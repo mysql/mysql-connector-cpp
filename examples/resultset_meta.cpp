@@ -1,0 +1,291 @@
+/* Copyright (C) 2007 - 2008 MySQL AB, 2008 Sun Microsystems, Inc.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; version 2 of the License.
+
+   There are special exceptions to the terms and conditions of the GPL
+   as it is applied to this software. View the full text of the
+   exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
+   software distribution.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+
+/* *
+* Example of sql::ResultSetMetaData - meta data of a result set
+*
+*/
+
+// Standard C++ includes
+#include <stdlib.h>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
+
+/* Public interface of the MySQL Connector/C++ */
+#include <driver/mysql_public_iface.h>
+/* Connection parameter and sample data */
+#include "examples.h"
+
+static void printResultSetMetaData(std::auto_ptr< sql::ResultSet > &res, std::auto_ptr< sql::ResultSet > &ps_res);
+
+using namespace std;
+
+/**
+* Meta data of a (simple) statements result set - not prepared statements
+*/
+int main(int argc, const char **argv)
+{
+	const string url(argc >= 2 ? argv[1] : EXAMPLE_HOST);
+	const string user(argc >= 3 ? argv[2] : EXAMPLE_USER);
+	const string pass(argc >= 4 ? argv[3] : EXAMPLE_PASS);
+	const string database(argc >= 5 ? argv[4] : EXAMPLE_DB);
+
+	stringstream sql;
+	unsigned int i;
+	int ret;
+
+	cout << boolalpha;
+	cout << "1..1" << endl;
+	cout << "# Connector/C++ conect basic usage example.." << endl;
+
+	try {
+		/* Using the Driver to create a conection */
+		std::auto_ptr< sql::Connection > con(get_driver_instance()->connect(url, user, pass));
+
+		con->setSchema(database);
+
+		/* Create a test table demonstrating the use of sql::Statement.execute() */
+		std::auto_ptr< sql::Statement > stmt(con->createStatement());
+		stmt->execute("DROP TABLE IF EXISTS test");
+		stmt->execute("CREATE TABLE test(id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, label CHAR(1))");
+		cout << "#\t Test table created" << endl;
+
+		/* Populate the test table with data */
+		for (i = 0; i < EXAMPLE_NUM_TEST_ROWS; i++) {
+			// KLUDGE: You should take measures against SQL injections!
+			// example.h contains the test data
+			sql.str("");
+			sql << "INSERT INTO test(id, label) VALUES (";
+			sql << test_data[i].id << ", '" << test_data[i].label << "')";
+			stmt->execute(sql.str());
+		}
+		cout << "#\t Test table populated" << endl;
+
+		{
+			std::auto_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id AS column_alias, label FROM test AS table_alias LIMIT 1"));
+			std::auto_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("SELECT id AS column_alias, label FROM test AS table_alias LIMIT 1"));
+			std::auto_ptr< sql::ResultSet > ps_res(prep_stmt->executeQuery());
+			cout << "#\t SELECT id AS column_alias, label FROM test AS table_alias LIMIT 1" << endl;
+			printResultSetMetaData(res, ps_res);
+		}
+
+		{
+			std::auto_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT 1.01, 'Hello world!'"));
+			std::auto_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("SELECT 1.01, 'Hello world!'"));
+			std::auto_ptr< sql::ResultSet > ps_res(prep_stmt->executeQuery());
+			cout << "#\t SELECT 1.01, 'Hello world!'" << endl;
+			printResultSetMetaData(res, ps_res);
+		}
+
+		{
+			std::auto_ptr< sql::ResultSet > res(stmt->executeQuery("DESCRIBE test"));
+			std::auto_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("DESCRIBE test"));
+			std::auto_ptr< sql::ResultSet > ps_res(prep_stmt->executeQuery());
+			cout << "# \tDESCRIBE test" << endl;
+			printResultSetMetaData(res, ps_res);
+		}
+
+		/* Clean up */
+		stmt->execute("DROP TABLE IF EXISTS test");
+		cout << "# done!" << endl;
+		ret = EXIT_SUCCESS;
+
+	} catch (sql::SQLException &e) {
+		/*
+		The MySQL Connector/C++ throws three different exceptions:
+
+		- sql::MethodNotImplementedException (derived from sql::SQLException)
+		- sql::InvalidArgumentException (derived from sql::SQLException)
+		- sql::SQLException (derived from std::runtime_error)
+		*/
+		cout << "# ERR: SQLException in " << __FILE__;
+		cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << endl;
+		/* Use what(), getErrorCode() and getSQLState() */
+		cout << "# ERR: " << e.what();
+		cout << " (MySQL error code: " << e.getErrorCode();
+		cout << ", SQLState: " << e.getSQLState() << " )" << endl;
+
+		ret = EXIT_FAILURE;
+
+	} catch (std::runtime_error &e) {
+		cout << "# ERR: runtime_error in " << __FILE__;
+		cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << endl;
+		cout << "# ERR: " << e.what() << endl;
+
+		ret = EXIT_FAILURE;
+	}
+
+	if (ret != EXIT_SUCCESS) {
+		cout << "not ";
+	}
+	cout << "ok 1" << endl;
+	return ret;
+}
+
+/**
+* Prints all meta data associated with an result set
+*
+*/
+static void printResultSetMetaData(std::auto_ptr< sql::ResultSet > &res, std::auto_ptr< sql::ResultSet > &ps_res)
+{
+	/* ResultSetMetaData object */
+	sql::ResultSetMetaData * meta;
+	sql::ResultSetMetaData * ps_meta;
+	unsigned int column;
+
+	if (res->rowsCount() == 0) {
+		throw runtime_error("FAILURE - no rows");
+	}
+
+	/* Get the meta data - we leave all the exception handling to the caller... */
+	meta = res->getMetaData();
+	ps_meta = ps_res->getMetaData();
+
+	cout << "#\t Printing result set meta data" << endl;
+	cout << "#\t res->rowsCount() = " << res->rowsCount() << endl;
+	if (res->rowsCount() != ps_res->rowsCount())
+		throw runtime_error("rowsCount() different for PS and non-PS");
+
+	cout << "#\t meta->getColumnCount() = " << meta->getColumnCount() << endl;
+	if (meta->getColumnCount() != ps_meta->getColumnCount())
+		throw runtime_error("getColumnCount() different for PS and non-PS");
+
+	/*
+	Dump information for every column
+	NOTE: column indexing is 1-based not zero-based!
+	*/
+	for (column = 1; column <= meta->getColumnCount(); column++) {
+		cout << "#\t\tColumn " << column << "\t\t\t= " << meta->getColumnName(column);
+		cout << "/" << ps_meta->getColumnName(column) << endl;
+		if (meta->getColumnName(column) != ps_meta->getColumnName(column))
+			throw runtime_error("getColumnName different for PS and non-PS");
+
+		cout << "#\t\tmeta->getCatalogName()\t\t= " << meta->getCatalogName(column);
+		cout  << "/" << ps_meta->getCatalogName(column) << endl;
+
+		if (meta->getCatalogName(column) != ps_meta->getCatalogName(column))
+			throw runtime_error("getCatalogName different for PS and non-PS");
+
+		cout << "#\t\t meta->getColumnDisplaySize() = " << meta->getColumnDisplaySize(column) << endl;
+
+		cout << "#\t\t meta->getColumnLabel()\t\t= " << meta->getColumnLabel(column);
+		cout << "/" << ps_meta->getColumnLabel(column) << endl;
+		if (meta->getColumnLabel(column) != ps_meta->getColumnLabel(column))
+			throw runtime_error("getColumnLabel different for PS and non-PS");
+
+		cout << "#\t\t meta->getColumnName()\t\t= " << meta->getColumnName(column);
+		cout << "/" << ps_meta->getColumnName(column) << endl;
+		if (meta->getColumnName(column) != ps_meta->getColumnName(column))
+			throw runtime_error("getColumnName different for PS and non-PS");
+
+		cout << "#\t\t meta->getColumnType()\t\t= " << meta->getColumnType(column);
+		cout << "/" << ps_meta->getColumnType(column) << endl;
+		if (meta->getColumnType(column) != ps_meta->getColumnType(column))
+			throw runtime_error("getColumnType different for PS and non-PS");
+
+		cout << "#\t\t meta->getColumnTypeName()\t= " << meta->getColumnTypeName(column);
+		cout << "/" << ps_meta->getColumnTypeName(column) << endl;
+		if (meta->getColumnTypeName(column) != ps_meta->getColumnTypeName(column))
+			throw runtime_error("getColumnTypeName different for PS and non-PS");
+
+		try {
+			/* Part of JDBC, but we don't support it yet */
+			cout << "#\t\t meta->getPrecision()\t\t= " << meta->getPrecision(column) << endl;
+			throw runtime_error("Update example, getPrecision supported");
+		} catch (sql::MethodNotImplementedException) { }
+
+		cout << "#\t\t meta->getScale()\t\t= " << meta->getScale(column) << endl;
+
+		cout << "#\t\t meta->getSchemaName()\t\t= " << meta->getSchemaName(column);
+		cout << "/" << ps_meta->getSchemaName(column) << endl;
+		if (meta->getSchemaName(column) != ps_meta->getSchemaName(column))
+			throw runtime_error("getSchemaName different for PS and non-PS");
+
+
+		cout << "#\t\t meta->getTableName()\t\t= " << meta->getTableName(column);
+		cout << "/" << ps_meta->getTableName(column) << endl;
+		if (meta->getTableName(column) != ps_meta->getTableName(column))
+			throw runtime_error("getTableName different for PS and non-PS");
+
+		cout << "#\t\t meta->isAutoIncrement()\t= " << meta->isAutoIncrement(column);
+		cout << "/" << ps_meta->isAutoIncrement(column) << endl;
+		if (meta->isAutoIncrement(column) != ps_meta->isAutoIncrement(column))
+			throw runtime_error("isAutoIncrement different for PS and non-PS");
+
+		cout << "#\t\t meta->isCaseSensitive()\t= " << meta->isCaseSensitive(column);
+		cout << "/" << ps_meta->isCaseSensitive(column) << endl;
+		if (meta->isCaseSensitive(column) != ps_meta->isCaseSensitive(column))
+			throw runtime_error("isCaseSensitive different for PS and non-PS");
+
+		cout << "#\t\t meta->isCurrency()\t\t= " << meta->isCurrency(column);
+		cout << "/" << ps_meta->isCurrency(column) << endl;
+		if (meta->isCurrency(column) != ps_meta->isCurrency(column))
+			throw runtime_error("isCurrency different for PS and non-PS");
+
+		cout << "#\t\t meta->isDefinitelyWritable()\t= " << meta->isDefinitelyWritable(column);
+		cout << "/" << ps_meta->isDefinitelyWritable(column) << endl;
+		if (meta->isDefinitelyWritable(column) != ps_meta->isDefinitelyWritable(column))
+			throw runtime_error("isDefinitelyWritable different for PS and non-PS");
+
+		cout << "#\t\t meta->isNullable()\t\t= " << meta->isNullable(column);
+		cout << "/" << ps_meta->isNullable(column) << endl;
+		if (meta->isNullable(column) != ps_meta->isNullable(column))
+			throw runtime_error("isNullable different for PS and non-PS");
+
+		cout << "#\t\t meta->isReadOnly()\t\t= " << meta->isReadOnly(column);
+		cout << "/" << ps_meta->isReadOnly(column) << endl;
+		if (meta->isReadOnly(column) != ps_meta->isReadOnly(column))
+			throw runtime_error("isReadOnly different for PS and non-PS");
+
+		cout << "#\t\t meta->isSearchable()\t\t= " << meta->isSearchable(column);
+		cout << "/" << ps_meta->isSearchable(column) << endl;
+		if (meta->isSearchable(column) != ps_meta->isSearchable(column))
+			throw runtime_error("isSearchable different for PS and non-PS");
+
+		cout << "#\t\t meta->isSigned()\t\t= " << meta->isSigned(column);
+		cout << "/" << ps_meta->isSigned(column) << endl;
+		if (meta->isSigned(column) != ps_meta->isSigned(column))
+			throw runtime_error("isSigned different for PS and non-PS");
+
+		cout << "#\t\t meta->isWritable()\t\t= " << meta->isWritable(column);
+		cout << "/" << ps_meta->isWritable(column) << endl;
+		if (meta->isWritable(column) != ps_meta->isWritable(column))
+			throw runtime_error("isWritable different for PS and non-PS");
+	}
+
+	try {
+		res->close();
+		meta = res->getMetaData();
+	} catch (sql::SQLException &e) {
+		cout << "#\t Excepted exception (I) when trying to get meta data after close:" << endl;
+		cout << "#\t " << e.what() << endl;
+	}
+
+	try {
+		ps_res->close();
+		ps_meta = ps_res->getMetaData();
+	} catch (sql::SQLException &e) {
+		cout << "#\t Excepted exception (II) when trying to get meta data after close:" << endl;
+		cout << "#\t " << e.what() << endl;
+	}
+}

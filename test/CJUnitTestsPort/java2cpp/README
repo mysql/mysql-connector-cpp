@@ -1,0 +1,16 @@
+Usage:
+[perl] java2cpp.pl [-auto=<autoAnswer>] <javaClassFileName>
+
+<autoAnswer> is one of a, c, d, s. I would say that only "a" and "c" make sence
+to use there.
+
+I usually use it as:
+
+java2cpp.pl -auto=a <javaClassFileName> 2> traceLog
+
+And then watch result in editor and do changes in dictionary file amd/or script.
+"a" means "as is" and leaves all unknown words as is ("c" would comment them out;
+not really useful either). Without "-auto=a" work of script will be long and boring.
+
+Script does many assumptions on Marks's code style. Sometimes they are wrong.
+Also there are couple of known bugs =)

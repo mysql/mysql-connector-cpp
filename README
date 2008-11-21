@@ -1,0 +1,235 @@
+MySQL Connector/C++
+Copyright (C) 2007-2008 MySQL AB, Sun Microsystems Inc.
+
+
+CONTENTS
+
+ * Contact
+ * License
+ * Installation
+ * Prerequisites for building Connector/C++
+ * Installation on Unix
+   * Run CMake to build a Makefile
+   * Use make to build the libraries
+   * CMake options: MySQL installation path, debug version and more
+ * Installation on Windows
+ * Source layout
+
+CONTACT
+
+ For general discussion of the MySQL Connector/C++ please use the C/C++
+ community forum at http://forums.mysql.com/list.php?45 or join the MySQL
+ Connector/C++ mailing list at http://lists.mysql.com .
+
+ Bugs can be reported at http://bugs.mysql.com .
+
+ For sales related questions please write to <sales@mysql.com>.
+
+ See also http://forge.mysql.com/wiki/Connector_C%2B%2B .
+
+
+LICENSE
+
+ MySQL Connector/C++ is licensed under the GPL.
+
+ If you have licensed this product under the GPL, please see the COPYING
+ file for more information.
+
+ There are special exceptions to the terms and conditions of the GPL
+ as it is applied to this software. View the full text of the
+ exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
+ software distribution.
+
+ If you need non-GPL licenses for commercial distribution please contact
+ <sales@mysql.com>.
+
+PREREQUISITES FOR BUILDING CONNECTOR/C++
+
+  The MySQL Connector/C++ is based on the MySQL client libary (MySQL C API).
+  Connector C/C++ is linked against the MySQL client library. You need to have
+  the MySQL client library installed in order to compile the Connector/C++.
+
+  Typically the MySQL client library gets installed by installing
+  the MySQL Server. However, check your operating system documentation for
+  other installation options.
+
+  You need to have CMake 2.4 (http://www.cmake.org).
+  NOTE: cmake binaries are available for most systems. You do not need to build
+  cmake yourself.
+
+
+INSTALLATION ON UNIX
+
+  The MySQL Connector/C++ is using the cross platform make CMake. CMake
+  creates classical Makefiles. Please visit http://www.cmake.org for
+  further information and documentation.
+
+  1. Run CMake to build a Makefile
+
+    me@host:/path/to/mysql-connector-cpp> cmake .
+    -- Check for working C compiler: /usr/local/bin/gcc
+    -- Check for working C compiler: /usr/local/bin/gcc -- works
+    -- Check size of void*
+    -- Check size of void* - done
+    -- Check for working CXX compiler: /usr/bin/c++
+    -- Check for working CXX compiler: /usr/bin/c++ -- works
+    -- mysql_config was found /usr/bin/mysql_config
+    -- MySQL Include dir: /usr/include/mysql
+    -- MySQL Library    :
+    -- MySQL Library dir: /usr/lib64/mysql;/usr/lib64
+    -- MySQL CFLAGS: -I/usr/include/mysql [...]
+    -- MySQL Link flags:
+    -- MySQL Version: 5.0.51
+    -- MySQL Include dir: /usr/include/mysql
+    -- MySQL Library dir: /usr/lib64/mysql;/usr/lib64
+    -- MySQL CFLAGS: -I/usr/include/mysql [...]
+    -- MySQL Link flags:
+    -- Configuring cppconn
+    -- Configuring test cases
+    -- Looking for isinf
+    -- Looking for isinf - found
+    -- Looking for isinf
+    -- Looking for isinf - not found.
+    -- Looking for finite
+    -- Looking for finite - not found.
+    -- Configuring C/J junit tests port
+    -- Configuring examples
+    -- Configuring done
+    -- Generating done
+    -- Build files have been written to: /path/to/mysql-connector-cpp/
+
+  Read on at point 3) in case of configure problems.
+
+  2. Use make to build the libraries
+
+    me@host:/path/to/mysql-connector-cpp> make clean
+    me@host:/path/to/mysql-connector-cpp> make
+    [  1%] Building CXX object driver/CMakeFiles/mysqlcppconn.dir/mysql_connection.o
+    [  3%] Building CXX object driver/CMakeFiles/mysqlcppconn.dir/mysql_constructed_resultset.o
+    [...]
+    [100%] Building CXX object examples/CMakeFiles/statement.dir/statement.o
+    Linking CXX executable statement
+
+  If all goes well, you will find the Connector/C++ library in
+  /path/to/driver/libcppmysqlcppconn.so . In case of problems read on below
+  before you ask for assistance.
+
+  If you want to install the libraries on your system proceed with make install.
+
+  me@host:/path/to/mysql-connector-cpp> make install
+
+  3. CMake options: MySQL installation path, debug version and more
+
+  In case of configure and/or compile problems check the list of CMake options:
+
+    me@host:/path/to/mysql-connector-cpp> cmake -L
+    [...]
+    CMAKE_BACKWARDS_COMPATIBILITY:STRING=2.4
+    CMAKE_BUILD_TYPE:STRING=
+    CMAKE_INSTALL_PREFIX:PATH=/usr/local
+    EXECUTABLE_OUTPUT_PATH:PATH=
+    LIBRARY_OUTPUT_PATH:PATH=
+    MYSQLCPPCONN_GCOV_ENABLE:BOOL=0
+    MYSQLCPPCONN_TRACE_ENABLE:BOOL=0
+    MYSQL_CONFIG_EXECUTABLE:FILEPATH=/usr/bin/mysql_config
+
+  For example, if your MySQL Server installation path is not /usr/local/mysql
+  and you want to build a debug version of the MySQL Connector/C++ use:
+
+    me@host:/path/to/mysql-connector-cpp>
+    cmake -D CMAKE_BUILD_TYPE:STRING=Debug -D MYSQL_DIR:PATH=/path/to/my/mysql/server .
+
+  Verify your settings with cmake -L:
+
+    me@host:/path/to/mysql-connector-cpp> cmake -L
+    [...]
+    CMAKE_BACKWARDS_COMPATIBILITY:STRING=2.4
+    CMAKE_BUILD_TYPE:STRING=Debug
+    CMAKE_INSTALL_PREFIX:PATH=/usr/local
+    EXECUTABLE_OUTPUT_PATH:PATH=
+    LIBRARY_OUTPUT_PATH:PATH=
+    MYSQLCPPCONN_GCOV_ENABLE:BOOL=0
+    MYSQLCPPCONN_TRACE_ENABLE:BOOL=0
+    MYSQL_CONFIG_EXECUTABLE:FILEPATH=/usr/bin/mysql_config
+    MYSQL_DIR:PATH=/path/to/my/mysql/server
+
+  Procees with make clean; make as described at point 2.)
+
+  NOTE: cmake does cache settings in the file CMakeCache.txt.
+  Make sure that cmake does not use old and unwanted settings from
+  CMakeCache.txt. This may cause compile problems. If so, delete CMakeCache.txt,
+  configure custom settings with cmake -D, if any and try compiling again.
+
+INSTALLATION ON SOLARIS
+
+  Use the Sun compiler to build the MySQL Connector/C++.
+
+  Ensure that your environment points cmake to the appropriate compiler
+  binaries. The binary distributions of the MySQL Server are build using Sun
+  compilers. The MySQL tool mysql_config returns compiler flags suitable for
+  Sun compilers but possibly not suitable for GCC. If you plan to use GCC on
+  Solaris to compile MySQL Connector/C++, you might need to comment out
+
+  # ADD_DEFINITIONS("${MYSQL_CFLAGS}")
+
+  in the file /path/to/mysql-connector-cpp/FindMySQL.cmake.
+  However, its recommended to use Sun Studio on Solaris.
+  No changes are required when using the Sun compilers!
+
+  Make sure that you do not mix Sun compilers with GNU compilers when building
+  the MySQL Connector/C++. For example, do not use GCC as a C compiler and
+  Sun CC as a C++ compiler. The linker might fail to link the results
+  from both compilers to one binary.
+
+
+INSTALLATION ON WINDOWS
+
+  The MySQL Connector/C++ is using the cross platform make CMake. CMake
+  creates classical Makefiles. Please visit http://www.cmake.org for
+  further information and documentation.
+
+  You need to have the environment variables set for the Visual Studio
+  toolchain. Visual Studio includes a batch file to set these for you,
+  and installs a shortcut into the Start menu to open a command prompt
+  with these variables set.
+
+  You need to set MYSQL_DIR to point to where the MySQL server is
+  installed, using the short-style filenames:
+
+   set MYSQL_DIR=C:\PROGRA~1\MySQL\MYSQLS~1.0
+
+  Build Connector/C++ using the "cmake" command-line tool by doing the
+  following from the source root directory (in a command prompt window);
+
+    cmake -G "Visual Studio 8 2005"
+
+  This produces a project file that you can open with Visual Studio or
+  build from the command line with either of:
+
+   devenv.com MySQLCPPCONN.sln /build Release
+   devenv.com MySQLCPPCONN.sln /build RelWithDebInfo
+
+  To compile the "Debug" build, you must run set the cmake build type so
+  the correct version of the MySQL client libraries are used:
+
+    cmake -G "Visual Studio 8 2005" -DCMAKE_BUILD_TYPE=Debug
+     devenv.com MySQLCPPCONN.sln /build Debug
+
+  Upon completion; you will find the executables in the subdirectories of the
+  "bin" and "lib" directories.
+
+  Different versions of CMake come with different "generators". A generator
+  is the component of CMake that is responsible for writing the build files.
+  If, for example, cmake --help does not list a generator for
+  Visual Studio 9 2008, try a more recent version of CMake.
+
+
+SOURCE LAYOUT
+
+  The MySQL Connector/C++ distribution contains the following directories:
+
+  |-- common               <-- Commonly used infrastructure
+  |-- cppconn              <-- Header files of the public interface
+  |-- driver               <-- Connector/C++ source code
+  |-- examples             <-- Basic examples
+  `-- test                 <-- Tests, so to say: more examples

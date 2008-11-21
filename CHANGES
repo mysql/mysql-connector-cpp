@@ -1,0 +1,23 @@
+Alpha  1.0.1 - xx/xx/2008
+
+- New directory layout
+- Addition of Connector/J test convert
+- Changing DbcException to implement the interface of JDBC's SQLException
+- All tests changed to create TAP compliant output
+- Introduction of experimental CPack support, see make help
+- Metadata: switching to column names "TABLE_CAT" (was: TABLE_CATALOG) and "TABLE_SCHEM" (was: TABLE_SCHEMA) for JDBC compliance
+- ConnectionMetaData::getImportedKeys(): PKTABLE_CATALOG -> PKTABLE_CAT, PKTABLE_SCHEMA -> PKTABLE_SCHEM, FKTABLE_CATALOG -> FKTABLE_CAT, FKTABLE_SCHEMA -> FKTABLE_SCHEM
+- ConnectionMetaData::getPrimaryKeys(): COLUMN -> COLUMN_NAME, SEQUENCE -> KEY_SEQ, INDEX_NAME -> PK_NAME
+- ConnectionMetaData::getProcedures: PROCEDURE_SCHEMA -> PROCEDURE_SCHEM
+- ConnectionMetaData::getTables: TABLE_COMMENT -> REMARKS
+- All examples can be given optional connection parameters on the command line, for example, examples/connect tcp://host:port user pass database
+- Adding experimental GCov support, cmake -DMYSQLCPPCONN_GCOV_ENABLE:BOOL=1
+- ConnectionMetaData::getCatalogTerm() returns n/a, there is no counterpart to catalog in C/C++
+- Addition of ConnectionMetaData::getSchemas() and  Connection::setSchema(). None of them is in the JDBC standard
+- Deprecation of the Driver Manager
+- sql::mysql::MySQL_SQLException is gone. There is no distinction between server and client (= Connector) caused errors based on the type of the exception. However, you can still check the error code to figure out the reason.
+
+
+Preview 1.0.0  - 05/08/2008
+
+- First public release
