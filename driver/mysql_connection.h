@@ -139,7 +139,13 @@ protected:
 	bool closed;
 	bool autocommit;
 	enum_transaction_isolation txIsolationLevel;
-	std::auto_ptr<const sql::SQLWarning> warnings;
+
+#if defined(_WIN32) || defined(_WIN64)
+#pragma warning(push)
+#pragma warning (disable : 4251)
+  std::auto_ptr<const sql::SQLWarning> warnings;
+#pragma warning (pop) 
+#endif
 
 	bool is_valid;
 
