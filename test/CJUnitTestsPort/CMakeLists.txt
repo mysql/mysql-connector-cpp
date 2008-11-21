@@ -1,4 +1,6 @@
 
+IF(EXISTS MiniCppUnit)
+
 INCLUDE_DIRECTORIES(${MYSQLCPPCONN_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${MYSQLCPPCONN_SOURCE_DIR}/cppconn)
 INCLUDE(CheckSymbolExists)
@@ -38,23 +40,12 @@ IF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)
 	SET(MY_GCOV_LINK_LIBRARIES gcov)
 ENDIF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)
 
-#TRY_COMPILE(
-#	HAVE_ISINF
-#	${CMAKE_BINARY_DIR}
-#	${CMAKE_SOURCE_DIR}/test/CJUnitTestsPort/MiniCppUnit/_check_isinf.cpp
-#	${CMAKE_FLAGS}
-#	OUTPUT_VARIABLE OUTPUT
-#	)
-#IF (HAVE_ISINF)
-#	ADD_DEFINITIONS("-DHAVE_ISINF")
-#ENDIF(HAVE_ISINF)
-
 SET(jdbctests_sources
 	BaseTestCase.h
 	BaseTestCase.inl
 	BaseTestCase.cpp
-	MiniCppUnit/TestsRunner.cxx
-	MiniCppUnit/MiniCppUnit.cxx
+#	MiniCppUnit/TestsRunner.cxx
+#	MiniCppUnit/MiniCppUnit.cxx
 	../../common/stringutils.cpp
 	../../common/stringutils.h
 	resources.cpp
@@ -81,3 +72,6 @@ TARGET_LINK_LIBRARIES(CJUnitTestsPort ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK
 
 #
 MESSAGE(STATUS "Configuring C/J junit tests port")
+
+
+ENDIF(EXISTS MiniCppUnit)
