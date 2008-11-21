@@ -41,23 +41,23 @@ public:
 
 	virtual ~MySQL_ParameterMetaData() {}
 
-	virtual std::string getParameterClassName(unsigned int param) const;
+	virtual std::string getParameterClassName(unsigned int param);
 
-	virtual int getParameterCount() const;
+	virtual int getParameterCount();
 
-	virtual int getParameterMode(unsigned int param) const;
+	virtual int getParameterMode(unsigned int param);
 
-	virtual int getParameterType(unsigned int param) const;
+	virtual int getParameterType(unsigned int param);
 
 	virtual std::string getParameterTypeName(unsigned int param)  const;
 
-	virtual int getPrecision(unsigned int param) const;
+	virtual int getPrecision(unsigned int param);
 
-	virtual int getScale(unsigned int param) const;
+	virtual int getScale(unsigned int param);
 
-	virtual int isNullable(unsigned int param) const;
+	virtual int isNullable(unsigned int param);
 
-	virtual bool isSigned(unsigned int param) const;
+	virtual bool isSigned(unsigned int param);
 
 
 private:

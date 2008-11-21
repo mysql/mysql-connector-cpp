@@ -45,23 +45,23 @@ public:
 		parameterNullableUnknown
 	};
 
-	virtual std::string getParameterClassName(unsigned int param) const = 0;
+	virtual std::string getParameterClassName(unsigned int param) = 0;
 
-	virtual int getParameterCount() const = 0;
+	virtual int getParameterCount() = 0;
 
-	virtual int getParameterMode(unsigned int param) const = 0;
+	virtual int getParameterMode(unsigned int param) = 0;
 
-	virtual int getParameterType(unsigned int param) const = 0;
+	virtual int getParameterType(unsigned int param) = 0;
 
-	virtual std::string getParameterTypeName(unsigned int param) const = 0;
+	virtual std::string getParameterTypeName(unsigned int param) = 0;
 
-	virtual int getPrecision(unsigned int param) const = 0;
+	virtual int getPrecision(unsigned int param) = 0;
 
-	virtual int getScale(unsigned int param) const = 0;
+	virtual int getScale(unsigned int param) = 0;
 
-	virtual int isNullable(unsigned int param) const = 0;
+	virtual int isNullable(unsigned int param) = 0;
 
-	virtual bool isSigned(unsigned int param) const = 0;
+	virtual bool isSigned(unsigned int param) = 0;
 
 	virtual ~ParameterMetaData() {}
 };

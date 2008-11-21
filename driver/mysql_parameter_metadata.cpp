@@ -50,7 +50,7 @@ MySQL_ParameterMetaData::MySQL_ParameterMetaData(MYSQL_STMT * stmt)
 
 /* {{{ MySQL_ParameterMetaData::getParameterClassName -U- */
 std::string
-MySQL_ParameterMetaData::getParameterClassName(unsigned int /* param */) const
+MySQL_ParameterMetaData::getParameterClassName(unsigned int /* param */)
 {
 	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");
 }
@@ -59,7 +59,7 @@ MySQL_ParameterMetaData::getParameterClassName(unsigned int /* param */) const
 
 /* {{{ MySQL_ParameterMetaData::getParameterCount -U- */
 int
-MySQL_ParameterMetaData::getParameterCount() const
+MySQL_ParameterMetaData::getParameterCount()
 {
 	return param_count;
 }
@@ -68,7 +68,7 @@ MySQL_ParameterMetaData::getParameterCount() const
 
 /* {{{ MySQL_ParameterMetaData::getParameterMode -U- */
 int
-MySQL_ParameterMetaData::getParameterMode(unsigned int /* param */) const
+MySQL_ParameterMetaData::getParameterMode(unsigned int /* param */)
 {
 	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");
 }
@@ -77,7 +77,7 @@ MySQL_ParameterMetaData::getParameterMode(unsigned int /* param */) const
 
 /* {{{ MySQL_ParameterMetaData::getParameterType -U- */
 int
-MySQL_ParameterMetaData::getParameterType(unsigned int /* param */) const
+MySQL_ParameterMetaData::getParameterType(unsigned int /* param */)
 {
 	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");
 }
@@ -86,7 +86,7 @@ MySQL_ParameterMetaData::getParameterType(unsigned int /* param */) const
 
 /* {{{ MySQL_ParameterMetaData::getParameterTypeName -U- */
 std::string
-MySQL_ParameterMetaData::getParameterTypeName(unsigned int /* param */) const
+MySQL_ParameterMetaData::getParameterTypeName(unsigned int /* param */)
 {
 	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");
 }
@@ -95,7 +95,7 @@ MySQL_ParameterMetaData::getParameterTypeName(unsigned int /* param */) const
 
 /* {{{ MySQL_ParameterMetaData::getPrecision -U- */
 int
-MySQL_ParameterMetaData::getPrecision(unsigned int /* param */) const
+MySQL_ParameterMetaData::getPrecision(unsigned int /* param */)
 {
 	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");
 }
@@ -104,7 +104,7 @@ MySQL_ParameterMetaData::getPrecision(unsigned int /* param */) const
 
 /* {{{ MySQL_ParameterMetaData::getScale -U- */
 int
-MySQL_ParameterMetaData::getScale(unsigned int /* param */) const
+MySQL_ParameterMetaData::getScale(unsigned int /* param */)
 {
 	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");
 }
@@ -113,7 +113,7 @@ MySQL_ParameterMetaData::getScale(unsigned int /* param */) const
 
 /* {{{ MySQL_ParameterMetaData::isNullable -U- */
 int
-MySQL_ParameterMetaData::isNullable(unsigned int /* param */) const
+MySQL_ParameterMetaData::isNullable(unsigned int /* param */)
 {
 	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");
 }
@@ -122,7 +122,7 @@ MySQL_ParameterMetaData::isNullable(unsigned int /* param */) const
 
 /* {{{ MySQL_ParameterMetaData::isSigned -U- */
 bool
-MySQL_ParameterMetaData::isSigned(unsigned int /* param */) const
+MySQL_ParameterMetaData::isSigned(unsigned int /* param */)
 {
 	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");
 }
