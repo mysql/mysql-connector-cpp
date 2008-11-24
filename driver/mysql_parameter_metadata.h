@@ -49,7 +49,7 @@ public:
 
 	virtual int getParameterType(unsigned int param);
 
-	virtual std::string getParameterTypeName(unsigned int param)  const;
+	virtual std::string getParameterTypeName(unsigned int param);
 
 	virtual int getPrecision(unsigned int param);
 
