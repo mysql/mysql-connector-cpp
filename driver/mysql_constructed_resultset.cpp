@@ -19,7 +19,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "mysql_res_wrapper.h"
 #include "mysql_constructed_resultset.h"
 #include "mysql_cset_metadata.h"
 
