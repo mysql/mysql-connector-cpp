@@ -29,13 +29,6 @@
 #define atoll(x) _atoi64((x))
 #endif	//	_WIN32
 
-#ifdef __GNUC__
-#if __GNUC__ >= 2
-#define CPPCONN_FUNC __FUNCTION__
-#endif
-#else
-#define CPPCONN_FUNC "<unknown>"
-#endif
 
 #include "mysql_debug.h"
 #include "mysql_util.h"
