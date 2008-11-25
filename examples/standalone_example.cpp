@@ -49,15 +49,11 @@
 
 
 #include "mysql_connection.h"
-#include "mysql_exception.h"
 
 #include <cppconn/driver.h>
-#include <cppconn/metadata.h>
-#include <cppconn/prepared_statement.h>
+#include <cppconn/exception.h>
 #include <cppconn/resultset.h>
-#include <cppconn/resultset_metadata.h>
 #include <cppconn/statement.h>
-#include <cppconn/warning.h>
 
 #define EXAMPLE_HOST "localhost"
 #define EXAMPLE_USER "root"
