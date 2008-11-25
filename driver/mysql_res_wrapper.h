@@ -33,7 +33,7 @@ class MYSQL_RES_Wrapper
 {
 	MYSQL_RES *		result; /* should be first */
 	unsigned int	refcount;
-	bool			is_valid;
+	bool					is_valid;
 
 public:
 	MYSQL_RES_Wrapper(MYSQL_RES * res);
@@ -47,7 +47,7 @@ public:
 
 	void dispose() throw();
 
-  	MYSQL_RES * get() const;
+	MYSQL_RES * get() const;
 };
 
 }; /* namespace mysql */
