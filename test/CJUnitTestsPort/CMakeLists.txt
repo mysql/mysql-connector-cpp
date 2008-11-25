@@ -44,8 +44,8 @@ SET(jdbctests_sources
 	BaseTestCase.h
 	BaseTestCase.inl
 	BaseTestCase.cpp
-#	MiniCppUnit/TestsRunner.cxx
-#	MiniCppUnit/MiniCppUnit.cxx
+	MiniCppUnit/TestsRunner.cxx
+	MiniCppUnit/MiniCppUnit.cxx
 	../../common/stringutils.cpp
 	../../common/stringutils.h
 	resources.cpp
