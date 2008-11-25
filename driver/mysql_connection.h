@@ -140,11 +140,16 @@ protected:
 	bool autocommit;
 	enum_transaction_isolation txIsolationLevel;
 
+	/* disable compile warnings on Windows */
 #if defined(_WIN32) || defined(_WIN64)
 #pragma warning(push)
 #pragma warning (disable : 4251)
+#endif
+
   std::auto_ptr<const sql::SQLWarning> warnings;
-#pragma warning (pop) 
+
+#if defined(_WIN32) || defined(_WIN64)
+#pragma warning (pop)
 #endif
 
 	bool is_valid;

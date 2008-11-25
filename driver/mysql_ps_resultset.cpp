@@ -436,7 +436,7 @@ MySQL_Prepared_ResultSet::getLong(const std::string& columnLabel) const
 }
 /* }}} */
 
-/* {{{ MySQL_Prepared_ResultSet::getMetaData() -U- */
+/* {{{ MySQL_Prepared_ResultSet::getMetaData() -I- */
 sql::ResultSetMetaData *
 MySQL_Prepared_ResultSet::getMetaData() const
 {
