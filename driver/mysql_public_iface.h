@@ -19,6 +19,12 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+/*
+  Public interface of the MySQL Connector/C++.
+  You might not use it but directly include directly the different
+  headers from cppconn/ and mysql_driver.h + mysql_util.h
+  (and mysql_connection.h). This will reduce your build time!
+*/
 
 #ifndef MYSQL_PUBLIC_IFACE_H_
 #define MYSQL_PUBLIC_IFACE_H_
