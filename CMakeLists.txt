@@ -81,8 +81,10 @@ ENDIF(CMAKE_COMPILER_IS_GNUCC)
 # SET(CPACK_*) before the INCLUDE(CPack)
 INCLUDE(CPack)
 
-
-# ----------------------------------------------------------------------
+IF(WIN32)
+	STRING(REGEX REPLACE "MYSQLCPPCONN" "MySQL/ConnectorCPP" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+	MESSAGE(STATUS "Installtion path is: ${CMAKE_INSTALL_PREFIX}")
+ENDIF(WIN32)
 
 ADD_SUBDIRECTORY(cppconn)
 ADD_SUBDIRECTORY(driver)
