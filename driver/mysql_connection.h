@@ -24,7 +24,7 @@
 
 #include <cppconn/connection.h>
 #include <list>
-
+#include "mysql_util.h"
 struct st_mysql;
 
 
@@ -33,7 +33,6 @@ namespace sql
 namespace mysql
 {
 
-namespace util {template<class T> class my_shared_ptr; }; // forward declaration.
 
 class MySQL_Savepoint : public sql::Savepoint
 {
