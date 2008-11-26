@@ -23,8 +23,10 @@
 #define _MYSQL_DEBUG_H_
 
 #if CPPCONN_TRACE_ENABLED
-#define CPP_ENTER(msg)		MySQL_DebugLogger * __l = this->logger? this->logger->get():NULL;(void)__l;\
-							MySQL_DebugEnterEvent __this_func(__LINE__, __FILE__, msg, logger)
+#define CPP_ENTER(msg)			MySQL_DebugLogger * __l = this->logger? this->logger->get():NULL;(void)__l;\
+								MySQL_DebugEnterEvent __this_func(__LINE__, __FILE__, msg, logger)
+#define CPP_ENTER_WL(l, msg)	MySQL_DebugLogger * __l = (l)? (l)->get():NULL;(void)__l;\
+								MySQL_DebugEnterEvent __this_func(__LINE__, __FILE__, msg, (l))
 #define CPP_INFO(msg)		{if (__l) __l->log("INF", msg); }
 #define CPP_INFO_FMT(...)	{if (__l) __l->log_va("INF", __VA_ARGS__); }
 #define CPP_ERR(msg)		{if (__l) __l->log("ERR", msg); }

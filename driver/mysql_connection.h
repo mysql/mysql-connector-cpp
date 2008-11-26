@@ -53,6 +53,7 @@ private:
 };
 
 class MySQL_DebugLogger;
+class MySQL_ConnectionData;
 
 class CPPDBC_PUBLIC_FUNC MySQL_Connection : public sql::Connection
 {
@@ -132,35 +133,13 @@ public:
 	std::string getSessionVariable(const std::string & varname);
 
 protected:
-
-	bool closed;
-	bool autocommit;
-	enum_transaction_isolation txIsolationLevel;
-
-	/* disable compile warnings on Windows */
-#if defined(_WIN32) || defined(_WIN64)
-#pragma warning(push)
-#pragma warning (disable : 4251)
-#endif
-
-  std::auto_ptr<const sql::SQLWarning> warnings;
-
-#if defined(_WIN32) || defined(_WIN64)
-#pragma warning (pop)
-#endif
-
-	bool is_valid;
-
-	std::string sql_mode;
 	void checkClosed();
 
-	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
+	class MySQL_ConnectionData * intern;
 private:
 	/* Prevent use of these */
 	MySQL_Connection(const MySQL_Connection &);
 	void operator=(MySQL_Connection &);
-
-	struct ::st_mysql * mysql; /* let it be last . If wrong dll is used we will get valgrind error or runtime error !*/
 };
 
 }; /* namespace mysql */

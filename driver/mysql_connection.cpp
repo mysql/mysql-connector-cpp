@@ -29,6 +29,7 @@
 #endif
 
 #include "mysql_connection.h"
+#include "mysql_connection_data.h"
 #include "mysql_prepared_statement.h"
 #include "mysql_statement.h"
 #include "mysql_metadata.h"
@@ -76,17 +77,18 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName,
 								   const std::string& userName,
 								   const std::string& password)
 {
-	is_valid = true;
+	intern = new MySQL_ConnectionData();
+	intern->is_valid = true;
 	bool protocol_tcp = true;
 	std::string host;
 	std::string socket;
-	uint port = 3306;
+	unsigned int port = 3306;
 
-	logger = new sql::mysql::util::my_shared_ptr< MySQL_DebugLogger >(new MySQL_DebugLogger()); /* should be before CPP_ENTER */
-	CPP_ENTER("MySQL_Connection::MySQL_Connection");
+	intern->logger = new sql::mysql::util::my_shared_ptr< MySQL_DebugLogger >(new MySQL_DebugLogger()); /* should be before CPP_ENTER */
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::MySQL_Connection");
 
 	try {
-		if (!(mysql = mysql_init(NULL))) {
+		if (!(intern->mysql = mysql_init(NULL))) {
 			throw sql::SQLException("Insufficient memory: cannot create MySQL handle using mysql_init()", "HY000", 1000);
 		}
 #ifndef CPPDBC_WIN32
@@ -110,7 +112,7 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName,
 		if (protocol_tcp && !host.compare(0, sizeof("localhost") - 1, "localhost")) {
 			host = "127.0.0.1";
 		}
-		if (!mysql_real_connect(mysql,
+		if (!mysql_real_connect(intern->mysql,
 							host.c_str(),
 							userName.c_str(),
 							password.c_str(),
@@ -118,24 +120,24 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName,
 							port,
 							protocol_tcp == false? socket.c_str():NULL /*socket*/,
 							0)) {
-			sql::SQLException e(mysql_error(mysql), mysql_sqlstate(mysql), mysql_errno(mysql));
-			mysql_close(mysql);
-			mysql = NULL;
+			sql::SQLException e(mysql_error(intern->mysql), mysql_sqlstate(intern->mysql), mysql_errno(intern->mysql));
+			mysql_close(intern->mysql);
+			intern->mysql = NULL;
 			throw e;
 		}
-		mysql_set_server_option(mysql, MYSQL_OPTION_MULTI_STATEMENTS_OFF);
+		mysql_set_server_option(intern->mysql, MYSQL_OPTION_MULTI_STATEMENTS_OFF);
 		setAutoCommit(true);
 		setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
 
-		sql_mode = getSessionVariable("SQL_MODE");
+		intern->sql_mode = getSessionVariable("SQL_MODE");
 	} catch (sql::SQLException &e) {
-		logger->freeReference();		
+		intern->logger->freeReference();		
 		throw e;
 	} catch (std::runtime_error &e) {
-		logger->freeReference();		
+		intern->logger->freeReference();		
 		throw e;
 	} catch (std::bad_alloc &e) {
-		logger->freeReference();		
+		intern->logger->freeReference();		
 		throw e;
 	}
 }
@@ -147,17 +149,18 @@ MySQL_Connection::~MySQL_Connection()
 {
 	/*
 	  We need this outter block, because the on-stack object
-	  created by CPP_ENTER references `logger`. And if there is no block
-	  the on-stack object will be destructed after `delete logger` leading
+	  created by CPP_ENTER references `intern->logger`. And if there is no block
+	  the on-stack object will be destructed after `delete intern->logger` leading
 	  to a faulty memory access.
 	*/
 	{
-		CPP_ENTER("MySQL_Connection::~MySQL_Connection");
-		if (is_valid) {
-			mysql_close(mysql);
+		CPP_ENTER_WL(intern->logger, "MySQL_Connection::~MySQL_Connection");
+		if (!isClosed()) {
+			mysql_close(intern->mysql);
 		}
 	}
-	logger->freeReference();
+	intern->logger->freeReference();
+	delete intern;
 }
 /* }}} */
 
@@ -166,8 +169,8 @@ MySQL_Connection::~MySQL_Connection()
 void
 MySQL_Connection::clearWarnings()
 {
-	CPP_ENTER("MySQL_Connection::clearWarnings");
-	warnings.reset();
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::clearWarnings");
+	intern->warnings.reset();
 }
 /* }}} */
 
@@ -176,8 +179,8 @@ MySQL_Connection::clearWarnings()
 void
 MySQL_Connection::checkClosed()
 {
-	CPP_ENTER("MySQL_Connection::checkClosed");
-	if (!is_valid) {
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::checkClosed");
+	if (!intern->is_valid) {
 		throw sql::SQLException("Connection has been closed", "HY000", 1000);
 	}
 }
@@ -188,11 +191,11 @@ MySQL_Connection::checkClosed()
 void
 MySQL_Connection::close()
 {
-	CPP_ENTER("MySQL_Connection::close");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::close");
 	checkClosed();
-	mysql_close(mysql);
-	mysql = NULL;
-	is_valid = false;
+	mysql_close(intern->mysql);
+	intern->mysql = NULL;
+	intern->is_valid = false;
 }
 /* }}} */
 
@@ -201,9 +204,9 @@ MySQL_Connection::close()
 void
 MySQL_Connection::commit()
 {
-	CPP_ENTER("MySQL_Connection::commit");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::commit");
 	checkClosed();
-	mysql_commit(mysql);
+	mysql_commit(intern->mysql);
 }
 /* }}} */
 
@@ -211,9 +214,9 @@ MySQL_Connection::commit()
 /* {{{ MySQL_Connection::createStatement() -I- */
 sql::Statement * MySQL_Connection::createStatement()
 {
-	CPP_ENTER("MySQL_Connection::createStatement");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::createStatement");
 	checkClosed();
-	return new MySQL_Statement(this, logger);
+	return new MySQL_Statement(this, intern->logger);
 }
 /* }}} */
 
@@ -222,8 +225,8 @@ sql::Statement * MySQL_Connection::createStatement()
 bool
 MySQL_Connection::getAutoCommit()
 {
-	CPP_ENTER("MySQL_Connection::getAutoCommit");
-	return autocommit;
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getAutoCommit");
+	return intern->autocommit;
 }
 /* }}} */
 
@@ -232,7 +235,7 @@ MySQL_Connection::getAutoCommit()
 std::string
 MySQL_Connection::getCatalog()
 {
-  CPP_ENTER("MySQL_Connection::getCatalog");
+  CPP_ENTER_WL(intern->logger, "MySQL_Connection::getCatalog");
   return std::string("");
 }
 /* }}} */
@@ -245,7 +248,7 @@ MySQL_Connection::getCatalog()
 std::string
 MySQL_Connection::getSchema()
 {
-  CPP_ENTER("MySQL_Connection::getSchema");
+  CPP_ENTER_WL(intern->logger, "MySQL_Connection::getSchema");
   checkClosed();
   std::auto_ptr<sql::Statement> stmt(createStatement());
   std::auto_ptr<ResultSet> rset(stmt->executeQuery("SELECT DATABASE()")); //SELECT SCHEMA()
@@ -260,7 +263,7 @@ const std::string&
 MySQL_Connection::getClientInfo(const std::string&)
 {
 	static const std::string clientInfo("cppconn");
-	CPP_ENTER("MySQL_Connection::getClientInfo");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getClientInfo");
 	return clientInfo;
 }
 /* }}} */
@@ -280,9 +283,9 @@ MySQL_Connection::getClientOption(const std::string & /* optionName */, void * /
 DatabaseMetaData *
 MySQL_Connection::getMetaData()
 {
-	CPP_ENTER("MySQL_Connection::getMetaData");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getMetaData");
 	checkClosed();
-	return new MySQL_ConnectionMetaData(this, this->logger);
+	return new MySQL_ConnectionMetaData(this, this->intern->logger);
 }
 /* }}} */
 
@@ -291,9 +294,9 @@ MySQL_Connection::getMetaData()
 MYSQL *
 MySQL_Connection::getMySQLHandle()
 {
-	CPP_ENTER("MySQL_Connection::getMySQLHandle");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getMySQLHandle");
 	checkClosed();
-	return mysql;
+	return intern->mysql;
 }
 /* }}} */
 
@@ -302,8 +305,8 @@ MySQL_Connection::getMySQLHandle()
 enum_transaction_isolation
 MySQL_Connection::getTransactionIsolation()
 {
-	CPP_ENTER("MySQL_Connection::getTransactionIsolation");
-	return txIsolationLevel;
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getTransactionIsolation");
+	return intern->txIsolationLevel;
 }
 /* }}} */
 
@@ -312,12 +315,12 @@ MySQL_Connection::getTransactionIsolation()
 const SQLWarning *
 MySQL_Connection::getWarnings()
 {
-	CPP_ENTER("MySQL_Connection::getWarnings");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getWarnings");
 	checkClosed();
 
-  warnings.reset( loadMysqlWarnings( this ) );
+	intern->warnings.reset(loadMysqlWarnings(this));
 
-  return warnings.get();
+	return intern->warnings.get();
 }
 /* }}} */
 
@@ -326,8 +329,8 @@ MySQL_Connection::getWarnings()
 bool
 MySQL_Connection::isClosed()
 {
-	CPP_ENTER("MySQL_Connection::isClosed");
-	return !is_valid;
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::isClosed");
+	return !intern->is_valid;
 }
 /* }}} */
 
@@ -336,7 +339,7 @@ MySQL_Connection::isClosed()
 bool
 MySQL_Connection::isReadOnly()
 {
-	CPP_ENTER("MySQL_Connection::isReadOnly");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::isReadOnly");
 	checkClosed();
 	throw sql::MethodNotImplementedException("MySQL_Connection::isReadOnly");
 	return false;
@@ -348,7 +351,7 @@ MySQL_Connection::isReadOnly()
 std::string *
 MySQL_Connection::nativeSQL(const std::string& sql)
 {
-	CPP_ENTER("MySQL_Connection::nativeSQL");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::nativeSQL");
 	checkClosed();
 	return new std::string(sql.c_str());
 }
@@ -359,14 +362,14 @@ MySQL_Connection::nativeSQL(const std::string& sql)
 sql::PreparedStatement *
 MySQL_Connection::prepareStatement(const std::string& sql)
 {
-	CPP_ENTER("MySQL_Connection::prepareStatement");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
 	CPP_INFO_FMT("query=%s", sql.c_str());
 	checkClosed();
-	MYSQL_STMT *stmt = mysql_stmt_init(mysql);
+	MYSQL_STMT *stmt = mysql_stmt_init(intern->mysql);
 
 	if (!stmt) {
 		CPP_ERR("Exception, no statement");
-		throw sql::SQLException(mysql_error(mysql), mysql_sqlstate(mysql), mysql_errno(mysql));
+		throw sql::SQLException(mysql_error(intern->mysql), mysql_sqlstate(intern->mysql), mysql_errno(intern->mysql));
 	}
 
 	if (mysql_stmt_prepare(stmt, sql.c_str(), sql.length())) {
@@ -376,7 +379,7 @@ MySQL_Connection::prepareStatement(const std::string& sql)
 		throw e;
 	}
 
-	return new MySQL_Prepared_Statement(stmt, this, this->logger);
+	return new MySQL_Prepared_Statement(stmt, this, this->intern->logger);
 }
 /* }}} */
 
@@ -385,7 +388,7 @@ MySQL_Connection::prepareStatement(const std::string& sql)
 sql::PreparedStatement *
 MySQL_Connection::prepareStatement(const std::string& /* sql */, int /* autoGeneratedKeys */)
 {
-	CPP_ENTER("MySQL_Connection::prepareStatement");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
 	checkClosed();
 	throw sql::MethodNotImplementedException("MySQL_Connection::prepareStatement(const std::string& sql, int autoGeneratedKeys)");
 	return NULL;
@@ -397,7 +400,7 @@ MySQL_Connection::prepareStatement(const std::string& /* sql */, int /* autoGene
 sql::PreparedStatement *
 MySQL_Connection::prepareStatement(const std::string& /* sql */, int /* columnIndexes */ [])
 {
-	CPP_ENTER("MySQL_Connection::prepareStatement");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
 	checkClosed();
 	throw sql::MethodNotImplementedException("MySQL_Connection::prepareStatement(const std::string& sql, int* columnIndexes)");
 	return NULL;
@@ -409,7 +412,7 @@ MySQL_Connection::prepareStatement(const std::string& /* sql */, int /* columnIn
 sql::PreparedStatement *
 MySQL_Connection::prepareStatement(const std::string& /* sql */, int /* resultSetType */, int /* resultSetConcurrency */)
 {
-	CPP_ENTER("MySQL_Connection::prepareStatement");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
 	checkClosed();
 	throw sql::MethodNotImplementedException("MySQL_Connection::prepareStatement(const std::string& sql, int resultSetType, int resultSetConcurrency)");
 	return NULL;
@@ -421,7 +424,7 @@ MySQL_Connection::prepareStatement(const std::string& /* sql */, int /* resultSe
 sql::PreparedStatement *
 MySQL_Connection::prepareStatement(const std::string& /* sql */, int /* resultSetType */, int /* resultSetConcurrency */, int /* resultSetHoldability */)
 {
-	CPP_ENTER("MySQL_Connection::prepareStatement");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
 	checkClosed();
 	throw sql::MethodNotImplementedException("MySQL_Connection::prepareStatement(const std::string& sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)");
 	return NULL;
@@ -433,7 +436,7 @@ MySQL_Connection::prepareStatement(const std::string& /* sql */, int /* resultSe
 sql::PreparedStatement *
 MySQL_Connection::prepareStatement(const std::string& /* sql */, std::string /* columnNames*/ [])
 {
-	CPP_ENTER("MySQL_Connection::prepareStatement");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
 	checkClosed();
 	throw sql::MethodNotImplementedException("MySQL_Connection::prepareStatement(const std::string& sql, std::string columnNames[])");
 	return NULL;
@@ -445,9 +448,9 @@ MySQL_Connection::prepareStatement(const std::string& /* sql */, std::string /* 
 void
 MySQL_Connection::releaseSavepoint(Savepoint * savepoint)
 {
-	CPP_ENTER("MySQL_Connection::releaseSavepoint");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::releaseSavepoint");
 	checkClosed();
-	if (mysql_get_server_version(mysql) < 50001) {
+	if (mysql_get_server_version(intern->mysql) < 50001) {
 		throw sql::MethodNotImplementedException("releaseSavepoint not available in this server version");
 	}
 	if (getAutoCommit()) {
@@ -466,9 +469,9 @@ MySQL_Connection::releaseSavepoint(Savepoint * savepoint)
 void
 MySQL_Connection::rollback()
 {
-	CPP_ENTER("MySQL_Connection::rollback");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::rollback");
 	checkClosed();
-	mysql_rollback(mysql);
+	mysql_rollback(intern->mysql);
 }
 /* }}} */
 
@@ -477,7 +480,7 @@ MySQL_Connection::rollback()
 void
 MySQL_Connection::rollback(Savepoint * savepoint)
 {
-	CPP_ENTER("MySQL_Connection::rollback");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::rollback");
 	checkClosed();
 	if (getAutoCommit()) {
 		throw sql::InvalidArgumentException("The connection is in autoCommit mode");
@@ -495,7 +498,7 @@ MySQL_Connection::rollback(Savepoint * savepoint)
 void
 MySQL_Connection::setCatalog(const std::string&)
 {
-	CPP_ENTER("MySQL_Connection::setCatalog");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setCatalog");
 	checkClosed();
 }
 /* }}} */
@@ -505,7 +508,7 @@ MySQL_Connection::setCatalog(const std::string&)
 void
 MySQL_Connection::setSchema(const std::string& catalog)
 {
-	CPP_ENTER("MySQL_Connection::setCatalog");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setCatalog");
 	checkClosed();
 	std::string sql("USE ");
 	sql.append(catalog);
@@ -520,15 +523,15 @@ MySQL_Connection::setSchema(const std::string& catalog)
 void
 MySQL_Connection::setClientOption(const std::string & optionName, const void * optionValue)
 {
-	CPP_ENTER("MySQL_Connection::setClientOption");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setClientOption");
 	if (!optionName.compare("libmysql_debug")) {
 		mysql_debug(static_cast<const char *>(optionValue));
 	} else if (!optionName.compare("client_trace")) {
 		if (*(static_cast<const bool *>(optionValue))) {
-			logger->get()->enableTracing();
+			intern->logger->get()->enableTracing();
 			CPP_INFO("Tracing enabled");
 		} else {
-			logger->get()->disableTracing();
+			intern->logger->get()->disableTracing();
 			CPP_INFO("Tracing disabled");
 		}
 	}
@@ -540,7 +543,7 @@ MySQL_Connection::setClientOption(const std::string & optionName, const void * o
 void
 MySQL_Connection::setHoldability(int /* holdability */)
 {
-	CPP_ENTER("MySQL_Connection::setHoldability");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setHoldability");
 	throw sql::MethodNotImplementedException("MySQL_Connection::setHoldability()");
 }
 /* }}} */
@@ -550,7 +553,7 @@ MySQL_Connection::setHoldability(int /* holdability */)
 void
 MySQL_Connection::setReadOnly(bool /* readOnly */)
 {
-	CPP_ENTER("MySQL_Connection::setReadOnly");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setReadOnly");
 	throw sql::MethodNotImplementedException("MySQL_Connection::setReadOnly()");
 }
 /* }}} */
@@ -560,7 +563,7 @@ MySQL_Connection::setReadOnly(bool /* readOnly */)
 Savepoint *
 MySQL_Connection::setSavepoint()
 {
-	CPP_ENTER("MySQL_Connection::setSavepoint");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setSavepoint");
 	checkClosed();
 	throw sql::MethodNotImplementedException("Please use MySQL_Connection::setSavepoint(const std::string& name)");
 	return NULL;
@@ -572,7 +575,7 @@ MySQL_Connection::setSavepoint()
 Savepoint *
 MySQL_Connection::setSavepoint(const std::string& name)
 {
-	CPP_ENTER("MySQL_Connection::setSavepoint");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setSavepoint");
 	checkClosed();
 	if (getAutoCommit()) {
 		throw sql::InvalidArgumentException("The connection is in autoCommit mode");
@@ -595,10 +598,10 @@ MySQL_Connection::setSavepoint(const std::string& name)
 void
 MySQL_Connection::setAutoCommit(bool autoCommit)
 {
-	CPP_ENTER("MySQL_Connection::setAutoCommit");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setAutoCommit");
 	checkClosed();
-	mysql_autocommit(mysql, autoCommit);
-	autocommit = autoCommit;
+	mysql_autocommit(intern->mysql, autoCommit);
+	intern->autocommit = autoCommit;
 }
 /* }}} */
 
@@ -607,7 +610,7 @@ MySQL_Connection::setAutoCommit(bool autoCommit)
 void
 MySQL_Connection::setTransactionIsolation(enum_transaction_isolation level)
 {
-	CPP_ENTER("MySQL_Connection::setTransactionIsolation");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setTransactionIsolation");
 	checkClosed();
 	const char * q;
 	switch (level) {
@@ -626,8 +629,8 @@ MySQL_Connection::setTransactionIsolation(enum_transaction_isolation level)
 		default:
 			throw sql::InvalidArgumentException("MySQL_Connection::setTransactionIsolation()");
 	}
-	txIsolationLevel = level;
-	mysql_query(mysql, q);
+	intern->txIsolationLevel = level;
+	mysql_query(intern->mysql, q);
 }
 /* }}} */
 
@@ -636,11 +639,11 @@ MySQL_Connection::setTransactionIsolation(enum_transaction_isolation level)
 std::string
 MySQL_Connection::getSessionVariable(const std::string & varname)
 {
-	CPP_ENTER("MySQL_Connection::getSessionVariable");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getSessionVariable");
 	checkClosed();
 
 	if (!strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1)) {
-		return sql_mode;
+		return intern->sql_mode;
 	}
 	std::auto_ptr<sql::Statement> stmt(createStatement());
 	std::string q = std::string("SHOW SESSION VARIABLES LIKE '").append(varname).append("'");
@@ -654,7 +657,7 @@ MySQL_Connection::getSessionVariable(const std::string & varname)
 }
 /* }}} */
 
-}; /* namespace mysql */
+}; /* namespace intern->mysql */
 }; /* namespace sql */
 /*
  * Local variables:
