@@ -340,7 +340,7 @@ static void test_connection_3(sql::Connection * conn, std::string user)
 {
 	ENTER_FUNCTION();
 	try {
-		sql::DatabaseMetaData * meta(conn->getMetaData());
+		std::auto_ptr<sql::DatabaseMetaData> meta(conn->getMetaData());
 		ensure("getUserName() failed", user == meta->getUserName().substr(0, user.length()));
 	} catch (sql::SQLException &e) {
 		printf("\n# ERR: Caught sql::SQLException at %s::%d  %s (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState().c_str());
@@ -1422,7 +1422,7 @@ static void test_general_0(sql::Connection * conn)
 {
 	ENTER_FUNCTION();
 	try {
-		sql::DatabaseMetaData * meta(conn->getMetaData());
+		std::auto_ptr<sql::DatabaseMetaData> meta(conn->getMetaData());
 		std::auto_ptr<sql::ResultSet> rset(meta->getSchemata());
 
 		while (rset->next()) {
@@ -1924,7 +1924,7 @@ static void test_not_implemented_conn_meta(sql::Connection * conn)
 	ENTER_FUNCTION();
 
 	std::string bar("foo");
-	sql::DatabaseMetaData* conn_meta(conn->getMetaData());
+	std::auto_ptr<sql::DatabaseMetaData> conn_meta(conn->getMetaData());
 
 	try {
 
@@ -2426,7 +2426,7 @@ static void test_not_implemented_cs_resultset(sql::Connection * conn)
 	ENTER_FUNCTION();
 
 	std::string bar("foo");	
-	sql::DatabaseMetaData *conn_meta(conn->getMetaData());
+	std::auto_ptr<sql::DatabaseMetaData> conn_meta(conn->getMetaData());
 	std::auto_ptr<sql::ResultSet> res(conn_meta->getSchemaObjectTypes());
 
 	try {
@@ -2638,7 +2638,7 @@ static void test_not_implemented_cs_rs_meta(sql::Connection * conn)
 	ENTER_FUNCTION();
 
 	std::string bar("foo");
-	sql::DatabaseMetaData *conn_meta(conn->getMetaData());
+	std::auto_ptr<sql::DatabaseMetaData> conn_meta(conn->getMetaData());
 	std::auto_ptr<sql::ResultSet> res(conn_meta->getSchemaObjectTypes());
 	sql::ResultSetMetaData * meta(res->getMetaData());
 

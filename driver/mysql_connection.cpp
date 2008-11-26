@@ -75,7 +75,6 @@ MySQL_Savepoint::getSavepointName()
 MySQL_Connection::MySQL_Connection(const std::string& hostName,
 								   const std::string& userName,
 								   const std::string& password)
-  : metadata(NULL)
 {
 	is_valid = true;
 	bool protocol_tcp = true;
@@ -129,7 +128,6 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName,
 		setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
 
 		sql_mode = getSessionVariable("SQL_MODE");
-		metadata = new MySQL_ConnectionMetaData(this, this->logger);
 	} catch (sql::SQLException &e) {
 		logger->freeReference();		
 		throw e;
@@ -158,7 +156,6 @@ MySQL_Connection::~MySQL_Connection()
 		if (is_valid) {
 			mysql_close(mysql);
 		}
-		delete metadata;
 	}
 	logger->freeReference();
 }
@@ -285,7 +282,7 @@ MySQL_Connection::getMetaData()
 {
 	CPP_ENTER("MySQL_Connection::getMetaData");
 	checkClosed();
-	return metadata;
+	return new MySQL_ConnectionMetaData(this, this->logger);
 }
 /* }}} */
 

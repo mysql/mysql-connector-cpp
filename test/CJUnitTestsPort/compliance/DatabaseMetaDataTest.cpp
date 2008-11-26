@@ -910,7 +910,7 @@ namespace compliance
 
     bool test_status = true;
     logMsg("Calling DatabaseMetaData.getColumns");
-String tmp("%"); 
+	String tmp("%"); 
     ResultSet oRet_ResultSet(dbmd->getColumns(sCatalogName, sSchemaName, tmp, tmp));
     test_status = columnCompare(sColumnNames, oRet_ResultSet);
     if (test_status == false) {
@@ -9217,7 +9217,7 @@ std::list< String > tmp2;
             FAIL("Invalid Foreign table");
         }
         sSchemaName = "";
-        dbmd = const_cast<DatabaseMetaData>(conn->getMetaData());
+        dbmd.reset(conn->getMetaData());
     }
 
     /* A private method to compare the Column Names & No of Columns Specific to the test */

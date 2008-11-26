@@ -228,10 +228,9 @@ namespace compliance
 
   void ConnectionTest::testGetMetaData() 
   {  logMsg("Calling getMetaData() method ");
-            const sql::DatabaseMetaData * rsmd = conn->getMetaData();
+            DatabaseMetaData rsmd(conn->getMetaData());
 
-            if (dynamic_cast<const sql::mysql::MySQL_ConnectionMetaData*>(rsmd)
-                    != NULL)
+            if (rsmd.get()!= NULL)
             {
                 logMsg( "getMetaData returns the DatabaseMetaData object ");
             }
@@ -501,7 +500,7 @@ namespace compliance
   void ConnectionTest::setUp() 
   {
         super::setUp();
-        dbmd = const_cast<sql::DatabaseMetaData*>( conn->getMetaData() );
+        dbmd.reset(conn->getMetaData());
     }
 
 }

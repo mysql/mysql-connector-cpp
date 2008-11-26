@@ -52,7 +52,7 @@ namespace testsuite
   typedef std::auto_ptr<sql::ResultSet>         ResultSet;
   typedef sql::Driver                           Driver;
   typedef sql::ResultSetMetaData *              ResultSetMetaData;
-  typedef sql::DatabaseMetaData *               DatabaseMetaData;
+  typedef std::auto_ptr<sql::DatabaseMetaData>  DatabaseMetaData;
 
 //  typedef String                                Object;
 

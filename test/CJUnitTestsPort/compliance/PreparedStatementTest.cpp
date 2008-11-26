@@ -3416,7 +3416,7 @@ namespace compliance
     super::setUp();
 
     stmt.reset( conn->createStatement() );
-    dbmd= const_cast<DatabaseMetaData>( conn->getMetaData() );
+    dbmd.reset(conn->getMetaData());
   }
 
 }

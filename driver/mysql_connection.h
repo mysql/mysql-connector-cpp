@@ -133,8 +133,6 @@ public:
 
 protected:
 
-	sql::DatabaseMetaData * metadata;
-
 	bool closed;
 	bool autocommit;
 	enum_transaction_isolation txIsolationLevel;

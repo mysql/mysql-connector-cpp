@@ -536,7 +536,7 @@ namespace testsuite
     if (this->rs.get() != NULL)
       this->rs->close();
 
-    sql::DatabaseMetaData * dbmd = conn->getMetaData();
+    std::auto_ptr<sql::DatabaseMetaData> dbmd(conn->getMetaData());
 
     hasSps = dbmd->supportsStoredProcedures();
 
