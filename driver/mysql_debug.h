@@ -36,6 +36,7 @@
 #define CPP_ENTER_WL(l, msg)
 #define CPP_INFO(msg)
 #define CPP_ERR(msg)
+#define CPP_ENTER_WL(l, msg)
 static inline void CPP_INFO_FMT(...) {}
 static inline void CPP_ERR_FMT(...) {}
 #endif
