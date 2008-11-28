@@ -893,36 +893,37 @@ sql::ResultSet *
 MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */, const std::string& schemaName, const std::string& objectType)
 {
 	// for now catalog name is ignored
-	CPP_ENTER("MySQL_ConnectionMetaData::getSchemaObjects");
-
 	std::string query;
 
+	std::string schemata_where_clause;
 	std::string tables_where_clause;
 	std::string views_where_clause;
 	std::string routines_where_clause;
 	std::string triggers_where_clause;
 
-	static const std::string tables_select_items("'table' AS 'OBJECT_TYPE', TABLE_CATALOG as 'CATALOG', TABLE_SCHEMA as 'SCHEMA', TABLE_NAME as 'NAME'");
-	static const std::string views_select_items("'view' AS 'OBJECT_TYPE', TABLE_CATALOG as 'CATALOG', TABLE_SCHEMA as 'SCHEMA', TABLE_NAME as 'NAME'");
-	static const std::string routines_select_items("ROUTINE_TYPE AS 'OBJECT_TYPE', ROUTINE_CATALOG as 'CATALOG', ROUTINE_SCHEMA as 'SCHEMA', ROUTINE_NAME as 'NAME'");
-	static const std::string triggers_select_items("'trigger' AS 'OBJECT_TYPE', TRIGGER_CATALOG as 'CATALOG', TRIGGER_SCHEMA as 'SCHEMA', TRIGGER_NAME as 'NAME'");
+	static std::string schemata_select_items("'schema' AS 'OBJECT_TYPE', CATALOG_NAME as 'CATALOG', SCHEMA_NAME as 'SCHEMA', SCHEMA_NAME as 'NAME'");
+	static std::string tables_select_items("'table' AS 'OBJECT_TYPE', TABLE_CATALOG as 'CATALOG', TABLE_SCHEMA as 'SCHEMA', TABLE_NAME as 'NAME'");
+	static std::string views_select_items("'view' AS 'OBJECT_TYPE', TABLE_CATALOG as 'CATALOG', TABLE_SCHEMA as 'SCHEMA', TABLE_NAME as 'NAME'");
+	static std::string routines_select_items("ROUTINE_TYPE AS 'OBJECT_TYPE', ROUTINE_CATALOG as 'CATALOG', ROUTINE_SCHEMA as 'SCHEMA', ROUTINE_NAME as 'NAME'");
+	static std::string triggers_select_items("'trigger' AS 'OBJECT_TYPE', TRIGGER_CATALOG as 'CATALOG', TRIGGER_SCHEMA as 'SCHEMA', TRIGGER_NAME as 'NAME'");
 
-	static const std::string table_ddl_column("Create Table");
-	static const std::string view_ddl_column("Create View");
-	static const std::string procedure_ddl_column("Create Procedure");
-	static const std::string function_ddl_column("Create Function");
-	static const std::string trigger_ddl_column("SQL Original Statement");
+	static std::string schema_ddl_column("Create Database");
+	static std::string table_ddl_column("Create Table");
+	static std::string view_ddl_column("Create View");
+	static std::string procedure_ddl_column("Create Procedure");
+	static std::string function_ddl_column("Create Function");
+	static std::string trigger_ddl_column("SQL Original Statement");
 
 	if (schemaName.length() > 0) {
 		tables_where_clause.append(" WHERE table_type<>'VIEW' AND table_schema = '").append(schemaName).append("' ");
+		schemata_where_clause.append(" WHERE schema_name = '").append(schemaName).append("' ");
 		views_where_clause.append(" WHERE table_schema = '").append(schemaName).append("' ");
 		routines_where_clause.append(" WHERE routine_schema = '").append(schemaName).append("' ");
 		triggers_where_clause.append(" WHERE trigger_schema = '").append(schemaName).append("' ");
 	}
 
-	if (objectType.length() == 0) {
-		query
-			.append("SELECT ").append(tables_select_items)
+	if (objectType.length() == 0) { 
+		query.append("SELECT ").append(tables_select_items)
 			.append(" FROM information_schema.tables ").append(tables_where_clause)
 			.append("UNION SELECT ").append(views_select_items)
 			.append(" FROM information_schema.views ").append(views_where_clause)
@@ -932,22 +933,27 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 			.append(" FROM information_schema.triggers ").append(triggers_where_clause)
 			;
 	} else {
-		if(objectType.compare("table") == 0) {
+		if (objectType.compare("schema") == 0) {
+			query.append("SELECT ")
+				.append(schemata_select_items)
+				.append(" FROM information_schema.schemata")
+				.append(schemata_where_clause);
+		} else if (objectType.compare("table") == 0) {
 			query.append("SELECT ")
 				.append(tables_select_items)
 				.append(" FROM information_schema.tables")
 				.append(tables_where_clause);
-		} else if(objectType.compare("view") == 0) {
+		} else if (objectType.compare("view") == 0) {
 			query.append("SELECT ")
 				.append(views_select_items)
 				.append(" FROM information_schema.views")
 				.append(views_where_clause);
-		} else if(objectType.compare("routine") == 0) {
+		} else if (objectType.compare("routine") == 0) {
 			query.append("SELECT ")
 				.append(routines_select_items)
 				.append(" FROM information_schema.routines")
 				.append(routines_where_clause);
-		} else if(objectType.compare("trigger") == 0) {
+		} else if (objectType.compare("trigger") == 0) {
 			query.append("SELECT ")
 				.append(triggers_select_items)
 				.append(" FROM information_schema.triggers")
@@ -956,11 +962,10 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 			throw sql::InvalidArgumentException("MySQLMetadata::getSchemaObjects: invalid 'objectType'");
 		}
 	}
-	// XXX:
 
 	std::auto_ptr<sql::Statement> stmt1(connection->createStatement());
 	std::auto_ptr<sql::ResultSet> native_rs(stmt1->executeQuery(query));
-
+		
 	int objtype_field_index = native_rs->findColumn("OBJECT_TYPE");
 	int catalog_field_index = native_rs->findColumn("CATALOG");
 	int schema_field_index = native_rs->findColumn("SCHEMA");
@@ -968,10 +973,11 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 
 	std::list<std::string> rs_data;
 
+	std::map<std::string, std::string> trigger_name_map;
 	std::map<std::string, std::string> trigger_ddl_map;
 
 	// if we fetch triggers, then build DDL for them
-	if((objectType.compare("trigger") == 0) || objectType.empty()) {
+	if ((objectType.compare("trigger") == 0) || objectType.empty()) {
 		std::string trigger_ddl_query("SELECT ");
 		trigger_ddl_query
 			.append(triggers_select_items)
@@ -985,34 +991,63 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 
 		// trigger specific fields: exclusion from the rule - 'show create trigger' is not supported by verions below 5.1.21
 		// reproducing ddl based on metadata
-		int event_manipulation_index	= trigger_ddl_rs->findColumn("EVENT_MANIPULATION");
-		int event_object_schema_index	= trigger_ddl_rs->findColumn("EVENT_OBJECT_SCHEMA");
-		int event_object_table_index	= trigger_ddl_rs->findColumn("EVENT_OBJECT_TABLE");
-		int action_statement_index		= trigger_ddl_rs->findColumn("ACTION_STATEMENT");
-		int action_timing_index			= trigger_ddl_rs->findColumn("ACTION_TIMING");
-		int definer_index				= trigger_ddl_rs->findColumn("DEFINER");
+		int event_manipulation_index = trigger_ddl_rs->findColumn("EVENT_MANIPULATION");
+		int event_object_schema_index = trigger_ddl_rs->findColumn("EVENT_OBJECT_SCHEMA");
+		int event_object_table_index = trigger_ddl_rs->findColumn("EVENT_OBJECT_TABLE");
+		int action_statement_index = trigger_ddl_rs->findColumn("ACTION_STATEMENT");
+		int action_timing_index = trigger_ddl_rs->findColumn("ACTION_TIMING");
+		int definer_index = trigger_ddl_rs->findColumn("DEFINER");
 
 		while (trigger_ddl_rs->next()) {
 			std::string trigger_ddl;
 
-			trigger_ddl
-				.append("CREATE\nDEFINER=").append(trigger_ddl_rs->getString(definer_index)).append("\nTRIGGER ").append("`")
-				.append(trigger_ddl_rs->getString("schema")).append("`.`").append(trigger_ddl_rs->getString("name")).append("`")
-				.append("\n").append(trigger_ddl_rs->getString(action_timing_index))
-				.append(" ").append(trigger_ddl_rs->getString(event_manipulation_index))
-				.append(" ON `").append(trigger_ddl_rs->getString(event_object_schema_index))
-				.append("`.`").append(trigger_ddl_rs->getString(event_object_table_index)).append("`")
-				.append("\nFOR EACH ROW\n").append(trigger_ddl_rs->getString(action_statement_index)).append("\n");
+			// quote definer, which is stored as unquoted string
+			std::string quoted_definer;
+			{
+				quoted_definer = trigger_ddl_rs->getString(definer_index);
+				const char *quot_sym = "`\0";
+				size_t i = quoted_definer.find('@');
+				if (std::string::npos != i)
+				{
+					quoted_definer.reserve(quoted_definer.size()+4);
+					quoted_definer.insert(i+1, quot_sym);
+					quoted_definer.insert(i, quot_sym);
+				}
+				quoted_definer.insert(0, quot_sym);
+				quoted_definer.push_back(quot_sym[0]);
+			}
 
 			std::string key;
+			key.append("`").append(trigger_ddl_rs->getString("schema"))
+				.append("`.`").append(trigger_ddl_rs->getString("name")).append("`");
 
-			key.append("`").append(trigger_ddl_rs->getString("schema")).append("`.`").append(trigger_ddl_rs->getString("name")).append("`");
+			{
+				trigger_ddl
+					.append("CREATE\nDEFINER=").append(quoted_definer)
+					.append("\nTRIGGER ").append("`")
+					.append(trigger_ddl_rs->getString("schema")).append("`.`").append(trigger_ddl_rs->getString("name")).append("`")
+					.append("\n").append(trigger_ddl_rs->getString(action_timing_index))
+					.append(" ").append(trigger_ddl_rs->getString(event_manipulation_index))
+					.append(" ON `").append(trigger_ddl_rs->getString(event_object_schema_index))
+					.append("`.`").append(trigger_ddl_rs->getString(event_object_table_index)).append("`")
+					.append("\nFOR EACH ROW\n")
+					.append(trigger_ddl_rs->getString(action_statement_index))
+					.append("\n");
+					trigger_ddl_map[key] = trigger_ddl;
+			}
 
-			trigger_ddl_map[key] = trigger_ddl;
+			{
+				std::string trigger_name;
+				trigger_name
+					.append(trigger_ddl_rs->getString(event_object_table_index))
+					.append(".")
+					.append(trigger_ddl_rs->getString("name"));
+					trigger_name_map[key] = trigger_name;
+			}
 		}
 	}
 
-	while (native_rs->next()) {
+	while(native_rs->next()) {
 		std::string obj_type(native_rs->getString(objtype_field_index));
 		std::string schema(native_rs->getString(schema_field_index));
 		std::string name(native_rs->getString(name_field_index));
@@ -1024,45 +1059,77 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 		}
 		rs_data.push_back(native_rs->getString(catalog_field_index));
 		rs_data.push_back(schema);
-		rs_data.push_back(name);
+
+
+		if (obj_type.compare("trigger") == 0) {
+			std::string key;
+			key.append("`").append(schema).append("`.`").append(name).append("`");
+			rs_data.push_back(trigger_name_map[key]);
+		} else {
+			rs_data.push_back(name);
+		}
 
 		std::string ddl_query;
 		std::string ddl_column;
 
-		if (obj_type.compare("table") == 0) {
+		if (obj_type.compare("schema") == 0) {
+			ddl_column = schema_ddl_column;
+			ddl_query.append("SHOW CREATE SCHEMA `").append(name).append("`");
+		} else if (obj_type.compare("table") == 0) {
 			ddl_column = table_ddl_column;
-			ddl_query.append("SHOW CREATE TABLE `").append(schema).append("`.`").append(name).append("`");
-		} else if(obj_type.compare("view") == 0) {
+			ddl_query.append("SHOW CREATE TABLE `")
+				.append(schema).append("`.`")
+				.append(name).append("`");
+		} else if (obj_type.compare("view") == 0) {
 			ddl_column = view_ddl_column;
-			ddl_query.append("SHOW CREATE VIEW `").append(schema).append("`.`").append(name).append("`");
-		} else if(obj_type.compare("PROCEDURE") == 0) {
+			ddl_query.append("SHOW CREATE VIEW `")
+				.append(schema).append("`.`")
+				.append(name).append("`");
+		} else if (obj_type.compare("PROCEDURE") == 0) {
 			ddl_column = procedure_ddl_column;
-			ddl_query.append("SHOW CREATE PROCEDURE `").append(schema).append("`.`").append(name).append("`");
-		} else if(obj_type.compare("FUNCTION") == 0) {
+			ddl_query.append("SHOW CREATE PROCEDURE `")
+				.append(schema).append("`.`")
+				.append(name).append("`");
+		} else if (obj_type.compare("FUNCTION") == 0) {
 			ddl_column = function_ddl_column;
-			ddl_query.append("SHOW CREATE FUNCTION `").append(schema).append("`.`").append(name).append("`");
-		} else if(obj_type.compare("trigger") == 0) {
-		/*
-			ddl_column = trigger_ddl_column;
-			ddl_query.append("SHOW CREATE TRIGGER `").append(schema).append("`.`").append(name).append("`");
-		*/
+			ddl_query.append("SHOW CREATE FUNCTION `")
+				.append(schema).append("`.`")
+				.append(name).append("`");
+		} else if (obj_type.compare("trigger") == 0) {
+			/*
+			ddl_column= trigger_ddl_column;
+			ddl_query.append("SHOW CREATE TRIGGER `")
+				.append(schema).append("`.`")
+				.append(name).append("`");
+			*/
 		} else {
-			throw sql::InvalidArgumentException("MySQLMetadata::getSchemaObjects: invalid OBJECT_TYPE returned from query");
+			throw sql::InvalidArgumentException("MySQL_DatabaseMetaData::getSchemaObjects: invalid OBJECT_TYPE returned from query");
 		}
 
-		// due to bugs in server code some queries can fail.
+		// due to bugs in server code some queries can fail. 
 		// here we want to gather as much info as possible
-		try	{
+		try  {
 			std::string ddl;
 
 			if (obj_type.compare("trigger") == 0) {
+				//ddl
+				//	.append("CREATE\nDEFINER=").append(trigger_ddl_rs->getString(definer_index))
+				//	.append("\nTRIGGER ").append("`")
+				//	.append(schema).append("`.`").append(name).append("`")
+				//	.append("\n").append(trigger_ddl_rs->getString(action_timing_index))
+				//	.append(" ").append(trigger_ddl_rs->getString(event_manipulation_index))
+				//	.append(" ON `").append(trigger_ddl_rs->getString(event_object_schema_index))
+				//	.append("`.`").append(trigger_ddl_rs->getString(event_object_table_index)).append("`")
+				//	.append("\nFOR EACH ROW\n")
+				//	.append(trigger_ddl_rs->getString(action_statement_index))
+				//	.append("\n");
+
 				std::string key;
 				key.append("`").append(schema).append("`.`").append(name).append("`");
 
 				std::map<std::string, std::string>::const_iterator it = trigger_ddl_map.find(key);
-				if (it != trigger_ddl_map.end()) {
+				if (it != trigger_ddl_map.end())
 					ddl.append(it->second);
-				}
 			} else {
 				std::auto_ptr<sql::Statement> stmt3(connection->createStatement());
 				std::auto_ptr<sql::ResultSet> sql_rs(stmt3->executeQuery(ddl_query));
@@ -1071,28 +1138,26 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 
 				// this is a hack for views listed as tables
 				int colIdx = sql_rs->findColumn(ddl_column);
-				if ((colIdx == -1) && (obj_type.compare("table") == 0)) {
+				if ((colIdx == -1) && (obj_type.compare("table") == 0))
 					colIdx = sql_rs->findColumn(view_ddl_column);
-				}
 
 				ddl = sql_rs->getString(colIdx);
 			}
 			rs_data.push_back(ddl);
-		} catch (SQLException &) {
+		} catch (sql::SQLException &) {
 			rs_data.push_back("");
 		}
 	}
 
 	std::list<std::string> rs_field_data;
-	rs_field_data.push_back("OBJECT_TYPE");
-	rs_field_data.push_back("CATALOG");
-	rs_field_data.push_back("SCHEMA");
-	rs_field_data.push_back("NAME");
-	rs_field_data.push_back("DDL");
+	rs_field_data.push_back(std::string("OBJECT_TYPE"));
+	rs_field_data.push_back(std::string("CATALOG"));
+	rs_field_data.push_back(std::string("SCHEMA"));
+	rs_field_data.push_back(std::string("NAME"));
+	rs_field_data.push_back(std::string("DDL"));
 
 	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
 }
-/* }}} */
 
 
 /* {{{ MySQL_ConnectionMetaData::getSchemaObjectTypes() -I- */
