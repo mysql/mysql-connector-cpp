@@ -168,11 +168,11 @@ INSTALLATION ON SOLARIS
   binaries. The binary distributions of the MySQL Server are build using Sun
   compilers. The MySQL tool mysql_config returns compiler flags suitable for
   Sun compilers but possibly not suitable for GCC. If you plan to use GCC on
-  Solaris to compile MySQL Connector/C++, you might need to comment out
+  Solaris to compile MySQL Connector/C++, you might need to insert
 
-  # ADD_DEFINITIONS("${MYSQL_CFLAGS}")
+  SET(MYSQL_CFLAGS "")
 
-  in the file /path/to/mysql-connector-cpp/FindMySQL.cmake.
+  at the end of the file /path/to/mysql-connector-cpp/FindMySQL.cmake.
   However, its recommended to use Sun Studio on Solaris.
   No changes are required when using the Sun compilers!
 
