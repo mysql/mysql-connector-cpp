@@ -2227,14 +2227,20 @@ MySQL_ConnectionMetaData::getSchemas()
 
 	std::auto_ptr<sql::Statement> stmt(connection->createStatement());
 	std::auto_ptr<sql::ResultSet> rs(
-		stmt->executeQuery(server_version > 49999? "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA ORDER BY SCHEMA_NAME":
+		stmt->executeQuery(server_version > 49999? "SELECT SCHEMA_NAME, CATALOG_NAME FROM INFORMATION_SCHEMA.SCHEMATA ORDER BY SCHEMA_NAME":
 												   "SHOW DATABASES"));
 
 	while (rs->next()) {
 		rs_data.push_back(rs->getString(1));
+		if (server_version > 49999) {
+			rs_data.push_back(rs->getString(2));		
+		} else {
+			rs_data.push_back("");
+		}
 	}
 
 	rs_field_data.push_back("TABLE_SCHEM");
+	rs_field_data.push_back("TABLE_CATALOG");
 
 	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
 }
