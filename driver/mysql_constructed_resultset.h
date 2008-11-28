@@ -33,7 +33,6 @@ namespace mysql
 {
 namespace util {template<class T> class my_shared_ptr; }; // forward declaration.
 
-class MySQL_ConstructedResultSetMetaData;
 class MySQL_DebugLogger;
 
 class MySQL_ConstructedResultSet : public sql::ResultSet
@@ -166,7 +165,6 @@ public:
 	my_ulonglong row_position; /* 0 = before first row, 1 - first row, 'num_rows + 1' - after last row */
 
 	bool is_closed;
-	MySQL_ConstructedResultSetMetaData * metadata;
 
 protected:
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;

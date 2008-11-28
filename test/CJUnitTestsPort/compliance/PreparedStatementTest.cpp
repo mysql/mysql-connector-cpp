@@ -76,7 +76,7 @@ namespace compliance
       */
       //rsmdPrep= pstmt->getMetaData();
 
-      rsmdPrep= const_cast<ResultSetMetaData>( pstmt->executeQuery()->getMetaData() );
+      rsmdPrep.reset(pstmt->executeQuery()->getMetaData());
     }
     catch (sql::SQLException & sqe)
     {
@@ -90,7 +90,7 @@ namespace compliance
 
       rs.reset( stmt->executeQuery( sPrepStmt ) );
       logMsg("Getting MetaData from ResultSet");
-      rsmd= const_cast<ResultSetMetaData>( rs->getMetaData() );
+      rsmd.reset(rs->getMetaData());
 
       if ( rsmdPrep->getColumnCount() == rsmd->getColumnCount() )
         logMsg("Call to getMetaData Method is Passed");
