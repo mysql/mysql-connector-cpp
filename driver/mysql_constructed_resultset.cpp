@@ -64,7 +64,6 @@ MySQL_ConstructedResultSet::MySQL_ConstructedResultSet(const StringList& fn, con
 		field_index_to_name_map[idx] = std::string(tmp);
 		free(tmp);
 	}
-	metadata = new MySQL_ConstructedResultSetMetaData(this, logger);
 }
 /* }}} */
 
@@ -201,7 +200,6 @@ MySQL_ConstructedResultSet::close()
 	CPP_ENTER("MySQL_ConstructedResultSet::close");
 	CPP_INFO_FMT("this=%p", this);
 	checkValid();
-	delete metadata;
 	delete [] field_index_to_name_map;
 	is_closed = true;
 }
@@ -449,7 +447,7 @@ sql::ResultSetMetaData *
 MySQL_ConstructedResultSet::getMetaData() const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getMetaData");
-	return metadata;
+	return new MySQL_ConstructedResultSetMetaData(this, logger);
 }
 /* }}} */
 

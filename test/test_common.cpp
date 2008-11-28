@@ -1363,7 +1363,7 @@ static void test_result_set_11(sql::Connection * conn, std::string database)
 		ensure("res1 is NULL", rset1.get() != NULL);
 		ensure("res1 is empty", rset1->next() != false);
 
-		sql::ResultSetMetaData * meta1(rset1->getMetaData());
+		std::auto_ptr<sql::ResultSetMetaData> meta1(rset1->getMetaData());
 		ensure("column name differs", !meta1->getColumnName(1).compare("a"));
 		ensure("column name differs", !meta1->getColumnName(2).compare("b"));
 		ensure("column name differs", !meta1->getColumnName(3).compare("c"));
@@ -2562,7 +2562,7 @@ static void test_not_implemented_rs_meta(sql::Connection * conn)
 	std::string bar("foo");
 	std::auto_ptr<sql::Statement> stmt(conn->createStatement());	
 	std::auto_ptr<sql::ResultSet> res(stmt->executeQuery("SELECT 1 AS 'a'"));
-	sql::ResultSetMetaData * meta(res->getMetaData());
+	std::auto_ptr<sql::ResultSetMetaData> meta(res->getMetaData());
 
 	try {
 		// getPrecision(unsigned int columnIndex) 
@@ -2593,7 +2593,7 @@ static void test_not_implemented_ps_rs_meta(sql::Connection * conn)
 	std::string bar("foo");
 	std::auto_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT 1 AS 'a'"));
 	std::auto_ptr<sql::ResultSet> res(stmt->executeQuery());
-	sql::ResultSetMetaData * meta(res->getMetaData());
+	std::auto_ptr<sql::ResultSetMetaData> meta(res->getMetaData());
 
 	try {
 		// getColumnDisplaySize(unsigned int columnIndex) 
@@ -2640,7 +2640,7 @@ static void test_not_implemented_cs_rs_meta(sql::Connection * conn)
 	std::string bar("foo");
 	std::auto_ptr<sql::DatabaseMetaData> conn_meta(conn->getMetaData());
 	std::auto_ptr<sql::ResultSet> res(conn_meta->getSchemaObjectTypes());
-	sql::ResultSetMetaData * meta(res->getMetaData());
+	std::auto_ptr<sql::ResultSetMetaData> meta(res->getMetaData());
 
 	try {
 		// getColumnDisplaySize(unsigned int columnIndex) 

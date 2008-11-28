@@ -890,7 +890,7 @@ MySQL_ConnectionMetaData::getSchemata(const std::string& /*catalogName*/)
 
 /* {{{ MySQL_ConnectionMetaData::getSchemaObjects() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getSchemaObjects(const std::string& catalogName, const std::string& /*schemaName*/, const std::string& objectType)
+MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */, const std::string& schemaName, const std::string& objectType)
 {
 	// for now catalog name is ignored
 	CPP_ENTER("MySQL_ConnectionMetaData::getSchemaObjects");
@@ -913,11 +913,11 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& catalogName, const
 	static const std::string function_ddl_column("Create Function");
 	static const std::string trigger_ddl_column("SQL Original Statement");
 
-	if (catalogName.length() > 0) {
-		tables_where_clause.append(" WHERE table_type<>'VIEW' AND table_schema = '").append(catalogName).append("' ");
-		views_where_clause.append(" WHERE table_schema = '").append(catalogName).append("' ");
-		routines_where_clause.append(" WHERE routine_schema = '").append(catalogName).append("' ");
-		triggers_where_clause.append(" WHERE trigger_schema = '").append(catalogName).append("' ");
+	if (schemaName.length() > 0) {
+		tables_where_clause.append(" WHERE table_type<>'VIEW' AND table_schema = '").append(schemaName).append("' ");
+		views_where_clause.append(" WHERE table_schema = '").append(schemaName).append("' ");
+		routines_where_clause.append(" WHERE routine_schema = '").append(schemaName).append("' ");
+		triggers_where_clause.append(" WHERE trigger_schema = '").append(schemaName).append("' ");
 	}
 
 	if (objectType.length() == 0) {
@@ -2227,14 +2227,20 @@ MySQL_ConnectionMetaData::getSchemas()
 
 	std::auto_ptr<sql::Statement> stmt(connection->createStatement());
 	std::auto_ptr<sql::ResultSet> rs(
-		stmt->executeQuery(server_version > 49999? "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA ORDER BY SCHEMA_NAME":
+		stmt->executeQuery(server_version > 49999? "SELECT SCHEMA_NAME, CATALOG_NAME FROM INFORMATION_SCHEMA.SCHEMATA ORDER BY SCHEMA_NAME":
 												   "SHOW DATABASES"));
 
 	while (rs->next()) {
 		rs_data.push_back(rs->getString(1));
+		if (server_version > 49999) {
+			rs_data.push_back(rs->getString(2));		
+		} else {
+			rs_data.push_back("");
+		}
 	}
 
 	rs_field_data.push_back("TABLE_SCHEM");
+	rs_field_data.push_back("TABLE_CATALOG");
 
 	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
 }

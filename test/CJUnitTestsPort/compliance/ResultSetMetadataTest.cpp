@@ -850,7 +850,7 @@ namespace compliance
         stmt.reset( conn->createStatement( /*sql::ResultSet::TYPE_SCROLL_INSENSITIVE,sql::ResultSet::CONCUR_READ_ONLY*/
             ) );
         rs.reset( stmt->executeQuery(query) );
-        rsmd = const_cast<ResultSetMetaData>( rs->getMetaData() );
+        rsmd.reset(rs->getMetaData());
     }
 
 }

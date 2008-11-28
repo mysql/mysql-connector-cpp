@@ -33,7 +33,6 @@ namespace mysql
 namespace util {template<class T> class my_shared_ptr; }; // forward declaration.
 class MySQL_Prepared_Statement;
 class MySQL_DebugLogger;
-class MySQL_Prepared_ResultSetMetaData;
 
 class MySQL_Prepared_ResultSet : public sql::ResultSet
 {
@@ -55,8 +54,6 @@ private:
 	const MySQL_Prepared_Statement * parent;
 
 	bool is_valid;
-
-	MySQL_Prepared_ResultSetMetaData * metadata;
 
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 

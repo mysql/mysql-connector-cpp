@@ -57,7 +57,6 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(MYSQL_STMT *s, MySQL_Prepared
 	}
 	mysql_free_result(result_meta);
 	result_meta = NULL;
-	metadata = new MySQL_Prepared_ResultSetMetaData(stmt, logger);
 }
 /* }}} */
 
@@ -190,7 +189,6 @@ MySQL_Prepared_ResultSet::closeIntern()
 	CPP_ENTER("MySQL_Prepared_ResultSet::closeIntern");
 	CPP_INFO_FMT("this=%p", this);
 	checkValid();
-	delete metadata;
 	is_valid = false;
 }
 /* }}} */
@@ -443,7 +441,7 @@ MySQL_Prepared_ResultSet::getMetaData() const
 	CPP_ENTER("MySQL_Prepared_ResultSet::getMetaData");
 	CPP_INFO_FMT("this=%p", this);
 	checkValid();
-	return metadata;
+	return new MySQL_Prepared_ResultSetMetaData(stmt, logger);
 }
 /* }}} */
 

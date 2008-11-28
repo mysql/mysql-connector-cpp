@@ -58,7 +58,6 @@ MySQL_ResultSet::MySQL_ResultSet(MYSQL_RES_Wrapper * res, MySQL_Statement * par,
 		field_name_to_index_map[std::string(tmp)] = i;
 		free(tmp);
 	}
-	metadata = new MySQL_ResultSetMetaData(result->getReference(), logger);
 }
 /* }}} */
 
@@ -70,7 +69,6 @@ MySQL_ResultSet::~MySQL_ResultSet()
 	{
 		CPP_ENTER("MySQL_ResultSet::~MySQL_ResultSet");
 		CPP_INFO_FMT("this=%p", this);
-		delete metadata;
 		if (!isClosed()) {
 			result->dispose();
 		}
@@ -435,7 +433,7 @@ MySQL_ResultSet::getMetaData() const
 	CPP_ENTER("MySQL_ResultSet::getMetaData");
 	CPP_INFO_FMT("this=%p", this);
 	checkValid();
-	return metadata;
+	return new MySQL_ResultSetMetaData(result->getReference(), logger);
 }
 /* }}} */
 
