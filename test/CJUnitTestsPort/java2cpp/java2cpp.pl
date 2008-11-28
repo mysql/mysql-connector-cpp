@@ -1,6 +1,25 @@
 #!/usr/bin/perl
 
-# This tool doesn't pretend to be universal, but for translatio JUnit c/J tests
+# Copyright (C) 2007 - 2008 MySQL AB, 2008 Sun Microsystems, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 2 of the License.
+#
+# There are special exceptions to the terms and conditions of the GPL
+# as it is applied to this software. View the full text of the
+# exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
+# software distribution.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA*/
+
+
+# This tool doesn't pretend to be universal, but for translation JUnit c/J tests
 # to c++
 
 # Setting custom INT processor for debug purposes rather
@@ -12,7 +31,7 @@ my $auto    = 0;
 my $tab= '  ';
 my $nl = "\n";
 
-#some consts defining possible pasrser statuses bits
+#some consts defining possible pasrser status bits
 my $ML_STRING   = 1;
 my $CLASS_DEF   = 2;
 my $METHOD_DEF  = 4;
