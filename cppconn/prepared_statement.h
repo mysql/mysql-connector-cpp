@@ -52,7 +52,7 @@ public:
 	using Statement::executeUpdate;
 	virtual int executeUpdate() = 0;
 
-	virtual const ParameterMetaData * getParameterMetaData() = 0;
+	virtual ParameterMetaData * getParameterMetaData() = 0;
 
 	virtual void setBlob(unsigned int parameterIndex, sql::Blob & blob) = 0;
 

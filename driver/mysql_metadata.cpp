@@ -1158,6 +1158,7 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 
 	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
 }
+/* }}} */
 
 
 /* {{{ MySQL_ConnectionMetaData::getSchemaObjectTypes() -I- */

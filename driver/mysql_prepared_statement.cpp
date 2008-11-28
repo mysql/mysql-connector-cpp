@@ -79,7 +79,6 @@ MySQL_Prepared_Statement::MySQL_Prepared_Statement(MYSQL_STMT *s, sql::Connectio
 	err = NULL;
 	len = NULL;
 	num_fields = 0;
-	param_meta = new MySQL_ParameterMetaData(stmt);
 }
 /* }}} */
 
@@ -562,13 +561,13 @@ MySQL_Prepared_Statement::getFetchSize()
 
 
 /* {{{ MySQL_Prepared_Statement::getParameterMetaData() -I- */
-const sql::ParameterMetaData *
+sql::ParameterMetaData *
 MySQL_Prepared_Statement::getParameterMetaData()
 {
 	CPP_ENTER("MySQL_Prepared_Statement::getParameterMetaData");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	return param_meta;
+	return new MySQL_ParameterMetaData(stmt);
 }
 /* }}} */
 
@@ -821,8 +820,6 @@ MySQL_Prepared_Statement::closeIntern()
 	delete[] is_null;
 	delete[] err;
 	delete[] len;
-
-	delete param_meta;
 }
 /* }}} */
 

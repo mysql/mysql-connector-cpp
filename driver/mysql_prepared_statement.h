@@ -62,8 +62,6 @@ protected:
 	unsigned long *len;
 	MYSQL_BIND *result_bind;
 
-	const sql::ParameterMetaData * param_meta;
-
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 public:
 
@@ -99,7 +97,7 @@ public:
 
 	unsigned int getQueryTimeout();
 
-	const sql::ParameterMetaData * getParameterMetaData();	
+	sql::ParameterMetaData * getParameterMetaData();	
 
 	sql::ResultSet * getResultSet();
 
