@@ -33,6 +33,7 @@
 #define CPP_ERR_FMT(...)	{if (__l) __l->log_va("ERR", __VA_ARGS__); }
 #else
 #define CPP_ENTER(msg)
+#define CPP_ENTER_WL(l, msg)
 #define CPP_INFO(msg)
 #define CPP_ERR(msg)
 static inline void CPP_INFO_FMT(...) {}
