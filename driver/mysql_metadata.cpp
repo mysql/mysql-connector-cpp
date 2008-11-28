@@ -890,7 +890,7 @@ MySQL_ConnectionMetaData::getSchemata(const std::string& /*catalogName*/)
 
 /* {{{ MySQL_ConnectionMetaData::getSchemaObjects() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getSchemaObjects(const std::string& catalogName, const std::string& /*schemaName*/, const std::string& objectType)
+MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */, const std::string& schemaName, const std::string& objectType)
 {
 	// for now catalog name is ignored
 	CPP_ENTER("MySQL_ConnectionMetaData::getSchemaObjects");
@@ -913,11 +913,11 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& catalogName, const
 	static const std::string function_ddl_column("Create Function");
 	static const std::string trigger_ddl_column("SQL Original Statement");
 
-	if (catalogName.length() > 0) {
-		tables_where_clause.append(" WHERE table_type<>'VIEW' AND table_schema = '").append(catalogName).append("' ");
-		views_where_clause.append(" WHERE table_schema = '").append(catalogName).append("' ");
-		routines_where_clause.append(" WHERE routine_schema = '").append(catalogName).append("' ");
-		triggers_where_clause.append(" WHERE trigger_schema = '").append(catalogName).append("' ");
+	if (schemaName.length() > 0) {
+		tables_where_clause.append(" WHERE table_type<>'VIEW' AND table_schema = '").append(schemaName).append("' ");
+		views_where_clause.append(" WHERE table_schema = '").append(schemaName).append("' ");
+		routines_where_clause.append(" WHERE routine_schema = '").append(schemaName).append("' ");
+		triggers_where_clause.append(" WHERE trigger_schema = '").append(schemaName).append("' ");
 	}
 
 	if (objectType.length() == 0) {
