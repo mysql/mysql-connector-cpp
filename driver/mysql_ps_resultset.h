@@ -60,6 +60,7 @@ private:
 protected:
 	void checkValid() const;
 	void closeIntern();
+	bool isBeforeFirstOrAfterLast() const;
 	void seek();
 
 public:

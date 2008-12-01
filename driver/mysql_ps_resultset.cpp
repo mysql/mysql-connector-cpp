@@ -237,7 +237,7 @@ MySQL_Prepared_ResultSet::getBoolean(unsigned int columnIndex) const
 	CPP_ENTER("MySQL_Prepared_ResultSet::getBoolean(int)");
 	CPP_INFO_FMT("this=%p", this);
 	/* isBeforeFirst checks for validity */
-	if (isBeforeFirst() || isAfterLast()) {
+	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getBoolean: can't fetch because not on result set");
 	}
 	return getInt(columnIndex)? true:false;
@@ -252,7 +252,7 @@ MySQL_Prepared_ResultSet::getBoolean(const std::string& columnLabel) const
 	CPP_ENTER("MySQL_Prepared_ResultSet::getBoolean(string)");
 	CPP_INFO_FMT("this=%p", this);
 	/* isBeforeFirst checks for validity */
-	if (isBeforeFirst() || isAfterLast()) {
+	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getBoolean: can't fetch because not on result set");
 	}
 	return getInt(columnLabel)? true:false;
@@ -291,7 +291,7 @@ MySQL_Prepared_ResultSet::getDouble(unsigned int columnIndex) const
 	CPP_ENTER("MySQL_Prepared_ResultSet::getDouble(int)");
 	CPP_INFO_FMT("this=%p", this);
 	/* isBeforeFirst checks for validity */
-	if (isBeforeFirst() || isAfterLast()) {
+	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getDouble: can't fetch because not on result set");
 	}
 	/* internally zero based */
@@ -360,7 +360,7 @@ MySQL_Prepared_ResultSet::getInt(unsigned int columnIndex) const
 	CPP_INFO_FMT("this=%p", this);
 
 	/* isBeforeFirst checks for validity */
-	if (isBeforeFirst() || isAfterLast()) {
+	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt: can't fetch because not on result set");
 	}
 	/* internally zero based */
@@ -401,7 +401,7 @@ MySQL_Prepared_ResultSet::getLong(unsigned int columnIndex) const
 	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	/* isBeforeFirst checks for validity */
-	if (isBeforeFirst() || isAfterLast()) {
+	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getLong: can't fetch because not on result set");
 	}
 	/* internally zero based */
@@ -499,7 +499,7 @@ MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 	CPP_INFO_FMT("this=%p column=%u", this, columnIndex);
 
 	/* isBeforeFirst checks for validity */
-	if (isBeforeFirst() || isAfterLast()) {
+	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getString: can't fetch because not on result set");
 	}
 	/* internally zero based */
@@ -845,6 +845,18 @@ MySQL_Prepared_ResultSet::wasNull() const
 /* }}} */
 
 
+/* {{{ MySQL_Prepared_ResultSet::isBeforeFirstOrAfterLast() -I- */
+bool
+MySQL_Prepared_ResultSet::isBeforeFirstOrAfterLast() const
+{
+	CPP_ENTER("MySQL_Prepared_ResultSet::isBeforeFirstOrAfterLast");
+	CPP_INFO_FMT("this=%p", this);
+	checkValid();
+	return (row_position == 0) || (row_position == num_rows + 1);
+}
+/* }}} */
+
+
 /* {{{ MySQL_Prepared_ResultSet::seek() -I- */
 void
 MySQL_Prepared_ResultSet::seek()
@@ -854,6 +866,7 @@ MySQL_Prepared_ResultSet::seek()
 	mysql_stmt_fetch(stmt);
 }
 /* }}} */
+
 
 
 

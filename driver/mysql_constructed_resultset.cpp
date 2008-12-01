@@ -99,6 +99,18 @@ inline void MySQL_ConstructedResultSet::seek()
 /* }}} */
 
 
+/* {{{ MySQL_ConstructedResultSet::isBeforeFirstOrAfterLast() -I- */
+bool
+MySQL_ConstructedResultSet::isBeforeFirstOrAfterLast() const
+{
+	CPP_ENTER("MySQL_ConstructedResultSet::isBeforeFirstOrAfterLast");
+	CPP_INFO_FMT("this=%p", this);
+	checkValid();
+	return (row_position == 0) || (row_position == num_rows + 1);
+}
+/* }}} */
+
+
 /* {{{ MySQL_ConstructedResultSet::absolute() -I- */
 bool
 MySQL_ConstructedResultSet::absolute(int row)
@@ -250,7 +262,7 @@ MySQL_ConstructedResultSet::getBoolean(unsigned int columnIndex) const
 	CPP_INFO_FMT("this=%p", this);
 
 	/* isBeforeFirst checks for validity */
-	if (isBeforeFirst() || isAfterLast()) {
+	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getString: can't fetch because not on result set");
 	}
 	return getInt(columnIndex) != 0;
@@ -302,7 +314,7 @@ MySQL_ConstructedResultSet::getDouble(unsigned int columnIndex) const
 	CPP_INFO_FMT("this=%p", this);
 
 	/* isBeforeFirst checks for validity */
-	if (isBeforeFirst() || isAfterLast()) {
+	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getDouble: can't fetch because not on result set");
 	}
 
@@ -378,7 +390,7 @@ MySQL_ConstructedResultSet::getInt(unsigned int columnIndex) const
 	CPP_INFO_FMT("this=%p", this);
 
 	/* isBeforeFirst checks for validity */
-	if (isBeforeFirst() || isAfterLast()) {
+	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getInt: can't fetch because not on result set");
 	}
 
@@ -417,7 +429,7 @@ MySQL_ConstructedResultSet::getLong(unsigned int columnIndex) const
 	CPP_INFO_FMT("this=%p", this);
 
 	/* isBeforeFirst checks for validity */
-	if (isBeforeFirst() || isAfterLast()) {
+	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getLong: can't fetch because not on result set");
 	}
 
@@ -514,7 +526,7 @@ MySQL_ConstructedResultSet::getString(unsigned int columnIndex) const
 	CPP_INFO_FMT("this=%p column=%u", this, columnIndex);
 
 	/* isBeforeFirst checks for validity */
-	if (isBeforeFirst() || isAfterLast()) {
+	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getString: can't fetch because not on result set");
 	}
 

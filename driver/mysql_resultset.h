@@ -55,6 +55,7 @@ class MySQL_ResultSet : public sql::ResultSet
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 protected:
 	void checkValid() const;
+	bool isBeforeFirstOrAfterLast() const;
 	void seek();
 
 public:

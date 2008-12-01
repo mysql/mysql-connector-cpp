@@ -146,6 +146,7 @@ public:
 
 protected:
 	void checkValid() const;
+	bool isBeforeFirstOrAfterLast() const;
 	void seek();
 
 public:
