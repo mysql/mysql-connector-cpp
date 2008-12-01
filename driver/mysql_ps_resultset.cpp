@@ -236,7 +236,7 @@ MySQL_Prepared_ResultSet::getBoolean(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getBoolean(int)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
+	/* isBeforeFirst checks for validity */
 	if (isBeforeFirst() || isAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getBoolean: can't fetch because not on result set");
 	}
@@ -251,7 +251,7 @@ MySQL_Prepared_ResultSet::getBoolean(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getBoolean(string)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
+	/* isBeforeFirst checks for validity */
 	if (isBeforeFirst() || isAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getBoolean: can't fetch because not on result set");
 	}
@@ -290,14 +290,14 @@ MySQL_Prepared_ResultSet::getDouble(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getDouble(int)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirst() || isAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getDouble: can't fetch because not on result set");
+	}
 	/* internally zero based */
 	columnIndex--;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("MySQLPreparedResultSet::getDouble: invalid 'columnIndex'");
-	}
-	if (isBeforeFirst() || isAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getDouble: can't fetch because not on result set");
 	}
 
 	last_queried_column = columnIndex;
@@ -312,7 +312,6 @@ MySQL_Prepared_ResultSet::getDouble(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getDouble(string)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
 	return getDouble(findColumn(columnLabel));
 }
 /* }}} */
@@ -359,14 +358,15 @@ MySQL_Prepared_ResultSet::getInt(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getInt(int)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
+
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirst() || isAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt: can't fetch because not on result set");
+	}
 	/* internally zero based */
 	columnIndex--;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt: invalid value of 'columnIndex'");
-	}
-	if (isBeforeFirst() || isAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt: can't fetch because not on result set");
 	}
 
 	last_queried_column = columnIndex;
@@ -388,7 +388,6 @@ MySQL_Prepared_ResultSet::getInt(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getInt(string)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
 	return getInt(findColumn(columnLabel));
 }
 /* }}} */
@@ -401,13 +400,14 @@ MySQL_Prepared_ResultSet::getLong(unsigned int columnIndex) const
 	CPP_ENTER("MySQL_Prepared_ResultSet::getLong(int)");
 	CPP_INFO_FMT("this=%p", this);
 	checkValid();
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirst() || isAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getLong: can't fetch because not on result set");
+	}
 	/* internally zero based */
 	columnIndex--;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getLong: invalid value of 'columnIndex'");
-	}
-	if (isBeforeFirst() || isAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getLong: can't fetch because not on result set");
 	}
 
 	last_queried_column = columnIndex;
@@ -429,7 +429,6 @@ MySQL_Prepared_ResultSet::getLong(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getLong(string)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
 	return getLong(findColumn(columnLabel));
 }
 /* }}} */
@@ -450,6 +449,8 @@ MySQL_Prepared_ResultSet::getMetaData() const
 size_t
 MySQL_Prepared_ResultSet::getRow() const
 {
+	CPP_ENTER("MySQL_Prepared_ResultSet::getRow");
+	checkValid();
 	/* row_position is 0 based */
 	return static_cast<size_t> (row_position);
 }
@@ -495,15 +496,16 @@ std::string
 MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getString(int)");
-	CPP_INFO_FMT("this=%p", this);
-	checkValid();
+	CPP_INFO_FMT("this=%p column=%u", this, columnIndex);
+
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirst() || isAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getString: can't fetch because not on result set");
+	}
 	/* internally zero based */
 	columnIndex--;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("MySQLPreparedResultSet::getString: invalid 'columnIndex'");
-	}
-	if (isBeforeFirst() || isAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getLong: can't fetch because not on result set");
 	}
 
 	last_queried_column = columnIndex;
@@ -523,7 +525,6 @@ MySQL_Prepared_ResultSet::getString(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getString(string)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
 	return getString(findColumn(columnLabel));
 }
 /* }}} */
@@ -633,7 +634,6 @@ MySQL_Prepared_ResultSet::isNull(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::isNull(string)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
 	int col_idx = findColumn(columnLabel);
 	if (col_idx == -1) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::isNull: invalid value of 'columnLabel'");
@@ -690,7 +690,7 @@ MySQL_Prepared_ResultSet::next()
 	CPP_ENTER("MySQL_Prepared_ResultSet::next");
 	CPP_INFO_FMT("this=%p", this);
 	bool ret = false;
-	checkValid();
+	/* isBeforeFirst checks for validity */
 	if (isLast()) {
 		row_position++;
 		return false;
@@ -717,7 +717,7 @@ MySQL_Prepared_ResultSet::previous()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::previous");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
+	/* isBeforeFirst checks for validity */
 	if (isBeforeFirst()) {
 		return false;
 	} else if (isFirst()) {

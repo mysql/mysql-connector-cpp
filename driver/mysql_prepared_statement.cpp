@@ -275,7 +275,7 @@ MySQL_Prepared_Statement::bindResult()
 	mysql_free_result(result_meta);
 	result_meta = NULL;
 	if (mysql_stmt_bind_result(stmt, result_bind)) {
-		throw sql::SQLException("Can't bind");
+		throw sql::SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
 	}
 }
 
