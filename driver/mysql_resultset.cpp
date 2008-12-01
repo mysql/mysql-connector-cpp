@@ -228,7 +228,7 @@ MySQL_ResultSet::getBoolean(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ResultSet::getBoolean(int)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
+	/* isBeforeFirst checks for validity */
 	if (isBeforeFirst() || isAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_ResultSet::getBoolean: can't fetch because not on result set");
 	}
@@ -243,7 +243,7 @@ MySQL_ResultSet::getBoolean(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ResultSet::getBoolean(string)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
+	/* isBeforeFirst checks for validity */
 	if (isBeforeFirst() || isAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_ResultSet::getBoolean: can't fetch because not on result set");
 	}
@@ -282,16 +282,17 @@ MySQL_ResultSet::getDouble(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ResultSet::getDouble(int)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
+
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirst() || isAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_ResultSet::getDouble: can't fetch because not on result set");
+	}
+
 	/* internally zero based */
 	columnIndex--;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("MySQL_ResultSet::getDouble: invalid value of 'columnIndex'");
 	}
-	if (isBeforeFirst() || isAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_ResultSet::getDouble: can't fetch because not on result set");
-	}
-
 	if (row[columnIndex] == NULL) {
 		was_null = true;
 		return 0.0;
@@ -308,7 +309,6 @@ MySQL_ResultSet::getDouble(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ResultSet::getDouble(string)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
 	return getDouble(findColumn(columnLabel));
 }
 /* }}} */
@@ -356,14 +356,16 @@ MySQL_ResultSet::getInt(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ResultSet::getInt(int)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
+
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirst() || isAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_ResultSet::getInt: can't fetch because not on result set");
+	}
+
 	/* internally zero based */
 	columnIndex--;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("MySQL_ResultSet::getInt: invalid value of 'columnIndex'");
-	}
-	if (isBeforeFirst() || isAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_ResultSet::getInt: can't fetch because not on result set");
 	}
 
 	if (row[columnIndex] == NULL) {
@@ -382,7 +384,6 @@ MySQL_ResultSet::getInt(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ResultSet::getInt(string)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
 	return getInt(findColumn(columnLabel));
 }
 /* }}} */
@@ -394,14 +395,16 @@ MySQL_ResultSet::getLong(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ResultSet::getLong(int)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
+
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirst() || isAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_ResultSet::getLong: can't fetch because not on result set");
+	}
+
 	/* internally zero based */
 	columnIndex--;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("MySQL_ResultSet::getLong: invalid value of 'columnIndex'");
-	}
-	if (isBeforeFirst() || isAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_ResultSet::getInt: can't fetch because not on result set");
 	}
 
 	if (row[columnIndex] == NULL) {
@@ -420,7 +423,6 @@ MySQL_ResultSet::getLong(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ResultSet::getLong(string)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
 	return getLong(findColumn(columnLabel));
 }
 /* }}} */
@@ -443,6 +445,7 @@ size_t
 MySQL_ResultSet::getRow() const
 {
 	CPP_ENTER("MySQL_ResultSet::getRow");
+	checkValid();
 	/* row_position is 0 based */
 	return static_cast<size_t>(row_position);
 }
@@ -488,15 +491,17 @@ std::string
 MySQL_ResultSet::getString(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ResultSet::getString(int)");
-	CPP_INFO_FMT("this=%p", this);
-	checkValid();
+	CPP_INFO_FMT("this=%p column=%u", this, columnIndex);
+
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirst() || isAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_ResultSet::getString: can't fetch because not on result set");
+	}
+
 	/* internally zero based */
 	columnIndex--;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("MySQL_ResultSet::getString: invalid value of 'columnIndex'");
-	}
-	if (isBeforeFirst() || isAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_ResultSet::getString: can't fetch because not on result set");
 	}
 
 	if(row[columnIndex] == NULL) {
@@ -516,7 +521,6 @@ MySQL_ResultSet::getString(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ResultSet::getString(string)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
 	return getString(findColumn(columnLabel));
 }
 /* }}} */
@@ -627,7 +631,6 @@ MySQL_ResultSet::isNull(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ResultSet::isNull(string)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
 	int col_idx = findColumn(columnLabel);
 	if (col_idx == -1) {
 		throw sql::InvalidArgumentException("MySQL_ResultSet::isNull: invalid value of 'columnLabel'");
@@ -685,8 +688,8 @@ MySQL_ResultSet::next()
 	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	bool ret = false;
-	if (row_position == num_rows) {
-		row_position++;
+	if (isLast()) {
+		afterLast();
 	} else if (row_position < num_rows + 1) {
 		row = mysql_fetch_row(result->get());
 		row_position++;
@@ -704,7 +707,8 @@ MySQL_ResultSet::previous()
 {
 	CPP_ENTER("MySQL_ResultSet::previous");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
+
+	/* isBeforeFirst checks for validity */
 	if (isBeforeFirst()) {
 		return false;
 	} else if (isFirst()) {

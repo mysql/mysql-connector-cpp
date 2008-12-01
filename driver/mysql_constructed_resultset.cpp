@@ -248,7 +248,8 @@ MySQL_ConstructedResultSet::getBoolean(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getBoolean(int)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
+
+	/* isBeforeFirst checks for validity */
 	if (isBeforeFirst() || isAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getString: can't fetch because not on result set");
 	}
@@ -263,7 +264,6 @@ MySQL_ConstructedResultSet::getBoolean(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getBoolean(string)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
 	return getInt(columnLabel) != 0;
 }
 /* }}} */
@@ -300,13 +300,15 @@ MySQL_ConstructedResultSet::getDouble(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getDouble(int)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
+
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirst() || isAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getDouble: can't fetch because not on result set");
+	}
+
 	/* Don't columnIndex--, as we use it in the while loop later */
 	if (columnIndex > num_fields || columnIndex == 0) {
 		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getDouble: invalid value of 'columnIndex'");
-	}
-	if (isBeforeFirst() || isAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getDouble: can't fetch because not on result set");
 	}
 
 	StringList::iterator f = current_record;
@@ -326,7 +328,6 @@ MySQL_ConstructedResultSet::getDouble(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getDouble(string)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
 	return getDouble(findColumn(columnLabel));
 }
 /* }}} */
@@ -375,13 +376,15 @@ MySQL_ConstructedResultSet::getInt(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getInt(int)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
+
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirst() || isAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getInt: can't fetch because not on result set");
+	}
+
 	/* Don't columnIndex--, as we use it in the while loop later */
 	if (columnIndex > num_fields || columnIndex == 0) {
 		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getInt: invalid value of 'columnIndex'");
-	}
-	if (isBeforeFirst() || isAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getInt: can't fetch because not on result set");
 	}
 
 	StringList::iterator f = current_record;
@@ -412,13 +415,15 @@ MySQL_ConstructedResultSet::getLong(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getLong(int)");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
+
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirst() || isAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getLong: can't fetch because not on result set");
+	}
+
 	/* Don't columnIndex--, as we use it in the while loop later */
 	if (columnIndex > num_fields || columnIndex == 0) {
 		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getLong: invalid value of 'columnIndex'");
-	}
-	if (isBeforeFirst() || isAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getLong: can't fetch because not on result set");
 	}
 
 	StringList::iterator f = current_record;
@@ -447,6 +452,7 @@ sql::ResultSetMetaData *
 MySQL_ConstructedResultSet::getMetaData() const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getMetaData");
+	checkValid();
 	return new MySQL_ConstructedResultSetMetaData(this, logger);
 }
 /* }}} */
@@ -457,6 +463,7 @@ size_t
 MySQL_ConstructedResultSet::getRow() const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getRow");
+	checkValid();
 	/* row_position is 0 based */
 	return static_cast<size_t> (row_position);
 }
@@ -504,23 +511,24 @@ std::string
 MySQL_ConstructedResultSet::getString(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getString(int)");
-	CPP_INFO_FMT("this=%p", this);
-	CPP_INFO_FMT("columnIndex=%u", columnIndex);
-	checkValid();
+	CPP_INFO_FMT("this=%p column=%u", this, columnIndex);
+
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirst() || isAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getString: can't fetch because not on result set");
+	}
+
 	/* Don't columnIndex--, as we use it in the while loop later */
 	if (columnIndex > num_fields || columnIndex == 0) {
 		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getString: invalid value of 'columnIndex'");
-	}
-	if (isBeforeFirst() || isAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getString: can't fetch because not on result set");
 	}
 
 	StringList::iterator f = current_record;
 	while (--columnIndex) {
 		f++;
 	}
-	CPP_INFO_FMT("value=%d", f->length());
-//	CPP_INFO_FMT("value=%*s", f->length(), f->c_str());
+//	CPP_INFO_FMT("value=%d", f->length());
+	CPP_INFO_FMT("value=%*s", f->length(), f->c_str());
 	return *f;
 }
 /* }}} */
@@ -695,7 +703,7 @@ MySQL_ConstructedResultSet::next()
 	CPP_ENTER("MySQL_ConstructedResultSet::next");
 	checkValid();
 	bool ret = false;
-	if (row_position == num_rows) {
+	if (isLast()) {
 		afterLast();
 	} else if (row_position == 0) {
 		first();
@@ -720,18 +728,16 @@ MySQL_ConstructedResultSet::previous()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::previous");
 	CPP_INFO_FMT("this=%p", this);
-	checkValid();
-	if (row_position == 0) {
+
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirst()) {
 		return false;
-	} else if (row_position == 1) {
+	} else if (isFirst()) {
 		beforeFirst();
 		return false;
 	} else if (row_position > 1) {
 		row_position--;
-		int i = num_fields;
-		while (i--) {
-			current_record--;
-		}
+		seek();
 		return true;
 	}
 	throw sql::SQLException("Impossible");
