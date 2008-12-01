@@ -111,8 +111,7 @@ ENDIF(WIN32)
 # Install some MySQL specific headers
 SET(MYSQLCPPCONN_SPECIFIC_INSTALL_HEADERS
 		mysql_connection.h
-		mysql_driver.h
-		mysql_util.h)
+		mysql_driver.h)
 
 INSTALL(FILES ${MYSQLCPPCONN_SPECIFIC_INSTALL_HEADERS} DESTINATION include)
 
