@@ -1,10 +1,10 @@
 Dear MySQL Users,
 
-A new connector has been made available: MySQL Connector/C++. The MySQL Connector/C++ provides a C++ API for connecting client applications to the MySQL Server. You can download a preview at:
+a new version of MySQL Connector/C++ has been made available: MySQL Connector/C++ 1.0.1alpha. The MySQL Connector/C++ provides a C++ API for connecting client applications to the MySQL Server. You can download the alpha release at:
 
-  http://downloads.mysql.com/forge/connector_cplusplus
+  http://dev.mysql.com/downloads/connector/cpp/1.0.html
 
-The MySQL Connector/C++ mimics the JDBC 3.0 API. JDBC is a commonly known and well designed API. The Connector/C++ preview implements about 75% of the methods of the following classes of the JDBC 3.0 API:
+The MySQL Connector/C++ mimics the JDBC 4.0 API. JDBC is a commonly known and well designed API. The MySQL Connector/C++ alpha implements about 75% of the methods of the following classes of the JDBC 4.0 API:
 
  * Connection
  * DatabaseMetaData
@@ -18,8 +18,8 @@ The MySQL Connector/C++ mimics the JDBC 3.0 API. JDBC is a commonly known and we
 Using MySQL Connector/C++ instead of the MySQL C API (MySQL Client Library) offers the following advantages for C++ users:
 
  * Convenience of pure C++ - no C function calls
- * Support of a well designed API - JDBC 3.0
- * Support of a commonly known and well documented API - JDBC 3.0
+ * Support of a well designed API - JDBC 4.0
+ * Support of a commonly known and well documented API - JDBC 4.0
  * Support of the object oriented programming paradigma
  * Shorter development times
 
@@ -27,7 +27,11 @@ You can find further details, including usage examples, on the projects MySQL Fo
 
   http://forge.mysql.com/wiki/Connector_C%2B%2B
 
-Please note that the MySQL Connector/C++ is released as a Software Preview. We do not recommend using it in production environments or systems with critical data.
+A first documentation draft is available at:
+
+  http://dev.mysql.com/doc/refman/6.0/en/connector-cpp.html
+
+Please note, the MySQL Connector/C++ is released as a Alpha release. Although MySQL Workbench is using a pre-alpha snapshot we do not recommend using it in production environments or systems with critical data. Please note, official support is not available for the alpha version of Connector/C++.
 
 Feedback, bug reports, bug fixes, patches and so on are welcome and appreciated:
 

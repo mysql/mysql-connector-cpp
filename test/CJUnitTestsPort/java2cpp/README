@@ -1,7 +1,7 @@
 Usage:
 [perl] java2cpp.pl [-auto=<autoAnswer>] <javaClassFileName>
 
-<autoAnswer> is one of a, c, d, s. I would say that only "a" and "c" make sence
+<autoAnswer> is one of a, c, d, s. I would say that only "a" and "c" make sense
 to use there.
 
 I usually use it as:
