@@ -27,6 +27,9 @@ CONTACT
 
  See also http://forge.mysql.com/wiki/Connector_C%2B%2B .
 
+ Please note, official support is not available for the alpha version
+ of MySQL Connector/C++.
+
 
 LICENSE
 
@@ -67,36 +70,26 @@ INSTALLATION ON UNIX
   1. Run CMake to build a Makefile
 
     me@host:/path/to/mysql-connector-cpp> cmake .
-    -- Check for working C compiler: /usr/local/bin/gcc
-    -- Check for working C compiler: /usr/local/bin/gcc -- works
-    -- Check size of void*
-    -- Check size of void* - done
-    -- Check for working CXX compiler: /usr/bin/c++
-    -- Check for working CXX compiler: /usr/bin/c++ -- works
     -- mysql_config was found /usr/bin/mysql_config
     -- MySQL Include dir: /usr/include/mysql
     -- MySQL Library    :
     -- MySQL Library dir: /usr/lib64/mysql;/usr/lib64
-    -- MySQL CFLAGS: -I/usr/include/mysql [...]
+    -- MySQL CFLAGS: -I/usr/include/mysql -fmessage-length=0 -D_FORTIFY_SOURCE=2 -fstack-protector -DPIC -fPIC -DUNDEF_HAVE_INITGROUPS -fno-strict-aliasing
     -- MySQL Link flags:
     -- MySQL Version: 5.0.51
     -- MySQL Include dir: /usr/include/mysql
     -- MySQL Library dir: /usr/lib64/mysql;/usr/lib64
-    -- MySQL CFLAGS: -I/usr/include/mysql [...]
+    -- MySQL CFLAGS: -I/usr/include/mysql -fmessage-length=0 -D_FORTIFY_SOURCE=2 -fstack-protector -DPIC -fPIC -DUNDEF_HAVE_INITGROUPS -fno-strict-aliasing
     -- MySQL Link flags:
+    -- Installation path is: /usr/local   (overwrite with -DCMAKE_INSTALL_PREFIX=/your/path)
     -- Configuring cppconn
-    -- Configuring test cases
-    -- Looking for isinf
-    -- Looking for isinf - found
-    -- Looking for isinf
-    -- Looking for isinf - not found.
-    -- Looking for finite
-    -- Looking for finite - not found.
-    -- Configuring C/J junit tests port
     -- Configuring examples
+    -- Configuring test cases
+    -- No MiniCppUnit
     -- Configuring done
     -- Generating done
-    -- Build files have been written to: /path/to/mysql-connector-cpp/
+    -- Build files have been written to: /path/to/mysql-connector-cpp
+
 
   Read on at point 3) in case of configure problems.
 
@@ -104,11 +97,12 @@ INSTALLATION ON UNIX
 
     me@host:/path/to/mysql-connector-cpp> make clean
     me@host:/path/to/mysql-connector-cpp> make
-    [  1%] Building CXX object driver/CMakeFiles/mysqlcppconn.dir/mysql_connection.o
-    [  3%] Building CXX object driver/CMakeFiles/mysqlcppconn.dir/mysql_constructed_resultset.o
+    Scanning dependencies of target mysqlcppconn
+    [  2%] Building CXX object driver/CMakeFiles/mysqlcppconn.dir/mysql_connection.o
+    [  4%] Building CXX object driver/CMakeFiles/mysqlcppconn.dir/mysql_constructed_resultset.o
     [...]
-    [100%] Building CXX object examples/CMakeFiles/statement.dir/statement.o
-    Linking CXX executable statement
+    [ 97%] Building CXX object test/CMakeFiles/driver_test.dir/driver_test.o
+    Linking CXX executable driver_test
 
   If all goes well, you will find the Connector/C++ library in
   /path/to/driver/libcppmysqlcppconn.so . In case of problems read on below
@@ -137,21 +131,20 @@ INSTALLATION ON UNIX
   and you want to build a debug version of the MySQL Connector/C++ use:
 
     me@host:/path/to/mysql-connector-cpp>
-    cmake -D CMAKE_BUILD_TYPE:STRING=Debug -D MYSQL_DIR:PATH=/path/to/my/mysql/server .
+    cmake -D CMAKE_BUILD_TYPE:STRING=Debug -D MYSQL_CONFIG_EXECUTABLE=/path/to/my/mysql/server/bin/mysql_config .
 
   Verify your settings with cmake -L:
 
     me@host:/path/to/mysql-connector-cpp> cmake -L
     [...]
     CMAKE_BACKWARDS_COMPATIBILITY:STRING=2.4
-    CMAKE_BUILD_TYPE:STRING=Debug
+    CMAKE_BUILD_TYPE:STRING=
     CMAKE_INSTALL_PREFIX:PATH=/usr/local
     EXECUTABLE_OUTPUT_PATH:PATH=
     LIBRARY_OUTPUT_PATH:PATH=
     MYSQLCPPCONN_GCOV_ENABLE:BOOL=0
     MYSQLCPPCONN_TRACE_ENABLE:BOOL=0
-    MYSQL_CONFIG_EXECUTABLE:FILEPATH=/usr/bin/mysql_config
-    MYSQL_DIR:PATH=/path/to/my/mysql/server
+    MYSQL_CONFIG_EXECUTABLE=/path/to/my/mysql/server/bin/mysql_config
 
   Procees with make clean; make as described at point 2.)
 
