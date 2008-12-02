@@ -93,21 +93,16 @@ namespace testsuite
                                                   , const String & dbSchema
                                                   );
 
-                  String        extractVal( const String  & sTableName
-                                          , int             count
-                                          , Properties    & sqlProps
-                                          , Connection    & conn);
+                  String        extractVal  ( const String  & sTableName
+                                            , int             count
+                                            , Properties    & sqlProps
+                                            , Connection    & conn);
 
-    static void logMsg(String message)
-    {
-      TestsListener::theInstance().messagesLog() << message << std::endl;
-    }
+    static        void          logMsg      (String message);
 
-    void logErr(String message)
-    {
-      TestsListener::theInstance().errorsLog() << message << std::endl;
-      /*new Throwable().printStackTrace();*/
-    }
+                  void          logErr      (String message);
+
+    static        String        randomString();
 
   protected:
 
@@ -415,8 +410,6 @@ namespace testsuite
 
     /*bool          isClassAvailable            (String classname);*/
     void          closeMemberJDBCResources    () ;
-
-    String        randomString();
 
     /* See comments in cpp file*/
     /*void cleanupTempFiles(const File exampleTempFile, const String tempfilePrefix) ;*/

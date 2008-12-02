@@ -274,11 +274,11 @@ namespace testsuite
       if (value->instanceof( value_object::vtByte ) )
       {
         // workaround for bad 4.1.x bugfix  - c/j legacy comment
-        return value->toString;//new String((byte[]) value);
+        return value->toString();//new String((byte[]) value);
       }
     }
 
-    return value->toString;
+    return value->toString();
   }
 
   /**
@@ -375,8 +375,8 @@ namespace testsuite
 
     try
     {
-      svStmt = c->createStatement();
-      valueRs = svStmt->executeQuery(query);
+      svStmt.reset( c->createStatement() );
+      valueRs.reset( svStmt->executeQuery(query) );
 
       if (! valueRs->next())
       {
@@ -705,20 +705,6 @@ namespace testsuite
         // ignore
       }
     }
-  }
-
-
-  template <typename ConcreteTestFixture>
-  String BaseTestFixture<ConcreteTestFixture>::randomString()
-  {
-    int length = (int)(::rand() * 32);
-    String buf;
-
-    buf.resize(length);
-    for (int i = 0; i < length; i++) {
-      buf.append((char)((rand() * 26) + 'a'));
-    }
-    return buf;
   }
 
 
