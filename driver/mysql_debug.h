@@ -31,6 +31,7 @@
 #define CPP_INFO_FMT(...)	{if (__l) __l->log_va("INF", __VA_ARGS__); }
 #define CPP_ERR(msg)		{if (__l) __l->log("ERR", msg); }
 #define CPP_ERR_FMT(...)	{if (__l) __l->log_va("ERR", __VA_ARGS__); }
+
 #else
 #define CPP_ENTER(msg)
 #define CPP_ENTER_WL(l, msg)

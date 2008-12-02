@@ -104,7 +104,6 @@ bool
 MySQL_ConstructedResultSet::isBeforeFirstOrAfterLast() const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::isBeforeFirstOrAfterLast");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	return (row_position == 0) || (row_position == num_rows + 1);
 }
@@ -116,7 +115,6 @@ bool
 MySQL_ConstructedResultSet::absolute(int row)
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::absolute");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	if (row > 0) {
 		if (row > (int) num_rows) {
@@ -148,7 +146,6 @@ void
 MySQL_ConstructedResultSet::afterLast()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::afterLast");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	row_position = num_rows + 1;
 	seek();
@@ -161,7 +158,6 @@ void
 MySQL_ConstructedResultSet::beforeFirst()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::beforeFirst");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	row_position = 0;
 	seek();
@@ -174,7 +170,6 @@ void
 MySQL_ConstructedResultSet::cancelRowUpdates()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::cancelRowUpdates");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ConstructedResultSet::cancelRowUpdates()");
 }
@@ -198,7 +193,6 @@ void
 MySQL_ConstructedResultSet::clearWarnings()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::clearWarnings");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ConstructedResultSet::clearWarnings()");
 }
@@ -210,7 +204,6 @@ void
 MySQL_ConstructedResultSet::close()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::close");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	delete [] field_index_to_name_map;
 	is_closed = true;
@@ -223,7 +216,6 @@ unsigned int
 MySQL_ConstructedResultSet::findColumn(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::columnLabel");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	char * tmp = cppmysql_utf8_strup(columnLabel.c_str(), 0);
 	FieldNameIndexMap::const_iterator iter = field_name_to_index_map.find(tmp);
@@ -243,7 +235,6 @@ bool
 MySQL_ConstructedResultSet::first()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::first");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	if (num_rows) {
 		row_position = 1;
@@ -259,7 +250,6 @@ bool
 MySQL_ConstructedResultSet::getBoolean(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getBoolean(int)");
-	CPP_INFO_FMT("this=%p", this);
 
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirstOrAfterLast()) {
@@ -275,7 +265,6 @@ bool
 MySQL_ConstructedResultSet::getBoolean(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getBoolean(string)");
-	CPP_INFO_FMT("this=%p", this);
 	return getInt(columnLabel) != 0;
 }
 /* }}} */
@@ -286,7 +275,6 @@ int
 MySQL_ConstructedResultSet::getConcurrency()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getConcurrency");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ConstructedResultSet::getConcurrency()");
 }
@@ -298,7 +286,6 @@ std::string
 MySQL_ConstructedResultSet::getCursorName()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getCursorName");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ConstructedResultSet::getCursorName()");
 }
@@ -311,7 +298,6 @@ double
 MySQL_ConstructedResultSet::getDouble(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getDouble(int)");
-	CPP_INFO_FMT("this=%p", this);
 
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirstOrAfterLast()) {
@@ -339,7 +325,6 @@ double
 MySQL_ConstructedResultSet::getDouble(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getDouble(string)");
-	CPP_INFO_FMT("this=%p", this);
 	return getDouble(findColumn(columnLabel));
 }
 /* }}} */
@@ -350,7 +335,6 @@ int
 MySQL_ConstructedResultSet::getFetchDirection()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getFetchDirection");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ConstructedResultSet::getFetchDirection()");
 }
@@ -362,7 +346,6 @@ int
 MySQL_ConstructedResultSet::getFetchSize()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getFetchSize");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ConstructedResultSet::getFetchSize()");
 }
@@ -374,7 +357,6 @@ int
 MySQL_ConstructedResultSet::getHoldability()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getHoldability");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ConstructedResultSet::getHoldability()");
 }
@@ -387,7 +369,6 @@ int
 MySQL_ConstructedResultSet::getInt(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getInt(int)");
-	CPP_INFO_FMT("this=%p", this);
 
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirstOrAfterLast()) {
@@ -426,7 +407,6 @@ long long
 MySQL_ConstructedResultSet::getLong(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getLong(int)");
-	CPP_INFO_FMT("this=%p", this);
 
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirstOrAfterLast()) {
@@ -487,7 +467,6 @@ sql::RowID *
 MySQL_ConstructedResultSet::getRowId(unsigned int)
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getRowId");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ConstructedResultSet::getRowId()");
 }
@@ -499,7 +478,6 @@ sql::RowID *
 MySQL_ConstructedResultSet::getRowId(const std::string &)
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getRowId");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ConstructedResultSet::getRowId()");
 }
@@ -511,7 +489,6 @@ const Statement *
 MySQL_ConstructedResultSet::getStatement() const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getStatement");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	return NULL; /* This is a constructed result set - no statement -> NULL */
 }
@@ -561,7 +538,6 @@ void
 MySQL_ConstructedResultSet::getWarnings()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getWarnings");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ConstructedResultSet::getWarnings()");
 }
@@ -573,7 +549,6 @@ void
 MySQL_ConstructedResultSet::insertRow()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::insertRow");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	 /* TODO - We don't support inserting anyway */
 	throw sql::MethodNotImplementedException("MySQL_ConstructedResultSet::insertRow()");
@@ -586,7 +561,6 @@ bool
 MySQL_ConstructedResultSet::isAfterLast() const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::isAfterLast");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	return (row_position == num_rows + 1);
 }
@@ -598,7 +572,6 @@ bool
 MySQL_ConstructedResultSet::isBeforeFirst() const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::isBeforeFirst");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	return (row_position == 0);
 }
@@ -620,7 +593,6 @@ bool
 MySQL_ConstructedResultSet::isFirst() const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::isFirst");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	/* OR current_record == rs.begin() */
 	return (row_position == 1);
@@ -633,7 +605,6 @@ bool
 MySQL_ConstructedResultSet::isLast() const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::isLast");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	/* OR current_record == rs.end() */
 	return (row_position == num_rows);
@@ -646,7 +617,6 @@ bool
 MySQL_ConstructedResultSet::isNull(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::isNull(int)");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	/* internally zero based */
 	columnIndex--;
@@ -673,7 +643,6 @@ bool
 MySQL_ConstructedResultSet::last()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::last");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	if (num_rows) {
 		row_position = num_rows;
@@ -689,7 +658,6 @@ void
 MySQL_ConstructedResultSet::moveToCurrentRow()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::moveToCurrentRow");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ConstructedResultSet::moveToCurrentRow()");
 }
@@ -701,7 +669,6 @@ void
 MySQL_ConstructedResultSet::moveToInsertRow()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::moveToInsertRow");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ConstructedResultSet::moveToInsertRow()");
 }
@@ -739,7 +706,6 @@ bool
 MySQL_ConstructedResultSet::previous()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::previous");
-	CPP_INFO_FMT("this=%p", this);
 
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirst()) {
@@ -762,7 +728,6 @@ void
 MySQL_ConstructedResultSet::refreshRow()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::refreshRow");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ResultSet::refreshRow()");
 }
@@ -774,7 +739,6 @@ bool
 MySQL_ConstructedResultSet::relative(int rows)
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::relative");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	if (rows != 0) {
 		if ((row_position + rows) > num_rows || (row_position + rows) < 1) {
@@ -795,7 +759,6 @@ bool
 MySQL_ConstructedResultSet::rowDeleted()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::rowDeleted");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ConstructedResultSet::rowDeleted()");
 }
@@ -807,7 +770,6 @@ bool
 MySQL_ConstructedResultSet::rowInserted()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::rowInserted");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ConstructedResultSet::rowInserted()");
 }
@@ -819,7 +781,6 @@ bool
 MySQL_ConstructedResultSet::rowUpdated()
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::rowUpdated");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ConstructedResultSet::rowUpdated()");
 }
@@ -831,7 +792,6 @@ size_t
 MySQL_ConstructedResultSet::rowsCount() const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::rowsCount");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	return rs.size() / num_fields;
 }
@@ -843,7 +803,6 @@ void
 MySQL_ConstructedResultSet::setFetchSize(size_t /* rows */) 
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::setFetchSize");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ResultSet::rowDeleted()");
 }
@@ -855,7 +814,6 @@ bool
 MySQL_ConstructedResultSet::wasNull() const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::wasNull");
-	CPP_INFO_FMT("this=%p", this);
 	checkValid();
 	return false;
 }

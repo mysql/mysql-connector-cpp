@@ -25,6 +25,12 @@
 #include <stdarg.h>
 #include "mysql_debug.h"
 
+#define NON_WANTED_FUNCTIONS 	!strstr(func, "Closed") \
+								&& !strstr(func, "Valid") \
+								&& !strstr(func, "getMySQLHandle") \
+								&& !strstr(func, "isBeforeFirstOrAfterLast")
+
+
 namespace sql
 {
 namespace mysql
@@ -38,7 +44,9 @@ MySQL_DebugEnterEvent::MySQL_DebugEnterEvent(unsigned int l, const char * const 
   : line(l), file(f), func(func_name), logger(logger_object? logger_object->getReference():NULL)
 {
 	if (logger) {
-		logger->get()->enter(this);
+		if (NON_WANTED_FUNCTIONS) {
+			logger->get()->enter(this);
+		}
 	}
 }
 /* }}} */ 
@@ -48,7 +56,9 @@ MySQL_DebugEnterEvent::MySQL_DebugEnterEvent(unsigned int l, const char * const 
 MySQL_DebugEnterEvent::~MySQL_DebugEnterEvent()
 {
 	if (logger) {
-		logger->get()->leave(this);
+		if (NON_WANTED_FUNCTIONS) {
+			logger->get()->leave(this);
+		}
 		logger->freeReference();
 	}
 } 
