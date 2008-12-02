@@ -1990,7 +1990,7 @@ MySQL_ConnectionMetaData::getCDBCMinorVersion()
 int
 MySQL_ConnectionMetaData::getMaxBinaryLiteralLength()
 {
-	CPP_ENTER("MySQL_ConnectionMetaData::allProceduresAreCallable");
+	CPP_ENTER("MySQL_ConnectionMetaData::getMaxBinaryLiteralLength");
 	return 16777208L;
 }
 /* }}} */
@@ -3154,7 +3154,7 @@ bool
 MySQL_ConnectionMetaData::supportsCatalogsInDataManipulation()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::supportsCatalogsInDataManipulation");
-	return server_version >= 32200;
+	return false;
 }
 /* }}} */
 
@@ -3164,7 +3164,7 @@ bool
 MySQL_ConnectionMetaData::supportsCatalogsInIndexDefinitions()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::supportsCatalogsInIndexDefinitions");
-	return server_version >= 32200;
+	return false;
 }
 /* }}} */
 
@@ -3174,7 +3174,7 @@ bool
 MySQL_ConnectionMetaData::supportsCatalogsInPrivilegeDefinitions()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::supportsCatalogsInPrivilegeDefinitions");
-	return server_version > 32200;
+	return false;
 }
 /* }}} */
 
@@ -3184,7 +3184,7 @@ bool
 MySQL_ConnectionMetaData::supportsCatalogsInProcedureCalls()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::supportsCatalogsInProcedureCalls");
-	return server_version >= 32200;
+	return false;
 }
 /* }}} */
 
@@ -3194,7 +3194,7 @@ bool
 MySQL_ConnectionMetaData::supportsCatalogsInTableDefinitions()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::supportsCatalogsInTableDefinitions");
-	return server_version >= 32200;
+	return false;
 }
 /* }}} */
 
@@ -3583,8 +3583,8 @@ MySQL_ConnectionMetaData::supportsSavepoints()
 bool
 MySQL_ConnectionMetaData::supportsSchemasInDataManipulation()
 {
-	CPP_ENTER("MySQL_ConnectionMetaData::allProceduresAreCallable");
-	return false;
+	CPP_ENTER("MySQL_ConnectionMetaData::supportsSchemasInDataManipulation");
+	return server_version >= 32200;
 }
 /* }}} */
 
@@ -3594,7 +3594,7 @@ bool
 MySQL_ConnectionMetaData::supportsSchemasInIndexDefinitions()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::supportsSchemasInIndexDefinitions");
-	return false;
+	return server_version >= 32200;
 }
 /* }}} */
 
@@ -3603,8 +3603,8 @@ MySQL_ConnectionMetaData::supportsSchemasInIndexDefinitions()
 bool
 MySQL_ConnectionMetaData::supportsSchemasInPrivilegeDefinitions()
 {
-	CPP_ENTER("MySQL_ConnectionMetaData::allProceduresAreCallable");
-	return false;
+	CPP_ENTER("MySQL_ConnectionMetaData::supportsSchemasInPrivilegeDefinitions");
+	return server_version > 32200;
 }
 /* }}} */
 
@@ -3614,7 +3614,7 @@ bool
 MySQL_ConnectionMetaData::supportsSchemasInProcedureCalls()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::supportsSchemasInProcedureCalls");
-	return false;
+	return server_version >= 32200;
 }
 /* }}} */
 
@@ -3623,8 +3623,8 @@ MySQL_ConnectionMetaData::supportsSchemasInProcedureCalls()
 bool
 MySQL_ConnectionMetaData::supportsSchemasInTableDefinitions()
 {
-	CPP_ENTER("MySQL_ConnectionMetaData::allProceduresAreCallable");
-	return false;
+	CPP_ENTER("MySQL_ConnectionMetaData::supportsSchemasInTableDefinitions");
+	return server_version >= 32200;
 }
 /* }}} */
 
