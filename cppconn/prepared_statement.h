@@ -43,13 +43,13 @@ public:
 
 	virtual void clearParameters() = 0;
 
-	using Statement::execute;
+	virtual bool execute(const std::string& sql) = 0;
 	virtual bool execute() = 0;
 
-	using Statement::executeQuery;
+	virtual ResultSet *executeQuery(const std::string& sql) = 0;
 	virtual ResultSet *executeQuery() = 0;
 
-	using Statement::executeUpdate;
+	virtual int executeUpdate(const std::string& sql) = 0;
 	virtual int executeUpdate() = 0;
 
 	virtual ParameterMetaData * getParameterMetaData() = 0;
