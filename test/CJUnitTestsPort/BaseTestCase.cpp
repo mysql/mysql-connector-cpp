@@ -19,6 +19,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include <time.h>
 
 #include "BaseTestCase.h"
 #include "../common/stringutils.h"
@@ -103,6 +104,39 @@ namespace testsuite
 
     return retStr;
   }
+
+
+  void TestFixtureCommon::logMsg(String message)
+  {
+    TestsListener::theInstance().messagesLog() << message << std::endl;
+  }
+
+
+  void TestFixtureCommon::logErr(String message)
+  {
+    TestsListener::theInstance().errorsLog() << message << std::endl;
+    /*new Throwable().printStackTrace();*/
+  }
+
+
+  String TestFixtureCommon::randomString()
+  {
+    srand( (unsigned)time( NULL ) );
+
+    int     length= (rand()%32);
+    String  buf, ch("a");
+
+    buf.resize(length);
+
+    for (int i = 0; i < length; i++)
+    {
+      ch.assign( 1, 'a' + rand()%26 );
+      buf.append( ch );
+    }
+
+    return buf;
+  }
+
 
   /** value_object methods */
 
