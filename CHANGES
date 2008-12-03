@@ -5,40 +5,60 @@ Beta  1.0.2 - xxxx-xx-xx
   all supportSchemaXXXX methods false, which is not as it should be.
   Now it is reversed, to be consistent with the rest.
 
+- Implemented MySQL_PreparedStatement::clearParameters()
+
 
 Alpha  1.0.1 - 2008-12-01
 
 - New directory layout
+
 - MySQL Workbench 5.1 using Connector/C++ for its database connectivity.
+
 - Addition of Connector/J tests converted
+
 - Changing sql::DbcException to implement the interface of JDBC's SQLException.
   And renamed it to sql::SQLException.
+
 - Renamed sql::DbcInvalidArgument to sql::InvalidArgumentException
+
 - Renamed sql::DbcMethodNotImplemented to sql::MethodNotImplementedException
+
 - All tests changed to create TAP compliant output
+
 - Introduction of experimental CPack support, see make help
+
 - Metadata: switching to column names "TABLE_CAT" (was: TABLE_CATALOG) and
   "TABLE_SCHEM" (was: TABLE_SCHEMA) for JDBC compliance
+
 - ConnectionMetaData::getImportedKeys():
   PKTABLE_CATALOG -> PKTABLE_CAT, PKTABLE_SCHEMA -> PKTABLE_SCHEM,
   FKTABLE_CATALOG -> FKTABLE_CAT, FKTABLE_SCHEMA -> FKTABLE_SCHEM
+
 - ConnectionMetaData::getPrimaryKeys():
   COLUMN -> COLUMN_NAME, SEQUENCE -> KEY_SEQ, INDEX_NAME -> PK_NAME
+
 - ConnectionMetaData::getProcedures:
   PROCEDURE_SCHEMA -> PROCEDURE_SCHEM
+
 - ConnectionMetaData::getTables:
   TABLE_COMMENT -> REMARKS
+
 - All examples can be given optional connection parameters on the command
   line, for example
   `examples/connect tcp://host:port user pass database`
   or
   `examples/connect unix:///path/to/mysql.sock user pass database` 
+
 - Adding experimental GCov support, cmake -DMYSQLCPPCONN_GCOV_ENABLE:BOOL=1
+
 - ConnectionMetaData::getCatalogTerm() returns n/a, there is no counterpart
   to catalog in Connector/C++
+
 - Addition of ConnectionMetaData::getSchemas() and  Connection::setSchema().
   None of them is in the JDBC standard
+
 - Driver Manager removed
+
 - `(n)make install` works.  You can change the default installation path.
   Read carefully the messages after executing cmake. Installed are the static
   and the dynamic version of the library, libmysqlcppconn as well as the
@@ -50,6 +70,7 @@ Alpha  1.0.1 - 2008-12-01
      class and use its specifics not found in sql::Connection
   However, you can make your application fully abstract by not using the two
   headers above but the generic headers.
+
 - sql::mysql::MySQL_SQLException is gone. There is no distinction between
   server and client (= Connector) caused errors based on the type of the
   exception. However, you can still check the error code to figure out the
