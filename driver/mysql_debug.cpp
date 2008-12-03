@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <memory>
 #include <stdarg.h>
+#include <string.h>
 #include "mysql_debug.h"
 
 #define NON_WANTED_FUNCTIONS 	!strstr(func, "Closed") \
