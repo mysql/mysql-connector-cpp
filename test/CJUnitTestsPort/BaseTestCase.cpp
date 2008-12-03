@@ -137,7 +137,7 @@ namespace testsuite
 
     for (int i = 0; i < length; i++)
     {
-      ch.assign( static_cast<String::size_type>(1), 'a' + rand()%26 );
+      ch.assign( static_cast<String::size_type>(1), static_cast<String::value_type>('a' + rand()%26) );
       buf.append( ch );
     }
 
