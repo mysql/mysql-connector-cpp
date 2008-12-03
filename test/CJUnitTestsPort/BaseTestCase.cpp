@@ -39,7 +39,14 @@ namespace testsuite
 
   Properties TestFixtureCommon::sqlProps;
 
-  int TestFixtureCommon::propsLoaded = resources::LoadProperties("sql.properties",sqlProps);
+  static const char * possiblePropertiesLocations[] = { ".."
+                                                      , "test/CJUnitTestsPort"
+                                                      , NULL //last should be NULL
+                                                      };
+
+  int TestFixtureCommon::propsLoaded = resources::LoadProperties( "sql.properties"
+                                                                , sqlProps
+                                                                , possiblePropertiesLocations);
 
   Driver *  TestFixtureCommon::driver = NULL;
 

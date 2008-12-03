@@ -52,7 +52,8 @@ namespace testsuite
       }
     };
 
-    int LoadProperties( const String & fileName, Properties &props );
+    int LoadProperties( const String & fileName, Properties &props
+                      , const char * _possibleLocations[]= NULL );
   }
 }
 #endif

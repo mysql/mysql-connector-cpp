@@ -2719,82 +2719,85 @@ namespace compliance
 /* throws Exception */
   void DatabaseMetaDataTest::testGetProcedures() 
   {
-      if (!this->hasSps)
-      {
-        return;
-      }
+    if (!this->hasSps)
+    {
+      return;
+    }
         
-            List sColumnNames;
+    List sColumnNames;
 
-            sColumnNames.push_back( "PROCEDURE_CAT"   );
-            sColumnNames.push_back( "PROCEDURE_SCHEM" );
-            sColumnNames.push_back( "PROCEDURE_NAME"  );
-            sColumnNames.push_back( "RESERVED1"       );
-            sColumnNames.push_back( "RESERVED2"       );
-            sColumnNames.push_back( "RESERVED3"       );
-            sColumnNames.push_back( "REMARKS"         );
-            sColumnNames.push_back( "PROCEDURE_TYPE"  );
+    sColumnNames.push_back( "PROCEDURE_CAT"   );
+    sColumnNames.push_back( "PROCEDURE_SCHEM" );
+    sColumnNames.push_back( "PROCEDURE_NAME"  );
+    sColumnNames.push_back( "RESERVED1"       );
+    sColumnNames.push_back( "RESERVED2"       );
+    sColumnNames.push_back( "RESERVED3"       );
+    sColumnNames.push_back( "REMARKS"         );
+    sColumnNames.push_back( "PROCEDURE_TYPE"  );
 
-            bool statusColumnCount = true;
-            bool statusColumnMatch = true;
-            int iColumnNamesLength = sColumnNames.size();
+    bool statusColumnCount = true;
+    bool statusColumnMatch = true;
+    int iColumnNamesLength = sColumnNames.size();
 
-            logMsg("Calling DatabaseMetaData.getProcedures");
-      String tmp("%");
-            ResultSet oRet_ResultSet(dbmd->getProcedures(sCatalogName, sSchemaName, tmp));
-            String sRetStr;
+    logMsg("Calling DatabaseMetaData.getProcedures");
 
-            sRetStr = "";
-            sql::ResultSetMetaData * rsmd = oRet_ResultSet->getMetaData();
+    String tmp("%");
 
-            int iCount = rsmd->getColumnCount();
-            TestsListener::theInstance().messagesLog()
-              << "Minimum Column Count is:" << iColumnNamesLength;
-            if (iColumnNamesLength <= iCount)
+    ResultSet oRet_ResultSet(dbmd->getProcedures(sCatalogName, sSchemaName, tmp));
+    String sRetStr;
+
+    sRetStr = "";
+    ResultSetMetaData rsmd( oRet_ResultSet->getMetaData() );
+
+    int iCount = rsmd->getColumnCount();
+    TestsListener::theInstance().messagesLog()
+      << "Minimum Column Count is:" << iColumnNamesLength;
+    if (iColumnNamesLength <= iCount)
+    {
+        iCount = iColumnNamesLength;
+        statusColumnCount = true;
+    }
+    else
+    {
+        statusColumnCount = false;
+    }
+    logMsg("Comparing Column Names...");
+
+    while (iColumnNamesLength > 0)
+    {
+        if ((iCount < 4) || (iCount > 6))
+        {
+            if (ciString( sColumnNames[iColumnNamesLength - 1].c_str() )
+                  ==  rsmd->getColumnName( iCount ).c_str() )
             {
-                iCount = iColumnNamesLength;
-                statusColumnCount = true;
+                statusColumnMatch = true;
             }
             else
             {
-                statusColumnCount = false;
+                statusColumnMatch = false;
+                break;
             }
-            logMsg("Comparing Column Names...");
-            while (iColumnNamesLength > 0)
-            {
-                if ((iCount < 4) || (iCount > 6))
-                {
-                    if (ciString( sColumnNames[iColumnNamesLength - 1].c_str() )
-                          ==  rsmd->getColumnName( iCount ).c_str() )
-                    {
-                        statusColumnMatch = true;
-                    }
-                    else
-                    {
-                        statusColumnMatch = false;
-                        break;
-                    }
-                }
+        }
 
-                iCount--;
-                iColumnNamesLength--;
-            }
-            if ((statusColumnCount == false) || (statusColumnMatch == false))
-            {
-                logMsg("Columns return are not same either in order or name");
-                FAIL("Call to getProcedures Failed!");
-            }
-            while (oRet_ResultSet->next())
-                sRetStr += (oRet_ResultSet->getString(3) + ",");
-            if (sRetStr == "")
-            {
-                logMsg("getProcedures did not return any procedure names");
-            }
-            else
-            {
-                logMsg("The Procedure names returned are : "
-                    + sRetStr.substr(0, sRetStr.length() - 1));
-            }
+        iCount--;
+        iColumnNamesLength--;
+    }
+    if ((statusColumnCount == false) || (statusColumnMatch == false))
+    {
+        logMsg("Columns return are not same either in order or name");
+        FAIL("Call to getProcedures Failed!");
+    }
+    while (oRet_ResultSet->next())
+        sRetStr += (oRet_ResultSet->getString(3) + ",");
+    if (sRetStr == "")
+    {
+        logMsg("getProcedures did not return any procedure names");
+    }
+    else
+    {
+        logMsg("The Procedure names returned are : "
+            + sRetStr.substr(0, sRetStr.length() - 1));
+    }
   }
 
     /*
@@ -3304,7 +3307,7 @@ std::list< String > tmp2;
 
             ResultSet oRet_ResultSet(dbmd->getTypeInfo());
 
-            sql::ResultSetMetaData * rsmd = oRet_ResultSet->getMetaData();
+            ResultSetMetaData rsmd( oRet_ResultSet->getMetaData() );
 
             int iCount = rsmd->getColumnCount();
             TestsListener::theInstance().messagesLog()
@@ -3421,26 +3424,29 @@ std::list< String > tmp2;
 
 /* throws Exception */
   void DatabaseMetaDataTest::testGetUDTs01() 
-  {  List sColumnNames;
+  {
+    List sColumnNames;
 
-            sColumnNames.push_back( "TYPE_CAT"    );
-            sColumnNames.push_back( "TYPE_SCHEM"  );
-            sColumnNames.push_back( "TYPE_NAME"   );
-            sColumnNames.push_back( "CLASS_NAME"  );
-            sColumnNames.push_back( "DATA_TYPE"   );
-            sColumnNames.push_back( "REMARKS"     );
+    sColumnNames.push_back( "TYPE_CAT"    );
+    sColumnNames.push_back( "TYPE_SCHEM"  );
+    sColumnNames.push_back( "TYPE_NAME"   );
+    sColumnNames.push_back( "CLASS_NAME"  );
+    sColumnNames.push_back( "DATA_TYPE"   );
+    sColumnNames.push_back( "REMARKS"     );
 
-            bool statusColumnMatch = true;
-            bool statusColumnCount = true;
-            String sRetStr ;
+    bool statusColumnMatch = true;
+    bool statusColumnCount = true;
+    String sRetStr ;
 
-            sRetStr = "";
-            int iColumnNamesLength = sColumnNames.size();
-            logMsg("Calling DatabaseMetaData.getUDTs");
-      String tmp("%");
-      std::list<int> tmp2;
+    sRetStr = "";
+    int iColumnNamesLength = sColumnNames.size();
+    logMsg("Calling DatabaseMetaData.getUDTs");
+
+    String tmp("%");
+    std::list<int> tmp2;
+
             ResultSet oRet_ResultSet(dbmd->getUDTs(sCatalogName, sSchemaName, tmp, tmp2));
-            sql::ResultSetMetaData * rsmd = oRet_ResultSet->getMetaData();
+            ResultSetMetaData rsmd( oRet_ResultSet->getMetaData() );
 
             int iCount = rsmd->getColumnCount();
 
@@ -9245,11 +9251,12 @@ std::list< String > tmp2;
 /* throws SQLException */
   bool DatabaseMetaDataTest::columnCompare(List & sColumnNames, ResultSet & rset) 
   {
-    bool test_status = false;
-    bool statusColumnCount = true;
-    bool statusColumnMatch = true;
-    int iColumnNamesLength = sColumnNames.size();
-    sql::ResultSetMetaData * rsmd = rset->getMetaData();
+    bool  test_status=        false;
+    bool  statusColumnCount=  true;
+    bool  statusColumnMatch=  true;
+    int   iColumnNamesLength= sColumnNames.size();
+
+    ResultSetMetaData rsmd( rset->getMetaData() );
 
     int iCount = rsmd->getColumnCount();
 
