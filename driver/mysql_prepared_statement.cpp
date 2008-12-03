@@ -128,7 +128,12 @@ MySQL_Prepared_Statement::clearParameters()
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 	if (param_bind) {
-		throw MethodNotImplementedException("MySQL_Prepared_Statement::clearParameters");
+		for (unsigned int i = 0; i < param_count; i++) {
+			delete (char*) param_bind[i].length;
+			param_bind[i].length = NULL;
+			delete[] (char*) param_bind[i].buffer;
+			param_bind[i].buffer = NULL;
+		}
 	}
 }
 /* }}} */
@@ -452,9 +457,7 @@ MySQL_Prepared_Statement::setDouble(unsigned int parameterIndex, double value)
 	param_bind[parameterIndex].buffer		= p.first;
 	param_bind[parameterIndex].buffer_length= 0;
 	param_bind[parameterIndex].is_null_value= 0;
-	if (!param_bind[parameterIndex].length) {
-		delete param_bind[parameterIndex].length;
-	}
+	delete param_bind[parameterIndex].length;
 	param_bind[parameterIndex].length		= NULL;
 
 	memcpy(param_bind[parameterIndex].buffer, &value, p.second);
@@ -774,14 +777,14 @@ MySQL_Prepared_Statement::setString(unsigned int parameterIndex, const std::stri
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setString: invalid 'parameterIndex'");
 	}
 	enum_field_types t = MYSQL_TYPE_STRING;
+	delete[] (char*) param_bind[parameterIndex].buffer;
 
 	param_bind[parameterIndex].buffer_type	= t;
-	delete[] (char *) param_bind[parameterIndex].buffer;
 	param_bind[parameterIndex].buffer		= memcpy(new char[value.length() + 1], value.c_str(), value.length() + 1);
 	param_bind[parameterIndex].buffer_length= static_cast<unsigned long>(value.length()) + 1;
 	param_bind[parameterIndex].is_null_value= 0;
-	// TODO: allocate one buffer for length of all fields, when initing a new stmt
-	delete param_bind[parameterIndex].length;
+
+	delete (unsigned long *) param_bind[parameterIndex].length;
 	param_bind[parameterIndex].length = new unsigned long(static_cast<unsigned long>(value.length()));
 }
 /* }}} */
@@ -806,10 +809,7 @@ MySQL_Prepared_Statement::closeIntern()
 {
 	CPP_ENTER("MySQL_Prepared_Statement::closeIntern");
 	mysql_stmt_close(stmt);
-	for (unsigned int i = 0; i < param_count; i++) {
-		delete (char*) param_bind[i].length;
-		delete[] (char*) param_bind[i].buffer;
-	}
+	clearParameters();
 	/* allocated with calloc */
 	free(param_bind);
 

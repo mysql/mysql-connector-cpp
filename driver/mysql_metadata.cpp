@@ -1,4 +1,3 @@
-
 /* Copyright (C) 2007 - 2008 MySQL AB, 2008 Sun Microsystems, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -2201,9 +2200,10 @@ MySQL_ConnectionMetaData::getNumericFunctions()
 
 /* {{{ MySQL_ConnectionMetaData::getPrimaryKeys() -Is- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& /*catalog*/, const std::string& schema, const std::string& table)
+MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::string& schema, const std::string& table)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getPrimaryKeys");
+	CPP_INFO_FMT("catalog=%s schema=%s table=%s", catalog.c_str(), schema.c_str(), table.c_str());
 	std::list<std::string> rs_data;
 	std::list<std::string> rs_field_data;
 
