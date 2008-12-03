@@ -43,6 +43,14 @@ class cpp_trace_analyzer {
 	protected $exclude_functions = array();
 	protected $verbose = false;
 	protected $max_lines = 0;
+	protected $read_from_tail = false;
+	protected $collapse = false;
+
+	protected $stats = array();
+	protected $collect_stats = false;
+
+	protected $fetch_buffer = array();
+	protected $fetch_unfetched = 0;
 
 	public function __construct() {
 	}
@@ -113,6 +121,24 @@ class cpp_trace_analyzer {
 					}
 					$this->max_lines = $max;
 					break;
+
+				case '-c':
+					$this->collapse = true;
+					break;
+
+				case '-b':
+					$this->printUsage("-b is not supported yet");
+					return false;
+					$this->read_from_tail = true;
+					break;
+
+				case '-stats':
+					$this->collect_stats = true;
+					break;
+
+				case '-v';
+					$this->verbose = true;
+					break;
 			}
 		}
 
@@ -129,10 +155,11 @@ class cpp_trace_analyzer {
 
 			$lineno = 0;
 			$displayed = 0;
-			while ($line = fgets($fp, 16384)) {
+			while ($line = $this->fetchLine($fp)) {
 				$lineno++;
 				$function = trim($line);
 				$level = 1;
+				$exit = false;
 				do {
 					$left = substr(trim($function), 0, 1);
 					switch ($left) {
@@ -141,9 +168,29 @@ class cpp_trace_analyzer {
 							$level++;
 							break;
 						case '<':
-						case '>':
-							// function enter or exit
+							// function exit
 							$function = substr(trim($function), 1);
+							$exit = true;
+							break 2;
+
+						case '>':
+							// function enter
+							$function = substr(trim($function), 1);
+							if ($this->collapse) {
+								// look ahead: is the next line the closing function call?
+								$next = $this->fetchLine($fp);
+								if (strstr($next, '<' . $function)) {
+										// Yes, it is..- lets collapse into one line
+										if ($this->verbose)
+											printf("%07d - Collapsing\n%s/%s", $lineno, $line, $next);
+										$line = str_replace('>' . $function, '=' . $function, $line);
+										$lineno++;
+								} else {
+									if ($this->verbose)
+											printf("%07d - No collapse\n%s/%s\n", $lineno, $line, $next);
+									$this->unfetchLine();
+								}
+							}
 							break 2;
 
 						default:
@@ -152,12 +199,6 @@ class cpp_trace_analyzer {
 					}
 					$function = substr($function, 1);
 				} while ($function != '');
-
-				if ($this->level > 0 && ($level > $this->level)) {
-					if ($this->verbose)
-							printf("%07d - Skip - level %d > %d\n", $lineno, $level, $this->level);
-					continue;
-				}
 
 				if ('' == $function) {
 					if ($this->verbose)
@@ -181,6 +222,19 @@ class cpp_trace_analyzer {
 						$method = substr($function, $i + 2);
 				}
 
+				if ($this->collect_stats && !$exit && $method != '') {
+					if (!isset($this->stats[$class][$method]))
+						$this->stats[$class][$method] = 1;
+					else
+						$this->stats[$class][$method]++;
+				}
+				if ($this->level > 0 && ($level > $this->level)) {
+					if ($this->verbose)
+							printf("%07d - Skip - level %d > %d\n", $lineno, $level, $this->level);
+					continue;
+				}
+
+
 				if (isset($this->exclude_functions[$class . '::'])) {
 					if ($this->verbose)
 						printf("%07d - Skip - class %s because of -r %s::\n", $lineno, $class, $class);
@@ -193,8 +247,16 @@ class cpp_trace_analyzer {
 					continue;
 				}
 
+				if (isset($this->exclude_functions[$class . '::' . $method])) {
+					if ($this->verbose)
+						printf("%07d - Skip - method %s::%s because of -r %s::%s\n", $lineno, $class, $method, $class, $method);
+					continue;
+				}
+
 				if (!empty($this->show_functions)) {
-					if (!isset($this->show_functions[$class . '::']) && !isset($this->show_functions[$method])) {
+					if (!isset($this->show_functions[$class . '::']) &&
+							!isset($this->show_functions[$method]) &&
+							!isset($this->show_functions[$class . '::' . $method])) {
 						if ($this->verbose)
 							printf("%07d - Skip - class %s or method %s not in positive show list, no -s %s:: and no -s %s\n", $lineno, $class, $method, $class, $method);
 						continue;
@@ -205,21 +267,69 @@ class cpp_trace_analyzer {
 				printf("%07d/%02d/%07d\t%s", $lineno, $level, $displayed, $line);
 				if (($this->max_lines > 0) && ($displayed == $this->max_lines)) {
 					if ($this->verbose)
-							printf("%07d - Skip - showed %d lines, limit of -m %d reached%s\n", $lineno, $displayed, $this->max_lines);
+							printf("%07d - Skip - showed %d lines, limit of -m %d reached\n", $lineno, $displayed, $this->max_lines);
 					break;
 				}
 			}
 
-
 			fclose($fp);
 
+			if ($this->collect_stats)
+				$this->printStats();
+
 			return true;
+	}
+
+
+	public function printStats() {
+
+		printf("\n");
+		ksort($this->stats);
+		foreach ($this->stats as $class => $methods) {
+
+			if ($class)
+				printf("Class: %s\n\n", $class);
+			else
+				printf("No class\n\n");
+
+			arsort($methods, SORT_NUMERIC);
+			foreach ($methods as $method => $calls)
+				printf("  %-40s %-7d\n", $method, $calls);
+			printf("\n");
+		}
+	}
+
+	protected function fetchLine($fp, $bytes = 16384) {
+		if ($this->unfetched > 0) {
+			$line = $this->fetch_buffer[count($this->fetch_buffer) - $this->unfetched];
+			$this->unfetched--;
+			return $line;
+		}
+
+		if (!$this->read_from_tail)
+			$line =  fgets($fp, $bytes);
+
+		$this->fetch_buffer[] = $line;
+		if (count($this->fetch_buffer) > 10) {
+			// remove oldest
+			array_shift($this->fetch_buffer);
+		}
+
+		return $line;
+	}
+
+	protected function unfetchLine() {
+		if ($this->unfetched == count($this->fetch_buffer))
+			return false;
+
+		$this->unfetched++;
+		return $this->fetch_buffer[count($this->fetch_buffer) - $this->unfetched - 1];
 	}
 
 	protected function printUsage($msg = NULL) {
 		print "\n";
 		print "Usage:\n";
-		print " script.php [-l trace_lesting_level] [-s show_function] [-r remove_function] [-m max_number_of_lines_to_display] trace\n";
+		print " script.php [-l trace_lesting_level] [-s show_function] [-r remove_function] [-b read_file_backwards] [-m max_number_of_lines_to_display] [-stats] trace\n";
 		print "\n";
 		if (!is_null($msg))
 			printf(" %s\n\n", $msg);
