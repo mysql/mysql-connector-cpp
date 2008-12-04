@@ -13,7 +13,8 @@ Beta  1.0.2 - xxxx-xx-xx
 
 - Fixed a bug in MySQL_ConnectionMetaData::getColumns() which was
   performing a cartesian product of the columns in the table times
-  the columns matching columnNamePattern. (Andrey)
+  the columns matching columnNamePattern. example/connection_meta_schemaobj.cpp
+  extended to cover the function. (Andrey)
 
 - Fixed lame bug in MySQL_ConnectionMetaData::getIndexInfo() which
   did not work because the schema name wasn't included in the query sent
