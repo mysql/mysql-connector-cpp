@@ -1932,7 +1932,7 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 		}
 	} else {
 		std::string query("SHOW KEYS FROM `");
-		query.append("`.`").append(table).append("`");
+		query.append(schema).append("`.`").append(table).append("`");
 
 		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
 
