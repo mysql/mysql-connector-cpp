@@ -527,6 +527,7 @@ namespace testsuite
     catch (sql::SQLException & sqle)
     {
       logErr( String("Couldn't get connection") + sqle.what() );
+      throw sqle;
     }
 
     this->stmt.reset( this->conn->createStatement() );
