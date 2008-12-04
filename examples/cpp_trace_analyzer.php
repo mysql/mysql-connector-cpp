@@ -323,7 +323,7 @@ class cpp_trace_analyzer {
 						$comment = sprintf("(hidden because of -r %s)", $method);
 					else {
 						if ($calls * $fac > 1)
-							$comment = sprintf('(shown, used "-r %s" to hide)', $method);
+							$comment = sprintf('(shown, used "-r %s::%s" to hide)', $class, $method);
 						else
 							$comment = "(shown)";
 					}
