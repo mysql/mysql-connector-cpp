@@ -7,6 +7,10 @@ Beta  1.0.2 - xxxx-xx-xx
 
 - Implemented MySQL_PreparedStatement::clearParameters()
 
+- Fixed a bug in MySQL_ConnectionMetaData::getColumns() which was
+  performing a cartesian product of the columns in the table times
+  the columns matching columnNamePattern.
+
 
 Alpha  1.0.1 - 2008-12-01
 
