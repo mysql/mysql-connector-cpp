@@ -857,22 +857,23 @@ namespace compliance
 /* throws Exception */
   void ResultSetMetadataTest::setUp() 
   {
-        super::setUp();
+    super::setUp();
+
     Properties::const_iterator cit = sqlProps.find("ftable");
-        String fTableName;
+    String fTableName;
 
     if ( cit != sqlProps.end() )
     {
       fTableName = cit->second;
     }
 
-        query = String( "SELECT COF_NAME, PRICE FROM " ) + fTableName;
+    query = String( "SELECT COF_NAME, PRICE FROM " ) + fTableName;
 
-        stmt.reset( conn->createStatement( /*sql::ResultSet::TYPE_SCROLL_INSENSITIVE,sql::ResultSet::CONCUR_READ_ONLY*/
-            ) );
-        rs.reset( stmt->executeQuery(query) );
-        rsmd.reset(rs->getMetaData());
-    }
+    stmt.reset( conn->createStatement( /*sql::ResultSet::TYPE_SCROLL_INSENSITIVE,sql::ResultSet::CONCUR_READ_ONLY*/
+        ) );
+    rs.reset( stmt->executeQuery(query) );
+    rsmd.reset(rs->getMetaData());
+  }
 
 }
 }

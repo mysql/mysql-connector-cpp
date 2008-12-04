@@ -557,11 +557,11 @@ namespace testsuite
     if (this->rs.get() != NULL)
       this->rs->close();
 
-    std::auto_ptr<sql::DatabaseMetaData> dbmd(conn->getMetaData());
+    DatabaseMetaData dbmd(conn->getMetaData());
 
     hasSps = dbmd->supportsStoredProcedures();
 
-	stmt->execute( String( "USE " ) + defaultDb );
+	  stmt->execute( String( "USE " ) + defaultDb );
   }
 
   /**

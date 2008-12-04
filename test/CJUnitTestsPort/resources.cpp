@@ -109,23 +109,41 @@ namespace testsuite
       return instance;
     }
 
-    int LoadProperties( const String & fileName, Properties &props )
+
+    bool OpenFile( std::ifstream & fileStream, const String & fileName
+                  , const char * _possibleLocations[] )
+    {
+      fileStream.open( fileName.c_str() );
+
+      int i= 0;
+
+      while (!fileStream.is_open()
+           && _possibleLocations != NULL && _possibleLocations[ i ] != NULL )
+      {
+        fileStream.clear();
+        fileStream.open( ( String(_possibleLocations[ i ]) + "/" + fileName ).c_str() );
+        ++i;
+      }
+
+      return fileStream.is_open();
+    }
+
+    int LoadProperties( const String & fileName, Properties & props
+                      , const char * _possibleLocations[] )
     {
       int counter= 0;
 
-      std::ifstream propsFile( fileName.c_str() );
+      std::ifstream propsFile;
 
-      if (propsFile.is_open())
+      if ( OpenFile( propsFile, fileName, _possibleLocations ) )
       {
         String line;
-        while (! propsFile.eof() )
+        while ( getline(propsFile,line) )
         {
-          getline (propsFile,line);
-
           StringUtils::trim( line );
 
           // Not empty line or a comment
-          if (line.size() > 0 && line.c_str()[0] != '#')
+          if (! propsFile.eof() && line.size() > 0 && line.c_str()[0] != '#')
           {
             String::size_type pos = line.find_first_of( "=" );
 
