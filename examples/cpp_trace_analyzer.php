@@ -321,8 +321,12 @@ class cpp_trace_analyzer {
 				} else if (!empty($this->exclude_functions)) {
 					if (isset($this->exclude_functions[$method]))
 						$comment = sprintf("(hidden because of -r %s)", $method);
-					else
-						$comment = sprintf('(shown, used -r %s to hide)', $method);
+					else {
+						if ($calls * $fac > 1)
+							$comment = sprintf('(shown, used "-r %s" to hide)', $method);
+						else
+							$comment = "(shown)";
+					}
 				}
 				printf("  %-40s %-7d (= %5s%%) - %s\n", $method, $calls,
 					sprintf("%2.2f", $calls * $fac), $comment);
