@@ -1468,31 +1468,40 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 
 				while (rs4->next()) {
 					for (unsigned int i = 1; i <= rs3_meta->getColumnCount(); i++) {
-						rs_data.push_back("");								// Catalog
-						rs_data.push_back(current_schema);					// Schema
-						rs_data.push_back(current_table);					// Table
-						rs_data.push_back(rs4->getString(1));				// Column
-						rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getColumnType(i))); // Type
-						rs_data.push_back(rs3_meta->getColumnTypeName(i));	// Type name
-						rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getColumnDisplaySize(i))); // Column size
-						rs_data.push_back("");								// Table comment
-						rs_data.push_back("");								// Buffer length
-						rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getScale(i))); // Decimal digits
-						rs_data.push_back("10");							// NUM_PREC_RADIX
-						rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->isNullable(i))); // Is_nullable
-						rs_data.push_back(rs4->getString(9));				// remarks
-						rs_data.push_back(rs4->getString(6));				// default
-						rs_data.push_back("");								// SQL_DATA_TYPE - unused
-						rs_data.push_back("");								// SQL_DATETIME_SUB - unused
-						rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getColumnDisplaySize(i))); // CHAR_OCTET_LENGTH
-						rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) i)); // CHAR_OCTET_LENGTH
-						rs_data.push_back(rs3_meta->isNullable(i)? "YES":"NO");		// IS_NULLABLE
+						/*
+						  `SELECT * FROM XYZ WHERE 0=1` will return metadata about all
+						  columns but `columnNamePattern` could be set. So, we can have different
+						  number of rows/columns in the result sets which doesn't correspond.
+						*/
+						if (rs3_meta->getColumnName(i) == rs4->getString(1)) {
+							rs_data.push_back("");								// Catalog
+							rs_data.push_back(current_schema);					// Schema
+							rs_data.push_back(current_table);					// Table
+							rs_data.push_back(rs4->getString(1));				// Column
+							rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getColumnType(i))); // Type
+							rs_data.push_back(rs3_meta->getColumnTypeName(i));	// Type name
+							rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getColumnDisplaySize(i))); // Column size
+							rs_data.push_back("");								// Table comment
+							rs_data.push_back("");								// Buffer length
+							rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getScale(i))); // Decimal digits
+							rs_data.push_back("10");							// NUM_PREC_RADIX
+							rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->isNullable(i))); // Is_nullable
+							rs_data.push_back(rs4->getString(9));				// remarks
+							rs_data.push_back(rs4->getString(6));				// default
+							rs_data.push_back("");								// SQL_DATA_TYPE - unused
+							rs_data.push_back("");								// SQL_DATETIME_SUB - unused
+							rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getColumnDisplaySize(i))); // CHAR_OCTET_LENGTH
+							rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) i)); // CHAR_OCTET_LENGTH
+							rs_data.push_back(rs3_meta->isNullable(i)? "YES":"NO");		// IS_NULLABLE
 #if 0
-						rs_data.push_back("");				// SCOPE_CATALOG - unused
-						rs_data.push_back("");				// SCOPE_SCHEMA - unused
-						rs_data.push_back("");				// SCOPE_TABLE - unused
-						rs_data.push_back("");				// IS_AUTOINCREMENT - unused
+							rs_data.push_back("");				// SCOPE_CATALOG - unused
+							rs_data.push_back("");				// SCOPE_SCHEMA - unused
+							rs_data.push_back("");				// SCOPE_TABLE - unused
+							rs_data.push_back("");				// IS_AUTOINCREMENT - unused
 #endif
+							/* don't iterate any more, we have found our column */
+							break;
+						}
 					}
 				}
 			}
@@ -1923,7 +1932,7 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 		}
 	} else {
 		std::string query("SHOW KEYS FROM `");
-		query.append("`.`").append(table).append("`");
+		query.append(schema).append("`.`").append(table).append("`");
 
 		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
 

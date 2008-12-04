@@ -3,9 +3,17 @@ Beta  1.0.2 - xxxx-xx-xx
 - Fixed bugs in MySQL_DatabaseMetaData :
   All supportsCatalogXXXXX methods were returning `true` and
   all supportSchemaXXXX methods false, which is not as it should be.
-  Now it is reversed, to be consistent with the rest.
+  Now it is reversed, to be consistent with the rest. (Andrey)
 
-- Implemented MySQL_PreparedStatement::clearParameters()
+- Implemented MySQL_PreparedStatement::clearParameters(). (Andrey)
+
+- Fixed a bug in MySQL_ConnectionMetaData::getColumns() which was
+  performing a cartesian product of the columns in the table times
+  the columns matching columnNamePattern. (Andrey)
+
+- Fixed lame bug in MySQL_ConnectionMetaData::getIndexInfo() which
+  did not work because the schema name wasn't included in the query sent
+  to the server. (Andrey)
 
 
 Alpha  1.0.1 - 2008-12-01

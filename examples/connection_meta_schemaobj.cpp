@@ -230,6 +230,19 @@ int main(int argc, const char **argv)
 		}
 		cout << "#" << endl;
 
+  	res_tables->first();
+		std::auto_ptr< sql::ResultSet > res_columns(con_meta->getColumns(con->getCatalog(), database, "test1", "%"));
+
+		cout << "#" << "Columns in the table 'test1'..." << endl;
+		cout << "#\t rowsCount() = " << res_columns->rowsCount() << endl;
+		if (res_columns->rowsCount() != 2)
+			throw runtime_error("Table test1 has two columns, no more!");
+
+		while (res_columns->next()) {
+			cout << "#\t Column name = '" << res_columns->getString("COLUMN_NAME") << "'" << endl;
+		}
+		cout << "#" << endl;
+
 		cout << "# done!" << endl;
 		cout << "ok" << endl;
 
