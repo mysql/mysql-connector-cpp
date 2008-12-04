@@ -284,17 +284,50 @@ class cpp_trace_analyzer {
 	public function printStats() {
 
 		printf("\n");
+		$total_calls = $fac = 0;
+		foreach ($this->stats as $class => $methods) {
+			foreach ($methods as $method => $calls)
+				$total_calls += $calls;
+		}
+		$fac = 100 / $total_calls;
+
 		ksort($this->stats);
 		foreach ($this->stats as $class => $methods) {
 
+			if (!empty($this->show_functions)) {
+				if (isset($this->show_functions[$class . '::']))
+					$comment = sprintf("(shown because of -s %s::)", $class);
+				else
+					$comment = "(hidden)";
+			} else if (!empty($this->exclude_functions)) {
+				if (isset($this->exclude_functions[$class . '::']))
+					$comment = sprintf("(hidden because of -r %s::)", $class);
+				else
+					$comment = '(shown)';
+			}
+
 			if ($class)
-				printf("Class: %s\n\n", $class);
+				printf("Class: %s %s\n\n", $class, $comment);
 			else
 				printf("No class\n\n");
 
 			arsort($methods, SORT_NUMERIC);
-			foreach ($methods as $method => $calls)
-				printf("  %-40s %-7d\n", $method, $calls);
+			foreach ($methods as $method => $calls) {
+				if (!empty($this->show_functions)) {
+					if (isset($this->show_functions[$method]))
+						$comment = sprintf("(shown because of -s %s)", $method);
+					else
+						$comment = "(hidden)";
+				} else if (!empty($this->exclude_functions)) {
+					if (isset($this->exclude_functions[$method]))
+						$comment = sprintf("(hidden because of -r %s)", $method);
+					else
+						$comment = '(shown)';
+				}
+				printf("  %-40s %-7d (= %5s%%) - %s\n", $method, $calls,
+					sprintf("%2.2f", $calls * $fac), $comment);
+
+			}
 			printf("\n");
 		}
 	}
