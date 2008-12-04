@@ -1,5 +1,9 @@
 Beta  1.0.2 - xxxx-xx-xx
 
+- Adding PHP script examples/cpp_trace_analyzer.php to filter the
+  output of the debug trace. Please see the inline comments for documentation.
+  This script is unsupported! We do no promise to maintain it. (Ulf)
+
 - Fixed bugs in MySQL_DatabaseMetaData :
   All supportsCatalogXXXXX methods were returning `true` and
   all supportSchemaXXXX methods false, which is not as it should be.
@@ -55,7 +59,7 @@ Alpha  1.0.1 - 2008-12-01
   line, for example
   `examples/connect tcp://host:port user pass database`
   or
-  `examples/connect unix:///path/to/mysql.sock user pass database` 
+  `examples/connect unix:///path/to/mysql.sock user pass database`
 
 - Adding experimental GCov support, cmake -DMYSQLCPPCONN_GCOV_ENABLE:BOOL=1
 
@@ -73,7 +77,7 @@ Alpha  1.0.1 - 2008-12-01
   generic interface cppconn + 3 MySQL specific headers
   -- mysql_driver.h (if you want to get your connections from the driver
      instead of instantiating a MySQL_Connection object. This makes your code
-	 pretty portable against the common interface) 
+	 pretty portable against the common interface)
   -- mysql_connection.h - If you intend to link directly to the MySQL_Connection
      class and use its specifics not found in sql::Connection
   However, you can make your application fully abstract by not using the two
