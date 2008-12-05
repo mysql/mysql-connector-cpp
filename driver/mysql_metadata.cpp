@@ -2639,23 +2639,17 @@ MySQL_ConnectionMetaData::getTables(const std::string& catalog, const std::strin
 	rs_field_data.push_back("REMARKS");
 
 	/* Bind Problems with 49999, check later why */
-	if (server_version > 79999) {
-		static const std::string query("SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, " \
-							"IF(STRCMP(TABLE_TYPE,'BASE TABLE'), TABLE_TYPE, 'TABLE'), " \
-							"TABLE_COMMENT FROM INFORMATION_SCHEMA.TABLES WHERE " \
-							"TABLE_SCHEMA  LIKE ? AND TABLE_NAME LIKE ? " \
-							"ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME");
-		std::string pattern1, pattern2;
+	if (server_version > 49999) {
+		std::string query("SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, "
+							"IF(STRCMP(TABLE_TYPE,'BASE TABLE'), TABLE_TYPE, 'TABLE'), "
+							"TABLE_COMMENT FROM INFORMATION_SCHEMA.TABLES WHERE "
+							"TABLE_SCHEMA  LIKE '");
+		query.append(schemaPattern).append("' AND TABLE_NAME LIKE '").append(tableNamePattern).
+			append("' ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME");
 
-		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
-		pattern1.append(schemaPattern.c_str());
+		std::auto_ptr<sql::Statement> stmt(connection->createStatement());
 
-		pattern2.append(tableNamePattern.c_str());
-
-		stmt->setString(1, pattern1);
-		stmt->setString(2, pattern2);
-
-		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
+		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
 
 		while (rs->next()) {
 			std::list<std::string>::iterator it;
