@@ -442,15 +442,18 @@ class cpp_trace_analyzer {
 			arsort($methods, SORT_NUMERIC);
 
 			foreach ($methods as $method => $calls) {
-
+				$hidden = false;
 				$comment = '';
 				if (!empty($this->show_functions)) {
 					if (isset($this->show_functions[$method])) {
 						$comment = sprintf("(shown because of -s %s)", $method);
 					} else if (isset($this->show_functions[$class . '::' . $method])) {
 						$comment = sprintf("(shown because of -s %s::%s)", $class, $method);
+					} else if (isset($this->show_functions[$class . '::'])) {
+						$comment = sprintf("(shown because of -s %s::)", $class);
 					} else {
 						$total_hidden += $calls;
+						$hidden = true;
 						$comment = "(hidden)";
 					}
 				} else if (!empty($this->exclude_functions)) {
@@ -459,12 +462,19 @@ class cpp_trace_analyzer {
 						$comment = sprintf("(hidden because of -r %s)", $method);
 					} else if (isset($this->exclude_functions[$class . '::' . $method])) {
 						$total_hidden += $calls;
+						$hidden = true;
 						$comment = sprintf("(hidden because of -r %s::%s)", $class, $method);
+					} else if (isset($this->exclude_functions[$class . '::'])) {
+						$total_hidden += $calls;
+						$hidden = true;
+						$comment = sprintf("(hidden because of -r %s::)", $class);
 					}
 				}
 
 				if ($comment == '') {
-					if ($calls * $fac >= 2) {
+					if ($hidden) {
+						$comment = '(hidden)';
+					} else if ($calls * $fac >= 2) {
 						$comment = sprintf('(shown, use "-r %s::%s" to hide)', $class, $method);
 						$auto_hide .= sprintf("-r %s::%s ", $class, $method);
 					} else {
