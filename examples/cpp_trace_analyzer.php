@@ -279,6 +279,7 @@ class cpp_trace_analyzer {
 				$lineno++;
 				$function = trim($line);
 				$level = 1;
+				$show_level = null;
 				$exit = false;
 				do {
 					$left = substr(trim($function), 0, 1);
@@ -381,10 +382,16 @@ class cpp_trace_analyzer {
 				if (!empty($this->show_functions)) {
 					if (!isset($this->show_functions[$class . '::']) &&
 							!isset($this->show_functions[$method]) &&
-							!isset($this->show_functions[$class . '::' . $method])) {
+							!isset($this->show_functions[$class . '::' . $method]) &&
+							$level < $show_level
+							) {
 						if ($this->verbose)
 							printf("%07d - Skip - class %s or method %s not in positive show list, no -s %s:: and no -s %s\n", $lineno, $class, $method, $class, $method);
+						$show_level = null;
 						continue;
+					} else {
+						if (is_null($show_level))
+							$show_level = $level;
 					}
 				}
 
