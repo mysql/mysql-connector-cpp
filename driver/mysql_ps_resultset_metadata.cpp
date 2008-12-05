@@ -135,11 +135,14 @@ MySQL_Prepared_ResultSetMetaData::getColumnType(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getColumnType");
 	CPP_INFO_FMT("this=%p", this);
+	CPP_INFO_FMT("column=%u", columnIndex);
 	columnIndex--;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	return mysql_fetch_field_direct(result_meta, columnIndex)->type;
+	int mysql_type = mysql_fetch_field_direct(result_meta, columnIndex)->type;
+	CPP_INFO_FMT("type=%d", mysql_type);
+	return mysql_type;
 }
 /* }}} */
 

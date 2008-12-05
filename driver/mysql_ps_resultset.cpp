@@ -24,10 +24,19 @@
 #include "mysql_prepared_statement.h"
 #include "mysql_ps_resultset_metadata.h"
 
+#include <stdio.h>
+
 #ifndef _WIN32
 #include <string.h>
 #include <stdlib.h>
 #endif	//	_WIN32
+
+#ifndef _WIN32
+#include <stdlib.h>
+#else
+#define atoll(x) _atoi64((x))
+#endif	//	_WIN32
+
 
 #include "mysql_debug.h"
 #include "mysql_util.h"
@@ -37,7 +46,26 @@ namespace sql
 namespace mysql
 {
 
+
 char * cppmysql_utf8_strup(const char *src, size_t srclen);
+
+/* {{{ my_l_to_a() -I- */
+static inline char * my_l_to_a(char * buf, size_t buf_size, long long a)
+{
+	snprintf(buf, buf_size, "%lld", a);
+	return buf;
+}
+/* }}} */
+
+
+/* {{{ my_f_to_a() -I- */
+static inline char * my_f_to_a(char * buf, size_t buf_size, double a)
+{
+	snprintf(buf, buf_size, "%f", a);
+	return buf;
+}
+/* }}} */
+
 
 /* {{{ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet() -I- */
 MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(MYSQL_STMT *s, MySQL_Prepared_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
@@ -277,10 +305,12 @@ MySQL_Prepared_ResultSet::getDouble(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getDouble(int)");
 	CPP_INFO_FMT("column=%u", columnIndex);
+
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getDouble: can't fetch because not on result set");
 	}
+
 	/* internally zero based */
 	columnIndex--;
 	if (columnIndex >= num_fields) {
@@ -288,6 +318,28 @@ MySQL_Prepared_ResultSet::getDouble(unsigned int columnIndex) const
 	}
 
 	last_queried_column = columnIndex;
+
+	if (*stmt->bind[columnIndex].is_null) {
+		return 0.0;
+	}
+
+	std::auto_ptr<sql::ResultSetMetaData> rs_meta(getMetaData());
+	switch (rs_meta->getColumnType(columnIndex + 1)) {
+		case MYSQL_TYPE_TINY:
+		case MYSQL_TYPE_SHORT:
+		case MYSQL_TYPE_INT24:
+		case MYSQL_TYPE_LONG:
+		case MYSQL_TYPE_LONGLONG:
+		case MYSQL_TYPE_TIMESTAMP:
+			CPP_INFO("It's an int");
+			return getLong(columnIndex + 1);
+		case MYSQL_TYPE_STRING:
+		case MYSQL_TYPE_VAR_STRING:
+		case MYSQL_TYPE_BLOB:
+			CPP_INFO("It's a string");
+			return atof(getString(columnIndex + 1).c_str());
+	}
+
 	return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<double *>(stmt->bind[columnIndex].buffer):0.;
 }
 /* }}} */
@@ -341,10 +393,12 @@ MySQL_Prepared_ResultSet::getInt(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getInt(int)");
 	CPP_INFO_FMT("column=%u", columnIndex);
+
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt: can't fetch because not on result set");
 	}
+
 	/* internally zero based */
 	columnIndex--;
 	if (columnIndex >= num_fields) {
@@ -352,6 +406,24 @@ MySQL_Prepared_ResultSet::getInt(unsigned int columnIndex) const
 	}
 
 	last_queried_column = columnIndex;
+
+	if (*stmt->bind[columnIndex].is_null) {
+		return 0;
+	}
+
+	std::auto_ptr<sql::ResultSetMetaData> rs_meta(getMetaData());
+	switch (rs_meta->getColumnType(columnIndex + 1)) {
+		case MYSQL_TYPE_FLOAT:
+		case MYSQL_TYPE_DOUBLE:
+			CPP_INFO("It's a double");
+			return (long long) getDouble(columnIndex + 1);
+		case MYSQL_TYPE_STRING:
+		case MYSQL_TYPE_VAR_STRING:
+		case MYSQL_TYPE_BLOB:
+			CPP_INFO("It's a string");
+			return atoll(getString(columnIndex + 1).c_str());
+	}
+
 	switch (stmt->bind[columnIndex].buffer_length) {
 		case 1:
 			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int8_t *>(stmt->bind[columnIndex].buffer):0;
@@ -384,7 +456,7 @@ MySQL_Prepared_ResultSet::getLong(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getLong(int)");
 	CPP_INFO_FMT("column=%u", columnIndex);
-	checkValid();
+
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getLong: can't fetch because not on result set");
@@ -396,6 +468,24 @@ MySQL_Prepared_ResultSet::getLong(unsigned int columnIndex) const
 	}
 
 	last_queried_column = columnIndex;
+
+	if (*stmt->bind[columnIndex].is_null) {
+		return 0;
+	}
+
+	std::auto_ptr<sql::ResultSetMetaData> rs_meta(getMetaData());
+	switch (rs_meta->getColumnType(columnIndex + 1)) {
+		case MYSQL_TYPE_FLOAT:
+		case MYSQL_TYPE_DOUBLE:
+			CPP_INFO("It's a double");
+			return (long long) getDouble(columnIndex + 1);
+		case MYSQL_TYPE_STRING:
+		case MYSQL_TYPE_VAR_STRING:
+		case MYSQL_TYPE_BLOB:
+			CPP_INFO("It's a string");
+			return atoll(getString(columnIndex + 1).c_str());
+	}
+	
 	switch (stmt->bind[columnIndex].buffer_length) {
 		case 1:
 			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int8_t *>(stmt->bind[columnIndex].buffer):0;
@@ -487,6 +577,7 @@ MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getString: can't fetch because not on result set");
 	}
+
 	/* internally zero based */
 	columnIndex--;
 	if (columnIndex >= num_fields) {
@@ -497,6 +588,31 @@ MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 	if (*stmt->bind[columnIndex].is_null) {
 		return std::string("");
 	}
+
+	std::auto_ptr<sql::ResultSetMetaData> rs_meta(getMetaData());
+	switch (rs_meta->getColumnType(columnIndex + 1)) {
+		case MYSQL_TYPE_TINY:
+		case MYSQL_TYPE_SHORT:
+		case MYSQL_TYPE_INT24:
+		case MYSQL_TYPE_LONG:
+		case MYSQL_TYPE_LONGLONG:
+		case MYSQL_TYPE_TIMESTAMP:
+		{
+			char buf[30];
+			CPP_INFO("It's an int");
+			my_l_to_a(buf, sizeof(buf) - 1, getLong(columnIndex + 1));
+			return std::string(buf);
+		}
+		case MYSQL_TYPE_FLOAT:
+		case MYSQL_TYPE_DOUBLE:
+		{
+			char buf[50];
+			CPP_INFO("It's a double");
+			my_f_to_a(buf, sizeof(buf) - 1, getDouble(columnIndex + 1));
+			return std::string(buf);
+		}
+	}		
+	
 	CPP_INFO_FMT("value=%*s", *stmt->bind[columnIndex].length, stmt->bind[columnIndex].buffer);
 	return  std::string(static_cast<char *>(stmt->bind[columnIndex].buffer),
 						static_cast<char *>(stmt->bind[columnIndex].buffer) + *stmt->bind[columnIndex].length);
