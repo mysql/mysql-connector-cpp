@@ -353,10 +353,14 @@ MySQL_Prepared_ResultSet::getInt(unsigned int columnIndex) const
 
 	last_queried_column = columnIndex;
 	switch (stmt->bind[columnIndex].buffer_length) {
+		case 1:
+			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int8_t *>(stmt->bind[columnIndex].buffer):0;
+		case 2:
+			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int16_t *>(stmt->bind[columnIndex].buffer):0;
 		case 4:
-			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int *>(stmt->bind[columnIndex].buffer):0;
+			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int32_t *>(stmt->bind[columnIndex].buffer):0;
 		case 8:
-			return static_cast<int>( !*stmt->bind[columnIndex].is_null? *reinterpret_cast<long long *>(stmt->bind[columnIndex].buffer):0 );
+			return static_cast<int>( !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int64_t *>(stmt->bind[columnIndex].buffer):0 );
 		default:
 			throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt: invalid type");
 	}
@@ -393,10 +397,14 @@ MySQL_Prepared_ResultSet::getLong(unsigned int columnIndex) const
 
 	last_queried_column = columnIndex;
 	switch (stmt->bind[columnIndex].buffer_length) {
+		case 1:
+			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int8_t *>(stmt->bind[columnIndex].buffer):0;
+		case 2:
+			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int16_t *>(stmt->bind[columnIndex].buffer):0;
 		case 4:
-			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int *>(stmt->bind[columnIndex].buffer):0;
+			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int32_t *>(stmt->bind[columnIndex].buffer):0;
 		case 8:
-			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<long long *>(stmt->bind[columnIndex].buffer):0;
+			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int64_t *>(stmt->bind[columnIndex].buffer):0;
 		default:
 			throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getLong: invalid type");
 	}
