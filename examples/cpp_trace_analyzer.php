@@ -21,9 +21,128 @@
 */
 
 /**
-* Simple utility script to filter Connector/C++ internal traces
+* Script to filter Connector/C++ (and Connector/OpenOffice.org) debug traces
 *
-* NO PROMISE THAT IT WORKS !
+* NOTE: NO SUPPORT FOR THIS SCRIPT
+* NOTE: FIX BUGS YOURSELF!
+*
+* MySQL Connector/C++ offers several debug traces, The internal debug trace is
+* a call trace. It shows each and every function call and sometimes
+* the function arguments and other related information.
+*
+* Example:
+* |  INF: Tracing enabled
+* <MySQL_Connection::setClientOption
+* >MySQL_Prepared_Statement::setInt
+* |  INF: this=0x69a2e0
+* |  >MySQL_Prepared_Statement::checkClosed
+* |  <MySQL_Prepared_Statement::checkClosed
+* |  <MySQL_Prepared_Statement::setInt
+*
+*
+*
+* Obviously this trace  can easily get very, very long. It can show significantly
+* more detail than you might want to find in the trace. Therefore you will find
+* yourself often "grep'ing" through the trace to identify relevant information.
+* This script aims to help you with the grep. I'm not a Unix-Shell expert,
+* I've grown up with PHP - so its in PHP.
+*
+* Syntax:
+*   php script.php
+*     [-l trace_nesting_level]
+*     [-s show_function]
+*     [-r remove_function]
+*     [-b read_file_backwards]
+*     [-m max_number_of_lines_to_display]
+*     [-stats]
+*      trace_input_file
+*
+*
+* The script shows three numbers at the beginning of each line of its output:
+*
+*  <input_lineno>/<nesting_level>/<output_lineno>
+*
+* <input_lineno>  - number of the line in the input file which causes the output
+* <nesting_level> - see -t trace_nesting_level
+* <output_lineno> - line number the line in the the generated output
+*
+*
+* -t trace_nesting_level
+*
+* Show only information up to a function call depth of -t <n>.
+* Nesting starts at level 1. If you apply -t 1 to the above example trace,
+* the calls to MySQL_Prepared_Statement::checkClosed and
+* MySQL_Prepared_Statement::setInt should not be shown, because they are
+* on nesting level 2.
+*
+*
+* -s show_function
+*
+* Show only classes and methods that apply to the pattern -s <pattern>.
+* To show only method calls from the class X use -s X:: . To show
+* only calls to method Y from class X, use -s X::Y. To show only
+* all methods with the name Y from any class, use -s Y.
+*
+* Example based on the above trace:
+*
+* -s MySQL_Connection::
+*    show only calls from the MySQL Connection class
+*
+* -s execute
+*    show only calls of the method "execute" from any class
+*
+* -s MySQL_Prepared_Statement::setInt
+*    show calls of method setInt from class MySQL_Prepared_statement
+*
+*
+* -r remove_function
+*
+* Hide classes and methods that apply to pattern -r <pattern>.
+* See -s show_function for a description of <pattern>.
+*
+*
+* -b read_file_backwards
+*
+* Not functional.
+*
+*
+* - m max_number_of_lines_to_display
+*
+* Limit output to <n> lines.
+*
+*
+* -c
+*
+* Compress opening and closing function name into one line. Normally the trace
+* will show two lines for every function call. The first line gets printed when
+* entering a function. The second line gets printed when exiting. -c does
+* "collapse" or "compress" to subsequent lines that show entering and leaving
+* a function into one line. For example:
+*
+* > class::func()
+* < class::func()
+*
+* Would be compressed into one line:
+*
+* = class::func()
+*
+* Compression happens only if no further lines are between entering and leaving
+* a function.
+*
+*
+* -v
+*
+* Print debug output.
+*
+*
+* - stats
+*
+* Print call statistics. This can be useful to decide which
+* classes and/or methods to exclude from the output using -r or -s. Statistics
+* cover all calls - regardless if hidden from the output or not!
+*
+*
+* @see http://dev.mysql.com/doc/refman/6.0/en/connector-cpp-debug-tracing.html
 */
 
 
@@ -155,10 +274,12 @@ class cpp_trace_analyzer {
 
 			$lineno = 0;
 			$displayed = 0;
+
 			while ($line = $this->fetchLine($fp)) {
 				$lineno++;
 				$function = trim($line);
 				$level = 1;
+				$show_level = null;
 				$exit = false;
 				do {
 					$left = substr(trim($function), 0, 1);
@@ -206,9 +327,9 @@ class cpp_trace_analyzer {
 					continue;
 				}
 
-				$class = '';
-				$method = $function;
 				if (strstr($function, '::')) {
+					$pclass = '';
+					$pmethod = $function;
 					$len = strlen($function);
 					for ($i = 0; $i < $len; $i++) {
 						$char = $function{$i};
@@ -216,17 +337,17 @@ class cpp_trace_analyzer {
 						if (':' == $char && ($i < $len -1) && ':' == $function{$i + 1}) {
 							break;
 						}
-						$class .= $char;
+						$pclass .= $char;
 					}
-					if ($class != '')
-						$method = substr($function, $i + 2);
+					if ($pclass != '')
+						$pmethod = substr($function, $i + 2);
 				}
 
-				if ($this->collect_stats && !$exit && $method != '') {
-					if (!isset($this->stats[$class][$method]))
-						$this->stats[$class][$method] = 1;
+				if ($this->collect_stats && !$exit && $pmethod != '') {
+					if (!isset($this->stats[$pclass][$pmethod]))
+						$this->stats[$pclass][$pmethod] = 1;
 					else
-						$this->stats[$class][$method]++;
+						$this->stats[$pclass][$pmethod]++;
 				}
 				if ($this->level > 0 && ($level > $this->level)) {
 					if ($this->verbose)
@@ -234,6 +355,11 @@ class cpp_trace_analyzer {
 					continue;
 				}
 
+				if ($pclass != '' && $pclass != $class)
+					$class = $pclass;
+
+				if ($pmethod != '' && $pmethod != $method)
+					$method = $pmethod;
 
 				if (isset($this->exclude_functions[$class . '::'])) {
 					if ($this->verbose)
@@ -256,10 +382,16 @@ class cpp_trace_analyzer {
 				if (!empty($this->show_functions)) {
 					if (!isset($this->show_functions[$class . '::']) &&
 							!isset($this->show_functions[$method]) &&
-							!isset($this->show_functions[$class . '::' . $method])) {
+							!isset($this->show_functions[$class . '::' . $method]) &&
+							$level < $show_level
+							) {
 						if ($this->verbose)
 							printf("%07d - Skip - class %s or method %s not in positive show list, no -s %s:: and no -s %s\n", $lineno, $class, $method, $class, $method);
+						$show_level = null;
 						continue;
+					} else {
+						if (is_null($show_level))
+							$show_level = $level;
 					}
 				}
 
@@ -291,6 +423,9 @@ class cpp_trace_analyzer {
 		}
 		$fac = 100 / $total_calls;
 
+		$total_hidden = 0;
+		$auto_hide = '';
+
 		ksort($this->stats);
 		foreach ($this->stats as $class => $methods) {
 
@@ -312,28 +447,60 @@ class cpp_trace_analyzer {
 				printf("No class\n\n");
 
 			arsort($methods, SORT_NUMERIC);
+
 			foreach ($methods as $method => $calls) {
+				$hidden = false;
+				$comment = '';
 				if (!empty($this->show_functions)) {
-					if (isset($this->show_functions[$method]))
+					if (isset($this->show_functions[$method])) {
 						$comment = sprintf("(shown because of -s %s)", $method);
-					else
+					} else if (isset($this->show_functions[$class . '::' . $method])) {
+						$comment = sprintf("(shown because of -s %s::%s)", $class, $method);
+					} else if (isset($this->show_functions[$class . '::'])) {
+						$comment = sprintf("(shown because of -s %s::)", $class);
+					} else {
+						$total_hidden += $calls;
+						$hidden = true;
 						$comment = "(hidden)";
+					}
 				} else if (!empty($this->exclude_functions)) {
-					if (isset($this->exclude_functions[$method]))
+					if (isset($this->exclude_functions[$method])) {
+						$total_hidden += $calls;
 						$comment = sprintf("(hidden because of -r %s)", $method);
-					else {
-						if ($calls * $fac > 1)
-							$comment = sprintf('(shown, used "-r %s::%s" to hide)', $class, $method);
-						else
-							$comment = "(shown)";
+					} else if (isset($this->exclude_functions[$class . '::' . $method])) {
+						$total_hidden += $calls;
+						$hidden = true;
+						$comment = sprintf("(hidden because of -r %s::%s)", $class, $method);
+					} else if (isset($this->exclude_functions[$class . '::'])) {
+						$total_hidden += $calls;
+						$hidden = true;
+						$comment = sprintf("(hidden because of -r %s::)", $class);
 					}
 				}
+
+				if ($comment == '') {
+					if ($hidden) {
+						$comment = '(hidden)';
+					} else if ($calls * $fac >= 2) {
+						$comment = sprintf('(shown, use "-r %s::%s" to hide)', $class, $method);
+						$auto_hide .= sprintf("-r %s::%s ", $class, $method);
+					} else {
+						$comment = "(shown)";
+					}
+				}
+
 				printf("  %-40s %-7d (= %5s%%) - %s\n", $method, $calls,
 					sprintf("%2.2f", $calls * $fac), $comment);
 
 			}
 			printf("\n");
 		}
+
+		printf("NOTE: %2.2f%% of all calls hidden.\n", $total_hidden * $fac);
+		printf("\n");
+		printf("If you want to hide all functions which are invoked in more than 2%% of all cases, use:\n");
+		printf("%s\n", $auto_hide);
+		printf("\n");
 	}
 
 	protected function fetchLine($fp, $bytes = 16384) {
@@ -366,7 +533,7 @@ class cpp_trace_analyzer {
 	protected function printUsage($msg = NULL) {
 		print "\n";
 		print "Usage:\n";
-		print " script.php [-l trace_lesting_level] [-s show_function] [-r remove_function] [-b read_file_backwards] [-m max_number_of_lines_to_display] [-stats] trace\n";
+		print " script.php [-l trace_nesting_level] [-s show_function] [-r remove_function] [-b read_file_backwards] [-m max_number_of_lines_to_display] [-stats] trace\n";
 		print "\n";
 		if (!is_null($msg))
 			printf(" %s\n\n", $msg);
