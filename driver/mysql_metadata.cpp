@@ -2273,18 +2273,14 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 	std::list<std::string> rs_field_data;
 
 	if (server_version > 49999) {
-		static const std::string query(
-						"SELECT ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_COMMENT " \
-						"FROM INFORMATION_SCHEMA.ROUTINES WHERE " \
-						"ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ? " \
-						"ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME");
+		std::string query("SELECT ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_COMMENT "
+						"FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA LIKE '");
+		query.append(schemaPattern).append("' AND ROUTINE_NAME LIKE '").append(procedureNamePattern.size() ? procedureNamePattern : "%").
+			append("' ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME");
 
-		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
+		std::auto_ptr<sql::Statement> stmt(connection->createStatement());
 
-		stmt->setString(1, schemaPattern);
-		stmt->setString(2, procedureNamePattern.size() ? procedureNamePattern : "%");
-
-		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
+		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
 		while (rs->next()) {
 			rs_data.push_back(rs->getString(1));	// category
 			rs_data.push_back(rs->getString(2));	// schema
