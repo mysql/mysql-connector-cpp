@@ -48,9 +48,9 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(MYSQL_STMT *s, MySQL_Prepared
 	num_fields = mysql_stmt_field_count(stmt);
 	num_rows = mysql_stmt_num_rows(stmt);
 
+	CPP_INFO_FMT("num_fields=%u num_rows=%u", num_fields, num_rows);
 	for (unsigned int i = 0; i < num_fields; i++) {
 		char *tmp = cppmysql_utf8_strup(mysql_fetch_field(result_meta)->name, 0);
-
 		field_name_to_index_map[std::string(tmp)] = i;
 		free(tmp);
 	}
@@ -145,6 +145,7 @@ void
 MySQL_Prepared_ResultSet::checkValid() const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::checkValid");
+	CPP_INFO_FMT("this=%p", this);
 	if (isClosed()) {
 		throw sql::InvalidInstanceException("Statement has been closed");
 	}
@@ -224,6 +225,7 @@ bool
 MySQL_Prepared_ResultSet::getBoolean(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getBoolean(int)");
+	CPP_INFO_FMT("column=%u", columnIndex);
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getBoolean: can't fetch because not on result set");
@@ -274,6 +276,7 @@ double
 MySQL_Prepared_ResultSet::getDouble(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getDouble(int)");
+	CPP_INFO_FMT("column=%u", columnIndex);
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getDouble: can't fetch because not on result set");
@@ -337,7 +340,7 @@ int
 MySQL_Prepared_ResultSet::getInt(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getInt(int)");
-
+	CPP_INFO_FMT("column=%u", columnIndex);
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt: can't fetch because not on result set");
@@ -376,6 +379,7 @@ long long
 MySQL_Prepared_ResultSet::getLong(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getLong(int)");
+	CPP_INFO_FMT("column=%u", columnIndex);
 	checkValid();
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirstOrAfterLast()) {
@@ -469,7 +473,7 @@ std::string
 MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getString(int)");
-	CPP_INFO_FMT("this=%p column=%u", this, columnIndex);
+	CPP_INFO_FMT("column=%u", columnIndex);
 
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirstOrAfterLast()) {
@@ -649,11 +653,12 @@ bool
 MySQL_Prepared_ResultSet::next()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::next");
+	CPP_INFO_FMT("row_position=%llu num_rows=%llu", row_position, num_rows);
 	bool ret = false;
 	/* isBeforeFirst checks for validity */
 	if (isLast()) {
 		row_position++;
-		return false;
+		ret = false;
 	} else if (row_position < num_rows + 1) {
 		mysql_stmt_data_seek(stmt, row_position);
 		int result = mysql_stmt_fetch(stmt);
@@ -665,7 +670,7 @@ MySQL_Prepared_ResultSet::next()
 		}
 		row_position++;
 	}
-	CPP_INFO_FMT("row_position=%llu num_rows=%llu", row_position, num_rows);
+	CPP_INFO_FMT("new_row_position=%llu ret=%d", row_position, ret);
 	return ret;
 }
 /* }}} */

@@ -150,6 +150,7 @@ void
 MySQL_ResultSet::checkValid() const
 {
 	CPP_ENTER("MySQL_ResultSet::checkValid");
+	CPP_INFO_FMT("this=%p", this);
 	if (isClosed()) {
 		throw sql::InvalidInstanceException("ResultSet has been closed");
 	}

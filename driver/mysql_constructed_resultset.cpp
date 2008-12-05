@@ -181,6 +181,7 @@ void
 MySQL_ConstructedResultSet::checkValid() const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::checkValid");
+	CPP_INFO_FMT("this=%p", this);
 	if (isClosed()) {
 		throw sql::InvalidInstanceException("ResultSet has been closed");
 	}

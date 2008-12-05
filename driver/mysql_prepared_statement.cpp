@@ -67,6 +67,7 @@ MySQL_Prepared_Statement::MySQL_Prepared_Statement(MYSQL_STMT *s, sql::Connectio
 	:connection(conn), stmt(s), param_bind(NULL), isClosed(false), logger(log? log->getReference():NULL)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::MySQL_Prepared_Statement");
+	CPP_INFO_FMT("this=%p", this);
 	param_count = mysql_stmt_param_count(s);
 	if (param_count) {
 		param_bind = get_new_param_bind(param_count);
@@ -471,6 +472,7 @@ MySQL_Prepared_Statement::setInt(unsigned int parameterIndex, int value)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::setInt");
 	CPP_INFO_FMT("this=%p", this);
+	CPP_INFO_FMT("column=%u value=%d", parameterIndex, value);
 	checkClosed();
 
 	parameterIndex--; /* DBC counts from 1 */
@@ -769,6 +771,7 @@ MySQL_Prepared_Statement::setString(unsigned int parameterIndex, const std::stri
 {
 	CPP_ENTER("MySQL_Prepared_Statement::setString");
 	CPP_INFO_FMT("this=%p", this);
+	CPP_INFO_FMT("column=%u value_len=%d value=%s ", parameterIndex, value.length(), value.c_str());
 	checkClosed();
 
 	parameterIndex--; /* DBC counts from 1 */
