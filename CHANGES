@@ -20,6 +20,7 @@ Beta  1.0.2 - xxxx-xx-xx
   did not work because the schema name wasn't included in the query sent
   to the server. (Andrey)
 
+- Implemented PreparedStatement::setNull(). (Andrey)
 
 Alpha  1.0.1 - 2008-12-01
 

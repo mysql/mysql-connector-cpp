@@ -54,6 +54,8 @@ public:
 
 	virtual ParameterMetaData * getParameterMetaData() = 0;
 
+	virtual void setBigInt(unsigned int parameterIndex, const std::string& value) = 0;
+
 	virtual void setBlob(unsigned int parameterIndex, sql::Blob & blob) = 0;
 
 	virtual void setBoolean(unsigned int parameterIndex, bool value) = 0;
@@ -66,7 +68,7 @@ public:
 
 	virtual void setLong(unsigned int parameterIndex, long long value) = 0;
 
-	virtual void setBigInt(unsigned int parameterIndex, const std::string& value) = 0;
+	virtual void setNull(unsigned int parameterIndex, int sqlType) = 0;
 
 	virtual void setString(unsigned int parameterIndex, const std::string& value) = 0;
 };

@@ -179,6 +179,8 @@ static BufferSizePair
 allocate_buffer_for_type(MYSQL_FIELD *field)
 {
 	switch (field->type) {
+		case MYSQL_TYPE_NULL:
+			return BufferSizePair(NULL, 0);
 		case MYSQL_TYPE_TINY:
 			return BufferSizePair(new char[1], 1);
 		case MYSQL_TYPE_SHORT:
@@ -214,10 +216,6 @@ allocate_buffer_for_type(MYSQL_FIELD *field)
 		case MYSQL_TYPE_BIT:
 		case MYSQL_TYPE_ENUM:
 		case MYSQL_TYPE_GEOMETRY:
-		case MYSQL_TYPE_NULL:
-			if (!(field->max_length))
-				return BufferSizePair(new char[1], 1);
-			return BufferSizePair(new char[field->max_length], field->max_length);
 		default:
 			throw sql::InvalidArgumentException("allocate_buffer_for_type: invalid result_bind data type");
 	}
@@ -331,6 +329,22 @@ int
 MySQL_Prepared_Statement::executeUpdate(const std::string&)
 {
 	throw sql::MethodNotImplementedException("MySQL_Prepared_Statement::executeUpdate"); /* TODO - what to do? Comes from Statement */
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_Statement::setBigInt() -I- */
+void
+MySQL_Prepared_Statement::setBigInt(unsigned int parameterIndex, const std::string& value)
+{
+	CPP_ENTER("MySQL_Prepared_Statement::setBigInt");
+	CPP_INFO_FMT("this=%p", this);
+	checkClosed();
+	parameterIndex--; /* DBC counts from 1 */
+	if (parameterIndex >= param_count) {
+		throw InvalidArgumentException("MySQL_Prepared_Statement::setBigInt: invalid 'parameterIndex'");
+	}
+	setString(parameterIndex, value);
 }
 /* }}} */
 
@@ -527,18 +541,29 @@ MySQL_Prepared_Statement::setLong(unsigned int parameterIndex, long long value)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_Statement::setBigInt() -I- */
+/* {{{ MySQL_Prepared_Statement::setNull() -I- */
 void
-MySQL_Prepared_Statement::setBigInt(unsigned int parameterIndex, const std::string& value)
+MySQL_Prepared_Statement::setNull(unsigned int parameterIndex, int /* sqlType */)
 {
-	CPP_ENTER("MySQL_Prepared_Statement::setBigInt");
+	CPP_ENTER("MySQL_Prepared_Statement::setNull");
 	CPP_INFO_FMT("this=%p", this);
+	CPP_INFO_FMT("column=%u", parameterIndex);
 	checkClosed();
+
 	parameterIndex--; /* DBC counts from 1 */
 	if (parameterIndex >= param_count) {
-		throw InvalidArgumentException("MySQL_Prepared_Statement::setBigInt: invalid 'parameterIndex'");
+		throw InvalidArgumentException("MySQL_Prepared_Statement::setInt: invalid 'parameterIndex'");
 	}
-	setString(parameterIndex, value);
+
+	enum_field_types t = MYSQL_TYPE_NULL;
+
+	BufferSizePair p = allocate_buffer_for_type(t);
+
+	param_bind[parameterIndex].buffer_type	= t;
+	delete[] (char *) param_bind[parameterIndex].buffer;
+	param_bind[parameterIndex].buffer		= NULL;
+	delete param_bind[parameterIndex].length;
+	param_bind[parameterIndex].length		= NULL;
 }
 /* }}} */
 

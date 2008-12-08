@@ -129,6 +129,8 @@ public:
 
 	void setMaxRows(unsigned int max);
 
+	void setNull(unsigned int parameterIndex, int sqlType);
+
 	void setResultSetConcurrency(int concurrencyFlag);
 
 	void setResultSetType(int typeFlag);
