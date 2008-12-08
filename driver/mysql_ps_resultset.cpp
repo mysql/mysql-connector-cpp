@@ -610,27 +610,26 @@ MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 		case MYSQL_TYPE_TIMESTAMP:
 		case MYSQL_TYPE_DATETIME:
 		{
-			CPP_INFO("It's a datetime");
 			char buf[22];
 			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(stmt->bind[columnIndex].buffer);
-			snprintf(buf, sizeof(buf) - 1, "%d-%d-%d %d:%d:%d", t->year, t->month, t->day, t->hour, t->minute, t->second);
+			snprintf(buf, sizeof(buf) - 1, "%04d-%02d-%02d %02d:%02d:%02d", t->year, t->month, t->day, t->hour, t->minute, t->second);
+			CPP_INFO_FMT("It's a datetime/timestamp %s", buf);
 			return std::string(buf);
 		}
-		case MYSQL_TYPE_NEWDATE:
 		case MYSQL_TYPE_DATE:
 		{
-			CPP_INFO("It's a datetime");
 			char buf[12];
 			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(stmt->bind[columnIndex].buffer);
-			snprintf(buf, sizeof(buf) - 1, "%d:%d:%d", t->year, t->month, t->day);
+			snprintf(buf, sizeof(buf) - 1, "%02d:%02d:%02d", t->year, t->month, t->day);
+			CPP_INFO_FMT("It's a date %s", buf);
 			return std::string(buf);
 		}
 		case MYSQL_TYPE_TIME:
 		{
-			CPP_INFO("It's a datetime");
 			char buf[12];
 			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(stmt->bind[columnIndex].buffer);
-			snprintf(buf, sizeof(buf) - 1, "%d:%d:%d", t->hour, t->minute, t->second);
+			snprintf(buf, sizeof(buf) - 1, "%02d:%02d:%02d", t->hour, t->minute, t->second);
+			CPP_INFO_FMT("It's a time %s", buf);
 			return std::string(buf);
 		}
 		case MYSQL_TYPE_TINY:
