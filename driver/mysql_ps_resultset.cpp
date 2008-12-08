@@ -330,7 +330,6 @@ MySQL_Prepared_ResultSet::getDouble(unsigned int columnIndex) const
 		case MYSQL_TYPE_INT24:
 		case MYSQL_TYPE_LONG:
 		case MYSQL_TYPE_LONGLONG:
-		case MYSQL_TYPE_TIMESTAMP:
 			CPP_INFO("It's an int");
 			return getLong(columnIndex + 1);
 		case MYSQL_TYPE_TIMESTAMP:
@@ -636,7 +635,6 @@ MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 		case MYSQL_TYPE_INT24:
 		case MYSQL_TYPE_LONG:
 		case MYSQL_TYPE_LONGLONG:
-		case MYSQL_TYPE_TIMESTAMP:
 		{
 			char buf[30];
 			CPP_INFO("It's an int");
