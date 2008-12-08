@@ -338,12 +338,6 @@ void
 MySQL_Prepared_Statement::setBigInt(unsigned int parameterIndex, const std::string& value)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::setBigInt");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	parameterIndex--; /* DBC counts from 1 */
-	if (parameterIndex >= param_count) {
-		throw InvalidArgumentException("MySQL_Prepared_Statement::setBigInt: invalid 'parameterIndex'");
-	}
 	setString(parameterIndex, value);
 }
 /* }}} */
@@ -386,6 +380,7 @@ MySQL_Prepared_Statement::setBlob(unsigned int parameterIndex, sql::Blob & blob)
 void
 MySQL_Prepared_Statement::setBoolean(unsigned int parameterIndex, bool value)
 {
+	CPP_ENTER("MySQL_Prepared_Statement::setBoolean");
 	setInt(parameterIndex, value);
 }
 /* }}} */
@@ -396,12 +391,6 @@ void
 MySQL_Prepared_Statement::setDateTime(unsigned int parameterIndex, const std::string& value)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::setDateTime");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	parameterIndex--; /* DBC counts from 1 */
-	if (parameterIndex >= param_count) {
-		throw InvalidArgumentException("MySQL_Prepared_Statement::setDateTime: invalid 'parameterIndex'");
-	}
 	setString(parameterIndex, value);
 }
 /* }}} */
