@@ -274,12 +274,12 @@ class cpp_trace_analyzer {
 
 			$lineno = 0;
 			$displayed = 0;
+			$show_level = null;
 
 			while ($line = $this->fetchLine($fp)) {
 				$lineno++;
 				$function = trim($line);
 				$level = 1;
-				$show_level = null;
 				$exit = false;
 				do {
 					$left = substr(trim($function), 0, 1);
@@ -312,6 +312,7 @@ class cpp_trace_analyzer {
 									$this->unfetchLine();
 								}
 							}
+							$level++;
 							break 2;
 
 						default:
@@ -382,16 +383,32 @@ class cpp_trace_analyzer {
 				if (!empty($this->show_functions)) {
 					if (!isset($this->show_functions[$class . '::']) &&
 							!isset($this->show_functions[$method]) &&
-							!isset($this->show_functions[$class . '::' . $method]) &&
-							$level < $show_level
-							) {
-						if ($this->verbose)
-							printf("%07d - Skip - class %s or method %s not in positive show list, no -s %s:: and no -s %s\n", $lineno, $class, $method, $class, $method);
-						$show_level = null;
-						continue;
+							!isset($this->show_functions[$class . '::' . $method]))
+							{
+						if ((!is_null($show_level) && $level < $show_level) || is_null($show_level)) {
+							if ($this->verbose)
+								printf("%07d/%03d - Skip - class %s or method %s not in positive show list, no -s %s:: and no -s %s\n", $lineno, $level, $class, $method, $class, $method);
+							$show_level = null;
+							continue;
+						} else if ($show_level === $level) {
+							// last one on the initial opening level?
+							if (!$exit) {
+								// something else, could be a new function, eat up - KLUDGE no proper way to detect if it should be skipped
+								if ($this->verbose)
+									printf("%07d/%03d - Skip - class %s or method %s not in positive show list, no -s %s:: and no -s %s\n", $lineno, $level, $class, $method, $class, $method);
+								$show_level = null;
+								continue;
+							} else {
+								// <function - exiting function
+								$show_level = null;
+							}
+						}
 					} else {
-						if (is_null($show_level))
+						if (is_null($show_level)) {
 							$show_level = $level;
+							if ($this->verbose)
+								printf("%07d - Info - accepting level > %d\n", $lineno, $level);
+						}
 					}
 				}
 
