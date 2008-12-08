@@ -2675,16 +2675,17 @@ MySQL_ConnectionMetaData::getTables(const std::string& catalog, const std::strin
 
 	/* Bind Problems with 49999, check later why */
 	if (server_version > 49999) {
-		std::string query("SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, "
+		static const std::string query("SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, "
 							"IF(STRCMP(TABLE_TYPE,'BASE TABLE'), TABLE_TYPE, 'TABLE'), "
 							"TABLE_COMMENT FROM INFORMATION_SCHEMA.TABLES WHERE "
-							"TABLE_SCHEMA  LIKE '");
-		query.append(schemaPattern).append("' AND TABLE_NAME LIKE '").append(tableNamePattern).
-			append("' ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME");
+							"TABLE_SCHEMA  LIKE ? AND TABLE_NAME LIKE ? "
+							"ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME");
 
-		std::auto_ptr<sql::Statement> stmt(connection->createStatement());
-
-		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
+		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
+		stmt->setString(1, schemaPattern);
+		stmt->setString(2, tableNamePattern);
+		
+		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next()) {
 			std::list<std::string>::iterator it;
