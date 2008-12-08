@@ -423,6 +423,7 @@ allocate_buffer_for_type(enum_field_types t)
 		case MYSQL_TYPE_DOUBLE:
 		case MYSQL_TYPE_LONGLONG:
 			return BufferSizePair(new char[8], 8);
+		case MYSQL_TYPE_NEWDATE:
 		case MYSQL_TYPE_DATE:
 		case MYSQL_TYPE_TIME:
 		case MYSQL_TYPE_DATETIME:
