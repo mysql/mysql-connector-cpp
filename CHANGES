@@ -22,6 +22,10 @@ Beta  1.0.2 - xxxx-xx-xx
 
 - Implemented PreparedStatement::setNull(). (Andrey)
 
+- Reverted implementation of MySQL_DatabaseMetaData::getTypeInfo().
+  Now unimplemented. In addition, removed cppconn/datatype.h for now
+  till we havea proper implementation of the types.
+
 Alpha  1.0.1 - 2008-12-01
 
 - New directory layout

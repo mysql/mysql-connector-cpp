@@ -1810,20 +1810,21 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 	if (server_version >= 50116) {
 		/* This just doesn't work */
 		/* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
-		std::string query("SELECT A.CONSTRAINT_SCHEMA, A.TABLE_NAME, "
+		static const std::string query("SELECT A.CONSTRAINT_SCHEMA, A.TABLE_NAME, "
 									"A.COLUMN_NAME, A.TABLE_SCHEMA, A.TABLE_NAME, "
 									"A.COLUMN_NAME, A.ORDINAL_POSITION, NULL AS CONSTRAINT_METHOD, "
 									"A.CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE A, "
-									"INFORMATION_SCHEMA.TABLE_CONSTRAINTS B WHERE A.TABLE_SCHEMA='");
-									query.append(schema).append(
-									"' AND A.CONSTRAINT_NAME=B.CONSTRAINT_NAME AND A.TABLE_NAME='").append(table).append("' "
-									"AND B.TABLE_NAME='").append(table).append("' AND A.REFERENCED_TABLE_SCHEMA IS NOT NULL "
+									"INFORMATION_SCHEMA.TABLE_CONSTRAINTS B WHERE A.TABLE_SCHEMA=? "
+									"AND A.CONSTRAINT_NAME=B.CONSTRAINT_NAME AND A.TABLE_NAME=? "
+									"AND B.TABLE_NAME=? AND A.REFERENCED_TABLE_SCHEMA IS NOT NULL "
 									"ORDER BY A.REFERENCED_TABLE_SCHEMA, A.REFERENCED_TABLE_NAME, "
 									"A.ORDINAL_POSITION");
 
-		std::auto_ptr<sql::Statement> stmt(connection->createStatement());
-
-		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
+		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
+		stmt->setString(1, schema);
+		stmt->setString(2, table);
+		stmt->setString(3, table);
+		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next()) {
 			rs_data.push_back("");					// PK_TABLE_CAT
@@ -1924,14 +1925,15 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 	}
 
 	if (server_version > 59999) {
-		std::string query("SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, NON_UNIQUE, "
+		static const std::string query("SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, NON_UNIQUE, "
 						"INDEX_NAME, SEQ_IN_INDEX, COLUMN_NAME, CARDINALITY "
-						"FROM INFORMATION_SCHEMA.STATISTICS WHERE "
-						"TABLE_SCHEMA LIKE '");
-		query.append(schema).append("' AND TABLE_NAME LIKE '").append(table).
-			append("ORDER BY NON_UNIQUE, INDEX_NAME, SEQ_IN_INDEX");
+						"FROM INFORMATION_SCHEMA.STATISTICS "
+						"WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? "
+						"ORDER BY NON_UNIQUE, INDEX_NAME, SEQ_IN_INDEX");
 
-		std::auto_ptr<sql::Statement> stmt(connection->createStatement());
+		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
+		stmt->setString(1, schema);
+		stmt->setString(2, table);
 
 		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
 
@@ -2245,20 +2247,16 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 
 	/* Bind Problems with 49999, check later why */
 	if (server_version > 49999) {
-#if 0
 		static const std::string query("SELECT TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, "
 						"SEQ_IN_INDEX, INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS "
 						"WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND "
 						"INDEX_NAME='PRIMARY' ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX");
-#endif
-		std::string query("SELECT TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, SEQ_IN_INDEX, INDEX_NAME "
-						"FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA LIKE '");
-		query.append(schema).append("' AND TABLE_NAME LIKE '").append(table).append("'"
-					" AND INDEX_NAME='PRIMARY' ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX");
 
-		std::auto_ptr<sql::Statement> stmt(connection->createStatement());
+		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
+		stmt->setString(1 ,schema);
+		stmt->setString(2, table);
 
-		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
+		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next()) {
 			rs_data.push_back("");					// catalog
@@ -2312,12 +2310,14 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 	std::list<std::string> rs_field_data;
 
 	if (server_version > 49999) {
-		std::string query("SELECT ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_COMMENT "
-						"FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA LIKE '");
-		query.append(schemaPattern).append("' AND ROUTINE_NAME LIKE '").append(procedureNamePattern.size() ? procedureNamePattern : "%").
-			append("' ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME");
+		static const std::string query("SELECT ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_COMMENT "
+						"FROM INFORMATION_SCHEMA.ROUTINES "
+						"WHERE ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ? "
+						"ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME");
 
-		std::auto_ptr<sql::Statement> stmt(connection->createStatement());
+		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
+		stmt->setString(1, schemaPattern);
+		stmt->setString(2, procedureNamePattern.size() ? procedureNamePattern : "%");
 
 		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
 		while (rs->next()) {
