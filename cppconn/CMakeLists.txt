@@ -21,7 +21,6 @@
 SET(MYSQLCPPCONN_INSTALL_HEADERS
 		blob.h
 		connection.h
-		datatype.h
 		driver.h
 		exception.h
 		metadata.h

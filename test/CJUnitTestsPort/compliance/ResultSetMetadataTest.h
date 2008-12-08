@@ -24,7 +24,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "cppconn/resultset.h"
 #include "cppconn/resultset_metadata.h"
 #include "cppconn/exception.h"
-#include "cppconn/datatype.h"
 
 
 /**

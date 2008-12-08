@@ -5551,6 +5551,7 @@ std::list< String > tmp2;
   {  logMsg(
         "Calling supportsConvert(ARRAY, VARCHAR) on DatabaseMetaData");
 
+#ifdef WE_HAVE_DATATYPE_AGAIN
       bool retValue = dbmd->supportsConvert( sql::DataType::ARRAY
                                            , sql::DataType::VARCHAR );
 
@@ -5560,9 +5561,11 @@ std::list< String > tmp2;
       }
       else
       {
-        logMsg(
-          "supportsConvert(ARRAY, VARCHAR) method is not supported");
+        logMsg("supportsConvert(ARRAY, VARCHAR) method is not supported");
       }
+#else
+        logMsg("supportsConvert(ARRAY, VARCHAR) method is not supported");
+#endif
       }
 
     /*
@@ -5590,15 +5593,19 @@ std::list< String > tmp2;
 
 /* throws Exception */
   void DatabaseMetaDataTest::testSupportsConvert02() 
-  {  logMsg(
-                "Calling supportsConvert(BIGINT, VARCHAR) on DatabaseMetaData");
-            bool retValue = dbmd->supportsConvert(sql::DataType::BIGINT, sql::DataType::VARCHAR);
-            if (retValue) {
-                logMsg("supportsConvert(BIGINT, VARCHAR) method is supported");
-            } else {
-                logMsg(
-                    "supportsConvert(BIGINT, VARCHAR) method is not supported");
-            }  }
+  {
+  	logMsg("Calling supportsConvert(BIGINT, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
+    bool retValue = dbmd->supportsConvert(sql::DataType::BIGINT, sql::DataType::VARCHAR);
+	if (retValue) {
+		logMsg("supportsConvert(BIGINT, VARCHAR) method is supported");
+	} else {
+		logMsg("supportsConvert(BIGINT, VARCHAR) method is not supported");
+	}
+#else
+		logMsg("supportsConvert(BIGINT, VARCHAR) method is not supported");
+#endif
+  }
 
     /*
      * @testName:         testSupportsConvert03
@@ -5627,15 +5634,19 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert03() 
   {
         
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::BINARY, sql::DataType::VARCHAR);
             logMsg(
                 "Calling supportsConvert(BINARY, VARCHAR) on DatabaseMetaData");
             if (retValue) {
                 logMsg("supportsConvert(BINARY, VARCHAR) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(BINARY, VARCHAR) method is not supported");
-            }  }
+                logMsg("supportsConvert(BINARY, VARCHAR) method is not supported");
+			}
+#else
+                logMsg("supportsConvert(BINARY, VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert04
@@ -5664,13 +5675,18 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert04() 
   {
         
+#ifdef WE_HAVE_DATATYPE_AGAIN
             logMsg("Calling supportsConvert(BIT, VARCHAR) on DatabaseMetaData");
             bool retValue = dbmd->supportsConvert(sql::DataType::BIT, sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(BIT, VARCHAR) method is supported");
             } else {
                 logMsg("supportsConvert(BIT, VARCHAR) method is not supported");
-            }  }
+            }
+#else
+                logMsg("supportsConvert(BIT, VARCHAR) method is not supported");
+#endif
+}
 
     /*
      * @testName:         testSupportsConvert05
@@ -5700,12 +5716,17 @@ std::list< String > tmp2;
   {
         
             logMsg("Calling supportsConvert(BLOB, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::BLOB, sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(BLOB, VARCHAR) method is supported");
             } else {
                 logMsg("supportsConvert(BLOB, VARCHAR) method is not supported");
-            }  }
+            }
+#else
+			logMsg("supportsConvert(BLOB, VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert06
@@ -5735,12 +5756,17 @@ std::list< String > tmp2;
   {
         
             logMsg("Calling supportsConvert(CHAR, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::CHAR, sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(CHAR, VARCHAR) method is supported");
             } else {
                 logMsg("supportsConvert(CHAR, VARCHAR) method is not supported");
-            }  }
+            }
+#else
+                logMsg("supportsConvert(CHAR, VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert07
@@ -5770,12 +5796,17 @@ std::list< String > tmp2;
   {
         
             logMsg("Calling supportsConvert(CLOB, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::CLOB, sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(CLOB, VARCHAR) method is supported");
             } else {
                 logMsg("supportsConvert(CLOB, VARCHAR) method is not supported");
-            }  }
+            }
+#else
+			logMsg("supportsConvert(CLOB, VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert08
@@ -5805,12 +5836,17 @@ std::list< String > tmp2;
   {
         
             logMsg("Calling supportsConvert(DATE, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::DATE, sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(DATE, VARCHAR) method is supported");
             } else {
                 logMsg("supportsConvert(DATE, VARCHAR) method is not supported");
-            }  }
+            }
+#else
+			logMsg("supportsConvert(DATE, VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert09
@@ -5839,15 +5875,18 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert09() 
   {
         
-            logMsg(
-                "Calling supportsConvert(DECIMAL, VARCHAR) on DatabaseMetaData");
+            logMsg("Calling supportsConvert(DECIMAL, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::DECIMAL, sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(DECIMAL, VARCHAR) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(DECIMAL, VARCHAR) method is not supported");
-            }  }
+                logMsg("supportsConvert(DECIMAL, VARCHAR) method is not supported");
+            }
+#else
+			logMsg("supportsConvert(DECIMAL, VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert10
@@ -5878,14 +5917,18 @@ std::list< String > tmp2;
         
             logMsg(
                 "Calling supportsConvert(DISTINCT, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::DISTINCT,
                     sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(DISTINCT, VARCHAR) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(DISTINCT, VARCHAR) method is not supported");
-            }  }
+                logMsg("supportsConvert(DISTINCT, VARCHAR) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(DISTINCT, VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert11
@@ -5916,13 +5959,17 @@ std::list< String > tmp2;
         
             logMsg(
                 "Calling supportsConvert(DOUBLE, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::DOUBLE, sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(DOUBLE, VARCHAR) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(DOUBLE, VARCHAR) method is not supported");
-            }  }
+                logMsg("supportsConvert(DOUBLE, VARCHAR) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(DOUBLE, VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert12
@@ -5953,13 +6000,17 @@ std::list< String > tmp2;
         
             logMsg(
                 "Calling supportsConvert(FLOAT, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::FLOAT, sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(FLOAT, VARCHAR) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(FLOAT, VARCHAR) method is not supported");
-            }  }
+                logMsg("supportsConvert(FLOAT, VARCHAR) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(FLOAT, VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert13
@@ -5990,13 +6041,17 @@ std::list< String > tmp2;
         
             logMsg(
                 "Calling supportsConvert(INTEGER, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::INTEGER, sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(INTEGER, VARCHAR) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(INTEGER, VARCHAR) method is not supported");
-            }  }
+                logMsg("supportsConvert(INTEGER, VARCHAR) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(INTEGER, VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert14
@@ -6028,15 +6083,20 @@ std::list< String > tmp2;
         
             logMsg(
                 "Calling supportsConvert(JAVA_OBJECT, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::JAVA_OBJECT,
                     sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg(
                     "supportsConvert(JAVA_OBJECT, VARCHAR) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(JAVA_OBJECT, VARCHAR) method is not supported");
-            }  }*/
+                logMsg("supportsConvert(JAVA_OBJECT, VARCHAR) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(JAVA_OBJECT, VARCHAR) method is not supported");
+#endif
+	}
+*/
 
 
     /*
@@ -6068,15 +6128,19 @@ std::list< String > tmp2;
         
             logMsg(
                 "Calling supportsConvert(LONGVARBINARY, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::LONGVARBINARY,
                     sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg(
                     "supportsConvert(LONGVARBINARY, VARCHAR) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(LONGVARBINARY, VARCHAR) method is not supported");
-            }  }
+                logMsg("supportsConvert(LONGVARBINARY, VARCHAR) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(LONGVARBINARY, VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert16
@@ -6107,15 +6171,19 @@ std::list< String > tmp2;
         
             logMsg(
                 "Calling supportsConvert(LONGVARCHAR, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::LONGVARCHAR,
                     sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg(
                     "supportsConvert(LONGVARCHAR, VARCHAR) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(LONGVARCHAR, VARCHAR) method is not supported");
-            }  }
+                logMsg("supportsConvert(LONGVARCHAR, VARCHAR) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(LONGVARCHAR, VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert17
@@ -6144,8 +6212,9 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert17() 
   {  logMsg("Calling supportsConvert(NULL, VARCHAR) on DatabaseMetaData");
 
-      bool retValue = dbmd->supportsConvert(sql::DataType::SQLNULL, sql::DataType::VARCHAR);
 
+#ifdef WE_HAVE_DATATYPE_AGAIN
+      bool retValue = dbmd->supportsConvert(sql::DataType::SQLNULL, sql::DataType::VARCHAR);
       if (retValue)
       {
         logMsg("supportsConvert(NULL, VARCHAR) method is supported");
@@ -6153,8 +6222,11 @@ std::list< String > tmp2;
       else
       {
         logMsg("supportsConvert(NULL, VARCHAR) method is not supported");
-      }
-      }
+		}
+#else
+        logMsg("supportsConvert(NULL, VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert18
@@ -6185,13 +6257,17 @@ std::list< String > tmp2;
         
             logMsg(
                 "Calling supportsConvert(NUMERIC, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::NUMERIC, sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(NUMERIC, VARCHAR) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(NUMERIC, VARCHAR) method is not supported");
-            }  }
+                logMsg("supportsConvert(NUMERIC, VARCHAR) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(NUMERIC, VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert19
@@ -6222,13 +6298,17 @@ std::list< String > tmp2;
         
             logMsg(
                 "Calling supportsConvert(OTHER, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::OTHER, sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(OTHER, VARCHAR) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(OTHER, VARCHAR) method is not supported");
-            }  }
+                logMsg("supportsConvert(OTHER, VARCHAR) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(OTHER, VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert20
@@ -6257,13 +6337,18 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert20() 
   {
         
-            bool retValue = dbmd->supportsConvert(sql::DataType::REAL, sql::DataType::VARCHAR);
             logMsg("Calling supportsConvert(REAL, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
+            bool retValue = dbmd->supportsConvert(sql::DataType::REAL, sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(REAL, VARCHAR) method is supported");
             } else {
                 logMsg("supportsConvert(REAL, VARCHAR) method is not supported");
-            }  }
+            }
+#else
+                logMsg("supportsConvert(REAL, VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert21
@@ -6292,13 +6377,18 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert21() 
   {
         
-            bool retValue = dbmd->supportsConvert(sql::DataType::REF, sql::DataType::VARCHAR);
             logMsg("Calling supportsConvert(REF, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
+            bool retValue = dbmd->supportsConvert(sql::DataType::REF, sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(REF VARCHAR) method is supported");
             } else {
                 logMsg("supportsConvert(REF VARCHAR) method is not supported");
-            }  }
+            }
+#else
+                logMsg("supportsConvert(REF VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert22
@@ -6327,16 +6417,19 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert22() 
   {
         
+            logMsg("Calling supportsConvert(SMALLINT, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::SMALLINT,
                     sql::DataType::VARCHAR);
-            logMsg(
-                "Calling supportsConvert(SMALLINT, VARCHAR) on DatabaseMetaData");
             if (retValue) {
                 logMsg("supportsConvert(SMALLINT VARCHAR) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(SMALLINT VARCHAR) method is not supported");
-            }  }
+                logMsg("supportsConvert(SMALLINT VARCHAR) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(SMALLINT VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert23
@@ -6365,15 +6458,18 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert23() 
   {
         
-            logMsg(
-                "Calling supportsConvert(STRUCT, VARCHAR) on DatabaseMetaData");
+            logMsg("Calling supportsConvert(STRUCT, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::STRUCT, sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(STRUCT VARCHAR) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(STRUCT VARCHAR) method is not supported");
-            }  }
+                logMsg("supportsConvert(STRUCT VARCHAR) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(STRUCT VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert24
@@ -6403,12 +6499,17 @@ std::list< String > tmp2;
   {
         
             logMsg("Calling supportsConvert(TIME, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::TIME, sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(TIME VARCHAR) method is supported");
             } else {
                 logMsg("supportsConvert(TIME VARCHAR) method is not supported");
-            }  }
+            }
+#else
+                logMsg("supportsConvert(TIME VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert25
@@ -6437,16 +6538,19 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert25() 
   {
         
-            logMsg(
-                "Calling supportsConvert(TIMESTAMP, VARCHAR) on DatabaseMetaData");
+            logMsg("Calling supportsConvert(TIMESTAMP, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::TIMESTAMP,
                     sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(TIMESTAMP VARCHAR) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(TIMESTAMP VARCHAR) method is not supported");
-            }  }
+                logMsg("supportsConvert(TIMESTAMP VARCHAR) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(TIMESTAMP VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert26
@@ -6475,15 +6579,18 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert26() 
   {
         
-            logMsg(
-                "Calling supportsConvert(TINYINT, VARCHAR) on DatabaseMetaData");
+            logMsg("Calling supportsConvert(TINYINT, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::TINYINT, sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(TINYINT VARCHAR) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(TINYINT VARCHAR) method is not supported");
-            }  }
+                logMsg("supportsConvert(TINYINT VARCHAR) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(TINYINT VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert27
@@ -6512,16 +6619,19 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert27() 
   {
         
-            logMsg(
-                "Calling supportsConvert(VARBINARY, VARCHAR) on DatabaseMetaData");
+            logMsg("Calling supportsConvert(VARBINARY, VARCHAR) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::VARBINARY,
                     sql::DataType::VARCHAR);
             if (retValue) {
                 logMsg("supportsConvert(VARBINARY VARCHAR) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(VARBINARY VARCHAR) method is not supported");
-            }  }
+                logMsg("supportsConvert(VARBINARY VARCHAR) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(VARBINARY VARCHAR) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert28
@@ -6550,15 +6660,18 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert28() 
   {
         
-            logMsg(
-                "Calling supportsConvert(BIGINT, INTEGER) on DatabaseMetaData");
+            logMsg("Calling supportsConvert(BIGINT, INTEGER) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::BIGINT, sql::DataType::INTEGER);
             if (retValue) {
                 logMsg("supportsConvert(BIGINT, INTEGER) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(BIGINT, INTEGER) method is not supported");
-            }  }
+                logMsg("supportsConvert(BIGINT, INTEGER) method is not supported");
+			}
+#else
+                logMsg("supportsConvert(BIGINT, INTEGER) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert29
@@ -6588,12 +6701,17 @@ std::list< String > tmp2;
   {
         
             logMsg("Calling supportsConvert(BIT, INTEGER) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::BIT, sql::DataType::INTEGER);
             if (retValue) {
                 logMsg("supportsConvert(BIT, INTEGER) method is supported");
             } else {
                 logMsg("supportsConvert(BIT, INTEGER) method is not supported");
-            }  }
+            }
+#else
+                logMsg("supportsConvert(BIT, INTEGER) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert30
@@ -6623,12 +6741,17 @@ std::list< String > tmp2;
   {
         
             logMsg("Calling supportsConvert(DATE, INTEGER) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::DATE, sql::DataType::INTEGER);
             if (retValue) {
                 logMsg("supportsConvert(DATE, INTEGER) method is supported");
             } else {
                 logMsg("supportsConvert(DATE, INTEGER) method is not supported");
-            }  }
+            }
+#else
+                logMsg("supportsConvert(DATE, INTEGER) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert31
@@ -6657,15 +6780,18 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert31() 
   {
         
-            logMsg(
-                "Calling supportsConvert(DECIMAL, INTEGER) on DatabaseMetaData");
+            logMsg("Calling supportsConvert(DECIMAL, INTEGER) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::DECIMAL, sql::DataType::INTEGER);
             if (retValue) {
                 logMsg("supportsConvert(DECIMAL, INTEGER) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(DECIMAL, INTEGER) method is not supported");
-            }  }
+                logMsg("supportsConvert(DECIMAL, INTEGER) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(DECIMAL, INTEGER) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert32
@@ -6694,15 +6820,18 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert32() 
   {
         
-            logMsg(
-                "Calling supportsConvert(DOUBLE, INTEGER) on DatabaseMetaData");
+            logMsg("Calling supportsConvert(DOUBLE, INTEGER) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::DOUBLE, sql::DataType::INTEGER);
             if (retValue) {
                 logMsg("supportsConvert(DOUBLE, INTEGER) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(DOUBLE, INTEGER) method is not supported");
-            }  }
+                logMsg("supportsConvert(DOUBLE, INTEGER) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(DOUBLE, INTEGER) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert33
@@ -6731,15 +6860,18 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert33() 
   {
         
-            logMsg(
-                "Calling supportsConvert(FLOAT, INTEGER) on DatabaseMetaData");
+            logMsg("Calling supportsConvert(FLOAT, INTEGER) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::FLOAT, sql::DataType::INTEGER);
             if (retValue) {
                 logMsg("supportsConvert(FLOAT, INTEGER) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(FLOAT, INTEGER) method is not supported");
-            }  }
+                logMsg("supportsConvert(FLOAT, INTEGER) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(FLOAT, INTEGER) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert34
@@ -6768,15 +6900,18 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert34() 
   {
         
-            logMsg(
-                "Calling supportsConvert(NUMERIC, INTEGER) on DatabaseMetaData");
+            logMsg("Calling supportsConvert(NUMERIC, INTEGER) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::NUMERIC, sql::DataType::INTEGER);
             if (retValue) {
                 logMsg("supportsConvert(NUMERIC, INTEGER) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(NUMERIC, INTEGER) method is not supported");
-            }  }
+                logMsg("supportsConvert(NUMERIC, INTEGER) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(NUMERIC, INTEGER) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert35
@@ -6806,12 +6941,17 @@ std::list< String > tmp2;
   {
         
             logMsg("Calling supportsConvert(REAL, INTEGER) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::REAL, sql::DataType::INTEGER);
             if (retValue) {
                 logMsg("supportsConvert(REAL, INTEGER) method is supported");
             } else {
                 logMsg("supportsConvert(REAL, INTEGER) method is not supported");
-            }  }
+            }
+#else
+                logMsg("supportsConvert(REAL, INTEGER) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert36
@@ -6840,16 +6980,19 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert36() 
   {
         
+            logMsg("Calling supportsConvert(SMALLINT, INTEGER) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::SMALLINT,
                     sql::DataType::INTEGER);
-            logMsg(
-                "Calling supportsConvert(SMALLINT, INTEGER) on DatabaseMetaData");
             if (retValue) {
                 logMsg("supportsConvert(SMALLINT, INTEGER) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(SMALLINT, INTEGER) method is not supported");
-            }  }
+                logMsg("supportsConvert(SMALLINT, INTEGER) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(SMALLINT, INTEGER) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsConvert37
@@ -6878,15 +7021,18 @@ std::list< String > tmp2;
   void DatabaseMetaDataTest::testSupportsConvert37() 
   {
         
-            logMsg(
-                "Calling supportsConvert(TINYINT, INTEGER) on DatabaseMetaData");
+            logMsg("Calling supportsConvert(TINYINT, INTEGER) on DatabaseMetaData");
+#ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::TINYINT, sql::DataType::INTEGER);
             if (retValue) {
                 logMsg("supportsConvert(TINYINT, INTEGER) method is supported");
             } else {
-                logMsg(
-                    "supportsConvert(TINYINT, INTEGER) method is not supported");
-            }  }
+                logMsg("supportsConvert(TINYINT, INTEGER) method is not supported");
+            }
+#else
+                logMsg("supportsConvert(TINYINT, INTEGER) method is not supported");
+#endif
+	}
 
     /*
      * @testName:         testSupportsCoreSQLGrammar

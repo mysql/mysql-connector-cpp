@@ -26,7 +26,6 @@
 #include "mysql_constructed_resultset.h"
 #include "mysql_statement.h"
 #include "mysql_prepared_statement.h"
-#include <cppconn/datatype.h>
 
 // For snprintf
 #include <stdio.h>
@@ -41,6 +40,45 @@ namespace sql
 {
 namespace mysql
 {
+
+#if 0
+class DataType
+{
+	DataType();
+public:
+	enum {
+		BIT = -7,
+		TINYINT = -6,
+		SMALLINT = 5,
+		INTEGER = 4,
+		BIGINT = -5,
+		FLOAT = 6,
+		REAL = 7,
+		DOUBLE = 8,
+		NUMERIC = 2,
+		DECIMAL = 3,
+		CHAR = 1,
+		VARCHAR = 12,
+		LONGVARCHAR = -1,
+		DATE = 91,
+		TIME = 92,
+		TIMESTAMP = 93,
+		BINARY = -2,
+		VARBINARY = -3,
+		LONGVARBINARY = -4,
+		SQLNULL = 0,
+		OTHER = 1111,
+		OBJECT = 2000,
+		DISTINCT = 2001,
+		STRUCT = 2002,
+		ARRAY = 2003,
+		BLOB = 2004,
+		CLOB = 2005,
+		REF = 2006,
+		BOOLEAN = 16
+	};
+};
+
 
 struct TypeInfoDef
 {
@@ -69,6 +107,7 @@ TypeInfoDef mysqlc_types[] = {
 	// ------------- MySQL-Type: BIT. DBC-Type: Bit -------------
 	{
 		"BIT",								// Typename
+		DataType::Bit,						// dbc-type
 		DataType::BIT,						// dbc-type
 		1,									// Precision
 		"",									// Literal prefix
@@ -841,7 +880,7 @@ TypeInfoDef mysqlc_types[] = {
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	}
 };
-
+#endif
 
 /* {{{ my_i_to_a() -I- */
 static inline char * my_i_to_a(char * buf, size_t buf_size, int a)
@@ -2743,54 +2782,7 @@ sql::ResultSet *
 MySQL_ConnectionMetaData::getTypeInfo()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getTypeInfo");
-	std::list<std::string> rs_data;
-	std::list<std::string> rs_field_data;
-	int i = 0;
-	char buf[16];
-	buf[sizeof(buf) - 1] = '\0';
-
-	rs_field_data.push_back("TYPE_NAME");
-	rs_field_data.push_back("DATA_TYPE");
-	rs_field_data.push_back("PRECISION");
-	rs_field_data.push_back("LITERAL_PREFIX");
-	rs_field_data.push_back("LITERAL_SUFFIX");
-	rs_field_data.push_back("CREATE_PARAMS");
-	rs_field_data.push_back("NULLABLE");
-	rs_field_data.push_back("CASE_SENSITIVE");
-	rs_field_data.push_back("SEARCHABLE");
-	rs_field_data.push_back("UNSIGNED_ATTRIBUTE");
-	rs_field_data.push_back("FIXED_PREC_SCALE");
-	rs_field_data.push_back("AUTO_INCREMENT");
-	rs_field_data.push_back("LOCAL_TYPE_NAME");
-	rs_field_data.push_back("MINIMUM_SCALE");
-	rs_field_data.push_back("MAXIMUM_SCALE");
-	rs_field_data.push_back("SQL_DATA_TYPE");
-	rs_field_data.push_back("SQL_DATETIME_SUB");
-	rs_field_data.push_back("NUM_PREC_RADIX");
-
-	while (mysqlc_types[i].typeName) {
-		rs_data.push_back(mysqlc_types[i].typeName);
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) mysqlc_types[i].dataType));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) mysqlc_types[i].precision));
-		rs_data.push_back("");
-		rs_data.push_back("");
-		rs_data.push_back(mysqlc_types[i].createParams);
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) mysqlc_types[i].nullable));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) mysqlc_types[i].caseSensitive));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) mysqlc_types[i].searchable));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) mysqlc_types[i].isUnsigned));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) mysqlc_types[i].fixedPrecScale));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) mysqlc_types[i].autoIncrement));
-		rs_data.push_back(mysqlc_types[i].localTypeName);
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) mysqlc_types[i].minScale));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) mysqlc_types[i].maxScale));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) 0));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) 0));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) 10));
-		i++;
-	}
-
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::getTypeInfo");
 }
 /* }}} */
 
