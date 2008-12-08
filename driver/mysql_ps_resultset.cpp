@@ -84,6 +84,7 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(MYSQL_STMT *s, MySQL_Prepared
 	}
 	mysql_free_result(result_meta);
 	result_meta = NULL;
+	rs_meta.reset(getMetaData());
 }
 /* }}} */
 
@@ -323,7 +324,6 @@ MySQL_Prepared_ResultSet::getDouble(unsigned int columnIndex) const
 		return 0.0;
 	}
 
-	std::auto_ptr<sql::ResultSetMetaData> rs_meta(getMetaData());
 	switch (rs_meta->getColumnType(columnIndex + 1)) {
 		case MYSQL_TYPE_TINY:
 		case MYSQL_TYPE_SHORT:
@@ -411,7 +411,6 @@ MySQL_Prepared_ResultSet::getInt(unsigned int columnIndex) const
 		return 0;
 	}
 
-	std::auto_ptr<sql::ResultSetMetaData> rs_meta(getMetaData());
 	switch (rs_meta->getColumnType(columnIndex + 1)) {
 		case MYSQL_TYPE_FLOAT:
 		case MYSQL_TYPE_DOUBLE:
@@ -473,7 +472,6 @@ MySQL_Prepared_ResultSet::getLong(unsigned int columnIndex) const
 		return 0;
 	}
 
-	std::auto_ptr<sql::ResultSetMetaData> rs_meta(getMetaData());
 	switch (rs_meta->getColumnType(columnIndex + 1)) {
 		case MYSQL_TYPE_FLOAT:
 		case MYSQL_TYPE_DOUBLE:
@@ -485,19 +483,25 @@ MySQL_Prepared_ResultSet::getLong(unsigned int columnIndex) const
 			CPP_INFO("It's a string");
 			return atoll(getString(columnIndex + 1).c_str());
 	}
-	
+	long long ret;
 	switch (stmt->bind[columnIndex].buffer_length) {
 		case 1:
-			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int8_t *>(stmt->bind[columnIndex].buffer):0;
+			ret = !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int8_t *>(stmt->bind[columnIndex].buffer):0;
+			break;
 		case 2:
-			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int16_t *>(stmt->bind[columnIndex].buffer):0;
+			ret = !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int16_t *>(stmt->bind[columnIndex].buffer):0;
+			break;
 		case 4:
-			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int32_t *>(stmt->bind[columnIndex].buffer):0;
+			ret =  !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int32_t *>(stmt->bind[columnIndex].buffer):0;
+			break;
 		case 8:
-			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int64_t *>(stmt->bind[columnIndex].buffer):0;
+			ret =  !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int64_t *>(stmt->bind[columnIndex].buffer):0;
+			break;
 		default:
 			throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getLong: invalid type");
 	}
+	CPP_INFO_FMT("value=%lld", ret);
+	return ret; 
 }
 /* }}} */
 
@@ -589,7 +593,6 @@ MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 		return std::string("");
 	}
 
-	std::auto_ptr<sql::ResultSetMetaData> rs_meta(getMetaData());
 	switch (rs_meta->getColumnType(columnIndex + 1)) {
 		case MYSQL_TYPE_TINY:
 		case MYSQL_TYPE_SHORT:

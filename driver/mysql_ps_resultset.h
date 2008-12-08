@@ -57,6 +57,7 @@ private:
 
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 
+	std::auto_ptr<sql::ResultSetMetaData> rs_meta;
 protected:
 	void checkValid() const;
 	void closeIntern();
