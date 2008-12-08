@@ -333,6 +333,7 @@ MySQL_Prepared_ResultSet::getDouble(unsigned int columnIndex) const
 		case MYSQL_TYPE_TIMESTAMP:
 			CPP_INFO("It's an int");
 			return getLong(columnIndex + 1);
+		case MYSQL_TYPE_TIMESTAMP:
 		case MYSQL_TYPE_DATETIME:
 		case MYSQL_TYPE_DATE:
 		case MYSQL_TYPE_TIME:
@@ -419,6 +420,7 @@ MySQL_Prepared_ResultSet::getInt(unsigned int columnIndex) const
 		case MYSQL_TYPE_DOUBLE:
 			CPP_INFO("It's a double");
 			return (long long) getDouble(columnIndex + 1);
+		case MYSQL_TYPE_TIMESTAMP:
 		case MYSQL_TYPE_DATETIME:
 		case MYSQL_TYPE_DATE:
 		case MYSQL_TYPE_TIME:
@@ -483,6 +485,7 @@ MySQL_Prepared_ResultSet::getLong(unsigned int columnIndex) const
 		case MYSQL_TYPE_DOUBLE:
 			CPP_INFO("It's a double");
 			return (long long) getDouble(columnIndex + 1);
+		case MYSQL_TYPE_TIMESTAMP:
 		case MYSQL_TYPE_DATETIME:
 		case MYSQL_TYPE_DATE:
 		case MYSQL_TYPE_TIME:
@@ -603,6 +606,7 @@ MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 	}
 
 	switch (rs_meta->getColumnType(columnIndex + 1)) {
+		case MYSQL_TYPE_TIMESTAMP:
 		case MYSQL_TYPE_DATETIME:
 		{
 			CPP_INFO("It's a datetime");
