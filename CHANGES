@@ -26,6 +26,14 @@ Beta  1.0.2 - xxxx-xx-xx
   Now unimplemented. In addition, removed cppconn/datatype.h for now
   till we havea proper implementation of the types.
 
+- DATE, DATETIME and TIME are now being handled when calling
+  MySQL_PreparedResultSet::
+  -- getString()
+  -- getDouble()
+  -- getInt()
+  -- getLong()
+  -- getBoolean()
+
 Alpha  1.0.1 - 2008-12-01
 
 - New directory layout

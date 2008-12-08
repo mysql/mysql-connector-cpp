@@ -333,6 +333,9 @@ MySQL_Prepared_ResultSet::getDouble(unsigned int columnIndex) const
 		case MYSQL_TYPE_TIMESTAMP:
 			CPP_INFO("It's an int");
 			return getLong(columnIndex + 1);
+		case MYSQL_TYPE_DATETIME:
+		case MYSQL_TYPE_DATE:
+		case MYSQL_TYPE_TIME:
 		case MYSQL_TYPE_STRING:
 		case MYSQL_TYPE_VAR_STRING:
 		case MYSQL_TYPE_BLOB:
@@ -416,6 +419,9 @@ MySQL_Prepared_ResultSet::getInt(unsigned int columnIndex) const
 		case MYSQL_TYPE_DOUBLE:
 			CPP_INFO("It's a double");
 			return (long long) getDouble(columnIndex + 1);
+		case MYSQL_TYPE_DATETIME:
+		case MYSQL_TYPE_DATE:
+		case MYSQL_TYPE_TIME:
 		case MYSQL_TYPE_STRING:
 		case MYSQL_TYPE_VAR_STRING:
 		case MYSQL_TYPE_BLOB:
@@ -477,6 +483,9 @@ MySQL_Prepared_ResultSet::getLong(unsigned int columnIndex) const
 		case MYSQL_TYPE_DOUBLE:
 			CPP_INFO("It's a double");
 			return (long long) getDouble(columnIndex + 1);
+		case MYSQL_TYPE_DATETIME:
+		case MYSQL_TYPE_DATE:
+		case MYSQL_TYPE_TIME:
 		case MYSQL_TYPE_STRING:
 		case MYSQL_TYPE_VAR_STRING:
 		case MYSQL_TYPE_BLOB:
@@ -594,6 +603,30 @@ MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 	}
 
 	switch (rs_meta->getColumnType(columnIndex + 1)) {
+		case MYSQL_TYPE_DATETIME:
+		{
+			CPP_INFO("It's a datetime");
+			char buf[22];
+			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(stmt->bind[columnIndex].buffer);
+			snprintf(buf, sizeof(buf) - 1, "%d-%d-%d %d:%d:%d", t->year, t->month, t->day, t->hour, t->minute, t->second);
+			return std::string(buf);
+		}
+		case MYSQL_TYPE_DATE:
+		{
+			CPP_INFO("It's a datetime");
+			char buf[12];
+			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(stmt->bind[columnIndex].buffer);
+			snprintf(buf, sizeof(buf) - 1, "%d:%d:%d", t->year, t->month, t->day);
+			return std::string(buf);
+		}
+		case MYSQL_TYPE_TIME:
+		{
+			CPP_INFO("It's a datetime");
+			char buf[12];
+			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(stmt->bind[columnIndex].buffer);
+			snprintf(buf, sizeof(buf) - 1, "%d:%d:%d", t->hour, t->minute, t->second);
+			return std::string(buf);
+		}
 		case MYSQL_TYPE_TINY:
 		case MYSQL_TYPE_SHORT:
 		case MYSQL_TYPE_INT24:
