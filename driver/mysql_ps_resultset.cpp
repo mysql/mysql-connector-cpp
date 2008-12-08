@@ -332,6 +332,7 @@ MySQL_Prepared_ResultSet::getDouble(unsigned int columnIndex) const
 		case MYSQL_TYPE_LONGLONG:
 			CPP_INFO("It's an int");
 			return getLong(columnIndex + 1);
+		case MYSQL_TYPE_TIMESTAMP:
 		case MYSQL_TYPE_DATETIME:
 		case MYSQL_TYPE_DATE:
 		case MYSQL_TYPE_TIME:
@@ -420,6 +421,7 @@ MySQL_Prepared_ResultSet::getInt(unsigned int columnIndex) const
 			return (long long) getDouble(columnIndex + 1);
 		case MYSQL_TYPE_TIMESTAMP:
 		case MYSQL_TYPE_DATETIME:
+		case MYSQL_TYPE_NEWDATE:
 		case MYSQL_TYPE_DATE:
 		case MYSQL_TYPE_TIME:
 		case MYSQL_TYPE_STRING:
@@ -485,6 +487,7 @@ MySQL_Prepared_ResultSet::getLong(unsigned int columnIndex) const
 			return (long long) getDouble(columnIndex + 1);
 		case MYSQL_TYPE_TIMESTAMP:
 		case MYSQL_TYPE_DATETIME:
+		case MYSQL_TYPE_NEWDATE:
 		case MYSQL_TYPE_DATE:
 		case MYSQL_TYPE_TIME:
 		case MYSQL_TYPE_STRING:
@@ -511,7 +514,7 @@ MySQL_Prepared_ResultSet::getLong(unsigned int columnIndex) const
 			throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getLong: invalid type");
 	}
 	CPP_INFO_FMT("value=%lld", ret);
-	return ret;
+	return ret; 
 }
 /* }}} */
 
@@ -613,6 +616,7 @@ MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 			snprintf(buf, sizeof(buf) - 1, "%d-%d-%d %d:%d:%d", t->year, t->month, t->day, t->hour, t->minute, t->second);
 			return std::string(buf);
 		}
+		case MYSQL_TYPE_NEWDATE:
 		case MYSQL_TYPE_DATE:
 		{
 			CPP_INFO("It's a datetime");
@@ -648,8 +652,8 @@ MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 			my_f_to_a(buf, sizeof(buf) - 1, getDouble(columnIndex + 1));
 			return std::string(buf);
 		}
-	}
-
+	}		
+	
 	CPP_INFO_FMT("value=%*s", *stmt->bind[columnIndex].length, stmt->bind[columnIndex].buffer);
 	return  std::string(static_cast<char *>(stmt->bind[columnIndex].buffer),
 						static_cast<char *>(stmt->bind[columnIndex].buffer) + *stmt->bind[columnIndex].length);
