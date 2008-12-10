@@ -22,10 +22,10 @@
 extern "C"
 {
 #if defined(_WIN32) || defined(_WIN64) 
-#include "my_global.h"
+#include <my_global.h>
 #endif
-#include "errmsg.h"
-#include "mysql.h"
+#include <errmsg.h>
+#include <mysql.h>
 }
 /* mysql.h introduces bool */
 #undef bool
