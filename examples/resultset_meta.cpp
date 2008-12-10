@@ -228,7 +228,6 @@ static void printResultSetMetaData(std::auto_ptr< sql::ResultSet > &res, std::au
 		if (meta->getSchemaName(column) != ps_meta->getSchemaName(column))
 			throw runtime_error("getSchemaName different for PS and non-PS");
 
-
 		cout << "#\t\t meta->getTableName()\t\t= " << meta->getTableName(column);
 		cout << "/" << ps_meta->getTableName(column) << endl;
 		if (meta->getTableName(column) != ps_meta->getTableName(column))
