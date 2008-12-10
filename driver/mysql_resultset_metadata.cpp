@@ -252,7 +252,7 @@ MySQL_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 			throw sql::InvalidArgumentException("Invalid value for columnIndex");
 		}
 		int scale = getScale(columnIndex);
-		int ret = mysql_fetch_field_direct(result->get(), columnIndex - 1)->max_length;
+		int ret = mysql_fetch_field_direct(result->get(), columnIndex - 1)->length;
 		if (scale) {
 			ret -= scale + 1;
 		}
@@ -264,7 +264,7 @@ MySQL_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_ResultSetMetaData::getScale -U- */
+/* {{{ MySQL_ResultSetMetaData::getScale -I- */
 int
 MySQL_ResultSetMetaData::getScale(unsigned int columnIndex)
 {
