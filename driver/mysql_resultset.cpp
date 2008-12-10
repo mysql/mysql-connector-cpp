@@ -486,7 +486,7 @@ MySQL_ResultSet::getString(unsigned int columnIndex) const
 	}
 	was_null= false;
 	CPP_INFO_FMT("value=%*s", strlen(row[columnIndex]), row[columnIndex]);
-	return row[columnIndex];
+	return std::string(row[columnIndex], mysql_fetch_lengths(result->get())[columnIndex]);
 }
 /* }}} */
 

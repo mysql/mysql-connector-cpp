@@ -46,6 +46,8 @@ Beta  1.0.2 - xxxx-xx-xx
 - Changed ResultSetMetaData::getColumnDisplaySize() to return unsigned int
   instead of signed int. (Andrey)
 
+- Fixed MySQL_ResultSet to be binary safe. (Andrey)
+
 
 Alpha  1.0.1 - 2008-12-01
 
