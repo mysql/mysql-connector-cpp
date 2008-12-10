@@ -341,9 +341,12 @@ MySQL_Prepared_ResultSet::getDouble(unsigned int columnIndex) const
 		case MYSQL_TYPE_BLOB:
 			CPP_INFO("It's a string");
 			return atof(getString(columnIndex + 1).c_str());
+		case MYSQL_TYPE_FLOAT:
+			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<float *>(stmt->bind[columnIndex].buffer):0.;
+		case MYSQL_TYPE_DOUBLE:
+			return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<double *>(stmt->bind[columnIndex].buffer):0.;
 	}
-
-	return !*stmt->bind[columnIndex].is_null? *reinterpret_cast<double *>(stmt->bind[columnIndex].buffer):0.;
+	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getDouble: unhandled type. Please, report");
 }
 /* }}} */
 
