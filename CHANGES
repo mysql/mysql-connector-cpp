@@ -1,9 +1,14 @@
 Beta  1.0.2 - xxxx-xx-xx
 
-- Fixign bug in FLOAT handling (Andrey)
+- Implemented MySQL_ResultSetMetaData::getPrecision() and
+  MySQL_Prepared_ResultSetMetaData::getPrecision,
+  updating example (Andrey)
+
+- Fixing bug in FLOAT handling (Andrey)
 
 - Fixing bug in getString():
-  getString() is binary safe now (Andrey)
+  getString() is binary safe now (Andrey),
+  new example (Ulf)
 
 - Fixing bugs in MySQL_PreparedStatements:
   setBigInt() and setDatetime() have decremented the internal column
