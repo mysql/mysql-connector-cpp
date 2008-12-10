@@ -187,11 +187,13 @@ static void printResultSetMetaData(std::auto_ptr< sql::ResultSet > &res, std::au
 
 		cout << "#\t\t meta->getCatalogName()\t\t= " << meta->getCatalogName(column);
 		cout  << "/" << ps_meta->getCatalogName(column) << endl;
-
 		if (meta->getCatalogName(column) != ps_meta->getCatalogName(column))
 			throw runtime_error("getCatalogName different for PS and non-PS");
 
-		cout << "#\t\t meta->getColumnDisplaySize() = " << meta->getColumnDisplaySize(column) << endl;
+		cout << "#\t\t meta->getColumnDisplaySize() = " << meta->getColumnDisplaySize(column);
+		cout  << "/" << ps_meta->getColumnDisplaySize(column) << endl;
+		if (meta->getColumnDisplaySize(column) != ps_meta->getColumnDisplaySize(column))
+			throw runtime_error("getColumnDisplaySize different for PS and non-PS");
 
 		cout << "#\t\t meta->getColumnLabel()\t\t= " << meta->getColumnLabel(column);
 		cout << "/" << ps_meta->getColumnLabel(column) << endl;
