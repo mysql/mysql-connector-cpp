@@ -1,5 +1,11 @@
 Beta  1.0.2 - xxxx-xx-xx
 
+- Fixing bugs in MySQL_PreparedStatements:
+  setBigInt() and setDatetime() have decremented the internal column
+  index before forwarding the request. This resulted in double-decrement
+  and wrong internal column index. Typical error message:
+  setString() ... invalid "parameterIndex" (Ulf)
+
 - Adding PHP script examples/cpp_trace_analyzer.php to filter the
   output of the debug trace. Please see the inline comments for documentation.
   This script is unsupported! We do no promise to maintain it. (Ulf)
