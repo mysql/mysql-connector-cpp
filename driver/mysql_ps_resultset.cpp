@@ -95,7 +95,7 @@ MySQL_Prepared_ResultSet::~MySQL_Prepared_ResultSet()
 	/* Don't remove the block or we can get into problems with logger */
 	{
 		CPP_ENTER("MySQL_Prepared_ResultSet::~MySQL_Prepared_ResultSet");
-			closeIntern();
+		closeIntern();
 	}
 	logger->freeReference();
 }
@@ -209,7 +209,6 @@ void
 MySQL_Prepared_ResultSet::closeIntern()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::closeIntern");
-	checkValid();
 	is_valid = false;
 }
 /* }}} */
