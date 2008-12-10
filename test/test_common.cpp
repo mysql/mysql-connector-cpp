@@ -2565,10 +2565,8 @@ static void test_not_implemented_rs_meta(sql::Connection * conn)
 	std::auto_ptr<sql::ResultSetMetaData> meta(res->getMetaData());
 
 	try {
-		// getPrecision(unsigned int columnIndex) 
 		try {
 			total_tests++;
-			meta->getPrecision(1);
 			res->cancelRowUpdates();
 			ensure("ERR: Exception not thrown", false);
 		} catch (sql::MethodNotImplementedException &) {}
@@ -2586,52 +2584,6 @@ static void test_not_implemented_rs_meta(sql::Connection * conn)
 }
 /* }}} */
 
-static void test_not_implemented_ps_rs_meta(sql::Connection * conn)
-{
-	ENTER_FUNCTION();
-
-	std::string bar("foo");
-	std::auto_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT 1 AS 'a'"));
-	std::auto_ptr<sql::ResultSet> res(stmt->executeQuery());
-	std::auto_ptr<sql::ResultSetMetaData> meta(res->getMetaData());
-
-	try {
-		// getColumnDisplaySize(unsigned int columnIndex) 
-		try {
-			total_tests++;
-			meta->getColumnDisplaySize(1);
-			res->cancelRowUpdates();
-			ensure("ERR: Exception not thrown", false);
-		} catch (sql::MethodNotImplementedException &) {}
-
-		// getPrecision(unsigned int columnIndex) 
-		try {
-			total_tests++;
-			meta->getPrecision(1);
-			res->cancelRowUpdates();
-			ensure("ERR: Exception not thrown", false);
-		} catch (sql::MethodNotImplementedException &) {}
-
-		// getScale(unsigned int columnIndex)
-		try {
-			total_tests++;
-			meta->getScale(1);
-			res->cancelRowUpdates();
-			ensure("ERR: Exception not thrown", false);
-		} catch (sql::MethodNotImplementedException &) {}
-
-	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  %s (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState().c_str());
-		printf("# ");
-		total_errors++;
-	} catch (...) {
-		printf("\n# ERR: Caught unknown exception at %s::%d\n", CPPCONN_FUNC, __LINE__);
-		printf("# ");
-		total_errors++;
-	}
-	LEAVE_FUNCTION();
-}
-/* }}} */
 
 static void test_not_implemented_cs_rs_meta(sql::Connection * conn)
 {
@@ -2871,9 +2823,6 @@ int main(int argc, const char **argv)
 		delete conn;
 
 		test_not_implemented_rs_meta(conn = get_connection(host, user, pass));
-		delete conn;
-
-		test_not_implemented_ps_rs_meta(conn = get_connection(host, user, pass));
 		delete conn;
 
 		test_not_implemented_cs_rs_meta(conn = get_connection(host, user, pass));

@@ -29,6 +29,8 @@
 #include "mysql_debug.h"
 #include "mysql_util.h"
 
+#define MAX_LEN_PER_CHAR 4
+
 namespace sql
 {
 namespace mysql
@@ -95,8 +97,9 @@ MySQL_ResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
 		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
 			throw sql::InvalidArgumentException("Invalid value for columnIndex");
 		}
-		return 20; /* TODO : temporary value */
-		throw sql::MethodNotImplementedException("MySQL_ResultSetMetaData::getColumnDisplaySize()");
+		int ret = mysql_fetch_field_direct(result->get(), columnIndex - 1)->length * MAX_LEN_PER_CHAR;
+		CPP_INFO_FMT("column=%u name=%s display_size=%d", columnIndex, mysql_fetch_field_direct(result->get(), columnIndex - 1)->name, ret);
+		return ret;
 	}
 	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
 }
@@ -233,7 +236,7 @@ MySQL_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_ResultSetMetaData::getPrecision -U- */
+/* {{{ MySQL_ResultSetMetaData::getPrecision -I- */
 int
 MySQL_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 {
@@ -242,7 +245,13 @@ MySQL_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
 			throw sql::InvalidArgumentException("Invalid value for columnIndex");
 		}
-		throw sql::MethodNotImplementedException("MySQL_ResultSetMetaData::getPrecision()");
+		int scale = getScale(columnIndex);
+		int ret = mysql_fetch_field_direct(result->get(), columnIndex)->max_length;
+		if (scale) {
+			ret -= scale + 1;
+		}
+		CPP_INFO_FMT("column=%u precision=%d", columnIndex, ret);
+		return ret;		
 	}
 	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
 }
@@ -258,8 +267,9 @@ MySQL_ResultSetMetaData::getScale(unsigned int columnIndex)
 		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
 			throw sql::InvalidArgumentException("Invalid value for columnIndex");
 		}
-		return 10; // TODO : Temporary value
-		throw sql::MethodNotImplementedException("MySQL_ResultSetMetaData::getScale()");
+		int ret = mysql_fetch_field_direct(result->get(), columnIndex - 1)->decimals;
+		CPP_INFO_FMT("column=%u scale=%d", columnIndex, ret);
+		return ret;		
 	}
 	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
 }

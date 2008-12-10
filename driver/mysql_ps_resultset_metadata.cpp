@@ -29,6 +29,8 @@
 #include "mysql_debug.h"
 #include "mysql_util.h"
 
+#define MAX_LEN_PER_CHAR 4
+
 namespace sql
 {
 namespace mysql
@@ -66,7 +68,8 @@ MySQL_Prepared_ResultSetMetaData::getCatalogName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getCatalogName");
 	CPP_INFO_FMT("this=%p", this);
-	if (columnIndex == 0 || columnIndex > num_fields) {
+	columnIndex--;
+	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
 	return "";
@@ -85,16 +88,20 @@ MySQL_Prepared_ResultSetMetaData::getColumnCount()
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::getColumnDisplaySize -U- */
+/* {{{ MySQL_Prepared_ResultSetMetaData::getColumnDisplaySize -I- */
 unsigned int
 MySQL_Prepared_ResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getColumnDisplaySize");
 	CPP_INFO_FMT("this=%p", this);
-	if (columnIndex == 0 || columnIndex > num_fields) {
+	columnIndex--;
+	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSetMetaData::getColumnDisplaySize()");
+	int char_len = MAX_LEN_PER_CHAR;
+	int ret = mysql_fetch_field_direct(result_meta, columnIndex)->length * char_len;
+	CPP_INFO_FMT("column=%u display_size=%d", columnIndex + 1, ret);
+	return ret;
 }
 /* }}} */
 
@@ -227,30 +234,40 @@ MySQL_Prepared_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::getPrecision -U- */
+/* {{{ MySQL_Prepared_ResultSetMetaData::getPrecision -I- */
 int
 MySQL_Prepared_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getPrecision");
 	CPP_INFO_FMT("this=%p", this);
-	if (columnIndex == 0 || columnIndex > num_fields) {
+	columnIndex--;
+	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSetMetaData::getPrecision()");
+	int scale = getScale(columnIndex);
+	int ret = mysql_fetch_field_direct(result_meta, columnIndex)->max_length;
+	if (scale) {
+		ret -= scale + 1;
+	}
+	CPP_INFO_FMT("column=%u precision=%d", columnIndex + 1, ret);
+	return ret;
 }
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::getScale -U- */
+/* {{{ MySQL_Prepared_ResultSetMetaData::getScale -I- */
 int
 MySQL_Prepared_ResultSetMetaData::getScale(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getScale");
 	CPP_INFO_FMT("this=%p", this);
-	if (columnIndex == 0 || columnIndex > num_fields) {
+	columnIndex--;
+	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSetMetaData::getScale()");
+	int ret = mysql_fetch_field_direct(result_meta, columnIndex)->decimals;
+	CPP_INFO_FMT("column=%u scale=%d", columnIndex + 1, ret);
+	return ret;
 }
 /* }}} */
 
@@ -261,10 +278,11 @@ MySQL_Prepared_ResultSetMetaData::getSchemaName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getSchemaName");
 	CPP_INFO_FMT("this=%p", this);
-	if (columnIndex == 0 || columnIndex > num_fields) {
+	columnIndex--;
+	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	char *db = mysql_fetch_field_direct(result_meta, columnIndex - 1)->db;
+	char *db = mysql_fetch_field_direct(result_meta, columnIndex)->db;
 	return db ? db : "";
 }
 /* }}} */
