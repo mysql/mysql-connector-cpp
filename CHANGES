@@ -43,6 +43,10 @@ Beta  1.0.2 - xxxx-xx-xx
 - Fixed MySQL_PreparedStatementResultSet::getDouble() to return proper
   value when the underlying type is MYSQL_TYPE_FLOAT. (Andrey)
 
+- Changed ResultSetMetaData::getColumnDisplaySize() to return unsigned int
+  instead of signed int. (Andrey)
+
+
 Alpha  1.0.1 - 2008-12-01
 
 - New directory layout

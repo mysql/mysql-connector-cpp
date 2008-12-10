@@ -45,7 +45,7 @@ public:
 
 	unsigned int getColumnCount();
 
-	int getColumnDisplaySize(unsigned int columnIndex);
+	unsigned int getColumnDisplaySize(unsigned int columnIndex);
 
 	std::string getColumnLabel(unsigned int columnIndex);
 

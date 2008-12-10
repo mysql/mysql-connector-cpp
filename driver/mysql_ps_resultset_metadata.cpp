@@ -86,7 +86,7 @@ MySQL_Prepared_ResultSetMetaData::getColumnCount()
 
 
 /* {{{ MySQL_Prepared_ResultSetMetaData::getColumnDisplaySize -U- */
-int
+unsigned int
 MySQL_Prepared_ResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getColumnDisplaySize");

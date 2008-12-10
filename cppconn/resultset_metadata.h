@@ -41,7 +41,7 @@ public:
 
 	virtual unsigned int getColumnCount() = 0;
 
-	virtual int getColumnDisplaySize(unsigned int column) = 0;
+	virtual unsigned int getColumnDisplaySize(unsigned int column) = 0;
 
 	virtual std::string getColumnLabel(unsigned int column) = 0;
 
