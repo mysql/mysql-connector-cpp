@@ -4,9 +4,9 @@
 #   it under the terms of the GNU General Public License as published by
 #   the Free Software Foundation; version 2 of the License.
 #
-#   There are special exceptions to the terms and conditions of the GPL 
-#   as it is applied to this software. View the full text of the 
-#   exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this 
+#   There are special exceptions to the terms and conditions of the GPL
+#   as it is applied to this software. View the full text of the
+#   exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
 #   software distribution.
 #
 #   This program is distributed in the hope that it will be useful,
@@ -78,6 +78,13 @@ SET_TARGET_PROPERTIES(resultset PROPERTIES
 					LINK_FLAGS "${MYSQL_LINK_FLAGS} $ENV{LDFLAGS}"
 					COMPILE_FLAGS "${MYSQL_CFLAGS} $ENV{CFLAGS} $ENV{CFLAGS} $ENV{CXXFLAGS}")
 TARGET_LINK_LIBRARIES(resultset ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
+ADD_EXECUTABLE(resultset_binary resultset_binary.cpp)
+SET_TARGET_PROPERTIES(resultset_binary PROPERTIES
+					LINK_FLAGS "${MYSQL_LINK_FLAGS} $ENV{LDFLAGS}"
+					COMPILE_FLAGS "${MYSQL_CFLAGS} $ENV{CFLAGS} $ENV{CFLAGS} $ENV{CXXFLAGS}")
+TARGET_LINK_LIBRARIES(resultset_binary ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
 
 ADD_EXECUTABLE(resultset_meta resultset_meta.cpp)
 SET_TARGET_PROPERTIES(resultset_meta PROPERTIES
