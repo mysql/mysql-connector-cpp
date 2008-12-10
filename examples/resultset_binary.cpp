@@ -69,7 +69,7 @@ int main(int argc, const char **argv)
 		/* Creating a "simple" statement - "simple" = not a prepared statement */
 		std::auto_ptr< sql::Statement > stmt(con->createStatement());
 		stmt->execute("DROP TABLE IF EXISTS test");
-		stmt->execute("CREATE TABLE test(id INT, label CHAR(1), col_binary BINARY(4))");
+		stmt->execute("CREATE TABLE test(id INT, label CHAR(1), col_binary BINARY(4), col_varbinary VARBINARY(10))");
 		cout << "#\t Test table created" << endl;
 
 		/* Populate the test table with data */
@@ -87,9 +87,9 @@ int main(int argc, const char **argv)
 			KLUDGE: You should take measures against SQL injections!
 			*/
 			sql.str("");
-			sql << "INSERT INTO test(id, label, col_binary) VALUES (";
+			sql << "INSERT INTO test(id, label, col_binary, col_varbinary) VALUES (";
 			sql << test_data[i].id << ", '" << test_data[i].label << "', ";
-			sql << "\"a\\0b\")";
+			sql << "\"a\\0b\", '" << i * 5 << "\\0abc')";
 			stmt->execute(sql.str());
 		}
 		cout << "#\t Test table populated" << endl;
@@ -102,10 +102,13 @@ int main(int argc, const char **argv)
 				cout << "#\t\t Row " << row << ", getRow() " << res->getRow();
 				cout << " id = " << res->getInt("id");
 				cout << ", label = '" << res->getString("label") << "'";
-				cout << ", col_binary = '" << res->getString("col_binary") << "'" << endl;
+				/* cout might "hide" \0 and other special characters from the output */
+				cout << ", col_binary = '" << res->getString("col_binary") << "'";
+				cout << ", col_varbinary = '" << res->getString("col_varbinary") << "'" << endl;
 
+				/* fixed length column - length = size of the column! */
 				if (res->getString("col_binary").length() != 4)
-					throw runtime_error("BINARY(n) should return std::string of length n");
+					throw runtime_error("BINARY(n) should return std::string of length n regardless how long the value stored in the column is.");
 
 				if (res->getString("col_binary").compare(0, 1, "a"))
 					throw runtime_error("First sign from BINARY(n) seems wrong");
@@ -113,12 +116,15 @@ int main(int argc, const char **argv)
 				if (res->getString("col_binary").compare(2, 1, "b"))
 					throw runtime_error("Third sign from BINARY(n) seems wrong");
 
+				if (res->getString("col_varbinary").length() != 5 &&
+					res->getString("col_varbinary").length() != 6)
+					throw runtime_error("VARBINARY(n) should return std::string of length n which holds the length of the actual column value.");
 				row++;
 			}
 		}
 
 		/* Clean up */
-		stmt->execute("DROP TABLE IF EXISTS test");
+		/* stmt->execute("DROP TABLE IF EXISTS test");*/
 		cout << "# done!" << endl;
 
 	} catch (sql::SQLException &e) {
