@@ -240,7 +240,7 @@ MySQL_Prepared_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 
 
 /* {{{ MySQL_Prepared_ResultSetMetaData::getPrecision -I- */
-int
+unsigned int
 MySQL_Prepared_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getPrecision");
@@ -261,7 +261,7 @@ MySQL_Prepared_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 
 
 /* {{{ MySQL_Prepared_ResultSetMetaData::getScale -I- */
-int
+unsigned int
 MySQL_Prepared_ResultSetMetaData::getScale(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getScale");

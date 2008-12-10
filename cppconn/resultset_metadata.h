@@ -51,9 +51,9 @@ public:
 
 	virtual std::string getColumnTypeName(unsigned int column) = 0;
 
-	virtual int getPrecision(unsigned int column) = 0;
+	virtual unsigned int getPrecision(unsigned int column) = 0;
 
-	virtual int getScale(unsigned int column) = 0;
+	virtual unsigned int getScale(unsigned int column) = 0;
 
 	virtual std::string getSchemaName(unsigned int column) = 0;
 

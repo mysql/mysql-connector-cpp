@@ -53,8 +53,11 @@ Beta  1.0.2 - xxxx-xx-xx
 - Fixed MySQL_PreparedStatementResultSet::getDouble() to return proper
   value when the underlying type is MYSQL_TYPE_FLOAT. (Andrey)
 
-- Changed ResultSetMetaData::getColumnDisplaySize() to return unsigned int
-  instead of signed int. (Andrey)
+- Changed ResultSetMetaData::
+  -- getColumnDisplaySize()
+  -- getPrecision()
+  -- getScale()
+  to return unsigned int instead of signed int. (Andrey)
 
 - Fixed MySQL_ResultSet to be binary safe. (Andrey)
 

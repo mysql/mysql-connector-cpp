@@ -57,9 +57,9 @@ public:
 
 	std::string getColumnTypeName(unsigned int columnIndex);
 
-	int getPrecision(unsigned int columnIndex);
+	unsigned int getPrecision(unsigned int columnIndex);
 
-	int getScale(unsigned int columnIndex);
+	unsigned int getScale(unsigned int columnIndex);
 
 	std::string getSchemaName(unsigned int columnIndex);
 

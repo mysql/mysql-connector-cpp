@@ -243,7 +243,7 @@ MySQL_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 
 
 /* {{{ MySQL_ResultSetMetaData::getPrecision -I- */
-int
+unsigned int
 MySQL_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getPrecision");
@@ -265,7 +265,7 @@ MySQL_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 
 
 /* {{{ MySQL_ResultSetMetaData::getScale -I- */
-int
+unsigned int
 MySQL_ResultSetMetaData::getScale(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getScale");
