@@ -180,12 +180,12 @@ static void printResultSetMetaData(std::auto_ptr< sql::ResultSet > &res, std::au
 	NOTE: column indexing is 1-based not zero-based!
 	*/
 	for (column = 1; column <= meta->getColumnCount(); column++) {
-		cout << "#\t\tColumn " << column << "\t\t\t= " << meta->getColumnName(column);
+		cout << "#\t\t Column " << column << "\t\t\t= " << meta->getColumnName(column);
 		cout << "/" << ps_meta->getColumnName(column) << endl;
 		if (meta->getColumnName(column) != ps_meta->getColumnName(column))
 			throw runtime_error("getColumnName different for PS and non-PS");
 
-		cout << "#\t\tmeta->getCatalogName()\t\t= " << meta->getCatalogName(column);
+		cout << "#\t\t meta->getCatalogName()\t\t= " << meta->getCatalogName(column);
 		cout  << "/" << ps_meta->getCatalogName(column) << endl;
 
 		if (meta->getCatalogName(column) != ps_meta->getCatalogName(column))
@@ -213,13 +213,15 @@ static void printResultSetMetaData(std::auto_ptr< sql::ResultSet > &res, std::au
 		if (meta->getColumnTypeName(column) != ps_meta->getColumnTypeName(column))
 			throw runtime_error("getColumnTypeName different for PS and non-PS");
 
-		try {
-			/* Part of JDBC, but we don't support it yet */
-			cout << "#\t\t meta->getPrecision()\t\t= " << meta->getPrecision(column) << endl;
-			throw runtime_error("Update example, getPrecision supported");
-		} catch (sql::MethodNotImplementedException) { }
+		cout << "#\t\t meta->getPrecision()\t\t= " << meta->getPrecision(column);
+		cout << "/" << ps_meta->getPrecision(column) << endl;
+		if (meta->getPrecision(column) != ps_meta->getPrecision(column))
+			throw runtime_error("getPrecision different for PS and non-PS");
 
-		cout << "#\t\t meta->getScale()\t\t= " << meta->getScale(column) << endl;
+		cout << "#\t\t meta->getScale()\t\t= " << meta->getScale(column);
+		cout << "/" << ps_meta->getScale(column) << endl;
+		if (meta->getScale(column) != ps_meta->getScale(column))
+			throw runtime_error("getScale different for PS and non-PS");
 
 		cout << "#\t\t meta->getSchemaName()\t\t= " << meta->getSchemaName(column);
 		cout << "/" << ps_meta->getSchemaName(column) << endl;

@@ -1,5 +1,9 @@
 Beta  1.0.2 - xxxx-xx-xx
 
+- Implemented MySQL_ResultSetMetaData::getPrecision() and
+  MySQL_Prepared_ResultSetMetaData::getPrecision,
+  updating example (Andrey)
+
 - Fixign bug in FLOAT handling (Andrey)
 
 - Fixing bug in getString():
