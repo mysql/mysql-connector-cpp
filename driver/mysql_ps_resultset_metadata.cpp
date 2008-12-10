@@ -249,7 +249,7 @@ MySQL_Prepared_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	int scale = getScale(columnIndex);
+	int scale = getScale(columnIndex + 1);
 	int ret = mysql_fetch_field_direct(result_meta, columnIndex)->max_length;
 	if (scale) {
 		ret -= scale + 1;
