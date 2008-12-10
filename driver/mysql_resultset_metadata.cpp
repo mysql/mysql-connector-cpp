@@ -103,7 +103,7 @@ MySQL_ResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
 		} else {
 			char_len = MAX_LEN_PER_CHAR;
 		}
-		int ret = mysql_fetch_field_direct(result->get(), columnIndex)->length * char_len;
+		int ret = mysql_fetch_field_direct(result->get(), columnIndex - 1)->length * char_len;
 		CPP_INFO_FMT("column=%u name=%s display_size=%d", columnIndex, mysql_fetch_field_direct(result->get(), columnIndex - 1)->name, ret);
 		return ret;
 	}
