@@ -98,7 +98,12 @@ MySQL_Prepared_ResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	int char_len = MAX_LEN_PER_CHAR;
+	int char_len;
+	if (IS_NUM_FIELD(mysql_fetch_field_direct(result_meta, columnIndex))) {
+		char_len = 1;
+	} else {
+		char_len = MAX_LEN_PER_CHAR;
+	}
 	int ret = mysql_fetch_field_direct(result_meta, columnIndex)->length * char_len;
 	CPP_INFO_FMT("column=%u display_size=%d", columnIndex + 1, ret);
 	return ret;
