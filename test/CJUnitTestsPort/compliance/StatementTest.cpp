@@ -28,16 +28,6 @@ namespace testsuite
 {
 namespace compliance
 {
-
-    /**
-     * Constructor for StatementTest.
-     * @param name
-     */
-  StatementTest::StatementTest(String name)
-             : super(name)
-  {
-  }
-
     /*
      * @testName:         testClearWarnings
      * @assertion:        The Statement object provides methods for executing SQL

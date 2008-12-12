@@ -26,15 +26,6 @@ namespace testsuite
 namespace compliance
 {
 
-  /**
-	 * Constructor for PreparedStatementTest.
-	 * @param name
-	 */
-  PreparedStatementTest::PreparedStatementTest(String name) :
-      super(name)
-  {
-  }
-
     /*
 		 * @testName:         testGetMetaData
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
@@ -137,7 +128,7 @@ namespace compliance
 
     logMsg(String( "Prepared Statement String :" ) + sPrepStmt);
     pstmt.reset( conn->prepareStatement( sPrepStmt ) );
-    pstmt->setInt(1,1);
+    pstmt->setInt(1, 1);
     pstmt->clearParameters();
 
     try
@@ -187,7 +178,6 @@ namespace compliance
 
 /* throws Exception */
   void PreparedStatementTest::testExecute01() 
-		
   {
     bool retValue;
     String sPrepStmt= sqlProps[ "CoffeeTab_Delete" ];
@@ -235,7 +225,6 @@ namespace compliance
 
 /* throws Exception */
   void PreparedStatementTest::testExecute02() 
-		
   {
       bool retValue;
       String sPrepStmt= sqlProps[ "CoffeeTab_Delete" ];
@@ -935,8 +924,6 @@ namespace compliance
       {
         try
         {
-          if(rs != NULL) rs->close();  
-          pstmt->close();  
           clearTable("Tinyint_Tab",conn);                
         }  
         catch(std::exception * e){}
@@ -1017,8 +1004,6 @@ namespace compliance
       {
         try
         {
-          if(rs != NULL) rs->close();  
-          pstmt->close();  
           clearTable("Tinyint_Tab",conn);                
         }  
         catch(std::exception * e){}
@@ -1163,8 +1148,6 @@ namespace compliance
       {
         try
         {
-          if(rs != NULL) rs->close();  
-          pstmt->close();  
           clearTable("Float_Tab",conn);                
         }  
         catch(std::exception * e){}
@@ -1949,21 +1932,6 @@ namespace compliance
       {
         try
         {
-          if(rs != NULL)
-          {  
-             rs->close();
-             rs /*= NULL*/;
-          }   
-          if(pstmt != NULL)
-          {  
-             pstmt->close();
-             pstmt /*= NULL*/;
-          }          
-          if(stmt != NULL)
-          {  
-             stmt->close();
-             stmt /*= NULL*/;
-          }
           clearTable("Float_Tab",conn);
         }
         catch(std::exception * e) { }
@@ -3415,7 +3383,6 @@ namespace compliance
   {
     super::setUp();
 
-    stmt.reset( conn->createStatement() );
     dbmd.reset(conn->getMetaData());
   }
 

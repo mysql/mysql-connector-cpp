@@ -1,25 +1,25 @@
 /* Copyright (C) 2007 - 2008 MySQL AB, 2008 Sun Microsystems, Inc.
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; version 2 of the License.
 
-   There are special exceptions to the terms and conditions of the GPL
-   as it is applied to this software. View the full text of the
-   exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
- software distribution.
+There are special exceptions to the terms and conditions of the GPL
+as it is applied to this software. View the full text of the
+exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
+software distribution.
 
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
 
 
- */
 #ifndef _BASE_TEST_FIXTURE_
 #define _BASE_TEST_FIXTURE_
 
@@ -29,7 +29,8 @@
 #include "common/stringutils.h"
 #include "resources.h"
 #include <driver/mysql_public_iface.h>
-#include "MiniCppUnit/MiniCppUnit.hxx"
+
+#include "framework/framework.h"
 
 
 #define MESSAGE(msg)  TestsListener::theInstance().messagesLog() << msg << std::endl;
@@ -64,7 +65,12 @@ namespace testsuite
 
   public:
     enum      value_type      { vtDouble=0, vtFloat, vtByte, vtLast };
-    value_object    ( const sql::ResultSet *, int colNum );
+
+              value_object    ();
+              value_object    ( const sql::ResultSet *, int colNum );
+
+    bool      isNull          () const;
+
     String    toString        () const  { return asString; }
     int       intValue        () const;
     float     floatValue      () const;
@@ -85,13 +91,10 @@ namespace testsuite
 
   value_object * getObject( sql::ResultSet * rs, int colNum );
 
+  // TODO: Move everything from TestFixtureCommon to BaseTestFixture
   struct TestFixtureCommon
   {
-                                TestFixtureCommon ( const String & dbUrl
-                                                  , const String & dbUser
-                                                  , const String & dbPasswd
-                                                  , const String & dbSchema
-                                                  );
+                                TestFixtureCommon ();
 
                   String        extractVal  ( const String  & sTableName
                                             , int             count
@@ -106,6 +109,7 @@ namespace testsuite
 
   protected:
 
+                  void          init();
     static const  String        ADMIN_CONNECTION_PROPERTY_NAME;
 
     static const  String        NO_MULTI_HOST_PROPERTY_NAME;
@@ -127,28 +131,13 @@ namespace testsuite
 /*                                                                      */
 /************************************************************************/
 
-  template <typename ConcreteTestFixture>
-  class BaseTestFixture :public TestFixture<ConcreteTestFixture>, public TestFixtureCommon
+  class BaseTestFixture :public TestSuite, public TestFixtureCommon
   {
-  public:
-    typedef ConcreteTestFixture ConcreteFixture;
-  private:
-    typedef TestFixture<ConcreteFixture> super;
-    /*typedef BaseTestFixture<ConcreteFixture> own;*/
-
-    /*
-    static const String ADMIN_CONNECTION_PROPERTY_NAME;
-        static const String NO_MULTI_HOST_PROPERTY_NAME;*/
-    
-
-  /** Instance counter ****Moved to TestFixtureCommon struct **** */
-   /*static int          instanceCount;*/
-
-  /** list of schema objects to be dropped in tearDown */
+    typedef TestSuite super;
 
     List                createdObjects;
-  /** My instance number */
 
+  /** My instance number */
     int                 myInstanceNumber;
 
   protected:
@@ -217,42 +206,25 @@ namespace testsuite
 
 
 /* throws SQLException */
-
     void dropSchemaObject(String objectType, String objectName) ;
 
-    sql::Connection * getConnection() 
-    {
-      //Properties props = new Properties();
-      //props.setProperty("jdbcCompliantTruncation", "false");
-      //props.setProperty("runningCTS13", "true");
-      if ( driver == NULL )
-      {
-        driver = get_driver_instance();
-        logMsg( String(_T("Done: loaded ")) + driver->getName());
-      }
+    sql::Connection * getConnection(); 
 
-      return driver->connect( host, /*port,*/ login, passwd );
-    }
+/* throws SQLException */
+    sql::Connection * getAdminConnection() ;
 
 
 /* throws SQLException */
-
-    Connection getAdminConnection() ;
-
-
-/* throws SQLException */
-
-    Connection getAdminConnectionWithProps(Properties props) ;
+    sql::Connection * getAdminConnectionWithProps(Properties props) ;
 
 
 /* throws SQLException */
-
     sql::Connection * getConnectionWithProps( const String & propsList) ;
 
 
 /* throws SQLException */
-
     sql::Connection * getConnectionWithProps(const String & url, const String & propsList) ;
+
   /**
 	 * Returns a new connection with the given properties
 	 * 
@@ -324,25 +296,24 @@ namespace testsuite
 
 /* throws SQLException */
 
-    Object getSingleIndexedValueWithQuery(Connection & c,
+    value_object getSingleIndexedValueWithQuery(Connection & c,
 			int columnIndex, const String & query) ;
 
 
 /* throws SQLException */
 
-    Object getSingleIndexedValueWithQuery(int columnIndex,
+    value_object getSingleIndexedValueWithQuery(int columnIndex,
 			const String & query) ;
 
 
 /* throws SQLException */
-
-    Object getSingleValue(const String & tableName, const String & columnName,
+    value_object getSingleValue(const String & tableName, const String & columnName,
 			const String & whereClause) ;
 
 
 /* throws SQLException */
+    value_object getSingleValueWithQuery(const String & query) ;
 
-    Object getSingleValueWithQuery(const String & query) ;
     bool isAdminConnectionConfigured() ;
 
 
@@ -366,9 +337,9 @@ namespace testsuite
 	 * @return true if the property is defined.
 	 */
 
-    bool      runTestIfSysPropDefined       (String propName) ;
+    bool      runTestIfSysPropDefined       ( const String & propName) ;
 
-    bool runMultiHostTests() ;
+    bool      runMultiHostTests() ;
   /**
 	 * Checks whether the database we're connected to meets the given version
 	 * minimum
@@ -432,15 +403,9 @@ public:
 	 *            The name of the JUnit test case
 	 */
 
-          BaseTestFixture     ( String name    ) ;
-          BaseTestFixture     ( const String & name
-                              , const String & dbUrl
-                              , const String & dbUser
-                              , const String & dbPasswd
-                              , const String & dbSchema
-                              ) ;
+          BaseTestFixture     ( const String & name    ) ;
 
-    void  logDebug            ( String message ) ;
+    void  logDebug            ( const String & message ) ;
   /**
 	 * Creates resources used by all tests.
 	 * 
@@ -463,10 +428,13 @@ public:
   };
 }
 
-#include "BaseTestCase.inl"
-
 /* Macros to use instead of one of junit assertEquals calls */
 #define MyAssertEquals(str, a, b) ASSERT_MESSAGE(a==b, str)
+
+// Redefining TEST_FIXTURE
+#define TEST_FIXTURE( theFixtureClass ) typedef theFixtureClass TestSuiteClass;\
+  theFixtureClass( const String & name ) \
+  : BaseTestFixture( #theFixtureClass )
 
 #endif
 

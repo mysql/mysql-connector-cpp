@@ -43,22 +43,24 @@ namespace testsuite
 {
 namespace compliance
 {
-  class ConnectionTest : public BaseTestFixture<ConnectionTest>
+  class ConnectionTest : public BaseTestFixture
   {
   private:
-    typedef BaseTestFixture<ConnectionTest> super;
+
+    typedef BaseTestFixture super;
+
     DatabaseMetaData dbmd;
   
-protected:
+  protected:
 
     /**
      * @see junit.framework.TestCase#setUp()
      */
 
-/* throws std::runtime_error * */
+    /* throws std::runtime_error * */
+      void setUp();
 
-      void setUp() ;  
-public:
+  public:
 
     /**
      * Constructor for ConnectionTest.
@@ -78,7 +80,6 @@ public:
     TEST_CASE( testNativeSQL );
   }
 
-      ConnectionTest(String name) ;
     /*
      * @testName:         testClose
      *

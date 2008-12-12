@@ -39,13 +39,13 @@ namespace testsuite
 {
 namespace compliance
 {
-  class ResultSetMetadataTest : public BaseTestFixture<ResultSetMetadataTest>
+  class ResultSetMetadataTest : public BaseTestFixture
   {
   private:
-    typedef BaseTestFixture<ResultSetMetadataTest> super;
-    ResultSet rs;
+    typedef BaseTestFixture super;
+
     ResultSetMetaData rsmd;
-    String query;
+    String            query;
   
 protected:
 
@@ -82,12 +82,6 @@ protected:
       TEST_CASE( testIsWritable );
     }
 
-    /**
-     * Constructor for ResultSetMetadataTest.
-     * @param name
-     */
-
-      ResultSetMetadataTest(String name) ;
     /*
      * @testName:         testGetCatalogName
      * @assertion:        The ResultSetMetaData provides information about the types and

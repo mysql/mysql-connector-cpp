@@ -43,10 +43,10 @@ namespace testsuite
 {
 namespace compliance
 {
-  class DatabaseMetaDataTest : public BaseTestFixture<DatabaseMetaDataTest>
+  class DatabaseMetaDataTest : public BaseTestFixture
   {
   private:
-    typedef BaseTestFixture<DatabaseMetaDataTest> super;
+    typedef BaseTestFixture super;
     DatabaseMetaData dbmd;
     //DataSource ds1;
     String dbName;
@@ -297,15 +297,21 @@ protected:
       TEST_CASE( testUpdatesAreDetected2 );
       TEST_CASE( testUpdatesAreDetected3 );
       TEST_CASE( testUsesLocalFilePerTable );
+
+      dbmd.reset();
+
+      dbName=       "";
+      dbUser=       "";
+      drManager=    "";
+      sCatalogName= "";
+      sFtable=      "";
+      sPtable=      "";
+      //                                         ds1               (NULL),
+      sSchemaName=  "";
   }
 
-    /**
-     * Constructor for DatabaseMetaDataTest.
-     * @param name
-     */
 
-      DatabaseMetaDataTest(String name) ;
-    /*
+  /*
      * @testName:         testAllProceduresAreCallable
      * @assertion:        The DatabaseMetaData provides information about the database.
      *                    (See section 15.1 of JDBC 2.0 API Reference & Tutorial 2nd edition)

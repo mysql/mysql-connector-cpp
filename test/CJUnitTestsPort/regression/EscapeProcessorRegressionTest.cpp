@@ -25,11 +25,6 @@ namespace testsuite
 {
   namespace regression
   {
-    EscapeProcessorRegressionTest::EscapeProcessorRegressionTest(String name)
-      : super(name)
-    {
-      // TODO Auto-generated constructor stub
-    }
 
     /**
     * Tests fix for BUG#11797 - Escape tokenizer doesn't respect stacked single
@@ -43,7 +38,7 @@ namespace testsuite
     void EscapeProcessorRegressionTest::testBug11797() 
     {
       ASSERT_EQUALS("select 'ESCAPED BY ''\\'' ON {tbl_name | * | *.* | db_name.*}'",
-        * this->conn->nativeSQL("select 'ESCAPED BY ''\\'' ON {tbl_name | * | *.* | db_name.*}'"));
+       * this->conn->nativeSQL("select 'ESCAPED BY ''\\'' ON {tbl_name | * | *.* | db_name.*}'"));
     }
 
     /**

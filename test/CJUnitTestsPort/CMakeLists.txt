@@ -18,8 +18,6 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-IF(EXISTS ${MYSQLCPPCONN_SOURCE_DIR}/test/CJUnitTestsPort/MiniCppUnit)
-
 INCLUDE_DIRECTORIES(${MYSQLCPPCONN_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${MYSQLCPPCONN_SOURCE_DIR}/cppconn)
 INCLUDE(CheckSymbolExists)
@@ -74,28 +72,48 @@ IF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)
 ENDIF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)
 
 SET(jdbctests_sources
-	BaseTestCase.h
-	BaseTestCase.inl
+	ccpptests.cpp
 	BaseTestCase.cpp
-	MiniCppUnit/TestsRunner.cxx
-	MiniCppUnit/MiniCppUnit.cxx
+	framework/test_suite.cpp
+	framework/test_factory.cpp
+	framework/test_listener.cpp
+	framework/test_asserts.cpp
+	framework/test_tapOutputter.cpp
+	framework/test_runner.cpp
 	../../common/stringutils.cpp
-	../../common/stringutils.h
 	resources.cpp
-	resources.h
 	regression/EscapeProcessorRegressionTest.cpp
-	regression/EscapeProcessorRegressionTest.h
-	compliance/ConnectionTest.h
 	compliance/ConnectionTest.cpp
-	compliance/DatabaseMetaDataTest.h
 	compliance/DatabaseMetaDataTest.cpp
-	compliance/StatementTest.h
 	compliance/StatementTest.cpp
-	compliance/ResultSetMetadataTest.h
 	compliance/ResultSetMetadataTest.cpp
-	compliance/PreparedStatementTest.h
 	compliance/PreparedStatementTest.cpp
 	)
+
+# It's convinient for VS users to have headers as part of project
+IF(WIN32)
+	SET(jdbctests_sources
+    		${jdbctests_sources}
+		BaseTestCase.h
+		framework/test_runner.h
+		framework/test_suite.h
+		framework/test_case.h
+		framework/test_factory.h
+		framework/test_listener.h
+		framework/test_asserts.h
+		framework/test_outputter.h
+		framework/test_tapOutputter.h
+		../../common/stringutils.h
+		resources.h
+		regression/EscapeProcessorRegressionTest.h
+		compliance/ConnectionTest.h
+		compliance/DatabaseMetaDataTest.h
+		compliance/StatementTest.h
+		compliance/ResultSetMetadataTest.h
+		compliance/PreparedStatementTest.h
+		)
+ENDIF(WIN32)
+
 #	simple/ResultSetTest.cpp
 #	simple/ResultSetTest.h
 
@@ -105,6 +123,3 @@ TARGET_LINK_LIBRARIES(CJUnitTestsPort ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK
 
 #
 MESSAGE(STATUS "Configuring C/J junit tests port")
-
-
-ENDIF(EXISTS ${MYSQLCPPCONN_SOURCE_DIR}/test/CJUnitTestsPort/MiniCppUnit)

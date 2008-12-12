@@ -25,16 +25,6 @@ namespace testsuite
 {
 namespace compliance
 {
-
-    /**
-     * Constructor for ResultSetMetadataTest.
-     * @param name
-     */
-  ResultSetMetadataTest::ResultSetMetadataTest(String name) : super(name)
-  {
-        
-    }
-
     /*
      * @testName:         testGetCatalogName
      * @assertion:        The ResultSetMetaData provides information about the types and

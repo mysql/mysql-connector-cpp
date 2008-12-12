@@ -34,10 +34,10 @@ namespace testsuite
 {
   namespace regression
   {
-    class EscapeProcessorRegressionTest :public BaseTestFixture<EscapeProcessorRegressionTest>
+    class EscapeProcessorRegressionTest : public BaseTestFixture
     {
     private:
-      typedef BaseTestFixture<EscapeProcessorRegressionTest> super;
+      typedef BaseTestFixture super;
     protected:
     public:
 
@@ -49,7 +49,6 @@ namespace testsuite
         TEST_CASE( testBug25399 );
       }
 
-      EscapeProcessorRegressionTest(String name) ;
 
       /**
       * Tests fix for BUG#11797 - Escape tokenizer doesn't respect stacked single

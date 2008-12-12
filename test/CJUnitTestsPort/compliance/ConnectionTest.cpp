@@ -31,14 +31,6 @@ namespace testsuite
 namespace compliance
 {
 
-    /**
-     * Constructor for ConnectionTest.
-     * @param name
-     */
-  ConnectionTest::ConnectionTest(String name) : super(name)
-  {
-  }
-
     /*
      * @testName:         testClose
      *

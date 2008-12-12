@@ -103,12 +103,31 @@ MySQL_Prepared_Statement::~MySQL_Prepared_Statement()
 /* }}} */
 
 
+bool validParamBind( unsigned paramCount, MYSQL_BIND *paramBind )
+{
+  if ( paramCount == 0 )
+    return true;
+
+  if ( paramBind == NULL )
+    return false;
+
+  for ( unsigned i= 0; i < paramCount; ++i )
+  {
+    if ( paramBind[ i ].buffer == NULL && paramBind[ i ].is_null == NULL )
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 /* {{{ MySQL_Prepared_Statement::do_query() -I- */
 void
 MySQL_Prepared_Statement::do_query()
 {
 	CPP_ENTER("MySQL_Prepared_Statement::do_query");
-	if (param_count && mysql_stmt_bind_param(stmt, param_bind)) {
+	if ( ! validParamBind(param_count, param_bind) || mysql_stmt_bind_param(stmt, param_bind)) {
 		CPP_ERR("Couldn't bind");
 		throw sql::SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
 	}

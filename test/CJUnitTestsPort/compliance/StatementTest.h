@@ -42,10 +42,10 @@ namespace testsuite
 {
 namespace compliance
 {
-  class StatementTest : public BaseTestFixture<StatementTest>
+  class StatementTest : public BaseTestFixture
   {
   private:
-    typedef BaseTestFixture<StatementTest> super;
+    typedef BaseTestFixture super;
   
 protected:
   
@@ -91,12 +91,6 @@ protected:
 #endif
     }
 
-    /**
-     * Constructor for StatementTest.
-     * @param name
-     */
-
-      StatementTest(String name) ;
     /*
      * @testName:         testClearWarnings
      * @assertion:        The Statement object provides methods for executing SQL

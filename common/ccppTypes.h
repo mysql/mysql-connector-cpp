@@ -47,6 +47,14 @@
 #include <list>
 /*#include <locale>*/
 
+#ifndef ABSTRACT
+#define ABSTRACT
+#endif
+
+#ifndef PURE
+#define PURE =0
+#endif
+
 /*----------------------------------------------------------------------------
 ci_char_traits : Case-insensitive char traits.
 Taken from : http://gcc.gnu.org/onlinedocs/libstdc++/21_strings/gotw29a.txt

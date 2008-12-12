@@ -34,15 +34,13 @@ namespace testsuite
 {
 namespace compliance
 {
-  class PreparedStatementTest : public BaseTestFixture<PreparedStatementTest>
+  class PreparedStatementTest : public BaseTestFixture
   {
   private:
-      typedef BaseTestFixture<PreparedStatementTest> super;
 
-      ResultSet         rs;
-      Statement         stmt;
+      typedef BaseTestFixture super;
+
       DatabaseMetaData  dbmd;
-      PreparedStatement pstmt;
 
   protected:
 
@@ -144,12 +142,6 @@ namespace compliance
 #endif
     }
 
-  /**
-	 * Constructor for PreparedStatementTest.
-	 * @param name
-	 */
-
-    PreparedStatementTest(String name) ;
     /*
 		 * @testName:         testGetMetaData
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled

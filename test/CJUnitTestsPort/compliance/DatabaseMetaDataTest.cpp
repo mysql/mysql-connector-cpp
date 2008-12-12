@@ -25,26 +25,6 @@ namespace testsuite
 {
 namespace compliance
 {
-    /**
-     * Constructor for DatabaseMetaDataTest.
-     * @param name
-     */
-  DatabaseMetaDataTest::DatabaseMetaDataTest( String name )
-                                        :
-                                          super             ( name  ),
-                                          dbmd              ( NULL  ),
-                                          dbName            ( ""    ),
-                                          dbUser            ( ""    ),
-                                          drManager         ( ""    ),
-                                          sCatalogName      ( ""    ),
-                                          sFtable           ( ""    ),
-                                          sPtable           ( ""    ),
- //                                         ds1               (NULL),
-                                          sSchemaName       ( ""    )
- 
-  {
-  }
-
     /*
      * @testName:         testAllProceduresAreCallable
      * @assertion:        The DatabaseMetaData provides information about the database.

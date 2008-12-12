@@ -50,6 +50,9 @@ namespace sql
 namespace mysql
 {
 
+#if defined(_WIN32) || defined(_WIN64)
+#define snprintf _snprintf
+#endif
 
 char * cppmysql_utf8_strup(const char *src, size_t srclen);
 
