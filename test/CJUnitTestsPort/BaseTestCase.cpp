@@ -433,8 +433,8 @@ namespace testsuite
   String BaseTestFixture::getMysqlVariable(Connection & c
     , const String & variableName)
   {
-    value_object & value= getSingleIndexedValueWithQuery(c, 2,
-      "SHOW VARIABLES LIKE '" + variableName + "'");
+    value_object value( getSingleIndexedValueWithQuery(c, 2,
+      "SHOW VARIABLES LIKE '" + variableName + "'") );
 
     if (! value.isNull() )
     {
@@ -597,7 +597,7 @@ namespace testsuite
 
   bool BaseTestFixture::isServerRunningOnWindows()
   {
-    return (getMysqlVariable("datadir").find_first_of('\\') != -1);
+    return (getMysqlVariable("datadir").find_first_of('\\') != String::npos);
   }
 
 
@@ -907,8 +907,8 @@ namespace testsuite
     {
       test->next();
       for (int i = 0; i < controlNumCols; i++) {
-        Object controlObj = getObject( control.get(), i + 1 );
-        Object testObj    = getObject( test.get()   , i + 1 );
+        Object controlObj( getObject( control.get(), i + 1 ) );
+        Object testObj( getObject( test.get()   , i + 1 ) );
 
         if (controlObj.get() == NULL) {
           ASSERT( testObj.get() == NULL );
