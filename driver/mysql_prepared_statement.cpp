@@ -142,25 +142,6 @@ MySQL_Prepared_Statement::~MySQL_Prepared_Statement()
 /* }}} */
 
 
-bool validParamBind( unsigned paramCount, MYSQL_BIND *paramBind )
-{
-  if ( paramCount == 0 )
-    return true;
-
-  if ( paramBind == NULL )
-    return false;
-
-  for ( unsigned i= 0; i < paramCount; ++i )
-  {
-    if ( paramBind[ i ].buffer == NULL && paramBind[ i ].is_null == NULL )
-    {
-      return false;
-    }
-  }
-
-  return true;
-}
-
 /* {{{ MySQL_Prepared_Statement::do_query() -I- */
 void
 MySQL_Prepared_Statement::do_query()

@@ -50,7 +50,7 @@ namespace compliance
     typedef BaseTestFixture super;
 
     DatabaseMetaData dbmd;
-  
+
   protected:
 
     /**

@@ -1,14 +1,17 @@
 Beta  1.0.2 - xxxx-xx-xx
 
-- Implemented MySQL_ResultSetMetaData::getPrecision() and
-  MySQL_Prepared_ResultSetMetaData::getPrecision,
-  updating example (Andrey)
+- Addition of a new unit test framework for JDBC compliance and
+  regression testing. (Lawrin)
 
-- Fixing bug in FLOAT handling (Andrey)
+- Implemented MySQL_ResultSetMetaData::getPrecision() and
+  MySQL_Prepared_ResultSetMetaData::getPrecision(),
+  updating example. (Andrey)
+
+- Fixing bug in FLOAT handling. (Andrey)
 
 - Fixing bug in getString():
   getString() is binary safe now (Andrey),
-  new example (Ulf)
+  new example. (Ulf)
 
 - Fixing bugs in MySQL_PreparedStatements:
   setBigInt() and setDatetime() have decremented the internal column

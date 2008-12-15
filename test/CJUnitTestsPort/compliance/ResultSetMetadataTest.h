@@ -46,7 +46,7 @@ namespace compliance
 
     ResultSetMetaData rsmd;
     String            query;
-  
+
 protected:
 
     /**
@@ -55,7 +55,7 @@ protected:
 
 /* throws std::exception * */
 
-      void setUp() ;  
+      void setUp() ;
   public:
     TEST_FIXTURE( ResultSetMetadataTest )
     {

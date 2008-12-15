@@ -4,9 +4,9 @@ This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; version 2 of the License.
 
-There are special exceptions to the terms and conditions of the GPL 
-as it is applied to this software. View the full text of the 
-exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this 
+There are special exceptions to the terms and conditions of the GPL
+as it is applied to this software. View the full text of the
+exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
 software distribution.
 
 This program is distributed in the hope that it will be useful,
@@ -67,7 +67,7 @@ namespace compliance
 
       TEST_CASE( testSetBoolean01 );
       TEST_CASE( testSetBoolean02 );
- 
+
       TEST_CASE( testSetInt01 );
       TEST_CASE( testSetInt02 );
 
@@ -145,47 +145,47 @@ namespace compliance
     /*
 		 * @testName:         testGetMetaData
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements.It can take one or more parameters as input 
-		 *                    arguments(IN parameters). (See section 11.1.6 of JDBC 2.0 API 
+		 *                    SQL statements.It can take one or more parameters as input
+		 *                    arguments(IN parameters). (See section 11.1.6 of JDBC 2.0 API
 		 *                    Reference & Tutorial,Second Edition)
-		 *                    
-		 *                    The JDBC drivers must provide full support for PreparedStatement 
-		 *                    methods.  (See section 6.2.2.3 of Java2 Platform Enterprise 
+		 *
+		 *                    The JDBC drivers must provide full support for PreparedStatement
+		 *                    methods.  (See section 6.2.2.3 of Java2 Platform Enterprise
 		 *                    Edition(J2EE) specification v 1.2)
-		 *                    
+		 *
 		 *                    The getMetadata() method returns a valid ResultSetMetaData Object
 		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
 		 *                    Execute the getMetaData() method and get the number of columns using
-		 *		      getColumnCount() method of ResultSetMetaData.Execute a query using 
+		 *		      getColumnCount() method of ResultSetMetaData.Execute a query using
 		 *		      executeQuery() method and get the number of columns. Both the values
 		 *		      should be equal or it should throw an SQL exception.
-		 *                     
+		 *
 		 */
 
 
 /* throws std::exception * */
 
     void testGetMetaData();
-    /* 
+    /*
 		 * @testName:         testClearParameters
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements.It can take one or more parameters as input 
-		 *                    arguments(IN parameters).  (See section 11.1.6 of JDBC 2.0 
+		 *                    SQL statements.It can take one or more parameters as input
+		 *                    arguments(IN parameters).  (See section 11.1.6 of JDBC 2.0
 		 *                    API Reference & Tutorial,Second Edition)
-		 *                    
-		 *                    The JDBC drivers must provide full support for Prepared Statement 
-		 *                    methods.  (See section 6.2.2.3 of Java2 Platform Enterprise 
+		 *
+		 *                    The JDBC drivers must provide full support for Prepared Statement
+		 *                    methods.  (See section 6.2.2.3 of Java2 Platform Enterprise
 		 *                    Edition(J2EE) specification v 1.2)
-		 *                    
-		 *                    The method clearParameters() clears the values set for the 
-		 *                    PreparedStatement object's IN parameters and releases the 
+		 *
+		 *                    The method clearParameters() clears the values set for the
+		 *                    PreparedStatement object's IN parameters and releases the
 		 *                    resources used by those values.
 		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
 		 *                    Set the value for the IN parameter of the Prepared Statement object.
 		 *                    Call the clearParameters() method.Call the executeQuery() method
-		 *                    to check if the call to clearParameters() clears the IN parameter 
+		 *                    to check if the call to clearParameters() clears the IN parameter
 		 *                    set by the Prepared Statement object.
 		 */
 
@@ -195,24 +195,24 @@ namespace compliance
     void testClearParameters();
     /*
 		 * @testName:         testExecute01
-		 * @assertion:        A Prepared Statement object provides a way of calling 
-		 *                    precompiled SQL statements.It can take one or more parameters 
-		 *                    as input arguments(IN parameters). (See section 11.1.6 of 
+		 * @assertion:        A Prepared Statement object provides a way of calling
+		 *                    precompiled SQL statements.It can take one or more parameters
+		 *                    as input arguments(IN parameters). (See section 11.1.6 of
 		 *                    JDBC 2.0 API Reference & Tutorial,Second Edition)
-		 *                    
-		 *                    The drivers must provide full support for Prepared Statement 
-		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise 
+		 *
+		 *                    The drivers must provide full support for Prepared Statement
+		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise
 		 *                    Edition(J2EE) specification v 1.2).
-		 *                    
-		 *                    The execute()method executes the SQL statement contained in 
-		 *                    the Prepared Statement object and indicates whether the first 
+		 *
+		 *                    The execute()method executes the SQL statement contained in
+		 *                    the Prepared Statement object and indicates whether the first
 		 *                    result is a resultset,an update count,or there are no results.
 		 *                    (See JDK 1.2.2 API Documentation)
 		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
 		 *                    Set the value for the IN parameter of the Prepared Statement
-		 *                    object. Execute the precompiled SQL Statement of deleting a row. 
-		 *                    It should return a boolean value and the value should be equal to 
+		 *                    object. Execute the precompiled SQL Statement of deleting a row.
+		 *                    It should return a boolean value and the value should be equal to
 		 *                    false.  (See JDK 1.2.2 API documentation)
 		 *
 		 */
@@ -222,25 +222,25 @@ namespace compliance
 
     void testExecute01();
     /*
-		 * @testName:         testExecute02 
+		 * @testName:         testExecute02
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements.It can take one or more parameters as input 
-		 *                    arguments(IN parameters). (See section 11.1.6 of JDBC 2.0 
+		 *                    SQL statements.It can take one or more parameters as input
+		 *                    arguments(IN parameters). (See section 11.1.6 of JDBC 2.0
 		 *                    API Reference & Tutorial,Second Edition)
-		 *                    The drivers must provide full support for Prepared Statement 
-		 *                    methods.  (See section 6.2.2.3 of Java2 Platform Enterprise 
-		 *                    Edition(J2EE) specification v 1.2) 
-		 *                    
-		 *                    The execute()method executes the SQL statement contained in the 
-		 *                    Prepared Statement object and indicates whether the first result 
+		 *                    The drivers must provide full support for Prepared Statement
+		 *                    methods.  (See section 6.2.2.3 of Java2 Platform Enterprise
+		 *                    Edition(J2EE) specification v 1.2)
+		 *
+		 *                    The execute()method executes the SQL statement contained in the
+		 *                    Prepared Statement object and indicates whether the first result
 		 *                    is a resultset,an update count,or there are no results.
 		 *                    (See JDK 1.2.2 API documentation)
 		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
 		 *                    Set the value for the IN parameter of the Prepared Statement object.
-		 *                    Execute the precompiled SQL Statement by calling executeQuery() 
+		 *                    Execute the precompiled SQL Statement by calling executeQuery()
 		 *                    method with a non-existent row.Call ResultSet.next() method.
-		 *                    It should return a boolean value and the value should be equal 
+		 *                    It should return a boolean value and the value should be equal
 		 *                    to false. (See JDK 1.2.2 API documentation)
 		 *
 		 */
@@ -249,23 +249,23 @@ namespace compliance
 /* throws std::exception * */
 
     void testExecute02();
-    /* 
+    /*
 		 * @testName:         testExecute03
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements.It can take one or more parameters as input 
-		 *                    arguments(IN parameters).  (See section 11.1.6 of JDBC 2.0 API 
+		 *                    SQL statements.It can take one or more parameters as input
+		 *                    arguments(IN parameters).  (See section 11.1.6 of JDBC 2.0 API
 		 *                    Reference & Tutorial,Second Edition)
-		 *                    
-		 *                    The drivers must provide full support for Prepared Statement 
-		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise 
+		 *
+		 *                    The drivers must provide full support for Prepared Statement
+		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise
 		 *                    edition(J2EE) specification v 1.2).
-		 *                    
-		 *                    The execute() method executes the SQL statement contained in 
-		 *                    the Prepared Statement object and indicates whether the first 
+		 *
+		 *                    The execute() method executes the SQL statement contained in
+		 *                    the Prepared Statement object and indicates whether the first
 		 *                    result is a resultset,an update count,or there are no results.
 		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
-		 *                    Execute the precompiled SQL Statement by calling execute() method 
+		 *                    Execute the precompiled SQL Statement by calling execute() method
 		 *                    without setting the parameters.An SQL std::exception * must be thrown.
 		 *                    (See JDK 1.2.2 API documentation)
 		 *
@@ -278,23 +278,23 @@ namespace compliance
     /*
 		 * @testName:         testExecuteQuery01
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements.It can take one or more parameters as input 
-		 *                    arguments(IN parameters).  (See section 11.1.6 of JDBC 2.0 
+		 *                    SQL statements.It can take one or more parameters as input
+		 *                    arguments(IN parameters).  (See section 11.1.6 of JDBC 2.0
 		 *                    API Reference & Tutorial,Second Edition)
-		 *                    
-		 *                    The drivers must provide full support for Prepared Statement 
-		 *                    methods (See section 6.2.2.3 of Java2 Platform Enterprise 
-		 *                    Edition(J2EE) specification v 1.2) 
-		 *                    
-		 *                    The executeQuery() method executes SQL query in this 
-		 *                    PreparedStatement object and returns the result set generated 
+		 *
+		 *                    The drivers must provide full support for Prepared Statement
+		 *                    methods (See section 6.2.2.3 of Java2 Platform Enterprise
+		 *                    Edition(J2EE) specification v 1.2)
+		 *
+		 *                    The executeQuery() method executes SQL query in this
+		 *                    PreparedStatement object and returns the result set generated
 		 *                    by the query.(See JDK 1.2.2 API documentation)
 		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
 		 *                    Set the value for the IN parameter of the Prepared Statement object.
-		 *                    Execute the precompiled SQL Statement by calling executeQuery() 
+		 *                    Execute the precompiled SQL Statement by calling executeQuery()
 		 *                    method. It should return a ResultSet object.
-		 *  
+		 *
 		 */
 
 
@@ -304,24 +304,24 @@ namespace compliance
     /*
 		 * @testName:         testExecuteQuery02
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements.It can take one or more parameters as input 
-		 *                    arguments(IN parameters).  (See section 11.1.6 of JDBC 2.0 API 
+		 *                    SQL statements.It can take one or more parameters as input
+		 *                    arguments(IN parameters).  (See section 11.1.6 of JDBC 2.0 API
 		 *                    Reference & Tutorial,Second Edition)
-		 *                    
-		 *                    The JDBC drivers must provide full support for PreparedStatement 
-		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise 
-		 *                    Edition(J2EE) specification v 1.2) 
-		 *                    
-		 *                    The executeQuery() method executes SQL query in this 
-		 *                    PreparedStatement object and returns the result set generated 
+		 *
+		 *                    The JDBC drivers must provide full support for PreparedStatement
+		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise
+		 *                    Edition(J2EE) specification v 1.2)
+		 *
+		 *                    The executeQuery() method executes SQL query in this
+		 *                    PreparedStatement object and returns the result set generated
 		 *                    by the query. (See JDK 1.2.2 API documentation)
 		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
 		 *                    Set the value for the IN parameter of the Prepared Statement object.
-		 *                    Execute the precompiled SQL Statement by calling executeQuery() 
-		 *                    method with a non existent row.  A call to ResultSet.next() 
+		 *                    Execute the precompiled SQL Statement by calling executeQuery()
+		 *                    method with a non existent row.  A call to ResultSet.next()
 		 *                    should return a false value.
-		 */ 
+		 */
 
 
 /* throws std::exception * */
@@ -329,24 +329,24 @@ namespace compliance
     void testExecuteQuery02();
     /*
 		 * @testName:         testExecuteQuery03
-		 * @assertion:        A Prepared Statement object provides a way of calling precompiled 
-		 *                    SQL statements.It can take one or more parameters as input 
-		 *                    arguments(IN parameters).(See section 11.1.6 of JDBC 2.0 API 
+		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
+		 *                    SQL statements.It can take one or more parameters as input
+		 *                    arguments(IN parameters).(See section 11.1.6 of JDBC 2.0 API
 		 *                    Reference & Tutorial,Second Edition)
-		 *                    
-		 *                    The JDBC drivers must provide full support for PreparedStatement 
-		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise 
-		 *                    Edition(J2EE) specification v 1.2) 
-		 *                    
-		 *                    The executeQuery() method executes SQL query in this 
-		 *                    PreparedStatement object and returns the result set generated 
+		 *
+		 *                    The JDBC drivers must provide full support for PreparedStatement
+		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise
+		 *                    Edition(J2EE) specification v 1.2)
+		 *
+		 *                    The executeQuery() method executes SQL query in this
+		 *                    PreparedStatement object and returns the result set generated
 		 *                    by the query. (See JDK 1.2.2 API documentation)
 		 *
-		 * @test_Strategy:    Get a PreparedStatement object from the connection to the 
-		 *                    database. Execute the precompiled SQL Statement by calling 
+		 * @test_Strategy:    Get a PreparedStatement object from the connection to the
+		 *                    database. Execute the precompiled SQL Statement by calling
 		 *                    executeQuery() method without setting the parameters.
 		 *                    It should throw a SQL std::exception *.
-		 */ 
+		 */
 
 
 /* throws std::exception * */
@@ -355,24 +355,24 @@ namespace compliance
     /*
 		 * @testName:         testExecuteUpdate01
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements.  It can take one or more parameters as input 
-		 *                    arguments(IN parameters). (See section 11.1.6 of JDBC 2.0 API 
+		 *                    SQL statements.  It can take one or more parameters as input
+		 *                    arguments(IN parameters). (See section 11.1.6 of JDBC 2.0 API
 		 *                    Reference & Tutorial,Second Edition)
-		 *                    
-		 *                    The JDBC drivers must provide full support for PreparedStatement 
-		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise 
+		 *
+		 *                    The JDBC drivers must provide full support for PreparedStatement
+		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise
 		 *                    Edition(J2EE) specification v 1.2)
-		 *                    
+		 *
 		 *                    The executeUpdate(String sql) method executes an SQL Insert,
-		 *                    Update or Delete Statement and returns the number of rows that 
-		 *                    were affected.It can also be used to execute SQL statements 
-		 *                    that have no return value such as DDL statements that create 
+		 *                    Update or Delete Statement and returns the number of rows that
+		 *                    were affected.It can also be used to execute SQL statements
+		 *                    that have no return value such as DDL statements that create
 		 *                    or drop tables.  (See JDK 1.2.2 API documentation)
 		 *
-		 * @test_Strategy:    Get a PreparedStatement object from the connection to the 
-		 *                    database. Set the value for the IN parameter of the PreparedStatement 
-		 *                    object. Execute the precompiled SQL Statement by calling 
-		 *                    executeUpdate() method. It should return an integer 
+		 * @test_Strategy:    Get a PreparedStatement object from the connection to the
+		 *                    database. Set the value for the IN parameter of the PreparedStatement
+		 *                    object. Execute the precompiled SQL Statement by calling
+		 *                    executeUpdate() method. It should return an integer
 		 *                    value indicating the number of rows that were affected.
 		 *                    (The value could be zero if zero rows are affected).
 		 */
@@ -384,24 +384,24 @@ namespace compliance
     /*
 		 * @testName:         testExecuteUpdate02
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements.It can take one or more parameters as input 
-		 *                    arguments(IN parameters) (See section 11.1.6 of JDBC 2.0 API 
+		 *                    SQL statements.It can take one or more parameters as input
+		 *                    arguments(IN parameters) (See section 11.1.6 of JDBC 2.0 API
 		 *                    Reference & Tutorial,Second Edition)
-		 *                    
-		 *                    The JDBC drivers must provide full support for PreparedStatement 
-		 *                    methods (See section 6.2.2.3 of Java2 Platform Enterprise 
+		 *
+		 *                    The JDBC drivers must provide full support for PreparedStatement
+		 *                    methods (See section 6.2.2.3 of Java2 Platform Enterprise
 		 *                    Edition(J2EE) specification v 1.2)
-		 *                    
+		 *
 		 *                    The executeUpdate() method executes an SQL Insert,
-		 *                    Update or Delete Statement and returns the number of rows that 
-		 *                    were affected.It can also be used to execute SQL statements 
-		 *                    that have no return value such as DDL statements that create 
+		 *                    Update or Delete Statement and returns the number of rows that
+		 *                    were affected.It can also be used to execute SQL statements
+		 *                    that have no return value such as DDL statements that create
 		 *                    or drop tables.(The value could be zero if zero rows are affected).
 		 *                    (See JDK 1.2.2 API documentation)
 		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
-		 *                    Set the value for the IN parameter of the Prepared Statement 
-		 *                    object. Execute the precompiled SQL Statement by calling 
+		 *                    Set the value for the IN parameter of the Prepared Statement
+		 *                    object. Execute the precompiled SQL Statement by calling
 		 *                    executeUpdate() method with a non existent row.
 		 *                    It should return an Integer value.
 		 */
@@ -413,15 +413,15 @@ namespace compliance
     /*
 		 * @testName:         testExecuteUpdate03
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements.It can take one or more parameters as input 
-		 *                    arguments(IN parameters). (See section 11.1.6 of JDBC 2.0 API 
+		 *                    SQL statements.It can take one or more parameters as input
+		 *                    arguments(IN parameters). (See section 11.1.6 of JDBC 2.0 API
 		 *                    Reference & Tutorial,Second Edition)
-		 *                    
-		 *                    The JDBC drivers must provide full support for PreparedStatement 
-		 *                    methods.  (See section 6.2.2.3 of Java2 Platform Enterprise 
+		 *
+		 *                    The JDBC drivers must provide full support for PreparedStatement
+		 *                    methods.  (See section 6.2.2.3 of Java2 Platform Enterprise
 		 *                    Edition(J2EE) specification v 1.2)
-		 *                    
-		 *                    The executeUpdate() method executes an SQL Insert,Update or 
+		 *
+		 *                    The executeUpdate() method executes an SQL Insert,Update or
 		 *                    Delete Statement and returns the number of rows that were affected.
 		 *                    It can also be used to execute SQL statements that have no
 		 *                    return value such as DDL statements that create or drop tables.
@@ -429,7 +429,7 @@ namespace compliance
 		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
 		 *                    Execute the precompiled SQL Statement without setting the IN parameter.
-		 *                    It should throw an SQL exception. 
+		 *                    It should throw an SQL exception.
 		 */
 
 
@@ -439,28 +439,28 @@ namespace compliance
     /*
 		 * @testName:         testSetBigDecimal01
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements.It can take one or more parameters as input 
-		 *                    arguments(IN parameters). (See section 11.1.6 of JDBC 2.0 API 
+		 *                    SQL statements.It can take one or more parameters as input
+		 *                    arguments(IN parameters). (See section 11.1.6 of JDBC 2.0 API
 		 *                    Reference & Tutorial,Second Edition).
-		 *                    
-		 *                    The JDBC drivers must provide full support for PreparedStatement 
-		 *                    methods.  (See section 6.2.2.3 of Java2 Platform Enterprise 
+		 *
+		 *                    The JDBC drivers must provide full support for PreparedStatement
+		 *                    methods.  (See section 6.2.2.3 of Java2 Platform Enterprise
 		 *                    Edition(J2EE) specification v 1.2)
-		 *                    
-		 *                    The setBigDecimal(int parameterIndex, BigDecimal x) method 
-		 *                    sets the parameterIndex to x which is an instance of 
-		 *                    java.math.BigDecimal class. The Driver converts this  to a 
+		 *
+		 *                    The setBigDecimal(int parameterIndex, BigDecimal x) method
+		 *                    sets the parameterIndex to x which is an instance of
+		 *                    java.math.BigDecimal class. The Driver converts this  to a
 		 *                    JDBC Numeric Value when it sends it to the database. (See
 		 *                    section 24.3.2 of JDBC 2.0 API Tutorial & Reference,2nd Edition).
 		 *
-		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database. 
-		 *                    Execute the precompiled.SQL Statement by calling the 
+		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
+		 *                    Execute the precompiled.SQL Statement by calling the
 		 *                    setBigDecimal(int parameterindex, BigDecimal x) method for updating
-		 *                    the value of column MIN_VAL in Numeric_Tab.Check first 
+		 *                    the value of column MIN_VAL in Numeric_Tab.Check first
 		 *                    the return value of executeUpdate() method used is equal to 1.
 		 *                    Call the ResultSet.getBigDecimal(int columnIndex)method.
 		 *                    Check if returns the BigDecimal Value that has been set.
-		 */ 
+		 */
 
 
 /* throws std::exception * */
@@ -469,27 +469,27 @@ namespace compliance
     /*
 		 * @testName:         testSetBigDecimal02
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements.It can take one or more parameters as input 
-		 *                    arguments(IN parameters) (See section 11.1.6 of JDBC 2.0 API 
+		 *                    SQL statements.It can take one or more parameters as input
+		 *                    arguments(IN parameters) (See section 11.1.6 of JDBC 2.0 API
 		 *                    Reference & Tutorial,Second Edition)
-		 *                    
-		 *                    The JDBC drivers must provide full support for PreparedStatement 
-		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise 
+		 *
+		 *                    The JDBC drivers must provide full support for PreparedStatement
+		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise
 		 *                    Edition(J2EE) specification v 1.2)
-		 *                    
-		 *                    The setBigDecimal(int parameterIndex, BigDecimal x) method 
-		 *                    sets the parameterIndex to x which is an instance of 
-		 *                    java.math.BigDecimal class.The Driver converts this to a JDBC 
-		 *                    Numeric Value when it sends it to the database.(See section 
+		 *
+		 *                    The setBigDecimal(int parameterIndex, BigDecimal x) method
+		 *                    sets the parameterIndex to x which is an instance of
+		 *                    java.math.BigDecimal class.The Driver converts this to a JDBC
+		 *                    Numeric Value when it sends it to the database.(See section
 		 *                    24.3.2 of JDBC 2.0 API Tutorial & Reference, Second Edition).
 		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
-		 *                    Execute the precompiled SQL Statement by calling the 
+		 *                    Execute the precompiled SQL Statement by calling the
 		 *                    setBigDecimal(int parameterindex, BigDecimal x) method for updating
-		 *                    the value of column NULL_VAL in Numeric_Tab.  Call the 
-		 *                    ResultSet.getBigDecimal(int columnIndex) method. Check if 
+		 *                    the value of column NULL_VAL in Numeric_Tab.  Call the
+		 *                    ResultSet.getBigDecimal(int columnIndex) method. Check if
 		 *                    returns the BigDecimal Value that has been set.
-		 */ 
+		 */
 
 /* throws std::exception * */
 
@@ -497,24 +497,24 @@ namespace compliance
     /*
 		 * @testName:         testSetBoolean01
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements.It can take one or more parameters as input 
-		 *                    arguments(IN parameters). (See section 11.1.6 of JDBC 2.0 API 
+		 *                    SQL statements.It can take one or more parameters as input
+		 *                    arguments(IN parameters). (See section 11.1.6 of JDBC 2.0 API
 		 *                    Reference & Tutorial,Second Edition).
-		 *                    
-		 *                    The JDBC drivers must provide full support for PreparedStatement 
-		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise 
+		 *
+		 *                    The JDBC drivers must provide full support for PreparedStatement
+		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise
 		 *                    Edition(J2EE) specification v 1.2)
-		 *                    
-		 *                    The setBoolean(int parameterIndex, boolean x) method sets the 
-		 *                    parameterIndex to x, a Java boolean value.The driver converts 
+		 *
+		 *                    The setBoolean(int parameterIndex, boolean x) method sets the
+		 *                    parameterIndex to x, a Java boolean value.The driver converts
 		 *                    this to JDBC BIT value when it sends it to the database. (See
 		 *                    section 24.3.2 of JDBC 2.0 API Tutorial & Reference, 2nd Edition).
 		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
-		 *                    Execute the precompiled SQL Statement by calling the 
+		 *                    Execute the precompiled SQL Statement by calling the
 		 *                    setBoolean(int parameterIndex, boolean x) to set MAX_VAL
 		 *                    column of Bit_tab to the boolean value x.
-		 *                    Call the ResultSet.getBoolean(int columnIndex) method to check 
+		 *                    Call the ResultSet.getBoolean(int columnIndex) method to check
 		 *                    if it returns the boolean Value that has been set.
 		 *
 		 */
@@ -525,26 +525,26 @@ namespace compliance
     /*
 		 * @testName:         testSetBoolean02
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements.It can take one or more parameters as input 
-		 *                    arguments(IN parameters). (See section 11.1.6 of JDBC 2.0 API 
+		 *                    SQL statements.It can take one or more parameters as input
+		 *                    arguments(IN parameters). (See section 11.1.6 of JDBC 2.0 API
 		 *                    Reference & Tutorial,Second Edition)
-		 *                    
-		 *                    The JDBC drivers must provide full support for PreparedStatement 
-		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise 
+		 *
+		 *                    The JDBC drivers must provide full support for PreparedStatement
+		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise
 		 *                    Edition(J2EE) specification v 1.2)
-		 *                    
-		 *                    The setBoolean(int parameterIndex, boolean x) method sets the 
-		 *                    parameterIndex to x, a Java boolean value.The driver converts this 
-		 *                    to JDBC BIT value when it sends it to the database. (See section 
+		 *
+		 *                    The setBoolean(int parameterIndex, boolean x) method sets the
+		 *                    parameterIndex to x, a Java boolean value.The driver converts this
+		 *                    to JDBC BIT value when it sends it to the database. (See section
 		 *                    24.3.2 of JDBC 2.0 API Tutorial & Reference, Second Edition).
 		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
-		 *                    Execute the precompiled SQL Statement by calling the method 
-		 *                    setBoolean(int parameterIndex, boolean x) to set NULL_VAL 
+		 *                    Execute the precompiled SQL Statement by calling the method
+		 *                    setBoolean(int parameterIndex, boolean x) to set NULL_VAL
 		 *                    column of Bit_tab to the boolean value x.
-		 *                    Call the ResultSet.getBoolean(int columnIndex) method to 
-		 *                    check if it returns the boolean Value that has been set. 
-		 */ 
+		 *                    Call the ResultSet.getBoolean(int columnIndex) method to
+		 *                    check if it returns the boolean Value that has been set.
+		 */
 
 /* throws std::exception * */
 
@@ -552,24 +552,24 @@ namespace compliance
     /*
 		 * @testName:         testSetByte01
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements.It can take one or more parameters as input 
-		 *                    arguments(IN parameters).  (See section 11.1.6 of JDBC 2.0 API 
+		 *                    SQL statements.It can take one or more parameters as input
+		 *                    arguments(IN parameters).  (See section 11.1.6 of JDBC 2.0 API
 		 *                    Reference & Tutorial,Second Edition)
-		 *                    
-		 *                    The JDBC drivers must provide full support for PreparedStatement 
-		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise 
+		 *
+		 *                    The JDBC drivers must provide full support for PreparedStatement
+		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise
 		 *                    Edition(J2EE) specification v 1.2)
-		 *                    
-		 *                    The setByte(int parameterIndex, byte x) method sets the parameter 
-		 *                    number parameterIndex to x,a Java byte value.The Driver converts 
-		 *                    this to a JDBC Tinyint value when it sends it to the database. (See 
+		 *
+		 *                    The setByte(int parameterIndex, byte x) method sets the parameter
+		 *                    number parameterIndex to x,a Java byte value.The Driver converts
+		 *                    this to a JDBC Tinyint value when it sends it to the database. (See
 		 *                    section 24.3.2 of JDBC 2.0 API Tutorial & Reference, 2nd Edition).
 		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
-		 *                    Execute the precompiled SQL Statement by calling the 
-		 *                    setByte(int parameterindex, byte x) method for updating MAX_VAL 
+		 *                    Execute the precompiled SQL Statement by calling the
+		 *                    setByte(int parameterindex, byte x) method for updating MAX_VAL
 		 *                    column of Tinyint_Tab.  Call the ResultSet.getByte(int columnIndex)
-		 *                    method to check if it returns the byte Value that has been set. 
+		 *                    method to check if it returns the byte Value that has been set.
 		 */
 
 /* throws std::exception * */
@@ -578,22 +578,22 @@ namespace compliance
     /*
 		 * @testName:         testSetByte02
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements.It can take one or more parameters as input 
-		 *                    arguments(IN parameters).  (See section 11.1.6 of JDBC 2.0 API 
+		 *                    SQL statements.It can take one or more parameters as input
+		 *                    arguments(IN parameters).  (See section 11.1.6 of JDBC 2.0 API
 		 *                    Reference & Tutorial,Second Edition)
-		 *                    
-		 *                    The JDBC drivers must provide full support for PreparedStatement 
-		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise 
+		 *
+		 *                    The JDBC drivers must provide full support for PreparedStatement
+		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise
 		 *                    Edition(J2EE) specification v 1.2)
-		 *                    
-		 *                    The setByte(int parameterIndex, byte x) method sets the parameter 
-		 *                    number parameterIndex to x,a Java byte value.  The Driver converts 
+		 *
+		 *                    The setByte(int parameterIndex, byte x) method sets the parameter
+		 *                    number parameterIndex to x,a Java byte value.  The Driver converts
 		 *                    this to a JDBC Tinyint value when it sends it to the database.
 		 *                    (See section 24.3.2 of JDBC 2.0 API Tutorial & Reference,2nd Edition)
 		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
-		 *                    Execute the precompiled SQL Statement by calling the 
-		 *                    setByte(int parameterindex, byte x) method for updating NULL_VAL 
+		 *                    Execute the precompiled SQL Statement by calling the
+		 *                    setByte(int parameterindex, byte x) method for updating NULL_VAL
 		 *                    column of Tinyint_Tab.  Call the ResultSet.getByte(int columnIndex)
 		 *                    method,to check if it returns the byte Value that has been set.
 		 */
@@ -605,23 +605,23 @@ namespace compliance
     /*
 		 * @testName:         testSetFloat01
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements.It can take one or more parameters as input 
-		 *                    arguments(IN parameters).  (See section 11.1.6 of JDBC 2.0 API 
+		 *                    SQL statements.It can take one or more parameters as input
+		 *                    arguments(IN parameters).  (See section 11.1.6 of JDBC 2.0 API
 		 *                    Reference & Tutorial,Second Edition)
-		 *                    
-		 *                    The JDBC drivers must provide full support for PreparedStatement 
-		 *                    methods.  (See section 6.2.2.3 of Java2 Platform Enterprise 
+		 *
+		 *                    The JDBC drivers must provide full support for PreparedStatement
+		 *                    methods.  (See section 6.2.2.3 of Java2 Platform Enterprise
 		 *                    Edition(J2EE) specification v 1.2)
-		 *                    
-		 *                    The setFloat(int parameterIndex, float x) method sets the parameter 
-		 *                    number parameterIndex to x ,a Java float value.  The Driver converts 
-		 *                    this to a JDBC REAL when it sends it to the database. (See section 
+		 *
+		 *                    The setFloat(int parameterIndex, float x) method sets the parameter
+		 *                    number parameterIndex to x ,a Java float value.  The Driver converts
+		 *                    this to a JDBC REAL when it sends it to the database. (See section
 		 *                    24.3.2 of JDBC 2.0 API Tutorial & Reference,2nd Edition).
-		 * 
+		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database
-		 *                    execute the precompiled SQL Statement by calling the 
-		 *                    setFloat(int parameterindex, float x) method for updating 
-		 *                    the MAX_VAL column of Float_Tab.  Call the 
+		 *                    execute the precompiled SQL Statement by calling the
+		 *                    setFloat(int parameterindex, float x) method for updating
+		 *                    the MAX_VAL column of Float_Tab.  Call the
 		 *                    ResultSet.getFloat(int columnIndex)
 		 *                    method to check if it returns the float Value that has been set.
 		 *
@@ -634,25 +634,25 @@ namespace compliance
     /*
 		 * @testName:         testSetFloat02
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements.It can take one or more parameters as input 
-		 *                    arguments(IN parameters).  (See section 11.1.6 of JDBC 2.0 API 
+		 *                    SQL statements.It can take one or more parameters as input
+		 *                    arguments(IN parameters).  (See section 11.1.6 of JDBC 2.0 API
 		 *                    Reference & Tutorial,Second Edition)
-		 *                    
-		 *                    The JDBC drivers must provide full support for PreparedStatement 
-		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise 
+		 *
+		 *                    The JDBC drivers must provide full support for PreparedStatement
+		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise
 		 *                    Edition(J2EE) specification v 1.2)
-		 *                    
-		 *                    The setFloat(int parameterIndex, float x) method sets the 
-		 *                    parameter number parameterIndex to x ,a Java float value. 
-		 *                    The Driver converts this to a JDBC REAL when it sends it to 
-		 *                    the database. (See section 24.3.2 of JDBC 2.0 API Tutorial & 
+		 *
+		 *                    The setFloat(int parameterIndex, float x) method sets the
+		 *                    parameter number parameterIndex to x ,a Java float value.
+		 *                    The Driver converts this to a JDBC REAL when it sends it to
+		 *                    the database. (See section 24.3.2 of JDBC 2.0 API Tutorial &
 		 *                    Reference, Second Edition).
-		 * 
+		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database
-		 *                    execute the precompiled SQL Statement by calling the 
-		 *                    setFloat(int parameterindex, float x)  method for updating the 
-		 *                    NULL_VAL column of Float_Tab.  Call the 
-		 *                    ResultSet.getFloat(int columnIndex) method to check if it returns 
+		 *                    execute the precompiled SQL Statement by calling the
+		 *                    setFloat(int parameterindex, float x)  method for updating the
+		 *                    NULL_VAL column of Float_Tab.  Call the
+		 *                    ResultSet.getFloat(int columnIndex) method to check if it returns
 		 *                    the float Value that has been set.
 		 *
 		 */
@@ -663,22 +663,22 @@ namespace compliance
     /*
 		 * @testName:         testSetInt01
 		 * @assertion:        A Prepared Statement object provides a way of calling precompiled
-		 *                    SQL statements. It can take one or more parameters as input 
-		 *                    arguments(IN parameters). (See section 11.1.6 of JDBC 2.0 API 
+		 *                    SQL statements. It can take one or more parameters as input
+		 *                    arguments(IN parameters). (See section 11.1.6 of JDBC 2.0 API
 		 *                    Reference & Tutorial,Second Edition)
-		 *                    
-		 *                    The JDBC drivers must provide full support for PreparedStatement 
-		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise 
+		 *
+		 *                    The JDBC drivers must provide full support for PreparedStatement
+		 *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise
 		 *                    Edition(J2EE) specification v 1.2)
-		 *                    
-		 *                    The setInt(int parameterIndex, int x) method sets the parameter 
-		 *                    number parameterIndex to x ,a Java int value.  The Driver converts 
-		 *                    this to a JDBC INTEGER when it sends it to the database. (See 
+		 *
+		 *                    The setInt(int parameterIndex, int x) method sets the parameter
+		 *                    number parameterIndex to x ,a Java int value.  The Driver converts
+		 *                    this to a JDBC INTEGER when it sends it to the database. (See
 		 *                    section 24.3.2 of JDBC 2.0 API Tutorial & Reference, 2nd Edition)
-		 * 
+		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database
-		 *                    execute the precompiled SQL Statement by calling the 
-		 *                    setInt(int parameterindex, int x) method for updating the MAX_VAL 
+		 *                    execute the precompiled SQL Statement by calling the
+		 *                    setInt(int parameterindex, int x) method for updating the MAX_VAL
 		 *                    column of Integer_Tab.  Call the ResultSet.getInt(int columnIndex)
 		 *                    method to check if it returns the integer Value that has been set.
 		 *
@@ -871,10 +871,10 @@ namespace compliance
 		 *                    this to an SQL BIGINT value when it sends it to the database.
 		 *
 		 * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
-		 *                    Using setLong(int parameterIndex,long x),update the column the 
+		 *                    Using setLong(int parameterIndex,long x),update the column the
 		 *                    maximum value of Bigint_Tab.
-		 *                    Now execute a query to get the maximum value and retrieve the result 
-		 *                    of the query using the getLong(int columnIndex) method.Compare the 
+		 *                    Now execute a query to get the maximum value and retrieve the result
+		 *                    of the query using the getLong(int columnIndex) method.Compare the
 		 *                    returned value, with the maximum value extracted from the ctssql.stmt file.
 		 *                    Both of them should be equal.
 		 */
@@ -885,7 +885,7 @@ namespace compliance
     void testSetLong02();
     /*
 		 * @testName:         testSetShort01
-		 * @assertion:        A Prepared Statement object provides a way of calling 
+		 * @assertion:        A Prepared Statement object provides a way of calling
 		 *                    precompiled SQL statements.It can take one or more parameters
 		 *                    as input arguments(IN parameters). (See section 11.1.6 of
 		 *                    JDBC 2.0 API Reference & Tutorial,Second Edition)
@@ -1173,24 +1173,24 @@ namespace compliance
 #ifdef __SET_NULL_ADDED_
       /*
       * @testName:         testSetNull01
-      * @assertion:        A Prepared Statement object provides a way of calling 
-      *                    precompiled SQL statements.It can take one or more parameters 
-      *                    as input arguments(IN parameters). (See section 11.1.6 of 
+      * @assertion:        A Prepared Statement object provides a way of calling
+      *                    precompiled SQL statements.It can take one or more parameters
+      *                    as input arguments(IN parameters). (See section 11.1.6 of
       *                    JDBC 2.0 API Reference & Tutorial,Second Edition)
-      *                    
-      *                    The drivers must provide full support for Prepared Statement 
-      *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise 
+      *
+      *                    The drivers must provide full support for Prepared Statement
+      *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise
       *                    Edition(J2EE) specification v 1.2).
       *
-      *                    The setNull(int parameterIndex, int sqlType) method sets the 
-      *                    designated parameter to SQL NULL(the generic SQL NULL defined in 
-      *                    java.sql.Types). Note that the JDBC type of the parameter to be 
+      *                    The setNull(int parameterIndex, int sqlType) method sets the
+      *                    designated parameter to SQL NULL(the generic SQL NULL defined in
+      *                    java.sql.Types). Note that the JDBC type of the parameter to be
       *                    set to JDBC NULL must be specified.
       *
       * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
       *                    execute the precompiled SQL Statement to set the value as SQL Null
-      *                    for INTEGER Type and retrieve the same value by executing a query. Call 
-      *                    the ResultSet.wasNull() method to check it. It should return a true value. 
+      *                    for INTEGER Type and retrieve the same value by executing a query. Call
+      *                    the ResultSet.wasNull() method to check it. It should return a true value.
       *
       */
       /* throws std::exception * */
@@ -1240,8 +1240,8 @@ namespace compliance
       *
       * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
       *                    execute the precompiled SQL Statement to set the value as SQL Null
-      *                    for SMALLINT Type and retrieve the same value by executing a query. Call 
-      *                    the ResultSet.wasNull() method to check it. It should return a true value. 
+      *                    for SMALLINT Type and retrieve the same value by executing a query. Call
+      *                    the ResultSet.wasNull() method to check it. It should return a true value.
       */
       /* throws std::exception * */
       void testSetNull03();
@@ -1315,8 +1315,8 @@ namespace compliance
       *
       * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
       *                    execute the precompiled SQL Statement to set the value as SQL Null
-      *                    for TIMESTAMP Type and retrieve the same value by executing a query. Call 
-      *                    the ResultSet.wasNull() method to check it. It should return a true value. 
+      *                    for TIMESTAMP Type and retrieve the same value by executing a query. Call
+      *                    the ResultSet.wasNull() method to check it. It should return a true value.
       */
       /* throws std::exception * */
       void testSetNull06();
@@ -1324,7 +1324,7 @@ namespace compliance
 
       /*
       * @testName:         testSetNull07
-      * @assertion:        A Prepared Statement object provides a way of calling 
+      * @assertion:        A Prepared Statement object provides a way of calling
       *                    precompiled SQL statements.It can take one or more parameters
       *                    as input arguments(IN parameters). (See section 11.1.6 of
       *                    JDBC 2.0 API Reference & Tutorial,Second Edition)
@@ -1374,11 +1374,11 @@ namespace compliance
 
       /*
       * @testName:         testSetNull09
-      * @assertion:        A Prepared Statement object provides a way of calling 
+      * @assertion:        A Prepared Statement object provides a way of calling
       *                    precompiled SQL statements.It can take one or more parameters
-      *                    as input arguments(IN parameters). (See section 11.1.6 of 
+      *                    as input arguments(IN parameters). (See section 11.1.6 of
       *                    JDBC 2.0 API Reference & Tutorial,Second Edition)
-      *                    
+      *
       *                    The drivers must provide full support for Prepared Statement
       *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise
       *                    Edition(J2EE) specification v 1.2).

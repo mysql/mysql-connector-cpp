@@ -52,7 +52,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testClearWarnings() 
+  void StatementTest::testClearWarnings()
   {
     const sql::SQLWarning * sWarning = stmt->getWarnings();
 
@@ -100,7 +100,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testClose() 
+  void StatementTest::testClose()
   {
     Statement statemt;
     bool sqlExceptFlag = false;
@@ -152,7 +152,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testExecute01() 
+  void StatementTest::testExecute01()
   {
     bool executeFlag = false;
 
@@ -196,7 +196,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testExecute02() 
+  void StatementTest::testExecute02()
   {
         bool executeFlag = false;
 
@@ -240,7 +240,7 @@ namespace compliance
 /*
  *throws Exception
  * Pretty much useless in C++ */
-  void StatementTest::testExecuteQuery01() 
+  void StatementTest::testExecuteQuery01()
   {
     ResultSet reSet;
 
@@ -287,7 +287,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testExecuteQuery02() 
+  void StatementTest::testExecuteQuery02()
   {
     ResultSet reSet;
     String    sSqlStmt= sqlProps[ "SelCoffeeNull" ];
@@ -336,14 +336,14 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testExecuteQuery03() 
+  void StatementTest::testExecuteQuery03()
   {
     ResultSet reSet;
     bool      sqlExceptFlag= false;
 
     String sSqlStmt= sqlProps[ "Ins_Coffee_Tab" ];
     logMsg(String( "SQL Statement to be executed  :  " ) + sSqlStmt);
-    
+
     try
     {
       logMsg("Calling executeQuery method ");
@@ -392,7 +392,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testExecuteUpdate01() 
+  void StatementTest::testExecuteUpdate01()
   {
     int     updCount=     0;
     int     retRowCount=  0;
@@ -453,7 +453,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testExecuteUpdate03() 
+  void StatementTest::testExecuteUpdate03()
   {
         bool sqlExceptFlag = false;
         int updCount = 0;
@@ -507,14 +507,14 @@ namespace compliance
      *
      */
 
-/* throws Exception 
+/* throws Exception
  *
  * Not included into sql::statement (and thus into MySQL_Statement)
  * Disabled so far.
  */
 
 #ifdef MISSING_METHODS_INCLUDED2STATEMENT
-  void StatementTest::testGetFetchDirection() 
+  void StatementTest::testGetFetchDirection()
   {
     int fetchDirVal = 0;
 
@@ -561,7 +561,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testGetFetchSize() 
+  void StatementTest::testGetFetchSize()
   {
 
     logMsg("Calling getFetchSize on Statement");
@@ -602,7 +602,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testGetMaxFieldSize() 
+  void StatementTest::testGetMaxFieldSize()
   {
 
     logMsg("Calling getMaxFieldSize on Statement");
@@ -643,7 +643,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testGetMaxRows() 
+  void StatementTest::testGetMaxRows()
   {
 
     logMsg("Calling getMaxRows on Statement");
@@ -688,7 +688,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testGetMoreResults01() 
+  void StatementTest::testGetMoreResults01()
   {
 
     String sSqlStmt = sqlProps[ "SelCoffeeAll" ];
@@ -739,7 +739,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testGetMoreResults02() 
+  void StatementTest::testGetMoreResults02()
   {
 
     String sSqlStmt = sqlProps[ "SelCoffeeNull" ];
@@ -790,7 +790,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testGetMoreResults03() 
+  void StatementTest::testGetMoreResults03()
   {
 
     String sSqlStmt = sqlProps[ "Upd_Coffee_Tab" ];
@@ -836,7 +836,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testGetQueryTimeout() 
+  void StatementTest::testGetQueryTimeout()
   {
     int queryTimeout = 0;
 
@@ -879,7 +879,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testGetResultSet01() 
+  void StatementTest::testGetResultSet01()
   {
     ResultSet retResSet /*= NULL*/;
     String    sSqlStmt  = sqlProps[ "SelCoffeeAll" ];
@@ -925,7 +925,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testGetResultSet02() 
+  void StatementTest::testGetResultSet02()
   {
     ResultSet retResSet /*= NULL*/;
     String    sSqlStmt  = sqlProps[ "Upd_Coffee_Tab" ];
@@ -978,7 +978,7 @@ namespace compliance
  */
 
 #ifdef MISSING_METHODS_INCLUDED2STATEMENT
-  void StatementTest::testGetResultSetConcurrency01() 
+  void StatementTest::testGetResultSetConcurrency01()
   {
         int rsConcur = 0;
 
@@ -1021,7 +1021,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testGetResultSetType01() 
+  void StatementTest::testGetResultSetType01()
   {
         int rsType = 0;
 
@@ -1069,7 +1069,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testGetResultSetType02() 
+  void StatementTest::testGetResultSetType02()
   {
         int rsType = 0;
         Statement statemt /*= NULL*/;
@@ -1115,7 +1115,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testGetResultSetType03() 
+  void StatementTest::testGetResultSetType03()
   {
         int rsType = 0;
         Statement statemt /*= NULL*/;
@@ -1167,7 +1167,7 @@ namespace compliance
 
 
 /* throws Exception */
-  void StatementTest::testGetUpdateCount01() 
+  void StatementTest::testGetUpdateCount01()
   {
     int updCountVal   = 0;
     int rowsAffectVal = 0;
@@ -1232,7 +1232,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testGetUpdateCount02() 
+  void StatementTest::testGetUpdateCount02()
   {
     int updCountVal = 0;
     String sSqlStmt = sqlProps[ "SelCoffeeNull" ];
@@ -1279,7 +1279,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testGetWarnings() 
+  void StatementTest::testGetWarnings()
   {
     if (hasSps)
     {
@@ -1287,7 +1287,7 @@ namespace compliance
 
       //TODO: Need to invent somth to generate warnings instead of this
 #ifdef  WE_GOT_SMTH2DEAL_WITH_SP
-    
+
       CallableStatement cstmt = conn->prepareCall(
       "{call Integer_Proc(?,?,?)}");
       logMsg(String( "The Callable Statement " ) + cstmt);
@@ -1344,12 +1344,12 @@ namespace compliance
 
 /* throws Exception */
 #ifdef MISSING_METHODS_INCLUDED2STATEMENT
-  void StatementTest::testSetFetchDirection04() 
+  void StatementTest::testSetFetchDirection04()
   {
     bool sqlExceptFlag = false;
 
     logMsg("Calling setFetchDirection method ");
-    
+
     try
     {
         stmt->setFetchDirection(-1);
@@ -1398,7 +1398,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testSetFetchSize02() 
+  void StatementTest::testSetFetchSize02()
   {
     int maxFetchSizeVal=  50;
     int maxRowsVal=       0;
@@ -1453,7 +1453,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testSetFetchSize05() 
+  void StatementTest::testSetFetchSize05()
   {
     int     maxFetchSizeVal=  0;
     String  sMaxFetchSizeVal;
@@ -1467,7 +1467,7 @@ namespace compliance
       << "Maximum Value to be set as Fetch Size " << maxFetchSizeVal <<std::endl;
 
     logMsg("Calling setFetchSize method");
-    
+
     try
     {
       stmt->setFetchSize(maxFetchSizeVal);
@@ -1515,7 +1515,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testSetMaxFieldSize01() 
+  void StatementTest::testSetMaxFieldSize01()
   {
     int     maxFieldSizeVal= 0;
     String  sMaxFieldSizeVal;
@@ -1572,7 +1572,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testSetMaxFieldSize02() 
+  void StatementTest::testSetMaxFieldSize02()
   {
     int     maxFieldSizeVal=  0;
     String  sMaxFieldSizeVal;
@@ -1585,7 +1585,7 @@ namespace compliance
     TestsListener::theInstance().messagesLog()
       << "Rows Value to be set " <<  maxFieldSizeVal << std::endl;
     logMsg("Calling the setMaxFieldSize method");
-    
+
     try
     {
       stmt->setMaxFieldSize(maxFieldSizeVal);
@@ -1631,7 +1631,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testSetMaxRows01() 
+  void StatementTest::testSetMaxRows01()
   {
         int maxRowsVal = 0;
         String sMaxRowsVal;
@@ -1681,7 +1681,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testSetMaxRows02() 
+  void StatementTest::testSetMaxRows02()
   {
         int maxRowsVal = 0;
         String sMaxRowsVal;
@@ -1737,7 +1737,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void StatementTest::testSetQueryTimeout02() 
+  void StatementTest::testSetQueryTimeout02()
   {
     int maxQueryTimeVal = 0;
     String sMaxQueryTimeVal;
@@ -1750,7 +1750,7 @@ namespace compliance
       << "Seconds Value to be set as QueryTimeout " << maxQueryTimeVal
       << std::endl;
     logMsg("Calling maxQueryTimeout method");
-    
+
     try
     {
         stmt->setQueryTimeout(maxQueryTimeVal);

@@ -50,9 +50,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testAllProceduresAreCallable() 
+  void DatabaseMetaDataTest::testAllProceduresAreCallable()
   {
-        
+
             logMsg("Calling allProceduresAreCallable on DatabaseMetaData");
             bool retValue = dbmd->allProceduresAreCallable();
             if (retValue) {
@@ -88,7 +88,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testAllTablesAreSelectable() 
+  void DatabaseMetaDataTest::testAllTablesAreSelectable()
   {
     logMsg("Calling allTablesAreSelectable on DatabaseMetaData");
             bool retValue = dbmd->allTablesAreSelectable();
@@ -124,7 +124,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testDataDefinitionCausesTransactionCommit() 
+  void DatabaseMetaDataTest::testDataDefinitionCausesTransactionCommit()
   {
     logMsg(
         "Calling DatabaseMetaData.dataDefinitionCausesTransactionCommit");
@@ -161,9 +161,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testDataDefinitionIgnoredInTransactions() 
+  void DatabaseMetaDataTest::testDataDefinitionIgnoredInTransactions()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.dataDefinitionIgnoredInTransactions");
             bool retValue = dbmd->dataDefinitionIgnoredInTransactions();
@@ -173,8 +173,8 @@ namespace compliance
                 logMsg(
                     "Data definition statement is not ignored in a transaction");
             }
-        
-            
+
+
             }
 
     /*
@@ -203,9 +203,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testDeletesAreDetected1() 
+  void DatabaseMetaDataTest::testDeletesAreDetected1()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.deletesAreDetected(TYPE_FORWARD_ONLY)");
             bool retValue = dbmd->deletesAreDetected(sql::ResultSet::TYPE_FORWARD_ONLY);
@@ -216,8 +216,8 @@ namespace compliance
                 logMsg(
                     "Visible row delete cannot be detected for TYPE_FORWARD_ONLY");
             }
-        
-            
+
+
             }
 
     /*
@@ -246,9 +246,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testDeletesAreDetected2() 
+  void DatabaseMetaDataTest::testDeletesAreDetected2()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.deletesAreDetected(TYPE_SCROLL_INSENSITIVE)");
             bool retValue = dbmd->deletesAreDetected(sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
@@ -259,8 +259,8 @@ namespace compliance
                 logMsg(
                     "Visible row delete cannot be detected for TYPE_SCROLL_INSENSITIVE");
             }
-        
-            
+
+
             }
 
     /*
@@ -289,9 +289,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testDeletesAreDetected3() 
+  void DatabaseMetaDataTest::testDeletesAreDetected3()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.deletesAreDetected(TYPE_SCROLL_SENSITIVE)");
             bool retValue = dbmd->deletesAreDetected(sql::ResultSet::TYPE_SCROLL_SENSITIVE);
@@ -302,8 +302,8 @@ namespace compliance
                 logMsg(
                     "Visible row delete cannot be detected for TYPE_SCROLL_SENSITIVE");
             }
-        
-            
+
+
 }
 
     /*
@@ -330,9 +330,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testDoesMaxRowSizeIncludeBlobs() 
+  void DatabaseMetaDataTest::testDoesMaxRowSizeIncludeBlobs()
   {
-        
+
             logMsg("Calling  DatabaseMetaData.doesMaxRowSizeIncludeBlobs");
             bool retValue = dbmd->doesMaxRowSizeIncludeBlobs();
             if (retValue) {
@@ -340,8 +340,8 @@ namespace compliance
             } else {
                 logMsg("MaxRowSize does not include blobs");
             }
-        
-            
+
+
             }
 
     /*
@@ -370,9 +370,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetBestRowIdentifier1() 
+  void DatabaseMetaDataTest::testGetBestRowIdentifier1()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.getBestRowIdentifier with scope bestRowTemporary with NULLable columns");
 
@@ -390,8 +390,8 @@ namespace compliance
                 logMsg("The columns returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-        
-            
+
+
   }
 
     /*
@@ -420,9 +420,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetBestRowIdentifier2() 
+  void DatabaseMetaDataTest::testGetBestRowIdentifier2()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.getBestRowIdentifier with scope bestRowTransaction with NULLable columns");
             ResultSet oRet_ResultSet( dbmd->getBestRowIdentifier(sCatalogName,
@@ -439,8 +439,8 @@ namespace compliance
                 logMsg("The columns returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-        
-            
+
+
             }
 
     /*
@@ -469,9 +469,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetBestRowIdentifier3() 
+  void DatabaseMetaDataTest::testGetBestRowIdentifier3()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.getBestRowIdentifier with scope bestRowSession with NULLable columns");
             ResultSet oRet_ResultSet(dbmd->getBestRowIdentifier(sCatalogName,
@@ -487,8 +487,8 @@ namespace compliance
                 logMsg("The columns returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-        
-            
+
+
             }
 
     /*
@@ -517,9 +517,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetBestRowIdentifier4() 
+  void DatabaseMetaDataTest::testGetBestRowIdentifier4()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.getBestRowIdentifier with scope bestRowTemporary without NULLable columns");
             ResultSet oRet_ResultSet(dbmd->getBestRowIdentifier(sCatalogName,
@@ -536,8 +536,8 @@ namespace compliance
                 logMsg("The columns returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-        
-            
+
+
             }
 
     /*
@@ -566,9 +566,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetBestRowIdentifier5() 
+  void DatabaseMetaDataTest::testGetBestRowIdentifier5()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.getBestRowIdentifier with scope bestRowTransaction without NULLable columns");
             ResultSet oRet_ResultSet(dbmd->getBestRowIdentifier(sCatalogName,
@@ -585,7 +585,7 @@ namespace compliance
                 logMsg("The columns returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-            
+
             }
 
     /*
@@ -614,9 +614,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetBestRowIdentifier6() 
+  void DatabaseMetaDataTest::testGetBestRowIdentifier6()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.getBestRowIdentifier with scope bestRowSession without NULLable columns");
             ResultSet oRet_ResultSet(dbmd->getBestRowIdentifier(sCatalogName,
@@ -632,8 +632,8 @@ namespace compliance
                 logMsg("The columns returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-        
-            
+
+
             }
 
     /*
@@ -662,7 +662,7 @@ namespace compliance
              */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetBestRowIdentifier7() 
+  void DatabaseMetaDataTest::testGetBestRowIdentifier7()
   {  List sColumnNames;
             sColumnNames.push_back( "SCOPE"           );
             sColumnNames.push_back( "COLUMN_NAME"     );
@@ -684,8 +684,8 @@ namespace compliance
                 logMsg("Columns return are not same either in order or name");
                 FAIL("Call to getBestRowIdentifier7 Failed!");
             }
-        
-            
+
+
   }
 
     /*
@@ -710,7 +710,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetCatalogSeparator() 
+  void DatabaseMetaDataTest::testGetCatalogSeparator()
   {
     logMsg("Calling DatabaseMetaData.getCatalogSeparator");
     String sRetValue = dbmd->getCatalogSeparator();
@@ -745,7 +745,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetCatalogTerm() 
+  void DatabaseMetaDataTest::testGetCatalogTerm()
   {
     logMsg("Calling getCatalogTerm on DatabaseMetaData");
     String sRetValue = dbmd->getCatalogTerm();
@@ -779,7 +779,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetCatalogs() 
+  void DatabaseMetaDataTest::testGetCatalogs()
   {
   List sColumnNames;
     sColumnNames.push_back("TABLE_CAT");
@@ -828,9 +828,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetColumnPrivileges() 
+  void DatabaseMetaDataTest::testGetColumnPrivileges()
   {
-        
+
             List sColumnNames;
             sColumnNames.push_back( "TABLE_CAT"   );
             sColumnNames.push_back( "TABLE_SCHEM" );
@@ -843,7 +843,7 @@ namespace compliance
 
             bool test_status = true;
             logMsg("Calling DatabaseMetaData.getColumnPrivileges");
-      String tmp("%"); 
+      String tmp("%");
             ResultSet oRet_ResultSet(dbmd->getColumnPrivileges(sCatalogName,
                     sSchemaName, sFtable, tmp ) );
             test_status = columnCompare(sColumnNames, oRet_ResultSet);
@@ -884,9 +884,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetColumns() 
+  void DatabaseMetaDataTest::testGetColumns()
   {
-        
+
     List sColumnNames;
 
     sColumnNames.push_back( "TABLE_CAT"         );
@@ -910,7 +910,7 @@ namespace compliance
 
     bool test_status = true;
     logMsg("Calling DatabaseMetaData.getColumns");
-	String tmp("%"); 
+	String tmp("%");
     ResultSet oRet_ResultSet(dbmd->getColumns(sCatalogName, sSchemaName, tmp, tmp));
     test_status = columnCompare(sColumnNames, oRet_ResultSet);
     if (test_status == false) {
@@ -922,8 +922,8 @@ namespace compliance
     } else {
         logMsg("getColumns did not return any column names");
     }
-        
-            
+
+
   }
 
     /*
@@ -950,9 +950,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetCrossReference() 
+  void DatabaseMetaDataTest::testGetCrossReference()
   {
-        
+
             List sColumnNames;
 
             sColumnNames.push_back( "PKTABLE_CAT"     );
@@ -989,8 +989,8 @@ namespace compliance
                 logMsg("The columns returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-        
-            
+
+
             }
 
     /*
@@ -1016,9 +1016,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetDatabaseProductName() 
+  void DatabaseMetaDataTest::testGetDatabaseProductName()
   {
-        
+
             logMsg("Calling getDatabaseProductName on DatabaseMetaData");
             String sRetValue = dbmd->getDatabaseProductName();
             if (sRetValue.empty()) {
@@ -1051,9 +1051,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetDatabaseProductVersion() 
+  void DatabaseMetaDataTest::testGetDatabaseProductVersion()
   {
-        
+
             logMsg("Calling getDatabaseProductVersion on DatabaseMetaData");
             String sRetValue = dbmd->getDatabaseProductVersion();
             if (sRetValue.empty()) {
@@ -1090,9 +1090,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetDefaultTransactionIsolation() 
+  void DatabaseMetaDataTest::testGetDefaultTransactionIsolation()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getDefaultTransactionIsolation");
             int nRetval = dbmd->getDefaultTransactionIsolation();
             if ((nRetval != sql::TRANSACTION_NONE)
@@ -1110,8 +1110,8 @@ namespace compliance
                     "getDefaultTransactionIsolation returns a valid Isolation level"
                     + nRetval);
             }
-        
-            
+
+
             }
 
     /*
@@ -1138,7 +1138,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetDriverMajorVersion() 
+  void DatabaseMetaDataTest::testGetDriverMajorVersion()
   {
     logMsg("Calling getDriverMajorVersion on DatabaseMetaData");
     int drMajorVersion = dbmd->getDriverMajorVersion();
@@ -1174,7 +1174,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetDriverMinorVersion() 
+  void DatabaseMetaDataTest::testGetDriverMinorVersion()
   {
     logMsg("Calling getDriverMinorVersion on DatabaseMetaData");
     int drMinorVersion = dbmd->getDriverMinorVersion();
@@ -1211,9 +1211,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetDriverName() 
+  void DatabaseMetaDataTest::testGetDriverName()
   {
-        
+
             logMsg("Calling getDriverName on DatabaseMetaData");
             String sRetValue = dbmd->getDriverName();
             if (sRetValue.empty()) {
@@ -1247,9 +1247,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetDriverVersion() 
+  void DatabaseMetaDataTest::testGetDriverVersion()
   {
-        
+
             logMsg("Calling getDriverVersion on DatabaseMetaData");
             String sRetValue = dbmd->getDriverVersion();
             if (sRetValue.empty()) {
@@ -1283,9 +1283,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetExportedKeys() 
+  void DatabaseMetaDataTest::testGetExportedKeys()
   {
-        
+
             List sColumnNames;
 
             sColumnNames.push_back( "PKTABLE_CAT"     );
@@ -1322,8 +1322,8 @@ namespace compliance
                 logMsg("The columns returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-        
-            
+
+
             }
 
     /*
@@ -1349,9 +1349,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetExtraNameCharacters() 
+  void DatabaseMetaDataTest::testGetExtraNameCharacters()
   {
-        
+
             logMsg("Calling getExtraNameCharacters on DatabaseMetaData");
             String sRetValue = dbmd->getExtraNameCharacters();
             if (sRetValue.empty()) {
@@ -1386,9 +1386,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetIdentifierQuoteString() 
+  void DatabaseMetaDataTest::testGetIdentifierQuoteString()
   {
-        
+
             logMsg("Calling getIdentifierQuoteString on DatabaseMetaData");
             String sRetValue = dbmd->getIdentifierQuoteString();
             if (sRetValue == "")
@@ -1429,23 +1429,23 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetImportedKeys() 
+  void DatabaseMetaDataTest::testGetImportedKeys()
   {
-        
+
             List sColumnNames;
-            
+
             sColumnNames.push_back( "PKTABLE_CAT"   );
             sColumnNames.push_back( "PKTABLE_SCHEM" );
-            sColumnNames.push_back( "PKTABLE_NAME"  ); 
+            sColumnNames.push_back( "PKTABLE_NAME"  );
             sColumnNames.push_back( "PKCOLUMN_NAME" );
-            sColumnNames.push_back( "FKTABLE_CAT"   ); 
-            sColumnNames.push_back( "FKTABLE_SCHEM" ); 
-            sColumnNames.push_back( "FKTABLE_NAME"  ); 
+            sColumnNames.push_back( "FKTABLE_CAT"   );
+            sColumnNames.push_back( "FKTABLE_SCHEM" );
+            sColumnNames.push_back( "FKTABLE_NAME"  );
             sColumnNames.push_back( "FKCOLUMN_NAME" );
-            sColumnNames.push_back( "KEY_SEQ"       ); 
-            sColumnNames.push_back( "UPDATE_RULE"   ); 
-            sColumnNames.push_back( "DELETE_RULE"   ); 
-            sColumnNames.push_back( "FK_NAME"       ); 
+            sColumnNames.push_back( "KEY_SEQ"       );
+            sColumnNames.push_back( "UPDATE_RULE"   );
+            sColumnNames.push_back( "DELETE_RULE"   );
+            sColumnNames.push_back( "FK_NAME"       );
             sColumnNames.push_back( "PK_NAME"       );
             sColumnNames.push_back( "DEFERRABILITY" );
 
@@ -1469,8 +1469,8 @@ namespace compliance
                 logMsg("The columns returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-        
-            
+
+
             }
 
     /*
@@ -1496,9 +1496,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetIndexInfo1() 
+  void DatabaseMetaDataTest::testGetIndexInfo1()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.getIndexInfo with approximate data and without accurate results");
             ResultSet oRet_ResultSet(dbmd->getIndexInfo(sCatalogName,
@@ -1513,8 +1513,8 @@ namespace compliance
                 logMsg("The index names returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-        
-            
+
+
             }
 
     /*
@@ -1540,9 +1540,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetIndexInfo2() 
+  void DatabaseMetaDataTest::testGetIndexInfo2()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.getIndexInfo with approximate data and with accurate results");
             ResultSet oRet_ResultSet(dbmd->getIndexInfo(sCatalogName,
@@ -1557,8 +1557,8 @@ namespace compliance
                 logMsg("The index names returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-        
-            
+
+
             }
 
     /*
@@ -1584,9 +1584,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetIndexInfo3() 
+  void DatabaseMetaDataTest::testGetIndexInfo3()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.getIndexInfo without approximate data and with accurate results");
             ResultSet oRet_ResultSet(dbmd->getIndexInfo(sCatalogName,
@@ -1601,8 +1601,8 @@ namespace compliance
                 logMsg("The index names returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-      
-            
+
+
   }
 
     /*
@@ -1628,9 +1628,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetIndexInfo4() 
+  void DatabaseMetaDataTest::testGetIndexInfo4()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.getIndexInfo without approximate data and without accurate results");
             ResultSet oRet_ResultSet(dbmd->getIndexInfo(sCatalogName,
@@ -1645,8 +1645,8 @@ namespace compliance
                 logMsg("The index names returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-        
-            
+
+
             }
 
     /*
@@ -1672,19 +1672,19 @@ namespace compliance
              */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetIndexInfo5() 
+  void DatabaseMetaDataTest::testGetIndexInfo5()
   {  List sColumnNames;
-            sColumnNames.push_back( "TABLE_CAT"         ); 
-            sColumnNames.push_back( "TABLE_SCHEM"       ); 
-            sColumnNames.push_back( "TABLE_NAME"        ); 
+            sColumnNames.push_back( "TABLE_CAT"         );
+            sColumnNames.push_back( "TABLE_SCHEM"       );
+            sColumnNames.push_back( "TABLE_NAME"        );
             sColumnNames.push_back( "NON_UNIQUE"        );
             sColumnNames.push_back( "INDEX_QUALIFIER"   );
             sColumnNames.push_back( "INDEX_NAME"        );
-            sColumnNames.push_back( "TYPE"              ); 
+            sColumnNames.push_back( "TYPE"              );
             sColumnNames.push_back( "ORDINAL_POSITION"  );
-            sColumnNames.push_back( "COLUMN_NAME"       ); 
-            sColumnNames.push_back( "ASC_OR_DESC"       ); 
-            sColumnNames.push_back( "CARDINALITY"       ); 
+            sColumnNames.push_back( "COLUMN_NAME"       );
+            sColumnNames.push_back( "ASC_OR_DESC"       );
+            sColumnNames.push_back( "CARDINALITY"       );
             sColumnNames.push_back( "PAGES"             );
             sColumnNames.push_back( "FILTER_CONDITION"  );
 
@@ -1698,8 +1698,8 @@ namespace compliance
                 logMsg("Columns return are not same either in order or name");
                 FAIL("Call to getCrossReference Failed!");
             }
-        
-            
+
+
             }
 
     /*
@@ -1725,7 +1725,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxBinaryLiteralLength() 
+  void DatabaseMetaDataTest::testGetMaxBinaryLiteralLength()
   {  logMsg("Calling DatabaseMetaData.getMaxBinaryLiteralLength");
             int nRetval = dbmd->getMaxBinaryLiteralLength();
             if (nRetval < 0)
@@ -1762,7 +1762,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxCatalogNameLength() 
+  void DatabaseMetaDataTest::testGetMaxCatalogNameLength()
   {  logMsg("Calling DatabaseMetaData.getMaxCatalogNameLength");
             int nRetval = dbmd->getMaxCatalogNameLength();
             if (nRetval < 0)
@@ -1774,8 +1774,8 @@ namespace compliance
                 TestsListener::theInstance().messagesLog()
                   << "getMaxCatalogNameLength returns " << nRetval;
             }
-        
-            
+
+
             }
 
     /*
@@ -1802,9 +1802,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxCharLiteralLength() 
+  void DatabaseMetaDataTest::testGetMaxCharLiteralLength()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getMaxCharLiteralLength");
             int nRetval = dbmd->getMaxCharLiteralLength();
             if (nRetval < 0) {
@@ -1838,9 +1838,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxColumnNameLength() 
+  void DatabaseMetaDataTest::testGetMaxColumnNameLength()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getMaxColumnNameLength");
             int nRetval = dbmd->getMaxColumnNameLength();
             if (nRetval < 0) {
@@ -1849,8 +1849,8 @@ namespace compliance
                 TestsListener::theInstance().messagesLog() <<
                   "getMaxColumnNameLength returns " <<  nRetval << std::endl;
             }
-        
-            
+
+
             }
 
     /*
@@ -1877,9 +1877,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxColumnsInGroupBy() 
+  void DatabaseMetaDataTest::testGetMaxColumnsInGroupBy()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getMaxColumnsInGroupBy");
             int nRetval = dbmd->getMaxColumnsInGroupBy();
             if (nRetval < 0)
@@ -1891,8 +1891,8 @@ namespace compliance
                 TestsListener::theInstance().messagesLog()
                   << "getMaxColumnsInGroupBy returns " <<  nRetval << std::endl;
             }
-        
-            
+
+
             }
 
     /*
@@ -1919,9 +1919,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxColumnsInIndex() 
+  void DatabaseMetaDataTest::testGetMaxColumnsInIndex()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getMaxColumnsInIndex");
             int nRetval = dbmd->getMaxColumnsInIndex();
             if (nRetval < 0) {
@@ -1930,8 +1930,8 @@ namespace compliance
                 TestsListener::theInstance().messagesLog()
                   << "getMaxColumnsInIndex returns " <<  nRetval << std::endl;
             }
-        
-            
+
+
             }
 
     /*
@@ -1958,9 +1958,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxColumnsInOrderBy() 
+  void DatabaseMetaDataTest::testGetMaxColumnsInOrderBy()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getMaxColumnsInOrderBy");
             int nRetval = dbmd->getMaxColumnsInOrderBy();
             if (nRetval < 0) {
@@ -1969,8 +1969,8 @@ namespace compliance
                 TestsListener::theInstance().messagesLog()
                   << "getMaxColumnsInOrderBy returns " <<  nRetval << std::endl;
             }
-        
-            
+
+
             }
 
     /*
@@ -1997,9 +1997,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxColumnsInSelect() 
+  void DatabaseMetaDataTest::testGetMaxColumnsInSelect()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getMaxColumnsInSelect");
             int nRetval = dbmd->getMaxColumnsInSelect();
             if (nRetval < 0) {
@@ -2008,8 +2008,8 @@ namespace compliance
                 TestsListener::theInstance().messagesLog()
                   << "getMaxColumnsInSelect returns " <<  nRetval << std::endl;
             }
-        
-            
+
+
             }
 
     /*
@@ -2036,7 +2036,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxColumnsInTable() 
+  void DatabaseMetaDataTest::testGetMaxColumnsInTable()
   {  logMsg("Calling DatabaseMetaData.getMaxColumnsInTable");
             int nRetval = dbmd->getMaxColumnsInTable();
             if (nRetval < 0) {
@@ -2047,8 +2047,8 @@ namespace compliance
                 TestsListener::theInstance().messagesLog()
                   << "getMaxColumnsInTable returns " <<  nRetval << std::endl;
             }
-        
-            
+
+
             }
 
     /*
@@ -2075,9 +2075,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxConnections() 
+  void DatabaseMetaDataTest::testGetMaxConnections()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getMaxConnections");
             int nRetval = dbmd->getMaxConnections();
             if (nRetval < 0) {
@@ -2086,8 +2086,8 @@ namespace compliance
                 TestsListener::theInstance().messagesLog()
                   << "getMaxConnections returns " <<  nRetval << std::endl;
             }
-        
-            
+
+
             }
 
     /*
@@ -2114,9 +2114,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxCursorNameLength() 
+  void DatabaseMetaDataTest::testGetMaxCursorNameLength()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getMaxCursorNameLength");
             int nRetval = dbmd->getMaxCursorNameLength();
             if (nRetval < 0) {
@@ -2125,8 +2125,8 @@ namespace compliance
                 TestsListener::theInstance().messagesLog()
                   << "getMaxCursorNameLength returns " <<  nRetval << std::endl;
             }
-        
-            
+
+
             }
 
     /*
@@ -2153,9 +2153,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxIndexLength() 
+  void DatabaseMetaDataTest::testGetMaxIndexLength()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getMaxIndexLength");
             int nRetval = dbmd->getMaxIndexLength();
             if (nRetval < 0) {
@@ -2164,8 +2164,8 @@ namespace compliance
                 TestsListener::theInstance().messagesLog()
                   << "getMaxIndexLength returns " <<  nRetval << std::endl;
             }
-        
-            
+
+
             }
 
     /*
@@ -2192,9 +2192,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxProcedureNameLength() 
+  void DatabaseMetaDataTest::testGetMaxProcedureNameLength()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getMaxProcedureNameLength");
             int nRetval = dbmd->getMaxProcedureNameLength();
             if (nRetval < 0) {
@@ -2203,8 +2203,8 @@ namespace compliance
                 TestsListener::theInstance().messagesLog()
                   << "getMaxProcedureNameLength returns " << nRetval << std::endl;
             }
-        
-            
+
+
             }
 
     /*
@@ -2231,9 +2231,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxRowSize() 
+  void DatabaseMetaDataTest::testGetMaxRowSize()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getMaxRowSize");
             int nRetval = dbmd->getMaxRowSize();
             if (nRetval < 0) {
@@ -2241,8 +2241,8 @@ namespace compliance
             } else {
                 TestsListener::theInstance().messagesLog() << "getMaxRowSize returns " << nRetval << std::endl;
             }
-        
-            
+
+
             }
 
     /*
@@ -2269,9 +2269,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxSchemaNameLength() 
+  void DatabaseMetaDataTest::testGetMaxSchemaNameLength()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getMaxSchemaNameLength");
             int nRetval = dbmd->getMaxSchemaNameLength();
             if (nRetval < 0) {
@@ -2279,8 +2279,8 @@ namespace compliance
             } else {
                 TestsListener::theInstance().messagesLog() << "getMaxSchemaNameLength returns " << nRetval << std::endl;
             }
-        
-            
+
+
             }
 
     /*
@@ -2307,9 +2307,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxStatementLength() 
+  void DatabaseMetaDataTest::testGetMaxStatementLength()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getMaxStatementLength");
             int nRetval = dbmd->getMaxStatementLength();
             if (nRetval < 0) {
@@ -2317,8 +2317,8 @@ namespace compliance
             } else {
                 TestsListener::theInstance().messagesLog() << "getMaxStatementLength returns " << nRetval << std::endl;
             }
-        
-            
+
+
             }
 
     /*
@@ -2345,9 +2345,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxStatements() 
+  void DatabaseMetaDataTest::testGetMaxStatements()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getMaxStatements");
             int nRetval = dbmd->getMaxStatements();
             if (nRetval < 0) {
@@ -2355,8 +2355,8 @@ namespace compliance
             } else {
                 TestsListener::theInstance().messagesLog() << "getMaxStatements returns " << nRetval << std::endl;
             }
-        
-            
+
+
             }
 
     /*
@@ -2383,9 +2383,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxTableNameLength() 
+  void DatabaseMetaDataTest::testGetMaxTableNameLength()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getMaxTableNameLength");
             int nRetval = dbmd->getMaxTableNameLength();
             if (nRetval < 0) {
@@ -2393,8 +2393,8 @@ namespace compliance
             } else {
                 TestsListener::theInstance().messagesLog() << "getMaxTableNameLength returns " << nRetval << std::endl;
             }
-        
-            
+
+
             }
 
     /*
@@ -2421,9 +2421,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxTablesInSelect() 
+  void DatabaseMetaDataTest::testGetMaxTablesInSelect()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getMaxTablesInSelect");
             int nRetval = dbmd->getMaxTablesInSelect();
             if (nRetval < 0) {
@@ -2431,8 +2431,8 @@ namespace compliance
             } else {
                 TestsListener::theInstance().messagesLog() << "getMaxTablesInSelect returns " << nRetval << std::endl;
             }
-        
-            
+
+
             }
 
     /*
@@ -2459,9 +2459,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetMaxUserNameLength() 
+  void DatabaseMetaDataTest::testGetMaxUserNameLength()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getMaxUserNameLength");
             int nRetval = dbmd->getMaxUserNameLength();
             if (nRetval < 0) {
@@ -2469,8 +2469,8 @@ namespace compliance
             } else {
                 TestsListener::theInstance().messagesLog() << "getMaxUserNameLength returns " << nRetval << std::endl;
             }
-        
-            
+
+
             }
 
     /*
@@ -2497,9 +2497,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetNumericFunctions() 
+  void DatabaseMetaDataTest::testGetNumericFunctions()
   {
-        
+
             logMsg("Calling getNumericFunctions on DatabaseMetaData");
             String sRetValue = dbmd->getNumericFunctions();
             if (sRetValue.empty()) {
@@ -2533,16 +2533,16 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetPrimaryKeys() 
+  void DatabaseMetaDataTest::testGetPrimaryKeys()
   {
-        
+
             List sColumnNames;
 
             sColumnNames.push_back( "TABLE_CAT"   );
-            sColumnNames.push_back( "TABLE_SCHEM" ); 
-            sColumnNames.push_back( "TABLE_NAME"  ); 
+            sColumnNames.push_back( "TABLE_SCHEM" );
+            sColumnNames.push_back( "TABLE_NAME"  );
             sColumnNames.push_back( "COLUMN_NAME" );
-            sColumnNames.push_back( "KEY_SEQ"     ); 
+            sColumnNames.push_back( "KEY_SEQ"     );
             sColumnNames.push_back( "PK_NAME"     );
 
             bool test_status = true;
@@ -2564,8 +2564,8 @@ namespace compliance
                 logMsg("The columns returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-        
-            
+
+
   }
 
     /*
@@ -2593,13 +2593,13 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetProcedureColumns() 
+  void DatabaseMetaDataTest::testGetProcedureColumns()
   {
         if (hasSps) {
-            
+
                 List sColumnNames;
 
-                sColumnNames.push_back( "PROCEDURE_CAT"   ); 
+                sColumnNames.push_back( "PROCEDURE_CAT"   );
                 sColumnNames.push_back( "PROCEDURE_SCHEM" );
                 sColumnNames.push_back( "PROCEDURE_NAME"  );
                 sColumnNames.push_back( "COLUMN_NAME"     );
@@ -2632,8 +2632,8 @@ namespace compliance
                     logMsg(
                         "getProcedureColumns did not return any column names");
                 }
-            
-                
+
+
                 }
     }
 
@@ -2660,9 +2660,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetProcedureTerm() 
+  void DatabaseMetaDataTest::testGetProcedureTerm()
   {
-        
+
             logMsg("Calling getProcedureTerm on DatabaseMetaData");
             String sRetValue = dbmd->getProcedureTerm();
             if (sRetValue.empty()) {
@@ -2697,13 +2697,13 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetProcedures() 
+  void DatabaseMetaDataTest::testGetProcedures()
   {
     if (!this->hasSps)
     {
       return;
     }
-        
+
     List sColumnNames;
 
     sColumnNames.push_back( "PROCEDURE_CAT"   );
@@ -2803,9 +2803,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetSQLKeywords() 
+  void DatabaseMetaDataTest::testGetSQLKeywords()
   {
-        
+
             logMsg("Calling getSQLKeywords on DatabaseMetaData");
             String sRetValue = dbmd->getSQLKeywords();
             if (sRetValue.empty()) {
@@ -2837,7 +2837,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetSchemaTerm() 
+  void DatabaseMetaDataTest::testGetSchemaTerm()
   {
     logMsg("Calling getSchemaTerm on DatabaseMetaData");
     String sRetValue = dbmd->getSchemaTerm();
@@ -2875,7 +2875,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetSchemas() 
+  void DatabaseMetaDataTest::testGetSchemas()
   {  List sColumnNames;
             sColumnNames.push_back( "TABLE_SCHEM" );
 
@@ -2900,8 +2900,8 @@ namespace compliance
                 logMsg("The Schema names returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-        
-            
+
+
             }
 
     /*
@@ -2927,9 +2927,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetSearchStringEscape() 
+  void DatabaseMetaDataTest::testGetSearchStringEscape()
   {
-        
+
             logMsg("Calling getSearchStringEscape on DatabaseMetaData");
             String sRetValue = dbmd->getSearchStringEscape();
             if (sRetValue.empty()) {
@@ -2963,9 +2963,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetStringFunctions() 
+  void DatabaseMetaDataTest::testGetStringFunctions()
   {
-        
+
             logMsg("Calling getStringFunctions on DatabaseMetaData");
             String sRetValue = dbmd->getStringFunctions();
             if (sRetValue.empty()) {
@@ -2999,9 +2999,9 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetSystemFunctions() 
+  void DatabaseMetaDataTest::testGetSystemFunctions()
   {
-        
+
             logMsg("Calling getSystemFunctions on DatabaseMetaData");
             String sRetValue = dbmd->getSystemFunctions();
             if (sRetValue.empty()) {
@@ -3035,8 +3035,8 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetTablePrivileges() 
-  { 
+  void DatabaseMetaDataTest::testGetTablePrivileges()
+  {
     List sColumnNames;
 
             sColumnNames.push_back( "TABLE_CAT"     );
@@ -3068,8 +3068,8 @@ namespace compliance
                 logMsg("The privileges returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-        
-            
+
+
             }
 
     /*
@@ -3095,14 +3095,14 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetTableTypes() 
+  void DatabaseMetaDataTest::testGetTableTypes()
   {  List sColumnNames;
             sColumnNames.push_back( "TABLE_TYPE" );
 
             bool test_status = true;
 
             logMsg("Calling DatabaseMetaData.getTableTypes");
-			
+
             ResultSet oRet_ResultSet(dbmd->getTableTypes());
             String sRetStr ;
             sRetStr = "";
@@ -3126,8 +3126,8 @@ namespace compliance
                 logMsg("The Table Types returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-        
-            
+
+
             }
 
     /*
@@ -3153,7 +3153,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetTables() 
+  void DatabaseMetaDataTest::testGetTables()
   {
     List sColumnNames;
 
@@ -3220,9 +3220,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetTimeDateFunctions() 
+  void DatabaseMetaDataTest::testGetTimeDateFunctions()
   {
-        
+
             logMsg("Calling getTimeDateFunctions on DatabaseMetaData");
             String sRetValue = dbmd->getTimeDateFunctions();
             if (sRetValue.empty()) {
@@ -3255,7 +3255,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetTypeInfo() 
+  void DatabaseMetaDataTest::testGetTypeInfo()
   {  List sColumnNames;
 
             sColumnNames.push_back( "TYPE_NAME"           );
@@ -3331,8 +3331,8 @@ std::list< String > tmp2;
             } else {
                 logMsg(String( "The Type names returned are : " ) + sRetStr);
             }
-        
-            
+
+
             }
 
     /*
@@ -3358,9 +3358,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetUDTs() 
+  void DatabaseMetaDataTest::testGetUDTs()
   {
-        
+
             logMsg("Calling DatabaseMetaData.getUDTs");
       String tmp("%");
       std::list<int> tmp2;
@@ -3375,8 +3375,8 @@ std::list< String > tmp2;
                 logMsg("The type names returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-        
-            
+
+
 }
 
     /*
@@ -3403,7 +3403,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetUDTs01() 
+  void DatabaseMetaDataTest::testGetUDTs01()
   {
     List sColumnNames;
 
@@ -3510,9 +3510,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetURL() 
+  void DatabaseMetaDataTest::testGetURL()
   {
-        
+
             logMsg("Calling getURL on DatabaseMetaData");
             String sRetValue = dbmd->getURL();
             if (sRetValue.empty()) {
@@ -3544,9 +3544,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetUserName() 
+  void DatabaseMetaDataTest::testGetUserName()
   {
-        
+
             logMsg("Calling getUserName on DatabaseMetaData");
             String sRetValue = dbmd->getUserName();
             if (sRetValue.empty()) {
@@ -3580,9 +3580,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testGetVersionColumns() 
+  void DatabaseMetaDataTest::testGetVersionColumns()
   {
-        
+
             List sColumnNames;
 
             sColumnNames.push_back( "SCOPE"         );
@@ -3616,8 +3616,8 @@ std::list< String > tmp2;
                 logMsg("The columns returned Are : "
                     + sRetStr.substr(0, sRetStr.length() - 1));
             }
-        
-            
+
+
             }
 
     /*
@@ -3648,9 +3648,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testInsertsAreDetected1() 
+  void DatabaseMetaDataTest::testInsertsAreDetected1()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.insertsAreDetected(TYPE_FORWARD_ONLY)");
             bool retValue = dbmd->insertsAreDetected(sql::ResultSet::TYPE_FORWARD_ONLY);
@@ -3661,8 +3661,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Visible row insert cannot be detected for TYPE_FORWARD_ONLY");
             }
-        
-            
+
+
             }
 
     /*
@@ -3693,9 +3693,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testInsertsAreDetected2() 
+  void DatabaseMetaDataTest::testInsertsAreDetected2()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.insertsAreDetected(TYPE_SCROLL_INSENSITIVE)");
             bool retValue = dbmd->insertsAreDetected(sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
@@ -3706,8 +3706,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Visible row insert cannot be detected for TYPE_SCROLL_INSENSITIVE");
             }
-        
-            
+
+
             }
 
     /*
@@ -3738,9 +3738,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testInsertsAreDetected3() 
+  void DatabaseMetaDataTest::testInsertsAreDetected3()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.insertsAreDetected(TYPE_SCROLL_SENSITIVE)");
             bool retValue = dbmd->insertsAreDetected(sql::ResultSet::TYPE_SCROLL_SENSITIVE);
@@ -3751,8 +3751,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Visible row insert cannot be detected for TYPE_SCROLL_SENSITIVE");
             }
-        
-            
+
+
             }
 
     /*
@@ -3779,9 +3779,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testIsCatalogAtStart() 
+  void DatabaseMetaDataTest::testIsCatalogAtStart()
   {
-        
+
             logMsg("Calling isCatalogAtStart on DatabaseMetaData");
             bool retValue = dbmd->isCatalogAtStart();
             if (retValue) {
@@ -3816,9 +3816,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testIsReadOnly() 
+  void DatabaseMetaDataTest::testIsReadOnly()
   {
-        
+
             logMsg("Calling isReadOnly on DatabaseMetaData");
             bool retValue = dbmd->isReadOnly();
             if (retValue) {
@@ -3852,7 +3852,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testNullPlusNonNullIsNull() 
+  void DatabaseMetaDataTest::testNullPlusNonNullIsNull()
   {  logMsg("Calling nullPlusNonNullIsNull on DatabaseMetaData");
 
       bool retValue = dbmd->nullPlusNonNullIsNull();
@@ -3894,9 +3894,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testNullsAreSortedAtEnd() 
+  void DatabaseMetaDataTest::testNullsAreSortedAtEnd()
   {
-        
+
             logMsg("Calling NullsAreSortedAtEnd on DatabaseMetaData");
             bool retValue = dbmd->nullsAreSortedAtEnd();
             if (retValue) {
@@ -3931,9 +3931,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testNullsAreSortedAtStart() 
+  void DatabaseMetaDataTest::testNullsAreSortedAtStart()
   {
-        
+
             logMsg("Calling nullsAreSortedAtStart on DatabaseMetaData");
             bool retValue = dbmd->nullsAreSortedAtStart();
             if (retValue) {
@@ -3968,9 +3968,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testNullsAreSortedHigh() 
+  void DatabaseMetaDataTest::testNullsAreSortedHigh()
   {
-        
+
             logMsg("Calling nullsAreSortedHigh on DatabaseMetaData");
             bool retValue = dbmd->nullsAreSortedHigh();
             if (retValue) {
@@ -4006,7 +4006,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testNullsAreSortedLow() 
+  void DatabaseMetaDataTest::testNullsAreSortedLow()
   {  logMsg("Calling nullsAreSortedLow on DatabaseMetaData");
           bool retValue = dbmd->nullsAreSortedLow();
           if (retValue)
@@ -4047,9 +4047,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOthersDeletesAreVisible1() 
+  void DatabaseMetaDataTest::testOthersDeletesAreVisible1()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.othersDeletesAreVisible(TYPE_FORWARD_ONLY)");
             bool retValue = dbmd->othersDeletesAreVisible(sql::ResultSet::TYPE_FORWARD_ONLY);
@@ -4060,8 +4060,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Deletes made by others are not visible for TYPE_FORWARD_ONLY");
             }
-        
-            
+
+
             }
 
     /*
@@ -4090,9 +4090,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOthersDeletesAreVisible2() 
+  void DatabaseMetaDataTest::testOthersDeletesAreVisible2()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.othersDeletesAreVisible(TYPE_SCROLL_INSENSITIVE)");
             bool retValue = dbmd->othersDeletesAreVisible(sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
@@ -4103,8 +4103,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Deletes made by others are not visible for TYPE_SCROLL_INSENSITIVE");
             }
-        
-            
+
+
             }
 
     /*
@@ -4133,9 +4133,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOthersDeletesAreVisible3() 
+  void DatabaseMetaDataTest::testOthersDeletesAreVisible3()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.othersDeletesAreVisible(TYPE_SCROLL_SENSITIVE)");
             bool retValue = dbmd->othersDeletesAreVisible(sql::ResultSet::TYPE_SCROLL_SENSITIVE);
@@ -4146,8 +4146,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Deletes made by others are not visible for TYPE_SCROLL_SENSITIVE");
             }
-        
-            
+
+
             }
 
     /*
@@ -4176,9 +4176,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOthersInsertsAreVisible1() 
+  void DatabaseMetaDataTest::testOthersInsertsAreVisible1()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.othersInsertsAreVisible(TYPE_FORWARD_ONLY)");
             bool retValue = dbmd->othersInsertsAreVisible(sql::ResultSet::TYPE_FORWARD_ONLY);
@@ -4189,8 +4189,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Inserts made by others are not visible for TYPE_FORWARD_ONLY");
             }
-        
-            
+
+
             }
 
     /*
@@ -4219,9 +4219,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOthersInsertsAreVisible2() 
+  void DatabaseMetaDataTest::testOthersInsertsAreVisible2()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.othersInsertsAreVisible(TYPE_SCROLL_INSENSITIVE)");
             bool retValue = dbmd->othersInsertsAreVisible(sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
@@ -4232,8 +4232,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Inserts made by others are not visible for TYPE_SCROLL_INSENSITIVE");
             }
-        
-            
+
+
             }
 
     /*
@@ -4262,9 +4262,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOthersInsertsAreVisible3() 
+  void DatabaseMetaDataTest::testOthersInsertsAreVisible3()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.othersInsertsAreVisible(TYPE_SCROLL_SENSITIVE)");
             bool retValue = dbmd->othersInsertsAreVisible(sql::ResultSet::TYPE_SCROLL_SENSITIVE);
@@ -4275,8 +4275,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Inserts made by others are not visible for TYPE_SCROLL_SENSITIVE");
             }
-        
-            
+
+
             }
 
     /*
@@ -4305,9 +4305,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOthersUpdatesAreVisible1() 
+  void DatabaseMetaDataTest::testOthersUpdatesAreVisible1()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.othersUpdatesAreVisible(TYPE_FORWARD_ONLY)");
             bool retValue = dbmd->othersUpdatesAreVisible(sql::ResultSet::TYPE_FORWARD_ONLY);
@@ -4318,8 +4318,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Updates made by others are not visible for TYPE_FORWARD_ONLY");
             }
-        
-            
+
+
             }
 
     /*
@@ -4348,9 +4348,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOthersUpdatesAreVisible2() 
+  void DatabaseMetaDataTest::testOthersUpdatesAreVisible2()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.othersUpdatesAreVisible(TYPE_SCROLL_INSENSITIVE)");
             bool retValue = dbmd->othersUpdatesAreVisible(sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
@@ -4361,8 +4361,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Updates made by others are not visible for TYPE_SCROLL_INSENSITIVE");
             }
-        
-            
+
+
             }
 
     /*
@@ -4391,9 +4391,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOthersUpdatesAreVisible3() 
+  void DatabaseMetaDataTest::testOthersUpdatesAreVisible3()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.othersUpdatesAreVisible(TYPE_SCROLL_SENSITIVE)");
             bool retValue = dbmd->othersUpdatesAreVisible(sql::ResultSet::TYPE_SCROLL_SENSITIVE);
@@ -4404,8 +4404,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Updates made by others are not visible for TYPE_SCROLL_SENSITIVE");
             }
-        
-            
+
+
             }
 
     /*
@@ -4435,9 +4435,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOwnDeletesAreVisible1() 
+  void DatabaseMetaDataTest::testOwnDeletesAreVisible1()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.ownDeletesAreVisible(TYPE_FORWARD_ONLY)");
             bool retValue = dbmd->ownDeletesAreVisible(sql::ResultSet::TYPE_FORWARD_ONLY);
@@ -4448,8 +4448,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Result Set's own deletes are not visible for TYPE_FORWARD_ONLY");
             }
-        
-            
+
+
             }
 
     /*
@@ -4479,9 +4479,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOwnDeletesAreVisible2() 
+  void DatabaseMetaDataTest::testOwnDeletesAreVisible2()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.ownDeletesAreVisible(TYPE_SCROLL_INSENSITIVE)");
             bool retValue = dbmd->ownDeletesAreVisible(sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
@@ -4492,8 +4492,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Result Set's own deletes are not visible for TYPE_SCROLL_INSENSITIVE");
             }
-        
-            
+
+
             }
 
     /*
@@ -4523,9 +4523,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOwnDeletesAreVisible3() 
+  void DatabaseMetaDataTest::testOwnDeletesAreVisible3()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.ownDeletesAreVisible(TYPE_SCROLL_SENSITIVE)");
             bool retValue = dbmd->ownDeletesAreVisible(sql::ResultSet::TYPE_SCROLL_SENSITIVE);
@@ -4536,8 +4536,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Result Set's own deletes are not visible for TYPE_SCROLL_SENSITIVE");
             }
-        
-            
+
+
             }
 
     /*
@@ -4567,9 +4567,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOwnInsertsAreVisible1() 
+  void DatabaseMetaDataTest::testOwnInsertsAreVisible1()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.ownInsertsAreVisible(TYPE_FORWARD_ONLY)");
             bool retValue = dbmd->ownInsertsAreVisible(sql::ResultSet::TYPE_FORWARD_ONLY);
@@ -4580,8 +4580,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Result Set's own inserts are not visible for TYPE_FORWARD_ONLY");
             }
-        
-            
+
+
             }
 
     /*
@@ -4611,9 +4611,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOwnInsertsAreVisible2() 
+  void DatabaseMetaDataTest::testOwnInsertsAreVisible2()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.ownInsertsAreVisible(TYPE_SCROLL_INSENSITIVE)");
             bool retValue = dbmd->ownInsertsAreVisible(sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
@@ -4624,8 +4624,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Result Set's own inserts are not visible for TYPE_SCROLL_INSENSITIVE");
             }
-        
-            
+
+
             }
 
     /*
@@ -4655,9 +4655,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOwnInsertsAreVisible3() 
+  void DatabaseMetaDataTest::testOwnInsertsAreVisible3()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.ownInsertsAreVisible(TYPE_SCROLL_SENSITIVE)");
             bool retValue = dbmd->ownInsertsAreVisible(sql::ResultSet::TYPE_SCROLL_SENSITIVE);
@@ -4668,8 +4668,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Result Set's own inserts are not visible for TYPE_SCROLL_SENSITIVE");
             }
-        
-            
+
+
             }
 
     /*
@@ -4699,9 +4699,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOwnUpdatesAreVisible1() 
+  void DatabaseMetaDataTest::testOwnUpdatesAreVisible1()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.ownUpdatesAreVisible(TYPE_FORWARD_ONLY)");
             bool retValue = dbmd->ownUpdatesAreVisible(sql::ResultSet::TYPE_FORWARD_ONLY);
@@ -4712,8 +4712,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Result Set's own updates are not visible for TYPE_FORWARD_ONLY");
             }
-        
-            
+
+
             }
 
     /*
@@ -4743,9 +4743,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOwnUpdatesAreVisible2() 
+  void DatabaseMetaDataTest::testOwnUpdatesAreVisible2()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.ownUpdatesAreVisible(TYPE_SCROLL_INSENSITIVE)");
             bool retValue = dbmd->ownUpdatesAreVisible(sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
@@ -4756,8 +4756,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Result Set's own updates are not visible for TYPE_SCROLL_INSENSITIVE");
             }
-        
-            
+
+
             }
 
     /*
@@ -4787,9 +4787,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testOwnUpdatesAreVisible3() 
+  void DatabaseMetaDataTest::testOwnUpdatesAreVisible3()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.ownUpdatesAreVisible(TYPE_SCROLL_SENSITIVE)");
             bool retValue = dbmd->ownUpdatesAreVisible(sql::ResultSet::TYPE_SCROLL_SENSITIVE);
@@ -4800,8 +4800,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Result Set's own updates are not visible for TYPE_SCROLL_SENSITIVE");
             }
-        
-            
+
+
             }
 
     /*
@@ -4830,7 +4830,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testStoresLowerCaseIdentifiers() 
+  void DatabaseMetaDataTest::testStoresLowerCaseIdentifiers()
   {
     logMsg("Calling storesLowerCaseIdentifiers on DatabaseMetaData");
     bool retValue = dbmd->storesLowerCaseIdentifiers();
@@ -4868,9 +4868,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testStoresLowerCaseQuotedIdentifiers() 
+  void DatabaseMetaDataTest::testStoresLowerCaseQuotedIdentifiers()
   {
-        
+
             logMsg(
                 "Calling storesLowerCaseQuotedIdentifiers on DatabaseMetaData");
             bool retValue = dbmd->storesLowerCaseQuotedIdentifiers();
@@ -4907,9 +4907,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testStoresMixedCaseIdentifiers() 
+  void DatabaseMetaDataTest::testStoresMixedCaseIdentifiers()
   {
-        
+
             logMsg("Calling storesMixedCaseIdentifiers on DatabaseMetaData");
             bool retValue = dbmd->storesMixedCaseIdentifiers();
             if (retValue) {
@@ -4945,9 +4945,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testStoresMixedCaseQuotedIdentifiers() 
+  void DatabaseMetaDataTest::testStoresMixedCaseQuotedIdentifiers()
   {
-        
+
             logMsg(
                 "Calling storesMixedCaseQuotedIdentifiers on DatabaseMetaData");
             bool retValue = dbmd->storesMixedCaseQuotedIdentifiers();
@@ -4985,9 +4985,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testStoresUpperCaseIdentifiers() 
+  void DatabaseMetaDataTest::testStoresUpperCaseIdentifiers()
   {
-        
+
             logMsg("Calling storesUpperCaseIdentifiers on DatabaseMetaData");
             bool retValue = dbmd->storesUpperCaseIdentifiers();
             if (retValue) {
@@ -4997,7 +4997,7 @@ std::list< String > tmp2;
                 logMsg(
                     "storesUpperCaseIdentifiers method returns unquoted SQL identifiers not stored as upper case");
             }
-        
+
 }
 
     /*
@@ -5025,9 +5025,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testStoresUpperCaseQuotedIdentifiers() 
+  void DatabaseMetaDataTest::testStoresUpperCaseQuotedIdentifiers()
   {
-        
+
             logMsg(
                 "Calling storesUpperCaseQuotedIdentifiers on DatabaseMetaData");
             bool retValue = dbmd->storesUpperCaseQuotedIdentifiers();
@@ -5063,9 +5063,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsANSI92EntryLevelSQL() 
+  void DatabaseMetaDataTest::testSupportsANSI92EntryLevelSQL()
   {
-        
+
             logMsg("Calling supportsANSI92EntryLevelSQL on DatabaseMetaData");
             bool retValue = dbmd->supportsANSI92EntryLevelSQL();
             if (retValue) {
@@ -5097,9 +5097,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsANSI92FullSQL() 
+  void DatabaseMetaDataTest::testSupportsANSI92FullSQL()
   {
-        
+
             bool retValue = dbmd->supportsANSI92FullSQL();
             logMsg("Calling supportsANSI92FullSQL on DatabaseMetaData");
             if (retValue) {
@@ -5131,9 +5131,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsANSI92IntermediateSQL() 
+  void DatabaseMetaDataTest::testSupportsANSI92IntermediateSQL()
   {
-        
+
             logMsg("Calling supportsANSI92IntermediateSQL on DatabaseMetaData");
             bool retValue = dbmd->supportsANSI92IntermediateSQL();
             if (retValue) {
@@ -5166,9 +5166,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsAlterTableWithAddColumn() 
+  void DatabaseMetaDataTest::testSupportsAlterTableWithAddColumn()
   {
-        
+
             logMsg(
                 "Calling supportsAlterTableWithAddColumn on DatabaseMetaData");
             bool retValue = dbmd->supportsAlterTableWithAddColumn();
@@ -5202,9 +5202,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsAlterTableWithDropColumn() 
+  void DatabaseMetaDataTest::testSupportsAlterTableWithDropColumn()
   {
-        
+
             logMsg(
                 "Calling supportsAlterTableWithDropColumn on DatabaseMetaData");
             bool retValue = dbmd->supportsAlterTableWithDropColumn();
@@ -5237,9 +5237,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsBatchUpdates() 
+  void DatabaseMetaDataTest::testSupportsBatchUpdates()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsBatchUpdates");
             bool retValue = dbmd->supportsBatchUpdates();
             if (retValue) {
@@ -5247,8 +5247,8 @@ std::list< String > tmp2;
             } else {
                 logMsg("supportsBatchUpdates is not supported");
             }
-        
-            
+
+
             }
 
     /*
@@ -5275,9 +5275,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsCatalogsInDataManipulation() 
+  void DatabaseMetaDataTest::testSupportsCatalogsInDataManipulation()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsCatalogsInDataManipulation");
             bool retValue = dbmd->supportsCatalogsInDataManipulation();
@@ -5311,9 +5311,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsCatalogsInIndexDefinitions() 
+  void DatabaseMetaDataTest::testSupportsCatalogsInIndexDefinitions()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsCatalogsInIndexDefinitions");
             bool retValue = dbmd->supportsCatalogsInIndexDefinitions();
@@ -5347,9 +5347,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsCatalogsInPrivilegeDefinitions() 
+  void DatabaseMetaDataTest::testSupportsCatalogsInPrivilegeDefinitions()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsCatalogsInPrivilegeDefinitions");
             bool retValue = dbmd->supportsCatalogsInPrivilegeDefinitions();
@@ -5385,9 +5385,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsCatalogsInProcedureCalls() 
+  void DatabaseMetaDataTest::testSupportsCatalogsInProcedureCalls()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsCatalogsInProcedureCalls");
             bool retValue = dbmd->supportsCatalogsInProcedureCalls();
             if (retValue) {
@@ -5420,9 +5420,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsCatalogsInTableDefinitions() 
+  void DatabaseMetaDataTest::testSupportsCatalogsInTableDefinitions()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsCatalogsInTableDefinitions()");
             bool retValue = dbmd->supportsCatalogsInTableDefinitions();
@@ -5456,9 +5456,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsColumnAliasing() 
+  void DatabaseMetaDataTest::testSupportsColumnAliasing()
   {
-        
+
             logMsg("Calling supportsColumnAliasing on DatabaseMetaData");
             bool retValue = dbmd->supportsColumnAliasing();
             if (retValue) {
@@ -5492,9 +5492,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert() 
+  void DatabaseMetaDataTest::testSupportsConvert()
   {
-        
+
             logMsg("Calling supportsConvert on DatabaseMetaData");
             bool retValue = dbmd->supportsConvert();
             if (retValue) {
@@ -5527,7 +5527,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert01() 
+  void DatabaseMetaDataTest::testSupportsConvert01()
   {  logMsg(
         "Calling supportsConvert(ARRAY, VARCHAR) on DatabaseMetaData");
 
@@ -5572,7 +5572,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert02() 
+  void DatabaseMetaDataTest::testSupportsConvert02()
   {
   	logMsg("Calling supportsConvert(BIGINT, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
@@ -5611,9 +5611,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert03() 
+  void DatabaseMetaDataTest::testSupportsConvert03()
   {
-        
+
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::BINARY, sql::DataType::VARCHAR);
             logMsg(
@@ -5652,9 +5652,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert04() 
+  void DatabaseMetaDataTest::testSupportsConvert04()
   {
-        
+
 #ifdef WE_HAVE_DATATYPE_AGAIN
             logMsg("Calling supportsConvert(BIT, VARCHAR) on DatabaseMetaData");
             bool retValue = dbmd->supportsConvert(sql::DataType::BIT, sql::DataType::VARCHAR);
@@ -5692,9 +5692,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert05() 
+  void DatabaseMetaDataTest::testSupportsConvert05()
   {
-        
+
             logMsg("Calling supportsConvert(BLOB, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::BLOB, sql::DataType::VARCHAR);
@@ -5732,9 +5732,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert06() 
+  void DatabaseMetaDataTest::testSupportsConvert06()
   {
-        
+
             logMsg("Calling supportsConvert(CHAR, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::CHAR, sql::DataType::VARCHAR);
@@ -5772,9 +5772,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert07() 
+  void DatabaseMetaDataTest::testSupportsConvert07()
   {
-        
+
             logMsg("Calling supportsConvert(CLOB, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::CLOB, sql::DataType::VARCHAR);
@@ -5812,9 +5812,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert08() 
+  void DatabaseMetaDataTest::testSupportsConvert08()
   {
-        
+
             logMsg("Calling supportsConvert(DATE, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::DATE, sql::DataType::VARCHAR);
@@ -5852,9 +5852,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert09() 
+  void DatabaseMetaDataTest::testSupportsConvert09()
   {
-        
+
             logMsg("Calling supportsConvert(DECIMAL, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::DECIMAL, sql::DataType::VARCHAR);
@@ -5892,9 +5892,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert10() 
+  void DatabaseMetaDataTest::testSupportsConvert10()
   {
-        
+
             logMsg(
                 "Calling supportsConvert(DISTINCT, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
@@ -5934,9 +5934,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert11() 
+  void DatabaseMetaDataTest::testSupportsConvert11()
   {
-        
+
             logMsg(
                 "Calling supportsConvert(DOUBLE, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
@@ -5975,9 +5975,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert12() 
+  void DatabaseMetaDataTest::testSupportsConvert12()
   {
-        
+
             logMsg(
                 "Calling supportsConvert(FLOAT, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
@@ -6016,9 +6016,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert13() 
+  void DatabaseMetaDataTest::testSupportsConvert13()
   {
-        
+
             logMsg(
                 "Calling supportsConvert(INTEGER, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
@@ -6058,9 +6058,9 @@ std::list< String > tmp2;
 
 /* Doesn't make sense in C/C++*/
 /*
-  void DatabaseMetaDataTest::testSupportsConvert14() 
+  void DatabaseMetaDataTest::testSupportsConvert14()
   {
-        
+
             logMsg(
                 "Calling supportsConvert(JAVA_OBJECT, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
@@ -6103,9 +6103,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert15() 
+  void DatabaseMetaDataTest::testSupportsConvert15()
   {
-        
+
             logMsg(
                 "Calling supportsConvert(LONGVARBINARY, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
@@ -6146,9 +6146,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert16() 
+  void DatabaseMetaDataTest::testSupportsConvert16()
   {
-        
+
             logMsg(
                 "Calling supportsConvert(LONGVARCHAR, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
@@ -6189,7 +6189,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert17() 
+  void DatabaseMetaDataTest::testSupportsConvert17()
   {  logMsg("Calling supportsConvert(NULL, VARCHAR) on DatabaseMetaData");
 
 
@@ -6232,9 +6232,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert18() 
+  void DatabaseMetaDataTest::testSupportsConvert18()
   {
-        
+
             logMsg(
                 "Calling supportsConvert(NUMERIC, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
@@ -6273,9 +6273,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert19() 
+  void DatabaseMetaDataTest::testSupportsConvert19()
   {
-        
+
             logMsg(
                 "Calling supportsConvert(OTHER, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
@@ -6314,9 +6314,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert20() 
+  void DatabaseMetaDataTest::testSupportsConvert20()
   {
-        
+
             logMsg("Calling supportsConvert(REAL, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::REAL, sql::DataType::VARCHAR);
@@ -6354,9 +6354,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert21() 
+  void DatabaseMetaDataTest::testSupportsConvert21()
   {
-        
+
             logMsg("Calling supportsConvert(REF, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::REF, sql::DataType::VARCHAR);
@@ -6394,9 +6394,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert22() 
+  void DatabaseMetaDataTest::testSupportsConvert22()
   {
-        
+
             logMsg("Calling supportsConvert(SMALLINT, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::SMALLINT,
@@ -6435,9 +6435,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert23() 
+  void DatabaseMetaDataTest::testSupportsConvert23()
   {
-        
+
             logMsg("Calling supportsConvert(STRUCT, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::STRUCT, sql::DataType::VARCHAR);
@@ -6475,9 +6475,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert24() 
+  void DatabaseMetaDataTest::testSupportsConvert24()
   {
-        
+
             logMsg("Calling supportsConvert(TIME, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::TIME, sql::DataType::VARCHAR);
@@ -6515,9 +6515,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert25() 
+  void DatabaseMetaDataTest::testSupportsConvert25()
   {
-        
+
             logMsg("Calling supportsConvert(TIMESTAMP, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::TIMESTAMP,
@@ -6556,9 +6556,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert26() 
+  void DatabaseMetaDataTest::testSupportsConvert26()
   {
-        
+
             logMsg("Calling supportsConvert(TINYINT, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::TINYINT, sql::DataType::VARCHAR);
@@ -6596,9 +6596,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert27() 
+  void DatabaseMetaDataTest::testSupportsConvert27()
   {
-        
+
             logMsg("Calling supportsConvert(VARBINARY, VARCHAR) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::VARBINARY,
@@ -6637,9 +6637,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert28() 
+  void DatabaseMetaDataTest::testSupportsConvert28()
   {
-        
+
             logMsg("Calling supportsConvert(BIGINT, INTEGER) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::BIGINT, sql::DataType::INTEGER);
@@ -6677,9 +6677,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert29() 
+  void DatabaseMetaDataTest::testSupportsConvert29()
   {
-        
+
             logMsg("Calling supportsConvert(BIT, INTEGER) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::BIT, sql::DataType::INTEGER);
@@ -6717,9 +6717,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert30() 
+  void DatabaseMetaDataTest::testSupportsConvert30()
   {
-        
+
             logMsg("Calling supportsConvert(DATE, INTEGER) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::DATE, sql::DataType::INTEGER);
@@ -6757,9 +6757,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert31() 
+  void DatabaseMetaDataTest::testSupportsConvert31()
   {
-        
+
             logMsg("Calling supportsConvert(DECIMAL, INTEGER) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::DECIMAL, sql::DataType::INTEGER);
@@ -6797,9 +6797,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert32() 
+  void DatabaseMetaDataTest::testSupportsConvert32()
   {
-        
+
             logMsg("Calling supportsConvert(DOUBLE, INTEGER) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::DOUBLE, sql::DataType::INTEGER);
@@ -6837,9 +6837,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert33() 
+  void DatabaseMetaDataTest::testSupportsConvert33()
   {
-        
+
             logMsg("Calling supportsConvert(FLOAT, INTEGER) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::FLOAT, sql::DataType::INTEGER);
@@ -6877,9 +6877,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert34() 
+  void DatabaseMetaDataTest::testSupportsConvert34()
   {
-        
+
             logMsg("Calling supportsConvert(NUMERIC, INTEGER) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::NUMERIC, sql::DataType::INTEGER);
@@ -6917,9 +6917,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert35() 
+  void DatabaseMetaDataTest::testSupportsConvert35()
   {
-        
+
             logMsg("Calling supportsConvert(REAL, INTEGER) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::REAL, sql::DataType::INTEGER);
@@ -6957,9 +6957,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert36() 
+  void DatabaseMetaDataTest::testSupportsConvert36()
   {
-        
+
             logMsg("Calling supportsConvert(SMALLINT, INTEGER) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::SMALLINT,
@@ -6998,9 +6998,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsConvert37() 
+  void DatabaseMetaDataTest::testSupportsConvert37()
   {
-        
+
             logMsg("Calling supportsConvert(TINYINT, INTEGER) on DatabaseMetaData");
 #ifdef WE_HAVE_DATATYPE_AGAIN
             bool retValue = dbmd->supportsConvert(sql::DataType::TINYINT, sql::DataType::INTEGER);
@@ -7037,9 +7037,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsCoreSQLGrammar() 
+  void DatabaseMetaDataTest::testSupportsCoreSQLGrammar()
   {
-        
+
             logMsg("Calling supportsCoreSQLGrammar on DatabaseMetaData");
             bool retValue = dbmd->supportsCoreSQLGrammar();
             if (retValue) {
@@ -7072,9 +7072,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsCorrelatedSubqueries() 
+  void DatabaseMetaDataTest::testSupportsCorrelatedSubqueries()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsCorrelatedSubqueries");
             bool retValue = dbmd->supportsCorrelatedSubqueries();
             if (retValue) {
@@ -7107,7 +7107,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsDataDefinitionAndDataManipulationTransactions() 
+  void DatabaseMetaDataTest::testSupportsDataDefinitionAndDataManipulationTransactions()
   {  logMsg(
         "Calling DatabaseMetaData.supportsDataDefinitionAndDataManipulationTransactions");
       bool retValue = dbmd->supportsDataDefinitionAndDataManipulationTransactions();
@@ -7144,9 +7144,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsDataManipulationTransactionsOnly() 
+  void DatabaseMetaDataTest::testSupportsDataManipulationTransactionsOnly()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsDataManipulationTransactionsOnly");
             bool retValue = dbmd->supportsDataManipulationTransactionsOnly();
@@ -7181,9 +7181,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsDifferentTableCorrelationNames() 
+  void DatabaseMetaDataTest::testSupportsDifferentTableCorrelationNames()
   {
-        
+
             logMsg(
                 "Calling supportsDifferentTableCorrelationNames on DatabaseMetaData");
             bool retValue = dbmd->supportsDifferentTableCorrelationNames();
@@ -7220,9 +7220,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsExpressionsInOrderBy() 
+  void DatabaseMetaDataTest::testSupportsExpressionsInOrderBy()
   {
-        
+
             logMsg("Calling supportsExpressionsInOrderBy on DatabaseMetaData");
             bool retValue = dbmd->supportsExpressionsInOrderBy();
             if (retValue) {
@@ -7254,9 +7254,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsExtendedSQLGrammar() 
+  void DatabaseMetaDataTest::testSupportsExtendedSQLGrammar()
   {
-        
+
             logMsg("Calling supportsExtendedSQLGrammar on DatabaseMetaData");
             bool retValue = dbmd->supportsExtendedSQLGrammar();
             if (retValue) {
@@ -7288,9 +7288,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsFullOuterJoins() 
+  void DatabaseMetaDataTest::testSupportsFullOuterJoins()
   {
-        
+
             logMsg("Calling supportsFullOuterJoins on DatabaseMetaData");
             bool retValue = dbmd->supportsFullOuterJoins();
             if (retValue) {
@@ -7326,9 +7326,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsGroupBy() 
+  void DatabaseMetaDataTest::testSupportsGroupBy()
   {
-        
+
             logMsg("Calling supportsGroupBy on DatabaseMetaData");
             bool retValue = dbmd->supportsGroupBy();
             if (retValue) {
@@ -7360,9 +7360,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsGroupByBeyondSelect() 
+  void DatabaseMetaDataTest::testSupportsGroupByBeyondSelect()
   {
-        
+
             logMsg("Calling supportsGroupByBeyondSelect on DatabaseMetaData");
             bool retValue = dbmd->supportsGroupByBeyondSelect();
             if (retValue) {
@@ -7395,9 +7395,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsGroupByUnrelated() 
+  void DatabaseMetaDataTest::testSupportsGroupByUnrelated()
   {
-        
+
             logMsg("Calling supportsGroupByUnrelated on DatabaseMetaData");
             bool retValue = dbmd->supportsGroupByUnrelated();
             if (retValue) {
@@ -7430,7 +7430,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsIntegrityEnhancementFacility() 
+  void DatabaseMetaDataTest::testSupportsIntegrityEnhancementFacility()
   {  logMsg(
                 "Calling supportsIntegrityEnhancementFacility on DatabaseMetaData");
             bool retValue = dbmd->supportsIntegrityEnhancementFacility();
@@ -7470,7 +7470,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsLikeEscapeClause() 
+  void DatabaseMetaDataTest::testSupportsLikeEscapeClause()
   {
     logMsg("Calling supportsLikeEscapeClause on DatabaseMetaData");
     bool retValue = dbmd->supportsLikeEscapeClause();
@@ -7506,7 +7506,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsLimitedOuterJoins() 
+  void DatabaseMetaDataTest::testSupportsLimitedOuterJoins()
   {
     logMsg("Calling supportsLimitedOuterJoins on DatabaseMetaData");
     bool retValue = dbmd->supportsLimitedOuterJoins();
@@ -7544,7 +7544,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsMinimumSQLGrammar() 
+  void DatabaseMetaDataTest::testSupportsMinimumSQLGrammar()
   {
     logMsg("Calling supportsMinimumSQLGrammar on DatabaseMetaData");
     bool retValue = dbmd->supportsMinimumSQLGrammar();
@@ -7584,7 +7584,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsMixedCaseIdentifiers() 
+  void DatabaseMetaDataTest::testSupportsMixedCaseIdentifiers()
   {
     logMsg("Calling supportsMixedCaseIdentifiers on DatabaseMetaData");
     bool retValue = dbmd->supportsMixedCaseIdentifiers();
@@ -7620,9 +7620,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsMixedCaseQuotedIdentifiers() 
+  void DatabaseMetaDataTest::testSupportsMixedCaseQuotedIdentifiers()
   {
-        
+
             logMsg(
                 "Calling supportsMixedCaseQuotedIdentifiers on DatabaseMetaData");
             bool retValue = dbmd->supportsMixedCaseQuotedIdentifiers();
@@ -7657,9 +7657,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsMultipleResultSets() 
+  void DatabaseMetaDataTest::testSupportsMultipleResultSets()
   {
-        
+
             logMsg("Calling supportsMultipleResultSets on DatabaseMetaData");
             bool retValue = dbmd->supportsMultipleResultSets();
             if (retValue) {
@@ -7692,7 +7692,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsMultipleTransactions() 
+  void DatabaseMetaDataTest::testSupportsMultipleTransactions()
   {
     logMsg("Calling supportsMultipleTransactions on DatabaseMetaData");
     bool retValue = dbmd->supportsMultipleTransactions();
@@ -7727,9 +7727,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsNonNullableColumns() 
+  void DatabaseMetaDataTest::testSupportsNonNullableColumns()
   {
-        
+
             logMsg("Calling supportsNonNullableColumns on DatabaseMetaData");
             bool retValue = dbmd->supportsNonNullableColumns();
             if (retValue) {
@@ -7761,9 +7761,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsOpenCursorsAcrossCommit() 
+  void DatabaseMetaDataTest::testSupportsOpenCursorsAcrossCommit()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsOpenCursorsAcrossCommit");
             bool retValue = dbmd->supportsOpenCursorsAcrossCommit();
             if (retValue) {
@@ -7795,9 +7795,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsOpenCursorsAcrossRollback() 
+  void DatabaseMetaDataTest::testSupportsOpenCursorsAcrossRollback()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsOpenCursorsAcrossRollback");
             bool retValue = dbmd->supportsOpenCursorsAcrossRollback();
             if (retValue) {
@@ -7830,9 +7830,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsOpenStatementsAcrossCommit() 
+  void DatabaseMetaDataTest::testSupportsOpenStatementsAcrossCommit()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsOpenStatementsAcrossCommit");
             bool retValue = dbmd->supportsOpenStatementsAcrossCommit();
@@ -7841,8 +7841,8 @@ std::list< String > tmp2;
             } else {
                 logMsg("supportsOpenStatementsAcrossCommit is not supported");
             }
-        
-            
+
+
             }
 
     /*
@@ -7869,7 +7869,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsOpenStatementsAcrossRollback() 
+  void DatabaseMetaDataTest::testSupportsOpenStatementsAcrossRollback()
   {  logMsg(
           "Calling DatabaseMetaData.supportsOpenStatementsAcrossRollback");
       bool retValue = dbmd->supportsOpenStatementsAcrossRollback();
@@ -7906,9 +7906,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsOrderByUnrelated() 
+  void DatabaseMetaDataTest::testSupportsOrderByUnrelated()
   {
-        
+
             logMsg("Calling supportsOrderByUnrelated on DatabaseMetaData");
             bool retValue = dbmd->supportsOrderByUnrelated();
             if (retValue) {
@@ -7940,9 +7940,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsOuterJoins() 
+  void DatabaseMetaDataTest::testSupportsOuterJoins()
   {
-        
+
             logMsg("Calling supportsOuterJoins on DatabaseMetaData");
             bool retValue = dbmd->supportsOuterJoins();
             if (retValue) {
@@ -7974,9 +7974,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsPositionedDelete() 
+  void DatabaseMetaDataTest::testSupportsPositionedDelete()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsPositionedDelete");
             bool retValue = dbmd->supportsPositionedDelete();
             if (retValue) {
@@ -8008,9 +8008,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsPositionedUpdate() 
+  void DatabaseMetaDataTest::testSupportsPositionedUpdate()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsPositionedUpdate");
             bool retValue = dbmd->supportsPositionedUpdate();
             if (retValue) {
@@ -8047,9 +8047,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsResultSetConcurrency1() 
+  void DatabaseMetaDataTest::testSupportsResultSetConcurrency1()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsResultSetConcurrency(TYPE_FORWARD_ONLY, CONCUR_READ_ONLY)");
             bool retValue = dbmd->supportsResultSetConcurrency(sql::ResultSet::TYPE_FORWARD_ONLY,
@@ -8061,8 +8061,8 @@ std::list< String > tmp2;
                 logMsg(
                     "supportsResultSetConcurrency(TYPE_FORWARD_ONLY, CONCUR_READ_ONLY) is not supported");
             }
-        
-            
+
+
             }
 
     /*
@@ -8093,9 +8093,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsResultSetConcurrency2() 
+  void DatabaseMetaDataTest::testSupportsResultSetConcurrency2()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsResultSetConcurrency(TYPE_FORWARD_ONLY, CONCUR_UPDATABLE)");
             bool retValue = dbmd->supportsResultSetConcurrency(sql::ResultSet::TYPE_FORWARD_ONLY,
@@ -8107,8 +8107,8 @@ std::list< String > tmp2;
                 logMsg(
                     "supportsResultSetConcurrency(TYPE_FORWARD_ONLY, CONCUR_UPDATABLE) is not supported");
             }
-        
-            
+
+
             }
 
     /*
@@ -8139,9 +8139,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsResultSetConcurrency3() 
+  void DatabaseMetaDataTest::testSupportsResultSetConcurrency3()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsResultSetConcurrency(TYPE_SCROLL_INSENSITIVE, CONCUR_READ_ONLY)");
             bool retValue = dbmd->supportsResultSetConcurrency(sql::ResultSet::TYPE_SCROLL_INSENSITIVE,
@@ -8153,8 +8153,8 @@ std::list< String > tmp2;
                 logMsg(
                     "supportsResultSetConcurrency(TYPE_SCROLL_INSENSITIVE, CONCUR_READ_ONLY) is not supported");
             }
-        
-            
+
+
             }
 
     /*
@@ -8185,9 +8185,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsResultSetConcurrency4() 
+  void DatabaseMetaDataTest::testSupportsResultSetConcurrency4()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsResultSetConcurrency(TYPE_SCROLL_INSENSITIVE, CONCUR_UPDATABLE)");
             bool retValue = dbmd->supportsResultSetConcurrency(sql::ResultSet::TYPE_SCROLL_INSENSITIVE,
@@ -8199,8 +8199,8 @@ std::list< String > tmp2;
                 logMsg(
                     "supportsResultSetConcurrency(TYPE_SCROLL_INSENSITIVE, CONCUR_UPDATABLE) is not supported");
             }
-        
-            
+
+
             }
 
     /*
@@ -8231,9 +8231,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsResultSetConcurrency5() 
+  void DatabaseMetaDataTest::testSupportsResultSetConcurrency5()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsResultSetConcurrency(TYPE_SCROLL_SENSITIVE, CONCUR_READ_ONLY)");
             bool retValue = dbmd->supportsResultSetConcurrency(sql::ResultSet::TYPE_SCROLL_SENSITIVE,
@@ -8245,8 +8245,8 @@ std::list< String > tmp2;
                 logMsg(
                     "supportsResultSetConcurrency(TYPE_SCROLL_SENSITIVE, CONCUR_READ_ONLY) is not supported");
             }
-        
-            
+
+
             }
 
     /*
@@ -8277,9 +8277,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsResultSetConcurrency6() 
+  void DatabaseMetaDataTest::testSupportsResultSetConcurrency6()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsResultSetConcurrency(TYPE_SCROLL_SENSITIVE, CONCUR_UPDATABLE)");
             bool retValue = dbmd->supportsResultSetConcurrency(sql::ResultSet::TYPE_SCROLL_SENSITIVE,
@@ -8291,8 +8291,8 @@ std::list< String > tmp2;
                 logMsg(
                     "supportsResultSetConcurrency(TYPE_SCROLL_SENSITIVE, CONCUR_UPDATABLE) is not supported");
             }
-        
-            
+
+
             }
 
     /*
@@ -8320,9 +8320,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsResultSetType1() 
+  void DatabaseMetaDataTest::testSupportsResultSetType1()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsResultSetType(TYPE_FORWARD_ONLY)");
             bool retValue = dbmd->supportsResultSetType(sql::ResultSet::TYPE_FORWARD_ONLY);
@@ -8331,8 +8331,8 @@ std::list< String > tmp2;
             } else {
                 logMsg("TYPE_FORWARD_ONLY ResultSetType is not supported");
             }
-        
-            
+
+
             }
 
     /*
@@ -8360,9 +8360,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsResultSetType2() 
+  void DatabaseMetaDataTest::testSupportsResultSetType2()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsResultSetType(TYPE_SCROLL_INSENSITIVE)");
             bool retValue = dbmd->supportsResultSetType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
@@ -8371,8 +8371,8 @@ std::list< String > tmp2;
             } else {
                 logMsg("TYPE_SCROLL_INSENSITIVE ResultSetType is not supported");
             }
-        
-            
+
+
             }
 
     /*
@@ -8400,9 +8400,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsResultSetType3() 
+  void DatabaseMetaDataTest::testSupportsResultSetType3()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsResultSetType(TYPE_SCROLL_SENSITIVE)");
             bool retValue = dbmd->supportsResultSetType(sql::ResultSet::TYPE_SCROLL_SENSITIVE);
@@ -8411,8 +8411,8 @@ std::list< String > tmp2;
             } else {
                 logMsg("TYPE_SCROLL_SENSITIVE ResultSetType is not supported");
             }
-        
-            
+
+
             }
 
     /*
@@ -8438,9 +8438,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsSchemasInDataManipulation() 
+  void DatabaseMetaDataTest::testSupportsSchemasInDataManipulation()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsSchemasInDataManipulation");
             bool retValue = dbmd->supportsSchemasInDataManipulation();
             if (retValue) {
@@ -8473,9 +8473,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsSchemasInIndexDefinitions() 
+  void DatabaseMetaDataTest::testSupportsSchemasInIndexDefinitions()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsSchemasInIndexDefinitions");
             bool retValue = dbmd->supportsSchemasInIndexDefinitions();
             if (retValue) {
@@ -8508,7 +8508,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsSchemasInPrivilegeDefinitions() 
+  void DatabaseMetaDataTest::testSupportsSchemasInPrivilegeDefinitions()
   {  logMsg(
                 "Calling DatabaseMetaData.supportsSchemasInPrivilegeDefinitions");
             bool retValue = dbmd->supportsSchemasInPrivilegeDefinitions();
@@ -8543,9 +8543,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsSchemasInProcedureCalls() 
+  void DatabaseMetaDataTest::testSupportsSchemasInProcedureCalls()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsSchemasInProcedureCalls");
             bool retValue = dbmd->supportsSchemasInProcedureCalls();
             if (retValue) {
@@ -8577,9 +8577,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsSchemasInTableDefinitions() 
+  void DatabaseMetaDataTest::testSupportsSchemasInTableDefinitions()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsSchemasInTableDefinitions");
             bool retValue = dbmd->supportsSchemasInTableDefinitions();
             if (retValue) {
@@ -8611,9 +8611,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsSelectForUpdate() 
+  void DatabaseMetaDataTest::testSupportsSelectForUpdate()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsSelectForUpdate");
             bool retValue = dbmd->supportsSelectForUpdate();
             if (retValue) {
@@ -8647,10 +8647,10 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsStoredProcedures() 
+  void DatabaseMetaDataTest::testSupportsStoredProcedures()
   {
         if (hasSps) {
-            
+
                 logMsg("Calling supportsStoredProcedures on DatabaseMetaData");
                 bool retValue = dbmd->supportsStoredProcedures();
                 if (retValue) {
@@ -8685,9 +8685,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsSubqueriesInComparisons() 
+  void DatabaseMetaDataTest::testSupportsSubqueriesInComparisons()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsSubqueriesInComparisons");
             bool retValue = dbmd->supportsSubqueriesInComparisons();
             if (retValue) {
@@ -8720,9 +8720,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsSubqueriesInExists() 
+  void DatabaseMetaDataTest::testSupportsSubqueriesInExists()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsSubqueriesInExists");
             bool retValue = dbmd->supportsSubqueriesInExists();
             if (retValue) {
@@ -8755,9 +8755,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsSubqueriesInIns() 
+  void DatabaseMetaDataTest::testSupportsSubqueriesInIns()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsSubqueriesInIns");
             bool retValue = dbmd->supportsSubqueriesInIns();
             if (retValue) {
@@ -8790,7 +8790,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsSubqueriesInQuantifieds() 
+  void DatabaseMetaDataTest::testSupportsSubqueriesInQuantifieds()
   {
     logMsg("Calling DatabaseMetaData.supportsSubqueriesInQuantifieds");
     bool retValue = dbmd->supportsSubqueriesInQuantifieds();
@@ -8829,9 +8829,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsTableCorrelationNames() 
+  void DatabaseMetaDataTest::testSupportsTableCorrelationNames()
   {
-        
+
             logMsg("Calling supportsTableCorrelationNames on DatabaseMetaData");
             bool retValue = dbmd->supportsTableCorrelationNames();
             if (retValue) {
@@ -8868,7 +8868,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsTransactionIsolationLevel1() 
+  void DatabaseMetaDataTest::testSupportsTransactionIsolationLevel1()
   {  logMsg(
                 "Calling DatabaseMetaData.supportsTransactionIsolationLevel(sql::TRANSACTION_NONE)");
             bool retValue = dbmd->supportsTransactionIsolationLevel(sql::TRANSACTION_NONE);
@@ -8879,8 +8879,8 @@ std::list< String > tmp2;
                 logMsg(
                     "supportsTransactionIsolationLevel(sql::TRANSACTION_NONE) is not supported");
             }
-        
-            
+
+
             }
 
     /*
@@ -8911,7 +8911,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsTransactionIsolationLevel2() 
+  void DatabaseMetaDataTest::testSupportsTransactionIsolationLevel2()
   {  logMsg(
                 "Calling DatabaseMetaData.supportsTransactionIsolationLevel(sql::TRANSACTION_READ_COMMITTED)");
             bool retValue = dbmd->supportsTransactionIsolationLevel(sql::TRANSACTION_READ_COMMITTED);
@@ -8954,9 +8954,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsTransactionIsolationLevel3() 
+  void DatabaseMetaDataTest::testSupportsTransactionIsolationLevel3()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsTransactionIsolationLevel(sql::TRANSACTION_READ_UNCOMMITTED)");
             bool retValue = dbmd->supportsTransactionIsolationLevel(sql::TRANSACTION_READ_UNCOMMITTED);
@@ -8967,8 +8967,8 @@ std::list< String > tmp2;
                 logMsg(
                     "supportsTransactionIsolationLevel(sql::TRANSACTION_READ_UNCOMMITTED ) is not supported");
             }
-        
-            
+
+
             }
 
     /*
@@ -8999,9 +8999,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsTransactionIsolationLevel4() 
+  void DatabaseMetaDataTest::testSupportsTransactionIsolationLevel4()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsTransactionIsolationLevel(sql::TRANSACTION_REPEATABLE_READ)");
             bool retValue = dbmd->supportsTransactionIsolationLevel(sql::TRANSACTION_REPEATABLE_READ);
@@ -9012,8 +9012,8 @@ std::list< String > tmp2;
                 logMsg(
                     "supportsTransactionIsolationLevel(sql::TRANSACTION_REPEATABLE_READ) is not supported");
             }
-        
-            
+
+
             }
 
     /*
@@ -9044,9 +9044,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsTransactionIsolationLevel5() 
+  void DatabaseMetaDataTest::testSupportsTransactionIsolationLevel5()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.supportsTransactionIsolationLevel(sql::TRANSACTION_SERIALIZABLE)");
             bool retValue = dbmd->supportsTransactionIsolationLevel(sql::TRANSACTION_SERIALIZABLE);
@@ -9057,8 +9057,8 @@ std::list< String > tmp2;
                 logMsg(
                     "supportsTransactionIsolationLevel(sql::TRANSACTION_SERIALIZABLE) is not supported");
             }
-        
-            
+
+
             }
 
     /*
@@ -9084,9 +9084,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsTransactions() 
+  void DatabaseMetaDataTest::testSupportsTransactions()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsTransactions");
             bool retValue = dbmd->supportsTransactions();
             if (retValue) {
@@ -9094,8 +9094,8 @@ std::list< String > tmp2;
             } else {
                 logMsg("supportsTransactions is not supported");
             }
-        
-            
+
+
             }
 
     /*
@@ -9121,9 +9121,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsUnion() 
+  void DatabaseMetaDataTest::testSupportsUnion()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsUnion");
             bool retValue = dbmd->supportsUnion();
             if (retValue) {
@@ -9155,9 +9155,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testSupportsUnionAll() 
+  void DatabaseMetaDataTest::testSupportsUnionAll()
   {
-        
+
             logMsg("Calling DatabaseMetaData.supportsUnionAll");
             bool retValue = dbmd->supportsUnionAll();
             if (retValue) {
@@ -9194,9 +9194,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testUpdatesAreDetected1() 
+  void DatabaseMetaDataTest::testUpdatesAreDetected1()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.updatesAreDetected(TYPE_FORWARD_ONLY)");
             bool retValue = dbmd->updatesAreDetected(sql::ResultSet::TYPE_FORWARD_ONLY);
@@ -9207,8 +9207,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Visible row update cannot be detected for TYPE_FORWARD_ONLY");
             }
-        
-            
+
+
             }
 
     /*
@@ -9239,9 +9239,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testUpdatesAreDetected2() 
+  void DatabaseMetaDataTest::testUpdatesAreDetected2()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.updatesAreDetected(TYPE_SCROLL_INSENSITIVE)");
             bool retValue = dbmd->updatesAreDetected(sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
@@ -9252,8 +9252,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Visible row update cannot be detected for TYPE_SCROLL_INSENSITIVE");
             }
-        
-            
+
+
             }
 
     /*
@@ -9284,9 +9284,9 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testUpdatesAreDetected3() 
+  void DatabaseMetaDataTest::testUpdatesAreDetected3()
   {
-        
+
             logMsg(
                 "Calling DatabaseMetaData.updatesAreDetected(TYPE_SCROLL_SENSITIVE)");
             bool retValue = dbmd->updatesAreDetected(sql::ResultSet::TYPE_SCROLL_SENSITIVE);
@@ -9297,8 +9297,8 @@ std::list< String > tmp2;
                 logMsg(
                     "Visible row update cannot be detected for TYPE_SCROLL_SENSITIVE");
             }
-        
-            
+
+
             }
 
     /*
@@ -9325,7 +9325,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::testUsesLocalFilePerTable() 
+  void DatabaseMetaDataTest::testUsesLocalFilePerTable()
   {
     logMsg("Calling usesLocalFilePerTable on DatabaseMetaData");
     bool retValue = dbmd->usesLocalFilePerTable();
@@ -9343,7 +9343,7 @@ std::list< String > tmp2;
      */
 
 /* throws Exception */
-  void DatabaseMetaDataTest::setUp() 
+  void DatabaseMetaDataTest::setUp()
   {
         super::setUp();
 
@@ -9375,7 +9375,7 @@ std::list< String > tmp2;
     /* A private method to compare the Column Names & No of Columns Specific to the test */
 
 /* throws SQLException */
-  bool DatabaseMetaDataTest::columnCompare(List & sColumnNames, ResultSet & rset) 
+  bool DatabaseMetaDataTest::columnCompare(List & sColumnNames, ResultSet & rset)
   {
     bool  test_status=        false;
     bool  statusColumnCount=  true;

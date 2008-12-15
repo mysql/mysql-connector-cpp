@@ -1,4 +1,4 @@
-/* Copyright (C) 2007 - 2008 MySQL AB, 2008 Sun Microsystems, Inc.
+/* Copyright 2008 Sun Microsystems, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ namespace testsuite
     }
   };
 
-  enum ParameterOrder { poFirst=-1, poUrl, poUser, poPasswd, poSchema, poLast}; 
+  enum ParameterOrder { poFirst=-1, poUrl, poUser, poPasswd, poSchema, poLast};
   struct StartOptions
   {
     bool          verbose;

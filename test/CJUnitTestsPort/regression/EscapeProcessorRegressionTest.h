@@ -2,12 +2,12 @@
  Copyright (C) 2005-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
- it under the terms of version 2 of the GNU General Public License as 
+ it under the terms of version 2 of the GNU General Public License as
  published by the Free Software Foundation.
 
- There are special exceptions to the terms and conditions of the GPL 
- as it is applied to this software. View the full text of the 
- exception in file EXCEPTIONS-CONNECTOR-J in the directory of this 
+ There are special exceptions to the terms and conditions of the GPL
+ as it is applied to this software. View the full text of the
+ exception in file EXCEPTIONS-CONNECTOR-J in the directory of this
  software distribution.
 
  This program is distributed in the hope that it will be useful,
@@ -25,9 +25,9 @@
 
 /**
  * Tests regressions w/ the Escape Processor code.
- * 
+ *
  * @version $Id:$
- * 
+ *
  */
 
 namespace testsuite
@@ -53,7 +53,7 @@ namespace testsuite
       /**
       * Tests fix for BUG#11797 - Escape tokenizer doesn't respect stacked single
       * quotes for escapes.
-      * 
+      *
       * @throws Exception
       *             if the test fails.
       */
@@ -64,7 +64,7 @@ namespace testsuite
       /**
       * Tests fix for BUG#11498 - Escape processor didn't honor strings
       * demarcated with double quotes.
-      * 
+      *
       * @throws Exception
       *             if the test fails.
       */
@@ -75,7 +75,7 @@ namespace testsuite
       /**
       * Tests fix for BUG#14909 - escape processor replaces quote character in
       * quoted string with string delimiter.
-      * 
+      *
       * @throws Exception
       */
 
@@ -84,7 +84,7 @@ namespace testsuite
       void testBug14909() ;
       /**
       * Tests fix for BUG#25399 - EscapeProcessor gets confused by multiple backslashes
-      * 
+      *
       * @throws Exception if the test fails.
       */
 

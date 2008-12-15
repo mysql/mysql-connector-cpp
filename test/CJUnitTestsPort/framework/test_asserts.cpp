@@ -1,4 +1,4 @@
-/* Copyright (C) 2007 - 2008 MySQL AB, 2008 Sun Microsystems, Inc.
+/* Copyright 2008 Sun Microsystems, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -70,7 +70,7 @@ bool isNaN( double smth )
 
 
 double scaledEpsilon( const double & expected, const double & fuzzyEpsilon )
-{ 
+{
   const double aa = fabs( expected ) + 1;
 
   return ( true ) ? fuzzyEpsilon : fuzzyEpsilon * aa;
@@ -86,7 +86,7 @@ bool fuzzyEquals( double expected, double result, double fuzzyEpsilon )
 
 void assertEquals( const double & expected, const double & result,
                    const char* file, int line )
-{	
+{
   const double fuzzyEpsilon = 0.000001;
 
   assertEqualsEpsilon( expected, result, fuzzyEpsilon, file, line );
