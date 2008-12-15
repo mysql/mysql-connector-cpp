@@ -1037,4 +1037,3 @@ namespace testsuite
     _stmt->close();
   }
 }
-

@@ -55,8 +55,6 @@ namespace testsuite
   typedef std::auto_ptr<sql::ResultSetMetaData> ResultSetMetaData;
   typedef std::auto_ptr<sql::DatabaseMetaData>  DatabaseMetaData;
 
-//  typedef String                                Object;
-
   class value_object
   {
   private:
@@ -436,4 +434,3 @@ public:
   : BaseTestFixture( #theFixtureClass )
 
 #endif // _BASE_TEST_FIXTURE_
-
