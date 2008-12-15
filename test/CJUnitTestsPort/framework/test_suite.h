@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ */
 
 #ifndef __TESTSUITE_H_
 #define __TESTSUITE_H_
@@ -36,28 +36,34 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 namespace testsuite
 {
-  class TestSuite : public Test
+
+class TestSuite : public Test
+{
+private:
+
+  std::vector<Test*> testCases;
+  String suiteName;
+
+public:
+  TestSuite(const String& name="Unnamed Test Suite");
+  ~TestSuite();
+
+  virtual void setUp()
   {
-  private:
+  }
 
-    std::vector<Test*> testCases;
-    String             suiteName;
+  virtual void tearDown()
+  {
+  }
 
-  public:
-    TestSuite ( const String& name= "Unnamed Test Suite" );
-    ~TestSuite();
+  const String & name() const;
 
-    virtual void      setUp     () {}
-    virtual void      tearDown  () {}
+  virtual void RegisterTestCase(Test * test);
 
-    const   String &  name() const;
+  void runTest();
+};
 
-    virtual void      RegisterTestCase( Test * test );
-
-    void      runTest();
-  };
-
-}   // namespace testsuite
+} // namespace testsuite
 
 #endif  // __TESTSUITE_H_
 

@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ */
 
 
 #ifndef __TESTFACTORY_H_
@@ -30,32 +30,32 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 namespace testsuite
 {
 
-typedef Test* (*TestSuiteCreator)( const String::value_type * name );
+typedef Test* (*TestSuiteCreator)(const String::value_type * name);
 
 template <class SuiteClass>
-Test * CreateTestCase( const String::value_type * name )
+Test * CreateTestCase(const String::value_type * name)
 {
-  return new SuiteClass( name );
+  return new SuiteClass(name);
 }
 
 class TestSuiteFactory : public policies::Singleton<TestSuiteFactory>
 {
 private:
   // should be private/protected
-  CCPP_SINGLETON( TestSuiteFactory );
+  CCPP_SINGLETON(TestSuiteFactory);
 
   typedef std::map<const String::value_type *, TestSuiteCreator> TestSuiteCreators;
 
-	TestSuiteCreators testSuites;
+  TestSuiteCreators testSuites;
 
 public:
 
-	bool        runTests();
+  bool runTests();
 
-  static int RegisterTestSuite( const String::value_type * name, TestSuiteCreator creator);
+  static int RegisterTestSuite(const String::value_type * name, TestSuiteCreator creator);
 };
 
-}   // namespace testsuite
+} // namespace testsuite
 
 #endif  // __TESTFACTORY_H_
 

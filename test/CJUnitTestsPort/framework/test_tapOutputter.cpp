@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ */
 
 #include "test_tapOutputter.h"
 #include <stdio.h>
@@ -25,111 +25,111 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 namespace testsuite
 {
-  void TAP::Header( const String::value_type * text )
+
+void TAP::Header(const String::value_type * text)
+{
+}
+
+void TAP::SuiteHeader(const String & name
+                      , unsigned first
+                      , unsigned testsInSuite)
+{
+  std::cout << std::endl << "# " << name << std::endl;
+  std::cout << first << ".."
+          << first + testsInSuite - 1 << std::endl;
+}
+
+void TAP::TestPassed(unsigned ordNum
+                     , const String & name
+                     , const String::value_type * comment)
+{
+  std::cout << "ok " << ordNum << " - " << name;
+
+  if (comment != NULL)
   {
+    std::cout << " # " << comment;
   }
 
-  void TAP::SuiteHeader   ( const String & name
-                          , unsigned       first
-                          , unsigned       testsInSuite )
+  std::cout << std::endl;
+}
+
+void TAP::TestFailed(unsigned ordNum
+                     , const String & name
+                     , const String::value_type * comment)
+{
+  std::cout << "not ok " << ordNum
+          << " - " << name;
+
+  if (comment != NULL)
   {
-    std::cout << std::endl << "# " << name << std::endl;
-    std::cout << first << ".."
-      << first + testsInSuite - 1 << std::endl;
+    std::cout << " # " << comment;
   }
 
-  void TAP::TestPassed( unsigned                    ordNum
-                      , const String &              name
-                      , const String::value_type *  comment )
-  {
-    std::cout << "ok " << ordNum << " - " << name;
+  std::cout << std::endl;
+}
 
-    if ( comment != NULL )
+void TAP::Comment(const String & comment)
+{
+  std::cout << " # " << comment << std::endl;
+}
+
+void TAP::Summary(unsigned testsRun
+                  , unsigned testsFailed
+                  , std::vector<int> failedTestsNum)
+{
+  char percentage[7];
+
+  if (testsRun)
+    sprintf(percentage, "%3.2f"
+            , static_cast<float> (testsRun - testsFailed)*100 / testsRun);
+  else
+    strcpy(percentage, "0.00");
+
+  if (testsFailed > 0)
+  {
+    //TODO: move is string utils as "join" or smth
+    std::vector<int>::const_iterator cit=failedTestsNum.begin();
+
+    std::cout << std::endl << "FAILED tests " << *cit;
+
+    while (++cit != failedTestsNum.end())
     {
-      std::cout << " # " << comment;
+      std::cout << ", " << *cit;
     }
-
-    std::cout << std::endl;
   }
 
-  void TAP::TestFailed( unsigned                    ordNum
-                      , const String &              name
-                      , const String::value_type *  comment )
-  {
-    std::cout << "not ok " << ordNum
-      << " - " << name;
+  std::cout << std::endl << "Failed " << testsFailed << "/" << testsRun
+          << ", " << percentage << "% okay" << std::endl;
 
-    if ( comment != NULL )
-    {
-      std::cout << " # " << comment;
-    }
+  std::cout;
+}
 
-    std::cout << std::endl;
-  }
+void TAP::SuiteSummary(const String & suiteName
+                       , unsigned testsRun
+                       , unsigned testsFailed)
+{
 
-  void TAP::Comment( const String & comment )
-  {
-    std::cout << " # " << comment << std::endl;
-  }
+}
 
-  void TAP::Summary( unsigned          testsRun
-                     , unsigned          testsFailed
-                     , std::vector<int>  failedTestsNum )
-  {
-    char percentage[7];
+void TAP::Assert(const String & expected, const String & result
+                 , const String & file, int line)
+{
+  std::ostringstream tmp("Assertion Failed in file ");
 
-    if ( testsRun )
-      sprintf( percentage, "%3.2f"
-      , static_cast<float>( testsRun - testsFailed )*100 / testsRun );
-    else
-      strcpy(percentage, "0.00");
+  tmp << file << " Line " << line;
 
-    if ( testsFailed > 0 )
-    {
-      //TODO: move is string utils as "join" or smth
-      std::vector<int>::const_iterator cit = failedTestsNum.begin();
+  Comment(tmp.str());
 
-      std::cout	<< std::endl << "FAILED tests " << *cit;
+  tmp.flush();
+  tmp << "Expected: " << expected;
 
-      while ( ++cit != failedTestsNum.end() )
-      {
-        std::cout << ", " << *cit;
-      }
-    }
+  Comment(tmp.str());
 
-    std::cout  << std::endl << "Failed " << testsFailed << "/" << testsRun
-      << ", " << percentage << "% okay" << std::endl;
+  tmp.flush();
+  tmp << "Received: " << result;
 
-    std::cout ;
-  }
-
-  void TAP::SuiteSummary( const String &  suiteName
-                        , unsigned        testsRun
-                        , unsigned        testsFailed )
-  {
-
-  }
-
-
-  void TAP::Assert( const String & expected, const String & result
-                  , const String & file,  int line )
-  {
-    std::ostringstream tmp( "Assertion Failed in file " );
-
-    tmp << file << " Line " << line;
-
-    Comment( tmp.str() );
-
-    tmp.flush();
-    tmp << "Expected: " << expected;
-
-    Comment( tmp.str() );
-
-    tmp.flush();
-    tmp << "Received: " << result;
-
-    Comment( tmp.str() );
-  }
+  Comment(tmp.str());
+}
 
 }
 

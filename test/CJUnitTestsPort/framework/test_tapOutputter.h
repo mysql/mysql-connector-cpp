@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ */
 
 #ifndef __TEST_TAPOUTPUTTER_H_
 #define __TEST_TAPOUTPUTTER_H_
@@ -27,42 +27,43 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 namespace testsuite
 {
 
-  class TAP : public TestOutputter
+class TAP : public TestOutputter
+{
+public:
+
+  virtual ~TAP()
   {
+  }
 
-  public:
+  virtual void Header(const String::value_type * text);
 
-    virtual ~TAP(){}
+  virtual void SuiteHeader(const String & name
+                           , unsigned first
+                           , unsigned testsInSuite);
 
-    virtual void Header         ( const String::value_type * text );
+  virtual void TestPassed(unsigned ordNum
+                          , const String & name
+                          , const String::value_type * comment);
 
-    virtual void SuiteHeader    ( const String & name
-                               , unsigned       first
-                               , unsigned       testsInSuite );
+  virtual void TestFailed(unsigned ordNum
+                          , const String & name
+                          , const String::value_type * comment);
 
-    virtual void TestPassed     ( unsigned                    ordNum
-                                , const String &              name
-                                , const String::value_type *  comment );
+  virtual void Comment(const String & comment);
 
-    virtual void TestFailed     ( unsigned                    ordNum
-                                , const String &              name
-                                , const String::value_type *  comment );
+  virtual void Summary(unsigned testsRun
+                       , unsigned testsFailed
+                       , std::vector<int> failedTestsNum);
 
-    virtual void Comment        ( const String & comment );
+  virtual void SuiteSummary(const String & suiteName
+                            , unsigned testsRun
+                            , unsigned testsFailed);
 
-    virtual void Summary        ( unsigned          testsRun
-                                , unsigned          testsFailed
-                                , std::vector<int>  failedTestsNum );
-
-    virtual void SuiteSummary   ( const String &  suiteName
-                                , unsigned        testsRun
-                                , unsigned        testsFailed );
-
-    virtual void Assert         ( const  String &  expected
-                                , const  String &  result
-                                , const  String &  file
-                                ,        int       line );
-  };
+  virtual void Assert(const String & expected
+                      , const String & result
+                      , const String & file
+                      , int line);
+};
 }
 
 #endif

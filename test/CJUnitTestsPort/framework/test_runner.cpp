@@ -17,32 +17,32 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ */
 
 #include "test_runner.h"
 #include "test_factory.h"
 
 namespace testsuite
 {
-  TestsRunner::TestsRunner()
-    : startOptions  ( NULL )
-  {
 
-  }
+TestsRunner::TestsRunner()
+: startOptions(NULL)
+{
 
-  bool TestsRunner::runTests()
-  {
-    return TestSuiteFactory::theInstance().runTests();
-  }
+}
 
+bool TestsRunner::runTests()
+{
+  return TestSuiteFactory::theInstance().runTests();
+}
 
-  void TestsRunner::setStartOptions( StartOptions * options )
-  {
-    startOptions = options;
-  }
+void TestsRunner::setStartOptions(StartOptions * options)
+{
+  startOptions=options;
+}
 
-  StartOptions * TestsRunner::getStartOptions() const
-  {
-    return startOptions;
-  }
+StartOptions * TestsRunner::getStartOptions() const
+{
+  return startOptions;
+}
 }

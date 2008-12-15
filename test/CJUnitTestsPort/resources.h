@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ */
 
 #ifndef _TESTSUITE_RESOURCES_H_
 #define _TESTSUITE_RESOURCES_H_
@@ -25,35 +25,40 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 namespace testsuite
 {
-  namespace resources
+namespace resources
+{
+
+class CharsetMapping
+{
+public:
+
+  typedef std::map<String, unsigned int> Map;
+  typedef Map::const_iterator cit;
+
+private:
+
+  /* Hiding constructor */
+  CharsetMapping()
   {
-    class CharsetMapping
-    {
-    public:
-
-      typedef std::map<String, unsigned int>  Map;
-      typedef Map::const_iterator             cit;
-
-    private:
-      /* Hiding constructor */
-                                        CharsetMapping      ()  { Init(); }
-
-      Map                               STATIC_CHARSET_TO_NUM_BYTES_MAP;
-
-      void                              Init                ();
-
-    public:
-
-      static const CharsetMapping &     Instance            ();
-
-      const Map &                       GetMap              () const
-      {
-        return STATIC_CHARSET_TO_NUM_BYTES_MAP;
-      }
-    };
-
-    int LoadProperties( const String & fileName, Properties &props
-                      , const char * _possibleLocations[]= NULL );
+    Init();
   }
+
+  Map STATIC_CHARSET_TO_NUM_BYTES_MAP;
+
+  void Init();
+
+public:
+
+  static const CharsetMapping & Instance();
+
+  const Map & GetMap() const
+  {
+    return STATIC_CHARSET_TO_NUM_BYTES_MAP;
+  }
+};
+
+int LoadProperties(const String & fileName, Properties &props
+                   , const char * _possibleLocations[]=NULL);
+}
 }
 #endif

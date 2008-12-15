@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ */
 
 
 #ifndef _BASE_TEST_FIXTURE_
@@ -47,382 +47,398 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 namespace testsuite
 {
-  typedef std::auto_ptr<sql::Connection>        Connection;
-  typedef std::auto_ptr<sql::PreparedStatement> PreparedStatement;
-  typedef std::auto_ptr<sql::Statement>         Statement;
-  typedef std::auto_ptr<sql::ResultSet>         ResultSet;
-  typedef sql::Driver                           Driver;
-  typedef std::auto_ptr<sql::ResultSetMetaData> ResultSetMetaData;
-  typedef std::auto_ptr<sql::DatabaseMetaData>  DatabaseMetaData;
+typedef std::auto_ptr<sql::Connection> Connection;
+typedef std::auto_ptr<sql::PreparedStatement> PreparedStatement;
+typedef std::auto_ptr<sql::Statement> Statement;
+typedef std::auto_ptr<sql::ResultSet> ResultSet;
+typedef sql::Driver Driver;
+typedef std::auto_ptr<sql::ResultSetMetaData> ResultSetMetaData;
+typedef std::auto_ptr<sql::DatabaseMetaData> DatabaseMetaData;
 
-  class value_object
+class value_object
+{
+private:
+  String asString;
+  bool wasNull;
+
+public:
+
+  enum value_type
   {
-  private:
-    String    asString;
-    bool      wasNull;
-
-  public:
-    enum      value_type      { vtDouble=0, vtFloat, vtByte, vtLast };
-
-              value_object    ();
-              value_object    ( const sql::ResultSet *, int colNum );
-
-    bool      isNull          () const;
-
-    String    toString        () const  { return asString; }
-    int       intValue        () const;
-    float     floatValue      () const;
-    long long longValue       () const;
-
-    /**
-    Based on correspondent methods implementation in the mysql_resultset
-        class
-    */
-    double    doubleValue     () const  { return floatValue();    }
-    bool      booleanValue    () const  { return intValue() != 0; }
-
-    //Little hack
-    bool      instanceof      ( value_type type );
+    vtDouble=0, vtFloat, vtByte, vtLast
   };
 
-  typedef std::auto_ptr<value_object>         Object;
+  value_object();
+  value_object(const sql::ResultSet *, int colNum);
 
-  value_object * getObject( sql::ResultSet * rs, int colNum );
+  bool isNull() const;
 
-  // TODO: Move everything from TestFixtureCommon to BaseTestFixture
-  struct TestFixtureCommon
+  String toString() const
   {
-                                TestFixtureCommon ();
+    return asString;
+  }
+  int intValue() const;
+  float floatValue() const;
+  long long longValue() const;
 
-                  String        extractVal  ( const String  & sTableName
-                                            , int             count
-                                            , Properties    & sqlProps
-                                            , Connection    & conn);
+  /**
+  Based on correspondent methods implementation in the mysql_resultset
+      class
+   */
+  double doubleValue() const
+  {
+    return floatValue();
+  }
 
-    static        void          logMsg      (String message);
+  bool booleanValue() const
+  {
+    return intValue() != 0;
+  }
 
-                  void          logErr      (String message);
+  //Little hack
+  bool instanceof(value_type type);
+};
 
-    static        String        randomString();
+typedef std::auto_ptr<value_object> Object;
 
-  protected:
+value_object * getObject(sql::ResultSet * rs, int colNum);
 
-                  void          init();
+// TODO: Move everything from TestFixtureCommon to BaseTestFixture
 
-    static const  String        NO_MULTI_HOST_PROPERTY_NAME;
+struct TestFixtureCommon
+{
+  TestFixtureCommon();
 
-                  String        host;
-                  String        port;
-                  String        login;
-                  String        passwd;
-                  String        db;
+  String extractVal(const String & sTableName
+                    , int count
+                    , Properties & sqlProps
+                    , Connection & conn);
 
-    static        int           instanceCount;
+  static void logMsg(String message);
 
-    static        int           propsLoaded;
-    static        Properties    sqlProps;
-    static        Driver        *driver;
-  };
+  void logErr(String message);
+
+  static String randomString();
+
+protected:
+
+  void init();
+
+  static const String NO_MULTI_HOST_PROPERTY_NAME;
+
+  String host;
+  String port;
+  String login;
+  String passwd;
+  String db;
+
+  static int instanceCount;
+
+  static int propsLoaded;
+  static Properties sqlProps;
+  static Driver *driver;
+};
 
 /************************************************************************/
 /*                                                                      */
+
 /************************************************************************/
 
-  class BaseTestFixture :public TestSuite, public TestFixtureCommon
-  {
-    typedef TestSuite super;
+class BaseTestFixture : public TestSuite, public TestFixtureCommon
+{
+  typedef TestSuite super;
 
-    List                createdObjects;
+  List createdObjects;
 
   /** My instance number */
-    int                 myInstanceNumber;
+  int myInstanceNumber;
 
-  protected:
+protected:
 
   /** Connection to server, initialized in setUp() Cleaned up in tearDown(). */
 
-    Connection          conn;
+  Connection conn;
 
   /** The driver to use */
 
-    String              dbClass;
+  String dbClass;
 
   /**
-	 * PreparedStatement to be used in tests, not initialized. Cleaned up in
-	 * tearDown().
-	 */
-    PreparedStatement   pstmt;
+   * PreparedStatement to be used in tests, not initialized. Cleaned up in
+   * tearDown().
+   */
+  PreparedStatement pstmt;
 
   /**
-	 * Statement to be used in tests, initialized in setUp(). Cleaned up in
-	 * tearDown().
-	 */
-    Statement           stmt;
-
-   /**
-	 * ResultSet to be used in tests, not initialized. Cleaned up in tearDown().
-	 */
-    ResultSet           rs;
-
-    bool                hasSps;
-
-/* throws SQLException */
-
-    void createSchemaObject(String objectType, String objectName,
-			String columnsAndOtherStuff) ;
-
-
-/* throws SQLException */
-
-    void createFunction(String functionName, String functionDefn) ;
-
-
-/* throws SQLException */
-
-    void dropFunction(String functionName) ;
-
-
-/* throws SQLException */
-
-    void createProcedure(String procedureName, String procedureDefn) ;
-
-
-/* throws SQLException */
-
-    void dropProcedure(String procedureName) ;
-
-
-/* throws SQLException */
-
-    void createTable(String tableName, String columnsAndOtherStuff) ;
-
-
-/* throws SQLException */
-
-    void dropTable(String tableName) ;
-
-
-/* throws SQLException */
-    void dropSchemaObject(String objectType, String objectName) ;
-
-    sql::Connection * getConnection();
-
-/* throws SQLException */
-    sql::Connection * getAdminConnection() ;
-
-
-/* throws SQLException */
-    sql::Connection * getAdminConnectionWithProps(Properties props) ;
-
-
-/* throws SQLException */
-    sql::Connection * getConnectionWithProps( const String & propsList) ;
-
-
-/* throws SQLException */
-    sql::Connection * getConnectionWithProps(const String & url, const String & propsList) ;
+   * Statement to be used in tests, initialized in setUp(). Cleaned up in
+   * tearDown().
+   */
+  Statement stmt;
 
   /**
-	 * Returns a new connection with the given properties
-	 *
-	 * @param props
-	 *            the properties to use (the URL will come from the standard for
-	 *            this testcase).
-	 *
-	 * @return a new connection using the given properties.
-	 *
-	 * @throws SQLException
-	 *             DOCUMENT ME!
-	 */
+   * ResultSet to be used in tests, not initialized. Cleaned up in tearDown().
+   */
+  ResultSet rs;
 
-/* throws SQLException */
+  bool hasSps;
 
-    sql::Connection * getConnectionWithProps(const Properties & props) ;
+  /* throws SQLException */
+
+  void createSchemaObject(String objectType, String objectName,
+                          String columnsAndOtherStuff);
 
 
-/* throws SQLException */
+  /* throws SQLException */
 
-    sql::Connection * getConnectionWithProps(const String & url, const Properties & props) ;
+  void createFunction(String functionName, String functionDefn);
+
+
+  /* throws SQLException */
+
+  void dropFunction(String functionName);
+
+
+  /* throws SQLException */
+
+  void createProcedure(String procedureName, String procedureDefn);
+
+
+  /* throws SQLException */
+
+  void dropProcedure(String procedureName);
+
+
+  /* throws SQLException */
+
+  void createTable(String tableName, String columnsAndOtherStuff);
+
+
+  /* throws SQLException */
+
+  void dropTable(String tableName);
+
+
+  /* throws SQLException */
+  void dropSchemaObject(String objectType, String objectName);
+
+  sql::Connection * getConnection();
+
+  /* throws SQLException */
+  sql::Connection * getAdminConnection();
+
+
+  /* throws SQLException */
+  sql::Connection * getAdminConnectionWithProps(Properties props);
+
+
+  /* throws SQLException */
+  sql::Connection * getConnectionWithProps(const String & propsList);
+
+
+  /* throws SQLException */
+  sql::Connection * getConnectionWithProps(const String & url, const String & propsList);
+
   /**
-	 * Returns the per-instance counter (for messages when multi-threading
-	 * stress tests)
-	 *
-	 * @return int the instance number
-	 */
+   * Returns a new connection with the given properties
+   *
+   * @param props
+   *            the properties to use (the URL will come from the standard for
+   *            this testcase).
+   *
+   * @return a new connection using the given properties.
+   *
+   * @throws SQLException
+   *             DOCUMENT ME!
+   */
 
-    int getInstanceNumber() ;
+  /* throws SQLException */
+
+  sql::Connection * getConnectionWithProps(const Properties & props);
 
 
-/* throws SQLException */
+  /* throws SQLException */
 
-    String getMysqlVariable(Connection & c, const String & variableName) ;
+  sql::Connection * getConnectionWithProps(const String & url, const Properties & props);
   /**
-	 * Returns the named MySQL variable from the currently connected server.
-	 *
-	 * @param variableName
-	 *            the name of the variable to return
-	 *
-	 * @return the value of the given variable, or NULL if it doesn't exist
-	 *
-	 * @throws SQLException
-	 *             if an error occurs
-	 */
+   * Returns the per-instance counter (for messages when multi-threading
+   * stress tests)
+   *
+   * @return int the instance number
+   */
 
-/* throws SQLException */
+  int getInstanceNumber();
 
-    String getMysqlVariable(const String & variableName) ;
+
+  /* throws SQLException */
+
+  String getMysqlVariable(Connection & c, const String & variableName);
   /**
-	 * Returns the properties that represent the default URL used for
-	 * connections for all testcases.
-	 *
-	 * @return properties parsed from com.mysql.jdbc.testsuite.url
-	 *
-	 * @throws SQLException
-	 *             if parsing fails
-	 */
+   * Returns the named MySQL variable from the currently connected server.
+   *
+   * @param variableName
+   *            the name of the variable to return
+   *
+   * @return the value of the given variable, or NULL if it doesn't exist
+   *
+   * @throws SQLException
+   *             if an error occurs
+   */
 
-/* throws SQLException */
+  /* throws SQLException */
 
-    /*Properties getPropertiesFromTestsuiteUrl() ;*/
-
-
-/* throws SQLException */
-
-    int getRowCount(const String & tableName) ;
-
-
-/* throws SQLException */
-
-    value_object getSingleIndexedValueWithQuery(Connection & c,
-			int columnIndex, const String & query) ;
-
-
-/* throws SQLException */
-
-    value_object getSingleIndexedValueWithQuery(int columnIndex,
-			const String & query) ;
-
-
-/* throws SQLException */
-    value_object getSingleValue(const String & tableName, const String & columnName,
-			const String & whereClause) ;
-
-
-/* throws SQLException */
-    value_object getSingleValueWithQuery(const String & query) ;
-
-    bool isAdminConnectionConfigured() ;
-
-
-    /* throws SQLException */
-
-    bool      isServerRunningOnWindows      () ;
-
-
-    /* throws IOException */
-    /*File newTempBinaryFile(String name, long size) ;*/
-
-
-    bool      runLongTests                  () ;
+  String getMysqlVariable(const String & variableName);
   /**
-	 * Checks whether a certain system property is defined, in order to
-	 * run/not-run certain tests
-	 *
-	 * @param propName
-	 *            the property name to check for
-	 *
-	 * @return true if the property is defined.
-	 */
+   * Returns the properties that represent the default URL used for
+   * connections for all testcases.
+   *
+   * @return properties parsed from com.mysql.jdbc.testsuite.url
+   *
+   * @throws SQLException
+   *             if parsing fails
+   */
 
-    bool      runTestIfSysPropDefined       ( const String & propName) ;
+  /* throws SQLException */
 
-    bool      runMultiHostTests() ;
+  /*Properties getPropertiesFromTestsuiteUrl() ;*/
+
+
+  /* throws SQLException */
+
+  int getRowCount(const String & tableName);
+
+
+  /* throws SQLException */
+
+  value_object getSingleIndexedValueWithQuery(Connection & c,
+                                              int columnIndex, const String & query);
+
+
+  /* throws SQLException */
+
+  value_object getSingleIndexedValueWithQuery(int columnIndex,
+                                              const String & query);
+
+
+  /* throws SQLException */
+  value_object getSingleValue(const String & tableName, const String & columnName,
+                              const String & whereClause);
+
+
+  /* throws SQLException */
+  value_object getSingleValueWithQuery(const String & query);
+
+  bool isAdminConnectionConfigured();
+
+
+  /* throws SQLException */
+
+  bool isServerRunningOnWindows();
+
+
+  /* throws IOException */
+  /*File newTempBinaryFile(String name, long size) ;*/
+
+
+  bool runLongTests();
   /**
-	 * Checks whether the database we're connected to meets the given version
-	 * minimum
-	 *
-	 * @param major
-	 *            the major version to meet
-	 * @param minor
-	 *            the minor version to meet
-	 *
-	 * @return boolean if the major/minor is met
-	 *
-	 * @throws SQLException
-	 *             if an error occurs.
-	 */
+   * Checks whether a certain system property is defined, in order to
+   * run/not-run certain tests
+   *
+   * @param propName
+   *            the property name to check for
+   *
+   * @return true if the property is defined.
+   */
 
-/* throws SQLException */
+  bool runTestIfSysPropDefined(const String & propName);
 
-    bool versionMeetsMinimum(int major, int minor) ;
+  bool runMultiHostTests();
   /**
-	 * Checks whether the database we're connected to meets the given version
-	 * minimum
-	 *
-	 * @param major
-	 *            the major version to meet
-	 * @param minor
-	 *            the minor version to meet
-	 *
-	 * @return boolean if the major/minor is met
-	 *
-	 * @throws SQLException
-	 *             if an error occurs.
-	 */
+   * Checks whether the database we're connected to meets the given version
+   * minimum
+   *
+   * @param major
+   *            the major version to meet
+   * @param minor
+   *            the minor version to meet
+   *
+   * @return boolean if the major/minor is met
+   *
+   * @throws SQLException
+   *             if an error occurs.
+   */
 
-/* throws SQLException */
+  /* throws SQLException */
 
-    bool          versionMeetsMinimum         ( int major
-                                              , int minor
-                                              , int subminor);
+  bool versionMeetsMinimum(int major, int minor);
+  /**
+   * Checks whether the database we're connected to meets the given version
+   * minimum
+   *
+   * @param major
+   *            the major version to meet
+   * @param minor
+   *            the minor version to meet
+   *
+   * @return boolean if the major/minor is met
+   *
+   * @throws SQLException
+   *             if an error occurs.
+   */
 
-    /*bool          isClassAvailable            (String classname);*/
-    void          closeMemberJDBCResources    () ;
+  /* throws SQLException */
 
-    /* See comments in cpp file*/
-    /*void cleanupTempFiles(const File exampleTempFile, const String tempfilePrefix) ;*/
+  bool versionMeetsMinimum(int major
+                           , int minor
+                           , int subminor);
+
+  /*bool          isClassAvailable            (String classname);*/
+  void closeMemberJDBCResources();
+
+  /* See comments in cpp file*/
+  /*void cleanupTempFiles(const File exampleTempFile, const String tempfilePrefix) ;*/
 
 
-/* throws Exception */
+  /* throws Exception */
 
-    void assertResultSetsEqual  (ResultSet & control, ResultSet & test) ;
+  void assertResultSetsEqual(ResultSet & control, ResultSet & test);
 
-    void initTable              ( const String  & sTableName, Properties & sqlProps
-                                , Connection    & conn );
-    void clearTable             ( const String  & sTableName, Connection & conn ) ;
+  void initTable(const String & sTableName, Properties & sqlProps
+                 , Connection & conn);
+  void clearTable(const String & sTableName, Connection & conn);
 
 public:
 
   /**
-	 * Creates a new BaseTestCase object.
-	 *
-	 * @param name
-	 *            The name of the JUnit test case
-	 */
+   * Creates a new BaseTestCase object.
+   *
+   * @param name
+   *            The name of the JUnit test case
+   */
 
-          BaseTestFixture     ( const String & name    ) ;
+  BaseTestFixture(const String & name);
 
-    void  logDebug            ( const String & message ) ;
+  void logDebug(const String & message);
   /**
-	 * Creates resources used by all tests.
-	 *
-	 * @throws Exception
-	 *             if an error occurs.
-	 */
+   * Creates resources used by all tests.
+   *
+   * @throws Exception
+   *             if an error occurs.
+   */
 
-/* throws Exception */
+  /* throws Exception */
 
-    virtual void setUp() ;
+  virtual void setUp();
   /**
-	 * Destroys resources created during the test case.
-	 *
-	 * @throws Exception
-	 *             DOCUMENT ME!
-	 */
+   * Destroys resources created during the test case.
+   *
+   * @throws Exception
+   *             DOCUMENT ME!
+   */
 
-    /* throws Exception */
-    virtual void tearDown() ;
-  };
+  /* throws Exception */
+  virtual void tearDown();
+};
 }
 
 /* Macros to use instead of one of junit assertEquals calls */
