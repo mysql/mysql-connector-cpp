@@ -62,8 +62,6 @@ Beta  1.0.2 - xxxx-xx-xx
   -- getScale()
   to return unsigned int instead of signed int. (Andrey)
 
-- Fixed MySQL_ResultSet to be binary safe. (Andrey)
-
 - Implemented getScale(), getPrecision() and getColumnDisplaySize() for
   MySQL_ResultSetMetaData and MySQL_Prepared_ResultSetMetaData. (Andrey)
 
