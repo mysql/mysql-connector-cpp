@@ -102,5 +102,3 @@ TestSuite::~TestSuite()
     delete (*it);
 }
 }
-
-

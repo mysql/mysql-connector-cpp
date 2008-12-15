@@ -58,4 +58,3 @@ public:
 } // namespace testsuite
 
 #endif  // __TESTFACTORY_H_
-

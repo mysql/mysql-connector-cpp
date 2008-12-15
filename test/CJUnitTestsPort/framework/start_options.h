@@ -102,4 +102,3 @@ struct StartOptions
 
 } // namespace testsuite
 #endif  // __TEST_FRAMEWORK_START_OPTIONS
-

@@ -66,4 +66,3 @@ public:
 } // namespace testsuite
 
 #endif  // __TESTSUITE_H_
-
