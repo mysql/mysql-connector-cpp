@@ -110,7 +110,6 @@ namespace testsuite
   protected:
 
                   void          init();
-    static const  String        ADMIN_CONNECTION_PROPERTY_NAME;
 
     static const  String        NO_MULTI_HOST_PROPERTY_NAME;
 

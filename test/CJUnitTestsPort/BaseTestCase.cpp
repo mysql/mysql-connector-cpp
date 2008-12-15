@@ -32,10 +32,6 @@ namespace testsuite
   static const String defaultLogin  = _T( "root"      );
   static const String defaultPasswd = _T( "root"      );
 
-
-  const String TestFixtureCommon::ADMIN_CONNECTION_PROPERTY_NAME =
-    _T("com.mysql.jdbc.testsuite.admin-url");
-
   int TestFixtureCommon::instanceCount = 1;
 
   Properties TestFixtureCommon::sqlProps;
@@ -69,7 +65,7 @@ namespace testsuite
   String TestFixtureCommon::extractVal( const String  & sTableName
                                       , int             count
                                       , Properties    & sqlProps
-                                      , Connection    & conn) 
+                                      , Connection    & conn)
   {
     String  sKeyName;
     String  insertString;
@@ -200,7 +196,7 @@ namespace testsuite
       switch ( type )
       {
       case vtByte   : return true;
-      case vtFloat  :  
+      case vtFloat  :
       case vtDouble :
         {
           long long llValue = longValue();
@@ -335,8 +331,7 @@ namespace testsuite
 
   sql::Connection * BaseTestFixture::getAdminConnectionWithProps(Properties props)
   {
-    //String adminUrl = System.getProperty(ADMIN_CONNECTION_PROPERTY_NAME);
-    if (driver)//adminUrl != NULL)`
+    if (driver)
     {
       return driver->connect(host, /*port,*/ login, passwd); //adminUrl, props);
     }
@@ -944,7 +939,7 @@ namespace testsuite
 
   void BaseTestFixture::initTable( const String  & sTableName
     , Properties    & _sqlProps
-    , Connection    & _conn) 
+    , Connection    & _conn)
   {
     String    execString;
     String    sKeyName;
@@ -1025,7 +1020,7 @@ namespace testsuite
 
 
   void BaseTestFixture::clearTable(const String & sTableName
-    , Connection & _conn) 
+    , Connection & _conn)
   {
     logMsg("dropTab");
 
