@@ -114,12 +114,7 @@ IF(WIN32)
 		)
 ENDIF(WIN32)
 
-#	simple/ResultSetTest.cpp
-#	simple/ResultSetTest.h
-
-
 ADD_EXECUTABLE(CJUnitTestsPort ${jdbctests_sources})
 TARGET_LINK_LIBRARIES(CJUnitTestsPort ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
-#
 MESSAGE(STATUS "Configuring C/J junit tests port")
