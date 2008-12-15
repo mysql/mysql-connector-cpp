@@ -3425,65 +3425,65 @@ std::list< String > tmp2;
     String tmp("%");
     std::list<int> tmp2;
 
-            ResultSet oRet_ResultSet(dbmd->getUDTs(sCatalogName, sSchemaName, tmp, tmp2));
-            ResultSetMetaData rsmd( oRet_ResultSet->getMetaData() );
+    ResultSet oRet_ResultSet(dbmd->getUDTs(sCatalogName, sSchemaName, tmp, tmp2));
+    ResultSetMetaData rsmd( oRet_ResultSet->getMetaData() );
 
-            int iCount = rsmd->getColumnCount();
+    int iCount = rsmd->getColumnCount();
 
-            TestsListener::theInstance().messagesLog()
-              << "Minimum Column Count is:" << iColumnNamesLength << std::endl;
+    TestsListener::theInstance().messagesLog()
+      << "Minimum Column Count is:" << iColumnNamesLength << std::endl;
 
-            if (iColumnNamesLength > iCount)
-            {
-                statusColumnCount = false;
-                logMsg("Different number of columns");
-            }
-            else if (iColumnNamesLength < iCount)
-            {
-                iCount = iColumnNamesLength;
-                statusColumnCount = true;
-            }
-            else
-            {
-                statusColumnCount = true;
-            }
+    if (iColumnNamesLength > iCount)
+    {
+        statusColumnCount = false;
+        logMsg("Different number of columns");
+    }
+    else if (iColumnNamesLength < iCount)
+    {
+        iCount = iColumnNamesLength;
+        statusColumnCount = true;
+    }
+    else
+    {
+        statusColumnCount = true;
+    }
 
-            logMsg("Comparing Column Names...");
+    logMsg("Comparing Column Names...");
 
-            while (iColumnNamesLength > 0)
-            {
-                if ( ciString( sColumnNames[iColumnNamesLength - 1].c_str() )
-                  == rsmd->getColumnName(iCount).c_str() )
-                {
-                    statusColumnMatch = true;
-                }
-                else
-                {
-                    statusColumnMatch = false;
-                    logMsg("Different columns, dumping expected and returned");
-                    logMsg(sColumnNames[iColumnNamesLength - 1]);
-                    logMsg(rsmd->getColumnName(iCount));
-                    break;
-                }
-                iCount--;
-                iColumnNamesLength--;
-            }
+    while (iColumnNamesLength > 0)
+    {
+        if ( ciString( sColumnNames[iColumnNamesLength - 1].c_str() )
+          == rsmd->getColumnName(iCount).c_str() )
+        {
+            statusColumnMatch = true;
+        }
+        else
+        {
+            statusColumnMatch = false;
+            logMsg("Different columns, dumping expected and returned");
+            logMsg(sColumnNames[iColumnNamesLength - 1]);
+            logMsg(rsmd->getColumnName(iCount));
+            break;
+        }
 
-            if ((statusColumnMatch == false) && (statusColumnCount == true)) {
-                logMsg("Column names or order wrong.");
-                FAIL("Call to getUDTs Failed!");
-            }
+        --iCount;
+        --iColumnNamesLength;
+    }
 
-            while (oRet_ResultSet->next())
-                sRetStr += (oRet_ResultSet->getString(3) + ",");
-            if (sRetStr == "") {
-                logMsg("getUDTs did not return any user defined types");
-            } else {
-                logMsg("The type names returned Are : "
-                    + sRetStr.substr(0, sRetStr.length() - 1));
-            }
+    if ((statusColumnMatch == false) && (statusColumnCount == true)) {
+        logMsg("Column names or order wrong.");
+        FAIL("Call to getUDTs Failed!");
+    }
 
+    while (oRet_ResultSet->next())
+        sRetStr += (oRet_ResultSet->getString(3) + ",");
 
+    if (sRetStr == "") {
+        logMsg("getUDTs did not return any user defined types");
+    } else {
+        logMsg("The type names returned Are : "
+            + sRetStr.substr(0, sRetStr.length() - 1));
+    }
 }
 
     /*
@@ -3512,14 +3512,19 @@ std::list< String > tmp2;
 /* throws Exception */
   void DatabaseMetaDataTest::testGetURL()
   {
+    logMsg("Calling getURL on DatabaseMetaData");
 
-            logMsg("Calling getURL on DatabaseMetaData");
-            String sRetValue = dbmd->getURL();
-            if (sRetValue.empty()) {
-                logMsg("getURL method return a NULL value ");
-            } else {
-                logMsg(String( "getURL method returns:  " ) + sRetValue);
-            }  }
+    String sRetValue = dbmd->getURL();
+
+    if (sRetValue.empty())
+    {
+        logMsg("getURL method return a NULL value ");
+    }
+    else
+    {
+        logMsg(String( "getURL method returns:  " ) + sRetValue);
+    }
+  }
 
     /*
      * @testName:         testGetUserName

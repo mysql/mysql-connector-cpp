@@ -84,6 +84,10 @@ void TestSuite::runTest()
         << (*it)->name() << ". Message: " << e.what()
         << std::endl;
     }
+    catch ( TestFailedException &)
+    {
+      // Thrown by fail. Just used to stop test execution
+    }
     catch (...)
     {
       TestsListener::theInstance().testHasThrown();
