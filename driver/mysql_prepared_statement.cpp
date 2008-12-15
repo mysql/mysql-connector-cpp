@@ -43,38 +43,77 @@ namespace sql
 namespace mysql
 {
 
-/*
-  Plug only relevant parts of Zend and main/streams and statically build them.
-  Remove the ZEND MM, and put own implementation, which is just malloc.
-*/
 
-/* {{{ get_new_param_bind() -I- */
-static MYSQL_BIND *
-get_new_param_bind(int param_count)
+class MySQL_ParamBind
 {
-	if (!param_count) {
-		return NULL;
-	}
-	MYSQL_BIND * bind = (MYSQL_BIND *) calloc(param_count, sizeof(MYSQL_BIND));
+	MYSQL_BIND * bind;
+	bool 		* value_set;
+	unsigned int param_count;
 
-	return bind;
-}
-/* }}} */
+public:
+	MySQL_ParamBind(unsigned int paramCount)
+	{
+		if (!paramCount) {
+			bind = NULL;
+			value_set = NULL;
+		} else {
+			bind = (MYSQL_BIND *) calloc(paramCount, sizeof(MYSQL_BIND));
+			value_set = new bool[paramCount];
+			for (unsigned int i = 0; i < paramCount; i++) {
+				bind[i].is_null_value = 1;
+				value_set[i] = false;
+			}
+		}
+		param_count = paramCount;
+	}
+
+	virtual ~MySQL_ParamBind()
+	{
+		free(bind);
+		delete [] value_set;
+	}
+	
+	void set(unsigned int position)
+	{
+		value_set[position] = true;
+	}
+
+	bool isAllSet()
+	{
+		for (unsigned int i = 0; i < param_count; i++) {
+			if (!value_set[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	void clearParameters()
+	{
+		for (unsigned int i = 0; i < param_count; i++) {
+			delete (char*) bind[i].length;
+			bind[i].length = NULL;
+			delete[] (char*) bind[i].buffer;
+			bind[i].buffer = NULL;
+		}	
+	}
+
+	MYSQL_BIND * get()
+	{
+		return bind;
+	}
+};
 
 
 /* {{{ MySQL_Prepared_Statement::MySQL_Prepared_Statement() -I- */
 MySQL_Prepared_Statement::MySQL_Prepared_Statement(MYSQL_STMT *s, sql::Connection * conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * log)
-	:connection(conn), stmt(s), param_bind(NULL), isClosed(false), logger(log? log->getReference():NULL)
+	:connection(conn), stmt(s), isClosed(false), logger(log? log->getReference():NULL)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::MySQL_Prepared_Statement");
 	CPP_INFO_FMT("this=%p", this);
 	param_count = mysql_stmt_param_count(s);
-	if (param_count) {
-		param_bind = get_new_param_bind(param_count);
-		for (unsigned int i = 0; i < param_count; i++) {
-			param_bind[i].is_null_value = 1;
-		}
-	}
+	param_bind = new MySQL_ParamBind(param_count);
+
 	result_bind = NULL;
 	is_null = NULL;
 	err = NULL;
@@ -127,7 +166,7 @@ void
 MySQL_Prepared_Statement::do_query()
 {
 	CPP_ENTER("MySQL_Prepared_Statement::do_query");
-	if ( ! validParamBind(param_count, param_bind) || mysql_stmt_bind_param(stmt, param_bind)) {
+	if (param_count && !param_bind->isAllSet() || mysql_stmt_bind_param(stmt, param_bind->get())) {
 		CPP_ERR("Couldn't bind");
 		throw sql::SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
 	}
@@ -147,14 +186,7 @@ MySQL_Prepared_Statement::clearParameters()
 	CPP_ENTER("MySQL_Prepared_Statement::clearParameters");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	if (param_bind) {
-		for (unsigned int i = 0; i < param_count; i++) {
-			delete (char*) param_bind[i].length;
-			param_bind[i].length = NULL;
-			delete[] (char*) param_bind[i].buffer;
-			param_bind[i].buffer = NULL;
-		}
-	}
+	param_bind->clearParameters();
 }
 /* }}} */
 
@@ -476,15 +508,18 @@ MySQL_Prepared_Statement::setDouble(unsigned int parameterIndex, double value)
 
 	BufferSizePair p = allocate_buffer_for_type(t);
 
-	param_bind[parameterIndex].buffer_type	= t;
-	delete[] (char *) param_bind[parameterIndex].buffer;
-	param_bind[parameterIndex].buffer		= p.first;
-	param_bind[parameterIndex].buffer_length= 0;
-	param_bind[parameterIndex].is_null_value= 0;
-	delete param_bind[parameterIndex].length;
-	param_bind[parameterIndex].length		= NULL;
+	param_bind->set(parameterIndex);
+	MYSQL_BIND * param = &param_bind->get()[parameterIndex];
+	
+	param->buffer_type	= t;
+	delete[] (char *) param->buffer;
+	param->buffer = p.first;
+	param->buffer_length = 0;
+	param->is_null_value = 0;
+	delete param->length;
+	param->length	= NULL;
 
-	memcpy(param_bind[parameterIndex].buffer, &value, p.second);
+	memcpy(param->buffer, &value, p.second);
 }
 /* }}} */
 
@@ -507,15 +542,18 @@ MySQL_Prepared_Statement::setInt(unsigned int parameterIndex, int value)
 
 	BufferSizePair p = allocate_buffer_for_type(t);
 
-	param_bind[parameterIndex].buffer_type	= t;
-	delete[] (char *) param_bind[parameterIndex].buffer;
-	param_bind[parameterIndex].buffer		= p.first;
-	param_bind[parameterIndex].buffer_length= 0;
-	param_bind[parameterIndex].is_null_value= 0;
-	delete param_bind[parameterIndex].length;
-	param_bind[parameterIndex].length		= NULL;
+	param_bind->set(parameterIndex);
+	MYSQL_BIND * param = &param_bind->get()[parameterIndex];
 
-	memcpy(param_bind[parameterIndex].buffer, &value, p.second);
+	param->buffer_type	= t;
+	delete[] (char *) param->buffer;
+	param->buffer		= p.first;
+	param->buffer_length = 0;
+	param->is_null_value = 0;
+	delete param->length;
+	param->length		= NULL;
+
+	memcpy(param->buffer, &value, p.second);
 }
 /* }}} */
 
@@ -537,15 +575,18 @@ MySQL_Prepared_Statement::setLong(unsigned int parameterIndex, long long value)
 
 	BufferSizePair p = allocate_buffer_for_type(t);
 
-	param_bind[parameterIndex].buffer_type	= t;
-	delete[] (char *) param_bind[parameterIndex].buffer;
-	param_bind[parameterIndex].buffer		= p.first;
-	param_bind[parameterIndex].buffer_length= 0;
-	param_bind[parameterIndex].is_null_value= 0;
-	delete param_bind[parameterIndex].length;
-	param_bind[parameterIndex].length		= NULL;
+	param_bind->set(parameterIndex);
+	MYSQL_BIND * param = &param_bind->get()[parameterIndex];
 
-	memcpy(param_bind[parameterIndex].buffer, &value, p.second);
+	param->buffer_type	= t;
+	delete[] (char *) param->buffer;
+	param->buffer		= p.first;
+	param->buffer_length = 0;
+	param->is_null_value = 0;
+	delete param->length;
+	param->length = NULL;
+
+	memcpy(param->buffer, &value, p.second);
 }
 /* }}} */
 
@@ -568,11 +609,46 @@ MySQL_Prepared_Statement::setNull(unsigned int parameterIndex, int /* sqlType */
 
 	BufferSizePair p = allocate_buffer_for_type(t);
 
-	param_bind[parameterIndex].buffer_type	= t;
-	delete[] (char *) param_bind[parameterIndex].buffer;
-	param_bind[parameterIndex].buffer		= NULL;
-	delete param_bind[parameterIndex].length;
-	param_bind[parameterIndex].length		= NULL;
+	param_bind->set(parameterIndex);
+	MYSQL_BIND * param = &param_bind->get()[parameterIndex];
+
+	param->buffer_type	= t;
+	delete[] (char *) param->buffer;
+	param->buffer = NULL;
+	delete param->length;
+	param->length = NULL;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_Statement::setString() -I- */
+void
+MySQL_Prepared_Statement::setString(unsigned int parameterIndex, const std::string& value)
+{
+	CPP_ENTER("MySQL_Prepared_Statement::setString");
+	CPP_INFO_FMT("this=%p", this);
+	CPP_INFO_FMT("column=%u value_len=%d value=%s ", parameterIndex, value.length(), value.c_str());
+	checkClosed();
+
+	parameterIndex--; /* DBC counts from 1 */
+	if (parameterIndex >= param_count) {
+		CPP_ERR("Invalid parameterIndex");
+		throw InvalidArgumentException("MySQL_Prepared_Statement::setString: invalid 'parameterIndex'");
+	}
+	enum_field_types t = MYSQL_TYPE_STRING;
+
+	param_bind->set(parameterIndex);
+	MYSQL_BIND * param = &param_bind->get()[parameterIndex];
+
+	delete[] (char*) param->buffer;
+
+	param->buffer_type	= t;
+	param->buffer		= memcpy(new char[value.length() + 1], value.c_str(), value.length() + 1);
+	param->buffer_length= static_cast<unsigned long>(value.length()) + 1;
+	param->is_null_value= 0;
+
+	delete (unsigned long *) param->length;
+	param->length = new unsigned long(static_cast<unsigned long>(value.length()));
 }
 /* }}} */
 
@@ -798,35 +874,6 @@ MySQL_Prepared_Statement::setResultSetType(int)
 }
 /* }}} */
 
-
-/* {{{ MySQL_Prepared_Statement::setString() -I- */
-void
-MySQL_Prepared_Statement::setString(unsigned int parameterIndex, const std::string& value)
-{
-	CPP_ENTER("MySQL_Prepared_Statement::setString");
-	CPP_INFO_FMT("this=%p", this);
-	CPP_INFO_FMT("column=%u value_len=%d value=%s ", parameterIndex, value.length(), value.c_str());
-	checkClosed();
-
-	parameterIndex--; /* DBC counts from 1 */
-	if (parameterIndex >= param_count) {
-		CPP_ERR("Invalid parameterIndex");
-		throw InvalidArgumentException("MySQL_Prepared_Statement::setString: invalid 'parameterIndex'");
-	}
-	enum_field_types t = MYSQL_TYPE_STRING;
-	delete[] (char*) param_bind[parameterIndex].buffer;
-
-	param_bind[parameterIndex].buffer_type	= t;
-	param_bind[parameterIndex].buffer		= memcpy(new char[value.length() + 1], value.c_str(), value.length() + 1);
-	param_bind[parameterIndex].buffer_length= static_cast<unsigned long>(value.length()) + 1;
-	param_bind[parameterIndex].is_null_value= 0;
-
-	delete (unsigned long *) param_bind[parameterIndex].length;
-	param_bind[parameterIndex].length = new unsigned long(static_cast<unsigned long>(value.length()));
-}
-/* }}} */
-
-
 /* {{{ MySQL_Prepared_Statement::checkClosed() -I- */
 void
 MySQL_Prepared_Statement::checkClosed()
@@ -847,8 +894,8 @@ MySQL_Prepared_Statement::closeIntern()
 	CPP_ENTER("MySQL_Prepared_Statement::closeIntern");
 	mysql_stmt_close(stmt);
 	clearParameters();
-	/* allocated with calloc */
-	free(param_bind);
+
+	delete param_bind;
 
 	for (unsigned int i = 0; i < num_fields; i++) {
 		delete[] (char *) result_bind[i].buffer;
