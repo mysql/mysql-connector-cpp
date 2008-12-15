@@ -20,6 +20,7 @@
  */
 
 #include <time.h>
+#include <stdlib.h>
 
 #include "BaseTestCase.h"
 #include "../common/stringutils.h"

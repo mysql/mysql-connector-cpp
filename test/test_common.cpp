@@ -81,7 +81,7 @@ static bool populate_insert_data(sql::Statement * stmt)
 
 
 /* {{{	*/
-static bool populate_test_table(sql::Connection * conn, std::string database)
+static bool populate_test_table(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	std::auto_ptr<sql::Statement> stmt(conn->createStatement());
 	ensure("stmt is NULL", stmt.get() != NULL);
@@ -110,7 +110,7 @@ static bool populate_TX_insert_data(sql::Statement * stmt)
 
 
 /* {{{	*/
-static bool populate_TX_test_table(sql::Connection * conn, std::string database)
+static bool populate_TX_test_table(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	std::auto_ptr<sql::Statement> stmt(conn->createStatement());
 	ensure("stmt is NULL", stmt.get() != NULL);
@@ -132,7 +132,7 @@ static bool populate_TX_test_table(sql::Connection * conn, std::string database)
 
 
 /* {{{	*/
-static bool populate_test_table_PS(sql::Connection * conn, std::string database)
+static bool populate_test_table_PS(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	std::auto_ptr<sql::Statement> stmt1(conn->createStatement());
 	ensure("stmt1 is NULL", stmt1.get() != NULL);
@@ -156,7 +156,7 @@ static bool populate_test_table_PS(sql::Connection * conn, std::string database)
 
 
 /* {{{	*/
-static bool populate_TX_test_table_PS(sql::Connection * conn, std::string database)
+static bool populate_TX_test_table_PS(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	std::auto_ptr<sql::Statement> stmt1(conn->createStatement());
 	ensure("stmt is NULL", stmt1.get() != NULL);
@@ -180,7 +180,7 @@ static bool populate_TX_test_table_PS(sql::Connection * conn, std::string databa
 
 
 /* {{{	*/
-static void test_autocommit(sql::Connection * conn)
+static void test_autocommit(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 	try {
@@ -200,7 +200,7 @@ static void test_autocommit(sql::Connection * conn)
 
 
 /* {{{	*/
-static void test_connection_0(sql::Connection * conn)
+static void test_connection_0(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 	try {
@@ -243,7 +243,7 @@ static void test_connection_0(sql::Connection * conn)
 
 
 /* {{{	*/
-static void test_connection_1(sql::Connection * conn, std::string database)
+static void test_connection_1(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -303,7 +303,7 @@ static void test_connection_1(sql::Connection * conn, std::string database)
 
 
 /* {{{	*/
-static void test_connection_2(sql::Connection * conn, std::string database)
+static void test_connection_2(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -336,7 +336,7 @@ static void test_connection_2(sql::Connection * conn, std::string database)
 
 
 /* {{{	*/
-static void test_connection_3(sql::Connection * conn, std::string user)
+static void test_connection_3(std::auto_ptr<sql::Connection> & conn, std::string user)
 {
 	ENTER_FUNCTION();
 	try {
@@ -353,12 +353,12 @@ static void test_connection_3(sql::Connection * conn, std::string user)
 
 
 /* {{{	*/
-static void test_statement_0(sql::Connection * conn)
+static void test_statement_0(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 	try {
 		std::auto_ptr<sql::Statement> stmt(conn->createStatement());
-		ensure("AutoCommit", conn == stmt->getConnection());
+		ensure("AutoCommit", conn.get() == stmt->getConnection());
 	} catch (sql::SQLException &e) {
 		printf("\n# ERR: Caught sql::SQLException at %s::%d  %s (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState().c_str());
 		printf("# ");
@@ -370,7 +370,7 @@ static void test_statement_0(sql::Connection * conn)
 
 
 /* {{{ Test simple update statement against statement object */
-static void test_statement_1(sql::Connection * conn, sql::Connection * conn2, std::string database)
+static void test_statement_1(std::auto_ptr<sql::Connection> & conn, std::auto_ptr<sql::Connection> & conn2, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -401,7 +401,7 @@ static void test_statement_1(sql::Connection * conn, sql::Connection * conn2, st
 
 
 /* {{{ Test simple query against statement object */
-static void test_statement_2(sql::Connection * conn, sql::Connection * conn2, std::string database)
+static void test_statement_2(std::auto_ptr<sql::Connection> & conn, std::auto_ptr<sql::Connection> & conn2, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -432,7 +432,7 @@ static void test_statement_2(sql::Connection * conn, sql::Connection * conn2, st
 
 
 /* {{{ Test executeQuery() - returning a result set*/
-static void test_statement_3(sql::Connection * conn, sql::Connection * conn2, std::string database)
+static void test_statement_3(std::auto_ptr<sql::Connection> & conn, std::auto_ptr<sql::Connection> & conn2, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -470,7 +470,7 @@ static void test_statement_3(sql::Connection * conn, sql::Connection * conn2, st
 
 
 /* {{{ Test executeQuery() - returning empty result set */
-static void test_statement_4(sql::Connection * conn, sql::Connection * conn2, std::string database)
+static void test_statement_4(std::auto_ptr<sql::Connection> & conn, std::auto_ptr<sql::Connection> & conn2, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -510,7 +510,7 @@ static void test_statement_4(sql::Connection * conn, sql::Connection * conn2, st
 
 
 /* {{{ Test executeQuery() - use it for inserting, should generate an exception */
-static void test_statement_5(sql::Connection * conn, sql::Connection * conn2, std::string database)
+static void test_statement_5(std::auto_ptr<sql::Connection> & conn, std::auto_ptr<sql::Connection> & conn2, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -549,7 +549,7 @@ static void test_statement_5(sql::Connection * conn, sql::Connection * conn2, st
 
 
 /* {{{ Test executeUpdate() - check the returned value */
-static void test_statement_6(sql::Connection * conn, sql::Connection * conn2, std::string database)
+static void test_statement_6(std::auto_ptr<sql::Connection> & conn, std::auto_ptr<sql::Connection> & conn2, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -585,7 +585,7 @@ static void test_statement_6(sql::Connection * conn, sql::Connection * conn2, st
 
 
 /* {{{ Test executeUpdate() - execute a SELECT, should get an exception */
-static void test_statement_7(sql::Connection * conn, sql::Connection * conn2, std::string database)
+static void test_statement_7(std::auto_ptr<sql::Connection> & conn, std::auto_ptr<sql::Connection> & conn2, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -626,7 +626,7 @@ static void test_statement_7(sql::Connection * conn, sql::Connection * conn2, st
 #if 0
 /* {{{ Test getFetchSize() - should return int value */
 /* XXX: Test fails because getFetchSize() is not implemented*/
-static void test_statement_xx(sql::Connection * conn, sql::Connection * conn2)
+static void test_statement_xx(std::auto_ptr<sql::Connection> & conn, std::auto_ptr<sql::Connection> & conn2)
 {
 	ENTER_FUNCTION();
 	try {
@@ -649,7 +649,7 @@ static void test_statement_xx(sql::Connection * conn, sql::Connection * conn2)
 
 /* {{{ Test setFetchSize() - set and get the value */
 /* XXX: Doesn't pass because setFetchSize() is unimplemented */
-static void test_statement_xx(sql::Connection * conn)
+static void test_statement_xx(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 	try {
@@ -676,7 +676,7 @@ static void test_statement_xx(sql::Connection * conn)
 
 /* {{{ Test setFetchSize() - set negative value and expect an exception */
 /* XXX: Doesn't pass because setFetchSize() is unimplemented */
-static void test_statement_xx(sql::Connection * conn)
+static void test_statement_xx(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 	try {
@@ -705,7 +705,7 @@ static void test_statement_xx(sql::Connection * conn)
 
 /* {{{ Test setQueryTimeout() - set negative value and expect an exception */
 /* XXX: Doesn't pass because setQueryTimeout() is unimplemented */
-static void test_statement_xx(sql::Connection * conn)
+static void test_statement_xx(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 	try {
@@ -732,7 +732,7 @@ static void test_statement_xx(sql::Connection * conn)
 
 
 /* {{{ Test getResultSet() - execute() a query and get the result set */
-static void test_statement_8(sql::Connection * conn, sql::Connection * conn2, std::string database)
+static void test_statement_8(std::auto_ptr<sql::Connection> & conn, std::auto_ptr<sql::Connection> & conn2, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -765,7 +765,7 @@ static void test_statement_8(sql::Connection * conn, sql::Connection * conn2, st
 
 
 /* {{{ Test getResultSet() - execute() an update query and get the result set - should be empty */
-static void test_statement_9(sql::Connection * conn, sql::Connection * conn2, std::string database)
+static void test_statement_9(std::auto_ptr<sql::Connection> & conn, std::auto_ptr<sql::Connection> & conn2, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -799,12 +799,12 @@ static void test_statement_9(sql::Connection * conn, sql::Connection * conn2, st
 
 
 /* {{{	*/
-static void test_result_set_0(sql::Connection * conn)
+static void test_result_set_0(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 	try {
 		std::auto_ptr<sql::Statement> stmt(conn->createStatement());
-		ensure("AutoCommit", conn == stmt->getConnection());
+		ensure("AutoCommit", conn.get() == stmt->getConnection());
 
 		std::auto_ptr<sql::ResultSet> result(stmt->executeQuery("SELECT 1, 2, 3"));
 
@@ -822,7 +822,7 @@ static void test_result_set_0(sql::Connection * conn)
 
 
 /* {{{	*/
-static void test_result_set_1(sql::Connection * conn)
+static void test_result_set_1(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 	try {
@@ -848,7 +848,7 @@ static void test_result_set_1(sql::Connection * conn)
 
 
 /* {{{	*/
-static void test_result_set_2(sql::Connection * conn, std::string database)
+static void test_result_set_2(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -876,14 +876,14 @@ static void test_result_set_2(sql::Connection * conn, std::string database)
 
 
 /* {{{	*/
-static void test_result_set_3(sql::Connection * conn, std::string database)
+static void test_result_set_3(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
 		std::auto_ptr<sql::Statement> stmt1(conn->createStatement());
 		ensure("stmt1 is NULL", stmt1.get() != NULL);
 
-		ensure_equal("sql::Connection differs", conn, stmt1->getConnection());
+		ensure_equal("sql::Connection differs", conn.get(), stmt1->getConnection());
 		int old_commit_mode = conn->getAutoCommit();
 		conn->setAutoCommit(0);
 
@@ -942,14 +942,14 @@ static void test_result_set_3(sql::Connection * conn, std::string database)
 
 
 /* {{{ Test commit and rollback (autocommit on) */
-static void test_result_set_4(sql::Connection * conn, std::string database)
+static void test_result_set_4(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
 		std::auto_ptr<sql::Statement> stmt1(conn->createStatement());
 		ensure("stmt1 is NULL", stmt1.get() != NULL);
 
-		ensure_equal("sql::Connection differs", conn, stmt1->getConnection());
+		ensure_equal("sql::Connection differs", conn.get(), stmt1->getConnection());
 
 		int old_commit_mode = conn->getAutoCommit();
 		conn->setAutoCommit(true);
@@ -1024,7 +1024,7 @@ static void test_result_set_4(sql::Connection * conn, std::string database)
 
 
 /* {{{ Test multistatement off - send two queries in one call */
-static void test_result_set_5(sql::Connection * conn)
+static void test_result_set_5(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 	try {
@@ -1123,14 +1123,14 @@ static void test_result_set_check_out_of_bound(sql::ResultSet *rset1)
 
 
 /* {{{ Test out of bound extraction of data */
-static void test_result_set_6(sql::Connection * conn, std::string database)
+static void test_result_set_6(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
 		std::auto_ptr<sql::Statement> stmt1(conn->createStatement());
 		ensure("stmt1 is NULL", stmt1.get() != NULL);
 
-		ensure_equal("sql::Connection differs", conn, stmt1->getConnection());
+		ensure_equal("sql::Connection differs", conn.get(), stmt1->getConnection());
 
 		ensure("Data not populated", true == populate_TX_test_table(conn, database));
 
@@ -1151,7 +1151,7 @@ static void test_result_set_6(sql::Connection * conn, std::string database)
 
 
 /* {{{ Test out of bound extraction of data - PS version */
-static void test_result_set_7(sql::Connection * conn, std::string database)
+static void test_result_set_7(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -1159,7 +1159,7 @@ static void test_result_set_7(sql::Connection * conn, std::string database)
 
 		std::auto_ptr<sql::PreparedStatement> stmt1(conn->prepareStatement("SELECT COUNT(*) AS 'count of rows' FROM test_function_tx"));
 		ensure("stmt1 is NULL", stmt1.get() != NULL);
-		ensure_equal("sql::Connection differs", conn, stmt1->getConnection());
+		ensure_equal("sql::Connection differs", conn.get(), stmt1->getConnection());
 
 		std::auto_ptr<sql::ResultSet> rset1(stmt1->executeQuery());
 		ensure("res1 is NULL", rset1.get() != NULL);
@@ -1179,7 +1179,7 @@ static void test_result_set_7(sql::Connection * conn, std::string database)
 
 
 /* {{{ Test commit and rollback (autocommit on) - PS version */
-static void test_result_set_8(sql::Connection * conn, std::string database)
+static void test_result_set_8(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -1187,7 +1187,7 @@ static void test_result_set_8(sql::Connection * conn, std::string database)
 		std::auto_ptr<sql::PreparedStatement> stmt0(conn->prepareStatement("SELECT 1"));
 		ensure("stmt0 is NULL", stmt0.get() != NULL);
 
-		ensure_equal("sql::Connection differs", conn, stmt0->getConnection());
+		ensure_equal("sql::Connection differs", conn.get(), stmt0->getConnection());
 
 		int old_commit_mode = conn->getAutoCommit();
 		conn->setAutoCommit(true);
@@ -1267,7 +1267,7 @@ static void test_result_set_8(sql::Connection * conn, std::string database)
 
 
 /* {{{ Test multistatement off - send two queries in one call - PS version */
-static void test_result_set_9(sql::Connection * conn)
+static void test_result_set_9(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 	try {
@@ -1287,7 +1287,7 @@ static void test_result_set_9(sql::Connection * conn)
 
 
 /* {{{ Test multiresults - SP with normal and prepared statement */
-static void test_result_set_10(sql::Connection * conn, std::string database)
+static void test_result_set_10(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -1350,7 +1350,7 @@ static void test_result_set_10(sql::Connection * conn, std::string database)
 
 
 /* {{{ getMetadata() */
-static void test_result_set_11(sql::Connection * conn, std::string database)
+static void test_result_set_11(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -1418,7 +1418,7 @@ static void test_result_set_11(sql::Connection * conn, std::string database)
 
 #if 0
 /* {{{ General test 0 */
-static void test_general_0(sql::Connection * conn)
+static void test_general_0(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 	try {
@@ -1444,7 +1444,7 @@ static void test_general_0(sql::Connection * conn)
 
 
 /* {{{ General test 1 */
-static void test_general_1(sql::Connection * conn)
+static void test_general_1(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 	try {
@@ -1486,7 +1486,7 @@ static void test_general_1(sql::Connection * conn)
 #endif
 
 /* {{{	*/
-static void test_prep_statement_0(sql::Connection * conn)
+static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 	try {
@@ -1656,7 +1656,7 @@ static void test_prep_statement_0(sql::Connection * conn)
 
 
 /* {{{ Test simple update statement against statement object */
-static void test_prep_statement_1(sql::Connection * conn, sql::Connection * conn2, const std::string database)
+static void test_prep_statement_1(std::auto_ptr<sql::Connection> & conn, std::auto_ptr<sql::Connection> & conn2, const std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -1694,7 +1694,7 @@ static void test_prep_statement_1(sql::Connection * conn, sql::Connection * conn
 
 
 /* {{{ Test simple update statement against statement object */
-static void test_prep_statement_2(sql::Connection * conn, std::string database)
+static void test_prep_statement_2(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -1729,7 +1729,7 @@ static void test_prep_statement_2(sql::Connection * conn, std::string database)
 
 
 /* {{{	Invoke as many "not implemented" methods as possible for better code coverage (and to make sure we keep CHANGES current) */
-static void test_not_implemented_connection(sql::Connection * conn)
+static void test_not_implemented_connection(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 
@@ -1820,7 +1820,7 @@ static void test_not_implemented_connection(sql::Connection * conn)
 }
 /* }}} */
 
-static void test_not_implemented_statement(sql::Connection * conn, const std::string database)
+static void test_not_implemented_statement(std::auto_ptr<sql::Connection> & conn, const std::string database)
 {
 	ENTER_FUNCTION();
 
@@ -1919,7 +1919,7 @@ static void test_not_implemented_statement(sql::Connection * conn, const std::st
 }
 /* }}} */
 
-static void test_not_implemented_conn_meta(sql::Connection * conn)
+static void test_not_implemented_conn_meta(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 
@@ -2004,7 +2004,7 @@ static void test_not_implemented_conn_meta(sql::Connection * conn)
 }
 /* }}} */
 
-static void test_not_implemented_ps(sql::Connection * conn, const std::string database)
+static void test_not_implemented_ps(std::auto_ptr<sql::Connection> & conn, const std::string database)
 {
 	ENTER_FUNCTION();
 
@@ -2152,7 +2152,7 @@ static void test_not_implemented_ps(sql::Connection * conn, const std::string da
 /* }}} */
 
 
-static void test_not_implemented_resultset(sql::Connection * conn)
+static void test_not_implemented_resultset(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 
@@ -2287,7 +2287,7 @@ static void test_not_implemented_resultset(sql::Connection * conn)
 /* }}} */
 
 
-static void test_not_implemented_ps_resultset(sql::Connection * conn)
+static void test_not_implemented_ps_resultset(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 
@@ -2421,7 +2421,7 @@ static void test_not_implemented_ps_resultset(sql::Connection * conn)
 }
 /* }}} */
 
-static void test_not_implemented_cs_resultset(sql::Connection * conn)
+static void test_not_implemented_cs_resultset(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 
@@ -2555,7 +2555,7 @@ static void test_not_implemented_cs_resultset(sql::Connection * conn)
 }
 /* }}} */
 
-static void test_not_implemented_rs_meta(sql::Connection * conn)
+static void test_not_implemented_rs_meta(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 
@@ -2585,7 +2585,7 @@ static void test_not_implemented_rs_meta(sql::Connection * conn)
 /* }}} */
 
 
-static void test_not_implemented_cs_rs_meta(sql::Connection * conn)
+static void test_not_implemented_cs_rs_meta(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
 
@@ -2642,7 +2642,7 @@ int main(int argc, const char **argv)
 	printf("# %s\n", mysql_get_client_info());
 #endif
 
-	sql::Connection *conn, *conn2;
+	std::auto_ptr<sql::Connection> conn, conn2;
 	int last_error_total = 0;
 	int i;
 
@@ -2657,21 +2657,21 @@ int main(int argc, const char **argv)
 		printf("# ");
 
 		try {
-			conn = get_connection(host, user, pass);
+			conn.reset(get_connection(host, user, pass));
 		} catch (sql::SQLException &e) {
 			printf("\n# ERR: Caught sql::SQLException at %s::%d  %s (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState().c_str());		
 			printf("not ok\n");
 			return 1;
 		}
 		/* XXX : Doing upcast, not the best thing, but tests getMySQLVariable */
-		ensure("Testing getSessionVariable",
-					0 == ((sql::mysql::MySQL_Connection *) conn)->getSessionVariable("version").compare(
-								mysql_get_server_info(((sql::mysql::MySQL_Connection *) conn)->getMySQLHandle())
-																							)
-			);
-		printf("\n");
-		printf("# Server %s\n", ((sql::mysql::MySQL_Connection *) conn)->getSessionVariable("version").c_str());
-		printf("# ");
+//		ensure("Testing getSessionVariable",
+//					0 == ((sql::mysql::MySQL_Connection *) conn)->getSessionVariable("version").compare(
+//								mysql_get_server_info(((sql::mysql::MySQL_Connection *) conn)->getMySQLHandle())
+//																							)
+//			);
+//		printf("\n");
+//		printf("# Server %s\n", ((sql::mysql::MySQL_Connection *) conn)->getSessionVariable("version").c_str());
+//		printf("# ");
 
 		try {		
 			std::auto_ptr<sql::Statement> stmt(conn->createStatement());
@@ -2696,137 +2696,186 @@ int main(int argc, const char **argv)
 			printf("# ");
 			return 1;
 		}
-		delete conn;
+		conn.reset(NULL);
 
-		test_connection_0(conn = get_connection(host, user, pass));
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_connection_0(conn);
+		conn.reset(NULL);
 
-		test_connection_1(conn = get_connection(host, user, pass), database);
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_connection_1(conn, database);
+		conn.reset(NULL);
 
-		test_connection_2(conn = get_connection(host, user, pass), database);
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_connection_2(conn, database);
+		conn.reset(NULL);
 
-		test_connection_3(conn = get_connection(host, user, pass), user);
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_connection_3(conn, user);
+		conn.reset(NULL);
 
-		test_autocommit(conn = get_connection(host, user, pass));
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_autocommit(conn);
+		conn.reset(NULL);
 
-		test_statement_0(conn = get_connection(host, user, pass));
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_statement_0(conn);
+		conn.reset(NULL);
 
-		test_statement_1(conn = get_connection(host, user, pass), conn2 = get_connection(host, user, pass), database);
-		delete conn; 
-		delete conn2;
+		conn.reset(get_connection(host, user, pass));
+		conn2.reset(get_connection(host, user, pass));
+		test_statement_1(conn, conn2, database);
+		conn.reset(NULL);
+		conn2.reset(NULL);
 
-		test_statement_2(conn = get_connection(host, user, pass), conn2 = get_connection(host, user, pass), database);
-		delete conn;
-		delete conn2;
+		conn.reset(get_connection(host, user, pass));
+		conn2.reset(get_connection(host, user, pass));
+		test_statement_2(conn, conn2, database);
+		conn.reset(NULL);
+		conn2.reset(NULL);
 
-		test_statement_3(conn = get_connection(host, user, pass), conn2 = get_connection(host, user, pass), database);
-		delete conn;
-		delete conn2;
+		conn.reset(get_connection(host, user, pass));
+		conn2.reset(get_connection(host, user, pass));
+		test_statement_3(conn, conn2, database);
+		conn.reset(NULL);
+		conn2.reset(NULL);
 
-		test_statement_4(conn = get_connection(host, user, pass), conn2 = get_connection(host, user, pass), database);
-		delete conn; 
-		delete conn2;
+		conn.reset(get_connection(host, user, pass));
+		conn2.reset(get_connection(host, user, pass));
+		test_statement_4(conn, conn2, database);
+		conn.reset(NULL);
+		conn2.reset(NULL);
 
-		test_statement_5(conn = get_connection(host, user, pass), conn2 = get_connection(host, user, pass), database);
-		delete conn;
-		delete conn2;
+		conn.reset(get_connection(host, user, pass));
+		conn2.reset(get_connection(host, user, pass));
+		test_statement_5(conn, conn2, database);
+		conn.reset(NULL);
+		conn2.reset(NULL);
 
-		test_statement_6(conn = get_connection(host, user, pass), conn2 = get_connection(host, user, pass), database);
-		delete conn;
-		delete conn2;
+		conn.reset(get_connection(host, user, pass));
+		conn2.reset(get_connection(host, user, pass));
+		test_statement_6(conn, conn2, database);
+		conn.reset(NULL);
+		conn2.reset(NULL);
 
-		test_statement_7(conn = get_connection(host, user, pass), conn2 = get_connection(host, user, pass), database);
-		delete conn;
-		delete conn2;
+		conn.reset(get_connection(host, user, pass));
+		conn2.reset(get_connection(host, user, pass));
+		test_statement_7(conn, conn2, database);
+		conn.reset(NULL);
+		conn2.reset(NULL);
 
-		test_statement_8(conn = get_connection(host, user, pass), conn2 = get_connection(host, user, pass), database);
-		delete conn;
-		delete conn2;
+		conn.reset(get_connection(host, user, pass));
+		conn2.reset(get_connection(host, user, pass));
+		test_statement_8(conn, conn2, database);
+		conn.reset(NULL);
+		conn2.reset(NULL);
 
-		test_statement_9(conn = get_connection(host, user, pass), conn2 = get_connection(host, user, pass), database);
-		delete conn;
-		delete conn2;
+		conn.reset(get_connection(host, user, pass));
+		conn2.reset(get_connection(host, user, pass));
+		test_statement_9(conn, conn2, database);
+		conn.reset(NULL);
+		conn2.reset(NULL);
 
-		test_result_set_0(conn = get_connection(host, user, pass));
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_result_set_0(conn);
+		conn.reset(NULL);
 
-		test_result_set_1(conn = get_connection(host, user, pass));
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_result_set_1(conn);
+		conn.reset(NULL);
 
-		test_result_set_2(conn = get_connection(host, user, pass), database);
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_result_set_2(conn, database);
+		conn.reset(NULL);
 
-		test_result_set_3(conn = get_connection(host, user, pass), database);
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_result_set_3(conn, database);
+		conn.reset(NULL);
 
-		test_result_set_4(conn = get_connection(host, user, pass), database);
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_result_set_4(conn, database);
+		conn.reset(NULL);
 
-		test_result_set_5(conn = get_connection(host, user, pass));
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_result_set_5(conn);
+		conn.reset(NULL);
 
-		test_result_set_6(conn = get_connection(host, user, pass), database);
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_result_set_6(conn, database);
+		conn.reset(NULL);
 
-		test_result_set_7(conn = get_connection(host, user, pass), database);
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_result_set_7(conn, database);
+		conn.reset(NULL);
 
-		test_result_set_8(conn = get_connection(host, user, pass), database);
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_result_set_8(conn, database);
+		conn.reset(NULL);
 
-		test_result_set_9(conn = get_connection(host, user, pass));
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_result_set_9(conn);
+		conn.reset(NULL);
 
-		test_result_set_10(conn = get_connection(host, user, pass), database);
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_result_set_10(conn, database);
+		conn.reset(NULL);
 
-		test_result_set_11(conn = get_connection(host, user, pass), database);
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_result_set_11(conn, database);
+		conn.reset(NULL);
 #if 0
-		test_general_0(conn = get_connection(host, user, pass)); delete conn;
-		test_general_1(conn = get_connection(host, user, pass)); delete conn;
+		test_general_0(conn); delete conn;
+		test_general_1(conn); delete conn;
 #endif
-		test_prep_statement_0(conn = get_connection(host, user, pass));
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_prep_statement_0(conn);
+		conn.reset(NULL);
 
-		test_prep_statement_1(conn = get_connection(host, user, pass), conn2 = get_connection(host, user, pass), database);
-		delete conn;
-		delete conn2;
+		conn.reset(get_connection(host, user, pass));
+		conn2.reset(get_connection(host, user, pass));
+		test_prep_statement_1(conn, conn2, database);
+		conn.reset(NULL);
+		conn2.reset(NULL);
 
-		test_prep_statement_2(conn = get_connection(host, user, pass), database);
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_prep_statement_2(conn, database);
+		conn.reset(NULL);
 
-		test_not_implemented_connection(conn = get_connection(host, user, pass));
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_not_implemented_connection(conn);
+		conn.reset(NULL);
 
-		test_not_implemented_statement(conn = get_connection(host, user, pass), database);
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_not_implemented_statement(conn, database);
+		conn.reset(NULL);
 
-		test_not_implemented_conn_meta(conn = get_connection(host, user, pass));
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_not_implemented_conn_meta(conn);
+		conn.reset(NULL);
 
-		test_not_implemented_ps(conn = get_connection(host, user, pass), database);
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_not_implemented_ps(conn, database);
+		conn.reset(NULL);
 
-		test_not_implemented_resultset(conn = get_connection(host, user, pass));
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_not_implemented_resultset(conn);
+		conn.reset(NULL);
 
-		test_not_implemented_ps_resultset(conn = get_connection(host, user, pass));
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_not_implemented_ps_resultset(conn);
+		conn.reset(NULL);
 
-		test_not_implemented_cs_resultset(conn = get_connection(host, user, pass));
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_not_implemented_cs_resultset(conn);
+		conn.reset(NULL);
 
-		test_not_implemented_rs_meta(conn = get_connection(host, user, pass));
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_not_implemented_rs_meta(conn);
+		conn.reset(NULL);
 
-		test_not_implemented_cs_rs_meta(conn = get_connection(host, user, pass));
-		delete conn;
+		conn.reset(get_connection(host, user, pass));
+		test_not_implemented_cs_rs_meta(conn);
+		conn.reset(NULL);
 
 		printf("\n#---------------  %d -----------------\n", i + 1);	
 		if ((total_errors - last_error_total) == 0)

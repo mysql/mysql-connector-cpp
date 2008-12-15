@@ -34,13 +34,14 @@ namespace mysql
 {
 namespace util {template<class T> class my_shared_ptr; }; // forward declaration.
 class MySQL_DebugLogger;
+class MySQL_ParamBind;
 
 class MySQL_Prepared_Statement : public sql::PreparedStatement
 {
 protected:
 	sql::Connection *connection;
 	MYSQL_STMT *stmt;
-	MYSQL_BIND *param_bind;
+	MySQL_ParamBind *param_bind;
 	unsigned int param_count;
 
 	int resultSetConcurrency;
