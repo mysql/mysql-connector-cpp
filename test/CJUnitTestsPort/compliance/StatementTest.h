@@ -19,7 +19,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-  
+
 #include "../BaseTestCase.h"
 
 //#include java.sql.CallableStatement
@@ -46,9 +46,9 @@ namespace compliance
   {
   private:
     typedef BaseTestFixture super;
-  
+
 protected:
-  
+
   public:
     TEST_FIXTURE( StatementTest )
     {
@@ -331,7 +331,7 @@ protected:
 /* throws std::exception * */
       void testExecuteUpdate03() ;
 
-      
+
     /*
      * @testName:         testGetFetchSize
      * @assertion:        The Statement object provides methods for executing SQL
@@ -661,7 +661,7 @@ protected:
 
 /* throws std::exception * */
       void testGetWarnings() ;
- 
+
     /*
      * @testName:         testSetFetchSize02
      * @assertion:        A driver must provide support for Statement and

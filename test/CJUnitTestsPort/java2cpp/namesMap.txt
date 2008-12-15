@@ -9,7 +9,7 @@
 = new String\(\)      =>
 = new Properties\(\)  =>
 = new HashMap()       =>
-(\S+)\.getObject\(    => getObject($1, 
+(\S+)\.getObject\(    => getObject($1,
 BaseTestCase(?!\.h)          => BaseTestFixture<$class>
 (?<=String)(\s+\w+)\s*=\s*NULL =>$1
 (?<!\=|\!)\=\s*NULL              => \/*= NULL*\/
@@ -163,7 +163,7 @@ NULLsAreSortedLow     => nullsAreSortedLow
 
 # tests related
 com.mysql.jdbc.compliance.tests  => testsuite::compliance
-com.mysql.jdbc.compliance.common=> testsuite::compliance  
+com.mysql.jdbc.compliance.common=> testsuite::compliance
 Connection            => Connection
 List                  => List
 Iterator              => Iterator

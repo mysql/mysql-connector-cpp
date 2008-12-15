@@ -4,9 +4,9 @@ This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; version 2 of the License.
 
-There are special exceptions to the terms and conditions of the GPL 
-as it is applied to this software. View the full text of the 
-exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this 
+There are special exceptions to the terms and conditions of the GPL
+as it is applied to this software. View the full text of the
+exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
 software distribution.
 
 This program is distributed in the hope that it will be useful,
@@ -55,7 +55,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ConnectionTest::testClose() 
+  void ConnectionTest::testClose()
   {
     bool closeFlag = false;
     Connection con /*= NULL*/;  con.reset( getConnection() );
@@ -95,7 +95,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ConnectionTest::testCreateStatement01() 
+  void ConnectionTest::testCreateStatement01()
   {
       Statement statemt /*= NULL*/;  logMsg("Calling createStatement() method ");
 
@@ -144,7 +144,7 @@ namespace compliance
      Probably should have tests both for getSchema and getCatalog
      */
 /* throws Exception */
-  void ConnectionTest::testGetCatalog() 
+  void ConnectionTest::testGetCatalog()
   {
     String  catalogName;
     String  url;
@@ -218,7 +218,7 @@ namespace compliance
    * to cast to implementation class
    */
 
-  void ConnectionTest::testGetMetaData() 
+  void ConnectionTest::testGetMetaData()
   {  logMsg("Calling getMetaData() method ");
             DatabaseMetaData rsmd(conn->getMetaData());
 
@@ -265,7 +265,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ConnectionTest::testGetTransactionIsolation() 
+  void ConnectionTest::testGetTransactionIsolation()
   {
         int transIsolateVal = 0;  logMsg("Calling getTransactionIsolation() method ");
             transIsolateVal = conn->getTransactionIsolation();
@@ -331,7 +331,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ConnectionTest::testIsClosed01() 
+  void ConnectionTest::testIsClosed01()
   {
         bool closeFlag = false;
         Connection con /*= NULL*/;  con.reset( getConnection() );
@@ -372,7 +372,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ConnectionTest::testIsClosed02() 
+  void ConnectionTest::testIsClosed02()
   {
         bool closeFlag = false;
         Connection con /*= NULL*/;  con.reset( getConnection() );
@@ -413,7 +413,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ConnectionTest::testIsReadOnly() 
+  void ConnectionTest::testIsReadOnly()
   {
         bool errorFlag = true;  logMsg("invoking the setReadOnly method");
 
@@ -467,7 +467,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ConnectionTest::testNativeSQL() 
+  void ConnectionTest::testNativeSQL()
   {
     String sSqlStmt;
     String * nativeSql;  sSqlStmt = sqlProps["Escape_Seq_Query"];
@@ -489,7 +489,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ConnectionTest::setUp() 
+  void ConnectionTest::setUp()
   {
         super::setUp();
         dbmd.reset(conn->getMetaData());

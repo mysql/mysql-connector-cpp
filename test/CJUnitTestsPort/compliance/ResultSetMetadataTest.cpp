@@ -50,7 +50,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testGetCatalogName() 
+  void ResultSetMetadataTest::testGetCatalogName()
   {
     logMsg("Calling getCatalogName on ResultSetMetadata");
             String sRetValue = rsmd->getCatalogName(1);
@@ -92,7 +92,7 @@ namespace compliance
 
 /* throws Exception */
   /* Not Implemented in C/C++ (not even part of interface at the moment) */
-  void ResultSetMetadataTest::testGetColumnClassName() 
+  void ResultSetMetadataTest::testGetColumnClassName()
   {
 #ifdef getColumnClassName_IMPLEMENTED
 			logMsg("Calling getColumnClassName on ResultSetMetadata");
@@ -131,7 +131,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testGetColumnCount() 
+  void ResultSetMetadataTest::testGetColumnCount()
   {  logMsg("Calling getColumnCount on ResultSetMetaData");
             int coloumnCount = rsmd->getColumnCount();
             if (coloumnCount >= 0) {
@@ -167,7 +167,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testGetColumnDisplaySize() 
+  void ResultSetMetadataTest::testGetColumnDisplaySize()
   {
         /*try
     {*/
@@ -185,7 +185,7 @@ namespace compliance
         /*}
     catch (sql::DbcException & sqle)
     {
-            
+
             FAIL("Call to getColumnDisplaySize is Failed!");
         }*/
         /*catch (std::exception & e) {
@@ -219,7 +219,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testGetColumnLabel() 
+  void ResultSetMetadataTest::testGetColumnLabel()
   {  logMsg("Calling getColumnLabel on ResultSetMetadata");
             String sRetValue = rsmd->getColumnLabel(2);
 
@@ -253,8 +253,8 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testGetColumnName() 
-  { 
+  void ResultSetMetadataTest::testGetColumnName()
+  {
     logMsg("Calling getColumnName on ResultSetMetadata");
 
     String sRetValue = rsmd->getColumnName(2);
@@ -290,7 +290,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testGetColumnType() 
+  void ResultSetMetadataTest::testGetColumnType()
   {
     logMsg("Calling getColumnType on ResultSetMetaData");
 
@@ -366,7 +366,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testGetColumnTypeName() 
+  void ResultSetMetadataTest::testGetColumnTypeName()
   {  logMsg("Calling getColumnTypeName on ResultSetMetadata");
             String sRetValue = rsmd->getColumnTypeName(1);
 
@@ -400,7 +400,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testGetPrecision() 
+  void ResultSetMetadataTest::testGetPrecision()
   {  logMsg("Calling getPrecision on ResultSetMetaData");
             int precisionSize = rsmd->getPrecision(1);
             if (precisionSize >= 0) {
@@ -435,7 +435,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testGetScale() 
+  void ResultSetMetadataTest::testGetScale()
   {  logMsg("Calling getScale on ResultSetMetaData");
             int scaleSize = rsmd->getScale(2);
             if (scaleSize >= 0) {
@@ -471,7 +471,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testGetSchemaName() 
+  void ResultSetMetadataTest::testGetSchemaName()
   {  logMsg("Calling getSchemaName on ResultSetMetadata");
             String sRetValue = rsmd->getSchemaName(2);
 
@@ -503,7 +503,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testGetTableName() 
+  void ResultSetMetadataTest::testGetTableName()
   {  logMsg("Calling getTableName on ResultSetMetadata");
             String sRetValue = rsmd->getTableName(1);
 
@@ -535,7 +535,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testIsAutoIncrement() 
+  void ResultSetMetadataTest::testIsAutoIncrement()
   {  logMsg("Calling isAutoIncrement on ResultSetMetaData");
             bool retValue = rsmd->isAutoIncrement(1);
             if (retValue) {
@@ -570,7 +570,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testIsCaseSensitive() 
+  void ResultSetMetadataTest::testIsCaseSensitive()
   {  logMsg("Calling isCaseSensitive on ResultSetMetaData");
             bool retValue = rsmd->isCaseSensitive(1);
             if (retValue) {
@@ -605,7 +605,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testIsCurrency() 
+  void ResultSetMetadataTest::testIsCurrency()
   {  logMsg("Calling IsCurrency on ResultSetMetaData");
             bool retValue = rsmd->isCurrency(2);
             if (retValue) {
@@ -641,7 +641,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testIsDefinitelyWritable() 
+  void ResultSetMetadataTest::testIsDefinitelyWritable()
   {  logMsg("Calling isDefinitelyWritable on ResultSetMetaData");
             bool retValue = rsmd->isDefinitelyWritable(1);
             if (retValue) {
@@ -679,8 +679,8 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testIsNullable() 
-  { 
+  void ResultSetMetadataTest::testIsNullable()
+  {
     logMsg("Calling isNullable on ResultSetMetaData");
     int coloumnCount = rsmd->isNullable(2);
 
@@ -722,7 +722,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testIsReadOnly() 
+  void ResultSetMetadataTest::testIsReadOnly()
   {
     logMsg("Calling isReadOnly on ResultSetMetaData");
     bool retValue = rsmd->isReadOnly(1);
@@ -762,7 +762,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testIsSearchable() 
+  void ResultSetMetadataTest::testIsSearchable()
   {  logMsg("Calling isSearchable on ResultSetMetaData");
             bool retValue = rsmd->isSearchable(1);
             if (retValue) {
@@ -798,7 +798,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testIsSigned() 
+  void ResultSetMetadataTest::testIsSigned()
   {  logMsg("Calling isSigned on ResultSetMetaData");
             bool retValue = rsmd->isSigned(2);
             if (retValue) {
@@ -835,7 +835,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::testIsWritable() 
+  void ResultSetMetadataTest::testIsWritable()
   {  logMsg("Calling isWritable on ResultSetMetaData");
             bool retValue = rsmd->isWritable(1);
             if (retValue) {
@@ -850,7 +850,7 @@ namespace compliance
      */
 
 /* throws Exception */
-  void ResultSetMetadataTest::setUp() 
+  void ResultSetMetadataTest::setUp()
   {
     super::setUp();
 

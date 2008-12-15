@@ -61,7 +61,7 @@ namespace compliance
 
 /* throws sql::DbcException */
 
-      bool columnCompare(List & sColumnNames, ResultSet & rs) ;  
+      bool columnCompare(List & sColumnNames, ResultSet & rs) ;
 protected:
 
     /**
@@ -70,7 +70,7 @@ protected:
 
 /* throws std::exception * */
 
-      void setUp() ;  
+      void setUp() ;
   public:
     TEST_FIXTURE( DatabaseMetaDataTest )
   {

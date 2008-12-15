@@ -92,7 +92,7 @@ if ( ! $javaClass )
 
 if ( ! open( SRC,'<'.$javaClass ) )
 {
-  print STDERR "Can't open file $javaClass\n"; 
+  print STDERR "Can't open file $javaClass\n";
   Usage();
 }
 
@@ -144,7 +144,7 @@ while ( $line = <SRC> )
 {
   # use "right" tabs instead of "bad" ones
   $line =~ s/\t/$tab/g;
-  
+
   if ( CommentStarts( $line ) )
   {
     Trace('COMMENT:');
@@ -538,7 +538,7 @@ if ( $add2proj )
 
   copyFiles( $addNameH, $addNameCpp );
 
-  if ( Add2Cmake( $addNameH, $addNameCpp ) ) 
+  if ( Add2Cmake( $addNameH, $addNameCpp ) )
   {
     recreateProjFiles();
   }
@@ -579,7 +579,7 @@ sub copyFile
 
   print "Copying $size bytes to new location";
   print DST $content;
-  
+
 
   close( DST );
   close( SRC );
@@ -678,7 +678,7 @@ sub isClassDeclarationStarts()
 {
   my $word  = shift;
   my $ind   = shift;
-  
+
   $$ind = inArr( 'class', @$word );
 
   return $$ind > -1;
@@ -759,11 +759,11 @@ sub postProcess
         my $eval = GetMappedValue( $MappingsKeys->[ $i ] );
 
         Trace( $eval );
-        
-        $eval = '"'.$eval.'"'; 
+
+        $eval = '"'.$eval.'"';
 
         Trace( $eval );
- 
+
         $subst = eval( $eval );
 
         $$line =~ s/$MappingsKeys->[$i]/$subst/g;
@@ -847,7 +847,7 @@ sub FlushData
 
   if ( @TestMethod )
   {
-    #my $ind1 = 
+    #my $ind1 =
     $Public = "$nl$tab${namespaceCorrection}TEST_FIXTURE( $class )$nl$namespaceCorrection$tab\{$nl$namespaceCorrection$tab$tab".
       'TEST_CASE( '.join( " );$nl$namespaceCorrection$tab${tab}TEST_CASE( ", @TestMethod )." );$nl$namespaceCorrection$tab\}".
       $Public;
@@ -1040,7 +1040,7 @@ sub RuleExistsForKey
 {
   my $key = shift;
 
-  return exists( $Dict->{ $key } ); 
+  return exists( $Dict->{ $key } );
 }
 
 
@@ -1151,7 +1151,7 @@ sub CommentStarts
 {
   my $line = shift;
 
-  return $line =~ /^\s*(?:\/\*|\/\/)/; 
+  return $line =~ /^\s*(?:\/\*|\/\/)/;
 }
 
 # Relies on few suppositions based on comments style in tests
