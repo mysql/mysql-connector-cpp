@@ -39,7 +39,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 /**
  * Base class for all test cases. Creates connections, statements, etc. and
  * closes them.
- * 
+ *
  * @author Mark Matthews
  * @version $Id: BaseTestCase.java 5440 2006-06-27 17:00:53 +0000 (Tue, 27 Jun
  *          2006) mmatthews $
@@ -208,7 +208,7 @@ namespace testsuite
 /* throws SQLException */
     void dropSchemaObject(String objectType, String objectName) ;
 
-    sql::Connection * getConnection(); 
+    sql::Connection * getConnection();
 
 /* throws SQLException */
     sql::Connection * getAdminConnection() ;
@@ -227,13 +227,13 @@ namespace testsuite
 
   /**
 	 * Returns a new connection with the given properties
-	 * 
+	 *
 	 * @param props
 	 *            the properties to use (the URL will come from the standard for
 	 *            this testcase).
-	 * 
+	 *
 	 * @return a new connection using the given properties.
-	 * 
+	 *
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
@@ -249,7 +249,7 @@ namespace testsuite
   /**
 	 * Returns the per-instance counter (for messages when multi-threading
 	 * stress tests)
-	 * 
+	 *
 	 * @return int the instance number
 	 */
 
@@ -261,12 +261,12 @@ namespace testsuite
     String getMysqlVariable(Connection & c, const String & variableName) ;
   /**
 	 * Returns the named MySQL variable from the currently connected server.
-	 * 
+	 *
 	 * @param variableName
 	 *            the name of the variable to return
-	 * 
+	 *
 	 * @return the value of the given variable, or NULL if it doesn't exist
-	 * 
+	 *
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
@@ -277,9 +277,9 @@ namespace testsuite
   /**
 	 * Returns the properties that represent the default URL used for
 	 * connections for all testcases.
-	 * 
+	 *
 	 * @return properties parsed from com.mysql.jdbc.testsuite.url
-	 * 
+	 *
 	 * @throws SQLException
 	 *             if parsing fails
 	 */
@@ -330,10 +330,10 @@ namespace testsuite
   /**
 	 * Checks whether a certain system property is defined, in order to
 	 * run/not-run certain tests
-	 * 
+	 *
 	 * @param propName
 	 *            the property name to check for
-	 * 
+	 *
 	 * @return true if the property is defined.
 	 */
 
@@ -343,14 +343,14 @@ namespace testsuite
   /**
 	 * Checks whether the database we're connected to meets the given version
 	 * minimum
-	 * 
+	 *
 	 * @param major
 	 *            the major version to meet
 	 * @param minor
 	 *            the minor version to meet
-	 * 
+	 *
 	 * @return boolean if the major/minor is met
-	 * 
+	 *
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
@@ -361,14 +361,14 @@ namespace testsuite
   /**
 	 * Checks whether the database we're connected to meets the given version
 	 * minimum
-	 * 
+	 *
 	 * @param major
 	 *            the major version to meet
 	 * @param minor
 	 *            the minor version to meet
-	 * 
+	 *
 	 * @return boolean if the major/minor is met
-	 * 
+	 *
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
@@ -398,7 +398,7 @@ public:
 
   /**
 	 * Creates a new BaseTestCase object.
-	 * 
+	 *
 	 * @param name
 	 *            The name of the JUnit test case
 	 */
@@ -408,7 +408,7 @@ public:
     void  logDebug            ( const String & message ) ;
   /**
 	 * Creates resources used by all tests.
-	 * 
+	 *
 	 * @throws Exception
 	 *             if an error occurs.
 	 */
@@ -418,7 +418,7 @@ public:
     virtual void setUp() ;
   /**
 	 * Destroys resources created during the test case.
-	 * 
+	 *
 	 * @throws Exception
 	 *             DOCUMENT ME!
 	 */
@@ -436,5 +436,5 @@ public:
   theFixtureClass( const String & name ) \
   : BaseTestFixture( #theFixtureClass )
 
-#endif
+#endif // _BASE_TEST_FIXTURE_
 

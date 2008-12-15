@@ -1,4 +1,4 @@
-/* Copyright (C) 2007 - 2008 MySQL AB, 2008 Sun Microsystems, Inc.
+/* Copyright 2008 Sun Microsystems, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ namespace testsuite
   {
     std::cout << "not ok " << ordNum
       << " - " << name;
-    
+
     if ( comment != NULL )
     {
       std::cout << " # " << comment;
