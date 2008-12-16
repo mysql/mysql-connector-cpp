@@ -95,6 +95,8 @@ IF(WIN32)
 	SET(jdbctests_sources
     		${jdbctests_sources}
 		BaseTestCase.h
+		example_base.h
+		example/example.h
 		framework/test_runner.h
 		framework/test_suite.h
 		framework/test_case.h
@@ -114,7 +116,43 @@ IF(WIN32)
 		)
 ENDIF(WIN32)
 
+
 ADD_EXECUTABLE(CJUnitTestsPort ${jdbctests_sources})
 TARGET_LINK_LIBRARIES(CJUnitTestsPort ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
+
+SET(example_sources
+	example_base.cpp
+	example_main.cpp
+	framework/test_suite.cpp
+	framework/test_factory.cpp
+	framework/test_listener.cpp
+	framework/test_asserts.cpp
+	framework/test_tapOutputter.cpp
+	framework/test_runner.cpp
+	../../common/stringutils.cpp
+	resources.cpp
+	example/example.cpp)
+
+IF(WIN32)
+	SET(example_sources
+    		${example_sources}
+	example_base.h
+	framework/test_runner.h
+	framework/test_suite.h
+	framework/test_case.h
+	framework/test_factory.h
+	framework/test_listener.h
+	framework/test_asserts.h
+	framework/test_outputter.h
+	framework/test_tapOutputter.h
+	../../common/stringutils.h
+	resources.h
+	example/example.h)
+ENDIF(WIN32)
+
+ADD_EXECUTABLE(example_tests ${example_sources})
+TARGET_LINK_LIBRARIES(example_tests ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
 
 MESSAGE(STATUS "Configuring C/J junit tests port")

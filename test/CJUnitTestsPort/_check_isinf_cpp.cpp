@@ -27,6 +27,5 @@ main ()
 {
 	float f = 0.0;
 	int r = std::isinf(f);
-	return r;
-	return 0;
+	return r;	
 }

@@ -46,7 +46,7 @@ void TestSuite::runTest()
 
   std::vector<Test*>::iterator it;
 
-  for( it= testCases.begin(); it!= testCases.end(); ++it )
+  for (it=testCases.begin(); it != testCases.end(); ++it)
   {
     //Incrementing order number of current test
     TestsListener::theInstance().incrementCounter();
@@ -105,7 +105,7 @@ TestSuite::~TestSuite()
 {
   std::vector<Test*>::iterator it;
 
-  for( it = testCases.begin(); it != testCases.end(); ++it )
+  for (it=testCases.begin(); it != testCases.end(); ++it)
     delete (*it);
 }
 }

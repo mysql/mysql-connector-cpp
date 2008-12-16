@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ */
 
 #include "test_listener.h"
 #include "test_tapOutputter.h"
@@ -25,103 +25,97 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 namespace testsuite
 {
-  TestsListener::TestsListener()
-    : curSuiteName    ( "n/a" )
-    , curTestName     ( "n/a" )
-    , curTestOrdNum   ( 0  )
-    , executed        ( 0  )
-    , exceptions      ( 0  )
-  {
-    //TODO: Make StartOptions  dependent
-    outputter.reset( new TAP() );
-  }
+
+TestsListener::TestsListener()
+: curSuiteName("n/a")
+, curTestName("n/a")
+, curTestOrdNum(0)
+, executed(0)
+, exceptions(0)
+{
+  //TODO: Make StartOptions  dependent
+  outputter.reset(new TAP());
+}
 
 
-  //TODO: "set" counterparts
-  std::iostream & TestsListener::errorsLog()
-  {
-    return log;
-  }
+//TODO: "set" counterparts
 
+std::iostream & TestsListener::errorsLog()
+{
+  return log;
+}
 
-  std::iostream & TestsListener::messagesLog()
-  {
-    return log;
-  }
+std::iostream & TestsListener::messagesLog()
+{
+  return log;
+}
 
+void TestsListener::currentTestName(const String & name)
+{
+  theInstance().curTestName=name;
+}
 
-  void TestsListener::currentTestName( const String & name )
-  {
-    theInstance().curTestName = name;
-  }
+void TestsListener::incrementCounter()
+{
+  ++curTestOrdNum;
+}
 
+int TestsListener::recordFailed()
+{
+  failedTests.push_back(curTestOrdNum);
+  return failedTests.size();
+}
 
-  void TestsListener::incrementCounter()
-  {
-    ++curTestOrdNum;
-  }
+void TestsListener::nextSuiteStarts(const String & name, int testsNumber)
+{
+  theInstance().curSuiteName=name;
 
+  theInstance().outputter->SuiteHeader(name, theInstance().curTestOrdNum + 1
+                                       , testsNumber);
+}
 
-  int TestsListener::recordFailed()
-  {
-    failedTests.push_back( curTestOrdNum );
-    return failedTests.size();
-  }
+void TestsListener::testHasRun()
+{
+  //std::cout << ".";
+  ++theInstance().executed;
+}
 
+void TestsListener::testHasFailed()
+{
+  theInstance().outputter->TestFailed(theInstance().curTestOrdNum, theInstance().curTestName);
+  theInstance().recordFailed();
+  throw TestFailedException();
+}
 
-  void TestsListener::nextSuiteStarts( const String & name, int testsNumber )
-  {
-    theInstance().curSuiteName = name;
+void TestsListener::testHasThrown()
+{
+  theInstance().outputter->TestFailed(theInstance().curTestOrdNum, theInstance().curTestName);
+  theInstance().recordFailed();
+  ++theInstance().exceptions;
+}
 
-    theInstance().outputter->SuiteHeader( name, theInstance().curTestOrdNum + 1
-      , testsNumber );
-  }
+void TestsListener::testHasPassed()
+{
+  theInstance().outputter->TestPassed(theInstance().curTestOrdNum
+                                      , theInstance().curTestName);
+}
 
-  void TestsListener::testHasRun()
-  {
-    //std::cout << ".";
-    ++ theInstance().executed;
-  }
+void TestsListener::testHasPassedWithInfo(const String & str)
+{
+  theInstance().outputter->TestPassed(theInstance().curTestOrdNum
+                                      , theInstance().curTestName, str.c_str());
+}
 
+void TestsListener::summary()
+{
+  outputter->Summary(executed
+                     , failed() + exceptions
+                     , failedTests);
+}
 
-  void TestsListener::testHasFailed()
-  {
-    theInstance().outputter->TestFailed( theInstance().curTestOrdNum, theInstance().curTestName );
-    theInstance().recordFailed();
-    throw TestFailedException();
-  }
-
-
-  void TestsListener::testHasThrown()
-  {
-    theInstance().outputter->TestFailed( theInstance().curTestOrdNum, theInstance().curTestName );
-    theInstance().recordFailed();
-    ++ theInstance().exceptions;
-  }
-
-  void TestsListener::testHasPassed()
-  {
-    theInstance().outputter->TestPassed( theInstance().curTestOrdNum
-      , theInstance().curTestName );
-  }
-
-  void TestsListener::testHasPassedWithInfo( const String & str)
-  {
-    theInstance().outputter->TestPassed( theInstance().curTestOrdNum
-      , theInstance().curTestName, str.c_str() );
-  }
-
-  void TestsListener::summary()
-  {
-    outputter->Summary( executed
-      , failed() + exceptions
-      , failedTests );
-  }
-
-
-  bool TestsListener::allTestsPassed()
-  {
-    return theInstance().exceptions && !theInstance().failed() == 0;
-  }
+bool TestsListener::allTestsPassed()
+{
+  return theInstance().exceptions && !theInstance().failed() == 0;
+}
 
 }

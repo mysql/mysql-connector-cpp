@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ */
 
 #ifndef __TESTASSERTS_H_
 #define __TESTASSERTS_H_
@@ -26,34 +26,34 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 namespace testsuite
 {
-  void fail         ( const char* reason, const char* file, int line );
+void fail(const char* reason, const char* file, int line);
 
-  void assertTrue   ( const char * msg, bool expression
-                    , const char* file, int line );
+void assertTrue(const char * msg, bool expression
+                , const char* file, int line);
 
-  void assertEquals ( const char * expected, const char * result
-                    , const char* file, int line );
+void assertEquals(const char * expected, const char * result
+                  , const char* file, int line);
 
-  void assertEquals ( int expected, int result
-                    , const char* file, int line );
+void assertEquals(int expected, int result
+                  , const char* file, int line);
 
-  void assertEquals ( bool expected, bool  result
-    , const char* file, int line );
+void assertEquals(bool expected, bool result
+                  , const char* file, int line);
 
-  void assertEquals ( const double & expected, const double & result
-                    , const char* file, int line );
+void assertEquals(const double & expected, const double & result
+                  , const char* file, int line);
 
-  void assertEquals ( const float & expected, const float & result
-                    , const char * file, int line );
+void assertEquals(const float & expected, const float & result
+                  , const char * file, int line);
 
-  void assertEquals ( const long double & expected, const long double & result
-                    , const char * file, int line );
+void assertEquals(const long double & expected, const long double & result
+                  , const char * file, int line);
 
-  void assertEqualsEpsilon( const double & expected, const double & result
-                          , const double & epsilon, const char * file, int line );
+void assertEqualsEpsilon(const double & expected, const double & result
+                         , const double & epsilon, const char * file, int line);
 
-  void assertEquals ( const String & expected, const String & result
-                    , const char* file, int line );
+void assertEquals(const String & expected, const String & result
+                  , const char* file, int line);
 }
 
 // Macroses should be used inside testsuite namespace
