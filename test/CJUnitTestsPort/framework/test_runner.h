@@ -33,7 +33,7 @@ class TestsRunner : public policies::Singleton<TestsRunner>
 {
 private:
   // should be private/protected
-  CCPP_SINGLETON(TestsRunner);
+  CCPP_SINGLETON(TestsRunner)
 
   std::vector<const String::value_type *> TestSuites;
 
