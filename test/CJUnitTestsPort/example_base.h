@@ -7,7 +7,7 @@ the Free Software Foundation; version 2 of the License.
 
 There are special exceptions to the terms and conditions of the GPL
 as it is applied to this software. View the full text of the
-exception in file EXCEPTIONS-conECTOR-C++ in the directory of this
+exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
 software distribution.
 
 This program is distributed in the hope that it will be useful,

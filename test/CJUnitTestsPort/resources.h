@@ -21,7 +21,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #ifndef _TESTSUITE_RESOURCES_H_
 #define _TESTSUITE_RESOURCES_H_
-#include "BaseTestCase.h"
+
+#include "../common/ccppTypes.h"
 
 namespace testsuite
 {

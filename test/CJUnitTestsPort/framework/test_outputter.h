@@ -29,7 +29,7 @@ namespace testsuite
 // TODO: Add listener state passing - verbose/trace/streams
 // TODO: Add failed tests list passing
 
-ABSTRACT class TestOutputter
+_ABSTRACT class TestOutputter
 {
 public:
 
@@ -37,38 +37,38 @@ public:
   {
   }
 
-  virtual void Header(const String::value_type * text=NULL) PURE;
+  virtual void Header(const String::value_type * text=NULL) _PURE;
 
   virtual void SuiteHeader(const String & name
                            , unsigned first
-                           , unsigned testsInSuite) PURE;
+                           , unsigned testsInSuite) _PURE;
 
   virtual void TestPassed(unsigned ordNum
                           , const String & name
-                          , const String::value_type * comment=NULL) PURE;
+                          , const String::value_type * comment=NULL) _PURE;
 
   virtual void TestFailed(unsigned ordNum
                           , const String & name
-                          , const String::value_type * comment=NULL) PURE;
+                          , const String::value_type * comment=NULL) _PURE;
 
-  virtual void Comment(const String & comment) PURE;
+  virtual void Comment(const String & comment) _PURE;
 
   virtual void Summary(unsigned testsRun
                        , unsigned testsFailed
                        // a bit TAP-bound... However listener can complete
                        // needed info
-                       , std::vector<int> failedTestsNum) PURE;
+                       , std::vector<int> failedTestsNum) _PURE;
 
   virtual void SuiteSummary(const String & suiteName
                             , unsigned testsRun
-                            , unsigned testsFailed) PURE;
+                            , unsigned testsFailed) _PURE;
 
 
   // Make string from anything shouldn't be a problem
   virtual void Assert(const String & expected
                       , const String & result
                       , const String & file
-                      , int line) PURE;
+                      , int line) _PURE;
 };
 }
 

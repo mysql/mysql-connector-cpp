@@ -25,13 +25,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include <math.h>
 
-#include "common/ccppTypes.h"
-#include "common/stringutils.h"
 #include "resources.h"
 #include <driver/mysql_public_iface.h>
 
 #include "framework/framework.h"
 
+#include "common/ccppTypes.h"
+#include "common/stringutils.h"
 
 #define MESSAGE(msg)  TestsListener::theInstance().messagesLog() << msg << std::endl;
 
@@ -445,6 +445,10 @@ public:
 #define MyAssertEquals(str, a, b) ASSERT_MESSAGE(a==b, str)
 
 // Redefining TEST_FIXTURE
+#ifdef TEST_FIXTURE
+#undef TEST_FIXTURE
+#endif
+
 #define TEST_FIXTURE( theFixtureClass ) typedef theFixtureClass TestSuiteClass;\
   theFixtureClass( const String & name ) \
   : BaseTestFixture( #theFixtureClass )
