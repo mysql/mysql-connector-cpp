@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ */
 
 
 #ifndef __TESTSRUNNER_H_
@@ -28,27 +28,27 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 namespace testsuite
 {
+
 class TestsRunner : public policies::Singleton<TestsRunner>
 {
 private:
   // should be private/protected
-  CCPP_SINGLETON( TestsRunner );
+  CCPP_SINGLETON(TestsRunner)
 
   std::vector<const String::value_type *> TestSuites;
 
-  StartOptions *                          startOptions;
+  StartOptions * startOptions;
 
 public:
 
-	bool            runTests        ();
+  bool runTests();
 
-  void            setStartOptions ( StartOptions * options );
+  void setStartOptions(StartOptions * options);
 
-  StartOptions *  getStartOptions () const;
+  StartOptions * getStartOptions() const;
 };
 
 }
 
 
 #endif  // __TESTSRUNNER_H_
-

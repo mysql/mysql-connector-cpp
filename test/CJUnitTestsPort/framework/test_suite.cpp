@@ -46,7 +46,7 @@ void TestSuite::runTest()
 
   std::vector<Test*>::iterator it;
 
-  for( it= testCases.begin(); it!= testCases.end(); ++it )
+  for (it=testCases.begin(); it != testCases.end(); ++it)
   {
     //Incrementing order number of current test
     TestsListener::theInstance().incrementCounter();
@@ -84,6 +84,10 @@ void TestSuite::runTest()
         << (*it)->name() << ". Message: " << e.what()
         << std::endl;
     }
+    catch ( TestFailedException &)
+    {
+      // Thrown by fail. Just used to stop test execution
+    }
     catch (...)
     {
       TestsListener::theInstance().testHasThrown();
@@ -101,7 +105,7 @@ TestSuite::~TestSuite()
 {
   std::vector<Test*>::iterator it;
 
-  for( it = testCases.begin(); it != testCases.end(); ++it )
+  for (it=testCases.begin(); it != testCases.end(); ++it)
     delete (*it);
 }
 }

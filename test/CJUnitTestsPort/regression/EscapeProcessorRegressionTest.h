@@ -32,67 +32,68 @@
 
 namespace testsuite
 {
-  namespace regression
+namespace regression
+{
+
+class EscapeProcessorRegressionTest : public BaseTestFixture
+{
+private:
+  typedef BaseTestFixture super;
+protected:
+public:
+
+  TEST_FIXTURE(EscapeProcessorRegressionTest)
   {
-    class EscapeProcessorRegressionTest : public BaseTestFixture
-    {
-    private:
-      typedef BaseTestFixture super;
-    protected:
-    public:
-
-      TEST_FIXTURE( EscapeProcessorRegressionTest )
-      {
-        TEST_CASE( testBug11797 );
-        TEST_CASE( testBug11498 );
-        TEST_CASE( testBug14909 );
-        TEST_CASE( testBug25399 );
-      }
-
-
-      /**
-      * Tests fix for BUG#11797 - Escape tokenizer doesn't respect stacked single
-      * quotes for escapes.
-      *
-      * @throws Exception
-      *             if the test fails.
-      */
-
-      /* throws Exception */
-
-      void testBug11797() ;
-      /**
-      * Tests fix for BUG#11498 - Escape processor didn't honor strings
-      * demarcated with double quotes.
-      *
-      * @throws Exception
-      *             if the test fails.
-      */
-
-      /* throws Exception */
-
-      void testBug11498() ;
-      /**
-      * Tests fix for BUG#14909 - escape processor replaces quote character in
-      * quoted string with string delimiter.
-      *
-      * @throws Exception
-      */
-
-      /* throws Exception */
-
-      void testBug14909() ;
-      /**
-      * Tests fix for BUG#25399 - EscapeProcessor gets confused by multiple backslashes
-      *
-      * @throws Exception if the test fails.
-      */
-
-      /* throws Exception */
-
-      void testBug25399() ;
-    };
-
-    REGISTER_FIXTURE( EscapeProcessorRegressionTest );
+    TEST_CASE(testBug11797);
+    TEST_CASE(testBug11498);
+    TEST_CASE(testBug14909);
+    TEST_CASE(testBug25399);
   }
+
+
+  /**
+   * Tests fix for BUG#11797 - Escape tokenizer doesn't respect stacked single
+   * quotes for escapes.
+   *
+   * @throws Exception
+   *             if the test fails.
+   */
+
+  /* throws Exception */
+
+  void testBug11797();
+  /**
+   * Tests fix for BUG#11498 - Escape processor didn't honor strings
+   * demarcated with double quotes.
+   *
+   * @throws Exception
+   *             if the test fails.
+   */
+
+  /* throws Exception */
+
+  void testBug11498();
+  /**
+   * Tests fix for BUG#14909 - escape processor replaces quote character in
+   * quoted string with string delimiter.
+   *
+   * @throws Exception
+   */
+
+  /* throws Exception */
+
+  void testBug14909();
+  /**
+   * Tests fix for BUG#25399 - EscapeProcessor gets confused by multiple backslashes
+   *
+   * @throws Exception if the test fails.
+   */
+
+  /* throws Exception */
+
+  void testBug25399();
+};
+
+REGISTER_FIXTURE(EscapeProcessorRegressionTest);
+}
 }

@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ */
 
 #ifndef __TESTLISTENER_H_
 #define __TESTLISTENER_H_
@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <vector>
 
 #include "start_options.h"
+#include "test_tapOutputter.h"
 #include <cppconn/exception.h>
 #include "../common/stringutils.h"
 #include "../common/singleton.h"
@@ -34,42 +35,44 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 namespace testsuite
 {
 
-class TestOutputter;
-
 class TestsListener : public policies::Singleton<TestsListener>
 {
-  CCPP_SINGLETON( TestsListener );
+  CCPP_SINGLETON(TestsListener);
 
-  std::auto_ptr<TestOutputter>  outputter;
+  std::auto_ptr<TestOutputter> outputter;
 
-  String                        curSuiteName;
-  String                        curTestName;
-  unsigned                      curTestOrdNum;
-  std::stringstream             log;
-  unsigned                      executed;
-  std::vector<int>              failedTests;
+  String curSuiteName;
+  String curTestName;
+  unsigned curTestOrdNum;
+  std::stringstream log;
+  unsigned executed;
+  std::vector<int> failedTests;
   // don't really need to count exceptions
-  unsigned                      exceptions;
+  unsigned exceptions;
 
 public:
 
-  std::iostream &         errorsLog         ();
-  std::iostream &         messagesLog       ();
+  std::iostream & errorsLog();
+  std::iostream & messagesLog();
 
-  void                    incrementCounter  ();
-  int                     recordFailed      ();
-  int                     failed            () { return failedTests.size(); }
+  void incrementCounter();
+  int recordFailed();
 
-	static void             currentTestName   ( const String & name );
-  static void             nextSuiteStarts   ( const String & name, int testsNumber );
-	static void             testHasRun        ();
-	static void             testHasFailed     ();
-	static void             testHasThrown     ();
-  static void             testHasPassed     ();
-  static void             testHasPassedWithInfo  ( const String & str );
+  int failed()
+  {
+    return failedTests.size();
+  }
 
-	void                    summary();
-	static bool             allTestsPassed();
+  static void currentTestName(const String & name);
+  static void nextSuiteStarts(const String & name, int testsNumber);
+  static void testHasRun();
+  static void testHasFailed();
+  static void testHasThrown();
+  static void testHasPassed();
+  static void testHasPassedWithInfo(const String & str);
+
+  void summary();
+  static bool allTestsPassed();
 };
 
 class TestFailedException

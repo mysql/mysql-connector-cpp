@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ */
 
 #include "test_factory.h"
 
@@ -28,14 +28,13 @@ TestSuiteFactory::TestSuiteFactory()
 {
 }
 
-
 bool TestSuiteFactory::runTests()
 {
   std::map<const char *, TestSuiteCreator>::iterator it;
 
-  for(it=testSuites.begin(); it!=testSuites.end(); it++)
+  for (it=testSuites.begin(); it != testSuites.end(); it++)
   {
-    Test* suite = it->second( it->first );
+    Test* suite=it->second(it->first);
     suite->runTest();
     delete suite;
   }
@@ -44,18 +43,17 @@ bool TestSuiteFactory::runTests()
 
   TestsListener::theInstance().summary();
 
-  if ( false )//&& errors!="")
-    std::cout << "\n\nError Details:\n";// << errors;
+  if (false)//&& errors!="")
+    std::cout << "\n\nError Details:\n"; // << errors;
 
   return TestsListener::theInstance().allTestsPassed();
 }
 
-
-int TestSuiteFactory::RegisterTestSuite( const String::value_type * name, TestSuiteCreator creator)
+int TestSuiteFactory::RegisterTestSuite(const String::value_type * name, TestSuiteCreator creator)
 {
-  TestSuiteFactory::theInstance().testSuites.insert( std::make_pair( name, creator ) );
+  TestSuiteFactory::theInstance().testSuites.insert(std::make_pair(name, creator));
 
   return TestSuiteFactory::theInstance().testSuites.size();
 }
 
-}   // namespace testsuite
+} // namespace testsuite

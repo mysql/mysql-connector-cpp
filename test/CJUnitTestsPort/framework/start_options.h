@@ -1,5 +1,4 @@
-/* Copyright 2008 Sun Microsystems, Inc.
-
+/*
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; version 2 of the License.
@@ -17,7 +16,7 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ */
 
 
 #ifndef __TEST_FRAMEWORK_START_OPTIONS
@@ -29,74 +28,77 @@
 
 namespace testsuite
 {
-  struct TestsFilter
+
+struct TestsFilter
+{
+  List filter;
+
+  TestsFilter()
   {
-    List filter;
 
-    TestsFilter ()
-    {
+  }
 
-    }
-
-    TestsFilter ( String & filterString )
-    {
-    }
-
-    bool  Admits      ( String & testName )
-    {
-      return true;
-    }
-  };
-
-  enum ParameterOrder { poFirst=-1, poUrl, poUser, poPasswd, poSchema, poLast};
-  struct StartOptions
+  TestsFilter(String & filterString)
   {
-    bool          verbose;
-    TestsFilter   filter;
+  }
 
-    String        dbUrl;
-    String        dbUser;
-    String        dbPasswd;
-    String        dbSchema;
+  bool Admits(String & testName)
+  {
+    return true;
+  }
+};
 
-    StartOptions()
-        : verbose ( false )
+enum ParameterOrder
+{
+  poFirst=-1, poUrl, poUser, poPasswd, poSchema, poLast
+};
 
+struct StartOptions
+{
+  bool verbose;
+  TestsFilter filter;
+
+  String dbUrl;
+  String dbUser;
+  String dbPasswd;
+  String dbSchema;
+
+  StartOptions()
+          : verbose(false)
+
+  {
+  }
+
+  StartOptions(int paramsNumber, char** paramsValues)
+          : verbose(false)
+  {
+    String * _param[ poLast - poFirst - 1 ]={&dbUrl, &dbUser, &dbPasswd, &dbSchema};
+
+    if (paramsNumber > 1)
     {
-    }
-
-    StartOptions( int paramsNumber, char** paramsValues )
-        : verbose (false)
-    {
-    String * _param[ poLast - poFirst - 1 ] = {&dbUrl, &dbUser, &dbPasswd, &dbSchema};
-
-      if ( paramsNumber > 1 )
+      ParameterOrder curParam=poFirst;
+      while (--paramsNumber)
       {
-        ParameterOrder curParam = poFirst;
-        while ( --paramsNumber )
+        ciString param(*(++paramsValues));
+
+        if (param.substr(0, 2) == "--")
         {
-          ciString param( *(++paramsValues));
 
-          if ( param.substr(0,2) == "--" )
+          if (param == "--verbose")
           {
-
-            if( param == "--verbose" )
-            {
-              verbose = true;
-            }
+            verbose=true;
           }
-          else if ( curParam < poLast )
-          {
-            curParam = static_cast<ParameterOrder>( curParam + 1 );
+        } else if (curParam < poLast)
+        {
+          curParam=static_cast<ParameterOrder> (curParam + 1);
 
-            *_param[ curParam ] = String(param.c_str());
-          }
+          *_param[ curParam ]=String(param.c_str());
         }
       }
-
     }
-  };
 
-}       // namespace testsuite
+  }
+};
+
+} // namespace testsuite
 #endif  // __TEST_FRAMEWORK_START_OPTIONS
-

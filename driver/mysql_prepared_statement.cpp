@@ -91,7 +91,7 @@ public:
 
 	bool isAllSet()
 	{
-		for (unsigned int i = 0; i < param_count; i++) {
+		for (unsigned int i = 0; i < param_count; ++i) {
 			if (!value_set[i]) {
 				return false;
 			}
@@ -101,12 +101,13 @@ public:
 
 	void clearParameters()
 	{
-		for (unsigned int i = 0; i < param_count; i++) {
+		for (unsigned int i = 0; i < param_count; ++i) {
 			delete (char*) bind[i].length;
 			bind[i].length = NULL;
 			delete[] (char*) bind[i].buffer;
 			bind[i].buffer = NULL;
 			blob_bind[i] = NULL;
+			value_set[i] = false;
 		}	
 	}
 
