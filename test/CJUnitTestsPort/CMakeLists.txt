@@ -41,7 +41,7 @@ ENDIF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)
 
 SET(jdbctests_sources
 	ccpptests.cpp
-	BaseTestCase.cpp
+	BaseTestFixture.cpp
 	framework/test_suite.cpp
 	framework/test_factory.cpp
 	framework/test_listener.cpp
@@ -62,9 +62,7 @@ SET(jdbctests_sources
 IF(WIN32)
 	SET(jdbctests_sources
     		${jdbctests_sources}
-		BaseTestCase.h
-		example_base.h
-		example/example.h
+		BaseTestFixture.h
 		framework/test_runner.h
 		framework/test_suite.h
 		framework/test_case.h
