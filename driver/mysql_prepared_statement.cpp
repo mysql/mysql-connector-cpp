@@ -50,12 +50,16 @@ class MySQL_ParamBind
 	bool 		* value_set;
 	unsigned int param_count;
 
+	sql::Blob	** blob_bind;
+
 public:
+
 	MySQL_ParamBind(unsigned int paramCount)
 	{
 		if (!paramCount) {
 			bind = NULL;
 			value_set = NULL;
+			blob_bind = NULL;
 		} else {
 			bind = (MYSQL_BIND *) calloc(paramCount, sizeof(MYSQL_BIND));
 			value_set = new bool[paramCount];
@@ -63,6 +67,7 @@ public:
 				bind[i].is_null_value = 1;
 				value_set[i] = false;
 			}
+			blob_bind = (sql::Blob **) calloc(paramCount, sizeof(sql::Blob *));
 		}
 		param_count = paramCount;
 	}
@@ -71,11 +76,17 @@ public:
 	{
 		free(bind);
 		delete [] value_set;
+		free(blob_bind);
 	}
 	
 	void set(unsigned int position)
 	{
 		value_set[position] = true;
+	}
+
+	void setBlob(unsigned int position, sql::Blob * blob)
+	{
+		blob_bind[position] = blob;
 	}
 
 	bool isAllSet()
@@ -95,6 +106,7 @@ public:
 			bind[i].length = NULL;
 			delete[] (char*) bind[i].buffer;
 			bind[i].buffer = NULL;
+			blob_bind[i] = NULL;
 		}	
 	}
 
@@ -102,6 +114,12 @@ public:
 	{
 		return bind;
 	}
+
+	sql::Blob * getBlobObject(unsigned int position)
+	{
+		return blob_bind[position];
+	}
+
 };
 
 
@@ -142,17 +160,50 @@ MySQL_Prepared_Statement::~MySQL_Prepared_Statement()
 /* }}} */
 
 
+/* {{{ MySQL_Prepared_Statement::sendLongDataBeforeParamBind() -I- */
+bool
+MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
+{
+	CPP_ENTER("MySQL_Prepared_Statement::sendLongDataBeforeParamBind");
+	MYSQL_BIND * bind = param_bind->get();
+	for (unsigned int i = 0; i < param_count; i++) {
+		if (bind[i].buffer_type == MYSQL_TYPE_LONG_BLOB) {
+			do {
+				std::string chunk = param_bind->getBlobObject(i)->readChunk(1024);
+				if (!chunk.length()) {
+					break;
+				}
+				if (mysql_stmt_send_long_data(stmt, i, chunk.data(), chunk.length())) {
+					switch (mysql_stmt_errno(stmt)) {
+						case CR_OUT_OF_MEMORY:
+							throw std::bad_alloc();
+						case CR_INVALID_BUFFER_USE:
+							throw InvalidArgumentException("MySQL_Prepared_Statement::setBlob: can't set blob value on that column");
+						case CR_SERVER_GONE_ERROR:
+						case CR_COMMANDS_OUT_OF_SYNC:
+						default:
+							throw SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
+					}
+				}
+			} while (1);
+		}
+	}
+	return true;
+}
+/* }}} */
+
+
 /* {{{ MySQL_Prepared_Statement::do_query() -I- */
 void
 MySQL_Prepared_Statement::do_query()
 {
 	CPP_ENTER("MySQL_Prepared_Statement::do_query");
-	if (param_count && !param_bind->isAllSet() || mysql_stmt_bind_param(stmt, param_bind->get())) {
+	if (param_count && !param_bind->isAllSet() || mysql_stmt_bind_param(stmt, param_bind->get()) ) {
 		CPP_ERR("Couldn't bind");
 		throw sql::SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
 	}
 
-	if (mysql_stmt_execute(stmt)) {
+	if (!sendLongDataBeforeParamBind() || mysql_stmt_execute(stmt)) {
 		CPP_ERR("Couldn't execute");
 		throw sql::SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
 	}
@@ -252,6 +303,7 @@ allocate_buffer_for_type(MYSQL_FIELD *field)
 			throw sql::InvalidArgumentException("allocate_buffer_for_type: invalid result_bind data type");
 	}
 }
+/* }}} */
 
 
 /* {{{ MySQL_Prepared_Statement::bindResult() -I- */
@@ -314,6 +366,8 @@ MySQL_Prepared_Statement::bindResult()
 		throw sql::SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
 	}
 }
+/* }}} */
+
 
 /* {{{ MySQL_Prepared_Statement::executeQuery() -I- */
 sql::ResultSet *
@@ -375,9 +429,9 @@ MySQL_Prepared_Statement::setBigInt(unsigned int parameterIndex, const std::stri
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_Statement::setBlob() -U- */
+/* {{{ MySQL_Prepared_Statement::setBlob() -I- */
 void
-MySQL_Prepared_Statement::setBlob(unsigned int parameterIndex, sql::Blob & blob)
+MySQL_Prepared_Statement::setBlob(unsigned int parameterIndex, sql::Blob * blob)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::setBlob");
 	CPP_INFO_FMT("this=%p", this);
@@ -386,24 +440,21 @@ MySQL_Prepared_Statement::setBlob(unsigned int parameterIndex, sql::Blob & blob)
 	if (parameterIndex >= param_count) {
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setBlob: invalid 'parameterIndex'");
 	}
-	do {
-		std::string chunk = blob.readChunk(1024);
-		if (!chunk.length()) {
-			break;
-		}
-		if (mysql_stmt_send_long_data(stmt, parameterIndex, chunk.c_str(), chunk.length())) {
-			switch (mysql_stmt_errno(stmt)) {
-				case CR_OUT_OF_MEMORY:
-					throw std::bad_alloc();
-				case CR_INVALID_BUFFER_USE:
-					throw InvalidArgumentException("MySQL_Prepared_Statement::setBlob: can't set blob value on that column");
-				case CR_SERVER_GONE_ERROR:
-				case CR_COMMANDS_OUT_OF_SYNC:
-				default:
-					throw SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
-			}
-		}
-	} while (1);
+
+	param_bind->set(parameterIndex);
+	MYSQL_BIND * param = &param_bind->get()[parameterIndex];
+
+	delete[] (char*) param->buffer;
+
+	param->buffer_type	= MYSQL_TYPE_LONG_BLOB;
+	param->buffer		= NULL;
+	param->buffer_length= 0;
+	param->is_null_value= 0;
+	
+	delete (unsigned long *) param->length;
+	param->length = new unsigned long(0);
+
+	param_bind->setBlob(parameterIndex, blob);
 }
 /* }}} */
 

@@ -56,7 +56,7 @@ public:
 
 	virtual void setBigInt(unsigned int parameterIndex, const std::string& value) = 0;
 
-	virtual void setBlob(unsigned int parameterIndex, sql::Blob & blob) = 0;
+	virtual void setBlob(unsigned int parameterIndex, sql::Blob * blob) = 0;
 
 	virtual void setBoolean(unsigned int parameterIndex, bool value) = 0;
 

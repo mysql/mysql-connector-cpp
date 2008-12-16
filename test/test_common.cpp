@@ -72,7 +72,58 @@ extern "C"
 #pragma warning(disable:4251)
 #endif
 
+class TestBlob : public sql::Blob
+{
+	std::string value;
+	size_t position;
+public:
+	TestBlob(std::string & s) : value(s), position(0) {}
+	virtual ~TestBlob() {}
+
+	std::string readChunk(size_t chunkSize);
+	void writeChunk(const std::string & chunk);
+};
+
+
+/* {{{ TestBlob::readChunk() */
+std::string TestBlob::readChunk(size_t chunkSize)
+{
+	try {
+		size_t tmp = position;
+		position+=chunkSize;
+		return value.substr(tmp, chunkSize);
+	} catch (std::out_of_range) {
+		return std::string("");
+	}
+}
+/* }}} */
+
+
+/* {{{ TestBlob::writeChunk() */
+void TestBlob::writeChunk(const std::string & chunk)
+{
+	value.append(chunk);
+}
+/* }}} */
+
+
 /* {{{	*/
+static bool populate_blob_table(std::auto_ptr<sql::Connection> & conn, std::string database)
+{
+	std::auto_ptr<sql::Statement> stmt(conn->createStatement());
+	ensure("stmt is NULL", stmt.get() != NULL);
+
+	stmt->execute("USE " + database);
+	stmt->execute("DROP TABLE IF EXISTS test_blob");
+	if (true == stmt->execute("CREATE TABLE test_blob (a longblob) ENGINE=MYISAM")) {
+		return false;
+	}
+	return true;
+}
+/* }}} */
+
+
+/* {{{ */
 static bool populate_insert_data(sql::Statement * stmt)
 {
 	return stmt->execute("INSERT INTO test_function (a,b,c,d,e) VALUES(1, 111, NULL, \"222\", \"xyz\")");
@@ -88,7 +139,7 @@ static bool populate_test_table(std::auto_ptr<sql::Connection> & conn, std::stri
 
 	stmt->execute("USE " + database);
 	stmt->execute("DROP TABLE IF EXISTS test_function");
-	if (true == stmt->execute("CREATE TABLE test_function (a integer unsigned not null, b integer, c integer default null, d char(10), e varchar(10) character set utf8 collate utf8_bin)")) {
+	if (true == stmt->execute("CREATE TABLE test_function (a integer unsigned not null, b integer, c integer default null, d char(10), e varchar(10) character set utf8 collate utf8_bin) ENGINE=MYISAM")) {
 		return false;
 	}
 
@@ -1728,6 +1779,35 @@ static void test_prep_statement_2(std::auto_ptr<sql::Connection> & conn, std::st
 /* }}} */
 
 
+/* {{{ Tests blob with PS */
+static void test_prep_statement_blob(std::auto_ptr<sql::Connection> & conn, std::string database)
+{
+	ENTER_FUNCTION();
+	try {
+		populate_blob_table(conn, database);
+		/* USE still cannot be prepared */
+		std::auto_ptr<sql::Statement> use_stmt(conn->createStatement());
+		use_stmt->execute("USE " + database);
+
+		std::auto_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("INSERT INTO test_blob VALUES(?)"));
+		std::string value("This is blob's value");
+		TestBlob myTestBlob(value);
+		stmt->setBlob(1, &myTestBlob);
+		stmt->execute();
+
+	} catch (sql::SQLException &e) {
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  %s (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState().c_str());
+		printf("# ");
+		total_errors++;
+	} catch (...) {
+		printf("\n# ERR: Caught unknown exception at %s::%d\n", CPPCONN_FUNC, __LINE__);
+		printf("# ");
+		total_errors++;
+	}
+	LEAVE_FUNCTION();
+}
+/* }}} */
+
 /* {{{	Invoke as many "not implemented" methods as possible for better code coverage (and to make sure we keep CHANGES current) */
 static void test_not_implemented_connection(std::auto_ptr<sql::Connection> & conn)
 {
@@ -2839,6 +2919,10 @@ int main(int argc, const char **argv)
 
 		conn.reset(get_connection(host, user, pass));
 		test_prep_statement_2(conn, database);
+		conn.reset(NULL);
+
+		conn.reset(get_connection(host, user, pass));
+		test_prep_statement_blob(conn, database);
 		conn.reset(NULL);
 
 		conn.reset(get_connection(host, user, pass));

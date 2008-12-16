@@ -1,5 +1,8 @@
 Beta  1.0.2 - xxxx-xx-xx
 
+- Fixed MySQL_PreparedStatement::setBlob() to really work. In the tests 
+  there is a simple example of a class implementing sql::Blob. (Andrey)
+
 - Addition of a new unit test framework for JDBC compliance and
   regression testing. (Lawrin)
 
