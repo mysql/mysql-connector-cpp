@@ -47,7 +47,7 @@ public:
   }
 
   /**
-   * SELECT 'Hello world' example
+   * SELECT 'Hello world' example using framework magic
    *
    * Runs SELECT 'Hello world!' using the Connection and Statement
    * object that has been implicitly created by setUp() before calling the test.
@@ -65,7 +65,10 @@ public:
   void test1();
 
   /**
-   * Description
+   * SELECT 'Hello world' example without framework magic
+	 *
+	 * The same as test1() but with less framework magic and, for example, 
+	 * manual connect using the framework method getConnection()
    */
   void test2();
 

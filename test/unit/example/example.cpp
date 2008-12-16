@@ -29,7 +29,7 @@ namespace example
 
 void example_test_class::test1()
 {
-  logMsg("example_test_class::test1()");
+  logMsg("Hello world using framework magic");
   try
   {
     /*
@@ -67,6 +67,28 @@ void example_test_class::test1()
 
 void example_test_class::test2()
 {
+	logMsg("Hello world without framework magic");
+	try {
+		/*
+		 Connection, Statement and ResultSet are typedefs from unit_fixture.h:
+		 
+		 typedef std::auto_ptr<sql::Connection> Connection
+		 typedef std::auto_ptr<sql::Statement> Statement;
+		 typedef std::auto_ptr<sql::ResultSet> ResultSet;
+		 
+		 Do yourself a favour and use auto_ptr in tests!
+		 */
+		Connection con(getConnection());
+		Statement stmt(con->createStatement());
+		ResultSet res(stmt->executeQuery("SELECT 'Hello world!' AS _world"));
+		
+		res->next();
+		logMsg(res->getString("_world"));
+	} catch (sql::SQLException &e) {
+		logErr(e.what());
+		logErr("SQLState: " + e.getSQLState());
+		FAIL(e.what());
+	}
 }
 
 } /* namespace example */

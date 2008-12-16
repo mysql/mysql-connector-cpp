@@ -133,7 +133,7 @@ protected:
    * @param	object_type							SQL type, e.g. TABLE, FUNCTION, ...
    * @param object_name							SQL element name, e.g. "table1"
    * @param	columns_and_other_stuff Additional SQL definitions
-   * @throws SQLException*
+   * @throws SQLException &
    */
 
   void createSchemaObject(String object_type, String object_name,
@@ -147,7 +147,7 @@ protected:
    *
    * @param object_type			SQL type e.g. TABLE, FUNCTION, ...
    * @param object_name			SQL element name, e.g. "table1"
-   * @throws SQLException*
+   * @throws SQLException &
    */
   void dropSchemaObject(String object_type, String object_name);
 
@@ -156,7 +156,7 @@ protected:
    *
    * @param table_name							SQL table name
    * @param	columns_and_other_stuff Additional SQL definitions
-   * @throws SQLException*
+   * @throws SQLException &
    */
   void createTable(String table_name, String columns_and_other_stuff);
 
@@ -167,7 +167,7 @@ protected:
    * during tearDown().
    *
    * @param	table_name	SQL table name
-   * @throws SQLException*
+   * @throws SQLException &
    */
   void dropTable(String table_name);
 
@@ -178,7 +178,7 @@ protected:
    * want to use typedef std::auto_ptr<sql::Connection>con(getConnection())
    * or similar for convenience reasons.
    *
-   * @throws SQLException*
+   * @throws SQLException &
    */
   sql::Connection * getConnection();
 
@@ -218,14 +218,14 @@ public:
    * Opens a connection and stores the object in this->con.
    * All other members (this->stmt, this->pstmt, this->res) are uninitialized!
    *
-   * @throws SQLException*
+   * @throws SQLException &
    */
   virtual void setUp();
 
   /**
    * Destroys resources created during the test case.
    *
-   * @throws SQLException*
+   * @throws SQLException &
    */
   virtual void tearDown();
 
