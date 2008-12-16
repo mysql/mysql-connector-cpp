@@ -3441,11 +3441,6 @@ std::list< String > tmp2;
     else if (iColumnNamesLength < iCount)
     {
         iCount = iColumnNamesLength;
-        statusColumnCount = true;
-    }
-    else
-    {
-        statusColumnCount = true;
     }
 
     logMsg("Comparing Column Names...");
