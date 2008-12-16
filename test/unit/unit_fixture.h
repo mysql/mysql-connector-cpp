@@ -58,20 +58,6 @@ private:
    */
   static Driver *driver;
 
-  /**
-   * Write (info) message to test protocol
-   *
-   * @param	message	Message to be included in the protocol
-   */
-  void logMsg(const String message);
-
-  /**
-   * Write error to test protocol
-   *
-   * @param	message Message to be included in the protocol
-   */
-  void logErr(const String message);
-
 protected:
 
   /**
@@ -211,11 +197,26 @@ public:
    * @param message
    */
   void logDebug(const String message);
+	
+	/**
+   * Write (info) message to test protocol
+   *
+   * @param	message	Message to be included in the protocol
+   */
+  void logMsg(const String message);
+
+  /**
+   * Write error to test protocol
+   *
+   * @param	message Message to be included in the protocol
+   */
+  void logErr(const String message);
 
   /**
    * Creates resources used by all tests.
    *
-   * TODO: which ones?
+   * Opens a connection and stores the object in this->con.
+	 * All other members (this->stmt, this->pstmt, this->res) are uninitialized!
    *
    * @throws SQLException*
    */

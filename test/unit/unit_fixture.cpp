@@ -78,9 +78,11 @@ void unit_fixture::setUp()
     throw sqle;
   }
 
-  this->stmt.reset(this->con->createStatement());
+	/* TODO: conect message incl. version using logDebug() */
+  logDebug("Driver: " + driver->getName());
+	/*
+					 + " " + String(driver->getMajorVersion() + driver->getMajorVersion + String(".") + driver->getMinorVersion());*/
 
-  /* TODO: conect message incl. version using logDebug() */
   con->setSchema((db.length() > 0 ? db : default_db));
 }
 
@@ -120,12 +122,12 @@ void unit_fixture::createSchemaObject(String object_type, String object_name,
   sql.append(" ");
   sql.append(columns_and_other_stuff);
 
-  this->stmt->executeUpdate(sql);
+  stmt->executeUpdate(sql);
 }
 
 void unit_fixture::dropSchemaObject(String object_type, String object_name)
 {
-  this->stmt->executeUpdate(String("DROP ") + object_type + " IF EXISTS "
+  stmt->executeUpdate(String("DROP ") + object_type + " IF EXISTS "
                             + object_name);
 }
 
