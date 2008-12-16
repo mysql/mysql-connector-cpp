@@ -42,8 +42,10 @@ public:
 
   EXAMPLE_TEST_FIXTURE(example_test_class)
   {
-    TEST_CASE(test1);
-    TEST_CASE(test2);
+    TEST_CASE(test_hello_world1);
+    TEST_CASE(test_hello_world2);
+    TEST_CASE(test_assert_equals);
+    TEST_CASE(test_assert_equals_fail);
   }
 
   /**
@@ -62,15 +64,36 @@ public:
    * use. All other objects are in an undefined state. All members are defined
    * as auto-ptr, meaning, you don't need to worry about cleaning up them.
    */
-  void test1();
+  void test_hello_world1();
 
   /**
    * SELECT 'Hello world' example without framework magic
-	 *
-	 * The same as test1() but with less framework magic and, for example, 
-	 * manual connect using the framework method getConnection()
+   *
+   * The same as test1() but with less framework magic and, for example,
+   * manual connect using the framework method getConnection()
    */
-  void test2();
+  void test_hello_world2();
+
+  /**
+   * Demo of ASSERT_EQUALS macro
+   *
+   * ASSERT_EQUALS macro can handle the following types:
+   * - int
+   * - bool
+   * - double
+   * - float
+   * - long double
+   * - char*
+   *
+   * ASSERT_EQUALS is a wrapper for:
+   * void assertEquals(<type> expected, <type> result, const char* file, int line);
+   */
+  void test_assert_equals();
+
+  /**
+   * Demo of a failing ASSERT_EQUALS
+   */
+  void test_assert_equals_fail();
 
 };
 

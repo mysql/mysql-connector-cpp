@@ -27,7 +27,7 @@ namespace testsuite
 namespace example
 {
 
-void example_test_class::test1()
+void example_test_class::test_hello_world1()
 {
   logMsg("Hello world using framework magic");
   try
@@ -65,30 +65,63 @@ void example_test_class::test1()
   /* If all goes fine, there is no need to call PASS() or something.	 */
 }
 
-void example_test_class::test2()
+void example_test_class::test_hello_world2()
 {
-	logMsg("Hello world without framework magic");
-	try {
-		/*
-		 Connection, Statement and ResultSet are typedefs from unit_fixture.h:
-		 
-		 typedef std::auto_ptr<sql::Connection> Connection
-		 typedef std::auto_ptr<sql::Statement> Statement;
-		 typedef std::auto_ptr<sql::ResultSet> ResultSet;
-		 
-		 Do yourself a favour and use auto_ptr in tests!
-		 */
-		Connection con(getConnection());
-		Statement stmt(con->createStatement());
-		ResultSet res(stmt->executeQuery("SELECT 'Hello world!' AS _world"));
-		
-		res->next();
-		logMsg(res->getString("_world"));
-	} catch (sql::SQLException &e) {
-		logErr(e.what());
-		logErr("SQLState: " + e.getSQLState());
-		FAIL(e.what());
-	}
+  logMsg("Hello world without framework magic");
+  try
+  {
+    /*
+     Connection, Statement and ResultSet are typedefs from unit_fixture.h:
+
+     typedef std::auto_ptr<sql::Connection> Connection
+     typedef std::auto_ptr<sql::Statement> Statement;
+     typedef std::auto_ptr<sql::ResultSet> ResultSet;
+
+     Do yourself a favour and use auto_ptr in tests!
+     */
+    Connection con(getConnection());
+    Statement stmt(con->createStatement());
+    ResultSet res(stmt->executeQuery("SELECT 'Hello world!' AS _world"));
+
+    res->next();
+    logMsg(res->getString("_world"));
+  } catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    FAIL(e.what());
+  }
+}
+
+void example_test_class::test_assert_equals()
+{
+  logMsg("ASSERT_EQUALS() macro demo");
+  /*
+   Be careful: ASSERT_EQUALS() is not available for each and every type!
+   */
+  int a=1;
+  ASSERT_EQUALS(a, a);
+
+  bool b=false;
+  ASSERT_EQUALS(b, b);
+
+  float c= -1.23;
+  ASSERT_EQUALS(c, c);
+
+  double d=1.23;
+  ASSERT_EQUALS(d, d);
+
+  long double e=1.23e12;
+  ASSERT_EQUALS(e, e);
+
+  const char f[]="foo";
+  ASSERT_EQUALS(f, f);
+}
+
+void example_test_class::test_assert_equals_fail()
+{
+  logMsg("ASSERT_EQUALS failure");
+  ASSERT_EQUALS(true, false);
 }
 
 } /* namespace example */
