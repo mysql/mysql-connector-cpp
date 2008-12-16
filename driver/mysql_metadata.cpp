@@ -2797,8 +2797,8 @@ MySQL_ConnectionMetaData::getUDTs(const std::string& /*catalog*/, const std::str
 	std::list<std::string> rs_data;
 	std::list<std::string> rs_field_data;
 
-	rs_field_data.push_back("TYPE_CATALOG");
-	rs_field_data.push_back("TYPE_SCHEMA");
+	rs_field_data.push_back("TYPE_CAT");
+	rs_field_data.push_back("TYPE_SCHEM");
 	rs_field_data.push_back("TYPE_NAME");
 	rs_field_data.push_back("CLASS_NAME");
 	rs_field_data.push_back("DATA_TYPE");

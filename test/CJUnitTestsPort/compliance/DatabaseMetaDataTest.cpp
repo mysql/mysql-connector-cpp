@@ -3589,14 +3589,11 @@ void DatabaseMetaDataTest::testGetUDTs01()
   {
     statusColumnCount=false;
     logMsg("Different number of columns");
-  } else if (iColumnNamesLength < iCount)
-  {
-    iCount=iColumnNamesLength;
-    statusColumnCount=true;
-  } else
-  {
-    statusColumnCount=true;
-  }
+    }
+    else if (iColumnNamesLength < iCount)
+    {
+        iCount = iColumnNamesLength;
+    }
 
   logMsg("Comparing Column Names...");
 
@@ -3613,10 +3610,10 @@ void DatabaseMetaDataTest::testGetUDTs01()
       logMsg(sColumnNames[iColumnNamesLength - 1]);
       logMsg(rsmd->getColumnName(iCount));
       break;
+        }
+        --iCount;
+        --iColumnNamesLength;
     }
-    iCount--;
-    iColumnNamesLength--;
-  }
 
   if ((statusColumnMatch == false) && (statusColumnCount == true))
   {

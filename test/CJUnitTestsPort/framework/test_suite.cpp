@@ -17,32 +17,32 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
+*/
 
 #include "test_suite.h"
 
 namespace testsuite
 {
-
 const String & TestSuite::name() const
 {
   return suiteName;
 };
 
-TestSuite::TestSuite(const String& name)
-: suiteName(name)
+
+TestSuite::TestSuite( const String& name )
+: suiteName( name )
 {
 }
 
-void TestSuite::RegisterTestCase(Test * test)
+void TestSuite::RegisterTestCase( Test * test )
 {
-  testCases.push_back(test);
+  testCases.push_back( test );
 }
 
 /** calls each test after setUp and tearDown TestFixture methods */
 void TestSuite::runTest()
 {
-  TestsListener::nextSuiteStarts(suiteName, testCases.size());
+  TestsListener::nextSuiteStarts( suiteName, testCases.size() );
 
   std::vector<Test*>::iterator it;
 
@@ -56,41 +56,48 @@ void TestSuite::runTest()
       setUp();
 
       TestsListener::testHasRun();
-      TestsListener::currentTestName((*it)->name());
+      TestsListener::currentTestName( (*it)->name() );
 
       (*it)->runTest();
 
       TestsListener::testHasPassed();
 
       tearDown();
-    }    // TODO: move interpretation of exception to TestSuite descendants
+    }
+    // TODO: move interpretation of exception to TestSuite descendants
     // framework shouldn't know about sql::* exceptions
-    catch (sql::MethodNotImplementedException & sqlni)
+    catch ( sql::MethodNotImplementedException & sqlni )
     {
-      String msg("SKIP "); // or should it be TODO
-      msg=msg + " relies on method " + sqlni.what()
-              + ", which is not implemented at the moment.";
+      String msg ( "SKIP " ); // or should it be TODO
+      msg = msg + " relies on method " + sqlni.what()
+        + ", which is not implemented at the moment.";
 
-      TestsListener::testHasPassedWithInfo(msg);
+      TestsListener::testHasPassedWithInfo( msg );
 
-    }    catch (std::exception & e)
+    }
+    catch ( std::exception & e )
     {
       TestsListener::theInstance().testHasThrown();
       TestsListener::theInstance().errorsLog()
-              << "Not trapped exception occurred while running (probably while setUp"\
+        << "Not trapped exception occurred while running (probably while setUp"\
         "or tearDown):"
-              << (*it)->name() << ". Message: " << e.what()
-              << std::endl;
-    }    catch (...)
+        << (*it)->name() << ". Message: " << e.what()
+        << std::endl;
+    }
+    catch ( TestFailedException &)
+    {
+      // Thrown by fail. Just used to stop test execution
+    }
+    catch (...)
     {
       TestsListener::theInstance().testHasThrown();
       TestsListener::theInstance().errorsLog()
-              << "Not trapped exception occurred while running:"
-              << (*it)->name() << std::endl;
+        << "Not trapped exception occurred while running:"
+        << (*it)->name() << std::endl;
     }
 
     // TODO: check why did i add it and is it still needed.
-    TestsListener::theInstance().currentTestName("n/a");
+    TestsListener::theInstance().currentTestName( "n/a" );
   }
 }
 
@@ -102,3 +109,5 @@ TestSuite::~TestSuite()
     delete (*it);
 }
 }
+
+
