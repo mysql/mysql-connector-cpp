@@ -1,4 +1,5 @@
-/* Copyright (C) 2007 - 2008 MySQL AB, 2008 Sun Microsystems, Inc.
+/*
+   Copyright 2008 Sun Microsystems, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -26,50 +27,84 @@
 
 namespace testsuite
 {
-static const String defaultHost="127.0.0.1";
-static const String defaultPort=_T("3306");
-static const String defaultDb=_T("test");
-static const String defaultLogin=_T("root");
-static const String defaultPasswd=_T("root");
 
+	static const String default_url = "tcp://127.0.0.1";
+	static const String default_db = "test";
+	static const String default_user =  "root";
+	static const String default_passwd = "root";
+	
 Driver * example_fixture::driver=NULL;
-
-void example_fixture::init()
-{
-  host=TestsRunner::theInstance().getStartOptions()->dbUrl;
-  login=TestsRunner::theInstance().getStartOptions()->dbUser;
-  passwd=TestsRunner::theInstance().getStartOptions()->dbPasswd;
-  db=TestsRunner::theInstance().getStartOptions()->dbSchema;
-}
-
-void example_fixture::logMsg(String message)
-{
-  TestsListener::theInstance().messagesLog() << message << std::endl;
-}
-
-void example_fixture::logErr(String message)
-{
-  TestsListener::theInstance().errorsLog() << message << std::endl;
-}
 
 /**
  * Creates a new example_fixture object.
  *
- * @param name
- *            The name of the JUnit test case
+ * @param name The name of the unit test case
  */
-
-
 example_fixture::example_fixture(const String & name)
 : super(name),
 conn(NULL),
 pstmt(NULL),
 stmt(NULL),
-rs(NULL),
-hasSps(true)
-
+rs(NULL)
 {
   init();
+}
+
+void example_fixture::init()
+{
+  url=TestsRunner::theInstance().getStartOptions()->dbUrl;
+  user=TestsRunner::theInstance().getStartOptions()->dbUser;
+  passwd=TestsRunner::theInstance().getStartOptions()->dbPasswd;
+  db=TestsRunner::theInstance().getStartOptions()->dbSchema;
+}
+
+/**
+ * Creates resources used by all tests.
+ *
+ * @throws Exception
+ *             if an error occurs.
+ */
+void example_fixture::setUp()
+{
+  this->created_objects.clear();
+
+  try
+  {
+    this->conn.reset(getConnection());
+  } catch (sql::SQLException & sqle)
+  {
+    logErr(String("Couldn't get connection") + sqle.what());
+    throw sqle;
+  }
+
+  this->stmt.reset(this->conn->createStatement());
+
+	/* TODO: connect message incl. version using logDebug() */
+  
+	DatabaseMetaData dbmd(conn->getMetaData());
+  stmt->execute(String("USE ") + (db.length() > 0 ? db : default_db));
+}
+
+/**
+ * Destroys SQL schema objects created during the test case.
+ *
+ * @throws Exception
+ */
+void example_fixture::tearDown()
+{
+	
+  rs.reset();
+  for (int i=0; i < static_cast<int> (this->created_objects.size() - 1); i+=2)
+  {
+    try
+    {
+      dropSchemaObject(this->created_objects[ i ], this->created_objects[ i + 1 ]);
+    } catch (sql::SQLException &) { }
+  }
+
+  stmt.reset();
+  pstmt.reset();
+  conn.reset();
 }
 
 /* throws SQLException & */
@@ -77,22 +112,29 @@ hasSps(true)
 void example_fixture::createSchemaObject(String objectType, String objectName,
                                          String columnsAndOtherStuff)
 {
-  this->createdObjects.push_back(objectType);
-  this->createdObjects.push_back(objectName);
+  this->created_objects.push_back(objectType);
+  this->created_objects.push_back(objectName);
 
   dropSchemaObject(objectType, objectName);
-  String createSql(_T("CREATE  "));
+  String sql(_T("CREATE  "));
 
-  createSql.resize(objectName.length()
+  sql.resize(objectName.length()
                    + objectType.length() + columnsAndOtherStuff.length() + 10);
 
-  createSql.append(objectType);
-  createSql.append(" ");
-  createSql.append(objectName);
-  createSql.append(" ");
-  createSql.append(columnsAndOtherStuff);
-  this->stmt->executeUpdate(createSql);
+  sql.append(objectType);
+  sql.append(" ");
+  sql.append(objectName);
+  sql.append(" ");
+  sql.append(columnsAndOtherStuff);
+  this->stmt->executeUpdate(sql);
 }
+
+void example_fixture::dropSchemaObject(String objectType, String objectName)
+{
+  this->stmt->executeUpdate(String("DROP ") + objectType + " IF EXISTS "
+                            + objectName);
+}
+
 
 void example_fixture::createTable(String tableName, String columnsAndOtherStuff)
 {
@@ -106,74 +148,11 @@ void example_fixture::dropTable(String tableName)
   dropSchemaObject("TABLE", tableName);
 }
 
-/* throws SQLException & */
-
-void example_fixture::dropSchemaObject(String objectType, String objectName)
-{
-  this->stmt->executeUpdate(String("DROP ") + objectType + " IF EXISTS "
-                            + objectName);
-}
-
-void example_fixture::logDebug(const String & message)
-{
-  logMsg(message);
-}
-
 /**
- * Creates resources used by all tests.
+ * Returns a database connection
  *
- * @throws Exception
- *             if an error occurs.
+ * @throws SQLException &
  */
-
-/* throws Exception */
-
-void example_fixture::setUp()
-{
-  this->createdObjects.clear();
-
-  try
-  {
-    this->conn.reset(getConnection());
-  } catch (sql::SQLException & sqle)
-  {
-    logErr(String("Couldn't get connection") + sqle.what());
-    throw sqle;
-  }
-
-  this->stmt.reset(this->conn->createStatement());
-
-  try
-  {
-    if (host.find_first_of("mysql") != String::npos)
-    {
-      this->rs.reset(this->stmt->executeQuery("SELECT VERSION()"));
-      this->rs->next();
-      logDebug("Connected to " + this->rs->getString(1));
-      //this->rs->close();
-      this->rs.reset();
-    } else
-    {
-      logDebug("Connected to "
-               + this->conn->getMetaData()->getDatabaseProductName()
-               + " / "
-               + this->conn->getMetaData()->getDatabaseProductVersion());
-    }
-  } catch (sql::SQLException & sqle)
-  {
-    logErr(sqle.what());
-  }
-
-  if (this->rs.get() != NULL)
-    this->rs->close();
-
-  DatabaseMetaData dbmd(conn->getMetaData());
-
-  hasSps=dbmd->supportsStoredProcedures();
-
-  stmt->execute(String("USE ") + (db.length() > 0 ? db : defaultDb));
-}
-
 sql::Connection * example_fixture::getConnection()
 {
   if (driver == NULL)
@@ -182,69 +161,30 @@ sql::Connection * example_fixture::getConnection()
     logMsg(String(_T("Done: loaded ")) + driver->getName());
   }
 
-  if (host.length() == 0)
-  {
-    host=defaultHost;
+  if (url.length() == 0)  
+    url=default_url;
+	
+	if (user.length() == 0)
+		user = default_user;
+	
+	if (passwd.length() == 0)
+		passwd = default_passwd;
 
-    if (login.length() == 0)
-    {
-      login=defaultLogin;
-      passwd=defaultPasswd;
-    }
-  }
-
-  return driver->connect(host, /*port,*/ login, passwd);
+  return driver->connect(url, user, passwd);
 }
 
 
-/**
- * Destroys resources created during the test case.
- *
- * @throws Exception
- *             DOCUMENT ME!
- */
 
-/* throws Exception */
-void example_fixture::tearDown()
-{
-  rs.reset();
-
-  for (int i=0; i < static_cast<int> (this->createdObjects.size() - 1); i+=2)
-  {
-    try
-    {
-      dropSchemaObject(this->createdObjects[ i ], this->createdObjects[ i + 1 ]);
-    } catch (sql::SQLException &)
-    {
-    }
-  }
-
-
-  stmt.reset();
-
-  pstmt.reset();
-
-  conn.reset();
-
-}
 
 /**
  * Checks whether the database we're connected to meets the given version
  * minimum
  *
- * @param major
- *            the major version to meet
- * @param minor
- *            the minor version to meet
- *
+ * @param major the major version to meet
+ * @param minor the minor version to meet 
  * @return bool if the major/minor is met
- *
- * @throws SQLException &
- *             if an error occurs.
+ * @throws SQLException& if an error occurs.
  */
-
-/* throws SQLException & */
-
 bool example_fixture::versionMeetsMinimum(int major, int minor)
 {
   return versionMeetsMinimum(major, minor, 0);
@@ -254,19 +194,11 @@ bool example_fixture::versionMeetsMinimum(int major, int minor)
  * Checks whether the database we're connected to meets the given version
  * minimum
  *
- * @param major
- *            the major version to meet
- * @param minor
- *            the minor version to meet
- *
+ * @param major the major version to meet
+ * @param minor the minor version to meet
  * @return bool if the major/minor is met
- *
- * @throws SQLException &
- *             if an error occurs.
+ * @throws SQLException&
  */
-
-/* throws SQLException & */
-
 bool example_fixture::versionMeetsMinimum(int major, int minor, int subminor)
 {
   return true;
@@ -305,7 +237,20 @@ void example_fixture::closeMemberJDBCResources()
   }
 }
 
-
-
-
+void example_fixture::logMsg(String message)
+{
+  TestsListener::theInstance().messagesLog() << message << std::endl;
 }
+
+void example_fixture::logErr(String message)
+{
+  TestsListener::theInstance().errorsLog() << message << std::endl;
+}
+
+void example_fixture::logDebug(const String & message)
+{
+  logMsg(message);
+}
+
+
+} /* namespace testsuite */

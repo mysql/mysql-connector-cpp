@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2005-2007 MySQL AB
+ Copyright 2008 Sun Microsystems, Inc.
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as
@@ -24,9 +24,7 @@
 #include "../example_base.h"
 
 /**
- * Tests regressions w/ the Escape Processor code.
- *
- * @version $Id:$
+ * Example of a collection of tests
  *
  */
 
@@ -42,27 +40,24 @@ private:
 protected:
 public:
 
-  TEST_FIXTURE2(example_test_class)
+  EXAMPLE_TEST_FIXTURE(example_test_class)
   {
-    TEST_CASE(testBug11797);
-
+    TEST_CASE(test1);
+	TEST_CASE(test2);
   }
 
-
   /**
-   * Tests fix for BUG#11797 - Escape tokenizer doesn't respect stacked single
-   * quotes for escapes.
-   *
-   * @throws Exception
-   *             if the test fails.
+   * Description
    */
+  void test1();
 
-  /* throws Exception */
-
-  void testBug11797();
+	/**
+   * Description
+   */
+  void test2();
 
 };
 
 REGISTER_FIXTURE(example_test_class);
-}
-}
+} /* namespace example */
+} /* namespace testsuite */

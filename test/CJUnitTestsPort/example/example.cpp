@@ -1,4 +1,5 @@
-/* Copyright (C) 2007 - 2008 MySQL AB, 2008 Sun Microsystems, Inc.
+/*
+Copyright 2008 Sun Microsystems, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -27,18 +28,18 @@ namespace example
 {
 
 /**
- * Tests fix for BUG#11797 - Escape tokenizer doesn't respect stacked single
- * quotes for escapes.
- *
- * @throws Exception
- *             if the test fails.
+ * Description test1
  */
-
-/* throws Exception */
-void example_test_class::testBug11797()
+void example_test_class::test1()
 {
-
 }
 
+/**
+ * Description test2
+ */
+void example_test_class::test2()
+{
 }
-}
+
+} /* namespace example */
+} /* namespace testsuite */

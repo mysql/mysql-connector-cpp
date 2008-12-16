@@ -1,4 +1,5 @@
-/* Copyright (C) 2007 - 2008 MySQL AB, 2008 Sun Microsystems, Inc.
+/*
+Copyright 2008 Sun Microsystems, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,7 +20,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 #ifndef _EXAMPLE_BASE_TEST_FIXTURE_
 #define _EXAMPLE_BASE_TEST_FIXTURE_
 
@@ -31,9 +31,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <driver/mysql_public_iface.h>
 
 #include "framework/framework.h"
-
-
-#define MESSAGE(msg)  TestsListener::theInstance().messagesLog() << msg << std::endl;
 
 namespace testsuite
 {
@@ -47,23 +44,41 @@ typedef std::auto_ptr<sql::DatabaseMetaData> DatabaseMetaData;
 
 class example_fixture : public TestSuite
 {
+		
+public:	
   typedef TestSuite super;
 
-  List createdObjects;
+	/**
+	 * List of SQL schema objects created during the test run
+	 *
+	 * Used by tearDown() to clean up the database after the test run
+	 */
+  List created_objects;
+	
+	/**
+	 * Driver to be used
+	 *
+	 */
   static Driver *driver;
+	
   static void logMsg(String message);
-
   void logErr(String message);
 
 protected:
 
+	/**
+	 * 
+	 *
+	 *
+	 */
   void init();
+		
+	String url;
+	String db;
+	String user;
+	String passwd;
+	
 
-  String host;
-  String port;
-  String login;
-  String passwd;
-  String db;
 
   /** Connection to server, initialized in setUp() Cleaned up in tearDown(). */
 
@@ -89,39 +104,18 @@ protected:
    * ResultSet to be used in tests, not initialized. Cleaned up in tearDown().
    */
   ResultSet rs;
-
-  bool hasSps;
-
   /* throws SQLException */
 
   void createSchemaObject(String objectType, String objectName,
                           String columnsAndOtherStuff);
-
+	void dropSchemaObject(String objectType, String objectName);
 
   void createTable(String tableName, String columnsAndOtherStuff);
   void dropTable(String tableName);
 
-  void dropSchemaObject(String objectType, String objectName);
-
   sql::Connection * getConnection();
 
-  /* throws SQLException */
-
-
-  bool runLongTests();
-  /**
-   * Checks whether a certain system property is defined, in order to
-   * run/not-run certain tests
-   *
-   * @param propName
-   *            the property name to check for
-   *
-   * @return true if the property is defined.
-   */
-
-  bool runTestIfSysPropDefined(const String & propName);
-
-  bool runMultiHostTests();
+  
   /**
    * Checks whether the database we're connected to meets the given version
    * minimum
@@ -195,10 +189,10 @@ public:
   /* throws Exception */
   virtual void tearDown();
 };
-}
 
-// Redefining TEST_FIXTURE
-#define TEST_FIXTURE2( theFixtureClass ) typedef theFixtureClass TestSuiteClass;\
+} /* namespace testsuite */
+
+#define EXAMPLE_TEST_FIXTURE( theFixtureClass ) typedef theFixtureClass TestSuiteClass;\
   theFixtureClass( const String & name ) \
   : example_fixture( #theFixtureClass )
 
