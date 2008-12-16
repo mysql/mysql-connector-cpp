@@ -23,13 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #ifndef _EXAMPLE_BASE_TEST_FIXTURE_
 #define _EXAMPLE_BASE_TEST_FIXTURE_
 
-#include <math.h>
-
-#include "common/ccppTypes.h"
-#include "common/stringutils.h"
-#include "resources.h"
 #include <driver/mysql_public_iface.h>
-
 #include "framework/framework.h"
 
 namespace testsuite
