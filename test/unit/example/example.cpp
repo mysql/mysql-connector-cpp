@@ -27,16 +27,10 @@ namespace testsuite
 namespace example
 {
 
-/**
- * Description test1
- */
 void example_test_class::test1()
 {
 }
 
-/**
- * Description test2
- */
 void example_test_class::test2()
 {
 }

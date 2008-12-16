@@ -196,28 +196,6 @@ protected:
    */
   sql::Connection * getConnection();
 
-
-  /**
-   * Checks whether the database we're conected to meets the given version minimum
-   *
-   * @param major the major version to meet
-   * @param minor the minor version to meet
-   * @return boolean if the major/minor is met
-   * @throws SQLException*
-   */
-  bool versionMeetsMinimum(int major, int minor);
-
-  /**
-   * Checks whether the database we're conected to meets the given version minimum
-   *
-   * @param major the major version to meet
-   * @param minor the minor version to meet
-   * @param subminor the subminor version to meet
-   * @return boolean if the major/minor is met
-   * @throws SQLException*
-   */
-  bool versionMeetsMinimum(int major, int minor, int subminor);
-
 public:
 
   /**

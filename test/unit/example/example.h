@@ -43,7 +43,7 @@ public:
   EXAMPLE_TEST_FIXTURE(example_test_class)
   {
     TEST_CASE(test1);
-	TEST_CASE(test2);
+    TEST_CASE(test2);
   }
 
   /**
@@ -51,7 +51,7 @@ public:
    */
   void test1();
 
-	/**
+  /**
    * Description
    */
   void test2();

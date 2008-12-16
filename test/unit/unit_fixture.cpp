@@ -104,7 +104,7 @@ void unit_fixture::tearDown()
 }
 
 void unit_fixture::createSchemaObject(String object_type, String object_name,
-                                         String columns_and_other_stuff)
+                                      String columns_and_other_stuff)
 {
   created_objects.push_back(object_type);
   created_objects.push_back(object_name);
@@ -134,8 +134,6 @@ void unit_fixture::createTable(String table_name, String columns_and_other_stuff
   createSchemaObject("TABLE", table_name, columns_and_other_stuff);
 }
 
-/* throws SQLException & */
-
 void unit_fixture::dropTable(String table_name)
 {
   dropSchemaObject("TABLE", table_name);
@@ -159,20 +157,6 @@ sql::Connection * unit_fixture::getConnection()
     passwd=default_passwd;
 
   return driver->connect(url, user, passwd);
-}
-
-bool unit_fixture::versionMeetsMinimum(int major, int minor)
-{
-  return versionMeetsMinimum(major, minor, 0);
-}
-
-bool unit_fixture::versionMeetsMinimum(int major, int minor, int subminor)
-{
-  return true;
-  /*
-  ((dynamic_cast<sql::mysql::MySQL_Connection*> (this->con)->versionMeetsMinimum(
-  major, minor, subminor));*/
-
 }
 
 void unit_fixture::logMsg(const String message)
