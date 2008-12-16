@@ -27,14 +27,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <vector>
 
 #include "start_options.h"
+#include "test_tapOutputter.h"
 #include <cppconn/exception.h>
 #include "../common/stringutils.h"
 #include "../common/singleton.h"
 
 namespace testsuite
 {
-
-class TestOutputter;
 
 class TestsListener : public policies::Singleton<TestsListener>
 {
