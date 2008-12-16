@@ -22,7 +22,7 @@
 #include <time.h>
 #include <stdlib.h>
 
-#include "BaseTestCase.h"
+#include "BaseTestFixture.h"
 #include "../common/stringutils.h"
 
 namespace testsuite
