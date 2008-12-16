@@ -20,8 +20,6 @@
 
 INCLUDE_DIRECTORIES(${MYSQLCPPCONN_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${MYSQLCPPCONN_SOURCE_DIR}/cppconn)
-INCLUDE(CheckSymbolExists)
-INCLUDE(CheckFunctionExists)
 
 # no need to look for libmysql - working with C/C++ only!
 #INCLUDE(${CMAKE_SOURCE_DIR}/FindMySQL.cmake)
@@ -36,36 +34,6 @@ IF(WIN32)
 ELSEIF(NOT WIN32)
 	SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn mysqlclient_r)
 ENDIF(WIN32)
-
-CHECK_FUNCTION_EXISTS("isinf" HAVE_ISINF)
-CHECK_SYMBOL_EXISTS("isinf" "ieeefp.h" HAVE_ISINF_IN_IEEEFP_H)
-CHECK_SYMBOL_EXISTS("finite" "ieeefp.h" HAVE_FINITE_IN_IEEEFP_H)
-
-IF(HAVE_ISINF)
-	IF(CMAKE_SYSTEM MATCHES "^AIX")
-		MESSAGE(STATUS "Compiling isinf test program on AIX")
-		INCLUDE (CheckCXXSourceCompiles)
-		CHECK_CXX_SOURCE_COMPILES("_check_isinf_cpp.cpp" HAVE_ISINF_IN_STD)
-		IF(HAVE_ISINF_IN_STD)
-			MESSAGE(STATUS "std::isinf available on AIX")
-			ADD_DEFINITIONS("-DHAVE_ISINF")
-		ELSEIF(NOT HAVE_ISINF_IN_STD)
-			MESSAGE(STATUS "using C isinf on AIX")
-			ADD_DEFINITIONS("-DHAVE_ISINF_IN_MATH")
-		ENDIF(HAVE_ISINF_IN_STD)
-	ELSEIF(NOT CMAKE_SYSTEM EQUAL "AIX")
-		MESSAGE(STATUS "isinf found")
-		ADD_DEFINITIONS("-DHAVE_ISINF")
-	ENDIF(CMAKE_SYSTEM MATCHES "^AIX")
-ENDIF(HAVE_ISINF)
-IF(HAVE_ISINF_IN_IEEEFP_H)
-	MESSAGE(STATUS "isinf found in ieeefp.h")
-	ADD_DEFINITIONS("-DHAVE_ISINF_IN_IEEEFP_H")
-ENDIF(HAVE_ISINF_IN_IEEEFP_H)
-IF(HAVE_FINITE_IN_IEEEFP_H)
-	MESSAGE(STATUS "finite found in ieeefp.h")
-	ADD_DEFINITIONS("-DHAVE_FINITE_IN_IEEEFP_H")
-ENDIF(HAVE_FINITE_IN_IEEEFP_H)
 
 IF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)
 	SET(MY_GCOV_LINK_LIBRARIES gcov)
@@ -116,43 +84,7 @@ IF(WIN32)
 		)
 ENDIF(WIN32)
 
-
 ADD_EXECUTABLE(CJUnitTestsPort ${jdbctests_sources})
 TARGET_LINK_LIBRARIES(CJUnitTestsPort ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
-
-
-SET(example_sources
-	example_base.cpp
-	example_main.cpp
-	framework/test_suite.cpp
-	framework/test_factory.cpp
-	framework/test_listener.cpp
-	framework/test_asserts.cpp
-	framework/test_tapOutputter.cpp
-	framework/test_runner.cpp
-	../../common/stringutils.cpp
-	resources.cpp
-	example/example.cpp)
-
-IF(WIN32)
-	SET(example_sources
-    		${example_sources}
-	example_base.h
-	framework/test_runner.h
-	framework/test_suite.h
-	framework/test_case.h
-	framework/test_factory.h
-	framework/test_listener.h
-	framework/test_asserts.h
-	framework/test_outputter.h
-	framework/test_tapOutputter.h
-	../../common/stringutils.h
-	resources.h
-	example/example.h)
-ENDIF(WIN32)
-
-ADD_EXECUTABLE(example_tests ${example_sources})
-TARGET_LINK_LIBRARIES(example_tests ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
-
 
 MESSAGE(STATUS "Configuring C/J junit tests port")
