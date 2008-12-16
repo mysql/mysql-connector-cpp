@@ -78,10 +78,10 @@ void unit_fixture::setUp()
     throw sqle;
   }
 
-	/* TODO: conect message incl. version using logDebug() */
+  /* TODO: conect message incl. version using logDebug() */
   logDebug("Driver: " + driver->getName());
-	/*
-					 + " " + String(driver->getMajorVersion() + driver->getMajorVersion + String(".") + driver->getMinorVersion());*/
+  /*
+           + " " + String(driver->getMajorVersion() + driver->getMajorVersion + String(".") + driver->getMinorVersion());*/
 
   con->setSchema((db.length() > 0 ? db : default_db));
 }
@@ -128,7 +128,7 @@ void unit_fixture::createSchemaObject(String object_type, String object_name,
 void unit_fixture::dropSchemaObject(String object_type, String object_name)
 {
   stmt->executeUpdate(String("DROP ") + object_type + " IF EXISTS "
-                            + object_name);
+                      + object_name);
 }
 
 void unit_fixture::createTable(String table_name, String columns_and_other_stuff)

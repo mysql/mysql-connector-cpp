@@ -48,19 +48,19 @@ public:
 
   /**
    * SELECT 'Hello world' example
-	 *
-	 * Runs SELECT 'Hello world!' using the Connection and Statement
-	 * object that has been implicitly created by setUp() before calling the test.
-	 *
-	 * The unit_fixture class defines a coupld of useful members for you:
-	 * - Connection 
-	 * - Statement
-	 * - PreparedStatement
-	 * - ResultSet
-	 *
-	 * The Connection object is the only one which is initialized and ready for
-	 * use. All other objects are in an undefined state. All members are defined
-	 * as auto-ptr, meaning, you don't need to worry about cleaning up them.
+   *
+   * Runs SELECT 'Hello world!' using the Connection and Statement
+   * object that has been implicitly created by setUp() before calling the test.
+   *
+   * The unit_fixture class defines a coupld of useful members for you:
+   * - Connection
+   * - Statement
+   * - PreparedStatement
+   * - ResultSet
+   *
+   * The Connection object is the only one which is initialized and ready for
+   * use. All other objects are in an undefined state. All members are defined
+   * as auto-ptr, meaning, you don't need to worry about cleaning up them.
    */
   void test1();
 

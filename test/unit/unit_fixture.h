@@ -197,8 +197,8 @@ public:
    * @param message
    */
   void logDebug(const String message);
-	
-	/**
+
+  /**
    * Write (info) message to test protocol
    *
    * @param	message	Message to be included in the protocol
@@ -216,7 +216,7 @@ public:
    * Creates resources used by all tests.
    *
    * Opens a connection and stores the object in this->con.
-	 * All other members (this->stmt, this->pstmt, this->res) are uninitialized!
+   * All other members (this->stmt, this->pstmt, this->res) are uninitialized!
    *
    * @throws SQLException*
    */
