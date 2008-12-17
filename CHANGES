@@ -1,4 +1,8 @@
-Beta  1.0.2 - xxxx-xx-xx
+Beta  1.0.3 - 2009-xx-xx
+
+
+
+Alpha  1.0.2 - 2008-12-19
 
 - Adding test/unit as a basis for general unit tests based on the new
   test framework, see test/unit/example for basic usage examples (Ulf)
