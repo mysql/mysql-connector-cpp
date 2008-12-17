@@ -24,6 +24,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "../common/ccppTypes.h"
 
+#ifndef __LINE__
+  #define __LINE__ "(line number n/a)"
+#endif 
+
 namespace testsuite
 {
 void fail(const char* reason, const char* file, int line);

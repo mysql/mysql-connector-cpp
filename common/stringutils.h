@@ -22,8 +22,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #ifndef __CCPP_STRINGUTILS_H
 #define __CCPP_STRINGUTILS_H
 
-#include "ccppTypes.h"
 #include <sstream>
+
+#include "ccppTypes.h"
 
 namespace StringUtils
 {

@@ -19,15 +19,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
-#include "../BaseTestCase.h"
-
-//#include java.sql.CallableStatement
-#include "cppconn/resultset.h"
-#include "cppconn/exception.h"
-//#include java.sql.SQLWarning
-#include "cppconn/statement.h"
-
+#include "../BaseTestFixture.h"
 
 /**
  * @author mmatthew

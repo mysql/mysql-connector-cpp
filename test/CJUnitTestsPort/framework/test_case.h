@@ -32,15 +32,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "../common/ccppTypes.h"
 #include "../common/stringutils.h"
 
-ABSTRACT class Test
+_ABSTRACT class Test
 {
 public:
 
   virtual ~Test()
   {
   }
-  virtual void runTest() PURE;
-  virtual const String & name() const PURE;
+  virtual void runTest() _PURE;
+  virtual const String & name() const _PURE;
 };
 
 template <class SuiteClass>
@@ -59,13 +59,13 @@ private:
 
 public:
 
-  TestCase(SuiteClass & obj
-           , TestCaseMethod testMethod
-           , const String & _name)
-  : Test(),
-  suite(&obj),
-  test(testMethod),
-  testName(_name)
+  TestCase(   SuiteClass &    obj
+           ,  TestCaseMethod  testMethod
+           ,  const String &  _name)
+      : Test      (),
+        suite     ( &obj        ),
+        test      ( testMethod  ),
+        testName  ( _name       )
   {
   }
 

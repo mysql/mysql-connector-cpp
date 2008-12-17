@@ -21,7 +21,7 @@
 
  */
 
-#include "../BaseTestCase.h"
+#include "../BaseTestFixture.h"
 
 /**
  * Tests regressions w/ the Escape Processor code.

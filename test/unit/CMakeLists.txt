@@ -39,50 +39,36 @@ IF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)
 	SET(MY_GCOV_LINK_LIBRARIES gcov)
 ENDIF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)
 
-SET(jdbctests_sources
-	ccpptests.cpp
-	BaseTestFixture.cpp
-	framework/test_suite.cpp
-	framework/test_factory.cpp
-	framework/test_listener.cpp
-	framework/test_asserts.cpp
-	framework/test_tapOutputter.cpp
-	framework/test_runner.cpp
+SET(example_sources
+	unit_fixture.cpp
+	main.cpp
+	../CJUnitTestsPort/framework/test_suite.cpp
+	../CJUnitTestsPort/framework/test_factory.cpp
+	../CJUnitTestsPort/framework/test_listener.cpp
+	../CJUnitTestsPort/framework/test_asserts.cpp
+	../CJUnitTestsPort/framework/test_tapOutputter.cpp
+	../CJUnitTestsPort/framework/test_runner.cpp
 	../../common/stringutils.cpp
-	resources.cpp
-	regression/EscapeProcessorRegressionTest.cpp
-	compliance/ConnectionTest.cpp
-	compliance/DatabaseMetaDataTest.cpp
-	compliance/StatementTest.cpp
-	compliance/ResultSetMetadataTest.cpp
-	compliance/PreparedStatementTest.cpp
-	)
+	example/example.cpp)
 
-# It's convinient for VS users to have headers as part of project
 IF(WIN32)
-	SET(jdbctests_sources
-    		${jdbctests_sources}
-		BaseTestFixture.h
-		framework/test_runner.h
-		framework/test_suite.h
-		framework/test_case.h
-		framework/test_factory.h
-		framework/test_listener.h
-		framework/test_asserts.h
-		framework/test_outputter.h
-		framework/test_tapOutputter.h
-		../../common/stringutils.h
-		resources.h
-		regression/EscapeProcessorRegressionTest.h
-		compliance/ConnectionTest.h
-		compliance/DatabaseMetaDataTest.h
-		compliance/StatementTest.h
-		compliance/ResultSetMetadataTest.h
-		compliance/PreparedStatementTest.h
-		)
+	SET(example_sources
+    		${example_sources}
+	unit_fixture.h
+	../CJUnitTestsPort/framework/test_runner.h
+	../CJUnitTestsPort/framework/test_suite.h
+	../CJUnitTestsPort/framework/test_case.h
+	../CJUnitTestsPort/framework/test_factory.h
+	../CJUnitTestsPort/framework/test_listener.h
+	../CJUnitTestsPort/framework/test_asserts.h
+	../CJUnitTestsPort/framework/test_outputter.h
+	../CJUnitTestsPort/framework/test_tapOutputter.h
+	../../common/stringutils.h
+	example/example.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(CJUnitTestsPort ${jdbctests_sources})
-TARGET_LINK_LIBRARIES(CJUnitTestsPort ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+ADD_EXECUTABLE(example_tests ${example_sources})
+TARGET_LINK_LIBRARIES(example_tests ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
-MESSAGE(STATUS "Configuring C/J junit tests port")
+
+MESSAGE(STATUS "Configuring unit tests")

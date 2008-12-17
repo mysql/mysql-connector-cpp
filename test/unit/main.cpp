@@ -21,9 +21,9 @@
 
  */
 
-#include "framework/test_runner.h"
-#include "framework/start_options.h"
-#include "framework/test_tapOutputter.h"
+#include "../CJUnitTestsPort/framework/test_runner.h"
+#include "../CJUnitTestsPort/framework/start_options.h"
+#include "../CJUnitTestsPort/framework/test_tapOutputter.h"
 
 int main(int argc, char** argv)
 {

@@ -47,12 +47,12 @@
 #include <list>
 /*#include <locale>*/
 
-#ifndef ABSTRACT
-#define ABSTRACT
+#ifndef _ABSTRACT
+#define _ABSTRACT
 #endif
 
-#ifndef PURE
-#define PURE =0
+#ifndef _PURE
+#define _PURE =0
 #endif
 
 /*----------------------------------------------------------------------------

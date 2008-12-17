@@ -62,7 +62,7 @@ ELSE(WIN32)
 		"mysql-connector-c++-version-arch")
 ENDIF(WIN32)
 SET(CPACK_PACKAGE_INSTALL_DIRECTORY "mysql-connector-c++-version-arch")
-SET(COMMON_IGNORE_FILES "/CMakeFiles/" "/Testing/" "/.bzr/" "_CPack_Packages/" 
+SET(COMMON_IGNORE_FILES "/CMakeFiles/" "/Testing/" "/.bzr/" "_CPack_Packages/"
     ".cmake$" "~" ".swp" ".log" ".gz" ".directory$" "CMakeCache.txt" "Makefile")
 SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} "something_here" )
 
@@ -91,6 +91,7 @@ ADD_SUBDIRECTORY(driver)
 ADD_SUBDIRECTORY(examples)
 ADD_SUBDIRECTORY(test)
 ADD_SUBDIRECTORY(test/CJUnitTestsPort)
+ADD_SUBDIRECTORY(test/unit)
 
 IF(DEFINED CMAKE_SYSTEM_NAME AND ${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 	# see also README
