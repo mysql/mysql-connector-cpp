@@ -33,7 +33,14 @@ TestsRunner::TestsRunner()
 
 bool TestsRunner::runTests()
 {
-  return TestSuiteFactory::theInstance().runTests();
+  bool result= TestSuiteFactory::theInstance().runTests();
+
+  if ( startOptions->verbose )
+  {
+    TestsListener::dumpLog();
+  }
+
+  return result;
 }
 
 void TestsRunner::setStartOptions(StartOptions * options)

@@ -63,16 +63,16 @@ void assertEquals(const String & expected, const String & result
 // Macroses should be used inside testsuite namespace
 
 #define ASSERT_EQUALS( expected, result) \
-	assertEquals( expected, result, __FILE__, __LINE__ );
+	assertEquals( expected, result, __FILE__, __LINE__ )
 
 #define ASSERT_EQUALS_EPSILON( expected, result, epsilon) \
-	assertEqualsEpsilon( expected, result, epsilon, __FILE__, __LINE__ );
+	assertEqualsEpsilon( expected, result, epsilon, __FILE__, __LINE__ )
 
-#define ASSERT( exp ) assertTrue( #exp, exp, __FILE__, __LINE__);
+#define ASSERT( exp ) assertTrue( #exp, exp, __FILE__, __LINE__)
 
 #define ASSERT_MESSAGE( exp, message ) \
-	assertTrueMessage(#exp, exp, message, __FILE__, __LINE__);
+	assertTrueMessage(#exp, exp, message, __FILE__, __LINE__)
 
-#define FAIL( why ) fail( #why, __FILE__, __LINE__ );
+#define FAIL( why ) fail( #why, __FILE__, __LINE__ )
 
 #endif  // __TESTASSERTS_H_

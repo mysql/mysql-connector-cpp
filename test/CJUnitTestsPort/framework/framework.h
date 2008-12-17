@@ -43,6 +43,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #endif
 
 #define TEST_CASE( methodName ) \
-  RegisterTestCase( new TestCase<TestSuiteClass>( *this, &TestSuiteClass::methodName, #methodName ) );
+  RegisterTestCase( new TestCase<TestSuiteClass>( *this, &TestSuiteClass::methodName, #methodName ) )
 
 #endif  // __FRAMEWORK_H

@@ -51,18 +51,31 @@ void TestSuite::runTest()
     //Incrementing order number of current test
     TestsListener::theInstance().incrementCounter();
 
+
+    TestsListener::currentTestName( (*it)->name() );
+
+    try
+    {     
+      setUp();
+    }
+    catch ( std::exception & e )
+    {
+      TestsListener::bailSuite(
+        String( "An exception occurred while running while setUp before" )
+        + (*it)->name() + ". Message: " + e.what() );
+
+      //TODO: break here and thus really bail a tests suite.
+      TestsListener::theInstance().testHasThrown();
+      continue;
+    }
+
     try
     {
-      setUp();
-
       TestsListener::testHasRun();
-      TestsListener::currentTestName( (*it)->name() );
 
       (*it)->runTest();
 
       TestsListener::testHasPassed();
-
-      tearDown();
     }
     // TODO: move interpretation of exception to TestSuite descendants
     // framework shouldn't know about sql::* exceptions
@@ -73,14 +86,12 @@ void TestSuite::runTest()
         + ", which is not implemented at the moment.";
 
       TestsListener::testHasPassedWithInfo( msg );
-
     }
     catch ( std::exception & e )
     {
       TestsListener::theInstance().testHasThrown();
       TestsListener::theInstance().errorsLog()
-        << "Not trapped exception occurred while running (probably while setUp"\
-        "or tearDown):"
+        << "Not trapped exception occurred while running test:"
         << (*it)->name() << ". Message: " << e.what()
         << std::endl;
     }
@@ -94,6 +105,19 @@ void TestSuite::runTest()
       TestsListener::theInstance().errorsLog()
         << "Not trapped exception occurred while running:"
         << (*it)->name() << std::endl;
+    }
+
+    try
+    {
+      tearDown();
+    }
+    catch ( std::exception & e )
+    {
+      TestsListener::theInstance().testHasThrown();
+      TestsListener::theInstance().errorsLog()
+        << "Not trapped exception occurred while running while tearDown after:"
+        << (*it)->name() << ". Message: " << e.what()
+        << std::endl;
     }
 
     // TODO: check why did i add it and is it still needed.

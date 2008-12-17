@@ -117,4 +117,15 @@ bool TestsListener::allTestsPassed()
   return theInstance().exceptions && !theInstance().failed() == 0;
 }
 
+void TestsListener::bailSuite( const String & reason )
+{
+  static const String bail( "#BAIL " );
+  theInstance().outputter->Comment( bail + reason );
+}
+
+void TestsListener::dumpLog()
+{
+  std::cerr << theInstance().log.str();
+}
+
 }

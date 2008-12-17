@@ -21,11 +21,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "../BaseTestFixture.h"
 
-#include "cppconn/resultset.h"
-#include "cppconn/resultset_metadata.h"
-#include "cppconn/exception.h"
-
-
 /**
  * @author mmatthew
  *
@@ -46,7 +41,7 @@ private:
   typedef BaseTestFixture super;
 
   ResultSetMetaData rsmd;
-  String query;
+  String            query;
 
 protected:
 

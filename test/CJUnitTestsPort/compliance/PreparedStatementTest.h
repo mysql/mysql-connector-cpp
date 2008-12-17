@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "../BaseTestFixture.h"
 
+#define __SET_NULL_ADDED_
 /**
  * @author mmatthew
  *
@@ -127,20 +128,38 @@ public:
     TEST_CASE(testSetNull02);
     TEST_CASE(testSetNull03);
     TEST_CASE(testSetNull04);
+
+// Assuming that set/getTiem and Timestamp will be added along w/ setDate
+#ifdef __SET_DATE_ADDED_
     TEST_CASE(testSetNull05);
     TEST_CASE(testSetNull06);
     TEST_CASE(testSetNull07);
+#endif
+
+#ifdef __SET_BIG_DECIMAL_ADDED_
     TEST_CASE(testSetNull08);
-    TEST_CASE(testSetNull09);
+#endif
+
     TEST_CASE(testSetNull10);
     TEST_CASE(testSetNull11);
     TEST_CASE(testSetNull12);
     TEST_CASE(testSetNull13);
+
+#ifdef _WE_HAVE_SOME_REAL_TYPE
     TEST_CASE(testSetNull14);
+#endif
+
+#ifdef __SET_BIG_DECIMAL_ADDED_
     TEST_CASE(testSetNull15);
+#endif
+
+#ifdef __SET_BYTE_ADDED_
+    TEST_CASE(testSetNull09);
+
     TEST_CASE(testSetNull16);
     TEST_CASE(testSetNull17);
     TEST_CASE(testSetNull18);
+#endif
 #endif
   }
 

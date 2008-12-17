@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "PreparedStatementTest.h"
 
+#include "../driver/mysql_private_iface.h"
+
 namespace testsuite
 {
 namespace compliance
@@ -52,10 +54,11 @@ void PreparedStatementTest::testGetMetaData()
 {
   ResultSetMetaData rsmd;
   ResultSetMetaData rsmdPrep;
-  bool statflag=false;
-  String sPrepStmt=sqlProps[ "SelCoffeeAll" ];
+  bool              statflag=   false;
+  String            sPrepStmt=  sqlProps[ "SelCoffeeAll" ];
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
+
   try
   {
     logMsg("Getting MetaData from PreparedStatement");
@@ -1290,7 +1293,8 @@ void PreparedStatementTest::testSetDate01()
   smfgDateVal=smfgDateVal.substr(smfgDateVal.indexOf('\'') + 1, smfgDateVal.lastIndexOf('\''));
   mfgDateVal=sql.Date.valueOf(smfgDateVal);
   logMsg(String("Date Value: ") + mfgDateVal);
-  pstmt=conn->prepareStatement(sPrepStmt);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
   pstmt->setDate(1, mfgDateVal);
   pstmt->executeUpdate();
   String Null_Val_Query=sqlProps[ "Date_Query_Null" ];
@@ -1792,32 +1796,44 @@ void PreparedStatementTest::testSetShort02()
 
 void PreparedStatementTest::testSetNull01()
 {
-  bool NULLFlag;
-  int rIntegerVal=0;
+  bool  NULLFlag;
+  int   rIntegerVal=0;
 
   initTable("Integer_Tab", sqlProps, conn);
+
   const String & sPrepStmt=sqlProps[ "Integer_Tab_Null_Update" ];
+
   logMsg(String("Prepared Statement String: ") + sPrepStmt);
-  pstmt=conn->prepareStatement(sPrepStmt);
-  pstmt->setNull(1, sql::Types::INTEGER);
+
+  pstmt.reset( conn->prepareStatement(sPrepStmt) );
+  // Second parameter to setNull is ignored
+  pstmt->setNull(1, MYSQL_TYPE_LONG);
   pstmt->executeUpdate();
+
   String Null_Val_Query=sqlProps[ "Integer_Query_Null" ];
+
   logMsg(Null_Val_Query);
+
   rs.reset(stmt->executeQuery(Null_Val_Query));
   rs->next();
+
   rIntegerVal=rs->getInt(1);
   NULLFlag=rs->wasNull();
-  logMsg(String("Boolean Value After Updation: ") + NULLFlag);
 
-  if (NULLFlag)
+  TestsListener::theInstance().messagesLog()
+    << "Boolean Value After Updation: " << NULLFlag << std::endl;
+
+  if ( NULLFlag )
   {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
-  } else
+  }
+  else
   {
     logErr("setNull Method does not set the designated parameter to a SQL Null ");
     FAIL("Call to setNull Method is Failed!");
   }
 }
+
 
 /*
  * @testName:         testSetNull02
@@ -1843,50 +1859,39 @@ void PreparedStatementTest::testSetNull01()
 
 /* throws Exception */
 void PreparedStatementTest::testSetNull02()
-
 {
-  bool NULLFlag;
-  float rFloatVal=0;
-  try
-  {
-    initTable("Float_Tab", sqlProps, conn);
-    const String & sPrepStmt=sqlProps[ "Float_Tab_Null_Update" ];
-    logMsg(String("Prepared Statement String :") + sPrepStmt);
-    pstmt=conn->prepareStatement(sPrepStmt);
-    pstmt->setNull(1, sql::Types::FLOAT);
-    pstmt->executeUpdate();
-    const String & Null_Val_Query=sqlProps[ "Float_Query_Null" ];
-    logMsg(Null_Val_Query);
-    rs.reset(stmt->executeQuery(Null_Val_Query));
-    rs->next();
-    rFloatVal=rs->getFloat(1);
-    NULLFlag=rs->wasNull();
-    logMsg(String("Boolean Value After Updation: ") + NULLFlag);
-    if (NULLFlag)
-    {
-      logMsg("setNull Method sets the designated parameter to a SQL Null");
-    } else
-    {
-      logErr("setNull Method does not set the designated parameter to a SQL Null ");
-      FAIL("Call to setNull Method is Failed!");
-    }
-  } catch (sql::SQLException & sqle)
-  {
-    logErr(String("SQL std::exception * ") + sqle->what());
-    FAIL("Call to setNull is Failed!");
-  } catch (std::exception * e)
-  {
-    logErr(String("Unexpected std::exception * ") + e->what());
-    FAIL("Call to setNull Failed!", e);
-  }
+  bool  NULLFlag;
+  float rFloatVal= 0;
 
+  initTable("Float_Tab", sqlProps, conn);
+
+  const String & sPrepStmt=sqlProps[ "Float_Tab_Null_Update" ];
+
+  logMsg(String("Prepared Statement String :") + sPrepStmt);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
+  pstmt->setNull(1, MYSQL_TYPE_FLOAT);
+
+  pstmt->executeUpdate();
+  const String & Null_Val_Query=sqlProps[ "Float_Query_Null" ];
+  logMsg(Null_Val_Query);
+  rs.reset(stmt->executeQuery(Null_Val_Query));
+  rs->next();
+  rFloatVal= static_cast<float>( rs->getDouble(1) );
+  NULLFlag=rs->wasNull();
+
+  TestsListener::theInstance().messagesLog()
+    << "Boolean Value After Updation: " << NULLFlag << std::endl;
+
+  clearTable("Float_Tab", conn);
+
+  if (NULLFlag)
   {
-    try
-    {
-      clearTable("Float_Tab", conn);
-    } catch (std::exception * e)
-    {
-    }
+    logMsg("setNull Method sets the designated parameter to a SQL Null");
+  } else
+  {
+    logErr("setNull Method does not set the designated parameter to a SQL Null ");
+    FAIL("Call to setNull Method is Failed!");
   }
 }
 
@@ -1916,22 +1921,30 @@ void PreparedStatementTest::testSetNull02()
 void PreparedStatementTest::testSetNull03()
 
 {
-  bool NULLFlag;
+  bool  NULLFlag;
   short rShortVal=0;
 
   initTable("Smallint_Tab", sqlProps, conn);
+
   const String & sPrepStmt=sqlProps[ "Smallint_Tab_Null_Update" ];
+
   logMsg(String("Prepared Statement String :") + sPrepStmt);
-  pstmt=conn->prepareStatement(sPrepStmt);
-  pstmt->setNull(1, sql::Types::SMALLINT);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
+
+  pstmt->setNull(1, MYSQL_TYPE_SHORT);
   pstmt->executeUpdate();
+
   String Null_Val_Query=sqlProps[ "Smallint_Query_Null" ];
   logMsg(Null_Val_Query);
   rs.reset(stmt->executeQuery(Null_Val_Query));
+
   rs->next();
-  rShortVal=rs->getShort(1);
+  // it's easier to hack the test, than comment it
+  rShortVal=static_cast<short>( rs->getInt(1) );
   NULLFlag=rs->wasNull();
-  logMsg(String("Boolean Value After Updation: ") + NULLFlag ? "true" : "false");
+
+  logMsg(String("Boolean Value After Updation: ") + (NULLFlag ? "true" : "false"));
 
   if (NULLFlag)
   {
@@ -1974,8 +1987,10 @@ void PreparedStatementTest::testSetNull04()
   initTable("Char_Tab", sqlProps, conn);
   const String & sPrepStmt=sqlProps[ "Char_Tab_Null_Update" ];
   logMsg(String("Prepared Statement String: ") + sPrepStmt);
-  pstmt=conn->prepareStatement(sPrepStmt);
-  pstmt->setNull(1, sql::Types::CHAR);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
+
+  pstmt->setNull(1, MYSQL_TYPE_STRING);
   pstmt->executeUpdate();
   const String & Null_Val_Query=sqlProps[ "Char_Query_Null" ];
   logMsg(Null_Val_Query);
@@ -1983,7 +1998,7 @@ void PreparedStatementTest::testSetNull04()
   rs->next();
   rStringVal=rs->getString(1);
   NULLFlag=rs->wasNull();
-  logMsg(String("Boolean Value After Updation: ") + NULLFlag);
+  logMsg(String("Boolean Value After Updation: ") + (NULLFlag ? "true" : "false") );
 
   if (NULLFlag)
   {
@@ -2018,6 +2033,8 @@ void PreparedStatementTest::testSetNull04()
  */
 
 /* throws Exception */
+// Assuming that set/getTiem and Timestamp will be added along w/ setDate
+#ifdef __SET_DATE_ADDED_
 void PreparedStatementTest::testSetNull05()
 {
   bool NULLFlag;
@@ -2026,7 +2043,8 @@ void PreparedStatementTest::testSetNull05()
   initTable("Time_Tab", sqlProps, conn);
   const String & sPrepStmt=sqlProps[ "Time_Tab_Null_Update" ];
   logMsg(String("Prepared Statement String: ") + sPrepStmt);
-  pstmt=conn->prepareStatement(sPrepStmt);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
   pstmt->setNull(1, sql::Types::TIME);
   pstmt->executeUpdate();
   const String & Null_Val_Query=sqlProps[ "Time_Query_Null" ];
@@ -2045,6 +2063,7 @@ void PreparedStatementTest::testSetNull05()
     FAIL("Call to setNull Method is Failed!");
   }
 }
+
 
 /*
  * @testName:         testSetNull06
@@ -2077,7 +2096,8 @@ void PreparedStatementTest::testSetNull06()
   initTable("Timestamp_Tab", sqlProps, conn);
   const String & sPrepStmt=sqlProps[ "Timestamp_Tab_Null_Update" ];
   logMsg(String("Prepared Statement String: ") + sPrepStmt);
-  pstmt=conn->prepareStatement(sPrepStmt);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
   pstmt->setNull(1, sql::Types::TIMESTAMP);
   pstmt->executeUpdate();
   const String & Null_Val_Query=sqlProps[ "Timestamp_Query_Null" ];
@@ -2129,7 +2149,8 @@ void PreparedStatementTest::testSetNull07()
   initTable("Date_Tab", sqlProps, conn);
   const String & sPrepStmt=sqlProps[ "Date_Tab_Null_Update" ];
   logMsg(String("Prepared Statement String: ") + sPrepStmt);
-  pstmt=conn->prepareStatement(sPrepStmt);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
   pstmt->setNull(1, sql::Types::DATE);
   logMsg("Null set");
   pstmt->executeUpdate();
@@ -2150,7 +2171,10 @@ void PreparedStatementTest::testSetNull07()
     FAIL("Call to setNull Method is Failed!");
   }
 }
+#endif
 
+
+#ifdef __SET_BIG_DECIMAL_ADDED_
 /*
  * @testName:         testSetNull08
  * @assertion:        A Prepared Statement object provides a way of calling
@@ -2172,7 +2196,6 @@ void PreparedStatementTest::testSetNull07()
  *                    for NUMERIC Type and retrieve the same value by executing a query. Call
  *                    the ResultSet.wasNull() method to check it. It should return a true value.
  */
-
 /* throws Exception */
 void PreparedStatementTest::testSetNull08()
 {
@@ -2182,7 +2205,8 @@ void PreparedStatementTest::testSetNull08()
   initTable("Numeric_Tab", sqlProps, conn);
   const String & sPrepStmt=sqlProps[ "Numeric_Tab_Null_Update" ];
   logMsg(String("Prepared Statement String: ") + sPrepStmt);
-  pstmt=conn->prepareStatement(sPrepStmt);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
   pstmt->setNull(1, sql::Types::NUMERIC);
   pstmt->executeUpdate();
   const String & Null_Val_Query=sqlProps[ "Numeric_Query_Null" ];
@@ -2201,7 +2225,10 @@ void PreparedStatementTest::testSetNull08()
     FAIL("Call to setNull Method is Failed!");
   }
 }
+#endif
 
+
+#ifdef __SET_BYTE_ADDED_
 /*
  * @testName:         testSetNull09
  * @assertion:        A Prepared Statement object provides a way of calling
@@ -2233,7 +2260,8 @@ void PreparedStatementTest::testSetNull09()
   initTable("Tinyint_Tab", sqlProps, conn);
   const String & sPrepStmt=sqlProps[ "Tinyint_Tab_Null_Update" ];
   logMsg(String("Prepared Statement String: ") + sPrepStmt);
-  pstmt=conn->prepareStatement(sPrepStmt);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
   pstmt->setNull(1, sql::Types::TINYINT);
   pstmt->executeUpdate();
   String Null_Val_Query=sqlProps[ "Tinyint_Query_Null" ];
@@ -2252,6 +2280,8 @@ void PreparedStatementTest::testSetNull09()
     FAIL("Call to setNull Method is Failed!");
   }
 }
+#endif
+
 
 /*
  * @testName:         testSetNull10
@@ -2274,7 +2304,6 @@ void PreparedStatementTest::testSetNull09()
  *                    for DOUBLE Type and retrieve the same value by executing a query. Call
  *                    the ResultSet.wasNull() method to check it. It should return a true value.
  */
-
 /* throws Exception */
 void PreparedStatementTest::testSetNull10()
 {
@@ -2282,18 +2311,25 @@ void PreparedStatementTest::testSetNull10()
   double rDoubleVal=0;
 
   initTable("Double_Tab", sqlProps, conn);
+
   const String & sPrepStmt=sqlProps[ "Double_Tab_Null_Update" ];
+
   logMsg(String("Prepared Statement String: ") + sPrepStmt);
-  pstmt=conn->prepareStatement(sPrepStmt);
-  pstmt->setNull(1, sql::Types::DOUBLE);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
+  pstmt->setNull(1, MYSQL_TYPE_DOUBLE);
   pstmt->executeUpdate();
+
   String Null_Val_Query=sqlProps[ "Double_Query_Null" ];
   logMsg(Null_Val_Query);
   rs.reset(stmt->executeQuery(Null_Val_Query));
   rs->next();
   rDoubleVal=rs->getDouble(1);
+
   NULLFlag=rs->wasNull();
-  logMsg(String("Boolean Value After Updation: ") + NULLFlag);
+
+  logMsg(String("Boolean Value After Updation: ") + ( NULLFlag ? "true" : "false" ) );
+
   if (NULLFlag)
   {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
@@ -2325,27 +2361,31 @@ void PreparedStatementTest::testSetNull10()
  *                    for BIGINT Type and retrieve the same value by executing a query. Call
  *                    the ResultSet.wasNull() method to check it. It should return a true value.
  */
-
 /* throws Exception */
-
 void PreparedStatementTest::testSetNull11()
 {
   bool NULLFlag;
-  long rLongVal=0;
+  long long rLongVal=0;
 
   initTable("Bigint_Tab", sqlProps, conn);
   const String & sPrepStmt=sqlProps[ "Bigint_Tab_Null_Update" ];
   logMsg(String("Prepared Statement String: ") + sPrepStmt);
-  pstmt=conn->prepareStatement(sPrepStmt);
-  pstmt->setNull(1, sql::Types::BIGINT);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
+  pstmt->setNull(1, MYSQL_TYPE_LONG);
   pstmt->executeUpdate();
+
   String Null_Val_Query=sqlProps[ "Bigint_Query_Null" ];
+
   logMsg(Null_Val_Query);
+
   rs.reset(stmt->executeQuery(Null_Val_Query));
   rs->next();
   rLongVal=rs->getLong(1);
   NULLFlag=rs->wasNull();
-  logMsg(String("Boolean Value After Updation: ") + NULLFlag);
+
+  logMsg(String("Boolean Value After Updation: ") + ( NULLFlag ? "true" : "false" ));
+
   if (NULLFlag)
   {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
@@ -2356,7 +2396,6 @@ void PreparedStatementTest::testSetNull11()
   }
 }
 #endif
-
 
 /*
  * @testName:         testSetString01
@@ -2462,7 +2501,8 @@ void PreparedStatementTest::testSetTime01()
   sbrkTimeVal=StringUtils::trim(sbrkTimeVal);
   brkTimeVal=Time.valueOf(sbrkTimeVal);
   logMsg(String("Time Value: ") + brkTimeVal);
-  pstmt=conn->prepareStatement(sPrepStmt);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
   pstmt->setTime(1, brkTimeVal);
   pstmt->executeUpdate();
   const String & Null_Val_Query=sqlProps[ "Time_Query_Null" ];
@@ -2527,7 +2567,8 @@ void PreparedStatementTest::testSetTime02()
   brkTimeVal=Time.valueOf(sbrkTimeVal);
   logMsg(String("Time Value: ") + brkTimeVal);
   cal=Calendar.getInstance();
-  pstmt=conn->prepareStatement(sPrepStmt);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
   pstmt->setTime(1, brkTimeVal, cal);
   pstmt->executeUpdate();
   const String & Null_Val_Query=sqlProps[ "Time_Query_Null" ];
@@ -2588,7 +2629,8 @@ void PreparedStatementTest::testSetTimestamp01()
   sinTimeVal=sinTimeVal.substr(sinTimeVal.indexOf('\'') + 1, sinTimeVal.lastIndexOf('\''));
   inTimeVal=Timestamp.valueOf(sinTimeVal);
   logMsg(String("Timestamp Value: ") + inTimeVal);
-  pstmt=conn->prepareStatement(sPrepStmt);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
   pstmt->setTimestamp(1, inTimeVal);
   pstmt->executeUpdate();
   const String & Null_Val_Query=sqlProps[ "Timestamp_Query_Null" ];
@@ -2653,7 +2695,8 @@ void PreparedStatementTest::testSetTimestamp02()
   inTimeVal=Timestamp.valueOf(sinTimeVal);
   logMsg(String("Timestamp Value: ") + inTimeVal);
   cal=Calendar.getInstance();
-  pstmt=conn->prepareStatement(sPrepStmt);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
   pstmt->setTimestamp(1, inTimeVal, cal);
   pstmt->executeUpdate();
   const String & Null_Val_Query=sqlProps[ "Timestamp_Query_Null" ];
@@ -2777,7 +2820,8 @@ void PreparedStatementTest::testSetFloat01()
   String sminFloatVal=extractVal("Real_Tab", 2, sqlProps, conn);
   minFloatVal=float.parseFloat(sminFloatVal);
   logMsg(String("float Value: ") + minFloatVal);
-  pstmt=conn->prepareStatement(sPrepStmt);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
   pstmt->setFloat(1, minFloatVal);
   pstmt->executeUpdate();
   const String & Max_Val_Query=sqlProps[ "Real_Query_Max" ];
@@ -2833,7 +2877,8 @@ void PreparedStatementTest::testSetFloat02()
   String smaxFloatVal=extractVal("Real_Tab", 1, sqlProps, conn);
   maxFloatVal=float.parseFloat(smaxFloatVal);
   logMsg(String("float Value: ") + maxFloatVal);
-  pstmt=conn->prepareStatement(sPrepStmt);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
   pstmt->setFloat(1, maxFloatVal);
   pstmt->executeUpdate();
   const String & Null_Val_Query=sqlProps[ "Real_Query_Null" ];
@@ -2887,18 +2932,26 @@ void PreparedStatementTest::testSetNull12()
   String rStringVal;
 
   initTable("Varchar_Tab", sqlProps, conn);
+
   const String & sPrepStmt=sqlProps[ "Varchar_Tab_Null_Update" ];
+
   logMsg(String("Prepared Statement String: ") + sPrepStmt);
-  pstmt=conn->prepareStatement(sPrepStmt);
-  pstmt->setNull(1, sql::Types::VARCHAR);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
+  pstmt->setNull(1, MYSQL_TYPE_VARCHAR);
   pstmt->executeUpdate();
+
   const String & Null_Val_Query=sqlProps[ "Varchar_Query_Null" ];
+
   logMsg(Null_Val_Query);
+
   rs.reset(stmt->executeQuery(Null_Val_Query));
   rs->next();
   rStringVal=rs->getString(1);
   NULLFlag=rs->wasNull();
-  logMsg(String("Boolean Value After Updation: ") + NULLFlag);
+
+  logMsg(String("Boolean Value After Updation: ") + ( NULLFlag ? "true" : "false" ));
+
   if (NULLFlag)
   {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
@@ -2908,6 +2961,7 @@ void PreparedStatementTest::testSetNull12()
     FAIL("Call to setNull Method is Failed!");
   }
 }
+
 
 /*
  * @testName:         testSetNull13
@@ -2931,47 +2985,45 @@ void PreparedStatementTest::testSetNull12()
  *                    the ResultSet.wasNull() method to check it. It should return a true value.
  *
  */
-
 /* throws Exception */
 void PreparedStatementTest::testSetNull13()
-
 {
   bool NULLFlag;
   String rStringVal;
-  try
+
+  initTable("Longvarcharnull_Tab", sqlProps, conn);
+
+  const String & sPrepStmt=sqlProps[ "Longvarchar_Tab_Null_Update" ];
+
+  logMsg(String("Prepared Statement String: ") + sPrepStmt);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
+  pstmt->setNull( 1, MYSQL_TYPE_MEDIUM_BLOB );
+  pstmt->executeUpdate();
+
+  const String & Null_Val_Query=sqlProps[ "Longvarchar_Query_Null" ];
+
+  logMsg(Null_Val_Query);
+  rs.reset(stmt->executeQuery(Null_Val_Query));
+  rs->next();
+  rStringVal=rs->getString(1);
+  NULLFlag=rs->wasNull();
+
+  // TODO: add toString(bool) in the StringUtils
+  logMsg(String("Boolean Value After Updation: ") + ( NULLFlag ? "true" : "false" ) );
+
+  if (NULLFlag)
   {
-    initTable("Longvarcharnull_Tab", sqlProps, conn);
-    const String & sPrepStmt=sqlProps[ "Longvarchar_Tab_Null_Update" ];
-    logMsg(String("Prepared Statement String: ") + sPrepStmt);
-    pstmt=conn->prepareStatement(sPrepStmt);
-    pstmt->setNull(1, sql::Types::LONGVARCHAR);
-    pstmt->executeUpdate();
-    const String & Null_Val_Query=sqlProps[ "Longvarchar_Query_Null" ];
-    logMsg(Null_Val_Query);
-    rs.reset(stmt->executeQuery(Null_Val_Query));
-    rs->next();
-    rStringVal=rs->getString(1);
-    NULLFlag=rs->wasNull();
-    logMsg(String("Boolean Value After Updation: ") + NULLFlag);
-    if (NULLFlag)
-    {
-      logMsg("setNull Method sets the designated parameter to a SQL Null");
-    } else
-    {
-      logErr("setNull Method does not set the designated parameter to a SQL Null ");
-      FAIL("Call to setNull Method is Failed!");
-    }
-  } catch (sql::SQLException & sqle)
+    logMsg("setNull Method sets the designated parameter to a SQL Null");
+  } else
   {
-    logErr(String("SQL std::exception *: ") + sqle->what());
-    FAIL("Call to setNull is Failed!");
-  } catch (std::exception * e)
-  {
-    logErr(String("Unexpected std::exception *: ") + e->what());
-    FAIL("Call to setNull is Failed!", e);
+    logErr("setNull Method does not set the designated parameter to a SQL Null ");
+    FAIL("Call to setNull Method is Failed!");
   }
 }
 
+
+#ifdef _WE_HAVE_SOME_REAL_TYPE
 /*
  * @testName:         testSetNull14
  * @assertion:        A Prepared Statement object provides a way of calling
@@ -2994,10 +3046,8 @@ void PreparedStatementTest::testSetNull13()
  *                    the ResultSet.wasNull() method to check it. It should return a true value.
  *
  */
-
 /* throws Exception */
 void PreparedStatementTest::testSetNull14()
-
 {
   bool NULLFlag;
   float rFloatVal=0;
@@ -3006,7 +3056,8 @@ void PreparedStatementTest::testSetNull14()
     initTable("Real_Tab", sqlProps, conn);
     const String & sPrepStmt=sqlProps[ "Real_Tab_Null_Update" ];
     logMsg(String("Prepared Statement String: ") + sPrepStmt);
-    pstmt=conn->prepareStatement(sPrepStmt);
+
+    pstmt.reset(conn->prepareStatement(sPrepStmt) );
     pstmt->setNull(1, sql::Types::REAL);
     pstmt->executeUpdate();
     const String & Null_Val_Query=sqlProps[ "Real_Query_Null" ];
@@ -3034,7 +3085,10 @@ void PreparedStatementTest::testSetNull14()
     FAIL("Call to setNull is Failed!", e);
   }
 }
+#endif
 
+//getBigDecimal will be probably added along w/ its "set" counterpart
+#ifdef __SET_BIG_DECIMAL_ADDED_
 /*
  * @testName:         testSetNull15
  * @assertion:        A Prepared Statement object provides a way of calling
@@ -3057,10 +3111,8 @@ void PreparedStatementTest::testSetNull14()
  *                    the ResultSet.wasNull() method to check it. It should return a true value.
  *
  */
-
 /* throws Exception */
 void PreparedStatementTest::testSetNull15()
-
 {
   bool NULLFlag;
   BigDecimal rBigDecimalVal /*= NULL*/;
@@ -3069,7 +3121,8 @@ void PreparedStatementTest::testSetNull15()
     initTable("Decimal_Tab", sqlProps, conn);
     const String & sPrepStmt=sqlProps[ "Decimal_Tab_Null_Update" ];
     logMsg(String("Prepared Statement String: ") + sPrepStmt);
-    pstmt=conn->prepareStatement(sPrepStmt);
+
+    pstmt.reset(conn->prepareStatement(sPrepStmt) );
     pstmt->setNull(1, sql::Types::DECIMAL);
     pstmt->executeUpdate();
     const String & Null_Val_Query=sqlProps[ "Decimal_Query_Null" ];
@@ -3097,8 +3150,10 @@ void PreparedStatementTest::testSetNull15()
     FAIL("Call to setNull is Failed!", e);
   }
 }
+#endif
 
 
+#ifdef __SET_BYTE_ADDED_
 /*
  * @testName:         testSetNull16
  * @assertion:        A Prepared Statement object provides a way of calling
@@ -3121,10 +3176,8 @@ void PreparedStatementTest::testSetNull15()
  *                    the ResultSet.wasNull() method to check it. It should return a true value.
  *
  */
-
 /* throws Exception */
 void PreparedStatementTest::testSetNull16()
-
 {
   byte retByteArr[] /*= NULL*/;
   String binarySize;
@@ -3143,7 +3196,8 @@ void PreparedStatementTest::testSetNull16()
     sbyteval=int.toString(count % 255);
     bytearr[count]=Byte.parseByte(sbyteval);
   }
-  pstmt=conn->prepareStatement(sPrepStmt);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
   pstmt->setBytes(1, bytearr);
   pstmt->executeUpdate();
   pstmt->setNull(1, sql::Types::BINARY);
@@ -3208,7 +3262,8 @@ void PreparedStatementTest::testSetNull17()
     sbyteval=int.toString(count % 255);
     bytearr[count]=Byte.parseByte(sbyteval);
   }
-  pstmt=conn->prepareStatement(sPrepStmt);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
   pstmt->setBytes(1, bytearr);
   pstmt->executeUpdate();
   pstmt->setNull(1, sql::Types::VARBINARY);
@@ -3271,7 +3326,8 @@ void PreparedStatementTest::testSetNull18()
     sbyteval=int.toString(count % 255);
     bytearr[count]=Byte.parseByte(sbyteval);
   }
-  pstmt=conn->prepareStatement(sPrepStmt);
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt) );
   pstmt->setBytes(1, bytearr);
   pstmt->executeUpdate();
   pstmt->setNull(1, sql::Types::LONGVARBINARY);
@@ -3290,7 +3346,8 @@ void PreparedStatementTest::testSetNull18()
     FAIL("Call to setNull Method is Failed!");
   }
 }
-#endif
+#endif    // __SET_BYTE_ADDED_
+#endif    // __SET_NULL_ADDED_
 
 
 /**

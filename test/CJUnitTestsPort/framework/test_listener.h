@@ -63,13 +63,15 @@ public:
     return failedTests.size();
   }
 
-  static void currentTestName(const String & name);
-  static void nextSuiteStarts(const String & name, int testsNumber);
-  static void testHasRun();
-  static void testHasFailed();
-  static void testHasThrown();
-  static void testHasPassed();
-  static void testHasPassedWithInfo(const String & str);
+  static void currentTestName       (const String & name);
+  static void nextSuiteStarts       (const String & name, int testsNumber);
+  static void testHasRun            ();
+  static void testHasFailed         ();
+  static void testHasThrown         ();
+  static void testHasPassed         ();
+  static void testHasPassedWithInfo (const String & str);
+  static void bailSuite             ( const String & reason );
+  static void dumpLog               ();
 
   void summary();
   static bool allTestsPassed();
