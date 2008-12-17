@@ -36,7 +36,7 @@
 #include "mysql_resultset.h"
 #include "mysql_warning.h"
 
-#include "common/ccppTypes.h"
+//#include "common/ccppTypes.h"
 
 #include "mysql_debug.h"
 #include "mysql_util.h"
