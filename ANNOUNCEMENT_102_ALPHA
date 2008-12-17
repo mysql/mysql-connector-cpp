@@ -6,7 +6,7 @@ a new version of MySQL Connector/C++ has been made available: MySQL Connector/C+
 
 The 1.0.2alpha is a bug fix release. Please see the documentation and the CHANGES file in the source distribution for a detailed description of bugs that have been fixed. The following methods have been implemented:
 
- - MySQL_PreparedStatementclearParameters()
+ - MySQL_PreparedStatement::clearParameters()
  - MySQL_PreparedStatement::setNull()
  - MySQL_ResultSetMetaData::getScale()
  - MySQL_Prepared_ResultSetMetaData::getScale()
