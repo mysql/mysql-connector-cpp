@@ -47,3 +47,5 @@ with the examples from the examples/ directory. The syntax is like:
 For example, to connect to 192.168.2.22 on port 3307, try:
 
 # CJUnitTestsPort tcp://192.168.2.22:3307 user password database
+
+The 1.0.2alpha release should pass about 95% of the tests.
