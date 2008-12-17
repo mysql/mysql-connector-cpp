@@ -1,13 +1,13 @@
 /*
- Copyright (C) 2005-2007 MySQL AB
+ Copyright 2005-2008 MySQL AB, 2008 Sun Microsystems, Inc.
 
  This program is free software; you can redistribute it and/or modify
- it under the terms of version 2 of the GNU General Public License as
- published by the Free Software Foundation.
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; version 2 of the License.
 
  There are special exceptions to the terms and conditions of the GPL
  as it is applied to this software. View the full text of the
- exception in file EXCEPTIONS-CONNECTOR-J in the directory of this
+ exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
  software distribution.
 
  This program is distributed in the hope that it will be useful,
