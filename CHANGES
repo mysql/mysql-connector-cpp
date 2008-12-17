@@ -49,7 +49,7 @@ Alpha  1.0.2 - 2008-12-19
   did not work because the schema name wasn't included in the query sent
   to the server. (Andrey)
 
-- Implemented PreparedStatement::setNull(). (Andrey)
+- Implemented MySQL_PreparedStatement::setNull(). (Andrey)
 
 - Reverted implementation of MySQL_DatabaseMetaData::getTypeInfo().
   Now unimplemented. In addition, removed cppconn/datatype.h for now
