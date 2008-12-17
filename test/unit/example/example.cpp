@@ -85,6 +85,12 @@ void example_test_class::test_hello_world2()
 
     res->next();
     logMsg(res->getString("_world"));
+    res->close();
+    
+    ResultSet res2(stmt->executeQuery("SELECT 'What a boring example' AS _complain"));
+    logMsg(res2->getString("_world"));
+    res2->close();
+
   } catch (sql::SQLException &e)
   {
     logErr(e.what());
@@ -122,6 +128,19 @@ void example_test_class::test_assert_equals_fail()
 {
   logMsg("ASSERT_EQUALS failure");
   ASSERT_EQUALS(true, false);
+}
+
+void example_test_class::test_assert_message()
+{
+  logMsg("ASSERT_MESSAGE example");
+  /*
+   Wrapper of
+  void assertTrue(const char * msg, bool expression
+                , const char* file, int line);
+   
+  ASSERT_MESSAGE(1 < 2, "ASSERT_MESSAGE example (true)");
+  ASSERT_MESSAGE(1 > 2, "ASSERT_MESSAGE example (fail)");
+	 */
 }
 
 } /* namespace example */

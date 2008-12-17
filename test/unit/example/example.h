@@ -46,6 +46,7 @@ public:
     TEST_CASE(test_hello_world2);
     TEST_CASE(test_assert_equals);
     TEST_CASE(test_assert_equals_fail);
+    TEST_CASE(test_assert_message);
   }
 
   /**
@@ -94,6 +95,11 @@ public:
    * Demo of a failing ASSERT_EQUALS
    */
   void test_assert_equals_fail();
+
+  /**
+   * Demo of ASSERT_MESSAGE
+   */
+  void test_assert_message();
 
 };
 
