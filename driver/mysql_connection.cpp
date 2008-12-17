@@ -36,7 +36,14 @@
 #include "mysql_resultset.h"
 #include "mysql_warning.h"
 
-//#include "common/ccppTypes.h"
+#if defined(_WIN32) || defined(_WIN64)
+/* MySQL 5.1 might have defined it before in include/config-win.h */
+#ifndef strncasecmp
+#define strncasecmp(s1,s2,n) _strnicmp(s1,s2,n)
+#endif
+#else
+#include <string.h>
+#endif
 
 #include "mysql_debug.h"
 #include "mysql_util.h"
