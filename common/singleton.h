@@ -49,6 +49,6 @@ public:
 
 // macros to use in private/protected part of singletoned class
 #define CCPP_SINGLETON(classname) classname();\
-  friend class policies::Singleton<classname>;
+  friend class policies::Singleton<classname>
 
 #endif
