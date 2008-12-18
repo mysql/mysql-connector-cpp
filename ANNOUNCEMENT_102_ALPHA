@@ -15,7 +15,7 @@ The 1.0.2alpha is a bug fix release. Please see the documentation and the CHANGE
  - MySQL_ResultSetMetaData::getColumnDisplaySize()
  - MySQL_Prepared_ResultSetMetaData::getColumnDisplaySize()
 
-Furthermore we have added out JDBC compliance tests to the release.
+Furthermore we have added our JDBC compliance tests to the release.
 
 You can find further details, including usage examples, on the projects MySQL Forge wiki page at:
 
