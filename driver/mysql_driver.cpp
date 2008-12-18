@@ -24,16 +24,11 @@
 
 #include "mysql_private_iface.h"
 
-/*
-extern "C"
-{*/
 
 CPPDBC_PUBLIC_FUNC sql::Driver *get_driver_instance()
 {
 	return sql::mysql::MySQL_Driver::Instance();
 }
-//} /* extern_c */
-
 
 namespace sql
 {
@@ -73,6 +68,28 @@ sql::Connection * MySQL_Driver::connect(const std::string& hostName,
 										const std::string& password)
 {
 	return new MySQL_Connection(hostName, userName, password);
+}
+
+
+int MySQL_Driver::getMajorVersion()
+{
+	return 1;
+}
+
+int MySQL_Driver::getMinorVersion()
+{
+	return 0;
+}
+
+int MySQL_Driver::getPatchVersion()
+{
+	return 3;
+}
+
+const std::string & MySQL_Driver::getName()
+{
+	static const std::string name("MySQL Connector C++ (libmysql)");
+	return name;
 }
 
 }; /* namespace mysql */

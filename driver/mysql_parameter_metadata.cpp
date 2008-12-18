@@ -57,7 +57,7 @@ MySQL_ParameterMetaData::getParameterClassName(unsigned int /* param */)
 /* }}} */
 
 
-/* {{{ MySQL_ParameterMetaData::getParameterCount -U- */
+/* {{{ MySQL_ParameterMetaData::getParameterCount -I- */
 int
 MySQL_ParameterMetaData::getParameterCount()
 {

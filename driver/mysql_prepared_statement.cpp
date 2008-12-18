@@ -212,7 +212,7 @@ MySQL_Prepared_Statement::do_query()
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_Statement::clearParameters() -U- */
+/* {{{ MySQL_Prepared_Statement::clearParameters() -I- */
 void
 MySQL_Prepared_Statement::clearParameters()
 {

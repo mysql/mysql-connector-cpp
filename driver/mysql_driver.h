@@ -29,7 +29,6 @@ namespace sql
 {
 namespace mysql
 {
-class db_mgmt_Connection;
 class Connection;
 
 
@@ -41,17 +40,19 @@ protected:
 
 public:
 
-	static MySQL_Driver* Instance();
+	static MySQL_Driver * Instance();
 
 	virtual sql::Connection *connect(const std::string& hostName, 
 									const std::string& userName, 
 									const std::string& password);
 
+	virtual int getMajorVersion();
 
-	virtual int getMajorVersion() { return 5; }
-	virtual int getMinorVersion() { return 1; }
+	virtual int getMinorVersion();
 
-	virtual std::string getName() { return std::string("Connector C++ (libmysql)"); }
+	virtual int getPatchVersion();
+
+	virtual const std::string & getName();
 
 private:
 	/* Prevent use of these */

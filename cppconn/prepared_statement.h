@@ -39,8 +39,6 @@ class PreparedStatement : public Statement
 public:
 	virtual ~PreparedStatement() {}
 
-	virtual void cancel() = 0;
-
 	virtual void clearParameters() = 0;
 
 	virtual bool execute(const std::string& sql) = 0;
