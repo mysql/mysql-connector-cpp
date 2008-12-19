@@ -31,7 +31,7 @@ A first documentation draft is available at:
 
   http://dev.mysql.com/doc/refman/6.0/en/connector-cpp.html
 
-Please note, the MySQL Connector/C++ is released as an alpha version. Although MySQL Workbench is using a pre-alpha snapshot we do not recommend using it in production environments or systems with critical data. Please note, official support is not available for the alpha version of Connector/C++.
+Please note, the MySQL Connector/C++ is released as an alpha version. We do not recommend using the driver in production environments or systems with critical data. Please note, official support is not available for the alpha version of Connector/C++.
 
 Feedback, bug reports, bug fixes, patches and so on are welcome and appreciated:
 
