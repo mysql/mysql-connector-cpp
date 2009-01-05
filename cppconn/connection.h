@@ -22,6 +22,8 @@
 #ifndef _SQL_CONNECTION_H_
 #define _SQL_CONNECTION_H_
 
+#ifndef CPPDBC_PUBLIC_FUNC
+
 #if defined(_WIN32)
  #ifdef CPPDBC_EXPORTS
   #define CPPDBC_PUBLIC_FUNC __declspec(dllexport)
@@ -32,7 +34,7 @@
  #define CPPDBC_PUBLIC_FUNC
 #endif
 
-
+#endif    //#ifndef CPPDBC_PUBLIC_FUNC
 
 #include <string>
 #include <map>
