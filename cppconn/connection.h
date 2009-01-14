@@ -42,6 +42,17 @@
 namespace sql
 {
 
+typedef union _ConnectPropertyVal{
+		struct {
+			const char * val;
+			size_t len;
+		} str;
+		double dval;
+		long long lval;
+		void * pval;
+} ConnectPropertyVal;
+
+
 class DatabaseMetaData;
 class PreparedStatement;
 class Statement;

@@ -24,6 +24,7 @@
 
 #include <string>
 #include <map>
+#include "connection.h"
 
 #if defined(_WIN32)
  #ifdef CPPDBC_EXPORTS
@@ -37,19 +38,6 @@
 
 namespace sql
 {
-
-typedef union _ConnectPropertyVal{
-		struct {
-			const char * val;
-			size_t len;
-		} str;
-		double dval;
-		long long lval;
-		void * pval;
-} ConnectPropertyVal;
-
-
-class Connection;
 
 class CPPDBC_PUBLIC_FUNC Driver
 {

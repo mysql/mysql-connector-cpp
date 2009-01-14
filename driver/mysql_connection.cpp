@@ -84,6 +84,55 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName,
 								   const std::string& userName,
 								   const std::string& password)
 {
+	init(hostName, userName, password);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Connection::MySQL_Connection() -I- */
+MySQL_Connection::MySQL_Connection(std::map<std::string, ConnectPropertyVal> properties)
+{
+	std::string hostName;
+	std::string userName;
+	std::string password;
+	std::map<std::string, sql::ConnectPropertyVal>::const_iterator it = properties.begin();
+	for (; it != properties.end(); it++) {
+		if (!it->first.compare("hostName")) {
+			hostName = it->second.str.val;
+		} else if (!it->first.compare("userName")) {
+			userName = it->second.str.val;
+		} else if (!it->first.compare("password")) {
+			password = it->second.str.val;
+		}
+	}
+	init(hostName, userName, password);
+}
+
+
+/* {{{ MySQL_Connection::~MySQL_Connection() -I- */
+MySQL_Connection::~MySQL_Connection()
+{
+	/*
+	  We need this outter block, because the on-stack object
+	  created by CPP_ENTER references `intern->logger`. And if there is no block
+	  the on-stack object will be destructed after `delete intern->logger` leading
+	  to a faulty memory access.
+	*/
+	{
+		CPP_ENTER_WL(intern->logger, "MySQL_Connection::~MySQL_Connection");
+		if (!isClosed()) {
+			mysql_close(intern->mysql);
+		}
+	}
+	intern->logger->freeReference();
+	delete intern;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Connection::init() -I- */
+void MySQL_Connection::init(const std::string& hostName, const std::string& userName, const std::string& password)
+{
 	intern = new MySQL_ConnectionData();
 	intern->is_valid = true;
 	bool protocol_tcp = true;
@@ -148,28 +197,6 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName,
 		throw e;
 	}
 }
-/* }}} */
-
-
-/* {{{ MySQL_Connection::~MySQL_Connection() -I- */
-MySQL_Connection::~MySQL_Connection()
-{
-	/*
-	  We need this outter block, because the on-stack object
-	  created by CPP_ENTER references `intern->logger`. And if there is no block
-	  the on-stack object will be destructed after `delete intern->logger` leading
-	  to a faulty memory access.
-	*/
-	{
-		CPP_ENTER_WL(intern->logger, "MySQL_Connection::~MySQL_Connection");
-		if (!isClosed()) {
-			mysql_close(intern->mysql);
-		}
-	}
-	intern->logger->freeReference();
-	delete intern;
-}
-/* }}} */
 
 
 /* {{{ MySQL_Connection::clearWarnings() -I- */
