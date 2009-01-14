@@ -30,29 +30,29 @@ namespace sql
 namespace mysql
 {
 class Connection;
-
+class ConnectProperty;
 
 class CPPDBC_PUBLIC_FUNC MySQL_Driver : public sql::Driver
 {
-protected:
-	virtual ~MySQL_Driver();
-	MySQL_Driver();
-
 public:
+	MySQL_Driver(); /* DON'T CALL THIS, USE Instance() */
+	virtual ~MySQL_Driver();/* DON'T CALL THIS, MEMORY WILL BE AUTOMAGICALLY CLEANED */
 
 	static MySQL_Driver * Instance();
 
-	virtual sql::Connection *connect(const std::string& hostName, 
-									const std::string& userName, 
-									const std::string& password);
+	sql::Connection * connect(const std::string& hostName, 
+							const std::string& userName, 
+							const std::string& password);
 
-	virtual int getMajorVersion();
+	sql::Connection * connect(std::map<std::string, sql::ConnectPropertyVal>);
 
-	virtual int getMinorVersion();
+	int getMajorVersion();
 
-	virtual int getPatchVersion();
+	int getMinorVersion();
 
-	virtual const std::string & getName();
+	int getPatchVersion();
+
+	const std::string & getName();
 
 private:
 	/* Prevent use of these */

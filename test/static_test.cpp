@@ -26,7 +26,7 @@
 int loops = 1;
 
 /* {{{	*/
-sql::Connection *
+static sql::Connection *
 get_connection(const std::string& host, const std::string& user, const std::string& pass)
 {
 	static sql::Driver * driver = get_driver_instance();
@@ -36,3 +36,18 @@ get_connection(const std::string& host, const std::string& user, const std::stri
 
 #include "test_common.cpp"
 
+static void driver_test_new_driver_exception()
+{
+	try {
+//		new sql::mysql::MySQL_Driver();
+//		ensure("Exception not thrown", false);
+	} catch (sql::InvalidArgumentException) { }
+}
+
+
+int main(int argc, const char **argv)
+{
+	driver_test_new_driver_exception();
+
+	return run_tests(argc, argv);
+}

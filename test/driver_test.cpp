@@ -33,19 +33,43 @@
 
 using namespace std;
 
-int loops = 1;
+int loops = 2;
 
 static sql::Driver * mysql_driver = NULL;
 
 /* {{{	*/
-sql::Connection *
+static sql::Connection *
 get_connection(const std::string & host, const std::string & user, const std::string & pass)
 {
 	try {
+		/* There will be concurrency problem if we had threads, but don't have, then it's ok */
 		if (!mysql_driver) {
 			mysql_driver = sql::mysql::MySQL_Driver::Instance();
 		}
-		return mysql_driver->connect(host, user, pass);
+		if (loops % 2) {
+			return mysql_driver->connect(host, user, pass);
+		} else {
+			std::map<std::string, sql::ConnectPropertyVal> connection_properties;
+			{
+				sql::ConnectPropertyVal tmp;
+				tmp.str.val = host.c_str();
+				tmp.str.len = host.length();
+				connection_properties[std::string("hostName")] = tmp;
+			}
+			{
+				sql::ConnectPropertyVal tmp;
+				tmp.str.val = user.c_str();
+				tmp.str.len = user.length();
+				connection_properties[std::string("userName")] = tmp;
+			}
+			{
+				sql::ConnectPropertyVal tmp;
+				tmp.str.val = pass.c_str();
+				tmp.str.len = pass.length();
+				connection_properties[std::string("password")] = tmp;
+			}
+			return mysql_driver->connect(connection_properties);
+		}
 	} catch (sql::SQLException &e) {
 		cout << "sql::SQLException caught during connect" << endl;
 		cout << e.what() << endl;
@@ -57,4 +81,21 @@ get_connection(const std::string & host, const std::string & user, const std::st
 #define DRIVER_TEST 1
 
 #include "test_common.cpp"
+
+static void driver_test_new_driver_exception()
+{
+	try {
+		new sql::mysql::MySQL_Driver();
+		ensure("Exception not thrown", false);
+	} catch (sql::InvalidArgumentException) { }
+}
+
+/* {{{	*/
+int main(int argc, const char **argv)
+{
+	driver_test_new_driver_exception();
+
+	return run_tests(argc, argv);
+}
+/* }}} */
 

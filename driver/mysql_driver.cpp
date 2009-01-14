@@ -23,7 +23,9 @@
 #include "mysql_connection.h"
 
 #include "mysql_private_iface.h"
+#include <cppconn/exception.h>
 
+static bool module_already_loaded = 0;
 
 CPPDBC_PUBLIC_FUNC sql::Driver *get_driver_instance()
 {
@@ -35,8 +37,6 @@ namespace sql
 namespace mysql
 {
 
-//static MySQL_Driver driver;
-
 
 CPPDBC_PUBLIC_FUNC MySQL_Driver *get_mysql_driver_instance()
 {
@@ -44,17 +44,25 @@ CPPDBC_PUBLIC_FUNC MySQL_Driver *get_mysql_driver_instance()
 	return sql::mysql::MySQL_Driver::Instance();
 }
 
+static sql::mysql::MySQL_Driver d;
+
+
 MySQL_Driver * MySQL_Driver::Instance()
 {
-	static sql::mysql::MySQL_Driver d;
-
 	return &d;
 }
 
+
 MySQL_Driver::MySQL_Driver()
 {
-	mysql_library_init(0, NULL, NULL);
+	if (!module_already_loaded) {
+		mysql_library_init(0, NULL, NULL);
+		module_already_loaded = true;
+	} else {
+		throw sql::InvalidArgumentException("You should not call directly the constructor");
+	}
 }
+
 
 
 MySQL_Driver::~MySQL_Driver()
@@ -67,6 +75,26 @@ sql::Connection * MySQL_Driver::connect(const std::string& hostName,
 										const std::string& userName, 
 										const std::string& password)
 {
+	return new MySQL_Connection(hostName, userName, password);
+}
+
+
+sql::Connection * MySQL_Driver::connect(std::map<std::string, sql::ConnectPropertyVal> properties)
+{
+	std::string hostName;
+	std::string userName;
+	std::string password;
+	std::map<std::string, sql::ConnectPropertyVal>::const_iterator it = properties.begin();
+	for (; it != properties.end(); it++) {
+		if (!it->first.compare("hostName")) {
+			hostName = it->second.str.val;
+		} else if (!it->first.compare("userName")) {
+			userName = it->second.str.val;
+		} else if (!it->first.compare("password")) {
+			password = it->second.str.val;
+		}
+	}
+
 	return new MySQL_Connection(hostName, userName, password);
 }
 

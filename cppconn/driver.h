@@ -23,6 +23,7 @@
 #define _SQL_DRIVER_H_
 
 #include <string>
+#include <map>
 
 #if defined(_WIN32)
  #ifdef CPPDBC_EXPORTS
@@ -37,6 +38,17 @@
 namespace sql
 {
 
+typedef union _ConnectPropertyVal{
+		struct {
+			const char * val;
+			size_t len;
+		} str;
+		double dval;
+		long long lval;
+		void * pval;
+} ConnectPropertyVal;
+
+
 class Connection;
 
 class CPPDBC_PUBLIC_FUNC Driver
@@ -47,6 +59,8 @@ public:
 	// Attempts to make a database connection to the given URL.
 
 	virtual Connection * connect(const std::string& hostName, const std::string& userName, const std::string& password) = 0;
+
+	virtual Connection * connect(std::map<std::string, ConnectPropertyVal>) = 0;
 
 	virtual int getMajorVersion() = 0;
 

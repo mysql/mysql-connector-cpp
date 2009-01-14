@@ -2714,7 +2714,7 @@ static void test_not_implemented_cs_rs_meta(std::auto_ptr<sql::Connection> & con
 
 
 /* {{{	*/
-int main(int argc, const char **argv)
+int run_tests(int argc, const char **argv)
 {
 
 	printf("1..%d\n#\n", loops);	
