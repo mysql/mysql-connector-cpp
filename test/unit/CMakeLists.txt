@@ -39,36 +39,10 @@ IF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)
 	SET(MY_GCOV_LINK_LIBRARIES gcov)
 ENDIF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)
 
-SET(example_sources
-	unit_fixture.cpp
-	main.cpp
-	../CJUnitTestsPort/framework/test_suite.cpp
-	../CJUnitTestsPort/framework/test_factory.cpp
-	../CJUnitTestsPort/framework/test_listener.cpp
-	../CJUnitTestsPort/framework/test_asserts.cpp
-	../CJUnitTestsPort/framework/test_tapOutputter.cpp
-	../CJUnitTestsPort/framework/test_runner.cpp
-	../../common/stringutils.cpp
-	example/example.cpp)
-
-IF(WIN32)
-	SET(example_sources
-    		${example_sources}
-	unit_fixture.h
-	../CJUnitTestsPort/framework/test_runner.h
-	../CJUnitTestsPort/framework/test_suite.h
-	../CJUnitTestsPort/framework/test_case.h
-	../CJUnitTestsPort/framework/test_factory.h
-	../CJUnitTestsPort/framework/test_listener.h
-	../CJUnitTestsPort/framework/test_asserts.h
-	../CJUnitTestsPort/framework/test_outputter.h
-	../CJUnitTestsPort/framework/test_tapOutputter.h
-	../../common/stringutils.h
-	example/example.h)
-ENDIF(WIN32)
-
-ADD_EXECUTABLE(example_tests ${example_sources})
-TARGET_LINK_LIBRARIES(example_tests ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
-
-
 MESSAGE(STATUS "Configuring unit tests")
+
+ADD_SUBDIRECTORY(example/)
+
+# Copy&Paste template: change directory name and uncomment
+# ADD_SUBDIRECTORY(template_bug/)
+ADD_SUBDIRECTORY(template_bug/)
