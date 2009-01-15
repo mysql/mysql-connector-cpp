@@ -74,3 +74,45 @@ HOW TO ADD A REGRESSION TEST
   directory of your newly create mygroup/ directory.
 
   Open the CMakeLists.txt file from test/unit/). At its end you will find:
+
+    # Copy&Paste template: change directory name and uncomment
+    # ADD_SUBDIRECTORY(template_bug_group)
+    ADD_SUBDIRECTORY(template_bug_group)
+
+  Modify the CMakeLists.txt by adding: "ADD_SUBDIRECTORY(mygroup)" to its end.
+
+2) Adding a test to a group of tests
+
+  Go to the directory where you want to add your test. 
+  Write the test code.
+
+  You can either copy a pair of one *.h and one *.cpp file which makes a test
+  for another bug and modify it, or you copy example files from the directory
+  template_bug_group for a starting point. For example, copy the template
+  files bug123.cpp and bug123.h:
+
+    # cd mygroup/
+    # cp ../template_bug_group/bug123.cpp bug_mynumber.cpp
+    # cp ../template_bug_group/bug123.h bug_mynumber.h
+
+  Use Cut&Past and Search&Replace to fix class and methods names in the newly
+  created files bug_mynumber.cpp and bug_mynumber.h .
+
+  Have a look at the examples/ directory for code syntax snippets.
+
+3) Add the new test to the CMakeLists.txt in its directory
+
+  In order compile your new test from mygroup/bug_mynumber.[cpp|h] into a
+  binary mygroup/bug_mynumber you need to modify mygroup/CMakeLists.txt .
+  It should be easy going. Look out for a block like this:
+
+    #
+    # Instructions for compiling bug123.cpp|h into the binary bug123
+    # Use Copy&Paste and Search&Replace to add new tests to the build
+    #
+    [...]
+    #
+    # End of the instructions for building binary bug123 from bug123.cpp|h
+    #
+ 
+  
