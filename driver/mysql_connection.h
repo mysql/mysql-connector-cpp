@@ -60,7 +60,7 @@ class CPPDBC_PUBLIC_FUNC MySQL_Connection : public sql::Connection
 public:
 	MySQL_Connection(const std::string& hostName,  const std::string& userName, const std::string& password);
 
-	MySQL_Connection(std::map<std::string, ConnectPropertyVal>);
+	MySQL_Connection(std::map<std::string, sql::ConnectPropertyVal>);
 
 	virtual ~MySQL_Connection();
 

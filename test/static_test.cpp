@@ -23,14 +23,37 @@
 #include "driver/mysql_public_iface.h"
 #include <string>
 
-int loops = 1;
+int loops = 2;
 
 /* {{{	*/
 static sql::Connection *
 get_connection(const std::string& host, const std::string& user, const std::string& pass)
 {
 	static sql::Driver * driver = get_driver_instance();
-	return driver->connect(host, /*port,*/ user, pass);
+	if (loops % 2) {
+		return driver->connect(host, /*port,*/ user, pass);
+	} else {
+		std::map<std::string, sql::ConnectPropertyVal> connection_properties;
+		{
+			sql::ConnectPropertyVal tmp;
+			tmp.str.val = host.c_str();
+			tmp.str.len = host.length();
+			connection_properties[std::string("hostName")] = tmp;
+		}
+		{
+			sql::ConnectPropertyVal tmp;
+			tmp.str.val = user.c_str();
+			tmp.str.len = user.length();
+			connection_properties[std::string("userName")] = tmp;
+		}
+		{
+			sql::ConnectPropertyVal tmp;
+			tmp.str.val = pass.c_str();
+			tmp.str.len = pass.length();
+			connection_properties[std::string("password")] = tmp;
+		}
+		return new sql::mysql::MySQL_Connection(connection_properties);
+	}
 }
 /* }}} */
 
