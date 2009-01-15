@@ -30,7 +30,7 @@ int main(int argc, char** argv)
   testsuite::StartOptions options=testsuite::StartOptions(argc, argv);
 
   testsuite::TestsRunner & testsRunner=testsuite::TestsRunner::theInstance();
-	
+
   testsRunner.setStartOptions(& options);
 
   return testsRunner.runTests() ? 0 : -1;
