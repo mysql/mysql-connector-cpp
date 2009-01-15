@@ -72,6 +72,12 @@ HOW TO RUN A REGRESSION TEST
   (Connects to MySQL using TCP/IP on  127.0.0.1:3306 using user "root"
    with the password "root" and selects the database "test")
 
+3) Verbose?
+
+   Yes, its there. Try something like:
+
+     > test/unit/example/example --verbose tcp://127.0.0.1 root root test
+
 
 HOW TO WRITE A REGRESSION TEST
 
