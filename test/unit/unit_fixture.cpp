@@ -1,4 +1,4 @@
-/*
+b /*
    Copyright 2008 Sun Microsystems, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -22,28 +22,8 @@
 
 #include "unit_fixture.h"
 
-namespace testsuite
+        namespace testsuite
 {
-
-/**
- * Fallback connection URL if no URL is passed to the test on the command line
- */
-static const String default_url="tcp://127.0.0.1";
-
-/**
- * Fallback connection schema to use if no schema is passed to the test on the command line
- */
-static const String default_db="test";
-
-/**
- * Fallback user name if no schema is passed to the test on the command line
- */
-static const String default_user="root";
-
-/**
- * Fallback user password if no schema is passwrd to the test on the command line
- */
-static const String default_passwd="root";
 
 Driver * unit_fixture::driver=NULL;
 
@@ -83,7 +63,7 @@ void unit_fixture::setUp()
   /*
            + " " + String(driver->getMajorVersion() + driver->getMajorVersion + String(".") + driver->getMinorVersion());*/
 
-  con->setSchema((db.length() > 0 ? db : default_db));
+  con->setSchema(db);
 }
 
 void unit_fixture::tearDown()
@@ -148,15 +128,6 @@ sql::Connection * unit_fixture::getConnection()
     driver=get_driver_instance();
     logMsg(String("Done: loaded ") + driver->getName());
   }
-
-  if (url.length() == 0)
-    url=default_url;
-
-  if (user.length() == 0)
-    user=default_user;
-
-  if (passwd.length() == 0)
-    passwd=default_passwd;
 
   return driver->connect(url, user, passwd);
 }

@@ -19,11 +19,11 @@
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #
-# Instructions for compiling bug123.cpp|h into the binary bug123
+# Instructions for compiling example.cpp|h into the binary example
 # Use Copy&Paste and Search&Replace to add new tests to the build
 #
 
-SET(bug123_sources
+SET(example_sources
 	../unit_fixture.cpp
 	../main.cpp
 	../../CJUnitTestsPort/framework/test_suite.cpp
@@ -33,11 +33,11 @@ SET(bug123_sources
 	../../CJUnitTestsPort/framework/test_tapOutputter.cpp
 	../../CJUnitTestsPort/framework/test_runner.cpp
 	../../../common/stringutils.cpp
-	bug123.cpp)
+	example.cpp)
 
 IF(WIN32)
-	SET(bug123_sources
-    		${bug123_sources}
+	SET(example_sources
+    		${example_sources}
 	unit_fixture.h
 	../../CJUnitTestsPort/framework/test_runner.h
 	../../CJUnitTestsPort/framework/test_suite.h
@@ -48,49 +48,14 @@ IF(WIN32)
 	../../CJUnitTestsPort/framework/test_outputter.h
 	../../CJUnitTestsPort/framework/test_tapOutputter.h
 	../../../common/stringutils.h
-	bug123.h)
+	example.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(bug123 ${bug123_sources})
-TARGET_LINK_LIBRARIES(bug123 ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+ADD_EXECUTABLE(example ${example_sources})
+TARGET_LINK_LIBRARIES(example ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 #
-# End of the instructions for building binary bug123 from bug123.cpp|h
+# End of the instructions for building binary example from example.cpp|h
 #
 
-#
-# Instructions for compiling bug456.cpp|h into the binary bug456
-#
-
-SET(bug456_sources
-	../unit_fixture.cpp
-	../main.cpp
-	../../CJUnitTestsPort/framework/test_suite.cpp
-	../../CJUnitTestsPort/framework/test_factory.cpp
-	../../CJUnitTestsPort/framework/test_listener.cpp
-	../../CJUnitTestsPort/framework/test_asserts.cpp
-	../../CJUnitTestsPort/framework/test_tapOutputter.cpp
-	../../CJUnitTestsPort/framework/test_runner.cpp
-	../../../common/stringutils.cpp
-	bug456.cpp)
-
-IF(WIN32)
-	SET(bug456_sources
-    		${bug456_sources}
-	unit_fixture.h
-	../../CJUnitTestsPort/framework/test_runner.h
-	../../CJUnitTestsPort/framework/test_suite.h
-	../../CJUnitTestsPort/framework/test_case.h
-	../../CJUnitTestsPort/framework/test_factory.h
-	../../CJUnitTestsPort/framework/test_listener.h
-	../../CJUnitTestsPort/framework/test_asserts.h
-	../../CJUnitTestsPort/framework/test_outputter.h
-	../../CJUnitTestsPort/framework/test_tapOutputter.h
-	../../../common/stringutils.h
-	bug456.h)
-ENDIF(WIN32)
-
-ADD_EXECUTABLE(bug456 ${bug456_sources})
-TARGET_LINK_LIBRARIES(bug456 ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
-
-MESSAGE(STATUS "Configuring unit tests - group template_bug")
+MESSAGE(STATUS "Configuring unit tests - examples")
