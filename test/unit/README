@@ -54,22 +54,23 @@ HOW TO ADD A REGRESSION TEST
    [# cd test/unit/ - this is where this README is :-)]
     # cp -R template_bug_group/ mygroup/
 
-  Go to the directory mygroup/. It contains a CMake build file,
-  two *.cpp and two *.h files. A pair of one *.cpp and the
-  corresponding *.h file holds the test code for one bug and is
-  compiled into one binary.
+  Go to the newly create directory mygroup/. It should reside in
+  test/unit. The directory mygroup/ contains a CMake build
+  file (a) and two *.cpp and two *.h files (b, c):
 
     a) A CMakeLists.txt build file
     b) bug123.cpp + bug123.h -> compiled into binary bug123
     c) bug456.cpp + bug456.h -> compiled into binary bug456
 
+  A pair of one *.cpp and the corresponding *.h file (b, c) holds 
+  the code for one bug test and is compiled into one binary. 
+
   Modify the template code as needed. Make sure you keep the
-  CMakeLists.txt in sync with the code in the directory. Have a look,
+  CMakeLists.txt (a) in sync with the code in the directory. Have a look,
   its Cut&Paste and Search&Replace that needs to be done.
 
-  NOTE: You must "register" the new directory at the CMakeLists.txt
-  found in the parent directory of your mygroup/ directory before you
-  can build it.
+  In order to build the test whenever the driver is build, you must
+  "register" the new directory at the CMakeLists.txt found in the parent 
+  directory of your newly create mygroup/ directory.
 
-  At the end of the CMakeLists.txt (from test/unit/), you will find:
-
+  Open the CMakeLists.txt file from test/unit/). At its end you will find:
