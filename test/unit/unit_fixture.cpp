@@ -1,4 +1,4 @@
-/*
+b /*
    Copyright 2008 Sun Microsystems, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 
 #include "unit_fixture.h"
 
-namespace testsuite
+        namespace testsuite
 {
 
 Driver * unit_fixture::driver=NULL;

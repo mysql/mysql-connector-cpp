@@ -49,10 +49,15 @@ HOW TO RUN A REGRESSION TEST
 
 2) Invoke a test
 
-  For example, run the example code test:
+  When running a test binary you must pass connection parameters
+  to it. There are no defaults currently. The syntax is:
 
-    > test/unit/example/example
-  
+  example_program tcp://<host>[:<port>] [username] [password] [database]
+
+  For example, use:
+
+    > test/unit/example/example tcp://127.0.0.1 root root test
+
     # example_test_class
     1..5
     ok 1 - test_hello_world1
@@ -64,20 +69,11 @@ HOW TO RUN A REGRESSION TEST
     FAILED tests 2, 4
     Failed 2/5, 60.00% okay
 
-  By default the test will try to connect to MySQL using TCP/IP on 
-  127.0.0.1:3306 using user "root" with the password "root" and the 
-  password "root"!
-
-  However, you can pass other connection parameters to it using:
-
-    example_program tcp://<host>[:<port>] [username] [password] [database]
-
-  HINT: To specify and empty string as a password use:
-
-    > test/unit/example/example tcp://127.0.0.1:3306 root ""
+  (Connects to MySQL using TCP/IP on  127.0.0.1:3306 using user "root"
+   with the password "root" and selects the database "test")
 
 
-HOW TO ADD A REGRESSION TEST
+HOW TO WRITE A REGRESSION TEST
 
 1) Identify a proper group, a proper directory for your test
 
@@ -98,15 +94,15 @@ HOW TO ADD A REGRESSION TEST
     b) bug123.cpp + bug123.h -> compiled into binary bug123
     c) bug456.cpp + bug456.h -> compiled into binary bug456
 
-  A pair of one *.cpp and the corresponding *.h file (b, c) holds 
-  the code for one bug test and is compiled into one binary. 
+  A pair of one *.cpp and the corresponding *.h file (b, c) holds
+  the code for one bug test and is compiled into one binary.
 
   Modify the template code as needed. Make sure you keep the
   CMakeLists.txt (a) in sync with the code in the directory. Have a look,
   its Cut&Paste and Search&Replace that needs to be done.
 
   In order to build the test whenever the driver is build, you must
-  "register" the new directory at the CMakeLists.txt found in the parent 
+  "register" the new directory at the CMakeLists.txt found in the parent
   directory of your newly create mygroup/ directory.
 
   Open the CMakeLists.txt file from test/unit/). At its end you will find:
@@ -119,7 +115,7 @@ HOW TO ADD A REGRESSION TEST
 
 2) Adding a test to a group of tests
 
-  Go to the directory where you want to add your test. 
+  Go to the directory where you want to add your test.
   Write the test code.
 
   You can either copy a pair of one *.h and one *.cpp file which makes a test
@@ -134,7 +130,8 @@ HOW TO ADD A REGRESSION TEST
   Use Cut&Past and Search&Replace to fix class and methods names in the newly
   created files bug_mynumber.cpp and bug_mynumber.h .
 
-  Have a look at the examples/ directory for code syntax snippets.
+  Have a look at the examples/ directory for basic syntax snippets!
+  (Yes, we should add more, but as we will proceed this is likely to grow...)
 
 3) Add the new test to the CMakeLists.txt in its directory
 
@@ -149,9 +146,9 @@ HOW TO ADD A REGRESSION TEST
     [...]
     #
     # End of the instructions for building binary bug123 from bug123.cpp|h
-    #    
- 
-  Use Cut&Paste and Search&Replace to make it compile your test code 
+    #
+
+  Use Cut&Paste and Search&Replace to make it compile your test code
   contained in bug_mynumber.cpp|h instead of bug123.c|h.
 
 4) Compile the new code
@@ -160,8 +157,8 @@ HOW TO ADD A REGRESSION TEST
 
   > cmake . && make
 
-  If all goes well, it does an incemental build and builds only 
-  you latest additions. You will find the binary of you new test in 
+  If all goes well, it does an incemental build and builds only
+  you latest additions. You will find the binary of you new test in
   test/unit/mygroup. It will have the name bug_mynumber. Of course,
   replace "mygroup" and "bug_mynumber" with whatever you used in steps 1-3 :-).
 
