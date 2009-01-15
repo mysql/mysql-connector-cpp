@@ -29,6 +29,34 @@ INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
 INCLUDE(CheckTypeSize)
 
+
+#----------------------
+# STLPORT - BEGIN
+#
+SET(MYSQLCPPCONN_STLPORT_ENABLE 0 CACHE BOOL "stlport-enabled")
+IF(MYSQLCPPCONN_STLPORT_ENABLE)
+	MESSAGE(STATUS "Looking for STLPort")
+	FIND_PATH(STLPORT_INCLUDE_DIR stl_user_config.h
+			$ENV{STLPORT_INCLUDE_DIR}
+			/usr/include/stlport
+			/usr/local/include/stlport)
+	IF(STLPORT_INCLUDE_DIR)
+		MESSAGE(STATUS "Using STLPort from : ${STLPORT_INCLUDE_DIR}")
+		
+		INCLUDE_DIRECTORIES(STLPORT_INCLUDE_DIR)
+		SET(MYSQLCPPCONN_STLPORT_LIB "stlport")
+	ELSE(STLPORT_INCLUDE_DIR)
+		MESSAGE(SEND_ERROR "STLPORT not found. Please set $ENV{STLPORT_INCLUDE_DIR} if installed in non-standard location")	
+	ENDIF(STLPORT_INCLUDE_DIR)
+ELSE(MYSQLCPPCONN_STLPORT_ENABLE)
+	SET(MYSQLCPPCONN_STLPORT_LIB "")
+ENDIF(MYSQLCPPCONN_STLPORT_ENABLE)
+#
+# STLPORT - END
+#----------------------
+
+
+
 INCLUDE(${CMAKE_SOURCE_DIR}/FindMySQL.cmake)
 
 # ----------------------------------------------------------------------

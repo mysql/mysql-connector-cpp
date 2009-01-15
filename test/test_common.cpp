@@ -72,6 +72,8 @@ extern "C"
 #pragma warning(disable:4251)
 #endif
 
+#include <stdio.h>
+
 class TestBlob : public sql::Blob
 {
 	std::string value;
