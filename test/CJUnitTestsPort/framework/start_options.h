@@ -80,7 +80,6 @@ struct StartOptions
       while (--paramsNumber)
       {
         ciString param(*(++paramsValues));
-
         if (param.substr(0, 2) == "--")
         {
 
@@ -91,7 +90,6 @@ struct StartOptions
         } else if (curParam < poLast)
         {
           curParam=static_cast<ParameterOrder> (curParam + 1);
-
           *_param[ curParam ]=String(param.c_str());
         }
       }

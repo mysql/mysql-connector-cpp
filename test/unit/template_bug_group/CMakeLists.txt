@@ -18,6 +18,11 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+#
+# Instructions for compiling bug123.cpp|h into the binary bug123
+# Use Copy&Paste and Search&Replace to add new tests to the build
+#
+
 SET(bug123_sources
 	../unit_fixture.cpp
 	../main.cpp
@@ -48,6 +53,14 @@ ENDIF(WIN32)
 
 ADD_EXECUTABLE(bug123 ${bug123_sources})
 TARGET_LINK_LIBRARIES(bug123 ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
+#
+# End of the instructions for building binary bug123 from bug123.cpp|h
+#
+
+#
+# Instructions for compiling bug456.cpp|h into the binary bug456
+#
 
 SET(bug456_sources
 	../unit_fixture.cpp

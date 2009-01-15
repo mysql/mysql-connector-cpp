@@ -42,12 +42,39 @@ do.
 
 HOW TO RUN A REGRESSION TEST
 
-1) Compile the driver. 
+1) Compile the driver which compiles the tests as well
 
   See the README in the root directory of the source distribution for help.
   Tests are build together with the driver.
 
+2) Invoke a test
 
+  For example, run the example code test:
+
+    > test/unit/example/example
+  
+    # example_test_class
+    1..5
+    ok 1 - test_hello_world1
+    not ok 2 - test_hello_world2
+    ok 3 - test_assert_equals
+    not ok 4 - test_assert_equals_fail
+    ok 5 - test_assert_message
+
+    FAILED tests 2, 4
+    Failed 2/5, 60.00% okay
+
+  By default the test will try to connect to MySQL using TCP/IP on 
+  127.0.0.1:3306 using user "root" with the password "root" and the 
+  password "root"!
+
+  However, you can pass other connection parameters to it using:
+
+    example_program tcp://<host>[:<port>] [username] [password] [database]
+
+  HINT: To specify and empty string as a password use:
+
+    > test/unit/example/example tcp://127.0.0.1:3306 root ""
 
 
 HOW TO ADD A REGRESSION TEST
@@ -100,9 +127,9 @@ HOW TO ADD A REGRESSION TEST
   template_bug_group for a starting point. For example, copy the template
   files bug123.cpp and bug123.h:
 
-    # cd mygroup/
-    # cp ../template_bug_group/bug123.cpp bug_mynumber.cpp
-    # cp ../template_bug_group/bug123.h bug_mynumber.h
+    > cd mygroup/
+    > cp ../template_bug_group/bug123.cpp bug_mynumber.cpp
+    > cp ../template_bug_group/bug123.h bug_mynumber.h
 
   Use Cut&Past and Search&Replace to fix class and methods names in the newly
   created files bug_mynumber.cpp and bug_mynumber.h .
@@ -129,9 +156,16 @@ HOW TO ADD A REGRESSION TEST
 
 4) Compile the new code
 
-  In the root 
+  In the root directory of the driver do:
+
+  > cmake . && make
+
+  If all goes well, it does an incemental build and builds only 
+  you latest additions. You will find the binary of you new test in 
+  test/unit/mygroup. It will have the name bug_mynumber. Of course,
+  replace "mygroup" and "bug_mynumber" with whatever you used in steps 1-3 :-).
 
 5) Questions?
 
   Andrey Hristov, Lawrin Novitsky and Ulf Wendel have worked on
-  Connector/C++. Georg Richter has some good CMake skills
+  Connector/C++. Georg Richter has some good CMake skills.
