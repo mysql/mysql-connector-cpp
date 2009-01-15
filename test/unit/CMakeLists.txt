@@ -44,5 +44,5 @@ MESSAGE(STATUS "Configuring unit tests")
 ADD_SUBDIRECTORY(example/)
 
 # Copy&Paste template: change directory name and uncomment
-# ADD_SUBDIRECTORY(template_bug/)
-ADD_SUBDIRECTORY(template_bug/)
+# ADD_SUBDIRECTORY(template_bug_group)
+ADD_SUBDIRECTORY(template_bug_group)
