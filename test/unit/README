@@ -21,8 +21,55 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 */
 
-This is a stub. We will soon start to add unit tests here.
+INTRODUCTION
 
-If you want to file a bug, you can provide an example how to reproduce
-the issue and you have the time to write a unit test, have a look
-at the examples....
+This is the best place for regression tests. This is where you should
+add a test when you fix a bug in the Connector. For historical reason
+there are three distinct sets of tests for the driver:
+
+tests/CJUnitTests/ <-- ported JDBC compliance/conformance tests
+tests/unit/        <-- primarily regression testing
+tests/static_test* <-- unclassified API tests, don't add code any more!
+
+The first two sets of test are using the same unit testing framework.
+All new tests of any kind (compliance, conformance, regression, ...),
+shall be written using the unit testing framework contained in the source
+of the MySQL Connector/C++.
+
+If you work for MySQL Support or you would like to help us with a
+full-featured bug report including a test case, here is what you need to
+do.
+
+
+HOW TO ADD A REGRESSION TEST
+
+1) Identify a proper group, a proper directory for your test
+
+  If there is a suitable directory for adding a new test proceed
+  with step 2)!
+
+  If there is no suitable directory, you need to create one by copying
+  the directory template_bug_group/. For example, use:
+
+   [# cd test/unit/ - this is where this README is :-)]
+    # cp -R template_bug_group/ mygroup/
+
+  Go to the directory mygroup/. It contains a CMake build file,
+  two *.cpp and two *.h files. A pair of one *.cpp and the
+  corresponding *.h file holds the test code for one bug and is
+  compiled into one binary.
+
+    a) A CMakeLists.txt build file
+    b) bug123.cpp + bug123.h -> compiled into binary bug123
+    c) bug456.cpp + bug456.h -> compiled into binary bug456
+
+  Modify the template code as needed. Make sure you keep the
+  CMakeLists.txt in sync with the code in the directory. Have a look,
+  its Cut&Paste and Search&Replace that needs to be done.
+
+  NOTE: You must "register" the new directory at the CMakeLists.txt
+  found in the parent directory of your mygroup/ directory before you
+  can build it.
+
+  At the end of the CMakeLists.txt (from test/unit/), you will find:
+
