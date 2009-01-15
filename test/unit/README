@@ -40,6 +40,15 @@ If you work for MySQL Support or you would like to help us with a
 full-featured bug report including a test case, here is what you need to
 do.
 
+HOW TO RUN A REGRESSION TEST
+
+1) Compile the driver. 
+
+  See the README in the root directory of the source distribution for help.
+  Tests are build together with the driver.
+
+
+
 
 HOW TO ADD A REGRESSION TEST
 
@@ -102,7 +111,7 @@ HOW TO ADD A REGRESSION TEST
 
 3) Add the new test to the CMakeLists.txt in its directory
 
-  In order compile your new test from mygroup/bug_mynumber.[cpp|h] into a
+  In order compile your new test from mygroup/bug_mynumber.cpp|h into a
   binary mygroup/bug_mynumber you need to modify mygroup/CMakeLists.txt .
   It should be easy going. Look out for a block like this:
 
@@ -113,6 +122,16 @@ HOW TO ADD A REGRESSION TEST
     [...]
     #
     # End of the instructions for building binary bug123 from bug123.cpp|h
-    #
+    #    
  
-  
+  Use Cut&Paste and Search&Replace to make it compile your test code 
+  contained in bug_mynumber.cpp|h instead of bug123.c|h.
+
+4) Compile the new code
+
+  In the root 
+
+5) Questions?
+
+  Andrey Hristov, Lawrin Novitsky and Ulf Wendel have worked on
+  Connector/C++. Georg Richter has some good CMake skills
