@@ -1,6 +1,13 @@
 Beta  1.0.3 - 2009-xx-xx
 
+- Addition of test/unit/README with instructions for writing bug/regression tests
 
+- Fixed a bug in MySQL_PreparedResultSet::getString(). Returned string hat real
+  data but the length was random. Now, the string is initialized with correct
+  length and thus is binary safe. (Andrey)
+
+- Added properties-enabled (map of key->value) for connecting, which
+  add many connect options. (Andrey)
 
 Alpha  1.0.2 - 2008-12-19
 
