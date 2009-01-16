@@ -199,7 +199,7 @@ void
 MySQL_Prepared_Statement::do_query()
 {
 	CPP_ENTER("MySQL_Prepared_Statement::do_query");
-	if (param_count && !param_bind->isAllSet() || mysql_stmt_bind_param(stmt, param_bind->get()) ) {
+	if (param_count && (!param_bind->isAllSet() || mysql_stmt_bind_param(stmt, param_bind->get()))) {
 		CPP_ERR("Couldn't bind");
 		throw sql::SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
 	}

@@ -58,7 +58,7 @@ class MySQL_ConnectionData;
 class CPPDBC_PUBLIC_FUNC MySQL_Connection : public sql::Connection
 {
 public:
-	MySQL_Connection(const std::string& hostName,  const std::string& userName, const std::string& password);
+	MySQL_Connection(const std::string& hostName, const std::string& userName, const std::string& password);
 
 	MySQL_Connection(std::map<std::string, sql::ConnectPropertyVal>);
 
@@ -138,6 +138,7 @@ public:
 protected:
 	void checkClosed();
 	void init(const std::string& hostName, const std::string& userName, const std::string& password);
+	void init(std::map<std::string, sql::ConnectPropertyVal> properties);
 
 	class MySQL_ConnectionData * intern;
 private:
