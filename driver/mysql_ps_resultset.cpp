@@ -671,8 +671,7 @@ MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 	}		
 	
 	CPP_INFO_FMT("value=%*s", *stmt->bind[columnIndex].length, stmt->bind[columnIndex].buffer);
-	return  std::string(static_cast<char *>(stmt->bind[columnIndex].buffer),
-						static_cast<char *>(stmt->bind[columnIndex].buffer) + *stmt->bind[columnIndex].length);
+	return  std::string(static_cast<char *>(stmt->bind[columnIndex].buffer), *stmt->bind[columnIndex].length);
 }
 /* }}} */
 

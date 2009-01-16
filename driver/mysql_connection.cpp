@@ -287,19 +287,19 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		}
 		std::map<std::string, sql::ConnectPropertyVal>::const_iterator it_tmp = properties.begin();
 		for (; it_tmp != properties.end(); it_tmp++) {
-			if (!it->first.compare("OPT_CONNECT_TIMEOUT")) {
+			if (!it_tmp->first.compare("OPT_CONNECT_TIMEOUT")) {
 				mysql_options(intern->mysql, MYSQL_OPT_CONNECT_TIMEOUT, (const char *) &it_tmp->second.lval);
-			} else if (!it->first.compare("OPT_NAMED_PIPE")) {
+			} else if (!it_tmp->first.compare("OPT_NAMED_PIPE")) {
 				mysql_options(intern->mysql, MYSQL_OPT_NAMED_PIPE, NULL);
-			} else if (!it->first.compare("OPT_READ_TIMEOUT")) {
+			} else if (!it_tmp->first.compare("OPT_READ_TIMEOUT")) {
 				mysql_options(intern->mysql, MYSQL_OPT_READ_TIMEOUT, (const char *) &it_tmp->second.lval);
-			} else if (!it->first.compare("OPT_WRITE_TIMEOUT")) {
+			} else if (!it_tmp->first.compare("OPT_WRITE_TIMEOUT")) {
 				mysql_options(intern->mysql, MYSQL_OPT_WRITE_TIMEOUT, (const char *) &it_tmp->second.lval);
-			} else if (!it->first.compare("OPT_RECONNECT")) {
+			} else if (!it_tmp->first.compare("OPT_RECONNECT")) {
 				mysql_options(intern->mysql, MYSQL_OPT_RECONNECT, (const char *) &it_tmp->second.lval);
-			} else if (!it->first.compare("OPT_CHARSET_NAME")) {
+			} else if (!it_tmp->first.compare("OPT_CHARSET_NAME")) {
 				mysql_options(intern->mysql, MYSQL_SET_CHARSET_NAME, (const char *) &it_tmp->second.str.val);
-			} else if (!it->first.compare("OPT_REPORT_DATA_TRUNCATION")) {
+			} else if (!it_tmp->first.compare("OPT_REPORT_DATA_TRUNCATION")) {
 				mysql_options(intern->mysql, MYSQL_REPORT_DATA_TRUNCATION, (const char *) &it_tmp->second.str.val);
 			}
 		}
