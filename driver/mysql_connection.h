@@ -137,7 +137,6 @@ public:
 
 protected:
 	void checkClosed();
-	void init(const std::string& hostName, const std::string& userName, const std::string& password);
 	void init(std::map<std::string, sql::ConnectPropertyVal> properties);
 
 	class MySQL_ConnectionData * intern;
