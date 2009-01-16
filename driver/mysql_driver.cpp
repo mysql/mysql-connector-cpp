@@ -81,21 +81,7 @@ sql::Connection * MySQL_Driver::connect(const std::string& hostName,
 
 sql::Connection * MySQL_Driver::connect(std::map<std::string, sql::ConnectPropertyVal> properties)
 {
-	std::string hostName;
-	std::string userName;
-	std::string password;
-	std::map<std::string, sql::ConnectPropertyVal>::const_iterator it = properties.begin();
-	for (; it != properties.end(); it++) {
-		if (!it->first.compare("hostName")) {
-			hostName = it->second.str.val;
-		} else if (!it->first.compare("userName")) {
-			userName = it->second.str.val;
-		} else if (!it->first.compare("password")) {
-			password = it->second.str.val;
-		}
-	}
-
-	return new MySQL_Connection(hostName, userName, password);
+	return new MySQL_Connection(properties);
 }
 
 

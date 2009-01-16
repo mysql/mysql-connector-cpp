@@ -84,7 +84,26 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName,
 								   const std::string& userName,
 								   const std::string& password)
 {
-	init(hostName, userName, password);
+	std::map<std::string, sql::ConnectPropertyVal> connection_properties;
+	{
+		sql::ConnectPropertyVal tmp;
+		tmp.str.val = hostName.c_str();
+		tmp.str.len = hostName.length();
+		connection_properties[std::string("hostName")] = tmp;
+	}
+	{
+		sql::ConnectPropertyVal tmp;
+		tmp.str.val = userName.c_str();
+		tmp.str.len = userName.length();
+		connection_properties[std::string("userName")] = tmp;
+	}
+	{
+		sql::ConnectPropertyVal tmp;
+		tmp.str.val = password.c_str();
+		tmp.str.len = password.length();
+		connection_properties[std::string("password")] = tmp;
+	}
+	init(connection_properties);
 }
 /* }}} */
 
@@ -92,20 +111,7 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName,
 /* {{{ MySQL_Connection::MySQL_Connection() -I- */
 MySQL_Connection::MySQL_Connection(std::map<std::string, sql::ConnectPropertyVal> properties)
 {
-	std::string hostName;
-	std::string userName;
-	std::string password;
-	std::map<std::string, sql::ConnectPropertyVal>::const_iterator it = properties.begin();
-	for (; it != properties.end(); it++) {
-		if (!it->first.compare("hostName")) {
-			hostName = it->second.str.val;
-		} else if (!it->first.compare("userName")) {
-			userName = it->second.str.val;
-		} else if (!it->first.compare("password")) {
-			password = it->second.str.val;
-		}
-	}
-	init(hostName, userName, password);
+	init(properties);
 }
 
 
@@ -126,76 +132,6 @@ MySQL_Connection::~MySQL_Connection()
 	}
 	intern->logger->freeReference();
 	delete intern;
-}
-/* }}} */
-
-
-/* {{{ MySQL_Connection::init() -I- */
-void MySQL_Connection::init(const std::string& hostName, const std::string& userName, const std::string& password)
-{
-	intern = new MySQL_ConnectionData();
-	intern->is_valid = true;
-	bool protocol_tcp = true;
-	std::string host;
-	std::string socket;
-	unsigned int port = 3306;
-
-	intern->logger = new sql::mysql::util::my_shared_ptr< MySQL_DebugLogger >(new MySQL_DebugLogger()); /* should be before CPP_ENTER */
-	CPP_ENTER_WL(intern->logger, "MySQL_Connection::MySQL_Connection");
-
-	try {
-		if (!(intern->mysql = mysql_init(NULL))) {
-			throw sql::SQLException("Insufficient memory: cannot create MySQL handle using mysql_init()", "HY000", 1000);
-		}
-#ifndef CPPDBC_WIN32
-		if (!hostName.compare(0, sizeof("unix://") - 1, "unix://")) {
-			protocol_tcp = false;
-			host = "localhost";
-			socket = hostName.substr(sizeof("unix://") - 1, std::string::npos);
-		} else
-#endif
-		if (!hostName.compare(0, sizeof("tcp://") - 1, "tcp://") ) {
-			size_t port_pos;
-			host = hostName.substr(sizeof("tcp://") - 1, std::string::npos);
-			if (std::string::npos != (port_pos = host.find_last_of(':', std::string::npos))) {
-				port = atoi(host.substr(port_pos + 1, std::string::npos).c_str());
-				host = host.substr(0, port_pos);
-			}
-		} else {
-			host = hostName.c_str();
-		}
-		/* libmysql shouldn't think it is too smart */
-		if (protocol_tcp && !host.compare(0, sizeof("localhost") - 1, "localhost")) {
-			host = "127.0.0.1";
-		}
-		if (!mysql_real_connect(intern->mysql,
-							host.c_str(),
-							userName.c_str(),
-							password.c_str(),
-							NULL /* schema */,
-							port,
-							protocol_tcp == false? socket.c_str():NULL /*socket*/,
-							0)) {
-			sql::SQLException e(mysql_error(intern->mysql), mysql_sqlstate(intern->mysql), mysql_errno(intern->mysql));
-			mysql_close(intern->mysql);
-			intern->mysql = NULL;
-			throw e;
-		}
-		mysql_set_server_option(intern->mysql, MYSQL_OPTION_MULTI_STATEMENTS_OFF);
-		setAutoCommit(true);
-		setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
-
-		intern->sql_mode = getSessionVariable("SQL_MODE");
-	} catch (sql::SQLException &e) {
-		intern->logger->freeReference();		
-		throw e;
-	} catch (std::runtime_error &e) {
-		intern->logger->freeReference();		
-		throw e;
-	} catch (std::bad_alloc &e) {
-		intern->logger->freeReference();		
-		throw e;
-	}
 }
 /* }}} */
 
