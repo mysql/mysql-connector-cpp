@@ -135,6 +135,38 @@ MySQL_Connection::~MySQL_Connection()
 }
 /* }}} */
 
+/*
+  We support :
+  - hostName
+  - userName
+  - password
+  - port
+  - socket
+  - sslKey
+  - sslCert
+  - sslCA
+  - sslCAPath
+  - sslCipher
+  - CLIENT_COMPRESS
+  - CLIENT_FOUND_ROWS
+  - CLIENT_IGNORE_SIGPIPE
+  - CLIENT_IGNORE_SPACE
+  - CLIENT_INTERACTIVE
+  - CLIENT_LOCAL_FILES
+  - CLIENT_MULTI_RESULTS
+  - CLIENT_MULTI_RESULTS
+  - CLIENT_MULTI_STATEMENTS
+  - CLIENT_NO_SCHEMA
+  - CLIENT_COMPRESS
+  - OPT_CONNECT_TIMEOUT
+  - OPT_NAMED_PIPE
+  - OPT_READ_TIMEOUT
+  - OPT_WRITE_TIMEOUT
+  - OPT_RECONNECT
+  - OPT_CHARSET_NAME
+  - OPT_REPORT_DATA_TRUNCATION
+*/
+
 
 /* {{{ MySQL_Connection::init() -I- */
 void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> properties)
@@ -145,11 +177,14 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 	std::string host;
 	std::string socket;
 	unsigned int port = 3306;
+	
 
 
 	std::string hostName;
 	std::string userName;
 	std::string password;
+	const char *sslKey = NULL, *sslCert = NULL, *sslCA = NULL, *sslCAPath = NULL, *sslCipher = NULL;
+	bool ssl_used = false;
 	int flags = 0;
 	std::map<std::string, sql::ConnectPropertyVal>::const_iterator it = properties.begin();
 	for (; it != properties.end(); it++) {
@@ -164,6 +199,21 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		} else if (!it->first.compare("socket")) {
 			socket = std::string(it->second.str.val);
 			protocol_tcp = false;
+		} else if (!it->first.compare("sslKey")) {
+			sslKey = it->second.str.val;
+			ssl_used = true;
+		} else if (!it->first.compare("sslCert")) {
+			sslCert = it->second.str.val;
+			ssl_used = true;
+		} else if (!it->first.compare("sslCA")) {
+			sslCA = it->second.str.val;
+			ssl_used = true;
+		} else if (!it->first.compare("sslCAPath")) {
+			sslCAPath = it->second.str.val;
+			ssl_used = true;
+		} else if (!it->first.compare("sslCipher")) {
+			sslCipher = it->second.str.val;
+			ssl_used = true;
 		} else if (!it->first.compare("CLIENT_COMPRESS")) {
 			if (it->second.lval && (flags & CLIENT_COMPRESS)) {
 				flags |= CLIENT_COMPRESS;
@@ -207,7 +257,6 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		}
 	}
 
-
 	intern->logger = new sql::mysql::util::my_shared_ptr< MySQL_DebugLogger >(new MySQL_DebugLogger()); /* should be before CPP_ENTER */
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::MySQL_Connection");
 
@@ -235,6 +284,28 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		/* libmysql shouldn't think it is too smart */
 		if (protocol_tcp && !host.compare(0, sizeof("localhost") - 1, "localhost")) {
 			host = "127.0.0.1";
+		}
+		std::map<std::string, sql::ConnectPropertyVal>::const_iterator it_tmp = properties.begin();
+		for (; it_tmp != properties.end(); it_tmp++) {
+			if (!it->first.compare("OPT_CONNECT_TIMEOUT")) {
+				mysql_options(intern->mysql, MYSQL_OPT_CONNECT_TIMEOUT, (const char *) &it_tmp->second.lval);
+			} else if (!it->first.compare("OPT_NAMED_PIPE")) {
+				mysql_options(intern->mysql, MYSQL_OPT_NAMED_PIPE, NULL);
+			} else if (!it->first.compare("OPT_READ_TIMEOUT")) {
+				mysql_options(intern->mysql, MYSQL_OPT_READ_TIMEOUT, (const char *) &it_tmp->second.lval);
+			} else if (!it->first.compare("OPT_WRITE_TIMEOUT")) {
+				mysql_options(intern->mysql, MYSQL_OPT_WRITE_TIMEOUT, (const char *) &it_tmp->second.lval);
+			} else if (!it->first.compare("OPT_RECONNECT")) {
+				mysql_options(intern->mysql, MYSQL_OPT_RECONNECT, (const char *) &it_tmp->second.lval);
+			} else if (!it->first.compare("OPT_CHARSET_NAME")) {
+				mysql_options(intern->mysql, MYSQL_SET_CHARSET_NAME, (const char *) &it_tmp->second.str.val);
+			} else if (!it->first.compare("OPT_REPORT_DATA_TRUNCATION")) {
+				mysql_options(intern->mysql, MYSQL_REPORT_DATA_TRUNCATION, (const char *) &it_tmp->second.str.val);
+			}
+		}
+		if (ssl_used) {
+			/* According to the docs, always returns 0 */
+			mysql_ssl_set(intern->mysql, sslKey, sslCert, sslCA, sslCAPath, sslCipher);
 		}
 		if (!mysql_real_connect(intern->mysql,
 							host.c_str(),
