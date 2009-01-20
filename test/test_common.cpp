@@ -1761,7 +1761,7 @@ static void test_prep_statement_blob(std::auto_ptr<sql::Connection> & conn, std:
 		use_stmt->execute("USE " + database);
 
 		std::auto_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("INSERT INTO test_blob VALUES(?)"));
-		std::string value("This is blob's value"); 
+		std::string value("A\0B", sizeof("A\0B") - 1); 
 		std::istringstream tmp_blob(value);
 		stmt->setBlob(1, &tmp_blob);
 		stmt->execute();
