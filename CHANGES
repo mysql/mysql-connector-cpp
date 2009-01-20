@@ -9,6 +9,14 @@ Beta  1.0.3 - 2009-xx-xx
 - Added properties-enabled (map of key->value) for connecting, which
   add many connect options. (Andrey)
 
+- New BLOB implementation. Got rid of sql::Blob in favor of std::istream. C++'s
+  IOStream library is very powerful, similar to PHP's streams. It makes no sense
+  to reinvent the wheel. For example one can pass a std::istringstream object
+  to setBlob() if the data is in memory, or just open a file std::fstream and
+  let it stream to the DB, or write own stream. Similar will be true for getBlob()
+  where we can just copy data, if buffered result set, or stream, if we implement
+  it. (Andrey)
+
 Alpha  1.0.2 - 2008-12-19
 
 - Adding test/unit as a basis for general unit tests based on the new

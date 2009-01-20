@@ -113,6 +113,7 @@ MySQL_Connection::MySQL_Connection(std::map<std::string, sql::ConnectPropertyVal
 {
 	init(properties);
 }
+/* }}} */
 
 
 /* {{{ MySQL_Connection::~MySQL_Connection() -I- */

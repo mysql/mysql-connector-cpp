@@ -108,7 +108,7 @@ public:
 
 	const SQLWarning * getWarnings();/* should return differen type */
 
-	void setBlob(unsigned int parameterIndex, sql::Blob * blob);
+	void setBlob(unsigned int parameterIndex, std::istream * blob);
 
 	void setBoolean(unsigned int parameterIndex, bool value);
 

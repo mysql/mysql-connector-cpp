@@ -23,8 +23,9 @@
 #ifndef _SQL_PREPARED_STATEMENT_H_
 #define _SQL_PREPARED_STATEMENT_H_
 
+#include <iostream>
+#include <sstream>
 #include "statement.h"
-#include "blob.h"
 
 
 namespace sql
@@ -54,7 +55,7 @@ public:
 
 	virtual void setBigInt(unsigned int parameterIndex, const std::string& value) = 0;
 
-	virtual void setBlob(unsigned int parameterIndex, sql::Blob * blob) = 0;
+	virtual void setBlob(unsigned int parameterIndex, std::istream * blob) = 0;
 
 	virtual void setBoolean(unsigned int parameterIndex, bool value) = 0;
 

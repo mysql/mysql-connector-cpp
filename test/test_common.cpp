@@ -22,6 +22,8 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <iostream>
+#include <sstream>
 
 // Portable __FUNCTION__
 #ifndef __FUNCTION__
@@ -41,6 +43,7 @@
 #define ensure(msg, stmt)				do {total_tests++;if(!(stmt)){printf("\n# Error! line=%d: %s\n# ",__LINE__,msg);total_errors++;throw sql::SQLException("error");} else { printf(".");}} while (0)
 #define ensure_equal(msg, op1, op2)	do {total_tests++;if((op1)!=(op2)){printf("\n# Error! line=%d: %s\n# ",__LINE__,msg);total_errors++;throw sql::SQLException("error");} else { printf(".");}}while(0)
 #define ensure_equal_int(msg, op1, op2)	do {total_tests++;if((op1)!=(op2)){printf("\n# Error! line=%d: %s Op1=%d Op2=%d\n# ",__LINE__,msg,op1,op2);total_errors++;throw sql::SQLException("error");} else { printf(".");}}while(0)
+#define ensure_equal_str(msg, op1, op2)	do {total_tests++;if((op1)!=(op2)){printf("\n# Error! line=%d: %s Op1=%s Op2=%s\n# ",__LINE__,msg,op1.c_str(),op2.c_str());total_errors++;throw sql::SQLException("error");} else { printf(".");}}while(0)
 
 static int total_errors = 0;
 static int total_tests = 0;
@@ -73,40 +76,6 @@ extern "C"
 #endif
 
 #include <stdio.h>
-
-class TestBlob : public sql::Blob
-{
-	std::string value;
-	size_t position;
-public:
-	TestBlob(std::string & s) : value(s), position(0) {}
-	virtual ~TestBlob() {}
-
-	std::string readChunk(size_t chunkSize);
-	void writeChunk(const std::string & chunk);
-};
-
-
-/* {{{ TestBlob::readChunk() */
-std::string TestBlob::readChunk(size_t chunkSize)
-{
-	try {
-		size_t tmp = position;
-		position+=chunkSize;
-		return value.substr(tmp, chunkSize);
-	} catch (std::out_of_range) {
-		return std::string("");
-	}
-}
-/* }}} */
-
-
-/* {{{ TestBlob::writeChunk() */
-void TestBlob::writeChunk(const std::string & chunk)
-{
-	value.append(chunk);
-}
-/* }}} */
 
 
 /* {{{	*/
@@ -1792,11 +1761,21 @@ static void test_prep_statement_blob(std::auto_ptr<sql::Connection> & conn, std:
 		use_stmt->execute("USE " + database);
 
 		std::auto_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("INSERT INTO test_blob VALUES(?)"));
-		std::string value("This is blob's value");
-		TestBlob myTestBlob(value);
-		stmt->setBlob(1, &myTestBlob);
+		std::string value("This is blob's value"); 
+		std::istringstream tmp_blob(value);
+		stmt->setBlob(1, &tmp_blob);
 		stmt->execute();
 
+
+		std::auto_ptr<sql::Statement> stmt2(conn->createStatement());
+		stmt2->execute("SELECT * FROM test_blob");
+		std::auto_ptr<sql::ResultSet> rset2(stmt2->getResultSet());
+		ensure("res2 is NULL", rset2.get() != NULL);
+		ensure_equal_int("res2 is empty", rset2->next(), true);
+		ensure_equal_str("Wrong data", rset2->getString(1), value);
+		ensure_equal_int("res2 has more rows ", rset2->next(), false);
+
+//		stmt2->execute("DELETE FROM test_blob WHERE 1");
 	} catch (sql::SQLException &e) {
 		printf("\n# ERR: Caught sql::SQLException at %s::%d  %s (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState().c_str());
 		printf("# ");

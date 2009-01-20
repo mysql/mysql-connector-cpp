@@ -20,6 +20,9 @@
 */
 #include <stdlib.h>
 #include <memory>
+#include <iostream>
+#include <sstream>
+#include <fstream>
 #include "mysql_connection.h"
 #include "mysql_statement.h"
 #include "mysql_prepared_statement.h"
@@ -50,7 +53,7 @@ class MySQL_ParamBind
 	bool 		* value_set;
 	unsigned int param_count;
 
-	sql::Blob	** blob_bind;
+	std::istream	** blob_bind;
 
 public:
 
@@ -67,7 +70,7 @@ public:
 				bind[i].is_null_value = 1;
 				value_set[i] = false;
 			}
-			blob_bind = (sql::Blob **) calloc(paramCount, sizeof(sql::Blob *));
+			blob_bind = (std::istream **) calloc(paramCount, sizeof(std::istream *));
 		}
 		param_count = paramCount;
 	}
@@ -84,7 +87,7 @@ public:
 		value_set[position] = true;
 	}
 
-	void setBlob(unsigned int position, sql::Blob * blob)
+	void setBlob(unsigned int position, std::istream * blob)
 	{
 		blob_bind[position] = blob;
 	}
@@ -116,7 +119,7 @@ public:
 		return bind;
 	}
 
-	sql::Blob * getBlobObject(unsigned int position)
+	std::istream * getBlobObject(unsigned int position)
 	{
 		return blob_bind[position];
 	}
@@ -167,14 +170,24 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 {
 	CPP_ENTER("MySQL_Prepared_Statement::sendLongDataBeforeParamBind");
 	MYSQL_BIND * bind = param_bind->get();
+	char buf[1024];
 	for (unsigned int i = 0; i < param_count; i++) {
 		if (bind[i].buffer_type == MYSQL_TYPE_LONG_BLOB) {
+			std::istream * my_blob = param_bind->getBlobObject(i);
 			do {
-				std::string chunk = param_bind->getBlobObject(i)->readChunk(1024);
-				if (!chunk.length()) {
+				if ((my_blob->rdstate() & std::ifstream::eofbit) != 0 ) {
 					break;
 				}
-				if (mysql_stmt_send_long_data(stmt, i, chunk.data(), chunk.length())) {
+				my_blob->read(buf, sizeof(buf));
+
+				if ((my_blob->rdstate() & std::ifstream::badbit) != 0) {
+					throw SQLException("Error while reading from blob (bad)");
+				} else if ((my_blob->rdstate() & std::ifstream::failbit) != 0) {
+					if ((my_blob->rdstate() & std::ifstream::eofbit) == 0) {
+						throw SQLException("Error while reading from blob (fail)");
+					}
+				}
+				if (mysql_stmt_send_long_data(stmt, i, buf, my_blob->gcount())) {
 					switch (mysql_stmt_errno(stmt)) {
 						case CR_OUT_OF_MEMORY:
 							throw std::bad_alloc();
@@ -237,7 +250,8 @@ MySQL_Prepared_Statement::getConnection()
 
 
 /* {{{ MySQL_Prepared_Statement::execute() -I- */
-bool MySQL_Prepared_Statement::execute()
+bool
+MySQL_Prepared_Statement::execute()
 {
 	CPP_ENTER("MySQL_Prepared_Statement::execute");
 	CPP_INFO_FMT("this=%p", this);
@@ -249,11 +263,12 @@ bool MySQL_Prepared_Statement::execute()
 
 
 /* {{{ MySQL_Prepared_Statement::execute() -U- */
-bool MySQL_Prepared_Statement::execute(const std::string&)
+bool
+MySQL_Prepared_Statement::execute(const std::string&)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::execute(const std::string& sql)");
 	throw sql::MethodNotImplementedException("MySQL_Prepared_Statement::execute");
-	return(false);
+	return false;
 }
 /* }}} */
 
@@ -432,7 +447,7 @@ MySQL_Prepared_Statement::setBigInt(unsigned int parameterIndex, const std::stri
 
 /* {{{ MySQL_Prepared_Statement::setBlob() -I- */
 void
-MySQL_Prepared_Statement::setBlob(unsigned int parameterIndex, sql::Blob * blob)
+MySQL_Prepared_Statement::setBlob(unsigned int parameterIndex, std::istream * blob)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::setBlob");
 	CPP_INFO_FMT("this=%p", this);
