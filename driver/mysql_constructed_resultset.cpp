@@ -21,6 +21,7 @@
 
 #include "mysql_constructed_resultset.h"
 #include "mysql_cset_metadata.h"
+#include <sstream>
 
 #if !defined(_WIN32) && !defined(_WIN64)
 #include <stdlib.h>
@@ -242,6 +243,31 @@ MySQL_ConstructedResultSet::first()
 		seek();
 	}
 	return num_rows != 0;
+}
+/* }}} */
+
+
+/* {{{ MySQL_ConstructedResultSet::getBlob() -I- */
+std::istream *
+MySQL_ConstructedResultSet::getBlob(unsigned int columnIndex) const
+{
+	CPP_ENTER("MySQL_ConstructedResultSet::getBlob(int)");
+
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirstOrAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getString: can't fetch because not on result set");
+	}
+	return new std::istringstream(getString(columnIndex));
+}
+/* }}} */
+
+
+/* {{{ MySQL_ConstructedResultSet::getBlob() -I- */
+std::istream *
+MySQL_ConstructedResultSet::getBlob(const std::string& columnLabel) const
+{
+	CPP_ENTER("MySQL_ConstructedResultSet::getBlob(string)");
+	return new std::istringstream(getString(columnLabel));
 }
 /* }}} */
 

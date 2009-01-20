@@ -22,7 +22,6 @@
 #include <memory>
 #include <iostream>
 #include <sstream>
-#include <fstream>
 #include "mysql_connection.h"
 #include "mysql_statement.h"
 #include "mysql_prepared_statement.h"
@@ -175,15 +174,15 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 		if (bind[i].buffer_type == MYSQL_TYPE_LONG_BLOB) {
 			std::istream * my_blob = param_bind->getBlobObject(i);
 			do {
-				if ((my_blob->rdstate() & std::ifstream::eofbit) != 0 ) {
+				if ((my_blob->rdstate() & std::istream::eofbit) != 0 ) {
 					break;
 				}
 				my_blob->read(buf, sizeof(buf));
 
-				if ((my_blob->rdstate() & std::ifstream::badbit) != 0) {
+				if ((my_blob->rdstate() & std::istream::badbit) != 0) {
 					throw SQLException("Error while reading from blob (bad)");
-				} else if ((my_blob->rdstate() & std::ifstream::failbit) != 0) {
-					if ((my_blob->rdstate() & std::ifstream::eofbit) == 0) {
+				} else if ((my_blob->rdstate() & std::istream::failbit) != 0) {
+					if ((my_blob->rdstate() & std::istream::eofbit) == 0) {
 						throw SQLException("Error while reading from blob (fail)");
 					}
 				}

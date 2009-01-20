@@ -23,6 +23,7 @@
 #include "mysql_resultset_metadata.h"
 #include "mysql_statement.h"
 #include "mysql_res_wrapper.h"
+#include <sstream>
 
 #ifndef _WIN32
 #include <string.h>
@@ -210,6 +211,34 @@ MySQL_ResultSet::first()
 		seek();
 	}
 	return num_rows != 0;
+}
+/* }}} */
+
+
+/* {{{ MySQL_ResultSet::getBlob() -I- */
+std::istream *
+MySQL_ResultSet::getBlob(unsigned int columnIndex) const
+{
+	CPP_ENTER("MySQL_ResultSet::getBlob(int)");
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirstOrAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_ResultSet::getBoolean: can't fetch because not on result set");
+	}
+	return new std::istringstream(getString(columnIndex));
+}
+/* }}} */
+
+
+/* {{{ MySQL_ResultSet::getBlob() -I- */
+std::istream *
+MySQL_ResultSet::getBlob(const std::string& columnLabel) const
+{
+	CPP_ENTER("MySQL_ResultSet::getBlob(string)");
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirstOrAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_ResultSet::getBoolean: can't fetch because not on result set");
+	}
+	return new std::istringstream(getString(columnLabel));
 }
 /* }}} */
 

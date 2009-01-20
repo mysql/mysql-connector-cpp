@@ -27,6 +27,7 @@
 #include <list>
 #include <string>
 #include <map>
+#include <iostream>
 
 namespace sql
 {
@@ -84,6 +85,9 @@ public:
 	virtual unsigned int findColumn(const std::string& columnLabel) const = 0;
 
 	virtual bool first() = 0;
+
+	virtual std::istream * getBlob(unsigned int columnIndex)  const = 0;
+	virtual std::istream * getBlob(const std::string& columnLabel) const = 0;
 
 	virtual bool getBoolean(unsigned int columnIndex) const = 0;
 	virtual bool getBoolean(const std::string& columnLabel) const = 0;

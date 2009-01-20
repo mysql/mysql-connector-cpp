@@ -24,7 +24,6 @@
 #define _SQL_PREPARED_STATEMENT_H_
 
 #include <iostream>
-#include <sstream>
 #include "statement.h"
 
 

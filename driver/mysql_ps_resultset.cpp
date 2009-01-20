@@ -25,6 +25,7 @@
 #include "mysql_ps_resultset_metadata.h"
 
 #include <stdio.h>
+#include <sstream>
 
 #ifndef _WIN32
 #include <string.h>
@@ -251,6 +252,35 @@ MySQL_Prepared_ResultSet::first()
 		seek();
 	}
 	return num_rows? true:false;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_ResultSet::getBlob() -I- */
+std::istream *
+MySQL_Prepared_ResultSet::getBlob(unsigned int columnIndex) const
+{
+	CPP_ENTER("MySQL_Prepared_ResultSet::getBlob(int)");
+	CPP_INFO_FMT("column=%u", columnIndex);
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirstOrAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getBlob: can't fetch because not on result set");
+	}
+	return new std::istringstream(getString(columnIndex));
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_ResultSet::getBlob() -I- */
+std::istream *
+MySQL_Prepared_ResultSet::getBlob(const std::string& columnLabel) const
+{
+	CPP_ENTER("MySQL_Prepared_ResultSet::getBlob(string)");
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirstOrAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getBlob: can't fetch because not on result set");
+	}
+	return new std::istringstream(getString(columnLabel));
 }
 /* }}} */
 

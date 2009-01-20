@@ -59,6 +59,10 @@ public:
 
 	bool first();
 
+	std::istream * getBlob(unsigned int columnIndex) const;
+
+	std::istream * getBlob(const std::string& columnLabel) const;
+
 	bool getBoolean(unsigned int columnIndex) const;
 
 	bool getBoolean(const std::string& columnLabel) const;

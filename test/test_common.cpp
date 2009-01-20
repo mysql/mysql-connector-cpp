@@ -1773,9 +1773,31 @@ static void test_prep_statement_blob(std::auto_ptr<sql::Connection> & conn, std:
 		ensure("res2 is NULL", rset2.get() != NULL);
 		ensure_equal_int("res2 is empty", rset2->next(), true);
 		ensure_equal_str("Wrong data", rset2->getString(1), value);
+
+		std::auto_ptr<std::istream> blob(rset2->getBlob(1));
+  		std::string::iterator it;
+  		for (it = value.begin() ; it < value.end(); it++) {
+			if ((blob->rdstate() & std::istream::eofbit)) {
+				ensure("premature eof", 0);
+			}
+			char ch;
+			blob->get(ch);
+			if ((blob->rdstate() & std::istream::badbit) != 0) {
+				ensure("badbit set", false);
+			} else if ((blob->rdstate() & std::istream::failbit) != 0) {
+				if ((blob->rdstate() & std::istream::eofbit) == 0) {
+					ensure("failbit set without eof being set", false);
+				}
+			}
+			if (*it != ch) {
+				ensure("character differ", false);
+			}			
+		}
+		ensure("BLOB doesn't match, has more data", (blob->rdstate() & std::istream::eofbit) == 0);
+
 		ensure_equal_int("res2 has more rows ", rset2->next(), false);
 
-//		stmt2->execute("DELETE FROM test_blob WHERE 1");
+		stmt2->execute("DELETE FROM test_blob WHERE 1");
 	} catch (sql::SQLException &e) {
 		printf("\n# ERR: Caught sql::SQLException at %s::%d  %s (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState().c_str());
 		printf("# ");
