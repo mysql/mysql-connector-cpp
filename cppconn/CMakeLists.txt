@@ -19,7 +19,6 @@
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 SET(MYSQLCPPCONN_INSTALL_HEADERS
-		blob.h
 		connection.h
 		driver.h
 		exception.h
