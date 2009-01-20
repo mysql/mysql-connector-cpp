@@ -1,12 +1,12 @@
-#   Copyright (C) 2007 - 2008 MySQL AB, 2008 Sun Microsystems, Inc.
+#   Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
 #   the Free Software Foundation; version 2 of the License.
 #
-#   There are special exceptions to the terms and conditions of the GPL 
-#   as it is applied to this software. View the full text of the 
-#   exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this 
+#   There are special exceptions to the terms and conditions of the GPL
+#   as it is applied to this software. View the full text of the
+#   exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
 #   software distribution.
 #
 #   This program is distributed in the hope that it will be useful,
@@ -148,7 +148,7 @@ IF (MYSQL_INCLUDE_DIR AND MYSQL_LIB_DIR)
 			#SET(CMAKE_REQUIRED_LIBRARIES ${MYSQL_LIB})
 		ELSE(WIN32)
 			# For now this works only on *nix
-			SET(CMAKE_REQUIRED_LIBRARIES ${MYSQL_LIBRARIES})		
+			SET(CMAKE_REQUIRED_LIBRARIES ${MYSQL_LIBRARIES})
 			SET(CMAKE_REQUIRED_INCLUDES ${MYSQL_INCLUDE_DIR})
 			CHECK_FUNCTION_EXISTS("mysql_set_character_set" HAVE_SET_CHARSET)
 			SET(CMAKE_REQUIRED_LIBRARIES)
@@ -156,7 +156,7 @@ IF (MYSQL_INCLUDE_DIR AND MYSQL_LIB_DIR)
 			IF (HAVE_SET_CHARSET)
 				MESSAGE(STATUS "libmysql version - ok")
 			ELSE (HAVE_SET_CHARSET)
-				MESSAGE(FATAL_ERROR "Versions < 4.1.13 (for MySQL 4.1.x) and < 5.0.7 for (MySQL 5.0.x) are not supported. Please update your libraries.")		
+				MESSAGE(FATAL_ERROR "Versions < 4.1.13 (for MySQL 4.1.x) and < 5.0.7 for (MySQL 5.0.x) are not supported. Please update your libraries.")
 			ENDIF (HAVE_SET_CHARSET)
 		ENDIF(WIN32)
 	ENDIF(MYSQL_VERSION)
