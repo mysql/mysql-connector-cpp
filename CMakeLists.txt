@@ -68,6 +68,9 @@ INCLUDE(${CMAKE_SOURCE_DIR}/FindMySQL.cmake)
 #  SET(ARCH win32)
 #ENDIF(NOT ARCH)
 
+
+SET(CPACK_PACKAGE_NAME "mysql-connector-c++")
+
 # Get the part of the package name for this product
 IF(MYSQL_SERVER_SUFFIX STREQUAL "-community")
   SET(CPACK_SERVER_SUFFIX "")
@@ -82,16 +85,17 @@ SET(CPACK_PACKAGE_VERSION_PATCH 1)
 SET(CPACK_PACKAGE_VENDOR "MySQL")
 SET(CPACK_RESOURCE_FILE_LICENSE "COPYING")
 SET(CPACK_RESOURCE_FILE_README "README")
+SET(CPACK_SOURCE_PACKAGE_FILE_NAME "mysql-connector-c++-source")
 IF(WIN32)
-	SET(CPACK_PACKAGE_FILE_NAME
-		"mysql-connector-c++-noinstall-version-arch")
+	SET(CPACK_PACKAGE_FILE_NAME "mysql-connector-c++-noinstall-version-arch")
 ELSE(WIN32)
-	SET(CPACK_PACKAGE_FILE_NAME
-		"mysql-connector-c++-version-arch")
+	SET(CPACK_PACKAGE_FILE_NAME	"mysql-connector-c++-version-arch")
 ENDIF(WIN32)
+
 SET(CPACK_PACKAGE_INSTALL_DIRECTORY "mysql-connector-c++-version-arch")
 SET(COMMON_IGNORE_FILES "/CMakeFiles/" "/Testing/" "/.bzr/" "_CPack_Packages/"
-    ".cmake$" "~" ".swp" ".log" ".gz" ".directory$" "CMakeCache.txt" "Makefile")
+    ".cmake$" "~" ".swp" ".log" ".gz" ".directory$" "CMakeCache.txt" "Makefile"
+	"install_manifest.txt")
 SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} "something_here" )
 
 SET(CPACK_SOURCE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES})
