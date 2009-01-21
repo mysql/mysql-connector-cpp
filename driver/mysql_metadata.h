@@ -393,8 +393,8 @@ public:
 	sql::ResultSet *getSchemaObjectTypes();
 
 private:
-	bool matchTable(std::string &sPattern, std::string & tPattern, std::string & schema, std::string & table);
-	bool parseImportedKeys(std::string& token, std::string & quoteIdentifier, std::list< std::string > &fields);
+	bool matchTable(const std::string & sPattern, const std::string & tPattern, const std::string & schema, const std::string & table);
+	bool parseImportedKeys(const std::string & token, const std::string & quoteIdentifier, std::list< std::string > &fields);
 
 	/* Prevent use of these */
 	MySQL_ConnectionMetaData();

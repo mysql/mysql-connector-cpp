@@ -1460,7 +1460,7 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next()) {
-			std::list<std::string>::iterator it;
+			std::list<std::string>::const_iterator it;
 			for (it = types.begin(); it != types.end(); ++it) {
 				if (*it == rs->getString(4)) {
 					rs_data.push_back(rs->getString(1));
@@ -1735,7 +1735,7 @@ MySQL_ConnectionMetaData::getIdentifierQuoteString()
 
 /* {{{ MySQL_ConnectionMetaData::parseImportedKeys() -I- */
 bool
-MySQL_ConnectionMetaData::parseImportedKeys(std::string& token, std::string & /* quoteIdentifier */, std::list< std::string > & /* fields */)
+MySQL_ConnectionMetaData::parseImportedKeys(const std::string& token, const std::string & /* quoteIdentifier */, std::list< std::string > & /* fields */)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::parseImportedKeys");
 //	TODO
@@ -2565,7 +2565,7 @@ MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const s
 	std::list< std::string > aSchemas;
 	std::list< std::string > aTables;
 
-	std::string strAllPrivs("ALTER,DELETE,DROP,INDEX,INSERT,LOCK TABLES,SELECT,UPDATE");
+	std::string strAllPrivs("ALTER, DELETE, DROP, INDEX, INSERT, LOCK TABLES, SELECT, UPDATE");
 
 	while (rs->next() ) {
 		std::string cQuote(getIdentifierQuoteString());
@@ -2580,24 +2580,36 @@ MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const s
 
 		pos = aGrant.find("ON");
 
-    //ASSERT(pos != std::string::npos);
+		//ASSERT(pos != std::string::npos);
 
 		aPrivileges.push_back(aGrant.substr(0, pos - 1)); /* -1 for trim */
 
 		aGrant = aGrant.substr(pos + 3); /* remove "ON " */
-		pos = 1;
-		do {
-			pos = aGrant.find(cQuote, pos);
-		} while (pos != std::string::npos && aGrant[pos - 1] == '\\');
+		if (aGrant[0] != '*') {
+			pos = 1;
+			do {
+				pos = aGrant.find(cQuote, pos);
+			} while (pos != std::string::npos && aGrant[pos - 1] == '\\');
+			aSchemas.push_back(aGrant.substr(1, pos - 1)); /* From pos 1, without the quoting */
+			aGrant = aGrant.replace(0, pos + 1 + 1, ""); // remove the quote, the dot too
+		} else {
+			aSchemas.push_back("*");
+			aGrant = aGrant.replace(0, 1 + 1, ""); // remove the star, the dot too
+		}
+
 		/* first char is the quotestring, the last too "`xyz`." Dot is at 5, copy from 1, 5 - 1 - 1 = xyz */
 
-		aSchemas.push_back(aGrant.substr(1, pos - 2)); /* From pos 1, without the quoting */
-		int idx = pos + 2;
-		pos = idx;
-		do {
-			pos = aGrant.find(cQuote, pos);
-		} while (pos != std::string::npos && aGrant[pos - 1] == '\\');
-
+		if (aGrant[0] != '*') {
+			// What if the names are not quoted. They should be, no?
+			int idx = 1;
+			pos = idx;
+			do {
+				pos = aGrant.find(cQuote, pos);
+			} while (pos != std::string::npos && aGrant[pos - 1] == '\\');
+			aTables.push_back(aGrant.substr(1, pos - 1));
+		} else {
+			aTables.push_back("*");
+		}
 		/*
 		  `aaa`.`xyz`  - jump over the dot and the quote
 		  . = 5
@@ -2606,7 +2618,6 @@ MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const s
 		  ` = 10
 		  ` - x = 10 - 7 = 3 -> xyz
 		*/
-		aTables.push_back(aGrant.substr(idx, idx - pos));
 	}
 	std::list< std::string > tableTypes;
 	tableTypes.push_back(std::string("TABLE"));
@@ -2616,28 +2627,37 @@ MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const s
 	while (tables->next()) {
 		schema = tables->getString(2);
 		table = tables->getString(3);
-		std::list<std::string>::iterator it_priv, it_schemas, it_tables;
+		std::list<std::string>::const_iterator it_priv, it_schemas, it_tables;
 		it_priv = aPrivileges.begin();
 		it_schemas = aSchemas.begin();
 		it_tables = aTables.begin();
 
 		for (; it_priv != aPrivileges.end(); ++it_priv, ++it_schemas, ++it_tables) {
+			/* skip usage */
 			if (it_priv->compare("USAGE") && matchTable(*it_schemas, *it_tables, schema, table)) {
 				size_t pos, idx;
 				pos = 0;
 				do {
-					idx = it_priv->find(",", pos);
-					std::string privToken = it_priv->substr(pos, idx - pos);
-					pos = idx + 1; /* skip ',' */
+					while ((*it_priv)[pos] == ' ') pos++; // Eat the whitespace
 
+					idx = it_priv->find(",", pos);
+					std::string privToken;
+					// check for std::string::npos
+					if (idx != std::string::npos) {
+						privToken = it_priv->substr(pos, idx - pos);
+						pos = idx + 1; /* skip ',' */
+					} else {
+						privToken = it_priv->substr(pos, it_priv->length() - pos);
+					}
+					// ToDo: Why?
 					if (privToken.find_first_of('/') == std::string::npos) {
-						rs_data.push_back(NULL);			// Catalog
+						rs_data.push_back("");				// Catalog
 						rs_data.push_back(schema);			// Schema
 						rs_data.push_back(table);			// Tablename
-						rs_data.push_back(NULL);			// Grantor
+						rs_data.push_back("");				// Grantor
 						rs_data.push_back(getUserName());	// Grantee
 						rs_data.push_back(privToken);		// privilege
-						rs_data.push_back(NULL);			// is_grantable
+						rs_data.push_back("");				// is_grantable - ToDo maybe here WITH GRANT OPTION??
 					}
 				} while (idx != std::string::npos);
 				break;
@@ -2688,7 +2708,7 @@ MySQL_ConnectionMetaData::getTables(const std::string& catalog, const std::strin
 		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next()) {
-			std::list<std::string>::iterator it;
+			std::list<std::string>::const_iterator it;
 			for (it = types.begin(); it != types.end(); ++it) {
 				if (*it == rs->getString(4)) {
 					rs_data.push_back(rs->getString(1));
@@ -2715,7 +2735,7 @@ MySQL_ConnectionMetaData::getTables(const std::string& catalog, const std::strin
 			std::auto_ptr<sql::ResultSet> rs2(stmt2->executeQuery(query2));
 
 			while (rs2->next()) {
-				std::list< std::string >::iterator it;
+				std::list< std::string >::const_iterator it;
 				for (it = types.begin(); it != types.end(); ++it) {
 					/* < 49999 knows only TABLE, no VIEWS */
 					/* TODO: Optimize this everytime checking, put it outside of the loop */
@@ -3766,10 +3786,11 @@ MySQL_ConnectionMetaData::usesLocalFiles()
 
 /* {{{ MySQL_ConnectionMetaData::matchTable() -I- */
 bool
-MySQL_ConnectionMetaData::matchTable(std::string &sPattern, std::string & tPattern, std::string & schema, std::string & table)
+MySQL_ConnectionMetaData::matchTable(const std::string &sPattern, const std::string & tPattern,
+									 const std::string & schema, const std::string & table)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::matchTable");
-	return (!sPattern.compare(schema) || !sPattern.compare("*")) && (!tPattern.compare(table)  || !tPattern.compare("*"));
+	return (!sPattern.compare("*") || !sPattern.compare(schema)) && (!tPattern.compare("*") || !tPattern.compare(table));
 }
 
 

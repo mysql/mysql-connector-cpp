@@ -1811,6 +1811,138 @@ static void test_prep_statement_blob(std::auto_ptr<sql::Connection> & conn, std:
 }
 /* }}} */
 
+#define DEBUG_TABLE_PRIVS 0
+
+/* {{{ Tests getTablePrivileges */
+static void test_get_table_privileges_1(const std::string & host, const std::string & user, const std::string & pass)
+{
+	ENTER_FUNCTION();
+	int a;
+	char buf[20] = "p";
+	snprintf(buf+1, sizeof(buf) - 2, "%u", ((unsigned int) &a) % 10000);
+
+	std::string plain_user(std::string("tu").append(buf));
+	std::string plain_user_w_host(std::string("").append(plain_user).
+#if A0
+							append("@%"));
+#else
+							append("@localhost"));
+#endif
+
+	std::string plain_user_db(std::string("test_someuser_db").append(buf));
+	std::string plain_user_table("table1");
+	std::string create_db(std::string("CREATE DATABASE `").append(plain_user_db).append("`"));
+	std::string create_table(std::string("CREATE TABLE `").append(plain_user_db).append("`.`").append(plain_user_table).append("`(a int)"));
+	std::string create_user(std::string("CREATE USER ").append(plain_user_w_host).append(" IDENTIFIED BY 'pass'"));
+	std::string grant_user1(std::string("GRANT ALL ON `").append(plain_user_db).append("`.`").
+							append(plain_user_table).append("` TO ").append(plain_user_w_host));
+	std::string grant_user2(std::string("GRANT DELETE ON `").append(plain_user_db).append("`.`").
+							append(plain_user_table).append("` TO ").append(plain_user_w_host));
+	std::string grant_user3(std::string("GRANT SELECT, INSERT ON `").append(plain_user_db).append("`.`").
+							append(plain_user_table).append("` TO ").append(plain_user_w_host));
+	std::string drop_user(std::string("DROP USER ").append(plain_user_w_host));
+	std::string drop_db(std::string("DROP DATABASE `").append(plain_user_db).append("`"));
+
+	std::list< std::string > grantsList;
+	grantsList.push_back(grant_user1);
+	grantsList.push_back(grant_user2);
+	grantsList.push_back(grant_user3);
+
+	std::list< std::list< std::string > > expectedPrivilegesList;
+	std::list< std::string > expectedPrivileges1;
+	expectedPrivileges1.push_back(std::string("ALTER"));
+	expectedPrivileges1.push_back(std::string("DELETE"));
+	expectedPrivileges1.push_back(std::string("DROP"));
+	expectedPrivileges1.push_back(std::string("INDEX"));
+	expectedPrivileges1.push_back(std::string("INSERT"));
+	expectedPrivileges1.push_back(std::string("LOCK TABLES"));
+	expectedPrivileges1.push_back(std::string("SELECT"));
+	expectedPrivileges1.push_back(std::string("UPDATE"));
+	expectedPrivilegesList.push_back(expectedPrivileges1);
+
+	std::list< std::string > expectedPrivileges2;
+	expectedPrivileges2.push_back(std::string("DELETE"));
+	expectedPrivilegesList.push_back(expectedPrivileges2);
+
+	std::list< std::string > expectedPrivileges3;
+	expectedPrivileges3.push_back(std::string("SELECT"));
+	expectedPrivileges3.push_back(std::string("INSERT"));
+	expectedPrivilegesList.push_back(expectedPrivileges3);
+
+	std::list< std::string >::const_iterator grantsList_it = grantsList.begin();
+	std::list< std::list< std::string > >::const_iterator expectedPrivilegesList_it = expectedPrivilegesList.begin();
+	
+	try {
+		std::auto_ptr<sql::Connection> root_conn(get_connection(host, user, pass));
+		std::auto_ptr<sql::Statement> root_stmt(root_conn->createStatement());
+#if DEBUG_TABLE_PRIVS
+		std::cout << std::endl << plain_user_w_host << std::endl;
+#endif
+		for (; grantsList_it != grantsList.end(); grantsList_it++, expectedPrivilegesList_it++) {
+			root_stmt->execute(create_db);
+			root_stmt->execute(create_table);
+			root_stmt->execute(create_user);
+			root_stmt->execute(*grantsList_it);
+			/* Put it in a block, so the connection will be closed before we start dropping the user and the table */
+			try {
+
+				std::auto_ptr<sql::Connection> user_conn(get_connection(host, plain_user, "pass"));
+				std::auto_ptr<sql::DatabaseMetaData> user_conn_meta(user_conn->getMetaData());
+				std::auto_ptr<sql::ResultSet> res(user_conn_meta->getTablePrivileges("", "%", "%"));
+
+
+#if DEBUG_TABLE_PRIVS
+				printf("\tTABLE_CAT\tTABLE_SCHEM\tTABLE_NAME\tGRANTOR\tGRANTEE\tPRIVILEGE\tIS_GRANTABLE\n");
+#endif
+				unsigned int found = 0, rows = 0;
+				while (res->next()) {
+#if DEBUG_TABLE_PRIVS
+					for (int i = 1; i < 8; i++) printf("\t[%s]", res->getString(i).c_str());
+					printf("\n");
+#endif
+					std::list< std::string >::const_iterator it = expectedPrivilegesList_it->begin();
+					for (;it != expectedPrivilegesList_it->end(); it++) {
+						if (!it->compare(res->getString("PRIVILEGE"))) {
+							found++;
+						}
+//						ensure_equal("Bad TABLE_CAT", std::string(""), res->getString("TABLE_CAT"));
+//						ensure_equal("Bad TABLE_SCHEM", plain_user_db, res->getString("TABLE_SCHEM"));
+//						ensure_equal("Bad TABLE_NAME", plain_user_table, res->getString("TABLE_NAME"));
+//						ensure_equal("Bad GRANTEE", plain_user_w_host, res->getString("GRANTEE"));
+					}
+					rows++;
+				}
+#if DEBUG_TABLE_PRIVS
+				std::cout << "Found:" << found << " Rows:" << rows << "\n";
+#endif
+				ensure_equal_int("Bad PRIVILEGE data(1)", found, expectedPrivilegesList_it->size());
+				ensure_equal_int("Bad PRIVILEGE data(2)", found, rows);
+			} catch (sql::SQLException &e) {
+				printf("\n# ERR: Caught sql::SQLException at %s::%d  %s (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState().c_str());
+				printf("# ");
+				total_errors++;
+			} catch (...) {
+				printf("\n# ERR: Caught unknown exception at %s::%d\n", CPPCONN_FUNC, __LINE__);
+				printf("# ");
+				total_errors++;
+			}
+			root_stmt->execute(drop_user);
+			root_stmt->execute(drop_db);
+		}
+	} catch (sql::SQLException &e) {
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  %s (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState().c_str());
+		printf("# ");
+		total_errors++;
+	} catch (...) {
+		printf("\n# ERR: Caught unknown exception at %s::%d\n", CPPCONN_FUNC, __LINE__);
+		printf("# ");
+		total_errors++;
+	}
+	LEAVE_FUNCTION();
+}
+/* }}} */
+
+
 /* {{{	Invoke as many "not implemented" methods as possible for better code coverage (and to make sure we keep CHANGES current) */
 static void test_not_implemented_connection(std::auto_ptr<sql::Connection> & conn)
 {
@@ -2722,7 +2854,7 @@ int run_tests(int argc, const char **argv)
 
 	printf("1..%d\n#\n", loops);	
 #ifndef DRIVER_TEST
-	printf("# %s\n", mysql_get_client_info());
+	printf("# Client version: %s\n", mysql_get_client_info());
 #endif
 
 	std::auto_ptr<sql::Connection> conn, conn2;
@@ -2736,6 +2868,7 @@ int run_tests(int argc, const char **argv)
 	for (i = 0 ; i < loops; i++) {
 		last_error_total = total_errors;
 		const std::string host(argc >=2? argv[1]:"tcp://127.0.0.1");
+		std::cout << "Host=" << host << std::endl << "User=" << user << std::endl;
 		printf("#---------------  %d -----------------\n", i + 1);
 		printf("# ");
 
@@ -2927,6 +3060,8 @@ int run_tests(int argc, const char **argv)
 		conn.reset(get_connection(host, user, pass));
 		test_prep_statement_blob(conn, database);
 		conn.reset(NULL);
+
+		test_get_table_privileges_1(host, user, pass);
 
 		conn.reset(get_connection(host, user, pass));
 		test_not_implemented_connection(conn);
