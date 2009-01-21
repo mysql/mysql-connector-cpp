@@ -1,4 +1,4 @@
-#   Copyright (C) 2007 - 2008 MySQL AB, 2008 Sun Microsystems, Inc.
+#   Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -42,11 +42,11 @@ IF(MYSQLCPPCONN_STLPORT_ENABLE)
 			/usr/local/include/stlport)
 	IF(STLPORT_INCLUDE_DIR)
 		MESSAGE(STATUS "Using STLPort from : ${STLPORT_INCLUDE_DIR}")
-		
+
 		INCLUDE_DIRECTORIES(STLPORT_INCLUDE_DIR)
 		SET(MYSQLCPPCONN_STLPORT_LIB "stlport")
 	ELSE(STLPORT_INCLUDE_DIR)
-		MESSAGE(SEND_ERROR "STLPORT not found. Please set \$ENV{STLPORT_INCLUDE_DIR} if installed in non-standard location")	
+		MESSAGE(SEND_ERROR "STLPORT not found. Please set \$ENV{STLPORT_INCLUDE_DIR} if installed in non-standard location")
 	ENDIF(STLPORT_INCLUDE_DIR)
 ELSE(MYSQLCPPCONN_STLPORT_ENABLE)
 	SET(MYSQLCPPCONN_STLPORT_LIB "")
@@ -79,10 +79,11 @@ ELSE(MYSQL_SERVER_SUFFIX STREQUAL "-community")
 ENDIF(MYSQL_SERVER_SUFFIX STREQUAL "-community")
 
 SET(CPACK_GENERATOR "TGZ")
+SET(CPACK_PACKAGE_NAME "mysql-connector-c++")
 SET(CPACK_PACKAGE_VERSION_MAJOR 1)
 SET(CPACK_PACKAGE_VERSION_MINOR 0)
 SET(CPACK_PACKAGE_VERSION_PATCH 2)
-SET(CPACK_PACKAGE_VENDOR "MySQL")
+SET(CPACK_PACKAGE_VENDOR "Sun Microsystems, Inc.")
 SET(CPACK_RESOURCE_FILE_LICENSE "COPYING")
 SET(CPACK_RESOURCE_FILE_README "README")
 SET(CPACK_SOURCE_PACKAGE_FILE_NAME "mysql-connector-c++-source")

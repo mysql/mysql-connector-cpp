@@ -1,4 +1,4 @@
-/* Copyright (C) 2007 - 2008 MySQL AB, 2008 Sun Microsystems, Inc.
+/* Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -3100,10 +3100,11 @@ int run_tests(int argc, const char **argv)
 		conn.reset(NULL);
 
 		printf("\n#---------------  %d -----------------\n", i + 1);	
-		if ((total_errors - last_error_total) == 0)
+		if ((total_errors - last_error_total) == 0) {
 			printf("ok\n");
-		else 
+		} else {
 			printf("not ok\n");
+		}
 		printf("# ");
 		
 	}
