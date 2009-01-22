@@ -23,7 +23,7 @@
 #include "driver/mysql_public_iface.h"
 #include <string>
 
-int loops = 1;
+int loops = 2;
 
 /* {{{	*/
 static sql::Connection *

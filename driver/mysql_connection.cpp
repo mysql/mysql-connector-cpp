@@ -197,10 +197,8 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 	for (; it != properties.end(); it++) {
 		if (!it->first.compare("hostName")) {
 			hostName = it->second.str.val;
-			CPP_INFO_FMT("host=%s", hostName.c_str());
 		} else if (!it->first.compare("userName")) {
 			userName = it->second.str.val;
-			CPP_INFO_FMT("user=%s", userName.c_str());
 		} else if (!it->first.compare("password")) {
 			password = it->second.str.val;
 		} else if (!it->first.compare("port")) {
@@ -208,11 +206,9 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		} else if (!it->first.compare("socket")) {
 			socket = it->second.str.val;
 			protocol_tcp = false;
-			CPP_INFO_FMT("socket=%s", socket.c_str());
 		} else if (!it->first.compare("schema")) {
 			schema = std::string(it->second.str.val);
 			schema_used = true;
-			CPP_INFO_FMT("schema=%s", schema.c_str());
 		} else if (!it->first.compare("sslKey")) {
 			sslKey = it->second.str.val;
 			ssl_used = true;
@@ -283,9 +279,17 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		} else
 #endif
 		if (!hostName.compare(0, sizeof("tcp://") - 1, "tcp://") ) {
-			size_t port_pos;
+			size_t port_pos, schema_pos;
 			host = hostName.substr(sizeof("tcp://") - 1, std::string::npos);
-			if (std::string::npos != (port_pos = host.find_last_of(':', std::string::npos))) {
+			schema_pos = host.find('/');
+			if (schema_pos != std::string::npos) {
+				schema_pos++; // skip the slash
+				schema = host.substr(schema_pos, host.size() - schema_pos); 
+				schema_used = true;
+				host = host.substr(0, schema_pos);
+			}
+			port_pos = host.find_last_of(':', std::string::npos);
+			if (port_pos != std::string::npos) {
 				port = atoi(host.substr(port_pos + 1, std::string::npos).c_str());
 				host = host.substr(0, port_pos);
 			}
@@ -318,11 +322,16 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 			/* According to the docs, always returns 0 */
 			mysql_ssl_set(intern->mysql, sslKey, sslCert, sslCA, sslCAPath, sslCipher);
 		}
+		CPP_INFO_FMT("host=%s", hostName.c_str());
+		CPP_INFO_FMT("user=%s", userName.c_str());
+		CPP_INFO_FMT("por=%d", port);
+		CPP_INFO_FMT("schema=%s", schema.c_str());
+		CPP_INFO_FMT("socket=%s", socket.c_str());
 		if (!mysql_real_connect(intern->mysql,
 							host.c_str(),
 							userName.c_str(),
 							password.c_str(),
-							schema_used? schema.c_str():NULL /* schema */,
+							schema_used && schema.size()? schema.c_str():NULL /* schema */,
 							port,
 							protocol_tcp == false? socket.c_str():NULL /*socket*/,
 							flags)) {
