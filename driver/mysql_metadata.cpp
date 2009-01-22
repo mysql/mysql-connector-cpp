@@ -1395,13 +1395,99 @@ MySQL_ConnectionMetaData::getCatalogTerm()
 /* }}} */
 
 
+#if 0
+    ODatabaseMetaDataResultSet *pResultSet = new ODatabaseMetaDataResultSet( ODatabaseMetaDataResultSet::eColumnPrivileges );
+    Reference<XResultSet> xResultSet = pResultSet;
+    ODatabaseMetaDataResultSet::ORows rRows;
+
+
+	::rtl::OUString strStmt = ASC2OU("SHOW FULL COLUMNS FROM ") + schema + ASC2OU(".") + table + 
+                              ASC2OU(" LIKE '") + getPattern(columnNamePattern) + ASC2OU("'");
+
+    XStatement *stmt = new OStatement(m_pConnection);
+    Reference< XResultSet> rs = stmt->executeQuery(strStmt);
+
+    while (rs.is() && rs->next()) 
+    {
+        Reference< XRow> xRow(rs, UNO_QUERY); 
+        ::rtl::OUString aToken;
+        sal_Int32 nIndex = 0;
+        ::rtl::OUString aPrivileges = (m_pSettings->pConnection->host) ?
+            xRow->getString(8) : ASC2OU("select, insert, update, references");
+
+        do
+        {
+            ODatabaseMetaDataResultSet::ORow aRow(1);
+            aToken = aPrivileges.getToken(0, ',', nIndex).toAsciiUpperCase();
+
+            aRow.push_back(new  ORowSetValueDecorator(ASC2OU("")));         // Catalog
+            aRow.push_back(new  ORowSetValueDecorator(schema));             // Schema
+            aRow.push_back(new  ORowSetValueDecorator(table));              // Tablename
+            aRow.push_back(new  ORowSetValueDecorator(xRow->getString(1))); // Columnname
+            aRow.push_back(new  ORowSetValueDecorator(ASC2OU("")));         // Grantor
+            aRow.push_back(new  ORowSetValueDecorator(getUserName()));      // Grantee
+            aRow.push_back(new  ORowSetValueDecorator(aToken.trim()));      // privilege
+            aRow.push_back(new  ORowSetValueDecorator(ASC2OU("")));         // grantable
+            rRows.push_back(aRow);
+        } while (nIndex >= 0);
+    }
+    pResultSet->setRows(rRows);
+	return(xResultSet);
+#endif
+
 /* {{{ MySQL_ConnectionMetaData::getColumnPrivileges() -U- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, const std::string& /*schema*/,
-												const std::string& /*table*/, const std::string& /*columnNamePattern*/)
+MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, const std::string& schema,
+												const std::string& table, const std::string& columnNamePattern)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getColumnPrivileges");
-	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::getColumnPrivileges");
+	std::list<std::string> rs_data;
+	std::list<std::string> rs_field_data;
+	size_t idx;
+
+	std::string query("SHOW FULL COLUMNS FROM `");
+	query.append(table).append("`.`").append(table).append("` LIKE '").append(columnNamePattern).append("'");
+
+	std::auto_ptr<sql::Statement> stmt(connection->createStatement());
+	std::auto_ptr<sql::ResultSet> res(stmt->executeQuery(query));
+
+	while (res->next()) {
+		size_t pos = 0;
+		std::string privs = res->getString(8);
+		do {
+			std::string privToken;
+
+			while (privs[pos] == ' ') pos++; // Eat the whitespace
+
+			size_t idx = privs.find(",", pos);
+
+			if (idx != std::string::npos) {
+				privToken = privs.substr(pos, idx - pos);
+				pos = idx + 1; /* skip ',' */
+			} else {
+				privToken = privs.substr(pos, privs.length() - pos);
+			}
+			rs_data.push_back("");					// TABLE_CAT
+			rs_data.push_back(schema);				// TABLE_SCHEM
+			rs_data.push_back(table);				// TABLE_NAME
+			rs_data.push_back(res->getString(1));	// COLUMN_NAME
+			rs_data.push_back("");					// GRANTOR
+			rs_data.push_back(getUserName());		// GRANTEE
+			rs_data.push_back(privToken);			// PRIVILEGE
+			rs_data.push_back("");					// IS_GRANTABLE
+		} while (idx != std::string::npos);
+	}
+
+	rs_field_data.push_back("TABLE_CAT");
+	rs_field_data.push_back("TABLE_SCHEM");
+	rs_field_data.push_back("TABLE_NAME");
+	rs_field_data.push_back("COLUMN_NAME");
+	rs_field_data.push_back("GRANTOR");
+	rs_field_data.push_back("GRANTEE");
+	rs_field_data.push_back("PRIVILEGE");
+	rs_field_data.push_back("IS_GRANTABLE");
+
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
 }
 /* }}} */
 

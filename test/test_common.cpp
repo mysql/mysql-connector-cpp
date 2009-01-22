@@ -2142,14 +2142,6 @@ static void test_not_implemented_conn_meta(std::auto_ptr<sql::Connection> & conn
 	std::auto_ptr<sql::DatabaseMetaData> conn_meta(conn->getMetaData());
 
 	try {
-
-		// :getColumnPrivileges(const std::string& /*catalog*/, const std::string& /*schema*/,        const std::string& /*table*/, const std::string& /*columnNamePattern*/) const
-		try {
-			total_tests++;
-			conn_meta->getColumnPrivileges(bar, bar, bar, bar);
-			ensure("ERR: Exception not thrown", false);
-		} catch (sql::MethodNotImplementedException &) {}
-
 		// getCrossReference(const std::string& /*primaryCatalog*/, const std::string& /*primarySchema*/, const std::string& /*primaryTable*/, const std::string& /*foreignCatalog*/, const std::string& /*foreignSchema*/, const std::string& /*foreignTable*/)
 		try {
 			total_tests++;
