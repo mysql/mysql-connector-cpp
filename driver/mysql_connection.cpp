@@ -143,6 +143,7 @@ MySQL_Connection::~MySQL_Connection()
   - password
   - port
   - socket
+  - schema
   - sslKey
   - sslCert
   - sslCA
@@ -178,14 +179,13 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 	std::string host;
 	std::string socket;
 	unsigned int port = 3306;
-	
-
 
 	std::string hostName;
 	std::string userName;
 	std::string password;
+	std::string schema;
 	const char *sslKey = NULL, *sslCert = NULL, *sslCA = NULL, *sslCAPath = NULL, *sslCipher = NULL;
-	bool ssl_used = false;
+	bool ssl_used = false, schema_used = false;
 	int flags = 0;
 	std::map<std::string, sql::ConnectPropertyVal>::const_iterator it = properties.begin();
 	for (; it != properties.end(); it++) {
@@ -200,6 +200,8 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		} else if (!it->first.compare("socket")) {
 			socket = std::string(it->second.str.val);
 			protocol_tcp = false;
+		} else if (!it->first.compare("schema")) {
+			schema = std::string(it->second.str.val);
 		} else if (!it->first.compare("sslKey")) {
 			sslKey = it->second.str.val;
 			ssl_used = true;
@@ -312,7 +314,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 							host.c_str(),
 							userName.c_str(),
 							password.c_str(),
-							NULL /* schema */,
+							schema_used? schema.c_str():NULL /* schema */,
 							port,
 							protocol_tcp == false? socket.c_str():NULL /*socket*/,
 							flags)) {
