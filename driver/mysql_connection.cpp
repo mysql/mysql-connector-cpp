@@ -103,6 +103,9 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName,
 		tmp.str.len = password.length();
 		connection_properties[std::string("password")] = tmp;
 	}
+
+	intern = new MySQL_ConnectionData();
+	intern->logger = new sql::mysql::util::my_shared_ptr< MySQL_DebugLogger >(new MySQL_DebugLogger()); /* should be before CPP_ENTER */
 	init(connection_properties);
 }
 /* }}} */
@@ -111,6 +114,8 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName,
 /* {{{ MySQL_Connection::MySQL_Connection() -I- */
 MySQL_Connection::MySQL_Connection(std::map<std::string, sql::ConnectPropertyVal> properties)
 {
+	intern = new MySQL_ConnectionData();
+	intern->logger = new sql::mysql::util::my_shared_ptr< MySQL_DebugLogger >(new MySQL_DebugLogger()); /* should be before CPP_ENTER */
 	init(properties);
 }
 /* }}} */
@@ -173,7 +178,8 @@ MySQL_Connection::~MySQL_Connection()
 /* {{{ MySQL_Connection::init() -I- */
 void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> properties)
 {
-	intern = new MySQL_ConnectionData();
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::init");
+
 	intern->is_valid = true;
 	bool protocol_tcp = true;
 	std::string host;
@@ -191,17 +197,22 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 	for (; it != properties.end(); it++) {
 		if (!it->first.compare("hostName")) {
 			hostName = it->second.str.val;
+			CPP_INFO_FMT("host=%s", hostName.c_str());
 		} else if (!it->first.compare("userName")) {
 			userName = it->second.str.val;
+			CPP_INFO_FMT("user=%s", userName.c_str());
 		} else if (!it->first.compare("password")) {
 			password = it->second.str.val;
 		} else if (!it->first.compare("port")) {
 			port = it->second.lval;
 		} else if (!it->first.compare("socket")) {
-			socket = std::string(it->second.str.val);
+			socket = it->second.str.val;
 			protocol_tcp = false;
+			CPP_INFO_FMT("socket=%s", socket.c_str());
 		} else if (!it->first.compare("schema")) {
 			schema = std::string(it->second.str.val);
+			schema_used = true;
+			CPP_INFO_FMT("schema=%s", schema.c_str());
 		} else if (!it->first.compare("sslKey")) {
 			sslKey = it->second.str.val;
 			ssl_used = true;
@@ -259,9 +270,6 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 			}		
 		}
 	}
-
-	intern->logger = new sql::mysql::util::my_shared_ptr< MySQL_DebugLogger >(new MySQL_DebugLogger()); /* should be before CPP_ENTER */
-	CPP_ENTER_WL(intern->logger, "MySQL_Connection::MySQL_Connection");
 
 	try {
 		if (!(intern->mysql = mysql_init(NULL))) {
@@ -326,8 +334,6 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		mysql_set_server_option(intern->mysql, MYSQL_OPTION_MULTI_STATEMENTS_OFF);
 		setAutoCommit(true);
 		setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
-
-		intern->sql_mode = getSessionVariable("SQL_MODE");
 	} catch (sql::SQLException &e) {
 		intern->logger->freeReference();		
 		throw e;
