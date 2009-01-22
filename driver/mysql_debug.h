@@ -22,7 +22,7 @@
 #ifndef _MYSQL_DEBUG_H_
 #define _MYSQL_DEBUG_H_
 
-#if CPPCONN_TRACE_ENABLED
+#if CPPCONN_TRACE_ENABLED || defined(SAL_DLLPRIVATE)
 #define CPP_ENTER(msg)			MySQL_DebugLogger * __l = this->logger? this->logger->get():NULL;(void)__l;\
 								MySQL_DebugEnterEvent __this_func(__LINE__, __FILE__, msg, logger)
 #define CPP_ENTER_WL(l, msg)	MySQL_DebugLogger * __l = (l)? (l)->get():NULL;(void)__l;\
