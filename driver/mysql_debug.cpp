@@ -70,6 +70,11 @@ MySQL_DebugEnterEvent::~MySQL_DebugEnterEvent()
 MySQL_DebugLogger::MySQL_DebugLogger()
   : tracing(false)
 {
+#if !defined(_WIN32)
+	if (getenv("MYSQLCPPCONN_TRACE_ENABLED")) {
+		tracing = true;
+	}
+#endif
 }
 /* }}} */ 
 
