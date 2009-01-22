@@ -818,6 +818,8 @@ MySQL_Connection::getSessionVariable(const std::string & varname)
 	checkClosed();
 
 	if (intern->sql_mode_set == true && !strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1)) {
+		printf("sql_mode=%s\n", intern->sql_mode.c_str());
+		CPP_INFO_FMT("sql_mode=%s", intern->sql_mode.c_str());
 		return intern->sql_mode;
 	}
 	std::auto_ptr<sql::Statement> stmt(createStatement());
@@ -835,6 +837,25 @@ MySQL_Connection::getSessionVariable(const std::string & varname)
 	return NULL;
 }
 /* }}} */
+
+
+/* {{{ MySQL_Connection::setSessionVariable() -I- */
+void
+MySQL_Connection::setSessionVariable(const std::string & varname, const std::string & value)
+{
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setSessionVariable");
+	checkClosed();
+
+	std::auto_ptr<sql::Statement> stmt(createStatement());
+	std::string q(std::string("SET SESSION ").append(varname).append("='").append(value).append("'"));
+
+	stmt->executeQuery(q);
+	if (!strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1)) {
+		intern->sql_mode = value;
+	}
+}
+/* }}} */
+
 
 }; /* namespace intern->mysql */
 }; /* namespace sql */

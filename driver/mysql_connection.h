@@ -134,6 +134,7 @@ public:
 
 
 	std::string getSessionVariable(const std::string & varname);
+	void setSessionVariable(const std::string & varname, const std::string & value);
 
 protected:
 	void checkClosed();

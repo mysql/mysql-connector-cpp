@@ -25,6 +25,9 @@ Beta  1.0.3 - 2009-xx-xx
 - Fixed MySQL_DatabaseMetaData::getTablePrivileges() to work correctly. Test cases
   added in the first unit testing framework. (Andrey)
 
+- Implemented MySQL_Connection::setSessionVariable() for setting variables like
+  sql_mode. (Andrey)
+
 Alpha  1.0.2 - 2008-12-19
 
 - Adding test/unit as a basis for general unit tests based on the new
