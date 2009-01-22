@@ -2560,14 +2560,13 @@ MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const s
 	std::auto_ptr<sql::Statement> stmt(connection->createStatement());
 	std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery("SHOW GRANTS"));
 
-	std::list< std::string > aPrivileges;
-	std::list< std::string > aSchemas;
-	std::list< std::string > aTables;
+	std::list< std::string > aPrivileges, aSchemas, aTables;
 
 	std::string strAllPrivs("ALTER, DELETE, DROP, INDEX, INSERT, LOCK TABLES, SELECT, UPDATE");
 
+	std::string cQuote(getIdentifierQuoteString());
+
 	while (rs->next() ) {
-		std::string cQuote(getIdentifierQuoteString());
 		std::string aGrant = rs->getString(1);
 		aGrant = aGrant.replace(0, 6, "");
 
