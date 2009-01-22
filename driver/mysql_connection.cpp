@@ -817,7 +817,7 @@ MySQL_Connection::getSessionVariable(const std::string & varname)
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getSessionVariable");
 	checkClosed();
 
-	if (!strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1)) {
+	if (intern->sql_mode_set == true && !strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1)) {
 		return intern->sql_mode;
 	}
 	std::auto_ptr<sql::Statement> stmt(createStatement());
@@ -826,6 +826,10 @@ MySQL_Connection::getSessionVariable(const std::string & varname)
 	std::auto_ptr<ResultSet> rset(stmt->executeQuery(q));
 
 	if (rset->next()) {
+		if (intern->sql_mode_set == false && !strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1)) {
+			intern->sql_mode = rset->getString(2);
+			intern->sql_mode_set = true;
+		}
 		return rset->getString(2);
 	}
 	return NULL;

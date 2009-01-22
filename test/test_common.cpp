@@ -97,7 +97,7 @@ static bool populate_blob_table(std::auto_ptr<sql::Connection> & conn, std::stri
 /* {{{ */
 static bool populate_insert_data(sql::Statement * stmt)
 {
-	return stmt->execute("INSERT INTO test_function (a,b,c,d,e) VALUES(1, 111, NULL, \"222\", \"xyz\")");
+	return stmt->execute("INSERT INTO test_function (a,b,c,d,e) VALUES(1, 111, NULL, '222', 'xyz')");
 }
 /* }}} */
 
@@ -126,7 +126,7 @@ static bool populate_test_table(std::auto_ptr<sql::Connection> & conn, std::stri
 /* {{{	*/
 static bool populate_TX_insert_data(sql::Statement * stmt)
 {
-	return stmt->execute("INSERT INTO test_function_tx (a,b,c,d,e) VALUES(1, 111, NULL,  \"222\", \"xyz\")");
+	return stmt->execute("INSERT INTO test_function_tx (a,b,c,d,e) VALUES(1, 111, NULL,  '222', 'xyz')");
 }
 /* }}} */
 
@@ -168,7 +168,7 @@ static bool populate_test_table_PS(std::auto_ptr<sql::Connection> & conn, std::s
 	ensure("stmt3 is NULL", stmt3.get() != NULL);
 	stmt3->executeUpdate();
 
-	std::auto_ptr<sql::PreparedStatement> stmt4(conn->prepareStatement("INSERT INTO test_function (a,b,c,d,e) VALUES(1, 111, NULL, \"222\", \"xyz\")"));
+	std::auto_ptr<sql::PreparedStatement> stmt4(conn->prepareStatement("INSERT INTO test_function (a,b,c,d,e) VALUES(1, 111, NULL, '222', 'xyz')"));
 	ensure("stmt4 is NULL", stmt4.get() != NULL);
 	stmt4->executeUpdate();
 
@@ -192,7 +192,7 @@ static bool populate_TX_test_table_PS(std::auto_ptr<sql::Connection> & conn, std
 	ensure("stmt3 is NULL", stmt3.get() != NULL);
 	stmt3->executeUpdate();
 
-	std::auto_ptr<sql::PreparedStatement> stmt4(conn->prepareStatement("INSERT INTO test_function_tx (a,b,c,d,e) VALUES(1, 111, NULL, \"222\", \"xyz\")"));
+	std::auto_ptr<sql::PreparedStatement> stmt4(conn->prepareStatement("INSERT INTO test_function_tx (a,b,c,d,e) VALUES(1, 111, NULL, '222', 'xyz')"));
 	ensure("stmt4 is NULL", stmt4.get() != NULL);
 	stmt4->executeUpdate();
 

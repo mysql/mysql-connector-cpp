@@ -1421,13 +1421,12 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 	rs_field_data.push_back("DATA_TYPE");
 	rs_field_data.push_back("TYPE_NAME");
 	rs_field_data.push_back("COLUMN_SIZE");
-	rs_field_data.push_back("TABLE_COMMENT");
 	rs_field_data.push_back("BUFFER_LENGTH");
 	rs_field_data.push_back("DECIMAL_DIGITS");
 	rs_field_data.push_back("NUM_PREC_RADIX");
 	rs_field_data.push_back("NULLABLE");
 	rs_field_data.push_back("REMARKS");
-	rs_field_data.push_back("COLUMN_DEFAULT");
+	rs_field_data.push_back("COLUMN_DEF");
 	rs_field_data.push_back("SQL_DATA_TYPE");
 	rs_field_data.push_back("SQL_DATETIME_SUB");
 	rs_field_data.push_back("CHAR_OCTET_LENGTH");
@@ -1437,6 +1436,7 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 	rs_field_data.push_back("SCOPE_CATALOG");
 	rs_field_data.push_back("SCOPE_SCHEMA");
 	rs_field_data.push_back("SCOPE_TABLE");
+	rs_field_data.push_back("SOURCE_DATA_TYPE");
 	rs_field_data.push_back("IS_AUTOINCREMENT");
 #endif
 
@@ -1520,7 +1520,6 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 							rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getColumnType(i))); 		// DATA_TYPE
 							rs_data.push_back(rs3_meta->getColumnTypeName(i));											// TYPE_NAME
 							rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getColumnDisplaySize(i)));	// COLUMN_SIZE
-							rs_data.push_back("");					// TABLE_COMMENT
 							rs_data.push_back("");					// BUFFER_LENGTH
 							rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getScale(i))); // DECIMAL_DIGITS
 							rs_data.push_back("10");							// NUM_PREC_RADIX
