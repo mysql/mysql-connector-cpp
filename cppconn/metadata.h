@@ -222,7 +222,7 @@ public:
 
 	virtual	int getMaxUserNameLength() = 0;
 
-	virtual	std::string getNumericFunctions() = 0;
+	virtual	const std::string& getNumericFunctions() = 0;
 
 	virtual	ResultSet * getPrimaryKeys(const std::string& catalog, const std::string& schema, const std::string& table) = 0;
 

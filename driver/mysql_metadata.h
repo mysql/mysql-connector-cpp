@@ -153,7 +153,7 @@ public:
 
 	int getMaxUserNameLength();
 
-	std::string getNumericFunctions();
+	const std::string& getNumericFunctions();
 
 	sql::ResultSet * getPrimaryKeys(const std::string& catalog, const std::string& schema, const std::string& table);
 

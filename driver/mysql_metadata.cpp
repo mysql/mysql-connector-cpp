@@ -2217,7 +2217,7 @@ MySQL_ConnectionMetaData::getMaxUserNameLength()
 
 
 /* {{{ MySQL_ConnectionMetaData::getNumericFunctions() -I- */
-std::string
+const std::string &
 MySQL_ConnectionMetaData::getNumericFunctions()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getNumericFunctions");
