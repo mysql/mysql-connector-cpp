@@ -817,7 +817,9 @@ MySQL_Connection::getSessionVariable(const std::string & varname)
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getSessionVariable");
 	checkClosed();
 
-	if (intern->sql_mode_set == true && !strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1)) {
+	if (intern->cache_sql_mode && intern->sql_mode_set == true &&
+		!strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1))
+	{
 		printf("sql_mode=%s\n", intern->sql_mode.c_str());
 		CPP_INFO_FMT("sql_mode=%s", intern->sql_mode.c_str());
 		return intern->sql_mode;
@@ -828,7 +830,9 @@ MySQL_Connection::getSessionVariable(const std::string & varname)
 	std::auto_ptr<ResultSet> rset(stmt->executeQuery(q));
 
 	if (rset->next()) {
-		if (intern->sql_mode_set == false && !strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1)) {
+		if (intern->cache_sql_mode && intern->sql_mode_set == false &&
+			!strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1))
+		{
 			intern->sql_mode = rset->getString(2);
 			intern->sql_mode_set = true;
 		}
@@ -850,7 +854,7 @@ MySQL_Connection::setSessionVariable(const std::string & varname, const std::str
 	std::string q(std::string("SET SESSION ").append(varname).append("='").append(value).append("'"));
 
 	stmt->executeQuery(q);
-	if (!strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1)) {
+	if (intern->cache_sql_mode && !strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1)) {
 		intern->sql_mode = value;
 	}
 }
