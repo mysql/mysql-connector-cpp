@@ -29,6 +29,8 @@
 #include "mysql_debug.h"
 #include "mysql_util.h"
 
+#include <cppconn/datatype.h>
+
 namespace sql
 {
 namespace mysql
@@ -133,8 +135,7 @@ MySQL_ConstructedResultSetMetaData::getColumnType(unsigned int columnIndex)
 	if (columnIndex == 0 || columnIndex > parent->num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	return MYSQL_TYPE_VARCHAR;
-//	return mysql_fetch_field_direct(result->get(), columnIndex - 1)->type;
+	return sql::DataType::VARCHAR;
 }
 /* }}} */
 

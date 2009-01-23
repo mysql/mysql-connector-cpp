@@ -32,6 +32,8 @@ Beta  1.0.3 - 2009-xx-xx
 
 - Implemented MySQL_DatabaseMetaData::getColumnPrivileges(). (Andrey)
 
+- cppconn/datatype.h changed and used again. Reimplemented the type subsystem to
+  be more usable - more types for binary and non-binary strings. (Andrey)
 
 Alpha  1.0.2 - 2008-12-19
 

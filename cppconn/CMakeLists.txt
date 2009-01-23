@@ -20,6 +20,7 @@
 
 SET(MYSQLCPPCONN_INSTALL_HEADERS
 		connection.h
+		datatype.h
 		driver.h
 		exception.h
 		metadata.h

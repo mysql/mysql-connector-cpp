@@ -44,6 +44,7 @@ SET(MYSQLCPPCONN_SOURCES
 	mysql_resultset_metadata.cpp
 	mysql_res_wrapper.cpp
 	mysql_statement.cpp
+	mysql_util.cpp
 	mysql_warning.cpp)
 
 ADD_LIBRARY(mysqlcppconn SHARED ${MYSQLCPPCONN_SOURCES})

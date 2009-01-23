@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #endif	//	_WIN32
 
+#include <cppconn/datatype.h>
 #include "mysql_resultset.h"
 #include "mysql_resultset_metadata.h"
 
@@ -148,7 +149,10 @@ MySQL_ResultSetMetaData::getColumnType(unsigned int columnIndex)
 		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
 			throw sql::InvalidArgumentException("Invalid value for columnIndex");
 		}
-		return mysql_fetch_field_direct(result->get(), columnIndex - 1)->type;
+		return sql::mysql::util::mysql_to_datatype(
+				mysql_fetch_field_direct(result->get(), columnIndex - 1)->type,
+				mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags
+			);
 	}
 	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
 }
