@@ -11,8 +11,10 @@ Beta  1.0.3 - 2009-xx-xx
   data but the length was random. Now, the string is initialized with correct
   length and thus is binary safe. (Andrey)
 
-- Added properties-enabled (map of key->value) for connecting, which
+- Added properties-enabled (map of key->value) methods for connecting, which
   add many connect options. (Andrey)
+  -- Driver::connect( map )
+  -- Connection::Connection( map )
 
 - New BLOB implementation. Got rid of sql::Blob in favor of std::istream. C++'s
   IOStream library is very powerful, similar to PHP's streams. It makes no sense
@@ -34,6 +36,14 @@ Beta  1.0.3 - 2009-xx-xx
 
 - cppconn/datatype.h changed and used again. Reimplemented the type subsystem to
   be more usable - more types for binary and non-binary strings. (Andrey)
+
+- Initial implementation for MySQL_DatabaseMetaData::getImportedKeys() for 
+  MySQL versions before 5.0.16 . (Andrey)
+
+- Implemented MySQL_ConnectionMetaData::getProcedureColumns(). (Andrey)
+
+- make package_source packs now with bzip2. (Andrey)
+
 
 Alpha  1.0.2 - 2008-12-19
 

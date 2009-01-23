@@ -1435,7 +1435,8 @@ MySQL_ConnectionMetaData::getCatalogTerm()
 	return(xResultSet);
 #endif
 
-/* {{{ MySQL_ConnectionMetaData::getColumnPrivileges() -U- */
+
+/* {{{ MySQL_ConnectionMetaData::getColumnPrivileges() -I- */
 sql::ResultSet *
 MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, const std::string& schema,
 												const std::string& table, const std::string& columnNamePattern)
@@ -1822,52 +1823,127 @@ MySQL_ConnectionMetaData::getIdentifierQuoteString()
 
 /* {{{ MySQL_ConnectionMetaData::parseImportedKeys() -I- */
 bool
-MySQL_ConnectionMetaData::parseImportedKeys(const std::string& token, const std::string & /* quoteIdentifier */, std::list< std::string > & /* fields */)
+MySQL_ConnectionMetaData::parseImportedKeys(
+		const std::string& def,
+		size_t start_pos,
+		std::string & constraint_name,
+		std::map< std::string, std::string > & keywords_names,
+		std::map< std::string, std::list< std::string > > & referenced_fields,
+		std::map< std::string, int > & update_cascade
+	)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::parseImportedKeys");
-//	TODO
-//	token = token.trim();
-
+	size_t idx, pos;
+	
 	/* check if line contains 'CONSTRAINT' */
-	if (token.find("CONSTRAINT") != std::string::npos) {
+	idx = def.find("CONSTRAINT", start_pos);
+	if (idx != std::string::npos) {
 		return false;
 	}
-#if 0
-	int nIndex = 0, nextField = -1;
-	std::string field;
+	pos = idx + sizeof("CONSTRAINT") - 1;
 
-	do {
-		field = token.getToken(0, '\"', nIndex).trim();
+	std::string cQuote(getIdentifierQuoteString());
 
-		if (field.equals(ASC2OU("CONSTRAINT"))) {
-			nextField = 0;
-		} else if (field.equals(ASC2OU("FOREIGN KEY ("))) {
-			nextField = 1;
-		} else if (field.equals(ASC2OU(") REFERENCES"))) {
-			nextField = 2;
-		} else if (field.equals(ASC2OU("."))) {
-			fields[4] = fields[2];
-			nextField = 2;
-		} else if (field.equals(ASC2OU("("))) {
-			nextField = 3;
-		} else if (nextField > -1) {
-			fields[nextField] = field;
-			nextField = -1;
+	{
+		if (cQuote.size()) {
+			while (def[pos] != cQuote[0]) pos++;
+			size_t end_pos = pos;
+			while (def[end_pos] != cQuote[0] && def[end_pos - 1] != '\\') end_pos++;
+			constraint_name = def.substr(pos, end_pos - pos - 1);
+			pos = end_pos + 1;
+		} else {
+			while (def[pos] == ' ') pos++;
+			size_t end_pos = pos;
+			while (def[end_pos] != ' ') end_pos++;
+			constraint_name = def.substr(pos, end_pos - pos - 1);
+			pos = end_pos + 1;
 		}
-	} while (nIndex != -1);
+		
+		std::list< std::string > keywords;
+		keywords.push_back("FOREIGN KEY");
+		keywords.push_back("REFERENCES");
+		std::list< std::string >::const_iterator keywords_it = keywords.begin();
+		
+		for (; keywords_it != keywords.end(); keywords_it++) {
+			idx = def.find(*keywords_it, pos);
+			pos = idx + keywords_it->size();
 
-	if (token.indexOf(ASC2OU("UPDATE CASCADE"),0) > 0) {
-		fields[5] = ASC2OU("UPDATE CASCADE");
-	} else if (token.indexOf(ASC2OU("DELETE CASCADE"),0) > 0) {
-		fields[5] = ASC2OU("DELETE CASCADE");
+			while (def[pos] == ' ') pos++;
+			// Here comes optional constraint name 
+			if (def[pos] != '(') {
+				if (cQuote.size()) {
+					size_t end_pos = pos;
+					while (def[end_pos] != cQuote[0] && def[end_pos - 1] != '\\') end_pos++;
+					keywords_names[*keywords_it] = def.substr(pos, end_pos - pos - 1);
+					pos = end_pos + 1;
+				} else {
+					size_t end_pos = pos;
+					while (def[end_pos] != ' ' && def[end_pos] != '(') end_pos++;
+					keywords_names[*keywords_it] = def.substr(pos, end_pos - pos - 1);
+					pos = end_pos + 1;
+					// Now find the opening bracket
+				}
+				// skip to the open bracket
+				while (def[pos] != '(') pos++;
+			}
+			pos++; // skip the bracket
+
+			// Here come the referenced fields
+			{
+				size_t end_bracket;
+				end_bracket = def.find(")", pos);
+				size_t comma_pos;
+				do {
+					// Look within a range
+					comma_pos = def.find("," , pos, end_bracket - pos);
+					if (comma_pos == std::string::npos) {
+						referenced_fields[*keywords_it].push_back(def.substr(pos, end_bracket - pos));
+					} else {
+						referenced_fields[*keywords_it].push_back(def.substr(pos, comma_pos - pos));
+						pos = comma_pos + 1; // skip the comma
+					}
+				} while (comma_pos != std::string::npos);
+				pos = end_bracket + 1;
+			}
+		}	
 	}
-#endif
+
+	// Check optional (UPDATE | DELETE) CASCADE
+	{
+		std::list< std::string > keywords;
+		keywords.push_back("ON DELETE");
+		keywords.push_back("ON UPDATE");
+		std::list< std::string >::const_iterator keywords_it = keywords.begin();
+		
+		for (; keywords_it != keywords.end(); keywords_it++) {
+			int action = importedKeyNoAction;
+			idx = def.find(*keywords_it, pos);
+			if (idx != std::string::npos) {
+				pos = idx + keywords_it->size();
+				while (def[pos] == ' ') pos++;
+				if (def[pos] == 'R') { 		// RESTRICT
+					action = importedKeyRestrict;
+					pos += sizeof("RESTRICT");
+				} else if (def[pos] == 'C') { // CASCADE
+					action = importedKeyCascade;
+					pos += sizeof("CASCADE");
+				} else if (def[pos] == 'S') { // SET NULL
+					action = importedKeySetNull;
+					pos += sizeof("SET NULL");
+				} else if (def[pos] == 'N') { // NO ACTION
+					action = importedKeyNoAction;
+					pos += sizeof("NO ACTION");
+				}
+			}
+			update_cascade[*keywords_it] = action;
+		}
+	}
 	return true;
 }
 /* }}} */
 
 
-/* {{{ MySQL_ConnectionMetaData::getImportedKeys() -U- */
+/* {{{ MySQL_ConnectionMetaData::getImportedKeys() -I- */
 sql::ResultSet *
 MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std::string& schema, const std::string& table)
 {
@@ -1899,15 +1975,15 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next()) {
-			rs_data.push_back("");					// PK_TABLE_CAT
-			rs_data.push_back(rs->getString(1));	// PK_TABLE_SCHEMA
-			rs_data.push_back(rs->getString(2));	// PK_TABLE_NAME
-			rs_data.push_back(rs->getString(3));	// PK_COLUMN_NAME
-			rs_data.push_back("");					// FK_TABLE_CAT
-			rs_data.push_back(rs->getString(4));	// FK_TABLE_SCHEMA
-			rs_data.push_back(rs->getString(5));	// FK_TABLE_NAME
-			rs_data.push_back(rs->getString(6));	// FK_COLUMN_NAME
-			rs_data.push_back(rs->getString(7));	// KEY_SEQUENCE
+			rs_data.push_back("");					// PKTABLE_CAT
+			rs_data.push_back(rs->getString(1));	// PKTABLE_SCHEMA
+			rs_data.push_back(rs->getString(2));	// PKTABLE_NAME
+			rs_data.push_back(rs->getString(3));	// PKCOLUMN_NAME
+			rs_data.push_back("");					// FKTABLE_CAT
+			rs_data.push_back(rs->getString(4));	// FKTABLE_SCHEMA
+			rs_data.push_back(rs->getString(5));	// FKTABLE_NAME
+			rs_data.push_back(rs->getString(6));	// FKCOLUMN_NAME
+			rs_data.push_back(rs->getString(7));	// KEY_SEQ
 
 			int lFlag = !rs->getString(8).compare("ON UPDATE CASCADE")? importedKeyCascade: importedKeyNoAction;
 			rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) lFlag));	// UPDATE_RULE
@@ -1920,61 +1996,59 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 			rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) importedKeyNotDeferrable));	// DEFERRABILITY
 		}
 	} else {
-#if 0
 		std::string query("SHOW CREATE TABLE `");
 		query.append(schema).append("`.`").append(table).append("`");
 
 		std::auto_ptr<sql::Statement> stmt(connection->createStatement());
 		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
-		rs->next();
-		std::string create_query(rs->getString(2));
-#endif
-#if 0
-		{
-			OUString token, statement;
-			sal_Int32 nIndex = 0, kSequence = 0;
-
+		if (rs->next()) {
+			std::string create_query(rs->getString(2));
+			size_t cr_pos = 0;
+			unsigned int kSequence = 0;
+			
 			do {
-				token = statement.getToken(0, '\n', nIndex);
-				Sequence< OUString> fields(6);
-				if ( parseImportedKeys(token, m_pSettings->quoteIdentifier, fields)) {
-					::std::vector< Any > aRow(1);
-					aRow.push_back(Any());					// PK_TABLE_CAT
-					if (fields[4].getLength()) {
-						aRow.push_back(makeAny(fields[4]));	// PK_TABLE_SCHEMA
-					} else {
-						aRow.push_back(makeAny(schema));	// PK_TABLE_SCHEMA
-					}
-					aRow.push_back(makeAny(fields[2]));		// PK_TABLE_NAME
-					aRow.push_back(makeAny(fields[3]));		// PK_COLUMN_NAME
-					aRow.push_back(Any());					// FK_TABLE_CAT
-					aRow.push_back(makeAny(schema));		// FK_TABLE_SCHEMA
-					aRow.push_back(makeAny(table));			// FK_TABLE_NAME
-					aRow.push_back(makeAny(fields[1]));		// FK_COLUMN_NAME
+				std::string constraint_name;
+				std::map< std::string, std::string > keywords_names;
+				std::map< std::string, std::list< std::string > > referenced_fields;
+				std::map< std::string, int > update_delete_action;
 
-					aRow.push_back(makeAny(
-									OUString::valueOf((long) ++kSequence,10)));	// KEY_SEQUENCE
-
-					sal_Int32 lFlag = !(fields[5].equals(ASC2OU("UPDATE CASCADE"))) ?
-							com::sun::star::sdbc::KeyRule::NO_ACTION :
-							com::sun::star::sdbc::KeyRule::CASCADE;
-					aRow.push_back(makeAny(OUString::valueOf(lFlag, 10)));
-
-					lFlag = !((fields[5].equals(ASC2OU("DELETE CASCADE")))) ?
-							com::sun::star::sdbc::KeyRule::NO_ACTION :
-							com::sun::star::sdbc::KeyRule::CASCADE;
-					aRow.push_back(makeAny(OUString::valueOf(lFlag, 10)));
-
-					aRow.push_back(makeAny(fields[0]));				// FK_NAME
-					aRow.push_back(makeAny(ASC2OU("PRIMARY")));		// PK_NAME
-					aRow.push_back(makeAny(
-									OUString::valueOf(com::sun::star::sdbc::Deferrability::NONE,10)));	// DEFERRABILITY
-
-					rRows.push_back(aRow);
+				// the first line doesn't include CONSTRAINTS, but CREATE TABLE so we are safe here
+				cr_pos = create_query.find("\n", cr_pos);
+				if (cr_pos == std::string::npos) {
+					break;
 				}
-			} while (nIndex != -1);
+
+				if (!parseImportedKeys(create_query, cr_pos, constraint_name, keywords_names, referenced_fields, update_delete_action)) {
+					continue;
+				}
+				rs_data.push_back("");					// PK_TABLE_CAT
+				rs_data.push_back(schema);				// PKTABLE_SCHEM
+				rs_data.push_back(table);				// PKTABLE_NAME
+
+				// ToDo: Extracting just the first column
+				rs_data.push_back(referenced_fields["FOREIGN KEY"].front());	// PK_COLUMN_NAME
+
+				rs_data.push_back("");					// FKTABLE_CAT
+
+				// ToDo: Is this correct? referencing the same schema. Maybe fully referenced name can appear, need to parse it too
+				rs_data.push_back(schema);							// FKTABLE_SCHEM
+				rs_data.push_back(keywords_names["REFERENCES"]);	// FKTABLE_NAME
+
+				// ToDo: Extracting just the first column
+				rs_data.push_back(referenced_fields["REFERENCES"].front());				// FKCOLUMN_NAME
+				rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) kSequence++));	// KEY_SEQ
+
+				
+				rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) update_delete_action["ON UPDATE"]));	// UPDATE_RULE
+
+				rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) update_delete_action["ON DELETE"]));	// DELETE_RULE
+
+				rs_data.push_back(constraint_name);		// FK_NAME
+				// ToDo: Should it really be PRIMARY?
+				rs_data.push_back("");					// PK_NAME
+				rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) importedKeyNotDeferrable));	// DEFERRABILITY
+			} while (1);
 		}
-#endif
 	}
 	rs_field_data.push_back("PKTABLE_CAT");
 	rs_field_data.push_back("PKTABLE_SCHEM");
@@ -2377,13 +2451,30 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 /* }}} */
 
 
-/* {{{ MySQL_ConnectionMetaData::getProcedureColumns() -U- */
+/* {{{ MySQL_ConnectionMetaData::getProcedureColumns() -I- */
 sql::ResultSet *
 MySQL_ConnectionMetaData::getProcedureColumns(const std::string& /* catalog */, const std::string& /*schemaPattern*/,
-												const std::string& /*procedureNamePattern*/, const std::string& /*columnNamePattern*/)
+											  const std::string& /*procedureNamePattern*/, const std::string& /*columnNamePattern*/)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getProcedureColumns");
-	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::getProcedureColumns");
+	std::list<std::string> rs_data;
+	std::list<std::string> rs_field_data;
+
+	rs_field_data.push_back("PROCEDURE_CAT");
+	rs_field_data.push_back("PROCEDURE_SCHEM");
+	rs_field_data.push_back("PROCEDURE_NAME");
+	rs_field_data.push_back("COLUMN_NAME");
+	rs_field_data.push_back("COLUMN_TYPE");
+	rs_field_data.push_back("DATA_TYPE");
+	rs_field_data.push_back("TYPE_NAME");
+	rs_field_data.push_back("PRECISION");
+	rs_field_data.push_back("LENGTH");
+	rs_field_data.push_back("SCALE");
+	rs_field_data.push_back("RADIX");
+	rs_field_data.push_back("NULLABLE");
+	rs_field_data.push_back("REMARKS");
+
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
 }
 /* }}} */
 

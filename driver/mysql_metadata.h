@@ -23,6 +23,8 @@
 #define _MYSQL_METADATA_H_
 
 #include <cppconn/metadata.h>
+#include <string>
+#include <map>
 
 namespace sql
 {
@@ -394,7 +396,14 @@ public:
 
 private:
 	bool matchTable(const std::string & sPattern, const std::string & tPattern, const std::string & schema, const std::string & table);
-	bool parseImportedKeys(const std::string & token, const std::string & quoteIdentifier, std::list< std::string > &fields);
+	bool parseImportedKeys(
+		const std::string& def,
+		size_t start_pos,
+		std::string & constraint_name,
+		std::map< std::string, std::string > & keywords_names,
+		std::map< std::string, std::list< std::string > > & referenced_fields,
+		std::map< std::string, int > & update_cascade
+	);
 
 	/* Prevent use of these */
 	MySQL_ConnectionMetaData();
