@@ -27,7 +27,10 @@
 namespace sql {
 namespace mysql {
 namespace util {
-int mysql_to_datatype(int mysql_type, int flags)
+
+/* {{{ mysql_to_datatype() -I- */
+int
+mysql_type_to_datatype(int mysql_type, int flags)
 {
 	switch (mysql_type) {
 		case MYSQL_TYPE_BIT:
@@ -94,8 +97,93 @@ int mysql_to_datatype(int mysql_type, int flags)
 			return sql::DataType::UNKNOWN;
 	}
 }
+/* }}} */
+
+
+/* {{{ mysql_to_datatype() -I- */
+const char *
+mysql_type_to_string(const int cppconn_type, const int flags)
+{
+	bool isUnsigned = (flags & UNSIGNED_FLAG) != 0;
+	switch (cppconn_type) {
+		case MYSQL_TYPE_BIT:
+			return "BIT";
+		case MYSQL_TYPE_DECIMAL:
+		case MYSQL_TYPE_NEWDECIMAL:
+			return isUnsigned ? "DECIMAL UNSIGNED" : "DECIMAL";
+		case MYSQL_TYPE_TINY:
+			return isUnsigned ? "TINYINT UNSIGNED" : "TINYINT";
+		case MYSQL_TYPE_SHORT:
+			return isUnsigned ? "SMALLINT UNSIGNED" : "SMALLINT";
+		case MYSQL_TYPE_LONG:
+			return isUnsigned ? "INTEGER UNSIGNED" : "INT";
+		case MYSQL_TYPE_FLOAT:
+			return isUnsigned ? "FLOAT UNSIGNED" : "FLOAT";
+		case MYSQL_TYPE_DOUBLE:
+			return isUnsigned ? "DOUBLE UNSIGNED" : "DOUBLE";
+		case MYSQL_TYPE_NULL:
+			return "NULL";
+		case MYSQL_TYPE_TIMESTAMP:
+			return "TIMESTAMP";
+		case MYSQL_TYPE_LONGLONG:
+			return isUnsigned ? "BIGINT UNSIGNED" : "BIGINT";
+		case MYSQL_TYPE_INT24:
+			return isUnsigned ? "MEDIUMINT UNSIGNED" : "MEDIUMINT";
+		case MYSQL_TYPE_DATE:
+			return "DATE";
+		case MYSQL_TYPE_TIME:
+			return "TIME";
+		case MYSQL_TYPE_DATETIME:
+			return "DATETIME";
+		case MYSQL_TYPE_TINY_BLOB:
+			return "TINYBLOB";
+		case MYSQL_TYPE_MEDIUM_BLOB:
+			return "MEDIUMBLOB";
+		case MYSQL_TYPE_LONG_BLOB:
+			return "LONGBLOB";
+		case MYSQL_TYPE_BLOB:
+			if (flags & BINARY_FLAG) {
+				return "BLOB";
+			}
+			return "TEXT";
+		case MYSQL_TYPE_VARCHAR:
+		case MYSQL_TYPE_VAR_STRING:
+			if (flags & BINARY_FLAG) {
+				return "VARBINARY";
+			}
+			return "VARCHAR";
+		case MYSQL_TYPE_STRING:
+			if (flags & ENUM_FLAG) {
+				return "ENUM";
+			}
+			if (flags & BINARY_FLAG) {
+				return "BINARY";
+			}
+			return "CHAR";
+		case MYSQL_TYPE_ENUM:
+			return "ENUM";
+		case MYSQL_TYPE_YEAR:
+			return "YEAR";
+		case MYSQL_TYPE_SET:
+			return "SET";
+		case MYSQL_TYPE_GEOMETRY:
+			return "GEOMETRY";
+		default:
+			return "UNKNOWN";
+	}
+}
+/* }}} */
 
 
 }; /* namespace util */
 }; /* namespace mysql */
 }; /* namespace sql */
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: noet sw=4 ts=4 fdm=marker
+ * vim<600: noet sw=4 ts=4
+ */

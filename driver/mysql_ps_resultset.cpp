@@ -361,34 +361,39 @@ MySQL_Prepared_ResultSet::getDouble(unsigned int columnIndex) const
 	}
 
 	switch (rs_meta->getColumnType(columnIndex + 1)) {
-		case MYSQL_TYPE_TINY:
-		case MYSQL_TYPE_SHORT:
-		case MYSQL_TYPE_INT24:
-		case MYSQL_TYPE_LONG:
-		case MYSQL_TYPE_LONGLONG:
+		case sql::DataType::TINYINT:
+		case sql::DataType::SMALLINT:
+		case sql::DataType::MEDIUMINT:
+		case sql::DataType::INTEGER:
+		case sql::DataType::BIGINT:
 			CPP_INFO("It's an int");
 			return getLong(columnIndex + 1);
-		case MYSQL_TYPE_TIMESTAMP:
-		case MYSQL_TYPE_DATETIME:
-		case MYSQL_TYPE_DATE:
-		case MYSQL_TYPE_TIME:
-		case MYSQL_TYPE_STRING:
-		case MYSQL_TYPE_VAR_STRING:
-		case MYSQL_TYPE_BLOB:
+		case sql::DataType::TIMESTAMP:
+		case sql::DataType::DATETIME:
+		case sql::DataType::DATE:
+		case sql::DataType::TIME:
+		case sql::DataType::CHAR:
+		case sql::DataType::BINARY:
+		case sql::DataType::VARCHAR:
+		case sql::DataType::VARBINARY:
+		case sql::DataType::LONGVARCHAR:
+		case sql::DataType::LONGVARBINARY:
 			CPP_INFO("It's a string");
 			return atof(getString(columnIndex + 1).c_str());
-		case MYSQL_TYPE_FLOAT:
+		case sql::DataType::FLOAT:
 		{
 			double ret = !*stmt->bind[columnIndex].is_null? *reinterpret_cast<float *>(stmt->bind[columnIndex].buffer):0.;
 			CPP_INFO_FMT("value=%10.10f", ret);
 			return ret;
 		}
-		case MYSQL_TYPE_DOUBLE:
+		case sql::DataType::DOUBLE:
 		{
 			double ret = !*stmt->bind[columnIndex].is_null? *reinterpret_cast<double *>(stmt->bind[columnIndex].buffer):0.;
 			CPP_INFO_FMT("value=%10.10f", ret);
 			return ret;
 		}
+
+		// ToDo : Geometry? default ?
 	}
 	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getDouble: unhandled type. Please, report");
 }
@@ -462,20 +467,23 @@ MySQL_Prepared_ResultSet::getInt(unsigned int columnIndex) const
 	}
 
 	switch (rs_meta->getColumnType(columnIndex + 1)) {
-		case MYSQL_TYPE_FLOAT:
-		case MYSQL_TYPE_DOUBLE:
+		case sql::DataType::FLOAT:
+		case sql::DataType::DOUBLE:
 			CPP_INFO("It's a double");
 			return (long long) getDouble(columnIndex + 1);
-		case MYSQL_TYPE_TIMESTAMP:
-		case MYSQL_TYPE_DATETIME:
-		case MYSQL_TYPE_NEWDATE:
-		case MYSQL_TYPE_DATE:
-		case MYSQL_TYPE_TIME:
-		case MYSQL_TYPE_STRING:
-		case MYSQL_TYPE_VAR_STRING:
-		case MYSQL_TYPE_BLOB:
+		case sql::DataType::TIMESTAMP:
+		case sql::DataType::DATETIME:
+		case sql::DataType::DATE:
+		case sql::DataType::TIME:
+		case sql::DataType::CHAR:
+		case sql::DataType::BINARY:
+		case sql::DataType::VARCHAR:
+		case sql::DataType::VARBINARY:
+		case sql::DataType::LONGVARCHAR:
+		case sql::DataType::LONGVARBINARY:
 			CPP_INFO("It's a string");
 			return atoll(getString(columnIndex + 1).c_str());
+		// ToDo : Geometry? default ?
 	}
 
 	switch (stmt->bind[columnIndex].buffer_length) {
@@ -528,24 +536,29 @@ MySQL_Prepared_ResultSet::getLong(unsigned int columnIndex) const
 	}
 
 	switch (rs_meta->getColumnType(columnIndex + 1)) {
-		case MYSQL_TYPE_FLOAT:
-		case MYSQL_TYPE_DOUBLE:
+		case sql::DataType::FLOAT:
+		case sql::DataType::DOUBLE:
 			CPP_INFO("It's a double");
 			return (long long) getDouble(columnIndex + 1);
-		case MYSQL_TYPE_TIMESTAMP:
-		case MYSQL_TYPE_DATETIME:
-		case MYSQL_TYPE_NEWDATE:
-		case MYSQL_TYPE_DATE:
-		case MYSQL_TYPE_TIME:
-		case MYSQL_TYPE_STRING:
-		case MYSQL_TYPE_VAR_STRING:
-		case MYSQL_TYPE_BLOB:
+		case sql::DataType::TIMESTAMP:
+		case sql::DataType::DATETIME:
+		case sql::DataType::DATE:
+		case sql::DataType::TIME:
+		case sql::DataType::CHAR:
+		case sql::DataType::BINARY:
+		case sql::DataType::VARCHAR:
+		case sql::DataType::VARBINARY:
+		case sql::DataType::LONGVARCHAR:
+		case sql::DataType::LONGVARBINARY:
 			CPP_INFO("It's a string");
 			return atoll(getString(columnIndex + 1).c_str());
+
+		// ToDo : Geometry? default ?
 	}
 	long long ret;
 	switch (stmt->bind[columnIndex].buffer_length) {
 		case 1:
+			// ToDo: Really reinterpret_case or static_cast
 			ret = !*stmt->bind[columnIndex].is_null? *reinterpret_cast<int8_t *>(stmt->bind[columnIndex].buffer):0;
 			break;
 		case 2:
@@ -654,8 +667,8 @@ MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 	}
 
 	switch (rs_meta->getColumnType(columnIndex + 1)) {
-		case MYSQL_TYPE_TIMESTAMP:
-		case MYSQL_TYPE_DATETIME:
+		case sql::DataType::TIMESTAMP:
+		case sql::DataType::DATETIME:
 		{
 			char buf[22];
 			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(stmt->bind[columnIndex].buffer);
@@ -663,7 +676,7 @@ MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 			CPP_INFO_FMT("It's a datetime/timestamp %s", buf);
 			return std::string(buf);
 		}
-		case MYSQL_TYPE_DATE:
+		case sql::DataType::DATE:
 		{
 			char buf[12];
 			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(stmt->bind[columnIndex].buffer);
@@ -671,7 +684,7 @@ MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 			CPP_INFO_FMT("It's a date %s", buf);
 			return std::string(buf);
 		}
-		case MYSQL_TYPE_TIME:
+		case sql::DataType::TIME:
 		{
 			char buf[12];
 			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(stmt->bind[columnIndex].buffer);
@@ -679,25 +692,27 @@ MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 			CPP_INFO_FMT("It's a time %s", buf);
 			return std::string(buf);
 		}
-		case MYSQL_TYPE_TINY:
-		case MYSQL_TYPE_SHORT:
-		case MYSQL_TYPE_INT24:
-		case MYSQL_TYPE_LONG:
-		case MYSQL_TYPE_LONGLONG:
+		case sql::DataType::TINYINT:
+		case sql::DataType::SMALLINT:
+		case sql::DataType::MEDIUMINT:
+		case sql::DataType::INTEGER:
+		case sql::DataType::BIGINT:
 		{
 			char buf[30];
 			CPP_INFO("It's an int");
 			my_l_to_a(buf, sizeof(buf) - 1, getLong(columnIndex + 1));
 			return std::string(buf);
 		}
-		case MYSQL_TYPE_FLOAT:
-		case MYSQL_TYPE_DOUBLE:
+		case sql::DataType::FLOAT:
+		case sql::DataType::DOUBLE:
 		{
 			char buf[50];
 			CPP_INFO("It's a double");
 			my_f_to_a(buf, sizeof(buf) - 1, getDouble(columnIndex + 1));
 			return std::string(buf);
 		}
+
+		// ToDo : Geometry? default ?
 	}		
 	
 	CPP_INFO_FMT("value=%*s", *stmt->bind[columnIndex].length, stmt->bind[columnIndex].buffer);

@@ -24,6 +24,7 @@
 
 #include <string>
 #include <list>
+#include "datatype.h"
 
 namespace sql
 {

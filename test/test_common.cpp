@@ -2156,13 +2156,6 @@ static void test_not_implemented_conn_meta(std::auto_ptr<sql::Connection> & conn
 			ensure("ERR: Exception not thrown", false);
 		} catch (sql::MethodNotImplementedException &) {}
 
-		// getProcedureColumns(const std::string& /* catalog */, const std::string& /*schemaPattern*/, const std::string& /*procedureNamePattern*/, const std::string& /*columnNamePattern*/)
-		try {
-			total_tests++;
-			conn_meta->getProcedureColumns(bar, bar, bar, bar);
-			ensure("ERR: Exception not thrown", false);
-		} catch (sql::MethodNotImplementedException &) {}
-
 		// getURL()
 		try {
 			total_tests++;

@@ -26,7 +26,8 @@ namespace sql {
 namespace mysql {
 namespace util {
 
-int mysql_to_datatype(int mysql_type, int flags);
+int mysql_type_to_datatype(const int mysql_type, const int flags);
+const char * mysql_type_to_string(const int cppconn_type, const int flags);
 
 template<typename T>
 class my_shared_ptr

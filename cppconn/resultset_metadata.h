@@ -23,6 +23,7 @@
 #define _SQL_RESULTSET_METADATA_H_
 
 #include <string>
+#include "datatype.h"
 
 namespace sql
 {
