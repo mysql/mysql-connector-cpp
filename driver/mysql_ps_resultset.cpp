@@ -368,8 +368,9 @@ MySQL_Prepared_ResultSet::getDouble(unsigned int columnIndex) const
 		case sql::DataType::BIGINT:
 			CPP_INFO("It's an int");
 			return getLong(columnIndex + 1);
+		case sql::DataType::NUMERIC:
+		case sql::DataType::DECIMAL:
 		case sql::DataType::TIMESTAMP:
-		case sql::DataType::DATETIME:
 		case sql::DataType::DATE:
 		case sql::DataType::TIME:
 		case sql::DataType::CHAR:
@@ -380,7 +381,7 @@ MySQL_Prepared_ResultSet::getDouble(unsigned int columnIndex) const
 		case sql::DataType::LONGVARBINARY:
 			CPP_INFO("It's a string");
 			return atof(getString(columnIndex + 1).c_str());
-		case sql::DataType::FLOAT:
+		case sql::DataType::REAL:
 		{
 			double ret = !*stmt->bind[columnIndex].is_null? *reinterpret_cast<float *>(stmt->bind[columnIndex].buffer):0.;
 			CPP_INFO_FMT("value=%10.10f", ret);
@@ -467,12 +468,13 @@ MySQL_Prepared_ResultSet::getInt(unsigned int columnIndex) const
 	}
 
 	switch (rs_meta->getColumnType(columnIndex + 1)) {
-		case sql::DataType::FLOAT:
+		case sql::DataType::REAL:
 		case sql::DataType::DOUBLE:
 			CPP_INFO("It's a double");
 			return (long long) getDouble(columnIndex + 1);
+		case sql::DataType::NUMERIC:
+		case sql::DataType::DECIMAL:
 		case sql::DataType::TIMESTAMP:
-		case sql::DataType::DATETIME:
 		case sql::DataType::DATE:
 		case sql::DataType::TIME:
 		case sql::DataType::CHAR:
@@ -536,12 +538,13 @@ MySQL_Prepared_ResultSet::getLong(unsigned int columnIndex) const
 	}
 
 	switch (rs_meta->getColumnType(columnIndex + 1)) {
-		case sql::DataType::FLOAT:
+		case sql::DataType::REAL:
 		case sql::DataType::DOUBLE:
 			CPP_INFO("It's a double");
 			return (long long) getDouble(columnIndex + 1);
+		case sql::DataType::NUMERIC:
+		case sql::DataType::DECIMAL:
 		case sql::DataType::TIMESTAMP:
-		case sql::DataType::DATETIME:
 		case sql::DataType::DATE:
 		case sql::DataType::TIME:
 		case sql::DataType::CHAR:
@@ -668,7 +671,6 @@ MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 
 	switch (rs_meta->getColumnType(columnIndex + 1)) {
 		case sql::DataType::TIMESTAMP:
-		case sql::DataType::DATETIME:
 		{
 			char buf[22];
 			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(stmt->bind[columnIndex].buffer);
@@ -703,7 +705,7 @@ MySQL_Prepared_ResultSet::getString(unsigned int columnIndex) const
 			my_l_to_a(buf, sizeof(buf) - 1, getLong(columnIndex + 1));
 			return std::string(buf);
 		}
-		case sql::DataType::FLOAT:
+		case sql::DataType::REAL:
 		case sql::DataType::DOUBLE:
 		{
 			char buf[50];

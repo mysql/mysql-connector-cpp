@@ -44,6 +44,9 @@ Beta  1.0.3 - 2009-xx-xx
 
 - make package_source packs now with bzip2. (Andrey)
 
+- Re-added getTypeInfo() with information about all types supported by MySQL and
+  the sql::DataType. (Andrey)
+
 
 Alpha  1.0.2 - 2008-12-19
 

@@ -41,74 +41,34 @@ namespace sql
 namespace mysql
 {
 
-#if 0
-class DataType
-{
-	DataType();
-public:
-	enum {
-		BIT = -7,
-		TINYINT = -6,
-		SMALLINT = 5,
-		INTEGER = 4,
-		BIGINT = -5,
-		FLOAT = 6,
-		REAL = 7,
-		DOUBLE = 8,
-		NUMERIC = 2,
-		DECIMAL = 3,
-		CHAR = 1,
-		VARCHAR = 12,
-		LONGVARCHAR = -1,
-		DATE = 91,
-		TIME = 92,
-		TIMESTAMP = 93,
-		BINARY = -2,
-		VARBINARY = -3,
-		LONGVARBINARY = -4,
-		SQLNULL = 0,
-		OTHER = 1111,
-		OBJECT = 2000,
-		DISTINCT = 2001,
-		STRUCT = 2002,
-		ARRAY = 2003,
-		BLOB = 2004,
-		CLOB = 2005,
-		REF = 2006,
-		BOOLEAN = 16
-	};
-};
-
-
 struct TypeInfoDef
 {
 	const char *typeName;
 	int dataType;
-	unsigned int precision;
-	const char *literalPrefix;
-	const char *literalSuffix;
-	const char *createParams;
+	unsigned long long precision;
+	const char * literalPrefix;
+	const char * literalSuffix;
+	const char * createParams;
 	short nullable;
 	bool caseSensitive;
 	short searchable;
 	bool isUnsigned;
 	bool fixedPrecScale;
 	bool autoIncrement;
-	const char *localTypeName;
-	unsigned int minScale;
-	unsigned int maxScale;
+	const char * localTypeName;
+	int minScale;
+	int maxScale;
 	int sqlDataType;
 	int sqlDateTimeSub;
-	unsigned int numPrecRadix;
+	int numPrecRadix;
 };
 
-TypeInfoDef mysqlc_types[] = {
+static TypeInfoDef mysqlc_types[] = {
 
-	// ------------- MySQL-Type: BIT. DBC-Type: Bit -------------
+	// ------------- MySQL-Type: BIT. DBC-Type: BIT -------------
 	{
 		"BIT",								// Typename
-		DataType::Bit,						// dbc-type
-		DataType::BIT,						// dbc-type
+		sql::DataType::BIT,					// dbc-type
 		1,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
@@ -116,21 +76,21 @@ TypeInfoDef mysqlc_types[] = {
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"BIT",								// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
-	// ------------ MySQL-Type: BOOL. DBC-Type: Bit -------------
+	// ------------ MySQL-Type: BOOL. DBC-Type: BIT -------------
 	{
 		"BOOL",								// Typename
-		DataType::BIT,						// dbc-type
+		sql::DataType::TINYINT,				// dbc-type
 		1,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
@@ -138,21 +98,41 @@ TypeInfoDef mysqlc_types[] = {
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"BOOL",								// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// --------- MySQL-Type: TINYINT DBC-Type: TINYINT ----------
 	{
 		"TINYINT",							// Typename
-		DataType::TINYINT,					// dbc-type
+		sql::DataType::TINYINT,				// dbc-type
+		3,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M)] [ZEROFILL]",					// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		false,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"TINYINT",							// local type name
+		0,									// minimum scale
+		0,									// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
+	{
+		"TINYINT UNSIGNED",					// Typename
+		sql::DataType::TINYINT,				// dbc-type
 		3,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
@@ -160,395 +140,395 @@ TypeInfoDef mysqlc_types[] = {
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		true,								// unsignable
+		true,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		true,								// auto_increment
-		"TINYINT",							// local type name
+		"TINYINT UNSIGNED",					// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: BIGINT DBC-Type: BIGINT ----------
 	{
 		"BIGINT",							// Typename
-		DataType::BIGINT,					// dbc-type
+		sql::DataType::BIGINT,				// dbc-type
 		19,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
-		"[(M)] [UNSIGNED] [ZEROFILL]",		// Create params
+		"[(M)] [ZEROFILL]",					// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		true,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		true,								// auto_increment
 		"BIGINT",							// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
+	{
+		"BIGINT UNSIGNED",					// Typename
+		sql::DataType::BIGINT,				// dbc-type
+		19,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M)] [ZEROFILL]",					// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		true,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"BIGINT UNSIGNED",					// local type name
+		0,									// minimum scale
+		0,									// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: LONG VARBINARY DBC-Type: LONGVARBINARY ----------
 	{
 		"LONG VARBINARY",					// Typename
-		DataType::LONGVARBINARY,			// dbc-type
+		sql::DataType::LONGVARBINARY,		// dbc-type
 		16777215,							// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
+		"'",								// Literal prefix
+		"'",								// Literal suffix
 		"",									// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		true,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"LONG VARBINARY",					// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: MEDIUMBLOB DBC-Type: LONGVARBINARY ----------
 	{
 		"MEDIUMBLOB",						// Typename
-		DataType::LONGVARBINARY,			// dbc-type
+		sql::DataType::LONGVARBINARY,		// dbc-type
 		16777215,							// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
+		"'",								// Literal prefix
+		"'",								// Literal suffix
 		"",									// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		true,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"MEDIUMBLOB",						// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: LONGBLOB DBC-Type: LONGVARBINARY ----------
 	{
 		"LONGBLOB",							// Typename
-		DataType::LONGVARBINARY,			// dbc-type
+		sql::DataType::LONGVARBINARY,		// dbc-type
 		0xFFFFFFFF,							// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
+		"'",								// Literal prefix
+		"'",								// Literal suffix
 		"",									// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		true,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"LONGBLOB",							// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: BLOB DBC-Type: LONGVARBINARY ----------
 	{
 		"BLOB",								// Typename
-		DataType::LONGVARBINARY,			// dbc-type
+		sql::DataType::LONGVARBINARY,		// dbc-type
 		0xFFFF,								// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
+		"'",								// Literal prefix
+		"'",								// Literal suffix
 		"",									// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		true,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"BLOB",								// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: TINYBLOB DBC-Type: LONGVARBINARY ----------
 	{
 		"TINYBLOB",							// Typename
-		DataType::LONGVARBINARY,			// dbc-type
-		0xFFFF,								// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
+		sql::DataType::LONGVARBINARY,		// dbc-type
+		0xFF,								// Precision
+		"'",								// Literal prefix
+		"'",								// Literal suffix
 		"",									// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		true,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"TINYBLOB",							// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: VARBINARY DBC-Type: VARBINARY ----------
 	{
 		"VARBINARY",						// Typename
-		DataType::VARBINARY,				// dbc-type
+		sql::DataType::VARBINARY,			// dbc-type
 		0xFF,								// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
+		"'",								// Literal prefix
+		"'",								// Literal suffix
 		"(M)",								// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		true,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"VARBINARY",						// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: BINARY DBC-Type: BINARY ----------
 	{
 		"BINARY",							// Typename
-		DataType::BINARY,					// dbc-type
+		sql::DataType::BINARY,				// dbc-type
 		0xFF,								// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
+		"'",								// Literal prefix
+		"'",								// Literal suffix
 		"(M)",								// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		true,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
-		"VARBINARY",						// local type name
+		"BINARY",							// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: LONG VARCHAR DBC-Type: LONG VARCHAR ----------
 	{
 		"LONG VARCHAR",						// Typename
-		DataType::LONGVARCHAR,				// dbc-type
+		sql::DataType::LONGVARCHAR,			// dbc-type
 		0xFFFFFF,							// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
+		"'",								// Literal prefix
+		"'",								// Literal suffix
 		"",									// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"LONG VARCHAR",						// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: MEDIUMTEXT DBC-Type: LONG VARCHAR ----------
 	{
 		"MEDIUMTEXT",						// Typename
-		DataType::LONGVARCHAR,				// dbc-type
+		sql::DataType::LONGVARCHAR,			// dbc-type
 		0xFFFFFF,							// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
+		"'",								// Literal prefix
+		"'",								// Literal suffix
 		"",									// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"MEDIUMTEXT",						// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
-		10									// num prec radix
-	},
-
-	// ----------- MySQL-Type: MEDIUMTEXT DBC-Type: LONG VARCHAR ----------
-	{
-		"MEDIUMTEXT",						// Typename
-		DataType::LONGVARCHAR,				// dbc-type
-		0xFFFFFF,							// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
-		"",									// Create params
-		DatabaseMetaData::typeNullable,		// nullable
-		false,								// case sensitive
-		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
-		false,								// fixed_prec_scale
-		false,								// auto_increment
-		"MEDIUMTEXT",						// local type name
-		0,									// minimum scale
-		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: LONGTEXT DBC-Type: LONG VARCHAR ----------
 	{
 		"LONGTEXT",							// Typename
-		DataType::LONGVARCHAR,				// dbc-type
+		sql::DataType::LONGVARCHAR,			// dbc-type
 		0xFFFFFF,							// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
+		"'",								// Literal prefix
+		"'",								// Literal suffix
 		"",									// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"LONGTEXT",							// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: TEXT DBC-Type: LONG VARCHAR ----------
 	{
 		"TEXT",								// Typename
-		DataType::LONGVARCHAR,				// dbc-type
+		sql::DataType::LONGVARCHAR,			// dbc-type
 		0xFFFF,								// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
+		"'",								// Literal prefix
+		"'",								// Literal suffix
 		"",									// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"TEXT",								// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: TINYTEXT DBC-Type: LONG VARCHAR ----------
 	{
 		"TINYTEXT",							// Typename
-		DataType::LONGVARCHAR,				// dbc-type
+		sql::DataType::LONGVARCHAR,			// dbc-type
 		0xFF,								// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
+		"'",								// Literal prefix
+		"'",								// Literal suffix
 		"",									// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"TINYTEXT",							// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: CHAR DBC-Type: CHAR ----------
 	{
 		"CHAR",								// Typename
-		DataType::CHAR,						// dbc-type
+		sql::DataType::CHAR,				// dbc-type
 		0xFF,								// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
+		"'",								// Literal prefix
+		"'",								// Literal suffix
 		"(M)",								// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
-		"NUMERIC",							// local type name
+		"CHAR",								// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
-	// ----------- MySQL-Type: DECIMAL DBC-Type: DECIMAL ----------
+// ToDo : The maximum number of digits for DECIMAL or NUMERIC is 65 (64 from MySQL 5.0.3 to 5.0.5). 
+
+	// ----------- MySQL-Type: NUMERIC (silently conv. to DECIMAL) DBC-Type: NUMERIC ----------
 	{
-		"DECIMAL",							// Typename
-		DataType::NUMERIC,					// dbc-type
-		17,									// Precision
+		"NUMERIC",							// Typename
+		sql::DataType::NUMERIC,				// dbc-type
+		64,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
 		"[(M[,D])] [ZEROFILL]",				// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"NUMERIC",							// local type name
+		-308,								// minimum scale
+		308,								// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
+
+	// ----------- MySQL-Type: DECIMAL  DBC-Type: DECIMAL ----------
+	{
+		"DECIMAL",							// Typename
+		sql::DataType::DECIMAL,				// dbc-type
+		64,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M[,D])] [ZEROFILL]",				// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		true,								// auto_increment
 		"DECIMAL",							// local type name
 		-308,								// minimum scale
 		308,								// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
-		10									// num prec radix
-	},
-
-	// ----------- MySQL-Type: NUMERIC DBC-Type: NUMERIC ----------
-	{
-		"NUMERIC",							// Typename
-		DataType::NUMERIC,					// dbc-type
-		17,									// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
-		"[(M[,D])] [ZEROFILL]",				// Create params
-		DatabaseMetaData::typeNullable,		// nullable
-		false,								// case sensitive
-		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
-		false,								// fixed_prec_scale
-		true,								// auto_increment
-		"NUMERIC",							// local type name
-		-308,								// minimum scale
-		308,								// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: INTEGER DBC-Type: INTEGER ----------
 	{
 		"INTEGER",							// Typename
-		DataType::NUMERIC,					// dbc-type
+		sql::DataType::INTEGER,				// dbc-type
 		10,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
@@ -556,21 +536,42 @@ TypeInfoDef mysqlc_types[] = {
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		true,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		true,								// auto_increment
 		"INTEGER",							// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
+
+	{
+		"INTEGER UNSIGNED",					// Typename
+		sql::DataType::INTEGER,				// dbc-type
+		10,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M)] [ZEROFILL]",					// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		false,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"INTEGER UNSIGNED",					// local type name
+		0,									// minimum scale
+		0,									// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: INT DBC-Type: INTEGER ----------
 	{
-		"INT",								// Typename
-		DataType::INTEGER,					// dbc-type
+		"INT",							// Typename
+		sql::DataType::INTEGER,				// dbc-type
 		10,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
@@ -578,21 +579,42 @@ TypeInfoDef mysqlc_types[] = {
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		true,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		true,								// auto_increment
 		"INT",								// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
-	// ----------- MySQL-Type: MEDIUMINT DBC-Type: INTEGER ----------
+	{
+		"INT UNSIGNED",						// Typename
+		sql::DataType::INTEGER,				// dbc-type
+		10,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M)] [ZEROFILL]",					// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		false,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"INT UNSIGNED",						// local type name
+		0,									// minimum scale
+		0,									// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
+
+	// ----------- MySQL-Type: MEDIUMINT DBC-Type: MEDIUMINT ----------
 	{
 		"MEDIUMINT",						// Typename
-		DataType::INTEGER,					// dbc-type
+		sql::DataType::MEDIUMINT,			// dbc-type
 		7,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
@@ -600,21 +622,41 @@ TypeInfoDef mysqlc_types[] = {
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		true,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		true,								// auto_increment
 		"MEDIUMINT",						// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
+	{
+		"MEDIUMINT UNSIGNED",				// Typename
+		sql::DataType::MEDIUMINT,			// dbc-type
+		7,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M)] [ZEROFILL]",					// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		true,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"MEDIUMINT UNSIGNED",				// local type name
+		0,									// minimum scale
+		0,									// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
-	// ----------- MySQL-Type: SMALLINT DBC-Type: INTEGER ----------
+	// ----------- MySQL-Type: SMALLINT DBC-Type: SMALLINT ----------
 	{
 		"SMALLINT",							// Typename
-		DataType::INTEGER,					// dbc-type
+		sql::DataType::SMALLINT,			// dbc-type
 		5,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
@@ -622,21 +664,47 @@ TypeInfoDef mysqlc_types[] = {
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		true,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		true,								// auto_increment
 		"SMALLINT",							// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
+
+	{
+		"SMALLINT UNSIGNED",				// Typename
+		sql::DataType::SMALLINT,			// dbc-type
+		5,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M)] [ZEROFILL]",					// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		true,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"SMALLINT UNSIGNED",				// local type name
+		0,									// minimum scale
+		0,									// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
+
+	/*
+	 * MySQL Type: FLOAT JDBC Type: REAL (this is the SINGLE PERCISION
+	 * floating point type)
+	 */
 
 	// ----------- MySQL-Type: FLOAT DBC-Type: REAL ----------
 	{
 		"FLOAT",							// Typename
-		DataType::REAL,						// dbc-type
+		sql::DataType::REAL,				// dbc-type
 		10,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
@@ -644,21 +712,21 @@ TypeInfoDef mysqlc_types[] = {
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		true,								// auto_increment
 		"FLOAT",							// local type name
 		-38,								// minimum scale
 		38,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: DOUBLE DBC-Type: DOUBLE ----------
 	{
 		"DOUBLE",							// Typename
-		DataType::DOUBLE,					// dbc-type
+		sql::DataType::DOUBLE,				// dbc-type
 		17,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
@@ -666,43 +734,25 @@ TypeInfoDef mysqlc_types[] = {
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		true,								// auto_increment
 		"DOUBLE",							// local type name
 		-308,								// minimum scale
 		308,								// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
-	// ----------- MySQL-Type: DOUBLE PRECISION DBC-Type: DOUBLE ----------
-	{
-		"DOUBLE PRECISION",					// Typename
-		DataType::DOUBLE,					// dbc-type
-		17,									// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
-		"[(M,D)] [ZEROFILL]",				// Create params
-		DatabaseMetaData::typeNullable,		// nullable
-		false,								// case sensitive
-		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
-		false,								// fixed_prec_scale
-		true,								// auto_increment
-		"DOUBLE PRECISION",					// local type name
-		-308,								// minimum scale
-		308,								// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
-		10									// num prec radix
-	},
-
+	/*
+	 * MySQL Type: REAL (does not map to Types.REAL) JDBC Type: DOUBLE
+	 */
 	// ----------- MySQL-Type: REAL DBC-Type: DOUBLE ----------
+
 	{
 		"REAL",								// Typename
-		DataType::DOUBLE,					// dbc-type
+		sql::DataType::DOUBLE,				// dbc-type
 		17,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
@@ -710,109 +760,109 @@ TypeInfoDef mysqlc_types[] = {
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		true,								// auto_increment
 		"REAL",								// local type name
 		-308,								// minimum scale
 		308,								// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: VARCHAR DBC-Type: VARCHAR ----------
 	{
 		"VARCHAR",							// Typename
-		DataType::VARCHAR,					// dbc-type
+		sql::DataType::VARCHAR,				// dbc-type
 		255,								// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
+		"'",								// Literal prefix
+		"'",								// Literal suffix
 		"(M)",								// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"VARCHAR",							// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: ENUM DBC-Type: VARCHAR ----------
 	{
 		"ENUM",								// Typename
-		DataType::VARCHAR,					// dbc-type
+		sql::DataType::VARCHAR,				// dbc-type
 		0xFFFF,								// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
+		"'",								// Literal prefix
+		"'",								// Literal suffix
 		"",									// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"ENUM",								// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: SET DBC-Type: VARCHAR ----------
 	{
 		"SET",								// Typename
-		DataType::VARCHAR,					// dbc-type
+		sql::DataType::VARCHAR,				// dbc-type
 		64,									// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
+		"'",								// Literal prefix
+		"'",								// Literal suffix
 		"",									// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"SET",								// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: DATE DBC-Type: DATE ----------
 	{
 		"DATE",								// Typename
-		DataType::DATE,						// dbc-type
+		sql::DataType::DATE,				// dbc-type
 		0,									// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
+		"'",								// Literal prefix
+		"'",								// Literal suffix
 		"",									// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"DATE",								// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: TIME DBC-Type: TIME ----------
 	{
 		"TIME",								// Typename
-		DataType::TIME,						// dbc-type
+		sql::DataType::TIME,				// dbc-type
 		0,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
@@ -820,21 +870,21 @@ TypeInfoDef mysqlc_types[] = {
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"TIME",								// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: DATETIME DBC-Type: TIMESTAMP ----------
 	{
 		"DATETIME",							// Typename
-		DataType::TIMESTAMP,				// dbc-type
+		sql::DataType::TIMESTAMP,			// dbc-type
 		0,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
@@ -842,45 +892,45 @@ TypeInfoDef mysqlc_types[] = {
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"DATETIME",							// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
 
 	// ----------- MySQL-Type: TIMESTAMP DBC-Type: TIMESTAMP ----------
 	{
 		"TIMESTAMP",						// Typename
-		DataType::TIMESTAMP,				// dbc-type
+		sql::DataType::TIMESTAMP,			// dbc-type
 		0,									// Precision
-		"",									// Literal prefix
-		"",									// Literal suffix
-		"",									// Create params
+		"'",								// Literal prefix
+		"'",								// Literal suffix
+		"[(M)]",							// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
-		false,								// unsignable
+		false,								// unsigned_attribute
 		false,								// fixed_prec_scale
 		false,								// auto_increment
 		"TIMESTAMP",						// local type name
 		0,									// minimum scale
 		0,									// maximum scale
-		0,									// sql data type (unsued)
-		0,									// sql datetime sub (unsued)
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
-
 	// ----------- MySQL-Type: TIMESTAMP DBC-Type: TIMESTAMP ----------
+
 	{
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	}
 };
-#endif
+
 
 /* {{{ my_i_to_a() -I- */
 static inline char * my_i_to_a(char * buf, size_t buf_size, int a)
@@ -890,6 +940,13 @@ static inline char * my_i_to_a(char * buf, size_t buf_size, int a)
 }
 /* }}} */
 
+/* {{{ my_l_to_a() -I- */
+static inline char * my_l_to_a(char * buf, size_t buf_size, long long a)
+{
+	snprintf(buf, buf_size, "%lld", a);
+	return buf;
+}
+/* }}} */
 
 
 /* {{{ MySQL_ConnectionMetaData::MySQL_ConnectionMetaData() -I- */
@@ -2980,7 +3037,56 @@ sql::ResultSet *
 MySQL_ConnectionMetaData::getTypeInfo()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getTypeInfo");
-	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::getTypeInfo");
+	std::list<std::string> rs_data;
+	std::list<std::string> rs_field_data;
+	char buf[20];
+
+	int i = 0;
+	while (mysqlc_types[i].typeName) {
+		TypeInfoDef * curr = &mysqlc_types[i];
+
+		rs_data.push_back(curr->typeName);
+		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->dataType));
+		rs_data.push_back(my_l_to_a(buf, sizeof(buf) - 1, curr->precision));
+		rs_data.push_back(curr->literalPrefix);
+		rs_data.push_back(curr->literalSuffix);
+		rs_data.push_back(curr->createParams);
+		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->nullable));
+		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->caseSensitive));
+		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->searchable));
+		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->isUnsigned));
+		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->fixedPrecScale));
+		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->autoIncrement));
+		rs_data.push_back(curr->localTypeName);
+		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->minScale));
+		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->maxScale));
+		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->sqlDataType));
+		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->sqlDateTimeSub));
+		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->numPrecRadix));
+
+		i++;
+	}
+
+	rs_field_data.push_back("TYPE_NAME");
+	rs_field_data.push_back("DATA_TYPE");
+	rs_field_data.push_back("PRECISION");
+	rs_field_data.push_back("LITERAL_PREFIX");
+	rs_field_data.push_back("LITERAL_SUFFIX");
+	rs_field_data.push_back("CREATE_PARAMS");
+	rs_field_data.push_back("NULLABLE");
+	rs_field_data.push_back("CASE_SENSITIVE");
+	rs_field_data.push_back("SEARCHABLE");
+	rs_field_data.push_back("UNSIGNED_ATTRIBUTE");
+	rs_field_data.push_back("FIXED_PREC_SCALE");
+	rs_field_data.push_back("AUTO_INCREMENT");
+	rs_field_data.push_back("LOCAL_TYPE_NAME");
+	rs_field_data.push_back("MINIMUM_SCALE");
+	rs_field_data.push_back("MAXIMUM_SCALE");
+	rs_field_data.push_back("SQL_DATA_TYPE");
+	rs_field_data.push_back("SQL_DATETIME_SUB");
+	rs_field_data.push_back("NUM_PREC_RADIX");
+
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
 }
 /* }}} */
 

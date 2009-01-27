@@ -343,15 +343,13 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		mysql_set_server_option(intern->mysql, MYSQL_OPTION_MULTI_STATEMENTS_OFF);
 		setAutoCommit(true);
 		setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
-	} catch (sql::SQLException &e) {
+	} catch (std::runtime_error) {
+		// SQLException is also a runtime_error, thus no special case for SQLException
 		intern->logger->freeReference();		
-		throw e;
-	} catch (std::runtime_error &e) {
+		throw;
+	} catch (std::bad_alloc) {
 		intern->logger->freeReference();		
-		throw e;
-	} catch (std::bad_alloc &e) {
-		intern->logger->freeReference();		
-		throw e;
+		throw;
 	}
 }
 /* }}} */

@@ -49,7 +49,7 @@ mysql_type_to_datatype(int mysql_type, int flags)
 		case MYSQL_TYPE_LONGLONG:
 			return sql::DataType::BIGINT;
 		case MYSQL_TYPE_FLOAT:
-			return sql::DataType::FLOAT;
+			return sql::DataType::REAL;
 		case MYSQL_TYPE_DOUBLE:
 			return sql::DataType::DOUBLE;
 		case MYSQL_TYPE_NULL:
@@ -63,7 +63,7 @@ mysql_type_to_datatype(int mysql_type, int flags)
 		case MYSQL_TYPE_YEAR:
 			return sql::DataType::YEAR;
 		case MYSQL_TYPE_DATETIME:
-			return sql::DataType::DATETIME;
+			return sql::DataType::TIMESTAMP;
 		case MYSQL_TYPE_TINY_BLOB:
 			if (flags & BINARY_FLAG) {
 				return sql::DataType::VARBINARY;
