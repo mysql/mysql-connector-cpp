@@ -44,7 +44,7 @@ private:
   // should be private/protected
   CCPP_SINGLETON(TestSuiteFactory);
 
-  typedef std::map<const String::value_type *, std::pair<TestSuiteCreator,Private::TestContainer::StorableTest *>> TestSuites;
+  typedef std::map<const String::value_type *, std::pair<TestSuiteCreator,Private::TestContainer::StorableTest *> > TestSuites;
 
   TestSuites testSuites;
 
