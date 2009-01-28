@@ -31,53 +31,65 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "../common/ccppTypes.h"
 #include "../common/stringutils.h"
+#include "../common/nocopy.h"
 
-_ABSTRACT class Test
+#include "test_container.h"
+
+namespace testsuite
 {
-public:
-
-  virtual ~Test()
+  _ABSTRACT class Test: private Private::TestContainer
   {
-  }
-  virtual void runTest() _PURE;
-  virtual const String & name() const _PURE;
-};
+    friend class Private::TestContainer::StorableTest;
 
-template <class SuiteClass>
-class TestCase : public Test
-{
-protected:
-  typedef void (SuiteClass::*TestCaseMethod)();
+  protected:
 
-private:
-  SuiteClass * suite;
-  TestCaseMethod test;
-  String testName;
+    virtual ~Test()
+    {
+    }
 
-  TestCase();
-  TestCase(const TestCase &other);
+  public:
 
-public:
+    virtual       void      runTest ()        _PURE;
+    virtual const String &  name    () const  _PURE;
+  };
 
-  TestCase(   SuiteClass &    obj
-           ,  TestCaseMethod  testMethod
-           ,  const String &  _name)
+
+  template <class SuiteClass>
+  class TestCase : public Test
+  {
+  protected:
+    typedef void (SuiteClass::*TestCaseMethod)();
+
+  private:
+    SuiteClass * suite;
+    TestCaseMethod test;
+    String testName;
+
+    TestCase();
+    TestCase(const TestCase &other);
+
+  public:
+
+    TestCase(   SuiteClass &    obj
+      ,  TestCaseMethod  testMethod
+      ,  const String &  _name)
       : Test      (),
-        suite     ( &obj        ),
-        test      ( testMethod  ),
-        testName  ( _name       )
-  {
-  }
+      suite     ( &obj        ),
+      test      ( testMethod  ),
+      testName  ( _name       )
+    {
+    }
 
-  virtual void runTest()
-  {
-    (suite->*test)();
-  }
+    virtual void runTest()
+    {
+      (suite->*test)();
+    }
 
-  virtual const String & name() const
-  {
-    return testName;
-  }
-};
+    virtual const String & name() const
+    {
+      return testName;
+    }
+  };
+}
 
 #endif  // ifndef __TESTCASE_H_

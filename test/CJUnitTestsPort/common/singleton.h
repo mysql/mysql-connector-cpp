@@ -1,4 +1,4 @@
-/* Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
+/* Copyright 2008 - 2009 Sun Microsystems, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,14 +22,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #ifndef __CCPP_SINGLETON_H
 #define __CCPP_SINGLETON_H
 
+#include "nocopy.h"
+
 namespace policies
 {
 
 template <class T>
-class Singleton
+class Singleton: public nocopy
 {
-  Singleton(const Singleton & other){}
-
 protected:
 
   Singleton(){}

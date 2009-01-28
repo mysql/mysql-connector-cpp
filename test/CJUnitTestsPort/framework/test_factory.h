@@ -38,21 +38,25 @@ Test * CreateTestCase(const String::value_type * name)
   return new SuiteClass(name);
 }
 
-class TestSuiteFactory : public policies::Singleton<TestSuiteFactory>
+class TestSuiteFactory : public policies::Singleton<TestSuiteFactory>, Private::TestContainer
 {
 private:
   // should be private/protected
   CCPP_SINGLETON(TestSuiteFactory);
 
-  typedef std::map<const String::value_type *, TestSuiteCreator> TestSuiteCreators;
+  typedef std::map<const String::value_type *, std::pair<TestSuiteCreator,Private::TestContainer::StorableTest *>> TestSuites;
 
-  TestSuiteCreators testSuites;
+  TestSuites testSuites;
+
+  ~TestSuiteFactory();
 
 public:
+          Test *  createTest        ( const String::value_type * name );
 
-  bool runTests();
+  static  int     RegisterTestSuite ( const String::value_type *  name
+                                    , TestSuiteCreator            creator);
 
-  static int RegisterTestSuite(const String::value_type * name, TestSuiteCreator creator);
+  List::size_type getTestsList      ( std::vector<const String::value_type *> & list ) const;
 };
 
 } // namespace testsuite

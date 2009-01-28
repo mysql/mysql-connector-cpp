@@ -32,20 +32,24 @@ namespace testsuite
 class TestsRunner : public policies::Singleton<TestsRunner>
 {
 private:
+
+  typedef std::vector<const String::value_type *>   constStrList;
+  typedef constStrList::const_iterator              constStrListCit;
+
   // should be private/protected
   CCPP_SINGLETON(TestsRunner);
 
-  std::vector<const String::value_type *> TestSuites;
+  constStrList    TestSuiteNames;
 
-  StartOptions * startOptions;
+  StartOptions *  startOptions;
 
 public:
 
-  bool runTests();
+  bool            runTests();
 
-  void setStartOptions(StartOptions * options);
+  void            setStartOptions(StartOptions * options);
 
-  StartOptions * getStartOptions() const;
+  StartOptions *  getStartOptions() const;
 };
 
 }

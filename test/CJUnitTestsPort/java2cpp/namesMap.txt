@@ -10,7 +10,7 @@
 = new Properties\(\)  =>
 = new HashMap()       =>
 (\S+)\.getObject\(    => getObject($1,
-BaseTestCase(?!\.h)          => BaseTestFixture<$class>
+BaseTestCase(?!\.h)          => BaseTestFixture
 (?<=String)(\s+\w+)\s*=\s*NULL =>$1
 (?<!\=|\!)\=\s*NULL              => \/*= NULL*\/
 #DriverManager.getConnection\((\w+),\s*\)
@@ -54,7 +54,7 @@ java.sql.DatabaseMetaData => "cppconn/metadata.h"
 java.sql.ResultSetMetaData=> "cppconn/resultset_metadata.h"
 java.sql.Types            => "cppconn/datatype.h"
 
-junit.framework.TestCase  => "MiniCppUnit/MiniCppUnit.hxx"
+junit.framework.TestCase  => "framework/framework.h"
 java.io.BufferedOutputStream  => ACT:COMMENT
 java.io.File            => ACT:COMMENT
 java.io.FileOutputStream=> ACT:COMMENT

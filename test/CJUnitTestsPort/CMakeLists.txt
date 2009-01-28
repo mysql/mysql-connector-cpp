@@ -26,13 +26,14 @@ INCLUDE_DIRECTORIES(${MYSQLCPPCONN_SOURCE_DIR}/cppconn)
 
 IF(WIN32)
 	LINK_DIRECTORIES(${MYSQL_DIR}/lib/$(ConfigurationName))
-	SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn libmysql)
+	LINK_DIRECTORIES(framework/$(ConfigurationName))
+	SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn libmysql test_framework)
 #	ADD_DEFINITIONS("-D_SECURE_SCL")
 	ADD_DEFINITIONS("-D_SCL_SECURE_NO_WARNINGS")
 	ADD_DEFINITIONS("-D_CRT_SECURE_NO_WARNINGS")
 
 ELSEIF(NOT WIN32)
-	SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn mysqlclient_r)
+	SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn mysqlclient_r test_framework)
 ENDIF(WIN32)
 
 IF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)
@@ -42,13 +43,7 @@ ENDIF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)
 SET(jdbctests_sources
 	ccpptests.cpp
 	BaseTestFixture.cpp
-	framework/test_suite.cpp
-	framework/test_factory.cpp
-	framework/test_listener.cpp
-	framework/test_asserts.cpp
-	framework/test_tapOutputter.cpp
-	framework/test_runner.cpp
-	../../common/stringutils.cpp
+	common/stringutils.cpp
 	resources.cpp
 	regression/EscapeProcessorRegressionTest.cpp
 	compliance/ConnectionTest.cpp
@@ -56,6 +51,7 @@ SET(jdbctests_sources
 	compliance/StatementTest.cpp
 	compliance/ResultSetMetadataTest.cpp
 	compliance/PreparedStatementTest.cpp
+#	simple/BlobTest.cpp
 	)
 
 # It's convinient for VS users to have headers as part of project
@@ -63,15 +59,7 @@ IF(WIN32)
 	SET(jdbctests_sources
     		${jdbctests_sources}
 		BaseTestFixture.h
-		framework/test_runner.h
-		framework/test_suite.h
-		framework/test_case.h
-		framework/test_factory.h
-		framework/test_listener.h
-		framework/test_asserts.h
-		framework/test_outputter.h
-		framework/test_tapOutputter.h
-		../../common/stringutils.h
+		common/stringutils.h
 		resources.h
 		regression/EscapeProcessorRegressionTest.h
 		compliance/ConnectionTest.h
@@ -79,6 +67,7 @@ IF(WIN32)
 		compliance/StatementTest.h
 		compliance/ResultSetMetadataTest.h
 		compliance/PreparedStatementTest.h
+#		simple/BlobTest.h
 		)
 ENDIF(WIN32)
 

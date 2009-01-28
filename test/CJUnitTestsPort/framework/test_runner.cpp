@@ -33,14 +33,27 @@ TestsRunner::TestsRunner()
 
 bool TestsRunner::runTests()
 {
-  bool result= TestSuiteFactory::theInstance().runTests();
+  TestSuiteNames.empty();
+
+  TestSuiteFactory::theInstance().getTestsList( TestSuiteNames );
+
+  for ( constStrListCit cit= TestSuiteNames.begin(); cit != TestSuiteNames.end(); ++cit )
+  {
+    Test * ts= TestSuiteFactory::theInstance().createTest( *cit );
+
+    ts->runTest();
+  }
+
+  TestsListener::theInstance().summary();
+
+  //bool result= TestSuiteFactory::theInstance().runTests();
 
   if ( startOptions->verbose )
   {
     TestsListener::dumpLog();
   }
 
-  return result;
+  return TestsListener::allTestsPassed();
 }
 
 void TestsRunner::setStartOptions(StartOptions * options)

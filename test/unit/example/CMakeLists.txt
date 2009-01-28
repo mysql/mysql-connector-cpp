@@ -26,28 +26,12 @@
 SET(example_sources
 	../unit_fixture.cpp
 	../main.cpp
-	../../CJUnitTestsPort/framework/test_suite.cpp
-	../../CJUnitTestsPort/framework/test_factory.cpp
-	../../CJUnitTestsPort/framework/test_listener.cpp
-	../../CJUnitTestsPort/framework/test_asserts.cpp
-	../../CJUnitTestsPort/framework/test_tapOutputter.cpp
-	../../CJUnitTestsPort/framework/test_runner.cpp
-	../../../common/stringutils.cpp
 	example.cpp)
 
 IF(WIN32)
 	SET(example_sources
     		${example_sources}
-	unit_fixture.h
-	../../CJUnitTestsPort/framework/test_runner.h
-	../../CJUnitTestsPort/framework/test_suite.h
-	../../CJUnitTestsPort/framework/test_case.h
-	../../CJUnitTestsPort/framework/test_factory.h
-	../../CJUnitTestsPort/framework/test_listener.h
-	../../CJUnitTestsPort/framework/test_asserts.h
-	../../CJUnitTestsPort/framework/test_outputter.h
-	../../CJUnitTestsPort/framework/test_tapOutputter.h
-	../../../common/stringutils.h
+	../unit_fixture.h
 	example.h)
 ENDIF(WIN32)
 

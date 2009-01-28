@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #include "test_suite.h"
+//#include "deletable_wrapper.h"
 
 namespace testsuite
 {
@@ -36,7 +37,8 @@ TestSuite::TestSuite( const String& name )
 
 void TestSuite::RegisterTestCase( Test * test )
 {
-  testCases.push_back( test );
+  if ( test != NULL )
+    testCases.push_back( new TestContainer::StorableTest( *test ) );
 }
 
 /** calls each test after setUp and tearDown TestFixture methods */
@@ -44,9 +46,7 @@ void TestSuite::runTest()
 {
   TestsListener::nextSuiteStarts( suiteName, testCases.size() );
 
-  std::vector<Test*>::iterator it;
-
-  for (it=testCases.begin(); it != testCases.end(); ++it)
+  for ( testsList_it it=testCases.begin(); it != testCases.end(); ++it)
   {
     //Incrementing order number of current test
     TestsListener::theInstance().incrementCounter();
@@ -127,9 +127,7 @@ void TestSuite::runTest()
 
 TestSuite::~TestSuite()
 {
-  std::vector<Test*>::iterator it;
-
-  for (it=testCases.begin(); it != testCases.end(); ++it)
+  for ( testsList_it it=testCases.begin(); it != testCases.end(); ++it)
     delete (*it);
 }
 }
