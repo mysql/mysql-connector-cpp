@@ -227,43 +227,43 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		} else if (!it->first.compare("CLIENT_COMPRESS")) {
 			if (it->second.lval && (flags & CLIENT_COMPRESS)) {
 				flags |= CLIENT_COMPRESS;
-			}		
+			}
 		} else if (!it->first.compare("CLIENT_FOUND_ROWS")) {
 			if (it->second.lval && (flags & CLIENT_FOUND_ROWS)) {
 				flags |= CLIENT_FOUND_ROWS;
-			}		
+			}
 		} else if (!it->first.compare("CLIENT_IGNORE_SIGPIPE")) {
 			if (it->second.lval && (flags & CLIENT_IGNORE_SIGPIPE)) {
 				flags |= CLIENT_IGNORE_SIGPIPE;
-			}		
+			}
 		} else if (!it->first.compare("CLIENT_IGNORE_SPACE")) {
 			if (it->second.lval && (flags & CLIENT_IGNORE_SPACE)) {
 				flags |= CLIENT_IGNORE_SPACE;
-			}		
+			}
 		} else if (!it->first.compare("CLIENT_INTERACTIVE")) {
 			if (it->second.lval && (flags & CLIENT_INTERACTIVE)) {
 				flags |= CLIENT_INTERACTIVE;
-			}		
+			}
 		} else if (!it->first.compare("CLIENT_LOCAL_FILES")) {
 			if (it->second.lval && (flags & CLIENT_LOCAL_FILES)) {
 				flags |= CLIENT_LOCAL_FILES;
-			}		
+			}
 		} else if (!it->first.compare("CLIENT_MULTI_RESULTS")) {
 			if (it->second.lval && (flags & CLIENT_MULTI_RESULTS)) {
 				flags |= CLIENT_MULTI_RESULTS;
-			}		
+			}
 		} else if (!it->first.compare("CLIENT_MULTI_STATEMENTS")) {
 			if (it->second.lval && (flags & CLIENT_MULTI_STATEMENTS)) {
 				flags |= CLIENT_MULTI_STATEMENTS;
-			}		
+			}
 		} else if (!it->first.compare("CLIENT_NO_SCHEMA")) {
 			if (it->second.lval && (flags & CLIENT_NO_SCHEMA)) {
 				flags |= CLIENT_NO_SCHEMA;
-			}		
+			}
 		} else if (!it->first.compare("CLIENT_COMPRESS")) {
 			if (it->second.lval && (flags & CLIENT_COMPRESS)) {
 				flags |= CLIENT_COMPRESS;
-			}		
+			}
 		}
 	}
 
@@ -284,7 +284,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 			schema_pos = host.find('/');
 			if (schema_pos != std::string::npos) {
 				schema_pos++; // skip the slash
-				schema = host.substr(schema_pos, host.size() - schema_pos); 
+				schema = host.substr(schema_pos, host.size() - schema_pos);
 				schema_used = true;
 				host = host.substr(0, schema_pos);
 			}
@@ -345,10 +345,10 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
 	} catch (std::runtime_error) {
 		// SQLException is also a runtime_error, thus no special case for SQLException
-		intern->logger->freeReference();		
+		intern->logger->freeReference();
 		throw;
 	} catch (std::bad_alloc) {
-		intern->logger->freeReference();		
+		intern->logger->freeReference();
 		throw;
 	}
 }
@@ -835,7 +835,6 @@ MySQL_Connection::getSessionVariable(const std::string & varname)
 	if (intern->cache_sql_mode && intern->sql_mode_set == true &&
 		!strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1))
 	{
-		printf("sql_mode=%s\n", intern->sql_mode.c_str());
 		CPP_INFO_FMT("sql_mode=%s", intern->sql_mode.c_str());
 		return intern->sql_mode;
 	}
