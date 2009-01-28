@@ -1,3 +1,4 @@
+
 /* Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -35,8 +36,6 @@
 /* Connection parameter and sample data */
 #include "examples.h"
 
-static void validateResultSet(std::auto_ptr< sql::ResultSet > & res, struct _test_data *min, struct _test_data *max);
-
 using namespace std;
 
 int main(int argc, const char **argv)
@@ -53,7 +52,6 @@ int main(int argc, const char **argv)
 	stringstream sql;
 	int i;
 	struct _test_data min, max;
-	char sign;
 
 	cout << boolalpha;
 	cout << "1..1" << endl;
