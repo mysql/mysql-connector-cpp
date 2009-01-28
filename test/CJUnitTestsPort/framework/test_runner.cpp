@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "test_runner.h"
 #include "test_factory.h"
+#include "test_case.h"
+#include "test_listener.h"
 
 namespace testsuite
 {
