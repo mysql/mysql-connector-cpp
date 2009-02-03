@@ -43,12 +43,12 @@ namespace mysql
 
 struct TypeInfoDef
 {
-	const char *typeName;
+	const char * const typeName;
 	int dataType;
 	unsigned long long precision;
-	const char * literalPrefix;
-	const char * literalSuffix;
-	const char * createParams;
+	const char * const literalPrefix;
+	const char * const literalSuffix;
+	const char * const createParams;
 	short nullable;
 	bool caseSensitive;
 	short searchable;
@@ -63,7 +63,7 @@ struct TypeInfoDef
 	int numPrecRadix;
 };
 
-static TypeInfoDef mysqlc_types[] = {
+static const TypeInfoDef mysqlc_types[] = {
 
 	// ------------- MySQL-Type: BIT. DBC-Type: BIT -------------
 	{
@@ -1241,7 +1241,7 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 				ddl = sql_rs->getString(colIdx);
 			}
 			rs_data.push_back(ddl);
-		} catch (sql::SQLException &) {
+		} catch (sql::SQLException) {
 			rs_data.push_back("");
 		}
 	}
@@ -1452,51 +1452,10 @@ MySQL_ConnectionMetaData::getCatalogTerm()
 /* }}} */
 
 
-#if 0
-    ODatabaseMetaDataResultSet *pResultSet = new ODatabaseMetaDataResultSet( ODatabaseMetaDataResultSet::eColumnPrivileges );
-    Reference<XResultSet> xResultSet = pResultSet;
-    ODatabaseMetaDataResultSet::ORows rRows;
-
-
-	::rtl::OUString strStmt = ASC2OU("SHOW FULL COLUMNS FROM ") + schema + ASC2OU(".") + table + 
-                              ASC2OU(" LIKE '") + getPattern(columnNamePattern) + ASC2OU("'");
-
-    XStatement *stmt = new OStatement(m_pConnection);
-    Reference< XResultSet> rs = stmt->executeQuery(strStmt);
-
-    while (rs.is() && rs->next()) 
-    {
-        Reference< XRow> xRow(rs, UNO_QUERY); 
-        ::rtl::OUString aToken;
-        sal_Int32 nIndex = 0;
-        ::rtl::OUString aPrivileges = (m_pSettings->pConnection->host) ?
-            xRow->getString(8) : ASC2OU("select, insert, update, references");
-
-        do
-        {
-            ODatabaseMetaDataResultSet::ORow aRow(1);
-            aToken = aPrivileges.getToken(0, ',', nIndex).toAsciiUpperCase();
-
-            aRow.push_back(new  ORowSetValueDecorator(ASC2OU("")));         // Catalog
-            aRow.push_back(new  ORowSetValueDecorator(schema));             // Schema
-            aRow.push_back(new  ORowSetValueDecorator(table));              // Tablename
-            aRow.push_back(new  ORowSetValueDecorator(xRow->getString(1))); // Columnname
-            aRow.push_back(new  ORowSetValueDecorator(ASC2OU("")));         // Grantor
-            aRow.push_back(new  ORowSetValueDecorator(getUserName()));      // Grantee
-            aRow.push_back(new  ORowSetValueDecorator(aToken.trim()));      // privilege
-            aRow.push_back(new  ORowSetValueDecorator(ASC2OU("")));         // grantable
-            rRows.push_back(aRow);
-        } while (nIndex >= 0);
-    }
-    pResultSet->setRows(rRows);
-	return(xResultSet);
-#endif
-
-
 /* {{{ MySQL_ConnectionMetaData::getColumnPrivileges() -I- */
 sql::ResultSet *
 MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, const std::string& schema,
-												const std::string& table, const std::string& columnNamePattern)
+											  const std::string& table, const std::string& columnNamePattern)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getColumnPrivileges");
 	std::list<std::string> rs_data;
@@ -1553,7 +1512,7 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 /* {{{ MySQL_ConnectionMetaData::getColumns() -I- */
 sql::ResultSet *
 MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::string& schemaPattern,
-										const std::string& tableNamePattern, const std::string& columnNamePattern)
+									 const std::string& tableNamePattern, const std::string& columnNamePattern)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getColumns");
 	std::list<std::string> rs_data;
@@ -2914,11 +2873,11 @@ MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const s
 
 /* {{{ MySQL_ConnectionMetaData::getTables() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getTables(const std::string& catalog, const std::string& schemaPattern,
+MySQL_ConnectionMetaData::getTables(const std::string& /* catalog */, const std::string& schemaPattern,
 									const std::string& tableNamePattern, std::list<std::string> &types)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getTables");
-	CPP_INFO_FMT("catalog=%s schemaPattern=%s tablePattern=%s", catalog.c_str(), schemaPattern.c_str(), tableNamePattern.c_str());
+	CPP_INFO_FMT("schemaPattern=%s tablePattern=%s", schemaPattern.c_str(), tableNamePattern.c_str());
 	std::list<std::string> rs_data;
 	std::list<std::string> rs_field_data;
 	rs_field_data.push_back("TABLE_CAT");
@@ -3043,7 +3002,7 @@ MySQL_ConnectionMetaData::getTypeInfo()
 
 	int i = 0;
 	while (mysqlc_types[i].typeName) {
-		TypeInfoDef * curr = &mysqlc_types[i];
+		const TypeInfoDef * const curr = &mysqlc_types[i];
 
 		rs_data.push_back(curr->typeName);
 		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->dataType));
@@ -4070,7 +4029,7 @@ MySQL_ConnectionMetaData::usesLocalFiles()
 
 /* {{{ MySQL_ConnectionMetaData::matchTable() -I- */
 bool
-MySQL_ConnectionMetaData::matchTable(const std::string &sPattern, const std::string & tPattern,
+MySQL_ConnectionMetaData::matchTable(const std::string & sPattern, const std::string & tPattern,
 									 const std::string & schema, const std::string & table)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::matchTable");

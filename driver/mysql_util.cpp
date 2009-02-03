@@ -30,7 +30,7 @@ namespace util {
 
 /* {{{ mysql_to_datatype() -I- */
 int
-mysql_type_to_datatype(int mysql_type, int flags)
+mysql_type_to_datatype(const int mysql_type, const int flags)
 {
 	switch (mysql_type) {
 		case MYSQL_TYPE_BIT:

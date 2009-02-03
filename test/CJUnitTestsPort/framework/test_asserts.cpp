@@ -58,8 +58,8 @@ void assertEquals(int expected, int result
 
 bool isNaN(double smth)
 {
-  bool lessThanZero=(smth < 0.0);
-  bool moreOrEqualZero=(smth >= 0.0);
+  bool lessThanZero=    ( smth <  0.0 );
+  bool moreOrEqualZero= ( smth >= 0.0 );
 
   return !(lessThanZero || moreOrEqualZero);
 }
@@ -128,7 +128,7 @@ void fail(const char* reason, const char* file, int line)
   // if( verbose...
   // TestsListener
 
-  TestsListener::testHasFailed();
+  TestsListener::testHasFailed( reason );
 }
 
 }

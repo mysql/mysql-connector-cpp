@@ -52,6 +52,16 @@ void TestsListener::errorsLog( const String::value_type * msg )
 }
 
 
+void TestsListener::errorsLog(  const String::value_type * msg
+                              , const String::value_type * file
+                              , int line )
+{
+  if ( msg != NULL )
+  {
+    log << msg << " File: " << file << " Line: " << line << std::endl;
+  }
+}
+
 std::iostream & TestsListener::messagesLog()
 {
   return log;

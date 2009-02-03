@@ -113,7 +113,7 @@ MySQL_ConstructedResultSet::isBeforeFirstOrAfterLast() const
 
 /* {{{ MySQL_ConstructedResultSet::absolute() -I- */
 bool
-MySQL_ConstructedResultSet::absolute(int row)
+MySQL_ConstructedResultSet::absolute(const int row)
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::absolute");
 	checkValid();
@@ -249,7 +249,7 @@ MySQL_ConstructedResultSet::first()
 
 /* {{{ MySQL_ConstructedResultSet::getBlob() -I- */
 std::istream *
-MySQL_ConstructedResultSet::getBlob(unsigned int columnIndex) const
+MySQL_ConstructedResultSet::getBlob(const unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getBlob(int)");
 
@@ -274,7 +274,7 @@ MySQL_ConstructedResultSet::getBlob(const std::string& columnLabel) const
 
 /* {{{ MySQL_ConstructedResultSet::getBoolean() -I- */
 bool
-MySQL_ConstructedResultSet::getBoolean(unsigned int columnIndex) const
+MySQL_ConstructedResultSet::getBoolean(const unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getBoolean(int)");
 
@@ -543,7 +543,6 @@ MySQL_ConstructedResultSet::getString(unsigned int columnIndex) const
 	while (--columnIndex) {
 		f++;
 	}
-//	CPP_INFO_FMT("value=%d", f->length());
 	CPP_INFO_FMT("value=%*s", f->length(), f->c_str());
 	return *f;
 }
@@ -641,13 +640,11 @@ MySQL_ConstructedResultSet::isLast() const
 
 /* {{{ MySQL_ConstructedResultSet::isLast() -I- */
 bool
-MySQL_ConstructedResultSet::isNull(unsigned int columnIndex) const
+MySQL_ConstructedResultSet::isNull(const unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::isNull(int)");
 	checkValid();
-	/* internally zero based */
-	columnIndex--;
-	if (columnIndex >= num_fields) {
+	if (columnIndex > num_fields || columnIndex == 0) {
 		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::isNull: invalid value of 'columnIndex'");
 	}
 	return false;
@@ -763,7 +760,7 @@ MySQL_ConstructedResultSet::refreshRow()
 
 /* {{{ MySQL_ConstructedResultSet::relative() -I- */
 bool
-MySQL_ConstructedResultSet::relative(int rows)
+MySQL_ConstructedResultSet::relative(const int rows)
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::relative");
 	checkValid();

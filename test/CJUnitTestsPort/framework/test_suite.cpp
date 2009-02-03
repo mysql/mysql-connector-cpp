@@ -61,7 +61,7 @@ void TestSuite::runTest()
     catch ( std::exception & e )
     {
       TestsListener::bailSuite(
-        String( "An exception occurred while running while setUp before" )
+        String( "An exception occurred while running setUp before " )
         + (*it)->name() + ". Message: " + e.what() );
 
       //TODO: break here and thus really bail a tests suite.

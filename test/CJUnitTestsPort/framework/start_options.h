@@ -87,7 +87,7 @@ struct StartOptions
           {
             verbose=true;
           }
-        } else if (curParam < poLast)
+        } else if ( ( curParam + 1 ) < poLast)
         {
           curParam=static_cast<ParameterOrder> (curParam + 1);
           *_param[ curParam ]=String(param.c_str());
