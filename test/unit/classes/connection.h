@@ -37,7 +37,11 @@ class connection : public unit_fixture
 {
 private:
   typedef unit_fixture super;
+
 protected:
+  std::string exceptionIsOK(sql::SQLException &e, const std::string& sql_state, int errno);
+  std::string exceptionIsOK(sql::SQLException &e);
+
 public:
 
   EXAMPLE_TEST_FIXTURE(connection)
@@ -46,6 +50,7 @@ public:
     TEST_CASE(getNoWarningsOnNewLine);
     TEST_CASE(getNoWarningsAfterClear);
     TEST_CASE(checkClosed);
+    TEST_CASE(connectUsingMap);
   }
 
   /**
