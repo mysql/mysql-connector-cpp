@@ -177,6 +177,15 @@ void connection::connectUsingMap()
     created_objects.clear();
     con.reset(driver->connect(connection_properties));
 
+    connection_properties.erase(connection_properties.find("port"));
+    {
+      sql::ConnectPropertyVal tmp;
+      tmp.lval = 1
+      connection_properties[std::string("port")] = tmp;
+    }
+    created_objects.clear();
+    con.reset(driver->connect(connection_properties));
+
   } catch (sql::SQLException &e)
   {
     logErr(e.what());
