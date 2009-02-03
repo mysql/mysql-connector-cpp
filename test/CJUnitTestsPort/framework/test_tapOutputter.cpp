@@ -101,7 +101,6 @@ void TAP::Summary(unsigned testsRun
   std::cout << std::endl << "Failed " << testsFailed << "/" << testsRun
           << ", " << percentage << "% okay" << std::endl;
 
-  std::cout;
 }
 
 void TAP::SuiteSummary(const String & suiteName
