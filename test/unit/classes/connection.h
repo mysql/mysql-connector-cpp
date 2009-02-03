@@ -46,7 +46,6 @@ public:
     TEST_CASE(getNoWarningsOnNewLine);
     TEST_CASE(getNoWarningsAfterClear);
     TEST_CASE(checkClosed);
-
   }
 
   /**
@@ -78,6 +77,15 @@ public:
    * MySQL_Connection::checkClosed() method.
    */
   void checkClosed();
+
+  /*
+   * Use a map to establish a connection
+   *
+   * This one does not check if the connection settings passed do anything
+   * meaningful. It here to ensure that one can pass a certain setting. The
+   * impact of a setting shall be tested by other dedicated test methods.
+   */
+  void connectUsingMap();
 
 };
 

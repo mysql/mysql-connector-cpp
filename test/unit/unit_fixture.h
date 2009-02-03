@@ -42,6 +42,7 @@ class unit_fixture : public TestSuite
 private:
   typedef TestSuite super;
 
+protected:
   /**
    * List of SQL schema objects created during the test run
    *
@@ -57,8 +58,6 @@ private:
    * use getConnection() to obtain a connection object.
    */
   static Driver *driver;
-
-protected:
 
   /**
    * Copies command line connection parameter into protected slots

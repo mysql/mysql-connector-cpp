@@ -130,6 +130,61 @@ void connection::checkClosed()
 }
 
 
+void connection::connectUsingMap()
+{
+  logMsg("connection::connectUsingMap - using map to pass connection parameters");
+  try
+  {
+
+    std::map<std::string, sql::ConnectPropertyVal> connection_properties;
+
+    {
+      sql::ConnectPropertyVal tmp;
+      /* url comes from the unit testing framework */
+      tmp.str.val = url.c_str();
+      tmp.str.len = url.length();
+      connection_properties[std::string("hostName")] = tmp;
+    }
+
+    {
+      sql::ConnectPropertyVal tmp;
+      /* user comes from the unit testing framework */
+      tmp.str.val = user.c_str();
+      tmp.str.len = user.length();
+      connection_properties[std::string("userName")] = tmp;
+    }
+
+    {
+      sql::ConnectPropertyVal tmp;
+      tmp.str.val = passwd.c_str();
+      tmp.str.len = passwd.length();
+      connection_properties[std::string("password")] = tmp;
+    }
+
+    created_objects.clear();
+    con.reset(driver->connect(connection_properties));
+
+    // Ok, these have been the minimum connection properties for the connect
+    // We can now add optional ones.
+
+    /* port */
+    {
+      sql::ConnectPropertyVal tmp;
+      tmp.str.val = "wrong way to set port";
+      tmp.str.len = (size_t)1000;
+      connection_properties[std::string("port")] = tmp;
+    }
+    created_objects.clear();
+    con.reset(driver->connect(connection_properties));
+
+  } catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    FAIL(e.what());
+  }
+}
+
 
 } /* namespace connection */
 } /* namespace testsuite */
