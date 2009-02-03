@@ -20,6 +20,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <cppconn/warning.h>
+
 #include "connection.h"
 
 namespace testsuite
@@ -36,8 +38,8 @@ void connection::getClientInfo()
     std::string ret;
 
     ret=con->getClientInfo(client_info);
-    if (ret != "cpp")
-      FAIL("Expecting 'cppdriver' got '" + ret + "'.");
+    if (ret != "cppconn")
+      FAIL("Expecting 'cppconn' got '" + ret + "'.");
 
     if (!client_info.empty())
       FAIL("Expecting parameter to be unchanged but it seems to have been modified.");
@@ -49,6 +51,85 @@ void connection::getClientInfo()
     FAIL(e.what());
   }
 }
+
+void connection::getNoWarningsOnNewLine()
+{
+  logMsg("connection::getNoWarningsOnNewLine() - MySQL_Connection::getWarnings()");
+  try
+  {
+    const sql::SQLWarning* warning;
+
+    warning=con->getWarnings();
+    if (warning != NULL)
+      FAIL("There should be no warnings on the default connection");
+
+  } catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    FAIL(e.what());
+  }
+}
+
+void connection::getNoWarningsAfterClear()
+{
+  logMsg("connection::getNoWarningsAfterClear() - MySQL_Connection::getWarnings()");
+  try
+  {
+    const sql::SQLWarning* warning;
+
+    /* TODO: pointless test as there is no warning before running clearWarnings() */
+    con->clearWarnings();
+    warning=con->getWarnings();
+    if (warning != NULL)
+      FAIL("There should be no warnings on the default connection");
+
+  } catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    FAIL(e.what());
+  }
+}
+
+void connection::checkClosed()
+{
+  logMsg("connection::checkClosed - MySQL_Connection::close, isClosed() and internal check_closed()");
+  try
+  {
+    if (con->isClosed())
+      FAIL("Connection should not be reported as closed");
+
+    con->close();
+
+    if (!con->isClosed())
+      FAIL("Connection should be closed");
+
+    try
+    {
+      con->rollback();
+    } catch (sql::SQLException &e)
+    {
+      if (e.getErrorCode() != 1000)
+        FAIL("Exception should report error code 1000 got '" + e.getErrorCode() + "'");
+      if (e.getSQLState() != "HY000")
+        FAIL("Exception should report SQL state 'HY1000' got '" + e.getSQLState() + "'");
+
+      std::string what(e.what());
+      if (what.empty())
+        FAIL("Exception should have a reason");
+    }
+
+
+  } catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    FAIL(e.what());
+  }
+}
+
+
 
 } /* namespace connection */
 } /* namespace testsuite */

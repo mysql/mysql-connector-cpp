@@ -43,6 +43,9 @@ public:
   EXAMPLE_TEST_FIXTURE(connection)
   {
     TEST_CASE(getClientInfo);
+    TEST_CASE(getNoWarningsOnNewLine);
+    TEST_CASE(getNoWarningsAfterClear);
+    TEST_CASE(checkClosed);
 
   }
 
@@ -52,6 +55,29 @@ public:
    * Not part of the JDBC specs? Always returns "cppconn".
    */
   void getClientInfo();
+
+  /**
+   * Ensure that tests get a connection without any warnings
+   *
+   * Call the function on a clean line, it should return NULL.
+   */
+  void getNoWarningsOnNewLine();
+
+  /**
+   * Check if MySQL_Connection::clearWarnings() really cleans warnings reported by MySQL_Connection::getWarnings()
+   *
+   * TODO: THe test method should cause a warning to be able to verify that
+   * clearWarnings() really clears the warnings...
+   */
+  void getNoWarningsAfterClear();
+
+  /*
+   * Check if MySQL_Connection::rollback() recognizes a closed connection
+   *
+   * NOTE: This is a little hack to reach the internal
+   * MySQL_Connection::checkClosed() method.
+   */
+  void checkClosed();
 
 };
 
