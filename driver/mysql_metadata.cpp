@@ -43,12 +43,12 @@ namespace mysql
 
 struct TypeInfoDef
 {
-	const char *typeName;
+	const char * const typeName;
 	int dataType;
 	unsigned long long precision;
-	const char * literalPrefix;
-	const char * literalSuffix;
-	const char * createParams;
+	const char * const literalPrefix;
+	const char * const literalSuffix;
+	const char * const createParams;
 	short nullable;
 	bool caseSensitive;
 	short searchable;
@@ -63,7 +63,7 @@ struct TypeInfoDef
 	int numPrecRadix;
 };
 
-static TypeInfoDef mysqlc_types[] = {
+static const TypeInfoDef mysqlc_types[] = {
 
 	// ------------- MySQL-Type: BIT. DBC-Type: BIT -------------
 	{
@@ -3043,7 +3043,7 @@ MySQL_ConnectionMetaData::getTypeInfo()
 
 	int i = 0;
 	while (mysqlc_types[i].typeName) {
-		TypeInfoDef * curr = &mysqlc_types[i];
+		const TypeInfoDef * const curr = &mysqlc_types[i];
 
 		rs_data.push_back(curr->typeName);
 		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->dataType));
