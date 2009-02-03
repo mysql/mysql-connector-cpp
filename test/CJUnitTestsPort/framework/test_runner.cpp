@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "test_runner.h"
 #include "test_factory.h"
+#include "test_case.h"
+#include "test_listener.h"
 
 namespace testsuite
 {
@@ -33,14 +35,27 @@ TestsRunner::TestsRunner()
 
 bool TestsRunner::runTests()
 {
-  bool result= TestSuiteFactory::theInstance().runTests();
+  TestSuiteNames.empty();
+
+  TestSuiteFactory::theInstance().getTestsList( TestSuiteNames );
+
+  for ( constStrListCit cit= TestSuiteNames.begin(); cit != TestSuiteNames.end(); ++cit )
+  {
+    Test * ts= TestSuiteFactory::theInstance().createTest( *cit );
+
+    ts->runTest();
+  }
+
+  TestsListener::theInstance().summary();
+
+  //bool result= TestSuiteFactory::theInstance().runTests();
 
   if ( startOptions->verbose )
   {
     TestsListener::dumpLog();
   }
 
-  return result;
+  return TestsListener::allTestsPassed();
 }
 
 void TestsRunner::setStartOptions(StartOptions * options)

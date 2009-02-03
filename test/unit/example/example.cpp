@@ -111,7 +111,7 @@ void example_test_class::test_assert_equals()
   bool b=false;
   ASSERT_EQUALS(b, b);
 
-  float c= -1.23;
+  float c= -1.23f;
   ASSERT_EQUALS(c, c);
 
   double d=1.23;

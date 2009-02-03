@@ -25,53 +25,46 @@ INCLUDE_DIRECTORIES(${MYSQLCPPCONN_SOURCE_DIR}/cppconn)
 #INCLUDE(${CMAKE_SOURCE_DIR}/FindMySQL.cmake)
 
 IF(WIN32)
-	LINK_DIRECTORIES(${MYSQL_DIR}/lib/$(ConfigurationName))
-	LINK_DIRECTORIES(framework/$(ConfigurationName))
-	SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn libmysql test_framework)
+#	LINK_DIRECTORIES(${MYSQL_DIR}/lib/$(ConfigurationName))
 #	ADD_DEFINITIONS("-D_SECURE_SCL")
 	ADD_DEFINITIONS("-D_SCL_SECURE_NO_WARNINGS")
 	ADD_DEFINITIONS("-D_CRT_SECURE_NO_WARNINGS")
 
 ELSEIF(NOT WIN32)
-	SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn mysqlclient_r test_framework)
 ENDIF(WIN32)
 
 IF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)
 	SET(MY_GCOV_LINK_LIBRARIES gcov)
 ENDIF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)
 
-SET(jdbctests_sources
-	ccpptests.cpp
-	BaseTestFixture.cpp
-	common/stringutils.cpp
-	resources.cpp
-	regression/EscapeProcessorRegressionTest.cpp
-	compliance/ConnectionTest.cpp
-	compliance/DatabaseMetaDataTest.cpp
-	compliance/StatementTest.cpp
-	compliance/ResultSetMetadataTest.cpp
-	compliance/PreparedStatementTest.cpp
-#	simple/BlobTest.cpp
+SET(testframework_sources
+	test_suite.cpp
+	test_factory.cpp
+	test_listener.cpp
+	test_asserts.cpp
+	test_tapOutputter.cpp
+	test_runner.cpp
+	test_container.cpp
+	../common/stringutils.cpp
 	)
 
 # It's convinient for VS users to have headers as part of project
 IF(WIN32)
-	SET(jdbctests_sources
-    		${jdbctests_sources}
-		BaseTestFixture.h
-		common/stringutils.h
-		resources.h
-		regression/EscapeProcessorRegressionTest.h
-		compliance/ConnectionTest.h
-		compliance/DatabaseMetaDataTest.h
-		compliance/StatementTest.h
-		compliance/ResultSetMetadataTest.h
-		compliance/PreparedStatementTest.h
-#		simple/BlobTest.h
+	SET(testframework_sources
+    		${testframework_sources}
+		test_runner.h
+		test_suite.h
+		test_case.h
+		test_factory.h
+		test_listener.h
+		test_asserts.h
+		test_outputter.h
+		test_tapOutputter.h
+		test_container.h
+		../common/stringutils.h
 		)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(CJUnitTestsPort ${jdbctests_sources})
-TARGET_LINK_LIBRARIES(CJUnitTestsPort ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+ADD_LIBRARY(test_framework STATIC ${testframework_sources})
 
-MESSAGE(STATUS "Configuring C/J junit tests port")
+MESSAGE(STATUS "Configuring tests framework lib")

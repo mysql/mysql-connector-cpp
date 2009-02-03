@@ -1,4 +1,4 @@
-/* Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
+/* Copyright 2009 Sun Microsystems, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,47 +19,50 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _TESTSUITE_RESOURCES_H_
-#define _TESTSUITE_RESOURCES_H_
+#include "test_case.h"
+#include "test_container.h"
 
-#include "common/ccppTypes.h"
+#include "../common/ccppTypes.h"
+
 
 namespace testsuite
 {
-namespace resources
-{
-
-class CharsetMapping
-{
-public:
-
-  typedef std::map<String, unsigned int> Map;
-  typedef Map::const_iterator cit;
-
-private:
-
-  /* Hiding constructor */
-  CharsetMapping()
+  namespace Private
   {
-    Init();
+    TestContainer::StorableTest::StorableTest( Test & test2decorate )
+    {
+       test= &test2decorate;
+    }
+
+    void TestContainer::StorableTest::runTest()
+    {
+      test->runTest();
+    }
+
+
+    const String &  TestContainer::StorableTest::name() const
+    {
+      return test->name();
+    }
+
+
+    /*Test & TestContainer::StorableTest::operator * ()
+    {
+      return *test;
+    }
+
+
+    Test * TestContainer::StorableTest::operator ->()
+    {
+      return get();
+    }*/
+    
+
+
+    Test * TestContainer::StorableTest::get()
+    {
+      //assert(test);
+      return test;
+    }
   }
-
-  Map STATIC_CHARSET_TO_NUM_BYTES_MAP;
-
-  void Init();
-
-public:
-
-  static const CharsetMapping & Instance();
-
-  const Map & GetMap() const
-  {
-    return STATIC_CHARSET_TO_NUM_BYTES_MAP;
-  }
-};
-
-int LoadProperties(const String & fileName, Properties &props
-                   , const char * _possibleLocations[]=NULL);
 }
-}
-#endif

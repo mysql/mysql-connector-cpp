@@ -26,28 +26,12 @@
 SET(bug123_sources
 	../unit_fixture.cpp
 	../main.cpp
-	../../CJUnitTestsPort/framework/test_suite.cpp
-	../../CJUnitTestsPort/framework/test_factory.cpp
-	../../CJUnitTestsPort/framework/test_listener.cpp
-	../../CJUnitTestsPort/framework/test_asserts.cpp
-	../../CJUnitTestsPort/framework/test_tapOutputter.cpp
-	../../CJUnitTestsPort/framework/test_runner.cpp
-	../../../common/stringutils.cpp
 	bug123.cpp)
 
 IF(WIN32)
 	SET(bug123_sources
     		${bug123_sources}
-	unit_fixture.h
-	../../CJUnitTestsPort/framework/test_runner.h
-	../../CJUnitTestsPort/framework/test_suite.h
-	../../CJUnitTestsPort/framework/test_case.h
-	../../CJUnitTestsPort/framework/test_factory.h
-	../../CJUnitTestsPort/framework/test_listener.h
-	../../CJUnitTestsPort/framework/test_asserts.h
-	../../CJUnitTestsPort/framework/test_outputter.h
-	../../CJUnitTestsPort/framework/test_tapOutputter.h
-	../../../common/stringutils.h
+	../unit_fixture.h
 	bug123.h)
 ENDIF(WIN32)
 
@@ -65,28 +49,12 @@ TARGET_LINK_LIBRARIES(bug123 ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIE
 SET(bug456_sources
 	../unit_fixture.cpp
 	../main.cpp
-	../../CJUnitTestsPort/framework/test_suite.cpp
-	../../CJUnitTestsPort/framework/test_factory.cpp
-	../../CJUnitTestsPort/framework/test_listener.cpp
-	../../CJUnitTestsPort/framework/test_asserts.cpp
-	../../CJUnitTestsPort/framework/test_tapOutputter.cpp
-	../../CJUnitTestsPort/framework/test_runner.cpp
-	../../../common/stringutils.cpp
 	bug456.cpp)
 
 IF(WIN32)
 	SET(bug456_sources
     		${bug456_sources}
-	unit_fixture.h
-	../../CJUnitTestsPort/framework/test_runner.h
-	../../CJUnitTestsPort/framework/test_suite.h
-	../../CJUnitTestsPort/framework/test_case.h
-	../../CJUnitTestsPort/framework/test_factory.h
-	../../CJUnitTestsPort/framework/test_listener.h
-	../../CJUnitTestsPort/framework/test_asserts.h
-	../../CJUnitTestsPort/framework/test_outputter.h
-	../../CJUnitTestsPort/framework/test_tapOutputter.h
-	../../../common/stringutils.h
+	../unit_fixture.h
 	bug456.h)
 ENDIF(WIN32)
 

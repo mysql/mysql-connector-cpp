@@ -37,12 +37,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 namespace testsuite
 {
 
-class TestSuite : public Test
+  class TestSuite : public Test, virtual public Private::TestContainer
 {
 private:
 
-  std::vector<Test*> testCases;
-  String suiteName;
+  typedef std::vector<Private::TestContainer::StorableTest *> testsList;
+  typedef testsList::iterator testsList_it;
+
+  testsList testCases;
+  String    suiteName;
 
 public:
   TestSuite(const String& name="Unnamed Test Suite");

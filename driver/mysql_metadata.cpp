@@ -1474,9 +1474,9 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 		do {
 			std::string privToken;
 
-			while (privs[pos] == ' ') pos++; // Eat the whitespace
+			while (privs[pos] == ' ') ++pos; // Eat the whitespace
 
-			size_t idx = privs.find(",", pos);
+			idx = privs.find(",", pos);
 
 			if (idx != std::string::npos) {
 				privToken = privs.substr(pos, idx - pos);

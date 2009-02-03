@@ -30,37 +30,41 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 namespace testsuite
 {
-void fail(const char* reason, const char* file, int line);
+void fail               ( const char* reason, const char* file, int line );
 
-void assertTrue(const char * msg, bool expression
-                , const char* file, int line);
+void assertTrue         ( const char * msg, bool expression
+                        , const char* file, int line );
 
-void assertEquals(const char * expected, const char * result
-                  , const char* file, int line);
+void assertEquals       ( const char * expected, const char * result
+                        , const char* file, int line );
 
-void assertEquals(int expected, int result
-                  , const char* file, int line);
+void assertEquals       ( int expected, int result
+                        , const char* file, int line );
 
-void assertEquals(bool expected, bool result
-                  , const char* file, int line);
+void assertEquals       ( bool expected, bool result
+                        , const char* file, int line );
 
-void assertEquals(const double & expected, const double & result
-                  , const char* file, int line);
+void assertEquals       ( const double & expected, const double & result
+                        , const char* file, int line );
 
-void assertEquals(const float & expected, const float & result
-                  , const char * file, int line);
+void assertEquals       ( const float & expected, const float & result
+                        , const char * file, int line );
 
-void assertEquals(const long double & expected, const long double & result
-                  , const char * file, int line);
+void assertEquals       ( const long double & expected
+                        , const long double & result
+                        , const char * file, int line );
 
-void assertEqualsEpsilon(const double & expected, const double & result
-                         , const double & epsilon, const char * file, int line);
+void assertEqualsEpsilon( const double & expected, const double & result
+                        , const double & epsilon, const char * file, int line);
 
-void assertEquals(const String & expected, const String & result
-                  , const char* file, int line);
+void assertEquals       ( const String & expected, const String & result
+                        , const char* file, int line);
+
+void assertTrueMessage  ( bool exp, const String & msg, const char* file
+                        , int line );
 }
 
-// Macroses should be used inside testsuite namespace
+// Macros should be used inside testsuite namespace
 
 #define ASSERT_EQUALS( expected, result) \
 	assertEquals( expected, result, __FILE__, __LINE__ )
@@ -71,7 +75,7 @@ void assertEquals(const String & expected, const String & result
 #define ASSERT( exp ) assertTrue( #exp, exp, __FILE__, __LINE__)
 
 #define ASSERT_MESSAGE( exp, message ) \
-	assertTrueMessage(#exp, exp, message, __FILE__, __LINE__)
+	assertTrueMessage( exp, message, __FILE__, __LINE__ )
 
 #define FAIL( why ) fail( #why, __FILE__, __LINE__ )
 

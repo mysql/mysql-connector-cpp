@@ -1,4 +1,4 @@
-/* Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
+/* Copyright 2009 Sun Microsystems, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,49 +17,29 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
+*/
 
-#ifndef _TESTSUITE_RESOURCES_H_
-#define _TESTSUITE_RESOURCES_H_
+#ifndef __CCPP_NOCOPY_H
+#define __CCPP_NOCOPY_H
 
-#include "common/ccppTypes.h"
-
-namespace testsuite
-{
-namespace resources
+namespace policies
 {
 
-class CharsetMapping
+class nocopy
 {
-public:
-
-  typedef std::map<String, unsigned int> Map;
-  typedef Map::const_iterator cit;
-
 private:
+  nocopy (const nocopy & other){}
+  const nocopy & operator = (const nocopy & other);
 
-  /* Hiding constructor */
-  CharsetMapping()
-  {
-    Init();
-  }
+protected:
 
-  Map STATIC_CHARSET_TO_NUM_BYTES_MAP;
+  // don't need anybody could create(and delete) instance of class.
+  nocopy(){}
+  ~nocopy(){}
 
-  void Init();
-
-public:
-
-  static const CharsetMapping & Instance();
-
-  const Map & GetMap() const
-  {
-    return STATIC_CHARSET_TO_NUM_BYTES_MAP;
-  }
 };
 
-int LoadProperties(const String & fileName, Properties &props
-                   , const char * _possibleLocations[]=NULL);
-}
-}
+
+}  // namespace policies
+
 #endif
