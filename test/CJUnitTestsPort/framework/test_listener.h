@@ -54,6 +54,7 @@ public:
 
   std::iostream & errorsLog   ();
   void            errorsLog   ( const String::value_type * msg );
+  void            errorsLog   ( const String::value_type * msg, const String::value_type * file, int line );
 
   std::iostream & messagesLog ();
   void            messagesLog ( const String::value_type * msg );

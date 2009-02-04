@@ -129,6 +129,7 @@ sql::Connection * unit_fixture::getConnection()
     logMsg(String("Done: loaded ") + driver->getName());
   }
 
+  logMsg(String("... connect(") + url + ", " + user + ", " + passwd +")");
   return driver->connect(url, user, passwd);
 }
 
