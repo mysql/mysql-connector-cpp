@@ -51,6 +51,7 @@ typedef union _ConnectPropertyVal{
 		} str;
 		double dval;
 		long long lval;
+		bool bval;
 		void * pval;
 } ConnectPropertyVal;
 
