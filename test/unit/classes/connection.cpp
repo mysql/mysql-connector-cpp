@@ -261,6 +261,7 @@ void connection::connectUsingMap()
         }
       }
     }
+    connection_properties.erase("socket");
 
     /* 2) Schema */
     connection_properties.erase("schema");
@@ -315,11 +316,14 @@ void connection::connectUsingMap()
         {
           created_objects.clear();
           con.reset(driver->connect(connection_properties));
-          retschema=con->getSchema();
+          sql::Connection* mycon=driver->connect(connection_properties);
+          retschema=mycon->getSchema();
           if (retschema != myschema)
           {
             logErr(retschema);
             logErr(myschema);
+            logErr(mycon->getCatalog());
+            logErr(mycon->getSchema());
             FAIL("Connected to schema mysql but getSchema() reports different schema");
           }
         } catch (sql::SQLException &e)
@@ -331,7 +335,6 @@ void connection::connectUsingMap()
       {
         /* schema is set in the TCP/IP url */
         logMsg("... schema is set in the URL and property shall be ignored");
-
 
         /* no property set */
         try
@@ -372,6 +375,142 @@ void connection::connectUsingMap()
         }
       }
     }
+    connection_properties.erase("schema");
+
+    /* 3) ssl* */
+    connection_properties.erase("sslKey");
+    connection_properties.erase("sslCert");
+    connection_properties.erase("sslCA");
+    connection_properties.erase("sslCAPath");
+    connection_properties.erase("sslCipher");
+    {
+      logMsg("... setting bogus SSL properties");
+
+      std::string sql("ramdom bogus value");
+      sql::ConnectPropertyVal tmp;
+      tmp.str.val=sql.c_str();
+      tmp.str.len=sql.length();
+      connection_properties[std::string("sslKey")]=tmp;
+      connection_properties[std::string("sslCert")]=tmp;
+      connection_properties[std::string("sslCA")]=tmp;
+      connection_properties[std::string("sslCAPath")]=tmp;
+      connection_properties[std::string("sslCipher")]=tmp;
+      /*
+       mysql_ssl_set is silly:
+       This function always returns 0.
+       If SSL setup is incorrect, mysql_real_connect()
+       returns an error when you attempt to connect.
+       */
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+
+    }
+    connection_properties.erase("sslKey");
+    connection_properties.erase("sslCert");
+    connection_properties.erase("sslCA");
+    connection_properties.erase("sslCAPath");
+    connection_properties.erase("sslCipher");
+
+    /* 4) CLIENT_COMPRESS */
+    connection_properties.erase("CLIENT_COMPRESS");
+    {
+      logMsg("... testing CLIENT_COMPRESS");
+      sql::ConnectPropertyVal tmp;
+      tmp.lval=(long long) true;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+      tmp.lval=(long long) false;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+    }
+    connection_properties.erase("CLIENT_COMPRESS");
+
+    /* 5) CLIENT_FOUND_ROWS */
+    connection_properties.erase("CLIENT_FOUND_ROWS");
+    {
+      logMsg("... testing CLIENT_FOUND_ROWS");
+      sql::ConnectPropertyVal tmp;
+      tmp.lval=(long long) true;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+      tmp.lval=(long long) false;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+    }
+    connection_properties.erase("CLIENT_FOUND_ROWS");
+
+    /* 6) CLIENT_IGNORE_SIGPIPE */
+    connection_properties.erase("CLIENT_IGNORE_SIGPIPE");
+    {
+      logMsg("... testing CLIENT_IGNORE_SIGPIPE");
+      sql::ConnectPropertyVal tmp;
+      tmp.lval=(long long) true;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+      tmp.lval=(long long) false;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+    }
+    connection_properties.erase("CLIENT_IGNORE_SIGPIPE");
+
+    /* 7) CLIENT_IGNORE_SPACE */
+    connection_properties.erase("CLIENT_IGNORE_SPACE");
+    {
+      logMsg("... testing CLIENT_IGNORE_SPACE");
+      sql::ConnectPropertyVal tmp;
+      tmp.lval=(long long) true;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+      tmp.lval=(long long) false;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+    }
+    connection_properties.erase("CLIENT_IGNORE_SPACE");
 
   } catch (sql::SQLException &e)
   {
@@ -379,7 +518,6 @@ void connection::connectUsingMap()
     logErr("SQLState: " + e.getSQLState());
     FAIL(e.what());
   }
-
 
 }
 

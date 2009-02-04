@@ -46,10 +46,10 @@ public:
 
   EXAMPLE_TEST_FIXTURE(connection)
   {
-    TEST_CASE(getClientInfo);
-    TEST_CASE(getNoWarningsOnNewLine);
-    TEST_CASE(getNoWarningsAfterClear);
-    TEST_CASE(checkClosed);
+    //TEST_CASE(getClientInfo);
+    //TEST_CASE(getNoWarningsOnNewLine);
+    //TEST_CASE(getNoWarningsAfterClear);
+    //TEST_CASE(checkClosed);
     TEST_CASE(connectUsingMap);
   }
 
