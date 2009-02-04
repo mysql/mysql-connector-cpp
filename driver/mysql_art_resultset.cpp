@@ -327,7 +327,9 @@ MySQL_ArtResultSet::getDouble(unsigned int columnIndex) const
 		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getDouble: invalid value of 'columnIndex'");
 	}
 
-	return atof(((*current_record)[columnIndex - 1]).c_str());
+	printf("getDouble columnIndex=%d\n", columnIndex);
+	MySQL_ArtResultSet::row_t & tmp_row = *current_record;
+	return atof(tmp_row[columnIndex - 1].c_str());
 }
 /* }}} */
 
@@ -391,7 +393,9 @@ MySQL_ArtResultSet::getInt(unsigned int columnIndex) const
 		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getInt: invalid value of 'columnIndex'");
 	}
 
-	return atoi(((*current_record)[columnIndex - 1]).c_str());
+	printf("columnIndex=%d\n", columnIndex);
+	MySQL_ArtResultSet::row_t & tmp_row = *current_record;
+	return atoi(tmp_row[columnIndex - 1].c_str());
 }
 /* }}} */
 
@@ -422,7 +426,9 @@ MySQL_ArtResultSet::getLong(unsigned int columnIndex) const
 		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getLong: invalid value of 'columnIndex'");
 	}
 
-	return atoll(((*current_record)[columnIndex - 1]).c_str());
+	printf("getLong columnIndex=%d\n", columnIndex);
+	MySQL_ArtResultSet::row_t & tmp_row = *current_record;
+	return atoll(tmp_row[columnIndex - 1].c_str());
 }
 /* }}} */
 
@@ -509,7 +515,9 @@ MySQL_ArtResultSet::getString(unsigned int columnIndex) const
 		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getString: invalid value of 'columnIndex'");
 	}
 
-	return ((*current_record)[columnIndex - 1]);
+	printf("getString columnIndex=%d\n", columnIndex);
+	MySQL_ArtResultSet::row_t & tmp_row = *current_record;
+	return (tmp_row[columnIndex - 1]);
 }
 /* }}} */
 
@@ -677,10 +685,7 @@ MySQL_ArtResultSet::next()
 		first();
 		ret = true;
 	} else if (row_position > 0 && row_position < num_rows) {
-		int i = num_fields;
-		while (i--) {
-			current_record++;
-		}
+		current_record++;
 		row_position++;
 		ret = true;
 	}
