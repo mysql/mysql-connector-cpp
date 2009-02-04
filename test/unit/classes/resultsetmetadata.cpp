@@ -31,21 +31,12 @@ namespace testsuite
 namespace classes
 {
 
-void resultsetmetadata::getClientInfo()
+void resultsetmetadata::getCatalogName()
 {
-  logMsg("resultsetmetadata::getClientInfo() - MySQL_resultsetmetadata::getClientInfo()");
+  logMsg("resultsetmetadata::getCatalogName() - MySQL_ResultSetMetaData::getCatalogName");
   try
   {
-    std::string client_info;
-    std::string ret;
-
-    ret=con->getClientInfo(client_info);
-    if (ret != "cppconn")
-      FAIL("Expecting 'cppconn' got '" + ret + "'.");
-
-    if (!client_info.empty())
-      FAIL("Expecting parameter to be unchanged but it seems to have been modified.");
-
+    
   } catch (sql::SQLException &e)
   {
     logErr(e.what());

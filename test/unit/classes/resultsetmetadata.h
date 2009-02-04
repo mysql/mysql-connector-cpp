@@ -39,22 +39,20 @@ private:
   typedef unit_fixture super;
 
 protected:
-  std::string exceptionIsOK(sql::SQLException &e, const std::string& sql_state, int errno);
-  std::string exceptionIsOK(sql::SQLException &e);
-
 public:
 
   EXAMPLE_TEST_FIXTURE(resultsetmetadata)
   {
-    TEST_CASE(getClientInfo);    
+    TEST_CASE(getCatalogName);
   }
 
   /**
-   * Test const std::string&  MySQL_resultsetmetadata::getClientInfo(const std::string&)
+   * Test for ResultSetMetaDate::getCatalogName()
    *
-   * Not part of the JDBC specs? Always returns "cppconn".
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
    */
-  void getClientInfo();
+  void getCatalogName();
 
 };
 
