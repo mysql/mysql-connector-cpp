@@ -159,7 +159,7 @@ void connection::connectUsingMap()
     created_objects.clear();
     con.reset(driver->connect(connection_properties));
 
-    /*     
+    /*
     The property map now contains the minimum required entries and it works.
     Lets play with so-to-say optional entries.
      */
@@ -247,9 +247,9 @@ void connection::connectUsingMap()
 
       } else
 #endif
-        if (url.compare(0, sizeof ("tcp://") - 1, "tcp://") != 0)
+        if (url.compare(0, sizeof ("tcp://") - 1, "tcp://") == 0)
       {
-        // Unix socket connection
+        // TCP/IP connection, socket shall be ignored
         socket="I hope this is invalid";
         try
         {
@@ -258,6 +258,117 @@ void connection::connectUsingMap()
         } catch (sql::SQLException &e)
         {
           FAIL("Socket setting should be ignored because its a TCP/IP connection");
+        }
+      }
+    }
+
+    /* 2) Schema */
+    connection_properties.erase("schema");
+    {
+      std::string schema("");
+      std::string myschema("mysql");
+      std::string retschema("");
+
+      if (url.compare(0, sizeof ("tcp://") - 1, "tcp://") == 0)
+      {
+        // TCP/IP connection - schema cannot be set when using unix socket syntax
+        size_t schema_pos;
+        std::string host(url.substr(sizeof ("tcp://") - 1, std::string::npos));
+        schema_pos=host.find("/");
+        if (schema_pos != std::string::npos)
+        {
+          schema_pos++;
+          schema=host.substr(schema_pos, host.size() - schema_pos);
+        }
+      }
+
+      if (schema.empty())
+      {
+        logMsg("... schema not set through the URL");
+
+        sql::ConnectPropertyVal tmp;
+        tmp.str.val=schema.c_str();
+        tmp.str.len=schema.length();
+        connection_properties[std::string("schema")]=tmp;
+
+        try
+        {
+          created_objects.clear();
+          con.reset(driver->connect(connection_properties));
+          schema=con->getSchema();
+          if (!schema.empty())
+            FAIL("Empty schama specified but certain schema selected upon connect");
+        } catch (sql::SQLException &e)
+        {
+          FAIL("Connect should have worked although schema property set to empty string");
+        }
+
+
+        logMsg("... trying to connect to mysql schema, may or may not work");
+
+        connection_properties.erase("schema");
+        tmp.str.val=myschema.c_str();
+        tmp.str.len=myschema.length();
+        connection_properties[std::string("schema")]=tmp;
+
+        try
+        {
+          created_objects.clear();
+          con.reset(driver->connect(connection_properties));
+          retschema=con->getSchema();
+          if (retschema != myschema)
+          {
+            logErr(retschema);
+            logErr(myschema);
+            FAIL("Connected to schema mysql but getSchema() reports different schema");
+          }
+        } catch (sql::SQLException &e)
+        {
+          logMsg("... cannot connect to mysql schema but that is OK, might be insufficient grants");
+        }
+
+      } else
+      {
+        /* schema is set in the TCP/IP url */
+        logMsg("... schema is set in the URL and property shall be ignored");
+
+
+        /* no property set */
+        try
+        {
+          created_objects.clear();
+          con.reset(driver->connect(connection_properties));
+          retschema=con->getSchema();
+          if (retschema != schema)
+          {
+            logErr(retschema);
+            logErr(schema);
+            FAIL("Connected to a certain schema but getSchema() reports different schema");
+          }
+        } catch (sql::SQLException &e)
+        {
+          FAIL("Connect should not fail");
+        }
+
+        /* property set */
+        sql::ConnectPropertyVal tmp;
+        tmp.str.val=myschema.c_str();
+        tmp.str.len=myschema.length();
+        connection_properties[std::string("schema")]=tmp;
+        try
+        {
+          created_objects.clear();
+          con.reset(driver->connect(connection_properties));
+          retschema=con->getSchema();
+          if (retschema != schema)
+          {
+            logErr(retschema);
+            logErr(schema);
+            FAIL("Connected to a certain schema but getSchema() reports different schema");
+          }
+        } catch (sql::SQLException &e)
+        {
+          FAIL("Connect should not fail");
         }
       }
     }
