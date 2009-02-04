@@ -286,7 +286,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 				schema_pos++; // skip the slash
 				schema = host.substr(schema_pos, host.size() - schema_pos);
 				schema_used = true;
-				host = host.substr(0, schema_pos);
+				host = host.substr(0, schema_pos - 1);
 			}
 			port_pos = host.find_last_of(':', std::string::npos);
 			if (port_pos != std::string::npos) {
@@ -322,9 +322,10 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 			/* According to the docs, always returns 0 */
 			mysql_ssl_set(intern->mysql, sslKey, sslCert, sslCA, sslCAPath, sslCipher);
 		}
-		CPP_INFO_FMT("host=%s", hostName.c_str());
+		CPP_INFO_FMT("hostName=%s", hostName.c_str());
+                CPP_INFO_FMT("host=%s", host.c_str());
 		CPP_INFO_FMT("user=%s", userName.c_str());
-		CPP_INFO_FMT("por=%d", port);
+		CPP_INFO_FMT("port=%d", port);
 		CPP_INFO_FMT("schema=%s", schema.c_str());
 		CPP_INFO_FMT("socket=%s", socket.c_str());
 		if (!mysql_real_connect(intern->mysql,
