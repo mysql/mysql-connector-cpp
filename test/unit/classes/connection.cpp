@@ -262,6 +262,7 @@ void connection::connectUsingMap()
         }
       }
     }
+    connection_properties.erase("socket");
 
     /* 2) Schema */
     connection_properties.erase("schema");
@@ -316,11 +317,14 @@ void connection::connectUsingMap()
         {
           created_objects.clear();
           con.reset(driver->connect(connection_properties));
-          retschema=con->getSchema();
+          sql::Connection* mycon=driver->connect(connection_properties);
+          retschema=mycon->getSchema();
           if (retschema != myschema)
           {
             logErr(retschema);
             logErr(myschema);
+            logErr(mycon->getCatalog());
+            logErr(mycon->getSchema());
             FAIL("Connected to schema mysql but getSchema() reports different schema");
           }
         } catch (sql::SQLException &e)
@@ -332,7 +336,6 @@ void connection::connectUsingMap()
       {
         /* schema is set in the TCP/IP url */
         logMsg("... schema is set in the URL and property shall be ignored");
-
 
         /* no property set */
         try
@@ -373,6 +376,393 @@ void connection::connectUsingMap()
         }
       }
     }
+    connection_properties.erase("schema");
+
+    /* 3) ssl* */
+    connection_properties.erase("sslKey");
+    connection_properties.erase("sslCert");
+    connection_properties.erase("sslCA");
+    connection_properties.erase("sslCAPath");
+    connection_properties.erase("sslCipher");
+    {
+      logMsg("... setting bogus SSL properties");
+
+      std::string sql("ramdom bogus value");
+      sql::ConnectPropertyVal tmp;
+      tmp.str.val=sql.c_str();
+      tmp.str.len=sql.length();
+      connection_properties[std::string("sslKey")]=tmp;
+      connection_properties[std::string("sslCert")]=tmp;
+      connection_properties[std::string("sslCA")]=tmp;
+      connection_properties[std::string("sslCAPath")]=tmp;
+      connection_properties[std::string("sslCipher")]=tmp;
+      /*
+       mysql_ssl_set is silly:
+       This function always returns 0.
+       If SSL setup is incorrect, mysql_real_connect()
+       returns an error when you attempt to connect.
+       */
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+
+    }
+    connection_properties.erase("sslKey");
+    connection_properties.erase("sslCert");
+    connection_properties.erase("sslCA");
+    connection_properties.erase("sslCAPath");
+    connection_properties.erase("sslCipher");
+
+    /* All the CLIENT* are pointless. There is no way (yet) to verify the settings */
+    /* 4) CLIENT_COMPRESS */
+    connection_properties.erase("CLIENT_COMPRESS");
+    {
+      logMsg("... testing CLIENT_COMPRESS");
+      sql::ConnectPropertyVal tmp;
+      tmp.lval=(long long) true;
+      connection_properties[std::string("CLIENT_COMPRESS")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+      tmp.lval=(long long) false;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+    }
+    connection_properties.erase("CLIENT_COMPRESS");
+
+    /* 5) CLIENT_FOUND_ROWS */
+    connection_properties.erase("CLIENT_FOUND_ROWS");
+    {
+      logMsg("... testing CLIENT_FOUND_ROWS");
+      sql::ConnectPropertyVal tmp;
+      tmp.lval=(long long) true;
+      connection_properties[std::string("CLIENT_FOUND_ROWS")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+      tmp.lval=(long long) false;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+    }
+    connection_properties.erase("CLIENT_FOUND_ROWS");
+
+    /* 6) CLIENT_IGNORE_SIGPIPE */
+    connection_properties.erase("CLIENT_IGNORE_SIGPIPE");
+    {
+      logMsg("... testing CLIENT_IGNORE_SIGPIPE");
+      sql::ConnectPropertyVal tmp;
+      tmp.lval=(long long) true;
+      connection_properties[std::string("CLIENT_IGNORE_SIGPIPE")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+      tmp.lval=(long long) false;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+    }
+    connection_properties.erase("CLIENT_IGNORE_SIGPIPE");
+
+    /* 7) CLIENT_IGNORE_SPACE */
+    connection_properties.erase("CLIENT_IGNORE_SPACE");
+    {
+      logMsg("... testing CLIENT_IGNORE_SPACE");
+      sql::ConnectPropertyVal tmp;
+      connection_properties[std::string("CLIENT_IGNORE_SPACE")]=tmp;
+      tmp.lval=(long long) true;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+      tmp.lval=(long long) false;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+    }
+    connection_properties.erase("CLIENT_IGNORE_SPACE");
+
+    /* 8) CLIENT_INTERACTIVE */
+    connection_properties.erase("CLIENT_INTERACTIVE");
+    {
+      logMsg("... testing CLIENT_INTERACTIVE");
+      sql::ConnectPropertyVal tmp;
+      connection_properties[std::string("CLIENT_INTERACTIVE")]=tmp;
+      tmp.lval=(long long) true;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+      tmp.lval=(long long) false;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+    }
+    connection_properties.erase("CLIENT_INTERACTIVE");
+
+    /* 9) CLIENT_LOCAL_FILES */
+    /* TODO - add proper test */
+    connection_properties.erase("CLIENT_LOCAL_FILES");
+    {
+      logMsg("... testing CLIENT_LOCAL_FILES");
+      sql::ConnectPropertyVal tmp;
+      connection_properties[std::string("CLIENT_LOCAL_FILES")]=tmp;
+      tmp.lval=(long long) true;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+      tmp.lval=(long long) false;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+    }
+    connection_properties.erase("CLIENT_LOCAL_FILES");
+
+    /* 10) CLIENT_MULTI_RESULTS */
+    /* TODO - add proper test */
+    connection_properties.erase("CLIENT_MULTI_RESULTS");
+    {
+      logMsg("... testing CLIENT_MULTI_RESULTS");
+      sql::ConnectPropertyVal tmp;
+      tmp.lval=(long long) true;
+      connection_properties[std::string("CLIENT_MULTI_RESULTS")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+      tmp.lval=(long long) false;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+    }
+    connection_properties.erase("CLIENT_MULTI_RESULTS");
+
+    /* 11) CLIENT_MULTI_STATEMENTS */
+    /* TODO: add proper test */
+    connection_properties.erase("CLIENT_MULTI_STATEMENTS");
+    {
+      logMsg("... testing CLIENT_MULTI_STATEMENTS");
+      sql::ConnectPropertyVal tmp;
+      tmp.lval=(long long) true;
+      connection_properties[std::string("CLIENT_MULTI_STATEMENTS")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+      tmp.lval=(long long) false;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+    }
+    connection_properties.erase("CLIENT_MULTI_STATEMENTS");
+
+    /* 12) CLIENT_NO_SCHEMA */
+    connection_properties.erase("CLIENT_NO_SCHEMA");
+    {
+      logMsg("... testing CLIENT_NO_SCHEMA");
+      sql::ConnectPropertyVal tmp;
+      tmp.lval=(long long) true;
+      connection_properties[std::string("CLIENT_NO_SCHEMA")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+      tmp.lval=(long long) false;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+      }
+    }
+    connection_properties.erase("CLIENT_NO_SCHEMA");
+
+    /* 13) MYSQL_OPT_CONNECT_TIMEOUT */
+    connection_properties.erase("MYSQL_OPT_CONNECT_TIMEOUT");
+    {
+      logMsg("... testing MYSQL_OPT_CONNECT_TIMEOUT");
+      sql::ConnectPropertyVal tmp;
+      /* C-API does not care about the actual value */
+      tmp.lval=(long long) - 1;
+      connection_properties[std::string("MYSQL_OPT_CONNECT_TIMEOUT")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+        FAIL(e.what());
+      }
+    }
+    connection_properties.erase("MYSQL_OPT_CONNECT_TIMEOUT");
+
+    /* 14) MYSQL_OPT_READ_TIMEOUT */
+    connection_properties.erase("MYSQL_OPT_READ_TIMEOUT");
+    {
+      logMsg("... testing MYSQL_OPT_READ_TIMEOUT");
+      sql::ConnectPropertyVal tmp;
+      /* C-API does not care about the actual value */
+      tmp.lval=(long long) - 1;
+      connection_properties[std::string("MYSQL_OPT_READ_TIMEOUT")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+        FAIL(e.what());
+      }
+    }
+    connection_properties.erase("MYSQL_OPT_READ_TIMEOUT");
+
+    /* 15) MYSQL_OPT_WRITE_TIMEOUT */
+    connection_properties.erase("MYSQL_OPT_WRITE_TIMEOUT");
+    {
+      logMsg("... testing MYSQL_OPT_WRITE_TIMEOUT");
+      sql::ConnectPropertyVal tmp;
+      /* C-API does not care about the actual value */
+      tmp.lval=(long long) - 1;
+      connection_properties[std::string("MYSQL_OPT_WRITE_TIMEOUT")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+        FAIL(e.what());
+      }
+    }
+    connection_properties.erase("MYSQL_OPT_WRITE_TIMEOUT");
+
+    /* 16) MYSQL_OPT_RECONNECT */
+    connection_properties.erase("MYSQL_OPT_RECONNECT");
+    {
+      logMsg("... testing MYSQL_OPT_RECONNECT");
+      sql::ConnectPropertyVal tmp;
+      /* C-API does not care about the actual value */
+      tmp.lval=(long long) - 1;
+      connection_properties[std::string("MYSQL_OPT_RECONNECT")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+        FAIL(e.what());
+      }
+    }
+    connection_properties.erase("MYSQL_OPT_RECONNECT");
+
+    /* 17) MYSQL_OPT_SET_CHARSET_NAME */
+    connection_properties.erase("MYSQL_OPT_SET_CHARSET_NAME");
+    {
+      logMsg("... testing MYSQL_OPT_SET_CHARSET_NAME");
+      std::string charset("utf8");
+      sql::ConnectPropertyVal tmp;
+      /* C-API does not care about the actual value */
+      tmp.str.val = charset.c_str();
+      tmp.str.len = charset.length();
+      connection_properties[std::string("MYSQL_OPT_SET_CHARSET_NAME")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+        FAIL(e.what());
+      }
+    }
+    connection_properties.erase("MYSQL_OPT_SET_CHARSET_NAME");
+
+    /* 18) MYSQL_REPORT_DATA_TRUNCATION */
+    connection_properties.erase("MYSQL_REPORT_DATA_TRUNCATION");
+    {
+      logMsg("... testing MYSQL_REPORT_DATA_TRUNCATION");
+      std::string charset("1");
+      sql::ConnectPropertyVal tmp;
+      /* C-API does not care about the actual value */
+      tmp.str.val = charset.c_str();
+      tmp.str.len = charset.length();
+      connection_properties[std::string("MYSQL_REPORT_DATA_TRUNCATION")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      } catch (sql::SQLException &e)
+      {
+        FAIL(e.what());
+      }
+    }
+    connection_properties.erase("MYSQL_REPORT_DATA_TRUNCATION");
 
   } catch (sql::SQLException &e)
   {
@@ -380,7 +770,6 @@ void connection::connectUsingMap()
     logErr("SQLState: " + e.getSQLState());
     FAIL(e.what());
   }
-
 
 }
 
