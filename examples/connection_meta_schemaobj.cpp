@@ -51,8 +51,6 @@ int main(int argc, const char **argv)
 	const string pass(argc >= 4 ? argv[3] : EXAMPLE_PASS);
 	const string database(argc >= 5 ? argv[4] : EXAMPLE_DB);
 
-	sql::ResultSetMetaData * res_meta, * res_meta_tables;
-
 	static std::list<std::string> table_types;
 	table_types.push_back("TABLE");
 
@@ -127,7 +125,7 @@ int main(int argc, const char **argv)
 		/* "" = empty string requests all types of objects */
 		std::auto_ptr< sql::ResultSet > res(con_meta->getSchemaObjects(con->getCatalog(), con->getSchema(), ""));
 		row = 1;
-		res_meta = res->getMetaData();
+		std::auto_ptr<sql::ResultSetMetaData> res_meta(res->getMetaData());
 		while (res->next()) {
 			if (row++ > 2)
 				break;
@@ -159,7 +157,7 @@ int main(int argc, const char **argv)
 			}
 
 			ddl = res->getString("DDL");
-			cout << "#\t DDL = " << setw(30);
+			cout << "#\t DDL = " << setw(40);
 			cout << ddl.substr(0, ddl.find_first_of("\n", 1) - 1) << "..." << endl;
 			cout << "#\t DDL is empty: " << ddl.empty() << endl;
 			if (res->getString(5) != res->getString("DDL")) {
@@ -214,7 +212,7 @@ int main(int argc, const char **argv)
 		cout << "#\t\t isWritable() = " << res_meta->isWritable(5) << endl;
 
 		std::auto_ptr< sql::ResultSet > res_tables(con_meta->getTables(con->getCatalog(), database, "t%", table_types));
-		res_meta_tables = res_tables->getMetaData();
+		std::auto_ptr<sql::ResultSetMetaData> res_meta_tables(res_tables->getMetaData());
 
 		cout << "#" << endl;
 		cout << "# Tables with names like 't%':" << endl;;
@@ -230,7 +228,7 @@ int main(int argc, const char **argv)
 		}
 		cout << "#" << endl;
 
-  	res_tables->first();
+	  	res_tables->first();
 		std::auto_ptr< sql::ResultSet > res_columns(con_meta->getColumns(con->getCatalog(), database, "test1", "%"));
 
 		cout << "#" << "Columns in the table 'test1'..." << endl;
