@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "resultsetmetadata.h"
 #include <sstream>
 #include <stdlib.h>
+#include <cppconn/resultset.h>
 
 namespace testsuite
 {
@@ -36,7 +37,10 @@ void resultsetmetadata::getCatalogName()
   logMsg("resultsetmetadata::getCatalogName() - MySQL_ResultSetMetaData::getCatalogName");
   try
   {
-    
+    stmt.reset(con->createStatement());
+    res.reset(stmt->executeQuery("SELECT 'Hello world!'"));
+    ResultSetMetaData meta(res->getMetaData());
+
   } catch (sql::SQLException &e)
   {
     logErr(e.what());

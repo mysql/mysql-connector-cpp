@@ -76,6 +76,8 @@ void example_test_class::test_hello_world2()
      typedef std::auto_ptr<sql::Connection> Connection
      typedef std::auto_ptr<sql::Statement> Statement;
      typedef std::auto_ptr<sql::ResultSet> ResultSet;
+     typedef std::auto_ptr<sql::ResultSetMetaData> ResultSetMetaData;
+     typedef std::auto_ptr<sql::DatabaseMetaData> DatabaseMetaData;
 
      Do yourself a favour and use auto_ptr in tests!
      */
