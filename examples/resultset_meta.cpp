@@ -61,7 +61,7 @@ int main(int argc, const char **argv)
 
 	cout << boolalpha;
 	cout << "1..1" << endl;
-	cout << "# Connector/C++ conect basic usage example.." << endl;
+	cout << "# Connector/C++ resultset metadata..." << endl;
 
 	try {
 		/* Using the Driver to create a conection */

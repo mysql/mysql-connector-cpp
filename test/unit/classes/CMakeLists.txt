@@ -26,13 +26,15 @@
 SET(classes_sources
 	../unit_fixture.cpp
 	../main.cpp
-	connection.cpp)
+	connection.cpp
+	resultsetmetadata.cpp)
 
 IF(WIN32)
 	SET(classes_sources
     		${classes_sources}
 	../unit_fixture.h
-	connection.h)
+	connection.h
+	resultsetmetadata.h)
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(classes ${classes_sources})

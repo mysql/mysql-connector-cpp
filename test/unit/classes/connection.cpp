@@ -729,8 +729,8 @@ void connection::connectUsingMap()
       std::string charset("utf8");
       sql::ConnectPropertyVal tmp;
       /* C-API does not care about the actual value */
-      tmp.str.val = charset.c_str();
-      tmp.str.len = charset.length();
+      tmp.str.val=charset.c_str();
+      tmp.str.len=charset.length();
       connection_properties[std::string("MYSQL_OPT_SET_CHARSET_NAME")]=tmp;
       try
       {
@@ -750,8 +750,8 @@ void connection::connectUsingMap()
       std::string charset("1");
       sql::ConnectPropertyVal tmp;
       /* C-API does not care about the actual value */
-      tmp.str.val = charset.c_str();
-      tmp.str.len = charset.length();
+      tmp.str.val=charset.c_str();
+      tmp.str.len=charset.length();
       connection_properties[std::string("MYSQL_REPORT_DATA_TRUNCATION")]=tmp;
       try
       {
@@ -771,42 +771,6 @@ void connection::connectUsingMap()
     FAIL(e.what());
   }
 
-}
-
-std::string connection::exceptionIsOK(sql::SQLException & e)
-{
-  return exceptionIsOK(e, "HY000", 0);
-}
-
-std::string connection::exceptionIsOK(sql::SQLException &e, const std::string& sql_state, int errno)
-{
-
-  std::stringstream reason;
-  reason.str("");
-
-  std::string what(e.what());
-  if (what.empty())
-  {
-    reason << "Exception must not have an empty message.";
-    logMsg(reason.str());
-    return reason.str();
-  }
-
-  if (e.getErrorCode() != errno)
-  {
-    reason << "Expecting error code '" << errno << "' got '" << e.getErrorCode() << "'";
-    logMsg(reason.str());
-    return reason.str();
-  }
-
-  if (e.getSQLState() != sql_state)
-  {
-    reason << "Expecting sqlstate '" << sql_state << "' got '" << e.getSQLState() << "'";
-    logMsg(reason.str());
-    return reason.str();
-  }
-
-  return reason.str();
 }
 
 } /* namespace connection */

@@ -22,7 +22,7 @@
 
 #include "unit_fixture.h"
 
-        namespace testsuite
+namespace testsuite
 {
 
 Driver * unit_fixture::driver=NULL;
@@ -129,7 +129,7 @@ sql::Connection * unit_fixture::getConnection()
     logMsg(String("Done: loaded ") + driver->getName());
   }
 
-  logMsg(String("... connect(") + url + ", " + user + ", " + passwd +")");
+  logMsg(String("... connect(") + url + ", " + user + ", " + passwd + ")");
   return driver->connect(url, user, passwd);
 }
 
@@ -146,6 +146,42 @@ void unit_fixture::logErr(const String message)
 void unit_fixture::logDebug(const String message)
 {
   logMsg(message);
+}
+
+std::string unit_fixture::exceptionIsOK(sql::SQLException & e)
+{
+  return exceptionIsOK(e, "HY000", 0);
+}
+
+std::string unit_fixture::exceptionIsOK(sql::SQLException &e, const std::string& sql_state, int errno)
+{
+
+  std::stringstream reason;
+  reason.str("");
+
+  std::string what(e.what());
+  if (what.empty())
+  {
+    reason << "Exception must not have an empty message.";
+    logMsg(reason.str());
+    return reason.str();
+  }
+
+  if (e.getErrorCode() != errno)
+  {
+    reason << "Expecting error code '" << errno << "' got '" << e.getErrorCode() << "'";
+    logMsg(reason.str());
+    return reason.str();
+  }
+
+  if (e.getSQLState() != sql_state)
+  {
+    reason << "Expecting sqlstate '" << sql_state << "' got '" << e.getSQLState() << "'";
+    logMsg(reason.str());
+    return reason.str();
+  }
+
+  return reason.str();
 }
 
 
