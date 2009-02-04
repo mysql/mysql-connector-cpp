@@ -260,10 +260,6 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 			if (it->second.bval && (flags & CLIENT_NO_SCHEMA)) {
 				flags |= CLIENT_NO_SCHEMA;
 			}
-		} else if (!it->first.compare("CLIENT_COMPRESS")) {
-			if (it->second.bval && (flags & CLIENT_COMPRESS)) {
-				flags |= CLIENT_COMPRESS;
-			}
 		}
 	}
 
