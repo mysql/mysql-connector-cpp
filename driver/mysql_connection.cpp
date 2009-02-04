@@ -225,43 +225,43 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 			sslCipher = it->second.str.val;
 			ssl_used = true;
 		} else if (!it->first.compare("CLIENT_COMPRESS")) {
-			if (it->second.lval && (flags & CLIENT_COMPRESS)) {
+			if (it->second.bval && (flags & CLIENT_COMPRESS)) {
 				flags |= CLIENT_COMPRESS;
 			}
 		} else if (!it->first.compare("CLIENT_FOUND_ROWS")) {
-			if (it->second.lval && (flags & CLIENT_FOUND_ROWS)) {
+			if (it->second.bval && (flags & CLIENT_FOUND_ROWS)) {
 				flags |= CLIENT_FOUND_ROWS;
 			}
 		} else if (!it->first.compare("CLIENT_IGNORE_SIGPIPE")) {
-			if (it->second.lval && (flags & CLIENT_IGNORE_SIGPIPE)) {
+			if (it->second.bval && (flags & CLIENT_IGNORE_SIGPIPE)) {
 				flags |= CLIENT_IGNORE_SIGPIPE;
 			}
 		} else if (!it->first.compare("CLIENT_IGNORE_SPACE")) {
-			if (it->second.lval && (flags & CLIENT_IGNORE_SPACE)) {
+			if (it->second.bval && (flags & CLIENT_IGNORE_SPACE)) {
 				flags |= CLIENT_IGNORE_SPACE;
 			}
 		} else if (!it->first.compare("CLIENT_INTERACTIVE")) {
-			if (it->second.lval && (flags & CLIENT_INTERACTIVE)) {
+			if (it->second.bval && (flags & CLIENT_INTERACTIVE)) {
 				flags |= CLIENT_INTERACTIVE;
 			}
 		} else if (!it->first.compare("CLIENT_LOCAL_FILES")) {
-			if (it->second.lval && (flags & CLIENT_LOCAL_FILES)) {
+			if (it->second.bval && (flags & CLIENT_LOCAL_FILES)) {
 				flags |= CLIENT_LOCAL_FILES;
 			}
 		} else if (!it->first.compare("CLIENT_MULTI_RESULTS")) {
-			if (it->second.lval && (flags & CLIENT_MULTI_RESULTS)) {
+			if (it->second.bval && (flags & CLIENT_MULTI_RESULTS)) {
 				flags |= CLIENT_MULTI_RESULTS;
 			}
 		} else if (!it->first.compare("CLIENT_MULTI_STATEMENTS")) {
-			if (it->second.lval && (flags & CLIENT_MULTI_STATEMENTS)) {
+			if (it->second.bval && (flags & CLIENT_MULTI_STATEMENTS)) {
 				flags |= CLIENT_MULTI_STATEMENTS;
 			}
 		} else if (!it->first.compare("CLIENT_NO_SCHEMA")) {
-			if (it->second.lval && (flags & CLIENT_NO_SCHEMA)) {
+			if (it->second.bval && (flags & CLIENT_NO_SCHEMA)) {
 				flags |= CLIENT_NO_SCHEMA;
 			}
 		} else if (!it->first.compare("CLIENT_COMPRESS")) {
-			if (it->second.lval && (flags & CLIENT_COMPRESS)) {
+			if (it->second.bval && (flags & CLIENT_COMPRESS)) {
 				flags |= CLIENT_COMPRESS;
 			}
 		}
@@ -313,11 +313,11 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 			} else if (!it_tmp->first.compare("OPT_WRITE_TIMEOUT")) {
 				mysql_options(intern->mysql, MYSQL_OPT_WRITE_TIMEOUT, (const char *) &it_tmp->second.lval);
 			} else if (!it_tmp->first.compare("OPT_RECONNECT")) {
-				mysql_options(intern->mysql, MYSQL_OPT_RECONNECT, (const char *) &it_tmp->second.lval);
+				mysql_options(intern->mysql, MYSQL_OPT_RECONNECT, (const char *) &it_tmp->second.bval);
 			} else if (!it_tmp->first.compare("OPT_CHARSET_NAME")) {
 				mysql_options(intern->mysql, MYSQL_SET_CHARSET_NAME, (const char *) &it_tmp->second.str.val);
 			} else if (!it_tmp->first.compare("OPT_REPORT_DATA_TRUNCATION")) {
-				mysql_options(intern->mysql, MYSQL_REPORT_DATA_TRUNCATION, (const char *) &it_tmp->second.str.val);
+				mysql_options(intern->mysql, MYSQL_REPORT_DATA_TRUNCATION, (const char *) &it_tmp->second.bval);
 			}
 		}
 		if (ssl_used) {
