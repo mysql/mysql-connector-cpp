@@ -1068,7 +1068,8 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 	int schema_field_index = native_rs->findColumn("SCHEMA");
 	int name_field_index = native_rs->findColumn("NAME");
 
-	std::list<std::string> rs_data;
+	
+	std::list<std::string> rs_data_row;
 
 	std::map<std::string, std::string> trigger_name_map;
 	std::map<std::string, std::string> trigger_ddl_map;
@@ -1150,20 +1151,20 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 		std::string name(native_rs->getString(name_field_index));
 
 		if ((obj_type.compare("PROCEDURE") == 0) || (obj_type.compare("FUNCTION") == 0)) {
-			rs_data.push_back("routine");
+			rs_data_row.push_back("routine");
 		} else {
-			rs_data.push_back(obj_type);
+			rs_data_row.push_back(obj_type);
 		}
-		rs_data.push_back(native_rs->getString(catalog_field_index));
-		rs_data.push_back(schema);
+		rs_data_row.push_back(native_rs->getString(catalog_field_index));
+		rs_data_row.push_back(schema);
 
 
 		if (obj_type.compare("trigger") == 0) {
 			std::string key;
 			key.append("`").append(schema).append("`.`").append(name).append("`");
-			rs_data.push_back(trigger_name_map[key]);
+			rs_data_row.push_back(trigger_name_map[key]);
 		} else {
-			rs_data.push_back(name);
+			rs_data_row.push_back(name);
 		}
 
 		std::string ddl_query;
@@ -1240,9 +1241,9 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 
 				ddl = sql_rs->getString(colIdx);
 			}
-			rs_data.push_back(ddl);
+			rs_data_row.push_back(ddl);
 		} catch (sql::SQLException) {
-			rs_data.push_back("");
+			rs_data_row.push_back("");
 		}
 	}
 
@@ -1253,7 +1254,7 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 	rs_field_data.push_back(std::string("NAME"));
 	rs_field_data.push_back(std::string("DDL"));
 
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -1263,16 +1264,16 @@ sql::ResultSet *
 MySQL_ConnectionMetaData::getSchemaObjectTypes()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getSchemaObjectTypes");
-	std::list<std::string> rs_data;
-	rs_data.push_back("table");
-	rs_data.push_back("view");
-	rs_data.push_back("routine");
-	rs_data.push_back("trigger");
+	std::list<std::string> rs_data_row;
+	rs_data_row.push_back("table");
+	rs_data_row.push_back("view");
+	rs_data_row.push_back("routine");
+	rs_data_row.push_back("trigger");
 
 	std::list<std::string> rs_field_data;
 	rs_field_data.push_back("OBJECT_TYPE");
 
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -1343,7 +1344,7 @@ MySQL_ConnectionMetaData::getAttributes(const std::string& /*catalog*/, const st
 										const std::string& /*typeNamePattern*/, const std::string& /*attributeNamePattern*/)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getAttributes");
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 
 	rs_field_data.push_back("TABLE_CAT");
@@ -1366,7 +1367,7 @@ MySQL_ConnectionMetaData::getAttributes(const std::string& /*catalog*/, const st
 	rs_field_data.push_back("SCOPE_SCHEMA");
 	rs_field_data.push_back("SOURCE_DATA_TYPE");
 
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -1378,7 +1379,7 @@ MySQL_ConnectionMetaData::getBestRowIdentifier(const std::string& catalog, const
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getBestRowIdentifier");
 	char buf1[12], buf2[12];
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 	std::auto_ptr<sql::ResultSet> rs(getPrimaryKeys(catalog, schema, table));
 	buf1[sizeof(buf1) - 1] = '\0';
@@ -1390,14 +1391,14 @@ MySQL_ConnectionMetaData::getBestRowIdentifier(const std::string& catalog, const
 
 		std::auto_ptr<sql::ResultSet> rsCols(getColumns(catalog, schema, table, columnNamePattern));
 		if (rsCols->next()) {
-			rs_data.push_back(buf1); 					// SCOPE
-			rs_data.push_back(rs->getString(4));		// COLUMN_NAME
-			rs_data.push_back(rsCols->getString(5));	// DATA_TYPE
-			rs_data.push_back(rsCols->getString(6));	// TYPE_NAME
-			rs_data.push_back(rsCols->getString(7));	// COLUMN_SIZE
-			rs_data.push_back(rsCols->getString(8));	// BUFFER_LENGTH
-			rs_data.push_back(rsCols->getString(9));	// DECIMAL_DIGITS
-			rs_data.push_back(buf2); // PSEUDO_COLUMN
+			rs_data_row.push_back(buf1); 					// SCOPE
+			rs_data_row.push_back(rs->getString(4));		// COLUMN_NAME
+			rs_data_row.push_back(rsCols->getString(5));	// DATA_TYPE
+			rs_data_row.push_back(rsCols->getString(6));	// TYPE_NAME
+			rs_data_row.push_back(rsCols->getString(7));	// COLUMN_SIZE
+			rs_data_row.push_back(rsCols->getString(8));	// BUFFER_LENGTH
+			rs_data_row.push_back(rsCols->getString(9));	// DECIMAL_DIGITS
+			rs_data_row.push_back(buf2); // PSEUDO_COLUMN
 		}
 	}
 
@@ -1410,7 +1411,7 @@ MySQL_ConnectionMetaData::getBestRowIdentifier(const std::string& catalog, const
 	rs_field_data.push_back("DECIMAL_DIGITS");
 	rs_field_data.push_back("PSEUDO_COLUMN");
 
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -1419,13 +1420,13 @@ MySQL_ConnectionMetaData::getBestRowIdentifier(const std::string& catalog, const
 sql::ResultSet *
 MySQL_ConnectionMetaData::getCatalogs()
 {
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 
 	rs_field_data.push_back("TABLE_CAT");
 	rs_field_data.push_back("TABLE_SCHEM");
 
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -1458,7 +1459,7 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 											  const std::string& table, const std::string& columnNamePattern)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getColumnPrivileges");
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 	size_t idx;
 
@@ -1484,14 +1485,14 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 			} else {
 				privToken = privs.substr(pos, privs.length() - pos);
 			}
-			rs_data.push_back("");					// TABLE_CAT
-			rs_data.push_back(schema);				// TABLE_SCHEM
-			rs_data.push_back(table);				// TABLE_NAME
-			rs_data.push_back(res->getString(1));	// COLUMN_NAME
-			rs_data.push_back("");					// GRANTOR
-			rs_data.push_back(getUserName());		// GRANTEE
-			rs_data.push_back(privToken);			// PRIVILEGE
-			rs_data.push_back("");					// IS_GRANTABLE
+			rs_data_row.push_back("");					// TABLE_CAT
+			rs_data_row.push_back(schema);				// TABLE_SCHEM
+			rs_data_row.push_back(table);				// TABLE_NAME
+			rs_data_row.push_back(res->getString(1));	// COLUMN_NAME
+			rs_data_row.push_back("");					// GRANTOR
+			rs_data_row.push_back(getUserName());		// GRANTEE
+			rs_data_row.push_back(privToken);			// PRIVILEGE
+			rs_data_row.push_back("");					// IS_GRANTABLE
 		} while (idx != std::string::npos);
 	}
 
@@ -1504,7 +1505,7 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 	rs_field_data.push_back("PRIVILEGE");
 	rs_field_data.push_back("IS_GRANTABLE");
 
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -1515,7 +1516,7 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 									 const std::string& tableNamePattern, const std::string& columnNamePattern)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getColumns");
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 
 
@@ -1568,11 +1569,11 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 			std::list<std::string>::const_iterator it;
 			for (it = types.begin(); it != types.end(); ++it) {
 				if (*it == rs->getString(4)) {
-					rs_data.push_back(rs->getString(1));
-					rs_data.push_back(rs->getString(2));
-					rs_data.push_back(rs->getString(3));
-					rs_data.push_back(rs->getString(4));
-					rs_data.push_back(rs->getString(5));
+					rs_data_row.push_back(rs->getString(1));
+					rs_data_row.push_back(rs->getString(2));
+					rs_data_row.push_back(rs->getString(3));
+					rs_data_row.push_back(rs->getString(4));
+					rs_data_row.push_back(rs->getString(5));
 					break;
 				}
 			}
@@ -1618,29 +1619,29 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 						  number of rows/columns in the result sets which doesn't correspond.
 						*/
 						if (rs3_meta->getColumnName(i) == rs4->getString(1)) {
-							rs_data.push_back("");					// TABLE_CAT
-							rs_data.push_back(current_schema);		// TABLE_SCHEM
-							rs_data.push_back(current_table);		// TABLE_NAME
-							rs_data.push_back(rs4->getString(1));	// COLUMN_NAME
-							rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getColumnType(i))); 		// DATA_TYPE
-							rs_data.push_back(rs3_meta->getColumnTypeName(i));											// TYPE_NAME
-							rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getColumnDisplaySize(i)));	// COLUMN_SIZE
-							rs_data.push_back("");					// BUFFER_LENGTH
-							rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getScale(i))); // DECIMAL_DIGITS
-							rs_data.push_back("10");							// NUM_PREC_RADIX
-							rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->isNullable(i))); // Is_nullable
-							rs_data.push_back(rs4->getString(9));		// REMARKS
-							rs_data.push_back(rs4->getString(6));		// COLUMN_DEFAULT
-							rs_data.push_back("");						// SQL_DATA_TYPE - unused
-							rs_data.push_back("");						// SQL_DATETIME_SUB - unused
-							rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getColumnDisplaySize(i))); // CHAR_OCTET_LENGTH
-							rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) i)); // ORDINAL_POSITION
-							rs_data.push_back(rs3_meta->isNullable(i)? "YES":"NO");		// IS_NULLABLE
+							rs_data_row.push_back("");					// TABLE_CAT
+							rs_data_row.push_back(current_schema);		// TABLE_SCHEM
+							rs_data_row.push_back(current_table);		// TABLE_NAME
+							rs_data_row.push_back(rs4->getString(1));	// COLUMN_NAME
+							rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getColumnType(i))); 		// DATA_TYPE
+							rs_data_row.push_back(rs3_meta->getColumnTypeName(i));											// TYPE_NAME
+							rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getColumnDisplaySize(i)));	// COLUMN_SIZE
+							rs_data_row.push_back("");					// BUFFER_LENGTH
+							rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getScale(i))); // DECIMAL_DIGITS
+							rs_data_row.push_back("10");							// NUM_PREC_RADIX
+							rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->isNullable(i))); // Is_nullable
+							rs_data_row.push_back(rs4->getString(9));		// REMARKS
+							rs_data_row.push_back(rs4->getString(6));		// COLUMN_DEFAULT
+							rs_data_row.push_back("");						// SQL_DATA_TYPE - unused
+							rs_data_row.push_back("");						// SQL_DATETIME_SUB - unused
+							rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getColumnDisplaySize(i))); // CHAR_OCTET_LENGTH
+							rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) i)); // ORDINAL_POSITION
+							rs_data_row.push_back(rs3_meta->isNullable(i)? "YES":"NO");		// IS_NULLABLE
 #if 0
-							rs_data.push_back("");	// SCOPE_CATALOG - unused
-							rs_data.push_back("");	// SCOPE_SCHEMA - unused
-							rs_data.push_back("");	// SCOPE_TABLE - unused
-							rs_data.push_back("");	// IS_AUTOINCREMENT - unused
+							rs_data_row.push_back("");	// SCOPE_CATALOG - unused
+							rs_data_row.push_back("");	// SCOPE_SCHEMA - unused
+							rs_data_row.push_back("");	// SCOPE_TABLE - unused
+							rs_data_row.push_back("");	// IS_AUTOINCREMENT - unused
 #endif
 							/* don't iterate any more, we have found our column */
 							break;
@@ -1651,7 +1652,7 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 		}
 
 	}
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -1965,7 +1966,7 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getImportedKeys");
 	CPP_INFO_FMT("catalog=%s schema=%s table=%s", catalog.c_str(), schema.c_str(), table.c_str());
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 
 	char buf[16];
@@ -1991,25 +1992,25 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next()) {
-			rs_data.push_back("");					// PKTABLE_CAT
-			rs_data.push_back(rs->getString(1));	// PKTABLE_SCHEMA
-			rs_data.push_back(rs->getString(2));	// PKTABLE_NAME
-			rs_data.push_back(rs->getString(3));	// PKCOLUMN_NAME
-			rs_data.push_back("");					// FKTABLE_CAT
-			rs_data.push_back(rs->getString(4));	// FKTABLE_SCHEMA
-			rs_data.push_back(rs->getString(5));	// FKTABLE_NAME
-			rs_data.push_back(rs->getString(6));	// FKCOLUMN_NAME
-			rs_data.push_back(rs->getString(7));	// KEY_SEQ
+			rs_data_row.push_back("");					// PKTABLE_CAT
+			rs_data_row.push_back(rs->getString(1));	// PKTABLE_SCHEMA
+			rs_data_row.push_back(rs->getString(2));	// PKTABLE_NAME
+			rs_data_row.push_back(rs->getString(3));	// PKCOLUMN_NAME
+			rs_data_row.push_back("");					// FKTABLE_CAT
+			rs_data_row.push_back(rs->getString(4));	// FKTABLE_SCHEMA
+			rs_data_row.push_back(rs->getString(5));	// FKTABLE_NAME
+			rs_data_row.push_back(rs->getString(6));	// FKCOLUMN_NAME
+			rs_data_row.push_back(rs->getString(7));	// KEY_SEQ
 
 			int lFlag = !rs->getString(8).compare("ON UPDATE CASCADE")? importedKeyCascade: importedKeyNoAction;
-			rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) lFlag));	// UPDATE_RULE
+			rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) lFlag));	// UPDATE_RULE
 
 			lFlag = !rs->getString(8).compare("ON DELETE CASCADE")? importedKeyCascade: importedKeyNoAction;
-			rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) lFlag));	// DELETE_RULE
+			rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) lFlag));	// DELETE_RULE
 
-			rs_data.push_back(rs->getString(9));	// FK_NAME
-			rs_data.push_back("");					// PK_NAME
-			rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) importedKeyNotDeferrable));	// DEFERRABILITY
+			rs_data_row.push_back(rs->getString(9));	// FK_NAME
+			rs_data_row.push_back("");					// PK_NAME
+			rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) importedKeyNotDeferrable));	// DEFERRABILITY
 		}
 	} else {
 		std::string query("SHOW CREATE TABLE `");
@@ -2037,32 +2038,32 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 				if (!parseImportedKeys(create_query, cr_pos, constraint_name, keywords_names, referenced_fields, update_delete_action)) {
 					continue;
 				}
-				rs_data.push_back("");					// PK_TABLE_CAT
-				rs_data.push_back(schema);				// PKTABLE_SCHEM
-				rs_data.push_back(table);				// PKTABLE_NAME
+				rs_data_row.push_back("");					// PK_TABLE_CAT
+				rs_data_row.push_back(schema);				// PKTABLE_SCHEM
+				rs_data_row.push_back(table);				// PKTABLE_NAME
 
 				// ToDo: Extracting just the first column
-				rs_data.push_back(referenced_fields["FOREIGN KEY"].front());	// PK_COLUMN_NAME
+				rs_data_row.push_back(referenced_fields["FOREIGN KEY"].front());	// PK_COLUMN_NAME
 
-				rs_data.push_back("");					// FKTABLE_CAT
+				rs_data_row.push_back("");					// FKTABLE_CAT
 
 				// ToDo: Is this correct? referencing the same schema. Maybe fully referenced name can appear, need to parse it too
-				rs_data.push_back(schema);							// FKTABLE_SCHEM
-				rs_data.push_back(keywords_names["REFERENCES"]);	// FKTABLE_NAME
+				rs_data_row.push_back(schema);							// FKTABLE_SCHEM
+				rs_data_row.push_back(keywords_names["REFERENCES"]);	// FKTABLE_NAME
 
 				// ToDo: Extracting just the first column
-				rs_data.push_back(referenced_fields["REFERENCES"].front());				// FKCOLUMN_NAME
-				rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) kSequence++));	// KEY_SEQ
+				rs_data_row.push_back(referenced_fields["REFERENCES"].front());				// FKCOLUMN_NAME
+				rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) kSequence++));	// KEY_SEQ
 
 				
-				rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) update_delete_action["ON UPDATE"]));	// UPDATE_RULE
+				rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) update_delete_action["ON UPDATE"]));	// UPDATE_RULE
 
-				rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) update_delete_action["ON DELETE"]));	// DELETE_RULE
+				rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) update_delete_action["ON DELETE"]));	// DELETE_RULE
 
-				rs_data.push_back(constraint_name);		// FK_NAME
+				rs_data_row.push_back(constraint_name);		// FK_NAME
 				// ToDo: Should it really be PRIMARY?
-				rs_data.push_back("");					// PK_NAME
-				rs_data.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) importedKeyNotDeferrable));	// DEFERRABILITY
+				rs_data_row.push_back("");					// PK_NAME
+				rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) importedKeyNotDeferrable));	// DEFERRABILITY
 			} while (1);
 		}
 	}
@@ -2081,7 +2082,7 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 	rs_field_data.push_back("PK_NAME");
 	rs_field_data.push_back("DEFERRABILITY");
 
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -2092,7 +2093,7 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 										const std::string& table, bool /* unique */, bool /* approximate */)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getIndexInfo");
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 	static char buf[5];
 	static bool buf_init = false;
@@ -2115,19 +2116,19 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
 
 		while (rs->next()) {
-			rs_data.push_back(rs->getString(1));	// TABLE_CAT
-			rs_data.push_back(rs->getString(2));	// TABLE_SCHEM
-			rs_data.push_back(rs->getString(3));	// TABLE_NAME
-			rs_data.push_back(rs->getString(4));	// NON_UNIQUE
-			rs_data.push_back("");					// INDEX_QUALIFIER
-			rs_data.push_back(rs->getString(5));	// INDEX_NAME
-			rs_data.push_back(buf);					// TYPE
-			rs_data.push_back(rs->getString(6));	// ORDINAL_POSITION
-			rs_data.push_back(rs->getString(7));	// COLUMN_NAME
-			rs_data.push_back("ASC");				// ASC_OR_DESC
-			rs_data.push_back(rs->getString(8));	// CARDINALITY
-			rs_data.push_back("0");					// PAGES
-			rs_data.push_back("0");					// FILTER_CONDITION
+			rs_data_row.push_back(rs->getString(1));	// TABLE_CAT
+			rs_data_row.push_back(rs->getString(2));	// TABLE_SCHEM
+			rs_data_row.push_back(rs->getString(3));	// TABLE_NAME
+			rs_data_row.push_back(rs->getString(4));	// NON_UNIQUE
+			rs_data_row.push_back("");					// INDEX_QUALIFIER
+			rs_data_row.push_back(rs->getString(5));	// INDEX_NAME
+			rs_data_row.push_back(buf);					// TYPE
+			rs_data_row.push_back(rs->getString(6));	// ORDINAL_POSITION
+			rs_data_row.push_back(rs->getString(7));	// COLUMN_NAME
+			rs_data_row.push_back("ASC");				// ASC_OR_DESC
+			rs_data_row.push_back(rs->getString(8));	// CARDINALITY
+			rs_data_row.push_back("0");					// PAGES
+			rs_data_row.push_back("0");					// FILTER_CONDITION
 		}
 	} else {
 		std::string query("SHOW KEYS FROM `");
@@ -2138,19 +2139,19 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
 
 		while (rs->next()) {
-			rs_data.push_back("");					// TABLE_CAT
-			rs_data.push_back(schema);				// TABLE_SCHEM
-			rs_data.push_back(rs->getString(1));	// TABLE_NAME
-			rs_data.push_back(rs->getString(2));	// NON_UNIQUE
-			rs_data.push_back("");					// INDEX_QUALIFIER
-			rs_data.push_back(rs->getString(3));	// INDEX_NAME
-			rs_data.push_back(buf);					// TYPE
-			rs_data.push_back(rs->getString(4));	// ORDINAL_POSITION
-			rs_data.push_back(rs->getString(5));	// COLUMN_NAME
-			rs_data.push_back("ASC");				// ASC_OR_DESC
-			rs_data.push_back(rs->getString(6));	// CARDINALITY
-			rs_data.push_back("0");					// PAGES
-			rs_data.push_back("");					// FILTER_CONDITION
+			rs_data_row.push_back("");					// TABLE_CAT
+			rs_data_row.push_back(schema);				// TABLE_SCHEM
+			rs_data_row.push_back(rs->getString(1));	// TABLE_NAME
+			rs_data_row.push_back(rs->getString(2));	// NON_UNIQUE
+			rs_data_row.push_back("");					// INDEX_QUALIFIER
+			rs_data_row.push_back(rs->getString(3));	// INDEX_NAME
+			rs_data_row.push_back(buf);					// TYPE
+			rs_data_row.push_back(rs->getString(4));	// ORDINAL_POSITION
+			rs_data_row.push_back(rs->getString(5));	// COLUMN_NAME
+			rs_data_row.push_back("ASC");				// ASC_OR_DESC
+			rs_data_row.push_back(rs->getString(6));	// CARDINALITY
+			rs_data_row.push_back("0");					// PAGES
+			rs_data_row.push_back("");					// FILTER_CONDITION
 		}
 	}
 
@@ -2168,7 +2169,7 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 	rs_field_data.push_back("PAGES");
 	rs_field_data.push_back("FILTER_CONDITION");
 
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -2412,7 +2413,7 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getPrimaryKeys");
 	CPP_INFO_FMT("catalog=%s schema=%s table=%s", catalog.c_str(), schema.c_str(), table.c_str());
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 
 	/* Bind Problems with 49999, check later why */
@@ -2429,12 +2430,12 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next()) {
-			rs_data.push_back("");					// TABLE_CAT
-			rs_data.push_back(rs->getString(1));	// TABLE_SCHEM
-			rs_data.push_back(rs->getString(2));	// TABLE_NAME
-			rs_data.push_back(rs->getString(3));	// COLUMN_NAME
-			rs_data.push_back(rs->getString(4));	// KEY_SEQ
-			rs_data.push_back(rs->getString(5));	// PK_NAME
+			rs_data_row.push_back("");					// TABLE_CAT
+			rs_data_row.push_back(rs->getString(1));	// TABLE_SCHEM
+			rs_data_row.push_back(rs->getString(2));	// TABLE_NAME
+			rs_data_row.push_back(rs->getString(3));	// COLUMN_NAME
+			rs_data_row.push_back(rs->getString(4));	// KEY_SEQ
+			rs_data_row.push_back(rs->getString(5));	// PK_NAME
 		}
 	} else {
 		std::string query("SHOW KEYS FROM `");
@@ -2445,12 +2446,12 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 
 		while (rs->next()) {
 			if (!rs->getString(3).compare("PRIMARY")) {
-				rs_data.push_back("");					// TABLE_CAT
-				rs_data.push_back(schema);				// TABLE_SCHEM
-				rs_data.push_back(rs->getString(1));	// TABLE_NAME
-				rs_data.push_back(rs->getString(5));	// COLUMN_NAME
-				rs_data.push_back(rs->getString(4));	// KEY_SEQ
-				rs_data.push_back("PRIMARY");			// PK_NAME
+				rs_data_row.push_back("");					// TABLE_CAT
+				rs_data_row.push_back(schema);				// TABLE_SCHEM
+				rs_data_row.push_back(rs->getString(1));	// TABLE_NAME
+				rs_data_row.push_back(rs->getString(5));	// COLUMN_NAME
+				rs_data_row.push_back(rs->getString(4));	// KEY_SEQ
+				rs_data_row.push_back("PRIMARY");			// PK_NAME
 			}
 		}
 	}
@@ -2462,7 +2463,7 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 	rs_field_data.push_back("KEY_SEQ");
 	rs_field_data.push_back("PK_NAME");
 
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -2473,7 +2474,7 @@ MySQL_ConnectionMetaData::getProcedureColumns(const std::string& /* catalog */, 
 											  const std::string& /*procedureNamePattern*/, const std::string& /*columnNamePattern*/)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getProcedureColumns");
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 
 	rs_field_data.push_back("PROCEDURE_CAT");
@@ -2490,7 +2491,7 @@ MySQL_ConnectionMetaData::getProcedureColumns(const std::string& /* catalog */, 
 	rs_field_data.push_back("NULLABLE");
 	rs_field_data.push_back("REMARKS");
 
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -2500,7 +2501,7 @@ sql::ResultSet *
 MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const std::string& schemaPattern, const std::string& procedureNamePattern)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getProcedures");
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 
 	if (server_version > 49999) {
@@ -2515,14 +2516,14 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 
 		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
 		while (rs->next()) {
-			rs_data.push_back(rs->getString(1));	// PROCEDURE_CAT
-			rs_data.push_back(rs->getString(2));	// PROCEDURE_SCHEM
-			rs_data.push_back(rs->getString(3));	// PROCEDURE_NAME
-			rs_data.push_back("");					// reserved1
-			rs_data.push_back("");					// reserved2
-			rs_data.push_back("");					// reserved3
-			rs_data.push_back(rs->getString(4));	// REMARKS
-			rs_data.push_back("0");					// PROCEDURE_TYPE
+			rs_data_row.push_back(rs->getString(1));	// PROCEDURE_CAT
+			rs_data_row.push_back(rs->getString(2));	// PROCEDURE_SCHEM
+			rs_data_row.push_back(rs->getString(3));	// PROCEDURE_NAME
+			rs_data_row.push_back("");					// reserved1
+			rs_data_row.push_back("");					// reserved2
+			rs_data_row.push_back("");					// reserved3
+			rs_data_row.push_back(rs->getString(4));	// REMARKS
+			rs_data_row.push_back("0");					// PROCEDURE_TYPE
 		}
 	}
 
@@ -2534,7 +2535,7 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 	rs_field_data.push_back("reserved3");
 	rs_field_data.push_back("REMARKS");
 	rs_field_data.push_back("PROCEDURE_TYPE");
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -2565,7 +2566,7 @@ sql::ResultSet *
 MySQL_ConnectionMetaData::getSchemas()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getSchemas");
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 
 	std::auto_ptr<sql::Statement> stmt(connection->createStatement());
@@ -2574,18 +2575,18 @@ MySQL_ConnectionMetaData::getSchemas()
 												   "SHOW DATABASES"));
 
 	while (rs->next()) {
-		rs_data.push_back(rs->getString(1));
+		rs_data_row.push_back(rs->getString(1));
 		if (server_version > 49999) {
-			rs_data.push_back(rs->getString(2));		
+			rs_data_row.push_back(rs->getString(2));		
 		} else {
-			rs_data.push_back("");
+			rs_data_row.push_back("");
 		}
 	}
 
 	rs_field_data.push_back("TABLE_SCHEM");
 	rs_field_data.push_back("TABLE_CATALOG");
 
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -2698,7 +2699,7 @@ sql::ResultSet *
 MySQL_ConnectionMetaData::getSuperTables(const std::string& /*catalog*/, const std::string& /*schemaPattern*/, const std::string& /*tableNamePattern*/)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getSuperTables");
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 
 	rs_field_data.push_back("TYPE_CATALOG");
@@ -2706,7 +2707,7 @@ MySQL_ConnectionMetaData::getSuperTables(const std::string& /*catalog*/, const s
 	rs_field_data.push_back("TYPE_NAME");
 	rs_field_data.push_back("SUPERTABLE_NAME");
 
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -2716,7 +2717,7 @@ sql::ResultSet *
 MySQL_ConnectionMetaData::getSuperTypes(const std::string& /*catalog*/, const std::string& /*schemaPattern*/, const std::string& /*typeNamePattern*/)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getSuperTypes");
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 
 	rs_field_data.push_back("TYPE_CATALOG");
@@ -2726,7 +2727,7 @@ MySQL_ConnectionMetaData::getSuperTypes(const std::string& /*catalog*/, const st
 	rs_field_data.push_back("SUPERTYPE_SCHEMA");
 	rs_field_data.push_back("SUPERTYPE_NAME");
 
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -2749,7 +2750,7 @@ sql::ResultSet *
 MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const std::string& schemaPattern, const std::string& tableNamePattern)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getTablePrivileges");
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 
 	std::auto_ptr<sql::Statement> stmt(connection->createStatement());
@@ -2844,13 +2845,13 @@ MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const s
 					}
 					// ToDo: Why?
 					if (privToken.find_first_of('/') == std::string::npos) {
-						rs_data.push_back("");				// TABLE_CAT
-						rs_data.push_back(schema);			// TABLE_SCHEM
-						rs_data.push_back(table);			// TABLE_NAME
-						rs_data.push_back("");				// GRANTOR
-						rs_data.push_back(getUserName());	// GRANTEE
-						rs_data.push_back(privToken);		// PRIVILEGE
-						rs_data.push_back("");				// IS_GRANTABLE - ToDo maybe here WITH GRANT OPTION??
+						rs_data_row.push_back("");				// TABLE_CAT
+						rs_data_row.push_back(schema);			// TABLE_SCHEM
+						rs_data_row.push_back(table);			// TABLE_NAME
+						rs_data_row.push_back("");				// GRANTOR
+						rs_data_row.push_back(getUserName());	// GRANTEE
+						rs_data_row.push_back(privToken);		// PRIVILEGE
+						rs_data_row.push_back("");				// IS_GRANTABLE - ToDo maybe here WITH GRANT OPTION??
 					}
 				} while (idx != std::string::npos);
 				break;
@@ -2866,7 +2867,7 @@ MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const s
 	rs_field_data.push_back("PRIVILEGE");
 	rs_field_data.push_back("IS_GRANTABLE");
 
-	return(new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger));
+	return(new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger));
 }
 /* }}} */
 
@@ -2878,7 +2879,7 @@ MySQL_ConnectionMetaData::getTables(const std::string& /* catalog */, const std:
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getTables");
 	CPP_INFO_FMT("schemaPattern=%s tablePattern=%s", schemaPattern.c_str(), tableNamePattern.c_str());
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 	rs_field_data.push_back("TABLE_CAT");
 	rs_field_data.push_back("TABLE_SCHEM");
@@ -2904,11 +2905,11 @@ MySQL_ConnectionMetaData::getTables(const std::string& /* catalog */, const std:
 			std::list<std::string>::const_iterator it = types.begin();
 			for (; it != types.end(); ++it) {
 				if (*it == rs->getString(4)) {
-					rs_data.push_back(rs->getString(1)); // TABLE_CAT
-					rs_data.push_back(rs->getString(2)); // TABLE_SCHEM
-					rs_data.push_back(rs->getString(3)); // TABLE_NAME
-					rs_data.push_back(rs->getString(4)); // TABLE_TYPE
-					rs_data.push_back(rs->getString(5)); // REMARKS
+					rs_data_row.push_back(rs->getString(1)); // TABLE_CAT
+					rs_data_row.push_back(rs->getString(2)); // TABLE_SCHEM
+					rs_data_row.push_back(rs->getString(3)); // TABLE_NAME
+					rs_data_row.push_back(rs->getString(4)); // TABLE_TYPE
+					rs_data_row.push_back(rs->getString(5)); // REMARKS
 					break;
 				}
 			}
@@ -2934,11 +2935,11 @@ MySQL_ConnectionMetaData::getTables(const std::string& /* catalog */, const std:
 					/* TODO: Optimize this everytime checking, put it outside of the loop */
 					if (!it->compare("TABLE")) {
 						CPP_INFO_FMT("[][%s][%s][TABLE][]", current_schema.c_str(), rs2->getString(1).c_str());
-						rs_data.push_back("");					// TABLE_CAT
-						rs_data.push_back(current_schema);		// TABLE_SCHEM
-						rs_data.push_back(rs2->getString(1));	// TABLE_NAME
-						rs_data.push_back("TABLE");				// TABLE_TYPE
-						rs_data.push_back("");					// REMARKS
+						rs_data_row.push_back("");					// TABLE_CAT
+						rs_data_row.push_back(current_schema);		// TABLE_SCHEM
+						rs_data_row.push_back(rs2->getString(1));	// TABLE_NAME
+						rs_data_row.push_back("TABLE");				// TABLE_TYPE
+						rs_data_row.push_back("");					// REMARKS
 						break;
 					}
 				}
@@ -2946,7 +2947,7 @@ MySQL_ConnectionMetaData::getTables(const std::string& /* catalog */, const std:
 		}
 	}
 
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -2959,17 +2960,17 @@ MySQL_ConnectionMetaData::getTableTypes()
 	static const char * const table_types[] = {"TABLE", "VIEW", "LOCAL TEMPORARY"};
 	static unsigned int requiredVersion[] = {32200, 50000, 32200};
 
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 
 	rs_field_data.push_back("TABLE_TYPE");
 
 	for (int i = 0; i < 3; ++i) {
 		if (server_version >= requiredVersion[i]) {
-			rs_data.push_back(table_types[i]);
+			rs_data_row.push_back(table_types[i]);
 		}
 	}
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -2996,7 +2997,7 @@ sql::ResultSet *
 MySQL_ConnectionMetaData::getTypeInfo()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getTypeInfo");
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 	char buf[20];
 
@@ -3004,24 +3005,24 @@ MySQL_ConnectionMetaData::getTypeInfo()
 	while (mysqlc_types[i].typeName) {
 		const TypeInfoDef * const curr = &mysqlc_types[i];
 
-		rs_data.push_back(curr->typeName);
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->dataType));
-		rs_data.push_back(my_l_to_a(buf, sizeof(buf) - 1, curr->precision));
-		rs_data.push_back(curr->literalPrefix);
-		rs_data.push_back(curr->literalSuffix);
-		rs_data.push_back(curr->createParams);
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->nullable));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->caseSensitive));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->searchable));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->isUnsigned));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->fixedPrecScale));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->autoIncrement));
-		rs_data.push_back(curr->localTypeName);
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->minScale));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->maxScale));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->sqlDataType));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->sqlDateTimeSub));
-		rs_data.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->numPrecRadix));
+		rs_data_row.push_back(curr->typeName);
+		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->dataType));
+		rs_data_row.push_back(my_l_to_a(buf, sizeof(buf) - 1, curr->precision));
+		rs_data_row.push_back(curr->literalPrefix);
+		rs_data_row.push_back(curr->literalSuffix);
+		rs_data_row.push_back(curr->createParams);
+		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->nullable));
+		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->caseSensitive));
+		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->searchable));
+		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->isUnsigned));
+		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->fixedPrecScale));
+		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->autoIncrement));
+		rs_data_row.push_back(curr->localTypeName);
+		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->minScale));
+		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->maxScale));
+		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->sqlDataType));
+		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->sqlDateTimeSub));
+		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->numPrecRadix));
 
 		i++;
 	}
@@ -3045,7 +3046,7 @@ MySQL_ConnectionMetaData::getTypeInfo()
 	rs_field_data.push_back("SQL_DATETIME_SUB");
 	rs_field_data.push_back("NUM_PREC_RADIX");
 
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -3056,7 +3057,7 @@ MySQL_ConnectionMetaData::getUDTs(const std::string& /*catalog*/, const std::str
 									const std::string& /*typeNamePattern*/, std::list<int> & /*types*/)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getUDTs");
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 
 	rs_field_data.push_back("TYPE_CAT");
@@ -3066,7 +3067,7 @@ MySQL_ConnectionMetaData::getUDTs(const std::string& /*catalog*/, const std::str
 	rs_field_data.push_back("DATA_TYPE");
 	rs_field_data.push_back("REMARKS");
 
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 
@@ -3101,7 +3102,7 @@ sql::ResultSet *
 MySQL_ConnectionMetaData::getVersionColumns(const std::string& /*catalog*/, const std::string& /*schema*/, const std::string& /*table*/)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getVersionColumns");
-	std::list<std::string> rs_data;
+	std::list<std::string> rs_data_row;
 	std::list<std::string> rs_field_data;
 
 	rs_field_data.push_back("SCOPE");
@@ -3113,7 +3114,7 @@ MySQL_ConnectionMetaData::getVersionColumns(const std::string& /*catalog*/, cons
 	rs_field_data.push_back("DECIMAL_DIGITS");
 	rs_field_data.push_back("PSEUDO_COLUMN");
 
-	return new MySQL_ConstructedResultSet(rs_field_data, rs_data, logger);
+	return new MySQL_ConstructedResultSet(rs_field_data, rs_data_row, logger);
 }
 /* }}} */
 

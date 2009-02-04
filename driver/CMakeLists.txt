@@ -30,6 +30,8 @@ IF(MYSQLCPPCONN_TRACE_ENABLE)
 ENDIF(MYSQLCPPCONN_TRACE_ENABLE)
 
 SET(MYSQLCPPCONN_SOURCES
+	mysql_art_resultset.cpp
+	mysql_art_rset_metadata.cpp
 	mysql_connection.cpp
 	mysql_constructed_resultset.cpp
 	mysql_cset_metadata.cpp
