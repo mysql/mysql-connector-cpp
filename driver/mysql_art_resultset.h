@@ -29,6 +29,9 @@
 
 #include <list>
 #include <vector>
+#include <string.h>
+#include <stdlib.h>
+#include <stdint.h>
 
 namespace sql
 {
@@ -37,6 +40,73 @@ namespace mysql
 namespace util {template<class T> class my_shared_ptr; }; // forward declaration.
 
 class MySQL_DebugLogger;
+
+class MyVal
+{
+	union {
+		std::vector< char > * str; 
+		double dval;
+		int64_t lval;
+		uint64_t ulval;
+		bool bval;
+		const void * pval;
+	} val;
+	enum
+	{
+		typeString,
+		typeDouble,
+		typeInt,
+		typeUInt,
+		typeBool,
+		typePtr
+	} val_type;
+
+	void copy_obj(const MyVal & rhs)
+	{
+		val_type = rhs.val_type;
+		if (val_type != typeString) {
+			val = rhs.val;
+		} else {
+			(*val.str) = *(rhs.val.str);
+		}	
+	}
+
+public:
+	MyVal(const std::string & s);
+
+	MyVal(double d) : val_type(typeDouble) { val.dval = d; } 
+
+	MyVal(int64_t l) : val_type(typeInt) { val.lval = l; } 
+
+	MyVal(uint64_t ul) : val_type(typeUInt) { val.ulval = ul; } 
+
+	MyVal(bool b) : val_type(typeBool) { val.bval = b;} 
+
+	MyVal(void * p) : val_type(typePtr) { val.pval = p; }
+
+	MyVal(const MyVal & rhs) { copy_obj(rhs); }
+
+	const MyVal & operator=(const MyVal & rhs) { copy_obj(rhs); return *this; }
+
+	~MyVal()
+	{
+		if (val_type == typeString) {
+			delete val.str;
+		}
+	}
+
+	std::string getString();
+
+	double getDouble();
+
+	int64_t getInt64();
+
+	uint64_t getUInt64();
+
+	bool getBool();
+};
+
+
 
 class MySQL_ArtResultSet : public sql::ResultSet
 {
