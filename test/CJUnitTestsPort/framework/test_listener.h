@@ -39,50 +39,50 @@ class TestsListener : public policies::Singleton<TestsListener>
 {
   CCPP_SINGLETON(TestsListener);
 
-  std::auto_ptr<TestOutputter>  outputter;
+  std::auto_ptr<TestOutputter> outputter;
 
-  String                        curSuiteName;
-  String                        curTestName;
-  unsigned                      curTestOrdNum;
-  std::stringstream             log;
-  unsigned                      executed;
-  std::vector<int>              failedTests;
+  String curSuiteName;
+  String curTestName;
+  unsigned curTestOrdNum;
+  std::stringstream log;
+  unsigned executed;
+  std::vector<int> failedTests;
   // don't really need to count exceptions
-  unsigned                      exceptions;
+  unsigned exceptions;
 
 public:
 
-  std::iostream & errorsLog   ();
-  void            errorsLog   ( const String::value_type * msg );
-  void            errorsLog   ( const String::value_type * msg, const String::value_type * file, int line );
+  std::iostream & errorsLog();
+  void errorsLog(const String::value_type * msg);
+  void errorsLog(const String::value_type * msg, const String::value_type * file, int line);
 
-  std::iostream & messagesLog ();
-  void            messagesLog ( const String::value_type * msg );
+  std::iostream & messagesLog();
+  void messagesLog(const String::value_type * msg);
 
-  void            incrementCounter();
-  int             recordFailed();
+  void incrementCounter();
+  int recordFailed();
 
   inline int failed()
   {
     return failedTests.size();
   }
 
-  static void currentTestName       ( const String & name );
-  static void nextSuiteStarts       ( const String & name, int testsNumber  );
+  static void currentTestName(const String & name);
+  static void nextSuiteStarts(const String & name, int testsNumber);
 
-  static void testHasRun            ();
+  static void testHasRun();
 
-  static void testHasFailed         ( const String & msg);
-  static void testHasThrown         ( const String::value_type * msg = NULL);
+  static void testHasFailed(const String & msg);
+  static void testHasThrown(const String::value_type * msg=NULL);
 
-  static void testHasPassed         ();
-  static void testHasPassedWithInfo ( const String & str    );
+  static void testHasPassed();
+  static void testHasPassedWithInfo(const String & str);
 
-  static void bailSuite             ( const String & reason );
+  static void bailSuite(const String & reason);
 
-  static void dumpLog               ();
+  static void dumpLog();
 
-         void summary();
+  void summary();
 
   static bool allTestsPassed();
 };

@@ -303,7 +303,7 @@ void ResultSetMetadataTest::testGetColumnType()
 
   int colType=rsmd->getColumnType(1);
 
-#ifdef WE_HAVE_DATATYPE_AGAIN
+
   switch (colType) {
   case sql::DataType::BIT :
   case sql::DataType::TINYINT :
@@ -341,10 +341,6 @@ void ResultSetMetadataTest::testGetColumnType()
             << "getColumnType method returns a illegal value " << colType << std::endl;
     FAIL("Call to getColumnTypeName failed !");
   }
-#else
-  TestsListener::theInstance().messagesLog()
-          << "getColumnType method returns: " << colType << std::endl;
-#endif
 }
 
 /*

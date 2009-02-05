@@ -44,19 +44,17 @@ std::iostream & TestsListener::errorsLog()
   return log;
 }
 
-
-void TestsListener::errorsLog( const String::value_type * msg )
+void TestsListener::errorsLog(const String::value_type * msg)
 {
-  if ( msg != NULL )
+  if (msg != NULL)
     log << msg;
 }
 
-
-void TestsListener::errorsLog(  const String::value_type * msg
+void TestsListener::errorsLog(const String::value_type * msg
                               , const String::value_type * file
-                              , int line )
+                              , int line)
 {
-  if ( msg != NULL )
+  if (msg != NULL)
   {
     log << msg << " File: " << file << " Line: " << line << std::endl;
   }
@@ -67,32 +65,27 @@ std::iostream & TestsListener::messagesLog()
   return log;
 }
 
-
-void TestsListener::messagesLog( const String::value_type * msg )
+void TestsListener::messagesLog(const String::value_type * msg)
 {
-  if ( msg != NULL )
+  if (msg != NULL)
     log << msg;
 }
-
 
 void TestsListener::currentTestName(const String & name)
 {
   theInstance().curTestName=name;
 }
 
-
 void TestsListener::incrementCounter()
 {
   ++curTestOrdNum;
 }
-
 
 int TestsListener::recordFailed()
 {
   failedTests.push_back(curTestOrdNum);
   return failedTests.size();
 }
-
 
 void TestsListener::nextSuiteStarts(const String & name, int testsNumber)
 {
@@ -102,33 +95,29 @@ void TestsListener::nextSuiteStarts(const String & name, int testsNumber)
                                        , testsNumber);
 }
 
-
 void TestsListener::testHasRun()
 {
   //std::cout << ".";
   ++theInstance().executed;
 }
 
-
-void TestsListener::testHasFailed( const String & msg )
+void TestsListener::testHasFailed(const String & msg)
 {
-  theInstance().errorsLog( msg.c_str() );
+  theInstance().errorsLog(msg.c_str());
 
-  theInstance().outputter->TestFailed(theInstance().curTestOrdNum, theInstance().curTestName);
+  theInstance().outputter->TestFailed(theInstance().curTestOrdNum, theInstance().curTestName, msg.c_str());
   theInstance().recordFailed();
   throw TestFailedException();
 }
 
-
-void TestsListener::testHasThrown( const String::value_type * msg )
+void TestsListener::testHasThrown(const String::value_type * msg)
 {
-  theInstance().errorsLog( msg );
+  theInstance().errorsLog(msg);
 
   theInstance().outputter->TestFailed(theInstance().curTestOrdNum, theInstance().curTestName);
   theInstance().recordFailed();
   ++theInstance().exceptions;
 }
-
 
 void TestsListener::testHasPassed()
 {
@@ -136,13 +125,11 @@ void TestsListener::testHasPassed()
                                       , theInstance().curTestName);
 }
 
-
 void TestsListener::testHasPassedWithInfo(const String & str)
 {
   theInstance().outputter->TestPassed(theInstance().curTestOrdNum
                                       , theInstance().curTestName, str.c_str());
 }
-
 
 void TestsListener::summary()
 {
@@ -151,19 +138,16 @@ void TestsListener::summary()
                      , failedTests);
 }
 
-
 bool TestsListener::allTestsPassed()
 {
   return theInstance().exceptions && !theInstance().failed() == 0;
 }
 
-
-void TestsListener::bailSuite( const String & reason )
+void TestsListener::bailSuite(const String & reason)
 {
-  static const String bail( "#BAIL " );
-  theInstance().outputter->Comment( bail + reason );
+  static const String bail("#BAIL ");
+  theInstance().outputter->Comment(bail + reason);
 }
-
 
 void TestsListener::dumpLog()
 {

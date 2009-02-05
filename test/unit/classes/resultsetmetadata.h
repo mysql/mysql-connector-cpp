@@ -40,12 +40,14 @@ struct columndefinition
   std::string sqldef;
   int ctype;
   std::string value;
+  bool check_name;
 
-  columndefinition(std::string n, std::string s, int c, std::string v) :
+  columndefinition(std::string n, std::string s, int c, std::string v, bool f) :
   name(n),
   sqldef(s),
   ctype(c),
-  value(v)
+  value(v),
+  check_name(f)
   {
   }
 };
