@@ -39,20 +39,43 @@ private:
   typedef unit_fixture super;
 
 protected:
+  /*
+   * Utility: run a query and fetch the resultset
+   */
+  void runStandardQuery();
+
 public:
 
   EXAMPLE_TEST_FIXTURE(resultsetmetadata)
   {
     TEST_CASE(getCatalogName);
+    TEST_CASE(getColumnCount);
+    TEST_CASE(getColumnDisplaySize);
   }
 
   /**
-   * Test for ResultSetMetaDate::getCatalogName()
+   * Test for ResultSetMetaData::getCatalogName()
    *
    * Focus on code coverage: invalid parameter, invalid resultset
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getCatalogName();
+
+  /**
+   * Test for ResultSetMetaData::getColumnCount()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getColumnCount();
+
+  /**
+   * Test for ResultSetMetaData::getColumnDisplaySize
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getColumnDisplaySize();
 
 };
 
