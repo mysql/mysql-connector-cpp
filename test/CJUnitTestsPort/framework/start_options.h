@@ -70,7 +70,7 @@ struct StartOptions
   }
 
   StartOptions(int paramsNumber, char** paramsValues)
-          : verbose(true)
+          : verbose(false)
   {
     String * _param[ poLast - poFirst - 1 ]={&dbUrl, &dbUser, &dbPasswd, &dbSchema};
 
