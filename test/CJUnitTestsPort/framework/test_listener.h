@@ -72,8 +72,8 @@ public:
 
   static void testHasRun            ();
 
-  static void testHasFailed         ( const String::value_type * msg = NULL );
-  static void testHasThrown         ( const String::value_type * msg = NULL );
+  static void testHasFailed         ( const String & msg);
+  static void testHasThrown         ( const String::value_type * msg = NULL);
 
   static void testHasPassed         ();
   static void testHasPassedWithInfo ( const String & str    );

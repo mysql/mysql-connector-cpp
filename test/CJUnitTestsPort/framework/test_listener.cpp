@@ -110,9 +110,9 @@ void TestsListener::testHasRun()
 }
 
 
-void TestsListener::testHasFailed( const String::value_type * msg )
+void TestsListener::testHasFailed( const String & msg )
 {
-  theInstance().errorsLog( msg );
+  theInstance().errorsLog( msg.c_str() );
 
   theInstance().outputter->TestFailed(theInstance().curTestOrdNum, theInstance().curTestName);
   theInstance().recordFailed();
