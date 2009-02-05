@@ -42,7 +42,7 @@ void unit_fixture::init()
   url=TestsRunner::theInstance().getStartOptions()->dbUrl;
   user=TestsRunner::theInstance().getStartOptions()->dbUser;
   passwd=TestsRunner::theInstance().getStartOptions()->dbPasswd;
-  db=TestsRunner::theInstance().getStartOptions()->dbSchema;
+  db=TestsRunner::theInstance().getStartOptions()->dbSchema;  
 }
 
 void unit_fixture::setUp()

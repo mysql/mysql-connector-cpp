@@ -22,6 +22,7 @@
  */
 
 #include "../unit_fixture.h"
+#include <vector>
 
 /**
  * Example of a collection of tests
@@ -33,12 +34,40 @@ namespace testsuite
 namespace classes
 {
 
+struct columndefinition
+{
+  std::string name;
+  std::string sqldef;
+  int ctype;
+  std::string value;
+
+  columndefinition(std::string n, std::string s, int c, std::string v) :
+  name(n),
+  sqldef(s),
+  ctype(c),
+  value(v)
+  {
+  }
+};
+
 class resultsetmetadata : public unit_fixture
 {
 private:
   typedef unit_fixture super;
 
 protected:
+
+  /**
+   * List of all column types known by MySQL
+   *
+   */
+  std::vector< columndefinition > columns;
+
+  /**
+   * Initializes the column type list
+   */
+  void init();
+
   /*
    * Utility: run a query and fetch the resultset
    */
@@ -48,10 +77,12 @@ public:
 
   EXAMPLE_TEST_FIXTURE(resultsetmetadata)
   {
+    init();
     TEST_CASE(getCatalogName);
     TEST_CASE(getColumnCount);
     TEST_CASE(getColumnDisplaySize);
     TEST_CASE(getColumnNameAndLabel);
+    TEST_CASE(getColumnType);
   }
 
   /**
@@ -85,6 +116,14 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getColumnNameAndLabel();
+
+  /**
+   * Test for ResultSetMetaData::getColumType
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getColumnType();
 
 };
 

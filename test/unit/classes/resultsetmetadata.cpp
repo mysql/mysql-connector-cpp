@@ -26,11 +26,29 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <sstream>
 #include <stdlib.h>
 #include <cppconn/resultset.h>
+#include <cppconn/datatype.h>
 
 namespace testsuite
 {
 namespace classes
 {
+
+void resultsetmetadata::init()
+{
+  columns.push_back(columndefinition("BIT", "BIT", sql::DataType::BIT, "0"));
+  columns.push_back(columndefinition("BIT", "BIT(8)", sql::DataType::BIT, "0"));
+  columns.push_back(columndefinition("TINYINT", "TINYINT", sql::DataType::TINYINT, "127"));
+  columns.push_back(columndefinition("TINYINT", "TINYINT(1)", sql::DataType::TINYINT, "0"));
+  columns.push_back(columndefinition("TINYINT", "TINYINT UNSIGNED", sql::DataType::TINYINT, "255"));
+  columns.push_back(columndefinition("TINYINT", "TINYINT ZEROFILL", sql::DataType::TINYINT, "-1"));
+  columns.push_back(columndefinition("TINYINT", "BOOLEAN", sql::DataType::TINYINT, "1"));
+  columns.push_back(columndefinition("SMALLINT", "SMALLINT", sql::DataType::SMALLINT, "-32768"));
+  columns.push_back(columndefinition("SMALLINT", "SMALLINT(5)", sql::DataType::SMALLINT, "-32768"));
+  columns.push_back(columndefinition("SMALLINT", "SMALLINT UNSIGNED", sql::DataType::SMALLINT, "65535"));
+  columns.push_back(columndefinition("SMALLINT", "SMALLINT ZEROFILL", sql::DataType::SMALLINT, "123"));
+  columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT", sql::DataType::MEDIUMINT, "-8388608"));
+  columns.push_back(columndefinition("INTEGER", "INTEGER", sql::DataType::INTEGER, "2147483647"));
+}
 
 void resultsetmetadata::getCatalogName()
 {
@@ -223,6 +241,57 @@ void resultsetmetadata::getColumnNameAndLabel()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
+    FAIL(e.what());
+  }
+}
+
+void resultsetmetadata::getColumnType()
+{
+  logMsg("resultsetmetadata::getColumnType() - MySQL_ResultSetMetaData::getColumnType()");  
+  try
+  {
+    std::stringstream sql;
+    std::vector<columndefinition>::iterator it;
+    stmt.reset(con->createStatement());
+    
+    for (it = columns.begin(); it != columns.end(); it++) {
+
+      stmt->execute("DROP TABLE IF EXISTS test");
+
+      sql.str("");
+      sql << "CREATE TABLE test(col1 " << it->sqldef << ")";
+      try {
+        stmt->execute(sql.str());
+        sql.str("");
+        sql << "INSERT INTO test(col1) VALUES (" << it->value << ")";
+        logMsg(sql.str());
+        stmt->execute(sql.str());
+
+        res.reset(stmt->executeQuery("SELECT * FROM test"));
+        ResultSetMetaData meta(res->getMetaData());
+        logMsg(sql.str());
+        ASSERT_EQUALS(it->name, meta->getColumnTypeName(1));
+        logMsg(sql.str());
+        ASSERT_EQUALS(it->ctype, meta->getColumnType(1));
+
+        sql.str("");
+        sql << "... OK: " << it->sqldef;
+        logMsg(sql.str());
+
+      } catch (sql::SQLException &e) {        
+        sql.str("");
+        sql << "... skipping " << it->name << " " << it->sqldef << ": ";
+        sql << e.what();
+        logMsg(sql.str());
+      }
+      
+    }
+
+  } catch (sql::SQLException &e)
+  {    
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
     FAIL(e.what());
   }
 }
