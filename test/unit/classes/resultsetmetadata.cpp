@@ -179,7 +179,8 @@ void resultsetmetadata::getColumnNameAndLabel()
     ResultSetMetaData meta(res->getMetaData());
     ASSERT_EQUALS("a", meta->getColumnName(1));
     ASSERT_EQUALS(meta->getColumnLabel(1), meta->getColumnName(1));
-    ASSERT_EQUALS(" ", meta->getColumnName(2));
+    /* NOTE: " " -> "" */
+    ASSERT_EQUALS("", meta->getColumnName(2));
     ASSERT_EQUALS(meta->getColumnLabel(2), meta->getColumnName(2));
     ASSERT_EQUALS("world", meta->getColumnName(3));
     ASSERT_EQUALS(meta->getColumnLabel(3), meta->getColumnName(3));
