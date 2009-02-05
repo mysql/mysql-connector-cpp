@@ -31,11 +31,15 @@ TestsListener::TestsListener()
 , curTestOrdNum(0)
 , executed(0)
 , exceptions(0)
+, verbose(false)
 {
   //TODO: Make StartOptions  dependent
   outputter.reset(new TAP());
 }
 
+void TestsListener::setVerbose(bool verbosity) {
+  verbose = verbosity;
+}
 
 //TODO: "set" counterparts
 
@@ -48,6 +52,11 @@ void TestsListener::errorsLog(const String::value_type * msg)
 {
   if (msg != NULL)
     log << msg;
+}
+
+void TestsListener::errorsLog(const String & msg)
+{
+  log << msg << std::endl;
 }
 
 void TestsListener::errorsLog(const String::value_type * msg
@@ -69,6 +78,13 @@ void TestsListener::messagesLog(const String::value_type * msg)
 {
   if (msg != NULL)
     log << msg;
+}
+
+void TestsListener::messagesLog(const String & msg)
+{
+  log << msg << std::endl;
+  if (verbose)
+    theInstance().outputter->Comment(msg);
 }
 
 void TestsListener::currentTestName(const String & name)
@@ -145,7 +161,7 @@ bool TestsListener::allTestsPassed()
 
 void TestsListener::bailSuite(const String & reason)
 {
-  static const String bail("#BAIL ");
+  static const String bail("BAIL ");
   theInstance().outputter->Comment(bail + reason);
 }
 

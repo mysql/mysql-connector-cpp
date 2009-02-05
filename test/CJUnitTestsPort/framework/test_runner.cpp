@@ -38,6 +38,7 @@ bool TestsRunner::runTests()
   TestSuiteNames.empty();
 
   TestSuiteFactory::theInstance().getTestsList( TestSuiteNames );
+  TestsListener::theInstance().setVerbose(startOptions->verbose);
 
   for ( constStrListCit cit= TestSuiteNames.begin(); cit != TestSuiteNames.end(); ++cit )
   {
@@ -50,7 +51,7 @@ bool TestsRunner::runTests()
 
   //bool result= TestSuiteFactory::theInstance().runTests();
 
-  if ( startOptions->verbose )
+  if ( startOptions->verbose_summary )
   {
     TestsListener::dumpLog();
   }

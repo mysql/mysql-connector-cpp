@@ -41,13 +41,16 @@ void resultsetmetadata::init()
   columns.push_back(columndefinition("TINYINT", "TINYINT(1)", sql::DataType::TINYINT, "0", false));
   columns.push_back(columndefinition("TINYINT", "TINYINT UNSIGNED", sql::DataType::TINYINT, "255", false));
   columns.push_back(columndefinition("TINYINT", "TINYINT ZEROFILL", sql::DataType::TINYINT, "-1", false));
+  /* Alias of BOOLEAN */
   columns.push_back(columndefinition("TINYINT", "BOOLEAN", sql::DataType::TINYINT, "1", true));
   columns.push_back(columndefinition("SMALLINT", "SMALLINT", sql::DataType::SMALLINT, "-32768", true));
   columns.push_back(columndefinition("SMALLINT", "SMALLINT(5)", sql::DataType::SMALLINT, "-32768", false));
   columns.push_back(columndefinition("SMALLINT", "SMALLINT UNSIGNED", sql::DataType::SMALLINT, "65535", false));
   columns.push_back(columndefinition("SMALLINT", "SMALLINT ZEROFILL", sql::DataType::SMALLINT, "123", false));
   columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT", sql::DataType::MEDIUMINT, "-8388608", true));
-  columns.push_back(columndefinition("INTEGER", "INTEGER", sql::DataType::INTEGER, "2147483647", true));
+  /* Alias of INTEGER */
+  columns.push_back(columndefinition("INT", "INTEGER", sql::DataType::INTEGER, "2147483647", true));
+  columns.push_back(columndefinition("INT", "INT", sql::DataType::INTEGER, "2147483647", true));
 }
 
 void resultsetmetadata::getCatalogName()
@@ -271,6 +274,7 @@ void resultsetmetadata::getColumnType()
 
         res.reset(stmt->executeQuery("SELECT * FROM test"));
         ResultSetMetaData meta(res->getMetaData());
+        logMsg(it->sqldef);
         ASSERT_EQUALS(it->ctype, meta->getColumnType(1));
         if (it->check_name)
           ASSERT_EQUALS(it->name, meta->getColumnTypeName(1));

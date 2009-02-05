@@ -49,18 +49,23 @@ class TestsListener : public policies::Singleton<TestsListener>
   std::vector<int> failedTests;
   // don't really need to count exceptions
   unsigned exceptions;
+  bool verbose;
 
 public:
 
   std::iostream & errorsLog();
   void errorsLog(const String::value_type * msg);
   void errorsLog(const String::value_type * msg, const String::value_type * file, int line);
+  void errorsLog(const String & msg);
 
   std::iostream & messagesLog();
   void messagesLog(const String::value_type * msg);
+  void messagesLog(const String & msg);
 
   void incrementCounter();
   int recordFailed();
+
+  void setVerbose(bool verbosity);
 
   inline int failed()
   {
@@ -83,6 +88,8 @@ public:
   static void dumpLog();
 
   void summary();
+
+
 
   static bool allTestsPassed();
 };
