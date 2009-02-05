@@ -51,6 +51,7 @@ public:
     TEST_CASE(getCatalogName);
     TEST_CASE(getColumnCount);
     TEST_CASE(getColumnDisplaySize);
+    TEST_CASE(getColumnNameAndLabel);
   }
 
   /**
@@ -76,6 +77,14 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getColumnDisplaySize();
+
+  /**
+   * Test for ResultSetMetaData::getColumnName, ResultSetMetaData::getColumnLabel
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getColumnNameAndLabel();
 
 };
 
