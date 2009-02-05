@@ -51,7 +51,7 @@ MyVal::MyVal(const std::string & s)
 	std::auto_ptr< std::vector< char > > local_val(new std::vector< char >());
 	std::vector< char > * tmp = local_val.get();
 	tmp->reserve(s.size() + 1);
-	for (size_t i = 0; i < s.size(); i++) {
+	for (size_t i = 0; i < s.size(); ++i) {
 		(*tmp)[i] = s[i];
 	}
 	(*tmp)[tmp->size()] = '\0';

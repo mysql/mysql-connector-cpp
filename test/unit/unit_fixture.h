@@ -181,6 +181,17 @@ protected:
    */
   sql::Connection * getConnection();
 
+  /**
+   * Checks if the passed SQLException is caused by the specified error
+   *
+   */
+  std::string exceptionIsOK(sql::SQLException &e, const std::string& sql_state, int errno);
+
+  /**
+   * Checks if the passed exception has the SQLState HY000 and the (vendor) error code 0
+   */
+  std::string exceptionIsOK(sql::SQLException &e);
+
 public:
 
   /**
