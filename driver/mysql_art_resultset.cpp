@@ -70,26 +70,26 @@ MyVal::getString()
 		case typeDouble:
 		{
 			char buf[31];
-			snprintf(buf, sizeof(buf) - 1, "%14.14f", val.dval);
-			return buf;	
+			size_t len = snprintf(buf, sizeof(buf) - 1, "%14.14f", val.dval);
+			return std::string(buf, len);	
 		}
 		case typeInt:
 		{
 			char buf[20];
-			snprintf(buf, sizeof(buf) - 1, "%lld", val.lval);
-			return buf;	
+			size_t len = snprintf(buf, sizeof(buf) - 1, "%lld", val.lval);
+			return std::string(buf, len);	
 		}
 		case typeUInt:
 		{
 			char buf[20];
-			snprintf(buf, sizeof(buf) - 1, "%llu", val.ulval);
-			return buf;	
+			size_t len = snprintf(buf, sizeof(buf) - 1, "%llu", val.ulval);
+			return std::string(buf, len);	
 		}
 		case typeBool:
 		{
 			char buf[3];
-			snprintf(buf, sizeof(buf) - 1, "%d", val.bval);
-			return buf;	
+			size_t len = snprintf(buf, sizeof(buf) - 1, "%d", val.bval);
+			return std::string(buf, len);	
 		}
 		case typePtr:
 			return "";
