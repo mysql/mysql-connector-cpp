@@ -69,7 +69,20 @@ void assertEquals(int expected, int result
   {
     std::stringstream errmsg;
     errmsg.str("");
-    errmsg << "assertEquals(boolean) failed at " << file << " on line " << line;
+    errmsg << "assertEquals(int) failed at " << file << " on line " << line;
+    errmsg << " expecting '" << expected << "' got '" << result << "'";
+    TestsListener::testHasFailed(errmsg.str());
+  }
+}
+
+void assertEquals(unsigned int expected, unsigned int result
+                  , const char* file, int line)
+{
+  if (expected != result)
+  {
+    std::stringstream errmsg;
+    errmsg.str("");
+    errmsg << "assertEquals(unsigned int) failed at " << file << " on line " << line;
     errmsg << " expecting '" << expected << "' got '" << result << "'";
     TestsListener::testHasFailed(errmsg.str());
   }
