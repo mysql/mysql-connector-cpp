@@ -192,14 +192,14 @@ MyVal::getBool()
 
 
 /* {{{ MySQL_ArtResultSet::MySQL_ArtResultSet() -I- */
-MySQL_ArtResultSet::MySQL_ArtResultSet(const StringList& fn, const rset_t & rs, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
-  : rset(rs), current_record(rset.begin()), started(false), row_position(0), is_closed(false), logger(l? l->getReference():NULL)
+MySQL_ArtResultSet::MySQL_ArtResultSet(const StringList& fn, rset_t * const rs, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
+  : rset(rs), current_record(rset->begin()), started(false), row_position(0), is_closed(false), logger(l? l->getReference():NULL)
 {
 	CPP_ENTER("MySQL_ArtResultSet::MySQL_ArtResultSet");
-	CPP_INFO_FMT("metadata.size=%d resultset.size=%d", fn.size(), rset.size());
+	CPP_INFO_FMT("metadata.size=%d resultset.size=%d", fn.size(), rset->size());
 	num_fields = static_cast<int>(fn.size());
 
-	num_rows = rset.size();
+	num_rows = rset->size();
 
 	field_index_to_name_map = new std::string[num_fields];
 
@@ -233,7 +233,7 @@ MySQL_ArtResultSet::~MySQL_ArtResultSet()
 void MySQL_ArtResultSet::seek()
 {
 	CPP_ENTER("MySQL_ArtResultSet::seek");
-	current_record = rset.begin();
+	current_record = rset->begin();
 	/* i should be signed, or when row_position is 0 `i` will overflow */
 	for (long long i = row_position - 1; i > 0; --i) {
 		current_record++;

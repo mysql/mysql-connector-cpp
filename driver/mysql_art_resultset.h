@@ -125,7 +125,7 @@ public:
 	typedef std::vector< MyVal > row_t;
 	typedef std::list< row_t > rset_t;
 
-	MySQL_ArtResultSet(const StringList& fn, const rset_t & rset, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
+	MySQL_ArtResultSet(const StringList& fn, rset_t * const rset, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
 	virtual ~MySQL_ArtResultSet();
 
 	bool absolute(int row);
@@ -241,7 +241,7 @@ protected:
 public:
 
 	unsigned int num_fields;
-	rset_t rset;
+	std::auto_ptr< rset_t > rset;
 	rset_t::iterator current_record;
 	bool started;
 
