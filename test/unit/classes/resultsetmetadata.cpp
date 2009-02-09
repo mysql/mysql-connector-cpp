@@ -35,6 +35,9 @@ namespace classes
 
 void resultsetmetadata::init()
 {
+  /* DO NOT test for unsinged/signed in the column names.
+   Server and libmysql return whatever they want in the flags depending on the version.
+   Its a madness. */
   columns.push_back(columndefinition("BIT", "BIT", sql::DataType::BIT, "0", true));
   columns.push_back(columndefinition("BIT", "BIT(8)", sql::DataType::BIT, "0", false));
   columns.push_back(columndefinition("TINYINT", "TINYINT", sql::DataType::TINYINT, "127", true));
@@ -50,7 +53,25 @@ void resultsetmetadata::init()
   columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT", sql::DataType::MEDIUMINT, "-8388608", true));
   /* Alias of INTEGER */
   columns.push_back(columndefinition("INT", "INTEGER", sql::DataType::INTEGER, "2147483647", true));
-  columns.push_back(columndefinition("INT", "INT", sql::DataType::INTEGER, "2147483647", true));
+  columns.push_back(columndefinition("INTEGER UNSIGNED", "INT UNSIGNED", sql::DataType::INTEGER, "4294967295", false));
+  /* If you specify ZEROFILL for a numeric column, MySQL automatically adds the UNSIGNED  attribute to the column.  */
+  columns.push_back(columndefinition("INTEGER UNSIGNED", "INT(4) SIGNED ZEROFILL", sql::DataType::INTEGER, "1", false));
+  columns.push_back(columndefinition("BIGINT", "BIGINT", sql::DataType::BIGINT, "-9223372036854775808", true));
+  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT UNSIGNED", sql::DataType::BIGINT, "18446744073709551615", false));
+  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT(4) ZEROFILL", sql::DataType::BIGINT, "2", false));
+  columns.push_back(columndefinition("FLOAT", "FLOAT", sql::DataType::REAL, "-1.01", true));
+  columns.push_back(columndefinition("FLOAT", "FLOAT UNSIGNED", sql::DataType::REAL, "1.01", false));
+  columns.push_back(columndefinition("FLOAT", "FLOAT(5,3) UNSIGNED ZEROFILL", sql::DataType::REAL, "1.01", false));
+  columns.push_back(columndefinition("FLOAT", "FLOAT(6)", sql::DataType::REAL, "1.01", false));
+  columns.push_back(columndefinition("DOUBLE", "DOUBLE", sql::DataType::DOUBLE, "-1.01", true));
+  columns.push_back(columndefinition("DOUBLE", "DOUBLE UNSIGNED", sql::DataType::DOUBLE, "1.01", false));
+  columns.push_back(columndefinition("DOUBLE", "DOUBLE(5,3) UNSIGNED ZEROFILL", sql::DataType::DOUBLE, "1.01", false));
+  columns.push_back(columndefinition("DECIMAL", "DECIMAL", sql::DataType::DECIMAL, "-1.01", true));
+  columns.push_back(columndefinition("DECIMAL", "DECIMAL UNSIGNED", sql::DataType::DECIMAL, "1.01", false));
+  columns.push_back(columndefinition("DECIMAL", "DECIMAL(5,3) UNSIGNED ZEROFILL", sql::DataType::DECIMAL, "1.01", false));
+  columns.push_back(columndefinition("DATE", "DATE", sql::DataType::DATE, "2009-02-09", true));
+  columns.push_back(columndefinition("DATETIME", "DATETIME", sql::DataType::TIMESTAMP, "2009-02-09 20:05:43", true));
+  columns.push_back(columndefinition("TIMESTAMP", "TIMESTAMP", sql::DataType::TIMESTAMP, "2038-01-09 03:14:07", true));
 }
 
 void resultsetmetadata::getCatalogName()
@@ -104,7 +125,7 @@ void resultsetmetadata::getColumnCount()
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
     runStandardQuery();
     ResultSetMetaData meta(res->getMetaData());
-    ASSERT_EQUALS(5, meta->getColumnCount());
+    ASSERT_EQUALS((unsigned int)5, meta->getColumnCount());
 
     res->close();
     try
@@ -132,11 +153,11 @@ void resultsetmetadata::getColumnDisplaySize()
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
     runStandardQuery();
     ResultSetMetaData meta(res->getMetaData());
-    ASSERT_EQUALS(5, meta->getColumnDisplaySize(1));
-    ASSERT_EQUALS(1, meta->getColumnDisplaySize(2));
-    ASSERT_EQUALS(5, meta->getColumnDisplaySize(3));
-    ASSERT_EQUALS(1, meta->getColumnDisplaySize(4));
-    ASSERT_EQUALS(3, meta->getColumnDisplaySize(5));
+    ASSERT_EQUALS((unsigned int)5, meta->getColumnDisplaySize(1));
+    ASSERT_EQUALS((unsigned int)1, meta->getColumnDisplaySize(2));
+    ASSERT_EQUALS((unsigned int)5, meta->getColumnDisplaySize(3));
+    ASSERT_EQUALS((unsigned int)1, meta->getColumnDisplaySize(4));
+    ASSERT_EQUALS((unsigned int)3, meta->getColumnDisplaySize(5));
 
     try
     {
@@ -269,7 +290,7 @@ void resultsetmetadata::getColumnType()
       {
         stmt->execute(sql.str());
         sql.str("");
-        sql << "INSERT INTO test(col1) VALUES (" << it->value << ")";
+        sql << "INSERT INTO test(col1) VALUES ('" << it->value << "')";
         stmt->execute(sql.str());
 
         res.reset(stmt->executeQuery("SELECT * FROM test"));
@@ -280,11 +301,13 @@ void resultsetmetadata::getColumnType()
           ASSERT_EQUALS(it->name, meta->getColumnTypeName(1));
 
         sql.str("");
-        sql << "... OK: " << it->sqldef;
+        sql << "... OK, SQL:" << it->sqldef << " -> Type = " << it->name;
+        sql << " (" << it->ctype << ")";
         logMsg(sql.str());
 
       } catch (sql::SQLException &e)
       {
+        logMsg(sql.str());
         sql.str("");
         sql << "... skipping " << it->name << " " << it->sqldef << ": ";
         sql << e.what();
@@ -301,6 +324,54 @@ void resultsetmetadata::getColumnType()
     FAIL(e.what());
   }
 }
+
+void resultsetmetadata::getPrecision()
+{
+  logMsg("resultsetmetadata::getPrecision() - MySQL_ResultSetMetaData::getPrecision");
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    runStandardQuery();
+    ResultSetMetaData meta(res->getMetaData());
+    
+    std::stringstream msg;
+    msg.str("");
+    msg << "getPrecision(1) = " << meta->getPrecision(1);
+    logMsg(msg.str());
+
+    ASSERT_EQUALS((unsigned int)5, meta->getPrecision(1));
+    ASSERT_EQUALS((unsigned int)1, meta->getPrecision(2));
+    ASSERT_EQUALS((unsigned int)5, meta->getPrecision(3));
+    ASSERT_EQUALS((unsigned int)1, meta->getPrecision(4));
+    ASSERT_EQUALS((unsigned int)3, meta->getPrecision(5));
+
+    res->close();
+    try
+    {
+      meta->getPrecision(6);
+      FAIL("Invalid offset 6 not recognized");
+    } catch (sql::SQLException &e)
+    {
+    }
+
+    res->close();
+    try
+    {
+      meta->getPrecision(1);
+      FAIL("Can fetch meta from invalid resultset");
+    } catch (sql::SQLException &e)
+    {
+    }
+
+
+  } catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    FAIL(e.what());
+  }
+}
+
 
 void resultsetmetadata::runStandardQuery()
 {
