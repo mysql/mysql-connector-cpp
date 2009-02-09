@@ -47,6 +47,14 @@ Beta  1.0.3 - 2009-xx-xx
 - Re-added getTypeInfo() with information about all types supported by MySQL and
   the sql::DataType. (Andrey)
 
+- Exchanged the implementation of MySQL_ConstructedResultSet to use more efficient
+  non O(n) but O(1) access method. This should improve the speed with which
+  the metadata result sets are used.
+
+- Introduced, internally, sql::mysql::MyVal which has implicit constructors used
+  in mysql_metadata.cpp to create result sets with more native data instead of
+  always string (varchar).
+
 
 Alpha  1.0.2 - 2008-12-19
 

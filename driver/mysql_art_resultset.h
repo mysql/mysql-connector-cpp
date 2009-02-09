@@ -31,7 +31,15 @@
 #include <vector>
 #include <string.h>
 #include <stdlib.h>
+
+
+#if !defined(_WIN32) && !defined(_WIN64)
 #include <stdint.h>
+#else
+typedef __int64 int64_t;
+typedef unsigned __int64 uint64_t;
+#endif	//	_WIN32
+
 
 namespace sql
 {
@@ -44,7 +52,7 @@ class MySQL_DebugLogger;
 class MyVal
 {
 	union {
-		std::vector< char > * str; 
+		std::string * str; 
 		double dval;
 		int64_t lval;
 		uint64_t ulval;
@@ -67,12 +75,14 @@ class MyVal
 		if (val_type != typeString) {
 			val = rhs.val;
 		} else {
-			(*val.str) = *(rhs.val.str);
+			val.str = new std::string(*rhs.val.str);
 		}	
 	}
 
 public:
 	MyVal(const std::string & s);
+
+	MyVal(const char * const s);
 
 	MyVal(double d) : val_type(typeDouble) { val.dval = d; } 
 
@@ -112,10 +122,10 @@ class MySQL_ArtResultSet : public sql::ResultSet
 {
 public:
 	typedef std::list<std::string> StringList;
-	typedef std::vector< std::string > row_t;
+	typedef std::vector< MyVal > row_t;
 	typedef std::list< row_t > rset_t;
 
-	MySQL_ArtResultSet(const StringList& fn, const rset_t & rset, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
+	MySQL_ArtResultSet(const StringList& fn, rset_t * const rset, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
 	virtual ~MySQL_ArtResultSet();
 
 	bool absolute(int row);
@@ -231,7 +241,7 @@ protected:
 public:
 
 	unsigned int num_fields;
-	rset_t rset;
+	std::auto_ptr< rset_t > rset;
 	rset_t::iterator current_record;
 	bool started;
 

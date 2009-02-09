@@ -45,19 +45,17 @@ extern char * cppmysql_utf8_strup(const char *src, size_t srclen);
 MyVal::MyVal(const std::string & s)
   : val_type(typeString)
 {
+	val.str = new std::string(s);
+}
+/* }}} */
+
+
+/* {{{ MyVal::MyVal() -I- */
+MyVal::MyVal(const char * const s)
+  : val_type(typeString)
+{
 	// Init it clearly 
-	val.str = NULL;
-	val_type = typeString;
-	std::auto_ptr< std::vector< char > > local_val(new std::vector< char >());
-	std::vector< char > * tmp = local_val.get();
-	tmp->reserve(s.size() + 1);
-	for (size_t i = 0; i < s.size(); ++i) {
-		(*tmp)[i] = s[i];
-	}
-	(*tmp)[tmp->size()] = '\0';
-	// Finished, release it, thus not destructing it
-	local_val.release();
-	val.str = tmp;
+	val.str = new std::string(s);
 }
 /* }}} */
 
@@ -68,30 +66,30 @@ MyVal::getString()
 {
 	switch (val_type) {
 		case typeString:
-			return std::string(val.str->begin(), val.str->end());
+			return *val.str;
 		case typeDouble:
 		{
 			char buf[31];
-			snprintf(buf, sizeof(buf) - 1, "%14.14f", val.dval);
-			return buf;	
+			size_t len = snprintf(buf, sizeof(buf) - 1, "%14.14f", val.dval);
+			return std::string(buf, len);	
 		}
 		case typeInt:
 		{
 			char buf[20];
-			snprintf(buf, sizeof(buf) - 1, "%lld", val.lval);
-			return buf;	
+			size_t len = snprintf(buf, sizeof(buf) - 1, "%lld", val.lval);
+			return std::string(buf, len);	
 		}
 		case typeUInt:
 		{
 			char buf[20];
-			snprintf(buf, sizeof(buf) - 1, "%llu", val.ulval);
-			return buf;	
+			size_t len = snprintf(buf, sizeof(buf) - 1, "%llu", val.ulval);
+			return std::string(buf, len);	
 		}
 		case typeBool:
 		{
 			char buf[3];
-			snprintf(buf, sizeof(buf) - 1, "%d", val.bval);
-			return buf;	
+			size_t len = snprintf(buf, sizeof(buf) - 1, "%d", val.bval);
+			return std::string(buf, len);	
 		}
 		case typePtr:
 			return "";
@@ -107,7 +105,7 @@ MyVal::getDouble()
 {
 	switch (val_type) {
 		case typeString:
-			return atof(std::string(val.str->begin(), val.str->end()).c_str());
+			return atof(val.str->c_str());
 		case typeDouble:
 			return val.dval;
 		case typeInt:
@@ -130,7 +128,7 @@ MyVal::getInt64()
 {
 	switch (val_type) {
 		case typeString:
-			return atoll(std::string(val.str->begin(), val.str->end()).c_str());
+			return atoll(val.str->c_str());
 		case typeDouble:
 			return val.dval;
 		case typeInt:
@@ -153,7 +151,7 @@ MyVal::getUInt64()
 {
 	switch (val_type) {
 		case typeString:
-			return atoll(std::string(val.str->begin(), val.str->end()).c_str());
+			return atoll(val.str->c_str());
 		case typeDouble:
 			return val.dval;
 		case typeInt:
@@ -176,7 +174,7 @@ MyVal::getBool()
 {
 	switch (val_type) {
 		case typeString:
-			return static_cast<bool>(atoi(std::string(val.str->begin(), val.str->end()).c_str()));
+			return static_cast<bool>(val.str->c_str());
 		case typeDouble:
 			return static_cast<bool>(val.dval);
 		case typeInt:
@@ -194,14 +192,14 @@ MyVal::getBool()
 
 
 /* {{{ MySQL_ArtResultSet::MySQL_ArtResultSet() -I- */
-MySQL_ArtResultSet::MySQL_ArtResultSet(const StringList& fn, const rset_t & rs, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
-  : rset(rs), current_record(rset.begin()), started(false), row_position(0), is_closed(false), logger(l? l->getReference():NULL)
+MySQL_ArtResultSet::MySQL_ArtResultSet(const StringList& fn, rset_t * const rs, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
+  : rset(rs), current_record(rset->begin()), started(false), row_position(0), is_closed(false), logger(l? l->getReference():NULL)
 {
 	CPP_ENTER("MySQL_ArtResultSet::MySQL_ArtResultSet");
-	CPP_INFO_FMT("metadata.size=%d resultset.size=%d", fn.size(), rset.size());
+	CPP_INFO_FMT("metadata.size=%d resultset.size=%d", fn.size(), rset->size());
 	num_fields = static_cast<int>(fn.size());
 
-	num_rows = rset.size();
+	num_rows = rset->size();
 
 	field_index_to_name_map = new std::string[num_fields];
 
@@ -235,7 +233,7 @@ MySQL_ArtResultSet::~MySQL_ArtResultSet()
 void MySQL_ArtResultSet::seek()
 {
 	CPP_ENTER("MySQL_ArtResultSet::seek");
-	current_record = rset.begin();
+	current_record = rset->begin();
 	/* i should be signed, or when row_position is 0 `i` will overflow */
 	for (long long i = row_position - 1; i > 0; --i) {
 		current_record++;
@@ -479,8 +477,7 @@ MySQL_ArtResultSet::getDouble(unsigned int columnIndex) const
 		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getDouble: invalid value of 'columnIndex'");
 	}
 
-	MySQL_ArtResultSet::row_t & tmp_row = *current_record;
-	return atof(tmp_row[columnIndex - 1].c_str());
+	return (*current_record)[columnIndex - 1].getDouble();
 }
 /* }}} */
 
@@ -528,7 +525,6 @@ MySQL_ArtResultSet::getHoldability()
 /* }}} */
 
 
-// Get the given column as int
 /* {{{ MySQL_ArtResultSet::getInt() -I- */
 int
 MySQL_ArtResultSet::getInt(unsigned int columnIndex) const
@@ -544,8 +540,7 @@ MySQL_ArtResultSet::getInt(unsigned int columnIndex) const
 		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getInt: invalid value of 'columnIndex'");
 	}
 
-	MySQL_ArtResultSet::row_t & tmp_row = *current_record;
-	return atoi(tmp_row[columnIndex - 1].c_str());
+	return (*current_record)[columnIndex - 1].getInt64();
 }
 /* }}} */
 
@@ -576,8 +571,7 @@ MySQL_ArtResultSet::getLong(unsigned int columnIndex) const
 		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getLong: invalid value of 'columnIndex'");
 	}
 
-	MySQL_ArtResultSet::row_t & tmp_row = *current_record;
-	return atoll(tmp_row[columnIndex - 1].c_str());
+	return (*current_record)[columnIndex - 1].getInt64();
 }
 /* }}} */
 
@@ -664,8 +658,7 @@ MySQL_ArtResultSet::getString(unsigned int columnIndex) const
 		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getString: invalid value of 'columnIndex'");
 	}
 
-	MySQL_ArtResultSet::row_t & tmp_row = *current_record;
-	return (tmp_row[columnIndex - 1]);
+	return (*current_record)[columnIndex - 1].getString();
 }
 /* }}} */
 
