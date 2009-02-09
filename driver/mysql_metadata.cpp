@@ -1661,19 +1661,19 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 							rs_data_row.push_back(current_schema);		// TABLE_SCHEM
 							rs_data_row.push_back(current_table);		// TABLE_NAME
 							rs_data_row.push_back(rs4->getString(1));	// COLUMN_NAME
-							rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getColumnType(i))); 		// DATA_TYPE
+							rs_data_row.push_back((int64_t) rs3_meta->getColumnType(i)); 		// DATA_TYPE
 							rs_data_row.push_back(rs3_meta->getColumnTypeName(i));											// TYPE_NAME
-							rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getColumnDisplaySize(i)));	// COLUMN_SIZE
+							rs_data_row.push_back((int64_t) rs3_meta->getColumnDisplaySize(i));	// COLUMN_SIZE
 							rs_data_row.push_back("");					// BUFFER_LENGTH
-							rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getScale(i))); // DECIMAL_DIGITS
+							rs_data_row.push_back((int64_t) rs3_meta->getScale(i)); // DECIMAL_DIGITS
 							rs_data_row.push_back("10");							// NUM_PREC_RADIX
-							rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->isNullable(i))); // Is_nullable
+							rs_data_row.push_back((int64_t) rs3_meta->isNullable(i)); // Is_nullable
 							rs_data_row.push_back(rs4->getString(9));		// REMARKS
 							rs_data_row.push_back(rs4->getString(6));		// COLUMN_DEFAULT
 							rs_data_row.push_back("");						// SQL_DATA_TYPE - unused
 							rs_data_row.push_back("");						// SQL_DATETIME_SUB - unused
-							rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) rs3_meta->getColumnDisplaySize(i))); // CHAR_OCTET_LENGTH
-							rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) i)); // ORDINAL_POSITION
+							rs_data_row.push_back((int64_t) rs3_meta->getColumnDisplaySize(i)); // CHAR_OCTET_LENGTH
+							rs_data_row.push_back((int64_t) i); // ORDINAL_POSITION
 							rs_data_row.push_back(rs3_meta->isNullable(i)? "YES":"NO");		// IS_NULLABLE
 #if 0
 							rs_data_row.push_back("");	// SCOPE_CATALOG - unused
@@ -2060,14 +2060,14 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 			rs_data_row.push_back(rs->getString(7));	// KEY_SEQ
 
 			int lFlag = !rs->getString(8).compare("ON UPDATE CASCADE")? importedKeyCascade: importedKeyNoAction;
-			rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) lFlag));	// UPDATE_RULE
+			rs_data_row.push_back((int64_t) lFlag);	// UPDATE_RULE
 
 			lFlag = !rs->getString(8).compare("ON DELETE CASCADE")? importedKeyCascade: importedKeyNoAction;
-			rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) lFlag));	// DELETE_RULE
+			rs_data_row.push_back((int64_t) lFlag);	// DELETE_RULE
 
 			rs_data_row.push_back(rs->getString(9));	// FK_NAME
 			rs_data_row.push_back("");					// PK_NAME
-			rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) importedKeyNotDeferrable));	// DEFERRABILITY
+			rs_data_row.push_back((int64_t) importedKeyNotDeferrable);	// DEFERRABILITY
 
 			rs_data.push_back(rs_data_row);
 		}
@@ -2115,17 +2115,17 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 
 				// ToDo: Extracting just the first column
 				rs_data_row.push_back(referenced_fields["REFERENCES"].front());				// FKCOLUMN_NAME
-				rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) kSequence++));	// KEY_SEQ
+				rs_data_row.push_back((int64_t) kSequence++);	// KEY_SEQ
 
 				
-				rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) update_delete_action["ON UPDATE"]));	// UPDATE_RULE
+				rs_data_row.push_back((int64_t) update_delete_action["ON UPDATE"]);	// UPDATE_RULE
 
-				rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) update_delete_action["ON DELETE"]));	// DELETE_RULE
+				rs_data_row.push_back((int64_t) update_delete_action["ON DELETE"]);	// DELETE_RULE
 
 				rs_data_row.push_back(constraint_name);		// FK_NAME
 				// ToDo: Should it really be PRIMARY?
 				rs_data_row.push_back("");					// PK_NAME
-				rs_data_row.push_back(my_i_to_a(buf, sizeof(buf)-1, (long) importedKeyNotDeferrable));	// DEFERRABILITY
+				rs_data_row.push_back((int64_t) importedKeyNotDeferrable);	// DEFERRABILITY
 
 				rs_data.push_back(rs_data_row);
 			} while (1);
@@ -3111,8 +3111,6 @@ MySQL_ConnectionMetaData::getTypeInfo()
 	rs_field_data.push_back("SQL_DATETIME_SUB");
 	rs_field_data.push_back("NUM_PREC_RADIX");
 
-	char buf[20];
-
 	MySQL_ArtResultSet::rset_t rs_data;
 	int i = 0;
 	while (mysqlc_types[i].typeName) {
@@ -3120,23 +3118,23 @@ MySQL_ConnectionMetaData::getTypeInfo()
 		const TypeInfoDef * const curr = &mysqlc_types[i];
 
 		rs_data_row.push_back(curr->typeName);
-		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->dataType));
-		rs_data_row.push_back(my_l_to_a(buf, sizeof(buf) - 1, curr->precision));
+		rs_data_row.push_back((int64_t) curr->dataType);
+		rs_data_row.push_back((int64_t) curr->precision);
 		rs_data_row.push_back(curr->literalPrefix);
 		rs_data_row.push_back(curr->literalSuffix);
 		rs_data_row.push_back(curr->createParams);
-		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->nullable));
-		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->caseSensitive));
-		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->searchable));
-		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->isUnsigned));
-		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->fixedPrecScale));
-		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->autoIncrement));
+		rs_data_row.push_back((int64_t)  curr->nullable);
+		rs_data_row.push_back((int64_t)  curr->caseSensitive);
+		rs_data_row.push_back((int64_t)  curr->searchable);
+		rs_data_row.push_back((int64_t)  curr->isUnsigned);
+		rs_data_row.push_back((int64_t)  curr->fixedPrecScale);
+		rs_data_row.push_back((int64_t)  curr->autoIncrement);
 		rs_data_row.push_back(curr->localTypeName);
-		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->minScale));
-		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->maxScale));
-		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->sqlDataType));
-		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->sqlDateTimeSub));
-		rs_data_row.push_back(my_i_to_a(buf, sizeof(buf) - 1, curr->numPrecRadix));
+		rs_data_row.push_back((int64_t)  curr->minScale);
+		rs_data_row.push_back((int64_t)  curr->maxScale);
+		rs_data_row.push_back((int64_t)  curr->sqlDataType);
+		rs_data_row.push_back((int64_t)  curr->sqlDateTimeSub);
+		rs_data_row.push_back((int64_t)  curr->numPrecRadix);
 
 		rs_data.push_back(rs_data_row);
 		i++;
