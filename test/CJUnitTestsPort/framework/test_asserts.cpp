@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "test_asserts.h"
 #include "test_listener.h"
 #include "math.h"
+#include <sstream>
 
 
 namespace testsuite
@@ -32,7 +33,11 @@ void assertTrue(const char * msg, bool expression,
 {
   if (!expression)
   {
-    TestsListener::testHasFailed();
+    std::stringstream errmsg;
+    errmsg.str("");
+    errmsg << "assertTrue() failed at " << file << " on line " << line;
+    errmsg << ": '" << msg << "'";
+    TestsListener::testHasFailed(errmsg.str());
   }
 }
 
@@ -47,19 +52,33 @@ void assertEquals(const char * expected, const char * result,
 void assertEquals(bool expected, bool result,
                   const char* file, int line)
 {
-  assertTrue(NULL, expected == result, file, line);
+  if (expected != result)
+  {
+    std::stringstream errmsg;
+    errmsg.str("");
+    errmsg << "assertEquals(boolean) failed at " << file << " on line " << line;
+    TestsListener::testHasFailed(errmsg.str());
+  }
+
 }
 
 void assertEquals(int expected, int result
                   , const char* file, int line)
 {
-  assertTrue(NULL, expected == result, file, line);
+  if (expected != result)
+  {
+    std::stringstream errmsg;
+    errmsg.str("");
+    errmsg << "assertEquals(boolean) failed at " << file << " on line " << line;
+    errmsg << " expecting '" << expected << "' got '" << result << "'";
+    TestsListener::testHasFailed(errmsg.str());
+  }
 }
 
 bool isNaN(double smth)
 {
-  bool lessThanZero=    ( smth <  0.0 );
-  bool moreOrEqualZero= ( smth >= 0.0 );
+  bool lessThanZero=(smth < 0.0);
+  bool moreOrEqualZero=(smth >= 0.0);
 
   return !(lessThanZero || moreOrEqualZero);
 }
@@ -110,8 +129,11 @@ void assertEqualsEpsilon(const double & expected, const double & result
     return;
   }
 
-
-  TestsListener::testHasFailed();
+  std::stringstream errmsg;
+  errmsg.str("");
+  errmsg << "assertEquals(double) failed at " << file << " on line " << line;
+  errmsg << " expecting '" << expected << "' got '" << result << "'";
+  TestsListener::testHasFailed(errmsg.str());
 }
 
 void assertEquals(const String & expected, const String & result
@@ -119,7 +141,11 @@ void assertEquals(const String & expected, const String & result
 {
   if (expected != result)
   {
-    TestsListener::testHasFailed();
+    std::stringstream errmsg;
+    errmsg.str("");
+    errmsg << "assertEquals(std::string) failed at " << file << " on line " << line;
+    errmsg << " expecting '" << expected << "' got '" << result << "'";
+    TestsListener::testHasFailed(errmsg.str());
   }
 }
 
@@ -127,8 +153,11 @@ void fail(const char* reason, const char* file, int line)
 {
   // if( verbose...
   // TestsListener
-
-  TestsListener::testHasFailed( reason );
+  std::stringstream errmsg;
+  errmsg.str("");
+  errmsg << "Failed at " << file << " on line " << line;
+  errmsg << "reason: '" << reason << "'";
+  TestsListener::testHasFailed(errmsg.str());
 }
 
 }

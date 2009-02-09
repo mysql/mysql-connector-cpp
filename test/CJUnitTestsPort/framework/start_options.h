@@ -24,7 +24,7 @@
 
 #include "../common/ccppTypes.h"
 #include "../common/stringutils.h"
-
+#include <stdlib.h>
 
 namespace testsuite
 {
@@ -56,6 +56,7 @@ enum ParameterOrder
 struct StartOptions
 {
   bool verbose;
+  bool verbose_summary;
   TestsFilter filter;
 
   String dbUrl;
@@ -64,13 +65,13 @@ struct StartOptions
   String dbSchema;
 
   StartOptions()
-          : verbose(false)
+  : verbose(false), verbose_summary(false)
 
   {
   }
 
   StartOptions(int paramsNumber, char** paramsValues)
-          : verbose(false)
+  : verbose(false), verbose_summary(false)
   {
     String * _param[ poLast - poFirst - 1 ]={&dbUrl, &dbUser, &dbPasswd, &dbSchema};
 
@@ -80,14 +81,25 @@ struct StartOptions
       while (--paramsNumber)
       {
         ciString param(*(++paramsValues));
-        if (param.substr(0, 2) == "--")
-        {
 
-          if (param == "--verbose")
-          {
+        if (param.substr(0, 2) == "--")
+        {          
+          if (param.substr(0, sizeof("--verbose") - 1) == "--verbose")
+          {            
             verbose=true;
+            verbose_summary=true;
           }
-        } else if ( ( curParam + 1 ) < poLast)
+          size_t switch_pos;
+
+          if ((switch_pos=param.find_last_of("=", std::string::npos)) != std::string::npos)
+          {
+            switch_pos++;
+            if (param.length() > switch_pos)
+            {
+              verbose_summary=false;
+            }
+          }          
+        } else if ((curParam + 1) < poLast)
         {
           curParam=static_cast<ParameterOrder> (curParam + 1);
           *_param[ curParam ]=String(param.c_str());

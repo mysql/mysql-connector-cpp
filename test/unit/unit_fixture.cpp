@@ -59,8 +59,9 @@ void unit_fixture::setUp()
   }
 
   /* TODO: conect message incl. version using logDebug() */
-  logDebug("Driver: " + driver->getName());
+
   /*
+   logDebug("Driver: " + driver->getName());
            + " " + String(driver->getMajorVersion() + driver->getMajorVersion + String(".") + driver->getMinorVersion());*/
 
   con->setSchema(db);
@@ -126,21 +127,19 @@ sql::Connection * unit_fixture::getConnection()
   if (driver == NULL)
   {
     driver=get_driver_instance();
-    logMsg(String("Done: loaded ") + driver->getName());
   }
 
-  logMsg(String("... connect(") + url + ", " + user + ", " + passwd + ")");
   return driver->connect(url, user, passwd);
 }
 
 void unit_fixture::logMsg(const String message)
 {
-  TestsListener::theInstance().messagesLog() << message << std::endl;
+  TestsListener::theInstance().messagesLog(message);
 }
 
 void unit_fixture::logErr(const String message)
 {
-  TestsListener::theInstance().errorsLog() << message << std::endl;
+  TestsListener::theInstance().errorsLog(message);
 }
 
 void unit_fixture::logDebug(const String message)
