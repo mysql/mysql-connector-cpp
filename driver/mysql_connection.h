@@ -24,7 +24,6 @@
 
 #include <cppconn/connection.h>
 #include <list>
-#include "mysql_util.h"
 struct st_mysql;
 
 
