@@ -47,6 +47,8 @@ public:
     TEST_CASE(test_assert_equals);
     TEST_CASE(test_assert_equals_fail);
     TEST_CASE(test_assert_message);
+    TEST_CASE(test_assert_lessthan);
+    TEST_CASE(test_assert_greaterthan);
   }
 
   /**
@@ -100,6 +102,24 @@ public:
    * Demo of ASSERT_MESSAGE
    */
   void test_assert_message();
+
+  /**
+   * Demo of ASSERT_LT
+   *
+   * At the time of writing ASSERT_LT is only defined for int and unsigned int
+   * comparisons. This has the nice  side effect that you can rewrite
+   * "less or equal than" conditions as "less than" conditions.
+   */
+  void test_assert_lessthan();
+
+  /**
+   * Demo of ASSERT_GT
+   *
+   * At the time of writing ASSERT_GR is only defined for int and unsigned int
+   * comparisons. This has the nice  side effect that you can rewrite
+   * "greater or equal than" conditions as "greater than" conditions.
+   */
+  void test_assert_greaterthan();
 
 };
 

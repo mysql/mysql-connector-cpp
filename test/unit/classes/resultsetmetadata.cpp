@@ -72,6 +72,49 @@ void resultsetmetadata::init()
   columns.push_back(columndefinition("DATE", "DATE", sql::DataType::DATE, "2009-02-09", true));
   columns.push_back(columndefinition("DATETIME", "DATETIME", sql::DataType::TIMESTAMP, "2009-02-09 20:05:43", true));
   columns.push_back(columndefinition("TIMESTAMP", "TIMESTAMP", sql::DataType::TIMESTAMP, "2038-01-09 03:14:07", true));
+  columns.push_back(columndefinition("TIME", "TIME", sql::DataType::TIME, "-838:59:59", true));
+  columns.push_back(columndefinition("YEAR", "YEAR", sql::DataType::YEAR, "1901", true));
+  columns.push_back(columndefinition("YEAR", "YEAR(4)", sql::DataType::YEAR, "2009", false));
+  columns.push_back(columndefinition("YEAR", "YEAR(2)", sql::DataType::YEAR, "1", false));
+  columns.push_back(columndefinition("CHAR", "CHAR", sql::DataType::CHAR, "a", true));
+  columns.push_back(columndefinition("CHAR", "CHAR(255)", sql::DataType::CHAR, "abc", false));
+  columns.push_back(columndefinition("CHAR", "NATIONAL CHAR(255)", sql::DataType::CHAR, "abc", false));
+  columns.push_back(columndefinition("CHAR", "CHAR(255) CHARACTER SET 'utf8'", sql::DataType::CHAR, "abc", false));
+  /* TODO this might be server dependent! */
+  columns.push_back(columndefinition("CHAR", "CHAR(255) CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::BINARY, "abc", false));
+  columns.push_back(columndefinition("CHAR", "CHAR(255) CHARACTER SET 'ucs2'", sql::DataType::CHAR, "abc", false));
+  /* The CHAR BYTE data type is an alias for the BINARY data type. This is a compatibility feature.  */
+  columns.push_back(columndefinition("BINARY", "CHAR(255) BYTE", sql::DataType::BINARY, "abc", false));
+  /*  Specifying the CHARACTER SET binary  attribute for a character data type
+   causes the column to be created as the corresponding binary data type:
+   CHAR becomes BINARY, VARCHAR becomes VARBINARY, and TEXT becomes BLOB.
+   For the ENUM and SET data types, this does not occur; they are created as declared.   */
+  columns.push_back(columndefinition("BINARY", "CHAR(255) CHARACTER SET 'binary'", sql::DataType::BINARY, "abc", false));
+  columns.push_back(columndefinition("VARCHAR", "VARCHAR(10)", sql::DataType::VARCHAR, "a", true));
+  columns.push_back(columndefinition("VARCHAR", "VARCHAR(10) CHARACTER SET 'utf8'", sql::DataType::VARCHAR, "a", false));
+  /* TODO this might be server dependent! */
+  columns.push_back(columndefinition("VARCHAR", "VARCHAR(10) CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::VARBINARY, "a", false));
+  columns.push_back(columndefinition("VARBINARY", "VARCHAR(10) BYTE", sql::DataType::VARBINARY, "a", true));
+  columns.push_back(columndefinition("BINARY", "BINARY(1)", sql::DataType::BINARY, "a", true));
+  columns.push_back(columndefinition("VARBINARY", "VARBINARY(1)", sql::DataType::VARBINARY, "a", true));
+  columns.push_back(columndefinition("BLOB", "TINYBLOB", sql::DataType::LONGVARBINARY, "a", true));
+  columns.push_back(columndefinition("TEXT", "TINYTEXT", sql::DataType::LONGVARCHAR, "a", true));
+  columns.push_back(columndefinition("TEXT", "TINYTEXT", sql::DataType::LONGVARCHAR, "a", true));
+  columns.push_back(columndefinition("TEXT", "TINYTEXT CHARACTER SET 'utf8'", sql::DataType::LONGVARCHAR, "a", false));
+  /* TODO this might be server dependent! */
+  columns.push_back(columndefinition("TEXT", "TINYTEXT CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", false));
+  columns.push_back(columndefinition("BLOB", "MEDIUMBLOB", sql::DataType::LONGVARBINARY, "a", true));
+  columns.push_back(columndefinition("TEXT", "MEDIUMTEXT", sql::DataType::LONGVARCHAR, "a", true));
+  columns.push_back(columndefinition("TEXT", "MEDIUMTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", false));
+  /* TODO this might be server dependent! */
+  columns.push_back(columndefinition("TEXT", "MEDIUMTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", false));
+  columns.push_back(columndefinition("BLOB", "LONGBLOB", sql::DataType::LONGVARBINARY, "a", false));
+  columns.push_back(columndefinition("TEXT", "LONGTEXT", sql::DataType::LONGVARCHAR, "a", true));
+  columns.push_back(columndefinition("TEXT", "LONGTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", false));
+  /* TODO this might be server dependent! */
+  columns.push_back(columndefinition("TEXT", "LONGTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", false));
+  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no')", sql::DataType::CHAR, "yes", true));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no')", sql::DataType::CHAR, "yes", true));
 }
 
 void resultsetmetadata::getCatalogName()
@@ -125,7 +168,7 @@ void resultsetmetadata::getColumnCount()
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
     runStandardQuery();
     ResultSetMetaData meta(res->getMetaData());
-    ASSERT_EQUALS((unsigned int)5, meta->getColumnCount());
+    ASSERT_EQUALS((unsigned int) 5, meta->getColumnCount());
 
     res->close();
     try
@@ -153,11 +196,11 @@ void resultsetmetadata::getColumnDisplaySize()
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
     runStandardQuery();
     ResultSetMetaData meta(res->getMetaData());
-    ASSERT_EQUALS((unsigned int)5, meta->getColumnDisplaySize(1));
-    ASSERT_EQUALS((unsigned int)1, meta->getColumnDisplaySize(2));
-    ASSERT_EQUALS((unsigned int)5, meta->getColumnDisplaySize(3));
-    ASSERT_EQUALS((unsigned int)1, meta->getColumnDisplaySize(4));
-    ASSERT_EQUALS((unsigned int)3, meta->getColumnDisplaySize(5));
+    ASSERT_EQUALS((unsigned int) 5, meta->getColumnDisplaySize(1));
+    ASSERT_EQUALS((unsigned int) 1, meta->getColumnDisplaySize(2));
+    ASSERT_EQUALS((unsigned int) 5, meta->getColumnDisplaySize(3));
+    ASSERT_EQUALS((unsigned int) 1, meta->getColumnDisplaySize(4));
+    ASSERT_EQUALS((unsigned int) 3, meta->getColumnDisplaySize(5));
 
     try
     {
@@ -302,7 +345,7 @@ void resultsetmetadata::getColumnType()
 
         sql.str("");
         sql << "... OK, SQL:" << it->sqldef << " -> Type = " << it->name;
-        sql << " (" << it->ctype << ")";
+        sql << " (Code = " << it->ctype << ")";
         logMsg(sql.str());
 
       } catch (sql::SQLException &e)
@@ -333,19 +376,13 @@ void resultsetmetadata::getPrecision()
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
     runStandardQuery();
     ResultSetMetaData meta(res->getMetaData());
-    
-    std::stringstream msg;
-    msg.str("");
-    msg << "getPrecision(1) = " << meta->getPrecision(1);
-    logMsg(msg.str());
 
-    ASSERT_EQUALS((unsigned int)5, meta->getPrecision(1));
-    ASSERT_EQUALS((unsigned int)1, meta->getPrecision(2));
-    ASSERT_EQUALS((unsigned int)5, meta->getPrecision(3));
-    ASSERT_EQUALS((unsigned int)1, meta->getPrecision(4));
-    ASSERT_EQUALS((unsigned int)3, meta->getPrecision(5));
+    ASSERT_GT((unsigned int) 4, meta->getPrecision(1));
+    ASSERT_GT((unsigned int) 0, meta->getPrecision(2));
+    ASSERT_GT((unsigned int) 4, meta->getPrecision(3));
+    ASSERT_GT((unsigned int) 0, meta->getPrecision(4));
+    ASSERT_GT((unsigned int) 2, meta->getPrecision(5));
 
-    res->close();
     try
     {
       meta->getPrecision(6);
@@ -372,6 +409,138 @@ void resultsetmetadata::getPrecision()
   }
 }
 
+void resultsetmetadata::getScale()
+{
+  logMsg("resultsetmetadata::getScale() - MySQL_ResultSetMetaData::getScale");
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    runStandardQuery();
+    ResultSetMetaData meta(res->getMetaData());
+
+    try
+    {
+      meta->getScale(6);
+      FAIL("Invalid offset 6 not recognized");
+    } catch (sql::SQLException &e)
+    {
+    }
+
+    res->close();
+    try
+    {
+      meta->getScale(1);
+      FAIL("Can fetch meta from invalid resultset");
+    } catch (sql::SQLException &e)
+    {
+    }
+
+
+  } catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    FAIL(e.what());
+  }
+}
+
+void resultsetmetadata::getSchemaName()
+{
+  logMsg("resultsetmetadata::getSchemaName() - MySQL_ResultSetMetaData::getSchemaName");
+  int i;
+  std::stringstream sql;
+
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT)");
+    stmt->execute("INSERT INTO test(id) VALUES (1)");
+    res.reset(stmt->executeQuery("SELECT * FROM test"));
+    ResultSetMetaData meta2(res->getMetaData());
+    ASSERT_EQUALS(meta2->getSchemaName(1), con->getSchema());
+
+    runStandardQuery();
+    ResultSetMetaData meta(res->getMetaData());
+    for (i=1; i < 6; i++)
+      ASSERT_EQUALS(meta->getSchemaName(i), "");
+    
+    try
+    {
+      meta->getScale(6);
+      FAIL("Invalid offset 6 not recognized");
+    } catch (sql::SQLException &e)
+    {
+    }
+
+    res->close();
+    try
+    {
+      meta->getScale(1);
+      FAIL("Can fetch meta from invalid resultset");
+    } catch (sql::SQLException &e)
+    {
+    }
+
+
+  } catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    FAIL(e.what());
+  }
+}
+
+void resultsetmetadata::getTableName()
+{
+  logMsg("resultsetmetadata::getTableName() - MySQL_ResultSetMetaData::getTableName");
+  int i;
+  std::stringstream sql;
+
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT)");
+    stmt->execute("INSERT INTO test(id) VALUES (1)");
+    res.reset(stmt->executeQuery("SELECT * FROM test"));
+    ResultSetMetaData meta2(res->getMetaData());
+    ASSERT_EQUALS(meta2->getTableName(1), "test");
+
+    runStandardQuery();
+    ResultSetMetaData meta(res->getMetaData());
+    for (i=1; i < 6; i++)
+      ASSERT_EQUALS(meta->getTableName(i), "");
+
+    try
+    {
+      meta->getScale(6);
+      FAIL("Invalid offset 6 not recognized");
+    } catch (sql::SQLException &e)
+    {
+    }
+
+    res->close();
+    try
+    {
+      meta->getScale(1);
+      FAIL("Can fetch meta from invalid resultset");
+    } catch (sql::SQLException &e)
+    {
+    }
+
+
+  } catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    FAIL(e.what());
+  }
+}
 
 void resultsetmetadata::runStandardQuery()
 {

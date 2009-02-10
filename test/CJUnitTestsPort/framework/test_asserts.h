@@ -25,52 +25,70 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "../common/ccppTypes.h"
 
 #ifndef __LINE__
-  #define __LINE__ "(line number n/a)"
+#define __LINE__ "(line number n/a)"
 #endif 
 
 namespace testsuite
 {
-void fail               ( const char* reason, const char* file, int line );
+void fail(const char* reason, const char* file, int line);
 
-void assertTrue         ( const char * msg, bool expression
-                        , const char* file, int line );
+void assertTrue(const char * msg, bool expression
+                , const char* file, int line);
 
-void assertEquals       ( const char * expected, const char * result
-                        , const char* file, int line );
+void assertEquals(const char * expected, const char * result
+                  , const char* file, int line);
 
-void assertEquals       ( int expected, int result
-                        , const char* file, int line );
+void assertEquals(int expected, int result
+                  , const char* file, int line);
 
-void assertEquals       ( unsigned int expected, unsigned int result
-                        , const char* file, int line );
+void assertEquals(unsigned int expected, unsigned int result
+                  , const char* file, int line);
 
-void assertEquals       ( bool expected, bool result
-                        , const char* file, int line );
+void assertEquals(bool expected, bool result
+                  , const char* file, int line);
 
-void assertEquals       ( const double & expected, const double & result
-                        , const char* file, int line );
+void assertEquals(const double & expected, const double & result
+                  , const char* file, int line);
 
-void assertEquals       ( const float & expected, const float & result
-                        , const char * file, int line );
+void assertEquals(const float & expected, const float & result
+                  , const char * file, int line);
 
-void assertEquals       ( const long double & expected
-                        , const long double & result
-                        , const char * file, int line );
+void assertEquals(const long double & expected
+                  , const long double & result
+                  , const char * file, int line);
 
-void assertEqualsEpsilon( const double & expected, const double & result
-                        , const double & epsilon, const char * file, int line);
+void assertEqualsEpsilon(const double & expected, const double & result
+                         , const double & epsilon, const char * file, int line);
 
-void assertEquals       ( const String & expected, const String & result
-                        , const char* file, int line);
+void assertEquals(const String & expected, const String & result
+                  , const char* file, int line);
 
-void assertTrueMessage  ( bool exp, const String & msg, const char* file
-                        , int line );
+void assertTrueMessage(bool exp, const String & msg, const char* file
+                       , int line);
+
+void assertGreaterThan(int expected, int result
+                       , const char* file, int line);
+
+void assertGreaterThan(unsigned int expected, unsigned int result
+                       , const char* file, int line);
+
+void assertLessThan(int expected, int result
+                    , const char* file, int line);
+
+void assertLessThan(unsigned int expected, unsigned int result
+                    , const char* file, int line);
 }
 
 // Macros should be used inside testsuite namespace
 
 #define ASSERT_EQUALS( expected, result) \
 	assertEquals( expected, result, __FILE__, __LINE__ )
+
+#define ASSERT_LT( expected, result) \
+	assertLessThan( expected, result, __FILE__, __LINE__ )
+
+#define ASSERT_GT( expected, result) \
+	assertGreaterThan( expected, result, __FILE__, __LINE__ )
 
 #define ASSERT_EQUALS_EPSILON( expected, result, epsilon) \
 	assertEqualsEpsilon( expected, result, epsilon, __FILE__, __LINE__ )
