@@ -339,11 +339,11 @@ void resultsetmetadata::getPrecision()
     runStandardQuery();
     ResultSetMetaData meta(res->getMetaData());
 
-    ASSERT_GREATER((unsigned int) 4, meta->getPrecision(1));
-    ASSERT_GREATER((unsigned int) 0, meta->getPrecision(2));
-    ASSERT_GREATER((unsigned int) 4, meta->getPrecision(3));
-    ASSERT_GREATER((unsigned int) 0, meta->getPrecision(4));
-    ASSERT_GREATER((unsigned int) 2, meta->getPrecision(5));
+    ASSERT_GT((unsigned int) 4, meta->getPrecision(1));
+    ASSERT_GT((unsigned int) 0, meta->getPrecision(2));
+    ASSERT_GT((unsigned int) 4, meta->getPrecision(3));
+    ASSERT_GT((unsigned int) 0, meta->getPrecision(4));
+    ASSERT_GT((unsigned int) 2, meta->getPrecision(5));
 
     try
     {

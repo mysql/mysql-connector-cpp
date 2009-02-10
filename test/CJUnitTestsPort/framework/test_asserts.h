@@ -84,10 +84,10 @@ void assertLessThan(unsigned int expected, unsigned int result
 #define ASSERT_EQUALS( expected, result) \
 	assertEquals( expected, result, __FILE__, __LINE__ )
 
-#define ASSERT_LESS( expected, result) \
+#define ASSERT_LT( expected, result) \
 	assertLessThan( expected, result, __FILE__, __LINE__ )
 
-#define ASSERT_GREATER( expected, result) \
+#define ASSERT_GT( expected, result) \
 	assertGreaterThan( expected, result, __FILE__, __LINE__ )
 
 #define ASSERT_EQUALS_EPSILON( expected, result, epsilon) \

@@ -126,6 +126,40 @@ void example_test_class::test_assert_equals()
   ASSERT_EQUALS(f, f);
 }
 
+void example_test_class::test_assert_lessthan()
+{
+  logMsg("ASSERT_LT() macro demo");
+  /*
+   Be careful: ASSERT_LT(expected, value) is not available for each and every type!
+   In fact at the time of writing its only available for int and unsigned int
+   */
+  int a=1, b=2;
+
+  ASSERT_LT(b, a);
+  ASSERT_LT((unsigned int) b, (unsigned int) a);
+
+  /* There is no "less or equal than", use LT instead.
+  Example: 1 <= 2 */
+  ASSERT_LT(3, 1);
+}
+
+void example_test_class::test_assert_greaterthan()
+{
+  logMsg("ASSERT_GT() macro demo");
+  /*
+   Be careful: ASSERT_GT(expected, value) is not available for each and every type!
+   In fact at the time of writing its only available for int and unsigned int
+   */
+  int a=1, b=2;
+
+  ASSERT_GT(a, b);
+  ASSERT_GT((unsigned int) a, (unsigned int) b);
+
+  /* There is no "greater or equal than", use GT instead.
+  Example: 2 >= 1 */
+  ASSERT_GT(2, 0);
+}
+
 void example_test_class::test_assert_equals_fail()
 {
   logMsg("ASSERT_EQUALS failure");
