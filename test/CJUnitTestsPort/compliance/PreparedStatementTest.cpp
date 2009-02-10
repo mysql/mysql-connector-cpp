@@ -70,14 +70,12 @@ void PreparedStatementTest::testGetMetaData()
     //rsmdPrep= pstmt->getMetaData();
 
     rsmdPrep.reset(pstmt->executeQuery()->getMetaData());
-  } catch (sql::SQLException & sqe)
-  {
+  } catch (sql::SQLException & sqe) {
     statflag=true;
     logErr(String("SQL std::exception * ") + sqe.what());
   }
 
-  if (statflag == false)
-  {
+  if (statflag == false) {
     logMsg(String("Executing Query : ") + sPrepStmt);
 
     rs.reset(stmt->executeQuery(sPrepStmt));
@@ -133,16 +131,13 @@ void PreparedStatementTest::testClearParameters()
   try
   {
     reSet.reset(pstmt->executeQuery());
-  } catch (sql::SQLException &)
-  {
+  } catch (sql::SQLException &) {
     sqlexcflag=true;
   }
 
-  if (sqlexcflag)
-  {
+  if (sqlexcflag) {
     logMsg("clearParameters Method clears the current Parameters ");
-  } else
-  {
+  } else {
     logErr("clearParameters Method does not clear the current Parameters");
     FAIL("Call to clearParameters Method is Failed!");
   }
@@ -183,11 +178,9 @@ void PreparedStatementTest::testExecute01()
   pstmt->setInt(1, 1);
   retValue=pstmt->execute();
 
-  if (!retValue)
-  {
+  if (!retValue) {
     logMsg("execute Method executes the SQL Statement ");
-  } else
-  {
+  } else {
     logErr("execute Method does not execute the SQL Statement");
     FAIL("Call to execute Method is Failed!");
   }
@@ -227,11 +220,9 @@ void PreparedStatementTest::testExecute02()
   pstmt.reset(conn->prepareStatement(sPrepStmt));
   pstmt->setInt(1, 0);
   retValue=pstmt->execute();
-  if (!retValue)
-  {
+  if (!retValue) {
     logMsg("execute Method executes the SQL Statement ");
-  } else
-  {
+  } else {
     logErr("execute Method does not execute the SQL Statment");
     FAIL("Call to execute Method is Failed!");
   }
@@ -273,16 +264,13 @@ void PreparedStatementTest::testExecute03()
   try
   {
     retValue=pstmt->execute();
-  } catch (sql::SQLException &)
-  {
+  } catch (sql::SQLException &) {
     sqlexcflag=true;
   }
 
-  if (sqlexcflag)
-  {
+  if (sqlexcflag) {
     logMsg("execute Method executes the SQL Statement ");
-  } else
-  {
+  } else {
     logErr("execute Method does not execute the SQL Statment");
     FAIL("Call to execute Method is Failed!");
   }
@@ -321,11 +309,9 @@ void PreparedStatementTest::testExecuteQuery01()
   pstmt->setInt(1, 1);
   reSet.reset(pstmt->executeQuery());
 
-  if (reSet.get() != NULL)
-  {
+  if (reSet.get() != NULL) {
     logMsg("executeQuery Method executes the SQL Statement ");
-  } else
-  {
+  } else {
     logErr("executeQuery Method does not execute the SQL Statment");
     FAIL("Call to executeQuery Method is Failed!");
   }
@@ -366,11 +352,9 @@ void PreparedStatementTest::testExecuteQuery02()
   pstmt->setInt(1, 0);
   reSet.reset(pstmt->executeQuery());
 
-  if (!reSet->next())
-  {
+  if (!reSet->next()) {
     logMsg("executeQuery Method executes the SQL Statement ");
-  } else
-  {
+  } else {
     logErr("executeQuery Method does not execute the SQL Statment");
     FAIL("Call to executeQuery Method is Failed!");
   }
@@ -410,16 +394,13 @@ void PreparedStatementTest::testExecuteQuery03()
   try
   {
     reSet.reset(pstmt->executeQuery());
-  } catch (sql::SQLException &)
-  {
+  } catch (sql::SQLException &) {
     sqlexcflag=true;
   }
 
-  if (sqlexcflag)
-  {
+  if (sqlexcflag) {
     logMsg("executeQuery Method executes the SQL Statement ");
-  } else
-  {
+  } else {
     logErr("executeQuery Method does not execute the SQL Statment");
     FAIL("Call to executeQuery Method is Failed!");
   }
@@ -462,11 +443,9 @@ void PreparedStatementTest::testExecuteUpdate01()
   pstmt->setInt(1, 1);
   retValue=pstmt->executeUpdate();
 
-  if (retValue >= 0)
-  {
+  if (retValue >= 0) {
     logMsg("executeUpdate Method executes the SQL Statement ");
-  } else
-  {
+  } else {
     logErr("executeUpdate Method does not execute the SQL Statment");
     FAIL("Call to executeUpdate Method is Failed!");
   }
@@ -508,11 +487,9 @@ void PreparedStatementTest::testExecuteUpdate02()
   pstmt->setInt(1, 0);
   retValue=pstmt->executeUpdate();
 
-  if (retValue >= 0)
-  {
+  if (retValue >= 0) {
     logMsg("executeUpdate Method executes the SQL Statement ");
-  } else
-  {
+  } else {
     logErr("executeUpdate Method does not execute the SQL Statment");
     FAIL("Call to executeUpdate Method is Failed!");
   }
@@ -552,15 +529,12 @@ void PreparedStatementTest::testExecuteUpdate03()
   try
   {
     retValue=pstmt->executeUpdate();
-  } catch (sql::SQLException &)
-  {
+  } catch (sql::SQLException &) {
     sqlexcflag=true;
   }
-  if (sqlexcflag)
-  {
+  if (sqlexcflag) {
     logMsg("executeUpdate Method executes the SQL Statement ");
-  } else
-  {
+  } else {
     logErr("executeUpdate Method does not execute the SQL Statment");
     FAIL("Call to executeUpdate Method is Failed!");
   }
@@ -616,8 +590,7 @@ void PreparedStatementTest::testSetBigDecimal01()
   TestsListener::theInstance().messagesLog() << "Return Value "
           << retVal << std::endl;
 
-  if (retVal != 1)
-  {
+  if (retVal != 1) {
     logErr("Minimum Value not being updated in the Min_Val column");
     FAIL("Call to setBigDecimal Method is Failed!");
   }
@@ -627,11 +600,9 @@ void PreparedStatementTest::testSetBigDecimal01()
   rs->next();
   rBigDecimalVal=rs->getBigDecimal(1);
   logMsg(String("Returned BigDecimal Value after Updation:") + rBigDecimalVal);
-  if (rBigDecimalVal.compareTo(minBigDecimalVal) == 0)
-  {
+  if (rBigDecimalVal.compareTo(minBigDecimalVal) == 0) {
     logMsg("setBigDecimal Method sets the designated parameter to a BigDecimal value ");
-  } else
-  {
+  } else {
     logErr("setBigDecimal Method does not set the designated parameter to a BigDecimal value ");
     FAIL("Call to setBigDecimal Method is Failed!");
   }
@@ -685,11 +656,9 @@ void PreparedStatementTest::testSetBigDecimal02()
   rs->next();
   rBigDecimalVal=rs->getBigDecimal(1);
   logMsg(String("Returned BigDecimal Value after Updation:") + rBigDecimalVal);
-  if (rBigDecimalVal.compareTo(maxBigDecimalVal) == 0)
-  {
+  if (rBigDecimalVal.compareTo(maxBigDecimalVal) == 0) {
     logMsg("setBigDecimal Method sets the designated parameter to a BigDecimal value ");
-  } else
-  {
+  } else {
     logErr("setBigDecimal Method does not set the designated parameter to a BigDecimal value ");
     FAIL("Call to setBigDecimal Method is Failed!");
   }
@@ -753,11 +722,9 @@ void PreparedStatementTest::testSetBoolean01()
   TestsListener::theInstance().messagesLog()
           << "Returned Boolean Value after Updation:" << rBooleanVal << std::endl;
 
-  if (rBooleanVal == bMinBooleanVal)
-  {
+  if (rBooleanVal == bMinBooleanVal) {
     logMsg("setBoolean Method sets the designated parameter to a Boolean value ");
-  } else
-  {
+  } else {
     logErr("setBoolean Method does not set the designated parameter to a Boolean value ");
     FAIL("Call to setBoolean Method is Failed!");
   }
@@ -815,11 +782,9 @@ void PreparedStatementTest::testSetBoolean02()
   TestsListener::theInstance().messagesLog()
           << "Returned Boolean Value after Updation:" << rBooleanVal << std::endl;
 
-  if (rBooleanVal == bMaxBooleanVal)
-  {
+  if (rBooleanVal == bMaxBooleanVal) {
     logMsg("setBoolean Method sets the designated parameter to a Boolean value ");
-  } else
-  {
+  } else {
     logErr("setBoolean Method does not set the designated parameter to a Boolean value ");
     FAIL("Call to setBoolean Method is Failed!");
   }
@@ -882,12 +847,10 @@ void PreparedStatementTest::testSetByte01()
       logErr("setByte Method does not set the designated parameter to a Byte value ");
       FAIL("Call to setByte Method is Failed!");
     }
-  } catch (sql::SQLException & sqle)
-  {
+  } catch (sql::SQLException & sqle) {
     logErr(String("SQL std::exception * ") + sqle->what());
     FAIL("Call to setByte is Failed!");
-  } catch (std::exception * e)
-  {
+  } catch (std::exception * e) {
     logErr(String("Unexpected std::exception * ") + e->what());
     FAIL("Call to setByte Failed!", e);
   }
@@ -961,12 +924,10 @@ void PreparedStatementTest::testSetByte02()
       logErr("setByte Method does not set the designated parameter to a Byte value ");
       FAIL("Call to setByte Method is Failed!");
     }
-  } catch (sql::SQLException & sqle)
-  {
+  } catch (sql::SQLException & sqle) {
     logErr(String("SQL std::exception * ") + sqle->what());
     FAIL("Call to setByte is Failed!");
-  } catch (std::exception * e)
-  {
+  } catch (std::exception * e) {
     logErr(String("Unexpected std::exception * ") + e->what());
     FAIL("Call to setByte Failed!", e);
   }
@@ -1033,11 +994,9 @@ void PreparedStatementTest::testSetFloat010101()
   rs->next();
   rFloatVal=rs->getFloat(1);
   logMsg(String("Returned float Value after Updation:") + rFloatVal);
-  if (rFloatVal == minFloatVal)
-  {
+  if (rFloatVal == minFloatVal) {
     logMsg("setFloat Method sets the designated parameter to a float value ");
-  } else
-  {
+  } else {
     logErr("setFloat Method does not set the designated parameter to a float value ");
     FAIL("Call to setFloat Method is Failed!");
   }
@@ -1104,12 +1063,10 @@ void PreparedStatementTest::testSetFloat020202()
       logErr("setFloat Method does not set the designated parameter to a float value ");
       FAIL("Call to setFloat   Method is Failed!");
     }
-  } catch (sql::SQLException & sqle)
-  {
+  } catch (sql::SQLException & sqle) {
     logErr(String("SQL std::exception * ") + sqle->what());
     FAIL("Call to setFloat is Failed!");
-  } catch (std::exception * e)
-  {
+  } catch (std::exception * e) {
     logErr(String("Unexpected std::exception * ") + e->what());
     FAIL("Call to setFloat Failed!", e);
   }
@@ -1176,11 +1133,9 @@ void PreparedStatementTest::testSetInt01()
   TestsListener::theInstance().messagesLog()
           << "Returned int Value after Updation:" << rIntegerVal << std::endl;
 
-  if (rIntegerVal == minIntegerVal)
-  {
+  if (rIntegerVal == minIntegerVal) {
     logMsg("setInt Method sets the designated parameter to a int value ");
-  } else
-  {
+  } else {
     logErr("setInteger Method does not set the designated parameter to a int value ");
     FAIL("Call to setInt   Method is Failed!");
   }
@@ -1242,11 +1197,9 @@ void PreparedStatementTest::testSetInt02()
   TestsListener::theInstance().messagesLog()
           << "Value returned from ctssql.stmt: " << maxIntegerVal << std::endl;
 
-  if (rIntegerVal == maxIntegerVal)
-  {
+  if (rIntegerVal == maxIntegerVal) {
     logMsg("setInt Method sets the designated parameter to a int value ");
-  } else
-  {
+  } else {
     logErr("setInteger Method does not set the designated parameter to a int value ");
     FAIL("Call to setInt   Method is Failed!");
   }
@@ -1304,11 +1257,9 @@ void PreparedStatementTest::testSetDate01()
   rDateVal=rs->getDate(1);
   logMsg(String("Returned Date Value after Updation: ") + rDateVal);
   logMsg(String("Value returned from ctssql.stmt: ") + mfgDateVal);
-  if (rDateVal == mfgDateVal)
-  {
+  if (rDateVal == mfgDateVal) {
     logMsg("setDate Method sets the designated parameter to a Date value ");
-  } else
-  {
+  } else {
     logErr("setDate Method does not set the designated parameter to a Date value ");
     FAIL("Call to setDate Method is Failed!");
   }
@@ -1377,11 +1328,9 @@ void PreparedStatementTest::testSetDate02()
   logMsg("getDate() succeeds");
   logMsg(String("Returned Date Value after Updation: ") + rDateVal);
   logMsg(String("Value returned from ctssql.stmt: ") + mfgDateVal);
-  if (rDateVal == mfgDateVal)
-  {
+  if (rDateVal == mfgDateVal) {
     logMsg("setDate Method sets the designated parameter to a Date value ");
-  } else
-  {
+  } else {
     logErr(String("setDate Method does not set the designated parameter to a Date value ") + rDateVal + "!=" + mfgDateVal);
     FAIL("Call to setDate Method is Failed!");
   }
@@ -1441,11 +1390,9 @@ void PreparedStatementTest::testSetDouble01()
   TestsListener::theInstance().messagesLog()
           << "Value returned from ctssql.stmt: " << minDoubleVal << std::endl;
 
-  if (rDoubleVal == minDoubleVal)
-  {
+  if (rDoubleVal == minDoubleVal) {
     logMsg("setDouble Method sets the designated parameter to a Double value ");
-  } else
-  {
+  } else {
     logErr("setDouble Method does not set the designated parameter to a Double value ");
     FAIL("Call to setDouble Method is Failed!");
   }
@@ -1505,11 +1452,9 @@ void PreparedStatementTest::testSetDouble02()
   TestsListener::theInstance().messagesLog()
           << "Value returned from ctssql.stmt: " << maxDoubleVal << std::endl;
 
-  if (rDoubleVal == maxDoubleVal)
-  {
+  if (rDoubleVal == maxDoubleVal) {
     logMsg("setDouble Method sets the designated parameter to a Double value ");
-  } else
-  {
+  } else {
     logErr("setDouble Method does not set the designated parameter to a Double value ");
     FAIL("Call to setDouble Method is Failed!");
   }
@@ -1572,11 +1517,9 @@ void PreparedStatementTest::testSetLong01()
   TestsListener::theInstance().messagesLog()
           << "Value returned from ctssql.stmt: " << minLongVal << std::endl;
 
-  if (rLongVal == minLongVal)
-  {
+  if (rLongVal == minLongVal) {
     logMsg("setLong Method sets the designated parameter to a long value ");
-  } else
-  {
+  } else {
     logErr("setLong Method does not set the designated parameter to a long value ");
     FAIL("Call to setLong Method is Failed!");
   }
@@ -1637,11 +1580,9 @@ void PreparedStatementTest::testSetLong02()
   TestsListener::theInstance().messagesLog()
           << "Value returned from ctssql.stmt: " << maxLongVal << std::endl;
 
-  if (rLongVal == maxLongVal)
-  {
+  if (rLongVal == maxLongVal) {
     logMsg("setLong Method sets the designated parameter to a long value ");
-  } else
-  {
+  } else {
     logErr("setLong Method does not set the designated parameter to a long value ");
     FAIL("Call to setLong Method is Failed!");
   }
@@ -1696,11 +1637,9 @@ void PreparedStatementTest::testSetShort01()
   rShortVal=rs->getShort(1);
   logMsg(String("Returned Short Value after Updation: ") + rShortVal);
   logMsg(String("Value returned from ctssql.stmt: ") + minShortVal);
-  if (rShortVal == minShortVal)
-  {
+  if (rShortVal == minShortVal) {
     logMsg("setShort Method sets the designated parameter to a Short value ");
-  } else
-  {
+  } else {
     logErr("setShort Method does not set the designated parameter to a Short value ");
     FAIL("Call to setShort Method is Failed!");
   }
@@ -1754,11 +1693,9 @@ void PreparedStatementTest::testSetShort02()
   logMsg(String("Returned Short Value after Updation:") + rShortVal);
   logMsg(String("Value returned from ctssql.stmt: ") + maxShortVal);
 
-  if (rShortVal == maxShortVal)
-  {
+  if (rShortVal == maxShortVal) {
     logMsg("setShort Method sets the designated parameter to a Short value ");
-  } else
-  {
+  } else {
     logErr("setShort Method does not set the designated parameter to a Short value ");
     FAIL("Call to setShort Method is Failed!");
   }
@@ -1823,8 +1760,7 @@ void PreparedStatementTest::testSetNull01()
   TestsListener::theInstance().messagesLog()
     << "Boolean Value After Updation: " << NULLFlag << std::endl;
 
-  if ( NULLFlag )
-  {
+  if ( NULLFlag ) {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
   }
   else
@@ -1885,11 +1821,9 @@ void PreparedStatementTest::testSetNull02()
 
   clearTable("Float_Tab", conn);
 
-  if (NULLFlag)
-  {
+  if (NULLFlag) {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
-  } else
-  {
+  } else {
     logErr("setNull Method does not set the designated parameter to a SQL Null ");
     FAIL("Call to setNull Method is Failed!");
   }
@@ -1946,11 +1880,9 @@ void PreparedStatementTest::testSetNull03()
 
   logMsg(String("Boolean Value After Updation: ") + (NULLFlag ? "true" : "false"));
 
-  if (NULLFlag)
-  {
+  if (NULLFlag) {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
-  } else
-  {
+  } else {
     logErr("setNull Method does not set the designated parameter to a SQL Null ");
     FAIL("Call to setNull Method is Failed!");
   }
@@ -2000,11 +1932,9 @@ void PreparedStatementTest::testSetNull04()
   NULLFlag=rs->wasNull();
   logMsg(String("Boolean Value After Updation: ") + (NULLFlag ? "true" : "false") );
 
-  if (NULLFlag)
-  {
+  if (NULLFlag) {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
-  } else
-  {
+  } else {
     logErr("setNull Method does not set the designated parameter to a SQL Null ");
     FAIL("Call to setNull Method is Failed!");
   }
@@ -2054,11 +1984,9 @@ void PreparedStatementTest::testSetNull05()
   rTimeVal=rs->getTime(1);
   NULLFlag=rs->wasNull();
   logMsg(String("Time Value After Updation: ") + NULLFlag);
-  if (NULLFlag)
-  {
+  if (NULLFlag) {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
-  } else
-  {
+  } else {
     logErr("setNull Method does not set the designated parameter to a SQL Null ");
     FAIL("Call to setNull Method is Failed!");
   }
@@ -2107,11 +2035,9 @@ void PreparedStatementTest::testSetNull06()
   rTimestampVal=rs->getTimestamp(1);
   NULLFlag=rs->wasNull();
   logMsg(String("Boolean Value After Updation: ") + NULLFlag);
-  if (NULLFlag)
-  {
+  if (NULLFlag) {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
-  } else
-  {
+  } else {
     logErr("setNull Method does not set the designated parameter to a SQL Null ");
     FAIL("Call to setNull Method is Failed!");
   }
@@ -2162,11 +2088,9 @@ void PreparedStatementTest::testSetNull07()
   rDateVal=rs->getDate(1);
   NULLFlag=rs->wasNull();
   logMsg(String("Boolean Value After Updation: ") + NULLFlag);
-  if (NULLFlag)
-  {
+  if (NULLFlag) {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
-  } else
-  {
+  } else {
     logErr("setNull Method does not set the designated parameter to a SQL Null ");
     FAIL("Call to setNull Method is Failed!");
   }
@@ -2216,11 +2140,9 @@ void PreparedStatementTest::testSetNull08()
   rBigDecimalVal=rs->getBigDecimal(1);
   NULLFlag=rs->wasNull();
   logMsg(String("Boolean Value After Updation: ") + NULLFlag);
-  if (NULLFlag)
-  {
+  if (NULLFlag) {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
-  } else
-  {
+  } else {
     logErr("setNull Method does not set the designated parameter to a SQL Null ");
     FAIL("Call to setNull Method is Failed!");
   }
@@ -2271,11 +2193,9 @@ void PreparedStatementTest::testSetNull09()
   rByteVal=rs->getByte(1);
   NULLFlag=rs->wasNull();
   logMsg(String("Boolean Value After Updation: ") + NULLFlag);
-  if (NULLFlag)
-  {
+  if (NULLFlag) {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
-  } else
-  {
+  } else {
     logErr("setNull Method does not set the designated parameter to a SQL Null ");
     FAIL("Call to setNull Method is Failed!");
   }
@@ -2330,11 +2250,9 @@ void PreparedStatementTest::testSetNull10()
 
   logMsg(String("Boolean Value After Updation: ") + ( NULLFlag ? "true" : "false" ) );
 
-  if (NULLFlag)
-  {
+  if (NULLFlag) {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
-  } else
-  {
+  } else {
     logErr("setNull Method does not set the designated parameter to a SQL Null ");
     FAIL("Call to setNull Method is Failed!");
   }
@@ -2386,11 +2304,9 @@ void PreparedStatementTest::testSetNull11()
 
   logMsg(String("Boolean Value After Updation: ") + ( NULLFlag ? "true" : "false" ));
 
-  if (NULLFlag)
-  {
+  if (NULLFlag) {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
-  } else
-  {
+  } else {
     logErr("setNull Method does not set the designated parameter to a SQL Null ");
     FAIL("Call to setNull Method is Failed!");
   }
@@ -2451,11 +2367,9 @@ void PreparedStatementTest::testSetString01()
   logMsg(String("Returned String Value after Updation: ") + rStringVal);
   logMsg(String("Value returned from ctssql.stmt: ") + maxStringVal);
 
-  if (rStringVal == maxStringVal)
-  {
+  if (rStringVal == maxStringVal) {
     logMsg("setString Method sets the designated parameter to a String value ");
-  } else
-  {
+  } else {
     logErr("setString Method does not set the designated parameter to a String value ");
     FAIL("Call to setString Method is Failed!");
   }
@@ -2512,11 +2426,9 @@ void PreparedStatementTest::testSetTime01()
   rTimeVal=rs->getTime(1);
   logMsg(String("Returned Time Value after Updation: ") + rTimeVal);
   logMsg(String("Value returned from ctssql.stmt: ") + brkTimeVal);
-  if (rTimeVal == brkTimeVal)
-  {
+  if (rTimeVal == brkTimeVal) {
     logMsg("setTime Method sets the designated parameter to a Time value ");
-  } else
-  {
+  } else {
     logErr("setTime Method does not set the designated parameter to a Time value ");
     FAIL(String("Call to setTime Method is Failed!, expected '") + brkTimeVal + "', value returned was '" + rTimeVal + "'");
   }
@@ -2578,11 +2490,9 @@ void PreparedStatementTest::testSetTime02()
   rTimeVal=rs->getTime(1, cal);
   logMsg(String("Returned Time Value after Updation: ") + rTimeVal);
   logMsg(String("Value returned from ctssql.stmt:") + brkTimeVal);
-  if ((rTimeVal).trim().equals((brkTimeVal).trim()))
-  {
+  if ((rTimeVal).trim().equals((brkTimeVal).trim())) {
     logMsg("setTime Method sets the designated parameter to a Time value ");
-  } else
-  {
+  } else {
     logErr("setTime Method does not set the designated parameter to a Time value ");
     FAIL(String("Call to setTime Method is Failed!, expected '") + brkTimeVal + "', value returned was '" + rTimeVal + "'");
   }
@@ -2641,11 +2551,9 @@ void PreparedStatementTest::testSetTimestamp01()
   logMsg(String("Returned Timestamp Value after Updation: ") + rTimestampVal);
   logMsg(String("Value returned from ctssql.stmt  :") + inTimeVal);
 
-  if (rTimestampVal == inTimeVal)
-  {
+  if (rTimestampVal == inTimeVal) {
     logMsg("setTimestamp Method sets the designated parameter to a Timestamp value ");
-  } else
-  {
+  } else {
     logErr("setTimestamp Method does not set the designated parameter to a Timestamp value ");
     FAIL("Call to setTimestamp Method is Failed!");
   }
@@ -2706,11 +2614,9 @@ void PreparedStatementTest::testSetTimestamp02()
   rTimestampVal=rs->getTimestamp(1, cal);
   logMsg(String("Returned Timestamp Value after Updation: ") + rTimestampVal);
   logMsg(String("Value returned from ctssql.stmt  :") + inTimeVal);
-  if (rTimestampVal == inTimeVal)
-  {
+  if (rTimestampVal == inTimeVal) {
     logMsg("setTimestamp Method sets the designated parameter to a Timestamp value ");
-  } else
-  {
+  } else {
     logErr("setTimestamp Method does not set the designated parameter to a Timestamp value ");
     FAIL("Call to setTimestamp Method is Failed!");
   }
@@ -2771,11 +2677,9 @@ void PreparedStatementTest::testSetString02()
   logMsg(String("Returned String Value after Updation: ") + rStringVal);
   logMsg(String("Value returned from ctssql.stmt: ") + maxStringVal);
 
-  if (rStringVal == maxStringVal)
-  {
+  if (rStringVal == maxStringVal) {
     logMsg("setString Method sets the designated parameter to a String value ");
-  } else
-  {
+  } else {
     logErr("setString Method does not set the designated parameter to a String value ");
     FAIL("Call to setString Method is Failed!");
   }
@@ -2831,11 +2735,9 @@ void PreparedStatementTest::testSetFloat01()
   rFloatVal=rs->getFloat(1);
   logMsg(String("Returned float Value after Updation: ") + rFloatVal);
   logMsg(String("Value returned from ctssql.stmt: ") + minFloatVal);
-  if (rFloatVal == minFloatVal)
-  {
+  if (rFloatVal == minFloatVal) {
     logMsg("setFloat Method sets the designated parameter to a float value ");
-  } else
-  {
+  } else {
     logErr("setFloat Method does not set the designated parameter to a float value ");
     FAIL("Call to setFloat Method is Failed!");
   }
@@ -2888,11 +2790,9 @@ void PreparedStatementTest::testSetFloat02()
   rFloatVal=rs->getFloat(1);
   logMsg(String("Returned float Value after Updation: ") + rFloatVal);
   logMsg(String("Value returned from ctssql.stmt: ") + maxFloatVal);
-  if (rFloatVal == maxFloatVal)
-  {
+  if (rFloatVal == maxFloatVal) {
     logMsg("setFloat Method sets the designated parameter to a float value ");
-  } else
-  {
+  } else {
     logErr("setFloat Method does not set the designated parameter to a float value ");
     FAIL("Call to setFloat Method is Failed!");
   }
@@ -2952,11 +2852,9 @@ void PreparedStatementTest::testSetNull12()
 
   logMsg(String("Boolean Value After Updation: ") + ( NULLFlag ? "true" : "false" ));
 
-  if (NULLFlag)
-  {
+  if (NULLFlag) {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
-  } else
-  {
+  } else {
     logErr("setNull Method does not set the designated parameter to a SQL Null ");
     FAIL("Call to setNull Method is Failed!");
   }
@@ -3012,11 +2910,9 @@ void PreparedStatementTest::testSetNull13()
   // TODO: add toString(bool) in the StringUtils
   logMsg(String("Boolean Value After Updation: ") + ( NULLFlag ? "true" : "false" ) );
 
-  if (NULLFlag)
-  {
+  if (NULLFlag) {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
-  } else
-  {
+  } else {
     logErr("setNull Method does not set the designated parameter to a SQL Null ");
     FAIL("Call to setNull Method is Failed!");
   }
@@ -3075,12 +2971,10 @@ void PreparedStatementTest::testSetNull14()
       logErr("setNull Method does not set the designated parameter to a SQL Null ");
       FAIL("Call to setNull Method is Failed!");
     }
-  } catch (sql::SQLException & sqle)
-  {
+  } catch (sql::SQLException & sqle) {
     logErr(String("SQL std::exception *: ") + sqle->what());
     FAIL("Call to setNull is Failed!");
-  } catch (std::exception * e)
-  {
+  } catch (std::exception * e) {
     logErr(String("Unexpected std::exception *: ") + e->what());
     FAIL("Call to setNull is Failed!", e);
   }
@@ -3140,12 +3034,10 @@ void PreparedStatementTest::testSetNull15()
       logErr("setNull Method does not set the designated parameter to a SQL Null ");
       FAIL("Call to setNull Method is Failed!");
     }
-  } catch (sql::SQLException & sqle)
-  {
+  } catch (sql::SQLException & sqle) {
     logErr(String("SQL std::exception *: ") + sqle->what());
     FAIL("Call to setNull is Failed!");
-  } catch (std::exception * e)
-  {
+  } catch (std::exception * e) {
     logErr(String("Unexpected std::exception *: ") + e->what());
     FAIL("Call to setNull is Failed!", e);
   }
@@ -3191,8 +3083,7 @@ void PreparedStatementTest::testSetNull16()
   logMsg(String("Binary Size : ") + bytearrsize);
   byte[] bytearr=new byte[bytearrsize];
   String sbyteval;
-  for (int count=0; count < bytearrsize; count++)
-  {
+  for (int count=0; count < bytearrsize; count++) {
     sbyteval=int.toString(count % 255);
     bytearr[count]=Byte.parseByte(sbyteval);
   }
@@ -3207,11 +3098,9 @@ void PreparedStatementTest::testSetNull16()
   rs.reset(stmt->executeQuery(Binary_Val_Query));
   rs->next();
   retByteArr=(byte[]) rs->getBytes(1);
-  if (retByteArr == NULL)
-  {
+  if (retByteArr == NULL) {
     logMsg("setNull Method sets the designated parameter to a SQL Null ");
-  } else
-  {
+  } else {
     logErr("setNull Method does not set the designated parameter to a SQL Null ");
     FAIL("Call to setNull Method is Failed!");
   }
@@ -3257,8 +3146,7 @@ void PreparedStatementTest::testSetNull17()
   logMsg(String("Varbinary Size : ") + bytearrsize);
   byte[] bytearr=new byte[bytearrsize];
   String sbyteval;
-  for (int count=0; count < bytearrsize; count++)
-  {
+  for (int count=0; count < bytearrsize; count++) {
     sbyteval=int.toString(count % 255);
     bytearr[count]=Byte.parseByte(sbyteval);
   }
@@ -3273,11 +3161,9 @@ void PreparedStatementTest::testSetNull17()
   rs.reset(stmt->executeQuery(Varbinary_Val_Query));
   rs->next();
   retByteArr=(byte[]) rs->getBytes(1);
-  if (retByteArr == NULL)
-  {
+  if (retByteArr == NULL) {
     logMsg("setNull Method sets the designated parameter to a SQL Null ");
-  } else
-  {
+  } else {
     logErr("setNull Method does not set the designated parameter to a SQL Null ");
     FAIL("Call to setNull Method is Failed!");
   }
@@ -3321,8 +3207,7 @@ void PreparedStatementTest::testSetNull18()
   logMsg(String("Longvarbinary Size : ") + bytearrsize);
   byte[] bytearr=new byte[bytearrsize];
   String sbyteval;
-  for (int count=0; count < bytearrsize; count++)
-  {
+  for (int count=0; count < bytearrsize; count++) {
     sbyteval=int.toString(count % 255);
     bytearr[count]=Byte.parseByte(sbyteval);
   }
@@ -3337,11 +3222,9 @@ void PreparedStatementTest::testSetNull18()
   rs.reset(stmt->executeQuery(Longvarbinary_Val_Query));
   rs->next();
   retByteArr=rs->getBytes(1);
-  if (retByteArr == NULL)
-  {
+  if (retByteArr == NULL) {
     logMsg("setNull Method sets the designated parameter to a SQL Null ");
-  } else
-  {
+  } else {
     logErr("setNull Method does not set the designated parameter to a SQL Null ");
     FAIL("Call to setNull Method is Failed!");
   }
