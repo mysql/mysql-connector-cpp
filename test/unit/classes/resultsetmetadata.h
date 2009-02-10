@@ -90,6 +90,8 @@ public:
     TEST_CASE(getSchemaName);
     TEST_CASE(getTableName);
     TEST_CASE(isAutoIncrement);
+    TEST_CASE(isCaseSensitive);
+    TEST_CASE(isCurrency);
   }
 
   /**
@@ -171,6 +173,22 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void isAutoIncrement();
+
+  /**
+   * Test for ResultSetMetaData::isCaseSensitive
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isCaseSensitive();
+
+  /**
+   * Test for ResultSetMetaData::isCurrency
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isCurrency();
 
 };
 
