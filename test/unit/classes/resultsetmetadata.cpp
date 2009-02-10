@@ -72,6 +72,10 @@ void resultsetmetadata::init()
   columns.push_back(columndefinition("DATE", "DATE", sql::DataType::DATE, "2009-02-09", true));
   columns.push_back(columndefinition("DATETIME", "DATETIME", sql::DataType::TIMESTAMP, "2009-02-09 20:05:43", true));
   columns.push_back(columndefinition("TIMESTAMP", "TIMESTAMP", sql::DataType::TIMESTAMP, "2038-01-09 03:14:07", true));
+  columns.push_back(columndefinition("TIME", "TIME", sql::DataType::TIME, "-838:59:59", true));
+  columns.push_back(columndefinition("YEAR", "YEAR", sql::DataType::YEAR, "1901", true));
+  columns.push_back(columndefinition("YEAR", "YEAR(4)", sql::DataType::YEAR, "2009", false));
+  columns.push_back(columndefinition("YEAR", "YEAR(2)", sql::DataType::YEAR, "1", false));
 }
 
 void resultsetmetadata::getCatalogName()
