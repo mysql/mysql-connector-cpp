@@ -53,8 +53,7 @@ void StatementTest::testClearWarnings()
 {
   const sql::SQLWarning * sWarning=stmt->getWarnings();
 
-  if (sWarning != NULL)
-  {
+  if (sWarning != NULL) {
     logMsg("Calling clearWarnings method ");
     stmt->clearWarnings();
     sWarning=stmt->getWarnings();
@@ -67,8 +66,7 @@ void StatementTest::testClearWarnings()
       logErr("clearWarnings does not clear the SQLWarning");
       FAIL("Call to clearWarnings is Failed!");
     }
-  } else
-  {
+  } else {
     logErr("getWarnings() returns a NULL SQLWarning object");
   }
 }
@@ -109,16 +107,13 @@ void StatementTest::testClose()
   try
   {
     rs.reset(statemt->executeQuery(sSelCoffee));
-  } catch (sql::SQLException &)
-  {
+  } catch (sql::SQLException &) {
     sqlExceptFlag=true;
   }
 
-  if (sqlExceptFlag)
-  {
+  if (sqlExceptFlag) {
     logMsg("close method closes the Statement object");
-  } else
-  {
+  } else {
     logErr("close method does not close the Statement object");
     FAIL("Call to close method is Failed!");
   }
@@ -156,11 +151,9 @@ void StatementTest::testExecute01()
   logMsg("Calling execute method ");
   executeFlag=stmt->execute(sSqlStmt);
 
-  if (!executeFlag)
-  {
+  if (!executeFlag) {
     logMsg("execute method executes the SQL Statement ");
-  } else
-  {
+  } else {
     logErr("execute method does not execute the SQL Statement");
     FAIL("Call to execute is Failed!");
   }
@@ -199,11 +192,9 @@ void StatementTest::testExecute02()
   logMsg(String("Sql Statement to be executed  ") + sSqlStmt);
   logMsg("Calling execute method ");
   executeFlag=stmt->execute(sSqlStmt);
-  if (executeFlag)
-  {
+  if (executeFlag) {
     logMsg("execute method executes the SQL Statement ");
-  } else
-  {
+  } else {
     logErr("execute method does not execute the SQL Statement");
     FAIL("Call to execute is Failed!");
   }
@@ -246,11 +237,9 @@ void StatementTest::testExecuteQuery01()
 
   reSet.reset(stmt->executeQuery(sSqlStmt));
 
-  if (reSet.get() != NULL)
-  {
+  if (reSet.get() != NULL) {
     logMsg("executeQuery method returns a ResultSet object");
-  } else
-  {
+  } else {
     logErr("executeQuery method does not return a ResultSet object");
     FAIL("Call to executeQuery is Failed!");
   }
@@ -292,12 +281,10 @@ void StatementTest::testExecuteQuery02()
 
   reSet.reset(stmt->executeQuery(sSqlStmt));
 
-  if (!reSet->next())
-  {
+  if (!reSet->next()) {
     logMsg(
            "executeQuery method returns an Empty ResultSet for Non-Existent row");
-  } else
-  {
+  } else {
     logErr(
            "executeQuery method does not return an Empty ResultSet for non-existent row");
     FAIL("Call to executeQuery is Failed!");
@@ -342,17 +329,14 @@ void StatementTest::testExecuteQuery03()
   {
     logMsg("Calling executeQuery method ");
     reSet.reset(stmt->executeQuery(sSqlStmt));
-  } catch (sql::SQLException &)
-  {
+  } catch (sql::SQLException &) {
     sqlExceptFlag=true;
   }
 
-  if (!sqlExceptFlag)
-  {
+  if (!sqlExceptFlag) {
     logErr("executeQuery method executes an Insert Statement");
     FAIL("Call to executeQuery is Failed!");
-  } else
-  {
+  } else {
     logMsg(
            "executeQuery method does not execute an Insert Statement");
   }
@@ -407,11 +391,9 @@ void StatementTest::testExecuteUpdate01()
           << "Number of rows in the table with the specified condition  "
           << retRowCount << std::endl;
 
-  if (updCount == retRowCount)
-  {
+  if (updCount == retRowCount) {
     logMsg("executeUpdate executes the SQL Statement ");
-  } else
-  {
+  } else {
     logErr("executeUpdate does not execute the SQL Statement ");
     FAIL("Call to executeUpdate is Failed!");
   }
@@ -456,17 +438,14 @@ void StatementTest::testExecuteUpdate03()
   {
     logMsg("Calling executeUpdate method ");
     updCount=stmt->executeUpdate(sSqlStmt);
-  } catch (sql::SQLException &)
-  {
+  } catch (sql::SQLException &) {
     sqlExceptFlag=true;
   }
 
-  if (sqlExceptFlag)
-  {
+  if (sqlExceptFlag) {
     logMsg(
            "executeUpdate does not execute the SQL statement on non-existent row");
-  } else
-  {
+  } else {
     logErr(
            "executeUpdate executes the SQL statement on non-existent row");
     FAIL("Call to executeUpdate is Failed!");
@@ -512,20 +491,16 @@ void StatementTest::testGetFetchDirection()
 
   fetchDirVal=stmt->getFetchDirection();
 
-  if (fetchDirVal == ResultSet::FETCH_FORWARD)
-  {
+  if (fetchDirVal == ResultSet::FETCH_FORWARD) {
     logMsg(
            "getFetchDirection method returns ResultSet.FETCH_FORWARD ");
-  } else if (fetchDirVal == ResultSet.FETCH_REVERSE)
-  {
+  } else if (fetchDirVal == ResultSet.FETCH_REVERSE) {
     logMsg(
            "getFetchDirection method returns ResultSet.FETCH_REVERSE");
-  } else if (fetchDirVal == ResultSet.FETCH_UNKNOWN)
-  {
+  } else if (fetchDirVal == ResultSet.FETCH_UNKNOWN) {
     logMsg(
            "getFetchDirection method returns ResultSet.FETCH_UNKNOWN");
-  } else
-  {
+  } else {
     logErr(" getFetchDirection method returns a invalid value");
     FAIL("Call to getFetchDirection is Failed");
   }
@@ -560,12 +535,10 @@ void StatementTest::testGetFetchSize()
   logMsg("Calling getFetchSize on Statement");
   int fetchSizeVal=stmt->getFetchSize();
 
-  if (fetchSizeVal >= 0)
-  {
+  if (fetchSizeVal >= 0) {
     TestsListener::theInstance().messagesLog()
             << "getFetchSize method returns :" << fetchSizeVal << std::endl;
-  } else
-  {
+  } else {
     logErr(" getFetchSize method returns a invalid value");
     FAIL("Call to getFetchSize is Failed!");
   }
@@ -600,12 +573,10 @@ void StatementTest::testGetMaxFieldSize()
   logMsg("Calling getMaxFieldSize on Statement");
   int maxFieldSizeVal=stmt->getMaxFieldSize();
 
-  if (maxFieldSizeVal >= 0)
-  {
+  if (maxFieldSizeVal >= 0) {
     TestsListener::theInstance().messagesLog()
             << "getMaxFieldSize method returns :" << maxFieldSizeVal << std::endl;
-  } else
-  {
+  } else {
     logErr(" getMaxFieldSize method returns a invalid value");
     FAIL("Call to getMaxFieldSize is Failed!");
   }
@@ -640,12 +611,10 @@ void StatementTest::testGetMaxRows()
   logMsg("Calling getMaxRows on Statement");
   int maxRowsVal=static_cast<int> (stmt->getMaxRows());
 
-  if (maxRowsVal >= 0)
-  {
+  if (maxRowsVal >= 0) {
     TestsListener::theInstance().messagesLog()
             << "getMaxRows method returns :" << maxRowsVal << std::endl;
-  } else
-  {
+  } else {
     logErr(" getMaxRows method returns a invalid value");
     FAIL("Call to getMaxRows is Failed!");
   }
@@ -689,12 +658,10 @@ void StatementTest::testGetMoreResults01()
   logMsg("Calling getMoreResults on Statement");
   bool moreResVal=stmt->getMoreResults();
 
-  if ((moreResVal == true) || (moreResVal == false))
-  {
+  if ((moreResVal == true) || (moreResVal == false)) {
     TestsListener::theInstance().messagesLog()
             << "getMoreResults method returns :" << moreResVal << std::endl;
-  } else
-  {
+  } else {
     logErr(" getMoreResults method returns a invalid value");
     FAIL("Call to getMoreResults is Failed!");
   }
@@ -739,12 +706,10 @@ void StatementTest::testGetMoreResults02()
   logMsg("Calling getMoreResults on Statement");
   bool moreResVal=stmt->getMoreResults();
 
-  if (!moreResVal)
-  {
+  if (!moreResVal) {
     TestsListener::theInstance().messagesLog()
             << "getMoreResults method returns :" << moreResVal << std::endl;
-  } else
-  {
+  } else {
     logErr(" getMoreResults method returns a invalid value");
     FAIL("Call to getMoreResults is Failed!");
   }
@@ -789,12 +754,10 @@ void StatementTest::testGetMoreResults03()
   logMsg("Calling getMoreResults on Statement");
   bool moreResVal=stmt->getMoreResults();
 
-  if (!moreResVal)
-  {
+  if (!moreResVal) {
     TestsListener::theInstance().messagesLog()
             << "getMoreResults method returns :" << moreResVal << std::endl;
-  } else
-  {
+  } else {
     logErr(" getMoreResults method returns a invalid value");
     FAIL("Call to getMoreResults is Failed!");
   }
@@ -830,12 +793,10 @@ void StatementTest::testGetQueryTimeout()
   logMsg("Calling getQueryTimeout on Statement");
   queryTimeout=stmt->getQueryTimeout();
 
-  if (queryTimeout >= 0)
-  {
+  if (queryTimeout >= 0) {
     TestsListener::theInstance().messagesLog()
             << "getQueryTimeout method returns :" << queryTimeout << std::endl;
-  } else
-  {
+  } else {
     logErr(" getQueryTimeout method returns a invalid value");
     FAIL("Call to getQueryTimeout is Failed!");
   }
@@ -876,11 +837,9 @@ void StatementTest::testGetResultSet01()
 
   retResSet.reset(stmt->getResultSet());
 
-  if (retResSet.get() != NULL)
-  {
+  if (retResSet.get() != NULL) {
     logMsg("getResultSet method returns a ResultSet object ");
-  } else
-  {
+  } else {
     logErr(
            " getResultSet method does not return a ResultSet object");
     FAIL("Call to getResultSet is Failed!");
@@ -921,11 +880,9 @@ void StatementTest::testGetResultSet02()
   stmt->execute(sSqlStmt);
   retResSet.reset(stmt->getResultSet());
 
-  if (retResSet.get() == NULL)
-  {
+  if (retResSet.get() == NULL) {
     logMsg("getResultSet method returns a Null ResultSet object ");
-  } else
-  {
+  } else {
     logErr(
            " getResultSet method does (not) return a ResultSet object");
     FAIL("Call to getResultSet is Failed!");
@@ -969,13 +926,11 @@ void StatementTest::testGetResultSetConcurrency01()
 
   rsConcur=stmt->getResultSetConcurrency();
   if ((rsConcur == sql::ResultSet::CONCUR_READ_ONLY)
-      || (rsConcur == sql::ResultSet::CONCUR_UPDATABLE))
-  {
+      || (rsConcur == sql::ResultSet::CONCUR_UPDATABLE)) {
     logMsg(
            "getResultSetConcurrency method returns ResultSet Concurrency mode  "
            + rsConcur);
-  } else
-  {
+  } else {
     logErr(
            " getResultSetConcurrency method does not return a valid value");
     FAIL("Call to getResultSetConcurrency is Failed!");
@@ -1013,22 +968,18 @@ void StatementTest::testGetResultSetType01()
   int rsType=0;
 
   rsType=stmt->getResultSetType();
-  if (rsType == sql::ResultSet::TYPE_FORWARD_ONLY)
-  {
+  if (rsType == sql::ResultSet::TYPE_FORWARD_ONLY) {
     logMsg("getResultSetType method returns TYPE_FORWARD_ONLY"
            + rsType);
-  } else if (rsType == sql::ResultSet::TYPE_SCROLL_INSENSITIVE)
-  {
+  } else if (rsType == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
     logMsg(
            "getResultSetType method returns TYPE_SCROLL_INSENSITIVE "
            + rsType);
-  } else if (rsType == sql::ResultSet::TYPE_SCROLL_SENSITIVE)
-  {
+  } else if (rsType == sql::ResultSet::TYPE_SCROLL_SENSITIVE) {
     logMsg(
            "getResultSetType method returns TYPE_SCROLL_SENSITIVE  "
            + rsType);
-  } else
-  {
+  } else {
     logErr(" getResultSetType method does not return a valid value");
     FAIL("Call to getResultSetType is Failed!");
   }
@@ -1069,12 +1020,10 @@ void StatementTest::testGetResultSetType02()
   statemt=conn->createStatement(sql::ResultSet::TYPE_FORWARD_ONLY,
                                 sql::ResultSet::CONCUR_READ_ONLY);
   rsType=statemt->getResultSetType();
-  if (rsType == sql::ResultSet::TYPE_FORWARD_ONLY)
-  {
+  if (rsType == sql::ResultSet::TYPE_FORWARD_ONLY) {
     logMsg("getResultSetType method returns TYPE_FORWARD_ONLY "
            + rsType);
-  } else
-  {
+  } else {
     statemt->close();
     logErr(" getResultSetType method does not return a valid value");
     FAIL("Call to getResultSetType is Failed!");
@@ -1117,13 +1066,11 @@ void StatementTest::testGetResultSetType03()
   statemt=conn->createStatement(sql::ResultSet::TYPE_SCROLL_INSENSITIVE,
                                 sql::ResultSet::CONCUR_READ_ONLY);
   rsType=statemt->getResultSetType();
-  if (rsType == sql::ResultSet::TYPE_SCROLL_INSENSITIVE)
-  {
+  if (rsType == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
     logMsg(
            "getResultSetType method returns TYPE_SCROLL_INSENSITIVE "
            + rsType);
-  } else
-  {
+  } else {
     statemt->close();
     logErr(" getResultSetType method does not return a valid value");
     FAIL("Call to getResultSetType is Failed!");
@@ -1185,12 +1132,10 @@ void StatementTest::testGetUpdateCount01()
           << "Number of Rows Affected by Update Statement " << rowsAffectVal
           << std::endl;
 
-  if (updCountVal == rowsAffectVal)
-  {
+  if (updCountVal == rowsAffectVal) {
     TestsListener::theInstance().messagesLog()
             << "getUpdateCount method returns :" << updCountVal << std::endl;
-  } else
-  {
+  } else {
     logErr(" getUpdateCount method returns a invalid value");
     FAIL("Call to getUpdateCount is Failed!");
   }
@@ -1236,11 +1181,9 @@ void StatementTest::testGetUpdateCount02()
   logMsg("Calling getMoreResults on Statement");
   updCountVal=static_cast<int> (stmt->getUpdateCount());
 
-  if (updCountVal == -1)
-  {
+  if (updCountVal == -1) {
     logMsg("getUpdateCount method returns : -1");
-  } else
-  {
+  } else {
     logErr(" getUpdateCount method returns a invalid value");
     FAIL("Call to getUpdateCount is Failed!");
   }
@@ -1273,8 +1216,7 @@ void StatementTest::testGetUpdateCount02()
 /* throws Exception */
 void StatementTest::testGetWarnings()
 {
-  if (hasSps)
-  {
+  if (hasSps) {
     initTable("Integer_Tab", sqlProps, conn);
 
     //TODO: Need to invent somth to generate warnings instead of this
@@ -1345,17 +1287,14 @@ void StatementTest::testSetFetchDirection04()
   try
   {
     stmt->setFetchDirection(-1);
-  } catch (sql::SQLException * sqe)
-  {
+  } catch (sql::SQLException * sqe) {
     sqlExceptFlag=true;
   }
 
-  if (sqlExceptFlag)
-  {
+  if (sqlExceptFlag) {
     logMsg(
            "setFetchDirection method does not sets the invalid direction for the ResultSet ");
-  } else
-  {
+  } else {
     logErr(
            "setFetchDirection method sets the invalid direction for ResultSet");
     FAIL("Call to setFetchDirection is Failed");
@@ -1407,12 +1346,10 @@ void StatementTest::testSetFetchSize02()
   stmt->setFetchSize(maxRowsVal);
   retVal=stmt->getFetchSize();
 
-  if (maxFetchSizeVal == retVal)
-  {
+  if (maxFetchSizeVal == retVal) {
     logMsg(
            "setFetchSize method sets the value as FetchSize for ResultSet");
-  } else
-  {
+  } else {
     logErr(
            "setFetchSize method does not set the value as Fetch Size for ResultSet");
     FAIL("Call to setFetchSize is Failed");
@@ -1463,16 +1400,13 @@ void StatementTest::testSetFetchSize05()
   try
   {
     stmt->setFetchSize(maxFetchSizeVal);
-  } catch (sql::SQLException &)
-  {
+  } catch (sql::SQLException &) {
     sqlExceptFlag=true;
   }
 
-  if (sqlExceptFlag)
-  {
+  if (sqlExceptFlag) {
     logMsg("setFetchSize method does not set the invalid value ");
-  } else
-  {
+  } else {
     logErr("setFetchSize method sets the Invalid value ");
     FAIL("Call to setFetchSize is Failed");
   }
@@ -1522,12 +1456,10 @@ void StatementTest::testSetMaxFieldSize01()
   stmt->setMaxFieldSize(maxFieldSizeVal);
   retVal=stmt->getMaxFieldSize();
 
-  if (maxFieldSizeVal == retVal)
-  {
+  if (maxFieldSizeVal == retVal) {
     logMsg(
            "setMaxFieldSize method sets the value for Maximum Field Size");
-  } else
-  {
+  } else {
     logErr(
            "setMaxFieldSize method does not set the value for Maximum Field Size");
     FAIL("Call to setMaxFieldSize is Failed");
@@ -1578,16 +1510,13 @@ void StatementTest::testSetMaxFieldSize02()
   try
   {
     stmt->setMaxFieldSize(maxFieldSizeVal);
-  } catch (sql::SQLException &)
-  {
+  } catch (sql::SQLException &) {
     sqlExceptFlag=true;
   }
 
-  if (sqlExceptFlag)
-  {
+  if (sqlExceptFlag) {
     logMsg("setMaxFieldSize method does not set the Invalid value ");
-  } else
-  {
+  } else {
     logErr("setMaxFieldSize method sets the Invalid value");
     FAIL("Call to setMaxFieldSize is Failed");
   }
@@ -1634,11 +1563,9 @@ void StatementTest::testSetMaxRows01()
 
   retVal=static_cast<int> (stmt->getMaxRows());
 
-  if (maxRowsVal == retVal)
-  {
+  if (maxRowsVal == retVal) {
     logMsg("setMaxRows method sets the value for Maximum Rows");
-  } else
-  {
+  } else {
     logErr(
            "setMaxRows method does not set the value for Maximum Rows");
     FAIL("Call to setMaxRows is Failed");
@@ -1686,16 +1613,13 @@ void StatementTest::testSetMaxRows02()
   try
   {
     stmt->setMaxRows(maxRowsVal);
-  } catch (sql::SQLException &)
-  {
+  } catch (sql::SQLException &) {
     sqlExceptFlag=true;
   }
 
-  if (sqlExceptFlag)
-  {
+  if (sqlExceptFlag) {
     logMsg("setMaxRows method does not set the Invalid value ");
-  } else
-  {
+  } else {
     logErr("setMaxRows method sets the Invalid value");
     FAIL("Call to setMaxRows is Failed");
   }
@@ -1744,16 +1668,13 @@ void StatementTest::testSetQueryTimeout02()
   try
   {
     stmt->setQueryTimeout(maxQueryTimeVal);
-  } catch (sql::SQLException &)
-  {
+  } catch (sql::SQLException &) {
     sqlExceptFlag=true;
   }
 
-  if (sqlExceptFlag)
-  {
+  if (sqlExceptFlag) {
     logMsg("setQueryTimeout method does not set the Invalid value ");
-  } else
-  {
+  } else {
     logErr("setQueryTimeout method sets the Invalid value");
     FAIL("Call to setQueryTimeout is Failed");
   }

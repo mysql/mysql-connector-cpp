@@ -55,11 +55,9 @@ void ResultSetMetadataTest::testGetCatalogName()
   logMsg("Calling getCatalogName on ResultSetMetadata");
   String sRetValue=rsmd->getCatalogName(1);
 
-  if (sRetValue.empty())
-  {
+  if (sRetValue.empty()) {
     logMsg("getCatalogName method does not return the column's table's catalog name");
-  } else
-  {
+  } else {
     logMsg(String("getCatalogName method returns:  ") + sRetValue);
   }
 }
@@ -97,12 +95,10 @@ void ResultSetMetadataTest::testGetColumnClassName()
 #ifdef getColumnClassName_IMPLEMENTED
   logMsg("Calling getColumnClassName on ResultSetMetadata");
   String sRetValue=rsmd->getColumnClassName(1);
-  if (sRetValue == NULL)
-  {
+  if (sRetValue == NULL) {
     logMsg(
            "getColumnClassName method does not returns the fully-qualified name of the class");
-  } else
-  {
+  } else {
     logMsg(String("getColumnClassName method returns:  ") + sRetValue);
   }
 #endif
@@ -137,12 +133,10 @@ void ResultSetMetadataTest::testGetColumnCount()
 {
   logMsg("Calling getColumnCount on ResultSetMetaData");
   int coloumnCount=rsmd->getColumnCount();
-  if (coloumnCount >= 0)
-  {
+  if (coloumnCount >= 0) {
     TestsListener::theInstance().messagesLog()
             << "getColumnCount method returns: " << coloumnCount << std::endl;
-  } else
-  {
+  } else {
     logErr(" getColumnCount method returns a negative value");
   }
 }
@@ -180,17 +174,14 @@ void ResultSetMetadataTest::testGetColumnDisplaySize()
 
   int colDispSize=rsmd->getColumnDisplaySize(2);
 
-  if (colDispSize >= 0)
-  {
+  if (colDispSize >= 0) {
     TestsListener::theInstance().messagesLog()
             << "getColumnDisplaySize method returns: " << colDispSize << std::endl;
-  } else
-  {
+  } else {
     logErr(" getColumnDisplaySize method returns a negative value");
   }
   /*}
-  catch (sql::DbcException & sqle)
-  {
+  catch (sql::DbcException & sqle) {
 
       FAIL("Call to getColumnDisplaySize is Failed!");
   }*/
@@ -407,12 +398,10 @@ void ResultSetMetadataTest::testGetPrecision()
 {
   logMsg("Calling getPrecision on ResultSetMetaData");
   int precisionSize=rsmd->getPrecision(1);
-  if (precisionSize >= 0)
-  {
+  if (precisionSize >= 0) {
     TestsListener::theInstance().messagesLog()
             << "getPrecision method returns: " << precisionSize << std::endl;
-  } else
-  {
+  } else {
     logErr(" getPrecision method returns a negative value");
   }
 }
@@ -445,12 +434,10 @@ void ResultSetMetadataTest::testGetScale()
 {
   logMsg("Calling getScale on ResultSetMetaData");
   int scaleSize=rsmd->getScale(2);
-  if (scaleSize >= 0)
-  {
+  if (scaleSize >= 0) {
     TestsListener::theInstance().messagesLog()
             << "getScale method returns: " << scaleSize << std::endl;
-  } else
-  {
+  } else {
     logErr(" getScale method returns a negative value");
   }
 }
@@ -550,12 +537,10 @@ void ResultSetMetadataTest::testIsAutoIncrement()
 {
   logMsg("Calling isAutoIncrement on ResultSetMetaData");
   bool retValue=rsmd->isAutoIncrement(1);
-  if (retValue)
-  {
+  if (retValue) {
     logMsg(
            "isAutoIncrement method returns column is automatically numbered");
-  } else
-  {
+  } else {
     logMsg(
            "isAutoIncrement method returns column cannot be automatically numbered");
   }
@@ -588,12 +573,10 @@ void ResultSetMetadataTest::testIsCaseSensitive()
 {
   logMsg("Calling isCaseSensitive on ResultSetMetaData");
   bool retValue=rsmd->isCaseSensitive(1);
-  if (retValue)
-  {
+  if (retValue) {
     logMsg(
            "isCaseSensitive method returns column's are case sensitive");
-  } else
-  {
+  } else {
     logMsg(
            "isCaseSensitive method returns column's are case insensitive");
   }
@@ -626,11 +609,9 @@ void ResultSetMetadataTest::testIsCurrency()
 {
   logMsg("Calling IsCurrency on ResultSetMetaData");
   bool retValue=rsmd->isCurrency(2);
-  if (retValue)
-  {
+  if (retValue) {
     logMsg("isCurrency method returns column is a cash value");
-  } else
-  {
+  } else {
     logMsg(
            "isCurrency method returns column does not contains a cash value");
   }
@@ -665,12 +646,10 @@ void ResultSetMetadataTest::testIsDefinitelyWritable()
 {
   logMsg("Calling isDefinitelyWritable on ResultSetMetaData");
   bool retValue=rsmd->isDefinitelyWritable(1);
-  if (retValue)
-  {
+  if (retValue) {
     logMsg(
            "isDefinitelyWritable method returns write on the column is definitely succeed");
-  } else
-  {
+  } else {
     logMsg(
            "isDefinitelyWritable method returns write on the column is definitely failed");
   }
@@ -709,12 +688,10 @@ void ResultSetMetadataTest::testIsNullable()
 
   if ((coloumnCount == sql::ResultSetMetaData::columnNoNulls)
       || (coloumnCount == sql::ResultSetMetaData::columnNullable)
-      || (coloumnCount == sql::ResultSetMetaData::columnNullableUnknown))
-  {
+      || (coloumnCount == sql::ResultSetMetaData::columnNullableUnknown)) {
     TestsListener::theInstance().messagesLog()
             << "isNullable method returns: " << coloumnCount << std::endl;
-  } else
-  {
+  } else {
     logErr(" isNullable method returns a negative value");
   }
 }
@@ -749,11 +726,9 @@ void ResultSetMetadataTest::testIsReadOnly()
   logMsg("Calling isReadOnly on ResultSetMetaData");
   bool retValue=rsmd->isReadOnly(1);
 
-  if (retValue)
-  {
+  if (retValue) {
     logMsg("isReadOnly method returns column cannot be writable");
-  } else
-  {
+  } else {
     logMsg("isReadOnly method returns column can be writable");
   }
 }
@@ -787,12 +762,10 @@ void ResultSetMetadataTest::testIsSearchable()
 {
   logMsg("Calling isSearchable on ResultSetMetaData");
   bool retValue=rsmd->isSearchable(1);
-  if (retValue)
-  {
+  if (retValue) {
     logMsg(
            "isSearchable method returns column can be used in a where clause");
-  } else
-  {
+  } else {
     logMsg(
            "isSearchable method returns column cannot be used in a where clause");
   }
@@ -826,12 +799,10 @@ void ResultSetMetadataTest::testIsSigned()
 {
   logMsg("Calling isSigned on ResultSetMetaData");
   bool retValue=rsmd->isSigned(2);
-  if (retValue)
-  {
+  if (retValue) {
     logMsg(
            "isSigned method returns values in the column are signed numbers");
-  } else
-  {
+  } else {
     logMsg(
            "isSigned method returns values in the column are isUnsigned numbers");
   }
@@ -866,11 +837,9 @@ void ResultSetMetadataTest::testIsWritable()
 {
   logMsg("Calling isWritable on ResultSetMetaData");
   bool retValue=rsmd->isWritable(1);
-  if (retValue)
-  {
+  if (retValue) {
     logMsg("isWritable method returns column is writable");
-  } else
-  {
+  } else {
     logMsg("isWritable method returns column cannot be writable");
   }
 }
@@ -887,8 +856,7 @@ void ResultSetMetadataTest::setUp()
   Properties::const_iterator cit=sqlProps.find("ftable");
   String fTableName;
 
-  if (cit != sqlProps.end())
-  {
+  if (cit != sqlProps.end()) {
     fTableName=cit->second;
   }
 
