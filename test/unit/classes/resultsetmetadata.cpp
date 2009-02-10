@@ -726,6 +726,97 @@ void resultsetmetadata::isCurrency()
   }
 }
 
+void resultsetmetadata::isDefinitelyWritable()
+{
+  logMsg("resultsetmetadata::isDefinitelyWritable() - MySQL_ResultSetMetaData::isDefinitelyWritable");
+  int i;
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+
+    runStandardQuery();
+    ResultSetMetaData meta(res->getMetaData());
+    for (i=1; i < 6; i++)
+      ASSERT_EQUALS(meta->isDefinitelyWritable(i), false);
+
+    try
+    {
+      meta->isDefinitelyWritable(6);
+      FAIL("Invalid offset 6 not recognized");
+    }
+    catch (sql::SQLException &e)
+    {
+    }
+
+    res->close();
+    try
+    {
+      meta->isDefinitelyWritable(1);
+      FAIL("Can fetch meta from invalid resultset");
+    }
+    catch (sql::SQLException &e)
+    {
+    }
+
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    FAIL(e.what());
+  }
+}
+
+void resultsetmetadata::isNullable()
+{
+  logMsg("resultsetmetadata::isNullable() - MySQL_ResultSetMetaData::isNullable");
+  int i;
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    runStandardQuery();
+    ResultSetMetaData meta(res->getMetaData());
+    for (i=1; i < 6; i++)
+      ASSERT_EQUALS(meta->isNullable(i), sql::ResultSetMetaData::columnNoNulls);
+
+    try
+    {
+      meta->isNullable(6);
+      FAIL("Invalid offset 6 not recognized");
+    }
+    catch (sql::SQLException &e)
+    {
+    }
+
+    res->close();
+    try
+    {
+      meta->isNullable(1);
+      FAIL("Can fetch meta from invalid resultset");
+    }
+    catch (sql::SQLException &e)
+    {
+    }
+
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT, col1 CHAR(1) DEFAULT NULL, col2 CHAR(10) NOT NULL)");
+    stmt->execute("INSERT INTO test(id, col2) VALUES (1, 'b')");
+    res.reset(stmt->executeQuery("SELECT id, col1, col2 FROM test"));
+    ResultSetMetaData meta2(res->getMetaData());
+    ASSERT_EQUALS(meta2->isNullable(1), sql::ResultSetMetaData::columnNullable);
+    ASSERT_EQUALS(meta2->isNullable(2), sql::ResultSetMetaData::columnNullable);
+    ASSERT_EQUALS(meta2->isNullable(3), sql::ResultSetMetaData::columnNoNulls);
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    FAIL(e.what());
+  }
+}
+
 void resultsetmetadata::runStandardQuery()
 {
   stmt.reset(con->createStatement());

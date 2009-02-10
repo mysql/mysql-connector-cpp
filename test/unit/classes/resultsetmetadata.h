@@ -92,6 +92,8 @@ public:
     TEST_CASE(isAutoIncrement);
     TEST_CASE(isCaseSensitive);
     TEST_CASE(isCurrency);
+    TEST_CASE(isDefinitelyWritable);
+    TEST_CASE(isNullable);
   }
 
   /**
@@ -189,6 +191,22 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void isCurrency();
+
+  /**
+   * Test for ResultSetMetaData::isDefinitelyWritable
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isDefinitelyWritable();
+
+  /**
+   * Test for ResultSetMetaData::isNullable
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isNullable();
 
 };
 
