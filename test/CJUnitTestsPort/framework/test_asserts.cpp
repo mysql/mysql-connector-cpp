@@ -162,6 +162,58 @@ void assertEquals(const String & expected, const String & result
   }
 }
 
+void assertLessThan(int expected, int result
+                    , const char* file, int line)
+{
+  if (expected < result)
+  {
+    std::stringstream errmsg;
+    errmsg.str("");
+    errmsg << "assertLessThan(int) failed at " << file << " on line " << line;
+    errmsg << " expecting '" << expected << "' got '" << result << "'";
+    TestsListener::testHasFailed(errmsg.str());
+  }
+}
+
+void assertLessThan(unsigned int expected, unsigned int result
+                    , const char* file, int line)
+{
+  if (expected < result)
+  {
+    std::stringstream errmsg;
+    errmsg.str("");
+    errmsg << "assertLessThan(unsigned int) failed at " << file << " on line " << line;
+    errmsg << " expecting '" << expected << "' got '" << result << "'";
+    TestsListener::testHasFailed(errmsg.str());
+  }
+}
+
+void assertGreaterThan(int expected, int result
+                       , const char* file, int line)
+{
+  if (expected > result)
+  {
+    std::stringstream errmsg;
+    errmsg.str("");
+    errmsg << "assertGreaterThan(int) failed at " << file << " on line " << line;
+    errmsg << " expecting '" << expected << "' got '" << result << "'";
+    TestsListener::testHasFailed(errmsg.str());
+  }
+}
+
+void assertGreaterThan(unsigned int expected, unsigned int result
+                       , const char* file, int line)
+{
+  if (expected > result)
+  {
+    std::stringstream errmsg;
+    errmsg.str("");
+    errmsg << "assertGreaterThan(unsigned int) failed at " << file << " on line " << line;
+    errmsg << " expecting '" << expected << "' got '" << result << "'";
+    TestsListener::testHasFailed(errmsg.str());
+  }
+}
+
 void fail(const char* reason, const char* file, int line)
 {
   // if( verbose...
