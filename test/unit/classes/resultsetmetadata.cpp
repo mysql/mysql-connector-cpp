@@ -1009,19 +1009,20 @@ void resultsetmetadata::isSigned()
 
 }
 
-void resultsetmetadata::isWriteable()
+void resultsetmetadata::isWritable()
 {
-  logMsg("resultsetmetadata::isWriteable() - MySQL_ResultSetMetaData::isWriteable");
+  logMsg("resultsetmetadata::isWritable() - MySQL_ResultSetMetaData::isWritable");
   int i;
   try
   {
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
     runStandardQuery();
-    /* NOTE: isReadable covers isWriteable */
+    ResultSetMetaData meta(res->getMetaData());
+    /* NOTE: isReadable covers isWritable */
 
     try
     {
-      meta->isWriteable(6);
+      meta->isWritable(6);
       FAIL("Invalid offset 6 not recognized");
     }
     catch (sql::SQLException &e)
@@ -1031,7 +1032,7 @@ void resultsetmetadata::isWriteable()
     res->close();
     try
     {
-      meta->isWriteable(1);
+      meta->isWritable(1);
       FAIL("Can fetch meta from invalid resultset");
     }
     catch (sql::SQLException &e)

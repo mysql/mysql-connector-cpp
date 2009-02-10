@@ -110,7 +110,7 @@ public:
     TEST_CASE(isReadOnly);
     TEST_CASE(isSearchable);
     TEST_CASE(isSigned);
-    TEST_CASE(isWriteable);
+    TEST_CASE(isWritable);
   }
 
   /**
@@ -250,12 +250,12 @@ public:
   void isSigned();
 
   /**
-   * Test for ResultSetMetaData::isWriteable
+   * Test for ResultSetMetaData::isWritable
    *
    * Focus on code coverage: invalid parameter, invalid resultset
    * JDBC compliance tests should take care that it does what its supposed to do
    */
-  void isWriteable();
+  void isWritable();
 
 };
 
