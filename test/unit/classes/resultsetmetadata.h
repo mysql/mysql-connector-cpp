@@ -89,6 +89,7 @@ public:
     TEST_CASE(getScale);
     TEST_CASE(getSchemaName);
     TEST_CASE(getTableName);
+    TEST_CASE(isAutoIncrement);
   }
 
   /**
@@ -162,6 +163,14 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getTableName();
+
+  /**
+   * Test for ResultSetMetaData::isAutoIncrement
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isAutoIncrement();
 
 };
 
