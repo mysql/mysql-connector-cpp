@@ -94,6 +94,8 @@ public:
     TEST_CASE(isCurrency);
     TEST_CASE(isDefinitelyWritable);
     TEST_CASE(isNullable);
+    TEST_CASE(isReadOnly);
+    TEST_CASE(isSearchable);
   }
 
   /**
@@ -207,6 +209,22 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void isNullable();
+
+  /**
+   * Test for ResultSetMetaData::isReadOnly
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isReadOnly();
+
+  /**
+   * Test for ResultSetMetaData::isSearchable
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isSearchable();
 
 };
 

@@ -736,8 +736,11 @@ void resultsetmetadata::isDefinitelyWritable()
 
     runStandardQuery();
     ResultSetMetaData meta(res->getMetaData());
-    for (i=1; i < 6; i++)
+    for (i=1; i < 6; i++) {
       ASSERT_EQUALS(meta->isDefinitelyWritable(i), false);
+      ASSERT_EQUALS(meta->isWritable(i), false);
+      ASSERT_EQUALS(meta->isReadOnly(i), true);
+    }
 
     try
     {
@@ -807,6 +810,111 @@ void resultsetmetadata::isNullable()
     ASSERT_EQUALS(meta2->isNullable(1), sql::ResultSetMetaData::columnNullable);
     ASSERT_EQUALS(meta2->isNullable(2), sql::ResultSetMetaData::columnNullable);
     ASSERT_EQUALS(meta2->isNullable(3), sql::ResultSetMetaData::columnNoNulls);
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    FAIL(e.what());
+  }
+}
+
+void resultsetmetadata::isReadOnly()
+{
+  logMsg("resultsetmetadata::isReadOnly() - MySQL_ResultSetMetaData::isReadOnly");
+  int i;
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    runStandardQuery();
+    ResultSetMetaData meta(res->getMetaData());
+    for (i=1; i < 6; i++)
+      ASSERT_EQUALS(meta->isReadOnly(i), true);
+
+    try
+    {
+      meta->isReadOnly(6);
+      FAIL("Invalid offset 6 not recognized");
+    }
+    catch (sql::SQLException &e)
+    {
+    }
+
+    res->close();
+    try
+    {
+      meta->isReadOnly(1);
+      FAIL("Can fetch meta from invalid resultset");
+    }
+    catch (sql::SQLException &e)
+    {
+    }
+
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT, col1 CHAR(1), col2 CHAR(10))");
+    stmt->execute("INSERT INTO test(id, col1, col2) VALUES (1, 'a', 'b')");
+    res.reset(stmt->executeQuery("SELECT id AS 'abc', col1, col2, 1 FROM test"));
+    ResultSetMetaData meta2(res->getMetaData());
+    ASSERT_EQUALS(meta2->isReadOnly(1), false);
+    ASSERT_EQUALS(meta2->isReadOnly(2), false);
+    ASSERT_EQUALS(meta2->isReadOnly(3), false);
+    ASSERT_EQUALS(meta2->isReadOnly(4), true);
+
+    try
+    {
+      stmt->execute("DROP VIEW IF EXISTS v_test");
+      stmt->execute("CREATE VIEW v_test(col1, col2) AS SELECT id, id + 1 FROM test");
+      res.reset(stmt->executeQuery("SELECT col1, col2 FROM v_test"));
+      ResultSetMetaData meta3(res->getMetaData());
+      ASSERT_EQUALS(meta3->isReadOnly(1), false);
+      /* Expecting ERROR 1348 (HY000): Column 'col2' is not updatable */
+      ASSERT_EQUALS(meta3->isReadOnly(2), true);
+    }
+    catch (sql::SQLException &e)
+    {
+      logMsg("... skipping VIEW test");
+    }
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    FAIL(e.what());
+  }
+}
+
+void resultsetmetadata::isSearchable()
+{
+  logMsg("resultsetmetadata::isSearchable() - MySQL_ResultSetMetaData::isSearchable");
+  int i;
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    runStandardQuery();
+    ResultSetMetaData meta(res->getMetaData());
+    for (i=1; i < 6; i++)
+      ASSERT_EQUALS(meta->isSearchable(i), true);
+
+    try
+    {
+      meta->isSearchable(6);
+      FAIL("Invalid offset 6 not recognized");
+    }
+    catch (sql::SQLException &e)
+    {
+    }
+
+    res->close();
+    try
+    {
+      meta->isSearchable(1);
+      FAIL("Can fetch meta from invalid resultset");
+    }
+    catch (sql::SQLException &e)
+    {
+    }
 
   }
   catch (sql::SQLException &e)
