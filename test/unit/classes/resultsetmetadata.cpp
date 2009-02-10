@@ -40,39 +40,39 @@ void resultsetmetadata::init()
    Its a madness. */
   columns.push_back(columndefinition("BIT", "BIT", sql::DataType::BIT, "0", true));
   columns.push_back(columndefinition("BIT", "BIT(8)", sql::DataType::BIT, "0", false));
-  columns.push_back(columndefinition("TINYINT", "TINYINT", sql::DataType::TINYINT, "127", true));
-  columns.push_back(columndefinition("TINYINT", "TINYINT(1)", sql::DataType::TINYINT, "0", false));
+  columns.push_back(columndefinition("TINYINT", "TINYINT", sql::DataType::TINYINT, "127", true, true));
+  columns.push_back(columndefinition("TINYINT", "TINYINT(1)", sql::DataType::TINYINT, "0", false, true));
   columns.push_back(columndefinition("TINYINT", "TINYINT UNSIGNED", sql::DataType::TINYINT, "255", false));
   columns.push_back(columndefinition("TINYINT", "TINYINT ZEROFILL", sql::DataType::TINYINT, "-1", false));
   /* Alias of BOOLEAN */
-  columns.push_back(columndefinition("TINYINT", "BOOLEAN", sql::DataType::TINYINT, "1", true));
-  columns.push_back(columndefinition("SMALLINT", "SMALLINT", sql::DataType::SMALLINT, "-32768", true));
-  columns.push_back(columndefinition("SMALLINT", "SMALLINT(5)", sql::DataType::SMALLINT, "-32768", false));
+  columns.push_back(columndefinition("TINYINT", "BOOLEAN", sql::DataType::TINYINT, "1", true, true));
+  columns.push_back(columndefinition("SMALLINT", "SMALLINT", sql::DataType::SMALLINT, "-32768", true, true));
+  columns.push_back(columndefinition("SMALLINT", "SMALLINT(5)", sql::DataType::SMALLINT, "-32768", false, true));
   columns.push_back(columndefinition("SMALLINT", "SMALLINT UNSIGNED", sql::DataType::SMALLINT, "65535", false));
-  columns.push_back(columndefinition("SMALLINT", "SMALLINT ZEROFILL", sql::DataType::SMALLINT, "123", false));
-  columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT", sql::DataType::MEDIUMINT, "-8388608", true));
+  columns.push_back(columndefinition("SMALLINT", "SMALLINT ZEROFILL", sql::DataType::SMALLINT, "123", false, false));
+  columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT", sql::DataType::MEDIUMINT, "-8388608", true, true));
   /* Alias of INTEGER */
-  columns.push_back(columndefinition("INT", "INTEGER", sql::DataType::INTEGER, "2147483647", true));
+  columns.push_back(columndefinition("INT", "INTEGER", sql::DataType::INTEGER, "2147483647", true, true));
   columns.push_back(columndefinition("INTEGER UNSIGNED", "INT UNSIGNED", sql::DataType::INTEGER, "4294967295", false));
   /* If you specify ZEROFILL for a numeric column, MySQL automatically adds the UNSIGNED  attribute to the column.  */
   columns.push_back(columndefinition("INTEGER UNSIGNED", "INT(4) SIGNED ZEROFILL", sql::DataType::INTEGER, "1", false));
-  columns.push_back(columndefinition("BIGINT", "BIGINT", sql::DataType::BIGINT, "-9223372036854775808", true));
+  columns.push_back(columndefinition("BIGINT", "BIGINT", sql::DataType::BIGINT, "-9223372036854775808", true, true));
   columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT UNSIGNED", sql::DataType::BIGINT, "18446744073709551615", false));
   columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT(4) ZEROFILL", sql::DataType::BIGINT, "2", false));
-  columns.push_back(columndefinition("FLOAT", "FLOAT", sql::DataType::REAL, "-1.01", true));
+  columns.push_back(columndefinition("FLOAT", "FLOAT", sql::DataType::REAL, "-1.01", true, true));
   columns.push_back(columndefinition("FLOAT", "FLOAT UNSIGNED", sql::DataType::REAL, "1.01", false));
   columns.push_back(columndefinition("FLOAT", "FLOAT(5,3) UNSIGNED ZEROFILL", sql::DataType::REAL, "1.01", false));
-  columns.push_back(columndefinition("FLOAT", "FLOAT(6)", sql::DataType::REAL, "1.01", false));
-  columns.push_back(columndefinition("DOUBLE", "DOUBLE", sql::DataType::DOUBLE, "-1.01", true));
+  columns.push_back(columndefinition("FLOAT", "FLOAT(6)", sql::DataType::REAL, "1.01", false, true));
+  columns.push_back(columndefinition("DOUBLE", "DOUBLE", sql::DataType::DOUBLE, "-1.01", true, true));
   columns.push_back(columndefinition("DOUBLE", "DOUBLE UNSIGNED", sql::DataType::DOUBLE, "1.01", false));
   columns.push_back(columndefinition("DOUBLE", "DOUBLE(5,3) UNSIGNED ZEROFILL", sql::DataType::DOUBLE, "1.01", false));
-  columns.push_back(columndefinition("DECIMAL", "DECIMAL", sql::DataType::DECIMAL, "-1.01", true));
+  columns.push_back(columndefinition("DECIMAL", "DECIMAL", sql::DataType::DECIMAL, "-1.01", true, true));
   columns.push_back(columndefinition("DECIMAL", "DECIMAL UNSIGNED", sql::DataType::DECIMAL, "1.01", false));
   columns.push_back(columndefinition("DECIMAL", "DECIMAL(5,3) UNSIGNED ZEROFILL", sql::DataType::DECIMAL, "1.01", false));
   columns.push_back(columndefinition("DATE", "DATE", sql::DataType::DATE, "2009-02-09", true));
   columns.push_back(columndefinition("DATETIME", "DATETIME", sql::DataType::TIMESTAMP, "2009-02-09 20:05:43", true));
   columns.push_back(columndefinition("TIMESTAMP", "TIMESTAMP", sql::DataType::TIMESTAMP, "2038-01-09 03:14:07", true));
-  columns.push_back(columndefinition("TIME", "TIME", sql::DataType::TIME, "-838:59:59", true));
+  columns.push_back(columndefinition("TIME", "TIME", sql::DataType::TIME, "-838:59:59", true, true));
   columns.push_back(columndefinition("YEAR", "YEAR", sql::DataType::YEAR, "1901", true));
   columns.push_back(columndefinition("YEAR", "YEAR(4)", sql::DataType::YEAR, "2009", false));
   columns.push_back(columndefinition("YEAR", "YEAR(2)", sql::DataType::YEAR, "1", false));
@@ -736,7 +736,8 @@ void resultsetmetadata::isDefinitelyWritable()
 
     runStandardQuery();
     ResultSetMetaData meta(res->getMetaData());
-    for (i=1; i < 6; i++) {
+    for (i=1; i < 6; i++)
+    {
       ASSERT_EQUALS(meta->isDefinitelyWritable(i), false);
       ASSERT_EQUALS(meta->isWritable(i), false);
       ASSERT_EQUALS(meta->isReadOnly(i), true);
@@ -934,7 +935,8 @@ void resultsetmetadata::isSigned()
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
     runStandardQuery();
     ResultSetMetaData meta(res->getMetaData());
-    for (i=1; i < 6; i++)
+
+    for (i=1; i < 5; i++)
       ASSERT_EQUALS(meta->isSigned(i), false);
 
     try
@@ -956,6 +958,46 @@ void resultsetmetadata::isSigned()
     {
     }
 
+    std::stringstream sql;
+    std::vector<columndefinition>::iterator it;
+    stmt.reset(con->createStatement());
+
+    for (it=columns.begin(); it != columns.end(); it++)
+    {
+
+      stmt->execute("DROP TABLE IF EXISTS test");
+
+      sql.str("");
+      sql << "CREATE TABLE test(col1 " << it->sqldef << ")";
+      try
+      {
+        stmt->execute(sql.str());
+        sql.str("");
+        sql << "INSERT INTO test(col1) VALUES ('" << it->value << "')";
+        stmt->execute(sql.str());
+
+        res.reset(stmt->executeQuery("SELECT * FROM test"));
+        ResultSetMetaData meta(res->getMetaData());
+        logMsg(it->sqldef);
+        /* TODO: the test needs to be tweaked!!! */
+        ASSERT_EQUALS(it->is_signed, meta->isSigned(1));
+        sql.str("");
+        sql << std::boolalpha << "... OK, SQL:" << it->sqldef << " -> Signed = " << it->is_signed;
+        logMsg(sql.str());
+
+      }
+
+      catch (sql::SQLException &e)
+      {
+        logMsg(sql.str());
+        sql.str("");
+        sql << "... skipping " << it->name << " " << it->sqldef << ": ";
+        sql << e.what();
+        logMsg(sql.str());
+      }
+
+    }
+
   }
   catch (sql::SQLException &e)
   {
@@ -963,6 +1005,8 @@ void resultsetmetadata::isSigned()
     logErr("SQLState: " + e.getSQLState());
     FAIL(e.what());
   }
+
+
 }
 
 void resultsetmetadata::runStandardQuery()

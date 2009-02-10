@@ -41,15 +41,28 @@ struct columndefinition
   int ctype;
   std::string value;
   bool check_name;
+  bool is_signed;
 
   columndefinition(std::string n, std::string s, int c, std::string v, bool f) :
   name(n),
   sqldef(s),
   ctype(c),
   value(v),
-  check_name(f)
+  check_name(f),
+  is_signed(false)
   {
   }
+
+  columndefinition(std::string n, std::string s, int c, std::string v, bool f, bool is) :
+  name(n),
+  sqldef(s),
+  ctype(c),
+  value(v),
+  check_name(f),
+  is_signed(is)
+  {
+  }
+  
 };
 
 class resultsetmetadata : public unit_fixture
@@ -227,7 +240,7 @@ public:
    */
   void isSearchable();
 
-    /**
+  /**
    * Test for ResultSetMetaData::isSigned
    *
    * Focus on code coverage: invalid parameter, invalid resultset
