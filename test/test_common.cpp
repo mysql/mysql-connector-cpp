@@ -1603,6 +1603,26 @@ static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 			total_errors++;
 		}
 
+		/* Test clearParameters() */
+		{
+			try {
+				std::auto_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ?"));
+				stmt->setInt(1, 13);
+				std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
+			} catch (sql::SQLException &e) {
+				printf("\n# ERR: Caught sql::SQLException at %s::%d  %s (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState().c_str());
+				printf("# ");
+				total_errors++;		
+			}
+			try {
+				std::auto_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ?"));
+				stmt->setInt(1, 13);
+				stmt->clearParameters();
+				std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
+				ensure("Exception not thrown", false);
+			} catch (sql::SQLException &e) {}
+		}
+
 		/* try clearParameters() call */
 		{
 #if 0
