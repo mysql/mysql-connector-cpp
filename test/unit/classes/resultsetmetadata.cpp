@@ -409,6 +409,40 @@ void resultsetmetadata::getPrecision()
   }
 }
 
+void resultsetmetadata::getScale()
+{
+  logMsg("resultsetmetadata::getScale() - MySQL_ResultSetMetaData::getScale");
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    runStandardQuery();
+    ResultSetMetaData meta(res->getMetaData());
+
+    try
+    {
+      meta->getScale(6);
+      FAIL("Invalid offset 6 not recognized");
+    } catch (sql::SQLException &e)
+    {
+    }
+
+    res->close();
+    try
+    {
+      meta->getScale(1);
+      FAIL("Can fetch meta from invalid resultset");
+    } catch (sql::SQLException &e)
+    {
+    }
+
+
+  } catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    FAIL(e.what());
+  }
+}
 void resultsetmetadata::runStandardQuery()
 {
   stmt.reset(con->createStatement());

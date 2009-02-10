@@ -86,6 +86,7 @@ public:
     TEST_CASE(getColumnNameAndLabel);
     TEST_CASE(getColumnType);
     TEST_CASE(getPrecision);
+    TEST_CASE(getScale);
   }
 
   /**
@@ -135,6 +136,14 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getPrecision();
+
+  /**
+   * Test for ResultSetMetaData::getPrecision
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getScale();
 
 };
 
