@@ -76,7 +76,45 @@ void resultsetmetadata::init()
   columns.push_back(columndefinition("YEAR", "YEAR", sql::DataType::YEAR, "1901", true));
   columns.push_back(columndefinition("YEAR", "YEAR(4)", sql::DataType::YEAR, "2009", false));
   columns.push_back(columndefinition("YEAR", "YEAR(2)", sql::DataType::YEAR, "1", false));
-
+  columns.push_back(columndefinition("CHAR", "CHAR", sql::DataType::CHAR, "a", true));
+  columns.push_back(columndefinition("CHAR", "CHAR(255)", sql::DataType::CHAR, "abc", false));
+  columns.push_back(columndefinition("CHAR", "NATIONAL CHAR(255)", sql::DataType::CHAR, "abc", false));
+  columns.push_back(columndefinition("CHAR", "CHAR(255) CHARACTER SET 'utf8'", sql::DataType::CHAR, "abc", false));
+  /* TODO this might be server dependent! */
+  columns.push_back(columndefinition("CHAR", "CHAR(255) CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::BINARY, "abc", false));
+  columns.push_back(columndefinition("CHAR", "CHAR(255) CHARACTER SET 'ucs2'", sql::DataType::CHAR, "abc", false));
+  /* The CHAR BYTE data type is an alias for the BINARY data type. This is a compatibility feature.  */
+  columns.push_back(columndefinition("BINARY", "CHAR(255) BYTE", sql::DataType::BINARY, "abc", false));
+  /*  Specifying the CHARACTER SET binary  attribute for a character data type
+   causes the column to be created as the corresponding binary data type:
+   CHAR becomes BINARY, VARCHAR becomes VARBINARY, and TEXT becomes BLOB.
+   For the ENUM and SET data types, this does not occur; they are created as declared.   */
+  columns.push_back(columndefinition("BINARY", "CHAR(255) CHARACTER SET 'binary'", sql::DataType::BINARY, "abc", false));
+  columns.push_back(columndefinition("VARCHAR", "VARCHAR(10)", sql::DataType::VARCHAR, "a", true));
+  columns.push_back(columndefinition("VARCHAR", "VARCHAR(10) CHARACTER SET 'utf8'", sql::DataType::VARCHAR, "a", false));
+  /* TODO this might be server dependent! */
+  columns.push_back(columndefinition("VARCHAR", "VARCHAR(10) CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::VARBINARY, "a", false));
+  columns.push_back(columndefinition("VARBINARY", "VARCHAR(10) BYTE", sql::DataType::VARBINARY, "a", true));
+  columns.push_back(columndefinition("BINARY", "BINARY(1)", sql::DataType::BINARY, "a", true));
+  columns.push_back(columndefinition("VARBINARY", "VARBINARY(1)", sql::DataType::VARBINARY, "a", true));
+  columns.push_back(columndefinition("BLOB", "TINYBLOB", sql::DataType::LONGVARBINARY, "a", true));
+  columns.push_back(columndefinition("TEXT", "TINYTEXT", sql::DataType::LONGVARCHAR, "a", true));
+  columns.push_back(columndefinition("TEXT", "TINYTEXT", sql::DataType::LONGVARCHAR, "a", true));
+  columns.push_back(columndefinition("TEXT", "TINYTEXT CHARACTER SET 'utf8'", sql::DataType::LONGVARCHAR, "a", false));
+  /* TODO this might be server dependent! */
+  columns.push_back(columndefinition("TEXT", "TINYTEXT CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", false));
+  columns.push_back(columndefinition("BLOB", "MEDIUMBLOB", sql::DataType::LONGVARBINARY, "a", true));
+  columns.push_back(columndefinition("TEXT", "MEDIUMTEXT", sql::DataType::LONGVARCHAR, "a", true));
+  columns.push_back(columndefinition("TEXT", "MEDIUMTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", false));
+  /* TODO this might be server dependent! */
+  columns.push_back(columndefinition("TEXT", "MEDIUMTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", false));
+  columns.push_back(columndefinition("BLOB", "LONGBLOB", sql::DataType::LONGVARBINARY, "a", false));
+  columns.push_back(columndefinition("TEXT", "LONGTEXT", sql::DataType::LONGVARCHAR, "a", true));
+  columns.push_back(columndefinition("TEXT", "LONGTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", false));
+  /* TODO this might be server dependent! */
+  columns.push_back(columndefinition("TEXT", "LONGTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", false));
+  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no')", sql::DataType::CHAR, "yes", true));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no')", sql::DataType::CHAR, "yes", true));
 }
 
 void resultsetmetadata::getCatalogName()
@@ -307,7 +345,7 @@ void resultsetmetadata::getColumnType()
 
         sql.str("");
         sql << "... OK, SQL:" << it->sqldef << " -> Type = " << it->name;
-        sql << " (" << it->ctype << ")";
+        sql << " (Code = " << it->ctype << ")";
         logMsg(sql.str());
 
       } catch (sql::SQLException &e)
