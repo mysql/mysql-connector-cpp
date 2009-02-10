@@ -67,7 +67,8 @@ int main(int argc, const char **argv)
 		/* Using the Driver to create a connection */
 		sql::Driver * driver = get_driver_instance();
 		cout << "# " << driver->getName() << ", version ";
-		cout << driver->getMajorVersion() << "." << driver->getMinorVersion() << endl;
+		cout << driver->getMajorVersion() << "." << driver->getMinorVersion();
+                cout << "." << driver->getPatchVersion() << endl;
 
 		std::auto_ptr< sql::Connection > con(driver->connect(url, user, pass));
 		std::auto_ptr<sql::DatabaseMetaData> con_meta(con->getMetaData());
