@@ -96,6 +96,7 @@ public:
     TEST_CASE(isNullable);
     TEST_CASE(isReadOnly);
     TEST_CASE(isSearchable);
+    TEST_CASE(isSigned);
   }
 
   /**
@@ -225,6 +226,14 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void isSearchable();
+
+    /**
+   * Test for ResultSetMetaData::isSigned
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isSigned();
 
 };
 

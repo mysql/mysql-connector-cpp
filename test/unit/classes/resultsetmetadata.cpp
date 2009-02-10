@@ -925,6 +925,46 @@ void resultsetmetadata::isSearchable()
   }
 }
 
+void resultsetmetadata::isSigned()
+{
+  logMsg("resultsetmetadata::isSigned() - MySQL_ResultSetMetaData::isSigned");
+  int i;
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    runStandardQuery();
+    ResultSetMetaData meta(res->getMetaData());
+    for (i=1; i < 6; i++)
+      ASSERT_EQUALS(meta->isSigned(i), false);
+
+    try
+    {
+      meta->isSigned(6);
+      FAIL("Invalid offset 6 not recognized");
+    }
+    catch (sql::SQLException &e)
+    {
+    }
+
+    res->close();
+    try
+    {
+      meta->isSigned(1);
+      FAIL("Can fetch meta from invalid resultset");
+    }
+    catch (sql::SQLException &e)
+    {
+    }
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    FAIL(e.what());
+  }
+}
+
 void resultsetmetadata::runStandardQuery()
 {
   stmt.reset(con->createStatement());
