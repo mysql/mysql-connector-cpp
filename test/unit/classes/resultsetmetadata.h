@@ -88,6 +88,7 @@ public:
     TEST_CASE(getPrecision);
     TEST_CASE(getScale);
     TEST_CASE(getSchemaName);
+    TEST_CASE(getTableName);
   }
 
   /**
@@ -153,6 +154,14 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getSchemaName();
+
+  /**
+   * Test for ResultSetMetaData::getTableName
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getTableName();
 
 };
 
