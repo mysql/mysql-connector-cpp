@@ -554,11 +554,12 @@ void resultsetmetadata::isAutoIncrement()
 
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
-    stmt->execute("CREATE TABLE test(id INT NOT NULL PRIMARY KEY AUTO_INCREMENT)");
-    stmt->execute("INSERT INTO test(id) VALUES (1)");
-    res.reset(stmt->executeQuery("SELECT * FROM test"));
+    stmt->execute("CREATE TABLE test(id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, col1 CHAR(1))");
+    stmt->execute("INSERT INTO test(id, col1) VALUES (1, 'a')");
+    res.reset(stmt->executeQuery("SELECT id, col1 FROM test"));
     ResultSetMetaData meta2(res->getMetaData());
     ASSERT_EQUALS(meta2->isAutoIncrement(1), true);
+    ASSERT_EQUALS(meta2->isAutoIncrement(2), false);
 
     runStandardQuery();
     ResultSetMetaData meta(res->getMetaData());
