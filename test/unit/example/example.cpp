@@ -157,7 +157,7 @@ void example_test_class::test_assert_greaterthan()
 
   /* There is no "greater or equal than", use GT instead.
   Example: 2 >= 1 */
-  ASSERT_GT(2, 0);
+  ASSERT_GT(0, 2);
 }
 
 void example_test_class::test_assert_equals_fail()
