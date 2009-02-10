@@ -443,6 +443,56 @@ void resultsetmetadata::getScale()
     FAIL(e.what());
   }
 }
+
+void resultsetmetadata::getSchemaName()
+{
+  logMsg("resultsetmetadata::getSchemaName() - MySQL_ResultSetMetaData::getSchemaName");
+  int i;
+  std::stringstream sql;
+
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT)");
+    stmt->execute("INSERT INTO test(id) VALUES (1)");
+    res.reset(stmt->executeQuery("SELECT * FROM test"));
+    ResultSetMetaData meta2(res->getMetaData());
+    ASSERT_EQUALS(meta2->getSchemaName(1), con->getSchema());
+
+    runStandardQuery();
+    ResultSetMetaData meta(res->getMetaData());
+    for (i=1; i < 6; i++)
+      ASSERT_EQUALS(meta->getSchemaName(i), "");
+    
+    try
+    {
+      meta->getScale(6);
+      FAIL("Invalid offset 6 not recognized");
+    } catch (sql::SQLException &e)
+    {
+    }
+
+    res->close();
+    try
+    {
+      meta->getScale(1);
+      FAIL("Can fetch meta from invalid resultset");
+    } catch (sql::SQLException &e)
+    {
+    }
+
+
+  } catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    FAIL(e.what());
+  }
+}
+
 void resultsetmetadata::runStandardQuery()
 {
   stmt.reset(con->createStatement());

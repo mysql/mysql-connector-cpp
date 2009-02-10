@@ -87,6 +87,7 @@ public:
     TEST_CASE(getColumnType);
     TEST_CASE(getPrecision);
     TEST_CASE(getScale);
+    TEST_CASE(getSchemaName);
   }
 
   /**
@@ -138,12 +139,20 @@ public:
   void getPrecision();
 
   /**
-   * Test for ResultSetMetaData::getPrecision
+   * Test for ResultSetMetaData::getScale
    *
    * Focus on code coverage: invalid parameter, invalid resultset
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getScale();
+
+  /**
+   * Test for ResultSetMetaData::getSchemaName
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getSchemaName();
 
 };
 
