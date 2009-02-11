@@ -43,16 +43,16 @@ public:
 
   EXAMPLE_TEST_FIXTURE(connectionmetadata)
   {
-    TEST_CASE(getCatalogName);
+    TEST_CASE(getSchemata);
   }
 
   /**
-   * Test for connectionmetadata::getCatalogName()
+   * Test for DatabaseMetaData:getSchemata()
    *
    * Focus on code coverage: invalid parameter, invalid resultset
    * JDBC compliance tests should take care that it does what its supposed to do
    */
-  void getCatalogName();
+  void getSchemata();
 
 };
 

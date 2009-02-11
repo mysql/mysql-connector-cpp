@@ -33,12 +33,38 @@ namespace testsuite
 namespace classes
 {
 
-void connectionmetadata::getCatalogName()
+void connectionmetadata::getSchemata()
 {
-  logMsg("connectionmetadata::getCatalogName() - MySQL_connectionmetadata::getCatalogName");
+  logMsg("connectionmetadata::getSchemata() - MySQL_ConnectionMetaData::getSchemata");
+  bool schema_found=false;
+  std::stringstream msg;
   try
   {
-    
+    DatabaseMetaData dbmeta(con->getMetaData());
+    ResultSet resdbm1(dbmeta->getSchemata());
+    ResultSet resdbm2(dbmeta->getSchemaObjects(con->getCatalog(), "", "schema"));
+    logMsg("... checking if getSchemata() and getSchemaObjects() report the same schematas");
+
+    resdbm1->beforeFirst();
+    while (resdbm1->next())
+    {
+
+      schema_found=false;
+      resdbm2->beforeFirst();
+      while (resdbm2->next())
+        if (resdbm2->getString("SCHEMA") == resdbm1->getString(1))
+        {
+          schema_found=true;
+          break;
+        }
+      
+      if (!schema_found)
+        FAIL("Schemata lists differ");
+
+      msg.str("");
+      msg << "... OK " << resdbm1->getString(1) << " = " << resdbm2->getString("SCHEMA");
+      logMsg(msg.str());
+    }
   }
   catch (sql::SQLException &e)
   {
