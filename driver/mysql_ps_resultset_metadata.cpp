@@ -364,6 +364,9 @@ MySQL_Prepared_ResultSetMetaData::isSigned(unsigned int columnIndex)
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
+	if (mysql_fetch_field_direct(result_meta, columnIndex)->type == FIELD_TYPE_YEAR) {
+		return false;	
+	}
 	return !(mysql_fetch_field_direct(result_meta, columnIndex)->flags & UNSIGNED_FLAG);
 }
 /* }}} */
