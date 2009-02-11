@@ -379,6 +379,9 @@ MySQL_ResultSetMetaData::isSigned(unsigned int columnIndex)
 		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
 			throw sql::InvalidArgumentException("Invalid value for columnIndex");
 		}
+		if (mysql_fetch_field_direct(result->get(), columnIndex - 1)->type == FIELD_TYPE_YEAR) {
+			return false;
+		}
 		return !(mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG);
 	}
 	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
