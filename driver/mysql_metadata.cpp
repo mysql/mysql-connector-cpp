@@ -708,7 +708,7 @@ static const TypeInfoDef mysqlc_types[] = {
 		10,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
-		"[(M,D)] [ZEROFILL]",				// Create params
+		"[(M,D)] [ZEROFILL] [UNSIGNED]",	// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
@@ -716,6 +716,26 @@ static const TypeInfoDef mysqlc_types[] = {
 		false,								// fixed_prec_scale
 		true,								// auto_increment
 		"FLOAT",							// local type name
+		-38,								// minimum scale
+		38,									// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
+	{
+		"FLOAT UNSIGNED",					// Typename
+		sql::DataType::REAL,				// dbc-type
+		10,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M,D)] [ZEROFILL]",				// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		true,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"FLOAT UNSIGNED",					// local type name
 		-38,								// minimum scale
 		38,									// maximum scale
 		0,									// sql data type (unused)
@@ -730,7 +750,7 @@ static const TypeInfoDef mysqlc_types[] = {
 		17,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
-		"[(M,D)] [ZEROFILL]",				// Create params
+		"[(M,D)] [ZEROFILL] [UNSIGNED]",	// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
@@ -738,6 +758,26 @@ static const TypeInfoDef mysqlc_types[] = {
 		false,								// fixed_prec_scale
 		true,								// auto_increment
 		"DOUBLE",							// local type name
+		-308,								// minimum scale
+		308,								// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
+	{
+		"DOUBLE UNSIGNED",						// Typename
+		sql::DataType::DOUBLE,				// dbc-type
+		17,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M,D)] [ZEROFILL]",				// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		true,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"DOUBLE UNSIGNED",					// local type name
 		-308,								// minimum scale
 		308,								// maximum scale
 		0,									// sql data type (unused)
@@ -756,7 +796,7 @@ static const TypeInfoDef mysqlc_types[] = {
 		17,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
-		"[(M,D)] [ZEROFILL]",				// Create params
+		"[(M,D)] [ZEROFILL] [UNSIGNED]",	// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
@@ -764,6 +804,26 @@ static const TypeInfoDef mysqlc_types[] = {
 		false,								// fixed_prec_scale
 		true,								// auto_increment
 		"REAL",								// local type name
+		-308,								// minimum scale
+		308,								// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
+	{
+		"REAL UNSIGNED",					// Typename
+		sql::DataType::DOUBLE,				// dbc-type
+		17,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M,D)] [ZEROFILL]",				// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		true,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"REAL UNSIGNED",					// local type name
 		-308,								// minimum scale
 		308,								// maximum scale
 		0,									// sql data type (unused)
