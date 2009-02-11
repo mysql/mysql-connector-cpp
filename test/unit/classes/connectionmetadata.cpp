@@ -57,7 +57,7 @@ void connectionmetadata::getSchemata()
           schema_found=true;
           break;
         }
-      
+
       if (!schema_found)
         FAIL("Schemata lists differ");
 
@@ -70,7 +70,31 @@ void connectionmetadata::getSchemata()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connectionmetadata::getAttributes()
+{
+  logMsg("connectionmetadata::getAttributes() - MySQL_ConnectionMetaData::getAttributes");
+  bool schema_found=false;
+  std::stringstream msg;
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    ResultSet res(dbmeta->getAttributes(con->getCatalog(), con->getSchema(), "", ""));
+
+    res->next();
+
+//    ASSERT_EQUALS(res->getString("TYPE_CAT"), "");
+    ASSERT_EQUALS(res->getString("TYPE_SCHEM"), "");
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 

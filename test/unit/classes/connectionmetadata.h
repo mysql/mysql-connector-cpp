@@ -44,6 +44,8 @@ public:
   EXAMPLE_TEST_FIXTURE(connectionmetadata)
   {
     TEST_CASE(getSchemata);
+    TEST_CASE(getAttributes);
+
   }
 
   /**
@@ -53,6 +55,14 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getSchemata();
+
+  /**
+   * Test for DatabaseMetaData:getAttributes()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getAttributes();
 
 };
 

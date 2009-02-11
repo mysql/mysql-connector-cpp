@@ -49,7 +49,7 @@ void connection::getClientInfo()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -68,7 +68,7 @@ void connection::getNoWarningsOnNewLine()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -89,7 +89,7 @@ void connection::getNoWarningsAfterClear()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -121,7 +121,7 @@ void connection::checkClosed()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -659,7 +659,7 @@ void connection::connectUsingMap()
         con.reset(driver->connect(connection_properties));
       } catch (sql::SQLException &e)
       {
-        FAIL(e.what());
+        fail(e.what(), __FILE__, __LINE__);
       }
     }
     connection_properties.erase("MYSQL_OPT_CONNECT_TIMEOUT");
@@ -678,7 +678,7 @@ void connection::connectUsingMap()
         con.reset(driver->connect(connection_properties));
       } catch (sql::SQLException &e)
       {
-        FAIL(e.what());
+        fail(e.what(), __FILE__, __LINE__);
       }
     }
     connection_properties.erase("MYSQL_OPT_READ_TIMEOUT");
@@ -697,7 +697,7 @@ void connection::connectUsingMap()
         con.reset(driver->connect(connection_properties));
       } catch (sql::SQLException &e)
       {
-        FAIL(e.what());
+        fail(e.what(), __FILE__, __LINE__);
       }
     }
     connection_properties.erase("MYSQL_OPT_WRITE_TIMEOUT");
@@ -716,7 +716,7 @@ void connection::connectUsingMap()
         con.reset(driver->connect(connection_properties));
       } catch (sql::SQLException &e)
       {
-        FAIL(e.what());
+        fail(e.what(), __FILE__, __LINE__);
       }
     }
     connection_properties.erase("MYSQL_OPT_RECONNECT");
@@ -737,7 +737,7 @@ void connection::connectUsingMap()
         con.reset(driver->connect(connection_properties));
       } catch (sql::SQLException &e)
       {
-        FAIL(e.what());
+        fail(e.what(), __FILE__, __LINE__);
       }
     }
     connection_properties.erase("MYSQL_OPT_SET_CHARSET_NAME");
@@ -758,7 +758,7 @@ void connection::connectUsingMap()
         con.reset(driver->connect(connection_properties));
       } catch (sql::SQLException &e)
       {
-        FAIL(e.what());
+        fail(e.what(), __FILE__, __LINE__);
       }
     }
     connection_properties.erase("MYSQL_REPORT_DATA_TRUNCATION");
@@ -767,7 +767,7 @@ void connection::connectUsingMap()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 
 }

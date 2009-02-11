@@ -50,7 +50,8 @@ void template_bug123_class::template_bug123_method()
     res->next();
     logMsg(res->getString(1));
 
-  } catch (sql::SQLException &e)
+  }
+  catch (sql::SQLException &e)
   {
     /* If anything goes wrong, write some info to the log... */
     logErr(e.what());
@@ -60,7 +61,7 @@ void template_bug123_class::template_bug123_method()
      ... and let the test fail. FAIL() is a macro.
      FAIL calls fail(const char* reason, const char* file, int line)
      */
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
   /* If all goes fine, there is no need to call PASS() or something.	 */
 }

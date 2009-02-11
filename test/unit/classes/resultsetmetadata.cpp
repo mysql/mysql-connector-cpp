@@ -160,7 +160,7 @@ void resultsetmetadata::getCatalogName()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -190,7 +190,7 @@ void resultsetmetadata::getColumnCount()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -242,7 +242,7 @@ void resultsetmetadata::getColumnDisplaySize()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -326,7 +326,7 @@ void resultsetmetadata::getColumnNameAndLabel()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -383,7 +383,7 @@ void resultsetmetadata::getColumnType()
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -427,7 +427,7 @@ void resultsetmetadata::getPrecision()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -465,7 +465,7 @@ void resultsetmetadata::getScale()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -516,7 +516,7 @@ void resultsetmetadata::getSchemaName()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -567,7 +567,7 @@ void resultsetmetadata::getTableName()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -618,7 +618,7 @@ void resultsetmetadata::isAutoIncrement()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -679,7 +679,7 @@ void resultsetmetadata::isCaseSensitive()
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
     printf("%s", e.what());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -722,7 +722,7 @@ void resultsetmetadata::isCurrency()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -768,7 +768,7 @@ void resultsetmetadata::isDefinitelyWritable()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -817,7 +817,7 @@ void resultsetmetadata::isNullable()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -882,7 +882,7 @@ void resultsetmetadata::isReadOnly()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -922,7 +922,7 @@ void resultsetmetadata::isSearchable()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -1003,7 +1003,7 @@ void resultsetmetadata::isSigned()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 
 
@@ -1043,7 +1043,7 @@ void resultsetmetadata::isWritable()
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 

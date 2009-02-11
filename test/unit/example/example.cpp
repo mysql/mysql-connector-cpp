@@ -50,7 +50,8 @@ void example_test_class::test_hello_world1()
     res->next();
     logMsg(res->getString(1));
 
-  } catch (sql::SQLException &e)
+  }
+  catch (sql::SQLException &e)
   {
     /* If anything goes wrong, write some info to the log... */
     logErr(e.what());
@@ -60,7 +61,7 @@ void example_test_class::test_hello_world1()
      ... and let the test fail. FAIL() is a macro.
      FAIL calls fail(const char* reason, const char* file, int line)
      */
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
   /* If all goes fine, there is no need to call PASS() or something.	 */
 }
@@ -93,11 +94,12 @@ void example_test_class::test_hello_world2()
     logMsg(res2->getString("_world"));
     res2->close();
 
-  } catch (sql::SQLException &e)
+  }
+  catch (sql::SQLException &e)
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
-    FAIL(e.what());
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
