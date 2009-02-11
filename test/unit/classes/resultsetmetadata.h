@@ -41,15 +41,28 @@ struct columndefinition
   int ctype;
   std::string value;
   bool check_name;
+  bool is_signed;
 
   columndefinition(std::string n, std::string s, int c, std::string v, bool f) :
   name(n),
   sqldef(s),
   ctype(c),
   value(v),
-  check_name(f)
+  check_name(f),
+  is_signed(false)
   {
   }
+
+  columndefinition(std::string n, std::string s, int c, std::string v, bool f, bool is) :
+  name(n),
+  sqldef(s),
+  ctype(c),
+  value(v),
+  check_name(f),
+  is_signed(is)
+  {
+  }
+  
 };
 
 class resultsetmetadata : public unit_fixture
@@ -89,6 +102,15 @@ public:
     TEST_CASE(getScale);
     TEST_CASE(getSchemaName);
     TEST_CASE(getTableName);
+    TEST_CASE(isAutoIncrement);
+    TEST_CASE(isCaseSensitive);
+    TEST_CASE(isCurrency);
+    TEST_CASE(isDefinitelyWritable);
+    TEST_CASE(isNullable);
+    TEST_CASE(isReadOnly);
+    TEST_CASE(isSearchable);
+    TEST_CASE(isSigned);
+    TEST_CASE(isWritable);
   }
 
   /**
@@ -162,6 +184,78 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getTableName();
+
+  /**
+   * Test for ResultSetMetaData::isAutoIncrement
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isAutoIncrement();
+
+  /**
+   * Test for ResultSetMetaData::isCaseSensitive
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isCaseSensitive();
+
+  /**
+   * Test for ResultSetMetaData::isCurrency
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isCurrency();
+
+  /**
+   * Test for ResultSetMetaData::isDefinitelyWritable
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isDefinitelyWritable();
+
+  /**
+   * Test for ResultSetMetaData::isNullable
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isNullable();
+
+  /**
+   * Test for ResultSetMetaData::isReadOnly
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isReadOnly();
+
+  /**
+   * Test for ResultSetMetaData::isSearchable
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isSearchable();
+
+  /**
+   * Test for ResultSetMetaData::isSigned
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isSigned();
+
+  /**
+   * Test for ResultSetMetaData::isWritable
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isWritable();
 
 };
 
