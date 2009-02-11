@@ -479,7 +479,7 @@ static const TypeInfoDef mysqlc_types[] = {
 		10									// num prec radix
 	},
 
-// ToDo : The maximum number of digits for DECIMAL or NUMERIC is 65 (64 from MySQL 5.0.3 to 5.0.5). 
+// ToDo : The maximum number of digits for DECIMAL or NUMERIC is 65 (64 from MySQL 5.0.3 to 5.0.5).
 
 	// ----------- MySQL-Type: NUMERIC (silently conv. to DECIMAL) DBC-Type: NUMERIC ----------
 	{
@@ -1099,7 +1099,7 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 		triggers_where_clause.append(" WHERE trigger_schema = '").append(schemaName).append("' ");
 	}
 
-	if (objectType.length() == 0) { 
+	if (objectType.length() == 0) {
 		query.append("SELECT ").append(tables_select_items)
 			.append(" FROM information_schema.tables ").append(tables_where_clause)
 			.append("UNION SELECT ").append(views_select_items)
@@ -1142,13 +1142,13 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 
 	std::auto_ptr<sql::Statement> stmt1(connection->createStatement());
 	std::auto_ptr<sql::ResultSet> native_rs(stmt1->executeQuery(query));
-		
+
 	int objtype_field_index = native_rs->findColumn("OBJECT_TYPE");
 	int catalog_field_index = native_rs->findColumn("CATALOG");
 	int schema_field_index = native_rs->findColumn("SCHEMA");
 	int name_field_index = native_rs->findColumn("NAME");
 
-	
+
 	std::map<std::string, std::string> trigger_name_map;
 	std::map<std::string, std::string> trigger_ddl_map;
 
@@ -1293,7 +1293,7 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 			throw sql::InvalidArgumentException("MySQL_DatabaseMetaData::getSchemaObjects: invalid OBJECT_TYPE returned from query");
 		}
 
-		// due to bugs in server code some queries can fail. 
+		// due to bugs in server code some queries can fail.
 		// here we want to gather as much info as possible
 		try  {
 			std::string ddl;
@@ -1457,10 +1457,11 @@ MySQL_ConnectionMetaData::getAttributes(const std::string& /*catalog*/, const st
 
 	std::list<std::string> rs_field_data;
 
-	rs_field_data.push_back("TABLE_CAT");
-	rs_field_data.push_back("TYPE_SCHEMA");
+	rs_field_data.push_back("TYPE_CAT");
+	rs_field_data.push_back("TYPE_SCHEM");
 	rs_field_data.push_back("TYPE_NAME");
 	rs_field_data.push_back("ATTR_NAME");
+	rs_field_data.push_back("DATA_TYPE");
 	rs_field_data.push_back("ATTR_TYPE_NAME");
 	rs_field_data.push_back("ATTR_SIZE");
 	rs_field_data.push_back("DECIMAL_DIGITS");
@@ -1475,6 +1476,7 @@ MySQL_ConnectionMetaData::getAttributes(const std::string& /*catalog*/, const st
 	rs_field_data.push_back("IS_NULLABLE");
 	rs_field_data.push_back("SCOPE_CATALOG");
 	rs_field_data.push_back("SCOPE_SCHEMA");
+	rs_field_data.push_back("SCOPE_TABLE");
 	rs_field_data.push_back("SOURCE_DATA_TYPE");
 
 	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
@@ -2037,7 +2039,7 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::parseImportedKeys");
 	size_t idx, pos;
-	
+
 	/* check if line contains 'CONSTRAINT' */
 	idx = def.find("CONSTRAINT", start_pos);
 	if (idx != std::string::npos) {
@@ -2061,18 +2063,18 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 			constraint_name = def.substr(pos, end_pos - pos - 1);
 			pos = end_pos + 1;
 		}
-		
+
 		std::list< std::string > keywords;
 		keywords.push_back("FOREIGN KEY");
 		keywords.push_back("REFERENCES");
 		std::list< std::string >::const_iterator keywords_it = keywords.begin();
-		
+
 		for (; keywords_it != keywords.end(); keywords_it++) {
 			idx = def.find(*keywords_it, pos);
 			pos = idx + keywords_it->size();
 
 			while (def[pos] == ' ') pos++;
-			// Here comes optional constraint name 
+			// Here comes optional constraint name
 			if (def[pos] != '(') {
 				if (cQuote.size()) {
 					size_t end_pos = pos;
@@ -2108,7 +2110,7 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 				} while (comma_pos != std::string::npos);
 				pos = end_bracket + 1;
 			}
-		}	
+		}
 	}
 
 	// Check optional (UPDATE | DELETE) CASCADE
@@ -2117,7 +2119,7 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 		keywords.push_back("ON DELETE");
 		keywords.push_back("ON UPDATE");
 		std::list< std::string >::const_iterator keywords_it = keywords.begin();
-		
+
 		for (; keywords_it != keywords.end(); keywords_it++) {
 			int action = importedKeyNoAction;
 			idx = def.find(*keywords_it, pos);
@@ -2228,7 +2230,7 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 			std::string create_query(rs->getString(2));
 			size_t cr_pos = 0;
 			unsigned int kSequence = 0;
-			
+
 			do {
 				// the first line doesn't include CONSTRAINTS, but CREATE TABLE so we are safe here
 				cr_pos = create_query.find("\n", cr_pos);
@@ -2264,7 +2266,7 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 				rs_data_row.push_back(referenced_fields["REFERENCES"].front());				// FKCOLUMN_NAME
 				rs_data_row.push_back((int64_t) kSequence++);	// KEY_SEQ
 
-				
+
 				rs_data_row.push_back((int64_t) update_delete_action["ON UPDATE"]);	// UPDATE_RULE
 
 				rs_data_row.push_back((int64_t) update_delete_action["ON DELETE"]);	// DELETE_RULE
@@ -2823,7 +2825,7 @@ MySQL_ConnectionMetaData::getSchemas()
 
 		rs_data_row.push_back(rs->getString(1));
 		if (server_version > 49999) {
-			rs_data_row.push_back(rs->getString(2));		
+			rs_data_row.push_back(rs->getString(2));
 		} else {
 			rs_data_row.push_back("");
 		}
@@ -3164,7 +3166,7 @@ MySQL_ConnectionMetaData::getTables(const std::string& /* catalog */, const std:
 		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
 		stmt->setString(1, schemaPattern);
 		stmt->setString(2, tableNamePattern);
-		
+
 		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next()) {
