@@ -62,7 +62,7 @@ struct columndefinition
   is_signed(is)
   {
   }
-  
+
 };
 
 class resultsetmetadata : public unit_fixture
