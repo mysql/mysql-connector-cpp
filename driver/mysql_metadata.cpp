@@ -510,7 +510,7 @@ static const TypeInfoDef mysqlc_types[] = {
 		64,									// Precision
 		"",									// Literal prefix
 		"",									// Literal suffix
-		"[(M[,D])] [ZEROFILL]",				// Create params
+		"[(M[,D])] [ZEROFILL] [UNSIGNED]",	// Create params
 		DatabaseMetaData::typeNullable,		// nullable
 		false,								// case sensitive
 		DatabaseMetaData::typeSearchable,	// searchable
@@ -518,6 +518,26 @@ static const TypeInfoDef mysqlc_types[] = {
 		false,								// fixed_prec_scale
 		true,								// auto_increment
 		"DECIMAL",							// local type name
+		-308,								// minimum scale
+		308,								// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
+	{
+		"DECIMAL UNSIGNED",					// Typename
+		sql::DataType::DECIMAL,				// dbc-type
+		64,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M[,D])] [ZEROFILL]",				// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		true,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"DECIMAL UNSIGNED",					// local type name
 		-308,								// minimum scale
 		308,								// maximum scale
 		0,									// sql data type (unused)
