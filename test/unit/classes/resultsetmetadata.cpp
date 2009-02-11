@@ -35,84 +35,81 @@ namespace classes
 
 void resultsetmetadata::init()
 {
-  /* DO NOT test for unsinged/signed in the column names.
-   Server and libmysql return whatever they want in the flags depending on the version.
-   Its a madness. */
   columns.push_back(columndefinition("BIT", "BIT", sql::DataType::BIT, "0", true));
-  columns.push_back(columndefinition("BIT", "BIT(8)", sql::DataType::BIT, "0", false));
+  columns.push_back(columndefinition("BIT", "BIT(8)", sql::DataType::BIT, "0", true));
   columns.push_back(columndefinition("TINYINT", "TINYINT", sql::DataType::TINYINT, "127", true, true));
-  columns.push_back(columndefinition("TINYINT", "TINYINT(1)", sql::DataType::TINYINT, "0", false, true));
-  columns.push_back(columndefinition("TINYINT", "TINYINT UNSIGNED", sql::DataType::TINYINT, "255", false));
-  columns.push_back(columndefinition("TINYINT", "TINYINT ZEROFILL", sql::DataType::TINYINT, "-1", false));
+  columns.push_back(columndefinition("TINYINT", "TINYINT(1)", sql::DataType::TINYINT, "0", true, true));
+  columns.push_back(columndefinition("TINYINT UNSIGNED", "TINYINT UNSIGNED", sql::DataType::TINYINT, "255", true));
+  columns.push_back(columndefinition("TINYINT UNSIGNED", "TINYINT ZEROFILL", sql::DataType::TINYINT, "-1", true));
   /* Alias of BOOLEAN */
   columns.push_back(columndefinition("TINYINT", "BOOLEAN", sql::DataType::TINYINT, "1", true, true));
   columns.push_back(columndefinition("SMALLINT", "SMALLINT", sql::DataType::SMALLINT, "-32768", true, true));
-  columns.push_back(columndefinition("SMALLINT", "SMALLINT(5)", sql::DataType::SMALLINT, "-32768", false, true));
-  columns.push_back(columndefinition("SMALLINT", "SMALLINT UNSIGNED", sql::DataType::SMALLINT, "65535", false));
-  columns.push_back(columndefinition("SMALLINT", "SMALLINT ZEROFILL", sql::DataType::SMALLINT, "123", false, false));
+  columns.push_back(columndefinition("SMALLINT", "SMALLINT(5)", sql::DataType::SMALLINT, "-32768", true, true));
+  columns.push_back(columndefinition("SMALLINT UNSIGNED", "SMALLINT UNSIGNED", sql::DataType::SMALLINT, "65535", true));
+  columns.push_back(columndefinition("SMALLINT UNSIGNED", "SMALLINT ZEROFILL", sql::DataType::SMALLINT, "123", true, false));
   columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT", sql::DataType::MEDIUMINT, "-8388608", true, true));
   /* Alias of INTEGER */
   columns.push_back(columndefinition("INT", "INTEGER", sql::DataType::INTEGER, "2147483647", true, true));
-  columns.push_back(columndefinition("INTEGER UNSIGNED", "INT UNSIGNED", sql::DataType::INTEGER, "4294967295", false));
+  columns.push_back(columndefinition("INTEGER UNSIGNED", "INT UNSIGNED", sql::DataType::INTEGER, "4294967295", true));
   /* If you specify ZEROFILL for a numeric column, MySQL automatically adds the UNSIGNED  attribute to the column.  */
   columns.push_back(columndefinition("INTEGER UNSIGNED", "INT(4) SIGNED ZEROFILL", sql::DataType::INTEGER, "1", false));
   columns.push_back(columndefinition("BIGINT", "BIGINT", sql::DataType::BIGINT, "-9223372036854775808", true, true));
-  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT UNSIGNED", sql::DataType::BIGINT, "18446744073709551615", false));
-  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT(4) ZEROFILL", sql::DataType::BIGINT, "2", false));
+  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT UNSIGNED", sql::DataType::BIGINT, "18446744073709551615", true));
+  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT(4) ZEROFILL", sql::DataType::BIGINT, "2", true));
   columns.push_back(columndefinition("FLOAT", "FLOAT", sql::DataType::REAL, "-1.01", true, true));
-  columns.push_back(columndefinition("FLOAT", "FLOAT UNSIGNED", sql::DataType::REAL, "1.01", false));
-  columns.push_back(columndefinition("FLOAT", "FLOAT(5,3) UNSIGNED ZEROFILL", sql::DataType::REAL, "1.01", false));
-  columns.push_back(columndefinition("FLOAT", "FLOAT(6)", sql::DataType::REAL, "1.01", false, true));
+  columns.push_back(columndefinition("FLOAT UNSIGNED", "FLOAT UNSIGNED", sql::DataType::REAL, "1.01", true));
+  columns.push_back(columndefinition("FLOAT UNSIGNED", "FLOAT(5,3) UNSIGNED ZEROFILL", sql::DataType::REAL, "1.01", true));
+  columns.push_back(columndefinition("FLOAT", "FLOAT(6)", sql::DataType::REAL, "1.01", true, true));
   columns.push_back(columndefinition("DOUBLE", "DOUBLE", sql::DataType::DOUBLE, "-1.01", true, true));
-  columns.push_back(columndefinition("DOUBLE", "DOUBLE UNSIGNED", sql::DataType::DOUBLE, "1.01", false));
-  columns.push_back(columndefinition("DOUBLE", "DOUBLE(5,3) UNSIGNED ZEROFILL", sql::DataType::DOUBLE, "1.01", false));
+  columns.push_back(columndefinition("DOUBLE UNSIGNED", "DOUBLE UNSIGNED", sql::DataType::DOUBLE, "1.01", true));
+  columns.push_back(columndefinition("DOUBLE UNSIGNED", "DOUBLE(5,3) UNSIGNED ZEROFILL", sql::DataType::DOUBLE, "1.01", false));
   columns.push_back(columndefinition("DECIMAL", "DECIMAL", sql::DataType::DECIMAL, "-1.01", true, true));
-  columns.push_back(columndefinition("DECIMAL", "DECIMAL UNSIGNED", sql::DataType::DECIMAL, "1.01", false));
-  columns.push_back(columndefinition("DECIMAL", "DECIMAL(5,3) UNSIGNED ZEROFILL", sql::DataType::DECIMAL, "1.01", false));
+  columns.push_back(columndefinition("DECIMAL UNSIGNED", "DECIMAL UNSIGNED", sql::DataType::DECIMAL, "1.01", true));
+  columns.push_back(columndefinition("DECIMAL UNSIGNED", "DECIMAL(5,3) UNSIGNED ZEROFILL", sql::DataType::DECIMAL, "1.01", true));
   columns.push_back(columndefinition("DATE", "DATE", sql::DataType::DATE, "2009-02-09", true));
   columns.push_back(columndefinition("DATETIME", "DATETIME", sql::DataType::TIMESTAMP, "2009-02-09 20:05:43", true));
   columns.push_back(columndefinition("TIMESTAMP", "TIMESTAMP", sql::DataType::TIMESTAMP, "2038-01-09 03:14:07", true));
   columns.push_back(columndefinition("TIME", "TIME", sql::DataType::TIME, "-838:59:59", true, true));
-  columns.push_back(columndefinition("YEAR", "YEAR", sql::DataType::YEAR, "1901", true));
-  columns.push_back(columndefinition("YEAR", "YEAR(4)", sql::DataType::YEAR, "2009", false));
-  columns.push_back(columndefinition("YEAR", "YEAR(2)", sql::DataType::YEAR, "1", false));
+  columns.push_back(columndefinition("YEAR", "YEAR", sql::DataType::DATE, "1901", true));
+  columns.push_back(columndefinition("YEAR", "YEAR(4)", sql::DataType::DATE, "2009", true));
+  columns.push_back(columndefinition("YEAR", "YEAR(2)", sql::DataType::DATE, "1", true));
   columns.push_back(columndefinition("CHAR", "CHAR", sql::DataType::CHAR, "a", true));
-  columns.push_back(columndefinition("CHAR", "CHAR(255)", sql::DataType::CHAR, "abc", false));
-  columns.push_back(columndefinition("CHAR", "NATIONAL CHAR(255)", sql::DataType::CHAR, "abc", false));
-  columns.push_back(columndefinition("CHAR", "CHAR(255) CHARACTER SET 'utf8'", sql::DataType::CHAR, "abc", false));
+  columns.push_back(columndefinition("CHAR", "CHAR(255)", sql::DataType::CHAR, "abc", true));
+  columns.push_back(columndefinition("CHAR", "NATIONAL CHAR(255)", sql::DataType::CHAR, "abc", true));
+  columns.push_back(columndefinition("CHAR", "CHAR(255) CHARACTER SET 'utf8'", sql::DataType::CHAR, "abc", true));
   /* TODO this might be server dependent! */
-  columns.push_back(columndefinition("CHAR", "CHAR(255) CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::BINARY, "abc", false));
-  columns.push_back(columndefinition("CHAR", "CHAR(255) CHARACTER SET 'ucs2'", sql::DataType::CHAR, "abc", false));
+  columns.push_back(columndefinition("BINARY", "CHAR(255) CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::BINARY, "abc", true));
+  columns.push_back(columndefinition("CHAR", "CHAR(255) CHARACTER SET 'ucs2'", sql::DataType::CHAR, "abc", true));
   /* The CHAR BYTE data type is an alias for the BINARY data type. This is a compatibility feature.  */
   columns.push_back(columndefinition("BINARY", "CHAR(255) BYTE", sql::DataType::BINARY, "abc", false));
   /*  Specifying the CHARACTER SET binary  attribute for a character data type
    causes the column to be created as the corresponding binary data type:
    CHAR becomes BINARY, VARCHAR becomes VARBINARY, and TEXT becomes BLOB.
    For the ENUM and SET data types, this does not occur; they are created as declared.   */
-  columns.push_back(columndefinition("BINARY", "CHAR(255) CHARACTER SET 'binary'", sql::DataType::BINARY, "abc", false));
+  columns.push_back(columndefinition("BINARY", "CHAR(255) CHARACTER SET 'binary'", sql::DataType::BINARY, "abc", true));
   columns.push_back(columndefinition("VARCHAR", "VARCHAR(10)", sql::DataType::VARCHAR, "a", true));
-  columns.push_back(columndefinition("VARCHAR", "VARCHAR(10) CHARACTER SET 'utf8'", sql::DataType::VARCHAR, "a", false));
+  columns.push_back(columndefinition("VARCHAR", "VARCHAR(10) CHARACTER SET 'utf8'", sql::DataType::VARCHAR, "a", true));
   /* TODO this might be server dependent! */
-  columns.push_back(columndefinition("VARCHAR", "VARCHAR(10) CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::VARBINARY, "a", false));
+  columns.push_back(columndefinition("VARBINARY", "VARCHAR(10) CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::VARBINARY, "a", true));
   columns.push_back(columndefinition("VARBINARY", "VARCHAR(10) BYTE", sql::DataType::VARBINARY, "a", true));
   columns.push_back(columndefinition("BINARY", "BINARY(1)", sql::DataType::BINARY, "a", true));
   columns.push_back(columndefinition("VARBINARY", "VARBINARY(1)", sql::DataType::VARBINARY, "a", true));
   columns.push_back(columndefinition("BLOB", "TINYBLOB", sql::DataType::LONGVARBINARY, "a", true));
   columns.push_back(columndefinition("TEXT", "TINYTEXT", sql::DataType::LONGVARCHAR, "a", true));
   columns.push_back(columndefinition("TEXT", "TINYTEXT", sql::DataType::LONGVARCHAR, "a", true));
-  columns.push_back(columndefinition("TEXT", "TINYTEXT CHARACTER SET 'utf8'", sql::DataType::LONGVARCHAR, "a", false));
+  columns.push_back(columndefinition("TEXT", "TINYTEXT CHARACTER SET 'utf8'", sql::DataType::LONGVARCHAR, "a", true));
   /* TODO this might be server dependent! */
-  columns.push_back(columndefinition("TEXT", "TINYTEXT CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", false));
+  columns.push_back(columndefinition("BLOB", "TINYTEXT CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", true));
   columns.push_back(columndefinition("BLOB", "MEDIUMBLOB", sql::DataType::LONGVARBINARY, "a", true));
   columns.push_back(columndefinition("TEXT", "MEDIUMTEXT", sql::DataType::LONGVARCHAR, "a", true));
-  columns.push_back(columndefinition("TEXT", "MEDIUMTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", false));
+  columns.push_back(columndefinition("TEXT", "MEDIUMTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", true));
   /* TODO this might be server dependent! */
-  columns.push_back(columndefinition("TEXT", "MEDIUMTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", false));
-  columns.push_back(columndefinition("BLOB", "LONGBLOB", sql::DataType::LONGVARBINARY, "a", false));
+  columns.push_back(columndefinition("BLOB", "MEDIUMTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", true));
+  columns.push_back(columndefinition("BLOB", "LONGBLOB", sql::DataType::LONGVARBINARY, "a", true));
   columns.push_back(columndefinition("TEXT", "LONGTEXT", sql::DataType::LONGVARCHAR, "a", true));
-  columns.push_back(columndefinition("TEXT", "LONGTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", false));
+  columns.push_back(columndefinition("TEXT", "LONGTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", true));
   /* TODO this might be server dependent! */
-  columns.push_back(columndefinition("TEXT", "LONGTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", false));
+  columns.push_back(columndefinition("BLOB", "LONGTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", true));
   columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no')", sql::DataType::CHAR, "yes", true));
   columns.push_back(columndefinition("SET", "SET('yes', 'no')", sql::DataType::CHAR, "yes", true));
 }
@@ -338,6 +335,12 @@ void resultsetmetadata::getColumnType()
     std::stringstream sql;
     std::vector<columndefinition>::iterator it;
     stmt.reset(con->createStatement());
+    bool type_found=false;
+
+    DatabaseMetaData dbmeta(con->getMetaData());
+    ResultSet restypes(dbmeta->getTypeInfo());
+
+    logMsg("... looping over all kinds of columns and testing type and type name");
 
     for (it=columns.begin(); it != columns.end(); it++)
     {
@@ -365,6 +368,50 @@ void resultsetmetadata::getColumnType()
         sql << " (Code = " << it->ctype << ")";
         logMsg(sql.str());
 
+        restypes->beforeFirst();
+        type_found=false;
+        while (restypes->next())
+        {
+          if (restypes->getInt("DATA_TYPE") == it->ctype)
+          {
+            type_found=true;
+            break;
+          }
+        }
+        if (!type_found)
+        {
+          sql.str("");
+          sql << "The type code " << it->ctype << " seems not to be in the type list ";
+          sql << "returned by DatabaseMetaData::getTypeInfo().";
+          logMsg(sql.str());
+          FAIL("Wrong type code");
+        }
+
+        sql.str("");
+        sql << "... OK type name is known by DatabaseMetaData::getTypeInfo()";
+
+        restypes->beforeFirst();
+        type_found=false;
+        while (restypes->next())
+        {
+          if (restypes->getString("TYPE_NAME") == std::string(it->name))
+          {
+            type_found=true;
+            break;
+          }
+        }
+        if (!type_found)
+        {
+          sql.str("");
+          sql << "The type name " << it->name << " seems not to be in the type list ";
+          sql << "returned by DatabaseMetaData::getTypeInfo().";
+          logMsg(sql.str());
+          FAIL("Wrong type name");
+        }
+
+        sql.str("");
+        sql << "... OK type name is known by DatabaseMetaData::getTypeInfo()";
+
       }
       catch (sql::SQLException &e)
       {
@@ -383,8 +430,8 @@ void resultsetmetadata::getColumnType()
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
-    fail(e.what(), __FILE__, __LINE__);
   }
+
 }
 
 void resultsetmetadata::getPrecision()
