@@ -26,6 +26,8 @@
 #include "mysql_art_resultset.h"
 #include "mysql_statement.h"
 #include "mysql_prepared_statement.h"
+#include "mysql_debug.h"
+#include "mysql_util.h"
 
 // For snprintf
 #include <stdio.h>
@@ -33,8 +35,6 @@
 #define snprintf _snprintf
 #endif	//	_WIN32
 
-#include "mysql_debug.h"
-#include "mysql_util.h"
 
 namespace sql
 {
@@ -1574,7 +1574,6 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 
 	std::list<std::string> rs_field_data;
 
-
 	rs_field_data.push_back("TABLE_CAT");
 	rs_field_data.push_back("TABLE_SCHEM");
 	rs_field_data.push_back("TABLE_NAME");
@@ -1601,43 +1600,87 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 	rs_field_data.push_back("IS_AUTOINCREMENT");
 #endif
 
-	if (server_version > 79999) {
-#if 0
-		static const std::string query("SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, " \
-							"IF(STRCMP(TABLE_TYPE,'BASE TABLE'), TABLE_TYPE, 'TABLE'), " \
-							"TABLE_COMMENT FROM INFORMATION_SCHEMA.TABLES WHERE " \
-							"TABLE_SCHEMA  LIKE ? AND TABLE_NAME LIKE ? " \
-							"ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME");
+	if (server_version > 50020) {
+		char buf[5];
+		std::string query("SELECT \"\" AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM TABLE_NAME, COLUMN_NAME, "
+			"CASE WHEN LOCATE('unsigned', COLUMN_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') "
+			"ELSE DATA_TYPE END AS TYPE_NAME, DATA_TYPE,"
+ 			"CASE "
+				"WHEN LCASE(DATA_TYPE)='date' THEN 10 "
+				"WHEN LCASE(DATA_TYPE)='time' THEN 8 "
+				"WHEN LCASE(DATA_TYPE)='datetime' THEN 19 "
+				"WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 "
+				"WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION "
+				"WHEN CHARACTER_MAXIMUM_LENGTH > 2147483647 THEN 2147483647 ELSE CHARACTER_MAXIMUM_LENGTH END AS COLUMN_SIZE, "
+			"\"\" AS BUFFER_LENGTH,"
+			"NUMERIC_SCALE AS DECIMAL_DIGITS,"
+			"10 AS NUM_PREC_RADIX,"
+			"CASE WHEN IS_NULLABLE='NO' THEN ");
+		query.append(my_i_to_a(buf, sizeof(buf) - 1, columnNoNulls));
+		query.append(" ELSE CASE WHEN IS_NULLABLE='YES' THEN ");
+		query.append(my_i_to_a(buf, sizeof(buf) - 1, columnNullable));
+		query.append(" ELSE ");
+		query.append(my_i_to_a(buf, sizeof(buf) - 1, columnNullableUnknown));
+		query.append(" END END AS NULLABLE,"
+			"COLUMN_COMMENT AS REMARKS,"
+			"COLUMN_DEFAULT AS COLUMN_DEF,"
+			"0 AS SQL_DATA_TYPE,"
+			"0 AS SQL_DATETIME_SUB,"
+			"CASE WHEN CHARACTER_OCTET_LENGTH > 2147483647 THEN 2147483647 ELSE CHARACTER_OCTET_LENGTH END AS CHAR_OCTET_LENGTH,"
+			"ORDINAL_POSITION,"
+			"IS_NULLABLE,"
+			"NULL AS SCOPE_CATALOG,"
+			"NULL AS SCOPE_SCHEMA,"
+			"NULL AS SCOPE_TABLE,"
+			"NULL AS SOURCE_DATA_TYPE,"
+			"IF (EXTRA LIKE '%auto_increment%','YES','NO') AS IS_AUTOINCREMENT "
+			"FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND COLUMN_NAME LIKE ? "
+			"ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION");
+
+
 		std::string pattern1, pattern2;
 
 		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
-		pattern1.append(schemaPattern.c_str());
 
-		pattern2.append(tableNamePattern.c_str());
-
-		stmt->setString(1, pattern1);
-		stmt->setString(2, pattern2);
+		stmt->setString(1, schemaPattern);
+		stmt->setString(2, tableNamePattern);
+		stmt->setString(2, columnNamePattern);
 
 		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next()) {
-			std::list<std::string>::const_iterator it;
-			for (it = types.begin(); it != types.end(); ++it) {
-				if (*it == rs->getString(4)) {
-					MySQL_ArtResultSet::row_t rs_data_row;
+			MySQL_ArtResultSet::row_t rs_data_row;
 
-					rs_data_row.push_back(rs->getString(1));
-					rs_data_row.push_back(rs->getString(2));
-					rs_data_row.push_back(rs->getString(3));
-					rs_data_row.push_back(rs->getString(4));
-					rs_data_row.push_back(rs->getString(5));
+			rs_data_row.push_back(rs->getString(1));	// TABLE_CAT
+			rs_data_row.push_back(rs->getString(2));	// TABLE_SCHEM
+			rs_data_row.push_back(rs->getString(3));	// TABLE_NAME
+			rs_data_row.push_back(rs->getString(4));	// COLUMN_NAME
+			rs_data_row.push_back((int64_t) sql::mysql::util::mysql_string_type_to_datatype(rs->getString(5)));	// DATA_TYPE
+			rs_data_row.push_back(rs->getString(6));	// TYPE_NAME
+			rs_data_row.push_back(rs->getString(7));	// COLUMN_SIZE
+			rs_data_row.push_back(rs->getString(8));	// BUFFER_LENGTH
+			rs_data_row.push_back(rs->getString(9));	// DECIMAL_DIGITS
+			rs_data_row.push_back(rs->getString(10));	// NUM_PREC_RADIX
+			rs_data_row.push_back(rs->getString(11));	// NULLABLE
+			rs_data_row.push_back(rs->getString(12));	// REMARKS
+			rs_data_row.push_back(rs->getString(13));	// COLUMN_DEFAULT
+			rs_data_row.push_back(rs->getString(14));	// SQL_DATA_TYPE
+			rs_data_row.push_back(rs->getString(15));	// SQL_DATETIME_SUB
+			rs_data_row.push_back(rs->getString(16));	// CHAR_OCTET_LENGTH
+			rs_data_row.push_back(rs->getString(17));	// ORDINAL_POSITION
+			rs_data_row.push_back(rs->getString(18));	// IS_NULLABLE
+			/* The following are not currently used by C/OOO*/
+#if 0
+			rs_data_row.push_back(rs->getString(19));	// SCOPE_CATALOG
+			rs_data_row.push_back(rs->getString(20));	// SCOPE_SCHEMA
+			rs_data_row.push_back(rs->getString(21));	// SCOPE_TABLE
+			rs_data_row.push_back(rs->getString(22));	// IS_AUTOINCREMENT
 
-					rs_data->push_back(rs_data_row);
-					break;
-				}
-			}
-		}
+
 #endif
+			rs_data->push_back(rs_data_row);
+		}
+
 	} else {
 		/* get schemata */
 		std::string query1("SHOW DATABASES LIKE '");
