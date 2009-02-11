@@ -177,5 +177,29 @@ void connectionmetadata::getAttributes()
   }
 }
 
+void connectionmetadata::getBestRowIdentifier()
+{
+  logMsg("connectionmetadata::getBestRowIdentifier() - MySQL_ConnectionMetaData::getBestRowIdentifier");
+ 
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT PRIMARY KEY AUTO_INCREMENT");
+    ResultSet res(dbmeta->getBestRowIdentifier(con->getCatalog(), con->getSchema(), "test", "", false));
+    ASSERT_EQUALS(res->getInteger(1), res->getInteger("SCOPE"));
+    ASSERT_EQUALS(res->getInteger(1), 0);
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 } /* namespace connectionmetadata */
 } /* namespace testsuite */
