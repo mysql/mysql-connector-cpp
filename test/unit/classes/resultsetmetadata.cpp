@@ -1012,7 +1012,6 @@ void resultsetmetadata::isSigned()
 void resultsetmetadata::isWritable()
 {
   logMsg("resultsetmetadata::isWritable() - MySQL_ResultSetMetaData::isWritable");
-  int i;
   try
   {
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
