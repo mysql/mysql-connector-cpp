@@ -280,8 +280,8 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 			schema_pos = host.find('/');
 			if (schema_pos != std::string::npos) {
 				schema_pos++; // skip the slash
-                                /* TODO: tcp://127.0.0.1/
-                                 -> host set, schema empty, schema property ignored */
+								/* TODO: tcp://127.0.0.1/
+								-> host set, schema empty, schema property ignored */
 				schema = host.substr(schema_pos, host.size() - schema_pos);
 				schema_used = true;
 				host = host.substr(0, schema_pos - 1);
@@ -321,7 +321,6 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 			mysql_ssl_set(intern->mysql, sslKey, sslCert, sslCA, sslCAPath, sslCipher);
 		}
 		CPP_INFO_FMT("hostName=%s", hostName.c_str());
-                CPP_INFO_FMT("host=%s", host.c_str());
 		CPP_INFO_FMT("user=%s", userName.c_str());
 		CPP_INFO_FMT("port=%d", port);
 		CPP_INFO_FMT("schema=%s", schema.c_str());
@@ -424,8 +423,8 @@ MySQL_Connection::getAutoCommit()
 std::string
 MySQL_Connection::getCatalog()
 {
-  CPP_ENTER_WL(intern->logger, "MySQL_Connection::getCatalog");
-  return std::string("");
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getCatalog");
+	return std::string("");
 }
 /* }}} */
 
@@ -437,12 +436,12 @@ MySQL_Connection::getCatalog()
 std::string
 MySQL_Connection::getSchema()
 {
-  CPP_ENTER_WL(intern->logger, "MySQL_Connection::getSchema");
-  checkClosed();
-  std::auto_ptr<sql::Statement> stmt(createStatement());
-  std::auto_ptr<ResultSet> rset(stmt->executeQuery("SELECT DATABASE()")); //SELECT SCHEMA()
-  rset->next();
-  return std::string(rset->getString(1));
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getSchema");
+	checkClosed();
+	std::auto_ptr<sql::Statement> stmt(createStatement());
+	std::auto_ptr<ResultSet> rset(stmt->executeQuery("SELECT DATABASE()")); //SELECT SCHEMA()
+	rset->next();
+	return std::string(rset->getString(1));
 }
 /* }}} */
 
