@@ -34,16 +34,45 @@ namespace testsuite
 namespace classes
 {
 
+struct udtattribute
+{
+  std::string name;
+  int ctype;
+
+  udtattribute(std::string n, int c) :
+  name(n),
+  ctype(c)
+  {
+  }
+
+};
+
 class connectionmetadata : public unit_fixture
 {
 private:
   typedef unit_fixture super;
 
+protected:
+
+  /**
+   * List of all columns which getAttribute() should deliver
+   *
+   */
+  std::vector< udtattribute > attributes;
+
+  /**
+   * Initializes the attributes list
+   */
+  void init();
+
 public:
 
   EXAMPLE_TEST_FIXTURE(connectionmetadata)
   {
+    init();
     TEST_CASE(getSchemata);
+    TEST_CASE(getAttributes);
+
   }
 
   /**
@@ -53,6 +82,14 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getSchemata();
+
+  /**
+   * Test for DatabaseMetaData:getAttributes()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getAttributes();
 
 };
 
