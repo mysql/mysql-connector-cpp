@@ -143,7 +143,7 @@ void connectionmetadata::getSchemata()
 void connectionmetadata::getAttributes()
 {
   logMsg("connectionmetadata::getAttributes() - MySQL_ConnectionMetaData::getAttributes");
-  int i;
+  uint i;
   std::vector<udtattribute>::iterator it;
   std::stringstream msg;
   try
@@ -153,7 +153,7 @@ void connectionmetadata::getAttributes()
     ResultSetMetaData resmeta(res->getMetaData());
 
     it=attributes.begin();
-    for (i=1; i < resmeta->getColumnCount(); i++)
+    for (i=1; i <= resmeta->getColumnCount(); i++)
     {
       if (it == attributes.end())
         FAIL("There are more columns than expected");
@@ -165,8 +165,15 @@ void connectionmetadata::getAttributes()
 
       it++;
     }
-    if (it != attributes.end())
+    if (it != attributes.end()) {
+	  msg << std::endl;
+      while (it != attributes.end()) {
+	    msg << "Iterator points to - " << it->name << std::endl;
+		it++;
+	  }
+      logMsg(msg.str());
       FAIL("There are less columns than expected");
+    }
 
   }
   catch (sql::SQLException &e)

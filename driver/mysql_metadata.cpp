@@ -1456,11 +1456,11 @@ MySQL_ConnectionMetaData::getAttributes(const std::string& /*catalog*/, const st
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
 	std::list<std::string> rs_field_data;
-
-	rs_field_data.push_back("TABLE_CAT");
-	rs_field_data.push_back("TYPE_SCHEMA");
+	rs_field_data.push_back("TYPE_CAT");
+	rs_field_data.push_back("TYPE_SCHEM");
 	rs_field_data.push_back("TYPE_NAME");
 	rs_field_data.push_back("ATTR_NAME");
+	rs_field_data.push_back("DATA_TYPE");
 	rs_field_data.push_back("ATTR_TYPE_NAME");
 	rs_field_data.push_back("ATTR_SIZE");
 	rs_field_data.push_back("DECIMAL_DIGITS");
@@ -1475,6 +1475,7 @@ MySQL_ConnectionMetaData::getAttributes(const std::string& /*catalog*/, const st
 	rs_field_data.push_back("IS_NULLABLE");
 	rs_field_data.push_back("SCOPE_CATALOG");
 	rs_field_data.push_back("SCOPE_SCHEMA");
+	rs_field_data.push_back("SCOPE_TABLE");
 	rs_field_data.push_back("SOURCE_DATA_TYPE");
 
 	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
