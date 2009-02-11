@@ -50,7 +50,6 @@ public:
 		TIMESTAMP,
 		DATE,
 		TIME,
-		YEAR,
 		GEOMETRY,
 		SQLNULL
 	};

@@ -71,8 +71,8 @@ void resultsetmetadata::init()
   columns.push_back(columndefinition("TIMESTAMP", "TIMESTAMP", sql::DataType::TIMESTAMP, "2038-01-09 03:14:07", true));
   columns.push_back(columndefinition("TIME", "TIME", sql::DataType::TIME, "-838:59:59", true, true));
   columns.push_back(columndefinition("YEAR", "YEAR", sql::DataType::DATE, "1901", true));
-  columns.push_back(columndefinition("YEAR", "YEAR(4)", sql::DataType::DATE, "2009", true));
-  columns.push_back(columndefinition("YEAR", "YEAR(2)", sql::DataType::DATE, "1", true));
+  columns.push_back(columndefinition("YEAR", "YEAR(4)", sql::DataType::DATE, "2009", false));
+  columns.push_back(columndefinition("YEAR", "YEAR(2)", sql::DataType::DATE, "1", false));
   columns.push_back(columndefinition("CHAR", "CHAR", sql::DataType::CHAR, "a", true));
   columns.push_back(columndefinition("CHAR", "CHAR(255)", sql::DataType::CHAR, "abc", true));
   columns.push_back(columndefinition("CHAR", "NATIONAL CHAR(255)", sql::DataType::CHAR, "abc", true));

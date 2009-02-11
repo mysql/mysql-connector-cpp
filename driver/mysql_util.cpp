@@ -63,7 +63,7 @@ mysql_type_to_datatype(const int mysql_type, const int flags)
 		case MYSQL_TYPE_TIME:
 			return sql::DataType::TIME;
 		case MYSQL_TYPE_YEAR:
-			return sql::DataType::YEAR;
+			return sql::DataType::DATE;
 		case MYSQL_TYPE_DATETIME:
 			return sql::DataType::TIMESTAMP;
 		case MYSQL_TYPE_TINY_BLOB:
@@ -131,7 +131,7 @@ mysql_string_type_to_datatype(const std::string & name)
 	} else if (name.compare("time")) {
 		return sql::DataType::TIME;	
 	} else if (name.compare("year")) {
-		return sql::DataType::YEAR;	
+		return sql::DataType::DATE;	
 	} else if (name.compare("datetime")) {
 		return sql::DataType::TIMESTAMP;	
 	} else if (name.compare("tinytext")) {
@@ -229,7 +229,7 @@ mysql_type_to_string(const int cppconn_type, const int flags)
 		case MYSQL_TYPE_ENUM:
 			return "ENUM";
 		case MYSQL_TYPE_YEAR:
-			return "YEAR";
+			return "DATE";
 		case MYSQL_TYPE_SET:
 			return "SET";
 		case MYSQL_TYPE_GEOMETRY:
