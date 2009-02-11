@@ -33,6 +33,13 @@ namespace testsuite
 namespace classes
 {
 
+void connectionmetadata::init()
+{
+  attributes.push_back(udtattribute("TYPE_CAT", 0));
+  attributes.push_back(udtattribute("TYPE_SCHEM", 0));
+  attributes.push_back(udtattribute("TYPE_NAME", 0));
+}
+
 void connectionmetadata::getSchemata()
 {
   logMsg("connectionmetadata::getSchemata() - MySQL_ConnectionMetaData::getSchemata");
@@ -77,17 +84,30 @@ void connectionmetadata::getSchemata()
 void connectionmetadata::getAttributes()
 {
   logMsg("connectionmetadata::getAttributes() - MySQL_ConnectionMetaData::getAttributes");
-  bool schema_found=false;
+  int i;
+  std::vector<udtattribute>::iterator it;
   std::stringstream msg;
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
     ResultSet res(dbmeta->getAttributes(con->getCatalog(), con->getSchema(), "", ""));
+    ResultSetMetaData resmeta(res->getMetaData());
 
-    res->next();
+    it=attributes.begin();
+    for (i=1; i < resmeta->getColumnCount(); i++)
+    {
+      if (it == attributes.end())
+        FAIL("There are more columns than expected");
 
-//    ASSERT_EQUALS(res->getString("TYPE_CAT"), "");
-    ASSERT_EQUALS(res->getString("TYPE_SCHEM"), "");
+      ASSERT_EQUALS(it->name, resmeta->getColumnName(i));
+      msg.str("");
+      msg << "... OK found column " << it->name;
+      logMsg(msg.str());
+      
+      it++;
+    }
+    if (it != attributes.end())
+      FAIL("There are less columns than expected");
 
   }
   catch (sql::SQLException &e)
