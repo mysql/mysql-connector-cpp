@@ -153,7 +153,7 @@ void connectionmetadata::getAttributes()
     ResultSetMetaData resmeta(res->getMetaData());
 
     it=attributes.begin();
-    for (i=1; i < resmeta->getColumnCount(); i++)
+    for (i=1; i <= resmeta->getColumnCount(); i++)
     {
       if (it == attributes.end())
         FAIL("There are more columns than expected");
