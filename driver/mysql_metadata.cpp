@@ -1602,7 +1602,7 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 
 	if (server_version > 50020) {
 		char buf[5];
-		std::string query("SELECT \"\" AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM TABLE_NAME, COLUMN_NAME, "
+		std::string query("SELECT '' AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, COLUMN_NAME, "
 			"CASE WHEN LOCATE('unsigned', COLUMN_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') "
 			"ELSE DATA_TYPE END AS TYPE_NAME, DATA_TYPE,"
  			"CASE "
@@ -1612,7 +1612,7 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 				"WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 "
 				"WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION "
 				"WHEN CHARACTER_MAXIMUM_LENGTH > 2147483647 THEN 2147483647 ELSE CHARACTER_MAXIMUM_LENGTH END AS COLUMN_SIZE, "
-			"\"\" AS BUFFER_LENGTH,"
+			"'' AS BUFFER_LENGTH,"
 			"NUMERIC_SCALE AS DECIMAL_DIGITS,"
 			"10 AS NUM_PREC_RADIX,"
 			"CASE WHEN IS_NULLABLE='NO' THEN ");
@@ -1637,14 +1637,11 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 			"FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND COLUMN_NAME LIKE ? "
 			"ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION");
 
-
-		std::string pattern1, pattern2;
-
 		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
 
 		stmt->setString(1, schemaPattern);
 		stmt->setString(2, tableNamePattern);
-		stmt->setString(2, columnNamePattern);
+		stmt->setString(3, columnNamePattern);
 
 		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
 
