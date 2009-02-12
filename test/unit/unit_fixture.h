@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include <driver/mysql_public_iface.h>
 #include "../CJUnitTestsPort/framework/framework.h"
+#include <vector>
 
 namespace testsuite
 {
@@ -36,6 +37,50 @@ typedef std::auto_ptr<sql::ResultSet> ResultSet;
 typedef sql::Driver Driver;
 typedef std::auto_ptr<sql::ResultSetMetaData> ResultSetMetaData;
 typedef std::auto_ptr<sql::DatabaseMetaData> DatabaseMetaData;
+
+struct columndefinition
+{
+  std::string name;
+  std::string sqldef;
+  int ctype;
+  std::string value;
+  bool check_name;
+  bool is_signed;
+
+  columndefinition(std::string n, std::string s, int c, std::string v, bool f) :
+  name(n),
+  sqldef(s),
+  ctype(c),
+  value(v),
+  check_name(f),
+  is_signed(false)
+  {
+  }
+
+  columndefinition(std::string n, std::string s, int c, std::string v, bool f, bool is) :
+  name(n),
+  sqldef(s),
+  ctype(c),
+  value(v),
+  check_name(f),
+  is_signed(is)
+  {
+  }
+
+};
+
+struct udtattribute
+{
+  std::string name;
+  int ctype;
+
+  udtattribute(std::string n, int c) :
+  name(n),
+  ctype(c)
+  {
+  }
+
+};
 
 class unit_fixture : public TestSuite
 {
@@ -116,6 +161,19 @@ protected:
    * ResultSet to be used in tests, not initialized. Cleaned up in tearDown()
    */
   ResultSet res;
+
+  /**
+   * List of all column types known by MySQL
+   *
+   */
+  std::vector< columndefinition > columns;
+
+  /**
+   * List of all columns which getAttribute() should deliver
+   *
+   */
+  std::vector< udtattribute > attributes;
+
 
   /**
    * Creates a SQL schema object

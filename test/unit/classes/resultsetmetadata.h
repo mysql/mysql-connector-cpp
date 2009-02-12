@@ -22,7 +22,6 @@
  */
 
 #include "../unit_fixture.h"
-#include <vector>
 
 /**
  * Example of a collection of tests
@@ -34,54 +33,12 @@ namespace testsuite
 namespace classes
 {
 
-struct columndefinition
-{
-  std::string name;
-  std::string sqldef;
-  int ctype;
-  std::string value;
-  bool check_name;
-  bool is_signed;
-
-  columndefinition(std::string n, std::string s, int c, std::string v, bool f) :
-  name(n),
-  sqldef(s),
-  ctype(c),
-  value(v),
-  check_name(f),
-  is_signed(false)
-  {
-  }
-
-  columndefinition(std::string n, std::string s, int c, std::string v, bool f, bool is) :
-  name(n),
-  sqldef(s),
-  ctype(c),
-  value(v),
-  check_name(f),
-  is_signed(is)
-  {
-  }
-
-};
-
 class resultsetmetadata : public unit_fixture
 {
 private:
   typedef unit_fixture super;
 
 protected:
-
-  /**
-   * List of all column types known by MySQL
-   *
-   */
-  std::vector< columndefinition > columns;
-
-  /**
-   * Initializes the column type list
-   */
-  void init();
 
   /*
    * Utility: run a query and fetch the resultset
@@ -92,7 +49,7 @@ public:
 
   EXAMPLE_TEST_FIXTURE(resultsetmetadata)
   {
-    init();
+
     TEST_CASE(getCatalogName);
     TEST_CASE(getColumnCount);
     TEST_CASE(getColumnDisplaySize);
