@@ -48,6 +48,7 @@ public:
     TEST_CASE(getSchemata);
     TEST_CASE(getAttributes);
     TEST_CASE(getBestRowIdentifier);
+    TEST_CASE(getColumns);
   }
 
   /**
@@ -73,6 +74,14 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getBestRowIdentifier();
+
+  /**
+   * Test for DatabaseMetaData:getColumns()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getColumns();
 
 };
 
