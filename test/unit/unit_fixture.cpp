@@ -63,7 +63,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT", sql::DataType::MEDIUMINT, "-8388608", true, 8, 0));
   columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT NOT NULL", sql::DataType::MEDIUMINT, "-8388608", true, 8, 0));
   columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT(1)", sql::DataType::MEDIUMINT, "2", true, 8, 0));
-  columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT UNSIGNED", sql::DataType::MEDIUMINT, "16777215", true, 8, 0));
+  columns.push_back(columndefinition("MEDIUMINT UNSIGNED", "MEDIUMINT UNSIGNED", sql::DataType::MEDIUMINT, "16777215", true, 8, 0));
   /* Alias of INTEGER */
   columns.push_back(columndefinition("INT", "INTEGER", sql::DataType::INTEGER, "2147483647", true, 10, 0));
   columns.push_back(columndefinition("INT", "INTEGER NOT NULL", sql::DataType::INTEGER, "2147483647", true, 10, 0));
