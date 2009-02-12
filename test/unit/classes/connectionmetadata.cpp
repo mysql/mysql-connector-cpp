@@ -290,7 +290,7 @@ void connectionmetadata::getColumns()
       {
         msg.str("");
         msg << "... WARNING - check NULLABLE for " << it->sqldef;
-        msg << " - expecting pecision " << it->nullable << " got " << res->getInt(11);
+        msg << " - expecting nullable = " << it->nullable << " got " << res->getInt(11);
         msg << " columnNoNull = " << sql::DatabaseMetaData::columnNoNulls << ", ";
         msg << " columnNullable = " << sql::DatabaseMetaData::columnNullable << ", ";
         msg << " columnNullableUnknown = " << sql::DatabaseMetaData::columnNullableUnknown;
@@ -300,9 +300,9 @@ void connectionmetadata::getColumns()
       ASSERT_EQUALS(it->nullable, res->getInt(11));
       ASSERT_EQUALS(res->getInt(11), res->getInt("NULLABLE"));
       ASSERT_EQUALS(it->remarks, res->getString(12));
-      ASSERT_EQUALS(res->getString(12), res->getString("REMARKS"));
-      ASSERT_EQUALS("", res->getString(13));
-      ASSERT_EQUALS(res->getString(13), res->getString("COLUMN_DEF"));
+      ASSERT_EQUALS(res->getString(12), res->getString("REMARKS"));      
+      ASSERT_EQUALS(it->column_def, res->getString(13));
+      ASSERT_EQUALS(res->getString(13), res->getString("COLUMN_DEF"));      
       
       stmt->execute("DROP TABLE IF EXISTS test");
     }

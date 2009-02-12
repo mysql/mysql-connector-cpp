@@ -74,6 +74,7 @@ struct columndefinition
   decimal_digits(_decimal_digits),
   is_nullable(_is_nullable),
   nullable((_is_nullable) ? sql::DatabaseMetaData::columnNullable : sql::DatabaseMetaData::columnNoNulls),
+  column_def(""),
   is_case_sensitive(false),
   remarks(""),
   is_searchable(sql::DatabaseMetaData::typeSearchable),
