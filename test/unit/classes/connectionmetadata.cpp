@@ -199,11 +199,9 @@ void connectionmetadata::getBestRowIdentifier()
     ASSERT_EQUALS(2, res->getInt(1));
     ASSERT_EQUALS(res->getInt(1), res->getInt("SCOPE"));
     ASSERT_EQUALS("id", res->getString(2));
-    ASSERT_EQUALS(res->getInt(2), res->getInt("COLUMN_NAME"));
-    /*
+    ASSERT_EQUALS(res->getInt(2), res->getInt("COLUMN_NAME"));    
     ASSERT_EQUALS(sql::DataType::INTEGER, res->getInt(3));
-    ASSERT_EQUALS(res->getInt(3), res->getInt("DATA_TYPE"));
-     */
+    ASSERT_EQUALS(res->getInt(3), res->getInt("DATA_TYPE"));     
     ASSERT_EQUALS("INT", res->getString(4));
     ASSERT_EQUALS(res->getString(4), res->getString("TYPE_NAME"));
     ASSERT_EQUALS(10, res->getInt(5));
@@ -229,12 +227,9 @@ void connectionmetadata::getBestRowIdentifier()
     {
       ASSERT_EQUALS(2, res2->getInt(1));
       ASSERT_EQUALS(res2->getInt(1), res2->getInt("SCOPE"));
-      ASSERT_EQUALS(res2->getInt(2), res2->getInt("COLUMN_NAME"));
-      /*
+      ASSERT_EQUALS(res2->getInt(2), res2->getInt("COLUMN_NAME"));      
       ASSERT_EQUALS(sql::DataType::INTEGER, res2->getInt(3));
       ASSERT_EQUALS(res2->getInt(3), res2->getInt("DATA_TYPE"));
-    
-       */
       ASSERT_EQUALS("INT", res2->getString(4));
       ASSERT_EQUALS(res2->getString(4), res2->getString("TYPE_NAME"));
       ASSERT_EQUALS(10, res2->getInt(5));
