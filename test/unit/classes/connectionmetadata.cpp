@@ -140,7 +140,7 @@ void connectionmetadata::getBestRowIdentifier()
       }
       res.reset(dbmeta->getBestRowIdentifier(con->getCatalog(), con->getSchema(), "test", 0, false));
       ASSERT_EQUALS(true, res->next());
-      ASSERT_EQUALS(sql::DatabaseMetaData::bestRowTemporary, res->getInt(1));
+      ASSERT_EQUALS(sql::DatabaseMetaData::bestRowSession, res->getInt(1));
       stmt->execute("DROP TABLE IF EXISTS test");
     }
     /*
