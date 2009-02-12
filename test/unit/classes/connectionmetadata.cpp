@@ -114,12 +114,19 @@ void connectionmetadata::getAttributes()
 void connectionmetadata::getBestRowIdentifier()
 {
   logMsg("connectionmetadata::getBestRowIdentifier() - MySQL_ConnectionMetaData::getBestRowIdentifier");
+  std::vector<columndefinition>::iterator it;
   std::stringstream msg;
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
-
     stmt.reset(con->createStatement());
+
+    logMsg("... looping over all kinds of column types");
+    for (it=columns.begin(); it != columns.end(); it++)
+    {
+      stmt->execute("DROP TABLE IF EXISTS test");
+      msg.str("");
+    }
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT PRIMARY KEY NOT NULL)");
 
