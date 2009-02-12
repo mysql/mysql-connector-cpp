@@ -119,24 +119,33 @@ void connectionmetadata::getBestRowIdentifier()
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
-    stmt.reset(con->createStatement());
+    stmt.reset(con->createStatement());    
 
     logMsg("... looping over all kinds of column types");
     for (it=columns.begin(); it != columns.end(); it++)
     {
       stmt->execute("DROP TABLE IF EXISTS test");
       msg.str("");
+      msg << "CREATE TABLE test(id " << it->sqldef << ", PRIMARY KEY(id))";
+      try
+      {
+        stmt->execute(msg.str());        
+      }
+      catch (sql::SQLException &e)
+      {
+        msg.str("");
+        msg << "... skipping " << it->sqldef;
+        logMsg(msg.str());
+        continue;
+      }
+      res.reset(dbmeta->getBestRowIdentifier(con->getCatalog(), con->getSchema(), "test", 0, false));
+      ASSERT_EQUALS(true, res->next());
+      ASSERT_EQUALS(sql::DatabaseMetaData::bestRowTemporary, res->getInt(1));
+      stmt->execute("DROP TABLE IF EXISTS test");
     }
-    stmt->execute("DROP TABLE IF EXISTS test");
-    stmt->execute("CREATE TABLE test(id INT PRIMARY KEY NOT NULL)");
-
-    msg.str("");
-    msg << "... catalog = '" << con->getCatalog() << "' schema = '" << con->getSchema() << "'";
-    msg << " table = 'test', scope = 0, nullable = false";
-    logMsg(msg.str());
-
-    ResultSet res(dbmeta->getBestRowIdentifier(con->getCatalog(), con->getSchema(), "test", 0, false));
-    ASSERT_EQUALS(true, res->next());
+    /*
+    
+    
     ASSERT_EQUALS(2, res->getInt(1));
     ASSERT_EQUALS(res->getInt(1), res->getInt("SCOPE"));
     ASSERT_EQUALS("id", res->getString(2));
@@ -182,6 +191,7 @@ void connectionmetadata::getBestRowIdentifier()
       ASSERT_EQUALS(sql::DatabaseMetaData::bestRowNotPseudo, res2->getInt(8));
       ASSERT_EQUALS(res2->getInt(8), res2->getInt("PSEUDO_COLUMN"));
     }
+     */
   }
   catch (sql::SQLException &e)
   {
