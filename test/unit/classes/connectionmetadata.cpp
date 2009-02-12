@@ -143,7 +143,7 @@ void connectionmetadata::getSchemata()
 void connectionmetadata::getAttributes()
 {
   logMsg("connectionmetadata::getAttributes() - MySQL_ConnectionMetaData::getAttributes");
-  int i;
+  unsigned int i;
   std::vector<udtattribute>::iterator it;
   std::stringstream msg;
   try
@@ -180,18 +180,72 @@ void connectionmetadata::getAttributes()
 void connectionmetadata::getBestRowIdentifier()
 {
   logMsg("connectionmetadata::getBestRowIdentifier() - MySQL_ConnectionMetaData::getBestRowIdentifier");
- 
+  std::stringstream msg;
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
 
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
-    stmt->execute("CREATE TABLE test(id INT PRIMARY KEY AUTO_INCREMENT");
-    ResultSet res(dbmeta->getBestRowIdentifier(con->getCatalog(), con->getSchema(), "test", "", false));
-    ASSERT_EQUALS(res->getInteger(1), res->getInteger("SCOPE"));
-    ASSERT_EQUALS(res->getInteger(1), 0);
+    stmt->execute("CREATE TABLE test(id INT PRIMARY KEY NOT NULL)");
 
+    msg.str("");
+    msg << "... catalog = '" << con->getCatalog() << "' schema = '" << con->getSchema() << "'";
+    msg << " table = 'test', scope = 0, nullable = false";
+    logMsg(msg.str());
+
+    ResultSet res(dbmeta->getBestRowIdentifier(con->getCatalog(), con->getSchema(), "test", 0, false));
+    ASSERT_EQUALS(true, res->next());
+    ASSERT_EQUALS(2, res->getInt(1));
+    ASSERT_EQUALS(res->getInt(1), res->getInt("SCOPE"));
+    ASSERT_EQUALS("id", res->getString(2));
+    ASSERT_EQUALS(res->getInt(2), res->getInt("COLUMN_NAME"));
+    /*
+    ASSERT_EQUALS(sql::DataType::INTEGER, res->getInt(3));
+    ASSERT_EQUALS(res->getInt(3), res->getInt("DATA_TYPE"));
+     */
+    ASSERT_EQUALS("INT", res->getString(4));
+    ASSERT_EQUALS(res->getString(4), res->getString("TYPE_NAME"));
+    ASSERT_EQUALS(10, res->getInt(5));
+    ASSERT_EQUALS(res->getInt(5), res->getInt("COLUMN_SIZE"));
+    ASSERT_EQUALS(0, res->getInt(6));
+    ASSERT_EQUALS(res->getInt(6), res->getInt("BUFFER_LENGTH"));
+    ASSERT_EQUALS(0, res->getInt(7));
+    ASSERT_EQUALS(res->getInt(7), res->getInt("DECIMAL_DIGITS"));
+    ASSERT_EQUALS(sql::DatabaseMetaData::bestRowNotPseudo, res->getInt(8));
+    ASSERT_EQUALS(res->getInt(8), res->getInt("PSEUDO_COLUMN"));
+
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id1 INT(1), id2 INT(1),  PRIMARY KEY (id1, id2))");
+
+    msg.str("");
+    msg << "... catalog = '" << con->getCatalog() << "' schema = '" << con->getSchema() << "'";
+    msg << " table = 'test', scope = 0, nullable = false";
+    logMsg(msg.str());
+
+    ResultSet res2(dbmeta->getBestRowIdentifier(con->getCatalog(), con->getSchema(), "test", 0, false));
+    while (res2->next())
+    {
+      ASSERT_EQUALS(2, res2->getInt(1));
+      ASSERT_EQUALS(res2->getInt(1), res2->getInt("SCOPE"));
+      ASSERT_EQUALS(res2->getInt(2), res2->getInt("COLUMN_NAME"));
+      /*
+      ASSERT_EQUALS(sql::DataType::INTEGER, res2->getInt(3));
+      ASSERT_EQUALS(res2->getInt(3), res2->getInt("DATA_TYPE"));
+    
+       */
+      ASSERT_EQUALS("INT", res2->getString(4));
+      ASSERT_EQUALS(res2->getString(4), res2->getString("TYPE_NAME"));
+      ASSERT_EQUALS(10, res2->getInt(5));
+      ASSERT_EQUALS(res2->getInt(5), res2->getInt("COLUMN_SIZE"));
+      ASSERT_EQUALS(0, res2->getInt(6));
+      ASSERT_EQUALS(res2->getInt(6), res2->getInt("BUFFER_LENGTH"));
+      ASSERT_EQUALS(0, res2->getInt(7));
+      ASSERT_EQUALS(res2->getInt(7), res2->getInt("DECIMAL_DIGITS"));
+      ASSERT_EQUALS(sql::DatabaseMetaData::bestRowNotPseudo, res2->getInt(8));
+      ASSERT_EQUALS(res2->getInt(8), res2->getInt("PSEUDO_COLUMN"));
+    }
   }
   catch (sql::SQLException &e)
   {
