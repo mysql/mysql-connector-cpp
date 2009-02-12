@@ -43,26 +43,14 @@ struct columndefinition
   std::string name;
   std::string sqldef;
   int ctype;
-  std::string value;
-  bool check_name;
+  std::string value;  
   bool is_signed;
 
-  columndefinition(std::string n, std::string s, int c, std::string v, bool f) :
+  columndefinition(std::string n, std::string s, int c, std::string v, bool is) :
   name(n),
   sqldef(s),
   ctype(c),
-  value(v),
-  check_name(f),
-  is_signed(false)
-  {
-  }
-
-  columndefinition(std::string n, std::string s, int c, std::string v, bool f, bool is) :
-  name(n),
-  sqldef(s),
-  ctype(c),
-  value(v),
-  check_name(f),
+  value(v),  
   is_signed(is)
   {
   }
