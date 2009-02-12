@@ -40,23 +40,26 @@ typedef std::auto_ptr<sql::DatabaseMetaData> DatabaseMetaData;
 
 struct columndefinition
 {
-  std::string name;
+  std::string name; // TYPE_NAME
   std::string sqldef;
-  int ctype;
+  int ctype; // DATA_TYPE
   std::string value;
   bool is_signed;
-  int precision;
-  bool is_nullable;
+  int precision; // COLUMN_SIZE
+  int decimal_digits; // DECIMAL_DIGITS
+  bool is_nullable; // IS_NULLABLE
+  int nullable; // NULLABLE
   bool is_case_sensitive;
+  std::string remarks; // REMARKS
   int is_searchable;
   bool fixed_prec_scale;
   bool auto_increment;
   std::string local_type_name;
   int minimum_scale;
   int maximum_scale;
-  int num_prec_radix;
-  int sql_data_type;
-  int sql_datetime_sub;
+  int num_prec_radix; // NUM_PREC_RADIX
+  int sql_data_type; // SQL_DATA_TYPE
+  int sql_datetime_sub; // SQL_DATA_TYPE_SUB
 
   columndefinition(std::string _name, std::string _sqldef, int _ctype, std::string _value, bool _is_signed) :
   name(_name),
@@ -65,8 +68,61 @@ struct columndefinition
   value(_value),
   is_signed(_is_signed),
   precision(0),
+  decimal_digits(0),
   is_nullable(false),
+  nullable(sql::DatabaseMetaData::columnNoNulls),
   is_case_sensitive(false),
+  remarks(""),
+  is_searchable(sql::DatabaseMetaData::typeSearchable),
+  fixed_prec_scale(false),
+  auto_increment(false),
+  local_type_name(""),
+  minimum_scale(0),
+  maximum_scale(0),
+  num_prec_radix(10),
+  sql_data_type(0),
+  sql_datetime_sub(0)
+  {
+  }
+
+  columndefinition(std::string _name, std::string _sqldef, int _ctype, std::string _value, bool _is_signed, int _precision) :
+  name(_name),
+  sqldef(_sqldef),
+  ctype(_ctype),
+  value(_value),
+  is_signed(_is_signed),
+  precision(_precision),
+  decimal_digits(0),
+  is_nullable(false),
+  nullable(sql::DatabaseMetaData::columnNoNulls),
+  is_case_sensitive(false),
+  remarks(""),
+  is_searchable(sql::DatabaseMetaData::typeSearchable),
+  fixed_prec_scale(false),
+  auto_increment(false),
+  local_type_name(""),
+  minimum_scale(0),
+  maximum_scale(0),
+  num_prec_radix(10),
+  sql_data_type(0),
+  sql_datetime_sub(0)
+  {
+  }
+
+  columndefinition(std::string _name, std::string _sqldef, int _ctype,
+                   std::string _value, bool _is_signed, int _precision,
+                   int _decimal_digits) :
+  name(_name),
+  sqldef(_sqldef),
+  ctype(_ctype),
+  value(_value),
+  is_signed(_is_signed),
+  precision(_precision),
+  decimal_digits(_decimal_digits),
+  is_nullable(false),
+  nullable(sql::DatabaseMetaData::columnNoNulls),
+  is_case_sensitive(false),
+  remarks(""),
   is_searchable(sql::DatabaseMetaData::typeSearchable),
   fixed_prec_scale(false),
   auto_increment(false),
