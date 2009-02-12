@@ -894,15 +894,16 @@ void resultsetmetadata::isSearchable()
 void resultsetmetadata::isSigned()
 {
   logMsg("resultsetmetadata::isSigned() - MySQL_ResultSetMetaData::isSigned");
-  int i;
+  int i;  
   try
   {
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
     runStandardQuery();
     ResultSetMetaData meta(res->getMetaData());
 
-    for (i=1; i < 5; i++)
-      ASSERT_EQUALS(meta->isSigned(i), false);
+    for (i=1; i < 5; i++) {      
+      ASSERT_EQUALS(meta->isSigned(i), true);
+    }
 
     try
     {
@@ -923,7 +924,7 @@ void resultsetmetadata::isSigned()
     {
     }
 
-    std::stringstream sql;
+    std::stringstream sql;    
     std::vector<columndefinition>::iterator it;
     stmt.reset(con->createStatement());
 
@@ -943,12 +944,11 @@ void resultsetmetadata::isSigned()
 
         res.reset(stmt->executeQuery("SELECT * FROM test"));
         ResultSetMetaData meta(res->getMetaData());
-        logMsg(it->sqldef);
-        /* TODO: the test needs to be tweaked!!! */
-        ASSERT_EQUALS(it->is_signed, meta->isSigned(1));
         sql.str("");
-        sql << std::boolalpha << "... OK, SQL:" << it->sqldef << " -> Signed = " << it->is_signed;
+        sql << std::boolalpha << "... testing, SQL:" << it->sqldef << " -> Signed = " << it->is_signed;
         logMsg(sql.str());
+        /* TODO: the test needs to be tweaked!!! */
+        ASSERT_EQUALS(it->is_signed, meta->isSigned(1));    
 
       }
 
