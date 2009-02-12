@@ -44,124 +44,124 @@ void unit_fixture::init()
   passwd=TestsRunner::theInstance().getStartOptions()->dbPasswd;
   db=TestsRunner::theInstance().getStartOptions()->dbSchema;
 
-  columns.push_back(columndefinition("BIT", "BIT", sql::DataType::BIT, "0", true));
-  columns.push_back(columndefinition("BIT", "BIT(8)", sql::DataType::BIT, "0", true));
-  columns.push_back(columndefinition("TINYINT", "TINYINT", sql::DataType::TINYINT, "127", true, true));
-  columns.push_back(columndefinition("TINYINT", "TINYINT(1)", sql::DataType::TINYINT, "0", true, true));
-  columns.push_back(columndefinition("TINYINT UNSIGNED", "TINYINT UNSIGNED", sql::DataType::TINYINT, "255", true));
-  columns.push_back(columndefinition("TINYINT UNSIGNED", "TINYINT ZEROFILL", sql::DataType::TINYINT, "-1", true));
+  columns.push_back(columndefinition("BIT", "BIT", sql::DataType::BIT, "0", false));
+  columns.push_back(columndefinition("BIT", "BIT(8)", sql::DataType::BIT, "0", false));
+  columns.push_back(columndefinition("TINYINT", "TINYINT", sql::DataType::TINYINT, "127", true));
+  columns.push_back(columndefinition("TINYINT", "TINYINT(1)", sql::DataType::TINYINT, "0", true));
+  columns.push_back(columndefinition("TINYINT UNSIGNED", "TINYINT UNSIGNED", sql::DataType::TINYINT, "255", false));
+  columns.push_back(columndefinition("TINYINT UNSIGNED", "TINYINT ZEROFILL", sql::DataType::TINYINT, "-1", false));
   /* Alias of BOOLEAN */
-  columns.push_back(columndefinition("TINYINT", "BOOLEAN", sql::DataType::TINYINT, "1", true, true));
-  columns.push_back(columndefinition("SMALLINT", "SMALLINT", sql::DataType::SMALLINT, "-32768", true, true));
-  columns.push_back(columndefinition("SMALLINT", "SMALLINT(5)", sql::DataType::SMALLINT, "-32768", true, true));
-  columns.push_back(columndefinition("SMALLINT UNSIGNED", "SMALLINT UNSIGNED", sql::DataType::SMALLINT, "65535", true));
-  columns.push_back(columndefinition("SMALLINT UNSIGNED", "SMALLINT ZEROFILL", sql::DataType::SMALLINT, "123", true, false));
-  columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT", sql::DataType::MEDIUMINT, "-8388608", true, true));
+  columns.push_back(columndefinition("TINYINT", "BOOLEAN", sql::DataType::TINYINT, "1", true));
+  columns.push_back(columndefinition("SMALLINT", "SMALLINT", sql::DataType::SMALLINT, "-32768", true));
+  columns.push_back(columndefinition("SMALLINT", "SMALLINT(5)", sql::DataType::SMALLINT, "-32768", true));
+  columns.push_back(columndefinition("SMALLINT UNSIGNED", "SMALLINT UNSIGNED", sql::DataType::SMALLINT, "65535", false));
+  columns.push_back(columndefinition("SMALLINT UNSIGNED", "SMALLINT ZEROFILL", sql::DataType::SMALLINT, "123", false));
+  columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT", sql::DataType::MEDIUMINT, "-8388608", true));
   /* Alias of INTEGER */
-  columns.push_back(columndefinition("INT", "INTEGER", sql::DataType::INTEGER, "2147483647", true, true));
-  columns.push_back(columndefinition("INTEGER UNSIGNED", "INT UNSIGNED", sql::DataType::INTEGER, "4294967295", true));
+  columns.push_back(columndefinition("INT", "INTEGER", sql::DataType::INTEGER, "2147483647", true));
+  columns.push_back(columndefinition("INTEGER UNSIGNED", "INT UNSIGNED", sql::DataType::INTEGER, "4294967295", false));
   /* If you specify ZEROFILL for a numeric column, MySQL automatically adds the UNSIGNED  attribute to the column.  */
   columns.push_back(columndefinition("INTEGER UNSIGNED", "INT(4) SIGNED ZEROFILL", sql::DataType::INTEGER, "1", false));
-  columns.push_back(columndefinition("BIGINT", "BIGINT", sql::DataType::BIGINT, "-9223372036854775808", true, true));
-  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT UNSIGNED", sql::DataType::BIGINT, "18446744073709551615", true));
-  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT(4) ZEROFILL", sql::DataType::BIGINT, "2", true));
-  columns.push_back(columndefinition("FLOAT", "FLOAT", sql::DataType::REAL, "-1.01", true, true));
-  columns.push_back(columndefinition("FLOAT UNSIGNED", "FLOAT UNSIGNED", sql::DataType::REAL, "1.01", true));
-  columns.push_back(columndefinition("FLOAT UNSIGNED", "FLOAT(5,3) UNSIGNED ZEROFILL", sql::DataType::REAL, "1.01", true));
-  columns.push_back(columndefinition("FLOAT", "FLOAT(6)", sql::DataType::REAL, "1.01", true, true));
-  columns.push_back(columndefinition("DOUBLE", "DOUBLE", sql::DataType::DOUBLE, "-1.01", true, true));
-  columns.push_back(columndefinition("DOUBLE UNSIGNED", "DOUBLE UNSIGNED", sql::DataType::DOUBLE, "1.01", true));
+  columns.push_back(columndefinition("BIGINT", "BIGINT", sql::DataType::BIGINT, "-9223372036854775808", true));
+  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT UNSIGNED", sql::DataType::BIGINT, "18446744073709551615", false));
+  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT(4) ZEROFILL", sql::DataType::BIGINT, "2", false));
+  columns.push_back(columndefinition("FLOAT", "FLOAT", sql::DataType::REAL, "-1.01", true));
+  columns.push_back(columndefinition("FLOAT UNSIGNED", "FLOAT UNSIGNED", sql::DataType::REAL, "1.01", false));
+  columns.push_back(columndefinition("FLOAT UNSIGNED", "FLOAT(5,3) UNSIGNED ZEROFILL", sql::DataType::REAL, "1.01", false));
+  columns.push_back(columndefinition("FLOAT", "FLOAT(6)", sql::DataType::REAL, "1.01", true));
+  columns.push_back(columndefinition("DOUBLE", "DOUBLE", sql::DataType::DOUBLE, "-1.01", true));
+  columns.push_back(columndefinition("DOUBLE UNSIGNED", "DOUBLE UNSIGNED", sql::DataType::DOUBLE, "1.01", false));
   columns.push_back(columndefinition("DOUBLE UNSIGNED", "DOUBLE(5,3) UNSIGNED ZEROFILL", sql::DataType::DOUBLE, "1.01", false));
-  columns.push_back(columndefinition("DECIMAL", "DECIMAL", sql::DataType::DECIMAL, "-1.01", true, true));
-  columns.push_back(columndefinition("DECIMAL UNSIGNED", "DECIMAL UNSIGNED", sql::DataType::DECIMAL, "1.01", true));
-  columns.push_back(columndefinition("DECIMAL UNSIGNED", "DECIMAL(5,3) UNSIGNED ZEROFILL", sql::DataType::DECIMAL, "1.01", true));
-  columns.push_back(columndefinition("DATE", "DATE", sql::DataType::DATE, "2009-02-09", true));
-  columns.push_back(columndefinition("DATETIME", "DATETIME", sql::DataType::TIMESTAMP, "2009-02-09 20:05:43", true));
-  columns.push_back(columndefinition("TIMESTAMP", "TIMESTAMP", sql::DataType::TIMESTAMP, "2038-01-09 03:14:07", true));
-  columns.push_back(columndefinition("TIME", "TIME", sql::DataType::TIME, "-838:59:59", true, true));
-  columns.push_back(columndefinition("YEAR", "YEAR", sql::DataType::DATE, "1901", true));
+  columns.push_back(columndefinition("DECIMAL", "DECIMAL", sql::DataType::DECIMAL, "-1.01", true));
+  columns.push_back(columndefinition("DECIMAL UNSIGNED", "DECIMAL UNSIGNED", sql::DataType::DECIMAL, "1.01", false));
+  columns.push_back(columndefinition("DECIMAL UNSIGNED", "DECIMAL(5,3) UNSIGNED ZEROFILL", sql::DataType::DECIMAL, "1.01", false));
+  columns.push_back(columndefinition("DATE", "DATE", sql::DataType::DATE, "2009-02-09", false));
+  columns.push_back(columndefinition("DATETIME", "DATETIME", sql::DataType::TIMESTAMP, "2009-02-09 20:05:43", false));
+  columns.push_back(columndefinition("TIMESTAMP", "TIMESTAMP", sql::DataType::TIMESTAMP, "2038-01-09 03:14:07", false));
+  columns.push_back(columndefinition("TIME", "TIME", sql::DataType::TIME, "-838:59:59", true));
+  columns.push_back(columndefinition("YEAR", "YEAR", sql::DataType::DATE, "1901", false));
   columns.push_back(columndefinition("YEAR", "YEAR(4)", sql::DataType::DATE, "2009", false));
   columns.push_back(columndefinition("YEAR", "YEAR(2)", sql::DataType::DATE, "1", false));
-  columns.push_back(columndefinition("CHAR", "CHAR", sql::DataType::CHAR, "a", true));
-  columns.push_back(columndefinition("CHAR", "CHAR(255)", sql::DataType::CHAR, "abc", true));
-  columns.push_back(columndefinition("CHAR", "NATIONAL CHAR(255)", sql::DataType::CHAR, "abc", true));
-  columns.push_back(columndefinition("CHAR", "CHAR(255) CHARACTER SET 'utf8'", sql::DataType::CHAR, "abc", true));
+  columns.push_back(columndefinition("CHAR", "CHAR", sql::DataType::CHAR, "a", false));
+  columns.push_back(columndefinition("CHAR", "CHAR(255)", sql::DataType::CHAR, "abc", false));
+  columns.push_back(columndefinition("CHAR", "NATIONAL CHAR(255)", sql::DataType::CHAR, "abc", false));
+  columns.push_back(columndefinition("CHAR", "CHAR(255) CHARACTER SET 'utf8'", sql::DataType::CHAR, "abc", false));
   /* TODO this might be server dependent! */
-  columns.push_back(columndefinition("BINARY", "CHAR(255) CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::BINARY, "abc", true));
-  columns.push_back(columndefinition("CHAR", "CHAR(255) CHARACTER SET 'ucs2'", sql::DataType::CHAR, "abc", true));
+  columns.push_back(columndefinition("BINARY", "CHAR(255) CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::BINARY, "abc", false));
+  columns.push_back(columndefinition("CHAR", "CHAR(255) CHARACTER SET 'ucs2'", sql::DataType::CHAR, "abc", false));
   /* The CHAR BYTE data type is an alias for the BINARY data type. This is a compatibility feature.  */
-  columns.push_back(columndefinition("BINARY", "CHAR(255) BYTE", sql::DataType::BINARY, "abc", false));
+  columns.push_back(columndefinition("BINARY", "CHAR(255) BYTE", sql::DataType::BINARY, "abc", true));
   /*  Specifying the CHARACTER SET binary  attribute for a character data type
    causes the column to be created as the corresponding binary data type:
    CHAR becomes BINARY, VARCHAR becomes VARBINARY, and TEXT becomes BLOB.
    For the ENUM and SET data types, this does not occur; they are created as declared.   */
-  columns.push_back(columndefinition("BINARY", "CHAR(255) CHARACTER SET 'binary'", sql::DataType::BINARY, "abc", true));
-  columns.push_back(columndefinition("VARCHAR", "VARCHAR(10)", sql::DataType::VARCHAR, "a", true));
-  columns.push_back(columndefinition("VARCHAR", "VARCHAR(10) CHARACTER SET 'utf8'", sql::DataType::VARCHAR, "a", true));
+  columns.push_back(columndefinition("BINARY", "CHAR(255) CHARACTER SET 'binary'", sql::DataType::BINARY, "abc", false));
+  columns.push_back(columndefinition("VARCHAR", "VARCHAR(10)", sql::DataType::VARCHAR, "a", false));
+  columns.push_back(columndefinition("VARCHAR", "VARCHAR(10) CHARACTER SET 'utf8'", sql::DataType::VARCHAR, "a", false));
   /* TODO this might be server dependent! */
-  columns.push_back(columndefinition("VARBINARY", "VARCHAR(10) CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::VARBINARY, "a", true));
-  columns.push_back(columndefinition("VARBINARY", "VARCHAR(10) BYTE", sql::DataType::VARBINARY, "a", true));
-  columns.push_back(columndefinition("BINARY", "BINARY(1)", sql::DataType::BINARY, "a", true));
-  columns.push_back(columndefinition("VARBINARY", "VARBINARY(1)", sql::DataType::VARBINARY, "a", true));
-  columns.push_back(columndefinition("BLOB", "TINYBLOB", sql::DataType::LONGVARBINARY, "a", true));
-  columns.push_back(columndefinition("TEXT", "TINYTEXT", sql::DataType::LONGVARCHAR, "a", true));
-  columns.push_back(columndefinition("TEXT", "TINYTEXT", sql::DataType::LONGVARCHAR, "a", true));
-  columns.push_back(columndefinition("TEXT", "TINYTEXT CHARACTER SET 'utf8'", sql::DataType::LONGVARCHAR, "a", true));
+  columns.push_back(columndefinition("VARBINARY", "VARCHAR(10) CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::VARBINARY, "a", false));
+  columns.push_back(columndefinition("VARBINARY", "VARCHAR(10) BYTE", sql::DataType::VARBINARY, "a", false));
+  columns.push_back(columndefinition("BINARY", "BINARY(1)", sql::DataType::BINARY, "a", false));
+  columns.push_back(columndefinition("VARBINARY", "VARBINARY(1)", sql::DataType::VARBINARY, "a", false));
+  columns.push_back(columndefinition("BLOB", "TINYBLOB", sql::DataType::LONGVARBINARY, "a", false));
+  columns.push_back(columndefinition("TEXT", "TINYTEXT", sql::DataType::LONGVARCHAR, "a", false));
+  columns.push_back(columndefinition("TEXT", "TINYTEXT", sql::DataType::LONGVARCHAR, "a", false));
+  columns.push_back(columndefinition("TEXT", "TINYTEXT CHARACTER SET 'utf8'", sql::DataType::LONGVARCHAR, "a", false));
   /* TODO this might be server dependent! */
-  columns.push_back(columndefinition("BLOB", "TINYTEXT CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", true));
-  columns.push_back(columndefinition("BLOB", "MEDIUMBLOB", sql::DataType::LONGVARBINARY, "a", true));
-  columns.push_back(columndefinition("TEXT", "MEDIUMTEXT", sql::DataType::LONGVARCHAR, "a", true));
-  columns.push_back(columndefinition("TEXT", "MEDIUMTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", true));
+  columns.push_back(columndefinition("BLOB", "TINYTEXT CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", false));
+  columns.push_back(columndefinition("BLOB", "MEDIUMBLOB", sql::DataType::LONGVARBINARY, "a", false));
+  columns.push_back(columndefinition("TEXT", "MEDIUMTEXT", sql::DataType::LONGVARCHAR, "a", false));
+  columns.push_back(columndefinition("TEXT", "MEDIUMTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", false));
   /* TODO this might be server dependent! */
-  columns.push_back(columndefinition("BLOB", "MEDIUMTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", true));
-  columns.push_back(columndefinition("BLOB", "LONGBLOB", sql::DataType::LONGVARBINARY, "a", true));
-  columns.push_back(columndefinition("TEXT", "LONGTEXT", sql::DataType::LONGVARCHAR, "a", true));
-  columns.push_back(columndefinition("TEXT", "LONGTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", true));
+  columns.push_back(columndefinition("BLOB", "MEDIUMTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", false));
+  columns.push_back(columndefinition("BLOB", "LONGBLOB", sql::DataType::LONGVARBINARY, "a", false));
+  columns.push_back(columndefinition("TEXT", "LONGTEXT", sql::DataType::LONGVARCHAR, "a", false));
+  columns.push_back(columndefinition("TEXT", "LONGTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", false));
   /* TODO this might be server dependent! */
-  columns.push_back(columndefinition("BLOB", "LONGTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", true));
-  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no')", sql::DataType::CHAR, "yes", true));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no')", sql::DataType::CHAR, "yes", true));
+  columns.push_back(columndefinition("BLOB", "LONGTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", false));
+  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no')", sql::DataType::CHAR, "yes", false));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no')", sql::DataType::CHAR, "yes", false));
 
-    /*
- ResultSet getAttributes(String catalog,
-                      String schemaPattern,
-                      String typeNamePattern,
-                      String attributeNamePattern)
-                      throws SQLException
+  /*
+  ResultSet getAttributes(String catalog,
+                    String schemaPattern,
+                    String typeNamePattern,
+                    String attributeNamePattern)
+                    throws SQLException
 
- Retrieves a description of the given attribute of the given type for a user-defined type (UDT) that is available in the given schema and catalog.
+  Retrieves a description of the given attribute of the given type for a user-defined type (UDT) that is available in the given schema and catalog.
 
-  Descriptions are returned only for attributes of UDTs matching the catalog, schema, type, and attribute name criteria. They are ordered by TYPE_CAT, TYPE_SCHEM, TYPE_NAME and ORDINAL_POSITION. This description does not contain inherited attributes.
+Descriptions are returned only for attributes of UDTs matching the catalog, schema, type, and attribute name criteria. They are ordered by TYPE_CAT, TYPE_SCHEM, TYPE_NAME and ORDINAL_POSITION. This description does not contain inherited attributes.
 
-  The ResultSet object that is returned has the following columns:
+The ResultSet object that is returned has the following columns:
 
- 1. TYPE_CAT String => type catalog (may be null)
- 2. TYPE_SCHEM String => type schema (may be null)
- 3. TYPE_NAME String => type name
- 4. ATTR_NAME String => attribute name
- 5. DATA_TYPE int => attribute type SQL type from java.sql.Types
- 6. ATTR_TYPE_NAME String => Data source dependent type name. For a UDT, the type name is fully qualified. For a REF, the type name is fully qualified and represents the target type of the reference type.
- 7. ATTR_SIZE int => column size. For char or date types this is the maximum number of characters; for numeric or decimal types this is precision.
- 8. DECIMAL_DIGITS int => the number of fractional digits. Null is returned for data types where DECIMAL_DIGITS is not applicable.
- 9. NUM_PREC_RADIX int => Radix (typically either 10 or 2)
-10. NULLABLE int => whether NULL is allowed
+  1. TYPE_CAT String => type catalog (may be null)
+  2. TYPE_SCHEM String => type schema (may be null)
+  3. TYPE_NAME String => type name
+  4. ATTR_NAME String => attribute name
+  5. DATA_TYPE int => attribute type SQL type from java.sql.Types
+  6. ATTR_TYPE_NAME String => Data source dependent type name. For a UDT, the type name is fully qualified. For a REF, the type name is fully qualified and represents the target type of the reference type.
+  7. ATTR_SIZE int => column size. For char or date types this is the maximum number of characters; for numeric or decimal types this is precision.
+  8. DECIMAL_DIGITS int => the number of fractional digits. Null is returned for data types where DECIMAL_DIGITS is not applicable.
+  9. NUM_PREC_RADIX int => Radix (typically either 10 or 2)
+  10. NULLABLE int => whether NULL is allowed
    * attributeNoNulls - might not allow NULL values
    * attributeNullable - definitely allows NULL values
    * attributeNullableUnknown - nullability unknown
-11. REMARKS String => comment describing column (may be null)
-12. ATTR_DEF String => default value (may be null)
-13. SQL_DATA_TYPE int => unused
-14. SQL_DATETIME_SUB int => unused
-15. CHAR_OCTET_LENGTH int => for char types the maximum number of bytes in the column
-16. ORDINAL_POSITION int => index of the attribute in the UDT (starting at 1)
-17. IS_NULLABLE String => ISO rules are used to determine the nullability for a attribute.
+  11. REMARKS String => comment describing column (may be null)
+  12. ATTR_DEF String => default value (may be null)
+  13. SQL_DATA_TYPE int => unused
+  14. SQL_DATETIME_SUB int => unused
+  15. CHAR_OCTET_LENGTH int => for char types the maximum number of bytes in the column
+  16. ORDINAL_POSITION int => index of the attribute in the UDT (starting at 1)
+  17. IS_NULLABLE String => ISO rules are used to determine the nullability for a attribute.
    * YES --- if the attribute can include NULLs
    * NO --- if the attribute cannot include NULLs
    * empty string --- if the nullability for the attribute is unknown
-18. SCOPE_CATALOG String => catalog of table that is the scope of a reference attribute (null if DATA_TYPE isn't REF)
-19. SCOPE_SCHEMA String => schema of table that is the scope of a reference attribute (null if DATA_TYPE isn't REF)
-20. SCOPE_TABLE String => table name that is the scope of a reference attribute (null if the DATA_TYPE isn't REF)
-21. SOURCE_DATA_TYPE short => source type of a distinct type or user-generated Ref type,SQL type from java.sql.Types (null if DATA_TYPE isn't DISTINCT or user-generated REF)
+  18. SCOPE_CATALOG String => catalog of table that is the scope of a reference attribute (null if DATA_TYPE isn't REF)
+  19. SCOPE_SCHEMA String => schema of table that is the scope of a reference attribute (null if DATA_TYPE isn't REF)
+  20. SCOPE_TABLE String => table name that is the scope of a reference attribute (null if the DATA_TYPE isn't REF)
+  21. SOURCE_DATA_TYPE short => source type of a distinct type or user-generated Ref type,SQL type from java.sql.Types (null if DATA_TYPE isn't DISTINCT or user-generated REF)
    */
   attributes.push_back(udtattribute("TYPE_CAT", 0));
   attributes.push_back(udtattribute("TYPE_SCHEM", 0));
@@ -193,7 +193,8 @@ void unit_fixture::setUp()
   try
   {
     con.reset(getConnection());
-  } catch (sql::SQLException & sqle)
+  }
+  catch (sql::SQLException & sqle)
   {
     logErr(String("Couldn't get connection") + sqle.what());
     throw sqle;
@@ -217,7 +218,8 @@ void unit_fixture::tearDown()
     try
     {
       dropSchemaObject(created_objects[ i ], created_objects[ i + 1 ]);
-    } catch (sql::SQLException &)
+    }
+    catch (sql::SQLException &)
     {
     }
   }

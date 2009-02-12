@@ -23,27 +23,53 @@
 # Use Copy&Paste and Search&Replace to add new tests to the build
 #
 
-SET(classes_sources
+SET(connection_sources
 	../unit_fixture.cpp
 	../main.cpp
-	connection.cpp
-	resultsetmetadata.cpp
+	connection.cpp)
+
+IF(WIN32)
+	SET(connection_sources
+    		${connection_sources}
+	../unit_fixture.h
+	connection.h)
+ENDIF(WIN32)
+
+ADD_EXECUTABLE(connection ${connection_sources})
+TARGET_LINK_LIBRARIES(connection ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
+MESSAGE(STATUS "Configuring unit tests - connection")
+
+SET(resultsetmetadata_sources
+	../unit_fixture.cpp
+	../main.cpp
+	resultsetmetadata.cpp)
+
+IF(WIN32)
+	SET(resultsetmetadata_sources
+    		${resultsetmetadata_sources}
+	../unit_fixture.h
+	resultsetmetadata.h)
+ENDIF(WIN32)
+
+ADD_EXECUTABLE(resultsetmetadata ${resultsetmetadata_sources})
+TARGET_LINK_LIBRARIES(resultsetmetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
+MESSAGE(STATUS "Configuring unit tests - resultsetmetadata")
+
+SET(databasemetadata_sources
+	../unit_fixture.cpp
+	../main.cpp
 	connectionmetadata.cpp)
 
 IF(WIN32)
-	SET(classes_sources
-    		${classes_sources}
+	SET(databasemetadata_sources
+    		${databasemetadata_sources}
 	../unit_fixture.h
-	connection.h
-	resultsetmetadata.h
 	connectionmetadata.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(classes ${classes_sources})
-TARGET_LINK_LIBRARIES(classes ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+ADD_EXECUTABLE(databasemetadata ${databasemetadata_sources})
+TARGET_LINK_LIBRARIES(databasemetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
-#
-# End of the instructions for building binary classes from classes/*.cpp|h
-#
-
-MESSAGE(STATUS "Configuring unit tests - classes")
+MESSAGE(STATUS "Configuring unit tests - databasemetadata")
