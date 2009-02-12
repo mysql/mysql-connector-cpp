@@ -45,7 +45,7 @@ struct columndefinition
   int ctype; // DATA_TYPE
   std::string value;
   bool is_signed;
-  long precision; // COLUMN_SIZE
+  unsigned int precision; // COLUMN_SIZE
   int decimal_digits; // DECIMAL_DIGITS
   bool is_nullable; // IS_NULLABLE
   int nullable; // NULLABLE
@@ -62,7 +62,7 @@ struct columndefinition
   int sql_datetime_sub; // SQL_DATA_TYPE_SUB
 
 
-  columndefinition(std::string _name, std::string _sqldef, int _ctype, std::string _value, bool _is_signed, long _precision) :
+  columndefinition(std::string _name, std::string _sqldef, int _ctype, std::string _value, bool _is_signed, unsigned int _precision) :
   name(_name),
   sqldef(_sqldef),
   ctype(_ctype),
@@ -87,7 +87,7 @@ struct columndefinition
   }
 
   columndefinition(std::string _name, std::string _sqldef, int _ctype,
-                   std::string _value, bool _is_signed, long _precision,
+                   std::string _value, bool _is_signed, unsigned int _precision,
                    int _decimal_digits) :
   name(_name),
   sqldef(_sqldef),
@@ -113,7 +113,7 @@ struct columndefinition
   }
 
   columndefinition(std::string _name, std::string _sqldef, int _ctype,
-                   std::string _value, bool _is_signed, long _precision,
+                   std::string _value, bool _is_signed, unsigned int _precision,
                    int _decimal_digits, bool _is_nullable) :
   name(_name),
   sqldef(_sqldef),
