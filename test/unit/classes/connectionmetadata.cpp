@@ -280,13 +280,14 @@ void connectionmetadata::getColumns()
       ASSERT_EQUALS(res->getInt(7), res->getInt("COLUMN_SIZE"));
 
       ASSERT_EQUALS(0, res->getInt(8));
-      ASSERT_EQUALS(res->getInt(8), res->getInt("BUFFER_LENGTH"));      
+      ASSERT_EQUALS(res->getInt(8), res->getInt("BUFFER_LENGTH"));
       ASSERT_EQUALS(it->decimal_digits, res->getInt(9));
-      ASSERT_EQUALS(res->getInt(9), res->getInt("DECIMAL_DIGITS"));      
+      ASSERT_EQUALS(res->getInt(9), res->getInt("DECIMAL_DIGITS"));
       ASSERT_EQUALS(it->num_prec_radix, res->getInt(10));
       ASSERT_EQUALS(res->getInt(10), res->getInt("NUM_PREC_RADIX"));
 
-      if (it->nullable != res->getInt(11)) {
+      if (it->nullable != res->getInt(11))
+      {
         msg.str("");
         msg << "... WARNING - check NULLABLE for " << it->sqldef;
         msg << " - expecting pecision " << it->nullable << " got " << res->getInt(11);
@@ -298,16 +299,13 @@ void connectionmetadata::getColumns()
       }
       ASSERT_EQUALS(it->nullable, res->getInt(11));
       ASSERT_EQUALS(res->getInt(11), res->getInt("NULLABLE"));
-      /*
-      // TODO      
       ASSERT_EQUALS(it->remarks, res->getString(12));
-      ASSERT_EQUALS(res->getString(12), res->getString("REMARKS"));      
+      ASSERT_EQUALS(res->getString(12), res->getString("REMARKS"));
       ASSERT_EQUALS("", res->getString(13));
       ASSERT_EQUALS(res->getString(13), res->getString("COLUMN_DEF"));
-      */
-
+      
       stmt->execute("DROP TABLE IF EXISTS test");
-    }    
+    }
     if (got_warning)
       FAIL("See Warnings!");
 

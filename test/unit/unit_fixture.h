@@ -61,57 +61,6 @@ struct columndefinition
   int sql_data_type; // SQL_DATA_TYPE
   int sql_datetime_sub; // SQL_DATA_TYPE_SUB
 
-
-  columndefinition(std::string _name, std::string _sqldef, int _ctype, std::string _value, bool _is_signed, unsigned int _precision) :
-  name(_name),
-  sqldef(_sqldef),
-  ctype(_ctype),
-  value(_value),
-  is_signed(_is_signed),
-  precision(_precision),
-  decimal_digits(0),
-  is_nullable(true),
-  nullable(sql::DatabaseMetaData::columnNullable),
-  is_case_sensitive(false),
-  remarks(""),
-  is_searchable(sql::DatabaseMetaData::typeSearchable),
-  fixed_prec_scale(false),
-  auto_increment(false),
-  local_type_name(""),
-  minimum_scale(0),
-  maximum_scale(0),
-  num_prec_radix(10),
-  sql_data_type(0),
-  sql_datetime_sub(0)
-  {
-  }
-
-  columndefinition(std::string _name, std::string _sqldef, int _ctype,
-                   std::string _value, bool _is_signed, unsigned int _precision,
-                   int _decimal_digits) :
-  name(_name),
-  sqldef(_sqldef),
-  ctype(_ctype),
-  value(_value),
-  is_signed(_is_signed),
-  precision(_precision),
-  decimal_digits(_decimal_digits),
-  is_nullable(true),
-  nullable(sql::DatabaseMetaData::columnNullable),
-  is_case_sensitive(false),
-  remarks(""),
-  is_searchable(sql::DatabaseMetaData::typeSearchable),
-  fixed_prec_scale(false),
-  auto_increment(false),
-  local_type_name(""),
-  minimum_scale(0),
-  maximum_scale(0),
-  num_prec_radix(10),
-  sql_data_type(0),
-  sql_datetime_sub(0)
-  {
-  }
-
   columndefinition(std::string _name, std::string _sqldef, int _ctype,
                    std::string _value, bool _is_signed, unsigned int _precision,
                    int _decimal_digits, bool _is_nullable) :
