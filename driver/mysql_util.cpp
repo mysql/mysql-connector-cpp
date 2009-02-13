@@ -106,55 +106,55 @@ mysql_type_to_datatype(const int mysql_type, const int flags)
 int
 mysql_string_type_to_datatype(const std::string & name)
 {
-	if (name.compare("bit")) {
+	if (!name.compare("bit")) {
 		return sql::DataType::BIT;
-	} else if (name.compare("decimal")) {
+	} else if (!name.compare("decimal")) {
 		return sql::DataType::DECIMAL;	
-	} else if (name.compare("tinyint")) {
+	} else if (!name.compare("tinyint")) {
 		return sql::DataType::TINYINT;	
-	} else if (name.compare("smallint")) {
+	} else if (!name.compare("smallint")) {
 		return sql::DataType::SMALLINT;	
-	} else if (name.compare("mediumint")) {
+	} else if (!name.compare("mediumint")) {
 		return sql::DataType::MEDIUMINT;	
-	} else if (name.compare("int")) {
+	} else if (!name.compare("int")) {
 		return sql::DataType::INTEGER;	
-	} else if (name.compare("bigint")) {
+	} else if (!name.compare("bigint")) {
 		return sql::DataType::BIGINT;	
-	} else if (name.compare("float")) {
+	} else if (!name.compare("float")) {
 		return sql::DataType::REAL;	
-	} else if (name.compare("double")) {
+	} else if (!name.compare("double")) {
 		return sql::DataType::DOUBLE;	
-	} else if (name.compare("timestamp")) {
+	} else if (!name.compare("timestamp")) {
 		return sql::DataType::TIMESTAMP;	
-	} else if (name.compare("date")) {
+	} else if (!name.compare("date")) {
 		return sql::DataType::DATE;	
-	} else if (name.compare("time")) {
+	} else if (!name.compare("time")) {
 		return sql::DataType::TIME;	
-	} else if (name.compare("year")) {
+	} else if (!name.compare("year")) {
 		return sql::DataType::DATE;	
-	} else if (name.compare("datetime")) {
+	} else if (!name.compare("datetime")) {
 		return sql::DataType::TIMESTAMP;	
-	} else if (name.compare("tinytext")) {
+	} else if (!name.compare("tinytext")) {
 		return sql::DataType::VARCHAR;	
-	} else if (name.compare("mediumtext") || name.compare("text") || name.compare("longtext")) {
+	} else if (!name.compare("mediumtext") || !name.compare("text") || !name.compare("longtext")) {
 		return sql::DataType::LONGVARCHAR;	
-	} else if (name.compare("tinyblob")) {
+	} else if (!name.compare("tinyblob")) {
 		return sql::DataType::VARBINARY;	
-	} else if (name.compare("mediumblob") || name.compare("blob") || name.compare("longblob")) {
+	} else if (!name.compare("mediumblob") || !name.compare("blob") || !name.compare("longblob")) {
 		return sql::DataType::LONGVARBINARY;	
-	} else if (name.compare("char")) {
+	} else if (!name.compare("char")) {
 		return sql::DataType::CHAR;	
-	} else if (name.compare("binary")) {
+	} else if (!name.compare("binary")) {
 		return sql::DataType::BINARY;	
-	} else if (name.compare("varchar")) {
+	} else if (!name.compare("varchar")) {
 		return sql::DataType::VARCHAR;	
-	} else if (name.compare("varbinary")) {
+	} else if (!name.compare("varbinary")) {
 		return sql::DataType::VARBINARY;	
-	} else if (name.compare("enum")) {
+	} else if (!name.compare("enum")) {
 		return sql::DataType::CHAR;	
-	} else if (name.compare("set")) {
+	} else if (!name.compare("set")) {
 		return sql::DataType::CHAR;	
-	} else if (name.compare("geometry")) {
+	} else if (!name.compare("geometry")) {
 		return sql::DataType::GEOMETRY;	
 	} else {
 		return sql::DataType::UNKNOWN;
