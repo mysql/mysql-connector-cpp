@@ -150,6 +150,26 @@ static const TypeInfoDef mysqlc_types[] = {
 		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
+	{
+		"TINYINT UNSIGNED ZEROFILL",		// Typename
+		sql::DataType::TINYINT,				// dbc-type
+		3,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M)] [UNSIGNED]",					// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		true,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"TINYINT UNSIGNED ZEROFILL",		// local type name
+		0,									// minimum scale
+		0,									// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
 
 	// ----------- MySQL-Type: BIGINT DBC-Type: BIGINT ----------
 	{
@@ -186,6 +206,26 @@ static const TypeInfoDef mysqlc_types[] = {
 		false,								// fixed_prec_scale
 		true,								// auto_increment
 		"BIGINT UNSIGNED",					// local type name
+		0,									// minimum scale
+		0,									// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
+	{
+		"BIGINT UNSIGNED ZEROFILL",			// Typename
+		sql::DataType::BIGINT,				// dbc-type
+		19,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M)]",							// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		true,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"BIGINT UNSIGNED ZEROFILL",			// local type name
 		0,									// minimum scale
 		0,									// maximum scale
 		0,									// sql data type (unused)
@@ -544,6 +584,26 @@ static const TypeInfoDef mysqlc_types[] = {
 		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
+	{
+		"DECIMAL UNSIGNED ZEROFILL",		// Typename
+		sql::DataType::DECIMAL,				// dbc-type
+		64,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M[,D])]",						// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		true,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"DECIMAL UNSIGNED ZEROFILL",		// local type name
+		-308,								// minimum scale
+		308,								// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
 
 #ifdef LETS_HAVE_JUST_ONLY_ONE_INT_TYPE
 	// ----------- MySQL-Type: INTEGER DBC-Type: INTEGER ----------
@@ -610,7 +670,6 @@ static const TypeInfoDef mysqlc_types[] = {
 		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
-
 	{
 		"INT UNSIGNED",						// Typename
 		sql::DataType::INTEGER,				// dbc-type
@@ -625,6 +684,26 @@ static const TypeInfoDef mysqlc_types[] = {
 		false,								// fixed_prec_scale
 		true,								// auto_increment
 		"INT UNSIGNED",						// local type name
+		0,									// minimum scale
+		0,									// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
+	{
+		"INT UNSIGNED ZEROFILL",			// Typename
+		sql::DataType::INTEGER,				// dbc-type
+		10,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M)]",					// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		false,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"INT UNSIGNED ZEROFILL",			// local type name
 		0,									// minimum scale
 		0,									// maximum scale
 		0,									// sql data type (unused)
@@ -673,6 +752,26 @@ static const TypeInfoDef mysqlc_types[] = {
 		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
+	{
+		"MEDIUMINT UNSIGNED ZEROFILL",		// Typename
+		sql::DataType::MEDIUMINT,			// dbc-type
+		7,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M)]",					// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		true,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"MEDIUMINT UNSIGNED ZEROFILL",		// local type name
+		0,									// minimum scale
+		0,									// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
 
 	// ----------- MySQL-Type: SMALLINT DBC-Type: SMALLINT ----------
 	{
@@ -695,7 +794,6 @@ static const TypeInfoDef mysqlc_types[] = {
 		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
-
 	{
 		"SMALLINT UNSIGNED",				// Typename
 		sql::DataType::SMALLINT,			// dbc-type
@@ -710,6 +808,26 @@ static const TypeInfoDef mysqlc_types[] = {
 		false,								// fixed_prec_scale
 		true,								// auto_increment
 		"SMALLINT UNSIGNED",				// local type name
+		0,									// minimum scale
+		0,									// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
+	{
+		"SMALLINT UNSIGNED ZEROFILL",		// Typename
+		sql::DataType::SMALLINT,			// dbc-type
+		5,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M)]",							// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		true,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"SMALLINT UNSIGNED ZEROFILL",		// local type name
 		0,									// minimum scale
 		0,									// maximum scale
 		0,									// sql data type (unused)
@@ -763,6 +881,26 @@ static const TypeInfoDef mysqlc_types[] = {
 		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
+	{
+		"FLOAT UNSIGNED ZEROFILL",			// Typename
+		sql::DataType::REAL,				// dbc-type
+		10,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M,D)]",							// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		true,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"FLOAT UNSIGNED ZEROFILL",			// local type name
+		-38,								// minimum scale
+		38,									// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
 
 	// ----------- MySQL-Type: DOUBLE DBC-Type: DOUBLE ----------
 	{
@@ -799,6 +937,26 @@ static const TypeInfoDef mysqlc_types[] = {
 		false,								// fixed_prec_scale
 		true,								// auto_increment
 		"DOUBLE UNSIGNED",					// local type name
+		-308,								// minimum scale
+		308,								// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
+	{
+		"DOUBLE UNSIGNED ZEROFILL",			// Typename
+		sql::DataType::DOUBLE,				// dbc-type
+		17,									// Precision
+		"",									// Literal prefix
+		"",									// Literal suffix
+		"[(M,D)]",							// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		true,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		true,								// auto_increment
+		"DOUBLE UNSIGNED ZEROFILL",			// local type name
 		-308,								// minimum scale
 		308,								// maximum scale
 		0,									// sql data type (unused)
