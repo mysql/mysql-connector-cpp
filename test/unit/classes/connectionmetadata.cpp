@@ -168,7 +168,7 @@ void connectionmetadata::getBestRowIdentifier()
       // TODO - ASSERT_EQUALS(it->name, res->getString(4));
       ASSERT_EQUALS(res->getString(4), res->getString("TYPE_NAME"));
 
-      if (it->precision != res->getInt(5))
+      if (it->precision != res->getUInt64(5))
       {
         msg.str("");
         msg << "... WARNING - check COLUMN_SIZE for " << it->sqldef;
@@ -268,7 +268,7 @@ void connectionmetadata::getColumns()
       // ASSERT_EQUALS(it->name, res->getString("TYPE_NAME"));
       ASSERT_EQUALS(res->getString(6), res->getString("TYPE_NAME"));
 
-      if (it->precision != res->getInt(7))
+      if (it->precision != res->getUInt64(7))
       {
         msg.str("");
         msg << "... WARNING - check COLUMN_SIZE for " << it->sqldef;

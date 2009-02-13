@@ -122,6 +122,9 @@ public:
 	virtual int64_t getInt64(unsigned int columnIndex) const = 0;
 	virtual int64_t getInt64(const std::string& columnLabel) const = 0;
 
+	virtual uint64_t getUInt64(unsigned int columnIndex) const = 0;
+	virtual uint64_t getUInt64(const std::string& columnLabel) const = 0;
+
 	virtual ResultSetMetaData * getMetaData() const = 0;
 
 	virtual size_t getRow() const = 0;

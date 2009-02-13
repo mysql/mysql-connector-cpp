@@ -40,6 +40,14 @@ typedef unsigned __int32  uint32_t;
 #endif
 #endif	//	_WIN32
 
+#ifndef _WIN32
+#include <stdlib.h>
+#else
+#define atoll(x) _atoi64((x))
+#define strtoull(x, e, b) _strtoui64((x), (e), (b))
+#endif	//	_WIN32
+
+
 namespace sql {
 namespace mysql {
 namespace util {

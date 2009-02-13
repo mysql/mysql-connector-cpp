@@ -75,6 +75,8 @@ Beta  1.0.3 - 2009-xx-xx
 - Renamed ResultSet::getLong() to ResultSet::getInt64(). resultset.h includes
   typdefs for Windows to be able to use int64_t. (Andrey)
 
+- Introduced ResultSet::getUInt64(). (Andrey)
+
 
 Alpha  1.0.2 - 2008-12-19
 
