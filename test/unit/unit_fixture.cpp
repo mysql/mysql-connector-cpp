@@ -73,11 +73,11 @@ void unit_fixture::init()
   columns.push_back(columndefinition("SMALLINT UNSIGNED", "SMALLINT UNSIGNED", sql::DataType::SMALLINT, "65535", false, 5, 0, true, ""));
   columns.push_back(columndefinition("SMALLINT UNSIGNED", "SMALLINT ZEROFILL", sql::DataType::SMALLINT, "123", false, 5, 0, true, ""));
   columns.push_back(columndefinition("SMALLINT UNSIGNED", "SMALLINT UNSIGNED ZEROFILL DEFAULT 101", sql::DataType::SMALLINT, "123", false, 5, 0, true, "00101"));
-  columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT", sql::DataType::MEDIUMINT, "-8388608", true, 8, 0, true, ""));
-  columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT NOT NULL", sql::DataType::MEDIUMINT, "-8388608", true, 8, 0, false, ""));
-  columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT(1)", sql::DataType::MEDIUMINT, "2", true, 8, 0, true, ""));
-  columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT(2) DEFAULT 12", sql::DataType::MEDIUMINT, "2", true, 8, 0, true, "12"));
-  columns.push_back(columndefinition("MEDIUMINT UNSIGNED", "MEDIUMINT UNSIGNED", sql::DataType::MEDIUMINT, "16777215", false, 8, 0, true, ""));
+  columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT", sql::DataType::MEDIUMINT, "-8388608", true, 7, 0, true, ""));
+  columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT NOT NULL", sql::DataType::MEDIUMINT, "-8388608", true, 7, 0, false, ""));
+  columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT(1)", sql::DataType::MEDIUMINT, "2", true, 7, 0, true, ""));
+  columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT(2) DEFAULT 12", sql::DataType::MEDIUMINT, "2", true, 7, 0, true, "12"));
+  columns.push_back(columndefinition("MEDIUMINT UNSIGNED", "MEDIUMINT UNSIGNED", sql::DataType::MEDIUMINT, "16777215", false, 7, 0, true, ""));
   /* Alias of INTEGER */
   columns.push_back(columndefinition("INT", "INTEGER", sql::DataType::INTEGER, "2147483647", true, 10, 0, true, ""));
   columns.push_back(columndefinition("INT", "INTEGER NOT NULL", sql::DataType::INTEGER, "2147483647", true, 10, 0, false, ""));
@@ -86,11 +86,11 @@ void unit_fixture::init()
   /* If you specify ZEROFILL for a numeric column, MySQL automatically adds the UNSIGNED  attribute to the column.  */
   columns.push_back(columndefinition("INT UNSIGNED", "INT(4) SIGNED ZEROFILL", sql::DataType::INTEGER, "1", false, 10, 0, true, ""));
   columns.push_back(columndefinition("INT", "INT(4) SIGNED DEFAULT -123", sql::DataType::INTEGER, "1", true, 10, 0, true, "-123"));
-  columns.push_back(columndefinition("BIGINT", "BIGINT", sql::DataType::BIGINT, "-9223372036854775808", true, 20, 0, true, ""));
-  columns.push_back(columndefinition("BIGINT", "BIGINT NOT NULL", sql::DataType::BIGINT, "-9223372036854775808", true, 20, 0, false, ""));
-  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT UNSIGNED", sql::DataType::BIGINT, "18446744073709551615", false, 20, 0, true, ""));
-  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT UNSIGNED", sql::DataType::BIGINT, "18446744073709551615", false, 20, 0, true, ""));
-  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT(4) ZEROFILL DEFAULT 10101", sql::DataType::BIGINT, "2", false, 20, 0, true, "10101"));
+  columns.push_back(columndefinition("BIGINT", "BIGINT", sql::DataType::BIGINT, "-9223372036854775808", true, 19, 0, true, ""));
+  columns.push_back(columndefinition("BIGINT", "BIGINT NOT NULL", sql::DataType::BIGINT, "-9223372036854775808", true, 19, 0, false, ""));
+  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT UNSIGNED", sql::DataType::BIGINT, "18446744073709551615", false, 19, 0, true, ""));
+  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT UNSIGNED", sql::DataType::BIGINT, "18446744073709551615", false, 19, 0, true, ""));
+  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT(4) ZEROFILL DEFAULT 10101", sql::DataType::BIGINT, "2", false, 19, 0, true, "10101"));
   columns.push_back(columndefinition("FLOAT", "FLOAT", sql::DataType::REAL, "-1.01", true, 12, 0, true, ""));
   columns.push_back(columndefinition("FLOAT", "FLOAT NOT NULL", sql::DataType::REAL, "-1.01", true, 12, 0, false, ""));
   columns.push_back(columndefinition("FLOAT UNSIGNED", "FLOAT UNSIGNED", sql::DataType::REAL, "1.01", false, 12, 0, true, ""));
@@ -115,9 +115,9 @@ void unit_fixture::init()
   columns.push_back(columndefinition("DATETIME", "DATETIME NOT NULL DEFAULT '2009-02-12 21:36:54'", sql::DataType::TIMESTAMP, "2009-02-12 17:49:21", false, 19, 0, false, "2009-02-12 21:36:54"));
   /* TODO this might be server dependent! */
   columns.push_back(columndefinition("TIMESTAMP", "TIMESTAMP DEFAULT '0000-00-00 00:00:01'", sql::DataType::TIMESTAMP, "2038-01-09 03:14:07", false, 19, 0, false, "0000-00-00 00:00:01"));
-  columns.push_back(columndefinition("TIME", "TIME", sql::DataType::TIME, "-838:59:59", true, 10, 0, true, ""));
-  columns.push_back(columndefinition("TIME", "TIME NOT NULL", sql::DataType::TIME, "838:59:59", true, 10, 0, false, ""));
-  columns.push_back(columndefinition("TIME", "TIME DEFAULT '12:39:41'", sql::DataType::TIME, "-838:59:59", true, 10, 0, true, "12:39:41"));
+  columns.push_back(columndefinition("TIME", "TIME", sql::DataType::TIME, "-838:59:59", true, 8, 0, true, ""));
+  columns.push_back(columndefinition("TIME", "TIME NOT NULL", sql::DataType::TIME, "838:59:59", true, 8, 0, false, ""));
+  columns.push_back(columndefinition("TIME", "TIME DEFAULT '12:39:41'", sql::DataType::TIME, "-838:59:59", true, 8, 0, true, "12:39:41"));
   columns.push_back(columndefinition("YEAR", "YEAR", sql::DataType::DATE, "1901", false, 4, 0, true, ""));
   columns.push_back(columndefinition("YEAR", "YEAR NOT NULL", sql::DataType::DATE, "1902", false, 4, 0, false, ""));
   columns.push_back(columndefinition("YEAR", "YEAR(4)", sql::DataType::DATE, "2009", false, 4, 0, true, ""));
@@ -159,7 +159,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("BINARY", "BINARY(1)", sql::DataType::BINARY, "a", false, 1, 0, true, ""));
   columns.push_back(columndefinition("VARBINARY", "VARBINARY(1)", sql::DataType::VARBINARY, "a", false, 1, 0, true, ""));
   columns.push_back(columndefinition("VARBINARY", "VARBINARY(2) NOT NULL", sql::DataType::VARBINARY, "a", false, 2, 0, false, ""));
-  columns.push_back(columndefinition("VARBINARY", "VARBINARY(20) NOT NULL DEFAULT 'Lawrin'", sql::DataType::VARBINARY, "a", false, 20, 0, false, "Lawrin"));
+  columns.push_back(columndefinition("VARBINARY", "VARBINARY(20) NOT NULL DEFAULT 'Lawrin'", sql::DataType::VARBINARY, "a", false, 19, 0, false, "Lawrin"));
   columns.push_back(columndefinition("BLOB", "TINYBLOB", sql::DataType::LONGVARBINARY, "a", false, 255, 0, true, ""));
   columns.push_back(columndefinition("BLOB", "TINYBLOB DEFAULT 'Cannot spell last name'", sql::DataType::LONGVARBINARY, "a", false, 255, 0, true, "Cannot spell last name"));
   columns.push_back(columndefinition("TEXT", "TINYTEXT", sql::DataType::LONGVARCHAR, "a", false, 255, 0, true, ""));
@@ -184,7 +184,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no')", sql::DataType::CHAR, "yes", false, 3, 0, true, ""));
   columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no') NOT NULL", sql::DataType::CHAR, "yes", false, 3, 0, false, ""));
   columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no', 'not sure') NOT NULL", sql::DataType::CHAR, "yes", false, 8, 0, false, ""));
-  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no', 'buy') NOT NULL DEFAULT 'buy'", sql::DataType::CHAR, "yes", false, 8, 0, false, "buy"));
+  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no', 'buy') NOT NULL DEFAULT 'buy'", sql::DataType::CHAR, "yes", false, 3, 0, false, "buy"));
   columns.push_back(columndefinition("SET", "SET('yes', 'no')", sql::DataType::CHAR, "yes", false, 6, 0, true));
   columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii'", sql::DataType::CHAR, "yes", false, 6, 0, true));
   columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii' DEFAULT 'yes'", sql::DataType::CHAR, "yes", false, 6, 0, true, "yes"));
