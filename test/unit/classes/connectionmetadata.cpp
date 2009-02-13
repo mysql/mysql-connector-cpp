@@ -272,7 +272,7 @@ void connectionmetadata::getColumns()
       {
         msg.str("");
         msg << "... WARNING - check COLUMN_SIZE for " << it->sqldef;
-        msg << " - expecting pecision " << it->precision << " got " << res->getInt(5);
+        msg << " - expecting pecision " << it->precision << " got " << res->getUInt64(7);
         logMsg(msg.str());
         got_warning=true;
       }
