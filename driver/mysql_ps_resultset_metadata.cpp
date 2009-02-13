@@ -184,8 +184,8 @@ MySQL_Prepared_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	int scale = getScale(columnIndex + 1);
-	int ret = mysql_fetch_field_direct(result_meta, columnIndex)->length;
+	unsigned int scale = getScale(columnIndex + 1);
+	unsigned int ret = mysql_fetch_field_direct(result_meta, columnIndex)->length;
 	if (scale) {
 		ret -= scale + 1;
 	}
@@ -205,7 +205,7 @@ MySQL_Prepared_ResultSetMetaData::getScale(unsigned int columnIndex)
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	int ret = mysql_fetch_field_direct(result_meta, columnIndex)->decimals;
+	unsigned int ret = mysql_fetch_field_direct(result_meta, columnIndex)->decimals;
 	CPP_INFO_FMT("column=%u scale=%d", columnIndex + 1, ret);
 	return ret;
 }
@@ -222,7 +222,7 @@ MySQL_Prepared_ResultSetMetaData::getSchemaName(unsigned int columnIndex)
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	char *db = mysql_fetch_field_direct(result_meta, columnIndex)->db;
+	const char * const db = mysql_fetch_field_direct(result_meta, columnIndex)->db;
 	return db ? db : "";
 }
 /* }}} */
@@ -313,7 +313,7 @@ MySQL_Prepared_ResultSetMetaData::isNullable(unsigned int columnIndex)
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	return mysql_fetch_field_direct(result_meta, columnIndex)->flags & NOT_NULL_FLAG? columnNoNulls:columnNullable;
+	return mysql_fetch_field_direct(result_meta, columnIndex)->flags & NOT_NULL_FLAG? columnNoNulls : columnNullable;
 }
 /* }}} */
 
@@ -330,10 +330,11 @@ MySQL_Prepared_ResultSetMetaData::isReadOnly(unsigned int columnIndex)
 	}
 	/* We consider we connect to >= 40100 - else, we can't say */
 
-	char * orgColumnName = mysql_fetch_field_direct(result_meta, columnIndex)->org_name;
+	const char * const orgColumnName = mysql_fetch_field_direct(result_meta, columnIndex)->org_name;
 	unsigned int orgColumnNameLen = mysql_fetch_field_direct(result_meta, columnIndex)->org_name_length;
-	char * orgTableName = mysql_fetch_field_direct(result_meta, columnIndex)->org_table;
+	const char * const orgTableName = mysql_fetch_field_direct(result_meta, columnIndex)->org_table;
 	unsigned int orgTableNameLen = mysql_fetch_field_direct(result_meta, columnIndex)->org_table_length;
+
 	return !(orgColumnName != NULL && orgColumnNameLen > 0 && orgTableName != NULL && orgTableNameLen > 0);
 }
 /* }}} */
