@@ -24,7 +24,7 @@
 #include <cppconn/datatype.h>
 #include <string>
 #include <memory>
-#include "mysql_private_iface.h"
+#include "mysql_util.h"
 
 namespace sql {
 namespace mysql {
@@ -32,9 +32,9 @@ namespace util {
 
 /* {{{ mysql_to_datatype() -I- */
 int
-mysql_type_to_datatype(const int mysql_type, const int flags)
+mysql_type_to_datatype(const MYSQL_FIELD * const field)
 {
-	switch (mysql_type) {
+	switch (field->type) {
 		case MYSQL_TYPE_BIT:
 			return sql::DataType::BIT;
 		case MYSQL_TYPE_DECIMAL:
@@ -67,25 +67,25 @@ mysql_type_to_datatype(const int mysql_type, const int flags)
 		case MYSQL_TYPE_DATETIME:
 			return sql::DataType::TIMESTAMP;
 		case MYSQL_TYPE_TINY_BLOB:
-			if (flags & BINARY_FLAG) {
+			if (field->flags & BINARY_FLAG) {
 				return sql::DataType::VARBINARY;
 			}
 			return sql::DataType::VARCHAR;
 		case MYSQL_TYPE_MEDIUM_BLOB:
 		case MYSQL_TYPE_LONG_BLOB:
 		case MYSQL_TYPE_BLOB:
-			if (flags & BINARY_FLAG) {
+			if (field->flags & BINARY_FLAG) {
 				return sql::DataType::LONGVARBINARY;
 			}
 			return sql::DataType::LONGVARCHAR;
 		case MYSQL_TYPE_VARCHAR:
 		case MYSQL_TYPE_VAR_STRING:
-			if (flags & BINARY_FLAG) {
+			if (field->flags & BINARY_FLAG) {
 				return sql::DataType::VARBINARY;
 			}
 			return sql::DataType::VARCHAR;
 		case MYSQL_TYPE_STRING:
-			if (flags & BINARY_FLAG) {
+			if (field->flags & BINARY_FLAG) {
 				return sql::DataType::BINARY;
 			}
 			return sql::DataType::CHAR;
@@ -169,11 +169,11 @@ mysql_string_type_to_datatype(const std::string & name)
 
 /* {{{ mysql_to_datatype() -I- */
 const char *
-mysql_type_to_string(const int cppconn_type, const int flags)
+mysql_type_to_string(const MYSQL_FIELD * const field)
 {
-	bool isUnsigned = (flags & UNSIGNED_FLAG) != 0;
-	bool isZerofill = (flags & ZEROFILL_FLAG) != 0;
-	switch (cppconn_type) {
+	bool isUnsigned = (field->flags & UNSIGNED_FLAG) != 0;
+	bool isZerofill = (field->flags & ZEROFILL_FLAG) != 0;
+	switch (field->type) {
 		case MYSQL_TYPE_BIT:
 			return "BIT";
 		case MYSQL_TYPE_DECIMAL:
@@ -210,24 +210,24 @@ mysql_type_to_string(const int cppconn_type, const int flags)
 		case MYSQL_TYPE_LONG_BLOB:
 			return "LONGBLOB";
 		case MYSQL_TYPE_BLOB:
-			if (flags & BINARY_FLAG) {
+			if (field->flags & BINARY_FLAG) {
 				return "BLOB";
 			}
 			return "TEXT";
 		case MYSQL_TYPE_VARCHAR:
 		case MYSQL_TYPE_VAR_STRING:
-			if (flags & BINARY_FLAG) {
+			if (field->flags & BINARY_FLAG) {
 				return "VARBINARY";
 			}
 			return "VARCHAR";
 		case MYSQL_TYPE_STRING:
-			if (flags & ENUM_FLAG) {
+			if (field->flags & ENUM_FLAG) {
 				return "ENUM";
 			}
-			if (flags & SET_FLAG) {
+			if (field->flags & SET_FLAG) {
 				return "SET";
 			}
-			if (flags & BINARY_FLAG) {
+			if (field->flags & BINARY_FLAG) {
 				return "BINARY";
 			}
 			return "CHAR";

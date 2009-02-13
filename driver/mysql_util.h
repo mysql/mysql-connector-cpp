@@ -48,13 +48,15 @@ typedef unsigned __int32  uint32_t;
 #endif	//	_WIN32
 
 
+#include "mysql_private_iface.h"
+
 namespace sql {
 namespace mysql {
 namespace util {
 
 int mysql_string_type_to_datatype(const std::string & name);
-int mysql_type_to_datatype(const int mysql_type, const int flags);
-const char * mysql_type_to_string(const int cppconn_type, const int flags);
+int mysql_type_to_datatype(const MYSQL_FIELD * const field);
+const char * mysql_type_to_string(const MYSQL_FIELD * const field);
 
 template<typename T>
 class my_shared_ptr

@@ -152,8 +152,7 @@ MySQL_ResultSetMetaData::getColumnType(unsigned int columnIndex)
 			throw sql::InvalidArgumentException("Invalid value for columnIndex");
 		}
 		return sql::mysql::util::mysql_type_to_datatype(
-				mysql_fetch_field_direct(result->get(), columnIndex - 1)->type,
-				mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags
+				mysql_fetch_field_direct(result->get(), columnIndex - 1)
 			);
 	}
 	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
@@ -171,8 +170,7 @@ MySQL_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 			throw sql::InvalidArgumentException("Invalid value for columnIndex");
 		}
 		return sql::mysql::util::mysql_type_to_string(
-				mysql_fetch_field_direct(result->get(), columnIndex - 1)->type, 
-				mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags
+				mysql_fetch_field_direct(result->get(), columnIndex - 1)
 			); 
 	}
 	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
