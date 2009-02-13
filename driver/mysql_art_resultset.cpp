@@ -47,7 +47,7 @@ MyVal::MyVal(const std::string & s)
 MyVal::MyVal(const char * const s)
   : val_type(typeString)
 {
-	// Init it clearly 
+	// Init it clearly
 	val.str = new std::string(s);
 }
 /* }}} */
@@ -64,25 +64,25 @@ MyVal::getString()
 		{
 			char buf[31];
 			size_t len = snprintf(buf, sizeof(buf) - 1, "%14.14f", val.dval);
-			return std::string(buf, len);	
+			return std::string(buf, len);
 		}
 		case typeInt:
 		{
 			char buf[20];
-			size_t len = snprintf(buf, sizeof(buf) - 1, "%lld", val.lval);
-			return std::string(buf, len);	
+			size_t len = snprintf(buf, sizeof(buf) - 1, "%lld", (long long int)val.lval);
+			return std::string(buf, len);
 		}
 		case typeUInt:
 		{
 			char buf[20];
-			size_t len = snprintf(buf, sizeof(buf) - 1, "%llu", val.ulval);
-			return std::string(buf, len);	
+			size_t len = snprintf(buf, sizeof(buf) - 1, "%llu", (long long unsigned int)val.ulval);
+			return std::string(buf, len);
 		}
 		case typeBool:
 		{
 			char buf[3];
 			size_t len = snprintf(buf, sizeof(buf) - 1, "%d", val.bval);
-			return std::string(buf, len);	
+			return std::string(buf, len);
 		}
 		case typePtr:
 			return "";
@@ -957,7 +957,7 @@ MySQL_ArtResultSet::rowsCount() const
 
 /* {{{ MySQL_ArtResultSet::setFetchSize() -U- */
 void
-MySQL_ArtResultSet::setFetchSize(size_t /* rows */) 
+MySQL_ArtResultSet::setFetchSize(size_t /* rows */)
 {
 	CPP_ENTER("MySQL_ArtResultSet::setFetchSize");
 	checkValid();
