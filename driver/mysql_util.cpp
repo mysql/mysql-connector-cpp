@@ -168,30 +168,31 @@ const char *
 mysql_type_to_string(const int cppconn_type, const int flags)
 {
 	bool isUnsigned = (flags & UNSIGNED_FLAG) != 0;
+	bool isZerofill = (flags & ZEROFILL_FLAG) != 0;
 	switch (cppconn_type) {
 		case MYSQL_TYPE_BIT:
 			return "BIT";
 		case MYSQL_TYPE_DECIMAL:
 		case MYSQL_TYPE_NEWDECIMAL:
-			return isUnsigned ? "DECIMAL UNSIGNED" : "DECIMAL";
+			return isUnsigned ? (isZerofill? "DECIMAL UNSIGNED ZEROFILL" : "DECIMAL UNSIGNED"): "DECIMAL";
 		case MYSQL_TYPE_TINY:
-			return isUnsigned ? "TINYINT UNSIGNED" : "TINYINT";
+			return isUnsigned ? (isZerofill? "TINYINT UNSIGNED ZEROFILL" : "TINYINT UNSIGNED"): "TINYINT";
 		case MYSQL_TYPE_SHORT:
-			return isUnsigned ? "SMALLINT UNSIGNED" : "SMALLINT";
+			return isUnsigned ? (isZerofill? "SMALLINT UNSIGNED ZEROFILL" : "SMALLINT UNSIGNED"): "SMALLINT";
 		case MYSQL_TYPE_LONG:
-			return isUnsigned ? "INTEGER UNSIGNED" : "INT";
+			return isUnsigned ? (isZerofill? "INTEGER UNSIGNED ZEROFILL" : "INTEGER UNSIGNED"): "INT";
 		case MYSQL_TYPE_FLOAT:
-			return isUnsigned ? "FLOAT UNSIGNED" : "FLOAT";
+			return isUnsigned ? (isZerofill? "FLOAT UNSIGNED ZEROFILL" : "FLOAT UNSIGNED"): "FLOAT";
 		case MYSQL_TYPE_DOUBLE:
-			return isUnsigned ? "DOUBLE UNSIGNED" : "DOUBLE";
+			return isUnsigned ? (isZerofill? "DOUBLE UNSIGNED ZEROFILL" : "DOUBLE UNSIGNED"): "DOUBLE";
 		case MYSQL_TYPE_NULL:
 			return "NULL";
 		case MYSQL_TYPE_TIMESTAMP:
 			return "TIMESTAMP";
 		case MYSQL_TYPE_LONGLONG:
-			return isUnsigned ? "BIGINT UNSIGNED" : "BIGINT";
+			return isUnsigned ? (isZerofill? "BIGINT UNSIGNED ZEROFILL" : "BIGINT UNSIGNED") : "BIGINT";
 		case MYSQL_TYPE_INT24:
-			return isUnsigned ? "MEDIUMINT UNSIGNED" : "MEDIUMINT";
+			return isUnsigned ? (isZerofill? "MEDIUMINT UNSIGNED ZEROFILL" : "MEDIUMINT UNSIGNED") : "MEDIUMINT";
 		case MYSQL_TYPE_DATE:
 			return "DATE";
 		case MYSQL_TYPE_TIME:
