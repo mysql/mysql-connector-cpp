@@ -555,20 +555,19 @@ MySQL_ArtResultSet::getInt(const std::string& columnLabel) const
 /* }}} */
 
 
-// Get the given column as int
-/* {{{ MySQL_ArtResultSet::getLong() -I- */
-long long
-MySQL_ArtResultSet::getLong(unsigned int columnIndex) const
+/* {{{ MySQL_ArtResultSet::getInt64() -I- */
+int64_t
+MySQL_ArtResultSet::getInt64(const unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getLong(int)");
 
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirstOrAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getLong: can't fetch because not on result set");
+		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getInt64: can't fetch because not on result set");
 	}
 
 	if (columnIndex > num_fields || columnIndex == 0) {
-		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getLong: invalid value of 'columnIndex'");
+		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getInt64: invalid value of 'columnIndex'");
 	}
 
 	return (*current_record)[columnIndex - 1].getInt64();
@@ -576,12 +575,12 @@ MySQL_ArtResultSet::getLong(unsigned int columnIndex) const
 /* }}} */
 
 
-/* {{{ MySQL_ArtResultSet::getLong() -I- */
-long long
-MySQL_ArtResultSet::getLong(const std::string& columnLabel) const
+/* {{{ MySQL_ArtResultSet::getInt64() -I- */
+int64_t
+MySQL_ArtResultSet::getInt64(const std::string& columnLabel) const
 {
-	CPP_ENTER("MySQL_ArtResultSet::getLong(string)");
-	return getLong(findColumn(columnLabel));
+	CPP_ENTER("MySQL_ArtResultSet::getInt64(string)");
+	return getInt64(findColumn(columnLabel));
 }
 /* }}} */
 

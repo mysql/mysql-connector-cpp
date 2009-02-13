@@ -1487,7 +1487,7 @@ void PreparedStatementTest::testSetDouble02()
  *                    Using setLong(int parameterIndex,long x),update the column the
  *                    minimum value of Bigint_Tab.
  *                    Now execute a query to get the minimum value and retrieve the result
- *                    of the query using the getLong(int columnIndex) method.Compare the
+ *                    of the query using the getInt64(int columnIndex) method.Compare the
  *                    returned value, with the minimum value extracted from the ctssql.stmt file.
  *                    Both of them should be equal.
  */
@@ -1518,7 +1518,7 @@ void PreparedStatementTest::testSetLong01()
 
   rs.reset(stmt->executeQuery(Max_Val_Query));
   rs->next();
-  rLongVal=rs->getLong(1);
+  rLongVal=rs->getInt64(1);
 
   TestsListener::theInstance().messagesLog()
           << "Returned Long Value after Updation:" << rLongVal << std::endl;
@@ -1552,7 +1552,7 @@ void PreparedStatementTest::testSetLong01()
  *                    Using setLong(int parameterIndex,long x),update the column the
  *                    maximum value of Bigint_Tab.
  *                    Now execute a query to get the maximum value and retrieve the result
- *                    of the query using the getLong(int columnIndex) method.Compare the
+ *                    of the query using the getInt64(int columnIndex) method.Compare the
  *                    returned value, with the maximum value extracted from the ctssql.stmt file.
  *                    Both of them should be equal.
  */
@@ -1581,7 +1581,7 @@ void PreparedStatementTest::testSetLong02()
   logMsg(Null_Val_Query);
   rs.reset(stmt->executeQuery(Null_Val_Query));
   rs->next();
-  rLongVal=rs->getLong(1);
+  rLongVal=rs->getInt64(1);
 
   TestsListener::theInstance().messagesLog()
           << "Returned Long Value after Updation:" << rLongVal << std::endl;
@@ -2307,7 +2307,7 @@ void PreparedStatementTest::testSetNull11()
 
   rs.reset(stmt->executeQuery(Null_Val_Query));
   rs->next();
-  rLongVal=rs->getLong(1);
+  rLongVal=rs->getInt64(1);
   NULLFlag=rs->wasNull();
 
   logMsg(String("Boolean Value After Updation: ") + ( NULLFlag ? "true" : "false" ));

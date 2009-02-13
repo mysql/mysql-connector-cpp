@@ -101,8 +101,8 @@ public:
 	int getInt(unsigned int columnIndex) const;
 	int getInt(const std::string& columnLabel) const;
 
-	long long getLong(unsigned int columnIndex) const;
-	long long getLong(const std::string& columnLabel) const;
+	int64_t getInt64(unsigned int columnIndex) const;
+	int64_t getInt64(const std::string& columnLabel) const;
 
 	sql::ResultSetMetaData * getMetaData() const;
 

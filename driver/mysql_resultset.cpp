@@ -395,19 +395,19 @@ MySQL_ResultSet::getInt(const std::string& columnLabel) const
 /* }}} */
 
 
-/* {{{ MySQL_ResultSet::getLong() -I- */
-long long
-MySQL_ResultSet::getLong(const unsigned int columnIndex) const
+/* {{{ MySQL_ResultSet::getInt64() -I- */
+int64_t
+MySQL_ResultSet::getInt64(const unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ResultSet::getLong(int)");
 
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirstOrAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_ResultSet::getLong: can't fetch because not on result set");
+		throw sql::InvalidArgumentException("MySQL_ResultSet::getInt64: can't fetch because not on result set");
 	}
 
 	if (columnIndex == 0 || columnIndex > num_fields) {
-		throw sql::InvalidArgumentException("MySQL_ResultSet::getLong: invalid value of 'columnIndex'");
+		throw sql::InvalidArgumentException("MySQL_ResultSet::getInt64: invalid value of 'columnIndex'");
 	}
 
 	if (row[columnIndex - 1] == NULL) {
@@ -420,12 +420,12 @@ MySQL_ResultSet::getLong(const unsigned int columnIndex) const
 /* }}} */
 
 
-/* {{{ MySQL_ResultSet::getLong() -I- */
-long long
-MySQL_ResultSet::getLong(const std::string& columnLabel) const
+/* {{{ MySQL_ResultSet::getInt64() -I- */
+int64_t
+MySQL_ResultSet::getInt64(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ResultSet::getLong(string)");
-	return getLong(findColumn(columnLabel));
+	return getInt64(findColumn(columnLabel));
 }
 /* }}} */
 

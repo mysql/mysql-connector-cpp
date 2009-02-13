@@ -365,7 +365,7 @@ MySQL_Prepared_ResultSet::getDouble(const unsigned int columnIndex) const
 		case sql::DataType::INTEGER:
 		case sql::DataType::BIGINT:
 			CPP_INFO("It's an int");
-			return getLong(columnIndex);
+			return getInt64(columnIndex);
 		case sql::DataType::NUMERIC:
 		case sql::DataType::DECIMAL:
 		case sql::DataType::TIMESTAMP:
@@ -511,19 +511,19 @@ MySQL_Prepared_ResultSet::getInt(const std::string& columnLabel) const
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSet::getLong() -I- */
-long long
-MySQL_Prepared_ResultSet::getLong(const unsigned int columnIndex) const
+/* {{{ MySQL_Prepared_ResultSet::getInt64() -I- */
+int64_t
+MySQL_Prepared_ResultSet::getInt64(const unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getLong(int)");
 	CPP_INFO_FMT("column=%u", columnIndex);
 
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirstOrAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getLong: can't fetch because not on result set");
+		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt64: can't fetch because not on result set");
 	}
 	if (columnIndex == 0 || columnIndex > num_fields) {
-		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getLong: invalid value of 'columnIndex'");
+		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt64: invalid value of 'columnIndex'");
 	}
 
 	last_queried_column = columnIndex;
@@ -570,7 +570,7 @@ MySQL_Prepared_ResultSet::getLong(const unsigned int columnIndex) const
 			ret =  !is_it_null? *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer):0;
 			break;
 		default:
-			throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getLong: invalid type");
+			throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt64: invalid type");
 	}
 	CPP_INFO_FMT("value=%lld", ret);
 	return ret; 
@@ -578,14 +578,15 @@ MySQL_Prepared_ResultSet::getLong(const unsigned int columnIndex) const
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSet::getLong() -I- */
-long long
-MySQL_Prepared_ResultSet::getLong(const std::string& columnLabel) const
+/* {{{ MySQL_Prepared_ResultSet::getInt64() -I- */
+int64_t
+MySQL_Prepared_ResultSet::getInt64(const std::string& columnLabel) const
 {
-	CPP_ENTER("MySQL_Prepared_ResultSet::getLong(string)");
-	return getLong(findColumn(columnLabel));
+	CPP_ENTER("MySQL_Prepared_ResultSet::getInt64(string)");
+	return getInt64(findColumn(columnLabel));
 }
 /* }}} */
+
 
 /* {{{ MySQL_Prepared_ResultSet::getMetaData() -I- */
 sql::ResultSetMetaData *
@@ -696,7 +697,7 @@ MySQL_Prepared_ResultSet::getString(const unsigned int columnIndex) const
 		{
 			char buf[30];
 			CPP_INFO("It's an int");
-			my_l_to_a(buf, sizeof(buf) - 1, getLong(columnIndex));
+			my_l_to_a(buf, sizeof(buf) - 1, getInt64(columnIndex));
 			return std::string(buf);
 		}
 		case sql::DataType::REAL:
@@ -704,7 +705,7 @@ MySQL_Prepared_ResultSet::getString(const unsigned int columnIndex) const
 		{
 			char buf[50];
 			CPP_INFO("It's a double");
-			my_f_to_a(buf, sizeof(buf) - 1, getDouble(columnIndex));
+			my_f_to_a(buf, sizeof(buf) - 1, getInt64(columnIndex));
 			return std::string(buf);
 		}
 

@@ -176,7 +176,7 @@ int main(int argc, const char **argv)
 		cout << "#\t\t DDL (as Boolean) = " << res->getBoolean("DDL") << "/" << res->getBoolean(5) << endl;
 		cout << "#\t\t DDL (as Double) = " << res->getDouble("DDL") << "/" << res->getDouble(5) << endl;
 		cout << "#\t\t DDL (as Int) = " << res->getInt("DDL") << "/" << res->getInt(5) << endl;
-		cout << "#\t\t DDL (as Long) = " << res->getLong("DDL") << "/" << res->getLong(5) << endl;
+		cout << "#\t\t DDL (as Long) = " << res->getInt64("DDL") << "/" << res->getInt64(5) << endl;
 		cout << "#" << endl;
 
 		cout << "#\t\t Meta data on the result set at the example of the DDL column" << endl;
