@@ -106,19 +106,23 @@ mysql_type_to_datatype(const int mysql_type, const int flags)
 int
 mysql_string_type_to_datatype(const std::string & name)
 {
+	/*
+	  I_S.COLUMNS is buggy, because it deflivers (float|double) unsigned
+	  but not (tinyint|smallint|mediumint|int|bigint) unsigned
+	*/
 	if (!name.compare("bit")) {
 		return sql::DataType::BIT;
-	} else if (!name.compare("decimal")) {
+	} else if (!name.compare("decimal") || !name.compare("decimal unsigned")) {
 		return sql::DataType::DECIMAL;
-	} else if (!name.compare("tinyint")) {
+	} else if (!name.compare("tinyint") || !name.compare("tinyint unsigned")) {
 		return sql::DataType::TINYINT;
-	} else if (!name.compare("smallint")) {
+	} else if (!name.compare("smallint") || !name.compare("smallint unsigned")) {
 		return sql::DataType::SMALLINT;
-	} else if (!name.compare("mediumint")) {
+	} else if (!name.compare("mediumint") || !name.compare("mediumint unsigned")) {
 		return sql::DataType::MEDIUMINT;
-	} else if (!name.compare("int")) {
+	} else if (!name.compare("int") || !name.compare("int unsigned")) {
 		return sql::DataType::INTEGER;
-	} else if (!name.compare("bigint")) {
+	} else if (!name.compare("bigint") || !name.compare("bigint unsigned")) {
 		return sql::DataType::BIGINT;
 	} else if (!name.compare("float") || !name.compare("float unsigned")) {
 		return sql::DataType::REAL;
