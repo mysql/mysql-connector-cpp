@@ -129,7 +129,7 @@ int main(int argc, const char **argv)
 				cout << "#\t\t Fetching row " << row;
 				cout << "#\t id (int) = " << res->getInt("id");
 				cout << "#\t id (boolean) = " << res->getBoolean("id");
-				cout << "#\t id (long) = " << res->getLong("id") << endl;
+				cout << "#\t id (long) = " << res->getInt64("id") << endl;
 				row++;
 			}
 		}

@@ -122,7 +122,7 @@ int main(int argc, const char **argv)
 			cout << "#\t\t\t id (as Integer) = " << res->getInt("id") << endl;
 			cout << "#\t\t\t id (as String) = " << res->getString("id") << endl;
 			cout << "#\t\t\t id (as Boolean) = " << res->getBoolean("id") << endl;
-			cout << "#\t\t\t id (as Long) = " << res->getLong("id") << endl;
+			cout << "#\t\t\t id (as Long) = " << res->getInt64("id") << endl;
 			cout << "#\t\t\t id (as Double) = " << res->getDouble("id") << endl;
 			cout << "#" << endl;
 			if (test_data[row].id != res->getInt(1)) {
@@ -134,7 +134,7 @@ int main(int argc, const char **argv)
 			cout << "#\t\t\t label (as Integer) = " << res->getInt(2) << endl;
 			cout << "#\t\t\t label (as String) = " << res->getString(2) << endl;
 			cout << "#\t\t\t label (as Boolean) = " << res->getBoolean(2) << endl;
-			cout << "#\t\t\t label (as Long) = " << res->getLong(2) << endl;
+			cout << "#\t\t\t label (as Long) = " << res->getInt64(2) << endl;
 			cout << "#\t\t\t label (as Double) = " << res->getDouble(2) << endl;
 			cout << "#" << endl;
 			if (test_data[row].label != c_string) {
@@ -146,19 +146,19 @@ int main(int argc, const char **argv)
 			cout << "#\t\t\t c_bool (as Integer) = " << res->getInt(3) << endl;
 			cout << "#\t\t\t c_bool (as String) = " << res->getString(3) << endl;
 			cout << "#\t\t\t c_bool (as Boolean) = " << res->getBoolean(3) << endl;
-			cout << "#\t\t\t c_bool (as Long) = " << res->getLong(3) << endl;
+			cout << "#\t\t\t c_bool (as Long) = " << res->getInt64(3) << endl;
 			cout << "#\t\t\t c_bool (as Double) = " << res->getDouble(3) << endl;
 			cout << "#" << endl;
 			if (c_bool1 != c_bool2) {
 				throw runtime_error("Wrong result for column c_bool");
 			}
 
-			c_long2 = res->getLong("c_long");
+			c_long2 = res->getInt64("c_long");
 			cout << "#\t\t\t c_long BIGINT = " << c_long2 << endl;
 			cout << "#\t\t\t c_long (as Integer) = " << res->getInt("c_long") << endl;
 			cout << "#\t\t\t c_long (as String) = " << res->getString("c_long") << endl;
 			cout << "#\t\t\t c_long (as Boolean) = " << res->getBoolean("c_long") << endl;
-			cout << "#\t\t\t c_long (as Long) = " << res->getLong("c_long") << endl;
+			cout << "#\t\t\t c_long (as Long) = " << res->getInt64("c_long") << endl;
 			cout << "#\t\t\t c_long (as Double) = " << res->getDouble("c_long") << endl;
 			cout << "#" << endl;
 			if (c_long1 != c_long2) {
@@ -170,7 +170,7 @@ int main(int argc, const char **argv)
 			cout << "#\t\t\t c_double (as Integer) = " << res->getInt("c_double") << endl;
 			cout << "#\t\t\t c_double (as String) = " << res->getString("c_double") << endl;
 			cout << "#\t\t\t c_double (as Boolean) = " << res->getBoolean("c_double") << endl;
-			cout << "#\t\t\t c_double (as Long) = " << res->getLong("c_double") << endl;
+			cout << "#\t\t\t c_double (as Long) = " << res->getInt64("c_double") << endl;
 			cout << "#\t\t\t c_double (as Double) = " << res->getDouble("c_double") << endl;
 			cout << "#\t\t\t c_double wasNull() = " << res->wasNull() << endl;
 			cout << "#" << endl;
@@ -184,7 +184,7 @@ int main(int argc, const char **argv)
 			cout << "#\t\t\t c_null (as Integer) = " << res->getInt("c_null") << endl;
 			cout << "#\t\t\t c_null (as String) = " << res->getString("c_null") << endl;
 			cout << "#\t\t\t c_null (as Boolean) = " << res->getBoolean("c_null") << endl;
-			cout << "#\t\t\t c_null (as Long) = " << res->getLong("c_null") << endl;
+			cout << "#\t\t\t c_null (as Long) = " << res->getInt64("c_null") << endl;
 			cout << "#\t\t\t c_null (as Double) = " << res->getDouble("c_null") << endl;
 			cout << "#\t\t\t c_null wasNull() = " << res->wasNull() << endl;
 			cout << "#" << endl;

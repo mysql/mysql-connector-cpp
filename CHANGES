@@ -2,7 +2,7 @@ Beta  1.0.3 - 2009-xx-xx
 
 - Added new tests at test/unit/classes. Those tests are mostly about
   code coverage. Most of the actual functionality of the driver is tested
-  by the tests found at test/CJUnitPort.
+  by the tests found at test/CJUnitPort. (Ulf)
 
 - New data types added to the list returned by DatabaseMetaData::getTypeInfo();
   FLOAT UNSIGED, DECIMAL UNSIGNED, DOUBLE UNSIGNED. Those tests may not
@@ -10,7 +10,7 @@ Beta  1.0.3 - 2009-xx-xx
   to look up every type and type name returned by, for example,
   ResultSetMetaData::getColumnTypeName(). (Andrey)
 
-- MySQL_Driver::getPatchVersion introducted most likely by Andrey. (Ulf)
+- MySQL_Driver::getPatchVersion introducted. (Andrey)
 
 - Major performance improvements due to new buffered resultset implementation
   by Andrey. (Ulf)
@@ -64,11 +64,18 @@ Beta  1.0.3 - 2009-xx-xx
 
 - Exchanged the implementation of MySQL_ConstructedResultSet to use more efficient
   non O(n) but O(1) access method. This should improve the speed with which
-  the metadata result sets are used.
+  the metadata result sets are used. Also, there is less copy during the
+  construction of the result set, which means that all result sets returned from
+  the metadata functions will be faster. (Andrey)
 
 - Introduced, internally, sql::mysql::MyVal which has implicit constructors used
   in mysql_metadata.cpp to create result sets with more native data instead of
-  always string (varchar).
+  always string (varchar). (Andrey)
+
+- Renamed ResultSet::getLong() to ResultSet::getInt64(). resultset.h includes
+  typdefs for Windows to be able to use int64_t. (Andrey)
+
+- Introduced ResultSet::getUInt64(). (Andrey)
 
 
 Alpha  1.0.2 - 2008-12-19

@@ -22,6 +22,14 @@
 
 #include "unit_fixture.h"
 
+#ifndef L64
+#ifdef _WIN32
+#define L64(x) x##i64
+#else
+#define L64(x) x##LL
+#endif
+#endif
+
 namespace testsuite
 {
 
@@ -166,21 +174,21 @@ void unit_fixture::init()
   columns.push_back(columndefinition("TEXT", "MEDIUMTEXT NOT NULL", sql::DataType::LONGVARCHAR, "a", false, 16777215, 0, false, ""));
   columns.push_back(columndefinition("TEXT", "MEDIUMTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", false, 16777215, 0, true, ""));  
   columns.push_back(columndefinition("BLOB", "MEDIUMTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", false, 16777215, 0, true));
-  columns.push_back(columndefinition("BLOB", "LONGBLOB", sql::DataType::LONGVARBINARY, "a", false, 4294967295, 0, true, ""));
-  columns.push_back(columndefinition("BLOB", "LONGBLOB NOT NULL", sql::DataType::LONGVARBINARY, "a", false, 4294967295, 0, false, ""));  
-  columns.push_back(columndefinition("TEXT", "LONGTEXT", sql::DataType::LONGVARCHAR, "a", false, 4294967295, 0, true, ""));
-  columns.push_back(columndefinition("TEXT", "LONGTEXT NOT NULL", sql::DataType::LONGVARCHAR, "a", false, 4294967295, 0, false, ""));
-  columns.push_back(columndefinition("TEXT", "LONGTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", false, 4294967295, 0, true, ""));
+  columns.push_back(columndefinition("BLOB", "LONGBLOB", sql::DataType::LONGVARBINARY, "a", false, L64(4294967295), 0, true, ""));
+  columns.push_back(columndefinition("BLOB", "LONGBLOB NOT NULL", sql::DataType::LONGVARBINARY, "a", false, L64(4294967295), 0, false, ""));  
+  columns.push_back(columndefinition("TEXT", "LONGTEXT", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, true, ""));
+  columns.push_back(columndefinition("TEXT", "LONGTEXT NOT NULL", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, false, ""));
+  columns.push_back(columndefinition("TEXT", "LONGTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, true, ""));
   /* TODO this might be server dependent! */
-  columns.push_back(columndefinition("BLOB", "LONGTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", false, 4294967295, 0, true, ""));
+  columns.push_back(columndefinition("BLOB", "LONGTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARBINARY, "a", false, L64(4294967295), 0, true, ""));
   columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no')", sql::DataType::CHAR, "yes", false, 3, 0, true, ""));
   columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no') NOT NULL", sql::DataType::CHAR, "yes", false, 3, 0, false, ""));
   columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no', 'not sure') NOT NULL", sql::DataType::CHAR, "yes", false, 8, 0, false, ""));
   columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no', 'buy') NOT NULL DEFAULT 'buy'", sql::DataType::CHAR, "yes", false, 8, 0, false, "buy"));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no')", sql::DataType::CHAR, "yes", false, 3, 0, true));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii'", sql::DataType::CHAR, "yes", false, 3, 0, true));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii' DEFAULT 'yes'", sql::DataType::CHAR, "yes", false, 3, 0, true, "yes"));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no', 'ascii') CHARSET 'ascii' NOT NULL", sql::DataType::CHAR, "yes", false, 5, 0, false));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no')", sql::DataType::CHAR, "yes", false, 6, 0, true));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii'", sql::DataType::CHAR, "yes", false, 6, 0, true));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii' DEFAULT 'yes'", sql::DataType::CHAR, "yes", false, 6, 0, true, "yes"));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no', 'ascii') CHARSET 'ascii' NOT NULL", sql::DataType::CHAR, "yes", false, 12, 0, false));
 
   /*
   ResultSet getAttributes(String catalog,

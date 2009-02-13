@@ -23,13 +23,6 @@
 #include "mysql_art_rset_metadata.h"
 #include <sstream>
 
-#if !defined(_WIN32) && !defined(_WIN64)
-#include <stdlib.h>
-#else
-#define atoll(x) _atoi64((x))
-#endif	//	_WIN32
-
-
 #include "mysql_debug.h"
 #include "mysql_util.h"
 
@@ -151,7 +144,7 @@ MyVal::getUInt64()
 {
 	switch (val_type) {
 		case typeString:
-			return atoll(val.str->c_str());
+			return strtoull(val.str->c_str(), NULL, 10);
 		case typeDouble:
 			return val.dval;
 		case typeInt:
@@ -555,20 +548,19 @@ MySQL_ArtResultSet::getInt(const std::string& columnLabel) const
 /* }}} */
 
 
-// Get the given column as int
-/* {{{ MySQL_ArtResultSet::getLong() -I- */
-long long
-MySQL_ArtResultSet::getLong(unsigned int columnIndex) const
+/* {{{ MySQL_ArtResultSet::getInt64() -I- */
+int64_t
+MySQL_ArtResultSet::getInt64(const unsigned int columnIndex) const
 {
-	CPP_ENTER("MySQL_ArtResultSet::getLong(int)");
+	CPP_ENTER("MySQL_ArtResultSet::getInt64(int)");
 
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirstOrAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getLong: can't fetch because not on result set");
+		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getInt64: can't fetch because not on result set");
 	}
 
 	if (columnIndex > num_fields || columnIndex == 0) {
-		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getLong: invalid value of 'columnIndex'");
+		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getInt64: invalid value of 'columnIndex'");
 	}
 
 	return (*current_record)[columnIndex - 1].getInt64();
@@ -576,12 +568,42 @@ MySQL_ArtResultSet::getLong(unsigned int columnIndex) const
 /* }}} */
 
 
-/* {{{ MySQL_ArtResultSet::getLong() -I- */
-long long
-MySQL_ArtResultSet::getLong(const std::string& columnLabel) const
+/* {{{ MySQL_ArtResultSet::getInt64() -I- */
+int64_t
+MySQL_ArtResultSet::getInt64(const std::string& columnLabel) const
 {
-	CPP_ENTER("MySQL_ArtResultSet::getLong(string)");
-	return getLong(findColumn(columnLabel));
+	CPP_ENTER("MySQL_ArtResultSet::getInt64(string)");
+	return getInt64(findColumn(columnLabel));
+}
+/* }}} */
+
+
+/* {{{ MySQL_ArtResultSet::getUInt64() -I- */
+uint64_t
+MySQL_ArtResultSet::getUInt64(const unsigned int columnIndex) const
+{
+	CPP_ENTER("MySQL_ArtResultSet::getUInt64(int)");
+
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirstOrAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getUInt64: can't fetch because not on result set");
+	}
+
+	if (columnIndex > num_fields || columnIndex == 0) {
+		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getUInt64: invalid value of 'columnIndex'");
+	}
+
+	return (*current_record)[columnIndex - 1].getUInt64();
+}
+/* }}} */
+
+
+/* {{{ MySQL_ArtResultSet::getUInt64() -I- */
+uint64_t
+MySQL_ArtResultSet::getUInt64(const std::string& columnLabel) const
+{
+	CPP_ENTER("MySQL_ArtResultSet::getUInt64(string)");
+	return getUInt64(findColumn(columnLabel));
 }
 /* }}} */
 

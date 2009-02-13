@@ -170,10 +170,13 @@ public:
 
 	int getInt(const std::string& columnLabel) const;
 
-	// Get the given column as int
-	long long getLong(unsigned int columnIndex) const;
+	int64_t getInt64(unsigned int columnIndex) const;
 
-	long long getLong(const std::string& columnLabel) const;
+	int64_t getInt64(const std::string& columnLabel) const;
+
+	uint64_t getUInt64(unsigned int columnIndex) const;
+
+	uint64_t getUInt64(const std::string& columnLabel) const;
 
 	sql::ResultSetMetaData * getMetaData() const;
 

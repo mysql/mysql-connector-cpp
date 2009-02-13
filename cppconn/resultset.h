@@ -29,6 +29,20 @@
 #include <map>
 #include <iostream>
 
+#if !defined(_WIN32) && !defined(_WIN64)
+#include <stdint.h>
+#else
+#ifndef int64_t
+#define int64_t
+typedef __int64           int64_t;
+#endif
+#ifndef uint64_t
+#define uint64_t
+typedef unsigned __int64  uint64_t;
+#endif
+#endif	//	_WIN32
+
+
 namespace sql
 {
 
@@ -105,8 +119,11 @@ public:
 	virtual int getInt(unsigned int columnIndex) const = 0;
 	virtual int getInt(const std::string& columnLabel) const = 0;
 
-	virtual long long getLong(unsigned int columnIndex) const = 0;
-	virtual long long getLong(const std::string& columnLabel) const = 0;
+	virtual int64_t getInt64(unsigned int columnIndex) const = 0;
+	virtual int64_t getInt64(const std::string& columnLabel) const = 0;
+
+	virtual uint64_t getUInt64(unsigned int columnIndex) const = 0;
+	virtual uint64_t getUInt64(const std::string& columnLabel) const = 0;
 
 	virtual ResultSetMetaData * getMetaData() const = 0;
 
