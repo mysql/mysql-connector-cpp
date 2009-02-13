@@ -545,6 +545,7 @@ static const TypeInfoDef mysqlc_types[] = {
 		10									// num prec radix
 	},
 
+#ifdef LETS_HAVE_JUST_ONLY_ONE_INT_TYPE
 	// ----------- MySQL-Type: INTEGER DBC-Type: INTEGER ----------
 	{
 		"INTEGER",							// Typename
@@ -587,7 +588,7 @@ static const TypeInfoDef mysqlc_types[] = {
 		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
-
+#endif
 	// ----------- MySQL-Type: INT DBC-Type: INTEGER ----------
 	{
 		"INT",							// Typename

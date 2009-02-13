@@ -180,7 +180,7 @@ mysql_type_to_string(const int cppconn_type, const int flags)
 		case MYSQL_TYPE_SHORT:
 			return isUnsigned ? (isZerofill? "SMALLINT UNSIGNED ZEROFILL" : "SMALLINT UNSIGNED"): "SMALLINT";
 		case MYSQL_TYPE_LONG:
-			return isUnsigned ? (isZerofill? "INTEGER UNSIGNED ZEROFILL" : "INTEGER UNSIGNED"): "INT";
+			return isUnsigned ? (isZerofill? "INT UNSIGNED ZEROFILL" : "INT UNSIGNED"): "INT";
 		case MYSQL_TYPE_FLOAT:
 			return isUnsigned ? (isZerofill? "FLOAT UNSIGNED ZEROFILL" : "FLOAT UNSIGNED"): "FLOAT";
 		case MYSQL_TYPE_DOUBLE:
