@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #endif	//	_WIN32
 
+#include <string.h>
+
 #include <cppconn/datatype.h>
 #include "mysql_resultset.h"
 #include "mysql_resultset_metadata.h"
@@ -277,7 +279,9 @@ MySQL_ResultSetMetaData::isCaseSensitive(unsigned int columnIndex)
 		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
 			throw sql::InvalidArgumentException("Invalid value for columnIndex");
 		}
-		return (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & BINARY_FLAG) != 0;
+		const CHARSET_INFO * const cs =
+			get_charset(mysql_fetch_field_direct(result->get(), columnIndex - 1)->charsetnr, MYF(0));
+		return NULL == strstr(cs->name, "_ci");
 	}
 	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
 }

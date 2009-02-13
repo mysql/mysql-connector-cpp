@@ -22,6 +22,7 @@
 #ifndef _WIN32
 #include <stdlib.h>
 #endif	//	_WIN32
+#include <string.h>
 
 #include "mysql_ps_resultset.h"
 #include "mysql_ps_resultset_metadata.h"
@@ -268,7 +269,9 @@ MySQL_Prepared_ResultSetMetaData::isCaseSensitive(unsigned int columnIndex)
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	return (mysql_fetch_field_direct(result_meta, columnIndex)->flags & BINARY_FLAG) != 0;
+	const CHARSET_INFO * const cs =
+		get_charset(mysql_fetch_field_direct(result_meta, columnIndex)->charsetnr, MYF(0));
+	return NULL == strstr(cs->name, "_ci");
 }
 /* }}} */
 

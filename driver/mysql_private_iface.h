@@ -19,18 +19,40 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#ifndef MYSQL_PRIVATE_IFACE_H
+#define MYSQL_PRIVATE_IFACE_H
+
+#if !defined(bool)
+#define WE_DEFINE_BOOL_TO_SKIP_LIBMYSQL
+#define bool
+#endif
+#if !defined(max)
+#define WE_DEFINE_MAX_TO_SKIP_LIBMYSQL
+#define max
+#endif
+
 extern "C"
 {
-#if defined(_WIN32) || defined(_WIN64) 
+//#if defined(_WIN32) || defined(_WIN64) 
 #include <my_global.h>
-#endif
+//#endif
+#include <my_sys.h>
 #include <errmsg.h>
 #include <mysql.h>
 }
-/* mysql.h introduces bool */
+
+/* my_global.h introduces bool and max */
+#ifdef WE_DEFINE_BOOL_TO_SKIP_LIBMYSQL
 #undef bool
+#undef WE_DEFINE_BOOL_TO_SKIP_LIBMYSQL
+#endif
+#ifdef WE_DEFINE_MAX_TO_SKIP_LIBMYSQL
+#undef max
+#undef WE_DEFINE_MAX_TO_SKIP_LIBMYSQL
+#endif
 
 #if defined(_WIN32) || defined(_WIN64) 
 #pragma warning(disable:4251)
 #endif
 
+#endif /* MYSQL_PRIVATE_IFACE_H */
