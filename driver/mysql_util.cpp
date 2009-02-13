@@ -109,53 +109,53 @@ mysql_string_type_to_datatype(const std::string & name)
 	if (!name.compare("bit")) {
 		return sql::DataType::BIT;
 	} else if (!name.compare("decimal")) {
-		return sql::DataType::DECIMAL;	
+		return sql::DataType::DECIMAL;
 	} else if (!name.compare("tinyint")) {
-		return sql::DataType::TINYINT;	
+		return sql::DataType::TINYINT;
 	} else if (!name.compare("smallint")) {
-		return sql::DataType::SMALLINT;	
+		return sql::DataType::SMALLINT;
 	} else if (!name.compare("mediumint")) {
-		return sql::DataType::MEDIUMINT;	
+		return sql::DataType::MEDIUMINT;
 	} else if (!name.compare("int")) {
-		return sql::DataType::INTEGER;	
+		return sql::DataType::INTEGER;
 	} else if (!name.compare("bigint")) {
-		return sql::DataType::BIGINT;	
-	} else if (!name.compare("float")) {
-		return sql::DataType::REAL;	
-	} else if (!name.compare("double")) {
-		return sql::DataType::DOUBLE;	
+		return sql::DataType::BIGINT;
+	} else if (!name.compare("float") || !name.compare("float unsigned")) {
+		return sql::DataType::REAL;
+	} else if (!name.compare("double") || !name.compare("double unsigned")) {
+		return sql::DataType::DOUBLE;
 	} else if (!name.compare("timestamp")) {
-		return sql::DataType::TIMESTAMP;	
+		return sql::DataType::TIMESTAMP;
 	} else if (!name.compare("date")) {
-		return sql::DataType::DATE;	
+		return sql::DataType::DATE;
 	} else if (!name.compare("time")) {
-		return sql::DataType::TIME;	
+		return sql::DataType::TIME;
 	} else if (!name.compare("year")) {
-		return sql::DataType::DATE;	
+		return sql::DataType::DATE;
 	} else if (!name.compare("datetime")) {
-		return sql::DataType::TIMESTAMP;	
+		return sql::DataType::TIMESTAMP;
 	} else if (!name.compare("tinytext")) {
-		return sql::DataType::VARCHAR;	
+		return sql::DataType::VARCHAR;
 	} else if (!name.compare("mediumtext") || !name.compare("text") || !name.compare("longtext")) {
-		return sql::DataType::LONGVARCHAR;	
+		return sql::DataType::LONGVARCHAR;
 	} else if (!name.compare("tinyblob")) {
-		return sql::DataType::VARBINARY;	
+		return sql::DataType::VARBINARY;
 	} else if (!name.compare("mediumblob") || !name.compare("blob") || !name.compare("longblob")) {
-		return sql::DataType::LONGVARBINARY;	
+		return sql::DataType::LONGVARBINARY;
 	} else if (!name.compare("char")) {
-		return sql::DataType::CHAR;	
+		return sql::DataType::CHAR;
 	} else if (!name.compare("binary")) {
-		return sql::DataType::BINARY;	
+		return sql::DataType::BINARY;
 	} else if (!name.compare("varchar")) {
-		return sql::DataType::VARCHAR;	
+		return sql::DataType::VARCHAR;
 	} else if (!name.compare("varbinary")) {
-		return sql::DataType::VARBINARY;	
+		return sql::DataType::VARBINARY;
 	} else if (!name.compare("enum")) {
-		return sql::DataType::CHAR;	
+		return sql::DataType::CHAR;
 	} else if (!name.compare("set")) {
-		return sql::DataType::CHAR;	
+		return sql::DataType::CHAR;
 	} else if (!name.compare("geometry")) {
-		return sql::DataType::GEOMETRY;	
+		return sql::DataType::GEOMETRY;
 	} else {
 		return sql::DataType::UNKNOWN;
 	}
