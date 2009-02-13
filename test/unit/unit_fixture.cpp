@@ -85,7 +85,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("INTEGER UNSIGNED", "INT UNSIGNED", sql::DataType::INTEGER, "4294967295", false, 10, 0, true, ""));
   /* If you specify ZEROFILL for a numeric column, MySQL automatically adds the UNSIGNED  attribute to the column.  */
   columns.push_back(columndefinition("INTEGER UNSIGNED", "INT(4) SIGNED ZEROFILL", sql::DataType::INTEGER, "1", false, 10, 0, true, ""));
-  columns.push_back(columndefinition("INTEGER UNSIGNED", "INT(4) SIGNED DEFAULT -123", sql::DataType::INTEGER, "1", false, 10, 0, true, "-123"));
+  columns.push_back(columndefinition("INT", "INT(4) SIGNED DEFAULT -123", sql::DataType::INTEGER, "1", true, 10, 0, true, "-123"));
   columns.push_back(columndefinition("BIGINT", "BIGINT", sql::DataType::BIGINT, "-9223372036854775808", true, 20, 0, true, ""));
   columns.push_back(columndefinition("BIGINT", "BIGINT NOT NULL", sql::DataType::BIGINT, "-9223372036854775808", true, 20, 0, false, ""));
   columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT UNSIGNED", sql::DataType::BIGINT, "18446744073709551615", false, 20, 0, true, ""));
@@ -185,10 +185,10 @@ void unit_fixture::init()
   columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no') NOT NULL", sql::DataType::CHAR, "yes", false, 3, 0, false, ""));
   columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no', 'not sure') NOT NULL", sql::DataType::CHAR, "yes", false, 8, 0, false, ""));
   columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no', 'buy') NOT NULL DEFAULT 'buy'", sql::DataType::CHAR, "yes", false, 8, 0, false, "buy"));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no')", sql::DataType::CHAR, "yes", false, 3, 0, true));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii'", sql::DataType::CHAR, "yes", false, 3, 0, true));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii' DEFAULT 'yes'", sql::DataType::CHAR, "yes", false, 3, 0, true, "yes"));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no', 'ascii') CHARSET 'ascii' NOT NULL", sql::DataType::CHAR, "yes", false, 5, 0, false));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no')", sql::DataType::CHAR, "yes", false, 6, 0, true));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii'", sql::DataType::CHAR, "yes", false, 6, 0, true));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii' DEFAULT 'yes'", sql::DataType::CHAR, "yes", false, 6, 0, true, "yes"));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no', 'ascii') CHARSET 'ascii' NOT NULL", sql::DataType::CHAR, "yes", false, 12, 0, false));
 
   /*
   ResultSet getAttributes(String catalog,
