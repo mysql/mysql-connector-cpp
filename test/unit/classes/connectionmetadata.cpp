@@ -329,6 +329,15 @@ void connectionmetadata::getColumns()
         got_warning=true;
       }
       ASSERT_EQUALS(res->getString(18), res->getString("IS_NULLABLE"));
+      ASSERT_EQUALS("", res->getString(19));
+
+      ASSERT_EQUALS(res->getString(19), res->getString("SCOPE_CATALOG"));
+      ASSERT_EQUALS("", res->getString(20));
+      ASSERT_EQUALS(res->getString(20), res->getString("SCOPE_SCHEMA"));
+      ASSERT_EQUALS("", res->getString(21));
+      ASSERT_EQUALS(res->getString(21), res->getString("SCOPE_TABLE"));
+      ASSERT_EQUALS("", res->getString(22));
+      ASSERT_EQUALS(res->getString(22), res->getString("SCOURCE_DATA_TYPE"));
 
       stmt->execute("DROP TABLE IF EXISTS test");
     }
