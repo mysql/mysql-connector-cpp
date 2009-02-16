@@ -1860,7 +1860,7 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 			"COLUMN_DEFAULT AS COLUMN_DEF,"
 			"0 AS SQL_DATA_TYPE,"
 			"0 AS SQL_DATETIME_SUB,"
-			"CASE WHEN CHARACTER_OCTET_LENGTH > 2147483647 THEN 2147483647 ELSE CHARACTER_OCTET_LENGTH END AS CHAR_OCTET_LENGTH,"
+			"CHARACTER_OCTET_LENGTH,"
 			"ORDINAL_POSITION,"
 			"IS_NULLABLE,"
 			"NULL AS SCOPE_CATALOG,"
@@ -1900,16 +1900,15 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 			rs_data_row.push_back(rs->getString(16));	// CHAR_OCTET_LENGTH
 			rs_data_row.push_back(rs->getString(17));	// ORDINAL_POSITION
 			rs_data_row.push_back(rs->getString(18));	// IS_NULLABLE
-
 			/* The following are not currently used by C/OOO*/
 			rs_data_row.push_back(rs->getString(19));	// SCOPE_CATALOG
 			rs_data_row.push_back(rs->getString(20));	// SCOPE_SCHEMA
 			rs_data_row.push_back(rs->getString(21));	// SCOPE_TABLE
-			rs_data_row.push_back(rs->getString(22));	// IS_AUTOINCREMENT
+			rs_data_row.push_back(rs->getString(22));	// SOURCE_DATA_TYPE
+			rs_data_row.push_back(rs->getString(23));	// IS_AUTOINCREMENT
 
 			rs_data->push_back(rs_data_row);
 		}
-
 	} else {
 		/* get schemata */
 		std::string query1("SHOW DATABASES LIKE '");
@@ -1970,12 +1969,13 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 							rs_data_row.push_back((int64_t) rs3_meta->getColumnDisplaySize(i)); // CHAR_OCTET_LENGTH
 							rs_data_row.push_back((int64_t) i); // ORDINAL_POSITION
 							rs_data_row.push_back(rs3_meta->isNullable(i)? "YES":"NO");		// IS_NULLABLE
-#if 0
+
 							rs_data_row.push_back("");	// SCOPE_CATALOG - unused
 							rs_data_row.push_back("");	// SCOPE_SCHEMA - unused
 							rs_data_row.push_back("");	// SCOPE_TABLE - unused
+							rs_data_row.push_back("");	// SOURCE_DATA_TYPE - unused
 							rs_data_row.push_back("");	// IS_AUTOINCREMENT - unused
-#endif
+
 							rs_data->push_back(rs_data_row);
 
 							/* don't iterate any more, we have found our column */
