@@ -292,7 +292,7 @@ protected:
    * Checks if the passed SQLException is caused by the specified error
    *
    */
-  std::string exceptionIsOK(sql::SQLException &e, const std::string& sql_state, int errno);
+  std::string exceptionIsOK(sql::SQLException &e, const std::string& sql_state, int errNo);
 
   /**
    * Checks if the passed exception has the SQLState HY000 and the (vendor) error code 0
@@ -313,7 +313,7 @@ public:
    *
    * @param message
    */
-  void logDebug(const String message);
+  void logDebug(const String & message);
 
   /**
    * Write (info) message to test protocol
@@ -327,7 +327,7 @@ public:
    *
    * @param	message Message to be included in the protocol
    */
-  void logErr(const String message);
+  void logErr(const String & message);
 
   /**
    * Creates resources used by all tests.

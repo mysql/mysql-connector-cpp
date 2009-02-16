@@ -348,12 +348,12 @@ void unit_fixture::logMsg(const String message)
   TestsListener::theInstance().messagesLog(message);
 }
 
-void unit_fixture::logErr(const String message)
+void unit_fixture::logErr(const String & message)
 {
   TestsListener::theInstance().errorsLog(message);
 }
 
-void unit_fixture::logDebug(const String message)
+void unit_fixture::logDebug(const String & message)
 {
   logMsg(message);
 }
@@ -363,7 +363,7 @@ std::string unit_fixture::exceptionIsOK(sql::SQLException & e)
   return exceptionIsOK(e, "HY000", 0);
 }
 
-std::string unit_fixture::exceptionIsOK(sql::SQLException &e, const std::string& sql_state, int errno)
+std::string unit_fixture::exceptionIsOK(sql::SQLException &e, const std::string& sql_state, int errNo)
 {
 
   std::stringstream reason;
@@ -377,9 +377,9 @@ std::string unit_fixture::exceptionIsOK(sql::SQLException &e, const std::string&
     return reason.str();
   }
 
-  if (e.getErrorCode() != errno)
+  if (e.getErrorCode() != errNo)
   {
-    reason << "Expecting error code '" << errno << "' got '" << e.getErrorCode() << "'";
+    reason << "Expecting error code '" << errNo << "' got '" << e.getErrorCode() << "'";
     logMsg(reason.str());
     return reason.str();
   }
