@@ -32,15 +32,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-
-#if !defined(_WIN32) && !defined(_WIN64)
-#include <stdint.h>
-#else
-typedef __int64 int64_t;
-typedef unsigned __int64 uint64_t;
-#endif	//	_WIN32
-
-
 namespace sql
 {
 namespace mysql
