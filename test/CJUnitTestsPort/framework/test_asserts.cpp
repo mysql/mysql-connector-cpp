@@ -88,6 +88,19 @@ void assertEquals(unsigned int expected, unsigned int result
   }
 }
 
+void assertEquals(uint64_t expected, uint64_t result
+                  , const char* file, int line)
+{
+  if (expected != result)
+  {
+    std::stringstream errmsg;
+    errmsg.str("");
+    errmsg << "assertEquals(uint64_t) failed at " << file << " on line " << line;
+    errmsg << " expecting '" << expected << "' got '" << result << "'";
+    TestsListener::testHasFailed(errmsg.str());
+  }
+}
+
 bool isNaN(double smth)
 {
   bool lessThanZero=(smth < 0.0);
