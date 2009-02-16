@@ -110,12 +110,12 @@ void unit_fixture::init()
   columns.push_back(columndefinition("DECIMAL UNSIGNED ZEROFILL", "DECIMAL(6,3) UNSIGNED ZEROFILL DEFAULT 34.56", sql::DataType::DECIMAL, "1.01", false, 6, 3, true, "034.560", 0));
   columns.push_back(columndefinition("DATE", "DATE", sql::DataType::DATE, "2009-02-09", false, 10, 0, true, "", 0));
   columns.push_back(columndefinition("DATE", "DATE NOT NULL", sql::DataType::DATE, "2009-02-12", false, 10, 0, false, "", 0));
-  columns.push_back(columndefinition("DATE", "DATE NOT NULL DEFAULT NOW()", sql::DataType::DATE, "2009-02-12", false, 10, 0, false, "NOW()", 0));
+  columns.push_back(columndefinition("DATE", "DATE NOT NULL DEFAULT '2009-02-16 17:19:23'", sql::DataType::DATE, "2009-02-12", false, 10, 0, false, "2009-02-16 17:19:23", 0));
   columns.push_back(columndefinition("DATETIME", "DATETIME", sql::DataType::TIMESTAMP, "2009-02-09 20:05:43", false, 19, 0, true, "", 0));
   columns.push_back(columndefinition("DATETIME", "DATETIME NOT NULL", sql::DataType::TIMESTAMP, "2009-02-12 17:49:21", false, 19, 0, false, "", 0));
   columns.push_back(columndefinition("DATETIME", "DATETIME NOT NULL DEFAULT '2009-02-12 21:36:54'", sql::DataType::TIMESTAMP, "2009-02-12 17:49:21", false, 19, 0, false, "2009-02-12 21:36:54", 0));
   /* TODO this might be server dependent! */
-  columns.push_back(columndefinition("TIMESTAMP", "TIMESTAMP DEFAULT '0000-00-00 00:00:01'", sql::DataType::TIMESTAMP, "2038-01-09 03:14:07", false, 19, 0, false, "0000-00-00 00:00:01", 0));
+  columns.push_back(columndefinition("TIMESTAMP", "TIMESTAMP", sql::DataType::TIMESTAMP, "2038-01-09 03:14:07", false, 19, 0, false, "", 0));
   columns.push_back(columndefinition("TIME", "TIME", sql::DataType::TIME, "-838:59:59", true, 8, 0, true, "", 0));
   columns.push_back(columndefinition("TIME", "TIME NOT NULL", sql::DataType::TIME, "838:59:59", true, 8, 0, false, "", 0));
   columns.push_back(columndefinition("TIME", "TIME DEFAULT '12:39:41'", sql::DataType::TIME, "-838:59:59", true, 8, 0, true, "12:39:41", 0));
@@ -182,14 +182,14 @@ void unit_fixture::init()
   columns.push_back(columndefinition("LONGTEXT", "LONGTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, true, "", L64(4294967295)));
   /* TODO this might be server dependent! */
   columns.push_back(columndefinition("LONGTEXT", "LONGTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, true, "", L64(4294967295)));
-  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no')", sql::DataType::CHAR, "yes", false, 3, 0, true, "", 3));
-  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no') NOT NULL", sql::DataType::CHAR, "yes", false, 3, 0, false, "", 3));
-  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no', 'not sure') NOT NULL", sql::DataType::CHAR, "yes", false, 8, 0, false, "", 3));
-  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no', 'buy') NOT NULL DEFAULT 'buy'", sql::DataType::CHAR, "yes", false, 3, 0, false, "buy", 8));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no')", sql::DataType::CHAR, "yes", false, 6, 0, true, "", 6));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii'", sql::DataType::CHAR, "yes", false, 6, 0, true, "", 6));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii' DEFAULT 'yes'", sql::DataType::CHAR, "yes", false, 6, 0, true, "yes", 6));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no', 'ascii') CHARSET 'ascii' NOT NULL", sql::DataType::CHAR, "yes", false, 12, 0, false, "", 12));
+  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no')", sql::DataType::VARCHAR, "yes", false, 3, 0, true, "", 3));
+  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no') NOT NULL", sql::DataType::VARCHAR, "yes", false, 3, 0, false, "", 3));
+  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no', 'not sure') NOT NULL", sql::DataType::VARCHAR, "yes", false, 8, 0, false, "", 3));
+  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no', 'buy') NOT NULL DEFAULT 'buy'", sql::DataType::VARCHAR, "yes", false, 3, 0, false, "buy", 8));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no')", sql::DataType::VARCHAR, "yes", false, 6, 0, true, "", 6));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii'", sql::DataType::VARCHAR, "yes", false, 6, 0, true, "", 6));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii' DEFAULT 'yes'", sql::DataType::VARCHAR, "yes", false, 6, 0, true, "yes", 6));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no', 'ascii') CHARSET 'ascii' NOT NULL", sql::DataType::VARCHAR, "yes", false, 12, 0, false, "", 12));
 
   /*
   ResultSet getAttributes(String catalog,
