@@ -93,10 +93,10 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
 			return sql::DataType::CHAR;
 		case MYSQL_TYPE_ENUM:
 			/* This hould never happen - MYSQL_TYPE_ENUM is not sent over the wire, just used in the server */
-			return sql::DataType::CHAR;
+			return sql::DataType::VARCHAR;
 		case MYSQL_TYPE_SET:
 			/* This hould never happen - MYSQL_TYPE_SET is not sent over the wire, just used in the server */
-			return sql::DataType::CHAR;
+			return sql::DataType::VARCHAR;
 		case MYSQL_TYPE_GEOMETRY:
 			return sql::DataType::GEOMETRY;
 		default:
@@ -159,9 +159,9 @@ mysql_string_type_to_datatype(const std::string & name)
 	} else if (!name.compare("varbinary")) {
 		return sql::DataType::VARBINARY;
 	} else if (!name.compare("enum")) {
-		return sql::DataType::CHAR;
+		return sql::DataType::VARCHAR;
 	} else if (!name.compare("set")) {
-		return sql::DataType::CHAR;
+		return sql::DataType::VARCHAR;
 	} else if (!name.compare("geometry")) {
 		return sql::DataType::GEOMETRY;
 	} else {
@@ -225,14 +225,12 @@ mysql_type_to_string(const MYSQL_FIELD * const field)
 			}
 			return "VARCHAR";
 		case MYSQL_TYPE_STRING:
-#if WHEN_WE_HAVE_ENUM_AND_SET_IN_DATATYPE_H
 			if (field->flags & ENUM_FLAG) {
-				return "ENUM";
+				return "VARCHAR";
 			}
 			if (field->flags & SET_FLAG) {
-				return "SET";
+				return "VARCHAR";
 			}
-#endif
 			if ((field->flags & BINARY_FLAG) && field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
 				return "BINARY";
 			}
