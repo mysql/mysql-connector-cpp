@@ -23,7 +23,6 @@
 #define _MYSQL_CONNECTION_H_
 
 #include <cppconn/connection.h>
-#include <list>
 struct st_mysql;
 
 
@@ -31,7 +30,6 @@ namespace sql
 {
 namespace mysql
 {
-
 
 class MySQL_Savepoint : public sql::Savepoint
 {
@@ -51,8 +49,9 @@ private:
 	void operator=(MySQL_Savepoint &);
 };
 
+
 class MySQL_DebugLogger;
-class MySQL_ConnectionData;
+class MySQL_ConnectionData; /* PIMPL */
 
 class CPPDBC_PUBLIC_FUNC MySQL_Connection : public sql::Connection
 {
@@ -71,7 +70,7 @@ public:
 
 	void commit();
 
-	sql::Statement *createStatement();
+	sql::Statement * createStatement();
 
 	bool getAutoCommit();
 
@@ -125,21 +124,21 @@ public:
 
 	void setReadOnly(bool readOnly);
 
-	sql::Savepoint *setSavepoint();
+	sql::Savepoint * setSavepoint();
 
-	sql::Savepoint *setSavepoint(const std::string& name);
+	sql::Savepoint * setSavepoint(const std::string& name);
 
 	void setTransactionIsolation(enum_transaction_isolation level);
 
-
 	std::string getSessionVariable(const std::string & varname);
+
 	void setSessionVariable(const std::string & varname, const std::string & value);
 
 protected:
 	void checkClosed();
 	void init(std::map<std::string, sql::ConnectPropertyVal> properties);
 
-	class MySQL_ConnectionData * intern;
+	class MySQL_ConnectionData * intern; /* pimpl */
 private:
 	/* Prevent use of these */
 	MySQL_Connection(const MySQL_Connection &);

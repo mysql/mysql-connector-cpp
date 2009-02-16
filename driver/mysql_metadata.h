@@ -45,7 +45,7 @@ class MySQL_ConnectionMetaData : public sql::DatabaseMetaData
 
 	std::string lower_case_table_names;
 public:
-	MySQL_ConnectionMetaData(MySQL_Connection * conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
+	MySQL_ConnectionMetaData(MySQL_Connection * const conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
 
 	virtual ~MySQL_ConnectionMetaData();
 
@@ -387,15 +387,13 @@ public:
 
 	sql::ResultSet *getSchemata(const std::string& catalogName = "");
 
-	sql::ResultSet *getSchemaObjects(const std::string& catalogName = "", 
-								const std::string& schemaName = "",
-								const std::string& objectType = "");
+	sql::ResultSet *getSchemaObjects(const std::string& catalogName = "", const std::string& schemaName = "", const std::string& objectType = "");
 
 	// Returns all schema object types this database supports
 	sql::ResultSet *getSchemaObjectTypes();
 
 private:
-	bool matchTable(const std::string & sPattern, const std::string & tPattern, const std::string & schema, const std::string & table);
+	bool matchTable(const std::string& sPattern, const std::string& tPattern, const std::string& schema, const std::string& table);
 	bool parseImportedKeys(
 		const std::string& def,
 		size_t start_pos,

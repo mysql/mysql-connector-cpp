@@ -37,27 +37,27 @@ class MySQL_ParameterMetaData : public sql::ParameterMetaData
 {
 	unsigned int param_count;
 public:
-	MySQL_ParameterMetaData(MYSQL_STMT * stmt);
+	MySQL_ParameterMetaData(const MYSQL_STMT * const stmt);
 
 	virtual ~MySQL_ParameterMetaData() {}
 
-	virtual std::string getParameterClassName(unsigned int param);
+	virtual std::string getParameterClassName(unsigned int paramNo);
 
 	virtual int getParameterCount();
 
-	virtual int getParameterMode(unsigned int param);
+	virtual int getParameterMode(unsigned int paramNo);
 
-	virtual int getParameterType(unsigned int param);
+	virtual int getParameterType(unsigned int paramNo);
 
-	virtual std::string getParameterTypeName(unsigned int param);
+	virtual std::string getParameterTypeName(unsigned int paramNo);
 
-	virtual int getPrecision(unsigned int param);
+	virtual int getPrecision(unsigned int paramNo);
 
-	virtual int getScale(unsigned int param);
+	virtual int getScale(unsigned int paramNo);
 
-	virtual int isNullable(unsigned int param);
+	virtual int isNullable(unsigned int paramNo);
 
-	virtual bool isSigned(unsigned int param);
+	virtual bool isSigned(unsigned int paramNo);
 
 
 private:
