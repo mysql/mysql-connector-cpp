@@ -693,46 +693,46 @@ void PreparedStatementTest::testSetBigDecimal02()
 
 /* throws Exception */
 void PreparedStatementTest::testSetBoolean01()
-
 {
   bool bMinBooleanVal;
   bool rBooleanVal;
 
-  try {
-    initTable("Bit_Tab", sqlProps, conn);
+  initTable("Bit_Tab", sqlProps, conn);
 
-    const String & sPrepStmt=sqlProps[ "Bit_Tab_Max_Update" ];
-    logMsg(String("Prepared Statement String :") + sPrepStmt);
+  const String & sPrepStmt=sqlProps[ "Bit_Tab_Max_Update" ];
+  logMsg(String("Prepared Statement String :") + sPrepStmt);
 
-    String sminBooleanVal=extractVal("Bit_Tab", 2, sqlProps, conn);
+  String sminBooleanVal=extractVal("Bit_Tab", 2, sqlProps, conn);
 
-    bMinBooleanVal=(sminBooleanVal == "true" ? true : false);
+  bMinBooleanVal=(sminBooleanVal == "true" ? true : false);
 
-    TestsListener::theInstance().messagesLog()
-          << "Boolean Value :" << bMinBooleanVal << std::endl;
+  TestsListener::theInstance().messagesLog()
+        << "Boolean Value :" << bMinBooleanVal << std::endl;
 
-sql::ResultSet * res = stmt->executeQuery("select * from Bit_Tab");
-std::cout << "Row count = " << res->rowsCount() << std::endl;
+  sql::ResultSet * res = stmt->executeQuery("select * from Bit_Tab");
 
-std::cout << sPrepStmt << std::endl;
-    pstmt.reset(conn->prepareStatement(sPrepStmt));
-    pstmt->setBoolean(1, bMinBooleanVal);
-    pstmt->executeUpdate();
-    String Max_Val_Query=sqlProps[ "Bit_Query_Max" ];
-    logMsg(Max_Val_Query);
-    rs.reset(stmt->executeQuery(Max_Val_Query));
-    rs->next();
-    rBooleanVal=rs->getBoolean(1);
+  TestsListener::theInstance().messagesLog() << "Row count = " << res->rowsCount() << std::endl;
 
-  } catch (sql::SQLException &e) {
-    std::cout << "Exception at " << __LINE__ << " :" << e.what() << std::endl;
-  }
+  TestsListener::theInstance().messagesLog() << sPrepStmt << std::endl;
+
+  pstmt.reset(conn->prepareStatement(sPrepStmt));
+  pstmt->setBoolean(1, bMinBooleanVal);
+  pstmt->executeUpdate();
+  String Max_Val_Query=sqlProps[ "Bit_Query_Max" ];
+  logMsg(Max_Val_Query);
+  rs.reset(stmt->executeQuery(Max_Val_Query));
+  rs->next();
+  rBooleanVal= rs->getBoolean(1);
 
   TestsListener::theInstance().messagesLog()
           << "Returned Boolean Value after Updation:" << rBooleanVal << std::endl;
-  if (rBooleanVal == bMinBooleanVal) {
+
+  if (rBooleanVal == bMinBooleanVal)
+  {
     logMsg("setBoolean Method sets the designated parameter to a Boolean value ");
-  } else {
+  }
+  else
+  {
     logErr("setBoolean Method does not set the designated parameter to a Boolean value ");
     FAIL("Call to setBoolean Method is Failed!");
   }
@@ -2918,9 +2918,12 @@ void PreparedStatementTest::testSetNull13()
   // TODO: add toString(bool) in the StringUtils
   logMsg(String("Boolean Value After Updation: ") + ( NULLFlag ? "true" : "false" ) );
 
-  if (NULLFlag) {
+  if (NULLFlag)
+  {
     logMsg("setNull Method sets the designated parameter to a SQL Null");
-  } else {
+  }
+  else
+  {
     logErr("setNull Method does not set the designated parameter to a SQL Null ");
     FAIL("Call to setNull Method is Failed!");
   }

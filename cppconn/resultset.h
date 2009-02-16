@@ -32,12 +32,12 @@
 #if !defined(_WIN32) && !defined(_WIN64)
 #include <stdint.h>
 #else
-#ifndef int64_t
-#define int64_t
+#ifndef int64_td
+#define int64_td
 typedef __int64           int64_t;
 #endif
-#ifndef uint64_t
-#define uint64_t
+#ifndef uint64_td
+#define uint64_td
 typedef unsigned __int64  uint64_t;
 #endif
 #endif	//	_WIN32
