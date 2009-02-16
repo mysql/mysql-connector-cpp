@@ -30,6 +30,8 @@ namespace sql {
 namespace mysql {
 namespace util {
 
+#define MAGIC_BINARY_CHARSET_NR 63
+
 /* {{{ mysql_to_datatype() -I- */
 int
 mysql_type_to_datatype(const MYSQL_FIELD * const field)
@@ -67,31 +69,33 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
 		case MYSQL_TYPE_DATETIME:
 			return sql::DataType::TIMESTAMP;
 		case MYSQL_TYPE_TINY_BLOB:
-			if (field->flags & BINARY_FLAG) {
+			if ((field->flags & BINARY_FLAG) && field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
 				return sql::DataType::VARBINARY;
 			}
 			return sql::DataType::VARCHAR;
 		case MYSQL_TYPE_MEDIUM_BLOB:
 		case MYSQL_TYPE_LONG_BLOB:
 		case MYSQL_TYPE_BLOB:
-			if (field->flags & BINARY_FLAG) {
+			if ((field->flags & BINARY_FLAG) && field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
 				return sql::DataType::LONGVARBINARY;
 			}
 			return sql::DataType::LONGVARCHAR;
 		case MYSQL_TYPE_VARCHAR:
 		case MYSQL_TYPE_VAR_STRING:
-			if (field->flags & BINARY_FLAG) {
+			if ((field->flags & BINARY_FLAG) && field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
 				return sql::DataType::VARBINARY;
 			}
 			return sql::DataType::VARCHAR;
 		case MYSQL_TYPE_STRING:
-			if (field->flags & BINARY_FLAG) {
+			if ((field->flags & BINARY_FLAG) && field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
 				return sql::DataType::BINARY;
 			}
 			return sql::DataType::CHAR;
 		case MYSQL_TYPE_ENUM:
+			/* This hould never happen - MYSQL_TYPE_ENUM is not sent over the wire, just used in the server */
 			return sql::DataType::CHAR;
 		case MYSQL_TYPE_SET:
+			/* This hould never happen - MYSQL_TYPE_SET is not sent over the wire, just used in the server */
 			return sql::DataType::CHAR;
 		case MYSQL_TYPE_GEOMETRY:
 			return sql::DataType::GEOMETRY;
@@ -210,33 +214,37 @@ mysql_type_to_string(const MYSQL_FIELD * const field)
 		case MYSQL_TYPE_LONG_BLOB:
 			return "LONGBLOB";
 		case MYSQL_TYPE_BLOB:
-			if (field->flags & BINARY_FLAG) {
+			if (field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
 				return "BLOB";
 			}
 			return "TEXT";
 		case MYSQL_TYPE_VARCHAR:
 		case MYSQL_TYPE_VAR_STRING:
-			if (field->flags & BINARY_FLAG) {
+			if (field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
 				return "VARBINARY";
 			}
 			return "VARCHAR";
 		case MYSQL_TYPE_STRING:
+#if WHEN_WE_HAVE_ENUM_AND_SET_IN_DATATYPE_H
 			if (field->flags & ENUM_FLAG) {
 				return "ENUM";
 			}
 			if (field->flags & SET_FLAG) {
 				return "SET";
 			}
-			if (field->flags & BINARY_FLAG) {
+#endif
+			if ((field->flags & BINARY_FLAG) && field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
 				return "BINARY";
 			}
 			return "CHAR";
 		case MYSQL_TYPE_ENUM:
-			return "ENUM";
+			/* This should never happen */
+			return "CHAR";
 		case MYSQL_TYPE_YEAR:
 			return "DATE";
 		case MYSQL_TYPE_SET:
-			return "SET";
+			/* This should never happen */
+			return "CHAR";
 		case MYSQL_TYPE_GEOMETRY:
 			return "GEOMETRY";
 		default:

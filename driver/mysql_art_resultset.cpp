@@ -21,10 +21,11 @@
 
 #include "mysql_art_resultset.h"
 #include "mysql_art_rset_metadata.h"
-#include <sstream>
-
 #include "mysql_debug.h"
 #include "mysql_util.h"
+
+#include <sstream>
+
 
 namespace sql
 {

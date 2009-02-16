@@ -1179,17 +1179,9 @@ static inline char * my_i_to_a(char * buf, size_t buf_size, int a)
 }
 /* }}} */
 
-/* {{{ my_l_to_a() -I- */
-static inline char * my_l_to_a(char * buf, size_t buf_size, long long a)
-{
-	snprintf(buf, buf_size, "%lld", a);
-	return buf;
-}
-/* }}} */
-
 
 /* {{{ MySQL_ConnectionMetaData::MySQL_ConnectionMetaData() -I- */
-MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(MySQL_Connection * conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
+MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(MySQL_Connection * const conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
   : connection(conn), logger(l? l->getReference():NULL)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::MySQL_ConnectionMetaData");
@@ -1237,18 +1229,18 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 	std::string routines_where_clause;
 	std::string triggers_where_clause;
 
-	static std::string schemata_select_items("'schema' AS 'OBJECT_TYPE', CATALOG_NAME as 'CATALOG', SCHEMA_NAME as 'SCHEMA', SCHEMA_NAME as 'NAME'");
-	static std::string tables_select_items("'table' AS 'OBJECT_TYPE', TABLE_CATALOG as 'CATALOG', TABLE_SCHEMA as 'SCHEMA', TABLE_NAME as 'NAME'");
-	static std::string views_select_items("'view' AS 'OBJECT_TYPE', TABLE_CATALOG as 'CATALOG', TABLE_SCHEMA as 'SCHEMA', TABLE_NAME as 'NAME'");
-	static std::string routines_select_items("ROUTINE_TYPE AS 'OBJECT_TYPE', ROUTINE_CATALOG as 'CATALOG', ROUTINE_SCHEMA as 'SCHEMA', ROUTINE_NAME as 'NAME'");
-	static std::string triggers_select_items("'trigger' AS 'OBJECT_TYPE', TRIGGER_CATALOG as 'CATALOG', TRIGGER_SCHEMA as 'SCHEMA', TRIGGER_NAME as 'NAME'");
+	const std::string schemata_select_items("'schema' AS 'OBJECT_TYPE', CATALOG_NAME as 'CATALOG', SCHEMA_NAME as 'SCHEMA', SCHEMA_NAME as 'NAME'");
+	const std::string tables_select_items("'table' AS 'OBJECT_TYPE', TABLE_CATALOG as 'CATALOG', TABLE_SCHEMA as 'SCHEMA', TABLE_NAME as 'NAME'");
+	const std::string views_select_items("'view' AS 'OBJECT_TYPE', TABLE_CATALOG as 'CATALOG', TABLE_SCHEMA as 'SCHEMA', TABLE_NAME as 'NAME'");
+	const std::string routines_select_items("ROUTINE_TYPE AS 'OBJECT_TYPE', ROUTINE_CATALOG as 'CATALOG', ROUTINE_SCHEMA as 'SCHEMA', ROUTINE_NAME as 'NAME'");
+	const std::string triggers_select_items("'trigger' AS 'OBJECT_TYPE', TRIGGER_CATALOG as 'CATALOG', TRIGGER_SCHEMA as 'SCHEMA', TRIGGER_NAME as 'NAME'");
 
-	static std::string schema_ddl_column("Create Database");
-	static std::string table_ddl_column("Create Table");
-	static std::string view_ddl_column("Create View");
-	static std::string procedure_ddl_column("Create Procedure");
-	static std::string function_ddl_column("Create Function");
-	static std::string trigger_ddl_column("SQL Original Statement");
+	const std::string schema_ddl_column("Create Database");
+	const std::string table_ddl_column("Create Table");
+	const std::string view_ddl_column("Create View");
+	const std::string procedure_ddl_column("Create Procedure");
+	const std::string function_ddl_column("Create Function");
+	const std::string trigger_ddl_column("SQL Original Statement");
 
 	if (schemaName.length() > 0) {
 		tables_where_clause.append(" WHERE table_type<>'VIEW' AND table_schema = '").append(schemaName).append("' ");
@@ -1652,9 +1644,7 @@ MySQL_ConnectionMetaData::getBestRowIdentifier(const std::string& catalog, const
 												const std::string& table, int /* scope */, bool /* nullable */)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getBestRowIdentifier");
-	char buf1[12], buf2[12];
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
-
 
 	std::list<std::string> rs_field_data;
 	rs_field_data.push_back("SCOPE");
@@ -1667,24 +1657,21 @@ MySQL_ConnectionMetaData::getBestRowIdentifier(const std::string& catalog, const
 	rs_field_data.push_back("PSEUDO_COLUMN");
 
 	std::auto_ptr<sql::ResultSet> rs(getPrimaryKeys(catalog, schema, table));
-	buf1[sizeof(buf1) - 1] = '\0';
 
-	my_i_to_a(buf1, sizeof(buf1) - 1, DatabaseMetaData::bestRowSession);
-	my_i_to_a(buf2, sizeof(buf2) - 1, DatabaseMetaData::bestRowNotPseudo);
 	while (rs->next()) {
 		std::string columnNamePattern(rs->getString(4));
 
 		std::auto_ptr<sql::ResultSet> rsCols(getColumns(catalog, schema, table, columnNamePattern));
 		if (rsCols->next()) {
 			MySQL_ArtResultSet::row_t rs_data_row;
-			rs_data_row.push_back(buf1); 					// SCOPE
+			rs_data_row.push_back((int64_t) DatabaseMetaData::bestRowSession); // SCOPE
 			rs_data_row.push_back(rs->getString(4));		// COLUMN_NAME
 			rs_data_row.push_back(rsCols->getString(5));	// DATA_TYPE
 			rs_data_row.push_back(rsCols->getString(6));	// TYPE_NAME
 			rs_data_row.push_back(rsCols->getString(7));	// COLUMN_SIZE
 			rs_data_row.push_back(rsCols->getString(8));	// BUFFER_LENGTH
 			rs_data_row.push_back(rsCols->getString(9));	// DECIMAL_DIGITS
-			rs_data_row.push_back(buf2); // PSEUDO_COLUMN
+			rs_data_row.push_back((int64_t) DatabaseMetaData::bestRowNotPseudo); // PSEUDO_COLUMN
 
 			rs_data->push_back(rs_data_row);
 		}
@@ -1833,13 +1820,12 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 	rs_field_data.push_back("CHAR_OCTET_LENGTH");
 	rs_field_data.push_back("ORDINAL_POSITION");
 	rs_field_data.push_back("IS_NULLABLE");
-#if 0
+	/* The following are not known by SDBC */
 	rs_field_data.push_back("SCOPE_CATALOG");
 	rs_field_data.push_back("SCOPE_SCHEMA");
 	rs_field_data.push_back("SCOPE_TABLE");
 	rs_field_data.push_back("SOURCE_DATA_TYPE");
 	rs_field_data.push_back("IS_AUTOINCREMENT");
-#endif
 
 	if (server_version > 50020) {
 		char buf[5];
@@ -1852,7 +1838,7 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 				"WHEN LCASE(DATA_TYPE)='datetime' THEN 19 "
 				"WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 "
 				"WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION "
-				"WHEN CHARACTER_MAXIMUM_LENGTH > 2147483647 THEN 2147483647 ELSE CHARACTER_MAXIMUM_LENGTH END AS COLUMN_SIZE, "
+				"ELSE CHARACTER_MAXIMUM_LENGTH END AS COLUMN_SIZE, "
 			"'' AS BUFFER_LENGTH,"
 			"NUMERIC_SCALE AS DECIMAL_DIGITS,"
 			"10 AS NUM_PREC_RADIX,"
@@ -1907,15 +1893,13 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 			rs_data_row.push_back(rs->getString(16));	// CHAR_OCTET_LENGTH
 			rs_data_row.push_back(rs->getString(17));	// ORDINAL_POSITION
 			rs_data_row.push_back(rs->getString(18));	// IS_NULLABLE
+
 			/* The following are not currently used by C/OOO*/
-#if 0
 			rs_data_row.push_back(rs->getString(19));	// SCOPE_CATALOG
 			rs_data_row.push_back(rs->getString(20));	// SCOPE_SCHEMA
 			rs_data_row.push_back(rs->getString(21));	// SCOPE_TABLE
 			rs_data_row.push_back(rs->getString(22));	// IS_AUTOINCREMENT
 
-
-#endif
 			rs_data->push_back(rs_data_row);
 		}
 
@@ -2338,7 +2322,7 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 	if (server_version >= 50116) {
 		/* This just doesn't work */
 		/* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
-		static const std::string query("SELECT A.CONSTRAINT_SCHEMA, A.TABLE_NAME, "
+		const std::string query("SELECT A.CONSTRAINT_SCHEMA, A.TABLE_NAME, "
 									"A.COLUMN_NAME, A.TABLE_SCHEMA, A.TABLE_NAME, "
 									"A.COLUMN_NAME, A.ORDINAL_POSITION, NULL AS CONSTRAINT_METHOD, "
 									"A.CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE A, "
@@ -2481,7 +2465,7 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 	}
 
 	if (server_version > 59999) {
-		static const std::string query("SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, NON_UNIQUE, "
+		const std::string query("SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, NON_UNIQUE, "
 						"INDEX_NAME, SEQ_IN_INDEX, COLUMN_NAME, CARDINALITY "
 						"FROM INFORMATION_SCHEMA.STATISTICS "
 						"WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? "
@@ -2802,7 +2786,7 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 
 	/* Bind Problems with 49999, check later why */
 	if (server_version > 49999) {
-		static const std::string query("SELECT TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, "
+		const std::string query("SELECT TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, "
 						"SEQ_IN_INDEX, INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS "
 						"WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND "
 						"INDEX_NAME='PRIMARY' ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX");
@@ -2907,7 +2891,7 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
 	if (server_version > 49999) {
-		static const std::string query("SELECT ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_COMMENT "
+		const std::string query("SELECT ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_COMMENT "
 						"FROM INFORMATION_SCHEMA.ROUTINES "
 						"WHERE ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ? "
 						"ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME");
@@ -3316,7 +3300,7 @@ MySQL_ConnectionMetaData::getTables(const std::string& /* catalog */, const std:
 
 	/* Bind Problems with 49999, check later why */
 	if (server_version > 49999) {
-		static const std::string query("SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, "
+		const std::string query("SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, "
 							"IF(STRCMP(TABLE_TYPE,'BASE TABLE'), TABLE_TYPE, 'TABLE'), "
 							"TABLE_COMMENT FROM INFORMATION_SCHEMA.TABLES WHERE "
 							"TABLE_SCHEMA  LIKE ? AND TABLE_NAME LIKE ? "
