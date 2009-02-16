@@ -302,7 +302,17 @@ void connectionmetadata::getColumns()
       ASSERT_EQUALS(it->remarks, res->getString(12));
       ASSERT_EQUALS(res->getString(12), res->getString("REMARKS"));      
       ASSERT_EQUALS(it->column_def, res->getString(13));
-      ASSERT_EQUALS(res->getString(13), res->getString("COLUMN_DEF"));      
+      ASSERT_EQUALS(res->getString(13), res->getString("COLUMN_DEF"));
+      ASSERT_EQUALS(res->getInt(14), res->getInt("SQL_DATA_TYPE"));
+      ASSERT_EQUALS(res->getInt(15), res->getInt("SQL_DATETIME_SUB"));
+      if (it->char_octet_length != 0 && (it->char_octet_length != res->getUInt64(16))) {
+        msg.str("");
+        msg << "... WARNING - check CHAR_OCTET_LENGTH for " << it->sqldef;
+        msg << " - expecting char_octet_length " << it->char_octet_length << " got " << res->getUInt64(16);
+        logMsg(msg.str());
+        got_warning=true;
+      }
+      ASSERT_EQUALS(res->getUInt64(16), res->getUInt64("CHAR_OCTET_LENGTH"));
       
       stmt->execute("DROP TABLE IF EXISTS test");
     }
