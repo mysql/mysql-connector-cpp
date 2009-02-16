@@ -31,6 +31,18 @@
 #define max
 #endif
 
+#if defined(_WIN32) || defined(_WIN64) || defined(WE_DEFINE_BOOL_TO_SKIP_LIBMYSQL)
+#undef bool
+#endif
+
+#if defined(_WIN32) || defined(_WIN64) || defined(WE_DEFINE_MAX_TO_SKIP_LIBMYSQL)
+#undef max
+#endif
+
+#ifndef snprintf
+#define snprintf _snprintf
+#endif
+
 extern "C"
 {
 //#if defined(_WIN32) || defined(_WIN64) 

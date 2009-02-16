@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #ifndef __TESTASSERTS_H_
 #define __TESTASSERTS_H_
 
+#include "../../../cppconn/resultset.h"
+
 #include "../common/ccppTypes.h"
 
 #ifndef __LINE__
@@ -42,6 +44,9 @@ void assertEquals(int expected, int result
                   , const char* file, int line);
 
 void assertEquals(unsigned int expected, unsigned int result
+                  , const char* file, int line);
+
+void assertEquals(uint64_t expected, uint64_t result
                   , const char* file, int line);
 
 void assertEquals(bool expected, bool result

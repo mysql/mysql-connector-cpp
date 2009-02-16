@@ -31,10 +31,6 @@
 
 // For snprintf
 #include <stdio.h>
-#if defined(_WIN32) || defined(_WIN64)
-#define snprintf _snprintf
-#endif	//	_WIN32
-
 
 namespace sql
 {
