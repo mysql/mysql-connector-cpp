@@ -96,7 +96,7 @@ void assertLessThan(unsigned int expected, unsigned int result
 #define ASSERT( exp ) assertTrue( #exp, exp, __FILE__, __LINE__)
 
 #define ASSERT_MESSAGE( exp, message ) \
-	assertTrueMessage( exp, message, __FILE__, __LINE__ )
+	assertTrue( message, exp, __FILE__, __LINE__ )
 
 #define FAIL( why ) fail( #why, __FILE__, __LINE__ )
 

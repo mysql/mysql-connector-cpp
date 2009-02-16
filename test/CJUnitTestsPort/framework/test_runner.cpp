@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "test_case.h"
 #include "test_listener.h"
 
+
 namespace testsuite
 {
 
@@ -38,7 +39,9 @@ bool TestsRunner::runTests()
   TestSuiteNames.empty();
 
   TestSuiteFactory::theInstance().getTestsList( TestSuiteNames );
-  TestsListener::theInstance().setVerbose(startOptions->verbose);
+
+  TestsListener::setVerbose(startOptions->verbose);
+  TestsListener::doTiming( startOptions->timer );
 
   for ( constStrListCit cit= TestSuiteNames.begin(); cit != TestSuiteNames.end(); ++cit )
   {
@@ -50,11 +53,13 @@ bool TestsRunner::runTests()
   TestsListener::theInstance().summary();
 
   //bool result= TestSuiteFactory::theInstance().runTests();
+/*
 
   if ( startOptions->verbose_summary )
   {
     TestsListener::dumpLog();
-  }
+  }*/
+
 
   return TestsListener::allTestsPassed();
 }

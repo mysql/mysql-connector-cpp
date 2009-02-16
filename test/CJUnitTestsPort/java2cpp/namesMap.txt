@@ -87,8 +87,8 @@ int       => int
 String[]  => List
 
 # names
-testsuite.BaseTestCase  =>  "../BaseTestCase.h"
-com.mysql.jdbc.compliance.common.BaseTestCase => "../BaseTestCase.h"
+testsuite.BaseTestCase  =>  "../BaseTestFixture.h"
+com.mysql.jdbc.compliance.common.BaseTestCase => "../BaseTestFixture.h"
 testsuite.      => testsuite::
 TestCase        => TestFixture::TestCase
 isRunningOnJRockit  => ACT:COMMENT

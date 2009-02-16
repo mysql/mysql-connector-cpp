@@ -210,13 +210,11 @@ bool value_object::instanceof(value_type type)
 
 
 BaseTestFixture::BaseTestFixture(const String & name)
-: super(name),
-
-TestFixtureCommon(),
-
-myInstanceNumber(0),
-conn(NULL),
-pstmt(NULL),
+  : super             (name),
+    TestFixtureCommon (),
+    myInstanceNumber  (0),
+    conn              (NULL),
+    pstmt(NULL),
 stmt(NULL),
 rs(NULL),
 /*dbClass           ( "sql::mysql::Driver"),*/
@@ -237,8 +235,9 @@ void BaseTestFixture::createSchemaObject(String objectType, String objectName,
   dropSchemaObject(objectType, objectName);
   String createSql(_T("CREATE  "));
 
+  /*
   createSql.resize(objectName.length()
-                   + objectType.length() + columnsAndOtherStuff.length() + 10);
+                     + objectType.length() + columnsAndOtherStuff.length() + 10);*/
 
   createSql.append(objectType);
   createSql.append(" ");
@@ -609,10 +608,18 @@ bool BaseTestFixture::runTestIfSysPropDefined(const String & propName)
   return true; //(prop != NULL) && (prop.length() > 0);
 }
 
+
 bool BaseTestFixture::runMultiHostTests()
 {
   return true; //!runTestIfSysPropDefined(NO_MULTI_HOST_PROPERTY_NAME);
 }
+
+
+void BaseTestFixture::selectDb( Statement & st )
+{
+  st->execute( String("USE ") + (db.length() > 0 ? db : defaultDb));
+}
+
 
 /**
  * Creates resources used by all tests.
@@ -620,9 +627,7 @@ bool BaseTestFixture::runMultiHostTests()
  * @throws Exception
  *             if an error occurs.
  */
-
 /* throws Exception */
-
 void BaseTestFixture::setUp()
 {
   this->createdObjects.clear();
@@ -654,7 +659,8 @@ void BaseTestFixture::setUp()
                + " / "
                + this->conn->getMetaData()->getDatabaseProductVersion());
     }
-  } catch (sql::SQLException & sqle)
+  }
+  catch (sql::SQLException & sqle)
   {
     logErr(sqle.what());
   }
@@ -666,7 +672,7 @@ void BaseTestFixture::setUp()
 
   hasSps=dbmd->supportsStoredProcedures();
 
-  stmt->execute(String("USE ") + (db.length() > 0 ? db : defaultDb));
+  selectDb( stmt );
 }
 
 sql::Connection * BaseTestFixture::getConnection()
@@ -712,7 +718,8 @@ void BaseTestFixture::tearDown()
     try
     {
       dropSchemaObject(this->createdObjects[ i ], this->createdObjects[ i + 1 ]);
-    } catch (sql::SQLException &)
+    }
+    catch (sql::SQLException &)
     {
     }
   }
@@ -768,9 +775,9 @@ bool BaseTestFixture::versionMeetsMinimum(int major, int minor)
 bool BaseTestFixture::versionMeetsMinimum(int major, int minor, int subminor)
 {
   return true;
-  /*
-  ((dynamic_cast<sql::mysql::MySQL_Connection*> (this->conn)->versionMeetsMinimum(
-  major, minor, subminor));*/
+  
+  /*(dynamic_cast<sql::mysql::MySQL_Connection*> (this->conn))->versionMeetsMinimum(
+  major, minor, subminor);*/
 
 }
 
@@ -787,36 +794,6 @@ catch (ClassNotFoundException e)
 return false;
 }
 }*/
-
-
-void BaseTestFixture::closeMemberJDBCResources()
-{
-  if (this->rs.get() != NULL)
-  {
-    ResultSet toClose=this->rs;
-    this->rs.reset();
-
-    try
-    {
-      toClose->close();
-    } catch (sql::SQLException &)
-    {
-      // ignore
-    }
-  }
-  if (this->pstmt.get() != NULL)
-  {
-    PreparedStatement toClose=this->pstmt;
-    this->pstmt.reset();
-    try
-    {
-      toClose->close();
-    } catch (sql::SQLException &)
-    {
-      // ignore
-    }
-  }
-}
 
 
 /**
@@ -915,7 +892,7 @@ void BaseTestFixture::initTable(const String & sTableName
   {
     statement.reset(_conn->createStatement());
 
-    if ((sTableName.find_first_of("Binary_Tab") == 0))
+    if ( ( sTableName.find( "Binary_Tab" ) == 0 ) )
     {
       binarySize=_sqlProps[ "binarySize" ];
       logMsg("Binary Table Size : " + binarySize);
@@ -927,7 +904,8 @@ void BaseTestFixture::initTable(const String & sTableName
       statement->executeUpdate(insertString);
 
       logMsg("Successfully inserted the row");
-    } else if ((sTableName.find_first_of("Varbinary_Tab") == 0))
+    }
+    else if ( ( sTableName.find( "Varbinary_Tab" ) == 0 ) )
     {
       varbinarySize=_sqlProps[ ("varbinarySize") ];
 
@@ -940,7 +918,8 @@ void BaseTestFixture::initTable(const String & sTableName
       statement->executeUpdate(insertString);
 
       logMsg("Successfully inserted the row");
-    } else
+    }
+    else
     {
       logMsg("Adding rows to the table" + sTableName);
       sKeyName=sTableName;
@@ -952,12 +931,14 @@ void BaseTestFixture::initTable(const String & sTableName
 
       logMsg("Rows added to the table " + sTableName);
     }
-  } catch (sql::SQLException & e)
+  }
+  catch (sql::SQLException & e)
   {
     logErr("sql::DbcException creating the Table" + sTableName);
     logErr(e.what());
     throw e;
-  } catch (std::exception &)
+  }
+  catch (std::exception &)
   {
     logErr("Setup Failed!");
     exit(1);

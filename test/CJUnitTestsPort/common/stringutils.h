@@ -43,6 +43,12 @@ namespace StringUtils
   double    toDouble  ( const String & str, bool isNull = false );
 
   const String &  defaultIfEmpty  ( const String & str, const String & defStr );
+
+  String toHexString( char c, bool leading0x= false );
+
+  String toHexString( char c[], int count, bool leading0x= false );
+
+  String & concatSeparated( String & to, const String & add, const String & separator= " " );
 }
 
 #endif
