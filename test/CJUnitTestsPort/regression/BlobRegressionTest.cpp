@@ -169,6 +169,7 @@ namespace regression
       std::fstream & fos= blobFile.getStream();
       fos.seekp( blobFileSize - 1, std::ios_base::beg );
       fos << 'a';
+      fos.flush();
       blobFile.close();
     }
 
@@ -187,6 +188,8 @@ namespace regression
 
     stmt->executeUpdate("DROP TABLE IF EXISTS testBug5490");
 
+    if ( blobFile.exists() )
+      blobFile.deleteFile();
   }
 
   /**
@@ -361,7 +364,7 @@ namespace regression
       TestsListener::theInstance().errorsLog() << "read: " << tmp << static_cast<int>(tmp)
         << std::endl;
 
-      FAIL( "Read from blob stream should has failed - it hasn't. But probably that's ok" );
+      FAIL( "But probably that's ok - bad test likely" );
     }
   }
 

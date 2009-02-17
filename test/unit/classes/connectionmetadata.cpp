@@ -300,12 +300,13 @@ void connectionmetadata::getColumns()
       ASSERT_EQUALS(it->nullable, res->getInt(11));
       ASSERT_EQUALS(res->getInt(11), res->getInt("NULLABLE"));
       ASSERT_EQUALS(it->remarks, res->getString(12));
-      ASSERT_EQUALS(res->getString(12), res->getString("REMARKS"));      
+      ASSERT_EQUALS(res->getString(12), res->getString("REMARKS"));
       ASSERT_EQUALS(it->column_def, res->getString(13));
       ASSERT_EQUALS(res->getString(13), res->getString("COLUMN_DEF"));
       ASSERT_EQUALS(res->getInt(14), res->getInt("SQL_DATA_TYPE"));
       ASSERT_EQUALS(res->getInt(15), res->getInt("SQL_DATETIME_SUB"));
-      if (it->char_octet_length != 0 && (it->char_octet_length != res->getUInt64(16))) {
+      if (it->char_octet_length != 0 && (it->char_octet_length != res->getUInt64(16)))
+      {
         msg.str("");
         msg << "... WARNING - check CHAR_OCTET_LENGTH for " << it->sqldef;
         msg << " - expecting char_octet_length " << it->char_octet_length << " got " << res->getUInt64(16);
@@ -313,16 +314,37 @@ void connectionmetadata::getColumns()
         got_warning=true;
       }
       ASSERT_EQUALS(res->getUInt64(16), res->getUInt64("CHAR_OCTET_LENGTH"));
-      
+
+      ASSERT_EQUALS(2, res->getInt(17));
+      ASSERT_EQUALS(res->getInt(17), res->getInt("ORDINAL_POSITION"));
+
+      if (((it->nullable == sql::DatabaseMetaData::columnNoNulls) && (res->getString(18) != "NO")) ||
+          ((it->nullable == sql::DatabaseMetaData::columnNullable) && (res->getString(18) != "YES")) ||
+          ((it->nullable == sql::DatabaseMetaData::columnNullableUnknown) && (res->getString(18) != "")))
+      {
+        msg.str("");
+        msg << "... WARNING - check IS_NULLABLE for " << it->sqldef;
+        msg << " - expecting nullable = " << it->nullable << " got is_nullable = '" << res->getInt(18) << "'";
+        logMsg(msg.str());
+        got_warning=true;
+      }
+      ASSERT_EQUALS(res->getString(18), res->getString("IS_NULLABLE"));
+      ASSERT_EQUALS("", res->getString(19));
+
+      ASSERT_EQUALS(res->getString(19), res->getString("SCOPE_CATALOG"));
+      ASSERT_EQUALS("", res->getString(20));
+      ASSERT_EQUALS(res->getString(20), res->getString("SCOPE_SCHEMA"));
+      ASSERT_EQUALS("", res->getString(21));
+      ASSERT_EQUALS(res->getString(21), res->getString("SCOPE_TABLE"));
+      ASSERT_EQUALS("", res->getString(22));
+      ASSERT_EQUALS(res->getString(22), res->getString("SCOURCE_DATA_TYPE"));
+
       stmt->execute("DROP TABLE IF EXISTS test");
     }
     if (got_warning)
       FAIL("See Warnings!");
 
     stmt->execute("DROP TABLE IF EXISTS test");
-    stmt->execute("CREATE TABLE test(col1 INT NOT NULL, col2 INT NOT NULL, PRIMARY KEY(col1, col2))");
-
-
   }
   catch (sql::SQLException &e)
   {

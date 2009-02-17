@@ -108,7 +108,7 @@ namespace simple
 
   };
 
-  //REGISTER_FIXTURE( BlobTest );
+  REGISTER_FIXTURE( BlobTest );
 
 }
 }
