@@ -335,10 +335,11 @@ void connectionmetadata::getColumns()
       ASSERT_EQUALS("", res->getString(20));
       ASSERT_EQUALS(res->getString(20), res->getString("SCOPE_SCHEMA"));
       ASSERT_EQUALS("", res->getString(21));
-      ASSERT_EQUALS(res->getString(21), res->getString("SCOPE_TABLE"));
+      ASSERT_EQUALS(res->getString(21), res->getString("SCOPE_TABLE"));      
       ASSERT_EQUALS("", res->getString(22));
-      ASSERT_EQUALS(res->getString(22), res->getString("SCOURCE_DATA_TYPE"));
-
+      ASSERT_EQUALS(res->getString(22), res->getString("SOURCE_DATA_TYPE"));      
+      ASSERT_EQUALS(it->is_autoincrement, res->getString(23));
+      ASSERT_EQUALS(res->getString(23), res->getString("IS_AUTOINCREMENT"));      
       stmt->execute("DROP TABLE IF EXISTS test");
     }
     if (got_warning)
