@@ -437,7 +437,7 @@ void connectionmetadata::getConnection()
   }
 }
 
-void connectionmetadata::getVersions()
+void connectionmetadata::getDatabaseVersions()
 {
   logMsg("connectionmetadata::getVersions() - MySQL_ConnectionMetaData::getDatabase[Minor|Major|Patch]Version()");
   try

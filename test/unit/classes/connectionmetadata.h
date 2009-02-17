@@ -51,7 +51,7 @@ public:
     TEST_CASE(getColumnPrivileges);
     TEST_CASE(getColumns);
     TEST_CASE(getConnection);
-    TEST_CASE(getVersions);
+    TEST_CASE(getDatabaseVersions);
   }
 
   /**
@@ -108,7 +108,7 @@ public:
    * Focus on code coverage: invalid parameter, invalid resultset
    * JDBC compliance tests should take care that it does what its supposed to do
    */
-  void getVersions();
+  void getDatabaseVersions();
 
 };
 
