@@ -206,8 +206,7 @@ void connectionmetadata::getBestRowIdentifier()
 
 void connectionmetadata::getColumnPrivileges()
 {
-  logMsg("connectionmetadata::getColumnPrivileges() - MySQL_ConnectionMetaData::getColumnPrivileges");
-  std::stringstream msg;
+  logMsg("connectionmetadata::getColumnPrivileges() - MySQL_ConnectionMetaData::getColumnPrivileges");  
   int rows=0;
   try
   {
@@ -224,12 +223,7 @@ void connectionmetadata::getColumnPrivileges()
     rows=0;
     while (res->next())
     {
-      rows++;
-      msg.str("");
-      msg << "testing column " << rows << " '" << res->getString(1) << "'.'";
-      msg << res->getString(2) << "'.'" << res->getString(3) << "'.'";
-      msg << res->getString(4) << "'";
-      logMsg(msg.str());
+      rows++; 
 
       ASSERT_EQUALS(con->getCatalog(), res->getString(1));
       ASSERT_EQUALS(res->getString(1), res->getString("TABLE_CAT"));
@@ -249,8 +243,9 @@ void connectionmetadata::getColumnPrivileges()
         // Let's be optimistic that  the column does not hold this exact value...
         ASSERT_EQUALS("Any of 'YES', 'NO' and empty string ''", res->getString(8));
       }
+    
     }
-    ASSERT_EQUALS(2, rows);
+    ASSERT_GT(2, rows);
 
     res.reset(dbmeta->getColumnPrivileges(con->getCatalog(), con->getSchema(), "test", "col2"));
     ASSERT_EQUALS(true, res->next());
