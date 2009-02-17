@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <stdlib.h>
 #include <cppconn/resultset.h>
 #include <cppconn/datatype.h>
+#include <cppconn/connection.h>
 
 namespace testsuite
 {
@@ -403,6 +404,31 @@ void connectionmetadata::getColumns()
       FAIL("See Warnings!");
 
     stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connectionmetadata::getConnection()
+{
+  logMsg("connectionmetadata::getConnection() - MySQL_ConnectionMetaData::getConnection");
+  sql::Connection* same_con;
+  try
+  {
+    stmt.reset(con->createStatement());
+    stmt->execute("SET @this_is_my_connection_id=101");
+    DatabaseMetaData dbmeta(con->getMetaData());    
+    same_con = dbmeta->getConnection();    
+    stmt.reset(same_con->createStatement());
+    res.reset(stmt->executeQuery("SELECT @this_is_my_connection_id AS _connection_id"));
+    ASSERT(res->next());
+    ASSERT_EQUALS(101, res->getInt("_connection_id"));
+    ASSERT_EQUALS(res->getInt(1), res->getInt("_connection_id"));
+     
   }
   catch (sql::SQLException &e)
   {
