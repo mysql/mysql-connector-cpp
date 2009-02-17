@@ -72,7 +72,7 @@ public:
   void messagesLog      (const String::value_type * msg);
   void messagesLog      (const String & msg);
 
-  void  incrementCounter();
+  static void  incrementCounter( int incrVal= 1);
   int   recordFailed    ();
 
   static void setVerbose( bool verbosity    );

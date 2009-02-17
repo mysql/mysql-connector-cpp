@@ -49,7 +49,7 @@ void TestSuite::runTest()
   for ( testsList_it it=testCases.begin(); it != testCases.end(); ++it)
   {
     //Incrementing order number of current test
-    TestsListener::theInstance().incrementCounter();
+    TestsListener::incrementCounter();
 
     TestsListener::currentTestName( (*it)->name() );
 
@@ -61,11 +61,14 @@ void TestSuite::runTest()
     {
       TestsListener::bailSuite(
         String( "An exception occurred while running setUp before " )
-        + (*it)->name() + ". Message: " + e.what() );
+        + (*it)->name() + ". Message: " + e.what() + ". Skipping all tests in the suite" );
 
-      //TODO: break here and thus really bail a tests suite.
-      TestsListener::TestHasFinished( trrThrown, "Test setup has failed" );
-      continue;
+      //not really needed probably
+      //TestsListener::TestHasFinished( trrThrown, "Test setup has failed, all tests in the suite will be skipped" );
+
+      TestsListener::incrementCounter( testCases.size() - ( it - testCases.begin() + 1 ) );
+
+      break;
     }
 
     TestRunResult result=   trrPassed;

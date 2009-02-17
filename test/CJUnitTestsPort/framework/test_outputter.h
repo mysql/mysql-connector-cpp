@@ -37,7 +37,7 @@ public:
   {
   }
 
-  virtual void Header(const String::value_type * text=NULL) _PURE;
+  virtual void Header(const String & text= "") _PURE;
 
   virtual void SuiteHeader(const String & name
                            , unsigned first
@@ -45,11 +45,11 @@ public:
 
   virtual void TestPassed(unsigned ordNum
                           , const String & name
-                          , const String::value_type * comment=NULL) _PURE;
+                          , const String & comment= "") _PURE;
 
   virtual void TestFailed(unsigned ordNum
                           , const String & name
-                          , const String::value_type * comment=NULL) _PURE;
+                          , const String & comment= "") _PURE;
 
   virtual void Comment(const String & comment) _PURE;
 
@@ -57,7 +57,7 @@ public:
                        , unsigned testsFailed
                        // a bit TAP-bound... However listener can complete
                        // needed info
-                       , std::vector<int> failedTestsNum) _PURE;
+                       , std::vector<int> & failedTestsNum) _PURE;
 
   virtual void SuiteSummary(const String & suiteName
                             , unsigned testsRun
