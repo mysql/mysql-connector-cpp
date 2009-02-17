@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <cppconn/resultset.h>
 #include <cppconn/datatype.h>
 #include <cppconn/connection.h>
+#include <cppconn/metadata.h>
 
 namespace testsuite
 {
@@ -481,6 +482,35 @@ void connectionmetadata::getDriverVersions()
     ASSERT_LT(100, dbmeta->getDriverPatchVersion());
 
     ASSERT_EQUALS("MySQL Connector/C++", dbmeta->getDriverName());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connectionmetadata::getDefaultTransactionIsolation()
+{
+  logMsg("connectionmetadata::getDefaultTransactionIsolation() - MySQL_ConnectionMetaData::getDefaultTransactionIsolation()");
+  int server_version;
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+
+    server_version=(10000 * dbmeta->getDatabaseMajorVersion())
+            + (100 * dbmeta->getDriverMinorVersion())
+            + dbmeta->getDriverPatchVersion();
+
+    if (server_version < 32336)
+      FAIL("Sorry guys - we do not support MySQL <5.1. This test will not handle this case.");
+
+    ASSERT_EQUALS(sql::TRANSACTION_READ_COMMITTED, dbmeta->getDefaultTransactionIsolation());
+    ASSERT(sql::TRANSACTION_NONE != dbmeta->getDefaultTransactionIsolation());
+    ASSERT(sql::TRANSACTION_READ_UNCOMMITTED != dbmeta->getDefaultTransactionIsolation());
+    ASSERT(sql::TRANSACTION_REPEATABLE_READ != dbmeta->getDefaultTransactionIsolation());
+    ASSERT(sql::TRANSACTION_SERIALIZABLE != dbmeta->getDefaultTransactionIsolation());
   }
   catch (sql::SQLException &e)
   {

@@ -53,6 +53,7 @@ public:
     TEST_CASE(getConnection);
     TEST_CASE(getDatabaseVersions);
     TEST_CASE(getDriverVersions);
+    TEST_CASE(getDefaultTransactionIsolation);
   }
 
   /**
@@ -103,7 +104,7 @@ public:
    */
   void getConnection();
 
-    /**
+  /**
    * Test for DatabaseMetaData:getDatabaseMajorVersion, *MinorVersion,  *PatchVersion()
    *
    * Focus on code coverage: invalid parameter, invalid resultset
@@ -119,6 +120,13 @@ public:
    */
   void getDriverVersions();
 
+  /**
+   * Test for DatabaseMetaData:getDefaultTransactionIsolation()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getDefaultTransactionIsolation();
 };
 
 REGISTER_FIXTURE(connectionmetadata);
