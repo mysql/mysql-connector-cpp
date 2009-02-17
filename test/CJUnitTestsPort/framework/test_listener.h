@@ -35,63 +35,78 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 namespace testsuite
 {
 
+enum TestRunResult
+{
+  trrPassed = 0,
+  trrFailed,
+  trrThrown
+};
+
 class TestsListener : public policies::Singleton<TestsListener>
 {
   CCPP_SINGLETON(TestsListener);
 
   std::auto_ptr<TestOutputter> outputter;
 
-  String curSuiteName;
-  String curTestName;
-  unsigned curTestOrdNum;
+  String            curSuiteName;
+  String            curTestName;
+  unsigned          curTestOrdNum;
   std::stringstream log;
-  unsigned executed;
-  std::vector<int> failedTests;
+  unsigned          executed;
+  std::vector<int>  failedTests;
   // don't really need to count exceptions
-  unsigned exceptions;
-  bool verbose;
+  unsigned          exceptions;
+  bool              verbose;
+  bool              timing;
+
+  String            executionComment;
 
 public:
 
   std::iostream & errorsLog();
-  void errorsLog(const String::value_type * msg);
-  void errorsLog(const String::value_type * msg, const String::value_type * file, int line);
-  void errorsLog(const String & msg);
+  void errorsLog        (const String::value_type * msg);
+  void errorsLog        (const String::value_type * msg, const String::value_type * file, int line);
+  void errorsLog        (const String & msg);
 
   std::iostream & messagesLog();
-  void messagesLog(const String::value_type * msg);
-  void messagesLog(const String & msg);
+  void messagesLog      (const String::value_type * msg);
+  void messagesLog      (const String & msg);
 
-  void incrementCounter();
-  int recordFailed();
+  void  incrementCounter();
+  int   recordFailed    ();
 
-  void setVerbose(bool verbosity);
+  static void setVerbose( bool verbosity    );
+  static void doTiming  ( bool timing= true ); 
 
   inline int failed()
   {
     return failedTests.size();
   }
 
-  static void currentTestName(const String & name);
-  static void nextSuiteStarts(const String & name, int testsNumber);
+  static void   currentTestName (const String & name);
+  static String TestFullName    ();
 
-  static void testHasRun();
+  static void   nextSuiteStarts (const String & name, int testsNumber);
 
-  static void testHasFailed(const String & msg);
-  static void testHasThrown(const String::value_type * msg=NULL);
+  static void   testHasStarted  ();
+  static void   TestHasFinished ( TestRunResult result, const String & msg = "" );
 
-  static void testHasPassed();
-  static void testHasPassedWithInfo(const String & str);
+  static void   testHasFailed    (const String & msg);
 
-  static void bailSuite(const String & reason);
+  /** This sets comment to the test which output along w/ test result
+  (it will be output in silent(non-verbose) mode too)
+  */
+  static void   setTestExecutionComment ( const String & msg );
 
-  static void dumpLog();
+  static void   bailSuite       (const String & reason);
 
-  void summary();
+  static void   dumpLog         ();
+
+  void          summary         ();
 
 
 
-  static bool allTestsPassed();
+  static bool   allTestsPassed  ();
 };
 
 class TestFailedException

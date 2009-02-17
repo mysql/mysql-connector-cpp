@@ -44,6 +44,7 @@
 #include <map>
 #include <iostream>
 #include <list>
+#include <cctype>
 /*#include <locale>*/
 
 #ifndef _ABSTRACT
@@ -86,7 +87,7 @@ template <typename charT> struct ci_char_traits
 
   static const charT* find (const charT* s, int n, charT a)
   {
-    while (n-- > 0 && std::tolower(*s) != std::tolower(a))
+    while (  --n >= 0 && std::tolower(*s) != std::tolower(a))
     {
       ++s;
     }

@@ -47,8 +47,8 @@ void resultsetmetadata::getCatalogName()
     {
       meta->getCatalogName(0);
       FAIL("Column number starts at 1, invalid offset 0 not detected");
-    }
-    catch (sql::InvalidArgumentException &e)
+
+    } catch (sql::InvalidArgumentException &)
     {
     }
 
@@ -56,8 +56,8 @@ void resultsetmetadata::getCatalogName()
     {
       meta->getCatalogName(6);
       FAIL("Only five columns available but requesting number six, should bail");
-    }
-    catch (sql::InvalidArgumentException &e)
+
+    } catch (sql::InvalidArgumentException &)
     {
     }
 
@@ -66,8 +66,8 @@ void resultsetmetadata::getCatalogName()
     {
       meta->getCatalogName(1);
       FAIL("Can fetch meta from invalid resultset");
-    }
-    catch (sql::SQLException &e)
+
+    } catch (sql::SQLException &)
     {
     }
 
@@ -95,8 +95,8 @@ void resultsetmetadata::getColumnCount()
     {
       meta->getCatalogName(1);
       FAIL("Can fetch meta from invalid resultset");
-    }
-    catch (sql::SQLException &e)
+
+    } catch (sql::SQLException &)
     {
     }
 
@@ -128,8 +128,8 @@ void resultsetmetadata::getColumnDisplaySize()
     {
       meta->getColumnDisplaySize(0);
       FAIL("Column number starts at 1, invalid offset 0 not detected");
-    }
-    catch (sql::InvalidArgumentException &e)
+
+    } catch (sql::InvalidArgumentException &)
     {
     }
 
@@ -137,8 +137,8 @@ void resultsetmetadata::getColumnDisplaySize()
     {
       meta->getColumnDisplaySize(6);
       FAIL("Only five columns available but requesting number six, should bail");
-    }
-    catch (sql::InvalidArgumentException &e)
+
+    } catch (sql::InvalidArgumentException &)
     {
     }
 
@@ -147,8 +147,8 @@ void resultsetmetadata::getColumnDisplaySize()
     {
       meta->getColumnDisplaySize(1);
       FAIL("Can fetch meta from invalid resultset");
-    }
-    catch (sql::SQLException &e)
+
+    } catch (sql::SQLException &)
     {
     }
 
@@ -186,8 +186,8 @@ void resultsetmetadata::getColumnNameAndLabel()
     {
       meta->getColumnName(0);
       FAIL("Column number starts at 1, invalid offset 0 not detected");
-    }
-    catch (sql::InvalidArgumentException &e)
+
+    } catch (sql::InvalidArgumentException &)
     {
     }
 
@@ -195,8 +195,8 @@ void resultsetmetadata::getColumnNameAndLabel()
     {
       meta->getColumnLabel(0);
       FAIL("Column number starts at 1, invalid offset 0 not detected");
-    }
-    catch (sql::InvalidArgumentException &e)
+
+    } catch (sql::InvalidArgumentException &)
     {
     }
 
@@ -204,8 +204,8 @@ void resultsetmetadata::getColumnNameAndLabel()
     {
       meta->getColumnName(6);
       FAIL("Only five columns available but requesting number six, should bail");
-    }
-    catch (sql::InvalidArgumentException &e)
+
+    } catch (sql::InvalidArgumentException &)
     {
     }
 
@@ -213,8 +213,8 @@ void resultsetmetadata::getColumnNameAndLabel()
     {
       meta->getColumnLabel(6);
       FAIL("Only five columns available but requesting number six, should bail");
-    }
-    catch (sql::InvalidArgumentException &e)
+
+    } catch (sql::InvalidArgumentException &)
     {
     }
 
@@ -223,8 +223,8 @@ void resultsetmetadata::getColumnNameAndLabel()
     {
       meta->getColumnName(1);
       FAIL("Can fetch meta from invalid resultset");
-    }
-    catch (sql::SQLException &e)
+
+    } catch (sql::SQLException &)
     {
     }
 
@@ -232,8 +232,8 @@ void resultsetmetadata::getColumnNameAndLabel()
     {
       meta->getColumnLabel(1);
       FAIL("Can fetch meta from invalid resultset");
-    }
-    catch (sql::SQLException &e)
+
+    } catch (sql::SQLException &)
     {
     }
 

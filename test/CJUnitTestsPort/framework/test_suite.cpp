@@ -51,7 +51,6 @@ void TestSuite::runTest()
     //Incrementing order number of current test
     TestsListener::theInstance().incrementCounter();
 
-
     TestsListener::currentTestName( (*it)->name() );
 
     try
@@ -65,47 +64,50 @@ void TestSuite::runTest()
         + (*it)->name() + ". Message: " + e.what() );
 
       //TODO: break here and thus really bail a tests suite.
-      TestsListener::theInstance().testHasThrown();
+      TestsListener::TestHasFinished( trrThrown, "Test setup has failed" );
       continue;
     }
 
+    TestRunResult result=   trrPassed;
+
     try
     {
-      TestsListener::testHasRun();
+      TestsListener::testHasStarted();
 
       (*it)->runTest();
-
-      TestsListener::testHasPassed();
     }
     // TODO: move interpretation of exception to TestSuite descendants
     // framework shouldn't know about sql::* exceptions
     catch ( sql::MethodNotImplementedException & sqlni )
     {
-      String msg ( "SKIP " ); // or should it be TODO
-      msg = msg + " relies on method " + sqlni.what()
+      String msg( "SKIP relies on method " ); // or should it be TODO
+      msg= msg + sqlni.what()
         + ", which is not implemented at the moment.";
 
-      TestsListener::testHasPassedWithInfo( msg );
+      TestsListener::setTestExecutionComment( msg );
     }
     catch ( std::exception & e )
     {
-      TestsListener::theInstance().testHasThrown();
+      result= trrThrown;
       TestsListener::theInstance().errorsLog()
-        << "Not trapped exception occurred while running test:"
+        << "Standard exception occurred while running test:"
         << (*it)->name() << ". Message: " << e.what()
         << std::endl;
     }
     catch ( TestFailedException &)
     {
       // Thrown by fail. Just used to stop test execution
+      result= trrFailed;
     }
     catch (...)
     {
-      TestsListener::theInstance().testHasThrown();
+      result= trrThrown;
       TestsListener::theInstance().errorsLog()
-        << "Not trapped exception occurred while running:"
+        << "Unknown exception occurred while running:"
         << (*it)->name() << std::endl;
     }
+
+    TestsListener::TestHasFinished( result );
 
     try
     {
@@ -113,7 +115,6 @@ void TestSuite::runTest()
     }
     catch ( std::exception & e )
     {
-      TestsListener::theInstance().testHasThrown();
       TestsListener::theInstance().errorsLog()
         << "Not trapped exception occurred while running while tearDown after:"
         << (*it)->name() << ". Message: " << e.what()
@@ -121,7 +122,7 @@ void TestSuite::runTest()
     }
 
     // TODO: check why did i add it and is it still needed.
-    TestsListener::theInstance().currentTestName( "n/a" );
+    //TestsListener::theInstance().currentTestName( "n/a" );
   }
 }
 

@@ -48,4 +48,9 @@ For example, to connect to 192.168.2.22 on port 3307, try:
 
 # CJUnitTestsPort tcp://192.168.2.22:3307 user password database
 
+Other possible start options are:
+
+--verbose - to output contents of messages/errors log
+--timer   - to automatically time all tests runs. --verbose is needed for custom timers.
+
 The 1.0.2alpha release should pass about 95% of the tests.

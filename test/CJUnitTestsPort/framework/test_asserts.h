@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #ifndef __TESTASSERTS_H_
 #define __TESTASSERTS_H_
 
+#include "../../../cppconn/resultset.h"
+
 #include "../common/ccppTypes.h"
 
 #ifndef __LINE__
@@ -99,7 +101,7 @@ void assertLessThan(unsigned int expected, unsigned int result
 #define ASSERT( exp ) assertTrue( #exp, exp, __FILE__, __LINE__)
 
 #define ASSERT_MESSAGE( exp, message ) \
-	assertTrueMessage( exp, message, __FILE__, __LINE__ )
+	assertTrue( message, exp, __FILE__, __LINE__ )
 
 #define FAIL( why ) fail( #why, __FILE__, __LINE__ )
 

@@ -19,26 +19,37 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "test_listener.h"
 #include <stdio.h>
+
+#include "test_listener.h"
+#include "test_timer.h"
 
 namespace testsuite
 {
 
 TestsListener::TestsListener()
-: curSuiteName("n/a")
-, curTestName("n/a")
-, curTestOrdNum(0)
-, executed(0)
-, exceptions(0)
-, verbose(false)
+: curSuiteName  ( "n/a" )
+, curTestName   ( "n/a" )
+, curTestOrdNum ( 0     )
+, executed      ( 0     )
+, exceptions    ( 0     )
+, verbose       ( false )
+, timing        ( false )
 {
   //TODO: Make StartOptions  dependent
   outputter.reset(new TAP());
 }
 
-void TestsListener::setVerbose(bool verbosity) {
-  verbose = verbosity;
+
+void TestsListener::setVerbose(bool verbosity)
+{
+  theInstance().verbose = verbosity;
+}
+
+
+void  TestsListener::doTiming( bool timing )
+{
+  theInstance().timing= timing;
 }
 
 //TODO: "set" counterparts
@@ -48,16 +59,19 @@ std::iostream & TestsListener::errorsLog()
   return log;
 }
 
+
 void TestsListener::errorsLog(const String::value_type * msg)
 {
   if (msg != NULL)
-    log << msg;
+    log << msg  << std::endl;
 }
+
 
 void TestsListener::errorsLog(const String & msg)
 {
   log << msg << std::endl;
 }
+
 
 void TestsListener::errorsLog(const String::value_type * msg
                               , const String::value_type * file
@@ -69,16 +83,19 @@ void TestsListener::errorsLog(const String::value_type * msg
   }
 }
 
+
 std::iostream & TestsListener::messagesLog()
 {
   return log;
 }
+
 
 void TestsListener::messagesLog(const String::value_type * msg)
 {
   if (msg != NULL)
     log << msg;
 }
+
 
 void TestsListener::messagesLog(const String & msg)
 {
@@ -87,15 +104,24 @@ void TestsListener::messagesLog(const String & msg)
     theInstance().outputter->Comment(msg);
 }
 
+
 void TestsListener::currentTestName(const String & name)
 {
   theInstance().curTestName=name;
 }
 
+
+String TestsListener::TestFullName()
+{
+  return theInstance().curSuiteName + "::" + theInstance().curTestName;
+}
+
+
 void TestsListener::incrementCounter()
 {
   ++curTestOrdNum;
 }
+
 
 int TestsListener::recordFailed()
 {
@@ -103,49 +129,115 @@ int TestsListener::recordFailed()
   return failedTests.size();
 }
 
+
 void TestsListener::nextSuiteStarts(const String & name, int testsNumber)
 {
+  /*
+  if ( name.length() > 0 )
+      theInstance().messagesLog()
+        << "=============== " << name << " ends. " << "==============="
+        << std::endl;*/
+  
+
+
   theInstance().curSuiteName=name;
+
+  /*
+  theInstance().messagesLog()
+      << "=============== " << name << " starts. " << "==============="
+      << std::endl;*/
+  
 
   theInstance().outputter->SuiteHeader(name, theInstance().curTestOrdNum + 1
                                        , testsNumber);
 }
 
-void TestsListener::testHasRun()
+
+void TestsListener::testHasStarted()
 {
   //std::cout << ".";
   ++theInstance().executed;
+  theInstance().executionComment= "";
+
+  if ( theInstance().timing )
+  {
+    Timer::startTimer( TestFullName() );
+  }
+
 }
+
+
+void TestsListener::TestHasFinished( TestRunResult result, const String & msg )
+{
+  static String timingResult("");
+
+  if ( theInstance().timing )
+  {
+    clock_t time= Timer::stopTimer( TestFullName() );
+
+    static std::stringstream tmp;
+
+    tmp.str("");
+    tmp << time << "(";
+    tmp.precision( 7 );
+    tmp << Timer::translate2seconds( time ) << "s)";
+
+    timingResult= "Time:";
+    timingResult+= tmp.str();    
+  }
+  else
+    timingResult= "";
+
+  StringUtils::concatSeparated( theInstance().executionComment, msg );
+  StringUtils::concatSeparated( theInstance().executionComment, timingResult
+    , " #" );
+
+  if ( result != trrPassed )
+  {
+    // Output about test fail and recording info
+
+    theInstance().recordFailed();
+
+    if (result == trrThrown )
+      ++theInstance().exceptions;
+
+    theInstance().outputter->TestFailed(theInstance().curTestOrdNum
+      , theInstance().curTestName
+      ,  theInstance().executionComment.c_str());
+  }
+  else
+  {
+    // Output about test success
+    theInstance().outputter->TestPassed(theInstance().curTestOrdNum
+      , theInstance().curTestName
+      , theInstance().executionComment.c_str());
+  }
+
+  
+  //log messsages from teardown goes after next test 
+  if (theInstance().verbose)
+    dumpLog();
+  else
+    // Just clearing memory
+    theInstance().log.str("");
+}
+
+
+void TestsListener::setTestExecutionComment ( const String & msg )
+{
+  theInstance().executionComment= msg;
+}
+
 
 void TestsListener::testHasFailed(const String & msg)
 {
+  setTestExecutionComment( msg );
+
   theInstance().errorsLog(msg.c_str());
 
-  theInstance().outputter->TestFailed(theInstance().curTestOrdNum, theInstance().curTestName, msg.c_str());
-  theInstance().recordFailed();
   throw TestFailedException();
 }
 
-void TestsListener::testHasThrown(const String::value_type * msg)
-{
-  theInstance().errorsLog(msg);
-
-  theInstance().outputter->TestFailed(theInstance().curTestOrdNum, theInstance().curTestName);
-  theInstance().recordFailed();
-  ++theInstance().exceptions;
-}
-
-void TestsListener::testHasPassed()
-{
-  theInstance().outputter->TestPassed(theInstance().curTestOrdNum
-                                      , theInstance().curTestName);
-}
-
-void TestsListener::testHasPassedWithInfo(const String & str)
-{
-  theInstance().outputter->TestPassed(theInstance().curTestOrdNum
-                                      , theInstance().curTestName, str.c_str());
-}
 
 void TestsListener::summary()
 {
@@ -153,6 +245,7 @@ void TestsListener::summary()
                      , failed() + exceptions
                      , failedTests);
 }
+
 
 bool TestsListener::allTestsPassed()
 {
@@ -167,7 +260,21 @@ void TestsListener::bailSuite(const String & reason)
 
 void TestsListener::dumpLog()
 {
+  if ( theInstance().log.str().length() > 0 )
+  {
+    std::cerr << "---------------- "
+    << theInstance().curTestName << " starts. " << "----------------" << std::endl;
+  }
+
   std::cerr << theInstance().log.str();
+
+  if (theInstance().log.str().length() > 0 )
+  {
+    std::cerr <<  "---------------- "
+    << theInstance().curTestName << " ends. " << "----------------" << std::endl;
+  }
+
+  theInstance().log.str("");
 }
 
 }

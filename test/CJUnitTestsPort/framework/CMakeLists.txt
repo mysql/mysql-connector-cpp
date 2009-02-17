@@ -45,7 +45,9 @@ SET(testframework_sources
 	test_tapOutputter.cpp
 	test_runner.cpp
 	test_container.cpp
+	test_timer.cpp
 	../common/stringutils.cpp
+	../common/file.cpp
 	)
 
 # It's convinient for VS users to have headers as part of project
@@ -61,7 +63,9 @@ IF(WIN32)
 		test_outputter.h
 		test_tapOutputter.h
 		test_container.h
+		test_timer.h
 		../common/stringutils.h
+		../common/file.h
 		)
 ENDIF(WIN32)
 

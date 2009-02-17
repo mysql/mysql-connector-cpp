@@ -55,11 +55,12 @@ typedef sql::Driver Driver;
 typedef std::auto_ptr<sql::ResultSetMetaData> ResultSetMetaData;
 typedef std::auto_ptr<sql::DatabaseMetaData> DatabaseMetaData;
 
+
 class value_object
 {
 private:
-  String asString;
-  bool wasNull;
+  String  asString;
+  bool    wasNull;
 
 public:
 
@@ -77,8 +78,9 @@ public:
   {
     return asString;
   }
-  int intValue() const;
-  float floatValue() const;
+
+  int       intValue() const;
+  float     floatValue() const;
   long long longValue() const;
 
   /**
@@ -393,7 +395,6 @@ protected:
                            , int subminor);
 
   /*bool          isClassAvailable            (String classname);*/
-  void closeMemberJDBCResources();
 
   /* See comments in cpp file*/
   /*void cleanupTempFiles(const File exampleTempFile, const String tempfilePrefix) ;*/
@@ -416,19 +417,24 @@ public:
    *            The name of the JUnit test case
    */
 
-  BaseTestFixture(const String & name);
+  BaseTestFixture (const String & name);
 
-  void logDebug(const String & message);
+  void logDebug   (const String & message);
+
+
+  void selectDb   ( Statement & st );
+
+
   /**
    * Creates resources used by all tests.
    *
    * @throws Exception
    *             if an error occurs.
    */
-
   /* throws Exception */
-
   virtual void setUp();
+
+
   /**
    * Destroys resources created during the test case.
    *

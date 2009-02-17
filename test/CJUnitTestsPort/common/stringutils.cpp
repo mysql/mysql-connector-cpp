@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "stringutils.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 namespace StringUtils
 {
@@ -145,6 +146,48 @@ namespace StringUtils
       return defStr;
     else
       return str;
+  }
+
+  String toHexString( char c, bool leading0x )
+  {
+    String result;
+
+    if ( leading0x )
+      result= "0x";
+
+    char buf[3];
+
+    sprintf( buf, "%02x", c & 0xff );
+
+    result.append( buf );
+
+    return result;
+  }
+
+  int toHexString( String & buff, char c[], int count, bool leading0x )
+  {
+    while( --count >= 0 )
+    {
+      buff+= toHexString( *c, leading0x );
+
+      if ( count )
+      {
+        buff+= " ";
+        ++c;
+      }
+    }
+
+    return buff.size();
+  }
+
+  String & concatSeparated( String & to, const String & add, const String & separator )
+  {
+    if ( to.length() > 0 && add.length() > 0 )
+      to+= separator;
+
+    to+= add;
+
+    return to;
   }
 
 }
