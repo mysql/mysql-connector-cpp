@@ -440,6 +440,7 @@ void connectionmetadata::getConnection()
 void connectionmetadata::getDatabaseVersions()
 {
   logMsg("connectionmetadata::getDatabaseVersions() - MySQL_ConnectionMetaData::getDatabase[Minor|Major|Patch]Version()");
+  std::stringstream prodversion;
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
@@ -449,6 +450,14 @@ void connectionmetadata::getDatabaseVersions()
     ASSERT_LT(100, dbmeta->getDatabaseMinorVersion());
     ASSERT_GT(-1, dbmeta->getDatabasePatchVersion());
     ASSERT_LT(100, dbmeta->getDatabasePatchVersion());
+
+    ASSERT_EQUALS("MySQL", dbmeta->getDatabaseProductName());
+
+    prodversion.str("");
+    prodversion << dbmeta->getDatabaseMajorVersion() << "." << dbmeta->getDatabaseMinorVersion();
+    prodversion << "." << dbmeta->getDatabasePatchVersion();
+    ASSERT_EQUALS(prodversion.str(), dbmeta->getDatabaseProductVersion());
+
   }
   catch (sql::SQLException &e)
   {
@@ -470,6 +479,8 @@ void connectionmetadata::getDriverVersions()
     ASSERT_LT(100, dbmeta->getDriverMinorVersion());
     ASSERT_GT(-1, dbmeta->getDriverPatchVersion());
     ASSERT_LT(100, dbmeta->getDriverPatchVersion());
+
+    ASSERT_EQUALS("MySQL Connector/C++", dbmeta->getDriverName());
   }
   catch (sql::SQLException &e)
   {
