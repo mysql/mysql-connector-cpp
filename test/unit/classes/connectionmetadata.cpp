@@ -330,7 +330,6 @@ void connectionmetadata::getColumns()
       }
       ASSERT_EQUALS(res->getString(18), res->getString("IS_NULLABLE"));
       ASSERT_EQUALS("", res->getString(19));
-
       ASSERT_EQUALS(res->getString(19), res->getString("SCOPE_CATALOG"));
       ASSERT_EQUALS("", res->getString(20));
       ASSERT_EQUALS(res->getString(20), res->getString("SCOPE_SCHEMA"));
