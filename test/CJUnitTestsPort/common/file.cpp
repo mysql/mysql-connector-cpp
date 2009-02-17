@@ -77,9 +77,10 @@ namespace FileUtils
     {
       if ( exists() )
         stream.open( name.c_str(), std::ios_base::out | std::ios_base::in
-                                | ( binary ? std::ios_base::binary : 0 ) );
+                                | ( binary ? std::ios_base::binary : static_cast<std::ios_base::openmode>(0) ) );
       else
-        stream.open( name.c_str(), std::ios_base::out | ( binary ? std::ios_base::binary : 0 ) );
+        stream.open( name.c_str(), std::ios_base::out
+                                | ( binary ? std::ios_base::binary : static_cast<std::ios_base::openmode>(0) ) );
     }
     else
       stream.clear();
