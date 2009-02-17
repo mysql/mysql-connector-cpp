@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 namespace testsuite
 {
 
-void TAP::Header(const String::value_type * text)
+void TAP::Header(const String & text)
 {
 }
 
@@ -41,11 +41,11 @@ void TAP::SuiteHeader(const String & name
 
 void TAP::TestPassed(unsigned ordNum
                      , const String & name
-                     , const String::value_type * comment)
+                     , const String & comment)
 {
   std::cout << "ok " << ordNum << " - " << name;
 
-  if (comment != NULL)
+  if (comment.length() > 0)
   {
     std::cout << " # " << comment;
   }
@@ -53,14 +53,14 @@ void TAP::TestPassed(unsigned ordNum
   std::cout << std::endl;
 }
 
-void TAP::TestFailed(unsigned ordNum
-                     , const String & name
-                     , const String::value_type * comment)
+void TAP::TestFailed( unsigned        ordNum
+                    , const String &  name
+                    , const String &  comment )
 {
   std::cout << "not ok " << ordNum
           << " - " << name;
 
-  if (comment != NULL)
+  if ( comment.length() > 0 )
   {
     std::cout << " # " << comment;
   }
@@ -73,9 +73,9 @@ void TAP::Comment(const String & comment)
   std::cout << " # " << comment << std::endl;
 }
 
-void TAP::Summary(unsigned testsRun
-                  , unsigned testsFailed
-                  , std::vector<int> failedTestsNum)
+void TAP::Summary( unsigned           testsRun
+                 , unsigned           testsFailed
+                 , std::vector<int> & failedTestsNum)
 {
   char percentage[7];
 

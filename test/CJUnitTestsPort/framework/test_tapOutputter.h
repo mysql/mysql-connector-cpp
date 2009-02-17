@@ -35,7 +35,7 @@ public:
   {
   }
 
-  virtual void Header(const String::value_type * text);
+  virtual void Header(const String & text);
 
   virtual void SuiteHeader(const String & name
                            , unsigned first
@@ -43,17 +43,17 @@ public:
 
   virtual void TestPassed(unsigned ordNum
                           , const String & name
-                          , const String::value_type * comment);
+                          , const String & comment);
 
   virtual void TestFailed(unsigned ordNum
                           , const String & name
-                          , const String::value_type * comment);
+                          , const String & comment);
 
   virtual void Comment(const String & comment);
 
   virtual void Summary(unsigned testsRun
                        , unsigned testsFailed
-                       , std::vector<int> failedTestsNum);
+                       , std::vector<int> & failedTestsNum);
 
   virtual void SuiteSummary(const String & suiteName
                             , unsigned testsRun

@@ -117,9 +117,9 @@ String TestsListener::TestFullName()
 }
 
 
-void TestsListener::incrementCounter()
+void TestsListener::incrementCounter( int incrVal )
 {
-  ++curTestOrdNum;
+  theInstance().curTestOrdNum+= incrVal;
 }
 
 
@@ -203,24 +203,23 @@ void TestsListener::TestHasFinished( TestRunResult result, const String & msg )
 
     theInstance().outputter->TestFailed(theInstance().curTestOrdNum
       , theInstance().curTestName
-      ,  theInstance().executionComment.c_str());
+      ,  theInstance().executionComment );
   }
   else
   {
     // Output about test success
     theInstance().outputter->TestPassed(theInstance().curTestOrdNum
       , theInstance().curTestName
-      , theInstance().executionComment.c_str());
+      , theInstance().executionComment );
   }
 
-/*
+
   //log messsages from teardown goes after next test 
   if (theInstance().verbose)
     dumpLog();
   else
     // Just clearing memory
     theInstance().log.str("");
- */
 }
 
 
