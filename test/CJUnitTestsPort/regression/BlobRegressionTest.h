@@ -42,20 +42,15 @@ namespace regression
     TEST_FIXTURE( BlobRegressionTest )
     {
       //TEST_CASE( testBug2670 );
-
-/***** Commented out because of stack corruption i can't understand at the moment
-      TEST_CASE( testUpdateLongBlobGT16M        );*/
-
-
       //TEST_CASE( testUpdatableBlobsWithCharsets );
       TEST_CASE( testBug5490                    );
-
       // not relevant to c/c++ (at least) at the moment
       //TEST_CASE( testBug8096                    );
 
       //TEST_CASE( testBug9040                    );
       TEST_CASE( testBug10850                   );
       TEST_CASE( testBug34677                   );
+      TEST_CASE( testUpdateLongBlobGT16M        );
     }
 
   /**

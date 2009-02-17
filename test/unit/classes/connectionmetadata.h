@@ -48,7 +48,14 @@ public:
     TEST_CASE(getSchemata);
     TEST_CASE(getAttributes);
     TEST_CASE(getBestRowIdentifier);
+    TEST_CASE(getColumnPrivileges);
     TEST_CASE(getColumns);
+    TEST_CASE(getConnection);
+    TEST_CASE(getDatabaseVersions);
+    TEST_CASE(getDriverVersions);
+    TEST_CASE(getDefaultTransactionIsolation);
+    TEST_CASE(getExtraNameCharacters);
+    TEST_CASE(getIdentifierQuoteString);
   }
 
   /**
@@ -67,7 +74,7 @@ public:
    */
   void getAttributes();
 
-    /**
+  /**
    * Test for DatabaseMetaData:getBestRowIdentifier()
    *
    * Focus on code coverage: invalid parameter, invalid resultset
@@ -82,6 +89,62 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getColumns();
+
+  /**
+   * Test for DatabaseMetaData:getColumnPrivileges()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getColumnPrivileges();
+
+  /**
+   * Test for DatabaseMetaData:getConnection
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getConnection();
+
+  /**
+   * Test for DatabaseMetaData:getDatabaseMajorVersion, *MinorVersion,  *PatchVersion()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getDatabaseVersions();
+
+  /**
+   * Test for DatabaseMetaData:getDriverMajorVersion, *MinorVersion,  *PatchVersion()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getDriverVersions();
+
+  /**
+   * Test for DatabaseMetaData:getDefaultTransactionIsolation()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getDefaultTransactionIsolation();
+
+  /**
+   * Test for DatabaseMetaData:getExtraNameCharacters()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getExtraNameCharacters();
+
+  /**
+   * Test for DatabaseMetaData:getIdentifierQuoteString()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getIdentifierQuoteString();
 
 };
 

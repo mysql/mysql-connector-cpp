@@ -27,6 +27,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <stdlib.h>
 #include <cppconn/resultset.h>
 #include <cppconn/datatype.h>
+#include <cppconn/connection.h>
+#include <cppconn/metadata.h>
 
 namespace testsuite
 {
@@ -204,6 +206,64 @@ void connectionmetadata::getBestRowIdentifier()
   }
 }
 
+void connectionmetadata::getColumnPrivileges()
+{
+  logMsg("connectionmetadata::getColumnPrivileges() - MySQL_ConnectionMetaData::getColumnPrivileges");
+  int rows=0;
+  try
+  {
+
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(col1 INT, col2 INT)");
+    DatabaseMetaData dbmeta(con->getMetaData());
+
+    res.reset(dbmeta->getColumnPrivileges(con->getCatalog(), con->getSchema(), "test", "id"));
+    ASSERT_EQUALS(false, res->next());
+
+    res.reset(dbmeta->getColumnPrivileges(con->getCatalog(), con->getSchema(), "test", "col%"));
+    rows=0;
+    while (res->next())
+    {
+      rows++;
+
+      ASSERT_EQUALS(con->getCatalog(), res->getString(1));
+      ASSERT_EQUALS(res->getString(1), res->getString("TABLE_CAT"));
+      ASSERT_EQUALS(con->getSchema(), res->getString(2));
+      ASSERT_EQUALS(res->getString(2), res->getString("TABLE_SCHEM"));
+      ASSERT_EQUALS("test", res->getString(3));
+
+      ASSERT_EQUALS(res->getString(3), res->getString("TABLE_NAME"));
+      ASSERT_EQUALS(res->getString(4), res->getString("COLUMN_NAME"));
+      ASSERT_EQUALS("", res->getString(5));
+      ASSERT_EQUALS(res->getString(5), res->getString("GRANTOR"));
+      ASSERT_EQUALS(res->getString(6), res->getString("GRANTEE"));
+      ASSERT_EQUALS(res->getString(7), res->getString("PRIVILEGE"));
+      ASSERT_EQUALS(res->getString(8), res->getString("IS_GRANTABLE"));
+      if (("NO" != res->getString(8)) && ("YES" != res->getString(8)) && ("" != res->getString(8)))
+      {
+        // Let's be optimistic that  the column does not hold this exact value...
+        ASSERT_EQUALS("Any of 'YES', 'NO' and empty string ''", res->getString(8));
+      }
+
+    }
+    ASSERT_GT(2, rows);
+
+    res.reset(dbmeta->getColumnPrivileges(con->getCatalog(), con->getSchema(), "test", "col2"));
+    ASSERT_EQUALS(true, res->next());
+    ASSERT_EQUALS("col2", res->getString("COLUMN_NAME"));
+    ASSERT_EQUALS(res->getString(4), res->getString("COLUMN_NAME"));
+
+    stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 void connectionmetadata::getColumns()
 {
   logMsg("connectionmetadata::getColumn() - MySQL_ConnectionMetaData::getColumns");
@@ -330,16 +390,15 @@ void connectionmetadata::getColumns()
       }
       ASSERT_EQUALS(res->getString(18), res->getString("IS_NULLABLE"));
       ASSERT_EQUALS("", res->getString(19));
-
       ASSERT_EQUALS(res->getString(19), res->getString("SCOPE_CATALOG"));
       ASSERT_EQUALS("", res->getString(20));
       ASSERT_EQUALS(res->getString(20), res->getString("SCOPE_SCHEMA"));
       ASSERT_EQUALS("", res->getString(21));
-      ASSERT_EQUALS(res->getString(21), res->getString("SCOPE_TABLE"));      
+      ASSERT_EQUALS(res->getString(21), res->getString("SCOPE_TABLE"));
       ASSERT_EQUALS("", res->getString(22));
-      ASSERT_EQUALS(res->getString(22), res->getString("SOURCE_DATA_TYPE"));      
+      ASSERT_EQUALS(res->getString(22), res->getString("SOURCE_DATA_TYPE"));
       ASSERT_EQUALS(it->is_autoincrement, res->getString(23));
-      ASSERT_EQUALS(res->getString(23), res->getString("IS_AUTOINCREMENT"));      
+      ASSERT_EQUALS(res->getString(23), res->getString("IS_AUTOINCREMENT"));
       stmt->execute("DROP TABLE IF EXISTS test");
     }
     if (got_warning)
@@ -354,6 +413,190 @@ void connectionmetadata::getColumns()
     fail(e.what(), __FILE__, __LINE__);
   }
 }
+
+void connectionmetadata::getConnection()
+{
+  logMsg("connectionmetadata::getConnection() - MySQL_ConnectionMetaData::getConnection");
+  sql::Connection* same_con;
+  try
+  {
+    stmt.reset(con->createStatement());
+    stmt->execute("SET @this_is_my_connection_id=101");
+    DatabaseMetaData dbmeta(con->getMetaData());
+    same_con=dbmeta->getConnection();
+    stmt.reset(same_con->createStatement());
+    res.reset(stmt->executeQuery("SELECT @this_is_my_connection_id AS _connection_id"));
+    ASSERT(res->next());
+    ASSERT_EQUALS(101, res->getInt("_connection_id"));
+    ASSERT_EQUALS(res->getInt(1), res->getInt("_connection_id"));
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connectionmetadata::getDatabaseVersions()
+{
+  logMsg("connectionmetadata::getDatabaseVersions() - MySQL_ConnectionMetaData::getDatabase[Minor|Major|Patch]Version()");
+  std::stringstream prodversion;
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    ASSERT_GT(2, dbmeta->getDatabaseMajorVersion());
+    ASSERT_LT(7, dbmeta->getDatabaseMajorVersion());
+    ASSERT_GT(-1, dbmeta->getDatabaseMinorVersion());
+    ASSERT_LT(100, dbmeta->getDatabaseMinorVersion());
+    ASSERT_GT(-1, dbmeta->getDatabasePatchVersion());
+    ASSERT_LT(100, dbmeta->getDatabasePatchVersion());
+
+    ASSERT_EQUALS("MySQL", dbmeta->getDatabaseProductName());
+
+    prodversion.str("");
+    prodversion << dbmeta->getDatabaseMajorVersion() << "." << dbmeta->getDatabaseMinorVersion();
+    prodversion << "." << dbmeta->getDatabasePatchVersion();
+    if (prodversion.str().length() < dbmeta->getDatabaseProductVersion().length())
+    {
+      // Check only left prefix, database could have "-alpha" or something in its product versin
+      ASSERT_EQUALS(prodversion.str(), dbmeta->getDatabaseProductVersion().substr(0, prodversion.str().length()));
+    }
+    else
+    {
+      ASSERT_EQUALS(prodversion.str(), dbmeta->getDatabaseProductVersion());
+    }
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connectionmetadata::getDriverVersions()
+{
+  logMsg("connectionmetadata::getDriverVersions() - MySQL_ConnectionMetaData::getDriver[Minor|Major|Patch]Version()");
+  std::stringstream prodversion;
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    ASSERT_GT(0, dbmeta->getDriverMajorVersion());
+    ASSERT_LT(2, dbmeta->getDriverMajorVersion());
+    ASSERT_GT(-1, dbmeta->getDriverMinorVersion());
+    ASSERT_LT(100, dbmeta->getDriverMinorVersion());
+    ASSERT_GT(-1, dbmeta->getDriverPatchVersion());
+    ASSERT_LT(100, dbmeta->getDriverPatchVersion());
+
+    ASSERT_EQUALS("MySQL Connector/C++", dbmeta->getDriverName());
+
+    prodversion.str("");
+    prodversion << dbmeta->getDriverMajorVersion() << "." << dbmeta->getDriverMinorVersion();
+    prodversion << "." << dbmeta->getDriverPatchVersion();
+    if (prodversion.str().length() < dbmeta->getDriverVersion().length())
+    {
+      // Check only left prefix, Driver could have "-alpha" or something in its product versin
+      ASSERT_EQUALS(prodversion.str(), dbmeta->getDriverVersion().substr(0, prodversion.str().length()));
+    }
+    else
+    {
+      ASSERT_EQUALS(prodversion.str(), dbmeta->getDriverVersion());
+    }
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connectionmetadata::getDefaultTransactionIsolation()
+{
+  logMsg("connectionmetadata::getDefaultTransactionIsolation() - MySQL_ConnectionMetaData::getDefaultTransactionIsolation()");
+  int server_version;
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+
+    server_version=(10000 * dbmeta->getDatabaseMajorVersion())
+            + (100 * dbmeta->getDriverMinorVersion())
+            + dbmeta->getDriverPatchVersion();
+
+    if (server_version < 32336)
+      FAIL("Sorry guys - we do not support MySQL <5.1. This test will not handle this case.");
+
+    ASSERT_EQUALS(sql::TRANSACTION_READ_COMMITTED, dbmeta->getDefaultTransactionIsolation());
+    ASSERT(sql::TRANSACTION_NONE != dbmeta->getDefaultTransactionIsolation());
+    ASSERT(sql::TRANSACTION_READ_UNCOMMITTED != dbmeta->getDefaultTransactionIsolation());
+    ASSERT(sql::TRANSACTION_REPEATABLE_READ != dbmeta->getDefaultTransactionIsolation());
+    ASSERT(sql::TRANSACTION_SERIALIZABLE != dbmeta->getDefaultTransactionIsolation());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connectionmetadata::getExtraNameCharacters()
+{
+  logMsg("connectionmetadata::getExtraNameCharacters() - MySQL_ConnectionMetaData::getExtraNameCharacters()");
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    ASSERT_EQUALS("#@", dbmeta->getExtraNameCharacters());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connectionmetadata::getIdentifierQuoteString()
+{
+  logMsg("connectionmetadata::getIdentifierQuoteString() - MySQL_ConnectionMetaData::getIdentifierQuoteString()");
+  bool can_set_sqlmode=false;
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    stmt.reset(con->createStatement());
+    try
+    {
+      stmt->execute("SET @@sql_mode = ''");
+      res.reset(stmt->executeQuery("SELECT @@sql_mode AS _sql_mode"));
+      ASSERT(res->next());
+      ASSERT_EQUALS("", res->getString("_sql_mode"));
+      can_set_sqlmode=true;
+    }
+    catch (sql::SQLException &e)
+    {
+      logMsg("Cannot set SQL_MODE, skipping test");
+    }
+    if (can_set_sqlmode)
+    {
+      ASSERT_EQUALS("`", dbmeta->getIdentifierQuoteString());
+      stmt->execute("SET @@sql_mode = 'ANSI_QUOTES,ALLOW_INVALID_DATES'");
+      res.reset(stmt->executeQuery("SELECT @@sql_mode AS _sql_mode"));
+      ASSERT(res->next());      
+      ASSERT_EQUALS("ANSI_QUOTES,ALLOW_INVALID_DATES", res->getString("_sql_mode"));
+      ASSERT_EQUALS("\"", dbmeta->getIdentifierQuoteString());
+    }
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+}
+
 
 } /* namespace connectionmetadata */
 } /* namespace testsuite */
