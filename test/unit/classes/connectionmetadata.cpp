@@ -457,9 +457,10 @@ void connectionmetadata::getDatabaseVersions()
     prodversion.str("");
     prodversion << dbmeta->getDatabaseMajorVersion() << "." << dbmeta->getDatabaseMinorVersion();
     prodversion << "." << dbmeta->getDatabasePatchVersion();
-    if (prodversion.str().length() < dbmeta->getDatabaseProductVersion())
+    if (prodversion.str().length() < dbmeta->getDatabaseProductVersion().length())
     {
-
+      // Check only left prefix, database could have "-alpha" or something in its product versin
+      ASSERT_EQUALS(prodversion.str(), dbmeta->getDatabaseProductVersion().substr(0, prodversion.str().length()));
     }
     else
     {
@@ -490,6 +491,19 @@ void connectionmetadata::getDriverVersions()
     ASSERT_LT(100, dbmeta->getDriverPatchVersion());
 
     ASSERT_EQUALS("MySQL Connector/C++", dbmeta->getDriverName());
+
+    prodversion.str("");
+    prodversion << dbmeta->getDriverMajorVersion() << "." << dbmeta->getDriverMinorVersion();
+    prodversion << "." << dbmeta->getDriverPatchVersion();
+    if (prodversion.str().length() < dbmeta->getDriverVersion().length())
+    {
+      // Check only left prefix, Driver could have "-alpha" or something in its product versin
+      ASSERT_EQUALS(prodversion.str(), dbmeta->getDriverVersion().substr(0, prodversion.str().length()));
+    }
+    else
+    {
+      ASSERT_EQUALS(prodversion.str(), dbmeta->getDriverVersion());
+    }
   }
   catch (sql::SQLException &e)
   {
