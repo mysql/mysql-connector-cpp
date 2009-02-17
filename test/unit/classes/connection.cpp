@@ -639,9 +639,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      } catch (sql::SQLException &)
       {
-        e;
       }
     }
     connection_properties.erase("CLIENT_NO_SCHEMA");

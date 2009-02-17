@@ -127,13 +127,13 @@ namespace simple
 
     ASSERT_MESSAGE( !bIn.fail(), "seekg 0 position from the beginning - failed" );
 
-    int fileLength = testBlobFile->getSize();
+    unsigned int fileLength = testBlobFile->getSize();
 
     std::stringstream inFile, inTable;
 
     if (retrBytes.size() == fileLength)
     {
-      for ( int i = 0; i < fileLength; ++i )
+      for (unsigned int i = 0; i < fileLength; ++i )
       {
         char fromFile;
         bIn.read( & fromFile, 1 );
@@ -154,7 +154,7 @@ namespace simple
             << StringUtils::toHexString( fromFile ) << ")"
             << std::endl << "Retrieved: " << inTable.str() << "< ";
 
-          for ( int j = i + 1; (j < (i + 10)) /* && (j < i) */; ++j )
+          for (unsigned int j = i + 1; (j < (i + 10)) /* && (j < i) */; ++j )
           {
             TestsListener::theInstance().errorsLog() 
               << StringUtils::toHexString(retrBytes[j]) << " ";
@@ -164,7 +164,7 @@ namespace simple
           TestsListener::theInstance().errorsLog() << std::endl << "From File: "
             << inFile.str() << "< ";
 
-          for ( int j = 1; j < 10 && ! bIn.fail(); ++j )
+          for (unsigned int j = 1; j < 10 && ! bIn.fail(); ++j )
           {
             bIn >> fromFile;
             TestsListener::theInstance().errorsLog()

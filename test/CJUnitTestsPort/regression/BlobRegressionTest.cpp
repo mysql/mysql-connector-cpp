@@ -223,9 +223,9 @@ namespace regression
 
     char testData[dataSize];
 
-    for (char i= 0; i < sizeof( testData ); ++i)
+    for (unsigned int i= 0; i < sizeof( testData ); ++i)
     {
-      testData[i]= i;
+      testData[i]= char(i);
     }
 
     stmt->executeUpdate("DROP TABLE IF EXISTS testBug8096");
@@ -241,6 +241,7 @@ namespace regression
     if ( rs->next() )
     {
       std::istream * b = rs->getBlob("BLOB_DATA");
+	  (void) b;//skip compiler warning
       //b.setBytes(1, testData);
     }
 
