@@ -439,7 +439,7 @@ void connectionmetadata::getConnection()
 
 void connectionmetadata::getDatabaseVersions()
 {
-  logMsg("connectionmetadata::getVersions() - MySQL_ConnectionMetaData::getDatabase[Minor|Major|Patch]Version()");
+  logMsg("connectionmetadata::getDatabaseVersions() - MySQL_ConnectionMetaData::getDatabase[Minor|Major|Patch]Version()");
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
@@ -449,6 +449,27 @@ void connectionmetadata::getDatabaseVersions()
     ASSERT_LT(100, dbmeta->getDatabaseMinorVersion());
     ASSERT_GT(-1, dbmeta->getDatabasePatchVersion());
     ASSERT_LT(100, dbmeta->getDatabasePatchVersion());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connectionmetadata::getDriverVersions()
+{
+  logMsg("connectionmetadata::getDriverVersions() - MySQL_ConnectionMetaData::getDriver[Minor|Major|Patch]Version()");
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    ASSERT_GT(0, dbmeta->getDriverMajorVersion());
+    ASSERT_LT(2, dbmeta->getDriverMajorVersion());
+    ASSERT_GT(-1, dbmeta->getDriverMinorVersion());
+    ASSERT_LT(100, dbmeta->getDriverMinorVersion());
+    ASSERT_GT(-1, dbmeta->getDriverPatchVersion());
+    ASSERT_LT(100, dbmeta->getDriverPatchVersion());
   }
   catch (sql::SQLException &e)
   {

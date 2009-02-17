@@ -52,6 +52,7 @@ public:
     TEST_CASE(getColumns);
     TEST_CASE(getConnection);
     TEST_CASE(getDatabaseVersions);
+    TEST_CASE(getDriverVersions);
   }
 
   /**
@@ -103,12 +104,20 @@ public:
   void getConnection();
 
     /**
-   * Test for DatabaseMetaData:getMajorVersion, :getMinorVersion,  :getDatabasePatchVersion()
+   * Test for DatabaseMetaData:getDatabaseMajorVersion, *MinorVersion,  *PatchVersion()
    *
    * Focus on code coverage: invalid parameter, invalid resultset
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getDatabaseVersions();
+
+  /**
+   * Test for DatabaseMetaData:getDriverMajorVersion, *MinorVersion,  *PatchVersion()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getDriverVersions();
 
 };
 
