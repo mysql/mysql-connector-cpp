@@ -457,7 +457,14 @@ void connectionmetadata::getDatabaseVersions()
     prodversion.str("");
     prodversion << dbmeta->getDatabaseMajorVersion() << "." << dbmeta->getDatabaseMinorVersion();
     prodversion << "." << dbmeta->getDatabasePatchVersion();
-    ASSERT_EQUALS(prodversion.str(), dbmeta->getDatabaseProductVersion());
+    if (prodversion.str().length() < dbmeta->getDatabaseProductVersion())
+    {
+
+    }
+    else
+    {
+      ASSERT_EQUALS(prodversion.str(), dbmeta->getDatabaseProductVersion());
+    }
 
   }
   catch (sql::SQLException &e)
@@ -471,6 +478,7 @@ void connectionmetadata::getDatabaseVersions()
 void connectionmetadata::getDriverVersions()
 {
   logMsg("connectionmetadata::getDriverVersions() - MySQL_ConnectionMetaData::getDriver[Minor|Major|Patch]Version()");
+  std::stringstream prodversion;
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
