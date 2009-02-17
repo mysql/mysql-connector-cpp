@@ -54,6 +54,7 @@ public:
     TEST_CASE(getDatabaseVersions);
     TEST_CASE(getDriverVersions);
     TEST_CASE(getDefaultTransactionIsolation);
+    TEST_CASE(getExtraNameCharacters);
   }
 
   /**
@@ -127,6 +128,15 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getDefaultTransactionIsolation();
+
+  /**
+   * Test for DatabaseMetaData:getExtraNameCharacters()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getExtraNameCharacters();
+
 };
 
 REGISTER_FIXTURE(connectionmetadata);

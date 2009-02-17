@@ -542,5 +542,22 @@ void connectionmetadata::getDefaultTransactionIsolation()
   }
 }
 
+void connectionmetadata::getExtraNameCharacters()
+{
+  logMsg("connectionmetadata::getExtraNameCharacters() - MySQL_ConnectionMetaData::getExtraNameCharacters()");
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    ASSERT_EQUALS("#@", dbmeta->getExtraNameCharacters());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+
 } /* namespace connectionmetadata */
 } /* namespace testsuite */
