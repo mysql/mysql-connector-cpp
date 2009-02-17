@@ -204,6 +204,41 @@ void connectionmetadata::getBestRowIdentifier()
   }
 }
 
+void connectionmetadata::getColumnPrivileges()
+{
+  logMsg("connectionmetadata::getColumnPrivileges() - MySQL_ConnectionMetaData::getColumnPrivileges");
+  int rows=0;
+  try
+  {
+
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(col1 INT, col2 INT)");
+    DatabaseMetaData dbmeta(con->getMetaData());
+
+    res.reset(dbmeta->getColumnPrivileges(con->getCatalog(), con->getSchema(), "test", "id"));
+    ASSERT_EQUALS(false, res->next());
+
+    res.reset(dbmeta->getColumnPrivileges(con->getCatalog(), con->getSchema(), "test", "col%"));
+    rows=0;
+    while (res->next())
+    {
+      rows++;
+      ASSERT_EQUALS(con->getCatalog(), res->getString(1));
+      ASSERT_EQUALS(res->getString(1), res->getString("TABLE_CAT"));
+      ASSERT_EQUALS(con->getSchema(), res->getString(2));
+      ASSERT_EQUALS(res->getString(2), res->getString("TABLE_SCHEM"));
+    }
+    stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 void connectionmetadata::getColumns()
 {
   logMsg("connectionmetadata::getColumn() - MySQL_ConnectionMetaData::getColumns");
@@ -334,11 +369,11 @@ void connectionmetadata::getColumns()
       ASSERT_EQUALS("", res->getString(20));
       ASSERT_EQUALS(res->getString(20), res->getString("SCOPE_SCHEMA"));
       ASSERT_EQUALS("", res->getString(21));
-      ASSERT_EQUALS(res->getString(21), res->getString("SCOPE_TABLE"));      
+      ASSERT_EQUALS(res->getString(21), res->getString("SCOPE_TABLE"));
       ASSERT_EQUALS("", res->getString(22));
-      ASSERT_EQUALS(res->getString(22), res->getString("SOURCE_DATA_TYPE"));      
+      ASSERT_EQUALS(res->getString(22), res->getString("SOURCE_DATA_TYPE"));
       ASSERT_EQUALS(it->is_autoincrement, res->getString(23));
-      ASSERT_EQUALS(res->getString(23), res->getString("IS_AUTOINCREMENT"));      
+      ASSERT_EQUALS(res->getString(23), res->getString("IS_AUTOINCREMENT"));
       stmt->execute("DROP TABLE IF EXISTS test");
     }
     if (got_warning)
