@@ -207,6 +207,7 @@ void connectionmetadata::getBestRowIdentifier()
 void connectionmetadata::getColumnPrivileges()
 {
   logMsg("connectionmetadata::getColumnPrivileges() - MySQL_ConnectionMetaData::getColumnPrivileges");
+  std::stringstream msg;
   int rows=0;
   try
   {
@@ -224,11 +225,38 @@ void connectionmetadata::getColumnPrivileges()
     while (res->next())
     {
       rows++;
+      msg.str("");
+      msg << "testing column " << rows << " '" << res->getString(1) << "'.'";
+      msg << res->getString(2) << "'.'" << res->getString(3) << "'.'";
+      msg << res->getString(4) << "'";
+      logMsg(msg.str());
+
       ASSERT_EQUALS(con->getCatalog(), res->getString(1));
       ASSERT_EQUALS(res->getString(1), res->getString("TABLE_CAT"));
       ASSERT_EQUALS(con->getSchema(), res->getString(2));
       ASSERT_EQUALS(res->getString(2), res->getString("TABLE_SCHEM"));
+      ASSERT_EQUALS("test", res->getString(3));
+
+      ASSERT_EQUALS(res->getString(3), res->getString("TABLE_NAME"));
+      ASSERT_EQUALS(res->getString(4), res->getString("COLUMN_NAME"));
+      ASSERT_EQUALS("", res->getString(5));
+      ASSERT_EQUALS(res->getString(5), res->getString("GRANTOR"));
+      ASSERT_EQUALS(res->getString(6), res->getString("GRANTEE"));
+      ASSERT_EQUALS(res->getString(7), res->getString("PRIVILEGE"));
+      ASSERT_EQUALS(res->getString(8), res->getString("IS_GRANTABLE"));
+      if (("NO" != res->getString(8)) && ("YES" != res->getString(8)) && ("" != res->getString(8)))
+      {
+        // Let's be optimistic that  the column does not hold this exact value...
+        ASSERT_EQUALS("Any of 'YES', 'NO' and empty string ''", res->getString(8));
+      }
     }
+    ASSERT_EQUALS(2, rows);
+
+    res.reset(dbmeta->getColumnPrivileges(con->getCatalog(), con->getSchema(), "test", "col2"));
+    ASSERT_EQUALS(true, res->next());
+    ASSERT_EQUALS("col2", res->getString("COLUMN_NAME"));
+    ASSERT_EQUALS(res->getString(4), res->getString("COLUMN_NAME"));
+    
     stmt->execute("DROP TABLE IF EXISTS test");
   }
   catch (sql::SQLException &e)

@@ -1826,7 +1826,12 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 	if (server_version > 50020) {
 		char buf[5];
 		std::string query("SELECT '' AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, COLUMN_NAME, DATA_TYPE,"
-			"CASE WHEN LOCATE('unsigned', COLUMN_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(UCASE(DATA_TYPE), ' UNSIGNED') "
+			"CASE "
+			"WHEN LOCATE('unsigned', COLUMN_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN "
+			"  CASE"
+			"    WHEN LOCATE('zerofill', COLUMN_TYPE) != 0 AND LOCATE('zerofill', DATA_TYPE) = 0 THEN CONCAT(UCASE(DATA_TYPE), ' UNSIGNED ZEROFILL')"
+			"    ELSE CONCAT(UCASE(DATA_TYPE), ' UNSIGNED')"
+			"  END "
 			"ELSE" 
 			"  CASE"
 			"    WHEN LCASE(DATA_TYPE)='set' THEN 'VARCHAR'"

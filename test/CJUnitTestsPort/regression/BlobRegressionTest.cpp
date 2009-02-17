@@ -171,8 +171,6 @@ namespace regression
       fos << 'a';
       fos.flush();
       blobFile.close();
-
-      ASSERT( blobFile.getSize() == blobFileSize );
     }
 
     pstmt.reset( conn->prepareStatement(sql) );
@@ -188,7 +186,7 @@ namespace regression
 
     ASSERT_EQUALS( blobFileSize, static_cast<int>(returned.length()) );
 
-    //stmt->executeUpdate("DROP TABLE IF EXISTS testBug5490");
+    stmt->executeUpdate("DROP TABLE IF EXISTS testBug5490");
 
     if ( blobFile.exists() )
       blobFile.deleteFile();
@@ -225,9 +223,9 @@ namespace regression
 
     char testData[dataSize];
 
-    for ( unsigned int i= 0; i < sizeof( testData ); ++i)
+    for (unsigned int i= 0; i < sizeof( testData ); ++i)
     {
-      testData[i]= static_cast<char>( i & 0xff );
+      testData[i]= char(i);
     }
 
     stmt->executeUpdate("DROP TABLE IF EXISTS testBug8096");
@@ -243,7 +241,7 @@ namespace regression
     if ( rs->next() )
     {
       std::istream * b = rs->getBlob("BLOB_DATA");
-      b;
+	  (void) b;//skip compiler warning
       //b.setBytes(1, testData);
     }
 
@@ -333,7 +331,7 @@ namespace regression
     stmt->executeUpdate(String( "TRUNCATE TABLE " ) + tableName);
     pstmt->clearParameters();
 
-    std::istringstream str2;
+    std::istringstream str2(NULL);
 
     pstmt->setBlob( 1, &str );
     pstmt->executeUpdate();

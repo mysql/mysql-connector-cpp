@@ -53,6 +53,7 @@ void unit_fixture::init()
   db=TestsRunner::theInstance().getStartOptions()->dbSchema;
 
   columns.push_back(columndefinition("BIT", "BIT", sql::DataType::BIT, "0", false, 1, 0, true, "", 0, "NO"));
+  /*
   columns.push_back(columndefinition("BIT", "BIT NOT NULL", sql::DataType::BIT, "0", false, 1, 0, false, "", 0, "NO"));
   columns.push_back(columndefinition("BIT", "BIT(5) NOT NULL", sql::DataType::BIT, "0", false, 5, 0, false, "", 0, "NO"));
   columns.push_back(columndefinition("BIT", "BIT(8)", sql::DataType::BIT, "0", false, 8, 0, true, "", 0, "NO"));
@@ -62,7 +63,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("TINYINT", "TINYINT(1)", sql::DataType::TINYINT, "0", true, 3, 0, true, "", 0, "NO"));
   columns.push_back(columndefinition("TINYINT UNSIGNED", "TINYINT UNSIGNED", sql::DataType::TINYINT, "255", false, 3, 0, true, "", 0, "NO"));
   columns.push_back(columndefinition("TINYINT UNSIGNED ZEROFILL", "TINYINT ZEROFILL", sql::DataType::TINYINT, "-1", false, 3, 0, true, "", 0, "NO"));
-  /* Alias of BOOLEAN */
+  // Alias of BOOLEAN
   columns.push_back(columndefinition("TINYINT", "BOOLEAN", sql::DataType::TINYINT, "1", true, 3, 0, true, "", 0, "NO"));
   columns.push_back(columndefinition("TINYINT", "BOOLEAN NOT NULL", sql::DataType::TINYINT, "1", true, 3, 0, false, "", 0, "NO"));
   columns.push_back(columndefinition("TINYINT", "BOOLEAN DEFAULT 0", sql::DataType::TINYINT, "1", true, 3, 0, true, "0", 0, "NO"));
@@ -79,12 +80,12 @@ void unit_fixture::init()
   columns.push_back(columndefinition("MEDIUMINT", "MEDIUMINT(2) DEFAULT 12", sql::DataType::MEDIUMINT, "2", true, 7, 0, true, "12", 0, "NO"));
   columns.push_back(columndefinition("MEDIUMINT UNSIGNED", "MEDIUMINT UNSIGNED", sql::DataType::MEDIUMINT, "16777215", false, 7, 0, true, "", 0, "NO"));
   columns.push_back(columndefinition("MEDIUMINT UNSIGNED ZEROFILL", "MEDIUMINT UNSIGNED ZEROFILL", sql::DataType::MEDIUMINT, "1677721", false, 7, 0, true, "", 0, "NO"));
-  /* Alias of INTEGER */
+  // Alias of INTEGER
   columns.push_back(columndefinition("INT", "INTEGER", sql::DataType::INTEGER, "2147483647", true, 10, 0, true, "", 0, "NO"));
   columns.push_back(columndefinition("INT", "INTEGER NOT NULL", sql::DataType::INTEGER, "2147483647", true, 10, 0, false, "", 0, "NO"));
   columns.push_back(columndefinition("INT", "INTEGER(1)", sql::DataType::INTEGER, "3", true, 10, 0, true, "", 0, "NO"));
   columns.push_back(columndefinition("INT UNSIGNED", "INT UNSIGNED", sql::DataType::INTEGER, "4294967295", false, 10, 0, true, "", 0, "NO"));
-  /* If you specify ZEROFILL for a numeric column, MySQL automatically adds the UNSIGNED  attribute to the column.  */
+  // If you specify ZEROFILL for a numeric column, MySQL automatically adds the UNSIGNED  attribute to the column.
   columns.push_back(columndefinition("INT UNSIGNED ZEROFILL", "INT(4) SIGNED ZEROFILL", sql::DataType::INTEGER, "1", false, 10, 0, true, "", 0, "NO"));
   columns.push_back(columndefinition("INT", "INT(4) SIGNED DEFAULT -123", sql::DataType::INTEGER, "1", true, 10, 0, true, "-123", 0, "NO"));
   columns.push_back(columndefinition("BIGINT", "BIGINT", sql::DataType::BIGINT, "-9223372036854775808", true, 19, 0, true, "", 0, "NO"));
@@ -114,7 +115,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("DATETIME", "DATETIME", sql::DataType::TIMESTAMP, "2009-02-09 20:05:43", false, 19, 0, true, "", 0, "NO"));
   columns.push_back(columndefinition("DATETIME", "DATETIME NOT NULL", sql::DataType::TIMESTAMP, "2009-02-12 17:49:21", false, 19, 0, false, "", 0, "NO"));
   columns.push_back(columndefinition("DATETIME", "DATETIME NOT NULL DEFAULT '2009-02-12 21:36:54'", sql::DataType::TIMESTAMP, "2009-02-12 17:49:21", false, 19, 0, false, "2009-02-12 21:36:54", 0, "NO"));
-  /* TODO this might be server dependent! */
+  // TODO this might be server dependent!
   columns.push_back(columndefinition("TIMESTAMP", "TIMESTAMP", sql::DataType::TIMESTAMP, "2038-01-09 03:14:07", false, 19, 0, false, "0000-00-00 00:00:00", 0, "NO"));
   columns.push_back(columndefinition("TIME", "TIME", sql::DataType::TIME, "-838:59:59", true, 8, 0, true, "", 0, "NO"));
   columns.push_back(columndefinition("TIME", "TIME NOT NULL", sql::DataType::TIME, "838:59:59", true, 8, 0, false, "", 0, "NO"));
@@ -135,26 +136,21 @@ void unit_fixture::init()
   columns.push_back(columndefinition("CHAR", "NATIONAL CHAR(215) NOT NULL DEFAULT 'Ulf'", sql::DataType::CHAR, "abc", false, 215, 0, false, "Ulf", 645, "NO"));
   columns.push_back(columndefinition("CHAR", "CHAR(255) CHARACTER SET 'utf8'", sql::DataType::CHAR, "abc", false, 255, 0, true, "", 765, "NO"));
   columns.push_back(columndefinition("CHAR", "CHAR(55) CHARACTER SET 'utf8' NOT NULL ", sql::DataType::CHAR, "abc", false, 55, 0, false, "", 165, "NO"));
-  /* TODO this might be server dependent! */
+  // TODO this might be server dependent!
   columns.push_back(columndefinition("CHAR", "CHAR(250) CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::CHAR, "abc", false, 250, 0, true, "", 750, "NO"));
   columns.push_back(columndefinition("CHAR", "CHAR(250) CHARACTER SET 'utf8' COLLATE 'utf8_bin' DEFAULT 'Wendel'", sql::DataType::CHAR, "abc", false, 250, 0, true, "Wendel", 750, "NO"));
   columns.push_back(columndefinition("CHAR", "CHAR(43) CHARACTER SET 'utf8' COLLATE 'utf8_bin' NOT NULL", sql::DataType::CHAR, "abc", false, 43, 0, false, "", 129, "NO"));
   columns.push_back(columndefinition("CHAR", "CHAR(123) CHARACTER SET 'ucs2'", sql::DataType::CHAR, "abc", false, 123, 0, true, "", 246, "NO"));
-  /* The CHAR BYTE data type is an alias for the BINARY data type. This is a compatibility feature.  */
+  // The CHAR BYTE data type is an alias for the BINARY data type. This is a compatibility feature.
   columns.push_back(columndefinition("BINARY", "CHAR(255) BYTE", sql::DataType::BINARY, "abc", true, 255, 0, true, "", 255, "NO"));
   columns.push_back(columndefinition("BINARY", "CHAR(12) BYTE NOT NULL", sql::DataType::BINARY, "abc", true, 12, 0, false, "", 12, "NO"));
-  columns.push_back(columndefinition("CHAR", "CHAR(14) DEFAULT 'Andrey'", sql::DataType::CHAR, "abc", true, 14, 0, true, "Andrey", 0, "NO"));
-  /*  Specifying the CHARACTER SET binary  attribute for a character data type
-   causes the column to be created as the corresponding binary data type:
-   CHAR becomes BINARY, VARCHAR becomes VARBINARY, and TEXT becomes BLOB.
-   For the ENUM and SET data types, this does not occur; they are created as declared.   */
+  columns.push_back(columndefinition("CHAR", "CHAR(14) DEFAULT 'Andrey'", sql::DataType::CHAR, "abc", true, 14, 0, true, "Andrey", 0, "NO"));  
   columns.push_back(columndefinition("BINARY", "CHAR(25) CHARACTER SET 'binary'", sql::DataType::BINARY, "abc", false, 25, 0, true, "", 25, "NO"));
   columns.push_back(columndefinition("VARCHAR", "VARCHAR(10)", sql::DataType::VARCHAR, "a", false, 10, 0, true, "", 0, "NO"));
   columns.push_back(columndefinition("VARCHAR", "VARCHAR(7) NOT NULL", sql::DataType::VARCHAR, "a", false, 7, 0, false, "", 0, "NO"));
   columns.push_back(columndefinition("VARCHAR", "VARCHAR(255) DEFAULT 'Good night twitter. BTW, go MySQL!'", sql::DataType::VARCHAR, "a", false, 255, 0, true, "Good night twitter. BTW, go MySQL!", 0, "NO"));
   columns.push_back(columndefinition("VARCHAR", "VARCHAR(11) CHARACTER SET 'utf8'", sql::DataType::VARCHAR, "a", false, 11, 0, true, "", 33, "NO"));
-  columns.push_back(columndefinition("VARCHAR", "VARCHAR(11) CHARACTER SET 'ascii' DEFAULT 'Hristov'", sql::DataType::VARCHAR, "a", false, 11, 0, true, "Hristov", 11, "NO"));
-  /* TODO this might be server dependent! */
+  columns.push_back(columndefinition("VARCHAR", "VARCHAR(11) CHARACTER SET 'ascii' DEFAULT 'Hristov'", sql::DataType::VARCHAR, "a", false, 11, 0, true, "Hristov", 11, "NO"));  
   columns.push_back(columndefinition("VARCHAR", "VARCHAR(12) CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::VARCHAR, "a", false, 12, 0, true, "", 36, "NO"));
   columns.push_back(columndefinition("VARBINARY", "VARCHAR(13) BYTE", sql::DataType::VARBINARY, "a", false, 13, 0, true, "", 13, "NO"));
   columns.push_back(columndefinition("VARBINARY", "VARCHAR(14) BYTE NOT NULL", sql::DataType::VARBINARY, "a", false, 14, 0, false, "", 14, "NO"));
@@ -166,8 +162,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("TINYTEXT", "TINYTEXT", sql::DataType::VARCHAR, "a", false, 255, 0, true, "", 255, "NO"));
   columns.push_back(columndefinition("TINYTEXT", "TINYTEXT NOT NULL", sql::DataType::VARCHAR, "a", false, 255, 0, false, "", 255, "NO"));
   columns.push_back(columndefinition("TINYTEXT", "TINYTEXT", sql::DataType::VARCHAR, "a", false, 255, 0, true, "", 255, "NO"));
-  columns.push_back(columndefinition("TINYTEXT", "TINYTEXT CHARACTER SET 'utf8'", sql::DataType::VARCHAR, "a", false, 255, 0, true, "", 255, "NO"));
-  /* TODO this might be server dependent! */
+  columns.push_back(columndefinition("TINYTEXT", "TINYTEXT CHARACTER SET 'utf8'", sql::DataType::VARCHAR, "a", false, 255, 0, true, "", 255, "NO"));  
   columns.push_back(columndefinition("TINYTEXT", "TINYTEXT CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::VARCHAR, "a", false, 255, 0, true, "", 255, "NO"));
   columns.push_back(columndefinition("MEDIUMBLOB", "MEDIUMBLOB", sql::DataType::LONGVARBINARY, "a", false, 16777215, 0, true, "", 16777215, "NO"));
   columns.push_back(columndefinition("MEDIUMBLOB", "MEDIUMBLOB NOT NULL", sql::DataType::LONGVARBINARY, "a", false, 16777215, 0, false, "", 16777215, "NO"));
@@ -179,8 +174,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("LONGBLOB", "LONGBLOB NOT NULL", sql::DataType::LONGVARBINARY, "a", false, L64(4294967295), 0, false, "", L64(4294967295), "NO"));
   columns.push_back(columndefinition("LONGTEXT", "LONGTEXT", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, true, "", L64(4294967295), "NO"));
   columns.push_back(columndefinition("LONGTEXT", "LONGTEXT NOT NULL", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, false, "", L64(4294967295), "NO"));
-  columns.push_back(columndefinition("LONGTEXT", "LONGTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, true, "", L64(4294967295), "NO"));
-  /* TODO this might be server dependent! */
+  columns.push_back(columndefinition("LONGTEXT", "LONGTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, true, "", L64(4294967295), "NO"));  
   columns.push_back(columndefinition("LONGTEXT", "LONGTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, true, "", L64(4294967295), "NO"));
   columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no')", sql::DataType::VARCHAR, "yes", false, 3, 0, true, "", 3, "NO"));
   columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no') NOT NULL", sql::DataType::VARCHAR, "yes", false, 3, 0, false, "", 3, "NO"));
@@ -190,7 +184,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii'", sql::DataType::VARCHAR, "yes", false, 6, 0, true, "", 6, "NO"));
   columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii' DEFAULT 'yes'", sql::DataType::VARCHAR, "yes", false, 6, 0, true, "yes", 6, "NO"));
   columns.push_back(columndefinition("SET", "SET('yes', 'no', 'ascii') CHARSET 'ascii' NOT NULL", sql::DataType::VARCHAR, "yes", false, 12, 0, false, "", 12, "NO"));
-
+   */
   /*
   ResultSet getAttributes(String catalog,
                     String schemaPattern,

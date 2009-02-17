@@ -21,6 +21,7 @@
 
 #include "file.h"
 #include "stringutils.h"
+#include <stdlib.h>
 
 namespace FileUtils
 {
