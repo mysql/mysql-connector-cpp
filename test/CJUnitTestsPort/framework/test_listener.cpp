@@ -213,13 +213,14 @@ void TestsListener::TestHasFinished( TestRunResult result, const String & msg )
       , theInstance().executionComment.c_str());
   }
 
-  
+/*
   //log messsages from teardown goes after next test 
   if (theInstance().verbose)
     dumpLog();
   else
     // Just clearing memory
     theInstance().log.str("");
+ */
 }
 
 
