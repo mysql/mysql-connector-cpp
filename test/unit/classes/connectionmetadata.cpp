@@ -207,7 +207,7 @@ void connectionmetadata::getBestRowIdentifier()
 
 void connectionmetadata::getColumnPrivileges()
 {
-  logMsg("connectionmetadata::getColumnPrivileges() - MySQL_ConnectionMetaData::getColumnPrivileges");  
+  logMsg("connectionmetadata::getColumnPrivileges() - MySQL_ConnectionMetaData::getColumnPrivileges");
   int rows=0;
   try
   {
@@ -224,7 +224,7 @@ void connectionmetadata::getColumnPrivileges()
     rows=0;
     while (res->next())
     {
-      rows++; 
+      rows++;
 
       ASSERT_EQUALS(con->getCatalog(), res->getString(1));
       ASSERT_EQUALS(res->getString(1), res->getString("TABLE_CAT"));
@@ -244,7 +244,7 @@ void connectionmetadata::getColumnPrivileges()
         // Let's be optimistic that  the column does not hold this exact value...
         ASSERT_EQUALS("Any of 'YES', 'NO' and empty string ''", res->getString(8));
       }
-    
+
     }
     ASSERT_GT(2, rows);
 
@@ -252,7 +252,7 @@ void connectionmetadata::getColumnPrivileges()
     ASSERT_EQUALS(true, res->next());
     ASSERT_EQUALS("col2", res->getString("COLUMN_NAME"));
     ASSERT_EQUALS(res->getString(4), res->getString("COLUMN_NAME"));
-    
+
     stmt->execute("DROP TABLE IF EXISTS test");
   }
   catch (sql::SQLException &e)
@@ -421,14 +421,34 @@ void connectionmetadata::getConnection()
   {
     stmt.reset(con->createStatement());
     stmt->execute("SET @this_is_my_connection_id=101");
-    DatabaseMetaData dbmeta(con->getMetaData());    
-    same_con = dbmeta->getConnection();    
+    DatabaseMetaData dbmeta(con->getMetaData());
+    same_con=dbmeta->getConnection();
     stmt.reset(same_con->createStatement());
     res.reset(stmt->executeQuery("SELECT @this_is_my_connection_id AS _connection_id"));
     ASSERT(res->next());
     ASSERT_EQUALS(101, res->getInt("_connection_id"));
     ASSERT_EQUALS(res->getInt(1), res->getInt("_connection_id"));
-     
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connectionmetadata::getVersions()
+{
+  logMsg("connectionmetadata::getVersions() - MySQL_ConnectionMetaData::getDatabase[Minor|Major|Patch]Version()");
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    ASSERT_GT(2, dbmeta->getDatabaseMajorVersion());
+    ASSERT_LT(7, dbmeta->getDatabaseMajorVersion());
+    ASSERT_GT(-1, dbmeta->getDatabaseMinorVersion());
+    ASSERT_LT(100, dbmeta->getDatabaseMinorVersion());
+    ASSERT_GT(-1, dbmeta->getDatabasePatchVersion());
+    ASSERT_LT(100, dbmeta->getDatabasePatchVersion());
   }
   catch (sql::SQLException &e)
   {

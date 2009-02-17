@@ -51,6 +51,7 @@ public:
     TEST_CASE(getColumnPrivileges);
     TEST_CASE(getColumns);
     TEST_CASE(getConnection);
+    TEST_CASE(getVersions);
   }
 
   /**
@@ -100,6 +101,14 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getConnection();
+
+    /**
+   * Test for DatabaseMetaData:getMajorVersion, :getMinorVersion,  :getDatabasePatchVersion()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getVersions();
 
 };
 
