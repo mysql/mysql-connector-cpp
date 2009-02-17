@@ -87,7 +87,7 @@ public:
 
 	const std::string& getDatabaseProductName();
 
-	const std::string& getDatabaseProductVersion();
+	std::string getDatabaseProductVersion();
 
 	int getDefaultTransactionIsolation();
 

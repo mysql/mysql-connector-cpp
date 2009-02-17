@@ -2060,7 +2060,7 @@ MySQL_ConnectionMetaData::getDatabaseProductName()
 
 
 /* {{{ MySQL_ConnectionMetaData::getDatabaseProductVersion() -I- */
-const std::string&
+std::string
 MySQL_ConnectionMetaData::getDatabaseProductVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDatabaseProductVersion");
