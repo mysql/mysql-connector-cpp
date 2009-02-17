@@ -456,7 +456,7 @@ void connectionmetadata::getDatabaseVersions()
 
     prodversion.str("");
     prodversion << dbmeta->getDatabaseMajorVersion() << "." << dbmeta->getDatabaseMinorVersion();
-    prodversion << "." << dbmeta->getDatabasePatchVersion();
+    prodversion << "." << dbmeta->getDatabasePatchVersion() << '\0';
     if (prodversion.str().length() < dbmeta->getDatabaseProductVersion().length())
     {
       // Check only left prefix, database could have "-alpha" or something in its product versin

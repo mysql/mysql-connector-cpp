@@ -2064,8 +2064,7 @@ const std::string&
 MySQL_ConnectionMetaData::getDatabaseProductVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDatabaseProductVersion");
-	static const std::string product_version("5.1");
-	return product_version;
+	return mysql_get_server_info(connection->getMySQLHandle());
 }
 /* }}} */
 
@@ -2107,18 +2106,7 @@ int
 MySQL_ConnectionMetaData::getDriverPatchVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverPatchVersion");
-	return 0;
-}
-/* }}} */
-
-
-/* {{{ MySQL_ConnectionMetaData::getDriverName() -I- */
-const std::string&
-MySQL_ConnectionMetaData::getDriverName()
-{
-	CPP_ENTER("MySQL_ConnectionMetaData::getDriverName");
-	static const std::string product_version("MySQL CPP Connector");
-	return product_version;
+	return 2;
 }
 /* }}} */
 
@@ -2130,6 +2118,17 @@ MySQL_ConnectionMetaData::getDriverVersion()
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverVersion");
 	static const std::string version("1.0.2-beta");
 	return version;
+}
+/* }}} */
+
+
+/* {{{ MySQL_ConnectionMetaData::getDriverName() -I- */
+const std::string&
+MySQL_ConnectionMetaData::getDriverName()
+{
+	CPP_ENTER("MySQL_ConnectionMetaData::getDriverName");
+	static const std::string product_version("MySQL Connector/C++");
+	return product_version;
 }
 /* }}} */
 
