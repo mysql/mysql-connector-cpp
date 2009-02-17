@@ -55,6 +55,7 @@ public:
     TEST_CASE(getDriverVersions);
     TEST_CASE(getDefaultTransactionIsolation);
     TEST_CASE(getExtraNameCharacters);
+    TEST_CASE(getIdentifierQuoteString);
   }
 
   /**
@@ -136,6 +137,14 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getExtraNameCharacters();
+
+  /**
+   * Test for DatabaseMetaData:getIdentifierQuoteString()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getIdentifierQuoteString();
 
 };
 

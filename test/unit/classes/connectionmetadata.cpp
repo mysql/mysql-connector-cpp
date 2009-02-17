@@ -558,6 +558,45 @@ void connectionmetadata::getExtraNameCharacters()
   }
 }
 
+void connectionmetadata::getIdentifierQuoteString()
+{
+  logMsg("connectionmetadata::getIdentifierQuoteString() - MySQL_ConnectionMetaData::getIdentifierQuoteString()");
+  bool can_set_sqlmode=false;
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    stmt.reset(con->createStatement());
+    try
+    {
+      stmt->execute("SET @@sql_mode = ''");
+      res.reset(stmt->executeQuery("SELECT @@sql_mode AS _sql_mode"));
+      ASSERT(res->next());
+      ASSERT_EQUALS("", res->getString("_sql_mode"));
+      can_set_sqlmode=true;
+    }
+    catch (sql::SQLException &e)
+    {
+      logMsg("Cannot set SQL_MODE, skipping test");
+    }
+    if (can_set_sqlmode)
+    {
+      ASSERT_EQUALS("`", dbmeta->getIdentifierQuoteString());
+      stmt->execute("SET @@sql_mode = 'ANSI_QUOTES,ALLOW_INVALID_DATES'");
+      res.reset(stmt->executeQuery("SELECT @@sql_mode AS _sql_mode"));
+      ASSERT(res->next());      
+      ASSERT_EQUALS("ANSI_QUOTES,ALLOW_INVALID_DATES", res->getString("_sql_mode"));
+      ASSERT_EQUALS("\"", dbmeta->getIdentifierQuoteString());
+    }
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+}
+
 
 } /* namespace connectionmetadata */
 } /* namespace testsuite */
