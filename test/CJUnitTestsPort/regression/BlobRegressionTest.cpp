@@ -74,19 +74,24 @@ namespace regression
 	 */
   void BlobRegressionTest::testUpdateLongBlobGT16M() 
   {
-    if ( versionMeetsMinimum(4, 0) )
+    if ( this->versionMeetsMinimum(4, 0) )
     {
-      char blobData[18 * 1024 * 1024]; // 18M blob
+      const int size18M= 18 * 1024 * 1024;
+      String blobData; // 18M blob
+
+      blobData.append( size18M, 'a' );
 
       stmt->executeUpdate("DROP TABLE IF EXISTS testUpdateLongBlob");
       stmt->executeUpdate("CREATE TABLE testUpdateLongBlob(blobField LONGBLOB)");
       stmt->executeUpdate("INSERT INTO testUpdateLongBlob (blobField) VALUES (NULL)");
-      pstmt.reset( conn->prepareStatement("UPDATE testUpdateLongBlob SET blobField=?") );
 
-      pstmt->setString(1, blobData);
+      pstmt.reset( conn->prepareStatement("UPDATE testUpdateLongBlob SET blobField=?") );
+     
+      pstmt->setString(1, blobData );
       pstmt->executeUpdate();
 
       stmt->executeUpdate("DROP TABLE IF EXISTS testUpdateLongBlob");
+
     }
   }
 
@@ -163,10 +168,11 @@ namespace regression
 
     FileUtils::ccppFile blobFile("Bug5490");
     
-    if( blobFile.exists() && blobFile.getSize() != blobFileSize )
+    if( ! blobFile.exists() || blobFile.getSize() != blobFileSize )
     {
       blobFile.deleteFile();
       std::fstream & fos= blobFile.getStream();
+
       fos.seekp( blobFileSize - 1, std::ios_base::beg );
       fos << 'a';
       fos.flush();
@@ -223,9 +229,9 @@ namespace regression
 
     char testData[dataSize];
 
-    for (unsigned int i= 0; i < sizeof( testData ); ++i)
+    for ( unsigned int i= 0; i < sizeof( testData ); ++i)
     {
-      testData[i]= char(i);
+      testData[i]= static_cast<char>( i & 0xff );
     }
 
     stmt->executeUpdate("DROP TABLE IF EXISTS testBug8096");
@@ -241,7 +247,7 @@ namespace regression
     if ( rs->next() )
     {
       std::istream * b = rs->getBlob("BLOB_DATA");
-	  (void) b;//skip compiler warning
+      b;
       //b.setBytes(1, testData);
     }
 
@@ -331,7 +337,7 @@ namespace regression
     stmt->executeUpdate(String( "TRUNCATE TABLE " ) + tableName);
     pstmt->clearParameters();
 
-    std::istringstream str2(NULL);
+    std::istringstream str2;
 
     pstmt->setBlob( 1, &str );
     pstmt->executeUpdate();

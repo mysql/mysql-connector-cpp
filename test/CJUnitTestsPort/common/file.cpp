@@ -194,8 +194,9 @@ namespace FileUtils
     if ( stream.is_open() )
     {
       stream.close();
-      init();
     }
+
+    init();
   }
 
 /*
