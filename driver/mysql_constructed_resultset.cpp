@@ -390,30 +390,12 @@ MySQL_ConstructedResultSet::getHoldability()
 /* }}} */
 
 
-// Get the given column as int
 /* {{{ MySQL_ConstructedResultSet::getInt() -I- */
 int
 MySQL_ConstructedResultSet::getInt(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getInt(int)");
-
-	/* isBeforeFirst checks for validity */
-	if (isBeforeFirstOrAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getInt: can't fetch because not on result set");
-	}
-
-	/* Don't columnIndex--, as we use it in the while loop later */
-	if (columnIndex > num_fields || columnIndex == 0) {
-		throw sql::InvalidArgumentException("MySQL_ConstructedResultSet::getInt: invalid value of 'columnIndex'");
-	}
-
-	StringList::iterator f = current_record;
-
-	while (--columnIndex) {
-		f++;
-	}
-
-	return atoi(f->c_str());
+	return getInt64(columnIndex);
 }
 /* }}} */
 
@@ -424,6 +406,26 @@ MySQL_ConstructedResultSet::getInt(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getInt(string)");
 	return getInt(findColumn(columnLabel));
+}
+/* }}} */
+
+
+/* {{{ MySQL_ConstructedResultSet::getUInt() -I- */
+unsigned int
+MySQL_ConstructedResultSet::getUInt(unsigned int columnIndex) const
+{
+	CPP_ENTER("MySQL_ConstructedResultSet::getInt(int)");
+	return getUInt64(columnIndex);
+}
+/* }}} */
+
+
+/* {{{ MySQL_ConstructedResultSet::getUInt() -I- */
+unsigned int
+MySQL_ConstructedResultSet::getUInt(const std::string& columnLabel) const
+{
+	CPP_ENTER("MySQL_ConstructedResultSet::getInt(string)");
+	return getUInt(findColumn(columnLabel));
 }
 /* }}} */
 

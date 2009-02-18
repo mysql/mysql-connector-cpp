@@ -25,6 +25,7 @@
 #include <memory>
 #include <iostream>
 #include <sstream>
+#include <inttypes.h>
 
 // Portable __FUNCTION__
 #ifndef __FUNCTION__
@@ -41,10 +42,16 @@
   #define __LINE__ "(line number n/a)"
 #endif
 
+#ifdef PRId64
+#error it is defined
+#endif
+
 #define ensure(msg, stmt)				do {total_tests++;if(!(stmt)){printf("\n# Error! line=%d: %s\n# ",__LINE__,msg);total_errors++;throw sql::SQLException("error");} else { printf(".");}} while (0)
 #define ensure_equal(msg, op1, op2)	do {total_tests++;if((op1)!=(op2)){printf("\n# Error! line=%d: %s\n# ",__LINE__,msg);total_errors++;throw sql::SQLException("error");} else { printf(".");}}while(0)
 #define ensure_equal_int(msg, op1, op2)	do {total_tests++;if((op1)!=(op2)){printf("\n# Error! line=%d: %s Op1=%d Op2=%d\n# ",__LINE__,msg,op1,op2);total_errors++;throw sql::SQLException("error");} else { printf(".");}}while(0)
 #define ensure_equal_str(msg, op1, op2)	do {total_tests++;if((op1)!=(op2)){printf("\n# Error! line=%d: %s Op1=%s Op2=%s\n# ",__LINE__,msg,op1.c_str(),op2.c_str());total_errors++;throw sql::SQLException("error");} else { printf(".");}}while(0)
+#define ensure_equal_int64(msg, op1, op2)	do {total_tests++;if((op1)!=(op2)){printf("\n# Error! line=%d: %s Op1=%lld Op2=%lld\n# ",__LINE__,msg,(long long)op1,(long long)op2);total_errors++;throw sql::SQLException("error");} else { printf(".");}}while(0)
+#define ensure_equal_uint64(msg, op1, op2)	do {total_tests++;if((op1)!=(op2)){printf("\n# Error! line=%d: %s Op1=%llu Op2=%llu\n# ",__LINE__,msg,(unsigned long long)op1,(unsigned long long)op2);total_errors++;throw sql::SQLException("error");} else { printf(".");}}while(0)
 
 static int total_errors = 0;
 static int total_tests = 0;
@@ -79,7 +86,24 @@ extern "C"
 #include <stdio.h>
 
 
-/* {{{	*/
+#ifndef L64
+#ifdef _WIN32
+#define L64(x) x##i64
+#else
+#define L64(x) x##LL
+#endif
+#endif
+
+#ifndef UL64
+#ifdef _WIN32
+#define UL64(x) x##ui64
+#else
+#define UL64(x) x##ULL
+#endif
+#endif
+
+
+/* {{{ */
 static bool populate_blob_table(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	std::auto_ptr<sql::Statement> stmt(conn->createStatement());
@@ -103,7 +127,7 @@ static bool populate_insert_data(sql::Statement * stmt)
 /* }}} */
 
 
-/* {{{	*/
+/* {{{ */
 static bool populate_test_table(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	std::auto_ptr<sql::Statement> stmt(conn->createStatement());
@@ -124,7 +148,7 @@ static bool populate_test_table(std::auto_ptr<sql::Connection> & conn, std::stri
 /* }}} */
 
 
-/* {{{	*/
+/* {{{ */
 static bool populate_TX_insert_data(sql::Statement * stmt)
 {
 	return stmt->execute("INSERT INTO test_function_tx (a,b,c,d,e) VALUES(1, 111, NULL,  '222', 'xyz')");
@@ -132,7 +156,7 @@ static bool populate_TX_insert_data(sql::Statement * stmt)
 /* }}} */
 
 
-/* {{{	*/
+/* {{{ */
 static bool populate_TX_test_table(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	std::auto_ptr<sql::Statement> stmt(conn->createStatement());
@@ -154,7 +178,7 @@ static bool populate_TX_test_table(std::auto_ptr<sql::Connection> & conn, std::s
 /* }}} */
 
 
-/* {{{	*/
+/* {{{ */
 static bool populate_test_table_PS(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	std::auto_ptr<sql::Statement> stmt1(conn->createStatement());
@@ -178,7 +202,7 @@ static bool populate_test_table_PS(std::auto_ptr<sql::Connection> & conn, std::s
 /* }}} */
 
 
-/* {{{	*/
+/* {{{ */
 static bool populate_TX_test_table_PS(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	std::auto_ptr<sql::Statement> stmt1(conn->createStatement());
@@ -202,7 +226,27 @@ static bool populate_TX_test_table_PS(std::auto_ptr<sql::Connection> & conn, std
 /* }}} */
 
 
-/* {{{	*/
+/* {{{ */
+static bool populate_test_table_PS_integers(std::auto_ptr<sql::Connection> & conn, std::string database)
+{
+	std::auto_ptr<sql::Statement> stmt1(conn->createStatement());
+	ensure("stmt1 is NULL", stmt1.get() != NULL);
+	stmt1->execute("USE " + database);
+
+	std::auto_ptr<sql::PreparedStatement> stmt2(conn->prepareStatement("DROP TABLE IF EXISTS test_function_int"));
+	ensure("stmt2 is NULL", stmt2.get() != NULL);
+	stmt2->executeUpdate();
+
+	std::auto_ptr<sql::PreparedStatement> stmt3(conn->prepareStatement("CREATE TABLE test_function_int(i integer, i_uns integer unsigned, b bigint, b_uns bigint unsigned)"));
+	ensure("stmt3 is NULL", stmt3.get() != NULL);
+	stmt3->executeUpdate();
+
+	return true;
+}
+/* }}} */
+
+
+/* {{{ */
 static void test_autocommit(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
@@ -222,7 +266,7 @@ static void test_autocommit(std::auto_ptr<sql::Connection> & conn)
 /* }}} */
 
 
-/* {{{	*/
+/* {{{ */
 static void test_connection_0(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
@@ -265,7 +309,7 @@ static void test_connection_0(std::auto_ptr<sql::Connection> & conn)
 /* }}} */
 
 
-/* {{{	*/
+/* {{{ */
 static void test_connection_1(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	ENTER_FUNCTION();
@@ -325,7 +369,7 @@ static void test_connection_1(std::auto_ptr<sql::Connection> & conn, std::string
 /* }}} */
 
 
-/* {{{	*/
+/* {{{ */
 static void test_connection_2(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	ENTER_FUNCTION();
@@ -358,7 +402,7 @@ static void test_connection_2(std::auto_ptr<sql::Connection> & conn, std::string
 /* }}} */
 
 
-/* {{{	*/
+/* {{{ */
 static void test_connection_3(std::auto_ptr<sql::Connection> & conn, std::string user)
 {
 	ENTER_FUNCTION();
@@ -375,7 +419,7 @@ static void test_connection_3(std::auto_ptr<sql::Connection> & conn, std::string
 /* }}} */
 
 
-/* {{{	*/
+/* {{{ */
 static void test_statement_0(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
@@ -821,7 +865,7 @@ static void test_statement_9(std::auto_ptr<sql::Connection> & conn, std::auto_pt
 /* }}} */
 
 
-/* {{{	*/
+/* {{{ */
 static void test_result_set_0(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
@@ -844,7 +888,7 @@ static void test_result_set_0(std::auto_ptr<sql::Connection> & conn)
 /* }}} */
 
 
-/* {{{	*/
+/* {{{ */
 static void test_result_set_1(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
@@ -870,7 +914,7 @@ static void test_result_set_1(std::auto_ptr<sql::Connection> & conn)
 /* }}} */
 
 
-/* {{{	*/
+/* {{{ */
 static void test_result_set_2(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	ENTER_FUNCTION();
@@ -898,7 +942,7 @@ static void test_result_set_2(std::auto_ptr<sql::Connection> & conn, std::string
 /* }}} */
 
 
-/* {{{	*/
+/* {{{ */
 static void test_result_set_3(std::auto_ptr<sql::Connection> & conn, std::string database)
 {
 	ENTER_FUNCTION();
@@ -1508,7 +1552,7 @@ static void test_general_1(std::auto_ptr<sql::Connection> & conn)
 /* }}} */
 #endif
 
-/* {{{	*/
+/* {{{ */
 static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 {
 	ENTER_FUNCTION();
@@ -1699,7 +1743,7 @@ static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 
 
 /* {{{ Test simple update statement against statement object */
-static void test_prep_statement_1(std::auto_ptr<sql::Connection> & conn, std::auto_ptr<sql::Connection> & conn2, const std::string database)
+static void test_prep_statement_1(std::auto_ptr<sql::Connection> & conn, std::auto_ptr<sql::Connection> & conn2, const std::string & database)
 {
 	ENTER_FUNCTION();
 	try {
@@ -1710,8 +1754,9 @@ static void test_prep_statement_1(std::auto_ptr<sql::Connection> & conn, std::au
 
 		std::auto_ptr<sql::PreparedStatement> stmt1(conn->prepareStatement("SELECT * FROM test_function"));
 		ensure("stmt1 is NULL", stmt1.get() != NULL);
-		if (false == stmt1->execute())
+		if (false == stmt1->execute()) {
 			ensure("False returned for SELECT", false);
+		}
 		std::auto_ptr<sql::ResultSet> rset(stmt1->getResultSet());
 
 		/* Clean */
@@ -1741,10 +1786,7 @@ static void test_prep_statement_2(std::auto_ptr<sql::Connection> & conn, std::st
 {
 	ENTER_FUNCTION();
 	try {
-		try {
-			std::auto_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("ELECT 1"));
-			ensure("ERR: Exception not thrown", false);
-		} catch (sql::SQLException &) {}
+		populate_test_table_PS_integers(conn, database);
 
 		try {
 			std::auto_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT '1"));
@@ -1757,6 +1799,99 @@ static void test_prep_statement_2(std::auto_ptr<sql::Connection> & conn, std::st
 			ensure("ERR: Exception not thrown", false);
 		} catch (sql::SQLException &) {}
 
+	} catch (sql::SQLException &e) {
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  %s (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState().c_str());
+		printf("# ");
+		total_errors++;
+	} catch (...) {
+		printf("\n# ERR: Caught unknown exception at %s::%d\n", CPPCONN_FUNC, __LINE__);
+		printf("# ");
+		total_errors++;
+	}
+	LEAVE_FUNCTION();
+}
+/* }}} */
+
+
+/* {{{ Test simple update statement against statement object */
+static void test_prep_statement_3(std::auto_ptr<sql::Connection> & conn, std::auto_ptr<sql::Connection> & conn2, const std::string & database)
+{
+	ENTER_FUNCTION();
+	try {
+		int64_t	r1_c1 = L64(2147483646),
+				r1_c2 = L64(2147483650),
+				r1_c3 = L64(9223372036854775806),
+				r2_c1 = L64(2147483647),
+				r2_c2 = L64(2147483649),
+				r2_c3 = L64(9223372036854775807);
+
+		uint64_t r1_c4 = UL64(9223372036854775810),
+				 r2_c4 = UL64(18446744073709551615);
+		
+		std::auto_ptr<sql::PreparedStatement> stmt0(conn->prepareStatement("SELECT 1, 2, 3"));
+		ensure("stmt0 is NULL", stmt0.get() != NULL);
+
+		ensure("Data not populated", true == populate_test_table_PS_integers(conn, database));
+
+		
+		std::auto_ptr<sql::PreparedStatement> stmt1(conn->prepareStatement("INSERT INTO test_function_int (i, i_uns, b, b_uns) VALUES(?,?,?,?)"));
+		ensure("stmt0 is NULL", stmt1.get() != NULL);
+		stmt1->clearParameters();
+		stmt1->setInt(1, r1_c1);
+		stmt1->setInt64(2, r1_c2);
+		stmt1->setInt64(3, r1_c3);
+		stmt1->setUInt64(4, r1_c4);
+		ensure("True returned for INSERT", false == stmt1->execute());
+		stmt1->clearParameters();
+		stmt1->setInt(1, r2_c1);
+		stmt1->setInt64(2, r2_c2);
+		stmt1->setInt64(3, r2_c3);
+		stmt1->setUInt64(4, r2_c4);
+		ensure("True returned for INSERT", false == stmt1->execute());
+	
+		std::auto_ptr<sql::PreparedStatement> stmt2(conn->prepareStatement("SELECT i, i_uns, b, b_uns FROM test_function_int"));
+		ensure("stmt1 is NULL", stmt2.get() != NULL);
+		ensure("False returned for SELECT", stmt2->execute());
+
+		std::auto_ptr<sql::ResultSet> rset(stmt2->getResultSet());
+
+		ensure("No first line", rset->next());
+		ensure_equal_int64("Different data", rset->getInt("i"), r1_c1);
+		ensure_equal_int64("Different data", rset->getInt(1), r1_c1);
+
+		ensure_equal_int64("Different data", rset->getInt64("i_uns"), r1_c2);
+		ensure_equal_int64("Different data", rset->getInt64(2), r1_c2);
+
+		ensure_equal_int64("Different data", rset->getInt64("b"), r1_c3);
+		ensure_equal_int64("Different data", rset->getInt64(3), r1_c3);
+
+		ensure_equal_uint64("Different data", rset->getUInt64("b_uns"), r1_c4);
+		ensure_equal_uint64("Different data", rset->getUInt64(4), r1_c4);
+
+		ensure("No second line", rset->next());
+
+		ensure_equal_int64("Different data", rset->getInt("i"), r2_c1);
+		ensure_equal_int64("Different data", rset->getInt(1), r2_c1);
+
+		ensure_equal_int64("Different data", rset->getInt64("i_uns"), r2_c2);
+		ensure_equal_int64("Different data", rset->getInt64(2), r2_c2);
+
+		ensure_equal_int64("Different data", rset->getInt64("b"), r2_c3);
+		ensure_equal_int64("Different data", rset->getInt64(3), r2_c3);
+
+		ensure_equal_uint64("Different data", rset->getUInt64("b_uns"), r2_c4);
+		ensure_equal_uint64("Different data", rset->getUInt64(4), r2_c4);
+
+		ensure("Too many lines", rset->next() == false);
+
+		/* Clean */
+		std::auto_ptr<sql::Statement> stmt4(conn2->createStatement());
+		ensure("stmt4 is NULL", stmt4.get() != NULL);
+		stmt4->execute("USE " + database);
+
+//		std::auto_ptr<sql::PreparedStatement> stmt5(conn2->prepareStatement("DROP TABLE test_function_int"));
+//		ensure("stmt5 is NULL", stmt5.get() != NULL);
+//		stmt5->execute();
 	} catch (sql::SQLException &e) {
 		printf("\n# ERR: Caught sql::SQLException at %s::%d  %s (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState().c_str());
 		printf("# ");
@@ -2057,7 +2192,7 @@ static void test_not_implemented_connection(std::auto_ptr<sql::Connection> & con
 }
 /* }}} */
 
-static void test_not_implemented_statement(std::auto_ptr<sql::Connection> & conn, const std::string database)
+static void test_not_implemented_statement(std::auto_ptr<sql::Connection> & conn, const std::string & database)
 {
 	ENTER_FUNCTION();
 
@@ -2226,7 +2361,7 @@ static void test_not_implemented_conn_meta(std::auto_ptr<sql::Connection> & conn
 }
 /* }}} */
 
-static void test_not_implemented_ps(std::auto_ptr<sql::Connection> & conn, const std::string database)
+static void test_not_implemented_ps(std::auto_ptr<sql::Connection> & conn, const std::string & database)
 {
 	ENTER_FUNCTION();
 
@@ -2855,7 +2990,7 @@ static void test_not_implemented_cs_rs_meta(std::auto_ptr<sql::Connection> & con
 /* }}} */
 
 
-/* {{{	*/
+/* {{{ */
 int run_tests(int argc, const char **argv)
 {
 
@@ -3063,6 +3198,12 @@ int run_tests(int argc, const char **argv)
 		conn.reset(get_connection(host, user, pass));
 		test_prep_statement_2(conn, database);
 		conn.reset(NULL);
+
+		conn.reset(get_connection(host, user, pass));
+		conn2.reset(get_connection(host, user, pass));
+		test_prep_statement_3(conn, conn2, database);
+		conn.reset(NULL);
+		conn2.reset(NULL);
 
 		conn.reset(get_connection(host, user, pass));
 		test_prep_statement_blob(conn, database);

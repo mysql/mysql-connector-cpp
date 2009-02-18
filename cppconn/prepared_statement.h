@@ -66,6 +66,8 @@ public:
 
 	virtual void setInt64(unsigned int parameterIndex, int64_t value) = 0;
 
+	virtual void setUInt64(unsigned int parameterIndex, uint64_t value) = 0;
+
 	virtual void setNull(unsigned int parameterIndex, int sqlType) = 0;
 
 	virtual void setString(unsigned int parameterIndex, const std::string& value) = 0;

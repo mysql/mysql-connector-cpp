@@ -128,6 +128,8 @@ public:
 
 	void setInt64(unsigned int parameterIndex, int64_t value);
 
+	void setUInt64(unsigned int parameterIndex, uint64_t value);
+
 	void setMaxFieldSize(unsigned int max);
 
 	void setMaxRows(unsigned int max);

@@ -359,22 +359,7 @@ int
 MySQL_ResultSet::getInt(const unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ResultSet::getInt(int)");
-
-	/* isBeforeFirst checks for validity */
-	if (isBeforeFirstOrAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_ResultSet::getInt: can't fetch because not on result set");
-	}
-
-	if (columnIndex == 0 || columnIndex > num_fields) {
-		throw sql::InvalidArgumentException("MySQL_ResultSet::getInt: invalid value of 'columnIndex'");
-	}
-
-	if (row[columnIndex - 1] == NULL) {
-		was_null = true;
-		return 0;
-	}
-	was_null = false;
-	return atoi(row[columnIndex - 1]);
+	return getInt64(columnIndex);
 }
 /* }}} */
 
@@ -385,6 +370,26 @@ MySQL_ResultSet::getInt(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ResultSet::getInt(string)");
 	return getInt(findColumn(columnLabel));
+}
+/* }}} */
+
+
+/* {{{ MySQL_ResultSet::getUInt() -I- */
+unsigned int
+MySQL_ResultSet::getUInt(const unsigned int columnIndex) const
+{
+	CPP_ENTER("MySQL_ResultSet::getUInt(int)");
+	return getUInt64(columnIndex);
+}
+/* }}} */
+
+
+/* {{{ MySQL_ResultSet::getUInt() -I- */
+unsigned int
+MySQL_ResultSet::getUInt(const std::string& columnLabel) const
+{
+	CPP_ENTER("MySQL_ResultSet::getUInt(string)");
+	return getUInt(findColumn(columnLabel));
 }
 /* }}} */
 

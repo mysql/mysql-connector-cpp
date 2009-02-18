@@ -119,6 +119,9 @@ public:
 	virtual int getInt(unsigned int columnIndex) const = 0;
 	virtual int getInt(const std::string& columnLabel) const = 0;
 
+	virtual unsigned int getUInt(unsigned int columnIndex) const = 0;
+	virtual unsigned int getUInt(const std::string& columnLabel) const = 0;
+
 	virtual int64_t getInt64(unsigned int columnIndex) const = 0;
 	virtual int64_t getInt64(const std::string& columnLabel) const = 0;
 

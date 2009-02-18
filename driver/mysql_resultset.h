@@ -101,6 +101,9 @@ public:
 	int getInt(unsigned int columnIndex) const;
 	int getInt(const std::string& columnLabel) const;
 
+	unsigned int getUInt(unsigned int columnIndex) const;
+	unsigned int getUInt(const std::string& columnLabel) const;
+
 	int64_t getInt64(unsigned int columnIndex) const;
 	int64_t getInt64(const std::string& columnLabel) const;
 
