@@ -41,6 +41,24 @@ TARGET_LINK_LIBRARIES(test_connection ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK
 
 MESSAGE(STATUS "Configuring unit tests - connection")
 
+SET(test_databasemetadata_sources
+	../unit_fixture.cpp
+	../main.cpp
+	connectionmetadata.cpp)
+
+IF(WIN32)
+	SET(test_databasemetadata_sources
+    		${test_databasemetadata_sources}
+	../unit_fixture.h
+	connectionmetadata.h)
+ENDIF(WIN32)
+
+ADD_EXECUTABLE(test_databasemetadata ${test_databasemetadata_sources})
+TARGET_LINK_LIBRARIES(test_databasemetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
+MESSAGE(STATUS "Configuring unit tests - databasemetadata")
+
+
 SET(test_resultsetmetadata_sources
 	../unit_fixture.cpp
 	../main.cpp

@@ -56,6 +56,7 @@ public:
     TEST_CASE(getDefaultTransactionIsolation);
     TEST_CASE(getExtraNameCharacters);
     TEST_CASE(getIdentifierQuoteString);
+    TEST_CASE(getImportedKeys);
   }
 
   /**
@@ -145,6 +146,15 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getIdentifierQuoteString();
+  
+  
+  /**
+   * Test for DatabaseMetaData:getImportedKeys()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getImportedKeys();
 
 };
 

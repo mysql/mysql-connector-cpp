@@ -582,7 +582,7 @@ void connectionmetadata::getIdentifierQuoteString()
       ASSERT_EQUALS("`", dbmeta->getIdentifierQuoteString());
       stmt->execute("SET @@sql_mode = 'ANSI_QUOTES,ALLOW_INVALID_DATES'");
       res.reset(stmt->executeQuery("SELECT @@sql_mode AS _sql_mode"));
-      ASSERT(res->next());      
+      ASSERT(res->next());
       ASSERT_EQUALS("ANSI_QUOTES,ALLOW_INVALID_DATES", res->getString("_sql_mode"));
       ASSERT_EQUALS("\"", dbmeta->getIdentifierQuoteString());
     }
@@ -594,6 +594,47 @@ void connectionmetadata::getIdentifierQuoteString()
     fail(e.what(), __FILE__, __LINE__);
   }
 
+}
+
+void connectionmetadata::getImportedKeys()
+{
+  logMsg("connectionmetadata::getImportedKeys() - MySQL_ConnectionMetaData::getImportedKeys()");
+  bool can_create_pk=false;
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    stmt.reset(con->createStatement());
+
+    stmt->execute("DROP TABLE IF EXISTS child");
+    stmt->execute("DROP TABLE IF EXISTS parent");    
+    try
+    {
+      stmt->execute("CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY(id)) ENGINE=INNODB;");
+      stmt->execute("CREATE TABLE child(id INT NOT NULL, parent_id INT, "
+                    "INDEX idx_parent_id(parent_id), FOREIGN KEY fk_parent_id(parent_id) "
+                    "REFERENCES parent(id) ON DELETE CASCADE, PRIMARY KEY(id)) ENGINE=INNODB;");
+      can_create_pk=true;
+    }
+    catch (sql::SQLException &e)
+    {
+      logMsg("... cannot create necessary FK tables");
+    }
+
+    if (can_create_pk)
+    {
+      res.reset(dbmeta->getImportedKeys(con->getCatalog(), con->getSchema(), "parent"));
+      ASSERT(!res->next());
+      
+    }    
+    stmt->execute("DROP TABLE IF EXISTS child");
+    stmt->execute("DROP TABLE IF EXISTS parent");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
 }
 
 
