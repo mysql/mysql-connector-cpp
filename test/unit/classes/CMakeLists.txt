@@ -36,6 +36,7 @@ IF(WIN32)
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(test_connection ${test_connection_sources})
+SET_TARGET_PROPERTIES(test_connection PROPERTIES OUTPUT_NAME "connection")
 TARGET_LINK_LIBRARIES(test_connection ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 MESSAGE(STATUS "Configuring unit tests - connection")
@@ -53,6 +54,7 @@ IF(WIN32)
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(test_resultsetmetadata ${test_resultsetmetadata_sources})
+SET_TARGET_PROPERTIES(test_resultsetmetadata PROPERTIES OUTPUT_NAME "resultsetmetadata")
 TARGET_LINK_LIBRARIES(test_resultsetmetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 MESSAGE(STATUS "Configuring unit tests - resultsetmetadata")
@@ -70,6 +72,7 @@ IF(WIN32)
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(test_resultset ${test_resultset_sources})
+SET_TARGET_PROPERTIES(test_resultset PROPERTIES OUTPUT_NAME "resultset")
 TARGET_LINK_LIBRARIES(test_resultset ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 MESSAGE(STATUS "Configuring unit tests - resultset")
