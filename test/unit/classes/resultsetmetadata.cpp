@@ -596,6 +596,7 @@ void resultsetmetadata::isCaseSensitive()
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
 
     stmt.reset(con->createStatement());
+    stmt->execute("SET NAMES UTF8");
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, col1 CHAR(1), col2 CHAR(10) CHARACTER SET 'utf8' COLLATE 'utf8_bin')");
     stmt->execute("INSERT INTO test(id, col1, col2) VALUES (1, 'a', 'b')");

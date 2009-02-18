@@ -267,8 +267,11 @@ MySQL_Prepared_ResultSetMetaData::isCaseSensitive(unsigned int columnIndex)
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	const CHARSET_INFO * const cs =
-		get_charset(mysql_fetch_field_direct(result_meta, columnIndex)->charsetnr, MYF(0));
+	const MYSQL_FIELD * const field = mysql_fetch_field_direct(result_meta, columnIndex);
+	if (field->flags & NUM_FLAG || field->type == MYSQL_TYPE_NEWDECIMAL || field->type == MYSQL_TYPE_DECIMAL) {
+		return false;
+	}
+	const CHARSET_INFO * const cs = get_charset(field->charsetnr, MYF(0));
 	return NULL == strstr(cs->name, "_ci");
 }
 /* }}} */

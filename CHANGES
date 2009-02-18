@@ -80,6 +80,9 @@ Beta  1.0.3 - 2009-xx-xx
 - Corrected handling of unsigned server types. Now returning correct values.
   (Andrey)
 
+- Fixed handling of numeric columns in ResultSetMetaData::isCaseSensitive to
+  return false. (Andrey)
+
 
 Alpha  1.0.2 - 2008-12-19
 
