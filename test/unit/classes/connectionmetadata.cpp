@@ -605,8 +605,8 @@ void connectionmetadata::getImportedKeys()
     DatabaseMetaData dbmeta(con->getMetaData());
     stmt.reset(con->createStatement());
 
-    stmt->execute("DROP TABLE IF EXISTS parent");
     stmt->execute("DROP TABLE IF EXISTS child");
+    stmt->execute("DROP TABLE IF EXISTS parent");    
     try
     {
       stmt->execute("CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY(id)) ENGINE=INNODB;");
@@ -622,12 +622,12 @@ void connectionmetadata::getImportedKeys()
 
     if (can_create_pk)
     {
-      res.reset(dbmeta->getImportedKeys(con->getCatalog(), con->getSchema(), "child"));
+      res.reset(dbmeta->getImportedKeys(con->getCatalog(), con->getSchema(), "parent"));
       ASSERT(!res->next());
       
-    }
-    stmt->execute("DROP TABLE IF EXISTS parent");
+    }    
     stmt->execute("DROP TABLE IF EXISTS child");
+    stmt->execute("DROP TABLE IF EXISTS parent");
   }
   catch (sql::SQLException &e)
   {
