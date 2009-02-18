@@ -54,6 +54,7 @@ IF(WIN32)
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(test_databasemetadata ${test_databasemetadata_sources})
+SET_TARGET_PROPERTIES(test_databasemetadata PROPERTIES OUTPUT_NAME "databasemetadata")
 TARGET_LINK_LIBRARIES(test_databasemetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 MESSAGE(STATUS "Configuring unit tests - databasemetadata")
