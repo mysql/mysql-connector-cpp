@@ -75,21 +75,21 @@ public:
 
 	void close();
 
-	unsigned int findColumn(const std::string& columnLabel) const;
+	uint32_t findColumn(const std::string& columnLabel) const;
 
 	bool first();
 
-	std::istream * getBlob(unsigned int columnIndex) const;
+	std::istream * getBlob(uint32_t columnIndex) const;
 	std::istream * getBlob(const std::string& columnLabel) const;
 
-	bool getBoolean(unsigned int columnIndex) const;
+	bool getBoolean(uint32_t columnIndex) const;
 	bool getBoolean(const std::string& columnLabel) const;
 
 	int getConcurrency();
 
 	std::string getCursorName();
 
-	double getDouble(unsigned int columnIndex) const;
+	double getDouble(uint32_t columnIndex) const;
 	double getDouble(const std::string& columnLabel) const;
 
 	int getFetchDirection();
@@ -98,28 +98,28 @@ public:
 
 	int getHoldability();
 
-	int getInt(unsigned int columnIndex) const;
-	int getInt(const std::string& columnLabel) const;
+	int32_t getInt(uint32_t columnIndex) const;
+	int32_t getInt(const std::string& columnLabel) const;
 
-	unsigned int getUInt(unsigned int columnIndex) const;
-	unsigned int getUInt(const std::string& columnLabel) const;
+	uint32_t getUInt(uint32_t columnIndex) const;
+	uint32_t getUInt(const std::string& columnLabel) const;
 
-	int64_t getInt64(unsigned int columnIndex) const;
+	int64_t getInt64(uint32_t columnIndex) const;
 	int64_t getInt64(const std::string& columnLabel) const;
 
-	uint64_t getUInt64(unsigned int columnIndex) const;
+	uint64_t getUInt64(uint32_t columnIndex) const;
 	uint64_t getUInt64(const std::string& columnLabel) const;
 
 	sql::ResultSetMetaData * getMetaData() const;
 
 	size_t getRow() const;
 
-	sql::RowID * getRowId(unsigned int columnIndex);
+	sql::RowID * getRowId(uint32_t columnIndex);
 	sql::RowID * getRowId(const std::string & columnLabel);
 
 	const sql::Statement * getStatement() const;
 
-	std::string getString(unsigned int columnIndex) const;
+	std::string getString(uint32_t columnIndex) const;
 	std::string getString(const std::string& columnLabel) const;	
 
 	void getWarnings();
@@ -136,7 +136,7 @@ public:
 
 	bool isLast() const;
 
-	bool isNull(unsigned int columnIndex) const;
+	bool isNull(uint32_t columnIndex) const;
 
 	bool isNull(const std::string& columnLabel) const;
 

@@ -45,4 +45,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define TEST_CASE( methodName ) \
   RegisterTestCase( new TestCase<TestSuiteClass>( *this, &TestSuiteClass::methodName, #methodName ) )
 
+#define SKIP( message ) TestsListener::setTestExecutionComment( String("SKIP ") + message );\
+  return
+
+#define TODO( message ) TestsListener::setTestExecutionComment( String("TODO ") + message )
+
 #endif  // __FRAMEWORK_H

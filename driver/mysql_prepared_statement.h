@@ -124,7 +124,9 @@ public:
 
 	void setFetchSize(unsigned int rows);
 
-	void setInt(unsigned int parameterIndex, int value);
+	void setInt(unsigned int parameterIndex, int32_t value);
+
+	void setUInt(unsigned int parameterIndex, uint32_t value);
 
 	void setInt64(unsigned int parameterIndex, int64_t value);
 
