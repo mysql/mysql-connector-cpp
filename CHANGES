@@ -84,7 +84,7 @@ Beta  1.0.3 - 2009-xx-xx
   return false. (Andrey)
 
 - Better implementation for ResultSetMetaData::isReadOnly. Values generated
-  from views are read-only. Seems tha these generated values don't have a `db`
+  from views are read-only. Seems that these generated values don't have `db`
   in MYSQL_FIELD set, while all normal columns do have. (Andrey)
 
 
