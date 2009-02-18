@@ -622,6 +622,8 @@ void connectionmetadata::getImportedKeys()
 
     if (can_create_pk)
     {
+      int num_res = 0;
+
       res.reset(dbmeta->getImportedKeys(con->getCatalog(), con->getSchema(), "parent"));
       ASSERT(!res->next());
 
@@ -683,6 +685,31 @@ void connectionmetadata::getImportedKeys()
       ASSERT(sql::DatabaseMetaData::importedKeyInitiallyImmediate != res->getInt64(10));
 
       ASSERT(!res->next());
+
+      stmt->execute("DROP TABLE IF EXISTS child");
+      stmt->execute("DROP TABLE IF EXISTS parent");
+      stmt->execute("CREATE TABLE parent(pid1 INT NOT NULL, pid2 INT NOT NULL, PRIMARY KEY(pid1, pid2)) ENGINE=INNODB;");
+      stmt->execute("CREATE TABLE child(cid INT NOT NULL, cpid2 INT, cpid1 INT, "
+                    "INDEX idx_parent_id(cpid1, cpid2), FOREIGN KEY idx_parent_id(cpid1, cpid2) "
+                    "REFERENCES parent(pid1, pid2) ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY(cid)) ENGINE=INNODB;");
+
+      res.reset(dbmeta->getImportedKeys(con->getCatalog(), con->getSchema(), "child"));
+      num_res = 0;
+      while (res->next()) {
+        num_res++;
+        switch (num_res) {
+        case 1:
+          ASSERT_EQUALS("cpid1", res->getString("FKCOLUMN_NAME"));
+          break;
+        case 2:
+          ASSERT_EQUALS("cpid1", res->getString("FKCOLUMN_NAME"));
+          break;
+        default:
+          FAIL("Expecting only two rows");
+          break;
+        }
+      }
+      ASSERT_EQUALS(2, num_res);      
     }
     stmt->execute("DROP TABLE IF EXISTS child");
     stmt->execute("DROP TABLE IF EXISTS parent");
