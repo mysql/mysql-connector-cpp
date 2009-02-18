@@ -45,7 +45,8 @@ void connection::getClientInfo()
     if (!client_info.empty())
       FAIL("Expecting parameter to be unchanged but it seems to have been modified.");
 
-  } catch (sql::SQLException &e)
+  }
+  catch (sql::SQLException &e)
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
@@ -64,7 +65,8 @@ void connection::getNoWarningsOnNewLine()
     if (warning != NULL)
       FAIL("There should be no warnings on the default connection");
 
-  } catch (sql::SQLException &e)
+  }
+  catch (sql::SQLException &e)
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
@@ -85,7 +87,8 @@ void connection::getNoWarningsAfterClear()
     if (warning != NULL)
       FAIL("There should be no warnings on the default connection");
 
-  } catch (sql::SQLException &e)
+  }
+  catch (sql::SQLException &e)
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
@@ -109,7 +112,8 @@ void connection::checkClosed()
     try
     {
       con->rollback();
-    } catch (sql::SQLException &e)
+    }
+    catch (sql::SQLException &e)
     {
       std::string reason(exceptionIsOK(e, "HY000", 1000));
       if (!reason.empty())
@@ -117,7 +121,8 @@ void connection::checkClosed()
     }
 
 
-  } catch (sql::SQLException &e)
+  }
+  catch (sql::SQLException &e)
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
@@ -185,12 +190,14 @@ void connection::connectUsingMap()
             created_objects.clear();
             con.reset(driver->connect(connection_properties));
             FAIL("Connect works with invalid port of -1");
-          } catch (sql::SQLException &e)
+          }
+          catch (sql::SQLException &e)
           {
             std::string reason(exceptionIsOK(e, "HY000", 2003));
             logErr(reason);
           }
-        } else
+        }
+        else
         {
           /* The user is using TCP/IP and has specified the port.
            A port setting shall NOT overrule the setting from the URL */
@@ -201,13 +208,15 @@ void connection::connectUsingMap()
           {
             created_objects.clear();
             con.reset(driver->connect(connection_properties));
-          } catch (sql::SQLException &e)
+          }
+          catch (sql::SQLException &e)
           {
             FAIL("URL shall overrule port setting");
           }
         }
 
-      } else
+      }
+      else
       {
         /* We must be using a socket connection - all port settings shall be ignored */
         sql::ConnectPropertyVal tmp;
@@ -218,7 +227,8 @@ void connection::connectUsingMap()
         {
           created_objects.clear();
           con.reset(driver->connect(connection_properties));
-        } catch (sql::SQLException &e)
+        }
+        catch (sql::SQLException &e)
         {
           FAIL("Port setting should be ignored, using Unix socket!");
         }
@@ -240,12 +250,14 @@ void connection::connectUsingMap()
         {
           created_objects.clear();
           con.reset(driver->connect(connection_properties));
-        } catch (sql::SQLException &e)
+        }
+        catch (sql::SQLException &e)
         {
           FAIL("Socket setting should be ignored, socket is part of the URL");
         }
 
-      } else
+      }
+      else
 #endif
         if (url.compare(0, sizeof ("tcp://") - 1, "tcp://") == 0)
       {
@@ -255,7 +267,8 @@ void connection::connectUsingMap()
         {
           created_objects.clear();
           con.reset(driver->connect(connection_properties));
-        } catch (sql::SQLException &e)
+        }
+        catch (sql::SQLException &e)
         {
           FAIL("Socket setting should be ignored because its a TCP/IP connection");
         }
@@ -299,7 +312,8 @@ void connection::connectUsingMap()
           schema=con->getSchema();
           if (!schema.empty())
             FAIL("Empty schama specified but certain schema selected upon connect");
-        } catch (sql::SQLException &e)
+        }
+        catch (sql::SQLException &e)
         {
           FAIL("Connect should have worked although schema property set to empty string");
         }
@@ -326,12 +340,14 @@ void connection::connectUsingMap()
             logErr(mycon->getSchema());
             FAIL("Connected to schema mysql but getSchema() reports different schema");
           }
-        } catch (sql::SQLException &e)
+        }
+        catch (sql::SQLException &e)
         {
           logMsg("... cannot connect to mysql schema but that is OK, might be insufficient grants");
         }
 
-      } else
+      }
+      else
       {
         /* schema is set in the TCP/IP url */
         logMsg("... schema is set in the URL and property shall be ignored");
@@ -348,7 +364,8 @@ void connection::connectUsingMap()
             logErr(schema);
             FAIL("Connected to a certain schema but getSchema() reports different schema");
           }
-        } catch (sql::SQLException &e)
+        }
+        catch (sql::SQLException &e)
         {
           FAIL("Connect should not fail");
         }
@@ -369,7 +386,8 @@ void connection::connectUsingMap()
             logErr(schema);
             FAIL("Connected to a certain schema but getSchema() reports different schema");
           }
-        } catch (sql::SQLException &e)
+        }
+        catch (sql::SQLException &e)
         {
           FAIL("Connect should not fail");
         }
@@ -405,7 +423,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
 
@@ -428,7 +447,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
       tmp.lval=(long long) false;
@@ -436,7 +456,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
     }
@@ -453,7 +474,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
       tmp.lval=(long long) false;
@@ -461,7 +483,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
     }
@@ -478,7 +501,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
       tmp.lval=(long long) false;
@@ -486,7 +510,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
     }
@@ -503,7 +528,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
       tmp.lval=(long long) false;
@@ -511,7 +537,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
     }
@@ -528,7 +555,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
       tmp.lval=(long long) false;
@@ -536,7 +564,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
     }
@@ -554,7 +583,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
       tmp.lval=(long long) false;
@@ -562,7 +592,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
     }
@@ -580,7 +611,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
       tmp.lval=(long long) false;
@@ -588,7 +620,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
     }
@@ -606,7 +639,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
       tmp.lval=(long long) false;
@@ -614,7 +648,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
     }
@@ -631,7 +666,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
       }
       tmp.lval=(long long) false;
@@ -639,7 +675,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &)
+      }
+      catch (sql::SQLException &)
       {
       }
     }
@@ -657,7 +694,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
         fail(e.what(), __FILE__, __LINE__);
       }
@@ -676,7 +714,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
         fail(e.what(), __FILE__, __LINE__);
       }
@@ -695,7 +734,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
         fail(e.what(), __FILE__, __LINE__);
       }
@@ -714,7 +754,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
         fail(e.what(), __FILE__, __LINE__);
       }
@@ -735,7 +776,8 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
         fail(e.what(), __FILE__, __LINE__);
       }
@@ -756,14 +798,16 @@ void connection::connectUsingMap()
       {
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
-      } catch (sql::SQLException &e)
+      }
+      catch (sql::SQLException &e)
       {
         fail(e.what(), __FILE__, __LINE__);
       }
     }
     connection_properties.erase("MYSQL_REPORT_DATA_TRUNCATION");
 
-  } catch (sql::SQLException &e)
+  }
+  catch (sql::SQLException &e)
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());

@@ -57,19 +57,19 @@ TARGET_LINK_LIBRARIES(resultsetmetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LI
 
 MESSAGE(STATUS "Configuring unit tests - resultsetmetadata")
 
-SET(databasemetadata_sources
+SET(resultset_sources
 	../unit_fixture.cpp
 	../main.cpp
-	connectionmetadata.cpp)
+	resultset.cpp)
 
 IF(WIN32)
-	SET(databasemetadata_sources
-    		${databasemetadata_sources}
+	SET(resultset_sources
+    		${resultset_sources}
 	../unit_fixture.h
 	connectionmetadata.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(databasemetadata ${databasemetadata_sources})
-TARGET_LINK_LIBRARIES(databasemetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+ADD_EXECUTABLE(resultset ${resultset_sources})
+TARGET_LINK_LIBRARIES(resultset ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
-MESSAGE(STATUS "Configuring unit tests - databasemetadata")
+MESSAGE(STATUS "Configuring unit tests - resultset")
