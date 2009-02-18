@@ -55,6 +55,23 @@
 #define _PURE =0
 #endif
 
+#ifndef L64
+#ifdef _WIN32
+#define L64(x) x##i64
+#else
+#define L64(x) x##LL
+#endif
+#endif
+
+#ifndef UL64
+#ifdef _WIN32
+#define UL64(x) x##ui64
+#else
+#define UL64(x) x##ULL
+#endif
+#endif
+
+
 /*----------------------------------------------------------------------------
 ci_char_traits : Case-insensitive char traits.
 Taken from : http://gcc.gnu.org/onlinedocs/libstdc++/21_strings/gotw29a.txt

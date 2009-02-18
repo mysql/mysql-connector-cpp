@@ -67,25 +67,107 @@ void resultset::andrey1()
      framework for creating SQL objects, I don't find it handy.
      Its used in the JDBC compliance tests, however.
      */
-    stmt->execute("DROP TABLE IF EXISTS test");
-    stmt->execute("CREATE TABLE test(id INT)");
+    stmt->execute("DROP TABLE IF EXISTS test_function_int");
+    stmt->execute("CREATE TABLE test_function_int(i integer, i_uns integer unsigned, b bigint, b_uns bigint unsigned)");
+
+		int64_t	r1_c1 = L64(2147483646),
+				r1_c2 = L64(2147483650),
+				r1_c3 = L64(9223372036854775806),
+				r2_c1 = L64(2147483647),
+				r2_c2 = L64(2147483649),
+				r2_c3 = L64(9223372036854775807);
+
+		uint64_t r1_c4 = UL64(9223372036854775810),
+				 r2_c4 = UL64(18446744073709551615);
+				
+		pstmt.reset(con->prepareStatement("INSERT INTO test_function_int (i, i_uns, b, b_uns) VALUES(?,?,?,?)"));
+
+		ASSERT(pstmt.get() != NULL);
+		pstmt->clearParameters();
+		pstmt->setInt(1, r1_c1);
+		pstmt->setInt64(2, r1_c2);
+		pstmt->setInt64(3, r1_c3);
+		pstmt->setUInt64(4, r1_c4);
+		ASSERT_EQUALS(false, pstmt->execute());
+
+		pstmt->clearParameters();
+		pstmt->setInt(1, r2_c1);
+		pstmt->setInt64(2, r2_c2);
+		pstmt->setInt64(3, r2_c3);
+		pstmt->setUInt64(4, r2_c4);
+		ASSERT_EQUALS(false, pstmt->execute());
+	
+		pstmt.reset(con->prepareStatement("SELECT i, i_uns, b, b_uns FROM test_function_int"));
+		ASSERT(pstmt.get() != NULL);
+		ASSERT(pstmt->execute());
+
+		res.reset(pstmt->getResultSet());
+
+		ASSERT(res->next());
+
+		ASSERT_EQUALS((int64_t) res->getInt("i"), r1_c1);
+		ASSERT_EQUALS((int64_t) res->getInt(1), r1_c1);
+
+		ASSERT_EQUALS(res->getInt64("i_uns"), r1_c2);
+		ASSERT_EQUALS(res->getInt64(2), r1_c2);
+
+		ASSERT_EQUALS(res->getInt64("b"), r1_c3);
+		ASSERT_EQUALS(res->getInt64(3), r1_c3);
+
+		ASSERT_EQUALS(res->getUInt64("b_uns"), r1_c4);
+		ASSERT_EQUALS(res->getUInt64(4), r1_c4);
+
+		ASSERT(res->next());
+
+		ASSERT_EQUALS((int64_t) res->getInt("i"), r2_c1);
+		ASSERT_EQUALS((int64_t) res->getInt(1), r2_c1);
+
+		ASSERT_EQUALS(res->getInt64("i_uns"), r2_c2);
+		ASSERT_EQUALS(res->getInt64(2), r2_c2);
+
+		ASSERT_EQUALS(res->getInt64("b"), r2_c3);
+		ASSERT_EQUALS(res->getInt64(3), r2_c3);
+
+		ASSERT_EQUALS(res->getUInt64("b_uns"), r2_c4);
+		ASSERT_EQUALS(res->getUInt64(4), r2_c4);
+
+		ASSERT_EQUALS(res->next(), false);
+
+
+		res.reset(stmt->executeQuery("SELECT i, i_uns, b, b_uns FROM test_function_int"));
+
+		ASSERT(res->next());
+
+		ASSERT_EQUALS((int64_t) res->getInt("i"), r1_c1);
+		ASSERT_EQUALS((int64_t) res->getInt(1), r1_c1);
+
+		ASSERT_EQUALS(res->getInt64("i_uns"), r1_c2);
+		ASSERT_EQUALS(res->getInt64(2), r1_c2);
+
+		ASSERT_EQUALS(res->getInt64("b"), r1_c3);
+		ASSERT_EQUALS(res->getInt64(3), r1_c3);
+
+		ASSERT_EQUALS(res->getUInt64("b_uns"), r1_c4);
+		ASSERT_EQUALS(res->getUInt64(4), r1_c4);
+
+		ASSERT(res->next());
+
+		ASSERT_EQUALS((int64_t) res->getInt("i"), r2_c1);
+		ASSERT_EQUALS((int64_t) res->getInt(1), r2_c1);
+
+		ASSERT_EQUALS(res->getInt64("i_uns"), r2_c2);
+		ASSERT_EQUALS(res->getInt64(2), r2_c2);
+
+		ASSERT_EQUALS(res->getInt64("b"), r2_c3);
+		ASSERT_EQUALS(res->getInt64(3), r2_c3);
+
+		ASSERT_EQUALS(res->getUInt64("b_uns"), r2_c4);
+		ASSERT_EQUALS(res->getUInt64(4), r2_c4);
+
+		ASSERT_EQUALS(res->next(), false);
 
     // Ocasionally write a log message which appears when you run the test using --verbose
-    logMsg("... creating table for INT test");
-
-    // You probabaly want to use PS for this...
-    stmt->execute("INSERT INTO test(id) VALUES (9999)");
-
-    res.reset(stmt->executeQuery("SELECT id FROM test"));
-    // ASSERT(<expression> == true)
-    ASSERT(res->next());
-    // ASSERT(expected, retrieved) is not overloaded for all types!
-    ASSERT_EQUALS(9999, res->getInt(1));
-    ASSERT_EQUALS(res->getInt(1), res->getInt("id"));
-
-    // And there is ASSERT_LT and ASSERT_GT
-    ASSERT_LT(100, res->getInt(1));
-    
+    // logMsg("... creating table for INT test");    
   }
   catch (sql::SQLException &e)
   {

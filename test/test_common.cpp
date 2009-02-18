@@ -42,10 +42,6 @@
   #define __LINE__ "(line number n/a)"
 #endif
 
-#ifdef PRId64
-#error it is defined
-#endif
-
 #define ensure(msg, stmt)				do {total_tests++;if(!(stmt)){printf("\n# Error! line=%d: %s\n# ",__LINE__,msg);total_errors++;throw sql::SQLException("error");} else { printf(".");}} while (0)
 #define ensure_equal(msg, op1, op2)	do {total_tests++;if((op1)!=(op2)){printf("\n# Error! line=%d: %s\n# ",__LINE__,msg);total_errors++;throw sql::SQLException("error");} else { printf(".");}}while(0)
 #define ensure_equal_int(msg, op1, op2)	do {total_tests++;if((op1)!=(op2)){printf("\n# Error! line=%d: %s Op1=%d Op2=%d\n# ",__LINE__,msg,op1,op2);total_errors++;throw sql::SQLException("error");} else { printf(".");}}while(0)
@@ -1828,11 +1824,7 @@ static void test_prep_statement_3(std::auto_ptr<sql::Connection> & conn, std::au
 		uint64_t r1_c4 = UL64(9223372036854775810),
 				 r2_c4 = UL64(18446744073709551615);
 		
-		std::auto_ptr<sql::PreparedStatement> stmt0(conn->prepareStatement("SELECT 1, 2, 3"));
-		ensure("stmt0 is NULL", stmt0.get() != NULL);
-
 		ensure("Data not populated", true == populate_test_table_PS_integers(conn, database));
-
 		
 		std::auto_ptr<sql::PreparedStatement> stmt1(conn->prepareStatement("INSERT INTO test_function_int (i, i_uns, b, b_uns) VALUES(?,?,?,?)"));
 		ensure("stmt0 is NULL", stmt1.get() != NULL);
@@ -1889,9 +1881,9 @@ static void test_prep_statement_3(std::auto_ptr<sql::Connection> & conn, std::au
 		ensure("stmt4 is NULL", stmt4.get() != NULL);
 		stmt4->execute("USE " + database);
 
-//		std::auto_ptr<sql::PreparedStatement> stmt5(conn2->prepareStatement("DROP TABLE test_function_int"));
-//		ensure("stmt5 is NULL", stmt5.get() != NULL);
-//		stmt5->execute();
+		std::auto_ptr<sql::PreparedStatement> stmt5(conn2->prepareStatement("DROP TABLE test_function_int"));
+		ensure("stmt5 is NULL", stmt5.get() != NULL);
+		stmt5->execute();
 	} catch (sql::SQLException &e) {
 		printf("\n# ERR: Caught sql::SQLException at %s::%d  %s (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState().c_str());
 		printf("# ");

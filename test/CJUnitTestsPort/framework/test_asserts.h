@@ -46,6 +46,9 @@ void assertEquals(int expected, int result
 void assertEquals(unsigned int expected, unsigned int result
                   , const char* file, int line);
 
+void assertEquals(int64_t expected, int64_t result
+                  , const char* file, int line);
+
 void assertEquals(uint64_t expected, uint64_t result
                   , const char* file, int line);
 
@@ -87,22 +90,22 @@ void assertLessThan(unsigned int expected, unsigned int result
 // Macros should be used inside testsuite namespace
 
 #define ASSERT_EQUALS( expected, result) \
-	assertEquals( expected, result, __FILE__, __LINE__ )
+	assertEquals( (expected), (result), __FILE__, __LINE__ )
 
 #define ASSERT_LT( expected, result) \
-	assertLessThan( expected, result, __FILE__, __LINE__ )
+	assertLessThan( (expected), (result), __FILE__, __LINE__ )
 
 #define ASSERT_GT( expected, result) \
-	assertGreaterThan( expected, result, __FILE__, __LINE__ )
+	assertGreaterThan( (expected), (result), __FILE__, __LINE__ )
 
 #define ASSERT_EQUALS_EPSILON( expected, result, epsilon) \
-	assertEqualsEpsilon( expected, result, epsilon, __FILE__, __LINE__ )
+	assertEqualsEpsilon( (expected), (result), (epsilon), __FILE__, __LINE__ )
 
-#define ASSERT( exp ) assertTrue( #exp, exp, __FILE__, __LINE__)
+#define ASSERT( exp ) assertTrue( (#exp), (exp), __FILE__, __LINE__)
 
 #define ASSERT_MESSAGE( exp, message ) \
-	assertTrue( message, exp, __FILE__, __LINE__ )
+	assertTrue( (message), (exp), __FILE__, __LINE__ )
 
-#define FAIL( why ) fail( #why, __FILE__, __LINE__ )
+#define FAIL( why ) fail( (#why), __FILE__, __LINE__ )
 
 #endif  // __TESTASSERTS_H_
