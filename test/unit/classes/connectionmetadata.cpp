@@ -134,7 +134,7 @@ void connectionmetadata::getBestRowIdentifier()
       {
         stmt->execute(msg.str());
       }
-      catch (sql::SQLException &e)
+      catch (sql::SQLException &)
       {
         msg.str("");
         msg << "... skipping " << it->sqldef;
@@ -289,7 +289,7 @@ void connectionmetadata::getColumns()
         msg << "... testing " << it->sqldef;
         logMsg(msg.str());
       }
-      catch (sql::SQLException &e)
+      catch (sql::SQLException &)
       {
         msg.str("");
         msg << "... skipping " << it->sqldef;
@@ -606,22 +606,24 @@ void connectionmetadata::getImportedKeys()
     stmt.reset(con->createStatement());
 
     stmt->execute("DROP TABLE IF EXISTS child");
-    stmt->execute("DROP TABLE IF EXISTS parent");    
+    stmt->execute("DROP TABLE IF EXISTS parent");
     try
     {
       stmt->execute("CREATE TABLE parent(pid INT NOT NULL, PRIMARY KEY(pid)) ENGINE=INNODB;");
       stmt->execute("CREATE TABLE child(cid INT NOT NULL, cpid INT, "
-                    "INDEX idx_parent_id(cpid), FOREIGN KEY fk_parent_id(cpid) "
-                    "REFERENCES parent(pid) ON DELETE CASCADE, PRIMARY KEY(cid)) ENGINE=INNODB;");
+                    "INDEX idx_parent_id(cpid), FOREIGN KEY idx_parent_id(cpid) "
+                    "REFERENCES parent(pid) ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY(cid)) ENGINE=INNODB;");
       can_create_pk=true;
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
       logMsg("... cannot create necessary FK tables");
     }
 
     if (can_create_pk)
     {
+      int num_res = 0;
+
       res.reset(dbmeta->getImportedKeys(con->getCatalog(), con->getSchema(), "parent"));
       ASSERT(!res->next());
 
@@ -629,15 +631,86 @@ void connectionmetadata::getImportedKeys()
       ASSERT(res->next());
       ASSERT_EQUALS(con->getCatalog(), res->getString(1));
       ASSERT_EQUALS(res->getString(1), res->getString("PKTABLE_CAT"));
+
       ASSERT_EQUALS(con->getSchema(), res->getString(2));
       ASSERT_EQUALS(res->getString(2), res->getString("PKTABLE_SCHEM"));
-      ASSERT_EQUALS("child", res->getString(3));
+
+      ASSERT_EQUALS("parent", res->getString(3));
       ASSERT_EQUALS(res->getString(3), res->getString("PKTABLE_NAME"));
-      ASSERT_EQUALS("cpid", res->getString(4));
+
+      ASSERT_EQUALS("pid", res->getString(4));
       ASSERT_EQUALS(res->getString(4), res->getString("PKCOLUMN_NAME"));
+
+      ASSERT_EQUALS(con->getCatalog(), res->getString(5));
+      ASSERT_EQUALS(res->getString(5), res->getString("FKTABLE_CAT"));
+
+      ASSERT_EQUALS(con->getSchema(), res->getString(6));
+      ASSERT_EQUALS(res->getString(6), res->getString("FKTABLE_SCHEM"));
+
+      ASSERT_EQUALS("child", res->getString(7));
+      ASSERT_EQUALS(res->getString(7), res->getString("FKTABLE_NAME"));
+
+      ASSERT_EQUALS("cpid", res->getString(8));
+      ASSERT_EQUALS(res->getString(8), res->getString("FKCOLUMN_NAME"));
+
+      ASSERT_EQUALS(1, res->getInt(9));
+      ASSERT_EQUALS(res->getInt(9), res->getInt("KEY_SEQ"));
+
+      ASSERT_EQUALS((int64_t) sql::DatabaseMetaData::importedKeyCascade, res->getInt64(10));
+      ASSERT_EQUALS(res->getInt64(10), res->getInt64("UPDATE_RULE"));
+
+      ASSERT(sql::DatabaseMetaData::importedKeyNoAction != res->getInt64(10));
+      ASSERT(sql::DatabaseMetaData::importedKeySetNull != res->getInt64(10));
+      ASSERT(sql::DatabaseMetaData::importedKeySetDefault != res->getInt64(10));
+      ASSERT(sql::DatabaseMetaData::importedKeyRestrict != res->getInt64(10));
+
+      ASSERT_EQUALS((int64_t) sql::DatabaseMetaData::importedKeyCascade, res->getInt64(11));
+      ASSERT_EQUALS(res->getInt64(11), res->getInt64("DELETE_RULE"));
+
+      ASSERT(sql::DatabaseMetaData::importedKeyNoAction != res->getInt64(11));
+      ASSERT(sql::DatabaseMetaData::importedKeySetNull != res->getInt64(11));
+      ASSERT(sql::DatabaseMetaData::importedKeySetDefault != res->getInt64(11));
+      ASSERT(sql::DatabaseMetaData::importedKeyRestrict != res->getInt64(11));
+
+      // InnoDB should give the FK a name
+      ASSERT("" != res->getString("FK_NAME"));
+      ASSERT_EQUALS(res->getString(12), res->getString("FK_NAME"));
+
+      // TODO - not sure what value to expect
+      ASSERT_EQUALS("", res->getString("PK_NAME"));
+      ASSERT_EQUALS(res->getString(13), res->getString("PK_NAME"));
+
+      ASSERT_EQUALS((int64_t)sql::DatabaseMetaData::importedKeyNotDeferrable, res->getInt64(14));
+      ASSERT(sql::DatabaseMetaData::importedKeyInitiallyDeferred != res->getInt64(10));
+      ASSERT(sql::DatabaseMetaData::importedKeyInitiallyImmediate != res->getInt64(10));
+
       ASSERT(!res->next());
-      
-    }    
+
+      stmt->execute("DROP TABLE IF EXISTS child");
+      stmt->execute("DROP TABLE IF EXISTS parent");
+      stmt->execute("CREATE TABLE parent(pid1 INT NOT NULL, pid2 INT NOT NULL, PRIMARY KEY(pid1, pid2)) ENGINE=INNODB;");
+      stmt->execute("CREATE TABLE child(cid INT NOT NULL, cpid2 INT, cpid1 INT, "
+                    "INDEX idx_parent_id(cpid1, cpid2), FOREIGN KEY idx_parent_id(cpid1, cpid2) "
+                    "REFERENCES parent(pid1, pid2) ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY(cid)) ENGINE=INNODB;");
+
+      res.reset(dbmeta->getImportedKeys(con->getCatalog(), con->getSchema(), "child"));
+      num_res = 0;
+      while (res->next()) {
+        num_res++;
+        switch (num_res) {
+        case 1:
+          ASSERT_EQUALS("cpid1", res->getString("FKCOLUMN_NAME"));
+          break;
+        case 2:
+          ASSERT_EQUALS("cpid1", res->getString("FKCOLUMN_NAME"));
+          break;
+        default:
+          FAIL("Expecting only two rows");
+          break;
+        }
+      }
+      ASSERT_EQUALS(2, num_res);      
+    }
     stmt->execute("DROP TABLE IF EXISTS child");
     stmt->execute("DROP TABLE IF EXISTS parent");
   }
