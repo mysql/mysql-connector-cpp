@@ -23,53 +23,53 @@
 # Use Copy&Paste and Search&Replace to add new tests to the build
 #
 
-SET(connection_sources
+SET(test_connection_sources
 	../unit_fixture.cpp
 	../main.cpp
 	connection.cpp)
 
 IF(WIN32)
-	SET(connection_sources
-    		${connection_sources}
+	SET(test_connection_sources
+    		${test_connection_sources}
 	../unit_fixture.h
 	connection.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(connection ${connection_sources})
-TARGET_LINK_LIBRARIES(connection ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+ADD_EXECUTABLE(test_connection ${test_connection_sources})
+TARGET_LINK_LIBRARIES(test_connection ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 MESSAGE(STATUS "Configuring unit tests - connection")
 
-SET(resultsetmetadata_sources
+SET(test_resultsetmetadata_sources
 	../unit_fixture.cpp
 	../main.cpp
 	resultsetmetadata.cpp)
 
 IF(WIN32)
-	SET(resultsetmetadata_sources
-    		${resultsetmetadata_sources}
+	SET(test_resultsetmetadata_sources
+    		${test_resultsetmetadata_sources}
 	../unit_fixture.h
 	resultsetmetadata.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(resultsetmetadata ${resultsetmetadata_sources})
-TARGET_LINK_LIBRARIES(resultsetmetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+ADD_EXECUTABLE(test_resultsetmetadata ${test_resultsetmetadata_sources})
+TARGET_LINK_LIBRARIES(test_resultsetmetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 MESSAGE(STATUS "Configuring unit tests - resultsetmetadata")
 
-SET(resultset_sources
+SET(test_resultset_sources
 	../unit_fixture.cpp
 	../main.cpp
 	resultset.cpp)
 
 IF(WIN32)
-	SET(resultset_sources
-    		${resultset_sources}
+	SET(test_resultset_sources
+    		${test_resultset_sources}
 	../unit_fixture.h
 	connectionmetadata.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(resultset ${resultset_sources})
-TARGET_LINK_LIBRARIES(resultset ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+ADD_EXECUTABLE(test_resultset ${test_resultset_sources})
+TARGET_LINK_LIBRARIES(test_resultset ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 MESSAGE(STATUS "Configuring unit tests - resultset")

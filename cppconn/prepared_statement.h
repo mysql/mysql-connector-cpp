@@ -64,7 +64,9 @@ public:
 
 	virtual void setInt(unsigned int parameterIndex, int value) = 0;
 
-	virtual void setLong(unsigned int parameterIndex, long long value) = 0;
+	virtual void setInt64(unsigned int parameterIndex, int64_t value) = 0;
+
+	virtual void setUInt64(unsigned int parameterIndex, uint64_t value) = 0;
 
 	virtual void setNull(unsigned int parameterIndex, int sqlType) = 0;
 

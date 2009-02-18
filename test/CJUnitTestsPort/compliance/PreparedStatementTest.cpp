@@ -1479,12 +1479,12 @@ void PreparedStatementTest::testSetDouble02()
  *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise
  *                    Edition(J2EE) specification v 1.2)
  *
- *                    The setLong(int parameterIndex, long x) method Sets the
+ *                    The setInt64(int parameterIndex, long x) method Sets the
  *                    designated parameter to a Java long value. The driver converts
  *                    this to an SQL BIGINT value when it sends it to the database.
  *
  * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
- *                    Using setLong(int parameterIndex,long x),update the column the
+ *                    Using setInt64(int parameterIndex,long x),update the column the
  *                    minimum value of Bigint_Tab.
  *                    Now execute a query to get the minimum value and retrieve the result
  *                    of the query using the getInt64(int columnIndex) method.Compare the
@@ -1509,7 +1509,7 @@ void PreparedStatementTest::testSetLong01()
           << "Long Value: " << minLongVal << std::endl;
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
-  pstmt->setLong(1, minLongVal);
+  pstmt->setInt64(1, minLongVal);
   pstmt->executeUpdate();
 
   const String & Max_Val_Query=sqlProps[ "Bigint_Query_Max" ];
@@ -1526,10 +1526,10 @@ void PreparedStatementTest::testSetLong01()
           << "Value returned from ctssql.stmt: " << minLongVal << std::endl;
 
   if (rLongVal == minLongVal) {
-    logMsg("setLong Method sets the designated parameter to a long value ");
+    logMsg("setInt64 Method sets the designated parameter to a long value ");
   } else {
-    logErr("setLong Method does not set the designated parameter to a long value ");
-    FAIL("Call to setLong Method is Failed!");
+    logErr("setInt64 Method does not set the designated parameter to a long value ");
+    FAIL("Call to setInt64 Method is Failed!");
   }
 }
 
@@ -1544,12 +1544,12 @@ void PreparedStatementTest::testSetLong01()
  *                    methods. (See section 6.2.2.3 of Java2 Platform Enterprise
  *                    Edition(J2EE) specification v 1.2).
  *
- *                    The setLong(int parameterIndex, long x) method Sets the
+ *                    The setInt64(int parameterIndex, long x) method Sets the
  *                    designated parameter to a Java long value. The driver converts
  *                    this to an SQL BIGINT value when it sends it to the database.
  *
  * @test_Strategy:    Get a PreparedStatement object from the connection to the database.
- *                    Using setLong(int parameterIndex,long x),update the column the
+ *                    Using setInt64(int parameterIndex,long x),update the column the
  *                    maximum value of Bigint_Tab.
  *                    Now execute a query to get the maximum value and retrieve the result
  *                    of the query using the getInt64(int columnIndex) method.Compare the
@@ -1575,7 +1575,7 @@ void PreparedStatementTest::testSetLong02()
           << "Long Value: " << maxLongVal << std::endl;
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
-  pstmt->setLong(1, maxLongVal);
+  pstmt->setInt64(1, maxLongVal);
   pstmt->executeUpdate();
   const String & Null_Val_Query=sqlProps[ "Bigint_Query_Null" ];
   logMsg(Null_Val_Query);
@@ -1589,10 +1589,10 @@ void PreparedStatementTest::testSetLong02()
           << "Value returned from ctssql.stmt: " << maxLongVal << std::endl;
 
   if (rLongVal == maxLongVal) {
-    logMsg("setLong Method sets the designated parameter to a long value ");
+    logMsg("setInt64 Method sets the designated parameter to a long value ");
   } else {
-    logErr("setLong Method does not set the designated parameter to a long value ");
-    FAIL("Call to setLong Method is Failed!");
+    logErr("setInt64 Method does not set the designated parameter to a long value ");
+    FAIL("Call to setInt64 Method is Failed!");
   }
 }
 

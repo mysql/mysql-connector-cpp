@@ -524,17 +524,7 @@ int
 MySQL_ArtResultSet::getInt(unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getInt(int)");
-
-	/* isBeforeFirst checks for validity */
-	if (isBeforeFirstOrAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getInt: can't fetch because not on result set");
-	}
-
-	if (columnIndex > num_fields || columnIndex == 0) {
-		throw sql::InvalidArgumentException("MySQL_ArtResultSet::getInt: invalid value of 'columnIndex'");
-	}
-
-	return (*current_record)[columnIndex - 1].getInt64();
+	return getInt64(columnIndex);
 }
 /* }}} */
 
@@ -545,6 +535,26 @@ MySQL_ArtResultSet::getInt(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getInt(string)");
 	return getInt(findColumn(columnLabel));
+}
+/* }}} */
+
+
+/* {{{ MySQL_ArtResultSet::getUInt() -I- */
+unsigned int
+MySQL_ArtResultSet::getUInt(unsigned int columnIndex) const
+{
+	CPP_ENTER("MySQL_ArtResultSet::getUInt(int)");
+	return getUInt64(columnIndex);
+}
+/* }}} */
+
+
+/* {{{ MySQL_ArtResultSet::getUInt() -I- */
+unsigned int
+MySQL_ArtResultSet::getUInt(const std::string& columnLabel) const
+{
+	CPP_ENTER("MySQL_ArtResultSet::getUInt(string)");
+	return getUInt(findColumn(columnLabel));
 }
 /* }}} */
 

@@ -126,7 +126,9 @@ public:
 
 	void setInt(unsigned int parameterIndex, int value);
 
-	void setLong(unsigned int parameterIndex, long long value);
+	void setInt64(unsigned int parameterIndex, int64_t value);
+
+	void setUInt64(unsigned int parameterIndex, uint64_t value);
 
 	void setMaxFieldSize(unsigned int max);
 

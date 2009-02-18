@@ -76,13 +76,13 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(MYSQL_STMT *s, MySQL_Prepared
 	: row(NULL), stmt(s), row_position(0), parent(par), is_valid(true), logger(l? l->getReference():NULL)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet");
-	MYSQL_RES *result_meta = mysql_stmt_result_metadata(stmt);
+	MYSQL_RES * result_meta = mysql_stmt_result_metadata(stmt);
 	num_fields = mysql_stmt_field_count(stmt);
 	num_rows = mysql_stmt_num_rows(stmt);
 
 	CPP_INFO_FMT("num_fields=%u num_rows=%u", num_fields, num_rows);
 	for (unsigned int i = 0; i < num_fields; i++) {
-		char *tmp = cppmysql_utf8_strup(mysql_fetch_field(result_meta)->name, 0);
+		char * tmp = cppmysql_utf8_strup(mysql_fetch_field(result_meta)->name, 0);
 		field_name_to_index_map[std::string(tmp)] = i;
 		free(tmp);
 	}
@@ -443,56 +443,7 @@ MySQL_Prepared_ResultSet::getInt(const unsigned int columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getInt(int)");
 	CPP_INFO_FMT("column=%u", columnIndex);
-
-	/* isBeforeFirst checks for validity */
-	if (isBeforeFirstOrAfterLast()) {
-		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt: can't fetch because not on result set");
-	}
-
-	if (columnIndex == 0 || columnIndex > num_fields) {
-		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt: invalid value of 'columnIndex'");
-	}
-
-	last_queried_column = columnIndex;
-
-	if (*stmt->bind[columnIndex - 1].is_null) {
-		return 0;
-	}
-
-	switch (rs_meta->getColumnType(columnIndex)) {
-		case sql::DataType::REAL:
-		case sql::DataType::DOUBLE:
-			CPP_INFO("It's a double");
-			return (long long) getDouble(columnIndex);
-		case sql::DataType::NUMERIC:
-		case sql::DataType::DECIMAL:
-		case sql::DataType::TIMESTAMP:
-		case sql::DataType::DATE:
-		case sql::DataType::TIME:
-		case sql::DataType::CHAR:
-		case sql::DataType::BINARY:
-		case sql::DataType::VARCHAR:
-		case sql::DataType::VARBINARY:
-		case sql::DataType::LONGVARCHAR:
-		case sql::DataType::LONGVARBINARY:
-			CPP_INFO("It's a string");
-			return atoll(getString(columnIndex).c_str());
-		// ToDo : Geometry? default ?
-	}
-
-	bool is_it_null = *stmt->bind[columnIndex - 1].is_null;
-	switch (stmt->bind[columnIndex - 1].buffer_length) {
-		case 1:
-			return !is_it_null? *reinterpret_cast<int8_t *>(stmt->bind[columnIndex - 1].buffer):0;
-		case 2:
-			return !is_it_null? *reinterpret_cast<int16_t *>(stmt->bind[columnIndex - 1].buffer):0;
-		case 4:
-			return !is_it_null? *reinterpret_cast<int32_t *>(stmt->bind[columnIndex - 1].buffer):0;
-		case 8:
-			return !is_it_null? (static_cast<int>(*reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer))):0;
-		default:
-			throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt: invalid type");
-	}
+	return getInt64(columnIndex);
 }
 /* }}} */
 
@@ -503,6 +454,27 @@ MySQL_Prepared_ResultSet::getInt(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getInt(string)");
 	return getInt(findColumn(columnLabel));
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_ResultSet::getUInt() -I- */
+unsigned int
+MySQL_Prepared_ResultSet::getUInt(const unsigned int columnIndex) const
+{
+	CPP_ENTER("MySQL_Prepared_ResultSet::getUInt(int)");
+	CPP_INFO_FMT("column=%u", columnIndex);
+	return getUInt64(columnIndex);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_ResultSet::getUInt() -I- */
+unsigned int
+MySQL_Prepared_ResultSet::getUInt(const std::string& columnLabel) const
+{
+	CPP_ENTER("MySQL_Prepared_ResultSet::getUInt(string)");
+	return getUInt(findColumn(columnLabel));
 }
 /* }}} */
 
@@ -551,19 +523,38 @@ MySQL_Prepared_ResultSet::getInt64(const unsigned int columnIndex) const
 	}
 	int64_t ret;
 	bool is_it_null = *stmt->bind[columnIndex - 1].is_null;
+	bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned;
+
 	switch (stmt->bind[columnIndex - 1].buffer_length) {
 		case 1:
-			// ToDo: Really reinterpret_case or static_cast
-			ret = !is_it_null? *reinterpret_cast<int8_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			if (is_it_unsigned) {
+				// ToDo: Really reinterpret_case or static_cast
+				ret = !is_it_null? *reinterpret_cast<uint8_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			} else {
+				// ToDo: Really reinterpret_case or static_cast
+				ret = !is_it_null? *reinterpret_cast<int8_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			}
 			break;
 		case 2:
-			ret = !is_it_null? *reinterpret_cast<int16_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			if (is_it_unsigned) {
+				ret = !is_it_null? *reinterpret_cast<uint16_t *>(stmt->bind[columnIndex - 1].buffer):0;			
+			} else {
+				ret = !is_it_null? *reinterpret_cast<int16_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			}
 			break;
 		case 4:
-			ret =  !is_it_null? *reinterpret_cast<int32_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			if (is_it_unsigned) {
+				ret =  !is_it_null? *reinterpret_cast<uint32_t *>(stmt->bind[columnIndex - 1].buffer):0;				
+			} else {
+				ret =  !is_it_null? *reinterpret_cast<int32_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			}
 			break;
 		case 8:
-			ret =  !is_it_null? *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			if (is_it_unsigned) {
+				ret =  !is_it_null? *reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			} else {
+				ret =  !is_it_null? *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			}
 			break;
 		default:
 			throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt64: invalid type");
@@ -628,22 +619,41 @@ MySQL_Prepared_ResultSet::getUInt64(const unsigned int columnIndex) const
 	}
 	uint64_t ret;
 	bool is_it_null = *stmt->bind[columnIndex - 1].is_null;
+	bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned;
+
 	switch (stmt->bind[columnIndex - 1].buffer_length) {
 		case 1:
-			// ToDo: Really reinterpret_case or static_cast
-			ret = !is_it_null? *reinterpret_cast<uint8_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			if (is_it_unsigned) {
+				// ToDo: Really reinterpret_case or static_cast
+				ret = !is_it_null? *reinterpret_cast<uint8_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			} else {
+				// ToDo: Really reinterpret_case or static_cast
+				ret = !is_it_null? *reinterpret_cast<int8_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			}
 			break;
 		case 2:
-			ret = !is_it_null? *reinterpret_cast<uint16_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			if (is_it_unsigned) {
+				ret = !is_it_null? *reinterpret_cast<uint16_t *>(stmt->bind[columnIndex - 1].buffer):0;			
+			} else {
+				ret = !is_it_null? *reinterpret_cast<int16_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			}
 			break;
 		case 4:
-			ret =  !is_it_null? *reinterpret_cast<uint32_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			if (is_it_unsigned) {
+				ret =  !is_it_null? *reinterpret_cast<uint32_t *>(stmt->bind[columnIndex - 1].buffer):0;				
+			} else {
+				ret =  !is_it_null? *reinterpret_cast<int32_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			}
 			break;
 		case 8:
-			ret =  !is_it_null? *reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			if (is_it_unsigned) {
+				ret =  !is_it_null? *reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			} else {
+				ret =  !is_it_null? *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer):0;
+			}
 			break;
 		default:
-			throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getUInt64: invalid type");
+			throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt64: invalid type");
 	}
 	CPP_INFO_FMT("value=%lld", ret);
 	return ret; 

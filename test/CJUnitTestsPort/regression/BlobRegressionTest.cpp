@@ -247,7 +247,7 @@ namespace regression
     if ( rs->next() )
     {
       std::istream * b = rs->getBlob("BLOB_DATA");
-      b;
+      (void) b; // void is to trick the compiler into generating no warnings
       //b.setBytes(1, testData);
     }
 
