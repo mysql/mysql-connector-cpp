@@ -609,10 +609,10 @@ void connectionmetadata::getImportedKeys()
     stmt->execute("DROP TABLE IF EXISTS parent");    
     try
     {
-      stmt->execute("CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY(id)) ENGINE=INNODB;");
-      stmt->execute("CREATE TABLE child(id INT NOT NULL, parent_id INT, "
-                    "INDEX idx_parent_id(parent_id), FOREIGN KEY fk_parent_id(parent_id) "
-                    "REFERENCES parent(id) ON DELETE CASCADE, PRIMARY KEY(id)) ENGINE=INNODB;");
+      stmt->execute("CREATE TABLE parent(pid INT NOT NULL, PRIMARY KEY(pid)) ENGINE=INNODB;");
+      stmt->execute("CREATE TABLE child(cid INT NOT NULL, cpid INT, "
+                    "INDEX idx_parent_id(cpid), FOREIGN KEY fk_parent_id(cpid) "
+                    "REFERENCES parent(pid) ON DELETE CASCADE, PRIMARY KEY(cid)) ENGINE=INNODB;");
       can_create_pk=true;
     }
     catch (sql::SQLException &e)
@@ -623,6 +623,18 @@ void connectionmetadata::getImportedKeys()
     if (can_create_pk)
     {
       res.reset(dbmeta->getImportedKeys(con->getCatalog(), con->getSchema(), "parent"));
+      ASSERT(!res->next());
+
+      res.reset(dbmeta->getImportedKeys(con->getCatalog(), con->getSchema(), "child"));
+      ASSERT(res->next());
+      ASSERT_EQUALS(con->getCatalog(), res->getString(1));
+      ASSERT_EQUALS(res->getString(1), res->getString("PKTABLE_CAT"));
+      ASSERT_EQUALS(con->getSchema(), res->getString(2));
+      ASSERT_EQUALS(res->getString(2), res->getString("PKTABLE_SCHEM"));
+      ASSERT_EQUALS("child", res->getString(3));
+      ASSERT_EQUALS(res->getString(3), res->getString("PKTABLE_NAME"));
+      ASSERT_EQUALS("cpid", res->getString(4));
+      ASSERT_EQUALS(res->getString(4), res->getString("PKCOLUMN_NAME"));
       ASSERT(!res->next());
       
     }    
