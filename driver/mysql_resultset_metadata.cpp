@@ -346,13 +346,8 @@ MySQL_ResultSetMetaData::isReadOnly(unsigned int columnIndex)
 		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
 			throw sql::InvalidArgumentException("Invalid value for columnIndex");
 		}
-		/* We consider we connect to >= 40100 - else, we can't say */
-		const char * const orgColumnName = mysql_fetch_field_direct(result->get(), columnIndex - 1)->org_name;
-		unsigned int orgColumnNameLen = mysql_fetch_field_direct(result->get(), columnIndex - 1)->org_name_length;
-		const char * const orgTableName = mysql_fetch_field_direct(result->get(), columnIndex - 1)->org_table;
-		unsigned int orgTableNameLen = mysql_fetch_field_direct(result->get(), columnIndex - 1)->org_table_length;
-
-		return !(orgColumnName != NULL && orgColumnNameLen > 0 && orgTableName != NULL && orgTableNameLen > 0);
+		const char * const db = mysql_fetch_field_direct(result->get(), columnIndex - 1)->db;
+		return !(db && strlen(db));
 	}
 	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
 }

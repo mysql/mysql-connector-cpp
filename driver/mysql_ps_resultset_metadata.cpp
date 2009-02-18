@@ -332,14 +332,9 @@ MySQL_Prepared_ResultSetMetaData::isReadOnly(unsigned int columnIndex)
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	/* We consider we connect to >= 40100 - else, we can't say */
-
-	const char * const orgColumnName = mysql_fetch_field_direct(result_meta, columnIndex)->org_name;
-	unsigned int orgColumnNameLen = mysql_fetch_field_direct(result_meta, columnIndex)->org_name_length;
-	const char * const orgTableName = mysql_fetch_field_direct(result_meta, columnIndex)->org_table;
-	unsigned int orgTableNameLen = mysql_fetch_field_direct(result_meta, columnIndex)->org_table_length;
-
-	return !(orgColumnName != NULL && orgColumnNameLen > 0 && orgTableName != NULL && orgTableNameLen > 0);
+	/* Seems for Views, where the value is generated DB is empty everything else is set */
+	const char * const db = mysql_fetch_field_direct(result_meta, columnIndex)->db;
+	return !(db && strlen(db));
 }
 /* }}} */
 
