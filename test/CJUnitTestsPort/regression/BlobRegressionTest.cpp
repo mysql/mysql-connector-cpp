@@ -363,7 +363,7 @@ namespace regression
     MESSAGE( rs->getString( 1 ) + "<- field1 in testBug34677" );
     std::istream * blob = rs->getBlob(1);
     blob->width(0L);
-    ASSERT_EQUALS(0, blob->width());
+    ASSERT_EQUALS(0, (int)blob->width());
     char tmp;
 
     if ( ! blob->read(&tmp,1).fail() )
