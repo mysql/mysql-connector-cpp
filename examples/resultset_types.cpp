@@ -61,7 +61,7 @@ int main(int argc, const char **argv)
 	string c_string;
 	bool c_bool1 = true, c_bool2;
 	/* TODO: long long is not C++, its C99 !!! */
-	long long c_long1 = L64(9223372036854775807), c_long2;
+	int64_t c_long1 = L64(9223372036854775807), c_long2;
 	double c_double1 = -999.9999, c_double2;
 
 
@@ -107,7 +107,7 @@ int main(int argc, const char **argv)
 			prep_stmt->setInt(1, test_data[i].id);
 			prep_stmt->setString(2, test_data[i].label);
 			prep_stmt->setBoolean(3, c_bool1);
-			prep_stmt->setLong(4, c_long1);
+			prep_stmt->setInt64(4, c_long1);
 			prep_stmt->setDouble(5, c_double1);
 			prep_stmt->execute();
 		}

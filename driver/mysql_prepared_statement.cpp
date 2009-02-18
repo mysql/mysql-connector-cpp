@@ -608,17 +608,17 @@ MySQL_Prepared_Statement::setInt(unsigned int parameterIndex, int value)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_Statement::setLong() -I- */
+/* {{{ MySQL_Prepared_Statement::setInt64() -I- */
 void
-MySQL_Prepared_Statement::setLong(unsigned int parameterIndex, long long value)
+MySQL_Prepared_Statement::setInt64(unsigned int parameterIndex, int64_t value)
 {
-	CPP_ENTER("MySQL_Prepared_Statement::setLong");
+	CPP_ENTER("MySQL_Prepared_Statement::setInt64");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
 	parameterIndex--; /* DBC counts from 1 */
 	if (parameterIndex >= param_count) {
-		throw InvalidArgumentException("MySQL_Prepared_Statement::setLong: invalid 'parameterIndex'");
+		throw InvalidArgumentException("MySQL_Prepared_Statement::setInt64: invalid 'parameterIndex'");
 	}
 
 	enum_field_types t = MYSQL_TYPE_LONGLONG;
