@@ -134,7 +134,7 @@ void connectionmetadata::getBestRowIdentifier()
       {
         stmt->execute(msg.str());
       }
-      catch (sql::SQLException &e)
+      catch (sql::SQLException &)
       {
         msg.str("");
         msg << "... skipping " << it->sqldef;
@@ -289,7 +289,7 @@ void connectionmetadata::getColumns()
         msg << "... testing " << it->sqldef;
         logMsg(msg.str());
       }
-      catch (sql::SQLException &e)
+      catch (sql::SQLException &)
       {
         msg.str("");
         msg << "... skipping " << it->sqldef;
@@ -615,7 +615,7 @@ void connectionmetadata::getImportedKeys()
                     "REFERENCES parent(pid) ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY(cid)) ENGINE=INNODB;");
       can_create_pk=true;
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
       logMsg("... cannot create necessary FK tables");
     }
