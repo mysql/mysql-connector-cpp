@@ -2180,7 +2180,6 @@ MySQL_ConnectionMetaData::getIdentifierQuoteString()
 bool
 MySQL_ConnectionMetaData::parseImportedKeys(
 		const std::string& def,
-		size_t start_pos,
 		std::string & constraint_name,
 		std::map< std::string, std::string > & keywords_names,
 		std::map< std::string, std::list< std::string > > & referenced_fields,
@@ -2191,8 +2190,8 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 	size_t idx, pos;
 
 	/* check if line contains 'CONSTRAINT' */
-	idx = def.find("CONSTRAINT", start_pos);
-	if (idx != std::string::npos) {
+	idx = def.find("CONSTRAINT");
+	if (idx == std::string::npos) {
 		return false;
 	}
 	pos = idx + sizeof("CONSTRAINT") - 1;
@@ -2200,19 +2199,18 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 	std::string cQuote(getIdentifierQuoteString());
 
 	{
+		size_t end_pos;
 		if (cQuote.size()) {
 			while (def[pos] != cQuote[0]) pos++;
-			size_t end_pos = pos;
-			while (def[end_pos] != cQuote[0] && def[end_pos - 1] != '\\') end_pos++;
-			constraint_name = def.substr(pos, end_pos - pos - 1);
-			pos = end_pos + 1;
+			end_pos = ++pos;
+			while (def[end_pos] != cQuote[0] && def[end_pos - 1] != '\\') ++end_pos;
 		} else {
 			while (def[pos] == ' ') pos++;
-			size_t end_pos = pos;
-			while (def[end_pos] != ' ') end_pos++;
-			constraint_name = def.substr(pos, end_pos - pos - 1);
-			pos = end_pos + 1;
+			end_pos = ++pos;
+			while (def[end_pos] != ' ') ++end_pos;
 		}
+		constraint_name = def.substr(pos, end_pos - pos);
+		pos = end_pos + 1;
 
 		std::list< std::string > keywords;
 		keywords.push_back("FOREIGN KEY");
@@ -2227,9 +2225,9 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 			// Here comes optional constraint name
 			if (def[pos] != '(') {
 				if (cQuote.size()) {
-					size_t end_pos = pos;
+					size_t end_pos = ++pos;
 					while (def[end_pos] != cQuote[0] && def[end_pos - 1] != '\\') end_pos++;
-					keywords_names[*keywords_it] = def.substr(pos, end_pos - pos - 1);
+					keywords_names[*keywords_it] = def.substr(pos, end_pos - pos);
 					pos = end_pos + 1;
 				} else {
 					size_t end_pos = pos;
@@ -2250,14 +2248,18 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 				size_t comma_pos;
 				do {
 					// Look within a range
-					comma_pos = def.find("," , pos, end_bracket - pos);
-					if (comma_pos == std::string::npos) {
-						referenced_fields[*keywords_it].push_back(def.substr(pos, end_bracket - pos));
+					// , end_bracket - pos
+					comma_pos = def.find("," , pos);
+					// there is something in the implementation of find(",", pos, end_bracket - pos) - so I have to emulate it
+					if (comma_pos >= end_bracket || comma_pos == std::string::npos) {
+						referenced_fields[*keywords_it].push_back(def.substr(pos + cQuote.size(), end_bracket - pos - cQuote.size() * 2));
+						break;
 					} else {
-						referenced_fields[*keywords_it].push_back(def.substr(pos, comma_pos - pos));
+						referenced_fields[*keywords_it].push_back(def.substr(pos + cQuote.size(), comma_pos - pos - cQuote.size() * 2));
 						pos = comma_pos + 1; // skip the comma
+						while (def[pos] == ' ') ++pos; // skip whitespace after the comma
 					}
-				} while (comma_pos != std::string::npos);
+				} while (1);
 				pos = end_bracket + 1;
 			}
 		}
@@ -2326,7 +2328,7 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 	char buf[16];
 	buf[sizeof(buf) - 1] = '\0';
 
-	if (server_version >= 50116) {
+	if (server_version >= 60116) {
 		/* This just doesn't work */
 		/* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
 		const std::string query("SELECT A.CONSTRAINT_SCHEMA, A.TABLE_NAME, "
@@ -2378,56 +2380,56 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
 		if (rs->next()) {
 			std::string create_query(rs->getString(2));
-			size_t cr_pos = 0;
 			unsigned int kSequence = 0;
 
-			do {
-				// the first line doesn't include CONSTRAINTS, but CREATE TABLE so we are safe here
-				cr_pos = create_query.find("\n", cr_pos);
-				if (cr_pos == std::string::npos) {
-					break;
+			std::string constraint_name;
+			std::map< std::string, std::string > keywords_names;
+			std::map< std::string, std::list< std::string > > referenced_fields;
+			std::map< std::string, int > update_delete_action;
+
+			if (parseImportedKeys(create_query, constraint_name, keywords_names, referenced_fields, update_delete_action)) {
+				std::list< std::string >::const_iterator it_references = referenced_fields["REFERENCES"].begin();
+				std::list< std::string >::const_iterator it_references_end = referenced_fields["REFERENCES"].end();
+				std::list< std::string >::const_iterator it_foreignkey = referenced_fields["FOREIGN KEY"].begin();
+				std::list< std::string >::const_iterator it_foreignkey_end = referenced_fields["FOREIGN KEY"].end();
+				for (
+						;
+						it_references != it_references_end && it_foreignkey != it_foreignkey_end;
+						++it_references, ++it_foreignkey
+					)
+				{
+					MySQL_ArtResultSet::row_t rs_data_row;
+
+					rs_data_row.push_back("");					// PK_TABLE_CAT
+					rs_data_row.push_back(schema);				// PKTABLE_SCHEM
+					rs_data_row.push_back(keywords_names["REFERENCES"]);// PKTABLE_NAME
+
+					// ToDo: Extracting just the first column
+					rs_data_row.push_back(*it_references);				// PK_COLUMN_NAME
+
+					rs_data_row.push_back("");							// FKTABLE_CAT
+
+					// ToDo: Is this correct? referencing the same schema. Maybe fully referenced name can appear, need to parse it too
+					rs_data_row.push_back(schema);	// FKTABLE_SCHEM
+					rs_data_row.push_back(table);	// FKTABLE_NAME
+
+					// ToDo: Extracting just the first column
+					rs_data_row.push_back(*it_foreignkey);			// FKCOLUMN_NAME
+					rs_data_row.push_back((int64_t) ++kSequence);	// KEY_SEQ
+
+
+					rs_data_row.push_back((int64_t) update_delete_action["ON UPDATE"]);	// UPDATE_RULE
+
+					rs_data_row.push_back((int64_t) update_delete_action["ON DELETE"]);	// DELETE_RULE
+
+					rs_data_row.push_back(constraint_name);		// FK_NAME
+					// ToDo: Should it really be PRIMARY?
+					rs_data_row.push_back("");					// PK_NAME
+					rs_data_row.push_back((int64_t) importedKeyNotDeferrable);	// DEFERRABILITY
+
+					rs_data->push_back(rs_data_row);
 				}
-
-				std::string constraint_name;
-				std::map< std::string, std::string > keywords_names;
-				std::map< std::string, std::list< std::string > > referenced_fields;
-				std::map< std::string, int > update_delete_action;
-
-				if (!parseImportedKeys(create_query, cr_pos, constraint_name, keywords_names, referenced_fields, update_delete_action)) {
-					continue;
-				}
-
-				MySQL_ArtResultSet::row_t rs_data_row;
-
-				rs_data_row.push_back("");					// PK_TABLE_CAT
-				rs_data_row.push_back(schema);				// PKTABLE_SCHEM
-				rs_data_row.push_back(table);				// PKTABLE_NAME
-
-				// ToDo: Extracting just the first column
-				rs_data_row.push_back(referenced_fields["FOREIGN KEY"].front());	// PK_COLUMN_NAME
-
-				rs_data_row.push_back("");					// FKTABLE_CAT
-
-				// ToDo: Is this correct? referencing the same schema. Maybe fully referenced name can appear, need to parse it too
-				rs_data_row.push_back(schema);							// FKTABLE_SCHEM
-				rs_data_row.push_back(keywords_names["REFERENCES"]);	// FKTABLE_NAME
-
-				// ToDo: Extracting just the first column
-				rs_data_row.push_back(referenced_fields["REFERENCES"].front());				// FKCOLUMN_NAME
-				rs_data_row.push_back((int64_t) kSequence++);	// KEY_SEQ
-
-
-				rs_data_row.push_back((int64_t) update_delete_action["ON UPDATE"]);	// UPDATE_RULE
-
-				rs_data_row.push_back((int64_t) update_delete_action["ON DELETE"]);	// DELETE_RULE
-
-				rs_data_row.push_back(constraint_name);		// FK_NAME
-				// ToDo: Should it really be PRIMARY?
-				rs_data_row.push_back("");					// PK_NAME
-				rs_data_row.push_back((int64_t) importedKeyNotDeferrable);	// DEFERRABILITY
-
-				rs_data->push_back(rs_data_row);
-			} while (1);
+			}
 		}
 	}
 
