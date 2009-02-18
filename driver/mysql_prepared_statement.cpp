@@ -578,7 +578,7 @@ MySQL_Prepared_Statement::setDouble(unsigned int parameterIndex, double value)
 
 /* {{{ MySQL_Prepared_Statement::setInt() -I- */
 void
-MySQL_Prepared_Statement::setInt(unsigned int parameterIndex, int value)
+MySQL_Prepared_Statement::setInt(unsigned int parameterIndex, int32_t value)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::setInt");
 	CPP_INFO_FMT("this=%p", this);
@@ -602,6 +602,41 @@ MySQL_Prepared_Statement::setInt(unsigned int parameterIndex, int value)
 	param->buffer		= p.first;
 	param->buffer_length = 0;
 	param->is_null_value = 0;
+	delete param->length;
+	param->length		= NULL;
+
+	memcpy(param->buffer, &value, p.second);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_Statement::setUInt() -I- */
+void
+MySQL_Prepared_Statement::setUInt(unsigned int parameterIndex, uint32_t value)
+{
+	CPP_ENTER("MySQL_Prepared_Statement::setUInt");
+	CPP_INFO_FMT("this=%p", this);
+	CPP_INFO_FMT("column=%u value=%u", parameterIndex, value);
+	checkClosed();
+
+	parameterIndex--; /* DBC counts from 1 */
+	if (parameterIndex >= param_count) {
+		throw InvalidArgumentException("MySQL_Prepared_Statement::setInt: invalid 'parameterIndex'");
+	}
+
+	enum_field_types t = MYSQL_TYPE_LONG;
+
+	BufferSizePair p = allocate_buffer_for_type(t);
+
+	param_bind->set(parameterIndex);
+	MYSQL_BIND * param = &param_bind->get()[parameterIndex];
+
+	param->buffer_type	= t;
+	delete[] (char *) param->buffer;
+	param->buffer		= p.first;
+	param->buffer_length = 0;
+	param->is_null_value = 0;
+	param->is_unsigned	= 1;
 	delete param->length;
 	param->length		= NULL;
 

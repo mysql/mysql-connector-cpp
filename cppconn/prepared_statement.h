@@ -62,7 +62,9 @@ public:
 
 	virtual void setDouble(unsigned int parameterIndex, double value) = 0;
 
-	virtual void setInt(unsigned int parameterIndex, int value) = 0;
+	virtual void setInt(unsigned int parameterIndex, int32_t value) = 0;
+
+	virtual void setUInt(unsigned int parameterIndex, uint32_t value) = 0;
 
 	virtual void setInt64(unsigned int parameterIndex, int64_t value) = 0;
 

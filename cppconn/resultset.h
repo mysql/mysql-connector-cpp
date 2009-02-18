@@ -40,6 +40,16 @@ typedef __int64           int64_t;
 #define uint64_t_defined
 typedef unsigned __int64  uint64_t;
 #endif
+
+#ifndef int32_t_defined
+#define int32_t_defined
+typedef __int32           int32_t;
+#endif
+#ifndef uint32_t_defined
+#define uint32_t_defined
+typedef unsigned __int32  uint32_t;
+#endif
+
 #endif	//	_WIN32
 
 
@@ -96,48 +106,48 @@ public:
 
 	virtual void deleteRow() { /* We don't support row deletion */ }
 
-	virtual unsigned int findColumn(const std::string& columnLabel) const = 0;
+	virtual uint32_t findColumn(const std::string& columnLabel) const = 0;
 
 	virtual bool first() = 0;
 
-	virtual std::istream * getBlob(unsigned int columnIndex)  const = 0;
+	virtual std::istream * getBlob(uint32_t columnIndex)  const = 0;
 	virtual std::istream * getBlob(const std::string& columnLabel) const = 0;
 
-	virtual bool getBoolean(unsigned int columnIndex) const = 0;
+	virtual bool getBoolean(uint32_t columnIndex) const = 0;
 	virtual bool getBoolean(const std::string& columnLabel) const = 0;
 
 	virtual int getConcurrency() = 0;
 	virtual std::string getCursorName() = 0;
 
-	virtual double getDouble(unsigned int columnIndex) const = 0;
+	virtual double getDouble(uint32_t columnIndex) const = 0;
 	virtual double getDouble(const std::string& columnLabel) const = 0;
 
 	virtual int getFetchDirection() = 0;
 	virtual int getFetchSize() = 0;
 	virtual int getHoldability() = 0;
 
-	virtual int getInt(unsigned int columnIndex) const = 0;
-	virtual int getInt(const std::string& columnLabel) const = 0;
+	virtual int32_t getInt(uint32_t columnIndex) const = 0;
+	virtual int32_t getInt(const std::string& columnLabel) const = 0;
 
-	virtual unsigned int getUInt(unsigned int columnIndex) const = 0;
-	virtual unsigned int getUInt(const std::string& columnLabel) const = 0;
+	virtual uint32_t getUInt(uint32_t columnIndex) const = 0;
+	virtual uint32_t getUInt(const std::string& columnLabel) const = 0;
 
-	virtual int64_t getInt64(unsigned int columnIndex) const = 0;
+	virtual int64_t getInt64(uint32_t columnIndex) const = 0;
 	virtual int64_t getInt64(const std::string& columnLabel) const = 0;
 
-	virtual uint64_t getUInt64(unsigned int columnIndex) const = 0;
+	virtual uint64_t getUInt64(uint32_t columnIndex) const = 0;
 	virtual uint64_t getUInt64(const std::string& columnLabel) const = 0;
 
 	virtual ResultSetMetaData * getMetaData() const = 0;
 
 	virtual size_t getRow() const = 0;
 
-	virtual RowID * getRowId(unsigned int columnIndex) = 0;
+	virtual RowID * getRowId(uint32_t columnIndex) = 0;
 	virtual RowID * getRowId(const std::string & columnLabel) = 0;
 
 	virtual const Statement * getStatement() const = 0;
 
-	virtual std::string getString(unsigned int columnIndex)  const = 0;
+	virtual std::string getString(uint32_t columnIndex)  const = 0;
 	virtual std::string getString(const std::string& columnLabel) const = 0;
 
 	virtual void getWarnings() = 0;
@@ -154,7 +164,7 @@ public:
 
 	virtual bool isLast() const = 0;
 
-	virtual bool isNull(unsigned int columnIndex) const = 0;
+	virtual bool isNull(uint32_t columnIndex) const = 0;
 	virtual bool isNull(const std::string& columnLabel) const = 0;
 
 	virtual bool last() = 0;

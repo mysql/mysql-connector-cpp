@@ -385,7 +385,7 @@ MySQL_ArtResultSet::first()
 
 /* {{{ MySQL_ArtResultSet::getBlob() -I- */
 std::istream *
-MySQL_ArtResultSet::getBlob(const unsigned int columnIndex) const
+MySQL_ArtResultSet::getBlob(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getBlob(int)");
 
@@ -410,7 +410,7 @@ MySQL_ArtResultSet::getBlob(const std::string& columnLabel) const
 
 /* {{{ MySQL_ArtResultSet::getBoolean() -I- */
 bool
-MySQL_ArtResultSet::getBoolean(const unsigned int columnIndex) const
+MySQL_ArtResultSet::getBoolean(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getBoolean(int)");
 
@@ -458,7 +458,7 @@ MySQL_ArtResultSet::getCursorName()
 // Get the given column as double
 /* {{{ MySQL_ArtResultSet::getDouble() -I- */
 double
-MySQL_ArtResultSet::getDouble(unsigned int columnIndex) const
+MySQL_ArtResultSet::getDouble(uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getDouble(int)");
 
@@ -521,7 +521,7 @@ MySQL_ArtResultSet::getHoldability()
 
 /* {{{ MySQL_ArtResultSet::getInt() -I- */
 int
-MySQL_ArtResultSet::getInt(unsigned int columnIndex) const
+MySQL_ArtResultSet::getInt(uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getInt(int)");
 	return getInt64(columnIndex);
@@ -541,7 +541,7 @@ MySQL_ArtResultSet::getInt(const std::string& columnLabel) const
 
 /* {{{ MySQL_ArtResultSet::getUInt() -I- */
 unsigned int
-MySQL_ArtResultSet::getUInt(unsigned int columnIndex) const
+MySQL_ArtResultSet::getUInt(uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getUInt(int)");
 	return getUInt64(columnIndex);
@@ -561,7 +561,7 @@ MySQL_ArtResultSet::getUInt(const std::string& columnLabel) const
 
 /* {{{ MySQL_ArtResultSet::getInt64() -I- */
 int64_t
-MySQL_ArtResultSet::getInt64(const unsigned int columnIndex) const
+MySQL_ArtResultSet::getInt64(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getInt64(int)");
 
@@ -591,7 +591,7 @@ MySQL_ArtResultSet::getInt64(const std::string& columnLabel) const
 
 /* {{{ MySQL_ArtResultSet::getUInt64() -I- */
 uint64_t
-MySQL_ArtResultSet::getUInt64(const unsigned int columnIndex) const
+MySQL_ArtResultSet::getUInt64(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getUInt64(int)");
 
@@ -677,7 +677,7 @@ MySQL_ArtResultSet::getStatement() const
 
 /* {{{ MySQL_ArtResultSet::getString() -I- */
 std::string
-MySQL_ArtResultSet::getString(unsigned int columnIndex) const
+MySQL_ArtResultSet::getString(uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getString(int)");
 	CPP_INFO_FMT("this=%p column=%u", this, columnIndex);
@@ -785,9 +785,9 @@ MySQL_ArtResultSet::isLast() const
 /* }}} */
 
 
-/* {{{ MySQL_ArtResultSet::isLast() -I- */
+/* {{{ MySQL_ArtResultSet::isNull() -I- */
 bool
-MySQL_ArtResultSet::isNull(const unsigned int columnIndex) const
+MySQL_ArtResultSet::isNull(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::isNull(int)");
 	checkValid();

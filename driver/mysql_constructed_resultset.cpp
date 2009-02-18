@@ -214,7 +214,7 @@ MySQL_ConstructedResultSet::close()
 
 
 /* {{{ MySQL_ConstructedResultSet::findColumn() -I- */
-unsigned int
+uint32_t
 MySQL_ConstructedResultSet::findColumn(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::columnLabel");
@@ -249,7 +249,7 @@ MySQL_ConstructedResultSet::first()
 
 /* {{{ MySQL_ConstructedResultSet::getBlob() -I- */
 std::istream *
-MySQL_ConstructedResultSet::getBlob(const unsigned int columnIndex) const
+MySQL_ConstructedResultSet::getBlob(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getBlob(int)");
 
@@ -274,7 +274,7 @@ MySQL_ConstructedResultSet::getBlob(const std::string& columnLabel) const
 
 /* {{{ MySQL_ConstructedResultSet::getBoolean() -I- */
 bool
-MySQL_ConstructedResultSet::getBoolean(const unsigned int columnIndex) const
+MySQL_ConstructedResultSet::getBoolean(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getBoolean(int)");
 
@@ -322,7 +322,7 @@ MySQL_ConstructedResultSet::getCursorName()
 // Get the given column as double
 /* {{{ MySQL_ConstructedResultSet::getDouble() -I- */
 double
-MySQL_ConstructedResultSet::getDouble(unsigned int columnIndex) const
+MySQL_ConstructedResultSet::getDouble(uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getDouble(int)");
 
@@ -392,7 +392,7 @@ MySQL_ConstructedResultSet::getHoldability()
 
 /* {{{ MySQL_ConstructedResultSet::getInt() -I- */
 int
-MySQL_ConstructedResultSet::getInt(unsigned int columnIndex) const
+MySQL_ConstructedResultSet::getInt(uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getInt(int)");
 	return getInt64(columnIndex);
@@ -412,7 +412,7 @@ MySQL_ConstructedResultSet::getInt(const std::string& columnLabel) const
 
 /* {{{ MySQL_ConstructedResultSet::getUInt() -I- */
 unsigned int
-MySQL_ConstructedResultSet::getUInt(unsigned int columnIndex) const
+MySQL_ConstructedResultSet::getUInt(uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getInt(int)");
 	return getUInt64(columnIndex);
@@ -432,7 +432,7 @@ MySQL_ConstructedResultSet::getUInt(const std::string& columnLabel) const
 
 /* {{{ MySQL_ConstructedResultSet::getInt64() -I- */
 int64_t
-MySQL_ConstructedResultSet::getInt64(unsigned int columnIndex) const
+MySQL_ConstructedResultSet::getInt64(uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getLong(int)");
 
@@ -469,7 +469,7 @@ MySQL_ConstructedResultSet::getInt64(const std::string& columnLabel) const
 
 /* {{{ MySQL_ConstructedResultSet::getUInt64() -I- */
 uint64_t
-MySQL_ConstructedResultSet::getUInt64(unsigned int columnIndex) const
+MySQL_ConstructedResultSet::getUInt64(uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getUInt64(int)");
 
@@ -562,7 +562,7 @@ MySQL_ConstructedResultSet::getStatement() const
 
 /* {{{ MySQL_ConstructedResultSet::getString() -I- */
 std::string
-MySQL_ConstructedResultSet::getString(unsigned int columnIndex) const
+MySQL_ConstructedResultSet::getString(uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::getString(int)");
 	CPP_INFO_FMT("this=%p column=%u", this, columnIndex);
@@ -676,9 +676,9 @@ MySQL_ConstructedResultSet::isLast() const
 /* }}} */
 
 
-/* {{{ MySQL_ConstructedResultSet::isLast() -I- */
+/* {{{ MySQL_ConstructedResultSet::isNull() -I- */
 bool
-MySQL_ConstructedResultSet::isNull(const unsigned int columnIndex) const
+MySQL_ConstructedResultSet::isNull(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ConstructedResultSet::isNull(int)");
 	checkValid();
