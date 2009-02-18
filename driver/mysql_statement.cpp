@@ -29,6 +29,15 @@
 #include "mysql_debug.h"
 #include "mysql_util.h"
 
+
+#ifndef UL64
+#ifdef _WIN32
+#define UL64(x) x##ui64
+#else
+#define UL64(x) x##ULL
+#endif
+#endif
+
 namespace sql
 {
 namespace mysql
@@ -188,7 +197,7 @@ MySQL_Statement::getResultSet()
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-	last_update_count = -1;
+	last_update_count = UL64(~0);
 
 	MYSQL * mysql = connection->getMySQLHandle();
 
@@ -266,7 +275,7 @@ MySQL_Statement::getMaxFieldSize()
 
 
 /* {{{ MySQL_Statement::getMaxRows() -U- */
-unsigned long long
+uint64_t
 MySQL_Statement::getMaxRows()
 {
 	CPP_ENTER("MySQL_Statement::getMaxRows");
@@ -285,7 +294,7 @@ MySQL_Statement::getMoreResults()
 	CPP_ENTER("MySQL_Statement::getMaxRows");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	last_update_count = -1;
+	last_update_count = UL64(~0);
 	MYSQL * conn = connection->getMySQLHandle();
 	if (mysql_more_results(conn)) {
 		int next_result = mysql_next_result(conn);
@@ -314,16 +323,16 @@ MySQL_Statement::getQueryTimeout()
 
 
 /* {{{ MySQL_Statement::getUpdateCount() -I- */
-long long
+uint64_t
 MySQL_Statement::getUpdateCount()
 {
 	CPP_ENTER("MySQL_Statement::getUpdateCount");
 	checkClosed();
-	if (last_update_count == (unsigned long long) -1) {
-		return -1;
+	if (last_update_count == UL64(~0)) {
+		return UL64(~0);
 	}
-	long long ret = last_update_count;
-	last_update_count = -1; /* the value will be returned once per result set */
+	uint64_t ret = last_update_count;
+	last_update_count = UL64(~0); /* the value will be returned once per result set */
 	return ret;
 }
 /* }}} */

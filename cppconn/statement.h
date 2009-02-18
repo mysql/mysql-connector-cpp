@@ -23,6 +23,7 @@
 #define _SQL_STATEMENT_H_
 
 #include <string>
+#include "resultset.h"
 #include "warning.h"
 
 namespace sql
@@ -37,7 +38,7 @@ class Statement
 public:
 	virtual ~Statement() {};
 
-	virtual Connection *getConnection() = 0;
+	virtual Connection * getConnection() = 0;
 
 	virtual void cancel() = 0;
 
@@ -47,7 +48,7 @@ public:
 
 	virtual bool execute(const std::string& sql) = 0;
 
-	virtual ResultSet *executeQuery(const std::string& sql) = 0;
+	virtual ResultSet * executeQuery(const std::string& sql) = 0;
 
 	virtual int executeUpdate(const std::string& sql) = 0;
 
@@ -55,15 +56,15 @@ public:
 
 	virtual unsigned int getMaxFieldSize() = 0;
 
-	virtual unsigned long long getMaxRows() = 0;
+	virtual uint64_t getMaxRows() = 0;
 
 	virtual bool getMoreResults() = 0;
 
 	virtual unsigned int getQueryTimeout() = 0;
 
-	virtual ResultSet *getResultSet() = 0;
+	virtual ResultSet * getResultSet() = 0;
 
-	virtual long long getUpdateCount() = 0;
+	virtual uint64_t getUpdateCount() = 0;
 
 	virtual const SQLWarning * getWarnings() = 0;
 

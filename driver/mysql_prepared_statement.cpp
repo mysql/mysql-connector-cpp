@@ -811,7 +811,7 @@ MySQL_Prepared_Statement::getMaxFieldSize()
 
 
 /* {{{ MySQL_Prepared_Statement::getMaxRows() -U- */
-unsigned long long
+uint64_t
 MySQL_Prepared_Statement::getMaxRows()
 {
 	checkClosed();
@@ -841,7 +841,7 @@ MySQL_Prepared_Statement::getQueryTimeout()
 
 
 /* {{{ MySQL_Prepared_Statement::getUpdateCount() -U- */
-long long
+uint64_t
 MySQL_Prepared_Statement::getUpdateCount()
 {
 	checkClosed();

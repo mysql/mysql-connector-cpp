@@ -37,13 +37,13 @@ class MySQL_DebugLogger;
 class MySQL_Statement : public sql::Statement
 {
 protected:
-  std::auto_ptr<sql::SQLWarning> warnings;
+	std::auto_ptr< sql::SQLWarning > warnings;
 	MySQL_Connection *connection;
 
 	void do_query(const char *q, size_t length);
 	bool isClosed;
 
-	unsigned long long last_update_count;
+	uint64_t last_update_count;
 
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 
@@ -72,7 +72,7 @@ public:
 
 	unsigned int getMaxFieldSize();
 
-	unsigned long long getMaxRows();
+	uint64_t getMaxRows();
 
 	bool getMoreResults();
 
@@ -80,7 +80,7 @@ public:
 
 	sql::ResultSet * getResultSet();
 
-	long long getUpdateCount();
+	uint64_t getUpdateCount();
 
 	const SQLWarning * getWarnings();/* should return differen type */
 

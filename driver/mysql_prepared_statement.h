@@ -94,7 +94,7 @@ public:
 
 	unsigned int getMaxFieldSize();
 
-	unsigned long long getMaxRows();
+	uint64_t getMaxRows();
 
 	bool getMoreResults();
 
@@ -104,7 +104,7 @@ public:
 
 	sql::ResultSet * getResultSet();
 
-	long long getUpdateCount();
+	uint64_t getUpdateCount();
 
 	const SQLWarning * getWarnings();/* should return differen type */
 
