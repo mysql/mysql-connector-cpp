@@ -1168,7 +1168,7 @@ static const TypeInfoDef mysqlc_types[] = {
 
 
 /* {{{ my_i_to_a() -I- */
-static inline char * my_i_to_a(char * buf, size_t buf_size, int a)
+static inline const char * my_i_to_a(char * buf, size_t buf_size, int a)
 {
 	snprintf(buf, buf_size, "%d", a);
 	return buf;
@@ -2006,14 +2006,128 @@ MySQL_ConnectionMetaData::getConnection()
 /* }}} */
 
 
-/* {{{ MySQL_ConnectionMetaData::getCrossReference() -U- */
+/* {{{ MySQL_ConnectionMetaData::getCrossReference() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getCrossReference(const std::string& /*primaryCatalog*/, const std::string& /*primarySchema*/,
-											const std::string& /*primaryTable*/, const std::string& /*foreignCatalog*/,
-											const std::string& /*foreignSchema*/, const std::string& /*foreignTable*/)
+MySQL_ConnectionMetaData::getCrossReference(const std::string& primaryCatalog, const std::string& primarySchema,
+											const std::string& primaryTable, const std::string& foreignCatalog ,
+											const std::string& foreignSchema, const std::string& foreignTable)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getCrossReference");
-	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::getCrossReference");
+	CPP_INFO_FMT("p_catalog=%s f_catalog=%s p_schema=%s f_schema=%s p_table=%s f_table=%s",
+				primaryCatalog.c_str(), foreignCatalog.c_str(), primarySchema.c_str(), foreignSchema.c_str(),
+				primaryTable.c_str(), foreignTable.c_str());
+
+	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+
+	std::list<std::string> rs_field_data;
+	rs_field_data.push_back("PKTABLE_CAT");
+	rs_field_data.push_back("PKTABLE_SCHEM");
+	rs_field_data.push_back("PKTABLE_NAME");
+	rs_field_data.push_back("PKCOLUMN_NAME");
+	rs_field_data.push_back("FKTABLE_CAT");
+	rs_field_data.push_back("FKTABLE_SCHEM");
+	rs_field_data.push_back("FKTABLE_NAME");
+	rs_field_data.push_back("FKCOLUMN_NAME");
+	rs_field_data.push_back("KEY_SEQ");
+	rs_field_data.push_back("UPDATE_RULE");
+	rs_field_data.push_back("DELETE_RULE");
+	rs_field_data.push_back("FK_NAME");
+	rs_field_data.push_back("PK_NAME");
+	rs_field_data.push_back("DEFERRABILITY");
+
+	char buf[16];
+	buf[sizeof(buf) - 1] = '\0';
+
+	/* Not sure which version, let it not be 5.0.0, just something above which is anyway not used anymore */
+	if (server_version >= 50010) {
+		/* This just doesn't work */
+		/* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
+		char buf[10];
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeyCascade);
+		std::string importedKeyCascadeStr(buf);
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeySetNull);
+		std::string importedKeySetNullStr(buf);
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeySetDefault);
+		std::string importedKeySetDefaultStr(buf);
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeyRestrict);
+		std::string importedKeyRestrictStr(buf);
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeyNoAction);
+		std::string importedKeyNoActionStr(buf);
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeyNotDeferrable);
+		std::string importedKeyNotDeferrableStr(buf);
+		
+		std::string UpdateRuleClause;
+		UpdateRuleClause.append("CASE WHEN R.UPDATE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
+						append(" WHEN R.UPDATE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
+						append(" WHEN R.UPDATE_RULE='SET DEFAULT' THEN ").append(importedKeySetDefaultStr).
+						append(" WHEN R.UPDATE_RULE='RESTRICT' THEN ").append(importedKeyRestrictStr).
+						append(" WHEN R.UPDATE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
+						append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
+
+		std::string DeleteRuleClause;
+
+		DeleteRuleClause.append("CASE WHEN R.DELETE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
+						append(" WHEN R.DELETE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
+						append(" WHEN R.DELETE_RULE='SET DEFAULT' THEN ").append(importedKeySetDefaultStr).
+						append(" WHEN R.DELETE_RULE='RESTRICT' THEN ").append(importedKeyRestrictStr).
+						append(" WHEN R.DELETE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
+						append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
+
+		std::string OptionalRefConstraintJoinStr(
+					"JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON "
+					"(R.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ");
+
+	std::string query("SELECT \n");
+		query.append("NULL AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,"
+					 "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, NULL AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
+					 "A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,");
+		query.append(UpdateRuleClause);
+		query.append(" AS UPDATE_RULE,");
+		query.append(DeleteRuleClause);
+		query.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME,"
+					 "(SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = REFERENCED_TABLE_SCHEMA AND"
+					 " TABLE_NAME = REFERENCED_TABLE_NAME AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,");
+		query.append(importedKeyNotDeferrableStr);
+		query.append(" AS DEFERRABILITY  FROM\nINFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B\n"
+					 "USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME)\n");
+		query.append(OptionalRefConstraintJoinStr);
+		query.append("\nWHERE B.CONSTRAINT_TYPE = 'FOREIGN KEY' AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=?\n"
+					 "AND A.TABLE_SCHEMA LIKE ? AND A.TABLE_NAME=?\nORDER BY  A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION");
+
+		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
+		stmt->setString(1, primarySchema);
+		stmt->setString(2, primaryTable);
+		stmt->setString(3, foreignSchema);
+		stmt->setString(4, foreignTable);
+		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
+
+		while (rs->next()) {
+			MySQL_ArtResultSet::row_t rs_data_row;
+
+			rs_data_row.push_back(rs->getString(1));	// PKTABLE_CAT
+			rs_data_row.push_back(rs->getString(2));	// PKTABLE_SCHEMA
+			rs_data_row.push_back(rs->getString(3));	// PKTABLE_NAME
+			rs_data_row.push_back(rs->getString(4));	// PKCOLUMN_NAME
+			rs_data_row.push_back(rs->getString(5));	// FKTABLE_CAT
+			rs_data_row.push_back(rs->getString(6));	// FKTABLE_SCHEMA
+			rs_data_row.push_back(rs->getString(7));	// FKTABLE_NAME
+			rs_data_row.push_back(rs->getString(8));	// FKCOLUMN_NAME
+			rs_data_row.push_back(rs->getString(9));	// KEY_SEQ
+			rs_data_row.push_back(rs->getString(10));	// UPDATE_RULE
+			rs_data_row.push_back(rs->getString(11));	// DELETE_RULE
+			rs_data_row.push_back(rs->getString(12));	// FK_NAME
+			rs_data_row.push_back(rs->getString(13));	// PK_NAME
+			rs_data_row.push_back(rs->getString(14));	// DEFERRABILITY
+
+			rs_data->push_back(rs_data_row);
+		}
+		MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
+		// If there is no exception we can release otherwise on function exit memory will be freed
+		rs_data.release();
+		return ret;
+	} else {
+		throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::getCrossReference");
+	}
 }
 /* }}} */
 
@@ -2133,12 +2247,121 @@ MySQL_ConnectionMetaData::getDriverName()
 /* }}} */
 
 
-/* {{{ MySQL_ConnectionMetaData::getExportedKeys() -U- */
+/* {{{ MySQL_ConnectionMetaData::getExportedKeys() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getExportedKeys(const std::string& /*catalog*/, const std::string& /*schema*/, const std::string& /*table*/)
+MySQL_ConnectionMetaData::getExportedKeys(const std::string& catalog, const std::string& schema, const std::string& table)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getExportedKeys");
-	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::getExportedKeys");
+	CPP_INFO_FMT("catalog=%s schema=%s table=%s", catalog.c_str(), schema.c_str(), table.c_str());
+	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+
+	std::list<std::string> rs_field_data;
+	rs_field_data.push_back("PKTABLE_CAT");
+	rs_field_data.push_back("PKTABLE_SCHEM");
+	rs_field_data.push_back("PKTABLE_NAME");
+	rs_field_data.push_back("PKCOLUMN_NAME");
+	rs_field_data.push_back("FKTABLE_CAT");
+	rs_field_data.push_back("FKTABLE_SCHEM");
+	rs_field_data.push_back("FKTABLE_NAME");
+	rs_field_data.push_back("FKCOLUMN_NAME");
+	rs_field_data.push_back("KEY_SEQ");
+	rs_field_data.push_back("UPDATE_RULE");
+	rs_field_data.push_back("DELETE_RULE");
+	rs_field_data.push_back("FK_NAME");
+	rs_field_data.push_back("PK_NAME");
+	rs_field_data.push_back("DEFERRABILITY");
+
+	char buf[16];
+	buf[sizeof(buf) - 1] = '\0';
+
+	/* Not sure which version, let it not be 5.0.0, just something above which is anyway not used anymore */
+	if (server_version >= 50010) {
+		/* This just doesn't work */
+		/* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
+		char buf[10];
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeyCascade);
+		std::string importedKeyCascadeStr(buf);
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeySetNull);
+		std::string importedKeySetNullStr(buf);
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeySetDefault);
+		std::string importedKeySetDefaultStr(buf);
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeyRestrict);
+		std::string importedKeyRestrictStr(buf);
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeyNoAction);
+		std::string importedKeyNoActionStr(buf);
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeyNotDeferrable);
+		std::string importedKeyNotDeferrableStr(buf);
+		
+		std::string UpdateRuleClause;
+		UpdateRuleClause.append("CASE WHEN R.UPDATE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
+						append(" WHEN R.UPDATE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
+						append(" WHEN R.UPDATE_RULE='SET DEFAULT' THEN ").append(importedKeySetDefaultStr).
+						append(" WHEN R.UPDATE_RULE='RESTRICT' THEN ").append(importedKeyRestrictStr).
+						append(" WHEN R.UPDATE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
+						append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
+
+		std::string DeleteRuleClause;
+
+		DeleteRuleClause.append("CASE WHEN R.DELETE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
+						append(" WHEN R.DELETE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
+						append(" WHEN R.DELETE_RULE='SET DEFAULT' THEN ").append(importedKeySetDefaultStr).
+						append(" WHEN R.DELETE_RULE='RESTRICT' THEN ").append(importedKeyRestrictStr).
+						append(" WHEN R.DELETE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
+						append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
+
+		std::string OptionalRefConstraintJoinStr(
+					"JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON "
+					"(R.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ");
+
+		std::string query("SELECT \n");
+		query.append(" NULL AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,\n"
+					 "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, NULL AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,\n"
+					 "A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,");
+		query.append(UpdateRuleClause);
+		query.append(" AS UPDATE_RULE,");
+		query.append(DeleteRuleClause);
+		query.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME,"
+					 "(SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = REFERENCED_TABLE_SCHEMA AND"
+					 " TABLE_NAME = REFERENCED_TABLE_NAME AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,");
+		query.append(importedKeyNotDeferrableStr);
+		query.append(" AS DEFERRABILITY \n FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN  INFORMATION_SCHEMA.TABLE_CONSTRAINTS B\n"
+					 "USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME)\n");
+		query.append(OptionalRefConstraintJoinStr);
+		query.append("\nWHERE B.CONSTRAINT_TYPE = 'FOREIGN KEY' AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=?\n"
+				 "ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION");
+
+		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
+		stmt->setString(1, schema);
+		stmt->setString(2, table);
+		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
+
+		while (rs->next()) {
+			MySQL_ArtResultSet::row_t rs_data_row;
+
+			rs_data_row.push_back(rs->getString(1));	// PKTABLE_CAT
+			rs_data_row.push_back(rs->getString(2));	// PKTABLE_SCHEMA
+			rs_data_row.push_back(rs->getString(3));	// PKTABLE_NAME
+			rs_data_row.push_back(rs->getString(4));	// PKCOLUMN_NAME
+			rs_data_row.push_back(rs->getString(5));	// FKTABLE_CAT
+			rs_data_row.push_back(rs->getString(6));	// FKTABLE_SCHEMA
+			rs_data_row.push_back(rs->getString(7));	// FKTABLE_NAME
+			rs_data_row.push_back(rs->getString(8));	// FKCOLUMN_NAME
+			rs_data_row.push_back(rs->getString(9));	// KEY_SEQ
+			rs_data_row.push_back(rs->getString(10));	// UPDATE_RULE
+			rs_data_row.push_back(rs->getString(11));	// DELETE_RULE
+			rs_data_row.push_back(rs->getString(12));	// FK_NAME
+			rs_data_row.push_back(rs->getString(13));	// PK_NAME
+			rs_data_row.push_back(rs->getString(14));	// DEFERRABILITY
+
+			rs_data->push_back(rs_data_row);
+		}
+		MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
+		// If there is no exception we can release otherwise on function exit memory will be freed
+		rs_data.release();
+		return ret;
+	} else {
+		throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::getExportedKeys");
+	}
 }
 /* }}} */
 
@@ -2328,47 +2551,85 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 	char buf[16];
 	buf[sizeof(buf) - 1] = '\0';
 
-	if (server_version >= 60116) {
+	if (server_version >= 50116) {
 		/* This just doesn't work */
 		/* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
-		const std::string query("SELECT A.CONSTRAINT_SCHEMA, A.TABLE_NAME, "
-									"A.COLUMN_NAME, A.TABLE_SCHEMA, A.TABLE_NAME, "
-									"A.COLUMN_NAME, A.ORDINAL_POSITION, NULL AS CONSTRAINT_METHOD, "
-									"A.CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE A, "
-									"INFORMATION_SCHEMA.TABLE_CONSTRAINTS B WHERE A.TABLE_SCHEMA=? "
-									"AND A.CONSTRAINT_NAME=B.CONSTRAINT_NAME AND A.TABLE_NAME=? "
-									"AND B.TABLE_NAME=? AND A.REFERENCED_TABLE_SCHEMA IS NOT NULL "
-									"ORDER BY A.REFERENCED_TABLE_SCHEMA, A.REFERENCED_TABLE_NAME, "
-									"A.ORDINAL_POSITION");
+		char buf[10];
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeyCascade);
+		std::string importedKeyCascadeStr(buf);
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeySetNull);
+		std::string importedKeySetNullStr(buf);
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeySetDefault);
+		std::string importedKeySetDefaultStr(buf);
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeyRestrict);
+		std::string importedKeyRestrictStr(buf);
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeyNoAction);
+		std::string importedKeyNoActionStr(buf);
+		my_i_to_a(buf, sizeof(buf) - 1, importedKeyNotDeferrable);
+		std::string importedKeyNotDeferrableStr(buf);
+		
+		std::string UpdateRuleClause;
+		UpdateRuleClause.append("CASE WHEN R.UPDATE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
+						append(" WHEN R.UPDATE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
+						append(" WHEN R.UPDATE_RULE='SET DEFAULT' THEN ").append(importedKeySetDefaultStr).
+						append(" WHEN R.UPDATE_RULE='RESTRICT' THEN ").append(importedKeyRestrictStr).
+						append(" WHEN R.UPDATE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
+						append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
+
+		std::string DeleteRuleClause;
+
+		DeleteRuleClause.append("CASE WHEN R.DELETE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
+						append(" WHEN R.DELETE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
+						append(" WHEN R.DELETE_RULE='SET DEFAULT' THEN ").append(importedKeySetDefaultStr).
+						append(" WHEN R.DELETE_RULE='RESTRICT' THEN ").append(importedKeyRestrictStr).
+						append(" WHEN R.DELETE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
+						append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
+
+		std::string OptionalRefConstraintJoinStr(
+					"JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON "
+					"(R.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ");
+
+		std::string query("SELECT \n"
+			 		"NULL AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,\n"
+			 		"A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, NULL AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,\n"
+			 		"A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,\n");
+		 query.append(UpdateRuleClause);
+		 query.append(" AS UPDATE_RULE,\n");
+		 query.append(DeleteRuleClause);
+		 query.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME,\n"
+		 			"(SELECT TC.CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS TC\n"
+		 			"WHERE TABLE_SCHEMA = A.REFERENCED_TABLE_SCHEMA AND TABLE_NAME = A.REFERENCED_TABLE_NAME \n"
+		 			"AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,\n");
+		query.append(importedKeyNotDeferrableStr);
+		query.append(" AS DEFERRABILITY FROM "
+					"INFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B \n"
+					"USING(CONSTRAINT_NAME, TABLE_NAME) \n");
+		query.append(OptionalRefConstraintJoinStr);
+		query.append("WHERE B.CONSTRAINT_TYPE = 'FOREIGN KEY' AND A.TABLE_SCHEMA LIKE ?  AND A.TABLE_NAME=?  AND A.REFERENCED_TABLE_SCHEMA \n"
+					"IS NOT NULL\nORDER BY A.REFERENCED_TABLE_SCHEMA, A.REFERENCED_TABLE_NAME, A.ORDINAL_POSITION");
 
 		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
 		stmt->setString(1, schema);
 		stmt->setString(2, table);
-		stmt->setString(3, table);
 		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next()) {
 			MySQL_ArtResultSet::row_t rs_data_row;
 
-			rs_data_row.push_back("");					// PKTABLE_CAT
-			rs_data_row.push_back(rs->getString(1));	// PKTABLE_SCHEMA
-			rs_data_row.push_back(rs->getString(2));	// PKTABLE_NAME
-			rs_data_row.push_back(rs->getString(3));	// PKCOLUMN_NAME
-			rs_data_row.push_back("");					// FKTABLE_CAT
-			rs_data_row.push_back(rs->getString(4));	// FKTABLE_SCHEMA
-			rs_data_row.push_back(rs->getString(5));	// FKTABLE_NAME
-			rs_data_row.push_back(rs->getString(6));	// FKCOLUMN_NAME
-			rs_data_row.push_back(rs->getString(7));	// KEY_SEQ
-
-			int lFlag = !rs->getString(8).compare("ON UPDATE CASCADE")? importedKeyCascade: importedKeyNoAction;
-			rs_data_row.push_back((int64_t) lFlag);	// UPDATE_RULE
-
-			lFlag = !rs->getString(8).compare("ON DELETE CASCADE")? importedKeyCascade: importedKeyNoAction;
-			rs_data_row.push_back((int64_t) lFlag);	// DELETE_RULE
-
-			rs_data_row.push_back(rs->getString(9));	// FK_NAME
-			rs_data_row.push_back("");					// PK_NAME
-			rs_data_row.push_back((int64_t) importedKeyNotDeferrable);	// DEFERRABILITY
+			rs_data_row.push_back(rs->getString(1));	// PKTABLE_CAT
+			rs_data_row.push_back(rs->getString(2));	// PKTABLE_SCHEMA
+			rs_data_row.push_back(rs->getString(3));	// PKTABLE_NAME
+			rs_data_row.push_back(rs->getString(4));	// PKCOLUMN_NAME
+			rs_data_row.push_back(rs->getString(5));	// FKTABLE_CAT
+			rs_data_row.push_back(rs->getString(6));	// FKTABLE_SCHEMA
+			rs_data_row.push_back(rs->getString(7));	// FKTABLE_NAME
+			rs_data_row.push_back(rs->getString(8));	// FKCOLUMN_NAME
+			rs_data_row.push_back(rs->getString(9));	// KEY_SEQ
+			rs_data_row.push_back(rs->getString(10));	// UPDATE_RULE
+			rs_data_row.push_back(rs->getString(11));	// DELETE_RULE
+			rs_data_row.push_back(rs->getString(12));	// FK_NAME
+			rs_data_row.push_back(rs->getString(13));	// PK_NAME
+			rs_data_row.push_back(rs->getString(14));	// DEFERRABILITY
 
 			rs_data->push_back(rs_data_row);
 		}
