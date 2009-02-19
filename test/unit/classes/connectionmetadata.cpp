@@ -754,7 +754,7 @@ void connectionmetadata::getIndexInfo()
     ASSERT_EQUALS(res->getString(3), res->getString("TABLE_NAME"));
     ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
     ASSERT_EQUALS(res->getBoolean(4), res->getBoolean("NON_UNIQUE"));
-    ASSERT_EQUALS("test", res->getString(5));
+    ASSERT_EQUALS("", res->getString(5));
     ASSERT_EQUALS(res->getString(5), res->getString("INDEX_QUALIFIER"));
     ASSERT_EQUALS("PRIMARY", res->getString(6));
     ASSERT_EQUALS(res->getString(6), res->getString("INDEX_NAME"));
