@@ -104,6 +104,8 @@ void connectionmetadata::getAttributes()
     if (it != attributes.end())
       FAIL("There are less columns than expected");
 
+    res.reset(dbmeta->getAttributes("ABC", "DEF", "GHI", "JKL"));
+    ASSERT(!res->next());
   }
   catch (sql::SQLException &e)
   {
@@ -194,9 +196,10 @@ void connectionmetadata::getBestRowIdentifier()
       FAIL("See Warnings!");
 
     stmt->execute("DROP TABLE IF EXISTS test");
-    stmt->execute("CREATE TABLE test(col1 INT NOT NULL, col2 INT NOT NULL, PRIMARY KEY(col1, col2))");
+    // TODO - stmt->execute("CREATE TABLE test(col1 INT NOT NULL, col2 INT NOT NULL, PRIMARY KEY(col1, col2))");
 
-
+    res.reset(dbmeta->getBestRowIdentifier(con->getCatalog(), con->getSchema(), "test", 0, false));
+    ASSERT(!res->next());
   }
   catch (sql::SQLException &e)
   {
@@ -255,6 +258,9 @@ void connectionmetadata::getColumnPrivileges()
     ASSERT_EQUALS(res->getString(4), res->getString("COLUMN_NAME"));
 
     stmt->execute("DROP TABLE IF EXISTS test");
+
+    res.reset(dbmeta->getColumnPrivileges(con->getCatalog(), con->getSchema(), "test", "col2"));
+    ASSERT(!res->next());
   }
   catch (sql::SQLException &e)
   {
@@ -405,6 +411,8 @@ void connectionmetadata::getColumns()
       FAIL("See Warnings!");
 
     stmt->execute("DROP TABLE IF EXISTS test");
+    res.reset(dbmeta->getColumns(con->getCatalog(), con->getSchema(), "test", "id"));
+    ASSERT(!res->next());
   }
   catch (sql::SQLException &e)
   {
@@ -622,7 +630,7 @@ void connectionmetadata::getImportedKeys()
 
     if (can_create_pk)
     {
-      int num_res = 0;
+      int num_res=0;
 
       res.reset(dbmeta->getImportedKeys(con->getCatalog(), con->getSchema(), "parent"));
       ASSERT(!res->next());
@@ -680,7 +688,7 @@ void connectionmetadata::getImportedKeys()
       ASSERT_EQUALS("", res->getString("PK_NAME"));
       ASSERT_EQUALS(res->getString(13), res->getString("PK_NAME"));
 
-      ASSERT_EQUALS((int64_t)sql::DatabaseMetaData::importedKeyNotDeferrable, res->getInt64(14));
+      ASSERT_EQUALS((int64_t) sql::DatabaseMetaData::importedKeyNotDeferrable, res->getInt64(14));
       ASSERT(sql::DatabaseMetaData::importedKeyInitiallyDeferred != res->getInt64(10));
       ASSERT(sql::DatabaseMetaData::importedKeyInitiallyImmediate != res->getInt64(10));
 
@@ -694,8 +702,9 @@ void connectionmetadata::getImportedKeys()
                     "REFERENCES parent(pid1, pid2) ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY(cid)) ENGINE=INNODB;");
 
       res.reset(dbmeta->getImportedKeys(con->getCatalog(), con->getSchema(), "child"));
-      num_res = 0;
-      while (res->next()) {
+      num_res=0;
+      while (res->next())
+      {
         num_res++;
         switch (num_res) {
         case 1:
@@ -709,10 +718,12 @@ void connectionmetadata::getImportedKeys()
           break;
         }
       }
-      ASSERT_EQUALS(2, num_res);      
+      ASSERT_EQUALS(2, num_res);
     }
     stmt->execute("DROP TABLE IF EXISTS child");
     stmt->execute("DROP TABLE IF EXISTS parent");
+    res.reset(dbmeta->getImportedKeys(con->getCatalog(), con->getSchema(), "child"));
+    ASSERT(!res->next());
   }
   catch (sql::SQLException &e)
   {
@@ -722,6 +733,37 @@ void connectionmetadata::getImportedKeys()
   }
 }
 
+void connectionmetadata::getIndexInfo()
+{
+  logMsg("connectionmetadata::getIndexInfo() - MySQL_ConnectionMetaData::getIndexInfo()");
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(col1 INT NOT NULL, col2 INT NOT NULL, col3 INT NOT NULL, col4 INT, col5 INT, PRIMARY KEY(col1))");
+    res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
+    while (res->next())
+    {
+      logMsg(res->getString("INDEX_NAME"));
+    }
+
+    stmt->execute("CREATE INDEX idx_col2 ON test(col2 ASC)");
+    stmt->execute("CREATE UNIQUE INDEX idx_col3 ON test(col3 ASC)");
+    stmt->execute("CREATE INDEX idx_col4 ON test(col4 DESC) ");
+    stmt->execute("CREATE INDEX idx_col4_col5 ON test(col4 DESC, col5 ASC)");
+
+    stmt->execute("DROP TABLE IF EXISTS test");
+    res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
+    ASSERT(!res->next());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
 
 } /* namespace connectionmetadata */
 } /* namespace testsuite */

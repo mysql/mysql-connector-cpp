@@ -57,6 +57,7 @@ public:
     TEST_CASE(getExtraNameCharacters);
     TEST_CASE(getIdentifierQuoteString);
     TEST_CASE(getImportedKeys);
+    TEST_CASE(getIndexInfo);
   }
 
   /**
@@ -151,10 +152,19 @@ public:
   /**
    * Test for DatabaseMetaData:getImportedKeys()
    *
+   * Create two tables parent and child and check if the method detects the FK properly.
+   */
+  void getImportedKeys();
+  
+  /**
+   * Test for DatabaseMetaData:getIndexInfo()
+   *
    * Focus on code coverage: invalid parameter, invalid resultset
    * JDBC compliance tests should take care that it does what its supposed to do
    */
-  void getImportedKeys();
+  void getIndexInfo();
+
+
 
 };
 
