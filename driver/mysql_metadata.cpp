@@ -2735,19 +2735,13 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 	}
 
 	if (server_version > 50020) {
-#if A0
-		std::string query("SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, NON_UNIQUE, "
-						"INDEX_NAME, SEQ_IN_INDEX, COLUMN_NAME, CARDINALITY "
-						"FROM INFORMATION_SCHEMA.STATISTICS "
-						"WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? "
-						"ORDER BY NON_UNIQUE, INDEX_NAME, SEQ_IN_INDEX");
-#endif
 		std::string query("SELECT NULL AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, NON_UNIQUE, "
 						 "TABLE_SCHEMA AS INDEX_QUALIFIER, INDEX_NAME,");
 		query.append(buf);
 		query.append(" AS TYPE, SEQ_IN_INDEX AS ORDINAL_POSITION, COLUMN_NAME, COLLATION AS ASC_OR_DESC, CARDINALITY,"
 					"NULL AS PAGES, NULL AS FILTER_CONDITION "
-					"FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ?");
+					"FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ?\n"
+					"ORDER BY NON_UNIQUE, TYPE, INDEX_NAME, ORDINAL_POSITION");
 		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
 		stmt->setString(1, schema);
 		stmt->setString(2, table);
@@ -2787,7 +2781,7 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 			rs_data_row.push_back("");								// TABLE_CAT
 			rs_data_row.push_back(schema);							// TABLE_SCHEM
 			rs_data_row.push_back(rs->getString("Table"));			// TABLE_NAME
-			rs_data_row.push_back(atoi(rs->getString("Non_unique").c_str())? "true":"false");		// NON_UNIQUE
+			rs_data_row.push_back(atoi(rs->getString("Non_unique").c_str())? true:false);		// NON_UNIQUE
 			rs_data_row.push_back(schema);							// INDEX_QUALIFIER
 			rs_data_row.push_back(rs->getString("Key_name"));		// INDEX_NAME
 			rs_data_row.push_back(buf);								// TYPE
