@@ -2774,7 +2774,7 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 			rs_data->push_back(rs_data_row);
 		}
 	} else {
-		std::string query("SHOW KEYS FROM `");
+		std::string query("SHOW INDEX FROM `");
 		query.append(schema).append("`.`").append(table).append("`");
 
 		std::auto_ptr<sql::Statement> stmt(connection->createStatement());
@@ -2784,19 +2784,19 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 		while (rs->next()) {
 			MySQL_ArtResultSet::row_t rs_data_row;
 
-			rs_data_row.push_back("");					// TABLE_CAT
-			rs_data_row.push_back(schema);				// TABLE_SCHEM
-			rs_data_row.push_back(rs->getString(1));	// TABLE_NAME
-			rs_data_row.push_back(rs->getString(2));	// NON_UNIQUE
-			rs_data_row.push_back("");					// INDEX_QUALIFIER
-			rs_data_row.push_back(rs->getString(3));	// INDEX_NAME
-			rs_data_row.push_back(buf);					// TYPE
-			rs_data_row.push_back(rs->getString(4));	// ORDINAL_POSITION
-			rs_data_row.push_back(rs->getString(5));	// COLUMN_NAME
-			rs_data_row.push_back("ASC");				// ASC_OR_DESC
-			rs_data_row.push_back(rs->getString(6));	// CARDINALITY
-			rs_data_row.push_back("0");					// PAGES
-			rs_data_row.push_back("");					// FILTER_CONDITION
+			rs_data_row.push_back("");								// TABLE_CAT
+			rs_data_row.push_back(schema);							// TABLE_SCHEM
+			rs_data_row.push_back(rs->getString("Table"));			// TABLE_NAME
+			rs_data_row.push_back(atoi(rs->getString("Non_unique").c_str())? "true":"false");		// NON_UNIQUE
+			rs_data_row.push_back(schema);							// INDEX_QUALIFIER
+			rs_data_row.push_back(rs->getString("Key_name"));		// INDEX_NAME
+			rs_data_row.push_back(buf);								// TYPE
+			rs_data_row.push_back(rs->getString("Seq_in_index"));	// ORDINAL_POSITION
+			rs_data_row.push_back(rs->getString("Column_name"));	// COLUMN_NAME
+			rs_data_row.push_back(rs->getString("Collation"));		// ASC_OR_DESC
+			rs_data_row.push_back(rs->getString("Cardinality"));	// CARDINALITY
+			rs_data_row.push_back("0");								// PAGES
+			rs_data_row.push_back("");								// FILTER_CONDITION
 
 			rs_data->push_back(rs_data_row);
 		}
