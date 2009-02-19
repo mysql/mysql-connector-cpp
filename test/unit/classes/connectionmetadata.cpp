@@ -736,33 +736,151 @@ void connectionmetadata::getImportedKeys()
 void connectionmetadata::getIndexInfo()
 {
   logMsg("connectionmetadata::getIndexInfo() - MySQL_ConnectionMetaData::getIndexInfo()");
+  std::stringstream msg;
+  bool got_warning=false;
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(col1 INT NOT NULL, col2 INT NOT NULL, col3 INT NOT NULL, col4 INT, col5 INT, PRIMARY KEY(col1))");
+    stmt->execute("INSERT INTO test(col1, col2, col3) VALUES (1, 1, 1)");
     res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
     ASSERT(res->next());
     ASSERT_EQUALS(con->getCatalog(), res->getString(1));
     ASSERT_EQUALS(res->getString(1), res->getString("TABLE_CAT"));
     ASSERT_EQUALS(con->getSchema(), res->getString(2));
-    ASSERT_EQUALS(con->getString(2), res->getString("TABLE_SCHEM"));
+    ASSERT_EQUALS(res->getString(2), res->getString("TABLE_SCHEM"));
     ASSERT_EQUALS("test", res->getString(3));
     ASSERT_EQUALS(res->getString(3), res->getString("TABLE_NAME"));
     ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
     ASSERT_EQUALS(res->getBoolean(4), res->getBoolean("NON_UNIQUE"));
-    logMsg(res->getString(5));
+    ASSERT_EQUALS("", res->getString(5));
+    ASSERT_EQUALS(res->getString(5), res->getString("INDEX_QUALIFIER"));
+    ASSERT_EQUALS("PRIMARY", res->getString(6));
+    ASSERT_EQUALS(res->getString(6), res->getString("INDEX_NAME"));
+    ASSERT_EQUALS(sql::DatabaseMetaData::tableIndexOther, res->getInt(7));
+    ASSERT_EQUALS(res->getInt(7), res->getInt("TYPE"));
+    ASSERT(sql::DatabaseMetaData::tableIndexStatistic != res->getInt(7));
+    ASSERT(sql::DatabaseMetaData::tableIndexClustered != res->getInt(7));
+    ASSERT(sql::DatabaseMetaData::tableIndexHashed != res->getInt(7));
+    ASSERT_EQUALS(1, res->getInt(8));
+    ASSERT_EQUALS(res->getInt(8), res->getInt("ORDINAL_POSITION"));
+    ASSERT_EQUALS("col1", res->getString(9));
+    ASSERT_EQUALS(res->getString(9), res->getString("COLUMN_NAME"));
+    ASSERT_EQUALS("ASC", res->getString(10));
+    ASSERT_EQUALS(res->getString(10), res->getString("ASC_OR_DESC"));
+    if (res->getInt(11) != 1)
+    {
+      got_warning=true;
+      msg.str("");
+      msg << "... WARNING: There is one row in the table and PK should have a ";
+      msg << "cardinality of 1, got " << res->getInt(11);
+      logMsg(msg.str());
+    }
+
+    ASSERT_EQUALS(res->getInt(11), res->getInt("CARDINALITY"));
+    ASSERT_EQUALS(0, res->getInt(12));
+    ASSERT_EQUALS(res->getInt(12), res->getInt("PAGES"));
+    ASSERT_EQUALS("", res->getString(13));
+    ASSERT_EQUALS(res->getString(13), res->getString("FILTER_CONDITION"));
     ASSERT(!res->next());
 
+    // New unique index
+    stmt->execute("CREATE UNIQUE INDEX an_idx_col3 ON test(col3 ASC)");
+    res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
+    ASSERT(res->next());
+    ASSERT_EQUALS("PRIMARY", res->getString("INDEX_NAME"));
+    ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
+    ASSERT(res->next());
+    ASSERT_EQUALS("an_idx_col3", res->getString("INDEX_NAME"));
+    ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
+    ASSERT(!res->next());
+
+    // Now we have three indexes, unique PK, unique an_idx_col3 and non-unique idx_col2
     stmt->execute("CREATE INDEX idx_col2 ON test(col2 ASC)");
-    stmt->execute("CREATE UNIQUE INDEX idx_col3 ON test(col3 ASC)");
-    stmt->execute("CREATE INDEX idx_col4 ON test(col4 DESC) ");
-    stmt->execute("CREATE INDEX idx_col4_col5 ON test(col4 DESC, col5 ASC)");
+    // Show only the unique ones...
+    res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", true, false));
+    ASSERT(res->next());
+    ASSERT_EQUALS("PRIMARY", res->getString("INDEX_NAME"));
+    ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
+    ASSERT(res->next());
+    ASSERT_EQUALS("an_idx_col3", res->getString("INDEX_NAME"));
+    ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
+    if (res->next())
+    {
+      got_warning=true;
+      msg.str("");
+      msg << "... WARNING: requesting only unique keys but got also non-unique key ";
+      msg << "'" << res->getString("INDEX_NAME") << "', UNIQUE = " << std::boolalpha;
+      msg << !res->getBoolean("NON_UNIQUE");
+      logMsg(msg.str());
+    }
+    ASSERT(!res->next());
+
+    // Another index. Should appear in the sort order prior to the idx_col2 one...
+    // Sort order is: NON_UNIQUE, TYPE, INDEX_NAME
+    // 1. PRIMARY, 2. UNIQUE an_idx_col3, 3. an_a_idx_col4, 4. idx_col2
+    stmt->execute("CREATE INDEX an_a_idx_col4 ON test(col4 DESC)");
+    res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
+    ASSERT(res->next());
+    ASSERT_EQUALS("PRIMARY", res->getString("INDEX_NAME"));
+    ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
+    ASSERT_EQUALS(sql::DatabaseMetaData::tableIndexOther, res->getInt(7));
+    ASSERT(res->next());
+    ASSERT_EQUALS("an_idx_col3", res->getString("INDEX_NAME"));
+    ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
+    ASSERT_EQUALS(sql::DatabaseMetaData::tableIndexOther, res->getInt(7));
+    ASSERT(res->next());
+    ASSERT_EQUALS("an_a_idx_col4", res->getString("INDEX_NAME"));
+    ASSERT_EQUALS(true, res->getBoolean("NON_UNIQUE"));
+    ASSERT_EQUALS(sql::DatabaseMetaData::tableIndexOther, res->getInt(7));
+    ASSERT(res->next());
+    ASSERT_EQUALS("idx_col2", res->getString("INDEX_NAME"));
+    ASSERT_EQUALS(true, res->getBoolean("NON_UNIQUE"));
+    ASSERT_EQUALS(sql::DatabaseMetaData::tableIndexOther, res->getInt(7));
+    ASSERT(!res->next());
+
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(col1 INT NOT NULL, col2 INT NOT NULL, col3 INT NOT NULL, col4 INT, col5 INT, PRIMARY KEY(col1))");
+    stmt->execute("CREATE INDEX idx_col4_col5 ON test(col5 DESC, col4 ASC)");
+    res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
+    ASSERT(res->next());
+    ASSERT_EQUALS("PRIMARY", res->getString("INDEX_NAME"));
+    ASSERT(res->next());
+    ASSERT_EQUALS("idx_col4_col5", res->getString("INDEX_NAME"));
+    ASSERT_EQUALS("ASC", res->getString("ASC_OR_DESC"));
+    ASSERT_EQUALS("col5", res->getString("COLUMN_NAME"));
+    ASSERT(res->next());
+    ASSERT_EQUALS("idx_col4_col5", res->getString("INDEX_NAME"));
+    ASSERT_EQUALS("ASC", res->getString("ASC_OR_DESC"));
+    ASSERT_EQUALS("col4", res->getString("COLUMN_NAME"));
+    ASSERT(!res->next());
+
+    try
+    {
+      stmt->execute("DROP TABLE IF EXISTS test");
+      stmt->execute("CREATE TABLE test(col1 INT NOT NULL, col2 INT NOT NULL, PRIMARY KEY(col1)) ENGINE=InnoDB");
+      stmt->execute("CREATE INDEX idx_col2 USING HASH ON test(col2 DESC)");
+      res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
+      ASSERT(res->next());
+      ASSERT_EQUALS("PRIMARY", res->getString("INDEX_NAME"));
+      ASSERT(res->next());
+      ASSERT_EQUALS("idx_col2", res->getString("INDEX_NAME"));
+      ASSERT_EQUALS("ASC", res->getString("ASC_OR_DESC"));
+      ASSERT_EQUALS("col2", res->getString("COLUMN_NAME"));
+      ASSERT_EQUALS(sql::DatabaseMetaData::tableIndexHashed, res->getInt("TYPE"));
+    }
+    catch (sql::SQLException &)
+    {
+    }
 
     stmt->execute("DROP TABLE IF EXISTS test");
     res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
     ASSERT(!res->next());
+
+    if (got_warning)
+      FAIL("See above warnings!");
   }
   catch (sql::SQLException &e)
   {

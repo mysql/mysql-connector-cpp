@@ -147,15 +147,15 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getIdentifierQuoteString();
-  
-  
+
+
   /**
    * Test for DatabaseMetaData:getImportedKeys()
    *
    * Create two tables parent and child and check if the method detects the FK properly.
    */
   void getImportedKeys();
-  
+
   /**
    * Test for DatabaseMetaData:getIndexInfo()
    *
