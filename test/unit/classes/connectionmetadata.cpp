@@ -702,7 +702,7 @@ void connectionmetadata::getImportedKeys()
           ASSERT_EQUALS("cpid1", res->getString("FKCOLUMN_NAME"));
           break;
         case 2:
-          ASSERT_EQUALS("cpid1", res->getString("FKCOLUMN_NAME"));
+          ASSERT_EQUALS("cpid2", res->getString("FKCOLUMN_NAME"));
           break;
         default:
           FAIL("Expecting only two rows");
