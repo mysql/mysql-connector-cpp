@@ -52,8 +52,9 @@ Beta  1.0.3 - 2009-xx-xx
 - cppconn/datatype.h changed and used again. Reimplemented the type subsystem to
   be more usable - more types for binary and non-binary strings. (Andrey)
 
-- Initial implementation for MySQL_DatabaseMetaData::getImportedKeys() for
-  MySQL versions before 5.0.16 . (Andrey)
+- Implementation for MySQL_DatabaseMetaData::getImportedKeys() for
+  MySQL versions before 5.1.16 using SHOW, and above using INFORMATION_SCHEMA.
+  (Andrey)
 
 - Implemented MySQL_ConnectionMetaData::getProcedureColumns(). (Andrey)
 
@@ -86,6 +87,10 @@ Beta  1.0.3 - 2009-xx-xx
 - Better implementation for ResultSetMetaData::isReadOnly. Values generated
   from views are read-only. Seems that these generated values don't have `db`
   in MYSQL_FIELD set, while all normal columns do have. (Andrey)
+
+- Implemented MySQL_DatabaseMetaData::getExportedKeys(). (Andrey)
+
+- Implemented MySQL_DatabaseMetaData::getCrossReference(). (Andrey)
 
 
 Alpha  1.0.2 - 2008-12-19
