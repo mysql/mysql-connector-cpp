@@ -743,10 +743,17 @@ void connectionmetadata::getIndexInfo()
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(col1 INT NOT NULL, col2 INT NOT NULL, col3 INT NOT NULL, col4 INT, col5 INT, PRIMARY KEY(col1))");
     res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
-    while (res->next())
-    {
-      logMsg(res->getString("INDEX_NAME"));
-    }
+    ASSERT(res->next());
+    ASSERT_EQUALS(con->getCatalog(), res->getString(1));
+    ASSERT_EQUALS(res->getString(1), res->getString("TABLE_CAT"));
+    ASSERT_EQUALS(con->getSchema(), res->getString(2));
+    ASSERT_EQUALS(con->getString(2), res->getString("TABLE_SCHEM"));
+    ASSERT_EQUALS("test", res->getString(3));
+    ASSERT_EQUALS(res->getString(3), res->getString("TABLE_NAME"));
+    ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
+    ASSERT_EQUALS(res->getBoolean(4), res->getBoolean("NON_UNIQUE"));
+    logMsg(res->getString(5));
+    ASSERT(!res->next());
 
     stmt->execute("CREATE INDEX idx_col2 ON test(col2 ASC)");
     stmt->execute("CREATE UNIQUE INDEX idx_col3 ON test(col3 ASC)");
