@@ -396,7 +396,6 @@ private:
 	bool matchTable(const std::string& sPattern, const std::string& tPattern, const std::string& schema, const std::string& table);
 	bool parseImportedKeys(
 		const std::string& def,
-		size_t start_pos,
 		std::string & constraint_name,
 		std::map< std::string, std::string > & keywords_names,
 		std::map< std::string, std::list< std::string > > & referenced_fields,

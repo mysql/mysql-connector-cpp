@@ -603,8 +603,11 @@ void resultsetmetadata::isCaseSensitive()
     ResultSetMetaData meta2(res->getMetaData());
     ASSERT_EQUALS(meta2->isCaseSensitive(1), false);
     ASSERT_EQUALS(meta2->isCaseSensitive(2), false);
+#if A0
+	// connection_collation distorts the collation of the results (character_set_results) doesn't help
+	// and thus we can't say for sure whether the original column was CI or CS. Only I_S.COLUMNS can tell us.
     ASSERT_EQUALS(meta2->isCaseSensitive(3), true);
-
+#endif
     runStandardQuery();
     ResultSetMetaData meta(res->getMetaData());
     for (i=1; i < 5; i++)

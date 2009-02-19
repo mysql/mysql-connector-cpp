@@ -80,6 +80,13 @@ Beta  1.0.3 - 2009-xx-xx
 - Corrected handling of unsigned server types. Now returning correct values.
   (Andrey)
 
+- Fixed handling of numeric columns in ResultSetMetaData::isCaseSensitive to
+  return false. (Andrey)
+
+- Better implementation for ResultSetMetaData::isReadOnly. Values generated
+  from views are read-only. Seems that these generated values don't have `db`
+  in MYSQL_FIELD set, while all normal columns do have. (Andrey)
+
 
 Alpha  1.0.2 - 2008-12-19
 
