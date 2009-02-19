@@ -59,6 +59,7 @@ public:
     TEST_CASE(getImportedKeys);
     TEST_CASE(getIndexInfo);
     TEST_CASE(getLimitsAndStuff);
+    TEST_CASE(getPrimaryKeys);
   }
 
   /**
@@ -170,6 +171,16 @@ public:
    * Test for assorted get*Something() methods
    */
   void getLimitsAndStuff();
+
+  /**
+   * Test for DatabaseMetaData:getPrimaryKeys()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getPrimaryKeys();
+
+
 
 };
 
