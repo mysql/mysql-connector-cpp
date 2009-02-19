@@ -754,7 +754,7 @@ void connectionmetadata::getIndexInfo()
     ASSERT_EQUALS(res->getString(3), res->getString("TABLE_NAME"));
     ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
     ASSERT_EQUALS(res->getBoolean(4), res->getBoolean("NON_UNIQUE"));
-    ASSERT_EQUALS("", res->getString(5));
+    ASSERT_EQUALS("test", res->getString(5));
     ASSERT_EQUALS(res->getString(5), res->getString("INDEX_QUALIFIER"));
     ASSERT_EQUALS("PRIMARY", res->getString(6));
     ASSERT_EQUALS(res->getString(6), res->getString("INDEX_NAME"));
@@ -767,7 +767,7 @@ void connectionmetadata::getIndexInfo()
     ASSERT_EQUALS(res->getInt(8), res->getInt("ORDINAL_POSITION"));
     ASSERT_EQUALS("col1", res->getString(9));
     ASSERT_EQUALS(res->getString(9), res->getString("COLUMN_NAME"));
-    ASSERT_EQUALS("ASC", res->getString(10));
+    ASSERT_EQUALS("A", res->getString(10));
     ASSERT_EQUALS(res->getString(10), res->getString("ASC_OR_DESC"));
     if (res->getInt(11) != 1)
     {
@@ -848,11 +848,11 @@ void connectionmetadata::getIndexInfo()
     ASSERT_EQUALS("PRIMARY", res->getString("INDEX_NAME"));
     ASSERT(res->next());
     ASSERT_EQUALS("idx_col4_col5", res->getString("INDEX_NAME"));
-    ASSERT_EQUALS("ASC", res->getString("ASC_OR_DESC"));
+    ASSERT_EQUALS("A", res->getString("ASC_OR_DESC"));
     ASSERT_EQUALS("col5", res->getString("COLUMN_NAME"));
     ASSERT(res->next());
     ASSERT_EQUALS("idx_col4_col5", res->getString("INDEX_NAME"));
-    ASSERT_EQUALS("ASC", res->getString("ASC_OR_DESC"));
+    ASSERT_EQUALS("A", res->getString("ASC_OR_DESC"));
     ASSERT_EQUALS("col4", res->getString("COLUMN_NAME"));
     ASSERT(!res->next());
 
@@ -866,7 +866,7 @@ void connectionmetadata::getIndexInfo()
       ASSERT_EQUALS("PRIMARY", res->getString("INDEX_NAME"));
       ASSERT(res->next());
       ASSERT_EQUALS("idx_col2", res->getString("INDEX_NAME"));
-      ASSERT_EQUALS("ASC", res->getString("ASC_OR_DESC"));
+      ASSERT_EQUALS("A", res->getString("ASC_OR_DESC"));
       ASSERT_EQUALS("col2", res->getString("COLUMN_NAME"));
       ASSERT_EQUALS(sql::DatabaseMetaData::tableIndexHashed, res->getInt("TYPE"));
     }
