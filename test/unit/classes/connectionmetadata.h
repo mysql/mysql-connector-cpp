@@ -58,6 +58,7 @@ public:
     TEST_CASE(getIdentifierQuoteString);
     TEST_CASE(getImportedKeys);
     TEST_CASE(getIndexInfo);
+    TEST_CASE(getLimitsAndStuff);
   }
 
   /**
@@ -148,7 +149,6 @@ public:
    */
   void getIdentifierQuoteString();
 
-
   /**
    * Test for DatabaseMetaData:getImportedKeys()
    *
@@ -164,7 +164,12 @@ public:
    */
   void getIndexInfo();
 
-
+  /**
+   * Test for DatabaseMetaData:getLimitsAndStuff()
+   *
+   * Test for assorted get*Something() methods
+   */
+  void getLimitsAndStuff();
 
 };
 

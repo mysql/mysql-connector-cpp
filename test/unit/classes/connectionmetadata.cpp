@@ -890,5 +890,53 @@ void connectionmetadata::getIndexInfo()
   }
 }
 
+void connectionmetadata::getLimitsAndStuff()
+{
+  logMsg("connectionmetadata::getLimitsAndStuff() - MySQL_ConnectionMetaData::getLimitsAndStuff()");
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    ASSERT_EQUALS(3, dbmeta->getCDBCMajorVersion());
+    ASSERT_EQUALS(0, dbmeta->getCDBCMinorVersion());
+    ASSERT_EQUALS(16777208, dbmeta->getMaxBinaryLiteralLength());
+    ASSERT_EQUALS(32, dbmeta->getMaxCatalogNameLength());
+    ASSERT_EQUALS(16777208, dbmeta->getMaxCharLiteralLength());
+    ASSERT_EQUALS(64, dbmeta->getMaxColumnNameLength());
+    ASSERT_EQUALS(64, dbmeta->getMaxColumnsInGroupBy());
+    ASSERT_EQUALS(16, dbmeta->getMaxColumnsInIndex());
+    ASSERT_EQUALS(64, dbmeta->getMaxColumnsInOrderBy());
+    ASSERT_EQUALS(256, dbmeta->getMaxColumnsInSelect());
+    ASSERT_EQUALS(512, dbmeta->getMaxColumnsInTable());
+    
+    stmt.reset(con->createStatement());
+    res.reset(stmt->executeQuery("SELECT @@max_connections AS _max"));
+    ASSERT(res->next());
+    ASSERT_EQUALS(res->getInt("_max"), dbmeta->getMaxConnections());
+
+    ASSERT_EQUALS(64, dbmeta->getMaxCursorNameLength());
+    ASSERT_EQUALS(256, dbmeta->getMaxIndexLength());
+    ASSERT_EQUALS(64, dbmeta->getMaxProcedureNameLength());
+    ASSERT_EQUALS(2147483639, dbmeta->getMaxRowSize());
+    ASSERT_EQUALS(64, dbmeta->getMaxSchemaNameLength());
+    
+    stmt.reset(con->createStatement());
+    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'"));
+    ASSERT(res->next());
+    ASSERT_EQUALS(res->getInt(2) - 4 , dbmeta->getMaxStatementLength());
+
+    ASSERT_EQUALS(0, dbmeta->getMaxStatements());
+    ASSERT_EQUALS(64, dbmeta->getMaxTableNameLength());
+    ASSERT_EQUALS(256, dbmeta->getMaxTablesInSelect());
+    ASSERT_EQUALS(16, dbmeta->getMaxUserNameLength());
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 } /* namespace connectionmetadata */
 } /* namespace testsuite */
