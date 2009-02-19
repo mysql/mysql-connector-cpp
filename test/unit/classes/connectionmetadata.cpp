@@ -342,7 +342,6 @@ void connectionmetadata::getColumns()
         logMsg(msg.str());
         got_warning=true;
       }
-      // TODO - ASSERT_EQUALS(it->precision, res->getInt(7));
       ASSERT_EQUALS(res->getInt(7), res->getInt("COLUMN_SIZE"));
 
       ASSERT_EQUALS(0, res->getInt(8));
@@ -685,8 +684,8 @@ void connectionmetadata::getImportedKeys()
       ASSERT_EQUALS(res->getString(12), res->getString("FK_NAME"));
 
       // TODO - not sure what value to expect
-//      ASSERT_EQUALS("", res->getString("PK_NAME"));
-//      ASSERT_EQUALS(res->getString(13), res->getString("PK_NAME"));
+      ASSERT_EQUALS("PRIMARY", res->getString("PK_NAME"));
+      ASSERT_EQUALS(res->getString(13), res->getString("PK_NAME"));
 
       ASSERT_EQUALS((int64_t) sql::DatabaseMetaData::importedKeyNotDeferrable, res->getInt64(14));
       ASSERT(sql::DatabaseMetaData::importedKeyInitiallyDeferred != res->getInt64(10));
@@ -768,7 +767,7 @@ void connectionmetadata::getIndexInfo()
     ASSERT_EQUALS(res->getInt(8), res->getInt("ORDINAL_POSITION"));
     ASSERT_EQUALS("col1", res->getString(9));
     ASSERT_EQUALS(res->getString(9), res->getString("COLUMN_NAME"));
-    ASSERT_EQUALS("ASC", res->getString(10));
+    ASSERT_EQUALS("A", res->getString(10));
     ASSERT_EQUALS(res->getString(10), res->getString("ASC_OR_DESC"));
     if (res->getInt(11) != 1)
     {
@@ -849,11 +848,11 @@ void connectionmetadata::getIndexInfo()
     ASSERT_EQUALS("PRIMARY", res->getString("INDEX_NAME"));
     ASSERT(res->next());
     ASSERT_EQUALS("idx_col4_col5", res->getString("INDEX_NAME"));
-    ASSERT_EQUALS("ASC", res->getString("ASC_OR_DESC"));
+    ASSERT_EQUALS("A", res->getString("ASC_OR_DESC"));
     ASSERT_EQUALS("col5", res->getString("COLUMN_NAME"));
     ASSERT(res->next());
     ASSERT_EQUALS("idx_col4_col5", res->getString("INDEX_NAME"));
-    ASSERT_EQUALS("ASC", res->getString("ASC_OR_DESC"));
+    ASSERT_EQUALS("A", res->getString("ASC_OR_DESC"));
     ASSERT_EQUALS("col4", res->getString("COLUMN_NAME"));
     ASSERT(!res->next());
 
@@ -867,7 +866,7 @@ void connectionmetadata::getIndexInfo()
       ASSERT_EQUALS("PRIMARY", res->getString("INDEX_NAME"));
       ASSERT(res->next());
       ASSERT_EQUALS("idx_col2", res->getString("INDEX_NAME"));
-      ASSERT_EQUALS("ASC", res->getString("ASC_OR_DESC"));
+      ASSERT_EQUALS("A", res->getString("ASC_OR_DESC"));
       ASSERT_EQUALS("col2", res->getString("COLUMN_NAME"));
       ASSERT_EQUALS(sql::DatabaseMetaData::tableIndexHashed, res->getInt("TYPE"));
     }
@@ -889,6 +888,119 @@ void connectionmetadata::getIndexInfo()
     fail(e.what(), __FILE__, __LINE__);
   }
 }
+
+void connectionmetadata::getLimitsAndStuff()
+{
+  logMsg("connectionmetadata::getLimitsAndStuff() - MySQL_ConnectionMetaData::getLimitsAndStuff()");
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    ASSERT_EQUALS(3, dbmeta->getCDBCMajorVersion());
+    ASSERT_EQUALS(0, dbmeta->getCDBCMinorVersion());
+    ASSERT_EQUALS(16777208, dbmeta->getMaxBinaryLiteralLength());
+    ASSERT_EQUALS(32, dbmeta->getMaxCatalogNameLength());
+    ASSERT_EQUALS(16777208, dbmeta->getMaxCharLiteralLength());
+    ASSERT_EQUALS(64, dbmeta->getMaxColumnNameLength());
+    ASSERT_EQUALS(64, dbmeta->getMaxColumnsInGroupBy());
+    ASSERT_EQUALS(16, dbmeta->getMaxColumnsInIndex());
+    ASSERT_EQUALS(64, dbmeta->getMaxColumnsInOrderBy());
+    ASSERT_EQUALS(256, dbmeta->getMaxColumnsInSelect());
+    ASSERT_EQUALS(512, dbmeta->getMaxColumnsInTable());
+
+    stmt.reset(con->createStatement());
+    res.reset(stmt->executeQuery("SELECT @@max_connections AS _max"));
+    ASSERT(res->next());
+    ASSERT_EQUALS(res->getInt("_max"), dbmeta->getMaxConnections());
+
+    ASSERT_EQUALS(64, dbmeta->getMaxCursorNameLength());
+    ASSERT_EQUALS(256, dbmeta->getMaxIndexLength());
+    ASSERT_EQUALS(64, dbmeta->getMaxProcedureNameLength());
+    ASSERT_EQUALS(2147483639, dbmeta->getMaxRowSize());
+    ASSERT_EQUALS(64, dbmeta->getMaxSchemaNameLength());
+
+    stmt.reset(con->createStatement());
+    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'"));
+    ASSERT(res->next());
+    ASSERT_EQUALS(res->getInt(2) - 4, dbmeta->getMaxStatementLength());
+
+    ASSERT_EQUALS(0, dbmeta->getMaxStatements());
+    ASSERT_EQUALS(64, dbmeta->getMaxTableNameLength());
+    ASSERT_EQUALS(256, dbmeta->getMaxTablesInSelect());
+    ASSERT_EQUALS(16, dbmeta->getMaxUserNameLength());
+    ASSERT_EQUALS("ABS,ACOS,ASIN,ATAN,ATAN2,BIT_COUNT,CEILING,COS,"
+                  "COT,DEGREES,EXP,FLOOR,LOG,LOG10,MAX,MIN,MOD,PI,POW,"
+                  "POWER,RADIANS,RAND,ROUND,SIN,SQRT,TAN,TRUNCATE"
+                  , dbmeta->getNumericFunctions());
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connectionmetadata::getPrimaryKeys()
+{
+  logMsg("connectionmetadata::getPrimaryKeys() - MySQL_ConnectionMetaData::getPrimaryKeys");
+  int row_num;
+  std::string catalog = NULL;
+  std::string schema = NULL;
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(col2 INT NOT NULL, col1 INT NOT NULL, PRIMARY KEY(col2, col1))");
+    // The descriptions are ordered by the column COLUMN_NAME, will they?
+    res.reset(dbmeta->getPrimaryKeys(con->getCatalog(), con->getSchema(), "test"));
+
+    row_num = 0;
+    while (res->next()) {
+      row_num++;
+      ASSERT_EQUALS(con->getCatalog(), res->getString("TABLE_CAT"));
+      ASSERT_EQUALS(con->getSchema(), res->getString("TABLE_SCHEM"));
+      ASSERT_EQUALS("test", res->getString("TABLE_NAME"));      
+      switch (row_num) {
+      case 1:
+        ASSERT_EQUALS("col1", res->getString("COLUMN_NAME"));
+        ASSERT_EQUALS(2, res->getInt("KEY_SEQ"));
+        break;
+      case 2:
+        ASSERT_EQUALS("col2", res->getString("COLUMN_NAME"));
+        ASSERT_EQUALS(1, res->getInt("KEY_SEQ"));
+        break;
+      default:
+        FAIL("Too many PK columns reported");
+        break;
+      }       
+      ASSERT_EQUALS("PRIMARY", res->getString("PK_NAME"));
+    }
+    ASSERT_EQUALS(2, row_num);
+
+    // catalog - a string ... "" retrieves pk from tables wo catalog, NULL = catalog should not be used to narrow the search
+    res.reset(dbmeta->getPrimaryKeys(catalog, con->getSchema(), "test"));
+    ASSERT_EQUALS(true, res->next());
+    ASSERT_EQUALS("test", res->getString("TABLE_NAME"));
+
+    res.reset(dbmeta->getPrimaryKeys(catalog, schema, "test"));
+    ASSERT_EQUALS(true, res->next());
+    ASSERT_EQUALS("test", res->getString("TABLE_NAME"));
+
+    stmt->execute("DROP TABLE IF EXISTS test");
+    res.reset(dbmeta->getPrimaryKeys(con->getCatalog(), con->getSchema(), "test"));
+    ASSERT_EQUALS(false, res->next());
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 
 } /* namespace connectionmetadata */
 } /* namespace testsuite */
