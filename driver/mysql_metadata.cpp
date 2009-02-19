@@ -2734,18 +2734,25 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 		buf_init = true;
 	}
 
-	if (server_version > 59999) {
-		const std::string query("SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, NON_UNIQUE, "
+	if (server_version > 50020) {
+#if A0
+		std::string query("SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, NON_UNIQUE, "
 						"INDEX_NAME, SEQ_IN_INDEX, COLUMN_NAME, CARDINALITY "
 						"FROM INFORMATION_SCHEMA.STATISTICS "
 						"WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? "
 						"ORDER BY NON_UNIQUE, INDEX_NAME, SEQ_IN_INDEX");
-
+#endif
+		std::string query("SELECT NULL AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, NON_UNIQUE, "
+						 "TABLE_SCHEMA AS INDEX_QUALIFIER, INDEX_NAME,");
+		query.append(buf);
+		query.append(" AS TYPE, SEQ_IN_INDEX AS ORDINAL_POSITION, COLUMN_NAME, COLLATION AS ASC_OR_DESC, CARDINALITY,"
+					"NULL AS PAGES, NULL AS FILTER_CONDITION "
+					"FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ?");
 		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
 		stmt->setString(1, schema);
 		stmt->setString(2, table);
 
-		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
+		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next()) {
 			MySQL_ArtResultSet::row_t rs_data_row;
@@ -2754,15 +2761,15 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 			rs_data_row.push_back(rs->getString(2));	// TABLE_SCHEM
 			rs_data_row.push_back(rs->getString(3));	// TABLE_NAME
 			rs_data_row.push_back(rs->getString(4));	// NON_UNIQUE
-			rs_data_row.push_back("");					// INDEX_QUALIFIER
-			rs_data_row.push_back(rs->getString(5));	// INDEX_NAME
-			rs_data_row.push_back(buf);					// TYPE
-			rs_data_row.push_back(rs->getString(6));	// ORDINAL_POSITION
-			rs_data_row.push_back(rs->getString(7));	// COLUMN_NAME
-			rs_data_row.push_back("ASC");				// ASC_OR_DESC
-			rs_data_row.push_back(rs->getString(8));	// CARDINALITY
-			rs_data_row.push_back("0");					// PAGES
-			rs_data_row.push_back("0");					// FILTER_CONDITION
+			rs_data_row.push_back(rs->getString(5));	// INDEX_QUALIFIER
+			rs_data_row.push_back(rs->getString(6));	// INDEX_NAME
+			rs_data_row.push_back(rs->getString(7));	// TYPE
+			rs_data_row.push_back(rs->getString(8));	// ORDINAL_POSITION
+			rs_data_row.push_back(rs->getString(9));	// COLUMN_NAME
+			rs_data_row.push_back(rs->getString(10));	// ASC_OR_DESC
+			rs_data_row.push_back(rs->getString(11));	// CARDINALITY
+			rs_data_row.push_back(rs->getString(12));	// PAGES
+			rs_data_row.push_back(rs->getString(13));	// FILTER_CONDITION
 
 			rs_data->push_back(rs_data_row);
 		}
