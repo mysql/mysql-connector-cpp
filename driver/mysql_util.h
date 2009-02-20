@@ -58,6 +58,22 @@ int mysql_string_type_to_datatype(const std::string & name);
 int mysql_type_to_datatype(const MYSQL_FIELD * const field);
 const char * mysql_type_to_string(const MYSQL_FIELD * const field);
 
+
+typedef struct st_our_charset
+{
+	unsigned int	nr;
+	const char		*name;
+	const char		*collation;
+	unsigned int	char_minlen;
+	unsigned int	char_maxlen;
+	const char		*comment;
+	unsigned int 	(*mb_charlen)(unsigned int c);
+	unsigned int 	(*mb_valid)(const char *start, const char *end);
+} OUR_CHARSET;
+
+const OUR_CHARSET * find_charset(unsigned int charsetnr);
+
+
 template<typename T>
 class my_shared_ptr
 {

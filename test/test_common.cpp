@@ -1425,7 +1425,8 @@ static void test_result_set_11(std::auto_ptr<sql::Connection> & conn, std::strin
 		std::auto_ptr<sql::ResultSet> rset1(stmt1->executeQuery("SELECT * FROM test_function"));
 		ensure("res1 is NULL", rset1.get() != NULL);
 		ensure("res1 is empty", rset1->next() != false);
-
+		stmt1->execute("set @old_charset_res=@@session.character_set_results");
+		stmt1->execute("set character_set_results=NULL");
 		std::auto_ptr<sql::ResultSetMetaData> meta1(rset1->getMetaData());
 		ensure("column name differs", !meta1->getColumnName(1).compare("a"));
 		ensure("column name differs", !meta1->getColumnName(2).compare("b"));
@@ -1437,13 +1438,14 @@ static void test_result_set_11(std::auto_ptr<sql::Connection> & conn, std::strin
 		ensure_equal_int("bad case sensitivity", meta1->isCaseSensitive(2), false);
 		ensure_equal_int("bad case sensitivity", meta1->isCaseSensitive(3), false);
 		ensure_equal_int("bad case sensitivity", meta1->isCaseSensitive(4), false);
-		ensure_equal_int("bad case sensitivity", meta1->isCaseSensitive(5), true);
+//		ensure_equal_int("bad case sensitivity", meta1->isCaseSensitive(5), true);
 
 		ensure_equal_int("bad case sensitivity", meta1->isCurrency(1), false);
 		ensure_equal_int("bad case sensitivity", meta1->isCurrency(2), false);
 		ensure_equal_int("bad case sensitivity", meta1->isCurrency(3), false);
 		ensure_equal_int("bad case sensitivity", meta1->isCurrency(4), false);
 		ensure_equal_int("bad case sensitivity", meta1->isCurrency(5), false);
+		stmt1->execute("set character_set_results=@old_charset_res");
 
 		try {
 			meta1->getColumnName(0);
@@ -2291,20 +2293,6 @@ static void test_not_implemented_conn_meta(std::auto_ptr<sql::Connection> & conn
 	std::auto_ptr<sql::DatabaseMetaData> conn_meta(conn->getMetaData());
 
 	try {
-		// getCrossReference(const std::string& /*primaryCatalog*/, const std::string& /*primarySchema*/, const std::string& /*primaryTable*/, const std::string& /*foreignCatalog*/, const std::string& /*foreignSchema*/, const std::string& /*foreignTable*/)
-		try {
-			total_tests++;
-			conn_meta->getCrossReference(bar, bar, bar, bar, bar, bar);
-			ensure("ERR: Exception not thrown", false);
-		} catch (sql::MethodNotImplementedException &) {}
-
-		// getExportedKeys(const std::string& /*catalog*/, const std::string& /*schema*/, const std::string& /*table*/)
-		try {
-			total_tests++;
-			conn_meta->getExportedKeys(bar, bar, bar);
-			ensure("ERR: Exception not thrown", false);
-		} catch (sql::MethodNotImplementedException &) {}
-
 		// getURL()
 		try {
 			total_tests++;

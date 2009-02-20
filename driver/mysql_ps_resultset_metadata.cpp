@@ -271,8 +271,8 @@ MySQL_Prepared_ResultSetMetaData::isCaseSensitive(unsigned int columnIndex)
 	if (field->flags & NUM_FLAG || field->type == MYSQL_TYPE_NEWDECIMAL || field->type == MYSQL_TYPE_DECIMAL) {
 		return false;
 	}
-	const CHARSET_INFO * const cs = get_charset(field->charsetnr, MYF(0));
-	return NULL == strstr(cs->name, "_ci");
+	const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
+	return NULL == strstr(cs->collation, "_ci");
 }
 /* }}} */
 
