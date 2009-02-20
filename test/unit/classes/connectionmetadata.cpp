@@ -818,10 +818,13 @@ void connectionmetadata::getIndexInfo()
     ASSERT(!res->next());
 
     // Another index. Should appear in the sort order prior to the idx_col2 one...
-    // Sort order is: NON_UNIQUE, TYPE, INDEX_NAME
-    // 1. PRIMARY, 2. UNIQUE an_idx_col3, 3. an_a_idx_col4, 4. idx_col2
+    // Sort order is: NON_UNIQUE, TYPE, INDEX_NAME 
     stmt->execute("CREATE INDEX an_a_idx_col4 ON test(col4 DESC)");
-    res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
+    res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));    
+    ASSERT(res->next());
+    ASSERT_EQUALS("an_idx_col3", res->getString("INDEX_NAME"));
+    ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
+    ASSERT_EQUALS(sql::DatabaseMetaData::tableIndexOther, res->getInt(7));
     ASSERT(res->next());
     ASSERT_EQUALS(sql::DatabaseMetaData::tableIndexOther, res->getInt(7));
     ASSERT_EQUALS("an_idx_col3", res->getString("INDEX_NAME"));
@@ -846,14 +849,17 @@ void connectionmetadata::getIndexInfo()
     res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
     ASSERT(res->next());
     ASSERT_EQUALS("PRIMARY", res->getString("INDEX_NAME"));
+    ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
     ASSERT(res->next());
     ASSERT_EQUALS("idx_col4_col5", res->getString("INDEX_NAME"));
     ASSERT_EQUALS("A", res->getString("ASC_OR_DESC"));
     ASSERT_EQUALS("col5", res->getString("COLUMN_NAME"));
+    ASSERT_EQUALS(true, res->getBoolean("NON_UNIQUE"));
     ASSERT(res->next());
     ASSERT_EQUALS("idx_col4_col5", res->getString("INDEX_NAME"));
     ASSERT_EQUALS("A", res->getString("ASC_OR_DESC"));
     ASSERT_EQUALS("col4", res->getString("COLUMN_NAME"));
+    ASSERT_EQUALS(true, res->getBoolean("NON_UNIQUE"));
     ASSERT(!res->next());
 
     try
@@ -864,12 +870,15 @@ void connectionmetadata::getIndexInfo()
       res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
       ASSERT(res->next());
       ASSERT_EQUALS("PRIMARY", res->getString("INDEX_NAME"));
+      ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
       ASSERT(res->next());
       ASSERT_EQUALS("idx_col2", res->getString("INDEX_NAME"));
 	  // There is no order when using HASH
       ASSERT_EQUALS("", res->getString("ASC_OR_DESC"));
       ASSERT_EQUALS("col2", res->getString("COLUMN_NAME"));
       ASSERT_EQUALS(sql::DatabaseMetaData::tableIndexHashed, res->getInt("TYPE"));
+      ASSERT_EQUALS(true, res->getBoolean("NON_UNIQUE"));
+      ASSERT(!res->next());
     }
     catch (sql::SQLException &)
     {
@@ -948,8 +957,8 @@ void connectionmetadata::getPrimaryKeys()
 {
   logMsg("connectionmetadata::getPrimaryKeys() - MySQL_ConnectionMetaData::getPrimaryKeys");
   int row_num;
-  std::string catalog = NULL;
-  std::string schema = NULL;
+  std::string catalog=NULL;
+  std::string schema=NULL;
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
@@ -959,12 +968,13 @@ void connectionmetadata::getPrimaryKeys()
     // The descriptions are ordered by the column COLUMN_NAME, will they?
     res.reset(dbmeta->getPrimaryKeys(con->getCatalog(), con->getSchema(), "test"));
 
-    row_num = 0;
-    while (res->next()) {
+    row_num=0;
+    while (res->next())
+    {
       row_num++;
       ASSERT_EQUALS(con->getCatalog(), res->getString("TABLE_CAT"));
       ASSERT_EQUALS(con->getSchema(), res->getString("TABLE_SCHEM"));
-      ASSERT_EQUALS("test", res->getString("TABLE_NAME"));      
+      ASSERT_EQUALS("test", res->getString("TABLE_NAME"));
       switch (row_num) {
       case 1:
         ASSERT_EQUALS("col1", res->getString("COLUMN_NAME"));
@@ -977,7 +987,7 @@ void connectionmetadata::getPrimaryKeys()
       default:
         FAIL("Too many PK columns reported");
         break;
-      }       
+      }
       ASSERT_EQUALS("PRIMARY", res->getString("PK_NAME"));
     }
     ASSERT_EQUALS(2, row_num);
