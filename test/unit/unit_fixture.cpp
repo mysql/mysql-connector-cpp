@@ -53,7 +53,7 @@ void unit_fixture::init()
   db=TestsRunner::theInstance().getStartOptions()->dbSchema;
 
   columns.push_back(columndefinition("BIT", "BIT", sql::DataType::BIT, "0", false, 1, 0, true, "", 0, "NO"));
-  /*
+  
   columns.push_back(columndefinition("BIT", "BIT NOT NULL", sql::DataType::BIT, "0", false, 1, 0, false, "", 0, "NO"));
   columns.push_back(columndefinition("BIT", "BIT(5) NOT NULL", sql::DataType::BIT, "0", false, 5, 0, false, "", 0, "NO"));
   columns.push_back(columndefinition("BIT", "BIT(8)", sql::DataType::BIT, "0", false, 8, 0, true, "", 0, "NO"));
@@ -184,7 +184,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii'", sql::DataType::VARCHAR, "yes", false, 6, 0, true, "", 6, "NO"));
   columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii' DEFAULT 'yes'", sql::DataType::VARCHAR, "yes", false, 6, 0, true, "yes", 6, "NO"));
   columns.push_back(columndefinition("SET", "SET('yes', 'no', 'ascii') CHARSET 'ascii' NOT NULL", sql::DataType::VARCHAR, "yes", false, 12, 0, false, "", 12, "NO"));
-   */
+   
   /*
   ResultSet getAttributes(String catalog,
                     String schemaPattern,
