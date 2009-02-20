@@ -604,8 +604,8 @@ void resultsetmetadata::isCaseSensitive()
     ASSERT_EQUALS(meta2->isCaseSensitive(1), false);
     ASSERT_EQUALS(meta2->isCaseSensitive(2), false);
 #if A0
-	// connection_collation distorts the collation of the results (character_set_results) doesn't help
-	// and thus we can't say for sure whether the original column was CI or CS. Only I_S.COLUMNS can tell us.
+    // connection_collation distorts the collation of the results (character_set_results) doesn't help
+    // and thus we can't say for sure whether the original column was CI or CS. Only I_S.COLUMNS can tell us.
     ASSERT_EQUALS(meta2->isCaseSensitive(3), true);
 #endif
     runStandardQuery();
@@ -633,12 +633,14 @@ void resultsetmetadata::isCaseSensitive()
     }
 
     /* TODO: is this correct? */
-    stmt->execute("SET NAMES 'utf8' COLLATE 'utf8_bin'");
+    stmt->execute("SET @old_charset_res=@@session.character_set_results");
+    stmt->execute("SET character_set_results=NULL");
     res.reset(stmt->executeQuery("SELECT id, col1, col2 FROM test"));
     ResultSetMetaData meta3(res->getMetaData());
     ASSERT_EQUALS(meta3->isCaseSensitive(1), false);
     ASSERT_EQUALS(meta3->isCaseSensitive(2), false);
     ASSERT_EQUALS(meta3->isCaseSensitive(3), true);
+    stmt->execute("SET character_set_results=@old_charset_res");
 
 
   }

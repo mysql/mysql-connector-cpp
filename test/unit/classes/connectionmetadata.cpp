@@ -869,7 +869,7 @@ void connectionmetadata::getIndexInfo()
       ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
       ASSERT(res->next());
       ASSERT_EQUALS("idx_col2", res->getString("INDEX_NAME"));
-	  // There is no order when using HASH
+      // There is no order when using HASH
       ASSERT_EQUALS("", res->getString("ASC_OR_DESC"));
       ASSERT_EQUALS("col2", res->getString("COLUMN_NAME"));
       ASSERT_EQUALS(sql::DatabaseMetaData::tableIndexHashed, res->getInt("TYPE"));
