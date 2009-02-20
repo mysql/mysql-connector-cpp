@@ -822,10 +822,6 @@ void connectionmetadata::getIndexInfo()
     stmt->execute("CREATE INDEX an_a_idx_col4 ON test(col4 DESC)");
     res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));    
     ASSERT(res->next());
-    ASSERT_EQUALS("an_idx_col3", res->getString("INDEX_NAME"));
-    ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
-    ASSERT_EQUALS(sql::DatabaseMetaData::tableIndexOther, res->getInt(7));
-    ASSERT(res->next());
     ASSERT_EQUALS(sql::DatabaseMetaData::tableIndexOther, res->getInt(7));
     ASSERT_EQUALS("an_idx_col3", res->getString("INDEX_NAME"));
     ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
