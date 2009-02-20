@@ -130,7 +130,7 @@ public:
    * you should test if MySQL can give you what you need. If it can't SKIP the test.
    * SKIP will stop test execution.
    */
-  void test_assert_skip();
+  void test_skip();
 
   /**
    * Demo of TODO(<message>)
@@ -140,7 +140,7 @@ public:
    * test will be able to see that you are working on the bug and the test failure
    * is expected and does not need to be escalated in any way.
    */
-  void test_assert_todo();
+  void test_todo();
 
 };
 

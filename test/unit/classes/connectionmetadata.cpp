@@ -577,8 +577,7 @@ void connectionmetadata::getIdentifierQuoteString()
       stmt->execute("SET @@sql_mode = ''");
       res.reset(stmt->executeQuery("SELECT @@sql_mode AS _sql_mode"));
       ASSERT(res->next());
-      ASSERT_EQUALS("", res->getString("_sql_mode"));
-      can_set_sqlmode=true;
+      ASSERT_EQUALS("", res->getString("_sql_mode"));      
     }
     catch (sql::SQLException &e)
     {
@@ -618,8 +617,7 @@ void connectionmetadata::getImportedKeys()
       stmt->execute("CREATE TABLE parent(pid INT NOT NULL, PRIMARY KEY(pid)) ENGINE=INNODB;");
       stmt->execute("CREATE TABLE child(cid INT NOT NULL, cpid INT, "
                     "INDEX idx_parent_id(cpid), FOREIGN KEY idx_parent_id(cpid) "
-                    "REFERENCES parent(pid) ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY(cid)) ENGINE=INNODB;");
-      can_create_pk=true;
+                    "REFERENCES parent(pid) ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY(cid)) ENGINE=INNODB;");      
     }
     catch (sql::SQLException &)
     {
