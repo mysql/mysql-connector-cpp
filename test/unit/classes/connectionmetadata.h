@@ -189,8 +189,6 @@ public:
    */
   void getProcedures();
 
-
-
 };
 
 REGISTER_FIXTURE(connectionmetadata);

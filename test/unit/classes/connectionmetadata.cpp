@@ -968,12 +968,13 @@ void connectionmetadata::getPrimaryKeys()
       ASSERT_EQUALS("test", res->getString("TABLE_NAME"));
       switch (row_num) {
       case 1:
-        ASSERT_EQUALS("col1", res->getString("COLUMN_NAME"));
-        ASSERT_EQUALS(2, res->getInt("KEY_SEQ"));
+        // No, ordered by KEY_SEQ
+        ASSERT_EQUALS("col2", res->getString("COLUMN_NAME"));
+        ASSERT_EQUALS(row_num, res->getInt("KEY_SEQ"));
         break;
       case 2:
-        ASSERT_EQUALS("col2", res->getString("COLUMN_NAME"));
-        ASSERT_EQUALS(1, res->getInt("KEY_SEQ"));
+        ASSERT_EQUALS("col1", res->getString("COLUMN_NAME"));
+        ASSERT_EQUALS(row_num, res->getInt("KEY_SEQ"));
         break;
       default:
         FAIL("Too many PK columns reported");
@@ -989,8 +990,7 @@ void connectionmetadata::getPrimaryKeys()
     ASSERT_EQUALS("test", res->getString("TABLE_NAME"));
 
     res.reset(dbmeta->getPrimaryKeys(catalog, schema, "test"));
-    ASSERT_EQUALS(true, res->next());
-    ASSERT_EQUALS("test", res->getString("TABLE_NAME"));
+    ASSERT(!res->next());   
 
     stmt->execute("DROP TABLE IF EXISTS test");
     res.reset(dbmeta->getPrimaryKeys(con->getCatalog(), con->getSchema(), "test"));
@@ -1015,12 +1015,18 @@ void connectionmetadata::getProcedures()
     try
     {
       stmt->execute("DROP PROCEDURE IF EXISTS p1");
-      stmt->execute("CREATE PROCEDURE IF EXISTS p1");
+      stmt->execute("CREATE PROCEDURE p1(OUT param1 INT) BEGIN SELECT 1 INTO param1; END");
     }
     catch (sql::SQLException &)
     {
       SKIP("Cannot create procedure");
     }
+
+    stmt->execute("SET @myvar = -1");
+    stmt->execute("CALL p1(@myvar)");
+    res.reset(stmt->executeQuery("SELECT @myvar AS _myvar"));
+    ASSERT(res->next());
+    ASSERT_EQUALS(1, res->getInt("_myvar"));
 
   }
   catch (sql::SQLException &e)
