@@ -61,6 +61,7 @@ public:
     TEST_CASE(getLimitsAndStuff);
     TEST_CASE(getPrimaryKeys);
     TEST_CASE(getProcedures);
+    TEST_CASE(getProcedureColumns);
   }
 
   /**
@@ -188,6 +189,14 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getProcedures();
+
+  /**
+   * Test for DatabaseMetaData:getProcedureColumns()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getProcedureColumns();
 
 };
 

@@ -577,7 +577,7 @@ void connectionmetadata::getIdentifierQuoteString()
       stmt->execute("SET @@sql_mode = ''");
       res.reset(stmt->executeQuery("SELECT @@sql_mode AS _sql_mode"));
       ASSERT(res->next());
-      ASSERT_EQUALS("", res->getString("_sql_mode"));      
+      ASSERT_EQUALS("", res->getString("_sql_mode"));
     }
     catch (sql::SQLException &e)
     {
@@ -617,7 +617,7 @@ void connectionmetadata::getImportedKeys()
       stmt->execute("CREATE TABLE parent(pid INT NOT NULL, PRIMARY KEY(pid)) ENGINE=INNODB;");
       stmt->execute("CREATE TABLE child(cid INT NOT NULL, cpid INT, "
                     "INDEX idx_parent_id(cpid), FOREIGN KEY idx_parent_id(cpid) "
-                    "REFERENCES parent(pid) ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY(cid)) ENGINE=INNODB;");      
+                    "REFERENCES parent(pid) ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY(cid)) ENGINE=INNODB;");
     }
     catch (sql::SQLException &)
     {
@@ -990,7 +990,7 @@ void connectionmetadata::getPrimaryKeys()
     ASSERT_EQUALS("test", res->getString("TABLE_NAME"));
 
     res.reset(dbmeta->getPrimaryKeys(catalog, schema, "test"));
-    ASSERT(!res->next());   
+    ASSERT(!res->next());
 
     stmt->execute("DROP TABLE IF EXISTS test");
     res.reset(dbmeta->getPrimaryKeys(con->getCatalog(), con->getSchema(), "test"));
@@ -1022,12 +1022,32 @@ void connectionmetadata::getProcedures()
       SKIP("Cannot create procedure");
     }
 
+    // Verify if the procedure creally has been created...
     stmt->execute("SET @myvar = -1");
     stmt->execute("CALL p1(@myvar)");
+
     res.reset(stmt->executeQuery("SELECT @myvar AS _myvar"));
     ASSERT(res->next());
     ASSERT_EQUALS(1, res->getInt("_myvar"));
-
+    logMsg("...who is the bad guy?");
+    res.reset(dbmeta->getProcedures(con->getCatalog(), con->getSchema(), "p1"));
+    logMsg("...is it you, getProcedures()?");
+    ASSERT(res->next());
+    ASSERT_EQUALS(con->getCatalog(), res->getString("PROCEDURE_CAT"));
+    ASSERT_EQUALS(res->getString(1), res->getString("PROCEDURE_CAT"));
+    ASSERT_EQUALS(con->getSchema(), res->getString("PROCEDURE_SCHEM"));
+    ASSERT_EQUALS(res->getString(2), res->getString("PROCEDURE_SCHEM"));
+    ASSERT_EQUALS("p1", res->getString(3));
+    ASSERT_EQUALS(res->getString(3), res->getString("PROCEDURE_NAME"));
+    ASSERT_EQUALS("", res->getString(4));
+    ASSERT_EQUALS("", res->getString(5));
+    ASSERT_EQUALS("", res->getString(6));
+    ASSERT_EQUALS("", res->getString(7));
+    ASSERT_EQUALS(res->getString("REMARKS"), res->getString(7));
+    ASSERT_EQUALS(sql::DatabaseMetaData::procedureResultUnknown, res->getInt(8));
+    ASSERT(sql::DatabaseMetaData::procedureNoResult != res->getInt(8));
+    ASSERT(sql::DatabaseMetaData::procedureReturnsResult != res->getInt(8));
+    ASSERT(!res->next());
   }
   catch (sql::SQLException &e)
   {
@@ -1037,6 +1057,52 @@ void connectionmetadata::getProcedures()
   }
 }
 
+void connectionmetadata::getProcedureColumns()
+{
+  logMsg("connectionmetadata::getProcedureColumns() - MySQL_ConnectionMetaData::getProcedureColumns()");
+  int server_version;
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    stmt.reset(con->createStatement());
+    try
+    {
+      stmt->execute("DROP PROCEDURE IF EXISTS p1");
+      stmt->execute("CREATE PROCEDURE p1(OUT param1 INT) BEGIN SELECT 1 INTO param1; END");
+    }
+    catch (sql::SQLException &)
+    {
+      SKIP("Cannot create procedure");
+    }
+
+    // Verify if the procedure creally has been created...
+    stmt->execute("SET @myvar = -1");
+    stmt->execute("CALL p1(@myvar)");
+    res.reset(stmt->executeQuery("SELECT @myvar AS _myvar"));
+    ASSERT(res->next());
+    ASSERT_EQUALS(1, res->getInt("_myvar"));
+
+    res.reset(dbmeta->getProcedureColumns(con->getCatalog(), con->getSchema(), "p1", "%"));
+    server_version=(10000 * dbmeta->getDatabaseMajorVersion())
+            + (100 * dbmeta->getDriverMinorVersion())
+            + dbmeta->getDriverPatchVersion();
+
+    if (server_version < 50206)
+      ASSERT(!res->next());
+    else
+    {
+      ASSERT(res->next());
+      FAIL("Theres a new I_S table PARAMETERS. The test should use it");
+    }
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
 
 } /* namespace connectionmetadata */
 } /* namespace testsuite */
