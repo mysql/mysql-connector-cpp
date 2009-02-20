@@ -1010,6 +1010,28 @@ void connectionmetadata::getPrimaryKeys()
   }
 }
 
+void connectionmetadata::getProcedures()
+{
+  logMsg("connectionmetadata::getProcedures() - MySQL_ConnectionMetaData::getProcedures");
+  bool has_procedures = false;
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    stmt.reset(con->createStatement());
+    try {
+
+    }catch (sql::SQLException &) {
+      logMsg("... skipping: cannot create procedure");
+    }
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 
 } /* namespace connectionmetadata */
 } /* namespace testsuite */

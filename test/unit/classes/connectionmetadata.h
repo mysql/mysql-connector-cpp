@@ -60,6 +60,7 @@ public:
     TEST_CASE(getIndexInfo);
     TEST_CASE(getLimitsAndStuff);
     TEST_CASE(getPrimaryKeys);
+    TEST_CASE(getProcedures);
   }
 
   /**
@@ -180,6 +181,14 @@ public:
    */
   void getPrimaryKeys();
 
+  /**
+   * Test for DatabaseMetaData:getProcedures()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getProcedures();
+
 
 
 };
@@ -187,3 +196,4 @@ public:
 REGISTER_FIXTURE(connectionmetadata);
 } /* namespace classes */
 } /* namespace testsuite */
+
