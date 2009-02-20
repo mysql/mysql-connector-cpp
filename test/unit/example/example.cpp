@@ -181,5 +181,26 @@ void example_test_class::test_assert_message()
    */
 }
 
+void example_test_class::test_skip()
+{
+  logMsg("SKIP() example");
+  /* Test if MySQL has a certain feature, e.g. if Procedures are supported */
+  if (false)
+    SKIP("EXAMPLE: the server does not support stored procedures");
+  /*
+   If MySQL does not suppoer feature xyz, call SKIP() and test execution ends.
+   You get here only if you feature is available
+   */
+  logMsg("Feature is available, use it.");
+}
+
+void example_test_class::test_skip()
+{
+  logMsg("SKIP() example");
+  /* Test if MySQL has a certain feature, e.g. if Procedures are supported */
+  TODO("If you know that a test mail fail and you intentionally want to let it fail temporarily, for example, as long as a bug has not been fixed, mark it as TODO");
+  FAIL("Expected failure, known failure - its on your TODO");
+}
+
 } /* namespace example */
 } /* namespace testsuite */
