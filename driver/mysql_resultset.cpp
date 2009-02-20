@@ -540,7 +540,6 @@ MySQL_ResultSet::getString(const uint32_t columnIndex) const
 		return "";
 	}
 	was_null= false;
-	CPP_INFO_FMT("value=%*s", strlen(row[columnIndex - 1]), row[columnIndex - 1]);
 	return std::string(row[columnIndex - 1], mysql_fetch_lengths(result->get())[columnIndex - 1]);
 }
 /* }}} */

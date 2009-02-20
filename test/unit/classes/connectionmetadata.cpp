@@ -953,8 +953,8 @@ void connectionmetadata::getPrimaryKeys()
 {
   logMsg("connectionmetadata::getPrimaryKeys() - MySQL_ConnectionMetaData::getPrimaryKeys");
   int row_num;
-  std::string catalog=NULL;
-  std::string schema=NULL;
+  std::string catalog;//=NULL;
+  std::string schema;//=NULL;
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
@@ -964,7 +964,7 @@ void connectionmetadata::getPrimaryKeys()
     // The descriptions are ordered by the column COLUMN_NAME, will they?
     res.reset(dbmeta->getPrimaryKeys(con->getCatalog(), con->getSchema(), "test"));
 
-    row_num=0;
+    row_num = 0;
     while (res->next())
     {
       row_num++;

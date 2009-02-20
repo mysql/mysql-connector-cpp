@@ -1739,47 +1739,81 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 	rs_field_data.push_back("PRIVILEGE");
 	rs_field_data.push_back("IS_GRANTABLE");
 
-	size_t idx;
-
-	std::string query("SHOW FULL COLUMNS FROM `");
-	query.append(table).append("`.`").append(table).append("` LIKE '").append(columnNamePattern).append("'");
-
-	std::auto_ptr<sql::Statement> stmt(connection->createStatement());
-	std::auto_ptr<sql::ResultSet> res(stmt->executeQuery(query));
-
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
-	while (res->next()) {
-		size_t pos = 0;
-		std::string privs = res->getString(8);
-		do {
+	/* I_S seems currently (20080220) not to work */
+	if (server_version > 69999) {
+		std::string query("SELECT NULL AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
+				 		"COLUMN_NAME, NULL AS GRANTOR, GRANTEE, PRIVILEGE_TYPE AS PRIVILEGE, IS_GRANTABLE\n"
+						"FROM INFORMATION_SCHEMA.COLUMN_PRIVILEGES\n"
+						"WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME=? AND COLUMN_NAME LIKE ?\n"
+						"ORDER BY COLUMN_NAME, PRIVILEGE_TYPE");
+		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
+		stmt->setString(1, schema);
+		stmt->setString(2, table);
+		stmt->setString(3, columnNamePattern);
+
+		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
+
+		while (rs->next()) {
 			MySQL_ArtResultSet::row_t rs_data_row;
-			std::string privToken;
 
-			while (privs[pos] == ' ') ++pos; // Eat the whitespace
-
-			idx = privs.find(",", pos);
-
-			if (idx != std::string::npos) {
-				privToken = privs.substr(pos, idx - pos);
-				pos = idx + 1; /* skip ',' */
-			} else {
-				privToken = privs.substr(pos, privs.length() - pos);
-			}
-			rs_data_row.push_back("");					// TABLE_CAT
-			rs_data_row.push_back(schema);				// TABLE_SCHEM
-			rs_data_row.push_back(table);				// TABLE_NAME
-			rs_data_row.push_back(res->getString(1));	// COLUMN_NAME
-			rs_data_row.push_back("");					// GRANTOR
-			rs_data_row.push_back(getUserName());		// GRANTEE
-			rs_data_row.push_back(privToken);			// PRIVILEGE
-			rs_data_row.push_back("");					// IS_GRANTABLE
+			rs_data_row.push_back(rs->getString(1));	// TABLE_CAT
+			rs_data_row.push_back(rs->getString(2));	// TABLE_SCHEM
+			rs_data_row.push_back(rs->getString(3));	// TABLE_NAME
+			rs_data_row.push_back(rs->getString(4));	// COLUMN_NAME
+			rs_data_row.push_back(rs->getString(5));	// KEY_SEQ
+			rs_data_row.push_back(rs->getString(6));	// PK_NAME
 
 			rs_data->push_back(rs_data_row);
+		}
 
-		} while (idx != std::string::npos);
+	} else {
+		size_t idx;
+		std::string query("SHOW FULL COLUMNS FROM `");
+		query.append(schema).append("`.`").append(table).append("` LIKE '").append(columnNamePattern).append("'");
+
+		std::auto_ptr<sql::Statement> stmt(connection->createStatement());
+		std::auto_ptr<sql::ResultSet> res(NULL);
+		try {
+			res.reset(stmt->executeQuery(query));
+		} catch (SQLException &e) {
+			// schema and/or table doesn't exist. return empty set
+			// do nothing here
+		}
+
+		while (res.get() && res->next()) {
+			size_t pos = 0;
+			std::string privs = res->getString(8);
+			do {
+				MySQL_ArtResultSet::row_t rs_data_row;
+				std::string privToken;
+
+				while (privs[pos] == ' ') ++pos; // Eat the whitespace
+
+				idx = privs.find(",", pos);
+
+				if (idx != std::string::npos) {
+					privToken = privs.substr(pos, idx - pos);
+					pos = idx + 1; /* skip ',' */
+				} else {
+					privToken = privs.substr(pos, privs.length() - pos);
+				}
+				rs_data_row.push_back("");					// TABLE_CAT
+				rs_data_row.push_back(schema);				// TABLE_SCHEM
+				rs_data_row.push_back(table);				// TABLE_NAME
+				rs_data_row.push_back(res->getString(1));	// COLUMN_NAME
+				rs_data_row.push_back("");					// GRANTOR
+				rs_data_row.push_back(getUserName());		// GRANTEE
+				rs_data_row.push_back(privToken);			// PRIVILEGE
+				rs_data_row.push_back("");					// IS_GRANTABLE
+
+				rs_data->push_back(rs_data_row);
+
+			} while (idx != std::string::npos);
+		}
 	}
-
+	
 	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
 	// If there is no exception we can release otherwise on function exit memory will be freed
 	rs_data.release();
@@ -2638,8 +2672,14 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 		query.append(schema).append("`.`").append(table).append("`");
 
 		std::auto_ptr<sql::Statement> stmt(connection->createStatement());
-		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
-		if (rs->next()) {
+		std::auto_ptr<sql::ResultSet> rs(NULL);
+		try {
+			rs.reset(stmt->executeQuery(query));
+		} catch (SQLException & e) {
+			// schema and/or table don't exist, return empty set
+			// just do nothing and the `if` will be skipped
+		}
+		if (rs.get() && rs->next()) {
 			std::string create_query(rs->getString(2));
 			unsigned int kSequence = 0;
 
@@ -2777,9 +2817,15 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 
 		std::auto_ptr<sql::Statement> stmt(connection->createStatement());
 
-		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
+		std::auto_ptr<sql::ResultSet> rs(NULL);
+		try {
+			rs.reset(stmt->executeQuery(query));
+		} catch (SQLException &) {
+			// schema and/or table doesn't exist. return empty set
+			// do nothing here
+		}
 
-		while (rs->next()) {
+		while (rs.get() && rs->next()) {
 			MySQL_ArtResultSet::row_t rs_data_row;
 
 			rs_data_row.push_back("");								// TABLE_CAT
@@ -3061,13 +3107,13 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 
 	/* Bind Problems with 49999, check later why */
 	if (server_version > 49999) {
-		const std::string query("SELECT TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, "
-						"SEQ_IN_INDEX, INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS "
-						"WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND "
-						"INDEX_NAME='PRIMARY' ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX");
+		const std::string query("SELECT NULL AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, "
+					"COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, INDEX_NAME AS PK_NAME FROM INFORMATION_SCHEMA.STATISTICS "
+					"WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND INDEX_NAME='PRIMARY' "
+					"ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX");
 
 		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
-		stmt->setString(1 ,schema);
+		stmt->setString(1, schema);
 		stmt->setString(2, table);
 
 		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
@@ -3075,12 +3121,12 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 		while (rs->next()) {
 			MySQL_ArtResultSet::row_t rs_data_row;
 
-			rs_data_row.push_back("");					// TABLE_CAT
-			rs_data_row.push_back(rs->getString(1));	// TABLE_SCHEM
-			rs_data_row.push_back(rs->getString(2));	// TABLE_NAME
-			rs_data_row.push_back(rs->getString(3));	// COLUMN_NAME
-			rs_data_row.push_back(rs->getString(4));	// KEY_SEQ
-			rs_data_row.push_back(rs->getString(5));	// PK_NAME
+			rs_data_row.push_back(rs->getString(1));	// TABLE_CAT
+			rs_data_row.push_back(rs->getString(2));	// TABLE_SCHEM
+			rs_data_row.push_back(rs->getString(3));	// TABLE_NAME
+			rs_data_row.push_back(rs->getString(4));	// COLUMN_NAME
+			rs_data_row.push_back(rs->getString(5));	// KEY_SEQ
+			rs_data_row.push_back(rs->getString(6));	// PK_NAME
 
 			rs_data->push_back(rs_data_row);
 		}
@@ -3089,18 +3135,25 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 		query.append(schema).append("`.`").append(table).append("`");
 
 		std::auto_ptr<sql::Statement> stmt(connection->createStatement());
-		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
+		std::auto_ptr<sql::ResultSet> rs(NULL);
+		try {
+			rs.reset(stmt->executeQuery(query));
+		} catch (SQLException &) {
+			// probably schema and/or table doesn't exist. return empty set
+			// do nothing here
+		}
 
-		while (rs->next()) {
-			if (!rs->getString(3).compare("PRIMARY")) {
+		while (rs.get() && rs->next()) {
+			std::string key_name = rs->getString("Key_name");
+			if (!key_name.compare("PRIMARY") || !key_name.compare("PRI")) {
 				MySQL_ArtResultSet::row_t rs_data_row;
 
-				rs_data_row.push_back("");					// TABLE_CAT
-				rs_data_row.push_back(schema);				// TABLE_SCHEM
-				rs_data_row.push_back(rs->getString(1));	// TABLE_NAME
-				rs_data_row.push_back(rs->getString(5));	// COLUMN_NAME
-				rs_data_row.push_back(rs->getString(4));	// KEY_SEQ
-				rs_data_row.push_back("PRIMARY");			// PK_NAME
+				rs_data_row.push_back("");								// TABLE_CAT
+				rs_data_row.push_back(schema);							// TABLE_SCHEM
+				rs_data_row.push_back(rs->getString(1));				// TABLE_NAME
+				rs_data_row.push_back(rs->getString("Column_name"));	// COLUMN_NAME
+				rs_data_row.push_back(rs->getString("Seq_in_index"));	// KEY_SEQ
+				rs_data_row.push_back(key_name);						// PK_NAME
 
 				rs_data->push_back(rs_data_row);
 			}

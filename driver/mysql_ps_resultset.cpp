@@ -795,7 +795,6 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 		// ToDo : Geometry? default ?
 	}		
 	
-	CPP_INFO_FMT("value=%*s", *stmt->bind[columnIndex - 1].length, stmt->bind[columnIndex - 1].buffer);
 	return  std::string(static_cast<char *>(stmt->bind[columnIndex - 1].buffer), *stmt->bind[columnIndex - 1].length);
 }
 /* }}} */
