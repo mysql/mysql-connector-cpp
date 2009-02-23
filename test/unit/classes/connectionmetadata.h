@@ -73,6 +73,7 @@ public:
     TEST_CASE(getResultSetHoldability);
     TEST_CASE(getSchemaTerm);
     TEST_CASE(getSearchStringEscape);
+    TEST_CASE(getSQLKeywords);
   }
 
   /**
@@ -280,6 +281,16 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getSearchStringEscape();
+  
+  /**
+   * Test for DatabaseMetaData::getSQLKeywords()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getSQLKeywords();
+
+
 
 };
 
