@@ -1137,6 +1137,12 @@ void connectionmetadata::getLimitsAndStuff()
     /* We support MySQL 5.1+ . It must be true */
     ASSERT_EQUALS(true, dbmeta->supportsSavepoints());
     ASSERT_EQUALS(true, dbmeta->supportsSchemasInDataManipulation());
+
+    ASSERT_EQUALS(true, dbmeta->supportsSchemasInDataManipulation());
+    ASSERT_EQUALS(true, dbmeta->supportsSchemasInIndexDefinitions());
+    ASSERT_EQUALS(true, dbmeta->supportsSchemasInPrivilegeDefinitions());
+    ASSERT_EQUALS(true, dbmeta->supportsSchemasInProcedureCalls());
+    ASSERT_EQUALS(true, dbmeta->supportsSchemasInTableDefinitions());
   }
   catch (sql::SQLException &e)
   {
