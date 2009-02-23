@@ -1056,6 +1056,7 @@ void connectionmetadata::getLimitsAndStuff()
     // KLUDGE - the code takes care of some exotic MySQL 4.x, however, we don't support 4.x
     ASSERT_EQUALS(false, dbmeta->nullsAreSortedHigh());
     ASSERT_EQUALS(!dbmeta->nullsAreSortedLow(), dbmeta->nullsAreSortedHigh());
+
     ASSERT_EQUALS(false, dbmeta->othersDeletesAreVisible(-1));
     ASSERT_EQUALS(false, dbmeta->othersDeletesAreVisible(0));
     ASSERT_EQUALS(false, dbmeta->othersDeletesAreVisible(1));
@@ -1066,6 +1067,114 @@ void connectionmetadata::getLimitsAndStuff()
     ASSERT_EQUALS(false, dbmeta->othersUpdatesAreVisible(0));
     ASSERT_EQUALS(false, dbmeta->othersUpdatesAreVisible(1));
 
+    ASSERT_EQUALS(false, dbmeta->ownDeletesAreVisible(-1));
+    ASSERT_EQUALS(false, dbmeta->ownDeletesAreVisible(0));
+    ASSERT_EQUALS(false, dbmeta->ownDeletesAreVisible(1));
+    ASSERT_EQUALS(false, dbmeta->ownInsertsAreVisible(-1));
+    ASSERT_EQUALS(false, dbmeta->ownInsertsAreVisible(0));
+    ASSERT_EQUALS(false, dbmeta->ownInsertsAreVisible(1));
+    ASSERT_EQUALS(false, dbmeta->ownUpdatesAreVisible(-1));
+    ASSERT_EQUALS(false, dbmeta->ownUpdatesAreVisible(0));
+    ASSERT_EQUALS(false, dbmeta->ownUpdatesAreVisible(1));
+
+    ASSERT_EQUALS(false, dbmeta->storesUpperCaseIdentifiers());
+    ASSERT_EQUALS(true, dbmeta->storesUpperCaseQuotedIdentifiers());
+
+    ASSERT_EQUALS(true, dbmeta->supportsAlterTableWithAddColumn());
+    ASSERT_EQUALS(true, dbmeta->supportsAlterTableWithDropColumn());
+
+    ASSERT_EQUALS(true, dbmeta->supportsANSI92EntryLevelSQL());
+    ASSERT_EQUALS(false, dbmeta->supportsANSI92FullSQL());
+    ASSERT_EQUALS(false, dbmeta->supportsANSI92IntermediateSQL());
+
+    ASSERT_EQUALS(true, dbmeta->supportsBatchUpdates());
+
+    ASSERT_EQUALS(false, dbmeta->supportsCatalogsInDataManipulation());
+    ASSERT_EQUALS(false, dbmeta->supportsCatalogsInIndexDefinitions());
+    ASSERT_EQUALS(false, dbmeta->supportsCatalogsInPrivilegeDefinitions());
+    ASSERT_EQUALS(false, dbmeta->supportsCatalogsInProcedureCalls());
+    ASSERT_EQUALS(false, dbmeta->supportsCatalogsInTableDefinitions());
+
+    ASSERT_EQUALS(true, dbmeta->supportsColumnAliasing());
+    ASSERT_EQUALS(false, dbmeta->supportsConvert());
+    ASSERT_EQUALS(true, dbmeta->supportsCoreSQLGrammar());
+    /* We support MySQL 5.1+ . It must be true */
+    ASSERT_EQUALS(true, dbmeta->supportsCorrelatedSubqueries());
+    ASSERT_EQUALS(false, dbmeta->supportsDataDefinitionAndDataManipulationTransactions());
+    ASSERT_EQUALS(false, dbmeta->supportsDataManipulationTransactionsOnly());
+    ASSERT_EQUALS(true, dbmeta->supportsDifferentTableCorrelationNames());
+    ASSERT_EQUALS(true, dbmeta->supportsExpressionsInOrderBy());
+    ASSERT_EQUALS(false, dbmeta->supportsExtendedSQLGrammar());
+    ASSERT_EQUALS(false, dbmeta->supportsFullOuterJoins());
+    ASSERT_EQUALS(true, dbmeta->supportsGetGeneratedKeys());
+    ASSERT_EQUALS(true, dbmeta->supportsGroupBy());
+    ASSERT_EQUALS(true, dbmeta->supportsGroupByBeyondSelect());
+    ASSERT_EQUALS(true, dbmeta->supportsGroupByUnrelated());
+    ASSERT_EQUALS(true, dbmeta->supportsLikeEscapeClause());
+    ASSERT_EQUALS(true, dbmeta->supportsLimitedOuterJoins());
+    ASSERT_EQUALS(true, dbmeta->supportsMinimumSQLGrammar());
+    ASSERT_EQUALS(true, dbmeta->supportsMultipleOpenResults());
+    ASSERT_EQUALS(false, dbmeta->supportsMultipleResultSets());
+    ASSERT_EQUALS(true, dbmeta->supportsMultipleTransactions());
+    ASSERT_EQUALS(false, dbmeta->supportsNamedParameters());
+    ASSERT_EQUALS(true, dbmeta->supportsNonNullableColumns());
+    ASSERT_EQUALS(false, dbmeta->supportsOpenCursorsAcrossCommit());
+    ASSERT_EQUALS(false, dbmeta->supportsOpenCursorsAcrossRollback());
+    ASSERT_EQUALS(false, dbmeta->supportsOpenStatementsAcrossCommit());
+    ASSERT_EQUALS(false, dbmeta->supportsOpenStatementsAcrossRollback());
+    ASSERT_EQUALS(false, dbmeta->supportsOrderByUnrelated());
+    ASSERT_EQUALS(true, dbmeta->supportsOuterJoins());
+    ASSERT_EQUALS(false, dbmeta->supportsPositionedDelete());
+    ASSERT_EQUALS(false, dbmeta->supportsPositionedUpdate());
+
+    ASSERT_EQUALS(true, dbmeta->supportsResultSetHoldability(sql::ResultSet::HOLD_CURSORS_OVER_COMMIT));
+    ASSERT_EQUALS(false, dbmeta->supportsResultSetHoldability(sql::ResultSet::CLOSE_CURSORS_AT_COMMIT));
+
+    ASSERT_EQUALS(true, dbmeta->supportsResultSetType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE));
+    ASSERT_EQUALS(false, dbmeta->supportsResultSetType(sql::ResultSet::TYPE_SCROLL_SENSITIVE));
+    ASSERT_EQUALS(false, dbmeta->supportsResultSetType(sql::ResultSet::TYPE_FORWARD_ONLY));
+
+    /* We support MySQL 5.1+ . It must be true */
+    ASSERT_EQUALS(true, dbmeta->supportsSavepoints());
+    ASSERT_EQUALS(true, dbmeta->supportsSchemasInDataManipulation());
+
+    ASSERT_EQUALS(true, dbmeta->supportsSchemasInDataManipulation());
+    ASSERT_EQUALS(true, dbmeta->supportsSchemasInIndexDefinitions());
+    ASSERT_EQUALS(true, dbmeta->supportsSchemasInPrivilegeDefinitions());
+    ASSERT_EQUALS(true, dbmeta->supportsSchemasInProcedureCalls());
+    ASSERT_EQUALS(true, dbmeta->supportsSchemasInTableDefinitions());
+
+    /* We support MySQL 5.1+ . It must be true */
+    ASSERT_EQUALS(true, dbmeta->supportsSelectForUpdate());
+    ASSERT_EQUALS(false, dbmeta->supportsStatementPooling());
+    ASSERT_EQUALS(true, dbmeta->supportsStoredProcedures());
+    ASSERT_EQUALS(true, dbmeta->supportsSubqueriesInComparisons());
+    ASSERT_EQUALS(true, dbmeta->supportsSubqueriesInExists());
+    ASSERT_EQUALS(true, dbmeta->supportsSubqueriesInIns());
+    ASSERT_EQUALS(true, dbmeta->supportsSubqueriesInQuantifieds());
+
+    ASSERT_EQUALS(true, dbmeta->supportsTableCorrelationNames());
+
+    /* We support MySQL 5.1+ . It must be true */
+    ASSERT_EQUALS(true, dbmeta->supportsTransactionIsolationLevel(sql::TRANSACTION_NONE));
+    ASSERT_EQUALS(true, dbmeta->supportsTransactionIsolationLevel(sql::TRANSACTION_READ_COMMITTED));
+    ASSERT_EQUALS(true, dbmeta->supportsTransactionIsolationLevel(sql::TRANSACTION_READ_UNCOMMITTED));
+    ASSERT_EQUALS(true, dbmeta->supportsTransactionIsolationLevel(sql::TRANSACTION_REPEATABLE_READ));
+    ASSERT_EQUALS(true, dbmeta->supportsTransactionIsolationLevel(sql::TRANSACTION_SERIALIZABLE));
+    ASSERT_EQUALS(true, dbmeta->supportsTransactions());
+
+    ASSERT_EQUALS(true, dbmeta->supportsTypeConversion());
+
+    /* We support MySQL 5.1+ . It must be true */
+    ASSERT_EQUALS(true, dbmeta->supportsUnion());
+    ASSERT_EQUALS(true, dbmeta->supportsUnionAll());
+
+    ASSERT_EQUALS(false, dbmeta->updatesAreDetected(sql::ResultSet::TYPE_FORWARD_ONLY));
+    ASSERT_EQUALS(false, dbmeta->updatesAreDetected(sql::ResultSet::TYPE_SCROLL_INSENSITIVE));
+    ASSERT_EQUALS(false, dbmeta->updatesAreDetected(sql::ResultSet::TYPE_SCROLL_SENSITIVE));
+
+    ASSERT_EQUALS(false, dbmeta->usesLocalFilePerTable());
+    ASSERT_EQUALS(false, dbmeta->usesLocalFiles());
   }
   catch (sql::SQLException &e)
   {
@@ -1464,7 +1573,7 @@ void connectionmetadata::getSuperTables()
 
     ASSERT(!res->next());
     ResultSetMetaData resmeta(res->getMetaData());
-    ASSERT_EQUALS((unsigned int)4, resmeta->getColumnCount());
+    ASSERT_EQUALS((unsigned int) 4, resmeta->getColumnCount());
     ASSERT_EQUALS("TABLE_CAT", resmeta->getColumnLabel(1));
     ASSERT_EQUALS("TABLE_SCHEM", resmeta->getColumnLabel(2));
     ASSERT_EQUALS("TABLE_NAME", resmeta->getColumnLabel(3));
@@ -1493,7 +1602,7 @@ void connectionmetadata::getSuperTypes()
 
     ASSERT(!res->next());
     ResultSetMetaData resmeta(res->getMetaData());
-    ASSERT_EQUALS((unsigned int)6, resmeta->getColumnCount());
+    ASSERT_EQUALS((unsigned int) 6, resmeta->getColumnCount());
     ASSERT_EQUALS("TYPE_CAT", resmeta->getColumnLabel(1));
     ASSERT_EQUALS("TYPE_SCHEM", resmeta->getColumnLabel(2));
     ASSERT_EQUALS("TYPE_NAME", resmeta->getColumnLabel(3));
