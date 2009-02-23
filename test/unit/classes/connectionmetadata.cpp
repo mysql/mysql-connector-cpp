@@ -1095,6 +1095,37 @@ void connectionmetadata::getLimitsAndStuff()
     ASSERT_EQUALS(false, dbmeta->supportsCatalogsInProcedureCalls());
     ASSERT_EQUALS(false, dbmeta->supportsCatalogsInTableDefinitions());
 
+    ASSERT_EQUALS(true, dbmeta->supportsColumnAliasing());
+    ASSERT_EQUALS(false, dbmeta->supportsConvert());
+    ASSERT_EQUALS(true, dbmeta->supportsCoreSQLGrammar());
+    /* We support MySQL 5.1+ . It must be true */
+    ASSERT_EQUALS(true, dbmeta->supportsCorrelatedSubqueries());
+    ASSERT_EQUALS(false, dbmeta->supportsDataDefinitionAndDataManipulationTransactions());
+    ASSERT_EQUALS(false, dbmeta->supportsDataManipulationTransactionsOnly());
+    ASSERT_EQUALS(true, dbmeta->supportsDifferentTableCorrelationNames());
+    ASSERT_EQUALS(true, dbmeta->supportsExpressionsInOrderBy());
+    ASSERT_EQUALS(false, dbmeta->supportsExtendedSQLGrammar());
+    ASSERT_EQUALS(false, dbmeta->supportsFullOuterJoins());
+    ASSERT_EQUALS(true, dbmeta->supportsGetGeneratedKeys());
+    ASSERT_EQUALS(true, dbmeta->supportsGroupBy());
+    ASSERT_EQUALS(true, dbmeta->supportsGroupByBeyondSelect());
+    ASSERT_EQUALS(true, dbmeta->supportsGroupByUnrelated());
+    ASSERT_EQUALS(true, dbmeta->supportsLikeEscapeClause());
+    ASSERT_EQUALS(true, dbmeta->supportsLimitedOuterJoins());
+    ASSERT_EQUALS(true, dbmeta->supportsMinimumSQLGrammar());
+    ASSERT_EQUALS(true, dbmeta->supportsMultipleOpenResults());
+    ASSERT_EQUALS(false, dbmeta->supportsMultipleResultSets());
+    ASSERT_EQUALS(true, dbmeta->supportsMultipleTransactions());
+    ASSERT_EQUALS(false, dbmeta->supportsNamedParameters());
+    ASSERT_EQUALS(true, dbmeta->supportsNonNullableColumns());
+    ASSERT_EQUALS(false, dbmeta->supportsOpenCursorsAcrossCommit());
+    ASSERT_EQUALS(false, dbmeta->supportsOpenCursorsAcrossRollback());
+    ASSERT_EQUALS(false, dbmeta->supportsOpenStatementsAcrossCommit());
+    ASSERT_EQUALS(false, dbmeta->supportsOpenStatementsAcrossRollback());
+    ASSERT_EQUALS(false, dbmeta->supportsOrderByUnrelated());
+    ASSERT_EQUALS(true, dbmeta->supportsOuterJoins());
+    ASSERT_EQUALS(false, dbmeta->supportsPositionedDelete());
+    ASSERT_EQUALS(false, dbmeta->supportsPositionedUpdate());
   }
   catch (sql::SQLException &e)
   {
