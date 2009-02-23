@@ -984,6 +984,9 @@ void connectionmetadata::getLimitsAndStuff()
                           "LTRIM,MAKE_SET,MATCH,MID,OCT,OCTET_LENGTH,ORD,POSITION,"\
                           "QUOTE,REPEAT,REPLACE,REVERSE,RIGHT,RPAD,RTRIM,SOUNDEX,"\
                           "SPACE,STRCMP,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING_INDEX,TRIM,UCASE,UPPER");
+
+  std::string sys_funcs("DATABASE,USER,SYSTEM_USER,SESSION_USER,PASSWORD,ENCRYPT,LAST_INSERT_ID,VERSION");
+
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
@@ -1038,6 +1041,7 @@ void connectionmetadata::getLimitsAndStuff()
     ASSERT(sql::DatabaseMetaData::sqlStateXOpen != dbmeta->getSQLStateType());
 
     ASSERT_EQUALS(funcs, dbmeta->getStringFunctions());
+    ASSERT_EQUALS(sys_funcs, dbmeta->getSystemFunctions());
   }
   catch (sql::SQLException &e)
   {
