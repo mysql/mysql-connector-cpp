@@ -46,8 +46,7 @@ protected:
 public:
 
   EXAMPLE_TEST_FIXTURE(connectionmetadata)
-  {
-    /*
+  {    
     TEST_CASE(getSchemata);
     TEST_CASE(getAttributes);
     TEST_CASE(getBestRowIdentifier);
@@ -76,8 +75,7 @@ public:
     TEST_CASE(getSearchStringEscape);
     TEST_CASE(getSQLKeywords);
     TEST_CASE(getSuperTables);
-    TEST_CASE(getSuperTypes);
-     */
+    TEST_CASE(getSuperTypes);     
     TEST_CASE(classAttributes);
   }
 
