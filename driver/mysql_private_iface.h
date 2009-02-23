@@ -43,8 +43,8 @@
 #define snprintf _snprintf
 #endif
 
-extern "C"
-{
+//extern "C"
+//{
 //#if defined(_WIN32) || defined(_WIN64) 
 #include <my_global.h>
 //#endif
@@ -53,7 +53,7 @@ extern "C"
 #endif
 #include <errmsg.h>
 #include <mysql.h>
-}
+//}
 
 /* my_global.h introduces bool and max */
 #ifdef WE_DEFINE_BOOL_TO_SKIP_LIBMYSQL

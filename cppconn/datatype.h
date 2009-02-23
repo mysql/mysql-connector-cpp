@@ -51,6 +51,7 @@ public:
 		DATE,
 		TIME,
 		GEOMETRY,
+		ENUM,
 		SQLNULL
 	};
 };
