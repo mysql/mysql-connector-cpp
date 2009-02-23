@@ -50,7 +50,7 @@
 * If you do not have compiled Connector/C++ against a debug version of the MySQL
 * Client Library but you have compiled  Connector/C++ with tracing enabled, then
 * you may activate the Connector/C++ internal trace using
-* setClientOption("client_trace", bool on_off).
+* setClientOption("clientTrace", bool on_off).
 *
 * To compile Connector/C++ with tracing enabled, do:
 *   cmake -DMYSQLCPPCONN_TRACE_ENABLE:BOOL=1
@@ -127,7 +127,7 @@ int main(int argc, const char **argv)
 			activating and de-activating the Connector/C++ internal trace
 			*/
 			on_off = (i + 2) % 2;
-			con->setClientOption("client_trace", &on_off);
+			con->setClientOption("clientTrace", &on_off);
 		}
 
 		stmt->execute("DROP TABLE IF EXISTS test");

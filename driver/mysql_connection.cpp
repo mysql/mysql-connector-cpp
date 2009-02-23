@@ -220,6 +220,8 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		} else if (!it->first.compare("sslCipher")) {
 			sslCipher = it->second.str.val;
 			ssl_used = true;
+		} else if (!it->first.compare("metadataUseInfoSchema")) {
+			intern->metadata_use_info_schema = it->second.bval;
 		} else if (!it->first.compare("CLIENT_COMPRESS")) {
 			if (it->second.bval && (flags & CLIENT_COMPRESS)) {
 				flags |= CLIENT_COMPRESS;
@@ -455,10 +457,12 @@ MySQL_Connection::getClientInfo(const std::string&)
 
 /* {{{ MySQL_Connection::getClientOption() -U- */
 void
-MySQL_Connection::getClientOption(const std::string & /* optionName */, void * /* optionValue */)
+MySQL_Connection::getClientOption(const std::string & optionName, void * optionValue)
 {
-	throw sql::MethodNotImplementedException("MySQL_Connection::getClientOption");
-	return;
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getClientOption");
+	if (!optionName.compare("metadataUseInfoSchema")) {
+		*(static_cast<bool *>(optionValue)) = intern->metadata_use_info_schema;
+	}
 }
 /* }}} */
 
@@ -710,7 +714,7 @@ MySQL_Connection::setClientOption(const std::string & optionName, const void * o
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setClientOption");
 	if (!optionName.compare("libmysql_debug")) {
 		mysql_debug(static_cast<const char *>(optionValue));
-	} else if (!optionName.compare("client_trace")) {
+	} else if (!optionName.compare("clientTrace")) {
 		if (*(static_cast<const bool *>(optionValue))) {
 			intern->logger->get()->enableTracing();
 			CPP_INFO("Tracing enabled");
@@ -718,6 +722,8 @@ MySQL_Connection::setClientOption(const std::string & optionName, const void * o
 			intern->logger->get()->disableTracing();
 			CPP_INFO("Tracing disabled");
 		}
+	} else if (!optionName.compare("metadataUseInfoSchema")) {
+		intern->metadata_use_info_schema = *(static_cast<const bool *>(optionValue));
 	}
 }
 /* }}} */

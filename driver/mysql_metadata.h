@@ -44,6 +44,8 @@ class MySQL_ConnectionMetaData : public sql::DatabaseMetaData
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 
 	std::string lower_case_table_names;
+
+	bool use_info_schema;
 public:
 	MySQL_ConnectionMetaData(MySQL_Connection * const conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
 
