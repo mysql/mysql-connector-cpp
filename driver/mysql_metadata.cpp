@@ -1184,7 +1184,7 @@ MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(MySQL_Connection * const conn
 	server_version = mysql_get_server_version(connection->getMySQLHandle());
 	lower_case_table_names = connection->getSessionVariable("lower_case_table_names");
 	
-	connection->getClientOption("metadata_use_info_schema", (void *) use_info_schema);
+	connection->getClientOption("metadata_use_info_schema", (void *) &use_info_schema);
 }
 /* }}} */
 
