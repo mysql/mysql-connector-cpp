@@ -977,6 +977,13 @@ void connectionmetadata::getIndexInfo()
 void connectionmetadata::getLimitsAndStuff()
 {
   logMsg("connectionmetadata::getLimitsAndStuff() - MySQL_ConnectionMetaData::getLimitsAndStuff()");
+
+  std::string funcs("ASCII,BIN,BIT_LENGTH,CHAR,CHARACTER_LENGTH,CHAR_LENGTH,CONCAT,"\
+                          "CONCAT_WS,CONV,ELT,EXPORT_SET,FIELD,FIND_IN_SET,HEX,INSERT,"\
+                          "INSTR,LCASE,LEFT,LENGTH,LOAD_FILE,LOCATE,LOCATE,LOWER,LPAD,"\
+                          "LTRIM,MAKE_SET,MATCH,MID,OCT,OCTET_LENGTH,ORD,POSITION,"\
+                          "QUOTE,REPEAT,REPLACE,REVERSE,RIGHT,RPAD,RTRIM,SOUNDEX,"\
+                          "SPACE,STRCMP,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING_INDEX,TRIM,UCASE,UPPER");
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
@@ -1026,9 +1033,11 @@ void connectionmetadata::getLimitsAndStuff()
     ASSERT_EQUALS(false, dbmeta->deletesAreDetected(1));
     ASSERT_EQUALS(true, dbmeta->dataDefinitionCausesTransactionCommit());
     ASSERT_EQUALS(true, dbmeta->doesMaxRowSizeIncludeBlobs());
+
     ASSERT_EQUALS(sql::DatabaseMetaData::sqlStateSQL99, dbmeta->getSQLStateType());
     ASSERT(sql::DatabaseMetaData::sqlStateXOpen != dbmeta->getSQLStateType());
 
+    ASSERT_EQUALS(funcs, dbmeta->getStringFunctions());
   }
   catch (sql::SQLException &e)
   {
@@ -1208,7 +1217,7 @@ void connectionmetadata::getCatalogs()
     ASSERT(!res->next());
     ResultSetMetaData resmeta(res->getMetaData());
     /* http://java.sun.com/j2se/1.4.2/docs/api/java/sql/DatabaseMetaData.html#getCatalogs() */
-    ASSERT_EQUALS((unsigned int)1, resmeta->getColumnCount());
+    ASSERT_EQUALS((unsigned int) 1, resmeta->getColumnCount());
     ASSERT_EQUALS("TABLE_CAT", resmeta->getColumnLabel(1));
   }
   catch (sql::SQLException &e)
