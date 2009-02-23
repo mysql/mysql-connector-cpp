@@ -36,23 +36,29 @@ namespace classes
 class resultset : public unit_fixture
 {
 private:
-  typedef unit_fixture super;  
+  typedef unit_fixture super;
 
 public:
 
   EXAMPLE_TEST_FIXTURE(resultset)
   {
-
-    TEST_CASE(andrey1);
+    TEST_CASE(getInt);
+    TEST_CASE(getTypes);
   }
 
   /**
    * Test for resultset::getInt*()
    *
-   * Checking in the assorted getInt*()-methods work properly and can fetch
-   * very small and very large values
+   * Test of the assorted methods to fetch integers
    */
-  void andrey1();
+  void getInt();
+
+  /**
+   * Test for resultset::get*()
+   *
+   * Test of the assorted methods to fetch data
+   */
+  void getTypes();
 
 };
 
