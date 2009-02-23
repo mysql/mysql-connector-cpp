@@ -3213,21 +3213,31 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 	rs_field_data.push_back("PROCEDURE_CAT");
 	rs_field_data.push_back("PROCEDURE_SCHEM");
 	rs_field_data.push_back("PROCEDURE_NAME");
-	rs_field_data.push_back("reserved1");
-	rs_field_data.push_back("reserved2");
-	rs_field_data.push_back("reserved3");
+	rs_field_data.push_back("RESERVERD_1");
+	rs_field_data.push_back("RESERVERD_2");
+	rs_field_data.push_back("RESERVERD_3");
 	rs_field_data.push_back("REMARKS");
 	rs_field_data.push_back("PROCEDURE_TYPE");
 
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
 	if (use_info_schema && server_version > 49999) {
-		const std::string query("SELECT ROUTINE_CATALOG AS PROCEDURE_CAT, ROUTINE_SCHEMA AS PROCEDURE_SCHEM, "
-						"ROUTINE_NAME AS PROCEDURE_NAME, NULL AS reserved1, NULL AS reserved2, NULL as reserved3,"
-						"ROUTINE_COMMENT AS REMARKS, 0 as PROCEDURE_TYPE\n"
-						"FROM INFORMATION_SCHEMA.ROUTINES\n"
-						"WHERE ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ?\n"
-						"ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME");
+		char buf[5];
+		std::string query("SELECT ROUTINE_CATALOG AS PROCEDURE_CAT, ROUTINE_SCHEMA AS PROCEDURE_SCHEM, "
+						"ROUTINE_NAME AS PROCEDURE_NAME, NULL AS RESERVED_1, NULL AS RESERVERD_2, NULL as RESERVED_3,"
+						"ROUTINE_COMMENT AS REMARKS, "
+						"CASE WHEN ROUTINE_TYPE = 'PROCEDURE' THEN ");
+		my_i_to_a(buf, sizeof(buf) - 1, procedureNoResult);
+		query.append(buf);
+		query.append(" WHEN ROUTINE_TYPE='FUNCTION' THEN ");
+		my_i_to_a(buf, sizeof(buf) - 1, procedureReturnsResult);
+		query.append(buf);
+		query.append(" ELSE ");
+		my_i_to_a(buf, sizeof(buf) - 1, procedureResultUnknown);
+		query.append(buf);
+		query.append(" END AS PROCEDURE_TYPE\nFROM INFORMATION_SCHEMA.ROUTINES\n"
+					"WHERE ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ?\n"
+					"ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME");
 
 		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
 		stmt->setString(1, schemaPattern);
@@ -3639,7 +3649,7 @@ MySQL_ConnectionMetaData::getTables(const std::string& /* catalog */, const std:
 							"FROM INFORMATION_SCHEMA.TABLES\nWHERE TABLE_SCHEMA  LIKE ? AND TABLE_NAME LIKE ?\n"
 							"ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME");
 
-		std::auto_ptr<sql::PreparedStatement> stmt(connection->cppconn_(query));
+		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
 		stmt->setString(1, schemaPattern);
 		stmt->setString(2, tableNamePattern);
 

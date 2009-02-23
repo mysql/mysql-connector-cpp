@@ -1286,9 +1286,9 @@ void connectionmetadata::getProcedures()
     ASSERT_EQUALS("", res->getString(6));
     ASSERT_EQUALS("", res->getString(7));
     ASSERT_EQUALS(res->getString("REMARKS"), res->getString(7));
-    ASSERT_EQUALS(sql::DatabaseMetaData::procedureResultUnknown, res->getInt(8));
-    ASSERT(sql::DatabaseMetaData::procedureNoResult != res->getInt(8));
+    ASSERT_EQUALS(sql::DatabaseMetaData::procedureNoResult, res->getInt("PROCEDURE_TYPE"));
     ASSERT(sql::DatabaseMetaData::procedureReturnsResult != res->getInt(8));
+    ASSERT(sql::DatabaseMetaData::procedureResultUnknown != res->getInt(8));
     ASSERT(!res->next());
   }
   catch (sql::SQLException &e)
