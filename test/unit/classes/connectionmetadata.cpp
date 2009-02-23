@@ -1126,6 +1126,17 @@ void connectionmetadata::getLimitsAndStuff()
     ASSERT_EQUALS(true, dbmeta->supportsOuterJoins());
     ASSERT_EQUALS(false, dbmeta->supportsPositionedDelete());
     ASSERT_EQUALS(false, dbmeta->supportsPositionedUpdate());
+
+    ASSERT_EQUALS(true, dbmeta->supportsResultSetHoldability(sql::ResultSet::HOLD_CURSORS_OVER_COMMIT));
+    ASSERT_EQUALS(false, dbmeta->supportsResultSetHoldability(sql::ResultSet::CLOSE_CURSORS_AT_COMMIT));
+
+    ASSERT_EQUALS(true, dbmeta->supportsResultSetType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE));
+    ASSERT_EQUALS(false, dbmeta->supportsResultSetType(sql::ResultSet::TYPE_SCROLL_SENSITIVE));
+    ASSERT_EQUALS(false, dbmeta->supportsResultSetType(sql::ResultSet::TYPE_FORWARD_ONLY));
+
+    /* We support MySQL 5.1+ . It must be true */
+    ASSERT_EQUALS(true, dbmeta->supportsSavepoints());
+    ASSERT_EQUALS(true, dbmeta->supportsSchemasInDataManipulation());
   }
   catch (sql::SQLException &e)
   {
