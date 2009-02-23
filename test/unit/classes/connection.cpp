@@ -330,7 +330,7 @@ void connection::connectUsingMap()
         {
           created_objects.clear();
           con.reset(driver->connect(connection_properties));
-          sql::Connection* mycon=driver->connect(connection_properties);
+          Connection mycon( driver->connect(connection_properties) );
           retschema=mycon->getSchema();
           if (retschema != myschema)
           {
