@@ -1026,6 +1026,9 @@ void connectionmetadata::getLimitsAndStuff()
     ASSERT_EQUALS(false, dbmeta->deletesAreDetected(1));
     ASSERT_EQUALS(true, dbmeta->dataDefinitionCausesTransactionCommit());
     ASSERT_EQUALS(true, dbmeta->doesMaxRowSizeIncludeBlobs());
+    ASSERT_EQUALS(sql::DatabaseMetaData::sqlStateSQL99, dbmeta->getSQLStateType());
+    ASSERT(sql::DatabaseMetaData::sqlStateXOpen != dbmeta->getSQLStateType());
+
   }
   catch (sql::SQLException &e)
   {
