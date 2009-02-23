@@ -1031,7 +1031,7 @@ static const TypeInfoDef mysqlc_types[] = {
 	// ----------- MySQL-Type: ENUM DBC-Type: VARCHAR ----------
 	{
 		"ENUM",								// Typename
-		sql::DataType::VARCHAR,				// dbc-type
+		sql::DataType::ENUM,				// dbc-type
 		0xFFFF,								// Precision
 		"'",								// Literal prefix
 		"'",								// Literal suffix
@@ -1744,7 +1744,7 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
 	/* I_S seems currently (20080220) not to work */
-	if (server_version > 69999) {
+	if (use_info_schema && server_version > 69999) {
 #if A0
 		std::string query("SELECT NULL AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
 				 		"COLUMN_NAME, NULL AS GRANTOR, GRANTEE, PRIVILEGE_TYPE AS PRIVILEGE, IS_GRANTABLE\n"
@@ -2123,7 +2123,7 @@ MySQL_ConnectionMetaData::getCrossReference(const std::string& primaryCatalog, c
 		query.append(DeleteRuleClause);
 		query.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME,"
 					 "(SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = REFERENCED_TABLE_SCHEMA AND"
-					 " TABLE_NAME = REFERENCED_TABLE_NAME AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,");
+					 " TABLE_NAME = A.REFERENCED_TABLE_NAME AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,");
 		query.append(importedKeyNotDeferrableStr);
 		query.append(" AS DEFERRABILITY  FROM\nINFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B\n"
 					 "USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME)\n");
@@ -2359,13 +2359,13 @@ MySQL_ConnectionMetaData::getExportedKeys(const std::string& catalog, const std:
 		query.append(DeleteRuleClause);
 		query.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME,"
 					 "(SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = REFERENCED_TABLE_SCHEMA AND"
-					 " TABLE_NAME = REFERENCED_TABLE_NAME AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,");
+					 " TABLE_NAME = A.REFERENCED_TABLE_NAME AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,");
 		query.append(importedKeyNotDeferrableStr);
 		query.append(" AS DEFERRABILITY \n FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN  INFORMATION_SCHEMA.TABLE_CONSTRAINTS B\n"
 					 "USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME)\n");
 		query.append(OptionalRefConstraintJoinStr);
 		query.append("\nWHERE B.CONSTRAINT_TYPE = 'FOREIGN KEY' AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=?\n"
-				 "ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION");
+				 		"ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION");
 
 		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
 		stmt->setString(1, schema);
@@ -2627,16 +2627,16 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 					"(R.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ");
 
 		std::string query("SELECT \n"
-			 		"NULL AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,\n"
-			 		"A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, NULL AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,\n"
-			 		"A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,\n");
-		 query.append(UpdateRuleClause);
-		 query.append(" AS UPDATE_RULE,\n");
-		 query.append(DeleteRuleClause);
-		 query.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME,\n"
-		 			"(SELECT TC.CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS TC\n"
-		 			"WHERE TABLE_SCHEMA = A.REFERENCED_TABLE_SCHEMA AND TABLE_NAME = A.REFERENCED_TABLE_NAME \n"
-		 			"AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,\n");
+					"NULL AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,\n"
+					"A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, NULL AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,\n"
+					"A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,\n");
+		query.append(UpdateRuleClause);
+		query.append(" AS UPDATE_RULE,\n");
+		query.append(DeleteRuleClause);
+		query.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME,\n"
+					"(SELECT TC.CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS TC\n"
+					"WHERE TABLE_SCHEMA = A.REFERENCED_TABLE_SCHEMA AND TABLE_NAME = A.REFERENCED_TABLE_NAME \n"
+					"AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,\n");
 		query.append(importedKeyNotDeferrableStr);
 		query.append(" AS DEFERRABILITY FROM "
 					"INFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B \n"
@@ -2834,7 +2834,7 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 			rs_data_row.push_back("");								// TABLE_CAT
 			rs_data_row.push_back(schema);							// TABLE_SCHEM
 			rs_data_row.push_back(rs->getString("Table"));			// TABLE_NAME
-			rs_data_row.push_back(atoi(rs->getString("Non_unique").c_str())? true:false);		// NON_UNIQUE
+			rs_data_row.push_back(atoi(rs->getString("Non_unique").c_str())? true:false);	// NON_UNIQUE
 			rs_data_row.push_back(schema);							// INDEX_QUALIFIER
 			rs_data_row.push_back(rs->getString("Key_name"));		// INDEX_NAME
 			rs_data_row.push_back(indexOther);						// TYPE
@@ -3090,7 +3090,7 @@ MySQL_ConnectionMetaData::getNumericFunctions()
 /* }}} */
 
 
-/* {{{ MySQL_ConnectionMetaData::getPrimaryKeys() -Is- */
+/* {{{ MySQL_ConnectionMetaData::getPrimaryKeys() -I- */
 sql::ResultSet *
 MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::string& schema, const std::string& table)
 {
@@ -3222,27 +3222,29 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
 	if (use_info_schema && server_version > 49999) {
-		const std::string query("SELECT ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_COMMENT "
-						"FROM INFORMATION_SCHEMA.ROUTINES "
-						"WHERE ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ? "
+		const std::string query("SELECT ROUTINE_CATALOG AS PROCEDURE_CAT, ROUTINE_SCHEMA AS PROCEDURE_SCHEM, "
+						"ROUTINE_NAME AS PROCEDURE_NAME, NULL AS reserved1, NULL AS reserved2, NULL as reserved3,"
+						"ROUTINE_COMMENT AS REMARKS, 0 as PROCEDURE_TYPE\n"
+						"FROM INFORMATION_SCHEMA.ROUTINES\n"
+						"WHERE ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ?\n"
 						"ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME");
 
 		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
 		stmt->setString(1, schemaPattern);
 		stmt->setString(2, procedureNamePattern.size() ? procedureNamePattern : "%");
 
-		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
+		std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
 		while (rs->next()) {
 			MySQL_ArtResultSet::row_t rs_data_row;
 
 			rs_data_row.push_back(rs->getString(1));	// PROCEDURE_CAT
 			rs_data_row.push_back(rs->getString(2));	// PROCEDURE_SCHEM
 			rs_data_row.push_back(rs->getString(3));	// PROCEDURE_NAME
-			rs_data_row.push_back("");					// reserved1
-			rs_data_row.push_back("");					// reserved2
-			rs_data_row.push_back("");					// reserved3
-			rs_data_row.push_back(rs->getString(4));	// REMARKS
-			rs_data_row.push_back("0");					// PROCEDURE_TYPE
+			rs_data_row.push_back(rs->getString(4));	// reserved1
+			rs_data_row.push_back(rs->getString(5));	// reserved2
+			rs_data_row.push_back(rs->getString(6));	// reserved3
+			rs_data_row.push_back(rs->getString(7));	// REMARKS
+			rs_data_row.push_back(rs->getString(8));	// PROCEDURE_TYPE
 
 			rs_data->push_back(rs_data_row);
 		}
@@ -3291,14 +3293,15 @@ MySQL_ConnectionMetaData::getSchemas()
 
 	std::auto_ptr<sql::Statement> stmt(connection->createStatement());
 	std::auto_ptr<sql::ResultSet> rs(
-		stmt->executeQuery(server_version > 49999? "SELECT SCHEMA_NAME, CATALOG_NAME FROM INFORMATION_SCHEMA.SCHEMATA ORDER BY SCHEMA_NAME":
-												   "SHOW DATABASES"));
+		stmt->executeQuery(use_info_schema && server_version > 49999?
+				"SELECT SCHEMA_NAME, CATALOG_NAME FROM INFORMATION_SCHEMA.SCHEMATA ORDER BY SCHEMA_NAME":
+				"SHOW DATABASES"));
 
 	while (rs->next()) {
 		MySQL_ArtResultSet::row_t rs_data_row;
 
 		rs_data_row.push_back(rs->getString(1));
-		if (server_version > 49999) {
+		if (use_info_schema && server_version > 49999) {
 			rs_data_row.push_back(rs->getString(2));
 		} else {
 			rs_data_row.push_back("");
@@ -3425,9 +3428,9 @@ MySQL_ConnectionMetaData::getSuperTables(const std::string& /*catalog*/, const s
 	CPP_ENTER("MySQL_ConnectionMetaData::getSuperTables");
 	std::list<std::string> rs_field_data;
 
-	rs_field_data.push_back("TYPE_CATALOG");
-	rs_field_data.push_back("TYPE_SCHEMA");
-	rs_field_data.push_back("TYPE_NAME");
+	rs_field_data.push_back("TABLE_CAT");
+	rs_field_data.push_back("TABLE_SCHEM");
+	rs_field_data.push_back("TABLE_NAME");
 	rs_field_data.push_back("SUPERTABLE_NAME");
 
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
@@ -3447,11 +3450,11 @@ MySQL_ConnectionMetaData::getSuperTypes(const std::string& /*catalog*/, const st
 	CPP_ENTER("MySQL_ConnectionMetaData::getSuperTypes");
 	std::list<std::string> rs_field_data;
 
-	rs_field_data.push_back("TYPE_CATALOG");
-	rs_field_data.push_back("TYPE_SCHEMA");
+	rs_field_data.push_back("TYPE_CAT");
+	rs_field_data.push_back("TYPE_SCHEM");
 	rs_field_data.push_back("TYPE_NAME");
-	rs_field_data.push_back("SUPERTYPE_CATALOG");
-	rs_field_data.push_back("SUPERTYPE_SCHEMA");
+	rs_field_data.push_back("SUPERTYPE_CAT");
+	rs_field_data.push_back("SUPERTYPE_SCHEM");
 	rs_field_data.push_back("SUPERTYPE_NAME");
 
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
@@ -3631,13 +3634,12 @@ MySQL_ConnectionMetaData::getTables(const std::string& /* catalog */, const std:
 
 	/* Bind Problems with 49999, check later why */
 	if (use_info_schema && server_version > 49999) {
-		const std::string query("SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, "
-							"IF(STRCMP(TABLE_TYPE,'BASE TABLE'), TABLE_TYPE, 'TABLE'), "
-							"TABLE_COMMENT FROM INFORMATION_SCHEMA.TABLES WHERE "
-							"TABLE_SCHEMA  LIKE ? AND TABLE_NAME LIKE ? "
+		const std::string query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
+							"IF(STRCMP(TABLE_TYPE,'BASE TABLE'), TABLE_TYPE, 'TABLE') AS TABLE_TYPE, TABLE_COMMENT AS REMARKS\n"
+							"FROM INFORMATION_SCHEMA.TABLES\nWHERE TABLE_SCHEMA  LIKE ? AND TABLE_NAME LIKE ?\n"
 							"ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME");
 
-		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
+		std::auto_ptr<sql::PreparedStatement> stmt(connection->cppconn_(query));
 		stmt->setString(1, schemaPattern);
 		stmt->setString(2, tableNamePattern);
 
@@ -3791,18 +3793,18 @@ MySQL_ConnectionMetaData::getTypeInfo()
 		rs_data_row.push_back(curr->literalPrefix);
 		rs_data_row.push_back(curr->literalSuffix);
 		rs_data_row.push_back(curr->createParams);
-		rs_data_row.push_back((int64_t)  curr->nullable);
-		rs_data_row.push_back((int64_t)  curr->caseSensitive);
-		rs_data_row.push_back((int64_t)  curr->searchable);
-		rs_data_row.push_back((int64_t)  curr->isUnsigned);
-		rs_data_row.push_back((int64_t)  curr->fixedPrecScale);
-		rs_data_row.push_back((int64_t)  curr->autoIncrement);
+		rs_data_row.push_back((int64_t) curr->nullable);
+		rs_data_row.push_back((int64_t) curr->caseSensitive);
+		rs_data_row.push_back((int64_t) curr->searchable);
+		rs_data_row.push_back((int64_t) curr->isUnsigned);
+		rs_data_row.push_back((int64_t) curr->fixedPrecScale);
+		rs_data_row.push_back((int64_t) curr->autoIncrement);
 		rs_data_row.push_back(curr->localTypeName);
-		rs_data_row.push_back((int64_t)  curr->minScale);
-		rs_data_row.push_back((int64_t)  curr->maxScale);
-		rs_data_row.push_back((int64_t)  curr->sqlDataType);
-		rs_data_row.push_back((int64_t)  curr->sqlDateTimeSub);
-		rs_data_row.push_back((int64_t)  curr->numPrecRadix);
+		rs_data_row.push_back((int64_t) curr->minScale);
+		rs_data_row.push_back((int64_t) curr->maxScale);
+		rs_data_row.push_back((int64_t) curr->sqlDataType);
+		rs_data_row.push_back((int64_t) curr->sqlDateTimeSub);
+		rs_data_row.push_back((int64_t) curr->numPrecRadix);
 
 		rs_data->push_back(rs_data_row);
 		i++;

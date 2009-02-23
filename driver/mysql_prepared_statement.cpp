@@ -317,9 +317,12 @@ allocate_buffer_for_type(MYSQL_FIELD *field)
 		case MYSQL_TYPE_TIMESTAMP:
 		case MYSQL_TYPE_YEAR:
 			return BufferSizePair(new char[10], 10);
-		case MYSQL_TYPE_SET:
-		case MYSQL_TYPE_BIT:
+#if A0
+		// There two are not sent over the wire
 		case MYSQL_TYPE_ENUM:
+		case MYSQL_TYPE_SET:
+#endif
+		case MYSQL_TYPE_BIT:
 		case MYSQL_TYPE_GEOMETRY:
 		default:
 			throw sql::InvalidArgumentException("allocate_buffer_for_type: invalid result_bind data type");
@@ -507,7 +510,7 @@ typedef std::pair<char *, int> BufferSizePair;
 static BufferSizePair
 allocate_buffer_for_type(enum_field_types t)
 {
-	switch(t) {
+	switch (t) {
 		case MYSQL_TYPE_TINY:
 			return BufferSizePair(new char[1], 1);
 		case MYSQL_TYPE_SHORT:
@@ -535,10 +538,13 @@ allocate_buffer_for_type(enum_field_types t)
 		case MYSQL_TYPE_TIMESTAMP:
 		case MYSQL_TYPE_YEAR:
 			return BufferSizePair(new char[10], 10);
+#if A0
+		// There two are not sent over the wire
 		case MYSQL_TYPE_SET:
-		case MYSQL_TYPE_BIT:
 		case MYSQL_TYPE_ENUM:
+#endif
 		case MYSQL_TYPE_GEOMETRY:
+		case MYSQL_TYPE_BIT:
 		case MYSQL_TYPE_NULL:
 			return BufferSizePair(NULL, 0);
 		default:

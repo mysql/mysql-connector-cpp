@@ -53,17 +53,12 @@ int main(int argc, const char **argv)
 	/* Driver Manager */
 	sql::Driver *driver;
 
-	/* sql::ResultSet.rowsCount() returns size_t */
-	size_t row;
-	int i;
 	struct _test_data min, max;
 	int c_int1;
-	string c_string;
 	bool c_bool1 = true, c_bool2;
 	/* TODO: long long is not C++, its C99 !!! */
 	int64_t c_long1 = L64(9223372036854775807), c_long2;
 	double c_double1 = -999.9999, c_double2;
-
 
 	cout << boolalpha;
 	cout << "1..1" << endl;
@@ -95,7 +90,7 @@ int main(int argc, const char **argv)
 
 		/* Populate the test table with data */
 		min = max = test_data[0];
-		for (i = 0; i < EXAMPLE_NUM_TEST_ROWS; i++) {
+		for (unsigned int i = 0; i < EXAMPLE_NUM_TEST_ROWS; i++) {
 			/* Remember min/max for further testing */
 			if (test_data[i].id < min.id) {
 				min = test_data[i];
@@ -115,7 +110,8 @@ int main(int argc, const char **argv)
 
 		std::auto_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id, label, c_bool, c_long, c_double, c_null FROM test ORDER BY id ASC"));
 		while (res->next()) {
-			row = res->getRow() - 1;
+			/* sql::ResultSet.rowsCount() returns size_t */
+			size_t row = res->getRow() - 1;
 
 			cout << "#\t\t Row " << res->getRow() << endl;
 			cout << "#\t\t\t id INT = " << res->getInt("id") << endl;
@@ -129,7 +125,7 @@ int main(int argc, const char **argv)
 				throw runtime_error("Wrong results for column id");
 			}
 
-			c_string = res->getString(2);
+			std::string c_string = res->getString(2);
 			cout << "#\t\t\t label CHAR(1) = " << c_string << endl;
 			cout << "#\t\t\t label (as Integer) = " << res->getInt(2) << endl;
 			cout << "#\t\t\t label (as String) = " << res->getString(2) << endl;

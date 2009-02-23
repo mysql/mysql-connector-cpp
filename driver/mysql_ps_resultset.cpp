@@ -373,6 +373,7 @@ MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
 		case sql::DataType::VARBINARY:
 		case sql::DataType::LONGVARCHAR:
 		case sql::DataType::LONGVARBINARY:
+		case sql::DataType::ENUM:
 			CPP_INFO("It's a string");
 			return atof(getString(columnIndex).c_str());
 		case sql::DataType::REAL:
@@ -516,6 +517,7 @@ MySQL_Prepared_ResultSet::getInt64(const uint32_t columnIndex) const
 		case sql::DataType::VARBINARY:
 		case sql::DataType::LONGVARCHAR:
 		case sql::DataType::LONGVARBINARY:
+		case sql::DataType::ENUM:
 			CPP_INFO("It's a string");
 			return atoll(getString(columnIndex).c_str());
 
@@ -612,6 +614,7 @@ MySQL_Prepared_ResultSet::getUInt64(const uint32_t columnIndex) const
 		case sql::DataType::VARBINARY:
 		case sql::DataType::LONGVARCHAR:
 		case sql::DataType::LONGVARBINARY:
+		case sql::DataType::ENUM:
 			CPP_INFO("It's a string");
 			return strtoull(getString(columnIndex).c_str(), NULL, 10);
 

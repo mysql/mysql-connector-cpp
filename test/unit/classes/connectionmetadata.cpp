@@ -193,7 +193,9 @@ void connectionmetadata::getBestRowIdentifier()
       stmt->execute("DROP TABLE IF EXISTS test");
     }
     if (got_warning)
+    {
       FAIL("See Warnings!");
+    }
 
     stmt->execute("DROP TABLE IF EXISTS test");
     // TODO - stmt->execute("CREATE TABLE test(col1 INT NOT NULL, col2 INT NOT NULL, PRIMARY KEY(col1, col2))");
