@@ -38,6 +38,8 @@ class connectionmetadata : public unit_fixture
 {
 private:
   typedef unit_fixture super;
+  /* Helper function to check a FK definition */
+  void checkForeignKey(Connection &con, ResultSet &res);
 
 protected:
 
@@ -48,6 +50,10 @@ public:
     TEST_CASE(getSchemata);
     TEST_CASE(getAttributes);
     TEST_CASE(getBestRowIdentifier);
+    TEST_CASE(getCatalogs);
+    TEST_CASE(getCatalogSeparator);
+    TEST_CASE(getCatalogTerm);
+    TEST_CASE(getCrossReference);
     TEST_CASE(getColumnPrivileges);
     TEST_CASE(getColumns);
     TEST_CASE(getConnection);
@@ -55,6 +61,7 @@ public:
     TEST_CASE(getDriverVersions);
     TEST_CASE(getDefaultTransactionIsolation);
     TEST_CASE(getExtraNameCharacters);
+    TEST_CASE(getExportedKeys);
     TEST_CASE(getIdentifierQuoteString);
     TEST_CASE(getImportedKeys);
     TEST_CASE(getIndexInfo);
@@ -62,6 +69,7 @@ public:
     TEST_CASE(getPrimaryKeys);
     TEST_CASE(getProcedures);
     TEST_CASE(getProcedureColumns);
+    TEST_CASE(getProcedureTerm);
   }
 
   /**
@@ -87,6 +95,38 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getBestRowIdentifier();
+
+  /**
+   * Test for DatabaseMetaData:getCatalogs()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getCatalogs();
+
+  /**
+   * Test for DatabaseMetaData:getCatalogSeparator()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getCatalogSeparator();
+
+  /**
+   * Test for DatabaseMetaData:getCatalogTerm()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getCatalogTerm();
+
+  /**
+   * Test for DatabaseMetaData:getCrossReference()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getCrossReference();
 
   /**
    * Test for DatabaseMetaData:getColumns()
@@ -145,6 +185,14 @@ public:
   void getExtraNameCharacters();
 
   /**
+   * Test for DatabaseMetaData:getExportedKeys()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getExportedKeys();
+
+  /**
    * Test for DatabaseMetaData:getIdentifierQuoteString()
    *
    * Focus on code coverage: invalid parameter, invalid resultset
@@ -197,6 +245,14 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getProcedureColumns();
+
+  /**
+   * Test for DatabaseMetaData:getProcedureTerm()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getProcedureTerm();
 
 };
 
