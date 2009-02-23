@@ -441,7 +441,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_COMPRESS");
       sql::ConnectPropertyVal tmp;
-      tmp.lval=(long long) true;
+      tmp.bval= true;
       connection_properties[std::string("CLIENT_COMPRESS")]=tmp;
       try
       {
@@ -468,7 +468,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_FOUND_ROWS");
       sql::ConnectPropertyVal tmp;
-      tmp.lval=(long long) true;
+      tmp.bval= true;
       connection_properties[std::string("CLIENT_FOUND_ROWS")]=tmp;
       try
       {
@@ -495,7 +495,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_IGNORE_SIGPIPE");
       sql::ConnectPropertyVal tmp;
-      tmp.lval=(long long) true;
+      tmp.bval= true;
       connection_properties[std::string("CLIENT_IGNORE_SIGPIPE")]=tmp;
       try
       {
@@ -522,8 +522,8 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_IGNORE_SPACE");
       sql::ConnectPropertyVal tmp;
+      tmp.bval= true;
       connection_properties[std::string("CLIENT_IGNORE_SPACE")]=tmp;
-      tmp.lval=(long long) true;
       try
       {
         created_objects.clear();
@@ -549,8 +549,8 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_INTERACTIVE");
       sql::ConnectPropertyVal tmp;
+      tmp.bval= true;
       connection_properties[std::string("CLIENT_INTERACTIVE")]=tmp;
-      tmp.lval=(long long) true;
       try
       {
         created_objects.clear();
@@ -577,8 +577,8 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_LOCAL_FILES");
       sql::ConnectPropertyVal tmp;
+      tmp.bval= true;
       connection_properties[std::string("CLIENT_LOCAL_FILES")]=tmp;
-      tmp.lval=(long long) true;
       try
       {
         created_objects.clear();
@@ -605,7 +605,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_MULTI_RESULTS");
       sql::ConnectPropertyVal tmp;
-      tmp.lval=(long long) true;
+      tmp.bval= true;
       connection_properties[std::string("CLIENT_MULTI_RESULTS")]=tmp;
       try
       {
@@ -633,7 +633,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_MULTI_STATEMENTS");
       sql::ConnectPropertyVal tmp;
-      tmp.lval=(long long) true;
+      tmp.bval= true;
       connection_properties[std::string("CLIENT_MULTI_STATEMENTS")]=tmp;
       try
       {
@@ -660,7 +660,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_NO_SCHEMA");
       sql::ConnectPropertyVal tmp;
-      tmp.lval=(long long) true;
+      tmp.bval= true;
       connection_properties[std::string("CLIENT_NO_SCHEMA")]=tmp;
       try
       {

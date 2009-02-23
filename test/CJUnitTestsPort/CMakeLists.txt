@@ -53,6 +53,7 @@ SET(jdbctests_sources
 	compliance/PreparedStatementTest.cpp
 	simple/BlobTest.cpp
 	regression/BlobRegressionTest.cpp
+	regression/PreparedStatementTest.cpp
 	)
 
 # It's convinient for VS users to have headers as part of project
@@ -70,6 +71,7 @@ IF(WIN32)
 		compliance/PreparedStatementTest.h
 		simple/BlobTest.h
 		regression/BlobRegressionTest.h
+		regression/PreparedStatementTest.h
 		)
 ENDIF(WIN32)
 

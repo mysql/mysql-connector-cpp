@@ -220,6 +220,8 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		} else if (!it->first.compare("sslCipher")) {
 			sslCipher = it->second.str.val;
 			ssl_used = true;
+		} else if (!it->first.compare("metadataUseInfoSchema")) {
+			intern->metadata_use_info_schema = it->second.bval;
 		} else if (!it->first.compare("CLIENT_COMPRESS")) {
 			if (it->second.bval && (flags & CLIENT_COMPRESS)) {
 				flags |= CLIENT_COMPRESS;

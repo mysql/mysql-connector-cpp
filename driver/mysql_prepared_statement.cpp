@@ -65,7 +65,7 @@ public:
 		} else {
 			bind = (MYSQL_BIND *) calloc(paramCount, sizeof(MYSQL_BIND));
 			value_set = new bool[paramCount];
-			for (unsigned int i = 0; i < paramCount; i++) {
+			for (unsigned int i = 0; i < paramCount; ++i) {
 				bind[i].is_null_value = 1;
 				value_set[i] = false;
 			}
@@ -76,6 +76,8 @@ public:
 
 	virtual ~MySQL_ParamBind()
 	{
+		clearParameters();
+
 		free(bind);
 		delete [] value_set;
 		free(blob_bind);
@@ -104,13 +106,15 @@ public:
 	void clearParameters()
 	{
 		for (unsigned int i = 0; i < param_count; ++i) {
-			delete (char*) bind[i].length;
-			bind[i].length = NULL;
-			delete[] (char*) bind[i].buffer;
-			bind[i].buffer = NULL;
-			blob_bind[i] = NULL;
-			value_set[i] = false;
-		}	
+			if ( value_set[i] ){
+			  delete (char*) bind[i].length;
+			  bind[i].length = NULL;
+			  delete[] (char*) bind[i].buffer;
+			  bind[i].buffer = NULL;
+			  blob_bind[i] = NULL;
+			  value_set[i] = false;
+			}
+		}
 	}
 
 	MYSQL_BIND * get()
@@ -750,7 +754,7 @@ MySQL_Prepared_Statement::setString(unsigned int parameterIndex, const std::stri
 	CPP_INFO_FMT("column=%u value_len=%d value=%s ", parameterIndex, value.length(), value.c_str());
 	checkClosed();
 
-	parameterIndex--; /* DBC counts from 1 */
+	--parameterIndex; /* DBC counts from 1 */
 	if (parameterIndex >= param_count) {
 		CPP_ERR("Invalid parameterIndex");
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setString: invalid 'parameterIndex'");
@@ -1024,6 +1028,8 @@ MySQL_Prepared_Statement::closeIntern()
 	delete[] is_null;
 	delete[] err;
 	delete[] len;
+
+	isClosed = true;
 }
 /* }}} */
 
