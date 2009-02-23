@@ -2123,7 +2123,7 @@ MySQL_ConnectionMetaData::getCrossReference(const std::string& primaryCatalog, c
 		query.append(DeleteRuleClause);
 		query.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME,"
 					 "(SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = REFERENCED_TABLE_SCHEMA AND"
-					 " TABLE_NAME = REFERENCED_TABLE_NAME AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,");
+					 " TABLE_NAME = A.REFERENCED_TABLE_NAME AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,");
 		query.append(importedKeyNotDeferrableStr);
 		query.append(" AS DEFERRABILITY  FROM\nINFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B\n"
 					 "USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME)\n");
@@ -2359,13 +2359,13 @@ MySQL_ConnectionMetaData::getExportedKeys(const std::string& catalog, const std:
 		query.append(DeleteRuleClause);
 		query.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME,"
 					 "(SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = REFERENCED_TABLE_SCHEMA AND"
-					 " TABLE_NAME = REFERENCED_TABLE_NAME AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,");
+					 " TABLE_NAME = A.REFERENCED_TABLE_NAME AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,");
 		query.append(importedKeyNotDeferrableStr);
 		query.append(" AS DEFERRABILITY \n FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN  INFORMATION_SCHEMA.TABLE_CONSTRAINTS B\n"
 					 "USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME)\n");
 		query.append(OptionalRefConstraintJoinStr);
 		query.append("\nWHERE B.CONSTRAINT_TYPE = 'FOREIGN KEY' AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=?\n"
-				 "ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION");
+				 		"ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION");
 
 		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
 		stmt->setString(1, schema);
@@ -3426,9 +3426,9 @@ MySQL_ConnectionMetaData::getSuperTables(const std::string& /*catalog*/, const s
 	CPP_ENTER("MySQL_ConnectionMetaData::getSuperTables");
 	std::list<std::string> rs_field_data;
 
-	rs_field_data.push_back("TYPE_CATALOG");
-	rs_field_data.push_back("TYPE_SCHEMA");
-	rs_field_data.push_back("TYPE_NAME");
+	rs_field_data.push_back("TABLE_CAT");
+	rs_field_data.push_back("TABLE_SCHEM");
+	rs_field_data.push_back("TABLE_NAME");
 	rs_field_data.push_back("SUPERTABLE_NAME");
 
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
@@ -3448,11 +3448,11 @@ MySQL_ConnectionMetaData::getSuperTypes(const std::string& /*catalog*/, const st
 	CPP_ENTER("MySQL_ConnectionMetaData::getSuperTypes");
 	std::list<std::string> rs_field_data;
 
-	rs_field_data.push_back("TYPE_CATALOG");
-	rs_field_data.push_back("TYPE_SCHEMA");
+	rs_field_data.push_back("TYPE_CAT");
+	rs_field_data.push_back("TYPE_SCHEM");
 	rs_field_data.push_back("TYPE_NAME");
-	rs_field_data.push_back("SUPERTYPE_CATALOG");
-	rs_field_data.push_back("SUPERTYPE_SCHEMA");
+	rs_field_data.push_back("SUPERTYPE_CAT");
+	rs_field_data.push_back("SUPERTYPE_SCHEM");
 	rs_field_data.push_back("SUPERTYPE_NAME");
 
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
@@ -3632,10 +3632,9 @@ MySQL_ConnectionMetaData::getTables(const std::string& /* catalog */, const std:
 
 	/* Bind Problems with 49999, check later why */
 	if (use_info_schema && server_version > 49999) {
-		const std::string query("SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, "
-							"IF(STRCMP(TABLE_TYPE,'BASE TABLE'), TABLE_TYPE, 'TABLE'), "
-							"TABLE_COMMENT FROM INFORMATION_SCHEMA.TABLES WHERE "
-							"TABLE_SCHEMA  LIKE ? AND TABLE_NAME LIKE ? "
+		const std::string query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
+							"IF(STRCMP(TABLE_TYPE,'BASE TABLE'), TABLE_TYPE, 'TABLE') AS TABLE_TYPE, TABLE_COMMENT AS REMARKS\n"
+							"FROM INFORMATION_SCHEMA.TABLES\nWHERE TABLE_SCHEMA  LIKE ? AND TABLE_NAME LIKE ?\n"
 							"ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME");
 
 		std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
