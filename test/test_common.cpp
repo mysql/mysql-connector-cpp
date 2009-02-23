@@ -25,7 +25,9 @@
 #include <memory>
 #include <iostream>
 #include <sstream>
+#if !defined(_WIN32) && !defined(_WIN64)
 #include <inttypes.h>
+#endif
 
 // Portable __FUNCTION__
 #ifndef __FUNCTION__
