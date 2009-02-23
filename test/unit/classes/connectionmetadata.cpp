@@ -1056,6 +1056,7 @@ void connectionmetadata::getLimitsAndStuff()
     // KLUDGE - the code takes care of some exotic MySQL 4.x, however, we don't support 4.x
     ASSERT_EQUALS(false, dbmeta->nullsAreSortedHigh());
     ASSERT_EQUALS(!dbmeta->nullsAreSortedLow(), dbmeta->nullsAreSortedHigh());
+
     ASSERT_EQUALS(false, dbmeta->othersDeletesAreVisible(-1));
     ASSERT_EQUALS(false, dbmeta->othersDeletesAreVisible(0));
     ASSERT_EQUALS(false, dbmeta->othersDeletesAreVisible(1));
@@ -1066,6 +1067,22 @@ void connectionmetadata::getLimitsAndStuff()
     ASSERT_EQUALS(false, dbmeta->othersUpdatesAreVisible(0));
     ASSERT_EQUALS(false, dbmeta->othersUpdatesAreVisible(1));
 
+    ASSERT_EQUALS(false, dbmeta->ownDeletesAreVisible(-1));
+    ASSERT_EQUALS(false, dbmeta->ownDeletesAreVisible(0));
+    ASSERT_EQUALS(false, dbmeta->ownDeletesAreVisible(1));
+    ASSERT_EQUALS(false, dbmeta->ownInsertsAreVisible(-1));
+    ASSERT_EQUALS(false, dbmeta->ownInsertsAreVisible(0));
+    ASSERT_EQUALS(false, dbmeta->ownInsertsAreVisible(1));
+    ASSERT_EQUALS(false, dbmeta->ownUpdatesAreVisible(-1));
+    ASSERT_EQUALS(false, dbmeta->ownUpdatesAreVisible(0));
+    ASSERT_EQUALS(false, dbmeta->ownUpdatesAreVisible(1));
+
+    ASSERT_EQUALS(false, dbmeta->storesUpperCaseIdentifiers());
+    ASSERT_EQUALS(true, dbmeta->storesUpperCaseQuotedIdentifiers());
+    ASSERT_EQUALS(true, dbmeta->supportsAlterTableWithAddColumn());
+    ASSERT_EQUALS(true, dbmeta->supportsAlterTableWithDropColumn());
+    ASSERT_EQUALS(true, dbmeta->supportsANSI92EntryLevelSQL());
+    ASSERT_EQUALS(false, dbmeta->supportsANSI92FullSQL());
   }
   catch (sql::SQLException &e)
   {
@@ -1464,7 +1481,7 @@ void connectionmetadata::getSuperTables()
 
     ASSERT(!res->next());
     ResultSetMetaData resmeta(res->getMetaData());
-    ASSERT_EQUALS((unsigned int)4, resmeta->getColumnCount());
+    ASSERT_EQUALS((unsigned int) 4, resmeta->getColumnCount());
     ASSERT_EQUALS("TABLE_CAT", resmeta->getColumnLabel(1));
     ASSERT_EQUALS("TABLE_SCHEM", resmeta->getColumnLabel(2));
     ASSERT_EQUALS("TABLE_NAME", resmeta->getColumnLabel(3));
@@ -1493,7 +1510,7 @@ void connectionmetadata::getSuperTypes()
 
     ASSERT(!res->next());
     ResultSetMetaData resmeta(res->getMetaData());
-    ASSERT_EQUALS((unsigned int)6, resmeta->getColumnCount());
+    ASSERT_EQUALS((unsigned int) 6, resmeta->getColumnCount());
     ASSERT_EQUALS("TYPE_CAT", resmeta->getColumnLabel(1));
     ASSERT_EQUALS("TYPE_SCHEM", resmeta->getColumnLabel(2));
     ASSERT_EQUALS("TYPE_NAME", resmeta->getColumnLabel(3));
