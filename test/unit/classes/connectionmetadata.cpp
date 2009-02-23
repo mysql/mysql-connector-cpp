@@ -1620,6 +1620,91 @@ void connectionmetadata::getSuperTypes()
   }
 }
 
+void connectionmetadata::classAttributes()
+{
+  logMsg("connectionmetadata::classAttributes - MySQL_ConnectionMetaData class attributes");
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+
+    ASSERT_EQUALS(0, dbmeta->attributeNoNulls);
+    ASSERT_EQUALS(1, dbmeta->attributeNullable);
+    ASSERT_EQUALS(2, dbmeta->attributeNullableUnknown);
+
+    ASSERT_EQUALS(1, dbmeta->bestRowNotPseudo);
+    // BUG - ASSERT_EQUALS(2, dbmeta->bestRowPseudo);
+    ASSERT_EQUALS(2, dbmeta->bestRowSession);
+
+    ASSERT_EQUALS(0, dbmeta->bestRowTemporary);
+    ASSERT_EQUALS(1, dbmeta->bestRowTransaction);
+    ASSERT_EQUALS(0, dbmeta->bestRowUnknown);
+
+    ASSERT_EQUALS(0, dbmeta->columnNoNulls);
+    ASSERT_EQUALS(1, dbmeta->columnNullable);
+    ASSERT_EQUALS(2, dbmeta->columnNullableUnknown);
+
+    ASSERT_EQUALS(0, dbmeta->importedKeyCascade);
+    // BUG - got 1 - ASSERT_EQUALS(5, dbmeta->importedKeyInitiallyDeferred);
+    // BUG - got 2 - ASSERT_EQUALS(6, dbmeta->importedKeyInitiallyImmediate);
+    ASSERT_EQUALS(3, dbmeta->importedKeyNoAction);
+    // BUG - got 4 - ASSERT_EQUALS(7, dbmeta->importedKeyNotDeferrable);
+    // BUG - got 5 - ASSERT_EQUALS(1, dbmeta->importedKeyRestrict);
+    // BUG - got 6 - ASSERT_EQUALS(4, dbmeta->importedKeySetDefault);
+    // BUG - got 7 - ASSERT_EQUALS(2, dbmeta->importedKeySetNull);
+
+    // BUG - got 0 - ASSERT_EQUALS(1, dbmeta->procedureColumnIn);
+    // BUG - got 1 - ASSERT_EQUALS(2, dbmeta->procedureColumnInOut);
+    // BUG - got 2 - ASSERT_EQUALS(4, dbmeta->procedureColumnOut);
+    ASSERT_EQUALS(3, dbmeta->procedureColumnResult);
+    // BUG - got 4 - ASSERT_EQUALS(5, dbmeta->procedureColumnReturn);
+
+    // BUG - got 5 - ASSERT_EQUALS(1, dbmeta->importedKeyRestrict);
+    // BUG - got 6 - ASSERT_EQUALS(4, dbmeta->importedKeySetDefault);
+    // BUG - got 7 - ASSERT_EQUALS(2, dbmeta->importedKeySetNull);
+
+    // BUG - got 0 - ASSERT_EQUALS(1, dbmeta->procedureColumnIn);
+    ASSERT_EQUALS(1, dbmeta->procedureColumnInOut);
+    // BUG - got 2 - ASSERT_EQUALS(4, dbmeta->procedureColumnOut);
+    ASSERT_EQUALS(3, dbmeta->procedureColumnResult);
+    // BUG - got 4 - ASSERT_EQUALS(5, dbmeta->procedureColumnReturn);
+    // BUG - got 5 - ASSERT_EQUALS(0, dbmeta->procedureColumnUnknown);
+    // BUG - got 6 - ASSERT_EQUALS(0, dbmeta->procedureNoNulls);
+    // BUG - got 7 - ASSERT_EQUALS(1, dbmeta->procedureNoResult);
+    // BUG - got 8 - ASSERT_EQUALS(1, dbmeta->procedureNullable);
+    // BUG - got 9 - ASSERT_EQUALS(0, dbmeta->procedureNullableUnknown);
+    // BUG - got 10 - ASSERT_EQUALS(2, dbmeta->procedureResultUnknown);
+    // BUG - got 11 - ASSERT_EQUALS(2, dbmeta->procedureReturnsResult);
+
+    // BUG - got 0 - ASSERT_EQUALS(2, dbmeta->sqlStateSQL99);
+    ASSERT_EQUALS(1, dbmeta->sqlStateXOpen);
+
+    // BUG - got 0 - ASSERT_EQUALS(1, dbmeta->tableIndexClustered);
+    // BUG - got 1 - ASSERT_EQUALS(2, dbmeta->tableIndexHashed);
+    // BUG - got 2 - ASSERT_EQUALS(3, dbmeta->tableIndexOther);
+    // BUG - got 3 - ASSERT_EQUALS(0, dbmeta->tableIndexStatistic);
+
+    ASSERT_EQUALS(0, dbmeta->typeNoNulls);
+    ASSERT_EQUALS(1, dbmeta->typeNullable);
+    ASSERT_EQUALS(2, dbmeta->typeNullableUnknown);
+    
+    ASSERT_EQUALS(2, dbmeta->typePredBasic);
+    ASSERT_EQUALS(1, dbmeta->typePredChar);
+    ASSERT_EQUALS(0, dbmeta->typePredNone);
+
+    ASSERT_EQUALS(3, dbmeta->typeSearchable);
+    ASSERT_EQUALS(1, dbmeta->versionColumnNotPseudo);
+    ASSERT_EQUALS(2, dbmeta->versionColumnPseudo);
+    ASSERT_EQUALS(0, dbmeta->versionColumnUnknown);
+    
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 
 } /* namespace connectionmetadata */
 } /* namespace testsuite */

@@ -47,6 +47,7 @@ public:
 
   EXAMPLE_TEST_FIXTURE(connectionmetadata)
   {
+    /*
     TEST_CASE(getSchemata);
     TEST_CASE(getAttributes);
     TEST_CASE(getBestRowIdentifier);
@@ -76,6 +77,8 @@ public:
     TEST_CASE(getSQLKeywords);
     TEST_CASE(getSuperTables);
     TEST_CASE(getSuperTypes);
+     */
+    TEST_CASE(classAttributes);
   }
 
   /**
@@ -299,7 +302,7 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getSuperTables();
-  
+
   /**
    * Test for DatabaseMetaData::getSuperTypes()
    *
@@ -307,6 +310,14 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getSuperTypes();
+
+  /**
+   * Test of DatabaseMetaData class attributes
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void classAttributes();
 
 };
 
