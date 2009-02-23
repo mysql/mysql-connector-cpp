@@ -579,7 +579,7 @@ void connectionmetadata::getIdentifierQuoteString()
       ASSERT(res->next());
       ASSERT_EQUALS("", res->getString("_sql_mode"));
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
       SKIP("Cannot set SQL_MODE, skipping test");
     }
@@ -984,6 +984,9 @@ void connectionmetadata::getLimitsAndStuff()
                           "LTRIM,MAKE_SET,MATCH,MID,OCT,OCTET_LENGTH,ORD,POSITION,"\
                           "QUOTE,REPEAT,REPLACE,REVERSE,RIGHT,RPAD,RTRIM,SOUNDEX,"\
                           "SPACE,STRCMP,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING_INDEX,TRIM,UCASE,UPPER");
+
+  std::string sys_funcs("DATABASE,USER,SYSTEM_USER,SESSION_USER,PASSWORD,ENCRYPT,LAST_INSERT_ID,VERSION");
+
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
@@ -1038,6 +1041,31 @@ void connectionmetadata::getLimitsAndStuff()
     ASSERT(sql::DatabaseMetaData::sqlStateXOpen != dbmeta->getSQLStateType());
 
     ASSERT_EQUALS(funcs, dbmeta->getStringFunctions());
+    ASSERT_EQUALS(sys_funcs, dbmeta->getSystemFunctions());
+
+    ASSERT_EQUALS(false, dbmeta->insertsAreDetected(-1));
+    ASSERT_EQUALS(false, dbmeta->insertsAreDetected(0));
+    ASSERT_EQUALS(false, dbmeta->insertsAreDetected(1));
+
+    ASSERT_EQUALS(true, dbmeta->isCatalogAtStart());
+    ASSERT_EQUALS(false, dbmeta->isReadOnly());
+
+    ASSERT_EQUALS(true, dbmeta->nullPlusNonNullIsNull());
+    ASSERT_EQUALS(false, dbmeta->nullsAreSortedAtEnd());
+    ASSERT_EQUALS(false, dbmeta->nullsAreSortedAtStart());
+    // KLUDGE - the code takes care of some exotic MySQL 4.x, however, we don't support 4.x
+    ASSERT_EQUALS(false, dbmeta->nullsAreSortedHigh());
+    ASSERT_EQUALS(!dbmeta->nullsAreSortedLow(), dbmeta->nullsAreSortedHigh());
+    ASSERT_EQUALS(false, dbmeta->othersDeletesAreVisible(-1));
+    ASSERT_EQUALS(false, dbmeta->othersDeletesAreVisible(0));
+    ASSERT_EQUALS(false, dbmeta->othersDeletesAreVisible(1));
+    ASSERT_EQUALS(false, dbmeta->othersInsertsAreVisible(-1));
+    ASSERT_EQUALS(false, dbmeta->othersInsertsAreVisible(0));
+    ASSERT_EQUALS(false, dbmeta->othersInsertsAreVisible(1));
+    ASSERT_EQUALS(false, dbmeta->othersUpdatesAreVisible(-1));
+    ASSERT_EQUALS(false, dbmeta->othersUpdatesAreVisible(0));
+    ASSERT_EQUALS(false, dbmeta->othersUpdatesAreVisible(1));
+
   }
   catch (sql::SQLException &e)
   {
@@ -1414,6 +1442,66 @@ void connectionmetadata::getSQLKeywords()
   {
     DatabaseMetaData dbmeta(con->getMetaData());
     ASSERT_EQUALS(keywords, dbmeta->getSQLKeywords());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connectionmetadata::getSuperTables()
+{
+  logMsg("connectionmetadata::getSuperTables - MySQL_ConnectionMetaData::getSuperTables()");
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT)");
+    res.reset(dbmeta->getSuperTables(con->getCatalog(), con->getSchema(), "test"));
+
+    ASSERT(!res->next());
+    ResultSetMetaData resmeta(res->getMetaData());
+    ASSERT_EQUALS((unsigned int)4, resmeta->getColumnCount());
+    ASSERT_EQUALS("TABLE_CAT", resmeta->getColumnLabel(1));
+    ASSERT_EQUALS("TABLE_SCHEM", resmeta->getColumnLabel(2));
+    ASSERT_EQUALS("TABLE_NAME", resmeta->getColumnLabel(3));
+    ASSERT_EQUALS("SUPERTABLE_NAME", resmeta->getColumnLabel(4));
+
+    stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connectionmetadata::getSuperTypes()
+{
+  logMsg("connectionmetadata::getSuperTypes - MySQL_ConnectionMetaData::getSuperTypes()");
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT)");
+    res.reset(dbmeta->getSuperTypes(con->getCatalog(), con->getSchema(), "test"));
+
+    ASSERT(!res->next());
+    ResultSetMetaData resmeta(res->getMetaData());
+    ASSERT_EQUALS((unsigned int)6, resmeta->getColumnCount());
+    ASSERT_EQUALS("TYPE_CAT", resmeta->getColumnLabel(1));
+    ASSERT_EQUALS("TYPE_SCHEM", resmeta->getColumnLabel(2));
+    ASSERT_EQUALS("TYPE_NAME", resmeta->getColumnLabel(3));
+    ASSERT_EQUALS("SUPERTYPE_CAT", resmeta->getColumnLabel(4));
+    ASSERT_EQUALS("SUPERTYPE_SCHEM", resmeta->getColumnLabel(5));
+    ASSERT_EQUALS("SUPERTYPE_NAME", resmeta->getColumnLabel(6));
+
+    stmt->execute("DROP TABLE IF EXISTS test");
   }
   catch (sql::SQLException &e)
   {

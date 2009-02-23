@@ -76,6 +76,8 @@ namespace FileUtils
 
     static ccppFile * createTempFile( const String & prefix, const String & suffix= "" );
 
+    String::size_type loadFile( String & container );
+
   };
 }
 

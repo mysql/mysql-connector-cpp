@@ -44,6 +44,8 @@ namespace testsuite
 
       public:
 
+        virtual ~StorableTest();
+
         StorableTest( Test & test2decorate );
 
         void            runTest ();
