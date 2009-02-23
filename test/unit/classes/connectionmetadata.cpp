@@ -1143,6 +1143,26 @@ void connectionmetadata::getLimitsAndStuff()
     ASSERT_EQUALS(true, dbmeta->supportsSchemasInPrivilegeDefinitions());
     ASSERT_EQUALS(true, dbmeta->supportsSchemasInProcedureCalls());
     ASSERT_EQUALS(true, dbmeta->supportsSchemasInTableDefinitions());
+
+    /* We support MySQL 5.1+ . It must be true */
+    ASSERT_EQUALS(true, dbmeta->supportsSelectForUpdate());
+    ASSERT_EQUALS(false, dbmeta->supportsStatementPooling());
+    ASSERT_EQUALS(true, dbmeta->supportsStoredProcedures());
+    ASSERT_EQUALS(true, dbmeta->supportsSubqueriesInComparisons());
+    ASSERT_EQUALS(true, dbmeta->supportsSubqueriesInExists());
+    ASSERT_EQUALS(true, dbmeta->supportsSubqueriesInIns());
+    ASSERT_EQUALS(true, dbmeta->supportsSubqueriesInQuantifieds());
+
+    ASSERT_EQUALS(true, dbmeta->supportsTableCorrelationNames());
+
+    /* We support MySQL 5.1+ . It must be true */
+    ASSERT_EQUALS(true, dbmeta->supportsTransactionIsolationLevel(sql::TRANSACTION_NONE));
+    ASSERT_EQUALS(true, dbmeta->supportsTransactionIsolationLevel(sql::TRANSACTION_READ_COMMITTED));
+    ASSERT_EQUALS(true, dbmeta->supportsTransactionIsolationLevel(sql::TRANSACTION_READ_UNCOMMITTED));
+    ASSERT_EQUALS(true, dbmeta->supportsTransactionIsolationLevel(sql::TRANSACTION_REPEATABLE_READ));
+    ASSERT_EQUALS(true, dbmeta->supportsTransactionIsolationLevel(sql::TRANSACTION_SERIALIZABLE));
+    ASSERT_EQUALS(true, dbmeta->supportsTransactions());
+
   }
   catch (sql::SQLException &e)
   {
