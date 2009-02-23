@@ -1051,12 +1051,20 @@ void connectionmetadata::getLimitsAndStuff()
     ASSERT_EQUALS(false, dbmeta->isReadOnly());
 
     ASSERT_EQUALS(true, dbmeta->nullPlusNonNullIsNull());
-    ASSERT_EQUALS(true, dbmeta->nullsAreSortedAtEnd());
-    ASSERT_EQUALS(!dbmeta->nullsAreSortedAtStart(), dbmeta->nullsAreSortedAtEnd());
+    ASSERT_EQUALS(false, dbmeta->nullsAreSortedAtEnd());
+    ASSERT_EQUALS(false, dbmeta->nullsAreSortedAtStart());
+    // KLUDGE - the code takes care of some exotic MySQL 4.x, however, we don't support 4.x
     ASSERT_EQUALS(false, dbmeta->nullsAreSortedHigh());
     ASSERT_EQUALS(!dbmeta->nullsAreSortedLow(), dbmeta->nullsAreSortedHigh());
-
-
+    ASSERT_EQUALS(false, dbmeta->othersDeletesAreVisible(-1));
+    ASSERT_EQUALS(false, dbmeta->othersDeletesAreVisible(0));
+    ASSERT_EQUALS(false, dbmeta->othersDeletesAreVisible(1));
+    ASSERT_EQUALS(false, dbmeta->othersInsertsAreVisible(-1));
+    ASSERT_EQUALS(false, dbmeta->othersInsertsAreVisible(0));
+    ASSERT_EQUALS(false, dbmeta->othersInsertsAreVisible(1));
+    ASSERT_EQUALS(false, dbmeta->othersUpdatesAreVisible(-1));
+    ASSERT_EQUALS(false, dbmeta->othersUpdatesAreVisible(0));
+    ASSERT_EQUALS(false, dbmeta->othersUpdatesAreVisible(1));
 
   }
   catch (sql::SQLException &e)
