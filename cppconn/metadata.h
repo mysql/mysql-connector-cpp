@@ -35,31 +35,31 @@ class DatabaseMetaData
 public:
 	enum
 	{
-		attributeNoNulls,
+		attributeNoNulls = 0,
 		attributeNullable,
 		attributeNullableUnknown
 	};
 	enum
 	{
 		bestRowTemporary = 0,
-		bestRowTransaction = 1,
-		bestRowSession = 2
+		bestRowTransaction,
+		bestRowSession
 	};
 	enum
 	{
 		bestRowUnknown = 0,
-		bestRowPseudo = 1,
-		bestRowNotPseudo = 2
+		bestRowNotPseudo,
+		bestRowPseudo,
 	};
 	enum
 	{
-		columnNoNulls,
+		columnNoNulls = 0,
 		columnNullable,
 		columnNullableUnknown
 	};
 	enum
 	{
-		importedKeyCascade,
+		importedKeyCascade = 0,
 		importedKeyInitiallyDeferred,
 		importedKeyInitiallyImmediate,
 		importedKeyNoAction,
@@ -70,7 +70,7 @@ public:
 	};
 	enum
 	{
-		procedureColumnIn,
+		procedureColumnIn = 0,
 		procedureColumnInOut,
 		procedureColumnOut,
 		procedureColumnResult,
@@ -85,12 +85,12 @@ public:
 	};
 	enum
 	{
-		sqlStateSQL99,
+		sqlStateSQL99 = 0,
 		sqlStateXOpen
 	};
 	enum
 	{
-		tableIndexClustered,
+		tableIndexClustered = 0,
 		tableIndexHashed,
 		tableIndexOther,
 		tableIndexStatistic

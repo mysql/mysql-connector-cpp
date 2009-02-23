@@ -281,7 +281,7 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
 			return sql::DataType::LONGVARCHAR;
 		case MYSQL_TYPE_VARCHAR:
 		case MYSQL_TYPE_VAR_STRING:
-			if ((field->flags & ENUM_FLAG)) {
+			if (field->flags & ENUM_FLAG) {
 				return sql::DataType::ENUM;
 			}
 			if ((field->flags & BINARY_FLAG) && field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
@@ -422,6 +422,12 @@ mysql_type_to_string(const MYSQL_FIELD * const field)
 			return "TEXT";
 		case MYSQL_TYPE_VARCHAR:
 		case MYSQL_TYPE_VAR_STRING:
+			if (field->flags & ENUM_FLAG) {
+				return "ENUM";
+			}
+			if (field->flags & SET_FLAG) {
+				return "VARCHAR";
+			}
 			if (field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
 				return "VARBINARY";
 			}
