@@ -64,7 +64,7 @@ void TestSuite::runTest()
         + (*it)->name() + ". Message: " + e.what() + ". Skipping all tests in the suite" );
 
       //not really needed probably
-      //TestsListener::TestHasFinished( trrThrown, "Test setup has failed, all tests in the suite will be skipped" );
+      //TestsListener::testHasFinished( trrThrown, "Test setup has failed, all tests in the suite will be skipped" );
 
       TestsListener::incrementCounter( testCases.size() - ( it - testCases.begin() + 1 ) );
 
@@ -92,10 +92,15 @@ void TestSuite::runTest()
     catch ( std::exception & e )
     {
       result= trrThrown;
-      TestsListener::theInstance().errorsLog()
-        << "Standard exception occurred while running test:"
-        << (*it)->name() << ". Message: " << e.what()
-        << std::endl;
+
+      String msg( "Standard exception occurred while running test: " );
+
+      msg+= (*it)->name();
+      msg+= ". Message: ";
+      msg+= e.what();
+
+      TestsListener::setTestExecutionComment( msg );
+      TestsListener::errorsLog( msg );
     }
     catch ( TestFailedException &)
     {
@@ -105,12 +110,12 @@ void TestSuite::runTest()
     catch (...)
     {
       result= trrThrown;
-      TestsListener::theInstance().errorsLog()
+      TestsListener::errorsLog()
         << "Unknown exception occurred while running:"
         << (*it)->name() << std::endl;
     }
 
-    TestsListener::TestHasFinished( result );
+    TestsListener::testHasFinished( result );
 
     try
     {
@@ -118,7 +123,7 @@ void TestSuite::runTest()
     }
     catch ( std::exception & e )
     {
-      TestsListener::theInstance().errorsLog()
+      TestsListener::errorsLog()
         << "Not trapped exception occurred while running while tearDown after:"
         << (*it)->name() << ". Message: " << e.what()
         << std::endl;

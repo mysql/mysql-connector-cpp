@@ -29,6 +29,12 @@ namespace testsuite
 {
   namespace Private
   {
+    TestContainer::StorableTest::~StorableTest()
+    {
+      delete test;
+    }
+
+
     TestContainer::StorableTest::StorableTest( Test & test2decorate )
     {
        test= &test2decorate;

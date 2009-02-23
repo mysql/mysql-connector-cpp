@@ -1780,7 +1780,7 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 		std::auto_ptr<sql::ResultSet> res(NULL);
 		try {
 			res.reset(stmt->executeQuery(query));
-		} catch (SQLException &e) {
+		} catch (SQLException &) {
 			// schema and/or table doesn't exist. return empty set
 			// do nothing here
 		}
@@ -2678,7 +2678,7 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 		std::auto_ptr<sql::ResultSet> rs(NULL);
 		try {
 			rs.reset(stmt->executeQuery(query));
-		} catch (SQLException & e) {
+		} catch (SQLException &) {
 			// schema and/or table don't exist, return empty set
 			// just do nothing and the `if` will be skipped
 		}

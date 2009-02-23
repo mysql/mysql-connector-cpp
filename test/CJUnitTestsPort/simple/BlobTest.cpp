@@ -90,6 +90,7 @@ namespace simple
 /* throws Exception */
   void BlobTest::testByteStreamInsert() 
   {
+    SKIP("too slow");
     testByteStreamInsert( conn );
   }
 
@@ -121,58 +122,57 @@ namespace simple
 
     std::fstream & bIn = testBlobFile->getStream();
 
-    TestsListener::theInstance().errorsLog() << "fail state before seek" << bIn.fail() << std::endl;
-
     bIn.seekg( 0, std::ios_base::beg );
 
     ASSERT_MESSAGE( !bIn.fail(), "seekg 0 position from the beginning - failed" );
 
     unsigned int fileLength = testBlobFile->getSize();
 
-    std::stringstream inFile, inTable;
-
     if (retrBytes.size() == fileLength)
     {
-      for (unsigned int i = 0; i < fileLength; ++i )
-      {
-        char fromFile;
-        bIn.read( & fromFile, 1 );
+      int substrIdx= 0;
 
-        inFile  << StringUtils::toHexString( fromFile )   << " ";
-        inTable << StringUtils::toHexString(retrBytes[i]) << " ";
+      while ( ! bIn.eof() )
+      {
+        char fromFile[8192];
+        bIn.read( fromFile, sizeof(fromFile) );
 
         ASSERT_MESSAGE( !bIn.fail(), "read from file failed" );
 
-        if ( 0xff & ( retrBytes[i] ^ fromFile ) )
+        if ( retrBytes.compare( substrIdx, bIn.gcount(), fromFile, bIn.gcount() ) != 0 )
         {
           passed = false;
-          TestsListener::theInstance().errorsLog()
-            << "Byte pattern differed at position "
-            << i << " , Retrieved: " << retrBytes[i]
-            << "(" <<  StringUtils::toHexString(retrBytes[i])
-            << ") != From File:" << fromFile << "("
-            << StringUtils::toHexString( fromFile ) << ")"
-            << std::endl << "Retrieved: " << inTable.str() << "< ";
+          int j = 0;
 
-          for (unsigned int j = i + 1; (j < (i + 10)) /* && (j < i) */; ++j )
+          while ( j < bIn.gcount() && fromFile[ j ] == retrBytes[substrIdx + j] )
+            ++j;
+
+
+          if ( j < bIn.gcount() )
           {
-            TestsListener::theInstance().errorsLog() 
-              << StringUtils::toHexString(retrBytes[j]) << " ";
+            TestsListener::errorsLog() << "Byte pattern differed at position "
+              << j << " , Retrieved: " << retrBytes[ substrIdx + j ]
+              << "(" <<  StringUtils::toHexString( retrBytes[ substrIdx + j ] )
+              << ") != From File:" << fromFile[ j ] << "("
+              << StringUtils::toHexString( fromFile[ j ] ) << ")"
+              << std::endl;
+              
+            if ( j < bIn.gcount() - 1 )
+            {
+              TestsListener::errorsLog() << "Following bytes (table:file):";
+
+              while ( j < bIn.gcount()  )
+              {
+                // current byte was already printed;
+                ++j;
+                TestsListener::errorsLog()
+                  << " (" << StringUtils::toHexString( retrBytes[ substrIdx + j ] )
+                  << ":" << StringUtils::toHexString( fromFile[ j ] ) << ")";
+              }
+
+              TestsListener::errorsLog() << std::endl;
+            }
           }
-
-
-          TestsListener::theInstance().errorsLog() << std::endl << "From File: "
-            << inFile.str() << "< ";
-
-          for (unsigned int j = 1; j < 10 && ! bIn.fail(); ++j )
-          {
-            bIn >> fromFile;
-            TestsListener::theInstance().errorsLog()
-              << StringUtils::toHexString( fromFile )
-              << " ";
-          }
-
-          TestsListener::theInstance().errorsLog() << std::endl;
 
           break;
         }
@@ -184,7 +184,7 @@ namespace simple
     {
       passed = false;
 
-      TestsListener::theInstance().errorsLog() << "retrBytes.length("
+      TestsListener::errorsLog() << "retrBytes.length("
         << retrBytes.size()
         << ") != testBlob.length(" << fileLength << ")";
     }
@@ -228,17 +228,10 @@ namespace simple
 
     String s( rs->getString(1) );
 
-    //max_size supposed to contain number of bytes in blob, length w/ give string length
-
-    TestsListener::theInstance().messagesLog() << "Capacity:"
-      << s.capacity() << " MaxSize:" << s.max_size() << " Length:" << s.length()
-      << std::endl;
-
     passed = checkBlob(s);
 
     ASSERT_MESSAGE(passed,
         "Inserted BLOB data did not match retrieved BLOB data for getString()." );
-
 
     s.clear();
 

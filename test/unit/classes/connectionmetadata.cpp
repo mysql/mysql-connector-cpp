@@ -579,7 +579,7 @@ void connectionmetadata::getIdentifierQuoteString()
       ASSERT(res->next());
       ASSERT_EQUALS("", res->getString("_sql_mode"));
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
       SKIP("Cannot set SQL_MODE, skipping test");
     }

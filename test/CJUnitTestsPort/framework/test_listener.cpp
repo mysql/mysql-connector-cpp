@@ -56,20 +56,20 @@ void  TestsListener::doTiming( bool timing )
 
 std::iostream & TestsListener::errorsLog()
 {
-  return log;
+  return theInstance().log;
 }
 
 
 void TestsListener::errorsLog(const String::value_type * msg)
 {
   if (msg != NULL)
-    log << msg  << std::endl;
+    theInstance().log << msg  << std::endl;
 }
 
 
 void TestsListener::errorsLog(const String & msg)
 {
-  log << msg << std::endl;
+  theInstance().log << msg << std::endl;
 }
 
 
@@ -79,7 +79,7 @@ void TestsListener::errorsLog(const String::value_type * msg
 {
   if (msg != NULL)
   {
-    log << msg << " File: " << file << " Line: " << line << std::endl;
+    theInstance().log << msg << " File: " << file << " Line: " << line << std::endl;
   }
 }
 
@@ -111,7 +111,12 @@ void TestsListener::currentTestName(const String & name)
 }
 
 
-String TestsListener::TestFullName()
+const String & TestsListener::currentSuiteName()
+{
+  return theInstance().curSuiteName;
+}
+
+String TestsListener::testFullName()
 {
   return theInstance().curSuiteName + "::" + theInstance().curTestName;
 }
@@ -161,19 +166,19 @@ void TestsListener::testHasStarted()
 
   if ( theInstance().timing )
   {
-    Timer::startTimer( TestFullName() );
+    Timer::startTimer( testFullName() );
   }
 
 }
 
 
-void TestsListener::TestHasFinished( TestRunResult result, const String & msg )
+void TestsListener::testHasFinished( TestRunResult result, const String & msg )
 {
   static String timingResult("");
 
   if ( theInstance().timing )
   {
-    clock_t time= Timer::stopTimer( TestFullName() );
+    clock_t time= Timer::stopTimer( testFullName() );
 
     static std::stringstream tmp;
 
@@ -212,7 +217,6 @@ void TestsListener::TestHasFinished( TestRunResult result, const String & msg )
       , theInstance().curTestName
       , theInstance().executionComment );
   }
-/*
 
   //log messsages from teardown goes after next test 
   if (theInstance().verbose)
@@ -220,8 +224,7 @@ void TestsListener::TestHasFinished( TestRunResult result, const String & msg )
   else
     // Just clearing memory
     theInstance().log.str("");
- */
-}
+ }
 
 
 void TestsListener::setTestExecutionComment ( const String & msg )
@@ -234,7 +237,7 @@ void TestsListener::testHasFailed(const String & msg)
 {
   setTestExecutionComment( msg );
 
-  theInstance().errorsLog(msg.c_str());
+  errorsLog( msg );
 
   throw TestFailedException();
 }

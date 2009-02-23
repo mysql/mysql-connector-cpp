@@ -199,6 +199,12 @@ namespace FileUtils
     init();
   }
 
+
+  String::size_type loadFile( String & container )
+  {
+    return container.length();
+  }
+
 /*
 bool OpenFile(std::ifstream & fileStream, const String & fileName
               , const char * _possibleLocations[])
@@ -235,7 +241,7 @@ int LoadProperties(const String & fileName, Properties & props
       // Not empty line or a comment
       if (!propsFile.eof() && line.size() > 0 && line.c_str()[0] != '#')
       {
-        String::size_type pos=line.find_first_of("=");
+        String::size_type pos=line.find("=");
 
         if (pos != String::npos && pos > 0)
         {

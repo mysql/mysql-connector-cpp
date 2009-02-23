@@ -29,6 +29,8 @@ namespace testsuite
 
 class TAP : public TestOutputter
 {
+  String suiteName;
+
 public:
 
   virtual ~TAP()

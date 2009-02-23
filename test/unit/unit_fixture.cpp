@@ -345,7 +345,7 @@ void unit_fixture::logMsg(const String message)
 
 void unit_fixture::logErr(const String & message)
 {
-  TestsListener::theInstance().errorsLog(message);
+  TestsListener::errorsLog(message);
 }
 
 void unit_fixture::logDebug(const String & message)
