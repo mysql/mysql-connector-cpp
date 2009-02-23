@@ -1042,6 +1042,14 @@ void connectionmetadata::getLimitsAndStuff()
 
     ASSERT_EQUALS(funcs, dbmeta->getStringFunctions());
     ASSERT_EQUALS(sys_funcs, dbmeta->getSystemFunctions());
+
+    ASSERT_EQUALS(false, dbmeta->insertsAreDetected(-1));
+    ASSERT_EQUALS(false, dbmeta->insertsAreDetected(0));
+    ASSERT_EQUALS(false, dbmeta->insertsAreDetected(1));
+
+    ASSERT_EQUALS(true, dbmeta->isCatalogAtStart());
+    ASSERT_EQUALS(false, dbmeta->isReadOnly());
+
   }
   catch (sql::SQLException &e)
   {
