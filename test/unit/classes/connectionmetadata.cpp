@@ -1050,6 +1050,14 @@ void connectionmetadata::getLimitsAndStuff()
     ASSERT_EQUALS(true, dbmeta->isCatalogAtStart());
     ASSERT_EQUALS(false, dbmeta->isReadOnly());
 
+    ASSERT_EQUALS(true, dbmeta->nullPlusNonNullIsNull());
+    ASSERT_EQUALS(true, dbmeta->nullsAreSortedAtEnd());
+    ASSERT_EQUALS(!dbmeta->nullsAreSortedAtStart(), dbmeta->nullsAreSortedAtEnd());
+    ASSERT_EQUALS(false, dbmeta->nullsAreSortedHigh());
+    ASSERT_EQUALS(!dbmeta->nullsAreSortedLow(), dbmeta->nullsAreSortedHigh());
+
+
+
   }
   catch (sql::SQLException &e)
   {
