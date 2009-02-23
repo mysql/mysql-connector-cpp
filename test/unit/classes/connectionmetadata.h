@@ -70,6 +70,9 @@ public:
     TEST_CASE(getProcedures);
     TEST_CASE(getProcedureColumns);
     TEST_CASE(getProcedureTerm);
+    TEST_CASE(getResultSetHoldability);
+    TEST_CASE(getSchemaTerm);
+    TEST_CASE(getSearchStringEscape);
   }
 
   /**
@@ -253,6 +256,30 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getProcedureTerm();
+
+  /**
+   * Test for DatabaseMetaData:getResultSetHoldability()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getResultSetHoldability();
+
+  /**
+   * Test for DatabaseMetaData::getSchemaTerm()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getSchemaTerm();
+
+  /**
+   * Test for DatabaseMetaData::getSearchStringEscape()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getSearchStringEscape();
 
 };
 

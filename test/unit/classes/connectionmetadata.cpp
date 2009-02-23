@@ -1299,5 +1299,55 @@ void connectionmetadata::getProcedureTerm()
   }
 }
 
+void connectionmetadata::getResultSetHoldability()
+{
+  logMsg("connectionmetadata::getResultSetHoldability() - MySQL_ConnectionMetaData::getResultSetHoldability()");
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    ASSERT_EQUALS(sql::ResultSet::HOLD_CURSORS_OVER_COMMIT, dbmeta->getResultSetHoldability());
+    ASSERT(sql::ResultSet::CLOSE_CURSORS_AT_COMMIT != dbmeta->getResultSetHoldability());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connectionmetadata::getSchemaTerm()
+{
+  logMsg("connectionmetadata::getSchemaTerm() - MySQL_ConnectionMetaData::getSchemaTerm()");
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    ASSERT_EQUALS("database", dbmeta->getSchemaTerm());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connectionmetadata::getSearchStringEscape()
+{
+  logMsg("connectionmetadata::getSearchStringEscape - MySQL_ConnectionMetaData::getSearchStringEscape()");
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    ASSERT_EQUALS("\\", dbmeta->getSearchStringEscape());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+
 } /* namespace connectionmetadata */
 } /* namespace testsuite */
