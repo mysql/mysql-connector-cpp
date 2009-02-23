@@ -49,6 +49,8 @@ public:
     TEST_CASE(test_assert_message);
     TEST_CASE(test_assert_lessthan);
     TEST_CASE(test_assert_greaterthan);
+    TEST_CASE(test_skip);
+    TEST_CASE(test_todo);
   }
 
   /**
@@ -115,11 +117,30 @@ public:
   /**
    * Demo of ASSERT_GT
    *
-   * At the time of writing ASSERT_GR is only defined for int and unsigned int
+   * At the time of writing ASSERT_GT is only defined for int and unsigned int
    * comparisons. This has the nice  side effect that you can rewrite
    * "greater or equal than" conditions as "greater than" conditions.
    */
   void test_assert_greaterthan();
+
+  /**
+   * Demo of SKIP(<message>)
+   *
+   * If a test requires a certain MySQL feature only available with MySQL version x.y.z
+   * you should test if MySQL can give you what you need. If it can't SKIP the test.
+   * SKIP will stop test execution.
+   */
+  void test_skip();
+
+  /**
+   * Demo of TODO(<message>)
+   *
+   * If you know that a certain test will fail, for example, because its a regression
+   * test for an open bug report, you should mark the test as a TODO. Whoever runs the
+   * test will be able to see that you are working on the bug and the test failure
+   * is expected and does not need to be escalated in any way.
+   */
+  void test_todo();
 
 };
 

@@ -82,7 +82,7 @@ namespace simple
   public:
     TEST_FIXTURE( BlobTest ), testBlobFile( NULL )
     {
-      TEST_CASE( testByteStreamInsert );
+      // TODO - runtime too long - hack to disable test - TEST_CASE( testByteStreamInsert );
     }
 
 
