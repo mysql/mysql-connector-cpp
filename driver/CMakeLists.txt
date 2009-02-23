@@ -69,31 +69,8 @@ IF(WIN32)
 	#Disables bunch of pretty useless warnings on win
 	ADD_DEFINITIONS("-D_SCL_SECURE_NO_WARNINGS")
 
-	# Following part is actually taken from c/odbc cmake file
-	FOREACH(TYPE C CXX)
-		# makefiles use blank configuration
-		FOREACH(CFG "_DEBUG" "_MINSIZEREL" "_RELEASE" "_RELWITHDEBINFO")
-		#FOREACH(CFG "" ${CMAKE_CONFIGURATION_TYPES})
-			#MESSAGE("Replacing CMAKE_${TYPE}_FLAGS${CFG}: ${CMAKE_${TYPE}_FLAGS${CFG}}")
 
-			SET(NEW_FLAGS "${CMAKE_${TYPE}_FLAGS${CFG}}")
-
-			# fix up static libc flags
-			STRING(REPLACE "/MD" "/MT" NEW_FLAGS "${NEW_FLAGS}")
-
-			# *FORCE* to override whats already placed into the cache
-			SET(CMAKE_${TYPE}_FLAGS${CFG} "${NEW_FLAGS}" CACHE STRING
-				"CMAKE_${TYPE}_FLAGS${CFG} (overwritten for odbc)" FORCE)
-
-			#MESSAGE("New       CMAKE_${TYPE}_FLAGS${CFG}: ${CMAKE_${TYPE}_FLAGS${CFG}}")
-		ENDFOREACH(CFG)
-	ENDFOREACH(TYPE)
-
-	IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		SET(MY_TARGET_LINK_LIBRARIES_DYNAMIC mysqlclient.lib ws2_32)
-	ELSE(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		SET(MY_TARGET_LINK_LIBRARIES_DYNAMIC mysys.lib strings.lib libmysql ws2_32)
-	ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	SET(MY_TARGET_LINK_LIBRARIES_DYNAMIC libmysql ws2_32)
 	SET(MY_TARGET_LINK_LIBRARIES_STATIC mysqlclient ws2_32)
 ELSEIF(NOT WIN32)
 
@@ -107,6 +84,13 @@ ENDIF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)
 
 
 TARGET_LINK_LIBRARIES(mysqlcppconn ${MY_TARGET_LINK_LIBRARIES_DYNAMIC} ${MY_GCOV_LINK_LIBRARIES} ${MYSQLCPPCONN_STLPORT_LIB})
+
+# Need to find way it's defined for mysqlcppconn-static only 
+#IF(WIN32)
+#	ADD_DEFINITIONS("-DCPPDBC_PUBLIC_FUNC")
+#ENDIF(WIN32)
+
+
 TARGET_LINK_LIBRARIES(mysqlcppconn-static ${MY_TARGET_LINK_LIBRARIES_STATIC} ${MY_GCOV_LINK_LIBRARIES} ${MYSQLCPPCONN_STLPORT_LIB})
 
 
