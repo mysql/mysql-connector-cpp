@@ -1423,6 +1423,66 @@ void connectionmetadata::getSQLKeywords()
   }
 }
 
+void connectionmetadata::getSuperTables()
+{
+  logMsg("connectionmetadata::getSuperTables - MySQL_ConnectionMetaData::getSuperTables()");
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT)");
+    res.reset(dbmeta->getSuperTables(con->getCatalog(), con->getSchema(), "test"));
+
+    ASSERT(!res->next());
+    ResultSetMetaData resmeta(res->getMetaData());
+    ASSERT_EQUALS((unsigned int)4, resmeta->getColumnCount());
+    ASSERT_EQUALS("TABLE_CAT", resmeta->getColumnLabel(1));
+    ASSERT_EQUALS("TABLE_SCHEM", resmeta->getColumnLabel(2));
+    ASSERT_EQUALS("TABLE_NAME", resmeta->getColumnLabel(3));
+    ASSERT_EQUALS("SUPERTABLE_NAME", resmeta->getColumnLabel(4));
+
+    stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connectionmetadata::getSuperTypes()
+{
+  logMsg("connectionmetadata::getSuperTypes - MySQL_ConnectionMetaData::getSuperTypes()");
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT)");
+    res.reset(dbmeta->getSuperTypes(con->getCatalog(), con->getSchema(), "test"));
+
+    ASSERT(!res->next());
+    ResultSetMetaData resmeta(res->getMetaData());
+    ASSERT_EQUALS((unsigned int)6, resmeta->getColumnCount());
+    ASSERT_EQUALS("TYPE_CAT", resmeta->getColumnLabel(1));
+    ASSERT_EQUALS("TYPE_SCHEM", resmeta->getColumnLabel(2));
+    ASSERT_EQUALS("TYPE_NAME", resmeta->getColumnLabel(3));
+    ASSERT_EQUALS("SUPERTYPE_CAT", resmeta->getColumnLabel(4));
+    ASSERT_EQUALS("SUPERTYPE_SCHEM", resmeta->getColumnLabel(5));
+    ASSERT_EQUALS("SUPERTYPE_NAME", resmeta->getColumnLabel(6));
+
+    stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 
 } /* namespace connectionmetadata */
 } /* namespace testsuite */

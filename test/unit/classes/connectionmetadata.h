@@ -74,6 +74,8 @@ public:
     TEST_CASE(getSchemaTerm);
     TEST_CASE(getSearchStringEscape);
     TEST_CASE(getSQLKeywords);
+    TEST_CASE(getSuperTables);
+    TEST_CASE(getSuperTypes);
   }
 
   /**
@@ -281,7 +283,7 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getSearchStringEscape();
-  
+
   /**
    * Test for DatabaseMetaData::getSQLKeywords()
    *
@@ -290,7 +292,21 @@ public:
    */
   void getSQLKeywords();
 
-
+  /**
+   * Test for DatabaseMetaData::getSuperTables()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getSuperTables();
+  
+  /**
+   * Test for DatabaseMetaData::getSuperTypes()
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getSuperTypes();
 
 };
 
