@@ -455,10 +455,12 @@ MySQL_Connection::getClientInfo(const std::string&)
 
 /* {{{ MySQL_Connection::getClientOption() -U- */
 void
-MySQL_Connection::getClientOption(const std::string & /* optionName */, void * /* optionValue */)
+MySQL_Connection::getClientOption(const std::string & optionName, void * optionValue)
 {
-	throw sql::MethodNotImplementedException("MySQL_Connection::getClientOption");
-	return;
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getClientOption");
+	if (!optionName.compare("metadata_use_info_schema")) {
+		*(static_cast<bool *>(optionValue)) = intern->metadata_use_info_schema;
+	}
 }
 /* }}} */
 
@@ -718,6 +720,8 @@ MySQL_Connection::setClientOption(const std::string & optionName, const void * o
 			intern->logger->get()->disableTracing();
 			CPP_INFO("Tracing disabled");
 		}
+	} else if (!optionName.compare("metadata_use_info_schema")) {
+		intern->metadata_use_info_schema = *(static_cast<const bool *>(optionValue));
 	}
 }
 /* }}} */

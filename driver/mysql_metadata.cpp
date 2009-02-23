@@ -1178,11 +1178,13 @@ static inline const char * my_i_to_a(char * buf, size_t buf_size, int a)
 
 /* {{{ MySQL_ConnectionMetaData::MySQL_ConnectionMetaData() -I- */
 MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(MySQL_Connection * const conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
-  : connection(conn), logger(l? l->getReference():NULL)
+  : connection(conn), logger(l? l->getReference():NULL), use_info_schema(true)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::MySQL_ConnectionMetaData");
 	server_version = mysql_get_server_version(connection->getMySQLHandle());
 	lower_case_table_names = connection->getSessionVariable("lower_case_table_names");
+	
+	connection->getClientOption("metadata_use_info_schema", (void *) use_info_schema);
 }
 /* }}} */
 
@@ -1743,6 +1745,7 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 
 	/* I_S seems currently (20080220) not to work */
 	if (server_version > 69999) {
+#if A0
 		std::string query("SELECT NULL AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
 				 		"COLUMN_NAME, NULL AS GRANTOR, GRANTEE, PRIVILEGE_TYPE AS PRIVILEGE, IS_GRANTABLE\n"
 						"FROM INFORMATION_SCHEMA.COLUMN_PRIVILEGES\n"
@@ -1767,7 +1770,7 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 
 			rs_data->push_back(rs_data_row);
 		}
-
+#endif
 	} else {
 		size_t idx;
 		std::string query("SHOW FULL COLUMNS FROM `");
@@ -1857,7 +1860,7 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 	rs_field_data.push_back("SOURCE_DATA_TYPE");
 	rs_field_data.push_back("IS_AUTOINCREMENT");
 
-	if (server_version > 50020) {
+	if (use_info_schema && server_version > 50020) {
 		char buf[5];
 		std::string query("SELECT '' AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, COLUMN_NAME, DATA_TYPE,"
 			"CASE "
@@ -2073,7 +2076,7 @@ MySQL_ConnectionMetaData::getCrossReference(const std::string& primaryCatalog, c
 	buf[sizeof(buf) - 1] = '\0';
 
 	/* Not sure which version, let it not be 5.0.0, just something above which is anyway not used anymore */
-	if (server_version >= 50010) {
+	if (use_info_schema && server_version >= 50010) {
 		/* This just doesn't work */
 		/* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
 		char buf[10];
@@ -2111,7 +2114,7 @@ MySQL_ConnectionMetaData::getCrossReference(const std::string& primaryCatalog, c
 					"JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON "
 					"(R.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ");
 
-	std::string query("SELECT \n");
+		std::string query("SELECT \n");
 		query.append("NULL AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,"
 					 "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, NULL AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
 					 "A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,");
@@ -2309,7 +2312,7 @@ MySQL_ConnectionMetaData::getExportedKeys(const std::string& catalog, const std:
 	buf[sizeof(buf) - 1] = '\0';
 
 	/* Not sure which version, let it not be 5.0.0, just something above which is anyway not used anymore */
-	if (server_version >= 50010) {
+	if (use_info_schema && server_version >= 50010) {
 		/* This just doesn't work */
 		/* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
 		char buf[10];
@@ -2585,7 +2588,7 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 	char buf[16];
 	buf[sizeof(buf) - 1] = '\0';
 
-	if (server_version >= 50116) {
+	if (use_info_schema && server_version >= 50116) {
 		/* This just doesn't work */
 		/* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
 		char buf[10];
@@ -2770,7 +2773,7 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 
 	snprintf(indexOther, sizeof(indexOther), "%d", DatabaseMetaData::tableIndexOther);
 
-	if (server_version > 50020) {
+	if (use_info_schema && server_version > 50020) {
 		char indexHash[5];
 		snprintf(indexHash, sizeof(indexHash), "%d", DatabaseMetaData::tableIndexHashed);
 
@@ -3106,7 +3109,7 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
 	/* Bind Problems with 49999, check later why */
-	if (server_version > 49999) {
+	if (use_info_schema && server_version > 49999) {
 		const std::string query("SELECT NULL AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, "
 					"COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, INDEX_NAME AS PK_NAME FROM INFORMATION_SCHEMA.STATISTICS "
 					"WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND INDEX_NAME='PRIMARY' "
@@ -3218,7 +3221,7 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
-	if (server_version > 49999) {
+	if (use_info_schema && server_version > 49999) {
 		const std::string query("SELECT ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_COMMENT "
 						"FROM INFORMATION_SCHEMA.ROUTINES "
 						"WHERE ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ? "
@@ -3254,7 +3257,7 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 
 
 /* {{{ MySQL_ConnectionMetaData::getProcedureTerm() -I- */
-const std::string&
+const std::string &
 MySQL_ConnectionMetaData::getProcedureTerm()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getProcedureTerm");
@@ -3627,7 +3630,7 @@ MySQL_ConnectionMetaData::getTables(const std::string& /* catalog */, const std:
 	rs_field_data.push_back("REMARKS");
 
 	/* Bind Problems with 49999, check later why */
-	if (server_version > 49999) {
+	if (use_info_schema && server_version > 49999) {
 		const std::string query("SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, "
 							"IF(STRCMP(TABLE_TYPE,'BASE TABLE'), TABLE_TYPE, 'TABLE'), "
 							"TABLE_COMMENT FROM INFORMATION_SCHEMA.TABLES WHERE "
@@ -3715,7 +3718,7 @@ MySQL_ConnectionMetaData::getTableTypes()
 
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
-	for (int i = 0; i < 3; ++i) {
+	for (unsigned int i = 0; i < 3; ++i) {
 		if (server_version >= requiredVersion[i]) {
 			MySQL_ArtResultSet::row_t rs_data_row;
 			rs_data_row.push_back(table_types[i]);

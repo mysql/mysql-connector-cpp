@@ -38,7 +38,8 @@ class MySQL_ConnectionData
 {
 public:
 	MySQL_ConnectionData() : closed(false), autocommit(false), txIsolationLevel(TRANSACTION_READ_COMMITTED),
-							 is_valid(false), sql_mode_set(false), cache_sql_mode(false), logger(NULL), mysql(NULL) {}
+							 is_valid(false), sql_mode_set(false), cache_sql_mode(false),
+							 metadata_use_info_schema(true), logger(NULL), mysql(NULL) {}
 	bool closed;
 	bool autocommit;
 	enum_transaction_isolation txIsolationLevel;
@@ -60,6 +61,7 @@ public:
 	std::string sql_mode;
 	bool sql_mode_set;
 	bool cache_sql_mode;
+	bool metadata_use_info_schema;
 
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 
