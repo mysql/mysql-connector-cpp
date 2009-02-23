@@ -275,6 +275,7 @@ void connectionmetadata::getColumnPrivileges()
 void connectionmetadata::getColumns()
 {
   logMsg("connectionmetadata::getColumn() - MySQL_ConnectionMetaData::getColumns");
+  TODO("for Ulf...");
   std::vector<columndefinition>::iterator it;
   std::stringstream msg;
   bool got_warning=false;
@@ -1420,7 +1421,7 @@ void connectionmetadata::getCrossReference()
     {
       SKIP("Cannot create necessary FK tables");
     }
-    res.reset(dbmeta->getCrossReference(con->getCatalog(), con->getSchema(), "child", con->getCatalog(), con->getSchema(), "parent"));
+    res.reset(dbmeta->getCrossReference(con->getCatalog(), con->getSchema(), "parent", con->getCatalog(), con->getSchema(), "child"));
     ASSERT(res->next());
     logMsg("... checking child->parent");
     checkForeignKey(con, res);
@@ -1625,6 +1626,7 @@ void connectionmetadata::getSuperTypes()
 void connectionmetadata::classAttributes()
 {
   logMsg("connectionmetadata::classAttributes - MySQL_ConnectionMetaData class attributes");
+  TODO("Check if JDBC compliance requires certain values");
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
