@@ -1079,10 +1079,22 @@ void connectionmetadata::getLimitsAndStuff()
 
     ASSERT_EQUALS(false, dbmeta->storesUpperCaseIdentifiers());
     ASSERT_EQUALS(true, dbmeta->storesUpperCaseQuotedIdentifiers());
+
     ASSERT_EQUALS(true, dbmeta->supportsAlterTableWithAddColumn());
     ASSERT_EQUALS(true, dbmeta->supportsAlterTableWithDropColumn());
+
     ASSERT_EQUALS(true, dbmeta->supportsANSI92EntryLevelSQL());
     ASSERT_EQUALS(false, dbmeta->supportsANSI92FullSQL());
+    ASSERT_EQUALS(false, dbmeta->supportsANSI92IntermediateSQL());
+
+    ASSERT_EQUALS(true, dbmeta->supportsBatchUpdates());
+
+    ASSERT_EQUALS(false, dbmeta->supportsCatalogsInDataManipulation());
+    ASSERT_EQUALS(false, dbmeta->supportsCatalogsInIndexDefinitions());
+    ASSERT_EQUALS(false, dbmeta->supportsCatalogsInPrivilegeDefinitions());
+    ASSERT_EQUALS(false, dbmeta->supportsCatalogsInProcedureCalls());
+    ASSERT_EQUALS(false, dbmeta->supportsCatalogsInTableDefinitions());
+
   }
   catch (sql::SQLException &e)
   {
