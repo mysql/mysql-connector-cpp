@@ -1163,6 +1163,18 @@ void connectionmetadata::getLimitsAndStuff()
     ASSERT_EQUALS(true, dbmeta->supportsTransactionIsolationLevel(sql::TRANSACTION_SERIALIZABLE));
     ASSERT_EQUALS(true, dbmeta->supportsTransactions());
 
+    ASSERT_EQUALS(true, dbmeta->supportsTypeConversion());
+
+    /* We support MySQL 5.1+ . It must be true */
+    ASSERT_EQUALS(true, dbmeta->supportsUnion());
+    ASSERT_EQUALS(true, dbmeta->supportsUnionAll());
+
+    ASSERT_EQUALS(false, dbmeta->updatesAreDetected(sql::ResultSet::TYPE_FORWARD_ONLY));
+    ASSERT_EQUALS(false, dbmeta->updatesAreDetected(sql::ResultSet::TYPE_SCROLL_INSENSITIVE));
+    ASSERT_EQUALS(false, dbmeta->updatesAreDetected(sql::ResultSet::TYPE_SCROLL_SENSITIVE));
+
+    ASSERT_EQUALS(false, dbmeta->usesLocalFilePerTable());
+    ASSERT_EQUALS(false, dbmeta->usesLocalFiles());
   }
   catch (sql::SQLException &e)
   {
