@@ -1692,7 +1692,6 @@ MySQL_ConnectionMetaData::getCatalogs()
 	std::list<std::string> rs_field_data;
 
 	rs_field_data.push_back("TABLE_CAT");
-	rs_field_data.push_back("TABLE_SCHEM");
 
 	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
 	// If there is no exception we can release otherwise on function exit memory will be freed
@@ -3304,7 +3303,7 @@ MySQL_ConnectionMetaData::getSchemas()
 	std::auto_ptr<sql::Statement> stmt(connection->createStatement());
 	std::auto_ptr<sql::ResultSet> rs(
 		stmt->executeQuery(use_info_schema && server_version > 49999?
-				"SELECT SCHEMA_NAME, CATALOG_NAME FROM INFORMATION_SCHEMA.SCHEMATA ORDER BY SCHEMA_NAME":
+				"SELECT SCHEMA_NAME AS TABLE_SCHEM, CATALOG_NAME AS TABLE_CATALOG FROM INFORMATION_SCHEMA.SCHEMATA ORDER BY SCHEMA_NAME":
 				"SHOW DATABASES"));
 
 	while (rs->next()) {
