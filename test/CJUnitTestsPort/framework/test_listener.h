@@ -63,10 +63,11 @@ class TestsListener : public policies::Singleton<TestsListener>
 
 public:
 
-  std::iostream & errorsLog();
-  void errorsLog        (const String::value_type * msg);
-  void errorsLog        (const String::value_type * msg, const String::value_type * file, int line);
-  void errorsLog        (const String & msg);
+  static std::iostream & errorsLog();
+  static void errorsLog (const String::value_type * msg);
+  static void errorsLog ( const String::value_type * msg
+                        , const String::value_type * file, int line);
+  static void errorsLog (const String & msg);
 
   std::iostream & messagesLog();
   void messagesLog      (const String::value_type * msg);
@@ -83,13 +84,16 @@ public:
     return failedTests.size();
   }
 
-  static void   currentTestName (const String & name);
-  static String TestFullName    ();
+  static void             currentTestName   (const String & name);
+
+
+  static const String &   currentSuiteName  ();
+  static String           testFullName      ();
 
   static void   nextSuiteStarts (const String & name, int testsNumber);
 
   static void   testHasStarted  ();
-  static void   TestHasFinished ( TestRunResult result, const String & msg = "" );
+  static void   testHasFinished ( TestRunResult result, const String & msg = "" );
 
   static void   testHasFailed    (const String & msg);
 

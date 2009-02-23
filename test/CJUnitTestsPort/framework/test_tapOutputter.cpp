@@ -34,6 +34,8 @@ void TAP::SuiteHeader(const String & name
                       , unsigned first
                       , unsigned testsInSuite)
 {
+  suiteName= name;
+
   std::cout << std::endl << "# " << name << std::endl;
   std::cout << first << ".."
           << first + testsInSuite - 1 << std::endl;
@@ -43,7 +45,7 @@ void TAP::TestPassed(unsigned ordNum
                      , const String & name
                      , const String & comment)
 {
-  std::cout << "ok " << ordNum << " - " << name;
+  std::cout << "ok " << ordNum << " - " << suiteName << "::" << name;
 
   if (comment.length() > 0)
   {
@@ -58,7 +60,7 @@ void TAP::TestFailed( unsigned        ordNum
                     , const String &  comment )
 {
   std::cout << "not ok " << ordNum
-          << " - " << name;
+          << " - " << suiteName << "::" << name;
 
   if ( comment.length() > 0 )
   {

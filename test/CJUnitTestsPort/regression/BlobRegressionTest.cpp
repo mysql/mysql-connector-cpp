@@ -368,7 +368,7 @@ namespace regression
 
     if ( ! blob->read(&tmp,1).fail() )
     {
-      TestsListener::theInstance().errorsLog() << "read: " << tmp << static_cast<int>(tmp)
+      TestsListener::errorsLog() << "read: " << tmp << static_cast<int>(tmp)
         << std::endl;
 
       FAIL( "But probably that's ok - bad test likely" );

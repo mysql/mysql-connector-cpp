@@ -56,8 +56,8 @@ public:
 
   TEST_FIXTURE(PreparedStatementTest)
   {
-    TEST_CASE(testGetMetaData);
-    TEST_CASE(testClearParameters);
+    TEST_CASE( testGetMetaData    );
+    TEST_CASE( testClearParameters);
     TEST_CASE(testExecute01);
     TEST_CASE(testExecute02);
     TEST_CASE(testExecute03);
@@ -162,7 +162,6 @@ public:
 #endif
 #endif
   }
-
   /*
    * @testName:         testGetMetaData
    * @assertion:        A Prepared Statement object provides a way of calling precompiled

@@ -27,7 +27,6 @@ namespace testsuite
 {
 namespace compliance
 {
-
 /*
  * @testName:         testGetMetaData
  * @assertion:        A Prepared Statement object provides a way of calling precompiled
@@ -3247,7 +3246,6 @@ void PreparedStatementTest::testSetNull18()
 /**
  * @see junit.framework.TestCase#setUp()
  */
-
 /* throws Exception */
 void PreparedStatementTest::setUp()
 {

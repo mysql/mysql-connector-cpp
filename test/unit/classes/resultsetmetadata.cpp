@@ -372,7 +372,7 @@ void resultsetmetadata::getPrecision()
       meta->getPrecision(6);
       FAIL("Invalid offset 6 not recognized");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -382,7 +382,7 @@ void resultsetmetadata::getPrecision()
       meta->getPrecision(1);
       FAIL("Can fetch meta from invalid resultset");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -410,7 +410,7 @@ void resultsetmetadata::getScale()
       meta->getScale(6);
       FAIL("Invalid offset 6 not recognized");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -420,7 +420,7 @@ void resultsetmetadata::getScale()
       meta->getScale(1);
       FAIL("Can fetch meta from invalid resultset");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -461,7 +461,7 @@ void resultsetmetadata::getSchemaName()
       meta->getSchemaName(6);
       FAIL("Invalid offset 6 not recognized");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -471,7 +471,7 @@ void resultsetmetadata::getSchemaName()
       meta->getSchemaName(1);
       FAIL("Can fetch meta from invalid resultset");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -512,7 +512,7 @@ void resultsetmetadata::getTableName()
       meta->getTableName(6);
       FAIL("Invalid offset 6 not recognized");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -522,7 +522,7 @@ void resultsetmetadata::getTableName()
       meta->getTableName(1);
       FAIL("Can fetch meta from invalid resultset");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -563,7 +563,7 @@ void resultsetmetadata::isAutoIncrement()
       meta->isAutoIncrement(6);
       FAIL("Invalid offset 6 not recognized");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -573,7 +573,7 @@ void resultsetmetadata::isAutoIncrement()
       meta->isAutoIncrement(1);
       FAIL("Can fetch meta from invalid resultset");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -618,7 +618,7 @@ void resultsetmetadata::isCaseSensitive()
       meta->isCaseSensitive(6);
       FAIL("Invalid offset 6 not recognized");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -628,7 +628,7 @@ void resultsetmetadata::isCaseSensitive()
       meta->isCaseSensitive(1);
       FAIL("Can fetch meta from invalid resultset");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -672,7 +672,7 @@ void resultsetmetadata::isCurrency()
       meta->isCurrency(6);
       FAIL("Invalid offset 6 not recognized");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -682,7 +682,7 @@ void resultsetmetadata::isCurrency()
       meta->isCurrency(1);
       FAIL("Can fetch meta from invalid resultset");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -718,7 +718,7 @@ void resultsetmetadata::isDefinitelyWritable()
       meta->isDefinitelyWritable(6);
       FAIL("Invalid offset 6 not recognized");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -728,7 +728,7 @@ void resultsetmetadata::isDefinitelyWritable()
       meta->isDefinitelyWritable(1);
       FAIL("Can fetch meta from invalid resultset");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -759,7 +759,7 @@ void resultsetmetadata::isNullable()
       meta->isNullable(6);
       FAIL("Invalid offset 6 not recognized");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -769,7 +769,7 @@ void resultsetmetadata::isNullable()
       meta->isNullable(1);
       FAIL("Can fetch meta from invalid resultset");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -808,7 +808,7 @@ void resultsetmetadata::isReadOnly()
       meta->isReadOnly(6);
       FAIL("Invalid offset 6 not recognized");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -818,7 +818,7 @@ void resultsetmetadata::isReadOnly()
       meta->isReadOnly(1);
       FAIL("Can fetch meta from invalid resultset");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -842,7 +842,7 @@ void resultsetmetadata::isReadOnly()
       /* Expecting ERROR 1348 (HY000): Column 'col2' is not updatable */
       ASSERT_EQUALS(meta3->isReadOnly(2), true);
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
       logMsg("... skipping VIEW test");
     }
@@ -873,7 +873,7 @@ void resultsetmetadata::isSearchable()
       meta->isSearchable(6);
       FAIL("Invalid offset 6 not recognized");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -883,7 +883,7 @@ void resultsetmetadata::isSearchable()
       meta->isSearchable(1);
       FAIL("Can fetch meta from invalid resultset");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -915,7 +915,7 @@ void resultsetmetadata::isSigned()
       meta->isSigned(6);
       FAIL("Invalid offset 6 not recognized");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -925,7 +925,7 @@ void resultsetmetadata::isSigned()
       meta->isSigned(1);
       FAIL("Can fetch meta from invalid resultset");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -994,7 +994,7 @@ void resultsetmetadata::isWritable()
       meta->isWritable(6);
       FAIL("Invalid offset 6 not recognized");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 
@@ -1004,7 +1004,7 @@ void resultsetmetadata::isWritable()
       meta->isWritable(1);
       FAIL("Can fetch meta from invalid resultset");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
     }
 

@@ -115,7 +115,7 @@ void TestFixtureCommon::logMsg(String message)
 
 void TestFixtureCommon::logErr(String message)
 {
-  TestsListener::theInstance().errorsLog() << message << std::endl;
+  TestsListener::errorsLog() << message << std::endl;
   /*new Throwable().printStackTrace();*/
 }
 
@@ -645,7 +645,8 @@ void BaseTestFixture::setUp()
 
   try
   {
-    if (host.find_first_of("mysql") != String::npos)
+    //doesn't currently make sense in c/c++
+    /*if (host.find("mysql") != String::npos)
     {
       this->rs.reset(this->stmt->executeQuery("SELECT VERSION()"));
       this->rs->next();
@@ -653,12 +654,13 @@ void BaseTestFixture::setUp()
       //this->rs->close();
       this->rs.reset();
     } else
-    {
-      logDebug("Connected to "
-               + this->conn->getMetaData()->getDatabaseProductName()
-               + " / "
-               + this->conn->getMetaData()->getDatabaseProductVersion());
-    }
+    {*/
+    String tmp( "Connected to " );
+    tmp+= this->conn->getMetaData()->getDatabaseProductName();
+    tmp+= " / ";
+    //tmp.append( this->conn->getMetaData()->getDatabaseProductVersion() );
+
+    logDebug( tmp );
   }
   catch (sql::SQLException & sqle)
   {

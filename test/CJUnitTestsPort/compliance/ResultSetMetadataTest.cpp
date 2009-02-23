@@ -328,7 +328,7 @@ void ResultSetMetadataTest::testGetColumnType()
             << "getColumnType method returns: " << colType << std::endl;
     break;
   default:
-    TestsListener::theInstance().errorsLog()
+    TestsListener::errorsLog()
             << "getColumnType method returns a illegal value " << colType << std::endl;
     FAIL("Call to getColumnTypeName failed !");
   }
