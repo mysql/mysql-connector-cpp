@@ -27,11 +27,11 @@ public:
   {
   }
 
-  virtual void Header(const String & text= "") _PURE;
+  virtual void Header     (const String & text= "") _PURE;
 
   virtual void SuiteHeader(const String & name
-                           , unsigned first
-                           , unsigned testsInSuite) _PURE;
+                           , unsigned     first
+                           , int          testsInSuite) _PURE;
 
   virtual void TestPassed(unsigned ordNum
                           , const String & name

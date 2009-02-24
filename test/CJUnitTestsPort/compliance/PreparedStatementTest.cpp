@@ -1130,11 +1130,14 @@ void PreparedStatementTest::testSetInt01()
   TestsListener::theInstance().messagesLog()
           << "Returned int Value after Updation:" << rIntegerVal << std::endl;
 
-  if (rIntegerVal == minIntegerVal) {
+  if (rIntegerVal == minIntegerVal)
+	{
     logMsg("setInt Method sets the designated parameter to a int value ");
-  } else {
+  }
+	else
+	{
     logErr("setInteger Method does not set the designated parameter to a int value ");
-    FAIL("Call to setInt   Method is Failed!");
+    FAIL("Call to setInt Method is Failed!");
   }
 }
 

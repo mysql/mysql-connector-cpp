@@ -48,14 +48,14 @@ void resultset::getInt()
 
     ASSERT(pstmt.get() != NULL);
     pstmt->clearParameters();
-    pstmt->setInt(1, r1_c1);
+    pstmt->setInt(1, static_cast<int>(r1_c1));
     pstmt->setInt64(2, r1_c2);
     pstmt->setInt64(3, r1_c3);
     pstmt->setUInt64(4, r1_c4);
     ASSERT_EQUALS(false, pstmt->execute());
 
     pstmt->clearParameters();
-    pstmt->setInt(1, r2_c1);
+    pstmt->setInt(1, static_cast<int>(r2_c1));
     pstmt->setInt64(2, r2_c2);
     pstmt->setInt64(3, r2_c3);
     pstmt->setUInt64(4, r2_c4);

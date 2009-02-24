@@ -94,10 +94,13 @@ MyVal::getDouble()
 		case typePtr:
 			return .0;
 		case typeDouble:
-		case typeInt:
-		case typeUInt:
-		case typeBool:
 			return val.dval;
+		case typeInt:
+			return static_cast<double>(val.lval);
+		case typeUInt:
+			return static_cast<double>(val.ulval);
+		case typeBool:
+			return val.bval ? 1.0 : 0.0;
 
 	}
 	throw std::runtime_error("impossible");
@@ -115,6 +118,7 @@ MyVal::getInt64()
 		case typePtr:
 			return 0;
 		case typeDouble:
+			return static_cast<uint64_t>(val.dval);
 		case typeInt:
 		case typeUInt:
 		case typeBool:
@@ -136,6 +140,7 @@ MyVal::getUInt64()
 		case typePtr:
 			return 0;
 		case typeDouble:
+			return static_cast<uint64_t>(val.dval);
 		case typeInt:
 		case typeUInt:
 		case typeBool:
@@ -155,11 +160,12 @@ MyVal::getBool()
 		case typeString:
 			return getInt64() != 0;
 		case typeDouble:
+			return abs(static_cast<double>(val.dval - .0)) < 0.0000001;
 		case typeInt:
 		case typeUInt:
 		case typeBool:
 		case typePtr:
-			return val.bval != false; // that is needed. otherwise we can't ensure
+			return val.lval != 0; // that is needed. otherwise we can't ensure
 																// that comparison with true will have true result
 
 	}
