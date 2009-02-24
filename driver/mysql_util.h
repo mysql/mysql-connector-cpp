@@ -21,7 +21,7 @@
 #endif
 
 
-#if defined(_WIN32) || !defined(_WIN64)
+#if defined(_WIN32) || defined(_WIN64)
 #ifdef HAVE_MS_INT8
 typedef __int8			int8_t;
 #endif
