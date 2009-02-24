@@ -1,22 +1,12 @@
-/* Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
+/*
+   Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   There are special exceptions to the terms and conditions of the GPL 
-   as it is applied to this software. View the full text of the 
-   exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this 
-   software distribution.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   The MySQL Connector/C++ is licensed under the terms of the GPL
+   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+   MySQL Connectors. There are special exceptions to the terms and
+   conditions of the GPL as it is applied to this software, see the
+   FLOSS License Exception
+   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
 #ifndef _MYSQL_DEBUG_H_
@@ -49,7 +39,7 @@ static inline void CPP_ERR_FMT(...) {}
 namespace sql {
 namespace mysql {
 
-class MySQL_DebugEnterEvent; 
+class MySQL_DebugEnterEvent;
 
 
 class MySQL_DebugLogger
@@ -86,7 +76,7 @@ public:
 	const char * const file;
 	const char * const func;
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
-	
+
 	MySQL_DebugEnterEvent(unsigned int l, const char * const f, const char * const func_name, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger_object);
 	~MySQL_DebugEnterEvent();
 };
