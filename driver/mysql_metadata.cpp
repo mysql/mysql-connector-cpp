@@ -2155,6 +2155,7 @@ MySQL_ConnectionMetaData::getCrossReference(const std::string& primaryCatalog, c
 	} else {
 		throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::getCrossReference");
 	}
+	return NULL; // This will shut up compilers
 }
 /* }}} */
 
@@ -2389,6 +2390,7 @@ MySQL_ConnectionMetaData::getExportedKeys(const std::string& catalog, const std:
 	} else {
 		throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::getExportedKeys");
 	}
+	return NULL; // This will shut up compilers
 }
 /* }}} */
 
@@ -2827,7 +2829,7 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 			rs_data_row.push_back(atoi(rs->getString("Non_unique").c_str())? true:false);	// NON_UNIQUE
 			rs_data_row.push_back(schema);							// INDEX_QUALIFIER
 			rs_data_row.push_back(rs->getString("Key_name"));		// INDEX_NAME
-			rs_data_row.push_back(indexOther);						// TYPE
+			rs_data_row.push_back((const char *) indexOther);				// TYPE
 			rs_data_row.push_back(rs->getString("Seq_in_index"));	// ORDINAL_POSITION
 			rs_data_row.push_back(rs->getString("Column_name"));	// COLUMN_NAME
 			rs_data_row.push_back(rs->getString("Collation"));		// ASC_OR_DESC
@@ -3849,6 +3851,7 @@ MySQL_ConnectionMetaData::getURL()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getURL");
 	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::getURL");
+	return ""; // This will shut up compilers
 }
 /* }}} */
 
@@ -3929,6 +3932,7 @@ MySQL_ConnectionMetaData::locatorsUpdateCopy()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::locatorsUpdateCopy");
 	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::locatorsUpdateCopy");
+	return false; // This will shut up compilers
 }
 /* }}} */
 
@@ -4239,6 +4243,7 @@ MySQL_ConnectionMetaData::supportsConvert(int /* fromType */, int /* toType */)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::supportsConvert");
 	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::supportsConvert");
+	return false; // This will shut up compilers
 }
 /* }}} */
 
@@ -4369,6 +4374,7 @@ MySQL_ConnectionMetaData::supportsIntegrityEnhancementFacility()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::supportsIntegrityEnhancementFacility");
 	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::supportsIntegrityEnhancementFacility");
+	return false; // This will shut up compilers
 }
 /* }}} */
 
@@ -4559,6 +4565,7 @@ MySQL_ConnectionMetaData::supportsResultSetConcurrency(int /* type */, int /* co
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::supportsResultSetConcurrency");
 	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::supportsResultSetConcurrency");
+	return false; // This will shut up compilers
 }
 /* }}} */
 

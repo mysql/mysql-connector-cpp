@@ -37,7 +37,7 @@ namespace mysql
 
 /* {{{ MySQL_Statement::MySQL_Statement() -I- */
 MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
-	: connection(conn), isClosed(false), last_update_count(-1), logger(l? l->getReference():NULL)
+	: connection(conn), isClosed(false), last_update_count(UL64(~0)), logger(l? l->getReference():NULL)
 {
 	CPP_ENTER("MySQL_Statement::MySQL_Statement");
 	CPP_INFO_FMT("this=%p", this);
@@ -117,7 +117,7 @@ MySQL_Statement::execute(const std::string& sql)
 	checkClosed();
 	do_query(sql.c_str(), static_cast<int>(sql.length()));
 	bool ret = mysql_field_count(connection->getMySQLHandle()) > 0;
-	last_update_count = ret? -1:mysql_affected_rows(connection->getMySQLHandle());
+	last_update_count = ret? UL64(~0):mysql_affected_rows(connection->getMySQLHandle());
 	return ret;
 }
 /* }}} */
@@ -131,7 +131,7 @@ MySQL_Statement::executeQuery(const std::string& sql)
 	CPP_INFO_FMT("this=%p", this);
 	CPP_INFO_FMT("query=%s", sql.c_str());
 	checkClosed();
-	last_update_count = -1;
+	last_update_count = UL64(~0);
 	do_query(sql.c_str(), static_cast<int>(sql.length()));
 	sql::ResultSet *tmp = new MySQL_ResultSet(get_resultset(), this, logger);
 	CPP_INFO_FMT("rset=%p", tmp);

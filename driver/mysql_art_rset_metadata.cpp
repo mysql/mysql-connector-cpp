@@ -85,6 +85,7 @@ MySQL_ArtResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
 	throw sql::MethodNotImplementedException("MySQL_ArtResultSetMetaData::getColumnDisplaySize()");
+	return 0; // This will shut up compilers
 }
 /* }}} */
 
@@ -155,6 +156,7 @@ MySQL_ArtResultSetMetaData::getPrecision(unsigned int columnIndex)
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
 	throw sql::MethodNotImplementedException("MySQL_ArtResultSetMetaData::getPrecision()");
+	return 0; // This will shut up compilers
 }
 /* }}} */
 
@@ -169,6 +171,7 @@ MySQL_ArtResultSetMetaData::getScale(unsigned int columnIndex)
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
 	throw sql::MethodNotImplementedException("MySQL_ArtResultSetMetaData::getScale()");
+	return 0; // This will shut up compilers
 }
 /* }}} */
 

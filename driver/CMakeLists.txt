@@ -23,8 +23,6 @@ SET(MYSQLCPPCONN_SOURCES
 	mysql_art_resultset.cpp
 	mysql_art_rset_metadata.cpp
 	mysql_connection.cpp
-	mysql_constructed_resultset.cpp
-	mysql_cset_metadata.cpp
 	mysql_debug.cpp
 	mysql_driver.cpp
 	mysql_metadata.cpp

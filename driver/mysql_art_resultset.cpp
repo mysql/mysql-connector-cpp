@@ -423,6 +423,7 @@ MySQL_ArtResultSet::getConcurrency()
 	CPP_ENTER("MySQL_ArtResultSet::getConcurrency");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ArtResultSet::getConcurrency()");
+	return 0; // This will shut up compilers
 }
 /* }}} */
 
@@ -434,6 +435,7 @@ MySQL_ArtResultSet::getCursorName()
 	CPP_ENTER("MySQL_ArtResultSet::getCursorName");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ArtResultSet::getCursorName()");
+	return 0; // This will shut up compilers
 }
 /* }}} */
 
@@ -476,6 +478,7 @@ MySQL_ArtResultSet::getFetchDirection()
 	CPP_ENTER("MySQL_ArtResultSet::getFetchDirection");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ArtResultSet::getFetchDirection()");
+	return 0; // This will shut up compilers
 }
 /* }}} */
 
@@ -487,6 +490,7 @@ MySQL_ArtResultSet::getFetchSize()
 	CPP_ENTER("MySQL_ArtResultSet::getFetchSize");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ArtResultSet::getFetchSize()");
+	return 0; // This will shut up compilers
 }
 /* }}} */
 
@@ -498,6 +502,7 @@ MySQL_ArtResultSet::getHoldability()
 	CPP_ENTER("MySQL_ArtResultSet::getHoldability");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ArtResultSet::getHoldability()");
+	return 0; // This will shut up compilers
 }
 /* }}} */
 
@@ -632,6 +637,7 @@ MySQL_ArtResultSet::getRowId(unsigned int)
 	CPP_ENTER("MySQL_ArtResultSet::getRowId");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ArtResultSet::getRowId()");
+	return NULL; // This will shut up compilers
 }
 /* }}} */
 
@@ -643,6 +649,7 @@ MySQL_ArtResultSet::getRowId(const std::string &)
 	CPP_ENTER("MySQL_ArtResultSet::getRowId");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ArtResultSet::getRowId()");
+	return NULL; // This will shut up compilers
 }
 /* }}} */
 
@@ -912,6 +919,7 @@ MySQL_ArtResultSet::rowDeleted()
 	CPP_ENTER("MySQL_ArtResultSet::rowDeleted");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ArtResultSet::rowDeleted()");
+	return false; // This will shut up compilers
 }
 /* }}} */
 
@@ -923,6 +931,7 @@ MySQL_ArtResultSet::rowInserted()
 	CPP_ENTER("MySQL_ArtResultSet::rowInserted");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ArtResultSet::rowInserted()");
+	return false; // This will shut up compilers
 }
 /* }}} */
 
@@ -934,6 +943,7 @@ MySQL_ArtResultSet::rowUpdated()
 	CPP_ENTER("MySQL_ArtResultSet::rowUpdated");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ArtResultSet::rowUpdated()");
+	return false; // This will shut up compilers
 }
 /* }}} */
 
