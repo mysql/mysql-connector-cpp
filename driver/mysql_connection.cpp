@@ -22,6 +22,8 @@
 #include <stdlib.h>
 #include <memory>
 #include <stdio.h>
+#include <cppconn/exception.h>
+
 #include "mysql_private_iface.h"
 
 #if defined(_WIN32) || defined(_WIN64)

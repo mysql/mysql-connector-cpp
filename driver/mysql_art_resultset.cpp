@@ -24,6 +24,7 @@
 #include "mysql_debug.h"
 #include "mysql_util.h"
 
+#include <cppconn/exception.h>
 #include <sstream>
 
 

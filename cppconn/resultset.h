@@ -22,12 +22,6 @@
 #ifndef _SQL_RESULTSET_H_
 #define _SQL_RESULTSET_H_
 
-#include "exception.h"
-#include "resultset_metadata.h"
-#include <list>
-#include <string>
-#include <map>
-#include <iostream>
 
 #if !defined(_WIN32) && !defined(_WIN64)
 #ifdef HAVE_STDINT_H
@@ -54,8 +48,14 @@ typedef __int32           int32_t;
 #define uint32_t_defined
 typedef unsigned __int32  uint32_t;
 #endif
-
 #endif	//	_WIN32
+
+
+#include "resultset_metadata.h"
+#include <list>
+#include <string>
+#include <map>
+#include <iostream>
 
 
 namespace sql

@@ -19,11 +19,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "mysql_ps_resultset.h"
-#include "mysql_resultset.h"
-#include "mysql_prepared_statement.h"
-#include "mysql_ps_resultset_metadata.h"
-
 #include <stdio.h>
 #include <sstream>
 
@@ -36,11 +31,15 @@
 #include <stdlib.h>
 #else
 #define atoll(x) _atoi64((x))
-typedef __int64 int64_t;
-typedef __int32 int32_t;
 typedef __int16 int16_t;
 typedef __int8 int8_t;
 #endif	//	_WIN32
+
+#include <cppconn/exception.h>
+#include "mysql_ps_resultset.h"
+#include "mysql_resultset.h"
+#include "mysql_prepared_statement.h"
+#include "mysql_ps_resultset_metadata.h"
 
 
 #include "mysql_debug.h"
