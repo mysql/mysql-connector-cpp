@@ -359,7 +359,7 @@ int
 MySQL_ResultSet::getInt(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ResultSet::getInt(int)");
-	return getInt64(columnIndex);
+	return static_cast<int>(getInt64(columnIndex) );// & 0xffffffff;
 }
 /* }}} */
 
@@ -379,7 +379,7 @@ unsigned int
 MySQL_ResultSet::getUInt(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ResultSet::getUInt(int)");
-	return getUInt64(columnIndex);
+	return static_cast<unsigned int>(getUInt64(columnIndex));// & 0xffffffff;
 }
 /* }}} */
 

@@ -100,16 +100,14 @@ MyVal::getDouble()
 	switch (val_type) {
 		case typeString:
 			return atof(val.str->c_str());
-		case typeDouble:
-			return val.dval;
-		case typeInt:
-			return val.lval;
-		case typeUInt:
-			return val.ulval;
-		case typeBool:
-			return val.bval;
 		case typePtr:
 			return .0;
+		case typeDouble:
+		case typeInt:
+		case typeUInt:
+		case typeBool:
+			return val.dval;
+
 	}
 	throw std::runtime_error("impossible");
 }
@@ -123,16 +121,14 @@ MyVal::getInt64()
 	switch (val_type) {
 		case typeString:
 			return atoll(val.str->c_str());
-		case typeDouble:
-			return val.dval;
-		case typeInt:
-			return val.lval;
-		case typeUInt:
-			return val.ulval;
-		case typeBool:
-			return val.bval;
 		case typePtr:
 			return 0;
+		case typeDouble:
+		case typeInt:
+		case typeUInt:
+		case typeBool:
+			return val.lval;
+
 	}
 	throw std::runtime_error("impossible");
 }
@@ -146,16 +142,14 @@ MyVal::getUInt64()
 	switch (val_type) {
 		case typeString:
 			return strtoull(val.str->c_str(), NULL, 10);
-		case typeDouble:
-			return val.dval;
-		case typeInt:
-			return val.lval;
-		case typeUInt:
-			return val.ulval;
-		case typeBool:
-			return val.bval;
 		case typePtr:
 			return 0;
+		case typeDouble:
+		case typeInt:
+		case typeUInt:
+		case typeBool:
+			return val.ulval;
+
 	}
 	throw std::runtime_error("impossible");
 }
@@ -168,17 +162,15 @@ MyVal::getBool()
 {
 	switch (val_type) {
 		case typeString:
-			return static_cast<bool>(val.str->c_str());
+			return getInt64() != 0;
 		case typeDouble:
-			return static_cast<bool>(val.dval);
 		case typeInt:
-			return static_cast<bool>(val.lval);
 		case typeUInt:
-			return static_cast<bool>(val.ulval);
 		case typeBool:
-			return static_cast<bool>(val.bval);
 		case typePtr:
-			return val.pval != NULL;
+			return val.bval != false; // that is needed. otherwise we can't ensure
+																// that comparison with true will have true result
+
 	}
 	throw std::runtime_error("impossible");
 }
@@ -524,7 +516,7 @@ int
 MySQL_ArtResultSet::getInt(uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getInt(int)");
-	return getInt64(columnIndex);
+	return static_cast<int>(getInt64(columnIndex));
 }
 /* }}} */
 
@@ -544,7 +536,7 @@ unsigned int
 MySQL_ArtResultSet::getUInt(uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getUInt(int)");
-	return getUInt64(columnIndex);
+	return static_cast<unsigned int>(getUInt64(columnIndex));
 }
 /* }}} */
 
@@ -961,7 +953,7 @@ MySQL_ArtResultSet::rowsCount() const
 {
 	CPP_ENTER("MySQL_ArtResultSet::rowsCount");
 	checkValid();
-	return num_rows;
+	return static_cast<size_t>( num_rows );
 }
 /* }}} */
 
