@@ -17,6 +17,10 @@
 --
 -- Table structure for table 'bb_tab'
 --
+DROP DATABASE IF EXISTS test;
+CREATE DATABASE test;
+USE test;
+
 
 CREATE TABLE BB_tab (
   KEY_ID int(11) NOT NULL default '0',
