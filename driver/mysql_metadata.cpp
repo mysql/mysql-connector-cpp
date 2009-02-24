@@ -1,22 +1,12 @@
-/* Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
+/*
+   Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   There are special exceptions to the terms and conditions of the GPL
-   as it is applied to this software. View the full text of the
-   exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
-   software distribution.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   The MySQL Connector/C++ is licensed under the terms of the GPL
+   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+   MySQL Connectors. There are special exceptions to the terms and
+   conditions of the GPL as it is applied to this software, see the
+   FLOSS License Exception
+   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
 #include <stdlib.h>
@@ -1184,7 +1174,7 @@ MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(MySQL_Connection * const conn
 	CPP_ENTER("MySQL_ConnectionMetaData::MySQL_ConnectionMetaData");
 	server_version = mysql_get_server_version(connection->getMySQLHandle());
 	lower_case_table_names = connection->getSessionVariable("lower_case_table_names");
-	
+
 	connection->getClientOption("metadata_use_info_schema", (void *) &use_info_schema);
 }
 /* }}} */
@@ -1816,7 +1806,7 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 			} while (idx != std::string::npos);
 		}
 	}
-	
+
 	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
 	// If there is no exception we can release otherwise on function exit memory will be freed
 	rs_data.release();
@@ -1869,7 +1859,7 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 			"    WHEN LOCATE('zerofill', COLUMN_TYPE) != 0 AND LOCATE('zerofill', DATA_TYPE) = 0 THEN CONCAT(UCASE(DATA_TYPE), ' UNSIGNED ZEROFILL')"
 			"    ELSE CONCAT(UCASE(DATA_TYPE), ' UNSIGNED')"
 			"  END "
-			"ELSE" 
+			"ELSE"
 			"  CASE"
 			"    WHEN LCASE(DATA_TYPE)='set' THEN 'VARCHAR'"
 			"    WHEN LCASE(DATA_TYPE)='enum' THEN 'VARCHAR'"
@@ -2092,7 +2082,7 @@ MySQL_ConnectionMetaData::getCrossReference(const std::string& primaryCatalog, c
 		std::string importedKeyNoActionStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeyNotDeferrable);
 		std::string importedKeyNotDeferrableStr(buf);
-		
+
 		std::string UpdateRuleClause;
 		UpdateRuleClause.append("CASE WHEN R.UPDATE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
 						append(" WHEN R.UPDATE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
@@ -2329,7 +2319,7 @@ MySQL_ConnectionMetaData::getExportedKeys(const std::string& catalog, const std:
 		std::string importedKeyNoActionStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeyNotDeferrable);
 		std::string importedKeyNotDeferrableStr(buf);
-		
+
 		std::string UpdateRuleClause;
 		UpdateRuleClause.append("CASE WHEN R.UPDATE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
 						append(" WHEN R.UPDATE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
@@ -2606,7 +2596,7 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 		std::string importedKeyNoActionStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeyNotDeferrable);
 		std::string importedKeyNotDeferrableStr(buf);
-		
+
 		std::string UpdateRuleClause;
 		UpdateRuleClause.append("CASE WHEN R.UPDATE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
 						append(" WHEN R.UPDATE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
@@ -2785,7 +2775,7 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 		query.append(" END AS TYPE, SEQ_IN_INDEX AS ORDINAL_POSITION, COLUMN_NAME, COLLATION AS ASC_OR_DESC, CARDINALITY,"
 					"NULL AS PAGES, NULL AS FILTER_CONDITION "
 					"FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ?\n");
-		
+
 		if (unique) {
 			query.append(" AND NON_UNIQUE=0");
 		}

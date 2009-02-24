@@ -1,23 +1,12 @@
+/*
+   Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
 
-/* Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   There are special exceptions to the terms and conditions of the GPL
-   as it is applied to this software. View the full text of the
-   exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
-   software distribution.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   The MySQL Connector/C++ is licensed under the terms of the GPL
+   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+   MySQL Connectors. There are special exceptions to the terms and
+   conditions of the GPL as it is applied to this software, see the
+   FLOSS License Exception
+   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
 
@@ -73,7 +62,7 @@ const OUR_CHARSET our_charsets60[] =
 	{  19, "euckr", "euckr_korean_ci", 1, 2, "", cppconn_mbcharlen_euckr, check_mb_euckr},
 	{  22, "koi8u", "koi8u_general_ci", 1, 1, "", NULL, NULL},
 	{  24, "gb2312", "gb2312_chinese_ci", 1, 2, "", cppconn_mbcharlen_gb2312, check_mb_gb2312},
-	{  25, "greek", "greek_general_ci", 1, 1, "", NULL, NULL},	
+	{  25, "greek", "greek_general_ci", 1, 1, "", NULL, NULL},
 	{  26, "cp1250", "cp1250_general_ci", 1, 1, "", NULL, NULL},
 	{  28, "gbk", "gbk_chinese_ci", 1, 2, "", cppconn_mbcharlen_gbk, check_mb_gbk},
 	{  30, "latin5", "latin5_turkish_ci", 1, 1, "", NULL, NULL},

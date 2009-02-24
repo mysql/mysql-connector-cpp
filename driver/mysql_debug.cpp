@@ -1,22 +1,12 @@
-/* Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
+/*
+   Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   There are special exceptions to the terms and conditions of the GPL 
-   as it is applied to this software. View the full text of the 
-   exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this 
-   software distribution.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   The MySQL Connector/C++ is licensed under the terms of the GPL
+   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+   MySQL Connectors. There are special exceptions to the terms and
+   conditions of the GPL as it is applied to this software, see the
+   FLOSS License Exception
+   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
 #include <stdlib.h>
@@ -50,7 +40,7 @@ MySQL_DebugEnterEvent::MySQL_DebugEnterEvent(unsigned int l, const char * const 
 		}
 	}
 }
-/* }}} */ 
+/* }}} */
 
 
 /* {{{ MySQL_DebugEnterEvent::MySQL_DebugEnterEvent() -I- */
@@ -62,8 +52,8 @@ MySQL_DebugEnterEvent::~MySQL_DebugEnterEvent()
 		}
 		logger->freeReference();
 	}
-} 
-/* }}} */ 
+}
+/* }}} */
 
 
 /* {{{ MySQL_DebugLogger::MySQL_DebugLogger() -I- */
@@ -76,7 +66,7 @@ MySQL_DebugLogger::MySQL_DebugLogger()
 	}
 #endif
 }
-/* }}} */ 
+/* }}} */
 
 
 /* {{{ MySQL_DebugLogger::~MySQL_DebugLogger() -I- */
@@ -84,7 +74,7 @@ MySQL_DebugLogger::~MySQL_DebugLogger()
 {
 	callStack.empty();
 }
-/* }}} */ 
+/* }}} */
 
 
 /* {{{ MySQL_DebugLogger::disableTracing() -I- */
@@ -93,7 +83,7 @@ MySQL_DebugLogger::disableTracing()
 {
 	tracing = false;
 }
-/* }}} */ 
+/* }}} */
 
 
 /* {{{ MySQL_DebugLogger::enableTracing() -I- */
@@ -102,7 +92,7 @@ MySQL_DebugLogger::enableTracing()
 {
 	tracing = true;
 }
-/* }}} */ 
+/* }}} */
 
 
 /* {{{ MySQL_DebugLogger::enter() -I- */
@@ -118,7 +108,7 @@ MySQL_DebugLogger::enter(const MySQL_DebugEnterEvent * event)
 	}
 	callStack.push(event);
 }
-/* }}} */ 
+/* }}} */
 
 
 /* {{{ MySQL_DebugLogger::leave() -I- */
@@ -134,7 +124,7 @@ MySQL_DebugLogger::leave(const MySQL_DebugEnterEvent * event)
 		printf("<%s\n", event->func);
 	}
 }
-/* }}} */ 
+/* }}} */
 
 
 /* {{{ MySQL_DebugLogger::log() -I- */
@@ -151,7 +141,7 @@ MySQL_DebugLogger::log(const char * const type, const char * const message)
 	printf("%s: ", type);
 	printf("%s\n", message);
 }
-/* }}} */ 
+/* }}} */
 
 
 /* {{{ MySQL_DebugLogger::log_va() -I- */
@@ -172,7 +162,7 @@ MySQL_DebugLogger::log_va(const char * const type, const char * const format, ..
 	va_end(args);
 	printf("\n");
 }
-/* }}} */ 
+/* }}} */
 
 }; /* namespace mysql */
 }; /* namespace sql */

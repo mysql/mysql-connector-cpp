@@ -1,22 +1,12 @@
-/* Copyright (C) 2009 Sun Microsystems, Inc.
+/*
+   Copyright (C) 2009 Sun Microsystems, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; version 2 of the License.
-
-There are special exceptions to the terms and conditions of the GPL
-as it is applied to this software. View the full text of the
-exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
-software distribution.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   The MySQL Connector/C++ is licensed under the terms of the GPL
+   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+   MySQL Connectors. There are special exceptions to the terms and
+   conditions of the GPL as it is applied to this software, see the
+   FLOSS License Exception
+   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
 
@@ -49,11 +39,11 @@ namespace simple
 
   /**
 	 * Setup the test case
-	 * 
+	 *
 	 * @throws Exception
 	 *             if an error occurs
 	 */
-  void BlobTest::setUp() 
+  void BlobTest::setUp()
   {
     super::setUp();
 
@@ -73,13 +63,13 @@ namespace simple
 
   /**
 	 * Destroy resources created by test case
-	 * 
+	 *
 	 * @throws Exception
 	 *             if an error occurs
 	 */
 
 /* throws Exception */
-  void BlobTest::tearDown() 
+  void BlobTest::tearDown()
   {
     stmt->executeUpdate( "DROP TABLE IF EXISTS BLOBTEST" );
 
@@ -88,7 +78,7 @@ namespace simple
 
 
 /* throws Exception */
-  void BlobTest::testByteStreamInsert() 
+  void BlobTest::testByteStreamInsert()
   {
     SKIP("too slow");
     testByteStreamInsert( conn );
@@ -96,14 +86,14 @@ namespace simple
 
   /**
 	 * Tests inserting blob data as a stream
-	 * 
+	 *
 	 * @throws Exception
 	 *             if an error occurs
 	 */
-  void BlobTest::testByteStreamInsert(Connection & c) 
+  void BlobTest::testByteStreamInsert(Connection & c)
   {
     std::fstream & bIn= testBlobFile->getStream();
-    
+
     ASSERT( ! bIn.fail() );
 
     pstmt.reset( conn->prepareStatement("INSERT INTO BLOBTEST(blobdata) VALUES (?)") );
@@ -116,7 +106,7 @@ namespace simple
 
 
 /* throws Exception */
-  bool BlobTest::checkBlob( const String & retrBytes) 
+  bool BlobTest::checkBlob( const String & retrBytes)
   {
     bool passed = false;
 
@@ -156,7 +146,7 @@ namespace simple
               << ") != From File:" << fromFile[ j ] << "("
               << StringUtils::toHexString( fromFile[ j ] ) << ")"
               << std::endl;
-              
+
             if ( j < bIn.gcount() - 1 )
             {
               TestsListener::errorsLog() << "Following bytes (table:file):";
@@ -194,7 +184,7 @@ namespace simple
 
 
 /* throws Exception */
-  void BlobTest::createTestTable() 
+  void BlobTest::createTestTable()
   {
     try
     {
@@ -210,15 +200,15 @@ namespace simple
 
   /**
 	 * Mark this as deprecated to avoid warnings from compiler...
-	 * 
+	 *
 	 * @deprecated
-	 * 
+	 *
 	 * @throws Exception
 	 *             if an error occurs retrieving the value
 	 */
 
 /* throws Exception */
-  void BlobTest::doRetrieval() 
+  void BlobTest::doRetrieval()
   {
     bool passed = false;
 
@@ -269,18 +259,18 @@ namespace simple
         assertTrue(
             "Inserted BLOB data did not match retrieved BLOB data for getUnicodeStream().",
             passed);*/
-    
+
   }
 
 
 /* throws Exception */
-  void BlobTest::createBlobFile(int size) 
+  void BlobTest::createBlobFile(int size)
   {
     if (testBlobFile.get() != NULL && testBlobFile->getSize() != size)
     {
       testBlobFile->deleteFile();
       //testBlobFile.reset( FileUtils::ccppFile::createTempFile(TEST_BLOB_FILE_PREFIX, ".dat") );
-    
+
       //cleanupTempFiles(testBlobFile, TEST_BLOB_FILE_PREFIX);
       std::ostream & bOut = testBlobFile->getStream();
 

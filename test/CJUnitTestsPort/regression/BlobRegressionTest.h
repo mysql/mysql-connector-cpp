@@ -1,29 +1,19 @@
-/* Copyright (C) 2009 Sun Microsystems, Inc.
+/*
+   Copyright (C) 2009 Sun Microsystems, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; version 2 of the License.
-
-There are special exceptions to the terms and conditions of the GPL
-as it is applied to this software. View the full text of the
-exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
-software distribution.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   The MySQL Connector/C++ is licensed under the terms of the GPL
+   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+   MySQL Connectors. There are special exceptions to the terms and
+   conditions of the GPL as it is applied to this software, see the
+   FLOSS License Exception
+   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
 #include "../BaseTestFixture.h"
 
 /**
  * Tests fixes for BLOB handling.
- * 
+ *
  * @author Mark Matthews
  * @version $Id: BlobRegressionTest.java,v 1.1.2.19 2005/03/09 18:16:16
  *          mmatthews Exp $
@@ -80,7 +70,7 @@ namespace regression
   /**
 	 * Tests BUG#8096 where emulated locators corrupt binary data when using
 	 * server-side prepared statements.
-	 * 
+	 *
 	 * @throws std::exception *
 	 *             if the test fails.
 	 */
@@ -90,7 +80,7 @@ namespace regression
   /**
 	 * Tests fix for BUG#9040 - PreparedStatement.addBatch() doesn't work with
 	 * server-side prepared statements and streaming BINARY data.
-	 * 
+	 *
 	 * @throws std::exception *
 	 *             if the test fails.
    Irrelevant - May become useful later

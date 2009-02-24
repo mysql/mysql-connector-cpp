@@ -1,22 +1,12 @@
-/* Copyright (C) 2009 Sun Microsystems, Inc.
+/*
+   Copyright (C) 2009 Sun Microsystems, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; version 2 of the License.
-
-There are special exceptions to the terms and conditions of the GPL
-as it is applied to this software. View the full text of the
-exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
-software distribution.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   The MySQL Connector/C++ is licensed under the terms of the GPL
+   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+   MySQL Connectors. There are special exceptions to the terms and
+   conditions of the GPL as it is applied to this software, see the
+   FLOSS License Exception
+   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
 #include <fstream>
@@ -27,7 +17,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 /**
  * Tests BLOB functionality in the driver.
- * 
+ *
  * @author Mark Matthews
  * @version $Id: BlobTest.java 6707 2008-01-04 22:06:31Z mmatthews $
  */
@@ -45,7 +35,7 @@ namespace simple
 
   /**
 	 * Tests inserting blob data as a stream
-	 * 
+	 *
 	 * @throws std::exception *
 	 *             if an error occurs
 	 */
@@ -63,9 +53,9 @@ namespace simple
 
   /**
 	 * Mark this as deprecated to avoid warnings from compiler...
-	 * 
+	 *
 	 * @deprecated
-	 * 
+	 *
 	 * @throws std::exception *
 	 *             if an error occurs retrieving the value
 	 */
@@ -74,11 +64,11 @@ namespace simple
 
     static const String TEST_BLOB_FILE_PREFIX;
 
-    
-    void createBlobFile(int size) ;  
+
+    void createBlobFile(int size) ;
 
   protected:
-  
+
   public:
     TEST_FIXTURE( BlobTest ), testBlobFile( NULL )
     {
@@ -88,7 +78,7 @@ namespace simple
 
   /**
 	 * Setup the test case
-	 * 
+	 *
 	 * @throws std::exception *
 	 *             if an error occurs
 	 */
@@ -96,7 +86,7 @@ namespace simple
 
   /**
 	 * Destroy resources created by test case
-	 * 
+	 *
 	 * @throws std::exception *
 	 *             if an error occurs
 	 */
