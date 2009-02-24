@@ -30,8 +30,8 @@ public:
   virtual void Header(const String & text);
 
   virtual void SuiteHeader(const String & name
-                           , unsigned first
-                           , unsigned testsInSuite);
+                           , unsigned     first
+                           , int          testsInSuite);
 
   virtual void TestPassed(unsigned ordNum
                           , const String & name

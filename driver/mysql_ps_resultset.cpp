@@ -350,7 +350,7 @@ MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
 		case sql::DataType::INTEGER:
 		case sql::DataType::BIGINT:
 			CPP_INFO("It's an int");
-			return getInt64(columnIndex);
+			return static_cast<double>(getInt64(columnIndex));
 		case sql::DataType::NUMERIC:
 		case sql::DataType::DECIMAL:
 		case sql::DataType::TIMESTAMP:
@@ -433,7 +433,7 @@ MySQL_Prepared_ResultSet::getInt(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getInt(int)");
 	CPP_INFO_FMT("column=%u", columnIndex);
-	return getInt64(columnIndex);
+	return static_cast<int>(getInt64(columnIndex));
 }
 /* }}} */
 
@@ -454,7 +454,7 @@ MySQL_Prepared_ResultSet::getUInt(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getUInt(int)");
 	CPP_INFO_FMT("column=%u", columnIndex);
-	return getUInt64(columnIndex);
+	return static_cast<unsigned int>(getUInt64(columnIndex));
 }
 /* }}} */
 
@@ -513,8 +513,8 @@ MySQL_Prepared_ResultSet::getInt64(const uint32_t columnIndex) const
 		// ToDo : Geometry? default ?
 	}
 	int64_t ret;
-	bool is_it_null = *stmt->bind[columnIndex - 1].is_null;
-	bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned;
+	bool is_it_null = *stmt->bind[columnIndex - 1].is_null != 0;
+	bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned != 0;
 
 	switch (stmt->bind[columnIndex - 1].buffer_length) {
 		case 1:
@@ -610,8 +610,8 @@ MySQL_Prepared_ResultSet::getUInt64(const uint32_t columnIndex) const
 		// ToDo : Geometry? default ?
 	}
 	uint64_t ret;
-	bool is_it_null = *stmt->bind[columnIndex - 1].is_null;
-	bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned;
+	bool is_it_null = *stmt->bind[columnIndex - 1].is_null != 0;
+	bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned != 0;
 
 	switch (stmt->bind[columnIndex - 1].buffer_length) {
 		case 1:
@@ -780,7 +780,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 		{
 			char buf[50];
 			CPP_INFO("It's a double");
-			my_f_to_a(buf, sizeof(buf) - 1, getInt64(columnIndex));
+			my_f_to_a(buf, sizeof(buf) - 1, getDouble(columnIndex));
 			return std::string(buf);
 		}
 

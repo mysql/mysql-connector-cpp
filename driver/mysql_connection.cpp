@@ -19,6 +19,7 @@
 #if defined(_WIN32) || defined(_WIN64)
 /* MySQL 5.1 might have defined it before in include/config-win.h */
 #ifndef strncasecmp
+#pragma message("DEFINING strncasecmp AS _strnicmp")
 #define strncasecmp(s1,s2,n) _strnicmp(s1,s2,n)
 #endif
 #else
@@ -190,7 +191,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		} else if (!it->first.compare("password")) {
 			password = it->second.str.val;
 		} else if (!it->first.compare("port")) {
-			port = it->second.lval;
+			port = static_cast<unsigned int>(it->second.lval);
 		} else if (!it->first.compare("socket")) {
 			socket = it->second.str.val;
 			protocol_tcp = false;

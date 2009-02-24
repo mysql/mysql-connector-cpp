@@ -21,19 +21,6 @@ namespace testsuite
 namespace simple
 {
 
-  /*
-  static int dummySimpleBlob= atexit
-        public void run() {
-          for (int i = 0; i < 5; i++) {
-            try {
-              if (testBlobFile.delete()) {
-                break;
-              }
-            } catch ( std::exception & t) {
-            }
-          }
-        }*/
-
   const String BlobTest::TEST_BLOB_FILE_PREFIX( "cmj-testblob" );
 
 
@@ -72,6 +59,8 @@ namespace simple
   void BlobTest::tearDown()
   {
     stmt->executeUpdate( "DROP TABLE IF EXISTS BLOBTEST" );
+
+    testBlobFile.reset();
 
     super::tearDown();
   }

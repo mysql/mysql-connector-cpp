@@ -1,12 +1,23 @@
 /*
-   Copyright 2008 - 2009 Sun Microsystems, Inc.
+Copyright 2008 - 2009 Sun Microsystems, Inc.
 
-   The MySQL Connector/C++ is licensed under the terms of the GPL
-   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
-   MySQL Connectors. There are special exceptions to the terms and
-   conditions of the GPL as it is applied to this software, see the
-   FLOSS License Exception
-   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; version 2 of the License.
+
+There are special exceptions to the terms and conditions of the GPL
+as it is applied to this software. View the full text of the
+exception in file EXCEPTIONS-conECTOR-C++ in the directory of this
+software distribution.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #ifndef _UNIT_FIXTURE_
@@ -56,10 +67,10 @@ struct columndefinition
   std::string as_string; // value as it should be returns by getString()
   bool check_as_string;
 
-  columndefinition(std::string _name, std::string _sqldef, int _ctype,
-                   std::string _value, bool _is_signed, unsigned int _precision,
+  columndefinition(const std::string & _name, const std::string & _sqldef, int _ctype,
+                   const std::string & _value, bool _is_signed, unsigned int _precision,
                    int _decimal_digits, bool _is_nullable, std::string _column_def,
-                   int _char_octet_length, std::string _is_autoincrement) :
+                   unsigned int _char_octet_length, const std::string & _is_autoincrement) :
   name(_name),
   sqldef(_sqldef),
   ctype(_ctype),
@@ -87,10 +98,11 @@ struct columndefinition
   {
   }
 
-  columndefinition(std::string _name, std::string _sqldef, int _ctype,
-                   std::string _value, bool _is_signed, unsigned int _precision,
-                   int _decimal_digits, bool _is_nullable, std::string _column_def,
-                   int _char_octet_length, std::string _is_autoincrement, std::string _as_string) :
+  columndefinition(const std::string & _name, const std::string & _sqldef, int _ctype,
+                   const std::string & _value, bool _is_signed, unsigned int _precision,
+                   int _decimal_digits, bool _is_nullable, const std::string & _column_def,
+                   int _char_octet_length, const std::string & _is_autoincrement,
+									 const std::string & _as_string) :
   name(_name),
   sqldef(_sqldef),
   ctype(_ctype),
