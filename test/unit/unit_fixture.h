@@ -64,6 +64,9 @@ struct columndefinition
   unsigned int char_octet_length;
   std::string is_autoincrement;
 
+  std::string as_string; // value as it should be returns by getString()
+  bool check_as_string;
+
   columndefinition(std::string _name, std::string _sqldef, int _ctype,
                    std::string _value, bool _is_signed, unsigned int _precision,
                    int _decimal_digits, bool _is_nullable, std::string _column_def,
@@ -90,7 +93,40 @@ struct columndefinition
   sql_data_type(0),
   sql_datetime_sub(0),
   char_octet_length(_char_octet_length),
-  is_autoincrement(_is_autoincrement)
+  is_autoincrement(_is_autoincrement),
+  check_as_string(false)
+  {
+  }
+
+  columndefinition(std::string _name, std::string _sqldef, int _ctype,
+                   std::string _value, bool _is_signed, unsigned int _precision,
+                   int _decimal_digits, bool _is_nullable, std::string _column_def,
+                   int _char_octet_length, std::string _is_autoincrement, std::string _as_string) :
+  name(_name),
+  sqldef(_sqldef),
+  ctype(_ctype),
+  value(_value),
+  is_signed(_is_signed),
+  precision(_precision),
+  decimal_digits(_decimal_digits),
+  is_nullable(_is_nullable),
+  nullable((_is_nullable) ? sql::DatabaseMetaData::columnNullable : sql::DatabaseMetaData::columnNoNulls),
+  column_def(_column_def),
+  is_case_sensitive(false),
+  remarks(""),
+  is_searchable(sql::DatabaseMetaData::typeSearchable),
+  fixed_prec_scale(false),
+  auto_increment(false),
+  local_type_name(""),
+  minimum_scale(0),
+  maximum_scale(0),
+  num_prec_radix(10),
+  sql_data_type(0),
+  sql_datetime_sub(0),
+  char_octet_length(_char_octet_length),
+  is_autoincrement(_is_autoincrement),
+  as_string(_as_string),
+  check_as_string(true)
   {
   }
 
