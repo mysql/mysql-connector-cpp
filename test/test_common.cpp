@@ -1653,7 +1653,7 @@ static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 				stmt->clearParameters();
 				std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
 				ensure("Exception not thrown", false);
-			} catch (sql::SQLException &e) {}
+			} catch (sql::SQLException &) {}
 		}
 
 		/* try clearParameters() call */
@@ -1822,13 +1822,13 @@ static void test_prep_statement_3(std::auto_ptr<sql::Connection> & conn, std::au
 		std::auto_ptr<sql::PreparedStatement> stmt1(conn->prepareStatement("INSERT INTO test_function_int (i, i_uns, b, b_uns) VALUES(?,?,?,?)"));
 		ensure("stmt0 is NULL", stmt1.get() != NULL);
 		stmt1->clearParameters();
-		stmt1->setInt(1, r1_c1);
+		stmt1->setInt(1, static_cast<int>(r1_c1));
 		stmt1->setInt64(2, r1_c2);
 		stmt1->setInt64(3, r1_c3);
 		stmt1->setUInt64(4, r1_c4);
 		ensure("True returned for INSERT", false == stmt1->execute());
 		stmt1->clearParameters();
-		stmt1->setInt(1, r2_c1);
+		stmt1->setInt(1, static_cast<int>(r2_c1));
 		stmt1->setInt64(2, r2_c2);
 		stmt1->setInt64(3, r2_c3);
 		stmt1->setUInt64(4, r2_c4);

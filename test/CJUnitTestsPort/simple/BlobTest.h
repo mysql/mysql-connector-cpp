@@ -70,9 +70,10 @@ namespace simple
   protected:
 
   public:
-    TEST_FIXTURE( BlobTest ), testBlobFile( NULL )
+    TEST_FIXTURE( BlobTest )
     {
-      // TODO - runtime too long - hack to disable test - TEST_CASE( testByteStreamInsert );
+      // TODO - runtime too long - hack to disable test
+			TEST_CASE( testByteStreamInsert );
     }
 
 

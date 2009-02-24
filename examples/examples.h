@@ -17,7 +17,7 @@
  #ifdef __func__
    #define __FUNCTION__ __func__
  #else
-   #define __FUNCTION__ "(function n/a)"
+   #define __FUNCTION__ ""
  #endif
 #endif
 

@@ -237,7 +237,7 @@ void fail(const char* reason, const char* file, int line)
   std::stringstream errmsg;
   errmsg.str("");
   errmsg << "Failed at " << file << " on line " << line;
-  errmsg << "reason: '" << reason << "'";
+  errmsg << ". Reason: '" << reason << "'";
   TestsListener::testHasFailed(errmsg.str());
 }
 

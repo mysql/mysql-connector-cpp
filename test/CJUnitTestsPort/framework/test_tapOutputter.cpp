@@ -20,15 +20,18 @@ void TAP::Header(const String & text)
 {
 }
 
-void TAP::SuiteHeader(const String & name
-                      , unsigned first
-                      , unsigned testsInSuite)
+void TAP::SuiteHeader(	const String &  name
+                      , unsigned        first
+                      , int             testsInSuite)
 {
   suiteName= name;
 
   std::cout << std::endl << "# " << name << std::endl;
-  std::cout << first << ".."
-          << first + testsInSuite - 1 << std::endl;
+
+  if ( testsInSuite > 0 )
+    std::cout << first << ".." << first + testsInSuite - 1 << std::endl;
+  else
+    std::cout << "# doesn't contain any tests" << std::endl;
 }
 
 void TAP::TestPassed(unsigned ordNum
