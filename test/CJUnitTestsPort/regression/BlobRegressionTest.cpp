@@ -1,22 +1,12 @@
-/* Copyright (C) 2009 Sun Microsystems, Inc.
+/*
+   Copyright (C) 2009 Sun Microsystems, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; version 2 of the License.
-
-There are special exceptions to the terms and conditions of the GPL
-as it is applied to this software. View the full text of the
-exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
-software distribution.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   The MySQL Connector/C++ is licensed under the terms of the GPL
+   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+   MySQL Connectors. There are special exceptions to the terms and
+   conditions of the GPL as it is applied to this software, see the
+   FLOSS License Exception
+   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
 #include "BlobRegressionTest.h"
@@ -29,12 +19,12 @@ namespace regression
 
   /**
 	 * Dunno how this test should look like in C++
-	 * 
+	 *
 	 * @throws Exception
 	 *             ...
 	 */
   /*
-  void BlobRegressionTest::testBug2670() 
+  void BlobRegressionTest::testBug2670()
     {
       if (!isRunningOnJdk131()) {
         try {
@@ -66,13 +56,13 @@ namespace regression
         }
       }
     }*/
-  
+
 
   /**
 	 * @throws Exception
 	 *             ...
 	 */
-  void BlobRegressionTest::testUpdateLongBlobGT16M() 
+  void BlobRegressionTest::testUpdateLongBlobGT16M()
   {
     if ( this->versionMeetsMinimum(4, 0) )
     {
@@ -86,7 +76,7 @@ namespace regression
       stmt->executeUpdate("INSERT INTO testUpdateLongBlob (blobField) VALUES (NULL)");
 
       pstmt.reset( conn->prepareStatement("UPDATE testUpdateLongBlob SET blobField=?") );
-     
+
       pstmt->setString(1, blobData );
       pstmt->executeUpdate();
 
@@ -96,69 +86,69 @@ namespace regression
   }
 
   /**
-	 * 
+	 *
 	 * @throws Exception
 	 */
 
 /* throws Exception */
   /*
-  void BlobRegressionTest::testUpdatableBlobsWithCharsets() 
+  void BlobRegressionTest::testUpdatableBlobsWithCharsets()
     {
       char smallBlob[32];
-  
+
       for (char i = 0; i < sizeof(smallBlob); ++i)
       {
         smallBlob[i] = i;
       }
-  
+
         stmt->executeUpdate("DROP TABLE IF EXISTS testUpdatableBlobsWithCharsets");
         stmt->executeUpdate("CREATE TABLE testUpdatableBlobsWithCharsets(pk INT NOT NULL PRIMARY KEY, field1 BLOB)");
-  
+
         std::istringstream str( smallBlob );
-  
+
         PreparedStatement pstmt( conn->prepareStatement("INSERT INTO testUpdatableBlobsWithCharsets (pk, field1) VALUES (1, ?)") );
-  
+
         pstmt->setBlob( 1, & str );
         pstmt->executeUpdate();
-  
+
         Statement updstmt( conn->createStatement() );
         rs.reset( updstmt->executeQuery("SELECT pk, field1 FROM testUpdatableBlobsWithCharsets") );
-  
+
         rs->next();
-  
+
         MESSAGE( rs->getString(1) + "->" + rs->getString(2) );
-  
-  
-  
+
+
+
         for (char i = 0; i < sizeof( smallBlob ); ++i)
         {
           smallBlob[i] = i + 32;
         }
-  
+
         //we don't support that yet. so the whole test doesn't make sense either
   / *
         rs->setBlob(2, std::istringstream(smallBlob), sizeof(smallBlob) );
         rs->updateRow();* /
-  
-  
+
+
         ResultSet newRs( stmt->executeQuery("SELECT field1 FROM testUpdatableBlobsWithCharsets") );
         newRs->next();
         String updatedBlob( newRs->getString(1) );
-  
+
         for (byte i = 0; i < sizeof(smallBlob); i++) {
           char origValue = smallBlob[i];
           char newValue = updatedBlob[i];
           assertTrue(String( "Original byte at position " ) + i + ", " + origValue
               + " != new value, " + newValue, origValue == newValue);
         }
-  
+
         stmt->executeUpdate("DROP TABLE IF EXISTS testUpdatableBlobsWithCharsets");
     }*/
-  
+
 
 
 /* throws Exception */
-  void BlobRegressionTest::testBug5490() 
+  void BlobRegressionTest::testBug5490()
   {
     stmt->executeUpdate("DROP TABLE IF EXISTS testBug5490");
     stmt->executeUpdate("CREATE TABLE testBug5490"\
@@ -167,7 +157,7 @@ namespace regression
     int blobFileSize = 871;
 
     FileUtils::ccppFile blobFile("Bug5490");
-    
+
     if( ! blobFile.exists() || blobFile.getSize() != blobFileSize )
     {
       blobFile.deleteFile();
@@ -201,13 +191,13 @@ namespace regression
   /**
 	 * Tests BUG#8096 where emulated locators corrupt binary data when using
 	 * server-side prepared statements.
-	 * 
+	 *
 	 * @throws Exception
 	 *             if the test fails.
 	 */
 
 /* looks like doesn't make much sense here either */
-  void BlobRegressionTest::testBug8096() 
+  void BlobRegressionTest::testBug8096()
   {
     const int dataSize = 256;
 
@@ -217,7 +207,7 @@ namespace regression
 
     stmt.reset( locatorConn->createStatement() );
     selectDb( stmt );
-    
+
     String createTable( "CREATE TABLE testBug8096 (ID VARCHAR(10) "\
                         "PRIMARY KEY, DATA LONGBLOB)" );
 
@@ -282,14 +272,14 @@ namespace regression
   /**
 	 * Tests fix for BUG#9040 - PreparedStatement.addBatch() doesn't work with
 	 * server-side prepared statements and streaming BINARY data.
-	 * 
+	 *
 	 * @throws Exception
 	 *             if the test fails.
 	 */
 
 /* not relevant at the moment - no batches */
 /*
-  void BlobRegressionTest::testBug9040() 
+  void BlobRegressionTest::testBug9040()
   {
       stmt->executeUpdate("DROP TABLE IF EXISTS testBug9040");
       stmt->executeUpdate("create table if not exists testBug9040 "
@@ -318,7 +308,7 @@ namespace regression
 
 
 /* throws Exception */
-  void BlobRegressionTest::testBug10850() 
+  void BlobRegressionTest::testBug10850()
   {
     String tableName = "testBug10850";
     createTable(tableName, "(field1 TEXT)");
@@ -351,7 +341,7 @@ namespace regression
 
 /* throws Exception */
   /** Doesn't make much sense. As well as i'm not sure it's equivalenly translated*/
-  void BlobRegressionTest::testBug34677() 
+  void BlobRegressionTest::testBug34677()
   {
     createTable("testBug34677", "(field1 BLOB)");
 

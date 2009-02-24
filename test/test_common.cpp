@@ -1,23 +1,12 @@
+/*
+   Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
 
-/* Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   There are special exceptions to the terms and conditions of the GPL
-   as it is applied to this software. View the full text of the
-   exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
-   software distribution.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   The MySQL Connector/C++ is licensed under the terms of the GPL
+   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+   MySQL Connectors. There are special exceptions to the terms and
+   conditions of the GPL as it is applied to this software, see the
+   FLOSS License Exception
+   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
 #include <list>
@@ -1656,7 +1645,7 @@ static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 			} catch (sql::SQLException &e) {
 				printf("\n# ERR: Caught sql::SQLException at %s::%d  %s (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState().c_str());
 				printf("# ");
-				total_errors++;		
+				total_errors++;
 			}
 			try {
 				std::auto_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ?"));
@@ -1827,9 +1816,9 @@ static void test_prep_statement_3(std::auto_ptr<sql::Connection> & conn, std::au
 
 		uint64_t r1_c4 = UL64(9223372036854775810),
 				 r2_c4 = UL64(18446744073709551615);
-		
+
 		ensure("Data not populated", true == populate_test_table_PS_integers(conn, database));
-		
+
 		std::auto_ptr<sql::PreparedStatement> stmt1(conn->prepareStatement("INSERT INTO test_function_int (i, i_uns, b, b_uns) VALUES(?,?,?,?)"));
 		ensure("stmt0 is NULL", stmt1.get() != NULL);
 		stmt1->clearParameters();
@@ -1844,7 +1833,7 @@ static void test_prep_statement_3(std::auto_ptr<sql::Connection> & conn, std::au
 		stmt1->setInt64(3, r2_c3);
 		stmt1->setUInt64(4, r2_c4);
 		ensure("True returned for INSERT", false == stmt1->execute());
-	
+
 		std::auto_ptr<sql::PreparedStatement> stmt2(conn->prepareStatement("SELECT i, i_uns, b, b_uns FROM test_function_int"));
 		ensure("stmt1 is NULL", stmt2.get() != NULL);
 		ensure("False returned for SELECT", stmt2->execute());
