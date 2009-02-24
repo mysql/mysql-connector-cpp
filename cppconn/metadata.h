@@ -49,7 +49,7 @@ public:
 	{
 		bestRowUnknown = 0,
 		bestRowNotPseudo,
-		bestRowPseudo,
+		bestRowPseudo
 	};
 	enum
 	{

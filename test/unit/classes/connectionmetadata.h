@@ -52,8 +52,8 @@ public:
     TEST_CASE(getBestRowIdentifier);
     TEST_CASE(getCatalogs);
     TEST_CASE(getCatalogSeparator);
-    TEST_CASE(getCatalogTerm);
-    TEST_CASE(getCrossReference);
+    TEST_CASE(getCatalogTerm);    
+    TEST_CASE(getCrossReference);    
     TEST_CASE(getColumnPrivileges);
     TEST_CASE(getColumns);
     TEST_CASE(getConnection);
@@ -76,7 +76,7 @@ public:
     TEST_CASE(getSQLKeywords);
     TEST_CASE(getSuperTables);
     TEST_CASE(getSuperTypes);     
-    TEST_CASE(classAttributes);
+    TEST_CASE(classAttributes);     
   }
 
   /**

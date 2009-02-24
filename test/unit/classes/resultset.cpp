@@ -156,7 +156,9 @@ void resultset::getTypes()
   logMsg("resultset::getTypes - MySQL_ResultSet::get*");
   std::vector<columndefinition>::iterator it;
   std::stringstream msg;
+  TODO("Under development...");
   bool got_warning=false;
+  ResultSet pres;
 
   try
   {
@@ -186,9 +188,35 @@ void resultset::getTypes()
       msg.str("");
       msg << "INSERT INTO test(id) VALUES ('" << it->value << "')";
       stmt->execute(msg.str());
-      
-    }
 
+      msg.str("");
+      msg << "... testing '" << it->sqldef << "'";
+      logMsg(msg.str());
+
+      res.reset(stmt->executeQuery("SELECT id FROM test"));
+      pstmt.reset(con->prepareStatement("SELECT id FROM test"));
+      pres.reset(pstmt->executeQuery());
+      ASSERT(res->next());
+      if (it->value != res->getString("id"))
+      {
+        msg.str("");
+        msg << "... expecting '" << it->value << "', got '" << res->getString("id") << "'";
+        logMsg(msg.str());
+        got_warning=true;
+      }
+      ASSERT_EQUALS(res->getString("id"), res->getString(1));
+      ASSERT_EQUALS(res->getDouble("id"), res->getDouble(1));
+      ASSERT_EQUALS(res->getInt64("id"), res->getInt64(1));
+      ASSERT_EQUALS(res->getUInt64("id"), res->getUInt64(1));
+      ASSERT_EQUALS(res->getBoolean("id"), res->getBoolean(1));
+      ASSERT_EQUALS(pres->getString("id"), pres->getString(1));
+      ASSERT_EQUALS(pres->getDouble("id"), pres->getDouble(1));
+      ASSERT_EQUALS(pres->getInt64("id"), pres->getInt64(1));
+      ASSERT_EQUALS(pres->getUInt64("id"), pres->getUInt64(1));
+      ASSERT_EQUALS(pres->getBoolean("id"), res->getBoolean(1));
+    }
+    if (got_warning)
+      FAIL("See warnings!");
     stmt->execute("DROP TABLE IF EXISTS test");
   }
   catch (sql::SQLException &e)

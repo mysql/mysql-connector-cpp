@@ -4,9 +4,9 @@
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; version 2 of the License.
 
-   There are special exceptions to the terms and conditions of the GPL 
-   as it is applied to this software. View the full text of the 
-   exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this 
+   There are special exceptions to the terms and conditions of the GPL
+   as it is applied to this software. View the full text of the
+   exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
    software distribution.
 
    This program is distributed in the hope that it will be useful,
@@ -24,7 +24,12 @@
 
 
 #if !defined(_WIN32) && !defined(_WIN64)
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
 #else
 typedef __int8            int8_t;
 #ifndef uint8_t
