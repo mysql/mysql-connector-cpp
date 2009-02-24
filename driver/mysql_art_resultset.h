@@ -148,14 +148,13 @@ public:
 	int getFetchSize();
 	int getHoldability();
 
-	// Get the given column as int
-	int getInt(uint32_t columnIndex) const;
+	int32_t getInt(uint32_t columnIndex) const;
 
-	int getInt(const std::string& columnLabel) const;
+	int32_t getInt(const std::string& columnLabel) const;
 
-	unsigned int getUInt(uint32_t columnIndex) const;
+	uint32_t getUInt(uint32_t columnIndex) const;
 
-	unsigned int getUInt(const std::string& columnLabel) const;
+	uint32_t getUInt(const std::string& columnLabel) const;
 
 	int64_t getInt64(uint32_t columnIndex) const;
 

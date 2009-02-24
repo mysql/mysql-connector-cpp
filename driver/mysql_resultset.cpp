@@ -351,7 +351,7 @@ MySQL_ResultSet::getHoldability()
 
 
 /* {{{ MySQL_ResultSet::getInt() -I- */
-int
+int32_t
 MySQL_ResultSet::getInt(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ResultSet::getInt(int)");
@@ -361,7 +361,7 @@ MySQL_ResultSet::getInt(const uint32_t columnIndex) const
 
 
 /* {{{ MySQL_ResultSet::getInt() -I- */
-int
+int32_t
 MySQL_ResultSet::getInt(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ResultSet::getInt(string)");
@@ -371,7 +371,7 @@ MySQL_ResultSet::getInt(const std::string& columnLabel) const
 
 
 /* {{{ MySQL_ResultSet::getUInt() -I- */
-unsigned int
+uint32_t
 MySQL_ResultSet::getUInt(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ResultSet::getUInt(int)");
@@ -381,7 +381,7 @@ MySQL_ResultSet::getUInt(const uint32_t columnIndex) const
 
 
 /* {{{ MySQL_ResultSet::getUInt() -I- */
-unsigned int
+uint32_t
 MySQL_ResultSet::getUInt(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ResultSet::getUInt(string)");
