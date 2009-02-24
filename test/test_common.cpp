@@ -2098,12 +2098,6 @@ static void test_not_implemented_connection(std::auto_ptr<sql::Connection> & con
 
 		try {
 			total_tests++;
-			conn->getClientOption("foo", &bar);
-			ensure("ERR: Exception not thrown", false);
-		} catch (sql::MethodNotImplementedException &) {}
-
-		try {
-			total_tests++;
 			conn->isReadOnly();
 			ensure("ERR: Exception not thrown", false);
 		} catch (sql::MethodNotImplementedException &) {}
