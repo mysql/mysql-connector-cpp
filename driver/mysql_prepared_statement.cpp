@@ -265,7 +265,7 @@ MySQL_Prepared_Statement::execute(const std::string&)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::execute(const std::string& sql)");
 	throw sql::MethodNotImplementedException("MySQL_Prepared_Statement::execute");
-	return false;
+	return false; // fool compilers
 }
 /* }}} */
 
@@ -411,6 +411,7 @@ sql::ResultSet *
 MySQL_Prepared_Statement::executeQuery(const std::string&)
 {
 	throw sql::MethodNotImplementedException("MySQL_Prepared_Statement::executeQuery"); /* TODO - what to do? Comes from Statement */
+	return NULL; // fool compilers
 }
 /* }}} */
 
@@ -433,6 +434,7 @@ int
 MySQL_Prepared_Statement::executeUpdate(const std::string&)
 {
 	throw sql::MethodNotImplementedException("MySQL_Prepared_Statement::executeUpdate"); /* TODO - what to do? Comes from Statement */
+	return 0; // fool compilers
 }
 /* }}} */
 
@@ -792,6 +794,7 @@ MySQL_Prepared_Statement::getFetchSize()
 {
 	checkClosed();
 	throw MethodNotImplementedException("MySQL_Prepared_Statement::getFetchSize");
+	return 0; // fool compilers
 }
 /* }}} */
 
@@ -877,6 +880,7 @@ MySQL_Prepared_Statement::getMaxFieldSize()
 {
 	checkClosed();
 	throw MethodNotImplementedException("MySQL_Prepared_Statement::getMaxFieldSize");
+	return 0; // fool compilers
 }
 /* }}} */
 
@@ -887,6 +891,7 @@ MySQL_Prepared_Statement::getMaxRows()
 {
 	checkClosed();
 	throw MethodNotImplementedException("MySQL_Prepared_Statement::getMaxRows");
+	return 0; // fool compilers
 }
 /* }}} */
 
@@ -897,6 +902,7 @@ MySQL_Prepared_Statement::getMoreResults()
 {
 	checkClosed();
 	throw MethodNotImplementedException("MySQL_Prepared_Statement::getMoreResults");
+	return false; // fool compilers
 }
 /* }}} */
 
@@ -907,6 +913,7 @@ MySQL_Prepared_Statement::getQueryTimeout()
 {
 	checkClosed();
 	throw MethodNotImplementedException("MySQL_Prepared_Statement::getQueryTimeout");
+	return 0; // fool compilers
 }
 /* }}} */
 
@@ -917,6 +924,7 @@ MySQL_Prepared_Statement::getUpdateCount()
 {
 	checkClosed();
 	throw MethodNotImplementedException("MySQL_Prepared_Statement::getUpdateCount");
+	return 0; // fool compilers
 }
 /* }}} */
 

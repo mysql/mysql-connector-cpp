@@ -2065,8 +2065,8 @@ MySQL_ConnectionMetaData::getCrossReference(const std::string& primaryCatalog, c
 	char buf[16];
 	buf[sizeof(buf) - 1] = '\0';
 
-	/* Not sure which version, let it not be 5.0.0, just something above which is anyway not used anymore */
-	if (use_info_schema && server_version >= 50010) {
+	/* Not sure which version, let it not be 5.1.0, just something above which is anyway not used anymore */
+	if (use_info_schema && server_version >= 50110) {
 		/* This just doesn't work */
 		/* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
 		char buf[10];
@@ -2302,8 +2302,8 @@ MySQL_ConnectionMetaData::getExportedKeys(const std::string& catalog, const std:
 	char buf[16];
 	buf[sizeof(buf) - 1] = '\0';
 
-	/* Not sure which version, let it not be 5.0.0, just something above which is anyway not used anymore */
-	if (use_info_schema && server_version >= 50010) {
+	/* Not sure which version, let it not be 5.1.0, just something above which is anyway not used anymore */
+	if (use_info_schema && server_version >= 50110) {
 		/* This just doesn't work */
 		/* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
 		char buf[10];

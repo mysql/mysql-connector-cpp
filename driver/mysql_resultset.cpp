@@ -263,6 +263,7 @@ MySQL_ResultSet::getConcurrency()
 	CPP_ENTER("MySQL_ResultSet::getConcurrency");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ResultSet::getConcurrency()");
+	return 0; // fool compilers
 }
 /* }}} */
 
@@ -274,6 +275,7 @@ MySQL_ResultSet::getCursorName()
 	CPP_ENTER("MySQL_ResultSet::getCursorName");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ResultSet::getCursorName()");
+	return ""; // fool compilers
 }
 /* }}} */
 
@@ -319,6 +321,7 @@ MySQL_ResultSet::getFetchDirection()
 	CPP_ENTER("MySQL_ResultSet::getFetchDirection");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ResultSet::getFetchDirection()");
+	return 0; // fool compilers
 }
 /* }}} */
 
@@ -330,6 +333,7 @@ MySQL_ResultSet::getFetchSize()
 	CPP_ENTER("MySQL_ResultSet::getFetchSize");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ResultSet::getFetchSize()");
+	return 0; // fool compilers
 }
 /* }}} */
 
@@ -341,6 +345,7 @@ MySQL_ResultSet::getHoldability()
 	CPP_ENTER("MySQL_ResultSet::getHoldability");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ResultSet::getHoldability()");
+	return 0; // fool compilers
 }
 /* }}} */
 
@@ -485,6 +490,7 @@ MySQL_ResultSet::getRowId(unsigned int)
 	CPP_ENTER("MySQL_ResultSet::getRowId");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ResultSet::getRowId(uint32_t columnIndex)");
+	return NULL; // fool compilers
 }
 /* }}} */
 
@@ -496,6 +502,7 @@ MySQL_ResultSet::getRowId(const std::string &)
 	CPP_ENTER("MySQL_ResultSet::getRowId");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ResultSet::getRowId(const std::string & columnLabel)");
+	return NULL; // fool compilers
 }
 /* }}} */
 
@@ -768,6 +775,7 @@ MySQL_ResultSet::rowDeleted()
 	CPP_ENTER("MySQL_ResultSet::rowDeleted");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ResultSet::rowDeleted()");
+	return false; // fool compilers
 }
 /* }}} */
 
@@ -779,6 +787,7 @@ MySQL_ResultSet::rowInserted()
 	CPP_ENTER("MySQL_ResultSet::rowInserted");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ResultSet::rowInserted()");
+	return false; // fool compilers
 }
 /* }}} */
 
@@ -790,6 +799,7 @@ MySQL_ResultSet::rowUpdated()
 	CPP_ENTER("MySQL_ResultSet::rowUpdated");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ResultSet::rowUpdated()");
+	return false; // fool compilers
 }
 /* }}} */
 

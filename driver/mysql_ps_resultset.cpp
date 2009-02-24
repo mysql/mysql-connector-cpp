@@ -306,6 +306,7 @@ MySQL_Prepared_ResultSet::getConcurrency()
 	CPP_ENTER("MySQL_Prepared_ResultSet::getConcurrency");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getConcurrency()");
+	return 0; // fool compilers
 }
 /* }}} */
 
@@ -317,6 +318,7 @@ MySQL_Prepared_ResultSet::getCursorName()
 	CPP_ENTER("MySQL_Prepared_ResultSet::getCursorName");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getCursorName()");
+	return ""; // fool compilers
 }
 /* }}} */
 
@@ -381,6 +383,7 @@ MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
 		// ToDo : Geometry? default ?
 	}
 	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getDouble: unhandled type. Please, report");
+	return .0; // fool compilers
 }
 /* }}} */
 
@@ -402,7 +405,9 @@ MySQL_Prepared_ResultSet::getFetchDirection()
 	CPP_ENTER("MySQL_Prepared_ResultSet::getFetchDirection");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getFetchDirection()");
+	return 0; // fool compilers
 }
+/* }}} */
 
 
 /* {{{ MySQL_Prepared_ResultSet::getFetchSize() -U- */
@@ -412,6 +417,7 @@ MySQL_Prepared_ResultSet::getFetchSize()
 	CPP_ENTER("MySQL_Prepared_ResultSet::getFetchSize");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getFetchSize()");
+	return 0; // fool compilers
 }
 /* }}} */
 
@@ -423,6 +429,7 @@ MySQL_Prepared_ResultSet::getHoldability()
 	CPP_ENTER("MySQL_Prepared_ResultSet::getHoldability");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getHoldability()");
+	return 0; // fool compilers
 }
 /* }}} */
 
@@ -693,6 +700,7 @@ MySQL_Prepared_ResultSet::getRowId(unsigned int)
 	CPP_ENTER("MySQL_Prepared_ResultSet::getRowId");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getRowId()");
+	return NULL; // fool compilers
 }
 /* }}} */
 
@@ -704,6 +712,7 @@ MySQL_Prepared_ResultSet::getRowId(const std::string &)
 	CPP_ENTER("MySQL_Prepared_ResultSet::getRowId");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getRowId()");
+	return NULL; // fool compilers
 }
 /* }}} */
 
@@ -1036,6 +1045,7 @@ MySQL_Prepared_ResultSet::rowDeleted()
 	CPP_ENTER("MySQL_Prepared_ResultSet::rowDeleted");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::rowDeleted()");
+	return false; // fool compilers
 }
 /* }}} */
 
@@ -1047,6 +1057,7 @@ MySQL_Prepared_ResultSet::rowInserted()
 	CPP_ENTER("MySQL_Prepared_ResultSet::rowInserted");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::rowInserted()");
+	return false; // fool compilers
 }
 /* }}} */
 
@@ -1058,6 +1069,7 @@ MySQL_Prepared_ResultSet::rowUpdated()
 	CPP_ENTER("MySQL_Prepared_ResultSet::rowUpdated");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::rowUpdated()");
+	return false; // fool compilers
 }
 /* }}} */
 
