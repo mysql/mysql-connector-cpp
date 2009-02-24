@@ -142,8 +142,8 @@ namespace FileUtils
   {
     _2deleteAtexit.insert( std::make_pair( fileName, fileObject ) );
 
-    if ( _2deleteAtexit.size() == 1 )
-      atexit( filesDeleter );
+    //if ( _2deleteAtexit.size() == 1 )
+      //atexit( filesDeleter );
   }
 
 

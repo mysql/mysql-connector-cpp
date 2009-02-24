@@ -16,6 +16,7 @@
 
 #include <cppconn/exception.h>
 #include <sstream>
+#include <math.h>
 
 
 namespace sql
@@ -156,11 +157,13 @@ MyVal::getUInt64()
 bool
 MyVal::getBool()
 {
+  static const double delta= 0.000001;
+
 	switch (val_type) {
 		case typeString:
 			return getInt64() != 0;
 		case typeDouble:
-			return abs(static_cast<double>(val.dval - .0)) < 0.0000001;
+			return val.dval < delta && val.dval > -delta;
 		case typeInt:
 		case typeUInt:
 		case typeBool:
