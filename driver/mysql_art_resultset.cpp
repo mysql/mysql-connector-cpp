@@ -160,7 +160,7 @@ MyVal::getBool()
 		case typeString:
 			return getInt64() != 0;
 		case typeDouble:
-			return abs(val.dval - 0) < 0.0000001;
+			return abs(static_cast<double>(val.dval - .0)) < 0.0000001;
 		case typeInt:
 		case typeUInt:
 		case typeBool:
