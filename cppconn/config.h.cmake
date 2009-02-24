@@ -1,0 +1,21 @@
+#cmakedefine HAVE_STDINT_H 1
+#cmakedefine HAVE_INTTYPES_H 1
+
+#cmakedefine HAVE_INT8_T   1
+#cmakedefine HAVE_UINT8_T  1
+#cmakedefine HAVE_INT16_T  1
+#cmakedefine HAVE_UINT16_T 1
+#cmakedefine HAVE_INT32_T  1
+#cmakedefine HAVE_UINT32_T 1
+#cmakedefine HAVE_INT32_T  1
+#cmakedefine HAVE_UINT32_T 1
+#cmakedefine HAVE_INT64_T  1
+#cmakedefine HAVE_UINT64_T 1
+#cmakedefine HAVE_MS_INT8     1
+#cmakedefine HAVE_MS_UINT8    1
+#cmakedefine HAVE_MS_INT16    1
+#cmakedefine HAVE_MS_UINT16   1
+#cmakedefine HAVE_MS_INT32    1
+#cmakedefine HAVE_MS_UINT32   1
+#cmakedefine HAVE_MS_INT64   1
+#cmakedefine HAVE_MS_UINT64   1

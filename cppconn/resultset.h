@@ -22,40 +22,43 @@
 #ifndef _SQL_RESULTSET_H_
 #define _SQL_RESULTSET_H_
 
+#include "config.h"
 
-#if !defined(_WIN32) && !defined(_WIN64)
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
+
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
-#else
-#ifndef int64_t_defined
-#define int64_t_defined
-typedef __int64           int64_t;
-#endif
-#ifndef uint64_t_defined
-#define uint64_t_defined
-typedef unsigned __int64  uint64_t;
+
+#if defined(_WIN32) || defined(_WIN64)
+#ifndef CPPCONN_DONT_TYPEDEF_MS_TYPES_TO_C99_TYPES
+
+#ifdef HAVE_MS_INT32
+typedef __int32			int32_t;
 #endif
 
-#ifndef int32_t_defined
-#define int32_t_defined
-typedef __int32           int32_t;
+#ifdef HAVE_MS_UINT32
+typedef unsigned __int32	uint32_t;
 #endif
-#ifndef uint32_t_defined
-#define uint32_t_defined
-typedef unsigned __int32  uint32_t;
+
+#ifdef HAVE_MS_INT64
+typedef __int64			int64_t;
 #endif
+#ifdef HAVE_MS_UINT64
+typedef unsigned __int64	uint64_t;
+#endif
+
+#endif  // CPPCONN_DONT_TYPEDEF_MS_TYPES_TO_C99_TYPES
 #endif	//	_WIN32
 
 
-#include "resultset_metadata.h"
 #include <list>
 #include <string>
 #include <map>
 #include <iostream>
+#include "resultset_metadata.h"
 
 
 namespace sql
