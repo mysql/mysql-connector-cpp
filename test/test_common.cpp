@@ -1103,7 +1103,7 @@ static void test_result_set_check_out_of_bound(sql::ResultSet *rset1)
 {
 	ensure("res1 is empty", rset1->next() != false);
 	try {
-		rset1->getInt(-123);
+		rset1->getInt(0);
 		ensure("ERR: No sql::InvalidArgumentException thrown", false);
 	} catch (sql::InvalidArgumentException &) {}
 	try {
@@ -1115,7 +1115,7 @@ static void test_result_set_check_out_of_bound(sql::ResultSet *rset1)
 		ensure("ERR: No sql::InvalidArgumentException thrown", false);
 	} catch (sql::InvalidArgumentException &) {}
 	try {
-		rset1->getString(-123);
+		rset1->getString(0);
 		ensure("ERR: No sql::InvalidArgumentException thrown", false);
 	} catch (sql::InvalidArgumentException &) {}
 	try {
@@ -1127,7 +1127,7 @@ static void test_result_set_check_out_of_bound(sql::ResultSet *rset1)
 		ensure("ERR: No sql::InvalidArgumentException thrown", false);
 	} catch (sql::InvalidArgumentException &) {}
 	try {
-		rset1->getDouble(-123);
+		rset1->getDouble(0);
 		ensure("ERR: No sql::InvalidArgumentException thrown", false);
 	} catch (sql::InvalidArgumentException &) {}
 	try {
