@@ -74,7 +74,7 @@ void connectionmetadata::getAttributes()
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
-    ResultSet res(dbmeta->getAttributes(con->getCatalog(), con->getSchema(), "", ""));
+    res.reset(dbmeta->getAttributes(con->getCatalog(), con->getSchema(), "", ""));
     ResultSetMetaData resmeta(res->getMetaData());
 
     it=attributes.begin();
@@ -741,64 +741,63 @@ void connectionmetadata::getExportedKeys()
   }
 }
 
-void connectionmetadata::checkForeignKey(Connection &con, ResultSet &res)
+void connectionmetadata::checkForeignKey(Connection &mycon, ResultSet &myres)
 {
 
-  ASSERT_EQUALS(con->getCatalog(), res->getString(1));
-  ASSERT_EQUALS(res->getString(1), res->getString("PKTABLE_CAT"));
+  ASSERT_EQUALS(mycon->getCatalog(), myres->getString(1));
+  ASSERT_EQUALS(myres->getString(1), myres->getString("PKTABLE_CAT"));
 
-  ASSERT_EQUALS(con->getSchema(), res->getString(2));
-  ASSERT_EQUALS(res->getString(2), res->getString("PKTABLE_SCHEM"));
+  ASSERT_EQUALS(mycon->getSchema(), myres->getString(2));
+  ASSERT_EQUALS(myres->getString(2), myres->getString("PKTABLE_SCHEM"));
 
-  ASSERT_EQUALS("parent", res->getString(3));
-  ASSERT_EQUALS(res->getString(3), res->getString("PKTABLE_NAME"));
+  ASSERT_EQUALS("parent", myres->getString(3));
+  ASSERT_EQUALS(myres->getString(3), myres->getString("PKTABLE_NAME"));
 
-  ASSERT_EQUALS("pid", res->getString(4));
-  ASSERT_EQUALS(res->getString(4), res->getString("PKCOLUMN_NAME"));
+  ASSERT_EQUALS("pid", myres->getString(4));
+  ASSERT_EQUALS(myres->getString(4), myres->getString("PKCOLUMN_NAME"));
 
-  ASSERT_EQUALS(con->getCatalog(), res->getString(5));
-  ASSERT_EQUALS(res->getString(5), res->getString("FKTABLE_CAT"));
+  ASSERT_EQUALS(mycon->getCatalog(), myres->getString(5));
+  ASSERT_EQUALS(myres->getString(5), myres->getString("FKTABLE_CAT"));
 
-  ASSERT_EQUALS(con->getSchema(), res->getString(6));
-  ASSERT_EQUALS(res->getString(6), res->getString("FKTABLE_SCHEM"));
+  ASSERT_EQUALS(mycon->getSchema(), myres->getString(6));
+  ASSERT_EQUALS(myres->getString(6), myres->getString("FKTABLE_SCHEM"));
 
-  ASSERT_EQUALS("child", res->getString(7));
-  ASSERT_EQUALS(res->getString(7), res->getString("FKTABLE_NAME"));
+  ASSERT_EQUALS("child", myres->getString(7));
+  ASSERT_EQUALS(myres->getString(7), myres->getString("FKTABLE_NAME"));
 
-  ASSERT_EQUALS("cpid", res->getString(8));
-  ASSERT_EQUALS(res->getString(8), res->getString("FKCOLUMN_NAME"));
+  ASSERT_EQUALS("cpid", myres->getString(8));
+  ASSERT_EQUALS(myres->getString(8), myres->getString("FKCOLUMN_NAME"));
 
-  ASSERT_EQUALS(1, res->getInt(9));
-  ASSERT_EQUALS(res->getInt(9), res->getInt("KEY_SEQ"));
+  ASSERT_EQUALS(1, myres->getInt(9));
+  ASSERT_EQUALS(myres->getInt(9), myres->getInt("KEY_SEQ"));
 
-  ASSERT_EQUALS((int64_t) sql::DatabaseMetaData::importedKeyCascade, res->getInt64(10));
-  ASSERT_EQUALS(res->getInt64(10), res->getInt64("UPDATE_RULE"));
+  ASSERT_EQUALS((int64_t) sql::DatabaseMetaData::importedKeyCascade, myres->getInt64(10));
+  ASSERT_EQUALS(myres->getInt64(10), myres->getInt64("UPDATE_RULE"));
 
-  ASSERT(sql::DatabaseMetaData::importedKeyNoAction != res->getInt64(10));
-  ASSERT(sql::DatabaseMetaData::importedKeySetNull != res->getInt64(10));
-  ASSERT(sql::DatabaseMetaData::importedKeySetDefault != res->getInt64(10));
-  ASSERT(sql::DatabaseMetaData::importedKeyRestrict != res->getInt64(10));
+  ASSERT(sql::DatabaseMetaData::importedKeyNoAction != myres->getInt64(10));
+  ASSERT(sql::DatabaseMetaData::importedKeySetNull != myres->getInt64(10));
+  ASSERT(sql::DatabaseMetaData::importedKeySetDefault != myres->getInt64(10));
+  ASSERT(sql::DatabaseMetaData::importedKeyRestrict != myres->getInt64(10));
 
-  ASSERT_EQUALS((int64_t) sql::DatabaseMetaData::importedKeyCascade, res->getInt64(11));
-  ASSERT_EQUALS(res->getInt64(11), res->getInt64("DELETE_RULE"));
+  ASSERT_EQUALS((int64_t) sql::DatabaseMetaData::importedKeyCascade, myres->getInt64(11));
+  ASSERT_EQUALS(myres->getInt64(11), myres->getInt64("DELETE_RULE"));
 
-  ASSERT(sql::DatabaseMetaData::importedKeyNoAction != res->getInt64(11));
-  ASSERT(sql::DatabaseMetaData::importedKeySetNull != res->getInt64(11));
-  ASSERT(sql::DatabaseMetaData::importedKeySetDefault != res->getInt64(11));
-  ASSERT(sql::DatabaseMetaData::importedKeyRestrict != res->getInt64(11));
+  ASSERT(sql::DatabaseMetaData::importedKeyNoAction != myres->getInt64(11));
+  ASSERT(sql::DatabaseMetaData::importedKeySetNull != myres->getInt64(11));
+  ASSERT(sql::DatabaseMetaData::importedKeySetDefault != myres->getInt64(11));
+  ASSERT(sql::DatabaseMetaData::importedKeyRestrict != myres->getInt64(11));
 
   // InnoDB should give the FK a name
-  ASSERT("" != res->getString("FK_NAME"));
-  ASSERT_EQUALS(res->getString(12), res->getString("FK_NAME"));
+  ASSERT("" != myres->getString("FK_NAME"));
+  ASSERT_EQUALS(myres->getString(12), myres->getString("FK_NAME"));
 
   // TODO - not sure what value to expect
-  ASSERT_EQUALS("PRIMARY", res->getString("PK_NAME"));
-  ASSERT_EQUALS(res->getString(13), res->getString("PK_NAME"));
+  ASSERT_EQUALS("PRIMARY", myres->getString("PK_NAME"));
+  ASSERT_EQUALS(myres->getString(13), myres->getString("PK_NAME"));
 
-  ASSERT_EQUALS((int64_t) sql::DatabaseMetaData::importedKeyNotDeferrable, res->getInt64(14));
-  ASSERT(sql::DatabaseMetaData::importedKeyInitiallyDeferred != res->getInt64(10));
-  ASSERT(sql::DatabaseMetaData::importedKeyInitiallyImmediate != res->getInt64(10));
-
+  ASSERT_EQUALS((int64_t) sql::DatabaseMetaData::importedKeyNotDeferrable, myres->getInt64(14));
+  ASSERT(sql::DatabaseMetaData::importedKeyInitiallyDeferred != myres->getInt64(10));
+  ASSERT(sql::DatabaseMetaData::importedKeyInitiallyImmediate != myres->getInt64(10));
 }
 
 void connectionmetadata::getIndexInfo()
