@@ -98,7 +98,7 @@ void TAP::Summary( unsigned           testsRun
 
 }
 
-void TAP::SuiteSummary(const String & suiteName
+void TAP::SuiteSummary(const String & _suiteName
                        , unsigned testsRun
                        , unsigned testsFailed)
 {
