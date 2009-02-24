@@ -12,28 +12,33 @@
 #ifndef _MYSQL_UTIL_H_
 #define _MYSQL_UTIL_H_
 
-
-#if !defined(_WIN32) && !defined(_WIN64)
+#include <cppconn/config.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
-#else
-typedef __int8            int8_t;
-#ifndef uint8_t
-typedef unsigned __int8   uint8_t;
+
+
+#if defined(_WIN32) || !defined(_WIN64)
+#ifdef HAVE_MS_INT8
+typedef __int8			int8_t;
 #endif
-typedef __int16           int16_t;
-typedef unsigned __int16  uint16_t;
-#ifndef int32_t
-typedef __int32           int32_t;
+#ifdef HAVE_MS_UINT8
+typedef unsigned __int8	uint8_t;
 #endif
-#ifndef uint32_t
-typedef unsigned __int32  uint32_t;
+#ifdef HAVE_MS_INT16
+typedef __int16			int16_t;
 #endif
+#ifdef HAVE_MS_UINT16
+typedef unsigned __int16	uint16_t;
+#endif
+
 #endif	//	_WIN32
+
+
+
 
 #ifndef _WIN32
 #include <stdlib.h>
