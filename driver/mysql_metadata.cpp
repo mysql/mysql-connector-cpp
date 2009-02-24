@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include <memory>
+#include <cppconn/exception.h>
 #include "mysql_connection.h"
 #include "mysql_metadata.h"
 #include "mysql_art_resultset.h"

@@ -18,16 +18,17 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+#ifndef _WIN32
+#include <string.h>
+#endif
 
+#include <sstream>
+
+#include <cppconn/exception.h>
 #include "mysql_resultset.h"
 #include "mysql_resultset_metadata.h"
 #include "mysql_statement.h"
 #include "mysql_res_wrapper.h"
-#include <sstream>
-
-#ifndef _WIN32
-#include <string.h>
-#endif
 
 #include "mysql_debug.h"
 #include "mysql_util.h"

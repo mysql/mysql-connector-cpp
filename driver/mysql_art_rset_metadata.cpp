@@ -30,6 +30,7 @@
 #include "mysql_util.h"
 
 #include <cppconn/datatype.h>
+#include <cppconn/exception.h>
 
 namespace sql
 {

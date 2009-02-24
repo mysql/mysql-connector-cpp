@@ -22,15 +22,17 @@
 #ifndef _MYSQL_ART_RESULTSET_H_
 #define _MYSQL_ART_RESULTSET_H_
 
+#include <list>
+#include <vector>
+#include <string.h>
+#include <stdlib.h>
+#include <memory>
+
 #include <cppconn/resultset.h>
 #include "mysql_res_wrapper.h"
 
 #include "mysql_private_iface.h"
 
-#include <list>
-#include <vector>
-#include <string.h>
-#include <stdlib.h>
 
 namespace sql
 {
@@ -239,7 +241,7 @@ protected:
 public:
 
 	unsigned int num_fields;
-	std::auto_ptr< rset_t > rset;
+	::std::auto_ptr< MySQL_ArtResultSet::rset_t > rset;
 	rset_t::iterator current_record;
 	bool started;
 

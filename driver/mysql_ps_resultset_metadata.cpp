@@ -24,6 +24,7 @@
 #endif	//	_WIN32
 #include <string.h>
 
+#include <cppconn/exception.h>
 #include "mysql_ps_resultset.h"
 #include "mysql_ps_resultset_metadata.h"
 

@@ -19,9 +19,10 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include <sstream>
+#include <cppconn/exception.h>
 #include "mysql_constructed_resultset.h"
 #include "mysql_cset_metadata.h"
-#include <sstream>
 
 #if !defined(_WIN32) && !defined(_WIN64)
 #include <stdlib.h>

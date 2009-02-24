@@ -22,6 +22,7 @@
 #include <memory>
 #include <iostream>
 #include <sstream>
+#include <cppconn/exception.h>
 #include "mysql_connection.h"
 #include "mysql_statement.h"
 #include "mysql_prepared_statement.h"

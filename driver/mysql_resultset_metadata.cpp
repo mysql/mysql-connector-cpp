@@ -26,13 +26,12 @@
 #include <string.h>
 
 #include <cppconn/datatype.h>
+#include <cppconn/exception.h>
 #include "mysql_resultset.h"
 #include "mysql_resultset_metadata.h"
 
 #include "mysql_debug.h"
 #include "mysql_util.h"
-
-#define MAX_LEN_PER_CHAR 4
 
 namespace sql
 {

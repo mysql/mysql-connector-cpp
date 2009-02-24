@@ -23,13 +23,14 @@
 #include <stdlib.h>
 #endif	//	_WIN32
 
+#include <cppconn/datatype.h>
+#include <cppconn/exception.h>
 #include "mysql_constructed_resultset.h"
 #include "mysql_cset_metadata.h"
 
 #include "mysql_debug.h"
 #include "mysql_util.h"
 
-#include <cppconn/datatype.h>
 
 namespace sql
 {
