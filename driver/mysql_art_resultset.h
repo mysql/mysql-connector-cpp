@@ -73,9 +73,9 @@ public:
 
 	MyVal(uint64_t ul) : val_type(typeUInt) { val.ulval = ul; }
 
-	MyVal(bool b) : val_type(typeBool) { val.lval= 0; val.bval = b; } 
+	MyVal(bool b) : val_type(typeBool) { val.bval = b; } 
 
-	MyVal(void * p) : val_type(typePtr) { val.lval= 0; val.pval = p; }
+	MyVal(void * p) : val_type(typePtr) { val.pval = p; }
 
 	MyVal(const MyVal & rhs) { copy_obj(rhs); }
 

@@ -46,7 +46,7 @@ void assertEquals(bool expected, bool result,
   {
     std::stringstream errmsg;
     errmsg.str("");
-    errmsg << "assertEquals(boolean) failed at " << file << " on line " << line;
+    errmsg << "assertEquals(boolean) failed in " << file << " at line " << line;
     TestsListener::testHasFailed(errmsg.str());
   }
 
