@@ -119,7 +119,7 @@ MyVal::getInt64()
 		case typePtr:
 			return 0;
 		case typeDouble:
-			return static_cast<uint64_t>(val.dval);
+			return static_cast<int64_t>(val.dval);
 		case typeInt:
 		case typeUInt:
 		case typeBool:
