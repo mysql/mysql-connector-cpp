@@ -20,10 +20,10 @@ namespace classes
 
   void art_resultset::testMyVal()
   {
-    sql::mysql::MyVal valInt1     ( 0x0000000100000000LL );
-    sql::mysql::MyVal valInt2     ( 0x0000000000000100LL );
-    sql::mysql::MyVal valInt3     ( 0x8000000000000100LL );
-    sql::mysql::MyVal valUInt1    ( 0xfffffffffffffffeULL );
+    sql::mysql::MyVal valInt1     ( static_cast<int64_t>(0x0000000100000000LL   ) );
+    sql::mysql::MyVal valInt2     ( static_cast<int64_t>(0x0000000000000100LL   ) );
+    sql::mysql::MyVal valInt3     ( static_cast<int64_t>(0x8000000000000100LL   ) );
+    sql::mysql::MyVal valUInt1    ( static_cast<uint64_t>(0xfffffffffffffffeULL  ) );
     sql::mysql::MyVal valDouble1  ( 0.00001  );
     sql::mysql::MyVal valDouble2  ( 0.0      );
     sql::mysql::MyVal valDouble3  ( 2.49     );
