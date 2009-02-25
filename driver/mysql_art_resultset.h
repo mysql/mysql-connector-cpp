@@ -62,7 +62,6 @@ class MyVal
 		}
 	}
 
-  void zeroValMem() { val.lval= 0; }
 public:
 	MyVal(const std::string & s);
 
@@ -74,9 +73,9 @@ public:
 
 	MyVal(uint64_t ul) : val_type(typeUInt) { val.ulval = ul; }
 
-	MyVal(bool b) : val_type(typeBool) { zeroValMem(); val.bval = b; } 
+	MyVal(bool b) : val_type(typeBool) { val.bval = b; } 
 
-	MyVal(void * p) : val_type(typePtr) { zeroValMem(); val.pval = p; }
+	MyVal(void * p) : val_type(typePtr) { val.pval = p; }
 
 	MyVal(const MyVal & rhs) { copy_obj(rhs); }
 
