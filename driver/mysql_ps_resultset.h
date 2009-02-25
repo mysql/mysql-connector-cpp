@@ -96,7 +96,7 @@ public:
 	int32_t getInt(const std::string& columnLabel) const;
 
 	uint32_t getUInt(uint32_t columnIndex) const;
-	uint32_t int getUInt(const std::string& columnLabel) const;
+	uint32_t getUInt(const std::string& columnLabel) const;
 
 	int64_t getInt64(uint32_t columnIndex) const;
 	int64_t getInt64(const std::string& columnLabel) const;

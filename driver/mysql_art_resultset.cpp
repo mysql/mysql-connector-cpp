@@ -163,7 +163,7 @@ MyVal::getBool()
 		case typeString:
 			return getInt64() != 0;
 		case typeDouble:
-			return val.dval < delta && val.dval > -delta;
+			return !(val.dval < delta && val.dval > -delta);
 		case typeInt:
 		case typeUInt:
 		case typeBool:
