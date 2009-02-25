@@ -62,7 +62,7 @@ class MyVal
 		}
 	}
 
-  void zeroValMem() { val.lval= 0; }
+	void zeroValMem() { val.lval= 0; }
 public:
 	MyVal(const std::string & s);
 

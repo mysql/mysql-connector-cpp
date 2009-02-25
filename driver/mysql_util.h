@@ -37,7 +37,13 @@ typedef unsigned __int16	uint16_t;
 
 #endif	//	_WIN32
 
-
+#ifndef UL64
+#ifdef _WIN32
+#define UL64(x) x##ui64
+#else
+#define UL64(x) x##ULL
+#endif
+#endif
 
 
 #ifndef _WIN32

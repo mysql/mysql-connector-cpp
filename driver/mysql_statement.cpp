@@ -21,15 +21,6 @@
 #include "mysql_debug.h"
 #include "mysql_util.h"
 
-
-#ifndef UL64
-#ifdef _WIN32
-#define UL64(x) x##ui64
-#else
-#define UL64(x) x##ULL
-#endif
-#endif
-
 namespace sql
 {
 namespace mysql

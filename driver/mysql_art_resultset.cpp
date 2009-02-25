@@ -121,9 +121,8 @@ MyVal::getInt64()
 		case typeDouble:
 			return static_cast<int64_t>(val.dval);
 		case typeBool:
-      return val.bval ? 1LL : 0LL;
-
-    case typeInt:
+			return val.bval ? 1LL : 0LL;
+		case typeInt:
 		case typeUInt:
 			return val.lval;
 
@@ -145,8 +144,8 @@ MyVal::getUInt64()
 		case typeDouble:
 			return static_cast<uint64_t>(val.dval);
 		case typeBool:
-      return val.bval ? 1ULL : 0ULL;  
-    case typeInt:
+			return val.bval ? UL64(1) : UL64(0);
+		case typeInt:
 		case typeUInt:
 			return val.ulval;
 
@@ -160,7 +159,7 @@ MyVal::getUInt64()
 bool
 MyVal::getBool()
 {
-  static const double delta= 0.000001;
+	static const double delta= 0.000001;
 
 	switch (val_type) {
 		case typeString:
