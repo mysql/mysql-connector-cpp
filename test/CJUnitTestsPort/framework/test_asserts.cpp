@@ -25,7 +25,7 @@ void assertTrue(const char * msg, bool expression,
   {
     std::stringstream errmsg;
     errmsg.str("");
-    errmsg << "assertTrue() failed at " << file << " on line " << line;
+    errmsg << "assertTrue() failed in " << file << ", line #" << line;
     errmsg << ": '" << msg << "'";
     TestsListener::testHasFailed(errmsg.str());
   }
@@ -46,7 +46,7 @@ void assertEquals(bool expected, bool result,
   {
     std::stringstream errmsg;
     errmsg.str("");
-    errmsg << "assertEquals(boolean) failed in " << file << " at line " << line;
+    errmsg << "assertEquals(boolean) failed in " << file << ", line #" << line;
     TestsListener::testHasFailed(errmsg.str());
   }
 
@@ -59,7 +59,7 @@ void assertEquals(int expected, int result
   {
     std::stringstream errmsg;
     errmsg.str("");
-    errmsg << "assertEquals(int) failed at " << file << " on line " << line;
+    errmsg << "assertEquals(int) failed in " << file << ", line #" << line;
     errmsg << " expecting '" << expected << "' got '" << result << "'";
     TestsListener::testHasFailed(errmsg.str());
   }
@@ -72,7 +72,7 @@ void assertEquals(unsigned int expected, unsigned int result
   {
     std::stringstream errmsg;
     errmsg.str("");
-    errmsg << "assertEquals(unsigned int) failed at " << file << " on line " << line;
+    errmsg << "assertEquals(unsigned int) failed in " << file << ", line #" << line;
     errmsg << " expecting '" << expected << "' got '" << result << "'";
     TestsListener::testHasFailed(errmsg.str());
   }
@@ -85,7 +85,7 @@ void assertEquals(int64_t expected, int64_t result
   {
     std::stringstream errmsg;
     errmsg.str("");
-    errmsg << "assertEquals(int64_t) failed at " << file << " on line " << line;
+    errmsg << "assertEquals(int64_t) failed in " << file << ", line #" << line;
     errmsg << " expecting '" << expected << "' got '" << result << "'";
     TestsListener::testHasFailed(errmsg.str());
   }
@@ -98,7 +98,7 @@ void assertEquals(uint64_t expected, uint64_t result
   {
     std::stringstream errmsg;
     errmsg.str("");
-    errmsg << "assertEquals(uint64_t) failed at " << file << " on line " << line;
+    errmsg << "assertEquals(uint64_t) failed in " << file << ", line #" << line;
     errmsg << " expecting '" << expected << "' got '" << result << "'";
     TestsListener::testHasFailed(errmsg.str());
   }
@@ -160,7 +160,7 @@ void assertEqualsEpsilon(const double & expected, const double & result
 
   std::stringstream errmsg;
   errmsg.str("");
-  errmsg << "assertEquals(double) failed at " << file << " on line " << line;
+  errmsg << "assertEquals(double) failed in " << file << ", line #" << line;
   errmsg << " expecting '" << expected << "' got '" << result << "'";
   TestsListener::testHasFailed(errmsg.str());
 }
@@ -172,7 +172,7 @@ void assertEquals(const String & expected, const String & result
   {
     std::stringstream errmsg;
     errmsg.str("");
-    errmsg << "assertEquals(std::string) failed at " << file << " on line " << line;
+    errmsg << "assertEquals(std::string) failed in" << file << ", line #" << line;
     errmsg << " expecting '" << expected << "' got '" << result << "'";
     TestsListener::testHasFailed(errmsg.str());
   }
@@ -185,7 +185,7 @@ void assertLessThan(int expected, int result
   {
     std::stringstream errmsg;
     errmsg.str("");
-    errmsg << "assertLessThan(int) failed at " << file << " on line " << line;
+    errmsg << "assertLessThan(int) failed in " << file << ", line #" << line;
     errmsg << " expecting '" << expected << "' got '" << result << "'";
     TestsListener::testHasFailed(errmsg.str());
   }
@@ -198,7 +198,7 @@ void assertLessThan(unsigned int expected, unsigned int result
   {
     std::stringstream errmsg;
     errmsg.str("");
-    errmsg << "assertLessThan(unsigned int) failed at " << file << " on line " << line;
+    errmsg << "assertLessThan(unsigned int) failed in " << file << ", line #" << line;
     errmsg << " expecting '" << expected << "' got '" << result << "'";
     TestsListener::testHasFailed(errmsg.str());
   }
@@ -211,7 +211,7 @@ void assertGreaterThan(int expected, int result
   {
     std::stringstream errmsg;
     errmsg.str("");
-    errmsg << "assertGreaterThan(int) failed at " << file << " on line " << line;
+    errmsg << "assertGreaterThan(int) failed in " << file << ", line #" << line;
     errmsg << " expecting '" << expected << "' got '" << result << "'";
     TestsListener::testHasFailed(errmsg.str());
   }
@@ -224,7 +224,7 @@ void assertGreaterThan(unsigned int expected, unsigned int result
   {
     std::stringstream errmsg;
     errmsg.str("");
-    errmsg << "assertGreaterThan(unsigned int) failed at " << file << " on line " << line;
+    errmsg << "assertGreaterThan(unsigned int) failed in " << file << ", line #" << line;
     errmsg << " expecting '" << expected << "' got '" << result << "'";
     TestsListener::testHasFailed(errmsg.str());
   }
@@ -236,7 +236,7 @@ void fail(const char* reason, const char* file, int line)
   // TestsListener
   std::stringstream errmsg;
   errmsg.str("");
-  errmsg << "Failed at " << file << " on line " << line;
+  errmsg << "failed in " << file << ", line #" << line;
   errmsg << ". Reason: '" << reason << "'";
   TestsListener::testHasFailed(errmsg.str());
 }

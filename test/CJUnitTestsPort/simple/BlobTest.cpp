@@ -43,6 +43,7 @@ namespace simple
       requiredSize = 8 * 1024 * 1024;
     }
 
+    return; // skippin' setup since test is skipped too
     createBlobFile(requiredSize);
 
     createTestTable();
