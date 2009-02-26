@@ -75,7 +75,7 @@ TARGET_LINK_LIBRARIES(mysqlcppconn ${MY_TARGET_LINK_LIBRARIES_DYNAMIC} ${MY_GCOV
 
 # Need to find way it's defined for mysqlcppconn-static only
 #IF(WIN32)
-#	ADD_DEFINITIONS("-DCPPDBC_PUBLIC_FUNC")
+#	ADD_DEFINITIONS("-DCPPDBC_PUBLIC_FUNC=\"\"")
 #ENDIF(WIN32)
 
 

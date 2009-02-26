@@ -343,6 +343,7 @@ namespace regression
   /** Doesn't make much sense. As well as i'm not sure it's equivalenly translated*/
   void BlobRegressionTest::testBug34677()
   {
+    SKIP( "The test is wrong" );
     createTable("testBug34677", "(field1 BLOB)");
 
     stmt->executeUpdate("INSERT INTO testBug34677 VALUES ('abc')");
