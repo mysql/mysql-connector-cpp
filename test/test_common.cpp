@@ -1143,7 +1143,7 @@ static void test_result_set_check_out_of_bound(sql::ResultSet *rset1)
 		ensure("ERR: No sql::InvalidArgumentException thrown", false);
 	} catch (sql::InvalidArgumentException &) {}
 	try {
-		rset1->isNull(-123);
+		rset1->isNull(0);
 		ensure("ERR: No sql::InvalidArgumentException thrown", false);
 	} catch (sql::InvalidArgumentException &) {}
 	try {
