@@ -10,9 +10,6 @@
 INCLUDE_DIRECTORIES(${MYSQLCPPCONN_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${MYSQLCPPCONN_SOURCE_DIR}/cppconn)
 
-# no need to look for libmysql - working with C/C++ only!
-#INCLUDE(${CMAKE_SOURCE_DIR}/FindMySQL.cmake)
-
 IF(WIN32)
 #	LINK_DIRECTORIES(${MYSQL_DIR}/lib/$(ConfigurationName))
 #	ADD_DEFINITIONS("-D_SECURE_SCL")

@@ -24,7 +24,7 @@ Alpha  1.0.3 - 2009-03-25
   time later without prior warning! Check cmake -L for configuration
   instructions. (Andrey)
 
-- Fixed a bug in MySQL_PreparedResultSet::getString(). Returned string hat real
+- Fixed a bug in MySQL_PreparedResultSet::getString(). Returned string had real
   data but the length was random. Now, the string is initialized with correct
   length and thus is binary safe. (Andrey)
 

@@ -10,11 +10,11 @@
 PROJECT(MYSQLCPPCONN)
 
 IF(WIN32)
-	// We need this for mysqlcppconn_EXPORTS needed for the static build
+	# We need this for mysqlcppconn_EXPORTS needed for the static build
 	cmake_minimum_required(VERSION 2.6.2)
 ELSE(WIN32)
 	cmake_minimum_required(VERSION 2.4.2)
-ENDIF()
+ENDIF(WIN32)
 
 if(COMMAND cmake_policy)
         cmake_policy(SET CMP0003 NEW)
@@ -52,7 +52,7 @@ ENDIF(MYSQLCPPCONN_STLPORT_ENABLE)
 
 
 
-INCLUDE(${CMAKE_SOURCE_DIR}/FindMySQL.cmake)
+INCLUDE(${CMAKE_SOURCE_DIR}/FindMySQL.cm)
 
 # ----------------------------------------------------------------------
 # Create package script
@@ -78,11 +78,12 @@ SET(CPACK_PACKAGE_NAME "mysql-connector-c++")
 SET(CPACK_PACKAGE_VERSION_MAJOR 1)
 SET(CPACK_PACKAGE_VERSION_MINOR 0)
 SET(CPACK_PACKAGE_VERSION_PATCH 4)
+SET(CPACK_PACKAGE_RELEASE_TYPE "beta")
 SET(CPACK_PACKAGE_VENDOR "Sun Microsystems, Inc.")
 SET(CPACK_RESOURCE_FILE_LICENSE "COPYING")
 SET(CPACK_RESOURCE_FILE_README "README")
 SET(CPACK_SOURCE_PACKAGE_FILE_NAME
-	"mysql-connector-c++-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}-src")
+	"mysql-connector-c++-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}-${CPACK_PACKAGE_RELEASE_TYPE}")
 IF(WIN32)
 	SET(CPACK_PACKAGE_FILE_NAME "mysql-connector-c++-noinstall-version-arch")
 ELSE(WIN32)
@@ -133,7 +134,7 @@ IF(DEFINED CMAKE_SYSTEM_NAME AND ${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 		message("returned by the MySQL tool mysql_config.")
 		message("In case of an error, try commenting out:")
 		message("# ADD_DEFINITIONS(\"\${MYSQL_CFLAGS}\")")
-		message("in the file FindMySQL.cmake")
+		message("in the file FindMySQL.cm")
 	ENDIF(${CMAKE_C_COMPILER} MATCHES "gcc$")
 
 	IF(${CMAKE_C_COMPILER} MATCHES "gcc$")
