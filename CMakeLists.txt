@@ -90,6 +90,10 @@ ELSE(WIN32)
 	SET(CPACK_PACKAGE_FILE_NAME	"mysql-connector-c++-version-arch")
 ENDIF(WIN32)
 
+IF(WIN32)
+  FILE(WRITE "${CMAKE_SOURCE_DIR}/win/version.cmake" "SET(CONNECTOR_PRODUCT_VERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}.0)")
+ENDIF(WIN32)
+
 SET(CPACK_PACKAGE_INSTALL_DIRECTORY "mysql-connector-c++-version-arch")
 SET(COMMON_IGNORE_FILES "/CMakeFiles/" "/Testing/" "/.bzr/" "_CPack_Packages/"
     ".cmake$" "~" ".swp" ".log" ".gz" ".directory$" "CMakeCache.txt" "Makefile"
