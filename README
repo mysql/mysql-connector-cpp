@@ -165,7 +165,7 @@ INSTALLATION ON SOLARIS
 
   SET(MYSQL_CFLAGS "")
 
-  at the end of the file /path/to/mysql-connector-cpp/FindMySQL.cmake.
+  at the end of the file /path/to/mysql-connector-cpp/FindMySQL.cm.
   However, its recommended to use Sun Studio on Solaris.
   No changes are required when using the Sun compilers!
 
