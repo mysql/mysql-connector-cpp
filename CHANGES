@@ -1,6 +1,8 @@
 Beta   1.0.4 - 2009-03-xx
 
-Alpha  1.0.3 - 2009-03-25
+- Added Windows Installer (Georg)
+
+Alpha  1.0.3 - 2009-03-03
 
 - Added new tests at test/unit/classes. Those tests are mostly about
   code coverage. Most of the actual functionality of the driver is tested
