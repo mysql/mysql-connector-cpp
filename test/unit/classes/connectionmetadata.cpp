@@ -1697,6 +1697,59 @@ void connectionmetadata::classAttributes()
   }
 }
 
+void connectionmetadata::getColumnsTypeConversions()
+{
+  logMsg("connectionmetadata::getColumnsTypeConversions() - MySQL_ConnectionMetaData::getColumns");
+  std::vector<columndefinition>::iterator it;
+  std::stringstream msg;
+  bool got_warning=false;
+  try
+  {
+    DatabaseMetaData dbmeta(con->getMetaData());
+    stmt.reset(con->createStatement());
+
+    logMsg("... looping over all kinds of column types");
+    for (it=columns.begin(); it != columns.end(); it++)
+    {
+      stmt->execute("DROP TABLE IF EXISTS test");
+      msg.str("");
+      msg << "CREATE TABLE test(dummy TIMESTAMP, id " << it->sqldef << ")";
+      try
+      {
+        stmt->execute(msg.str());
+        msg.str("");
+        msg << "... testing " << it->sqldef;
+        logMsg(msg.str());
+      }
+      catch (sql::SQLException &)
+      {
+        msg.str("");
+        msg << "... skipping " << it->sqldef;
+        logMsg(msg.str());
+        continue;
+      }
+      res.reset(dbmeta->getColumns(con->getCatalog(), con->getSchema(), "test", "id"));
+      ASSERT_EQUALS(true, res->next());
+      ASSERT_EQUALS("test", res->getString("TABLE_NAME"));
+      ASSERT_EQUALS(false, res->getBoolean("TABLE_NAME"));
+      
+      stmt->execute("DROP TABLE IF EXISTS test");
+    }
+    if (got_warning)
+      FAIL("See Warnings!");
+
+    stmt->execute("DROP TABLE IF EXISTS test");
+    res.reset(dbmeta->getColumns(con->getCatalog(), con->getSchema(), "test", "id"));
+    ASSERT(!res->next());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 
 } /* namespace connectionmetadata */
 } /* namespace testsuite */

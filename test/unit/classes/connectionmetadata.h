@@ -7,7 +7,7 @@
    conditions of the GPL as it is applied to this software, see the
    FLOSS License Exception
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-*/
+ */
 
 #include "../unit_fixture.h"
 #include <vector>
@@ -65,6 +65,7 @@ public:
     TEST_CASE(getSuperTables);
     TEST_CASE(getSuperTypes);
     TEST_CASE(classAttributes);
+    TEST_CASE(getColumnsTypeConversions);
   }
 
   /**
@@ -305,6 +306,11 @@ public:
    */
   void classAttributes();
 
+  /**
+   * Test of type conversions in MySQL_ArtResultSet
+   *
+   */
+  void getColumnsTypeConversions();
 };
 
 REGISTER_FIXTURE(connectionmetadata);
