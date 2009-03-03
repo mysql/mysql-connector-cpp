@@ -56,7 +56,7 @@ PREREQUISITES FOR BUILDING CONNECTOR/C++
   the MySQL Server. However, check your operating system documentation for
   other installation options.
 
-  You need to have CMake 2.4 (http://www.cmake.org).
+  You need to have CMake 2.6.2 (http://www.cmake.org).
   NOTE: cmake binaries are available for most systems. You do not need to build
   cmake yourself.
 
