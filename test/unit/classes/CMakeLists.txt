@@ -85,6 +85,25 @@ TARGET_LINK_LIBRARIES(test_resultset ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_
 
 MESSAGE(STATUS "Configuring unit tests - resultset")
 
+SET(test_savepoint_sources
+	../unit_fixture.cpp
+	../main.cpp
+	savepoint.cpp)
+
+IF(WIN32)
+	SET(test_savepoint_sources
+    		${test_savepoint_sources}
+	../unit_fixture.h
+	savepoint.h)
+ENDIF(WIN32)
+
+ADD_EXECUTABLE(test_savepoint ${test_savepoint_sources})
+SET_TARGET_PROPERTIES(test_savepoint PROPERTIES OUTPUT_NAME "savepoint")
+TARGET_LINK_LIBRARIES(test_savepoint ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
+MESSAGE(STATUS "Configuring unit tests - savepoint")
+
+
 SET(test_art_resultset_sources
 	../unit_fixture.cpp
 	../main.cpp

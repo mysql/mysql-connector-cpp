@@ -9,8 +9,7 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 /*
-  Some common definitions and inclusions for C/C++.
-  I hope it will be so :) Used in tests only so far
+  Some common definitions and inclusions for C/C++ tests.
 */
 
 #ifndef __C_CPP_TYPES_H_
@@ -26,6 +25,16 @@
 #endif
 #else
 #include <string.h>
+# ifdef __hpux
+#  ifdef _PA_RISC2_0
+#   define atoll(__a) atol(__a)
+#   define strtoull(__a, __b, __c) strtoul(__a, __b, __c)
+#  else
+#   include <inttypes.h>
+#   define atoll(__a) strtoimax(__a, NULL, 10)
+#   define strtoull(__a, __b, __c) strtoumax(__a, __b, __c)
+#  endif
+# endif
 #endif
 
 #include <vector>
