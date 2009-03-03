@@ -17,14 +17,6 @@
 #include <stdlib.h>
 #endif	//	_WIN32
 
-#ifndef _WIN32
-#include <stdlib.h>
-#else
-#define atoll(x) _atoi64((x))
-typedef __int16 int16_t;
-typedef __int8 int8_t;
-#endif	//	_WIN32
-
 #include <cppconn/exception.h>
 #include "mysql_ps_resultset.h"
 #include "mysql_resultset.h"

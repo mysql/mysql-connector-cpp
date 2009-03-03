@@ -47,10 +47,19 @@ typedef unsigned __int16	uint16_t;
 
 
 #ifndef _WIN32
-#include <stdlib.h>
+#  include <stdlib.h>
+#  ifdef __hpux
+#    ifdef _PA_RISC2_0
+#      define atoll(__a) atol(__a)
+#      define strtoull(__a, __b, __c) strtoul(__a, __b, __c)
+#    else
+#      define atoll(__a) strtoimax(__a, NULL, 10)
+#      define strtoull(__a, __b, __c) strtoumax(__a, __b, __c)
+#    endif
+#  endif
 #else
-#define atoll(x) _atoi64((x))
-#define strtoull(x, e, b) _strtoui64((x), (e), (b))
+#  define atoll(x) _atoi64((x))
+#  define strtoull(x, e, b) _strtoui64((x), (e), (b))
 #endif	//	_WIN32
 
 
