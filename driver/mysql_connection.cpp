@@ -61,7 +61,7 @@ MySQL_Savepoint::getSavepointId()
 
 
 /* {{{ MySQL_Savepoint::getSavepointName() -I- */
-std::string &
+std::string
 MySQL_Savepoint::getSavepointName()
 {
 	return name;
@@ -406,6 +406,7 @@ bool
 MySQL_Connection::getAutoCommit()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getAutoCommit");
+	checkClosed();
 	return intern->autocommit;
 }
 /* }}} */
@@ -416,6 +417,7 @@ std::string
 MySQL_Connection::getCatalog()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getCatalog");
+	checkClosed();
 	return std::string("");
 }
 /* }}} */
@@ -488,6 +490,7 @@ enum_transaction_isolation
 MySQL_Connection::getTransactionIsolation()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getTransactionIsolation");
+	checkClosed();
 	return intern->txIsolationLevel;
 }
 /* }}} */
@@ -547,7 +550,7 @@ MySQL_Connection::prepareStatement(const std::string& sql)
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
 	CPP_INFO_FMT("query=%s", sql.c_str());
 	checkClosed();
-	MYSQL_STMT *stmt = mysql_stmt_init(intern->mysql);
+	MYSQL_STMT * stmt = mysql_stmt_init(intern->mysql);
 
 	if (!stmt) {
 		CPP_ERR("Exception, no statement");
@@ -756,7 +759,7 @@ MySQL_Connection::setSavepoint()
 
 
 /* {{{ MySQL_Connection::setSavepoint() -I- */
-Savepoint *
+sql::Savepoint *
 MySQL_Connection::setSavepoint(const std::string& name)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setSavepoint");

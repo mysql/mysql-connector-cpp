@@ -22,7 +22,7 @@ namespace mysql
 class Connection;
 class ConnectProperty;
 
-class CPPDBC_PUBLIC_FUNC MySQL_Driver : public sql::Driver
+class CPPCONN_PUBLIC_FUNC MySQL_Driver : public sql::Driver
 {
 public:
 	MySQL_Driver(); /* DON'T CALL THIS, USE Instance() */
@@ -50,7 +50,7 @@ private:
 	void operator=(MySQL_Driver &);
 };
 
-CPPDBC_PUBLIC_FUNC MySQL_Driver *get_mysql_driver_instance();
+CPPCONN_PUBLIC_FUNC MySQL_Driver *get_mysql_driver_instance();
 
 
 }; /* namespace mysql */

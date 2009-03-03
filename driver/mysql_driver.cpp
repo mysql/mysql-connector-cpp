@@ -17,7 +17,7 @@
 
 static bool module_already_loaded = 0;
 
-CPPDBC_PUBLIC_FUNC sql::Driver *get_driver_instance()
+CPPCONN_PUBLIC_FUNC sql::Driver * get_driver_instance()
 {
 	return sql::mysql::MySQL_Driver::Instance();
 }
@@ -28,9 +28,8 @@ namespace mysql
 {
 
 
-CPPDBC_PUBLIC_FUNC MySQL_Driver *get_mysql_driver_instance()
+CPPCONN_PUBLIC_FUNC MySQL_Driver * get_mysql_driver_instance()
 {
-	//return &driver;
 	return sql::mysql::MySQL_Driver::Instance();
 }
 
