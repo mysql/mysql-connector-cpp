@@ -1,6 +1,9 @@
 Beta   1.0.4 - 2009-03-xx
 
-- Added Windows Installer (Georg)
+- Added Windows installer (Georg)
+
+- Bumping up CMake minimum version requirement from 2.4.2 to 2.6.2.
+  We need the latest version for Windows. (Lawrin)
 
 Alpha  1.0.3 - 2009-03-03
 
