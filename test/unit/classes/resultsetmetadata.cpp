@@ -266,6 +266,7 @@ void resultsetmetadata::getColumnType()
         stmt->execute(sql.str());
 
         res.reset(stmt->executeQuery("SELECT * FROM test"));
+        checkResultSetScrolling(res);
         ResultSetMetaData meta(res->getMetaData());
         logMsg(it->sqldef);
         ASSERT_EQUALS(it->ctype, meta->getColumnType(1));
@@ -438,6 +439,7 @@ void resultsetmetadata::getSchemaName()
     stmt->execute("CREATE TABLE test(id INT)");
     stmt->execute("INSERT INTO test(id) VALUES (1)");
     res.reset(stmt->executeQuery("SELECT * FROM test"));
+    checkResultSetScrolling(res);
     ResultSetMetaData meta2(res->getMetaData());
     ASSERT_EQUALS(meta2->getSchemaName(1), con->getSchema());
 
@@ -489,6 +491,7 @@ void resultsetmetadata::getTableName()
     stmt->execute("CREATE TABLE test(id INT)");
     stmt->execute("INSERT INTO test(id) VALUES (1)");
     res.reset(stmt->executeQuery("SELECT * FROM test"));
+    checkResultSetScrolling(res);
     ResultSetMetaData meta2(res->getMetaData());
     ASSERT_EQUALS(meta2->getTableName(1), "test");
 
@@ -539,6 +542,7 @@ void resultsetmetadata::isAutoIncrement()
     stmt->execute("CREATE TABLE test(id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, col1 CHAR(1))");
     stmt->execute("INSERT INTO test(id, col1) VALUES (1, 'a')");
     res.reset(stmt->executeQuery("SELECT id, col1 FROM test"));
+    checkResultSetScrolling(res);
     ResultSetMetaData meta2(res->getMetaData());
     ASSERT_EQUALS(meta2->isAutoIncrement(1), true);
     ASSERT_EQUALS(meta2->isAutoIncrement(2), false);
@@ -590,6 +594,7 @@ void resultsetmetadata::isCaseSensitive()
     stmt->execute("CREATE TABLE test(id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, col1 CHAR(1), col2 CHAR(10) CHARACTER SET 'utf8' COLLATE 'utf8_bin')");
     stmt->execute("INSERT INTO test(id, col1, col2) VALUES (1, 'a', 'b')");
     res.reset(stmt->executeQuery("SELECT id, col1, col2 FROM test"));
+    checkResultSetScrolling(res);
     ResultSetMetaData meta2(res->getMetaData());
     ASSERT_EQUALS(meta2->isCaseSensitive(1), false);
     ASSERT_EQUALS(meta2->isCaseSensitive(2), false);
@@ -626,6 +631,7 @@ void resultsetmetadata::isCaseSensitive()
     stmt->execute("SET @old_charset_res=@@session.character_set_results");
     stmt->execute("SET character_set_results=NULL");
     res.reset(stmt->executeQuery("SELECT id, col1, col2 FROM test"));
+    checkResultSetScrolling(res);
     ResultSetMetaData meta3(res->getMetaData());
     ASSERT_EQUALS(meta3->isCaseSensitive(1), false);
     ASSERT_EQUALS(meta3->isCaseSensitive(2), false);
@@ -767,6 +773,7 @@ void resultsetmetadata::isNullable()
     stmt->execute("CREATE TABLE test(id INT, col1 CHAR(1) DEFAULT NULL, col2 CHAR(10) NOT NULL)");
     stmt->execute("INSERT INTO test(id, col2) VALUES (1, 'b')");
     res.reset(stmt->executeQuery("SELECT id, col1, col2 FROM test"));
+    checkResultSetScrolling(res);
     ResultSetMetaData meta2(res->getMetaData());
     ASSERT_EQUALS(meta2->isNullable(1), sql::ResultSetMetaData::columnNullable);
     ASSERT_EQUALS(meta2->isNullable(2), sql::ResultSetMetaData::columnNullable);
@@ -816,6 +823,7 @@ void resultsetmetadata::isReadOnly()
     stmt->execute("CREATE TABLE test(id INT, col1 CHAR(1), col2 CHAR(10))");
     stmt->execute("INSERT INTO test(id, col1, col2) VALUES (1, 'a', 'b')");
     res.reset(stmt->executeQuery("SELECT id AS 'abc', col1, col2, 1 FROM test"));
+    checkResultSetScrolling(res);
     ResultSetMetaData meta2(res->getMetaData());
     ASSERT_EQUALS(meta2->isReadOnly(1), false);
     ASSERT_EQUALS(meta2->isReadOnly(2), false);
@@ -827,6 +835,7 @@ void resultsetmetadata::isReadOnly()
       stmt->execute("DROP VIEW IF EXISTS v_test");
       stmt->execute("CREATE VIEW v_test(col1, col2) AS SELECT id, id + 1 FROM test");
       res.reset(stmt->executeQuery("SELECT col1, col2 FROM v_test"));
+      checkResultSetScrolling(res);
       ResultSetMetaData meta3(res->getMetaData());
       ASSERT_EQUALS(meta3->isReadOnly(1), false);
       /* Expecting ERROR 1348 (HY000): Column 'col2' is not updatable */
@@ -938,6 +947,7 @@ void resultsetmetadata::isSigned()
         stmt->execute(sql.str());
 
         res.reset(stmt->executeQuery("SELECT * FROM test"));
+        checkResultSetScrolling(res);
         ResultSetMetaData meta(res->getMetaData());
         sql.str("");
         sql << std::boolalpha << "... testing, SQL:" << it->sqldef << " -> Signed = " << it->is_signed;
@@ -1011,6 +1021,7 @@ void resultsetmetadata::runStandardQuery()
 {
   stmt.reset(con->createStatement());
   res.reset(stmt->executeQuery("SELECT 'Hello' AS a, ' ', 'world', '!', 123 AS z"));
+  checkResultSetScrolling(res);
 }
 
 } /* namespace resultsetmetadata */

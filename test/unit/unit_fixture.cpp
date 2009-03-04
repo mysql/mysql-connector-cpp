@@ -398,30 +398,25 @@ std::string unit_fixture::exceptionIsOK(sql::SQLException &e, const std::string&
 
 void unit_fixture::checkResultSetScrolling(ResultSet &res)
 {
-  return;
-/*
-  if (res->getType() == sql::ResultSet::TYPE_FORWARD_ONLY)
-    return;
-*/
+
+  /*
+    if (res->getType() == sql::ResultSet::TYPE_FORWARD_ONLY)
+      return;
+   */
   int before;
-  int num_rows;
 
   before=res->getRow();
-  ASSERT(res->last());
-  num_rows=(int) res->getRow();
-  if (num_rows < 1)
+  if (!res->last())
   {
     res->absolute(before);
     return;
   }
 
+  int num_rows;
   int i;
-  std::stringstream msg;
 
-  msg.str("");
-  msg << "connectionmetadata::checkResultSetScrolling()";  
-  logMsg(msg.str());
-
+  num_rows=(int) res->getRow();
+ 
   res->beforeFirst();
   ASSERT(!res->previous());
   ASSERT(res->next());

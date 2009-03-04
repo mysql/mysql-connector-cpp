@@ -76,8 +76,8 @@ void connectionmetadata::getAttributes()
   {
     DatabaseMetaData dbmeta(con->getMetaData());
     res.reset(dbmeta->getAttributes(con->getCatalog(), con->getSchema(), "", ""));
-    ResultSetMetaData resmeta(res->getMetaData());
     checkResultSetScrolling(res);
+    ResultSetMetaData resmeta(res->getMetaData());    
     it=attributes.begin();
     for (i=1; i <= resmeta->getColumnCount(); i++)
     {

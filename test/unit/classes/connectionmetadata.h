@@ -39,7 +39,7 @@ public:
   EXAMPLE_TEST_FIXTURE(connectionmetadata)
   {
     TEST_CASE(getSchemata);
-    TEST_CASE(getAttributes);
+    TEST_CASE(getAttributes);    
     TEST_CASE(getBestRowIdentifier);
     TEST_CASE(getCatalogs);
     TEST_CASE(getCatalogSeparator);
@@ -68,7 +68,7 @@ public:
     TEST_CASE(getSuperTables);
     TEST_CASE(getSuperTypes);
     TEST_CASE(classAttributes);
-    TEST_CASE(getColumnsTypeConversions);
+    TEST_CASE(getColumnsTypeConversions);     
   }
 
   /**
