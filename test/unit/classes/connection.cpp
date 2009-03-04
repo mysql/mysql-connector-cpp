@@ -441,7 +441,20 @@ void connection::connectUsingMap()
       catch (sql::SQLException &)
       {
       }
+
+      connection_properties[std::string("CLIENT_COMPRESS")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &)
+      {
+      }
+
+      connection_properties.erase("CLIENT_COMPRESS");
       tmp.lval=(long long) false;
+      connection_properties[std::string("CLIENT_COMPRESS")]=tmp;
       try
       {
         created_objects.clear();
@@ -468,7 +481,20 @@ void connection::connectUsingMap()
       catch (sql::SQLException &)
       {
       }
+
+      connection_properties[std::string("CLIENT_FOUND_ROWS")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &)
+      {
+      }
+
+      connection_properties.erase("CLIENT_FOUND_ROWS");
       tmp.lval=(long long) false;
+      connection_properties[std::string("CLIENT_FOUND_ROWS")]=tmp;
       try
       {
         created_objects.clear();
@@ -495,7 +521,20 @@ void connection::connectUsingMap()
       catch (sql::SQLException &)
       {
       }
+
+      connection_properties[std::string("CLIENT_IGNORE_SIGPIPE")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &)
+      {
+      }
+
+      connection_properties.erase("CLIENT_IGNORE_SIGPIPE");
       tmp.lval=(long long) false;
+      connection_properties[std::string("CLIENT_IGNORE_SIGPIPE")]=tmp;
       try
       {
         created_objects.clear();
@@ -522,7 +561,20 @@ void connection::connectUsingMap()
       catch (sql::SQLException &)
       {
       }
+
+      connection_properties[std::string("CLIENT_IGNORE_SPACE")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &)
+      {
+      }
+
+      connection_properties.erase("CLIENT_IGNORE_SPACE");
       tmp.lval=(long long) false;
+      connection_properties[std::string("CLIENT_IGNORE_SPACE")]=tmp;
       try
       {
         created_objects.clear();
@@ -549,7 +601,20 @@ void connection::connectUsingMap()
       catch (sql::SQLException &)
       {
       }
+
+      connection_properties[std::string("CLIENT_INTERACTIVE")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &)
+      {
+      }
+
+      connection_properties.erase("CLIENT_INTERACTIVE");
       tmp.lval=(long long) false;
+      connection_properties[std::string("CLIENT_INTERACTIVE")]=tmp;
       try
       {
         created_objects.clear();
@@ -577,7 +642,20 @@ void connection::connectUsingMap()
       catch (sql::SQLException &)
       {
       }
+
+      connection_properties[std::string("CLIENT_LOCAL_FILES")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &)
+      {
+      }
+
+      connection_properties.erase("CLIENT_LOCAL_FILES");
       tmp.lval=(long long) false;
+      connection_properties[std::string("CLIENT_LOCAL_FILES")]=tmp;
       try
       {
         created_objects.clear();
@@ -605,7 +683,20 @@ void connection::connectUsingMap()
       catch (sql::SQLException &)
       {
       }
+
+      connection_properties[std::string("CLIENT_MULTI_RESULTS")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &)
+      {
+      }
+
+      connection_properties.erase("CLIENT_MULTI_RESULTS");
       tmp.lval=(long long) false;
+      connection_properties[std::string("CLIENT_MULTI_RESULTS")]=tmp;
       try
       {
         created_objects.clear();
@@ -633,7 +724,20 @@ void connection::connectUsingMap()
       catch (sql::SQLException &)
       {
       }
+
+      connection_properties[std::string("CLIENT_MULTI_STATEMENTS")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &)
+      {
+      }
+
+      connection_properties.erase("CLIENT_MULTI_STATEMENTS");
       tmp.lval=(long long) false;
+      connection_properties[std::string("CLIENT_MULTI_STATEMENTS")]=tmp;
       try
       {
         created_objects.clear();
@@ -660,7 +764,20 @@ void connection::connectUsingMap()
       catch (sql::SQLException &)
       {
       }
+
+      connection_properties[std::string("CLIENT_NO_SCHEMA")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &)
+      {
+      }
+
+      connection_properties.erase("CLIENT_NO_SCHEMA");
       tmp.lval=(long long) false;
+      connection_properties[std::string("CLIENT_NO_SCHEMA")]=tmp;
       try
       {
         created_objects.clear();
@@ -673,13 +790,13 @@ void connection::connectUsingMap()
     connection_properties.erase("CLIENT_NO_SCHEMA");
 
     /* 13) MYSQL_OPT_CONNECT_TIMEOUT */
-    connection_properties.erase("MYSQL_OPT_CONNECT_TIMEOUT");
+    connection_properties.erase("OPT_CONNECT_TIMEOUT");
     {
-      logMsg("... testing MYSQL_OPT_CONNECT_TIMEOUT");
+      logMsg("... testing OPT_CONNECT_TIMEOUT");
       sql::ConnectPropertyVal tmp;
       /* C-API does not care about the actual value */
       tmp.lval=(long long) - 1;
-      connection_properties[std::string("MYSQL_OPT_CONNECT_TIMEOUT")]=tmp;
+      connection_properties[std::string("OPT_CONNECT_TIMEOUT")]=tmp;
       try
       {
         created_objects.clear();
@@ -690,16 +807,16 @@ void connection::connectUsingMap()
         fail(e.what(), __FILE__, __LINE__);
       }
     }
-    connection_properties.erase("MYSQL_OPT_CONNECT_TIMEOUT");
+    connection_properties.erase("OPT_CONNECT_TIMEOUT");
 
     /* 14) MYSQL_OPT_READ_TIMEOUT */
-    connection_properties.erase("MYSQL_OPT_READ_TIMEOUT");
+    connection_properties.erase("OPT_READ_TIMEOUT");
     {
-      logMsg("... testing MYSQL_OPT_READ_TIMEOUT");
+      logMsg("... testing OPT_READ_TIMEOUT");
       sql::ConnectPropertyVal tmp;
       /* C-API does not care about the actual value */
       tmp.lval=(long long) - 1;
-      connection_properties[std::string("MYSQL_OPT_READ_TIMEOUT")]=tmp;
+      connection_properties[std::string("OPT_READ_TIMEOUT")]=tmp;
       try
       {
         created_objects.clear();
@@ -710,16 +827,16 @@ void connection::connectUsingMap()
         fail(e.what(), __FILE__, __LINE__);
       }
     }
-    connection_properties.erase("MYSQL_OPT_READ_TIMEOUT");
+    connection_properties.erase("OPT_READ_TIMEOUT");
 
     /* 15) MYSQL_OPT_WRITE_TIMEOUT */
-    connection_properties.erase("MYSQL_OPT_WRITE_TIMEOUT");
+    connection_properties.erase("OPT_WRITE_TIMEOUT");
     {
-      logMsg("... testing MYSQL_OPT_WRITE_TIMEOUT");
+      logMsg("... testing OPT_WRITE_TIMEOUT");
       sql::ConnectPropertyVal tmp;
       /* C-API does not care about the actual value */
       tmp.lval=(long long) - 1;
-      connection_properties[std::string("MYSQL_OPT_WRITE_TIMEOUT")]=tmp;
+      connection_properties[std::string("OPT_WRITE_TIMEOUT")]=tmp;
       try
       {
         created_objects.clear();
@@ -730,16 +847,16 @@ void connection::connectUsingMap()
         fail(e.what(), __FILE__, __LINE__);
       }
     }
-    connection_properties.erase("MYSQL_OPT_WRITE_TIMEOUT");
+    connection_properties.erase("OPT_WRITE_TIMEOUT");
 
     /* 16) MYSQL_OPT_RECONNECT */
-    connection_properties.erase("MYSQL_OPT_RECONNECT");
+    connection_properties.erase("OPT_RECONNECT");
     {
-      logMsg("... testing MYSQL_OPT_RECONNECT");
+      logMsg("... testing OPT_RECONNECT");
       sql::ConnectPropertyVal tmp;
       /* C-API does not care about the actual value */
       tmp.lval=(long long) - 1;
-      connection_properties[std::string("MYSQL_OPT_RECONNECT")]=tmp;
+      connection_properties[std::string("OPT_RECONNECT")]=tmp;
       try
       {
         created_objects.clear();
@@ -750,18 +867,18 @@ void connection::connectUsingMap()
         fail(e.what(), __FILE__, __LINE__);
       }
     }
-    connection_properties.erase("MYSQL_OPT_RECONNECT");
+    connection_properties.erase("OPT_RECONNECT");
 
     /* 17) MYSQL_OPT_SET_CHARSET_NAME */
-    connection_properties.erase("MYSQL_OPT_SET_CHARSET_NAME");
+    connection_properties.erase("OPT_SET_CHARSET_NAME");
     {
-      logMsg("... testing MYSQL_OPT_SET_CHARSET_NAME");
+      logMsg("... testing OPT_SET_CHARSET_NAME");
       std::string charset("utf8");
       sql::ConnectPropertyVal tmp;
       /* C-API does not care about the actual value */
       tmp.str.val=charset.c_str();
       tmp.str.len=charset.length();
-      connection_properties[std::string("MYSQL_OPT_SET_CHARSET_NAME")]=tmp;
+      connection_properties[std::string("OPT_SET_CHARSET_NAME")]=tmp;
       try
       {
         created_objects.clear();
@@ -772,18 +889,18 @@ void connection::connectUsingMap()
         fail(e.what(), __FILE__, __LINE__);
       }
     }
-    connection_properties.erase("MYSQL_OPT_SET_CHARSET_NAME");
+    connection_properties.erase("OPT_SET_CHARSET_NAME");
 
     /* 18) MYSQL_REPORT_DATA_TRUNCATION */
-    connection_properties.erase("MYSQL_REPORT_DATA_TRUNCATION");
+    connection_properties.erase("REPORT_DATA_TRUNCATION");
     {
-      logMsg("... testing MYSQL_REPORT_DATA_TRUNCATION");
+      logMsg("... testing REPORT_DATA_TRUNCATION");
       std::string charset("1");
       sql::ConnectPropertyVal tmp;
       /* C-API does not care about the actual value */
       tmp.str.val=charset.c_str();
       tmp.str.len=charset.length();
-      connection_properties[std::string("MYSQL_REPORT_DATA_TRUNCATION")]=tmp;
+      connection_properties[std::string("REPORT_DATA_TRUNCATION")]=tmp;
       try
       {
         created_objects.clear();
@@ -794,7 +911,42 @@ void connection::connectUsingMap()
         fail(e.what(), __FILE__, __LINE__);
       }
     }
-    connection_properties.erase("MYSQL_REPORT_DATA_TRUNCATION");
+    connection_properties.erase("REPORT_DATA_TRUNCATION");
+
+
+    /* 19) metadataUseInfoSchema */
+    connection_properties.erase("metadataUseInfoSchema");
+    {
+      logMsg("... testing metadataUseInfoSchema");
+      sql::ConnectPropertyVal tmp;
+      tmp.bval=true;
+      connection_properties[std::string("metadataUseInfoSchema")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &e)
+      {
+        fail(e.what(), __FILE__, __LINE__);
+      }
+
+      connection_properties.erase("metadataUseInfoSchema");
+      tmp.bval=false;
+      connection_properties[std::string("metadataUseInfoSchema")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &e)
+      {
+        fail(e.what(), __FILE__, __LINE__);
+      }
+    }
+    connection_properties.erase("metadataUseInfoSchema");
+
+
 
   }
   catch (sql::SQLException &e)
