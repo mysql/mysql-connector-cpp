@@ -342,7 +342,38 @@ sql::Connection * unit_fixture::getConnection()
     driver=get_driver_instance();
   }
 
-  return driver->connect(url, user, passwd);
+  std::map<std::string, sql::ConnectPropertyVal> connection_properties;
+
+  {
+    sql::ConnectPropertyVal tmp;
+    /* url comes from the unit testing framework */
+    tmp.str.val=url.c_str();
+    tmp.str.len=url.length();
+    connection_properties[std::string("hostName")]=tmp;
+  }
+
+  {
+    sql::ConnectPropertyVal tmp;
+    /* user comes from the unit testing framework */
+    tmp.str.val=user.c_str();
+    tmp.str.len=user.length();
+    connection_properties[std::string("userName")]=tmp;
+  }
+
+  {
+    sql::ConnectPropertyVal tmp;
+    tmp.str.val=passwd.c_str();
+    tmp.str.len=passwd.length();
+    connection_properties[std::string("password")]=tmp;
+  }
+
+  {
+    sql::ConnectPropertyVal tmp;
+    tmp.bval=TestsRunner::theInstance().getStartOptions()->use_is;
+    connection_properties[std::string("metadataUseInfoSchema")]=tmp;
+  }
+
+  return driver->connect(connection_properties);
 }
 
 void unit_fixture::logMsg(const String message)
@@ -416,7 +447,7 @@ void unit_fixture::checkResultSetScrolling(ResultSet &res)
   int i;
 
   num_rows=(int) res->getRow();
- 
+
   res->beforeFirst();
   ASSERT(!res->previous());
   ASSERT(res->next());
@@ -496,7 +527,7 @@ void unit_fixture::checkResultSetScrolling(ResultSet &res)
   }
   ASSERT_EQUALS(num_rows, i);
 
-  // relative(1) is equivalent to next()     
+  // relative(1) is equivalent to next()
   i=0;
   res->beforeFirst();
   while (res->relative(1))
@@ -505,7 +536,7 @@ void unit_fixture::checkResultSetScrolling(ResultSet &res)
     i++;
     ASSERT_EQUALS(i, (int) res->getRow());
   }
-  ASSERT_EQUALS(num_rows, i); 
+  ASSERT_EQUALS(num_rows, i);
 
   i=0;
   res->first();
@@ -518,7 +549,7 @@ void unit_fixture::checkResultSetScrolling(ResultSet &res)
   while (res->next());
   ASSERT_EQUALS(num_rows, i);
 
-  // relative(1) is equivalent to next()  
+  // relative(1) is equivalent to next()
   i=0;
   res->first();
   do
@@ -528,7 +559,7 @@ void unit_fixture::checkResultSetScrolling(ResultSet &res)
     ASSERT_EQUALS(i, (int) res->getRow());
   }
   while (res->relative(1));
-  ASSERT_EQUALS(num_rows, i);   
+  ASSERT_EQUALS(num_rows, i);
 
   i=num_rows;
   res->last();
@@ -541,7 +572,7 @@ void unit_fixture::checkResultSetScrolling(ResultSet &res)
   while (res->previous());
   ASSERT_EQUALS(0, i);
 
-  // relative(-1) is equivalent to previous()  
+  // relative(-1) is equivalent to previous()
   i=num_rows;
   res->last();
   do
@@ -552,7 +583,7 @@ void unit_fixture::checkResultSetScrolling(ResultSet &res)
   }
   while (res->relative(-1));
   ASSERT_EQUALS(0, i);
-   
+
   i=num_rows;
   res->afterLast();
   while (res->previous())
@@ -564,7 +595,7 @@ void unit_fixture::checkResultSetScrolling(ResultSet &res)
   ASSERT_EQUALS(0, i);
 
   // relative(-1) is equivalent to previous()
-  
+
   i=num_rows;
   res->afterLast();
   while (res->relative(-1))
@@ -573,7 +604,7 @@ void unit_fixture::checkResultSetScrolling(ResultSet &res)
     ASSERT_EQUALS(i, (int) res->getRow());
     i--;
   }
-  ASSERT_EQUALS(0, i);  
+  ASSERT_EQUALS(0, i);
 
   res->last();
   res->relative(0);

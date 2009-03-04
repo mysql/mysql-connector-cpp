@@ -52,6 +52,9 @@ struct StartOptions
 
   bool timer;
 
+  /* TODO - Lawrin, please fix my hack */
+  bool use_is;
+
   String dbUrl;
   String dbUser;
   String dbPasswd;
@@ -67,7 +70,7 @@ struct StartOptions
   : verbose(false), verbose_summary(false)
   {
     String * _param[ poLast - poFirst - 1 ]={&dbUrl, &dbUser, &dbPasswd, &dbSchema};
-
+    use_is = true;
     if (paramsNumber > 1)
     {
       UnnamedParameterOrder curParam=poFirst;
@@ -98,6 +101,11 @@ struct StartOptions
           {
             timer= true;
           }
+          else if ( param == "--dont-use-is"  )
+          {
+            use_is= false;
+          }
+
         }
         else if ((curParam + 1) < poLast)
         {
