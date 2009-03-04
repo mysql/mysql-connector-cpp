@@ -28,7 +28,6 @@ namespace sql
 namespace mysql
 {
 
-extern char * cppmysql_utf8_strup(const char *src, size_t srclen);
 
 
 /* {{{ MySQL_ResultSet::MySQL_ResultSet() -I- */
@@ -39,8 +38,8 @@ MySQL_ResultSet::MySQL_ResultSet(MYSQL_RES_Wrapper * res, MySQL_Statement * par,
 	num_rows = mysql_num_rows(result->get());
 
 	num_fields = mysql_num_fields(result->get());
-	for (unsigned int i = 0; i < num_fields; i++) {
-		char *tmp = cppmysql_utf8_strup(mysql_fetch_field_direct(result->get(), i)->name, 0);
+	for (unsigned int i = 0; i < num_fields; ++i) {
+		char *tmp = sql::mysql::util::cppmysql_utf8_strup(mysql_fetch_field_direct(result->get(), i)->name, 0);
 		field_name_to_index_map[std::string(tmp)] = i;
 		free(tmp);
 	}
@@ -172,7 +171,7 @@ MySQL_ResultSet::findColumn(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ResultSet::findColumn");
 	checkValid();
-	char *tmp = cppmysql_utf8_strup(columnLabel.c_str(), 0);
+	char *tmp = sql::mysql::util::cppmysql_utf8_strup(columnLabel.c_str(), 0);
 	FieldNameIndexMap::const_iterator iter = field_name_to_index_map.find(tmp);
 	free(tmp);
 
@@ -706,7 +705,7 @@ MySQL_ResultSet::next()
 		afterLast();
 	} else if (row_position < num_rows + 1) {
 		row = mysql_fetch_row(result->get());
-		row_position++;
+		++row_position;
 		ret = (row != 0);
 	}
 	CPP_INFO_FMT("new_position=%llu num_rows=%llu", row_position, num_rows);
@@ -728,7 +727,7 @@ MySQL_ResultSet::previous()
 		beforeFirst();
 		return false;
 	} else if (row_position > 1) {
-		row_position--;
+		--row_position;
 		seek();
 		return true;
 	}

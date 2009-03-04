@@ -32,7 +32,7 @@ MYSQL_RES_Wrapper::~MYSQL_RES_Wrapper()
 MYSQL_RES_Wrapper * MYSQL_RES_Wrapper::getReference()
 {
 	if (is_valid) {
-		refcount++;
+		++refcount;
 		return this;
 	} else {
 		throw sql::InvalidInstanceException("Object is invalid");

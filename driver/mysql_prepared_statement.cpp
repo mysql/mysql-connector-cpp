@@ -165,7 +165,7 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 	CPP_ENTER("MySQL_Prepared_Statement::sendLongDataBeforeParamBind");
 	MYSQL_BIND * bind = param_bind->get();
 	char buf[1024];
-	for (unsigned int i = 0; i < param_count; i++) {
+	for (unsigned int i = 0; i < param_count; ++i) {
 		if (bind[i].buffer_type == MYSQL_TYPE_LONG_BLOB) {
 			std::istream * my_blob = param_bind->getBlobObject(i);
 			do {
@@ -327,7 +327,7 @@ void
 MySQL_Prepared_Statement::bindResult()
 {
 	CPP_ENTER("MySQL_Prepared_Statement::bindResult");
-	for (unsigned int i = 0; i < num_fields; i++) {
+	for (unsigned int i = 0; i < num_fields; ++i) {
 		delete[] (char *) result_bind[i].buffer;
 	}
 	delete[] result_bind;
@@ -358,7 +358,7 @@ MySQL_Prepared_Statement::bindResult()
 	mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, &tmp);
 	mysql_stmt_store_result(stmt);
 
-	for (unsigned int i = 0; i < num_fields; i++) {
+	for (unsigned int i = 0; i < num_fields; ++i) {
 		MYSQL_FIELD * field = mysql_fetch_field(result_meta);
 
 		BufferSizePair p = allocate_buffer_for_type(field);
@@ -456,7 +456,7 @@ MySQL_Prepared_Statement::setBlob(unsigned int parameterIndex, std::istream * bl
 	CPP_ENTER("MySQL_Prepared_Statement::setBlob");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	parameterIndex--; /* DBC counts from 1 */
+	--parameterIndex; /* DBC counts from 1 */
 	if (parameterIndex >= param_count) {
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setBlob: invalid 'parameterIndex'");
 	}
@@ -554,7 +554,7 @@ MySQL_Prepared_Statement::setDouble(unsigned int parameterIndex, double value)
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-	parameterIndex--; /* DBC counts from 1 */
+	--parameterIndex; /* DBC counts from 1 */
 	if (parameterIndex >= param_count) {
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setDouble: invalid 'parameterIndex'");
 	}
@@ -588,7 +588,7 @@ MySQL_Prepared_Statement::setInt(unsigned int parameterIndex, int32_t value)
 	CPP_INFO_FMT("column=%u value=%d", parameterIndex, value);
 	checkClosed();
 
-	parameterIndex--; /* DBC counts from 1 */
+	--parameterIndex; /* DBC counts from 1 */
 	if (parameterIndex >= param_count) {
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setInt: invalid 'parameterIndex'");
 	}
@@ -622,7 +622,7 @@ MySQL_Prepared_Statement::setUInt(unsigned int parameterIndex, uint32_t value)
 	CPP_INFO_FMT("column=%u value=%u", parameterIndex, value);
 	checkClosed();
 
-	parameterIndex--; /* DBC counts from 1 */
+	--parameterIndex; /* DBC counts from 1 */
 	if (parameterIndex >= param_count) {
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setInt: invalid 'parameterIndex'");
 	}
@@ -656,7 +656,7 @@ MySQL_Prepared_Statement::setInt64(unsigned int parameterIndex, int64_t value)
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-	parameterIndex--; /* DBC counts from 1 */
+	--parameterIndex; /* DBC counts from 1 */
 	if (parameterIndex >= param_count) {
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setInt64: invalid 'parameterIndex'");
 	}
@@ -688,7 +688,7 @@ MySQL_Prepared_Statement::setUInt64(unsigned int parameterIndex, uint64_t value)
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-	parameterIndex--; /* DBC counts from 1 */
+	--parameterIndex; /* DBC counts from 1 */
 	if (parameterIndex >= param_count) {
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setUInt64: invalid 'parameterIndex'");
 	}
@@ -723,7 +723,7 @@ MySQL_Prepared_Statement::setNull(unsigned int parameterIndex, int /* sqlType */
 	CPP_INFO_FMT("column=%u", parameterIndex);
 	checkClosed();
 
-	parameterIndex--; /* DBC counts from 1 */
+	--parameterIndex; /* DBC counts from 1 */
 	if (parameterIndex >= param_count) {
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setInt: invalid 'parameterIndex'");
 	}
@@ -1026,7 +1026,7 @@ MySQL_Prepared_Statement::closeIntern()
 
 	delete param_bind;
 
-	for (unsigned int i = 0; i < num_fields; i++) {
+	for (unsigned int i = 0; i < num_fields; ++i) {
 		delete[] (char *) result_bind[i].buffer;
 	}
 	delete[] result_bind;

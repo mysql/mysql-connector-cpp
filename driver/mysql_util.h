@@ -13,29 +13,6 @@
 #define _MYSQL_UTIL_H_
 
 #include <cppconn/config.h>
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
-#ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
-#endif
-
-
-#if defined(_WIN32) || defined(_WIN64)
-#ifdef HAVE_MS_INT8
-typedef __int8			int8_t;
-#endif
-#ifdef HAVE_MS_UINT8
-typedef unsigned __int8	uint8_t;
-#endif
-#ifdef HAVE_MS_INT16
-typedef __int16			int16_t;
-#endif
-#ifdef HAVE_MS_UINT16
-typedef unsigned __int16	uint16_t;
-#endif
-
-#endif	//	_WIN32
 
 #ifndef UL64
 #ifdef _WIN32
@@ -50,11 +27,11 @@ typedef unsigned __int16	uint16_t;
 #  include <stdlib.h>
 #  ifdef __hpux
 #    ifdef _PA_RISC2_0
-#      define atoll(__a) atol(__a)
-#      define strtoull(__a, __b, __c) strtoul(__a, __b, __c)
+#      define atoll(__a) atol((__a))
+#      define strtoull(__a, __b, __c) strtoul((__a), (__b), (__c))
 #    else
-#      define atoll(__a) strtoimax(__a, NULL, 10)
-#      define strtoull(__a, __b, __c) strtoumax(__a, __b, __c)
+#      define atoll(__a) strtoimax((__a), NULL, 10)
+#      define strtoull(__a, __b, __c) strtoumax((__a), (__b), (__c))
 #    endif
 #  endif
 #else
@@ -72,6 +49,8 @@ namespace util {
 int mysql_string_type_to_datatype(const std::string & name);
 int mysql_type_to_datatype(const MYSQL_FIELD * const field);
 const char * mysql_type_to_string(const MYSQL_FIELD * const field);
+
+char * cppmysql_utf8_strup(const char * const src, size_t srclen);
 
 
 typedef struct st_our_charset

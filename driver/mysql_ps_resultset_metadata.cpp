@@ -60,7 +60,7 @@ MySQL_Prepared_ResultSetMetaData::getCatalogName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getCatalogName");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -86,7 +86,7 @@ MySQL_Prepared_ResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getColumnDisplaySize");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -103,7 +103,7 @@ MySQL_Prepared_ResultSetMetaData::getColumnLabel(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getColumnLabel");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -118,7 +118,7 @@ MySQL_Prepared_ResultSetMetaData::getColumnName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getColumnName");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -134,7 +134,7 @@ MySQL_Prepared_ResultSetMetaData::getColumnType(unsigned int columnIndex)
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getColumnType");
 	CPP_INFO_FMT("this=%p", this);
 	CPP_INFO_FMT("column=%u", columnIndex);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -153,7 +153,7 @@ MySQL_Prepared_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getColumnTypeName");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--; /* Indexed from 1 */
+	--columnIndex; /* Indexed from 1 */
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -170,7 +170,7 @@ MySQL_Prepared_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getPrecision");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -191,7 +191,7 @@ MySQL_Prepared_ResultSetMetaData::getScale(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getScale");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -208,7 +208,7 @@ MySQL_Prepared_ResultSetMetaData::getSchemaName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getSchemaName");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -224,7 +224,7 @@ MySQL_Prepared_ResultSetMetaData::getTableName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getTableName");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -239,7 +239,7 @@ MySQL_Prepared_ResultSetMetaData::isAutoIncrement(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isAutoIncrement");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -254,7 +254,7 @@ MySQL_Prepared_ResultSetMetaData::isCaseSensitive(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isCaseSensitive");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -274,7 +274,7 @@ MySQL_Prepared_ResultSetMetaData::isCurrency(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isCurrency");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -289,7 +289,7 @@ MySQL_Prepared_ResultSetMetaData::isDefinitelyWritable(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isDefinitelyWritable");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -304,7 +304,7 @@ MySQL_Prepared_ResultSetMetaData::isNullable(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isNullable");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -319,7 +319,7 @@ MySQL_Prepared_ResultSetMetaData::isReadOnly(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isReadOnly");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -336,7 +336,7 @@ MySQL_Prepared_ResultSetMetaData::isSearchable(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isSearchable");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -351,7 +351,7 @@ MySQL_Prepared_ResultSetMetaData::isSigned(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isSigned");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
@@ -369,7 +369,7 @@ MySQL_Prepared_ResultSetMetaData::isWritable(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isWritable");
 	CPP_INFO_FMT("this=%p", this);
-	columnIndex--;
+	--columnIndex;
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}

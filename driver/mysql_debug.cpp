@@ -101,7 +101,7 @@ MySQL_DebugLogger::enter(const MySQL_DebugEnterEvent * event)
 {
 	if (tracing) {
 		printf("\t");
-		for (unsigned int i = 0; i < callStack.size(); i++) {
+		for (unsigned int i = 0; i < callStack.size(); ++i) {
 			printf("|  ");
 		}
 		printf(">%s\n", event->func);
@@ -118,7 +118,7 @@ MySQL_DebugLogger::leave(const MySQL_DebugEnterEvent * event)
 	callStack.pop();
 	if (tracing) {
 		printf("\t");
-		for (unsigned int i = 0; i < callStack.size(); i++) {
+		for (unsigned int i = 0; i < callStack.size(); ++i) {
 			printf("|  ");
 		}
 		printf("<%s\n", event->func);
@@ -135,7 +135,7 @@ MySQL_DebugLogger::log(const char * const type, const char * const message)
 		return;
 	}
 	printf("\t");
-	for (unsigned int i = 0; i < callStack.size(); i++) {
+	for (unsigned int i = 0; i < callStack.size(); ++i) {
 		printf("|  ");
 	}
 	printf("%s: ", type);
@@ -153,7 +153,7 @@ MySQL_DebugLogger::log_va(const char * const type, const char * const format, ..
 	}
 	va_list args;
 	printf("\t");
-	for (unsigned int i = 0; i < callStack.size(); i++) {
+	for (unsigned int i = 0; i < callStack.size(); ++i) {
 		printf("|  ");
 	}
 	printf("%s: ", type);
