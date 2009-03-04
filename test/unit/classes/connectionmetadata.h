@@ -26,7 +26,10 @@ class connectionmetadata : public unit_fixture
 {
 private:
   typedef unit_fixture super;
-  /* Helper function to check a FK definition */
+
+  /**  Helper function to check a FK definition
+   *
+   */
   void checkForeignKey(Connection &con, ResultSet &res);
 
 protected:
@@ -36,7 +39,7 @@ public:
   EXAMPLE_TEST_FIXTURE(connectionmetadata)
   {
     TEST_CASE(getSchemata);
-    TEST_CASE(getAttributes);
+    TEST_CASE(getAttributes);    
     TEST_CASE(getBestRowIdentifier);
     TEST_CASE(getCatalogs);
     TEST_CASE(getCatalogSeparator);
@@ -65,7 +68,7 @@ public:
     TEST_CASE(getSuperTables);
     TEST_CASE(getSuperTypes);
     TEST_CASE(classAttributes);
-    TEST_CASE(getColumnsTypeConversions);
+    TEST_CASE(getColumnsTypeConversions);     
   }
 
   /**
@@ -311,6 +314,7 @@ public:
    *
    */
   void getColumnsTypeConversions();
+
 };
 
 REGISTER_FIXTURE(connectionmetadata);

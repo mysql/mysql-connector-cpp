@@ -259,7 +259,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		if (!(intern->mysql = mysql_init(NULL))) {
 			throw sql::SQLException("Insufficient memory: cannot create MySQL handle using mysql_init()", "HY000", 1000);
 		}
-#ifndef CPPCONN_WIN32
+#if !defined(_WIN32) && !defined(_WIN64)
 		if (!hostName.compare(0, sizeof("unix://") - 1, "unix://")) {
 			protocol_tcp = false;
 			host = "localhost";

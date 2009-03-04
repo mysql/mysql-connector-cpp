@@ -33,6 +33,7 @@ void connectionmetadata::getSchemata()
   {
     DatabaseMetaData dbmeta(con->getMetaData());
     ResultSet resdbm1(dbmeta->getSchemata());
+    checkResultSetScrolling(resdbm1);
     ResultSet resdbm2(dbmeta->getSchemaObjects(con->getCatalog(), "", "schema"));
     logMsg("... checking if getSchemata() and getSchemaObjects() report the same schematas");
 
@@ -75,8 +76,8 @@ void connectionmetadata::getAttributes()
   {
     DatabaseMetaData dbmeta(con->getMetaData());
     res.reset(dbmeta->getAttributes(con->getCatalog(), con->getSchema(), "", ""));
-    ResultSetMetaData resmeta(res->getMetaData());
-
+    checkResultSetScrolling(res);
+    ResultSetMetaData resmeta(res->getMetaData());    
     it=attributes.begin();
     for (i=1; i <= resmeta->getColumnCount(); i++)
     {
@@ -133,6 +134,7 @@ void connectionmetadata::getBestRowIdentifier()
         continue;
       }
       res.reset(dbmeta->getBestRowIdentifier(con->getCatalog(), con->getSchema(), "test", 0, false));
+      checkResultSetScrolling(res);
       ASSERT_EQUALS(true, res->next());
       ASSERT_EQUALS(sql::DatabaseMetaData::bestRowSession, res->getInt(1));
       ASSERT_EQUALS(res->getInt(1), res->getInt("SCOPE"));
@@ -216,6 +218,7 @@ void connectionmetadata::getColumnPrivileges()
     ASSERT_EQUALS(false, res->next());
 
     res.reset(dbmeta->getColumnPrivileges(con->getCatalog(), con->getSchema(), "test", "col%"));
+    checkResultSetScrolling(res);
     rows=0;
     while (res->next())
     {
@@ -295,6 +298,7 @@ void connectionmetadata::getColumns()
         continue;
       }
       res.reset(dbmeta->getColumns(con->getCatalog(), con->getSchema(), "test", "id"));
+      checkResultSetScrolling(res);
       ASSERT_EQUALS(true, res->next());
       ASSERT_EQUALS(con->getCatalog(), res->getString("TABLE_CAT"));
       ASSERT_EQUALS(res->getString(1), res->getString("TABLE_CAT"));
@@ -622,6 +626,7 @@ void connectionmetadata::getImportedKeys()
     ASSERT(!res->next());
 
     res.reset(dbmeta->getImportedKeys(con->getCatalog(), con->getSchema(), "child"));
+    checkResultSetScrolling(res);
     ASSERT(res->next());
     logMsg("... calling checkForeignKey for child");
     checkForeignKey(con, res);
@@ -710,6 +715,7 @@ void connectionmetadata::getExportedKeys()
                   "REFERENCES parent(pid1, pid2) ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY(cid)) ENGINE=INNODB;");
 
     res.reset(dbmeta->getExportedKeys(con->getCatalog(), con->getSchema(), "parent"));
+    checkResultSetScrolling(res);
     num_res=0;
     while (res->next())
     {
@@ -856,6 +862,7 @@ void connectionmetadata::getIndexInfo()
     // New unique index
     stmt->execute("CREATE UNIQUE INDEX an_idx_col3 ON test(col3 ASC)");
     res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
+    checkResultSetScrolling(res);
     ASSERT(res->next());
     ASSERT_EQUALS("an_idx_col3", res->getString("INDEX_NAME"));
     ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
@@ -1189,7 +1196,7 @@ void connectionmetadata::getPrimaryKeys()
     stmt->execute("CREATE TABLE test(col2 INT NOT NULL, col1 INT NOT NULL, PRIMARY KEY(col2, col1))");
     // The descriptions are ordered by the column COLUMN_NAME, will they?
     res.reset(dbmeta->getPrimaryKeys(con->getCatalog(), con->getSchema(), "test"));
-
+    checkResultSetScrolling(res);
     row_num=0;
     while (res->next())
     {
@@ -1262,6 +1269,7 @@ void connectionmetadata::getProcedures()
     ASSERT_EQUALS(1, res->getInt("_myvar"));
     logMsg("...who is the bad guy?");
     res.reset(dbmeta->getProcedures(con->getCatalog(), con->getSchema(), "p1"));
+    checkResultSetScrolling(res);
     logMsg("...is it you, getProcedures()?");
     ASSERT(res->next());
     ASSERT_EQUALS(con->getCatalog(), res->getString("PROCEDURE_CAT"));
@@ -1310,6 +1318,7 @@ void connectionmetadata::getProcedureColumns()
     stmt->execute("SET @myvar = -1");
     stmt->execute("CALL p1(@myvar)");
     res.reset(stmt->executeQuery("SELECT @myvar AS _myvar"));
+    checkResultSetScrolling(res);
     ASSERT(res->next());
     ASSERT_EQUALS(1, res->getInt("_myvar"));
 
@@ -1341,9 +1350,9 @@ void connectionmetadata::getCatalogs()
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
-    res.reset(dbmeta->getCatalogs());
+    res.reset(dbmeta->getCatalogs());    
     ASSERT(!res->next());
-    ResultSetMetaData resmeta(res->getMetaData());
+    ResultSetMetaData resmeta(res->getMetaData());    
     /* http://java.sun.com/j2se/1.4.2/docs/api/java/sql/DatabaseMetaData.html#getCatalogs() */
     ASSERT_EQUALS((unsigned int) 1, resmeta->getColumnCount());
     ASSERT_EQUALS("TABLE_CAT", resmeta->getColumnLabel(1));
@@ -1410,6 +1419,7 @@ void connectionmetadata::getCrossReference()
       SKIP("Cannot create necessary FK tables");
     }
     res.reset(dbmeta->getCrossReference(con->getCatalog(), con->getSchema(), "parent", con->getCatalog(), con->getSchema(), "child"));
+    checkResultSetScrolling(res);
     ASSERT(res->next());
     logMsg("... checking child->parent");
     checkForeignKey(con, res);
@@ -1561,7 +1571,7 @@ void connectionmetadata::getSuperTables()
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT)");
     res.reset(dbmeta->getSuperTables(con->getCatalog(), con->getSchema(), "test"));
-
+    checkResultSetScrolling(res);
     ASSERT(!res->next());
     ResultSetMetaData resmeta(res->getMetaData());
     ASSERT_EQUALS((unsigned int) 4, resmeta->getColumnCount());
@@ -1590,7 +1600,7 @@ void connectionmetadata::getSuperTypes()
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT)");
     res.reset(dbmeta->getSuperTypes(con->getCatalog(), con->getSchema(), "test"));
-
+    checkResultSetScrolling(res);
     ASSERT(!res->next());
     ResultSetMetaData resmeta(res->getMetaData());
     ASSERT_EQUALS((unsigned int) 6, resmeta->getColumnCount());
@@ -1702,14 +1712,16 @@ void connectionmetadata::getColumnsTypeConversions()
   logMsg("connectionmetadata::getColumnsTypeConversions() - MySQL_ConnectionMetaData::getColumns");
   std::vector<columndefinition>::iterator it;
   std::stringstream msg;
-  bool got_warning=false;
+  int i;
+  bool got_warning;
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
     stmt.reset(con->createStatement());
 
+    got_warning=false;
     logMsg("... looping over all kinds of column types");
-    for (it=columns.begin(); it != columns.end(); it++)
+    for (it=columns.begin(), i=0; it != columns.end() && i < 5; i++, it++)
     {
       stmt->execute("DROP TABLE IF EXISTS test");
       msg.str("");
@@ -1729,14 +1741,111 @@ void connectionmetadata::getColumnsTypeConversions()
         continue;
       }
       res.reset(dbmeta->getColumns(con->getCatalog(), con->getSchema(), "test", "id"));
+      checkResultSetScrolling(res);
       ASSERT_EQUALS(true, res->next());
+
+      // string -> xyz
       ASSERT_EQUALS("test", res->getString("TABLE_NAME"));
+      ASSERT_EQUALS(false, res->wasNull());
+      ASSERT_EQUALS(res->getString(3), res->getString("TABLE_NAME"));
+
       ASSERT_EQUALS(false, res->getBoolean("TABLE_NAME"));
-      
+      ASSERT_EQUALS(false, res->wasNull());
+      ASSERT_EQUALS(res->getBoolean(3), res->getBoolean("TABLE_NAME"));
+
+      ASSERT_EQUALS((int64_t) 0, res->getInt64("TABLE_NAME"));
+      ASSERT_EQUALS(false, res->wasNull());
+      ASSERT_EQUALS(res->getInt64(3), res->getInt64("TABLE_NAME"));
+
+      ASSERT_EQUALS((uint64_t) 0, res->getUInt64("TABLE_NAME"));
+      ASSERT_EQUALS(false, res->wasNull());
+      ASSERT_EQUALS(res->getUInt64(3), res->getUInt64("TABLE_NAME"));
+
+      ASSERT_EQUALS((double) 0, res->getDouble("TABLE_NAME"));
+      ASSERT_EQUALS(false, res->wasNull());
+      ASSERT_EQUALS(res->getDouble(3), res->getDouble("TABLE_NAME"));
+
+      ASSERT_EQUALS((int) 0, res->getInt("TABLE_NAME"));
+      ASSERT_EQUALS(false, res->wasNull());
+      ASSERT_EQUALS(res->getInt(3), res->getInt("TABLE_NAME"));
+
+      ASSERT_EQUALS((uint) 0, res->getUInt("TABLE_NAME"));
+      ASSERT_EQUALS(false, res->wasNull());
+      ASSERT_EQUALS(res->getUInt(3), res->getUInt("TABLE_NAME"));
+
+      ASSERT_EQUALS(false, res->isNull("TABLE_NAME"));
+      ASSERT_EQUALS(false, res->wasNull());
+      ASSERT_EQUALS(res->isNull(3), res->isNull("TABLE_NAME"));
+
+      // integer -> xyz
+      ASSERT_EQUALS(it->decimal_digits, res->getInt("DECIMAL_DIGITS"));
+      ASSERT_EQUALS(false, res->wasNull());
+      ASSERT_EQUALS(res->getInt(9), res->getInt("DECIMAL_DIGITS"));
+
+      msg.str("");
+      msg << it->decimal_digits;
+      if (msg.str() != res->getString("DECIMAL_DIGITS"))
+      {
+        msg.str("");
+        msg << "... expecting DECIMAL_DIGITS = '" << it->decimal_digits << "'";
+        msg << " got '" << res->getString("DECIMAL_DIGITS") << "'";
+        logMsg(msg.str());
+        got_warning=true;
+        msg.str("");
+        msg << it->decimal_digits;
+      }
+      // ASSERT_EQUALS(msg.str(), res->getString("DECIMAL_DIGITS"));
+      ASSERT_EQUALS(false, res->wasNull());
+      ASSERT_EQUALS(res->getString(9), res->getString("DECIMAL_DIGITS"));
+
+      ASSERT_EQUALS((bool)it->decimal_digits, res->getBoolean("DECIMAL_DIGITS"));
+      ASSERT_EQUALS(false, res->wasNull());
+      ASSERT_EQUALS(res->getBoolean(9), res->getBoolean("DECIMAL_DIGITS"));
+
+      ASSERT_EQUALS((int64_t) it->decimal_digits, res->getInt64("DECIMAL_DIGITS"));
+      ASSERT_EQUALS(false, res->wasNull());
+      ASSERT_EQUALS(res->getInt64(9), res->getInt64("DECIMAL_DIGITS"));
+
+      ASSERT_EQUALS((uint64_t) it->decimal_digits, res->getUInt64("DECIMAL_DIGITS"));
+      ASSERT_EQUALS(false, res->wasNull());
+      ASSERT_EQUALS(res->getUInt64(9), res->getUInt64("DECIMAL_DIGITS"));
+
+      ASSERT_EQUALS((double) it->decimal_digits, res->getDouble("DECIMAL_DIGITS"));
+      ASSERT_EQUALS(false, res->wasNull());
+      ASSERT_EQUALS(res->getDouble(9), res->getDouble("DECIMAL_DIGITS"));
+
+      ASSERT_EQUALS((int) it->decimal_digits, res->getInt("DECIMAL_DIGITS"));
+      ASSERT_EQUALS(false, res->wasNull());
+      ASSERT_EQUALS(res->getInt(9), res->getInt("DECIMAL_DIGITS"));
+
+      ASSERT_EQUALS((uint) it->decimal_digits, res->getUInt("DECIMAL_DIGITS"));
+      ASSERT_EQUALS(false, res->wasNull());
+      ASSERT_EQUALS(res->getUInt(9), res->getUInt("DECIMAL_DIGITS"));
+
+      ASSERT_EQUALS(false, res->isNull(9));
+      ASSERT_EQUALS(res->isNull(9), res->isNull("DECIMAL_DIGITS"));
+      ASSERT_EQUALS(false, res->wasNull());
+
+      try
+      {
+        res->isNull(0);
+        FAIL("Invalid column index");
+      }
+      catch (sql::SQLException &)
+      {
+      }
+
+      try
+      {
+        res->isNull("invalid column index");
+        FAIL("Invalid column index");
+      }
+      catch (sql::SQLException &)
+      {
+      }
+
       stmt->execute("DROP TABLE IF EXISTS test");
     }
-    if (got_warning)
-      FAIL("See Warnings!");
 
     stmt->execute("DROP TABLE IF EXISTS test");
     res.reset(dbmeta->getColumns(con->getCatalog(), con->getSchema(), "test", "id"));
@@ -1748,8 +1857,28 @@ void connectionmetadata::getColumnsTypeConversions()
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
   }
-}
 
+  try
+  {
+    res->isNull(1);
+    FAIL("Not on resultset, should fail");
+  }
+  catch (sql::SQLException &)
+  {
+  }
+
+  try
+  {
+    res->isNull("not on resultset and unknown column");
+    FAIL("Not on resultset, should fail");
+  }
+  catch (sql::SQLException &)
+  {
+  }
+
+  if (got_warning)
+    FAIL("See warnings!");
+}
 
 } /* namespace connectionmetadata */
 } /* namespace testsuite */

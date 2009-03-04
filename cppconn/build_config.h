@@ -20,7 +20,7 @@
   #define CPPCONN_PUBLIC_FUNC __declspec(dllexport)
  #else
   // this is for static build
-  #ifdef CPPCONN_EXPORTS
+  #ifdef CPPCONN_LIB_BUILD
     #define CPPCONN_PUBLIC_FUNC 
   #else
    // this is for clients using dynamic lib

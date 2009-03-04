@@ -66,6 +66,7 @@ void resultset::getInt()
     ASSERT(pstmt->execute());
 
     res.reset(pstmt->getResultSet());
+    checkResultSetScrolling(res);
 
     ASSERT(res->next());
 
@@ -99,6 +100,7 @@ void resultset::getInt()
 
 
     res.reset(stmt->executeQuery("SELECT i, i_uns, b, b_uns FROM test"));
+    checkResultSetScrolling(res);
 
     ASSERT(res->next());
 
@@ -183,10 +185,12 @@ void resultset::getTypes()
       logMsg(msg.str());
 
       res.reset(stmt->executeQuery("SELECT id FROM test"));
+      checkResultSetScrolling(res);
       /*
       pstmt.reset(con->prepareStatement("SELECT id FROM test"));
       pstmt->clearParameters();
       pres.reset(pstmt->executeQuery());
+      checkResultSetScrolling(res);
        */
       ASSERT(res->next());
       if (it->check_as_string)
