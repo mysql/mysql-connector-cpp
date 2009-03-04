@@ -53,7 +53,7 @@ void unit_fixture::init()
   db=TestsRunner::theInstance().getStartOptions()->dbSchema;
 
   columns.push_back(columndefinition("BIT", "BIT", sql::DataType::BIT, "0", false, 1, 0, true, "", 0, "NO"));
-  
+
   columns.push_back(columndefinition("BIT", "BIT NOT NULL", sql::DataType::BIT, "1", false, 1, 0, false, "", 0, "NO"));
   columns.push_back(columndefinition("BIT", "BIT(5) NOT NULL", sql::DataType::BIT, "0", false, 5, 0, false, "", 0, "NO"));
   columns.push_back(columndefinition("BIT", "BIT(8)", sql::DataType::BIT, "0", false, 8, 0, true, "", 0, "NO"));
@@ -145,14 +145,14 @@ void unit_fixture::init()
   // The CHAR BYTE data type is an alias for the BINARY data type. This is a compatibility feature.
   columns.push_back(columndefinition("BINARY", "CHAR(255) BYTE", sql::DataType::BINARY, "abc", true, 255, 0, true, "", 255, "NO"));
   columns.push_back(columndefinition("BINARY", "CHAR(12) BYTE NOT NULL", sql::DataType::BINARY, "abc", true, 12, 0, false, "", 12, "NO"));
-  columns.push_back(columndefinition("CHAR", "CHAR(14) DEFAULT 'Andrey'", sql::DataType::CHAR, "abc", true, 14, 0, true, "Andrey", 0, "NO"));  
+  columns.push_back(columndefinition("CHAR", "CHAR(14) DEFAULT 'Andrey'", sql::DataType::CHAR, "abc", true, 14, 0, true, "Andrey", 0, "NO"));
   columns.push_back(columndefinition("BINARY", "CHAR(25) CHARACTER SET 'binary'", sql::DataType::BINARY, "abc", false, 25, 0, true, "", 25, "NO"));
   columns.push_back(columndefinition("VARCHAR", "VARCHAR(10)", sql::DataType::VARCHAR, "a", false, 10, 0, true, "", 0, "NO"));
   columns.push_back(columndefinition("VARBINARY", "VARCHAR(10) CHARACTER SET binary", sql::DataType::BINARY, "a", false, 10, 0, true, "", 0, "NO"));
   columns.push_back(columndefinition("VARCHAR", "VARCHAR(7) NOT NULL", sql::DataType::VARCHAR, "a", false, 7, 0, false, "", 0, "NO"));
   columns.push_back(columndefinition("VARCHAR", "VARCHAR(255) DEFAULT 'Good night twitter. BTW, go MySQL!'", sql::DataType::VARCHAR, "a", false, 255, 0, true, "Good night twitter. BTW, go MySQL!", 0, "NO"));
   columns.push_back(columndefinition("VARCHAR", "VARCHAR(11) CHARACTER SET 'utf8'", sql::DataType::VARCHAR, "a", false, 11, 0, true, "", 33, "NO"));
-  columns.push_back(columndefinition("VARCHAR", "VARCHAR(11) CHARACTER SET 'ascii' DEFAULT 'Hristov'", sql::DataType::VARCHAR, "a", false, 11, 0, true, "Hristov", 11, "NO"));  
+  columns.push_back(columndefinition("VARCHAR", "VARCHAR(11) CHARACTER SET 'ascii' DEFAULT 'Hristov'", sql::DataType::VARCHAR, "a", false, 11, 0, true, "Hristov", 11, "NO"));
   columns.push_back(columndefinition("VARCHAR", "VARCHAR(12) CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::VARCHAR, "a", false, 12, 0, true, "", 36, "NO"));
   columns.push_back(columndefinition("VARBINARY", "VARCHAR(13) BYTE", sql::DataType::VARBINARY, "a", false, 13, 0, true, "", 13, "NO"));
   columns.push_back(columndefinition("VARBINARY", "VARCHAR(14) BYTE NOT NULL", sql::DataType::VARBINARY, "a", false, 14, 0, false, "", 14, "NO"));
@@ -165,7 +165,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("TINYTEXT", "TINYTEXT NOT NULL", sql::DataType::VARCHAR, "a", false, 255, 0, false, "", 255, "NO"));
   columns.push_back(columndefinition("TINYTEXT", "TINYTEXT", sql::DataType::VARCHAR, "a", false, 255, 0, true, "", 255, "NO"));
   columns.push_back(columndefinition("TINYBLOB", "TINYTEXT CHARACTER SET binary", sql::DataType::VARBINARY, "a", false, 255, 0, true, "", 255, "NO"));
-  columns.push_back(columndefinition("TINYTEXT", "TINYTEXT CHARACTER SET 'utf8'", sql::DataType::VARCHAR, "a", false, 255, 0, true, "", 255, "NO"));  
+  columns.push_back(columndefinition("TINYTEXT", "TINYTEXT CHARACTER SET 'utf8'", sql::DataType::VARCHAR, "a", false, 255, 0, true, "", 255, "NO"));
   columns.push_back(columndefinition("TINYTEXT", "TINYTEXT CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::VARCHAR, "a", false, 255, 0, true, "", 255, "NO"));
   columns.push_back(columndefinition("MEDIUMBLOB", "MEDIUMBLOB", sql::DataType::LONGVARBINARY, "a", false, 16777215, 0, true, "", 16777215, "NO"));
   columns.push_back(columndefinition("MEDIUMBLOB", "MEDIUMBLOB NOT NULL", sql::DataType::LONGVARBINARY, "a", false, 16777215, 0, false, "", 16777215, "NO"));
@@ -179,7 +179,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("LONGTEXT", "LONGTEXT", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, true, "", L64(4294967295), "NO"));
   columns.push_back(columndefinition("LONGBLOB", "LONGTEXT CHARACTER SET binary", sql::DataType::LONGVARBINARY, "a", false, L64(4294967295), 0, true, "", L64(4294967295), "NO"));
   columns.push_back(columndefinition("LONGTEXT", "LONGTEXT NOT NULL", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, false, "", L64(4294967295), "NO"));
-  columns.push_back(columndefinition("LONGTEXT", "LONGTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, true, "", L64(4294967295), "NO"));  
+  columns.push_back(columndefinition("LONGTEXT", "LONGTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, true, "", L64(4294967295), "NO"));
   columns.push_back(columndefinition("LONGTEXT", "LONGTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, true, "", L64(4294967295), "NO"));
   columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no')", sql::DataType::ENUM, "yes", false, 3, 0, true, "", 3, "NO"));
   columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no') CHARACTER SET 'binary'", sql::DataType::ENUM, "yes", false, 3, 0, true, "", 3, "NO"));
@@ -191,7 +191,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii'", sql::DataType::SET, "yes", false, 6, 0, true, "", 6, "NO"));
   columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii' DEFAULT 'yes'", sql::DataType::SET, "yes", false, 6, 0, true, "yes", 6, "NO"));
   columns.push_back(columndefinition("SET", "SET('yes', 'no', 'ascii') CHARSET 'ascii' NOT NULL", sql::DataType::SET, "yes", false, 12, 0, false, "", 12, "NO"));
-   
+
   /*
   ResultSet getAttributes(String catalog,
                     String schemaPattern,
@@ -396,5 +396,204 @@ std::string unit_fixture::exceptionIsOK(sql::SQLException &e, const std::string&
   return reason.str();
 }
 
+void unit_fixture::checkResultSetScrolling(ResultSet &res)
+{
+  return;
+/*
+  if (res->getType() == sql::ResultSet::TYPE_FORWARD_ONLY)
+    return;
+*/
+  int before;
+  int num_rows;
+
+  before=res->getRow();
+  ASSERT(res->last());
+  num_rows=(int) res->getRow();
+  if (num_rows < 1)
+  {
+    res->absolute(before);
+    return;
+  }
+
+  int i;
+  std::stringstream msg;
+
+  msg.str("");
+  msg << "connectionmetadata::checkResultSetScrolling()";  
+  logMsg(msg.str());
+
+  res->beforeFirst();
+  ASSERT(!res->previous());
+  ASSERT(res->next());
+  ASSERT_EQUALS(1, (int) res->getRow());
+  ASSERT(!res->isBeforeFirst());
+  ASSERT(!res->isAfterLast());
+  if (num_rows > 1)
+  {
+    ASSERT(res->next());
+    ASSERT(res->previous());
+    ASSERT_EQUALS(1, (int) res->getRow());
+  }
+
+  ASSERT(res->first());
+  ASSERT_EQUALS(1, (int) res->getRow());
+  ASSERT(res->isFirst());
+  ASSERT(!res->isBeforeFirst());
+  ASSERT(!res->isAfterLast());
+  if (num_rows == 1)
+    ASSERT(res->isLast());
+  else
+    ASSERT(!res->isLast());
+
+  if (num_rows > 1)
+  {
+    ASSERT(res->next());
+    ASSERT(res->previous());
+    ASSERT_EQUALS(1, (int) res->getRow());
+  }
+  ASSERT(!res->previous());
+
+  ASSERT(res->last());
+  ASSERT_EQUALS(num_rows, (int) res->getRow());
+  ASSERT(res->isLast());
+  ASSERT(!res->isBeforeFirst());
+  ASSERT(!res->isAfterLast());
+  if (num_rows == 1)
+    ASSERT(res->isFirst());
+  else
+    ASSERT(!res->isFirst());
+
+  if (num_rows > 1)
+  {
+    ASSERT(res->previous());
+    ASSERT_EQUALS(num_rows - 1, (int) res->getRow());
+    ASSERT(res->next());
+    ASSERT_EQUALS(num_rows, (int) res->getRow());
+  }
+  ASSERT(!res->next());
+
+  res->beforeFirst();
+  ASSERT_EQUALS(0, (int) res->getRow());
+  ASSERT(res->isBeforeFirst());
+  ASSERT(!res->isAfterLast());
+  ASSERT(!res->isFirst());
+  ASSERT(!res->previous());
+  ASSERT(res->next());
+  ASSERT_EQUALS(1, (int) res->getRow());
+  ASSERT(!res->previous());
+
+  res->afterLast();
+  ASSERT_EQUALS(num_rows + 1, (int) res->getRow());
+  ASSERT(res->isAfterLast());
+  ASSERT(!res->isBeforeFirst());
+  ASSERT(!res->isFirst());
+  ASSERT(res->previous());
+  ASSERT_EQUALS(num_rows, (int) res->getRow());
+  ASSERT(!res->next());
+
+  i=0;
+  res->beforeFirst();
+  while (res->next())
+  {
+    ASSERT(!res->isAfterLast());
+    i++;
+    ASSERT_EQUALS(i, (int) res->getRow());
+  }
+  ASSERT_EQUALS(num_rows, i);
+
+  // relative(1) is equivalent to next()
+  /*
+   TODO - equivalent to next() but fails
+  i=0;
+  res->beforeFirst();
+  while (res->relative(1))
+  {
+    ASSERT(!res->isAfterLast());
+    i++;
+    ASSERT_EQUALS(i, (int) res->getRow());
+  }
+  ASSERT_EQUALS(num_rows, i);
+   */
+
+  i=0;
+  res->first();
+  do
+  {
+    ASSERT(!res->isAfterLast());
+    i++;
+    ASSERT_EQUALS(i, (int) res->getRow());
+  }
+  while (res->next());
+  ASSERT_EQUALS(num_rows, i);
+
+  // relative(1) is equivalent to next()
+  /*
+  i=0;
+  res->first();
+  do
+  {
+    ASSERT(!res->isAfterLast());
+    i++;
+    ASSERT_EQUALS(i, (int) res->getRow());
+  }
+  while (res->relative(1));
+  ASSERT_EQUALS(num_rows, i);
+   */
+
+  i=num_rows;
+  res->last();
+  do
+  {
+    ASSERT(!res->isBeforeFirst());
+    ASSERT_EQUALS(i, (int) res->getRow());
+    i--;
+  }
+  while (res->previous());
+  ASSERT_EQUALS(0, i);
+
+  // relative(-1) is equivalent to previous()
+  /*
+  i=num_rows;
+  res->last();
+  do
+  {
+    ASSERT(!res->isBeforeFirst());
+    ASSERT_EQUALS(i, (int) res->getRow());
+    i--;
+  }
+  while (res->relative(-1));
+  ASSERT_EQUALS(0, i);
+   */
+
+  i=num_rows;
+  res->afterLast();
+  while (res->previous())
+  {
+    ASSERT(!res->isBeforeFirst());
+    ASSERT_EQUALS(i, (int) res->getRow());
+    i--;
+  }
+  ASSERT_EQUALS(0, i);
+
+  // relative(-1) is equivalent to previous()
+  /*
+  i=num_rows;
+  res->afterLast();
+  while (res->relative(-1))
+  {
+    ASSERT(!res->isBeforeFirst());
+    ASSERT_EQUALS(i, (int) res->getRow());
+    i--;
+  }
+  ASSERT_EQUALS(0, i);
+   */
+
+  res->last();
+  res->relative(0);
+  ASSERT(res->isLast());
+
+  res->absolute(before);
+  ASSERT_EQUALS(before, (int) res->getRow());
+}
 
 } /* namespace testsuite */

@@ -26,7 +26,10 @@ class connectionmetadata : public unit_fixture
 {
 private:
   typedef unit_fixture super;
-  /* Helper function to check a FK definition */
+
+  /**  Helper function to check a FK definition
+   *
+   */
   void checkForeignKey(Connection &con, ResultSet &res);
 
 protected:
@@ -311,6 +314,7 @@ public:
    *
    */
   void getColumnsTypeConversions();
+
 };
 
 REGISTER_FIXTURE(connectionmetadata);

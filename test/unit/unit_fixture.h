@@ -103,7 +103,7 @@ struct columndefinition
                    const std::string & _value, bool _is_signed, unsigned int _precision,
                    int _decimal_digits, bool _is_nullable, const std::string & _column_def,
                    int _char_octet_length, const std::string & _is_autoincrement,
-									 const std::string & _as_string) :
+                   const std::string & _as_string) :
   name(_name),
   sqldef(_sqldef),
   ctype(_ctype),
@@ -314,6 +314,11 @@ protected:
    * Checks if the passed exception has the SQLState HY000 and the (vendor) error code 0
    */
   std::string exceptionIsOK(sql::SQLException &e);
+
+  /**
+   * Helper function to check scrolling through a result set
+   */
+  void checkResultSetScrolling(ResultSet &res);
 
 public:
 
