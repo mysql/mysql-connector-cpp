@@ -39,9 +39,9 @@ MySQL_ResultSet::MySQL_ResultSet(MYSQL_RES_Wrapper * res, MySQL_Statement * par,
 
 	num_fields = mysql_num_fields(result->get());
 	for (unsigned int i = 0; i < num_fields; ++i) {
-		char *tmp = sql::mysql::util::cppmysql_utf8_strup(mysql_fetch_field_direct(result->get(), i)->name, 0);
+		char *tmp = sql::mysql::util::utf8_strup(mysql_fetch_field_direct(result->get(), i)->name, 0);
 		field_name_to_index_map[std::string(tmp)] = i;
-		free(tmp);
+		delete [] tmp;
 	}
 }
 /* }}} */
@@ -171,9 +171,9 @@ MySQL_ResultSet::findColumn(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ResultSet::findColumn");
 	checkValid();
-	char *tmp = sql::mysql::util::cppmysql_utf8_strup(columnLabel.c_str(), 0);
+	char *tmp = sql::mysql::util::utf8_strup(columnLabel.c_str(), 0);
 	FieldNameIndexMap::const_iterator iter = field_name_to_index_map.find(tmp);
-	free(tmp);
+	delete [] tmp;
 
 	if (iter == field_name_to_index_map.end()) {
 		return 0;

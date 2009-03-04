@@ -272,7 +272,7 @@ MySQL_Prepared_Statement::execute(const std::string&)
 
 typedef std::pair<char *, int> BufferSizePair;
 static BufferSizePair
-allocate_buffer_for_type(MYSQL_FIELD *field)
+allocate_buffer_for_field(const MYSQL_FIELD * const field)
 {
 	switch (field->type) {
 		case MYSQL_TYPE_NULL:
@@ -292,15 +292,16 @@ allocate_buffer_for_type(MYSQL_FIELD *field)
 		case MYSQL_TYPE_TIME:
 		case MYSQL_TYPE_DATETIME:
 			return BufferSizePair(new char[sizeof(MYSQL_TIME)], sizeof(MYSQL_TIME));
-		case MYSQL_TYPE_STRING:
+#if A0
+		// There three are not sent over the wire
 		case MYSQL_TYPE_TINY_BLOB:
-		case MYSQL_TYPE_BLOB:
 		case MYSQL_TYPE_MEDIUM_BLOB:
 		case MYSQL_TYPE_LONG_BLOB:
+#endif
+		case MYSQL_TYPE_BLOB:
+		case MYSQL_TYPE_STRING:
 		case MYSQL_TYPE_VAR_STRING:
-			if (!(field->max_length))
-				return BufferSizePair(new char[1], 1);
-			return BufferSizePair(new char[field->max_length], field->max_length);
+			return BufferSizePair(new char[field->max_length + 1], field->max_length + 1);
 
 		case MYSQL_TYPE_DECIMAL:
 		case MYSQL_TYPE_NEWDECIMAL:
@@ -316,7 +317,7 @@ allocate_buffer_for_type(MYSQL_FIELD *field)
 		case MYSQL_TYPE_BIT:
 		case MYSQL_TYPE_GEOMETRY:
 		default:
-			throw sql::InvalidArgumentException("allocate_buffer_for_type: invalid result_bind data type");
+			throw sql::InvalidArgumentException("allocate_buffer_for_field: invalid result_bind data type");
 	}
 }
 /* }}} */
@@ -361,7 +362,7 @@ MySQL_Prepared_Statement::bindResult()
 	for (unsigned int i = 0; i < num_fields; ++i) {
 		MYSQL_FIELD * field = mysql_fetch_field(result_meta);
 
-		BufferSizePair p = allocate_buffer_for_type(field);
+		BufferSizePair p = allocate_buffer_for_field(field);
 		result_bind[i].buffer_type	= field->type;
 		result_bind[i].buffer		= p.first;
 		result_bind[i].buffer_length= p.second;
@@ -369,14 +370,6 @@ MySQL_Prepared_Statement::bindResult()
 		result_bind[i].is_null		= &is_null[i];
 		result_bind[i].error		= &err[i];
 		result_bind[i].is_unsigned = field->flags & UNSIGNED_FLAG;
-
-		if (field->type == MYSQL_TYPE_BLOB || field->type == MYSQL_TYPE_MEDIUM_BLOB ||
-			field->type == MYSQL_TYPE_LONG_BLOB) {
-
-			if (!(result_bind[i].buffer_length = field->max_length))
-				++result_bind[i].buffer_length;
-			result_bind[i].buffer = new char[result_bind[i].buffer_length];
-		}
 	}
 	mysql_free_result(result_meta);
 	result_meta = NULL;

@@ -2144,14 +2144,14 @@ static int cppmysql_caseup_utf8(const char * src, size_t srclen, char *dst, size
 	return (size_t) (dst - dst0);
 }
 
-char * cppmysql_utf8_strup(const char * const src, size_t srclen)
+char * utf8_strup(const char * const src, size_t srclen)
 {
 	size_t dstlen;
 	char * dst;
 	if (srclen == 0) {
 		srclen = strlen(src);
 	}
-	dst = (char *) malloc(dstlen = srclen * 4);
+	dst = new char[(dstlen = srclen * 4)];
 	if (!dst) {
 		return NULL;
 	}

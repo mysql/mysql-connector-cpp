@@ -50,7 +50,7 @@ int mysql_string_type_to_datatype(const std::string & name);
 int mysql_type_to_datatype(const MYSQL_FIELD * const field);
 const char * mysql_type_to_string(const MYSQL_FIELD * const field);
 
-char * cppmysql_utf8_strup(const char * const src, size_t srclen);
+char * utf8_strup(const char * const src, size_t srclen);
 
 
 typedef struct st_our_charset

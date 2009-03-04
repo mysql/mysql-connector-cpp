@@ -192,10 +192,10 @@ MySQL_ArtResultSet::MySQL_ArtResultSet(const StringList& fn, rset_t * const rs, 
 
 	unsigned int idx = 0;
 	for (StringList::const_iterator it = fn.begin(), e = fn.end(); it != e; ++it, ++idx) {
-		char *tmp = sql::mysql::util::cppmysql_utf8_strup(it->c_str(), 0);
+		char * tmp = sql::mysql::util::utf8_strup(it->c_str(), 0);
 		field_name_to_index_map[std::string(tmp)] = idx;
 		field_index_to_name_map[idx] = std::string(tmp);
-		free(tmp);
+		delete [] tmp;
 	}
 }
 /* }}} */
@@ -348,9 +348,9 @@ MySQL_ArtResultSet::findColumn(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::columnLabel");
 	checkValid();
-	char * tmp = sql::mysql::util::cppmysql_utf8_strup(columnLabel.c_str(), 0);
+	char * tmp = sql::mysql::util::utf8_strup(columnLabel.c_str(), 0);
 	FieldNameIndexMap::const_iterator iter = field_name_to_index_map.find(tmp);
-	free(tmp);
+	delete [] tmp;
 
 	if (iter == field_name_to_index_map.end()) {
 		return 0;

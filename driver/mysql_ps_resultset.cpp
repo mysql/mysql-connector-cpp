@@ -62,9 +62,9 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(MYSQL_STMT *s, MySQL_Prepared
 
 	CPP_INFO_FMT("num_fields=%u num_rows=%u", num_fields, num_rows);
 	for (unsigned int i = 0; i < num_fields; ++i) {
-		char * tmp = sql::mysql::util::cppmysql_utf8_strup(mysql_fetch_field(result_meta)->name, 0);
+		char * tmp = sql::mysql::util::utf8_strup(mysql_fetch_field(result_meta)->name, 0);
 		field_name_to_index_map[std::string(tmp)] = i;
-		free(tmp);
+		delete [] tmp;
 	}
 	mysql_free_result(result_meta);
 	result_meta = NULL;
@@ -204,9 +204,9 @@ MySQL_Prepared_ResultSet::findColumn(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::findColumn");
 	checkValid();
-	char * tmp = sql::mysql::util::cppmysql_utf8_strup(columnLabel.c_str(), 0);
+	char * tmp = sql::mysql::util::utf8_strup(columnLabel.c_str(), 0);
 	FieldNameIndexMap::const_iterator iter= field_name_to_index_map.find(tmp);
-	free(tmp);
+	delete [] tmp;
 
 	if (iter == field_name_to_index_map.end()) {
 		return 0;
