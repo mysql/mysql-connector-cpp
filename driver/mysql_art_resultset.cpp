@@ -919,7 +919,7 @@ MySQL_ArtResultSet::relative(const int rows)
 		}
 	}
 
-	return (row_position < (num_rows + 1) || row_position > 0);
+	return (row_position > 0 && row_position <= num_rows);
 }
 /* }}} */
 
