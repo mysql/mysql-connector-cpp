@@ -1044,7 +1044,7 @@ static const TypeInfoDef mysqlc_types[] = {
 	// ----------- MySQL-Type: SET DBC-Type: VARCHAR ----------
 	{
 		"SET",								// Typename
-		sql::DataType::VARCHAR,				// dbc-type
+		sql::DataType::SET,					// dbc-type
 		64,									// Precision
 		"'",								// Literal prefix
 		"'",								// Literal suffix
@@ -1861,8 +1861,8 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 			"  END "
 			"ELSE"
 			"  CASE"
-			"    WHEN LCASE(DATA_TYPE)='set' THEN 'VARCHAR'"
-			"    WHEN LCASE(DATA_TYPE)='enum' THEN 'VARCHAR'"
+//			"    WHEN LCASE(DATA_TYPE)='set' THEN 'VARCHAR'"
+//			"    WHEN LCASE(DATA_TYPE)='enum' THEN 'VARCHAR'"
 			"    WHEN LCASE(DATA_TYPE)='year' THEN 'DATE'"
 			"    ELSE UCASE(DATA_TYPE)"
 			"  END "

@@ -31,7 +31,7 @@ public:
 
 	int getSavepointId();
 
-	std::string &getSavepointName();
+	std::string getSavepointName();
 
 private:
 	/* Prevent use of these */
@@ -43,7 +43,7 @@ private:
 class MySQL_DebugLogger;
 class MySQL_ConnectionData; /* PIMPL */
 
-class CPPDBC_PUBLIC_FUNC MySQL_Connection : public sql::Connection
+class CPPCONN_PUBLIC_FUNC MySQL_Connection : public sql::Connection
 {
 public:
 	MySQL_Connection(const std::string& hostName, const std::string& userName, const std::string& password);

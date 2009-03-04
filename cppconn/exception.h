@@ -12,7 +12,7 @@
 #ifndef _SQL_EXCEPTION_H_
 #define _SQL_EXCEPTION_H_
 
-
+#include "build_config.h"
 #include <stdexcept>
 #include <string>
 #include <memory>
@@ -35,7 +35,7 @@ namespace sql
 //warning C4290: C++ exception specification ignored except to indicate a function is not __declspec(nothrow)
 #endif
 
-class SQLException : public std::runtime_error
+class CPPCONN_PUBLIC_FUNC SQLException : public std::runtime_error
 {
 protected:
 	const std::string sql_state;
@@ -72,7 +72,7 @@ protected:
 	MEMORY_ALLOC_OPERATORS(SQLException)
 };
 
-struct MethodNotImplementedException : public SQLException
+struct CPPCONN_PUBLIC_FUNC MethodNotImplementedException : public SQLException
 {
  	MethodNotImplementedException(const MethodNotImplementedException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
 	MethodNotImplementedException(const std::string& reason) : SQLException(reason, "", 0) {}
@@ -81,7 +81,7 @@ private:
 	virtual SQLException* copy() { return new MethodNotImplementedException(*this); }
 };
 
-struct InvalidArgumentException : public SQLException
+struct CPPCONN_PUBLIC_FUNC InvalidArgumentException : public SQLException
 {
  	InvalidArgumentException(const InvalidArgumentException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
  	InvalidArgumentException(const std::string& reason) : SQLException(reason, "", 0) {}
@@ -90,7 +90,7 @@ private:
   virtual SQLException* copy() { return new InvalidArgumentException(*this); }
 };
 
-struct InvalidInstanceException : public SQLException
+struct CPPCONN_PUBLIC_FUNC InvalidInstanceException : public SQLException
 {
  	InvalidInstanceException(const InvalidInstanceException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
  	InvalidInstanceException(const std::string& reason) : SQLException(reason, "", 0) {}

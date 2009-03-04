@@ -230,7 +230,7 @@ void connection::connectUsingMap()
     connection_properties.erase("socket");
     {
       std::string socket("");
-#ifndef CPPDBC_WIN32
+#ifndef CPPWIN_WIN32
 
       if (url.compare(0, sizeof ("unix://") - 1, "unix://") == 0)
       {

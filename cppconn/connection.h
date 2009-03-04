@@ -21,8 +21,10 @@
 namespace sql
 {
 
-typedef union _ConnectPropertyVal{
-		struct {
+typedef union _ConnectPropertyVal
+{
+		struct
+		{
 			const char * val;
 			size_t len;
 		} str;
@@ -56,11 +58,11 @@ public:
 	virtual ~Savepoint() {};
 	virtual int getSavepointId() = 0;
 
-	virtual std::string &getSavepointName() = 0;
+	virtual std::string getSavepointName() = 0;
 };
 
 
-class CPPDBC_PUBLIC_FUNC Connection
+class CPPCONN_PUBLIC_FUNC Connection
 {
 	/* Prevent use of these */
 	Connection(const Connection &);

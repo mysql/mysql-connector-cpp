@@ -115,7 +115,7 @@ IF(WIN32)
 	../unit_fixture.h
 	art_resultset.h)
 
-	ADD_DEFINITIONS("-DCPPDBC_PUBLIC_FUNC=")
+	ADD_DEFINITIONS("-DCPPCONN_PUBLIC_FUNC=")
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(test_art_resultset ${test_art_resultset_sources})

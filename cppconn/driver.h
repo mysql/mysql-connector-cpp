@@ -20,7 +20,7 @@
 namespace sql
 {
 
-class CPPDBC_PUBLIC_FUNC Driver
+class CPPCONN_PUBLIC_FUNC Driver
 {
 protected:
 	virtual ~Driver() {}
@@ -44,7 +44,7 @@ public:
 
 extern "C"
 {
-  CPPDBC_PUBLIC_FUNC sql::Driver *get_driver_instance();
+  CPPCONN_PUBLIC_FUNC sql::Driver *get_driver_instance();
 }
 
 #endif /* _SQL_DRIVER_H_ */

@@ -42,6 +42,7 @@ public:
 		TIME,
 		GEOMETRY,
 		ENUM,
+		SET,
 		SQLNULL
 	};
 };

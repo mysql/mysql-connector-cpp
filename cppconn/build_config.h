@@ -12,25 +12,25 @@
 #ifndef _SQL_BUILD_CONFIG_H_
 #define _SQL_BUILD_CONFIG_H_
 
-#ifndef CPPDBC_PUBLIC_FUNC
+#ifndef CPPCONN_PUBLIC_FUNC
 
 #if defined(_WIN32)
  // mysqlcppconn_EXPORTS is added by cmake and defined for dynamic lib build only
  #ifdef mysqlcppconn_EXPORTS
-  #define CPPDBC_PUBLIC_FUNC __declspec(dllexport)
+  #define CPPCONN_PUBLIC_FUNC __declspec(dllexport)
  #else
   // this is for static build
-  #ifdef CPPDBC_EXPORTS
-    #define CPPDBC_PUBLIC_FUNC 
+  #ifdef CPPCONN_EXPORTS
+    #define CPPCONN_PUBLIC_FUNC 
   #else
    // this is for clients using dynamic lib
-   #define CPPDBC_PUBLIC_FUNC __declspec(dllimport)
+   #define CPPCONN_PUBLIC_FUNC __declspec(dllimport)
   #endif
  #endif
 #else
- #define CPPDBC_PUBLIC_FUNC
+ #define CPPCONN_PUBLIC_FUNC
 #endif
 
-#endif    //#ifndef CPPDBC_PUBLIC_FUNC
+#endif    //#ifndef CPPCONN_PUBLIC_FUNC
 
 #endif    //#ifndef _SQL_BUILD_CONFIG_H_

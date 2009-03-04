@@ -181,16 +181,16 @@ void unit_fixture::init()
   columns.push_back(columndefinition("LONGTEXT", "LONGTEXT NOT NULL", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, false, "", L64(4294967295), "NO"));
   columns.push_back(columndefinition("LONGTEXT", "LONGTEXT CHARSET 'utf8'", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, true, "", L64(4294967295), "NO"));  
   columns.push_back(columndefinition("LONGTEXT", "LONGTEXT CHARSET 'utf8' COLLATE 'utf8_bin'", sql::DataType::LONGVARCHAR, "a", false, L64(4294967295), 0, true, "", L64(4294967295), "NO"));
-  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no')", sql::DataType::VARCHAR, "yes", false, 3, 0, true, "", 3, "NO"));
-  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no') CHARACTER SET 'binary'", sql::DataType::VARBINARY, "yes", false, 3, 0, true, "", 3, "NO"));
-  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no') NOT NULL", sql::DataType::VARCHAR, "yes", false, 3, 0, false, "", 3, "NO", "yes"));
-  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no', 'not sure') NOT NULL", sql::DataType::VARCHAR, "yes", false, 8, 0, false, "", 3, "NO"));
-  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no', 'buy') NOT NULL DEFAULT 'buy'", sql::DataType::VARCHAR, "yes", false, 3, 0, false, "buy", 8, "NO"));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no')", sql::DataType::VARCHAR, "yes", false, 6, 0, true, "", 6, "NO", "yes"));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARACTER SET 'binary'", sql::DataType::VARBINARY, "yes", false, 6, 0, true, "", 6, "NO", "yes"));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii'", sql::DataType::VARCHAR, "yes", false, 6, 0, true, "", 6, "NO"));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii' DEFAULT 'yes'", sql::DataType::VARCHAR, "yes", false, 6, 0, true, "yes", 6, "NO"));
-  columns.push_back(columndefinition("SET", "SET('yes', 'no', 'ascii') CHARSET 'ascii' NOT NULL", sql::DataType::VARCHAR, "yes", false, 12, 0, false, "", 12, "NO"));
+  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no')", sql::DataType::ENUM, "yes", false, 3, 0, true, "", 3, "NO"));
+  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no') CHARACTER SET 'binary'", sql::DataType::ENUM, "yes", false, 3, 0, true, "", 3, "NO"));
+  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no') NOT NULL", sql::DataType::ENUM, "yes", false, 3, 0, false, "", 3, "NO", "yes"));
+  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no', 'not sure') NOT NULL", sql::DataType::ENUM, "yes", false, 8, 0, false, "", 3, "NO"));
+  columns.push_back(columndefinition("ENUM", "ENUM('yes', 'no', 'buy') NOT NULL DEFAULT 'buy'", sql::DataType::ENUM, "yes", false, 3, 0, false, "buy", 8, "NO"));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no')", sql::DataType::SET, "yes", false, 6, 0, true, "", 6, "NO", "yes"));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARACTER SET 'binary'", sql::DataType::SET, "yes", false, 6, 0, true, "", 6, "NO", "yes"));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii'", sql::DataType::SET, "yes", false, 6, 0, true, "", 6, "NO"));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii' DEFAULT 'yes'", sql::DataType::SET, "yes", false, 6, 0, true, "yes", 6, "NO"));
+  columns.push_back(columndefinition("SET", "SET('yes', 'no', 'ascii') CHARSET 'ascii' NOT NULL", sql::DataType::SET, "yes", false, 12, 0, false, "", 12, "NO"));
    
   /*
   ResultSet getAttributes(String catalog,
