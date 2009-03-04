@@ -13,6 +13,7 @@
 
 #include "connection.h"
 #include <stdlib.h>
+#include <cppconn/connection.h>
 
 namespace testsuite
 {
@@ -319,7 +320,7 @@ void connection::connectUsingMap()
         {
           created_objects.clear();
           con.reset(driver->connect(connection_properties));
-          Connection mycon( driver->connect(connection_properties) );
+          Connection mycon(driver->connect(connection_properties));
           retschema=mycon->getSchema();
           if (retschema != myschema)
           {
@@ -430,7 +431,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_COMPRESS");
       sql::ConnectPropertyVal tmp;
-      tmp.bval= true;
+      tmp.bval=true;
       connection_properties[std::string("CLIENT_COMPRESS")]=tmp;
       try
       {
@@ -457,7 +458,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_FOUND_ROWS");
       sql::ConnectPropertyVal tmp;
-      tmp.bval= true;
+      tmp.bval=true;
       connection_properties[std::string("CLIENT_FOUND_ROWS")]=tmp;
       try
       {
@@ -484,7 +485,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_IGNORE_SIGPIPE");
       sql::ConnectPropertyVal tmp;
-      tmp.bval= true;
+      tmp.bval=true;
       connection_properties[std::string("CLIENT_IGNORE_SIGPIPE")]=tmp;
       try
       {
@@ -511,7 +512,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_IGNORE_SPACE");
       sql::ConnectPropertyVal tmp;
-      tmp.bval= true;
+      tmp.bval=true;
       connection_properties[std::string("CLIENT_IGNORE_SPACE")]=tmp;
       try
       {
@@ -538,7 +539,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_INTERACTIVE");
       sql::ConnectPropertyVal tmp;
-      tmp.bval= true;
+      tmp.bval=true;
       connection_properties[std::string("CLIENT_INTERACTIVE")]=tmp;
       try
       {
@@ -566,7 +567,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_LOCAL_FILES");
       sql::ConnectPropertyVal tmp;
-      tmp.bval= true;
+      tmp.bval=true;
       connection_properties[std::string("CLIENT_LOCAL_FILES")]=tmp;
       try
       {
@@ -594,7 +595,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_MULTI_RESULTS");
       sql::ConnectPropertyVal tmp;
-      tmp.bval= true;
+      tmp.bval=true;
       connection_properties[std::string("CLIENT_MULTI_RESULTS")]=tmp;
       try
       {
@@ -622,7 +623,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_MULTI_STATEMENTS");
       sql::ConnectPropertyVal tmp;
-      tmp.bval= true;
+      tmp.bval=true;
       connection_properties[std::string("CLIENT_MULTI_STATEMENTS")]=tmp;
       try
       {
@@ -649,7 +650,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing CLIENT_NO_SCHEMA");
       sql::ConnectPropertyVal tmp;
-      tmp.bval= true;
+      tmp.bval=true;
       connection_properties[std::string("CLIENT_NO_SCHEMA")]=tmp;
       try
       {
@@ -804,6 +805,37 @@ void connection::connectUsingMap()
   }
 
 }
+
+/*
+ TODO - do we want to add this to sql::Connection?
+void connection::setSessionVariable()
+{
+  logMsg("connection::setSessionVariable() - MySQL_Connection::setSessionVariable()");
+  try
+  {
+    con->setSessionVariable("autocommit", "OFF");
+    con->setSessionVariable("sql_mode", "ANSI");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+  con->close();
+  try
+  {
+    con->setSessionVariable("autocommit", "OFF");
+    FAIL("Closed connection not detected");
+  }
+  catch (sql::SQLException &)
+  {
+  }
+
+}
+ */
+
 
 } /* namespace connection */
 } /* namespace testsuite */

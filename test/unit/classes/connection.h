@@ -36,6 +36,10 @@ public:
     TEST_CASE(getNoWarningsAfterClear);
     TEST_CASE(checkClosed);
     TEST_CASE(connectUsingMap);
+    /*
+    TODO: do we want to add this to sql::Connection?
+    TEST_CASE(setSessionVariable);
+     */
   }
 
   /**
@@ -76,6 +80,15 @@ public:
    * impact of a setting shall be tested by other dedicated test methods.
    */
   void connectUsingMap();
+
+  /*
+   * Test of MySQL_Connection::setSessionVariable()
+   *
+   * TODO: do we want to add this to sql::Connection?
+   * Focus on code coverage
+   *
+  void setSessionVariable();
+   */
 
 };
 
