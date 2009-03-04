@@ -1769,7 +1769,7 @@ void connectionmetadata::getColumnsTypeConversions()
       ASSERT_EQUALS(false, res->wasNull());
       ASSERT_EQUALS(res->getInt(3), res->getInt("TABLE_NAME"));
 
-      ASSERT_EQUALS((uint) 0, res->getUInt("TABLE_NAME"));
+      ASSERT_EQUALS((unsigned int) 0, res->getUInt("TABLE_NAME"));
       ASSERT_EQUALS(false, res->wasNull());
       ASSERT_EQUALS(res->getUInt(3), res->getUInt("TABLE_NAME"));
 

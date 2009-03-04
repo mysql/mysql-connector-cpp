@@ -26,6 +26,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <driver/mysql_public_iface.h>
 #include "../CJUnitTestsPort/framework/framework.h"
 #include <vector>
+#include <stdlib.h>
+#include <cppconn/connection.h>
 
 namespace testsuite
 {

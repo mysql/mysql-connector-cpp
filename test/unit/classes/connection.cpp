@@ -986,8 +986,7 @@ void connection::setSessionVariable()
   }
 
 }
- */
-
+*/
 
 } /* namespace connection */
 } /* namespace testsuite */
