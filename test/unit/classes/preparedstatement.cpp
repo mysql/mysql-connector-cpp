@@ -58,13 +58,11 @@ void preparedstatement::InsertSelectAllTypes()
       pstmt.reset(con->prepareStatement("INSERT INTO test(id) VALUES (?)"));
       pstmt->setString(1, it->value);
       ASSERT_EQUALS(1, pstmt->executeUpdate());
-
       
       pstmt.reset(con->prepareStatement("SELECT id FROM test"));
       res.reset(pstmt->executeQuery());
       checkResultSetScrolling(res);
       ASSERT(res->next());
-
 
       if (it->check_as_string && (res->getString(1) != it->as_string)) {
         sql.str("");
@@ -74,6 +72,13 @@ void preparedstatement::InsertSelectAllTypes()
         got_warning = true;
       }
       ASSERT_EQUALS(res->getString(1), res->getString("id"));
+
+      ASSERT_EQUALS(res->getBoolean(1), res->getBoolean("id"));
+      ASSERT_EQUALS(res->getDouble(1), res->getDouble("id"));
+      ASSERT_EQUALS(res->getInt(1), res->getInt("id"));
+      ASSERT_EQUALS(res->getInt64(1), res->getInt64("id"));
+      ASSERT_EQUALS(res->getUInt(1), res->getUInt("id"));
+      ASSERT_EQUALS(res->getUInt64(1), res->getUInt64("id"));
     }
 
     if (got_warning)

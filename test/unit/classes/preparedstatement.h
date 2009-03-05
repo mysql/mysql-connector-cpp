@@ -35,10 +35,10 @@ public:
   }
 
   /**
-   * Loops over all column types and inserts/fetches a value
-   *
+   * Loops over all kinds of column types and inserts/fetches a value
    */
   void InsertSelectAllTypes();
+ 
 
 };
 
