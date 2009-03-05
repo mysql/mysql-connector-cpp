@@ -961,36 +961,78 @@ void connection::connectUsingMap()
 void connection::setTransactionIsolation()
 {
   logMsg("connection::setTransactionIsolation() - MySQL_Connection::setTransactionIsolation()");
+  
   stmt.reset(con->createStatement());
   try
   {
     con->setTransactionIsolation(sql::TRANSACTION_READ_COMMITTED);
+    ASSERT_EQUALS(sql::TRANSACTION_READ_COMMITTED, con->getTransactionIsolation());
     res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'tx_isolation'"));
     checkResultSetScrolling(res);
     res->next();
     ASSERT_EQUALS("READ-COMMITTED", res->getString("Value"));
-    
+
     con->setTransactionIsolation(sql::TRANSACTION_READ_UNCOMMITTED);
+    ASSERT_EQUALS(sql::TRANSACTION_READ_UNCOMMITTED, con->getTransactionIsolation());
     res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'tx_isolation'"));
     res->next();
     ASSERT_EQUALS("READ-UNCOMMITTED", res->getString("Value"));
 
     con->setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
+    ASSERT_EQUALS(sql::TRANSACTION_REPEATABLE_READ, con->getTransactionIsolation());
     res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'tx_isolation'"));
     res->next();
     ASSERT_EQUALS("REPEATABLE-READ", res->getString("Value"));
 
     con->setTransactionIsolation(sql::TRANSACTION_SERIALIZABLE);
+    ASSERT_EQUALS(sql::TRANSACTION_SERIALIZABLE, con->getTransactionIsolation());
     res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'tx_isolation'"));
     res->next();
     ASSERT_EQUALS("SERIALIZABLE", res->getString("Value"));
-
   }
   catch (sql::SQLException &e)
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
+  }
+
+  try
+  {
+    con->setAutoCommit(true);
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT)");
+    con->setAutoCommit(false);
+    con->setTransactionIsolation(sql::TRANSACTION_SERIALIZABLE);
+    stmt->execute("INSERT INTO test(id) VALUES (1)");
+    /* JDBC documentation: If this method is called while
+     in the middle of a transaction, any changes up to that point
+     will be committed.*/
+    con->setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
+    /* According to the JDBC docs the INSERT has been comitted
+     and this ROLLBACK must have no impat */
+    con->rollback();
+
+    res.reset(stmt->executeQuery("SELECT COUNT(*) AS _num FROM test"));
+    res->next();
+    ASSERT_EQUALS(1, res->getInt("_num"));
+    stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+  con->close();
+  try
+  {
+    con->setTransactionIsolation(sql::TRANSACTION_READ_COMMITTED);
+    FAIL("Closed connection not detected");
+  }
+  catch (sql::SQLException &)
+  {
   }
 }
 
