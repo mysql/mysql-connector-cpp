@@ -642,7 +642,7 @@ MySQL_ArtResultSet::getRow() const
 
 /* {{{ MySQL_ArtResultSet::getRowId() -U- */
 sql::RowID *
-MySQL_ArtResultSet::getRowId(unsigned int)
+MySQL_ArtResultSet::getRowId(uint32_t)
 {
 	CPP_ENTER("MySQL_ArtResultSet::getRowId");
 	checkValid();

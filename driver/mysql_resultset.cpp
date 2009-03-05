@@ -484,7 +484,7 @@ MySQL_ResultSet::getRow() const
 
 /* {{{ MySQL_ResultSet::getRowId() -U- */
 sql::RowID *
-MySQL_ResultSet::getRowId(unsigned int)
+MySQL_ResultSet::getRowId(uint32_t)
 {
 	CPP_ENTER("MySQL_ResultSet::getRowId");
 	checkValid();
