@@ -103,6 +103,23 @@ TARGET_LINK_LIBRARIES(test_savepoint ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_
 
 MESSAGE(STATUS "Configuring unit tests - savepoint")
 
+SET(test_preparedstatement_sources
+	../unit_fixture.cpp
+	../main.cpp
+	preparedstatement.cpp)
+
+IF(WIN32)
+	SET(test_preparedstatement_sources
+    		${test_preparedstatement_sources}
+	../unit_fixture.h
+	preparedstatement.h)
+ENDIF(WIN32)
+
+ADD_EXECUTABLE(test_preparedstatement ${test_preparedstatement_sources})
+SET_TARGET_PROPERTIES(test_preparedstatement PROPERTIES OUTPUT_NAME "preparedstatement")
+TARGET_LINK_LIBRARIES(test_preparedstatement ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
+MESSAGE(STATUS "Configuring unit tests - preparedstatement")
 
 SET(test_art_resultset_sources
 	../unit_fixture.cpp
