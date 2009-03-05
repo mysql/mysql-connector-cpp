@@ -22,7 +22,7 @@ namespace mysql
 /*
 * TODO: implement it. Probably it's not the right place for this function
 */
-const std::string & errCode2SqlState (int errCode)
+const std::string & errCode2SqlState (int /* errCode */)
 {
 	static const std::string state = "";
 

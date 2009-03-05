@@ -1814,11 +1814,11 @@ void connectionmetadata::getColumnsTypeConversions()
       ASSERT_EQUALS(false, res->wasNull());
       ASSERT_EQUALS(res->getDouble(9), res->getDouble("DECIMAL_DIGITS"));
 
-      ASSERT_EQUALS((int) it->decimal_digits, res->getInt("DECIMAL_DIGITS"));
+      ASSERT_EQUALS((int32_t) it->decimal_digits, res->getInt("DECIMAL_DIGITS"));
       ASSERT_EQUALS(false, res->wasNull());
       ASSERT_EQUALS(res->getInt(9), res->getInt("DECIMAL_DIGITS"));
 
-      ASSERT_EQUALS((uint) it->decimal_digits, res->getUInt("DECIMAL_DIGITS"));
+      ASSERT_EQUALS((uint32_t) it->decimal_digits, res->getUInt("DECIMAL_DIGITS"));
       ASSERT_EQUALS(false, res->wasNull());
       ASSERT_EQUALS(res->getUInt(9), res->getUInt("DECIMAL_DIGITS"));
 
