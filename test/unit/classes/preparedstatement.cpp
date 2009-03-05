@@ -23,53 +23,62 @@ namespace testsuite
 namespace classes
 {
 
-void preparedstatement::getSavepointId()
+void preparedstatement::InsertSelectAllTypes()
 {
-  logMsg("preparedstatement::getSavepointId() - MySQL_Savepoint::getSavepointId()");
-  sql::Savepoint* sp;
+  logMsg("preparedstatement::InsertSelectAllTypes() - MySQL_PreparedStatement::*");
+
+  std::stringstream sql;
+  std::vector<columndefinition>::iterator it;
+  stmt.reset(con->createStatement());
+  bool got_warning;
 
   try
-  {
-    con->setAutoCommit(true);
-    sp=con->setSavepoint("mypreparedstatement");
-    FAIL("You should not be able to set a preparedstatement in autoCommit mode");
-  }
-  catch (sql::SQLException &)
-  {
-  }
+  {  
 
-  try
-  {
-    con->setAutoCommit(false);
-    sp=con->setSavepoint("mypreparedstatement");
-    try
+    for (it=columns.end(), it--; it != columns.begin(); it--)
     {
-      sp->getSavepointId();
-      FAIL("Anonymous preparedstatements are not supported");
-    }
-    catch (sql::InvalidArgumentException &)
-    {
-    }
-    con->releaseSavepoint(sp);
-  }
-  catch (sql::SQLException &e)
-  {
-    logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
-    fail(e.what(), __FILE__, __LINE__);
-  }
-}
+      stmt->execute("DROP TABLE IF EXISTS test");
+      sql.str("");
+      sql << "CREATE TABLE test(dummy TIMESTAMP, id " << it->sqldef << ")";
+      try
+      {
+        stmt->execute(sql.str());
+        sql.str("");
+        sql << "... testing '" << it->sqldef << "'";
+        logMsg(sql.str());
+      }
+      catch (sql::SQLException &)
+      {
+        sql.str("");
+        sql << "... skipping '" << it->sqldef << "'";
+        logMsg(sql.str());
+        continue;
+      }
 
-void preparedstatement::getSavepointName()
-{
-  logMsg("preparedstatement::getSavepointName() - MySQL_Savepoint::getSavepointName()");
-  sql::Savepoint* sp;
-  try
-  {
-    con->setAutoCommit(false);
-    sp=con->setSavepoint("mypreparedstatement");
-    ASSERT_EQUALS("mypreparedstatement", sp->getSavepointName());
-    con->releaseSavepoint(sp);
+      pstmt.reset(con->prepareStatement("INSERT INTO test(id) VALUES (?)"));
+      pstmt->setString(1, it->value);
+      ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      
+      pstmt.reset(con->prepareStatement("SELECT id FROM test"));
+      res.reset(pstmt->executeQuery());
+      checkResultSetScrolling(res);
+      ASSERT(res->next());
+
+
+      if (it->check_as_string && (res->getString(1) != it->as_string)) {
+        sql.str("");
+        sql << "... WARNING - SQL: '" << it->sqldef << "' - expecting '" << it->as_string << "'";
+        sql << " got '" << res->getString(1) << "'";
+        logMsg(sql.str());
+        got_warning = true;
+      }
+      ASSERT_EQUALS(res->getString(1), res->getString("id"));
+    }
+
+    if (got_warning)
+      FAIL("See warnings");
+
   }
   catch (sql::SQLException &e)
   {

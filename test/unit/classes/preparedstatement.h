@@ -31,23 +31,14 @@ public:
 
   EXAMPLE_TEST_FIXTURE(preparedstatement)
   {
-    TEST_CASE(getSavepointId);
-    TEST_CASE(getSavepointName);
+    TEST_CASE(InsertSelectAllTypes);
   }
 
   /**
-   * Test preparedstatement::getSavepointId()
+   * Loops over all column types and inserts/fetches a value
    *
-   * Save points must have names at the time of writing
    */
-  void getSavepointId();
-
-  /**
-   * Test preparedstatement::getSavepointName()
-   *
-   * Save points must have names at the time of writing
-   */
-  void getSavepointName();
+  void InsertSelectAllTypes();
 
 };
 

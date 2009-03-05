@@ -5515,7 +5515,7 @@ void DatabaseMetaDataTest::testSupportsConvert01()
   logMsg(
          "Calling supportsConvert(ARRAY, VARCHAR) on DatabaseMetaData");
 
-#ifdef WE_HAVE_DATATYPE_AGAIN
+#ifdef WE_HAVE_ALL_DATATYPES_AGAIN
   bool retValue=dbmd->supportsConvert(sql::DataType::ARRAY
                                       , sql::DataType::VARCHAR);
 
@@ -5677,7 +5677,7 @@ void DatabaseMetaDataTest::testSupportsConvert05()
 {
 
   logMsg("Calling supportsConvert(BLOB, VARCHAR) on DatabaseMetaData");
-#ifdef WE_HAVE_DATATYPE_AGAIN
+#ifdef WE_HAVE_ALL_DATATYPES_AGAIN
   bool retValue=dbmd->supportsConvert(sql::DataType::BLOB, sql::DataType::VARCHAR);
   if (retValue) {
     logMsg("supportsConvert(BLOB, VARCHAR) method is supported");
@@ -5757,7 +5757,7 @@ void DatabaseMetaDataTest::testSupportsConvert07()
 {
 
   logMsg("Calling supportsConvert(CLOB, VARCHAR) on DatabaseMetaData");
-#ifdef WE_HAVE_DATATYPE_AGAIN
+#ifdef WE_HAVE_ALL_DATATYPES_AGAIN
   bool retValue=dbmd->supportsConvert(sql::DataType::CLOB, sql::DataType::VARCHAR);
   if (retValue) {
     logMsg("supportsConvert(CLOB, VARCHAR) method is supported");
@@ -5878,7 +5878,7 @@ void DatabaseMetaDataTest::testSupportsConvert10()
 
   logMsg(
          "Calling supportsConvert(DISTINCT, VARCHAR) on DatabaseMetaData");
-#ifdef WE_HAVE_DATATYPE_AGAIN
+#ifdef WE_HAVE_ALL_DATATYPES_AGAIN
   bool retValue=dbmd->supportsConvert(sql::DataType::DISTINCT,
                                       sql::DataType::VARCHAR);
   if (retValue) {
@@ -5961,7 +5961,7 @@ void DatabaseMetaDataTest::testSupportsConvert12()
 
   logMsg(
          "Calling supportsConvert(FLOAT, VARCHAR) on DatabaseMetaData");
-#ifdef WE_HAVE_DATATYPE_AGAIN
+#ifdef WE_HAVE_ALL_DATATYPES_AGAIN
   bool retValue=dbmd->supportsConvert(sql::DataType::FLOAT, sql::DataType::VARCHAR);
   if (retValue) {
     logMsg("supportsConvert(FLOAT, VARCHAR) method is supported");
@@ -6256,7 +6256,7 @@ void DatabaseMetaDataTest::testSupportsConvert19()
 
   logMsg(
          "Calling supportsConvert(OTHER, VARCHAR) on DatabaseMetaData");
-#ifdef WE_HAVE_DATATYPE_AGAIN
+#ifdef WE_HAVE_ALL_DATATYPES_AGAIN
   bool retValue=dbmd->supportsConvert(sql::DataType::OTHER, sql::DataType::VARCHAR);
   if (retValue) {
     logMsg("supportsConvert(OTHER, VARCHAR) method is supported");
@@ -6336,7 +6336,7 @@ void DatabaseMetaDataTest::testSupportsConvert21()
 {
 
   logMsg("Calling supportsConvert(REF, VARCHAR) on DatabaseMetaData");
-#ifdef WE_HAVE_DATATYPE_AGAIN
+#ifdef WE_HAVE_ALL_DATATYPES_AGAIN
   bool retValue=dbmd->supportsConvert(sql::DataType::REF, sql::DataType::VARCHAR);
   if (retValue) {
     logMsg("supportsConvert(REF VARCHAR) method is supported");
@@ -6417,7 +6417,7 @@ void DatabaseMetaDataTest::testSupportsConvert23()
 {
 
   logMsg("Calling supportsConvert(STRUCT, VARCHAR) on DatabaseMetaData");
-#ifdef WE_HAVE_DATATYPE_AGAIN
+#ifdef WE_HAVE_ALL_DATATYPES_AGAIN
   bool retValue=dbmd->supportsConvert(sql::DataType::STRUCT, sql::DataType::VARCHAR);
   if (retValue) {
     logMsg("supportsConvert(STRUCT VARCHAR) method is supported");
@@ -6819,7 +6819,7 @@ void DatabaseMetaDataTest::testSupportsConvert33()
 {
 
   logMsg("Calling supportsConvert(FLOAT, INTEGER) on DatabaseMetaData");
-#ifdef WE_HAVE_DATATYPE_AGAIN
+#ifdef WE_HAVE_ALL_DATATYPES_AGAIN
   bool retValue=dbmd->supportsConvert(sql::DataType::FLOAT, sql::DataType::INTEGER);
   if (retValue) {
     logMsg("supportsConvert(FLOAT, INTEGER) method is supported");
