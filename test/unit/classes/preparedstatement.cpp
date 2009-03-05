@@ -134,24 +134,132 @@ void preparedstatement::assortedSetType()
       ASSERT_EQUALS(1, pstmt->executeUpdate());
 
       pstmt->clearParameters();
+      try
+      {
+        pstmt->setString(0, "overflow");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setString(2, "invalid");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      pstmt->clearParameters();
       pstmt->setBigInt(1, it->value);
       ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setBigInt(0, it->value);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setBigInt(2, it->value);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
 
       pstmt->clearParameters();
       pstmt->setBoolean(1, false);
       ASSERT_EQUALS(1, pstmt->executeUpdate());
 
       pstmt->clearParameters();
+      try
+      {
+        pstmt->setBoolean(0, false);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setBoolean(2, false);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      pstmt->clearParameters();
       pstmt->setDateTime(1, it->value);
       ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setDateTime(0, it->value);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setDateTime(2, it->value);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
 
       pstmt->clearParameters();
       pstmt->setDouble(1, (double) 1.23);
       ASSERT_EQUALS(1, pstmt->executeUpdate());
 
       pstmt->clearParameters();
+      try
+      {
+        pstmt->setDouble(0, (double) 1.23);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setDouble(2, (double) 1.23);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      pstmt->clearParameters();
       pstmt->setInt(1, (int32_t) - 1);
       ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setInt(0, (int32_t) - 1);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setInt(2, (int32_t) - 1);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
 
       pstmt->clearParameters();
       pstmt->setInt64(1, (int64_t) - 123);
