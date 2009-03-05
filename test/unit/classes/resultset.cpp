@@ -48,14 +48,14 @@ void resultset::getInt()
 
     ASSERT(pstmt.get() != NULL);
     pstmt->clearParameters();
-    pstmt->setInt(1, static_cast<int>(r1_c1));
+    pstmt->setInt(1, static_cast<int> (r1_c1));
     pstmt->setInt64(2, r1_c2);
     pstmt->setInt64(3, r1_c3);
     pstmt->setUInt64(4, r1_c4);
     ASSERT_EQUALS(false, pstmt->execute());
 
     pstmt->clearParameters();
-    pstmt->setInt(1, static_cast<int>(r2_c1));
+    pstmt->setInt(1, static_cast<int> (r2_c1));
     pstmt->setInt64(2, r2_c2);
     pstmt->setInt64(3, r2_c3);
     pstmt->setUInt64(4, r2_c4);
@@ -186,13 +186,15 @@ void resultset::getTypes()
 
       res.reset(stmt->executeQuery("SELECT id FROM test"));
       checkResultSetScrolling(res);
-      /*
+      ASSERT(res->next());
+
       pstmt.reset(con->prepareStatement("SELECT id FROM test"));
       pstmt->clearParameters();
       pres.reset(pstmt->executeQuery());
-      checkResultSetScrolling(res);
-       */
-      ASSERT(res->next());
+      checkResultSetScrolling(pres);
+      ASSERT(pres->next());
+
+
       if (it->check_as_string)
       {
         logMsg("... checking string value");
@@ -209,20 +211,20 @@ void resultset::getTypes()
       ASSERT_EQUALS(res->getInt64("id"), res->getInt64(1));
       ASSERT_EQUALS(res->getUInt64("id"), res->getUInt64(1));
       ASSERT_EQUALS(res->getBoolean("id"), res->getBoolean(1));
-      /*
+
       ASSERT_EQUALS(pres->getString("id"), pres->getString(1));
       ASSERT_EQUALS(pres->getDouble("id"), pres->getDouble(1));
       ASSERT_EQUALS(pres->getInt64("id"), pres->getInt64(1));
       ASSERT_EQUALS(pres->getUInt64("id"), pres->getUInt64(1));
       ASSERT_EQUALS(pres->getBoolean("id"), pres->getBoolean(1));
 
-     // Comparing prepared statement resultset and statement resultset
-       ASSERT_EQUALS(pres->getString("id"), res->getString(1));
+      // Comparing prepared statement resultset and statement resultset
+      ASSERT_EQUALS(pres->getString("id"), res->getString(1));
       ASSERT_EQUALS(pres->getDouble("id"), res->getDouble(1));
       ASSERT_EQUALS(pres->getInt64("id"), res->getInt64(1));
       ASSERT_EQUALS(pres->getUInt64("id"), res->getUInt64(1));
       ASSERT_EQUALS(pres->getBoolean("id"), res->getBoolean(1));
-       */
+
     }
     if (got_warning)
       FAIL("See warnings!");

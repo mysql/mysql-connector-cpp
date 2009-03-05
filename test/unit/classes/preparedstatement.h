@@ -32,13 +32,24 @@ public:
   EXAMPLE_TEST_FIXTURE(preparedstatement)
   {
     TEST_CASE(InsertSelectAllTypes);
+    TEST_CASE(assortedSetType);
+    TEST_CASE(setNull);
   }
 
   /**
-   * Loops over all column types and inserts/fetches a value
-   *
+   * Loops over all kinds of column types and inserts/fetches a value
    */
   void InsertSelectAllTypes();
+
+  /**
+   * Loops over assorted column types and uses setXYZ to insert a value
+   */
+  void assortedSetType();
+
+  /**
+   * Loops over assorted column types and uses setXYZ to insert a value
+   */
+  void setNull();
 
 };
 

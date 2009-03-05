@@ -10,6 +10,9 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
  */
 
+#include <cppconn/prepared_statement.h>
+
+
 #include <cppconn/connection.h>
 
 
@@ -33,7 +36,7 @@ void preparedstatement::InsertSelectAllTypes()
   bool got_warning;
 
   try
-  {  
+  {
 
     for (it=columns.end(), it--; it != columns.begin(); it--)
     {
@@ -59,23 +62,29 @@ void preparedstatement::InsertSelectAllTypes()
       pstmt->setString(1, it->value);
       ASSERT_EQUALS(1, pstmt->executeUpdate());
 
-      
       pstmt.reset(con->prepareStatement("SELECT id FROM test"));
       res.reset(pstmt->executeQuery());
       checkResultSetScrolling(res);
       ASSERT(res->next());
 
-
-      if (it->check_as_string && (res->getString(1) != it->as_string)) {
+      if (it->check_as_string && (res->getString(1) != it->as_string))
+      {
         sql.str("");
         sql << "... WARNING - SQL: '" << it->sqldef << "' - expecting '" << it->as_string << "'";
         sql << " got '" << res->getString(1) << "'";
         logMsg(sql.str());
-        got_warning = true;
+        got_warning=true;
       }
       ASSERT_EQUALS(res->getString(1), res->getString("id"));
-    }
 
+      ASSERT_EQUALS(res->getBoolean(1), res->getBoolean("id"));
+      ASSERT_EQUALS(res->getDouble(1), res->getDouble("id"));
+      ASSERT_EQUALS(res->getInt(1), res->getInt("id"));
+      ASSERT_EQUALS(res->getInt64(1), res->getInt64("id"));
+      ASSERT_EQUALS(res->getUInt(1), res->getUInt("id"));
+      ASSERT_EQUALS(res->getUInt64(1), res->getUInt64("id"));
+    }
+    stmt->execute("DROP TABLE IF EXISTS test");
     if (got_warning)
       FAIL("See warnings");
 
@@ -86,6 +95,152 @@ void preparedstatement::InsertSelectAllTypes()
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
   }
+}
+
+void preparedstatement::assortedSetType()
+{
+  logMsg("preparedstatement::assortedSetType() - MySQL_PreparedStatement::set*");
+
+  std::stringstream sql;
+  std::vector<columndefinition>::iterator it;
+  stmt.reset(con->createStatement());
+  bool got_warning;
+
+  try
+  {
+
+    for (it=columns.end(), it--; it != columns.begin(); it--)
+    {
+      stmt->execute("DROP TABLE IF EXISTS test");
+      sql.str("");
+      sql << "CREATE TABLE test(dummy TIMESTAMP, id " << it->sqldef << ")";
+      try
+      {
+        stmt->execute(sql.str());
+        sql.str("");
+        sql << "... testing '" << it->sqldef << "'";
+        logMsg(sql.str());
+      }
+      catch (sql::SQLException &)
+      {
+        sql.str("");
+        sql << "... skipping '" << it->sqldef << "'";
+        logMsg(sql.str());
+        continue;
+      }
+
+      pstmt.reset(con->prepareStatement("INSERT INTO test(id) VALUES (?)"));
+      pstmt->setString(1, it->value);
+      ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      pstmt->clearParameters();
+      pstmt->setBigInt(1, it->value);
+      ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      pstmt->clearParameters();
+      pstmt->setBoolean(1, false);
+      ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      pstmt->clearParameters();
+      pstmt->setDateTime(1, it->value);
+      ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      pstmt->clearParameters();
+      pstmt->setDouble(1, (double) 1.23);
+      ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      pstmt->clearParameters();
+      pstmt->setInt(1, (int32_t) - 1);
+      ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      pstmt->clearParameters();
+      pstmt->setInt64(1, (int64_t) - 123);
+      ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      if (it->is_nullable)
+      {
+        pstmt->clearParameters();
+        pstmt->setNull(1, it->ctype);
+        ASSERT_EQUALS(1, pstmt->executeUpdate());
+      }
+
+      pstmt->clearParameters();
+      pstmt->setUInt(1, (uint32_t) 1);
+      ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      pstmt->clearParameters();
+      pstmt->setUInt64(1, (uint64_t) 123);
+      ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      pstmt.reset(con->prepareStatement("SELECT COUNT(IFNULL(id, 1)) AS _num FROM test"));
+      res.reset(pstmt->executeQuery());
+      checkResultSetScrolling(res);
+      ASSERT(res->next());
+      if (res->getUInt(1) != (9 + (unsigned int) it->is_nullable))
+      {
+        sql.str("");
+        sql << "....WARNING, SQL: " << it->sqldef << ", nullable " << std::boolalpha;
+        sql << it->is_nullable << ", found " << res->getInt(1) << "columns but";
+        sql << " expecting " << (9 + (unsigned int) it->is_nullable);
+        logMsg(sql.str());
+        got_warning=true;
+      }
+
+    }
+    stmt->execute("DROP TABLE IF EXISTS test");
+    if (got_warning)
+      FAIL("See warnings");
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void preparedstatement::setNull()
+{
+  logMsg("preparedstatement::InsertSelectAllTypes() - MySQL_PreparedStatement::*");
+
+  std::stringstream sql;
+  stmt.reset(con->createStatement());
+
+  try
+  {
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT)");
+    pstmt.reset(con->prepareStatement("INSERT INTO test(id) VALUES (?)"));
+    pstmt->setNull(1, sql::DataType::INTEGER);
+    ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+    pstmt.reset(con->prepareStatement("SELECT id FROM test"));
+    res.reset(pstmt->executeQuery());
+    checkResultSetScrolling(res);
+    ASSERT(res->next());
+    ASSERT(res->isNull(1));
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+  try
+  {
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT NOT NULL)");
+    pstmt.reset(con->prepareStatement("INSERT INTO test(id) VALUES (?)"));
+    pstmt->setNull(1, sql::DataType::INTEGER);
+    pstmt->executeUpdate();
+    FAIL("Should fail");
+  }
+  catch (sql::SQLException &)
+  {
+  }
+
 }
 
 } /* namespace preparedstatement */
