@@ -451,7 +451,7 @@ MySQL_Connection::getClientInfo(const std::string&)
 /* }}} */
 
 
-/* {{{ MySQL_Connection::getClientOption() -U- */
+/* {{{ MySQL_Connection::getClientOption() -I- */
 void
 MySQL_Connection::getClientOption(const std::string & optionName, void * optionValue)
 {

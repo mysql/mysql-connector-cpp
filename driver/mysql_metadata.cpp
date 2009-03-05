@@ -4237,13 +4237,139 @@ MySQL_ConnectionMetaData::supportsConvert()
 /* }}} */
 
 
-/* {{{ MySQL_ConnectionMetaData::supportsConvert() -U- */
+/* {{{ MySQL_ConnectionMetaData::supportsConvert() -I- */
 bool
-MySQL_ConnectionMetaData::supportsConvert(int /* fromType */, int /* toType */)
+MySQL_ConnectionMetaData::supportsConvert(int fromType, int toType)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::supportsConvert");
-	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::supportsConvert");
-	return false; // This will shut up compilers
+	switch (fromType) {
+		// The char/binary types can be converted to pretty much anything.
+		case sql::DataType::CHAR:
+		case sql::DataType::VARCHAR:
+		case sql::DataType::LONGVARCHAR:
+		case sql::DataType::BINARY:
+		case sql::DataType::VARBINARY:
+		case sql::DataType::LONGVARBINARY:
+		{
+			switch (toType) {
+				case sql::DataType::DECIMAL:
+				case sql::DataType::NUMERIC:
+				case sql::DataType::REAL:
+				case sql::DataType::TINYINT:
+				case sql::DataType::SMALLINT:
+				case sql::DataType::INTEGER:
+				case sql::DataType::BIGINT:
+				case sql::DataType::DOUBLE:
+				case sql::DataType::CHAR:
+				case sql::DataType::VARCHAR:
+				case sql::DataType::LONGVARCHAR:
+				case sql::DataType::BINARY:
+				case sql::DataType::VARBINARY:
+				case sql::DataType::LONGVARBINARY:
+				case sql::DataType::DATE:
+				case sql::DataType::TIME:
+				case sql::DataType::TIMESTAMP:
+					return true;
+
+				default:
+					return false;
+			}
+		}
+
+		// We don't handle the BIT type yet.
+		case sql::DataType::BIT:
+			return false;
+
+		// The numeric types. Basically they can convert among themselves, and
+		case sql::DataType::DECIMAL:
+		case sql::DataType::NUMERIC:
+		case sql::DataType::REAL:
+		case sql::DataType::TINYINT:
+		case sql::DataType::SMALLINT:
+		case sql::DataType::INTEGER:
+		case sql::DataType::BIGINT:
+		case sql::DataType::DOUBLE:
+		{
+			switch (toType) {
+				case sql::DataType::DECIMAL:
+				case sql::DataType::NUMERIC:
+				case sql::DataType::REAL:
+				case sql::DataType::TINYINT:
+				case sql::DataType::SMALLINT:
+				case sql::DataType::INTEGER:
+				case sql::DataType::BIGINT:
+				case sql::DataType::DOUBLE:
+				case sql::DataType::CHAR:
+				case sql::DataType::VARCHAR:
+				case sql::DataType::LONGVARCHAR:
+				case sql::DataType::BINARY:
+				case sql::DataType::VARBINARY:
+				case sql::DataType::LONGVARBINARY:
+					return true;
+
+				default:
+					return false;
+			}
+		}
+
+		// MySQL doesn't support a NULL type
+		case sql::DataType::SQLNULL:
+			return false;
+
+		// Dates can be converted to char/binary types
+		case sql::DataType::DATE:
+		{
+			switch (toType) {
+				case sql::DataType::CHAR:
+				case sql::DataType::VARCHAR:
+				case sql::DataType::LONGVARCHAR:
+				case sql::DataType::BINARY:
+				case sql::DataType::VARBINARY:
+				case sql::DataType::LONGVARBINARY:
+					return true;
+
+				default:
+					return false;
+			}
+		}
+		// Time can be converted to char/binary types
+		case sql::DataType::TIME:
+		{
+			switch (toType) {
+				case sql::DataType::CHAR:
+				case sql::DataType::VARCHAR:
+				case sql::DataType::LONGVARCHAR:
+				case sql::DataType::BINARY:
+				case sql::DataType::VARBINARY:
+				case sql::DataType::LONGVARBINARY:
+					return true;
+
+				default:
+					return false;
+			}
+		}
+		// Timestamp can be converted to char/binary types and date/time types (with loss of precision).
+		case sql::DataType::TIMESTAMP:
+		{
+			switch (toType) {
+				case sql::DataType::CHAR:
+				case sql::DataType::VARCHAR:
+				case sql::DataType::LONGVARCHAR:
+				case sql::DataType::BINARY:
+				case sql::DataType::VARBINARY:
+				case sql::DataType::LONGVARBINARY:
+				case sql::DataType::TIME:
+				case sql::DataType::DATE:
+					return true;
+
+				default:
+					return false;
+			}
+		}
+		// We shouldn't get here!
+		default:
+			return false; // not sure
+	}
 }
 /* }}} */
 
