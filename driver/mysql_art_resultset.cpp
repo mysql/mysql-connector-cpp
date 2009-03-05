@@ -522,7 +522,7 @@ int32_t
 MySQL_ArtResultSet::getInt(uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getInt(int)");
-	return static_cast<int>(getInt64(columnIndex));
+	return static_cast<int32_t>(getInt64(columnIndex));
 }
 /* }}} */
 
@@ -542,7 +542,7 @@ uint32_t
 MySQL_ArtResultSet::getUInt(uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getUInt(int)");
-	return static_cast<unsigned int>(getUInt64(columnIndex));
+	return static_cast<uint32_t>(getUInt64(columnIndex));
 }
 /* }}} */
 

@@ -431,7 +431,7 @@ MySQL_Prepared_ResultSet::getInt(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getInt(int)");
 	CPP_INFO_FMT("column=%u", columnIndex);
-	return static_cast<int>(getInt64(columnIndex));
+	return static_cast<int32_t>(getInt64(columnIndex));
 }
 /* }}} */
 
@@ -452,7 +452,7 @@ MySQL_Prepared_ResultSet::getUInt(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getUInt(int)");
 	CPP_INFO_FMT("column=%u", columnIndex);
-	return static_cast<unsigned int>(getUInt64(columnIndex));
+	return static_cast<uint32_t>(getUInt64(columnIndex));
 }
 /* }}} */
 
