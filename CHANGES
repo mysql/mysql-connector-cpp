@@ -8,8 +8,11 @@ Beta   1.0.4 - 2009-03-xx
 - Added "metadataUseInfoSchema" to connection propery map which allows you
   to control the use of the INFORMATION_SCHEMA for meta data. (Andrey)
 
-- Fixed a bug in all implementations of ResultSet::relative() which was
-  giving wrong return value although positioning was working correctly.
+- Fixed a bug in all implementations of ResultSet::relative() which was giving
+  wrong return value although positioning was working correctly. (Andrey)
+
+- Fixed a leak in MySQL_PreparedResultSet when the result was containing a BLOB
+  column. (Andrey)
 
 
 Alpha  1.0.3 - 2009-03-03

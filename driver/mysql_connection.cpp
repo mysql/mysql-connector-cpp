@@ -184,7 +184,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 	bool ssl_used = false, schema_used = false;
 	int flags = 0;
 	std::map<std::string, sql::ConnectPropertyVal>::const_iterator it = properties.begin();
-	for (; it != properties.end(); it++) {
+	for (; it != properties.end(); ++it) {
 		if (!it->first.compare("hostName")) {
 			hostName = it->second.str.val;
 		} else if (!it->first.compare("userName")) {
@@ -271,7 +271,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 			host = hostName.substr(sizeof("tcp://") - 1, std::string::npos);
 			schema_pos = host.find('/');
 			if (schema_pos != std::string::npos) {
-				schema_pos++; // skip the slash
+				++schema_pos; // skip the slash
 								/* TODO: tcp://127.0.0.1/
 								-> host set, schema empty, schema property ignored */
 				schema = host.substr(schema_pos, host.size() - schema_pos);
@@ -291,7 +291,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 			host = "127.0.0.1";
 		}
 		std::map<std::string, sql::ConnectPropertyVal>::const_iterator it_tmp = properties.begin();
-		for (; it_tmp != properties.end(); it_tmp++) {
+		for (; it_tmp != properties.end(); ++it_tmp) {
 			if (!it_tmp->first.compare("OPT_CONNECT_TIMEOUT")) {
 				mysql_options(intern->mysql, MYSQL_OPT_CONNECT_TIMEOUT, (const char *) &it_tmp->second.lval);
 			} else if (!it_tmp->first.compare("OPT_NAMED_PIPE")) {

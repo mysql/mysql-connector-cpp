@@ -14,36 +14,6 @@
 
 #include "config.h"
 
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
-
-#ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
-#endif
-
-#if defined(_WIN32) || defined(_WIN64)
-#ifndef CPPCONN_DONT_TYPEDEF_MS_TYPES_TO_C99_TYPES
-
-#ifdef HAVE_MS_INT32
-typedef __int32			int32_t;
-#endif
-
-#ifdef HAVE_MS_UINT32
-typedef unsigned __int32	uint32_t;
-#endif
-
-#ifdef HAVE_MS_INT64
-typedef __int64			int64_t;
-#endif
-#ifdef HAVE_MS_UINT64
-typedef unsigned __int64	uint64_t;
-#endif
-
-#endif  // CPPCONN_DONT_TYPEDEF_MS_TYPES_TO_C99_TYPES
-#endif	//	_WIN32
-
-
 #include <list>
 #include <string>
 #include <map>

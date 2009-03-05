@@ -1970,7 +1970,7 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 				std::auto_ptr<sql::ResultSet> rs4(stmt1->executeQuery(query4));
 
 				while (rs4->next()) {
-					for (unsigned int i = 1; i <= rs3_meta->getColumnCount(); i++) {
+					for (unsigned int i = 1; i <= rs3_meta->getColumnCount(); ++i) {
 						/*
 						  `SELECT * FROM XYZ WHERE 0=1` will return metadata about all
 						  columns but `columnNamePattern` could be set. So, we can have different
@@ -2453,11 +2453,11 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 	{
 		size_t end_pos;
 		if (cQuote.size()) {
-			while (def[pos] != cQuote[0]) pos++;
+			while (def[pos] != cQuote[0]) ++pos;
 			end_pos = ++pos;
 			while (def[end_pos] != cQuote[0] && def[end_pos - 1] != '\\') ++end_pos;
 		} else {
-			while (def[pos] == ' ') pos++;
+			while (def[pos] == ' ') ++pos;
 			end_pos = ++pos;
 			while (def[end_pos] != ' ') ++end_pos;
 		}
@@ -2469,29 +2469,29 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 		keywords.push_back("REFERENCES");
 		std::list< std::string >::const_iterator keywords_it = keywords.begin();
 
-		for (; keywords_it != keywords.end(); keywords_it++) {
+		for (; keywords_it != keywords.end(); ++keywords_it) {
 			idx = def.find(*keywords_it, pos);
 			pos = idx + keywords_it->size();
 
-			while (def[pos] == ' ') pos++;
+			while (def[pos] == ' ') ++pos;
 			// Here comes optional constraint name
 			if (def[pos] != '(') {
 				if (cQuote.size()) {
 					size_t end_pos = ++pos;
-					while (def[end_pos] != cQuote[0] && def[end_pos - 1] != '\\') end_pos++;
+					while (def[end_pos] != cQuote[0] && def[end_pos - 1] != '\\') ++end_pos;
 					keywords_names[*keywords_it] = def.substr(pos, end_pos - pos);
 					pos = end_pos + 1;
 				} else {
 					size_t end_pos = pos;
-					while (def[end_pos] != ' ' && def[end_pos] != '(') end_pos++;
+					while (def[end_pos] != ' ' && def[end_pos] != '(') ++end_pos;
 					keywords_names[*keywords_it] = def.substr(pos, end_pos - pos - 1);
 					pos = end_pos + 1;
 					// Now find the opening bracket
 				}
 				// skip to the open bracket
-				while (def[pos] != '(') pos++;
+				while (def[pos] != '(') ++pos;
 			}
-			pos++; // skip the bracket
+			++pos; // skip the bracket
 
 			// Here come the referenced fields
 			{
@@ -2524,12 +2524,12 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 		keywords.push_back("ON UPDATE");
 		std::list< std::string >::const_iterator keywords_it = keywords.begin();
 
-		for (; keywords_it != keywords.end(); keywords_it++) {
+		for (; keywords_it != keywords.end(); ++keywords_it) {
 			int action = importedKeyNoAction;
 			idx = def.find(*keywords_it, pos);
 			if (idx != std::string::npos) {
 				pos = idx + keywords_it->size();
-				while (def[pos] == ' ') pos++;
+				while (def[pos] == ' ') ++pos;
 				if (def[pos] == 'R') { 		// RESTRICT
 					action = importedKeyRestrict;
 					pos += sizeof("RESTRICT");
@@ -3579,7 +3579,7 @@ MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const s
 				size_t pos, idx;
 				pos = 0;
 				do {
-					while ((*it_priv)[pos] == ' ') pos++; // Eat the whitespace
+					while ((*it_priv)[pos] == ' ') ++pos; // Eat the whitespace
 
 					idx = it_priv->find(",", pos);
 					std::string privToken;
@@ -3809,7 +3809,7 @@ MySQL_ConnectionMetaData::getTypeInfo()
 		rs_data_row.push_back((int64_t) curr->numPrecRadix);
 
 		rs_data->push_back(rs_data_row);
-		i++;
+		++i;
 	}
 
 	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);

@@ -24,8 +24,6 @@ namespace sql
 namespace mysql
 {
 
-extern char * cppmysql_utf8_strup(const char *src, size_t srclen);
-
 
 /* {{{ MyVal::MyVal() -I- */
 MyVal::MyVal(const std::string & s)
@@ -193,11 +191,11 @@ MySQL_ArtResultSet::MySQL_ArtResultSet(const StringList& fn, rset_t * const rs, 
 	field_index_to_name_map = new std::string[num_fields];
 
 	unsigned int idx = 0;
-	for (StringList::const_iterator it = fn.begin(), e = fn.end(); it != e; it++, idx++) {
-		char *tmp = cppmysql_utf8_strup(it->c_str(), 0);
+	for (StringList::const_iterator it = fn.begin(), e = fn.end(); it != e; ++it, ++idx) {
+		char * tmp = sql::mysql::util::utf8_strup(it->c_str(), 0);
 		field_name_to_index_map[std::string(tmp)] = idx;
 		field_index_to_name_map[idx] = std::string(tmp);
-		free(tmp);
+		delete [] tmp;
 	}
 }
 /* }}} */
@@ -225,7 +223,7 @@ void MySQL_ArtResultSet::seek()
 	current_record = rset->begin();
 	/* i should be signed, or when row_position is 0 `i` will overflow */
 	for (long long i = row_position - 1; i > 0; --i) {
-		current_record++;
+		++current_record;
 	}
 }
 /* }}} */
@@ -345,14 +343,14 @@ MySQL_ArtResultSet::close()
 
 
 /* {{{ MySQL_ArtResultSet::findColumn() -I- */
-unsigned int
+uint32_t
 MySQL_ArtResultSet::findColumn(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::columnLabel");
 	checkValid();
-	char * tmp = cppmysql_utf8_strup(columnLabel.c_str(), 0);
+	char * tmp = sql::mysql::util::utf8_strup(columnLabel.c_str(), 0);
 	FieldNameIndexMap::const_iterator iter = field_name_to_index_map.find(tmp);
-	free(tmp);
+	delete [] tmp;
 
 	if (iter == field_name_to_index_map.end()) {
 		return 0;
@@ -861,8 +859,8 @@ MySQL_ArtResultSet::next()
 		first();
 		ret = true;
 	} else if (row_position > 0 && row_position < num_rows) {
-		current_record++;
-		row_position++;
+		++current_record;
+		++row_position;
 		ret = true;
 	}
 	CPP_INFO_FMT("row_position=%llu num_rows=%llu", row_position, num_rows);
@@ -884,8 +882,8 @@ MySQL_ArtResultSet::previous()
 		beforeFirst();
 		return false;
 	} else if (row_position > 1) {
-		row_position--;
-		current_record--;
+		--row_position;
+		--current_record;
 		return true;
 	}
 	throw sql::SQLException("Impossible");
