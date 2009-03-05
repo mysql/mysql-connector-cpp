@@ -176,7 +176,7 @@ void preparedstatement::assortedSetType()
       res.reset(pstmt->executeQuery());
       checkResultSetScrolling(res);
       ASSERT(res->next());
-      if (res->getInt(1) != (9 + (unsigned int) it->is_nullable))
+      if (res->getUInt(1) != (9 + (unsigned int) it->is_nullable))
       {
         sql.str("");
         sql << "....WARNING, SQL: " << it->sqldef << ", nullable " << std::boolalpha;
