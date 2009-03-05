@@ -186,13 +186,15 @@ void resultset::getTypes()
 
       res.reset(stmt->executeQuery("SELECT id FROM test"));
       checkResultSetScrolling(res);
-      /*
+      ASSERT(res->next());
+      
       pstmt.reset(con->prepareStatement("SELECT id FROM test"));
       pstmt->clearParameters();
       pres.reset(pstmt->executeQuery());
-      checkResultSetScrolling(res);
-       */
-      ASSERT(res->next());
+      checkResultSetScrolling(pres);
+      ASSERT(pres->next());
+      
+      
       if (it->check_as_string)
       {
         logMsg("... checking string value");
@@ -209,7 +211,7 @@ void resultset::getTypes()
       ASSERT_EQUALS(res->getInt64("id"), res->getInt64(1));
       ASSERT_EQUALS(res->getUInt64("id"), res->getUInt64(1));
       ASSERT_EQUALS(res->getBoolean("id"), res->getBoolean(1));
-      /*
+      
       ASSERT_EQUALS(pres->getString("id"), pres->getString(1));
       ASSERT_EQUALS(pres->getDouble("id"), pres->getDouble(1));
       ASSERT_EQUALS(pres->getInt64("id"), pres->getInt64(1));
@@ -222,7 +224,7 @@ void resultset::getTypes()
       ASSERT_EQUALS(pres->getInt64("id"), res->getInt64(1));
       ASSERT_EQUALS(pres->getUInt64("id"), res->getUInt64(1));
       ASSERT_EQUALS(pres->getBoolean("id"), res->getBoolean(1));
-       */
+      
     }
     if (got_warning)
       FAIL("See warnings!");
