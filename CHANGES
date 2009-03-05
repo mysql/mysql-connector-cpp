@@ -14,6 +14,8 @@ Beta   1.0.4 - 2009-03-xx
 - Fixed a leak in MySQL_PreparedResultSet when the result was containing a BLOB
   column. (Andrey)
 
+- Implemented MySQL_ConnectionMetaData::supportsConvert(from, to). (Andrey)
+
 
 Alpha  1.0.3 - 2009-03-03
 
