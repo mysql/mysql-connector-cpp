@@ -7,7 +7,7 @@
    conditions of the GPL as it is applied to this software, see the
    FLOSS License Exception
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-*/
+ */
 
 #include "../unit_fixture.h"
 
@@ -35,7 +35,8 @@ public:
     TEST_CASE(getNoWarningsOnNewLine);
     TEST_CASE(getNoWarningsAfterClear);
     TEST_CASE(checkClosed);
-    TEST_CASE(connectUsingMap);    
+    TEST_CASE(connectUsingMap);
+    TEST_CASE(setTransactionIsolation);
     /*
     TODO: do we want to add this to sql::Connection?
     TEST_CASE(setSessionVariable);
@@ -89,6 +90,12 @@ public:
    *
   void setSessionVariable();
    */
+
+  /*
+   * Test of MySQL_Connection::setTransactionIsolation()
+   *
+   */
+  void setTransactionIsolation();
 
 };
 

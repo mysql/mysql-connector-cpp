@@ -958,6 +958,43 @@ void connection::connectUsingMap()
 
 }
 
+void connection::setTransactionIsolation()
+{
+  logMsg("connection::setTransactionIsolation() - MySQL_Connection::setTransactionIsolation()");
+  stmt.reset(con->createStatement());
+  try
+  {
+    con->setTransactionIsolation(sql::TRANSACTION_READ_COMMITTED);
+    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'tx_isolation'"));
+    checkResultSetScrolling(res);
+    res->next();
+    ASSERT_EQUALS("READ-COMMITTED", res->getString("Value"));
+    
+    con->setTransactionIsolation(sql::TRANSACTION_READ_UNCOMMITTED);
+    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'tx_isolation'"));
+    res->next();
+    ASSERT_EQUALS("READ-UNCOMMITTED", res->getString("Value"));
+
+    con->setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
+    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'tx_isolation'"));
+    res->next();
+    ASSERT_EQUALS("REPEATABLE-READ", res->getString("Value"));
+
+    con->setTransactionIsolation(sql::TRANSACTION_SERIALIZABLE);
+    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'tx_isolation'"));
+    res->next();
+    ASSERT_EQUALS("SERIALIZABLE", res->getString("Value"));
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+
 /*
  TODO - do we want to add this to sql::Connection?
 void connection::setSessionVariable()
@@ -986,7 +1023,7 @@ void connection::setSessionVariable()
   }
 
 }
-*/
+ */
 
 } /* namespace connection */
 } /* namespace testsuite */
