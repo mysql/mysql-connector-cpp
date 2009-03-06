@@ -343,8 +343,12 @@ MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
 		case sql::DataType::MEDIUMINT:
 		case sql::DataType::INTEGER:
 		case sql::DataType::BIGINT:
+		{
 			CPP_INFO("It's an int");
-			return static_cast<double>(getInt64(columnIndex));
+			double ret = static_cast<double>(getInt64(columnIndex));
+			CPP_INFO_FMT("value=%10.10f", ret);
+			return ret;
+		}
 		case sql::DataType::NUMERIC:
 		case sql::DataType::DECIMAL:
 		case sql::DataType::TIMESTAMP:
@@ -357,8 +361,12 @@ MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
 		case sql::DataType::LONGVARCHAR:
 		case sql::DataType::LONGVARBINARY:
 		case sql::DataType::ENUM:
+		{
 			CPP_INFO("It's a string");
-			return atof(getString(columnIndex).c_str());
+			double ret =  atof(getString(columnIndex).c_str());
+			CPP_INFO_FMT("value=%10.10f", ret);
+			return ret;
+		}
 		case sql::DataType::REAL:
 		{
 			double ret = !*stmt->bind[columnIndex - 1].is_null? *reinterpret_cast<float *>(stmt->bind[columnIndex - 1].buffer):0.;
