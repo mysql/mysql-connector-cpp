@@ -33,7 +33,8 @@ public:
   {
     TEST_CASE(InsertSelectAllTypes);
     TEST_CASE(assortedSetType);
-    TEST_CASE(setNull);
+    TEST_CASE(setNull);    
+    TEST_CASE(checkClosed);
   }
 
   /**
@@ -50,6 +51,11 @@ public:
    * Loops over assorted column types and uses setXYZ to insert a value
    */
   void setNull();
+
+  /**
+   * Calling close() 
+   */
+  void checkClosed();
 
 };
 

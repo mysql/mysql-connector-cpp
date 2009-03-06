@@ -207,10 +207,124 @@ void resultset::getTypes()
         }
       }
       ASSERT_EQUALS(res->getString("id"), res->getString(1));
+      try
+      {
+        res->getString(0);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getString(2);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
       ASSERT_EQUALS(res->getDouble("id"), res->getDouble(1));
+      try
+      {
+        res->getDouble(0);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getDouble(2);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      ASSERT_EQUALS(res->getInt(1), res->getInt("id"));
+      try
+      {
+        res->getInt(0);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getInt(2);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      ASSERT_EQUALS(res->getUInt(1), res->getUInt("id"));
+      try
+      {
+        res->getUInt(0);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getUInt(2);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
       ASSERT_EQUALS(res->getInt64("id"), res->getInt64(1));
+      try
+      {
+        res->getInt64(0);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getInt64(2);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
       ASSERT_EQUALS(res->getUInt64("id"), res->getUInt64(1));
+      try
+      {
+        res->getUInt64(0);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getUInt64(2);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
       ASSERT_EQUALS(res->getBoolean("id"), res->getBoolean(1));
+      try
+      {
+        res->getBoolean(0);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getBoolean(2);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
 
       ASSERT_EQUALS(pres->getString("id"), pres->getString(1));
       ASSERT_EQUALS(pres->getDouble("id"), pres->getDouble(1));
