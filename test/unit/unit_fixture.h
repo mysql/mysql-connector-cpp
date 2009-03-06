@@ -34,6 +34,7 @@ namespace testsuite
 /* TODO - document */
 typedef std::auto_ptr<sql::Connection> Connection;
 typedef std::auto_ptr<sql::PreparedStatement> PreparedStatement;
+typedef std::auto_ptr<sql::ParameterMetaData> ParameterMetaData;
 typedef std::auto_ptr<sql::Statement> Statement;
 typedef std::auto_ptr<sql::Savepoint> Savepoint;
 typedef std::auto_ptr<sql::ResultSet> ResultSet;

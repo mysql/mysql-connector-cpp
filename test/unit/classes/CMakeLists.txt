@@ -121,6 +121,24 @@ TARGET_LINK_LIBRARIES(test_preparedstatement ${MY_TARGET_LINK_LIBRARIES} ${MY_GC
 
 MESSAGE(STATUS "Configuring unit tests - preparedstatement")
 
+SET(test_parametermetadata_sources
+	../unit_fixture.cpp
+	../main.cpp
+	parametermetadata.cpp)
+
+IF(WIN32)
+	SET(test_parametermetadata_sources
+    		${test_parametermetadata_sources}
+	../unit_fixture.h
+	parametermetadata.h)
+ENDIF(WIN32)
+
+ADD_EXECUTABLE(test_parametermetadata ${test_parametermetadata_sources})
+SET_TARGET_PROPERTIES(test_parametermetadata PROPERTIES OUTPUT_NAME "parametermetadata")
+TARGET_LINK_LIBRARIES(test_parametermetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
+MESSAGE(STATUS "Configuring unit tests - parametermetadata")
+
 SET(test_art_resultset_sources
 	../unit_fixture.cpp
 	../main.cpp
