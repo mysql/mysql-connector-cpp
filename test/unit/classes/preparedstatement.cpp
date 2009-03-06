@@ -33,7 +33,7 @@ void preparedstatement::InsertSelectAllTypes()
   std::stringstream sql;
   std::vector<columndefinition>::iterator it;
   stmt.reset(con->createStatement());
-  bool got_warning;
+  bool got_warning = false;
 
   try
   {
@@ -228,7 +228,7 @@ void preparedstatement::assortedSetType()
   std::stringstream sql;
   std::vector<columndefinition>::iterator it;
   stmt.reset(con->createStatement());
-  bool got_warning;
+  bool got_warning = false;
 
   try
   {
@@ -575,7 +575,7 @@ void preparedstatement::getMetaData()
   ResultSetMetaData meta_ps;
   ResultSetMetaData meta_st;
   ResultSet res_st;
-  bool got_warning;
+  bool got_warning = false;
   unsigned int i;
 
   try
