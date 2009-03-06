@@ -1,4 +1,3 @@
-
 /*
    Copyright 2009 Sun Microsystems, Inc.
 
@@ -31,9 +30,9 @@ void preparedstatement::InsertSelectAllTypes()
   logMsg("preparedstatement::InsertSelectAllTypes() - MySQL_PreparedStatement::*");
 
   std::stringstream sql;
-  std::vector<columndefinition>::iterator it;
+  std::vector<columndefinition>::const_iterator it;
   stmt.reset(con->createStatement());
-  bool got_warning;
+  bool got_warning = false;
 
   try
   {
@@ -79,121 +78,72 @@ void preparedstatement::InsertSelectAllTypes()
       try
       {
         res->getString(0);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
-
+      } catch (sql::InvalidArgumentException) {}
       try
       {
         res->getString(2);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
-
+      } catch (sql::InvalidArgumentException) {}
       ASSERT_EQUALS(res->getBoolean(1), res->getBoolean("id"));
+
       try
       {
         res->getBoolean(0);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
-
+      } catch (sql::InvalidArgumentException) {}
       try
       {
         res->getBoolean(2);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
-
+      } catch (sql::InvalidArgumentException) {}
       ASSERT_EQUALS(res->getDouble(1), res->getDouble("id"));
+
       try
       {
         res->getDouble(0);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
-
+      } catch (sql::InvalidArgumentException) {}
       try
       {
         res->getDouble(2);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
-
+      } catch (sql::InvalidArgumentException) {}
       ASSERT_EQUALS(res->getInt(1), res->getInt("id"));
+
       try
       {
         res->getInt(0);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
-
+      } catch (sql::InvalidArgumentException) {}
       try
       {
         res->getInt(2);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
-
+      } catch (sql::InvalidArgumentException) {}
       ASSERT_EQUALS(res->getInt64(1), res->getInt64("id"));
+
       try
       {
         res->getInt64(0);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
-
+      } catch (sql::InvalidArgumentException) {}
       try
       {
         res->getInt64(2);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
-
+      } catch (sql::InvalidArgumentException) {}
       ASSERT_EQUALS(res->getUInt(1), res->getUInt("id"));
+
       try
       {
         res->getUInt(0);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
-
+      } catch (sql::InvalidArgumentException) {}
       try
       {
         res->getUInt(2);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
-
+      } catch (sql::InvalidArgumentException) {}
       ASSERT_EQUALS(res->getUInt64(1), res->getUInt64("id"));
+
       try
       {
         res->getUInt64(0);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
-
+      } catch (sql::InvalidArgumentException) {}
       try
       {
         res->getUInt64(2);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
-    }
+      } catch (sql::InvalidArgumentException) {}
+	}
     stmt->execute("DROP TABLE IF EXISTS test");
     if (got_warning)
       FAIL("See warnings");
@@ -214,7 +164,7 @@ void preparedstatement::assortedSetType()
   std::stringstream sql;
   std::vector<columndefinition>::iterator it;
   stmt.reset(con->createStatement());
-  bool got_warning;
+  bool got_warning = false;
 
   try
   {
@@ -224,15 +174,12 @@ void preparedstatement::assortedSetType()
       stmt->execute("DROP TABLE IF EXISTS test");
       sql.str("");
       sql << "CREATE TABLE test(dummy TIMESTAMP, id " << it->sqldef << ")";
-      try
-      {
+      try {
         stmt->execute(sql.str());
         sql.str("");
         sql << "... testing '" << it->sqldef << "'";
         logMsg(sql.str());
-      }
-      catch (sql::SQLException &)
-      {
+      } catch (sql::SQLException &) {
         sql.str("");
         sql << "... skipping '" << it->sqldef << "'";
         logMsg(sql.str());
@@ -244,132 +191,86 @@ void preparedstatement::assortedSetType()
       ASSERT_EQUALS(1, pstmt->executeUpdate());
 
       pstmt->clearParameters();
-      try
-      {
+      try {
         pstmt->setString(0, "overflow");
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
+      } catch (sql::InvalidArgumentException) {}
 
       pstmt->clearParameters();
-      try
-      {
+      try {
         pstmt->setString(2, "invalid");
       }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
-
+      catch (sql::InvalidArgumentException) {}
       pstmt->clearParameters();
       pstmt->setBigInt(1, it->value);
       ASSERT_EQUALS(1, pstmt->executeUpdate());
 
       pstmt->clearParameters();
-      try
-      {
+      try {
         pstmt->setBigInt(0, it->value);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
+      } catch (sql::InvalidArgumentException) {}
 
       pstmt->clearParameters();
-      try
-      {
+
+      try {
         pstmt->setBigInt(2, it->value);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
+      } catch (sql::InvalidArgumentException) {}
 
       pstmt->clearParameters();
       pstmt->setBoolean(1, false);
       ASSERT_EQUALS(1, pstmt->executeUpdate());
 
       pstmt->clearParameters();
-      try
-      {
+      try {
         pstmt->setBoolean(0, false);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
+      } catch (sql::InvalidArgumentException) {}
 
       pstmt->clearParameters();
-      try
-      {
-        pstmt->setBoolean(2, false);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
 
+      try {
+        pstmt->setBoolean(2, false);
+      } catch (sql::InvalidArgumentException) {}
       pstmt->clearParameters();
       pstmt->setDateTime(1, it->value);
       ASSERT_EQUALS(1, pstmt->executeUpdate());
 
       pstmt->clearParameters();
-      try
-      {
+      try {
         pstmt->setDateTime(0, it->value);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
+      } catch (sql::InvalidArgumentException) {}
 
       pstmt->clearParameters();
-      try
-      {
-        pstmt->setDateTime(2, it->value);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
 
+      try {
+        pstmt->setDateTime(2, it->value);
+      } catch (sql::InvalidArgumentException) {}
       pstmt->clearParameters();
       pstmt->setDouble(1, (double) 1.23);
       ASSERT_EQUALS(1, pstmt->executeUpdate());
 
       pstmt->clearParameters();
-      try
-      {
+      try {
         pstmt->setDouble(0, (double) 1.23);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
+      } catch (sql::InvalidArgumentException) {}
 
       pstmt->clearParameters();
-      try
-      {
+
+      try {
         pstmt->setDouble(2, (double) 1.23);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
+      } catch (sql::InvalidArgumentException) {}
 
       pstmt->clearParameters();
       pstmt->setInt(1, (int32_t) - 1);
       ASSERT_EQUALS(1, pstmt->executeUpdate());
 
       pstmt->clearParameters();
-      try
-      {
+      try {
         pstmt->setInt(0, (int32_t) - 1);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
+      } catch (sql::InvalidArgumentException) {}
 
       pstmt->clearParameters();
-      try
-      {
+      try {
         pstmt->setInt(2, (int32_t) - 1);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
+      } catch (sql::InvalidArgumentException) {}
 
       pstmt->clearParameters();
       pstmt->setInt64(1, (int64_t) - 123);
@@ -382,22 +283,14 @@ void preparedstatement::assortedSetType()
         ASSERT_EQUALS(1, pstmt->executeUpdate());
 
         pstmt->clearParameters();
-        try
-        {
+        try {
           pstmt->setNull(0, it->ctype);
-        }
-        catch (sql::InvalidArgumentException &)
-        {
-        }
+        } catch (sql::InvalidArgumentException) {}
 
         pstmt->clearParameters();
-        try
-        {
+        try {
           pstmt->setNull(2, it->ctype);
-        }
-        catch (sql::InvalidArgumentException &)
-        {
-        }
+        } catch (sql::InvalidArgumentException) {}
       }
 
       pstmt->clearParameters();
@@ -405,44 +298,28 @@ void preparedstatement::assortedSetType()
       ASSERT_EQUALS(1, pstmt->executeUpdate());
 
       pstmt->clearParameters();
-      try
-      {
+      try {
         pstmt->setUInt(0, (uint32_t) - 1);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
+      } catch (sql::InvalidArgumentException) {}
 
       pstmt->clearParameters();
-      try
-      {
+      try {
         pstmt->setUInt(2, (uint32_t) - 1);
       }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
-
+      catch (sql::InvalidArgumentException) {}
       pstmt->clearParameters();
       pstmt->setUInt64(1, (uint64_t) 123);
       ASSERT_EQUALS(1, pstmt->executeUpdate());
 
       pstmt->clearParameters();
-      try
-      {
+      try {
         pstmt->setUInt64(0, (uint64_t) - 1);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
+      } catch (sql::InvalidArgumentException) {}
 
       pstmt->clearParameters();
-      try
-      {
+      try {
         pstmt->setUInt64(2, (uint64_t) - 1);
-      }
-      catch (sql::InvalidArgumentException &)
-      {
-      }
+      } catch (sql::InvalidArgumentException) {}
 
       pstmt.reset(con->prepareStatement("SELECT COUNT(IFNULL(id, 1)) AS _num FROM test"));
       res.reset(pstmt->executeQuery());
@@ -457,7 +334,6 @@ void preparedstatement::assortedSetType()
         logMsg(sql.str());
         got_warning=true;
       }
-
     }
     stmt->execute("DROP TABLE IF EXISTS test");
     if (got_warning)
@@ -479,8 +355,7 @@ void preparedstatement::setNull()
   std::stringstream sql;
   stmt.reset(con->createStatement());
 
-  try
-  {
+  try {
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT)");
     pstmt.reset(con->prepareStatement("INSERT INTO test(id) VALUES (?)"));
@@ -492,16 +367,13 @@ void preparedstatement::setNull()
     checkResultSetScrolling(res);
     ASSERT(res->next());
     ASSERT(res->isNull(1));
-  }
-  catch (sql::SQLException &e)
-  {
+  } catch (sql::SQLException &e) {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
   }
 
-  try
-  {
+  try {
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT NOT NULL)");
     pstmt.reset(con->prepareStatement("INSERT INTO test(id) VALUES (?)"));
@@ -509,9 +381,7 @@ void preparedstatement::setNull()
     pstmt->executeUpdate();
     FAIL("Should fail");
   }
-  catch (sql::SQLException &)
-  {
-  }
+  catch (sql::SQLException) {}
 
 }
 
@@ -519,18 +389,14 @@ void preparedstatement::checkClosed()
 {
   logMsg("preparedstatement::checkClosed() - MySQL_PreparedStatement::close()");
  
-  try
-  {
+  try {
     pstmt.reset(con->prepareStatement("SELECT 1"));
     pstmt->close();   
-  }
-  catch (sql::SQLException &e)
-  {
+  } catch (sql::SQLException &e) {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
-  } 
-
+  }
 }
 
 } /* namespace preparedstatement */

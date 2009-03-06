@@ -37,6 +37,21 @@ namespace mysql
 {
 
 
+class MySQL_AutoResultSet
+{
+	MYSQL_RES * result;
+public:
+	MySQL_AutoResultSet(MYSQL_RES * res) : result(res) {}
+	~MySQL_AutoResultSet() { mysql_free_result(result); }
+
+	MYSQL_RES * get() const throw() { return result; }
+private:
+	/* Prevent use of these */
+	MySQL_AutoResultSet(const MySQL_AutoResultSet &);
+	void operator=(MySQL_AutoResultSet &);
+};
+
+
 class MySQL_ParamBind
 {
 	MYSQL_BIND * bind;
@@ -270,28 +285,38 @@ MySQL_Prepared_Statement::execute(const std::string&)
 /* }}} */
 
 
-typedef std::pair<char *, int> BufferSizePair;
-static BufferSizePair
+struct st_buffer_size_type
+{
+	char * buffer;
+	size_t size;
+	enum_field_types type;
+	st_buffer_size_type(char * b, size_t s, enum_field_types t) : buffer(b), size(s), type(t) {}
+};
+
+typedef std::pair<char *, size_t> BufferSizePair;
+static struct st_buffer_size_type
 allocate_buffer_for_field(const MYSQL_FIELD * const field)
 {
 	switch (field->type) {
 		case MYSQL_TYPE_NULL:
-			return BufferSizePair(NULL, 0);
+			return st_buffer_size_type(NULL, 0, field->type);
 		case MYSQL_TYPE_TINY:
-			return BufferSizePair(new char[1], 1);
+			return st_buffer_size_type(new char[1], 1, field->type);
 		case MYSQL_TYPE_SHORT:
-			return BufferSizePair(new char[2], 2);
+			return st_buffer_size_type(new char[2], 2, field->type);
 		case MYSQL_TYPE_INT24:
 		case MYSQL_TYPE_LONG:
 		case MYSQL_TYPE_FLOAT:
-			return BufferSizePair(new char[4], 4);
+			return st_buffer_size_type(new char[4], 4, field->type);
 		case MYSQL_TYPE_DOUBLE:
 		case MYSQL_TYPE_LONGLONG:
-			return BufferSizePair(new char[8], 8);
+			return st_buffer_size_type(new char[8], 8, field->type);
+		case MYSQL_TYPE_TIMESTAMP:
+		case MYSQL_TYPE_YEAR:
 		case MYSQL_TYPE_DATE:
 		case MYSQL_TYPE_TIME:
 		case MYSQL_TYPE_DATETIME:
-			return BufferSizePair(new char[sizeof(MYSQL_TIME)], sizeof(MYSQL_TIME));
+			return st_buffer_size_type(new char[sizeof(MYSQL_TIME)], sizeof(MYSQL_TIME), field->type);
 #if A0
 		// There three are not sent over the wire
 		case MYSQL_TYPE_TINY_BLOB:
@@ -301,22 +326,26 @@ allocate_buffer_for_field(const MYSQL_FIELD * const field)
 		case MYSQL_TYPE_BLOB:
 		case MYSQL_TYPE_STRING:
 		case MYSQL_TYPE_VAR_STRING:
-			return BufferSizePair(new char[field->max_length + 1], field->max_length + 1);
+			return st_buffer_size_type(new char[field->max_length + 1], field->max_length + 1, field->type);
 
 		case MYSQL_TYPE_DECIMAL:
 		case MYSQL_TYPE_NEWDECIMAL:
-			return BufferSizePair(new char[64], 64);
+			return st_buffer_size_type(new char[64], 64, field->type);
+#if A1
 		case MYSQL_TYPE_TIMESTAMP:
 		case MYSQL_TYPE_YEAR:
-			return BufferSizePair(new char[10], 10);
+			return st_buffer_size_type(new char[10], 10, field->type);
+#endif
 #if A0
 		// There two are not sent over the wire
 		case MYSQL_TYPE_ENUM:
 		case MYSQL_TYPE_SET:
 #endif
 		case MYSQL_TYPE_BIT:
+			return st_buffer_size_type(new char[8], 8, MYSQL_TYPE_LONGLONG);
 		case MYSQL_TYPE_GEOMETRY:
 		default:
+			printf("TYPE=%d\n", field->type);
 			throw sql::InvalidArgumentException("allocate_buffer_for_field: invalid result_bind data type");
 	}
 }
@@ -341,7 +370,6 @@ MySQL_Prepared_Statement::bindResult()
 	err = NULL;
 	len = NULL;
 
-	MYSQL_RES * result_meta = mysql_stmt_result_metadata(stmt);
 	num_fields = mysql_stmt_field_count(stmt);
 	result_bind = new MYSQL_BIND[num_fields];
 	memset(result_bind, 0, sizeof(MYSQL_BIND) * num_fields);
@@ -359,20 +387,20 @@ MySQL_Prepared_Statement::bindResult()
 	mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, &tmp);
 	mysql_stmt_store_result(stmt);
 
+	MySQL_AutoResultSet resultMetaGuard(mysql_stmt_result_metadata(stmt));
+	MYSQL_RES * result_meta = resultMetaGuard.get();
 	for (unsigned int i = 0; i < num_fields; ++i) {
 		MYSQL_FIELD * field = mysql_fetch_field(result_meta);
 
-		BufferSizePair p = allocate_buffer_for_field(field);
-		result_bind[i].buffer_type	= field->type;
-		result_bind[i].buffer		= p.first;
-		result_bind[i].buffer_length= p.second;
+		struct st_buffer_size_type p = allocate_buffer_for_field(field);
+		result_bind[i].buffer_type	= p.type;
+		result_bind[i].buffer		= p.buffer;
+		result_bind[i].buffer_length= p.size;
 		result_bind[i].length		= &len[i];
 		result_bind[i].is_null		= &is_null[i];
 		result_bind[i].error		= &err[i];
 		result_bind[i].is_unsigned = field->flags & UNSIGNED_FLAG;
 	}
-	mysql_free_result(result_meta);
-	result_meta = NULL;
 	if (mysql_stmt_bind_result(stmt, result_bind)) {
 		throw sql::SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
 	}
@@ -493,7 +521,6 @@ MySQL_Prepared_Statement::setDateTime(unsigned int parameterIndex, const std::st
 /* }}} */
 
 
-typedef std::pair<char *, int> BufferSizePair;
 static BufferSizePair
 allocate_buffer_for_type(enum_field_types t)
 {
