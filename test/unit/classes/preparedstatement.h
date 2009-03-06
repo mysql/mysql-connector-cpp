@@ -30,13 +30,11 @@ protected:
 public:
 
   EXAMPLE_TEST_FIXTURE(preparedstatement)
-  {
-    /*
+  {    
     TEST_CASE(InsertSelectAllTypes);
     TEST_CASE(assortedSetType);
     TEST_CASE(setNull);    
-    TEST_CASE(checkClosed);
-     */
+    TEST_CASE(checkClosed);     
     TEST_CASE(getMetaData);
   }
 
