@@ -1834,41 +1834,80 @@ static void test_prep_statement_3(std::auto_ptr<sql::Connection> & conn, std::au
 		stmt1->setUInt64(4, r2_c4);
 		ensure("True returned for INSERT", false == stmt1->execute());
 
-		std::auto_ptr<sql::PreparedStatement> stmt2(conn->prepareStatement("SELECT i, i_uns, b, b_uns FROM test_function_int"));
-		ensure("stmt1 is NULL", stmt2.get() != NULL);
-		ensure("False returned for SELECT", stmt2->execute());
+		{
+			std::auto_ptr<sql::PreparedStatement> stmt2(conn->prepareStatement("SELECT i, i_uns, b, b_uns FROM test_function_int"));
+			ensure("stmt1 is NULL", stmt2.get() != NULL);
+			ensure("False returned for SELECT", stmt2->execute());
 
-		std::auto_ptr<sql::ResultSet> rset(stmt2->getResultSet());
+			std::auto_ptr<sql::ResultSet> rset(stmt2->getResultSet());
 
-		ensure("No first line", rset->next());
-		ensure_equal_int64("Different data", rset->getInt("i"), r1_c1);
-		ensure_equal_int64("Different data", rset->getInt(1), r1_c1);
+			ensure("No first line", rset->next());
+			ensure_equal_int64("Different data", rset->getInt("i"), r1_c1);
+			ensure_equal_int64("Different data", rset->getInt(1), r1_c1);
 
-		ensure_equal_int64("Different data", rset->getInt64("i_uns"), r1_c2);
-		ensure_equal_int64("Different data", rset->getInt64(2), r1_c2);
+			ensure_equal_int64("Different data", rset->getInt64("i_uns"), r1_c2);
+			ensure_equal_int64("Different data", rset->getInt64(2), r1_c2);
 
-		ensure_equal_int64("Different data", rset->getInt64("b"), r1_c3);
-		ensure_equal_int64("Different data", rset->getInt64(3), r1_c3);
+			ensure_equal_int64("Different data", rset->getInt64("b"), r1_c3);
+			ensure_equal_int64("Different data", rset->getInt64(3), r1_c3);
 
-		ensure_equal_uint64("Different data", rset->getUInt64("b_uns"), r1_c4);
-		ensure_equal_uint64("Different data", rset->getUInt64(4), r1_c4);
+			ensure_equal_uint64("Different data", rset->getUInt64("b_uns"), r1_c4);
+			ensure_equal_uint64("Different data", rset->getUInt64(4), r1_c4);
 
-		ensure("No second line", rset->next());
+			ensure("No second line", rset->next());
 
-		ensure_equal_int64("Different data", rset->getInt("i"), r2_c1);
-		ensure_equal_int64("Different data", rset->getInt(1), r2_c1);
+			ensure_equal_int64("Different data", rset->getInt("i"), r2_c1);
+			ensure_equal_int64("Different data", rset->getInt(1), r2_c1);
 
-		ensure_equal_int64("Different data", rset->getInt64("i_uns"), r2_c2);
-		ensure_equal_int64("Different data", rset->getInt64(2), r2_c2);
+			ensure_equal_int64("Different data", rset->getInt64("i_uns"), r2_c2);
+			ensure_equal_int64("Different data", rset->getInt64(2), r2_c2);
 
-		ensure_equal_int64("Different data", rset->getInt64("b"), r2_c3);
-		ensure_equal_int64("Different data", rset->getInt64(3), r2_c3);
+			ensure_equal_int64("Different data", rset->getInt64("b"), r2_c3);
+			ensure_equal_int64("Different data", rset->getInt64(3), r2_c3);
 
-		ensure_equal_uint64("Different data", rset->getUInt64("b_uns"), r2_c4);
-		ensure_equal_uint64("Different data", rset->getUInt64(4), r2_c4);
+			ensure_equal_uint64("Different data", rset->getUInt64("b_uns"), r2_c4);
+			ensure_equal_uint64("Different data", rset->getUInt64(4), r2_c4);
 
-		ensure("Too many lines", rset->next() == false);
+			ensure("Too many lines", rset->next() == false);
+		}
 
+		{
+			std::auto_ptr<sql::Statement> stmt2(conn->createStatement());
+			ensure("stmt1 is NULL", stmt2.get() != NULL);
+			ensure("False returned for SELECT", stmt2->execute("SELECT i, i_uns, b, b_uns FROM test_function_int"));
+
+			std::auto_ptr<sql::ResultSet> rset(stmt2->getResultSet());
+
+			ensure("No first line", rset->next());
+			ensure_equal_int64("Different data", rset->getInt("i"), r1_c1);
+			ensure_equal_int64("Different data", rset->getInt(1), r1_c1);
+
+			ensure_equal_int64("Different data", rset->getInt64("i_uns"), r1_c2);
+			ensure_equal_int64("Different data", rset->getInt64(2), r1_c2);
+
+			ensure_equal_int64("Different data", rset->getInt64("b"), r1_c3);
+			ensure_equal_int64("Different data", rset->getInt64(3), r1_c3);
+
+			ensure_equal_uint64("Different data", rset->getUInt64("b_uns"), r1_c4);
+			ensure_equal_uint64("Different data", rset->getUInt64(4), r1_c4);
+
+			ensure("No second line", rset->next());
+
+			ensure_equal_int64("Different data", rset->getInt("i"), r2_c1);
+			ensure_equal_int64("Different data", rset->getInt(1), r2_c1);
+
+			ensure_equal_int64("Different data", rset->getInt64("i_uns"), r2_c2);
+			ensure_equal_int64("Different data", rset->getInt64(2), r2_c2);
+
+			ensure_equal_int64("Different data", rset->getInt64("b"), r2_c3);
+			ensure_equal_int64("Different data", rset->getInt64(3), r2_c3);
+
+			ensure_equal_uint64("Different data", rset->getUInt64("b_uns"), r2_c4);
+			ensure_equal_uint64("Different data", rset->getUInt64(4), r2_c4);
+
+			ensure("Too many lines", rset->next() == false);
+		}
+		
 		/* Clean */
 		std::auto_ptr<sql::Statement> stmt4(conn2->createStatement());
 		ensure("stmt4 is NULL", stmt4.get() != NULL);
