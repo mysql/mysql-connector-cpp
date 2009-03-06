@@ -33,6 +33,7 @@ public:
   {
     TEST_CASE(getMeta);
     TEST_CASE(getParameterCount);
+    //TEST_CASE(notImplemented);
   }
 
   /**
@@ -44,6 +45,11 @@ public:
    * Test of ParameterMetaData::getParameterCount()
    */
   void getParameterCount();
+
+  /**
+   * Tests of all "not implemented" methods to track API changes
+   */
+  //void notImplemented();
 
 };
 

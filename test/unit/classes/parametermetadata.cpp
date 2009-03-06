@@ -29,11 +29,11 @@ namespace classes
 void parametermetadata::getMeta()
 {
   logMsg("parametermetadata::InsertSelectAllTypes() - MySQL_ParameterMetaData::*");
-  ParameterMetaData parameta; 
+  ParameterMetaData parameta;
 
   try
   {
-    pstmt.reset(con->prepareStatement("SELECT 1"));
+    pstmt.reset(con->prepareStatement("SELECT 1 WHERE 1 = ?"));
     parameta.reset(pstmt->getParameterMetaData());
     pstmt->close();
   }
@@ -52,9 +52,8 @@ void parametermetadata::getMeta()
   catch (sql::InvalidInstanceException)
   {
   }
-  
-}
 
+}
 
 void parametermetadata::getParameterCount()
 {
@@ -63,8 +62,8 @@ void parametermetadata::getParameterCount()
 
   try
   {
-    pstmt.reset(con->prepareStatement("SELECT 1"));
-    parameta.reset(pstmt->getParameterMetaData()); 
+    pstmt.reset(con->prepareStatement("SELECT 1 WHERE 1 = ?"));
+    parameta.reset(pstmt->getParameterMetaData());
     parameta->getParameterCount();
     pstmt->close();
   }
@@ -77,7 +76,7 @@ void parametermetadata::getParameterCount()
 
   try
   {
-    
+
     pstmt->getParameterMetaData();
     FAIL("Closed connection not detected");
   }
@@ -86,6 +85,98 @@ void parametermetadata::getParameterCount()
   }
 
 }
+/*
+void parametermetadata::notImplemented()
+{
+  logMsg("parametermetadata::notImplemented() - MySQL_ParameterMetaData::*");
+  ParameterMetaData parameta;
+
+  try
+  {
+    pstmt.reset(con->prepareStatement("SELECT 1 WHERE 1 = ?"));
+    parameta.reset(pstmt->getParameterMetaData());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+  try
+  {
+    parameta->getParameterClassName(1);
+    FAIL("API change");
+  }
+  catch (sql::MethodNotImplementedException)
+  {
+  }
+
+  try
+  {
+    parameta->getParameterMode(1);
+    FAIL("API change");
+  }
+  catch (sql::MethodNotImplementedException)
+  {
+  }
+
+  try
+  {
+    parameta->getParameterType(1);
+    FAIL("API change");
+  }
+  catch (sql::MethodNotImplementedException)
+  {
+  }
+
+  try
+  {
+    parameta->getParameterTypeName(1);
+    FAIL("API change");
+  }
+  catch (sql::MethodNotImplementedException)
+  {
+  }
+
+  try
+  {
+    parameta->getPrecision(1);
+    FAIL("API change");
+  }
+  catch (sql::MethodNotImplementedException)
+  {
+  }
+
+  try
+  {
+    parameta->getScale(1);
+    FAIL("API change");
+  }
+  catch (sql::MethodNotImplementedException)
+  {
+  }
+
+  try
+  {
+    parameta->isNullable(1);
+    FAIL("API change");
+  }
+  catch (sql::MethodNotImplementedException)
+  {
+  }
+
+  try
+  {
+    parameta->isSigned(1);
+    FAIL("API change");
+  }
+  catch (sql::MethodNotImplementedException)
+  {
+  }
+
+}
+*/
 
 } /* namespace parametermetadata */
 } /* namespace testsuite */
