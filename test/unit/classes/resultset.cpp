@@ -163,9 +163,8 @@ void resultset::getTypes()
       try
       {
         stmt->execute(msg.str());
-
         msg.str("");
-        msg << "... testing " << it->sqldef;
+        msg << "... testing " << it->sqldef << ", value = '" << it->value << "'";
         logMsg(msg.str());
       }
       catch (sql::SQLException &)
@@ -179,10 +178,6 @@ void resultset::getTypes()
       msg.str("");
       msg << "INSERT INTO test(id) VALUES ('" << it->value << "')";
       stmt->execute(msg.str());
-
-      msg.str("");
-      msg << "... testing '" << it->sqldef << "'";
-      logMsg(msg.str());
 
       res.reset(stmt->executeQuery("SELECT id FROM test"));
       checkResultSetScrolling(res);
@@ -342,15 +337,73 @@ void resultset::getTypes()
 
       ASSERT_EQUALS(pres->getString("id"), pres->getString(1));
       ASSERT_EQUALS(pres->getDouble("id"), pres->getDouble(1));
+      ASSERT_EQUALS(pres->getInt("id"), pres->getInt(1));
+      ASSERT_EQUALS(pres->getUInt("id"), pres->getUInt(1));
       ASSERT_EQUALS(pres->getInt64("id"), pres->getInt64(1));
       ASSERT_EQUALS(pres->getUInt64("id"), pres->getUInt64(1));
       ASSERT_EQUALS(pres->getBoolean("id"), pres->getBoolean(1));
 
       // Comparing prepared statement resultset and statement resultset
-      ASSERT_EQUALS(pres->getString("id"), res->getString(1));
-      ASSERT_EQUALS(pres->getDouble("id"), res->getDouble(1));
-      ASSERT_EQUALS(pres->getInt64("id"), res->getInt64(1));
-      ASSERT_EQUALS(pres->getUInt64("id"), res->getUInt64(1));
+      if (pres->getString("id") != res->getString("id"))
+      {
+        msg.str("");
+        msg << "... WARNING - getString(), PS: '" << pres->getString("id") << "'";
+        msg << ", Statement: '" << res->getString("id") << "'";
+        logMsg(msg.str());
+        got_warning=true;
+      }
+      // ASSERT_EQUALS(pres->getString("id"), res->getString("id"));
+
+      if (pres->getDouble("id") != res->getDouble("id"))
+      {
+        msg.str("");
+        msg << "... WARNING - getDouble(), PS: '" << pres->getDouble("id") << "'";
+        msg << ", Statement: '" << res->getDouble("id") << "'";
+        logMsg(msg.str());
+        got_warning=true;
+      }
+      //ASSERT_EQUALS(pres->getDouble("id"), res->getDouble("id"));
+
+      if (pres->getInt("id") != res->getInt("id"))
+      {
+        msg.str("");
+        msg << "... WARNING - getInt(), PS: '" << pres->getInt("id") << "'";
+        msg << ", Statement: '" << res->getInt("id") << "'";
+        logMsg(msg.str());
+        got_warning=true;
+      }
+      // ASSERT_EQUALS(pres->getInt("id"), res->getInt("id"));
+
+      if (pres->getUInt("id") != res->getUInt("id"))
+      {
+        msg.str("");
+        msg << "... WARNING - getUInt(), PS: '" << pres->getUInt("id") << "'";
+        msg << ", Statement: '" << res->getUInt("id") << "'";
+        logMsg(msg.str());
+        got_warning=true;
+      }
+      // ASSERT_EQUALS(pres->getUInt("id"), res->getUInt("id"));
+
+      if (pres->getInt64("id") != res->getInt64("id"))
+      {
+        msg.str("");
+        msg << "... WARNING - getInt64(), PS: '" << pres->getInt64("id") << "'";
+        msg << ", Statement: '" << res->getInt64("id") << "'";
+        logMsg(msg.str());
+        got_warning=true;
+      }
+      // ASSERT_EQUALS(pres->getInt64("id"), res->getInt64("id"));
+
+      if (pres->getUInt64("id") != res->getUInt64("id"))
+      {
+        msg.str("");
+        msg << "... WARNING - getUInt64(), PS: '" << pres->getUInt64("id") << "'";
+        msg << ", Statement: '" << res->getUInt64("id") << "'";
+        logMsg(msg.str());
+        got_warning=true;
+      }
+      // ASSERT_EQUALS(pres->getUInt64("id"), res->getUInt64("id"));
+
       ASSERT_EQUALS(pres->getBoolean("id"), res->getBoolean(1));
 
     }
@@ -379,10 +432,68 @@ void resultset::notImplemented()
     ASSERT_EQUALS(1, stmt->executeUpdate("INSERT INTO test(id) VALUES (1)"));
     res.reset(stmt->executeQuery("SELECT id FROM test"));
 
-    try {
+    try
+    {
       res->getWarnings();
-    } catch (sql::MethodNotImplementedException) {
-      
+    }
+    catch (sql::MethodNotImplementedException)
+    {
+    }
+
+    try
+    {
+      res->insertRow();
+    }
+    catch (sql::MethodNotImplementedException)
+    {
+    }
+
+    try
+    {
+      res->moveToCurrentRow();
+    }
+    catch (sql::MethodNotImplementedException)
+    {
+    }
+
+    try
+    {
+      res->moveToInsertRow();
+    }
+    catch (sql::MethodNotImplementedException)
+    {
+    }
+
+    try
+    {
+      res->refreshRow();
+    }
+    catch (sql::MethodNotImplementedException)
+    {
+    }
+
+    try
+    {
+      res->rowDeleted();
+    }
+    catch (sql::MethodNotImplementedException)
+    {
+    }
+
+    try
+    {
+      res->rowInserted();
+    }
+    catch (sql::MethodNotImplementedException)
+    {
+    }
+
+    try
+    {
+      res->rowUpdated();
+    }
+    catch (sql::MethodNotImplementedException)
+    {
     }
 
     stmt->execute("DROP TABLE IF EXISTS test");
@@ -394,7 +505,7 @@ void resultset::notImplemented()
     fail(e.what(), __FILE__, __LINE__);
   }
 
-  
+
 }
 
 } /* namespace resultset */
