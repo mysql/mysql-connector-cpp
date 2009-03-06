@@ -26,16 +26,16 @@ namespace testsuite
 namespace classes
 {
 
-void parametermetadata::InsertSelectAllTypes()
+void parametermetadata::getMeta()
 {
   logMsg("parametermetadata::InsertSelectAllTypes() - MySQL_ParameterMetaData::*");
-  ParameterMetaData meta;
-  PreparedStatement pstmt;
+  ParameterMetaData parameta; 
 
   try
   {
     pstmt.reset(con->prepareStatement("SELECT 1"));
-    meta.reset(pstmt->getParameterMetaData());
+    parameta.reset(pstmt->getParameterMetaData());
+    pstmt->close();
   }
   catch (sql::SQLException &e)
   {
@@ -43,8 +43,49 @@ void parametermetadata::InsertSelectAllTypes()
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
   }
+
+  try
+  {
+    pstmt->getParameterMetaData();
+    FAIL("Closed connection not detected");
+  }
+  catch (sql::InvalidInstanceException)
+  {
+  }
+  
 }
 
+
+void parametermetadata::getParameterCount()
+{
+  logMsg("parametermetadata::getParameterCount() - MySQL_ParameterMetaData::getParameterCount");
+  ParameterMetaData parameta;
+
+  try
+  {
+    pstmt.reset(con->prepareStatement("SELECT 1"));
+    parameta.reset(pstmt->getParameterMetaData()); 
+    parameta->getParameterCount();
+    pstmt->close();
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+  try
+  {
+    
+    pstmt->getParameterMetaData();
+    FAIL("Closed connection not detected");
+  }
+  catch (sql::InvalidInstanceException)
+  {
+  }
+
+}
 
 } /* namespace parametermetadata */
 } /* namespace testsuite */

@@ -31,14 +31,19 @@ public:
 
   EXAMPLE_TEST_FIXTURE(parametermetadata)
   {
-    TEST_CASE(InsertSelectAllTypes);
-
+    TEST_CASE(getMeta);
+    TEST_CASE(getParameterCount);
   }
 
   /**
-   * Loops over all kinds of column types and inserts/fetches a value
+   * Fetch meta data from open/closed PS
    */
-  void InsertSelectAllTypes();
+  void getMeta();
+
+  /**
+   * Test of ParameterMetaData::getParameterCount()
+   */
+  void getParameterCount();
 
 };
 
