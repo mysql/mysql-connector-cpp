@@ -1493,8 +1493,6 @@ MySQL_ConnectionMetaData::getSchemaObjectTypes()
 	CPP_ENTER("MySQL_ConnectionMetaData::getSchemaObjectTypes");
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
-	MySQL_ArtResultSet::row_t rs_data_row;
-
 	std::list<std::string> rs_field_data;
 	rs_field_data.push_back("OBJECT_TYPE");
 
