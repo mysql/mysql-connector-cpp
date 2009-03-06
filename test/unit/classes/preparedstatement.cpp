@@ -76,6 +76,21 @@ void preparedstatement::InsertSelectAllTypes()
         got_warning=true;
       }
       ASSERT_EQUALS(res->getString(1), res->getString("id"));
+      try
+      {
+        res->getString(0);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getString(2);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
 
       ASSERT_EQUALS(res->getBoolean(1), res->getBoolean("id"));
       try
