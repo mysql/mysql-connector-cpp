@@ -11,13 +11,8 @@
  */
 
 #include <cppconn/prepared_statement.h>
-
-
 #include <cppconn/connection.h>
-
-
 #include <cppconn/warning.h>
-
 #include "preparedstatement.h"
 #include <stdlib.h>
 
@@ -33,7 +28,7 @@ void preparedstatement::InsertSelectAllTypes()
   std::stringstream sql;
   std::vector<columndefinition>::iterator it;
   stmt.reset(con->createStatement());
-  bool got_warning = false;
+  bool got_warning=false;
 
   try
   {
@@ -228,7 +223,7 @@ void preparedstatement::assortedSetType()
   std::stringstream sql;
   std::vector<columndefinition>::iterator it;
   stmt.reset(con->createStatement());
-  bool got_warning = false;
+  bool got_warning=false;
 
   try
   {
@@ -575,7 +570,7 @@ void preparedstatement::getMetaData()
   ResultSetMetaData meta_ps;
   ResultSetMetaData meta_st;
   ResultSet res_st;
-  bool got_warning = false;
+  bool got_warning=false;
   unsigned int i;
 
   try
@@ -617,8 +612,8 @@ void preparedstatement::getMetaData()
       for (i=1; i <= meta_ps->getColumnCount(); i++)
       {
         ASSERT_EQUALS(meta_ps->getCatalogName(i), meta_st->getCatalogName(i));
-        ASSERT_EQUALS(meta_ps->getColumnDisplaySize(1), meta_st->getColumnDisplaySize(1));
-        ASSERT_EQUALS(meta_ps->getColumnLabel(i), meta_st->getColumnLabel(1));
+        ASSERT_EQUALS(meta_ps->getColumnDisplaySize(i), meta_st->getColumnDisplaySize(i));
+        ASSERT_EQUALS(meta_ps->getColumnLabel(i), meta_st->getColumnLabel(i));
         ASSERT_EQUALS(meta_ps->getColumnName(i), meta_st->getColumnName(i));
         ASSERT_EQUALS(meta_ps->getColumnType(i), meta_st->getColumnType(i));
         ASSERT_EQUALS(meta_ps->getColumnTypeName(i), meta_st->getColumnTypeName(i));
@@ -663,5 +658,3 @@ void preparedstatement::getMetaData()
 
 } /* namespace preparedstatement */
 } /* namespace testsuite */
-
-

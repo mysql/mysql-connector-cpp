@@ -33,6 +33,14 @@ protected:
    */
   void runStandardQuery();
 
+  /**
+   * Utility: run a query through PS interface and fetch the resultset
+   */
+  void runStandardPSQuery();
+
+  void doGetCatalogName();
+  void doGetColumnCount();
+
 public:
 
   EXAMPLE_TEST_FIXTURE(resultsetmetadata)

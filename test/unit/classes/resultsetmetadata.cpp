@@ -17,6 +17,8 @@
 #include <stdlib.h>
 #include <cppconn/resultset.h>
 #include <cppconn/datatype.h>
+#include <cppconn/prepared_statement.h>
+#include <cppconn/statement.h>
 
 namespace testsuite
 {
@@ -26,40 +28,75 @@ namespace classes
 void resultsetmetadata::getCatalogName()
 {
   logMsg("resultsetmetadata::getCatalogName() - MySQL_ResultSetMetaData::getCatalogName");
+
   try
   {
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    logMsg("... Statement");
     runStandardQuery();
-    ResultSetMetaData meta(res->getMetaData());
-    ASSERT_EQUALS(con->getCatalog(), meta->getCatalogName(1));
+    doGetCatalogName();
+    /*
+    logMsg("... PreparedStatement");
+    runStandardPSQuery();
+    doGetCatalogName();
+    */
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
 
-    try
-    {
-      meta->getCatalogName(0);
-      FAIL("Column number starts at 1, invalid offset 0 not detected");
+void resultsetmetadata::doGetCatalogName()
+{
+  ResultSetMetaData meta(res->getMetaData());
+  ASSERT_EQUALS(con->getCatalog(), meta->getCatalogName(1));
 
-    } catch (sql::InvalidArgumentException &)
-    {
-    }
+  try
+  {
+    meta->getCatalogName(0);
+    FAIL("Column number starts at 1, invalid offset 0 not detected");
+  }
+  catch (sql::InvalidArgumentException &)
+  {
+  }
 
-    try
-    {
-      meta->getCatalogName(6);
-      FAIL("Only five columns available but requesting number six, should bail");
+  try
+  {
+    meta->getCatalogName(6);
+    FAIL("Only five columns available but requesting number six, should bail");
+  }
+  catch (sql::InvalidArgumentException &)
+  {
+  }
 
-    } catch (sql::InvalidArgumentException &)
-    {
-    }
+  res->close();
+  try
+  {
+    meta->getCatalogName(1);
+    FAIL("Can fetch meta from invalid resultset");
+  }
+  catch (sql::SQLException &)
+  {
+  }
+}
 
-    res->close();
-    try
-    {
-      meta->getCatalogName(1);
-      FAIL("Can fetch meta from invalid resultset");
-
-    } catch (sql::SQLException &)
-    {
-    }
+void resultsetmetadata::getColumnCount()
+{
+  logMsg("resultsetmetadata::getColumnCount() - MySQL_ResultSetMetaData::getColumnCount");
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    logMsg("... Statement");
+    runStandardQuery();
+    doGetColumnCount();
+    /*
+    logMsg("... PreparedStatement");
+    runStandardPSQuery();
+    doGetColumnCount();
+    */
 
   }
   catch (sql::SQLException &e)
@@ -70,33 +107,19 @@ void resultsetmetadata::getCatalogName()
   }
 }
 
-void resultsetmetadata::getColumnCount()
+void resultsetmetadata::doGetColumnCount()
 {
-  logMsg("resultsetmetadata::getColumnCount() - MySQL_ResultSetMetaData::getColumnCount");
+  ResultSetMetaData meta(res->getMetaData());
+  ASSERT_EQUALS((unsigned int) 5, meta->getColumnCount());
+
+  res->close();
   try
   {
-    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
-    runStandardQuery();
-    ResultSetMetaData meta(res->getMetaData());
-    ASSERT_EQUALS((unsigned int) 5, meta->getColumnCount());
-
-    res->close();
-    try
-    {
-      meta->getCatalogName(1);
-      FAIL("Can fetch meta from invalid resultset");
-
-    } catch (sql::SQLException &)
-    {
-    }
-
-
+    meta->getCatalogName(1);
+    FAIL("Can fetch meta from invalid resultset");
   }
-  catch (sql::SQLException &e)
+  catch (sql::SQLException &)
   {
-    logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
-    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -118,8 +141,8 @@ void resultsetmetadata::getColumnDisplaySize()
     {
       meta->getColumnDisplaySize(0);
       FAIL("Column number starts at 1, invalid offset 0 not detected");
-
-    } catch (sql::InvalidArgumentException &)
+    }
+    catch (sql::InvalidArgumentException &)
     {
     }
 
@@ -127,8 +150,8 @@ void resultsetmetadata::getColumnDisplaySize()
     {
       meta->getColumnDisplaySize(6);
       FAIL("Only five columns available but requesting number six, should bail");
-
-    } catch (sql::InvalidArgumentException &)
+    }
+    catch (sql::InvalidArgumentException &)
     {
     }
 
@@ -137,8 +160,8 @@ void resultsetmetadata::getColumnDisplaySize()
     {
       meta->getColumnDisplaySize(1);
       FAIL("Can fetch meta from invalid resultset");
-
-    } catch (sql::SQLException &)
+    }
+    catch (sql::SQLException &)
     {
     }
 
@@ -176,8 +199,8 @@ void resultsetmetadata::getColumnNameAndLabel()
     {
       meta->getColumnName(0);
       FAIL("Column number starts at 1, invalid offset 0 not detected");
-
-    } catch (sql::InvalidArgumentException &)
+    }
+    catch (sql::InvalidArgumentException &)
     {
     }
 
@@ -185,8 +208,8 @@ void resultsetmetadata::getColumnNameAndLabel()
     {
       meta->getColumnLabel(0);
       FAIL("Column number starts at 1, invalid offset 0 not detected");
-
-    } catch (sql::InvalidArgumentException &)
+    }
+    catch (sql::InvalidArgumentException &)
     {
     }
 
@@ -194,8 +217,8 @@ void resultsetmetadata::getColumnNameAndLabel()
     {
       meta->getColumnName(6);
       FAIL("Only five columns available but requesting number six, should bail");
-
-    } catch (sql::InvalidArgumentException &)
+    }
+    catch (sql::InvalidArgumentException &)
     {
     }
 
@@ -203,8 +226,8 @@ void resultsetmetadata::getColumnNameAndLabel()
     {
       meta->getColumnLabel(6);
       FAIL("Only five columns available but requesting number six, should bail");
-
-    } catch (sql::InvalidArgumentException &)
+    }
+    catch (sql::InvalidArgumentException &)
     {
     }
 
@@ -213,8 +236,8 @@ void resultsetmetadata::getColumnNameAndLabel()
     {
       meta->getColumnName(1);
       FAIL("Can fetch meta from invalid resultset");
-
-    } catch (sql::SQLException &)
+    }
+    catch (sql::SQLException &)
     {
     }
 
@@ -222,8 +245,8 @@ void resultsetmetadata::getColumnNameAndLabel()
     {
       meta->getColumnLabel(1);
       FAIL("Can fetch meta from invalid resultset");
-
-    } catch (sql::SQLException &)
+    }
+    catch (sql::SQLException &)
     {
     }
 
@@ -253,7 +276,6 @@ void resultsetmetadata::getColumnType()
 
     for (it=columns.begin(); it != columns.end(); it++)
     {
-
       stmt->execute("DROP TABLE IF EXISTS test");
 
       sql.str("");
@@ -905,7 +927,8 @@ void resultsetmetadata::isSigned()
     runStandardQuery();
     ResultSetMetaData meta(res->getMetaData());
 
-    for (i=1; i < 5; i++) {
+    for (i=1; i < 5; i++)
+    {
       ASSERT_EQUALS(meta->isSigned(i), true);
     }
 
@@ -1021,6 +1044,13 @@ void resultsetmetadata::runStandardQuery()
 {
   stmt.reset(con->createStatement());
   res.reset(stmt->executeQuery("SELECT 'Hello' AS a, ' ', 'world', '!', 123 AS z"));
+  checkResultSetScrolling(res);
+}
+
+void resultsetmetadata::runStandardPSQuery()
+{
+  pstmt.reset(con->prepareStatement("SELECT 'Hello' AS a, ' ', 'world', '!', 123 AS z"));
+  res.reset(pstmt->executeQuery());
   checkResultSetScrolling(res);
 }
 
