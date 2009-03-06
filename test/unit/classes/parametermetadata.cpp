@@ -11,7 +11,7 @@
  */
 
 #include <cppconn/prepared_statement.h>
-
+#include <cppconn/parameter_metadata.h>
 
 #include <cppconn/connection.h>
 
