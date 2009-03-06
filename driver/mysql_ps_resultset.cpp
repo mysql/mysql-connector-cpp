@@ -337,6 +337,7 @@ MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
 	}
 
 	switch (rs_meta->getColumnType(columnIndex)) {
+		case sql::DataType::BIT:
 		case sql::DataType::TINYINT:
 		case sql::DataType::SMALLINT:
 		case sql::DataType::MEDIUMINT:
@@ -764,6 +765,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 			CPP_INFO_FMT("It's a time %s", buf);
 			return std::string(buf);
 		}
+		case sql::DataType::BIT:
 		case sql::DataType::TINYINT:
 		case sql::DataType::SMALLINT:
 		case sql::DataType::MEDIUMINT:

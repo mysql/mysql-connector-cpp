@@ -1493,8 +1493,6 @@ MySQL_ConnectionMetaData::getSchemaObjectTypes()
 	CPP_ENTER("MySQL_ConnectionMetaData::getSchemaObjectTypes");
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
-	MySQL_ArtResultSet::row_t rs_data_row;
-
 	std::list<std::string> rs_field_data;
 	rs_field_data.push_back("OBJECT_TYPE");
 
@@ -2062,9 +2060,6 @@ MySQL_ConnectionMetaData::getCrossReference(const std::string& primaryCatalog, c
 	rs_field_data.push_back("PK_NAME");
 	rs_field_data.push_back("DEFERRABILITY");
 
-	char buf[16];
-	buf[sizeof(buf) - 1] = '\0';
-
 	/* Not sure which version, let it not be 5.1.0, just something above which is anyway not used anymore */
 	if (use_info_schema && server_version >= 50110) {
 		/* This just doesn't work */
@@ -2299,9 +2294,6 @@ MySQL_ConnectionMetaData::getExportedKeys(const std::string& catalog, const std:
 	rs_field_data.push_back("PK_NAME");
 	rs_field_data.push_back("DEFERRABILITY");
 
-	char buf[16];
-	buf[sizeof(buf) - 1] = '\0';
-
 	/* Not sure which version, let it not be 5.1.0, just something above which is anyway not used anymore */
 	if (use_info_schema && server_version >= 50110) {
 		/* This just doesn't work */
@@ -2451,18 +2443,20 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 	std::string cQuote(getIdentifierQuoteString());
 
 	{
-		size_t end_pos;
-		if (cQuote.size()) {
-			while (def[pos] != cQuote[0]) ++pos;
-			end_pos = ++pos;
-			while (def[end_pos] != cQuote[0] && def[end_pos - 1] != '\\') ++end_pos;
-		} else {
-			while (def[pos] == ' ') ++pos;
-			end_pos = ++pos;
-			while (def[end_pos] != ' ') ++end_pos;
+		{
+			size_t end_pos;
+			if (cQuote.size()) {
+				while (def[pos] != cQuote[0]) ++pos;
+				end_pos = ++pos;
+				while (def[end_pos] != cQuote[0] && def[end_pos - 1] != '\\') ++end_pos;
+			} else {
+				while (def[pos] == ' ') ++pos;
+				end_pos = ++pos;
+				while (def[end_pos] != ' ') ++end_pos;
+			}
+			constraint_name = def.substr(pos, end_pos - pos);
+			pos = end_pos + 1;
 		}
-		constraint_name = def.substr(pos, end_pos - pos);
-		pos = end_pos + 1;
 
 		std::list< std::string > keywords;
 		keywords.push_back("FOREIGN KEY");
@@ -2576,9 +2570,6 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 	rs_field_data.push_back("FK_NAME");
 	rs_field_data.push_back("PK_NAME");
 	rs_field_data.push_back("DEFERRABILITY");
-
-	char buf[16];
-	buf[sizeof(buf) - 1] = '\0';
 
 	if (use_info_schema && server_version >= 50116) {
 		/* This just doesn't work */
