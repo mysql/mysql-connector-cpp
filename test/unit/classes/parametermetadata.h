@@ -10,6 +10,7 @@
  */
 
 #include "../unit_fixture.h"
+#include <cppconn/parameter_metadata.h>
 
 /**
  * Example of a collection of tests
