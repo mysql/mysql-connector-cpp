@@ -474,7 +474,7 @@ void preparedstatement::assortedSetType()
 
 void preparedstatement::setNull()
 {
-  logMsg("preparedstatement::InsertSelectAllTypes() - MySQL_PreparedStatement::*");
+  logMsg("preparedstatement::setNull() - MySQL_PreparedStatement::*");
 
   std::stringstream sql;
   stmt.reset(con->createStatement());
@@ -515,5 +515,25 @@ void preparedstatement::setNull()
 
 }
 
+void preparedstatement::checkClosed()
+{
+  logMsg("preparedstatement::checkClosed() - MySQL_PreparedStatement::close()");
+ 
+  try
+  {
+    pstmt.reset(con->prepareStatement("SELECT 1"));
+    pstmt->close();   
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  } 
+
+}
+
 } /* namespace preparedstatement */
 } /* namespace testsuite */
+
+
