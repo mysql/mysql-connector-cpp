@@ -210,6 +210,7 @@ void resultset::getTypes()
       try
       {
         res->getString(0);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -218,6 +219,7 @@ void resultset::getTypes()
       try
       {
         res->getString(2);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -227,6 +229,7 @@ void resultset::getTypes()
       try
       {
         res->getDouble(0);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -235,6 +238,7 @@ void resultset::getTypes()
       try
       {
         res->getDouble(2);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -244,6 +248,7 @@ void resultset::getTypes()
       try
       {
         res->getInt(0);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -252,6 +257,7 @@ void resultset::getTypes()
       try
       {
         res->getInt(2);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -261,6 +267,7 @@ void resultset::getTypes()
       try
       {
         res->getUInt(0);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -269,6 +276,7 @@ void resultset::getTypes()
       try
       {
         res->getUInt(2);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -278,6 +286,7 @@ void resultset::getTypes()
       try
       {
         res->getInt64(0);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -286,6 +295,7 @@ void resultset::getTypes()
       try
       {
         res->getInt64(2);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -295,6 +305,7 @@ void resultset::getTypes()
       try
       {
         res->getUInt64(0);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -303,6 +314,7 @@ void resultset::getTypes()
       try
       {
         res->getUInt64(2);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -312,6 +324,7 @@ void resultset::getTypes()
       try
       {
         res->getBoolean(0);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -320,6 +333,7 @@ void resultset::getTypes()
       try
       {
         res->getBoolean(2);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {

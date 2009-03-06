@@ -79,6 +79,7 @@ void preparedstatement::InsertSelectAllTypes()
       try
       {
         res->getString(0);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -87,6 +88,7 @@ void preparedstatement::InsertSelectAllTypes()
       try
       {
         res->getString(2);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -96,6 +98,7 @@ void preparedstatement::InsertSelectAllTypes()
       try
       {
         res->getBoolean(0);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -104,6 +107,7 @@ void preparedstatement::InsertSelectAllTypes()
       try
       {
         res->getBoolean(2);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -113,6 +117,7 @@ void preparedstatement::InsertSelectAllTypes()
       try
       {
         res->getDouble(0);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -121,6 +126,7 @@ void preparedstatement::InsertSelectAllTypes()
       try
       {
         res->getDouble(2);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -130,6 +136,7 @@ void preparedstatement::InsertSelectAllTypes()
       try
       {
         res->getInt(0);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -138,6 +145,7 @@ void preparedstatement::InsertSelectAllTypes()
       try
       {
         res->getInt(2);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -147,6 +155,7 @@ void preparedstatement::InsertSelectAllTypes()
       try
       {
         res->getInt64(0);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -155,6 +164,7 @@ void preparedstatement::InsertSelectAllTypes()
       try
       {
         res->getInt64(2);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -164,6 +174,7 @@ void preparedstatement::InsertSelectAllTypes()
       try
       {
         res->getUInt(0);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -172,6 +183,7 @@ void preparedstatement::InsertSelectAllTypes()
       try
       {
         res->getUInt(2);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -181,6 +193,7 @@ void preparedstatement::InsertSelectAllTypes()
       try
       {
         res->getUInt64(0);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -189,6 +202,7 @@ void preparedstatement::InsertSelectAllTypes()
       try
       {
         res->getUInt64(2);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -247,6 +261,7 @@ void preparedstatement::assortedSetType()
       try
       {
         pstmt->setString(0, "overflow");
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -256,6 +271,7 @@ void preparedstatement::assortedSetType()
       try
       {
         pstmt->setString(2, "invalid");
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -269,6 +285,7 @@ void preparedstatement::assortedSetType()
       try
       {
         pstmt->setBigInt(0, it->value);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -278,6 +295,7 @@ void preparedstatement::assortedSetType()
       try
       {
         pstmt->setBigInt(2, it->value);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -291,6 +309,7 @@ void preparedstatement::assortedSetType()
       try
       {
         pstmt->setBoolean(0, false);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -300,6 +319,7 @@ void preparedstatement::assortedSetType()
       try
       {
         pstmt->setBoolean(2, false);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -313,6 +333,7 @@ void preparedstatement::assortedSetType()
       try
       {
         pstmt->setDateTime(0, it->value);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -322,6 +343,7 @@ void preparedstatement::assortedSetType()
       try
       {
         pstmt->setDateTime(2, it->value);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -335,6 +357,7 @@ void preparedstatement::assortedSetType()
       try
       {
         pstmt->setDouble(0, (double) 1.23);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -344,6 +367,7 @@ void preparedstatement::assortedSetType()
       try
       {
         pstmt->setDouble(2, (double) 1.23);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -357,6 +381,7 @@ void preparedstatement::assortedSetType()
       try
       {
         pstmt->setInt(0, (int32_t) - 1);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -366,6 +391,7 @@ void preparedstatement::assortedSetType()
       try
       {
         pstmt->setInt(2, (int32_t) - 1);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -385,6 +411,7 @@ void preparedstatement::assortedSetType()
         try
         {
           pstmt->setNull(0, it->ctype);
+          FAIL("Invalid argument not detected");
         }
         catch (sql::InvalidArgumentException &)
         {
@@ -394,6 +421,7 @@ void preparedstatement::assortedSetType()
         try
         {
           pstmt->setNull(2, it->ctype);
+          FAIL("Invalid argument not detected");
         }
         catch (sql::InvalidArgumentException &)
         {
@@ -408,6 +436,7 @@ void preparedstatement::assortedSetType()
       try
       {
         pstmt->setUInt(0, (uint32_t) - 1);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -417,6 +446,7 @@ void preparedstatement::assortedSetType()
       try
       {
         pstmt->setUInt(2, (uint32_t) - 1);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -430,6 +460,7 @@ void preparedstatement::assortedSetType()
       try
       {
         pstmt->setUInt64(0, (uint64_t) - 1);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -439,6 +470,7 @@ void preparedstatement::assortedSetType()
       try
       {
         pstmt->setUInt64(2, (uint64_t) - 1);
+        FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
       {
@@ -518,20 +550,116 @@ void preparedstatement::setNull()
 void preparedstatement::checkClosed()
 {
   logMsg("preparedstatement::checkClosed() - MySQL_PreparedStatement::close()");
- 
+
   try
   {
     pstmt.reset(con->prepareStatement("SELECT 1"));
-    pstmt->close();   
+    pstmt->close();
   }
   catch (sql::SQLException &e)
   {
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
-  } 
+  }
 
 }
+
+void preparedstatement::getMetaData()
+{
+  logMsg("preparedstatement::getMetaData() - MySQL_PreparedStatement::getMetaData()");
+
+  std::stringstream sql;
+  std::vector<columndefinition>::iterator it;
+  stmt.reset(con->createStatement());
+  ResultSetMetaData meta_ps;
+  ResultSetMetaData meta_st;
+  ResultSet res_st;
+  bool got_warning;
+  unsigned int i;
+
+  try
+  {
+
+    for (it=columns.end(), it--; it != columns.begin(); it--)
+    {
+      stmt->execute("DROP TABLE IF EXISTS test");
+      sql.str("");
+      sql << "CREATE TABLE test(dummy TIMESTAMP, id " << it->sqldef << ")";
+      try
+      {
+        stmt->execute(sql.str());
+        sql.str("");
+        sql << "... testing '" << it->sqldef << "'";
+        logMsg(sql.str());
+      }
+      catch (sql::SQLException &)
+      {
+        sql.str("");
+        sql << "... skipping '" << it->sqldef << "'";
+        logMsg(sql.str());
+        continue;
+      }
+
+      pstmt.reset(con->prepareStatement("INSERT INTO test(id) VALUES (?)"));
+      pstmt->setString(1, it->value);
+      ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      pstmt.reset(con->prepareStatement("SELECT id, dummy, NULL, -1.1234, 'Warum nicht...' FROM test"));
+      res.reset(pstmt->executeQuery());
+      meta_ps.reset(res->getMetaData());
+
+      res_st.reset(stmt->executeQuery("SELECT id, dummy, NULL, -1.1234, 'Warum nicht...' FROM test"));
+      meta_st.reset(res->getMetaData());
+
+      ASSERT_EQUALS(meta_ps->getColumnCount(), meta_st->getColumnCount());
+
+      for (i=1; i <= meta_ps->getColumnCount(); i++)
+      {
+        ASSERT_EQUALS(meta_ps->getCatalogName(i), meta_st->getCatalogName(i));
+        ASSERT_EQUALS(meta_ps->getColumnDisplaySize(1), meta_st->getColumnDisplaySize(1));
+        ASSERT_EQUALS(meta_ps->getColumnLabel(i), meta_st->getColumnLabel(1));
+        ASSERT_EQUALS(meta_ps->getColumnName(i), meta_st->getColumnName(i));
+        ASSERT_EQUALS(meta_ps->getColumnType(i), meta_st->getColumnType(i));
+        ASSERT_EQUALS(meta_ps->getColumnTypeName(i), meta_st->getColumnTypeName(i));
+        ASSERT_EQUALS(meta_ps->getPrecision(i), meta_st->getPrecision(i));
+        ASSERT_EQUALS(meta_ps->getScale(i), meta_st->getScale(i));
+        ASSERT_EQUALS(meta_ps->getSchemaName(i), meta_st->getSchemaName(i));
+        ASSERT_EQUALS(meta_ps->getTableName(i), meta_st->getTableName(i));
+        ASSERT_EQUALS(meta_ps->isAutoIncrement(i), meta_st->isAutoIncrement(i));
+        ASSERT_EQUALS(meta_ps->isCaseSensitive(i), meta_st->isCaseSensitive(i));
+        ASSERT_EQUALS(meta_ps->isCurrency(i), meta_st->isCurrency(i));
+        ASSERT_EQUALS(meta_ps->isDefinitelyWritable(i), meta_st->isDefinitelyWritable(i));
+        ASSERT_EQUALS(meta_ps->isNullable(i), meta_st->isNullable(i));
+        ASSERT_EQUALS(meta_ps->isReadOnly(i), meta_st->isReadOnly(i));
+        ASSERT_EQUALS(meta_ps->isSearchable(i), meta_st->isSearchable(i));
+        ASSERT_EQUALS(meta_ps->isSigned(i), meta_st->isSigned(i));
+        ASSERT_EQUALS(meta_ps->isWritable(i), meta_st->isWritable(i));
+      }
+
+      try
+      {
+       meta_ps->getCatalogName(0);
+       FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+    }
+    stmt->execute("DROP TABLE IF EXISTS test");
+    if (got_warning)
+      FAIL("See warnings");
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 
 } /* namespace preparedstatement */
 } /* namespace testsuite */
