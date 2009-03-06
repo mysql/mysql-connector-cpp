@@ -33,7 +33,7 @@ void parametermetadata::getMeta()
 
   try
   {
-    pstmt.reset(con->prepareStatement("SELECT 1 WHERE 1 = ?"));
+    pstmt.reset(con->prepareStatement("SELECT 1"));
     parameta.reset(pstmt->getParameterMetaData());
     pstmt->close();
   }
@@ -62,7 +62,7 @@ void parametermetadata::getParameterCount()
 
   try
   {
-    pstmt.reset(con->prepareStatement("SELECT 1 WHERE 1 = ?"));
+    pstmt.reset(con->prepareStatement("SELECT 1"));
     parameta.reset(pstmt->getParameterMetaData());
     parameta->getParameterCount();
     pstmt->close();
@@ -85,7 +85,7 @@ void parametermetadata::getParameterCount()
   }
 
 }
-/*
+
 void parametermetadata::notImplemented()
 {
   logMsg("parametermetadata::notImplemented() - MySQL_ParameterMetaData::*");
@@ -93,7 +93,7 @@ void parametermetadata::notImplemented()
 
   try
   {
-    pstmt.reset(con->prepareStatement("SELECT 1 WHERE 1 = ?"));
+    pstmt.reset(con->prepareStatement("SELECT 1"));
     parameta.reset(pstmt->getParameterMetaData());
   }
   catch (sql::SQLException &e)
@@ -176,7 +176,7 @@ void parametermetadata::notImplemented()
   }
 
 }
-*/
+
 
 } /* namespace parametermetadata */
 } /* namespace testsuite */

@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <vector>
 #include <stdlib.h>
 #include <cppconn/connection.h>
+#include <cppconn/parameter_metadata.h>
 
 namespace testsuite
 {

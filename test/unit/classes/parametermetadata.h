@@ -33,7 +33,7 @@ public:
   {
     TEST_CASE(getMeta);
     TEST_CASE(getParameterCount);
-    //TEST_CASE(notImplemented);
+    TEST_CASE(notImplemented);
   }
 
   /**
@@ -49,7 +49,7 @@ public:
   /**
    * Tests of all "not implemented" methods to track API changes
    */
-  //void notImplemented();
+  void notImplemented();
 
 };
 

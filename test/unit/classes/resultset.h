@@ -32,6 +32,7 @@ public:
   {
     TEST_CASE(getInt);
     TEST_CASE(getTypes);
+    TEST_CASE(notImplemented);
   }
 
   /**
@@ -47,6 +48,11 @@ public:
    * Test of the assorted methods to fetch data
    */
   void getTypes();
+
+  /**
+   * Calling methods which throw "not implemented" to detect API changes
+   */
+  void notImplemented();
 
 };
 

@@ -366,5 +366,36 @@ void resultset::getTypes()
   }
 }
 
+void resultset::notImplemented()
+{
+  logMsg("resultset::notImplemented - MySQL_ResultSet::*");
+
+
+  try
+  {
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT)");
+    ASSERT_EQUALS(1, stmt->executeUpdate("INSERT INTO test(id) VALUES (1)"));
+    res.reset(stmt->executeQuery("SELECT id FROM test"));
+
+    try {
+      res->getWarnings();
+    } catch (sql::MethodNotImplementedException) {
+      
+    }
+
+    stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+  
+}
+
 } /* namespace resultset */
 } /* namespace testsuite */
