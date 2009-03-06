@@ -2451,18 +2451,20 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 	std::string cQuote(getIdentifierQuoteString());
 
 	{
-		size_t end_pos;
-		if (cQuote.size()) {
-			while (def[pos] != cQuote[0]) ++pos;
-			end_pos = ++pos;
-			while (def[end_pos] != cQuote[0] && def[end_pos - 1] != '\\') ++end_pos;
-		} else {
-			while (def[pos] == ' ') ++pos;
-			end_pos = ++pos;
-			while (def[end_pos] != ' ') ++end_pos;
+		{
+			size_t end_pos;
+			if (cQuote.size()) {
+				while (def[pos] != cQuote[0]) ++pos;
+				end_pos = ++pos;
+				while (def[end_pos] != cQuote[0] && def[end_pos - 1] != '\\') ++end_pos;
+			} else {
+				while (def[pos] == ' ') ++pos;
+				end_pos = ++pos;
+				while (def[end_pos] != ' ') ++end_pos;
+			}
+			constraint_name = def.substr(pos, end_pos - pos);
+			pos = end_pos + 1;
 		}
-		constraint_name = def.substr(pos, end_pos - pos);
-		pos = end_pos + 1;
 
 		std::list< std::string > keywords;
 		keywords.push_back("FOREIGN KEY");
