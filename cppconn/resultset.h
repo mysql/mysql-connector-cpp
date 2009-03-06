@@ -87,8 +87,8 @@ public:
 	virtual int getConcurrency() = 0;
 	virtual std::string getCursorName() = 0;
 
-	virtual double getDouble(uint32_t columnIndex) const = 0;
-	virtual double getDouble(const std::string& columnLabel) const = 0;
+	virtual long double getDouble(uint32_t columnIndex) const = 0;
+	virtual long double getDouble(const std::string& columnLabel) const = 0;
 
 	virtual int getFetchDirection() = 0;
 	virtual int getFetchSize() = 0;

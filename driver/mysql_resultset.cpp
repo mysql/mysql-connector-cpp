@@ -280,7 +280,7 @@ MySQL_ResultSet::getCursorName()
 
 
 /* {{{ MySQL_ResultSet::getDouble() -I- */
-double
+long double
 MySQL_ResultSet::getDouble(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ResultSet::getDouble(int)");
@@ -304,7 +304,7 @@ MySQL_ResultSet::getDouble(const uint32_t columnIndex) const
 
 
 /* {{{ MySQL_ResultSet::getDouble() -I- */
-double
+long double
 MySQL_ResultSet::getDouble(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ResultSet::getDouble(string)");

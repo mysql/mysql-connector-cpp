@@ -54,7 +54,7 @@ MyVal::getString()
 		case typeDouble:
 		{
 			char buf[31];
-			size_t len = snprintf(buf, sizeof(buf) - 1, "%14.14f", val.dval);
+			size_t len = snprintf(buf, sizeof(buf) - 1, "%14.14Lf", val.dval);
 			return std::string(buf, len);
 		}
 		case typeInt:
@@ -84,20 +84,20 @@ MyVal::getString()
 
 
 /* {{{ MyVal::getDouble() -I- */
-double
+long double
 MyVal::getDouble()
 {
 	switch (val_type) {
 		case typeString:
-			return atof(val.str->c_str());
+			return strtold(val.str->c_str(), NULL);
 		case typePtr:
 			return .0;
 		case typeDouble:
 			return val.dval;
 		case typeInt:
-			return static_cast<double>(val.lval);
+			return static_cast<long double>(val.lval);
 		case typeUInt:
-			return static_cast<double>(val.ulval);
+			return static_cast<long double>(val.ulval);
 		case typeBool:
 			return val.bval ? 1.0 : 0.0;
 
@@ -450,9 +450,8 @@ MySQL_ArtResultSet::getCursorName()
 /* }}} */
 
 
-// Get the given column as double
 /* {{{ MySQL_ArtResultSet::getDouble() -I- */
-double
+long double
 MySQL_ArtResultSet::getDouble(uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getDouble(int)");
@@ -472,7 +471,7 @@ MySQL_ArtResultSet::getDouble(uint32_t columnIndex) const
 
 
 /* {{{ MySQL_ArtResultSet::getDouble() -I- */
-double
+long double
 MySQL_ArtResultSet::getDouble(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getDouble(string)");

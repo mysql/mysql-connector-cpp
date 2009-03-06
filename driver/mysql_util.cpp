@@ -258,7 +258,7 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
 		case MYSQL_TYPE_TIME:
 			return sql::DataType::TIME;
 		case MYSQL_TYPE_YEAR:
-			return sql::DataType::DATE;
+			return sql::DataType::SMALLINT;
 		case MYSQL_TYPE_DATETIME:
 			return sql::DataType::TIMESTAMP;
 		case MYSQL_TYPE_TINY_BLOB:
@@ -338,7 +338,7 @@ mysql_string_type_to_datatype(const std::string & name)
 	} else if (!name.compare("time")) {
 		return sql::DataType::TIME;
 	} else if (!name.compare("year")) {
-		return sql::DataType::DATE;
+		return sql::DataType::SMALLINT;
 	} else if (!name.compare("datetime")) {
 		return sql::DataType::TIMESTAMP;
 	} else if (!name.compare("tinytext")) {
@@ -444,7 +444,7 @@ mysql_type_to_string(const MYSQL_FIELD * const field)
 			/* This should never happen */
 			return "ENUM";
 		case MYSQL_TYPE_YEAR:
-			return "DATE";
+			return "SMALLINT";
 		case MYSQL_TYPE_SET:
 			/* This should never happen */
 			return "SET";

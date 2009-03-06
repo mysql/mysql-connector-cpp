@@ -79,8 +79,8 @@ public:
 
 	std::string getCursorName();
 
-	double getDouble(uint32_t columnIndex) const;
-	double getDouble(const std::string& columnLabel) const;
+	long double getDouble(uint32_t columnIndex) const;
+	long double getDouble(const std::string& columnLabel) const;
 
 	int getFetchDirection();
 

@@ -1861,7 +1861,7 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 			"  CASE"
 //			"    WHEN LCASE(DATA_TYPE)='set' THEN 'VARCHAR'"
 //			"    WHEN LCASE(DATA_TYPE)='enum' THEN 'VARCHAR'"
-			"    WHEN LCASE(DATA_TYPE)='year' THEN 'DATE'"
+			"    WHEN LCASE(DATA_TYPE)='year' THEN 'SMALLINT'"
 			"    ELSE UCASE(DATA_TYPE)"
 			"  END "
 			"END AS TYPE_NAME,"

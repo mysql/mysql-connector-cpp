@@ -144,7 +144,7 @@ void connectionmetadata::getBestRowIdentifier()
       if (it->ctype != res->getInt(3))
       {
         msg.str("");
-        msg << "... WARNING - check DATA_TYPE for " << it->sqldef;
+        msg << "... \t\tWARNING - check DATA_TYPE for " << it->sqldef;
         msg << " - expecting type " << it->ctype << " got " << res->getInt(3);
         logMsg(msg.str());
         got_warning=true;
@@ -155,7 +155,7 @@ void connectionmetadata::getBestRowIdentifier()
       if (it->name != res->getString(4))
       {
         msg.str("");
-        msg << "... WARNING - check DATA_TYPE for " << it->sqldef;
+        msg << "... \t\tWARNING - check DATA_TYPE for " << it->sqldef;
         msg << " - expecting type name " << it->name << " got " << res->getString(4);
         logMsg(msg.str());
         got_warning=true;
@@ -166,7 +166,7 @@ void connectionmetadata::getBestRowIdentifier()
       if (it->precision != res->getUInt64(5))
       {
         msg.str("");
-        msg << "... WARNING - check COLUMN_SIZE for " << it->sqldef;
+        msg << "... \t\tWARNING - check COLUMN_SIZE for " << it->sqldef;
         msg << " - expecting pecision " << it->precision << " got " << res->getInt(5);
         logMsg(msg.str());
         got_warning=true;
@@ -311,7 +311,7 @@ void connectionmetadata::getColumns()
       if (it->ctype != res->getInt("DATA_TYPE"))
       {
         msg.str("");
-        msg << "... WARNING - check DATA_TYPE for " << it->sqldef;
+        msg << "... \t\tWARNING - check DATA_TYPE for " << it->sqldef;
         msg << " - expecting type " << it->ctype << " got " << res->getInt("DATA_TYPE");
         logMsg(msg.str());
         got_warning=true;
@@ -322,7 +322,7 @@ void connectionmetadata::getColumns()
       if (it->name != res->getString("TYPE_NAME"))
       {
         msg.str("");
-        msg << "... WARNING - check TYPE_NAME for " << it->sqldef;
+        msg << "... \t\tWARNING - check TYPE_NAME for " << it->sqldef;
         msg << " - expecting type " << it->name << " got " << res->getString("TYPE_NAME");
         logMsg(msg.str());
         got_warning=true;
@@ -333,7 +333,7 @@ void connectionmetadata::getColumns()
       if (it->precision != res->getUInt64(7))
       {
         msg.str("");
-        msg << "... WARNING - check COLUMN_SIZE for " << it->sqldef;
+        msg << "... \t\tWARNING - check COLUMN_SIZE for " << it->sqldef;
         msg << " - expecting pecision " << it->precision << " got " << res->getUInt64(7);
         logMsg(msg.str());
         got_warning=true;
@@ -350,7 +350,7 @@ void connectionmetadata::getColumns()
       if (it->nullable != res->getInt(11))
       {
         msg.str("");
-        msg << "... WARNING - check NULLABLE for " << it->sqldef;
+        msg << "... \t\tWARNING - check NULLABLE for " << it->sqldef;
         msg << " - expecting nullable = " << it->nullable << " got " << res->getInt(11);
         msg << " columnNoNull = " << sql::DatabaseMetaData::columnNoNulls << ", ";
         msg << " columnNullable = " << sql::DatabaseMetaData::columnNullable << ", ";
@@ -369,7 +369,7 @@ void connectionmetadata::getColumns()
       if (it->char_octet_length != 0 && (it->char_octet_length != res->getUInt64(16)))
       {
         msg.str("");
-        msg << "... WARNING - check CHAR_OCTET_LENGTH for " << it->sqldef;
+        msg << "... \t\tWARNING - check CHAR_OCTET_LENGTH for " << it->sqldef;
         msg << " - expecting char_octet_length " << it->char_octet_length << " got " << res->getUInt64(16);
         logMsg(msg.str());
         got_warning=true;
@@ -384,7 +384,7 @@ void connectionmetadata::getColumns()
           ((it->nullable == sql::DatabaseMetaData::columnNullableUnknown) && (res->getString(18) != "")))
       {
         msg.str("");
-        msg << "... WARNING - check IS_NULLABLE for " << it->sqldef;
+        msg << "... \t\tWARNING - check IS_NULLABLE for " << it->sqldef;
         msg << " - expecting nullable = " << it->nullable << " got is_nullable = '" << res->getInt(18) << "'";
         logMsg(msg.str());
         got_warning=true;
@@ -847,7 +847,7 @@ void connectionmetadata::getIndexInfo()
     {
       got_warning=true;
       msg.str("");
-      msg << "... WARNING: There is one row in the table and PK should have a ";
+      msg << "... \t\tWARNING: There is one row in the table and PK should have a ";
       msg << "cardinality of 1, got " << res->getInt(11);
       logMsg(msg.str());
     }
@@ -885,7 +885,7 @@ void connectionmetadata::getIndexInfo()
     {
       got_warning=true;
       msg.str("");
-      msg << "... WARNING: requesting only unique keys but got also non-unique key ";
+      msg << "... \t\tWARNING: requesting only unique keys but got also non-unique key ";
       msg << "'" << res->getString("INDEX_NAME") << "', UNIQUE = " << std::boolalpha;
       msg << !res->getBoolean("NON_UNIQUE");
       logMsg(msg.str());

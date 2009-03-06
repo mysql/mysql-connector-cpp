@@ -36,7 +36,7 @@ class MyVal
 {
 	union {
 		std::string * str;
-		double dval;
+		long double dval;
 		int64_t lval;
 		uint64_t ulval;
 		bool bval;
@@ -67,6 +67,8 @@ public:
 
 	MyVal(const char * const s);
 
+	MyVal(long double d) : val_type(typeDouble) { val.dval = d; }
+
 	MyVal(double d) : val_type(typeDouble) { val.dval = d; }
 
 	MyVal(int64_t l) : val_type(typeInt) { val.lval = l; }
@@ -90,7 +92,7 @@ public:
 
 	std::string getString();
 
-	double getDouble();
+	long double getDouble();
 
 	int64_t getInt64();
 
@@ -140,9 +142,9 @@ public:
 	std::string getCursorName();
 
 	// Get the given column as double
-	double getDouble(uint32_t columnIndex) const;
+	long double getDouble(uint32_t columnIndex) const;
 
-	double getDouble(const std::string& columnLabel) const;
+	long double getDouble(const std::string& columnLabel) const;
 
 	int getFetchDirection();
 	int getFetchSize();

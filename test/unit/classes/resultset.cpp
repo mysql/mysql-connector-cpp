@@ -347,7 +347,7 @@ void resultset::getTypes()
       if (pres->getString("id") != res->getString("id"))
       {
         msg.str("");
-        msg << "... WARNING - getString(), PS: '" << pres->getString("id") << "'";
+        msg << "... \t\tWARNING - getString(), PS: '" << pres->getString("id") << "'";
         msg << ", Statement: '" << res->getString("id") << "'";
         logMsg(msg.str());
         got_warning=true;
@@ -357,7 +357,7 @@ void resultset::getTypes()
       if (pres->getDouble("id") != res->getDouble("id"))
       {
         msg.str("");
-        msg << "... WARNING - getDouble(), PS: '" << pres->getDouble("id") << "'";
+        msg << "... \t\tWARNING - getDouble(), PS: '" << pres->getDouble("id") << "'";
         msg << ", Statement: '" << res->getDouble("id") << "'";
         logMsg(msg.str());
         got_warning=true;
@@ -367,7 +367,7 @@ void resultset::getTypes()
       if (pres->getInt("id") != res->getInt("id"))
       {
         msg.str("");
-        msg << "... WARNING - getInt(), PS: '" << pres->getInt("id") << "'";
+        msg << "... \t\tWARNING - getInt(), PS: '" << pres->getInt("id") << "'";
         msg << ", Statement: '" << res->getInt("id") << "'";
         logMsg(msg.str());
         got_warning=true;
@@ -377,7 +377,7 @@ void resultset::getTypes()
       if (pres->getUInt("id") != res->getUInt("id"))
       {
         msg.str("");
-        msg << "... WARNING - getUInt(), PS: '" << pres->getUInt("id") << "'";
+        msg << "... \t\tWARNING - getUInt(), PS: '" << pres->getUInt("id") << "'";
         msg << ", Statement: '" << res->getUInt("id") << "'";
         logMsg(msg.str());
         got_warning=true;
@@ -387,7 +387,7 @@ void resultset::getTypes()
       if (pres->getInt64("id") != res->getInt64("id"))
       {
         msg.str("");
-        msg << "... WARNING - getInt64(), PS: '" << pres->getInt64("id") << "'";
+        msg << "... \t\tWARNING - getInt64(), PS: '" << pres->getInt64("id") << "'";
         msg << ", Statement: '" << res->getInt64("id") << "'";
         logMsg(msg.str());
         got_warning=true;
@@ -397,7 +397,7 @@ void resultset::getTypes()
       if (pres->getUInt64("id") != res->getUInt64("id"))
       {
         msg.str("");
-        msg << "... WARNING - getUInt64(), PS: '" << pres->getUInt64("id") << "'";
+        msg << "... \t\tWARNING - getUInt64(), PS: '" << pres->getUInt64("id") << "'";
         msg << ", Statement: '" << res->getUInt64("id") << "'";
         logMsg(msg.str());
         got_warning=true;

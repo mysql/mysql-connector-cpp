@@ -1,3 +1,4 @@
+#cmakedefine HAVE_STRTOLD 1
 #cmakedefine HAVE_STDINT_H 1
 #cmakedefine HAVE_INTTYPES_H 1
 

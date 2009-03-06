@@ -311,8 +311,9 @@ allocate_buffer_for_field(const MYSQL_FIELD * const field)
 		case MYSQL_TYPE_DOUBLE:
 		case MYSQL_TYPE_LONGLONG:
 			return st_buffer_size_type(new char[8], 8, field->type);
-		case MYSQL_TYPE_TIMESTAMP:
 		case MYSQL_TYPE_YEAR:
+			return st_buffer_size_type(new char[2], 2, MYSQL_TYPE_SHORT);
+		case MYSQL_TYPE_TIMESTAMP:
 		case MYSQL_TYPE_DATE:
 		case MYSQL_TYPE_TIME:
 		case MYSQL_TYPE_DATETIME:

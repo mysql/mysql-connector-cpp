@@ -65,7 +65,7 @@ void preparedstatement::InsertSelectAllTypes()
       if (it->check_as_string && (res->getString(1) != it->as_string))
       {
         sql.str("");
-        sql << "... WARNING - SQL: '" << it->sqldef << "' - expecting '" << it->as_string << "'";
+        sql << "... \t\tWARNING - SQL: '" << it->sqldef << "' - expecting '" << it->as_string << "'";
         sql << " got '" << res->getString(1) << "'";
         logMsg(sql.str());
         got_warning=true;
@@ -478,7 +478,7 @@ void preparedstatement::assortedSetType()
       if (res->getUInt(1) != (9 + (unsigned int) it->is_nullable))
       {
         sql.str("");
-        sql << "....WARNING, SQL: " << it->sqldef << ", nullable " << std::boolalpha;
+        sql << "....\t\tWARNING, SQL: " << it->sqldef << ", nullable " << std::boolalpha;
         sql << it->is_nullable << ", found " << res->getInt(1) << "columns but";
         sql << " expecting " << (9 + (unsigned int) it->is_nullable);
         logMsg(sql.str());

@@ -119,11 +119,43 @@ double scaledEpsilon(const double & expected, const double & fuzzyEpsilon)
   return ( true) ? fuzzyEpsilon : fuzzyEpsilon * aa;
 }
 
+double scaledEpsilon(const long double & expected, const long double & fuzzyEpsilon)
+{
+  const long double aa=fabs(expected) + 1;
+
+  return ( true) ? fuzzyEpsilon : fuzzyEpsilon * aa;
+}
+
 bool fuzzyEquals(double expected, double result, double fuzzyEpsilon)
 {
   return ( expected == result)
           || (fabs(expected - result) <= scaledEpsilon(expected, fuzzyEpsilon));
 }
+
+bool fuzzyEquals(long double expected, long double result, long double fuzzyEpsilon)
+{
+  return ( expected == result)
+          || (fabs(expected - result) <= scaledEpsilon(expected, fuzzyEpsilon));
+}
+
+
+void assertEquals(const long double & expected, const long double & result,
+                  const char* file, int line)
+{
+  const long double fuzzyEpsilon=0.000001;
+
+  assertEqualsEpsilon(expected, result, fuzzyEpsilon, file, line);
+}
+
+
+void assertEquals(const double & expected, const long double & result,
+                  const char* file, int line)
+{
+  const long double fuzzyEpsilon=0.000001;
+
+  assertEqualsEpsilon(expected, result, fuzzyEpsilon, file, line);
+}
+
 
 void assertEquals(const double & expected, const double & result,
                   const char* file, int line)
@@ -140,12 +172,25 @@ void assertEquals(const float & expected, const float & result,
                , file, line);
 }
 
-void assertEquals(const long double & expected, const long double & result,
-                  const char * file, int line)
+
+void assertEqualsEpsilon(const long double & expected, const long double & result
+                         , const long double & epsilon, const char * file, int line)
 {
-  assertEquals(static_cast<double> (expected), static_cast<double> (result)
-               , file, line);
+  if (isNaN(expected) && isNaN(result)
+      ||
+      !isNaN(expected) && !isNaN(result)
+      && fuzzyEquals(expected, result, epsilon))
+  {
+    return;
+  }
+
+  std::stringstream errmsg;
+  errmsg.str("");
+  errmsg << "assertEquals(double) failed in " << file << ", line #" << line;
+  errmsg << " expecting '" << expected << "' got '" << result << "'";
+  TestsListener::testHasFailed(errmsg.str());
 }
+
 
 void assertEqualsEpsilon(const double & expected, const double & result
                          , const double & epsilon, const char * file, int line)

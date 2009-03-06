@@ -54,6 +54,9 @@ protected:
 	bool isBeforeFirstOrAfterLast() const;
 	void seek();
 
+	int64_t getInt64_intern(const uint32_t columnIndex, bool cutTooBig) const;
+	uint64_t getUInt64_intern(const uint32_t columnIndex, bool cutTooBig) const;
+
 public:
 	MySQL_Prepared_ResultSet(MYSQL_STMT *s, MySQL_Prepared_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
 
@@ -85,8 +88,8 @@ public:
 
 	std::string getCursorName();
 
-	double getDouble(uint32_t columnIndex) const;
-	double getDouble(const std::string& columnLabel) const;
+	long double getDouble(uint32_t columnIndex) const;
+	long double getDouble(const std::string& columnLabel) const;
 
 	int getFetchDirection();
 	int getFetchSize();

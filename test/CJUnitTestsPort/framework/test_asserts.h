@@ -45,6 +45,12 @@ void assertEquals(uint64_t expected, uint64_t result
 void assertEquals(bool expected, bool result
                   , const char* file, int line);
 
+void assertEquals(const double & expected, const long double & result
+                  , const char* file, int line);
+
+void assertEquals(const long double & expected, const long double & result
+                  , const char* file, int line);
+
 void assertEquals(const double & expected, const double & result
                   , const char* file, int line);
 

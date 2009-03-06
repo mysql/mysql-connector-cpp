@@ -22,6 +22,14 @@
 #endif
 #endif
 
+#ifndef L64
+#ifdef _WIN32
+#define L64(x) x##i64
+#else
+#define L64(x) x##LL
+#endif
+#endif
+
 
 #ifndef _WIN32
 #  include <stdlib.h>
@@ -39,6 +47,10 @@
 #  define strtoull(x, e, b) _strtoui64((x), (e), (b))
 #endif	//	_WIN32
 
+
+#ifndef HAVE_STRTOLD
+#define strold(a, b) strtod((a), (b))
+#endif
 
 #include "mysql_private_iface.h"
 
