@@ -753,7 +753,8 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 		{
 			char buf[12];
 			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(stmt->bind[columnIndex - 1].buffer);
-			snprintf(buf, sizeof(buf) - 1, "%02d:%02d:%02d", t->year, t->month, t->day);
+//			snprintf(buf, sizeof(buf) - 1, "%02d-%02d-%02d", t->year, t->month, t->day);
+			snprintf(buf, sizeof(buf) - 1, "%02d-%02d-%02d", t->year, t->month, t->day);
 			CPP_INFO_FMT("It's a date %s", buf);
 			return std::string(buf);
 		}

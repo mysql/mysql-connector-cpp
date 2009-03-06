@@ -52,6 +52,7 @@ void unit_fixture::init()
   passwd=TestsRunner::theInstance().getStartOptions()->dbPasswd;
   db=TestsRunner::theInstance().getStartOptions()->dbSchema;
 
+#if 1
   columns.push_back(columndefinition("BIT", "BIT", sql::DataType::BIT, "0", false, 1, 0, true, "", 0, "NO"));
 
   columns.push_back(columndefinition("BIT", "BIT NOT NULL", sql::DataType::BIT, "1", false, 1, 0, false, "", 0, "NO"));
@@ -123,8 +124,10 @@ void unit_fixture::init()
   columns.push_back(columndefinition("YEAR", "YEAR", sql::DataType::DATE, "1901", false, 4, 0, true, "", 0, "NO"));
   columns.push_back(columndefinition("YEAR", "YEAR NOT NULL", sql::DataType::DATE, "1902", false, 4, 0, false, "", 0, "NO"));
   columns.push_back(columndefinition("YEAR", "YEAR(4)", sql::DataType::DATE, "2009", false, 4, 0, true, "", 0, "NO", "2009"));
+#endif
   columns.push_back(columndefinition("YEAR", "YEAR(2)", sql::DataType::DATE, "1", false, 4, 0, true, "", 0, "NO"));
   columns.push_back(columndefinition("YEAR", "YEAR(3) DEFAULT '2009'", sql::DataType::DATE, "1", false, 4, 0, true, "2009", 0, "NO"));
+#if 1
   columns.push_back(columndefinition("CHAR", "CHAR", sql::DataType::CHAR, "a", false, 1, 0, true, "", 0, "NO", "a"));
   columns.push_back(columndefinition("CHAR", "CHAR NOT NULL", sql::DataType::CHAR, "a", false, 1, 0, false, "", 0, "NO"));
   columns.push_back(columndefinition("CHAR", "CHAR(255)", sql::DataType::CHAR, "abc", false, 255, 0, true, "", 0, "NO"));
@@ -191,7 +194,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii'", sql::DataType::SET, "yes", false, 6, 0, true, "", 6, "NO"));
   columns.push_back(columndefinition("SET", "SET('yes', 'no') CHARSET 'ascii' DEFAULT 'yes'", sql::DataType::SET, "yes", false, 6, 0, true, "yes", 6, "NO"));
   columns.push_back(columndefinition("SET", "SET('yes', 'no', 'ascii') CHARSET 'ascii' NOT NULL", sql::DataType::SET, "yes", false, 12, 0, false, "", 12, "NO"));
-
+#endif
   /*
   ResultSet getAttributes(String catalog,
                     String schemaPattern,
