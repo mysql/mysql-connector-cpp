@@ -78,11 +78,106 @@ void preparedstatement::InsertSelectAllTypes()
       ASSERT_EQUALS(res->getString(1), res->getString("id"));
 
       ASSERT_EQUALS(res->getBoolean(1), res->getBoolean("id"));
+      try
+      {
+        res->getBoolean(0);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getBoolean(2);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
       ASSERT_EQUALS(res->getDouble(1), res->getDouble("id"));
+      try
+      {
+        res->getDouble(0);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getDouble(2);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
       ASSERT_EQUALS(res->getInt(1), res->getInt("id"));
+      try
+      {
+        res->getInt(0);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getInt(2);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
       ASSERT_EQUALS(res->getInt64(1), res->getInt64("id"));
+      try
+      {
+        res->getInt64(0);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getInt64(2);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
       ASSERT_EQUALS(res->getUInt(1), res->getUInt("id"));
+      try
+      {
+        res->getUInt(0);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getUInt(2);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
       ASSERT_EQUALS(res->getUInt64(1), res->getUInt64("id"));
+      try
+      {
+        res->getUInt64(0);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getUInt64(2);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
     }
     stmt->execute("DROP TABLE IF EXISTS test");
     if (got_warning)
@@ -270,6 +365,24 @@ void preparedstatement::assortedSetType()
         pstmt->clearParameters();
         pstmt->setNull(1, it->ctype);
         ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+        pstmt->clearParameters();
+        try
+        {
+          pstmt->setNull(0, it->ctype);
+        }
+        catch (sql::InvalidArgumentException &)
+        {
+        }
+
+        pstmt->clearParameters();
+        try
+        {
+          pstmt->setNull(2, it->ctype);
+        }
+        catch (sql::InvalidArgumentException &)
+        {
+        }
       }
 
       pstmt->clearParameters();
@@ -277,8 +390,44 @@ void preparedstatement::assortedSetType()
       ASSERT_EQUALS(1, pstmt->executeUpdate());
 
       pstmt->clearParameters();
+      try
+      {
+        pstmt->setUInt(0, (uint32_t) - 1);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setUInt(2, (uint32_t) - 1);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      pstmt->clearParameters();
       pstmt->setUInt64(1, (uint64_t) 123);
       ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setUInt64(0, (uint64_t) - 1);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setUInt64(2, (uint64_t) - 1);
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
 
       pstmt.reset(con->prepareStatement("SELECT COUNT(IFNULL(id, 1)) AS _num FROM test"));
       res.reset(pstmt->executeQuery());
