@@ -2060,9 +2060,6 @@ MySQL_ConnectionMetaData::getCrossReference(const std::string& primaryCatalog, c
 	rs_field_data.push_back("PK_NAME");
 	rs_field_data.push_back("DEFERRABILITY");
 
-	char buf[16];
-	buf[sizeof(buf) - 1] = '\0';
-
 	/* Not sure which version, let it not be 5.1.0, just something above which is anyway not used anymore */
 	if (use_info_schema && server_version >= 50110) {
 		/* This just doesn't work */
@@ -2296,9 +2293,6 @@ MySQL_ConnectionMetaData::getExportedKeys(const std::string& catalog, const std:
 	rs_field_data.push_back("FK_NAME");
 	rs_field_data.push_back("PK_NAME");
 	rs_field_data.push_back("DEFERRABILITY");
-
-	char buf[16];
-	buf[sizeof(buf) - 1] = '\0';
 
 	/* Not sure which version, let it not be 5.1.0, just something above which is anyway not used anymore */
 	if (use_info_schema && server_version >= 50110) {
@@ -2576,9 +2570,6 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 	rs_field_data.push_back("FK_NAME");
 	rs_field_data.push_back("PK_NAME");
 	rs_field_data.push_back("DEFERRABILITY");
-
-	char buf[16];
-	buf[sizeof(buf) - 1] = '\0';
 
 	if (use_info_schema && server_version >= 50116) {
 		/* This just doesn't work */
