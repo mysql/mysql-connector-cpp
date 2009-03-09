@@ -35,11 +35,10 @@ void resultsetmetadata::getCatalogName()
     logMsg("... Statement");
     runStandardQuery();
     doGetCatalogName();
-    /*
+
     logMsg("... PreparedStatement");
     runStandardPSQuery();
     doGetCatalogName();
-    */
   }
   catch (sql::SQLException &e)
   {
@@ -96,7 +95,7 @@ void resultsetmetadata::getColumnCount()
     logMsg("... PreparedStatement");
     runStandardPSQuery();
     doGetColumnCount();
-    */
+     */
 
   }
   catch (sql::SQLException &e)
@@ -1049,6 +1048,7 @@ void resultsetmetadata::runStandardQuery()
 
 void resultsetmetadata::runStandardPSQuery()
 {
+  // pstmt.reset(con->prepareStatement("SELECT 'Hello' AS a, ' ', 'world', '!', 123 AS z"));
   pstmt.reset(con->prepareStatement("SELECT 'Hello' AS a, ' ', 'world', '!', 123 AS z"));
   res.reset(pstmt->executeQuery());
   checkResultSetScrolling(res);
