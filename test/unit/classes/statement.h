@@ -33,6 +33,7 @@ public:
   {
     TEST_CASE(getWarnings);
     TEST_CASE(clearWarnings);
+    TEST_CASE(callSP);
   }
 
   /**
@@ -44,6 +45,12 @@ public:
    * Calls clearWarnings()
    */
   void clearWarnings();
+
+  /**
+   * Calls a stored procedure
+   */
+  void callSP();
+  
 };
 
 REGISTER_FIXTURE(statement);
