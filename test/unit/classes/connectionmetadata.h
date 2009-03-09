@@ -39,8 +39,8 @@ public:
   EXAMPLE_TEST_FIXTURE(connectionmetadata)
   {
     TEST_CASE(getSchemata);
-    TEST_CASE(getAttributes);    
-    TEST_CASE(getBestRowIdentifier);
+    TEST_CASE(getAttributes);     
+    TEST_CASE(getBestRowIdentifier);    
     TEST_CASE(getCatalogs);
     TEST_CASE(getCatalogSeparator);
     TEST_CASE(getCatalogTerm);
