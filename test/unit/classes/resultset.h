@@ -26,6 +26,9 @@ class resultset : public unit_fixture
 private:
   typedef unit_fixture super;
 
+protected:
+  void doNotImplemented();
+
 public:
 
   EXAMPLE_TEST_FIXTURE(resultset)

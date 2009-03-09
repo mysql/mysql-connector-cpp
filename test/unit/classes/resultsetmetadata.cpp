@@ -34,11 +34,11 @@ void resultsetmetadata::getCatalogName()
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
     logMsg("... Statement");
     runStandardQuery();
-    doGetCatalogName();
+    doGetCatalogName(false);
 
     logMsg("... PreparedStatement");
     runStandardPSQuery();
-    doGetCatalogName();
+    doGetCatalogName(true);
   }
   catch (sql::SQLException &e)
   {
@@ -48,7 +48,7 @@ void resultsetmetadata::getCatalogName()
   }
 }
 
-void resultsetmetadata::doGetCatalogName()
+void resultsetmetadata::doGetCatalogName(bool is_ps)
 {
   ResultSetMetaData meta(res->getMetaData());
   ASSERT_EQUALS(con->getCatalog(), meta->getCatalogName(1));
@@ -71,14 +71,17 @@ void resultsetmetadata::doGetCatalogName()
   {
   }
 
-  res->close();
-  try
+  if (!is_ps)
   {
-    meta->getCatalogName(1);
-    FAIL("Can fetch meta from invalid resultset");
-  }
-  catch (sql::SQLException &)
-  {
+    res->close();
+    try
+    {
+      meta->getCatalogName(1);
+      FAIL("Can fetch meta from invalid resultset");
+    }
+    catch (sql::SQLException &)
+    {
+    }
   }
 }
 
@@ -90,13 +93,11 @@ void resultsetmetadata::getColumnCount()
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
     logMsg("... Statement");
     runStandardQuery();
-    doGetColumnCount();
-    /*
+    doGetColumnCount(false);
+
     logMsg("... PreparedStatement");
     runStandardPSQuery();
-    doGetColumnCount();
-     */
-
+    doGetColumnCount(true);
   }
   catch (sql::SQLException &e)
   {
@@ -106,19 +107,23 @@ void resultsetmetadata::getColumnCount()
   }
 }
 
-void resultsetmetadata::doGetColumnCount()
+void resultsetmetadata::doGetColumnCount(bool is_ps)
 {
   ResultSetMetaData meta(res->getMetaData());
   ASSERT_EQUALS((unsigned int) 5, meta->getColumnCount());
 
-  res->close();
-  try
+
+  if (!is_ps)
   {
-    meta->getCatalogName(1);
-    FAIL("Can fetch meta from invalid resultset");
-  }
-  catch (sql::SQLException &)
-  {
+    res->close();
+    try
+    {
+      meta->getCatalogName(1);
+      FAIL("Can fetch meta from invalid resultset");
+    }
+    catch (sql::SQLException &)
+    {
+    }
   }
 }
 
@@ -128,32 +133,52 @@ void resultsetmetadata::getColumnDisplaySize()
   try
   {
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    logMsg("... Statement");
     runStandardQuery();
-    ResultSetMetaData meta(res->getMetaData());
-    ASSERT_EQUALS((unsigned int) 5, meta->getColumnDisplaySize(1));
-    ASSERT_EQUALS((unsigned int) 1, meta->getColumnDisplaySize(2));
-    ASSERT_EQUALS((unsigned int) 5, meta->getColumnDisplaySize(3));
-    ASSERT_EQUALS((unsigned int) 1, meta->getColumnDisplaySize(4));
-    ASSERT_EQUALS((unsigned int) 3, meta->getColumnDisplaySize(5));
+    doGetColumnDisplaySize(false);
 
-    try
-    {
-      meta->getColumnDisplaySize(0);
-      FAIL("Column number starts at 1, invalid offset 0 not detected");
-    }
-    catch (sql::InvalidArgumentException &)
-    {
-    }
+    logMsg("... PreparedStatement");
+    runStandardPSQuery();
+    doGetColumnDisplaySize(true);
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
 
-    try
-    {
-      meta->getColumnDisplaySize(6);
-      FAIL("Only five columns available but requesting number six, should bail");
-    }
-    catch (sql::InvalidArgumentException &)
-    {
-    }
+void resultsetmetadata::doGetColumnDisplaySize(bool is_ps)
+{
+  ResultSetMetaData meta(res->getMetaData());
 
+  ASSERT_EQUALS((unsigned int) 5, meta->getColumnDisplaySize(1));
+  ASSERT_EQUALS((unsigned int) 1, meta->getColumnDisplaySize(2));
+  ASSERT_EQUALS((unsigned int) 5, meta->getColumnDisplaySize(3));
+  ASSERT_EQUALS((unsigned int) 1, meta->getColumnDisplaySize(4));
+  ASSERT_EQUALS((unsigned int) 3, meta->getColumnDisplaySize(5));
+
+  try
+  {
+    meta->getColumnDisplaySize(0);
+    FAIL("Column number starts at 1, invalid offset 0 not detected");
+  }
+  catch (sql::InvalidArgumentException &)
+  {
+  }
+
+  try
+  {
+    meta->getColumnDisplaySize(6);
+    FAIL("Only five columns available but requesting number six, should bail");
+  }
+  catch (sql::InvalidArgumentException &)
+  {
+  }
+
+  if (!is_ps)
+  {
     res->close();
     try
     {
@@ -163,7 +188,22 @@ void resultsetmetadata::getColumnDisplaySize()
     catch (sql::SQLException &)
     {
     }
+  }
+}
 
+void resultsetmetadata::getColumnNameAndLabel()
+{
+  logMsg("resultsetmetadata::getColumnName() - MySQL_ResultSetMetaData::getColumnName(), MySQL_ResultSetMetaData::getColumnLabel()");
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    logMsg("... Statement");
+    runStandardQuery();
+    doGetColumnNameAndLabel(false);
+
+    logMsg("... PreparedStatement");
+    runStandardPSQuery();
+    doGetColumnNameAndLabel(true);
 
   }
   catch (sql::SQLException &e)
@@ -174,62 +214,59 @@ void resultsetmetadata::getColumnDisplaySize()
   }
 }
 
-void resultsetmetadata::getColumnNameAndLabel()
+void resultsetmetadata::doGetColumnNameAndLabel(bool is_ps)
 {
-  logMsg("resultsetmetadata::getColumnName() - MySQL_ResultSetMetaData::getColumnName(), MySQL_ResultSetMetaData::getColumnLabel()");
+  ResultSetMetaData meta(res->getMetaData());
+  ASSERT_EQUALS("a", meta->getColumnName(1));
+  ASSERT_EQUALS(meta->getColumnLabel(1), meta->getColumnName(1));
+  /* NOTE: " " -> "" */
+  ASSERT_EQUALS("", meta->getColumnName(2));
+  ASSERT_EQUALS(meta->getColumnLabel(2), meta->getColumnName(2));
+  ASSERT_EQUALS("world", meta->getColumnName(3));
+  ASSERT_EQUALS(meta->getColumnLabel(3), meta->getColumnName(3));
+  ASSERT_EQUALS("!", meta->getColumnName(4));
+  ASSERT_EQUALS(meta->getColumnLabel(4), meta->getColumnName(4));
+  ASSERT_EQUALS("z", meta->getColumnName(5));
+  ASSERT_EQUALS(meta->getColumnLabel(5), meta->getColumnName(5));
+
   try
   {
-    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
-    runStandardQuery();
-    ResultSetMetaData meta(res->getMetaData());
-    ASSERT_EQUALS("a", meta->getColumnName(1));
-    ASSERT_EQUALS(meta->getColumnLabel(1), meta->getColumnName(1));
-    /* NOTE: " " -> "" */
-    ASSERT_EQUALS("", meta->getColumnName(2));
-    ASSERT_EQUALS(meta->getColumnLabel(2), meta->getColumnName(2));
-    ASSERT_EQUALS("world", meta->getColumnName(3));
-    ASSERT_EQUALS(meta->getColumnLabel(3), meta->getColumnName(3));
-    ASSERT_EQUALS("!", meta->getColumnName(4));
-    ASSERT_EQUALS(meta->getColumnLabel(4), meta->getColumnName(4));
-    ASSERT_EQUALS("z", meta->getColumnName(5));
-    ASSERT_EQUALS(meta->getColumnLabel(5), meta->getColumnName(5));
+    meta->getColumnName(0);
+    FAIL("Column number starts at 1, invalid offset 0 not detected");
+  }
+  catch (sql::InvalidArgumentException &)
+  {
+  }
 
-    try
-    {
-      meta->getColumnName(0);
-      FAIL("Column number starts at 1, invalid offset 0 not detected");
-    }
-    catch (sql::InvalidArgumentException &)
-    {
-    }
+  try
+  {
+    meta->getColumnLabel(0);
+    FAIL("Column number starts at 1, invalid offset 0 not detected");
+  }
+  catch (sql::InvalidArgumentException &)
+  {
+  }
 
-    try
-    {
-      meta->getColumnLabel(0);
-      FAIL("Column number starts at 1, invalid offset 0 not detected");
-    }
-    catch (sql::InvalidArgumentException &)
-    {
-    }
+  try
+  {
+    meta->getColumnName(6);
+    FAIL("Only five columns available but requesting number six, should bail");
+  }
+  catch (sql::InvalidArgumentException &)
+  {
+  }
 
-    try
-    {
-      meta->getColumnName(6);
-      FAIL("Only five columns available but requesting number six, should bail");
-    }
-    catch (sql::InvalidArgumentException &)
-    {
-    }
+  try
+  {
+    meta->getColumnLabel(6);
+    FAIL("Only five columns available but requesting number six, should bail");
+  }
+  catch (sql::InvalidArgumentException &)
+  {
+  }
 
-    try
-    {
-      meta->getColumnLabel(6);
-      FAIL("Only five columns available but requesting number six, should bail");
-    }
-    catch (sql::InvalidArgumentException &)
-    {
-    }
-
+  if (!is_ps)
+  {
     res->close();
     try
     {
@@ -239,23 +276,8 @@ void resultsetmetadata::getColumnNameAndLabel()
     catch (sql::SQLException &)
     {
     }
-
-    try
-    {
-      meta->getColumnLabel(1);
-      FAIL("Can fetch meta from invalid resultset");
-    }
-    catch (sql::SQLException &)
-    {
-    }
-
   }
-  catch (sql::SQLException &e)
-  {
-    logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
-    fail(e.what(), __FILE__, __LINE__);
-  }
+
 }
 
 void resultsetmetadata::getColumnType()
@@ -370,33 +392,13 @@ void resultsetmetadata::getPrecision()
   try
   {
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    logMsg("... Statement");
     runStandardQuery();
-    ResultSetMetaData meta(res->getMetaData());
+    doGetPrecision(false);
 
-    ASSERT_GT((unsigned int) 4, meta->getPrecision(1));
-    ASSERT_GT((unsigned int) 0, meta->getPrecision(2));
-    ASSERT_GT((unsigned int) 4, meta->getPrecision(3));
-    ASSERT_GT((unsigned int) 0, meta->getPrecision(4));
-    ASSERT_GT((unsigned int) 2, meta->getPrecision(5));
-
-    try
-    {
-      meta->getPrecision(6);
-      FAIL("Invalid offset 6 not recognized");
-    }
-    catch (sql::SQLException &)
-    {
-    }
-
-    res->close();
-    try
-    {
-      meta->getPrecision(1);
-      FAIL("Can fetch meta from invalid resultset");
-    }
-    catch (sql::SQLException &)
-    {
-    }
+    logMsg("... PreparedStatement");
+    runStandardPSQuery();
+    doGetPrecision(true);
 
 
   }
@@ -408,24 +410,76 @@ void resultsetmetadata::getPrecision()
   }
 }
 
+void resultsetmetadata::doGetPrecision(bool is_ps)
+{
+  ResultSetMetaData meta(res->getMetaData());
+
+  ASSERT_GT((unsigned int) 4, meta->getPrecision(1));
+  ASSERT_GT((unsigned int) 0, meta->getPrecision(2));
+  ASSERT_GT((unsigned int) 4, meta->getPrecision(3));
+  ASSERT_GT((unsigned int) 0, meta->getPrecision(4));
+  ASSERT_GT((unsigned int) 2, meta->getPrecision(5));
+
+  try
+  {
+    meta->getPrecision(6);
+    FAIL("Invalid offset 6 not recognized");
+  }
+  catch (sql::SQLException &)
+  {
+  }
+
+  if (!is_ps)
+  {
+    res->close();
+    try
+    {
+      meta->getPrecision(1);
+      FAIL("Can fetch meta from invalid resultset");
+    }
+    catch (sql::SQLException &)
+    {
+    }
+  }
+}
+
 void resultsetmetadata::getScale()
 {
   logMsg("resultsetmetadata::getScale() - MySQL_ResultSetMetaData::getScale");
   try
   {
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    logMsg("... Statement");
     runStandardQuery();
-    ResultSetMetaData meta(res->getMetaData());
+    doGetScale(false);
 
-    try
-    {
-      meta->getScale(6);
-      FAIL("Invalid offset 6 not recognized");
-    }
-    catch (sql::SQLException &)
-    {
-    }
+    logMsg("... PreparedStatement");
+    runStandardPSQuery();
+    doGetScale(true);
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
 
+void resultsetmetadata::doGetScale(bool is_ps)
+{
+  ResultSetMetaData meta(res->getMetaData());
+
+  try
+  {
+    meta->getScale(6);
+    FAIL("Invalid offset 6 not recognized");
+  }
+  catch (sql::SQLException &)
+  {
+  }
+
+  if (!is_ps)
+  {
     res->close();
     try
     {
@@ -435,14 +489,6 @@ void resultsetmetadata::getScale()
     catch (sql::SQLException &)
     {
     }
-
-
-  }
-  catch (sql::SQLException &e)
-  {
-    logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
-    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -1048,7 +1094,6 @@ void resultsetmetadata::runStandardQuery()
 
 void resultsetmetadata::runStandardPSQuery()
 {
-  // pstmt.reset(con->prepareStatement("SELECT 'Hello' AS a, ' ', 'world', '!', 123 AS z"));
   pstmt.reset(con->prepareStatement("SELECT 'Hello' AS a, ' ', 'world', '!', 123 AS z"));
   res.reset(pstmt->executeQuery());
   checkResultSetScrolling(res);

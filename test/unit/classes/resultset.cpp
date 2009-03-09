@@ -563,7 +563,6 @@ void resultset::notImplemented()
 {
   logMsg("resultset::notImplemented - MySQL_ResultSet::*");
 
-
   try
   {
     stmt.reset(con->createStatement());
@@ -571,78 +570,11 @@ void resultset::notImplemented()
     stmt->execute("CREATE TABLE test(id INT)");
     ASSERT_EQUALS(1, stmt->executeUpdate("INSERT INTO test(id) VALUES (1)"));
     res.reset(stmt->executeQuery("SELECT id FROM test"));
+    doNotImplemented();
 
-    try
-    {
-      res->getWarnings();
-    }
-    catch (sql::MethodNotImplementedException)
-    {
-    }
-
-    try
-    {
-      res->clearWarnings();
-    }
-    catch (sql::MethodNotImplementedException)
-    {
-    }
-
-    try
-    {
-      res->insertRow();
-    }
-    catch (sql::MethodNotImplementedException)
-    {
-    }
-
-    try
-    {
-      res->moveToCurrentRow();
-    }
-    catch (sql::MethodNotImplementedException)
-    {
-    }
-
-    try
-    {
-      res->moveToInsertRow();
-    }
-    catch (sql::MethodNotImplementedException)
-    {
-    }
-
-    try
-    {
-      res->refreshRow();
-    }
-    catch (sql::MethodNotImplementedException)
-    {
-    }
-
-    try
-    {
-      res->rowDeleted();
-    }
-    catch (sql::MethodNotImplementedException)
-    {
-    }
-
-    try
-    {
-      res->rowInserted();
-    }
-    catch (sql::MethodNotImplementedException)
-    {
-    }
-
-    try
-    {
-      res->rowUpdated();
-    }
-    catch (sql::MethodNotImplementedException)
-    {
-    }
+    pstmt.reset(con->prepareStatement("SELECT id FROM test"));
+    res.reset(pstmt->executeQuery());
+    doNotImplemented();
 
     stmt->execute("DROP TABLE IF EXISTS test");
   }
@@ -652,8 +584,82 @@ void resultset::notImplemented()
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
   }
+}
 
+void resultset::doNotImplemented()
+{
 
+  try
+  {
+    res->getWarnings();
+  }
+  catch (sql::MethodNotImplementedException)
+  {
+  }
+
+  try
+  {
+    res->clearWarnings();
+  }
+  catch (sql::MethodNotImplementedException)
+  {
+  }
+
+  try
+  {
+    res->insertRow();
+  }
+  catch (sql::MethodNotImplementedException)
+  {
+  }
+
+  try
+  {
+    res->moveToCurrentRow();
+  }
+  catch (sql::MethodNotImplementedException)
+  {
+  }
+
+  try
+  {
+    res->moveToInsertRow();
+  }
+  catch (sql::MethodNotImplementedException)
+  {
+  }
+
+  try
+  {
+    res->refreshRow();
+  }
+  catch (sql::MethodNotImplementedException)
+  {
+  }
+
+  try
+  {
+    res->rowDeleted();
+  }
+  catch (sql::MethodNotImplementedException)
+  {
+  }
+
+  try
+  {
+    res->rowInserted();
+  }
+  catch (sql::MethodNotImplementedException)
+  {
+  }
+
+  try
+  {
+    res->rowUpdated();
+  }
+  catch (sql::MethodNotImplementedException)
+  {
+  }
 }
 
 } /* namespace resultset */

@@ -38,8 +38,12 @@ protected:
    */
   void runStandardPSQuery();
 
-  void doGetCatalogName();
-  void doGetColumnCount();
+  void doGetCatalogName(bool is_ps);
+  void doGetColumnCount(bool is_ps);
+  void doGetColumnDisplaySize(bool is_ps);
+  void doGetColumnNameAndLabel(bool is_ps);
+  void doGetPrecision(bool is_ps);
+  void doGetScale(bool is_ps);
 
 public:
 
