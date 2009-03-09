@@ -68,8 +68,8 @@ void statement::getWarnings()
 void statement::clearWarnings()
 {
   logMsg("statement::clearWarnings() - MySQL_Statement::clearWarnings");
-  const sql::SQLWarning* warn;
-  std::stringstream msg;
+  // const sql::SQLWarning* warn;
+  // std::stringstream msg;
 
   stmt.reset(con->createStatement());
   try
