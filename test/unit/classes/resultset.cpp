@@ -442,6 +442,14 @@ void resultset::notImplemented()
 
     try
     {
+      res->clearWarnings();
+    }
+    catch (sql::MethodNotImplementedException)
+    {
+    }
+
+    try
+    {
       res->insertRow();
     }
     catch (sql::MethodNotImplementedException)
