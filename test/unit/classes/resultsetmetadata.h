@@ -44,6 +44,7 @@ protected:
   void doGetColumnNameAndLabel(bool is_ps);
   void doGetPrecision(bool is_ps);
   void doGetScale(bool is_ps);
+  void doGetSchemaName(bool is_ps);
 
 public:
 

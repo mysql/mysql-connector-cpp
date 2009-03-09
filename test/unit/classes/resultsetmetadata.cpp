@@ -19,6 +19,7 @@
 #include <cppconn/datatype.h>
 #include <cppconn/prepared_statement.h>
 #include <cppconn/statement.h>
+#include <cppconn/connection.h>
 
 namespace testsuite
 {
@@ -495,35 +496,56 @@ void resultsetmetadata::doGetScale(bool is_ps)
 void resultsetmetadata::getSchemaName()
 {
   logMsg("resultsetmetadata::getSchemaName() - MySQL_ResultSetMetaData::getSchemaName");
-  int i;
-
   try
   {
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
-
+    logMsg("... Statement");
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT)");
     stmt->execute("INSERT INTO test(id) VALUES (1)");
     res.reset(stmt->executeQuery("SELECT * FROM test"));
     checkResultSetScrolling(res);
-    ResultSetMetaData meta2(res->getMetaData());
-    ASSERT_EQUALS(meta2->getSchemaName(1), con->getSchema());
+    doGetSchemaName(false);
 
-    runStandardQuery();
-    ResultSetMetaData meta(res->getMetaData());
-    for (i=1; i < 6; i++)
-      ASSERT_EQUALS(meta->getSchemaName(i), "");
+    logMsg("... PreparedStatement");
+    pstmt.reset(con->prepareStatement("SELECT * FROM test"));
+    res.reset(pstmt->executeQuery());
+    checkResultSetScrolling(res);
+    doGetSchemaName(true);
 
-    try
-    {
-      meta->getSchemaName(6);
-      FAIL("Invalid offset 6 not recognized");
-    }
-    catch (sql::SQLException &)
-    {
-    }
+    stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
 
+void resultsetmetadata::doGetSchemaName(bool is_ps)
+{
+  int i;
+  ResultSetMetaData meta2(res->getMetaData());
+  ASSERT_EQUALS(meta2->getSchemaName(1), con->getSchema());
+
+  runStandardQuery();
+  ResultSetMetaData meta(res->getMetaData());
+  for (i=1; i < 6; i++)
+    ASSERT_EQUALS(meta->getSchemaName(i), "");
+
+  try
+  {
+    meta->getSchemaName(6);
+    FAIL("Invalid offset 6 not recognized");
+  }
+  catch (sql::SQLException &)
+  {
+  }
+
+  if (!is_ps)
+  {
     res->close();
     try
     {
@@ -533,14 +555,6 @@ void resultsetmetadata::getSchemaName()
     catch (sql::SQLException &)
     {
     }
-
-
-  }
-  catch (sql::SQLException &e)
-  {
-    logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
-    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
