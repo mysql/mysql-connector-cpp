@@ -164,3 +164,21 @@ ELSE(WIN32)
 ENDIF(WIN32)
 
 MESSAGE(STATUS "Configuring unit tests - art_resultset")
+
+SET(test_statement_sources
+	../unit_fixture.cpp
+	../main.cpp
+	statement.cpp)
+
+IF(WIN32)
+	SET(test_statement_sources
+    		${test_statement_sources}
+	../unit_fixture.h
+	statement.h)
+ENDIF(WIN32)
+
+ADD_EXECUTABLE(test_statement ${test_statement_sources})
+SET_TARGET_PROPERTIES(test_statement PROPERTIES OUTPUT_NAME "statement")
+TARGET_LINK_LIBRARIES(test_statement ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
+MESSAGE(STATUS "Configuring unit tests - statement")
