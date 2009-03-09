@@ -147,6 +147,11 @@ void connectionmetadata::getBestRowIdentifier()
         msg << "... \t\tWARNING - check DATA_TYPE for " << it->sqldef;
         msg << " - expecting type " << it->ctype << " got " << res->getInt(3);
         logMsg(msg.str());
+
+        ResultSet cres(stmt->executeQuery("SHOW CREATE TABLE test"));
+        cres->next();
+        logMsg(cres->getString(2).c_str());
+        
         got_warning=true;
       }
       // TODO - ASSERT_EQUALS(it->ctype, res->getInt(3));
@@ -1721,7 +1726,7 @@ void connectionmetadata::getColumnsTypeConversions()
 
     got_warning=false;
     logMsg("... looping over all kinds of column types");
-    for (it=columns.begin(), i=0; it != columns.end() && i < 5; i++, it++)
+    for (it=columns.begin(), i=0; it != columns.end(); i++, it++)
     {
       stmt->execute("DROP TABLE IF EXISTS test");
       msg.str("");
