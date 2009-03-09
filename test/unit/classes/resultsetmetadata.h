@@ -45,12 +45,21 @@ protected:
   void doGetPrecision(bool is_ps);
   void doGetScale(bool is_ps);
   void doGetSchemaName(bool is_ps);
+  void doGetTableName(bool is_ps);
+  void doIsAutoIncrement(bool is_ps);
+  void doIsCaseSensitive(bool is_ps);
+  void doIsCurrency(bool is_ps);
+  void doIsDefinitelyWritable(bool is_ps);
+  void doIsNullable(bool is_ps);
+  void doIsReadOnly(bool is_ps);
+  void doIsSearchable(bool is_ps);
+  void doIsSigned(bool is_ps);
+  void doIsWritable(bool is_ps);
 
 public:
 
   EXAMPLE_TEST_FIXTURE(resultsetmetadata)
   {
-
     TEST_CASE(getCatalogName);
     TEST_CASE(getColumnCount);
     TEST_CASE(getColumnDisplaySize);

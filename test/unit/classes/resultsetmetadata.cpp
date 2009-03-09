@@ -561,35 +561,57 @@ void resultsetmetadata::doGetSchemaName(bool is_ps)
 void resultsetmetadata::getTableName()
 {
   logMsg("resultsetmetadata::getTableName() - MySQL_ResultSetMetaData::getTableName");
-  int i;
-
   try
   {
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
-
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT)");
     stmt->execute("INSERT INTO test(id) VALUES (1)");
     res.reset(stmt->executeQuery("SELECT * FROM test"));
     checkResultSetScrolling(res);
-    ResultSetMetaData meta2(res->getMetaData());
-    ASSERT_EQUALS(meta2->getTableName(1), "test");
 
-    runStandardQuery();
-    ResultSetMetaData meta(res->getMetaData());
-    for (i=1; i < 6; i++)
-      ASSERT_EQUALS(meta->getTableName(i), "");
+    logMsg("... Statement");
+    doGetTableName(false);
 
-    try
-    {
-      meta->getTableName(6);
-      FAIL("Invalid offset 6 not recognized");
-    }
-    catch (sql::SQLException &)
-    {
-    }
+    logMsg("... PreparedStatement");
+    pstmt.reset(con->prepareStatement("SELECT * FROM test"));
+    res.reset(pstmt->executeQuery());
+    checkResultSetScrolling(res);
+    doGetTableName(true);
 
+    stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void resultsetmetadata::doGetTableName(bool is_ps)
+{
+  int i;
+  ResultSetMetaData meta2(res->getMetaData());
+  ASSERT_EQUALS(meta2->getTableName(1), "test");
+
+  runStandardQuery();
+  ResultSetMetaData meta(res->getMetaData());
+  for (i=1; i < 6; i++)
+    ASSERT_EQUALS(meta->getTableName(i), "");
+
+  try
+  {
+    meta->getTableName(6);
+    FAIL("Invalid offset 6 not recognized");
+  }
+  catch (sql::SQLException &)
+  {
+  }
+
+  if (!is_ps)
+  {
     res->close();
     try
     {
@@ -599,7 +621,42 @@ void resultsetmetadata::getTableName()
     catch (sql::SQLException &)
     {
     }
+  }
 
+}
+
+void resultsetmetadata::isAutoIncrement()
+{
+  logMsg("resultsetmetadata::isAutoIncrement() - MySQL_ResultSetMetaData::isAutoIncrement");
+
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, col1 CHAR(1))");
+    stmt->execute("INSERT INTO test(id, col1) VALUES (1, 'a')");
+
+    logMsg("... Statement");
+    res.reset(stmt->executeQuery("SELECT id, col1 FROM test"));
+    checkResultSetScrolling(res);
+    ResultSetMetaData meta2(res->getMetaData());
+    ASSERT_EQUALS(meta2->isAutoIncrement(1), true);
+    ASSERT_EQUALS(meta2->isAutoIncrement(2), false);
+
+    runStandardQuery();
+    doIsAutoIncrement(false);
+
+    logMsg("... PreparedStatement");
+    pstmt.reset(con->prepareStatement("SELECT id, col1 FROM test"));
+    res.reset(pstmt->executeQuery());
+    checkResultSetScrolling(res);
+    meta2.reset(res->getMetaData());
+    ASSERT_EQUALS(meta2->isAutoIncrement(1), true);
+    ASSERT_EQUALS(meta2->isAutoIncrement(2), false);
+
+    runStandardPSQuery();
+    doIsAutoIncrement(true);
 
   }
   catch (sql::SQLException &e)
@@ -610,38 +667,25 @@ void resultsetmetadata::getTableName()
   }
 }
 
-void resultsetmetadata::isAutoIncrement()
+void resultsetmetadata::doIsAutoIncrement(bool is_ps)
 {
-  logMsg("resultsetmetadata::isAutoIncrement() - MySQL_ResultSetMetaData::isAutoIncrement");
   int i;
+
+  ResultSetMetaData meta(res->getMetaData());
+  for (i=1; i < 6; i++)
+    ASSERT_EQUALS(meta->isAutoIncrement(i), false);
+
   try
   {
-    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    meta->isAutoIncrement(6);
+    FAIL("Invalid offset 6 not recognized");
+  }
+  catch (sql::SQLException &)
+  {
+  }
 
-    stmt.reset(con->createStatement());
-    stmt->execute("DROP TABLE IF EXISTS test");
-    stmt->execute("CREATE TABLE test(id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, col1 CHAR(1))");
-    stmt->execute("INSERT INTO test(id, col1) VALUES (1, 'a')");
-    res.reset(stmt->executeQuery("SELECT id, col1 FROM test"));
-    checkResultSetScrolling(res);
-    ResultSetMetaData meta2(res->getMetaData());
-    ASSERT_EQUALS(meta2->isAutoIncrement(1), true);
-    ASSERT_EQUALS(meta2->isAutoIncrement(2), false);
-
-    runStandardQuery();
-    ResultSetMetaData meta(res->getMetaData());
-    for (i=1; i < 6; i++)
-      ASSERT_EQUALS(meta->isAutoIncrement(i), false);
-
-    try
-    {
-      meta->isAutoIncrement(6);
-      FAIL("Invalid offset 6 not recognized");
-    }
-    catch (sql::SQLException &)
-    {
-    }
-
+  if (!is_ps)
+  {
     res->close();
     try
     {
@@ -651,21 +695,12 @@ void resultsetmetadata::isAutoIncrement()
     catch (sql::SQLException &)
     {
     }
-
-
-  }
-  catch (sql::SQLException &e)
-  {
-    logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
-    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
 void resultsetmetadata::isCaseSensitive()
 {
   logMsg("resultsetmetadata::isCaseSensitive() - MySQL_ResultSetMetaData::isCaseSensitive");
-  int i;
   try
   {
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
@@ -674,49 +709,65 @@ void resultsetmetadata::isCaseSensitive()
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, col1 CHAR(1), col2 CHAR(10) CHARACTER SET 'utf8' COLLATE 'utf8_bin')");
     stmt->execute("INSERT INTO test(id, col1, col2) VALUES (1, 'a', 'b')");
+
+    logMsg("... Statement");
     res.reset(stmt->executeQuery("SELECT id, col1, col2 FROM test"));
     checkResultSetScrolling(res);
     ResultSetMetaData meta2(res->getMetaData());
     ASSERT_EQUALS(meta2->isCaseSensitive(1), false);
     ASSERT_EQUALS(meta2->isCaseSensitive(2), false);
-#if A0
-    // connection_collation distorts the collation of the results (character_set_results) doesn't help
-    // and thus we can't say for sure whether the original column was CI or CS. Only I_S.COLUMNS can tell us.
-    ASSERT_EQUALS(meta2->isCaseSensitive(3), true);
-#endif
+    if (TestsRunner::theInstance().getStartOptions()->use_is)
+    {
+      // connection_collation distorts the collation of the results (character_set_results) doesn't help
+      // and thus we can't say for sure whether the original column was CI or CS. Only I_S.COLUMNS can tell us.
+      ASSERT_EQUALS(meta2->isCaseSensitive(3), true);
+    }
+    else
+    {
+      logMsg("... skipping 'collate_bin' test because we don't use I_S");
+    }
+
+    logMsg("... PreparedStatement");
+    pstmt.reset(con->prepareStatement("SELECT id, col1, col2 FROM test"));
+    res.reset(pstmt->executeQuery());
+    checkResultSetScrolling(res);
+    meta2.reset(res->getMetaData());
+    ASSERT_EQUALS(meta2->isCaseSensitive(1), false);
+    ASSERT_EQUALS(meta2->isCaseSensitive(2), false);
+    if (TestsRunner::theInstance().getStartOptions()->use_is)
+    {
+      // connection_collation distorts the collation of the results (character_set_results) doesn't help
+      // and thus we can't say for sure whether the original column was CI or CS. Only I_S.COLUMNS can tell us.
+      ASSERT_EQUALS(meta2->isCaseSensitive(3), true);
+    }
+
+    logMsg("... Statement");
     runStandardQuery();
-    ResultSetMetaData meta(res->getMetaData());
-    for (i=1; i < 5; i++)
-      ASSERT_EQUALS(meta->isCaseSensitive(i), false);
+    doIsCaseSensitive(false);
 
-    try
-    {
-      meta->isCaseSensitive(6);
-      FAIL("Invalid offset 6 not recognized");
-    }
-    catch (sql::SQLException &)
-    {
-    }
-
-    res->close();
-    try
-    {
-      meta->isCaseSensitive(1);
-      FAIL("Can fetch meta from invalid resultset");
-    }
-    catch (sql::SQLException &)
-    {
-    }
-
-    /* TODO: is this correct? */
     stmt->execute("SET @old_charset_res=@@session.character_set_results");
     stmt->execute("SET character_set_results=NULL");
     res.reset(stmt->executeQuery("SELECT id, col1, col2 FROM test"));
     checkResultSetScrolling(res);
-    ResultSetMetaData meta3(res->getMetaData());
-    ASSERT_EQUALS(meta3->isCaseSensitive(1), false);
-    ASSERT_EQUALS(meta3->isCaseSensitive(2), false);
-    ASSERT_EQUALS(meta3->isCaseSensitive(3), true);
+    meta2.reset(res->getMetaData());
+    ASSERT_EQUALS(meta2->isCaseSensitive(1), false);
+    ASSERT_EQUALS(meta2->isCaseSensitive(2), false);
+    ASSERT_EQUALS(meta2->isCaseSensitive(3), true);
+    stmt->execute("SET character_set_results=@old_charset_res");
+
+    logMsg("... PreparedStatement");
+    runStandardPSQuery();
+    doIsCaseSensitive(true);
+
+    stmt->execute("SET @old_charset_res=@@session.character_set_results");
+    stmt->execute("SET character_set_results=NULL");
+    pstmt.reset(con->prepareStatement("SELECT id, col1, col2 FROM test"));
+    res.reset(pstmt->executeQuery());
+    checkResultSetScrolling(res);
+    meta2.reset(res->getMetaData());
+    ASSERT_EQUALS(meta2->isCaseSensitive(1), false);
+    ASSERT_EQUALS(meta2->isCaseSensitive(2), false);
+    ASSERT_EQUALS(meta2->isCaseSensitive(3), true);
     stmt->execute("SET character_set_results=@old_charset_res");
 
 
@@ -730,29 +781,77 @@ void resultsetmetadata::isCaseSensitive()
   }
 }
 
-void resultsetmetadata::isCurrency()
+void resultsetmetadata::doIsCaseSensitive(bool is_ps)
 {
-  logMsg("resultsetmetadata::isCurrency() - MySQL_ResultSetMetaData::isCurrency");
   int i;
+  ResultSetMetaData meta(res->getMetaData());
+  for (i=1; i < 5; i++)
+    ASSERT_EQUALS(meta->isCaseSensitive(i), false);
+
   try
   {
-    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    meta->isCaseSensitive(6);
+    FAIL("Invalid offset 6 not recognized");
+  }
+  catch (sql::SQLException &)
+  {
+  }
 
-
-    runStandardQuery();
-    ResultSetMetaData meta(res->getMetaData());
-    for (i=1; i < 6; i++)
-      ASSERT_EQUALS(meta->isCurrency(i), false);
-
+  if (!is_ps)
+  {
+    res->close();
     try
     {
-      meta->isCurrency(6);
-      FAIL("Invalid offset 6 not recognized");
+      meta->isCaseSensitive(1);
+      FAIL("Can fetch meta from invalid resultset");
     }
     catch (sql::SQLException &)
     {
     }
+  }
+}
 
+void resultsetmetadata::isCurrency()
+{
+  logMsg("resultsetmetadata::isCurrency() - MySQL_ResultSetMetaData::isCurrency");
+
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    logMsg("... Statement");
+    runStandardQuery();
+    doIsCurrency(false);
+
+    logMsg("... PreparedStatement");
+    runStandardPSQuery();
+    doIsCurrency(true);
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void resultsetmetadata::doIsCurrency(bool is_ps)
+{
+  int i;
+  ResultSetMetaData meta(res->getMetaData());
+  for (i=1; i < 6; i++)
+    ASSERT_EQUALS(meta->isCurrency(i), false);
+
+  try
+  {
+    meta->isCurrency(6);
+    FAIL("Invalid offset 6 not recognized");
+  }
+  catch (sql::SQLException &)
+  {
+  }
+
+  if (!is_ps)
+  {
     res->close();
     try
     {
@@ -762,8 +861,22 @@ void resultsetmetadata::isCurrency()
     catch (sql::SQLException &)
     {
     }
+  }
+}
 
+void resultsetmetadata::isDefinitelyWritable()
+{
+  logMsg("resultsetmetadata::isDefinitelyWritable() - MySQL_ResultSetMetaData::isDefinitelyWritable");
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    logMsg("... Statement");
+    runStandardQuery();
+    doIsDefinitelyWritable(false);
 
+    logMsg("... PreparedStatement");
+    runStandardPSQuery();
+    doIsDefinitelyWritable(true);
   }
   catch (sql::SQLException &e)
   {
@@ -773,32 +886,28 @@ void resultsetmetadata::isCurrency()
   }
 }
 
-void resultsetmetadata::isDefinitelyWritable()
+void resultsetmetadata::doIsDefinitelyWritable(bool is_ps)
 {
-  logMsg("resultsetmetadata::isDefinitelyWritable() - MySQL_ResultSetMetaData::isDefinitelyWritable");
   int i;
+  ResultSetMetaData meta(res->getMetaData());
+  for (i=1; i < 6; i++)
+  {
+    ASSERT_EQUALS(meta->isDefinitelyWritable(i), false);
+    ASSERT_EQUALS(meta->isWritable(i), false);
+    ASSERT_EQUALS(meta->isReadOnly(i), true);
+  }
+
   try
   {
-    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    meta->isDefinitelyWritable(6);
+    FAIL("Invalid offset 6 not recognized");
+  }
+  catch (sql::SQLException &)
+  {
+  }
 
-    runStandardQuery();
-    ResultSetMetaData meta(res->getMetaData());
-    for (i=1; i < 6; i++)
-    {
-      ASSERT_EQUALS(meta->isDefinitelyWritable(i), false);
-      ASSERT_EQUALS(meta->isWritable(i), false);
-      ASSERT_EQUALS(meta->isReadOnly(i), true);
-    }
-
-    try
-    {
-      meta->isDefinitelyWritable(6);
-      FAIL("Invalid offset 6 not recognized");
-    }
-    catch (sql::SQLException &)
-    {
-    }
-
+  if (!is_ps)
+  {
     res->close();
     try
     {
@@ -808,8 +917,46 @@ void resultsetmetadata::isDefinitelyWritable()
     catch (sql::SQLException &)
     {
     }
+  }
+}
 
+void resultsetmetadata::isNullable()
+{
+  logMsg("resultsetmetadata::isNullable() - MySQL_ResultSetMetaData::isNullable");
 
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    logMsg("... Statement");
+    runStandardQuery();
+    doIsNullable(false);
+
+    logMsg("... PreparedStatement");
+    runStandardPSQuery();
+    doIsNullable(true);
+
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT, col1 CHAR(1) DEFAULT NULL, col2 CHAR(10) NOT NULL)");
+    stmt->execute("INSERT INTO test(id, col2) VALUES (1, 'b')");
+
+    logMsg("... Statement");
+    res.reset(stmt->executeQuery("SELECT id, col1, col2 FROM test"));
+    checkResultSetScrolling(res);
+    ResultSetMetaData meta2(res->getMetaData());
+    ASSERT_EQUALS(meta2->isNullable(1), sql::ResultSetMetaData::columnNullable);
+    ASSERT_EQUALS(meta2->isNullable(2), sql::ResultSetMetaData::columnNullable);
+    ASSERT_EQUALS(meta2->isNullable(3), sql::ResultSetMetaData::columnNoNulls);
+
+    logMsg("... PreparedStatement");
+    pstmt.reset(con->prepareStatement("SELECT id, col1, col2 FROM test"));
+    res.reset(pstmt->executeQuery());
+    checkResultSetScrolling(res);
+    meta2.reset(res->getMetaData());
+    ASSERT_EQUALS(meta2->isNullable(1), sql::ResultSetMetaData::columnNullable);
+    ASSERT_EQUALS(meta2->isNullable(2), sql::ResultSetMetaData::columnNullable);
+    ASSERT_EQUALS(meta2->isNullable(3), sql::ResultSetMetaData::columnNoNulls);
+
+    stmt->execute("DROP TABLE IF EXISTS test");
   }
   catch (sql::SQLException &e)
   {
@@ -819,27 +966,24 @@ void resultsetmetadata::isDefinitelyWritable()
   }
 }
 
-void resultsetmetadata::isNullable()
+void resultsetmetadata::doIsNullable(bool is_ps)
 {
-  logMsg("resultsetmetadata::isNullable() - MySQL_ResultSetMetaData::isNullable");
   int i;
+  ResultSetMetaData meta(res->getMetaData());
+  for (i=1; i < 6; i++)
+    ASSERT_EQUALS(meta->isNullable(i), sql::ResultSetMetaData::columnNoNulls);
+
   try
   {
-    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
-    runStandardQuery();
-    ResultSetMetaData meta(res->getMetaData());
-    for (i=1; i < 6; i++)
-      ASSERT_EQUALS(meta->isNullable(i), sql::ResultSetMetaData::columnNoNulls);
+    meta->isNullable(6);
+    FAIL("Invalid offset 6 not recognized");
+  }
+  catch (sql::SQLException &)
+  {
+  }
 
-    try
-    {
-      meta->isNullable(6);
-      FAIL("Invalid offset 6 not recognized");
-    }
-    catch (sql::SQLException &)
-    {
-    }
-
+  if (!is_ps)
+  {
     res->close();
     try
     {
@@ -849,60 +993,28 @@ void resultsetmetadata::isNullable()
     catch (sql::SQLException &)
     {
     }
-
-    stmt->execute("DROP TABLE IF EXISTS test");
-    stmt->execute("CREATE TABLE test(id INT, col1 CHAR(1) DEFAULT NULL, col2 CHAR(10) NOT NULL)");
-    stmt->execute("INSERT INTO test(id, col2) VALUES (1, 'b')");
-    res.reset(stmt->executeQuery("SELECT id, col1, col2 FROM test"));
-    checkResultSetScrolling(res);
-    ResultSetMetaData meta2(res->getMetaData());
-    ASSERT_EQUALS(meta2->isNullable(1), sql::ResultSetMetaData::columnNullable);
-    ASSERT_EQUALS(meta2->isNullable(2), sql::ResultSetMetaData::columnNullable);
-    ASSERT_EQUALS(meta2->isNullable(3), sql::ResultSetMetaData::columnNoNulls);
-
-  }
-  catch (sql::SQLException &e)
-  {
-    logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
-    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
 void resultsetmetadata::isReadOnly()
 {
   logMsg("resultsetmetadata::isReadOnly() - MySQL_ResultSetMetaData::isReadOnly");
-  int i;
   try
   {
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    logMsg("... Statement");
     runStandardQuery();
-    ResultSetMetaData meta(res->getMetaData());
-    for (i=1; i < 6; i++)
-      ASSERT_EQUALS(meta->isReadOnly(i), true);
+    doIsReadOnly(false);
 
-    try
-    {
-      meta->isReadOnly(6);
-      FAIL("Invalid offset 6 not recognized");
-    }
-    catch (sql::SQLException &)
-    {
-    }
-
-    res->close();
-    try
-    {
-      meta->isReadOnly(1);
-      FAIL("Can fetch meta from invalid resultset");
-    }
-    catch (sql::SQLException &)
-    {
-    }
+    logMsg("... PreparedStatement");
+    runStandardPSQuery();
+    doIsReadOnly(true);
 
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT, col1 CHAR(1), col2 CHAR(10))");
     stmt->execute("INSERT INTO test(id, col1, col2) VALUES (1, 'a', 'b')");
+
+    logMsg("... Statement");
     res.reset(stmt->executeQuery("SELECT id AS 'abc', col1, col2, 1 FROM test"));
     checkResultSetScrolling(res);
     ResultSetMetaData meta2(res->getMetaData());
@@ -927,6 +1039,35 @@ void resultsetmetadata::isReadOnly()
       logMsg("... skipping VIEW test");
     }
 
+    logMsg("... PreparedStatement");
+    pstmt.reset(con->prepareStatement("SELECT id AS 'abc', col1, col2, 1 FROM test"));
+    res.reset(pstmt->executeQuery());
+    checkResultSetScrolling(res);
+    meta2.reset(res->getMetaData());
+    ASSERT_EQUALS(meta2->isReadOnly(1), false);
+    ASSERT_EQUALS(meta2->isReadOnly(2), false);
+    ASSERT_EQUALS(meta2->isReadOnly(3), false);
+    ASSERT_EQUALS(meta2->isReadOnly(4), true);
+
+    try
+    {
+      stmt->execute("DROP VIEW IF EXISTS v_test");
+      stmt->execute("CREATE VIEW v_test(col1, col2) AS SELECT id, id + 1 FROM test");
+      pstmt.reset(con->prepareStatement("SELECT col1, col2 FROM v_test"));
+      res.reset(pstmt->executeQuery());
+      checkResultSetScrolling(res);
+      ResultSetMetaData meta3(res->getMetaData());
+      ASSERT_EQUALS(meta3->isReadOnly(1), false);
+      /* Expecting ERROR 1348 (HY000): Column 'col2' is not updatable */
+      ASSERT_EQUALS(meta3->isReadOnly(2), true);
+      stmt->execute("DROP VIEW IF EXISTS v_test");
+    }
+    catch (sql::SQLException &)
+    {
+      logMsg("... skipping VIEW test");
+    }
+
+    stmt->execute("DROP TABLE IF EXISTS test");
   }
   catch (sql::SQLException &e)
   {
@@ -936,27 +1077,76 @@ void resultsetmetadata::isReadOnly()
   }
 }
 
-void resultsetmetadata::isSearchable()
+void resultsetmetadata::doIsReadOnly(bool is_ps)
 {
-  logMsg("resultsetmetadata::isSearchable() - MySQL_ResultSetMetaData::isSearchable");
   int i;
+  ResultSetMetaData meta(res->getMetaData());
+  for (i=1; i < 6; i++)
+    ASSERT_EQUALS(meta->isReadOnly(i), true);
+
   try
   {
-    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
-    runStandardQuery();
-    ResultSetMetaData meta(res->getMetaData());
-    for (i=1; i < 6; i++)
-      ASSERT_EQUALS(meta->isSearchable(i), true);
+    meta->isReadOnly(6);
+    FAIL("Invalid offset 6 not recognized");
+  }
+  catch (sql::SQLException &)
+  {
+  }
 
+  if (!is_ps)
+  {
+    res->close();
     try
     {
-      meta->isSearchable(6);
-      FAIL("Invalid offset 6 not recognized");
+      meta->isReadOnly(1);
+      FAIL("Can fetch meta from invalid resultset");
     }
     catch (sql::SQLException &)
     {
     }
+  }
+}
 
+void resultsetmetadata::isSearchable()
+{
+  logMsg("resultsetmetadata::isSearchable() - MySQL_ResultSetMetaData::isSearchable");
+  try
+  {
+    /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    logMsg("... Statement");
+    runStandardQuery();
+    doIsSearchable(false);
+
+    logMsg("... PreparedStatement");
+    runStandardPSQuery();
+    doIsSearchable(true);
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void resultsetmetadata::doIsSearchable(bool is_ps)
+{
+  int i;
+  ResultSetMetaData meta(res->getMetaData());
+  for (i=1; i < 6; i++)
+    ASSERT_EQUALS(meta->isSearchable(i), true);
+
+  try
+  {
+    meta->isSearchable(6);
+    FAIL("Invalid offset 6 not recognized");
+  }
+  catch (sql::SQLException &)
+  {
+  }
+
+  if (!is_ps)
+  {
     res->close();
     try
     {
@@ -966,59 +1156,33 @@ void resultsetmetadata::isSearchable()
     catch (sql::SQLException &)
     {
     }
-
-  }
-  catch (sql::SQLException &e)
-  {
-    logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
-    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
 void resultsetmetadata::isSigned()
 {
   logMsg("resultsetmetadata::isSigned() - MySQL_ResultSetMetaData::isSigned");
-  int i;
+  std::stringstream sql;
+  std::vector<columndefinition>::iterator it;
+  ResultSetMetaData meta_st;
+  ResultSetMetaData meta_ps;
+  ResultSet res_ps;
+
   try
   {
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    logMsg("... Statement");
     runStandardQuery();
-    ResultSetMetaData meta(res->getMetaData());
+    doIsSigned(false);
 
-    for (i=1; i < 5; i++)
-    {
-      ASSERT_EQUALS(meta->isSigned(i), true);
-    }
+    logMsg("... PreparedStatement");
+    runStandardPSQuery();
+    doIsSigned(true);
 
-    try
-    {
-      meta->isSigned(6);
-      FAIL("Invalid offset 6 not recognized");
-    }
-    catch (sql::SQLException &)
-    {
-    }
-
-    res->close();
-    try
-    {
-      meta->isSigned(1);
-      FAIL("Can fetch meta from invalid resultset");
-    }
-    catch (sql::SQLException &)
-    {
-    }
-
-    std::stringstream sql;
-    std::vector<columndefinition>::iterator it;
     stmt.reset(con->createStatement());
-
     for (it=columns.begin(); it != columns.end(); it++)
     {
-
       stmt->execute("DROP TABLE IF EXISTS test");
-
       sql.str("");
       sql << "CREATE TABLE test(col1 " << it->sqldef << ")";
       try
@@ -1027,18 +1191,10 @@ void resultsetmetadata::isSigned()
         sql.str("");
         sql << "INSERT INTO test(col1) VALUES ('" << it->value << "')";
         stmt->execute(sql.str());
-
-        res.reset(stmt->executeQuery("SELECT * FROM test"));
-        checkResultSetScrolling(res);
-        ResultSetMetaData meta(res->getMetaData());
         sql.str("");
         sql << std::boolalpha << "... testing, SQL:" << it->sqldef << " -> Signed = " << it->is_signed;
         logMsg(sql.str());
-        /* TODO: the test needs to be tweaked!!! */
-        ASSERT_EQUALS(it->is_signed, meta->isSigned(1));
-
       }
-
       catch (sql::SQLException &e)
       {
         logMsg(sql.str());
@@ -1048,8 +1204,17 @@ void resultsetmetadata::isSigned()
         logMsg(sql.str());
       }
 
-    }
+      res.reset(stmt->executeQuery("SELECT col1 FROM test"));
+      checkResultSetScrolling(res);
+      meta_st.reset(res->getMetaData());
 
+      pstmt.reset(con->prepareStatement("SELECT col1 FROM test"));
+      res_ps.reset(pstmt->executeQuery());
+      meta_ps.reset(res_ps->getMetaData());
+
+      ASSERT_EQUALS(meta_st->isSigned(1), meta_ps->isSigned(1));
+      ASSERT_EQUALS(it->is_signed, meta_st->isSigned(1));
+    }
   }
   catch (sql::SQLException &e)
   {
@@ -1057,7 +1222,39 @@ void resultsetmetadata::isSigned()
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
   }
+}
 
+void resultsetmetadata::doIsSigned(bool is_ps)
+{
+  int i;
+  ResultSetMetaData meta(res->getMetaData());
+
+  for (i=1; i < 5; i++)
+  {
+    ASSERT_EQUALS(meta->isSigned(i), true);
+  }
+
+  try
+  {
+    meta->isSigned(6);
+    FAIL("Invalid offset 6 not recognized");
+  }
+  catch (sql::SQLException &)
+  {
+  }
+
+  if (!is_ps)
+  {
+    res->close();
+    try
+    {
+      meta->isSigned(1);
+      FAIL("Can fetch meta from invalid resultset");
+    }
+    catch (sql::SQLException &)
+    {
+    }
+  }
 
 }
 
@@ -1067,19 +1264,37 @@ void resultsetmetadata::isWritable()
   try
   {
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
+    logMsg("... Statement");
     runStandardQuery();
-    ResultSetMetaData meta(res->getMetaData());
-    /* NOTE: isReadable covers isWritable */
+    doIsWritable(false);
 
-    try
-    {
-      meta->isWritable(6);
-      FAIL("Invalid offset 6 not recognized");
-    }
-    catch (sql::SQLException &)
-    {
-    }
+    logMsg("... PreparedStatement");
+    runStandardPSQuery();
+    doIsWritable(true);
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
 
+void resultsetmetadata::doIsWritable(bool is_ps)
+{
+  ResultSetMetaData meta(res->getMetaData());
+  /* NOTE: isReadable covers isWritable */
+  try
+  {
+    meta->isWritable(6);
+    FAIL("Invalid offset 6 not recognized");
+  }
+  catch (sql::SQLException &)
+  {
+  }
+
+  if (!is_ps)
+  {
     res->close();
     try
     {
@@ -1089,13 +1304,6 @@ void resultsetmetadata::isWritable()
     catch (sql::SQLException &)
     {
     }
-
-  }
-  catch (sql::SQLException &e)
-  {
-    logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
-    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
