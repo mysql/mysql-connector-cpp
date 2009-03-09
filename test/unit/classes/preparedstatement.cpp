@@ -57,7 +57,7 @@ void preparedstatement::InsertSelectAllTypes()
       pstmt->setString(1, it->value);
       ASSERT_EQUALS(1, pstmt->executeUpdate());
 
-      pstmt.reset(con->prepareStatement("SELECT id FROM test"));
+      pstmt.reset(con->prepareStatement("SELECT id, NULL FROM test"));
       res.reset(pstmt->executeQuery());
       checkResultSetScrolling(res);
       ASSERT(res->next());
@@ -70,62 +70,83 @@ void preparedstatement::InsertSelectAllTypes()
         logMsg(sql.str());
         got_warning=true;
       }
-      ASSERT_EQUALS(res->getString(1), res->getString("id"));
+      ASSERT_EQUALS(res->getString("id"), res->getString(1));
       try
       {
         res->getString(0);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException &)
       {
       }
 
       try
       {
-        res->getString(2);
+        res->getString(3);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException &)
       {
       }
 
-      ASSERT_EQUALS(res->getBoolean(1), res->getBoolean("id"));
+      res->beforeFirst();
       try
       {
-        res->getBoolean(0);
+        res->getString(1);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException &)
       {
       }
-
+      res->afterLast();
       try
       {
-        res->getBoolean(2);
+        res->getString(1);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException &)
       {
       }
+      res->first();
 
-      ASSERT_EQUALS(res->getDouble(1), res->getDouble("id"));
+      ASSERT_EQUALS(res->getDouble("id"), res->getDouble(1));
       try
       {
         res->getDouble(0);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException &)
       {
       }
 
       try
       {
-        res->getDouble(2);
+        res->getDouble(3);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException &)
       {
       }
+
+      res->beforeFirst();
+      try
+      {
+        res->getDouble(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->afterLast();
+      try
+      {
+        res->getDouble(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->first();
 
       ASSERT_EQUALS(res->getInt(1), res->getInt("id"));
       try
@@ -133,37 +154,38 @@ void preparedstatement::InsertSelectAllTypes()
         res->getInt(0);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException &)
       {
       }
 
       try
       {
-        res->getInt(2);
+        res->getInt(3);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException &)
       {
       }
 
-      ASSERT_EQUALS(res->getInt64(1), res->getInt64("id"));
+      res->beforeFirst();
       try
       {
-        res->getInt64(0);
+        res->getInt(1);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException &)
       {
       }
-
+      res->afterLast();
       try
       {
-        res->getInt64(2);
+        res->getInt(1);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException &)
       {
       }
+      res->first();
 
       ASSERT_EQUALS(res->getUInt(1), res->getUInt("id"));
       try
@@ -171,37 +193,156 @@ void preparedstatement::InsertSelectAllTypes()
         res->getUInt(0);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException &)
       {
       }
 
       try
       {
-        res->getUInt(2);
+        res->getUInt(3);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException &)
       {
       }
 
-      ASSERT_EQUALS(res->getUInt64(1), res->getUInt64("id"));
+      res->beforeFirst();
+      try
+      {
+        res->getUInt(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->afterLast();
+      try
+      {
+        res->getUInt(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->first();
+
+      ASSERT_EQUALS(res->getInt64("id"), res->getInt64(1));
+      try
+      {
+        res->getInt64(0);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getInt64(3);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      res->beforeFirst();
+      try
+      {
+        res->getInt64(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->afterLast();
+      try
+      {
+        res->getInt64(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->first();
+
+      ASSERT_EQUALS(res->getUInt64("id"), res->getUInt64(1));
       try
       {
         res->getUInt64(0);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException &)
       {
       }
 
       try
       {
-        res->getUInt64(2);
+        res->getUInt64(3);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException &)
       {
       }
+
+      res->beforeFirst();
+      try
+      {
+        res->getUInt64(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->afterLast();
+      try
+      {
+        res->getUInt64(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->first();
+
+      ASSERT_EQUALS(res->getBoolean("id"), res->getBoolean(1));
+      try
+      {
+        res->getBoolean(0);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getBoolean(3);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      res->beforeFirst();
+      try
+      {
+        res->getBoolean(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->afterLast();
+      try
+      {
+        res->getBoolean(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->first();
+
     }
     stmt->execute("DROP TABLE IF EXISTS test");
     if (got_warning)

@@ -179,11 +179,11 @@ void resultset::getTypes()
       msg << "INSERT INTO test(id) VALUES ('" << it->value << "')";
       stmt->execute(msg.str());
 
-      res.reset(stmt->executeQuery("SELECT id FROM test"));
+      res.reset(stmt->executeQuery("SELECT id, NULL FROM test"));
       checkResultSetScrolling(res);
       ASSERT(res->next());
 
-      pstmt.reset(con->prepareStatement("SELECT id FROM test"));
+      pstmt.reset(con->prepareStatement("SELECT id, NULL FROM test"));
       pstmt->clearParameters();
       pres.reset(pstmt->executeQuery());
       checkResultSetScrolling(pres);
@@ -213,7 +213,7 @@ void resultset::getTypes()
 
       try
       {
-        res->getString(2);
+        res->getString(3);
         FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
@@ -252,7 +252,7 @@ void resultset::getTypes()
 
       try
       {
-        res->getDouble(2);
+        res->getDouble(3);
         FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
@@ -291,7 +291,7 @@ void resultset::getTypes()
 
       try
       {
-        res->getInt(2);
+        res->getInt(3);
         FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
@@ -330,7 +330,7 @@ void resultset::getTypes()
 
       try
       {
-        res->getUInt(2);
+        res->getUInt(3);
         FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
@@ -369,7 +369,7 @@ void resultset::getTypes()
 
       try
       {
-        res->getInt64(2);
+        res->getInt64(3);
         FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
@@ -408,7 +408,7 @@ void resultset::getTypes()
 
       try
       {
-        res->getUInt64(2);
+        res->getUInt64(3);
         FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
@@ -447,7 +447,7 @@ void resultset::getTypes()
 
       try
       {
-        res->getBoolean(2);
+        res->getBoolean(3);
         FAIL("Invalid argument not detected");
       }
       catch (sql::InvalidArgumentException &)
