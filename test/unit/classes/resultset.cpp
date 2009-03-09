@@ -220,6 +220,26 @@ void resultset::getTypes()
       {
       }
 
+      res->beforeFirst();
+      try
+      {
+        res->getString(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->afterLast();
+      try
+      {
+        res->getString(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->first();
+
       ASSERT_EQUALS(res->getDouble("id"), res->getDouble(1));
       try
       {
@@ -238,6 +258,26 @@ void resultset::getTypes()
       catch (sql::InvalidArgumentException &)
       {
       }
+
+      res->beforeFirst();
+      try
+      {
+        res->getDouble(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->afterLast();
+      try
+      {
+        res->getDouble(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->first();
 
       ASSERT_EQUALS(res->getInt(1), res->getInt("id"));
       try
@@ -258,6 +298,26 @@ void resultset::getTypes()
       {
       }
 
+      res->beforeFirst();
+      try
+      {
+        res->getInt(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->afterLast();
+      try
+      {
+        res->getInt(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->first();
+
       ASSERT_EQUALS(res->getUInt(1), res->getUInt("id"));
       try
       {
@@ -276,6 +336,26 @@ void resultset::getTypes()
       catch (sql::InvalidArgumentException &)
       {
       }
+
+      res->beforeFirst();
+      try
+      {
+        res->getUInt(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->afterLast();
+      try
+      {
+        res->getUInt(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->first();
 
       ASSERT_EQUALS(res->getInt64("id"), res->getInt64(1));
       try
@@ -296,6 +376,26 @@ void resultset::getTypes()
       {
       }
 
+      res->beforeFirst();
+      try
+      {
+        res->getInt64(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->afterLast();
+      try
+      {
+        res->getInt64(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->first();
+
       ASSERT_EQUALS(res->getUInt64("id"), res->getUInt64(1));
       try
       {
@@ -315,6 +415,26 @@ void resultset::getTypes()
       {
       }
 
+      res->beforeFirst();
+      try
+      {
+        res->getUInt64(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->afterLast();
+      try
+      {
+        res->getUInt64(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->first();
+
       ASSERT_EQUALS(res->getBoolean("id"), res->getBoolean(1));
       try
       {
@@ -333,6 +453,26 @@ void resultset::getTypes()
       catch (sql::InvalidArgumentException &)
       {
       }
+
+      res->beforeFirst();
+      try
+      {
+        res->getBoolean(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->afterLast();
+      try
+      {
+        res->getBoolean(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->first();
 
 
       ASSERT_EQUALS(pres->getString("id"), pres->getString(1));
