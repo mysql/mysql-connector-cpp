@@ -151,7 +151,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("CHAR", "CHAR(14) DEFAULT 'Andrey'", sql::DataType::CHAR, "abc", true, 14, 0, true, "Andrey", 0, "NO"));
   columns.push_back(columndefinition("BINARY", "CHAR(25) CHARACTER SET 'binary'", sql::DataType::BINARY, "abc", true, 25, 0, true, "", 25, "NO"));
   columns.push_back(columndefinition("VARCHAR", "VARCHAR(10)", sql::DataType::VARCHAR, "a", true, 10, 0, true, "", 0, "NO"));
-  columns.push_back(columndefinition("VARBINARY", "VARCHAR(10) CHARACTER SET binary", sql::DataType::BINARY, "a", true, 10, 0, true, "", 0, "NO"));
+  columns.push_back(columndefinition("VARBINARY", "VARCHAR(10) CHARACTER SET binary", sql::DataType::VARBINARY, "a", true, 10, 0, true, "", 0, "NO"));
   columns.push_back(columndefinition("VARCHAR", "VARCHAR(7) NOT NULL", sql::DataType::VARCHAR, "a", true, 7, 0, false, "", 0, "NO"));
   columns.push_back(columndefinition("VARCHAR", "VARCHAR(255) DEFAULT 'Good night twitter. BTW, go MySQL!'", sql::DataType::VARCHAR, "a", true, 255, 0, true, "Good night twitter. BTW, go MySQL!", 0, "NO"));
   columns.push_back(columndefinition("VARCHAR", "VARCHAR(11) CHARACTER SET 'utf8'", sql::DataType::VARCHAR, "a", true, 11, 0, true, "", 33, "NO"));
