@@ -27,7 +27,7 @@ class MySQL_DebugLogger;
 class MySQL_Statement : public sql::Statement
 {
 protected:
-	std::auto_ptr< sql::SQLWarning > warnings;
+	sql::SQLWarning * warnings;
 	MySQL_Connection *connection;
 
 	void do_query(const char *q, size_t length);

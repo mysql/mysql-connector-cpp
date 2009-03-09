@@ -20,9 +20,9 @@ namespace sql
 namespace mysql
 {
 
-  const std::string & errCode2SqlState (int errCode);
+	const std::string & errCode2SqlState(int errCode);
 
-  sql::SQLWarning   * loadMysqlWarnings( MySQL_Connection * connection );
+	sql::SQLWarning * loadMysqlWarnings(sql::Connection * connection);
 
 } /* namespace mysql */
 } /* namespace sql   */

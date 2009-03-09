@@ -22,14 +22,17 @@ namespace mysql
 /*
 * TODO: implement it. Probably it's not the right place for this function
 */
-const std::string & errCode2SqlState (int /* errCode */)
+const std::string &
+errCode2SqlState(int /* errCode */)
 {
 	static const std::string state = "";
 
 	return state;
 }
 
-sql::SQLWarning * loadMysqlWarnings(MySQL_Connection * connection)
+
+sql::SQLWarning *
+loadMysqlWarnings(sql::Connection * connection)
 {
 	SQLWarning * first = NULL, * current = NULL;
 
@@ -38,7 +41,10 @@ sql::SQLWarning * loadMysqlWarnings(MySQL_Connection * connection)
 		std::auto_ptr<sql::ResultSet> rset(stmt->executeQuery("SHOW WARNINGS"));
 
 		while (rset->next()) {
-			int errCode = rset->getInt(2);
+			// 1 - Level
+			// 2 - Code
+			// 3 - Message
+			int32_t errCode = rset->getInt(2);
 
 			if (current == NULL) {
 				first = current = new SQLWarning(std::string(rset->getString(3)), errCode2SqlState(errCode), errCode);
