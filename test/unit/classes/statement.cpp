@@ -31,11 +31,11 @@ void statement::getWarnings()
   {
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT UNSIGNED)");
-    
+
     // Lets hope that this will always cause a 1264 or similar warning
     stmt->execute("INSERT INTO test(id) VALUES (-1)");
     warn=stmt->getWarnings();
-    
+
     msg.str("");
     msg << "... ErrorCode = '" << warn->getErrorCode() << "', ";
     msg << "SQLState = '" << warn->getSQLState() << "', ";
@@ -79,7 +79,7 @@ void statement::clearWarnings()
     // Lets hope that this will always cause a 1264 or similar warning
     stmt->execute("INSERT INTO test(id) VALUES (-1)");
     stmt->clearWarnings();
-    // TODO - how to verify?    
+    // TODO - how to verify?
     // TODO - how to use getNextWarning() ?
     stmt->execute("DROP TABLE IF EXISTS test");
   }
@@ -94,5 +94,3 @@ void statement::clearWarnings()
 
 } /* namespace statement */
 } /* namespace testsuite */
-
-
