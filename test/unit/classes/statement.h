@@ -34,6 +34,7 @@ public:
     TEST_CASE(getWarnings);
     TEST_CASE(clearWarnings);
     TEST_CASE(callSP);
+    TEST_CASE(selectZero);
   }
 
   /**
@@ -50,6 +51,12 @@ public:
    * Calls a stored procedure
    */
   void callSP();
+
+    /**
+   * SELECT 0 as string
+   */
+  void selectZero();
+
   
 };
 

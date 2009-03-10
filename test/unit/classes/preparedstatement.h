@@ -26,7 +26,6 @@ class preparedstatement : public unit_fixture
 private:
   typedef unit_fixture super;
 
-protected:
 public:
 
   EXAMPLE_TEST_FIXTURE(preparedstatement)
@@ -36,6 +35,7 @@ public:
     TEST_CASE(setNull);
     TEST_CASE(checkClosed);
     TEST_CASE(getMetaData);
+    TEST_CASE(callSP);
   }
 
   /**
@@ -62,6 +62,12 @@ public:
    * Compare PS and Non-PS Metadata.
    */
   void getMetaData();
+
+
+  /**
+   * Calls a stored procedure
+   */
+  void callSP();
 
 
 };

@@ -77,7 +77,7 @@ void connectionmetadata::getAttributes()
     DatabaseMetaData dbmeta(con->getMetaData());
     res.reset(dbmeta->getAttributes(con->getCatalog(), con->getSchema(), "", ""));
     checkResultSetScrolling(res);
-    ResultSetMetaData resmeta(res->getMetaData());    
+    ResultSetMetaData resmeta(res->getMetaData());
     it=attributes.begin();
     for (i=1; i <= resmeta->getColumnCount(); i++)
     {
@@ -151,7 +151,7 @@ void connectionmetadata::getBestRowIdentifier()
         ResultSet cres(stmt->executeQuery("SHOW CREATE TABLE test"));
         cres->next();
         logMsg(cres->getString(2).c_str());
-        
+
         got_warning=true;
       }
       // TODO - ASSERT_EQUALS(it->ctype, res->getInt(3));
@@ -1355,9 +1355,9 @@ void connectionmetadata::getCatalogs()
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
-    res.reset(dbmeta->getCatalogs());    
+    res.reset(dbmeta->getCatalogs());
     ASSERT(!res->next());
-    ResultSetMetaData resmeta(res->getMetaData());    
+    ResultSetMetaData resmeta(res->getMetaData());
     /* http://java.sun.com/j2se/1.4.2/docs/api/java/sql/DatabaseMetaData.html#getCatalogs() */
     ASSERT_EQUALS((unsigned int) 1, resmeta->getColumnCount());
     ASSERT_EQUALS("TABLE_CAT", resmeta->getColumnLabel(1));
@@ -1788,11 +1788,18 @@ void connectionmetadata::getColumnsTypeConversions()
       ASSERT_EQUALS(res->getInt(9), res->getInt("DECIMAL_DIGITS"));
 
       msg.str("");
-      msg << it->decimal_digits;
+      if (0 == it->decimal_digits)
+      {
+        msg << "0";
+      }
+      else
+      {
+        msg << it->decimal_digits;
+      }
       if (msg.str() != res->getString("DECIMAL_DIGITS"))
       {
         msg.str("");
-        msg << "... expecting DECIMAL_DIGITS = '" << it->decimal_digits << "'";
+        msg << "...\t\tWARNING: expecting DECIMAL_DIGITS = '" << it->decimal_digits << "'";
         msg << " got '" << res->getString("DECIMAL_DIGITS") << "'";
         logMsg(msg.str());
         got_warning=true;
