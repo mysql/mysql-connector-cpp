@@ -19,6 +19,10 @@
 #if defined (_WIN32)
 /* SAFE_MUTEX will not work until the thread structure is up to date */
 #undef SAFE_MUTEX
+
+#include <my_global.h>
+#include "my_pthread.h"
+
 #include <process.h>
 #include <signal.h>
 

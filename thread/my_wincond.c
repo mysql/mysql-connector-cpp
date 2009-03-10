@@ -22,6 +22,9 @@
 #include <process.h>
 #include <sys/timeb.h>
 
+#include <my_global.h>
+#include "my_pthread.h"
+
 int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr)
 {
   cond->waiting= 0;
@@ -191,7 +194,7 @@ int pthread_attr_setstacksize(pthread_attr_t *connect_att,DWORD stack)
 
 int pthread_attr_destroy(pthread_attr_t *connect_att)
 {
-  bzero((uchar*) connect_att,sizeof(*connect_att));
+  memset((void*) connect_att, 0, sizeof(*connect_att));
   return 0;
 }
 
@@ -203,14 +206,14 @@ struct tm *localtime_r(const time_t *timep,struct tm *tmp)
 {
   if (*timep == (time_t) -1)			/* This will crash win32 */
   {
-    bzero(tmp,sizeof(*tmp));
+    memset((void*)tmp, 0, sizeof(*tmp));
   }
   else
   {
     struct tm *res=localtime(timep);
     if (!res)                                   /* Wrong date */
     {
-      bzero(tmp,sizeof(*tmp));                  /* Keep things safe */
+      memset((void*)tmp, 0, sizeof(*tmp));                  /* Keep things safe */
       return 0;
     }
     *tmp= *res;
