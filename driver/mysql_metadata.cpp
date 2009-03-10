@@ -1935,10 +1935,10 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 			rs_data_row.push_back(rs->getString(4));	// COLUMN_NAME
 			rs_data_row.push_back((int64_t) sql::mysql::util::mysql_string_type_to_datatype(rs->getString(5)));	// DATA_TYPE
 			rs_data_row.push_back(rs->getString(6));	// TYPE_NAME
-			rs_data_row.push_back(rs->getString(7));	// COLUMN_SIZE
-			rs_data_row.push_back(rs->getString(8));	// BUFFER_LENGTH
-			rs_data_row.push_back(rs->getString(9));	// DECIMAL_DIGITS
-			rs_data_row.push_back(rs->getString(10));	// NUM_PREC_RADIX
+			rs_data_row.push_back(rs->getInt64(7));		// COLUMN_SIZE
+			rs_data_row.push_back(rs->getInt64(8));		// BUFFER_LENGTH
+			rs_data_row.push_back(rs->getInt64(9));		// DECIMAL_DIGITS
+			rs_data_row.push_back(rs->getInt64(10));	// NUM_PREC_RADIX
 			rs_data_row.push_back(rs->getString(11));	// NULLABLE
 			rs_data_row.push_back(rs->getString(12));	// REMARKS
 			rs_data_row.push_back(rs->getString(13));	// COLUMN_DEFAULT
