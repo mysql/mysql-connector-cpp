@@ -1150,6 +1150,27 @@ static const TypeInfoDef mysqlc_types[] = {
 		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
+	// ----------- MySQL-Type: DATE DBC-Type: DATE ----------
+	{
+		"YEAR",								// Typename
+		sql::DataType::YEAR,				// dbc-type
+		0,									// Precision
+		"'",								// Literal prefix
+		"'",								// Literal suffix
+		"",									// Create params
+		DatabaseMetaData::typeNullable,		// nullable
+		false,								// case sensitive
+		DatabaseMetaData::typeSearchable,	// searchable
+		false,								// unsigned_attribute
+		false,								// fixed_prec_scale
+		false,								// auto_increment
+		"YEAR",								// local type name
+		0,									// minimum scale
+		0,									// maximum scale
+		0,									// sql data type (unused)
+		0,									// sql datetime sub (unused)
+		10									// num prec radix
+	},
 	// ----------- MySQL-Type: TIMESTAMP DBC-Type: TIMESTAMP ----------
 
 	{
@@ -1857,13 +1878,13 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 			"    WHEN LOCATE('zerofill', COLUMN_TYPE) != 0 AND LOCATE('zerofill', DATA_TYPE) = 0 THEN CONCAT(UCASE(DATA_TYPE), ' UNSIGNED ZEROFILL')"
 			"    ELSE CONCAT(UCASE(DATA_TYPE), ' UNSIGNED')"
 			"  END "
-			"ELSE"
-			"  CASE"
+//			"ELSE"
+//			"  CASE"
 //			"    WHEN LCASE(DATA_TYPE)='set' THEN 'VARCHAR'"
 //			"    WHEN LCASE(DATA_TYPE)='enum' THEN 'VARCHAR'"
-			"    WHEN LCASE(DATA_TYPE)='year' THEN 'SMALLINT'"
+//			"    WHEN LCASE(DATA_TYPE)='year' THEN 'YEAR'"
 			"    ELSE UCASE(DATA_TYPE)"
-			"  END "
+//			"  END "
 			"END AS TYPE_NAME,"
  			"CASE "
 				"WHEN LCASE(DATA_TYPE)='date' THEN 10 "

@@ -347,6 +347,7 @@ MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
 
 	switch (rs_meta->getColumnType(columnIndex)) {
 		case sql::DataType::BIT:
+		case sql::DataType::YEAR:	// fetched as a SMALLINT
 		case sql::DataType::TINYINT:
 		case sql::DataType::SMALLINT:
 		case sql::DataType::MEDIUMINT:
@@ -541,6 +542,7 @@ MySQL_Prepared_ResultSet::getInt64_intern(const uint32_t columnIndex, bool cutTo
 
 		// ToDo : Geometry? default ?
 	}
+	// sql::DataType::YEAR is fetched as a SMALLINT, thus should not be in the switch
 	int64_t ret;
 	bool is_it_null = *stmt->bind[columnIndex - 1].is_null != 0;
 	bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned != 0;
@@ -655,6 +657,8 @@ MySQL_Prepared_ResultSet::getUInt64_intern(const uint32_t columnIndex, bool cutT
 
 		// ToDo : Geometry? default ?
 	}
+	// sql::DataType::YEAR is fetched as a SMALLINT, thus should not be in the switch
+
 	uint64_t ret;
 	bool is_it_null = *stmt->bind[columnIndex - 1].is_null != 0;
 	bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned != 0;
@@ -841,6 +845,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 			return std::string(buf);
 		}
 		case sql::DataType::BIT:
+		case sql::DataType::YEAR:	// fetched as a SMALLINT
 		case sql::DataType::TINYINT:
 		case sql::DataType::SMALLINT:
 		case sql::DataType::MEDIUMINT:
