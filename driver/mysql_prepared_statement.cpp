@@ -584,12 +584,12 @@ MySQL_Prepared_Statement::setDouble(unsigned int parameterIndex, double value)
 	if (parameterIndex == 0 || parameterIndex > param_count) {
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setDouble: invalid 'parameterIndex'");
 	}
+	--parameterIndex; /* DBC counts from 1 */
+
 	if (param_bind->getBlobObject(parameterIndex)) {
 		param_bind->setBlob(parameterIndex, NULL);
 		param_bind->unset(parameterIndex);
 	}
-
-	--parameterIndex; /* DBC counts from 1 */
 
 	enum_field_types t = MYSQL_TYPE_DOUBLE;
 
@@ -623,12 +623,12 @@ MySQL_Prepared_Statement::setInt(unsigned int parameterIndex, int32_t value)
 	if (parameterIndex == 0 || parameterIndex > param_count) {
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setInt: invalid 'parameterIndex'");
 	}
+	--parameterIndex; /* DBC counts from 1 */
+
 	if (param_bind->getBlobObject(parameterIndex)) {
 		param_bind->setBlob(parameterIndex, NULL);
 		param_bind->unset(parameterIndex);
 	}
-
-	--parameterIndex; /* DBC counts from 1 */
 
 	enum_field_types t = MYSQL_TYPE_LONG;
 
@@ -662,12 +662,12 @@ MySQL_Prepared_Statement::setUInt(unsigned int parameterIndex, uint32_t value)
 	if (parameterIndex == 0 || parameterIndex > param_count) {
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setInt: invalid 'parameterIndex'");
 	}
+	--parameterIndex; /* DBC counts from 1 */
+
 	if (param_bind->getBlobObject(parameterIndex)) {
 		param_bind->setBlob(parameterIndex, NULL);
 		param_bind->unset(parameterIndex);
 	}
-
-	--parameterIndex; /* DBC counts from 1 */
 
 	enum_field_types t = MYSQL_TYPE_LONG;
 
@@ -701,12 +701,12 @@ MySQL_Prepared_Statement::setInt64(unsigned int parameterIndex, int64_t value)
 	if (parameterIndex == 0 || parameterIndex > param_count) {
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setInt64: invalid 'parameterIndex'");
 	}
+	--parameterIndex; /* DBC counts from 1 */
+
 	if (param_bind->getBlobObject(parameterIndex)) {
 		param_bind->setBlob(parameterIndex, NULL);
 		param_bind->unset(parameterIndex);
 	}
-
-	--parameterIndex; /* DBC counts from 1 */
 
 	enum_field_types t = MYSQL_TYPE_LONGLONG;
 
@@ -738,12 +738,13 @@ MySQL_Prepared_Statement::setUInt64(unsigned int parameterIndex, uint64_t value)
 	if (parameterIndex == 0 || parameterIndex > param_count) {
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setUInt64: invalid 'parameterIndex'");
 	}
+	--parameterIndex; /* DBC counts from 1 */
+
 	if (param_bind->getBlobObject(parameterIndex)) {
 		param_bind->setBlob(parameterIndex, NULL);
 		param_bind->unset(parameterIndex);
 	}
 
-	--parameterIndex; /* DBC counts from 1 */
 
 	enum_field_types t = MYSQL_TYPE_LONGLONG;
 
@@ -778,12 +779,12 @@ MySQL_Prepared_Statement::setNull(unsigned int parameterIndex, int /* sqlType */
 	if (parameterIndex == 0 || parameterIndex > param_count) {
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setInt: invalid 'parameterIndex'");
 	}
+	--parameterIndex; /* DBC counts from 1 */
+
 	if (param_bind->getBlobObject(parameterIndex)) {
 		param_bind->setBlob(parameterIndex, NULL);
 		param_bind->unset(parameterIndex);
 	}
-
-	--parameterIndex; /* DBC counts from 1 */
 
 	enum_field_types t = MYSQL_TYPE_NULL;
 
@@ -818,11 +819,13 @@ MySQL_Prepared_Statement::setString(unsigned int parameterIndex, const std::stri
 		std::istringstream tmp_blob(value);
 		return setBlob(parameterIndex, &tmp_blob);
 	}
+
+	--parameterIndex; /* DBC counts from 1 */
+
 	if (param_bind->getBlobObject(parameterIndex)) {
 		param_bind->setBlob(parameterIndex, NULL);
 		param_bind->unset(parameterIndex);
 	}
-	--parameterIndex; /* DBC counts from 1 */
 
 	enum_field_types t = MYSQL_TYPE_STRING;
 
