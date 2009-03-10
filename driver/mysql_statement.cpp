@@ -28,7 +28,7 @@ namespace mysql
 
 /* {{{ MySQL_Statement::MySQL_Statement() -I- */
 MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
-	: connection(conn), isClosed(false), last_update_count(UL64(~0)), logger(l? l->getReference():NULL)
+	: warnings(NULL), connection(conn), isClosed(false), last_update_count(UL64(~0)), logger(l? l->getReference():NULL)
 {
 	CPP_ENTER("MySQL_Statement::MySQL_Statement");
 	CPP_INFO_FMT("this=%p", this);
@@ -44,6 +44,10 @@ MySQL_Statement::~MySQL_Statement()
 		CPP_ENTER("MySQL_Statement::~MySQL_Statement");
 		CPP_INFO_FMT("this=%p", this);
 	}
+	for (sql::SQLWarning * tmp = warnings, * next_tmp = warnings; tmp; tmp = next_tmp) {
+		next_tmp = const_cast<sql::SQLWarning *>(tmp->getNextWarning());
+		delete tmp;
+	}	
 	logger->freeReference();
 }
 /* }}} */
@@ -227,7 +231,11 @@ MySQL_Statement::clearWarnings()
 	CPP_ENTER("MySQL_Statement::clearWarnings");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	warnings.reset();
+	for (sql::SQLWarning * tmp = warnings, * next_tmp = warnings; tmp; tmp = next_tmp) {
+		next_tmp = const_cast<sql::SQLWarning *>(tmp->getNextWarning());
+		delete tmp;
+	}
+	warnings = NULL;
 }
 /* }}} */
 
@@ -239,6 +247,10 @@ MySQL_Statement::close()
 	CPP_ENTER("MySQL_Statement::close");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
+	for (sql::SQLWarning * tmp = warnings, * next_tmp = warnings; tmp; tmp = next_tmp) {
+		next_tmp = const_cast<sql::SQLWarning *>(tmp->getNextWarning());
+		delete tmp;
+	}
 	isClosed = true;
 }
 /* }}} */
@@ -329,9 +341,7 @@ MySQL_Statement::getWarnings()
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-  warnings.reset( loadMysqlWarnings( dynamic_cast<MySQL_Connection*>(connection) ) );
-
-  return warnings.get();
+	return warnings;
 }
 /* }}} */
 

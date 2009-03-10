@@ -29,10 +29,10 @@ class SQLWarning
 {
 protected:
 
-	const std::string                       sql_state;
-	const int                               errNo;
-	mutable std::auto_ptr<const SQLWarning> next;
-	const std::string                       descr;
+	const std::string	sql_state;
+	const int			errNo;
+	SQLWarning *		next;
+	const std::string	descr;
 
 public:
 
@@ -67,14 +67,14 @@ public:
 		return errNo;
 	}
 
-	const SQLWarning & getNextWarning() const
+	const SQLWarning * getNextWarning() const
 	{
-		return *next;
+		return next;
 	}
 
 	void setNextWarning(SQLWarning * _next)
 	{
-		next.reset(_next);
+		next = _next;
 	}
 
 	virtual ~SQLWarning() throw () {};

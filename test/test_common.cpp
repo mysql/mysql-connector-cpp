@@ -2331,13 +2331,6 @@ static void test_not_implemented_conn_meta(std::auto_ptr<sql::Connection> & conn
 			ensure("ERR: Exception not thrown", false);
 		} catch (sql::MethodNotImplementedException &) {}
 
-		// supportsConvert(int /* fromType */, int /* toType */)
-		try {
-			total_tests++;
-			conn_meta->supportsConvert(1, 2);
-			ensure("ERR: Exception not thrown", false);
-		} catch (sql::MethodNotImplementedException &) {}
-
 		// supportsIntegrityEnhancementFacility()
 		try {
 			total_tests++;
@@ -2378,15 +2371,6 @@ static void test_not_implemented_ps(std::auto_ptr<sql::Connection> & conn, const
 	ps2->setInt(1, 2);
 
 	try {
-
-		// clearParameters()
-		try {
-			ps1->clearParameters();
-			ensure("ERR: Exception not thrown", true);
-			total_tests++;
-			ps2->clearParameters();
-		} catch (sql::MethodNotImplementedException &) {}
-
 		// execute(const std::string&)
 		try {
 			total_tests++;

@@ -797,5 +797,43 @@ void preparedstatement::getMetaData()
 }
 
 
+void preparedstatement::callSP()
+{
+  logMsg("preparedstatement::callSP() - MySQL_PreparedStatement::*()");
+
+  try
+  {
+    try
+    {
+      pstmt.reset(con->prepareStatement("DROP PROCEDURE IF EXISTS p"));
+      pstmt->execute();
+    }
+    catch (sql::SQLException &e)
+    {
+      logMsg("... skipping:");
+      logMsg(e.what());
+      return;
+    }
+
+    DatabaseMetaData dbmeta(con->getMetaData());
+
+    pstmt.reset(con->prepareStatement("CREATE PROCEDURE p(OUT ver_param VARCHAR(25)) BEGIN SELECT VERSION() INTO ver_param; END;"));
+    ASSERT(!pstmt->execute());
+    pstmt.reset(con->prepareStatement("CALL p(@version)"));
+    ASSERT(!pstmt->execute());
+    pstmt.reset(con->prepareStatement("SELECT @version AS _version"));
+    res.reset(pstmt->executeQuery());
+    ASSERT(res->next());
+    ASSERT_EQUALS(dbmeta->getDatabaseProductVersion(), res->getString("_version"));    
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+}
+
 } /* namespace preparedstatement */
 } /* namespace testsuite */
