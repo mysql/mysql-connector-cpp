@@ -94,6 +94,11 @@ public:
 		value_set[position] = true;
 	}
 
+	void unset(unsigned int position)
+	{
+		value_set[position] = false;
+	}
+
 	void setBlob(unsigned int position, std::istream * blob)
 	{
 		blob_bind[position] = blob;
