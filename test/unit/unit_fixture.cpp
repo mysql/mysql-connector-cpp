@@ -121,12 +121,12 @@ void unit_fixture::init()
   columns.push_back(columndefinition("TIME", "TIME", sql::DataType::TIME, "-838:59:59", true, 8, 0, true, "", 0, "NO"));
   columns.push_back(columndefinition("TIME", "TIME NOT NULL", sql::DataType::TIME, "838:59:59", true, 8, 0, false, "", 0, "NO"));
   columns.push_back(columndefinition("TIME", "TIME DEFAULT '12:39:41'", sql::DataType::TIME, "-838:59:59", true, 8, 0, true, "12:39:41", 0, "NO"));
-  columns.push_back(columndefinition("YEAR", "YEAR", sql::DataType::SMALLINT, "1901", false, 4, 0, true, "", 0, "NO"));
-  columns.push_back(columndefinition("YEAR", "YEAR NOT NULL", sql::DataType::SMALLINT, "1902", false, 4, 0, false, "", 0, "NO"));
-  columns.push_back(columndefinition("YEAR", "YEAR(4)", sql::DataType::SMALLINT, "2009", false, 4, 0, true, "", 0, "NO", "2009"));
+  columns.push_back(columndefinition("YEAR", "YEAR", sql::DataType::YEAR, "1901", false, 4, 0, true, "", 0, "NO"));
+  columns.push_back(columndefinition("YEAR", "YEAR NOT NULL", sql::DataType::YEAR, "1902", false, 4, 0, false, "", 0, "NO"));
+  columns.push_back(columndefinition("YEAR", "YEAR(4)", sql::DataType::YEAR, "2009", false, 4, 0, true, "", 0, "NO", "2009"));
 #endif
-  columns.push_back(columndefinition("YEAR", "YEAR(2)", sql::DataType::SMALLINT, "1", false, 4, 0, true, "", 0, "NO"));
-  columns.push_back(columndefinition("YEAR", "YEAR(3) DEFAULT '2009'", sql::DataType::SMALLINT, "1", false, 4, 0, true, "2009", 0, "NO"));
+  columns.push_back(columndefinition("YEAR", "YEAR(2)", sql::DataType::YEAR, "1", false, 4, 0, true, "", 0, "NO"));
+  columns.push_back(columndefinition("YEAR", "YEAR(3) DEFAULT '2009'", sql::DataType::YEAR, "1", false, 4, 0, true, "2009", 0, "NO"));
 #if 1
   columns.push_back(columndefinition("CHAR", "CHAR", sql::DataType::CHAR, "a", true, 1, 0, true, "", 0, "NO", "a"));
   columns.push_back(columndefinition("CHAR", "CHAR NOT NULL", sql::DataType::CHAR, "a", true, 1, 0, false, "", 0, "NO"));

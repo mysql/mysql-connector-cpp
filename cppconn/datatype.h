@@ -40,6 +40,7 @@ public:
 		TIMESTAMP,
 		DATE,
 		TIME,
+		YEAR,
 		GEOMETRY,
 		ENUM,
 		SET,
