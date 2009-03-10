@@ -728,7 +728,7 @@ void resultsetmetadata::isCaseSensitive()
     {
       logMsg("... skipping 'collate_bin' test because we don't use I_S");
     }
-    */
+     */
 
     logMsg("... PreparedStatement");
     pstmt.reset(con->prepareStatement("SELECT id, col1, col2 FROM test"));
@@ -737,13 +737,14 @@ void resultsetmetadata::isCaseSensitive()
     meta2.reset(res->getMetaData());
     ASSERT_EQUALS(meta2->isCaseSensitive(1), false);
     ASSERT_EQUALS(meta2->isCaseSensitive(2), false);
+    /*
     if (TestsRunner::theInstance().getStartOptions()->use_is)
     {
       // connection_collation distorts the collation of the results (character_set_results) doesn't help
       // and thus we can't say for sure whether the original column was CI or CS. Only I_S.COLUMNS can tell us.
       ASSERT_EQUALS(meta2->isCaseSensitive(3), true);
     }
-
+     */
     logMsg("... Statement");
     runStandardQuery();
     doIsCaseSensitive(false);
