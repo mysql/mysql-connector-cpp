@@ -11,6 +11,7 @@
 
 #include "BlobRegressionTest.h"
 #include "../common/file.h"
+#include <sstream>
 
 namespace testsuite
 {
@@ -66,9 +67,31 @@ namespace regression
   {
     if ( this->versionMeetsMinimum(4, 0) )
     {
-      const int size18M= 18 * 1024 * 1024;
+      int size18M= 18 * 1024 * 1024;
       String blobData; // 18M blob
+      std::stringstream sql;
+      ResultSet res;
 
+      res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'"));
+      if (!res->next())
+        return;
+
+      MESSAGE("checking max_allowed_packet");
+      if (res->getInt("Value") < size18M) {
+         // Update will fail, unless we allow larger packets
+         sql.str("");
+         sql << "SET SESSION max_allowed_packet = " << size18M;
+         stmt->execute(sql.str());
+
+         res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'"));
+         res->next();
+         size18M = res->getInt("Value") - 1024;
+
+         sql.str("");
+         sql << "Adjusting BLOB to " << size18M;
+         sql << " characters because max_allowed_packet = " << res->getInt("Value");
+         MESSAGE(sql.str());
+      }
       blobData.append( size18M, 'a' );
 
       stmt->executeUpdate("DROP TABLE IF EXISTS testUpdateLongBlob");
