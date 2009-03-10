@@ -78,7 +78,7 @@ namespace regression
       pstmt.reset( conn->prepareStatement("UPDATE testUpdateLongBlob SET blobField=?") );
 
       pstmt->setString(1, blobData );
-      pstmt->executeUpdate();
+      pstmt->execute();
 
       stmt->executeUpdate("DROP TABLE IF EXISTS testUpdateLongBlob");
     }

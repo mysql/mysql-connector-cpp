@@ -30,6 +30,7 @@ public:
 
   EXAMPLE_TEST_FIXTURE(preparedstatement)
   {
+    TEST_CASE(anonymousSelect);
     TEST_CASE(InsertSelectAllTypes);
     TEST_CASE(assortedSetType);
     TEST_CASE(setNull);
@@ -37,6 +38,11 @@ public:
     TEST_CASE(getMetaData);
     TEST_CASE(callSP);
   }
+
+  /**
+   * SELECT ' ', NULL as string
+   */
+  void anonymousSelect();
 
   /**
    * Loops over all kinds of column types and inserts/fetches a value

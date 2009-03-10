@@ -616,12 +616,12 @@ void preparedstatement::assortedSetType()
       res.reset(pstmt->executeQuery());
       checkResultSetScrolling(res);
       ASSERT(res->next());
-      if (res->getUInt(1) != (9 + (unsigned int) it->is_nullable))
+      if (res->getInt("_num") != (9 + (int) it->is_nullable))
       {
         sql.str("");
         sql << "....\t\tWARNING, SQL: " << it->sqldef << ", nullable " << std::boolalpha;
         sql << it->is_nullable << ", found " << res->getInt(1) << "columns but";
-        sql << " expecting " << (9 + (unsigned int) it->is_nullable);
+        sql << " expecting " << (9 + (int) it->is_nullable);
         logMsg(sql.str());
         got_warning=true;
       }
@@ -833,6 +833,30 @@ void preparedstatement::callSP()
     fail(e.what(), __FILE__, __LINE__);
   }
 
+}
+
+void preparedstatement::anonymousSelect()
+{
+  logMsg("preparedstatement::anonymousSelect() - MySQL_PreparedStatement::*, MYSQL_PS_Resultset::*");
+  
+  try
+  {
+    pstmt.reset(con->prepareStatement("SELECT ' ', NULL"));
+    res.reset(pstmt->executeQuery());
+    ASSERT(res->next());
+    ASSERT_EQUALS(" ", res->getString(1));
+
+    std::string mynull(res->getString(2));
+    ASSERT(res->isNull(2));
+    ASSERT(res->wasNull());
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
 }
 
 } /* namespace preparedstatement */
