@@ -22,6 +22,10 @@
 #include <process.h>
 #include <sys/timeb.h>
 
+#include <my_global.h>
+#include <m_string.h>
+#include "my_pthread.h"
+
 int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr)
 {
   cond->waiting= 0;
