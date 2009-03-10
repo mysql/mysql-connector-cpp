@@ -261,14 +261,17 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
 			return sql::DataType::YEAR;
 		case MYSQL_TYPE_DATETIME:
 			return sql::DataType::TIMESTAMP;
-		case MYSQL_TYPE_TINY_BLOB:
-			if ((field->flags & BINARY_FLAG) && field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
-				return sql::DataType::VARBINARY;
-			}
-			return sql::DataType::VARCHAR;
-		case MYSQL_TYPE_MEDIUM_BLOB:
-		case MYSQL_TYPE_LONG_BLOB:
+		case MYSQL_TYPE_TINY_BLOB:// should no appear over the wire
+		case MYSQL_TYPE_MEDIUM_BLOB:// should no appear over the wire
+		case MYSQL_TYPE_LONG_BLOB:// should no appear over the wire
 		case MYSQL_TYPE_BLOB:
+			if (255 == field->length) {
+				if ((field->flags & BINARY_FLAG) && field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
+					return sql::DataType::VARBINARY;
+				}
+				return sql::DataType::VARCHAR;				
+			}
+			// Over the wire only MYSQL_TYPE_BLOB appears
 			if ((field->flags & BINARY_FLAG) && field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
 				return sql::DataType::LONGVARBINARY;
 			}
@@ -406,17 +409,21 @@ mysql_type_to_string(const MYSQL_FIELD * const field)
 			return "TIME";
 		case MYSQL_TYPE_DATETIME:
 			return "DATETIME";
-		case MYSQL_TYPE_TINY_BLOB:
-			return "TINYBLOB";
-		case MYSQL_TYPE_MEDIUM_BLOB:
-			return "MEDIUMBLOB";
-		case MYSQL_TYPE_LONG_BLOB:
-			return "LONGBLOB";
+		case MYSQL_TYPE_TINY_BLOB:// should no appear over the wire
+		case MYSQL_TYPE_MEDIUM_BLOB:// should no appear over the wire
+		case MYSQL_TYPE_LONG_BLOB:// should no appear over the wire
 		case MYSQL_TYPE_BLOB:
-			if (field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
-				return "BLOB";
+		{
+			bool isBlob = field->charsetnr == MAGIC_BINARY_CHARSET_NR;
+			switch (field->length) {
+				case 255: return isBlob? "TINYBLOB":"TINYTEXT";
+				case 65535: return isBlob? "BLOB":"TEXT";
+				case 16777215: return isBlob? "MEDIUMBLOB":"MEDIUMTEXT";
+				case 4294967295: return isBlob? "LONGBLOB":"LONGTEXT";
+				default:
+					return "UNKNOWN";
 			}
-			return "TEXT";
+		}
 		case MYSQL_TYPE_VARCHAR:
 		case MYSQL_TYPE_VAR_STRING:
 			if (field->flags & ENUM_FLAG) {
