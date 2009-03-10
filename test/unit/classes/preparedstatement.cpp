@@ -616,12 +616,12 @@ void preparedstatement::assortedSetType()
       res.reset(pstmt->executeQuery());
       checkResultSetScrolling(res);
       ASSERT(res->next());
-      if (res->getUInt(1) != (9 + (unsigned int) it->is_nullable))
+      if (res->getInt("_num") != (9 + (int) it->is_nullable))
       {
         sql.str("");
         sql << "....\t\tWARNING, SQL: " << it->sqldef << ", nullable " << std::boolalpha;
         sql << it->is_nullable << ", found " << res->getInt(1) << "columns but";
-        sql << " expecting " << (9 + (unsigned int) it->is_nullable);
+        sql << " expecting " << (9 + (int) it->is_nullable);
         logMsg(sql.str());
         got_warning=true;
       }
