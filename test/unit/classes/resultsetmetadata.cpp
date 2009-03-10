@@ -716,6 +716,8 @@ void resultsetmetadata::isCaseSensitive()
     ResultSetMetaData meta2(res->getMetaData());
     ASSERT_EQUALS(meta2->isCaseSensitive(1), false);
     ASSERT_EQUALS(meta2->isCaseSensitive(2), false);
+    /*
+     NOTE: There is no reliable way to detect CI/CS
     if (TestsRunner::theInstance().getStartOptions()->use_is)
     {
       // connection_collation distorts the collation of the results (character_set_results) doesn't help
@@ -726,6 +728,7 @@ void resultsetmetadata::isCaseSensitive()
     {
       logMsg("... skipping 'collate_bin' test because we don't use I_S");
     }
+    */
 
     logMsg("... PreparedStatement");
     pstmt.reset(con->prepareStatement("SELECT id, col1, col2 FROM test"));
