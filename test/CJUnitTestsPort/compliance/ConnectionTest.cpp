@@ -462,14 +462,14 @@ void ConnectionTest::testIsReadOnly()
 void ConnectionTest::testNativeSQL()
 {
   String sSqlStmt;
-  String * nativeSql;
+  String nativeSql;
   sSqlStmt=sqlProps["Escape_Seq_Query"];
   logMsg(String("SQL Statement with Escape Syntax") + sSqlStmt);
   logMsg("Calling nativeSQL method ");
   nativeSql=conn->nativeSQL(sSqlStmt);
-  if (nativeSql->size() > 0)
+  if (nativeSql.size() > 0)
   {
-    logMsg(String("nativeSQL method returns :  ") + *nativeSql);
+    logMsg(String("nativeSQL method returns :  ") + nativeSql);
   } else
   {
     logErr(

@@ -56,6 +56,7 @@ class MySQL_ParamBind
 {
 	MYSQL_BIND * bind;
 	bool 		* value_set;
+	bool 		* delete_blob_after_execute;
 	unsigned int param_count;
 
 	std::istream	** blob_bind;
@@ -68,12 +69,15 @@ public:
 			bind = NULL;
 			value_set = NULL;
 			blob_bind = NULL;
+			delete_blob_after_execute = NULL;
 		} else {
 			bind = (MYSQL_BIND *) calloc(paramCount, sizeof(MYSQL_BIND));
 			value_set = new bool[paramCount];
+			delete_blob_after_execute = new bool[paramCount];
 			for (unsigned int i = 0; i < paramCount; ++i) {
 				bind[i].is_null_value = 1;
 				value_set[i] = false;
+				delete_blob_after_execute[i] = false;
 			}
 			blob_bind = (std::istream **) calloc(paramCount, sizeof(std::istream *));
 		}
@@ -86,6 +90,15 @@ public:
 
 		free(bind);
 		delete [] value_set;
+		for (unsigned int i = 0; i < param_count; ++i) {
+			if (delete_blob_after_execute[i]) {
+				delete_blob_after_execute[i] = false;
+				delete blob_bind[i];
+				blob_bind[i] = NULL;
+			}
+		}
+
+		delete [] delete_blob_after_execute;
 		free(blob_bind);
 	}
 
@@ -97,11 +110,20 @@ public:
 	void unset(unsigned int position)
 	{
 		value_set[position] = false;
+		if (delete_blob_after_execute[position]) {
+			delete_blob_after_execute[position] = false;
+			delete blob_bind[position];
+			blob_bind[position] = NULL;
+		}
 	}
 
-	void setBlob(unsigned int position, std::istream * blob)
+	void setBlob(unsigned int position, std::istream * blob, bool delete_after_execute)
 	{
+		if (blob_bind[position] && delete_blob_after_execute[position]) {
+			delete blob_bind[position];
+		}
 		blob_bind[position] = blob;
+		delete_blob_after_execute[position] = delete_after_execute;
 	}
 
 	bool isAllSet()
@@ -117,13 +139,16 @@ public:
 	void clearParameters()
 	{
 		for (unsigned int i = 0; i < param_count; ++i) {
-			if ( value_set[i] ){
-			  delete (char*) bind[i].length;
-			  bind[i].length = NULL;
-			  delete[] (char*) bind[i].buffer;
-			  bind[i].buffer = NULL;
-			  blob_bind[i] = NULL;
-			  value_set[i] = false;
+			if (value_set[i]){
+				delete (char*) bind[i].length;
+				bind[i].length = NULL;
+				delete[] (char*) bind[i].buffer;
+				bind[i].buffer = NULL;
+				if (blob_bind[i] && delete_blob_after_execute[i]) {
+					delete blob_bind[i];
+				}
+				blob_bind[i] = NULL;
+				value_set[i] = false;
 			}
 		}
 	}
@@ -476,17 +501,14 @@ MySQL_Prepared_Statement::setBigInt(unsigned int parameterIndex, const std::stri
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_Statement::setBlob() -I- */
+/* {{{ MySQL_Prepared_Statement::setBlob_intern() -I- */
 void
-MySQL_Prepared_Statement::setBlob(unsigned int parameterIndex, std::istream * blob)
+MySQL_Prepared_Statement::setBlob_intern(unsigned int parameterIndex, std::istream * blob, bool deleteBlobAfterExecute)
 {
-	CPP_ENTER("MySQL_Prepared_Statement::setBlob");
+	CPP_ENTER("MySQL_Prepared_Statement::setBlob_intern");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-	if (parameterIndex == 0 || parameterIndex > param_count) {
-		throw InvalidArgumentException("MySQL_Prepared_Statement::setBlob: invalid 'parameterIndex'");
-	}
 	--parameterIndex; /* DBC counts from 1 */
 
 	param_bind->set(parameterIndex);
@@ -502,7 +524,24 @@ MySQL_Prepared_Statement::setBlob(unsigned int parameterIndex, std::istream * bl
 	delete param->length;
 	param->length = new unsigned long(0);
 
-	param_bind->setBlob(parameterIndex, blob);
+	param_bind->setBlob(parameterIndex, blob, deleteBlobAfterExecute);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_Statement::setBlob() -I- */
+void
+MySQL_Prepared_Statement::setBlob(unsigned int parameterIndex, std::istream * blob)
+{
+	CPP_ENTER("MySQL_Prepared_Statement::setBlob");
+	CPP_INFO_FMT("this=%p", this);
+	checkClosed();
+
+	if (parameterIndex == 0 || parameterIndex > param_count) {
+		throw InvalidArgumentException("MySQL_Prepared_Statement::setBlob: invalid 'parameterIndex'");
+	}
+
+	setBlob_intern(parameterIndex, blob, false);
 }
 /* }}} */
 
@@ -587,7 +626,7 @@ MySQL_Prepared_Statement::setDouble(unsigned int parameterIndex, double value)
 	--parameterIndex; /* DBC counts from 1 */
 
 	if (param_bind->getBlobObject(parameterIndex)) {
-		param_bind->setBlob(parameterIndex, NULL);
+		param_bind->setBlob(parameterIndex, NULL, false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -626,7 +665,7 @@ MySQL_Prepared_Statement::setInt(unsigned int parameterIndex, int32_t value)
 	--parameterIndex; /* DBC counts from 1 */
 
 	if (param_bind->getBlobObject(parameterIndex)) {
-		param_bind->setBlob(parameterIndex, NULL);
+		param_bind->setBlob(parameterIndex, NULL, false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -665,7 +704,7 @@ MySQL_Prepared_Statement::setUInt(unsigned int parameterIndex, uint32_t value)
 	--parameterIndex; /* DBC counts from 1 */
 
 	if (param_bind->getBlobObject(parameterIndex)) {
-		param_bind->setBlob(parameterIndex, NULL);
+		param_bind->setBlob(parameterIndex, NULL, false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -704,7 +743,7 @@ MySQL_Prepared_Statement::setInt64(unsigned int parameterIndex, int64_t value)
 	--parameterIndex; /* DBC counts from 1 */
 
 	if (param_bind->getBlobObject(parameterIndex)) {
-		param_bind->setBlob(parameterIndex, NULL);
+		param_bind->setBlob(parameterIndex, NULL, false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -741,7 +780,7 @@ MySQL_Prepared_Statement::setUInt64(unsigned int parameterIndex, uint64_t value)
 	--parameterIndex; /* DBC counts from 1 */
 
 	if (param_bind->getBlobObject(parameterIndex)) {
-		param_bind->setBlob(parameterIndex, NULL);
+		param_bind->setBlob(parameterIndex, NULL, false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -782,7 +821,7 @@ MySQL_Prepared_Statement::setNull(unsigned int parameterIndex, int /* sqlType */
 	--parameterIndex; /* DBC counts from 1 */
 
 	if (param_bind->getBlobObject(parameterIndex)) {
-		param_bind->setBlob(parameterIndex, NULL);
+		param_bind->setBlob(parameterIndex, NULL, false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -816,14 +855,13 @@ MySQL_Prepared_Statement::setString(unsigned int parameterIndex, const std::stri
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setString: invalid 'parameterIndex'");
 	}
 	if (value.length() > 256*1024) {
-		std::istringstream tmp_blob(value);
-		return setBlob(parameterIndex, &tmp_blob);
+		return setBlob_intern(parameterIndex, new std::istringstream(value), true);
 	}
 
 	--parameterIndex; /* DBC counts from 1 */
 
 	if (param_bind->getBlobObject(parameterIndex)) {
-		param_bind->setBlob(parameterIndex, NULL);
+		param_bind->setBlob(parameterIndex, NULL, false);
 		param_bind->unset(parameterIndex);
 	}
 

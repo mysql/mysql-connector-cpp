@@ -82,7 +82,7 @@ public:
 
 	bool isReadOnly();
 
-	std::string *nativeSQL(const std::string& sql);
+	std::string nativeSQL(const std::string& sql);
 
 	sql::PreparedStatement * prepareStatement(const std::string& sql);
 

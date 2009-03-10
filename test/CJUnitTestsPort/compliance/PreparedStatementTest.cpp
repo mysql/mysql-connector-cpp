@@ -41,6 +41,7 @@ namespace compliance
 /* throws Exception */
 void PreparedStatementTest::testGetMetaData()
 {
+  ResultSet			res;
   ResultSetMetaData rsmd;
   ResultSetMetaData rsmdPrep;
   bool              statflag=   false;
@@ -57,8 +58,8 @@ void PreparedStatementTest::testGetMetaData()
     so, probably test doesn't make sense. Changing to compare result sets metadata
      */
     //rsmdPrep= pstmt->getMetaData();
-
-    rsmdPrep.reset(pstmt->executeQuery()->getMetaData());
+	res.reset(pstmt->executeQuery());
+    rsmdPrep.reset(res->getMetaData());
   } catch (sql::SQLException & sqe) {
     statflag=true;
     logErr(String("SQL std::exception * ") + sqe.what());
@@ -698,9 +699,9 @@ void PreparedStatementTest::testSetBoolean01()
   TestsListener::theInstance().messagesLog()
         << "Boolean Value :" << bMinBooleanVal << std::endl;
 
-  sql::ResultSet * res = stmt->executeQuery("select * from Bit_Tab");
+  ResultSet tmp_res(stmt->executeQuery("select * from Bit_Tab"));
 
-  TestsListener::theInstance().messagesLog() << "Row count = " << res->rowsCount() << std::endl;
+  TestsListener::theInstance().messagesLog() << "Row count = " << tmp_res->rowsCount() << std::endl;
 
   TestsListener::theInstance().messagesLog() << sPrepStmt << std::endl;
 

@@ -105,7 +105,7 @@ public:
 
 	virtual bool isReadOnly() = 0;
 
-	virtual std::string *nativeSQL(const std::string& sql) = 0;
+	virtual std::string nativeSQL(const std::string& sql) = 0;
 
 	virtual PreparedStatement * prepareStatement(const std::string& sql) = 0;
 

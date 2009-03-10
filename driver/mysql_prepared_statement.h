@@ -56,6 +56,8 @@ protected:
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 
 	bool sendLongDataBeforeParamBind();
+	void setBlob_intern(unsigned int parameterIndex, std::istream * blob, bool deleteBlobAfterExecute);
+
 public:
 
 	MySQL_Prepared_Statement(MYSQL_STMT *s, sql::Connection * conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * log);

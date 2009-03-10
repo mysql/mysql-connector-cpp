@@ -533,12 +533,12 @@ MySQL_Connection::isReadOnly()
 
 
 /* {{{ MySQL_Connection::nativeSQL() -I- */
-std::string *
+std::string
 MySQL_Connection::nativeSQL(const std::string& sql)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::nativeSQL");
 	checkClosed();
-	return new std::string(sql.c_str());
+	return std::string(sql.c_str());
 }
 /* }}} */
 

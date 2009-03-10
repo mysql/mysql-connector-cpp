@@ -646,7 +646,8 @@ void BaseTestFixture::setUp()
     } else
     {*/
     String tmp( "Connected to " );
-    tmp+= this->conn->getMetaData()->getDatabaseProductName();
+	DatabaseMetaData meta(this->conn->getMetaData());
+    tmp+= meta->getDatabaseProductName();
     tmp+= " / ";
     //tmp.append( this->conn->getMetaData()->getDatabaseProductVersion() );
 

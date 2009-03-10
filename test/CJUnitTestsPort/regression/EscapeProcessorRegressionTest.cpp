@@ -28,7 +28,7 @@ namespace regression
 void EscapeProcessorRegressionTest::testBug11797()
 {
   ASSERT_EQUALS("select 'ESCAPED BY ''\\'' ON {tbl_name | * | *.* | db_name.*}'",
-                * this->conn->nativeSQL("select 'ESCAPED BY ''\\'' ON {tbl_name | * | *.* | db_name.*}'"));
+                this->conn->nativeSQL("select 'ESCAPED BY ''\\'' ON {tbl_name | * | *.* | db_name.*}'"));
 }
 
 /**
@@ -44,7 +44,7 @@ void EscapeProcessorRegressionTest::testBug11498()
 {
   ASSERT_EQUALS(
                 "replace into t1 (id, f1, f4) VALUES(1,\"\",\"tko { zna gdje se sakrio\"),(2,\"a\",\"sedmi { kontinentio\"),(3,\"a\",\"a } cigov si ti?\")",
-                * this->conn->nativeSQL("replace into t1 (id, f1, f4) VALUES(1,\"\",\"tko { zna gdje se sakrio\"),(2,\"a\",\"sedmi { kontinentio\"),(3,\"a\",\"a } cigov si ti?\")"));
+                this->conn->nativeSQL("replace into t1 (id, f1, f4) VALUES(1,\"\",\"tko { zna gdje se sakrio\"),(2,\"a\",\"sedmi { kontinentio\"),(3,\"a\",\"a } cigov si ti?\")"));
 }
 
 /**
@@ -57,7 +57,7 @@ void EscapeProcessorRegressionTest::testBug11498()
 /* throws Exception */
 void EscapeProcessorRegressionTest::testBug14909()
 {
-  ASSERT_EQUALS("select '{\"','}'", * this->conn->nativeSQL("select '{\"','}'"));
+  ASSERT_EQUALS("select '{\"','}'", this->conn->nativeSQL("select '{\"','}'"));
 }
 
 /**

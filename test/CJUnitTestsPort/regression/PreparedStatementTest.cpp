@@ -22,7 +22,7 @@ namespace regression
 
     pstmt->setString( 1, "dummy" );
 
-    pstmt->executeQuery();
+    ResultSet tmp(pstmt->executeQuery());
 
     pstmt->close();
 
