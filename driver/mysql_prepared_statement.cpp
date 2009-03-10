@@ -779,6 +779,11 @@ MySQL_Prepared_Statement::setString(unsigned int parameterIndex, const std::stri
 		CPP_ERR("Invalid parameterIndex");
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setString: invalid 'parameterIndex'");
 	}
+	if (value.length() > 256*1024) {
+		std::istringstream tmp_blob(value);
+		return setBlob(parameterIndex, &tmp_blob);
+	}
+
 	--parameterIndex; /* DBC counts from 1 */
 
 	enum_field_types t = MYSQL_TYPE_STRING;
