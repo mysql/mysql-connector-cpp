@@ -425,7 +425,7 @@ mysql_type_to_string(const MYSQL_FIELD * const field)
 				case 255: return isBlob? "TINYBLOB":"TINYTEXT";
 				case 65535: return isBlob? "BLOB":"TEXT";
 				case 16777215: return isBlob? "MEDIUMBLOB":"MEDIUMTEXT";
-				case 4294967295: return isBlob? "LONGBLOB":"LONGTEXT";
+				case L64(4294967295): return isBlob? "LONGBLOB":"LONGTEXT";
 				default:
 					return "UNKNOWN";
 			}
