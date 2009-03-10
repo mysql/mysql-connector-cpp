@@ -61,16 +61,15 @@ struct StartOptions
   String dbSchema;
 
   StartOptions()
-  : verbose(false), verbose_summary(false)
-
+  : verbose(false), verbose_summary(false), timer(false), use_is(true)
   {
   }
 
   StartOptions(int paramsNumber, char** paramsValues)
-  : verbose(false), verbose_summary(false)
+  : verbose(false), verbose_summary(false), timer(false), use_is(true)
   {
-    String * _param[ poLast - poFirst - 1 ]={&dbUrl, &dbUser, &dbPasswd, &dbSchema};
-    use_is = true;
+    String * _param[ poLast - poFirst - 1 ]={&dbUrl, &dbUser, &dbPasswd, &dbSchema};    
+
     if (paramsNumber > 1)
     {
       UnnamedParameterOrder curParam=poFirst;
@@ -80,7 +79,7 @@ struct StartOptions
 
         if (param.substr(0, 2) == "--")
         {
-          if (param.substr(0, sizeof("--verbose") - 1) == "--verbose")
+          if (param.substr(0, sizeof ("--verbose") - 1) == "--verbose")
           {
             verbose=true;
             verbose_summary=true;
@@ -97,13 +96,13 @@ struct StartOptions
               }
             }
           }
-          else if ( param == "--timer"  )
+          else if (param == "--timer")
           {
-            timer= true;
+            timer=true;
           }
-          else if ( param == "--dont-use-is"  )
+          else if (param == "--dont-use-is")
           {
-            use_is= false;
+            use_is=false;
           }
 
         }
