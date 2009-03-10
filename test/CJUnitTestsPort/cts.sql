@@ -27,7 +27,7 @@ CREATE TABLE BB_tab (
   BRAND_NAME varchar(32) default NULL,
   PRICE float default NULL,
   PRIMARY KEY  (KEY_ID)
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'bb_tab'
@@ -42,7 +42,7 @@ CREATE TABLE Bigint_Tab (
   MAX_VAL bigint(20) default NULL,
   MIN_VAL bigint(20) default NULL,
   NULL_VAL bigint(20) default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'bigint_Tab'
@@ -55,7 +55,7 @@ CREATE TABLE Bigint_Tab (
 
 CREATE TABLE Binary_Tab (
   BINARY_VAL blob
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'binary_Tab'
@@ -70,7 +70,7 @@ CREATE TABLE Bit_Tab (
   MAX_VAL tinyint(1) default NULL,
   MIN_VAL tinyint(1) default NULL,
   NULL_VAL tinyint(1) default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'bit_Tab'
@@ -84,7 +84,7 @@ CREATE TABLE Bit_Tab (
 CREATE TABLE Char_Tab (
   COFFEE_NAME char(30) default NULL,
   NULL_VAL char(30) default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'char_Tab'
@@ -99,7 +99,7 @@ CREATE TABLE Connector_Tab (
   KEY_ID int(11) default NULL,
   PRODUCT_NAME varchar(32) default NULL,
   PRICE float default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'connector_Tab'
@@ -114,7 +114,7 @@ CREATE TABLE ctstable1 (
   TYPE_ID int(11) NOT NULL default '0',
   TYPE_DESC varchar(32) default NULL,
   PRIMARY KEY  (TYPE_ID)
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'ctstable1'
@@ -143,7 +143,7 @@ CREATE TABLE ctstable2 (
   PRIMARY KEY  (KEY_ID),
   KEY TYPE_ID (TYPE_ID),
   FOREIGN KEY (`TYPE_ID`) REFERENCES `ctstable1` (`TYPE_ID`)
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'ctstable2'
@@ -172,7 +172,7 @@ CREATE TABLE ctstable3 (
   TIMECOL time default NULL,
   TSCOL1 datetime default NULL,
   TSCOL2 datetime default NULL
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 --
 -- Dumping data for table 'ctstable3'
@@ -186,7 +186,7 @@ CREATE TABLE ctstable3 (
 CREATE TABLE ctstable4 (
   STRING4 varchar(20) default NULL,
   NUMCOL decimal(10,0) default NULL
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 --
 -- Dumping data for table 'ctstable4'
@@ -200,7 +200,7 @@ CREATE TABLE ctstable4 (
 CREATE TABLE Date_Tab (
   MFG_DATE date default NULL,
   NULL_VAL date default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'date_Tab'
@@ -215,7 +215,7 @@ CREATE TABLE Decimal_Tab (
   MAX_VAL decimal(30,15) default NULL,
   MIN_VAL decimal(30,15) default NULL,
   NULL_VAL decimal(30,15) default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'decimal_Tab'
@@ -231,7 +231,7 @@ CREATE TABLE Deploy_Tab1 (
   BRAND_NAME varchar(32) default NULL,
   PRICE float default NULL,
   PRIMARY KEY  (KEY_ID)
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'deploy_Tab1'
@@ -247,7 +247,7 @@ CREATE TABLE Deploy_Tab2 (
   BRAND_NAME varchar(32) default NULL,
   PRICE float default NULL,
   PRIMARY KEY  (KEY_ID)
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'deploy_Tab2'
@@ -263,7 +263,7 @@ CREATE TABLE Deploy_Tab3 (
   BRAND_NAME varchar(32) default NULL,
   PRICE float default NULL,
   PRIMARY KEY  (KEY_ID)
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'deploy_Tab3'
@@ -279,7 +279,7 @@ CREATE TABLE Deploy_Tab4 (
   BRAND_NAME varchar(32) default NULL,
   PRICE float default NULL,
   PRIMARY KEY  (KEY_ID)
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'deploy_Tab4'
@@ -297,7 +297,7 @@ CREATE TABLE Deploy_Tab5 (
   BRAND_NAME varchar(32) default NULL,
   PRICE float default NULL,
   PRIMARY KEY  (KEY_ID1,KEY_ID2,KEY_ID3)
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'deploy_Tab5'
@@ -312,7 +312,7 @@ CREATE TABLE Double_Tab (
   MAX_VAL double default NULL,
   MIN_VAL double default NULL,
   NULL_VAL double default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'double_Tab'
@@ -327,7 +327,7 @@ CREATE TABLE Float_Tab (
   MAX_VAL float default NULL,
   MIN_VAL float default NULL,
   NULL_VAL float default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'float_Tab'
@@ -342,7 +342,7 @@ CREATE TABLE Integer_Tab (
   MAX_VAL int(11) default NULL,
   MIN_VAL int(11) default NULL,
   NULL_VAL int(11) default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'integer_Tab'
@@ -357,7 +357,7 @@ CREATE TABLE Integration_sec_Tab (
   LOG_NO int(11) default NULL,
   LINE_NO int(11) default NULL,
   MESSAGE varchar(255) default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'integration_sec_Tab'
@@ -372,7 +372,7 @@ CREATE TABLE Integration_Tab (
   ACCOUNT int(11) NOT NULL default '0',
   BALANCE float default NULL,
   PRIMARY KEY  (ACCOUNT)
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'integration_Tab'
@@ -387,7 +387,7 @@ CREATE TABLE Jta_Tab1 (
   KEY_ID int(11) default NULL,
   COF_NAME varchar(32) default NULL,
   PRICE float default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'jta_Tab1'
@@ -402,7 +402,7 @@ CREATE TABLE Jta_Tab2 (
   KEY_ID int(11) default NULL,
   CHOC_NAME varchar(32) default NULL,
   PRICE float default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'jta_Tab2'
@@ -415,7 +415,7 @@ CREATE TABLE Jta_Tab2 (
 
 CREATE TABLE Longvarbinary_Tab (
   LONGVARBINARY_VAL longblob
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'longvarbinary_Tab'
@@ -428,7 +428,7 @@ CREATE TABLE Longvarbinary_Tab (
 
 CREATE TABLE Longvarchar_Tab (
   COFFEE_NAME mediumtext
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'longvarchar_Tab'
@@ -442,7 +442,7 @@ INSERT INTO Longvarchar_Tab VALUES ('1999-12-31 12:59:59');
 
 CREATE TABLE Longvarcharnull_Tab (
   NULL_VAL mediumtext
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'longvarcharnull_Tab'
@@ -458,7 +458,7 @@ CREATE TABLE Numeric_Tab (
   MAX_VAL decimal(30,15) default NULL,
   MIN_VAL decimal(30,15) default NULL,
   NULL_VAL decimal(30,15) default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'numeric_Tab'
@@ -473,7 +473,7 @@ CREATE TABLE Real_Tab (
   MAX_VAL double default NULL,
   MIN_VAL double default NULL,
   NULL_VAL double default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'real_Tab'
@@ -489,7 +489,7 @@ CREATE TABLE Sec_Tab1 (
   PRICE float default NULL,
   BRAND varchar(32) default NULL,
   PRIMARY KEY  (KEY_ID)
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'sec_Tab1'
@@ -504,7 +504,7 @@ CREATE TABLE Smallint_Tab (
   MAX_VAL smallint(6) default NULL,
   MIN_VAL smallint(6) default NULL,
   NULL_VAL smallint(6) default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'smallint_Tab'
@@ -518,7 +518,7 @@ CREATE TABLE Smallint_Tab (
 CREATE TABLE Time_Tab (
   BRK_TIME time default NULL,
   NULL_VAL time default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'time_Tab'
@@ -532,7 +532,7 @@ CREATE TABLE Time_Tab (
 CREATE TABLE Timestamp_Tab (
   IN_TIME datetime default NULL,
   NULL_VAL datetime default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'timestamp_Tab'
@@ -547,7 +547,7 @@ CREATE TABLE Tinyint_Tab (
   MAX_VAL tinyint(4) default NULL,
   MIN_VAL tinyint(4) default NULL,
   NULL_VAL tinyint(4) default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'tinyint_Tab'
@@ -562,7 +562,7 @@ CREATE TABLE TXBean_Tab1 (
   KEY_ID int(11) default NULL,
   TABONE_NAME varchar(32) default NULL,
   PRICE float default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'txbean_Tab1'
@@ -577,7 +577,7 @@ CREATE TABLE TXBean_Tab2 (
   KEY_ID int(11) default NULL,
   TABTWO_NAME varchar(32) default NULL,
   PRICE float default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'txbean_Tab2'
@@ -593,7 +593,7 @@ CREATE TABLE TXEBean_Tab (
   BRAND_NAME varchar(32) default NULL,
   PRICE float default NULL,
   PRIMARY KEY  (KEY_ID)
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'txebean_Tab'
@@ -606,7 +606,7 @@ CREATE TABLE TXEBean_Tab (
 
 CREATE TABLE Varbinary_Tab (
   VARBINARY_VAL blob
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'varbinary_Tab'
@@ -620,7 +620,7 @@ CREATE TABLE Varbinary_Tab (
 CREATE TABLE Varchar_Tab (
   COFFEE_NAME varchar(30) default NULL,
   NULL_VAL varchar(30) default NULL
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'varchar_Tab'
@@ -636,7 +636,7 @@ CREATE TABLE XA_Tab1 (
   col2 varchar(32) default NULL,
   col3 varchar(32) default NULL,
   PRIMARY KEY  (col1)
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'xa_Tab1'
@@ -652,7 +652,7 @@ CREATE TABLE XA_Tab2 (
   col2 varchar(32) default NULL,
   col3 varchar(32) default NULL,
   PRIMARY KEY  (col1)
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
 
 --
 -- Dumping data for table 'xa_Tab2'
