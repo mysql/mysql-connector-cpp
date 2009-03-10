@@ -40,6 +40,7 @@ namespace regression
       //TEST_CASE( testBug9040                    );
       TEST_CASE( testBug10850                   );
       TEST_CASE( testBug34677                   );
+      TEST_CASE( testUpdateLongBlobGT16M        );
     }
 
   /**
@@ -47,6 +48,13 @@ namespace regression
 	 * @throws std::exception *
 	 */
     //void testBug2670() ;
+
+
+  /**
+	 * @throws std::exception *
+	 *             ...
+	 */
+    void testUpdateLongBlobGT16M();
 
 
   /**
