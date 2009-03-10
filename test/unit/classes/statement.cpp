@@ -119,6 +119,49 @@ void statement::callSP()
 {
   logMsg("statement::callSP() - MySQL_Statement::*");
   std::stringstream msg;
+  std::map<std::string, sql::ConnectPropertyVal> connection_properties;
+
+  try
+  {
+    std::map<std::string, sql::ConnectPropertyVal> connection_properties;
+
+    {
+      sql::ConnectPropertyVal tmp;
+      /* url comes from the unit testing framework */
+      tmp.str.val=url.c_str();
+      tmp.str.len=url.length();
+      connection_properties[std::string("hostName")]=tmp;
+    }
+
+    {
+      sql::ConnectPropertyVal tmp;
+      /* user comes from the unit testing framework */
+      tmp.str.val=user.c_str();
+      tmp.str.len=user.length();
+      connection_properties[std::string("userName")]=tmp;
+    }
+
+    {
+      sql::ConnectPropertyVal tmp;
+      tmp.str.val=passwd.c_str();
+      tmp.str.len=passwd.length();
+      connection_properties[std::string("password")]=tmp;
+    }
+
+    connection_properties.erase("CLIENT_MULTI_RESULTS");
+    {
+      sql::ConnectPropertyVal tmp;
+      tmp.bval=true;
+      connection_properties[std::string("CLIENT_MULTI_RESULTS")]=tmp;
+    }
+     con.reset(driver->connect(connection_properties));
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
 
   try
   {

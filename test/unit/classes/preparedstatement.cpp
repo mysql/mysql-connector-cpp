@@ -841,7 +841,7 @@ void preparedstatement::anonymousSelect()
   
   try
   {
-    pstmt.reset(con->createPrepareStatement("SELECT ' ', NULL"));
+    pstmt.reset(con->prepareStatement("SELECT ' ', NULL"));
     res.reset(pstmt->executeQuery());
     ASSERT(res->next());
     ASSERT_EQUALS(" ", res->getString(1));
