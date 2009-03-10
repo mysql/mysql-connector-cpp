@@ -691,8 +691,13 @@ MySQL_Prepared_ResultSet::getUInt64_intern(const uint32_t columnIndex, bool cutT
 			if (is_it_unsigned) {
 				ret =  !is_it_null? *reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer):0;
 			} else {
-				ret =  !is_it_null? *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer):0;
-				if (cutTooBig && ret < 0) {
+				if (is_it_null) {
+					if (cutTooBig && *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer) < 0) {
+						ret = 0;
+					} else {
+						ret =  *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer);				
+					}
+				} else {
 					ret = 0;
 				}
 			}
