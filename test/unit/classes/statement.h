@@ -31,11 +31,17 @@ public:
 
   EXAMPLE_TEST_FIXTURE(statement)
   {
+    TEST_CASE(anonymousSelect);
     TEST_CASE(getWarnings);
     TEST_CASE(clearWarnings);
     TEST_CASE(callSP);
     TEST_CASE(selectZero);
   }
+
+  /**
+   * SELECT ' ' as string
+   */
+  void anonymousSelect();
 
   /**
    * Calls getWarnings()
@@ -55,9 +61,7 @@ public:
     /**
    * SELECT 0 as string
    */
-  void selectZero();
-
-  
+  void selectZero();  
 };
 
 REGISTER_FIXTURE(statement);

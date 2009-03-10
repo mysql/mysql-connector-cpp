@@ -20,6 +20,30 @@ namespace testsuite
 namespace classes
 {
 
+void statement::anonymousSelect()
+{
+  logMsg("statement::anonymousSelect() - MySQL_Statement::*, MYSQL_Resultset::*");
+
+  stmt.reset(con->createStatement());
+  try
+  {
+    res.reset(stmt->executeQuery("SELECT ' ', NULL"));
+    ASSERT(res->next());
+    ASSERT_EQUALS(" ", res->getString(1));
+
+    std::string mynull(res->getString(2));
+    ASSERT(res->isNull(2));
+    ASSERT(res->wasNull());
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 void statement::getWarnings()
 {
   logMsg("statement::getWarnings() - MySQL_Statement::getWarnings()");
@@ -34,7 +58,7 @@ void statement::getWarnings()
     // Lets hope that this will always cause a 1264 or similar warning
     stmt->execute("INSERT INTO test(id) VALUES (-1)");
 
-    for (const sql::SQLWarning* warn = stmt->getWarnings(); warn; warn = warn->getNextWarning())
+    for (const sql::SQLWarning* warn=stmt->getWarnings(); warn; warn=warn->getNextWarning())
     {
       msg.str("");
       msg << "... ErrorCode = '" << warn->getErrorCode() << "', ";
@@ -169,7 +193,7 @@ void statement::callSP()
 void statement::selectZero()
 {
   logMsg("statement::selectZero() - MySQL_Statement::*");
-  
+
   stmt.reset(con->createStatement());
   try
   {

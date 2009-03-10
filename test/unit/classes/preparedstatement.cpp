@@ -835,5 +835,29 @@ void preparedstatement::callSP()
 
 }
 
+void preparedstatement::anonymousSelect()
+{
+  logMsg("preparedstatement::anonymousSelect() - MySQL_PreparedStatement::*, MYSQL_PS_Resultset::*");
+  
+  try
+  {
+    pstmt.reset(con->createPrepareStatement("SELECT ' ', NULL"));
+    res.reset(pstmt->executeQuery());
+    ASSERT(res->next());
+    ASSERT_EQUALS(" ", res->getString(1));
+
+    std::string mynull(res->getString(2));
+    ASSERT(res->isNull(2));
+    ASSERT(res->wasNull());
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 } /* namespace preparedstatement */
 } /* namespace testsuite */
