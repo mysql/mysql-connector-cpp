@@ -278,6 +278,9 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
 			return sql::DataType::LONGVARCHAR;
 		case MYSQL_TYPE_VARCHAR:
 		case MYSQL_TYPE_VAR_STRING:
+			if (field->flags & SET_FLAG) {
+				return sql::DataType::SET;
+			}
 			if (field->flags & ENUM_FLAG) {
 				return sql::DataType::ENUM;
 			}
@@ -286,6 +289,9 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
 			}
 			return sql::DataType::VARCHAR;
 		case MYSQL_TYPE_STRING:
+			if (field->flags & SET_FLAG) {
+				return sql::DataType::SET;
+			}
 			if (field->flags & ENUM_FLAG) {
 				return sql::DataType::ENUM;
 			}
