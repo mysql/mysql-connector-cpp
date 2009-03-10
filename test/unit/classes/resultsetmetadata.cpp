@@ -1206,6 +1206,7 @@ void resultsetmetadata::isSigned()
         sql << "... skipping " << it->name << " " << it->sqldef << ": ";
         sql << e.what();
         logMsg(sql.str());
+        continue;
       }
 
       res.reset(stmt->executeQuery("SELECT col1 FROM test"));
