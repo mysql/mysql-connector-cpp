@@ -1792,7 +1792,7 @@ void connectionmetadata::getColumnsTypeConversions()
       if (msg.str() != res->getString("DECIMAL_DIGITS"))
       {
         msg.str("");
-        msg << "... expecting DECIMAL_DIGITS = '" << it->decimal_digits << "'";
+        msg << "...\t\tWARNING: expecting DECIMAL_DIGITS = '" << it->decimal_digits << "'";
         msg << " got '" << res->getString("DECIMAL_DIGITS") << "'";
         logMsg(msg.str());
         got_warning=true;
