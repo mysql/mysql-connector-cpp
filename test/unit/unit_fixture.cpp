@@ -431,7 +431,6 @@ std::string unit_fixture::exceptionIsOK(sql::SQLException &e, const std::string&
 
 void unit_fixture::checkResultSetScrolling(ResultSet &res)
 {
-
   /*
     if (res->getType() == sql::ResultSet::TYPE_FORWARD_ONLY)
       return;

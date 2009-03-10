@@ -23,7 +23,6 @@ namespace classes
 void statement::getWarnings()
 {
   logMsg("statement::getWarnings() - MySQL_Statement::getWarnings()");
-  const sql::SQLWarning* warn;
   std::stringstream msg;
 
   stmt.reset(con->createStatement());
@@ -34,9 +33,8 @@ void statement::getWarnings()
 
     // Lets hope that this will always cause a 1264 or similar warning
     stmt->execute("INSERT INTO test(id) VALUES (-1)");
-    warn=stmt->getWarnings();
 
-    do
+    for (const sql::SQLWarning* warn = stmt->getWarnings(); warn; warn = warn->getNextWarning())
     {
       msg.str("");
       msg << "... ErrorCode = '" << warn->getErrorCode() << "', ";
@@ -55,8 +53,6 @@ void statement::getWarnings()
       }
       ASSERT(("" != warn->getMessage()));
     }
-    while (false);
-    //while ((warn=warn->getNextWarning()));
 
     // TODO - how to use getNextWarning() ?
     stmt->execute("DROP TABLE IF EXISTS test");
