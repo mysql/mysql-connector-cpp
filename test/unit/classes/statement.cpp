@@ -67,7 +67,6 @@ void statement::getWarnings()
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
   }
-
 }
 
 void statement::clearWarnings()
@@ -94,7 +93,6 @@ void statement::clearWarnings()
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
   }
-
 }
 
 void statement::callSP()
@@ -170,6 +168,28 @@ void statement::callSP()
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
   }
+}
+
+void statement::selectZero()
+{
+  logMsg("statement::selectZero() - MySQL_Statement::*");
+  
+  stmt.reset(con->createStatement());
+  try
+  {
+    res.reset(stmt->executeQuery("SELECT 1, -1, 0"));
+    ASSERT(res->next());
+    ASSERT_EQUALS("1", res->getString(1));
+    ASSERT_EQUALS("-1", res->getString(2));
+    ASSERT_EQUALS("0", res->getString(3));
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
 }
 
 } /* namespace statement */
