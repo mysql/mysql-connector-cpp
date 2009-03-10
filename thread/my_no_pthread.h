@@ -24,7 +24,7 @@
   even in non-threaded builds.
   Case in point: 'mf_keycache.c'
 */
-#if defined(__WIN__)
+#if defined(_WIN32) || defined(_WIN64)
 #else /* Normal threads */
 #include <pthread.h>
 #endif /* defined(__WIN__) */
