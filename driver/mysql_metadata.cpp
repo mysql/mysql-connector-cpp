@@ -1887,6 +1887,7 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 //			"  END "
 			"END AS TYPE_NAME,"
  			"CASE "
+				"WHEN LCASE(DATA_TYPE)='year' THEN SUBSTRING(COLUMN_TYPE, 6, 1) -- 'year('=5\n"
 				"WHEN LCASE(DATA_TYPE)='date' THEN 10 "
 				"WHEN LCASE(DATA_TYPE)='time' THEN 8 "
 				"WHEN LCASE(DATA_TYPE)='datetime' THEN 19 "
