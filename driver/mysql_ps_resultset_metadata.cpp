@@ -165,7 +165,7 @@ MySQL_Prepared_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 }
 /* }}} */
 
-
+// Precision - total number of digits
 /* {{{ MySQL_Prepared_ResultSetMetaData::getPrecision -I- */
 unsigned int
 MySQL_Prepared_ResultSetMetaData::getPrecision(unsigned int columnIndex)
@@ -186,7 +186,7 @@ MySQL_Prepared_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 }
 /* }}} */
 
-
+// Scale - Number of digits right of the decimal point
 /* {{{ MySQL_Prepared_ResultSetMetaData::getScale -I- */
 unsigned int
 MySQL_Prepared_ResultSetMetaData::getScale(unsigned int columnIndex)

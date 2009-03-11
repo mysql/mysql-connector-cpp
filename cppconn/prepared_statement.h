@@ -20,8 +20,9 @@
 namespace sql
 {
 
-class ResultSet;
 class Connection;
+class ResultSet;
+class ResultSetMetaData;
 class ParameterMetaData;
 
 class PreparedStatement : public Statement
@@ -39,6 +40,8 @@ public:
 
 	virtual int executeUpdate(const std::string& sql) = 0;
 	virtual int executeUpdate() = 0;
+
+	virtual ResultSetMetaData * getMetaData() = 0;
 
 	virtual ParameterMetaData * getParameterMetaData() = 0;
 

@@ -86,6 +86,8 @@ public:
 
 	unsigned int getMaxFieldSize();
 
+	sql::ResultSetMetaData * getMetaData();
+
 	uint64_t getMaxRows();
 
 	bool getMoreResults();

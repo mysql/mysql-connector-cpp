@@ -17,6 +17,7 @@
 #include "mysql_statement.h"
 #include "mysql_prepared_statement.h"
 #include "mysql_ps_resultset.h"
+#include "mysql_ps_resultset_metadata.h"
 #include "mysql_parameter_metadata.h"
 #include "mysql_warning.h"
 
@@ -902,6 +903,18 @@ MySQL_Prepared_Statement::getFetchSize()
 	checkClosed();
 	throw MethodNotImplementedException("MySQL_Prepared_Statement::getFetchSize");
 	return 0; // fool compilers
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_Statement::getMetaData() -I- */
+sql::ResultSetMetaData *
+MySQL_Prepared_Statement::getMetaData()
+{
+	CPP_ENTER("MySQL_Prepared_Statement::getMetaData");
+	CPP_INFO_FMT("this=%p", this);
+	checkClosed();
+	return new MySQL_Prepared_ResultSetMetaData(stmt, logger);
 }
 /* }}} */
 
