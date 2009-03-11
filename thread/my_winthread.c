@@ -26,6 +26,25 @@
 #include <process.h>
 #include <signal.h>
 
+// re-defining calls to debug functions from libmysql
+
+#ifdef DBUG_PRINT
+#undef DBUG_PRINT
+#endif
+#define DBUG_PRINT(keyword, argslist)
+
+#ifdef DBUG_ENTER
+#undef DBUG_ENTER
+#endif
+#define DBUG_ENTER(p)
+
+#ifdef DBUG_RETURN
+#undef DBUG_RETURN
+#endif
+
+#define DBUG_RETURN(a1) return(a1)
+
+
 static void install_sigabrt_handler(void);
 
 struct thread_start_parameter
