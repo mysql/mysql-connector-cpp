@@ -68,6 +68,8 @@ public:
 
 	virtual bool isWritable(unsigned int column) = 0;
 
+	virtual bool isZerofill(unsigned int column) = 0;
+
 	virtual ~ResultSetMetaData() {}
 };
 

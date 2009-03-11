@@ -20,6 +20,10 @@ Beta   1.0.4 - 2009-03-xx
 
 - Introduced PreparedStatement::getMetaData(). (Andrey)
 
+- Introduced ResultSetMetaData::isZerofill(), which is not in the JDBC
+  specification. (Andrey)
+
+
 Alpha  1.0.3 - 2009-03-03
 
 - Added new tests at test/unit/classes. Those tests are mostly about

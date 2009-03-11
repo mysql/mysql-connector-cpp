@@ -331,6 +331,20 @@ MySQL_ArtResultSetMetaData::isWritable(unsigned int columnIndex)
 /* }}} */
 
 
+/* {{{ MySQL_ArtResultSetMetaData::isZerofill() -I- */
+bool
+MySQL_ArtResultSetMetaData::isZerofill(unsigned int columnIndex)
+{
+	CPP_ENTER("MySQL_ArtResultSetMetaData::isZerofill");
+	CPP_INFO_FMT("this=%p", this);
+	if (columnIndex == 0 || columnIndex > parent->num_fields) {
+		throw sql::InvalidArgumentException("Invalid value for columnIndex");
+	}
+	return false;
+}
+/* }}} */
+
+
 }; /* namespace mysql */
 }; /* namespace sql */
 

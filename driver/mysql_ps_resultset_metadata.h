@@ -73,6 +73,8 @@ public:
 
 	bool isWritable(unsigned int columnIndex);
 
+	bool isZerofill(unsigned int column);
+
 private:
 	/* Prevent use of these */
 	MySQL_Prepared_ResultSetMetaData(const MySQL_Prepared_ResultSetMetaData &);

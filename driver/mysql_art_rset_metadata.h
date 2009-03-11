@@ -71,6 +71,8 @@ public:
 
 	bool isWritable(unsigned int columnIndex);
 
+	bool isZerofill(unsigned int columnIndex);
+
 private:
 	/* Prevent use of these */
 	MySQL_ArtResultSetMetaData(const MySQL_ArtResultSetMetaData &);

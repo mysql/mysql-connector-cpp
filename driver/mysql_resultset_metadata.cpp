@@ -394,6 +394,22 @@ MySQL_ResultSetMetaData::isWritable(unsigned int columnIndex)
 /* }}} */
 
 
+/* {{{ MySQL_ResultSetMetaData::isZerofill -I- */
+bool
+MySQL_ResultSetMetaData::isZerofill(unsigned int columnIndex)
+{
+	CPP_ENTER("MySQL_ResultSetMetaData::isZerofill");
+	if (result->isValid()) {
+		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
+			throw sql::InvalidArgumentException("Invalid value for columnIndex");
+		}
+		return static_cast<bool>(mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & ZEROFILL_FLAG);
+	}
+	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+}
+/* }}} */
+
+
 }; /* namespace mysql */
 }; /* namespace sql */
 
