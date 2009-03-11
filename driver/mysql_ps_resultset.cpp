@@ -370,6 +370,7 @@ MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
 		case sql::DataType::VARBINARY:
 		case sql::DataType::LONGVARCHAR:
 		case sql::DataType::LONGVARBINARY:
+		case sql::DataType::SET:
 		case sql::DataType::ENUM:
 		{
 			CPP_INFO("It's a string");
@@ -392,6 +393,7 @@ MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
 
 		// ToDo : Geometry? default ?
 	}
+	CPP_ERR("MySQL_Prepared_ResultSet::getDouble: unhandled type. Please, report");
 	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getDouble: unhandled type. Please, report");
 	return .0; // fool compilers
 }
@@ -536,59 +538,72 @@ MySQL_Prepared_ResultSet::getInt64_intern(const uint32_t columnIndex, bool cutTo
 		case sql::DataType::VARBINARY:
 		case sql::DataType::LONGVARCHAR:
 		case sql::DataType::LONGVARBINARY:
+		case sql::DataType::SET:
 		case sql::DataType::ENUM:
 			CPP_INFO("It's a string");
 			return atoll(getString(columnIndex).c_str());
+		case sql::DataType::BIT:
+		case sql::DataType::YEAR:	// fetched as a SMALLINT
+		case sql::DataType::TINYINT:
+		case sql::DataType::SMALLINT:
+		case sql::DataType::MEDIUMINT:
+		case sql::DataType::INTEGER:
+		case sql::DataType::BIGINT: {
+			// sql::DataType::YEAR is fetched as a SMALLINT, thus should not be in the switch
+			int64_t ret;
+			bool is_it_null = *stmt->bind[columnIndex - 1].is_null != 0;
+			bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned != 0;
 
+			switch (stmt->bind[columnIndex - 1].buffer_length) {
+				case 1:
+					if (is_it_unsigned) {
+						// ToDo: Really reinterpret_case or static_cast
+						ret = !is_it_null? *reinterpret_cast<uint8_t *>(stmt->bind[columnIndex - 1].buffer):0;
+					} else {
+						// ToDo: Really reinterpret_case or static_cast
+						ret = !is_it_null? *reinterpret_cast<int8_t *>(stmt->bind[columnIndex - 1].buffer):0;
+					}
+					break;
+				case 2:
+					if (is_it_unsigned) {
+						ret = !is_it_null? *reinterpret_cast<uint16_t *>(stmt->bind[columnIndex - 1].buffer):0;
+					} else {
+						ret = !is_it_null? *reinterpret_cast<int16_t *>(stmt->bind[columnIndex - 1].buffer):0;
+					}
+					break;
+				case 4:
+					if (is_it_unsigned) {
+						ret =  !is_it_null? *reinterpret_cast<uint32_t *>(stmt->bind[columnIndex - 1].buffer):0;
+					} else {
+						ret =  !is_it_null? *reinterpret_cast<int32_t *>(stmt->bind[columnIndex - 1].buffer):0;
+					}
+					break;
+				case 8:
+					if (is_it_unsigned) {
+						ret =  !is_it_null? *reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer):0;
+						if (cutTooBig &&
+							ret &&
+							*reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer) > UL64(9223372036854775807))
+						{
+							ret = UL64(9223372036854775807);
+						}
+					} else {
+						ret =  !is_it_null? *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer):0;
+					}
+					break;
+				default:
+					throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt64_intern: invalid type");
+			}
+			CPP_INFO_FMT("value=%lld", ret);
+			return ret;
+		}
+		default:
+			break;
 		// ToDo : Geometry? default ?
 	}
-	// sql::DataType::YEAR is fetched as a SMALLINT, thus should not be in the switch
-	int64_t ret;
-	bool is_it_null = *stmt->bind[columnIndex - 1].is_null != 0;
-	bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned != 0;
-
-	switch (stmt->bind[columnIndex - 1].buffer_length) {
-		case 1:
-			if (is_it_unsigned) {
-				// ToDo: Really reinterpret_case or static_cast
-				ret = !is_it_null? *reinterpret_cast<uint8_t *>(stmt->bind[columnIndex - 1].buffer):0;
-			} else {
-				// ToDo: Really reinterpret_case or static_cast
-				ret = !is_it_null? *reinterpret_cast<int8_t *>(stmt->bind[columnIndex - 1].buffer):0;
-			}
-			break;
-		case 2:
-			if (is_it_unsigned) {
-				ret = !is_it_null? *reinterpret_cast<uint16_t *>(stmt->bind[columnIndex - 1].buffer):0;
-			} else {
-				ret = !is_it_null? *reinterpret_cast<int16_t *>(stmt->bind[columnIndex - 1].buffer):0;
-			}
-			break;
-		case 4:
-			if (is_it_unsigned) {
-				ret =  !is_it_null? *reinterpret_cast<uint32_t *>(stmt->bind[columnIndex - 1].buffer):0;
-			} else {
-				ret =  !is_it_null? *reinterpret_cast<int32_t *>(stmt->bind[columnIndex - 1].buffer):0;
-			}
-			break;
-		case 8:
-			if (is_it_unsigned) {
-				ret =  !is_it_null? *reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer):0;
-				if (cutTooBig &&
-					ret &&
-					*reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer) > UL64(9223372036854775807))
-				{
-					ret = UL64(9223372036854775807);
-				}
-			} else {
-				ret =  !is_it_null? *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer):0;
-			}
-			break;
-		default:
-			throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt64_intern: invalid type");
-	}
-	CPP_INFO_FMT("value=%lld", ret);
-	return ret;
+	CPP_ERR("MySQL_Prepared_ResultSet::getInt64_intern: unhandled type. Please, report");
+	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getInt64_intern: unhandled type. Please, report");
+	return 0; // fool compilers
 }
 /* }}} */
 
@@ -651,62 +666,76 @@ MySQL_Prepared_ResultSet::getUInt64_intern(const uint32_t columnIndex, bool cutT
 		case sql::DataType::VARBINARY:
 		case sql::DataType::LONGVARCHAR:
 		case sql::DataType::LONGVARBINARY:
+		case sql::DataType::SET:
 		case sql::DataType::ENUM:
 			CPP_INFO("It's a string");
 			return strtoull(getString(columnIndex).c_str(), NULL, 10);
+		case sql::DataType::BIT:
+		case sql::DataType::YEAR:	// fetched as a SMALLINT
+		case sql::DataType::TINYINT:
+		case sql::DataType::SMALLINT:
+		case sql::DataType::MEDIUMINT:
+		case sql::DataType::INTEGER:
+		case sql::DataType::BIGINT:
+		{
+			// sql::DataType::YEAR is fetched as a SMALLINT, thus should not be in the switch
 
+			uint64_t ret;
+			bool is_it_null = *stmt->bind[columnIndex - 1].is_null != 0;
+			bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned != 0;
+
+			switch (stmt->bind[columnIndex - 1].buffer_length) {
+				case 1:
+					if (is_it_unsigned) {
+						// ToDo: Really reinterpret_case or static_cast
+						ret = !is_it_null? *reinterpret_cast<uint8_t *>(stmt->bind[columnIndex - 1].buffer):0;
+					} else {
+						// ToDo: Really reinterpret_case or static_cast
+						ret = !is_it_null? *reinterpret_cast<int8_t *>(stmt->bind[columnIndex - 1].buffer):0;
+					}
+					break;
+				case 2:
+					if (is_it_unsigned) {
+						ret = !is_it_null? *reinterpret_cast<uint16_t *>(stmt->bind[columnIndex - 1].buffer):0;
+					} else {
+						ret = !is_it_null? *reinterpret_cast<int16_t *>(stmt->bind[columnIndex - 1].buffer):0;
+					}
+					break;
+				case 4:
+					if (is_it_unsigned) {
+						ret =  !is_it_null? *reinterpret_cast<uint32_t *>(stmt->bind[columnIndex - 1].buffer):0;
+					} else {
+						ret =  !is_it_null? *reinterpret_cast<int32_t *>(stmt->bind[columnIndex - 1].buffer):0;
+					}
+					break;
+				case 8:
+					if (is_it_unsigned) {
+						ret =  !is_it_null? *reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer):0;
+					} else {
+						if (is_it_null) {
+							if (cutTooBig && *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer) < 0) {
+								ret = 0;
+							} else {
+								ret =  *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer);				
+							}
+						} else {
+							ret = 0;
+						}
+					}
+					break;
+				default:
+					throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt64_intern: invalid type");
+			}
+			CPP_INFO_FMT("value=%lld", ret);
+			return ret;
+		}
+		default:
+			break;
 		// ToDo : Geometry? default ?
 	}
-	// sql::DataType::YEAR is fetched as a SMALLINT, thus should not be in the switch
-
-	uint64_t ret;
-	bool is_it_null = *stmt->bind[columnIndex - 1].is_null != 0;
-	bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned != 0;
-
-	switch (stmt->bind[columnIndex - 1].buffer_length) {
-		case 1:
-			if (is_it_unsigned) {
-				// ToDo: Really reinterpret_case or static_cast
-				ret = !is_it_null? *reinterpret_cast<uint8_t *>(stmt->bind[columnIndex - 1].buffer):0;
-			} else {
-				// ToDo: Really reinterpret_case or static_cast
-				ret = !is_it_null? *reinterpret_cast<int8_t *>(stmt->bind[columnIndex - 1].buffer):0;
-			}
-			break;
-		case 2:
-			if (is_it_unsigned) {
-				ret = !is_it_null? *reinterpret_cast<uint16_t *>(stmt->bind[columnIndex - 1].buffer):0;
-			} else {
-				ret = !is_it_null? *reinterpret_cast<int16_t *>(stmt->bind[columnIndex - 1].buffer):0;
-			}
-			break;
-		case 4:
-			if (is_it_unsigned) {
-				ret =  !is_it_null? *reinterpret_cast<uint32_t *>(stmt->bind[columnIndex - 1].buffer):0;
-			} else {
-				ret =  !is_it_null? *reinterpret_cast<int32_t *>(stmt->bind[columnIndex - 1].buffer):0;
-			}
-			break;
-		case 8:
-			if (is_it_unsigned) {
-				ret =  !is_it_null? *reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer):0;
-			} else {
-				if (is_it_null) {
-					if (cutTooBig && *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer) < 0) {
-						ret = 0;
-					} else {
-						ret =  *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer);				
-					}
-				} else {
-					ret = 0;
-				}
-			}
-			break;
-		default:
-			throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::getInt64_intern: invalid type");
-	}
-	CPP_INFO_FMT("value=%lld", ret);
-	return ret;
+	CPP_ERR("MySQL_Prepared_ResultSet::getUInt64_intern: unhandled type. Please, report");
+	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getUInt64_intern: unhandled type. Please, report");
+	return 0; // fool compilers
 }
 /* }}} */
 
@@ -874,11 +903,26 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 			my_f_to_a(buf, sizeof(buf) - 1, getDouble(columnIndex));
 			return std::string(buf);
 		}
-
+		case sql::DataType::NUMERIC:
+		case sql::DataType::DECIMAL:
+		case sql::DataType::CHAR:
+		case sql::DataType::BINARY:
+		case sql::DataType::VARCHAR:
+		case sql::DataType::VARBINARY:
+		case sql::DataType::LONGVARCHAR:
+		case sql::DataType::LONGVARBINARY:
+		case sql::DataType::SET:
+		case sql::DataType::ENUM:
+			CPP_INFO("It's a string");
+			return  std::string(static_cast<char *>(stmt->bind[columnIndex - 1].buffer), *stmt->bind[columnIndex - 1].length);
+		default:
+			break;		
 		// ToDo : Geometry? default ?
 	}
 
-	return  std::string(static_cast<char *>(stmt->bind[columnIndex - 1].buffer), *stmt->bind[columnIndex - 1].length);
+	CPP_ERR("MySQL_Prepared_ResultSet::getString: unhandled type. Please, report");
+	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getString: unhandled type. Please, report");
+	return 0; // fool compilers
 }
 /* }}} */
 

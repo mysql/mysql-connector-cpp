@@ -140,9 +140,11 @@ MySQL_Prepared_ResultSetMetaData::getColumnType(unsigned int columnIndex)
 	}
 	int mysql_type = mysql_fetch_field_direct(result_meta, columnIndex)->type;
 	CPP_INFO_FMT("type=%d", mysql_type);
-	return sql::mysql::util::mysql_type_to_datatype(
-			mysql_fetch_field_direct(result_meta, columnIndex)
-		);
+	int ret = sql::mysql::util::mysql_type_to_datatype(
+					mysql_fetch_field_direct(result_meta, columnIndex)
+				);
+	CPP_INFO_FMT("our type is %d", ret);
+	return ret;
 }
 /* }}} */
 
