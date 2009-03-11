@@ -21,12 +21,14 @@ EXECUTE_PROCESS(COMMAND uuidgen
 STRING(STRIP ${CONNECTOR_PKG_ID2} CONNECTOR_PKG_ID2)
 
 # check if wix is in current path #
-FIND_PROGRAM(HAVE_WIX NAMES light
-             PATHS ENV PATH
-	           "${CONNECTOR_WIX_DIR}")
-IF(NOT HAVE_WIX)
-  MESSAGE(ERROR "Wix not found. Please change your environment variable PATH or specify CONNECTOR_WIX_DIR")
-ENDIF(NOT HAVE_WIX)
+FIND_PATH(CONNECTOR_WIX_DIR candle.exe
+	$ENV{WIX_DIR}/bin
+	$ENV{ProgramFiles}/wix/bin
+        $ENV{ProgramFiles}/Windows Installer */bin)
+
+IF(NOT CONNECTOR_WIX_DIR)
+  MESSAGE(ERROR "Wix not found. Please change your environment variable PATH or specify WIX_DIR")
+ENDIF(NOT CONNECTOR_WIX_DIR)
 
 IF (CONNECTOR_SIGNED)
   FIND_PROGRAM(HAVE_MD5SUM NAMES md5sum
@@ -42,8 +44,6 @@ IF (CONNECTOR_SIGNED)
   ENDIF(NOT HAVE_SIGNTOOL)
 ENDIF (CONNECTOR_SIGNED)
 
-STRING(REPLACE "/light.exe" "" CONNECTOR_WIX_DIR ${HAVE_WIX})
-
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/mysql-conncpp-msi-template.xml.in
                ${CMAKE_CURRENT_SOURCE_DIR}/mysql-conncpp-msi-template.xml @ONLY)
 
@@ -52,18 +52,18 @@ SET(WIXOUT "mysql-conncpp-${CONNECTOR_PRODUCT_VERSION}-${CONNECTOR_PLATFORM}")
 MESSAGE(STATUS "${WIXOUT}")
        
 ADD_CUSTOM_COMMAND(OUTPUT "${WIXOUT}.wixobj"
-	           COMMAND "${CONNECTOR_WIX_DIR}/candle -out ${WIXOUT}.wixobj mysql-conncpp-msi-template.xml")
+			COMMAND ${CONNECTOR_WIX_DIR}/candle -out ${WIXOUT}.wixobj mysql-conncpp-msi-template.xml)
 
 ADD_CUSTOM_COMMAND(OUTPUT ${WIXOUT}.msi
-	           COMMAND "${CONNECTOR_WIX_DIR}/light -o ${WIXOUT}.msi ${WIXOUT}.wixobj ${CONNECTOR_WIX_DIR}/WixUI.wixlib -loc ${CONNECTOR_WIX_DIR}/WixUI_en-us.wxl"
-		   DEPENDS "${WIXOUT}.wixobj")
+			COMMAND ${CONNECTOR_WIX_DIR}/light -o ${WIXOUT}.msi ${WIXOUT}.wixobj ${CONNECTOR_WIX_DIR}/WixUI.wixlib -loc ${CONNECTOR_WIX_DIR}/WixUI_en-us.wxl
+			DEPENDS "${WIXOUT}.wixobj")
 
 ADD_CUSTOM_TARGET(MSI ALL DEPENDS "${WIXOUT}.msi")
 
 IF(CONNECTOR_SIGNED)
   ADD_CUSTOM_COMMAND(OUTPUT "${WIXOUT}.msi.md5"
-                     COMMAND "signtool sign -a -d 'MySQL Connector C ${CONECTOR_PRODUCT_VERSION}' -du 'http://www.mysql.com' -t 'http://timestamp.verisign.com/scripts/timestamp.dll' ${WIXOUT}.msi"
-		     COMMAND "md5sum ${WIXOUT}.msi > ${WIXOUT}.msi.md5")
-  ADD_CUSTOM_TARGET(MSI_SIGNED ALL DEPENDS "${WIXOUT}.msi.md5")
+			COMMAND signtool sign -a -d "MySQL Connector C++ ${CONECTOR_PRODUCT_VERSION}" -du "http://www.mysql.com" -t "http://timestamp.verisign.com/scripts/timestamp.dll" ${WIXOUT}.msi
+			COMMAND md5sum ${WIXOUT}.msi > ${WIXOUT}.msi.md5)
+			ADD_CUSTOM_TARGET(MSI_SIGNED ALL DEPENDS "${WIXOUT}.msi.md5")
 ENDIF(CONNECTOR_SIGNED)
 
