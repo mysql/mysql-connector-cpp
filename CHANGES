@@ -23,6 +23,10 @@ Beta   1.0.4 - 2009-03-xx
 - Introduced ResultSetMetaData::isZerofill(), which is not in the JDBC
   specification. (Andrey)
 
+- Fixed all implementations of ResultSet::isNull() to check whether the current
+  position is on a real row, not isBeforeFirst() nor isAfterLast(), like all
+  getXXX methods do. (Andrey)
+
 
 Alpha  1.0.3 - 2009-03-03
 

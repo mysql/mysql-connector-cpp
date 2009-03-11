@@ -1021,6 +1021,10 @@ MySQL_Prepared_ResultSet::isNull(const uint32_t columnIndex) const
 	if (columnIndex == 0 || columnIndex > num_fields) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::isNull: invalid value of 'columnIndex'");
 	}
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirstOrAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::isNull: can't fetch because not on result set");
+	}
 	return *stmt->bind[columnIndex - 1].is_null != 0;
 }
 /* }}} */
@@ -1228,6 +1232,10 @@ MySQL_Prepared_ResultSet::wasNull() const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::wasNull");
 	checkValid();
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirstOrAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::wasNull: can't fetch because not on result set");
+	}
 	return *stmt->bind[last_queried_column - 1].is_null != 0;
 }
 /* }}} */
