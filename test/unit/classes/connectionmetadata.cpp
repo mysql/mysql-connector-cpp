@@ -1368,6 +1368,7 @@ void connectionmetadata::getCatalogs()
   {
     DatabaseMetaData dbmeta(con->getMetaData());
     res.reset(dbmeta->getCatalogs());
+    ASSERT(res->next());
     ASSERT(!res->next());
     ResultSetMetaData resmeta(res->getMetaData());
     /* http://java.sun.com/j2se/1.4.2/docs/api/java/sql/DatabaseMetaData.html#getCatalogs() */
