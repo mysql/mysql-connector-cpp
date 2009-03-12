@@ -418,7 +418,7 @@ MySQL_Connection::getCatalog()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getCatalog");
 	checkClosed();
-	return std::string("");
+	return mysql_get_server_version(intern->mysql) > 60006 ? std::string("def") : std::string("");
 }
 /* }}} */
 

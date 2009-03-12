@@ -1703,6 +1703,12 @@ MySQL_ConnectionMetaData::getCatalogs()
 
 	rs_field_data.push_back("TABLE_CAT");
 
+	{
+		MySQL_ArtResultSet::row_t rs_data_row;
+		rs_data_row.push_back("def");
+		rs_data->push_back(rs_data_row);	
+	}
+
 	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
 	// If there is no exception we can release otherwise on function exit memory will be freed
 	rs_data.release();
@@ -1755,7 +1761,7 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 	/* I_S seems currently (20080220) not to work */
 	if (use_info_schema && server_version > 69999) {
 #if A0
-		std::string query("SELECT NULL AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
+		std::string query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
 				 		"COLUMN_NAME, NULL AS GRANTOR, GRANTEE, PRIVILEGE_TYPE AS PRIVILEGE, IS_GRANTABLE\n"
 						"FROM INFORMATION_SCHEMA.COLUMN_PRIVILEGES\n"
 						"WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME=? AND COLUMN_NAME LIKE ?\n"
@@ -1811,7 +1817,7 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 				} else {
 					privToken = privs.substr(pos, privs.length() - pos);
 				}
-				rs_data_row.push_back("");					// TABLE_CAT
+				rs_data_row.push_back("def");				// TABLE_CAT
 				rs_data_row.push_back(schema);				// TABLE_SCHEM
 				rs_data_row.push_back(table);				// TABLE_NAME
 				rs_data_row.push_back(res->getString(1));	// COLUMN_NAME
@@ -1871,7 +1877,7 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 
 	if (use_info_schema && server_version > 50020) {
 		char buf[5];
-		std::string query("SELECT '' AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, COLUMN_NAME, DATA_TYPE,"
+		std::string query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, COLUMN_NAME, DATA_TYPE,"
 			"CASE "
 			"WHEN LOCATE('unsigned', COLUMN_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN "
 			"  CASE"
@@ -1999,7 +2005,7 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 						if (rs3_meta->getColumnName(i) == rs4->getString(1)) {
 							MySQL_ArtResultSet::row_t rs_data_row;
 
-							rs_data_row.push_back("");					// TABLE_CAT
+							rs_data_row.push_back("def");				// TABLE_CAT
 							rs_data_row.push_back(current_schema);		// TABLE_SCHEM
 							rs_data_row.push_back(current_table);		// TABLE_NAME
 							rs_data_row.push_back(rs4->getString(1));	// COLUMN_NAME
@@ -2122,8 +2128,8 @@ MySQL_ConnectionMetaData::getCrossReference(const std::string& primaryCatalog, c
 					"(R.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ");
 
 		std::string query("SELECT \n");
-		query.append("NULL AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,"
-					 "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, NULL AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
+		query.append("A.TABLE_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,"
+					 "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
 					 "A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,");
 		query.append(UpdateRuleClause);
 		query.append(" AS UPDATE_RULE,");
@@ -2356,8 +2362,8 @@ MySQL_ConnectionMetaData::getExportedKeys(const std::string& catalog, const std:
 					"(R.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ");
 
 		std::string query("SELECT \n");
-		query.append(" NULL AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,\n"
-					 "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, NULL AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,\n"
+		query.append("A.TABLE_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,\n"
+					 "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,\n"
 					 "A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,");
 		query.append(UpdateRuleClause);
 		query.append(" AS UPDATE_RULE,");
@@ -2632,8 +2638,8 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 					"(R.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ");
 
 		std::string query("SELECT \n"
-					"NULL AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,\n"
-					"A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, NULL AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,\n"
+					"A.TABLE_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,\n"
+					"A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,\n"
 					"A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,\n");
 		query.append(UpdateRuleClause);
 		query.append(" AS UPDATE_RULE,\n");
@@ -2709,8 +2715,8 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 				{
 					MySQL_ArtResultSet::row_t rs_data_row;
 
-					rs_data_row.push_back("");					// PK_TABLE_CAT
-					rs_data_row.push_back(schema);				// PKTABLE_SCHEM
+					rs_data_row.push_back("def");						// PK_TABLE_CAT
+					rs_data_row.push_back(schema);						// PKTABLE_SCHEM
 					rs_data_row.push_back(keywords_names["REFERENCES"]);// PKTABLE_NAME
 
 					// ToDo: Extracting just the first column
@@ -2719,8 +2725,8 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 					rs_data_row.push_back("");							// FKTABLE_CAT
 
 					// ToDo: Is this correct? referencing the same schema. Maybe fully referenced name can appear, need to parse it too
-					rs_data_row.push_back(schema);	// FKTABLE_SCHEM
-					rs_data_row.push_back(table);	// FKTABLE_NAME
+					rs_data_row.push_back(schema);						// FKTABLE_SCHEM
+					rs_data_row.push_back(table);						// FKTABLE_NAME
 
 					// ToDo: Extracting just the first column
 					rs_data_row.push_back(*it_foreignkey);			// FKCOLUMN_NAME
@@ -2782,7 +2788,7 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 		char indexHash[5];
 		snprintf(indexHash, sizeof(indexHash), "%d", DatabaseMetaData::tableIndexHashed);
 
-		std::string query("SELECT NULL AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, NON_UNIQUE, "
+		std::string query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, NON_UNIQUE, "
 						 "TABLE_SCHEMA AS INDEX_QUALIFIER, INDEX_NAME, CASE WHEN INDEX_TYPE='HASH' THEN ");
 		query.append(indexHash).append(" ELSE ").append(indexOther);
 		query.append(" END AS TYPE, SEQ_IN_INDEX AS ORDINAL_POSITION, COLUMN_NAME, COLLATION AS ASC_OR_DESC, CARDINALITY,"
@@ -2836,7 +2842,7 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 		while (rs.get() && rs->next()) {
 			MySQL_ArtResultSet::row_t rs_data_row;
 
-			rs_data_row.push_back("");								// TABLE_CAT
+			rs_data_row.push_back("def");							// TABLE_CAT
 			rs_data_row.push_back(schema);							// TABLE_SCHEM
 			rs_data_row.push_back(rs->getString("Table"));			// TABLE_NAME
 			rs_data_row.push_back(atoi(rs->getString("Non_unique").c_str())? true:false);	// NON_UNIQUE
@@ -3115,7 +3121,7 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 
 	/* Bind Problems with 49999, check later why */
 	if (use_info_schema && server_version > 49999) {
-		const std::string query("SELECT NULL AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, "
+		const std::string query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, "
 					"COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, INDEX_NAME AS PK_NAME FROM INFORMATION_SCHEMA.STATISTICS "
 					"WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND INDEX_NAME='PRIMARY' "
 					"ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX");
@@ -3156,7 +3162,7 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 			if (!key_name.compare("PRIMARY") || !key_name.compare("PRI")) {
 				MySQL_ArtResultSet::row_t rs_data_row;
 
-				rs_data_row.push_back("");								// TABLE_CAT
+				rs_data_row.push_back("def");							// TABLE_CAT
 				rs_data_row.push_back(schema);							// TABLE_SCHEM
 				rs_data_row.push_back(rs->getString(1));				// TABLE_NAME
 				rs_data_row.push_back(rs->getString("Column_name"));	// COLUMN_NAME
@@ -3607,7 +3613,7 @@ MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const s
 					if (privToken.find_first_of('/') == std::string::npos) {
 						MySQL_ArtResultSet::row_t rs_data_row;
 
-						rs_data_row.push_back("");				// TABLE_CAT
+						rs_data_row.push_back("def");			// TABLE_CAT
 						rs_data_row.push_back(schema);			// TABLE_SCHEM
 						rs_data_row.push_back(table);			// TABLE_NAME
 						rs_data_row.push_back("");				// GRANTOR
@@ -3700,7 +3706,7 @@ MySQL_ConnectionMetaData::getTables(const std::string& /* catalog */, const std:
 						MySQL_ArtResultSet::row_t rs_data_row;
 
 						CPP_INFO_FMT("[][%s][%s][TABLE][]", current_schema.c_str(), rs2->getString(1).c_str());
-						rs_data_row.push_back("");					// TABLE_CAT
+						rs_data_row.push_back("def");				// TABLE_CAT
 						rs_data_row.push_back(current_schema);		// TABLE_SCHEM
 						rs_data_row.push_back(rs2->getString(1));	// TABLE_NAME
 						rs_data_row.push_back("TABLE");				// TABLE_TYPE
