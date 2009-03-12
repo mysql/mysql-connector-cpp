@@ -3184,8 +3184,8 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 
 /* {{{ MySQL_ConnectionMetaData::getProcedureColumns() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getProcedureColumns(const std::string& /* catalog */, const std::string& /*schemaPattern*/,
-											  const std::string& /*procedureNamePattern*/, const std::string& /*columnNamePattern*/)
+MySQL_ConnectionMetaData::getProcedureColumns(const std::string& /* catalog */, const std::string& schemaPattern,
+											  const std::string& procedureNamePattern, const std::string& /*columnNamePattern*/)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getProcedureColumns");
 	std::list<std::string> rs_field_data;
@@ -3205,6 +3205,10 @@ MySQL_ConnectionMetaData::getProcedureColumns(const std::string& /* catalog */, 
 	rs_field_data.push_back("REMARKS");
 
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+
+
+	if (server_version > 49999) {
+	}
 
 	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
 	// If there is no exception we can release otherwise on function exit memory will be freed
@@ -3232,20 +3236,23 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
+	char procRetNoRes[5];
+	my_i_to_a(procRetNoRes, sizeof(procRetNoRes) - 1, procedureNoResult);
+	char procRetRes[5];
+	my_i_to_a(procRetRes, sizeof(procRetRes) - 1, procedureReturnsResult);
+	char procRetUnknown[5];
+	my_i_to_a(procRetUnknown, sizeof(procRetUnknown) - 1, procedureResultUnknown);
+
 	if (use_info_schema && server_version > 49999) {
-		char buf[5];
 		std::string query("SELECT ROUTINE_CATALOG AS PROCEDURE_CAT, ROUTINE_SCHEMA AS PROCEDURE_SCHEM, "
 						"ROUTINE_NAME AS PROCEDURE_NAME, NULL AS RESERVED_1, NULL AS RESERVERD_2, NULL as RESERVED_3,"
 						"ROUTINE_COMMENT AS REMARKS, "
 						"CASE WHEN ROUTINE_TYPE = 'PROCEDURE' THEN ");
-		my_i_to_a(buf, sizeof(buf) - 1, procedureNoResult);
-		query.append(buf);
+		query.append(procRetNoRes);
 		query.append(" WHEN ROUTINE_TYPE='FUNCTION' THEN ");
-		my_i_to_a(buf, sizeof(buf) - 1, procedureReturnsResult);
-		query.append(buf);
+		query.append(procRetRes);
 		query.append(" ELSE ");
-		my_i_to_a(buf, sizeof(buf) - 1, procedureResultUnknown);
-		query.append(buf);
+		query.append(procRetUnknown);
 		query.append(" END AS PROCEDURE_TYPE\nFROM INFORMATION_SCHEMA.ROUTINES\n"
 					"WHERE ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ?\n"
 					"ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME");
@@ -3269,6 +3276,65 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 
 			rs_data->push_back(rs_data_row);
 		}
+	} else if (server_version > 49999) {
+		bool got_exception = false;
+		do {
+			std::string query("SELECT 'def' AS PROCEDURE_CAT, db as PROCEDURE_SCHEM, "
+									"name AS PROCEDURE_NAME, NULL as RESERVERD_1, NULL as RESERVERD_2, "
+									"NULL AS RESERVERD_3, comment as REMARKS, ");
+			query.append("CASE WHEN TYPE=='FUNCTION' THEN ").append(procRetRes).append("\n");
+			query.append("WHEN TYPE='PROCEDURE' THEN").append(procRetNoRes).append("ELSE ").append(procRetUnknown);
+			query.append("\n END AS PROCEDURE_TYPE\nFROM mysql.proc WHERE name LIKE ? AND db <=> ? ORDER BY name");
+
+			std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));
+			stmt->setString(1, procedureNamePattern);
+			stmt->setString(2, schemaPattern);
+
+			std::auto_ptr<sql::ResultSet> rs(NULL);
+			try {
+				rs.reset(stmt->executeQuery());
+			} catch (SQLException & e) {
+				/* We don't have direct access to the mysql.proc, use SHOW */
+				got_exception = true;
+				break;
+			}
+			while (rs->next()) {
+				MySQL_ArtResultSet::row_t rs_data_row;
+
+				rs_data_row.push_back(rs->getString(1));	// PROCEDURE_CAT
+				rs_data_row.push_back(rs->getString(2));	// PROCEDURE_SCHEM
+				rs_data_row.push_back(rs->getString(3));	// PROCEDURE_NAME
+				rs_data_row.push_back(rs->getString(4));	// reserved1
+				rs_data_row.push_back(rs->getString(5));	// reserved2
+				rs_data_row.push_back(rs->getString(6));	// reserved3
+				rs_data_row.push_back(rs->getString(7));	// REMARKS
+				rs_data_row.push_back(rs->getString(8));	// PROCEDURE_TYPE
+
+				rs_data->push_back(rs_data_row);
+			}
+		} while (0);
+		if (got_exception) {
+			std::string query("SHOW PROCEDURE STATUS");
+
+			std::auto_ptr<sql::PreparedStatement> stmt(connection->prepareStatement(query));				
+
+			std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
+			while (rs->next()) {
+				MySQL_ArtResultSet::row_t rs_data_row;
+
+				rs_data_row.push_back("def");				// PROCEDURE_CAT
+				rs_data_row.push_back(rs->getString(1));	// PROCEDURE_SCHEM
+				rs_data_row.push_back(rs->getString(2));	// PROCEDURE_NAME
+				rs_data_row.push_back("");					// reserved1
+				rs_data_row.push_back("");					// reserved2
+				rs_data_row.push_back("");					// reserved3
+				rs_data_row.push_back(rs->getString(8));	// REMARKS
+				rs_data_row.push_back(!rs->getString(3).compare("PROCEDURE")? procRetNoRes:procRetRes);	// PROCEDURE_TYPE
+
+				rs_data->push_back(rs_data_row);
+			}
+		}
+
 	}
 
 	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);

@@ -817,7 +817,7 @@ MySQL_Prepared_Statement::setNull(unsigned int parameterIndex, int /* sqlType */
 	checkClosed();
 
 	if (parameterIndex == 0 || parameterIndex > param_count) {
-		throw InvalidArgumentException("MySQL_Prepared_Statement::setInt: invalid 'parameterIndex'");
+		throw InvalidArgumentException("MySQL_Prepared_Statement::setNull: invalid 'parameterIndex'");
 	}
 	--parameterIndex; /* DBC counts from 1 */
 

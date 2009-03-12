@@ -27,6 +27,9 @@ Beta   1.0.4 - 2009-03-xx
   position is on a real row, not isBeforeFirst() nor isAfterLast(), like all
   getXXX methods do. (Andrey)
 
+- Implementation for MySQL_DatabaseMetaData::getProcedures() when
+  INFORMATION_SCHEMA is asked not to be used. (Andrey)
+
 
 Alpha  1.0.3 - 2009-03-03
 
