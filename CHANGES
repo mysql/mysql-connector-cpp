@@ -30,6 +30,10 @@ Beta   1.0.4 - 2009-03-xx
 - Implementation for MySQL_DatabaseMetaData::getProcedures() when
   INFORMATION_SCHEMA is asked not to be used. (Andrey)
 
+- Removed MySQL_DatabaseMetaData::getProcedureColumns() from the interface.
+  Until now it was returning always an empty result set. Full implementation
+  will be added at a later stage. (Andrey)
+
 
 Alpha  1.0.3 - 2009-03-03
 

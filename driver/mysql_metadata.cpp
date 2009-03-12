@@ -3182,12 +3182,16 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 /* }}} */
 
 
-/* {{{ MySQL_ConnectionMetaData::getProcedureColumns() -I- */
+/* {{{ MySQL_ConnectionMetaData::getProcedureColumns() -U- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getProcedureColumns(const std::string& /* catalog */, const std::string& schemaPattern,
-											  const std::string& procedureNamePattern, const std::string& /*columnNamePattern*/)
+MySQL_ConnectionMetaData::getProcedureColumns(const std::string& /* catalog */, const std::string& /* schemaPattern */,
+											  const std::string& /* procedureNamePattern */, const std::string& /* columnNamePattern */)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getProcedureColumns");
+	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::getURL");
+	return NULL; // fool compiler
+#if A0
+
 	std::list<std::string> rs_field_data;
 
 	rs_field_data.push_back("PROCEDURE_CAT");
@@ -3206,14 +3210,11 @@ MySQL_ConnectionMetaData::getProcedureColumns(const std::string& /* catalog */, 
 
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
-
-	if (server_version > 49999) {
-	}
-
 	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
 	// If there is no exception we can release otherwise on function exit memory will be freed
 	rs_data.release();
 	return ret;
+#endif
 }
 /* }}} */
 
