@@ -16,31 +16,31 @@
 
 int main(int argc, char** argv)
 {
-  const String::value_type * unnamedStartParams[]= { "dbUrl"
+  const String::value_type * unnamedStartParams[]={"dbUrl"
     , "dbUser"
     , "dbPasswd"
     , "dbSchema"
-    , NULL };
+    , NULL};
 
   Properties defaultStringValues;
 
-  defaultStringValues.insert( Properties::value_type( "dbUrl"   , "tcp://127.0.0.1:3306" ) );
-  defaultStringValues.insert( Properties::value_type( "dbUser"  , "root" ) );
-  defaultStringValues.insert( Properties::value_type( "dbPasswd", "root" ) );
-  defaultStringValues.insert( Properties::value_type( "dbSchema", "test" ) );
+  defaultStringValues.insert(Properties::value_type("dbUrl", "tcp://127.0.0.1:3306"));
+  defaultStringValues.insert(Properties::value_type("dbUser", "root"));
+  defaultStringValues.insert(Properties::value_type("dbPasswd", "root"));
+  defaultStringValues.insert(Properties::value_type("dbSchema", "test"));
 
   std::map<String, bool> defaultBoolValues;
 
-  testsuite::StartOptions options( unnamedStartParams, & defaultStringValues
-    , & defaultBoolValues );
+  testsuite::StartOptions options(unnamedStartParams, & defaultStringValues
+                                  , & defaultBoolValues);
 
-  options.parseParams( argc, argv );
-  testsuite::FiltersSuperposition filter( options.getString( "filter" ) );
+  options.parseParams(argc, argv);
+  testsuite::FiltersSuperposition filter(options.getString("filter"));
 
   testsuite::TestsRunner & testsRunner=testsuite::TestsRunner::theInstance();
 
   testsRunner.setStartOptions(& options);
-  testsRunner.setTestsFilter( filter    );
+  testsRunner.setTestsFilter(filter);
 
   return testsRunner.runTests() ? 0 : -1;
 }

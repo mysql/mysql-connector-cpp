@@ -1845,37 +1845,40 @@ void connectionmetadata::getColumnsTypeConversions()
         logMsg(msg.str());
         got_warning=true;
       }
-      // ASSERT_EQUALS(msg.str(), res->getString("DECIMAL_DIGITS"));
-      ASSERT_EQUALS(false, res->wasNull());
-      ASSERT_EQUALS(res->getString(9), res->getString("DECIMAL_DIGITS"));
+      else
+      {
+        // If string and int are broken, the rest is broken as well - you can bet!
+        ASSERT_EQUALS(false, res->wasNull());
+        ASSERT_EQUALS(res->getString(9), res->getString("DECIMAL_DIGITS"));
 
-      ASSERT_EQUALS(it->decimal_digits != 0, res->getBoolean("DECIMAL_DIGITS"));
-      ASSERT_EQUALS(false, res->wasNull());
-      ASSERT_EQUALS(res->getBoolean(9), res->getBoolean("DECIMAL_DIGITS"));
+        ASSERT_EQUALS(it->decimal_digits != 0, res->getBoolean("DECIMAL_DIGITS"));
+        ASSERT_EQUALS(false, res->wasNull());
+        ASSERT_EQUALS(res->getBoolean(9), res->getBoolean("DECIMAL_DIGITS"));
 
-      ASSERT_EQUALS((int64_t) it->decimal_digits, res->getInt64("DECIMAL_DIGITS"));
-      ASSERT_EQUALS(false, res->wasNull());
-      ASSERT_EQUALS(res->getInt64(9), res->getInt64("DECIMAL_DIGITS"));
+        ASSERT_EQUALS((int64_t) it->decimal_digits, res->getInt64("DECIMAL_DIGITS"));
+        ASSERT_EQUALS(false, res->wasNull());
+        ASSERT_EQUALS(res->getInt64(9), res->getInt64("DECIMAL_DIGITS"));
 
-      ASSERT_EQUALS((uint64_t) it->decimal_digits, res->getUInt64("DECIMAL_DIGITS"));
-      ASSERT_EQUALS(false, res->wasNull());
-      ASSERT_EQUALS(res->getUInt64(9), res->getUInt64("DECIMAL_DIGITS"));
+        ASSERT_EQUALS((uint64_t) it->decimal_digits, res->getUInt64("DECIMAL_DIGITS"));
+        ASSERT_EQUALS(false, res->wasNull());
+        ASSERT_EQUALS(res->getUInt64(9), res->getUInt64("DECIMAL_DIGITS"));
 
-      ASSERT_EQUALS((double) it->decimal_digits, res->getDouble("DECIMAL_DIGITS"));
-      ASSERT_EQUALS(false, res->wasNull());
-      ASSERT_EQUALS(res->getDouble(9), res->getDouble("DECIMAL_DIGITS"));
+        ASSERT_EQUALS((double) it->decimal_digits, res->getDouble("DECIMAL_DIGITS"));
+        ASSERT_EQUALS(false, res->wasNull());
+        ASSERT_EQUALS(res->getDouble(9), res->getDouble("DECIMAL_DIGITS"));
 
-      ASSERT_EQUALS((int32_t) it->decimal_digits, res->getInt("DECIMAL_DIGITS"));
-      ASSERT_EQUALS(false, res->wasNull());
-      ASSERT_EQUALS(res->getInt(9), res->getInt("DECIMAL_DIGITS"));
+        ASSERT_EQUALS((int32_t) it->decimal_digits, res->getInt("DECIMAL_DIGITS"));
+        ASSERT_EQUALS(false, res->wasNull());
+        ASSERT_EQUALS(res->getInt(9), res->getInt("DECIMAL_DIGITS"));
 
-      ASSERT_EQUALS((uint32_t) it->decimal_digits, res->getUInt("DECIMAL_DIGITS"));
-      ASSERT_EQUALS(false, res->wasNull());
-      ASSERT_EQUALS(res->getUInt(9), res->getUInt("DECIMAL_DIGITS"));
+        ASSERT_EQUALS((uint32_t) it->decimal_digits, res->getUInt("DECIMAL_DIGITS"));
+        ASSERT_EQUALS(false, res->wasNull());
+        ASSERT_EQUALS(res->getUInt(9), res->getUInt("DECIMAL_DIGITS"));
 
-      ASSERT_EQUALS(false, res->isNull(9));
-      ASSERT_EQUALS(res->isNull(9), res->isNull("DECIMAL_DIGITS"));
-      ASSERT_EQUALS(false, res->wasNull());
+        ASSERT_EQUALS(false, res->isNull(9));
+        ASSERT_EQUALS(res->isNull(9), res->isNull("DECIMAL_DIGITS"));
+        ASSERT_EQUALS(false, res->wasNull());
+      }
 
       try
       {

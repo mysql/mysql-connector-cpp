@@ -380,15 +380,12 @@ sql::Connection * unit_fixture::getConnection()
 
 void unit_fixture::logMsg(const String & message)
 {
-  //printf("# %s\n", message.c_str());
-
-  TestsListener::messagesLog( message + "\n" );
+  TestsListener::messagesLog(message + "\n");
 }
 
 void unit_fixture::logErr(const String & message)
 {
-  //printf("# %s\n", message.c_str());
-  TestsListener::errorsLog( message + "\n" );
+  TestsListener::errorsLog(message + "\n");
 }
 
 void unit_fixture::logDebug(const String & message)
