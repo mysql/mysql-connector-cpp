@@ -47,10 +47,10 @@ res(NULL)
 
 void unit_fixture::init()
 {
-  url=TestsRunner::theInstance().getStartOptions()->dbUrl;
-  user=TestsRunner::theInstance().getStartOptions()->dbUser;
-  passwd=TestsRunner::theInstance().getStartOptions()->dbPasswd;
-  db=TestsRunner::theInstance().getStartOptions()->dbSchema;
+  url=    TestsRunner::theInstance().getStartOptions()->getString( "dbUrl"    );
+  user=   TestsRunner::theInstance().getStartOptions()->getString( "dbUser"   );
+  passwd= TestsRunner::theInstance().getStartOptions()->getString( "dbPasswd" );
+  db=     TestsRunner::theInstance().getStartOptions()->getString( "dbSchema" );
 
   columns.push_back(columndefinition("BIT", "BIT", sql::DataType::BIT, "0", false, 1, 0, true, "", 0, "NO"));
 
@@ -370,7 +370,7 @@ sql::Connection * unit_fixture::getConnection()
 
   {
     sql::ConnectPropertyVal tmp;
-    tmp.bval=TestsRunner::theInstance().getStartOptions()->use_is;
+    tmp.bval= ! TestsRunner::getStartOptions()->getBool( "dont-use-is" );
     connection_properties[std::string("metadataUseInfoSchema")]=tmp;
   }
 

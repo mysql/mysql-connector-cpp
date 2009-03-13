@@ -51,9 +51,9 @@ namespace testsuite
     typedef void (SuiteClass::*TestCaseMethod)();
 
   private:
-    SuiteClass * suite;
-    TestCaseMethod test;
-    String testName;
+    SuiteClass *    suite;
+    TestCaseMethod  aTest;
+    String          testName;
 
     TestCase();
     TestCase(const TestCase &other);
@@ -61,18 +61,18 @@ namespace testsuite
   public:
 
     TestCase(   SuiteClass &    obj
-      ,  TestCaseMethod  testMethod
-      ,  const String &  _name)
+            ,  TestCaseMethod  testMethod
+            ,  const String &  _name)
       : Test      (),
       suite     ( &obj        ),
-      test      ( testMethod  ),
+      aTest     ( testMethod  ),
       testName  ( _name       )
     {
     }
 
     virtual void runTest()
     {
-      (suite->*test)();
+      (suite->*aTest)();
     }
 
     virtual const String & name() const

@@ -1726,7 +1726,7 @@ void DatabaseMetaDataTest::testGetMaxBinaryLiteralLength()
   if (nRetval < 0) {
     logErr("getMaxBinaryLiteralLength returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getMaxBinaryLiteralLength returns " << nRetval << std::endl;
   }
 }
@@ -1762,7 +1762,7 @@ void DatabaseMetaDataTest::testGetMaxCatalogNameLength()
   if (nRetval < 0) {
     logErr("getMaxCatalogNameLength returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getMaxCatalogNameLength returns " << nRetval;
   }
 
@@ -1801,7 +1801,7 @@ void DatabaseMetaDataTest::testGetMaxCharLiteralLength()
   if (nRetval < 0) {
     logErr("getMaxCharLiteralLength returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getMaxCharLiteralLength returns " << nRetval << std::endl;
   }
 }
@@ -1838,7 +1838,7 @@ void DatabaseMetaDataTest::testGetMaxColumnNameLength()
   if (nRetval < 0) {
     logErr("getMaxColumnNameLength returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog() <<
+    TestsListener::messagesLog() <<
             "getMaxColumnNameLength returns " << nRetval << std::endl;
   }
 
@@ -1877,7 +1877,7 @@ void DatabaseMetaDataTest::testGetMaxColumnsInGroupBy()
   if (nRetval < 0) {
     logErr("getMaxColumnsInGroupBy returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getMaxColumnsInGroupBy returns " << nRetval << std::endl;
   }
 
@@ -1916,7 +1916,7 @@ void DatabaseMetaDataTest::testGetMaxColumnsInIndex()
   if (nRetval < 0) {
     logErr("getMaxColumnsInIndex returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getMaxColumnsInIndex returns " << nRetval << std::endl;
   }
 
@@ -1955,7 +1955,7 @@ void DatabaseMetaDataTest::testGetMaxColumnsInOrderBy()
   if (nRetval < 0) {
     logErr("getMaxColumnsInOrderBy returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getMaxColumnsInOrderBy returns " << nRetval << std::endl;
   }
 
@@ -1994,7 +1994,7 @@ void DatabaseMetaDataTest::testGetMaxColumnsInSelect()
   if (nRetval < 0) {
     logErr("getMaxColumnsInSelect returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getMaxColumnsInSelect returns " << nRetval << std::endl;
   }
 
@@ -2032,7 +2032,7 @@ void DatabaseMetaDataTest::testGetMaxColumnsInTable()
   if (nRetval < 0) {
     logErr("getMaxColumnsInTable returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getMaxColumnsInTable returns " << nRetval << std::endl;
   }
 
@@ -2071,7 +2071,7 @@ void DatabaseMetaDataTest::testGetMaxConnections()
   if (nRetval < 0) {
     logErr("getMaxConnections returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getMaxConnections returns " << nRetval << std::endl;
   }
 
@@ -2110,7 +2110,7 @@ void DatabaseMetaDataTest::testGetMaxCursorNameLength()
   if (nRetval < 0) {
     logErr("getMaxCursorNameLength returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getMaxCursorNameLength returns " << nRetval << std::endl;
   }
 
@@ -2149,7 +2149,7 @@ void DatabaseMetaDataTest::testGetMaxIndexLength()
   if (nRetval < 0) {
     logErr("getMaxIndexLength returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getMaxIndexLength returns " << nRetval << std::endl;
   }
 
@@ -2188,7 +2188,7 @@ void DatabaseMetaDataTest::testGetMaxProcedureNameLength()
   if (nRetval < 0) {
     logErr("getMaxProcedureNameLength returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getMaxProcedureNameLength returns " << nRetval << std::endl;
   }
 
@@ -2227,7 +2227,7 @@ void DatabaseMetaDataTest::testGetMaxRowSize()
   if (nRetval < 0) {
     logErr("getMaxRowSize returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog() << "getMaxRowSize returns " << nRetval << std::endl;
+    TestsListener::messagesLog() << "getMaxRowSize returns " << nRetval << std::endl;
   }
 
 
@@ -2265,7 +2265,7 @@ void DatabaseMetaDataTest::testGetMaxSchemaNameLength()
   if (nRetval < 0) {
     logErr("getMaxSchemaNameLength returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog() << "getMaxSchemaNameLength returns " << nRetval << std::endl;
+    TestsListener::messagesLog() << "getMaxSchemaNameLength returns " << nRetval << std::endl;
   }
 
 
@@ -2303,7 +2303,7 @@ void DatabaseMetaDataTest::testGetMaxStatementLength()
   if (nRetval < 0) {
     logErr("getMaxStatementLength returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog() << "getMaxStatementLength returns " << nRetval << std::endl;
+    TestsListener::messagesLog() << "getMaxStatementLength returns " << nRetval << std::endl;
   }
 
 
@@ -2341,7 +2341,7 @@ void DatabaseMetaDataTest::testGetMaxStatements()
   if (nRetval < 0) {
     logErr("getMaxStatements returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog() << "getMaxStatements returns " << nRetval << std::endl;
+    TestsListener::messagesLog() << "getMaxStatements returns " << nRetval << std::endl;
   }
 
 
@@ -2379,7 +2379,7 @@ void DatabaseMetaDataTest::testGetMaxTableNameLength()
   if (nRetval < 0) {
     logErr("getMaxTableNameLength returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog() << "getMaxTableNameLength returns " << nRetval << std::endl;
+    TestsListener::messagesLog() << "getMaxTableNameLength returns " << nRetval << std::endl;
   }
 
 
@@ -2417,7 +2417,7 @@ void DatabaseMetaDataTest::testGetMaxTablesInSelect()
   if (nRetval < 0) {
     logErr("getMaxTablesInSelect returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog() << "getMaxTablesInSelect returns " << nRetval << std::endl;
+    TestsListener::messagesLog() << "getMaxTablesInSelect returns " << nRetval << std::endl;
   }
 
 
@@ -2455,7 +2455,7 @@ void DatabaseMetaDataTest::testGetMaxUserNameLength()
   if (nRetval < 0) {
     logErr("getMaxUserNameLength returns a negative value");
   } else {
-    TestsListener::theInstance().messagesLog() << "getMaxUserNameLength returns " << nRetval << std::endl;
+    TestsListener::messagesLog() << "getMaxUserNameLength returns " << nRetval << std::endl;
   }
 
 
@@ -2721,7 +2721,7 @@ void DatabaseMetaDataTest::testGetProcedures()
   ResultSetMetaData rsmd(oRet_ResultSet->getMetaData());
 
   int iCount=rsmd->getColumnCount();
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Minimum Column Count is:" << iColumnNamesLength;
   if (iColumnNamesLength <= iCount) {
     iCount=iColumnNamesLength;
@@ -3269,7 +3269,7 @@ void DatabaseMetaDataTest::testGetTypeInfo()
   ResultSetMetaData rsmd(oRet_ResultSet->getMetaData());
 
   int iCount=rsmd->getColumnCount();
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Minimum Column Count is:" << iColumnNamesLength << std::endl;
 
   if (iColumnNamesLength > iCount) {
@@ -3405,7 +3405,7 @@ void DatabaseMetaDataTest::testGetUDTs01()
 
   int iCount=rsmd->getColumnCount();
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Minimum Column Count is:" << iColumnNamesLength << std::endl;
 
   if (iColumnNamesLength > iCount) {
@@ -9385,7 +9385,7 @@ bool DatabaseMetaDataTest::columnCompare(List & sColumnNames, ResultSet & rset)
 
   int iCount=rsmd->getColumnCount();
 
-  TestsListener::theInstance().messagesLog() << "Minimum Column Count is:"
+  TestsListener::messagesLog() << "Minimum Column Count is:"
           << iColumnNamesLength << std::endl;
 
   if (iColumnNamesLength <= iCount) {

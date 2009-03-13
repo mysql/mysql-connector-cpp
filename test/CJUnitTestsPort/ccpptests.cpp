@@ -12,14 +12,57 @@
 #include "framework/test_runner.h"
 #include "framework/start_options.h"
 #include "framework/test_tapOutputter.h"
+#include "framework/test_filter.h"
 
 int main(int argc, char** argv)
 {
-  testsuite::StartOptions options=testsuite::StartOptions(argc, argv);
+  const String::value_type * unnamedStartParams[]= { "dbUrl"
+    , "dbUser"
+    , "dbPasswd"
+    , "dbSchema"
+    , NULL };
+
+  Properties defaultStringValues;
+
+  defaultStringValues.insert( Properties::value_type( "dbUrl"   , "tcp://127.0.0.1:3306" ) );
+  defaultStringValues.insert( Properties::value_type( "dbUser"  , "root" ) );
+  defaultStringValues.insert( Properties::value_type( "dbPasswd", "root" ) );
+  defaultStringValues.insert( Properties::value_type( "dbSchema", "test" ) );
+  defaultStringValues.insert( Properties::value_type( "filter"  , "!BlobTest::*" ) );
+
+  std::map<String, bool> defaultBoolValues;
+
+  testsuite::StartOptions options( unnamedStartParams, & defaultStringValues
+    , & defaultBoolValues );
+
+  options.parseParams( argc, argv );
+
+  testsuite::FiltersSuperposition filter( options.getString( "filter" ) );
+
+
+
+  /*
+  std::cerr << "BlobTest: "
+      << (filter.Admits( "BlobTest" ) ? "Admitted" : "Filtered Out" )
+      << std::endl;
+  
+    return 0;*/
+  
+/*std::cerr << options.getString( "dbUrl" ) << std::endl;
+  std::cerr << options.getString( "dbUser" ) << std::endl;
+  std::cerr << options.getString( "dbPasswd" ) << std::endl;
+  std::cerr << options.getString( "dbSchema" ) << std::endl;
+  std::cerr << options.getBool( "verbose" ) << std::endl;
+  std::cerr << options.getBool( "timer" ) << std::endl;
+  std::cerr << options.getBool( "dont-use-is" ) << std::endl;
+
+  return 0;*/
+
 
   testsuite::TestsRunner & testsRunner=testsuite::TestsRunner::theInstance();
 
-  testsRunner.setStartOptions(& options);
+  testsRunner.setStartOptions ( & options );
+  testsRunner.setTestsFilter  ( filter    );
 
   return testsRunner.runTests() ? 0 : -1;
 }

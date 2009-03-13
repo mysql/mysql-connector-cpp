@@ -16,9 +16,18 @@
 namespace testsuite
 {
 
+TAP::TAP()
+  : output( std::cout )
+  , msgLog( std::cerr )
+  , errLog( std::cerr )
+{
+}
+
+
 void TAP::Header(const String & text)
 {
 }
+
 
 void TAP::SuiteHeader(	const String &  name
                       , unsigned        first
@@ -26,46 +35,46 @@ void TAP::SuiteHeader(	const String &  name
 {
   suiteName= name;
 
-  std::cout << std::endl << "# " << name << std::endl;
+  Comment( name );
 
   if ( testsInSuite > 0 )
-    std::cout << first << ".." << first + testsInSuite - 1 << std::endl;
+    output << first << ".." << first + testsInSuite - 1 << std::endl;
   else
-    std::cout << "# doesn't contain any tests" << std::endl;
+    Comment( "doesn't contain any tests" );
 }
 
 void TAP::TestPassed(unsigned ordNum
                      , const String & name
                      , const String & comment)
 {
-  std::cout << "ok " << ordNum << " - " << suiteName << "::" << name;
+  output << "ok " << ordNum << " - " << suiteName << "::" << name;
 
   if (comment.length() > 0)
   {
-    std::cout << " # " << comment;
+    output << " # " << comment;
   }
 
-  std::cout << std::endl;
+  output << std::endl;
 }
 
 void TAP::TestFailed( unsigned        ordNum
                     , const String &  name
                     , const String &  comment )
 {
-  std::cout << "not ok " << ordNum
+  output << "not ok " << ordNum
           << " - " << suiteName << "::" << name;
 
   if ( comment.length() > 0 )
   {
-    std::cout << " # " << comment;
+    output << " # " << comment;
   }
 
-  std::cout << std::endl;
+  output << std::endl;
 }
 
 void TAP::Comment(const String & comment)
 {
-  std::cout << " # " << comment << std::endl;
+  output << "# " << comment << std::endl;
 }
 
 void TAP::Summary( unsigned           testsRun
@@ -85,15 +94,15 @@ void TAP::Summary( unsigned           testsRun
     //TODO: move is string utils as "join" or smth
     std::vector<int>::const_iterator cit=failedTestsNum.begin();
 
-    std::cout << std::endl << "FAILED tests " << *cit;
+    output << std::endl << "FAILED tests " << *cit;
 
     while (++cit != failedTestsNum.end())
     {
-      std::cout << ", " << *cit;
+      output << ", " << *cit;
     }
   }
 
-  std::cout << std::endl << "Failed " << testsFailed << "/" << testsRun
+  output << std::endl << "Failed " << testsFailed << "/" << testsRun
           << ", " << percentage << "% okay" << std::endl;
 
 }
@@ -123,6 +132,24 @@ void TAP::Assert(const String & expected, const String & result
   tmp << "Received: " << result;
 
   Comment(tmp.str());
+}
+
+
+std::ostream & TAP::messagesLog()
+{
+  // if they need log for smth... we have to make it TAP conmment
+  // there is risk that user doesn't output endl and that will break TAP format. So, possibly
+  // it's better to supply some str stream as a buffer
+  msgLog << "# ";
+
+  return msgLog;
+}
+
+std::ostream & TAP::errorsLog()
+{
+  errLog << "# ";
+
+  return errLog;
 }
 
 }

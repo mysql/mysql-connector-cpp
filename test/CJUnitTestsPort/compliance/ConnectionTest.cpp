@@ -12,9 +12,10 @@
 /* Ported JDBC compliance connection tests
  * Most of them don't really make sense in c++
  */
-#include "ConnectionTest.h"
 #include "driver/mysql_statement.h"
 #include "driver/mysql_metadata.h"
+
+#include "ConnectionTest.h"
 
 namespace testsuite
 {
@@ -263,27 +264,27 @@ void ConnectionTest::testGetTransactionIsolation()
   transIsolateVal=conn->getTransactionIsolation();
   if (transIsolateVal == sql::TRANSACTION_NONE)
   {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getTransactionIsolation method returns Transaction Isolation mode as "
             << transIsolateVal << std::endl;
   } else if (transIsolateVal == sql::TRANSACTION_READ_COMMITTED)
   {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getTransactionIsolation method returns Transaction Isolation mode as "
             << transIsolateVal << std::endl;
   } else if (transIsolateVal == sql::TRANSACTION_READ_UNCOMMITTED)
   {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getTransactionIsolation method returns Transaction Isolation mode as "
             << transIsolateVal << std::endl;
   } else if (transIsolateVal == sql::TRANSACTION_REPEATABLE_READ)
   {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getTransactionIsolation method returns Transaction Isolation mode as "
             << transIsolateVal;
   } else if (transIsolateVal == sql::TRANSACTION_SERIALIZABLE)
   {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getTransactionIsolation method returns Transaction Isolation mode as "
             << transIsolateVal;
   } else

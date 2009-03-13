@@ -41,7 +41,9 @@ class TestsListener : public policies::Singleton<TestsListener>
   String            curSuiteName;
   String            curTestName;
   unsigned          curTestOrdNum;
-  std::stringstream log;
+
+  std::ostringstream devNull;
+
   unsigned          executed;
   std::vector<int>  failedTests;
   // don't really need to count exceptions
@@ -53,15 +55,15 @@ class TestsListener : public policies::Singleton<TestsListener>
 
 public:
 
-  static std::iostream & errorsLog();
+  static std::ostream & errorsLog();
   static void errorsLog (const String::value_type * msg);
   static void errorsLog ( const String::value_type * msg
                         , const String::value_type * file, int line);
   static void errorsLog (const String & msg);
 
-  std::iostream & messagesLog();
-  void messagesLog      (const String::value_type * msg);
-  void messagesLog      (const String & msg);
+  static std::ostream & messagesLog();
+  static void messagesLog      (const String::value_type * msg);
+  static void messagesLog      (const String & msg);
 
   static void  incrementCounter( int incrVal= 1);
   int   recordFailed    ();
@@ -74,33 +76,31 @@ public:
     return failedTests.size();
   }
 
-  static void             currentTestName   (const String & name);
+  static        void      currentTestName   (const String & name);
 
 
-  static const String &   currentSuiteName  ();
-  static String           testFullName      ();
+  static const  String &  currentSuiteName  ();
+  static        String    testFullName      ();
 
-  static void   nextSuiteStarts (const String & name, int testsNumber);
+  static        void      nextSuiteStarts   (const String & name
+                                            , int testsNumber);
 
-  static void   testHasStarted  ();
-  static void   testHasFinished ( TestRunResult result, const String & msg = "" );
+  static        void      testHasStarted    ();
+  static        void      testHasFinished   ( TestRunResult result
+                                            , const String & msg = "" );
 
-  static void   testHasFailed    (const String & msg);
+  static        void      testHasFailed     (const String & msg);
 
   /** This sets comment to the test which output along w/ test result
   (it will be output in silent(non-verbose) mode too)
   */
-  static void   setTestExecutionComment ( const String & msg );
+  static        void      setTestExecutionComment ( const String & msg );
 
-  static void   bailSuite       (const String & reason);
+  static        void      bailSuite         (const String & reason);
 
-  static void   dumpLog         ();
+                void      summary           ();
 
-  void          summary         ();
-
-
-
-  static bool   allTestsPassed  ();
+  static        bool      allTestsPassed    ();
 };
 
 class TestFailedException

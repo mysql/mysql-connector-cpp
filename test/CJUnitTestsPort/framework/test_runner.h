@@ -19,6 +19,8 @@
 namespace testsuite
 {
 
+class Filter;
+
 class TestsRunner : public policies::Singleton<TestsRunner>
 {
 private:
@@ -31,15 +33,19 @@ private:
 
   constStrList    TestSuiteNames;
 
-  StartOptions *  startOptions;
+  StartOptions  * startOptions;
+
+  Filter        * filter;
 
 public:
 
-  bool            runTests();
+  bool            runTests        ();
 
-  void            setStartOptions(StartOptions * options);
+  void            setStartOptions ( StartOptions  * options );
+  void            setTestsFilter  ( Filter        & _filter );
 
-  StartOptions *  getStartOptions() const;
+  static StartOptions * getStartOptions ();
+  static bool           Admits          ( const String & testName );         
 };
 
 }

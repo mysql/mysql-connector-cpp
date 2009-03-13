@@ -17,11 +17,11 @@
 
 namespace testsuite
 {
-static const String defaultHost=_T("127.0.0.1");
-static const String defaultPort=_T("3306");
-static const String defaultDb=_T("test");
-static const String defaultLogin=_T("root");
-static const String defaultPasswd=_T("root");
+static const String defaultHost=    _T("127.0.0.1");
+static const String defaultPort=    _T("3306");
+static const String defaultDb=      _T("test");
+static const String defaultLogin=   _T("root");
+static const String defaultPasswd=  _T("root");
 
 int TestFixtureCommon::instanceCount=1;
 
@@ -45,10 +45,10 @@ TestFixtureCommon::TestFixtureCommon()
 
 void TestFixtureCommon::init()
 {
-  host=TestsRunner::theInstance().getStartOptions()->dbUrl;
-  login=TestsRunner::theInstance().getStartOptions()->dbUser;
-  passwd=TestsRunner::theInstance().getStartOptions()->dbPasswd;
-  db=TestsRunner::theInstance().getStartOptions()->dbSchema;
+  host=   TestsRunner::getStartOptions()->getString( "dbUrl"    );
+  login=  TestsRunner::getStartOptions()->getString( "dbUser"   );
+  passwd= TestsRunner::getStartOptions()->getString( "dbPasswd" );
+  db=     TestsRunner::getStartOptions()->getString( "dbSchema" );
 }
 
 String TestFixtureCommon::extractVal(const String & sTableName
@@ -100,7 +100,7 @@ String TestFixtureCommon::extractVal(const String & sTableName
 
 void TestFixtureCommon::logMsg(String message)
 {
-  TestsListener::theInstance().messagesLog() << message << std::endl;
+  TestsListener::messagesLog() << message << std::endl;
 }
 
 void TestFixtureCommon::logErr(String message)
@@ -979,7 +979,7 @@ void BaseTestFixture::initTable(const String & sTableName
     {
       varbinarySize=_sqlProps[ ("varbinarySize") ];
 
-      TestsListener::theInstance().messagesLog()
+      TestsListener::messagesLog()
               << "Varbinary Table Size : " << varbinarySize << std::endl;
       String insertString=_sqlProps[ "Varbinary_Tab_Insert" ];
 

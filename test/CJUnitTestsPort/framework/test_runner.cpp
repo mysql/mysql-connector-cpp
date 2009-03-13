@@ -13,16 +13,18 @@
 #include "test_factory.h"
 #include "test_case.h"
 #include "test_listener.h"
+#include "test_filter.h"
 
 
 namespace testsuite
 {
 
 TestsRunner::TestsRunner()
-: startOptions(NULL)
+  : startOptions( NULL  )
+  , filter      ( NULL  )
 {
-
 }
+
 
 bool TestsRunner::runTests()
 {
@@ -30,37 +32,54 @@ bool TestsRunner::runTests()
 
   TestSuiteFactory::theInstance().getTestsList( TestSuiteNames );
 
-  TestsListener::setVerbose(startOptions->verbose);
-  TestsListener::doTiming( startOptions->timer );
+  TestsListener::setVerbose(startOptions->getBool( "verbose") );
+  TestsListener::doTiming(  startOptions->getBool( "timer"  ) );
+
+  String dummy;
 
   for ( constStrListCit cit= TestSuiteNames.begin(); cit != TestSuiteNames.end(); ++cit )
   {
-    Test * ts= TestSuiteFactory::theInstance().createTest( *cit );
+    dummy= *cit;
+    dummy+= "::"; // to be caught by filters like "!SuiteName::*"
 
-    ts->runTest();
+    if ( Admits( dummy ) )
+    {
+      Test * ts= TestSuiteFactory::theInstance().createTest( *cit );
+      ts->runTest();
+    }
+    //else TODO: Add skipping by filter condition message
   }
 
   TestsListener::theInstance().summary();
 
-  //bool result= TestSuiteFactory::theInstance().runTests();
-/*
-
-  if ( startOptions->verbose_summary )
-  {
-    TestsListener::dumpLog();
-  }*/
-
-
   return TestsListener::allTestsPassed();
 }
+
 
 void TestsRunner::setStartOptions(StartOptions * options)
 {
   startOptions=options;
 }
 
-StartOptions * TestsRunner::getStartOptions() const
+
+void TestsRunner::setTestsFilter  ( Filter & _filter )
 {
-  return startOptions;
+  filter= &_filter;
 }
+
+
+StartOptions * TestsRunner::getStartOptions()
+{
+  return theInstance().startOptions;
+}
+
+
+bool TestsRunner::Admits( const String & testName )
+{
+  if ( theInstance().filter != NULL )
+    return theInstance().filter->Admits( testName );
+
+  return true;
+}
+
 }

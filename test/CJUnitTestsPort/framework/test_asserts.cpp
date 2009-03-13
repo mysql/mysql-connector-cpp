@@ -176,10 +176,10 @@ void assertEquals(const float & expected, const float & result,
 void assertEqualsEpsilon(const long double & expected, const long double & result
                          , const long double & epsilon, const char * file, int line)
 {
-  if (isNaN(expected) && isNaN(result)
+  if ( ( isNaN(expected) && isNaN(result) )
       ||
-      !isNaN(expected) && !isNaN(result)
-      && fuzzyEquals(expected, result, epsilon))
+      ( !isNaN(expected) && !isNaN(result)
+      && fuzzyEquals(expected, result, epsilon) ) )
   {
     return;
   }
@@ -195,10 +195,10 @@ void assertEqualsEpsilon(const long double & expected, const long double & resul
 void assertEqualsEpsilon(const double & expected, const double & result
                          , const double & epsilon, const char * file, int line)
 {
-  if (isNaN(expected) && isNaN(result)
+  if ( ( isNaN(expected) && isNaN(result) )
       ||
-      !isNaN(expected) && !isNaN(result)
-      && fuzzyEquals(expected, result, epsilon))
+      ( !isNaN(expected) && !isNaN(result)
+      && fuzzyEquals( expected, result, epsilon ) ) )
   {
     return;
   }

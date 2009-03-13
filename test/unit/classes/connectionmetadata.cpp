@@ -1826,7 +1826,7 @@ void connectionmetadata::getColumnsTypeConversions()
       ASSERT_EQUALS(false, res->wasNull());
       ASSERT_EQUALS(res->getString(9), res->getString("DECIMAL_DIGITS"));
 
-      ASSERT_EQUALS((bool)it->decimal_digits, res->getBoolean("DECIMAL_DIGITS"));
+      ASSERT_EQUALS(it->decimal_digits != 0, res->getBoolean("DECIMAL_DIGITS"));
       ASSERT_EQUALS(false, res->wasNull());
       ASSERT_EQUALS(res->getBoolean(9), res->getBoolean("DECIMAL_DIGITS"));
 

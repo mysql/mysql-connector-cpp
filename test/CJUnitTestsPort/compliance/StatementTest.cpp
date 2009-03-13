@@ -382,7 +382,7 @@ void StatementTest::testExecuteUpdate01()
   rs->next();
   retRowCount=rs->getInt(1);
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Number of rows in the table with the specified condition  "
           << retRowCount << std::endl;
 
@@ -531,7 +531,7 @@ void StatementTest::testGetFetchSize()
   int fetchSizeVal=stmt->getFetchSize();
 
   if (fetchSizeVal >= 0) {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getFetchSize method returns :" << fetchSizeVal << std::endl;
   } else {
     logErr(" getFetchSize method returns a invalid value");
@@ -569,7 +569,7 @@ void StatementTest::testGetMaxFieldSize()
   int maxFieldSizeVal=stmt->getMaxFieldSize();
 
   if (maxFieldSizeVal >= 0) {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getMaxFieldSize method returns :" << maxFieldSizeVal << std::endl;
   } else {
     logErr(" getMaxFieldSize method returns a invalid value");
@@ -607,7 +607,7 @@ void StatementTest::testGetMaxRows()
   int maxRowsVal=static_cast<int> (stmt->getMaxRows());
 
   if (maxRowsVal >= 0) {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getMaxRows method returns :" << maxRowsVal << std::endl;
   } else {
     logErr(" getMaxRows method returns a invalid value");
@@ -654,7 +654,7 @@ void StatementTest::testGetMoreResults01()
   bool moreResVal=stmt->getMoreResults();
 
   if ((moreResVal == true) || (moreResVal == false)) {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getMoreResults method returns :" << moreResVal << std::endl;
   } else {
     logErr(" getMoreResults method returns a invalid value");
@@ -702,7 +702,7 @@ void StatementTest::testGetMoreResults02()
   bool moreResVal=stmt->getMoreResults();
 
   if (!moreResVal) {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getMoreResults method returns :" << moreResVal << std::endl;
   } else {
     logErr(" getMoreResults method returns a invalid value");
@@ -750,7 +750,7 @@ void StatementTest::testGetMoreResults03()
   bool moreResVal=stmt->getMoreResults();
 
   if (!moreResVal) {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getMoreResults method returns :" << moreResVal << std::endl;
   } else {
     logErr(" getMoreResults method returns a invalid value");
@@ -789,7 +789,7 @@ void StatementTest::testGetQueryTimeout()
   queryTimeout=stmt->getQueryTimeout();
 
   if (queryTimeout >= 0) {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getQueryTimeout method returns :" << queryTimeout << std::endl;
   } else {
     logErr(" getQueryTimeout method returns a invalid value");
@@ -1126,12 +1126,12 @@ void StatementTest::testGetUpdateCount01()
 
   rowsAffectVal=rs1->getInt(1);
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Number of Rows Affected by Update Statement " << rowsAffectVal
           << std::endl;
 
   if (updCountVal == rowsAffectVal) {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getUpdateCount method returns :" << updCountVal << std::endl;
   } else {
     logErr(" getUpdateCount method returns a invalid value");
@@ -1339,7 +1339,7 @@ void StatementTest::testSetFetchSize02()
   stmt->setMaxRows(maxFetchSizeVal);
   maxRowsVal=static_cast<int> (stmt->getMaxRows());
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Maximum Rows that Statement can contain " << maxRowsVal << std::endl;
 
   logMsg("Calling the setFetchSize method");
@@ -1392,7 +1392,7 @@ void StatementTest::testSetFetchSize05()
   maxFetchSizeVal=StringUtils::toInt(sMaxFetchSizeVal);
   maxFetchSizeVal=maxFetchSizeVal * (-1);
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Maximum Value to be set as Fetch Size " << maxFetchSizeVal << std::endl;
 
   logMsg("Calling setFetchSize method");
@@ -1449,7 +1449,7 @@ void StatementTest::testSetMaxFieldSize01()
   maxFieldSizeVal=StringUtils::toInt(sMaxFieldSizeVal);
   maxFieldSizeVal=maxFieldSizeVal * 256;
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Maximum Field Size Value to be set " << maxFieldSizeVal << std::endl;
 
   logMsg("Calling maxFieldSize method ");
@@ -1503,7 +1503,7 @@ void StatementTest::testSetMaxFieldSize02()
   maxFieldSizeVal=StringUtils::toInt(sMaxFieldSizeVal);
   maxFieldSizeVal=maxFieldSizeVal * (-1);
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Rows Value to be set " << maxFieldSizeVal << std::endl;
   logMsg("Calling the setMaxFieldSize method");
 
@@ -1555,7 +1555,7 @@ void StatementTest::testSetMaxRows01()
 
   sMaxRowsVal=sqlProps[ "Max_Set_Val" ];
   maxRowsVal=StringUtils::toInt(sMaxRowsVal);
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Maximum Rows Value to be set " << maxRowsVal << std::endl;
 
   logMsg("Calling maxRowsVal method");
@@ -1606,7 +1606,7 @@ void StatementTest::testSetMaxRows02()
   sMaxRowsVal=sqlProps[ "Max_Set_Val" ];
   maxRowsVal=StringUtils::toInt(sMaxRowsVal);
   maxRowsVal=maxRowsVal * (-1);
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Rows Value to be set " << maxRowsVal << std::endl;
   logMsg("Calling setMaxRows method");
 
@@ -1660,7 +1660,7 @@ void StatementTest::testSetQueryTimeout02()
   sMaxQueryTimeVal=sqlProps[ "Max_Set_Val" ];
   maxQueryTimeVal=StringUtils::toInt(sMaxQueryTimeVal);
   maxQueryTimeVal=maxQueryTimeVal * (-1);
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Seconds Value to be set as QueryTimeout " << maxQueryTimeVal
           << std::endl;
   logMsg("Calling maxQueryTimeout method");

@@ -9,9 +9,11 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
  */
 
-#include "PreparedStatementTest.h"
 
 #include "../driver/mysql_private_iface.h"
+
+#include "PreparedStatementTest.h"
+
 
 namespace testsuite
 {
@@ -41,7 +43,7 @@ namespace compliance
 /* throws Exception */
 void PreparedStatementTest::testGetMetaData()
 {
-  ResultSet			res;
+  ResultSet			    res;
   ResultSetMetaData rsmd;
   ResultSetMetaData rsmdPrep;
   bool              statflag=   false;
@@ -577,7 +579,7 @@ void PreparedStatementTest::testSetBigDecimal01()
   pstmt->setBigDecimal(1, minBigDecimalVal);
   int retVal=pstmt->executeUpdate();
 
-  TestsListener::theInstance().messagesLog() << "Return Value "
+  TestsListener::messagesLog() << "Return Value "
           << retVal << std::endl;
 
   if (retVal != 1) {
@@ -697,14 +699,14 @@ void PreparedStatementTest::testSetBoolean01()
 
   bMinBooleanVal=(sminBooleanVal == "true" ? true : false);
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
         << "Boolean Value :" << bMinBooleanVal << std::endl;
 
   ResultSet tmp_res(stmt->executeQuery("select * from Bit_Tab"));
 
-  TestsListener::theInstance().messagesLog() << "Row count = " << tmp_res->rowsCount() << std::endl;
+  TestsListener::messagesLog() << "Row count = " << tmp_res->rowsCount() << std::endl;
 
-  TestsListener::theInstance().messagesLog() << sPrepStmt << std::endl;
+  TestsListener::messagesLog() << sPrepStmt << std::endl;
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
   pstmt->setBoolean(1, bMinBooleanVal);
@@ -715,7 +717,7 @@ void PreparedStatementTest::testSetBoolean01()
   rs->next();
   rBooleanVal= rs->getBoolean(1);
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Returned Boolean Value after Updation:" << rBooleanVal << std::endl;
 
   if (rBooleanVal == bMinBooleanVal)
@@ -766,7 +768,7 @@ void PreparedStatementTest::testSetBoolean02()
   String smaxBooleanVal=extractVal("Bit_Tab", 1, sqlProps, conn);
   bMaxBooleanVal=StringUtils::toBoolean(smaxBooleanVal);
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Boolean Value :" << bMaxBooleanVal << std::endl;
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
@@ -778,7 +780,7 @@ void PreparedStatementTest::testSetBoolean02()
   rs->next();
   rBooleanVal=rs->getBoolean(1);
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Returned Boolean Value after Updation:" << rBooleanVal << std::endl;
 
   if (rBooleanVal == bMaxBooleanVal) {
@@ -1118,7 +1120,7 @@ void PreparedStatementTest::testSetInt01()
 
   String sminIntegerVal=extractVal("Integer_Tab", 2, sqlProps, conn);
   minIntegerVal=StringUtils::toInt(sminIntegerVal);
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "int Value :" << minIntegerVal << std::endl;
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
@@ -1130,7 +1132,7 @@ void PreparedStatementTest::testSetInt01()
   rs.reset(stmt->executeQuery(Max_Val_Query));
   rs->next();
   rIntegerVal=rs->getInt(1);
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Returned int Value after Updation:" << rIntegerVal << std::endl;
 
   if (rIntegerVal == minIntegerVal)
@@ -1183,7 +1185,7 @@ void PreparedStatementTest::testSetInt02()
   String smaxIntegerVal=extractVal("Integer_Tab", 1, sqlProps, conn);
   maxIntegerVal=StringUtils::toInt(smaxIntegerVal);
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "int Value: " << maxIntegerVal << std::endl;
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
@@ -1196,9 +1198,9 @@ void PreparedStatementTest::testSetInt02()
   rs->next();
   rIntegerVal=rs->getInt(1);
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Returned int Value after Updation: " << rIntegerVal << std::endl;
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Value returned from ctssql.stmt: " << maxIntegerVal << std::endl;
 
   if (rIntegerVal == maxIntegerVal) {
@@ -1378,7 +1380,7 @@ void PreparedStatementTest::testSetDouble01()
   String sminDoubleVal=extractVal("Double_Tab", 2, sqlProps, conn);
   minDoubleVal=StringUtils::toDouble(sminDoubleVal);
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Double Value: " << minDoubleVal << std::endl;
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
@@ -1390,9 +1392,9 @@ void PreparedStatementTest::testSetDouble01()
   rs->next();
   rDoubleVal=rs->getDouble(1);
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Returned Double Value after Updation:" << rDoubleVal << std::endl;
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Value returned from ctssql.stmt: " << minDoubleVal << std::endl;
 
   if (rDoubleVal == minDoubleVal) {
@@ -1440,7 +1442,7 @@ void PreparedStatementTest::testSetDouble02()
 
   String smaxDoubleVal=extractVal("Double_Tab", 1, sqlProps, conn);
   maxDoubleVal=StringUtils::toDouble(smaxDoubleVal);
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Double Value: " << maxDoubleVal << std::endl;
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
@@ -1452,9 +1454,9 @@ void PreparedStatementTest::testSetDouble02()
   rs->next();
   rDoubleVal=rs->getDouble(1);
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Returned Double Value after Updation: " << rDoubleVal << std::endl;
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Value returned from ctssql.stmt: " << maxDoubleVal << std::endl;
 
   if (rDoubleVal == maxDoubleVal) {
@@ -1503,7 +1505,7 @@ void PreparedStatementTest::testSetLong01()
 
   String sminLongVal=extractVal("Bigint_Tab", 2, sqlProps, conn);
   minLongVal=StringUtils::toLong(sminLongVal);
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Long Value: " << minLongVal << std::endl;
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
@@ -1518,9 +1520,9 @@ void PreparedStatementTest::testSetLong01()
   rs->next();
   rLongVal=rs->getInt64(1);
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Returned Long Value after Updation:" << rLongVal << std::endl;
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Value returned from ctssql.stmt: " << minLongVal << std::endl;
 
   if (rLongVal == minLongVal) {
@@ -1570,7 +1572,7 @@ void PreparedStatementTest::testSetLong02()
   String smaxLongVal=extractVal("Bigint_Tab", 1, sqlProps, conn);
   maxLongVal=StringUtils::toLong(smaxLongVal);
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Long Value: " << maxLongVal << std::endl;
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
@@ -1582,9 +1584,9 @@ void PreparedStatementTest::testSetLong02()
   rs->next();
   rLongVal=rs->getInt64(1);
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Returned Long Value after Updation:" << rLongVal << std::endl;
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
           << "Value returned from ctssql.stmt: " << maxLongVal << std::endl;
 
   if (rLongVal == maxLongVal) {
@@ -1765,7 +1767,7 @@ void PreparedStatementTest::testSetNull01()
   rIntegerVal=rs->getInt(1);
   NULLFlag=rs->wasNull();
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
     << "Boolean Value After Updation: " << NULLFlag << std::endl;
 
   if ( NULLFlag ) {
@@ -1825,7 +1827,7 @@ void PreparedStatementTest::testSetNull02()
   rFloatVal= static_cast<float>( rs->getDouble(1) );
   NULLFlag=rs->wasNull();
 
-  TestsListener::theInstance().messagesLog()
+  TestsListener::messagesLog()
     << "Boolean Value After Updation: " << NULLFlag << std::endl;
 
   clearTable("Float_Tab", conn);
