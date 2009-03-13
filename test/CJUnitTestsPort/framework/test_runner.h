@@ -31,11 +31,11 @@ private:
   // should be private/protected
   CCPP_SINGLETON(TestsRunner);
 
-  Filter        * filter;
-
   constStrList    TestSuiteNames;
 
   StartOptions  * startOptions;
+
+  Filter        * filter;
 
 public:
 

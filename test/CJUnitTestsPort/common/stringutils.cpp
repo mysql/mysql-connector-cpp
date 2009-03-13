@@ -47,7 +47,7 @@ namespace StringUtils
 
     StdStringType item;
 
-    while ( prevPos < strSize && (newPos = str.find(delim, prevPos)) != (int)String::npos )
+    while ( prevPos < strSize && (newPos = str.find(delim, prevPos)) != String::npos )
     {
       if ( newPos == prevPos && delimSize == 0 )
         ++newPos;
