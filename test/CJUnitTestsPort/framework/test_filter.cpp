@@ -25,7 +25,7 @@ namespace testsuite
     if ( filterStr.find( NOTsymbol ) == 0 )
     {
       negative=     true;
-      filterString= StringUtils::trim( filterStr.substr( NOTsymbol.length() ) ).c_str();
+      filterString= filterStr.substr( NOTsymbol.length() ).c_str();
     }
     else
     {
@@ -33,6 +33,7 @@ namespace testsuite
       filterString= filterStr.c_str();
     }
 
+    StringUtils::trim( filterString );
     StringUtils::split( staticPart, filterString, wildCardCharacter, true, true );
   }
 

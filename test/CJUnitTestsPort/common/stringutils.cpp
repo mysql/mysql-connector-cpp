@@ -40,10 +40,10 @@ namespace StringUtils
     , bool trimItems, bool includeEmpty )
   {
     unsigned int          count=      0;
-    StdStringType::size_type prevPos=    0;
-    StdStringType::size_type newPos=     0;
-    StdStringType::size_type delimSize=  delim.size();
-    StdStringType::size_type strSize=    str.size();
+    String::size_type prevPos=    0;
+    String::size_type newPos=     0;
+    String::size_type delimSize=  delim.size();
+    String::size_type strSize=    str.size();
 
     StdStringType item;
 

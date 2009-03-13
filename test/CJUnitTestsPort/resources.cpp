@@ -141,8 +141,11 @@ int LoadProperties(const String & fileName, Properties & props
 
         if (pos != String::npos && pos > 0)
         {
-          String key=StringUtils::trim(line.substr(0, pos));
-          String val=StringUtils::trim(line.substr(pos + 1));
+          String key=line.substr(0, pos);
+          String val=line.substr(pos + 1);
+
+          StringUtils::trim( key );
+          StringUtils::trim( val );
 
           props.insert(Properties::value_type(key, val));
           ++counter;

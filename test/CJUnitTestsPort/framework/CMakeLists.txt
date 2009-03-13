@@ -35,6 +35,7 @@ SET(testframework_sources
 	../common/stringutils.cpp
 	../common/file.cpp
 	start_options.cpp
+	test_filter.cpp
 	)
 
 # It's convinient for VS users to have headers as part of project
@@ -52,6 +53,7 @@ IF(WIN32)
 		test_container.h
 		test_timer.h
 		start_options.h
+	  test_filter.h
 		../common/stringutils.h
 		../common/file.h
 		)
