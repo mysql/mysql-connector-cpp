@@ -475,30 +475,26 @@ void resultset::getTypes()
       res->first();
 
 
-      ASSERT_EQUALS(pres->getString("id"), pres->getString(1));
-      ASSERT_EQUALS(pres->getDouble("id"), pres->getDouble(1));
-      ASSERT_EQUALS(pres->getInt("id"), pres->getInt(1));
-      ASSERT_EQUALS(pres->getUInt("id"), pres->getUInt(1));
-      ASSERT_EQUALS(pres->getInt64("id"), pres->getInt64(1));
-      ASSERT_EQUALS(pres->getUInt64("id"), pres->getUInt64(1));
-      ASSERT_EQUALS(pres->getBoolean("id"), pres->getBoolean(1));
-
       // Comparing prepared statement resultset and statement resultset
       if (pres->getString("id") != res->getString("id"))
       {
-        msg.str("");
-        msg << "... \t\tWARNING - getString(), PS: '" << pres->getString("id") << "'";
-        msg << ", Statement: '" << res->getString("id") << "'";
-        logMsg(msg.str());
-        got_warning=true;
+        if (it->sqldef.find("ZEROFILL", 0) == std::string::npos)
+        {
+          msg.str("");
+          msg << "... \t\tWARNING - getString(), PS: '" << pres->getString("id") << "'";
+          msg << ", Statement: '" << res->getString("id") << "'";
+          logMsg(msg.str());
+          got_warning=true;
+        }
       }
       // ASSERT_EQUALS(pres->getString("id"), res->getString("id"));
 
-      if (pres->getDouble("id") != res->getDouble("id"))
+      if (!fuzzyEquals(pres->getDouble("id"), res->getDouble("id"), 0.001))
       {
         msg.str("");
         msg << "... \t\tWARNING - getDouble(), PS: '" << pres->getDouble("id") << "'";
         msg << ", Statement: '" << res->getDouble("id") << "'";
+        msg << ", Difference: '" << (pres->getDouble("id") - res->getDouble("id")) << "'";
         logMsg(msg.str());
         got_warning=true;
       }

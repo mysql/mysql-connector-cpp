@@ -81,6 +81,8 @@ void assertLessThan(int expected, int result
 
 void assertLessThan(unsigned int expected, unsigned int result
                     , const char* file, int line);
+
+bool fuzzyEquals(double expected, double result, double fuzzyEpsilon);
 }
 
 // Macros should be used inside testsuite namespace
