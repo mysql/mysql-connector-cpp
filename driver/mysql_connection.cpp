@@ -70,9 +70,7 @@ MySQL_Savepoint::getSavepointName()
 
 
 /* {{{ MySQL_Connection::MySQL_Connection() -I- */
-MySQL_Connection::MySQL_Connection(const std::string& hostName,
-								   const std::string& userName,
-								   const std::string& password)
+MySQL_Connection::MySQL_Connection(const std::string& hostName, const std::string& userName, const std::string& password)
 {
 	std::map<std::string, sql::ConnectPropertyVal> connection_properties;
 	{

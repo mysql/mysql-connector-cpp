@@ -45,12 +45,11 @@
 #else
 #  define atoll(x) _atoi64((x))
 #  define strtoull(x, e, b) _strtoui64((x), (e), (b))
-#  define strtold(x,e) strtod(x,e)
 #endif	//	_WIN32
 
 
 #ifndef HAVE_STRTOLD
-#define strold(a, b) strtod((a), (b))
+#define strtold(a, b) strtod((a), (b))
 #endif
 
 #include "mysql_private_iface.h"

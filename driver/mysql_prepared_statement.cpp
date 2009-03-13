@@ -1057,9 +1057,9 @@ MySQL_Prepared_Statement::getWarnings()
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-  warnings.reset( loadMysqlWarnings( dynamic_cast<MySQL_Connection*>(connection) ) );
+	warnings.reset( loadMysqlWarnings( dynamic_cast<MySQL_Connection*>(connection) ) );
 
-  return warnings.get();
+	return warnings.get();
 }
 /* }}} */
 
