@@ -37,7 +37,7 @@ private:
 
 protected:
 
-  virtual bool    paramAsBool       ( const ciString  & param ) const;
+          bool    paramAsBool       ( const ciString  & param ) const;
           bool    defaultBoolValue  ( const String    & name  ) const;
   const String &  defaultStringValue( const String    & name  ) const;
 
