@@ -174,6 +174,25 @@ protected:
 
   bool hasSps;
 
+  enum standard_tables {
+    TABLE_CTSTABLE1 = 0,
+    TABLE_CTSTABLE2,
+    TABLE_INTEGERTAB,
+    TABLE_BITTAB,
+    TABLE_DOUBLETAB,
+    TABLE_BIGINTTAB,
+    TABLE_CHARTAB,
+    TABLE_VARCHARTAB,
+    TABLE_FLOATTAB,
+    TABLE_SMALLINTTAB,
+    TABLE_LONGVARCHARNULLTAB
+  };
+
+  /**
+   * Standard SQL tables shared by many tests
+   */
+  void createStandardTable(standard_tables table);
+
   /* throws SQLException */
 
   void createSchemaObject(String objectType, String objectName,

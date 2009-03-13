@@ -31,11 +31,11 @@ protected:
 public:
 
   TEST_FIXTURE(EscapeProcessorRegressionTest)
-  {
+  {    
     TEST_CASE(testBug11797);
     TEST_CASE(testBug11498);
     TEST_CASE(testBug14909);
-    TEST_CASE(testBug25399);
+    TEST_CASE(testBug25399);   
   }
 
 

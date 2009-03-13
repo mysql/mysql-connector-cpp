@@ -214,8 +214,83 @@ hasSps(true)
   this->myInstanceNumber=instanceCount++;
 }
 
-/* throws SQLException & */
 
+void BaseTestFixture::createStandardTable(standard_tables table)
+{  
+  try {
+  switch (table) {
+  case TABLE_CTSTABLE1:
+    createTable("ctstable1", "(TYPE_ID int(11) NOT NULL default '0', TYPE_DESC varchar(32) default NULL, PRIMARY KEY  (TYPE_ID)) ENGINE=InnoDB");
+    this->stmt->executeUpdate("INSERT INTO ctstable1 VALUES (1,NULL)");
+    this->stmt->executeUpdate("INSERT INTO ctstable1 VALUES (2,NULL)");
+    this->stmt->executeUpdate("INSERT INTO ctstable1 VALUES (3,NULL)");
+    this->stmt->executeUpdate("INSERT INTO ctstable1 VALUES (4,NULL)");
+    this->stmt->executeUpdate("INSERT INTO ctstable1 VALUES (5,NULL)");
+    this->stmt->executeUpdate("INSERT INTO ctstable1 VALUES (6,NULL)");
+    this->stmt->executeUpdate("INSERT INTO ctstable1 VALUES (7,NULL)");
+    this->stmt->executeUpdate("INSERT INTO ctstable1 VALUES (8,NULL)");
+    this->stmt->executeUpdate("INSERT INTO ctstable1 VALUES (9,NULL)");
+    this->stmt->executeUpdate("INSERT INTO ctstable1 VALUES (10,NULL)");
+    break
+            ;
+  case TABLE_CTSTABLE2:
+    createStandardTable(TABLE_CTSTABLE1);
+    createTable("ctstable2", "(KEY_ID int(11) NOT NULL DEFAULT '0', COF_NAME varchar(32) DEFAULT NULL, PRICE float DEFAULT NULL, TYPE_ID int(11) DEFAULT NULL, PRIMARY KEY (KEY_ID),  KEY TYPE_ID (TYPE_ID), CONSTRAINT ctstable2_ibfk_1 FOREIGN KEY (TYPE_ID) REFERENCES ctstable1 (TYPE_ID)) ENGINE=InnoDB");
+    this->stmt->executeUpdate("INSERT INTO ctstable2 VALUES (2,'Continue-2',2,2)");
+    this->stmt->executeUpdate("INSERT INTO ctstable2 VALUES (3,'COFFEE-3',3,2)");
+    this->stmt->executeUpdate("INSERT INTO ctstable2 VALUES (4,'COFFEE-4',4,3)");
+    this->stmt->executeUpdate("INSERT INTO ctstable2 VALUES (5,'COFFEE-5',5,3)");
+    this->stmt->executeUpdate("INSERT INTO ctstable2 VALUES (6,'COFFEE-6',6,3)");
+    this->stmt->executeUpdate("INSERT INTO ctstable2 VALUES (7,'COFFEE-7',7,4)");
+    this->stmt->executeUpdate("INSERT INTO ctstable2 VALUES (8,'COFFEE-8',8,4)");
+    this->stmt->executeUpdate("INSERT INTO ctstable2 VALUES (9,'COFFEE-9',9,4)");
+    break;
+
+  case TABLE_INTEGERTAB:
+    createTable("Integer_Tab", "(MAX_VAL int(11) default NULL, MIN_VAL int(11) default NULL, NULL_VAL int(11) default NULL) ENGINE=InnoDB");
+    break;
+
+  case TABLE_BITTAB:
+    createTable("Bit_Tab", "(MAX_VAL tinyint(1) default NULL, MIN_VAL tinyint(1) default NULL, NULL_VAL tinyint(1) default NULL) ENGINE=InnoDB");
+    break;
+
+  case TABLE_DOUBLETAB:
+    createTable("Double_Tab", "(MAX_VAL double default NULL, MIN_VAL double default NULL, NULL_VAL double default NULL) ENGINE=InnoDB");
+    break;
+
+  case TABLE_BIGINTTAB:
+    createTable("Bigint_Tab", "(MAX_VAL bigint(20) default NULL, MIN_VAL bigint(20) default NULL, NULL_VAL bigint(20) default NULL) ENGINE=InnoDB");
+    break;
+    
+  case TABLE_CHARTAB:
+    createTable("Char_Tab", "(COFFEE_NAME char(30) default NULL, NULL_VAL char(30) default NULL) ENGINE=InnoDB");
+    break;
+
+  case TABLE_VARCHARTAB:
+    createTable("Varchar_Tab", "(COFFEE_NAME varchar(30) default NULL, NULL_VAL varchar(30) default NULL) ENGINE=InnoDB");
+    break;
+
+  case TABLE_FLOATTAB:
+    createTable("Float_Tab", "(MAX_VAL float default NULL, MIN_VAL float default NULL, NULL_VAL float default NULL) ENGINE=InnoDB");
+    break;
+
+  case TABLE_SMALLINTTAB:
+    createTable("Smallint_Tab", "(MAX_VAL smallint(6) default NULL, MIN_VAL smallint(6) default NULL,  NULL_VAL smallint(6) default NULL) ENGINE=InnoDB");
+    break;
+
+  case TABLE_LONGVARCHARNULLTAB:    
+    createTable("Longvarcharnull_Tab", "(NULL_VAL mediumtext) ENGINE=InnoDB");
+    break;
+
+  }
+
+  } catch (sql::SQLException &e) {    
+    logErr(e.what());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+  
+}
+/* throws SQLException & */
 void BaseTestFixture::createSchemaObject(String objectType, String objectName,
                                          String columnsAndOtherStuff)
 {
@@ -233,7 +308,7 @@ void BaseTestFixture::createSchemaObject(String objectType, String objectName,
   createSql.append(" ");
   createSql.append(objectName);
   createSql.append(" ");
-  createSql.append(columnsAndOtherStuff);
+  createSql.append(columnsAndOtherStuff);  
   this->stmt->executeUpdate(createSql);
 }
 
@@ -280,8 +355,10 @@ void BaseTestFixture::dropTable(String tableName)
 
 void BaseTestFixture::dropSchemaObject(String objectType, String objectName)
 {
+  this->stmt->execute("SET foreign_key_checks = 0");
   this->stmt->executeUpdate(String("DROP ") + objectType + " IF EXISTS "
                             + objectName);
+  this->stmt->execute("SET foreign_key_checks = 1");
 }
 
 /* throws SQLException & */

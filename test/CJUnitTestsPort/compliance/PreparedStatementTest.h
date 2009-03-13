@@ -151,6 +151,7 @@ public:
     TEST_CASE(testSetNull18);
 #endif
 #endif
+     
   }
   /*
    * @testName:         testGetMetaData

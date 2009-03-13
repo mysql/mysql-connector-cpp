@@ -134,6 +134,7 @@ void StatementTest::testClose()
 /* throws Exception */
 void StatementTest::testExecute01()
 {
+  createStandardTable(TABLE_CTSTABLE2);
   bool executeFlag=false;
 
   String sSqlStmt=sqlProps[ "Upd_Coffee_Tab" ];
@@ -175,6 +176,7 @@ void StatementTest::testExecute01()
 /* throws Exception */
 void StatementTest::testExecute02()
 {
+  createStandardTable(TABLE_CTSTABLE2);
   bool executeFlag=false;
 
   String sSqlStmt=sqlProps[ "Sel_Coffee_Tab" ];
@@ -219,6 +221,7 @@ void StatementTest::testExecute02()
  * Pretty much useless in C++ */
 void StatementTest::testExecuteQuery01()
 {
+  createStandardTable(TABLE_CTSTABLE2);
   ResultSet reSet;
 
   String sSqlStmt=sqlProps[ "SelCoffeeAll" ];
@@ -263,9 +266,10 @@ void StatementTest::testExecuteQuery01()
 /* throws Exception */
 void StatementTest::testExecuteQuery02()
 {
+  createStandardTable(TABLE_CTSTABLE2);
   ResultSet reSet;
-  String sSqlStmt=sqlProps[ "SelCoffeeNull" ];
-
+  String sSqlStmt=sqlProps[ "SelCoffeeNull" ]; 
+  
   logMsg(String("SQL Statement to be executed  :  ") + sSqlStmt);
   logMsg("Calling executeQuery method ");
 
@@ -360,6 +364,7 @@ void StatementTest::testExecuteQuery03()
 /* throws Exception */
 void StatementTest::testExecuteUpdate01()
 {
+  createStandardTable(TABLE_CTSTABLE2);
   int updCount=0;
   int retRowCount=0;
   String sSqlStmt=sqlProps[ "Upd_Coffee_Tab" ];
@@ -639,7 +644,7 @@ void StatementTest::testGetMaxRows()
 /* throws Exception */
 void StatementTest::testGetMoreResults01()
 {
-
+  createStandardTable(TABLE_CTSTABLE2);
   String sSqlStmt=sqlProps[ "SelCoffeeAll" ];
 
   logMsg(String("Query String : ") + sSqlStmt);
@@ -687,7 +692,7 @@ void StatementTest::testGetMoreResults01()
 /* throws Exception */
 void StatementTest::testGetMoreResults02()
 {
-
+  createStandardTable(TABLE_CTSTABLE2);
   String sSqlStmt=sqlProps[ "SelCoffeeNull" ];
 
   logMsg(String("Query String : ") + sSqlStmt);
@@ -735,7 +740,7 @@ void StatementTest::testGetMoreResults02()
 /* throws Exception */
 void StatementTest::testGetMoreResults03()
 {
-
+  createStandardTable(TABLE_CTSTABLE2);
   String sSqlStmt=sqlProps[ "Upd_Coffee_Tab" ];
 
   logMsg(String("Query String : ") + sSqlStmt);
@@ -818,6 +823,7 @@ void StatementTest::testGetQueryTimeout()
 /* throws Exception */
 void StatementTest::testGetResultSet01()
 {
+  createStandardTable(TABLE_CTSTABLE2);
   ResultSet retResSet /*= NULL*/;
   String sSqlStmt=sqlProps[ "SelCoffeeAll" ];
 
@@ -861,6 +867,7 @@ void StatementTest::testGetResultSet01()
 /* throws Exception */
 void StatementTest::testGetResultSet02()
 {
+  createStandardTable(TABLE_CTSTABLE2);
   ResultSet retResSet /*= NULL*/;
   String sSqlStmt=sqlProps[ "Upd_Coffee_Tab" ];
 
@@ -1100,6 +1107,7 @@ void StatementTest::testGetResultSetType03()
 /* throws Exception */
 void StatementTest::testGetUpdateCount01()
 {
+  createStandardTable(TABLE_CTSTABLE2);
   int updCountVal=0;
   int rowsAffectVal=0;
   String sSqlStmt=sqlProps[ "Upd_Coffee_Tab" ];
@@ -1162,6 +1170,7 @@ void StatementTest::testGetUpdateCount01()
 /* throws Exception */
 void StatementTest::testGetUpdateCount02()
 {
+  createStandardTable(TABLE_CTSTABLE2);
   int updCountVal=0;
   String sSqlStmt=sqlProps[ "SelCoffeeNull" ];
 
@@ -1206,6 +1215,7 @@ void StatementTest::testGetUpdateCount02()
 /* throws Exception */
 void StatementTest::testGetWarnings()
 {
+  createStandardTable(TABLE_INTEGERTAB);
   if (hasSps) {
     initTable("Integer_Tab", sqlProps, conn);
 

@@ -31,6 +31,7 @@ namespace regression
   public:
     TEST_FIXTURE( BlobRegressionTest )
     {
+      
       //TEST_CASE( testBug2670 );
       //TEST_CASE( testUpdatableBlobsWithCharsets );
       TEST_CASE( testBug5490                    );
@@ -41,6 +42,7 @@ namespace regression
       TEST_CASE( testBug10850                   );
       TEST_CASE( testBug34677                   );
       // TEST_CASE( testUpdateLongBlobGT16M        );
+      
     }
 
   /**

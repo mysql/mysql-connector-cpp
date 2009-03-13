@@ -42,6 +42,7 @@ public:
     TEST_CASE(testExecute02);
     TEST_CASE(testExecuteQuery01);
     TEST_CASE(testExecuteQuery02);
+    
     TEST_CASE(testExecuteQuery03);
     TEST_CASE(testExecuteUpdate01);
     TEST_CASE(testExecuteUpdate03);
@@ -51,6 +52,7 @@ public:
     TEST_CASE(testGetMoreResults01);
     TEST_CASE(testGetMoreResults02);
     TEST_CASE(testGetMoreResults03);
+    
     TEST_CASE(testGetQueryTimeout);
     TEST_CASE(testGetResultSet01);
     TEST_CASE(testGetResultSet02);
@@ -72,7 +74,7 @@ public:
     TEST_CASE(testGetResultSetType03);
     TEST_CASE(testGetResultSetConcurrency01);
     TEST_CASE(testGetFetchDirection);
-#endif
+#endif 
   }
 
   /*

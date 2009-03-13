@@ -65,7 +65,7 @@ protected:
 public:
 
   TEST_FIXTURE(DatabaseMetaDataTest)
-  {
+  {    
     TEST_CASE(testAllProceduresAreCallable);
     TEST_CASE(testAllTablesAreSelectable);
     TEST_CASE(testDataDefinitionCausesTransactionCommit);
@@ -288,6 +288,7 @@ public:
     TEST_CASE(testUpdatesAreDetected1);
     TEST_CASE(testUpdatesAreDetected2);
     TEST_CASE(testUpdatesAreDetected3);
+     
     TEST_CASE(testUsesLocalFilePerTable);
 
     dbmd.reset();

@@ -684,6 +684,7 @@ void PreparedStatementTest::testSetBigDecimal02()
 /* throws Exception */
 void PreparedStatementTest::testSetBoolean01()
 {
+  createStandardTable(TABLE_BITTAB);
   bool bMinBooleanVal;
   bool rBooleanVal;
 
@@ -754,8 +755,8 @@ void PreparedStatementTest::testSetBoolean01()
 
 /* throws Exception */
 void PreparedStatementTest::testSetBoolean02()
-
 {
+  createStandardTable(TABLE_BITTAB);
   bool bMaxBooleanVal;
   bool rBooleanVal;
 
@@ -1107,6 +1108,7 @@ void PreparedStatementTest::testSetFloat020202()
 /* throws Exception */
 void PreparedStatementTest::testSetInt01()
 {
+  createStandardTable(TABLE_INTEGERTAB);
   int rIntegerVal=0;
   int minIntegerVal=0;
 
@@ -1170,6 +1172,7 @@ void PreparedStatementTest::testSetInt01()
 /* throws Exception */
 void PreparedStatementTest::testSetInt02()
 {
+  createStandardTable(TABLE_INTEGERTAB);
   int maxIntegerVal=0;
   int rIntegerVal=0;
 
@@ -1365,6 +1368,7 @@ void PreparedStatementTest::testSetDate02()
 /* throws Exception */
 void PreparedStatementTest::testSetDouble01()
 {
+  createStandardTable(TABLE_DOUBLETAB);
   double rDoubleVal=0;
   double minDoubleVal=0;
 
@@ -1425,8 +1429,8 @@ void PreparedStatementTest::testSetDouble01()
 
 /* throws Exception */
 void PreparedStatementTest::testSetDouble02()
-
 {
+  createStandardTable(TABLE_DOUBLETAB);
   double maxDoubleVal=0;
   double rDoubleVal=0;
 
@@ -1488,6 +1492,7 @@ void PreparedStatementTest::testSetDouble02()
 /* throws Exception */
 void PreparedStatementTest::testSetLong01()
 {
+  createStandardTable(TABLE_BIGINTTAB);
   long long rLongVal=0;
   long long minLongVal=0;
 
@@ -1553,6 +1558,7 @@ void PreparedStatementTest::testSetLong01()
 /* throws Exception */
 void PreparedStatementTest::testSetLong02()
 {
+  createStandardTable(TABLE_BIGINTTAB);
   long long maxLongVal=0;
   long long rLongVal=0;
 
@@ -1734,6 +1740,7 @@ void PreparedStatementTest::testSetShort02()
 
 void PreparedStatementTest::testSetNull01()
 {
+  createStandardTable(TABLE_INTEGERTAB);
   bool  NULLFlag;
   int   rIntegerVal=0;
 
@@ -1797,6 +1804,7 @@ void PreparedStatementTest::testSetNull01()
 /* throws Exception */
 void PreparedStatementTest::testSetNull02()
 {
+  createStandardTable(TABLE_FLOATTAB);
   bool  NULLFlag;
   float rFloatVal= 0;
 
@@ -1854,8 +1862,8 @@ void PreparedStatementTest::testSetNull02()
 
 /* throws Exception */
 void PreparedStatementTest::testSetNull03()
-
 {
+  createStandardTable(TABLE_SMALLINTTAB);
   bool  NULLFlag;
   short rShortVal=0;
 
@@ -1914,6 +1922,7 @@ void PreparedStatementTest::testSetNull03()
 /* throws Exception */
 void PreparedStatementTest::testSetNull04()
 {
+  createStandardTable(TABLE_CHARTAB);
   bool NULLFlag;
   String rStringVal;
 
@@ -2228,6 +2237,7 @@ void PreparedStatementTest::testSetNull09()
 /* throws Exception */
 void PreparedStatementTest::testSetNull10()
 {
+  createStandardTable(TABLE_DOUBLETAB);
   bool NULLFlag;
   double rDoubleVal=0;
 
@@ -2283,6 +2293,7 @@ void PreparedStatementTest::testSetNull10()
 /* throws Exception */
 void PreparedStatementTest::testSetNull11()
 {
+  createStandardTable(TABLE_BIGINTTAB);
   bool NULLFlag;
   long long rLongVal=0;
 
@@ -2343,6 +2354,7 @@ void PreparedStatementTest::testSetNull11()
 /* throws Exception */
 void PreparedStatementTest::testSetString01()
 {
+  createStandardTable(TABLE_CHARTAB);
   String maxStringVal;
   String rStringVal;
 
@@ -2654,6 +2666,7 @@ void PreparedStatementTest::testSetTimestamp02()
 /* throws Exception */
 void PreparedStatementTest::testSetString02()
 {
+  createStandardTable(TABLE_VARCHARTAB);
   String maxStringVal;
   String rStringVal;
 
@@ -2827,8 +2840,8 @@ void PreparedStatementTest::testSetFloat02()
 
 /* throws Exception */
 void PreparedStatementTest::testSetNull12()
-
 {
+  createStandardTable(TABLE_VARCHARTAB);
   bool NULLFlag;
   String rStringVal;
 
@@ -2887,6 +2900,7 @@ void PreparedStatementTest::testSetNull12()
 /* throws Exception */
 void PreparedStatementTest::testSetNull13()
 {
+  createStandardTable(TABLE_LONGVARCHARNULLTAB);
   bool NULLFlag;
   String rStringVal;
 

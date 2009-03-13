@@ -45,7 +45,7 @@ protected:
 public:
 
   TEST_FIXTURE(ResultSetMetadataTest)
-  {
+  {    
     TEST_CASE(testGetCatalogName);
     TEST_CASE(testGetColumnClassName);
     TEST_CASE(testGetColumnCount);
@@ -66,7 +66,7 @@ public:
     TEST_CASE(testIsReadOnly);
     TEST_CASE(testIsSearchable);
     TEST_CASE(testIsSigned);
-    TEST_CASE(testIsWritable);
+    TEST_CASE(testIsWritable);     
   }
 
   /*

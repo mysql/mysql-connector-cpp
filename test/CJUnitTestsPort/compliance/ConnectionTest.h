@@ -59,7 +59,7 @@ public:
    */
 
   TEST_FIXTURE(ConnectionTest)
-  {
+  {    
     TEST_CASE(testClose);
     TEST_CASE(testCreateStatement01);
     TEST_CASE(testGetCatalog);
@@ -68,7 +68,7 @@ public:
     TEST_CASE(testIsClosed01);
     TEST_CASE(testIsClosed02);
     TEST_CASE(testIsReadOnly);
-    TEST_CASE(testNativeSQL);
+    TEST_CASE(testNativeSQL);   
   }
 
   /*
