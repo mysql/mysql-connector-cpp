@@ -40,7 +40,7 @@ namespace regression
       //TEST_CASE( testBug9040                    );
       TEST_CASE( testBug10850                   );
       TEST_CASE( testBug34677                   );
-      TEST_CASE( testUpdateLongBlobGT16M        );
+      // TEST_CASE( testUpdateLongBlobGT16M        );
     }
 
   /**
