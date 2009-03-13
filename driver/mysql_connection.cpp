@@ -18,10 +18,12 @@
 
 #if defined(_WIN32) || defined(_WIN64)
 /* MySQL 5.1 might have defined it before in include/config-win.h */
-#ifndef strncasecmp
-#pragma message("DEFINING strncasecmp AS _strnicmp")
-#define strncasecmp(s1,s2,n) _strnicmp(s1,s2,n)
+#ifdef strncasecmp
+#undef strncasecmp
 #endif
+
+#define strncasecmp(s1,s2,n) _strnicmp(s1,s2,n)
+
 #else
 #include <string.h>
 #endif

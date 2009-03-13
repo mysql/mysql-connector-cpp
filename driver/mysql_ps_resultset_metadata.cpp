@@ -245,7 +245,7 @@ MySQL_Prepared_ResultSetMetaData::isAutoIncrement(unsigned int columnIndex)
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	return static_cast<bool>(mysql_fetch_field_direct(result_meta, columnIndex)->flags & AUTO_INCREMENT_FLAG );
+	return (mysql_fetch_field_direct(result_meta, columnIndex)->flags & AUTO_INCREMENT_FLAG ) != 0;
 }
 /* }}} */
 
@@ -390,7 +390,7 @@ MySQL_Prepared_ResultSetMetaData::isZerofill(unsigned int columnIndex)
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	return static_cast<bool>(mysql_fetch_field_direct(result_meta, columnIndex)->flags & ZEROFILL_FLAG);
+	return (mysql_fetch_field_direct(result_meta, columnIndex)->flags & ZEROFILL_FLAG) != 0;
 }
 /* }}} */
 

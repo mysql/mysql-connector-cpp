@@ -35,8 +35,12 @@ namespace sql
 //warning C4290: C++ exception specification ignored except to indicate a function is not __declspec(nothrow)
 #endif
 
+#pragma warning(push)
+#pragma warning(disable: 4275)
 class CPPCONN_PUBLIC_FUNC SQLException : public std::runtime_error
 {
+#pragma warning(pop)
+
 protected:
 	const std::string sql_state;
 	const int errNo;
