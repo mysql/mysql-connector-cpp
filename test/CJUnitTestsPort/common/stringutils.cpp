@@ -39,7 +39,7 @@ namespace StringUtils
   unsigned _split( std::vector<StdStringType> & list, const StdStringType & str, const StdStringType & delim
     , bool trimItems, bool includeEmpty )
   {
-    unsigned int          count=      0;
+    unsigned int      count=      0;
     String::size_type prevPos=    0;
     String::size_type newPos=     0;
     String::size_type delimSize=  delim.size();

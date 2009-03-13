@@ -162,7 +162,8 @@ namespace testsuite
         return true;
     }
 
-    return false;
+    //return true if filter is empty
+    return filter.size() == 0;
   }
 
 } // namespace testsuite

@@ -344,7 +344,7 @@ public:
    *
    * @param	message	Message to be included in the protocol
    */
-  void logMsg(const String message);
+  void logMsg(const String & message);
 
   /**
    * Write error to test protocol

@@ -280,7 +280,7 @@ void connectionmetadata::getColumns()
   {
     DatabaseMetaData dbmeta(con->getMetaData());
     stmt.reset(con->createStatement());
-    bool isVer6 = dbmeta->getDatabaseMajorVersion() == 6;
+    bool isVer6=dbmeta->getDatabaseMajorVersion() == 6;
 
     logMsg("... looping over all kinds of column types");
     for (it=columns.begin(); it != columns.end(); it++)
@@ -374,13 +374,13 @@ void connectionmetadata::getColumns()
       ASSERT_EQUALS(res->getInt(15), res->getInt("SQL_DATETIME_SUB"));
       if (it->char_octet_length != 0 && (it->ctype == sql::DataType::CHAR || it->ctype == sql::DataType::VARCHAR))
       {
-        size_t expected_len = it->char_octet_length;
+        size_t expected_len=it->char_octet_length;
         if ((it->ctype == sql::DataType::CHAR || it->ctype == sql::DataType::VARCHAR) &&
-             isVer6 &&
-             it->sqldef.find("TINYTEXT") == std::string::npos &&
-             (it->sqldef.find("utf8") != std::string::npos || it->sqldef.find("NATIONAL") != std::string::npos))
+            isVer6 &&
+            it->sqldef.find("TINYTEXT") == std::string::npos &&
+            (it->sqldef.find("utf8") != std::string::npos || it->sqldef.find("NATIONAL") != std::string::npos))
         {
-          expected_len = (expected_len/3)*4;
+          expected_len=(expected_len / 3)*4;
         }
         if (res->getUInt64(16) != expected_len)
         {

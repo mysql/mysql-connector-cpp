@@ -149,7 +149,11 @@ void resultset::getTypes()
   std::stringstream msg;
   TODO("Under development...");
   bool got_warning=false;
+  bool got_minor_warning=false;
   ResultSet pres;
+  std::string ps_value;
+  std::string::size_type len_st;
+  std::string::size_type len_ps;
 
   try
   {
@@ -480,11 +484,44 @@ void resultset::getTypes()
       {
         if (it->sqldef.find("ZEROFILL", 0) == std::string::npos)
         {
+          bool is_minor=false;
+          ps_value=pres->getString("id");
+          len_st=res->getString("id").length();
+          len_ps=ps_value.length();
+          if (len_ps > len_st)
+          {
+            // Something like 1.01000 vs. 1.01 ?
+            std::string::size_type i;
+            for (i=len_st; i < len_ps; i++)
+            {
+              if (ps_value.at(i) != '0')
+                break;
+            }
+            if (i < (len_ps - 1))
+            {
+              got_warning=true;
+            }
+            else
+            {
+              is_minor=true;
+              got_minor_warning=true;
+            }
+          }
+          else
+          {
+            got_warning=true;
+          }
           msg.str("");
-          msg << "... \t\tWARNING - getString(), PS: '" << pres->getString("id") << "'";
+          if (is_minor)
+          {
+            msg << "... \t\tMINOR WARNING - getString(), PS: '" << pres->getString("id") << "'";
+          }
+          else
+          {
+            msg << "... \t\tWARNING - getString(), PS: '" << pres->getString("id") << "'";
+          }
           msg << ", Statement: '" << res->getString("id") << "'";
           logMsg(msg.str());
-          got_warning=true;
         }
       }
       // ASSERT_EQUALS(pres->getString("id"), res->getString("id"));
@@ -545,6 +582,10 @@ void resultset::getTypes()
     }
     if (got_warning)
       FAIL("See warnings!");
+
+    if (got_minor_warning)
+      logMsg("See MINOR WARNING");
+
     stmt->execute("DROP TABLE IF EXISTS test");
   }
   catch (sql::SQLException &e)

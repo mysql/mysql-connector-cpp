@@ -15,10 +15,11 @@
 
 namespace testsuite
 {
-  static const String::value_type * defaultUnnamedParam[]= { "dbUrl"
+  /*** TODO figure out will i need it
+   * static const String::value_type * defaultUnnamedParam[]= { "dbUrl"
                                                            , "dbUser"
                                                            , "dbPasswd"
-                                                           , "dbSchema" };
+                                                           , "dbSchema" }; */
 
   static const String::value_type * trueStrings[]= {"y", "yes", "true", "t", "1"
                                                 , NULL};
