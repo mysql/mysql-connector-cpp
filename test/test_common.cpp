@@ -364,7 +364,7 @@ static void test_connection_2(std::auto_ptr<sql::Connection> & conn, std::string
 		std::auto_ptr<sql::Statement> stmt(conn->createStatement());
 		ensure("stmt1 is NULL", stmt.get() != NULL);
 
-		ensure("Wrong catalog", conn->getCatalog() == "");
+		ensure("Wrong catalog", conn->getCatalog() == "def" || conn->getCatalog() == "");
 		stmt->execute("USE " + database);
 		std::string newCatalog(conn->getSchema());
 		ensure(std::string("Wrong catalog '" + newCatalog + "'/'" + database + "'").c_str(), newCatalog == std::string(database));

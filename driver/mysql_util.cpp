@@ -102,6 +102,8 @@ const OUR_CHARSET our_charsets60[] =
 	{  42, "latin7", "latin7_general_cs", 1, 1, "", NULL, NULL},
 	{  43, "macce", "macce_bin", 1, 1, "", NULL, NULL},
 	{  44, "cp1250", "cp1250_croatian_ci", 1, 1, "", NULL, NULL},
+	{  45, "utf8", "utf8_general_ci", 1, 1, "", NULL, NULL},
+	{  46, "utf8", "utf8_bin", 1, 1, "", NULL, NULL},
 	{  47, "latin1", "latin1_bin", 1, 1, "", NULL, NULL},
 	{  48, "latin1", "latin1_general_ci", 1, 1, "", NULL, NULL},
 	{  49, "latin1", "latin1_general_cs", 1, 1, "", NULL, NULL},
@@ -2164,7 +2166,7 @@ char * utf8_strup(const char * const src, size_t srclen)
 	if (srclen == 0) {
 		srclen = strlen(src);
 	}
-	dst = new char[(dstlen = srclen * 4)];
+	dst = new char[(dstlen = srclen * 4) + 1];
 	if (!dst) {
 		return NULL;
 	}
