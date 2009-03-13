@@ -961,7 +961,7 @@ void connection::connectUsingMap()
 void connection::setTransactionIsolation()
 {
   logMsg("connection::setTransactionIsolation() - MySQL_Connection::setTransactionIsolation()");
-  
+
   stmt.reset(con->createStatement());
   try
   {

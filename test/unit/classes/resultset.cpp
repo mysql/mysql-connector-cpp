@@ -507,6 +507,11 @@ void resultset::getTypes()
               got_minor_warning=true;
             }
           }
+          if (!it->check_as_string)
+          {
+            is_minor=true;
+            got_minor_warning=true;
+          }
           else
           {
             got_warning=true;
@@ -523,6 +528,7 @@ void resultset::getTypes()
           msg << ", Statement: '" << res->getString("id") << "'";
           logMsg(msg.str());
         }
+
       }
       // ASSERT_EQUALS(pres->getString("id"), res->getString("id"));
 
