@@ -181,8 +181,9 @@ void connectionmetadata::getBestRowIdentifier()
 
       ASSERT_EQUALS(0, res->getInt(6));
       ASSERT_EQUALS(res->getInt(6), res->getInt("BUFFER_LENGTH"));
-      
-      if (it->decimal_digits != res->getInt(7)) {
+
+      if (it->decimal_digits != res->getInt(7))
+      {
         msg.str("");
         msg << "... \t\tWARNING - check DECIMAL_DIGITS for " << it->sqldef;
         msg << " - expecting decimal digits = " << it->decimal_digits << " got " << res->getInt(7);
@@ -190,7 +191,7 @@ void connectionmetadata::getBestRowIdentifier()
         got_warning=true;
       }
       ASSERT_EQUALS(res->getInt(7), res->getInt("DECIMAL_DIGITS"));
-      
+
       ASSERT_EQUALS(sql::DatabaseMetaData::bestRowNotPseudo, res->getInt(8));
       ASSERT_EQUALS(res->getInt(8), res->getInt("PSEUDO_COLUMN"));
 
@@ -763,6 +764,10 @@ void connectionmetadata::getExportedKeys()
     stmt->execute("DROP TABLE IF EXISTS parent");
     res.reset(dbmeta->getExportedKeys(con->getCatalog(), con->getSchema(), "child"));
     ASSERT(!res->next());
+  }
+  catch (sql::MethodNotImplementedException &e)
+  {
+    SKIP("MySQL is too old, MethodNotImplementedException!");
   }
   catch (sql::SQLException &e)
   {
@@ -1450,7 +1455,7 @@ void connectionmetadata::getCrossReference()
     logMsg("... checking parent->child");
     res.reset(dbmeta->getCrossReference(con->getCatalog(), con->getSchema(), "parent", con->getCatalog(), con->getSchema(), "child"));
     checkResultSetScrolling(res);
-    ASSERT(res->next());    
+    ASSERT(res->next());
     checkForeignKey(con, res);
 
     logMsg("... checking child->parent");
@@ -1458,6 +1463,10 @@ void connectionmetadata::getCrossReference()
     stmt->execute("DROP TABLE IF EXISTS parent");
     res.reset(dbmeta->getCrossReference(con->getCatalog(), con->getSchema(), "child", con->getCatalog(), con->getSchema(), "parent"));
     ASSERT(!res->next());
+  }
+  catch (sql::MethodNotImplementedException &e)
+  {
+    SKIP("MySQL is too old, MethodNotImplementedException!");
   }
   catch (sql::SQLException &e)
   {
@@ -1808,7 +1817,8 @@ void connectionmetadata::getColumnsTypeConversions()
       ASSERT_EQUALS(res->isNull(3), res->isNull("TABLE_NAME"));
 
       // integer -> xyz
-      if (it->decimal_digits, res->getInt("DECIMAL_DIGITS")) {
+      if (it->decimal_digits, res->getInt("DECIMAL_DIGITS"))
+      {
         msg.str("");
         msg << "...\t\tWARNING: expecting DECIMAL_DIGITS = '" << it->decimal_digits << "'";
         msg << " got '" << res->getString("DECIMAL_DIGITS") << "'";
@@ -1833,7 +1843,7 @@ void connectionmetadata::getColumnsTypeConversions()
         msg << "...\t\tWARNING: expecting DECIMAL_DIGITS = '" << it->decimal_digits << "'";
         msg << " got '" << res->getString("DECIMAL_DIGITS") << "'";
         logMsg(msg.str());
-        got_warning=true;        
+        got_warning=true;
       }
       // ASSERT_EQUALS(msg.str(), res->getString("DECIMAL_DIGITS"));
       ASSERT_EQUALS(false, res->wasNull());
