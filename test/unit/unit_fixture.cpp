@@ -21,6 +21,7 @@
  */
 
 #include "unit_fixture.h"
+#include <cstdio>
 
 #ifndef L64
 #ifdef _WIN32
@@ -379,12 +380,14 @@ sql::Connection * unit_fixture::getConnection()
 
 void unit_fixture::logMsg(const String message)
 {
-  TestsListener::theInstance().messagesLog(message);
+  printf("# %s\n", message.c_str());
+  // TestsListener::theInstance().messagesLog(message);
 }
 
 void unit_fixture::logErr(const String & message)
 {
-  TestsListener::errorsLog(message);
+  printf("# %s\n", message.c_str());
+  // TestsListener::errorsLog(message);
 }
 
 void unit_fixture::logDebug(const String & message)
