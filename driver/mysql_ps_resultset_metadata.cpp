@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #endif	//	_WIN32
 #include <string.h>
+#include <iostream>
+#include <sstream>
 
 #include <cppconn/exception.h>
 #include "mysql_ps_resultset.h"
@@ -165,7 +167,8 @@ MySQL_Prepared_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 }
 /* }}} */
 
-// Precision - total number of digits
+
+// Scale - Number of digits right of the decimal point
 /* {{{ MySQL_Prepared_ResultSetMetaData::getPrecision -I- */
 unsigned int
 MySQL_Prepared_ResultSetMetaData::getPrecision(unsigned int columnIndex)
@@ -176,17 +179,14 @@ MySQL_Prepared_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	unsigned int scale = getScale(columnIndex + 1);
-	unsigned int ret = mysql_fetch_field_direct(result_meta, columnIndex)->length;
-	if (scale) {
-		ret -= scale + 1;
-	}
-	CPP_INFO_FMT("column=%u precision=%d", columnIndex + 1, ret);
+	unsigned int ret = mysql_fetch_field_direct(result_meta, columnIndex)->decimals;
+	CPP_INFO_FMT("column=%u scale=%d", columnIndex + 1, ret);
 	return ret;
 }
 /* }}} */
 
-// Scale - Number of digits right of the decimal point
+
+// Precision - total number of digits
 /* {{{ MySQL_Prepared_ResultSetMetaData::getScale -I- */
 unsigned int
 MySQL_Prepared_ResultSetMetaData::getScale(unsigned int columnIndex)
@@ -197,11 +197,16 @@ MySQL_Prepared_ResultSetMetaData::getScale(unsigned int columnIndex)
 	if (columnIndex >= num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
 	}
-	unsigned int ret = mysql_fetch_field_direct(result_meta, columnIndex)->decimals;
-	CPP_INFO_FMT("column=%u scale=%d", columnIndex + 1, ret);
+	unsigned int precision = getPrecision(columnIndex + 1);
+	unsigned int ret = mysql_fetch_field_direct(result_meta, columnIndex)->length;
+	if (precision) {
+		ret = precision - ret;
+	}
+	CPP_INFO_FMT("column=%u precision=%d", columnIndex + 1, ret);
 	return ret;
 }
 /* }}} */
+
 
 
 /* {{{ MySQL_Prepared_ResultSetMetaData::getSchemaName -I- */
@@ -265,6 +270,11 @@ MySQL_Prepared_ResultSetMetaData::isCaseSensitive(unsigned int columnIndex)
 		return false;
 	}
 	const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
+	if (!cs) {
+		std::ostringstream msg;
+		msg << "Server sent uknown charsetnr (" << field->charsetnr << ") . Please report";
+		throw SQLException(msg.str());
+	}
 	return NULL == strstr(cs->collation, "_ci");
 }
 /* }}} */

@@ -14,6 +14,8 @@
 #endif	//	_WIN32
 
 #include <string.h>
+#include <iostream>
+#include <sstream>
 
 #include <cppconn/datatype.h>
 #include <cppconn/exception.h>
@@ -167,19 +169,19 @@ MySQL_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_ResultSetMetaData::getPrecision -I- */
+/* {{{ MySQL_ResultSetMetaData::getScale -I- */
 unsigned int
-MySQL_ResultSetMetaData::getPrecision(unsigned int columnIndex)
+MySQL_ResultSetMetaData::getScale(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::getPrecision");
+	CPP_ENTER("MySQL_ResultSetMetaData::getScale");
 	if (result->isValid()) {
 		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
 			throw sql::InvalidArgumentException("Invalid value for columnIndex");
 		}
-		unsigned int scale = getScale(columnIndex);
+		unsigned int precision = getPrecision(columnIndex);
 		unsigned int ret = mysql_fetch_field_direct(result->get(), columnIndex - 1)->length;
-		if (scale) {
-			ret -= scale + 1;
+		if (precision) {
+			ret = precision - ret;
 		}
 		CPP_INFO_FMT("column=%u precision=%d", columnIndex, ret);
 		return ret;
@@ -189,11 +191,11 @@ MySQL_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_ResultSetMetaData::getScale -I- */
+/* {{{ MySQL_ResultSetMetaData::getPrecision -I- */
 unsigned int
-MySQL_ResultSetMetaData::getScale(unsigned int columnIndex)
+MySQL_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::getScale");
+	CPP_ENTER("MySQL_ResultSetMetaData::getPrecision");
 	if (result->isValid()) {
 		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
 			throw sql::InvalidArgumentException("Invalid value for columnIndex");
@@ -271,6 +273,11 @@ MySQL_ResultSetMetaData::isCaseSensitive(unsigned int columnIndex)
 			return false;
 		}
 		const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
+		if (!cs) {
+			std::ostringstream msg;
+			msg << "Server sent uknown charsetnr (" << field->charsetnr << ") . Please report";
+			throw SQLException(msg.str());
+		}
 		return NULL == strstr(cs->collation, "_ci");
 	}
 	throw sql::InvalidArgumentException("ResultSet is not valid anymore");

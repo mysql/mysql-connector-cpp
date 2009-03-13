@@ -72,9 +72,11 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(MYSQL_STMT *s, MySQL_Prepared
 	CPP_INFO_FMT("num_fields=%u num_rows=%u", num_fields, num_rows);
 	for (unsigned int i = 0; i < num_fields; ++i) {
 		char * tmp = sql::mysql::util::utf8_strup(mysql_fetch_field(result_meta)->name, 0);
+		printf("name=[%s]", mysql_fetch_field_direct(result_meta, i)->name);
 		field_name_to_index_map[std::string(tmp)] = i;
 		delete [] tmp;
 	}
+	printf("\n");
 	mysql_free_result(result_meta);
 	result_meta = NULL;
 	rs_meta.reset(getMetaData());
