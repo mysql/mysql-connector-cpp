@@ -48,10 +48,10 @@ res(NULL)
 
 void unit_fixture::init()
 {
-  url=    TestsRunner::theInstance().getStartOptions()->getString( "dbUrl"    );
-  user=   TestsRunner::theInstance().getStartOptions()->getString( "dbUser"   );
-  passwd= TestsRunner::theInstance().getStartOptions()->getString( "dbPasswd" );
-  db=     TestsRunner::theInstance().getStartOptions()->getString( "dbSchema" );
+  url=TestsRunner::theInstance().getStartOptions()->getString("dbUrl");
+  user=TestsRunner::theInstance().getStartOptions()->getString("dbUser");
+  passwd=TestsRunner::theInstance().getStartOptions()->getString("dbPasswd");
+  db=TestsRunner::theInstance().getStartOptions()->getString("dbSchema");
 
   columns.push_back(columndefinition("BIT", "BIT", sql::DataType::BIT, "0", false, 1, 0, true, "", 0, "NO"));
 
@@ -371,7 +371,7 @@ sql::Connection * unit_fixture::getConnection()
 
   {
     sql::ConnectPropertyVal tmp;
-    tmp.bval= ! TestsRunner::getStartOptions()->getBool( "dont-use-is" );
+    tmp.bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
     connection_properties[std::string("metadataUseInfoSchema")]=tmp;
   }
 
@@ -380,14 +380,12 @@ sql::Connection * unit_fixture::getConnection()
 
 void unit_fixture::logMsg(const String message)
 {
-  printf("# %s\n", message.c_str());
-  // TestsListener::theInstance().messagesLog(message);
+  TestsListener::theInstance().messagesLog(message);
 }
 
 void unit_fixture::logErr(const String & message)
 {
-  printf("# %s\n", message.c_str());
-  // TestsListener::errorsLog(message);
+  TestsListener::errorsLog(message);
 }
 
 void unit_fixture::logDebug(const String & message)
