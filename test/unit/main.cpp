@@ -12,6 +12,7 @@
 #include "../CJUnitTestsPort/framework/test_runner.h"
 #include "../CJUnitTestsPort/framework/start_options.h"
 #include "../CJUnitTestsPort/framework/test_tapOutputter.h"
+#include "../CJUnitTestsPort/framework/test_filter.h"
 
 int main(int argc, char** argv)
 {
@@ -34,10 +35,12 @@ int main(int argc, char** argv)
     , & defaultBoolValues );
 
   options.parseParams( argc, argv );
+  testsuite::FiltersSuperposition filter( options.getString( "filter" ) );
 
   testsuite::TestsRunner & testsRunner=testsuite::TestsRunner::theInstance();
 
   testsRunner.setStartOptions(& options);
+  testsRunner.setTestsFilter( filter    );
 
   return testsRunner.runTests() ? 0 : -1;
 }
