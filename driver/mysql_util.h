@@ -34,6 +34,10 @@
 #ifndef _WIN32
 #  include <stdlib.h>
 #  ifdef __hpux
+#    if defined(HAVE_STRTOLD) && defined(_LONG_DOUBLE)
+#      define HAVE_STRTOLD 1
+#      define strtold(a, b) reinterpret_cast<long double> strtold((a), (b)) 
+#    endif
 #    ifdef _PA_RISC2_0
 #      define atoll(__a) atol((__a))
 #      define strtoull(__a, __b, __c) strtoul((__a), (__b), (__c))
@@ -47,9 +51,32 @@
 #  define strtoull(x, e, b) _strtoui64((x), (e), (b))
 #endif	//	_WIN32
 
+/*
+  HPUX has some problems with long double : http://docs.hp.com/en/B3782-90716/ch02s02.html
+
+  strtold() has implementations that return struct long_double, 128bit one,
+  which contains four 32bit words. 
+  Fix described :
+  --------
+  union { 
+     long_double l_d; 
+     long double ld; 
+  } u; 
+  // convert str to a long_double; store return val in union
+  //(Putting value into union enables converted value to be 
+  // accessed as an ANSI C long double)
+  u.l_d = strtold( (const char *)str, (char **)NULL); 
+  --------
+  Because in C++ we can do reinterpret_cast, it should be more convenient.
+  But DON'T cast `struct long_double *` to `long double *`, different alignment.
+*/
 
 #ifndef HAVE_STRTOLD
-#define strtold(a, b) strtod((a), (b))
+#  define strtold(a, b) strtod((a), (b))
+#else
+#  if defined(__hpux) && defined(_LONG_DOUBLE)
+#    define strtold(a, b) reinterpret_cast<long double>(strtold((a), (b))) 
+#  endif
 #endif
 
 #include "mysql_private_iface.h"
