@@ -403,7 +403,7 @@ MySQL_ResultSetMetaData::isZerofill(unsigned int columnIndex)
 		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
 			throw sql::InvalidArgumentException("Invalid value for columnIndex");
 		}
-		return static_cast<bool>(mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & ZEROFILL_FLAG);
+		return (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & ZEROFILL_FLAG) != 0;
 	}
 	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
 }

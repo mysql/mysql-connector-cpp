@@ -3294,7 +3294,7 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 			std::auto_ptr<sql::ResultSet> rs(NULL);
 			try {
 				rs.reset(stmt->executeQuery());
-			} catch (SQLException & e) {
+			} catch (SQLException & /*e*/) {
 				/* We don't have direct access to the mysql.proc, use SHOW */
 				got_exception = true;
 				break;
