@@ -23,7 +23,7 @@
 #include "common/ccppTypes.h"
 #include "common/stringutils.h"
 
-#define MESSAGE(msg)  TestsListener::theInstance().messagesLog() << msg << std::endl;
+#define MESSAGE(msg)  TestsListener::messagesLog() << msg << std::endl;
 
 
 /**

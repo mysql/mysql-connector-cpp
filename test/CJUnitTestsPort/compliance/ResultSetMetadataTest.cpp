@@ -124,7 +124,7 @@ void ResultSetMetadataTest::testGetColumnCount()
   logMsg("Calling getColumnCount on ResultSetMetaData");
   int coloumnCount=rsmd->getColumnCount();
   if (coloumnCount >= 0) {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getColumnCount method returns: " << coloumnCount << std::endl;
   } else {
     logErr(" getColumnCount method returns a negative value");
@@ -165,7 +165,7 @@ void ResultSetMetadataTest::testGetColumnDisplaySize()
   int colDispSize=rsmd->getColumnDisplaySize(2);
 
   if (colDispSize >= 0) {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getColumnDisplaySize method returns: " << colDispSize << std::endl;
   } else {
     logErr(" getColumnDisplaySize method returns a negative value");
@@ -314,7 +314,7 @@ void ResultSetMetadataTest::testGetColumnType()
             // case sql::DataType::BLOB :
             // case sql::DataType::CLOB :
             // case sql::DataType::REF :
-            TestsListener::theInstance().messagesLog()
+            TestsListener::messagesLog()
             << "getColumnType method returns: " << colType << std::endl;
     break;
   default:
@@ -389,7 +389,7 @@ void ResultSetMetadataTest::testGetPrecision()
   logMsg("Calling getPrecision on ResultSetMetaData");
   int precisionSize=rsmd->getPrecision(1);
   if (precisionSize >= 0) {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getPrecision method returns: " << precisionSize << std::endl;
   } else {
     logErr(" getPrecision method returns a negative value");
@@ -425,7 +425,7 @@ void ResultSetMetadataTest::testGetScale()
   logMsg("Calling getScale on ResultSetMetaData");
   int scaleSize=rsmd->getScale(2);
   if (scaleSize >= 0) {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "getScale method returns: " << scaleSize << std::endl;
   } else {
     logErr(" getScale method returns a negative value");
@@ -679,7 +679,7 @@ void ResultSetMetadataTest::testIsNullable()
   if ((coloumnCount == sql::ResultSetMetaData::columnNoNulls)
       || (coloumnCount == sql::ResultSetMetaData::columnNullable)
       || (coloumnCount == sql::ResultSetMetaData::columnNullableUnknown)) {
-    TestsListener::theInstance().messagesLog()
+    TestsListener::messagesLog()
             << "isNullable method returns: " << coloumnCount << std::endl;
   } else {
     logErr(" isNullable method returns a negative value");

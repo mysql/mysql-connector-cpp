@@ -59,6 +59,9 @@ public:
                       , const String & result
                       , const String & file
                       , int line) _PURE;
+
+  virtual std::ostream & messagesLog()  _PURE;
+  virtual std::ostream & errorsLog()    _PURE;
 };
 }
 

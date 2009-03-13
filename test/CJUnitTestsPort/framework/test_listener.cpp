@@ -44,22 +44,28 @@ void  TestsListener::doTiming( bool timing )
 
 //TODO: "set" counterparts
 
-std::iostream & TestsListener::errorsLog()
+std::ostream & TestsListener::errorsLog()
 {
-  return theInstance().log;
+  if ( theInstance().verbose )
+    return theInstance().outputter->errorsLog();
+  else
+  {
+    theInstance().devNull.str("");
+    return theInstance().devNull;
+  }
 }
 
 
 void TestsListener::errorsLog(const String::value_type * msg)
 {
   if (msg != NULL)
-    theInstance().log << msg  << std::endl;
+    errorsLog() << msg  << std::endl;
 }
 
 
 void TestsListener::errorsLog(const String & msg)
 {
-  theInstance().log << msg << std::endl;
+  errorsLog() << msg << std::endl;
 }
 
 
@@ -69,29 +75,34 @@ void TestsListener::errorsLog(const String::value_type * msg
 {
   if (msg != NULL)
   {
-    theInstance().log << msg << " File: " << file << " Line: " << line << std::endl;
+    errorsLog() << msg << " File: " << file << " Line: " << line << std::endl;
   }
 }
 
 
-std::iostream & TestsListener::messagesLog()
+std::ostream & TestsListener::messagesLog()
 {
-  return log;
+  if ( theInstance().verbose )
+    return theInstance().outputter->messagesLog();
+  else
+  {
+    theInstance().devNull.str("");
+    return theInstance().devNull;
+  }
 }
 
 
 void TestsListener::messagesLog(const String::value_type * msg)
 {
   if (msg != NULL)
-    log << msg;
+    messagesLog() << msg;
 }
 
 
 void TestsListener::messagesLog(const String & msg)
 {
-  log << msg << std::endl;
-  if (verbose)
-    theInstance().outputter->Comment(msg);
+  if ( theInstance().verbose )
+    messagesLog() << msg;
 }
 
 
@@ -207,13 +218,6 @@ void TestsListener::testHasFinished( TestRunResult result, const String & msg )
       , theInstance().curTestName
       , theInstance().executionComment );
   }
-
-  //log messsages from teardown goes after next test
-  if (theInstance().verbose)
-    dumpLog();
-  else
-    // Just clearing memory
-    theInstance().log.str("");
  }
 
 
@@ -250,25 +254,6 @@ void TestsListener::bailSuite(const String & reason)
 {
   static const String bail("BAIL ");
   theInstance().outputter->Comment(bail + reason);
-}
-
-void TestsListener::dumpLog()
-{
-  if ( theInstance().log.str().length() > 0 )
-  {
-    std::cerr << "---------------- "
-    << theInstance().curTestName << " starts. " << "----------------" << std::endl;
-  }
-
-  std::cerr << theInstance().log.str();
-
-  if (theInstance().log.str().length() > 0 )
-  {
-    std::cerr <<  "---------------- "
-    << theInstance().curTestName << " ends. " << "----------------" << std::endl;
-  }
-
-  theInstance().log.str("");
 }
 
 }

@@ -18,13 +18,26 @@
 
 namespace StringUtils
 {
+  template <class StdStringType>
+  unsigned  _split    ( std::vector<StdStringType> & list
+                     , const StdStringType &  str
+                     , const StdStringType &  delim
+                     , bool            trimItems=    true
+                     , bool            includeEmpty= false);
+
+  // just a shortcut for split<String>()
   unsigned  split     ( List &          list
                       , const String &  str
                       , const String &  delim
-                      , bool            trimItems/*includeEmpty*/ = true );
+                      , bool            trimItems=    true
+                      , bool            includeEmpty= false);
+
+  template <class StdStringType>
+  StdStringType & _trim ( StdStringType & victim );
 
   /* Unlike Java's trim, this trims only blank spaces */
-  String    trim      ( const String & victim );
+  String &   trim      ( String & victim );
+
 
   int       toInt     ( const String & str, bool isNull = false );
   bool      toBoolean ( const String & str, bool isNull = false );

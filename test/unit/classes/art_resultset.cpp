@@ -9,9 +9,8 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
  */
 
-
-#include "art_resultset.h"
 #include "../../../driver/mysql_art_resultset.h"
+#include "art_resultset.h"
 
 namespace testsuite
 {

@@ -20,101 +20,45 @@
 namespace testsuite
 {
 
-struct TestsFilter
+class StartOptions
 {
-  List filter;
 
-  TestsFilter()
-  {
+private:
 
-  }
+  typedef std::map<String, bool> BoolParamsType;
 
-  TestsFilter(String & filterString)
-  {
-  }
+  List                            unnamedParams;
 
-  bool Admits(String & testName)
-  {
-    return true;
-  }
-};
+  BoolParamsType                  defBoolValues;
+  Properties                      defStringValues;
 
-enum UnnamedParameterOrder
-{
-  poFirst=-1, poUrl, poUser, poPasswd, poSchema, poLast
-};
+	BoolParamsType		              bOptions;
+	Properties                      sOptions;
 
-struct StartOptions
-{
-  bool verbose;
-  bool verbose_summary;
-  TestsFilter filter;
+protected:
 
-  bool timer;
+  virtual bool    paramAsBool       ( const ciString  & param ) const;
+          bool    defaultBoolValue  ( const String    & name  ) const;
+  const String &  defaultStringValue( const String    & name  ) const;
 
-  /* TODO - Lawrin, please fix my hack */
-  bool use_is;
+public:
 
-  String dbUrl;
-  String dbUser;
-  String dbPasswd;
-  String dbSchema;
+  StartOptions();
 
-  StartOptions()
-  : verbose(false), verbose_summary(false), timer(false), use_is(true)
-  {
-  }
+  StartOptions( const List                    & orderedParams
+              , const Properties              * defStrVals  = NULL
+              , const std::map<String, bool>  * defBoolVals = NULL );
 
-  StartOptions(int paramsNumber, char** paramsValues)
-  : verbose(false), verbose_summary(false), timer(false), use_is(true)
-  {
-    String * _param[ poLast - poFirst - 1 ]={&dbUrl, &dbUser, &dbPasswd, &dbSchema};    
+  /* Last array member must be NULL */
+  StartOptions( const String::value_type      * orderedParams[]
+              , const Properties              * defStrVals  = NULL
+              , const std::map<String, bool>  * defBoolVals = NULL );
 
-    if (paramsNumber > 1)
-    {
-      UnnamedParameterOrder curParam=poFirst;
-      while (--paramsNumber)
-      {
-        ciString param(*(++paramsValues));
+        bool      parseParams(int paramsNumber, char** paramsValues);
 
-        if (param.substr(0, 2) == "--")
-        {
-          if (param.substr(0, sizeof ("--verbose") - 1) == "--verbose")
-          {
-            verbose=true;
-            verbose_summary=true;
+        bool      getBool    ( const String & name ) const;
+  const String &  getString  ( const String & param) const;
 
-            size_t switch_pos;
-
-            if ((switch_pos=param.find_last_of("=", std::string::npos)) != std::string::npos)
-            {
-              ++switch_pos;
-
-              if (param.length() > switch_pos)
-              {
-                verbose_summary=false;
-              }
-            }
-          }
-          else if (param == "--timer")
-          {
-            timer=true;
-          }
-          else if (param == "--dont-use-is")
-          {
-            use_is=false;
-          }
-
-        }
-        else if ((curParam + 1) < poLast)
-        {
-          curParam=static_cast<UnnamedParameterOrder> (curParam + 1);
-          *_param[ curParam ]=String(param.c_str());
-        }
-      }
-    }
-
-  }
 };
 
 } // namespace testsuite

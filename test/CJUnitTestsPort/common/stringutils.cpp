@@ -15,65 +15,8 @@
 
 namespace StringUtils
 {
-  // In java(tests?) split's last boolean param. This function skips empties
-  unsigned split( List & list, const String & str, const String & delim
-    , bool trimItems/*includeEmpty*/)
-  {
-    /* not sure that we have to do it here*/
-    /* list.clear(); */
-
-    int count     = 0;
-    int prevPos   = 0;
-    int newPos    = 0;
-    int delimSize = static_cast<int>( delim.size());
-    int strSize   = static_cast<int>( str.size()  );
-
-    String item;
-
-    while ( prevPos < strSize && (newPos = str.find(delim, prevPos)) != (int)String::npos )
-    {
-      if ( newPos == prevPos && delimSize == 0 )
-        ++newPos;
-
-      if ( newPos > prevPos /*|| includeEmpty*/ )
-      {
-        item = str.substr(prevPos, newPos - prevPos );
-
-        if (trimItems)
-          trim(item);
-
-        list.push_back( item );
-        ++count;
-      }
-
-      prevPos = newPos + delimSize;
-    }
-
-    /* if string has delimiter at the end, and includeEmpty flag is set
-    - we doing that, unless delimiter is present (delimSize > 0) */
-/*  if ( prevPos == strSize && includeEmpty && delimSize > 0 )
-    {
-      list.push_back( _T("") );
-      ++count;
-    }
-*/
-
-    /* else - adding part after last token*/
-    /*else*/ if (prevPos < strSize )
-    {
-      item = str.substr(prevPos);
-
-      if (trimItems)
-        trim(item);
-
-      list.push_back( item );
-      ++count;
-    }
-
-    return count;
-  }
-
-  String trim( const String & victim )
+  template <class StdStringType>
+  StdStringType & _trim( StdStringType & victim )
   {
     static const String::value_type * space = _T(" ");
 
@@ -88,7 +31,85 @@ namespace StringUtils
     else
       ++end;
 
-    return victim.substr( begin, end - begin );
+    return victim.assign( victim, begin, end - begin );
+  }
+
+
+  template <class StdStringType>
+  unsigned _split( std::vector<StdStringType> & list, const StdStringType & str, const StdStringType & delim
+    , bool trimItems, bool includeEmpty )
+  {
+    unsigned int          count=      0;
+    StdStringType::size_type prevPos=    0;
+    StdStringType::size_type newPos=     0;
+    StdStringType::size_type delimSize=  delim.size();
+    StdStringType::size_type strSize=    str.size();
+
+    StdStringType item;
+
+    while ( prevPos < strSize && (newPos = str.find(delim, prevPos)) != (int)String::npos )
+    {
+      if ( newPos == prevPos && delimSize == 0 )
+        ++newPos;
+
+      if ( newPos > prevPos || includeEmpty )
+      {
+        item = str.substr(prevPos, newPos - prevPos );
+
+        if ( trimItems )
+          _trim<StdStringType>( item );
+
+        list.push_back( item );
+        ++count;
+      }
+
+      prevPos = newPos + delimSize;
+    }
+
+    /* if string has delimiter at the end, and includeEmpty flag is set
+    - we are doing that if delimiter is present (delimSize > 0) */
+    if ( prevPos == strSize && includeEmpty && delimSize > 0 )
+    {
+      list.push_back( _T("") );
+      ++count;
+    }
+    /* else - adding part after last token*/
+    else if (prevPos < strSize )
+    {
+      item = str.substr(prevPos);
+
+      if (trimItems)
+        _trim<StdStringType>(item);
+
+      list.push_back( item );
+      ++count;
+    }
+
+    return count;
+  }
+
+
+  // This function skips empties
+  unsigned  split( List & list, const String &  str, const String &  delim
+    , bool trimItems, bool includeEmpty)
+  {
+    return _split<String>( list, str, delim, trimItems, includeEmpty );
+  }
+
+
+  // hack for split template
+  //ciString trim ( const String & victim )
+
+  unsigned  split( std::vector<ciString> & list, const ciString &  str, const ciString &  delim
+    , bool trimItems, bool includeEmpty)
+  {
+    return _split<ciString>( list, str, delim, trimItems, includeEmpty );
+  }
+
+
+  String & trim( String & victim )
+  {
+    return _trim<String>( victim );
   }
 
 

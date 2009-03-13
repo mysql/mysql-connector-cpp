@@ -718,7 +718,7 @@ void resultsetmetadata::isCaseSensitive()
     ASSERT_EQUALS(meta2->isCaseSensitive(2), false);
     /*
      NOTE: There is no reliable way to detect CI/CS
-    if (TestsRunner::theInstance().getStartOptions()->use_is)
+    if ( !TestsRunner::getStartOptions()->getBool( "dont-use-is" ) )
     {
       // connection_collation distorts the collation of the results (character_set_results) doesn't help
       // and thus we can't say for sure whether the original column was CI or CS. Only I_S.COLUMNS can tell us.
@@ -738,7 +738,7 @@ void resultsetmetadata::isCaseSensitive()
     ASSERT_EQUALS(meta2->isCaseSensitive(1), false);
     ASSERT_EQUALS(meta2->isCaseSensitive(2), false);
     /*
-    if (TestsRunner::theInstance().getStartOptions()->use_is)
+    if (!TestsRunner::getStartOptions()->getBool( "dont-use-is" ))
     {
       // connection_collation distorts the collation of the results (character_set_results) doesn't help
       // and thus we can't say for sure whether the original column was CI or CS. Only I_S.COLUMNS can tell us.

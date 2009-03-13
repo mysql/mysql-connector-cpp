@@ -37,6 +37,8 @@ private:
   testsList testCases;
   String    suiteName;
 
+  static int TestsWillRunCount( const String & suiteName, const testsList & tl );
+
 public:
   TestSuite(const String& name="Unnamed Test Suite");
   ~TestSuite();

@@ -10,6 +10,7 @@
 */
 
 #include "test_suite.h"
+#include "test_runner.h"
 //#include "deletable_wrapper.h"
 
 namespace testsuite
@@ -25,19 +26,55 @@ TestSuite::TestSuite( const String& name )
 {
 }
 
+
 void TestSuite::RegisterTestCase( Test * test )
 {
   if ( test != NULL )
     testCases.push_back( new TestContainer::StorableTest( *test ) );
 }
 
+
+int TestSuite::TestsWillRunCount( const String & suiteName, const testsList & tl )
+{
+  int count= static_cast<int>( tl.size() );
+
+  String fullName;
+
+  for ( testsList::const_iterator cit=tl.begin(); cit != tl.end(); ++cit )
+  {
+    fullName=   suiteName;
+    fullName+=  "::";
+    fullName+=  (*cit)->name();
+
+    if ( ! TestsRunner::Admits( fullName ) )
+    {
+      --count;
+    }
+  }
+
+  return count;
+}
+
+
 /** calls each test after setUp and tearDown TestFixture methods */
 void TestSuite::runTest()
 {
-  TestsListener::nextSuiteStarts( suiteName, testCases.size() );
+  TestsListener::nextSuiteStarts( suiteName, TestsWillRunCount( suiteName, testCases ) );
+
+  String fullName;
 
   for ( testsList_it it=testCases.begin(); it != testCases.end(); ++it)
   {
+    fullName=   suiteName;
+    fullName+=  "::";
+    fullName+=  (*it)->name();
+
+    if ( ! TestsRunner::Admits( fullName ) )
+    {
+      // TODO: Add skipping by filter condition message
+      continue;
+    }
+
     //Incrementing order number of current test
     TestsListener::incrementCounter();
 

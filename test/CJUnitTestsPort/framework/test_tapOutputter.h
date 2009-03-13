@@ -21,7 +21,13 @@ class TAP : public TestOutputter
 {
   String suiteName;
 
+  std::ostream &  output;
+  std::ostream &  msgLog;
+  std::ostream &  errLog;
+
 public:
+
+  TAP();
 
   virtual ~TAP()
   {
@@ -55,6 +61,10 @@ public:
                       , const String & result
                       , const String & file
                       , int line);
+
+  // Methods returning messages and error out streams.
+  virtual std::ostream & messagesLog();
+  virtual std::ostream & errorsLog();
 };
 }
 

@@ -17,9 +17,12 @@
 
 #if defined(_WIN32) || defined(_WIN64)
 /* MySQL 5.1 might have defined it before in include/config-win.h */
-#ifndef strncasecmp
-#define strncasecmp(s1,s2,n) _strnicmp(s1,s2,n)
+#ifdef strncasecmp
+#undef strncasecmp
 #endif
+
+#define strncasecmp(s1,s2,n) _strnicmp(s1,s2,n)
+
 #ifndef atoll
 #define atoll(x) _atoi64((x))
 #endif

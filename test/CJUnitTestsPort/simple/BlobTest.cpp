@@ -43,7 +43,6 @@ namespace simple
       requiredSize = 8 * 1024 * 1024;
     }
 
-    return; // skippin' setup since test is skipped too
     createBlobFile(requiredSize);
 
     createTestTable();
@@ -70,7 +69,7 @@ namespace simple
 /* throws Exception */
   void BlobTest::testByteStreamInsert()
   {
-    SKIP("too slow");
+    //SKIP("too slow");
     testByteStreamInsert( conn );
   }
 
@@ -98,7 +97,7 @@ namespace simple
 /* throws Exception */
   bool BlobTest::checkBlob( const String & retrBytes)
   {
-    bool passed = false;
+    bool passed = true;
 
     std::fstream & bIn = testBlobFile->getStream();
 
@@ -117,12 +116,15 @@ namespace simple
         char fromFile[8192];
         bIn.read( fromFile, sizeof(fromFile) );
 
-        ASSERT_MESSAGE( !bIn.fail(), "read from file failed" );
+        ASSERT_MESSAGE( !bIn.fail() || bIn.eof(), "read from file failed" );
 
         if ( retrBytes.compare( substrIdx, bIn.gcount(), fromFile, bIn.gcount() ) != 0 )
         {
           passed = false;
           int j = 0;
+
+					TestsListener::errorsLog() << "compare returned !=0 at " << substrIdx
+						<< ", read from file " << bIn.gcount() << std::endl;
 
           while ( j < bIn.gcount() && fromFile[ j ] == retrBytes[substrIdx + j] )
             ++j;
@@ -157,7 +159,7 @@ namespace simple
           break;
         }
 
-        passed = true;
+				substrIdx+= bIn.gcount();
       }
     }
     else
