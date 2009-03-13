@@ -1317,6 +1317,9 @@ void connectionmetadata::getProcedureColumns()
 {
   logMsg("connectionmetadata::getProcedureColumns() - MySQL_ConnectionMetaData::getProcedureColumns()");
   int server_version;
+
+  SKIP("method not implemented");
+
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
