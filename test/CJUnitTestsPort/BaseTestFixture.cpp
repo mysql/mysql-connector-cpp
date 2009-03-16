@@ -701,8 +701,9 @@ void BaseTestFixture::setUp()
 
   try
   {
-    this->conn.reset(getConnection());
-  } catch (sql::SQLException & sqle)
+    this->conn.reset( getConnection() );
+  }
+  catch (sql::SQLException & sqle)
   {
     logErr(String("Couldn't get connection") + sqle.what());
     throw sqle;
@@ -723,10 +724,10 @@ void BaseTestFixture::setUp()
     } else
     {*/
     String tmp( "Connected to " );
-	DatabaseMetaData meta(this->conn->getMetaData());
-    tmp+= meta->getDatabaseProductName();
-    tmp+= " / ";
-    //tmp.append( this->conn->getMetaData()->getDatabaseProductVersion() );
+	  DatabaseMetaData meta(this->conn->getMetaData());
+    tmp.append( meta->getDatabaseProductName() );
+    tmp.append( " / " );
+    tmp.append( conn->getMetaData()->getDatabaseProductVersion() );
 
     logDebug( tmp );
   }

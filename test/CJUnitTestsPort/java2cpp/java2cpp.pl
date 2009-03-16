@@ -43,7 +43,7 @@ my $super     = '';
 
 my $javaClass   = 0;
 my $add2proj    = 0;
-my $miniCppUnit = 1;
+my $TestingFramework = 1;
 
 my $TestsBaseDir = '..';
 
@@ -62,7 +62,7 @@ while ( my $arg = shift( @ARGV ) )
   {
     $add2proj = 1;
   }
-  elsif ( $arg =~/-minicppunit(?:$|=(\w+))/ )
+  elsif ( $arg =~/-tframework(?:$|=(\w+))/ )
   {
     if ( length($1) )
     {
@@ -70,7 +70,7 @@ while ( my $arg = shift( @ARGV ) )
 
       if ( inArr($arg, '0', 'false', 'f', 'no', 'n' ) > -1 )
       {
-        $miniCppUnit = 0;
+        $TestingFramework = 0;
       }
     }
   }
@@ -459,7 +459,7 @@ while ( $line = <SRC> )
       $line =~ s/\{\s*$/;/g;
 
       # normally methods that are tests don't have parameters
-      if ( $miniCppUnit && $line =~ /^\s*public\s+.+\s+(\w+)\s*\(\s*\)/ )
+      if ( $TestingFramework && $line =~ /^\s*public\s+.+\s+(\w+)\s*\(\s*\)/ )
       {
         if ( inArr($1, $class, 'setUp', 'tearDown') == -1 )
         {
@@ -602,6 +602,7 @@ sub Add2Cmake
   my $cppFound  = 0;
   my $indent    = '';
   my $changed   = 0;
+  my $src_count = 0;
 
   while ( my $line = <CMAKE> )
   {
@@ -610,14 +611,14 @@ sub Add2Cmake
       if ( $line =~ /^(\s*)\)\s*$/)
       {
         $indent = $1;
-        if ( !$hFound )
+        if ( !$hFound && $src_count == 2 )
         {
           $content .= $indent.$hFile.$nl;
           print "Adding2cmake: $indent$hFile$nl";
           $changed = 1;
         }
 
-        if ( !$cppFound )
+        if ( !$cppFound && $src_count == 1 )
         {
           $content .= $indent.$cppFile.$nl;
           print "Adding2cmake: $indent$cppFile$nl";
@@ -638,6 +639,7 @@ sub Add2Cmake
     elsif ( $line =~ /^\s*set\s*\(jdbctests_sources\s*$/i )
     {
       $srcFiles = 1;
+      $src_count++;
     }
 
     $content .= $line;
@@ -863,7 +865,7 @@ sub FlushData
 
   print HDR $nl, $indent, $namespaceCorrection, '};', $nl;
 
-  if ( $miniCppUnit )
+  if ( $TestingFramework )
   {
     print HDR 'REGISTER_FIXTURE(', $class, ');', $nl;
   }
