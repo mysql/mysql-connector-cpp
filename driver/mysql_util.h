@@ -91,6 +91,7 @@ const char * mysql_type_to_string(const MYSQL_FIELD * const field);
 
 char * utf8_strup(const char * const src, size_t srclen);
 
+long double strtold(const char *nptr, char **endptr);
 
 typedef struct st_our_charset
 {
