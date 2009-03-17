@@ -3330,7 +3330,7 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 				rs_data_row.push_back("");					// reserved2
 				rs_data_row.push_back("");					// reserved3
 				rs_data_row.push_back(rs->getString(8));	// REMARKS
-				rs_data_row.push_back(!rs->getString(3).compare("PROCEDURE")? procRetNoRes:procRetRes);	// PROCEDURE_TYPE
+				rs_data_row.push_back(std::string(!rs->getString(3).compare("PROCEDURE")? procRetNoRes:procRetRes));	// PROCEDURE_TYPE
 
 				rs_data->push_back(rs_data_row);
 			}
