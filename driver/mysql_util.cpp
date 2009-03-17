@@ -2174,6 +2174,8 @@ char * utf8_strup(const char * const src, size_t srclen)
 	return dst;
 }
 
+#if A0
+
 #if defined(HAVE_STRTOLD) && defined(__hpux) && defined(_LONG_DOUBLE)
 typedef union {
 	long_double l_d;
@@ -2195,9 +2197,10 @@ long double strtold(const char *nptr, char **endptr)
 	return ::strtold(nptr, endptr);
 # endif
 #endif
-	
 
 }
+
+#endif
 
 
 }; /* namespace util */

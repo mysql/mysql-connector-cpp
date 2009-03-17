@@ -34,10 +34,6 @@
 #ifndef _WIN32
 #  include <stdlib.h>
 #  ifdef __hpux
-#    if defined(HAVE_STRTOLD) && defined(_LONG_DOUBLE)
-#      define HAVE_STRTOLD 1
-#      define strtold(a, b) reinterpret_cast<long double> strtold((a), (b)) 
-#    endif
 #    ifdef _PA_RISC2_0
 #      define atoll(__a) atol((__a))
 #      define strtoull(__a, __b, __c) strtoul((__a), (__b), (__c))
@@ -71,6 +67,13 @@
   But DON'T cast `struct long_double *` to `long double *`, different alignment.
 */
 
+#ifndef HAVE_STRTOLD
+#  define strtold(a, b) strtod((a), (b))
+#else
+#  if defined(__hpux) && defined(_LONG_DOUBLE)
+#    define strtold(a, b) reinterpret_cast<long double>(strtold((a), (b))) 
+#  endif
+#endif
 
 #include "mysql_private_iface.h"
 
@@ -84,7 +87,7 @@ const char * mysql_type_to_string(const MYSQL_FIELD * const field);
 
 char * utf8_strup(const char * const src, size_t srclen);
 
-long double strtold(const char *nptr, char **endptr);
+//long double strtold(const char *nptr, char **endptr);
 
 typedef struct st_our_charset
 {
