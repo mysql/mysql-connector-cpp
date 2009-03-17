@@ -71,13 +71,6 @@
   But DON'T cast `struct long_double *` to `long double *`, different alignment.
 */
 
-#ifndef HAVE_STRTOLD
-#  define strtold(a, b) strtod((a), (b))
-#else
-#  if defined(__hpux) && defined(_LONG_DOUBLE)
-#    define strtold(a, b) reinterpret_cast<long double>(strtold((a), (b))) 
-#  endif
-#endif
 
 #include "mysql_private_iface.h"
 
