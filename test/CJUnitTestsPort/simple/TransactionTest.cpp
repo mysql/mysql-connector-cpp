@@ -7,7 +7,6 @@ namespace testsuite
 namespace simple
 {
   const double TransactionTest::DOUBLE_CONST= 25.4312;
-  const double TransactionTest::EPSILON=      .0000001;
 
   /**
 	 * DOCUMENT ME!
@@ -59,13 +58,11 @@ namespace simple
     ASSERT_MESSAGE( hasResults, "No rows in table after INSERT" );
 
     double doubleVal = rs->getDouble(2);
-    double delta = abs(DOUBLE_CONST - doubleVal);
-
     str.str("");
 
     str << "Double value returned != " << DOUBLE_CONST;
 
-    ASSERT_MESSAGE( (delta < EPSILON), str.str().c_str() );
+    ASSERT_EQUALS( DOUBLE_CONST, doubleVal );
 
     //no need to setAutoCommit to old value - connection reset after each test.
     conn->setAutoCommit( prevAutoCommit );

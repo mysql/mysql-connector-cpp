@@ -45,8 +45,6 @@ namespace simple
 
     static const double DOUBLE_CONST;
 
-    static const double EPSILON;
-
 /* throws sql::DbcException */
 
     void createTestTable() ;  
