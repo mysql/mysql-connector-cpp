@@ -14,8 +14,8 @@ BaseTestCase(?!\.h)          => BaseTestFixture
 (?<=String)(\s+\w+)\s*=\s*NULL =>$1
 (?<!\=|\!)\=\s*NULL              => \/*= NULL*\/
 #DriverManager.getConnection\((\w+),\s*\)
-catch\s*\(SQLException  => catch (sql::DbcException *
-\bSQLException\b        => sql::DbcException
+catch\s*\(SQLException  => catch (sql::SQLException *
+\bSQLException\b        => sql::SQLException
 # Not really equal substitution. ...?
 \bException\b           => std::exception *
 # for string concatanation w/ constant 1st operand.
