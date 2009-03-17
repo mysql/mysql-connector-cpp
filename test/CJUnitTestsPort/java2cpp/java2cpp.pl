@@ -581,7 +581,8 @@ sub copyFile
 
 sub recreateProjFiles
 {
-  print 'Running CMake: ', `cmake $TestsBaseDir/../../`;
+  chdir( "$TestsBaseDir/../../" );
+  print 'Running CMake: ', `cmake .`;
 }
 
 

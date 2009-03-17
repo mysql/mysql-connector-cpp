@@ -41,6 +41,26 @@ ADD_LIBRARY(mysqlcppconn SHARED ${MYSQLCPPCONN_SOURCES})
 ADD_LIBRARY(mysqlcppconn-static STATIC ${MYSQLCPPCONN_SOURCES})
 
 IF(WIN32)
+	# adding headers to sources, so they will be included to VS projects
+
+	SET(MYSQLCPPCONN_SOURCES
+		mysql_art_resultset.h
+		mysql_art_rset_metadata.h
+		mysql_connection.h
+		mysql_debug.h
+		mysql_driver.h
+		mysql_metadata.h
+		mysql_parameter_metadata.h
+		mysql_prepared_statement.h
+		mysql_ps_resultset.h
+		mysql_ps_resultset_metadata.h
+		mysql_resultset.h
+		mysql_resultset_metadata.h
+		mysql_res_wrapper.h
+		mysql_statement.h
+		mysql_util.h
+		mysql_warning.h)
+
 	INCLUDE_DIRECTORIES(${MYSQL_DIR}/include)
 	IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		LINK_DIRECTORIES(${MYSQL_DIR}/lib/debug)
