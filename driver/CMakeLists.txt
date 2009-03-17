@@ -37,13 +37,11 @@ SET(MYSQLCPPCONN_SOURCES
 	mysql_util.cpp
 	mysql_warning.cpp)
 
-ADD_LIBRARY(mysqlcppconn SHARED ${MYSQLCPPCONN_SOURCES})
-ADD_LIBRARY(mysqlcppconn-static STATIC ${MYSQLCPPCONN_SOURCES})
-
 IF(WIN32)
 	# adding headers to sources, so they will be included to VS projects
 
 	SET(MYSQLCPPCONN_SOURCES
+		${MYSQLCPPCONN_SOURCES}
 		mysql_art_resultset.h
 		mysql_art_rset_metadata.h
 		mysql_connection.h
@@ -60,6 +58,13 @@ IF(WIN32)
 		mysql_statement.h
 		mysql_util.h
 		mysql_warning.h)
+ENDIF(WIN32)
+
+
+ADD_LIBRARY(mysqlcppconn SHARED ${MYSQLCPPCONN_SOURCES})
+ADD_LIBRARY(mysqlcppconn-static STATIC ${MYSQLCPPCONN_SOURCES})
+
+IF(WIN32)
 
 	INCLUDE_DIRECTORIES(${MYSQL_DIR}/include)
 	IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
