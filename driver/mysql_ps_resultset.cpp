@@ -374,8 +374,7 @@ MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
 		case sql::DataType::ENUM:
 		{
 			CPP_INFO("It's a string");
-//			long double ret = sql::mysql::util::strtold(getString(columnIndex).c_str(), NULL);
-			long double ret = strtold(getString(columnIndex).c_str(), NULL);
+			long double ret = sql::mysql::util::strtold(getString(columnIndex).c_str(), NULL);
 			CPP_INFO_FMT("value=%10.10f", ret);
 			return ret;
 		}

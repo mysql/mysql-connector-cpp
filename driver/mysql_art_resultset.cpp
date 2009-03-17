@@ -89,8 +89,7 @@ MyVal::getDouble()
 {
 	switch (val_type) {
 		case typeString:
-//			return sql::mysql::util::strtold(val.str->c_str(), NULL);
-			return strtold(val.str->c_str(), NULL);
+			return sql::mysql::util::strtold(val.str->c_str(), NULL);
 		case typePtr:
 			return .0;
 		case typeDouble:
