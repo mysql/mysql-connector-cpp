@@ -29,9 +29,9 @@ ENDIF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)
 
 MESSAGE(STATUS "Configuring unit tests")
 
-#ADD_SUBDIRECTORY(example/)
+ADD_SUBDIRECTORY(example/)
 ADD_SUBDIRECTORY(classes/)
 
 # Copy&Paste template: change directory name and uncomment
 # ADD_SUBDIRECTORY(template_bug_group)
-#ADD_SUBDIRECTORY(template_bug_group)
+ADD_SUBDIRECTORY(template_bug_group)
