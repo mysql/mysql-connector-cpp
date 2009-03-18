@@ -24,7 +24,7 @@ namespace testsuite
 {
 void fail(const char* reason, const char* file, int line);
 
-void assertTrue(const char * msg, bool expression
+void assertTrue(const String & msg, bool expression
                 , const char* file, int line);
 
 void assertEquals(const char * expected, const char * result

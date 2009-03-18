@@ -63,9 +63,13 @@ void example_test_class::test_hello_world2()
     /*
      Connection, Statement and ResultSet are typedefs from unit_fixture.h:
 
-     typedef std::auto_ptr<sql::Connection> Connection
+     typedef std::auto_ptr<sql::Connection> Connection;
+     typedef std::auto_ptr<sql::PreparedStatement> PreparedStatement;
+     typedef std::auto_ptr<sql::ParameterMetaData> ParameterMetaData;
      typedef std::auto_ptr<sql::Statement> Statement;
+     typedef std::auto_ptr<sql::Savepoint> Savepoint;
      typedef std::auto_ptr<sql::ResultSet> ResultSet;
+     typedef sql::Driver Driver;
      typedef std::auto_ptr<sql::ResultSetMetaData> ResultSetMetaData;
      typedef std::auto_ptr<sql::DatabaseMetaData> DatabaseMetaData;
 
@@ -73,16 +77,33 @@ void example_test_class::test_hello_world2()
      */
     Connection con(getConnection());
     Statement stmt(con->createStatement());
-    ResultSet res(stmt->executeQuery("SELECT 'Hello world!' AS _world"));
+
+    /*
+     The framework defines a couple of public members (from unit_fixture.h):
+
+     Connection con;
+     PreparedStatement pstmt;
+     Statement stmt;
+     ResultSet res;
+
+     The members are managed in unit_fixture.cpp setUp() and tearDown().
+     You don't need to clean up them as long as setUp() and tearDown()
+     are called and are not overwritten by your own method.
+
+     However note, if you declare a local variable of the same type
+     and name of any of the above members, for example ResultSet res, some
+     compilers will spawn warnings that you are hiding members.
+     */
+    res.reset(stmt->executeQuery("SELECT 'Hello world!' AS _world"));
 
     res->next();
     logMsg(res->getString("_world"));
     res->close();
 
     ResultSet res2(stmt->executeQuery("SELECT 'What a boring example' AS _complain"));
-    logMsg(res2->getString("_world"));
+    res2->next();
+    logMsg(res2->getString("_complain"));
     res2->close();
-
   }
   catch (sql::SQLException &e)
   {
@@ -97,9 +118,19 @@ void example_test_class::test_assert_equals()
   logMsg("ASSERT_EQUALS() macro demo");
   /*
    Be careful: ASSERT_EQUALS() is not available for each and every type!
+   You can find more details in test_asserts.h.
    */
-  int a=1;
+  int a=-1;
   ASSERT_EQUALS(a, a);
+
+  unsigned int h=1;
+  ASSERT_EQUALS(h, h);
+
+  int64_t i=-10;
+  ASSERT_EQUALS(i, i);
+
+  uint64_t j=10;
+  ASSERT_EQUALS(j, j);
 
   bool b=false;
   ASSERT_EQUALS(b, b);
@@ -110,11 +141,21 @@ void example_test_class::test_assert_equals()
   double d=1.23;
   ASSERT_EQUALS(d, d);
 
+  /*
+   For fuzzy comparisons e.g. 1.01 vs. 1.01 fetched from MySQL
+   */
+  double k = 1.01;
+  double l = 1.0999992;
+  fuzzyEquals(k, l, 0.001);
+
   long double e=1.23e12;
   ASSERT_EQUALS(e, e);
 
   const char f[]="foo";
   ASSERT_EQUALS(f, f);
+
+  std::string g("good idea");
+  ASSERT_EQUALS(g, g);
 }
 
 void example_test_class::test_assert_lessthan()
@@ -153,7 +194,7 @@ void example_test_class::test_assert_greaterthan()
 
 void example_test_class::test_assert_equals_fail()
 {
-  logMsg("ASSERT_EQUALS failure");
+  logMsg("ASSERT_EQUALS failure - EXPECTED failure");
   ASSERT_EQUALS(true, false);
 }
 
@@ -164,10 +205,9 @@ void example_test_class::test_assert_message()
    Wrapper of
   void assertTrue(const char * msg, bool expression
                 , const char* file, int line);
-
-  ASSERT_MESSAGE(1 < 2, "ASSERT_MESSAGE example (true)");
-  ASSERT_MESSAGE(1 > 2, "ASSERT_MESSAGE example (fail)");
    */
+  ASSERT_MESSAGE(1 < 2, "ASSERT_MESSAGE example (true)");
+  ASSERT_MESSAGE(1 > 2, "ASSERT_MESSAGE example (fail) - EXPECTED failure");
 }
 
 void example_test_class::test_skip()

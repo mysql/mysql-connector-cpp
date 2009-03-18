@@ -182,4 +182,4 @@ ResultSetMetaData.column  => sql::ResultSetMetaData::column
 # assertEquals overloaded in junit
 #assertEquals          => ASSERT_EQUALS
 super.                => super::
-
+assertTrue            => ASSERT
