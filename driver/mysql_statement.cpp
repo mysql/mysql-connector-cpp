@@ -313,6 +313,7 @@ MySQL_Statement::getQueryTimeout()
 {
 	checkClosed();
 	throw sql::MethodNotImplementedException("MySQL_Statement::getQueryTimeout");
+	return 0; // fool compilers
 }
 /* }}} */
 
