@@ -2998,7 +2998,8 @@ int run_tests(int argc, const char **argv)
 	for (i = 0 ; i < loops; i++) {
 		last_error_total = total_errors;
 		const std::string host(argc >=2? argv[1]:"tcp://127.0.0.1");
-		std::cout << "Host=" << host << std::endl << "User=" << user << std::endl;
+		std::cout << "# Host=" << host << std::endl;
+                std::cout << "# User=" << user << std::endl;
 		printf("#---------------  %d -----------------\n", i + 1);
 		printf("# ");
 
@@ -3241,7 +3242,7 @@ int run_tests(int argc, const char **argv)
 		} else {
 			printf("not ok\n");
 		}
-		printf("# ");
+		
 
 	}
 	printf("\n# Loops=%2d Tests= %4d Failures= %3d \n", loops, total_tests, total_errors);
