@@ -2196,7 +2196,7 @@ long double strtold(const char *nptr, char **endptr)
 	/* convert str to a long_double; store return val in union */ 
 	/* (Putting value into union enables converted value to be */ 
 	/* accessed as an ANSI C long double)*/ 
-	u.l_d = strtold( nptr, endptr);
+	u.ld = strtold( nptr, endptr);
 	retun u.ld;
 # else
 	return ::strtold(nptr, endptr);
