@@ -541,7 +541,7 @@ MySQL_Prepared_ResultSet::getInt64_intern(const uint32_t columnIndex, bool cutTo
 		case sql::DataType::SET:
 		case sql::DataType::ENUM:
 			CPP_INFO("It's a string");
-			return atoll(getString(columnIndex).c_str());
+			return strtoll(getString(columnIndex).c_str(), NULL, 10);
 		case sql::DataType::BIT:
 		case sql::DataType::YEAR:	// fetched as a SMALLINT
 		case sql::DataType::TINYINT:

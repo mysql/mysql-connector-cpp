@@ -33,17 +33,37 @@
 
 #ifndef _WIN32
 #  include <stdlib.h>
+#  ifndef HAVE_STRTOLL
+#    ifdef HAVE_STRTOL
+#      define strtoll(__a, __b, __c) strtol((__a), (__b), (__c))
+#    elif defined(HAVE_STRTOIMAX)
+#      define strtoll(__a, __b, __c) strtoimax((__a), NULL, 10)
+#    else
+#error "Compilation will fail because code does not know an equivalent of strtol/strtoll"
+#    endif
+#  endif
+#  ifndef HAVE_STRTOULL
+#    ifdef HAVE_STRTOUL
+#      define strtoull(__a, __b, __c) strtoul((__a), (__b), (__c))
+#    elif defined(HAVE_STRTOUMAX)
+#      define strtoull(__a, __b, __c) strtoumax((__a), NULL, 10)
+#    else
+#      error Compilation will fail because code does not know an equivalent of strtoul/strtoull
+#    endif
+#  endif
 #  ifdef __hpux
 #    ifdef _PA_RISC2_0
-#      define atoll(__a) atol((__a))
-#      define strtoull(__a, __b, __c) strtoul((__a), (__b), (__c))
+//#      define atoll(__a) atol((__a))
+//#      define strtoll(__a, __b, __c) strtol((__a), (__b), (__c))
+//#      define strtoull(__a, __b, __c) strtoul((__a), (__b), (__c))
 #    else
-#      define atoll(__a) strtoimax((__a), NULL, 10)
-#      define strtoull(__a, __b, __c) strtoumax((__a), (__b), (__c))
+//#      define strtoll(__a) strtoimax((__a), NULL, 10)
+//#      define atoll(__a) strtoimax((__a), NULL, 10)
+//#      define strtoull(__a, __b, __c) strtoumax((__a), (__b), (__c))
 #    endif
 #  endif
 #else
-#  define atoll(x) _atoi64((x))
+#  define strtoll(x, e, b) _strtoi64((x), (e), (b))
 #  define strtoull(x, e, b) _strtoui64((x), (e), (b))
 #endif	//	_WIN32
 
