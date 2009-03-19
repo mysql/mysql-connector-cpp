@@ -3025,7 +3025,7 @@ int run_tests(int argc, const char **argv)
 			std::auto_ptr<sql::ResultSet> rset(stmt->getResultSet());
 			int found = 0;
 			while (rset->next()) {
-				if (rset->getString("Engine") == "InnoDB" && rset->getString("Support") == "YES") {
+				if (rset->getString("Engine") == "InnoDB" && (rset->getString("Support") == "YES" || rset->getString("Support") == "DEFAULT")) {
 					found = 1;
 					break;
 				}
