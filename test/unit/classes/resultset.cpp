@@ -685,12 +685,13 @@ void resultset::getTypesMinorIssues()
         }
 
       }
-      
+
     }
     if (got_warning)
       FAIL("See --verbose warnings!");
 
-    if (got_minor_warning) {
+    if (got_minor_warning)
+    {
       TODO("See MINOR WARNING when using --verbose");
       FAIL("See MINOR WARNING when using --verbose");
     }

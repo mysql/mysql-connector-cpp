@@ -53,7 +53,7 @@ public:
    */
   void getTypes();
 
-    /**
+  /**
    * Test for resultset::get*()
    *
    * TODO - hack to temporarily seperate test failures from TODO for beta by having more fine grained test
