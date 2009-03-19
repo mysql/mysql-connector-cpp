@@ -36,14 +36,16 @@
 #  ifdef __hpux
 #    ifdef _PA_RISC2_0
 #      define atoll(__a) atol((__a))
+//#      define strtoll(__a, __b, __c) strtol((__a), (__b), (__c))
 #      define strtoull(__a, __b, __c) strtoul((__a), (__b), (__c))
 #    else
+//#      define strtoll(__a) strtoimax((__a), NULL, 10)
 #      define atoll(__a) strtoimax((__a), NULL, 10)
 #      define strtoull(__a, __b, __c) strtoumax((__a), (__b), (__c))
 #    endif
 #  endif
 #else
-#  define atoll(x) _atoi64((x))
+#  define strtoll(x, e, b) _strtoi64((x), (e), (b))
 #  define strtoull(x, e, b) _strtoui64((x), (e), (b))
 #endif	//	_WIN32
 

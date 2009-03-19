@@ -113,7 +113,7 @@ MyVal::getInt64()
 {
 	switch (val_type) {
 		case typeString:
-			return atoll(val.str->c_str());
+			return strtoll(val.str->c_str(), NULL, 10);
 		case typePtr:
 			return 0;
 		case typeDouble:

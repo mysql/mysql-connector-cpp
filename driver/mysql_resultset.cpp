@@ -409,7 +409,7 @@ MySQL_ResultSet::getInt64(const uint32_t columnIndex) const
 		return 0;
 	}
 	was_null = false;
-	return atoll(row[columnIndex - 1]);
+	return strtoll(row[columnIndex - 1], NULL, 10);
 }
 /* }}} */
 
