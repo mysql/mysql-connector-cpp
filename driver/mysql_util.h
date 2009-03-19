@@ -35,12 +35,12 @@
 #  include <stdlib.h>
 #  ifdef __hpux
 #    ifdef _PA_RISC2_0
-#      define atoll(__a) atol((__a))
+//#      define atoll(__a) atol((__a))
 //#      define strtoll(__a, __b, __c) strtol((__a), (__b), (__c))
 #      define strtoull(__a, __b, __c) strtoul((__a), (__b), (__c))
 #    else
 //#      define strtoll(__a) strtoimax((__a), NULL, 10)
-#      define atoll(__a) strtoimax((__a), NULL, 10)
+//#      define atoll(__a) strtoimax((__a), NULL, 10)
 #      define strtoull(__a, __b, __c) strtoumax((__a), (__b), (__c))
 #    endif
 #  endif
