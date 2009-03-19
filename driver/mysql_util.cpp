@@ -2186,18 +2186,19 @@ typedef union {
 long double strtold(const char *nptr, char **endptr)
 {
 #ifndef HAVE_STRTOLD
-	return strtod(nptr, endptr);
+	return ::strtod(nptr, endptr);
 #else
 # if defined(__hpux) && defined(_LONG_DOUBLE)
-	union { 
-		long_double l_d; 
-		long double ld; 
-	} u; 
+//	union { 
+//		long_double l_d; 
+//		long double ld; 
+//	} u; 
 	/* convert str to a long_double; store return val in union */ 
 	/* (Putting value into union enables converted value to be */ 
 	/* accessed as an ANSI C long double)*/ 
-	u.ld = strtold( nptr, endptr);
-	return u.ld;
+//	u.ld = strtold( nptr, endptr);
+//	return u.ld;
+	return ::strtold( nptr, endptr);
 # else
 	return ::strtold(nptr, endptr);
 # endif
