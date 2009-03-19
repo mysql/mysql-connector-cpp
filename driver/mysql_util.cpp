@@ -2189,8 +2189,14 @@ long double strtold(const char *nptr, char **endptr)
 	return strtod(nptr, endptr);
 #else
 # if defined(__hpux) && defined(_LONG_DOUBLE)
-	hpux_ld u;
-	u.l_d = strtold(nptr, endptr);
+	union { 
+		long_double l_d; 
+		long double ld; 
+	} u; 
+	/* convert str to a long_double; store return val in union */ 
+	/* (Putting value into union enables converted value to be */ 
+	/* accessed as an ANSI C long double)*/ 
+	u.ld = strtold( nptr, endptr);
 	return u.ld;
 # else
 	return ::strtold(nptr, endptr);
