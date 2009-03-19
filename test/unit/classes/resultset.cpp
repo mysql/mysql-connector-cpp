@@ -98,7 +98,6 @@ void resultset::getInt()
 
     ASSERT_EQUALS(res->next(), false);
 
-
     res.reset(stmt->executeQuery("SELECT i, i_uns, b, b_uns FROM test"));
     checkResultSetScrolling(res);
 
@@ -147,9 +146,7 @@ void resultset::getTypes()
   logMsg("resultset::getTypes - MySQL_ResultSet::get*");
   std::vector<columndefinition>::iterator it;
   std::stringstream msg;
-  TODO("Under development...");
   bool got_warning=false;
-  bool got_minor_warning=false;
   ResultSet pres;
   std::string ps_value;
   std::string::size_type len_st;
@@ -480,11 +477,10 @@ void resultset::getTypes()
 
 
       // Comparing prepared statement resultset and statement resultset
-      if (pres->getString("id") != res->getString("id"))
+      if (it->check_as_string && (pres->getString("id") != res->getString("id")))
       {
         if (it->sqldef.find("ZEROFILL", 0) == std::string::npos)
         {
-          bool is_minor=false;
           ps_value=pres->getString("id");
           len_st=res->getString("id").length();
           len_ps=ps_value.length();
@@ -500,33 +496,12 @@ void resultset::getTypes()
             if (i < (len_ps - 1))
             {
               got_warning=true;
+              msg.str("");
+              msg << "... \t\tWARNING - getString(), PS: '" << pres->getString("id") << "'";
+              msg << ", Statement: '" << res->getString("id") << "'";
+              logMsg(msg.str());
             }
-            else
-            {
-              is_minor=true;
-              got_minor_warning=true;
-            }
           }
-          if (!it->check_as_string)
-          {
-            is_minor=true;
-            got_minor_warning=true;
-          }
-          else
-          {
-            got_warning=true;
-          }
-          msg.str("");
-          if (is_minor)
-          {
-            msg << "... \t\tMINOR WARNING - getString(), PS: '" << pres->getString("id") << "'";
-          }
-          else
-          {
-            msg << "... \t\tWARNING - getString(), PS: '" << pres->getString("id") << "'";
-          }
-          msg << ", Statement: '" << res->getString("id") << "'";
-          logMsg(msg.str());
         }
 
       }
@@ -589,8 +564,136 @@ void resultset::getTypes()
     if (got_warning)
       FAIL("See warnings!");
 
-    if (got_minor_warning)
-      logMsg("See MINOR WARNING");
+    stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void resultset::getTypesMinorIssues()
+{
+  logMsg("resultset::getTypesMinorIssues - MySQL_ResultSet::get*");
+  std::vector<columndefinition>::iterator it;
+  std::stringstream msg;
+  TODO("Under development...");
+  bool got_warning=false;
+  bool got_minor_warning=false;
+  ResultSet pres;
+  std::string ps_value;
+  std::string::size_type len_st;
+  std::string::size_type len_ps;
+
+  try
+  {
+    stmt.reset(con->createStatement());
+    logMsg("... looping over all kinds of column types");
+    for (it=columns.begin(); it != columns.end(); it++)
+    {
+      stmt->execute("DROP TABLE IF EXISTS test");
+      msg.str("");
+      msg << "CREATE TABLE test(dummy TIMESTAMP, id " << it->sqldef << ")";
+      try
+      {
+        stmt->execute(msg.str());
+        msg.str("");
+        msg << "... testing " << it->sqldef << ", value = '" << it->value << "'";
+        logMsg(msg.str());
+      }
+      catch (sql::SQLException &)
+      {
+        msg.str("");
+        msg << "... skipping " << it->sqldef;
+        logMsg(msg.str());
+        continue;
+      }
+
+      msg.str("");
+      msg << "INSERT INTO test(id) VALUES ('" << it->value << "')";
+      stmt->execute(msg.str());
+
+      res.reset(stmt->executeQuery("SELECT id, NULL FROM test"));
+      checkResultSetScrolling(res);
+      ASSERT(res->next());
+
+      pstmt.reset(con->prepareStatement("SELECT id, NULL FROM test"));
+      pstmt->clearParameters();
+      pres.reset(pstmt->executeQuery());
+      checkResultSetScrolling(pres);
+      ASSERT(pres->next());
+
+      if (it->check_as_string && (it->as_string != res->getString("id")))
+      {
+        msg.str("");
+        msg << "... expecting '" << it->as_string << "', got '" << res->getString("id") << "'";
+        logMsg(msg.str());
+        got_warning=true;
+
+      }
+
+      // Comparing prepared statement resultset and statement resultset
+      if (pres->getString("id") != res->getString("id"))
+      {
+        if (it->sqldef.find("ZEROFILL", 0) == std::string::npos)
+        {
+          bool is_minor=false;
+          ps_value=pres->getString("id");
+          len_st=res->getString("id").length();
+          len_ps=ps_value.length();
+          if (len_ps > len_st)
+          {
+            // Something like 1.01000 vs. 1.01 ?
+            std::string::size_type i;
+            for (i=len_st; i < len_ps; i++)
+            {
+              if (ps_value.at(i) != '0')
+                break;
+            }
+            if (i < (len_ps - 1))
+            {
+              got_warning=true;
+            }
+            else
+            {
+              is_minor=true;
+              got_minor_warning=true;
+            }
+          }
+          if (!it->check_as_string)
+          {
+            is_minor=true;
+            got_minor_warning=true;
+          }
+          else
+          {
+            got_warning=true;
+          }
+          msg.str("");
+          if (is_minor)
+          {
+            msg << "... \t\tMINOR WARNING - getString(), PS: '" << pres->getString("id") << "'";
+          }
+          else
+          {
+            msg << "... \t\tWARNING - getString(), PS: '" << pres->getString("id") << "'";
+          }
+          msg << ", Statement: '" << res->getString("id") << "'";
+          logMsg(msg.str());
+        }
+
+      }
+      
+    }
+    if (got_warning)
+      FAIL("See --verbose warnings!");
+
+    if (got_minor_warning) {
+      TODO("See MINOR WARNING when using --verbose");
+      FAIL("See MINOR WARNING when using --verbose");
+    }
 
     stmt->execute("DROP TABLE IF EXISTS test");
   }
