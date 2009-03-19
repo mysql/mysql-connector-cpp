@@ -43,6 +43,7 @@
 #        error "Compilation will fail because code does not know an equivalent of strtol/strtoll"
 #      endif
 #    endif
+#    define HAVE_STRTOLL 1
 #  endif
 #  ifndef HAVE_STRTOULL
 #    ifdef HAVE_STRTOUL
@@ -54,6 +55,7 @@
 #        error Compilation will fail because code does not know an equivalent of strtoul/strtoull
 #      endif
 #    endif
+#    define HAVE_STRTOULL 1
 #  endif
 #  ifdef __hpux
 #    ifdef _PA_RISC2_0
