@@ -33,15 +33,29 @@
 
 #ifndef _WIN32
 #  include <stdlib.h>
+#  ifndef HAVE_STRTOLL
+#    ifdef HAVE_STRTOL
+#      define strtoll(__a, __b, __c) strtol((__a), (__b), (__c))
+#    elseif defined(HAVE_STRTOIMAX)
+#      define strtoll(__a, __b, __c) strtoimax((__a), NULL, 10)
+#    endif
+#  endif
+#  ifndef HAVE_STRTOULL
+#    ifdef HAVE_STRTOUL
+#      define strtoull(__a, __b, __c) strtoul((__a), (__b), (__c))
+#    elseif defined(HAVE_STRTOUMAX)
+#      define strtoull(__a, __b, __c) strtoumax((__a), NULL, 10)
+#    endif
+#  endif
 #  ifdef __hpux
 #    ifdef _PA_RISC2_0
 //#      define atoll(__a) atol((__a))
 //#      define strtoll(__a, __b, __c) strtol((__a), (__b), (__c))
-#      define strtoull(__a, __b, __c) strtoul((__a), (__b), (__c))
+//#      define strtoull(__a, __b, __c) strtoul((__a), (__b), (__c))
 #    else
 //#      define strtoll(__a) strtoimax((__a), NULL, 10)
 //#      define atoll(__a) strtoimax((__a), NULL, 10)
-#      define strtoull(__a, __b, __c) strtoumax((__a), (__b), (__c))
+//#      define strtoull(__a, __b, __c) strtoumax((__a), (__b), (__c))
 #    endif
 #  endif
 #else
