@@ -3241,6 +3241,7 @@ int run_tests(int argc, const char **argv)
 			printf("ok\n");
 		} else {
 			printf("not ok\n");
+                        printf("# total_errors %d, last_error_total = %d\n", total_errors, last_error_total);
 		}
 		
 
