@@ -38,6 +38,8 @@
 #      define strtoll(__a, __b, __c) strtol((__a), (__b), (__c))
 #    elseif defined(HAVE_STRTOIMAX)
 #      define strtoll(__a, __b, __c) strtoimax((__a), NULL, 10)
+#    else
+#error "Compilation will fail because code does not know an equivalent of strtol/strtoll"
 #    endif
 #  endif
 #  ifndef HAVE_STRTOULL
@@ -45,6 +47,8 @@
 #      define strtoull(__a, __b, __c) strtoul((__a), (__b), (__c))
 #    elseif defined(HAVE_STRTOUMAX)
 #      define strtoull(__a, __b, __c) strtoumax((__a), NULL, 10)
+#    else
+#      error Compilation will fail because code does not know an equivalent of strtoul/strtoull
 #    endif
 #  endif
 #  ifdef __hpux

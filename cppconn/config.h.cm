@@ -1,6 +1,8 @@
 #cmakedefine HAVE_STRTOLD 1
 #cmakedefine HAVE_ATOL 1
 #cmakedefine HAVE_ATOLL 1
+#cmakedefine HAVE_STRTOLL 1
+#cmakedefine HAVE_STRTOL 1
 #cmakedefine HAVE_STRTOULL 1
 #cmakedefine HAVE_STRTOUL 1
 #cmakedefine HAVE_STRTOIMAX 1
