@@ -141,7 +141,7 @@ IF(DEFINED CMAKE_SYSTEM_NAME AND ${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 		message("might fail due to compile flags")
 		message("returned by the MySQL tool mysql_config.")
 		message("In case of an error, try commenting out:")
-		message("# ADD_DEFINITIONS(\"\${MYSQL_CFLAGS}\")")
+		message("# ADD_DEFINITIONS(\"\${MYSQL_CXXFLAGS}\")")
 		message("in the file FindMySQL.cm")
 	ENDIF(${CMAKE_C_COMPILER} MATCHES "gcc$")
 

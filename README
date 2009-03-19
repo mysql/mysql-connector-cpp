@@ -163,7 +163,7 @@ INSTALLATION ON SOLARIS
   Sun compilers but possibly not suitable for GCC. If you plan to use GCC on
   Solaris to compile MySQL Connector/C++, you might need to insert
 
-  SET(MYSQL_CFLAGS "")
+  SET(MYSQL_CXXFLAGS "")
 
   at the end of the file /path/to/mysql-connector-cpp/FindMySQL.cm.
   However, its recommended to use Sun Studio on Solaris.
