@@ -35,6 +35,7 @@ public:
   {
     TEST_CASE(getInt);
     TEST_CASE(getTypes);
+    TEST_CASE(getTypesMinorIssues);
     TEST_CASE(notImplemented);
   }
 
@@ -51,6 +52,13 @@ public:
    * Test of the assorted methods to fetch data
    */
   void getTypes();
+
+  /**
+   * Test for resultset::get*()
+   *
+   * TODO - hack to temporarily seperate test failures from TODO for beta by having more fine grained test
+   */
+  void getTypesMinorIssues();
 
   /**
    * Calling methods which throw "not implemented" to detect API changes

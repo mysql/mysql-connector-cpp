@@ -220,6 +220,8 @@ void connectionmetadata::getColumnPrivileges()
 {
   logMsg("connectionmetadata::getColumnPrivileges() - MySQL_ConnectionMetaData::getColumnPrivileges");
   int rows=0;
+  bool got_warning = false;
+  std::stringstream msg;
   try
   {
 
@@ -238,8 +240,15 @@ void connectionmetadata::getColumnPrivileges()
     {
       rows++;
 
-      ASSERT_EQUALS(con->getCatalog(), res->getString(1));
+      if (con->getCatalog() != res->getString(1)) {
+        got_warning = true;
+        msg.str("");
+        msg << "... TABLE_CAT: expecting '" << con->getCatalog() << "' got ";
+        msg << "'" << res->getString(1) << "'";
+        logMsg(msg.str());
+      }
       ASSERT_EQUALS(res->getString(1), res->getString("TABLE_CAT"));
+
       ASSERT_EQUALS(con->getSchema(), res->getString(2));
       ASSERT_EQUALS(res->getString(2), res->getString("TABLE_SCHEM"));
       ASSERT_EQUALS("test", res->getString(3));
@@ -259,6 +268,9 @@ void connectionmetadata::getColumnPrivileges()
 
     }
     ASSERT_GT(2, rows);
+    if (got_warning) {
+      TODO("See --verbose warnings");      
+    }
 
     res.reset(dbmeta->getColumnPrivileges(con->getCatalog(), con->getSchema(), "test", "col2"));
     ASSERT_EQUALS(true, res->next());
@@ -276,12 +288,15 @@ void connectionmetadata::getColumnPrivileges()
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
   }
+
+  if (got_warning) {
+    FAIL("See --verbose warnings");
+  }
 }
 
 void connectionmetadata::getColumns()
 {
-  logMsg("connectionmetadata::getColumn() - MySQL_ConnectionMetaData::getColumns");
-  TODO("for Ulf...");
+  logMsg("connectionmetadata::getColumn() - MySQL_ConnectionMetaData::getColumns");  
   std::vector<columndefinition>::iterator it;
   std::stringstream msg;
   bool got_warning=false;
@@ -1817,11 +1832,11 @@ void connectionmetadata::getColumnsTypeConversions()
       ASSERT_EQUALS(res->isNull(3), res->isNull("TABLE_NAME"));
 
       // integer -> xyz
-      if (it->decimal_digits, res->getInt("DECIMAL_DIGITS"))
+      if (it->decimal_digits != res->getInt("DECIMAL_DIGITS"))
       {
         msg.str("");
-        msg << "...\t\tWARNING: expecting DECIMAL_DIGITS = '" << it->decimal_digits << "'";
-        msg << " got '" << res->getString("DECIMAL_DIGITS") << "'";
+        msg << "...\t\tWARNING: expecting DECIMAL_DIGITS = (int)'" << it->decimal_digits << "'";
+        msg << " got (int)'" << res->getString("DECIMAL_DIGITS") << "'";
         logMsg(msg.str());
         got_warning=true;
       }
@@ -1841,7 +1856,9 @@ void connectionmetadata::getColumnsTypeConversions()
       {
         msg.str("");
         msg << "...\t\tWARNING: expecting DECIMAL_DIGITS = '" << it->decimal_digits << "'";
+        msg << " length() is '" << msg.str().length() << "'";
         msg << " got '" << res->getString("DECIMAL_DIGITS") << "'";
+        msg << " length() is '" << res->getString("DECIMAL_DIGITS").length() << "'";
         logMsg(msg.str());
         got_warning=true;
       }
@@ -1931,7 +1948,7 @@ void connectionmetadata::getColumnsTypeConversions()
   }
 
   if (got_warning)
-    FAIL("See warnings!");
+    FAIL("See --verbose warnings!");
 }
 
 } /* namespace connectionmetadata */
