@@ -796,7 +796,6 @@ void preparedstatement::getMetaData()
   }
 }
 
-
 void preparedstatement::callSP()
 {
   logMsg("preparedstatement::callSP() - MySQL_PreparedStatement::*()");
@@ -824,7 +823,7 @@ void preparedstatement::callSP()
     pstmt.reset(con->prepareStatement("SELECT @version AS _version"));
     res.reset(pstmt->executeQuery());
     ASSERT(res->next());
-    ASSERT_EQUALS(dbmeta->getDatabaseProductVersion(), res->getString("_version"));    
+    ASSERT_EQUALS(dbmeta->getDatabaseProductVersion(), res->getString("_version"));
   }
   catch (sql::SQLException &e)
   {
@@ -838,7 +837,7 @@ void preparedstatement::callSP()
 void preparedstatement::anonymousSelect()
 {
   logMsg("preparedstatement::anonymousSelect() - MySQL_PreparedStatement::*, MYSQL_PS_Resultset::*");
-  
+
   try
   {
     pstmt.reset(con->prepareStatement("SELECT ' ', NULL"));
@@ -857,6 +856,30 @@ void preparedstatement::anonymousSelect()
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
   }
+}
+
+void preparedstatement::crash()
+{
+
+  logMsg("preparedstatement::crash() - MySQL_PreparedStatement::*");
+  try
+  {
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(dummy TIMESTAMP, id VARCHAR(1))");
+    pstmt.reset(con->prepareStatement("INSERT INTO test(id) VALUES (?)"));
+
+    pstmt->clearParameters();
+    pstmt->setDouble(1, (double) 1.23);
+    ASSERT_EQUALS(1, pstmt->executeUpdate());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
 }
 
 } /* namespace preparedstatement */

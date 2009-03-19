@@ -220,7 +220,7 @@ void connectionmetadata::getColumnPrivileges()
 {
   logMsg("connectionmetadata::getColumnPrivileges() - MySQL_ConnectionMetaData::getColumnPrivileges");
   int rows=0;
-  bool got_warning = false;
+  bool got_warning=false;
   std::stringstream msg;
   try
   {
@@ -240,8 +240,9 @@ void connectionmetadata::getColumnPrivileges()
     {
       rows++;
 
-      if (con->getCatalog() != res->getString(1)) {
-        got_warning = true;
+      if (con->getCatalog() != res->getString(1))
+      {
+        got_warning=true;
         msg.str("");
         msg << "... TABLE_CAT: expecting '" << con->getCatalog() << "' got ";
         msg << "'" << res->getString(1) << "'";
@@ -268,8 +269,9 @@ void connectionmetadata::getColumnPrivileges()
 
     }
     ASSERT_GT(2, rows);
-    if (got_warning) {
-      TODO("See --verbose warnings");      
+    if (got_warning)
+    {
+      TODO("See --verbose warnings");
     }
 
     res.reset(dbmeta->getColumnPrivileges(con->getCatalog(), con->getSchema(), "test", "col2"));
@@ -289,14 +291,15 @@ void connectionmetadata::getColumnPrivileges()
     fail(e.what(), __FILE__, __LINE__);
   }
 
-  if (got_warning) {
-    FAIL("See --verbose warnings");
+  if (got_warning)
+  {
+    FAIL("TODO - See --verbose warnings");
   }
 }
 
 void connectionmetadata::getColumns()
 {
-  logMsg("connectionmetadata::getColumn() - MySQL_ConnectionMetaData::getColumns");  
+  logMsg("connectionmetadata::getColumn() - MySQL_ConnectionMetaData::getColumns");
   std::vector<columndefinition>::iterator it;
   std::stringstream msg;
   bool got_warning=false;
@@ -794,8 +797,18 @@ void connectionmetadata::getExportedKeys()
 
 void connectionmetadata::checkForeignKey(Connection &mycon, ResultSet &myres)
 {
+  bool got_warning=false;
+  std::stringstream msg;
 
-  ASSERT_EQUALS(mycon->getCatalog(), myres->getString(1));
+  if (mycon->getCatalog() != myres->getString(1))
+  {
+    got_warning=true;
+    msg.str("");
+    msg << "... WARNING expecting PKTABLE_CAT = '" << mycon->getCatalog() << "'";
+    msg << " got '" << myres->getString(1) << "'";
+    logMsg(msg.str());
+  }
+
   ASSERT_EQUALS(myres->getString(1), myres->getString("PKTABLE_CAT"));
 
   ASSERT_EQUALS(mycon->getSchema(), myres->getString(2));
@@ -849,6 +862,13 @@ void connectionmetadata::checkForeignKey(Connection &mycon, ResultSet &myres)
   ASSERT_EQUALS((int64_t) sql::DatabaseMetaData::importedKeyNotDeferrable, myres->getInt64(14));
   ASSERT(sql::DatabaseMetaData::importedKeyInitiallyDeferred != myres->getInt64(10));
   ASSERT(sql::DatabaseMetaData::importedKeyInitiallyImmediate != myres->getInt64(10));
+
+  if (got_warning)
+  {
+    TODO("See --verbise warnings!");
+    FAIL("TODO - See --verbose warnings!");
+  }
+
 }
 
 void connectionmetadata::getIndexInfo()
