@@ -2197,7 +2197,7 @@ long double strtold(const char *nptr, char **endptr)
 	/* (Putting value into union enables converted value to be */ 
 	/* accessed as an ANSI C long double)*/ 
 	/* Yes, ld not l_d , directly returning breaks HPUX 11.11 */
-	u.ld = ::strtold( nptr, endptr);
+	u.l_d = ::strtold( nptr, endptr);
 	return u.ld;
 # else
 	return ::strtold(nptr, endptr);
