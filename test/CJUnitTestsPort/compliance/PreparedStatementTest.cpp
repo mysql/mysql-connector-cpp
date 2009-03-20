@@ -48,7 +48,7 @@ void PreparedStatementTest::testGetMetaData()
   ResultSetMetaData rsmdPrep;
   bool              statflag=   false;
   String            sPrepStmt=  sqlProps[ "SelCoffeeAll" ];
-
+  createStandardTable(TABLE_CTSTABLE2);
   pstmt.reset(conn->prepareStatement(sPrepStmt));
 
   try
@@ -114,7 +114,7 @@ void PreparedStatementTest::testClearParameters()
   ResultSet reSet;
   bool sqlexcflag=false;
   String sPrepStmt=sqlProps[ "CoffeeTab_Query" ];
-
+  createStandardTable(TABLE_CTSTABLE2);
   logMsg(String("Prepared Statement String :") + sPrepStmt);
   pstmt.reset(conn->prepareStatement(sPrepStmt));
   pstmt->setInt(1, 1);
@@ -164,6 +164,7 @@ void PreparedStatementTest::testExecute01()
 {
   bool retValue;
   String sPrepStmt=sqlProps[ "CoffeeTab_Delete" ];
+  createStandardTable(TABLE_CTSTABLE2);
 
   logMsg(String("Prepared Statement String :") + sPrepStmt);
   pstmt.reset(conn->prepareStatement(sPrepStmt));
@@ -207,6 +208,7 @@ void PreparedStatementTest::testExecute02()
 {
   bool retValue;
   String sPrepStmt=sqlProps[ "CoffeeTab_Delete" ];
+  createStandardTable(TABLE_CTSTABLE2);
 
   logMsg(String("Prepared Statement String :") + sPrepStmt);
   pstmt.reset(conn->prepareStatement(sPrepStmt));
@@ -249,6 +251,7 @@ void PreparedStatementTest::testExecute03()
   bool retValue;
   bool sqlexcflag=false;
   String sPrepStmt=sqlProps[ "CoffeeTab_Delete" ];
+  createStandardTable(TABLE_CTSTABLE2);
 
   logMsg(String("Prepared Statement String :") + sPrepStmt);
   pstmt.reset(conn->prepareStatement(sPrepStmt));
@@ -295,6 +298,7 @@ void PreparedStatementTest::testExecuteQuery01()
 {
   ResultSet reSet;
   const String & sPrepStmt=sqlProps[ "CoffeeTab_Query" ];
+  createStandardTable(TABLE_CTSTABLE2);
 
   logMsg(String("Prepared Statement String :") + sPrepStmt);
   pstmt.reset(conn->prepareStatement(sPrepStmt));
@@ -337,6 +341,7 @@ void PreparedStatementTest::testExecuteQuery02()
 {
   ResultSet reSet;
   String sPrepStmt=sqlProps[ "CoffeeTab_Query" ];
+  createStandardTable(TABLE_CTSTABLE2);
 
   logMsg(String("Prepared Statement String :") + sPrepStmt);
 
@@ -379,6 +384,7 @@ void PreparedStatementTest::testExecuteQuery03()
   ResultSet reSet;
   bool sqlexcflag=false;
   String sPrepStmt=sqlProps[ "CoffeeTab_Query" ];
+  createStandardTable(TABLE_CTSTABLE2);
 
   logMsg(String("Prepared Statement String :") + sPrepStmt);
   pstmt.reset(conn->prepareStatement(sPrepStmt));
@@ -428,6 +434,7 @@ void PreparedStatementTest::testExecuteUpdate01()
 {
   int retValue;
   const String & sPrepStmt=sqlProps[ "CoffeeTab_Delete" ];
+  createStandardTable(TABLE_CTSTABLE2);
 
   logMsg(String("Prepared Statement String :") + sPrepStmt);
 
@@ -473,6 +480,7 @@ void PreparedStatementTest::testExecuteUpdate02()
 {
   int retValue;
   String sPrepStmt=sqlProps[ "CoffeeTab_Delete" ];
+  createStandardTable(TABLE_CTSTABLE2);
 
   logMsg(String("Prepared Statement String :") + sPrepStmt);
   pstmt.reset(conn->prepareStatement(sPrepStmt));
@@ -515,6 +523,7 @@ void PreparedStatementTest::testExecuteUpdate03()
   int retValue;
   bool sqlexcflag=false;
   String sPrepStmt=sqlProps[ "CoffeeTab_Delete" ];
+  createStandardTable(TABLE_CTSTABLE2);
 
   logMsg(String("Prepared Statement String :") + sPrepStmt);
   pstmt.reset(conn->prepareStatement(sPrepStmt));
@@ -3259,8 +3268,8 @@ void PreparedStatementTest::testSetNull18()
 /* throws Exception */
 void PreparedStatementTest::setUp()
 {
-  super::setUp();
-
+  super::setUp(); 
+  
   dbmd.reset(conn->getMetaData());
 }
 

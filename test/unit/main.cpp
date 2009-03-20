@@ -13,6 +13,7 @@
 #include "../CJUnitTestsPort/framework/start_options.h"
 #include "../CJUnitTestsPort/framework/test_tapOutputter.h"
 #include "../CJUnitTestsPort/framework/test_filter.h"
+#include <stdlib.h>
 
 int main(int argc, char** argv)
 {
@@ -42,5 +43,5 @@ int main(int argc, char** argv)
   testsRunner.setStartOptions(& options);
   testsRunner.setTestsFilter(filter);
 
-  return testsRunner.runTests() ? 0 : -1;
+  return testsRunner.runTests() ? EXIT_SUCCESS : EXIT_FAILURE;
 }

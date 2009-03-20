@@ -133,7 +133,7 @@ int main(int argc, const char **argv)
 	if (ret != EXIT_SUCCESS) {
 		cout << "not ";
 	}
-	cout << "ok 1" << endl;
+	cout << "ok 1 - examples/resultset_meta.cpp" << endl;
 	return ret;
 }
 

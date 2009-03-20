@@ -131,7 +131,7 @@ int main(int argc, const char **argv)
 		cout << "# ERR: " << e.what();
 		cout << " (MySQL error code: " << e.getErrorCode();
 		cout << ", SQLState: " << e.getSQLState() << " )" << endl;
-		cout << "not ok 1" << endl;
+		cout << "not ok 1 - examples/resultset_binary.cpp" << endl;
 
 		return EXIT_FAILURE;
 	} catch (std::runtime_error &e) {
@@ -139,11 +139,11 @@ int main(int argc, const char **argv)
 		cout << "# ERR: runtime_error in " << __FILE__;
 		cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << endl;
 		cout << "# ERR: " << e.what() << endl;
-		cout << "not ok 1" << endl;
+		cout << "not ok 1 - examples/resultset_binary.cpp" << endl;
 
 		return EXIT_FAILURE;
 	}
 
-	cout << "ok 1" << endl;
+	cout << "ok 1 - examples/resultset_binary.cpp" << endl;
 	return EXIT_SUCCESS;
 }

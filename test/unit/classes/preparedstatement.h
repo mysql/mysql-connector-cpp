@@ -30,6 +30,7 @@ public:
 
   EXAMPLE_TEST_FIXTURE(preparedstatement)
   {
+    TEST_CASE(crash);
     TEST_CASE(anonymousSelect);
     TEST_CASE(InsertSelectAllTypes);
     TEST_CASE(assortedSetType);
@@ -69,12 +70,15 @@ public:
    */
   void getMetaData();
 
-
   /**
    * Calls a stored procedure
    */
   void callSP();
 
+  /**
+   * TODO - temporary to isolate a crash, remove after fix!
+   */
+  void crash();
 
 };
 

@@ -47,6 +47,7 @@ get_connection(const std::string& host, const std::string& user, const std::stri
 }
 /* }}} */
 
+#define TEST_COMMON_TAP_NAME "static_test"
 #include "test_common.cpp"
 
 static void driver_test_new_driver_exception()
