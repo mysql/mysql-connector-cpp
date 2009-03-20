@@ -22,40 +22,40 @@
 
 namespace testsuite
 {
-void fail(const char* reason, const char * const file, int line);
+void fail(const char* reason, const char * file, int line);
 
 void assertTrue(const String & msg, bool expression
-                , const char * const file, int line);
+                , const char * file, int line);
 
 void assertEquals(const char * expected, const char * result
-                  , const char * const file, int line);
+                  , const char * file, int line);
 
 void assertEquals(int expected, unsigned int result
-                  , const char * const file, int line);
+                  , const char * file, int line);
 
 void assertEquals(int expected, int result
-                  , const char * const file, int line);
+                  , const char * file, int line);
 
 void assertEquals(unsigned int expected, unsigned int result
-                  , const char * const file, int line);
+                  , const char * file, int line);
 
 void assertEquals(int64_t expected, int64_t result
-                  , const char * const file, int line);
+                  , const char * file, int line);
 
 void assertEquals(uint64_t expected, uint64_t result
-                  , const char * const file, int line);
+                  , const char * file, int line);
 
 void assertEquals(bool expected, bool result
-                  , const char * const file, int line);
+                  , const char * file, int line);
 
 void assertEquals(const double & expected, const long double & result
-                  , const char * const file, int line);
+                  , const char * file, int line);
 
 void assertEquals(const long double & expected, const long double & result
-                  , const char * const file, int line);
+                  , const char * file, int line);
 
 void assertEquals(const double & expected, const double & result
-                  , const char * const file, int line);
+                  , const char * file, int line);
 
 void assertEquals(const float & expected, const float & result
                   , const char * file, int line);
@@ -68,28 +68,28 @@ void assertEqualsEpsilon(const double & expected, const double & result
                          , const double & epsilon, const char * file, int line);
 
 void assertEquals(const String & expected, const String & result
-                  , const char * const file, int line);
+                  , const char * file, int line);
 
-void assertTrueMessage(bool exp, const String & msg, const char * const file
+void assertTrueMessage(bool exp, const String & msg, const char * file
                        , int line);
 
 void assertGreaterThan(int expected, unsigned int result
-                       , const char * const file, int line);
+                       , const char * file, int line);
 
 void assertGreaterThan(int expected, int result
-                       , const char * const file, int line);
+                       , const char * file, int line);
 
 void assertGreaterThan(unsigned int expected, unsigned int result
-                       , const char * const file, int line);
+                       , const char * file, int line);
 
 void assertLessThan(int expected, unsigned int result
-                    , const char * const file, int line);
+                    , const char * file, int line);
 
 void assertLessThan(int expected, int result
-                    , const char * const file, int line);
+                    , const char * file, int line);
 
 void assertLessThan(unsigned int expected, unsigned int result
-                    , const char * const file, int line);
+                    , const char * file, int line);
 
 bool fuzzyEquals(double expected, double result, double fuzzyEpsilon);
 }

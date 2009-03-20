@@ -19,7 +19,7 @@ namespace testsuite
 {
 
 void assertTrue(const String & msg, bool expression,
-                const char * const file, int line)
+                const char * file, int line)
 {
   if (!expression)
   {
@@ -32,7 +32,7 @@ void assertTrue(const String & msg, bool expression,
 }
 
 void assertEquals(const char * expected, const char * result,
-                  const char * const file, int line)
+                  const char * file, int line)
 {
   String s1(expected), s2(result);
 
@@ -40,7 +40,7 @@ void assertEquals(const char * expected, const char * result,
 }
 
 void assertEquals(bool expected, bool result,
-                  const char * const file, int line)
+                  const char * file, int line)
 {
   if (expected != result)
   {
@@ -53,7 +53,7 @@ void assertEquals(bool expected, bool result,
 }
 
 void assertEquals(int expected, unsigned int result
-                  , const char * const file, int line)
+                  , const char * file, int line)
 {
   if ((unsigned) expected != result)
   {
@@ -66,7 +66,7 @@ void assertEquals(int expected, unsigned int result
 }
 
 void assertEquals(int expected, int result
-                  , const char * const file, int line)
+                  , const char * file, int line)
 {
   if (expected != result)
   {
@@ -79,7 +79,7 @@ void assertEquals(int expected, int result
 }
 
 void assertEquals(unsigned int expected, unsigned int result
-                  , const char * const file, int line)
+                  , const char * file, int line)
 {
   if (expected != result)
   {
@@ -92,7 +92,7 @@ void assertEquals(unsigned int expected, unsigned int result
 }
 
 void assertEquals(int64_t expected, int64_t result
-                  , const char * const file, int line)
+                  , const char * file, int line)
 {
   if (expected != result)
   {
@@ -105,7 +105,7 @@ void assertEquals(int64_t expected, int64_t result
 }
 
 void assertEquals(uint64_t expected, uint64_t result
-                  , const char * const file, int line)
+                  , const char * file, int line)
 {
   if (expected != result)
   {
@@ -153,7 +153,7 @@ bool fuzzyEquals(long double expected, long double result, long double fuzzyEpsi
 
 
 void assertEquals(const long double & expected, const long double & result,
-                  const char * const file, int line)
+                  const char * file, int line)
 {
   const long double fuzzyEpsilon=0.000001;
 
@@ -162,7 +162,7 @@ void assertEquals(const long double & expected, const long double & result,
 
 
 void assertEquals(const double & expected, const long double & result,
-                  const char * const file, int line)
+                  const char * file, int line)
 {
   const long double fuzzyEpsilon=0.000001;
 
@@ -171,7 +171,7 @@ void assertEquals(const double & expected, const long double & result,
 
 
 void assertEquals(const double & expected, const double & result,
-                  const char * const file, int line)
+                  const char * file, int line)
 {
   const double fuzzyEpsilon=0.000001;
 
@@ -224,7 +224,7 @@ void assertEqualsEpsilon(const double & expected, const double & result
 }
 
 void assertEquals(const String & expected, const String & result
-                  , const char * const file, int line)
+                  , const char * file, int line)
 {
   if (expected != result)
   {
@@ -238,7 +238,7 @@ void assertEquals(const String & expected, const String & result
 
 
 void assertLessThan(int expected, unsigned int result
-                    , const char * const file, int line)
+                    , const char * file, int line)
 {
   if ((unsigned) expected < result)
   {
@@ -251,7 +251,7 @@ void assertLessThan(int expected, unsigned int result
 }
 
 void assertLessThan(int expected, int result
-                    , const char * const file, int line)
+                    , const char * file, int line)
 {
   if (expected < result)
   {
@@ -264,7 +264,7 @@ void assertLessThan(int expected, int result
 }
 
 void assertLessThan(unsigned int expected, unsigned int result
-                    , const char * const file, int line)
+                    , const char * file, int line)
 {
   if (expected < result)
   {
@@ -277,7 +277,7 @@ void assertLessThan(unsigned int expected, unsigned int result
 }
 
 void assertGreaterThan(int expected, unsigned int result
-                       , const char * const file, int line)
+                       , const char * file, int line)
 {
   if ((unsigned) expected > result)
   {
@@ -290,7 +290,7 @@ void assertGreaterThan(int expected, unsigned int result
 }
 
 void assertGreaterThan(int expected, int result
-                       , const char * const file, int line)
+                       , const char * file, int line)
 {
   if (expected > result)
   {
@@ -303,7 +303,7 @@ void assertGreaterThan(int expected, int result
 }
 
 void assertGreaterThan(unsigned int expected, unsigned int result
-                       , const char * const file, int line)
+                       , const char * file, int line)
 {
   if (expected > result)
   {
@@ -315,7 +315,7 @@ void assertGreaterThan(unsigned int expected, unsigned int result
   }
 }
 
-void fail(const char* reason, const char * const file, int line)
+void fail(const char* reason, const char * file, int line)
 {
   // if( verbose...
   // TestsListener
