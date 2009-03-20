@@ -9,10 +9,8 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
-#ifndef _WIN32
-#include <stdlib.h>
-#endif	//	_WIN32
 
+#include <stdlib.h>
 #include <string.h>
 #include <iostream>
 #include <sstream>

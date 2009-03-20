@@ -8,6 +8,7 @@
    FLOSS License Exception
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
+#include <string.h>
 #include <stdlib.h>
 #include <memory>
 #include <iostream>
@@ -22,9 +23,6 @@
 #include "mysql_parameter_metadata.h"
 #include "mysql_warning.h"
 
-#ifndef _WIN32
-#include <string.h>
-#endif
 
 #define mysql_stmt_conn(s) (s)->mysql
 

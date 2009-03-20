@@ -10,12 +10,10 @@
 */
 
 #include <stdio.h>
-#include <sstream>
-
-#ifndef _WIN32
 #include <string.h>
 #include <stdlib.h>
-#endif	//	_WIN32
+#include <sstream>
+
 
 #include <cppconn/exception.h>
 #include "mysql_util.h"
