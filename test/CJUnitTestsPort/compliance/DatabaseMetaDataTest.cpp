@@ -1763,7 +1763,7 @@ void DatabaseMetaDataTest::testGetMaxCatalogNameLength()
     logErr("getMaxCatalogNameLength returns a negative value");
   } else {
     TestsListener::messagesLog()
-            << "getMaxCatalogNameLength returns " << nRetval;
+            << "getMaxCatalogNameLength returns " << nRetval << std::endl;
   }
 
 
@@ -2722,7 +2722,7 @@ void DatabaseMetaDataTest::testGetProcedures()
 
   int iCount=rsmd->getColumnCount();
   TestsListener::messagesLog()
-          << "Minimum Column Count is:" << iColumnNamesLength;
+          << "Minimum Column Count is:" << iColumnNamesLength << std::endl;
   if (iColumnNamesLength <= iCount) {
     iCount=iColumnNamesLength;
     statusColumnCount=true;

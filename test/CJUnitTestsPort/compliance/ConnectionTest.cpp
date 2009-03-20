@@ -281,12 +281,12 @@ void ConnectionTest::testGetTransactionIsolation()
   {
     TestsListener::messagesLog()
             << "getTransactionIsolation method returns Transaction Isolation mode as "
-            << transIsolateVal;
+            << transIsolateVal << std::endl;;
   } else if (transIsolateVal == sql::TRANSACTION_SERIALIZABLE)
   {
     TestsListener::messagesLog()
             << "getTransactionIsolation method returns Transaction Isolation mode as "
-            << transIsolateVal;
+            << transIsolateVal << std::endl;
   } else
   {
     logErr("getTransactionIsolation method returns an invalid value");

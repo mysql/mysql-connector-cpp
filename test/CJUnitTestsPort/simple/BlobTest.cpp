@@ -168,7 +168,7 @@ namespace simple
 
       TestsListener::errorsLog() << "retrBytes.length("
         << retrBytes.size()
-        << ") != testBlob.length(" << fileLength << ")";
+        << ") != testBlob.length(" << fileLength << ")" << std::endl;
     }
 
     return passed;
