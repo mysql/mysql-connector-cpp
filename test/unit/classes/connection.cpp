@@ -961,6 +961,8 @@ void connection::connectUsingMap()
 void connection::setTransactionIsolation()
 {
   logMsg("connection::setTransactionIsolation() - MySQL_Connection::setTransactionIsolation()");
+  bool have_innodb=false;
+  int server_dependent_insert= -1;
 
   stmt.reset(con->createStatement());
   try
@@ -1001,28 +1003,61 @@ void connection::setTransactionIsolation()
   {
     con->setAutoCommit(true);
     stmt->execute("DROP TABLE IF EXISTS test");
-    stmt->execute("CREATE TABLE test(id INT)");
-    con->setAutoCommit(false);
-    con->setTransactionIsolation(sql::TRANSACTION_SERIALIZABLE);
-    stmt->execute("INSERT INTO test(id) VALUES (1)");
-    /* JDBC documentation: If this method is called while
-     in the middle of a transaction, any changes up to that point
-     will be committed.*/
-    con->setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
-    /* According to the JDBC docs the INSERT has been comitted
-     and this ROLLBACK must have no impat */
-    con->rollback();
-
-    res.reset(stmt->executeQuery("SELECT COUNT(*) AS _num FROM test"));
-    res->next();
-    ASSERT_EQUALS(1, res->getInt("_num"));
-    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT) ENGINE = InnoDB");
+    have_innodb=true;
   }
-  catch (sql::SQLException &e)
+  catch (sql::SQLException &)
   {
-    logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
-    fail(e.what(), __FILE__, __LINE__);
+    have_innodb=false;
+  }
+
+  if (have_innodb)
+  {
+    try
+    {
+      con->setAutoCommit(false);
+      con->setTransactionIsolation(sql::TRANSACTION_SERIALIZABLE);
+      stmt->execute("INSERT INTO test(id) VALUES (1)");
+      /* JDBC documentation: If this method is called while
+       in the middle of a transaction, any changes up to that point
+       will be committed.*/
+      stmt->execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
+      // con->setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
+      /* According to the JDBC docs the INSERT has been comitted
+       and this ROLLBACK must have no impat */
+      con->rollback();
+
+      res.reset(stmt->executeQuery("SELECT COUNT(*) AS _num FROM test"));
+      res->next();
+      server_dependent_insert=res->getInt("_num");
+      stmt->execute("DROP TABLE IF EXISTS test");
+
+      con->setAutoCommit(true);
+      stmt->execute("DROP TABLE IF EXISTS test");
+      stmt->execute("CREATE TABLE test(id INT) ENGINE = InnoDB");
+      con->setAutoCommit(false);
+      con->setTransactionIsolation(sql::TRANSACTION_SERIALIZABLE);
+      stmt->execute("INSERT INTO test(id) VALUES (1)");
+      /* JDBC documentation: If this method is called while
+       in the middle of a transaction, any changes up to that point
+       will be committed.*/
+
+      con->setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
+      /* According to the JDBC docs the INSERT has been comitted
+       and this ROLLBACK must have no impat */
+      con->rollback();
+
+      res.reset(stmt->executeQuery("SELECT COUNT(*) AS _num FROM test"));
+      res->next();
+      ASSERT_EQUALS(server_dependent_insert, res->getInt("_num"));
+      stmt->execute("DROP TABLE IF EXISTS test");
+    }
+    catch (sql::SQLException &e)
+    {
+      logErr(e.what());
+      logErr("SQLState: " + e.getSQLState());
+      fail(e.what(), __FILE__, __LINE__);
+    }
   }
 
   con->close();
