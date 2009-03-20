@@ -132,6 +132,8 @@ int main(int argc, const char **argv)
 		- sql::MethodNotImplementedException (derived from sql::SQLException)
 		- sql::InvalidArgumentException (derived from sql::SQLException)
 		- sql::SQLException (derived from std::runtime_error)
+
+                 sql::SQLException is the base class.
 		*/
 		cout << endl;
 		cout << "# ERR: DbcException in " << __FILE__;
@@ -148,7 +150,7 @@ int main(int argc, const char **argv)
 			*/
 			cout << "# ERR: Your server seems not to support PS at all because its MYSQL <4.1" << endl;
 		}
-		cout << "not ok 1" << endl;
+		cout << "not ok 1 - examples/exceptions.cpp" << endl;
 
 		return EXIT_FAILURE;
 	} catch (std::runtime_error &e) {
@@ -157,12 +159,12 @@ int main(int argc, const char **argv)
 		cout << "# ERR: runtime_error in " << __FILE__;
 		cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << endl;
 		cout << "# ERR: " << e.what() << endl;
-		cout << "not ok 1" << endl;
+		cout << "not ok 1 - examples/exceptions.cpp" << endl;
 
 		return EXIT_FAILURE;
 	}
 
-	cout << "ok 1" << endl;
+	cout << "ok 1 - examples/exceptions.cpp" << endl;
 	return EXIT_SUCCESS;
 }
 
