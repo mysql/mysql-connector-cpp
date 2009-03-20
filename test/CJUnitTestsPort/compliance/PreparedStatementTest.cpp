@@ -3268,8 +3268,8 @@ void PreparedStatementTest::testSetNull18()
 /* throws Exception */
 void PreparedStatementTest::setUp()
 {
-  super::setUp(); 
-  
+  super::setUp();
+
   dbmd.reset(conn->getMetaData());
 }
 

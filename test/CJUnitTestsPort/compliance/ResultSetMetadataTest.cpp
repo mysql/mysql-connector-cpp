@@ -41,7 +41,7 @@ namespace compliance
 
 /* throws Exception */
 void ResultSetMetadataTest::testGetCatalogName()
-{  
+{
   logMsg("Calling getCatalogName on ResultSetMetadata");
   String sRetValue=rsmd->getCatalogName(1);
 
@@ -843,7 +843,7 @@ void ResultSetMetadataTest::setUp()
 {
   super::setUp();
   createStandardTable(TABLE_CTSTABLE2);
-  
+
   Properties::const_iterator cit=sqlProps.find("ftable");
   String fTableName;
 
@@ -851,7 +851,7 @@ void ResultSetMetadataTest::setUp()
     fTableName=cit->second;
   }
 
-  query=String("SELECT COF_NAME, PRICE FROM ") + fTableName; 
+  query=String("SELECT COF_NAME, PRICE FROM ") + fTableName;
 
   stmt.reset(conn->createStatement(/*sql::ResultSet::TYPE_SCROLL_INSENSITIVE,sql::ResultSet::CONCUR_READ_ONLY*/
                                    ));
