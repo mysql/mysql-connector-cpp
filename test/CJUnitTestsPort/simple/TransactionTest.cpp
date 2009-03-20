@@ -1,3 +1,4 @@
+
 /*
 Copyright 2009 Sun Microsystems, Inc.
 
@@ -20,12 +21,12 @@ namespace simple
 
   /**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws Exception
 	 *             DOCUMENT ME!
 	 */
   /* throws Exception */
-  void TransactionTest::setUp() 
+  void TransactionTest::setUp()
   {
     super::setUp();
     createTestTable();
@@ -33,12 +34,12 @@ namespace simple
 
   /**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
   /* throws SQLException */
-  void TransactionTest::testTransaction() 
+  void TransactionTest::testTransaction()
   {
     bool prevAutoCommit= conn->getAutoCommit();
 
@@ -80,7 +81,7 @@ namespace simple
 
 
 /* throws SQLException */
-  void TransactionTest::createTestTable() 
+  void TransactionTest::createTestTable()
   {
     try
     {
@@ -90,7 +91,7 @@ namespace simple
     {
     }
 
-    stmt->executeUpdate("CREATE TABLE trans_test (id INT NOT NULL PRIMARY KEY, decdata DOUBLE) TYPE=InnoDB");
+    stmt->executeUpdate("CREATE TABLE trans_test (id INT NOT NULL PRIMARY KEY, decdata DOUBLE) ENGINE=InnoDB");
   }
 
 }
