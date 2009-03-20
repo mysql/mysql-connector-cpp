@@ -578,8 +578,7 @@ void resultset::getTypesMinorIssues()
 {
   logMsg("resultset::getTypesMinorIssues - MySQL_ResultSet::get*");
   std::vector<columndefinition>::iterator it;
-  std::stringstream msg;
-  TODO("Under development...");
+  std::stringstream msg;  
   bool got_warning=false;
   bool got_minor_warning=false;
   ResultSet pres;
@@ -693,7 +692,7 @@ void resultset::getTypesMinorIssues()
     if (got_minor_warning)
     {
       TODO("See MINOR WARNING when using --verbose");
-      FAIL("See MINOR WARNING when using --verbose");
+      FAIL("TODO - see MINOR WARNING when using --verbose");
     }
 
     stmt->execute("DROP TABLE IF EXISTS test");
