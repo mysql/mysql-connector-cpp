@@ -785,6 +785,7 @@ void connectionmetadata::getExportedKeys()
   }
   catch (sql::MethodNotImplementedException &e)
   {
+    logMsg(e.what());
     SKIP("MySQL is too old, MethodNotImplementedException!");
   }
   catch (sql::SQLException &e)
@@ -1501,6 +1502,7 @@ void connectionmetadata::getCrossReference()
   }
   catch (sql::MethodNotImplementedException &e)
   {
+    logMsg(e.what());
     SKIP("MySQL is too old, MethodNotImplementedException!");
   }
   catch (sql::SQLException &e)
