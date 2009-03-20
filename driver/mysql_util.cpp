@@ -2175,6 +2175,25 @@ char * utf8_strup(const char * const src, size_t srclen)
 }
 
 
+/*
+  HPUX has some problems with long double : http://docs.hp.com/en/B3782-90716/ch02s02.html
+
+  strtold() has implementations that return struct long_double, 128bit one,
+  which contains four 32bit words. 
+  Fix described :
+  --------
+  union { 
+     long_double l_d; 
+     long double ld; 
+  } u; 
+  // convert str to a long_double; store return val in union
+  //(Putting value into union enables converted value to be 
+  // accessed as an ANSI C long double)
+  u.l_d = strtold( (const char *)str, (char **)NULL); 
+  --------
+  reinterpret_cast doesn't work :(
+*/
+
 #if defined(HAVE_STRTOLD) && defined(__hpux) && defined(_LONG_DOUBLE)
 typedef union {
 	long_double l_d;
@@ -2193,10 +2212,6 @@ long double strtold(const char *nptr, char **endptr)
 		long_double l_d; 
 		long double ld; 
 	} u; 
-	/* convert str to a long_double; store return val in union */ 
-	/* (Putting value into union enables converted value to be */ 
-	/* accessed as an ANSI C long double)*/ 
-	/* Yes, ld not l_d , directly returning breaks HPUX 11.11 */
 	u.l_d = ::strtold( nptr, endptr);
 	return u.ld;
 # else

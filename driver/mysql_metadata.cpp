@@ -1967,8 +1967,6 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 		/* get schemata */
 		std::string query1("SHOW DATABASES LIKE '");
 		query1.append(schemaPattern).append("'");
-		char buf[12];
-		buf[sizeof(buf) - 1] = '\0';
 
 		std::auto_ptr<sql::Statement> stmt1(connection->createStatement());
 		std::auto_ptr<sql::ResultSet> rs1(stmt1->executeQuery(query1));

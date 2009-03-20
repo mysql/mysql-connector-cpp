@@ -17,28 +17,16 @@
 
 #if defined(_WIN32) || defined(_WIN64)
 /* MySQL 5.1 might have defined it before in include/config-win.h */
-#ifdef strncasecmp
-#undef strncasecmp
-#endif
-
-#define strncasecmp(s1,s2,n) _strnicmp(s1,s2,n)
-
-#ifndef atoll
-#define atoll(x) _atoi64((x))
-#endif
-#else
-#include <string.h>
-# ifdef __hpux
-#  ifdef _PA_RISC2_0
-#   define atoll(__a) atol(__a)
-#   define strtoull(__a, __b, __c) strtoul(__a, __b, __c)
-#  else
-#   include <inttypes.h>
-#   define atoll(__a) strtoimax(__a, NULL, 10)
-#   define strtoull(__a, __b, __c) strtoumax(__a, __b, __c)
+#  ifdef strncasecmp
+#    undef strncasecmp
 #  endif
-# endif
+#  define strncasecmp(s1,s2,n) _strnicmp(s1,s2,n)
+#else
+#  include <string.h>
 #endif
+
+#include "cppconn/config.h"
+
 
 #include <vector>
 #include <string>
