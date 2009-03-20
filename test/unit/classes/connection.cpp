@@ -1079,7 +1079,7 @@ void connection::setTransactionIsolation()
 
       if (-1 != cant_be_changed_error)
       {
-
+        FAIL("Changing the transaction level manually has caused an exception. Changing it through API has not!");
       }
 
       /* According to the JDBC docs the INSERT has been comitted
