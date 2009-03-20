@@ -28,7 +28,7 @@ class MySQL_Statement : public sql::Statement
 {
 protected:
 	sql::SQLWarning * warnings;
-	MySQL_Connection *connection;
+	MySQL_Connection * connection;
 
 	void do_query(const char *q, size_t length);
 	bool isClosed;
@@ -44,7 +44,7 @@ public:
 	MySQL_Statement(MySQL_Connection * conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
 	~MySQL_Statement();
 
-	sql::Connection *getConnection();
+	sql::Connection * getConnection();
 
 	void cancel();
 

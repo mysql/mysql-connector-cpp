@@ -34,6 +34,9 @@ Beta   1.0.4 - 2009-03-xx
   Until now it was returning always an empty result set. Full implementation
   will be added at a later stage. (Andrey)
 
+- Changed a bunch of methods of DatabaseMetaData()::getXXX, which returned `int`
+  to return `unsigned int` because it makes more sense. (Andrey)
+
 
 Alpha  1.0.3 - 2009-03-03
 

@@ -2182,7 +2182,7 @@ MySQL_ConnectionMetaData::getCrossReference(const std::string& primaryCatalog, c
 
 
 /* {{{ MySQL_ConnectionMetaData::getDatabaseMajorVersion() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getDatabaseMajorVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDatabaseMajorVersion");
@@ -2192,7 +2192,7 @@ MySQL_ConnectionMetaData::getDatabaseMajorVersion()
 
 
 /* {{{ MySQL_ConnectionMetaData::getDatabaseMinorVersion() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getDatabaseMinorVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDatabaseMinorVersion");
@@ -2202,7 +2202,7 @@ MySQL_ConnectionMetaData::getDatabaseMinorVersion()
 
 
 /* {{{ MySQL_ConnectionMetaData::getDatabasePatchVersion() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getDatabasePatchVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDatabasePatchVersion");
@@ -2246,7 +2246,7 @@ MySQL_ConnectionMetaData::getDefaultTransactionIsolation()
 
 
 /* {{{ MySQL_ConnectionMetaData::getDriverMajorVersion() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getDriverMajorVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverMajorVersion");
@@ -2256,7 +2256,7 @@ MySQL_ConnectionMetaData::getDriverMajorVersion()
 
 
 /* {{{ MySQL_ConnectionMetaData::getDriverMinorVersion() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getDriverMinorVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverMinorVersion");
@@ -2265,7 +2265,7 @@ MySQL_ConnectionMetaData::getDriverMinorVersion()
 /* }}} */
 
 /* {{{ MySQL_ConnectionMetaData::getDriverPatchVersion() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getDriverPatchVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverPatchVersion");
@@ -2867,7 +2867,7 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 
 
 /* {{{ MySQL_ConnectionMetaData::getCDBCMajorVersion() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getCDBCMajorVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getCDBCMajorVersion");
@@ -2877,7 +2877,7 @@ MySQL_ConnectionMetaData::getCDBCMajorVersion()
 
 
 /* {{{ MySQL_ConnectionMetaData::getCDBCMinorVersion() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getCDBCMinorVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getCDBCMinorVersion");
@@ -2887,7 +2887,7 @@ MySQL_ConnectionMetaData::getCDBCMinorVersion()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxBinaryLiteralLength() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxBinaryLiteralLength()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxBinaryLiteralLength");
@@ -2897,7 +2897,7 @@ MySQL_ConnectionMetaData::getMaxBinaryLiteralLength()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxCatalogNameLength() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxCatalogNameLength()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxCatalogNameLength");
@@ -2907,7 +2907,7 @@ MySQL_ConnectionMetaData::getMaxCatalogNameLength()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxCharLiteralLength() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxCharLiteralLength()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxCharLiteralLength");
@@ -2917,7 +2917,7 @@ MySQL_ConnectionMetaData::getMaxCharLiteralLength()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxColumnNameLength() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxColumnNameLength()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxColumnNameLength");
@@ -2927,7 +2927,7 @@ MySQL_ConnectionMetaData::getMaxColumnNameLength()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxColumnsInGroupBy() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxColumnsInGroupBy()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxColumnsInGroupBy");
@@ -2937,7 +2937,7 @@ MySQL_ConnectionMetaData::getMaxColumnsInGroupBy()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxColumnsInIndex() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxColumnsInIndex()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxColumnsInIndex");
@@ -2947,7 +2947,7 @@ MySQL_ConnectionMetaData::getMaxColumnsInIndex()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxColumnsInOrderBy() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxColumnsInOrderBy()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxColumnsInOrderBy");
@@ -2957,7 +2957,7 @@ MySQL_ConnectionMetaData::getMaxColumnsInOrderBy()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxColumnsInSelect() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxColumnsInSelect()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxColumnsInSelect");
@@ -2967,7 +2967,7 @@ MySQL_ConnectionMetaData::getMaxColumnsInSelect()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxColumnsInTable() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxColumnsInTable()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxColumnsInTable");
@@ -2977,7 +2977,7 @@ MySQL_ConnectionMetaData::getMaxColumnsInTable()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxConnections() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxConnections()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxConnections");
@@ -2987,7 +2987,7 @@ MySQL_ConnectionMetaData::getMaxConnections()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxCursorNameLength() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxCursorNameLength()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxCursorNameLength");
@@ -2997,7 +2997,7 @@ MySQL_ConnectionMetaData::getMaxCursorNameLength()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxIndexLength() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxIndexLength()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxIndexLength");
@@ -3007,7 +3007,7 @@ MySQL_ConnectionMetaData::getMaxIndexLength()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxProcedureNameLength() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxProcedureNameLength()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxProcedureNameLength");
@@ -3017,7 +3017,7 @@ MySQL_ConnectionMetaData::getMaxProcedureNameLength()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxRowSize() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxRowSize()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxRowSize");
@@ -3027,7 +3027,7 @@ MySQL_ConnectionMetaData::getMaxRowSize()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxSchemaNameLength() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxSchemaNameLength()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxSchemaNameLength");
@@ -3037,7 +3037,7 @@ MySQL_ConnectionMetaData::getMaxSchemaNameLength()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxStatementLength() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxStatementLength()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxStatementLength");
@@ -3047,7 +3047,7 @@ MySQL_ConnectionMetaData::getMaxStatementLength()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxStatements() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxStatements()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxStatements");
@@ -3057,7 +3057,7 @@ MySQL_ConnectionMetaData::getMaxStatements()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxTableNameLength() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxTableNameLength()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxTableNameLength");
@@ -3067,7 +3067,7 @@ MySQL_ConnectionMetaData::getMaxTableNameLength()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxTablesInSelect() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxTablesInSelect()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxTablesInSelect");
@@ -3077,7 +3077,7 @@ MySQL_ConnectionMetaData::getMaxTablesInSelect()
 
 
 /* {{{ MySQL_ConnectionMetaData::getMaxUserNameLength() -I- */
-int
+unsigned int
 MySQL_ConnectionMetaData::getMaxUserNameLength()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getMaxUserNameLength");

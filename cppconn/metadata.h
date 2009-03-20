@@ -137,11 +137,11 @@ public:
 
 	virtual	ResultSet * getCrossReference(const std::string& primaryCatalog, const std::string& primarySchema, const std::string& primaryTable, const std::string& foreignCatalog, const std::string& foreignSchema, const std::string& foreignTable) = 0;
 
-	virtual	int getDatabaseMajorVersion() = 0;
+	virtual	unsigned int getDatabaseMajorVersion() = 0;
 
-	virtual	int getDatabaseMinorVersion() = 0;
+	virtual	unsigned int getDatabaseMinorVersion() = 0;
 
-	virtual	int getDatabasePatchVersion() = 0;
+	virtual	unsigned int getDatabasePatchVersion() = 0;
 
 	virtual	const std::string& getDatabaseProductName() = 0;
 
@@ -149,11 +149,11 @@ public:
 
 	virtual	int getDefaultTransactionIsolation() = 0;
 
-	virtual	int getDriverMajorVersion() = 0;
+	virtual	unsigned int getDriverMajorVersion() = 0;
 
-	virtual	int getDriverMinorVersion() = 0;
+	virtual	unsigned int getDriverMinorVersion() = 0;
 
-	virtual	int getDriverPatchVersion() = 0;
+	virtual	unsigned int getDriverPatchVersion() = 0;
 
 	virtual	const std::string& getDriverName() = 0;
 
@@ -169,49 +169,49 @@ public:
 
 	virtual	ResultSet * getIndexInfo(const std::string& catalog, const std::string& schema, const std::string& table, bool unique, bool approximate) = 0;
 
-	virtual	int getCDBCMajorVersion() = 0;
+	virtual	unsigned int getCDBCMajorVersion() = 0;
 
-	virtual	int getCDBCMinorVersion() = 0;
+	virtual	unsigned int getCDBCMinorVersion() = 0;
 
-	virtual	int getMaxBinaryLiteralLength() = 0;
+	virtual	unsigned int getMaxBinaryLiteralLength() = 0;
 
-	virtual	int getMaxCatalogNameLength() = 0;
+	virtual	unsigned int getMaxCatalogNameLength() = 0;
 
-	virtual	int getMaxCharLiteralLength() = 0;
+	virtual	unsigned int getMaxCharLiteralLength() = 0;
 
-	virtual	int getMaxColumnNameLength() = 0;
+	virtual	unsigned int getMaxColumnNameLength() = 0;
 
-	virtual	int getMaxColumnsInGroupBy() = 0;
+	virtual	unsigned int getMaxColumnsInGroupBy() = 0;
 
-	virtual	int getMaxColumnsInIndex() = 0;
+	virtual	unsigned int getMaxColumnsInIndex() = 0;
 
-	virtual	int getMaxColumnsInOrderBy() = 0;
+	virtual	unsigned int getMaxColumnsInOrderBy() = 0;
 
-	virtual	int getMaxColumnsInSelect() = 0;
+	virtual	unsigned int getMaxColumnsInSelect() = 0;
 
-	virtual	int getMaxColumnsInTable() = 0;
+	virtual	unsigned int getMaxColumnsInTable() = 0;
 
-	virtual	int getMaxConnections() = 0;
+	virtual	unsigned int getMaxConnections() = 0;
 
-	virtual	int getMaxCursorNameLength() = 0;
+	virtual	unsigned int getMaxCursorNameLength() = 0;
 
-	virtual	int getMaxIndexLength() = 0;
+	virtual	unsigned int getMaxIndexLength() = 0;
 
-	virtual	int getMaxProcedureNameLength() = 0;
+	virtual	unsigned int getMaxProcedureNameLength() = 0;
 
-	virtual	int getMaxRowSize() = 0;
+	virtual	unsigned int getMaxRowSize() = 0;
 
-	virtual	int getMaxSchemaNameLength() = 0;
+	virtual	unsigned int getMaxSchemaNameLength() = 0;
 
-	virtual	int getMaxStatementLength() = 0;
+	virtual	unsigned int getMaxStatementLength() = 0;
 
-	virtual	int getMaxStatements() = 0;
+	virtual	unsigned int getMaxStatements() = 0;
 
-	virtual	int getMaxTableNameLength() = 0;
+	virtual	unsigned int getMaxTableNameLength() = 0;
 
-	virtual	int getMaxTablesInSelect() = 0;
+	virtual	unsigned int getMaxTablesInSelect() = 0;
 
-	virtual	int getMaxUserNameLength() = 0;
+	virtual	unsigned int getMaxUserNameLength() = 0;
 
 	virtual	const std::string& getNumericFunctions() = 0;
 

@@ -71,11 +71,11 @@ public:
 
 	sql::ResultSet * getCrossReference(const std::string& primaryCatalog, const std::string& primarySchema, const std::string& primaryTable, const std::string& foreignCatalog, const std::string& foreignSchema, const std::string& foreignTable);
 
-	int getDatabaseMajorVersion();
+	unsigned int getDatabaseMajorVersion();
 
-	int getDatabaseMinorVersion();
+	unsigned int getDatabaseMinorVersion();
 
-	int getDatabasePatchVersion();
+	unsigned int getDatabasePatchVersion();
 
 	const std::string& getDatabaseProductName();
 
@@ -83,11 +83,11 @@ public:
 
 	int getDefaultTransactionIsolation();
 
-	int getDriverMajorVersion();
+	unsigned int getDriverMajorVersion();
 
-	int getDriverMinorVersion();
+	unsigned int getDriverMinorVersion();
 
-	int getDriverPatchVersion();
+	unsigned int getDriverPatchVersion();
 
 	const std::string& getDriverName();
 
@@ -103,49 +103,49 @@ public:
 
 	sql::ResultSet * getIndexInfo(const std::string& catalog, const std::string& schema, const std::string& table, bool unique, bool approximate);
 
-	int getCDBCMajorVersion();
+	unsigned int getCDBCMajorVersion();
 
-	int getCDBCMinorVersion();
+	unsigned int getCDBCMinorVersion();
 
-	int getMaxBinaryLiteralLength();
+	unsigned int getMaxBinaryLiteralLength();
 
-	int getMaxCatalogNameLength();
+	unsigned int getMaxCatalogNameLength();
 
-	int getMaxCharLiteralLength();
+	unsigned int getMaxCharLiteralLength();
 
-	int getMaxColumnNameLength();
+	unsigned int getMaxColumnNameLength();
 
-	int getMaxColumnsInGroupBy();
+	unsigned int getMaxColumnsInGroupBy();
 
-	int getMaxColumnsInIndex();
+	unsigned int getMaxColumnsInIndex();
 
-	int getMaxColumnsInOrderBy();
+	unsigned int getMaxColumnsInOrderBy();
 
-	int getMaxColumnsInSelect();
+	unsigned int getMaxColumnsInSelect();
 
-	int getMaxColumnsInTable();
+	unsigned int getMaxColumnsInTable();
 
-	int getMaxConnections();
+	unsigned int getMaxConnections();
 
-	int getMaxCursorNameLength();
+	unsigned int getMaxCursorNameLength();
 
-	int getMaxIndexLength();
+	unsigned int getMaxIndexLength();
 
-	int getMaxProcedureNameLength();
+	unsigned int getMaxProcedureNameLength();
 
-	int getMaxRowSize();
+	unsigned int getMaxRowSize();
 
-	int getMaxSchemaNameLength();
+	unsigned int getMaxSchemaNameLength();
 
-	int getMaxStatementLength();
+	unsigned int getMaxStatementLength();
 
-	int getMaxStatements();
+	unsigned int getMaxStatements();
 
-	int getMaxTableNameLength();
+	unsigned int getMaxTableNameLength();
 
-	int getMaxTablesInSelect();
+	unsigned int getMaxTablesInSelect();
 
-	int getMaxUserNameLength();
+	unsigned int getMaxUserNameLength();
 
 	const std::string& getNumericFunctions();
 
