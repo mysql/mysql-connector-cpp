@@ -794,8 +794,11 @@ void connection::connectUsingMap()
     {
       logMsg("... testing OPT_CONNECT_TIMEOUT");
       sql::ConnectPropertyVal tmp;
-      /* C-API does not care about the actual value */
-      tmp.lval=(long long) - 1;
+      /* 
+       C-API does not care about the actual value, its passed down to the OS,
+       The OS may or may not detect bogus values such as negative values.
+       */
+      tmp.lval=(long long) 1;
       connection_properties[std::string("OPT_CONNECT_TIMEOUT")]=tmp;
       try
       {
