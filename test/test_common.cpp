@@ -3240,9 +3240,9 @@ int run_tests(int argc, const char **argv)
 
 		printf("\n#---------------  %d -----------------\n", i + 1);
 		if ((total_errors - last_error_total) == 0) {
-			printf("ok\n");
+			printf("ok %d - %s(loop%d)\n", i, TEST_COMMON_TAP_NAME, i);
 		} else {
-			printf("not ok\n");
+			printf("not ok %d - %s(loop%d)\n", i, TEST_COMMON_TAP_NAME, i);
 		}
 
 

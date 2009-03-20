@@ -69,6 +69,7 @@ get_connection(const std::string & host, const std::string & user, const std::st
 /* }}} */
 
 #define DRIVER_TEST 1
+#define TEST_COMMON_TAP_NAME "driver_test"
 
 #include "test_common.cpp"
 
