@@ -8,10 +8,8 @@
    FLOSS License Exception
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
-#ifndef _WIN32
-#include <string.h>
-#endif
 
+#include <string.h>
 #include <sstream>
 
 #include <cppconn/exception.h>
