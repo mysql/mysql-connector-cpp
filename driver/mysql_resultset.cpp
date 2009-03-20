@@ -297,7 +297,7 @@ MySQL_ResultSet::getDouble(const uint32_t columnIndex) const
 		return 0.0;
 	}
 	was_null = false;
-	return atof(row[columnIndex - 1]);
+	return sql::mysql::util::strtold(row[columnIndex - 1], NULL);
 }
 /* }}} */
 
