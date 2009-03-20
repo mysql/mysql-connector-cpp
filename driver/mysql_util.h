@@ -32,7 +32,6 @@
 
 
 #ifndef _WIN32
-#  include <stdlib.h>
 #  ifndef HAVE_STRTOLL
 #    ifdef HAVE_STRTOL
 #      define strtoll(__a, __b, __c) strtol((__a), (__b), (__c))

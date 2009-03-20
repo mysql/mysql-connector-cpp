@@ -10,6 +10,7 @@
 */
 
 #include <string.h>
+#include <stdlib.h>
 #include <sstream>
 
 #include <cppconn/exception.h>
