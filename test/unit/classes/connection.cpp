@@ -817,8 +817,11 @@ void connection::connectUsingMap()
     {
       logMsg("... testing OPT_READ_TIMEOUT");
       sql::ConnectPropertyVal tmp;
-      /* C-API does not care about the actual value */
-      tmp.lval=(long long) - 1;
+      /*
+       C-API does not care about the actual value, its passed down to the OS,
+       The OS may or may not detect bogus values such as negative values.
+       */
+      tmp.lval=(long long) 1;
       connection_properties[std::string("OPT_READ_TIMEOUT")]=tmp;
       try
       {
@@ -838,7 +841,7 @@ void connection::connectUsingMap()
       logMsg("... testing OPT_WRITE_TIMEOUT");
       sql::ConnectPropertyVal tmp;
       /* C-API does not care about the actual value */
-      tmp.lval=(long long) - 1;
+      tmp.lval=(long long) 1;
       connection_properties[std::string("OPT_WRITE_TIMEOUT")]=tmp;
       try
       {
@@ -858,7 +861,7 @@ void connection::connectUsingMap()
       logMsg("... testing OPT_RECONNECT");
       sql::ConnectPropertyVal tmp;
       /* C-API does not care about the actual value */
-      tmp.lval=(long long) - 1;
+      tmp.lval=(long long) 1;
       connection_properties[std::string("OPT_RECONNECT")]=tmp;
       try
       {
