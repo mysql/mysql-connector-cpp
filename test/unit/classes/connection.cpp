@@ -962,6 +962,7 @@ void connection::setTransactionIsolation()
 {
   logMsg("connection::setTransactionIsolation() - MySQL_Connection::setTransactionIsolation()");
   bool have_innodb=false;
+  int cant_be_changed_error= -1;
   int server_dependent_insert= -1;
 
   stmt.reset(con->createStatement());
@@ -1001,6 +1002,17 @@ void connection::setTransactionIsolation()
 
   try
   {
+    con.reset(getConnection());
+    stmt.reset(con->createStatement());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+  try
+  {
     con->setAutoCommit(true);
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT) ENGINE = InnoDB");
@@ -1016,7 +1028,7 @@ void connection::setTransactionIsolation()
     try
     {
       con->setAutoCommit(false);
-      con->setTransactionIsolation(sql::TRANSACTION_SERIALIZABLE);
+      stmt->execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
       stmt->execute("INSERT INTO test(id) VALUES (1)");
       /* JDBC documentation: If this method is called while
        in the middle of a transaction, any changes up to that point
@@ -1030,19 +1042,46 @@ void connection::setTransactionIsolation()
       res.reset(stmt->executeQuery("SELECT COUNT(*) AS _num FROM test"));
       res->next();
       server_dependent_insert=res->getInt("_num");
-      stmt->execute("DROP TABLE IF EXISTS test");
+    }
+    catch (sql::SQLException &e)
+    {
+      logMsg("... EXPECTED behaviour - Transaction isolation level can't be changed while a transaction is in progress.");
+      logMsg(e.what());
+      logMsg("SQLState: " + e.getSQLState());
+      cant_be_changed_error=e.getErrorCode();
+    }
 
+    try
+    {
+      con.reset(getConnection());
+      stmt.reset(con->createStatement());
+    }
+    catch (sql::SQLException &e)
+    {
+      logErr(e.what());
+      logErr("SQLState: " + e.getSQLState());
+      fail(e.what(), __FILE__, __LINE__);
+    }
+
+    try
+    {
       con->setAutoCommit(true);
       stmt->execute("DROP TABLE IF EXISTS test");
       stmt->execute("CREATE TABLE test(id INT) ENGINE = InnoDB");
+
       con->setAutoCommit(false);
       con->setTransactionIsolation(sql::TRANSACTION_SERIALIZABLE);
       stmt->execute("INSERT INTO test(id) VALUES (1)");
       /* JDBC documentation: If this method is called while
        in the middle of a transaction, any changes up to that point
        will be committed.*/
-
       con->setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
+
+      if (-1 != cant_be_changed_error)
+      {
+
+      }
+
       /* According to the JDBC docs the INSERT has been comitted
        and this ROLLBACK must have no impat */
       con->rollback();
@@ -1054,9 +1093,18 @@ void connection::setTransactionIsolation()
     }
     catch (sql::SQLException &e)
     {
-      logErr(e.what());
-      logErr("SQLState: " + e.getSQLState());
-      fail(e.what(), __FILE__, __LINE__);
+      if (e.getErrorCode() != cant_be_changed_error)
+      {
+        logErr(e.what());
+        logErr("SQLState: " + e.getSQLState());
+        fail(e.what(), __FILE__, __LINE__);
+      }
+      else
+      {
+        logMsg("... EXPECTED behaviour - Transaction isolation level can't be changed while a transaction is in progress.");
+        logMsg(e.what());
+        logMsg("SQLState: " + e.getSQLState());
+      }
     }
   }
 
