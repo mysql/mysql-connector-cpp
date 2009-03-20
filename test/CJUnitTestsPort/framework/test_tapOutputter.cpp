@@ -21,6 +21,9 @@ TAP::TAP()
   , msgLog( std::cerr )
   , errLog( std::cerr )
 {
+  output << std::unitbuf;
+  msgLog << std::unitbuf;
+  errLog << std::unitbuf;
 }
 
 

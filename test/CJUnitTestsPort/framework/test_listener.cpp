@@ -27,7 +27,7 @@ TestsListener::TestsListener()
 , timing        ( false )
 {
   //TODO: Make StartOptions  dependent
-  outputter.reset(new TAP());
+  outputter.reset(new TAP());  
 }
 
 
