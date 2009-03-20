@@ -303,6 +303,7 @@ void connectionmetadata::getColumns()
   std::vector<columndefinition>::iterator it;
   std::stringstream msg;
   bool got_warning=false;
+  bool got_todo_warning=false;
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
@@ -333,7 +334,14 @@ void connectionmetadata::getColumns()
       res.reset(dbmeta->getColumns(con->getCatalog(), con->getSchema(), "test", "id"));
       checkResultSetScrolling(res);
       ASSERT_EQUALS(true, res->next());
-      ASSERT_EQUALS(con->getCatalog(), res->getString("TABLE_CAT"));
+      if (con->getCatalog() != res->getString("TABLE_CAT"))
+      {
+        got_todo_warning=true;
+        msg.str();
+        msg << "...\t\tWARNING - expecting TABLE_CAT = '" << con->getCatalog() << "'";
+        msg << " got '" << res->getString("TABLE_CAT") << "'";
+        logMsg(msg.str());
+      }
       ASSERT_EQUALS(res->getString(1), res->getString("TABLE_CAT"));
       ASSERT_EQUALS(con->getSchema(), res->getString("TABLE_SCHEM"));
       ASSERT_EQUALS(res->getString(2), res->getString("TABLE_SCHEM"));
@@ -447,7 +455,13 @@ void connectionmetadata::getColumns()
       stmt->execute("DROP TABLE IF EXISTS test");
     }
     if (got_warning)
-      FAIL("See Warnings!");
+      FAIL("See --verbose warnings!");
+
+    if (got_todo_warning)
+    {
+      TODO("See --verbose warnings!");
+      FAIL("TODO - see --verbose warnings");
+    }
 
     stmt->execute("DROP TABLE IF EXISTS test");
     res.reset(dbmeta->getColumns(con->getCatalog(), con->getSchema(), "test", "id"));
@@ -809,7 +823,6 @@ void connectionmetadata::checkForeignKey(Connection &mycon, ResultSet &myres)
     msg << " got '" << myres->getString(1) << "'";
     logMsg(msg.str());
   }
-
   ASSERT_EQUALS(myres->getString(1), myres->getString("PKTABLE_CAT"));
 
   ASSERT_EQUALS(mycon->getSchema(), myres->getString(2));
@@ -821,7 +834,14 @@ void connectionmetadata::checkForeignKey(Connection &mycon, ResultSet &myres)
   ASSERT_EQUALS("pid", myres->getString(4));
   ASSERT_EQUALS(myres->getString(4), myres->getString("PKCOLUMN_NAME"));
 
-  ASSERT_EQUALS(mycon->getCatalog(), myres->getString(5));
+  if (mycon->getCatalog() != myres->getString(5))
+  {
+    got_warning=true;
+    msg.str("");
+    msg << "... WARNING expecting FKTABLE_CAT = '" << mycon->getCatalog() << "'";
+    msg << " got '" << myres->getString(1) << "'";
+    logMsg(msg.str());
+  }
   ASSERT_EQUALS(myres->getString(5), myres->getString("FKTABLE_CAT"));
 
   ASSERT_EQUALS(mycon->getSchema(), myres->getString(6));
@@ -866,7 +886,7 @@ void connectionmetadata::checkForeignKey(Connection &mycon, ResultSet &myres)
 
   if (got_warning)
   {
-    TODO("See --verbise warnings!");
+    TODO("See --verbose warnings!");
     FAIL("TODO - See --verbose warnings!");
   }
 
@@ -877,6 +897,7 @@ void connectionmetadata::getIndexInfo()
   logMsg("connectionmetadata::getIndexInfo() - MySQL_ConnectionMetaData::getIndexInfo()");
   std::stringstream msg;
   bool got_warning=false;
+  bool got_todo_warning=false;
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
@@ -886,7 +907,14 @@ void connectionmetadata::getIndexInfo()
     stmt->execute("INSERT INTO test(col1, col2, col3) VALUES (1, 1, 1)");
     res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
     ASSERT(res->next());
-    ASSERT_EQUALS(con->getCatalog(), res->getString(1));
+    if (con->getCatalog() != res->getString(1))
+    {
+      got_todo_warning=true;
+      msg.str("");
+      msg << "...\t\tWARNING expecting TABLE_CAT = '" << con->getCatalog() << "'";
+      msg << " got '" << res->getString(1) << "'";
+      logMsg(msg.str());
+    }
     ASSERT_EQUALS(res->getString(1), res->getString("TABLE_CAT"));
     ASSERT_EQUALS(con->getSchema(), res->getString(2));
     ASSERT_EQUALS(res->getString(2), res->getString("TABLE_SCHEM"));
@@ -1035,6 +1063,12 @@ void connectionmetadata::getIndexInfo()
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
+  }
+
+  if (got_todo_warning)
+  {
+    TODO("See --verbose warnings!");
+    FAIL("TODO - see --verbose warnings");
   }
 }
 
@@ -1252,8 +1286,11 @@ void connectionmetadata::getPrimaryKeys()
 {
   logMsg("connectionmetadata::getPrimaryKeys() - MySQL_ConnectionMetaData::getPrimaryKeys");
   int row_num;
-  std::string catalog; //=NULL;
-  std::string schema; //=NULL;
+  std::string catalog;
+  std::string schema;
+  std::stringstream msg;
+  bool got_warning=false;
+
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
@@ -1267,7 +1304,15 @@ void connectionmetadata::getPrimaryKeys()
     while (res->next())
     {
       row_num++;
-      ASSERT_EQUALS(con->getCatalog(), res->getString("TABLE_CAT"));
+      if (con->getCatalog() != res->getString("TABLE_CAT"))
+      {
+        got_warning=true;
+        msg.str("");
+        msg << "...\t\tWARNING expecting TABLE_CAT = '" << con->getCatalog() << "'";
+        msg << " got '" << res->getString("TABLE_CAT") << "'";
+        logMsg(msg.str());
+      }
+
       ASSERT_EQUALS(con->getSchema(), res->getString("TABLE_SCHEM"));
       ASSERT_EQUALS("test", res->getString("TABLE_NAME"));
       switch (row_num) {
@@ -1307,11 +1352,19 @@ void connectionmetadata::getPrimaryKeys()
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
   }
+
+  if (got_warning)
+  {
+    TODO("See --verbose warnings!");
+    FAIL("TODO - see --verbose warnings!");
+  }
 }
 
 void connectionmetadata::getProcedures()
 {
   logMsg("connectionmetadata::getProcedures() - MySQL_ConnectionMetaData::getProcedures");
+  bool got_warning=false;
+  std::stringstream msg;
   try
   {
     DatabaseMetaData dbmeta(con->getMetaData());
@@ -1338,7 +1391,16 @@ void connectionmetadata::getProcedures()
     checkResultSetScrolling(res);
     logMsg("...is it you, getProcedures()?");
     ASSERT(res->next());
-    ASSERT_EQUALS(con->getCatalog(), res->getString("PROCEDURE_CAT"));
+
+    if (con->getCatalog() != res->getString("PROCEDURE_CAT"))
+    {
+      got_warning=true;
+      msg.str("");
+      msg << "\t\tWARNING expecting PROCEDURE_CAT = '" << con->getCatalog() << "'";
+      msg << " got '" << res->getString("PROCEDURE_CAT") << "'";
+      logMsg(msg.str());
+    }
+
     ASSERT_EQUALS(res->getString(1), res->getString("PROCEDURE_CAT"));
     ASSERT_EQUALS(con->getSchema(), res->getString("PROCEDURE_SCHEM"));
     ASSERT_EQUALS(res->getString(2), res->getString("PROCEDURE_SCHEM"));
@@ -1359,6 +1421,12 @@ void connectionmetadata::getProcedures()
     logErr(e.what());
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
+  }
+
+  if (got_warning)
+  {
+    TODO("See --verbose warnings!");
+    FAIL("TODO - see --verbose warnings!");
   }
 }
 
