@@ -14,6 +14,7 @@
 #include <memory>
 #include <iostream>
 #include <sstream>
+#include <string>
 #if !defined(_WIN32) && !defined(_WIN64)
 #include <inttypes.h>
 #endif
@@ -3002,6 +3003,14 @@ int run_tests(int argc, const char **argv)
 		const std::string host(argc >=2? argv[1]:"tcp://127.0.0.1");
 		std::cout << "# Host=" << host << std::endl;
                 std::cout << "# User=" << user << std::endl;
+
+                std::string connect_method("unknown");
+                if (host.find("tcp://", (size_t)0) != std::string::npos) {
+                  connect_method = "tcp";
+                } else if (host.find("unix://", (size_t)0) != std::string::npos) {
+                  connect_method = "socket";
+                }
+
 		printf("#---------------  %d -----------------\n", i + 1);
 		printf("# ");
 
@@ -3240,9 +3249,9 @@ int run_tests(int argc, const char **argv)
 
 		printf("\n#---------------  %d -----------------\n", i + 1);
 		if ((total_errors - last_error_total) == 0) {
-			printf("ok %d - %s(loop%d)\n", i, TEST_COMMON_TAP_NAME, i);
+			printf("ok %d - %s_%s(loop%d)\n", i, TEST_COMMON_TAP_NAME, connect_method.c_str(), i);
 		} else {
-			printf("not ok %d - %s(loop%d)\n", i, TEST_COMMON_TAP_NAME, i);
+			printf("not ok %d - %s_%s(loop%d)\n", i, TEST_COMMON_TAP_NAME, connect_method.c_str(), i);
 		}
 
 
