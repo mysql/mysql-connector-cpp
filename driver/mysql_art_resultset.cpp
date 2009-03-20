@@ -9,10 +9,10 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
+#include "mysql_util.h"
 #include "mysql_art_resultset.h"
 #include "mysql_art_rset_metadata.h"
 #include "mysql_debug.h"
-#include "mysql_util.h"
 
 #include <cppconn/exception.h>
 #include <sstream>

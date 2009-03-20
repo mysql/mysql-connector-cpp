@@ -64,6 +64,7 @@
 
 
 #include "mysql_private_iface.h"
+#include <string>
 
 namespace sql {
 namespace mysql {
