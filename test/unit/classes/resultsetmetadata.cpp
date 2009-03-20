@@ -29,17 +29,18 @@ namespace classes
 void resultsetmetadata::getCatalogName()
 {
   logMsg("resultsetmetadata::getCatalogName() - MySQL_ResultSetMetaData::getCatalogName");
+  bool got_warning=false;
 
   try
   {
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
     logMsg("... Statement");
     runStandardQuery();
-    doGetCatalogName(false);
+    doGetCatalogName(false, got_warning);
 
     logMsg("... PreparedStatement");
     runStandardPSQuery();
-    doGetCatalogName(true);
+    doGetCatalogName(true, got_warning);
   }
   catch (sql::SQLException &e)
   {
@@ -47,12 +48,26 @@ void resultsetmetadata::getCatalogName()
     logErr("SQLState: " + e.getSQLState());
     fail(e.what(), __FILE__, __LINE__);
   }
+
+  if (got_warning)
+  {
+    TODO("See --verbose warnings");
+    FAIL("TODO - see --verbose warnings");
+  }
 }
 
-void resultsetmetadata::doGetCatalogName(bool is_ps)
+void resultsetmetadata::doGetCatalogName(bool is_ps, bool &got_warning)
 {
+  std::stringstream msg;
   ResultSetMetaData meta(res->getMetaData());
-  ASSERT_EQUALS(con->getCatalog(), meta->getCatalogName(1));
+  if (con->getCatalog() != meta->getCatalogName(1))
+  {
+    got_warning=true;
+    msg.str("");
+    msg << "...\t\tWARNING expecting catalog = '" << con->getCatalog() << "'";
+    msg << " got '" << meta->getCatalogName(1) << "'";
+    logMsg(msg.str());
+  }
 
   try
   {

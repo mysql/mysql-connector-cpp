@@ -38,7 +38,7 @@ protected:
    */
   void runStandardPSQuery();
 
-  void doGetCatalogName(bool is_ps);
+  void doGetCatalogName(bool is_ps, bool &got_warning);
   void doGetColumnCount(bool is_ps);
   void doGetColumnDisplaySize(bool is_ps);
   void doGetColumnNameAndLabel(bool is_ps);
