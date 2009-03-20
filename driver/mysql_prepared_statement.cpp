@@ -13,6 +13,7 @@
 #include <iostream>
 #include <sstream>
 #include <cppconn/exception.h>
+#include "mysql_util.h"
 #include "mysql_connection.h"
 #include "mysql_statement.h"
 #include "mysql_prepared_statement.h"
@@ -28,7 +29,6 @@
 #define mysql_stmt_conn(s) (s)->mysql
 
 #include "mysql_debug.h"
-#include "mysql_util.h"
 
 
 namespace sql

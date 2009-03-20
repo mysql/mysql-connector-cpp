@@ -17,11 +17,11 @@
 #include <sstream>
 
 #include <cppconn/exception.h>
+#include "mysql_util.h"
 #include "mysql_ps_resultset.h"
 #include "mysql_ps_resultset_metadata.h"
 
 #include "mysql_debug.h"
-#include "mysql_util.h"
 
 #define MAX_LEN_PER_CHAR 4
 

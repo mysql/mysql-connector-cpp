@@ -132,7 +132,7 @@ namespace StringUtils
     if (isNull)
       return 0L;
 
-    return atoll(str.c_str());
+    return strtoll(str.c_str(), NULL, 10);
   }
 
 

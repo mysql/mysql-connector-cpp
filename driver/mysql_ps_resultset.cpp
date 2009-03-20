@@ -18,6 +18,7 @@
 #endif	//	_WIN32
 
 #include <cppconn/exception.h>
+#include "mysql_util.h"
 #include "mysql_ps_resultset.h"
 #include "mysql_resultset.h"
 #include "mysql_prepared_statement.h"
@@ -25,7 +26,6 @@
 
 
 #include "mysql_debug.h"
-#include "mysql_util.h"
 
 namespace sql
 {

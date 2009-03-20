@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <cppconn/exception.h>
 
-#include "mysql_private_iface.h"
+#include "mysql_util.h"
 
 #if defined(_WIN32) || defined(_WIN64)
 /* MySQL 5.1 might have defined it before in include/config-win.h */
@@ -36,7 +36,6 @@
 #include "mysql_resultset.h"
 #include "mysql_warning.h"
 #include "mysql_debug.h"
-#include "mysql_util.h"
 
 
 namespace sql

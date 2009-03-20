@@ -12,13 +12,13 @@
 #include <stdlib.h>
 #include <memory>
 #include <cppconn/exception.h>
+#include "mysql_util.h"
 #include "mysql_connection.h"
 #include "mysql_metadata.h"
 #include "mysql_art_resultset.h"
 #include "mysql_statement.h"
 #include "mysql_prepared_statement.h"
 #include "mysql_debug.h"
-#include "mysql_util.h"
 
 // For snprintf
 #include <stdio.h>
@@ -1967,8 +1967,6 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 		/* get schemata */
 		std::string query1("SHOW DATABASES LIKE '");
 		query1.append(schemaPattern).append("'");
-		char buf[12];
-		buf[sizeof(buf) - 1] = '\0';
 
 		std::auto_ptr<sql::Statement> stmt1(connection->createStatement());
 		std::auto_ptr<sql::ResultSet> rs1(stmt1->executeQuery(query1));
