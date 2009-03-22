@@ -12,6 +12,7 @@
 /* Ported JDBC compliance connection tests
  * Most of them don't really make sense in c++
  */
+
 #include "driver/mysql_statement.h"
 #include "driver/mysql_metadata.h"
 

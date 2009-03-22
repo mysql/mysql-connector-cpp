@@ -12,6 +12,12 @@
 #include <memory>
 #include <algorithm>
 
+/*
+ * mysql_util.h includes private_iface, ie libmysql headers. and they must go
+ * prior to any header including config.h to avoid annoying redefenition warnings
+ */
+#include "mysql_util.h"
+
 #include <cppconn/exception.h>
 #include "mysql_connection.h"
 #include "mysql_statement.h"
@@ -19,7 +25,6 @@
 #include "mysql_warning.h"
 
 #include "mysql_debug.h"
-#include "mysql_util.h"
 
 namespace sql
 {

@@ -437,7 +437,7 @@ void unit_fixture::checkResultSetScrolling(ResultSet &res)
    */
   int before;
 
-  before=res->getRow();
+  before= static_cast<int>(res->getRow());
   if (!res->last())
   {
     res->absolute(before);

@@ -12,6 +12,9 @@
 #ifndef _MYSQL_UTIL_H_
 #define _MYSQL_UTIL_H_
 
+#include "mysql_private_iface.h"
+#include <string>
+
 #include <cppconn/config.h>
 
 #ifndef UL64
@@ -61,9 +64,6 @@
 #  define strtoull(x, e, b) _strtoui64((x), (e), (b))
 #endif	//	_WIN32
 
-
-#include "mysql_private_iface.h"
-#include <string>
 
 namespace sql {
 namespace mysql {

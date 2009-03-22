@@ -159,7 +159,7 @@ namespace simple
           break;
         }
 
-				substrIdx+= bIn.gcount();
+				substrIdx+= static_cast<int>(bIn.gcount());
       }
     }
     else

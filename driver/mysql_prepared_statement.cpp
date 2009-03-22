@@ -225,7 +225,7 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 						throw SQLException("Error while reading from blob (fail)");
 					}
 				}
-				if (mysql_stmt_send_long_data(stmt, i, buf, my_blob->gcount())) {
+				if (mysql_stmt_send_long_data(stmt, i, buf, static_cast<unsigned long>(my_blob->gcount()))) {
 					switch (mysql_stmt_errno(stmt)) {
 						case CR_OUT_OF_MEMORY:
 							throw std::bad_alloc();
@@ -425,7 +425,7 @@ MySQL_Prepared_Statement::bindResult()
 		struct st_buffer_size_type p = allocate_buffer_for_field(field);
 		result_bind[i].buffer_type	= p.type;
 		result_bind[i].buffer		= p.buffer;
-		result_bind[i].buffer_length= p.size;
+		result_bind[i].buffer_length= static_cast<unsigned long>(p.size);
 		result_bind[i].length		= &len[i];
 		result_bind[i].is_null		= &is_null[i];
 		result_bind[i].error		= &err[i];

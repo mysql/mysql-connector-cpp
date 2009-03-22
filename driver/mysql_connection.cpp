@@ -556,7 +556,7 @@ MySQL_Connection::prepareStatement(const std::string& sql)
 		throw sql::SQLException(mysql_error(intern->mysql), mysql_sqlstate(intern->mysql), mysql_errno(intern->mysql));
 	}
 
-	if (mysql_stmt_prepare(stmt, sql.c_str(), sql.length())) {
+	if (mysql_stmt_prepare(stmt, sql.c_str(), static_cast<unsigned long>(sql.length()))) {
 		CPP_ERR_FMT("Cannot prepare [%d:%s:%s]", mysql_stmt_errno(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_error(stmt));
 		sql::SQLException e(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
 		mysql_stmt_close(stmt);
