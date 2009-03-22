@@ -2706,9 +2706,9 @@ void DatabaseMetaDataTest::testGetProcedures()
   sColumnNames.push_back("REMARKS");
   sColumnNames.push_back("PROCEDURE_TYPE");
 
-  bool statusColumnCount=true;
-  bool statusColumnMatch=true;
-  int iColumnNamesLength=sColumnNames.size();
+  bool  statusColumnCount=  true;
+  bool  statusColumnMatch=  true;
+  int   iColumnNamesLength= static_cast<int>(sColumnNames.size());
 
   logMsg("Calling DatabaseMetaData.getProcedures");
 
@@ -3256,11 +3256,11 @@ void DatabaseMetaDataTest::testGetTypeInfo()
   sColumnNames.push_back("SQL_DATETIME_SUB");
   sColumnNames.push_back("NUM_PREC_RADIX");
 
-  bool statusColumnMatch=true;
-  bool statusColumnCount=true;
-  String sRetStr;
-  sRetStr="";
-  int iColumnNamesLength=sColumnNames.size();
+  bool    statusColumnMatch= true;
+  bool    statusColumnCount= true;
+  String  sRetStr("");
+
+  int     iColumnNamesLength= static_cast<int>(sColumnNames.size());
 
   logMsg("Calling DatabaseMetaData.getTypeInfo");
 

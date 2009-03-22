@@ -93,7 +93,8 @@ void TestSuite::runTest()
       //not really needed probably
       //TestsListener::testHasFinished( trrThrown, "Test setup has failed, all tests in the suite will be skipped" );
 
-      TestsListener::incrementCounter( testCases.size() - ( it - testCases.begin() + 1 ) );
+      TestsListener::incrementCounter( static_cast<int>(testCases.size()
+                                          - ( it - testCases.begin() + 1 )) );
 
       break;
     }

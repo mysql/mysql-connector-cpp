@@ -38,7 +38,10 @@
 
                     <File Id="file0100" Name="mycppcon.dll" LongName="mysqlcppcon.dll" Source="..\driver\debug\mysqlcppconn.dll" />
                     <File Id="file0101" Name="mycppcon.lib" LongName="mysqlcppcon.lib" Source="..\driver\debug\mysqlcppconn.lib" />
-                    <File Id="file0102" Name="mycpstat.lib" LongName="mysqlcppcon-static.lib" Source="..\driver\debug\mysqlcppconn-static.lib" />
+                    <File Id="file0102" Name="mycppcon.pdb" LongName="mysqlcppcon.pdb" Source="..\driver\debug\mysqlcppconn.pdb" />
+                    <File Id="file0103" Name="mycpstat.lib" LongName="mysqlcppcon-static.lib" Source="..\driver\debug\mysqlcppconn-static.lib" />
+                    <File Id="file0104" Name="mycpstat.lib" LongName="mysqlcppcon-static.lib" Source="..\driver\debug\mysqlcppconn-static.pdb" />
+                    <File Id="file0105" Name="libmysql.dll" LongName="libmysql.dll" Source="@LIBMYSQL_DIR@\debug\libmysql.dll" />
                   </Component>
                 </Directory>
                 <Directory Id="opt" Name="opt">
@@ -46,6 +49,7 @@
                     <File Id="file0150" Name="mycppcon.dll" LongName="mysqlcppcon.dll" Source="..\driver\relwithdebinfo\mysqlcppconn.dll" />
                     <File Id="file0151" Name="mycppcon.lib" LongName="mysqlcppcon.lib" Source="..\driver\relwithdebinfo\mysqlcppconn.lib" />
                     <File Id="file0152" Name="mycpstat.lib" LongName="mysqlcppcon-static.lib" Source="..\driver\relwithdebinfo\mysqlcppconn-static.lib" />
+                    <File Id="file0153" Name="libmysql.dll" LongName="libmysql.dll" Source="@LIBMYSQL_DIR@\opt\libmysql.dll" />
                   </Component>
                 </Directory>
               </Directory>

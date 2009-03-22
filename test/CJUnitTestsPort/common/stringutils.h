@@ -12,9 +12,8 @@
 #ifndef __CCPP_STRINGUTILS_H
 #define __CCPP_STRINGUTILS_H
 
-#include <sstream>
-
 #include "ccppTypes.h"
+
 
 namespace StringUtils
 {

@@ -73,7 +73,7 @@ public:
 
   inline int failed()
   {
-    return failedTests.size();
+    return static_cast<int>( failedTests.size() );
   }
 
   static        void      currentTestName   (const String & name);

@@ -15,7 +15,7 @@
 
 #include "../common/ccppTypes.h"
 #include "../common/stringutils.h"
-#include <stdlib.h>
+
 
 namespace testsuite
 {
@@ -25,7 +25,7 @@ class StartOptions
 
 private:
 
-  typedef std::map<String, bool> BoolParamsType;
+  typedef std::map<String, bool>  BoolParamsType;
 
   List                            unnamedParams;
 

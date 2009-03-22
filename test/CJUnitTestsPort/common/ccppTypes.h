@@ -94,8 +94,6 @@
 
 /*----------------------------------------------------------------------------
 ci_char_traits : Case-insensitive char traits.
-Taken from : http://gcc.gnu.org/onlinedocs/libstdc++/21_strings/gotw29a.txt
-and adapted as template for both 'char' and 'wchar_t' types.
 ----------------------------------------------------------------------------*/
 template <typename charT> struct ci_char_traits
 : public std::char_traits<charT>
@@ -122,13 +120,15 @@ template <typename charT> struct ci_char_traits
     return strncasecmp(s1, s2, n);
   }
 
-  static const charT* find (const charT* s, int n, charT a)
+  static const charT* find (const charT* s, std::allocator<char>::size_type n, charT a)
   {
-    while (  --n >= 0 && std::tolower(*s) != std::tolower(a))
+    while ( --n != static_cast<std::allocator<char>::size_type>(-1)
+          && std::tolower(*s) != std::tolower(a))
     {
       ++s;
     }
-    return (n >= 0 ? s : 0);
+
+    return (n != static_cast<std::allocator<char>::size_type>(-1) ? s : 0);
   }
 };
 

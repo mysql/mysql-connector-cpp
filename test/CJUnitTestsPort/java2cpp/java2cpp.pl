@@ -126,7 +126,14 @@ if ( ! open(CPP, ">$fileName.cpp" ) )
   die "Couldn't open file $fileName.cpp";
 }
 
-$cpp = "#include \"$fileName.h\"\n";
+if ( open( COPY, "copyrightNote" ) )
+{
+  my $copyrightNote= join( '', <COPY> );
+  $cpp .= $copyrightNote;
+  $private .=  $copyrightNote;
+}
+
+$cpp .= "#include \"$fileName.h\"\n";
 
 my $bracketsCount;
 my $namespaceCorrection = '';

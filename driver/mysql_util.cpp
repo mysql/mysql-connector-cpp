@@ -2154,7 +2154,7 @@ static int cppmysql_caseup_utf8(const char * src, size_t srclen, char *dst, size
 		src += srcres;
 		dst += dstres;
 	}
-	return (size_t) (dst - dst0);
+	return static_cast<int>((dst - dst0));
 }
 
 char * utf8_strup(const char * const src, size_t srclen)

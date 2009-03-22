@@ -38,6 +38,6 @@
 #define SKIP( message ) TestsListener::setTestExecutionComment( String("SKIP ") + message );\
   return
 
-#define TODO( message ) TestsListener::setTestExecutionComment( String("TODO ") + message )
+#define TODO( message ) TestsListener::setTestExecutionComment( String("TODO ") + message ); throw TestFailedException();
 
 #endif  // __FRAMEWORK_H

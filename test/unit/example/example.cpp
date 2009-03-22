@@ -228,7 +228,7 @@ void example_test_class::test_todo()
   logMsg("TODO() example");
   /* Test if MySQL has a certain feature, e.g. if Procedures are supported */
   TODO("If you know that a test mail fail and you intentionally want to let it fail temporarily, for example, as long as a bug has not been fixed, mark it as TODO");
-  FAIL("Expected failure, known failure - its on your TODO");
+  //FAIL("Expected failure, known failure - its on your TODO");
 }
 
 } /* namespace example */

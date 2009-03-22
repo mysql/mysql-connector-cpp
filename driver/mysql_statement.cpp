@@ -61,7 +61,7 @@ MySQL_Statement::do_query(const char *q, size_t length)
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 	MYSQL * mysql = connection->getMySQLHandle();
-	if (mysql_real_query(mysql, q, length) && mysql_errno(mysql)) {
+	if (mysql_real_query(mysql, q, static_cast<unsigned long>(length)) && mysql_errno(mysql)) {
 		CPP_ERR_FMT("Error during mysql_real_query [%d:%s:%s]", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 		throw sql::SQLException(mysql_error(mysql), mysql_sqlstate(mysql), mysql_errno(mysql));
 	}
