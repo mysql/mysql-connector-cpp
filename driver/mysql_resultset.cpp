@@ -353,6 +353,13 @@ int32_t
 MySQL_ResultSet::getInt(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ResultSet::getInt(int)");
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirstOrAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_ResultSet::getInt: can't fetch because not on result set");
+	}
+	if (columnIndex == 0 || columnIndex > num_fields) {
+		throw sql::InvalidArgumentException("MySQL_ResultSet::getInt: invalid value of 'columnIndex'");
+	}
 	CPP_INFO_FMT("%ssigned", (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG)? "un":"");
 	if (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG) {
 		return static_cast<uint32_t>(getInt64(columnIndex));
@@ -377,6 +384,13 @@ uint32_t
 MySQL_ResultSet::getUInt(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ResultSet::getUInt(int)");
+	/* isBeforeFirst checks for validity */
+	if (isBeforeFirstOrAfterLast()) {
+		throw sql::InvalidArgumentException("MySQL_ResultSet::getUInt: can't fetch because not on result set");
+	}
+	if (columnIndex == 0 || columnIndex > num_fields) {
+		throw sql::InvalidArgumentException("MySQL_ResultSet::getUInt: invalid value of 'columnIndex'");
+	}
 	CPP_INFO_FMT("%ssigned", (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG)? "un":"");
 	return static_cast<uint32_t>(getUInt64(columnIndex));// & 0xffffffff;
 }
