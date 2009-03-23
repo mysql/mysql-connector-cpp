@@ -41,7 +41,7 @@ SET(jdbctests_sources
 	compliance/PreparedStatementTest.cpp
 	simple/BlobTest.cpp
 	regression/BlobRegressionTest.cpp
-	regression/PreparedStatementTest.cpp
+	regression/PreparedStatementRegressionTest.cpp
 	simple/TransactionTest.cpp
 	regression/SubqueriesRegressionTest.cpp
 	)
@@ -61,7 +61,7 @@ IF(WIN32)
 		compliance/PreparedStatementTest.h
 		simple/BlobTest.h
 		regression/BlobRegressionTest.h
-		regression/PreparedStatementTest.h
+		regression/PreparedStatementRegressionTest.h
 		simple/TransactionTest.h
 		regression/SubqueriesRegressionTest.h
 		)
