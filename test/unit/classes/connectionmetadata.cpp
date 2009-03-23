@@ -508,9 +508,15 @@ void connectionmetadata::getDatabaseVersions()
     DatabaseMetaData dbmeta(con->getMetaData());
     ASSERT_GT(2, dbmeta->getDatabaseMajorVersion());
     ASSERT_LT(7, dbmeta->getDatabaseMajorVersion());
-    ASSERT_GT(-1, dbmeta->getDatabaseMinorVersion());
+
+    if (dbmeta->getDatabaseMinorVersion() < 0)
+      FAIL("getDatabaseMinorVersion returns negative value.");
+
     ASSERT_LT(100, dbmeta->getDatabaseMinorVersion());
-    ASSERT_GT(-1, dbmeta->getDatabasePatchVersion());
+
+    if (dbmeta->getDatabasePatchVersion() < 0)
+      FAIL("getDatabasePatchVersuin returns negative value.");
+
     ASSERT_LT(100, dbmeta->getDatabasePatchVersion());
 
     ASSERT_EQUALS("MySQL", dbmeta->getDatabaseProductName());
@@ -545,9 +551,15 @@ void connectionmetadata::getDriverVersions()
     DatabaseMetaData dbmeta(con->getMetaData());
     ASSERT_GT(0, dbmeta->getDriverMajorVersion());
     ASSERT_LT(2, dbmeta->getDriverMajorVersion());
-    ASSERT_GT(-1, dbmeta->getDriverMinorVersion());
+
+    if (dbmeta->getDriverMinorVersion() < 0)
+      FAIL("getDriverMinorVersion() returns negative value.");
+
     ASSERT_LT(100, dbmeta->getDriverMinorVersion());
-    ASSERT_GT(-1, dbmeta->getDriverPatchVersion());
+
+    if (dbmeta->getDriverPatchVersion() < 0)
+      FAIL("getDriverPatchVersion() returns negative value.");
+
     ASSERT_LT(100, dbmeta->getDriverPatchVersion());
 
     ASSERT_EQUALS("MySQL Connector/C++", dbmeta->getDriverName());
