@@ -20,7 +20,7 @@ namespace testsuite
 namespace regression
 {
 
-class PreparedStatementTest : public BaseTestFixture
+class PreparedStatementRegressionTest : public BaseTestFixture
 {
 private:
 
@@ -38,7 +38,7 @@ protected:
 
 public:
 
-  TEST_FIXTURE(PreparedStatementTest)
+  TEST_FIXTURE(PreparedStatementRegressionTest)
   {
     TEST_CASE( testStmtClose      );
   }
@@ -49,7 +49,7 @@ public:
 
 };
 
-REGISTER_FIXTURE(PreparedStatementTest);
+REGISTER_FIXTURE(PreparedStatementRegressionTest);
 
 } //namespace regression
 } //namespace testsuite

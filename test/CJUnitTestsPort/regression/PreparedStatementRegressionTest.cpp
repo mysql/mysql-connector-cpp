@@ -9,14 +9,14 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
  */
 
-#include "PreparedStatementTest.h"
+#include "PreparedStatementRegressionTest.h"
 
 namespace testsuite
 {
 namespace regression
 {
 
-  void PreparedStatementTest::testStmtClose()
+  void PreparedStatementRegressionTest::testStmtClose()
   {
     pstmt.reset( conn->prepareStatement( "select ?" ) );
 
@@ -32,7 +32,7 @@ namespace regression
   }
 
 
-  void PreparedStatementTest::setUp()
+  void PreparedStatementRegressionTest::setUp()
   {
     super::setUp();
 

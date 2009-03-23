@@ -3249,9 +3249,9 @@ int run_tests(int argc, const char **argv)
 
 		printf("\n#---------------  %d -----------------\n", i + 1);
 		if ((total_errors - last_error_total) == 0) {
-			printf("ok %d - %s_%s(loop%d)\n", i, TEST_COMMON_TAP_NAME, connect_method.c_str(), i);
+			printf("ok %d - %s_%s_loop%d\n", i + 1, TEST_COMMON_TAP_NAME, connect_method.c_str(), i + 1);
 		} else {
-			printf("not ok %d - %s_%s(loop%d)\n", i, TEST_COMMON_TAP_NAME, connect_method.c_str(), i);
+			printf("not ok %d - %s_%s_loop%d\n", i + 1, TEST_COMMON_TAP_NAME, connect_method.c_str(), i + 1);
 		}
 
 
