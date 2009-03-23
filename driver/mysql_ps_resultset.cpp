@@ -712,7 +712,7 @@ MySQL_Prepared_ResultSet::getUInt64_intern(const uint32_t columnIndex, bool cutT
 					} else {
 						if (is_it_null) {
 							if (cutTooBig && *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer) < 0) {
-								ret = 0;
+								ret =  *reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer);				
 							} else {
 								ret =  *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer);				
 							}

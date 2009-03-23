@@ -226,6 +226,7 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 					}
 				}
 				if (mysql_stmt_send_long_data(stmt, i, buf, static_cast<unsigned long>(my_blob->gcount()))) {
+					CPP_ERR_FMT("Couldn't send long data : %d:(%s) %s", mysql_stmt_errno(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_error(stmt));
 					switch (mysql_stmt_errno(stmt)) {
 						case CR_OUT_OF_MEMORY:
 							throw std::bad_alloc();
@@ -255,11 +256,11 @@ MySQL_Prepared_Statement::do_query()
 		throw sql::SQLException("Value not set for all parameters");
 	}
 	if (mysql_stmt_bind_param(stmt, param_bind->get())) {
-		CPP_ERR("Couldn't bind");
+		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", mysql_stmt_errno(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_error(stmt));
 		throw sql::SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
 	}
 	if (!sendLongDataBeforeParamBind() || mysql_stmt_execute(stmt)) {
-		CPP_ERR("Couldn't execute");
+		CPP_ERR_FMT("Couldn't execute : %d:(%s) %s", mysql_stmt_errno(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_error(stmt));
 		throw sql::SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
 	}
 }
@@ -432,6 +433,7 @@ MySQL_Prepared_Statement::bindResult()
 		result_bind[i].is_unsigned = field->flags & UNSIGNED_FLAG;
 	}
 	if (mysql_stmt_bind_result(stmt, result_bind)) {
+		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", mysql_stmt_errno(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_error(stmt));
 		throw sql::SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
 	}
 }
