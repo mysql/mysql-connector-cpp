@@ -156,6 +156,7 @@ void resultset::getTypes()
   {
     stmt.reset(con->createStatement());
     logMsg("... looping over all kinds of column types");
+    
     for (it=columns.begin(); it != columns.end(); it++)
     {
       stmt->execute("DROP TABLE IF EXISTS test");
@@ -475,7 +476,6 @@ void resultset::getTypes()
       }
       res->first();
 
-
       // Comparing prepared statement resultset and statement resultset
       if (it->check_as_string && (pres->getString("id") != res->getString("id")))
       {
@@ -528,7 +528,7 @@ void resultset::getTypes()
       }
       // ASSERT_EQUALS(pres->getInt("id"), res->getInt("id"));
 
-      if (pres->getUInt("id") != res->getUInt("id"))
+      if (!it->is_negative && (pres->getUInt("id") != res->getUInt("id")))
       {
         msg.str("");
         msg << "... \t\tWARNING - getUInt(), PS: '" << pres->getUInt("id") << "'";
@@ -548,7 +548,7 @@ void resultset::getTypes()
       }
       // ASSERT_EQUALS(pres->getInt64("id"), res->getInt64("id"));
 
-      if (pres->getUInt64("id") != res->getUInt64("id"))
+      if (!it->is_negative && (pres->getUInt64("id") != res->getUInt64("id")))
       {
         msg.str("");
         msg << "... \t\tWARNING - getUInt64(), PS: '" << pres->getUInt64("id") << "'";
@@ -565,6 +565,7 @@ void resultset::getTypes()
       FAIL("See warnings!");
 
     stmt->execute("DROP TABLE IF EXISTS test");
+     
   }
   catch (sql::SQLException &e)
   {
@@ -578,7 +579,7 @@ void resultset::getTypesMinorIssues()
 {
   logMsg("resultset::getTypesMinorIssues - MySQL_ResultSet::get*");
   std::vector<columndefinition>::iterator it;
-  std::stringstream msg;  
+  std::stringstream msg;
   bool got_warning=false;
   bool got_minor_warning=false;
   ResultSet pres;
