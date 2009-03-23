@@ -132,7 +132,7 @@ void TestsListener::incrementCounter( int incrVal )
 int TestsListener::recordFailed()
 {
   failedTests.push_back(curTestOrdNum);
-  return failedTests.size();
+  return static_cast<int>(failedTests.size());
 }
 
 

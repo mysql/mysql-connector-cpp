@@ -175,7 +175,7 @@ namespace StringUtils
     return result;
   }
 
-  int toHexString( String & buff, char c[], int count, bool leading0x )
+  String::size_type toHexString( String & buff, char c[], int count, bool leading0x )
   {
     while( --count >= 0 )
     {

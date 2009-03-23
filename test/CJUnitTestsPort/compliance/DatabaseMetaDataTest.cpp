@@ -3394,7 +3394,7 @@ void DatabaseMetaDataTest::testGetUDTs01()
   String sRetStr;
 
   sRetStr="";
-  int iColumnNamesLength=sColumnNames.size();
+  int iColumnNamesLength= static_cast<int>( sColumnNames.size() );
   logMsg("Calling DatabaseMetaData.getUDTs");
 
   String tmp("%");
@@ -9376,10 +9376,10 @@ void DatabaseMetaDataTest::setUp()
 /* throws SQLException */
 bool DatabaseMetaDataTest::columnCompare(List & sColumnNames, ResultSet & rset)
 {
-  bool test_status=false;
-  bool statusColumnCount=true;
-  bool statusColumnMatch=true;
-  int iColumnNamesLength=sColumnNames.size();
+  bool test_status=       false;
+  bool statusColumnCount= true;
+  bool statusColumnMatch= true;
+  int iColumnNamesLength= static_cast<int>(sColumnNames.size());
 
   ResultSetMetaData rsmd(rset->getMetaData());
 
