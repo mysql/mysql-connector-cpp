@@ -353,7 +353,11 @@ int32_t
 MySQL_ResultSet::getInt(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ResultSet::getInt(int)");
-	return static_cast<int>(getInt64(columnIndex) );// & 0xffffffff;
+	CPP_INFO_FMT("%ssigned", (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG)? "un":"");
+	if (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG) {
+		return static_cast<uint32_t>(getInt64(columnIndex));
+	}
+	return static_cast<int32_t>(getInt64(columnIndex));	
 }
 /* }}} */
 
@@ -373,7 +377,8 @@ uint32_t
 MySQL_ResultSet::getUInt(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ResultSet::getUInt(int)");
-	return static_cast<unsigned int>(getUInt64(columnIndex));// & 0xffffffff;
+	CPP_INFO_FMT("%ssigned", (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG)? "un":"");
+	return static_cast<uint32_t>(getUInt64(columnIndex));// & 0xffffffff;
 }
 /* }}} */
 
@@ -407,7 +412,11 @@ MySQL_ResultSet::getInt64(const uint32_t columnIndex) const
 		was_null = true;
 		return 0;
 	}
+	CPP_INFO_FMT("%ssigned", (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
+	if (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG) {
+		return strtoull(row[columnIndex - 1], NULL, 10);
+	}
 	return strtoll(row[columnIndex - 1], NULL, 10);
 }
 /* }}} */
@@ -442,8 +451,12 @@ MySQL_ResultSet::getUInt64(const uint32_t columnIndex) const
 		was_null = true;
 		return 0;
 	}
+	CPP_INFO_FMT("%ssigned", (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
-	return strtoull(row[columnIndex - 1], NULL, 10);
+	if (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG) {
+		return strtoull(row[columnIndex - 1], NULL, 10);	
+	}
+	return strtoll(row[columnIndex - 1], NULL, 10);	
 }
 /* }}} */
 
@@ -532,10 +545,10 @@ MySQL_ResultSet::getString(const uint32_t columnIndex) const
 	}
 
 	if (row[columnIndex - 1] == NULL) {
-		was_null= true;
+		was_null = true;
 		return "";
 	}
-	was_null= false;
+	was_null = false;
 	return std::string(row[columnIndex - 1], mysql_fetch_lengths(result->get())[columnIndex - 1]);
 }
 /* }}} */
