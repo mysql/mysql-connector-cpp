@@ -515,7 +515,7 @@ MySQL_Prepared_ResultSet::getUInt(const std::string& columnLabel) const
 
 /* {{{ MySQL_Prepared_ResultSet::getInt64_intern() -I- */
 int64_t
-MySQL_Prepared_ResultSet::getInt64_intern(const uint32_t columnIndex, bool cutTooBig) const
+MySQL_Prepared_ResultSet::getInt64_intern(const uint32_t columnIndex, bool /* cutTooBig */) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getInt64_intern");
 	CPP_INFO_FMT("column=%u", columnIndex);
@@ -552,6 +552,7 @@ MySQL_Prepared_ResultSet::getInt64_intern(const uint32_t columnIndex, bool cutTo
 			bool is_it_null = *stmt->bind[columnIndex - 1].is_null != 0;
 			bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned != 0;
 
+			CPP_INFO_FMT("%d byte, %ssigned, null=%d", stmt->bind[columnIndex - 1].buffer_length, is_it_unsigned? "un":"", is_it_null);
 			switch (stmt->bind[columnIndex - 1].buffer_length) {
 				case 1:
 					if (is_it_unsigned) {
@@ -579,12 +580,15 @@ MySQL_Prepared_ResultSet::getInt64_intern(const uint32_t columnIndex, bool cutTo
 				case 8:
 					if (is_it_unsigned) {
 						ret =  !is_it_null? *reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer):0;
+
+#if WE_WANT_TO_SEE_MORE_FAILURES_IN_UNIT_RESULTSET
 						if (cutTooBig &&
 							ret &&
 							*reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer) > UL64(9223372036854775807))
 						{
 							ret = UL64(9223372036854775807);
 						}
+#endif
 					} else {
 						ret =  !is_it_null? *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer):0;
 					}
@@ -643,7 +647,7 @@ MySQL_Prepared_ResultSet::getInt64(const std::string& columnLabel) const
 
 /* {{{ MySQL_Prepared_ResultSet::getUInt64_intern() -I- */
 uint64_t
-MySQL_Prepared_ResultSet::getUInt64_intern(const uint32_t columnIndex, bool cutTooBig) const
+MySQL_Prepared_ResultSet::getUInt64_intern(const uint32_t columnIndex, bool /* cutTooBig */) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getUInt64_intern");
 	CPP_INFO_FMT("column=%u", columnIndex);
@@ -682,6 +686,7 @@ MySQL_Prepared_ResultSet::getUInt64_intern(const uint32_t columnIndex, bool cutT
 			bool is_it_null = *stmt->bind[columnIndex - 1].is_null != 0;
 			bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned != 0;
 
+			CPP_INFO_FMT("%d byte, %ssigned, null=%d", stmt->bind[columnIndex - 1].buffer_length, is_it_unsigned? "un":"", is_it_null);
 			switch (stmt->bind[columnIndex - 1].buffer_length) {
 				case 1:
 					if (is_it_unsigned) {
@@ -710,6 +715,8 @@ MySQL_Prepared_ResultSet::getUInt64_intern(const uint32_t columnIndex, bool cutT
 					if (is_it_unsigned) {
 						ret =  !is_it_null? *reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer):0;
 					} else {
+						ret =  !is_it_null? *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer):0;				
+#if WE_WANT_TO_SEE_MORE_FAILURES_IN_UNIT_RESULTSET
 						if (is_it_null) {
 							if (cutTooBig && *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer) < 0) {
 								ret =  *reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer);				
@@ -719,6 +726,7 @@ MySQL_Prepared_ResultSet::getUInt64_intern(const uint32_t columnIndex, bool cutT
 						} else {
 							ret = 0;
 						}
+#endif
 					}
 					break;
 				default:
