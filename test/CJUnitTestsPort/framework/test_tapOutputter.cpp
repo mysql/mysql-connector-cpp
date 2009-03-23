@@ -21,9 +21,12 @@ TAP::TAP()
   , msgLog( std::cerr )
   , errLog( std::cerr )
 {
+  /*
+   TODO - Discuss with Lawrin
   output << std::unitbuf;
   msgLog << std::unitbuf;
   errLog << std::unitbuf;
+   */
 }
 
 

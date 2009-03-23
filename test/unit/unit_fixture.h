@@ -67,14 +67,14 @@ struct columndefinition
   int sql_datetime_sub; // SQL_DATA_TYPE_SUB
   unsigned int char_octet_length;
   std::string is_autoincrement;
-
+  bool is_negative;
   std::string as_string; // value as it should be returns by getString()
-  bool check_as_string;
+  bool check_as_string;  
 
   columndefinition(const std::string & _name, const std::string & _sqldef, int _ctype,
                    const std::string & _value, bool _is_signed, unsigned int _precision,
                    int _decimal_digits, bool _is_nullable, std::string _column_def,
-                   unsigned int _char_octet_length, const std::string & _is_autoincrement) :
+                   unsigned int _char_octet_length, const std::string & _is_autoincrement, bool _is_negative) :
   name(_name),
   sqldef(_sqldef),
   ctype(_ctype),
@@ -98,6 +98,7 @@ struct columndefinition
   sql_datetime_sub(0),
   char_octet_length(_char_octet_length),
   is_autoincrement(_is_autoincrement),
+  is_negative(_is_negative),
   check_as_string(false)
   {
   }
@@ -106,7 +107,7 @@ struct columndefinition
                    const std::string & _value, bool _is_signed, unsigned int _precision,
                    int _decimal_digits, bool _is_nullable, const std::string & _column_def,
                    int _char_octet_length, const std::string & _is_autoincrement,
-                   const std::string & _as_string) :
+                   bool _is_negative, const std::string & _as_string) :
   name(_name),
   sqldef(_sqldef),
   ctype(_ctype),
@@ -130,6 +131,7 @@ struct columndefinition
   sql_datetime_sub(0),
   char_octet_length(_char_octet_length),
   is_autoincrement(_is_autoincrement),
+  is_negative(_is_negative),
   as_string(_as_string),
   check_as_string(true)
   {
