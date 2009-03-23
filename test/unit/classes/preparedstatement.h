@@ -31,6 +31,7 @@ public:
   EXAMPLE_TEST_FIXTURE(preparedstatement)
   {
     TEST_CASE(crash);
+    /*
     TEST_CASE(anonymousSelect);
     TEST_CASE(InsertSelectAllTypes);
     TEST_CASE(assortedSetType);
@@ -38,6 +39,7 @@ public:
     TEST_CASE(checkClosed);
     TEST_CASE(getMetaData);
     TEST_CASE(callSP);
+     */
   }
 
   /**

@@ -860,10 +860,15 @@ void preparedstatement::anonymousSelect()
 
 void preparedstatement::crash()
 {
+  bool trace_on=true;
 
   logMsg("preparedstatement::crash() - MySQL_PreparedStatement::*");
   try
   {
+    trace_on=true;
+    con->setClientOption("libmysql_debug", "d:t:O,client.trace");
+    con->setClientOption("clientTrace", &trace_on);
+
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(dummy TIMESTAMP, id VARCHAR(1))");
@@ -872,6 +877,9 @@ void preparedstatement::crash()
     pstmt->clearParameters();
     pstmt->setDouble(1, (double) 1.23);
     ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+    trace_on=false;
+    con->setClientOption("clientTrace", &trace_on);
   }
   catch (sql::SQLException &e)
   {
