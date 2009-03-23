@@ -41,7 +41,7 @@ int TestSuiteFactory::RegisterTestSuite(const String::value_type * name, TestSui
   TestSuiteFactory::theInstance().testSuites.insert(std::make_pair(name
     , std::make_pair(creator, static_cast<TestContainer::StorableTest*>(NULL) ) ) );
 
-  return TestSuiteFactory::theInstance().testSuites.size();
+  return static_cast<int>(TestSuiteFactory::theInstance().testSuites.size());
 }
 
 
