@@ -67,7 +67,7 @@ MySQL_Statement::do_query(const char *q, size_t length)
 	checkClosed();
 	MYSQL * mysql = connection->getMySQLHandle();
 	if (mysql_real_query(mysql, q, static_cast<unsigned long>(length)) && mysql_errno(mysql)) {
-		CPP_ERR_FMT("Error during mysql_real_query [%d:%s:%s]", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
+		CPP_ERR_FMT("Error during mysql_real_query : %d:(%s) %s", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 		throw sql::SQLException(mysql_error(mysql), mysql_sqlstate(mysql), mysql_errno(mysql));
 	}
 }
@@ -86,7 +86,7 @@ MySQL_Statement::get_resultset()
 
 	MYSQL_RES * result = mysql_store_result(mysql);
 	if (result == NULL) {
-		CPP_ERR("Error during store result");
+		CPP_ERR_FMT("Error during store_result : %d:(%s) %s", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 		throw sql::SQLException(mysql_error(mysql), mysql_sqlstate(mysql), mysql_errno(mysql));
 	}
 
@@ -299,7 +299,7 @@ MySQL_Statement::getMoreResults()
 	if (mysql_more_results(conn)) {
 		int next_result = mysql_next_result(conn);
 		if (next_result > 0) {
-			CPP_ERR_FMT("Error during getMoreResults [%d:%s:%s]", mysql_errno(conn), mysql_sqlstate(conn), mysql_error(conn));
+			CPP_ERR_FMT("Error during getMoreResults : %d:(%s) %s", mysql_errno(conn), mysql_sqlstate(conn), mysql_error(conn));
 			throw sql::SQLException(mysql_error(conn), mysql_sqlstate(conn), mysql_errno(conn));
 		} else if (next_result == 0) {
 			return mysql_field_count(conn) != 0;
