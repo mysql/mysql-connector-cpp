@@ -75,8 +75,8 @@ void example_test_class::test_hello_world2()
 
      Do yourself a favour and use auto_ptr in tests!
      */
-    Connection con(getConnection());
-    Statement stmt(con->createStatement());
+    Connection my_con(getConnection());
+    Statement my_stmt(my_con->createStatement());
 
     /*
      The framework defines a couple of public members (from unit_fixture.h):
@@ -94,13 +94,13 @@ void example_test_class::test_hello_world2()
      and name of any of the above members, for example ResultSet res, some
      compilers will spawn warnings that you are hiding members.
      */
-    res.reset(stmt->executeQuery("SELECT 'Hello world!' AS _world"));
+    res.reset(my_stmt->executeQuery("SELECT 'Hello world!' AS _world"));
 
     res->next();
     logMsg(res->getString("_world"));
     res->close();
 
-    ResultSet res2(stmt->executeQuery("SELECT 'What a boring example' AS _complain"));
+    ResultSet res2(my_stmt->executeQuery("SELECT 'What a boring example' AS _complain"));
     res2->next();
     logMsg(res2->getString("_complain"));
     res2->close();

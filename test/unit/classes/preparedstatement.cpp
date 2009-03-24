@@ -861,12 +861,13 @@ void preparedstatement::anonymousSelect()
 void preparedstatement::crash()
 {
   bool trace_on=true;
+  // Can hit server bug http://bugs.mysql.com/bug.php?id=43833
 
   logMsg("preparedstatement::crash() - MySQL_PreparedStatement::*");
   try
   {
     trace_on=true;
-    con->setClientOption("libmysql_debug", "d:t:O,client.trace");
+    con->setClientOption("libmysql_debug", "d:t:O,/tmp/client.trace");
     con->setClientOption("clientTrace", &trace_on);
 
     stmt.reset(con->createStatement());
