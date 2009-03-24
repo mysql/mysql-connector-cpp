@@ -119,7 +119,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("DATETIME", "DATETIME NOT NULL", sql::DataType::TIMESTAMP, "2009-02-12 17:49:21", true, 19, 0, false, "", 0, "NO", false));
   columns.push_back(columndefinition("DATETIME", "DATETIME NOT NULL DEFAULT '2009-02-12 21:36:54'", sql::DataType::TIMESTAMP, "2009-02-12 17:49:21", true, 19, 0, false, "2009-02-12 21:36:54", 0, "NO", false));
   // TODO this might be server dependent!
-  
+
   columns.push_back(columndefinition("TIMESTAMP", "TIMESTAMP", sql::DataType::TIMESTAMP, "2038-01-09 03:14:07", false, 19, 0, false, "0000-00-00 00:00:00", 0, "NO", false));
   columns.push_back(columndefinition("TIME", "TIME", sql::DataType::TIME, "-838:59:59", true, 8, 0, true, "", 0, "NO", true));
   columns.push_back(columndefinition("TIME", "TIME NOT NULL", sql::DataType::TIME, "838:59:59", true, 8, 0, false, "", 0, "NO", false));
@@ -434,168 +434,169 @@ std::string unit_fixture::exceptionIsOK(sql::SQLException &e, const std::string&
   return reason.str();
 }
 
-void unit_fixture::checkResultSetScrolling(ResultSet &res)
+void unit_fixture::checkResultSetScrolling(ResultSet &res_ref)
 {
   /*
-    if (res->getType() == sql::ResultSet::TYPE_FORWARD_ONLY)
+    if (res_ref->getType() == sql::ResultSet::TYPE_FORWARD_ONLY)
       return;
    */
   int before;
 
-  before=static_cast<int> (res->getRow());
-  if (!res->last())
+  before=static_cast<int> (res_ref->getRow());
+  if (!res_ref->last())
   {
-    res->absolute(before);
+    res_ref->absolute(before);
     return;
   }
 
   int num_rows;
   int i;
 
-  num_rows=(int) res->getRow();
+  num_rows=(int) res_ref->getRow();
 
-  res->beforeFirst();
-  ASSERT(!res->previous());
-  ASSERT(res->next());
-  ASSERT_EQUALS(1, (int) res->getRow());
-  ASSERT(!res->isBeforeFirst());
-  ASSERT(!res->isAfterLast());
+  res_ref->beforeFirst();
+
+  ASSERT(!res_ref->previous());
+  ASSERT(res_ref->next());
+  ASSERT_EQUALS(1, (int) res_ref->getRow());
+  ASSERT(!res_ref->isBeforeFirst());
+  ASSERT(!res_ref->isAfterLast());
   if (num_rows > 1)
   {
-    ASSERT(res->next());
-    ASSERT(res->previous());
-    ASSERT_EQUALS(1, (int) res->getRow());
+    ASSERT(res_ref->next());
+    ASSERT(res_ref->previous());
+    ASSERT_EQUALS(1, (int) res_ref->getRow());
   }
 
-  ASSERT(res->first());
-  ASSERT_EQUALS(1, (int) res->getRow());
-  ASSERT(res->isFirst());
-  ASSERT(!res->isBeforeFirst());
-  ASSERT(!res->isAfterLast());
+  ASSERT(res_ref->first());
+  ASSERT_EQUALS(1, (int) res_ref->getRow());
+  ASSERT(res_ref->isFirst());
+  ASSERT(!res_ref->isBeforeFirst());
+  ASSERT(!res_ref->isAfterLast());
   if (num_rows == 1)
-    ASSERT(res->isLast());
+    ASSERT(res_ref->isLast());
   else
-    ASSERT(!res->isLast());
+    ASSERT(!res_ref->isLast());
 
   if (num_rows > 1)
   {
-    ASSERT(res->next());
-    ASSERT(res->previous());
-    ASSERT_EQUALS(1, (int) res->getRow());
+    ASSERT(res_ref->next());
+    ASSERT(res_ref->previous());
+    ASSERT_EQUALS(1, (int) res_ref->getRow());
   }
-  ASSERT(!res->previous());
+  ASSERT(!res_ref->previous());
 
-  ASSERT(res->last());
-  ASSERT_EQUALS(num_rows, (int) res->getRow());
-  ASSERT(res->isLast());
-  ASSERT(!res->isBeforeFirst());
-  ASSERT(!res->isAfterLast());
+  ASSERT(res_ref->last());
+  ASSERT_EQUALS(num_rows, (int) res_ref->getRow());
+  ASSERT(res_ref->isLast());
+  ASSERT(!res_ref->isBeforeFirst());
+  ASSERT(!res_ref->isAfterLast());
   if (num_rows == 1)
-    ASSERT(res->isFirst());
+    ASSERT(res_ref->isFirst());
   else
-    ASSERT(!res->isFirst());
+    ASSERT(!res_ref->isFirst());
 
   if (num_rows > 1)
   {
-    ASSERT(res->previous());
-    ASSERT_EQUALS(num_rows - 1, (int) res->getRow());
-    ASSERT(res->next());
-    ASSERT_EQUALS(num_rows, (int) res->getRow());
+    ASSERT(res_ref->previous());
+    ASSERT_EQUALS(num_rows - 1, (int) res_ref->getRow());
+    ASSERT(res_ref->next());
+    ASSERT_EQUALS(num_rows, (int) res_ref->getRow());
   }
-  ASSERT(!res->next());
+  ASSERT(!res_ref->next());
 
-  res->beforeFirst();
-  ASSERT_EQUALS(0, (int) res->getRow());
-  ASSERT(res->isBeforeFirst());
-  ASSERT(!res->isAfterLast());
-  ASSERT(!res->isFirst());
-  ASSERT(!res->previous());
-  ASSERT(res->next());
-  ASSERT_EQUALS(1, (int) res->getRow());
-  ASSERT(!res->previous());
+  res_ref->beforeFirst();
+  ASSERT_EQUALS(0, (int) res_ref->getRow());
+  ASSERT(res_ref->isBeforeFirst());
+  ASSERT(!res_ref->isAfterLast());
+  ASSERT(!res_ref->isFirst());
+  ASSERT(!res_ref->previous());
+  ASSERT(res_ref->next());
+  ASSERT_EQUALS(1, (int) res_ref->getRow());
+  ASSERT(!res_ref->previous());
 
-  res->afterLast();
-  ASSERT_EQUALS(num_rows + 1, (int) res->getRow());
-  ASSERT(res->isAfterLast());
-  ASSERT(!res->isBeforeFirst());
-  ASSERT(!res->isFirst());
-  ASSERT(res->previous());
-  ASSERT_EQUALS(num_rows, (int) res->getRow());
-  ASSERT(!res->next());
+  res_ref->afterLast();
+  ASSERT_EQUALS(num_rows + 1, (int) res_ref->getRow());
+  ASSERT(res_ref->isAfterLast());
+  ASSERT(!res_ref->isBeforeFirst());
+  ASSERT(!res_ref->isFirst());
+  ASSERT(res_ref->previous());
+  ASSERT_EQUALS(num_rows, (int) res_ref->getRow());
+  ASSERT(!res_ref->next());
 
   i=0;
-  res->beforeFirst();
-  while (res->next())
+  res_ref->beforeFirst();
+  while (res_ref->next())
   {
-    ASSERT(!res->isAfterLast());
+    ASSERT(!res_ref->isAfterLast());
     i++;
-    ASSERT_EQUALS(i, (int) res->getRow());
+    ASSERT_EQUALS(i, (int) res_ref->getRow());
   }
   ASSERT_EQUALS(num_rows, i);
 
   // relative(1) is equivalent to next()
   i=0;
-  res->beforeFirst();
-  while (res->relative(1))
+  res_ref->beforeFirst();
+  while (res_ref->relative(1))
   {
-    ASSERT(!res->isAfterLast());
+    ASSERT(!res_ref->isAfterLast());
     i++;
-    ASSERT_EQUALS(i, (int) res->getRow());
+    ASSERT_EQUALS(i, (int) res_ref->getRow());
   }
   ASSERT_EQUALS(num_rows, i);
 
   i=0;
-  res->first();
+  res_ref->first();
   do
   {
-    ASSERT(!res->isAfterLast());
+    ASSERT(!res_ref->isAfterLast());
     i++;
-    ASSERT_EQUALS(i, (int) res->getRow());
+    ASSERT_EQUALS(i, (int) res_ref->getRow());
   }
-  while (res->next());
+  while (res_ref->next());
   ASSERT_EQUALS(num_rows, i);
 
   // relative(1) is equivalent to next()
   i=0;
-  res->first();
+  res_ref->first();
   do
   {
-    ASSERT(!res->isAfterLast());
+    ASSERT(!res_ref->isAfterLast());
     i++;
-    ASSERT_EQUALS(i, (int) res->getRow());
+    ASSERT_EQUALS(i, (int) res_ref->getRow());
   }
-  while (res->relative(1));
+  while (res_ref->relative(1));
   ASSERT_EQUALS(num_rows, i);
 
   i=num_rows;
-  res->last();
+  res_ref->last();
   do
   {
-    ASSERT(!res->isBeforeFirst());
-    ASSERT_EQUALS(i, (int) res->getRow());
+    ASSERT(!res_ref->isBeforeFirst());
+    ASSERT_EQUALS(i, (int) res_ref->getRow());
     i--;
   }
-  while (res->previous());
+  while (res_ref->previous());
   ASSERT_EQUALS(0, i);
 
   // relative(-1) is equivalent to previous()
   i=num_rows;
-  res->last();
+  res_ref->last();
   do
   {
-    ASSERT(!res->isBeforeFirst());
-    ASSERT_EQUALS(i, (int) res->getRow());
+    ASSERT(!res_ref->isBeforeFirst());
+    ASSERT_EQUALS(i, (int) res_ref->getRow());
     i--;
   }
-  while (res->relative(-1));
+  while (res_ref->relative(-1));
   ASSERT_EQUALS(0, i);
 
   i=num_rows;
-  res->afterLast();
-  while (res->previous())
+  res_ref->afterLast();
+  while (res_ref->previous())
   {
-    ASSERT(!res->isBeforeFirst());
-    ASSERT_EQUALS(i, (int) res->getRow());
+    ASSERT(!res_ref->isBeforeFirst());
+    ASSERT_EQUALS(i, (int) res_ref->getRow());
     i--;
   }
   ASSERT_EQUALS(0, i);
@@ -603,21 +604,21 @@ void unit_fixture::checkResultSetScrolling(ResultSet &res)
   // relative(-1) is equivalent to previous()
 
   i=num_rows;
-  res->afterLast();
-  while (res->relative(-1))
+  res_ref->afterLast();
+  while (res_ref->relative(-1))
   {
-    ASSERT(!res->isBeforeFirst());
-    ASSERT_EQUALS(i, (int) res->getRow());
+    ASSERT(!res_ref->isBeforeFirst());
+    ASSERT_EQUALS(i, (int) res_ref->getRow());
     i--;
   }
   ASSERT_EQUALS(0, i);
 
-  res->last();
-  res->relative(0);
-  ASSERT(res->isLast());
+  res_ref->last();
+  res_ref->relative(0);
+  ASSERT(res_ref->isLast());
 
-  res->absolute(before);
-  ASSERT_EQUALS(before, (int) res->getRow());
+  res_ref->absolute(before);
+  ASSERT_EQUALS(before, (int) res_ref->getRow());
 }
 
 } /* namespace testsuite */

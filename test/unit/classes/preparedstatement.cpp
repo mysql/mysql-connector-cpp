@@ -866,7 +866,7 @@ void preparedstatement::crash()
   try
   {
     trace_on=true;
-    con->setClientOption("libmysql_debug", "d:t:O,client.trace");
+    con->setClientOption("libmysql_debug", "d:t:O,/tmp/client.trace");
     con->setClientOption("clientTrace", &trace_on);
 
     stmt.reset(con->createStatement());
