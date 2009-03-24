@@ -64,9 +64,6 @@ MySQL_DebugLogger::MySQL_DebugLogger()
 	if (getenv("MYSQLCPPCONN_TRACE_ENABLED")) {
 		tracing = NORMAL_TRACE;
 	}
-	if (getenv("MYSQLCPPCONN_TRACE_ENABLED_TAP")) {
-		tracing = TAP_COMMENT_TRACE;
-	}
 #endif
 }
 /* }}} */
@@ -103,7 +100,7 @@ void
 MySQL_DebugLogger::enter(const MySQL_DebugEnterEvent * event)
 {
 	if (tracing != NO_TRACE) {
-		printf("%s\t", tracing == TAP_COMMENT_TRACE? "#":"");
+		printf("#\t");
 		for (unsigned int i = 0; i < callStack.size(); ++i) {
 			printf("|  ");
 		}
@@ -120,7 +117,7 @@ MySQL_DebugLogger::leave(const MySQL_DebugEnterEvent * event)
 {
 	callStack.pop();
 	if (tracing != NO_TRACE) {
-		printf("%s\t", tracing == TAP_COMMENT_TRACE? "#":"");
+		printf("#\t");
 		for (unsigned int i = 0; i < callStack.size(); ++i) {
 			printf("|  ");
 		}
@@ -137,7 +134,7 @@ MySQL_DebugLogger::log(const char * const type, const char * const message)
 	if (tracing == NO_TRACE) {
 		return;
 	}
-	printf("%s\t", tracing == TAP_COMMENT_TRACE? "#":"");
+	printf("#\t");
 	for (unsigned int i = 0; i < callStack.size(); ++i) {
 		printf("|  ");
 	}
@@ -155,7 +152,7 @@ MySQL_DebugLogger::log_va(const char * const type, const char * const format, ..
 		return;
 	}
 	va_list args;
-	printf("%s\t", tracing == TAP_COMMENT_TRACE? "#":"");
+	printf("#\t");
 	for (unsigned int i = 0; i < callStack.size(); ++i) {
 		printf("|  ");
 	}

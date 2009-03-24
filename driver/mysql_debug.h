@@ -49,8 +49,7 @@ class MySQL_DebugLogger
 	enum
 	{
 		NO_TRACE,
-		NORMAL_TRACE,
-		TAP_COMMENT_TRACE
+		NORMAL_TRACE
 	};
 public:
 	MySQL_DebugLogger();
