@@ -618,7 +618,7 @@ void
 MySQL_Prepared_Statement::setDouble(unsigned int parameterIndex, double value)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::setDouble");
-	CPP_INFO_FMT("this=%p", this);
+	CPP_INFO_FMT("this=%p %f", this, value);
 	checkClosed();
 
 	if (parameterIndex == 0 || parameterIndex > param_count) {

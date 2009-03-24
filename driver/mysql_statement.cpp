@@ -146,6 +146,7 @@ MySQL_Statement::executeUpdate(const std::string& sql)
 {
 	CPP_ENTER("MySQL_Statement::executeUpdate");
 	CPP_INFO_FMT("this=%p", this);
+	CPP_INFO_FMT("query=%s", sql.c_str());
 	checkClosed();
 	do_query(sql.c_str(), static_cast<int>(sql.length()));
 	if (mysql_field_count(connection->getMySQLHandle())) {
