@@ -37,14 +37,14 @@ protected:
 public:
 
   EXAMPLE_TEST_FIXTURE(connectionmetadata)
-  {   
+  {
     TEST_CASE(getSchemata);
-    TEST_CASE(getAttributes);     
-    TEST_CASE(getBestRowIdentifier);    
+    TEST_CASE(getAttributes);
+    TEST_CASE(getBestRowIdentifier);
     TEST_CASE(getCatalogs);
     TEST_CASE(getCatalogSeparator);
-    TEST_CASE(getCatalogTerm);     
-    TEST_CASE(getCrossReference);    
+    TEST_CASE(getCatalogTerm);
+    TEST_CASE(getCrossReference);
     TEST_CASE(getColumnPrivileges);
     TEST_CASE(getColumns);
     TEST_CASE(getConnection);
@@ -67,8 +67,14 @@ public:
     TEST_CASE(getSQLKeywords);
     TEST_CASE(getSuperTables);
     TEST_CASE(getSuperTypes);
+    /*
+     TODO - we might in the future follow the JDBC standard word by word.
+     However, at the moment we do not promise that our class attributes have certain
+     values. Users shall not rely on certain values, for example those listed in the
+     JDBC standard!
     TEST_CASE(classAttributes);
-    TEST_CASE(getColumnsTypeConversions);     
+     */
+    TEST_CASE(getColumnsTypeConversions);
   }
 
   /**

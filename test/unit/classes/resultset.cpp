@@ -156,7 +156,7 @@ void resultset::getTypes()
   {
     stmt.reset(con->createStatement());
     logMsg("... looping over all kinds of column types");
-    
+
     for (it=columns.begin(); it != columns.end(); it++)
     {
       stmt->execute("DROP TABLE IF EXISTS test");
@@ -565,7 +565,7 @@ void resultset::getTypes()
       FAIL("See warnings!");
 
     stmt->execute("DROP TABLE IF EXISTS test");
-     
+
   }
   catch (sql::SQLException &e)
   {
@@ -808,6 +808,54 @@ void resultset::doNotImplemented()
   {
   }
 }
+
+void resultset::fetchBigint()
+{
+  std::stringstream msg;
+  bool trace_on=true;
+
+  logMsg("resultset::fetchBigint - MySQL_ResultSet::*");
+
+  try
+  {
+    trace_on=true;
+    con->setClientOption("libmysql_debug", "d:t:O,/tmp/client.trace");
+    con->setClientOption("clientTrace", &trace_on);
+
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id BIGINT UNSIGNED)");
+    stmt->execute("INSERT INTO test(id) VALUES (18446744073709551615)");
+    res.reset(stmt->executeQuery("SELECT id FROM test"));
+    doNotImplemented();
+
+    pstmt.reset(con->prepareStatement("SELECT id FROM test"));
+    res.reset(pstmt->executeQuery());
+    res->next();
+
+    msg.str();
+    msg << "... PS: id = " << res->getDouble(1);
+    logMsg(msg.str());
+    
+    res.reset(stmt->executeQuery("SELECT id FROM test"));
+    res->next();
+
+    msg.str();
+    msg << "... Statement: id = " << res->getDouble(1);
+    logMsg(msg.str());
+
+    stmt->execute("DROP TABLE IF EXISTS test");
+    trace_on=false;
+    con->setClientOption("clientTrace", &trace_on);
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + e.getSQLState());
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 
 } /* namespace resultset */
 } /* namespace testsuite */
