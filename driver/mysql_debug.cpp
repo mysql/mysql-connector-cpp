@@ -58,11 +58,14 @@ MySQL_DebugEnterEvent::~MySQL_DebugEnterEvent()
 
 /* {{{ MySQL_DebugLogger::MySQL_DebugLogger() -I- */
 MySQL_DebugLogger::MySQL_DebugLogger()
-  : tracing(false)
+  : tracing(NO_TRACE)
 {
 #if !defined(_WIN32)
 	if (getenv("MYSQLCPPCONN_TRACE_ENABLED")) {
-		tracing = true;
+		tracing = NORMAL_TRACE;
+	}
+	if (getenv("MYSQLCPPCONN_TRACE_ENABLED_TAP")) {
+		tracing = TAP_COMMENT_TRACE;
 	}
 #endif
 }
@@ -81,7 +84,7 @@ MySQL_DebugLogger::~MySQL_DebugLogger()
 void
 MySQL_DebugLogger::disableTracing()
 {
-	tracing = false;
+	tracing = NO_TRACE;
 }
 /* }}} */
 
@@ -90,7 +93,7 @@ MySQL_DebugLogger::disableTracing()
 void
 MySQL_DebugLogger::enableTracing()
 {
-	tracing = true;
+	tracing = NORMAL_TRACE;
 }
 /* }}} */
 
@@ -99,8 +102,8 @@ MySQL_DebugLogger::enableTracing()
 void
 MySQL_DebugLogger::enter(const MySQL_DebugEnterEvent * event)
 {
-	if (tracing) {
-		printf("\t");
+	if (tracing != NO_TRACE) {
+		printf("%s\t", tracing == TAP_COMMENT_TRACE? "#":"");
 		for (unsigned int i = 0; i < callStack.size(); ++i) {
 			printf("|  ");
 		}
@@ -116,8 +119,8 @@ void
 MySQL_DebugLogger::leave(const MySQL_DebugEnterEvent * event)
 {
 	callStack.pop();
-	if (tracing) {
-		printf("\t");
+	if (tracing != NO_TRACE) {
+		printf("%s\t", tracing == TAP_COMMENT_TRACE? "#":"");
 		for (unsigned int i = 0; i < callStack.size(); ++i) {
 			printf("|  ");
 		}
@@ -131,10 +134,10 @@ MySQL_DebugLogger::leave(const MySQL_DebugEnterEvent * event)
 void
 MySQL_DebugLogger::log(const char * const type, const char * const message)
 {
-	if (!tracing) {
+	if (tracing == NO_TRACE) {
 		return;
 	}
-	printf("\t");
+	printf("%s\t", tracing == TAP_COMMENT_TRACE? "#":"");
 	for (unsigned int i = 0; i < callStack.size(); ++i) {
 		printf("|  ");
 	}
@@ -148,11 +151,11 @@ MySQL_DebugLogger::log(const char * const type, const char * const message)
 void
 MySQL_DebugLogger::log_va(const char * const type, const char * const format, ...)
 {
-	if (!tracing) {
+	if (tracing == NO_TRACE) {
 		return;
 	}
 	va_list args;
-	printf("\t");
+	printf("%s\t", tracing == TAP_COMMENT_TRACE? "#":"");
 	for (unsigned int i = 0; i < callStack.size(); ++i) {
 		printf("|  ");
 	}

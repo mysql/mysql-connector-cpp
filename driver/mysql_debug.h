@@ -45,7 +45,13 @@ class MySQL_DebugEnterEvent;
 class MySQL_DebugLogger
 {
 	std::stack< const MySQL_DebugEnterEvent * > callStack;
-	bool tracing;
+	int tracing;
+	enum
+	{
+		NO_TRACE,
+		NORMAL_TRACE,
+		TAP_COMMENT_TRACE
+	};
 public:
 	MySQL_DebugLogger();
 	virtual ~MySQL_DebugLogger();
