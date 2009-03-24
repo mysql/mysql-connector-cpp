@@ -1,10 +1,20 @@
 Dear MySQL Users,
 
-a new version of MySQL Connector/C++ has been made available: MySQL Connector/C++ 1.0.4bera. The MySQL Connector/C++ provides a C++ API for connecting client applications to the MySQL Server. You can download the beta release at:
+a new version of MySQL Connector/C++ has been made available: MySQL Connector/C++ 1.0.4beta. The MySQL Connector/C++ provides a C++ API for connecting client applications to the MySQL Server. You can download the beta release at:
 
-  http://dev.mysql.com/downloads/connector/cpp/1.0.html
+ http://dev.mysql.com/downloads/connector/cpp/1.0.html
 
+The 1.0.4beta contains all major features scheduled for GA. There are no known bugs. This is the first combined binary and source release. You can choose between compiling the driver yourself or using a pre-compiled binary.
 
+We have fixed numerous bugs and added new features since the last alpha release. Please see the documentation and the CHANGES file in the source distribution for a detailed description of bugs that have been fixed. The following eatures have been added:
+
+  - Added Windows installer. (Georg)
+  - Implemented MySQL_ConnectionMetaData::supportsConvert(from, to). (Andrey)
+  - Introduced sql::DataType::YEAR to complement MySQL's YEAR type. (Andrey)
+  - Introduced PreparedStatement::getMetaData(). (Andrey)
+  - Introduced ResultSetMetaData::isZerofill(). (Andrey)
+  - Added "metadataUseInfoSchema" to connection propery map which allows you
+    to control the use of the INFORMATION_SCHEMA for meta data. (Andrey)
 
 You can find further details, including usage examples, on the projects MySQL Forge wiki page at:
 
