@@ -812,16 +812,10 @@ void resultset::doNotImplemented()
 void resultset::fetchBigint()
 {
   std::stringstream msg;
-  bool trace_on=true;
-
+  
   logMsg("resultset::fetchBigint - MySQL_ResultSet::*");
-
   try
-  {
-    trace_on=true;
-    con->setClientOption("libmysql_debug", "d:t:O,/tmp/client.trace");
-    con->setClientOption("clientTrace", &trace_on);
-
+  {    
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id BIGINT UNSIGNED)");
@@ -844,9 +838,7 @@ void resultset::fetchBigint()
     msg << "... Statement: id = " << res->getDouble(1);
     logMsg(msg.str());
 
-    stmt->execute("DROP TABLE IF EXISTS test");
-    trace_on=false;
-    con->setClientOption("clientTrace", &trace_on);
+    stmt->execute("DROP TABLE IF EXISTS test");   
   }
   catch (sql::SQLException &e)
   {

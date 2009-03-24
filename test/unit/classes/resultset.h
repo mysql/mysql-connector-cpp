@@ -33,13 +33,11 @@ public:
 
   EXAMPLE_TEST_FIXTURE(resultset)
   {
-    TEST_CASE(fetchBigint);
-    /*
+    TEST_CASE(fetchBigint);    
     TEST_CASE(getInt);
     TEST_CASE(getTypes);
     TEST_CASE(getTypesMinorIssues);
-    TEST_CASE(notImplemented);
-    */
+    TEST_CASE(notImplemented);    
   }
 
   /**
