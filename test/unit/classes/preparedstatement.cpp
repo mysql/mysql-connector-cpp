@@ -29,12 +29,16 @@ void preparedstatement::InsertSelectAllTypes()
   std::vector<columndefinition>::iterator it;
   stmt.reset(con->createStatement());
   bool got_warning=false;
+  bool trace_on=false;
 
   try
   {
 
     for (it=columns.end(), it--; it != columns.begin(); it--)
     {
+      trace_on=true;
+      con->setClientOption("clientTrace", &trace_on);
+
       stmt->execute("DROP TABLE IF EXISTS test");
       sql.str("");
       sql << "CREATE TABLE test(dummy TIMESTAMP, id " << it->sqldef << ")";
@@ -342,7 +346,9 @@ void preparedstatement::InsertSelectAllTypes()
       {
       }
       res->first();
-
+      
+      trace_on=false;
+      con->setClientOption("clientTrace", &trace_on);
     }
     stmt->execute("DROP TABLE IF EXISTS test");
     if (got_warning)
@@ -867,7 +873,6 @@ void preparedstatement::crash()
   try
   {
     trace_on=true;
-    con->setClientOption("libmysql_debug", "d:t:O,/tmp/client.trace");
     con->setClientOption("clientTrace", &trace_on);
 
     stmt.reset(con->createStatement());
