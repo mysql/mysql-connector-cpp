@@ -103,7 +103,7 @@ void
 MySQL_DebugLogger::enter(const MySQL_DebugEnterEvent * event)
 {
 	if (tracing != NO_TRACE) {
-		printf("\t");
+		printf("%s\t", tracing == TAP_COMMENT_TRACE? "#":"");
 		for (unsigned int i = 0; i < callStack.size(); ++i) {
 			printf("|  ");
 		}
@@ -120,7 +120,7 @@ MySQL_DebugLogger::leave(const MySQL_DebugEnterEvent * event)
 {
 	callStack.pop();
 	if (tracing != NO_TRACE) {
-		printf("\t");
+		printf("%s\t", tracing == TAP_COMMENT_TRACE? "#":"");
 		for (unsigned int i = 0; i < callStack.size(); ++i) {
 			printf("|  ");
 		}
