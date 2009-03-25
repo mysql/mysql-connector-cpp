@@ -1,5 +1,7 @@
 Beta   1.0.4 - 2009-03-xx
 
+- Prepared support for upcoming Connector/C. (Georg)
+
 - Added Windows installer. (Georg)
 
 - Bumping up CMake minimum version requirement from 2.4.2 to 2.6.2.
