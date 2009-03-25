@@ -99,9 +99,10 @@ void statement::clearWarnings()
   try
   {
     stmt->execute("DROP TABLE IF EXISTS test");
-    stmt->execute("CREATE TABLE test(id INT UNSIGNED)");
+    stmt->execute("CREATE TABLE test(col1 DATETIME, col2 DATE)");
+    stmt->execute("INSERT INTO test SET col1 = NOW()");
     // Lets hope that this will always cause a 1264 or similar warning
-    ASSERT(!stmt->execute("INSERT INTO test(id) VALUES (-1)"));
+    ASSERT(!stmt->execute("UPDATE t1 SET col2 = col1"));
     stmt->clearWarnings();
     // TODO - how to verify?
     // TODO - how to use getNextWarning() ?
