@@ -353,16 +353,16 @@ MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
 		case sql::DataType::BIGINT:
 		{
 			long double ret;
-			bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned;
+			bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned != 0;
 			CPP_INFO_FMT("It's an int : %ssigned", is_it_unsigned? "un":"");
 			if (is_it_unsigned) {
 				uint64_t ival = getUInt64_intern(columnIndex, false);
 				CPP_INFO_FMT("value=%llu", ival);
-				ret = ival;
+				ret = static_cast<long double>(ival);
 			} else {
 				int64_t ival = getInt64_intern(columnIndex, false);
 				CPP_INFO_FMT("value=%lld", ival);
-				ret = ival;
+				ret = static_cast<long double>(ival);
 			}
 			CPP_INFO_FMT("value=%10.10f", (double) ret);
 			return ret;

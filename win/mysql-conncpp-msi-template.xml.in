@@ -64,11 +64,10 @@
         <Feature Id="ConnectorCPP" Title="Library" Description="The release library and headers." Level="1" Display="expand">
           <ComponentRef Id="IncludeFiles" />
           <ComponentRef Id="ClientLibraryRelease" />
+          <ComponentRef Id="MSRedistributables" />
+
           <Feature Id="DebugLibraries" Title="Debug Libary" Description="Debug library and symbols." Level="1000">
             <ComponentRef Id="ClientLibraryDebug" />
-          </Feature>
-          <Feature Id="MSRedestributibleLibs" Title="MS VS Redistributables" Description="Required Microsoft(c) Visual Studio(tm) Redistributable Libraries(version @CRT_VERSION@)" Level="2000">
-            <ComponentRef Id="MSRedistributables" />
           </Feature>
         </Feature>
     </Feature>

@@ -48,7 +48,7 @@ ENDFOREACH(_dir $ENV{LIB})
 SET(REQUIRED_REDISTRIBUTABLE_LIBS "")
 SET(counter "1")
 FOREACH(arg ${DEPENDENTS})
-	# MESSAGE("${arg}")
+	MESSAGE(STATUS "Adding found dependency lib: ${arg}")
 	SET(REQUIRED_REDISTRIBUTABLE_LIBS "${REQUIRED_REDISTRIBUTABLE_LIBS}
 <File Id=\"file016${counter}\" Name=\"${arg}\" LongName=\"${arg}\" Source=\"${MSVCRTX_REDIST_DIR}\\${THE_MACHINE}\\Microsoft.VC${CRT_VERSION}.CRT\\${arg}\" />")
 
@@ -92,14 +92,14 @@ IF (CONNECTOR_SIGNED)
 ENDIF (CONNECTOR_SIGNED)
 
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/mysql-conncpp-msi-template.xml.in
-               ${CMAKE_CURRENT_SOURCE_DIR}/mysql-conncpp-msi-template.xml @ONLY)
+               ${CMAKE_CURRENT_SOURCE_DIR}/mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.xml @ONLY)
 
 SET(WIXOUT "mysql-connector-c++-${CONNECTOR_PRODUCT_VERSION}-${CONNECTOR_PLATFORM}")
 
 MESSAGE(STATUS "${WIXOUT}")
        
 ADD_CUSTOM_COMMAND(OUTPUT "${WIXOUT}.wixobj"
-			COMMAND ${CONNECTOR_WIX_DIR}/candle -out ${WIXOUT}.wixobj mysql-conncpp-msi-template.xml)
+			COMMAND ${CONNECTOR_WIX_DIR}/candle -out ${WIXOUT}.wixobj mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.xml)
 
 ADD_CUSTOM_COMMAND(OUTPUT ${WIXOUT}.msi
 			COMMAND ${CONNECTOR_WIX_DIR}/light -o ${WIXOUT}.msi ${WIXOUT}.wixobj ${CONNECTOR_WIX_DIR}/WixUI.wixlib -loc ${CONNECTOR_WIX_DIR}/WixUI_en-us.wxl
