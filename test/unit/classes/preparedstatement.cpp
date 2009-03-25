@@ -29,16 +29,12 @@ void preparedstatement::InsertSelectAllTypes()
   std::vector<columndefinition>::iterator it;
   stmt.reset(con->createStatement());
   bool got_warning=false;
-  bool trace_on=false;
-
+  
   try
   {
 
     for (it=columns.end(), it--; it != columns.begin(); it--)
-    {
-      trace_on=true;
-      con->setClientOption("clientTrace", &trace_on);
-
+    {      
       stmt->execute("DROP TABLE IF EXISTS test");
       sql.str("");
       sql << "CREATE TABLE test(dummy TIMESTAMP, id " << it->sqldef << ")";
@@ -345,10 +341,7 @@ void preparedstatement::InsertSelectAllTypes()
       catch (sql::InvalidArgumentException &)
       {
       }
-      res->first();
-      
-      trace_on=false;
-      con->setClientOption("clientTrace", &trace_on);
+      res->first();      
     }
     stmt->execute("DROP TABLE IF EXISTS test");
     if (got_warning)
