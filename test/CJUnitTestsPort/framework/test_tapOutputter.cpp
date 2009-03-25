@@ -21,12 +21,9 @@ TAP::TAP()
   , msgLog( std::cerr )
   , errLog( std::cerr )
 {
-  /*
-   TODO - Discuss with Lawrin
   output << std::unitbuf;
   msgLog << std::unitbuf;
   errLog << std::unitbuf;
-   */
 }
 
 
@@ -55,12 +52,19 @@ void TAP::TestPassed(unsigned ordNum
 {
   output << "ok " << ordNum << " - " << suiteName << "::" << name;
 
+
   if (comment.length() > 0)
   {
     output << " # " << comment;
   }
 
   output << std::endl;
+
+  printf("# PRINTF TEST ULFW - ok %d - %s::%s", ordNum, suiteName.c_str(), name.c_str());
+  if (comment.length() > 0)
+    printf("# PRINTF TEST ULFW - %s", comment.c_str());
+  printf("\n");
+
 }
 
 void TAP::TestFailed( unsigned        ordNum
