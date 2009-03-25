@@ -15,6 +15,7 @@ CONTENTS
  * Building on Solaris
  * Building on Windows
  * Source layout
+ * (if binary package) Further Platform Notes on Building
 
 
 CONTACT
@@ -47,6 +48,25 @@ LICENSE
 
  If you need non-GPL licenses for commercial distribution please contact
  <sales@mysql.com>.
+
+
+INSTALLATION
+
+  The MySQL Driver for C++ is distributed in source and binary form.
+
+  The binary distributions are available as TAR.GZ archives for all
+  supported platforms but Windows. On Windows you either use a MSI Installer
+  or unpack a ZIP archive to an appropriate place.
+
+  All binaries are static builds.
+
+  Please check the Reference Manual for further information at:
+
+    http://dev.mysql.com/doc/refman/6.0/en/connector-cpp.html
+
+  Notes on building the driver from source can be found in the Reference
+  Manual and below. At the end of this file you may find settings
+  we have used to build a binary package for your platform.
 
 
 PREREQUISITES FOR BUILDING CONNECTOR/C++
@@ -225,7 +245,8 @@ BUILDING ON WINDOWS
   If, for example, cmake --help does not list a generator for
   Visual Studio 9 2008, try a more recent version of CMake.
 
-  We only support the Micosoft compiler stack.
+  Connector C/C++ supports only Microsoft Visual Studio 2003 and above
+  on Windows.
 
 
 SOURCE LAYOUT
@@ -238,3 +259,13 @@ SOURCE LAYOUT
   |-- test                 <-- Tests, so to say: more examples
   |-- thread               <-- Thread abstaction, unused
   --- win                  <-- Windows MSI Installer
+
+
+FURTHER PLATFORM NOTES ON BUILDING
+
+If this README file is contained in a binary package, you will see below
+what settings we have used to create the biary.
+
+If this README file is contained in a source package and, you have build
+issues, please download a binary package for your platform and check
+the platform specific notes found in its README.
