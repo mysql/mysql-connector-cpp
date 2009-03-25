@@ -35,21 +35,21 @@
               <Directory Id="lib" Name="lib">
                 <Directory Id="debug" Name="debug">
                   <Component Id="ClientLibraryDebug" Guid="9cdd3e41-c4fb-4a47-88a2-6f0c82a4834d" DiskId="1">
-
                     <File Id="file0100" Name="mycppcon.dll" LongName="mysqlcppcon.dll" Source="..\driver\debug\mysqlcppconn.dll" />
                     <File Id="file0101" Name="mycppcon.lib" LongName="mysqlcppcon.lib" Source="..\driver\debug\mysqlcppconn.lib" />
                     <File Id="file0102" Name="mycppcon.pdb" LongName="mysqlcppcon.pdb" Source="..\driver\debug\mysqlcppconn.pdb" />
                     <File Id="file0103" Name="mycpstat.lib" LongName="mysqlcppcon-static.lib" Source="..\driver\debug\mysqlcppconn-static.lib" />
                     <File Id="file0104" Name="mycpstat.lib" LongName="mysqlcppcon-static.lib" Source="..\driver\debug\mysqlcppconn-static.pdb" />
-                    <File Id="file0105" Name="libmysql.dll" LongName="libmysql.dll" Source="@LIBMYSQL_DIR@\debug\libmysql.dll" />
-                  </Component>
+		  </Component>
                 </Directory>
                 <Directory Id="opt" Name="opt">
                   <Component Id="ClientLibraryRelease" Guid="00328709-7f5e-4a3c-a189-e79f92243377" DiskId="1">
                     <File Id="file0150" Name="mycppcon.dll" LongName="mysqlcppcon.dll" Source="..\driver\relwithdebinfo\mysqlcppconn.dll" />
                     <File Id="file0151" Name="mycppcon.lib" LongName="mysqlcppcon.lib" Source="..\driver\relwithdebinfo\mysqlcppconn.lib" />
                     <File Id="file0152" Name="mycpstat.lib" LongName="mysqlcppcon-static.lib" Source="..\driver\relwithdebinfo\mysqlcppconn-static.lib" />
-                    <File Id="file0153" Name="libmysql.dll" LongName="libmysql.dll" Source="@LIBMYSQL_DIR@\opt\libmysql.dll" />
+		  </Component>
+		  <Component Id="MSRedistributables" Guid="e50ed3bb-e5bd-42b5-9029-9ca2356fd0f3" DiskId="1">
+                    @REQUIRED_REDISTRIBUTABLE_LIBS@
                   </Component>
                 </Directory>
               </Directory>
@@ -66,6 +66,9 @@
           <ComponentRef Id="ClientLibraryRelease" />
           <Feature Id="DebugLibraries" Title="Debug Libary" Description="Debug library and symbols." Level="1000">
             <ComponentRef Id="ClientLibraryDebug" />
+          </Feature>
+          <Feature Id="MSRedestributibleLibs" Title="MS VS Redistributables" Description="Required Microsoft(c) Visual Studio(tm) Redistributable Libraries(version @CRT_VERSION@)" Level="2000">
+            <ComponentRef Id="MSRedistributables" />
           </Feature>
         </Feature>
     </Feature>

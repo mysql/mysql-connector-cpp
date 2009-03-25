@@ -10,7 +10,51 @@ ELSE(CMAKE_SIZEOF_VOID_P MATCHES 8)
 ENDIF(CMAKE_SIZEOF_VOID_P MATCHES 8)
 
 INCLUDE("version.cmake")
-INCLUDE("${CMAKE_SOURCE_DIR}/3rdPartyLibDirs.cmake")
+
+
+#####################################
+# Looking for ms redistributable libs
+
+SET(THE_MACHINE "x86")
+SET(CRT_VERSION "90")
+
+SET(MSVCRTX_REDIST_DIR "$ENV{VCINSTALLDIR}\\redist")
+
+EXECUTE_PROCESS(COMMAND "dumpbin" "/DEPENDENTS" "${CMAKE_SOURCE_DIR}/../driver/RelWithDebInfo/mysqlcppconn.dll"
+				OUTPUT_VARIABLE CPPLIB_DEPENDENCIES
+				)
+
+IF(${CPPLIB_DEPENDENCIES} MATCHES ".*MSVC.([0-9]+)[.]dll.*")
+	STRING(REGEX REPLACE ".*MSVC.([0-9]+)[.]dll.*" "\\1" CRT_VERSION "${CPPLIB_DEPENDENCIES}")
+ENDIF(${CPPLIB_DEPENDENCIES} MATCHES ".*MSVC.([0-9]+)[.]dll.*")
+
+STRING(REGEX MATCHALL "(MSVC.[0-9][0-9][.]dll)" DEPENDENTS "${CPPLIB_DEPENDENCIES}")
+
+
+# MESSAGE("${CRT_VERSION} ${MSVCRTX_REDIST_DIR} ${DEPENDENTS} ${MACHINE}")
+
+FOREACH(_dir $ENV{LIB})
+	# MESSAGE("${_dir}")
+	# $ENV{VCINSTALLDIR}
+	IF(${_dir} MATCHES ".+[\\]VC[\\]LIB[\\]([^\\]+)$")
+		STRING(REGEX REPLACE ".+[\\]LIB[\\]([^\\]+)$" "\\1" THE_MACHINE "${_dir}")
+		#MESSAGE("======= Have match for machine")
+	ENDIF(${_dir} MATCHES ".+[\\]VC[\\]LIB[\\]([^\\]+)$")
+ENDFOREACH(_dir $ENV{LIB})
+
+# MESSAGE("-=${THE_MACHINE}=-")
+
+SET(REQUIRED_REDISTRIBUTABLE_LIBS "")
+SET(counter "1")
+FOREACH(arg ${DEPENDENTS})
+	# MESSAGE("${arg}")
+	SET(REQUIRED_REDISTRIBUTABLE_LIBS "${REQUIRED_REDISTRIBUTABLE_LIBS}
+<File Id=\"file016${counter}\" Name=\"${arg}\" LongName=\"${arg}\" Source=\"${MSVCRTX_REDIST_DIR}\\${THE_MACHINE}\\Microsoft.VC${CRT_VERSION}.CRT\\${arg}\" />")
+
+	MATH( EXPR counter "${counter} + 1" )
+ENDFOREACH(arg ${DEPENDENTS})
+
+
 
 SET(CONNECTOR_PRODUCT_DEST "MySQL Connector C++ ${CONNECTOR_PRODUCT_VERSION}")
 
