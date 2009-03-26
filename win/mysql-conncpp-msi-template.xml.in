@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
   <Product Id="@CONNECTOR_PKG_ID1@" Name="MySQL Connector C++" Language="1033" Version="@CONNECTOR_PRODUCT_VERSION@" Manufacturer="Sun Microsystems">
-    <Package Id="@CONNECTOR_PKG_ID2@" Keywords="Installer,MSI,Database" Description="MySQL C++ Connector" InstallerVersion="200" Platforms="@CONNECTOR_PLATFORM@" Compressed="yes" SummaryCodepage="1252" />
+    <Package Id="@CONNECTOR_PKG_ID2@" Keywords="Installer,MSI,Database" Description="MySQL C++ Connector @CONNECTOR_PRODUCT_VERSION@" InstallerVersion="200" Platforms="@CONNECTOR_PLATFORM@" Compressed="yes" SummaryCodepage="1252" />
     <Media Id="1" Cabinet="Product.cab" EmbedCab="yes" />
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="@CONNECTOR_DEFAULT_DEST@">
@@ -14,39 +14,48 @@
                 -->
               <Directory Id="include" Name="include">
                 <Component Id="IncludeFiles" Guid="dfc7126d-b5b0-4ffb-b509-749523297faa" DiskId="1">
-                  <File Id="file0001" Name="connect~.h" LongName="connection.h" Source="..\cppconn\connection.h" />
-                  <File Id="file0002" Name="datatype.h" Source="..\cppconn\datatype.h" />
-                  <File Id="file0003" Name="driver.h" Source="..\cppconn\driver.h" />
-                  <File Id="file0004" Name="excepti~.h" LongName="exception.h" Source="..\cppconn\exception.h" />
-                  <File Id="file0005" Name="metadata.h" Source="..\cppconn\metadata.h" />
-                  <File Id="file0006" Name="paramet~.h" LongName="parameter_metadata.h" Source="..\cppconn\parameter_metadata.h" />
-                  <File Id="file0007" Name="prepare~.h" LongName="prepared_statement.h" Source="..\cppconn\prepared_statement.h" />
-                  <File Id="file0008" Name="results.h" LongName="resultset.h" Source="..\cppconn\resultset.h" />
-                  <File Id="file0009" Name="resultme.h" LongName="resultset_metadata.h" Source="..\cppconn\resultset_metadata.h" />
-                  <File Id="file0010" Name="statem~.h" LongName="statement.h" Source="..\cppconn\statement.h" />
-                  <File Id="file0011" Name="warning.h" Source="..\cppconn\warning.h" />
-                  <File Id="file0012" Name="mydrv.h" LongName="mysql_driver.h" Source="..\driver\mysql_driver.h" />
-                  <File Id="file0013" Name="myconn.h" LongName="mysql_connection.h" Source="..\driver\mysql_connection.h" />
+                  <File Id="file0021" Name="mydrv.h" LongName="mysql_driver.h" Source="..\driver\mysql_driver.h" />
+                  <File Id="file0022" Name="myconn.h" LongName="mysql_connection.h" Source="..\driver\mysql_connection.h" />
                 </Component>
-              </Directory>
+
+	        <Directory Id="cppconn" Name="cppconn">
+		  <Component Id="CppconnIncludes" Guid="3b8df956-dc82-48ac-8101-0784368dcd83" DiskId="1">
+                    <File Id="file0001" Name="connect~.h" LongName="connection.h" Source="..\cppconn\connection.h" />
+                    <File Id="file0002" Name="datatype.h" Source="..\cppconn\datatype.h" />
+                    <File Id="file0003" Name="driver.h" Source="..\cppconn\driver.h" />
+                    <File Id="file0004" Name="excepti~.h" LongName="exception.h" Source="..\cppconn\exception.h" />
+                    <File Id="file0005" Name="metadata.h" Source="..\cppconn\metadata.h" />
+                    <File Id="file0006" Name="paramet~.h" LongName="parameter_metadata.h" Source="..\cppconn\parameter_metadata.h" />
+                    <File Id="file0007" Name="prepare~.h" LongName="prepared_statement.h" Source="..\cppconn\prepared_statement.h" />
+                    <File Id="file0008" Name="results.h" LongName="resultset.h" Source="..\cppconn\resultset.h" />
+                    <File Id="file0009" Name="resultme.h" LongName="resultset_metadata.h" Source="..\cppconn\resultset_metadata.h" />
+                    <File Id="file0010" Name="statem~.h" LongName="statement.h" Source="..\cppconn\statement.h" />
+                    <File Id="file0012" Name="warning.h" Source="..\cppconn\warning.h" />
+		    <File Id="file0013" Name="config.h" Source="..\cppconn\config.h" />
+		    <File Id="file0014" Name="build_c~.h" LongName="build_config.h" Source="..\cppconn\build_config.h" />
+
+		  </Component>
+                </Directory>
+	
+	      </Directory>
               <!-- *****************************************************************************************
                    lib directory
                 -->
               <Directory Id="lib" Name="lib">
                 <Directory Id="debug" Name="debug">
                   <Component Id="ClientLibraryDebug" Guid="9cdd3e41-c4fb-4a47-88a2-6f0c82a4834d" DiskId="1">
-                    <File Id="file0100" Name="mycppcon.dll" LongName="mysqlcppcon.dll" Source="..\driver\debug\mysqlcppconn.dll" />
-                    <File Id="file0101" Name="mycppcon.lib" LongName="mysqlcppcon.lib" Source="..\driver\debug\mysqlcppconn.lib" />
-                    <File Id="file0102" Name="mycppcon.pdb" LongName="mysqlcppcon.pdb" Source="..\driver\debug\mysqlcppconn.pdb" />
-                    <File Id="file0103" Name="mycpstat.lib" LongName="mysqlcppcon-static.lib" Source="..\driver\debug\mysqlcppconn-static.lib" />
-                    <File Id="file0104" Name="mycpstat.lib" LongName="mysqlcppcon-static.lib" Source="..\driver\debug\mysqlcppconn-static.pdb" />
+                    <File Id="file0100" Name="mycppcon.dll" LongName="mysqlcppconn.dll" Source="..\driver\debug\mysqlcppconn.dll" />
+                    <File Id="file0101" Name="mycppcon.lib" LongName="mysqlcppconn.lib" Source="..\driver\debug\mysqlcppconn.lib" />
+                    <File Id="file0102" Name="mycppcon.pdb" LongName="mysqlcppconn.pdb" Source="..\driver\debug\mysqlcppconn.pdb" />
+                    <File Id="file0103" Name="mycpstat.lib" LongName="mysqlcppconn-static.lib" Source="..\driver\debug\mysqlcppconn-static.lib" />
+                    <File Id="file0104" Name="mycpstat.lib" LongName="mysqlcppconn-static.lib" Source="..\driver\debug\mysqlcppconn-static.pdb" />
 		  </Component>
                 </Directory>
                 <Directory Id="opt" Name="opt">
                   <Component Id="ClientLibraryRelease" Guid="00328709-7f5e-4a3c-a189-e79f92243377" DiskId="1">
-                    <File Id="file0150" Name="mycppcon.dll" LongName="mysqlcppcon.dll" Source="..\driver\relwithdebinfo\mysqlcppconn.dll" />
-                    <File Id="file0151" Name="mycppcon.lib" LongName="mysqlcppcon.lib" Source="..\driver\relwithdebinfo\mysqlcppconn.lib" />
-                    <File Id="file0152" Name="mycpstat.lib" LongName="mysqlcppcon-static.lib" Source="..\driver\relwithdebinfo\mysqlcppconn-static.lib" />
+                    <File Id="file0150" Name="mycppcon.dll" LongName="mysqlcppconn.dll" Source="..\driver\relwithdebinfo\mysqlcppconn.dll" />
+                    <File Id="file0151" Name="mycppcon.lib" LongName="mysqlcppconn.lib" Source="..\driver\relwithdebinfo\mysqlcppconn.lib" />
+                    <File Id="file0152" Name="mycpstat.lib" LongName="mysqlcppconn-static.lib" Source="..\driver\relwithdebinfo\mysqlcppconn-static.lib" />
 		  </Component>
 		  <Component Id="MSRedistributables" Guid="e50ed3bb-e5bd-42b5-9029-9ca2356fd0f3" DiskId="1">
                     @REQUIRED_REDISTRIBUTABLE_LIBS@
@@ -63,6 +72,7 @@
     <Feature Id="Complete" Title="MySQL Connector C++" Description="The MySQL Connector C++ client library." Display="expand" Level="1" ConfigurableDirectory="INSTALLDIR">
         <Feature Id="ConnectorCPP" Title="Library" Description="The release library and headers." Level="1" Display="expand">
           <ComponentRef Id="IncludeFiles" />
+	  <ComponentRef Id="CppconnIncludes" />
           <ComponentRef Id="ClientLibraryRelease" />
           <ComponentRef Id="MSRedistributables" />
 
