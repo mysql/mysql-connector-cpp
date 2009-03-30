@@ -14,6 +14,8 @@
 #include <sstream>
 
 #include <cppconn/exception.h>
+#include <cppconn/resultset.h>
+#include <cppconn/warning.h>
 #include "mysql_util.h"
 #include "mysql_resultset.h"
 #include "mysql_resultset_metadata.h"

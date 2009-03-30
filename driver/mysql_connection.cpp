@@ -333,11 +333,12 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		mysql_set_server_option(intern->mysql, MYSQL_OPTION_MULTI_STATEMENTS_OFF);
 		setAutoCommit(true);
 		setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
-	} catch (std::runtime_error) {
+	} catch (std::runtime_error & e) {
 		// SQLException is also a runtime_error, thus no special case for SQLException
+		CPP_ERR("freeing reference to logger and rethrowing");
 		intern->logger->freeReference();
 		throw;
-	} catch (std::bad_alloc) {
+	} catch (std::bad_alloc & e) {
 		intern->logger->freeReference();
 		throw;
 	}

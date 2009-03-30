@@ -13,14 +13,13 @@
 #define _SQL_STATEMENT_H_
 
 #include <string>
-#include "resultset.h"
-#include "warning.h"
 
 namespace sql
 {
 
 class ResultSet;
 class Connection;
+class SQLWarning;
 
 
 class Statement

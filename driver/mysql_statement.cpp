@@ -19,6 +19,8 @@
 #include "mysql_util.h"
 
 #include <cppconn/exception.h>
+#include <cppconn/resultset.h>
+#include <cppconn/warning.h>
 #include "mysql_connection.h"
 #include "mysql_statement.h"
 #include "mysql_resultset.h"
