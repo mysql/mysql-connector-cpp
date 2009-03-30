@@ -48,7 +48,7 @@
                     <File Id="file0101" Name="mycppcon.lib" LongName="mysqlcppconn.lib" Source="..\driver\debug\mysqlcppconn.lib" />
                     <File Id="file0102" Name="mycppcon.pdb" LongName="mysqlcppconn.pdb" Source="..\driver\debug\mysqlcppconn.pdb" />
                     <File Id="file0103" Name="mycpstat.lib" LongName="mysqlcppconn-static.lib" Source="..\driver\debug\mysqlcppconn-static.lib" />
-                    <File Id="file0104" Name="mycpstat.lib" LongName="mysqlcppconn-static.lib" Source="..\driver\debug\mysqlcppconn-static.pdb" />
+                    <File Id="file0104" Name="mycpstat.pdb" LongName="mysqlcppconn-static.pdb" Source="..\driver\debug\mysqlcppconn-static.pdb" />
 		  </Component>
                 </Directory>
                 <Directory Id="opt" Name="opt">
