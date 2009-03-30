@@ -1,3 +1,10 @@
+Beta2  1.0.5 - 2009-04-xx
+
+- Changed the return type of sql::SQLException::getSQLState() from
+  std::string to const char * to be consistent with std::exception::what().
+  (Andrey)
+
+
 Beta   1.0.4 - 2009-03-xx
 
 - Prepared support for upcoming Connector/C. (Georg)
