@@ -351,7 +351,7 @@ void preparedstatement::InsertSelectAllTypes()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -634,7 +634,7 @@ void preparedstatement::assortedSetType()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -663,7 +663,7 @@ void preparedstatement::setNull()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 
@@ -694,7 +694,7 @@ void preparedstatement::checkClosed()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 
@@ -790,7 +790,7 @@ void preparedstatement::getMetaData()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -827,7 +827,7 @@ void preparedstatement::callSP()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 
@@ -852,7 +852,7 @@ void preparedstatement::anonymousSelect()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -883,7 +883,7 @@ void preparedstatement::crash()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 

@@ -61,7 +61,7 @@ void connectionmetadata::getSchemata()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -100,7 +100,7 @@ void connectionmetadata::getAttributes()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -211,7 +211,7 @@ void connectionmetadata::getBestRowIdentifier()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -287,7 +287,7 @@ void connectionmetadata::getColumnPrivileges()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 
@@ -470,7 +470,7 @@ void connectionmetadata::getColumns()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -494,7 +494,7 @@ void connectionmetadata::getConnection()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -537,7 +537,7 @@ void connectionmetadata::getDatabaseVersions()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -580,7 +580,7 @@ void connectionmetadata::getDriverVersions()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -609,7 +609,7 @@ void connectionmetadata::getDefaultTransactionIsolation()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -625,7 +625,7 @@ void connectionmetadata::getExtraNameCharacters()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -661,7 +661,7 @@ void connectionmetadata::getIdentifierQuoteString()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 
@@ -737,7 +737,7 @@ void connectionmetadata::getImportedKeys()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -817,7 +817,7 @@ void connectionmetadata::getExportedKeys()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -1073,7 +1073,7 @@ void connectionmetadata::getIndexInfo()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 
@@ -1289,7 +1289,7 @@ void connectionmetadata::getLimitsAndStuff()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -1361,7 +1361,7 @@ void connectionmetadata::getPrimaryKeys()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 
@@ -1431,7 +1431,7 @@ void connectionmetadata::getProcedures()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 
@@ -1488,7 +1488,7 @@ void connectionmetadata::getProcedureColumns()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -1510,7 +1510,7 @@ void connectionmetadata::getCatalogs()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -1526,7 +1526,7 @@ void connectionmetadata::getCatalogSeparator()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -1542,7 +1542,7 @@ void connectionmetadata::getCatalogTerm()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -1588,7 +1588,7 @@ void connectionmetadata::getCrossReference()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -1604,7 +1604,7 @@ void connectionmetadata::getProcedureTerm()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -1621,7 +1621,7 @@ void connectionmetadata::getResultSetHoldability()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -1637,7 +1637,7 @@ void connectionmetadata::getSchemaTerm()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -1653,7 +1653,7 @@ void connectionmetadata::getSearchStringEscape()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -1712,7 +1712,7 @@ void connectionmetadata::getSQLKeywords()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -1741,7 +1741,7 @@ void connectionmetadata::getSuperTables()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -1772,7 +1772,7 @@ void connectionmetadata::getSuperTypes()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -1858,7 +1858,7 @@ void connectionmetadata::classAttributes()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -2027,7 +2027,7 @@ void connectionmetadata::getColumnsTypeConversions()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 

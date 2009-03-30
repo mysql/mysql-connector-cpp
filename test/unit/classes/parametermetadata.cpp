@@ -40,7 +40,7 @@ void parametermetadata::getMeta()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 
@@ -70,7 +70,7 @@ void parametermetadata::getParameterCount()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 
@@ -99,7 +99,7 @@ void parametermetadata::notImplemented()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 

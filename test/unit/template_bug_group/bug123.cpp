@@ -44,7 +44,7 @@ void template_bug123_class::template_bug123_method()
   {
     /* If anything goes wrong, write some info to the log... */
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
 
     /*
      ... and let the test fail. FAIL() is a macro.

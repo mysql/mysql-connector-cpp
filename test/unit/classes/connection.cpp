@@ -39,7 +39,7 @@ void connection::getClientInfo()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -59,7 +59,7 @@ void connection::getNoWarningsOnNewLine()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -81,7 +81,7 @@ void connection::getNoWarningsAfterClear()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -115,7 +115,7 @@ void connection::checkClosed()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -958,7 +958,7 @@ void connection::connectUsingMap()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 
@@ -1002,7 +1002,7 @@ void connection::setTransactionIsolation()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 
@@ -1014,7 +1014,7 @@ void connection::setTransactionIsolation()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
   try
@@ -1053,7 +1053,7 @@ void connection::setTransactionIsolation()
     {
       logMsg("... EXPECTED behaviour - Transaction isolation level can't be changed while a transaction is in progress.");
       logMsg(e.what());
-      logMsg("SQLState: " + e.getSQLState());
+      logMsg("SQLState: " + std::string(e.getSQLState()));
       cant_be_changed_error=e.getErrorCode();
     }
 
@@ -1065,7 +1065,7 @@ void connection::setTransactionIsolation()
     catch (sql::SQLException &e)
     {
       logErr(e.what());
-      logErr("SQLState: " + e.getSQLState());
+      logErr("SQLState: " + std::string(e.getSQLState()));
       fail(e.what(), __FILE__, __LINE__);
     }
 
@@ -1102,14 +1102,14 @@ void connection::setTransactionIsolation()
       if (e.getErrorCode() != cant_be_changed_error)
       {
         logErr(e.what());
-        logErr("SQLState: " + e.getSQLState());
+        logErr("SQLState: " + std::string(e.getSQLState()));
         fail(e.what(), __FILE__, __LINE__);
       }
       else
       {
         logMsg("... EXPECTED behaviour - Transaction isolation level can't be changed while a transaction is in progress.");
         logMsg(e.what());
-        logMsg("SQLState: " + e.getSQLState());
+        logMsg("SQLState: " + std::string(e.getSQLState()));
       }
     }
   }
@@ -1139,7 +1139,7 @@ void connection::setSessionVariable()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 

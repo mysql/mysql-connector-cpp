@@ -44,7 +44,7 @@ void example_test_class::test_hello_world1()
   {
     /* If anything goes wrong, write some info to the log... */
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
 
     /*
      ... and let the test fail. FAIL() is a macro.
@@ -108,7 +108,7 @@ void example_test_class::test_hello_world2()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + e.getSQLState());
+    logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
 }

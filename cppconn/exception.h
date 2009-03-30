@@ -62,9 +62,9 @@ public:
 
 	SQLException() : std::runtime_error(""), sql_state("HY000"), errNo(0) {}
 
-	const std::string& getSQLState() const
+	const char * getSQLState() const
 	{
-		return sql_state;
+		return sql_state.c_str();
 	}
 
 	int getErrorCode() const
