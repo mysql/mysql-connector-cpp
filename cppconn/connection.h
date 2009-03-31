@@ -87,7 +87,7 @@ public:
 
 	virtual std::string getSchema() = 0;
 
-	virtual const std::string& getClientInfo(const std::string& name) = 0;
+	virtual std::string getClientInfo() = 0;
 
 	virtual void getClientOption(const std::string & optionName, void * optionValue) = 0;
 

@@ -347,9 +347,9 @@ MySQL_ArtResultSet::findColumn(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::columnLabel");
 	checkValid();
-	char * tmp = sql::mysql::util::utf8_strup(columnLabel.c_str(), 0);
-	FieldNameIndexMap::const_iterator iter = field_name_to_index_map.find(tmp);
-	delete [] tmp;
+
+	sql::mysql::util::my_array_guard< char > upstring(sql::mysql::util::utf8_strup(columnLabel.c_str(), 0));
+	FieldNameIndexMap::const_iterator iter = field_name_to_index_map.find(upstring.get());
 
 	if (iter == field_name_to_index_map.end()) {
 		return 0;

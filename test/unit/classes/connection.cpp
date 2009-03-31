@@ -25,15 +25,11 @@ void connection::getClientInfo()
   logMsg("connection::getClientInfo() - MySQL_Connection::getClientInfo()");
   try
   {
-    std::string client_info;
     std::string ret;
 
-    ret=con->getClientInfo(client_info);
+    ret=con->getClientInfo();
     if (ret != "cppconn")
       FAIL("Expecting 'cppconn' got '" + ret + "'.");
-
-    if (!client_info.empty())
-      FAIL("Expecting parameter to be unchanged but it seems to have been modified.");
 
   }
   catch (sql::SQLException &e)

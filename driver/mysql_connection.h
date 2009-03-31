@@ -68,7 +68,7 @@ public:
 
 	std::string getSchema();
 
-	const std::string& getClientInfo(const std::string& name);
+	std::string getClientInfo();
 
 	void getClientOption(const std::string & optionName, void * optionValue);
 

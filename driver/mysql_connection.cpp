@@ -436,14 +436,14 @@ MySQL_Connection::getSchema()
 	std::auto_ptr<sql::Statement> stmt(createStatement());
 	std::auto_ptr<ResultSet> rset(stmt->executeQuery("SELECT DATABASE()")); //SELECT SCHEMA()
 	rset->next();
-	return std::string(rset->getString(1));
+	return rset->getString(1);
 }
 /* }}} */
 
 
 /* {{{ MySQL_Connection::getClientInfo() -I- */
-const std::string&
-MySQL_Connection::getClientInfo(const std::string&)
+std::string
+MySQL_Connection::getClientInfo()
 {
 	static const std::string clientInfo("cppconn");
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getClientInfo");
