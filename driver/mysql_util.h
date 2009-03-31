@@ -116,6 +116,17 @@ protected:
 	~my_shared_ptr() { delete _ptr; }
 };
 
+
+template<typename T>
+struct my_array_guard
+{
+	T * ptr;
+	my_array_guard(T * p) : ptr(p) {}
+	T * get() { return ptr; }
+	~my_array_guard() { delete [] ptr; }
+};
+
+
 }; /* namespace util */
 }; /* namespace mysql */
 }; /* namespace sql */

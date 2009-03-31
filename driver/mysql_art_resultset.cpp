@@ -192,10 +192,9 @@ MySQL_ArtResultSet::MySQL_ArtResultSet(const StringList& fn, rset_t * const rs, 
 
 	unsigned int idx = 0;
 	for (StringList::const_iterator it = fn.begin(), e = fn.end(); it != e; ++it, ++idx) {
-		char * tmp = sql::mysql::util::utf8_strup(it->c_str(), 0);
-		field_name_to_index_map[std::string(tmp)] = idx;
-		field_index_to_name_map[idx] = std::string(tmp);
-		delete [] tmp;
+		sql::mysql::util::my_array_guard< char > upstring(sql::mysql::util::utf8_strup(it->c_str(), 0));
+		field_name_to_index_map[std::string(upstring.get())] = idx;
+		field_index_to_name_map[idx] = std::string(upstring.get());
 	}
 }
 /* }}} */
