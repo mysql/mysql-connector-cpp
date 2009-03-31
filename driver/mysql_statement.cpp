@@ -86,12 +86,11 @@ MySQL_Statement::get_resultset()
 
 	MYSQL * mysql = connection->getMySQLHandle();
 
-	MYSQL_RES * result = mysql_store_result(mysql);
+	MYSQL_RES  * result = mysql_store_result(mysql);
 	if (result == NULL) {
 		CPP_ERR_FMT("Error during store_result : %d:(%s) %s", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 		throw sql::SQLException(mysql_error(mysql), mysql_sqlstate(mysql), mysql_errno(mysql));
 	}
-
 	return new MYSQL_RES_Wrapper(result);
 }
 /* }}} */
@@ -201,7 +200,10 @@ MySQL_Statement::getResultSet()
 		return NULL;
 	}
 
-	sql::ResultSet * ret = new MySQL_ResultSet(new MYSQL_RES_Wrapper(result), this, logger);
+	std::auto_ptr< MYSQL_RES_Wrapper > wrapper(new MYSQL_RES_Wrapper(result));
+	
+	sql::ResultSet * ret = new MySQL_ResultSet(wrapper.get(), this, logger);
+	wrapper.release();
 	CPP_INFO_FMT("res=%p", ret);
 	return ret;
 }
