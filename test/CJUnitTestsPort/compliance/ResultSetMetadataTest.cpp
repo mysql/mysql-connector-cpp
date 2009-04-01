@@ -856,7 +856,7 @@ void ResultSetMetadataTest::setUp()
   stmt.reset(conn->createStatement(/*sql::ResultSet::TYPE_SCROLL_INSENSITIVE,sql::ResultSet::CONCUR_READ_ONLY*/
                                    ));
   rs.reset(stmt->executeQuery(query));
-  rsmd.reset(rs->getMetaData());
+  rsmd = rs->getMetaData();
 }
 
 }

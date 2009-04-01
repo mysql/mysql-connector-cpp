@@ -291,7 +291,7 @@ public:
      
     TEST_CASE(testUsesLocalFilePerTable);
 
-    dbmd.reset();
+    dbmd= NULL;
 
     dbName="";
     dbUser="";

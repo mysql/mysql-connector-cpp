@@ -61,7 +61,7 @@ void PreparedStatementTest::testGetMetaData()
      */
     //rsmdPrep= pstmt->getMetaData();
 	res.reset(pstmt->executeQuery());
-    rsmdPrep.reset(res->getMetaData());
+    rsmdPrep = res->getMetaData();
   } catch (sql::SQLException & sqe) {
     statflag=true;
     logErr(String("SQL std::exception * ") + sqe.what());
@@ -72,7 +72,7 @@ void PreparedStatementTest::testGetMetaData()
 
     rs.reset(stmt->executeQuery(sPrepStmt));
     logMsg("Getting MetaData from ResultSet");
-    rsmd.reset(rs->getMetaData());
+    rsmd = rs->getMetaData();
 
     if (rsmdPrep->getColumnCount() == rsmd->getColumnCount())
       logMsg("Call to getMetaData Method is Passed");
@@ -3270,7 +3270,7 @@ void PreparedStatementTest::setUp()
 {
   super::setUp();
 
-  dbmd.reset(conn->getMetaData());
+  dbmd= conn->getMetaData();
 }
 
 }
