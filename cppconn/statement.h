@@ -12,6 +12,8 @@
 #ifndef _SQL_STATEMENT_H_
 #define _SQL_STATEMENT_H_
 
+#include "config.h"
+
 #include <string>
 
 namespace sql

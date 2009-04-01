@@ -478,13 +478,13 @@ void connectionmetadata::getColumns()
 void connectionmetadata::getConnection()
 {
   logMsg("connectionmetadata::getConnection() - MySQL_ConnectionMetaData::getConnection");
-  sql::Connection* same_con;
+  Connection same_con;
   try
   {
     stmt.reset(con->createStatement());
     stmt->execute("SET @this_is_my_connection_id=101");
     sql::DatabaseMetaData * dbmeta = con->getMetaData();
-    same_con=dbmeta->getConnection();
+    same_con.reset(dbmeta->getConnection());
     stmt.reset(same_con->createStatement());
     res.reset(stmt->executeQuery("SELECT @this_is_my_connection_id AS _connection_id"));
     ASSERT(res->next());

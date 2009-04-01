@@ -1,14 +1,16 @@
-#cmakedefine HAVE_STRTOLD 1
-#cmakedefine HAVE_STRTOLL 1
-#cmakedefine HAVE_STRTOL 1
-#cmakedefine HAVE_STRTOULL 1
 
-#ifndef HAVE_STRTOUL
-#cmakedefine HAVE_STRTOUL 1
-#endif
+// libmysql defines HAVE_STRTOUL (on win), so we have to follow different pattern in definitions names
+// to avoid annoying warnings.
 
-#cmakedefine HAVE_STRTOIMAX 1
-#cmakedefine HAVE_STRTOUMAX 1
+#cmakedefine HAVE_FUNCTION_STRTOLD 1
+#cmakedefine HAVE_FUNCTION_STRTOLL 1
+#cmakedefine HAVE_FUNCTION_STRTOL 1
+#cmakedefine HAVE_FUNCTION_STRTOULL 1
+
+#cmakedefine HAVE_FUNCTION_STRTOUL 1
+
+#cmakedefine HAVE_FUNCTION_STRTOIMAX 1
+#cmakedefine HAVE_FUNCTION_STRTOUMAX 1
 
 #cmakedefine HAVE_STDINT_H 1
 #cmakedefine HAVE_INTTYPES_H 1
