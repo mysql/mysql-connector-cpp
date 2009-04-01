@@ -2192,7 +2192,7 @@ char * utf8_strup(const char * const src, size_t srclen)
   reinterpret_cast doesn't work :(
 */
 
-#if defined(HAVE_STRTOLD) && defined(__hpux) && defined(_LONG_DOUBLE)
+#if defined(HAVE_FUNCTION_STRTOLD) && defined(__hpux) && defined(_LONG_DOUBLE)
 typedef union {
 	long_double l_d;
 	long double ld;
@@ -2202,7 +2202,7 @@ typedef union {
 
 long double strtold(const char *nptr, char **endptr)
 {
-#ifndef HAVE_STRTOLD
+#ifndef HAVE_FUNCTION_STRTOLD
 	return ::strtod(nptr, endptr);
 #else
 # if defined(__hpux) && defined(_LONG_DOUBLE)

@@ -28,29 +28,29 @@
 #include "cppconn/config.h"
 #ifndef _WIN32
 #  include <stdlib.h>
-#  ifndef HAVE_STRTOLL
-#    ifdef HAVE_STRTOL
+#  ifndef HAVE_FUNCTION_STRTOLL
+#    ifdef HAVE_FUNCTION_STRTOL
 #      define strtoll(__a, __b, __c) strtol((__a), (__b), (__c))
 #    else
-#      ifdef HAVE_STRTOIMAX
+#      ifdef HAVE_FUNCTION_STRTOIMAX
 #        define strtoll(__a, __b, __c) strtoimax((__a), NULL, 10)
 #      else
 #        error "Compilation will fail because code does not know an equivalent of strtol/strtoll"
 #      endif
 #    endif
-#    define HAVE_STRTOLL 1
+#    define HAVE_FUNCTION_STRTOLL 1
 #  endif
-#  ifndef HAVE_STRTOULL
-#    ifdef HAVE_STRTOUL
+#  ifndef HAVE_FUNCTION_STRTOULL
+#    ifdef HAVE_FUNCTION_STRTOUL
 #      define strtoull(__a, __b, __c) strtoul((__a), (__b), (__c))
 #    else
-#      ifdef HAVE_STRTOUMAX
+#      ifdef HAVE_FUNCTION_STRTOUMAX
 #        define strtoull(__a, __b, __c) strtoumax((__a), NULL, 10)
 #      else
 #        error Compilation will fail because code does not know an equivalent of strtoul/strtoull
 #      endif
 #    endif
-#    define HAVE_STRTOULL 1
+#    define HAVE_FUNCTION_STRTOULL 1
 #  endif
 #else
 #  define strtoll(x, e, b) _strtoi64((x), (e), (b))
