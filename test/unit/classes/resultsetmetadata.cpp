@@ -306,7 +306,7 @@ void resultsetmetadata::getColumnType()
     stmt.reset(con->createStatement());
     bool type_found=false;
 
-    DatabaseMetaData dbmeta(con->getMetaData());
+    sql::DatabaseMetaData * dbmeta = con->getMetaData();
     ResultSet restypes(dbmeta->getTypeInfo());
 
     logMsg("... looping over all kinds of columns and testing type and type name");

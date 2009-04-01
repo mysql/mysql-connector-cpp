@@ -813,7 +813,7 @@ void preparedstatement::callSP()
       return;
     }
 
-    DatabaseMetaData dbmeta(con->getMetaData());
+    sql::DatabaseMetaData * dbmeta = con->getMetaData();
 
     pstmt.reset(con->prepareStatement("CREATE PROCEDURE p(OUT ver_param VARCHAR(25)) BEGIN SELECT VERSION() INTO ver_param; END;"));
     ASSERT(!pstmt->execute());

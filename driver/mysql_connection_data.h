@@ -23,13 +23,18 @@ namespace mysql
 
 
 class MySQL_DebugLogger;
+class MySQL_ConnectionMetaData;
 
 class MySQL_ConnectionData
 {
 public:
-	MySQL_ConnectionData() : closed(false), autocommit(false), txIsolationLevel(TRANSACTION_READ_COMMITTED),
-							 is_valid(false), sql_mode_set(false), cache_sql_mode(false),
-							 metadata_use_info_schema(true), logger(NULL), mysql(NULL) {}
+	MySQL_ConnectionData(sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
+		: closed(false), autocommit(false), txIsolationLevel(TRANSACTION_READ_COMMITTED),
+		  is_valid(false), sql_mode_set(false), cache_sql_mode(false),
+		  metadata_use_info_schema(true), logger(l), meta(NULL), mysql(NULL) {}
+
+	~MySQL_ConnectionData() { logger->freeReference(); }
+
 	bool closed;
 	bool autocommit;
 	enum_transaction_isolation txIsolationLevel;
@@ -54,6 +59,8 @@ public:
 	bool metadata_use_info_schema;
 
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
+
+	std::auto_ptr< MySQL_ConnectionMetaData > meta;
 
 	struct ::st_mysql * mysql; /* let it be last . If wrong dll is used we will get valgrind error or runtime error !*/
 };

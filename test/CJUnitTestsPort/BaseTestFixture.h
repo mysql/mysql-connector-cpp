@@ -43,7 +43,7 @@ typedef std::auto_ptr<sql::Statement> Statement;
 typedef std::auto_ptr<sql::ResultSet> ResultSet;
 typedef sql::Driver Driver;
 typedef std::auto_ptr<sql::ResultSetMetaData> ResultSetMetaData;
-typedef std::auto_ptr<sql::DatabaseMetaData> DatabaseMetaData;
+typedef sql::DatabaseMetaData DatabaseMetaData;
 
 
 class value_object

@@ -22,6 +22,9 @@ class ResultSet;
 
 class DatabaseMetaData
 {
+protected:
+	virtual ~DatabaseMetaData() {}
+
 public:
 	enum
 	{
@@ -105,7 +108,6 @@ public:
 		typeSearchable = 3
 	};
 
-	virtual ~DatabaseMetaData() {}
 
 	virtual	bool allProceduresAreCallable() = 0;
 

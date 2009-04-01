@@ -179,7 +179,7 @@ void statement::callSP()
       return;
     }
 
-    DatabaseMetaData dbmeta(con->getMetaData());
+    sql::DatabaseMetaData * dbmeta = con->getMetaData();
 
     ASSERT(!stmt->execute("CREATE PROCEDURE p(OUT ver_param VARCHAR(25)) BEGIN SELECT VERSION() INTO ver_param; END;"));
     ASSERT(!stmt->execute("CALL p(@version)"));

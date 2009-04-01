@@ -72,6 +72,7 @@ MySQL_Savepoint::getSavepointName()
 
 /* {{{ MySQL_Connection::MySQL_Connection() -I- */
 MySQL_Connection::MySQL_Connection(const std::string& hostName, const std::string& userName, const std::string& password)
+	: intern(NULL)
 {
 	std::map<std::string, sql::ConnectPropertyVal> connection_properties;
 	{
@@ -93,18 +94,22 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName, const std::strin
 		connection_properties[std::string("password")] = tmp;
 	}
 
-	intern = new MySQL_ConnectionData();
-	intern->logger = new sql::mysql::util::my_shared_ptr< MySQL_DebugLogger >(new MySQL_DebugLogger()); /* should be before CPP_ENTER */
+	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * tmp_logger = new sql::mysql::util::my_shared_ptr< MySQL_DebugLogger >(new MySQL_DebugLogger());
+
+	intern.reset(new MySQL_ConnectionData(tmp_logger));
+
 	init(connection_properties);
 }
 /* }}} */
 
 
 /* {{{ MySQL_Connection::MySQL_Connection() -I- */
-MySQL_Connection::MySQL_Connection(std::map<std::string, sql::ConnectPropertyVal> properties)
+MySQL_Connection::MySQL_Connection(std::map< std::string, sql::ConnectPropertyVal > properties)
+	:intern(NULL)
 {
-	intern = new MySQL_ConnectionData();
-	intern->logger = new sql::mysql::util::my_shared_ptr< MySQL_DebugLogger >(new MySQL_DebugLogger()); /* should be before CPP_ENTER */
+	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * tmp_logger = new sql::mysql::util::my_shared_ptr< MySQL_DebugLogger >(new MySQL_DebugLogger());
+
+	intern.reset(new MySQL_ConnectionData(tmp_logger));
 	init(properties);
 }
 /* }}} */
@@ -119,14 +124,10 @@ MySQL_Connection::~MySQL_Connection()
 	  the on-stack object will be destructed after `delete intern->logger` leading
 	  to a faulty memory access.
 	*/
-	{
-		CPP_ENTER_WL(intern->logger, "MySQL_Connection::~MySQL_Connection");
-		if (!isClosed()) {
-			mysql_close(intern->mysql);
-		}
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::~MySQL_Connection");
+	if (!isClosed()) {
+		mysql_close(intern->mysql);
 	}
-	intern->logger->freeReference();
-	delete intern;
 }
 /* }}} */
 
@@ -333,6 +334,8 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		mysql_set_server_option(intern->mysql, MYSQL_OPTION_MULTI_STATEMENTS_OFF);
 		setAutoCommit(true);
 		setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
+
+		intern.get()->meta.reset(new MySQL_ConnectionMetaData(this, intern->logger));
 	} catch (std::runtime_error & e) {
 		// SQLException is also a runtime_error, thus no special case for SQLException
 		CPP_ERR("freeing reference to logger and rethrowing");
@@ -470,7 +473,7 @@ MySQL_Connection::getMetaData()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getMetaData");
 	checkClosed();
-	return new MySQL_ConnectionMetaData(this, this->intern->logger);
+	return intern->meta.get();
 }
 /* }}} */
 

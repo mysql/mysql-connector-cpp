@@ -61,7 +61,7 @@ int main(int argc, const char **argv)
                 cout << "." << driver->getPatchVersion() << endl;
 
 		std::auto_ptr< sql::Connection > con(driver->connect(url, user, pass));
-		std::auto_ptr<sql::DatabaseMetaData> con_meta(con->getMetaData());
+		sql::DatabaseMetaData * con_meta = con->getMetaData();
 
 		cout << "# CDBC (API) major version = " << con_meta->getCDBCMajorVersion() << endl;
 		if (con_meta->getCDBCMajorVersion() <= 0) {
