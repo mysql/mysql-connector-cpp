@@ -116,7 +116,7 @@ int main(int argc, const char **argv)
 		/* "" = empty string requests all types of objects */
 		std::auto_ptr< sql::ResultSet > res(con_meta->getSchemaObjects(con->getCatalog(), con->getSchema(), ""));
 		row = 1;
-		std::auto_ptr<sql::ResultSetMetaData> res_meta(res->getMetaData());
+		sql::ResultSetMetaData * res_meta = res->getMetaData();
 		while (res->next()) {
 			if (row++ > 2)
 				break;
@@ -203,7 +203,7 @@ int main(int argc, const char **argv)
 		cout << "#\t\t isWritable() = " << res_meta->isWritable(5) << endl;
 
 		std::auto_ptr< sql::ResultSet > res_tables(con_meta->getTables(con->getCatalog(), database, "t%", table_types));
-		std::auto_ptr<sql::ResultSetMetaData> res_meta_tables(res_tables->getMetaData());
+		sql::ResultSetMetaData * res_meta_tables = res_tables->getMetaData();
 
 		cout << "#" << endl;
 		cout << "# Tables with names like 't%':" << endl;;

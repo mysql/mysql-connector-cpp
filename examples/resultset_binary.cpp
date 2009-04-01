@@ -107,7 +107,7 @@ int main(int argc, const char **argv)
 					res->getString("col_varbinary").length() != 6)
 					throw runtime_error("VARBINARY(n) should return std::string of length n which holds the length of the actual column value.");
 
-				std::auto_ptr< sql::ResultSetMetaData > meta(res->getMetaData());
+				sql::ResultSetMetaData * meta = res->getMetaData();
 				cout << "#\t\t COLUMN_SIZE = " << meta->getColumnDisplaySize(3) << endl;
 				row++;
 			}

@@ -196,6 +196,8 @@ MySQL_ArtResultSet::MySQL_ArtResultSet(const StringList& fn, rset_t * const rs, 
 		field_name_to_index_map[std::string(upstring.get())] = idx;
 		field_index_to_name_map[idx] = std::string(upstring.get());
 	}
+
+	meta.reset(new MySQL_ArtResultSetMetaData(this, logger));
 }
 /* }}} */
 
@@ -621,7 +623,7 @@ MySQL_ArtResultSet::getMetaData() const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getMetaData");
 	checkValid();
-	return new MySQL_ArtResultSetMetaData(this, logger);
+	return meta.get();
 }
 /* }}} */
 

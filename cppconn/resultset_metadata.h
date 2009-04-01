@@ -70,6 +70,7 @@ public:
 
 	virtual bool isZerofill(unsigned int column) = 0;
 
+protected:
 	virtual ~ResultSetMetaData() {}
 };
 

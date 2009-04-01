@@ -1986,7 +1986,7 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 
 				std::auto_ptr<sql::Statement> stmt3(connection->createStatement());
 				std::auto_ptr<sql::ResultSet> rs3(stmt1->executeQuery(query3));
-				std::auto_ptr<sql::ResultSetMetaData> rs3_meta(rs3->getMetaData());
+				sql::ResultSetMetaData * rs3_meta = rs3->getMetaData();
 
 				std::string query4("SHOW FULL COLUMNS FROM `");
 				query4.append(current_schema).append("`.`").append(current_table).append("` LIKE '").append(columnNamePattern).append("'");

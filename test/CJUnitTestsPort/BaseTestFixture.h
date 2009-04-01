@@ -42,7 +42,7 @@ typedef std::auto_ptr<sql::PreparedStatement> PreparedStatement;
 typedef std::auto_ptr<sql::Statement> Statement;
 typedef std::auto_ptr<sql::ResultSet> ResultSet;
 typedef sql::Driver Driver;
-typedef std::auto_ptr<sql::ResultSetMetaData> ResultSetMetaData;
+typedef sql::ResultSetMetaData ResultSetMetaData;
 typedef sql::DatabaseMetaData DatabaseMetaData;
 
 

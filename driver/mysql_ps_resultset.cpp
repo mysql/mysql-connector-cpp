@@ -76,7 +76,7 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(MYSQL_STMT *s, MySQL_Prepared
 	}
 	mysql_free_result(result_meta);
 	result_meta = NULL;
-	rs_meta.reset(getMetaData());
+	rs_meta.reset(new MySQL_Prepared_ResultSetMetaData(stmt, logger));
 }
 /* }}} */
 
@@ -797,7 +797,7 @@ MySQL_Prepared_ResultSet::getMetaData() const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getMetaData");
 	checkValid();
-	return new MySQL_Prepared_ResultSetMetaData(stmt, logger);
+	return rs_meta.get();
 }
 /* }}} */
 

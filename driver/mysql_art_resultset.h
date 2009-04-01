@@ -101,7 +101,7 @@ public:
 	bool getBool();
 };
 
-
+class MySQL_ArtResultSetMetaData;
 
 class MySQL_ArtResultSet : public sql::ResultSet
 {
@@ -232,7 +232,7 @@ protected:
 public:
 
 	unsigned int num_fields;
-	::std::auto_ptr< MySQL_ArtResultSet::rset_t > rset;
+	std::auto_ptr< MySQL_ArtResultSet::rset_t > rset;
 	rset_t::iterator current_record;
 	bool started;
 
@@ -246,6 +246,8 @@ public:
 	my_ulonglong row_position; /* 0 = before first row, 1 - first row, 'num_rows + 1' - after last row */
 
 	bool is_closed;
+
+	std::auto_ptr< MySQL_ArtResultSetMetaData > meta;
 
 protected:
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;

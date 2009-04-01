@@ -23,6 +23,7 @@ namespace mysql
 namespace util {template<class T> class my_shared_ptr; }; // forward declaration.
 class MySQL_Prepared_Statement;
 class MySQL_DebugLogger;
+class MySQL_Prepared_ResultSetMetaData;
 
 class MySQL_Prepared_ResultSet : public sql::ResultSet
 {
@@ -47,7 +48,8 @@ private:
 
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 
-	std::auto_ptr<sql::ResultSetMetaData> rs_meta;
+	std::auto_ptr< MySQL_Prepared_ResultSetMetaData > rs_meta;
+
 protected:
 	void checkValid() const;
 	void closeIntern();

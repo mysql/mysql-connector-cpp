@@ -59,7 +59,7 @@ void resultsetmetadata::getCatalogName()
 void resultsetmetadata::doGetCatalogName(bool is_ps, bool &got_warning)
 {
   std::stringstream msg;
-  ResultSetMetaData meta(res->getMetaData());
+  ResultSetMetaData * meta = res->getMetaData();
   if (con->getCatalog() != meta->getCatalogName(1))
   {
     got_warning=true;
@@ -125,7 +125,7 @@ void resultsetmetadata::getColumnCount()
 
 void resultsetmetadata::doGetColumnCount(bool is_ps)
 {
-  ResultSetMetaData meta(res->getMetaData());
+  ResultSetMetaData * meta = res->getMetaData();
   ASSERT_EQUALS((unsigned int) 5, meta->getColumnCount());
 
 
@@ -167,7 +167,7 @@ void resultsetmetadata::getColumnDisplaySize()
 
 void resultsetmetadata::doGetColumnDisplaySize(bool is_ps)
 {
-  ResultSetMetaData meta(res->getMetaData());
+  ResultSetMetaData * meta = res->getMetaData();
 
   ASSERT_EQUALS((unsigned int) 5, meta->getColumnDisplaySize(1));
   ASSERT_EQUALS((unsigned int) 1, meta->getColumnDisplaySize(2));
@@ -232,7 +232,7 @@ void resultsetmetadata::getColumnNameAndLabel()
 
 void resultsetmetadata::doGetColumnNameAndLabel(bool is_ps)
 {
-  ResultSetMetaData meta(res->getMetaData());
+  ResultSetMetaData * meta = res->getMetaData();
   ASSERT_EQUALS("a", meta->getColumnName(1));
   ASSERT_EQUALS(meta->getColumnLabel(1), meta->getColumnName(1));
   /* NOTE: " " -> "" */
@@ -326,7 +326,7 @@ void resultsetmetadata::getColumnType()
 
         res.reset(stmt->executeQuery("SELECT * FROM test"));
         checkResultSetScrolling(res);
-        ResultSetMetaData meta(res->getMetaData());
+        ResultSetMetaData * meta = res->getMetaData();
         logMsg(it->sqldef);
         ASSERT_EQUALS(it->ctype, meta->getColumnType(1));
         ASSERT_EQUALS(it->name, meta->getColumnTypeName(1));
@@ -428,7 +428,7 @@ void resultsetmetadata::getPrecision()
 
 void resultsetmetadata::doGetPrecision(bool is_ps)
 {
-  ResultSetMetaData meta(res->getMetaData());
+  ResultSetMetaData * meta = res->getMetaData();
 
   ASSERT_GT((unsigned int) 4, meta->getPrecision(1));
   ASSERT_GT((unsigned int) 0, meta->getPrecision(2));
@@ -483,7 +483,7 @@ void resultsetmetadata::getScale()
 
 void resultsetmetadata::doGetScale(bool is_ps)
 {
-  ResultSetMetaData meta(res->getMetaData());
+  ResultSetMetaData * meta = res->getMetaData();
 
   try
   {
@@ -542,11 +542,11 @@ void resultsetmetadata::getSchemaName()
 void resultsetmetadata::doGetSchemaName(bool is_ps)
 {
   int i;
-  ResultSetMetaData meta2(res->getMetaData());
+  ResultSetMetaData * meta2 = res->getMetaData();
   ASSERT_EQUALS(meta2->getSchemaName(1), con->getSchema());
 
   runStandardQuery();
-  ResultSetMetaData meta(res->getMetaData());
+  ResultSetMetaData * meta = res->getMetaData();
   for (i=1; i < 6; i++)
     ASSERT_EQUALS(meta->getSchemaName(i), "");
 
@@ -608,11 +608,11 @@ void resultsetmetadata::getTableName()
 void resultsetmetadata::doGetTableName(bool is_ps)
 {
   int i;
-  ResultSetMetaData meta2(res->getMetaData());
+  ResultSetMetaData * meta2 = res->getMetaData();
   ASSERT_EQUALS(meta2->getTableName(1), "test");
 
   runStandardQuery();
-  ResultSetMetaData meta(res->getMetaData());
+  ResultSetMetaData * meta = res->getMetaData();
   for (i=1; i < 6; i++)
     ASSERT_EQUALS(meta->getTableName(i), "");
 
@@ -655,7 +655,7 @@ void resultsetmetadata::isAutoIncrement()
     logMsg("... Statement");
     res.reset(stmt->executeQuery("SELECT id, col1 FROM test"));
     checkResultSetScrolling(res);
-    ResultSetMetaData meta2(res->getMetaData());
+    ResultSetMetaData * meta2 = res->getMetaData();
     ASSERT_EQUALS(meta2->isAutoIncrement(1), true);
     ASSERT_EQUALS(meta2->isAutoIncrement(2), false);
 
@@ -666,7 +666,7 @@ void resultsetmetadata::isAutoIncrement()
     pstmt.reset(con->prepareStatement("SELECT id, col1 FROM test"));
     res.reset(pstmt->executeQuery());
     checkResultSetScrolling(res);
-    meta2.reset(res->getMetaData());
+    meta2 = (res->getMetaData());
     ASSERT_EQUALS(meta2->isAutoIncrement(1), true);
     ASSERT_EQUALS(meta2->isAutoIncrement(2), false);
 
@@ -686,7 +686,7 @@ void resultsetmetadata::doIsAutoIncrement(bool is_ps)
 {
   int i;
 
-  ResultSetMetaData meta(res->getMetaData());
+  ResultSetMetaData * meta = res->getMetaData();
   for (i=1; i < 6; i++)
     ASSERT_EQUALS(meta->isAutoIncrement(i), false);
 
@@ -728,7 +728,7 @@ void resultsetmetadata::isCaseSensitive()
     logMsg("... Statement");
     res.reset(stmt->executeQuery("SELECT id, col1, col2 FROM test"));
     checkResultSetScrolling(res);
-    ResultSetMetaData meta2(res->getMetaData());
+    ResultSetMetaData * meta2 = res->getMetaData();
     ASSERT_EQUALS(meta2->isCaseSensitive(1), false);
     ASSERT_EQUALS(meta2->isCaseSensitive(2), false);
     /*
@@ -749,7 +749,7 @@ void resultsetmetadata::isCaseSensitive()
     pstmt.reset(con->prepareStatement("SELECT id, col1, col2 FROM test"));
     res.reset(pstmt->executeQuery());
     checkResultSetScrolling(res);
-    meta2.reset(res->getMetaData());
+    meta2 = (res->getMetaData());
     ASSERT_EQUALS(meta2->isCaseSensitive(1), false);
     ASSERT_EQUALS(meta2->isCaseSensitive(2), false);
     /*
@@ -768,7 +768,7 @@ void resultsetmetadata::isCaseSensitive()
     stmt->execute("SET character_set_results=NULL");
     res.reset(stmt->executeQuery("SELECT id, col1, col2 FROM test"));
     checkResultSetScrolling(res);
-    meta2.reset(res->getMetaData());
+    meta2 = (res->getMetaData());
     ASSERT_EQUALS(meta2->isCaseSensitive(1), false);
     ASSERT_EQUALS(meta2->isCaseSensitive(2), false);
     ASSERT_EQUALS(meta2->isCaseSensitive(3), true);
@@ -783,7 +783,7 @@ void resultsetmetadata::isCaseSensitive()
     pstmt.reset(con->prepareStatement("SELECT id, col1, col2 FROM test"));
     res.reset(pstmt->executeQuery());
     checkResultSetScrolling(res);
-    meta2.reset(res->getMetaData());
+    meta2 = (res->getMetaData());
     ASSERT_EQUALS(meta2->isCaseSensitive(1), false);
     ASSERT_EQUALS(meta2->isCaseSensitive(2), false);
     ASSERT_EQUALS(meta2->isCaseSensitive(3), true);
@@ -803,7 +803,7 @@ void resultsetmetadata::isCaseSensitive()
 void resultsetmetadata::doIsCaseSensitive(bool is_ps)
 {
   int i;
-  ResultSetMetaData meta(res->getMetaData());
+  ResultSetMetaData * meta = res->getMetaData();
   for (i=1; i < 5; i++)
     ASSERT_EQUALS(meta->isCaseSensitive(i), false);
 
@@ -856,7 +856,7 @@ void resultsetmetadata::isCurrency()
 void resultsetmetadata::doIsCurrency(bool is_ps)
 {
   int i;
-  ResultSetMetaData meta(res->getMetaData());
+  ResultSetMetaData * meta = res->getMetaData();
   for (i=1; i < 6; i++)
     ASSERT_EQUALS(meta->isCurrency(i), false);
 
@@ -908,7 +908,7 @@ void resultsetmetadata::isDefinitelyWritable()
 void resultsetmetadata::doIsDefinitelyWritable(bool is_ps)
 {
   int i;
-  ResultSetMetaData meta(res->getMetaData());
+  ResultSetMetaData * meta = res->getMetaData();
   for (i=1; i < 6; i++)
   {
     ASSERT_EQUALS(meta->isDefinitelyWritable(i), false);
@@ -961,7 +961,7 @@ void resultsetmetadata::isNullable()
     logMsg("... Statement");
     res.reset(stmt->executeQuery("SELECT id, col1, col2 FROM test"));
     checkResultSetScrolling(res);
-    ResultSetMetaData meta2(res->getMetaData());
+    ResultSetMetaData * meta2 = res->getMetaData();
     ASSERT_EQUALS(meta2->isNullable(1), sql::ResultSetMetaData::columnNullable);
     ASSERT_EQUALS(meta2->isNullable(2), sql::ResultSetMetaData::columnNullable);
     ASSERT_EQUALS(meta2->isNullable(3), sql::ResultSetMetaData::columnNoNulls);
@@ -970,7 +970,7 @@ void resultsetmetadata::isNullable()
     pstmt.reset(con->prepareStatement("SELECT id, col1, col2 FROM test"));
     res.reset(pstmt->executeQuery());
     checkResultSetScrolling(res);
-    meta2.reset(res->getMetaData());
+    meta2 = (res->getMetaData());
     ASSERT_EQUALS(meta2->isNullable(1), sql::ResultSetMetaData::columnNullable);
     ASSERT_EQUALS(meta2->isNullable(2), sql::ResultSetMetaData::columnNullable);
     ASSERT_EQUALS(meta2->isNullable(3), sql::ResultSetMetaData::columnNoNulls);
@@ -988,7 +988,7 @@ void resultsetmetadata::isNullable()
 void resultsetmetadata::doIsNullable(bool is_ps)
 {
   int i;
-  ResultSetMetaData meta(res->getMetaData());
+  ResultSetMetaData * meta = res->getMetaData();
   for (i=1; i < 6; i++)
     ASSERT_EQUALS(meta->isNullable(i), sql::ResultSetMetaData::columnNoNulls);
 
@@ -1036,7 +1036,7 @@ void resultsetmetadata::isReadOnly()
     logMsg("... Statement");
     res.reset(stmt->executeQuery("SELECT id AS 'abc', col1, col2, 1 FROM test"));
     checkResultSetScrolling(res);
-    ResultSetMetaData meta2(res->getMetaData());
+    ResultSetMetaData * meta2 = res->getMetaData();
     ASSERT_EQUALS(meta2->isReadOnly(1), false);
     ASSERT_EQUALS(meta2->isReadOnly(2), false);
     ASSERT_EQUALS(meta2->isReadOnly(3), false);
@@ -1048,7 +1048,7 @@ void resultsetmetadata::isReadOnly()
       stmt->execute("CREATE VIEW v_test(col1, col2) AS SELECT id, id + 1 FROM test");
       res.reset(stmt->executeQuery("SELECT col1, col2 FROM v_test"));
       checkResultSetScrolling(res);
-      ResultSetMetaData meta3(res->getMetaData());
+      ResultSetMetaData * meta3 = res->getMetaData();
       ASSERT_EQUALS(meta3->isReadOnly(1), false);
       /* Expecting ERROR 1348 (HY000): Column 'col2' is not updatable */
       ASSERT_EQUALS(meta3->isReadOnly(2), true);
@@ -1062,7 +1062,7 @@ void resultsetmetadata::isReadOnly()
     pstmt.reset(con->prepareStatement("SELECT id AS 'abc', col1, col2, 1 FROM test"));
     res.reset(pstmt->executeQuery());
     checkResultSetScrolling(res);
-    meta2.reset(res->getMetaData());
+    meta2 = (res->getMetaData());
     ASSERT_EQUALS(meta2->isReadOnly(1), false);
     ASSERT_EQUALS(meta2->isReadOnly(2), false);
     ASSERT_EQUALS(meta2->isReadOnly(3), false);
@@ -1075,7 +1075,7 @@ void resultsetmetadata::isReadOnly()
       pstmt.reset(con->prepareStatement("SELECT col1, col2 FROM v_test"));
       res.reset(pstmt->executeQuery());
       checkResultSetScrolling(res);
-      ResultSetMetaData meta3(res->getMetaData());
+      ResultSetMetaData * meta3 = res->getMetaData();
       ASSERT_EQUALS(meta3->isReadOnly(1), false);
       /* Expecting ERROR 1348 (HY000): Column 'col2' is not updatable */
       ASSERT_EQUALS(meta3->isReadOnly(2), true);
@@ -1099,7 +1099,7 @@ void resultsetmetadata::isReadOnly()
 void resultsetmetadata::doIsReadOnly(bool is_ps)
 {
   int i;
-  ResultSetMetaData meta(res->getMetaData());
+  ResultSetMetaData * meta = res->getMetaData();
   for (i=1; i < 6; i++)
     ASSERT_EQUALS(meta->isReadOnly(i), true);
 
@@ -1151,7 +1151,7 @@ void resultsetmetadata::isSearchable()
 void resultsetmetadata::doIsSearchable(bool is_ps)
 {
   int i;
-  ResultSetMetaData meta(res->getMetaData());
+  ResultSetMetaData * meta = res->getMetaData();
   for (i=1; i < 6; i++)
     ASSERT_EQUALS(meta->isSearchable(i), true);
 
@@ -1183,8 +1183,8 @@ void resultsetmetadata::isSigned()
   logMsg("resultsetmetadata::isSigned() - MySQL_ResultSetMetaData::isSigned");
   std::stringstream sql;
   std::vector<columndefinition>::iterator it;
-  ResultSetMetaData meta_st;
-  ResultSetMetaData meta_ps;
+  ResultSetMetaData * meta_st;
+  ResultSetMetaData * meta_ps;
   ResultSet res_ps;
 
   try
@@ -1226,11 +1226,11 @@ void resultsetmetadata::isSigned()
 
       res.reset(stmt->executeQuery("SELECT col1 FROM test"));
       checkResultSetScrolling(res);
-      meta_st.reset(res->getMetaData());
+      meta_st = (res->getMetaData());
 
       pstmt.reset(con->prepareStatement("SELECT col1 FROM test"));
       res_ps.reset(pstmt->executeQuery());
-      meta_ps.reset(res_ps->getMetaData());
+      meta_ps = (res_ps->getMetaData());
 
       ASSERT_EQUALS(meta_st->isSigned(1), meta_ps->isSigned(1));
       ASSERT_EQUALS(it->is_signed, meta_st->isSigned(1));
@@ -1247,7 +1247,7 @@ void resultsetmetadata::isSigned()
 void resultsetmetadata::doIsSigned(bool is_ps)
 {
   int i;
-  ResultSetMetaData meta(res->getMetaData());
+  ResultSetMetaData * meta = res->getMetaData();
 
   for (i=1; i < 5; i++)
   {
@@ -1302,7 +1302,7 @@ void resultsetmetadata::isWritable()
 
 void resultsetmetadata::doIsWritable(bool is_ps)
 {
-  ResultSetMetaData meta(res->getMetaData());
+  ResultSetMetaData * meta = res->getMetaData();
   /* NOTE: isReadable covers isWritable */
   try
   {

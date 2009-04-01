@@ -43,6 +43,7 @@ MySQL_ResultSet::MySQL_ResultSet(MYSQL_RES_Wrapper * res, MySQL_Statement * par,
 		sql::mysql::util::my_array_guard< char > upstring(sql::mysql::util::utf8_strup(mysql_fetch_field_direct(result->get(), i)->name, 0));
 		field_name_to_index_map[std::string(upstring.get())] = i;
 	}
+	rs_meta.reset(new MySQL_ResultSetMetaData(result->getReference(), logger));
 }
 /* }}} */
 
@@ -491,7 +492,7 @@ MySQL_ResultSet::getMetaData() const
 {
 	CPP_ENTER("MySQL_ResultSet::getMetaData");
 	checkValid();
-	return new MySQL_ResultSetMetaData(result->getReference(), logger);
+	return rs_meta.get();
 }
 /* }}} */
 

@@ -707,8 +707,8 @@ void preparedstatement::getMetaData()
   std::stringstream sql;
   std::vector<columndefinition>::iterator it;
   stmt.reset(con->createStatement());
-  ResultSetMetaData meta_ps;
-  ResultSetMetaData meta_st;
+  ResultSetMetaData * meta_ps;
+  ResultSetMetaData * meta_st;
   ResultSet res_st;
   bool got_warning=false;
   unsigned int i;
@@ -742,10 +742,10 @@ void preparedstatement::getMetaData()
 
       pstmt.reset(con->prepareStatement("SELECT id, dummy, NULL, -1.1234, 'Warum nicht...' FROM test"));
       res.reset(pstmt->executeQuery());
-      meta_ps.reset(res->getMetaData());
+      meta_ps = res->getMetaData();
 
       res_st.reset(stmt->executeQuery("SELECT id, dummy, NULL, -1.1234, 'Warum nicht...' FROM test"));
-      meta_st.reset(res->getMetaData());
+      meta_st = res->getMetaData();
 
       ASSERT_EQUALS(meta_ps->getColumnCount(), meta_st->getColumnCount());
 
@@ -813,7 +813,7 @@ void preparedstatement::callSP()
       return;
     }
 
-    sql::DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta = con->getMetaData();
 
     pstmt.reset(con->prepareStatement("CREATE PROCEDURE p(OUT ver_param VARCHAR(25)) BEGIN SELECT VERSION() INTO ver_param; END;"));
     ASSERT(!pstmt->execute());
