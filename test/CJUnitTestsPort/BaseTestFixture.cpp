@@ -727,7 +727,7 @@ void BaseTestFixture::setUp()
 	  DatabaseMetaData meta(this->conn->getMetaData());
     tmp.append( meta->getDatabaseProductName() );
     tmp.append( " / " );
-    tmp.append( conn->getMetaData()->getDatabaseProductVersion() );
+    tmp.append( meta->getDatabaseProductVersion() );
 
     logDebug( tmp );
   }
