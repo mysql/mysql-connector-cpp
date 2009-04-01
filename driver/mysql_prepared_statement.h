@@ -33,7 +33,7 @@ class MySQL_Prepared_Statement : public sql::PreparedStatement
 protected:
 	sql::Connection *connection;
 	MYSQL_STMT *stmt;
-	MySQL_ParamBind *param_bind;
+	std::auto_ptr< MySQL_ParamBind > param_bind;
 	unsigned int param_count;
 
 	int resultSetConcurrency;

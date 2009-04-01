@@ -172,7 +172,7 @@ MySQL_Prepared_Statement::MySQL_Prepared_Statement(MYSQL_STMT *s, sql::Connectio
 	CPP_ENTER("MySQL_Prepared_Statement::MySQL_Prepared_Statement");
 	CPP_INFO_FMT("this=%p", this);
 	param_count = mysql_stmt_param_count(s);
-	param_bind = new MySQL_ParamBind(param_count);
+	param_bind.reset(new MySQL_ParamBind(param_count));
 
 	result_bind = NULL;
 	is_null = NULL;
@@ -1146,8 +1146,6 @@ MySQL_Prepared_Statement::closeIntern()
 	CPP_ENTER("MySQL_Prepared_Statement::closeIntern");
 	mysql_stmt_close(stmt);
 	clearParameters();
-
-	delete param_bind;
 
 	for (unsigned int i = 0; i < num_fields; ++i) {
 		delete [] static_cast<char *>(result_bind[i].buffer);
