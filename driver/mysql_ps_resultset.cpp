@@ -23,6 +23,7 @@
 #include "mysql_resultset.h"
 #include "mysql_prepared_statement.h"
 #include "mysql_ps_resultset_metadata.h"
+#include "mysql_resultbind.h"
 
 
 #include "mysql_debug.h"
@@ -61,10 +62,17 @@ static inline char * my_f_to_a(char * buf, size_t buf_size, double a)
 
 
 /* {{{ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet() -I- */
-MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(MYSQL_STMT *s, MySQL_Prepared_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
-	: row(NULL), stmt(s), row_position(0), parent(par), is_valid(true), logger(l? l->getReference():NULL)
+MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
+			MYSQL_STMT * s,
+			MySQL_ResultBind * r_bind,
+			MySQL_Prepared_Statement * par,
+			sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l
+		)
+	: row(NULL), stmt(s), row_position(0), parent(par), is_valid(true), logger(l? l->getReference():NULL), result_bind(r_bind)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet");
+	result_bind->bindResult();
+
 	MYSQL_RES * result_meta = mysql_stmt_result_metadata(stmt);
 	num_fields = mysql_stmt_field_count(stmt);
 	num_rows = mysql_stmt_num_rows(stmt);
@@ -339,7 +347,7 @@ MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
 
 	last_queried_column = columnIndex;
 
-	if (*stmt->bind[columnIndex - 1].is_null) {
+	if (*result_bind->rbind[columnIndex - 1].is_null) {
 		return 0.0;
 	}
 
@@ -353,7 +361,7 @@ MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
 		case sql::DataType::BIGINT:
 		{
 			long double ret;
-			bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned != 0;
+			bool is_it_unsigned = result_bind->rbind[columnIndex - 1].is_unsigned != 0;
 			CPP_INFO_FMT("It's an int : %ssigned", is_it_unsigned? "un":"");
 			if (is_it_unsigned) {
 				uint64_t ival = getUInt64_intern(columnIndex, false);
@@ -388,13 +396,13 @@ MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
 		}
 		case sql::DataType::REAL:
 		{
-			long double ret = !*stmt->bind[columnIndex - 1].is_null? *reinterpret_cast<float *>(stmt->bind[columnIndex - 1].buffer):0.;
+			long double ret = !*result_bind->rbind[columnIndex - 1].is_null? *reinterpret_cast<float *>(result_bind->rbind[columnIndex - 1].buffer):0.;
 			CPP_INFO_FMT("value=%10.10f", ret);
 			return ret;
 		}
 		case sql::DataType::DOUBLE:
 		{
-			long double ret = !*stmt->bind[columnIndex - 1].is_null? *reinterpret_cast<double *>(stmt->bind[columnIndex - 1].buffer):0.;
+			long double ret = !*result_bind->rbind[columnIndex - 1].is_null? *reinterpret_cast<double *>(result_bind->rbind[columnIndex - 1].buffer):0.;
 			CPP_INFO_FMT("value=%10.10f", ret);
 			return ret;
 		}
@@ -470,7 +478,7 @@ MySQL_Prepared_ResultSet::getInt(const uint32_t columnIndex) const
 
 	last_queried_column = columnIndex;
 
-	if (*stmt->bind[columnIndex - 1].is_null) {
+	if (*result_bind->rbind[columnIndex - 1].is_null) {
 		return 0;
 	}
 	
@@ -505,7 +513,7 @@ MySQL_Prepared_ResultSet::getUInt(const uint32_t columnIndex) const
 
 	last_queried_column = columnIndex;
 
-	if (*stmt->bind[columnIndex - 1].is_null) {
+	if (*result_bind->rbind[columnIndex - 1].is_null) {
 		return 0;
 	}
 	return static_cast<uint32_t>(getUInt64_intern(columnIndex, true));
@@ -559,48 +567,48 @@ MySQL_Prepared_ResultSet::getInt64_intern(const uint32_t columnIndex, bool /* cu
 		case sql::DataType::BIGINT: {
 			// sql::DataType::YEAR is fetched as a SMALLINT, thus should not be in the switch
 			int64_t ret;
-			bool is_it_null = *stmt->bind[columnIndex - 1].is_null != 0;
-			bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned != 0;
+			bool is_it_null = *result_bind->rbind[columnIndex - 1].is_null != 0;
+			bool is_it_unsigned = result_bind->rbind[columnIndex - 1].is_unsigned != 0;
 
-			CPP_INFO_FMT("%d byte, %ssigned, null=%d", stmt->bind[columnIndex - 1].buffer_length, is_it_unsigned? "un":"", is_it_null);
-			switch (stmt->bind[columnIndex - 1].buffer_length) {
+			CPP_INFO_FMT("%d byte, %ssigned, null=%d", result_bind->rbind[columnIndex - 1].buffer_length, is_it_unsigned? "un":"", is_it_null);
+			switch (result_bind->rbind[columnIndex - 1].buffer_length) {
 				case 1:
 					if (is_it_unsigned) {
 						// ToDo: Really reinterpret_case or static_cast
-						ret = !is_it_null? *reinterpret_cast<uint8_t *>(stmt->bind[columnIndex - 1].buffer):0;
+						ret = !is_it_null? *reinterpret_cast<uint8_t *>(result_bind->rbind[columnIndex - 1].buffer):0;
 					} else {
 						// ToDo: Really reinterpret_case or static_cast
-						ret = !is_it_null? *reinterpret_cast<int8_t *>(stmt->bind[columnIndex - 1].buffer):0;
+						ret = !is_it_null? *reinterpret_cast<int8_t *>(result_bind->rbind[columnIndex - 1].buffer):0;
 					}
 					break;
 				case 2:
 					if (is_it_unsigned) {
-						ret = !is_it_null? *reinterpret_cast<uint16_t *>(stmt->bind[columnIndex - 1].buffer):0;
+						ret = !is_it_null? *reinterpret_cast<uint16_t *>(result_bind->rbind[columnIndex - 1].buffer):0;
 					} else {
-						ret = !is_it_null? *reinterpret_cast<int16_t *>(stmt->bind[columnIndex - 1].buffer):0;
+						ret = !is_it_null? *reinterpret_cast<int16_t *>(result_bind->rbind[columnIndex - 1].buffer):0;
 					}
 					break;
 				case 4:
 					if (is_it_unsigned) {
-						ret =  !is_it_null? *reinterpret_cast<uint32_t *>(stmt->bind[columnIndex - 1].buffer):0;
+						ret =  !is_it_null? *reinterpret_cast<uint32_t *>(result_bind->rbind[columnIndex - 1].buffer):0;
 					} else {
-						ret =  !is_it_null? *reinterpret_cast<int32_t *>(stmt->bind[columnIndex - 1].buffer):0;
+						ret =  !is_it_null? *reinterpret_cast<int32_t *>(result_bind->rbind[columnIndex - 1].buffer):0;
 					}
 					break;
 				case 8:
 					if (is_it_unsigned) {
-						ret =  !is_it_null? *reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer):0;
+						ret =  !is_it_null? *reinterpret_cast<uint64_t *>(result_bind->rbind[columnIndex - 1].buffer):0;
 
 #if WE_WANT_TO_SEE_MORE_FAILURES_IN_UNIT_RESULTSET
 						if (cutTooBig &&
 							ret &&
-							*reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer) > UL64(9223372036854775807))
+							*reinterpret_cast<uint64_t *>(result_bind->rbind[columnIndex - 1].buffer) > UL64(9223372036854775807))
 						{
 							ret = UL64(9223372036854775807);
 						}
 #endif
 					} else {
-						ret =  !is_it_null? *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer):0;
+						ret =  !is_it_null? *reinterpret_cast<int64_t *>(result_bind->rbind[columnIndex - 1].buffer):0;
 					}
 					break;
 				default:
@@ -637,7 +645,7 @@ MySQL_Prepared_ResultSet::getInt64(const uint32_t columnIndex) const
 
 	last_queried_column = columnIndex;
 
-	if (*stmt->bind[columnIndex - 1].is_null) {
+	if (*result_bind->rbind[columnIndex - 1].is_null) {
 		return 0;
 	}
 	return getInt64_intern(columnIndex, true);
@@ -693,45 +701,45 @@ MySQL_Prepared_ResultSet::getUInt64_intern(const uint32_t columnIndex, bool /* c
 			// sql::DataType::YEAR is fetched as a SMALLINT, thus should not be in the switch
 
 			uint64_t ret;
-			bool is_it_null = *stmt->bind[columnIndex - 1].is_null != 0;
-			bool is_it_unsigned = stmt->bind[columnIndex - 1].is_unsigned != 0;
+			bool is_it_null = *result_bind->rbind[columnIndex - 1].is_null != 0;
+			bool is_it_unsigned = result_bind->rbind[columnIndex - 1].is_unsigned != 0;
 
-			CPP_INFO_FMT("%d byte, %ssigned, null=%d", stmt->bind[columnIndex - 1].buffer_length, is_it_unsigned? "un":"", is_it_null);
-			switch (stmt->bind[columnIndex - 1].buffer_length) {
+			CPP_INFO_FMT("%d byte, %ssigned, null=%d", result_bind->rbind[columnIndex - 1].buffer_length, is_it_unsigned? "un":"", is_it_null);
+			switch (result_bind->rbind[columnIndex - 1].buffer_length) {
 				case 1:
 					if (is_it_unsigned) {
 						// ToDo: Really reinterpret_case or static_cast
-						ret = !is_it_null? *reinterpret_cast<uint8_t *>(stmt->bind[columnIndex - 1].buffer):0;
+						ret = !is_it_null? *reinterpret_cast<uint8_t *>(result_bind->rbind[columnIndex - 1].buffer):0;
 					} else {
 						// ToDo: Really reinterpret_case or static_cast
-						ret = !is_it_null? *reinterpret_cast<int8_t *>(stmt->bind[columnIndex - 1].buffer):0;
+						ret = !is_it_null? *reinterpret_cast<int8_t *>(result_bind->rbind[columnIndex - 1].buffer):0;
 					}
 					break;
 				case 2:
 					if (is_it_unsigned) {
-						ret = !is_it_null? *reinterpret_cast<uint16_t *>(stmt->bind[columnIndex - 1].buffer):0;
+						ret = !is_it_null? *reinterpret_cast<uint16_t *>(result_bind->rbind[columnIndex - 1].buffer):0;
 					} else {
-						ret = !is_it_null? *reinterpret_cast<int16_t *>(stmt->bind[columnIndex - 1].buffer):0;
+						ret = !is_it_null? *reinterpret_cast<int16_t *>(result_bind->rbind[columnIndex - 1].buffer):0;
 					}
 					break;
 				case 4:
 					if (is_it_unsigned) {
-						ret =  !is_it_null? *reinterpret_cast<uint32_t *>(stmt->bind[columnIndex - 1].buffer):0;
+						ret =  !is_it_null? *reinterpret_cast<uint32_t *>(result_bind->rbind[columnIndex - 1].buffer):0;
 					} else {
-						ret =  !is_it_null? *reinterpret_cast<int32_t *>(stmt->bind[columnIndex - 1].buffer):0;
+						ret =  !is_it_null? *reinterpret_cast<int32_t *>(result_bind->rbind[columnIndex - 1].buffer):0;
 					}
 					break;
 				case 8:
 					if (is_it_unsigned) {
-						ret =  !is_it_null? *reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer):0;
+						ret =  !is_it_null? *reinterpret_cast<uint64_t *>(result_bind->rbind[columnIndex - 1].buffer):0;
 					} else {
-						ret =  !is_it_null? *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer):0;				
+						ret =  !is_it_null? *reinterpret_cast<int64_t *>(result_bind->rbind[columnIndex - 1].buffer):0;				
 #if WE_WANT_TO_SEE_MORE_FAILURES_IN_UNIT_RESULTSET
 						if (is_it_null) {
-							if (cutTooBig && *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer) < 0) {
-								ret =  *reinterpret_cast<uint64_t *>(stmt->bind[columnIndex - 1].buffer);				
+							if (cutTooBig && *reinterpret_cast<int64_t *>(result_bind->rbind[columnIndex - 1].buffer) < 0) {
+								ret =  *reinterpret_cast<uint64_t *>(result_bind->rbind[columnIndex - 1].buffer);				
 							} else {
-								ret =  *reinterpret_cast<int64_t *>(stmt->bind[columnIndex - 1].buffer);				
+								ret =  *reinterpret_cast<int64_t *>(result_bind->rbind[columnIndex - 1].buffer);				
 							}
 						} else {
 							ret = 0;
@@ -773,7 +781,7 @@ MySQL_Prepared_ResultSet::getUInt64(const uint32_t columnIndex) const
 
 	last_queried_column = columnIndex;
 
-	if (*stmt->bind[columnIndex - 1].is_null) {
+	if (*result_bind->rbind[columnIndex - 1].is_null) {
 		return 0;
 	}
 	return getUInt64_intern(columnIndex, true);
@@ -865,7 +873,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 	}
 
 	last_queried_column = columnIndex;
-	if (*stmt->bind[columnIndex - 1].is_null) {
+	if (*result_bind->rbind[columnIndex - 1].is_null) {
 		return std::string("");
 	}
 
@@ -873,7 +881,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 		case sql::DataType::TIMESTAMP:
 		{
 			char buf[22];
-			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(stmt->bind[columnIndex - 1].buffer);
+			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(result_bind->rbind[columnIndex - 1].buffer);
 			snprintf(buf, sizeof(buf) - 1, "%04d-%02d-%02d %02d:%02d:%02d", t->year, t->month, t->day, t->hour, t->minute, t->second);
 			CPP_INFO_FMT("It's a datetime/timestamp %s", buf);
 			return std::string(buf);
@@ -881,7 +889,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 		case sql::DataType::DATE:
 		{
 			char buf[12];
-			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(stmt->bind[columnIndex - 1].buffer);
+			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(result_bind->rbind[columnIndex - 1].buffer);
 			snprintf(buf, sizeof(buf) - 1, "%02d-%02d-%02d", t->year, t->month, t->day);
 			CPP_INFO_FMT("It's a date %s", buf);
 			return std::string(buf);
@@ -889,7 +897,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 		case sql::DataType::TIME:
 		{
 			char buf[12];
-			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(stmt->bind[columnIndex - 1].buffer);
+			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(result_bind->rbind[columnIndex - 1].buffer);
 			snprintf(buf, sizeof(buf) - 1, "%s%02d:%02d:%02d", t->neg? "-":"", t->hour, t->minute, t->second);
 			CPP_INFO_FMT("It's a time %s", buf);
 			return std::string(buf);
@@ -904,7 +912,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 		{
 			char buf[30];
 			CPP_INFO("It's an int");
-			if (stmt->bind[columnIndex - 1].is_unsigned) {
+			if (result_bind->rbind[columnIndex - 1].is_unsigned) {
 				my_ul_to_a(buf, sizeof(buf) - 1, getUInt64_intern(columnIndex, false));
 			} else {
 				my_l_to_a(buf, sizeof(buf) - 1, getInt64_intern(columnIndex, false));			
@@ -930,7 +938,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 		case sql::DataType::SET:
 		case sql::DataType::ENUM:
 			CPP_INFO("It's a string");
-			return  std::string(static_cast<char *>(stmt->bind[columnIndex - 1].buffer), *stmt->bind[columnIndex - 1].length);
+			return  std::string(static_cast<char *>(result_bind->rbind[columnIndex - 1].buffer), *result_bind->rbind[columnIndex - 1].length);
 		default:
 			break;		
 		// ToDo : Geometry? default ?
@@ -1041,7 +1049,7 @@ MySQL_Prepared_ResultSet::isNull(const uint32_t columnIndex) const
 	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::isNull: can't fetch because not on result set");
 	}
-	return *stmt->bind[columnIndex - 1].is_null != 0;
+	return *result_bind->rbind[columnIndex - 1].is_null != 0;
 }
 /* }}} */
 
@@ -1252,7 +1260,7 @@ MySQL_Prepared_ResultSet::wasNull() const
 	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::wasNull: can't fetch because not on result set");
 	}
-	return *stmt->bind[last_queried_column - 1].is_null != 0;
+	return *result_bind->rbind[last_queried_column - 1].is_null != 0;
 }
 /* }}} */
 

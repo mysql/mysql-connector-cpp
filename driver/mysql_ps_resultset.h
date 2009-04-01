@@ -24,6 +24,7 @@ namespace util {template<class T> class my_shared_ptr; }; // forward declaration
 class MySQL_Prepared_Statement;
 class MySQL_DebugLogger;
 class MySQL_Prepared_ResultSetMetaData;
+class MySQL_ResultBind;
 
 class MySQL_Prepared_ResultSet : public sql::ResultSet
 {
@@ -49,6 +50,7 @@ private:
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 
 	std::auto_ptr< MySQL_Prepared_ResultSetMetaData > rs_meta;
+	std::auto_ptr< MySQL_ResultBind > result_bind;
 
 protected:
 	void checkValid() const;
@@ -60,7 +62,7 @@ protected:
 	uint64_t getUInt64_intern(const uint32_t columnIndex, bool cutTooBig) const;
 
 public:
-	MySQL_Prepared_ResultSet(MYSQL_STMT *s, MySQL_Prepared_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
+	MySQL_Prepared_ResultSet(MYSQL_STMT *s, MySQL_ResultBind * r_bind, MySQL_Prepared_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
 
 	virtual ~MySQL_Prepared_ResultSet();
 

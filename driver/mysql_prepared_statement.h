@@ -27,12 +27,13 @@ class MySQL_DebugLogger;
 class MySQL_ParamBind;
 class MySQL_ParameterMetaData;
 class MySQL_Prepared_ResultSetMetaData;
+class MySQL_ResultBind;
 
 class MySQL_Prepared_Statement : public sql::PreparedStatement
 {
 protected:
-	sql::Connection *connection;
-	MYSQL_STMT *stmt;
+	sql::Connection * connection;
+	MYSQL_STMT * stmt;
 	std::auto_ptr< MySQL_ParamBind > param_bind;
 	unsigned int param_count;
 
@@ -43,22 +44,14 @@ protected:
 
 	bool isClosed;
 
-	virtual void do_query();
-	virtual void checkClosed();
-	virtual void closeIntern();
-
-	virtual void bindResult();
-
-	unsigned int num_fields;
-	my_bool *is_null;
-	my_bool *err;
-	unsigned long *len;
-	MYSQL_BIND *result_bind;
-
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 
 	std::auto_ptr< MySQL_Prepared_ResultSetMetaData > res_meta;
 	std::auto_ptr< MySQL_ParameterMetaData > param_meta;
+
+	virtual void do_query();
+	virtual void checkClosed();
+	virtual void closeIntern();
 
 	bool sendLongDataBeforeParamBind();
 	void setBlob_intern(unsigned int parameterIndex, std::istream * blob, bool deleteBlobAfterExecute);

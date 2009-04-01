@@ -118,11 +118,16 @@ protected:
 
 
 template<typename T>
-struct my_array_guard
+class my_array_guard
 {
 	T * ptr;
+public:
 	my_array_guard(T * p) : ptr(p) {}
-	T * get() { return ptr; }
+	void reset(T * p) { delete [] ptr; ptr = p; }
+	T * get() const { return ptr; }
+	T* operator->() const { return ptr; }
+	T& operator[](size_t i) const { return ptr[i]; }
+	
 	~my_array_guard() { delete [] ptr; }
 };
 

@@ -13,7 +13,7 @@
 #include "driver/mysql_public_iface.h"
 #include <string>
 
-int loops = 2;
+int loops = 1;
 
 /* {{{	*/
 static sql::Connection *

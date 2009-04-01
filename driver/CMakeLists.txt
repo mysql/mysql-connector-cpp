@@ -30,6 +30,7 @@ SET(MYSQLCPPCONN_SOURCES
 	mysql_prepared_statement.cpp
 	mysql_ps_resultset.cpp
 	mysql_ps_resultset_metadata.cpp
+	mysql_resultbind.cpp
 	mysql_resultset.cpp
 	mysql_resultset_metadata.cpp
 	mysql_res_wrapper.cpp
@@ -52,6 +53,7 @@ IF(WIN32)
 		mysql_prepared_statement.h
 		mysql_ps_resultset.h
 		mysql_ps_resultset_metadata.h
+		mysql_resultbind.h
 		mysql_resultset.h
 		mysql_resultset_metadata.h
 		mysql_res_wrapper.h

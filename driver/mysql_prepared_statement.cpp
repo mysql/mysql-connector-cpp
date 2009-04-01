@@ -10,7 +10,6 @@
 */
 #include <string.h>
 #include <stdlib.h>
-#include <memory>
 #include <iostream>
 #include <sstream>
 #include <cppconn/exception.h>
@@ -22,6 +21,7 @@
 #include "mysql_ps_resultset_metadata.h"
 #include "mysql_parameter_metadata.h"
 #include "mysql_warning.h"
+#include "mysql_resultbind.h"
 
 
 #define mysql_stmt_conn(s) (s)->mysql
@@ -35,20 +35,6 @@ namespace sql
 namespace mysql
 {
 
-
-class MySQL_AutoResultSet
-{
-	MYSQL_RES * result;
-public:
-	MySQL_AutoResultSet(MYSQL_RES * res) : result(res) {}
-	~MySQL_AutoResultSet() { mysql_free_result(result); }
-
-	MYSQL_RES * get() const throw() { return result; }
-private:
-	/* Prevent use of these */
-	MySQL_AutoResultSet(const MySQL_AutoResultSet &);
-	void operator=(MySQL_AutoResultSet &);
-};
 
 
 class MySQL_ParamBind
@@ -165,6 +151,7 @@ public:
 };
 
 
+
 /* {{{ MySQL_Prepared_Statement::MySQL_Prepared_Statement() -I- */
 MySQL_Prepared_Statement::MySQL_Prepared_Statement(MYSQL_STMT *s, sql::Connection * conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * log)
 	:connection(conn), stmt(s), isClosed(false), logger(log? log->getReference():NULL)
@@ -173,12 +160,6 @@ MySQL_Prepared_Statement::MySQL_Prepared_Statement(MYSQL_STMT *s, sql::Connectio
 	CPP_INFO_FMT("this=%p", this);
 	param_count = mysql_stmt_param_count(s);
 	param_bind.reset(new MySQL_ParamBind(param_count));
-
-	result_bind = NULL;
-	is_null = NULL;
-	err = NULL;
-	len = NULL;
-	num_fields = 0;
 
 	res_meta.reset(new MySQL_Prepared_ResultSetMetaData(stmt, logger));
 	param_meta.reset(new MySQL_ParameterMetaData(stmt));
@@ -318,131 +299,6 @@ MySQL_Prepared_Statement::execute(const std::string&)
 /* }}} */
 
 
-struct st_buffer_size_type
-{
-	char * buffer;
-	size_t size;
-	enum_field_types type;
-	st_buffer_size_type(char * b, size_t s, enum_field_types t) : buffer(b), size(s), type(t) {}
-};
-
-typedef std::pair<char *, size_t> BufferSizePair;
-static struct st_buffer_size_type
-allocate_buffer_for_field(const MYSQL_FIELD * const field)
-{
-	switch (field->type) {
-		case MYSQL_TYPE_NULL:
-			return st_buffer_size_type(NULL, 0, field->type);
-		case MYSQL_TYPE_TINY:
-			return st_buffer_size_type(new char[1], 1, field->type);
-		case MYSQL_TYPE_SHORT:
-			return st_buffer_size_type(new char[2], 2, field->type);
-		case MYSQL_TYPE_INT24:
-		case MYSQL_TYPE_LONG:
-		case MYSQL_TYPE_FLOAT:
-			return st_buffer_size_type(new char[4], 4, field->type);
-		case MYSQL_TYPE_DOUBLE:
-		case MYSQL_TYPE_LONGLONG:
-			return st_buffer_size_type(new char[8], 8, field->type);
-		case MYSQL_TYPE_YEAR:
-			return st_buffer_size_type(new char[2], 2, MYSQL_TYPE_SHORT);
-		case MYSQL_TYPE_TIMESTAMP:
-		case MYSQL_TYPE_DATE:
-		case MYSQL_TYPE_TIME:
-		case MYSQL_TYPE_DATETIME:
-			return st_buffer_size_type(new char[sizeof(MYSQL_TIME)], sizeof(MYSQL_TIME), field->type);
-#if A0
-		// There three are not sent over the wire
-		case MYSQL_TYPE_TINY_BLOB:
-		case MYSQL_TYPE_MEDIUM_BLOB:
-		case MYSQL_TYPE_LONG_BLOB:
-#endif
-		case MYSQL_TYPE_BLOB:
-		case MYSQL_TYPE_STRING:
-		case MYSQL_TYPE_VAR_STRING:
-			return st_buffer_size_type(new char[field->max_length + 1], field->max_length + 1, field->type);
-
-		case MYSQL_TYPE_DECIMAL:
-		case MYSQL_TYPE_NEWDECIMAL:
-			return st_buffer_size_type(new char[64], 64, field->type);
-#if A1
-		case MYSQL_TYPE_TIMESTAMP:
-		case MYSQL_TYPE_YEAR:
-			return st_buffer_size_type(new char[10], 10, field->type);
-#endif
-#if A0
-		// There two are not sent over the wire
-		case MYSQL_TYPE_ENUM:
-		case MYSQL_TYPE_SET:
-#endif
-		case MYSQL_TYPE_BIT:
-			return st_buffer_size_type(new char[8], 8, MYSQL_TYPE_LONGLONG);
-		case MYSQL_TYPE_GEOMETRY:
-		default:
-			printf("TYPE=%d\n", field->type);
-			throw sql::InvalidArgumentException("allocate_buffer_for_field: invalid result_bind data type");
-	}
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_Statement::bindResult() -I- */
-void
-MySQL_Prepared_Statement::bindResult()
-{
-	CPP_ENTER("MySQL_Prepared_Statement::bindResult");
-	for (unsigned int i = 0; i < num_fields; ++i) {
-		delete[] (char *) result_bind[i].buffer;
-	}
-	delete[] result_bind;
-	delete[] is_null;
-	delete[] err;
-	delete[] len;
-
-	result_bind = NULL;
-	is_null = NULL;
-	err = NULL;
-	len = NULL;
-
-	num_fields = mysql_stmt_field_count(stmt);
-	result_bind = new MYSQL_BIND[num_fields];
-	memset(result_bind, 0, sizeof(MYSQL_BIND) * num_fields);
-
-	is_null = new my_bool[num_fields];
-	memset(is_null, 0, sizeof(my_bool) * num_fields);
-
-	err = new my_bool[num_fields];
-	memset(err, 0, sizeof(my_bool) * num_fields);
-
-	len = new unsigned long[num_fields];
-	memset(len, 0, sizeof(unsigned long) * num_fields);
-
-	my_bool	tmp=1;
-	mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, &tmp);
-	mysql_stmt_store_result(stmt);
-
-	MySQL_AutoResultSet resultMetaGuard(mysql_stmt_result_metadata(stmt));
-	MYSQL_RES * result_meta = resultMetaGuard.get();
-	for (unsigned int i = 0; i < num_fields; ++i) {
-		MYSQL_FIELD * field = mysql_fetch_field(result_meta);
-
-		struct st_buffer_size_type p = allocate_buffer_for_field(field);
-		result_bind[i].buffer_type	= p.type;
-		result_bind[i].buffer		= p.buffer;
-		result_bind[i].buffer_length= static_cast<unsigned long>(p.size);
-		result_bind[i].length		= &len[i];
-		result_bind[i].is_null		= &is_null[i];
-		result_bind[i].error		= &err[i];
-		result_bind[i].is_unsigned = field->flags & UNSIGNED_FLAG;
-	}
-	if (mysql_stmt_bind_result(stmt, result_bind)) {
-		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", mysql_stmt_errno(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_error(stmt));
-		throw sql::SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
-	}
-}
-/* }}} */
-
-
 /* {{{ MySQL_Prepared_Statement::executeQuery() -I- */
 sql::ResultSet *
 MySQL_Prepared_Statement::executeQuery()
@@ -452,10 +308,12 @@ MySQL_Prepared_Statement::executeQuery()
 	checkClosed();
 
 	do_query();
+	
+	std::auto_ptr< MySQL_ResultBind > result_bind(new MySQL_ResultBind(stmt, logger));
+	
+	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, result_bind.get(), this, logger);
+	result_bind.release();
 
-	bindResult();
-
-	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, this, logger);
 	CPP_INFO_FMT("rset=%p", tmp);
 	return tmp;
 }
@@ -569,7 +427,7 @@ MySQL_Prepared_Statement::setDateTime(unsigned int parameterIndex, const std::st
 }
 /* }}} */
 
-
+typedef std::pair<char *, size_t> BufferSizePair;
 static BufferSizePair
 allocate_buffer_for_type(enum_field_types t)
 {
@@ -944,10 +802,13 @@ MySQL_Prepared_Statement::getResultSet()
 	if (mysql_more_results(mysql_stmt_conn(stmt))) {
 		mysql_next_result(mysql_stmt_conn(stmt));
 	}
-	bindResult();
 
-	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, this, logger);
+	std::auto_ptr< MySQL_ResultBind > result_bind(new MySQL_ResultBind(stmt, logger));
+
+	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, result_bind.get(), this, logger);
+	result_bind.release();
 	CPP_INFO_FMT("rset=%p", tmp);
+
 	return tmp;
 }
 /* }}} */
@@ -1146,14 +1007,6 @@ MySQL_Prepared_Statement::closeIntern()
 	CPP_ENTER("MySQL_Prepared_Statement::closeIntern");
 	mysql_stmt_close(stmt);
 	clearParameters();
-
-	for (unsigned int i = 0; i < num_fields; ++i) {
-		delete [] static_cast<char *>(result_bind[i].buffer);
-	}
-	delete[] result_bind;
-	delete[] is_null;
-	delete[] err;
-	delete[] len;
 
 	isClosed = true;
 }
