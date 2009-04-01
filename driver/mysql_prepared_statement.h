@@ -25,6 +25,8 @@ namespace mysql
 namespace util {template<class T> class my_shared_ptr; }; // forward declaration.
 class MySQL_DebugLogger;
 class MySQL_ParamBind;
+class MySQL_ParameterMetaData;
+class MySQL_Prepared_ResultSetMetaData;
 
 class MySQL_Prepared_Statement : public sql::PreparedStatement
 {
@@ -54,6 +56,9 @@ protected:
 	MYSQL_BIND *result_bind;
 
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
+
+	std::auto_ptr< MySQL_Prepared_ResultSetMetaData > res_meta;
+	std::auto_ptr< MySQL_ParameterMetaData > param_meta;
 
 	bool sendLongDataBeforeParamBind();
 	void setBlob_intern(unsigned int parameterIndex, std::istream * blob, bool deleteBlobAfterExecute);

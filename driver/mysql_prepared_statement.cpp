@@ -179,6 +179,9 @@ MySQL_Prepared_Statement::MySQL_Prepared_Statement(MYSQL_STMT *s, sql::Connectio
 	err = NULL;
 	len = NULL;
 	num_fields = 0;
+
+	res_meta.reset(new MySQL_Prepared_ResultSetMetaData(stmt, logger));
+	param_meta.reset(new MySQL_ParameterMetaData(stmt));
 }
 /* }}} */
 
@@ -914,7 +917,7 @@ MySQL_Prepared_Statement::getMetaData()
 	CPP_ENTER("MySQL_Prepared_Statement::getMetaData");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	return new MySQL_Prepared_ResultSetMetaData(stmt, logger);
+	return res_meta.get();
 }
 /* }}} */
 
@@ -926,7 +929,7 @@ MySQL_Prepared_Statement::getParameterMetaData()
 	CPP_ENTER("MySQL_Prepared_Statement::getParameterMetaData");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	return new MySQL_ParameterMetaData(stmt);
+	return param_meta.get();
 }
 /* }}} */
 

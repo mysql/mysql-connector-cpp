@@ -29,12 +29,12 @@ namespace classes
 void parametermetadata::getMeta()
 {
   logMsg("parametermetadata::InsertSelectAllTypes() - MySQL_ParameterMetaData::*");
-  ParameterMetaData parameta;
+  ParameterMetaData * parameta;
 
   try
   {
     pstmt.reset(con->prepareStatement("SELECT 1"));
-    parameta.reset(pstmt->getParameterMetaData());
+    parameta = pstmt->getParameterMetaData();
     pstmt->close();
   }
   catch (sql::SQLException &e)
@@ -58,12 +58,12 @@ void parametermetadata::getMeta()
 void parametermetadata::getParameterCount()
 {
   logMsg("parametermetadata::getParameterCount() - MySQL_ParameterMetaData::getParameterCount");
-  ParameterMetaData parameta;
+  ParameterMetaData * parameta;
 
   try
   {
     pstmt.reset(con->prepareStatement("SELECT 1"));
-    parameta.reset(pstmt->getParameterMetaData());
+    parameta = (pstmt->getParameterMetaData());
     parameta->getParameterCount();
     pstmt->close();
   }
@@ -89,12 +89,12 @@ void parametermetadata::getParameterCount()
 void parametermetadata::notImplemented()
 {
   logMsg("parametermetadata::notImplemented() - MySQL_ParameterMetaData::*");
-  ParameterMetaData parameta;
+  ParameterMetaData * parameta;
 
   try
   {
     pstmt.reset(con->prepareStatement("SELECT 1"));
-    parameta.reset(pstmt->getParameterMetaData());
+    parameta = (pstmt->getParameterMetaData());
   }
   catch (sql::SQLException &e)
   {

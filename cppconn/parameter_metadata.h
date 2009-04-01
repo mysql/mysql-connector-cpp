@@ -53,6 +53,7 @@ public:
 
 	virtual bool isSigned(unsigned int param) = 0;
 
+protected:
 	virtual ~ParameterMetaData() {}
 };
 
