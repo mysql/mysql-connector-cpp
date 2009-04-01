@@ -39,52 +39,48 @@ namespace mysql
 
 class MySQL_ParamBind
 {
-	MYSQL_BIND * bind;
-	bool 		* value_set;
-	bool 		* delete_blob_after_execute;
 	unsigned int param_count;
+	sql::mysql::util::my_array_guard< MYSQL_BIND > bind;
+	sql::mysql::util::my_array_guard< bool > value_set;
+	sql::mysql::util::my_array_guard< bool > delete_blob_after_execute;
 
-	std::istream	** blob_bind;
+	sql::mysql::util::my_array_guard< std::istream	* > blob_bind;
 
 public:
 
 	MySQL_ParamBind(unsigned int paramCount)
+		: param_count(paramCount), bind(NULL), value_set(NULL), delete_blob_after_execute(NULL), blob_bind(NULL)
 	{
-		if (!paramCount) {
-			bind = NULL;
-			value_set = NULL;
-			blob_bind = NULL;
-			delete_blob_after_execute = NULL;
-		} else {
-			bind = (MYSQL_BIND *) calloc(paramCount, sizeof(MYSQL_BIND));
-			value_set = new bool[paramCount];
-			delete_blob_after_execute = new bool[paramCount];
+		if (param_count) {
+			bind.reset(new MYSQL_BIND[paramCount]);
+			memset(bind.get(), 0, sizeof(MYSQL_BIND) * paramCount);
+
+			value_set.reset(new bool[paramCount]);
+			delete_blob_after_execute.reset(new bool[paramCount]);
 			for (unsigned int i = 0; i < paramCount; ++i) {
 				bind[i].is_null_value = 1;
 				value_set[i] = false;
 				delete_blob_after_execute[i] = false;
 			}
-			blob_bind = (std::istream **) calloc(paramCount, sizeof(std::istream *));
+
+			blob_bind.reset(new std::istream *[paramCount]);
+			memset(blob_bind.get(), 0, sizeof(std::istream *) * paramCount);
 		}
-		param_count = paramCount;
 	}
 
 	virtual ~MySQL_ParamBind()
 	{
 		clearParameters();
 
-		free(bind);
-		delete [] value_set;
-		for (unsigned int i = 0; i < param_count; ++i) {
-			if (delete_blob_after_execute[i]) {
-				delete_blob_after_execute[i] = false;
-				delete blob_bind[i];
-				blob_bind[i] = NULL;
+		if (blob_bind.get()) {
+			for (unsigned int i = 0; i < param_count; ++i) {
+				if (delete_blob_after_execute[i]) {
+					delete_blob_after_execute[i] = false;
+					delete blob_bind[i];
+					blob_bind[i] = NULL;
+				}
 			}
 		}
-
-		delete [] delete_blob_after_execute;
-		free(blob_bind);
 	}
 
 	void set(unsigned int position)
@@ -140,7 +136,7 @@ public:
 
 	MYSQL_BIND * get()
 	{
-		return bind;
+		return bind.get();
 	}
 
 	std::istream * getBlobObject(unsigned int position)
@@ -264,7 +260,7 @@ MySQL_Prepared_Statement::clearParameters()
 
 
 /* {{{ MySQL_Prepared_Statement::getConnection() -I- */
-Connection *
+sql::Connection *
 MySQL_Prepared_Statement::getConnection()
 {
 	CPP_ENTER("MySQL_Prepared_Statement::getConnection");
@@ -627,6 +623,7 @@ MySQL_Prepared_Statement::setInt64(unsigned int parameterIndex, int64_t value)
 	memcpy(param->buffer, &value, p.second);
 }
 /* }}} */
+
 
 /* {{{ MySQL_Prepared_Statement::setUInt64() -I- */
 void

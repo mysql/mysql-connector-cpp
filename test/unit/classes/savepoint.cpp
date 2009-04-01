@@ -25,12 +25,11 @@ namespace classes
 void savepoint::getSavepointId()
 {
   logMsg("savepoint::getSavepointId() - MySQL_Savepoint::getSavepointId()");
-  sql::Savepoint* sp;
 
   try
   {
     con->setAutoCommit(true);
-    sp=con->setSavepoint("mysavepoint");
+    std::auto_ptr< sql::Savepoint > sp(con->setSavepoint("mysavepoint"));
     FAIL("You should not be able to set a savepoint in autoCommit mode");
   }
   catch (sql::SQLException &)
@@ -40,7 +39,7 @@ void savepoint::getSavepointId()
   try
   {
     con->setAutoCommit(false);
-    sp=con->setSavepoint("mysavepoint");
+    std::auto_ptr< sql::Savepoint > sp(con->setSavepoint("mysavepoint"));
     try
     {
       sp->getSavepointId();
@@ -49,7 +48,7 @@ void savepoint::getSavepointId()
     catch (sql::InvalidArgumentException &)
     {
     }
-    con->releaseSavepoint(sp);
+    con->releaseSavepoint(sp.get());
   }
   catch (sql::SQLException &e)
   {
@@ -62,13 +61,12 @@ void savepoint::getSavepointId()
 void savepoint::getSavepointName()
 {
   logMsg("savepoint::getSavepointName() - MySQL_Savepoint::getSavepointName()");
-  sql::Savepoint* sp;
   try
   {
     con->setAutoCommit(false);
-    sp=con->setSavepoint("mysavepoint");
+    std::auto_ptr< sql::Savepoint > sp(con->setSavepoint("mysavepoint"));
     ASSERT_EQUALS("mysavepoint", sp->getSavepointName());
-    con->releaseSavepoint(sp);
+    con->releaseSavepoint(sp.get());
   }
   catch (sql::SQLException &e)
   {
