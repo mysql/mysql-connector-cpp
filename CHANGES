@@ -13,8 +13,8 @@ Beta2  1.0.5 - 2009-04-xx
   std::string to const char * to be consistent with std::exception::what().
   (Andrey)
 
-- Improved the memory management in many places to use auto_ptr in cases where
-  the code might leak in case of exceptions. (Andrey)
+- Large overhaul of the code to improve the memory management to not leak in
+  exceptional situations. Big improvement compared to Beta1. (Andrey)
 
 
 Beta   1.0.4 - 2009-03-xx
