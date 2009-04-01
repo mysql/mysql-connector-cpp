@@ -216,7 +216,7 @@ void ConnectionTest::testGetMetaData()
   logMsg("Calling getMetaData() method ");
   DatabaseMetaData rsmd(conn->getMetaData());
 
-  if (rsmd.get() != NULL)
+  if (rsmd != NULL)
   {
     logMsg("getMetaData returns the DatabaseMetaData object ");
   } else
@@ -488,7 +488,7 @@ void ConnectionTest::testNativeSQL()
 void ConnectionTest::setUp()
 {
   super::setUp();
-  dbmd.reset(conn->getMetaData());
+  dbmd= conn->getMetaData();
 }
 
 }

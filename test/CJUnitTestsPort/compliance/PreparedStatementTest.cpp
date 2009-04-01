@@ -3270,7 +3270,7 @@ void PreparedStatementTest::setUp()
 {
   super::setUp();
 
-  dbmd.reset(conn->getMetaData());
+  dbmd= conn->getMetaData();
 }
 
 }
