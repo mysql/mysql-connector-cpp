@@ -11,6 +11,7 @@
 
 #include <stdlib.h>
 #include <memory>
+#include <sstream>
 #include <stdio.h>
 #include <cppconn/exception.h>
 
@@ -144,6 +145,8 @@ MySQL_Connection::~MySQL_Connection()
   - sslCA
   - sslCAPath
   - sslCipher
+  - defaultStatementResultType
+  - defaultPreparedStatementResultType
   - CLIENT_COMPRESS
   - CLIENT_FOUND_ROWS
   - CLIENT_IGNORE_SIGPIPE
@@ -214,6 +217,36 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> prope
 		} else if (!it->first.compare("sslCipher")) {
 			sslCipher = it->second.str.val;
 			ssl_used = true;
+		} else if (!it->first.compare("defaultStatementResultType")) {
+			do {
+				if (static_cast< int >(sql::ResultSet::TYPE_FORWARD_ONLY) == it->second.lval) break;
+				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_INSENSITIVE) == it->second.lval) break;
+				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_SENSITIVE) == it->second.lval) {
+					std::ostringstream msg;
+					msg << "Invalid value " << it->second.lval <<
+						" for option defaultStatementResultType. TYPE_SCROLL_SENSITIVE is not supported";
+					throw sql::InvalidArgumentException(msg.str());			
+				}
+				std::ostringstream msg;
+				msg << "Invalid value (" << it->second.lval << " for option defaultStatementResultType";
+				throw sql::InvalidArgumentException(msg.str());
+			} while (0);
+			intern->defaultStatementResultType = static_cast< sql::ResultSet::enum_type >(it->second.lval);
+		} else if (!it->first.compare("defaultPreparedStatementResultType")) {
+			do {
+				if (static_cast< int >(sql::ResultSet::TYPE_FORWARD_ONLY) == it->second.lval) break;
+				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_INSENSITIVE) == it->second.lval) break;
+				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_SENSITIVE) == it->second.lval) {
+					std::ostringstream msg;
+					msg << "Invalid value " << it->second.lval <<
+						" for option defaultPreparedStatementResultType. TYPE_SCROLL_SENSITIVE is not supported";
+					throw sql::InvalidArgumentException(msg.str());			
+				}
+				std::ostringstream msg;
+				msg << "Invalid value (" << it->second.lval << " for option defaultPreparedStatementResultType";
+				throw sql::InvalidArgumentException(msg.str());
+			} while (0);
+			intern->defaultPreparedStatementResultType = static_cast< sql::ResultSet::enum_type >(it->second.lval);
 		} else if (!it->first.compare("metadataUseInfoSchema")) {
 			intern->metadata_use_info_schema = it->second.bval;
 		} else if (!it->first.compare("CLIENT_COMPRESS")) {
@@ -400,7 +433,7 @@ sql::Statement * MySQL_Connection::createStatement()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::createStatement");
 	checkClosed();
-	return new MySQL_Statement(this, intern->logger);
+	return new MySQL_Statement(this, intern->defaultStatementResultType, intern->logger);
 }
 /* }}} */
 
@@ -436,8 +469,8 @@ MySQL_Connection::getSchema()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getSchema");
 	checkClosed();
-	std::auto_ptr<sql::Statement> stmt(createStatement());
-	std::auto_ptr<ResultSet> rset(stmt->executeQuery("SELECT DATABASE()")); //SELECT SCHEMA()
+	std::auto_ptr< sql::Statement > stmt(createStatement());
+	std::auto_ptr< sql::ResultSet > rset(stmt->executeQuery("SELECT DATABASE()")); //SELECT SCHEMA()
 	rset->next();
 	return rset->getString(1);
 }
@@ -568,7 +601,7 @@ MySQL_Connection::prepareStatement(const std::string& sql)
 		throw e;
 	}
 
-	return new MySQL_Prepared_Statement(stmt, this, this->intern->logger);
+	return new MySQL_Prepared_Statement(stmt, this, intern->defaultPreparedStatementResultType, this->intern->logger);
 }
 /* }}} */
 
@@ -677,7 +710,7 @@ MySQL_Connection::rollback(Savepoint * savepoint)
 	std::string sql("ROLLBACK TO SAVEPOINT ");
 	sql.append(savepoint->getSavepointName());
 
-	std::auto_ptr<sql::Statement> stmt(createStatement());
+	std::auto_ptr< sql::Statement > stmt(createStatement());
 	stmt->execute(sql);
 }
 /* }}} */
@@ -702,7 +735,7 @@ MySQL_Connection::setSchema(const std::string& catalog)
 	std::string sql("USE ");
 	sql.append(catalog);
 
-	std::auto_ptr<sql::Statement> stmt(createStatement());
+	std::auto_ptr< sql::Statement > stmt(createStatement());
 	stmt->execute(sql);
 }
 /* }}} */
@@ -777,7 +810,7 @@ MySQL_Connection::setSavepoint(const std::string& name)
 	std::string sql("SAVEPOINT ");
 	sql.append(name);
 
-	std::auto_ptr<sql::Statement> stmt(createStatement());
+	std::auto_ptr< sql::Statement > stmt(createStatement());
 	stmt->execute(sql);
 
 	return new MySQL_Savepoint(name);
@@ -839,10 +872,10 @@ MySQL_Connection::getSessionVariable(const std::string & varname)
 		CPP_INFO_FMT("sql_mode=%s", intern->sql_mode.c_str());
 		return intern->sql_mode;
 	}
-	std::auto_ptr<sql::Statement> stmt(createStatement());
+	std::auto_ptr< sql::Statement > stmt(createStatement());
 	std::string q = std::string("SHOW SESSION VARIABLES LIKE '").append(varname).append("'");
 
-	std::auto_ptr<ResultSet> rset(stmt->executeQuery(q));
+	std::auto_ptr< sql::ResultSet > rset(stmt->executeQuery(q));
 
 	if (rset->next()) {
 		if (intern->cache_sql_mode && intern->sql_mode_set == false &&
@@ -865,7 +898,7 @@ MySQL_Connection::setSessionVariable(const std::string & varname, const std::str
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setSessionVariable");
 	checkClosed();
 
-	std::auto_ptr<sql::Statement> stmt(createStatement());
+	std::auto_ptr< sql::Statement > stmt(createStatement());
 	std::string q(std::string("SET SESSION ").append(varname).append("='").append(value).append("'"));
 
 	stmt->executeQuery(q);

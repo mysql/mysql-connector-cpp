@@ -13,6 +13,7 @@
 #define _MYSQL_CONNECTION_DATA_H_
 
 #include <list>
+#include <cppconn/resultset.h>
 #include "mysql_util.h"
 struct st_mysql;
 
@@ -31,7 +32,10 @@ public:
 	MySQL_ConnectionData(sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
 		: closed(false), autocommit(false), txIsolationLevel(TRANSACTION_READ_COMMITTED),
 		  is_valid(false), sql_mode_set(false), cache_sql_mode(false),
-		  metadata_use_info_schema(true), logger(l), meta(NULL), mysql(NULL) {}
+		  metadata_use_info_schema(true),
+		  defaultStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
+		  defaultPreparedStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
+		  logger(l), meta(NULL), mysql(NULL) {}
 
 	~MySQL_ConnectionData() { logger->freeReference(); }
 
@@ -57,6 +61,9 @@ public:
 	bool sql_mode_set;
 	bool cache_sql_mode;
 	bool metadata_use_info_schema;
+
+	sql::ResultSet::enum_type defaultStatementResultType;
+	sql::ResultSet::enum_type defaultPreparedStatementResultType;
 
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 

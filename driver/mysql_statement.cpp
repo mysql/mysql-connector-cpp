@@ -34,8 +34,10 @@ namespace mysql
 {
 
 /* {{{ MySQL_Statement::MySQL_Statement() -I- */
-MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
-	: warnings(NULL), connection(conn), isClosed(false), last_update_count(UL64(~0)), logger(l? l->getReference():NULL)
+MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, sql::ResultSet::enum_type rset_type, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
+	: warnings(NULL), connection(conn), isClosed(false),
+	  last_update_count(UL64(~0)), logger(l? l->getReference():NULL),
+	  resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_Statement::MySQL_Statement");
 	CPP_INFO_FMT("this=%p", this);
@@ -328,6 +330,17 @@ MySQL_Statement::getQueryTimeout()
 /* }}} */
 
 
+/* {{{ MySQL_Statement::getResultSetType() -I- */
+sql::ResultSet::enum_type
+MySQL_Statement::getResultSetType()
+{
+	CPP_ENTER("MySQL_Statement::getResultSetType");
+	checkClosed();
+	return resultset_type;
+}
+/* }}} */
+
+
 /* {{{ MySQL_Statement::getUpdateCount() -I- */
 uint64_t
 MySQL_Statement::getUpdateCount()
@@ -393,6 +406,17 @@ MySQL_Statement::setMaxRows(unsigned int)
 {
 	checkClosed();
 	throw sql::MethodNotImplementedException("MySQL_Statement::setMaxRows");
+}
+/* }}} */
+
+
+/* {{{ MySQL_Statement::setResultSetType() -I- */
+sql::Statement *
+MySQL_Statement::setResultSetType(sql::ResultSet::enum_type type)
+{
+	checkClosed();
+	resultset_type = type;
+	return this;
 }
 /* }}} */
 

@@ -51,12 +51,12 @@ public:
 		FETCH_REVERSE,
 		FETCH_UNKNOWN
 	};
-	enum
+	typedef enum
 	{
 		TYPE_FORWARD_ONLY,
 		TYPE_SCROLL_INSENSITIVE,
 		TYPE_SCROLL_SENSITIVE
-	};
+	} enum_type;
 
 	virtual ~ResultSet() {}
 

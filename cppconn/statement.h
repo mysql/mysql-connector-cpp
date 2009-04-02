@@ -13,6 +13,7 @@
 #define _SQL_STATEMENT_H_
 
 #include "config.h"
+#include "resultset.h"
 
 #include <string>
 
@@ -55,11 +56,11 @@ public:
 
 	virtual ResultSet * getResultSet() = 0;
 
+	virtual sql::ResultSet::enum_type getResultSetType() = 0;
+
 	virtual uint64_t getUpdateCount() = 0;
 
 	virtual const SQLWarning * getWarnings() = 0;
-
-//	virtual Statement * setBuffered() = 0;
 
 	virtual void setCursorName(const std::string & name) = 0;
 
@@ -73,7 +74,7 @@ public:
 
 	virtual void setQueryTimeout(unsigned int seconds) = 0;
 
-//	virtual Statement * setUnbuffered() = 0;
+	virtual Statement * setResultSetType(sql::ResultSet::enum_type type) = 0;
 };
 
 }; /* namespace sql */

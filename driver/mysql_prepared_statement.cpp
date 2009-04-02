@@ -150,8 +150,12 @@ public:
 
 
 /* {{{ MySQL_Prepared_Statement::MySQL_Prepared_Statement() -I- */
-MySQL_Prepared_Statement::MySQL_Prepared_Statement(MYSQL_STMT *s, sql::Connection * conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * log)
-	:connection(conn), stmt(s), isClosed(false), logger(log? log->getReference():NULL)
+MySQL_Prepared_Statement::MySQL_Prepared_Statement(
+			MYSQL_STMT *s, sql::Connection * conn, sql::ResultSet::enum_type rset_type,
+			sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * log
+		)
+	:connection(conn), stmt(s), isClosed(false),
+	 logger(log? log->getReference():NULL), resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::MySQL_Prepared_Statement");
 	CPP_INFO_FMT("this=%p", this);
@@ -912,6 +916,17 @@ MySQL_Prepared_Statement::getQueryTimeout()
 /* }}} */
 
 
+/* {{{ MySQL_Statement::getResultSetType() -I- */
+sql::ResultSet::enum_type
+MySQL_Prepared_Statement::getResultSetType()
+{
+	CPP_ENTER("MySQL_Statement::getResultSetType");
+	checkClosed();
+	return resultset_type;
+}
+/* }}} */
+
+
 /* {{{ MySQL_Prepared_Statement::getUpdateCount() -U- */
 uint64_t
 MySQL_Prepared_Statement::getUpdateCount()
@@ -988,12 +1003,13 @@ MySQL_Prepared_Statement::setResultSetConcurrency(int)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_Statement::setResultSetType() -U- */
-void
-MySQL_Prepared_Statement::setResultSetType(int)
+/* {{{ MySQL_Prepared_Statement::setResultSetType() -I- */
+sql::Statement *
+MySQL_Prepared_Statement::setResultSetType(sql::ResultSet::enum_type type)
 {
 	checkClosed();
-	throw MethodNotImplementedException("MySQL_Prepared_Statement::setResultSetType");
+	resultset_type = type;
+	return this;
 }
 /* }}} */
 
