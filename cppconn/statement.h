@@ -43,7 +43,7 @@ public:
 
 	virtual int executeUpdate(const std::string& sql) = 0;
 
-	virtual unsigned int getFetchSize() = 0;
+	virtual size_t getFetchSize() = 0;
 
 	virtual unsigned int getMaxFieldSize() = 0;
 
@@ -59,17 +59,21 @@ public:
 
 	virtual const SQLWarning * getWarnings() = 0;
 
+//	virtual Statement * setBuffered() = 0;
+
 	virtual void setCursorName(const std::string & name) = 0;
 
 	virtual void setEscapeProcessing(bool enable) = 0;
 
-	virtual void setFetchSize(unsigned int rows) = 0;
+	virtual void setFetchSize(size_t rows) = 0;
 
 	virtual void setMaxFieldSize(unsigned int max) = 0;
 
 	virtual void setMaxRows(unsigned int max) = 0;
 
 	virtual void setQueryTimeout(unsigned int seconds) = 0;
+
+//	virtual Statement * setUnbuffered() = 0;
 };
 
 }; /* namespace sql */

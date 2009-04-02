@@ -96,7 +96,7 @@ public:
 	long double getDouble(const std::string& columnLabel) const;
 
 	int getFetchDirection();
-	int getFetchSize();
+	size_t getFetchSize();
 	int getHoldability();
 
 	int32_t getInt(uint32_t columnIndex) const;

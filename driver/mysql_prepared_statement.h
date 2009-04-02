@@ -80,7 +80,7 @@ public:
 	int executeUpdate();
 	int executeUpdate(const std::string& sql);
 
-	unsigned int getFetchSize();
+	size_t getFetchSize();
 
 	unsigned int getMaxFieldSize();
 
@@ -114,7 +114,7 @@ public:
 
 	void setEscapeProcessing(bool enable);
 
-	void setFetchSize(unsigned int rows);
+	void setFetchSize(size_t rows);
 
 	void setInt(unsigned int parameterIndex, int32_t value);
 

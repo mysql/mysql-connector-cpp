@@ -439,7 +439,7 @@ MySQL_Prepared_ResultSet::getFetchDirection()
 
 
 /* {{{ MySQL_Prepared_ResultSet::getFetchSize() -U- */
-int
+size_t
 MySQL_Prepared_ResultSet::getFetchSize()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getFetchSize");

@@ -49,7 +49,8 @@ class MySQL_ParamBind
 public:
 
 	MySQL_ParamBind(unsigned int paramCount)
-		: param_count(paramCount), bind(NULL), value_set(NULL), delete_blob_after_execute(NULL), blob_bind(NULL)
+		: param_count(paramCount), bind(NULL), value_set(NULL),
+		  delete_blob_after_execute(NULL), blob_bind(NULL)
 	{
 		if (param_count) {
 			bind.reset(new MYSQL_BIND[paramCount]);
@@ -120,11 +121,11 @@ public:
 	void clearParameters()
 	{
 		for (unsigned int i = 0; i < param_count; ++i) {
-			if (value_set[i]){
-				delete (char*) bind[i].length;
-				bind[i].length = NULL;
-				delete[] (char*) bind[i].buffer;
-				bind[i].buffer = NULL;
+			delete (char*) bind[i].length;
+			bind[i].length = NULL;
+			delete[] (char*) bind[i].buffer;
+			bind[i].buffer = NULL;
+			if (value_set[i]) {
 				if (blob_bind[i] && delete_blob_after_execute[i]) {
 					delete blob_bind[i];
 				}
@@ -428,40 +429,52 @@ static BufferSizePair
 allocate_buffer_for_type(enum_field_types t)
 {
 	switch (t) {
+#if A1
+		// We don't use these now. When we have setXXX, we can enable them
 		case MYSQL_TYPE_TINY:
 			return BufferSizePair(new char[1], 1);
 		case MYSQL_TYPE_SHORT:
 			return BufferSizePair(new char[2], 2);
 		case MYSQL_TYPE_INT24:
-		case MYSQL_TYPE_LONG:
 		case MYSQL_TYPE_FLOAT:
+#endif
+		case MYSQL_TYPE_LONG:
 			return BufferSizePair(new char[4], 4);
 		case MYSQL_TYPE_DOUBLE:
 		case MYSQL_TYPE_LONGLONG:
 			return BufferSizePair(new char[8], 8);
+#if A1
+		// We don't use these now. When we have setXXX, we can enable them
 		case MYSQL_TYPE_NEWDATE:
 		case MYSQL_TYPE_DATE:
 		case MYSQL_TYPE_TIME:
 		case MYSQL_TYPE_DATETIME:
 			return BufferSizePair(new char[sizeof(MYSQL_TIME)], sizeof(MYSQL_TIME));
-		case MYSQL_TYPE_STRING:
 		case MYSQL_TYPE_BLOB:
 		case MYSQL_TYPE_VAR_STRING:
+#endif
+		case MYSQL_TYPE_STRING:
 			return BufferSizePair(NULL, 0);
 
+#if A1
+		// We don't use these now. When we have setXXX, we can enable them
 		case MYSQL_TYPE_DECIMAL:
 		case MYSQL_TYPE_NEWDECIMAL:
 			return BufferSizePair(new char[64], 64);
 		case MYSQL_TYPE_TIMESTAMP:
 		case MYSQL_TYPE_YEAR:
 			return BufferSizePair(new char[10], 10);
+#endif
 #if A0
 		// There two are not sent over the wire
 		case MYSQL_TYPE_SET:
 		case MYSQL_TYPE_ENUM:
 #endif
+#if A1
+		// We don't use these now. When we have setXXX, we can enable them
 		case MYSQL_TYPE_GEOMETRY:
 		case MYSQL_TYPE_BIT:
+#endif
 		case MYSQL_TYPE_NULL:
 			return BufferSizePair(NULL, 0);
 		default:
@@ -755,7 +768,7 @@ MySQL_Prepared_Statement::cancel()
 
 
 /* {{{ MySQL_Prepared_Statement::getFetchSize() -U- */
-unsigned int
+size_t
 MySQL_Prepared_Statement::getFetchSize()
 {
 	checkClosed();
@@ -813,7 +826,7 @@ MySQL_Prepared_Statement::getResultSet()
 
 /* {{{ MySQL_Prepared_Statement::setFetchSize() -U- */
 void
-MySQL_Prepared_Statement::setFetchSize(unsigned int)
+MySQL_Prepared_Statement::setFetchSize(size_t /* size */)
 {
 	checkClosed();
 	throw MethodNotImplementedException("MySQL_Prepared_Statement::setFetchSize");
@@ -983,6 +996,7 @@ MySQL_Prepared_Statement::setResultSetType(int)
 	throw MethodNotImplementedException("MySQL_Prepared_Statement::setResultSetType");
 }
 /* }}} */
+
 
 /* {{{ MySQL_Prepared_Statement::checkClosed() -I- */
 void

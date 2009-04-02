@@ -91,7 +91,7 @@ public:
 	virtual long double getDouble(const std::string& columnLabel) const = 0;
 
 	virtual int getFetchDirection() = 0;
-	virtual int getFetchSize() = 0;
+	virtual size_t getFetchSize() = 0;
 	virtual int getHoldability() = 0;
 
 	virtual int32_t getInt(uint32_t columnIndex) const = 0;

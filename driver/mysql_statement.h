@@ -58,7 +58,7 @@ public:
 
 	int executeUpdate(const std::string& sql);
 
-	unsigned int getFetchSize();
+	size_t getFetchSize();
 
 	unsigned int getMaxFieldSize();
 
@@ -74,11 +74,13 @@ public:
 
 	const SQLWarning * getWarnings();/* should return differen type */
 
+//	Statement * setBuffered();
+
 	void setCursorName(const std::string & name);
 
 	void setEscapeProcessing(bool enable);
 
-	void setFetchSize(unsigned int rows);
+	void setFetchSize(size_t rows);
 
 	void setMaxFieldSize(unsigned int max);
 
@@ -86,6 +88,7 @@ public:
 
 	void setQueryTimeout(unsigned int seconds);
 
+//	Statement * setUnbuffered();
 private:
 	/* Prevent use of these */
 	MySQL_Statement(const MySQL_Statement &);

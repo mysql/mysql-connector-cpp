@@ -171,7 +171,7 @@ MySQL_Statement::getConnection()
 
 
 /* {{{ MySQL_Statement::getFetchSize() -U- */
-unsigned int
+size_t
 MySQL_Statement::getFetchSize()
 {
 	CPP_ENTER("MySQL_Statement::getFetchSize");
@@ -212,7 +212,7 @@ MySQL_Statement::getResultSet()
 
 /* {{{ MySQL_Statement::setFetchSize() -U- */
 void
-MySQL_Statement::setFetchSize(unsigned int)
+MySQL_Statement::setFetchSize(size_t /* fetch */)
 {
 	CPP_ENTER("MySQL_Statement::setFetchSize");
 	CPP_INFO_FMT("this=%p", this);
