@@ -1004,7 +1004,7 @@ MySQL_Prepared_Statement::setResultSetConcurrency(int)
 
 
 /* {{{ MySQL_Prepared_Statement::setResultSetType() -I- */
-sql::Statement *
+sql::PreparedStatement *
 MySQL_Prepared_Statement::setResultSetType(sql::ResultSet::enum_type type)
 {
 	checkClosed();

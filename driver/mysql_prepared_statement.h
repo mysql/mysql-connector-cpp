@@ -142,7 +142,7 @@ public:
 
 	void setQueryTimeout(unsigned int seconds);
 
-	sql::Statement * setResultSetType(sql::ResultSet::enum_type type);
+	sql::PreparedStatement * setResultSetType(sql::ResultSet::enum_type type);
 
 private:
 	/* Prevent use of these */

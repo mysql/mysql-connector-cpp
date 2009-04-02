@@ -66,6 +66,8 @@ public:
 	virtual void setNull(unsigned int parameterIndex, int sqlType) = 0;
 
 	virtual void setString(unsigned int parameterIndex, const std::string& value) = 0;
+
+	virtual PreparedStatement * setResultSetType(sql::ResultSet::enum_type type) = 0;
 };
 
 
