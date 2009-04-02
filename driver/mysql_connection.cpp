@@ -105,7 +105,7 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName, const std::strin
 
 
 /* {{{ MySQL_Connection::MySQL_Connection() -I- */
-MySQL_Connection::MySQL_Connection(std::map< std::string, sql::ConnectPropertyVal > properties)
+MySQL_Connection::MySQL_Connection(std::map< std::string, sql::ConnectPropertyVal > & properties)
 	:intern(NULL)
 {
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * tmp_logger = new sql::mysql::util::my_shared_ptr< MySQL_DebugLogger >(new MySQL_DebugLogger());
@@ -169,7 +169,7 @@ MySQL_Connection::~MySQL_Connection()
 
 
 /* {{{ MySQL_Connection::init() -I- */
-void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> properties)
+void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & properties)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::init");
 

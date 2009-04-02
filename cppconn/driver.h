@@ -29,7 +29,7 @@ public:
 
 	virtual Connection * connect(const std::string& hostName, const std::string& userName, const std::string& password) = 0;
 
-	virtual Connection * connect(std::map< std::string, ConnectPropertyVal >) = 0;
+	virtual Connection * connect(std::map< std::string, ConnectPropertyVal > & options) = 0;
 
 	virtual int getMajorVersion() = 0;
 

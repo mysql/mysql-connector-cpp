@@ -88,9 +88,10 @@ MySQL_Statement::get_resultset()
 
 	MYSQL * mysql = connection->getMySQLHandle();
 
-	MYSQL_RES  * result = mysql_store_result(mysql);
+	MYSQL_RES  * result = resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? mysql_use_result(mysql):mysql_store_result(mysql);
 	if (result == NULL) {
-		CPP_ERR_FMT("Error during store_result : %d:(%s) %s", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
+		CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
+					mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 		throw sql::SQLException(mysql_error(mysql), mysql_sqlstate(mysql), mysql_errno(mysql));
 	}
 	return new MYSQL_RES_Wrapper(result);
@@ -197,8 +198,9 @@ MySQL_Statement::getResultSet()
 
 	MYSQL * mysql = connection->getMySQLHandle();
 
-	MYSQL_RES * result = mysql_store_result(mysql);
+	MYSQL_RES * result = resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? mysql_use_result(mysql):mysql_store_result(mysql);
 	if (!result) {
+		/* if there was an update then this method should return NULL and not throw */
 		return NULL;
 	}
 

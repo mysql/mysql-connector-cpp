@@ -68,7 +68,7 @@ sql::Connection * MySQL_Driver::connect(const std::string& hostName,
 }
 
 
-sql::Connection * MySQL_Driver::connect(std::map<std::string, sql::ConnectPropertyVal> properties)
+sql::Connection * MySQL_Driver::connect(std::map<std::string, sql::ConnectPropertyVal> & properties)
 {
 	return new MySQL_Connection(properties);
 }

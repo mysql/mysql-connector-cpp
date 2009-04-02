@@ -309,6 +309,16 @@ MySQL_Prepared_Statement::executeQuery()
 	checkClosed();
 
 	do_query();
+
+	my_bool	bool_tmp=1;
+	mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
+	if (resultset_type == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
+		mysql_stmt_store_result(stmt);
+	} else if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
+		;
+	} else {
+		throw SQLException("Invalid valude for result set type");
+	}
 	
 	std::auto_ptr< MySQL_ResultBind > result_bind(new MySQL_ResultBind(stmt, logger));
 	
@@ -815,6 +825,16 @@ MySQL_Prepared_Statement::getResultSet()
 	checkClosed();
 	if (mysql_more_results(mysql_stmt_conn(stmt))) {
 		mysql_next_result(mysql_stmt_conn(stmt));
+	}
+
+	my_bool	bool_tmp = 1;
+	mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
+	if (resultset_type == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
+		mysql_stmt_store_result(stmt);
+	} else if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
+		;
+	} else {
+		throw SQLException("Invalid valude for result set type");
 	}
 
 	std::auto_ptr< MySQL_ResultBind > result_bind(new MySQL_ResultBind(stmt, logger));

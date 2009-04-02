@@ -145,10 +145,6 @@ void MySQL_ResultBind::bindResult()
 	len.reset(new unsigned long[num_fields]);
 	memset(len.get(), 0, sizeof(unsigned long) * num_fields);
 
-	my_bool	tmp=1;
-	mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, &tmp);
-	mysql_stmt_store_result(stmt);
-
 	MySQL_AutoResultSet resultMetaGuard(mysql_stmt_result_metadata(stmt));
 	MYSQL_RES * result_meta = resultMetaGuard.get();
 	for (unsigned int i = 0; i < num_fields; ++i) {
