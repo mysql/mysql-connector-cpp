@@ -51,12 +51,12 @@ public:
 		FETCH_REVERSE,
 		FETCH_UNKNOWN
 	};
-	enum
+	typedef enum
 	{
 		TYPE_FORWARD_ONLY,
 		TYPE_SCROLL_INSENSITIVE,
 		TYPE_SCROLL_SENSITIVE
-	};
+	} enum_type;
 
 	virtual ~ResultSet() {}
 
@@ -91,7 +91,7 @@ public:
 	virtual long double getDouble(const std::string& columnLabel) const = 0;
 
 	virtual int getFetchDirection() = 0;
-	virtual int getFetchSize() = 0;
+	virtual size_t getFetchSize() = 0;
 	virtual int getHoldability() = 0;
 
 	virtual int32_t getInt(uint32_t columnIndex) const = 0;

@@ -13,6 +13,7 @@
 #define _MYSQL_STATEMENT_H_
 
 #include <cppconn/statement.h>
+#include <cppconn/resultset.h>
 #include "mysql_util.h"
 
 namespace sql
@@ -37,11 +38,13 @@ protected:
 
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 
+	sql::ResultSet::enum_type resultset_type;
+
 	virtual MYSQL_RES_Wrapper * get_resultset();
 	virtual void checkClosed();
 
 public:
-	MySQL_Statement(MySQL_Connection * conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
+	MySQL_Statement(MySQL_Connection * conn, sql::ResultSet::enum_type rset_type, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
 	~MySQL_Statement();
 
 	sql::Connection * getConnection();
@@ -58,7 +61,7 @@ public:
 
 	int executeUpdate(const std::string& sql);
 
-	unsigned int getFetchSize();
+	size_t getFetchSize();
 
 	unsigned int getMaxFieldSize();
 
@@ -70,15 +73,19 @@ public:
 
 	sql::ResultSet * getResultSet();
 
+	sql::ResultSet::enum_type getResultSetType();
+
 	uint64_t getUpdateCount();
 
 	const SQLWarning * getWarnings();/* should return differen type */
+
+	Statement * setBuffered();
 
 	void setCursorName(const std::string & name);
 
 	void setEscapeProcessing(bool enable);
 
-	void setFetchSize(unsigned int rows);
+	void setFetchSize(size_t rows);
 
 	void setMaxFieldSize(unsigned int max);
 
@@ -86,6 +93,7 @@ public:
 
 	void setQueryTimeout(unsigned int seconds);
 
+	sql::Statement * setResultSetType(sql::ResultSet::enum_type type);
 private:
 	/* Prevent use of these */
 	MySQL_Statement(const MySQL_Statement &);

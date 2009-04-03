@@ -34,8 +34,10 @@ namespace mysql
 {
 
 /* {{{ MySQL_Statement::MySQL_Statement() -I- */
-MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
-	: warnings(NULL), connection(conn), isClosed(false), last_update_count(UL64(~0)), logger(l? l->getReference():NULL)
+MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, sql::ResultSet::enum_type rset_type, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
+	: warnings(NULL), connection(conn), isClosed(false),
+	  last_update_count(UL64(~0)), logger(l? l->getReference():NULL),
+	  resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_Statement::MySQL_Statement");
 	CPP_INFO_FMT("this=%p", this);
@@ -86,9 +88,10 @@ MySQL_Statement::get_resultset()
 
 	MYSQL * mysql = connection->getMySQLHandle();
 
-	MYSQL_RES  * result = mysql_store_result(mysql);
+	MYSQL_RES  * result = resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? mysql_use_result(mysql):mysql_store_result(mysql);
 	if (result == NULL) {
-		CPP_ERR_FMT("Error during store_result : %d:(%s) %s", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
+		CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
+					mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 		throw sql::SQLException(mysql_error(mysql), mysql_sqlstate(mysql), mysql_errno(mysql));
 	}
 	return new MYSQL_RES_Wrapper(result);
@@ -171,7 +174,7 @@ MySQL_Statement::getConnection()
 
 
 /* {{{ MySQL_Statement::getFetchSize() -U- */
-unsigned int
+size_t
 MySQL_Statement::getFetchSize()
 {
 	CPP_ENTER("MySQL_Statement::getFetchSize");
@@ -195,8 +198,9 @@ MySQL_Statement::getResultSet()
 
 	MYSQL * mysql = connection->getMySQLHandle();
 
-	MYSQL_RES * result = mysql_store_result(mysql);
+	MYSQL_RES * result = resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? mysql_use_result(mysql):mysql_store_result(mysql);
 	if (!result) {
+		/* if there was an update then this method should return NULL and not throw */
 		return NULL;
 	}
 
@@ -212,7 +216,7 @@ MySQL_Statement::getResultSet()
 
 /* {{{ MySQL_Statement::setFetchSize() -U- */
 void
-MySQL_Statement::setFetchSize(unsigned int)
+MySQL_Statement::setFetchSize(size_t /* fetch */)
 {
 	CPP_ENTER("MySQL_Statement::setFetchSize");
 	CPP_INFO_FMT("this=%p", this);
@@ -328,6 +332,17 @@ MySQL_Statement::getQueryTimeout()
 /* }}} */
 
 
+/* {{{ MySQL_Statement::getResultSetType() -I- */
+sql::ResultSet::enum_type
+MySQL_Statement::getResultSetType()
+{
+	CPP_ENTER("MySQL_Statement::getResultSetType");
+	checkClosed();
+	return resultset_type;
+}
+/* }}} */
+
+
 /* {{{ MySQL_Statement::getUpdateCount() -I- */
 uint64_t
 MySQL_Statement::getUpdateCount()
@@ -393,6 +408,17 @@ MySQL_Statement::setMaxRows(unsigned int)
 {
 	checkClosed();
 	throw sql::MethodNotImplementedException("MySQL_Statement::setMaxRows");
+}
+/* }}} */
+
+
+/* {{{ MySQL_Statement::setResultSetType() -I- */
+sql::Statement *
+MySQL_Statement::setResultSetType(sql::ResultSet::enum_type type)
+{
+	checkClosed();
+	resultset_type = type;
+	return this;
 }
 /* }}} */
 

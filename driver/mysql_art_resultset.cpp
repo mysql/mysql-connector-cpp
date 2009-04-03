@@ -494,7 +494,7 @@ MySQL_ArtResultSet::getFetchDirection()
 
 
 /* {{{ MySQL_ArtResultSet::getFetchSize() -U- */
-int
+size_t
 MySQL_ArtResultSet::getFetchSize()
 {
 	CPP_ENTER("MySQL_ArtResultSet::getFetchSize");

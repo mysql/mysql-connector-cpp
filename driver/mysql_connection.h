@@ -48,7 +48,7 @@ class CPPCONN_PUBLIC_FUNC MySQL_Connection : public sql::Connection
 public:
 	MySQL_Connection(const std::string& hostName, const std::string& userName, const std::string& password);
 
-	MySQL_Connection(std::map< std::string, sql::ConnectPropertyVal >);
+	MySQL_Connection(std::map< std::string, sql::ConnectPropertyVal > & options);
 
 	virtual ~MySQL_Connection();
 
@@ -126,7 +126,7 @@ public:
 
 protected:
 	void checkClosed();
-	void init(std::map<std::string, sql::ConnectPropertyVal> properties);
+	void init(std::map<std::string, sql::ConnectPropertyVal> & properties);
 
 	std::auto_ptr< MySQL_ConnectionData > intern; /* pimpl */
 private:

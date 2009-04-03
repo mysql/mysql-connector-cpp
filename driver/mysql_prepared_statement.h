@@ -49,6 +49,8 @@ protected:
 	std::auto_ptr< MySQL_Prepared_ResultSetMetaData > res_meta;
 	std::auto_ptr< MySQL_ParameterMetaData > param_meta;
 
+	sql::ResultSet::enum_type resultset_type;
+
 	virtual void do_query();
 	virtual void checkClosed();
 	virtual void closeIntern();
@@ -58,7 +60,7 @@ protected:
 
 public:
 
-	MySQL_Prepared_Statement(MYSQL_STMT *s, sql::Connection * conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * log);
+	MySQL_Prepared_Statement(MYSQL_STMT *s, sql::Connection * conn, sql::ResultSet::enum_type rset_type, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * log);
 	virtual ~MySQL_Prepared_Statement();
 
 	sql::Connection *getConnection();
@@ -80,7 +82,7 @@ public:
 	int executeUpdate();
 	int executeUpdate(const std::string& sql);
 
-	unsigned int getFetchSize();
+	size_t getFetchSize();
 
 	unsigned int getMaxFieldSize();
 
@@ -90,15 +92,19 @@ public:
 
 	bool getMoreResults();
 
-	unsigned int getQueryTimeout();
-
 	sql::ParameterMetaData * getParameterMetaData();
 
+	unsigned int getQueryTimeout();
+
 	sql::ResultSet * getResultSet();
+
+	sql::ResultSet::enum_type getResultSetType();
 
 	uint64_t getUpdateCount();
 
 	const SQLWarning * getWarnings();/* should return differen type */
+
+	Statement * setBuffered();
 
 	void setBlob(unsigned int parameterIndex, std::istream * blob);
 
@@ -114,7 +120,7 @@ public:
 
 	void setEscapeProcessing(bool enable);
 
-	void setFetchSize(unsigned int rows);
+	void setFetchSize(size_t rows);
 
 	void setInt(unsigned int parameterIndex, int32_t value);
 
@@ -132,11 +138,11 @@ public:
 
 	void setResultSetConcurrency(int concurrencyFlag);
 
-	void setResultSetType(int typeFlag);
-
 	void setString(unsigned int parameterIndex, const std::string& value);
 
 	void setQueryTimeout(unsigned int seconds);
+
+	sql::PreparedStatement * setResultSetType(sql::ResultSet::enum_type type);
 
 private:
 	/* Prevent use of these */

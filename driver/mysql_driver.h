@@ -34,7 +34,7 @@ public:
 							const std::string& userName,
 							const std::string& password);
 
-	sql::Connection * connect(std::map<std::string, sql::ConnectPropertyVal>);
+	sql::Connection * connect(std::map<std::string, sql::ConnectPropertyVal> & options);
 
 	int getMajorVersion();
 

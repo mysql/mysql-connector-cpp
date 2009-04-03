@@ -13,6 +13,7 @@
 #define _SQL_STATEMENT_H_
 
 #include "config.h"
+#include "resultset.h"
 
 #include <string>
 
@@ -43,7 +44,7 @@ public:
 
 	virtual int executeUpdate(const std::string& sql) = 0;
 
-	virtual unsigned int getFetchSize() = 0;
+	virtual size_t getFetchSize() = 0;
 
 	virtual unsigned int getMaxFieldSize() = 0;
 
@@ -55,6 +56,8 @@ public:
 
 	virtual ResultSet * getResultSet() = 0;
 
+	virtual sql::ResultSet::enum_type getResultSetType() = 0;
+
 	virtual uint64_t getUpdateCount() = 0;
 
 	virtual const SQLWarning * getWarnings() = 0;
@@ -63,13 +66,15 @@ public:
 
 	virtual void setEscapeProcessing(bool enable) = 0;
 
-	virtual void setFetchSize(unsigned int rows) = 0;
+	virtual void setFetchSize(size_t rows) = 0;
 
 	virtual void setMaxFieldSize(unsigned int max) = 0;
 
 	virtual void setMaxRows(unsigned int max) = 0;
 
 	virtual void setQueryTimeout(unsigned int seconds) = 0;
+
+	virtual Statement * setResultSetType(sql::ResultSet::enum_type type) = 0;
 };
 
 }; /* namespace sql */

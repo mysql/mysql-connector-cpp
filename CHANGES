@@ -9,12 +9,15 @@ Beta2  1.0.5 - 2009-04-xx
   without the result of leaking memory because we lost the pointer returned
   by getMetaData(). (Lawrin, Andrey)
 
+- Large overhaul of the code to improve the memory management to not leak in
+  exceptional situations. Big improvement compared to Beta1. (Andrey)
+
+- Fixed the interface of sql::Driver and sql::Connection so they accept the
+  options map by alias instead of by value. (Andrey)
+
 - Changed the return type of sql::SQLException::getSQLState() from
   std::string to const char * to be consistent with std::exception::what().
   (Andrey)
-
-- Large overhaul of the code to improve the memory management to not leak in
-  exceptional situations. Big improvement compared to Beta1. (Andrey)
 
 
 Beta   1.0.4 - 2009-03-xx

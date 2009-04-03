@@ -87,7 +87,7 @@ public:
 
 	int getFetchDirection();
 
-	int getFetchSize();
+	size_t getFetchSize();
 
 	int getHoldability();
 

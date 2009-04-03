@@ -49,7 +49,8 @@ class MySQL_ParamBind
 public:
 
 	MySQL_ParamBind(unsigned int paramCount)
-		: param_count(paramCount), bind(NULL), value_set(NULL), delete_blob_after_execute(NULL), blob_bind(NULL)
+		: param_count(paramCount), bind(NULL), value_set(NULL),
+		  delete_blob_after_execute(NULL), blob_bind(NULL)
 	{
 		if (param_count) {
 			bind.reset(new MYSQL_BIND[paramCount]);
@@ -120,11 +121,11 @@ public:
 	void clearParameters()
 	{
 		for (unsigned int i = 0; i < param_count; ++i) {
-			if (value_set[i]){
-				delete (char*) bind[i].length;
-				bind[i].length = NULL;
-				delete[] (char*) bind[i].buffer;
-				bind[i].buffer = NULL;
+			delete (char*) bind[i].length;
+			bind[i].length = NULL;
+			delete[] (char*) bind[i].buffer;
+			bind[i].buffer = NULL;
+			if (value_set[i]) {
 				if (blob_bind[i] && delete_blob_after_execute[i]) {
 					delete blob_bind[i];
 				}
@@ -149,8 +150,12 @@ public:
 
 
 /* {{{ MySQL_Prepared_Statement::MySQL_Prepared_Statement() -I- */
-MySQL_Prepared_Statement::MySQL_Prepared_Statement(MYSQL_STMT *s, sql::Connection * conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * log)
-	:connection(conn), stmt(s), isClosed(false), logger(log? log->getReference():NULL)
+MySQL_Prepared_Statement::MySQL_Prepared_Statement(
+			MYSQL_STMT *s, sql::Connection * conn, sql::ResultSet::enum_type rset_type,
+			sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * log
+		)
+	:connection(conn), stmt(s), isClosed(false),
+	 logger(log? log->getReference():NULL), resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::MySQL_Prepared_Statement");
 	CPP_INFO_FMT("this=%p", this);
@@ -304,6 +309,16 @@ MySQL_Prepared_Statement::executeQuery()
 	checkClosed();
 
 	do_query();
+
+	my_bool	bool_tmp=1;
+	mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
+	if (resultset_type == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
+		mysql_stmt_store_result(stmt);
+	} else if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
+		;
+	} else {
+		throw SQLException("Invalid valude for result set type");
+	}
 	
 	std::auto_ptr< MySQL_ResultBind > result_bind(new MySQL_ResultBind(stmt, logger));
 	
@@ -428,40 +443,52 @@ static BufferSizePair
 allocate_buffer_for_type(enum_field_types t)
 {
 	switch (t) {
+#if A1
+		// We don't use these now. When we have setXXX, we can enable them
 		case MYSQL_TYPE_TINY:
 			return BufferSizePair(new char[1], 1);
 		case MYSQL_TYPE_SHORT:
 			return BufferSizePair(new char[2], 2);
 		case MYSQL_TYPE_INT24:
-		case MYSQL_TYPE_LONG:
 		case MYSQL_TYPE_FLOAT:
+#endif
+		case MYSQL_TYPE_LONG:
 			return BufferSizePair(new char[4], 4);
 		case MYSQL_TYPE_DOUBLE:
 		case MYSQL_TYPE_LONGLONG:
 			return BufferSizePair(new char[8], 8);
+#if A1
+		// We don't use these now. When we have setXXX, we can enable them
 		case MYSQL_TYPE_NEWDATE:
 		case MYSQL_TYPE_DATE:
 		case MYSQL_TYPE_TIME:
 		case MYSQL_TYPE_DATETIME:
 			return BufferSizePair(new char[sizeof(MYSQL_TIME)], sizeof(MYSQL_TIME));
-		case MYSQL_TYPE_STRING:
 		case MYSQL_TYPE_BLOB:
 		case MYSQL_TYPE_VAR_STRING:
+#endif
+		case MYSQL_TYPE_STRING:
 			return BufferSizePair(NULL, 0);
 
+#if A1
+		// We don't use these now. When we have setXXX, we can enable them
 		case MYSQL_TYPE_DECIMAL:
 		case MYSQL_TYPE_NEWDECIMAL:
 			return BufferSizePair(new char[64], 64);
 		case MYSQL_TYPE_TIMESTAMP:
 		case MYSQL_TYPE_YEAR:
 			return BufferSizePair(new char[10], 10);
+#endif
 #if A0
 		// There two are not sent over the wire
 		case MYSQL_TYPE_SET:
 		case MYSQL_TYPE_ENUM:
 #endif
+#if A1
+		// We don't use these now. When we have setXXX, we can enable them
 		case MYSQL_TYPE_GEOMETRY:
 		case MYSQL_TYPE_BIT:
+#endif
 		case MYSQL_TYPE_NULL:
 			return BufferSizePair(NULL, 0);
 		default:
@@ -755,7 +782,7 @@ MySQL_Prepared_Statement::cancel()
 
 
 /* {{{ MySQL_Prepared_Statement::getFetchSize() -U- */
-unsigned int
+size_t
 MySQL_Prepared_Statement::getFetchSize()
 {
 	checkClosed();
@@ -800,6 +827,16 @@ MySQL_Prepared_Statement::getResultSet()
 		mysql_next_result(mysql_stmt_conn(stmt));
 	}
 
+	my_bool	bool_tmp = 1;
+	mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
+	if (resultset_type == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
+		mysql_stmt_store_result(stmt);
+	} else if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
+		;
+	} else {
+		throw SQLException("Invalid valude for result set type");
+	}
+
 	std::auto_ptr< MySQL_ResultBind > result_bind(new MySQL_ResultBind(stmt, logger));
 
 	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, result_bind.get(), this, logger);
@@ -813,7 +850,7 @@ MySQL_Prepared_Statement::getResultSet()
 
 /* {{{ MySQL_Prepared_Statement::setFetchSize() -U- */
 void
-MySQL_Prepared_Statement::setFetchSize(unsigned int)
+MySQL_Prepared_Statement::setFetchSize(size_t /* size */)
 {
 	checkClosed();
 	throw MethodNotImplementedException("MySQL_Prepared_Statement::setFetchSize");
@@ -899,6 +936,17 @@ MySQL_Prepared_Statement::getQueryTimeout()
 /* }}} */
 
 
+/* {{{ MySQL_Statement::getResultSetType() -I- */
+sql::ResultSet::enum_type
+MySQL_Prepared_Statement::getResultSetType()
+{
+	CPP_ENTER("MySQL_Statement::getResultSetType");
+	checkClosed();
+	return resultset_type;
+}
+/* }}} */
+
+
 /* {{{ MySQL_Prepared_Statement::getUpdateCount() -U- */
 uint64_t
 MySQL_Prepared_Statement::getUpdateCount()
@@ -975,14 +1023,16 @@ MySQL_Prepared_Statement::setResultSetConcurrency(int)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_Statement::setResultSetType() -U- */
-void
-MySQL_Prepared_Statement::setResultSetType(int)
+/* {{{ MySQL_Prepared_Statement::setResultSetType() -I- */
+sql::PreparedStatement *
+MySQL_Prepared_Statement::setResultSetType(sql::ResultSet::enum_type type)
 {
 	checkClosed();
-	throw MethodNotImplementedException("MySQL_Prepared_Statement::setResultSetType");
+	resultset_type = type;
+	return this;
 }
 /* }}} */
+
 
 /* {{{ MySQL_Prepared_Statement::checkClosed() -I- */
 void
