@@ -65,10 +65,13 @@ static inline char * my_f_to_a(char * buf, size_t buf_size, double a)
 MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
 			MYSQL_STMT * s,
 			MySQL_ResultBind * r_bind,
+			sql::ResultSet::enum_type rset_type,
 			MySQL_Prepared_Statement * par,
 			sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l
 		)
-	: row(NULL), stmt(s), row_position(0), parent(par), is_valid(true), logger(l? l->getReference():NULL), result_bind(r_bind)
+	: row(NULL), stmt(s), row_position(0), parent(par), is_valid(true),
+	  logger(l? l->getReference():NULL), result_bind(r_bind),
+	  resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet");
 	result_bind->bindResult();
@@ -108,6 +111,7 @@ MySQL_Prepared_ResultSet::absolute(const int new_pos)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::absolute");
 	checkValid();
+	checkScrollable();
 	if (new_pos > 0) {
 		if (new_pos > (int) num_rows) {
 			row_position = num_rows + 1; /* after last row */
@@ -141,6 +145,7 @@ MySQL_Prepared_ResultSet::afterLast()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::afterLast");
 	checkValid();
+	checkScrollable();
 	row_position = num_rows + 1;
 }
 /* }}} */
@@ -152,6 +157,7 @@ MySQL_Prepared_ResultSet::beforeFirst()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::beforeFirst");
 	checkValid();
+	checkScrollable();
 	mysql_stmt_data_seek(stmt, 0);
 	row_position = 0;
 }
@@ -178,6 +184,30 @@ MySQL_Prepared_ResultSet::checkValid() const
 	if (isClosed()) {
 		throw sql::InvalidInstanceException("Statement has been closed");
 	}
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_ResultSet::checkScrollable() -I- */
+void
+MySQL_Prepared_ResultSet::checkScrollable() const
+{
+	CPP_ENTER("MySQL_Prepared_ResultSet::checkScrollable");
+	CPP_INFO_FMT("this=%p", this);
+	if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
+		throw sql::NonScrollableException("Nonscrollable result set");
+	}
+}
+/* }}} */
+
+
+/* {{{ MySQL_ResultSet::isScrollable() -I- */
+bool
+MySQL_Prepared_ResultSet::isScrollable() const
+{
+	CPP_ENTER("MySQL_ResultSet::isScrollable");
+	CPP_INFO_FMT("this=%p", this);
+	return (resultset_type != sql::ResultSet::TYPE_FORWARD_ONLY);
 }
 /* }}} */
 
@@ -238,6 +268,7 @@ MySQL_Prepared_ResultSet::first()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::first");
 	checkValid();
+	checkScrollable();
 	if (num_rows) {
 		row_position = 1;
 		seek();
@@ -961,6 +992,17 @@ MySQL_Prepared_ResultSet::getString(const std::string& columnLabel) const
 /* }}} */
 
 
+/* {{{ MySQL_Prepared_ResultSet::getType() -I- */
+sql::ResultSet::enum_type
+MySQL_Prepared_ResultSet::getType() const
+{
+	CPP_ENTER("MySQL_ResultSet::getWarnings");
+	checkValid();
+	return resultset_type;
+}
+/* }}} */
+
+
 /* {{{ MySQL_Prepared_ResultSet::getWarnings() -U- */
 void
 MySQL_Prepared_ResultSet::getWarnings()
@@ -978,6 +1020,7 @@ MySQL_Prepared_ResultSet::isAfterLast() const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::beforeFirst");
 	checkValid();
+	checkScrollable();
 	return (row_position == num_rows + 1);
 }
 /* }}} */
@@ -1031,6 +1074,7 @@ MySQL_Prepared_ResultSet::isLast() const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::isLast");
 	checkValid();
+	checkScrollable();
 	return (row_position == num_rows);
 }
 /* }}} */
@@ -1074,6 +1118,7 @@ MySQL_Prepared_ResultSet::last()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::last");
 	checkValid();
+	checkScrollable();
 	if (num_rows) {
 		row_position = num_rows;
 		seek();
@@ -1089,6 +1134,7 @@ MySQL_Prepared_ResultSet::moveToCurrentRow()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::moveToCurrentRow");
 	checkValid();
+	checkScrollable();
 	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::moveToCurrentRow()");
 }
 /* }}} */
@@ -1100,6 +1146,7 @@ MySQL_Prepared_ResultSet::moveToInsertRow()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::moveToInsertRow");
 	checkValid();
+	checkScrollable();
 	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::moveToInsertRow()");
 }
 /* }}} */
@@ -1111,13 +1158,26 @@ MySQL_Prepared_ResultSet::next()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::next");
 	CPP_INFO_FMT("row_position=%llu num_rows=%llu", row_position, num_rows);
+	checkValid();
 	bool ret = false;
-	/* isBeforeFirst checks for validity */
-	if (isLast()) {
-		++row_position;
-		ret = false;
-	} else if (row_position < num_rows + 1) {
-		mysql_stmt_data_seek(stmt, row_position);
+	if (isScrollable()) {
+		/* isBeforeFirst checks for validity */
+		if (isLast()) {
+			++row_position;
+			ret = false;
+		} else if (row_position < num_rows + 1) {
+			mysql_stmt_data_seek(stmt, row_position);
+			int result = mysql_stmt_fetch(stmt);
+			if (!result || result == MYSQL_DATA_TRUNCATED) {
+				ret = true;
+			}
+			if (result == MYSQL_NO_DATA) {
+				ret = false;
+			}
+			++row_position;
+		}
+		CPP_INFO_FMT("new_row_position=%llu ret=%d", row_position, ret);
+	} else {
 		int result = mysql_stmt_fetch(stmt);
 		if (!result || result == MYSQL_DATA_TRUNCATED) {
 			ret = true;
@@ -1127,7 +1187,6 @@ MySQL_Prepared_ResultSet::next()
 		}
 		++row_position;
 	}
-	CPP_INFO_FMT("new_row_position=%llu ret=%d", row_position, ret);
 	return ret;
 }
 /* }}} */
@@ -1178,6 +1237,7 @@ MySQL_Prepared_ResultSet::relative(const int rows)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::relative");
 	checkValid();
+	checkScrollable();
 	if (rows != 0) {
 		if (row_position + rows > num_rows || row_position + rows < 1) {
 			row_position = rows > 0? num_rows + 1 : 0; /* after last or before first */
@@ -1234,6 +1294,7 @@ MySQL_Prepared_ResultSet::rowsCount() const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::rowsCount");
 	checkValid();
+	checkScrollable();
 	return (size_t) mysql_stmt_num_rows(stmt);
 }
 /* }}} */
@@ -1271,7 +1332,7 @@ MySQL_Prepared_ResultSet::isBeforeFirstOrAfterLast() const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::isBeforeFirstOrAfterLast");
 	checkValid();
-	return (row_position == 0) || (row_position == num_rows + 1);
+	return (row_position == 0) || (isScrollable() && (row_position == num_rows + 1));
 }
 /* }}} */
 

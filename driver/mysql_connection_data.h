@@ -33,6 +33,7 @@ public:
 		: closed(false), autocommit(false), txIsolationLevel(TRANSACTION_READ_COMMITTED),
 		  is_valid(false), sql_mode_set(false), cache_sql_mode(false),
 		  metadata_use_info_schema(true),
+//		  defaultStatementResultType(sql::ResultSet::TYPE_FORWARD_ONLY),
 		  defaultStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
 		  defaultPreparedStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
 		  logger(l), meta(NULL), mysql(NULL) {}

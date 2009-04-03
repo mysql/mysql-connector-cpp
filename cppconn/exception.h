@@ -105,6 +105,16 @@ private:
   virtual SQLException* copy() { return new InvalidInstanceException(*this); }
 };
 
+
+struct CPPCONN_PUBLIC_FUNC NonScrollableException : public SQLException
+{
+ 	NonScrollableException(const NonScrollableException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
+ 	NonScrollableException(const std::string& reason) : SQLException(reason, "", 0) {}
+
+private:
+  virtual SQLException* copy() { return new NonScrollableException(*this); }
+};
+
 }; /* namespace sql */
 
 #endif /* _SQL_EXCEPTION_H_ */

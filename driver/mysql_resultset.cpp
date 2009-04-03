@@ -32,8 +32,12 @@ namespace mysql
 
 
 /* {{{ MySQL_ResultSet::MySQL_ResultSet() -I- */
-MySQL_ResultSet::MySQL_ResultSet(MYSQL_RES_Wrapper * res, MySQL_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
-	: row(NULL), result(res), row_position(0), was_null(false), parent(par), logger(l? l->getReference():NULL)
+MySQL_ResultSet::MySQL_ResultSet(
+			MYSQL_RES_Wrapper * res, sql::ResultSet::enum_type rset_type,
+			MySQL_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l
+		)
+	: row(NULL), result(res), row_position(0), was_null(false), parent(par),
+	  logger(l? l->getReference():NULL), resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_ResultSet::MySQL_ResultSet");
 	num_rows = mysql_num_rows(result->get());
@@ -70,6 +74,7 @@ MySQL_ResultSet::absolute(const int new_pos)
 {
 	CPP_ENTER("MySQL_ResultSet::absolute");
 	checkValid();
+	checkScrollable();
 	if (new_pos > 0) {
 		if (new_pos > (int) num_rows) {
 			row_position = num_rows + 1; /* after last row */
@@ -114,6 +119,7 @@ MySQL_ResultSet::beforeFirst()
 {
 	CPP_ENTER("MySQL_ResultSet::beforeFirst");
 	checkValid();
+	checkScrollable();
 	mysql_data_seek(result->get(), 0);
 	row_position = 0;
 }
@@ -127,6 +133,30 @@ MySQL_ResultSet::cancelRowUpdates()
 	CPP_ENTER("MySQL_ResultSet::cancelRowUpdates");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ResultSet::cancelRowUpdates()");
+}
+/* }}} */
+
+
+/* {{{ MySQL_ResultSet::checkScrollable() -I- */
+void
+MySQL_ResultSet::checkScrollable() const
+{
+	CPP_ENTER("MySQL_ResultSet::checkScrollable");
+	CPP_INFO_FMT("this=%p", this);
+	if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
+		throw sql::NonScrollableException("Nonscrollable result set");
+	}
+}
+/* }}} */
+
+
+/* {{{ MySQL_ResultSet::isScrollable() -I- */
+bool
+MySQL_ResultSet::isScrollable() const
+{
+//	CPP_ENTER("MySQL_ResultSet::isScrollable");
+//	CPP_INFO_FMT("this=%p", this);
+	return (resultset_type != sql::ResultSet::TYPE_FORWARD_ONLY);
 }
 /* }}} */
 
@@ -190,6 +220,7 @@ MySQL_ResultSet::first()
 {
 	CPP_ENTER("MySQL_ResultSet::first");
 	checkValid();
+	checkScrollable();
 	if (num_rows) {
 		row_position = 1;
 		seek();
@@ -563,8 +594,10 @@ MySQL_ResultSet::getString(const uint32_t columnIndex) const
 		was_null = true;
 		return "";
 	}
+	size_t len = mysql_fetch_lengths(result->get())[columnIndex - 1];
+	CPP_INFO_FMT("value=%*s",  len> 50? 50:len, row[columnIndex - 1]);
 	was_null = false;
-	return std::string(row[columnIndex - 1], mysql_fetch_lengths(result->get())[columnIndex - 1]);
+	return std::string(row[columnIndex - 1], len);
 }
 /* }}} */
 
@@ -575,6 +608,17 @@ MySQL_ResultSet::getString(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ResultSet::getString(string)");
 	return getString(findColumn(columnLabel));
+}
+/* }}} */
+
+
+/* {{{ MySQL_ResultSet::getType() -I- */
+sql::ResultSet::enum_type
+MySQL_ResultSet::getType() const
+{
+	CPP_ENTER("MySQL_ResultSet::getWarnings");
+	checkValid();
+	return resultset_type;
 }
 /* }}} */
 
@@ -607,6 +651,7 @@ MySQL_ResultSet::isAfterLast() const
 {
 	CPP_ENTER("MySQL_ResultSet::isAfterLast");
 	checkValid();
+	checkScrollable();
 	return (row_position == num_rows + 1);
 }
 /* }}} */
@@ -650,6 +695,7 @@ MySQL_ResultSet::isLast() const
 {
 	CPP_ENTER("MySQL_ResultSet::isLast");
 	checkValid();
+	checkScrollable();
 	return (row_position == num_rows);
 }
 /* }}} */
@@ -694,6 +740,7 @@ MySQL_ResultSet::last()
 {
 	CPP_ENTER("MySQL_ResultSet::last");
 	checkValid();
+	checkScrollable();
 	if (num_rows) {
 		row_position = num_rows;
 		seek();
@@ -710,6 +757,7 @@ MySQL_ResultSet::moveToCurrentRow()
 	CPP_ENTER("MySQL_ResultSet::moveToCurrentRow");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ResultSet::moveToCurrentRow()");
+	checkScrollable();
 }
 /* }}} */
 
@@ -721,6 +769,7 @@ MySQL_ResultSet::moveToInsertRow()
 	CPP_ENTER("MySQL_ResultSet::moveToInsertRow");
 	checkValid();
 	throw sql::MethodNotImplementedException("MySQL_ResultSet::moveToInsertRow()");
+	checkScrollable();
 }
 /* }}} */
 
@@ -732,12 +781,18 @@ MySQL_ResultSet::next()
 	CPP_ENTER("MySQL_ResultSet::next");
 	checkValid();
 	bool ret = false;
-	if (isLast()) {
-		afterLast();
-	} else if (row_position < num_rows + 1) {
+	if (isScrollable()) {
+		if (isLast()) {
+			afterLast();
+		} else if (row_position < num_rows + 1) {
+			row = mysql_fetch_row(result->get());
+			++row_position;
+			ret = (row != NULL);
+		}
+	} else {
 		row = mysql_fetch_row(result->get());
 		++row_position;
-		ret = (row != 0);
+		ret = (row != NULL);	
 	}
 	CPP_INFO_FMT("new_position=%llu num_rows=%llu", row_position, num_rows);
 	return ret;
@@ -751,6 +806,7 @@ MySQL_ResultSet::previous()
 {
 	CPP_ENTER("MySQL_ResultSet::previous");
 
+	checkScrollable();
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirst()) {
 		return false;
@@ -784,6 +840,7 @@ MySQL_ResultSet::relative(const int rows)
 {
 	CPP_ENTER("MySQL_ResultSet::relative");
 	checkValid();
+	checkScrollable();
 	if (rows != 0) {
 		if ((row_position + rows) > num_rows || (row_position + rows) < 1) {
 			row_position = rows > 0? num_rows + 1 : 0; /* after last or before first */
@@ -840,6 +897,7 @@ MySQL_ResultSet::rowsCount() const
 {
 	CPP_ENTER("MySQL_ResultSet::rowsCount");
 	checkValid();
+	checkScrollable();
 	return (size_t) mysql_num_rows(result->get());
 }
 /* }}} */
@@ -877,7 +935,7 @@ MySQL_ResultSet::isBeforeFirstOrAfterLast() const
 {
 	CPP_ENTER("MySQL_ResultSet::isBeforeFirstOrAfterLast");
 	checkValid();
-	return (row_position == 0) || (row_position == num_rows + 1);
+	return (row_position == 0) || (isScrollable() && (row_position == num_rows + 1));
 }
 /* }}} */
 
@@ -887,6 +945,7 @@ void
 MySQL_ResultSet::seek()
 {
 	CPP_ENTER("MySQL_ResultSet::seek");
+	checkScrollable();
 	mysql_data_seek(result->get(), row_position - 1);
 	row = mysql_fetch_row(result->get());
 }

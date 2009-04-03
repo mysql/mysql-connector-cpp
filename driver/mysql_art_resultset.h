@@ -180,6 +180,8 @@ public:
 
 	std::string getString(const std::string& columnLabel) const;
 
+	sql::ResultSet::enum_type getType() const;
+
 	void getWarnings();
 
 	void insertRow();

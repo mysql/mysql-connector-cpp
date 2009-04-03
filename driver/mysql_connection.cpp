@@ -232,6 +232,8 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 				throw sql::InvalidArgumentException(msg.str());
 			} while (0);
 			intern->defaultStatementResultType = static_cast< sql::ResultSet::enum_type >(it->second.lval);
+#if WE_SUPPORT_USE_RESULT_WITH_PS
+		/* The connector is not ready for unbuffered as we need to refetch */
 		} else if (!it->first.compare("defaultPreparedStatementResultType")) {
 			do {
 				if (static_cast< int >(sql::ResultSet::TYPE_FORWARD_ONLY) == it->second.lval) break;
@@ -247,6 +249,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 				throw sql::InvalidArgumentException(msg.str());
 			} while (0);
 			intern->defaultPreparedStatementResultType = static_cast< sql::ResultSet::enum_type >(it->second.lval);
+#endif
 		} else if (!it->first.compare("metadataUseInfoSchema")) {
 			intern->metadata_use_info_schema = it->second.bval;
 		} else if (!it->first.compare("CLIENT_COMPRESS")) {
@@ -886,7 +889,7 @@ MySQL_Connection::getSessionVariable(const std::string & varname)
 		}
 		return rset->getString(2);
 	}
-	return NULL;
+	return std::string("", 0);
 }
 /* }}} */
 

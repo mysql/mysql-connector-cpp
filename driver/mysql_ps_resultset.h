@@ -52,8 +52,12 @@ private:
 	std::auto_ptr< MySQL_Prepared_ResultSetMetaData > rs_meta;
 	std::auto_ptr< MySQL_ResultBind > result_bind;
 
+	sql::ResultSet::enum_type resultset_type;
+
 protected:
 	void checkValid() const;
+	void checkScrollable() const;
+	bool isScrollable() const;
 	void closeIntern();
 	bool isBeforeFirstOrAfterLast() const;
 	void seek();
@@ -62,7 +66,8 @@ protected:
 	uint64_t getUInt64_intern(const uint32_t columnIndex, bool cutTooBig) const;
 
 public:
-	MySQL_Prepared_ResultSet(MYSQL_STMT *s, MySQL_ResultBind * r_bind, MySQL_Prepared_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
+	MySQL_Prepared_ResultSet(MYSQL_STMT *s, MySQL_ResultBind * r_bind, sql::ResultSet::enum_type rset_type,
+							MySQL_Prepared_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
 
 	virtual ~MySQL_Prepared_ResultSet();
 
@@ -122,6 +127,8 @@ public:
 
 	std::string getString(uint32_t columnIndex) const;
 	std::string getString(const std::string& columnLabel) const;
+
+	sql::ResultSet::enum_type getType() const;
 
 	void getWarnings();
 

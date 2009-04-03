@@ -706,6 +706,17 @@ MySQL_ArtResultSet::getString(const std::string& columnLabel) const
 /* }}} */
 
 
+/* {{{ MySQL_ArtResultSet::getType() -I- */
+sql::ResultSet::enum_type
+MySQL_ArtResultSet::getType() const
+{
+	CPP_ENTER("MySQL_ArtResultSet::getWarnings");
+	checkValid();
+	return sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
+}
+/* }}} */
+
+
 /* {{{ MySQL_ArtResultSet::getWarnings() -U- */
 void
 MySQL_ArtResultSet::getWarnings()

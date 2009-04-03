@@ -118,6 +118,8 @@ public:
 	virtual std::string getString(uint32_t columnIndex)  const = 0;
 	virtual std::string getString(const std::string& columnLabel) const = 0;
 
+	virtual enum_type getType() const = 0;
+
 	virtual void getWarnings() = 0;
 
 	virtual void insertRow() = 0;

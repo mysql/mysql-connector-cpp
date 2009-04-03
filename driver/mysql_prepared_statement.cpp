@@ -312,17 +312,19 @@ MySQL_Prepared_Statement::executeQuery()
 
 	my_bool	bool_tmp=1;
 	mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
+	sql::ResultSet::enum_type tmp_type;
 	if (resultset_type == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
 		mysql_stmt_store_result(stmt);
+		tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
 	} else if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
-		;
+		tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
 	} else {
-		throw SQLException("Invalid valude for result set type");
+		throw SQLException("Invalid value for result set type");
 	}
 	
 	std::auto_ptr< MySQL_ResultBind > result_bind(new MySQL_ResultBind(stmt, logger));
 	
-	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, result_bind.get(), this, logger);
+	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, result_bind.get(), tmp_type, this, logger);
 	result_bind.release();
 
 	CPP_INFO_FMT("rset=%p", tmp);
@@ -829,17 +831,19 @@ MySQL_Prepared_Statement::getResultSet()
 
 	my_bool	bool_tmp = 1;
 	mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
+	sql::ResultSet::enum_type tmp_type;
 	if (resultset_type == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
 		mysql_stmt_store_result(stmt);
+		tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
 	} else if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
-		;
+		tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
 	} else {
 		throw SQLException("Invalid valude for result set type");
 	}
 
 	std::auto_ptr< MySQL_ResultBind > result_bind(new MySQL_ResultBind(stmt, logger));
 
-	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, result_bind.get(), this, logger);
+	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, result_bind.get(), tmp_type, this, logger);
 	result_bind.release();
 	CPP_INFO_FMT("rset=%p", tmp);
 
@@ -1023,12 +1027,17 @@ MySQL_Prepared_Statement::setResultSetConcurrency(int)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_Statement::setResultSetType() -I- */
+/* {{{ MySQL_Prepared_Statement::setResultSetType() -U- */
 sql::PreparedStatement *
 MySQL_Prepared_Statement::setResultSetType(sql::ResultSet::enum_type type)
 {
 	checkClosed();
+#if WE_SUPPORT_USE_RESULT_WITH_PS
+		/* The connector is not ready for unbuffered as we need to refetch */
 	resultset_type = type;
+#else
+	throw MethodNotImplementedException("MySQL_Prepared_Statement::setResultSetType");	
+#endif
 	return this;
 }
 /* }}} */

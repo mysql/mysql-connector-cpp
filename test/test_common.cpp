@@ -862,7 +862,7 @@ static void test_result_set_0(std::auto_ptr<sql::Connection> & conn)
 		std::auto_ptr<sql::Statement> stmt(conn->createStatement());
 		ensure("AutoCommit", conn.get() == stmt->getConnection());
 
-		std::auto_ptr<sql::ResultSet> result(stmt->executeQuery("SELECT 1, 2, 3"));
+		std::auto_ptr<sql::ResultSet> result(stmt->setResultSetType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE)->executeQuery("SELECT 1, 2, 3"));
 
 		ensure_equal_int("isFirst", result->isFirst(), false);
 
@@ -884,6 +884,7 @@ static void test_result_set_1(std::auto_ptr<sql::Connection> & conn)
 	try {
 		std::auto_ptr<sql::Statement> stmt1(conn->createStatement());
 		ensure("stmt1 is NULL", stmt1.get() != NULL);
+		stmt1->setResultSetType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
 
 		std::auto_ptr<sql::ResultSet> rset1(stmt1->executeQuery("SELECT 1"));
 		ensure("res1 is NULL", rset1.get() != NULL);
@@ -1412,6 +1413,7 @@ static void test_result_set_11(std::auto_ptr<sql::Connection> & conn, std::strin
 	try {
 		std::auto_ptr<sql::Statement> stmt1(conn->createStatement());
 		ensure("stmt1 is NULL", stmt1.get() != NULL);
+		stmt1->setResultSetType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
 
 		ensure("Data not populated", true == populate_test_table(conn, database));
 
@@ -1660,36 +1662,6 @@ static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 
 		/* try clearParameters() call */
 		{
-#if 0
-			std::auto_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ?, ?, ?, ?"));
-			/* Step 1 */
-			try {
-				stmt->setInt(3, 13);
-				stmt->setString(2, "Hello WORLD");
-				stmt->setDouble(4, 1.25);
-
-				stmt->clearParameters();
-
-				stmt->execute();
-
-				std::auto_ptr<sql::ResultSet> rset(stmt->getResultSet());
-
-				ensure("No result set", rset.get() != NULL);
-				ensure("Result set is empty", rset->next() != false);
-				ensure("Incorrect value for col 1", rset->getInt(2) == 0 && true == rset->wasNull());
-
-				ensure("Incorrect value for col 2", !rset->getString(1).compare("") && true == rset->wasNull());
-
-				ensure("Incorrect value for col 2", rset->getInt(3) == 0 && true == rset->wasNull());
-				ensure("Incorrect value for col 2", !rset->getString(3).compare("") && true == rset->wasNull());
-
-			} catch (sql::SQLException &e) {
-				printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
-				printf("# ");
-				total_errors++;
-			}
-			/* Step 2 */
-#endif
 			std::auto_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ?, ?, ?, NULL"));
 			try {
 				stmt->setInt(3, 42);
@@ -3033,18 +3005,20 @@ int run_tests(int argc, const char **argv)
 		try {
 			std::auto_ptr<sql::Statement> stmt(conn->createStatement());
 			stmt->execute("SHOW ENGINES");
-			std::auto_ptr<sql::ResultSet> rset(stmt->getResultSet());
-			int found = 0;
-			while (rset->next()) {
-				if (rset->getString("Engine") == "InnoDB" && (rset->getString("Support") == "YES" || rset->getString("Support") == "DEFAULT")) {
-					found = 1;
-					break;
+			{
+				std::auto_ptr<sql::ResultSet> rset(stmt->getResultSet());
+				int found = 0;
+				while (rset->next()) {
+					if (rset->getString("Engine") == "InnoDB" && (rset->getString("Support") == "YES" || rset->getString("Support") == "DEFAULT")) {
+						found = 1;
+						break;
+					}
 				}
-			}
-			if (found == 0) {
-				printf("\n#ERR: InnoDB Storage engine not available or disabled\n");
-				printf("not ok\n");
-				return 1;
+				if (found == 0) {
+					printf("\n#ERR: InnoDB Storage engine not available or disabled\n");
+					printf("not ok\n");
+					return 1;
+				}
 			}
 
 			stmt->execute("USE " + database);

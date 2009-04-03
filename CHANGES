@@ -19,6 +19,17 @@ Beta2  1.0.5 - 2009-04-xx
   std::string to const char * to be consistent with std::exception::what().
   (Andrey)
 
+- Implemented getResultSetType() and setResultSetType() for Statement. Used
+  are TYPE_FORWARD_ONLY, which means unbuffered result set and 
+  TYPE_SCROLL_INSENSITIVE, which means buffered result set. (Andrey)
+
+- Implemented getResultSetType() for PreparedStatement. The setter is not
+  implemented because currently PreparedStatement can't do refetching and
+  storing the result means the bind buffers will be correct. (Andrey)
+
+- Added Result::getType() and implemented it in the three result set classes.
+  (Andrey)
+
 
 Beta   1.0.4 - 2009-03-xx
 

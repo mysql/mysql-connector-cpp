@@ -46,13 +46,18 @@ class MySQL_ResultSet : public sql::ResultSet
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 
 	std::auto_ptr< MySQL_ResultSetMetaData > rs_meta;
+
+	sql::ResultSet::enum_type resultset_type;
+
 protected:
 	void checkValid() const;
+	void checkScrollable() const;
+	bool isScrollable() const;
 	bool isBeforeFirstOrAfterLast() const;
 	void seek();
 
 public:
-	MySQL_ResultSet(MYSQL_RES_Wrapper * res, MySQL_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
+	MySQL_ResultSet(MYSQL_RES_Wrapper * res, sql::ResultSet::enum_type rset_type, MySQL_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
 
 	virtual ~MySQL_ResultSet();
 
@@ -114,6 +119,8 @@ public:
 
 	std::string getString(uint32_t columnIndex) const;
 	std::string getString(const std::string& columnLabel) const;
+
+	sql::ResultSet::enum_type getType() const;
 
 	void getWarnings();
 

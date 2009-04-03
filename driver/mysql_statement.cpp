@@ -137,7 +137,13 @@ MySQL_Statement::executeQuery(const std::string& sql)
 	checkClosed();
 	last_update_count = UL64(~0);
 	do_query(sql.c_str(), static_cast<int>(sql.length()));
-	sql::ResultSet *tmp = new MySQL_ResultSet(get_resultset(), this, logger);
+	sql::ResultSet *tmp =
+				new MySQL_ResultSet(
+						get_resultset(),
+						resultset_type==sql::ResultSet::TYPE_FORWARD_ONLY? resultset_type:sql::ResultSet::TYPE_SCROLL_INSENSITIVE,
+						this,
+						logger
+				);
 	CPP_INFO_FMT("rset=%p", tmp);
 	return tmp;
 }
@@ -197,8 +203,17 @@ MySQL_Statement::getResultSet()
 	last_update_count = UL64(~0);
 
 	MYSQL * mysql = connection->getMySQLHandle();
-
-	MYSQL_RES * result = resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? mysql_use_result(mysql):mysql_store_result(mysql);
+	MYSQL_RES * result = NULL;
+	sql::ResultSet::enum_type tmp_type;
+	switch (resultset_type) {
+		case sql::ResultSet::TYPE_FORWARD_ONLY:
+			result = mysql_use_result(mysql);
+			tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
+			break;
+		default:
+			result = mysql_store_result(mysql);
+			tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
+	}
 	if (!result) {
 		/* if there was an update then this method should return NULL and not throw */
 		return NULL;
@@ -206,7 +221,7 @@ MySQL_Statement::getResultSet()
 
 	std::auto_ptr< MYSQL_RES_Wrapper > wrapper(new MYSQL_RES_Wrapper(result));
 	
-	sql::ResultSet * ret = new MySQL_ResultSet(wrapper.get(), this, logger);
+	sql::ResultSet * ret = new MySQL_ResultSet(wrapper.get(), tmp_type, this, logger);
 	wrapper.release();
 	CPP_INFO_FMT("res=%p", ret);
 	return ret;
