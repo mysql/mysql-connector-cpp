@@ -3950,7 +3950,7 @@ MySQL_ConnectionMetaData::getUserName()
 	if (rset->next()) {
 		return std::string(rset->getString(1));
 	}
-	return std::string("", 0);
+	return "";
 }
 /* }}} */
 

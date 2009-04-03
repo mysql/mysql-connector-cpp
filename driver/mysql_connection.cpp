@@ -889,7 +889,7 @@ MySQL_Connection::getSessionVariable(const std::string & varname)
 		}
 		return rset->getString(2);
 	}
-	return std::string("", 0);
+	return "";
 }
 /* }}} */
 
