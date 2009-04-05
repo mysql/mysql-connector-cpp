@@ -1,7 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
-  <Product Id="@CONNECTOR_PKG_ID1@" Name="MySQL Connector C++" Language="1033" Version="@CONNECTOR_PRODUCT_VERSION@" Manufacturer="Sun Microsystems">
+  <Product Id="@CONNECTOR_PKG_ID1@" Name="MySQL Connector C++ @CONNECTOR_PRODUCT_VERSION@" Language="1033" Version="@CONNECTOR_PRODUCT_VERSION@" Manufacturer="Sun Microsystems" UpgradeCode="E348C15D-6A35-4a3b-B014-335E715DF059">
     <Package Id="@CONNECTOR_PKG_ID2@" Keywords="Installer,MSI,Database" Description="MySQL C++ Connector @CONNECTOR_PRODUCT_VERSION@" InstallerVersion="200" Platforms="@CONNECTOR_PLATFORM@" Compressed="yes" SummaryCodepage="1252" />
+    <Icon Id="productIcon" SourceFile="Bitmaps\Up.ico" />
+
+<!-- Check for installed applications -->
+    <Upgrade Id="E348C15D-6A35-4a3b-B014-335E715DF059">
+        <UpgradeVersion Property="PREVIOUSLYINSTALLED" Minimum="0.0.0.0" Maximum="@CONNECTOR_PRODUCT_VERSION" IncludeMaximum="yes" IncludeMinimum="yes" />
+        <UpgradeVersion Property="NEWERPRODUCTFOUND" Minimum="@CONNECTOR_PRODUCT_VERSION" Maximum="1.9.9.9" IncludeMaximum="yes" IncludeMinimum="no" />
+    </Upgrade>
+    <CustomAction Id="NewerVersionInstalled" Error="A newer version of this product is
+already installed." />
+    <InstallExecuteSequence>
+      <Custom Action="NewerVersionInstalled" After="FindRelatedProducts">NEWERPRODUCTFOUND</Custom>
+      <RemoveExistingProducts After="InstallInitialize"/>
+    </InstallExecuteSequence>
+
+<!-- File definitions -->
     <Media Id="1" Cabinet="Product.cab" EmbedCab="yes" />
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="@CONNECTOR_DEFAULT_DEST@">
@@ -81,7 +96,7 @@
           </Feature>
         </Feature>
     </Feature>
-    <UIRef Id="WixUI_Mondo" />
+    <UIRef Id="WixUI_MySQLConnector" />
     <UIRef Id="WixUI_ErrorProgressText" />
   </Product>
 </Wix>

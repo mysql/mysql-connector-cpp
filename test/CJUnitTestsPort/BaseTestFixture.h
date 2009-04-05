@@ -18,10 +18,10 @@
 #include "resources.h"
 #include <driver/mysql_public_iface.h>
 
-#include "framework/framework.h"
+#include "../framework/framework.h"
 
-#include "common/ccppTypes.h"
-#include "common/stringutils.h"
+#include "../common/ccppTypes.h"
+#include "../common/stringutils.h"
 
 #define MESSAGE(msg)  TestsListener::messagesLog() << msg << std::endl;
 

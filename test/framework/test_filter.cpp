@@ -30,7 +30,7 @@ namespace testsuite
     else
     {
       negative=     false;
-      filterString= filterStr.c_str();
+      filterString= filterStr;
     }
 
     StringUtils::trim( filterString );

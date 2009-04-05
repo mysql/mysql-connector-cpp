@@ -13,7 +13,7 @@
 #include <stdlib.h>
 
 #include "BaseTestFixture.h"
-#include "common/stringutils.h"
+#include "../common/stringutils.h"
 
 namespace testsuite
 {

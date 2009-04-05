@@ -11,7 +11,7 @@
 
 #include <fstream>
 
-#include "../common/file.h"
+#include "../../common/file.h"
 
 #include "../BaseTestFixture.h"
 

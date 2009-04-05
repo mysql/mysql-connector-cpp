@@ -12,7 +12,7 @@ INCLUDE_DIRECTORIES(${MYSQLCPPCONN_SOURCE_DIR}/cppconn)
 
 IF(WIN32)
 	LINK_DIRECTORIES(${MYSQL_DIR}/lib/$(ConfigurationName))
-	LINK_DIRECTORIES(framework/$(ConfigurationName))
+	LINK_DIRECTORIES(../framework/$(ConfigurationName))
 	SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn libmysql test_framework)
 	SET(MY_TARGET_LINK_LIBRARIES_STATIC_CPPLIB mysqlcppconn-static libmysql test_framework)
 #	ADD_DEFINITIONS("-D_SECURE_SCL")

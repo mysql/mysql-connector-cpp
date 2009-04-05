@@ -9,10 +9,10 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
  */
 
-#include "../CJUnitTestsPort/framework/test_runner.h"
-#include "../CJUnitTestsPort/framework/start_options.h"
-#include "../CJUnitTestsPort/framework/test_tapOutputter.h"
-#include "../CJUnitTestsPort/framework/test_filter.h"
+#include "../framework/test_runner.h"
+#include "../framework/start_options.h"
+#include "../framework/test_tapOutputter.h"
+#include "../framework/test_filter.h"
 #include <stdlib.h>
 
 int main(int argc, char** argv)

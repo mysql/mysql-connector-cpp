@@ -12,7 +12,7 @@ INCLUDE_DIRECTORIES(${MYSQLCPPCONN_SOURCE_DIR}/cppconn)
 
 IF(WIN32)
 	LINK_DIRECTORIES(${MYSQL_DIR}/lib/$(ConfigurationName))
-	LINK_DIRECTORIES(framework/$(ConfigurationName))
+	LINK_DIRECTORIES(../framework/$(ConfigurationName))
 	SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn libmysql test_framework)
 #	ADD_DEFINITIONS("-D_SECURE_SCL")
 	ADD_DEFINITIONS("-D_SCL_SECURE_NO_WARNINGS")
@@ -31,7 +31,7 @@ ADD_DEFINITIONS("-DWE_HAVE_DATATYPE_AGAIN")
 SET(jdbctests_sources
 	ccpptests.cpp
 	BaseTestFixture.cpp
-	common/stringutils.cpp
+	../common/stringutils.cpp
 	resources.cpp
 	regression/EscapeProcessorRegressionTest.cpp
 	compliance/ConnectionTest.cpp
@@ -51,7 +51,7 @@ IF(WIN32)
 	SET(jdbctests_sources
     		${jdbctests_sources}
 		BaseTestFixture.h
-		common/stringutils.h
+		../common/stringutils.h
 		resources.h
 		regression/EscapeProcessorRegressionTest.h
 		compliance/ConnectionTest.h

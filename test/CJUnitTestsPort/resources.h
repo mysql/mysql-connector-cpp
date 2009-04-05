@@ -12,7 +12,7 @@
 #ifndef _TESTSUITE_RESOURCES_H_
 #define _TESTSUITE_RESOURCES_H_
 
-#include "common/ccppTypes.h"
+#include "../common/ccppTypes.h"
 
 namespace testsuite
 {

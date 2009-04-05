@@ -10,7 +10,7 @@
 */
 
 #include "BlobRegressionTest.h"
-#include "../common/file.h"
+#include "../../common/file.h"
 #include <sstream>
 
 namespace testsuite

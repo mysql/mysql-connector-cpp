@@ -12,7 +12,7 @@
 #ifndef __TESTASSERTS_H_
 #define __TESTASSERTS_H_
 
-#include "../../../cppconn/resultset.h"
+#include "../../cppconn/resultset.h"
 
 #include "../common/ccppTypes.h"
 

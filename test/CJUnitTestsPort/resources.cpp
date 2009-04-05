@@ -12,7 +12,7 @@
 #include <fstream>
 
 #include "resources.h"
-#include "common/stringutils.h"
+#include "../common/stringutils.h"
 
 namespace testsuite
 {
