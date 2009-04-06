@@ -54,7 +54,7 @@
 
       <Property Id="WixUI_WelcomeDlg_Next" Value="LicenseAgreementDlg" />
 
-      <Property Id="WixUI_LicenseAgreementDlg_Back" Value="WelcomeDlg" />
+      <Property Id="WixUI_LicenseAgreementDlg_Back" Value="MySQL_WelcomeDlg" />
       <Property Id="WixUI_LicenseAgreementDlg_Next" Value="SetupTypeDlg" />
 
       <Property Id="WixUI_SetupTypeDlg_NextTypical" Value="VerifyReadyDlg" />
