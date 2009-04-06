@@ -51,9 +51,9 @@ public:
 	SQLException(const SQLException& e) : std::runtime_error(e.what()), sql_state(e.sql_state), errNo(e.errNo) {}
 
 	SQLException(const std::string& reason, const std::string& SQLState, int vendorCode) :
-		std::runtime_error  (reason    ),
-		sql_state           (SQLState  ),
-		errNo               (vendorCode)
+		std::runtime_error	(reason		),
+		sql_state			(SQLState	),
+		errNo				(vendorCode)
 	{}
 
 	SQLException(const std::string& reason, const std::string& SQLState) : std::runtime_error(reason), sql_state(SQLState), errNo(0) {}
@@ -80,7 +80,7 @@ protected:
 
 struct CPPCONN_PUBLIC_FUNC MethodNotImplementedException : public SQLException
 {
- 	MethodNotImplementedException(const MethodNotImplementedException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
+	MethodNotImplementedException(const MethodNotImplementedException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
 	MethodNotImplementedException(const std::string& reason) : SQLException(reason, "", 0) {}
 
 private:
@@ -89,30 +89,30 @@ private:
 
 struct CPPCONN_PUBLIC_FUNC InvalidArgumentException : public SQLException
 {
- 	InvalidArgumentException(const InvalidArgumentException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
- 	InvalidArgumentException(const std::string& reason) : SQLException(reason, "", 0) {}
+	InvalidArgumentException(const InvalidArgumentException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
+	InvalidArgumentException(const std::string& reason) : SQLException(reason, "", 0) {}
 
 private:
-  virtual SQLException* copy() { return new InvalidArgumentException(*this); }
+	virtual SQLException* copy() { return new InvalidArgumentException(*this); }
 };
 
 struct CPPCONN_PUBLIC_FUNC InvalidInstanceException : public SQLException
 {
- 	InvalidInstanceException(const InvalidInstanceException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
- 	InvalidInstanceException(const std::string& reason) : SQLException(reason, "", 0) {}
+	InvalidInstanceException(const InvalidInstanceException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
+	InvalidInstanceException(const std::string& reason) : SQLException(reason, "", 0) {}
 
 private:
-  virtual SQLException* copy() { return new InvalidInstanceException(*this); }
+	virtual SQLException* copy() { return new InvalidInstanceException(*this); }
 };
 
 
 struct CPPCONN_PUBLIC_FUNC NonScrollableException : public SQLException
 {
- 	NonScrollableException(const NonScrollableException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
- 	NonScrollableException(const std::string& reason) : SQLException(reason, "", 0) {}
+	NonScrollableException(const NonScrollableException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
+	NonScrollableException(const std::string& reason) : SQLException(reason, "", 0) {}
 
 private:
-  virtual SQLException* copy() { return new NonScrollableException(*this); }
+	virtual SQLException* copy() { return new NonScrollableException(*this); }
 };
 
 }; /* namespace sql */

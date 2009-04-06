@@ -1976,7 +1976,7 @@ MY_UNICASE_INFO *my_unicase_default[256]={
 
 };
 
-#define MY_CS_ILSEQ	0		 /* Wrong by sequence: wb_wc									 */
+#define MY_CS_ILSEQ	0		 /* Wrong by sequence: wb_wc	*/
 #define MY_CS_TOOSMALL	-101	/* Need at least one byte:		wc_mb and mb_wc */
 #define MY_CS_TOOSMALL2 -102	/* Need at least two bytes:	 wc_mb and mb_wc */
 #define MY_CS_TOOSMALL3 -103	/* Need at least three bytes: wc_mb and mb_wc */

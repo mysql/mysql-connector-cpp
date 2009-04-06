@@ -28,18 +28,18 @@ class MySQL_ResultSetMetaData;
 
 class MySQL_ResultSet : public sql::ResultSet
 {
-	MYSQL_ROW               row;
-	MYSQL_RES_Wrapper *     result;
+	MYSQL_ROW				row;
+	MYSQL_RES_Wrapper *		result;
 	unsigned int			num_fields;
-	my_ulonglong            num_rows;
-	my_ulonglong            row_position;
-    /* 0 = before first row, 1 - first row, 'num_rows + 1' - after last row */
+	my_ulonglong			num_rows;
+	my_ulonglong			row_position;
+	/* 0 = before first row, 1 - first row, 'num_rows + 1' - after last row */
 
 	typedef std::map<std::string, unsigned int> FieldNameIndexMap;
 	typedef std::pair<std::string, unsigned int> FieldNameIndexPair;
 
-	FieldNameIndexMap       field_name_to_index_map;
-	mutable bool            was_null;
+	FieldNameIndexMap	field_name_to_index_map;
+	mutable bool		was_null;
 
 	const MySQL_Statement * parent;
 

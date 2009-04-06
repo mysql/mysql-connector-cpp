@@ -166,11 +166,11 @@ MyVal::getBool()
 			return !(val.dval < delta && val.dval > -delta);
 		case typeInt:
 		case typeUInt:
-      return val.lval != 0;
+			return val.lval != 0;
 		case typeBool:
-      return val.bval;
+			return val.bval;
 		case typePtr:
-      return val.pval != NULL;
+			return val.pval != NULL;
 
 	}
 	throw std::runtime_error("impossible");
