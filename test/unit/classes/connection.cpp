@@ -14,6 +14,7 @@
 #include "connection.h"
 #include <stdlib.h>
 #include <cppconn/connection.h>
+#include <cppconn/exception.h>
 
 namespace testsuite
 {
@@ -790,7 +791,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing OPT_CONNECT_TIMEOUT");
       sql::ConnectPropertyVal tmp;
-      /* 
+      /*
        C-API does not care about the actual value, its passed down to the OS,
        The OS may or may not detect bogus values such as negative values.
        */
@@ -948,7 +949,136 @@ void connection::connectUsingMap()
     }
     connection_properties.erase("metadataUseInfoSchema");
 
+    /* 20) defaultStatementResultType */
+    connection_properties.erase("defaultStatementResultType");
+    {
+      logMsg("... testing defaultStatementResultType");
+      sql::ConnectPropertyVal tmp;
+      tmp.lval=sql::ResultSet::TYPE_FORWARD_ONLY;
+      connection_properties[std::string("defaultStatementResultType")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &e)
+      {
+        fail(e.what(), __FILE__, __LINE__);
+      }
 
+      connection_properties.erase("defaultStatementResultType");
+      tmp.lval=sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
+      connection_properties[std::string("defaultStatementResultType")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &e)
+      {
+        fail(e.what(), __FILE__, __LINE__);
+      }
+
+      connection_properties.erase("defaultStatementResultType");
+      tmp.lval=sql::ResultSet::TYPE_SCROLL_SENSITIVE;
+      connection_properties[std::string("defaultStatementResultType")]=tmp;
+      try
+      {
+        created_objects.clear();
+        try
+        {
+          con.reset(driver->connect(connection_properties));
+          FAIL("Bug or API change - TYPE_SCROLL_SENSITIVE is unsupported");
+        }
+        catch (sql::SQLException &e)
+        {
+          logMsg("... expected exception because TYPE_SCROLL_SENSITIVE is unsupported!");
+          logMsg(e.what());
+        }
+      }
+      catch (sql::SQLException &e)
+      {
+        fail(e.what(), __FILE__, __LINE__);
+      }
+
+    }
+    connection_properties.erase("defaultStatementResultType");
+
+
+    /* 21) OPT_NAMED_PIPE - handled but ignored! */
+    connection_properties.erase("OPT_NAMED_PIPE");
+    {
+      logMsg("... testing OPT_NAMED_PIPE");
+      sql::ConnectPropertyVal tmp;
+      std::string pipe("IGNORED");
+      tmp.str.val=pipe.c_str();
+      tmp.str.len=pipe.length();
+      connection_properties[std::string("OPT_NAMED_PIPE")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &e)
+      {
+        fail(e.what(), __FILE__, __LINE__);
+      }
+    }
+    connection_properties.erase("OPT_NAMED_PIPE");
+
+    /* 22) OPT_CHARSET_NAME = MYSQL_SET_CHARSET_NAME */
+    connection_properties.erase("OPT_CHARSET_NAME");
+    {
+      logMsg("... testing OPT_CHARSET_NAME");
+      sql::ConnectPropertyVal tmp;
+      std::string charset("utf8");
+      tmp.str.val=charset.c_str();
+      tmp.str.len=charset.length();
+      connection_properties[std::string("OPT_CHARSET_NAME")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &e)
+      {
+        fail(e.what(), __FILE__, __LINE__);
+      }
+    }
+    connection_properties.erase("OPT_CHARSET_NAME");
+
+
+    /* 23) OPT_REPORT_DATA_TRUNCATION */
+    connection_properties.erase("OPT_REPORT_DATA_TRUNCATION");
+    {
+      logMsg("... testing OPT_REPORT_DATA_TRUNCATION");
+      sql::ConnectPropertyVal tmp;
+      tmp.bval=true;
+      connection_properties[std::string("OPT_REPORT_DATA_TRUNCATION")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &e)
+      {
+        fail(e.what(), __FILE__, __LINE__);
+      }
+
+      connection_properties.erase("OPT_REPORT_DATA_TRUNCATION");
+      tmp.bval=false;
+      connection_properties[std::string("OPT_REPORT_DATA_TRUNCATION")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &e)
+      {
+        fail(e.what(), __FILE__, __LINE__);
+      }
+    }
+    connection_properties.erase("OPT_REPORT_DATA_TRUNCATION");
 
   }
   catch (sql::SQLException &e)
