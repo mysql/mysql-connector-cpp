@@ -14,6 +14,7 @@
 #include "connection.h"
 #include <stdlib.h>
 #include <cppconn/connection.h>
+#include <driver/mysql_connection.h>
 #include <cppconn/exception.h>
 
 namespace testsuite
@@ -32,6 +33,61 @@ void connection::getClientInfo()
     if (ret != "cppconn")
       FAIL("Expecting 'cppconn' got '" + ret + "'.");
 
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connection::getClientOption()
+{
+  logMsg("connection::getClientOption() - MySQL_Connection::get|setClientOption()");
+  try
+  {
+    const std::string option("metadataUseInfoSchema");
+    bool input_value=true;
+    bool output_value=false;
+    void * input;
+    void * output;
+
+    input=(static_cast<bool *> (&input_value));
+    output=(static_cast<bool *> (&output_value));
+
+    con->setClientOption("metadataUseInfoSchema", input);
+    con->getClientOption("metadataUseInfoSchema", output);
+
+    ASSERT_EQUALS(input_value, output_value);
+
+    input_value=false;
+    con->setClientOption("metadataUseInfoSchema", input);
+    con->getClientOption("metadataUseInfoSchema", output);
+    ASSERT_EQUALS(input_value, output_value);
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connection::getSessionVariable()
+{
+  logMsg("connection::getSessionVariable() - MySQL_Connection::get|setSessionVariable()");
+  try
+  {
+    std::string value("");
+    std::auto_ptr< sql::mysql::MySQL_Connection > my_con(dynamic_cast<sql::mysql::MySQL_Connection*> (driver->connect(url, user, passwd)));
+    value = my_con->getSessionVariable("sql_mode");
+
+    my_con->setSessionVariable("sql_mode", "ANSI");
+    ASSERT_EQUALS(my_con->getSessionVariable("sql_mode"), "ANSI");
+
+    my_con->setSessionVariable("sql_mode", value);
+    ASSERT_EQUALS(value, my_con->getSessionVariable("sql_mode"));
   }
   catch (sql::SQLException &e)
   {

@@ -32,6 +32,8 @@ public:
   EXAMPLE_TEST_FIXTURE(connection)
   {
     TEST_CASE(getClientInfo);
+    TEST_CASE(getClientOption);
+    TEST_CASE(getSessionVariable);
     TEST_CASE(getNoWarningsOnNewLine);
     TEST_CASE(getNoWarningsAfterClear);
     TEST_CASE(checkClosed);
@@ -49,6 +51,22 @@ public:
    * Not part of the JDBC specs? Always returns "cppconn".
    */
   void getClientInfo();
+
+   /**
+   * Test getClientOption, setClientOption
+   *
+   * Not part of the JDBC specs? Only supports metadataUseInfoSchema
+   */
+  void getClientOption();
+
+
+ /**
+   * Test getSessionVariable, setSessionVariable
+   *
+   * Not part of the JDBC specs?
+   */
+  void getSessionVariable();
+
 
   /**
    * Ensure that tests get a connection without any warnings
