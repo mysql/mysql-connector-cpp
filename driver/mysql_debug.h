@@ -71,6 +71,8 @@ public:
 
 	void enter(const MySQL_DebugEnterEvent * obj);
 
+	bool isTracing();
+
 	void leave(const MySQL_DebugEnterEvent * obj);
 
 	void log(const char * const type, const char * const message);

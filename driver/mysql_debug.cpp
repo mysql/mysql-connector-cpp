@@ -110,6 +110,15 @@ MySQL_DebugLogger::enter(const MySQL_DebugEnterEvent * event)
 /* }}} */
 
 
+/* {{{ MySQL_DebugLogger::isTracing() -I- */
+bool
+MySQL_DebugLogger::isTracing()
+{
+	return (tracing != NO_TRACE);
+}
+/* }}} */
+
+
 /* {{{ MySQL_DebugLogger::leave() -I- */
 void
 MySQL_DebugLogger::leave(const MySQL_DebugEnterEvent * event)
