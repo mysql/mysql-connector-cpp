@@ -47,26 +47,55 @@ void connection::getClientOption()
   try
   {
     const std::string option("metadataUseInfoSchema");
-    bool input_value = true;
-    bool output_value = false;
+    bool input_value=true;
+    bool output_value=false;
     void * input;
     void * output;
 
-    input = (static_cast<bool *>(&input_value));
-    output = (static_cast<bool *>(&output_value));
+    input=(static_cast<bool *> (&input_value));
+    output=(static_cast<bool *> (&output_value));
 
     con->setClientOption("metadataUseInfoSchema", input);
     con->getClientOption("metadataUseInfoSchema", output);
 
     ASSERT_EQUALS(input_value, output_value);
 
-    input_value = false;
+    input_value=false;
     con->setClientOption("metadataUseInfoSchema", input);
     con->getClientOption("metadataUseInfoSchema", output);
     ASSERT_EQUALS(input_value, output_value);
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
 
-    // ASSERT_EQUALS((static_cast<bool*>(input)), (static_cast<bool*>(output)));
+void connection::getSessionVariable()
+{
+  logMsg("connection::getClientOption() - MySQL_Connection::getClientOption()");
+  try
+  {
+    const std::string option("metadataUseInfoSchema");
+    bool input_value=true;
+    bool output_value=false;
+    void * input;
+    void * output;
 
+    input=(static_cast<bool *> (&input_value));
+    output=(static_cast<bool *> (&output_value));
+
+    con->setClientOption("metadataUseInfoSchema", input);
+    con->getClientOption("metadataUseInfoSchema", output);
+
+    ASSERT_EQUALS(input_value, output_value);
+
+    input_value=false;
+    con->setClientOption("metadataUseInfoSchema", input);
+    con->getClientOption("metadataUseInfoSchema", output);
+    ASSERT_EQUALS(input_value, output_value);
   }
   catch (sql::SQLException &e)
   {
