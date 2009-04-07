@@ -81,6 +81,7 @@ void connection::getSessionVariable()
   {
     std::string value("");
     std::auto_ptr< sql::mysql::MySQL_Connection > my_con(dynamic_cast<sql::mysql::MySQL_Connection*> (driver->connect(url, user, passwd)));
+    value = my_con->getSessionVariable("sql_mode");
 
     my_con->setSessionVariable("sql_mode", "ANSI");
     ASSERT_EQUALS(my_con->getSessionVariable("sql_mode"), "ANSI");
