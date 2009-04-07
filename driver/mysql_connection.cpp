@@ -139,6 +139,7 @@ MySQL_Connection::~MySQL_Connection()
   - password
   - port
   - socket
+  - pipe
   - schema
   - sslKey
   - sslCert
@@ -176,7 +177,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 	intern->is_valid = true;
 	bool protocol_tcp = true;
 	std::string host;
-	std::string socket;
+	std::string socket_or_pipe;
 	unsigned int port = 3306;
 
 	std::string hostName;
@@ -197,7 +198,10 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 		} else if (!it->first.compare("port")) {
 			port = static_cast<unsigned int>(it->second.lval);
 		} else if (!it->first.compare("socket")) {
-			socket = it->second.str.val;
+			socket_or_pipe = it->second.str.val;
+			protocol_tcp = false;
+		} else if (!it->first.compare("pipe")) {
+			socket_or_pipe = it->second.str.val;
 			protocol_tcp = false;
 		} else if (!it->first.compare("schema")) {
 			schema = std::string(it->second.str.val);
@@ -298,8 +302,18 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 #if !defined(_WIN32) && !defined(_WIN64)
 		if (!hostName.compare(0, sizeof("unix://") - 1, "unix://")) {
 			protocol_tcp = false;
+			socket_or_pipe = hostName.substr(sizeof("unix://") - 1, std::string::npos);
 			host = "localhost";
-			socket = hostName.substr(sizeof("unix://") - 1, std::string::npos);
+			int tmp_protocol = MYSQL_PROTOCOL_SOCKET;
+			mysql_options(intern->mysql, MYSQL_OPT_PROTOCOL, (const char *) &tmp_protocol);
+		} else
+#else
+		if (!hostName.compare(0, sizeof("pipe://") - 1, "pipe://")) {
+			protocol_tcp = false;
+			socket_or_pipe = hostName.substr(sizeof("pipe://") - 1, std::string::npos);
+			host = ".";
+			int tmp_protocol = MYSQL_PROTOCOL_PIPE;
+			mysql_options(intern->mysql, MYSQL_OPT_PROTOCOL, (const char *) &tmp_protocol);
 		} else
 #endif
 		if (!hostName.compare(0, sizeof("tcp://") - 1, "tcp://") ) {
@@ -330,8 +344,6 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 		for (; it_tmp != properties.end(); ++it_tmp) {
 			if (!it_tmp->first.compare("OPT_CONNECT_TIMEOUT")) {
 				mysql_options(intern->mysql, MYSQL_OPT_CONNECT_TIMEOUT, (const char *) &it_tmp->second.lval);
-			} else if (!it_tmp->first.compare("OPT_NAMED_PIPE")) {
-				mysql_options(intern->mysql, MYSQL_OPT_NAMED_PIPE, NULL);
 			} else if (!it_tmp->first.compare("OPT_READ_TIMEOUT")) {
 				mysql_options(intern->mysql, MYSQL_OPT_READ_TIMEOUT, (const char *) &it_tmp->second.lval);
 			} else if (!it_tmp->first.compare("OPT_WRITE_TIMEOUT")) {
@@ -342,6 +354,8 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 				mysql_options(intern->mysql, MYSQL_SET_CHARSET_NAME, (const char *) &it_tmp->second.str.val);
 			} else if (!it_tmp->first.compare("OPT_REPORT_DATA_TRUNCATION")) {
 				mysql_options(intern->mysql, MYSQL_REPORT_DATA_TRUNCATION, (const char *) &it_tmp->second.bval);
+			} else if (!it_tmp->first.compare("OPT_NAMED_PIPE")) {
+				mysql_options(intern->mysql, MYSQL_OPT_NAMED_PIPE, NULL);
 			}
 		}
 		if (ssl_used) {
@@ -352,14 +366,14 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 		CPP_INFO_FMT("user=%s", userName.c_str());
 		CPP_INFO_FMT("port=%d", port);
 		CPP_INFO_FMT("schema=%s", schema.c_str());
-		CPP_INFO_FMT("socket=%s", socket.c_str());
+		CPP_INFO_FMT("socket/pipe=%s", socket_or_pipe.c_str());
 		if (!mysql_real_connect(intern->mysql,
 							host.c_str(),
 							userName.c_str(),
 							password.c_str(),
 							schema_used && schema.size()? schema.c_str():NULL /* schema */,
 							port,
-							protocol_tcp == false? socket.c_str():NULL /*socket*/,
+							protocol_tcp == false? socket_or_pipe.c_str():NULL /*socket or named pipe */,
 							flags)) {
 			CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", mysql_errno(intern->mysql), mysql_sqlstate(intern->mysql), mysql_error(intern->mysql));
 			sql::SQLException e(mysql_error(intern->mysql), mysql_sqlstate(intern->mysql), mysql_errno(intern->mysql));

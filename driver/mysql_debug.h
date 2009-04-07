@@ -13,15 +13,17 @@
 #define _MYSQL_DEBUG_H_
 
 /* _MSC_VER VC6.0=1200, VC7.0=1300, VC7.1=1310, VC8.0=1400 */
-#if defined(_MSC_VER) && MSC_VER >=1400
-	#define WE_HAVE_VARARGS_MACRO_SUPPORT
-#elseif !defined(_MSC_VER)
+#if defined(_MSC_VER)
+	#if _MSC_VER >=1400
+		#define WE_HAVE_VARARGS_MACRO_SUPPORT
+	#endif
+#else
 	#define WE_HAVE_VARARGS_MACRO_SUPPORT
 #endif
 
 
 
-#if WE_HAVE_VARARGS_MACRO_SUPPORT && (CPPCONN_TRACE_ENABLED || defined(SAL_DLLPRIVATE))
+#if defined(WE_HAVE_VARARGS_MACRO_SUPPORT) && (CPPCONN_TRACE_ENABLED || defined(SAL_DLLPRIVATE))
 	#define CPP_ENTER(msg)			MySQL_DebugLogger * __l = this->logger? this->logger->get():NULL;(void)__l;\
 									MySQL_DebugEnterEvent __this_func(__LINE__, __FILE__, msg, logger)
 	#define CPP_ENTER_WL(l, msg)	MySQL_DebugLogger * __l = (l)? (l)->get():NULL;(void)__l;\
