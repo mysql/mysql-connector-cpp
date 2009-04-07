@@ -524,6 +524,10 @@ MySQL_Connection::getClientOption(const std::string & optionName, void * optionV
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getClientOption");
 	if (!optionName.compare("metadataUseInfoSchema")) {
 		*(static_cast<bool *>(optionValue)) = intern->metadata_use_info_schema;
+	} else if (!optionName.compare("defaultStatementResultType")) {
+		*(static_cast<int *>(optionValue)) = intern->defaultStatementResultType;	
+	} else if (!optionName.compare("defaultPreparedStatementResultType")) {
+		*(static_cast<int *>(optionValue)) = intern->defaultPreparedStatementResultType;	
 	}
 }
 /* }}} */
