@@ -14,6 +14,7 @@
 #include "connection.h"
 #include <stdlib.h>
 #include <cppconn/connection.h>
+#include <driver/mysql_connection.h>
 #include <cppconn/exception.h>
 
 namespace testsuite
@@ -43,7 +44,7 @@ void connection::getClientInfo()
 
 void connection::getClientOption()
 {
-  logMsg("connection::getClientOption() - MySQL_Connection::getClientOption()");
+  logMsg("connection::getClientOption() - MySQL_Connection::get|setClientOption()");
   try
   {
     const std::string option("metadataUseInfoSchema");
@@ -75,27 +76,17 @@ void connection::getClientOption()
 
 void connection::getSessionVariable()
 {
-  logMsg("connection::getClientOption() - MySQL_Connection::getClientOption()");
+  logMsg("connection::getSessionVariable() - MySQL_Connection::get|setSessionVariable()");
   try
   {
-    const std::string option("metadataUseInfoSchema");
-    bool input_value=true;
-    bool output_value=false;
-    void * input;
-    void * output;
+    std::string value("");
+    std::auto_ptr< sql::mysql::MySQL_Connection > my_con(dynamic_cast<sql::mysql::MySQL_Connection*> (driver->connect(url, user, passwd)));
 
-    input=(static_cast<bool *> (&input_value));
-    output=(static_cast<bool *> (&output_value));
+    my_con->setSessionVariable("sql_mode", "ANSI");
+    ASSERT_EQUALS(my_con->getSessionVariable("sql_mode"), "ANSI");
 
-    con->setClientOption("metadataUseInfoSchema", input);
-    con->getClientOption("metadataUseInfoSchema", output);
-
-    ASSERT_EQUALS(input_value, output_value);
-
-    input_value=false;
-    con->setClientOption("metadataUseInfoSchema", input);
-    con->getClientOption("metadataUseInfoSchema", output);
-    ASSERT_EQUALS(input_value, output_value);
+    my_con->setSessionVariable("sql_mode", value);
+    ASSERT_EQUALS(value, my_con->getSessionVariable("sql_mode"));
   }
   catch (sql::SQLException &e)
   {
