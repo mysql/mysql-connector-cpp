@@ -30,6 +30,13 @@ Beta2  1.0.5 - 2009-04-xx
 - Added Result::getType() and implemented it in the three result set classes.
   (Andrey)
 
+- Enabled tracing functionality when building with VC8 and up (VS2005 and up).
+  (Andrey)
+
+- Added better support for named pipes, on Windows. Use pipe:// and add the
+  path to the pipe. Shared memory connections are currently not supported.
+  (Andrey)
+
 
 Beta   1.0.4 - 2009-03-xx
 
