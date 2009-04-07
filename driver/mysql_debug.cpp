@@ -60,11 +60,10 @@ MySQL_DebugEnterEvent::~MySQL_DebugEnterEvent()
 MySQL_DebugLogger::MySQL_DebugLogger()
   : tracing(NO_TRACE)
 {
-#if !defined(_WIN32)
+	// ToDo: On Win getenv() is not thread-safe !
 	if (getenv("MYSQLCPPCONN_TRACE_ENABLED")) {
 		tracing = NORMAL_TRACE;
 	}
-#endif
 }
 /* }}} */
 

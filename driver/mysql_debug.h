@@ -12,24 +12,32 @@
 #ifndef _MYSQL_DEBUG_H_
 #define _MYSQL_DEBUG_H_
 
-#if CPPCONN_TRACE_ENABLED || defined(SAL_DLLPRIVATE)
-#define CPP_ENTER(msg)			MySQL_DebugLogger * __l = this->logger? this->logger->get():NULL;(void)__l;\
-								MySQL_DebugEnterEvent __this_func(__LINE__, __FILE__, msg, logger)
-#define CPP_ENTER_WL(l, msg)	MySQL_DebugLogger * __l = (l)? (l)->get():NULL;(void)__l;\
-								MySQL_DebugEnterEvent __this_func(__LINE__, __FILE__, msg, (l))
-#define CPP_INFO(msg)		{if (__l) __l->log("INF", msg); }
-#define CPP_INFO_FMT(...)	{if (__l) __l->log_va("INF", __VA_ARGS__); }
-#define CPP_ERR(msg)		{if (__l) __l->log("ERR", msg); }
-#define CPP_ERR_FMT(...)	{if (__l) __l->log_va("ERR", __VA_ARGS__); }
+/* _MSC_VER VC6.0=1200, VC7.0=1300, VC7.1=1310, VC8.0=1400 */
+#if defined(_MSC_VER) && MSC_VER >=1400
+	#define WE_HAVE_VARARGS_MACRO_SUPPORT
+#elseif !defined(_MSC_VER)
+	#define WE_HAVE_VARARGS_MACRO_SUPPORT
+#endif
 
+
+
+#if WE_HAVE_VARARGS_MACRO_SUPPORT && (CPPCONN_TRACE_ENABLED || defined(SAL_DLLPRIVATE))
+	#define CPP_ENTER(msg)			MySQL_DebugLogger * __l = this->logger? this->logger->get():NULL;(void)__l;\
+									MySQL_DebugEnterEvent __this_func(__LINE__, __FILE__, msg, logger)
+	#define CPP_ENTER_WL(l, msg)	MySQL_DebugLogger * __l = (l)? (l)->get():NULL;(void)__l;\
+									MySQL_DebugEnterEvent __this_func(__LINE__, __FILE__, msg, (l))
+	#define CPP_INFO(msg)		{if (__l) __l->log("INF", msg); }
+	#define CPP_INFO_FMT(...)	{if (__l) __l->log_va("INF", __VA_ARGS__); }
+	#define CPP_ERR(msg)		{if (__l) __l->log("ERR", msg); }
+	#define CPP_ERR_FMT(...)	{if (__l) __l->log_va("ERR", __VA_ARGS__); }
 #else
-#define CPP_ENTER(msg)
-#define CPP_ENTER_WL(l, msg)
-#define CPP_INFO(msg)
-#define CPP_ERR(msg)
-#define CPP_ENTER_WL(l, msg)
-static inline void CPP_INFO_FMT(...) {}
-static inline void CPP_ERR_FMT(...) {}
+	#define CPP_ENTER(msg)
+	#define CPP_ENTER_WL(l, msg)
+	#define CPP_INFO(msg)
+	#define CPP_ERR(msg)
+	#define CPP_ENTER_WL(l, msg)
+	static inline void CPP_INFO_FMT(...) {}
+	static inline void CPP_ERR_FMT(...) {}
 #endif
 
 #include <string>
