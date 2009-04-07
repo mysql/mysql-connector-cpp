@@ -128,14 +128,7 @@ protected:
 	void checkClosed();
 	void init(std::map<std::string, sql::ConnectPropertyVal> & properties);
 
-#ifdef _MSC_VER
-	/*
-	  This is for Windows
-	  See: http://www.unknownroad.com/rtfm/VisualStudio/warningC4251.html
-	*/
-	template class CPPCONN_PUBLIC_FUNC std::auto_ptr< MySQL_ConnectionData >;
-#endif
-	std::auto_ptr< MySQL_ConnectionData > intern; /* pimpl */
+	MySQL_ConnectionData * intern; /* pimpl */
 
 private:
 	/* Prevent use of these */

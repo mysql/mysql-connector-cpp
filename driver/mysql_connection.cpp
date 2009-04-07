@@ -97,9 +97,13 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName, const std::strin
 
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * tmp_logger = new sql::mysql::util::my_shared_ptr< MySQL_DebugLogger >(new MySQL_DebugLogger());
 
-	intern.reset(new MySQL_ConnectionData(tmp_logger));
-
+	std::auto_ptr< MySQL_ConnectionData > tmp_intern(new MySQL_ConnectionData(tmp_logger));
+	intern = tmp_intern.get();
+	
 	init(connection_properties);
+	// No exception so far, thus intern can still point to the MySQL_ConnectionData object
+	// and in the dtor we will clean it up
+	tmp_intern.release();
 }
 /* }}} */
 
@@ -110,8 +114,13 @@ MySQL_Connection::MySQL_Connection(std::map< std::string, sql::ConnectPropertyVa
 {
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * tmp_logger = new sql::mysql::util::my_shared_ptr< MySQL_DebugLogger >(new MySQL_DebugLogger());
 
-	intern.reset(new MySQL_ConnectionData(tmp_logger));
+	std::auto_ptr< MySQL_ConnectionData > tmp_intern(new MySQL_ConnectionData(tmp_logger));
+	intern = tmp_intern.get();
+
 	init(properties);
+	// No exception so far, thus intern can still point to the MySQL_ConnectionData object
+	// and in the dtor we will clean it up
+	tmp_intern.release();
 }
 /* }}} */
 
@@ -125,10 +134,13 @@ MySQL_Connection::~MySQL_Connection()
 	  the on-stack object will be destructed after `delete intern->logger` leading
 	  to a faulty memory access.
 	*/
-	CPP_ENTER_WL(intern->logger, "MySQL_Connection::~MySQL_Connection");
-	if (!isClosed()) {
-		mysql_close(intern->mysql);
+	{
+		CPP_ENTER_WL(intern->logger, "MySQL_Connection::~MySQL_Connection");
+		if (!isClosed()) {
+			mysql_close(intern->mysql);
+		}
 	}
+	delete intern;
 }
 /* }}} */
 
@@ -385,7 +397,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 		setAutoCommit(true);
 		setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
 
-		intern.get()->meta.reset(new MySQL_ConnectionMetaData(this, intern->logger));
+		intern->meta.reset(new MySQL_ConnectionMetaData(this, intern->logger));
 	} catch (std::runtime_error & /*e*/) {
 		// SQLException is also a runtime_error, thus no special case for SQLException
 		CPP_ERR("freeing reference to logger and rethrowing");
