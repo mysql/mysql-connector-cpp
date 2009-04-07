@@ -34,8 +34,6 @@
 #cmakedefine HAVE_MS_INT64   1
 #cmakedefine HAVE_MS_UINT64   1
 
-#cmakedefine SIZEOF_WCHAR_T ${SIZEOF_WCHAR_T}
-
 
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
