@@ -42,6 +42,7 @@ public:
     TEST_CASE(callSP);
     TEST_CASE(selectZero);
     TEST_CASE(unbufferedFetch);
+    TEST_CASE(unbufferedOutOfSync);
   }
 
   /**
@@ -74,6 +75,10 @@ public:
    */
   void unbufferedFetch();
 
+  /**
+   * Unbuffered fetch - ouf of sync
+   */
+  void unbufferedOutOfSync();
 
 
 };

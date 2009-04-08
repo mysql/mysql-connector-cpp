@@ -371,10 +371,11 @@ void statement::unbufferedFetch()
     {
       fail(e.what(), __FILE__, __LINE__);
     }
+    int option=sql::ResultSet::TYPE_FORWARD_ONLY;
     con->setSchema(db);
-    con->setClientOption("defaultStatementResultType", (void *)sql::ResultSet::TYPE_FORWARD_ONLY);
+    con->setClientOption("defaultStatementResultType", (static_cast<void *> (&option)));
     stmt.reset(con->createStatement());
-    
+
     logMsg("... simple forward reading");
     res.reset(stmt->executeQuery("SELECT id FROM test ORDER BY id ASC"));
     id=0;
@@ -403,15 +404,78 @@ void statement::unbufferedFetch()
       id--;
     }
 
-    /*
-     */
-    stmt->execute("DROP TABLE IF EXISTS test");
+    logMsg("... setting TYPE_FORWARD_ONLY pointer magic");
+    try
+    {
+      created_objects.clear();
+      con.reset(getConnection());
+    }
+    catch (sql::SQLException &e)
+    {
+      fail(e.what(), __FILE__, __LINE__);
+    }
+    con->setSchema(db);
+    stmt.reset(con->createStatement());
+    res.reset((stmt->setResultSetType(sql::ResultSet::TYPE_FORWARD_ONLY)->executeQuery("SELECT id FROM test ORDER BY id ASC")));
+    logMsg("... simple forward reading");
+    
+    id=0;
+    while (res->next())
+    {
+      id++;
+      ASSERT_EQUALS(res->getInt(1), res->getInt("id"));
+      ASSERT_EQUALS(id, res->getInt("id"));
+    }
+    checkUnbufferedScrolling();
+
+    logMsg("... simple forward reading again");
+    res.reset((stmt->setResultSetType(sql::ResultSet::TYPE_FORWARD_ONLY)->executeQuery("SELECT id FROM test ORDER BY id DESC")));
+    ASSERT_EQUALS(stmt->getResultSetType(), sql::ResultSet::TYPE_FORWARD_ONLY);
+    try
+    {
+      res->beforeFirst();
+      FAIL("Nonscrollable result set not detected");
+    }
+    catch (sql::SQLException &)
+    {
+    }
+    id=5;
+    while (res->next())
+    {
+      ASSERT_EQUALS(res->getInt(1), res->getInt("id"));
+      ASSERT_EQUALS(id, res->getInt("id"));
+      id--;
+    }
+
+   stmt->execute("DROP TABLE IF EXISTS test");
+
   }
   catch (sql::SQLException &e)
   {
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void statement::unbufferedOutOfSync()
+{
+  logMsg("statement::unbufferedOutOfSync() - MySQL_Statement::*");
+  
+  try
+  {
+    stmt.reset(con->createStatement());        
+    res.reset((stmt->setResultSetType(sql::ResultSet::TYPE_FORWARD_ONLY)->executeQuery("SELECT 1")));
+    ASSERT_EQUALS(stmt->getResultSetType(), sql::ResultSet::TYPE_FORWARD_ONLY);
+
+    res.reset((stmt->setResultSetType(sql::ResultSet::TYPE_FORWARD_ONLY)->executeQuery("SELECT 1")));
+    FAIL("Commands should be out of sync");
+  }
+  catch (sql::SQLException &e)
+  {
+    logMsg("... expecting Out-of-sync exception");
+    logMsg(e.what());
+    logMsg("SQLState: " + std::string(e.getSQLState()));
   }
 }
 
