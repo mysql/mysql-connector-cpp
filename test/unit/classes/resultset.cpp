@@ -812,10 +812,10 @@ void resultset::doNotImplemented()
 void resultset::fetchBigint()
 {
   std::stringstream msg;
-  
+
   logMsg("resultset::fetchBigint - MySQL_ResultSet::*");
   try
-  {    
+  {
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id BIGINT UNSIGNED)");
@@ -830,7 +830,7 @@ void resultset::fetchBigint()
     msg.str();
     msg << "... PS: id = " << res->getDouble(1);
     logMsg(msg.str());
-    
+
     res.reset(stmt->executeQuery("SELECT id FROM test"));
     res->next();
 
@@ -838,7 +838,118 @@ void resultset::fetchBigint()
     msg << "... Statement: id = " << res->getDouble(1);
     logMsg(msg.str());
 
-    stmt->execute("DROP TABLE IF EXISTS test");   
+    stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void resultset::getResultSetType()
+{
+
+  std::map<std::string, sql::ConnectPropertyVal> connection_properties;
+
+  logMsg("resultset::getResultSetType - MySQL_ResultSet::*");
+  try
+  {
+
+    {
+      sql::ConnectPropertyVal tmp;
+      /* url comes from the unit testing framework */
+      tmp.str.val=url.c_str();
+      tmp.str.len=url.length();
+      connection_properties[std::string("hostName")]=tmp;
+    }
+
+    {
+      sql::ConnectPropertyVal tmp;
+      /* user comes from the unit testing framework */
+      tmp.str.val=user.c_str();
+      tmp.str.len=user.length();
+      connection_properties[std::string("userName")]=tmp;
+    }
+
+    {
+      sql::ConnectPropertyVal tmp;
+      tmp.str.val=passwd.c_str();
+      tmp.str.len=passwd.length();
+      connection_properties[std::string("password")]=tmp;
+    }
+
+    connection_properties.erase("defaultStatementResultType");
+    {
+      logMsg("... testing defaultStatementResultType");
+      sql::ConnectPropertyVal tmp;
+      tmp.lval=sql::ResultSet::TYPE_FORWARD_ONLY;
+      connection_properties[std::string("defaultStatementResultType")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &e)
+      {
+        fail(e.what(), __FILE__, __LINE__);
+      }
+      stmt.reset(con->createStatement());
+      ASSERT_EQUALS(stmt->getResultSetType(), sql::ResultSet::TYPE_FORWARD_ONLY);
+      pstmt.reset(con->prepareStatement("SELECT 1"));
+      /* NOTE: no bug - PS supports TYPE_SCROLL_INSENSITIVE only and we
+       are setting StatementResultType not PreparedStatementResultType */
+      res.reset(pstmt->executeQuery());
+      ASSERT_EQUALS(pstmt->getResultSetType(), sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
+
+      connection_properties.erase("defaultStatementResultType");
+      tmp.lval=sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
+      connection_properties[std::string("defaultStatementResultType")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &e)
+      {
+        fail(e.what(), __FILE__, __LINE__);
+      }
+      stmt.reset(con->createStatement());
+      ASSERT_EQUALS(stmt->getResultSetType(), sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
+      pstmt.reset(con->prepareStatement("SELECT 1"));
+      res.reset(pstmt->executeQuery());
+      ASSERT_EQUALS(pstmt->getResultSetType(), sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
+
+      connection_properties.erase("defaultStatementResultType");
+      tmp.lval=sql::ResultSet::TYPE_SCROLL_SENSITIVE;
+      connection_properties[std::string("defaultStatementResultType")]=tmp;
+      try
+      {
+        created_objects.clear();
+        try
+        {
+          con.reset(driver->connect(connection_properties));
+          FAIL("Bug or API change - TYPE_SCROLL_SENSITIVE is unsupported");
+          stmt.reset(con->createStatement());
+          ASSERT_EQUALS(stmt->getResultSetType(), sql::ResultSet::TYPE_SCROLL_SENSITIVE);
+          pstmt.reset(con->prepareStatement("SELECT 1"));
+          res.reset(pstmt->executeQuery());
+          ASSERT_EQUALS(pstmt->getResultSetType(), sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
+        }
+        catch (sql::SQLException &e)
+        {
+          logMsg("... expected exception because TYPE_SCROLL_SENSITIVE is unsupported!");
+          logMsg(e.what());
+        }
+      }
+      catch (sql::SQLException &e)
+      {
+        fail(e.what(), __FILE__, __LINE__);
+      }
+
+    }
+    connection_properties.erase("defaultStatementResultType");
   }
   catch (sql::SQLException &e)
   {
