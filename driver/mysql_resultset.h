@@ -67,10 +67,6 @@ public:
 
 	void beforeFirst();
 
-	void cancelRowUpdates();
-
-	void clearWarnings();
-
 	void close();
 
 	uint32_t findColumn(const std::string& columnLabel) const;
@@ -83,18 +79,8 @@ public:
 	bool getBoolean(uint32_t columnIndex) const;
 	bool getBoolean(const std::string& columnLabel) const;
 
-	int getConcurrency();
-
-	std::string getCursorName();
-
 	long double getDouble(uint32_t columnIndex) const;
 	long double getDouble(const std::string& columnLabel) const;
-
-	int getFetchDirection();
-
-	size_t getFetchSize();
-
-	int getHoldability();
 
 	int32_t getInt(uint32_t columnIndex) const;
 	int32_t getInt(const std::string& columnLabel) const;
@@ -112,19 +98,12 @@ public:
 
 	size_t getRow() const;
 
-	sql::RowID * getRowId(uint32_t columnIndex);
-	sql::RowID * getRowId(const std::string & columnLabel);
-
 	const sql::Statement * getStatement() const;
 
 	std::string getString(uint32_t columnIndex) const;
 	std::string getString(const std::string& columnLabel) const;
 
 	sql::ResultSet::enum_type getType() const;
-
-	void getWarnings();
-
-	void insertRow();
 
 	bool isAfterLast() const;
 
@@ -142,27 +121,13 @@ public:
 
 	bool last();
 
-	void moveToCurrentRow();
-
-	void moveToInsertRow();
-
 	bool next();
 
 	bool previous();
 
-	void refreshRow();
-
 	bool relative(int rows);
 
-	bool rowDeleted();
-
-	bool rowInserted();
-
-	bool rowUpdated();
-
 	size_t rowsCount() const;
-
-	void setFetchSize(size_t rows);
 
 	bool wasNull() const;
 private:

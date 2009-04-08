@@ -65,8 +65,6 @@ public:
 
 	sql::Connection *getConnection();
 
-	void cancel();
-
 	void clearParameters();
 
 	void clearWarnings();
@@ -82,19 +80,11 @@ public:
 	int executeUpdate();
 	int executeUpdate(const std::string& sql);
 
-	size_t getFetchSize();
-
-	unsigned int getMaxFieldSize();
-
 	sql::ResultSetMetaData * getMetaData();
-
-	uint64_t getMaxRows();
 
 	bool getMoreResults();
 
 	sql::ParameterMetaData * getParameterMetaData();
-
-	unsigned int getQueryTimeout();
 
 	sql::ResultSet * getResultSet();
 
@@ -112,15 +102,9 @@ public:
 
 	void setBigInt(unsigned int parameterIndex, const std::string& value);
 
-	void setCursorName(const std::string &name);
-
 	void setDateTime(unsigned int parameterIndex, const std::string& value);
 
 	void setDouble(unsigned int parameterIndex, double value);
-
-	void setEscapeProcessing(bool enable);
-
-	void setFetchSize(size_t rows);
 
 	void setInt(unsigned int parameterIndex, int32_t value);
 
@@ -130,17 +114,11 @@ public:
 
 	void setUInt64(unsigned int parameterIndex, uint64_t value);
 
-	void setMaxFieldSize(unsigned int max);
-
-	void setMaxRows(unsigned int max);
-
 	void setNull(unsigned int parameterIndex, int sqlType);
 
 	void setResultSetConcurrency(int concurrencyFlag);
 
 	void setString(unsigned int parameterIndex, const std::string& value);
-
-	void setQueryTimeout(unsigned int seconds);
 
 	sql::PreparedStatement * setResultSetType(sql::ResultSet::enum_type type);
 

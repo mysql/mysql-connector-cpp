@@ -32,8 +32,6 @@ public:
 
 	virtual Connection * getConnection() = 0;
 
-	virtual void cancel() = 0;
-
 	virtual void clearWarnings() = 0;
 
 	virtual void close() = 0;
@@ -44,15 +42,7 @@ public:
 
 	virtual int executeUpdate(const std::string& sql) = 0;
 
-	virtual size_t getFetchSize() = 0;
-
-	virtual unsigned int getMaxFieldSize() = 0;
-
-	virtual uint64_t getMaxRows() = 0;
-
 	virtual bool getMoreResults() = 0;
-
-	virtual unsigned int getQueryTimeout() = 0;
 
 	virtual ResultSet * getResultSet() = 0;
 
@@ -61,18 +51,6 @@ public:
 	virtual uint64_t getUpdateCount() = 0;
 
 	virtual const SQLWarning * getWarnings() = 0;
-
-	virtual void setCursorName(const std::string & name) = 0;
-
-	virtual void setEscapeProcessing(bool enable) = 0;
-
-	virtual void setFetchSize(size_t rows) = 0;
-
-	virtual void setMaxFieldSize(unsigned int max) = 0;
-
-	virtual void setMaxRows(unsigned int max) = 0;
-
-	virtual void setQueryTimeout(unsigned int seconds) = 0;
 
 	virtual Statement * setResultSetType(sql::ResultSet::enum_type type) = 0;
 };

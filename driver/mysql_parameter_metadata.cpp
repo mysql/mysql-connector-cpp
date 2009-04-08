@@ -28,16 +28,6 @@ MySQL_ParameterMetaData::MySQL_ParameterMetaData(const MYSQL_STMT * const stmt)
 /* }}} */
 
 
-/* {{{ MySQL_ParameterMetaData::getParameterClassName -U- */
-std::string
-MySQL_ParameterMetaData::getParameterClassName(unsigned int /* paramNo */)
-{
-	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");
-	return ""; // fool compilers
-}
-/* }}} */
-
-
 /* {{{ MySQL_ParameterMetaData::getParameterCount -I- */
 int
 MySQL_ParameterMetaData::getParameterCount()
@@ -46,78 +36,8 @@ MySQL_ParameterMetaData::getParameterCount()
 }
 /* }}} */
 
-
-/* {{{ MySQL_ParameterMetaData::getParameterMode -U- */
-int
-MySQL_ParameterMetaData::getParameterMode(unsigned int /* paramNo */)
-{
-	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");
-	return 0; // fool compilers
-}
-/* }}} */
-
-
-/* {{{ MySQL_ParameterMetaData::getParameterType -U- */
-int
-MySQL_ParameterMetaData::getParameterType(unsigned int /* paramNo */)
-{
-	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");
-	return 0; // fool compilers
-}
-/* }}} */
-
-
-/* {{{ MySQL_ParameterMetaData::getParameterTypeName -U- */
-std::string
-MySQL_ParameterMetaData::getParameterTypeName(unsigned int /* paramNo */)
-{
-	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");
-	return 0; // fool compilers
-}
-/* }}} */
-
-
-/* {{{ MySQL_ParameterMetaData::getPrecision -U- */
-int
-MySQL_ParameterMetaData::getPrecision(unsigned int /* paramNo */)
-{
-	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");
-	return 0; // fool compilers
-}
-/* }}} */
-
-
-/* {{{ MySQL_ParameterMetaData::getScale -U- */
-int
-MySQL_ParameterMetaData::getScale(unsigned int /* paramNo */)
-{
-	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");
-	return 0; // fool compilers
-}
-/* }}} */
-
-
-/* {{{ MySQL_ParameterMetaData::isNullable -U- */
-int
-MySQL_ParameterMetaData::isNullable(unsigned int /* paramNo */)
-{
-	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");
-	return 0; // fool compilers
-}
-/* }}} */
-
-
-/* {{{ MySQL_ParameterMetaData::isSigned -U- */
-bool
-MySQL_ParameterMetaData::isSigned(unsigned int /* paramNo */)
-{
-	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");
-	return 0; // fool compilers
-}
-/* }}} */
-
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 /*
  * Local variables:
  * tab-width: 4

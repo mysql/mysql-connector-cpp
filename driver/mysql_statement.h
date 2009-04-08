@@ -49,8 +49,6 @@ public:
 
 	sql::Connection * getConnection();
 
-	void cancel();
-
 	void clearWarnings();
 
 	void close();
@@ -61,15 +59,7 @@ public:
 
 	int executeUpdate(const std::string& sql);
 
-	size_t getFetchSize();
-
-	unsigned int getMaxFieldSize();
-
-	uint64_t getMaxRows();
-
 	bool getMoreResults();
-
-	unsigned int getQueryTimeout();
 
 	sql::ResultSet * getResultSet();
 
@@ -80,18 +70,6 @@ public:
 	const SQLWarning * getWarnings();/* should return differen type */
 
 	Statement * setBuffered();
-
-	void setCursorName(const std::string & name);
-
-	void setEscapeProcessing(bool enable);
-
-	void setFetchSize(size_t rows);
-
-	void setMaxFieldSize(unsigned int max);
-
-	void setMaxRows(unsigned int max);
-
-	void setQueryTimeout(unsigned int seconds);
 
 	sql::Statement * setResultSetType(sql::ResultSet::enum_type type);
 private:

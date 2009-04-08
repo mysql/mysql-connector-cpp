@@ -99,18 +99,6 @@ MySQL_Statement::get_resultset()
 /* }}} */
 
 
-/* {{{ MySQL_Statement::cancel() -U- */
-void
-MySQL_Statement::cancel()
-{
-	CPP_ENTER("MySQL_Statement::cancel");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::cancel");
-}
-/* }}} */
-
-
 /* {{{ MySQL_Statement::execute() -I- */
 bool
 MySQL_Statement::execute(const std::string& sql)
@@ -179,19 +167,6 @@ MySQL_Statement::getConnection()
 /* }}} */
 
 
-/* {{{ MySQL_Statement::getFetchSize() -U- */
-size_t
-MySQL_Statement::getFetchSize()
-{
-	CPP_ENTER("MySQL_Statement::getFetchSize");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::getFetchSize");
-	return 0;
-}
-/* }}} */
-
-
 /* {{{ MySQL_Statement::getResultSet() -I- */
 sql::ResultSet *
 MySQL_Statement::getResultSet()
@@ -229,30 +204,6 @@ MySQL_Statement::getResultSet()
 /* }}} */
 
 
-/* {{{ MySQL_Statement::setFetchSize() -U- */
-void
-MySQL_Statement::setFetchSize(size_t /* fetch */)
-{
-	CPP_ENTER("MySQL_Statement::setFetchSize");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::setFetchSize");
-}
-/* }}} */
-
-
-/* {{{ MySQL_Statement::setQueryTimeout() -U- */
-void
-MySQL_Statement::setQueryTimeout(unsigned int)
-{
-	CPP_ENTER("MySQL_Statement::setQueryTimeout");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::setQueryTimeout");
-}
-/* }}} */
-
-
 /* {{{ MySQL_Statement::clearWarnings() -I- */
 void
 MySQL_Statement::clearWarnings()
@@ -285,32 +236,6 @@ MySQL_Statement::close()
 /* }}} */
 
 
-/* {{{ MySQL_Statement::getMaxFieldSize() -U- */
-unsigned int
-MySQL_Statement::getMaxFieldSize()
-{
-	CPP_ENTER("MySQL_Statement::getMaxFieldSize");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::getMaxFieldSize");
-	return 0;
-}
-/* }}} */
-
-
-/* {{{ MySQL_Statement::getMaxRows() -U- */
-uint64_t
-MySQL_Statement::getMaxRows()
-{
-	CPP_ENTER("MySQL_Statement::getMaxRows");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::getMaxRows");
-	return 0;
-}
-/* }}} */
-
-
 /* {{{ MySQL_Statement::getMoreResults() -I- */
 bool
 MySQL_Statement::getMoreResults()
@@ -332,17 +257,6 @@ MySQL_Statement::getMoreResults()
 		}
 	}
 	return false;
-}
-/* }}} */
-
-
-/* {{{ MySQL_Statement::getQueryTimeout() -U- */
-unsigned int
-MySQL_Statement::getQueryTimeout()
-{
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::getQueryTimeout");
-	return 0; // fool compilers
 }
 /* }}} */
 
@@ -387,46 +301,6 @@ MySQL_Statement::getWarnings()
 /* }}} */
 
 
-/* {{{ MySQL_Statement::setCursorName() -U- */
-void
-MySQL_Statement::setCursorName(const std::string &)
-{
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::setCursorName");
-}
-/* }}} */
-
-
-/* {{{ MySQL_Statement::setEscapeProcessing() -U- */
-void
-MySQL_Statement::setEscapeProcessing(bool)
-{
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::setEscapeProcessing");
-}
-/* }}} */
-
-
-/* {{{ MySQL_Statement::setMaxFieldSize() -U- */
-void
-MySQL_Statement::setMaxFieldSize(unsigned int)
-{
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::setMaxFieldSize");
-}
-/* }}} */
-
-
-/* {{{ MySQL_Statement::setMaxRows() -U- */
-void
-MySQL_Statement::setMaxRows(unsigned int)
-{
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::setMaxRows");
-}
-/* }}} */
-
-
 /* {{{ MySQL_Statement::setResultSetType() -I- */
 sql::Statement *
 MySQL_Statement::setResultSetType(sql::ResultSet::enum_type type)
@@ -450,8 +324,8 @@ MySQL_Statement::checkClosed()
 }
 /* }}} */
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 /*
  * Local variables:

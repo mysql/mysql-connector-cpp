@@ -72,14 +72,6 @@ int main(int argc, const char **argv)
 		stmt->execute("CREATE TABLE test(id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, label CHAR(1))");
 		cout << "#\t Test table created" << endl;
 
-		try {
-			con->setReadOnly(true);
-		} catch (sql::MethodNotImplementedException &e) {
-			cout << "#\t Not implemented: " << e.what();
-			cout << " (MySQL error code: " << e.getErrorCode();
-			cout << ", SQLState: " << e.getSQLState() << " )" << endl;
-		}
-
 		con->setAutoCommit(0);
 		try {
 			savepoint.reset(con->setSavepoint(string("")));

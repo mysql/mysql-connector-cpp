@@ -3180,43 +3180,6 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 /* }}} */
 
 
-/* {{{ MySQL_ConnectionMetaData::getProcedureColumns() -U- */
-sql::ResultSet *
-MySQL_ConnectionMetaData::getProcedureColumns(const std::string& /* catalog */, const std::string& /* schemaPattern */,
-											  const std::string& /* procedureNamePattern */, const std::string& /* columnNamePattern */)
-{
-	CPP_ENTER("MySQL_ConnectionMetaData::getProcedureColumns");
-	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::getURL");
-	return NULL; // fool compiler
-#if A0
-
-	std::list<std::string> rs_field_data;
-
-	rs_field_data.push_back("PROCEDURE_CAT");
-	rs_field_data.push_back("PROCEDURE_SCHEM");
-	rs_field_data.push_back("PROCEDURE_NAME");
-	rs_field_data.push_back("COLUMN_NAME");
-	rs_field_data.push_back("COLUMN_TYPE");
-	rs_field_data.push_back("DATA_TYPE");
-	rs_field_data.push_back("TYPE_NAME");
-	rs_field_data.push_back("PRECISION");
-	rs_field_data.push_back("LENGTH");
-	rs_field_data.push_back("SCALE");
-	rs_field_data.push_back("RADIX");
-	rs_field_data.push_back("NULLABLE");
-	rs_field_data.push_back("REMARKS");
-
-	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
-
-	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
-	// If there is no exception we can release otherwise on function exit memory will be freed
-	rs_data.release();
-	return ret;
-#endif
-}
-/* }}} */
-
-
 /* {{{ MySQL_ConnectionMetaData::getProcedures() -I- */
 sql::ResultSet *
 MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const std::string& schemaPattern, const std::string& procedureNamePattern)
@@ -3929,17 +3892,6 @@ MySQL_ConnectionMetaData::getUDTs(const std::string& /*catalog*/, const std::str
 /* }}} */
 
 
-/* {{{ MySQL_ConnectionMetaData::getURL() -U- */
-std::string
-MySQL_ConnectionMetaData::getURL()
-{
-	CPP_ENTER("MySQL_ConnectionMetaData::getURL");
-	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::getURL");
-	return ""; // This will shut up compilers
-}
-/* }}} */
-
-
 /* {{{ MySQL_ConnectionMetaData::getUserName() -I- */
 std::string
 MySQL_ConnectionMetaData::getUserName()
@@ -4006,17 +3958,6 @@ bool
 MySQL_ConnectionMetaData::isReadOnly()
 {
 	return false;
-}
-/* }}} */
-
-
-/* {{{ MySQL_ConnectionMetaData::locatorsUpdateCopy() -U- */
-bool
-MySQL_ConnectionMetaData::locatorsUpdateCopy()
-{
-	CPP_ENTER("MySQL_ConnectionMetaData::locatorsUpdateCopy");
-	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::locatorsUpdateCopy");
-	return false; // This will shut up compilers
 }
 /* }}} */
 
@@ -4578,17 +4519,6 @@ MySQL_ConnectionMetaData::supportsGroupByUnrelated()
 /* }}} */
 
 
-/* {{{ MySQL_ConnectionMetaData::supportsIntegrityEnhancementFacility() -U- */
-bool
-MySQL_ConnectionMetaData::supportsIntegrityEnhancementFacility()
-{
-	CPP_ENTER("MySQL_ConnectionMetaData::supportsIntegrityEnhancementFacility");
-	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::supportsIntegrityEnhancementFacility");
-	return false; // This will shut up compilers
-}
-/* }}} */
-
-
 /* {{{ MySQL_ConnectionMetaData::supportsLikeEscapeClause() -I- */
 bool
 MySQL_ConnectionMetaData::supportsLikeEscapeClause()
@@ -4765,17 +4695,6 @@ MySQL_ConnectionMetaData::supportsPositionedUpdate()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::supportsPositionedUpdate");
 	return false;
-}
-/* }}} */
-
-
-/* {{{ MySQL_ConnectionMetaData::supportsResultSetConcurrency() -U- */
-bool
-MySQL_ConnectionMetaData::supportsResultSetConcurrency(int /* type */, int /* concurrency */)
-{
-	CPP_ENTER("MySQL_ConnectionMetaData::supportsResultSetConcurrency");
-	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::supportsResultSetConcurrency");
-	return false; // This will shut up compilers
 }
 /* }}} */
 
@@ -5030,8 +4949,8 @@ MySQL_ConnectionMetaData::matchTable(const std::string & sPattern, const std::st
 }
 
 
-};/* namespace mysql */
-};/* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 /*
  * Local variables:

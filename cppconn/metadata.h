@@ -219,8 +219,6 @@ public:
 
 	virtual	ResultSet * getPrimaryKeys(const std::string& catalog, const std::string& schema, const std::string& table) = 0;
 
-	virtual	ResultSet * getProcedureColumns(const std::string& catalog, const std::string& schemaPattern, const std::string& procedureNamePattern, const std::string& columnNamePattern) = 0;
-
 	virtual	ResultSet * getProcedures(const std::string& catalog, const std::string& schemaPattern, const std::string& procedureNamePattern) = 0;
 
 	virtual	const std::string& getProcedureTerm() = 0;
@@ -257,8 +255,6 @@ public:
 
 	virtual	ResultSet * getUDTs(const std::string& catalog, const std::string& schemaPattern, const std::string& typeNamePattern, std::list<int> &types) = 0;
 
-	virtual	std::string getURL() = 0;
-
 	virtual std::string getUserName() = 0;
 
 	virtual ResultSet * getVersionColumns(const std::string& catalog, const std::string& schema, const std::string& table) = 0;
@@ -268,8 +264,6 @@ public:
 	virtual bool isCatalogAtStart() = 0;
 
 	virtual bool isReadOnly() = 0;
-
-	virtual bool locatorsUpdateCopy() = 0;
 
 	virtual bool nullPlusNonNullIsNull() = 0;
 
@@ -357,8 +351,6 @@ public:
 
 	virtual bool supportsGroupByUnrelated() = 0;
 
-	virtual bool supportsIntegrityEnhancementFacility() = 0;
-
 	virtual bool supportsLikeEscapeClause() = 0;
 
 	virtual bool supportsLimitedOuterJoins() = 0;
@@ -394,8 +386,6 @@ public:
 	virtual bool supportsPositionedDelete() = 0;
 
 	virtual bool supportsPositionedUpdate() = 0;
-
-	virtual bool supportsResultSetConcurrency(int type, int concurrency) = 0;
 
 	virtual bool supportsResultSetHoldability(int holdability) = 0;
 

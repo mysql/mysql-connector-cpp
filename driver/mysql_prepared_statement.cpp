@@ -771,29 +771,6 @@ MySQL_Prepared_Statement::setString(unsigned int parameterIndex, const std::stri
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_Statement::cancel() -U- */
-void
-MySQL_Prepared_Statement::cancel()
-{
-	CPP_ENTER("MySQL_Prepared_Statement::cancel");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	throw MethodNotImplementedException("MySQL_Prepared_Statement::cancel");
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_Statement::getFetchSize() -U- */
-size_t
-MySQL_Prepared_Statement::getFetchSize()
-{
-	checkClosed();
-	throw MethodNotImplementedException("MySQL_Prepared_Statement::getFetchSize");
-	return 0; // fool compilers
-}
-/* }}} */
-
-
 /* {{{ MySQL_Prepared_Statement::getMetaData() -I- */
 sql::ResultSetMetaData *
 MySQL_Prepared_Statement::getMetaData()
@@ -852,26 +829,6 @@ MySQL_Prepared_Statement::getResultSet()
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_Statement::setFetchSize() -U- */
-void
-MySQL_Prepared_Statement::setFetchSize(size_t /* size */)
-{
-	checkClosed();
-	throw MethodNotImplementedException("MySQL_Prepared_Statement::setFetchSize");
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_Statement::setQueryTimeout() -U- */
-void
-MySQL_Prepared_Statement::setQueryTimeout(unsigned int)
-{
-	checkClosed();
-	throw MethodNotImplementedException("MySQL_Prepared_Statement::setQueryTimeout");
-}
-/* }}} */
-
-
 /* {{{ MySQL_Prepared_Statement::clearWarnings() -I- */
 void
 MySQL_Prepared_Statement::clearWarnings()
@@ -896,28 +853,6 @@ MySQL_Prepared_Statement::close()
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_Statement::getMaxFieldSize() -U- */
-unsigned int
-MySQL_Prepared_Statement::getMaxFieldSize()
-{
-	checkClosed();
-	throw MethodNotImplementedException("MySQL_Prepared_Statement::getMaxFieldSize");
-	return 0; // fool compilers
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_Statement::getMaxRows() -U- */
-uint64_t
-MySQL_Prepared_Statement::getMaxRows()
-{
-	checkClosed();
-	throw MethodNotImplementedException("MySQL_Prepared_Statement::getMaxRows");
-	return 0; // fool compilers
-}
-/* }}} */
-
-
 /* {{{ MySQL_Prepared_Statement::getMoreResults() -U- */
 bool
 MySQL_Prepared_Statement::getMoreResults()
@@ -925,17 +860,6 @@ MySQL_Prepared_Statement::getMoreResults()
 	checkClosed();
 	throw MethodNotImplementedException("MySQL_Prepared_Statement::getMoreResults");
 	return false; // fool compilers
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_Statement::getQueryTimeout() -U- */
-unsigned int
-MySQL_Prepared_Statement::getQueryTimeout()
-{
-	checkClosed();
-	throw MethodNotImplementedException("MySQL_Prepared_Statement::getQueryTimeout");
-	return 0; // fool compilers
 }
 /* }}} */
 
@@ -973,56 +897,6 @@ MySQL_Prepared_Statement::getWarnings()
 	warnings.reset( loadMysqlWarnings( dynamic_cast<MySQL_Connection*>(connection) ) );
 
 	return warnings.get();
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_Statement::setCursorName() -U- */
-void
-MySQL_Prepared_Statement::setCursorName(const std::string &)
-{
-	checkClosed();
-	throw MethodNotImplementedException("MySQL_Prepared_Statement::setCursorName");
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_Statement::setEscapeProcessing() -U- */
-void
-MySQL_Prepared_Statement::setEscapeProcessing(bool)
-{
-	checkClosed();
-	throw MethodNotImplementedException("MySQL_Prepared_Statement::setEscapeProcessing");
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_Statement::setMaxFieldSize() -U- */
-void
-MySQL_Prepared_Statement::setMaxFieldSize(unsigned int)
-{
-	checkClosed();
-	throw MethodNotImplementedException("MySQL_Prepared_Statement::setMaxFieldSize");
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_Statement::setMaxRows() -U- */
-void
-MySQL_Prepared_Statement::setMaxRows(unsigned int)
-{
-	checkClosed();
-	throw MethodNotImplementedException("MySQL_Prepared_Statement::setMaxRows");
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_Statement::setResultSetConcurrency() -U- */
-void
-MySQL_Prepared_Statement::setResultSetConcurrency(int)
-{
-	checkClosed();
-	throw MethodNotImplementedException("MySQL_Prepared_Statement::setResultSetConcurrency");
 }
 /* }}} */
 
@@ -1068,8 +942,8 @@ MySQL_Prepared_Statement::closeIntern()
 }
 /* }}} */
 
-};/* namespace mysql */
-};/* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 /*
  * Local variables:

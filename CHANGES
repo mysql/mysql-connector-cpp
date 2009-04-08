@@ -1,4 +1,4 @@
-Beta2  1.0.5 - 2009-04-xx
+GA  1.0.5 - 2009-04-xx
 
 - Changed the interface of sql::ConnectionMetaData, sql::ResultSetMetaData
   and sql::ParameterMetaData to have a protected destructor. In this way the

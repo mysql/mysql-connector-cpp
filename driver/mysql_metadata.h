@@ -151,8 +151,6 @@ public:
 
 	sql::ResultSet * getPrimaryKeys(const std::string& catalog, const std::string& schema, const std::string& table);
 
-	sql::ResultSet * getProcedureColumns(const std::string& catalog, const std::string& schemaPattern, const std::string& procedureNamePattern, const std::string& columnNamePattern);
-
 	sql::ResultSet * getProcedures(const std::string& catalog, const std::string& schemaPattern, const std::string& procedureNamePattern);
 
 	const std::string& getProcedureTerm();
@@ -189,8 +187,6 @@ public:
 
 	sql::ResultSet * getUDTs(const std::string& catalog, const std::string& schemaPattern, const std::string& typeNamePattern, std::list<int> &types);
 
-	std::string getURL();
-
 	std::string getUserName();
 
 	sql::ResultSet * getVersionColumns(const std::string& catalog, const std::string& schema, const std::string& table);
@@ -200,8 +196,6 @@ public:
 	bool isCatalogAtStart();
 
 	bool isReadOnly();
-
-	bool locatorsUpdateCopy();
 
 	bool nullPlusNonNullIsNull();
 
@@ -289,8 +283,6 @@ public:
 
 	bool supportsGroupByUnrelated();
 
-	bool supportsIntegrityEnhancementFacility();
-
 	bool supportsLikeEscapeClause();
 
 	bool supportsLimitedOuterJoins();
@@ -326,8 +318,6 @@ public:
 	bool supportsPositionedDelete();
 
 	bool supportsPositionedUpdate();
-
-	bool supportsResultSetConcurrency(int type, int concurrency);
 
 	bool supportsResultSetHoldability(int holdability);
 

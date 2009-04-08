@@ -66,13 +66,7 @@ public:
 
 	virtual void beforeFirst() = 0;
 
-	virtual void cancelRowUpdates() = 0;
-
-	virtual void clearWarnings() = 0;
-
 	virtual void close() = 0;
-
-	virtual void deleteRow() { /* We don't support row deletion */ }
 
 	virtual uint32_t findColumn(const std::string& columnLabel) const = 0;
 
@@ -84,15 +78,8 @@ public:
 	virtual bool getBoolean(uint32_t columnIndex) const = 0;
 	virtual bool getBoolean(const std::string& columnLabel) const = 0;
 
-	virtual int getConcurrency() = 0;
-	virtual std::string getCursorName() = 0;
-
 	virtual long double getDouble(uint32_t columnIndex) const = 0;
 	virtual long double getDouble(const std::string& columnLabel) const = 0;
-
-	virtual int getFetchDirection() = 0;
-	virtual size_t getFetchSize() = 0;
-	virtual int getHoldability() = 0;
 
 	virtual int32_t getInt(uint32_t columnIndex) const = 0;
 	virtual int32_t getInt(const std::string& columnLabel) const = 0;
@@ -110,19 +97,12 @@ public:
 
 	virtual size_t getRow() const = 0;
 
-	virtual RowID * getRowId(uint32_t columnIndex) = 0;
-	virtual RowID * getRowId(const std::string & columnLabel) = 0;
-
 	virtual const Statement * getStatement() const = 0;
 
 	virtual std::string getString(uint32_t columnIndex)  const = 0;
 	virtual std::string getString(const std::string& columnLabel) const = 0;
 
 	virtual enum_type getType() const = 0;
-
-	virtual void getWarnings() = 0;
-
-	virtual void insertRow() = 0;
 
 	virtual bool isAfterLast() const = 0;
 
@@ -141,23 +121,9 @@ public:
 
 	virtual bool next() = 0;
 
-	virtual void moveToCurrentRow() = 0;
-
-	virtual void moveToInsertRow() = 0;
-
 	virtual bool previous() = 0;
 
-	virtual void refreshRow() = 0;
-
 	virtual bool relative(int rows) = 0;
-
-	virtual bool rowDeleted() = 0;
-
-	virtual bool rowInserted() = 0;
-
-	virtual bool rowUpdated() = 0;
-
-	virtual void setFetchSize(size_t rows) = 0;
 
 	virtual size_t rowsCount() const = 0;
 

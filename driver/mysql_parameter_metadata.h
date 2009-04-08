@@ -31,24 +31,7 @@ public:
 
 	virtual ~MySQL_ParameterMetaData() {}
 
-	virtual std::string getParameterClassName(unsigned int paramNo);
-
 	virtual int getParameterCount();
-
-	virtual int getParameterMode(unsigned int paramNo);
-
-	virtual int getParameterType(unsigned int paramNo);
-
-	virtual std::string getParameterTypeName(unsigned int paramNo);
-
-	virtual int getPrecision(unsigned int paramNo);
-
-	virtual int getScale(unsigned int paramNo);
-
-	virtual int isNullable(unsigned int paramNo);
-
-	virtual bool isSigned(unsigned int paramNo);
-
 
 private:
 	/* Prevent use of these */

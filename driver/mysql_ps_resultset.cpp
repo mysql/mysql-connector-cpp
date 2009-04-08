@@ -164,17 +164,6 @@ MySQL_Prepared_ResultSet::beforeFirst()
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSet::cancelRowUpdates() -U- */
-void
-MySQL_Prepared_ResultSet::cancelRowUpdates()
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::cancelRowUpdates");
-	checkValid();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::cancelRowUpdates()");
-}
-/* }}} */
-
-
 /* {{{ MySQL_Prepared_ResultSet::checkValid() -I- */
 void
 MySQL_Prepared_ResultSet::checkValid() const
@@ -208,17 +197,6 @@ MySQL_Prepared_ResultSet::isScrollable() const
 	CPP_ENTER("MySQL_ResultSet::isScrollable");
 	CPP_INFO_FMT("this=%p", this);
 	return (resultset_type != sql::ResultSet::TYPE_FORWARD_ONLY);
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_ResultSet::clearWarnings() -U- */
-void
-MySQL_Prepared_ResultSet::clearWarnings()
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::clearWarnings");
-	checkValid();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::clearWarnings()");
 }
 /* }}} */
 
@@ -336,30 +314,6 @@ MySQL_Prepared_ResultSet::getBoolean(const std::string& columnLabel) const
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSet::getConcurrency() -U- */
-int
-MySQL_Prepared_ResultSet::getConcurrency()
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::getConcurrency");
-	checkValid();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getConcurrency()");
-	return 0; // fool compilers
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_ResultSet::getCursorName() -U- */
-std::string
-MySQL_Prepared_ResultSet::getCursorName()
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::getCursorName");
-	checkValid();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getCursorName()");
-	return ""; // fool compilers
-}
-/* }}} */
-
-
 /* {{{ MySQL_Prepared_ResultSet::getDouble() -I- */
 long double
 MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
@@ -453,42 +407,6 @@ MySQL_Prepared_ResultSet::getDouble(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getDouble(string)");
 	return getDouble(findColumn(columnLabel));
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_ResultSet::getFetchDirection() -U- */
-int
-MySQL_Prepared_ResultSet::getFetchDirection()
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::getFetchDirection");
-	checkValid();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getFetchDirection()");
-	return 0; // fool compilers
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_ResultSet::getFetchSize() -U- */
-size_t
-MySQL_Prepared_ResultSet::getFetchSize()
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::getFetchSize");
-	checkValid();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getFetchSize()");
-	return 0; // fool compilers
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_ResultSet::getHoldability() -U- */
-int
-MySQL_Prepared_ResultSet::getHoldability()
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::getHoldability");
-	checkValid();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getHoldability()");
-	return 0; // fool compilers
 }
 /* }}} */
 
@@ -853,30 +771,6 @@ MySQL_Prepared_ResultSet::getRow() const
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSet::getRowId() -U- */
-sql::RowID *
-MySQL_Prepared_ResultSet::getRowId(uint32_t)
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::getRowId");
-	checkValid();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getRowId()");
-	return NULL; // fool compilers
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_ResultSet::getRowId() -U- */
-sql::RowID *
-MySQL_Prepared_ResultSet::getRowId(const std::string &)
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::getRowId");
-	checkValid();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getRowId()");
-	return NULL; // fool compilers
-}
-/* }}} */
-
-
 /* {{{ MySQL_Prepared_ResultSet::getStatement() -I- */
 const sql::Statement *
 MySQL_Prepared_ResultSet::getStatement() const
@@ -996,20 +890,9 @@ MySQL_Prepared_ResultSet::getString(const std::string& columnLabel) const
 sql::ResultSet::enum_type
 MySQL_Prepared_ResultSet::getType() const
 {
-	CPP_ENTER("MySQL_ResultSet::getWarnings");
+	CPP_ENTER("MySQL_ResultSet::getType");
 	checkValid();
 	return resultset_type;
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_ResultSet::getWarnings() -U- */
-void
-MySQL_Prepared_ResultSet::getWarnings()
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::getWarnings");
-	checkValid();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::getWarnings()");
 }
 /* }}} */
 
@@ -1042,17 +925,6 @@ bool
 MySQL_Prepared_ResultSet::isClosed() const
 {
 	return !is_valid;
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_ResultSet::insertRow() -U- */
-void
-MySQL_Prepared_ResultSet::insertRow()
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::beforeFirst");
-	checkValid();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::insertRow()");
 }
 /* }}} */
 
@@ -1128,30 +1000,6 @@ MySQL_Prepared_ResultSet::last()
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSet::moveToCurrentRow() -U- */
-void
-MySQL_Prepared_ResultSet::moveToCurrentRow()
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::moveToCurrentRow");
-	checkValid();
-	checkScrollable();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::moveToCurrentRow()");
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_ResultSet::moveToInsertRow() -U- */
-void
-MySQL_Prepared_ResultSet::moveToInsertRow()
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::moveToInsertRow");
-	checkValid();
-	checkScrollable();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::moveToInsertRow()");
-}
-/* }}} */
-
-
 /* {{{ MySQL_Prepared_ResultSet::next() -I- */
 bool
 MySQL_Prepared_ResultSet::next()
@@ -1220,17 +1068,6 @@ MySQL_Prepared_ResultSet::previous()
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSet::refreshRow() -U- */
-void
-MySQL_Prepared_ResultSet::refreshRow()
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::refreshRow");
-	checkValid();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::refreshRow()");
-}
-/* }}} */
-
-
 /* {{{ MySQL_Prepared_ResultSet::relative() -I- */
 bool
 MySQL_Prepared_ResultSet::relative(const int rows)
@@ -1252,42 +1089,6 @@ MySQL_Prepared_ResultSet::relative(const int rows)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSet::rowDeleted() -U- */
-bool
-MySQL_Prepared_ResultSet::rowDeleted()
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::rowDeleted");
-	checkValid();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::rowDeleted()");
-	return false; // fool compilers
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_ResultSet::rowInserted() -U- */
-bool
-MySQL_Prepared_ResultSet::rowInserted()
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::rowInserted");
-	checkValid();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::rowInserted()");
-	return false; // fool compilers
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_ResultSet::rowUpdated() -U- */
-bool
-MySQL_Prepared_ResultSet::rowUpdated()
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::rowUpdated");
-	checkValid();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::rowUpdated()");
-	return false; // fool compilers
-}
-/* }}} */
-
-
 /* {{{ MySQL_Prepared_ResultSet::rowsCount() -I- */
 size_t
 MySQL_Prepared_ResultSet::rowsCount() const
@@ -1296,17 +1097,6 @@ MySQL_Prepared_ResultSet::rowsCount() const
 	checkValid();
 	checkScrollable();
 	return (size_t) mysql_stmt_num_rows(stmt);
-}
-/* }}} */
-
-
-/* {{{ MySQL_Prepared_ResultSet::setFetchSize() -U- */
-void
-MySQL_Prepared_ResultSet::setFetchSize(size_t /* rows */)
-{
-	CPP_ENTER("MySQL_Prepared_ResultSet::setFetchSize");
-	checkValid();
-	throw sql::MethodNotImplementedException("MySQL_Prepared_ResultSet::setFetchSize()");
 }
 /* }}} */
 
