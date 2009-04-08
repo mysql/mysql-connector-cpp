@@ -37,7 +37,8 @@ public:
     TEST_CASE(setNull);
     TEST_CASE(checkClosed);
     TEST_CASE(getMetaData);
-    TEST_CASE(callSP);    
+    TEST_CASE(callSP);
+    TEST_CASE(getWarnings);
   }
 
   /**
@@ -79,6 +80,11 @@ public:
    * TODO - temporary to isolate a crash, remove after fix!
    */
   void crash();
+
+  /**
+   * Check get|clearWarnings()
+   */
+  void getWarnings();
 
 };
 

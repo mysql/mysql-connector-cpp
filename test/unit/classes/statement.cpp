@@ -46,7 +46,7 @@ void statement::anonymousSelect()
 
 void statement::getWarnings()
 {
-  logMsg("statement::getWarnings() - MySQL_Statement::getWarnings()");
+  logMsg("statement::getWarnings() - MySQL_Statement::get|clearWarnings()");
   std::stringstream msg;
 
   stmt.reset(con->createStatement());
@@ -77,6 +77,31 @@ void statement::getWarnings()
       }
       ASSERT(("" != warn->getMessage()));
     }
+
+    for (const sql::SQLWarning* warn=stmt->getWarnings(); warn; warn=warn->getNextWarning())
+    {
+      msg.str("");
+      msg << "... ErrorCode = '" << warn->getErrorCode() << "', ";
+      msg << "SQLState = '" << warn->getSQLState() << "', ";
+      msg << "ErrorMessage = '" << warn->getMessage() << "'";
+      logMsg(msg.str());
+
+      ASSERT((0 != warn->getErrorCode()));
+      if (1264 == warn->getErrorCode())
+      {
+        ASSERT_EQUALS("22003", warn->getSQLState());
+      }
+      else
+      {
+        ASSERT(("" != warn->getSQLState()));
+      }
+      ASSERT(("" != warn->getMessage()));
+    }
+
+    stmt->clearWarnings();
+    for (const sql::SQLWarning* warn=stmt->getWarnings(); warn; warn=warn->getNextWarning()) {
+      FAIL("There should be no more warnings!");
+  }
 
     // TODO - how to use getNextWarning() ?
     stmt->execute("DROP TABLE IF EXISTS test");

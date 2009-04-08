@@ -29,12 +29,12 @@ void preparedstatement::InsertSelectAllTypes()
   std::vector<columndefinition>::iterator it;
   stmt.reset(con->createStatement());
   bool got_warning=false;
-  
+
   try
   {
 
     for (it=columns.end(), it--; it != columns.begin(); it--)
-    {      
+    {
       stmt->execute("DROP TABLE IF EXISTS test");
       sql.str("");
       sql << "CREATE TABLE test(dummy TIMESTAMP, id " << it->sqldef << ")";
@@ -341,7 +341,7 @@ void preparedstatement::InsertSelectAllTypes()
       catch (sql::InvalidArgumentException &)
       {
       }
-      res->first();      
+      res->first();
     }
     stmt->execute("DROP TABLE IF EXISTS test");
     if (got_warning)
@@ -742,10 +742,10 @@ void preparedstatement::getMetaData()
 
       pstmt.reset(con->prepareStatement("SELECT id, dummy, NULL, -1.1234, 'Warum nicht...' FROM test"));
       res.reset(pstmt->executeQuery());
-      meta_ps = res->getMetaData();
+      meta_ps=res->getMetaData();
 
       res_st.reset(stmt->executeQuery("SELECT id, dummy, NULL, -1.1234, 'Warum nicht...' FROM test"));
-      meta_st = res->getMetaData();
+      meta_st=res->getMetaData();
 
       ASSERT_EQUALS(meta_ps->getColumnCount(), meta_st->getColumnCount());
 
@@ -813,7 +813,7 @@ void preparedstatement::callSP()
       return;
     }
 
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
 
     pstmt.reset(con->prepareStatement("CREATE PROCEDURE p(OUT ver_param VARCHAR(25)) BEGIN SELECT VERSION() INTO ver_param; END;"));
     ASSERT(!pstmt->execute());
@@ -887,6 +887,78 @@ void preparedstatement::crash()
     fail(e.what(), __FILE__, __LINE__);
   }
 
+}
+
+void preparedstatement::getWarnings()
+{
+  logMsg("preparedstatement::getWarnings() - MySQL_PreparedStatement::get|clearWarnings()");
+  std::stringstream msg;
+
+  stmt.reset(con->createStatement());
+  try
+  {
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT UNSIGNED)");
+
+    // Lets hope that this will always cause a 1264 or similar warning
+    pstmt.reset(con->prepareStatement("INSERT INTO test(id) VALUES (-1)"));
+    pstmt->executeUpdate();
+
+    for (const sql::SQLWarning* warn=pstmt->getWarnings(); warn; warn=warn->getNextWarning())
+    {
+      msg.str("");
+      msg << "... ErrorCode = '" << warn->getErrorCode() << "', ";
+      msg << "SQLState = '" << warn->getSQLState() << "', ";
+      msg << "ErrorMessage = '" << warn->getMessage() << "'";
+      logMsg(msg.str());
+
+      ASSERT((0 != warn->getErrorCode()));
+      if (1264 == warn->getErrorCode())
+      {
+        ASSERT_EQUALS("22003", warn->getSQLState());
+      }
+      else
+      {
+        ASSERT(("" != warn->getSQLState()));
+      }
+      ASSERT(("" != warn->getMessage()));
+    }
+
+    for (const sql::SQLWarning* warn=pstmt->getWarnings(); warn; warn=warn->getNextWarning())
+    {
+      msg.str("");
+      msg << "... ErrorCode = '" << warn->getErrorCode() << "', ";
+      msg << "SQLState = '" << warn->getSQLState() << "', ";
+      msg << "ErrorMessage = '" << warn->getMessage() << "'";
+      logMsg(msg.str());
+
+      ASSERT((0 != warn->getErrorCode()));
+      if (1264 == warn->getErrorCode())
+      {
+        ASSERT_EQUALS("22003", warn->getSQLState());
+      }
+      else
+      {
+        ASSERT(("" != warn->getSQLState()));
+      }
+      ASSERT(("" != warn->getMessage()));
+    }
+
+    pstmt->clearWarnings();
+    for (const sql::SQLWarning* warn=pstmt->getWarnings(); warn; warn=warn->getNextWarning())
+    {
+      FAIL("There should be no more warnings!");
+    }
+
+    // TODO - how to use getNextWarning() ?
+    stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
 }
 
 } /* namespace preparedstatement */
