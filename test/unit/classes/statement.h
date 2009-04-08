@@ -26,6 +26,11 @@ class statement : public unit_fixture
 private:
   typedef unit_fixture super;
 
+  /*
+   * Helper method to check for forward only scrolling
+   */
+  void checkUnbufferedScrolling();
+
 protected:
 public:
 
@@ -37,6 +42,7 @@ public:
     TEST_CASE(callSP);
     TEST_CASE(selectZero);
     TEST_CASE(unbufferedFetch);
+    TEST_CASE(unbufferedOutOfSync);
   }
 
   /**
@@ -68,6 +74,12 @@ public:
    * Unbuffered fetch
    */
   void unbufferedFetch();
+
+  /**
+   * Unbuffered fetch - ouf of sync
+   */
+  void unbufferedOutOfSync();
+
 
 };
 
