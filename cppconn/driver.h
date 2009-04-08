@@ -40,7 +40,7 @@ public:
 	virtual const std::string & getName() = 0;
 };
 
-}; /* namespace sql */
+} /* namespace sql */
 
 extern "C"
 {

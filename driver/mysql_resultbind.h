@@ -46,8 +46,8 @@ public:
 
 };
 
-};/* namespace mysql */
-};/* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 #endif /* _MYSQL_RESULTBIND_H_ */
 

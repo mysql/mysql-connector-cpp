@@ -150,8 +150,8 @@ private:
 	void operator=(MySQL_Prepared_Statement &);
 };
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 #endif // _MYSQL_PREPARED_STATEMENT_H_
 
 

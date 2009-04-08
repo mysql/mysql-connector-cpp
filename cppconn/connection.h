@@ -146,6 +146,6 @@ public:
 	/* virtual void setTypeMap(Map map) = 0; */
 };
 
-}; /* namespace sql */
+} /* namespace sql */
 
 #endif // _SQL_CONNECTION_H_

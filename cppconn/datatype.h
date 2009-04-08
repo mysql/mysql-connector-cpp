@@ -48,6 +48,6 @@ public:
 	};
 };
 
-}; /* namespace */
+} /* namespace */
 
 #endif /* _SQL_DATATYPE_H_ */

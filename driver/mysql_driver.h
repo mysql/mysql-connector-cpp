@@ -53,8 +53,8 @@ private:
 CPPCONN_PUBLIC_FUNC MySQL_Driver *get_mysql_driver_instance();
 
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 #endif // _MYSQL_DRIVER_H_
 

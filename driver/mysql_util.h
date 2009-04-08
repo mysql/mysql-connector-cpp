@@ -132,9 +132,9 @@ public:
 };
 
 
-}; /* namespace util */
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace util */
+} /* namespace mysql */
+} /* namespace sql */
 
 #endif /* _MYSQL_UTIL_H_ */
 

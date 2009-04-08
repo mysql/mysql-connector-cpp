@@ -72,10 +72,10 @@ public:
 	struct ::st_mysql * mysql; /* let it be last . If wrong dll is used we will get valgrind error or runtime error !*/
 };
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
-#endif // _MYSQL_CONNECTION_H_
+#endif // _MYSQL_CONNECTION_DATA_H_
 
 /*
  * Local variables:

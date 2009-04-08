@@ -171,8 +171,8 @@ private:
 	void operator=(MySQL_ResultSet &);
 };
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 #endif // _MYSQL_RESULTSET_H_
 
 /*

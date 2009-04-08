@@ -71,6 +71,6 @@ public:
 };
 
 
-}; /* namespace sql */
+} /* namespace sql */
 
 #endif /* _SQL_PREPARED_STATEMENT_H_ */

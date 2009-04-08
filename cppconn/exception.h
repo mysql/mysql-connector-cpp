@@ -115,6 +115,6 @@ private:
 	virtual SQLException* copy() { return new NonScrollableException(*this); }
 };
 
-}; /* namespace sql */
+} /* namespace sql */
 
 #endif /* _SQL_EXCEPTION_H_ */

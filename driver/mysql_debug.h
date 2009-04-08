@@ -98,8 +98,8 @@ public:
 	~MySQL_DebugEnterEvent();
 };
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 #endif /* _MYSQL_DEBUG_H_ */
 

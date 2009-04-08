@@ -94,6 +94,6 @@ private:
 };
 
 
-}; /* namespace sql */
+} /* namespace sql */
 
 #endif /* _SQL_WARNING_H_ */

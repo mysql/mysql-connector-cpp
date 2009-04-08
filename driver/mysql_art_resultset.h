@@ -260,8 +260,8 @@ private:
 	void operator=(MySQL_ArtResultSet &);
 };
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 #endif // _MYSQL_ART_RESULTSET_H_
 
 /*

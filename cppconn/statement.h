@@ -77,6 +77,6 @@ public:
 	virtual Statement * setResultSetType(sql::ResultSet::enum_type type) = 0;
 };
 
-}; /* namespace sql */
+} /* namespace sql */
 
 #endif /* _SQL_STATEMENT_H_ */
