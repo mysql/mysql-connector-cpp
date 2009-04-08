@@ -196,6 +196,9 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 	std::string userName;
 	std::string password;
 	std::string schema;
+	std::string defaultCharset("utf8");
+	std::string characterSetResults("utf8");
+
 	const char *sslKey = NULL, *sslCert = NULL, *sslCA = NULL, *sslCAPath = NULL, *sslCipher = NULL;
 	bool ssl_used = false, schema_used = false;
 	int flags = 0;
@@ -218,6 +221,8 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 		} else if (!it->first.compare("schema")) {
 			schema = std::string(it->second.str.val);
 			schema_used = true;
+		} else if (!it->first.compare("characterSetResults")) {
+			characterSetResults = std::string(it->second.str.val);
 		} else if (!it->first.compare("sslKey")) {
 			sslKey = it->second.str.val;
 			ssl_used = true;
@@ -366,16 +371,20 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 			} else if (!it_tmp->first.compare("OPT_RECONNECT")) {
 				mysql_options(intern->mysql, MYSQL_OPT_RECONNECT, (const char *) &it_tmp->second.bval);
 			} else if (!it_tmp->first.compare("OPT_CHARSET_NAME")) {
-				mysql_options(intern->mysql, MYSQL_SET_CHARSET_NAME, (const char *) &it_tmp->second.str.val);
+				defaultCharset = it_tmp->second.str.val;
 			} else if (!it_tmp->first.compare("OPT_REPORT_DATA_TRUNCATION")) {
 				mysql_options(intern->mysql, MYSQL_REPORT_DATA_TRUNCATION, (const char *) &it_tmp->second.bval);
 			} else if (!it_tmp->first.compare("OPT_NAMED_PIPE")) {
 				mysql_options(intern->mysql, MYSQL_OPT_NAMED_PIPE, NULL);
 			}
 		}
+
 		{
 			my_bool tmp_bool = 1;
 			mysql_options(intern->mysql, MYSQL_SECURE_AUTH, (const char *) &tmp_bool);
+		}
+		{
+			mysql_options(intern->mysql, MYSQL_SET_CHARSET_NAME, defaultCharset.c_str());
 		}
 		if (ssl_used) {
 			/* According to the docs, always returns 0 */
@@ -403,6 +412,10 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 		mysql_set_server_option(intern->mysql, MYSQL_OPTION_MULTI_STATEMENTS_OFF);
 		setAutoCommit(true);
 		setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
+		// Different Values means we have to set different result set encoding
+		if (characterSetResults.compare(defaultCharset)) {
+			setSessionVariable("character_set_results", characterSetResults.length() ? characterSetResults:std::string("NULL"));
+		}
 
 		intern->meta.reset(new MySQL_ConnectionMetaData(this, intern->logger));
 	} catch (std::runtime_error & /*e*/) {
@@ -961,7 +974,12 @@ MySQL_Connection::setSessionVariable(const std::string & varname, const std::str
 	checkClosed();
 
 	std::auto_ptr< sql::Statement > stmt(createStatement());
-	std::string q(std::string("SET SESSION ").append(varname).append("='").append(value).append("'"));
+	std::string q(std::string("SET SESSION ").append(varname).append("="));
+	if (!value.compare("NULL")) {
+		q.append("NULL");
+	} else {
+		q.append("'").append(value).append("'");
+	}
 
 	stmt->executeUpdate(q);
 	if (intern->cache_sql_mode && !strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1)) {
