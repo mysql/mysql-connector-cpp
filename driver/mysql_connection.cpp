@@ -316,118 +316,106 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 		}
 	}
 
-	try {
-		if (!(intern->mysql = mysql_init(NULL))) {
-			throw sql::SQLException("Insufficient memory: cannot create MySQL handle using mysql_init()", "HY000", 1000);
-		}
-#if !defined(_WIN32) && !defined(_WIN64)
-		if (!hostName.compare(0, sizeof("unix://") - 1, "unix://")) {
-			protocol_tcp = false;
-			socket_or_pipe = hostName.substr(sizeof("unix://") - 1, std::string::npos);
-			host = "localhost";
-			int tmp_protocol = MYSQL_PROTOCOL_SOCKET;
-			mysql_options(intern->mysql, MYSQL_OPT_PROTOCOL, (const char *) &tmp_protocol);
-		} else
-#else
-		if (!hostName.compare(0, sizeof("pipe://") - 1, "pipe://")) {
-			protocol_tcp = false;
-			socket_or_pipe = hostName.substr(sizeof("pipe://") - 1, std::string::npos);
-			host = ".";
-			int tmp_protocol = MYSQL_PROTOCOL_PIPE;
-			mysql_options(intern->mysql, MYSQL_OPT_PROTOCOL, (const char *) &tmp_protocol);
-		} else
-#endif
-		if (!hostName.compare(0, sizeof("tcp://") - 1, "tcp://") ) {
-			size_t port_pos, schema_pos;
-			host = hostName.substr(sizeof("tcp://") - 1, std::string::npos);
-			schema_pos = host.find('/');
-			if (schema_pos != std::string::npos) {
-				++schema_pos; // skip the slash
-								/* TODO: tcp://127.0.0.1/
-								-> host set, schema empty, schema property ignored */
-				schema = host.substr(schema_pos, host.size() - schema_pos);
-				schema_used = true;
-				host = host.substr(0, schema_pos - 1);
-			}
-			port_pos = host.find_last_of(':', std::string::npos);
-			if (port_pos != std::string::npos) {
-				port = atoi(host.substr(port_pos + 1, std::string::npos).c_str());
-				host = host.substr(0, port_pos);
-			}
-		} else {
-			host = hostName.c_str();
-		}
-		/* libmysql shouldn't think it is too smart */
-		if (protocol_tcp && !host.compare(0, sizeof("localhost") - 1, "localhost")) {
-			host = "127.0.0.1";
-		}
-		std::map<std::string, sql::ConnectPropertyVal>::const_iterator it_tmp = properties.begin();
-		for (; it_tmp != properties.end(); ++it_tmp) {
-			if (!it_tmp->first.compare("OPT_CONNECT_TIMEOUT")) {
-				mysql_options(intern->mysql, MYSQL_OPT_CONNECT_TIMEOUT, (const char *) &it_tmp->second.lval);
-			} else if (!it_tmp->first.compare("OPT_READ_TIMEOUT")) {
-				mysql_options(intern->mysql, MYSQL_OPT_READ_TIMEOUT, (const char *) &it_tmp->second.lval);
-			} else if (!it_tmp->first.compare("OPT_WRITE_TIMEOUT")) {
-				mysql_options(intern->mysql, MYSQL_OPT_WRITE_TIMEOUT, (const char *) &it_tmp->second.lval);
-			} else if (!it_tmp->first.compare("OPT_RECONNECT")) {
-				mysql_options(intern->mysql, MYSQL_OPT_RECONNECT, (const char *) &it_tmp->second.bval);
-			} else if (!it_tmp->first.compare("OPT_CHARSET_NAME")) {
-				defaultCharset = it_tmp->second.str.val;
-			} else if (!it_tmp->first.compare("OPT_REPORT_DATA_TRUNCATION")) {
-				mysql_options(intern->mysql, MYSQL_REPORT_DATA_TRUNCATION, (const char *) &it_tmp->second.bval);
-			} else if (!it_tmp->first.compare("OPT_NAMED_PIPE")) {
-				mysql_options(intern->mysql, MYSQL_OPT_NAMED_PIPE, NULL);
-			}
-		}
-
-		{
-			my_bool tmp_bool = 1;
-			mysql_options(intern->mysql, MYSQL_SECURE_AUTH, (const char *) &tmp_bool);
-		}
-		{
-			mysql_options(intern->mysql, MYSQL_SET_CHARSET_NAME, defaultCharset.c_str());
-		}
-		if (ssl_used) {
-			/* According to the docs, always returns 0 */
-			mysql_ssl_set(intern->mysql, sslKey, sslCert, sslCA, sslCAPath, sslCipher);
-		}
-		CPP_INFO_FMT("hostName=%s", hostName.c_str());
-		CPP_INFO_FMT("user=%s", userName.c_str());
-		CPP_INFO_FMT("port=%d", port);
-		CPP_INFO_FMT("schema=%s", schema.c_str());
-		CPP_INFO_FMT("socket/pipe=%s", socket_or_pipe.c_str());
-		if (!mysql_real_connect(intern->mysql,
-							host.c_str(),
-							userName.c_str(),
-							password.c_str(),
-							schema_used && schema.size()? schema.c_str():NULL /* schema */,
-							port,
-							protocol_tcp == false? socket_or_pipe.c_str():NULL /*socket or named pipe */,
-							flags)) {
-			CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", mysql_errno(intern->mysql), mysql_sqlstate(intern->mysql), mysql_error(intern->mysql));
-			sql::SQLException e(mysql_error(intern->mysql), mysql_sqlstate(intern->mysql), mysql_errno(intern->mysql));
-			mysql_close(intern->mysql);
-			intern->mysql = NULL;
-			throw e;
-		}
-		mysql_set_server_option(intern->mysql, MYSQL_OPTION_MULTI_STATEMENTS_OFF);
-		setAutoCommit(true);
-		setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
-		// Different Values means we have to set different result set encoding
-		if (characterSetResults.compare(defaultCharset)) {
-			setSessionVariable("character_set_results", characterSetResults.length() ? characterSetResults:std::string("NULL"));
-		}
-
-		intern->meta.reset(new MySQL_ConnectionMetaData(this, intern->logger));
-	} catch (std::runtime_error & /*e*/) {
-		// SQLException is also a runtime_error, thus no special case for SQLException
-		CPP_ERR("freeing reference to logger and rethrowing");
-		intern->logger->freeReference();
-		throw;
-	} catch (std::bad_alloc & /*e*/) {
-		intern->logger->freeReference();
-		throw;
+	if (!(intern->mysql = mysql_init(NULL))) {
+		throw sql::SQLException("Insufficient memory: cannot create MySQL handle using mysql_init()", "HY000", 1000);
 	}
+#if !defined(_WIN32) && !defined(_WIN64)
+	if (!hostName.compare(0, sizeof("unix://") - 1, "unix://")) {
+		protocol_tcp = false;
+		socket_or_pipe = hostName.substr(sizeof("unix://") - 1, std::string::npos);
+		host = "localhost";
+		int tmp_protocol = MYSQL_PROTOCOL_SOCKET;
+		mysql_options(intern->mysql, MYSQL_OPT_PROTOCOL, (const char *) &tmp_protocol);
+	} else
+#else
+	if (!hostName.compare(0, sizeof("pipe://") - 1, "pipe://")) {
+		protocol_tcp = false;
+		socket_or_pipe = hostName.substr(sizeof("pipe://") - 1, std::string::npos);
+		host = ".";
+		int tmp_protocol = MYSQL_PROTOCOL_PIPE;
+		mysql_options(intern->mysql, MYSQL_OPT_PROTOCOL, (const char *) &tmp_protocol);
+	} else
+#endif
+	if (!hostName.compare(0, sizeof("tcp://") - 1, "tcp://") ) {
+		size_t port_pos, schema_pos;
+		host = hostName.substr(sizeof("tcp://") - 1, std::string::npos);
+		schema_pos = host.find('/');
+		if (schema_pos != std::string::npos) {
+			++schema_pos; // skip the slash
+							/* TODO: tcp://127.0.0.1/
+							-> host set, schema empty, schema property ignored */
+			schema = host.substr(schema_pos, host.size() - schema_pos);
+			schema_used = true;
+			host = host.substr(0, schema_pos - 1);
+		}
+		port_pos = host.find_last_of(':', std::string::npos);
+		if (port_pos != std::string::npos) {
+		port = atoi(host.substr(port_pos + 1, std::string::npos).c_str());
+			host = host.substr(0, port_pos);
+		}
+	} else {
+		host = hostName.c_str();
+	}
+	/* libmysql shouldn't think it is too smart */
+	if (protocol_tcp && !host.compare(0, sizeof("localhost") - 1, "localhost")) {
+		host = "127.0.0.1";
+	}
+	std::map<std::string, sql::ConnectPropertyVal>::const_iterator it_tmp = properties.begin();
+	for (; it_tmp != properties.end(); ++it_tmp) {
+		if (!it_tmp->first.compare("OPT_CONNECT_TIMEOUT")) {
+			mysql_options(intern->mysql, MYSQL_OPT_CONNECT_TIMEOUT, (const char *) &it_tmp->second.lval);
+		} else if (!it_tmp->first.compare("OPT_READ_TIMEOUT")) {
+			mysql_options(intern->mysql, MYSQL_OPT_READ_TIMEOUT, (const char *) &it_tmp->second.lval);
+		} else if (!it_tmp->first.compare("OPT_WRITE_TIMEOUT")) {
+			mysql_options(intern->mysql, MYSQL_OPT_WRITE_TIMEOUT, (const char *) &it_tmp->second.lval);
+		} else if (!it_tmp->first.compare("OPT_RECONNECT")) {
+			mysql_options(intern->mysql, MYSQL_OPT_RECONNECT, (const char *) &it_tmp->second.bval);
+		} else if (!it_tmp->first.compare("OPT_CHARSET_NAME")) {
+			defaultCharset = it_tmp->second.str.val;
+		} else if (!it_tmp->first.compare("OPT_REPORT_DATA_TRUNCATION")) {
+			mysql_options(intern->mysql, MYSQL_REPORT_DATA_TRUNCATION, (const char *) &it_tmp->second.bval);
+		} else if (!it_tmp->first.compare("OPT_NAMED_PIPE")) {
+			mysql_options(intern->mysql, MYSQL_OPT_NAMED_PIPE, NULL);
+		}
+	}
+	{
+		my_bool tmp_bool = 1;
+		mysql_options(intern->mysql, MYSQL_SECURE_AUTH, (const char *) &tmp_bool);
+	}
+	{
+		mysql_options(intern->mysql, MYSQL_SET_CHARSET_NAME, defaultCharset.c_str());
+	}
+	if (ssl_used) {
+		/* According to the docs, always returns 0 */
+		mysql_ssl_set(intern->mysql, sslKey, sslCert, sslCA, sslCAPath, sslCipher);
+	}
+	CPP_INFO_FMT("hostName=%s", hostName.c_str());
+	CPP_INFO_FMT("user=%s", userName.c_str());
+	CPP_INFO_FMT("port=%d", port);
+	CPP_INFO_FMT("schema=%s", schema.c_str());
+	CPP_INFO_FMT("socket/pipe=%s", socket_or_pipe.c_str());
+	if (!mysql_real_connect(intern->mysql,
+						host.c_str(),
+						userName.c_str(),
+						password.c_str(),
+						schema_used && schema.size()? schema.c_str():NULL /* schema */,
+						port,
+						protocol_tcp == false? socket_or_pipe.c_str():NULL /*socket or named pipe */,
+						flags)) {
+		CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", mysql_errno(intern->mysql), mysql_sqlstate(intern->mysql), mysql_error(intern->mysql));
+		sql::SQLException e(mysql_error(intern->mysql), mysql_sqlstate(intern->mysql), mysql_errno(intern->mysql));
+		mysql_close(intern->mysql);
+		intern->mysql = NULL;
+		throw e;
+	}
+	mysql_set_server_option(intern->mysql, MYSQL_OPTION_MULTI_STATEMENTS_OFF);
+	setAutoCommit(true);
+	setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
+	// Different Values means we have to set different result set encoding
+	if (characterSetResults.compare(defaultCharset)) {
+		setSessionVariable("character_set_results", characterSetResults.length() ? characterSetResults:std::string("NULL"));
+	}
+	intern->meta.reset(new MySQL_ConnectionMetaData(this, intern->logger));
 }
 /* }}} */
 
