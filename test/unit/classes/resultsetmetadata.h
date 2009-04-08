@@ -48,6 +48,7 @@ protected:
   void doGetTableName(bool is_ps);
   void doIsAutoIncrement(bool is_ps);
   void doIsCaseSensitive(bool is_ps);
+  void doIsZerofill(bool is_ps);
   void doIsCurrency(bool is_ps);
   void doIsDefinitelyWritable(bool is_ps);
   void doIsNullable(bool is_ps);
@@ -71,6 +72,7 @@ public:
     TEST_CASE(getTableName);
     TEST_CASE(isAutoIncrement);
     TEST_CASE(isCaseSensitive);
+    TEST_CASE(isZerofill);
     TEST_CASE(isCurrency);
     TEST_CASE(isDefinitelyWritable);
     TEST_CASE(isNullable);
@@ -167,6 +169,14 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void isCaseSensitive();
+
+  /**
+   * Test for ResultSetMetaData::isZerofill
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void isZerofill();
 
   /**
    * Test for ResultSetMetaData::isCurrency
