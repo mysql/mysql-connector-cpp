@@ -44,6 +44,7 @@ SET(jdbctests_sources
 	regression/PreparedStatementRegressionTest.cpp
 	simple/TransactionTest.cpp
 	regression/SubqueriesRegressionTest.cpp
+	compliance/UnbufferedRsStmtTest.cpp
 	)
 
 # It's convinient for VS users to have headers as part of project
@@ -64,6 +65,7 @@ IF(WIN32)
 		regression/PreparedStatementRegressionTest.h
 		simple/TransactionTest.h
 		regression/SubqueriesRegressionTest.h
+		compliance/UnbufferedRsStmtTest.h
 		)
 ENDIF(WIN32)
 
