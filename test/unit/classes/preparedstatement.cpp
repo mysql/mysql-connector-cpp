@@ -533,6 +533,30 @@ void preparedstatement::assortedSetType()
       }
 
       pstmt->clearParameters();
+      pstmt->setUInt(1, (uint32_t) 1);
+      ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setUInt(0, (uint32_t) 1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException)
+      {
+      }
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setUInt(2, (uint32_t) 1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException)
+      {
+      }
+
+      pstmt->clearParameters();
       pstmt->setInt64(1, (int64_t) - 123);
       ASSERT_EQUALS(1, pstmt->executeUpdate());
 
@@ -615,12 +639,12 @@ void preparedstatement::assortedSetType()
       res.reset(pstmt->executeQuery());
       checkResultSetScrolling(res);
       ASSERT(res->next());
-      if (res->getInt("_num") != (9 + (int) it->is_nullable))
+      if (res->getInt("_num") != (10 + (int) it->is_nullable))
       {
         sql.str("");
         sql << "....\t\tWARNING, SQL: " << it->sqldef << ", nullable " << std::boolalpha;
         sql << it->is_nullable << ", found " << res->getInt(1) << "columns but";
-        sql << " expecting " << (9 + (int) it->is_nullable);
+        sql << " expecting " << (10 + (int) it->is_nullable);
         logMsg(sql.str());
         got_warning=true;
       }
