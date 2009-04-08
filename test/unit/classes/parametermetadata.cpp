@@ -86,6 +86,8 @@ void parametermetadata::getParameterCount()
 
 }
 
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
 void parametermetadata::notImplemented()
 {
   logMsg("parametermetadata::notImplemented() - MySQL_ParameterMetaData::*");
@@ -176,7 +178,7 @@ void parametermetadata::notImplemented()
   }
 
 }
-
+#endif
 
 } /* namespace parametermetadata */
 } /* namespace testsuite */
