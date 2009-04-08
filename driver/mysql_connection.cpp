@@ -152,6 +152,7 @@ MySQL_Connection::~MySQL_Connection()
   - port
   - socket
   - pipe
+  - characterSetResults
   - schema
   - sslKey
   - sslCert
