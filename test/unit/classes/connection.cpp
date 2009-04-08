@@ -89,6 +89,15 @@ void connection::getSessionVariable()
 
     my_con->setSessionVariable("sql_mode", value);
     ASSERT_EQUALS(value, my_con->getSessionVariable("sql_mode"));
+
+    value = my_con->getSessionVariable("sql_warnings");
+    
+    my_con->setSessionVariable("sql_warnings", "0");
+    ASSERT_EQUALS("0", my_con->getSessionVariable("sql_warnings"));
+    my_con->setSessionVariable("sql_warnings", "1");
+    ASSERT_EQUALS("1", my_con->getSessionVariable("sql_warnings"));
+    my_con->setSessionVariable("sql_warnings", warning);
+    ASSERT_EQUALS(value, my_con->getSessionVariable("sql_warnings"));
   }
   catch (sql::SQLException &e)
   {
