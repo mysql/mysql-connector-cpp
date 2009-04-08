@@ -372,12 +372,9 @@ void statement::unbufferedFetch()
       fail(e.what(), __FILE__, __LINE__);
     }
     con->setSchema(db);
-    con->setClientOption("defaultStatementResultType", sql::ResultSet::TYPE_FORWARD_ONLY);
+    con->setClientOption("defaultStatementResultType", (void *)sql::ResultSet::TYPE_FORWARD_ONLY);
     stmt.reset(con->createStatement());
     
-    /*
-     res.reset((stmt->setResultSetType(sql::ResultSet::TYPE_FORWARD_ONLY)->executeQuery("SELECT id FROM test ORDER BY id ASC")));
-    res.reset(stmt->setResultSetType(sql::ResultSet::TYPE_FORWARD_ONLY))->executeQuery("SELECT id FROM test ORDER BY id ASC");
     logMsg("... simple forward reading");
     res.reset(stmt->executeQuery("SELECT id FROM test ORDER BY id ASC"));
     id=0;
@@ -405,8 +402,9 @@ void statement::unbufferedFetch()
       ASSERT_EQUALS(id, res->getInt("id"));
       id--;
     }
-    */
 
+    /*
+     */
     stmt->execute("DROP TABLE IF EXISTS test");
   }
   catch (sql::SQLException &e)
