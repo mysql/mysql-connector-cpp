@@ -305,6 +305,7 @@ void statement::unbufferedFetch()
       connection_properties[std::string("metadataUseInfoSchema")]=tmp;
     }
 
+    logMsg("... setting TYPE_FORWARD_ONLY through connection map");
     connection_properties.erase("defaultStatementResultType");
     {
       sql::ConnectPropertyVal tmp;
@@ -337,35 +338,10 @@ void statement::unbufferedFetch()
         ASSERT_EQUALS(res->getInt(1), res->getInt("id"));
         ASSERT_EQUALS(id, res->getInt("id"));
       }
+      checkUnbufferedScrolling();
 
-      try
-      {
-        res->previous();
-        FAIL("Nonscrollable result set not detected");
-      }
-      catch (sql::SQLException &)
-      {
-      }
-
-      try
-      {
-        res->absolute(1);
-        FAIL("Nonscrollable result set not detected");
-      }
-      catch (sql::SQLException &)
-      {
-      }
-
-      try
-      {
-        res->afterLast();
-        logMsg("... a bit odd, but OK, its forward");
-      }
-      catch (sql::SQLException &e)
-      {
-        fail(e.what(), __FILE__, __LINE__);
-      }
-
+      logMsg("... simple forward reading again");
+      res.reset(stmt->executeQuery("SELECT id FROM test ORDER BY id DESC"));
       try
       {
         res->beforeFirst();
@@ -374,35 +350,120 @@ void statement::unbufferedFetch()
       catch (sql::SQLException &)
       {
       }
-
-      try
-      {
-        res->last();
-        FAIL("Nonscrollable result set not detected");
-      }
-      catch (sql::SQLException &)
-      {
-      }
-
-      logMsg("... simple forward reading again");
-      res.reset(stmt->executeQuery("SELECT id FROM test ORDER BY id ASC"));
-      id=0;
+      id=5;
       while (res->next())
       {
-        id++;
         ASSERT_EQUALS(res->getInt(1), res->getInt("id"));
         ASSERT_EQUALS(id, res->getInt("id"));
+        id--;
       }
-      stmt->execute("DROP TABLE IF EXISTS test");
-
     }
     connection_properties.erase("defaultStatementResultType");
+
+
+    logMsg("... setting TYPE_FORWARD_ONLY through setClientOption()");
+    try
+    {
+      created_objects.clear();
+      con.reset(getConnection());
+    }
+    catch (sql::SQLException &e)
+    {
+      fail(e.what(), __FILE__, __LINE__);
+    }
+    con->setSchema(db);
+    con->setClientOption("defaultStatementResultType", sql::ResultSet::TYPE_FORWARD_ONLY);
+    stmt.reset(con->createStatement());
+    
+    /*
+     res.reset((stmt->setResultSetType(sql::ResultSet::TYPE_FORWARD_ONLY)->executeQuery("SELECT id FROM test ORDER BY id ASC")));
+    res.reset(stmt->setResultSetType(sql::ResultSet::TYPE_FORWARD_ONLY))->executeQuery("SELECT id FROM test ORDER BY id ASC");
+    logMsg("... simple forward reading");
+    res.reset(stmt->executeQuery("SELECT id FROM test ORDER BY id ASC"));
+    id=0;
+    while (res->next())
+    {
+      id++;
+      ASSERT_EQUALS(res->getInt(1), res->getInt("id"));
+      ASSERT_EQUALS(id, res->getInt("id"));
+    }
+    checkUnbufferedScrolling();
+    logMsg("... simple forward reading again");
+    res.reset(stmt->executeQuery("SELECT id FROM test ORDER BY id DESC"));
+    try
+    {
+      res->beforeFirst();
+      FAIL("Nonscrollable result set not detected");
+    }
+    catch (sql::SQLException &)
+    {
+    }
+    id=5;
+    while (res->next())
+    {
+      ASSERT_EQUALS(res->getInt(1), res->getInt("id"));
+      ASSERT_EQUALS(id, res->getInt("id"));
+      id--;
+    }
+    */
+
+    stmt->execute("DROP TABLE IF EXISTS test");
   }
   catch (sql::SQLException &e)
   {
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void statement::checkUnbufferedScrolling()
+{
+  logMsg("... checkUnbufferedScrolling");
+  try
+  {
+    res->previous();
+    FAIL("Nonscrollable result set not detected");
+  }
+  catch (sql::SQLException &)
+  {
+  }
+
+  try
+  {
+    res->absolute(1);
+    FAIL("Nonscrollable result set not detected");
+  }
+  catch (sql::SQLException &)
+  {
+  }
+
+  try
+  {
+    res->afterLast();
+    logMsg("... a bit odd, but OK, its forward");
+  }
+  catch (sql::SQLException &e)
+  {
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+  try
+  {
+    res->beforeFirst();
+    FAIL("Nonscrollable result set not detected");
+  }
+  catch (sql::SQLException &)
+  {
+  }
+
+  try
+  {
+    res->last();
+    FAIL("Nonscrollable result set not detected");
+  }
+  catch (sql::SQLException &)
+  {
   }
 }
 

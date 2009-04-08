@@ -115,7 +115,6 @@ void connection::getSessionVariable()
     {
     }
 
-
     my_con->setSessionVariable("sql_warnings", value);
     ASSERT_EQUALS(value, my_con->getSessionVariable("sql_warnings"));
   }
