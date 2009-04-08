@@ -934,7 +934,7 @@ MySQL_Connection::setSessionVariable(const std::string & varname, const std::str
 	std::auto_ptr< sql::Statement > stmt(createStatement());
 	std::string q(std::string("SET SESSION ").append(varname).append("='").append(value).append("'"));
 
-	stmt->executeQuery(q);
+	stmt->executeUpdate(q);
 	if (intern->cache_sql_mode && !strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1)) {
 		intern->sql_mode = value;
 	}
