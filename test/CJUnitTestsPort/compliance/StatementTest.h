@@ -46,29 +46,36 @@ public:
     TEST_CASE(testExecuteQuery03);
     TEST_CASE(testExecuteUpdate01);
     TEST_CASE(testExecuteUpdate03);
-    TEST_CASE(testGetFetchSize);
-    TEST_CASE(testGetMaxFieldSize);
-    TEST_CASE(testGetMaxRows);
+
     TEST_CASE(testGetMoreResults01);
     TEST_CASE(testGetMoreResults02);
     TEST_CASE(testGetMoreResults03);
-    
-    TEST_CASE(testGetQueryTimeout);
+
     TEST_CASE(testGetResultSet01);
     TEST_CASE(testGetResultSet02);
     TEST_CASE(testGetUpdateCount01);
     TEST_CASE(testGetUpdateCount02);
     TEST_CASE(testGetWarnings);
-    TEST_CASE(testSetFetchSize02);
+
     TEST_CASE(testSetFetchSize05);
-    TEST_CASE(testSetMaxFieldSize01);
+
     TEST_CASE(testSetMaxFieldSize02);
-    TEST_CASE(testSetMaxRows01);
+
     TEST_CASE(testSetMaxRows02);
     TEST_CASE(testSetQueryTimeout02);
 
     TEST_CASE(testGetResultSetType01);
     TEST_CASE(testGetResultSetType02);
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
+    TEST_CASE(testGetFetchSize);
+    TEST_CASE(testGetMaxFieldSize);
+    TEST_CASE(testGetMaxRows);
+    TEST_CASE(testGetQueryTimeout);
+    TEST_CASE(testSetFetchSize02);
+    TEST_CASE(testSetMaxFieldSize01);
+    TEST_CASE(testSetMaxRows01);
+#endif
 
 #ifdef MISSING_METHODS_INCLUDED2STATEMENT
     TEST_CASE(testSetFetchDirection04);
@@ -318,6 +325,7 @@ public:
   void testExecuteUpdate03();
 
 
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
   /*
    * @testName:         testGetFetchSize
    * @assertion:        The Statement object provides methods for executing SQL
@@ -391,6 +399,7 @@ public:
    */
   /* throws std::exception * */
   void testGetMaxRows();
+#endif
 
 
   /*
@@ -482,6 +491,7 @@ public:
   void testGetMoreResults03();
 
 
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
   /*
    * @testName:         testGetQueryTimeout
    * @assertion:        The Statement object provides methods for executing SQL
@@ -505,6 +515,7 @@ public:
    */
   /* throws std::exception * */
   void testGetQueryTimeout();
+#endif
 
 
   /*
@@ -643,10 +654,11 @@ public:
    * @test_Strategy:    Get a Statement object and call getWarnings() method
    *                    should return an SQLWarning object
    */
-
   /* throws std::exception * */
   void testGetWarnings();
 
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
   /*
    * @testName:         testSetFetchSize02
    * @assertion:        A driver must provide support for Statement and
@@ -672,10 +684,11 @@ public:
    *                    getFetchSize() method and it should return a int value
    *                    that is been set
    */
-
   /* throws std::exception * */
-
   void testSetFetchSize02();
+#endif
+
+
   /*
    * @testName:         testSetFetchSize05
    * @assertion:        The Statement object provides methods for executing SQL
@@ -700,10 +713,11 @@ public:
    *                    sql::DbcException
    *
    */
-
   /* throws std::exception * */
-
   void testSetFetchSize05();
+
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
   /*
    * @testName:         testSetMaxFieldSize01
    * @assertion:        The Statement object provides methods for executing SQL
@@ -729,10 +743,11 @@ public:
    *                    an integer value that is been set
    *
    */
-
   /* throws std::exception * */
-
   void testSetMaxFieldSize01();
+#endif
+
+
   /*
    * @testName:         testSetMaxFieldSize02
    * @assertion:        The Statement object provides methods for executing SQL
@@ -758,10 +773,11 @@ public:
    *                    throw a sql::DbcException
    *
    */
-
   /* throws std::exception * */
-
   void testSetMaxFieldSize02();
+
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
   /*
    * @testName:         testSetMaxRows01
    * @assertion:        The Statement object provides methods for executing SQL
@@ -785,10 +801,11 @@ public:
    *                    integer value that is been set
    *
    */
-
   /* throws std::exception * */
-
   void testSetMaxRows01();
+#endif
+
+
   /*
    * @testName:         testSetMaxRows02
    * @assertion:        The Statement object provides methods for executing SQL

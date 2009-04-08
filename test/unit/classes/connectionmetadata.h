@@ -59,7 +59,11 @@ public:
     TEST_CASE(getLimitsAndStuff);
     TEST_CASE(getPrimaryKeys);
     TEST_CASE(getProcedures);
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
     TEST_CASE(getProcedureColumns);
+#endif
+
     TEST_CASE(getProcedureTerm);
     TEST_CASE(getResultSetHoldability);
     TEST_CASE(getSchemaTerm);
@@ -243,6 +247,8 @@ public:
    */
   void getProcedures();
 
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
   /**
    * Test for DatabaseMetaData:getProcedureColumns()
    *
@@ -250,6 +256,8 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getProcedureColumns();
+#endif
+
 
   /**
    * Test for DatabaseMetaData:getProcedureTerm()

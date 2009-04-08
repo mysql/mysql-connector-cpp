@@ -383,6 +383,8 @@ void ConnectionTest::testIsClosed02()
   }
 }
 
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
 /*
  * @testName:         testIsReadOnly
  *
@@ -406,7 +408,6 @@ void ConnectionTest::testIsClosed02()
  *                    It should return a boolean value that is been set
  *
  */
-
 /* throws Exception */
 void ConnectionTest::testIsReadOnly()
 {
@@ -434,6 +435,8 @@ void ConnectionTest::testIsReadOnly()
     FAIL("Call to isReadOnly is Failed!");
   }
 }
+#endif
+
 
 /*
  * @testName:         testNativeSQL

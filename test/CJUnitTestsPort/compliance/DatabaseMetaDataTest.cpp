@@ -2557,6 +2557,8 @@ void DatabaseMetaDataTest::testGetPrimaryKeys()
 
 }
 
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
 /*
  * @testName:         testGetProcedureColumns
  * @assertion:        The DatabaseMetaData provides information about the database.
@@ -2580,7 +2582,6 @@ void DatabaseMetaDataTest::testGetPrimaryKeys()
  *                    It should return a ResultSet object
  *                      Validate the column names and column ordering.
  */
-
 /* throws Exception */
 void DatabaseMetaDataTest::testGetProcedureColumns()
 {
@@ -2623,10 +2624,9 @@ void DatabaseMetaDataTest::testGetProcedureColumns()
       logMsg(
              "getProcedureColumns did not return any column names");
     }
-
-
   }
 }
+#endif
 
 /*
  * @testName:         testGetProcedureTerm
@@ -3452,6 +3452,8 @@ void DatabaseMetaDataTest::testGetUDTs01()
 
 }
 
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
 /*
  * @testName:         testGetURL
  * @assertion:        The DatabaseMetaData provides information about the database.
@@ -3474,11 +3476,9 @@ void DatabaseMetaDataTest::testGetUDTs01()
  *                    It should return a String or null if it cannot be generated
  *
  */
-
 /* throws Exception */
 void DatabaseMetaDataTest::testGetURL()
 {
-
   logMsg("Calling getURL on DatabaseMetaData");
   String sRetValue=dbmd->getURL();
   if (sRetValue.empty()) {
@@ -3487,6 +3487,8 @@ void DatabaseMetaDataTest::testGetURL()
     logMsg(String("getURL method returns:  ") + sRetValue);
   }
 }
+#endif
+
 
 /*
  * @testName:         testGetUserName
@@ -7395,6 +7397,8 @@ void DatabaseMetaDataTest::testSupportsGroupByUnrelated()
   }
 }
 
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
 /*
  * @testName:         testSupportsIntegrityEnhancementFacility
  * @assertion:        The DatabaseMetaData provides information about the database.
@@ -7417,7 +7421,6 @@ void DatabaseMetaDataTest::testSupportsGroupByUnrelated()
  *                    It should return a boolean value; either true or false.
  *
  */
-
 /* throws Exception */
 void DatabaseMetaDataTest::testSupportsIntegrityEnhancementFacility()
 {
@@ -7432,6 +7435,8 @@ void DatabaseMetaDataTest::testSupportsIntegrityEnhancementFacility()
            "supportsIntegrityEnhancementFacility method is not supported");
   }
 }
+#endif
+
 
 /*
  * @testName:         testSupportsLikeEscapeClause
@@ -8008,6 +8013,8 @@ void DatabaseMetaDataTest::testSupportsPositionedUpdate()
   }
 }
 
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
 /*
  * @testName:         testSupportsResultSetConcurrency1
  * @assertion:        The DatabaseMetaData provides information about the database.
@@ -8034,7 +8041,6 @@ void DatabaseMetaDataTest::testSupportsPositionedUpdate()
  *                    It should return a boolean value; either true or false.
  *
  */
-
 /* throws Exception */
 void DatabaseMetaDataTest::testSupportsResultSetConcurrency1()
 {
@@ -8050,9 +8056,8 @@ void DatabaseMetaDataTest::testSupportsResultSetConcurrency1()
     logMsg(
            "supportsResultSetConcurrency(TYPE_FORWARD_ONLY, CONCUR_READ_ONLY) is not supported");
   }
-
-
 }
+
 
 /*
  * @testName:         testSupportsResultSetConcurrency2
@@ -8080,11 +8085,9 @@ void DatabaseMetaDataTest::testSupportsResultSetConcurrency1()
  *                    It should return a boolean value; either true or false.
  *
  */
-
 /* throws Exception */
 void DatabaseMetaDataTest::testSupportsResultSetConcurrency2()
 {
-
   logMsg(
          "Calling DatabaseMetaData.supportsResultSetConcurrency(TYPE_FORWARD_ONLY, CONCUR_UPDATABLE)");
   bool retValue=dbmd->supportsResultSetConcurrency(sql::ResultSet::TYPE_FORWARD_ONLY,
@@ -8096,9 +8099,8 @@ void DatabaseMetaDataTest::testSupportsResultSetConcurrency2()
     logMsg(
            "supportsResultSetConcurrency(TYPE_FORWARD_ONLY, CONCUR_UPDATABLE) is not supported");
   }
-
-
 }
+
 
 /*
  * @testName:         testSupportsResultSetConcurrency3
@@ -8126,11 +8128,9 @@ void DatabaseMetaDataTest::testSupportsResultSetConcurrency2()
  *                    It should return a boolean value; either true or false.
  *
  */
-
 /* throws Exception */
 void DatabaseMetaDataTest::testSupportsResultSetConcurrency3()
 {
-
   logMsg(
          "Calling DatabaseMetaData.supportsResultSetConcurrency(TYPE_SCROLL_INSENSITIVE, CONCUR_READ_ONLY)");
   bool retValue=dbmd->supportsResultSetConcurrency(sql::ResultSet::TYPE_SCROLL_INSENSITIVE,
@@ -8142,9 +8142,8 @@ void DatabaseMetaDataTest::testSupportsResultSetConcurrency3()
     logMsg(
            "supportsResultSetConcurrency(TYPE_SCROLL_INSENSITIVE, CONCUR_READ_ONLY) is not supported");
   }
-
-
 }
+
 
 /*
  * @testName:         testSupportsResultSetConcurrency4
@@ -8172,11 +8171,9 @@ void DatabaseMetaDataTest::testSupportsResultSetConcurrency3()
  *                    It should return a boolean value; either true or false.
  *
  */
-
 /* throws Exception */
 void DatabaseMetaDataTest::testSupportsResultSetConcurrency4()
 {
-
   logMsg(
          "Calling DatabaseMetaData.supportsResultSetConcurrency(TYPE_SCROLL_INSENSITIVE, CONCUR_UPDATABLE)");
   bool retValue=dbmd->supportsResultSetConcurrency(sql::ResultSet::TYPE_SCROLL_INSENSITIVE,
@@ -8188,9 +8185,8 @@ void DatabaseMetaDataTest::testSupportsResultSetConcurrency4()
     logMsg(
            "supportsResultSetConcurrency(TYPE_SCROLL_INSENSITIVE, CONCUR_UPDATABLE) is not supported");
   }
-
-
 }
+
 
 /*
  * @testName:         testSupportsResultSetConcurrency5
@@ -8218,11 +8214,9 @@ void DatabaseMetaDataTest::testSupportsResultSetConcurrency4()
  *                    It should return a boolean value; either true or false.
  *
  */
-
 /* throws Exception */
 void DatabaseMetaDataTest::testSupportsResultSetConcurrency5()
 {
-
   logMsg(
          "Calling DatabaseMetaData.supportsResultSetConcurrency(TYPE_SCROLL_SENSITIVE, CONCUR_READ_ONLY)");
   bool retValue=dbmd->supportsResultSetConcurrency(sql::ResultSet::TYPE_SCROLL_SENSITIVE,
@@ -8234,9 +8228,8 @@ void DatabaseMetaDataTest::testSupportsResultSetConcurrency5()
     logMsg(
            "supportsResultSetConcurrency(TYPE_SCROLL_SENSITIVE, CONCUR_READ_ONLY) is not supported");
   }
-
-
 }
+
 
 /*
  * @testName:         testSupportsResultSetConcurrency6
@@ -8264,11 +8257,9 @@ void DatabaseMetaDataTest::testSupportsResultSetConcurrency5()
  *                    It should return a boolean value; either true or false.
  *
  */
-
 /* throws Exception */
 void DatabaseMetaDataTest::testSupportsResultSetConcurrency6()
 {
-
   logMsg(
          "Calling DatabaseMetaData.supportsResultSetConcurrency(TYPE_SCROLL_SENSITIVE, CONCUR_UPDATABLE)");
   bool retValue=dbmd->supportsResultSetConcurrency(sql::ResultSet::TYPE_SCROLL_SENSITIVE,
@@ -8280,9 +8271,9 @@ void DatabaseMetaDataTest::testSupportsResultSetConcurrency6()
     logMsg(
            "supportsResultSetConcurrency(TYPE_SCROLL_SENSITIVE, CONCUR_UPDATABLE) is not supported");
   }
-
-
 }
+#endif
+
 
 /*
  * @testName:         testSupportsResultSetType1

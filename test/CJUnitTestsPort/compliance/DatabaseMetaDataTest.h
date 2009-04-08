@@ -125,7 +125,7 @@ public:
     TEST_CASE(testGetMaxUserNameLength);
     TEST_CASE(testGetNumericFunctions);
     TEST_CASE(testGetPrimaryKeys);
-    TEST_CASE(testGetProcedureColumns);
+
     TEST_CASE(testGetProcedureTerm);
     TEST_CASE(testGetProcedures);
     TEST_CASE(testGetSQLKeywords);
@@ -141,7 +141,7 @@ public:
     TEST_CASE(testGetTypeInfo);
     TEST_CASE(testGetUDTs);
     TEST_CASE(testGetUDTs01);
-    TEST_CASE(testGetURL);
+
     TEST_CASE(testGetUserName);
     TEST_CASE(testGetVersionColumns);
     TEST_CASE(testInsertsAreDetected1);
@@ -239,7 +239,7 @@ public:
     TEST_CASE(testSupportsGroupBy);
     TEST_CASE(testSupportsGroupByBeyondSelect);
     TEST_CASE(testSupportsGroupByUnrelated);
-    TEST_CASE(testSupportsIntegrityEnhancementFacility);
+
     TEST_CASE(testSupportsLikeEscapeClause);
     TEST_CASE(testSupportsLimitedOuterJoins);
     TEST_CASE(testSupportsMinimumSQLGrammar);
@@ -256,12 +256,7 @@ public:
     TEST_CASE(testSupportsOuterJoins);
     TEST_CASE(testSupportsPositionedDelete);
     TEST_CASE(testSupportsPositionedUpdate);
-    TEST_CASE(testSupportsResultSetConcurrency1);
-    TEST_CASE(testSupportsResultSetConcurrency2);
-    TEST_CASE(testSupportsResultSetConcurrency3);
-    TEST_CASE(testSupportsResultSetConcurrency4);
-    TEST_CASE(testSupportsResultSetConcurrency5);
-    TEST_CASE(testSupportsResultSetConcurrency6);
+
     TEST_CASE(testSupportsResultSetType1);
     TEST_CASE(testSupportsResultSetType2);
     TEST_CASE(testSupportsResultSetType3);
@@ -290,6 +285,18 @@ public:
     TEST_CASE(testUpdatesAreDetected3);
      
     TEST_CASE(testUsesLocalFilePerTable);
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
+    TEST_CASE(testGetProcedureColumns);
+    TEST_CASE(testGetURL);
+    TEST_CASE(testSupportsIntegrityEnhancementFacility);
+    TEST_CASE(testSupportsResultSetConcurrency1);
+    TEST_CASE(testSupportsResultSetConcurrency2);
+    TEST_CASE(testSupportsResultSetConcurrency3);
+    TEST_CASE(testSupportsResultSetConcurrency4);
+    TEST_CASE(testSupportsResultSetConcurrency5);
+    TEST_CASE(testSupportsResultSetConcurrency6);
+#endif
 
     dbmd= NULL;
 
@@ -1845,10 +1852,11 @@ public:
    *                    It should return a ResultSet object.
    *                      Validate the column names and column ordering.
    */
-
   /* throws std::exception * */
-
   void testGetPrimaryKeys();
+
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
   /*
    * @testName:         testGetProcedureColumns
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -1874,8 +1882,10 @@ public:
    */
 
   /* throws std::exception * */
-
   void testGetProcedureColumns();
+#endif
+
+
   /*
    * @testName:         testGetProcedureTerm
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -2254,10 +2264,11 @@ public:
    *                      Validate the column names and column ordering.
    *
    */
-
   /* throws std::exception * */
-
   void testGetUDTs01();
+
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
   /*
    * @testName:         testGetURL
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -2280,10 +2291,10 @@ public:
    *                    It should return a String or null if it cannot be generated
    *
    */
-
   /* throws std::exception * */
-
   void testGetURL();
+#endif
+
   /*
    * @testName:         testGetUserName
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -4835,10 +4846,11 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsGroupByUnrelated();
+
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
   /*
    * @testName:         testSupportsIntegrityEnhancementFacility
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -4861,10 +4873,11 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsIntegrityEnhancementFacility();
+#endif
+
+
   /*
    * @testName:         testSupportsLikeEscapeClause
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -4887,10 +4900,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsLikeEscapeClause();
+
+
   /*
    * @testName:         testSupportsLimitedOuterJoins
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -4914,10 +4927,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsLimitedOuterJoins();
+
+
   /*
    * @testName:         testSupportsMinimumSQLGrammar
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -4940,10 +4953,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsMinimumSQLGrammar();
+
+
   /*
    * @testName:         testSupportsMixedCaseIdentifiers
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -4968,10 +4981,10 @@ public:
    *                    It should return a boolean value
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsMixedCaseIdentifiers();
+
+
   /*
    * @testName:         testSupportsMixedCaseQuotedIdentifiers
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -4995,10 +5008,10 @@ public:
    *                    It should return a boolean value
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsMixedCaseQuotedIdentifiers();
+
+
   /*
    * @testName:         testSupportsMultipleResultSets
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5021,10 +5034,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsMultipleResultSets();
+
+
   /*
    * @testName:         testSupportsMultipleTransactions
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5047,10 +5060,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsMultipleTransactions();
+
+
   /*
    * @testName:         testSupportsNonNullableColumns
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5073,10 +5086,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsNonNullableColumns();
+
+
   /*
    * @testName:         testSupportsOpenCursorsAcrossCommit
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5098,10 +5111,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsOpenCursorsAcrossCommit();
+
+
   /*
    * @testName:         testSupportsOpenCursorsAcrossRollback
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5123,10 +5136,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsOpenCursorsAcrossRollback();
+
+
   /*
    * @testName:         testSupportsOpenStatementsAcrossCommit
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5149,10 +5162,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsOpenStatementsAcrossCommit();
+
+
   /*
    * @testName:         testSupportsOpenStatementsAcrossRollback
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5175,10 +5188,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsOpenStatementsAcrossRollback();
+
+
   /*
    * @testName:         testSupportsOrderByUnrelated
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5201,10 +5214,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsOrderByUnrelated();
+
+
   /*
    * @testName:         testSupportsOuterJoins
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5226,10 +5239,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsOuterJoins();
+
+
   /*
    * @testName:         testSupportsPositionedDelete
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5251,10 +5264,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsPositionedDelete();
+
+
   /*
    * @testName:         testSupportsPositionedUpdate
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5276,10 +5289,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsPositionedUpdate();
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
   /*
    * @testName:         testSupportsResultSetConcurrency1
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5306,10 +5319,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsResultSetConcurrency1();
+
+
   /*
    * @testName:         testSupportsResultSetConcurrency2
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5336,10 +5349,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsResultSetConcurrency2();
+
+
   /*
    * @testName:         testSupportsResultSetConcurrency3
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5366,10 +5379,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsResultSetConcurrency3();
+
+
   /*
    * @testName:         testSupportsResultSetConcurrency4
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5396,10 +5409,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsResultSetConcurrency4();
+
+
   /*
    * @testName:         testSupportsResultSetConcurrency5
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5426,10 +5439,10 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsResultSetConcurrency5();
+
+
   /*
    * @testName:         testSupportsResultSetConcurrency6
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5456,10 +5469,11 @@ public:
    *                    It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsResultSetConcurrency6();
+#endif
+
+
   /*
    * @testName:         testSupportsResultSetType1
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5483,10 +5497,10 @@ public:
    *                    on that object.It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsResultSetType1();
+
+
   /*
    * @testName:         testSupportsResultSetType2
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5510,10 +5524,10 @@ public:
    *                    on that object.It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsResultSetType2();
+
+
   /*
    * @testName:         testSupportsResultSetType3
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5537,10 +5551,10 @@ public:
    *                    on that object.It should return a boolean value; either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsResultSetType3();
+
+
   /*
    * @testName:         testSupportsSchemasInDataManipulation
    * @assertion:        The DatabaseMetaData provides information about the database.
@@ -5562,10 +5576,10 @@ public:
    *                    It should return a boolean value either true or false.
    *
    */
-
   /* throws std::exception * */
-
   void testSupportsSchemasInDataManipulation();
+
+
   /*
    * @testName:         testSupportsSchemasInIndexDefinitions
    * @assertion:        The DatabaseMetaData provides information about the database.

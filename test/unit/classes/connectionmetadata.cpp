@@ -1443,6 +1443,8 @@ void connectionmetadata::getProcedures()
   }
 }
 
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
 void connectionmetadata::getProcedureColumns()
 {
   logMsg("connectionmetadata::getProcedureColumns() - MySQL_ConnectionMetaData::getProcedureColumns()");
@@ -1493,6 +1495,7 @@ void connectionmetadata::getProcedureColumns()
     fail(e.what(), __FILE__, __LINE__);
   }
 }
+#endif
 
 void connectionmetadata::getCatalogs()
 {

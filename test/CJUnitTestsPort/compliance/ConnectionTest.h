@@ -67,7 +67,11 @@ public:
     TEST_CASE(testGetTransactionIsolation);
     TEST_CASE(testIsClosed01);
     TEST_CASE(testIsClosed02);
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
     TEST_CASE(testIsReadOnly);
+#endif
+
     TEST_CASE(testNativeSQL);   
   }
 
@@ -206,10 +210,10 @@ public:
    *
    *
    */
-
   /* throws std::runtime_error * */
-
   void testGetTransactionIsolation();
+
+
   /*
    * @testName:         testIsClosed01
    *
@@ -233,10 +237,10 @@ public:
    *                    equal to false
    *
    */
-
   /* throws std::runtime_error * */
-
   void testIsClosed01();
+
+
   /*
    * @testName:         testIsClosed02
    *
@@ -261,10 +265,11 @@ public:
    *                    equal to true
    *
    */
-
   /* throws std::runtime_error * */
-
   void testIsClosed02();
+
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
   /*
    * @testName:         testIsReadOnly
    *
@@ -288,10 +293,10 @@ public:
    *                    It should return a boolean value that is been set
    *
    */
-
   /* throws std::runtime_error * */
-
   void testIsReadOnly();
+#endif
+
   /*
    * @testName:         testNativeSQL
    *
@@ -316,11 +321,10 @@ public:
    *                    else it returns the actual SQL statement as a String.This is checked
    *                    by using instanceof method
    */
-
   /* throws std::runtime_error * */
-
   void testNativeSQL();
 };
+
 
 REGISTER_FIXTURE(ConnectionTest);
 }

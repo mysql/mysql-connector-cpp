@@ -501,6 +501,9 @@ void StatementTest::testGetFetchDirection()
   }
 }
 #endif
+
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
 /*
  * @testName:         testGetFetchSize
  * @assertion:        The Statement object provides methods for executing SQL
@@ -522,7 +525,6 @@ void StatementTest::testGetFetchDirection()
  *            It should return a int value
  *
  */
-
 /* throws Exception */
 void StatementTest::testGetFetchSize()
 {
@@ -538,6 +540,7 @@ void StatementTest::testGetFetchSize()
     FAIL("Call to getFetchSize is Failed!");
   }
 }
+
 
 /*
  * @testName:         testGetMaxFieldSize
@@ -560,7 +563,6 @@ void StatementTest::testGetFetchSize()
  *            It should return a int value
  *
  */
-
 /* throws Exception */
 void StatementTest::testGetMaxFieldSize()
 {
@@ -576,6 +578,7 @@ void StatementTest::testGetMaxFieldSize()
     FAIL("Call to getMaxFieldSize is Failed!");
   }
 }
+
 
 /*
  * @testName:         testGetMaxRows
@@ -598,7 +601,6 @@ void StatementTest::testGetMaxFieldSize()
  *            It should return a int value
  *
  */
-
 /* throws Exception */
 void StatementTest::testGetMaxRows()
 {
@@ -614,6 +616,8 @@ void StatementTest::testGetMaxRows()
     FAIL("Call to getMaxRows is Failed!");
   }
 }
+#endif
+
 
 /*
  * @testName:         testGetMoreResults01
@@ -758,6 +762,8 @@ void StatementTest::testGetMoreResults03()
   }
 }
 
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
 /*
  * @testName:         testGetQueryTimeout
  * @assertion:        The Statement object provides methods for executing SQL
@@ -779,7 +785,6 @@ void StatementTest::testGetMoreResults03()
  *            It should return a int value
  *
  */
-
 /* throws Exception */
 void StatementTest::testGetQueryTimeout()
 {
@@ -796,6 +801,8 @@ void StatementTest::testGetQueryTimeout()
     FAIL("Call to getQueryTimeout is Failed!");
   }
 }
+#endif
+
 
 /*
  * @testName:         testGetResultSet01
@@ -1261,6 +1268,8 @@ void StatementTest::testGetWarnings()
   }
 }
 
+
+#ifdef MISSING_METHODS_INCLUDED2STATEMENT
 /*
  * @testName:         testSetFetchDirection04
  * @assertion:        A driver must provide support for Statement and
@@ -1283,10 +1292,7 @@ void StatementTest::testGetWarnings()
  * @test_Strategy:    Get a Statement object and call the setFetchDirection(int direction)
  *            method with an invalid value and it should throw an SQLException
  */
-
 /* throws Exception */
-#ifdef MISSING_METHODS_INCLUDED2STATEMENT
-
 void StatementTest::testSetFetchDirection04()
 {
   bool sqlExceptFlag=false;
@@ -1312,6 +1318,7 @@ void StatementTest::testSetFetchDirection04()
 #endif
 
 
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
 /*
  * @testName:         testSetFetchSize02
  * @assertion:        A driver must provide support for Statement and
@@ -1337,7 +1344,6 @@ void StatementTest::testSetFetchDirection04()
  *            getFetchSize() method and it should return a int value
  *            that is been set
  */
-
 /* throws Exception */
 void StatementTest::testSetFetchSize02()
 {
@@ -1364,6 +1370,8 @@ void StatementTest::testSetFetchSize02()
     FAIL("Call to setFetchSize is Failed");
   }
 }
+#endif
+
 
 /*
  * @testName:         testSetFetchSize05
@@ -1389,7 +1397,6 @@ void StatementTest::testSetFetchSize02()
  *            SQLException
  *
  */
-
 /* throws Exception */
 void StatementTest::testSetFetchSize05()
 {
@@ -1421,6 +1428,8 @@ void StatementTest::testSetFetchSize05()
   }
 }
 
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
 /*
  * @testName:         testSetMaxFieldSize01
  * @assertion:        The Statement object provides methods for executing SQL
@@ -1446,7 +1455,6 @@ void StatementTest::testSetFetchSize05()
  *            an integer value that is been set
  *
  */
-
 /* throws Exception */
 void StatementTest::testSetMaxFieldSize01()
 {
@@ -1474,6 +1482,8 @@ void StatementTest::testSetMaxFieldSize01()
     FAIL("Call to setMaxFieldSize is Failed");
   }
 }
+#endif
+
 
 /*
  * @testName:         testSetMaxFieldSize02
@@ -1531,6 +1541,8 @@ void StatementTest::testSetMaxFieldSize02()
   }
 }
 
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
 /*
  * @testName:         testSetMaxRows01
  * @assertion:        The Statement object provides methods for executing SQL
@@ -1554,7 +1566,6 @@ void StatementTest::testSetMaxFieldSize02()
  *            integer value that is been set
  *
  */
-
 /* throws Exception */
 void StatementTest::testSetMaxRows01()
 {
@@ -1580,6 +1591,8 @@ void StatementTest::testSetMaxRows01()
     FAIL("Call to setMaxRows is Failed");
   }
 }
+#endif
+
 
 /*
  * @testName:         testSetMaxRows02

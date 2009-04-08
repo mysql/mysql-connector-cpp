@@ -63,7 +63,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("TINYINT", "TINYINT NOT NULL DEFAULT -1", sql::DataType::TINYINT, "12", true, 3, 0, false, "-1", 0, "NO", false, "12"));
   columns.push_back(columndefinition("TINYINT", "TINYINT(1)", sql::DataType::TINYINT, "3", true, 3, 0, true, "", 0, "NO", false, "3"));
   columns.push_back(columndefinition("TINYINT UNSIGNED", "TINYINT UNSIGNED", sql::DataType::TINYINT, "255", false, 3, 0, true, "", 0, "NO", false, "255"));
-  columns.push_back(columndefinition("TINYINT UNSIGNED ZEROFILL", "TINYINT ZEROFILL", sql::DataType::TINYINT, "-1", false, 3, 0, true, "", 0, "NO", false));
+  columns.push_back(columndefinition("TINYINT UNSIGNED ZEROFILL", "TINYINT ZEROFILL", sql::DataType::TINYINT, "1", false, 3, 0, true, "", 0, "NO", false));
   // Alias of BOOLEAN
   columns.push_back(columndefinition("TINYINT", "BOOLEAN", sql::DataType::TINYINT, "1", true, 3, 0, true, "", 0, "NO", false, "1"));
 
