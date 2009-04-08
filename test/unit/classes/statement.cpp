@@ -384,6 +384,15 @@ void statement::unbufferedFetch()
       {
       }
 
+      logMsg("... simple forward reading again");
+      res.reset(stmt->executeQuery("SELECT id FROM test ORDER BY id ASC"));
+      id=0;
+      while (res->next())
+      {
+        id++;
+        ASSERT_EQUALS(res->getInt(1), res->getInt("id"));
+        ASSERT_EQUALS(id, res->getInt("id"));
+      }
       stmt->execute("DROP TABLE IF EXISTS test");
 
     }
