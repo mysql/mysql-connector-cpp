@@ -710,7 +710,7 @@ MySQL_ArtResultSet::getString(const std::string& columnLabel) const
 sql::ResultSet::enum_type
 MySQL_ArtResultSet::getType() const
 {
-	CPP_ENTER("MySQL_ArtResultSet::getWarnings");
+	CPP_ENTER("MySQL_ArtResultSet::getType");
 	checkValid();
 	return sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
 }
@@ -1009,8 +1009,8 @@ MySQL_ArtResultSet::wasNull() const
 }
 /* }}} */
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 
 /*

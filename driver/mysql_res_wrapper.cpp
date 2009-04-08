@@ -68,8 +68,8 @@ MYSQL_RES * MYSQL_RES_Wrapper::get() const
 	return result;
 }
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 /*
  * Local variables:

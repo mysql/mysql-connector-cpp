@@ -95,8 +95,8 @@ const std::string & MySQL_Driver::getName()
 	return name;
 }
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 /*
  * Local variables:

@@ -996,7 +996,7 @@ MySQL_Prepared_ResultSet::getString(const std::string& columnLabel) const
 sql::ResultSet::enum_type
 MySQL_Prepared_ResultSet::getType() const
 {
-	CPP_ENTER("MySQL_ResultSet::getWarnings");
+	CPP_ENTER("MySQL_ResultSet::getType");
 	checkValid();
 	return resultset_type;
 }
@@ -1348,8 +1348,8 @@ MySQL_Prepared_ResultSet::seek()
 /* }}} */
 
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 /*
  * Local variables:

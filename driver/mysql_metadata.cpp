@@ -5030,8 +5030,8 @@ MySQL_ConnectionMetaData::matchTable(const std::string & sPattern, const std::st
 }
 
 
-};/* namespace mysql */
-};/* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 /*
  * Local variables:

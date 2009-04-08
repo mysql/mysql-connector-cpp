@@ -116,8 +116,8 @@ MySQL_ParameterMetaData::isSigned(unsigned int /* paramNo */)
 }
 /* }}} */
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 /*
  * Local variables:
  * tab-width: 4

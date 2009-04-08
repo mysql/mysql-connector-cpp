@@ -415,8 +415,8 @@ MySQL_ResultSetMetaData::isZerofill(unsigned int columnIndex)
 /* }}} */
 
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 /*
  * Local variables:

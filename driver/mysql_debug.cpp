@@ -172,8 +172,8 @@ MySQL_DebugLogger::log_va(const char * const type, const char * const format, ..
 }
 /* }}} */
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 /*
  * Local variables:

@@ -2221,9 +2221,9 @@ long double strtold(const char *nptr, char **endptr)
 }
 
 
-}; /* namespace util */
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace util */
+} /* namespace mysql */
+} /* namespace sql */
 
 /*
  * Local variables:

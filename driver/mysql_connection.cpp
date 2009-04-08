@@ -981,8 +981,8 @@ MySQL_Connection::setSessionVariable(const std::string & varname, const std::str
 /* }}} */
 
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 /*
  * Local variables:
  * tab-width: 4

@@ -1068,8 +1068,8 @@ MySQL_Prepared_Statement::closeIntern()
 }
 /* }}} */
 
-};/* namespace mysql */
-};/* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 /*
  * Local variables:

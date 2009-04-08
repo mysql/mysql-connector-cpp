@@ -450,8 +450,8 @@ MySQL_Statement::checkClosed()
 }
 /* }}} */
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 /*
  * Local variables:
