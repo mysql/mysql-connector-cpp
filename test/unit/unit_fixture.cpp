@@ -513,6 +513,8 @@ void unit_fixture::checkResultSetScrolling(ResultSet &res_ref)
   ASSERT(!res_ref->previous());
   ASSERT(res_ref->next());
   ASSERT_EQUALS(1, (int) res_ref->getRow());
+  res_ref->absolute(1);
+  ASSERT_EQUALS(1, (int) res_ref->getRow());
   ASSERT(!res_ref->previous());
 
   res_ref->afterLast();
