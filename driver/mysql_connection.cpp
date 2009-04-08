@@ -248,9 +248,9 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 				throw sql::InvalidArgumentException(msg.str());
 			} while (0);
 			intern->defaultStatementResultType = static_cast< sql::ResultSet::enum_type >(it->second.lval);
-#if WE_SUPPORT_USE_RESULT_WITH_PS
 		/* The connector is not ready for unbuffered as we need to refetch */
 		} else if (!it->first.compare("defaultPreparedStatementResultType")) {
+#if WE_SUPPORT_USE_RESULT_WITH_PS
 			do {
 				if (static_cast< int >(sql::ResultSet::TYPE_FORWARD_ONLY) == it->second.lval) break;
 				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_INSENSITIVE) == it->second.lval) break;
@@ -372,6 +372,10 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 			} else if (!it_tmp->first.compare("OPT_NAMED_PIPE")) {
 				mysql_options(intern->mysql, MYSQL_OPT_NAMED_PIPE, NULL);
 			}
+		}
+		{
+			my_bool tmp_bool = 1;
+			mysql_options(intern->mysql, MYSQL_SECURE_AUTH, (const char *) &tmp_bool);
 		}
 		if (ssl_used) {
 			/* According to the docs, always returns 0 */
