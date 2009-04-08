@@ -131,7 +131,7 @@ public:
 
 	virtual void setSchema(const std::string& catalog) = 0;
 
-	virtual void setClientOption(const std::string & optionName, const void * optionValue) = 0;
+	virtual sql::Connection * setClientOption(const std::string & optionName, const void * optionValue) = 0;
 
 	virtual void setHoldability(int holdability) = 0;
 

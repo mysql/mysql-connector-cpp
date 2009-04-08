@@ -265,6 +265,9 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 				throw sql::InvalidArgumentException(msg.str());
 			} while (0);
 			intern->defaultPreparedStatementResultType = static_cast< sql::ResultSet::enum_type >(it->second.lval);
+#else
+			throw SQLException("defaultPreparedStatementResultType parameter still not implemented");	
+
 #endif
 		} else if (!it->first.compare("metadataUseInfoSchema")) {
 			intern->metadata_use_info_schema = it->second.bval;
@@ -775,7 +778,7 @@ MySQL_Connection::setSchema(const std::string& catalog)
 
 
 /* {{{ MySQL_Connection::setClientOption() -I- */
-void
+sql::Connection *
 MySQL_Connection::setClientOption(const std::string & optionName, const void * optionValue)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setClientOption");
@@ -789,9 +792,31 @@ MySQL_Connection::setClientOption(const std::string & optionName, const void * o
 			intern->logger->get()->disableTracing();
 			CPP_INFO("Tracing disabled");
 		}
-	} else if (!optionName.compare("metadataUseInfoSchema")) {
-		intern->metadata_use_info_schema = *(static_cast<const bool *>(optionValue));
+	} else if (!optionName.compare("defaultStatementResultType")) {
+		int int_value =  *static_cast<const int *>(optionValue);
+		do {
+			if (static_cast< int >(sql::ResultSet::TYPE_FORWARD_ONLY) == int_value) break;
+			if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_INSENSITIVE) == int_value) break;
+			if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_SENSITIVE) == int_value) {
+				std::ostringstream msg;
+				msg << "Invalid value " << int_value <<
+					" for option defaultStatementResultType. TYPE_SCROLL_SENSITIVE is not supported";
+				throw sql::InvalidArgumentException(msg.str());			
+			}
+			std::ostringstream msg;
+			msg << "Invalid value (" << int_value << " for option defaultStatementResultType";
+			throw sql::InvalidArgumentException(msg.str());
+		} while (0);
+		intern->defaultStatementResultType = static_cast< sql::ResultSet::enum_type >(int_value);
+	} else if (!optionName.compare("defaultPreparedStatementResultType")) {
+#if WE_SUPPORT_USE_RESULT_WITH_PS
+		/* The connector is not ready for unbuffered as we need to refetch */
+		intern->defaultPreparedStatementResultType = *(static_cast<const bool *>(optionValue));
+#else
+		throw MethodNotImplementedException("MySQL_Prepared_Statement::setResultSetType");	
+#endif
 	}
+	return this;
 }
 /* }}} */
 

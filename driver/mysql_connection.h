@@ -108,7 +108,7 @@ public:
 
 	void setSchema(const std::string& catalog);
 
-	void setClientOption(const std::string & optionName, const void * optionValue);
+	sql::Connection * setClientOption(const std::string & optionName, const void * optionValue);
 
 	void setHoldability(int holdability);
 
