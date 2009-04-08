@@ -168,7 +168,6 @@ MySQL_Connection::~MySQL_Connection()
   - CLIENT_INTERACTIVE
   - CLIENT_LOCAL_FILES
   - CLIENT_MULTI_RESULTS
-  - CLIENT_MULTI_RESULTS
   - CLIENT_MULTI_STATEMENTS
   - CLIENT_NO_SCHEMA
   - CLIENT_COMPRESS
@@ -202,7 +201,8 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 
 	const char *sslKey = NULL, *sslCert = NULL, *sslCA = NULL, *sslCAPath = NULL, *sslCipher = NULL;
 	bool ssl_used = false, schema_used = false;
-	int flags = 0;
+	int flags = CLIENT_MULTI_RESULTS;
+
 	std::map<std::string, sql::ConnectPropertyVal>::const_iterator it = properties.begin();
 	for (; it != properties.end(); ++it) {
 		if (!it->first.compare("hostName")) {
@@ -301,10 +301,6 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 			if (it->second.bval && (flags & CLIENT_LOCAL_FILES)) {
 				flags |= CLIENT_LOCAL_FILES;
 			}
-		} else if (!it->first.compare("CLIENT_MULTI_RESULTS")) {
-			if (it->second.bval && (flags & CLIENT_MULTI_RESULTS)) {
-				flags |= CLIENT_MULTI_RESULTS;
-			}
 		} else if (!it->first.compare("CLIENT_MULTI_STATEMENTS")) {
 			if (it->second.bval && (flags & CLIENT_MULTI_STATEMENTS)) {
 				flags |= CLIENT_MULTI_STATEMENTS;
@@ -315,7 +311,6 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 			}
 		}
 	}
-
 	if (!(intern->mysql = mysql_init(NULL))) {
 		throw sql::SQLException("Insufficient memory: cannot create MySQL handle using mysql_init()", "HY000", 1000);
 	}
@@ -408,7 +403,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 		intern->mysql = NULL;
 		throw e;
 	}
-	mysql_set_server_option(intern->mysql, MYSQL_OPTION_MULTI_STATEMENTS_OFF);
+	mysql_set_server_option(intern->mysql, MYSQL_OPTION_MULTI_STATEMENTS_ON);
 	setAutoCommit(true);
 	setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
 	// Different Values means we have to set different result set encoding

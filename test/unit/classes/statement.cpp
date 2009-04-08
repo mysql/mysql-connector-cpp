@@ -234,12 +234,16 @@ void statement::callSP()
 
     stmt->execute("DROP PROCEDURE IF EXISTS p");
     ASSERT(!stmt->execute("CREATE PROCEDURE p() READS SQL DATA BEGIN SELECT id, label FROM test ORDER BY id ASC; END;"));
-    res.reset(stmt->executeQuery("CALL p()"));
+    ASSERT(stmt->execute("CALL p()"));
     msg.str("");
-    while (res->next())
+    do
     {
-      msg << res->getInt("id") << res->getString(2);
-    }
+      res.reset(stmt->getResultSet());
+      while (res->next())
+      {
+        msg << res->getInt("id") << res->getString(2);
+      }
+    } while (stmt->getMoreResults());
     ASSERT_EQUALS("1a2b3c", msg.str());
 
     stmt->execute("DROP PROCEDURE IF EXISTS p");
@@ -249,12 +253,11 @@ void statement::callSP()
     do
     {
       res.reset(stmt->getResultSet());
-    while (res->next())
-    {
-      msg << res->getInt("id") << res->getString(2);
-    }
-    }
-    while (stmt->getMoreResults());
+      while (res->next())
+      {
+        msg << res->getInt("id") << res->getString(2);
+      }
+    } while (stmt->getMoreResults());
     ASSERT_EQUALS("1a2b3c3c2b1a", msg.str());
 
   }
