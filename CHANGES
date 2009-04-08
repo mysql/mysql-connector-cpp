@@ -37,6 +37,9 @@ Beta2  1.0.5 - 2009-04-xx
   path to the pipe. Shared memory connections are currently not supported.
   (Andrey)
 
+- Fixed a bug in MySQL_Connection::setSessionVariable() which led to exception
+  being thrown. (Andrey)
+
 
 Beta   1.0.4 - 2009-03-xx
 

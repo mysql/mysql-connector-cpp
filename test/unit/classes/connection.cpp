@@ -90,13 +90,33 @@ void connection::getSessionVariable()
     my_con->setSessionVariable("sql_mode", value);
     ASSERT_EQUALS(value, my_con->getSessionVariable("sql_mode"));
 
-    value = my_con->getSessionVariable("sql_warnings");
-    
-    my_con->setSessionVariable("sql_warnings", "0");
-    ASSERT_EQUALS("0", my_con->getSessionVariable("sql_warnings"));
-    my_con->setSessionVariable("sql_warnings", "1");
-    ASSERT_EQUALS("1", my_con->getSessionVariable("sql_warnings"));
-    my_con->setSessionVariable("sql_warnings", warning);
+    value=my_con->getSessionVariable("sql_warnings");
+
+    std::string on("ON");
+    std::string off("OFF");
+    try
+    {
+      my_con->setSessionVariable("sql_warnings", "0");
+      on="1";
+      off="0";
+    }
+    catch (sql::SQLException &)
+    {
+    }
+
+    try
+    {
+      my_con->setSessionVariable("sql_warnings", on);
+      ASSERT_EQUALS(on, my_con->getSessionVariable("sql_warnings"));
+      my_con->setSessionVariable("sql_warnings", off);
+      ASSERT_EQUALS(off, my_con->getSessionVariable("sql_warnings"));
+    }
+    catch (sql::SQLException &)
+    {
+    }
+
+
+    my_con->setSessionVariable("sql_warnings", value);
     ASSERT_EQUALS(value, my_con->getSessionVariable("sql_warnings"));
   }
   catch (sql::SQLException &e)
@@ -213,7 +233,7 @@ void connection::connectUsingMap()
       tmp.str.len=passwd.length();
       connection_properties[std::string("password")]=tmp;
     }
-    
+
     {
       sql::ConnectPropertyVal tmp;
       tmp.bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
