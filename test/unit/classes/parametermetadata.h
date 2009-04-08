@@ -34,7 +34,9 @@ public:
   {
     TEST_CASE(getMeta);
     TEST_CASE(getParameterCount);
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
     TEST_CASE(notImplemented);
+#endif
   }
 
   /**
@@ -47,10 +49,12 @@ public:
    */
   void getParameterCount();
 
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
   /**
    * Tests of all "not implemented" methods to track API changes
    */
   void notImplemented();
+#endif
 
 };
 
