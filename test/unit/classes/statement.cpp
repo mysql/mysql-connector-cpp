@@ -155,7 +155,7 @@ void statement::callSP()
       tmp.bval=true;
       connection_properties[std::string("CLIENT_MULTI_RESULTS")]=tmp;
     }
-     con.reset(driver->connect(connection_properties));
+    con.reset(driver->connect(connection_properties));
   }
   catch (sql::SQLException &e)
   {
@@ -179,7 +179,7 @@ void statement::callSP()
       return;
     }
 
-    sql::DatabaseMetaData * dbmeta = con->getMetaData();
+    sql::DatabaseMetaData * dbmeta=con->getMetaData();
 
     ASSERT(!stmt->execute("CREATE PROCEDURE p(OUT ver_param VARCHAR(25)) BEGIN SELECT VERSION() INTO ver_param; END;"));
     ASSERT(!stmt->execute("CALL p(@version)"));
@@ -259,11 +259,72 @@ void statement::selectZero()
 void statement::unbufferedFetch()
 {
   logMsg("statement::unbufferedFetch() - MySQL_Resultset::*");
-  
+
+  std::map<std::string, sql::ConnectPropertyVal> connection_properties;
+  int id=0;
+
   try
   {
-    
-    //stmt->execute("DROP TABLE IF EXISTS test");
+
+    /*
+     This is the first way to do an unbuffered fetch...
+     */
+    {
+      sql::ConnectPropertyVal tmp;
+      /* url comes from the unit testing framework */
+      tmp.str.val=url.c_str();
+      tmp.str.len=url.length();
+      connection_properties[std::string("hostName")]=tmp;
+    }
+
+    {
+      sql::ConnectPropertyVal tmp;
+      /* user comes from the unit testing framework */
+      tmp.str.val=user.c_str();
+      tmp.str.len=user.length();
+      connection_properties[std::string("userName")]=tmp;
+    }
+
+    {
+      sql::ConnectPropertyVal tmp;
+      tmp.str.val=passwd.c_str();
+      tmp.str.len=passwd.length();
+      connection_properties[std::string("password")]=tmp;
+    }
+
+    connection_properties.erase("defaultStatementResultType");
+    {
+      logMsg("... testing defaultStatementResultType");
+      sql::ConnectPropertyVal tmp;
+      tmp.lval=sql::ResultSet::TYPE_FORWARD_ONLY;
+      connection_properties[std::string("defaultStatementResultType")]=tmp;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &e)
+      {
+        fail(e.what(), __FILE__, __LINE__);
+      }
+      stmt.reset(con->createStatement());
+      ASSERT_EQUALS(stmt->getResultSetType(), sql::ResultSet::TYPE_FORWARD_ONLY);
+      stmt->execute("DROP TABLE IF EXISTS test");
+      stmt->execute("CREATE TABLE test(id INT)");
+      stmt->execute("INSERT INTO test(id) VALUES (1), (2), (3), (4), (5)");
+
+      res.reset(stmt->executeQuery("SELECT id FROM test ORDER BY id ASC"));
+      id=0;
+      while (res->next())
+      {
+        id++;
+        ASSERT_EQUALS(res->getInt(1), res->getInt("id"));
+        ASSERT_EQUALS(id, res->getInt("id"));
+      }
+
+      stmt->execute("DROP TABLE IF EXISTS test");
+    }
+    connection_properties.erase("defaultStatementResultType");
   }
   catch (sql::SQLException &e)
   {
