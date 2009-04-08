@@ -1370,7 +1370,6 @@ void StatementTest::testSetFetchSize02()
     FAIL("Call to setFetchSize is Failed");
   }
 }
-#endif
 
 
 /*
@@ -1429,7 +1428,6 @@ void StatementTest::testSetFetchSize05()
 }
 
 
-#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
 /*
  * @testName:         testSetMaxFieldSize01
  * @assertion:        The Statement object provides methods for executing SQL
@@ -1482,7 +1480,6 @@ void StatementTest::testSetMaxFieldSize01()
     FAIL("Call to setMaxFieldSize is Failed");
   }
 }
-#endif
 
 
 /*
@@ -1542,7 +1539,6 @@ void StatementTest::testSetMaxFieldSize02()
 }
 
 
-#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
 /*
  * @testName:         testSetMaxRows01
  * @assertion:        The Statement object provides methods for executing SQL
@@ -1591,7 +1587,6 @@ void StatementTest::testSetMaxRows01()
     FAIL("Call to setMaxRows is Failed");
   }
 }
-#endif
 
 
 /*
@@ -1647,6 +1642,7 @@ void StatementTest::testSetMaxRows02()
   }
 }
 
+
 /*
  * @testName:         testSetQueryTimeout02
  * @assertion:        The Statement object provides methods for executing SQL
@@ -1701,6 +1697,7 @@ void StatementTest::testSetQueryTimeout02()
     FAIL("Call to setQueryTimeout is Failed");
   }
 }
+#endif
 
 }
 }
