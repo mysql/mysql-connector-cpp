@@ -1095,7 +1095,7 @@ void connection::connectUsingMap()
     }
     connection_properties.erase("defaultStatementResultType");
 
-
+#ifdef CPPWIN_WIN32
     /* 21) OPT_NAMED_PIPE - handled but ignored! */
     connection_properties.erase("OPT_NAMED_PIPE");
     {
@@ -1116,6 +1116,7 @@ void connection::connectUsingMap()
       }
     }
     connection_properties.erase("OPT_NAMED_PIPE");
+#endif
 
     /* 22) OPT_CHARSET_NAME = MYSQL_SET_CHARSET_NAME */
     connection_properties.erase("OPT_CHARSET_NAME");

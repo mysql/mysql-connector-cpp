@@ -369,8 +369,10 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 			defaultCharset = it_tmp->second.str.val;
 		} else if (!it_tmp->first.compare("OPT_REPORT_DATA_TRUNCATION")) {
 			mysql_options(intern->mysql, MYSQL_REPORT_DATA_TRUNCATION, (const char *) &it_tmp->second.bval);
+#if defined(_WIN32) || defined(_WIN64)
 		} else if (!it_tmp->first.compare("OPT_NAMED_PIPE")) {
 			mysql_options(intern->mysql, MYSQL_OPT_NAMED_PIPE, NULL);
+#endif
 		}
 	}
 	{
@@ -532,6 +534,8 @@ MySQL_Connection::getClientOption(const std::string & optionName, void * optionV
 		*(static_cast<int *>(optionValue)) = intern->defaultStatementResultType;	
 	} else if (!optionName.compare("defaultPreparedStatementResultType")) {
 		*(static_cast<int *>(optionValue)) = intern->defaultPreparedStatementResultType;	
+	} else if (!optionName.compare("characterSetResults")) {
+		*(static_cast<std::string **>(optionValue)) = new std::string(getSessionVariable("characterSetResults"));
 	}
 }
 /* }}} */
@@ -793,6 +797,10 @@ MySQL_Connection::setClientOption(const std::string & optionName, const void * o
 			intern->logger->get()->disableTracing();
 			CPP_INFO("Tracing disabled");
 		}
+	} else if (!optionName.compare("characterSetResults")) {
+		setSessionVariable("character_set_results", optionValue? static_cast<const char *>(optionValue) : std::string("NULL"));
+	} else if (!optionName.compare("metadataUseInfoSchema")) {
+		intern->metadata_use_info_schema = *(static_cast<const bool *>(optionValue));
 	} else if (!optionName.compare("defaultStatementResultType")) {
 		int int_value =  *static_cast<const int *>(optionValue);
 		do {
