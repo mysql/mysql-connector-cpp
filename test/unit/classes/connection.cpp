@@ -81,7 +81,7 @@ void connection::getSessionVariable()
   {
     std::string value("");
     std::auto_ptr< sql::mysql::MySQL_Connection > my_con(dynamic_cast<sql::mysql::MySQL_Connection*> (driver->connect(url, user, passwd)));
-    value = my_con->getSessionVariable("sql_mode");
+    value=my_con->getSessionVariable("sql_mode");
 
     my_con->setSessionVariable("sql_mode", "ANSI");
     ASSERT_EQUALS(my_con->getSessionVariable("sql_mode"), "ANSI");
@@ -202,6 +202,12 @@ void connection::connectUsingMap()
       tmp.str.val=passwd.c_str();
       tmp.str.len=passwd.length();
       connection_properties[std::string("password")]=tmp;
+    }
+    
+    {
+      sql::ConnectPropertyVal tmp;
+      tmp.bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
+      connection_properties[std::string("metadataUseInfoSchema")]=tmp;
     }
 
     created_objects.clear();
