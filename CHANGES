@@ -27,6 +27,9 @@ Beta2  1.0.5 - 2009-04-xx
   implemented because currently PreparedStatement can't do refetching and
   storing the result means the bind buffers will be correct. (Andrey)
 
+- Added "defaultStatementResultType" to MySQL_Connection::setClientOption() as
+  an option. Also the method now returns `sql::Connection *`. (Andrey)
+
 - Added Result::getType() and implemented it in the three result set classes.
   (Andrey)
 
