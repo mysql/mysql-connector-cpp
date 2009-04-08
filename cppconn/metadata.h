@@ -455,6 +455,6 @@ public:
 };
 
 
-}; /* namespace sql */
+} /* namespace sql */
 
 #endif /* _SQL_METADATA_H_ */

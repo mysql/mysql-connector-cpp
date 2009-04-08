@@ -100,8 +100,8 @@ private:
 	void operator=(MySQL_Statement &);
 };
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 #endif // _MYSQL_STATEMENT_H_
 
 /*

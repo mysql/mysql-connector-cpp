@@ -164,6 +164,6 @@ public:
 	virtual bool wasNull() const = 0;
 };
 
-}; /* namespace sql */
+} /* namespace sql */
 
 #endif /* _SQL_RESULTSET_H_ */

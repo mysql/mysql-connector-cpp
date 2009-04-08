@@ -75,6 +75,6 @@ protected:
 };
 
 
-}; /* namespace sql */
+} /* namespace sql */
 
 #endif /* _SQL_RESULTSET_METADATA_H_ */

@@ -400,8 +400,8 @@ private:
 	void operator=(MySQL_ConnectionMetaData &);
 };
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 #endif // _MYSQL_METADATA_H_
 
 /*

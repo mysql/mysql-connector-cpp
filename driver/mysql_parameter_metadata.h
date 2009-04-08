@@ -56,9 +56,8 @@ private:
 	void operator=(MySQL_ParameterMetaData &);
 };
 
-}; /* namespace mysql */
-
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 #endif // _MYSQL_PARAMETER_METADATA_H_
 

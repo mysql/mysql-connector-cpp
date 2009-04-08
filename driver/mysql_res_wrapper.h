@@ -41,7 +41,7 @@ public:
 	MYSQL_RES * get() const;
 };
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 #endif

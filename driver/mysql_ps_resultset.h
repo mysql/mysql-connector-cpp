@@ -175,8 +175,8 @@ public:
 	bool wasNull() const;
 };
 
-}; /* namespace mysql*/
-}; /* namespace sql*/
+} /* namespace mysql*/
+} /* namespace sql*/
 
 #endif // _MYSQL_PS_RESULTSET_H_
 

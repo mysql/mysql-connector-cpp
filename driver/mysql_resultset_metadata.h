@@ -78,8 +78,8 @@ private:
 	void operator=(MySQL_ResultSetMetaData &);
 };
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 #endif // _MYSQL_RESULTSET_METADATA_H_
 /*

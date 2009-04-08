@@ -80,8 +80,8 @@ private:
 };
 
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 #endif /* _MYSQL_ART_RSET_METADATA_H_ */
 

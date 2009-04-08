@@ -58,6 +58,6 @@ protected:
 };
 
 
-}; /* namespace sql */
+} /* namespace sql */
 
 #endif /* _SQL_PARAMETER_METADATA_H_ */
