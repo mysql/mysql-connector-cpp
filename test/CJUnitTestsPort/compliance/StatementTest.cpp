@@ -886,6 +886,111 @@ void StatementTest::testGetResultSet02()
   }
 }
 
+
+/*
+* @testName:         testGetResultSetType01
+* @assertion:        The Statement object provides methods for executing SQL
+*            statements and retrieving results.(See section 40.1 of
+*            JDBC 2.0 API Reference & Tutorial second edition).
+*
+*            The driver must provide full support for Statement methods.
+*            The driver must also support all the methods for executing
+*            SQL Statements in a single batch (Batch Updates). (See
+*            section 6.2.2.3 of Java2 Platform Enterprise Edition(J2EE)
+*            Specification v1.2)
+*
+*            The getResultSetType() method returns an integer value;
+*            the value representing the type of the ResultSet objects
+*            and the value can be any one of the following
+*            ResultSet.TYPE_FORWARD_ONLY, ResultSet.TYPE_SCROLL_SENSITIVE
+*            and ResultSet.TYPE_SCROLL_INSENSITIVE.
+*            (See JDK1.2.2 API documentation)
+*
+* @test_Strategy:    Get a Statement object and call getResultSetType() method
+*            It should return an int value which should be either
+*            TYPE_FORWARD_ONLY or TYPE_SCROLL_INSENSITIVE or TYPE_SCROLL_SENSITIVE
+*/
+void StatementTest::testGetResultSetType01()
+{
+  int rsType=0;
+
+  rsType=stmt->getResultSetType();
+
+  if (rsType == sql::ResultSet::TYPE_FORWARD_ONLY)
+  {
+    TestsListener::messagesLog() << "getResultSetType method returns TYPE_FORWARD_ONLY"
+      << rsType << std::endl;
+  }
+  else if (rsType == sql::ResultSet::TYPE_SCROLL_INSENSITIVE)
+  {
+    TestsListener::messagesLog() <<
+      "getResultSetType method returns TYPE_SCROLL_INSENSITIVE "
+      << rsType << std::endl;
+  }
+  else if (rsType == sql::ResultSet::TYPE_SCROLL_SENSITIVE)
+  {
+    TestsListener::messagesLog() <<
+      "getResultSetType method returns TYPE_SCROLL_SENSITIVE  "
+      << rsType << std::endl;
+  }
+  else
+  {
+    logErr(" getResultSetType method does not return a valid value");
+    FAIL("Call to getResultSetType is Failed!");
+  }
+}
+
+
+/*
+* @testName:         testGetResultSetType02
+* @assertion:        The Statement object provides methods for executing SQL
+*            statements and retrieving results.(See section 40.1 of
+*            JDBC 2.0 API Reference & Tutorial second edition).
+*
+*            The driver must provide full support for Statement methods.
+*            The driver must also support all the methods for executing
+*            SQL Statements in a single batch (Batch Updates). (See
+*            section 6.2.2.3 of Java2 Platform Enterprise Edition(J2EE)
+*            Specification v1.2)
+*
+*            The getResultSetType() method returns an integer value;
+*            the value representing the type of the ResultSet objects
+*            and the value can be any one of the following
+*            ResultSet.TYPE_FORWARD_ONLY, ResultSet.TYPE_SCROLL_SENSITIVE
+*            and ResultSet.TYPE_SCROLL_INSENSITIVE.
+*            (See JDK1.2.2 API documentation)
+*
+* @test_Strategy:    Call Connection.createStatement with the Type mode as
+*            TYPE_FORWARD_ONLY and call getResultSetType() method
+*            It should return a int value and the value should be equal
+*            to ResultSet.TYPE_FORWARD_ONLY
+*/
+void StatementTest::testGetResultSetType02()
+{
+  int rsType=0;
+
+  logMsg("Creating Statement object with the ResultSet Type");
+
+  Statement statemt( conn->createStatement() );
+
+  statemt->setResultSetType( sql::ResultSet::TYPE_FORWARD_ONLY );
+
+//    sql::ResultSet::CONCUR_READ_ONLY);
+  rsType=statemt->getResultSetType();
+
+  if ( rsType == sql::ResultSet::TYPE_FORWARD_ONLY )
+  {
+    TestsListener::messagesLog() << "getResultSetType method returns TYPE_FORWARD_ONLY "
+      << rsType << std::endl;
+  }
+  else
+  {
+    logErr(" getResultSetType method does not return a valid value");
+    FAIL("Call to getResultSetType is Failed!");
+  }
+}
+
+
 /*
  * @testName:         testGetResultSetConcurrency01
  * @assertion:        The Statement object provides methods for executing SQL
@@ -914,9 +1019,7 @@ void StatementTest::testGetResultSet02()
  *
  * throws Exception
  */
-
 #ifdef MISSING_METHODS_INCLUDED2STATEMENT
-
 void StatementTest::testGetResultSetConcurrency01()
 {
   int rsConcur=0;
@@ -934,99 +1037,6 @@ void StatementTest::testGetResultSetConcurrency01()
   }
 }
 
-
-/*
- * @testName:         testGetResultSetType01
- * @assertion:        The Statement object provides methods for executing SQL
- *            statements and retrieving results.(See section 40.1 of
- *            JDBC 2.0 API Reference & Tutorial second edition).
- *
- *            The driver must provide full support for Statement methods.
- *            The driver must also support all the methods for executing
- *            SQL Statements in a single batch (Batch Updates). (See
- *            section 6.2.2.3 of Java2 Platform Enterprise Edition(J2EE)
- *            Specification v1.2)
- *
- *            The getResultSetType() method returns an integer value;
- *            the value representing the type of the ResultSet objects
- *            and the value can be any one of the following
- *            ResultSet.TYPE_FORWARD_ONLY, ResultSet.TYPE_SCROLL_SENSITIVE
- *            and ResultSet.TYPE_SCROLL_INSENSITIVE.
- *            (See JDK1.2.2 API documentation)
- *
- * @test_Strategy:    Get a Statement object and call getResultSetType() method
- *            It should return an int value which should be either
- *            TYPE_FORWARD_ONLY or TYPE_SCROLL_INSENSITIVE or TYPE_SCROLL_SENSITIVE
- */
-
-/* throws Exception */
-void StatementTest::testGetResultSetType01()
-{
-  int rsType=0;
-
-  rsType=stmt->getResultSetType();
-  if (rsType == sql::ResultSet::TYPE_FORWARD_ONLY) {
-    logMsg("getResultSetType method returns TYPE_FORWARD_ONLY"
-           + rsType);
-  } else if (rsType == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
-    logMsg(
-           "getResultSetType method returns TYPE_SCROLL_INSENSITIVE "
-           + rsType);
-  } else if (rsType == sql::ResultSet::TYPE_SCROLL_SENSITIVE) {
-    logMsg(
-           "getResultSetType method returns TYPE_SCROLL_SENSITIVE  "
-           + rsType);
-  } else {
-    logErr(" getResultSetType method does not return a valid value");
-    FAIL("Call to getResultSetType is Failed!");
-  }
-}
-
-/*
- * @testName:         testGetResultSetType02
- * @assertion:        The Statement object provides methods for executing SQL
- *            statements and retrieving results.(See section 40.1 of
- *            JDBC 2.0 API Reference & Tutorial second edition).
- *
- *            The driver must provide full support for Statement methods.
- *            The driver must also support all the methods for executing
- *            SQL Statements in a single batch (Batch Updates). (See
- *            section 6.2.2.3 of Java2 Platform Enterprise Edition(J2EE)
- *            Specification v1.2)
- *
- *            The getResultSetType() method returns an integer value;
- *            the value representing the type of the ResultSet objects
- *            and the value can be any one of the following
- *            ResultSet.TYPE_FORWARD_ONLY, ResultSet.TYPE_SCROLL_SENSITIVE
- *            and ResultSet.TYPE_SCROLL_INSENSITIVE.
- *            (See JDK1.2.2 API documentation)
- *
- * @test_Strategy:    Call Connection.createStatement with the Type mode as
- *            TYPE_FORWARD_ONLY and call getResultSetType() method
- *            It should return a int value and the value should be equal
- *            to ResultSet.TYPE_FORWARD_ONLY
- */
-
-/* throws Exception */
-void StatementTest::testGetResultSetType02()
-{
-  int rsType=0;
-  Statement statemt /*= NULL*/;
-
-  logMsg("Creating Statement object with the ResultSet Type and Type");
-  statemt=conn->createStatement(sql::ResultSet::TYPE_FORWARD_ONLY,
-                                sql::ResultSet::CONCUR_READ_ONLY);
-  rsType=statemt->getResultSetType();
-  if (rsType == sql::ResultSet::TYPE_FORWARD_ONLY) {
-    logMsg("getResultSetType method returns TYPE_FORWARD_ONLY "
-           + rsType);
-  } else {
-    statemt->close();
-    logErr(" getResultSetType method does not return a valid value");
-    FAIL("Call to getResultSetType is Failed!");
-  }
-  statemt->close();
-}
 
 /*
  * @testName:         testGetResultSetType03
@@ -1052,7 +1062,6 @@ void StatementTest::testGetResultSetType02()
  *            It should return a int value and the value should be equal
  *            to ResultSet.TYPE_SCROLL_INSENSITIVE
  */
-
 /* throws Exception */
 void StatementTest::testGetResultSetType03()
 {

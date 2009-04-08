@@ -466,6 +466,6 @@ public:
 
 #define TEST_FIXTURE( theFixtureClass ) typedef theFixtureClass TestSuiteClass;\
   theFixtureClass( const String & name ) \
-  : BaseTestFixture( #theFixtureClass )
+  : BaseTestFixture( name )
 
 #endif // _BASE_TEST_FIXTURE_

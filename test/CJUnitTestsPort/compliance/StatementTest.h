@@ -67,10 +67,11 @@ public:
     TEST_CASE(testSetMaxRows02);
     TEST_CASE(testSetQueryTimeout02);
 
-#ifdef MISSING_METHODS_INCLUDED2STATEMENT
-    TEST_CASE(testSetFetchDirection04);
     TEST_CASE(testGetResultSetType01);
     TEST_CASE(testGetResultSetType02);
+
+#ifdef MISSING_METHODS_INCLUDED2STATEMENT
+    TEST_CASE(testSetFetchDirection04);
     TEST_CASE(testGetResultSetType03);
     TEST_CASE(testGetResultSetConcurrency01);
     TEST_CASE(testGetFetchDirection);
@@ -99,10 +100,10 @@ public:
    *                    method should return a null SQLWarning object
    *
    */
-
   /* throws std::exception * */
-
   void testClearWarnings();
+
+
   /*
    * @testName:         testClose
    * @assertion:        The Statement object provides methods for executing SQL
@@ -123,10 +124,10 @@ public:
    *                    executeQuery() method to check and it should throw sql::DbcException
    *
    */
-
   /* throws std::exception * */
-
   void testClose();
+
+
   /*
    * @testName:         testExecute01
    * @assertion:        The Statement object provides methods for executing SQL
@@ -148,10 +149,10 @@ public:
    *                    equal to false
    *
    */
-
   /* throws std::exception * */
-
   void testExecute01();
+
+
   /*
    * @testName:         testExecute02
    * @assertion:        The Statement object provides methods for executing SQL
@@ -174,10 +175,10 @@ public:
    *                    to true
    *
    */
-
   /* throws std::exception * */
-
   void testExecute02();
+
+
   /*
    * @testName:         testExecuteQuery01
    * @assertion:        The Statement object provides methods for executing SQL
@@ -201,10 +202,10 @@ public:
    *                    It should return a ResultSet object
    *
    */
-
   /* throws std::exception * */
-
   void testExecuteQuery01();
+
+
   /*
    * @testName:         testExecuteQuery02
    * @assertion:        The Statement object provides methods for executing SQL
@@ -229,10 +230,10 @@ public:
    *                    ResultSet.next() method to check and it should return a false
    *
    */
-
   /* throws std::exception * */
-
   void testExecuteQuery02();
+
+
   /*
    * @testName:         testExecuteQuery03
    * @assertion:        The Statement object provides methods for executing SQL
@@ -257,10 +258,10 @@ public:
    *                    It should throw sql::DbcException
    *
    */
-
   /* throws std::exception * */
-
   void testExecuteQuery03();
+
+
   /*
    * @testName:         testExecuteUpdate01
    * @assertion:        The Statement object provides methods for executing SQL
@@ -284,10 +285,10 @@ public:
    * @test_Strategy:    Get a Statement object and call executeUpdate(String sql)
    *                    It should return an int value which is equal to row count
    */
-
   /* throws std::exception * */
-
   void testExecuteUpdate01();
+
+
   /*
    * @testName:         testExecuteUpdate03
    * @assertion:        The Statement object provides methods for executing SQL
@@ -313,7 +314,6 @@ public:
    *                    It should throw a SQL std::exception *
    *
    */
-
   /* throws std::exception * */
   void testExecuteUpdate03();
 
@@ -339,10 +339,10 @@ public:
    *                    It should return a int value
    *
    */
-
   /* throws std::exception * */
-
   void testGetFetchSize();
+
+
   /*
    * @testName:         testGetMaxFieldSize
    * @assertion:        The Statement object provides methods for executing SQL
@@ -364,10 +364,10 @@ public:
    *                    It should return a int value
    *
    */
-
   /* throws std::exception * */
-
   void testGetMaxFieldSize();
+
+
   /*
    * @testName:         testGetMaxRows
    * @assertion:        The Statement object provides methods for executing SQL
@@ -389,10 +389,10 @@ public:
    *                    It should return a int value
    *
    */
-
   /* throws std::exception * */
-
   void testGetMaxRows();
+
+
   /*
    * @testName:         testGetMoreResults01
    * @assertion:        The Statement object provides methods for executing SQL
@@ -418,10 +418,10 @@ public:
    *                    It should return a boolean value
    *
    */
-
   /* throws std::exception * */
-
   void testGetMoreResults01();
+
+
   /*
    * @testName:         testGetMoreResults02
    * @assertion:        The Statement object provides methods for executing SQL
@@ -448,10 +448,10 @@ public:
    *                    equal to false
    *
    */
-
   /* throws std::exception * */
-
   void testGetMoreResults02();
+
+
   /*
    * @testName:         testGetMoreResults03
    * @assertion:        The Statement object provides methods for executing SQL
@@ -478,10 +478,10 @@ public:
    *                    equal to false
    *
    */
-
   /* throws std::exception * */
-
   void testGetMoreResults03();
+
+
   /*
    * @testName:         testGetQueryTimeout
    * @assertion:        The Statement object provides methods for executing SQL
@@ -503,10 +503,10 @@ public:
    *                    It should return a int value
    *
    */
-
   /* throws std::exception * */
-
   void testGetQueryTimeout();
+
+
   /*
    * @testName:         testGetResultSet01
    * @assertion:        The Statement object provides methods for executing SQL
@@ -529,10 +529,10 @@ public:
    *                    It should return a ResultSet object
    *
    */
-
   /* throws std::exception * */
-
   void testGetResultSet01();
+
+
   /*
    * @testName:         testGetResultSet02
    * @assertion:        The Statement object provides methods for executing SQL
@@ -554,7 +554,6 @@ public:
    *                    updating a row.Then call getResultSet() method
    *                    It should return a  Null ResultSet object
    */
-
   /* throws std::exception * */
   void testGetResultSet02();
 
@@ -586,10 +585,10 @@ public:
    *                    It should return a int value and the value should be
    *                    equal to number of rows with the specified condition for update
    */
-
   /* throws std::exception * */
-
   void testGetUpdateCount01();
+
+
   /*
    * @testName:         testGetUpdateCount02
    *
@@ -841,10 +840,64 @@ public:
    *                    throw an sql::DbcException
    *
    */
-
   /* throws std::exception * */
-
   void testSetQueryTimeout02();
+
+
+  /*
+  * @testName:         testGetResultSetType01
+  * @assertion:        The Statement object provides methods for executing SQL
+  *                    statements and retrieving results.(See section 40.1 of
+  *                    JDBC 2.0 API Reference & Tutorial second edition).
+  *
+  *                    The driver must provide full support for Statement methods.
+  *                    The driver must also support all the methods for executing
+  *                    SQL Statements in a single batch (Batch Updates). (See
+  *                    section 6.2.2.3 of Java2 Platform Enterprise Edition(J2EE)
+  *                    Specification v1.2)
+  *
+  *                    The getResultSetType() method returns an integer value;
+  *                    the value representing the type of the ResultSet objects
+  *                    and the value can be any one of the following
+  *                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.TYPE_SCROLL_SENSITIVE
+  *                    and ResultSet.TYPE_SCROLL_INSENSITIVE.
+  *                    (See JDK1.2.2 API documentation)
+  *
+  * @test_Strategy:    Get a Statement object and call getResultSetType() method
+  *                    It should return an int value which should be either
+  *                    TYPE_FORWARD_ONLY or TYPE_SCROLL_INSENSITIVE or TYPE_SCROLL_SENSITIVE
+  */
+  /* throws std::exception * */
+  void testGetResultSetType01();
+
+
+  /*
+  * @testName:         testGetResultSetType02
+  * @assertion:        The Statement object provides methods for executing SQL
+  *                    statements and retrieving results.(See section 40.1 of
+  *                    JDBC 2.0 API Reference & Tutorial second edition).
+  *
+  *                    The driver must provide full support for Statement methods.
+  *                    The driver must also support all the methods for executing
+  *                    SQL Statements in a single batch (Batch Updates). (See
+  *                    section 6.2.2.3 of Java2 Platform Enterprise Edition(J2EE)
+  *                    Specification v1.2)
+  *
+  *                    The getResultSetType() method returns an integer value;
+  *                    the value representing the type of the ResultSet objects
+  *                    and the value can be any one of the following
+  *                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.TYPE_SCROLL_SENSITIVE
+  *                    and ResultSet.TYPE_SCROLL_INSENSITIVE.
+  *                    (See JDK1.2.2 API documentation)
+  *
+  * @test_Strategy:    Call Connection.createStatement with the Type mode as
+  *                    TYPE_FORWARD_ONLY and call getResultSetType() method
+  *                    It should return a int value and the value should be equal
+  *                    to ResultSet.TYPE_FORWARD_ONLY
+  */
+  /* throws std::exception * */
+  void testGetResultSetType02();
+
 
 #ifdef MISSING_METHODS_INCLUDED2STATEMENT
   /*
@@ -896,65 +949,10 @@ public:
    *                    It should return an int value either CONCUR_READ_ONLY or
    *                    CONCUR_UPDATABLE.
    */
-
   /* throws std::exception * */
-
   void testGetResultSetConcurrency01();
-  /*
-   * @testName:         testGetResultSetType01
-   * @assertion:        The Statement object provides methods for executing SQL
-   *                    statements and retrieving results.(See section 40.1 of
-   *                    JDBC 2.0 API Reference & Tutorial second edition).
-   *
-   *                    The driver must provide full support for Statement methods.
-   *                    The driver must also support all the methods for executing
-   *                    SQL Statements in a single batch (Batch Updates). (See
-   *                    section 6.2.2.3 of Java2 Platform Enterprise Edition(J2EE)
-   *                    Specification v1.2)
-   *
-   *                    The getResultSetType() method returns an integer value;
-   *                    the value representing the type of the ResultSet objects
-   *                    and the value can be any one of the following
-   *                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.TYPE_SCROLL_SENSITIVE
-   *                    and ResultSet.TYPE_SCROLL_INSENSITIVE.
-   *                    (See JDK1.2.2 API documentation)
-   *
-   * @test_Strategy:    Get a Statement object and call getResultSetType() method
-   *                    It should return an int value which should be either
-   *                    TYPE_FORWARD_ONLY or TYPE_SCROLL_INSENSITIVE or TYPE_SCROLL_SENSITIVE
-   */
 
-  /* throws std::exception * */
 
-  void testGetResultSetType01();
-  /*
-   * @testName:         testGetResultSetType02
-   * @assertion:        The Statement object provides methods for executing SQL
-   *                    statements and retrieving results.(See section 40.1 of
-   *                    JDBC 2.0 API Reference & Tutorial second edition).
-   *
-   *                    The driver must provide full support for Statement methods.
-   *                    The driver must also support all the methods for executing
-   *                    SQL Statements in a single batch (Batch Updates). (See
-   *                    section 6.2.2.3 of Java2 Platform Enterprise Edition(J2EE)
-   *                    Specification v1.2)
-   *
-   *                    The getResultSetType() method returns an integer value;
-   *                    the value representing the type of the ResultSet objects
-   *                    and the value can be any one of the following
-   *                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.TYPE_SCROLL_SENSITIVE
-   *                    and ResultSet.TYPE_SCROLL_INSENSITIVE.
-   *                    (See JDK1.2.2 API documentation)
-   *
-   * @test_Strategy:    Call Connection.createStatement with the Type mode as
-   *                    TYPE_FORWARD_ONLY and call getResultSetType() method
-   *                    It should return a int value and the value should be equal
-   *                    to ResultSet.TYPE_FORWARD_ONLY
-   */
-
-  /* throws std::exception * */
-
-  void testGetResultSetType02();
   /*
    * @testName:         testGetResultSetType03
    * @assertion:        The Statement object provides methods for executing SQL
@@ -979,10 +977,9 @@ public:
    *                    It should return a int value and the value should be equal
    *                    to ResultSet.TYPE_SCROLL_INSENSITIVE
    */
-
   /* throws std::exception * */
-
   void testGetResultSetType03();
+
 
   /*
    * @testName:         testGetFetchDirection
