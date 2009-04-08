@@ -322,12 +322,13 @@ void statement::unbufferedFetch()
       }
       con->setSchema(db);
       stmt.reset(con->createStatement());
-      // ASSERT_EQUALS(stmt->getResultSetType(), sql::ResultSet::TYPE_FORWARD_ONLY);
+      ASSERT_EQUALS(stmt->getResultSetType(), sql::ResultSet::TYPE_FORWARD_ONLY);
       stmt->execute("DROP TABLE IF EXISTS test");
-      /*
+
       stmt->execute("CREATE TABLE test(id INT)");
       stmt->execute("INSERT INTO test(id) VALUES (1), (2), (3), (4), (5)");
 
+      logMsg("... simple forward reading");
       res.reset(stmt->executeQuery("SELECT id FROM test ORDER BY id ASC"));
       id=0;
       while (res->next())
@@ -337,8 +338,54 @@ void statement::unbufferedFetch()
         ASSERT_EQUALS(id, res->getInt("id"));
       }
 
+      try
+      {
+        res->previous();
+        FAIL("Nonscrollable result set not detected");
+      }
+      catch (sql::SQLException &)
+      {
+      }
+
+      try
+      {
+        res->absolute(1);
+        FAIL("Nonscrollable result set not detected");
+      }
+      catch (sql::SQLException &)
+      {
+      }
+
+      try
+      {
+        res->afterLast();
+        logMsg("... a bit odd, but OK, its forward");
+      }
+      catch (sql::SQLException &e)
+      {
+        fail(e.what(), __FILE__, __LINE__);
+      }
+
+      try
+      {
+        res->beforeFirst();
+        FAIL("Nonscrollable result set not detected");
+      }
+      catch (sql::SQLException &)
+      {
+      }
+
+      try
+      {
+        res->last();
+        FAIL("Nonscrollable result set not detected");
+      }
+      catch (sql::SQLException &)
+      {
+      }
+
       stmt->execute("DROP TABLE IF EXISTS test");
-       */
+
     }
     connection_properties.erase("defaultStatementResultType");
   }
