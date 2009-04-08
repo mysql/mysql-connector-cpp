@@ -102,7 +102,7 @@ void statement::clearWarnings()
     stmt->execute("CREATE TABLE test(col1 DATETIME, col2 DATE)");
     stmt->execute("INSERT INTO test SET col1 = NOW()");
     // Lets hope that this will always cause a 1264 or similar warning
-    ASSERT(!stmt->execute("UPDATE t1 SET col2 = col1"));
+    ASSERT(!stmt->execute("UPDATE test SET col2 = col1"));
     stmt->clearWarnings();
     // TODO - how to verify?
     // TODO - how to use getNextWarning() ?
@@ -254,6 +254,23 @@ void statement::selectZero()
     fail(e.what(), __FILE__, __LINE__);
   }
 
+}
+
+void statement::unbufferedFetch()
+{
+  logMsg("statement::unbufferedFetch() - MySQL_Resultset::*");
+  
+  try
+  {
+    
+    //stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
 }
 
 } /* namespace statement */

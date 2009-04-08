@@ -36,6 +36,7 @@ public:
     TEST_CASE(clearWarnings);
     TEST_CASE(callSP);
     TEST_CASE(selectZero);
+    TEST_CASE(unbufferedFetch);
   }
 
   /**
@@ -58,10 +59,16 @@ public:
    */
   void callSP();
 
-    /**
+  /**
    * SELECT 0 as string
    */
-  void selectZero();  
+  void selectZero();
+
+  /**
+   * Unbuffered fetch
+   */
+  void unbufferedFetch();
+
 };
 
 REGISTER_FIXTURE(statement);
