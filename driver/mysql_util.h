@@ -36,7 +36,9 @@
 
 #ifndef _WIN32
 #  ifndef HAVE_FUNCTION_STRTOLL
-#    ifdef HAVE_FUNCTION_STRTOL
+#    if 1
+#      define strtoll(__a, __b, __c)  static_cast<long long>(sql::mysql::strtold((__a), NULL))
+#    elseif defined(HAVE_FUNCTION_STRTOL)
 #      define strtoll(__a, __b, __c) strtol((__a), (__b), (__c))
 #    else
 #      ifdef HAVE_FUNCTION_STRTOIMAX
@@ -48,7 +50,9 @@
 #    define HAVE_FUNCTION_STRTOLL 1
 #  endif
 #  ifndef HAVE_FUNCTION_STRTOULL
-#    ifdef HAVE_FUNCTION_STRTOUL
+#    if 1
+#      define strtoll(__a, __b, __c)  static_cast<unsigned long long>(sql::mysql::strtold((__a), NULL))
+#    elseif defined(HAVE_FUNCTION_STRTOUL)
 #      define strtoull(__a, __b, __c) strtoul((__a), (__b), (__c))
 #    else
 #      ifdef HAVE_FUNCTION_STRTOUMAX
