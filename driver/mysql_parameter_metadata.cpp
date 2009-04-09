@@ -38,6 +38,7 @@ MySQL_ParameterMetaData::getParameterCount()
 
 } /* namespace mysql */
 } /* namespace sql */
+
 /*
  * Local variables:
  * tab-width: 4
@@ -46,5 +47,3 @@ MySQL_ParameterMetaData::getParameterCount()
  * vim600: noet sw=4 ts=4 fdm=marker
  * vim<600: noet sw=4 ts=4
  */
-
-

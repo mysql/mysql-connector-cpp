@@ -800,8 +800,8 @@ MySQL_ArtResultSet::wasNull() const
 }
 /* }}} */
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 
 /*

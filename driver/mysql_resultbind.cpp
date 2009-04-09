@@ -167,8 +167,8 @@ void MySQL_ResultBind::bindResult()
 /* }}} */
 
 
-};/* namespace mysql */
-};/* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 /*
  * Local variables:

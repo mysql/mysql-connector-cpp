@@ -1138,8 +1138,8 @@ MySQL_Prepared_ResultSet::seek()
 /* }}} */
 
 
-}; /* namespace mysql */
-}; /* namespace sql */
+} /* namespace mysql */
+} /* namespace sql */
 
 /*
  * Local variables:

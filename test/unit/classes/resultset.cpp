@@ -72,31 +72,31 @@ void resultset::getInt()
 
     ASSERT(res->next());
 
-    ASSERT_EQUALS((int64_t) res->getInt("i"), r1_c1);
-    ASSERT_EQUALS((int64_t) res->getInt(1), r1_c1);
+    ASSERT_EQUALS(r1_c1, (int64_t) res->getInt("i"));
+    ASSERT_EQUALS(r1_c1, (int64_t) res->getInt(1));
 
-    ASSERT_EQUALS(res->getInt64("i_uns"), r1_c2);
-    ASSERT_EQUALS(res->getInt64(2), r1_c2);
+    ASSERT_EQUALS(r1_c2, res->getInt64("i_uns"));
+    ASSERT_EQUALS(r1_c2, res->getInt64(2));
 
-    ASSERT_EQUALS(res->getInt64("b"), r1_c3);
-    ASSERT_EQUALS(res->getInt64(3), r1_c3);
+    ASSERT_EQUALS(r1_c3, res->getInt64("b"));
+    ASSERT_EQUALS(r1_c3, res->getInt64(3));
 
-    ASSERT_EQUALS(res->getUInt64("b_uns"), r1_c4);
-    ASSERT_EQUALS(res->getUInt64(4), r1_c4);
+    ASSERT_EQUALS(r1_c4, res->getUInt64("b_uns"));
+    ASSERT_EQUALS(r1_c4, res->getUInt64(4));
 
     ASSERT(res->next());
 
-    ASSERT_EQUALS((int64_t) res->getInt("i"), r2_c1);
-    ASSERT_EQUALS((int64_t) res->getInt(1), r2_c1);
+    ASSERT_EQUALS(r2_c1, (int64_t) res->getInt("i"));
+    ASSERT_EQUALS(r2_c1, (int64_t) res->getInt(1));
 
-    ASSERT_EQUALS(res->getInt64("i_uns"), r2_c2);
-    ASSERT_EQUALS(res->getInt64(2), r2_c2);
+    ASSERT_EQUALS(r2_c2, res->getInt64("i_uns"));
+    ASSERT_EQUALS(r2_c2, res->getInt64(2));
 
-    ASSERT_EQUALS(res->getInt64("b"), r2_c3);
-    ASSERT_EQUALS(res->getInt64(3), r2_c3);
+    ASSERT_EQUALS(r2_c3, res->getInt64("b"));
+    ASSERT_EQUALS(r2_c3, res->getInt64(3));
 
-    ASSERT_EQUALS(res->getUInt64("b_uns"), r2_c4);
-    ASSERT_EQUALS(res->getUInt64(4), r2_c4);
+    ASSERT_EQUALS(r2_c4, res->getUInt64("b_uns"));
+    ASSERT_EQUALS(r2_c4, res->getUInt64(4));
 
     ASSERT_EQUALS(res->next(), false);
 
@@ -105,31 +105,31 @@ void resultset::getInt()
 
     ASSERT(res->next());
 
-    ASSERT_EQUALS((int64_t) res->getInt("i"), r1_c1);
-    ASSERT_EQUALS((int64_t) res->getInt(1), r1_c1);
+    ASSERT_EQUALS(r1_c1, (int64_t) res->getInt("i"));
+    ASSERT_EQUALS(r1_c1, (int64_t) res->getInt(1));
 
-    ASSERT_EQUALS(res->getInt64("i_uns"), r1_c2);
-    ASSERT_EQUALS(res->getInt64(2), r1_c2);
+    ASSERT_EQUALS(r1_c2, res->getInt64("i_uns"));
+    ASSERT_EQUALS(r1_c2, res->getInt64(2));
 
-    ASSERT_EQUALS(res->getInt64("b"), r1_c3);
-    ASSERT_EQUALS(res->getInt64(3), r1_c3);
+    ASSERT_EQUALS(r1_c3, res->getInt64("b"));
+    ASSERT_EQUALS(r1_c3, res->getInt64(3));
 
-    ASSERT_EQUALS(res->getUInt64("b_uns"), r1_c4);
-    ASSERT_EQUALS(res->getUInt64(4), r1_c4);
+    ASSERT_EQUALS(r1_c4, res->getUInt64("b_uns"));
+    ASSERT_EQUALS(r1_c4, res->getUInt64(4));
 
     ASSERT(res->next());
 
-    ASSERT_EQUALS((int64_t) res->getInt("i"), r2_c1);
-    ASSERT_EQUALS((int64_t) res->getInt(1), r2_c1);
+    ASSERT_EQUALS(r2_c1, (int64_t) res->getInt("i"));
+    ASSERT_EQUALS(r2_c1, (int64_t) res->getInt(1));
 
-    ASSERT_EQUALS(res->getInt64("i_uns"), r2_c2);
-    ASSERT_EQUALS(res->getInt64(2), r2_c2);
+    ASSERT_EQUALS(r2_c2, res->getInt64("i_uns"));
+    ASSERT_EQUALS(r2_c2, res->getInt64(2));
 
-    ASSERT_EQUALS(res->getInt64("b"), r2_c3);
-    ASSERT_EQUALS(res->getInt64(3), r2_c3);
+    ASSERT_EQUALS(r2_c3, res->getInt64("b"));
+    ASSERT_EQUALS(r2_c3, res->getInt64(3));
 
-    ASSERT_EQUALS(res->getUInt64("b_uns"), r2_c4);
-    ASSERT_EQUALS(res->getUInt64(4), r2_c4);
+    ASSERT_EQUALS(r2_c4, res->getUInt64("b_uns"));
+    ASSERT_EQUALS(r2_c4, res->getUInt64(4));
 
     ASSERT_EQUALS(res->next(), false);
 
