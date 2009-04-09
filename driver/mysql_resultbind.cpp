@@ -120,7 +120,7 @@ MySQL_ResultBind::~MySQL_ResultBind()
 /* }}} */
 
 
-/* {{{ MySQL_ResultBind::~MySQL_ResultBind() -I- */
+/* {{{ MySQL_ResultBind::bindResult() -I- */
 void MySQL_ResultBind::bindResult()
 {
 	CPP_ENTER("MySQL_Prepared_Statement::bindResult");
@@ -161,7 +161,7 @@ void MySQL_ResultBind::bindResult()
 	}
 	if (mysql_stmt_bind_result(stmt, rbind.get())) {
 		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", mysql_stmt_errno(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_error(stmt));
-		throw sql::SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
+		sql::mysql::util::throwSQLException(stmt);
 	}
 }
 /* }}} */

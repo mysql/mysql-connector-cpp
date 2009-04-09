@@ -25,8 +25,8 @@ class MySQL_DebugLogger;
 
 class MySQL_Prepared_ResultSetMetaData : public sql::ResultSetMetaData
 {
-	MYSQL_RES * result_meta;
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger> * logger;
+	MYSQL_RES * result_meta;
 	unsigned int num_fields;
 
 public:
@@ -74,6 +74,11 @@ public:
 	bool isWritable(unsigned int columnIndex);
 
 	bool isZerofill(unsigned int column);
+
+protected:
+	void checkColumnIndex(unsigned int columnIndex) const;
+
+	MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const { return mysql_fetch_field_direct(result_meta, columnIndex - 1); }
 
 private:
 	/* Prevent use of these */

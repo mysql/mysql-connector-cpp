@@ -44,7 +44,7 @@ MySQL_ResultSet::MySQL_ResultSet(
 
 	num_fields = mysql_num_fields(result->get());
 	for (unsigned int i = 0; i < num_fields; ++i) {
-		sql::mysql::util::my_array_guard< char > upstring(sql::mysql::util::utf8_strup(mysql_fetch_field_direct(result->get(), i)->name, 0));
+		sql::mysql::util::my_array_guard< char > upstring(sql::mysql::util::utf8_strup(getFieldMeta(i + 1)->name, 0));
 		field_name_to_index_map[std::string(upstring.get())] = i;
 	}
 	rs_meta.reset(new MySQL_ResultSetMetaData(result->getReference(), logger));
@@ -392,8 +392,8 @@ MySQL_ResultSet::getInt(const uint32_t columnIndex) const
 	if (columnIndex == 0 || columnIndex > num_fields) {
 		throw sql::InvalidArgumentException("MySQL_ResultSet::getInt: invalid value of 'columnIndex'");
 	}
-	CPP_INFO_FMT("%ssigned", (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG)? "un":"");
-	if (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG) {
+	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
+	if (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG) {
 		return static_cast<uint32_t>(getInt64(columnIndex));
 	}
 	return static_cast<int32_t>(getInt64(columnIndex));	
@@ -423,7 +423,7 @@ MySQL_ResultSet::getUInt(const uint32_t columnIndex) const
 	if (columnIndex == 0 || columnIndex > num_fields) {
 		throw sql::InvalidArgumentException("MySQL_ResultSet::getUInt: invalid value of 'columnIndex'");
 	}
-	CPP_INFO_FMT("%ssigned", (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG)? "un":"");
+	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
 	return static_cast<uint32_t>(getUInt64(columnIndex));// & 0xffffffff;
 }
 /* }}} */
@@ -458,9 +458,9 @@ MySQL_ResultSet::getInt64(const uint32_t columnIndex) const
 		was_null = true;
 		return 0;
 	}
-	CPP_INFO_FMT("%ssigned", (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG)? "un":"");
+	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
-	if (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG) {
+	if (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG) {
 		return strtoull(row[columnIndex - 1], NULL, 10);
 	}
 	return strtoll(row[columnIndex - 1], NULL, 10);
@@ -497,9 +497,9 @@ MySQL_ResultSet::getUInt64(const uint32_t columnIndex) const
 		was_null = true;
 		return 0;
 	}
-	CPP_INFO_FMT("%ssigned", (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG)? "un":"");
+	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
-	if (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG) {
+	if (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG) {
 		return strtoull(row[columnIndex - 1], NULL, 10);	
 	}
 	return strtoll(row[columnIndex - 1], NULL, 10);	

@@ -27,6 +27,8 @@ class MySQL_ArtResultSetMetaData : public sql::ResultSetMetaData
 {
 	const MySQL_ArtResultSet * parent;
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
+	unsigned int num_fields;
+
 public:
 	MySQL_ArtResultSetMetaData(const MySQL_ArtResultSet * p, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
 	virtual ~MySQL_ArtResultSetMetaData();
@@ -72,6 +74,9 @@ public:
 	bool isWritable(unsigned int columnIndex);
 
 	bool isZerofill(unsigned int columnIndex);
+
+protected:
+	void checkColumnIndex(unsigned int columnIndex) const;
 
 private:
 	/* Prevent use of these */

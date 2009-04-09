@@ -15,12 +15,29 @@
 #include <memory>
 
 #include <cppconn/datatype.h>
+#include <cppconn/exception.h>
 #include "mysql_util.h"
 
 
 namespace sql {
 namespace mysql {
 namespace util {
+
+
+/* {{{ throwSQLException -I- */
+void throwSQLException(MYSQL * mysql)
+{
+	throw sql::SQLException(mysql_error(mysql), mysql_sqlstate(mysql), mysql_errno(mysql));
+}
+/* }}} */
+
+
+/* {{{ throwSQLException -I- */
+void throwSQLException(MYSQL_STMT * stmt)
+{
+	throw sql::SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
+}
+/* }}} */
 
 
 #define cppconn_mbcharlen_big5		NULL

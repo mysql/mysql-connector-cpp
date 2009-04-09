@@ -1492,7 +1492,7 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 				ddl = sql_rs->getString(colIdx);
 			}
 			rs_data_row.push_back(ddl);
-		} catch (sql::SQLException) {
+		} catch (SQLException) {
 			rs_data_row.push_back("");
 		}
 

@@ -56,6 +56,8 @@ protected:
 	bool isBeforeFirstOrAfterLast() const;
 	void seek();
 
+	MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const { return mysql_fetch_field_direct(result->get(), columnIndex - 1); }
+
 public:
 	MySQL_ResultSet(MYSQL_RES_Wrapper * res, sql::ResultSet::enum_type rset_type, MySQL_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
 
