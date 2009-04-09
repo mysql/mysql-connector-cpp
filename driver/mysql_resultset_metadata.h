@@ -26,6 +26,8 @@ class MySQL_ResultSetMetaData : public sql::ResultSetMetaData
 {
 	MYSQL_RES_Wrapper * result;
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
+	unsigned int num_fields;
+
 public:
 	MySQL_ResultSetMetaData(MYSQL_RES_Wrapper * res, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
 	virtual ~MySQL_ResultSetMetaData();
@@ -72,7 +74,15 @@ public:
 
 	bool isZerofill(unsigned int columnIndex);
 
+protected:
+	void checkValid() const;
+
+	void checkColumnIndex(unsigned int columnIndex) const;
+
+	MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const { return mysql_fetch_field_direct(result->get(), columnIndex - 1); }
+
 private:
+
 	/* Prevent use of these */
 	MySQL_ResultSetMetaData(const MySQL_ResultSetMetaData &);
 	void operator=(MySQL_ResultSetMetaData &);

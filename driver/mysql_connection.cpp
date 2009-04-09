@@ -312,7 +312,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 		}
 	}
 	if (!(intern->mysql = mysql_init(NULL))) {
-		throw sql::SQLException("Insufficient memory: cannot create MySQL handle using mysql_init()", "HY000", 1000);
+		throw sql::SQLException("Insufficient memory: cannot create MySQL handle using mysql_init()");
 	}
 #if !defined(_WIN32) && !defined(_WIN64)
 	if (!hostName.compare(0, sizeof("unix://") - 1, "unix://")) {
@@ -433,7 +433,7 @@ MySQL_Connection::checkClosed()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::checkClosed");
 	if (!intern->is_valid) {
-		throw sql::SQLException("Connection has been closed", "HY000", 1000);
+		throw sql::SQLException("Connection has been closed");
 	}
 }
 /* }}} */
@@ -620,7 +620,7 @@ MySQL_Connection::prepareStatement(const std::string& sql)
 
 	if (!stmt) {
 		CPP_ERR_FMT("No statement : %d:(%s) %s", mysql_errno(intern->mysql), mysql_sqlstate(intern->mysql), mysql_error(intern->mysql));
-		throw sql::SQLException(mysql_error(intern->mysql), mysql_sqlstate(intern->mysql), mysql_errno(intern->mysql));
+		sql::mysql::util::throwSQLException(intern->mysql);
 	}
 
 	if (mysql_stmt_prepare(stmt, sql.c_str(), static_cast<unsigned long>(sql.length()))) {
@@ -630,7 +630,7 @@ MySQL_Connection::prepareStatement(const std::string& sql)
 		throw e;
 	}
 
-	return new MySQL_Prepared_Statement(stmt, this, intern->defaultPreparedStatementResultType, this->intern->logger);
+	return new MySQL_Prepared_Statement(stmt, this, intern->defaultPreparedStatementResultType, intern->logger);
 }
 /* }}} */
 

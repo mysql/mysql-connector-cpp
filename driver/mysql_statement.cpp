@@ -72,7 +72,7 @@ MySQL_Statement::do_query(const char *q, size_t length)
 	MYSQL * mysql = connection->getMySQLHandle();
 	if (mysql_real_query(mysql, q, static_cast<unsigned long>(length)) && mysql_errno(mysql)) {
 		CPP_ERR_FMT("Error during mysql_real_query : %d:(%s) %s", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
-		throw sql::SQLException(mysql_error(mysql), mysql_sqlstate(mysql), mysql_errno(mysql));
+		sql::mysql::util::throwSQLException(mysql);
 	}
 }
 /* }}} */
@@ -92,7 +92,7 @@ MySQL_Statement::get_resultset()
 	if (result == NULL) {
 		CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
 					mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
-		throw sql::SQLException(mysql_error(mysql), mysql_sqlstate(mysql), mysql_errno(mysql));
+		sql::mysql::util::throwSQLException(mysql);
 	}
 	return new MYSQL_RES_Wrapper(result);
 }
@@ -249,11 +249,11 @@ MySQL_Statement::getMoreResults()
 		int next_result = mysql_next_result(conn);
 		if (next_result > 0) {
 			CPP_ERR_FMT("Error during getMoreResults : %d:(%s) %s", mysql_errno(conn), mysql_sqlstate(conn), mysql_error(conn));
-			throw sql::SQLException(mysql_error(conn), mysql_sqlstate(conn), mysql_errno(conn));
+			sql::mysql::util::throwSQLException(conn);
 		} else if (next_result == 0) {
 			return mysql_field_count(conn) != 0;
 		} else if (next_result == -1) {
-			throw sql::SQLException("Impossible! more_results() said true, next_result says no more results", "HY000", 1000);
+			throw sql::SQLException("Impossible! more_results() said true, next_result says no more results");
 		}
 	}
 	return false;

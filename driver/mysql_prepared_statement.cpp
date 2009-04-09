@@ -219,8 +219,8 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 							throw InvalidArgumentException("MySQL_Prepared_Statement::setBlob: can't set blob value on that column");
 						case CR_SERVER_GONE_ERROR:
 						case CR_COMMANDS_OUT_OF_SYNC:
-						default:
-							throw SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
+						default:		
+							sql::mysql::util::throwSQLException(stmt);
 					}
 				}
 			} while (1);
@@ -242,11 +242,11 @@ MySQL_Prepared_Statement::do_query()
 	}
 	if (mysql_stmt_bind_param(stmt, param_bind->get())) {
 		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", mysql_stmt_errno(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_error(stmt));
-		throw sql::SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
+		sql::mysql::util::throwSQLException(stmt);
 	}
 	if (!sendLongDataBeforeParamBind() || mysql_stmt_execute(stmt)) {
 		CPP_ERR_FMT("Couldn't execute : %d:(%s) %s", mysql_stmt_errno(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_error(stmt));
-		throw sql::SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
+		sql::mysql::util::throwSQLException(stmt);
 	}
 }
 /* }}} */

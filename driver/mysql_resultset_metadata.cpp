@@ -31,7 +31,7 @@ namespace mysql
 
 /* {{{ MySQL_ResultSetMetaData::MySQL_ResultSetMetaData -I- */
 MySQL_ResultSetMetaData::MySQL_ResultSetMetaData(MYSQL_RES_Wrapper * res, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
-  : result(res), logger(l? l->getReference():NULL)
+  : result(res), logger(l? l->getReference():NULL), num_fields(mysql_num_fields(result->get()))
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::MySQL_ResultSetMetaData");
 }
@@ -51,18 +51,36 @@ MySQL_ResultSetMetaData::~MySQL_ResultSetMetaData()
 /* }}} */
 
 
+/* {{{ MySQL_ResultSetMetaData::checkColumnIndex -I- */
+void
+MySQL_ResultSetMetaData::checkColumnIndex(unsigned int columnIndex) const
+{
+	if (columnIndex == 0 || columnIndex > num_fields) {
+		throw sql::InvalidArgumentException("Invalid value for columnIndex");
+	}
+}
+/* }}} */
+
+
+/* {{{ MySQL_ResultSetMetaData::checkValid -I- */
+void
+MySQL_ResultSetMetaData::checkValid() const
+{
+	if (!result->isValid()) {
+		throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	}
+}
+/* }}} */
+
+
 /* {{{ MySQL_ResultSetMetaData::getCatalogName -I- */
 std::string
 MySQL_ResultSetMetaData::getCatalogName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getCatalogName");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		return "";
-	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	checkValid();
+	checkColumnIndex(columnIndex);
+	return "";
 }
 /* }}} */
 
@@ -72,10 +90,8 @@ unsigned int
 MySQL_ResultSetMetaData::getColumnCount()
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getColumnCount");
-	if (result->isValid()) {
-		return mysql_num_fields(result->get());
-	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	checkValid();
+	return num_fields;
 }
 /* }}} */
 
@@ -85,16 +101,12 @@ unsigned int
 MySQL_ResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getColumnDisplaySize");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
+	checkValid();
+	checkColumnIndex(columnIndex);
 
-		int ret = mysql_fetch_field_direct(result->get(), columnIndex - 1)->length;
-		CPP_INFO_FMT("column=%u name=%s display_size=%d", columnIndex, mysql_fetch_field_direct(result->get(), columnIndex - 1)->name, ret);
-		return ret;
-	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	int ret = getFieldMeta(columnIndex)->length;
+	CPP_INFO_FMT("column=%u name=%s display_size=%d", columnIndex, getFieldMeta(columnIndex)->name, ret);
+	return ret;
 }
 /* }}} */
 
@@ -104,13 +116,10 @@ std::string
 MySQL_ResultSetMetaData::getColumnLabel(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getColumnLabel");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		return mysql_fetch_field_direct(result->get(), columnIndex - 1)->name;
-	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	return getFieldMeta(columnIndex)->name;
 }
 /* }}} */
 
@@ -120,13 +129,10 @@ std::string
 MySQL_ResultSetMetaData::getColumnName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getColumnName");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		return mysql_fetch_field_direct(result->get(), columnIndex - 1)->name;
-	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	return getFieldMeta(columnIndex)->name;
 }
 /* }}} */
 
@@ -136,15 +142,10 @@ int
 MySQL_ResultSetMetaData::getColumnType(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getColumnType");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		return sql::mysql::util::mysql_type_to_datatype(
-				mysql_fetch_field_direct(result->get(), columnIndex - 1)
-			);
-	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	return sql::mysql::util::mysql_type_to_datatype(getFieldMeta(columnIndex));
 }
 /* }}} */
 
@@ -154,15 +155,10 @@ std::string
 MySQL_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getColumnTypeName");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		return sql::mysql::util::mysql_type_to_string(
-				mysql_fetch_field_direct(result->get(), columnIndex - 1)
-			);
-	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	return sql::mysql::util::mysql_type_to_string(getFieldMeta(columnIndex));
 }
 /* }}} */
 
@@ -172,19 +168,16 @@ unsigned int
 MySQL_ResultSetMetaData::getScale(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getScale");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		unsigned int precision = getPrecision(columnIndex);
-		unsigned int ret = mysql_fetch_field_direct(result->get(), columnIndex - 1)->length;
-		if (precision) {
-			ret = precision - ret;
-		}
-		CPP_INFO_FMT("column=%u precision=%d", columnIndex, ret);
-		return ret;
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	unsigned int precision = getPrecision(columnIndex);
+	unsigned int ret = getFieldMeta(columnIndex)->length;
+	if (precision) {
+		ret = precision - ret;
 	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	CPP_INFO_FMT("column=%u precision=%d", columnIndex, ret);
+	return ret;
 }
 /* }}} */
 
@@ -194,15 +187,12 @@ unsigned int
 MySQL_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getPrecision");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		unsigned int ret = mysql_fetch_field_direct(result->get(), columnIndex - 1)->decimals;
-		CPP_INFO_FMT("column=%u scale=%d", columnIndex, ret);
-		return ret;
-	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	unsigned int ret = getFieldMeta(columnIndex)->decimals;
+	CPP_INFO_FMT("column=%u scale=%d", columnIndex, ret);
+	return ret;
 }
 /* }}} */
 
@@ -212,14 +202,11 @@ std::string
 MySQL_ResultSetMetaData::getSchemaName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getSchemaName");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		const char * const db = mysql_fetch_field_direct(result->get(), columnIndex - 1)->db;
-		return db ? db : "";
-	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	const char * const db = getFieldMeta(columnIndex)->db;
+	return db ? db : "";
 }
 /* }}} */
 
@@ -229,13 +216,10 @@ std::string
 MySQL_ResultSetMetaData::getTableName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getTableName");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		return mysql_fetch_field_direct(result->get(), columnIndex - 1)->org_table;
-	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	return getFieldMeta(columnIndex)->org_table;
 }
 /* }}} */
 
@@ -245,14 +229,10 @@ bool
 MySQL_ResultSetMetaData::isAutoIncrement(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::isAutoIncrement");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		return (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & AUTO_INCREMENT_FLAG ) != 0;
-	}
+	checkValid();
+	checkColumnIndex(columnIndex);
 
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	return (getFieldMeta(columnIndex)->flags & AUTO_INCREMENT_FLAG ) != 0;
 }
 /* }}} */
 
@@ -262,23 +242,20 @@ bool
 MySQL_ResultSetMetaData::isCaseSensitive(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::isCaseSensitive");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		const MYSQL_FIELD * const field = mysql_fetch_field_direct(result->get(), columnIndex - 1);
-		if (field->flags & NUM_FLAG || field->type == MYSQL_TYPE_NEWDECIMAL || field->type == MYSQL_TYPE_DECIMAL) {
-			return false;
-		}
-		const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
-		if (!cs) {
-			std::ostringstream msg;
-			msg << "Server sent uknown charsetnr (" << field->charsetnr << ") . Please report";
-			throw SQLException(msg.str());
-		}
-		return NULL == strstr(cs->collation, "_ci");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	const MYSQL_FIELD * const field = getFieldMeta(columnIndex);
+	if (field->flags & NUM_FLAG || field->type == MYSQL_TYPE_NEWDECIMAL || field->type == MYSQL_TYPE_DECIMAL) {
+		return false;
 	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
+	if (!cs) {
+		std::ostringstream msg;
+		msg << "Server sent uknown charsetnr (" << field->charsetnr << ") . Please report";
+		throw SQLException(msg.str());
+	}
+	return NULL == strstr(cs->collation, "_ci");
 }
 /* }}} */
 
@@ -288,13 +265,10 @@ bool
 MySQL_ResultSetMetaData::isCurrency(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::isCurrency");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		return false;
-	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	return false;
 }
 /* }}} */
 
@@ -304,13 +278,10 @@ bool
 MySQL_ResultSetMetaData::isDefinitelyWritable(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::isDefinitelyWritable");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		return isWritable(columnIndex);
-	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	return isWritable(columnIndex);
 }
 /* }}} */
 
@@ -320,13 +291,10 @@ int
 MySQL_ResultSetMetaData::isNullable(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::isNullable");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		return mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & NOT_NULL_FLAG? columnNoNulls:columnNullable;
-	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	return getFieldMeta(columnIndex)->flags & NOT_NULL_FLAG? columnNoNulls:columnNullable;
 }
 /* }}} */
 
@@ -336,14 +304,11 @@ bool
 MySQL_ResultSetMetaData::isReadOnly(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::isReadOnly");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		const char * const db = mysql_fetch_field_direct(result->get(), columnIndex - 1)->db;
-		return !(db && strlen(db));
-	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	const char * const db = getFieldMeta(columnIndex)->db;
+	return !(db && strlen(db));
 }
 /* }}} */
 
@@ -353,13 +318,10 @@ bool
 MySQL_ResultSetMetaData::isSearchable(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::isSearchable");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		return true;
-	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	return true;
 }
 /* }}} */
 
@@ -369,16 +331,13 @@ bool
 MySQL_ResultSetMetaData::isSigned(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::isSigned");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		if (mysql_fetch_field_direct(result->get(), columnIndex - 1)->type == FIELD_TYPE_YEAR) {
-			return false;
-		}
-		return !(mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & UNSIGNED_FLAG);
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	if (getFieldMeta(columnIndex)->type == FIELD_TYPE_YEAR) {
+		return false;
 	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	return !(getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG);
 }
 /* }}} */
 
@@ -388,13 +347,10 @@ bool
 MySQL_ResultSetMetaData::isWritable(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::isWritable");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		return !isReadOnly(columnIndex);
-	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	return !isReadOnly(columnIndex);
 }
 /* }}} */
 
@@ -404,13 +360,10 @@ bool
 MySQL_ResultSetMetaData::isZerofill(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::isZerofill");
-	if (result->isValid()) {
-		if (columnIndex == 0 || columnIndex > mysql_num_fields(result->get())) {
-			throw sql::InvalidArgumentException("Invalid value for columnIndex");
-		}
-		return (mysql_fetch_field_direct(result->get(), columnIndex - 1)->flags & ZEROFILL_FLAG) != 0;
-	}
-	throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	return (getFieldMeta(columnIndex)->flags & ZEROFILL_FLAG) != 0;
 }
 /* }}} */
 
