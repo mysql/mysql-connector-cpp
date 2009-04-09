@@ -25,6 +25,8 @@ namespace classes
 
 void resultset::getInt()
 {
+  bool on_off = true;
+  con->setClientOption("clientTrace", &on_off);
   // Message for --verbose output
   logMsg("resultset::getInt - MySQL_ResultSet::getInt*");
   try
@@ -139,6 +141,8 @@ void resultset::getInt()
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
+  on_off = false;
+  con->setClientOption("clientTrace", &on_off);
 }
 
 void resultset::getTypes()
