@@ -27,7 +27,9 @@ private:
   typedef unit_fixture super;
 
 protected:
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
   void doNotImplemented();
+#endif
 
 public:
 
@@ -38,7 +40,10 @@ public:
     TEST_CASE(getTypes);
     TEST_CASE(getResultSetType);
     TEST_CASE(getTypesMinorIssues);
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
     TEST_CASE(notImplemented);
+#endif
   }
 
   /**
@@ -71,10 +76,12 @@ public:
    */
   void getTypesMinorIssues();
 
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
   /**
    * Calling methods which throw "not implemented" to detect API changes
    */
   void notImplemented();
+#endif
 
   /**
    * Calling methods which throw "not implemented" to detect API changes

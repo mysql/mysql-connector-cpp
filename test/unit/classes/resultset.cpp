@@ -706,6 +706,8 @@ void resultset::getTypesMinorIssues()
   }
 }
 
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
 void resultset::notImplemented()
 {
   logMsg("resultset::notImplemented - MySQL_ResultSet::*");
@@ -732,6 +734,7 @@ void resultset::notImplemented()
     fail(e.what(), __FILE__, __LINE__);
   }
 }
+
 
 void resultset::doNotImplemented()
 {
@@ -808,6 +811,8 @@ void resultset::doNotImplemented()
   {
   }
 }
+#endif
+
 
 void resultset::fetchBigint()
 {
@@ -821,7 +826,10 @@ void resultset::fetchBigint()
     stmt->execute("CREATE TABLE test(id BIGINT UNSIGNED)");
     stmt->execute("INSERT INTO test(id) VALUES (18446744073709551615)");
     res.reset(stmt->executeQuery("SELECT id FROM test"));
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
     doNotImplemented();
+#endif
 
     pstmt.reset(con->prepareStatement("SELECT id FROM test"));
     res.reset(pstmt->executeQuery());

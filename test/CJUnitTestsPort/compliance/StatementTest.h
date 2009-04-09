@@ -57,22 +57,19 @@ public:
     TEST_CASE(testGetUpdateCount02);
     TEST_CASE(testGetWarnings);
 
-    TEST_CASE(testSetFetchSize05);
-
-    TEST_CASE(testSetMaxFieldSize02);
-
-    TEST_CASE(testSetMaxRows02);
-    TEST_CASE(testSetQueryTimeout02);
-
     TEST_CASE(testGetResultSetType01);
     TEST_CASE(testGetResultSetType02);
 
 #ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
     TEST_CASE(testGetFetchSize);
     TEST_CASE(testGetMaxFieldSize);
+    TEST_CASE(testSetMaxFieldSize02);
     TEST_CASE(testGetMaxRows);
+    TEST_CASE(testSetMaxRows02);
     TEST_CASE(testGetQueryTimeout);
+    TEST_CASE(testSetQueryTimeout02);
     TEST_CASE(testSetFetchSize02);
+    TEST_CASE(testSetFetchSize05);
     TEST_CASE(testSetMaxFieldSize01);
     TEST_CASE(testSetMaxRows01);
 #endif
@@ -686,7 +683,6 @@ public:
    */
   /* throws std::exception * */
   void testSetFetchSize02();
-#endif
 
 
   /*
@@ -717,7 +713,6 @@ public:
   void testSetFetchSize05();
 
 
-#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
   /*
    * @testName:         testSetMaxFieldSize01
    * @assertion:        The Statement object provides methods for executing SQL
@@ -745,7 +740,6 @@ public:
    */
   /* throws std::exception * */
   void testSetMaxFieldSize01();
-#endif
 
 
   /*
@@ -777,7 +771,6 @@ public:
   void testSetMaxFieldSize02();
 
 
-#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
   /*
    * @testName:         testSetMaxRows01
    * @assertion:        The Statement object provides methods for executing SQL
@@ -803,7 +796,6 @@ public:
    */
   /* throws std::exception * */
   void testSetMaxRows01();
-#endif
 
 
   /*
@@ -829,10 +821,9 @@ public:
    *                    throw an sql::DbcException
    *
    */
-
   /* throws std::exception * */
-
   void testSetMaxRows02();
+
   /*
    * @testName:         testSetQueryTimeout02
    * @assertion:        The Statement object provides methods for executing SQL
@@ -859,7 +850,7 @@ public:
    */
   /* throws std::exception * */
   void testSetQueryTimeout02();
-
+#endif
 
   /*
   * @testName:         testGetResultSetType01

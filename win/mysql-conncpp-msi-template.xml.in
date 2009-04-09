@@ -27,9 +27,15 @@ already installed." />
           <Directory Id="MysqlLibraryDir" Name="MYSQLCPP.CON" LongName="@CONNECTOR_PRODUCT_DEST@">
             <Directory Id="INSTALLDIR" Name=".">
 
+                <Component Id="AdditionalFiles" Guid="85f15863-ccbb-40b6-8610-5afedc9fa44f" DiskId="1">
+                  <File Id="file0031" Name="README" LongName="README" Source="..\README" />
+                  <File Id="file0032" Name="COPYING" LongName="COPYING" Source="..\COPYING" />
+                </Component>
+
               <!-- *****************************************************************************************
                    include directory
                 -->
+
               <Directory Id="include" Name="include">
                 <Component Id="IncludeFiles" Guid="dfc7126d-b5b0-4ffb-b509-749523297faa" DiskId="1">
                   <File Id="file0021" Name="mydrv.h" LongName="mysql_driver.h" Source="..\driver\mysql_driver.h" />
@@ -89,6 +95,7 @@ already installed." />
 
     <Feature Id="Complete" Title="MySQL Connector C++" Description="The MySQL Connector C++ client library." Display="expand" Level="1" ConfigurableDirectory="INSTALLDIR">
         <Feature Id="ConnectorCPP" Title="Library" Description="The release library and headers." Level="1" Display="expand">
+          <ComponentRef Id="AdditionalFiles" />
           <ComponentRef Id="IncludeFiles" />
 	  <ComponentRef Id="CppconnIncludes" />
           <ComponentRef Id="ClientLibraryRelease" />
