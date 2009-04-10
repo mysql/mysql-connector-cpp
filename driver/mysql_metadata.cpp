@@ -2279,7 +2279,7 @@ const std::string&
 MySQL_ConnectionMetaData::getDriverVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverVersion");
-	static const std::string version("1.0.2-beta");
+	static const std::string version("1.0.5-beta");
 	return version;
 }
 /* }}} */
