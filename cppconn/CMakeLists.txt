@@ -41,6 +41,7 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cm ${CMAKE_CURRENT_BINARY_DI
 
 
 SET(MYSQLCPPCONN_INSTALL_HEADERS
+		build_config.h
 		config.h
 		connection.h
 		datatype.h
