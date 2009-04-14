@@ -489,18 +489,7 @@ mysql_type_to_string(const MYSQL_FIELD * const field)
 
 
 
-/* The following code is from libmysql and is under the following license */
-
-/*
-   Copyright 2000 - 2008 MySQL AB,  2008 - 2009 Sun Microsystems, Inc.
-
-   The MySQL Connector/C++ is licensed under the terms of the GPL
-   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
-   MySQL Connectors. There are special exceptions to the terms and
-   conditions of the GPL as it is applied to this software, see the
-   FLOSS License Exception
-   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-*/
+/* The following code is from libmysql */
 
 /* UTF8 according RFC 2279 */
 /* Written by Alexander Barkov <bar@udm.net> */

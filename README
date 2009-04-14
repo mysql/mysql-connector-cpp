@@ -34,22 +34,6 @@ CONTACT
  of MySQL Connector/C++.
 
 
-LICENSE
-
- MySQL Connector/C++ is licensed under the GPL.
-
- If you have licensed this product under the GPL, please see the COPYING
- file for more information.
-
- There are special exceptions to the terms and conditions of the GPL
- as it is applied to this software. View the full text of the
- exception in file EXCEPTIONS-CONNECTOR-C++ in the directory of this
- software distribution.
-
- If you need non-GPL licenses for commercial distribution please contact
- <sales@mysql.com>.
-
-
 INSTALLATION
 
   The MySQL Driver for C++ is distributed in source and binary form.
