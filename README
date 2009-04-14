@@ -58,8 +58,6 @@ INSTALLATION
   supported platforms but Windows. On Windows you either use a MSI Installer
   or unpack a ZIP archive to an appropriate place.
 
-  All binaries are static builds.
-
   Please check the Reference Manual for further information at:
 
     http://dev.mysql.com/doc/refman/6.0/en/connector-cpp.html
@@ -78,6 +76,9 @@ PREREQUISITES FOR BUILDING CONNECTOR/C++
   Typically the MySQL client library gets installed by installing
   the MySQL Server. However, check your operating system documentation for
   other installation options.
+
+  Alternatively you can install the new MySQL Connector/C. The MySQL Connector/C
+  is a standalone version of the MySQL client library.
 
   You need to have CMake 2.6.2 (http://www.cmake.org).
   NOTE: cmake binaries are available for most systems. You do not need to build
