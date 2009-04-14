@@ -36,11 +36,11 @@
 
 #ifndef _WIN32
 #  ifndef HAVE_FUNCTION_STRTOLL
-#    define strtoll(__a, __b, __c)  static_cast<long long>(sql::mysql::strtold((__a), NULL))
+#    define strtoll(__a, __b, __c)  static_cast<long long>(sql::mysql::util::strtold((__a), NULL))
 #    define HAVE_FUNCTION_STRTOLL 1
 #  endif
 #  ifndef HAVE_FUNCTION_STRTOULL
-#    define strtoull(__a, __b, __c)  static_cast<unsigned long long>(sql::mysql::strtold((__a), NULL))
+#    define strtoull(__a, __b, __c)  static_cast<unsigned long long>(sql::mysql::util::strtold((__a), NULL))
 #    define HAVE_FUNCTION_STRTOULL 1
 #  endif
 #else
