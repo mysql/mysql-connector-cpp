@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.
+   Copyright 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.  All rights reserved.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -492,7 +492,7 @@ mysql_type_to_string(const MYSQL_FIELD * const field)
 /* The following code is from libmysql and is under the following license */
 
 /*
-   Copyright (C) 2000 - 2008 MySQL AB,  2008 - 2009 Sun Microsystems, Inc.
+   Copyright 2000 - 2008 MySQL AB,  2008 - 2009 Sun Microsystems, Inc.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
