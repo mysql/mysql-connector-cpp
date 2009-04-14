@@ -132,8 +132,6 @@ IF(WIN32)
 ENDIF(WIN32)
 MESSAGE(STATUS "Installation path is: ${CMAKE_INSTALL_PREFIX}   (overwrite with -DCMAKE_INSTALL_PREFIX=/your/path)")
 
-# thread module build is disabled at the moment
-#ADD_SUBDIRECTORY(thread)
 
 ADD_SUBDIRECTORY(cppconn)
 ADD_SUBDIRECTORY(driver)
