@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2008 MySQL AB, 2008 Sun Microsystems, Inc
+/* Copyright 2000-2008 MySQL AB, 2008 Sun Microsystems, Inc.  All rights reserved.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -826,7 +826,7 @@ int my_pthread_fastmutex_init(my_pthread_fastmutex_t *mp,
 
   x_{k+1} = (x_k g) mod n
 
-  Popular pair of parameters: n = 2^32 − 5 = 4294967291 and g = 279470273.
+  Popular pair of parameters: n = 2^32 �− 5 = 4294967291 and g = 279470273.
   The period of the generator is about 2^31.
   Largest value that can be returned: 2147483646 (RAND_MAX)
 

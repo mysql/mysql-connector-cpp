@@ -1,6 +1,6 @@
 <?php
 /*
-   Copyright 2008-2009 Sun Microsystems, Inc.
+   Copyright 2008-2009 Sun Microsystems, Inc.  All rights reserved.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most

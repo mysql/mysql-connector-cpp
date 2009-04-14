@@ -1,5 +1,4 @@
-
-GA  1.0.5 - 2009-04-xx
+GA  1.0.5 - 2009-04-20
 
 - Changed the interface of sql::ConnectionMetaData, sql::ResultSetMetaData
   and sql::ParameterMetaData to have a protected destructor. In this way the
@@ -45,7 +44,7 @@ GA  1.0.5 - 2009-04-xx
   being thrown. (Andrey)
 
 
-Beta 1.0.4 - 2009-03-31
+Beta   1.0.4 - 2009-03-31
 
 - Prepared support for upcoming Connector/C. (Georg)
 
