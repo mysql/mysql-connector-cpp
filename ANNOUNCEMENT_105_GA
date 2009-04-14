@@ -1,33 +1,32 @@
-
 Dear MySQL Users,
 
 the first GA (general availability) version of MySQL Connector/C++ has been made available: MySQL Connector/C++ 1.0.5 GA. The MySQL Connector/C++ provides a C++ API for connecting client applications to the MySQL Server 5.1 or newer. You can download the production release at:
 
  http://dev.mysql.com/downloads/connector/cpp/1.0.html
 
-[TODO]
+The MySQL driver for C++ offers an easy to use API derived from JDBC 4.0. We use the MySQL Connector/C++ in two of our own products. A development version of MySQL Workbench is using it successfully since months. MySQL Connector/OpenOffice.org, an OpenOffice.org 3.1 extension, is a thin wrapper around the MySQL driver for C++.
 
-The 1.0.4beta contains all major features scheduled for GA. There are no known bugs. This is the first combined binary and source release. You can choose between compiling the driver yourself or using a pre-compiled binary.
+We have improved the driver and added a couple of new features since the last beta release. Please see the documentation and the CHANGES file in the source distribution for a detailed description of bugs that have been fixed. The following features have been added:
 
-We have fixed numerous bugs and added new features since the last alpha release. Please see the documentation and the CHANGES file in the source distribution for a detailed description of bugs that have been fixed. The following eatures have been added:
+ - Introduced unbuffered fetch for Statement. (Andrey)
+ - Improved the memory management to not leak in exceptional situations. (Andrey)
+ - ConnectionMetaData, ResultSetMetaData, ParameterMetaData now allow
+   statements like: connection->getMetaData->getSchema(). (Lawrin, Andrey)
+ - Added SunConnect support to MSI installer. (Iggy, Lawrin)
+ - Added "defaultStatementResultType" to MySQL_Connection::setClientOption(). (Andrey)
+ - Added Result::getType() to the three result set classes. (Andrey)
+ - Added better support for named pipes, on Windows. (Andrey)
+ - Fixed a bug in MySQL_Connection::setSessionVariable(). (Andrey)
+ - Fixed the interface of sql::Driver and sql::Connection
+   so they accept the options map by alias instead of by value. (Andrey)
 
-  - Added Windows installer. (Georg)
-  - Implemented MySQL_ConnectionMetaData::supportsConvert(from, to). (Andrey)
-  - Introduced sql::DataType::YEAR to complement MySQL's YEAR type. (Andrey)
-  - Introduced PreparedStatement::getMetaData(). (Andrey)
-  - Introduced ResultSetMetaData::isZerofill(). (Andrey)
-  - Added "metadataUseInfoSchema" to connection propery map which allows you
-    to control the use of the INFORMATION_SCHEMA for meta data. (Andrey)
-
-You can find further details, including usage examples, on the projects MySQL Forge wiki page at:
-
-  http://forge.mysql.com/wiki/Connector_C%2B%2B
-
-A first documentation draft is available at:
+You can find further details, including usages examples, in the documentation at:
 
   http://dev.mysql.com/doc/refman/6.0/en/connector-cpp.html
 
-Please note, the MySQL Connector/C++ is released as an alpha version. We do not recommend using the driver in production environments or systems with critical data. Please note, official support is not available for the alpha version of Connector/C++.
+The projects MySQL Forge wiki page is at:
+
+  http://forge.mysql.com/wiki/Connector_C%2B%2B
 
 Feedback, bug reports, bug fixes, patches and so on are welcome and appreciated:
 
