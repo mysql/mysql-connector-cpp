@@ -36,27 +36,11 @@
 
 #ifndef _WIN32
 #  ifndef HAVE_FUNCTION_STRTOLL
-#    if 1
-#      define strtoll(__a, __b, __c)  static_cast<long long>(sql::mysql::strtold((__a), NULL))
-#    elif defined(HAVE_FUNCTION_STRTOL)
-#      define strtoll(__a, __b, __c) strtol((__a), (__b), (__c))
-#    elif defined(HAVE_FUNCTION_STRTOIMAX)
-#      define strtoll(__a, __b, __c) strtoimax((__a), NULL, 10)
-#    else
-#      error "Compilation will fail because code does not know an equivalent of strtol/strtoll"
-#    endif
+#    define strtoll(__a, __b, __c)  static_cast<long long>(sql::mysql::strtold((__a), NULL))
 #    define HAVE_FUNCTION_STRTOLL 1
 #  endif
 #  ifndef HAVE_FUNCTION_STRTOULL
-#    if 1
-#      define strtoll(__a, __b, __c)  static_cast<unsigned long long>(sql::mysql::strtold((__a), NULL))
-#    elif defined(HAVE_FUNCTION_STRTOUL)
-#      define strtoull(__a, __b, __c) strtoul((__a), (__b), (__c))
-#    elif defined(HAVE_FUNCTION_STRTOUMAX)
-#      define strtoull(__a, __b, __c) strtoumax((__a), NULL, 10)
-#    else
-#      error Compilation will fail because code does not know an equivalent of strtoul/strtoull
-#    endif
+#    define strtoull(__a, __b, __c)  static_cast<unsigned long long>(sql::mysql::strtold((__a), NULL))
 #    define HAVE_FUNCTION_STRTOULL 1
 #  endif
 #else
