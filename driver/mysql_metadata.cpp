@@ -1486,7 +1486,7 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 
 				// this is a hack for views listed as tables
 				int colIdx = sql_rs->findColumn(ddl_column);
-				if ((colIdx == -1) && (obj_type.compare("table") == 0))
+				if ((colIdx == 0) && (obj_type.compare("table") == 0))
 					colIdx = sql_rs->findColumn(view_ddl_column);
 
 				ddl = sql_rs->getString(colIdx);
