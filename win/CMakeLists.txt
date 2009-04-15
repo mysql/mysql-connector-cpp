@@ -78,8 +78,8 @@ STRING(STRIP ${CONNECTOR_PKG_ID2} CONNECTOR_PKG_ID2)
 
 # check if wix is in current path #
 FIND_PATH(CONNECTOR_WIX_DIR candle.exe
-	$ENV{WIX_DIR}/bin
-	$ENV{ProgramFiles}/wix/bin
+        $ENV{WIX_DIR}/bin
+        $ENV{ProgramFiles}/wix/bin
         $ENV{ProgramFiles}/Windows Installer */bin)
 
 IF(NOT CONNECTOR_WIX_DIR)
@@ -100,32 +100,29 @@ IF (CONNECTOR_SIGNED)
   ENDIF(NOT HAVE_SIGNTOOL)
 ENDIF (CONNECTOR_SIGNED)
 
+SET(WIXOUT "mysql-connector-c++-${CONNECTOR_PRODUCT_VERSION}-${CONNECTOR_PLATFORM}")
+
+SET(ProductURN "MSQZP-100-ZZZZ")
+
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/mysql-conncpp-msi-template.xml.in
                ${CMAKE_CURRENT_SOURCE_DIR}/mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.xml @ONLY)
 
-SET(WIXOUT "mysql-connector-c++-${CONNECTOR_PRODUCT_VERSION}-${CONNECTOR_PLATFORM}")
-
 MESSAGE(STATUS "${WIXOUT}")
-       
-ADD_CUSTOM_COMMAND(OUTPUT "${WIXOUT}.wixobj"
-		   COMMAND ${CONNECTOR_WIX_DIR}/candle -out ${WIXOUT}.wixobj mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.xml)
 
-ADD_CUSTOM_COMMAND(OUTPUT "mysql-conncpp-msi-ui.wixobj"
-                   COMMAND ${CONNECTOR_WIX_DIR}/candle -out mysql-conncpp-msi-ui.wixobj mysql-conncpp-msi-ui.xml
-                   DEPENDS "${WIXOUT}.wixobj")
- 
+ADD_CUSTOM_COMMAND(OUTPUT "${WIXOUT}.wixobj"
+                   COMMAND ${CONNECTOR_WIX_DIR}/candle mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.xml mysql-conncpp-msi-ui.xml mysql-conncpp-msi-registration.xml)
+
 ADD_CUSTOM_COMMAND(OUTPUT ${WIXOUT}.msi
-                   COMMAND ${CONNECTOR_WIX_DIR}/light -o ${WIXOUT}.msi ${WIXOUT}.wixobj mysql-conncpp-msi-ui.wixobj ${CONNECTOR_WIX_DIR}/WixUI.wixlib -loc
-${CONNECTOR_WIX_DIR}/WixUI_en-us.wxl
-                   DEPENDS "mysql-conncpp-msi-ui.wixobj")
+                   COMMAND ${CONNECTOR_WIX_DIR}/light -o ${WIXOUT}.msi mysql-connector-c++-${CONNECTOR_PRODUCT_VERSION}-${CONNECTOR_PLATFORM}.wixobj mysql-conncpp-msi-ui.wixobj mysql-conncpp-msi-registration.wixobj ${CONNECTOR_WIX_DIR}/WixUI.wixlib ${CONNECTOR_WIX_DIR}/wixca.wixlib -loc ${CONNECTOR_WIX_DIR}/WixUI_en-us.wxl
+                   DEPENDS "${WIXOUT}.wixobj")
 
 
 ADD_CUSTOM_TARGET(MSI ALL DEPENDS "${WIXOUT}.msi")
 
 IF(CONNECTOR_SIGNED)
   ADD_CUSTOM_COMMAND(OUTPUT "${WIXOUT}.msi.md5"
-			COMMAND signtool sign -a -d "MySQL Connector C++ ${CONECTOR_PRODUCT_VERSION}" -du "http://www.mysql.com" -t "http://timestamp.verisign.com/scripts/timestamp.dll" ${WIXOUT}.msi
-			COMMAND md5sum ${WIXOUT}.msi > ${WIXOUT}.msi.md5)
-			ADD_CUSTOM_TARGET(MSI_SIGNED ALL DEPENDS "${WIXOUT}.msi.md5")
+                     COMMAND signtool sign -a -d "MySQL Connector C++ ${CONECTOR_PRODUCT_VERSION}" -du "http://www.mysql.com" -t "http://timestamp.verisign.com/scripts/timestamp.dll" ${WIXOUT}.msi
+                     COMMAND md5sum ${WIXOUT}.msi > ${WIXOUT}.msi.md5)
+  ADD_CUSTOM_TARGET(MSI_SIGNED ALL DEPENDS "${WIXOUT}.msi.md5")
 ENDIF(CONNECTOR_SIGNED)
 

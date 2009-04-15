@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
   <Fragment>
+    <!-- Custom version of WelcomeDialog.  Original source WelcomeDialog.wxs from wixui -->
     <UI>
       <Dialog Id="MySQL_WelcomeDlg" Width="370" Height="270" Title="$(loc.WelcomeDlg_Title)">
         <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="$(loc.WixUINext)">
@@ -27,7 +28,38 @@
         <Show Dialog="MySQL_WelcomeDlg" Before="ProgressDlg">NOT Installed</Show>
       </InstallUISequence>
     </UI>
-    <UI Id="WixUI_MySQLConnector">
+
+    <!-- Custom version of ExitDialog.  Original source ExitDialog.wxs from wixui -->
+    <UI>
+      <Dialog Id="MySQL_ExitDialog" Width="370" Height="270" Title="$(loc.ExitDialog_Title)">
+        <Control Id="Finish" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Cancel="yes" Text="$(loc.WixUIFinish)">
+          <Publish Event="DoAction" Value="PostRegistration.SetProperty">RegisterServer and not Installed and ACTION="INSTALL"</Publish>
+          <Publish Event="DoAction" Value="PostRegistration">RegisterServer and not Installed and ACTION="INSTALL"</Publish>
+          <Publish Event="EndDialog" Value="Return">1</Publish>
+        </Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Disabled="yes" Text="$(loc.WixUICancel)" />
+        <Control Id="Bitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="234" TabSkip="no" Text="$(loc.ExitDialogBitmap)" />
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Disabled="yes" Text="$(loc.WixUIBack)" />
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+        <Control Id="Description" Type="Text" X="135" Y="70" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="$(loc.ExitDialogDescription)" />
+        <Control Id="Title" Type="Text" X="135" Y="20" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="$(loc.ExitDialogTitle)" />
+        <!-- Default Above. Custom Below -->
+        <Control Id="LaunchCheckBox" Type="CheckBox" X="10" Y="243" Width="170" Height="17" Hidden="yes" Property="RegisterServer" Integer="yes" CheckBoxValue="1" Text=" Register [ProductName] with Sun.">
+            <Condition Action="show">NOT Installed</Condition>
+        </Control>
+      </Dialog>
+
+      <InstallUISequence>
+        <Show Dialog="MySQL_ExitDialog" OnExit="success" />
+      </InstallUISequence>
+
+      <AdminUISequence>
+        <Show Dialog="MySQL_ExitDialog" OnExit="success" />
+      </AdminUISequence>
+    </UI>
+
+    <!-- Custom version of WiXUI_Mondo.  Original source WixUI_Mondo.wxs from wixui -->
+    <UI Id="MySQL_Connector_UI">
       <TextStyle Id="WixUI_Font_Normal" FaceName="Tahoma" Size="8" />
       <TextStyle Id="WixUI_Font_Bigger" FaceName="Tahoma" Size="12" />
       <TextStyle Id="WixUI_Font_Title" FaceName="Tahoma" Size="9" Bold="yes" />
@@ -37,7 +69,7 @@
 
       <DialogRef Id="CustomizeDlg" />
       <DialogRef Id="ErrorDlg" />
-      <DialogRef Id="ExitDialog" />
+      <DialogRef Id="MySQL_ExitDialog" />
       <DialogRef Id="FatalError" />
       <DialogRef Id="FilesInUse" />
       <DialogRef Id="LicenseAgreementDlg" />
