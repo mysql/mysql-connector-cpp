@@ -1,0 +1,128 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<Wix>
+    <!-- Properties -->
+    <Fragment Id='ServiceTagProperties'>
+        <Property Id='STCLIENT'>
+            <DirectorySearch Path='[ProgramFilesFolder]\Sun\servicetag' Depth='1' Id='FindSTClient'>
+                <FileSearch Name='stclient.exe' />
+            </DirectorySearch>
+        </Property>
+        <Property Id='WindowsVerName' Value='Unk' />
+        <Property Id='WindowsVerSP' Value=' '/>
+        <Property Id='WMIQuery' Value='Set via CustomActions' />
+        <Property Id='NewURN' Value='Set via CustomActions' />
+        <Property Id='InstanceUrn' Value=' ' />
+        <Property Id='RegistryUrn' Value=' ' />
+        <Property Id="RegisterServer">1</Property>
+    </Fragment>
+
+    <!-- Custom Actions -->
+    <Fragment>
+        <!-- OS String Generation -->
+        <CustomAction Id='SetWin2K' Property='WindowsVerName' Value='Microsoft Windows 2000' />
+        <CustomAction Id='SetWinXP' Property='WindowsVerName' Value='Microsoft Windows XP' />
+        <CustomAction Id='SetWin2K3' Property='WindowsVerName' Value='Microsoft Windows 2003' />
+        <CustomAction Id='SetWinVista' Property='WindowsVerName' Value='Microsoft Windows Vista' />
+        <CustomAction Id='SetWin2K8' Property='WindowsVerName' Value='Microsoft Windows 2008' />
+        <CustomAction Id='SetSP' Property='WindowsVerSP' Value='SP([ServicePackLevel])' />
+        <!-- WMI Queries -->
+        <CustomAction Id='SetCPUManufactQuery' Property='WMIQuery' Value='SELECT Manufacturer FROM Win32_Processor' />
+        <CustomAction Id='QWMICPUMan' BinaryKey='mysqlca' DllEntry='CAQueryWMI' Execute='immediate' Return='ignore' />
+        <CustomAction Id='SetSerialNumberQuery' Property='WMIQuery' Value='SELECT SerialNumber FROM Win32_BIOS' />
+        <CustomAction Id='QWMISerNum' BinaryKey='mysqlca' DllEntry='CAQueryWMI' Execute='immediate' Return='ignore' />
+        <CustomAction Id='SetMakeModelQuery' Property='WMIQuery' Value='SELECT Model, Manufacturer FROM Win32_ComputerSystem' />
+        <CustomAction Id='QWMIMakMod' BinaryKey='mysqlca' DllEntry='CAQueryWMI' Execute='immediate' Return='ignore' />
+        <!-- Generate URNs -->
+        <CustomAction Id='GenInstanceUrn' BinaryKey='mysqlca' DllEntry='CACreateURN' Execute='immediate' Return='ignore' />
+        <CustomAction Id='SetInstanceUrn' Property='InstanceUrn' Value='[NewURN]' />
+        <CustomAction Id='GenRegistryUrn' BinaryKey='mysqlca' DllEntry='CACreateURN' Execute='immediate' Return='ignore' />
+        <CustomAction Id='SetRegistryUrn' Property='RegistryUrn' Value='[NewURN]' />
+        <!-- Set registration Date Time -->
+        <CustomAction Id='SetDateTime' BinaryKey='mysqlca' DllEntry='CASetRegDateTime' Execute='immediate' Return='check' />
+        <!-- Update Offline Registration -->
+        <CustomAction Id="UpdateRegistration.SetProperty" Return="check" Property="UpdateRegistration" Value="[INSTALLDIR]" />
+        <CustomAction Id="UpdateRegistration" BinaryKey="mysqlca" DllEntry="CAUpdateOfflineReg" Execute="deferred" Return="ignore" HideTarget="yes" Impersonate="no"/>
+        <!-- POST Registration to RegistrationRelay Service if no STCLIENT -->
+        <CustomAction Id="PostRegistration.SetProperty" Return="check" Property="PostRegistration" Value="[INSTALLDIR]" />
+        <CustomAction Id="PostRegistration" BinaryKey="mysqlca" DllEntry="CASendServiceTag" Execute="immediate" Return="asyncNoWait" HideTarget="yes"/>
+        <!-- Use Service Tag Client Registration -->
+        <CustomAction Id='STClientRegister.SetProperty' Property='QtExecCmdLine' 
+        Value='"[STCLIENT]" -a -i [InstanceUrn] -p "[ProductName]" -e [ProductVersion] -t [ProductURN] -S [RegistrationPackage].msi -F N/A -P N/A -m "[Manufacturer]" -A [%PROCESSOR_ARCHITECTURE] -z N/A -I -1' />
+        <CustomAction Id='STClientRegister' BinaryKey='wixca' DllEntry='CAQuietExec' Execute='immediate' Return='check'/>
+    </Fragment>
+
+    <!-- Define the servicetag and offline regirations files. -->
+    <Fragment>
+     <Icon Id='SunReg.exe' src='./registration/webpage.ico' />
+     <DirectoryRef Id='INSTALLDIR'>
+          <Component Id='Registration' Guid='F3F8CC64-6169-4b23-9972-9C56855AF39A'>
+               <File Id='RegisterSVCTag' Name='register.htm' Source='./registration/register.htm' DiskId='1'>
+                    <Shortcut Id='RegisterSVCTag.Shortcut' Directory='MySQLProductMenuFolder' Name='Register' 
+                               LongName='SunInventory Registration'
+                               Description='SunInventory Registration'
+                               Icon='SunReg.exe' IconIndex='0' />
+               </File>
+               <File Id='XmlSettings' Name='svctag.xml' Source='./registration/svctag.xml' DiskId='1' />
+               <File Id='RegisterLoginHeader' Name='loginhdr.jpg' Source='./registration/loginhdr.jpg' DiskId='1' />
+               <XmlFile Id='XmlSettings1' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[%COMPUTERNAME]' ElementPath='//registration_data/environment/hostname' Sequence='1' />
+               <XmlFile Id='XmlSettings2' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[%OS]' ElementPath='//registration_data/environment/osName' Sequence='2' />
+               <XmlFile Id='XmlSettings3' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[WindowsVerName] [WindowsVerSP] ([VersionNT].[WindowsBuild])' ElementPath='//registration_data/environment/osVersion' Sequence='3' />
+               <XmlFile Id='XmlSettings4' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[%PROCESSOR_ARCHITECTURE]' ElementPath='//registration_data/environment/osArchitecture' Sequence='4' />
+               <XmlFile Id='XmlSettings5' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[ComputerSystem_Model]' ElementPath='//registration_data/environment/systemModel' Sequence='5' />
+               <XmlFile Id='XmlSettings6' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[ComputerSystem_Manufacturer]' ElementPath='//registration_data/environment/systemManufacturer' Sequence='6' />
+               <XmlFile Id='XmlSettings7' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[Processor_Manufacturer]' ElementPath='//registration_data/environment/cpuManufacturer' Sequence='7' />
+               <XmlFile Id='XmlSettings8' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[BIOS_SerialNumber]' ElementPath='//registration_data/environment/serialNumber' Sequence='8' />
+               <XmlFile Id='XmlSettings9' File='[INSTALLDIR]svctag.xml' Action='setValue' Name='urn' Value='[RegistryUrn]' ElementPath='//registration_data/registry' Sequence='9' />
+               <XmlFile Id='XmlSettings10' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[InstanceUrn]' ElementPath='//registration_data/registry/service_tag/instance_urn' Sequence='10' />
+               <XmlFile Id='XmlSettings11' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[ProductName]' ElementPath='//registration_data/registry/service_tag/product_name' Sequence='11' />
+               <XmlFile Id='XmlSettings12' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[ProductVersion]' ElementPath='//registration_data/registry/service_tag/product_version' Sequence='12' />
+               <XmlFile Id='XmlSettings13' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[ProductURN]' ElementPath='//registration_data/registry/service_tag/product_urn' Sequence='13' />
+               <XmlFile Id='XmlSettings14' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='N/A' ElementPath='//registration_data/registry/service_tag/product_parent_urn' Sequence='14' />
+               <XmlFile Id='XmlSettings15' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='license=gpl' ElementPath='//registration_data/registry/service_tag/product_defined_inst_id' Sequence='15' />
+               <XmlFile Id='XmlSettings16' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[Manufacturer]' ElementPath='//registration_data/registry/service_tag/product_vendor' Sequence='16' />
+               <XmlFile Id='XmlSettings17' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[SysDateTime]' ElementPath='//registration_data/registry/service_tag/timestamp' Sequence='17' />
+               <XmlFile Id='XmlSettings18' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[RegistrationPackage].msi' ElementPath='//registration_data/registry/service_tag/source' Sequence='18' />
+          </Component>
+     </DirectoryRef>
+    </Fragment>
+
+    <!-- Update properties needed for Service Tag. -->
+    <Fragment Id='ServiceTagActions'>
+     <InstallExecuteSequence>
+          <!-- Formatted ENV variables -->
+          <Custom Action='SetWin2K' After='InstallInitialize'>(VersionNT = 500) AND (WindowsBuild = 2195)</Custom>
+          <Custom Action='SetWinXP' After='SetWin2K'>(VersionNT = 501) AND (WindowsBuild = 2600)</Custom>
+          <Custom Action='SetWin2K3' After='SetWinXP'>(VersionNT = 502) AND (WindowsBuild = 3790)</Custom>
+          <Custom Action='SetWinVista' After='SetWin2K3'>(VersionNT = 600) AND (WindowsBuild = 6000)</Custom>
+          <Custom Action='SetWin2K8' After='SetWinVista'>(VersionNT = 600) AND (WindowsBuild = 6001)</Custom>
+          <Custom Action='SetSP' After='SetWin2K8'>ServicePackLevel</Custom>
+          <!-- WMI Queries -->
+          <Custom Action='SetCPUManufactQuery' After='SetSP' />
+          <Custom Action='QWMICPUMan' After='SetCPUManufactQuery' />
+          <Custom Action='SetSerialNumberQuery' After= 'QWMICPUMan' />
+          <Custom Action='QWMISerNum' After='SetSerialNumberQuery' />
+          <Custom Action='SetMakeModelQuery' After= 'QWMISerNum' />
+          <Custom Action='QWMIMakMod' After='SetMakeModelQuery' />
+          <!-- Local URNs -->
+          <Custom Action='GenInstanceUrn' After='QWMIMakMod' />
+          <Custom Action='SetInstanceUrn' After='GenInstanceUrn' />
+          <Custom Action='GenRegistryUrn' After='SetInstanceUrn' />
+          <Custom Action='SetRegistryUrn' After='GenRegistryUrn' />
+          <!-- Date/Time -->
+          <Custom Action='SetDateTime' After='SetRegistryUrn' />
+          <!-- Update Offline Registration -->
+          <Custom Action='UpdateRegistration.SetProperty' After='PublishProduct'>NOT Installed And ACTION="INSTALL"</Custom>
+          <Custom Action='UpdateRegistration' After='UpdateRegistration.SetProperty'>NOT Installed And ACTION="INSTALL"</Custom>
+          <!-- The POST Registration CustomAction is triggered by the UI's Finish button in mysql_common_ui.xml. -->
+          <!-- Use local servicetag client if available -->
+          <Custom Action='STClientRegister.SetProperty' Before='STClientRegister'>STCLIENT And NOT Installed And ACTION="INSTALL"</Custom>
+          <Custom Action='STClientRegister' Before='InstallFinalize'>STCLIENT And NOT Installed And ACTION="INSTALL"</Custom>
+     </InstallExecuteSequence>
+    </Fragment>
+
+    <!-- WiX Query WMI Custom Action DLL Definition -->
+    <Fragment>
+     <Binary Id='mysqlca' SourceFile='./registration/mysql_ca.dll' />
+     <Binary Id="wixca" src="wixca.dll"/>
+    </Fragment>
+</Wix>

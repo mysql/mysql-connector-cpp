@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<registration_data version="1.0">
+  <environment>
+    <hostname></hostname>
+    <hostId />
+    <osName></osName>
+    <osVersion></osVersion>
+    <osArchitecture></osArchitecture>
+    <systemModel></systemModel>
+    <systemManufacturer></systemManufacturer>
+    <cpuManufacturer></cpuManufacturer>
+    <serialNumber></serialNumber>
+  </environment>
+  <registry version="1.0">
+    <service_tag>
+      <instance_urn></instance_urn>
+      <product_name></product_name>
+      <product_version></product_version>
+      <product_urn></product_urn>
+      <product_parent_urn></product_parent_urn>
+      <product_parent>N/A</product_parent>
+      <product_defined_inst_id></product_defined_inst_id>
+      <product_vendor></product_vendor>
+      <platform_arch>Windows</platform_arch>
+      <timestamp></timestamp>
+      <container />
+      <source></source>
+      <installer_uid>-1</installer_uid>
+    </service_tag>
+  </registry>
+</registration_data>
+
