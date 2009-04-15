@@ -5,7 +5,6 @@ Copyright 2007-2008 MySQL AB, 2008-2009 Sun Microsystems Inc.
 CONTENTS
 
  * Contact
- * License
  * Installation
  * Prerequisites for building Connector/C++
  * Building on Unix
@@ -29,9 +28,6 @@ CONTACT
  For sales related questions please write to <sales@mysql.com>.
 
  See also http://forge.mysql.com/wiki/Connector_C%2B%2B .
-
- Please note, official support is not available for the alpha version
- of MySQL Connector/C++.
 
 
 INSTALLATION
