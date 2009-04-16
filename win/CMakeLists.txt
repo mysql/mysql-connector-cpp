@@ -78,6 +78,8 @@ STRING(STRIP ${CONNECTOR_PKG_ID2} CONNECTOR_PKG_ID2)
 
 # check if wix is in current path #
 FIND_PATH(CONNECTOR_WIX_DIR candle.exe
+        $ENV{CONNECTOR_WIX_DIR}
+        $ENV{WIX_DIR}
         $ENV{WIX_DIR}/bin
         $ENV{ProgramFiles}/wix/bin
         $ENV{ProgramFiles}/Windows Installer */bin)
@@ -113,7 +115,7 @@ ADD_CUSTOM_COMMAND(OUTPUT "${WIXOUT}.wixobj"
                    COMMAND ${CONNECTOR_WIX_DIR}/candle mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.xml mysql-conncpp-msi-ui.xml mysql-conncpp-msi-registration.xml)
 
 ADD_CUSTOM_COMMAND(OUTPUT ${WIXOUT}.msi
-                   COMMAND ${CONNECTOR_WIX_DIR}/light -o ${WIXOUT}.msi mysql-connector-c++-${CONNECTOR_PRODUCT_VERSION}-${CONNECTOR_PLATFORM}.wixobj mysql-conncpp-msi-ui.wixobj mysql-conncpp-msi-registration.wixobj ${CONNECTOR_WIX_DIR}/WixUI.wixlib ${CONNECTOR_WIX_DIR}/wixca.wixlib -loc ${CONNECTOR_WIX_DIR}/WixUI_en-us.wxl
+                   COMMAND ${CONNECTOR_WIX_DIR}/light -o ${WIXOUT}.msi mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.wixobj mysql-conncpp-msi-ui.wixobj mysql-conncpp-msi-registration.wixobj ${CONNECTOR_WIX_DIR}/WixUI.wixlib ${CONNECTOR_WIX_DIR}/wixca.wixlib -loc ${CONNECTOR_WIX_DIR}/WixUI_en-us.wxl
                    DEPENDS "${WIXOUT}.wixobj")
 
 

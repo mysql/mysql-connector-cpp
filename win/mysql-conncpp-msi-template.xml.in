@@ -2,6 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
   <Product Id="@CONNECTOR_PKG_ID1@" Name="MySQL Connector C++ @CONNECTOR_PRODUCT_VERSION@" Language="1033" Version="@CONNECTOR_PRODUCT_VERSION@" Manufacturer="Sun Microsystems" UpgradeCode="fe990d78-8bb1-4880-930a-0430e707f3ca">
     <Package Id="@CONNECTOR_PKG_ID2@" Keywords="Installer,MSI,Database" Description="MySQL C++ Connector @CONNECTOR_PRODUCT_VERSION@" InstallerVersion="200" Platforms="@CONNECTOR_PLATFORM@" Compressed="yes" SummaryCodepage="1252" />
+    <!--?include mysql-conncpp-msi-arpprops.xml ?-->
 
 <!-- Check for installed applications -->
     <CustomAction Id="NewerVersionInstalled" Error="A newer version of this product is
@@ -28,7 +29,7 @@ already installed." />
               <Directory Id="DesktopFolder" Name=".">
                 <Directory Id="ProgramMenuFolder" Name=".">
                   <Directory Id="MySQLProgramMenuFolder" Name="MySQL">
-                    <Directory Id="MySQLProductMenuFolder" Name="MySQLPMF" LongName="MySQL Connector C @CONNECTOR_PRODUCT_VERSION@" />
+                    <Directory Id="MySQLProductMenuFolder" Name="MySQLPMF" LongName="MySQL Connector C++ @CONNECTOR_PRODUCT_VERSION@" />
                   </Directory>
                 </Directory>
               </Directory>
@@ -111,6 +112,7 @@ already installed." />
             <ComponentRef Id="ClientLibraryDebug" />
           </Feature>
         </Feature>
+        <ComponentRef Id="Registration" />
     </Feature>
 
     <Property Id="RegistrationPackage">@WIXOUT@</Property>
