@@ -55,11 +55,97 @@ function printWiki($fname) {
 		}
 	}
 
+	$platform = ucfirst(substr(trim(basename($fname)), 0, -4));
+
+	$platform_mapping = array(
+		'Aix5.2-ppc32'			=> 'AIX 5.2 (POWER, 32bit)',
+		'Aix5.2-ppc64'			=> 'AIX 5.2 (POWER, 64-bit)',
+		'Aix5.3-ppc32'			=> 'AIX 5.3 (POWER, 32-bit)',
+		'Aix5.3-ppc64'			=> 'AIX 5.3 (POWER, 64-bit)',
+		'Freebsd6-x86_64'		=> 'FreeBSD 6.x (x86_64)',
+		'Freebsd6-x86'			=> 'FreeBSD 6.x (x86)',
+		'Freebsd7-x86_64'		=> 'FreeBSD 7.x (x86_64)',
+		'Freebsd7-x86'			=> 'FreeBSD 7.x (x86)',
+		'Hpux11.11-hppa32'	=> 'HP-UX 11.11 (PA-RISC 1.1, 32-bit only)',
+		'Hpux11.11-hppa64' 	=> 'HP-UX 11.11 (PA-RISC 2.0, 64-bit only)',
+		'Hpux11.23-ia64'		=> 'HP-UX 11.23 (IA64, 64-bit)',
+		'I5os-ppc32'				=> 'i5/OS (POWER, 32-bit)',
+		'I5os-ppc64'				=> 'i5/OS (POWER, 64-bit)',
+		'Linux-ia64'				=> 'Linux (IA64)',
+		'Linux-x86_64'			=> 'Linux (AMD64 / Intel EM64T)',
+		'Linux-x86' 				=> 'Linux (x86)',
+		'Linux-rhel4-ia64'	=> 'Red Hat Enterprise Linux 4 (IA64)',
+		'Linux-rhel4-x86_64'=> 'Red Hat Enterprise Linux 4 (AMD64 / Intel EM64T)',
+		'Linux-rhel4-x86'		=> 'Red Hat Enterprise Linux 4 (x86)',
+		'Linux-rhel5-ia64'	=> 'Red Hat Enterprise Linux 5 (IA64)',
+		'Linux-rhel5-x86_64'=> 'Red Hat Enterprise Linux 5 (AMD64 / Intel EM64T)',
+		'Linux-rhel5-x86'		=> 'Red Hat Enterprise Linux 5 (x86)',
+		'Linux-sles9-ia64'	=> 'SuSE Linux Enterprise Server 9 (IA64)',
+		'Linux-sles9-x86_64'=> 'SuSE Linux Enterprise Server 9 (AMD64 / Intel EM64T)',
+		'Linux-sles9-x86'		=> 'SuSE Linux Enterprise Server 9 (x86)',
+		'Linux-sles10-ia64'	=> 'SuSE Linux Enterprise Server 10 (IA64)',
+		'Linux-sles10-x86_64'=> 'SuSE Linux Enterprise Server 10 (AMD64 / Intel EM64T)',
+		'Linux-sles10-x86'	=> 'SuSE Linux Enterprise Server 10 (x86)',
+		'Macosx10.4-ppc32'	=> 'Mac OS X 10.4 (PowerPC, 32-bit)',
+		'Macosx10.4-ppc64'	=> 'Mac OS X 10.4 (PowerPC, 64-bit)',
+		'Macosx10.4-x86'		=> 'Mac OS X 10.4 (x86)',
+		'Macosx10.4-x86_64'	=> 'Mac OS X 10.4 (x86_64)',
+		'Macosx10.5-ppc32'	=> 'Mac OS X 10.5 (PowerPC, 32-bit)',
+		'Macosx10.5-ppc64'	=> 'Mac OS X 10.5 (PowerPC, 64-bit)',
+		'Macosx10.5-x86'		=> 'Mac OS X 10.5 (x86)',
+		'Macosx10.5-x86_64'	=> 'Mac OS X 10.5 (x86_64)',
+		'Solaris10-sparc32' => 'Solaris 10 (SPARC, 32-bit)',
+		'Solaris10-sparc64' => 'Solaris 10 (SPARC, 64-bit)',
+		'Solaris10-x86' 		=> 'Solaris 10 (x86, 32-bit)',
+		'Solaris10-x86_64'	=> 'Solaris 10 (AMD64 / Intel EM64T, 64-bit)',
+		'Solaris9-sparc32' 	=> 'Solaris 9 (SPARC, 32-bit)',
+		'Solaris9-sparc64' 	=> 'Solaris 9 (SPARC, 64-bit)',
+		'Solaris9-x86' 			=> 'Solaris 9 (x86, 32-bit)',
+		'Solaris9-x86_64'		=> 'Solaris 9 (AMD64 / Intel EM64T, 64-bit)',
+		'Solaris8-sparc32'	=> 'Solaris 8 (SPARC, 32-bit)',
+		'Solaris8-sparc64'	=> 'Solaris 8 (SPARC, 64-bit)',
+		'Solaris8-x86'			=> 'Solaris 8 (x86, 32-bit)',
+		'Solaris8-x86_64'		=> 'Solaris 8 (AMD64 / Intel EM64T, 64-bit)',
+		'Win32'							=> 'Windows',
+		'Winx64'						=> 'Windows x64',
+	);
+
 	printf("|-\n");
-	printf("! bgcolor='%s' valign='top'|%s\n",
+	printf("! bgcolor='%s' valign='top' colspan='5' align='center' |%s\n",
 		($rowno % 2) ? "#f0f0f0" : "#ffffff",
-		ucfirst(substr(trim($fname), 0, -4)));
+		(isset($platform_mapping[$platform])) ? $platform_mapping[$platform] : $platform);
+  printf("|-\n");
 	foreach ($core as $k => $v) {
+		switch ($k) {
+			case 'CMake version':
+				$props[$k] = trim(substr(trim($props[$k]), strlen("cmake version")));
+				switch ($props[$k]) {
+					case '2.6-patch 2':
+						$props[$k] = '2.6.2';
+						break;
+					case '2.6-patch 3':
+						$props[$k] = '2.6.3';
+						break;
+					default:
+						break;
+				}
+				break;
+			case 'C   compiler':
+				if (substr($props[$k], 0, 3) == 'cc:') {
+					$props[$k] = substr(trim($props[$k]), 3);
+				}
+				break;
+			case 'C++ compiler':
+				if (substr($props[$k], 0, 3) == 'CC:') {
+					$props[$k] = substr(trim($props[$k]), 3);
+				}
+				break;
+			default:
+				if ($platform == 'Win32' || $platform == 'Winx64') {
+					$props[$k] = 'See above!';
+				}
+				break;
+		}
 		printf("| bgcolor='%s' valign='top'|%s\n",
 			($rowno % 2) ? "#f0f0f0" : "#ffffff",
 			trim($props[$k]));
@@ -109,15 +195,33 @@ for($i = 1; $i < $argc; $i++) {
 
 {| class="wikitable"
 |-
-! bgcolor="#d0d0d0"|Platform
+! bgcolor="#d0d0d0" colspan="5" align="center" |Platform
+|-
 ! bgcolor="#d0d0d0"|C compiler
 ! bgcolor="#d0d0d0"|C++ compiler
 ! bgcolor="#d0d0d0"|CMake
 ! bgcolor="#d0d0d0"|MySQL
 ! bgcolor="#d0d0d0"|Settings
 <?php
-for($i = 1; $i < $argc; $i++) {
-	printWiki($argv[$i]);
+$sort_order ='win32,winx64,linux-x86,linux-x86_64,linux-ia64,linux-x86_64,linux-rhel5-x86,linux-rhel5-x86_64,linux-rhel5-ia64,linux-rhel4-x86,linux-rhel4-x86_64,linux-rhel4-ia64,linux-sles10-x86,linux-sles10-x86_64,linux-sles10-ia64,linux-sles9-x86,linux-sles9-x86_64,linux-sles9-ia64,solaris10-sparc64,solaris10-sparc32,solaris10-x86,solaris10-x86_64,solaris9-sparc64,solaris9-sparc32,solaris9-x86,solaris9-x86_64,solaris8-sparc64,solaris8-sparc32,solaris8-x86,solaris8-x86_64,freebsd7-x86,freebsd7-x86_64,freebsd6-x86,freebsd6-x86_64,macosx10.5-x86,macosx10.5-x86_64,macosx10.5-ppc32,macosx10.5-ppc64,macosx10.4-x86,macosx10.4-x86_64,macosx10.4-ppc32,macosx10.4-ppc64,hpux11.23-ia64,hpux11.11-hppa32,hpux11.11-hppa64,aix5.3-ppc64,aix5.3-ppc32,aix5.2-ppc64,aix5.2-ppc32,i5os-ppc32,i5os-ppc64';
+$order = explode(',', $sort_order);
+foreach ($order as $k => $v) {
+	for($i = 1; $i < $argc; $i++) {
+		$platform = strtolower(substr(trim(basename($argv[$i])), 0, -4));
+		if ($v == $platform) {
+			printWiki($argv[$i]);
+			unset($argv[$i]);
+			break;
+		}
+	}
 }
 ?>
 |}
+
+
+<?php
+if (count($argv) > 1) {
+	printf("ERROR?");
+	var_dump($argv);
+}
+?>
