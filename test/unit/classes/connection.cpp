@@ -84,7 +84,7 @@ void connection::getSessionVariable()
     value=my_con->getSessionVariable("sql_mode");
 
     my_con->setSessionVariable("sql_mode", "ANSI");
-    // The server will translate ANSI into something that is version dependent - 
+    // The server will translate ANSI into something that is version dependent -
     // ASSERT_EQUALS(my_con->getSessionVariable("sql_mode"), "");
 
     my_con->setSessionVariable("sql_mode", value);
@@ -136,6 +136,152 @@ void connection::getNoWarningsOnNewLine()
     warning=con->getWarnings();
     if (warning != NULL)
       FAIL("There should be no warnings on the default connection");
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void connection::invalidCredentials()
+{
+  logMsg("connection::invalidCredentials() - MySQL_Connection connect");
+  std::string myurl("tcp://");
+  std::string myuser("");
+  std::string mypasswd("");
+
+  try
+  {
+    try
+    {
+      con.reset(driver->connect(myurl, user, passwd));
+      logMsg("... using invalid URL should have failed, but we can't be sure that is it an issue, because we do not know for sure what defaults a test system is using,");
+      con.reset(driver->connect(url, user, passwd));
+    }
+    catch (sql::SQLException &e)
+    {
+      logMsg("... using wrong URL caused expected failure");
+      con.reset(driver->connect(url, user, passwd));
+    }
+
+    if (!url.empty())
+    {
+      try
+      {
+        con.reset(driver->connect("", user, passwd));
+        logMsg("... using empty URL should have failed, but we can't be sure that is it an issue, because we do not know for sure what defaults a test system is using,");
+        con.reset(driver->connect(url, user, passwd));
+      }
+      catch (sql::SQLException &)
+      {
+        logMsg("... using empty URL caused expected failure");
+        con.reset(driver->connect(url, user, passwd));
+        try
+        {
+          con.reset(driver->connect("", user, passwd));
+          FAIL("Should have caused exception");
+        }
+        catch (sql::SQLException &)
+        {
+        }
+      }
+    }
+
+    if (user.empty())
+    {
+      myuser.append("H17ba76inosuchuser");
+      try
+      {
+        con.reset(driver->connect(url, myuser, passwd));
+        FAIL("... using invalid user should cause failure");
+      }
+      catch (sql::SQLException &)
+      {
+        logMsg("... using wrong URL caused expected failure");
+        con.reset(driver->connect(url, user, passwd));
+        try
+        {
+          con.reset(driver->connect(url, myuser, passwd));
+          FAIL("Should have caused exception");
+        }
+        catch (sql::SQLException &)
+        {
+        }
+      }
+    }
+    else
+    {
+      /* Its a guess, but usually such a user won't exist... */
+      myuser.append(user);
+      myuser.append(user);
+      try
+      {
+        con.reset(driver->connect(url, myuser, passwd));
+        FAIL("... using invalid user should have failed");
+      }
+      catch (sql::SQLException &)
+      {
+        logMsg("... using wrong user caused expected failure");
+        con.reset(driver->connect(url, user, passwd));
+        try
+        {
+          con.reset(driver->connect(url, myuser, passwd));
+          FAIL("Should have caused exception");
+        }
+        catch (sql::SQLException &)
+        {
+        }
+      }
+    }
+
+    if (passwd.empty())
+    {
+      mypasswd.append("27jahjk327ahime27879xas");
+      try
+      {
+        con.reset(driver->connect(url, user, mypasswd));
+        FAIL("... using invalid password should cause failure");
+      }
+      catch (sql::SQLException &)
+      {
+        logMsg("... using wrong password caused expected failure");
+        con.reset(driver->connect(url, user, passwd));
+        try
+        {
+          con.reset(driver->connect(url, user, mypasswd));
+          FAIL("Should have caused exception");
+        }
+        catch (sql::SQLException &)
+        {
+        }
+      }
+    }
+    else
+    {
+      mypasswd.append(passwd);
+      mypasswd.append(passwd);
+      try
+      {
+        con.reset(driver->connect(url, user, mypasswd));
+        FAIL("... using invalid user should have failed");
+      }
+      catch (sql::SQLException &)
+      {
+        logMsg("... using wrong user caused expected failure");
+        con.reset(driver->connect(url, user, passwd));
+        try
+        {
+          con.reset(driver->connect(url, user, mypasswd));
+          FAIL("Should have caused exception");
+        }
+        catch (sql::SQLException &)
+        {
+        }
+      }
+    }
 
   }
   catch (sql::SQLException &e)

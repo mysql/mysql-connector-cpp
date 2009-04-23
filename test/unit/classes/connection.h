@@ -38,6 +38,7 @@ public:
     TEST_CASE(getNoWarningsAfterClear);
     TEST_CASE(checkClosed);
     TEST_CASE(connectUsingMap);
+    TEST_CASE(invalidCredentials);
     TEST_CASE(setTransactionIsolation);
     /*
     TODO: do we want to add this to sql::Connection?
@@ -108,6 +109,13 @@ public:
    *
   void setSessionVariable();
    */
+
+  /**
+   * Establish a connection with invalid credentials
+   *
+   * 
+   */
+  void invalidCredentials();
 
   /*
    * Test of MySQL_Connection::setTransactionIsolation()
