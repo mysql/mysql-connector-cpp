@@ -1,0 +1,30 @@
+<Include>
+  <Property Id="ARPCOMMENTS" Value="Some Comments" />
+  <Property Id="ARPCONTACT" Value="SuperInternetHero@Sun.COM" />
+  <Property Id="ARPPRODUCTICON" Value="InstConfIcon.exe" />
+  <Property Id="ARPHELPLINK" Value="http://forums.mysql.com/list.php?167" />
+  <Property Id="ARPURLINFOABOUT" Value="Something About" />
+  <Property Id="ARPURLUPDATEINFO" Value="http://dev.mysql.com/downloads/connector/cpp/" />
+  <!--Property Id="ARPHELPTELEPHONE" Value="" /-->
+  <Property Id="ARPAUTHORIZEDCDFPREFIX" Value="http://dev.mysql.com/doc/refman/5.1/en/connector-cpp.html" />
+  <Property Id="ARPSIZE" Value="3" />
+
+  <!--
+  <Property Id="ARPNOMODIFY" Value="0" />
+  <Property Id="ARPNOREPAIR" Value="0" />
+  <Property Id="ARPNOREMOVE" Value="0" />
+  <Property Id="ARPSYSTEMCOMPONENT" Value="0" />
+  -->
+
+  <Icon Id="InstConfIcon.exe" SourceFile="Bitmaps\InstConfIcon.exe" />
+
+  <!-- Set up ARPINSTALLLOCATION property -->
+  <CustomAction Id="SetARPINSTALLLOCATION" Property="ARPINSTALLLOCATION" Value="[INSTALLDIR]" />
+  <CustomAction Id="SetARPREADME" Property="ARPREADME" Value="[INSTALLDIR]README" />
+
+  <!-- Sequences -->
+  <InstallExecuteSequence>
+    <Custom Action="SetARPINSTALLLOCATION" After="InstallValidate"></Custom>
+    <Custom Action="SetARPREADME" After="InstallValidate"></Custom>
+  </InstallExecuteSequence>
+</Include>
