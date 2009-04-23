@@ -266,11 +266,11 @@ void connection::invalidCredentials()
       try
       {
         con.reset(driver->connect(url, user, mypasswd));
-        FAIL("... using invalid user should have failed");
+        FAIL("... using invalid password should have failed");
       }
       catch (sql::SQLException &)
       {
-        logMsg("... using wrong user caused expected failure");
+        logMsg("... using wrong password caused expected failure");
         con.reset(driver->connect(url, user, passwd));
         try
         {
@@ -333,12 +333,10 @@ void connection::checkClosed()
     }
     catch (sql::SQLException &e)
     {
-      std::string reason(exceptionIsOK(e, "HY000", 1000));
+      std::string reason(exceptionIsOK(e, "HY000", 0));
       if (!reason.empty())
-        FAIL(reason);
+        fail(reason.c_str(), __FILE__, __LINE__);
     }
-
-
   }
   catch (sql::SQLException &e)
   {
