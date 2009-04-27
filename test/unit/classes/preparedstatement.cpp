@@ -822,13 +822,13 @@ void preparedstatement::getMetaData()
 void preparedstatement::callSP()
 {
   logMsg("preparedstatement::callSP() - MySQL_PreparedStatement::*()");
-
+  std::string sp_code("CREATE PROCEDURE p(OUT ver_param VARCHAR(25)) BEGIN SELECT VERSION() INTO ver_param; END;");
   try
   {
     try
     {
-      pstmt.reset(con->prepareStatement("DROP PROCEDURE IF EXISTS p"));
-      pstmt->execute();
+      stmt.reset(con->createStatement());
+      stmt->execute("DROP PROCEDURE IF EXISTS p");
     }
     catch (sql::SQLException &e)
     {
@@ -839,7 +839,52 @@ void preparedstatement::callSP()
 
     DatabaseMetaData * dbmeta=con->getMetaData();
 
-    pstmt.reset(con->prepareStatement("CREATE PROCEDURE p(OUT ver_param VARCHAR(25)) BEGIN SELECT VERSION() INTO ver_param; END;"));
+    try
+    {
+      pstmt.reset(con->prepareStatement(sp_code));
+      ASSERT(!pstmt->execute());
+      logMsg("... using PS for everything");
+    }
+    catch (sql::SQLException &e)
+    {
+      if (e.getErrorCode() != 1295)
+      {
+        logErr(e.what());
+        std::stringstream msg;
+        msg.str("");
+        msg << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
+        logErr(msg.str());
+        fail(e.what(), __FILE__, __LINE__);
+      }
+      stmt->execute(sp_code);
+    }
+
+    try
+    {
+      pstmt.reset(con->prepareStatement("CALL p(@version)"));
+      ASSERT(!pstmt->execute());
+    }
+    catch (sql::SQLException &e)
+    {
+      if (e.getErrorCode() != 1295)
+      {
+        logErr(e.what());
+        std::stringstream msg;
+        msg.str("");
+        msg << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
+        logErr(msg.str());
+        fail(e.what(), __FILE__, __LINE__);
+      }
+      // PS protocol does not support CALL
+      return;
+    }
+
+    pstmt.reset(con->prepareStatement("SELECT @version AS _version"));
+    res.reset(pstmt->executeQuery());
+    ASSERT(res->next());
+    ASSERT_EQUALS(dbmeta->getDatabaseProductVersion(), res->getString("_version"));
+
+    pstmt.reset(con->prepareStatement("SET @version='no_version'"));
     ASSERT(!pstmt->execute());
     pstmt.reset(con->prepareStatement("CALL p(@version)"));
     ASSERT(!pstmt->execute());
@@ -850,9 +895,117 @@ void preparedstatement::callSP()
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
-    logErr("SQLState: " + std::string(e.getSQLState()));
+    std::stringstream msg;
+    msg.str("");
+    msg << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
+    logErr(msg.str());
     fail(e.what(), __FILE__, __LINE__);
+  }
+
+}
+
+void preparedstatement::callSPWithPS()
+{
+  logMsg("preparedstatement::callSPWithPS() - MySQL_PreparedStatement::*()");
+  std::stringstream msg;
+  std::string sp_code("CREATE PROCEDURE p(IN val VARCHAR(25)) BEGIN SET @sql = CONCAT('SELECT \"', val, '\"'); PREPARE stmt FROM @sql; EXECUTE stmt; DROP PREPARE stmt; END;");
+
+  try
+  {
+    try
+    {
+      stmt.reset(con->createStatement());
+      stmt->execute("DROP PROCEDURE IF EXISTS p");
+    }
+    catch (sql::SQLException &e)
+    {
+      logMsg("... skipping:");
+      logMsg(e.what());
+      return;
+    }
+
+    try
+    {
+      pstmt.reset(con->prepareStatement(sp_code));
+      ASSERT(!pstmt->execute());
+    }
+    catch (sql::SQLException &e)
+    {
+      if (e.getErrorCode() != 1295)
+      {
+        logErr(e.what());
+        std::stringstream msg;
+        msg.str("");
+        msg << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
+        logErr(msg.str());
+        fail(e.what(), __FILE__, __LINE__);
+      }
+      stmt->execute(sp_code);
+    }
+
+    try
+    {
+      pstmt.reset(con->prepareStatement("CALL p('abc')"));
+      res.reset(pstmt->executeQuery());
+    }
+    catch (sql::SQLException &e)
+    {
+      if (e.getErrorCode() != 1295)
+      {
+        logErr(e.what());
+        std::stringstream msg;
+        msg.str("");
+        msg << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
+        logErr(msg.str());
+        fail(e.what(), __FILE__, __LINE__);
+      }
+      // PS interface cannot call this kind of statement
+      return;
+    }
+    ASSERT(res->next());
+    ASSERT_EQUALS("abc", res->getString(1));
+    msg.str("");
+    msg << "... val = '" << res->getString(1) << "'";
+    logMsg(msg.str());
+
+    try
+    {
+      pstmt.reset(con->prepareStatement("CALL p(?)"));
+      pstmt->setString(1, "123");
+      res.reset(pstmt->executeQuery());
+    }
+    catch (sql::SQLException &e)
+    {
+      if (e.getErrorCode() != 1295)
+      {
+        logErr(e.what());
+        std::stringstream msg;
+        msg.str("");
+        msg << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
+        logErr(msg.str());
+        fail(e.what(), __FILE__, __LINE__);
+      }
+      // PS interface cannot call this kind of statement
+      return;
+    }
+
+    res->close();
+
+  }
+  catch (sql::SQLException &e)
+  {
+
+    if (e.getErrorCode() != 1295)
+    {
+      logErr(e.what());
+      std::stringstream msg;
+      msg.str("");
+      msg << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
+      logErr(msg.str());
+      fail(e.what(), __FILE__, __LINE__);
+    }
   }
 
 }
@@ -875,6 +1028,7 @@ void preparedstatement::anonymousSelect()
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -883,15 +1037,11 @@ void preparedstatement::anonymousSelect()
 
 void preparedstatement::crash()
 {
-  bool trace_on=true;
   // Can hit server bug http://bugs.mysql.com/bug.php?id=43833
 
   logMsg("preparedstatement::crash() - MySQL_PreparedStatement::*");
   try
   {
-    trace_on=true;
-    con->setClientOption("clientTrace", &trace_on);
-
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(dummy TIMESTAMP, id VARCHAR(1))");
@@ -900,12 +1050,10 @@ void preparedstatement::crash()
     pstmt->clearParameters();
     pstmt->setDouble(1, (double) 1.23);
     ASSERT_EQUALS(1, pstmt->executeUpdate());
-
-    trace_on=false;
-    con->setClientOption("clientTrace", &trace_on);
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);

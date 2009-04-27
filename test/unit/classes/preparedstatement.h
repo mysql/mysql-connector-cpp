@@ -30,7 +30,7 @@ public:
 
   EXAMPLE_TEST_FIXTURE(preparedstatement)
   {
-    TEST_CASE(crash);    
+    TEST_CASE(crash);
     TEST_CASE(anonymousSelect);
     TEST_CASE(InsertSelectAllTypes);
     TEST_CASE(assortedSetType);
@@ -38,6 +38,7 @@ public:
     TEST_CASE(checkClosed);
     TEST_CASE(getMetaData);
     TEST_CASE(callSP);
+    TEST_CASE(callSPWithPS);
     TEST_CASE(getWarnings);
   }
 
@@ -75,6 +76,11 @@ public:
    * Calls a stored procedure
    */
   void callSP();
+
+  /**
+   * Calls a stored procedure which contains a prepared statement
+   */
+  void callSPWithPS();
 
   /**
    * TODO - temporary to isolate a crash, remove after fix!
