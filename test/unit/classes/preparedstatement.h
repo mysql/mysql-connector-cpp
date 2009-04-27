@@ -25,6 +25,7 @@ class preparedstatement : public unit_fixture
 {
 private:
   typedef unit_fixture super;
+  bool createSP(std::string sp_code);
 
 public:
 
@@ -38,6 +39,7 @@ public:
     TEST_CASE(checkClosed);
     TEST_CASE(getMetaData);
     TEST_CASE(callSP);
+    TEST_CASE(callSPInOut);
     TEST_CASE(callSPWithPS);
     TEST_CASE(getWarnings);
   }
@@ -76,6 +78,11 @@ public:
    * Calls a stored procedure
    */
   void callSP();
+
+  /**
+   * Calls a stored procedure with IN and OUT parameters
+   */
+  void callSPInOut();
 
   /**
    * Calls a stored procedure which contains a prepared statement
