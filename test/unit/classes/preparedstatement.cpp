@@ -1033,7 +1033,64 @@ void preparedstatement::callSPWithPS()
       fail(e.what(), __FILE__, __LINE__);
     }
   }
+}
 
+void preparedstatement::callSPMultiRes()
+{
+  logMsg("preparedstatement::callSPMultiRes() - MySQL_PreparedStatement::*()");
+  std::stringstream msg;
+  std::string sp_code("CREATE PROCEDURE p() BEGIN SELECT 1; SELECT 2; SELECT 3; END;");
+
+  try
+  {
+    if (!createSP(sp_code))
+    {
+      logMsg("... skipping:");
+      return;
+    }
+    
+    try
+    {
+      pstmt.reset(con->prepareStatement("CALL p()"));
+      ASSERT(pstmt->execute());
+    }
+    catch (sql::SQLException &e)
+    {
+      if (e.getErrorCode() != 1295)
+      {
+        logErr(e.what());
+        std::stringstream msg;
+        msg.str("");
+        msg << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
+        logErr(msg.str());
+        fail(e.what(), __FILE__, __LINE__);
+      }
+      // PS interface cannot call this kind of statement
+      return;
+    }
+
+    // Should not work prior to MySQL 6.0
+    msg.str("");
+    do
+    {
+      res.reset(pstmt->getResultSet());
+      while (res->next())
+      {
+        msg << res->getString(1);
+      }
+    } while (pstmt->getMoreResults());
+   
+    ASSERT_EQUALS("123", msg.str());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    std::stringstream msg;
+    msg.str("");
+    msg << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
+    logErr(msg.str());
+    fail(e.what(), __FILE__, __LINE__);
+  }
 }
 
 void preparedstatement::anonymousSelect()

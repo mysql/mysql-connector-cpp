@@ -38,9 +38,10 @@ public:
     TEST_CASE(setNull);
     TEST_CASE(checkClosed);
     TEST_CASE(getMetaData);
-    TEST_CASE(callSP);
-    TEST_CASE(callSPInOut);
-    TEST_CASE(callSPWithPS);
+    // TEST_CASE(callSP);
+    // TEST_CASE(callSPInOut);
+    // TEST_CASE(callSPWithPS);
+    TEST_CASE(callSPMultiRes);
     TEST_CASE(getWarnings);
   }
 
@@ -88,6 +89,11 @@ public:
    * Calls a stored procedure which contains a prepared statement
    */
   void callSPWithPS();
+
+  /**
+   * Calls a stored procedure which returns multiple result sets
+   */
+  void callSPMultiRes();
 
   /**
    * TODO - temporary to isolate a crash, remove after fix!
