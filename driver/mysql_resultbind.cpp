@@ -73,12 +73,11 @@ allocate_buffer_for_field(const MYSQL_FIELD * const field)
 		case MYSQL_TYPE_TIME:
 		case MYSQL_TYPE_DATETIME:
 			return st_buffer_size_type(new char[sizeof(MYSQL_TIME)], sizeof(MYSQL_TIME), field->type);
-#if A0
-		// There three are not sent over the wire
+
+		
 		case MYSQL_TYPE_TINY_BLOB:
 		case MYSQL_TYPE_MEDIUM_BLOB:
 		case MYSQL_TYPE_LONG_BLOB:
-#endif
 		case MYSQL_TYPE_BLOB:
 		case MYSQL_TYPE_STRING:
 		case MYSQL_TYPE_VAR_STRING:
@@ -101,6 +100,7 @@ allocate_buffer_for_field(const MYSQL_FIELD * const field)
 			return st_buffer_size_type(new char[8], 8, MYSQL_TYPE_LONGLONG);
 		case MYSQL_TYPE_GEOMETRY:
 		default:
+                        // TODO: Andrey, there can be crashes when we go through this. Please fix.
 			printf("TYPE=%d\n", field->type);
 			throw sql::InvalidArgumentException("allocate_buffer_for_field: invalid rbind data type");
 	}

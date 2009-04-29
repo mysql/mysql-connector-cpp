@@ -38,9 +38,9 @@ public:
     TEST_CASE(setNull);
     TEST_CASE(checkClosed);
     TEST_CASE(getMetaData);
-    // TEST_CASE(callSP);
-    // TEST_CASE(callSPInOut);
-    // TEST_CASE(callSPWithPS);
+    TEST_CASE(callSP);
+    TEST_CASE(callSPInOut);
+    TEST_CASE(callSPWithPS);
     TEST_CASE(callSPMultiRes);
     TEST_CASE(getWarnings);
   }
