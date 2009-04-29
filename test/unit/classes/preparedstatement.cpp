@@ -963,6 +963,7 @@ void preparedstatement::callSPInOut()
 void preparedstatement::callSPWithPS()
 {
   logMsg("preparedstatement::callSPWithPS() - MySQL_PreparedStatement::*()");
+  SKIP("Bug #44495 - Server crash");
   std::stringstream msg;
   std::string sp_code("CREATE PROCEDURE p(IN val VARCHAR(25)) BEGIN SET @sql = CONCAT('SELECT \"', val, '\"'); PREPARE stmt FROM @sql; EXECUTE stmt; DROP PREPARE stmt; END;");
 
@@ -1038,6 +1039,7 @@ void preparedstatement::callSPWithPS()
 void preparedstatement::callSPMultiRes()
 {
   logMsg("preparedstatement::callSPMultiRes() - MySQL_PreparedStatement::*()");
+  SKIP("Bug #44521 - Server crash");
   std::stringstream msg;
   std::string sp_code("CREATE PROCEDURE p() BEGIN SELECT 1; SELECT 2; SELECT 3; END;");
 
