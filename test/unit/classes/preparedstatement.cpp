@@ -1039,7 +1039,7 @@ void preparedstatement::callSPWithPS()
 void preparedstatement::callSPMultiRes()
 {
   logMsg("preparedstatement::callSPMultiRes() - MySQL_PreparedStatement::*()");
-  SKIP("Bug #44521 - Server crash");
+  
   std::stringstream msg;
   std::string sp_code("CREATE PROCEDURE p() BEGIN SELECT 1; SELECT 2; SELECT 3; END;");
 
