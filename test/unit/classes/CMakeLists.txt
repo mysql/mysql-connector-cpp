@@ -11,6 +11,9 @@
 # Instructions for compiling example.cpp|h into the binary example
 # Use Copy&Paste and Search&Replace to add new tests to the build
 #
+IF(MYSQLCPPCONN_TEST_NOT_IMPLEMENTED)
+	ADD_DEFINITIONS("-DINCLUDE_NOT_IMPLEMENTED_METHODS=1")
+ENDIF(MYSQLCPPCONN_TEST_NOT_IMPLEMENTED)
 
 SET(test_connection_sources
 	../unit_fixture.cpp

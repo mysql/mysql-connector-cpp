@@ -50,7 +50,8 @@ ENDIF(MYSQLCPPCONN_STLPORT_ENABLE)
 # STLPORT - END
 #----------------------
 
-
+# Make tests cover methods that throw not implemented to detect API changes?
+SET(MYSQLCPPCONN_TEST_NOT_IMPLEMENTED 0 CACHE BOOL "HEAD/trunk QA: invoke methods that should return not implemented to detect API changes")
 
 INCLUDE(${CMAKE_SOURCE_DIR}/FindMySQL.cm)
 
