@@ -73,7 +73,7 @@ static const TypeInfoDef mysqlc_types[] = {
 		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
-
+#ifdef ENABLE_ONCE_THE_SERVER_HAS_REAL_BOOL
 	// ------------ MySQL-Type: BOOL. DBC-Type: BIT -------------
 	{
 		"BOOL",								// Typename
@@ -95,7 +95,7 @@ static const TypeInfoDef mysqlc_types[] = {
 		0,									// sql datetime sub (unused)
 		10									// num prec radix
 	},
-
+#endif
 	// --------- MySQL-Type: TINYINT DBC-Type: TINYINT ----------
 	{
 		"TINYINT",							// Typename
