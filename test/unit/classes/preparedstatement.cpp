@@ -1230,9 +1230,84 @@ void preparedstatement::getWarnings()
 void preparedstatement::blob()
 {
   logMsg("preparedstatement::blob() - MySQL_PreparedStatement::*");
+  char blob_input[256];
+  std::stringstream blob_input_stream;
+  std::stringstream msg;
+  std::istream * blob_output_stream;  
+  char blob_output[256];
+  int id;
+  int offset=0;
+
   try
   {
-    pstmt.reset(con->prepareStatement("SELECT 1"));
+    pstmt.reset(con->prepareStatement("DROP TABLE IF EXISTS test"));
+    pstmt->execute();
+
+    pstmt.reset(con->prepareStatement("CREATE TABLE test(id INT, col1 TINYBLOB, col2 TINYBLOB)"));
+    pstmt->execute();
+
+    // Most basic INSERT/SELECT...
+    pstmt.reset(con->prepareStatement("INSERT INTO test(id, col1) VALUES (?, ?)"));
+
+    for (char ascii_code=CHAR_MIN; ascii_code < CHAR_MAX; ascii_code++)
+    {
+      if (ascii_code == 10)
+        continue;
+      blob_output[offset]='\0';
+      blob_input[offset++]=ascii_code;
+    }
+    blob_input[offset]='\0';
+    blob_output[offset]='\0';
+
+    id=1;
+    blob_input_stream << blob_input;
+
+    pstmt->setInt(1, id);
+    pstmt->setBlob(2, &blob_input_stream);
+    try
+    {
+      pstmt->setBlob(3, &blob_input_stream);
+      FAIL("Invalid index not detected");
+    }
+    catch (sql::SQLException)
+    {
+    }
+
+    pstmt->execute();
+    pstmt.reset(con->prepareStatement("SELECT id, col1 FROM test WHERE id = 1"));
+    res.reset(pstmt->executeQuery());
+
+    ASSERT(res->next());
+
+    msg.str("");
+    msg << "... simple INSERT/SELECT, '" << blob_input << "' =? '" << res->getString(2) << "'";
+    logMsg(msg.str());
+
+    ASSERT_EQUALS(res->getInt(1), id);
+    ASSERT_EQUALS(res->getString(2), blob_input_stream.str());
+    ASSERT_EQUALS(res->getString(2), blob_input);
+    ASSERT_EQUALS(res->getString("col1"), blob_input_stream.str());
+    ASSERT_EQUALS(res->getString("col1"), blob_input);
+
+    blob_output_stream=res->getBlob(2);
+    blob_output_stream->seekg(std::ios::beg);
+    blob_output_stream->get(blob_output, offset + 1);
+    ASSERT_EQUALS(blob_input, blob_output);
+
+    blob_output_stream=res->getBlob("col1");
+    blob_output_stream->seekg(std::ios::beg);
+    blob_output_stream->get(blob_output, offset + 1);
+    ASSERT_EQUALS(blob_input, blob_output);    
+
+    msg.str("");
+    msg << "... second check, '" << blob_input << "' =? '" << blob_output << "'";
+    logMsg(msg.str());
+    
+    ASSERT(!res->next());
+
+    pstmt.reset(con->prepareStatement("DROP TABLE IF EXISTS test"));
+    pstmt->execute();
+
     pstmt->close();
   }
   catch (sql::SQLException &e)
