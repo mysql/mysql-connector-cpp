@@ -29,6 +29,8 @@ void preparedstatement::InsertSelectAllTypes()
   std::vector<columndefinition>::iterator it;
   stmt.reset(con->createStatement());
   bool got_warning=false;
+  std::istream * blob_output_stream;
+  size_t len;
 
   try
   {
@@ -342,6 +344,81 @@ void preparedstatement::InsertSelectAllTypes()
       {
       }
       res->first();
+
+      // TODO - make BLOB
+      
+      if (it->check_as_string)
+      {
+        {
+        blob_output_stream=res->getBlob(1);
+        len=it->as_string.length();
+        char* blob_out=new char(len);
+        blob_output_stream->read(blob_out, len);
+        blob_out[len] = '\0';
+        if (blob_out != it->as_string)
+        {
+          sql.str("");
+          sql << "... \t\tWARNING - SQL: '" << it->sqldef << "' - expecting '" << it->as_string << "'";
+          sql << " got '" << res->getString(1) << "'";
+          logMsg(sql.str());
+          got_warning=true;
+        }
+        }
+
+        {
+        blob_output_stream=res->getBlob("id");
+        len=it->as_string.length();
+        char* blob_out=new char(len);
+        blob_output_stream->read(blob_out, len);
+        blob_out[len] = '\0';
+        if (blob_out != it->as_string)
+        {
+          sql.str("");
+          sql << "... \t\tWARNING - SQL: '" << it->sqldef << "' - expecting '" << it->as_string << "'";
+          sql << " got '" << res->getString(1) << "'";
+          logMsg(sql.str());
+          got_warning=true;
+        }
+        }
+      }      
+      try
+      {
+        res->getBlob(0);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getBlob(3);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      res->beforeFirst();
+      try
+      {
+        res->getBlob(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->afterLast();
+      try
+      {
+        res->getBlob(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->first();
+
     }
     stmt->execute("DROP TABLE IF EXISTS test");
     if (got_warning)

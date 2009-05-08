@@ -35,7 +35,7 @@ public:
   {    
     TEST_CASE(crash);
     TEST_CASE(anonymousSelect);
-    TEST_CASE(InsertSelectAllTypes);
+    TEST_CASE(InsertSelectAllTypes);    
     TEST_CASE(assortedSetType);
     TEST_CASE(setNull);
     TEST_CASE(checkClosed);
@@ -45,7 +45,7 @@ public:
     TEST_CASE(callSPWithPS);
     TEST_CASE(callSPMultiRes);
     TEST_CASE(getWarnings);   
-    TEST_CASE(blob);
+    TEST_CASE(blob);     
   }
 
   /**
