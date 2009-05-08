@@ -398,6 +398,12 @@ void unit_fixture::logDebug(const String & message)
   logMsg(message);
 }
 
+int unit_fixture::getMySQLVersion(Connection & con)
+{
+  DatabaseMetaData * dbmeta=con->getMetaData();
+  return dbmeta->getDatabaseMajorVersion() * 10000 + dbmeta->getDatabaseMinorVersion() * 1000 + dbmeta->getDatabasePatchVersion();
+}
+
 std::string unit_fixture::exceptionIsOK(sql::SQLException & e)
 {
   return exceptionIsOK(e, "HY000", 0);

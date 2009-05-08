@@ -69,7 +69,7 @@ struct columndefinition
   std::string is_autoincrement;
   bool is_negative;
   std::string as_string; // value as it should be returns by getString()
-  bool check_as_string;  
+  bool check_as_string;
 
   columndefinition(const std::string & _name, const std::string & _sqldef, int _ctype,
                    const std::string & _value, bool _is_signed, unsigned int _precision,
@@ -324,6 +324,12 @@ protected:
    * Helper function to check scrolling through a result set
    */
   void checkResultSetScrolling(ResultSet &res);
+
+
+  /**
+   * Helper function to fetch the MySQL Server version as a classical integer in the range from 30000 - 99999
+   */
+  int getMySQLVersion(Connection &con);
 
 public:
 

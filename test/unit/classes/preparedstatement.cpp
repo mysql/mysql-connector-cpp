@@ -963,12 +963,17 @@ void preparedstatement::callSPInOut()
 void preparedstatement::callSPWithPS()
 {
   logMsg("preparedstatement::callSPWithPS() - MySQL_PreparedStatement::*()");
-  SKIP("Bug #44495 - Server crash");
+
   std::stringstream msg;
   std::string sp_code("CREATE PROCEDURE p(IN val VARCHAR(25)) BEGIN SET @sql = CONCAT('SELECT \"', val, '\"'); PREPARE stmt FROM @sql; EXECUTE stmt; DROP PREPARE stmt; END;");
 
   try
   {
+
+    int mysql_version=getMySQLVersion(con);
+    if (mysql_version < 60000)
+      SKIP("http://bugs.mysql.com/bug.php?id=44495 - Server crash");
+
     if (!createSP(sp_code))
     {
       logMsg("... skipping:");
@@ -1039,7 +1044,9 @@ void preparedstatement::callSPWithPS()
 void preparedstatement::callSPMultiRes()
 {
   logMsg("preparedstatement::callSPMultiRes() - MySQL_PreparedStatement::*()");
-  
+
+  SKIP("http://bugs.mysql.com/bug.php?id=44521 - Server crash");
+
   std::stringstream msg;
   std::string sp_code("CREATE PROCEDURE p() BEGIN SELECT 1; SELECT 2; SELECT 3; END;");
 
@@ -1050,7 +1057,7 @@ void preparedstatement::callSPMultiRes()
       logMsg("... skipping:");
       return;
     }
-    
+
     try
     {
       pstmt.reset(con->prepareStatement("CALL p()"));
@@ -1076,12 +1083,13 @@ void preparedstatement::callSPMultiRes()
     do
     {
       res.reset(pstmt->getResultSet());
-      while (res->next())
-      {
-        msg << res->getString(1);
-      }
-    } while (pstmt->getMoreResults());
-   
+    while (res->next())
+    {
+      msg << res->getString(1);
+    }
+    }
+    while (pstmt->getMoreResults());
+
     ASSERT_EQUALS("123", msg.str());
   }
   catch (sql::SQLException &e)
@@ -1121,11 +1129,14 @@ void preparedstatement::anonymousSelect()
 
 void preparedstatement::crash()
 {
-  // Can hit server bug http://bugs.mysql.com/bug.php?id=43833
-
   logMsg("preparedstatement::crash() - MySQL_PreparedStatement::*");
+
   try
   {
+    int mysql_version=getMySQLVersion(con);
+    if ((mysql_version > 50000 && mysql_version < 50082) || (mysql_version > 51000 && mysql_version < 51035) || (mysql_version > 60000 && mysql_version < 60012))
+      SKIP("http://bugs.mysql.com/bug.php?id=43833 - Server crash");
+
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(dummy TIMESTAMP, id VARCHAR(1))");
@@ -1214,6 +1225,23 @@ void preparedstatement::getWarnings()
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
+}
+
+void preparedstatement::blob()
+{
+  logMsg("preparedstatement::blob() - MySQL_PreparedStatement::*");
+  try
+  {
+    pstmt.reset(con->prepareStatement("SELECT 1"));
+    pstmt->close();
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
 }
 
 } /* namespace preparedstatement */

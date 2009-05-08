@@ -43,6 +43,7 @@ public:
     TEST_CASE(callSPWithPS);
     TEST_CASE(callSPMultiRes);
     TEST_CASE(getWarnings);
+    TEST_CASE(blob);
   }
 
   /**
@@ -104,6 +105,11 @@ public:
    * Check get|clearWarnings()
    */
   void getWarnings();
+
+  /**
+   * Check BLOB/LOB handling
+   */
+  void blob();
 
 };
 
