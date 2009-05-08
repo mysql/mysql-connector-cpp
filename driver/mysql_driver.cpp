@@ -86,7 +86,7 @@ int MySQL_Driver::getMinorVersion()
 
 int MySQL_Driver::getPatchVersion()
 {
-	return 5;
+	return 6;
 }
 
 const std::string & MySQL_Driver::getName()
