@@ -1233,7 +1233,7 @@ void preparedstatement::blob()
   char blob_input[256];
   std::stringstream blob_input_stream;
   std::stringstream msg;
-  std::istream * blob_output_stream;  
+  std::istream * blob_output_stream;
   char blob_output[256];
   int id;
   int offset=0;
@@ -1292,18 +1292,19 @@ void preparedstatement::blob()
     blob_output_stream=res->getBlob(2);
     blob_output_stream->seekg(std::ios::beg);
     blob_output_stream->get(blob_output, offset + 1);
-    ASSERT_EQUALS(blob_input, blob_output);
+    ASSERT_EQUALS(blob_input_stream.str(), blob_output);
 
     blob_output_stream=res->getBlob("col1");
     blob_output_stream->seekg(std::ios::beg);
     blob_output_stream->get(blob_output, offset + 1);
-    ASSERT_EQUALS(blob_input, blob_output);    
+    ASSERT_EQUALS(blob_input, blob_output);
 
     msg.str("");
     msg << "... second check, '" << blob_input << "' =? '" << blob_output << "'";
     logMsg(msg.str());
-    
+
     ASSERT(!res->next());
+    res->close();
 
     pstmt.reset(con->prepareStatement("DROP TABLE IF EXISTS test"));
     pstmt->execute();
