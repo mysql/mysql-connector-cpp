@@ -12,6 +12,8 @@
 #include <stdlib.h>
 
 #include "mysql_util.h"
+
+/* mysql_art_rset_metadata.h must be included after mysql_art_resultset.h */
 #include "mysql_art_resultset.h"
 #include "mysql_art_rset_metadata.h"
 
@@ -59,7 +61,7 @@ MySQL_ArtResultSetMetaData::checkColumnIndex(unsigned int columnIndex) const
 
 
 /* {{{ MySQL_ArtResultSetMetaData::getCatalogName() -I- */
-std::string
+SQLString
 MySQL_ArtResultSetMetaData::getCatalogName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ArtResultSetMetaData::getCatalogName");
@@ -97,7 +99,7 @@ MySQL_ArtResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
 
 
 /* {{{ MySQL_ArtResultSetMetaData::getColumnLabel() -I- */
-std::string
+SQLString
 MySQL_ArtResultSetMetaData::getColumnLabel(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ArtResultSetMetaData::getColumnLabel");
@@ -110,7 +112,7 @@ MySQL_ArtResultSetMetaData::getColumnLabel(unsigned int columnIndex)
 
 
 /* {{{ MySQL_ArtResultSetMetaData::getColumnName() -I- */
-std::string
+SQLString
 MySQL_ArtResultSetMetaData::getColumnName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ArtResultSetMetaData::getColumnName");
@@ -136,7 +138,7 @@ MySQL_ArtResultSetMetaData::getColumnType(unsigned int columnIndex)
 
 
 /* {{{ MySQL_ArtResultSetMetaData::getColumnTypeName() -I- */
-std::string
+SQLString
 MySQL_ArtResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ArtResultSetMetaData::getColumnTypeName");
@@ -177,7 +179,7 @@ MySQL_ArtResultSetMetaData::getScale(unsigned int columnIndex)
 
 
 /* {{{ MySQL_ArtResultSetMetaData::getSchemaName() -I- */
-std::string
+SQLString
 MySQL_ArtResultSetMetaData::getSchemaName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ArtResultSetMetaData::getSchemaName");
@@ -190,7 +192,7 @@ MySQL_ArtResultSetMetaData::getSchemaName(unsigned int columnIndex)
 
 
 /* {{{ MySQL_ArtResultSetMetaData::getTableName() -I- */
-std::string
+SQLString
 MySQL_ArtResultSetMetaData::getTableName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ArtResultSetMetaData::getTableName");

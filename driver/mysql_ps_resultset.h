@@ -95,7 +95,7 @@ public:
 
 	int getConcurrency();
 
-	std::string getCursorName();
+	SQLString getCursorName();
 
 	long double getDouble(uint32_t columnIndex) const;
 	long double getDouble(const std::string& columnLabel) const;
@@ -125,8 +125,8 @@ public:
 
 	const sql::Statement * getStatement() const;
 
-	std::string getString(uint32_t columnIndex) const;
-	std::string getString(const std::string& columnLabel) const;
+	SQLString getString(uint32_t columnIndex) const;
+	SQLString getString(const std::string& columnLabel) const;
 
 	sql::ResultSet::enum_type getType() const;
 

@@ -125,24 +125,24 @@ int main(int argc, const char **argv)
 			if (res->getString(1) != res->getString("OBJECT_TYPE")) {
 				throw runtime_error("Fetch using numeric/non-numeric index failed for OBJECT_TYPE");
 			}
-			if (res->getString("OBJECT_TYPE").empty()) {
+			if (res->getString("OBJECT_TYPE")->empty()) {
 				throw runtime_error("OBJECT_TYPE must not be empty");
 			}
 
 			cout << "#\t Catalog = " << res->getString("CATALOG");
-			cout << " (empty: " << res->getString("CATALOG").empty() << ")" << endl;
+			cout << " (empty: " << res->getString("CATALOG")->empty() << ")" << endl;
 			if (res->getString(2) != res->getString("CATALOG")) {
 				throw runtime_error("Fetch using numeric/non-numeric index failed for CATALOG");
 			}
 
 			cout << "#\t Schema = " << res->getString("SCHEMA");
-			cout << " (empty: " << res->getString("SCHEMA").empty() << ")" << endl;
+			cout << " (empty: " << res->getString("SCHEMA")->empty() << ")" << endl;
 			if (res->getString(3) != res->getString("SCHEMA")) {
 				throw runtime_error("Fetch using numeric/non-numeric index failed for SCHEMA");
 			}
 
 			cout << "#\t Name = " << res->getString("NAME");
-			cout << " (empty: " << res->getString("NAME").empty() << ")" << endl;
+			cout << " (empty: " << res->getString("NAME")->empty() << ")" << endl;
 			if (res->getString(4) != res->getString("NAME")) {
 				throw runtime_error("Fetch using numeric/non-numeric index failed for NAME");
 			}

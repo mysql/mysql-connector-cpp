@@ -2223,7 +2223,7 @@ MySQL_ConnectionMetaData::getDatabaseProductName()
 
 
 /* {{{ MySQL_ConnectionMetaData::getDatabaseProductVersion() -I- */
-std::string
+SQLString
 MySQL_ConnectionMetaData::getDatabaseProductVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDatabaseProductVersion");
@@ -3328,7 +3328,7 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 				rs_data_row.push_back("");					// reserved2
 				rs_data_row.push_back("");					// reserved3
 				rs_data_row.push_back(rs->getString(8));	// REMARKS
-				rs_data_row.push_back(std::string(!rs->getString(3).compare("PROCEDURE")? procRetNoRes:procRetRes));	// PROCEDURE_TYPE
+				rs_data_row.push_back(std::string(!rs->getString(3)->compare("PROCEDURE")? procRetNoRes:procRetRes));	// PROCEDURE_TYPE
 
 				rs_data->push_back(rs_data_row);
 			}
@@ -3930,7 +3930,7 @@ MySQL_ConnectionMetaData::getUDTs(const std::string& /*catalog*/, const std::str
 
 
 /* {{{ MySQL_ConnectionMetaData::getURL() -U- */
-std::string
+SQLString
 MySQL_ConnectionMetaData::getURL()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getURL");
@@ -3941,7 +3941,7 @@ MySQL_ConnectionMetaData::getURL()
 
 
 /* {{{ MySQL_ConnectionMetaData::getUserName() -I- */
-std::string
+SQLString
 MySQL_ConnectionMetaData::getUserName()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getUserName");

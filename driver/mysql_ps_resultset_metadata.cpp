@@ -65,7 +65,7 @@ MySQL_Prepared_ResultSetMetaData::checkColumnIndex(unsigned int columnIndex) con
 
 
 /* {{{ MySQL_Prepared_ResultSetMetaData::getCatalogName -I- */
-std::string
+SQLString
 MySQL_Prepared_ResultSetMetaData::getCatalogName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getCatalogName");
@@ -102,7 +102,7 @@ MySQL_Prepared_ResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
 
 
 /* {{{ MySQL_Prepared_ResultSetMetaData::getColumnLabel -I- */
-std::string
+SQLString
 MySQL_Prepared_ResultSetMetaData::getColumnLabel(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getColumnLabel");
@@ -114,7 +114,7 @@ MySQL_Prepared_ResultSetMetaData::getColumnLabel(unsigned int columnIndex)
 
 
 /* {{{ MySQL_Prepared_ResultSetMetaData::getColumnName -I- */
-std::string
+SQLString
 MySQL_Prepared_ResultSetMetaData::getColumnName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getColumnName");
@@ -145,7 +145,7 @@ MySQL_Prepared_ResultSetMetaData::getColumnType(unsigned int columnIndex)
 
 
 /* {{{ MySQL_Prepared_ResultSetMetaData::getColumnTypeName -I- */
-std::string
+SQLString
 MySQL_Prepared_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getColumnTypeName");
@@ -194,7 +194,7 @@ MySQL_Prepared_ResultSetMetaData::getScale(unsigned int columnIndex)
 
 
 /* {{{ MySQL_Prepared_ResultSetMetaData::getSchemaName -I- */
-std::string
+SQLString
 MySQL_Prepared_ResultSetMetaData::getSchemaName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getSchemaName");
@@ -207,7 +207,7 @@ MySQL_Prepared_ResultSetMetaData::getSchemaName(unsigned int columnIndex)
 
 
 /* {{{ MySQL_Prepared_ResultSetMetaData::getTableName -I- */
-std::string
+SQLString
 MySQL_Prepared_ResultSetMetaData::getTableName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getTableName");

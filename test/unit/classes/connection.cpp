@@ -161,7 +161,7 @@ void connection::invalidCredentials()
       logMsg("... using invalid URL should have failed, but we can't be sure that is it an issue, because we do not know for sure what defaults a test system is using,");
       con.reset(driver->connect(url, user, passwd));
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &/*e*/)
     {
       logMsg("... using wrong URL caused expected failure");
       con.reset(driver->connect(url, user, passwd));

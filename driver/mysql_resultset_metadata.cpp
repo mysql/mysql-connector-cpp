@@ -74,7 +74,7 @@ MySQL_ResultSetMetaData::checkValid() const
 
 
 /* {{{ MySQL_ResultSetMetaData::getCatalogName -I- */
-std::string
+SQLString
 MySQL_ResultSetMetaData::getCatalogName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getCatalogName");
@@ -112,7 +112,7 @@ MySQL_ResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
 
 
 /* {{{ MySQL_ResultSetMetaData::getColumnLabel -I- */
-std::string
+SQLString
 MySQL_ResultSetMetaData::getColumnLabel(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getColumnLabel");
@@ -125,7 +125,7 @@ MySQL_ResultSetMetaData::getColumnLabel(unsigned int columnIndex)
 
 
 /* {{{ MySQL_ResultSetMetaData::getColumnName -I- */
-std::string
+SQLString
 MySQL_ResultSetMetaData::getColumnName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getColumnName");
@@ -151,7 +151,7 @@ MySQL_ResultSetMetaData::getColumnType(unsigned int columnIndex)
 
 
 /* {{{ MySQL_ResultSetMetaData::getColumnTypeName -I- */
-std::string
+SQLString
 MySQL_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getColumnTypeName");
@@ -198,7 +198,7 @@ MySQL_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 
 
 /* {{{ MySQL_ResultSetMetaData::getSchemaName -I- */
-std::string
+SQLString
 MySQL_ResultSetMetaData::getSchemaName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getSchemaName");
@@ -212,7 +212,7 @@ MySQL_ResultSetMetaData::getSchemaName(unsigned int columnIndex)
 
 
 /* {{{ MySQL_ResultSetMetaData::getTableName -I- */
-std::string
+SQLString
 MySQL_ResultSetMetaData::getTableName(unsigned int columnIndex)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::getTableName");

@@ -15,6 +15,7 @@
 #include <string>
 #include <list>
 #include "datatype.h"
+#include "sqlstring.h"
 
 namespace sql
 {
@@ -147,7 +148,7 @@ public:
 
 	virtual	const std::string& getDatabaseProductName() = 0;
 
-	virtual	std::string getDatabaseProductVersion() = 0;
+	virtual	SQLString getDatabaseProductVersion() = 0;
 
 	virtual	int getDefaultTransactionIsolation() = 0;
 
@@ -257,9 +258,9 @@ public:
 
 	virtual	ResultSet * getUDTs(const std::string& catalog, const std::string& schemaPattern, const std::string& typeNamePattern, std::list<int> &types) = 0;
 
-	virtual	std::string getURL() = 0;
+	virtual	SQLString getURL() = 0;
 
-	virtual std::string getUserName() = 0;
+	virtual SQLString getUserName() = 0;
 
 	virtual ResultSet * getVersionColumns(const std::string& catalog, const std::string& schema, const std::string& table) = 0;
 
