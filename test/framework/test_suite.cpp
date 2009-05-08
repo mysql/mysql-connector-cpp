@@ -44,7 +44,7 @@ int TestSuite::TestsWillRunCount( const String & suiteName, const testsList & tl
   {
     fullName=   suiteName;
     fullName+=  "::";
-    fullName+=  (*cit)->name();
+    fullName+=  (*cit)->get()->name();
 
     if ( ! TestsRunner::Admits( fullName ) )
     {
@@ -67,7 +67,7 @@ void TestSuite::runTest()
   {
     fullName=   suiteName;
     fullName+=  "::";
-    fullName+=  (*it)->name();
+    fullName+=  (*it)->get()->name();
 
     if ( ! TestsRunner::Admits( fullName ) )
     {
@@ -78,7 +78,7 @@ void TestSuite::runTest()
     //Incrementing order number of current test
     TestsListener::incrementCounter();
 
-    TestsListener::currentTestName( (*it)->name() );
+    TestsListener::currentTestName( (*it)->get()->name() );
 
     try
     {
@@ -88,7 +88,7 @@ void TestSuite::runTest()
     {
       TestsListener::bailSuite(
         String( "An exception occurred while running setUp before " )
-        + (*it)->name() + ". Message: " + e.what() + ". Skipping all tests in the suite" );
+        + (*it)->get()->name() + ". Message: " + e.what() + ". Skipping all tests in the suite" );
 
       //not really needed probably
       //TestsListener::testHasFinished( trrThrown, "Test setup has failed, all tests in the suite will be skipped" );
@@ -105,7 +105,7 @@ void TestSuite::runTest()
     {
       TestsListener::testHasStarted();
 
-      (*it)->runTest();
+      (*it)->get()->runTest();
     }
     // TODO: move interpretation of exception to TestSuite descendants
     // framework shouldn't know about sql::* exceptions
@@ -123,7 +123,7 @@ void TestSuite::runTest()
 
       String msg( "Standard exception occurred while running test: " );
 
-      msg+= (*it)->name();
+      msg+= (*it)->get()->name();
       msg+= ". Message: ";
       msg+= e.what();
 
@@ -140,7 +140,7 @@ void TestSuite::runTest()
       result= trrThrown;
       TestsListener::errorsLog()
         << "Unknown exception occurred while running:"
-        << (*it)->name() << std::endl;
+        << (*it)->get()->name() << std::endl;
     }
 
     TestsListener::testHasFinished( result );
@@ -153,7 +153,7 @@ void TestSuite::runTest()
     {
       TestsListener::errorsLog()
         << "Not trapped exception occurred while running while tearDown after:"
-        << (*it)->name() << ". Message: " << e.what()
+        << (*it)->get()->name() << ". Message: " << e.what()
         << std::endl;
     }
 
