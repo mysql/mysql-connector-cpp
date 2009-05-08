@@ -1409,10 +1409,30 @@ void preparedstatement::blob()
     ASSERT(!res->next());
     res->close();
 
+    msg.str("");
+    // Data is too long to be stored in a TINYBLOB column
+    msg << "... this is more than TINYBLOB can hold: ";
+    msg << "01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
+    pstmt.reset(con->prepareStatement("INSERT INTO test(id, col1) VALUES (?, ?)"));
+    id = 2;
+    pstmt->setInt(1, id);
+    pstmt->setBlob(2, &msg);
+    pstmt->execute();
+    pstmt.reset(con->prepareStatement("SELECT id, col1 FROM test WHERE id = 2"));
+    res.reset(pstmt->executeQuery());
+    ASSERT(res->next());
+    ASSERT_EQUALS(res->getInt(1), id);
+    ASSERT_GT((int)(res->getString(2).length()), (int)(msg.str().length()));
+    ASSERT(!res->next());
+    res->close();
+
+    msg << "- what has happened to the stream?";
+    logMsg(msg.str());
+
+
     pstmt.reset(con->prepareStatement("DROP TABLE IF EXISTS test"));
     pstmt->execute();
-
-    pstmt->close();
+    
   }
   catch (sql::SQLException &e)
   {
