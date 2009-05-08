@@ -38,11 +38,7 @@ namespace testsuite
 
         StorableTest( Test & test2decorate );
 
-        void            runTest ();
-
-        const String &  name    () const;
-
-        /*Test & operator * ();
+         /*Test & operator * ();
         Test * operator ->();*/
 
         Test * get();
