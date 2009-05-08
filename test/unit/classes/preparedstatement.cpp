@@ -346,41 +346,41 @@ void preparedstatement::InsertSelectAllTypes()
       res->first();
 
       // TODO - make BLOB
-      
+
       if (it->check_as_string)
       {
         {
-        blob_output_stream=res->getBlob(1);
-        len=it->as_string.length();
-        char* blob_out=new char(len);
-        blob_output_stream->read(blob_out, len);
-        blob_out[len] = '\0';
-        if (blob_out != it->as_string)
-        {
-          sql.str("");
-          sql << "... \t\tWARNING - SQL: '" << it->sqldef << "' - expecting '" << it->as_string << "'";
-          sql << " got '" << res->getString(1) << "'";
-          logMsg(sql.str());
-          got_warning=true;
-        }
+          blob_output_stream=res->getBlob(1);
+          len=it->as_string.length();
+          char* blob_out=new char(len);
+          blob_output_stream->read(blob_out, len);
+          blob_out[len]='\0';
+          if (blob_out != it->as_string)
+          {
+            sql.str("");
+            sql << "... \t\tWARNING - SQL: '" << it->sqldef << "' - expecting '" << it->as_string << "'";
+            sql << " got '" << res->getString(1) << "'";
+            logMsg(sql.str());
+            got_warning=true;
+          }
         }
 
         {
-        blob_output_stream=res->getBlob("id");
-        len=it->as_string.length();
-        char* blob_out=new char(len);
-        blob_output_stream->read(blob_out, len);
-        blob_out[len] = '\0';
-        if (blob_out != it->as_string)
-        {
-          sql.str("");
-          sql << "... \t\tWARNING - SQL: '" << it->sqldef << "' - expecting '" << it->as_string << "'";
-          sql << " got '" << res->getString(1) << "'";
-          logMsg(sql.str());
-          got_warning=true;
+          blob_output_stream=res->getBlob("id");
+          len=it->as_string.length();
+          char* blob_out=new char(len);
+          blob_output_stream->read(blob_out, len);
+          blob_out[len]='\0';
+          if (blob_out != it->as_string)
+          {
+            sql.str("");
+            sql << "... \t\tWARNING - SQL: '" << it->sqldef << "' - expecting '" << it->as_string << "'";
+            sql << " got '" << res->getString(1) << "'";
+            logMsg(sql.str());
+            got_warning=true;
+          }
         }
-        }
-      }      
+      }
       try
       {
         res->getBlob(0);
@@ -712,16 +712,42 @@ void preparedstatement::assortedSetType()
       {
       }
 
+      pstmt->clearParameters();
+      std::stringstream blob_input_stream;
+      blob_input_stream.str(it->value);
+      pstmt->setBlob(1, &blob_input_stream);
+      ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setBlob(0, &blob_input_stream);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException)
+      {
+      }
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setBlob(2, &blob_input_stream);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException)
+      {
+      }
+
       pstmt.reset(con->prepareStatement("SELECT COUNT(IFNULL(id, 1)) AS _num FROM test"));
       res.reset(pstmt->executeQuery());
       checkResultSetScrolling(res);
       ASSERT(res->next());
-      if (res->getInt("_num") != (10 + (int) it->is_nullable))
+      if (res->getInt("_num") != (11 + (int) it->is_nullable))
       {
         sql.str("");
         sql << "....\t\tWARNING, SQL: " << it->sqldef << ", nullable " << std::boolalpha;
         sql << it->is_nullable << ", found " << res->getInt(1) << "columns but";
-        sql << " expecting " << (10 + (int) it->is_nullable);
+        sql << " expecting " << (11 + (int) it->is_nullable);
         logMsg(sql.str());
         got_warning=true;
       }
