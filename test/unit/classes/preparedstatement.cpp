@@ -1148,7 +1148,9 @@ void preparedstatement::callSPMultiRes()
 {
   logMsg("preparedstatement::callSPMultiRes() - MySQL_PreparedStatement::*()");
 
-  SKIP("http://bugs.mysql.com/bug.php?id=44521 - Server crash");
+  int mysql_version=getMySQLVersion(con);
+  if (mysql_version < 60008)
+    SKIP("http://bugs.mysql.com/bug.php?id=44521 - Server crash");
 
   std::stringstream msg;
   std::string sp_code("CREATE PROCEDURE p() BEGIN SELECT 1; SELECT 2; SELECT 3; END;");
@@ -1414,7 +1416,7 @@ void preparedstatement::blob()
     msg << "... this is more than TINYBLOB can hold: ";
     msg << "01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
     pstmt.reset(con->prepareStatement("INSERT INTO test(id, col1) VALUES (?, ?)"));
-    id = 2;
+    id=2;
     pstmt->setInt(1, id);
     pstmt->setBlob(2, &msg);
     pstmt->execute();
@@ -1422,7 +1424,7 @@ void preparedstatement::blob()
     res.reset(pstmt->executeQuery());
     ASSERT(res->next());
     ASSERT_EQUALS(res->getInt(1), id);
-    ASSERT_GT((int)(res->getString(2).length()), (int)(msg.str().length()));
+    ASSERT_GT((int) (res->getString(2).length()), (int) (msg.str().length()));
     ASSERT(!res->next());
     res->close();
 
@@ -1432,7 +1434,7 @@ void preparedstatement::blob()
 
     pstmt.reset(con->prepareStatement("DROP TABLE IF EXISTS test"));
     pstmt->execute();
-    
+
   }
   catch (sql::SQLException &e)
   {
