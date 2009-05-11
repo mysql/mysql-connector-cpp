@@ -30,17 +30,6 @@ namespace testsuite
        test= &test2decorate;
     }
 
-    void TestContainer::StorableTest::runTest()
-    {
-      test->runTest();
-    }
-
-
-    const String &  TestContainer::StorableTest::name() const
-    {
-      return test->name();
-    }
-
 
     /*Test & TestContainer::StorableTest::operator * ()
     {

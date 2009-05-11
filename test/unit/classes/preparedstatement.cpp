@@ -29,6 +29,8 @@ void preparedstatement::InsertSelectAllTypes()
   std::vector<columndefinition>::iterator it;
   stmt.reset(con->createStatement());
   bool got_warning=false;
+  std::istream * blob_output_stream;
+  size_t len;
 
   try
   {
@@ -342,6 +344,81 @@ void preparedstatement::InsertSelectAllTypes()
       {
       }
       res->first();
+
+      // TODO - make BLOB
+
+      if (it->check_as_string)
+      {
+        {
+          blob_output_stream=res->getBlob(1);
+          len=it->as_string.length();
+          char* blob_out=new char(len);
+          blob_output_stream->read(blob_out, len);
+          blob_out[len]='\0';
+          if (blob_out != it->as_string)
+          {
+            sql.str("");
+            sql << "... \t\tWARNING - SQL: '" << it->sqldef << "' - expecting '" << it->as_string << "'";
+            sql << " got '" << res->getString(1) << "'";
+            logMsg(sql.str());
+            got_warning=true;
+          }
+        }
+
+        {
+          blob_output_stream=res->getBlob("id");
+          len=it->as_string.length();
+          char* blob_out=new char(len);
+          blob_output_stream->read(blob_out, len);
+          blob_out[len]='\0';
+          if (blob_out != it->as_string)
+          {
+            sql.str("");
+            sql << "... \t\tWARNING - SQL: '" << it->sqldef << "' - expecting '" << it->as_string << "'";
+            sql << " got '" << res->getString(1) << "'";
+            logMsg(sql.str());
+            got_warning=true;
+          }
+        }
+      }
+      try
+      {
+        res->getBlob(0);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      try
+      {
+        res->getBlob(3);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+
+      res->beforeFirst();
+      try
+      {
+        res->getBlob(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->afterLast();
+      try
+      {
+        res->getBlob(1);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+      }
+      res->first();
+
     }
     stmt->execute("DROP TABLE IF EXISTS test");
     if (got_warning)
@@ -635,16 +712,42 @@ void preparedstatement::assortedSetType()
       {
       }
 
+      pstmt->clearParameters();
+      std::stringstream blob_input_stream;
+      blob_input_stream.str(it->value);
+      pstmt->setBlob(1, &blob_input_stream);
+      ASSERT_EQUALS(1, pstmt->executeUpdate());
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setBlob(0, &blob_input_stream);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException)
+      {
+      }
+
+      pstmt->clearParameters();
+      try
+      {
+        pstmt->setBlob(2, &blob_input_stream);
+        FAIL("Invalid argument not detected");
+      }
+      catch (sql::InvalidArgumentException)
+      {
+      }
+
       pstmt.reset(con->prepareStatement("SELECT COUNT(IFNULL(id, 1)) AS _num FROM test"));
       res.reset(pstmt->executeQuery());
       checkResultSetScrolling(res);
       ASSERT(res->next());
-      if (res->getInt("_num") != (10 + (int) it->is_nullable))
+      if (res->getInt("_num") != (11 + (int) it->is_nullable))
       {
         sql.str("");
         sql << "....\t\tWARNING, SQL: " << it->sqldef << ", nullable " << std::boolalpha;
         sql << it->is_nullable << ", found " << res->getInt(1) << "columns but";
-        sql << " expecting " << (10 + (int) it->is_nullable);
+        sql << " expecting " << (11 + (int) it->is_nullable);
         logMsg(sql.str());
         got_warning=true;
       }
@@ -963,12 +1066,17 @@ void preparedstatement::callSPInOut()
 void preparedstatement::callSPWithPS()
 {
   logMsg("preparedstatement::callSPWithPS() - MySQL_PreparedStatement::*()");
-  SKIP("Bug #44495 - Server crash");
+
   std::stringstream msg;
   std::string sp_code("CREATE PROCEDURE p(IN val VARCHAR(25)) BEGIN SET @sql = CONCAT('SELECT \"', val, '\"'); PREPARE stmt FROM @sql; EXECUTE stmt; DROP PREPARE stmt; END;");
 
   try
   {
+
+    int mysql_version=getMySQLVersion(con);
+    if (mysql_version < 60000)
+      SKIP("http://bugs.mysql.com/bug.php?id=44495 - Server crash");
+
     if (!createSP(sp_code))
     {
       logMsg("... skipping:");
@@ -1039,7 +1147,11 @@ void preparedstatement::callSPWithPS()
 void preparedstatement::callSPMultiRes()
 {
   logMsg("preparedstatement::callSPMultiRes() - MySQL_PreparedStatement::*()");
-  
+
+  int mysql_version=getMySQLVersion(con);
+  if (mysql_version < 60008)
+    SKIP("http://bugs.mysql.com/bug.php?id=44521 - Server crash");
+
   std::stringstream msg;
   std::string sp_code("CREATE PROCEDURE p() BEGIN SELECT 1; SELECT 2; SELECT 3; END;");
 
@@ -1050,7 +1162,7 @@ void preparedstatement::callSPMultiRes()
       logMsg("... skipping:");
       return;
     }
-    
+
     try
     {
       pstmt.reset(con->prepareStatement("CALL p()"));
@@ -1076,12 +1188,13 @@ void preparedstatement::callSPMultiRes()
     do
     {
       res.reset(pstmt->getResultSet());
-      while (res->next())
-      {
-        msg << res->getString(1);
-      }
-    } while (pstmt->getMoreResults());
-   
+    while (res->next())
+    {
+      msg << res->getString(1);
+    }
+    }
+    while (pstmt->getMoreResults());
+
     ASSERT_EQUALS("123", msg.str());
   }
   catch (sql::SQLException &e)
@@ -1121,11 +1234,14 @@ void preparedstatement::anonymousSelect()
 
 void preparedstatement::crash()
 {
-  // Can hit server bug http://bugs.mysql.com/bug.php?id=43833
-
   logMsg("preparedstatement::crash() - MySQL_PreparedStatement::*");
+
   try
   {
+    int mysql_version=getMySQLVersion(con);
+    if ((mysql_version > 50000 && mysql_version < 50082) || (mysql_version > 51000 && mysql_version < 51035) || (mysql_version > 60000 && mysql_version < 60012))
+      SKIP("http://bugs.mysql.com/bug.php?id=43833 - Server crash");
+
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(dummy TIMESTAMP, id VARCHAR(1))");
@@ -1214,6 +1330,119 @@ void preparedstatement::getWarnings()
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
+}
+
+void preparedstatement::blob()
+{
+  logMsg("preparedstatement::blob() - MySQL_PreparedStatement::*");
+  char blob_input[256];
+  std::stringstream blob_input_stream;
+  std::stringstream msg;
+  std::istream * blob_output_stream;
+  char blob_output[256];
+  int id;
+  int offset=0;
+
+  try
+  {
+    pstmt.reset(con->prepareStatement("DROP TABLE IF EXISTS test"));
+    pstmt->execute();
+
+    pstmt.reset(con->prepareStatement("CREATE TABLE test(id INT, col1 TINYBLOB, col2 TINYBLOB)"));
+    pstmt->execute();
+
+    // Most basic INSERT/SELECT...
+    pstmt.reset(con->prepareStatement("INSERT INTO test(id, col1) VALUES (?, ?)"));
+
+    for (char ascii_code=CHAR_MIN; ascii_code < CHAR_MAX; ascii_code++)
+    {
+      if (ascii_code == 10)
+        continue;
+      blob_output[offset]='\0';
+      blob_input[offset++]=ascii_code;
+    }
+    blob_input[offset]='\0';
+    blob_output[offset]='\0';
+
+    id=1;
+    blob_input_stream << blob_input;
+
+    pstmt->setInt(1, id);
+    pstmt->setBlob(2, &blob_input_stream);
+    try
+    {
+      pstmt->setBlob(3, &blob_input_stream);
+      FAIL("Invalid index not detected");
+    }
+    catch (sql::SQLException)
+    {
+    }
+
+    pstmt->execute();
+    pstmt.reset(con->prepareStatement("SELECT id, col1 FROM test WHERE id = 1"));
+    res.reset(pstmt->executeQuery());
+
+    ASSERT(res->next());
+
+    msg.str("");
+    msg << "... simple INSERT/SELECT, '" << blob_input << "' =? '" << res->getString(2) << "'";
+    logMsg(msg.str());
+
+    ASSERT_EQUALS(res->getInt(1), id);
+    ASSERT_EQUALS(res->getString(2), blob_input_stream.str());
+    ASSERT_EQUALS(res->getString(2), blob_input);
+    ASSERT_EQUALS(res->getString("col1"), blob_input_stream.str());
+    ASSERT_EQUALS(res->getString("col1"), blob_input);
+
+    blob_output_stream=res->getBlob(2);
+    blob_output_stream->seekg(std::ios::beg);
+    blob_output_stream->get(blob_output, offset + 1);
+    ASSERT_EQUALS(blob_input_stream.str(), blob_output);
+
+    blob_output_stream=res->getBlob("col1");
+    blob_output_stream->seekg(std::ios::beg);
+    blob_output_stream->get(blob_output, offset + 1);
+    ASSERT_EQUALS(blob_input, blob_output);
+
+    msg.str("");
+    msg << "... second check, '" << blob_input << "' =? '" << blob_output << "'";
+    logMsg(msg.str());
+
+    ASSERT(!res->next());
+    res->close();
+
+    msg.str("");
+    // Data is too long to be stored in a TINYBLOB column
+    msg << "... this is more than TINYBLOB can hold: ";
+    msg << "01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
+    pstmt.reset(con->prepareStatement("INSERT INTO test(id, col1) VALUES (?, ?)"));
+    id=2;
+    pstmt->setInt(1, id);
+    pstmt->setBlob(2, &msg);
+    pstmt->execute();
+    pstmt.reset(con->prepareStatement("SELECT id, col1 FROM test WHERE id = 2"));
+    res.reset(pstmt->executeQuery());
+    ASSERT(res->next());
+    ASSERT_EQUALS(res->getInt(1), id);
+    ASSERT_GT((int) (res->getString(2).length()), (int) (msg.str().length()));
+    ASSERT(!res->next());
+    res->close();
+
+    msg << "- what has happened to the stream?";
+    logMsg(msg.str());
+
+
+    pstmt.reset(con->prepareStatement("DROP TABLE IF EXISTS test"));
+    pstmt->execute();
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
 }
 
 } /* namespace preparedstatement */

@@ -2269,7 +2269,7 @@ unsigned int
 MySQL_ConnectionMetaData::getDriverPatchVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverPatchVersion");
-	return 2;
+	return 6;
 }
 /* }}} */
 
@@ -2279,7 +2279,7 @@ const std::string&
 MySQL_ConnectionMetaData::getDriverVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverVersion");
-	static const std::string version("1.0.2-beta");
+	static const std::string version("1.0.6-GA");
 	return version;
 }
 /* }}} */
