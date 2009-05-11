@@ -321,11 +321,10 @@ MySQL_Prepared_Statement::executeQuery()
 	} else {
 		throw SQLException("Invalid value for result set type");
 	}
-	
-	std::auto_ptr< MySQL_ResultBind > result_bind(new MySQL_ResultBind(stmt, logger));
-	
-	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, result_bind.get(), tmp_type, this, logger);
-	result_bind.release();
+	// MySQL_Prepared_ResultSet takes responsibility about the newly created
+	// MySQL_ResultBind object. The former uses auto_ptr and will clean it in
+	// any case. See http://www.gotw.ca/gotw/062.htm
+	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, new MySQL_ResultBind(stmt, logger), tmp_type, this, logger);
 
 	CPP_INFO_FMT("rset=%p", tmp);
 	return tmp;
@@ -841,12 +840,12 @@ MySQL_Prepared_Statement::getResultSet()
 		throw SQLException("Invalid valude for result set type");
 	}
 
-	std::auto_ptr< MySQL_ResultBind > result_bind(new MySQL_ResultBind(stmt, logger));
+	// MySQL_Prepared_ResultSet takes responsibility about the newly created
+	// MySQL_ResultBind object. The former uses auto_ptr and will clean it in
+	// any case. See http://www.gotw.ca/gotw/062.htm
+	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, new MySQL_ResultBind(stmt, logger), tmp_type, this, logger);
 
-	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, result_bind.get(), tmp_type, this, logger);
-	result_bind.release();
 	CPP_INFO_FMT("rset=%p", tmp);
-
 	return tmp;
 }
 /* }}} */
