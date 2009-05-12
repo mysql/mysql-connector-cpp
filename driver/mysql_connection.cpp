@@ -99,7 +99,7 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName, const std::strin
 
 	std::auto_ptr< MySQL_ConnectionData > tmp_intern(new MySQL_ConnectionData(tmp_logger));
 	intern = tmp_intern.get();
-	
+
 	init(connection_properties);
 	// No exception so far, thus intern can still point to the MySQL_ConnectionData object
 	// and in the dtor we will clean it up
@@ -247,7 +247,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 					std::ostringstream msg;
 					msg << "Invalid value " << it->second.lval <<
 						" for option defaultStatementResultType. TYPE_SCROLL_SENSITIVE is not supported";
-					throw sql::InvalidArgumentException(msg.str());			
+					throw sql::InvalidArgumentException(msg.str());
 				}
 				std::ostringstream msg;
 				msg << "Invalid value (" << it->second.lval << " for option defaultStatementResultType";
@@ -264,7 +264,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 					std::ostringstream msg;
 					msg << "Invalid value " << it->second.lval <<
 						" for option defaultPreparedStatementResultType. TYPE_SCROLL_SENSITIVE is not supported";
-					throw sql::InvalidArgumentException(msg.str());			
+					throw sql::InvalidArgumentException(msg.str());
 				}
 				std::ostringstream msg;
 				msg << "Invalid value (" << it->second.lval << " for option defaultPreparedStatementResultType";
@@ -272,7 +272,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 			} while (0);
 			intern->defaultPreparedStatementResultType = static_cast< sql::ResultSet::enum_type >(it->second.lval);
 #else
-			throw SQLException("defaultPreparedStatementResultType parameter still not implemented");	
+			throw SQLException("defaultPreparedStatementResultType parameter still not implemented");
 
 #endif
 		} else if (!it->first.compare("metadataUseInfoSchema")) {
@@ -405,7 +405,6 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 		intern->mysql = NULL;
 		throw e;
 	}
-	mysql_set_server_option(intern->mysql, MYSQL_OPTION_MULTI_STATEMENTS_ON);
 	setAutoCommit(true);
 	setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
 	// Different Values means we have to set different result set encoding
@@ -531,9 +530,9 @@ MySQL_Connection::getClientOption(const std::string & optionName, void * optionV
 	if (!optionName.compare("metadataUseInfoSchema")) {
 		*(static_cast<bool *>(optionValue)) = intern->metadata_use_info_schema;
 	} else if (!optionName.compare("defaultStatementResultType")) {
-		*(static_cast<int *>(optionValue)) = intern->defaultStatementResultType;	
+		*(static_cast<int *>(optionValue)) = intern->defaultStatementResultType;
 	} else if (!optionName.compare("defaultPreparedStatementResultType")) {
-		*(static_cast<int *>(optionValue)) = intern->defaultPreparedStatementResultType;	
+		*(static_cast<int *>(optionValue)) = intern->defaultPreparedStatementResultType;
 	} else if (!optionName.compare("characterSetResults")) {
 		*(static_cast<std::string **>(optionValue)) = new std::string(getSessionVariable("characterSetResults"));
 	}
@@ -810,7 +809,7 @@ MySQL_Connection::setClientOption(const std::string & optionName, const void * o
 				std::ostringstream msg;
 				msg << "Invalid value " << int_value <<
 					" for option defaultStatementResultType. TYPE_SCROLL_SENSITIVE is not supported";
-				throw sql::InvalidArgumentException(msg.str());			
+				throw sql::InvalidArgumentException(msg.str());
 			}
 			std::ostringstream msg;
 			msg << "Invalid value (" << int_value << " for option defaultStatementResultType";
@@ -822,7 +821,7 @@ MySQL_Connection::setClientOption(const std::string & optionName, const void * o
 		/* The connector is not ready for unbuffered as we need to refetch */
 		intern->defaultPreparedStatementResultType = *(static_cast<const bool *>(optionValue));
 #else
-		throw MethodNotImplementedException("MySQL_Prepared_Statement::setResultSetType");	
+		throw MethodNotImplementedException("MySQL_Prepared_Statement::setResultSetType");
 #endif
 	}
 	return this;
