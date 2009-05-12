@@ -9,12 +9,37 @@
 
 PROJECT(MYSQLCPPCONN)
 
+# We need this for mysqlcppconn_EXPORTS needed for the static build
+cmake_minimum_required(VERSION 2.6.2)
+
+
+#-----------------
+# BOOST
+
+# search for Boost version 1.34
 IF(WIN32)
-	# We need this for mysqlcppconn_EXPORTS needed for the static build
-	cmake_minimum_required(VERSION 2.6.2)
-ELSE(WIN32)
-	cmake_minimum_required(VERSION 2.4.2)
+        SET(BOOST_ROOT "C:/Program Files/Boost")
 ENDIF(WIN32)
+# Prefer static linking in all cases
+SET(Boost_ADDITIONAL_VERSIONS "1.37.0" "1.37" "1.38.0" "1.38" "1.39.0" "1.39")
+SET(MYSQLCPPCONN_BOOST_COMPONENTS thread date_time)
+SET(Boost_USE_STATIC_LIBS TRUE)
+FIND_PACKAGE(Boost COMPONENTS ${MYSQLCPPCONN_BOOST_COMPONENTS})
+IF(!Boost_FOUND)
+	# Try dynamic
+	set(Boost_USE_STATIC_LIBS FALSE)
+	FIND_PACKAGE(Boost COMPONENTS ${MYSQLCPPCONN_BOOST_COMPONENTS})
+	IF(!Boost_FOUND)
+		MESSAGE(FATAL_ERROR "Boost or some of its libraries found. If not in standard place please set -DBOOST_ROOT:STRING=")
+	ENDIF()
+ENDIF()
+
+SET(MYSQLCPPCONN_BOOST_INCLUDE_DIRS ${Boost_INCLUDE_DIRS})
+SET(MYSQLCPPCONN_BOOST_SYSTEM_LIBS ${Boost_SYSTEM_LIBRARY})
+SET(MYSQLCPPCONN_BOOST_THREAD_LIBS ${Boost_THREAD_LIBRARY})
+SET(MYSQLCPPCONN_BOOST_LIBRARY_DIRS ${Boost_LIBRARY_DIRS})
+#-----------------
+
 
 if(COMMAND cmake_policy)
         cmake_policy(SET CMP0003 NEW)
@@ -41,7 +66,7 @@ IF(MYSQLCPPCONN_STLPORT_ENABLE)
 		INCLUDE_DIRECTORIES(STLPORT_INCLUDE_DIR)
 		SET(MYSQLCPPCONN_STLPORT_LIB "stlport")
 	ELSE(STLPORT_INCLUDE_DIR)
-		MESSAGE(SEND_ERROR "STLPORT not found. Please set \$ENV{STLPORT_INCLUDE_DIR} if installed in non-standard location")
+		MESSAGE(FATAL_ERROR "STLPORT not found. Please set \$ENV{STLPORT_INCLUDE_DIR} if installed in non-standard location")
 	ENDIF(STLPORT_INCLUDE_DIR)
 ELSE(MYSQLCPPCONN_STLPORT_ENABLE)
 	SET(MYSQLCPPCONN_STLPORT_LIB "")
