@@ -13,6 +13,7 @@
 #define _MYSQL_CONNECTION_DATA_H_
 
 #include <list>
+#include <boost/scoped_ptr.hpp>
 #include <cppconn/resultset.h>
 #include "mysql_util.h"
 struct st_mysql;
@@ -49,7 +50,7 @@ public:
 #pragma warning (disable : 4251)
 #endif
 
-	std::auto_ptr<const sql::SQLWarning> warnings;
+	boost::scoped_ptr<const sql::SQLWarning> warnings;
 
 #if defined(_WIN32) || defined(_WIN64)
 #pragma warning (pop)
@@ -67,7 +68,7 @@ public:
 
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 
-	std::auto_ptr< MySQL_ConnectionMetaData > meta;
+	boost::scoped_ptr< MySQL_ConnectionMetaData > meta;
 
 	struct ::st_mysql * mysql; /* let it be last . If wrong dll is used we will get valgrind error or runtime error !*/
 };

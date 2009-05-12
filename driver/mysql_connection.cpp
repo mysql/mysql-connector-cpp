@@ -9,6 +9,7 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
+#include <boost/scoped_ptr.hpp>
 #include <stdlib.h>
 #include <memory>
 #include <sstream>
@@ -503,8 +504,8 @@ MySQL_Connection::getSchema()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getSchema");
 	checkClosed();
-	std::auto_ptr< sql::Statement > stmt(createStatement());
-	std::auto_ptr< sql::ResultSet > rset(stmt->executeQuery("SELECT DATABASE()")); //SELECT SCHEMA()
+	boost::scoped_ptr< sql::Statement > stmt(createStatement());
+	boost::scoped_ptr< sql::ResultSet > rset(stmt->executeQuery("SELECT DATABASE()")); //SELECT SCHEMA()
 	rset->next();
 	return rset->getString(1);
 }
@@ -721,7 +722,7 @@ MySQL_Connection::releaseSavepoint(Savepoint * savepoint)
 	std::string sql("RELEASE SAVEPOINT ");
 	sql.append(savepoint->getSavepointName());
 
-	std::auto_ptr<sql::Statement> stmt(createStatement());
+	boost::scoped_ptr<sql::Statement> stmt(createStatement());
 	stmt->execute(sql);
 }
 /* }}} */
@@ -750,7 +751,7 @@ MySQL_Connection::rollback(Savepoint * savepoint)
 	std::string sql("ROLLBACK TO SAVEPOINT ");
 	sql.append(savepoint->getSavepointName());
 
-	std::auto_ptr< sql::Statement > stmt(createStatement());
+	boost::scoped_ptr< sql::Statement > stmt(createStatement());
 	stmt->execute(sql);
 }
 /* }}} */
@@ -775,7 +776,7 @@ MySQL_Connection::setSchema(const std::string& catalog)
 	std::string sql("USE ");
 	sql.append(catalog);
 
-	std::auto_ptr< sql::Statement > stmt(createStatement());
+	boost::scoped_ptr< sql::Statement > stmt(createStatement());
 	stmt->execute(sql);
 }
 /* }}} */
@@ -876,7 +877,7 @@ MySQL_Connection::setSavepoint(const std::string& name)
 	std::string sql("SAVEPOINT ");
 	sql.append(name);
 
-	std::auto_ptr< sql::Statement > stmt(createStatement());
+	boost::scoped_ptr< sql::Statement > stmt(createStatement());
 	stmt->execute(sql);
 
 	return new MySQL_Savepoint(name);
@@ -938,10 +939,10 @@ MySQL_Connection::getSessionVariable(const std::string & varname)
 		CPP_INFO_FMT("sql_mode=%s", intern->sql_mode.c_str());
 		return intern->sql_mode;
 	}
-	std::auto_ptr< sql::Statement > stmt(createStatement());
+	boost::scoped_ptr< sql::Statement > stmt(createStatement());
 	std::string q = std::string("SHOW SESSION VARIABLES LIKE '").append(varname).append("'");
 
-	std::auto_ptr< sql::ResultSet > rset(stmt->executeQuery(q));
+	boost::scoped_ptr< sql::ResultSet > rset(stmt->executeQuery(q));
 
 	if (rset->next()) {
 		if (intern->cache_sql_mode && intern->sql_mode_set == false &&
@@ -964,7 +965,7 @@ MySQL_Connection::setSessionVariable(const std::string & varname, const std::str
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setSessionVariable");
 	checkClosed();
 
-	std::auto_ptr< sql::Statement > stmt(createStatement());
+	boost::scoped_ptr< sql::Statement > stmt(createStatement());
 	std::string q(std::string("SET SESSION ").append(varname).append("="));
 	if (!value.compare("NULL")) {
 		q.append("NULL");

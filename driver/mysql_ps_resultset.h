@@ -12,6 +12,7 @@
 #ifndef _MYSQL_PS_RESULTSET_H_
 #define _MYSQL_PS_RESULTSET_H_
 
+#include <boost/scoped_ptr.hpp>
 #include <cppconn/resultset.h>
 
 #include "mysql_private_iface.h"
@@ -49,8 +50,8 @@ private:
 
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 
-	std::auto_ptr< MySQL_Prepared_ResultSetMetaData > rs_meta;
-	std::auto_ptr< MySQL_ResultBind > result_bind;
+	boost::scoped_ptr< MySQL_Prepared_ResultSetMetaData > rs_meta;
+	boost::scoped_ptr< MySQL_ResultBind > result_bind;
 
 	sql::ResultSet::enum_type resultset_type;
 

@@ -17,6 +17,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <memory>
+#include <boost/scoped_ptr.hpp>
 
 #include <cppconn/resultset.h>
 #include "mysql_res_wrapper.h"
@@ -234,7 +235,7 @@ protected:
 public:
 
 	unsigned int num_fields;
-	std::auto_ptr< MySQL_ArtResultSet::rset_t > rset;
+	boost::scoped_ptr< MySQL_ArtResultSet::rset_t > rset;
 	rset_t::iterator current_record;
 	bool started;
 
@@ -249,7 +250,7 @@ public:
 
 	bool is_closed;
 
-	std::auto_ptr< MySQL_ArtResultSetMetaData > meta;
+	boost::scoped_ptr< MySQL_ArtResultSetMetaData > meta;
 
 protected:
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;

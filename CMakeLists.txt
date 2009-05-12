@@ -17,7 +17,7 @@ cmake_minimum_required(VERSION 2.6.2)
 # BOOST
 
 # search for Boost version 1.34
-IF(WIN32)
+IF(!BOOST_ROOT AND WIN32)
         SET(BOOST_ROOT "C:/Program Files/Boost")
 ENDIF(WIN32)
 # Prefer static linking in all cases
