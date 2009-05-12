@@ -19,12 +19,13 @@ cmake_minimum_required(VERSION 2.6.2)
 # search for Boost version 1.34
 IF(!BOOST_ROOT AND WIN32)
         SET(BOOST_ROOT "C:/Program Files/Boost")
-ENDIF(WIN32)
+ENDIF()
 # Prefer static linking in all cases
 SET(Boost_ADDITIONAL_VERSIONS "1.37.0" "1.37" "1.38.0" "1.38" "1.39.0" "1.39")
 SET(MYSQLCPPCONN_BOOST_COMPONENTS thread date_time)
 SET(Boost_USE_STATIC_LIBS TRUE)
-FIND_PACKAGE(Boost COMPONENTS ${MYSQLCPPCONN_BOOST_COMPONENTS})
+#FIND_PACKAGE(Boost COMPONENTS ${MYSQLCPPCONN_BOOST_COMPONENTS})
+FIND_PACKAGE(Boost)
 IF(!Boost_FOUND)
 	# Try dynamic
 	set(Boost_USE_STATIC_LIBS FALSE)
