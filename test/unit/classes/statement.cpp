@@ -213,6 +213,17 @@ void statement::callSP()
 
     sql::DatabaseMetaData * dbmeta=con->getMetaData();
 
+    ASSERT(!stmt->execute("DROP TABLE IF EXISTS test"));
+    ASSERT(!stmt->execute("CREATE TABLE test(id INT)"));
+    ASSERT(!stmt->execute("CREATE PROCEDURE p() BEGIN INSERT INTO test(id) VALUES (123); END;"));
+    ASSERT(!stmt->execute("CALL p()"));
+    ASSERT(stmt->execute("SELECT id FROM test"));
+    res.reset(stmt->getResultSet());
+    ASSERT(res->next());
+    ASSERT_EQUALS(123, res->getInt("id"));
+    ASSERT(!stmt->execute("DROP TABLE IF EXISTS test"));
+    stmt->execute("DROP PROCEDURE IF EXISTS p");
+
     ASSERT(!stmt->execute("CREATE PROCEDURE p(OUT ver_param VARCHAR(25)) BEGIN SELECT VERSION() INTO ver_param; END;"));
     ASSERT(!stmt->execute("CALL p(@version)"));
     ASSERT(stmt->execute("SELECT @version AS _version"));

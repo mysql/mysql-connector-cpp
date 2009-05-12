@@ -938,7 +938,7 @@ bool preparedstatement::createSP(std::string sp_code)
   try
   {
     pstmt.reset(con->prepareStatement(sp_code));
-    ASSERT(!pstmt->execute());
+    ASSERT(!pstmt->execute());    
     logMsg("... using PS for everything");
   }
   catch (sql::SQLException &e)
@@ -974,6 +974,7 @@ void preparedstatement::callSP()
     try
     {
       pstmt.reset(con->prepareStatement("CALL p(@version)"));
+      ASSERT(!pstmt->execute());
       ASSERT(!pstmt->execute());
     }
     catch (sql::SQLException &e)
