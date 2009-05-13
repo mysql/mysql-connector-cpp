@@ -9,8 +9,12 @@
 
 PROJECT(MYSQLCPPCONN)
 
+IF(WIN32)
 # We need this for mysqlcppconn_EXPORTS needed for the static build
-cmake_minimum_required(VERSION 2.6.2)
+	cmake_minimum_required(VERSION 2.6.2)
+ELSE(WIN32)
+	cmake_minimum_required(VERSION 2.6)
+ENDIF(WIN32)
 
 
 #-----------------
