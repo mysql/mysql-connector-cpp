@@ -13,6 +13,7 @@
 #define _MYSQL_PS_RESULTSET_H_
 
 #include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 #include <cppconn/resultset.h>
 
 #include "mysql_private_iface.h"
@@ -21,7 +22,6 @@ namespace sql
 {
 namespace mysql
 {
-namespace util {template<class T> class my_shared_ptr; }; // forward declaration.
 class MySQL_Prepared_Statement;
 class MySQL_DebugLogger;
 class MySQL_Prepared_ResultSetMetaData;
@@ -48,7 +48,7 @@ private:
 
 	bool is_valid;
 
-	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
+	boost::shared_ptr< MySQL_DebugLogger > logger;
 
 	boost::scoped_ptr< MySQL_Prepared_ResultSetMetaData > rs_meta;
 	boost::scoped_ptr< MySQL_ResultBind > result_bind;
@@ -67,8 +67,8 @@ protected:
 	uint64_t getUInt64_intern(const uint32_t columnIndex, bool cutTooBig) const;
 
 public:
-	MySQL_Prepared_ResultSet(MYSQL_STMT *s, MySQL_ResultBind * r_bind, sql::ResultSet::enum_type rset_type,
-							MySQL_Prepared_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
+	MySQL_Prepared_ResultSet(MYSQL_STMT * s, MySQL_ResultBind * r_bind, sql::ResultSet::enum_type rset_type,
+							 MySQL_Prepared_Statement * par, boost::shared_ptr< MySQL_DebugLogger > &l);
 
 	virtual ~MySQL_Prepared_ResultSet();
 

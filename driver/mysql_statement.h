@@ -21,7 +21,6 @@ namespace sql
 {
 namespace mysql
 {
-namespace util {template<class T> class my_shared_ptr; }; // forward declaration.
 class MySQL_Connection;
 class MySQL_DebugLogger;
 
@@ -36,7 +35,7 @@ protected:
 
 	uint64_t last_update_count;
 
-	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
+	boost::shared_ptr< MySQL_DebugLogger > logger;
 
 	sql::ResultSet::enum_type resultset_type;
 
@@ -44,7 +43,7 @@ protected:
 	virtual void checkClosed();
 
 public:
-	MySQL_Statement(MySQL_Connection * conn, sql::ResultSet::enum_type rset_type, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
+	MySQL_Statement(MySQL_Connection * conn, sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & l);
 	~MySQL_Statement();
 
 	sql::Connection * getConnection();

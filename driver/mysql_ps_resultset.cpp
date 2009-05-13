@@ -68,12 +68,10 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
 			MySQL_ResultBind * r_bind,
 			sql::ResultSet::enum_type rset_type,
 			MySQL_Prepared_Statement * par,
-			sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l
+			boost::shared_ptr< MySQL_DebugLogger > & l
 		)
 	: row(NULL), stmt(s), row_position(0), parent(par), is_valid(true),
-	  logger(l? l->getReference():NULL),
-	  result_bind(r_bind),
-	  resultset_type(rset_type)
+	  logger(l), result_bind(r_bind), resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet");
 
@@ -98,12 +96,8 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
 /* {{{ MySQL_Prepared_ResultSet::~MySQL_Prepared_ResultSet() -I- */
 MySQL_Prepared_ResultSet::~MySQL_Prepared_ResultSet()
 {
-	/* Don't remove the block or we can get into problems with logger */
-	{
-		CPP_ENTER("MySQL_Prepared_ResultSet::~MySQL_Prepared_ResultSet");
-		closeIntern();
-	}
-	logger->freeReference();
+	CPP_ENTER("MySQL_Prepared_ResultSet::~MySQL_Prepared_ResultSet");
+	closeIntern();
 }
 /* }}} */
 

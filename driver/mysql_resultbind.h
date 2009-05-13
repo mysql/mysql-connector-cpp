@@ -27,20 +27,19 @@ namespace mysql
 
 class MySQL_ResultBind
 {
-
 	unsigned int num_fields;
 	boost::scoped_array< my_bool > is_null;
 	boost::scoped_array< my_bool > err;
 	boost::scoped_array< unsigned long > len;
 
-	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
+	boost::shared_ptr< MySQL_DebugLogger > logger;
 	MYSQL_STMT * stmt;
 
 public:
 	boost::scoped_array< MYSQL_BIND > rbind;
 
 
-	MySQL_ResultBind(MYSQL_STMT * s, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * log)
+	MySQL_ResultBind(MYSQL_STMT * s, boost::shared_ptr< MySQL_DebugLogger > & log)
 		: num_fields(0), is_null(NULL), err(NULL), len(NULL), logger(log), stmt(s), rbind(NULL) {}
 	~MySQL_ResultBind();
 

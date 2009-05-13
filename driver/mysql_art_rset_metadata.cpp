@@ -29,8 +29,8 @@ namespace mysql
 
 /* {{{ MySQL_ArtResultSetMetaData::MySQL_ArtResultSetMetaData() -I- */
 MySQL_ArtResultSetMetaData::MySQL_ArtResultSetMetaData(const MySQL_ArtResultSet * p,
-													   sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
-  : parent(p), logger(l? l->getReference():NULL), num_fields(parent->num_fields)
+													   boost::shared_ptr< MySQL_DebugLogger > & l)
+  : parent(p), logger(l), num_fields(parent->num_fields)
 {
 }
 /* }}} */
@@ -39,12 +39,8 @@ MySQL_ArtResultSetMetaData::MySQL_ArtResultSetMetaData(const MySQL_ArtResultSet 
 /* {{{ MySQL_ArtResultSetMetaData::~MySQL_ArtResultSetMetaData() -I- */
 MySQL_ArtResultSetMetaData::~MySQL_ArtResultSetMetaData()
 {
-	/* Don't remove the block or we can get into problems with logger */
-	{
-		CPP_ENTER("MySQL_ArtResultSetMetaData::~MySQL_ArtResultSetMetaData");
-		CPP_INFO_FMT("this=%p", this);
-	}
-	logger->freeReference();
+	CPP_ENTER("MySQL_ArtResultSetMetaData::~MySQL_ArtResultSetMetaData");
+	CPP_INFO_FMT("this=%p", this);
 }
 /* }}} */
 

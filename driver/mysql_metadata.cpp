@@ -1190,8 +1190,8 @@ static inline const char * my_i_to_a(char * buf, size_t buf_size, int a)
 
 
 /* {{{ MySQL_ConnectionMetaData::MySQL_ConnectionMetaData() -I- */
-MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(MySQL_Connection * const conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
-  : connection(conn), logger(l? l->getReference():NULL), use_info_schema(true)
+MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(MySQL_Connection * const conn, boost::shared_ptr< MySQL_DebugLogger > & l)
+  : connection(conn), logger(l), use_info_schema(true)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::MySQL_ConnectionMetaData");
 	server_version = mysql_get_server_version(connection->getMySQLHandle());
@@ -1205,12 +1205,8 @@ MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(MySQL_Connection * const conn
 /* {{{ MySQL_ConnectionMetaData::~MySQL_ConnectionMetaData() -I- */
 MySQL_ConnectionMetaData::~MySQL_ConnectionMetaData()
 {
-	/* Don't remove the block or we can get into problems with logger */
-	{
-		CPP_ENTER("MySQL_ConnectionMetaData::~MySQL_ConnectionMetaData");
-		CPP_INFO_FMT("this=%p", this);
-	}
-	logger->freeReference();
+	CPP_ENTER("MySQL_ConnectionMetaData::~MySQL_ConnectionMetaData");
+	CPP_INFO_FMT("this=%p", this);
 }
 /* }}} */
 

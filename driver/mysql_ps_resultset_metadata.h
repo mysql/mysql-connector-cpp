@@ -20,17 +20,16 @@ namespace sql
 {
 namespace mysql
 {
-namespace util {template<class T> class my_shared_ptr; }; // forward declaration.
 class MySQL_DebugLogger;
 
 class MySQL_Prepared_ResultSetMetaData : public sql::ResultSetMetaData
 {
-	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger> * logger;
+	boost::shared_ptr< MySQL_DebugLogger> logger;
 	MYSQL_RES * result_meta;
 	unsigned int num_fields;
 
 public:
-	MySQL_Prepared_ResultSetMetaData(MYSQL_STMT * s, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger> * l);
+	MySQL_Prepared_ResultSetMetaData(MYSQL_STMT * s, boost::shared_ptr< MySQL_DebugLogger> & l);
 	virtual ~MySQL_Prepared_ResultSetMetaData();
 
 	SQLString getCatalogName(unsigned int columnIndex);

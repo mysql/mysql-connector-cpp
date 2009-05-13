@@ -12,6 +12,8 @@
 #ifndef _MYSQL_ART_RSET_METADATA_H_
 #define _MYSQL_ART_RSET_METADATA_H_
 
+#include <boost/shared_ptr.hpp>
+
 #include <cppconn/resultset.h>
 #include <cppconn/resultset_metadata.h>
 #include "mysql_private_iface.h"
@@ -20,17 +22,16 @@ namespace sql
 {
 namespace mysql
 {
-namespace util {template<class T> class my_shared_ptr; }; // forward declaration.
 class MySQL_DebugLogger;
 
 class MySQL_ArtResultSetMetaData : public sql::ResultSetMetaData
 {
 	const MySQL_ArtResultSet * parent;
-	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
+	boost::shared_ptr< MySQL_DebugLogger > logger;
 	unsigned int num_fields;
 
 public:
-	MySQL_ArtResultSetMetaData(const MySQL_ArtResultSet * p, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
+	MySQL_ArtResultSetMetaData(const MySQL_ArtResultSet * p, boost::shared_ptr< MySQL_DebugLogger > & l);
 	virtual ~MySQL_ArtResultSetMetaData();
 
 	SQLString getCatalogName(unsigned int columnIndex);

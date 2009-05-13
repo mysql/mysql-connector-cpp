@@ -79,31 +79,6 @@ typedef struct st_our_charset
 const OUR_CHARSET * find_charset(unsigned int charsetnr);
 
 
-template<typename T>
-class my_shared_ptr
-{
-public:
-	my_shared_ptr(): _ptr(NULL), ref_count(0) { }
-
-	my_shared_ptr(T * __p): ref_count(1), _ptr(__p) { }
-
-	void reset() { delete * _ptr; _ptr = NULL; }
-	void reset(T * new_p) { delete * _ptr; _ptr = new_p; }
-
-	T * get() const throw() { return _ptr; }
-
-	my_shared_ptr< T > * getReference() throw() { ++ref_count; return this; }
-	void freeReference() {  if (ref_count && !--ref_count) { delete this;} }
-
-
-protected:
-	unsigned int ref_count;
-	T * _ptr;
-
-	~my_shared_ptr() { delete _ptr; }
-};
-
-
 } /* namespace util */
 } /* namespace mysql */
 } /* namespace sql */

@@ -10,6 +10,7 @@
 */
 
 #include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 #include <stdlib.h>
 #include <memory>
 #include <sstream>
@@ -96,8 +97,7 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName, const std::strin
 		connection_properties[std::string("password")] = tmp;
 	}
 
-	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * tmp_logger = new sql::mysql::util::my_shared_ptr< MySQL_DebugLogger >(new MySQL_DebugLogger());
-
+	boost::shared_ptr<MySQL_DebugLogger> tmp_logger(new MySQL_DebugLogger());
 	std::auto_ptr< MySQL_ConnectionData > tmp_intern(new MySQL_ConnectionData(tmp_logger));
 	intern = tmp_intern.get();
 
@@ -113,8 +113,7 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName, const std::strin
 MySQL_Connection::MySQL_Connection(std::map< std::string, sql::ConnectPropertyVal > & properties)
 	:intern(NULL)
 {
-	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * tmp_logger = new sql::mysql::util::my_shared_ptr< MySQL_DebugLogger >(new MySQL_DebugLogger());
-
+	boost::shared_ptr<MySQL_DebugLogger> tmp_logger(new MySQL_DebugLogger());
 	std::auto_ptr< MySQL_ConnectionData > tmp_intern(new MySQL_ConnectionData(tmp_logger));
 	intern = tmp_intern.get();
 
@@ -791,10 +790,10 @@ MySQL_Connection::setClientOption(const std::string & optionName, const void * o
 		mysql_debug(static_cast<const char *>(optionValue));
 	} else if (!optionName.compare("clientTrace")) {
 		if (*(static_cast<const bool *>(optionValue))) {
-			intern->logger->get()->enableTracing();
+			intern->logger->enableTracing();
 			CPP_INFO("Tracing enabled");
 		} else {
-			intern->logger->get()->disableTracing();
+			intern->logger->disableTracing();
 			CPP_INFO("Tracing disabled");
 		}
 	} else if (!optionName.compare("characterSetResults")) {

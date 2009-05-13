@@ -31,8 +31,8 @@ namespace mysql
 
 
 /* {{{ MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData -I- */
-MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData(MYSQL_STMT * s, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger> * l)
-  :logger(l? l->getReference():NULL), result_meta(mysql_stmt_result_metadata(s)), num_fields(mysql_stmt_field_count(s))
+MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData(MYSQL_STMT * s, boost::shared_ptr< MySQL_DebugLogger> & l)
+  :logger(l), result_meta(mysql_stmt_result_metadata(s)), num_fields(mysql_stmt_field_count(s))
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData");
 }
@@ -42,13 +42,9 @@ MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData(MYSQL_STMT * 
 /* {{{ MySQL_Prepared_ResultSetMetaData::~MySQL_Prepared_ResultSetMetaData -I- */
 MySQL_Prepared_ResultSetMetaData::~MySQL_Prepared_ResultSetMetaData()
 {
-	/* Don't remove the block or we can get into problems with logger */
-	{
-		CPP_ENTER("MySQL_Prepared_ResultSetMetaData::~MySQL_Prepared_ResultSetMetaData");
-		CPP_INFO_FMT("this=%p", this);
-		mysql_free_result(result_meta);
-	}
-	logger->freeReference();
+	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::~MySQL_Prepared_ResultSetMetaData");
+	CPP_INFO_FMT("this=%p", this);
+	mysql_free_result(result_meta);
 }
 /* }}} */
 

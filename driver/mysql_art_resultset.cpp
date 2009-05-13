@@ -190,8 +190,8 @@ MyVal::getBool()
 
 
 /* {{{ MySQL_ArtResultSet::MySQL_ArtResultSet() -I- */
-MySQL_ArtResultSet::MySQL_ArtResultSet(const StringList& fn, rset_t * const rs, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
-  : rset(rs), current_record(rset->begin()), started(false), row_position(0), is_closed(false), logger(l? l->getReference():NULL)
+MySQL_ArtResultSet::MySQL_ArtResultSet(const StringList& fn, rset_t * const rs, boost::shared_ptr< MySQL_DebugLogger > & l)
+  : rset(rs), current_record(rset->begin()), started(false), row_position(0), is_closed(false), logger(l)
 {
 	CPP_ENTER("MySQL_ArtResultSet::MySQL_ArtResultSet");
 	CPP_INFO_FMT("metadata.size=%d resultset.size=%d", fn.size(), rset->size());
@@ -216,14 +216,10 @@ MySQL_ArtResultSet::MySQL_ArtResultSet(const StringList& fn, rset_t * const rs, 
 /* {{{ MySQL_ArtResultSet::~MySQL_ArtResultSet() -I- */
 MySQL_ArtResultSet::~MySQL_ArtResultSet()
 {
-	/* Don't remove the block or we can get into problems with logger */
-	{
-		CPP_ENTER("MySQL_ArtResultSet::~MySQL_ArtResultSet");
-		if (!isClosed()) {
-			close();
-		}
+	CPP_ENTER("MySQL_ArtResultSet::~MySQL_ArtResultSet");
+	if (!isClosed()) {
+		close();
 	}
-	logger->freeReference();
 }
 /* }}} */
 

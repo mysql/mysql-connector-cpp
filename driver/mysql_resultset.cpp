@@ -34,10 +34,10 @@ namespace mysql
 /* {{{ MySQL_ResultSet::MySQL_ResultSet() -I- */
 MySQL_ResultSet::MySQL_ResultSet(
 			boost::shared_ptr< MYSQL_RES > res, sql::ResultSet::enum_type rset_type,
-			MySQL_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l
+			MySQL_Statement * par, boost::shared_ptr< MySQL_DebugLogger > & l
 		)
 	: row(NULL), result(res), row_position(0), was_null(false), parent(par),
-	  logger(l? l->getReference():NULL), resultset_type(rset_type)
+	  logger(l), resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_ResultSet::MySQL_ResultSet");
 	num_rows = mysql_num_rows(result.get());
@@ -55,15 +55,7 @@ MySQL_ResultSet::MySQL_ResultSet(
 /* {{{ MySQL_ResultSet::~MySQL_ResultSet() -I- */
 MySQL_ResultSet::~MySQL_ResultSet()
 {
-	/* Don't remove the block or we can get into problems with logger */
-	{
-		CPP_ENTER("MySQL_ResultSet::~MySQL_ResultSet");
-//		if (!isClosed()) {
-//			result->dispose();
-//		}
-//		result->deleteReference();
-	}
-	logger->freeReference();
+	CPP_ENTER("MySQL_ResultSet::~MySQL_ResultSet");
 }
 /* }}} */
 

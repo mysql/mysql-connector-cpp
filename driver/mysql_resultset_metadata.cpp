@@ -31,8 +31,8 @@ namespace mysql
 
 
 /* {{{ MySQL_ResultSetMetaData::MySQL_ResultSetMetaData -I- */
-MySQL_ResultSetMetaData::MySQL_ResultSetMetaData(boost::shared_ptr< MYSQL_RES > res, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
-  : result(res), logger(l? l->getReference():NULL)
+MySQL_ResultSetMetaData::MySQL_ResultSetMetaData(boost::shared_ptr< MYSQL_RES > res, boost::shared_ptr< MySQL_DebugLogger > & l)
+  : result(res), logger(l)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::MySQL_ResultSetMetaData");
 	boost::shared_ptr< MYSQL_RES > result_p = result.lock();
@@ -46,11 +46,7 @@ MySQL_ResultSetMetaData::MySQL_ResultSetMetaData(boost::shared_ptr< MYSQL_RES > 
 /* {{{ MySQL_ResultSetMetaData::~MySQL_ResultSetMetaData -I- */
 MySQL_ResultSetMetaData::~MySQL_ResultSetMetaData()
 {
-	/* Don't remove the block or we can get into problems with logger */
-	{
-		CPP_ENTER("MySQL_ResultSetMetaData::~MySQL_ResultSetMetaData");
-	}
-	logger->freeReference();
+	CPP_ENTER("MySQL_ResultSetMetaData::~MySQL_ResultSetMetaData");
 }
 /* }}} */
 

@@ -13,6 +13,7 @@
 #define _MYSQL_PREPARED_STATEMENT_H_
 
 #include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 #include <cppconn/prepared_statement.h>
 #include <cppconn/parameter_metadata.h>
 
@@ -23,7 +24,6 @@ namespace sql
 {
 namespace mysql
 {
-namespace util {template<class T> class my_shared_ptr; }; // forward declaration.
 class MySQL_DebugLogger;
 class MySQL_ParamBind;
 class MySQL_ParameterMetaData;
@@ -45,7 +45,7 @@ protected:
 
 	bool isClosed;
 
-	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
+	boost::shared_ptr< MySQL_DebugLogger > logger;
 
 	boost::scoped_ptr< MySQL_Prepared_ResultSetMetaData > res_meta;
 	boost::scoped_ptr< MySQL_ParameterMetaData > param_meta;
@@ -61,7 +61,8 @@ protected:
 
 public:
 
-	MySQL_Prepared_Statement(MYSQL_STMT *s, sql::Connection * conn, sql::ResultSet::enum_type rset_type, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * log);
+	MySQL_Prepared_Statement(MYSQL_STMT * s, sql::Connection * conn, sql::ResultSet::enum_type rset_type,
+							 boost::shared_ptr< MySQL_DebugLogger > & log);
 	virtual ~MySQL_Prepared_Statement();
 
 	sql::Connection *getConnection();

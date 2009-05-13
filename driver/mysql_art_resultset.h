@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <memory>
 #include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <cppconn/resultset.h>
 
@@ -28,7 +29,6 @@ namespace sql
 {
 namespace mysql
 {
-namespace util {template<class T> class my_shared_ptr; }; // forward declaration.
 
 class MySQL_DebugLogger;
 
@@ -67,7 +67,7 @@ public:
 
 	MyVal(const char * const s);
 
-  MyVal(const SQLString & s);
+	MyVal(const SQLString & s);
 
 	MyVal(long double d) : val_type(typeDouble) { val.dval = d; }
 
@@ -112,7 +112,7 @@ public:
 	typedef std::vector< MyVal > row_t;
 	typedef std::list< row_t > rset_t;
 
-	MySQL_ArtResultSet(const StringList& fn, rset_t * const rset, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
+	MySQL_ArtResultSet(const StringList& fn, rset_t * const rset, boost::shared_ptr< MySQL_DebugLogger > & l);
 	virtual ~MySQL_ArtResultSet();
 
 	bool absolute(int row);
@@ -254,7 +254,7 @@ public:
 	boost::scoped_ptr< MySQL_ArtResultSetMetaData > meta;
 
 protected:
-	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
+	boost::shared_ptr< MySQL_DebugLogger > logger;
 
 private:
 	/* Prevent use of these */

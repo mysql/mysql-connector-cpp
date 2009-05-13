@@ -31,12 +31,12 @@ namespace mysql
 /* {{{ MySQL_DebugEnterEvent::MySQL_DebugEnterEvent() -I- */
 MySQL_DebugEnterEvent::MySQL_DebugEnterEvent(unsigned int l, const char * const f,
 											 const char * const func_name,
-											 sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger_object)
-  : line(l), file(f), func(func_name), logger(logger_object? logger_object->getReference():NULL)
+											 const boost::shared_ptr< MySQL_DebugLogger > & logger_object)
+  : line(l), file(f), func(func_name), logger(logger_object)
 {
 	if (logger) {
 		if (NON_WANTED_FUNCTIONS) {
-			logger->get()->enter(this);
+			logger->enter(this);
 		}
 	}
 }
@@ -48,9 +48,8 @@ MySQL_DebugEnterEvent::~MySQL_DebugEnterEvent()
 {
 	if (logger) {
 		if (NON_WANTED_FUNCTIONS) {
-			logger->get()->leave(this);
+			logger->leave(this);
 		}
-		logger->freeReference();
 	}
 }
 /* }}} */

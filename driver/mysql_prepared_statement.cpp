@@ -152,10 +152,10 @@ public:
 /* {{{ MySQL_Prepared_Statement::MySQL_Prepared_Statement() -I- */
 MySQL_Prepared_Statement::MySQL_Prepared_Statement(
 			MYSQL_STMT *s, sql::Connection * conn, sql::ResultSet::enum_type rset_type,
-			sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * log
+			boost::shared_ptr< MySQL_DebugLogger > & log
 		)
 	:connection(conn), stmt(s), isClosed(false),
-	 logger(log? log->getReference():NULL), resultset_type(rset_type)
+	 logger(log), resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::MySQL_Prepared_Statement");
 	CPP_INFO_FMT("this=%p", this);
@@ -171,18 +171,14 @@ MySQL_Prepared_Statement::MySQL_Prepared_Statement(
 /* {{{ MySQL_Prepared_Statement::~MySQL_Prepared_Statement() -I- */
 MySQL_Prepared_Statement::~MySQL_Prepared_Statement()
 {
-	/* Don't remove the block or we can get into problems with logger */
-	{
-		CPP_ENTER("MySQL_Prepared_Statement::~MySQL_Prepared_Statement");
-		/*
-		  This will free param_bind.
-		  We should not do it or there will be double free.
-		*/
-		if (!isClosed) {
-			closeIntern();
-		}
+	CPP_ENTER("MySQL_Prepared_Statement::~MySQL_Prepared_Statement");
+	/*
+	  This will free param_bind.
+	  We should not do it or there will be double free.
+	*/
+	if (!isClosed) {
+		closeIntern();
 	}
-	logger->freeReference();
 }
 /* }}} */
 

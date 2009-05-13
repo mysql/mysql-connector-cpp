@@ -14,6 +14,7 @@
 
 #include <list>
 #include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 #include <cppconn/resultset.h>
 #include "mysql_util.h"
 struct st_mysql;
@@ -30,7 +31,7 @@ class MySQL_ConnectionMetaData;
 class MySQL_ConnectionData
 {
 public:
-	MySQL_ConnectionData(sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
+	MySQL_ConnectionData(boost::shared_ptr< MySQL_DebugLogger > & l)
 		: closed(false), autocommit(false), txIsolationLevel(TRANSACTION_READ_COMMITTED),
 		  is_valid(false), sql_mode_set(false), cache_sql_mode(false),
 		  metadata_use_info_schema(true),
@@ -38,7 +39,7 @@ public:
 		  defaultPreparedStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
 		  logger(l), meta(NULL), mysql(NULL) {}
 
-	~MySQL_ConnectionData() { logger->freeReference(); }
+	~MySQL_ConnectionData() {}
 
 	bool closed;
 	bool autocommit;
@@ -66,7 +67,7 @@ public:
 	sql::ResultSet::enum_type defaultStatementResultType;
 	sql::ResultSet::enum_type defaultPreparedStatementResultType;
 
-	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
+	boost::shared_ptr< MySQL_DebugLogger > logger;
 
 	boost::scoped_ptr< MySQL_ConnectionMetaData > meta;
 

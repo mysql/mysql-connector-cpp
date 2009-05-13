@@ -22,7 +22,6 @@ namespace sql
 {
 namespace mysql
 {
-namespace util {template<class T> class my_shared_ptr; }; // forward declaration.
 class MySQL_Statement;
 class MySQL_DebugLogger;
 class MySQL_ResultSetMetaData;
@@ -44,7 +43,7 @@ class MySQL_ResultSet : public sql::ResultSet
 
 	const MySQL_Statement * parent;
 
-	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
+	boost::shared_ptr< MySQL_DebugLogger > logger;
 
 	std::auto_ptr< MySQL_ResultSetMetaData > rs_meta;
 
@@ -60,7 +59,8 @@ protected:
 	MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const { return mysql_fetch_field_direct(result.get(), columnIndex - 1); }
 
 public:
-	MySQL_ResultSet(boost::shared_ptr< MYSQL_RES > res, sql::ResultSet::enum_type rset_type, MySQL_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
+	MySQL_ResultSet(boost::shared_ptr< MYSQL_RES > res, sql::ResultSet::enum_type rset_type, MySQL_Statement * par,
+					boost::shared_ptr< MySQL_DebugLogger > & l);
 
 	virtual ~MySQL_ResultSet();
 

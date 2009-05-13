@@ -34,9 +34,9 @@ namespace mysql
 {
 
 /* {{{ MySQL_Statement::MySQL_Statement() -I- */
-MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, sql::ResultSet::enum_type rset_type, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
+MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & l)
 	: warnings(NULL), connection(conn), isClosed(false),
-	  last_update_count(UL64(~0)), logger(l? l->getReference():NULL),
+	  last_update_count(UL64(~0)), logger(l),
 	  resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_Statement::MySQL_Statement");
@@ -48,16 +48,13 @@ MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, sql::ResultSet::enum_t
 /* {{{ MySQL_Statement::~MySQL_Statement() -I- */
 MySQL_Statement::~MySQL_Statement()
 {
-	/* Don't remove the block or we can get into problems with logger */
-	{
-		CPP_ENTER("MySQL_Statement::~MySQL_Statement");
-		CPP_INFO_FMT("this=%p", this);
-	}
+	CPP_ENTER("MySQL_Statement::~MySQL_Statement");
+	CPP_INFO_FMT("this=%p", this);
+
 	for (sql::SQLWarning * tmp = warnings, * next_tmp = warnings; tmp; tmp = next_tmp) {
 		next_tmp = const_cast<sql::SQLWarning *>(tmp->getNextWarning());
 		delete tmp;
 	}	
-	logger->freeReference();
 }
 /* }}} */
 

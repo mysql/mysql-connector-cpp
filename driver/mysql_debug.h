@@ -12,6 +12,8 @@
 #ifndef _MYSQL_DEBUG_H_
 #define _MYSQL_DEBUG_H_
 
+#include <boost/shared_ptr.hpp>
+
 /* _MSC_VER VC6.0=1200, VC7.0=1300, VC7.1=1310, VC8.0=1400 */
 #if defined(_MSC_VER)
 	#if _MSC_VER >=1400
@@ -24,9 +26,9 @@
 
 
 #if defined(WE_HAVE_VARARGS_MACRO_SUPPORT) && (CPPCONN_TRACE_ENABLED || defined(SAL_DLLPRIVATE))
-	#define CPP_ENTER(msg)			MySQL_DebugLogger * __l = this->logger? this->logger->get():NULL;(void)__l;\
-									MySQL_DebugEnterEvent __this_func(__LINE__, __FILE__, msg, logger)
-	#define CPP_ENTER_WL(l, msg)	MySQL_DebugLogger * __l = (l)? (l)->get():NULL;(void)__l;\
+	#define CPP_ENTER(msg)			const boost::shared_ptr< MySQL_DebugLogger > __l = this->logger;(void)__l;\
+									MySQL_DebugEnterEvent __this_func(__LINE__, __FILE__, msg, this->logger)
+	#define CPP_ENTER_WL(l, msg)	const boost::shared_ptr< MySQL_DebugLogger > __l = (l);(void)__l;\
 									MySQL_DebugEnterEvent __this_func(__LINE__, __FILE__, msg, (l))
 	#define CPP_INFO(msg)		{if (__l) __l->log("INF", msg); }
 	#define CPP_INFO_FMT(...)	{if (__l) __l->log_va("INF", __VA_ARGS__); }
@@ -92,9 +94,9 @@ public:
 	unsigned int line;
 	const char * const file;
 	const char * const func;
-	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
+	const boost::shared_ptr< MySQL_DebugLogger > logger;
 
-	MySQL_DebugEnterEvent(unsigned int l, const char * const f, const char * const func_name, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger_object);
+	MySQL_DebugEnterEvent(unsigned int l, const char * const f, const char * const func_name, const boost::shared_ptr< MySQL_DebugLogger > & logger_object);
 	~MySQL_DebugEnterEvent();
 };
 

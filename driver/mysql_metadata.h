@@ -12,6 +12,8 @@
 #ifndef _MYSQL_METADATA_H_
 #define _MYSQL_METADATA_H_
 
+#include <boost/shared_ptr.hpp>
+
 #include <cppconn/metadata.h>
 #include <string>
 #include <map>
@@ -25,19 +27,18 @@ namespace mysql
 
 class MySQL_Connection;
 class MySQL_DebugLogger;
-namespace util {template<class T> class my_shared_ptr; }; // forward declaration.
 
 class MySQL_ConnectionMetaData : public sql::DatabaseMetaData
 {
 	MySQL_Connection * connection;
 	unsigned long server_version;
-	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
+	boost::shared_ptr< MySQL_DebugLogger > logger;
 
 	std::string lower_case_table_names;
 
 	bool use_info_schema;
 public:
-	MySQL_ConnectionMetaData(MySQL_Connection * const conn, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
+	MySQL_ConnectionMetaData(MySQL_Connection * const conn, boost::shared_ptr< MySQL_DebugLogger > & l);
 
 	virtual ~MySQL_ConnectionMetaData();
 
