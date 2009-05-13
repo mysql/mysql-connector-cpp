@@ -40,11 +40,11 @@ namespace mysql
 class MySQL_ParamBind
 {
 	unsigned int param_count;
-	sql::mysql::util::my_array_guard< MYSQL_BIND > bind;
-	sql::mysql::util::my_array_guard< bool > value_set;
-	sql::mysql::util::my_array_guard< bool > delete_blob_after_execute;
+	boost::scoped_array< MYSQL_BIND > bind;
+	boost::scoped_array< bool > value_set;
+	boost::scoped_array< bool > delete_blob_after_execute;
 
-	sql::mysql::util::my_array_guard< std::istream	* > blob_bind;
+	boost::scoped_array< std::istream	* > blob_bind;
 
 public:
 
@@ -322,7 +322,7 @@ MySQL_Prepared_Statement::executeQuery()
 		throw SQLException("Invalid value for result set type");
 	}
 	// MySQL_Prepared_ResultSet takes responsibility about the newly created
-	// MySQL_ResultBind object. The former uses auto_ptr and will clean it in
+	// MySQL_ResultBind object. The former uses scoped_ptr and will clean it in
 	// any case. See http://www.gotw.ca/gotw/062.htm
 	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, new MySQL_ResultBind(stmt, logger), tmp_type, this, logger);
 
@@ -841,7 +841,7 @@ MySQL_Prepared_Statement::getResultSet()
 	}
 
 	// MySQL_Prepared_ResultSet takes responsibility about the newly created
-	// MySQL_ResultBind object. The former uses auto_ptr and will clean it in
+	// MySQL_ResultBind object. The former uses scoped_ptr and will clean it in
 	// any case. See http://www.gotw.ca/gotw/062.htm
 	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, new MySQL_ResultBind(stmt, logger), tmp_type, this, logger);
 

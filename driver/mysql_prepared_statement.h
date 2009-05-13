@@ -12,6 +12,7 @@
 #ifndef _MYSQL_PREPARED_STATEMENT_H_
 #define _MYSQL_PREPARED_STATEMENT_H_
 
+#include <boost/scoped_ptr.hpp>
 #include <cppconn/prepared_statement.h>
 #include <cppconn/parameter_metadata.h>
 
@@ -34,20 +35,20 @@ class MySQL_Prepared_Statement : public sql::PreparedStatement
 protected:
 	sql::Connection * connection;
 	MYSQL_STMT * stmt;
-	std::auto_ptr< MySQL_ParamBind > param_bind;
+	boost::scoped_ptr< MySQL_ParamBind > param_bind;
 	unsigned int param_count;
 
 	int resultSetConcurrency;
 	int resultSetType;
 
-	std::auto_ptr< sql::SQLWarning > warnings;
+	boost::scoped_ptr< sql::SQLWarning > warnings;
 
 	bool isClosed;
 
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 
-	std::auto_ptr< MySQL_Prepared_ResultSetMetaData > res_meta;
-	std::auto_ptr< MySQL_ParameterMetaData > param_meta;
+	boost::scoped_ptr< MySQL_Prepared_ResultSetMetaData > res_meta;
+	boost::scoped_ptr< MySQL_ParameterMetaData > param_meta;
 
 	sql::ResultSet::enum_type resultset_type;
 

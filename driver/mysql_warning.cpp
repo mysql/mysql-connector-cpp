@@ -10,7 +10,7 @@
 */
 
 #include "mysql_warning.h"
-
+#include <boost/scoped_ptr.hpp>
 #include <cppconn/statement.h>
 #include <cppconn/resultset.h>
 
@@ -37,8 +37,8 @@ loadMysqlWarnings(sql::Connection * connection)
 	SQLWarning * first = NULL, * current = NULL;
 
 	if (connection != NULL) {
-		std::auto_ptr<sql::Statement> stmt(connection->createStatement());
-		std::auto_ptr<sql::ResultSet> rset(stmt->executeQuery("SHOW WARNINGS"));
+		boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
+		boost::scoped_ptr< sql::ResultSet > rset(stmt->executeQuery("SHOW WARNINGS"));
 
 		while (rset->next()) {
 			// 1 - Level

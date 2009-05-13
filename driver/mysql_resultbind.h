@@ -12,6 +12,8 @@
 #ifndef _MYSQL_RESULTBIND_H_
 #define _MYSQL_RESULTBIND_H_
 
+#include <boost/scoped_array.hpp>
+
 #include <cppconn/prepared_statement.h>
 #include <cppconn/parameter_metadata.h>
 
@@ -27,15 +29,15 @@ class MySQL_ResultBind
 {
 
 	unsigned int num_fields;
-	sql::mysql::util::my_array_guard< my_bool > is_null;
-	sql::mysql::util::my_array_guard< my_bool > err;
-	sql::mysql::util::my_array_guard< unsigned long > len;
+	boost::scoped_array< my_bool > is_null;
+	boost::scoped_array< my_bool > err;
+	boost::scoped_array< unsigned long > len;
 
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 	MYSQL_STMT * stmt;
 
 public:
-	sql::mysql::util::my_array_guard< MYSQL_BIND > rbind;
+	boost::scoped_array< MYSQL_BIND > rbind;
 
 
 	MySQL_ResultBind(MYSQL_STMT * s, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * log)

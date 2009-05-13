@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sstream>
+#include <boost/scoped_array.hpp>
 
 
 #include <cppconn/exception.h>
@@ -84,7 +85,7 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
 
 	CPP_INFO_FMT("num_fields=%u num_rows=%u", num_fields, num_rows);
 	for (unsigned int i = 0; i < num_fields; ++i) {
-		sql::mysql::util::my_array_guard< char > upstring(sql::mysql::util::utf8_strup(mysql_fetch_field(result_meta)->name, 0));
+		boost::scoped_array< char > upstring(sql::mysql::util::utf8_strup(mysql_fetch_field(result_meta)->name, 0));
 		field_name_to_index_map[std::string(upstring.get())] = i;
 	}
 	mysql_free_result(result_meta);
@@ -252,7 +253,7 @@ MySQL_Prepared_ResultSet::findColumn(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::findColumn");
 	checkValid();
-	sql::mysql::util::my_array_guard< char > upstring(sql::mysql::util::utf8_strup(columnLabel.c_str(), 0));
+	boost::scoped_array< char > upstring(sql::mysql::util::utf8_strup(columnLabel.c_str(), 0));
 	FieldNameIndexMap::const_iterator iter= field_name_to_index_map.find(upstring.get());
 
 	if (iter == field_name_to_index_map.end()) {
