@@ -19,11 +19,14 @@ ENDIF(WIN32)
 
 #-----------------
 # BOOST
+IF(!BOOST_ROOT AND ENV{BOOST_ROOT})
+	SET(BOOST_ROOT ENV{BOOST_ROOT})
+ENDIF(!BOOST_ROOT AND ENV{BOOST_ROOT})
 
-# search for Boost version 1.34
 IF(!BOOST_ROOT AND WIN32)
         SET(BOOST_ROOT "C:/Program Files/Boost")
-ENDIF()
+ENDIF(!BOOST_ROOT AND WIN32)
+
 # Prefer static linking in all cases
 SET(Boost_ADDITIONAL_VERSIONS "1.37.0" "1.37" "1.38.0" "1.38" "1.39.0" "1.39")
 SET(MYSQLCPPCONN_BOOST_COMPONENTS thread date_time)
