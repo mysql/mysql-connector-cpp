@@ -133,6 +133,10 @@ void MySQL_ResultBind::bindResult()
 	len.reset(NULL);
 
 	num_fields = mysql_stmt_field_count(stmt);
+	if (!num_fields) {
+		return;
+	}
+
 	rbind.reset(new MYSQL_BIND[num_fields]);
 	memset(rbind.get(), 0, sizeof(MYSQL_BIND) * num_fields);
 

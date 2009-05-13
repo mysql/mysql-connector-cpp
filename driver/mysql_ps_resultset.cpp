@@ -70,10 +70,12 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
 			sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l
 		)
 	: row(NULL), stmt(s), row_position(0), parent(par), is_valid(true),
-	  logger(l? l->getReference():NULL), result_bind(r_bind),
+	  logger(l? l->getReference():NULL),
+	  result_bind(r_bind),
 	  resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet");
+
 	result_bind->bindResult();
 
 	MYSQL_RES * result_meta = mysql_stmt_result_metadata(stmt);

@@ -10,6 +10,8 @@
  */
 
 #include "../unit_fixture.h"
+#include <iostream>
+#include <climits>
 
 /**
  * Example of a collection of tests
@@ -30,10 +32,10 @@ private:
 public:
 
   EXAMPLE_TEST_FIXTURE(preparedstatement)
-  {
+  {    
     TEST_CASE(crash);
     TEST_CASE(anonymousSelect);
-    TEST_CASE(InsertSelectAllTypes);
+    TEST_CASE(InsertSelectAllTypes);    
     TEST_CASE(assortedSetType);
     TEST_CASE(setNull);
     TEST_CASE(checkClosed);
@@ -42,8 +44,8 @@ public:
     TEST_CASE(callSPInOut);
     TEST_CASE(callSPWithPS);
     TEST_CASE(callSPMultiRes);
-    TEST_CASE(getWarnings);
-    TEST_CASE(blob);
+    TEST_CASE(getWarnings);   
+    TEST_CASE(blob);     
   }
 
   /**
