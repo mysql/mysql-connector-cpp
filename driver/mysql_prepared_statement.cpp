@@ -40,11 +40,11 @@ namespace mysql
 class MySQL_ParamBind
 {
 	unsigned int param_count;
-	sql::mysql::util::my_array_guard< MYSQL_BIND > bind;
-	sql::mysql::util::my_array_guard< bool > value_set;
-	sql::mysql::util::my_array_guard< bool > delete_blob_after_execute;
+	boost::scoped_array< MYSQL_BIND > bind;
+	boost::scoped_array< bool > value_set;
+	boost::scoped_array< bool > delete_blob_after_execute;
 
-	sql::mysql::util::my_array_guard< std::istream	* > blob_bind;
+	boost::scoped_array< std::istream	* > blob_bind;
 
 public:
 
