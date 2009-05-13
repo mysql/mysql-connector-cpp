@@ -49,7 +49,6 @@ MySQL_ResultSetMetaData::~MySQL_ResultSetMetaData()
 	/* Don't remove the block or we can get into problems with logger */
 	{
 		CPP_ENTER("MySQL_ResultSetMetaData::~MySQL_ResultSetMetaData");
-//		result->deleteReference();
 	}
 	logger->freeReference();
 }
@@ -76,10 +75,6 @@ MySQL_ResultSetMetaData::checkValid() const
 	if (!result_p) {
 		throw sql::InvalidArgumentException("ResultSet is not valid anymore");
 	}
-	
-//	if (!result->isValid()) {
-//		throw sql::InvalidArgumentException("ResultSet is not valid anymore");
-//	}
 }
 /* }}} */
 
