@@ -12,6 +12,7 @@
 #ifndef _MYSQL_STATEMENT_H_
 #define _MYSQL_STATEMENT_H_
 
+#include <boost/shared_ptr.hpp>
 #include <cppconn/statement.h>
 #include <cppconn/resultset.h>
 #include "mysql_util.h"
@@ -22,7 +23,6 @@ namespace mysql
 {
 namespace util {template<class T> class my_shared_ptr; }; // forward declaration.
 class MySQL_Connection;
-class MYSQL_RES_Wrapper;
 class MySQL_DebugLogger;
 
 class MySQL_Statement : public sql::Statement
@@ -40,7 +40,7 @@ protected:
 
 	sql::ResultSet::enum_type resultset_type;
 
-	virtual MYSQL_RES_Wrapper * get_resultset();
+	virtual boost::shared_ptr< MYSQL_RES > get_resultset();
 	virtual void checkClosed();
 
 public:

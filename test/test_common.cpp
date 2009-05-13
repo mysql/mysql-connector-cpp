@@ -854,6 +854,46 @@ static void test_statement_9(std::auto_ptr<sql::Connection> & conn, std::auto_pt
 /* }}} */
 
 
+/* {{{ Test metadata usage after result set has been closed  */
+static void test_statement_10(std::auto_ptr<sql::Connection> & conn, std::auto_ptr<sql::Connection> & conn2, std::string database)
+{
+	ENTER_FUNCTION();
+	try {
+		std::auto_ptr<sql::Statement> stmt(conn->createStatement());
+		ensure("stmt is NULL", stmt.get() != NULL);
+		ensure("Data not populated", true == populate_test_table(conn, database));
+
+		std::auto_ptr<sql::ResultSet> res(stmt->executeQuery("SELECT * FROM test_function"));
+		ensure("ResultSet is empty", res->rowsCount() > 0);
+		sql::ResultSetMetaData * meta = res->getMetaData();
+		ensure("Error while reading a row ", res->next());
+		ensure_equal_str("Table name differs", meta->getTableName(1), std::string("test_function"));
+		res->close();
+		try {
+			ensure_equal_str("Table name differs", meta->getTableName(1), std::string("test_function"));
+			ensure("Exception not correctly thrown", false);
+		} catch (sql::SQLException &e) {
+			// exception correctly thrown
+		}
+		/* Clean */
+		std::auto_ptr<sql::Statement> stmt2(conn2->createStatement());
+		ensure("stmt is NULL", stmt2.get() != NULL);
+		stmt2->execute("USE " + database);
+		stmt2->execute("DROP TABLE test_function");
+	} catch (sql::SQLException &e) {
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("# ");
+		total_errors++;
+	} catch (...) {
+		printf("\n# ERR: Caught unknown exception at %s::%d\n", CPPCONN_FUNC, __LINE__);
+		printf("# ");
+		total_errors++;
+	}
+	LEAVE_FUNCTION();
+}
+/* }}} */
+
+
 /* {{{ */
 static void test_result_set_0(std::auto_ptr<sql::Connection> & conn)
 {
@@ -3104,6 +3144,12 @@ int run_tests(int argc, const char **argv)
 		conn.reset(get_connection(host, user, pass));
 		conn2.reset(get_connection(host, user, pass));
 		test_statement_9(conn, conn2, database);
+		conn.reset(NULL);
+		conn2.reset(NULL);
+
+		conn.reset(get_connection(host, user, pass));
+		conn2.reset(get_connection(host, user, pass));
+		test_statement_10(conn, conn2, database);
 		conn.reset(NULL);
 		conn2.reset(NULL);
 

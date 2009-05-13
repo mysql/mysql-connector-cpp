@@ -34,21 +34,21 @@ namespace mysql
 
 /* {{{ MySQL_ResultSet::MySQL_ResultSet() -I- */
 MySQL_ResultSet::MySQL_ResultSet(
-			MYSQL_RES_Wrapper * res, sql::ResultSet::enum_type rset_type,
+			boost::shared_ptr< MYSQL_RES > res, sql::ResultSet::enum_type rset_type,
 			MySQL_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l
 		)
 	: row(NULL), result(res), row_position(0), was_null(false), parent(par),
 	  logger(l? l->getReference():NULL), resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_ResultSet::MySQL_ResultSet");
-	num_rows = mysql_num_rows(result->get());
+	num_rows = mysql_num_rows(result.get());
 
-	num_fields = mysql_num_fields(result->get());
+	num_fields = mysql_num_fields(result.get());
 	for (unsigned int i = 0; i < num_fields; ++i) {
 		boost::scoped_array< char > upstring(sql::mysql::util::utf8_strup(getFieldMeta(i + 1)->name, 0));
 		field_name_to_index_map[std::string(upstring.get())] = i;
 	}
-	rs_meta.reset(new MySQL_ResultSetMetaData(result->getReference(), logger));
+	rs_meta.reset(new MySQL_ResultSetMetaData(result, logger));
 }
 /* }}} */
 
@@ -59,10 +59,10 @@ MySQL_ResultSet::~MySQL_ResultSet()
 	/* Don't remove the block or we can get into problems with logger */
 	{
 		CPP_ENTER("MySQL_ResultSet::~MySQL_ResultSet");
-		if (!isClosed()) {
-			result->dispose();
-		}
-		result->deleteReference();
+//		if (!isClosed()) {
+//			result->dispose();
+//		}
+//		result->deleteReference();
 	}
 	logger->freeReference();
 }
@@ -96,7 +96,7 @@ MySQL_ResultSet::absolute(const int new_pos)
 		/* According to the JDBC book, absolute(0) means before the result set */
 		row_position = 0;
 		/* no seek() here, as we are not on data*/
-		mysql_data_seek(result->get(), 0);
+		mysql_data_seek(result.get(), 0);
 	}
 	return (row_position > 0 && row_position < (num_rows + 1));
 }
@@ -121,7 +121,7 @@ MySQL_ResultSet::beforeFirst()
 	CPP_ENTER("MySQL_ResultSet::beforeFirst");
 	checkValid();
 	checkScrollable();
-	mysql_data_seek(result->get(), 0);
+	mysql_data_seek(result.get(), 0);
 	row_position = 0;
 }
 /* }}} */
@@ -192,7 +192,8 @@ MySQL_ResultSet::close()
 {
 	CPP_ENTER("MySQL_ResultSet::close");
 	checkValid();
-	result->dispose();
+	result.reset();
+//	result->dispose();
 }
 /* }}} */
 
@@ -595,7 +596,7 @@ MySQL_ResultSet::getString(const uint32_t columnIndex) const
 		was_null = true;
 		return "";
 	}
-	size_t len = mysql_fetch_lengths(result->get())[columnIndex - 1];
+	size_t len = mysql_fetch_lengths(result.get())[columnIndex - 1];
 	CPP_INFO_FMT("value=%*s",  len> 50? 50:len, row[columnIndex - 1]);
 	was_null = false;
 	return std::string(row[columnIndex - 1], len);
@@ -674,7 +675,8 @@ bool
 MySQL_ResultSet::isClosed() const
 {
 	CPP_ENTER("MySQL_ResultSet::isClosed");
-	return !result->isValid();
+	return !result;
+//	return !result->isValid();
 }
 /* }}} */
 
@@ -786,12 +788,12 @@ MySQL_ResultSet::next()
 		if (isLast()) {
 			afterLast();
 		} else if (row_position < num_rows + 1) {
-			row = mysql_fetch_row(result->get());
+			row = mysql_fetch_row(result.get());
 			++row_position;
 			ret = (row != NULL);
 		}
 	} else {
-		row = mysql_fetch_row(result->get());
+		row = mysql_fetch_row(result.get());
 		++row_position;
 		ret = (row != NULL);	
 	}
@@ -899,7 +901,7 @@ MySQL_ResultSet::rowsCount() const
 	CPP_ENTER("MySQL_ResultSet::rowsCount");
 	checkValid();
 	checkScrollable();
-	return (size_t) mysql_num_rows(result->get());
+	return (size_t) mysql_num_rows(result.get());
 }
 /* }}} */
 
@@ -947,8 +949,8 @@ MySQL_ResultSet::seek()
 {
 	CPP_ENTER("MySQL_ResultSet::seek");
 	checkScrollable();
-	mysql_data_seek(result->get(), row_position - 1);
-	row = mysql_fetch_row(result->get());
+	mysql_data_seek(result.get(), row_position - 1);
+	row = mysql_fetch_row(result.get());
 }
 /* }}} */
 
