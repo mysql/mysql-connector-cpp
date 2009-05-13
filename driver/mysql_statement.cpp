@@ -79,7 +79,7 @@ MySQL_Statement::do_query(const char *q, size_t length)
 
 
 /* {{{ MySQL_Statement::get_resultset() -I- */
-MYSQL_RES_Wrapper *
+boost::shared_ptr< MYSQL_RES >
 MySQL_Statement::get_resultset()
 {
 	CPP_ENTER("MySQL_Statement::get_resultset");
@@ -94,7 +94,7 @@ MySQL_Statement::get_resultset()
 					mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 		sql::mysql::util::throwSQLException(mysql);
 	}
-	return new MYSQL_RES_Wrapper(result);
+	return boost::shared_ptr< MYSQL_RES >(result, &mysql_free_result);
 }
 /* }}} */
 
@@ -219,10 +219,9 @@ MySQL_Statement::getResultSet()
 		return NULL;
 	}
 
-	std::auto_ptr< MYSQL_RES_Wrapper > wrapper(new MYSQL_RES_Wrapper(result));
-	
-	sql::ResultSet * ret = new MySQL_ResultSet(wrapper.get(), tmp_type, this, logger);
-	wrapper.release();
+	boost::shared_ptr< MYSQL_RES > wrapper(result, &mysql_free_result);
+	sql::ResultSet * ret = new MySQL_ResultSet(wrapper, tmp_type, this, logger);
+
 	CPP_INFO_FMT("res=%p", ret);
 	return ret;
 }

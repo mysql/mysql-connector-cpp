@@ -56,7 +56,6 @@ SET(MYSQLCPPCONN_SOURCES
 	mysql_resultbind.cpp
 	mysql_resultset.cpp
 	mysql_resultset_metadata.cpp
-	mysql_res_wrapper.cpp
 	mysql_statement.cpp
 	mysql_util.cpp
 	mysql_warning.cpp)
@@ -79,7 +78,6 @@ IF(WIN32)
 		mysql_resultbind.h
 		mysql_resultset.h
 		mysql_resultset_metadata.h
-		mysql_res_wrapper.h
 		mysql_statement.h
 		mysql_util.h
 		mysql_warning.h)

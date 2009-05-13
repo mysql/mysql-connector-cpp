@@ -12,8 +12,9 @@
 #ifndef _MYSQL_RESULTSET_H_
 #define _MYSQL_RESULTSET_H_
 
+#include <boost/shared_ptr.hpp>
+
 #include <cppconn/resultset.h>
-#include "mysql_res_wrapper.h"
 
 #include "mysql_private_iface.h"
 
@@ -29,7 +30,7 @@ class MySQL_ResultSetMetaData;
 class MySQL_ResultSet : public sql::ResultSet
 {
 	MYSQL_ROW				row;
-	MYSQL_RES_Wrapper *		result;
+	boost::shared_ptr< MYSQL_RES > result;
 	unsigned int			num_fields;
 	my_ulonglong			num_rows;
 	my_ulonglong			row_position;
@@ -56,10 +57,10 @@ protected:
 	bool isBeforeFirstOrAfterLast() const;
 	void seek();
 
-	MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const { return mysql_fetch_field_direct(result->get(), columnIndex - 1); }
+	MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const { return mysql_fetch_field_direct(result.get(), columnIndex - 1); }
 
 public:
-	MySQL_ResultSet(MYSQL_RES_Wrapper * res, sql::ResultSet::enum_type rset_type, MySQL_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
+	MySQL_ResultSet(boost::shared_ptr< MYSQL_RES > res, sql::ResultSet::enum_type rset_type, MySQL_Statement * par, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
 
 	virtual ~MySQL_ResultSet();
 

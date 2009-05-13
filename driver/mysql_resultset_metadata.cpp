@@ -14,6 +14,7 @@
 #include <string.h>
 #include <iostream>
 #include <sstream>
+#include <boost/shared_ptr.hpp>
 
 #include <cppconn/datatype.h>
 #include <cppconn/exception.h>
@@ -30,10 +31,14 @@ namespace mysql
 
 
 /* {{{ MySQL_ResultSetMetaData::MySQL_ResultSetMetaData -I- */
-MySQL_ResultSetMetaData::MySQL_ResultSetMetaData(MYSQL_RES_Wrapper * res, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
-  : result(res), logger(l? l->getReference():NULL), num_fields(mysql_num_fields(result->get()))
+MySQL_ResultSetMetaData::MySQL_ResultSetMetaData(boost::shared_ptr< MYSQL_RES > res, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l)
+  : result(res), logger(l? l->getReference():NULL)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::MySQL_ResultSetMetaData");
+	boost::shared_ptr< MYSQL_RES > result_p = result.lock();
+	if (result_p) {
+		num_fields = mysql_num_fields(result_p.get());
+	}
 }
 /* }}} */
 
@@ -44,7 +49,6 @@ MySQL_ResultSetMetaData::~MySQL_ResultSetMetaData()
 	/* Don't remove the block or we can get into problems with logger */
 	{
 		CPP_ENTER("MySQL_ResultSetMetaData::~MySQL_ResultSetMetaData");
-		result->deleteReference();
 	}
 	logger->freeReference();
 }
@@ -66,7 +70,9 @@ MySQL_ResultSetMetaData::checkColumnIndex(unsigned int columnIndex) const
 void
 MySQL_ResultSetMetaData::checkValid() const
 {
-	if (!result->isValid()) {
+	CPP_ENTER("MySQL_ResultSetMetaData::checkValid");
+	boost::shared_ptr< MYSQL_RES > result_p = result.lock();
+	if (!result_p) {
 		throw sql::InvalidArgumentException("ResultSet is not valid anymore");
 	}
 }
@@ -159,6 +165,16 @@ MySQL_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 	checkColumnIndex(columnIndex);
 
 	return sql::mysql::util::mysql_type_to_string(getFieldMeta(columnIndex));
+}
+/* }}} */
+
+
+/* {{{ MySQL_ResultSetMetaData::getFieldMeta -I- */
+MYSQL_FIELD *
+MySQL_ResultSetMetaData::getFieldMeta(unsigned int columnIndex) const
+{
+	boost::shared_ptr< MYSQL_RES > result_p = result.lock();
+	return mysql_fetch_field_direct(result_p.get(), columnIndex - 1);
 }
 /* }}} */
 

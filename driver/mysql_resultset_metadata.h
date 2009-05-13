@@ -12,8 +12,10 @@
 #ifndef _MYSQL_RESULTSET_METADATA_H_
 #define _MYSQL_RESULTSET_METADATA_H_
 
+#include <boost/weak_ptr.hpp>
+
 #include <cppconn/resultset_metadata.h>
-#include "mysql_res_wrapper.h"
+#include "mysql_private_iface.h"
 
 namespace sql
 {
@@ -24,12 +26,12 @@ class MySQL_DebugLogger;
 
 class MySQL_ResultSetMetaData : public sql::ResultSetMetaData
 {
-	MYSQL_RES_Wrapper * result;
+	boost::weak_ptr< MYSQL_RES > result;
 	sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * logger;
 	unsigned int num_fields;
 
 public:
-	MySQL_ResultSetMetaData(MYSQL_RES_Wrapper * res, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
+	MySQL_ResultSetMetaData(boost::shared_ptr< MYSQL_RES > res, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger > * l);
 	virtual ~MySQL_ResultSetMetaData();
 
 	SQLString getCatalogName(unsigned int columnIndex);
@@ -79,7 +81,7 @@ protected:
 
 	void checkColumnIndex(unsigned int columnIndex) const;
 
-	MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const { return mysql_fetch_field_direct(result->get(), columnIndex - 1); }
+	MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const;
 
 private:
 
