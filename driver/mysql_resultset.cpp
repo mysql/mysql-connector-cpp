@@ -301,7 +301,7 @@ MySQL_ResultSet::getConcurrency()
 
 
 /* {{{ MySQL_ResultSet::getCursorName() -U- */
-std::string
+SQLString
 MySQL_ResultSet::getCursorName()
 {
 	CPP_ENTER("MySQL_ResultSet::getCursorName");
@@ -577,7 +577,7 @@ MySQL_ResultSet::getStatement() const
 
 
 /* {{{ MySQL_ResultSet::getString() -I- */
-std::string
+SQLString
 MySQL_ResultSet::getString(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ResultSet::getString(int)");
@@ -605,7 +605,7 @@ MySQL_ResultSet::getString(const uint32_t columnIndex) const
 
 
 /* {{{ MySQL_ResultSet::getString() -I- */
-std::string
+SQLString
 MySQL_ResultSet::getString(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ResultSet::getString(string)");

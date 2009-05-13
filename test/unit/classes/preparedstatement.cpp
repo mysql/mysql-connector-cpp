@@ -1425,7 +1425,7 @@ void preparedstatement::blob()
     res.reset(pstmt->executeQuery());
     ASSERT(res->next());
     ASSERT_EQUALS(res->getInt(1), id);
-    ASSERT_GT((int) (res->getString(2).length()), (int) (msg.str().length()));
+    ASSERT_GT((int) (res->getString(2)->length()), (int) (msg.str().length()));
     ASSERT(!res->next());
     res->close();
 

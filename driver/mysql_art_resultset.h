@@ -68,6 +68,8 @@ public:
 
 	MyVal(const char * const s);
 
+  MyVal(const SQLString & s);
+
 	MyVal(long double d) : val_type(typeDouble) { val.dval = d; }
 
 	MyVal(double d) : val_type(typeDouble) { val.dval = d; }
@@ -140,7 +142,7 @@ public:
 
 	int getConcurrency();
 
-	std::string getCursorName();
+	SQLString getCursorName();
 
 	// Get the given column as double
 	long double getDouble(uint32_t columnIndex) const;
@@ -177,9 +179,9 @@ public:
 	const sql::Statement * getStatement() const;
 
 	// Get the given column as string
-	std::string getString(uint32_t columnIndex) const;
+	SQLString getString(uint32_t columnIndex) const;
 
-	std::string getString(const std::string& columnLabel) const;
+	SQLString getString(const std::string& columnLabel) const;
 
 	sql::ResultSet::enum_type getType() const;
 

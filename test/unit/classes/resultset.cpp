@@ -486,7 +486,7 @@ void resultset::getTypes()
         if (it->sqldef.find("ZEROFILL", 0) == std::string::npos)
         {
           ps_value=pres->getString("id");
-          len_st=res->getString("id").length();
+          len_st=res->getString("id")->length();
           len_ps=ps_value.length();
           if (len_ps > len_st)
           {
@@ -645,7 +645,7 @@ void resultset::getTypesMinorIssues()
         {
           bool is_minor=false;
           ps_value=pres->getString("id");
-          len_st=res->getString("id").length();
+          len_st=res->getString("id")->length();
           len_ps=ps_value.length();
           if (len_ps > len_st)
           {

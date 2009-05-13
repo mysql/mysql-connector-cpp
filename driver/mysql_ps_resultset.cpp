@@ -352,7 +352,7 @@ MySQL_Prepared_ResultSet::getConcurrency()
 
 
 /* {{{ MySQL_Prepared_ResultSet::getCursorName() -U- */
-std::string
+SQLString
 MySQL_Prepared_ResultSet::getCursorName()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getCursorName");
@@ -891,7 +891,7 @@ MySQL_Prepared_ResultSet::getStatement() const
 
 
 /* {{{ MySQL_Prepared_ResultSet::getString() -I- */
-std::string
+SQLString
 MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getString(int)");
@@ -986,7 +986,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 
 
 /* {{{ MySQL_Prepared_ResultSet::getString() -I- */
-std::string
+SQLString
 MySQL_Prepared_ResultSet::getString(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getString(string)");

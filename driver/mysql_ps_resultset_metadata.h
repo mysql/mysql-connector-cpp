@@ -33,27 +33,27 @@ public:
 	MySQL_Prepared_ResultSetMetaData(MYSQL_STMT * s, sql::mysql::util::my_shared_ptr< MySQL_DebugLogger> * l);
 	virtual ~MySQL_Prepared_ResultSetMetaData();
 
-	std::string getCatalogName(unsigned int columnIndex);
+	SQLString getCatalogName(unsigned int columnIndex);
 
 	unsigned int getColumnCount();
 
 	unsigned int getColumnDisplaySize(unsigned int columnIndex);
 
-	std::string getColumnLabel(unsigned int columnIndex);
+	SQLString getColumnLabel(unsigned int columnIndex);
 
-	std::string getColumnName(unsigned int columnIndex);
+	SQLString getColumnName(unsigned int columnIndex);
 
 	int getColumnType(unsigned int columnIndex);
 
-	std::string getColumnTypeName(unsigned int columnIndex);
+	SQLString getColumnTypeName(unsigned int columnIndex);
 
 	unsigned int getPrecision(unsigned int columnIndex);
 
 	unsigned int getScale(unsigned int columnIndex);
 
-	std::string getSchemaName(unsigned int columnIndex);
+	SQLString getSchemaName(unsigned int columnIndex);
 
-	std::string getTableName(unsigned int columnIndex);
+	SQLString getTableName(unsigned int columnIndex);
 
 	bool isAutoIncrement(unsigned int columnIndex);
 

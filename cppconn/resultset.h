@@ -15,9 +15,9 @@
 #include "config.h"
 
 #include <list>
-#include <string>
 #include <map>
 #include <iostream>
+#include "sqlstring.h"
 #include "resultset_metadata.h"
 
 
@@ -85,7 +85,7 @@ public:
 	virtual bool getBoolean(const std::string& columnLabel) const = 0;
 
 	virtual int getConcurrency() = 0;
-	virtual std::string getCursorName() = 0;
+	virtual SQLString getCursorName() = 0;
 
 	virtual long double getDouble(uint32_t columnIndex) const = 0;
 	virtual long double getDouble(const std::string& columnLabel) const = 0;
@@ -115,8 +115,8 @@ public:
 
 	virtual const Statement * getStatement() const = 0;
 
-	virtual std::string getString(uint32_t columnIndex)  const = 0;
-	virtual std::string getString(const std::string& columnLabel) const = 0;
+	virtual SQLString getString(uint32_t columnIndex)  const = 0;
+	virtual SQLString getString(const std::string& columnLabel) const = 0;
 
 	virtual enum_type getType() const = 0;
 

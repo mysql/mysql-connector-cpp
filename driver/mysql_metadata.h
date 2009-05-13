@@ -79,7 +79,7 @@ public:
 
 	const std::string& getDatabaseProductName();
 
-	std::string getDatabaseProductVersion();
+	SQLString getDatabaseProductVersion();
 
 	int getDefaultTransactionIsolation();
 
@@ -189,9 +189,9 @@ public:
 
 	sql::ResultSet * getUDTs(const std::string& catalog, const std::string& schemaPattern, const std::string& typeNamePattern, std::list<int> &types);
 
-	std::string getURL();
+	SQLString getURL();
 
-	std::string getUserName();
+	SQLString getUserName();
 
 	sql::ResultSet * getVersionColumns(const std::string& catalog, const std::string& schema, const std::string& table);
 

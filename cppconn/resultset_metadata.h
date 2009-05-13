@@ -12,7 +12,7 @@
 #ifndef _SQL_RESULTSET_METADATA_H_
 #define _SQL_RESULTSET_METADATA_H_
 
-#include <string>
+#include "sqlstring.h"
 #include "datatype.h"
 
 namespace sql
@@ -28,27 +28,27 @@ public:
 		columnNullableUnknown
 	};
 
-	virtual std::string getCatalogName(unsigned int column) = 0;
+	virtual SQLString getCatalogName(unsigned int column) = 0;
 
 	virtual unsigned int getColumnCount() = 0;
 
 	virtual unsigned int getColumnDisplaySize(unsigned int column) = 0;
 
-	virtual std::string getColumnLabel(unsigned int column) = 0;
+	virtual SQLString getColumnLabel(unsigned int column) = 0;
 
-	virtual std::string getColumnName(unsigned int column) = 0;
+	virtual SQLString getColumnName(unsigned int column) = 0;
 
 	virtual int getColumnType(unsigned int column) = 0;
 
-	virtual std::string getColumnTypeName(unsigned int column) = 0;
+	virtual SQLString getColumnTypeName(unsigned int column) = 0;
 
 	virtual unsigned int getPrecision(unsigned int column) = 0;
 
 	virtual unsigned int getScale(unsigned int column) = 0;
 
-	virtual std::string getSchemaName(unsigned int column) = 0;
+	virtual SQLString getSchemaName(unsigned int column) = 0;
 
-	virtual std::string getTableName(unsigned int column) = 0;
+	virtual SQLString getTableName(unsigned int column) = 0;
 
 	virtual bool isAutoIncrement(unsigned int column) = 0;
 

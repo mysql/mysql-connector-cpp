@@ -46,6 +46,15 @@ MyVal::MyVal(const char * const s)
 /* }}} */
 
 
+/* {{{ MyVal::MyVal() -I- */
+MyVal::MyVal(const SQLString & s)
+  : val_type(typeString)
+{
+  val.str = new std::string(s);
+}
+/* }}} */
+
+
 /* {{{ MyVal::getString() -I- */
 std::string
 MyVal::getString()
@@ -442,7 +451,7 @@ MySQL_ArtResultSet::getConcurrency()
 
 
 /* {{{ MySQL_ArtResultSet::getCursorName() -U- */
-std::string
+SQLString
 MySQL_ArtResultSet::getCursorName()
 {
 	CPP_ENTER("MySQL_ArtResultSet::getCursorName");
@@ -678,7 +687,7 @@ MySQL_ArtResultSet::getStatement() const
 
 
 /* {{{ MySQL_ArtResultSet::getString() -I- */
-std::string
+SQLString
 MySQL_ArtResultSet::getString(uint32_t columnIndex) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getString(int)");
@@ -699,7 +708,7 @@ MySQL_ArtResultSet::getString(uint32_t columnIndex) const
 
 
 /* {{{ MySQL_ArtResultSet::getString() -I- */
-std::string
+SQLString
 MySQL_ArtResultSet::getString(const std::string& columnLabel) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getString(string)");
