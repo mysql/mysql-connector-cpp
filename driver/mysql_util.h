@@ -104,21 +104,6 @@ protected:
 };
 
 
-template<typename T>
-class my_array_guard
-{
-	T * ptr;
-public:
-	my_array_guard(T * p) : ptr(p) {}
-	void reset(T * p) { delete [] ptr; ptr = p; }
-	T * get() const { return ptr; }
-	T* operator->() const { return ptr; }
-	T& operator[](size_t i) const { return ptr[i]; }
-	
-	~my_array_guard() { delete [] ptr; }
-};
-
-
 } /* namespace util */
 } /* namespace mysql */
 } /* namespace sql */

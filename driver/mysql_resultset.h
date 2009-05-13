@@ -15,7 +15,6 @@
 #include <boost/shared_ptr.hpp>
 
 #include <cppconn/resultset.h>
-#include "mysql_res_wrapper.h"
 
 #include "mysql_private_iface.h"
 

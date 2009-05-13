@@ -16,7 +16,6 @@
 
 #include <cppconn/resultset_metadata.h>
 #include "mysql_private_iface.h"
-#include "mysql_res_wrapper.h"
 
 namespace sql
 {

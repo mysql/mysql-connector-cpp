@@ -21,7 +21,6 @@
 #include "mysql_resultset.h"
 #include "mysql_resultset_metadata.h"
 #include "mysql_statement.h"
-#include "mysql_res_wrapper.h"
 
 #include "mysql_debug.h"
 
