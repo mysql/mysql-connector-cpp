@@ -78,24 +78,9 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName, const std::strin
 	: intern(NULL)
 {
 	std::map<std::string, sql::ConnectPropertyVal> connection_properties;
-	{
-		sql::ConnectPropertyVal tmp;
-		tmp.str.val = hostName.c_str();
-		tmp.str.len = hostName.length();
-		connection_properties[std::string("hostName")] = tmp;
-	}
-	{
-		sql::ConnectPropertyVal tmp;
-		tmp.str.val = userName.c_str();
-		tmp.str.len = userName.length();
-		connection_properties[std::string("userName")] = tmp;
-	}
-	{
-		sql::ConnectPropertyVal tmp;
-		tmp.str.val = password.c_str();
-		tmp.str.len = password.length();
-		connection_properties[std::string("password")] = tmp;
-	}
+	connection_properties[std::string("hostName")] = sql::ConnectPropertyVal(hostName);
+	connection_properties[std::string("userName")] = sql::ConnectPropertyVal(userName);
+	connection_properties[std::string("password")] = sql::ConnectPropertyVal(password);
 
 	boost::shared_ptr<MySQL_DebugLogger> tmp_logger(new MySQL_DebugLogger());
 	std::auto_ptr< MySQL_ConnectionData > tmp_intern(new MySQL_ConnectionData(tmp_logger));
@@ -199,114 +184,204 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 	std::string defaultCharset("utf8");
 	std::string characterSetResults("utf8");
 
-	const char *sslKey = NULL, *sslCert = NULL, *sslCA = NULL, *sslCAPath = NULL, *sslCipher = NULL;
+	std::string sslKey, sslCert, sslCA, sslCAPath, sslCipher;
 	bool ssl_used = false, schema_used = false;
 	int flags = CLIENT_MULTI_RESULTS;
 
+	const long long * p_ll;
+	const bool * p_b;
+	const std::string * p_s;
+	
 	std::map<std::string, sql::ConnectPropertyVal>::const_iterator it = properties.begin();
 	for (; it != properties.end(); ++it) {
 		if (!it->first.compare("hostName")) {
-			hostName = it->second.str.val;
+			if ((p_s = boost::get<std::string>(&it->second))) {
+				hostName = *p_s;
+			} else {
+				throw sql::InvalidArgumentException("No string value passed for hostName");
+			}
 		} else if (!it->first.compare("userName")) {
-			userName = it->second.str.val;
+			if ((p_s = boost::get<std::string>(&it->second))) {
+				userName = *p_s;
+			} else {
+				throw sql::InvalidArgumentException("No string value passed for userName");
+			}
 		} else if (!it->first.compare("password")) {
-			password = it->second.str.val;
+			if ((p_s = boost::get<std::string>(&it->second))) {
+				password = *p_s;
+			} else {
+				throw sql::InvalidArgumentException("No string value passed for password");
+			}
 		} else if (!it->first.compare("port")) {
-			port = static_cast<unsigned int>(it->second.lval);
+			if ((p_ll = boost::get<long long>(&it->second))) {
+				port = *p_ll;
+			} else {
+				throw sql::InvalidArgumentException("No long long value passed for port");
+			}
 		} else if (!it->first.compare("socket")) {
-			socket_or_pipe = it->second.str.val;
+			if ((p_s = boost::get<std::string>(&it->second))) {
+				socket_or_pipe = *p_s;
+			} else {
+				throw sql::InvalidArgumentException("No string value passed for socket");
+			}
 			protocol_tcp = false;
 		} else if (!it->first.compare("pipe")) {
-			socket_or_pipe = it->second.str.val;
+			if ((p_s = boost::get<std::string>(&it->second))) {
+				socket_or_pipe = *p_s;
+			} else {
+				throw sql::InvalidArgumentException("No string value passed for pipe");
+			}
 			protocol_tcp = false;
 		} else if (!it->first.compare("schema")) {
-			schema = std::string(it->second.str.val);
+			if ((p_s = boost::get<std::string>(&it->second))) {
+				schema = *p_s;
+			} else {
+				throw sql::InvalidArgumentException("No string value passed for schema");
+			}
 			schema_used = true;
 		} else if (!it->first.compare("characterSetResults")) {
-			characterSetResults = std::string(it->second.str.val);
+			if ((p_s = boost::get<std::string>(&it->second))) {
+				characterSetResults = *p_s;
+			} else {
+				throw sql::InvalidArgumentException("No string value passed for characterSetResults");
+			}
 		} else if (!it->first.compare("sslKey")) {
-			sslKey = it->second.str.val;
+			if ((p_s = boost::get<std::string>(&it->second))) {
+				sslKey = *p_s;
+			} else {
+				throw sql::InvalidArgumentException("No string value passed for sslKey");
+			}
 			ssl_used = true;
 		} else if (!it->first.compare("sslCert")) {
-			sslCert = it->second.str.val;
+			if ((p_s = boost::get<std::string>(&it->second))) {
+				sslCert = *p_s;
+			} else {
+				throw sql::InvalidArgumentException("No string value passed for sslCert");
+			}
 			ssl_used = true;
 		} else if (!it->first.compare("sslCA")) {
-			sslCA = it->second.str.val;
+			if ((p_s = boost::get<std::string>(&it->second))) {
+				sslCA = *p_s;
+			} else {
+				throw sql::InvalidArgumentException("No string value passed for sslCA");
+			}
 			ssl_used = true;
 		} else if (!it->first.compare("sslCAPath")) {
-			sslCAPath = it->second.str.val;
+			if ((p_s = boost::get<std::string>(&it->second))) {
+				sslCAPath = *p_s;
+			} else {
+				throw sql::InvalidArgumentException("No string value passed for sslCAPath");
+			}
 			ssl_used = true;
 		} else if (!it->first.compare("sslCipher")) {
-			sslCipher = it->second.str.val;
+			if ((p_s = boost::get<std::string>(&it->second))) {
+				sslCipher = *p_s;
+			} else {
+				throw sql::InvalidArgumentException("No string value passed for sslCipher");
+			}
 			ssl_used = true;
 		} else if (!it->first.compare("defaultStatementResultType")) {
+			if (!(p_ll = boost::get<long long>(&it->second))) {
+				throw sql::InvalidArgumentException("No long long value passed for defaultStatementResultType");
+			}
 			do {
-				if (static_cast< int >(sql::ResultSet::TYPE_FORWARD_ONLY) == it->second.lval) break;
-				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_INSENSITIVE) == it->second.lval) break;
-				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_SENSITIVE) == it->second.lval) {
+				if (static_cast< int >(sql::ResultSet::TYPE_FORWARD_ONLY) == *p_ll) break;
+				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_INSENSITIVE) == *p_ll) break;
+				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_SENSITIVE) == *p_ll) {
 					std::ostringstream msg;
-					msg << "Invalid value " << it->second.lval <<
+					msg << "Invalid value " << *p_ll <<
 						" for option defaultStatementResultType. TYPE_SCROLL_SENSITIVE is not supported";
 					throw sql::InvalidArgumentException(msg.str());
 				}
 				std::ostringstream msg;
-				msg << "Invalid value (" << it->second.lval << " for option defaultStatementResultType";
+				msg << "Invalid value (" << *p_ll << " for option defaultStatementResultType";
 				throw sql::InvalidArgumentException(msg.str());
 			} while (0);
-			intern->defaultStatementResultType = static_cast< sql::ResultSet::enum_type >(it->second.lval);
+			intern->defaultStatementResultType = static_cast< sql::ResultSet::enum_type >(*p_ll);
 		/* The connector is not ready for unbuffered as we need to refetch */
 		} else if (!it->first.compare("defaultPreparedStatementResultType")) {
 #if WE_SUPPORT_USE_RESULT_WITH_PS
+			if (!(p_ll = boost::get<long long>(&it->second))) {
+				throw sql::InvalidArgumentException("No long long value passed for defaultPreparedStatementResultType");
+			}
 			do {
-				if (static_cast< int >(sql::ResultSet::TYPE_FORWARD_ONLY) == it->second.lval) break;
-				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_INSENSITIVE) == it->second.lval) break;
-				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_SENSITIVE) == it->second.lval) {
+				if (static_cast< int >(sql::ResultSet::TYPE_FORWARD_ONLY) == *p_ll) break;
+				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_INSENSITIVE) == *p_ll) break;
+				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_SENSITIVE) == *p_ll) {
 					std::ostringstream msg;
-					msg << "Invalid value " << it->second.lval <<
+					msg << "Invalid value " << *p_ll <<
 						" for option defaultPreparedStatementResultType. TYPE_SCROLL_SENSITIVE is not supported";
 					throw sql::InvalidArgumentException(msg.str());
 				}
 				std::ostringstream msg;
-				msg << "Invalid value (" << it->second.lval << " for option defaultPreparedStatementResultType";
+				msg << "Invalid value (" << *p_ll << " for option defaultPreparedStatementResultType";
 				throw sql::InvalidArgumentException(msg.str());
 			} while (0);
-			intern->defaultPreparedStatementResultType = static_cast< sql::ResultSet::enum_type >(it->second.lval);
+			intern->defaultPreparedStatementResultType = static_cast< sql::ResultSet::enum_type >(*p_ll);
 #else
 			throw SQLException("defaultPreparedStatementResultType parameter still not implemented");
 
 #endif
 		} else if (!it->first.compare("metadataUseInfoSchema")) {
-			intern->metadata_use_info_schema = it->second.bval;
+			if ((p_b = boost::get<bool>(&it->second))) {
+				intern->metadata_use_info_schema = *p_b;
+			} else {
+				throw sql::InvalidArgumentException("No bool value passed for metadataUseInfoSchema");
+			}
 		} else if (!it->first.compare("CLIENT_COMPRESS")) {
-			if (it->second.bval && (flags & CLIENT_COMPRESS)) {
+			if (!(p_b = boost::get<bool>(&it->second))) {
+				throw sql::InvalidArgumentException("No bool value passed for CLIENT_COMPRESS");
+			}
+			if (*p_b && (flags & CLIENT_COMPRESS)) {
 				flags |= CLIENT_COMPRESS;
 			}
 		} else if (!it->first.compare("CLIENT_FOUND_ROWS")) {
-			if (it->second.bval && (flags & CLIENT_FOUND_ROWS)) {
+			if (!(p_b = boost::get<bool>(&it->second))) {
+				throw sql::InvalidArgumentException("No bool value passed for CLIENT_FOUND_ROWS");
+			}
+			if (*p_b  && (flags & CLIENT_FOUND_ROWS)) {
 				flags |= CLIENT_FOUND_ROWS;
 			}
 		} else if (!it->first.compare("CLIENT_IGNORE_SIGPIPE")) {
-			if (it->second.bval && (flags & CLIENT_IGNORE_SIGPIPE)) {
+			if (!(p_b = boost::get<bool>(&it->second))) {
+				throw sql::InvalidArgumentException("No bool value passed for CLIENT_IGNORE_SIGPIPE");
+			}
+			if (*p_b  && (flags & CLIENT_IGNORE_SIGPIPE)) {
 				flags |= CLIENT_IGNORE_SIGPIPE;
 			}
 		} else if (!it->first.compare("CLIENT_IGNORE_SPACE")) {
-			if (it->second.bval && (flags & CLIENT_IGNORE_SPACE)) {
+			if (!(p_b = boost::get<bool>(&it->second))) {
+				throw sql::InvalidArgumentException("No bool value passed for CLIENT_IGNORE_SPACE");
+			}
+			if (*p_b  && (flags & CLIENT_IGNORE_SPACE)) {
 				flags |= CLIENT_IGNORE_SPACE;
 			}
 		} else if (!it->first.compare("CLIENT_INTERACTIVE")) {
-			if (it->second.bval && (flags & CLIENT_INTERACTIVE)) {
+			if (!(p_b = boost::get<bool>(&it->second))) {
+				throw sql::InvalidArgumentException("No bool value passed for CLIENT_INTERACTIVE");
+			}
+			if (*p_b  && (flags & CLIENT_INTERACTIVE)) {
 				flags |= CLIENT_INTERACTIVE;
 			}
 		} else if (!it->first.compare("CLIENT_LOCAL_FILES")) {
-			if (it->second.bval && (flags & CLIENT_LOCAL_FILES)) {
+			if (!(p_b = boost::get<bool>(&it->second))) {
+				throw sql::InvalidArgumentException("No bool value passed for CLIENT_LOCAL_FILES");
+			}
+			if (*p_b  && (flags & CLIENT_LOCAL_FILES)) {
 				flags |= CLIENT_LOCAL_FILES;
 			}
 		} else if (!it->first.compare("CLIENT_MULTI_STATEMENTS")) {
-			if (it->second.bval && (flags & CLIENT_MULTI_STATEMENTS)) {
+			if (!(p_b = boost::get<bool>(&it->second))) {
+				throw sql::InvalidArgumentException("No bool value passed for CLIENT_MULTI_STATEMENTS");
+			}
+			if (*p_b  && (flags & CLIENT_MULTI_STATEMENTS)) {
 				flags |= CLIENT_MULTI_STATEMENTS;
 			}
 		} else if (!it->first.compare("CLIENT_NO_SCHEMA")) {
-			if (it->second.bval && (flags & CLIENT_NO_SCHEMA)) {
+			if (!(p_b = boost::get<bool>(&it->second))) {
+				throw sql::InvalidArgumentException("No bool value passed for CLIENT_NO_SCHEMA");
+			}
+			if (*p_b  && (flags & CLIENT_NO_SCHEMA)) {
 				flags |= CLIENT_NO_SCHEMA;
 			}
 		}
@@ -355,6 +430,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 	if (protocol_tcp && !host.compare(0, sizeof("localhost") - 1, "localhost")) {
 		host = "127.0.0.1";
 	}
+#if A0
 	std::map<std::string, sql::ConnectPropertyVal>::const_iterator it_tmp = properties.begin();
 	for (; it_tmp != properties.end(); ++it_tmp) {
 		if (!it_tmp->first.compare("OPT_CONNECT_TIMEOUT")) {
@@ -375,6 +451,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 #endif
 		}
 	}
+#endif
 	{
 		my_bool tmp_bool = 1;
 		mysql_options(intern->mysql, MYSQL_SECURE_AUTH, (const char *) &tmp_bool);
@@ -384,7 +461,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 	}
 	if (ssl_used) {
 		/* According to the docs, always returns 0 */
-		mysql_ssl_set(intern->mysql, sslKey, sslCert, sslCA, sslCAPath, sslCipher);
+		mysql_ssl_set(intern->mysql, sslKey.c_str(), sslCert.c_str(), sslCA.c_str(), sslCAPath.c_str(), sslCipher.c_str());
 	}
 	CPP_INFO_FMT("hostName=%s", hostName.c_str());
 	CPP_INFO_FMT("user=%s", userName.c_str());

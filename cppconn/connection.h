@@ -14,6 +14,7 @@
 
 #include <string>
 #include <map>
+#include <boost/variant.hpp>
 
 #include "build_config.h"
 #include "warning.h"
@@ -21,19 +22,8 @@
 namespace sql
 {
 
-typedef union _ConnectPropertyVal
-{
-		struct
-		{
-			const char * val;
-			size_t len;
-		} str;
-		double dval;
-		long long lval;
-		bool bval;
-		void * pval;
-} ConnectPropertyVal;
 
+typedef boost::variant<long long, double, bool, std::string> ConnectPropertyVal;
 
 class DatabaseMetaData;
 class PreparedStatement;
@@ -90,10 +80,6 @@ public:
 	virtual std::string getClientInfo() = 0;
 
 	virtual void getClientOption(const std::string & optionName, void * optionValue) = 0;
-
-	/* virtual int getHoldability() = 0; */
-
-	/* virtual std::map getTypeMap() = 0; */
 
 	virtual DatabaseMetaData * getMetaData() = 0;
 

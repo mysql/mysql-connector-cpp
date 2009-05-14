@@ -151,41 +151,18 @@ void statement::callSP()
   {
     std::map<std::string, sql::ConnectPropertyVal> connection_properties;
 
-    {
-      sql::ConnectPropertyVal tmp;
-      /* url comes from the unit testing framework */
-      tmp.str.val=url.c_str();
-      tmp.str.len=url.length();
-      connection_properties[std::string("hostName")]=tmp;
-    }
+    /* url comes from the unit testing framework */
+    connection_properties[std::string("hostName")]=sql::ConnectPropertyVal(url);
+    /* user comes from the unit testing framework */
+    connection_properties["userName"]=sql::ConnectPropertyVal(user);
+    connection_properties["password"]=sql::ConnectPropertyVal(passwd);
 
-    {
-      sql::ConnectPropertyVal tmp;
-      /* user comes from the unit testing framework */
-      tmp.str.val=user.c_str();
-      tmp.str.len=user.length();
-      connection_properties[std::string("userName")]=tmp;
-    }
-
-    {
-      sql::ConnectPropertyVal tmp;
-      tmp.str.val=passwd.c_str();
-      tmp.str.len=passwd.length();
-      connection_properties[std::string("password")]=tmp;
-    }
-
-    {
-      sql::ConnectPropertyVal tmp;
-      tmp.bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
-      connection_properties[std::string("metadataUseInfoSchema")]=tmp;
-    }
+    bool bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
+    connection_properties["metadataUseInfoSchema"]=sql::ConnectPropertyVal(bval);
 
     connection_properties.erase("CLIENT_MULTI_RESULTS");
-    {
-      sql::ConnectPropertyVal tmp;
-      tmp.bval=true;
-      connection_properties[std::string("CLIENT_MULTI_RESULTS")]=tmp;
-    }
+    connection_properties["CLIENT_MULTI_RESULTS"]=sql::ConnectPropertyVal(true);
+
     con.reset(driver->connect(connection_properties));
     con->setSchema(db);
   }
@@ -315,41 +292,19 @@ void statement::unbufferedFetch()
     /*
      This is the first way to do an unbuffered fetch...
      */
-    {
-      sql::ConnectPropertyVal tmp;
-      /* url comes from the unit testing framework */
-      tmp.str.val=url.c_str();
-      tmp.str.len=url.length();
-      connection_properties[std::string("hostName")]=tmp;
-    }
+    /* url comes from the unit testing framework */
+    connection_properties["hostName"]=sql::ConnectPropertyVal(url);
+    /* user comes from the unit testing framework */
+    connection_properties["userName"]=sql::ConnectPropertyVal(user);
+    connection_properties["password"]=sql::ConnectPropertyVal(passwd);
 
-    {
-      sql::ConnectPropertyVal tmp;
-      /* user comes from the unit testing framework */
-      tmp.str.val=user.c_str();
-      tmp.str.len=user.length();
-      connection_properties[std::string("userName")]=tmp;
-    }
-
-    {
-      sql::ConnectPropertyVal tmp;
-      tmp.str.val=passwd.c_str();
-      tmp.str.len=passwd.length();
-      connection_properties[std::string("password")]=tmp;
-    }
-
-    {
-      sql::ConnectPropertyVal tmp;
-      tmp.bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
-      connection_properties[std::string("metadataUseInfoSchema")]=tmp;
-    }
+    bool bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
+    connection_properties["metadataUseInfoSchema"]=sql::ConnectPropertyVal(bval);
 
     logMsg("... setting TYPE_FORWARD_ONLY through connection map");
     connection_properties.erase("defaultStatementResultType");
     {
-      sql::ConnectPropertyVal tmp;
-      tmp.lval=sql::ResultSet::TYPE_FORWARD_ONLY;
-      connection_properties[std::string("defaultStatementResultType")]=tmp;
+      connection_properties["defaultStatementResultType"]=sql::ConnectPropertyVal((long long)sql::ResultSet::TYPE_FORWARD_ONLY);
 
       try
       {

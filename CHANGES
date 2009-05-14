@@ -4,6 +4,23 @@ GA  1.0.6 - 2009-06-xx
   solution to boost::shared_ptr/weak_ptr for guarding access around result sets.
   (Andrey)
 
+- API incompatible change: ConnectPropertyVal is no more a struct by a typedef
+  that uses boost::variant. This will break your build but is pretty easy to fix.
+  If you had code like
+  ---
+  {
+    sql::ConnectPropertyVal tmp;
+    tmp.str.val=passwd.c_str();
+    tmp.str.len=passwd.length();
+    connection_properties["password"] = tmp;
+  }
+  ---
+  Your new code you will like this:
+  ---
+  connection_properties["password"] = sql::ConnectPropertyVal(passwd);
+  ---
+  Which is simpler. (Andrey)
+
 - Fixed a bug in PS, which in combination of preparing a stored procedures without
   any parameters was leading to exception, which was a problem, and was leading
   to another problem which manifested itself with double free. All similar code

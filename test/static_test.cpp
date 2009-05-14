@@ -24,24 +24,9 @@ get_connection(const std::string& host, const std::string& user, const std::stri
 		return driver->connect(host, /*port,*/ user, pass);
 	} else {
 		std::map<std::string, sql::ConnectPropertyVal> connection_properties;
-		{
-			sql::ConnectPropertyVal tmp;
-			tmp.str.val = host.c_str();
-			tmp.str.len = host.length();
-			connection_properties[std::string("hostName")] = tmp;
-		}
-		{
-			sql::ConnectPropertyVal tmp;
-			tmp.str.val = user.c_str();
-			tmp.str.len = user.length();
-			connection_properties[std::string("userName")] = tmp;
-		}
-		{
-			sql::ConnectPropertyVal tmp;
-			tmp.str.val = pass.c_str();
-			tmp.str.len = pass.length();
-			connection_properties[std::string("password")] = tmp;
-		}
+		connection_properties["hostName"] = sql::ConnectPropertyVal(host);
+		connection_properties["userName"] = sql::ConnectPropertyVal(user);
+		connection_properties["password"] = sql::ConnectPropertyVal(pass);
 		return new sql::mysql::MySQL_Connection(connection_properties);
 	}
 }
