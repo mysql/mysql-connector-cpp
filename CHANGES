@@ -1,3 +1,15 @@
+GA  1.0.6 - 2009-06-xx
+- Exchanged most use cases of std::auto_ptr with boost::scoped_ptr. Migrated from
+  own solution to boost::scoped_array. In addition, migrated from another own
+  solution to boost::shared_ptr/weak_ptr for guarding access around result sets.
+  (Andrey)
+
+- Fixed a bug in PS, which in combination of preparing a stored procedures without
+  any parameters was leading to exception, which was a problem, and was leading
+  to another problem which manifested itself with double free. All similar code
+  snippets in the Connector were fixed. (Andrey)
+
+
 GA  1.0.5 - 2009-04-20
 
 - Changed the interface of sql::ConnectionMetaData, sql::ResultSetMetaData
