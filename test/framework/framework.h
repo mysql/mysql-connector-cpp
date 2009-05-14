@@ -18,6 +18,7 @@
 #include "test_listener.h"
 #include "test_runner.h"
 #include "test_factory.h"
+#include "test_timer.h"
 
 
 #define REGISTER_FIXTURE( theFixtureClass ) \

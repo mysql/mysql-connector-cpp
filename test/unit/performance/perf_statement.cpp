@@ -27,6 +27,13 @@ void perf_statement::anonymousSelect()
   stmt.reset(con->createStatement());
   try
   {
+    sleep(1);
+    double i = 0;
+    Timer::startTimer("loop");
+    for (int j = 1; j < INT_MAX / 30; j++)
+      i = i + 0.27823873787832;
+    Timer::stopTimer("loop");
+    
     res.reset(stmt->executeQuery("SELECT ' ', NULL"));
     ASSERT(res->next());
     ASSERT_EQUALS(" ", res->getString(1));

@@ -178,18 +178,28 @@ void TestsListener::testHasFinished( TestRunResult result, const String & msg )
   static String timingResult("");
 
   if ( theInstance().timing )
-  {
+  {    
     clock_t time= Timer::stopTimer( testFullName() );
 
     static std::stringstream tmp;
 
+    tmp.precision( 10 );
     tmp.str("");
-    tmp << time << "(";
-    tmp.precision( 7 );
-    tmp << Timer::translate2seconds( time ) << "s)";
+    tmp << "Total = " << Timer::translate2seconds( time ) << "s";
 
     timingResult= "Time:";
     timingResult+= tmp.str();
+
+    std::list<String> names = Timer::getNames();
+    std::list<String>::const_iterator it = names.begin();
+    for (; it != names.end(); ++it) {
+      if (*it == testFullName())
+        continue;
+      time = Timer::getTime(*it);
+      tmp << " - " << *it << ": " << Timer::translate2seconds(time) << "s";
+    }
+    
+    timingResult = tmp.str();
   }
   else
     timingResult= "";
