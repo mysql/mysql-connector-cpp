@@ -22,35 +22,35 @@
 namespace testsuite
 {
 
-struct timeRecorderEntry
+struct timer
 {
   clock_t start;
   clock_t total_cpu;
   bool stopped;
 
-  timeRecorderEntry(clock_t _start, clock_t _total_cpu, bool _stopped) :
+  timer(clock_t _start, clock_t _total_cpu, bool _stopped) :
   start(_start),
   total_cpu(_total_cpu),
   stopped(_stopped)
   {
   }
 
-  timeRecorderEntry(clock_t _start) :
+  timer(clock_t _start) :
   start(_start),
   total_cpu(static_cast<clock_t> (0)),
   stopped(false)
   {
   }
 
-  timeRecorderEntry() :
+  timer() :
   start(static_cast<clock_t> (0)),
   total_cpu(static_cast<clock_t> (0)),
   stopped(false)
   {
-    this->start = clock();
+    this->start=clock();
   }
 
-  timeRecorderEntry(const timeRecorderEntry & rhs) :
+  timer(const timer & rhs) :
   start(rhs.start),
   total_cpu(rhs.total_cpu),
   stopped(rhs.stopped)
@@ -59,24 +59,55 @@ struct timeRecorderEntry
 
 };
 
+struct test_timer
+{
+  clock_t cpu;
+  std::map<String, timer> timers;
+
+  test_timer()
+  {
+    this->cpu=clock();
+  }
+
+  test_timer(const test_timer & rhs) :
+  cpu(rhs.cpu),
+  timers(rhs.timers)
+  {
+  }
+};
+
 class Timer : public policies::Singleton<Timer>
 {
   CCPP_SINGLETON(Timer);
 
-  std::map<String, timeRecorderEntry> timeRecorder;
+  std::map<String, test_timer> timeRecorder;
+  String currentTest;
 
 public:
 
-  static clock_t startTimer(const String & name);
-  static clock_t stopTimer(const String & name);
-  static std::list<String> getNames();
+  static clock_t startTest(const String & test);
+  static clock_t stopTest(const String & test);
 
-  static clock_t getTime(const String & name);
-  static float getSeconds(const String & name);
+  static clock_t startTimer(const String & test, const String & name);
+  static clock_t startTimer(const String & name);
+
+  static clock_t stopTimer(const String & test, const String & name);
+  static clock_t stopTimer(const String & name);
+
+  static std::list<String> getNames();
+  static std::list<String> getNames(const String & test);
+
+  static clock_t getTime(const String & test, const String & name);
+  static clock_t getTime(const String & test);
+
+  static float getSeconds(const String & test, const String & name);
+  static float getSeconds(const String & test);
 
   static float translate2seconds(clock_t);
 };
 }
 
+#define TIMER_START(label) Timer::startTimer(#label);
+#define TIMER_STOP(label) Timer::stopTimer(#label);
 
 #endif  // ifndef __TEST_TIMER_H_

@@ -167,7 +167,7 @@ void TestsListener::testHasStarted()
 
   if ( theInstance().timing )
   {
-    Timer::startTimer( testFullName() );
+    Timer::startTest( testFullName() );
   }
 
 }
@@ -178,8 +178,9 @@ void TestsListener::testHasFinished( TestRunResult result, const String & msg )
   static String timingResult("");
 
   if ( theInstance().timing )
-  {    
-    clock_t time= Timer::stopTimer( testFullName() );
+  {
+    
+    clock_t time= Timer::stopTest( testFullName() );
 
     static std::stringstream tmp;
 
@@ -190,16 +191,15 @@ void TestsListener::testHasFinished( TestRunResult result, const String & msg )
     timingResult= "Time:";
     timingResult+= tmp.str();
 
-    std::list<String> names = Timer::getNames();
+    std::list<String> names = Timer::getNames(testFullName());
     std::list<String>::const_iterator it = names.begin();
-    for (; it != names.end(); ++it) {
-      if (*it == testFullName())
-        continue;
+    for (; it != names.end(); ++it) {      
       time = Timer::getTime(*it);
       tmp << " - " << *it << ": " << Timer::translate2seconds(time) << "s";
-    }
-    
+    }   
+
     timingResult = tmp.str();
+        
   }
   else
     timingResult= "";

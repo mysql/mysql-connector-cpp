@@ -20,65 +20,152 @@ Timer::Timer()
 
 }
 
-clock_t Timer::startTimer(const String & name)
+clock_t Timer::startTest(const String & test)
 {
-  std::map<String, timeRecorderEntry>::const_iterator cit=theInstance().timeRecorder.find(name);
+  std::map<String, test_timer>::const_iterator cit=theInstance().timeRecorder.find(test);
 
-  clock_t now=clock();
   if (cit == theInstance().timeRecorder.end())
   {
-    timeRecorderEntry t = timeRecorderEntry(now);
-    theInstance().timeRecorder[name] = t;
+    theInstance().currentTest=test;
+    test_timer t=test_timer();
+    theInstance().timeRecorder[test]=t;
+    return theInstance().timeRecorder[test].cpu;
+  }
+
+  return static_cast<clock_t> (-1);
+}
+
+clock_t Timer::stopTest(const String & test)
+{
+  std::map<String, test_timer>::const_iterator cit=theInstance().timeRecorder.find(test);
+
+  if (cit != theInstance().timeRecorder.end())
+  {
+    clock_t now=clock();
+    theInstance().timeRecorder[test].cpu=now - theInstance().timeRecorder[test].cpu;
+    return theInstance().timeRecorder[test].cpu;
+  }
+
+  return static_cast<clock_t> (-1);
+}
+
+clock_t Timer::startTimer(const String & name)
+{
+  // HACK
+  return startTimer(theInstance().currentTest, name);
+}
+
+clock_t Timer::startTimer(const String & test, const String & name)
+{
+  std::map<String, test_timer>::const_iterator cit=theInstance().timeRecorder.find(test);
+  if (cit == theInstance().timeRecorder.end())
+    // unknown test - must not happen
+    return static_cast<clock_t> (-1);
+
+  std::map<String, timer>::const_iterator it=theInstance().timeRecorder[test].timers.find(name);
+
+  clock_t now=clock();
+  if (it == theInstance().timeRecorder[test].timers.end())
+  {
+    timer t=timer(now);
+    theInstance().timeRecorder[test].timers[name]=t;
   }
   else
   {
     /* TODO: API semantics are somewhat unclear - not sure what is best */
-    theInstance().timeRecorder[name].start=now;
-    theInstance().timeRecorder[name].stopped=false;
+    theInstance().timeRecorder[test].timers[name].start=now;
+    theInstance().timeRecorder[name].timers[name].stopped=false;
   }
 
-  return theInstance().timeRecorder[name].start;
+  return theInstance().timeRecorder[name].timers[name].start;
 }
 
 clock_t Timer::stopTimer(const String & name)
 {
-  std::map<String, timeRecorderEntry>::const_iterator cit=theInstance().timeRecorder.find(name);
+  // hack
+  return stopTimer(theInstance().currentTest, name);
+}
 
+clock_t Timer::stopTimer(const String & test, const String & name)
+{
+  std::map<String, test_timer>::const_iterator cit=theInstance().timeRecorder.find(test);
   if (cit == theInstance().timeRecorder.end())
-    // unknown
+    // unknown test - must not happen
     return static_cast<clock_t> (-1);
 
-  if (theInstance().timeRecorder[name].stopped)
+  std::map<String, timer>::const_iterator it=theInstance().timeRecorder[test].timers.find(name);
+
+  if (it == theInstance().timeRecorder[test].timers.end())
+    // unknown timer
+    return static_cast<clock_t> (-1);
+
+  if (theInstance().timeRecorder[test].timers[name].stopped)
     // has been stopped before
     return static_cast<clock_t> (-1);
 
-  clock_t runtime=clock() - theInstance().timeRecorder[name].start;
-  theInstance().timeRecorder[name].stopped=true;
-  theInstance().timeRecorder[name].total_cpu+=runtime;
-  theInstance().timeRecorder[name].start=static_cast<clock_t> (0);
+  clock_t runtime=clock() - theInstance().timeRecorder[test].timers[name].start;
+  theInstance().timeRecorder[test].timers[name].stopped=true;
+  theInstance().timeRecorder[test].timers[name].total_cpu+=runtime;
+  theInstance().timeRecorder[test].timers[name].start=static_cast<clock_t> (0);
 
   return runtime;
 }
 
-clock_t Timer::getTime(const String & name)
+clock_t Timer::getTime(const String &name)
 {
-  std::map<String, timeRecorderEntry>::const_iterator cit=theInstance().timeRecorder.find(name);
+  return getTime(theInstance().currentTest, name);
+}
 
-  if (cit != theInstance().timeRecorder.end())
-    return theInstance().timeRecorder[name].total_cpu;
+clock_t Timer::getTime(const String & test, const String & name)
+{
+  std::map<String, test_timer>::const_iterator cit=theInstance().timeRecorder.find(test);
+  if (cit == theInstance().timeRecorder.end())
+    // unknown test - must not happen
+    return static_cast<clock_t> (-1);
 
-  return static_cast<clock_t> (-1);
+  std::map<String, timer>::const_iterator it=theInstance().timeRecorder[test].timers.find(name);
+
+  if (it == theInstance().timeRecorder[test].timers.end())
+    // unknown timer
+    return static_cast<clock_t> (-1);
+
+
+  return theInstance().timeRecorder[test].timers[name].total_cpu;
+
 }
 
 std::list<String> Timer::getNames()
 {
   static std::list<String> names;
 
-  std::map<String, timeRecorderEntry>::const_iterator cit=theInstance().timeRecorder.begin();
+  std::map<String, test_timer>::const_iterator cit=theInstance().timeRecorder.find("perf_statement::anonymousSelect");
+  std::map<String, timer>::const_iterator it;
 
   for (; cit != theInstance().timeRecorder.end(); ++cit)
   {
-    names.push_back(cit->first);
+    for (it=theInstance().timeRecorder[cit->first].timers.begin(); it != theInstance().timeRecorder[cit->first].timers.end(); ++it)
+    {
+      names.push_back(it->first);
+    }
+  }
+
+  return names;
+}
+
+std::list<String> Timer::getNames(const String & test)
+{
+  static std::list<String> names;
+
+  std::map<String, test_timer>::const_iterator cit=theInstance().timeRecorder.find(test);
+  if (cit == theInstance().timeRecorder.end())
+  {
+    return names;
+  }
+  std::map<String, timer>::const_iterator it;
+
+  for (it=theInstance().timeRecorder[cit->first].timers.begin(); it != theInstance().timeRecorder[cit->first].timers.end(); ++it)
+  {
+    names.push_back(it->first);
   }
 
   return names;

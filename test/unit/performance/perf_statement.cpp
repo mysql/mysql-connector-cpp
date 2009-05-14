@@ -14,6 +14,7 @@
 #include <cppconn/warning.h>
 #include "perf_statement.h"
 #include <stdlib.h>
+#include <climits>
 
 namespace testsuite
 {
@@ -29,10 +30,10 @@ void perf_statement::anonymousSelect()
   {
     sleep(1);
     double i = 0;
-    Timer::startTimer("loop");
+    TIMER_START("loop");
     for (int j = 1; j < INT_MAX / 30; j++)
       i = i + 0.27823873787832;
-    Timer::stopTimer("loop");
+    TIMER_STOP("loop");
     
     res.reset(stmt->executeQuery("SELECT ' ', NULL"));
     ASSERT(res->next());
