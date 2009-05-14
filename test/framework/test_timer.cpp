@@ -14,57 +14,91 @@
 
 namespace testsuite
 {
-  Timer::Timer()
-  {
 
+Timer::Timer()
+{
+
+}
+
+clock_t Timer::startTimer(const String & name)
+{
+  std::map<String, timeRecorderEntry>::const_iterator cit=theInstance().timeRecorder.find(name);
+
+  clock_t now=clock();
+  if (cit == theInstance().timeRecorder.end())
+  {
+    timeRecorderEntry t = timeRecorderEntry(now);
+    theInstance().timeRecorder[name] = t;
+  }
+  else
+  {
+    /* TODO: API semantics are somewhat unclear - not sure what is best */
+    theInstance().timeRecorder[name].start=now;
+    theInstance().timeRecorder[name].stopped=false;
   }
 
+  return theInstance().timeRecorder[name].start;
+}
 
-  clock_t Timer::startTimer  ( const String & name )
+clock_t Timer::stopTimer(const String & name)
+{
+  std::map<String, timeRecorderEntry>::const_iterator cit=theInstance().timeRecorder.find(name);
+
+  if (cit == theInstance().timeRecorder.end())
+    // unknown
+    return static_cast<clock_t> (-1);
+
+  if (theInstance().timeRecorder[name].stopped)
+    // has been stopped before
+    return static_cast<clock_t> (-1);
+
+  clock_t runtime=clock() - theInstance().timeRecorder[name].start;
+  theInstance().timeRecorder[name].stopped=true;
+  theInstance().timeRecorder[name].total_cpu+=runtime;
+  theInstance().timeRecorder[name].start=static_cast<clock_t> (0);
+
+  return runtime;
+}
+
+clock_t Timer::getTime(const String & name)
+{
+  std::map<String, timeRecorderEntry>::const_iterator cit=theInstance().timeRecorder.find(name);
+
+  if (cit != theInstance().timeRecorder.end())
+    return theInstance().timeRecorder[name].total_cpu;
+
+  return static_cast<clock_t> (-1);
+}
+
+std::list<String> Timer::getNames()
+{
+  static std::list<String> names;
+
+  std::map<String, timeRecorderEntry>::const_iterator cit=theInstance().timeRecorder.begin();
+
+  for (; cit != theInstance().timeRecorder.end(); ++cit)
   {
-    // If timer started 2nd time - we don't really care.
-
-    return theInstance().timeRecorder[ name ]= clock();
+    names.push_back(cit->first);
   }
 
+  return names;
+}
 
-  clock_t Timer::stopTimer    ( const String & name )
-  {
-    std::map<String, clock_t>::const_iterator cit= theInstance().timeRecorder.find( name );
+float Timer::getSeconds(const String & name)
+{
+  return translate2seconds(getTime(name));
+}
 
-    clock_t result= clock();
-
-    if ( cit != theInstance().timeRecorder.end() )
-      result -= cit->second;
-
-    return result;
-  }
-
-
-  clock_t Timer::getTime    ( const String & name )
-  {
-    std::map<String, clock_t>::const_iterator cit= theInstance().timeRecorder.find( name );
-
-    if ( cit != theInstance().timeRecorder.end() )
-      return cit->second;
-
-    return -1;
-  }
-
-
-  float   Timer::getSeconds  ( const String & name )
-  {
-    return translate2seconds( getTime( name ) );
-  }
-
-  float   Timer::translate2seconds( clock_t inWallClocks )
-  {
+float Timer::translate2seconds(clock_t inWallClocks)
+{
 #ifdef CLOCKS_PER_SEC
-  //it looks like CLOCKS_PER_SEC should be defined on all platforms... just to feel safe
-    return static_cast<float>(inWallClocks)/CLOCKS_PER_SEC;
+  /* it looks like CLOCKS_PER_SEC should be defined on all platforms... just to feel safe.
+  Maybe use sysconf(_SC_CLK_TCK) */
+
+  return static_cast<float> (inWallClocks) / CLOCKS_PER_SEC;
 #else
-    return static_cast<float>(inWallClocks);
+  return static_cast<float> (inWallClocks);
 #endif
-  }
+}
 }
 

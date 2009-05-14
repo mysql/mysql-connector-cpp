@@ -21,22 +21,61 @@
 
 namespace testsuite
 {
-  class Timer : public policies::Singleton<Timer>
+
+struct timeRecorderEntry
+{
+  clock_t start;
+  clock_t total_cpu;
+  bool stopped;
+
+  timeRecorderEntry(clock_t _start, clock_t _total_cpu, bool _stopped) :
+  start(_start),
+  total_cpu(_total_cpu),
+  stopped(_stopped)
   {
-    CCPP_SINGLETON( Timer );
+  }
 
-    std::map<String, clock_t> timeRecorder;
+  timeRecorderEntry(clock_t _start) :
+  start(_start),
+  total_cpu(static_cast<clock_t> (0)),
+  stopped(false)
+  {
+  }
 
-  public:
+  timeRecorderEntry() :
+  start(static_cast<clock_t> (0)),
+  total_cpu(static_cast<clock_t> (0)),
+  stopped(false)
+  {
+    this->start = clock();
+  }
 
-    static clock_t startTimer  ( const String & name );
-    static clock_t stopTimer   ( const String & name );
+  timeRecorderEntry(const timeRecorderEntry & rhs) :
+  start(rhs.start),
+  total_cpu(rhs.total_cpu),
+  stopped(rhs.stopped)
+  {
+  }
 
-    static clock_t getTime     ( const String & name );
-    static float   getSeconds  ( const String & name );
+};
 
-    static float   translate2seconds( clock_t );
-  };
+class Timer : public policies::Singleton<Timer>
+{
+  CCPP_SINGLETON(Timer);
+
+  std::map<String, timeRecorderEntry> timeRecorder;
+
+public:
+
+  static clock_t startTimer(const String & name);
+  static clock_t stopTimer(const String & name);
+  static std::list<String> getNames();
+
+  static clock_t getTime(const String & name);
+  static float getSeconds(const String & name);
+
+  static float translate2seconds(clock_t);
+};
 }
 
 
