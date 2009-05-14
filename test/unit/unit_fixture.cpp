@@ -351,34 +351,12 @@ sql::Connection * unit_fixture::getConnection()
   }
 
   std::map<std::string, sql::ConnectPropertyVal> connection_properties;
-  {
-    sql::ConnectPropertyVal tmp;
-    /* url comes from the unit testing framework */
-    tmp.str.val=url.c_str();
-    tmp.str.len=url.length();
-    connection_properties[std::string("hostName")]=tmp;
-  }
+  connection_properties["hostName"]=sql::ConnectPropertyVal(url);
+  connection_properties["userName"]=sql::ConnectPropertyVal(user);
+  connection_properties["password"]=sql::ConnectPropertyVal(passwd);
 
-  {
-    sql::ConnectPropertyVal tmp;
-    /* user comes from the unit testing framework */
-    tmp.str.val=user.c_str();
-    tmp.str.len=user.length();
-    connection_properties[std::string("userName")]=tmp;
-  }
-
-  {
-    sql::ConnectPropertyVal tmp;
-    tmp.str.val=passwd.c_str();
-    tmp.str.len=passwd.length();
-    connection_properties[std::string("password")]=tmp;
-  }
-
-  {
-    sql::ConnectPropertyVal tmp;
-    tmp.bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
-    connection_properties[std::string("metadataUseInfoSchema")]=tmp;
-  }
+  bool bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
+  connection_properties["metadataUseInfoSchema"]=sql::ConnectPropertyVal(bval);
 
   return driver->connect(connection_properties);
 }
