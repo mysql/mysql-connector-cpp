@@ -14,35 +14,35 @@
 #include <cppconn/warning.h>
 #include "perf_statement.h"
 #include <stdlib.h>
-#include <climits>
 
 namespace testsuite
 {
 namespace performance
 {
 
-void perf_statement::anonymousSelect()
+void perf_statement::simpleSelect1k()
 {
-  logMsg("perf_statement::anonymousSelect() - MySQL_Statement::*, MYSQL_Resultset::*");
+  logMsg("perf_statement::simpleSelect1k() - MySQL_Statement::*, MYSQL_Resultset::*");
+  String varchar("");
+  std::stringstream query;
+  int i;
 
   stmt.reset(con->createStatement());
   try
   {
-    sleep(1);
-    double i = 0;
-    TIMER_START("loop");
-    for (int j = 1; j < INT_MAX / 30; j++)
-      i = i + 0.27823873787832;
-    TIMER_STOP("loop");
-    
-    res.reset(stmt->executeQuery("SELECT ' ', NULL"));
-    ASSERT(res->next());
-    ASSERT_EQUALS(" ", res->getString(1));
-
-    std::string mynull(res->getString(2));
-    ASSERT(res->isNull(2));
-    ASSERT(res->wasNull());
-
+    TIMER_START("SELECT 1k FROM DUAL");
+    for (i=0; i < 50000; i++)
+    {
+      res.reset(stmt->executeQuery("SELECT 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' FROM DUAL"));
+      while (res->next())
+      {
+        varchar=res->getString(1);
+        varchar=res->getString(2);
+        varchar=res->getString(3);
+        varchar=res->getString(4);
+      }
+    }
+    TIMER_STOP("SELECT 1k FROM DUAL");
   }
   catch (sql::SQLException &e)
   {
