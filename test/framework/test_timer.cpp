@@ -49,13 +49,13 @@ clock_t Timer::stopTest(const String & test)
   return static_cast<clock_t> (-1);
 }
 
-clock_t Timer::startTimer(const String & name)
+clock_t Timer::startTimer(const String & name, const String & file, const unsigned int line)
 {
   // HACK
-  return startTimer(theInstance().currentTest, name);
+  return startTimer(theInstance().currentTest, name, file, line);
 }
 
-clock_t Timer::startTimer(const String & test, const String & name)
+clock_t Timer::startTimer(const String & test, const String & name, const String & file, const unsigned int line)
 {
   std::map<String, test_timer>::const_iterator cit=theInstance().timeRecorder.find(test);
   if (cit == theInstance().timeRecorder.end())
@@ -67,7 +67,7 @@ clock_t Timer::startTimer(const String & test, const String & name)
   clock_t now=clock();
   if (it == theInstance().timeRecorder[test].timers.end())
   {
-    timer t=timer(now);
+    timer t=timer(now, file, line);
     theInstance().timeRecorder[test].timers[name]=t;
   }
   else
@@ -131,7 +131,65 @@ clock_t Timer::getTime(const String & test, const String & name)
 
 
   return theInstance().timeRecorder[test].timers[name].total_cpu;
+}
 
+float Timer::getSeconds(const String & name)
+{
+  return translate2seconds(getTime(name));
+}
+
+float Timer::translate2seconds(clock_t inWallClocks)
+{
+#ifdef CLOCKS_PER_SEC
+  /* it looks like CLOCKS_PER_SEC should be defined on all platforms... just to feel safe.
+  Maybe use sysconf(_SC_CLK_TCK) */
+
+  return static_cast<float> (inWallClocks) / CLOCKS_PER_SEC;
+#else
+  return static_cast<float> (inWallClocks);
+#endif
+}
+
+unsigned int Timer::getLine(const String &name)
+{
+  return getLine(theInstance().currentTest, name);
+}
+
+unsigned int Timer::getLine(const String & test, const String & name)
+{
+  std::map<String, test_timer>::const_iterator cit=theInstance().timeRecorder.find(test);
+  if (cit == theInstance().timeRecorder.end())
+    // unknown test - must not happen
+    return 0;
+
+  std::map<String, timer>::const_iterator it=theInstance().timeRecorder[test].timers.find(name);
+
+  if (it == theInstance().timeRecorder[test].timers.end())
+    // unknown timer
+    return 0;
+
+  return theInstance().timeRecorder[test].timers[name].line;
+}
+
+const String Timer::getFile(const String &name)
+{
+  return getFile(theInstance().currentTest, name);
+}
+
+const String Timer::getFile(const String & test, const String & name)
+{
+  std::map<String, test_timer>::const_iterator cit=theInstance().timeRecorder.find(test);
+  if (cit == theInstance().timeRecorder.end())
+    // unknown test - must not happen
+    return 0;
+
+  std::map<String, timer>::const_iterator it=theInstance().timeRecorder[test].timers.find(name);
+
+  if (it == theInstance().timeRecorder[test].timers.end())
+    // unknown timer
+    return 0;
+
+  return theInstance().timeRecorder[test].timers[name].file;
 }
 
 std::list<String> Timer::getNames()
@@ -171,21 +229,5 @@ std::list<String> Timer::getNames(const String & test)
   return names;
 }
 
-float Timer::getSeconds(const String & name)
-{
-  return translate2seconds(getTime(name));
-}
-
-float Timer::translate2seconds(clock_t inWallClocks)
-{
-#ifdef CLOCKS_PER_SEC
-  /* it looks like CLOCKS_PER_SEC should be defined on all platforms... just to feel safe.
-  Maybe use sysconf(_SC_CLK_TCK) */
-
-  return static_cast<float> (inWallClocks) / CLOCKS_PER_SEC;
-#else
-  return static_cast<float> (inWallClocks);
-#endif
-}
 }
 

@@ -18,35 +18,33 @@ namespace testsuite
 {
 
 TestsListener::TestsListener()
-: curSuiteName  ( "n/a" )
-, curTestName   ( "n/a" )
-, curTestOrdNum ( 0     )
-, executed      ( 0     )
-, exceptions    ( 0     )
-, verbose       ( false )
-, timing        ( false )
+: curSuiteName("n/a")
+, curTestName("n/a")
+, curTestOrdNum(0)
+, executed(0)
+, exceptions(0)
+, verbose(false)
+, timing(false)
 {
   //TODO: Make StartOptions  dependent
-  outputter.reset(new TAP());  
+  outputter.reset(new TAP());
 }
-
 
 void TestsListener::setVerbose(bool verbosity)
 {
-  theInstance().verbose = verbosity;
+  theInstance().verbose=verbosity;
 }
 
-
-void  TestsListener::doTiming( bool timing )
+void TestsListener::doTiming(bool timing)
 {
-  theInstance().timing= timing;
+  theInstance().timing=timing;
 }
 
 //TODO: "set" counterparts
 
 std::ostream & TestsListener::errorsLog()
 {
-  if ( theInstance().verbose )
+  if (theInstance().verbose)
     return theInstance().outputter->errorsLog();
   else
   {
@@ -55,19 +53,16 @@ std::ostream & TestsListener::errorsLog()
   }
 }
 
-
 void TestsListener::errorsLog(const String::value_type * msg)
 {
   if (msg != NULL)
-    errorsLog() << msg  << std::endl;
+    errorsLog() << msg << std::endl;
 }
-
 
 void TestsListener::errorsLog(const String & msg)
 {
   errorsLog() << msg << std::endl;
 }
-
 
 void TestsListener::errorsLog(const String::value_type * msg
                               , const String::value_type * file
@@ -79,10 +74,9 @@ void TestsListener::errorsLog(const String::value_type * msg
   }
 }
 
-
 std::ostream & TestsListener::messagesLog()
 {
-  if ( theInstance().verbose )
+  if (theInstance().verbose)
     return theInstance().outputter->messagesLog();
   else
   {
@@ -91,26 +85,22 @@ std::ostream & TestsListener::messagesLog()
   }
 }
 
-
 void TestsListener::messagesLog(const String::value_type * msg)
 {
   if (msg != NULL)
     messagesLog() << msg;
 }
 
-
 void TestsListener::messagesLog(const String & msg)
 {
-  if ( theInstance().verbose )
+  if (theInstance().verbose)
     messagesLog() << msg;
 }
-
 
 void TestsListener::currentTestName(const String & name)
 {
   theInstance().curTestName=name;
 }
-
 
 const String & TestsListener::currentSuiteName()
 {
@@ -122,19 +112,16 @@ String TestsListener::testFullName()
   return theInstance().curSuiteName + "::" + theInstance().curTestName;
 }
 
-
-void TestsListener::incrementCounter( int incrVal )
+void TestsListener::incrementCounter(int incrVal)
 {
-  theInstance().curTestOrdNum+= incrVal;
+  theInstance().curTestOrdNum+=incrVal;
 }
-
 
 int TestsListener::recordFailed()
 {
   failedTests.push_back(curTestOrdNum);
-  return static_cast<int>(failedTests.size());
+  return static_cast<int> (failedTests.size());
 }
-
 
 void TestsListener::nextSuiteStarts(const String & name, int testsNumber)
 {
@@ -158,94 +145,105 @@ void TestsListener::nextSuiteStarts(const String & name, int testsNumber)
                                        , testsNumber);
 }
 
-
 void TestsListener::testHasStarted()
 {
   //std::cout << ".";
   ++theInstance().executed;
-  theInstance().executionComment= "";
+  theInstance().executionComment="";
 
-  if ( theInstance().timing )
+  if (theInstance().timing)
   {
-    Timer::startTest( testFullName() );
+    Timer::startTest(testFullName());
   }
 
 }
 
-
-void TestsListener::testHasFinished( TestRunResult result, const String & msg )
+void TestsListener::testHasFinished(TestRunResult result, const String & msg)
 {
   static String timingResult("");
 
-  if ( theInstance().timing )
+  if (theInstance().timing)
   {
+
+    clock_t time=Timer::stopTest(testFullName());
+    float total = Timer::translate2seconds(time);
     
-    clock_t time= Timer::stopTest( testFullName() );
+    static std::stringstream tmp;    
 
-    static std::stringstream tmp;
-
-    tmp.precision( 10 );
+    tmp.precision(10);
     tmp.str("");
-    tmp << "Total = " << Timer::translate2seconds( time ) << "s";
+    tmp << std::showpoint;
+    tmp << std::endl << "# " << std::setw(40) << std::left << "Total" << " = ";
+    tmp << std::setw(13) << std::right << total << "s";
+    tmp << " (100.00%)" << std::endl;
 
-    timingResult= "Time:";
-    timingResult+= tmp.str();
+    std::list<String> names=Timer::getNames(testFullName());
+    std::list<String>::const_iterator it=names.begin();
+    for (; it != names.end(); ++it)
+    {
+      time=Timer::getTime(*it);
+      tmp << "#   " << std::setw(38) << std::left << *it;
+      tmp << " = " << std::setw(13) << std::right << Timer::translate2seconds(time) << "s";
+      
+      tmp << " (";
+      tmp << std::setw(6) << std::right;
+      if (total > 0.0) {
+        tmp.precision(5);
+        tmp << ((100 / total) * Timer::translate2seconds(time));
+        tmp.precision(10);
+      } else {
+        tmp << "n/a ";
+      }
+      tmp << "%)";
+      
+      tmp << " (line " << Timer::getLine(*it) << "ff)" << std::endl;
+    }
 
-    std::list<String> names = Timer::getNames(testFullName());
-    std::list<String>::const_iterator it = names.begin();
-    for (; it != names.end(); ++it) {      
-      time = Timer::getTime(*it);
-      tmp << " - " << *it << ": " << Timer::translate2seconds(time) << "s";
-    }   
-
-    timingResult = tmp.str();
-        
+    timingResult=tmp.str();
   }
   else
-    timingResult= "";
+    timingResult="";
 
-  StringUtils::concatSeparated( theInstance().executionComment, msg );
-  StringUtils::concatSeparated( theInstance().executionComment, timingResult
-    , " #" );
+  if (!msg.empty())
+    StringUtils::concatSeparated(theInstance().executionComment, msg);
+  if (!timingResult.empty())
+    StringUtils::concatSeparated(theInstance().executionComment, timingResult);
 
-  if ( result != trrPassed )
+  if (result != trrPassed)
   {
     // Output about test fail and recording info
 
     theInstance().recordFailed();
 
-    if (result == trrThrown )
+    if (result == trrThrown)
       ++theInstance().exceptions;
 
     theInstance().outputter->TestFailed(theInstance().curTestOrdNum
-      , theInstance().curTestName
-      ,  theInstance().executionComment );
+                                        , theInstance().curTestName
+                                        , theInstance().executionComment);
   }
   else
   {
     // Output about test success
     theInstance().outputter->TestPassed(theInstance().curTestOrdNum
-      , theInstance().curTestName
-      , theInstance().executionComment );
+                                        , theInstance().curTestName
+                                        , theInstance().executionComment);
   }
- }
-
-
-void TestsListener::setTestExecutionComment ( const String & msg )
-{
-  theInstance().executionComment= msg;
 }
 
+void TestsListener::setTestExecutionComment(const String & msg)
+{
+  theInstance().executionComment=msg;
+}
 
 void TestsListener::testHasFailed(const String & msg)
 {
-  setTestExecutionComment( msg );
+  setTestExecutionComment(msg);
 
-  errorsLog( msg );
+  errorsLog(msg);
 
   throw TestFailedException();
 }
-
 
 void TestsListener::summary()
 {
@@ -253,7 +251,6 @@ void TestsListener::summary()
                      , failed() + exceptions
                      , failedTests);
 }
-
 
 bool TestsListener::allTestsPassed()
 {

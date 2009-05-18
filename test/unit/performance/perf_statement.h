@@ -25,24 +25,19 @@ class perf_statement : public unit_fixture
 {
 private:
   typedef unit_fixture super;
-
-  /*
-   * Helper method to check for forward only scrolling
-   */
-  void checkUnbufferedScrolling();
-
+  
 protected:
 public:
 
   EXAMPLE_TEST_FIXTURE(perf_statement)
   {
-    TEST_CASE(anonymousSelect);
+    TEST_CASE(simpleSelect1k);
   }
 
   /**
    * SELECT ' ' as string
    */
-  void anonymousSelect();
+  void simpleSelect1k();
 
 };
 

@@ -13,6 +13,8 @@
 #define __TESTLISTENER_H_
 
 #include <sstream>
+#include <iostream>
+#include <iomanip>
 #include <list>
 #include <vector>
 
