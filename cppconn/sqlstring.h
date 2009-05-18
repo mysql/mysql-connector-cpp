@@ -18,108 +18,109 @@ FLOSS License Exception
 
 namespace sql
 {
-  class CPPCONN_PUBLIC_FUNC SQLString
-  {
-    std::string realStr;
+	class CPPCONN_PUBLIC_FUNC SQLString
+	{
+		std::string realStr;
 
-  public:
+	public:
 
-    ~SQLString()
-    {
-    }
-
-
-    SQLString()
-    {
-    }
+		~SQLString()
+		{
+		}
 
 
-    SQLString             ( const SQLString & other ) : realStr( other.realStr )
-    {
-    }
+		SQLString()
+		{
+		}
 
 
-    SQLString             ( const std::string & other )  : realStr( other )
-    {
-    }
+		SQLString(const SQLString & other) : realStr(other.realStr)
+		{
+		}
 
 
-    SQLString             ( const char other[] )  : realStr( other )
-    {
-    }
-
-    // Needed for stuff like SQLString str= "char * string constant"
-    // ctor SQLString( const char *) would do the job too, but i like this one better
-    SQLString & operator= ( const std::string & rhs )
-    {
-      realStr= rhs;
-
-      return *this;
-    }
+		SQLString(const std::string & other) : realStr(other)
+		{
+		}
 
 
-    // Conversion to st::string. Comes in play for stuff like std::string str= SQLString_var;
-    operator std::string const&() const
-    {
-      return realStr;
-    }
+		SQLString(const char other[]) : realStr(other)
+		{
+		}
+
+		// Needed for stuff like SQLString str= "char * string constant"
+		// ctor SQLString( const char *) would do the job too, but i like this one better
+		SQLString & operator= ( const std::string & rhs )
+		{
+			realStr = rhs;
+
+			return *this;
+		}
 
 
-    /** For access std::string methods. Not sure we need it. Makes it look like some smart ptr.
-        possibly operator* - will look even more like smart ptr */
-    std::string * operator ->()
-    {
-      return & realStr;
-    }
+		// Conversion to st::string. Comes in play for stuff like std::string str= SQLString_var;
+		operator std::string const&() const
+		{
+			return realStr;
+		}
 
 
-    const std::string & get() const
-    {
-      return realStr;
-    }
+		/** For access std::string methods. Not sure we need it. Makes it look like some smart ptr.
+			possibly operator* - will look even more like smart ptr */
+		std::string * operator ->()
+		{
+			return & realStr;
+		}
 
 
-    const char * c_str() const
-    {
-      return realStr.c_str();
-    }
+		const std::string & get() const
+		{
+			return realStr;
+		}
 
 
-    const SQLString & operator+=( const SQLString & op2 )
-    {
-      realStr+= op2.get();
-      return *this;
-    }
+		const char * c_str() const
+		{
+			return realStr.c_str();
+		}
+
+
+		const SQLString & operator+=( const SQLString & op2 )
+		{
+			realStr+= op2.get();
+			return *this;
+		}
 };
 
   /*
   * Operators that can and have to be not a member.
   */
-  inline const SQLString operator+( const SQLString & op1, const SQLString & op2 )
-  {
-    return sql::SQLString( op1.get() + op2.get() );
-  }
-
-
-  inline bool operator ==( const SQLString & op1, const SQLString & op2 )
-  {
-    return ( op1.get() == op2.get() );
-  }
-
-
-  inline bool operator !=( const SQLString & op1, const SQLString & op2 )
-  {
-    return ( op1.get() != op2.get() );
-  }
+inline const SQLString operator+( const SQLString & op1, const SQLString & op2 )
+{
+	return sql::SQLString(op1.get() + op2.get());
 }
+
+
+inline bool operator ==( const SQLString & op1, const SQLString & op2 )
+{
+	return (op1.get() == op2.get());
+}
+
+
+inline bool operator !=(const SQLString & op1, const SQLString & op2)
+{
+	return (op1.get() != op2.get());
+}
+
+}// namespace sql
 
 
 namespace std
 {
-  // operator << for SQLString output
-  inline ostream & operator << ( ostream & os, const sql::SQLString & str )
-  {
-    return os << str.c_str();
-  }
+	// operator << for SQLString output
+	inline ostream & operator << (ostream & os, const sql::SQLString & str )
+	{
+		return os << str.c_str();
+	}
 }
 #endif
