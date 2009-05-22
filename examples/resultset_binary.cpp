@@ -94,19 +94,21 @@ int main(int argc, const char **argv)
 				cout << ", col_varbinary = '" << res->getString("col_varbinary") << "'" << endl;
 
 				/* fixed length column - length = size of the column! */
-				if (res->getString("col_binary")->length() != 4)
+				if (res->getString("col_binary").length() != 4) {
 					throw runtime_error("BINARY(n) should return std::string of length n regardless how long the value stored in the column is.");
+				}
 
-				if (res->getString("col_binary")->compare(0, 1, "a"))
+				if (res->getString("col_binary").compare(0, 1, "a")) {
 					throw runtime_error("First sign from BINARY(n) seems wrong");
+				}
 
-				if (res->getString("col_binary")->compare(2, 1, "b"))
+				if (res->getString("col_binary").compare(2, 1, "b")) {
 					throw runtime_error("Third sign from BINARY(n) seems wrong");
+				}
 
-				if (res->getString("col_varbinary")->length() != 5 &&
-					res->getString("col_varbinary")->length() != 6)
+				if (res->getString("col_varbinary").length() != 5 && res->getString("col_varbinary").length() != 6) {
 					throw runtime_error("VARBINARY(n) should return std::string of length n which holds the length of the actual column value.");
-
+				}
 				sql::ResultSetMetaData * meta = res->getMetaData();
 				cout << "#\t\t COLUMN_SIZE = " << meta->getColumnDisplaySize(3) << endl;
 				row++;

@@ -54,6 +54,7 @@ namespace sql
 		}
 
 		// Needed for stuff like SQLString str= "char * string constant"
+
 		const SQLString & operator=(const char * s)
 		{
 			realStr = s;
@@ -84,10 +85,6 @@ namespace sql
 
 		/** For access std::string methods. Not sure we need it. Makes it look like some smart ptr.
 			possibly operator* - will look even more like smart ptr */
-		std::string * operator ->()
-		{
-			return & realStr;
-		}
 
 		int compare(const SQLString& str) const
 		{

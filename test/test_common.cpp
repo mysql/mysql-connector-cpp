@@ -397,7 +397,7 @@ static void test_connection_3(std::auto_ptr<sql::Connection> & conn, std::string
 	ENTER_FUNCTION();
 	try {
 		sql::DatabaseMetaData * meta = conn->getMetaData();
-		ensure("getUserName() failed", user == meta->getUserName()->substr(0, user.length()));
+		ensure("getUserName() failed", user == meta->getUserName().substr(0, user.length()));
 	} catch (sql::SQLException &e) {
 		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
 		printf("# ");
@@ -1463,11 +1463,11 @@ static void test_result_set_11(std::auto_ptr<sql::Connection> & conn, std::strin
 		stmt1->execute("set @old_charset_res=@@session.character_set_results");
 		stmt1->execute("set character_set_results=NULL");
 		sql::ResultSetMetaData * meta1 = rset1->getMetaData();
-		ensure("column name differs", !meta1->getColumnName(1)->compare("a"));
-		ensure("column name differs", !meta1->getColumnName(2)->compare("b"));
-		ensure("column name differs", !meta1->getColumnName(3)->compare("c"));
-		ensure("column name differs", !meta1->getColumnName(4)->compare("d"));
-		ensure("column name differs", !meta1->getColumnName(5)->compare("e"));
+		ensure("column name differs", !meta1->getColumnName(1).compare("a"));
+		ensure("column name differs", !meta1->getColumnName(2).compare("b"));
+		ensure("column name differs", !meta1->getColumnName(3).compare("c"));
+		ensure("column name differs", !meta1->getColumnName(4).compare("d"));
+		ensure("column name differs", !meta1->getColumnName(5).compare("e"));
 
 		ensure_equal_int("bad case sensitivity", meta1->isCaseSensitive(1), false);
 		ensure_equal_int("bad case sensitivity", meta1->isCaseSensitive(2), false);
@@ -1710,9 +1710,9 @@ static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 				std::auto_ptr<sql::ResultSet> rset(stmt->executeQuery());
 				ensure("No result set", rset.get() != NULL);
 				ensure("Result set is empty", rset->next() != false);
-				ensure("Incorrect value for col 1", !rset->getString(4)->compare("") && true == rset->wasNull());
+				ensure("Incorrect value for col 1", !rset->getString(4).length() == 0 && true == rset->wasNull());
 
-				ensure("Incorrect value for col 0", !rset->getString(1)->compare("Hello MYSQL") && false == rset->wasNull());
+				ensure("Incorrect value for col 0", !rset->getString(1).compare("Hello MYSQL") && false == rset->wasNull());
 
 				ensure("Incorrect value for col 2", rset->getInt(3) == 42 && false == rset->wasNull());
 //				ensure("Incorrect value for col 2", !rset->getString(3).compare("42") && false == rset->wasNull());

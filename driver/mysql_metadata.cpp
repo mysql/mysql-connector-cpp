@@ -3327,7 +3327,7 @@ MySQL_ConnectionMetaData::getProcedures(const sql::SQLString& /*catalog*/, const
 				rs_data_row.push_back("");					// reserved2
 				rs_data_row.push_back("");					// reserved3
 				rs_data_row.push_back(rs->getString(8));	// REMARKS
-				rs_data_row.push_back(sql::SQLString(!rs->getString(3)->compare("PROCEDURE")? procRetNoRes:procRetRes));	// PROCEDURE_TYPE
+				rs_data_row.push_back(sql::SQLString(!rs->getString(3).compare("PROCEDURE")? procRetNoRes:procRetRes));	// PROCEDURE_TYPE
 
 				rs_data->push_back(rs_data_row);
 			}
