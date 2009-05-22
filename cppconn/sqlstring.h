@@ -25,33 +25,17 @@ namespace sql
 	public:
 		static const size_t npos = -1;
 	
-		~SQLString()
-		{
-		}
+		~SQLString() {}
 
+		SQLString() {}
 
-		SQLString()
-		{
-		}
+		SQLString(const SQLString & other) : realStr(other.realStr) {}
 
+		SQLString(const std::string & other) : realStr(other) {}
 
-		SQLString(const SQLString & other) : realStr(other.realStr)
-		{
-		}
+		SQLString(const char other[]) : realStr(other) {}
 
-
-		SQLString(const std::string & other) : realStr(other)
-		{
-		}
-
-
-		SQLString(const char other[]) : realStr(other)
-		{
-		}
-
-		SQLString(const char * s, size_t n) : realStr(s, n)
-		{
-		}
+		SQLString(const char * s, size_t n) : realStr(s, n) {}
 
 		// Needed for stuff like SQLString str= "char * string constant"
 
@@ -64,17 +48,14 @@ namespace sql
 		const SQLString & operator=(const std::string & rhs)
 		{
 			realStr = rhs;
-
 			return *this;
 		}
 
 		const SQLString & operator=(const SQLString & rhs)
 		{
 			realStr = rhs.realStr;
-
 			return *this;
 		}
-
 
 		// Conversion to st::string. Comes in play for stuff like std::string str= SQLString_var;
 		operator std::string const&() const
@@ -82,25 +63,18 @@ namespace sql
 			return realStr;
 		}
 
-
 		/** For access std::string methods. Not sure we need it. Makes it look like some smart ptr.
 			possibly operator* - will look even more like smart ptr */
 
 		int compare(const SQLString& str) const
 		{
-			return realStr.compare(str.get());
+			return realStr.compare(str.realStr);
 		}
 
-		int compare(const std::string& str) const
-		{
-			return realStr.compare(str);
-		}
-
-		int compare(const char* s) const
+		int compare(const char * s) const
 		{
 			return realStr.compare(s);	
 		}
-		
 
 		int compare(size_t pos1, size_t n1, const char * s) const
 		{
@@ -112,7 +86,6 @@ namespace sql
 			return realStr;
 		}
 
-
 		const char * c_str() const
 		{
 			return realStr.c_str();
@@ -123,16 +96,15 @@ namespace sql
 			return realStr.length();		
 		}
 
-
-		SQLString & append(const std::string& str)
+		SQLString & append(const std::string & str)
 		{
-			realStr += str;
+			realStr.append(str);
 			return *this;
 		}
 
 		SQLString & append(const char * s)
 		{
-			*this += sql::SQLString(s);
+			realStr.append(s);
 			return *this;
 		}
 
@@ -146,11 +118,6 @@ namespace sql
 			return realStr.find(c, pos);
 		}
 
-		size_t find(const char * s, size_t pos = 0) const
-		{
-			return realStr.find(s, pos);
-		}
-
 		size_t find(const SQLString & s, size_t pos = 0) const
 		{
 			return realStr.find(s.realStr, pos);
@@ -161,13 +128,7 @@ namespace sql
 			return realStr.substr(pos, n);
 		}
 
-		SQLString& replace(size_t pos1, size_t n1, const char* s)
-		{
-			realStr.replace(pos1, n1, s);
-			return *this;
-		}
-
-		SQLString& replace(size_t pos1, size_t n1, const SQLString & s)
+		const SQLString& replace(size_t pos1, size_t n1, const SQLString & s)
 		{
 			realStr.replace(pos1, n1, s.realStr);
 			return *this;
@@ -183,29 +144,25 @@ namespace sql
 			return realStr.find_last_of(c, npos);
 		}
 
-		const SQLString & operator+=( const SQLString & op2 )
+		const SQLString & operator+=(const SQLString & op2)
 		{
-			realStr+= op2.get();
+			realStr += op2.get();
 			return *this;
 		}
-
-
 };
 
-  /*
-  * Operators that can and have to be not a member.
-  */
+/*
+  Operators that can and have to be not a member.
+*/
 inline const SQLString operator+( const SQLString & op1, const SQLString & op2 )
 {
 	return sql::SQLString(op1.get() + op2.get());
 }
 
-
 inline bool operator ==( const SQLString & op1, const SQLString & op2 )
 {
 	return (op1.get() == op2.get());
 }
-
 
 inline bool operator !=(const SQLString & op1, const SQLString & op2)
 {
