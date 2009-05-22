@@ -863,24 +863,24 @@ void resultset::fetchBigint()
 void resultset::getResultSetType()
 {
 
-  std::map<std::string, sql::ConnectPropertyVal> connection_properties;
+  sql::ConnectOptionsMap connection_properties;
 
   logMsg("resultset::getResultSetType - MySQL_ResultSet::*");
   try
   {
 
     /* url comes from the unit testing framework */
-    connection_properties["hostName"]=sql::ConnectPropertyVal(url);
+    connection_properties["hostName"]=url;
 
     /* user comes from the unit testing framework */
-    connection_properties["userName"]=sql::ConnectPropertyVal(user);
+    connection_properties["userName"]=user;
 
-    connection_properties["password"]=sql::ConnectPropertyVal(passwd);
+    connection_properties["password"]=passwd;
 
     connection_properties.erase("defaultStatementResultType");
     {
       logMsg("... testing defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]=sql::ConnectPropertyVal((long long)sql::ResultSet::TYPE_FORWARD_ONLY);
+      connection_properties["defaultStatementResultType"]=(long long)sql::ResultSet::TYPE_FORWARD_ONLY;
       try
       {
         created_objects.clear();
@@ -899,7 +899,7 @@ void resultset::getResultSetType()
       ASSERT_EQUALS(pstmt->getResultSetType(), sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
 
       connection_properties.erase("defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]=sql::ConnectPropertyVal((long long)sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
+      connection_properties["defaultStatementResultType"]=(long long)sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
       try
       {
         created_objects.clear();
@@ -916,7 +916,7 @@ void resultset::getResultSetType()
       ASSERT_EQUALS(pstmt->getResultSetType(), sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
 
       connection_properties.erase("defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]=sql::ConnectPropertyVal((long long)sql::ResultSet::TYPE_SCROLL_SENSITIVE);
+      connection_properties["defaultStatementResultType"]=(long long)sql::ResultSet::TYPE_SCROLL_SENSITIVE;
       try
       {
         created_objects.clear();

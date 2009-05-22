@@ -3148,7 +3148,7 @@ void DatabaseMetaDataTest::testGetTables()
 
   logMsg("Calling DatabaseMetaData.getTables");
   String tmp("%");
-  std::list< String > tmp2;
+  std::list< sql::SQLString > tmp2;
   ResultSet oRet_ResultSet(dbmd->getTables(sCatalogName, sSchemaName, tmp, tmp2));
 
   String sRetStr;

@@ -41,7 +41,7 @@ int main(int argc, const char **argv)
 	const string pass(argc >= 4 ? argv[3] : EXAMPLE_PASS);
 	const string database(argc >= 5 ? argv[4] : EXAMPLE_DB);
 
-	static std::list<std::string> table_types;
+	static std::list< sql::SQLString > table_types;
 	table_types.push_back("TABLE");
 
 	unsigned int column, row;

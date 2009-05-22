@@ -39,7 +39,7 @@ private:
 	my_ulonglong num_rows;
 	my_ulonglong row_position;
 
-	typedef std::map< std::string, unsigned int > FieldNameIndexMap;
+	typedef std::map< sql::SQLString, unsigned int > FieldNameIndexMap;
 
 	FieldNameIndexMap field_name_to_index_map;
 	bool was_null;
@@ -84,50 +84,50 @@ public:
 
 	void close();
 
-	uint32_t findColumn(const std::string& columnLabel) const;
+	uint32_t findColumn(const sql::SQLString& columnLabel) const;
 
 	bool first();
 
 	std::istream * getBlob(uint32_t columnIndex) const;
-	std::istream * getBlob(const std::string& columnLabel) const;
+	std::istream * getBlob(const sql::SQLString& columnLabel) const;
 
 	bool getBoolean(uint32_t columnIndex) const;
-	bool getBoolean(const std::string& columnLabel) const;
+	bool getBoolean(const sql::SQLString& columnLabel) const;
 
 	int getConcurrency();
 
 	SQLString getCursorName();
 
 	long double getDouble(uint32_t columnIndex) const;
-	long double getDouble(const std::string& columnLabel) const;
+	long double getDouble(const sql::SQLString& columnLabel) const;
 
 	int getFetchDirection();
 	size_t getFetchSize();
 	int getHoldability();
 
 	int32_t getInt(uint32_t columnIndex) const;
-	int32_t getInt(const std::string& columnLabel) const;
+	int32_t getInt(const sql::SQLString& columnLabel) const;
 
 	uint32_t getUInt(uint32_t columnIndex) const;
-	uint32_t getUInt(const std::string& columnLabel) const;
+	uint32_t getUInt(const sql::SQLString& columnLabel) const;
 
 	int64_t getInt64(uint32_t columnIndex) const;
-	int64_t getInt64(const std::string& columnLabel) const;
+	int64_t getInt64(const sql::SQLString& columnLabel) const;
 
 	uint64_t getUInt64(uint32_t columnIndex) const;
-	uint64_t getUInt64(const std::string& columnLabel) const;
+	uint64_t getUInt64(const sql::SQLString& columnLabel) const;
 
 	sql::ResultSetMetaData * getMetaData() const;
 
 	size_t getRow() const;
 
 	sql::RowID * getRowId(uint32_t columnIndex);
-	sql::RowID * getRowId(const std::string & columnLabel);
+	sql::RowID * getRowId(const sql::SQLString & columnLabel);
 
 	const sql::Statement * getStatement() const;
 
 	SQLString getString(uint32_t columnIndex) const;
-	SQLString getString(const std::string& columnLabel) const;
+	SQLString getString(const sql::SQLString& columnLabel) const;
 
 	sql::ResultSet::enum_type getType() const;
 
@@ -147,7 +147,7 @@ public:
 
 	bool isNull(uint32_t columnIndex) const;
 
-	bool isNull(const std::string& columnLabel) const;
+	bool isNull(const sql::SQLString& columnLabel) const;
 
 	bool last();
 

@@ -76,13 +76,13 @@ public:
 	void close();
 
 	bool execute();
-	bool execute(const std::string& sql);
+	bool execute(const sql::SQLString& sql);
 
 	sql::ResultSet *executeQuery();
-	sql::ResultSet *executeQuery(const std::string& sql);
+	sql::ResultSet *executeQuery(const sql::SQLString& sql);
 
 	int executeUpdate();
-	int executeUpdate(const std::string& sql);
+	int executeUpdate(const sql::SQLString& sql);
 
 	size_t getFetchSize();
 
@@ -112,11 +112,11 @@ public:
 
 	void setBoolean(unsigned int parameterIndex, bool value);
 
-	void setBigInt(unsigned int parameterIndex, const std::string& value);
+	void setBigInt(unsigned int parameterIndex, const sql::SQLString& value);
 
-	void setCursorName(const std::string &name);
+	void setCursorName(const sql::SQLString &name);
 
-	void setDateTime(unsigned int parameterIndex, const std::string& value);
+	void setDateTime(unsigned int parameterIndex, const sql::SQLString& value);
 
 	void setDouble(unsigned int parameterIndex, double value);
 
@@ -140,7 +140,7 @@ public:
 
 	void setResultSetConcurrency(int concurrencyFlag);
 
-	void setString(unsigned int parameterIndex, const std::string& value);
+	void setString(unsigned int parameterIndex, const sql::SQLString& value);
 
 	void setQueryTimeout(unsigned int seconds);
 

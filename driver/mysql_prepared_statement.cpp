@@ -287,9 +287,9 @@ MySQL_Prepared_Statement::execute()
 
 /* {{{ MySQL_Prepared_Statement::execute() -U- */
 bool
-MySQL_Prepared_Statement::execute(const std::string&)
+MySQL_Prepared_Statement::execute(const sql::SQLString&)
 {
-	CPP_ENTER("MySQL_Prepared_Statement::execute(const std::string& sql)");
+	CPP_ENTER("MySQL_Prepared_Statement::execute(const sql::SQLString& sql)");
 	throw sql::MethodNotImplementedException("MySQL_Prepared_Statement::execute");
 	return false; // fool compilers
 }
@@ -330,7 +330,7 @@ MySQL_Prepared_Statement::executeQuery()
 
 /* {{{ MySQL_Prepared_Statement::executeQuery() -U- */
 sql::ResultSet *
-MySQL_Prepared_Statement::executeQuery(const std::string&)
+MySQL_Prepared_Statement::executeQuery(const sql::SQLString&)
 {
 	throw sql::MethodNotImplementedException("MySQL_Prepared_Statement::executeQuery"); /* TODO - what to do? Comes from Statement */
 	return NULL; // fool compilers
@@ -353,7 +353,7 @@ MySQL_Prepared_Statement::executeUpdate()
 
 /* {{{ MySQL_Prepared_Statement::executeUpdate() -U- */
 int
-MySQL_Prepared_Statement::executeUpdate(const std::string&)
+MySQL_Prepared_Statement::executeUpdate(const sql::SQLString&)
 {
 	throw sql::MethodNotImplementedException("MySQL_Prepared_Statement::executeUpdate"); /* TODO - what to do? Comes from Statement */
 	return 0; // fool compilers
@@ -363,7 +363,7 @@ MySQL_Prepared_Statement::executeUpdate(const std::string&)
 
 /* {{{ MySQL_Prepared_Statement::setBigInt() -I- */
 void
-MySQL_Prepared_Statement::setBigInt(unsigned int parameterIndex, const std::string& value)
+MySQL_Prepared_Statement::setBigInt(unsigned int parameterIndex, const sql::SQLString& value)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::setBigInt");
 	setString(parameterIndex, value);
@@ -428,7 +428,7 @@ MySQL_Prepared_Statement::setBoolean(unsigned int parameterIndex, bool value)
 
 /* {{{ MySQL_Prepared_Statement::setDateTime() -I- */
 void
-MySQL_Prepared_Statement::setDateTime(unsigned int parameterIndex, const std::string& value)
+MySQL_Prepared_Statement::setDateTime(unsigned int parameterIndex, const sql::SQLString& value)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::setDateTime");
 	setString(parameterIndex, value);
@@ -726,7 +726,7 @@ MySQL_Prepared_Statement::setNull(unsigned int parameterIndex, int /* sqlType */
 
 /* {{{ MySQL_Prepared_Statement::setString() -I- */
 void
-MySQL_Prepared_Statement::setString(unsigned int parameterIndex, const std::string& value)
+MySQL_Prepared_Statement::setString(unsigned int parameterIndex, const sql::SQLString& value)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::setString");
 	CPP_INFO_FMT("this=%p", this);
@@ -974,7 +974,7 @@ MySQL_Prepared_Statement::getWarnings()
 
 /* {{{ MySQL_Prepared_Statement::setCursorName() -U- */
 void
-MySQL_Prepared_Statement::setCursorName(const std::string &)
+MySQL_Prepared_Statement::setCursorName(const sql::SQLString &)
 {
 	checkClosed();
 	throw MethodNotImplementedException("MySQL_Prepared_Statement::setCursorName");

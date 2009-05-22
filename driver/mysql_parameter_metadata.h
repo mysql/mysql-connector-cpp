@@ -12,8 +12,6 @@
 #ifndef _MYSQL_PARAMETER_METADATA_H_
 #define _MYSQL_PARAMETER_METADATA_H_
 
-#include <string>
-
 #include <cppconn/parameter_metadata.h>
 
 #include "mysql_private_iface.h"
@@ -31,7 +29,7 @@ public:
 
 	virtual ~MySQL_ParameterMetaData() {}
 
-	virtual std::string getParameterClassName(unsigned int paramNo);
+	virtual sql::SQLString getParameterClassName(unsigned int paramNo);
 
 	virtual int getParameterCount();
 
@@ -39,7 +37,7 @@ public:
 
 	virtual int getParameterType(unsigned int paramNo);
 
-	virtual std::string getParameterTypeName(unsigned int paramNo);
+	virtual sql::SQLString getParameterTypeName(unsigned int paramNo);
 
 	virtual int getPrecision(unsigned int paramNo);
 

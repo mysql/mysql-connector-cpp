@@ -54,11 +54,11 @@ public:
 
 	void close();
 
-	bool execute(const std::string& sql);
+	bool execute(const sql::SQLString& sql);
 
-	sql::ResultSet * executeQuery(const std::string& sql);
+	sql::ResultSet * executeQuery(const sql::SQLString& sql);
 
-	int executeUpdate(const std::string& sql);
+	int executeUpdate(const sql::SQLString& sql);
 
 	size_t getFetchSize();
 
@@ -80,7 +80,7 @@ public:
 
 	Statement * setBuffered();
 
-	void setCursorName(const std::string & name);
+	void setCursorName(const sql::SQLString & name);
 
 	void setEscapeProcessing(bool enable);
 

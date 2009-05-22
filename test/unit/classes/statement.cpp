@@ -145,23 +145,22 @@ void statement::callSP()
 {
   logMsg("statement::callSP() - MySQL_Statement::*");
   std::stringstream msg;
-  std::map<std::string, sql::ConnectPropertyVal> connection_properties;
 
   try
   {
-    std::map<std::string, sql::ConnectPropertyVal> connection_properties;
+    sql::ConnectOptionsMap connection_properties;
 
     /* url comes from the unit testing framework */
-    connection_properties[std::string("hostName")]=sql::ConnectPropertyVal(url);
+    connection_properties["hostName"]=url;
     /* user comes from the unit testing framework */
-    connection_properties["userName"]=sql::ConnectPropertyVal(user);
-    connection_properties["password"]=sql::ConnectPropertyVal(passwd);
+    connection_properties["userName"]=user;
+    connection_properties["password"]=passwd;
 
     bool bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
-    connection_properties["metadataUseInfoSchema"]=sql::ConnectPropertyVal(bval);
+    connection_properties["metadataUseInfoSchema"]=bval;
 
     connection_properties.erase("CLIENT_MULTI_RESULTS");
-    connection_properties["CLIENT_MULTI_RESULTS"]=sql::ConnectPropertyVal(true);
+    connection_properties["CLIENT_MULTI_RESULTS"]=true;
 
     con.reset(driver->connect(connection_properties));
     con->setSchema(db);
@@ -283,7 +282,7 @@ void statement::unbufferedFetch()
 {
   logMsg("statement::unbufferedFetch() - MySQL_Resultset::*");
 
-  std::map<std::string, sql::ConnectPropertyVal> connection_properties;
+  sql::ConnectOptionsMap connection_properties;
   int id=0;
 
   try
@@ -293,18 +292,18 @@ void statement::unbufferedFetch()
      This is the first way to do an unbuffered fetch...
      */
     /* url comes from the unit testing framework */
-    connection_properties["hostName"]=sql::ConnectPropertyVal(url);
+    connection_properties["hostName"]=url;
     /* user comes from the unit testing framework */
-    connection_properties["userName"]=sql::ConnectPropertyVal(user);
-    connection_properties["password"]=sql::ConnectPropertyVal(passwd);
+    connection_properties["userName"]=user;
+    connection_properties["password"]=passwd;
 
     bool bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
-    connection_properties["metadataUseInfoSchema"]=sql::ConnectPropertyVal(bval);
+    connection_properties["metadataUseInfoSchema"]=bval;
 
     logMsg("... setting TYPE_FORWARD_ONLY through connection map");
     connection_properties.erase("defaultStatementResultType");
     {
-      connection_properties["defaultStatementResultType"]=sql::ConnectPropertyVal((long long)sql::ResultSet::TYPE_FORWARD_ONLY);
+      connection_properties["defaultStatementResultType"]=(long long)sql::ResultSet::TYPE_FORWARD_ONLY;
 
       try
       {

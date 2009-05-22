@@ -59,7 +59,7 @@ public:
 
 	bool is_valid;
 
-	std::string sql_mode;
+	sql::SQLString sql_mode;
 	bool sql_mode_set;
 	bool cache_sql_mode;
 	bool metadata_use_info_schema;

@@ -12,7 +12,7 @@
 #ifndef _SQL_PARAMETER_METADATA_H_
 #define _SQL_PARAMETER_METADATA_H_
 
-#include <string>
+#include <cppconn/sqlstring.h>
 
 
 namespace sql
@@ -35,7 +35,7 @@ public:
 		parameterNullableUnknown
 	};
 
-	virtual std::string getParameterClassName(unsigned int param) = 0;
+	virtual sql::SQLString getParameterClassName(unsigned int param) = 0;
 
 	virtual int getParameterCount() = 0;
 
@@ -43,7 +43,7 @@ public:
 
 	virtual int getParameterType(unsigned int param) = 0;
 
-	virtual std::string getParameterTypeName(unsigned int param) = 0;
+	virtual sql::SQLString getParameterTypeName(unsigned int param) = 0;
 
 	virtual int getPrecision(unsigned int param) = 0;
 

@@ -14,7 +14,7 @@ FLOSS License Exception
 
 #include <string>
 #include "build_config.h"
-
+#include <iostream>
 
 namespace sql
 {
@@ -23,7 +23,8 @@ namespace sql
 		std::string realStr;
 
 	public:
-
+		static const size_t npos = -1;
+	
 		~SQLString()
 		{
 		}
@@ -48,11 +49,27 @@ namespace sql
 		{
 		}
 
+		SQLString(const char * s, size_t n) : realStr(s, n)
+		{
+		}
+
 		// Needed for stuff like SQLString str= "char * string constant"
-		// ctor SQLString( const char *) would do the job too, but i like this one better
-		SQLString & operator= ( const std::string & rhs )
+		const SQLString & operator=(const char * s)
+		{
+			realStr = s;
+			return *this;
+		}
+
+		const SQLString & operator=(const std::string & rhs)
 		{
 			realStr = rhs;
+
+			return *this;
+		}
+
+		const SQLString & operator=(const SQLString & rhs)
+		{
+			realStr = rhs.realStr;
 
 			return *this;
 		}
@@ -72,6 +89,26 @@ namespace sql
 			return & realStr;
 		}
 
+		int compare(const SQLString& str) const
+		{
+			return realStr.compare(str.get());
+		}
+
+		int compare(const std::string& str) const
+		{
+			return realStr.compare(str);
+		}
+
+		int compare(const char* s) const
+		{
+			return realStr.compare(s);	
+		}
+		
+
+		int compare(size_t pos1, size_t n1, const char * s) const
+		{
+			return realStr.compare(pos1, n1, s);
+		}
 
 		const std::string & get() const
 		{
@@ -84,12 +121,78 @@ namespace sql
 			return realStr.c_str();
 		}
 
+		size_t length() const
+		{
+			return realStr.length();		
+		}
+
+
+		SQLString & append(const std::string& str)
+		{
+			realStr += str;
+			return *this;
+		}
+
+		SQLString & append(const char * s)
+		{
+			*this += sql::SQLString(s);
+			return *this;
+		}
+
+		const char& operator[](size_t pos) const
+		{
+			return realStr[pos];
+		}
+
+		size_t find(char c, size_t pos = 0) const
+		{
+			return realStr.find(c, pos);
+		}
+
+		size_t find(const char * s, size_t pos = 0) const
+		{
+			return realStr.find(s, pos);
+		}
+
+		size_t find(const SQLString & s, size_t pos = 0) const
+		{
+			return realStr.find(s.realStr, pos);
+		}
+
+		SQLString substr(size_t pos = 0, size_t n = npos) const
+		{
+			return realStr.substr(pos, n);
+		}
+
+		SQLString& replace(size_t pos1, size_t n1, const char* s)
+		{
+			realStr.replace(pos1, n1, s);
+			return *this;
+		}
+
+		SQLString& replace(size_t pos1, size_t n1, const SQLString & s)
+		{
+			realStr.replace(pos1, n1, s.realStr);
+			return *this;
+		}
+
+		size_t find_first_of(char c, size_t pos = 0) const
+		{
+			return realStr.find_first_of(c, pos);
+		}
+
+		size_t find_last_of(char c, size_t pos = npos) const
+		{
+			return realStr.find_last_of(c, npos);
+		}
 
 		const SQLString & operator+=( const SQLString & op2 )
 		{
 			realStr+= op2.get();
 			return *this;
 		}
+
+
 };
 
   /*
@@ -112,6 +215,12 @@ inline bool operator !=(const SQLString & op1, const SQLString & op2)
 	return (op1.get() != op2.get());
 }
 
+inline bool operator <(const SQLString & op1, const SQLString & op2)
+{
+	return op1.get() < op2.get();
+} 
+
+
 }// namespace sql
 
 
@@ -120,7 +229,7 @@ namespace std
 	// operator << for SQLString output
 	inline ostream & operator << (ostream & os, const sql::SQLString & str )
 	{
-		return os << str.c_str();
+		return os << str.get();
 	}
 }
 #endif

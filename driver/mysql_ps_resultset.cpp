@@ -84,7 +84,7 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
 	CPP_INFO_FMT("num_fields=%u num_rows=%u", num_fields, num_rows);
 	for (unsigned int i = 0; i < num_fields; ++i) {
 		boost::scoped_array< char > upstring(sql::mysql::util::utf8_strup(mysql_fetch_field(result_meta)->name, 0));
-		field_name_to_index_map[std::string(upstring.get())] = i;
+		field_name_to_index_map[sql::SQLString(upstring.get())] = i;
 	}
 	mysql_free_result(result_meta);
 	result_meta = NULL;
@@ -243,7 +243,7 @@ MySQL_Prepared_ResultSet::closeIntern()
 
 /* {{{ MySQL_Prepared_ResultSet::findColumn() -I- */
 uint32_t
-MySQL_Prepared_ResultSet::findColumn(const std::string& columnLabel) const
+MySQL_Prepared_ResultSet::findColumn(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::findColumn");
 	checkValid();
@@ -292,7 +292,7 @@ MySQL_Prepared_ResultSet::getBlob(const uint32_t columnIndex) const
 
 /* {{{ MySQL_Prepared_ResultSet::getBlob() -I- */
 std::istream *
-MySQL_Prepared_ResultSet::getBlob(const std::string& columnLabel) const
+MySQL_Prepared_ResultSet::getBlob(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getBlob(string)");
 	/* isBeforeFirst checks for validity */
@@ -321,7 +321,7 @@ MySQL_Prepared_ResultSet::getBoolean(const uint32_t columnIndex) const
 
 /* {{{ MySQL_Prepared_ResultSet::getBoolean() -I- */
 bool
-MySQL_Prepared_ResultSet::getBoolean(const std::string& columnLabel) const
+MySQL_Prepared_ResultSet::getBoolean(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getBoolean(string)");
 	/* isBeforeFirst checks for validity */
@@ -446,7 +446,7 @@ MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
 
 /* {{{ MySQL_Prepared_ResultSet::getDouble() -I- */
 long double
-MySQL_Prepared_ResultSet::getDouble(const std::string& columnLabel) const
+MySQL_Prepared_ResultSet::getDouble(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getDouble(string)");
 	return getDouble(findColumn(columnLabel));
@@ -517,7 +517,7 @@ MySQL_Prepared_ResultSet::getInt(const uint32_t columnIndex) const
 
 /* {{{ MySQL_Prepared_ResultSet::getInt() -I- */
 int32_t
-MySQL_Prepared_ResultSet::getInt(const std::string& columnLabel) const
+MySQL_Prepared_ResultSet::getInt(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getInt(string)");
 	return getInt(findColumn(columnLabel));
@@ -551,7 +551,7 @@ MySQL_Prepared_ResultSet::getUInt(const uint32_t columnIndex) const
 
 /* {{{ MySQL_Prepared_ResultSet::getUInt() -I- */
 uint32_t
-MySQL_Prepared_ResultSet::getUInt(const std::string& columnLabel) const
+MySQL_Prepared_ResultSet::getUInt(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getUInt(string)");
 	return getUInt(findColumn(columnLabel));
@@ -683,7 +683,7 @@ MySQL_Prepared_ResultSet::getInt64(const uint32_t columnIndex) const
 
 /* {{{ MySQL_Prepared_ResultSet::getInt64() -I- */
 int64_t
-MySQL_Prepared_ResultSet::getInt64(const std::string& columnLabel) const
+MySQL_Prepared_ResultSet::getInt64(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getInt64(string)");
 	return getInt64(findColumn(columnLabel));
@@ -819,7 +819,7 @@ MySQL_Prepared_ResultSet::getUInt64(const uint32_t columnIndex) const
 
 /* {{{ MySQL_Prepared_ResultSet::getUInt64() -I- */
 uint64_t
-MySQL_Prepared_ResultSet::getUInt64(const std::string& columnLabel) const
+MySQL_Prepared_ResultSet::getUInt64(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getUInt64(string)");
 	return getUInt64(findColumn(columnLabel));
@@ -864,7 +864,7 @@ MySQL_Prepared_ResultSet::getRowId(uint32_t)
 
 /* {{{ MySQL_Prepared_ResultSet::getRowId() -U- */
 sql::RowID *
-MySQL_Prepared_ResultSet::getRowId(const std::string &)
+MySQL_Prepared_ResultSet::getRowId(const sql::SQLString &)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getRowId");
 	checkValid();
@@ -902,7 +902,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 
 	last_queried_column = columnIndex;
 	if (*result_bind->rbind[columnIndex - 1].is_null) {
-		return std::string("");
+		return sql::SQLString("");
 	}
 
 	switch (rs_meta->getColumnType(columnIndex)) {
@@ -912,7 +912,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(result_bind->rbind[columnIndex - 1].buffer);
 			snprintf(buf, sizeof(buf) - 1, "%04d-%02d-%02d %02d:%02d:%02d", t->year, t->month, t->day, t->hour, t->minute, t->second);
 			CPP_INFO_FMT("It's a datetime/timestamp %s", buf);
-			return std::string(buf);
+			return sql::SQLString(buf);
 		}
 		case sql::DataType::DATE:
 		{
@@ -920,7 +920,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(result_bind->rbind[columnIndex - 1].buffer);
 			snprintf(buf, sizeof(buf) - 1, "%02d-%02d-%02d", t->year, t->month, t->day);
 			CPP_INFO_FMT("It's a date %s", buf);
-			return std::string(buf);
+			return sql::SQLString(buf);
 		}
 		case sql::DataType::TIME:
 		{
@@ -928,7 +928,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(result_bind->rbind[columnIndex - 1].buffer);
 			snprintf(buf, sizeof(buf) - 1, "%s%02d:%02d:%02d", t->neg? "-":"", t->hour, t->minute, t->second);
 			CPP_INFO_FMT("It's a time %s", buf);
-			return std::string(buf);
+			return sql::SQLString(buf);
 		}
 		case sql::DataType::BIT:
 		case sql::DataType::YEAR:	// fetched as a SMALLINT
@@ -945,7 +945,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 			} else {
 				my_l_to_a(buf, sizeof(buf) - 1, getInt64_intern(columnIndex, false));			
 			}
-			return std::string(buf);
+			return sql::SQLString(buf);
 		}
 		case sql::DataType::REAL:
 		case sql::DataType::DOUBLE:
@@ -953,7 +953,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 			char buf[50];
 			CPP_INFO("It's a double");
 			my_f_to_a(buf, sizeof(buf) - 1, getDouble(columnIndex));
-			return std::string(buf);
+			return sql::SQLString(buf);
 		}
 		case sql::DataType::NUMERIC:
 		case sql::DataType::DECIMAL:
@@ -966,7 +966,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 		case sql::DataType::SET:
 		case sql::DataType::ENUM:
 			CPP_INFO("It's a string");
-			return  std::string(static_cast<char *>(result_bind->rbind[columnIndex - 1].buffer), *result_bind->rbind[columnIndex - 1].length);
+			return  sql::SQLString(static_cast<char *>(result_bind->rbind[columnIndex - 1].buffer), *result_bind->rbind[columnIndex - 1].length);
 		default:
 			break;		
 		// ToDo : Geometry? default ?
@@ -981,7 +981,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 
 /* {{{ MySQL_Prepared_ResultSet::getString() -I- */
 SQLString
-MySQL_Prepared_ResultSet::getString(const std::string& columnLabel) const
+MySQL_Prepared_ResultSet::getString(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::getString(string)");
 	return getString(findColumn(columnLabel));
@@ -1097,7 +1097,7 @@ MySQL_Prepared_ResultSet::isNull(const uint32_t columnIndex) const
 
 /* {{{ MySQL_Prepared_ResultSet::isNull() -I- */
 bool
-MySQL_Prepared_ResultSet::isNull(const std::string& columnLabel) const
+MySQL_Prepared_ResultSet::isNull(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::isNull(string)");
 	uint32_t col_idx = findColumn(columnLabel);

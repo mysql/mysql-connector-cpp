@@ -32,26 +32,26 @@ public:
 
 	virtual void clearParameters() = 0;
 
-	virtual bool execute(const std::string& sql) = 0;
+	virtual bool execute(const sql::SQLString& sql) = 0;
 	virtual bool execute() = 0;
 
-	virtual ResultSet *executeQuery(const std::string& sql) = 0;
+	virtual ResultSet *executeQuery(const sql::SQLString& sql) = 0;
 	virtual ResultSet *executeQuery() = 0;
 
-	virtual int executeUpdate(const std::string& sql) = 0;
+	virtual int executeUpdate(const sql::SQLString& sql) = 0;
 	virtual int executeUpdate() = 0;
 
 	virtual ResultSetMetaData * getMetaData() = 0;
 
 	virtual ParameterMetaData * getParameterMetaData() = 0;
 
-	virtual void setBigInt(unsigned int parameterIndex, const std::string& value) = 0;
+	virtual void setBigInt(unsigned int parameterIndex, const sql::SQLString& value) = 0;
 
 	virtual void setBlob(unsigned int parameterIndex, std::istream * blob) = 0;
 
 	virtual void setBoolean(unsigned int parameterIndex, bool value) = 0;
 
-	virtual void setDateTime(unsigned int parameterIndex, const std::string& value) = 0;
+	virtual void setDateTime(unsigned int parameterIndex, const sql::SQLString& value) = 0;
 
 	virtual void setDouble(unsigned int parameterIndex, double value) = 0;
 
@@ -65,7 +65,7 @@ public:
 
 	virtual void setNull(unsigned int parameterIndex, int sqlType) = 0;
 
-	virtual void setString(unsigned int parameterIndex, const std::string& value) = 0;
+	virtual void setString(unsigned int parameterIndex, const sql::SQLString& value) = 0;
 
 	virtual PreparedStatement * setResultSetType(sql::ResultSet::enum_type type) = 0;
 };

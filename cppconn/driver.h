@@ -27,9 +27,9 @@ protected:
 public:
 	// Attempts to make a database connection to the given URL.
 
-	virtual Connection * connect(const std::string& hostName, const std::string& userName, const std::string& password) = 0;
+	virtual Connection * connect(const sql::SQLString& hostName, const sql::SQLString& userName, const sql::SQLString& password) = 0;
 
-	virtual Connection * connect(std::map< std::string, ConnectPropertyVal > & options) = 0;
+	virtual Connection * connect(ConnectOptionsMap & options) = 0;
 
 	virtual int getMajorVersion() = 0;
 
@@ -37,7 +37,7 @@ public:
 
 	virtual int getPatchVersion() = 0;
 
-	virtual const std::string & getName() = 0;
+	virtual const sql::SQLString & getName() = 0;
 };
 
 } /* namespace sql */

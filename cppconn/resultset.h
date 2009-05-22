@@ -74,49 +74,49 @@ public:
 
 	virtual void deleteRow() { /* We don't support row deletion */ }
 
-	virtual uint32_t findColumn(const std::string& columnLabel) const = 0;
+	virtual uint32_t findColumn(const sql::SQLString& columnLabel) const = 0;
 
 	virtual bool first() = 0;
 
 	virtual std::istream * getBlob(uint32_t columnIndex)  const = 0;
-	virtual std::istream * getBlob(const std::string& columnLabel) const = 0;
+	virtual std::istream * getBlob(const sql::SQLString& columnLabel) const = 0;
 
 	virtual bool getBoolean(uint32_t columnIndex) const = 0;
-	virtual bool getBoolean(const std::string& columnLabel) const = 0;
+	virtual bool getBoolean(const sql::SQLString& columnLabel) const = 0;
 
 	virtual int getConcurrency() = 0;
 	virtual SQLString getCursorName() = 0;
 
 	virtual long double getDouble(uint32_t columnIndex) const = 0;
-	virtual long double getDouble(const std::string& columnLabel) const = 0;
+	virtual long double getDouble(const sql::SQLString& columnLabel) const = 0;
 
 	virtual int getFetchDirection() = 0;
 	virtual size_t getFetchSize() = 0;
 	virtual int getHoldability() = 0;
 
 	virtual int32_t getInt(uint32_t columnIndex) const = 0;
-	virtual int32_t getInt(const std::string& columnLabel) const = 0;
+	virtual int32_t getInt(const sql::SQLString& columnLabel) const = 0;
 
 	virtual uint32_t getUInt(uint32_t columnIndex) const = 0;
-	virtual uint32_t getUInt(const std::string& columnLabel) const = 0;
+	virtual uint32_t getUInt(const sql::SQLString& columnLabel) const = 0;
 
 	virtual int64_t getInt64(uint32_t columnIndex) const = 0;
-	virtual int64_t getInt64(const std::string& columnLabel) const = 0;
+	virtual int64_t getInt64(const sql::SQLString& columnLabel) const = 0;
 
 	virtual uint64_t getUInt64(uint32_t columnIndex) const = 0;
-	virtual uint64_t getUInt64(const std::string& columnLabel) const = 0;
+	virtual uint64_t getUInt64(const sql::SQLString& columnLabel) const = 0;
 
 	virtual ResultSetMetaData * getMetaData() const = 0;
 
 	virtual size_t getRow() const = 0;
 
 	virtual RowID * getRowId(uint32_t columnIndex) = 0;
-	virtual RowID * getRowId(const std::string & columnLabel) = 0;
+	virtual RowID * getRowId(const sql::SQLString & columnLabel) = 0;
 
 	virtual const Statement * getStatement() const = 0;
 
 	virtual SQLString getString(uint32_t columnIndex)  const = 0;
-	virtual SQLString getString(const std::string& columnLabel) const = 0;
+	virtual SQLString getString(const sql::SQLString& columnLabel) const = 0;
 
 	virtual enum_type getType() const = 0;
 
@@ -135,7 +135,7 @@ public:
 	virtual bool isLast() const = 0;
 
 	virtual bool isNull(uint32_t columnIndex) const = 0;
-	virtual bool isNull(const std::string& columnLabel) const = 0;
+	virtual bool isNull(const sql::SQLString& columnLabel) const = 0;
 
 	virtual bool last() = 0;
 

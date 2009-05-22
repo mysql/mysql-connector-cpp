@@ -29,7 +29,7 @@ MySQL_ParameterMetaData::MySQL_ParameterMetaData(const MYSQL_STMT * const stmt)
 
 
 /* {{{ MySQL_ParameterMetaData::getParameterClassName -U- */
-std::string
+sql::SQLString
 MySQL_ParameterMetaData::getParameterClassName(unsigned int /* paramNo */)
 {
 	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");
@@ -68,7 +68,7 @@ MySQL_ParameterMetaData::getParameterType(unsigned int /* paramNo */)
 
 
 /* {{{ MySQL_ParameterMetaData::getParameterTypeName -U- */
-std::string
+sql::SQLString
 MySQL_ParameterMetaData::getParameterTypeName(unsigned int /* paramNo */)
 {
 	throw sql::MethodNotImplementedException("MySQL_ParameterMetaData::getParameterClassName()");

@@ -16,6 +16,7 @@
 #include <stdexcept>
 #include <string>
 #include <memory>
+#include "sqlstring.h"
 
 namespace sql
 {
@@ -29,35 +30,35 @@ class SQLWarning
 {
 protected:
 
-	const std::string	sql_state;
-	const int			errNo;
-	SQLWarning *		next;
-	const std::string	descr;
+	const sql::SQLString	sql_state;
+	const int				errNo;
+	SQLWarning *			next;
+	const sql::SQLString	descr;
 
 public:
 
-	SQLWarning(const std::string& reason, const std::string& SQLState, int vendorCode) :sql_state(SQLState), errNo(vendorCode),descr(reason)
+	SQLWarning(const sql::SQLString& reason, const sql::SQLString& SQLState, int vendorCode) :sql_state(SQLState), errNo(vendorCode),descr(reason)
 	{
 	}
 
-	SQLWarning(const std::string& reason, const std::string& SQLState) :sql_state (SQLState), errNo(0), descr(reason)
+	SQLWarning(const sql::SQLString& reason, const sql::SQLString& SQLState) :sql_state (SQLState), errNo(0), descr(reason)
 	{
 	}
 
-	SQLWarning(const std::string& reason) : sql_state ("HY000"), errNo(0), descr(reason)
+	SQLWarning(const sql::SQLString& reason) : sql_state ("HY000"), errNo(0), descr(reason)
 	{
 	}
 
 	SQLWarning() : sql_state ("HY000"), errNo(0) {}
 
 
-	const std::string & getMessage() const
+	const sql::SQLString & getMessage() const
 	{
 		return descr;
 	}
 
 
-	const std::string & getSQLState() const
+	const sql::SQLString & getSQLState() const
 	{
 		return sql_state;
 	}

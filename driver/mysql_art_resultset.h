@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <memory>
 #include <boost/scoped_ptr.hpp>
+#include <boost/scoped_array.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <cppconn/resultset.h>
@@ -35,7 +36,7 @@ class MySQL_DebugLogger;
 class MyVal
 {
 	union {
-		std::string * str;
+		sql::SQLString * str;
 		long double dval;
 		int64_t lval;
 		uint64_t ulval;
@@ -58,16 +59,14 @@ class MyVal
 		if (val_type != typeString) {
 			val = rhs.val;
 		} else {
-			val.str = new std::string(*rhs.val.str);
+			val.str = new sql::SQLString(*rhs.val.str);
 		}
 	}
 
 public:
-	MyVal(const std::string & s);
+	MyVal(const sql::SQLString & s);
 
 	MyVal(const char * const s);
-
-	MyVal(const SQLString & s);
 
 	MyVal(long double d) : val_type(typeDouble) { val.dval = d; }
 
@@ -92,7 +91,7 @@ public:
 		}
 	}
 
-	std::string getString();
+	sql::SQLString getString();
 
 	long double getDouble();
 
@@ -108,7 +107,7 @@ class MySQL_ArtResultSetMetaData;
 class MySQL_ArtResultSet : public sql::ResultSet
 {
 public:
-	typedef std::list<std::string> StringList;
+	typedef std::list<sql::SQLString> StringList;
 	typedef std::vector< MyVal > row_t;
 	typedef std::list< row_t > rset_t;
 
@@ -127,17 +126,17 @@ public:
 
 	void close();
 
-	uint32_t findColumn(const std::string& columnLabel) const;
+	uint32_t findColumn(const sql::SQLString& columnLabel) const;
 
 	bool first();
 
 	std::istream * getBlob(uint32_t columnIndex) const;
 
-	std::istream * getBlob(const std::string& columnLabel) const;
+	std::istream * getBlob(const sql::SQLString& columnLabel) const;
 
 	bool getBoolean(uint32_t columnIndex) const;
 
-	bool getBoolean(const std::string& columnLabel) const;
+	bool getBoolean(const sql::SQLString& columnLabel) const;
 
 	int getConcurrency();
 
@@ -146,7 +145,7 @@ public:
 	// Get the given column as double
 	long double getDouble(uint32_t columnIndex) const;
 
-	long double getDouble(const std::string& columnLabel) const;
+	long double getDouble(const sql::SQLString& columnLabel) const;
 
 	int getFetchDirection();
 	size_t getFetchSize();
@@ -154,33 +153,33 @@ public:
 
 	int32_t getInt(uint32_t columnIndex) const;
 
-	int32_t getInt(const std::string& columnLabel) const;
+	int32_t getInt(const sql::SQLString& columnLabel) const;
 
 	uint32_t getUInt(uint32_t columnIndex) const;
 
-	uint32_t getUInt(const std::string& columnLabel) const;
+	uint32_t getUInt(const sql::SQLString& columnLabel) const;
 
 	int64_t getInt64(uint32_t columnIndex) const;
 
-	int64_t getInt64(const std::string& columnLabel) const;
+	int64_t getInt64(const sql::SQLString& columnLabel) const;
 
 	uint64_t getUInt64(uint32_t columnIndex) const;
 
-	uint64_t getUInt64(const std::string& columnLabel) const;
+	uint64_t getUInt64(const sql::SQLString& columnLabel) const;
 
 	sql::ResultSetMetaData * getMetaData() const;
 
 	size_t getRow() const;
 
 	sql::RowID * getRowId(uint32_t columnIndex);
-	sql::RowID * getRowId(const std::string & columnLabel);
+	sql::RowID * getRowId(const sql::SQLString & columnLabel);
 
 	const sql::Statement * getStatement() const;
 
 	// Get the given column as string
 	SQLString getString(uint32_t columnIndex) const;
 
-	SQLString getString(const std::string& columnLabel) const;
+	SQLString getString(const sql::SQLString& columnLabel) const;
 
 	sql::ResultSet::enum_type getType() const;
 
@@ -201,7 +200,7 @@ public:
 
 	bool isNull(uint32_t columnIndex) const;
 
-	bool isNull(const std::string& columnLabel) const;
+	bool isNull(const sql::SQLString& columnLabel) const;
 
 	bool last();
 
@@ -240,11 +239,10 @@ public:
 	rset_t::iterator current_record;
 	bool started;
 
-	typedef std::map< std::string, int > FieldNameIndexMap;
-	typedef std::pair< std::string, int > FieldNameIndexPair;
+	typedef std::map< sql::SQLString, int > FieldNameIndexMap;
 
 	FieldNameIndexMap field_name_to_index_map;
-	std::string * field_index_to_name_map;
+	boost::scoped_array< sql::SQLString > field_index_to_name_map;
 
 	my_ulonglong num_rows;
 	my_ulonglong row_position; /* 0 = before first row, 1 - first row, 'num_rows + 1' - after last row */

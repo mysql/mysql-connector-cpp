@@ -39,7 +39,7 @@ get_connection(const std::string & host, const std::string & user, const std::st
 		if (loops % 2) {
 			return mysql_driver->connect(host, user, pass);
 		} else {
-			std::map<std::string, sql::ConnectPropertyVal> connection_properties;
+			sql::ConnectOptionsMap connection_properties;
 			connection_properties["hostName"] = sql::ConnectPropertyVal(host);
 			connection_properties["userName"] = sql::ConnectPropertyVal(user);
 			connection_properties["password"] = sql::ConnectPropertyVal(pass);

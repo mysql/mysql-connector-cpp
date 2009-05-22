@@ -350,13 +350,13 @@ sql::Connection * unit_fixture::getConnection()
     driver=get_driver_instance();
   }
 
-  std::map<std::string, sql::ConnectPropertyVal> connection_properties;
-  connection_properties["hostName"]=sql::ConnectPropertyVal(url);
-  connection_properties["userName"]=sql::ConnectPropertyVal(user);
-  connection_properties["password"]=sql::ConnectPropertyVal(passwd);
+  sql::ConnectOptionsMap connection_properties;
+  connection_properties["hostName"] = url;
+  connection_properties["userName"] = user;
+  connection_properties["password"] = passwd;
 
   bool bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
-  connection_properties["metadataUseInfoSchema"]=sql::ConnectPropertyVal(bval);
+  connection_properties["metadataUseInfoSchema"]=bval;
 
   return driver->connect(connection_properties);
 }

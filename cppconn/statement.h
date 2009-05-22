@@ -38,11 +38,11 @@ public:
 
 	virtual void close() = 0;
 
-	virtual bool execute(const std::string& sql) = 0;
+	virtual bool execute(const sql::SQLString& sql) = 0;
 
-	virtual ResultSet * executeQuery(const std::string& sql) = 0;
+	virtual ResultSet * executeQuery(const sql::SQLString& sql) = 0;
 
-	virtual int executeUpdate(const std::string& sql) = 0;
+	virtual int executeUpdate(const sql::SQLString& sql) = 0;
 
 	virtual size_t getFetchSize() = 0;
 
@@ -62,7 +62,7 @@ public:
 
 	virtual const SQLWarning * getWarnings() = 0;
 
-	virtual void setCursorName(const std::string & name) = 0;
+	virtual void setCursorName(const sql::SQLString & name) = 0;
 
 	virtual void setEscapeProcessing(bool enable) = 0;
 

@@ -13,9 +13,9 @@
 #define _MYSQL_UTIL_H_
 
 #include "mysql_private_iface.h"
-#include <string>
-
 #include <cppconn/config.h>
+#include <cppconn/sqlstring.h>
+
 
 #ifndef UL64
 #ifdef _WIN32
@@ -56,7 +56,7 @@ namespace util {
 void throwSQLException(MYSQL * mysql);
 void throwSQLException(MYSQL_STMT * stmt);
 
-int mysql_string_type_to_datatype(const std::string & name);
+int mysql_string_type_to_datatype(const sql::SQLString & name);
 int mysql_type_to_datatype(const MYSQL_FIELD * const field);
 const char * mysql_type_to_string(const MYSQL_FIELD * const field);
 

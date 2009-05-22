@@ -10,6 +10,7 @@
 */
 
 #include <stdlib.h>
+#include <string>
 #include <memory>
 #include <boost/scoped_ptr.hpp>
 #include <cppconn/exception.h>
@@ -1213,7 +1214,7 @@ MySQL_ConnectionMetaData::~MySQL_ConnectionMetaData()
 
 /* {{{ MySQL_ConnectionMetaData::getSchemata() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getSchemata(const std::string& /*catalogName*/)
+MySQL_ConnectionMetaData::getSchemata(const sql::SQLString& /*catalogName*/)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getSchemata");
 	boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
@@ -1224,30 +1225,30 @@ MySQL_ConnectionMetaData::getSchemata(const std::string& /*catalogName*/)
 
 /* {{{ MySQL_ConnectionMetaData::getSchemaObjects() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */, const std::string& schemaName, const std::string& objectType)
+MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName */, const sql::SQLString& schemaName, const sql::SQLString& objectType)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getSchemaObjects");
 	// for now catalog name is ignored
-	std::string query;
+	sql::SQLString query;
 
-	std::string schemata_where_clause;
-	std::string tables_where_clause;
-	std::string views_where_clause;
-	std::string routines_where_clause;
-	std::string triggers_where_clause;
+	sql::SQLString schemata_where_clause;
+	sql::SQLString tables_where_clause;
+	sql::SQLString views_where_clause;
+	sql::SQLString routines_where_clause;
+	sql::SQLString triggers_where_clause;
 
-	const std::string schemata_select_items("'schema' AS 'OBJECT_TYPE', CATALOG_NAME as 'CATALOG', SCHEMA_NAME as 'SCHEMA', SCHEMA_NAME as 'NAME'");
-	const std::string tables_select_items("'table' AS 'OBJECT_TYPE', TABLE_CATALOG as 'CATALOG', TABLE_SCHEMA as 'SCHEMA', TABLE_NAME as 'NAME'");
-	const std::string views_select_items("'view' AS 'OBJECT_TYPE', TABLE_CATALOG as 'CATALOG', TABLE_SCHEMA as 'SCHEMA', TABLE_NAME as 'NAME'");
-	const std::string routines_select_items("ROUTINE_TYPE AS 'OBJECT_TYPE', ROUTINE_CATALOG as 'CATALOG', ROUTINE_SCHEMA as 'SCHEMA', ROUTINE_NAME as 'NAME'");
-	const std::string triggers_select_items("'trigger' AS 'OBJECT_TYPE', TRIGGER_CATALOG as 'CATALOG', TRIGGER_SCHEMA as 'SCHEMA', TRIGGER_NAME as 'NAME'");
+	const sql::SQLString schemata_select_items("'schema' AS 'OBJECT_TYPE', CATALOG_NAME as 'CATALOG', SCHEMA_NAME as 'SCHEMA', SCHEMA_NAME as 'NAME'");
+	const sql::SQLString tables_select_items("'table' AS 'OBJECT_TYPE', TABLE_CATALOG as 'CATALOG', TABLE_SCHEMA as 'SCHEMA', TABLE_NAME as 'NAME'");
+	const sql::SQLString views_select_items("'view' AS 'OBJECT_TYPE', TABLE_CATALOG as 'CATALOG', TABLE_SCHEMA as 'SCHEMA', TABLE_NAME as 'NAME'");
+	const sql::SQLString routines_select_items("ROUTINE_TYPE AS 'OBJECT_TYPE', ROUTINE_CATALOG as 'CATALOG', ROUTINE_SCHEMA as 'SCHEMA', ROUTINE_NAME as 'NAME'");
+	const sql::SQLString triggers_select_items("'trigger' AS 'OBJECT_TYPE', TRIGGER_CATALOG as 'CATALOG', TRIGGER_SCHEMA as 'SCHEMA', TRIGGER_NAME as 'NAME'");
 
-	const std::string schema_ddl_column("Create Database");
-	const std::string table_ddl_column("Create Table");
-	const std::string view_ddl_column("Create View");
-	const std::string procedure_ddl_column("Create Procedure");
-	const std::string function_ddl_column("Create Function");
-	const std::string trigger_ddl_column("SQL Original Statement");
+	const sql::SQLString schema_ddl_column("Create Database");
+	const sql::SQLString table_ddl_column("Create Table");
+	const sql::SQLString view_ddl_column("Create View");
+	const sql::SQLString procedure_ddl_column("Create Procedure");
+	const sql::SQLString function_ddl_column("Create Function");
+	const sql::SQLString trigger_ddl_column("SQL Original Statement");
 
 	if (schemaName.length() > 0) {
 		tables_where_clause.append(" WHERE table_type<>'VIEW' AND table_schema = '").append(schemaName).append("' ");
@@ -1307,12 +1308,12 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 	int name_field_index = native_rs->findColumn("NAME");
 
 
-	std::map<std::string, std::string> trigger_name_map;
-	std::map<std::string, std::string> trigger_ddl_map;
+	std::map< sql::SQLString, sql::SQLString > trigger_name_map;
+	std::map< sql::SQLString, sql::SQLString > trigger_ddl_map;
 
 	// if we fetch triggers, then build DDL for them
-	if ((objectType.compare("trigger") == 0) || objectType.empty()) {
-		std::string trigger_ddl_query("SELECT ");
+	if ((objectType.compare("trigger") == 0) || !objectType.length()) {
+		sql::SQLString trigger_ddl_query("SELECT ");
 		trigger_ddl_query
 			.append(triggers_select_items)
 			.append(", EVENT_MANIPULATION, EVENT_OBJECT_SCHEMA, EVENT_OBJECT_TABLE, ACTION_ORDER, "
@@ -1333,17 +1334,17 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 		int definer_index = trigger_ddl_rs->findColumn("DEFINER");
 
 		while (trigger_ddl_rs->next()) {
-			std::string trigger_ddl;
+			sql::SQLString trigger_ddl;
 
 			// quote definer, which is stored as unquoted string
 			std::string quoted_definer;
 			{
 				quoted_definer = trigger_ddl_rs->getString(definer_index);
-				const char *quot_sym = "`\0";
+				const char * quot_sym = "`\0";
 				size_t i = quoted_definer.find('@');
 				if (std::string::npos != i)
 				{
-					quoted_definer.reserve(quoted_definer.size()+4);
+					quoted_definer.reserve(quoted_definer.length()+4);
 					quoted_definer.insert(i+1, quot_sym);
 					quoted_definer.insert(i, quot_sym);
 				}
@@ -1351,7 +1352,7 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 				quoted_definer.push_back(quot_sym[0]);
 			}
 
-			std::string key;
+			sql::SQLString key;
 			key.append("`").append(trigger_ddl_rs->getString("schema"))
 				.append("`.`").append(trigger_ddl_rs->getString("name")).append("`");
 
@@ -1371,7 +1372,7 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 			}
 
 			{
-				std::string trigger_name;
+				sql::SQLString trigger_name;
 				trigger_name
 					.append(trigger_ddl_rs->getString(event_object_table_index))
 					.append(".")
@@ -1381,21 +1382,21 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 		}
 	}
 
-	std::list<std::string> rs_field_data;
-	rs_field_data.push_back(std::string("OBJECT_TYPE"));
-	rs_field_data.push_back(std::string("CATALOG"));
-	rs_field_data.push_back(std::string("SCHEMA"));
-	rs_field_data.push_back(std::string("NAME"));
-	rs_field_data.push_back(std::string("DDL"));
+	std::list< sql::SQLString > rs_field_data;
+	rs_field_data.push_back("OBJECT_TYPE");
+	rs_field_data.push_back("CATALOG");
+	rs_field_data.push_back("SCHEMA");
+	rs_field_data.push_back("NAME");
+	rs_field_data.push_back("DDL");
 
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
 	while (native_rs->next()) {
 		MySQL_ArtResultSet::row_t rs_data_row;
 
-		std::string obj_type(native_rs->getString(objtype_field_index));
-		std::string schema(native_rs->getString(schema_field_index));
-		std::string name(native_rs->getString(name_field_index));
+		sql::SQLString obj_type(native_rs->getString(objtype_field_index));
+		sql::SQLString schema(native_rs->getString(schema_field_index));
+		sql::SQLString name(native_rs->getString(name_field_index));
 
 		if ((obj_type.compare("PROCEDURE") == 0) || (obj_type.compare("FUNCTION") == 0)) {
 			rs_data_row.push_back("routine");
@@ -1407,15 +1408,15 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 
 
 		if (obj_type.compare("trigger") == 0) {
-			std::string key;
+			sql::SQLString key;
 			key.append("`").append(schema).append("`.`").append(name).append("`");
 			rs_data_row.push_back(trigger_name_map[key]);
 		} else {
 			rs_data_row.push_back(name);
 		}
 
-		std::string ddl_query;
-		std::string ddl_column;
+		sql::SQLString ddl_query;
+		sql::SQLString ddl_column;
 
 		if (obj_type.compare("schema") == 0) {
 			ddl_column = schema_ddl_column;
@@ -1454,7 +1455,7 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 		// due to bugs in server code some queries can fail.
 		// here we want to gather as much info as possible
 		try  {
-			std::string ddl;
+			sql::SQLString ddl;
 
 			if (obj_type.compare("trigger") == 0) {
 				//ddl
@@ -1469,12 +1470,13 @@ MySQL_ConnectionMetaData::getSchemaObjects(const std::string& /* catalogName */,
 				//	.append(trigger_ddl_rs->getString(action_statement_index))
 				//	.append("\n");
 
-				std::string key;
+				sql::SQLString key;
 				key.append("`").append(schema).append("`.`").append(name).append("`");
 
-				std::map<std::string, std::string>::const_iterator it = trigger_ddl_map.find(key);
-				if (it != trigger_ddl_map.end())
+				std::map< sql::SQLString, sql::SQLString >::const_iterator it = trigger_ddl_map.find(key);
+				if (it != trigger_ddl_map.end()) {
 					ddl.append(it->second);
+				}
 			} else {
 				boost::scoped_ptr< sql::Statement > stmt3(connection->createStatement());
 				boost::scoped_ptr< sql::ResultSet > sql_rs(stmt3->executeQuery(ddl_query));
@@ -1511,7 +1513,7 @@ MySQL_ConnectionMetaData::getSchemaObjectTypes()
 	CPP_ENTER("MySQL_ConnectionMetaData::getSchemaObjectTypes");
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 	rs_field_data.push_back("OBJECT_TYPE");
 
 	{
@@ -1605,13 +1607,13 @@ MySQL_ConnectionMetaData::doesMaxRowSizeIncludeBlobs()
 
 /* {{{ MySQL_ConnectionMetaData::getAttributes() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getAttributes(const std::string& /*catalog*/, const std::string& /*schemaPattern*/,
-										const std::string& /*typeNamePattern*/, const std::string& /*attributeNamePattern*/)
+MySQL_ConnectionMetaData::getAttributes(const sql::SQLString& /*catalog*/, const sql::SQLString& /*schemaPattern*/,
+										const sql::SQLString& /*typeNamePattern*/, const sql::SQLString& /*attributeNamePattern*/)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getAttributes");
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 
 	rs_field_data.push_back("TYPE_CAT");
 	rs_field_data.push_back("TYPE_SCHEM");
@@ -1645,13 +1647,13 @@ MySQL_ConnectionMetaData::getAttributes(const std::string& /*catalog*/, const st
 
 /* {{{ MySQL_ConnectionMetaData::getBestRowIdentifier() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getBestRowIdentifier(const std::string& catalog, const std::string& schema,
-												const std::string& table, int /* scope */, bool /* nullable */)
+MySQL_ConnectionMetaData::getBestRowIdentifier(const sql::SQLString& catalog, const sql::SQLString& schema,
+												const sql::SQLString& table, int /* scope */, bool /* nullable */)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getBestRowIdentifier");
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 	rs_field_data.push_back("SCOPE");
 	rs_field_data.push_back("COLUMN_NAME");
 	rs_field_data.push_back("DATA_TYPE");
@@ -1664,7 +1666,7 @@ MySQL_ConnectionMetaData::getBestRowIdentifier(const std::string& catalog, const
 	boost::scoped_ptr< sql::ResultSet > rs(getPrimaryKeys(catalog, schema, table));
 
 	while (rs->next()) {
-		std::string columnNamePattern(rs->getString(4));
+		sql::SQLString columnNamePattern(rs->getString(4));
 
 		boost::scoped_ptr< sql::ResultSet > rsCols(getColumns(catalog, schema, table, columnNamePattern));
 		if (rsCols->next()) {
@@ -1696,7 +1698,7 @@ MySQL_ConnectionMetaData::getCatalogs()
 {
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 
 	rs_field_data.push_back("TABLE_CAT");
 
@@ -1715,22 +1717,22 @@ MySQL_ConnectionMetaData::getCatalogs()
 
 
 /* {{{ MySQL_ConnectionMetaData::getCatalogSeparator() -I- */
-const std::string&
+const sql::SQLString&
 MySQL_ConnectionMetaData::getCatalogSeparator()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getCatalogSeparator");
-	static const std::string separator("");
+	static const sql::SQLString separator("");
 	return separator;
 }
 /* }}} */
 
 
 /* {{{ MySQL_ConnectionMetaData::getCatalogTerm() -I- */
-const std::string&
+const sql::SQLString&
 MySQL_ConnectionMetaData::getCatalogTerm()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getCatalogTerm");
-	static const std::string term("n/a");
+	static const sql::SQLString term("n/a");
 	return term;
 }
 /* }}} */
@@ -1738,12 +1740,12 @@ MySQL_ConnectionMetaData::getCatalogTerm()
 
 /* {{{ MySQL_ConnectionMetaData::getColumnPrivileges() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, const std::string& schema,
-											  const std::string& table, const std::string& columnNamePattern)
+MySQL_ConnectionMetaData::getColumnPrivileges(const sql::SQLString& /*catalog*/, const sql::SQLString& schema,
+											  const sql::SQLString& table, const sql::SQLString& columnNamePattern)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getColumnPrivileges");
 
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 	rs_field_data.push_back("TABLE_CAT");
 	rs_field_data.push_back("TABLE_SCHEM");
 	rs_field_data.push_back("TABLE_NAME");
@@ -1758,7 +1760,7 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 	/* I_S seems currently (20080220) not to work */
 	if (use_info_schema && server_version > 69999) {
 #if A0
-		std::string query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
+		sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
 				 		"COLUMN_NAME, NULL AS GRANTOR, GRANTEE, PRIVILEGE_TYPE AS PRIVILEGE, IS_GRANTABLE\n"
 						"FROM INFORMATION_SCHEMA.COLUMN_PRIVILEGES\n"
 						"WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME=? AND COLUMN_NAME LIKE ?\n"
@@ -1785,7 +1787,7 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 #endif
 	} else {
 		size_t idx;
-		std::string query("SHOW FULL COLUMNS FROM `");
+		sql::SQLString query("SHOW FULL COLUMNS FROM `");
 		query.append(schema).append("`.`").append(table).append("` LIKE '").append(columnNamePattern).append("'");
 
 		boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
@@ -1799,16 +1801,16 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 
 		while (res.get() && res->next()) {
 			size_t pos = 0;
-			std::string privs = res->getString(8);
+			sql::SQLString privs = res->getString(8);
 			do {
 				MySQL_ArtResultSet::row_t rs_data_row;
-				std::string privToken;
+				sql::SQLString privToken;
 
 				while (privs[pos] == ' ') ++pos; // Eat the whitespace
 
-				idx = privs.find(",", pos);
+				idx = privs.get().find(",", pos);
 
-				if (idx != std::string::npos) {
+				if (idx != sql::SQLString::npos) {
 					privToken = privs.substr(pos, idx - pos);
 					pos = idx + 1; /* skip ',' */
 				} else {
@@ -1825,7 +1827,7 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 
 				rs_data->push_back(rs_data_row);
 
-			} while (idx != std::string::npos);
+			} while (idx != sql::SQLString::npos);
 		}
 	}
 
@@ -1839,13 +1841,13 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const std::string& /*catalog*/, co
 
 /* {{{ MySQL_ConnectionMetaData::getColumns() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::string& schemaPattern,
-									 const std::string& tableNamePattern, const std::string& columnNamePattern)
+MySQL_ConnectionMetaData::getColumns(const sql::SQLString& /*catalog*/, const sql::SQLString& schemaPattern,
+									 const sql::SQLString& tableNamePattern, const sql::SQLString& columnNamePattern)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getColumns");
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 
 	rs_field_data.push_back("TABLE_CAT");
 	rs_field_data.push_back("TABLE_SCHEM");
@@ -1874,7 +1876,7 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 
 	if (use_info_schema && server_version > 50020) {
 		char buf[5];
-		std::string query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, COLUMN_NAME, DATA_TYPE,"
+		sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, COLUMN_NAME, DATA_TYPE,"
 			"CASE "
 			"WHEN LOCATE('unsigned', COLUMN_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN "
 			"  CASE"
@@ -1962,30 +1964,30 @@ MySQL_ConnectionMetaData::getColumns(const std::string& /*catalog*/, const std::
 		}
 	} else {
 		/* get schemata */
-		std::string query1("SHOW DATABASES LIKE '");
+		sql::SQLString query1("SHOW DATABASES LIKE '");
 		query1.append(schemaPattern).append("'");
 
 		boost::scoped_ptr< sql::Statement > stmt1(connection->createStatement());
 		boost::scoped_ptr< sql::ResultSet > rs1(stmt1->executeQuery(query1));
 
 		while (rs1->next()) {
-			std::string current_schema(rs1->getString(1));
-			std::string query2("SHOW TABLES FROM `");
+			sql::SQLString current_schema(rs1->getString(1));
+			sql::SQLString query2("SHOW TABLES FROM `");
 			query2.append(current_schema).append("` LIKE '").append(tableNamePattern).append("'");
 
 			boost::scoped_ptr< sql::Statement > stmt2(connection->createStatement());
 			boost::scoped_ptr< sql::ResultSet > rs2(stmt2->executeQuery(query2));
 
 			while (rs2->next()) {
-				std::string current_table(rs2->getString(1));
-				std::string query3("SELECT * FROM `");
+				sql::SQLString current_table(rs2->getString(1));
+				sql::SQLString query3("SELECT * FROM `");
 				query3.append(current_schema).append("`.`").append(current_table).append("` WHERE 0=1");
 
 				boost::scoped_ptr< sql::Statement > stmt3(connection->createStatement());
 				boost::scoped_ptr< sql::ResultSet > rs3(stmt1->executeQuery(query3));
 				sql::ResultSetMetaData * rs3_meta = rs3->getMetaData();
 
-				std::string query4("SHOW FULL COLUMNS FROM `");
+				sql::SQLString query4("SHOW FULL COLUMNS FROM `");
 				query4.append(current_schema).append("`.`").append(current_table).append("` LIKE '").append(columnNamePattern).append("'");
 				boost::scoped_ptr< sql::Statement > stmt4(connection->createStatement());
 				boost::scoped_ptr< sql::ResultSet > rs4(stmt1->executeQuery(query4));
@@ -2056,9 +2058,9 @@ MySQL_ConnectionMetaData::getConnection()
 
 /* {{{ MySQL_ConnectionMetaData::getCrossReference() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getCrossReference(const std::string& primaryCatalog, const std::string& primarySchema,
-											const std::string& primaryTable, const std::string& foreignCatalog ,
-											const std::string& foreignSchema, const std::string& foreignTable)
+MySQL_ConnectionMetaData::getCrossReference(const sql::SQLString& primaryCatalog, const sql::SQLString& primarySchema,
+											const sql::SQLString& primaryTable, const sql::SQLString& foreignCatalog ,
+											const sql::SQLString& foreignSchema, const sql::SQLString& foreignTable)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getCrossReference");
 	CPP_INFO_FMT("p_catalog=%s f_catalog=%s p_schema=%s f_schema=%s p_table=%s f_table=%s",
@@ -2067,7 +2069,7 @@ MySQL_ConnectionMetaData::getCrossReference(const std::string& primaryCatalog, c
 
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 	rs_field_data.push_back("PKTABLE_CAT");
 	rs_field_data.push_back("PKTABLE_SCHEM");
 	rs_field_data.push_back("PKTABLE_NAME");
@@ -2089,19 +2091,19 @@ MySQL_ConnectionMetaData::getCrossReference(const std::string& primaryCatalog, c
 		/* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
 		char buf[10];
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeyCascade);
-		std::string importedKeyCascadeStr(buf);
+		sql::SQLString importedKeyCascadeStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeySetNull);
-		std::string importedKeySetNullStr(buf);
+		sql::SQLString importedKeySetNullStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeySetDefault);
-		std::string importedKeySetDefaultStr(buf);
+		sql::SQLString importedKeySetDefaultStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeyRestrict);
-		std::string importedKeyRestrictStr(buf);
+		sql::SQLString importedKeyRestrictStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeyNoAction);
-		std::string importedKeyNoActionStr(buf);
+		sql::SQLString importedKeyNoActionStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeyNotDeferrable);
-		std::string importedKeyNotDeferrableStr(buf);
+		sql::SQLString importedKeyNotDeferrableStr(buf);
 
-		std::string UpdateRuleClause;
+		sql::SQLString UpdateRuleClause;
 		UpdateRuleClause.append("CASE WHEN R.UPDATE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
 						append(" WHEN R.UPDATE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
 						append(" WHEN R.UPDATE_RULE='SET DEFAULT' THEN ").append(importedKeySetDefaultStr).
@@ -2109,7 +2111,7 @@ MySQL_ConnectionMetaData::getCrossReference(const std::string& primaryCatalog, c
 						append(" WHEN R.UPDATE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
 						append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
 
-		std::string DeleteRuleClause;
+		sql::SQLString DeleteRuleClause;
 
 		DeleteRuleClause.append("CASE WHEN R.DELETE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
 						append(" WHEN R.DELETE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
@@ -2118,11 +2120,11 @@ MySQL_ConnectionMetaData::getCrossReference(const std::string& primaryCatalog, c
 						append(" WHEN R.DELETE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
 						append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
 
-		std::string OptionalRefConstraintJoinStr(
+		sql::SQLString OptionalRefConstraintJoinStr(
 					"JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON "
 					"(R.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ");
 
-		std::string query("SELECT \n");
+		sql::SQLString query("SELECT \n");
 		query.append("A.TABLE_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,"
 					 "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
 					 "A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,");
@@ -2209,11 +2211,11 @@ MySQL_ConnectionMetaData::getDatabasePatchVersion()
 
 
 /* {{{ MySQL_ConnectionMetaData::getDatabaseProductName() -I- */
-const std::string&
+const sql::SQLString&
 MySQL_ConnectionMetaData::getDatabaseProductName()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDatabaseProductName");
-	static const std::string product_name("MySQL");
+	static const sql::SQLString product_name("MySQL");
 	return product_name;
 }
 /* }}} */
@@ -2272,22 +2274,22 @@ MySQL_ConnectionMetaData::getDriverPatchVersion()
 
 
 /* {{{ MySQL_ConnectionMetaData::getDriverVersion() -I- */
-const std::string&
+const sql::SQLString&
 MySQL_ConnectionMetaData::getDriverVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverVersion");
-	static const std::string version("1.0.6-GA");
+	static const sql::SQLString version("1.0.6-GA");
 	return version;
 }
 /* }}} */
 
 
 /* {{{ MySQL_ConnectionMetaData::getDriverName() -I- */
-const std::string&
+const sql::SQLString&
 MySQL_ConnectionMetaData::getDriverName()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverName");
-	static const std::string product_version("MySQL Connector/C++");
+	static const sql::SQLString product_version("MySQL Connector/C++");
 	return product_version;
 }
 /* }}} */
@@ -2295,13 +2297,13 @@ MySQL_ConnectionMetaData::getDriverName()
 
 /* {{{ MySQL_ConnectionMetaData::getExportedKeys() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getExportedKeys(const std::string& catalog, const std::string& schema, const std::string& table)
+MySQL_ConnectionMetaData::getExportedKeys(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getExportedKeys");
 	CPP_INFO_FMT("catalog=%s schema=%s table=%s", catalog.c_str(), schema.c_str(), table.c_str());
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 	rs_field_data.push_back("PKTABLE_CAT");
 	rs_field_data.push_back("PKTABLE_SCHEM");
 	rs_field_data.push_back("PKTABLE_NAME");
@@ -2323,19 +2325,19 @@ MySQL_ConnectionMetaData::getExportedKeys(const std::string& catalog, const std:
 		/* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
 		char buf[10];
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeyCascade);
-		std::string importedKeyCascadeStr(buf);
+		sql::SQLString importedKeyCascadeStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeySetNull);
-		std::string importedKeySetNullStr(buf);
+		sql::SQLString importedKeySetNullStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeySetDefault);
-		std::string importedKeySetDefaultStr(buf);
+		sql::SQLString importedKeySetDefaultStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeyRestrict);
-		std::string importedKeyRestrictStr(buf);
+		sql::SQLString importedKeyRestrictStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeyNoAction);
-		std::string importedKeyNoActionStr(buf);
+		sql::SQLString importedKeyNoActionStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeyNotDeferrable);
-		std::string importedKeyNotDeferrableStr(buf);
+		sql::SQLString importedKeyNotDeferrableStr(buf);
 
-		std::string UpdateRuleClause;
+		sql::SQLString UpdateRuleClause;
 		UpdateRuleClause.append("CASE WHEN R.UPDATE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
 						append(" WHEN R.UPDATE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
 						append(" WHEN R.UPDATE_RULE='SET DEFAULT' THEN ").append(importedKeySetDefaultStr).
@@ -2343,7 +2345,7 @@ MySQL_ConnectionMetaData::getExportedKeys(const std::string& catalog, const std:
 						append(" WHEN R.UPDATE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
 						append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
 
-		std::string DeleteRuleClause;
+		sql::SQLString DeleteRuleClause;
 
 		DeleteRuleClause.append("CASE WHEN R.DELETE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
 						append(" WHEN R.DELETE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
@@ -2352,11 +2354,11 @@ MySQL_ConnectionMetaData::getExportedKeys(const std::string& catalog, const std:
 						append(" WHEN R.DELETE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
 						append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
 
-		std::string OptionalRefConstraintJoinStr(
+		sql::SQLString OptionalRefConstraintJoinStr(
 					"JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON "
 					"(R.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ");
 
-		std::string query("SELECT \n");
+		sql::SQLString query("SELECT \n");
 		query.append("A.TABLE_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,\n"
 					 "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,\n"
 					 "A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,");
@@ -2411,28 +2413,28 @@ MySQL_ConnectionMetaData::getExportedKeys(const std::string& catalog, const std:
 
 
 /* {{{ MySQL_ConnectionMetaData::getExtraNameCharacters() -I- */
-const std::string&
+const sql::SQLString&
 MySQL_ConnectionMetaData::getExtraNameCharacters()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getExtraNameCharacters");
-	static const std::string extra("#@");
+	static const sql::SQLString extra("#@");
 	return extra;
 }
 /* }}} */
 
 
 /* {{{ MySQL_ConnectionMetaData::getIdentifierQuoteString() -I- */
-const std::string&
+const sql::SQLString&
 MySQL_ConnectionMetaData::getIdentifierQuoteString()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getIdentifierQuoteString");
-	static const std::string empty(" "), tick("`"), quote("\"");
+	static const sql::SQLString empty(" "), tick("`"), quote("\"");
 
 	if (server_version >= 32306) {
 		/* Ask the server for sql_mode and decide for a tick or a quote */
-		std::string sql_mode(connection->getSessionVariable("SQL_MODE"));
+		sql::SQLString sql_mode(connection->getSessionVariable("SQL_MODE"));
 
-		if (sql_mode.find("ANSI_QUOTES") != std::string::npos) {
+		if (sql_mode.find("ANSI_QUOTES") != sql::SQLString::npos) {
 			return quote;
 		} else {
 			return tick;
@@ -2446,11 +2448,11 @@ MySQL_ConnectionMetaData::getIdentifierQuoteString()
 /* {{{ MySQL_ConnectionMetaData::parseImportedKeys() -I- */
 bool
 MySQL_ConnectionMetaData::parseImportedKeys(
-		const std::string& def,
-		std::string & constraint_name,
-		std::map< std::string, std::string > & keywords_names,
-		std::map< std::string, std::list< std::string > > & referenced_fields,
-		std::map< std::string, int > & update_cascade
+		const sql::SQLString& def,
+		sql::SQLString & constraint_name,
+		std::map< sql::SQLString, sql::SQLString > & keywords_names,
+		std::map< sql::SQLString, std::list< sql::SQLString > > & referenced_fields,
+		std::map< sql::SQLString, int > & update_cascade
 	)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::parseImportedKeys");
@@ -2458,17 +2460,17 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 
 	/* check if line contains 'CONSTRAINT' */
 	idx = def.find("CONSTRAINT");
-	if (idx == std::string::npos) {
+	if (idx == sql::SQLString::npos) {
 		return false;
 	}
 	pos = idx + sizeof("CONSTRAINT") - 1;
 
-	std::string cQuote(getIdentifierQuoteString());
+	sql::SQLString cQuote(getIdentifierQuoteString());
 
 	{
 		{
 			size_t end_pos;
-			if (cQuote.size()) {
+			if (cQuote.length()) {
 				while (def[pos] != cQuote[0]) ++pos;
 				end_pos = ++pos;
 				while (def[end_pos] != cQuote[0] && def[end_pos - 1] != '\\') ++end_pos;
@@ -2481,19 +2483,19 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 			pos = end_pos + 1;
 		}
 
-		std::list< std::string > keywords;
+		std::list< sql::SQLString > keywords;
 		keywords.push_back("FOREIGN KEY");
 		keywords.push_back("REFERENCES");
-		std::list< std::string >::const_iterator keywords_it = keywords.begin();
+		std::list< sql::SQLString >::const_iterator keywords_it = keywords.begin();
 
 		for (; keywords_it != keywords.end(); ++keywords_it) {
 			idx = def.find(*keywords_it, pos);
-			pos = idx + keywords_it->size();
+			pos = idx + keywords_it->length();
 
 			while (def[pos] == ' ') ++pos;
 			// Here comes optional constraint name
 			if (def[pos] != '(') {
-				if (cQuote.size()) {
+				if (cQuote.length()) {
 					size_t end_pos = ++pos;
 					while (def[end_pos] != cQuote[0] && def[end_pos - 1] != '\\') ++end_pos;
 					keywords_names[*keywords_it] = def.substr(pos, end_pos - pos);
@@ -2520,11 +2522,11 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 					// , end_bracket - pos
 					comma_pos = def.find("," , pos);
 					// there is something in the implementation of find(",", pos, end_bracket - pos) - so I have to emulate it
-					if (comma_pos >= end_bracket || comma_pos == std::string::npos) {
-						referenced_fields[*keywords_it].push_back(def.substr(pos + cQuote.size(), end_bracket - pos - cQuote.size() * 2));
+					if (comma_pos >= end_bracket || comma_pos == sql::SQLString::npos) {
+						referenced_fields[*keywords_it].push_back(def.substr(pos + cQuote.length(), end_bracket - pos - cQuote.length() * 2));
 						break;
 					} else {
-						referenced_fields[*keywords_it].push_back(def.substr(pos + cQuote.size(), comma_pos - pos - cQuote.size() * 2));
+						referenced_fields[*keywords_it].push_back(def.substr(pos + cQuote.length(), comma_pos - pos - cQuote.length() * 2));
 						pos = comma_pos + 1; // skip the comma
 						while (def[pos] == ' ') ++pos; // skip whitespace after the comma
 					}
@@ -2536,16 +2538,16 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 
 	// Check optional (UPDATE | DELETE) CASCADE
 	{
-		std::list< std::string > keywords;
+		std::list< sql::SQLString > keywords;
 		keywords.push_back("ON DELETE");
 		keywords.push_back("ON UPDATE");
-		std::list< std::string >::const_iterator keywords_it = keywords.begin();
+		std::list< sql::SQLString >::const_iterator keywords_it = keywords.begin();
 
 		for (; keywords_it != keywords.end(); ++keywords_it) {
 			int action = importedKeyNoAction;
 			idx = def.find(*keywords_it, pos);
-			if (idx != std::string::npos) {
-				pos = idx + keywords_it->size();
+			if (idx != sql::SQLString::npos) {
+				pos = idx + keywords_it->length();
 				while (def[pos] == ' ') ++pos;
 				if (def[pos] == 'R') { 		// RESTRICT
 					action = importedKeyRestrict;
@@ -2571,14 +2573,14 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 
 /* {{{ MySQL_ConnectionMetaData::getImportedKeys() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std::string& schema, const std::string& table)
+MySQL_ConnectionMetaData::getImportedKeys(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getImportedKeys");
 	CPP_INFO_FMT("catalog=%s schema=%s table=%s", catalog.c_str(), schema.c_str(), table.c_str());
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
 
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 	rs_field_data.push_back("PKTABLE_CAT");
 	rs_field_data.push_back("PKTABLE_SCHEM");
 	rs_field_data.push_back("PKTABLE_NAME");
@@ -2599,19 +2601,19 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 		/* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
 		char buf[10];
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeyCascade);
-		std::string importedKeyCascadeStr(buf);
+		sql::SQLString importedKeyCascadeStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeySetNull);
-		std::string importedKeySetNullStr(buf);
+		sql::SQLString importedKeySetNullStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeySetDefault);
-		std::string importedKeySetDefaultStr(buf);
+		sql::SQLString importedKeySetDefaultStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeyRestrict);
-		std::string importedKeyRestrictStr(buf);
+		sql::SQLString importedKeyRestrictStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeyNoAction);
-		std::string importedKeyNoActionStr(buf);
+		sql::SQLString importedKeyNoActionStr(buf);
 		my_i_to_a(buf, sizeof(buf) - 1, importedKeyNotDeferrable);
-		std::string importedKeyNotDeferrableStr(buf);
+		sql::SQLString importedKeyNotDeferrableStr(buf);
 
-		std::string UpdateRuleClause;
+		sql::SQLString UpdateRuleClause;
 		UpdateRuleClause.append("CASE WHEN R.UPDATE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
 						append(" WHEN R.UPDATE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
 						append(" WHEN R.UPDATE_RULE='SET DEFAULT' THEN ").append(importedKeySetDefaultStr).
@@ -2619,7 +2621,7 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 						append(" WHEN R.UPDATE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
 						append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
 
-		std::string DeleteRuleClause;
+		sql::SQLString DeleteRuleClause;
 
 		DeleteRuleClause.append("CASE WHEN R.DELETE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
 						append(" WHEN R.DELETE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
@@ -2628,11 +2630,11 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 						append(" WHEN R.DELETE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
 						append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
 
-		std::string OptionalRefConstraintJoinStr(
+		sql::SQLString OptionalRefConstraintJoinStr(
 					"JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON "
 					"(R.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ");
 
-		std::string query("SELECT \n"
+		sql::SQLString query("SELECT \n"
 					"A.TABLE_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,\n"
 					"A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,\n"
 					"A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,\n");
@@ -2677,7 +2679,7 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 			rs_data->push_back(rs_data_row);
 		}
 	} else {
-		std::string query("SHOW CREATE TABLE `");
+		sql::SQLString query("SHOW CREATE TABLE `");
 		query.append(schema).append("`.`").append(table).append("`");
 
 		boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
@@ -2689,19 +2691,19 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 			// just do nothing and the `if` will be skipped
 		}
 		if (rs.get() && rs->next()) {
-			std::string create_query(rs->getString(2));
+			sql::SQLString create_query(rs->getString(2));
 			unsigned int kSequence = 0;
 
-			std::string constraint_name;
-			std::map< std::string, std::string > keywords_names;
-			std::map< std::string, std::list< std::string > > referenced_fields;
-			std::map< std::string, int > update_delete_action;
+			sql::SQLString constraint_name;
+			std::map< sql::SQLString, sql::SQLString > keywords_names;
+			std::map< sql::SQLString, std::list< sql::SQLString > > referenced_fields;
+			std::map< sql::SQLString, int > update_delete_action;
 
 			if (parseImportedKeys(create_query, constraint_name, keywords_names, referenced_fields, update_delete_action)) {
-				std::list< std::string >::const_iterator it_references = referenced_fields["REFERENCES"].begin();
-				std::list< std::string >::const_iterator it_references_end = referenced_fields["REFERENCES"].end();
-				std::list< std::string >::const_iterator it_foreignkey = referenced_fields["FOREIGN KEY"].begin();
-				std::list< std::string >::const_iterator it_foreignkey_end = referenced_fields["FOREIGN KEY"].end();
+				std::list< sql::SQLString >::const_iterator it_references = referenced_fields["REFERENCES"].begin();
+				std::list< sql::SQLString >::const_iterator it_references_end = referenced_fields["REFERENCES"].end();
+				std::list< sql::SQLString >::const_iterator it_foreignkey = referenced_fields["FOREIGN KEY"].begin();
+				std::list< sql::SQLString >::const_iterator it_foreignkey_end = referenced_fields["FOREIGN KEY"].end();
 				for (
 						;
 						it_references != it_references_end && it_foreignkey != it_foreignkey_end;
@@ -2753,14 +2755,14 @@ MySQL_ConnectionMetaData::getImportedKeys(const std::string& catalog, const std:
 
 /* {{{ MySQL_ConnectionMetaData::getIndexInfo() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std::string& schema,
-										const std::string& table, bool unique, bool /* approximate */)
+MySQL_ConnectionMetaData::getIndexInfo(const sql::SQLString& /*catalog*/, const sql::SQLString& schema,
+										const sql::SQLString& table, bool unique, bool /* approximate */)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getIndexInfo");
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
 
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 	rs_field_data.push_back("TABLE_CAT");
 	rs_field_data.push_back("TABLE_SCHEM");
 	rs_field_data.push_back("TABLE_NAME");
@@ -2783,7 +2785,7 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 		char indexHash[5];
 		snprintf(indexHash, sizeof(indexHash), "%d", DatabaseMetaData::tableIndexHashed);
 
-		std::string query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, NON_UNIQUE, "
+		sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, NON_UNIQUE, "
 						 "TABLE_SCHEMA AS INDEX_QUALIFIER, INDEX_NAME, CASE WHEN INDEX_TYPE='HASH' THEN ");
 		query.append(indexHash).append(" ELSE ").append(indexOther);
 		query.append(" END AS TYPE, SEQ_IN_INDEX AS ORDINAL_POSITION, COLUMN_NAME, COLLATION AS ASC_OR_DESC, CARDINALITY,"
@@ -2821,7 +2823,7 @@ MySQL_ConnectionMetaData::getIndexInfo(const std::string& /*catalog*/, const std
 			rs_data->push_back(rs_data_row);
 		}
 	} else {
-		std::string query("SHOW INDEX FROM `");
+		sql::SQLString query("SHOW INDEX FROM `");
 		query.append(schema).append("`.`").append(table).append("`");
 
 		boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
@@ -3084,11 +3086,11 @@ MySQL_ConnectionMetaData::getMaxUserNameLength()
 
 
 /* {{{ MySQL_ConnectionMetaData::getNumericFunctions() -I- */
-const std::string &
+const sql::SQLString &
 MySQL_ConnectionMetaData::getNumericFunctions()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getNumericFunctions");
-	static const std::string funcs("ABS,ACOS,ASIN,ATAN,ATAN2,BIT_COUNT,CEILING,COS,"
+	static const sql::SQLString funcs("ABS,ACOS,ASIN,ATAN,ATAN2,BIT_COUNT,CEILING,COS,"
 							"COT,DEGREES,EXP,FLOOR,LOG,LOG10,MAX,MIN,MOD,PI,POW,"
 							"POWER,RADIANS,RAND,ROUND,SIN,SQRT,TAN,TRUNCATE");
 	return funcs;
@@ -3098,12 +3100,12 @@ MySQL_ConnectionMetaData::getNumericFunctions()
 
 /* {{{ MySQL_ConnectionMetaData::getPrimaryKeys() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::string& schema, const std::string& table)
+MySQL_ConnectionMetaData::getPrimaryKeys(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getPrimaryKeys");
 	CPP_INFO_FMT("catalog=%s schema=%s table=%s", catalog.c_str(), schema.c_str(), table.c_str());
 
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 	rs_field_data.push_back("TABLE_CAT");
 	rs_field_data.push_back("TABLE_SCHEM");
 	rs_field_data.push_back("TABLE_NAME");
@@ -3116,7 +3118,7 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 
 	/* Bind Problems with 49999, check later why */
 	if (use_info_schema && server_version > 49999) {
-		const std::string query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, "
+		const sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, "
 					"COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, INDEX_NAME AS PK_NAME FROM INFORMATION_SCHEMA.STATISTICS "
 					"WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND INDEX_NAME='PRIMARY' "
 					"ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX");
@@ -3140,7 +3142,7 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 			rs_data->push_back(rs_data_row);
 		}
 	} else {
-		std::string query("SHOW KEYS FROM `");
+		sql::SQLString query("SHOW KEYS FROM `");
 		query.append(schema).append("`.`").append(table).append("`");
 
 		boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
@@ -3153,7 +3155,7 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 		}
 
 		while (rs.get() && rs->next()) {
-			std::string key_name = rs->getString("Key_name");
+			sql::SQLString key_name = rs->getString("Key_name");
 			if (!key_name.compare("PRIMARY") || !key_name.compare("PRI")) {
 				MySQL_ArtResultSet::row_t rs_data_row;
 
@@ -3179,15 +3181,15 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const std::string& catalog, const std::
 
 /* {{{ MySQL_ConnectionMetaData::getProcedureColumns() -U- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getProcedureColumns(const std::string& /* catalog */, const std::string& /* schemaPattern */,
-											  const std::string& /* procedureNamePattern */, const std::string& /* columnNamePattern */)
+MySQL_ConnectionMetaData::getProcedureColumns(const sql::SQLString& /* catalog */, const sql::SQLString& /* schemaPattern */,
+											  const sql::SQLString& /* procedureNamePattern */, const sql::SQLString& /* columnNamePattern */)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getProcedureColumns");
 	throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::getURL");
 	return NULL; // fool compiler
 #if A0
 
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 
 	rs_field_data.push_back("PROCEDURE_CAT");
 	rs_field_data.push_back("PROCEDURE_SCHEM");
@@ -3216,11 +3218,11 @@ MySQL_ConnectionMetaData::getProcedureColumns(const std::string& /* catalog */, 
 
 /* {{{ MySQL_ConnectionMetaData::getProcedures() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const std::string& schemaPattern, const std::string& procedureNamePattern)
+MySQL_ConnectionMetaData::getProcedures(const sql::SQLString& /*catalog*/, const sql::SQLString& schemaPattern, const sql::SQLString& procedureNamePattern)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getProcedures");
 
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 	rs_field_data.push_back("PROCEDURE_CAT");
 	rs_field_data.push_back("PROCEDURE_SCHEM");
 	rs_field_data.push_back("PROCEDURE_NAME");
@@ -3240,7 +3242,7 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 	my_i_to_a(procRetUnknown, sizeof(procRetUnknown) - 1, procedureResultUnknown);
 
 	if (use_info_schema && server_version > 49999) {
-		std::string query("SELECT ROUTINE_CATALOG AS PROCEDURE_CAT, ROUTINE_SCHEMA AS PROCEDURE_SCHEM, "
+		sql::SQLString query("SELECT ROUTINE_CATALOG AS PROCEDURE_CAT, ROUTINE_SCHEMA AS PROCEDURE_SCHEM, "
 						"ROUTINE_NAME AS PROCEDURE_NAME, NULL AS RESERVED_1, NULL AS RESERVERD_2, NULL as RESERVED_3,"
 						"ROUTINE_COMMENT AS REMARKS, "
 						"CASE WHEN ROUTINE_TYPE = 'PROCEDURE' THEN ");
@@ -3255,7 +3257,7 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 
 		boost::scoped_ptr< sql::PreparedStatement > stmt(connection->prepareStatement(query));
 		stmt->setString(1, schemaPattern);
-		stmt->setString(2, procedureNamePattern.size() ? procedureNamePattern : "%");
+		stmt->setString(2, procedureNamePattern.length() ? procedureNamePattern : "%");
 
 		boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery());
 		while (rs->next()) {
@@ -3275,7 +3277,7 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 	} else if (server_version > 49999) {
 		bool got_exception = false;
 		do {
-			std::string query("SELECT 'def' AS PROCEDURE_CAT, db as PROCEDURE_SCHEM, "
+			sql::SQLString query("SELECT 'def' AS PROCEDURE_CAT, db as PROCEDURE_SCHEM, "
 									"name AS PROCEDURE_NAME, NULL as RESERVERD_1, NULL as RESERVERD_2, "
 									"NULL AS RESERVERD_3, comment as REMARKS, ");
 			query.append("CASE WHEN TYPE=='FUNCTION' THEN ").append(procRetRes).append("\n");
@@ -3310,7 +3312,7 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 			}
 		} while (0);
 		if (got_exception) {
-			std::string query("SHOW PROCEDURE STATUS");
+			sql::SQLString query("SHOW PROCEDURE STATUS");
 
 			boost::scoped_ptr< sql::PreparedStatement > stmt(connection->prepareStatement(query));				
 
@@ -3325,7 +3327,7 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 				rs_data_row.push_back("");					// reserved2
 				rs_data_row.push_back("");					// reserved3
 				rs_data_row.push_back(rs->getString(8));	// REMARKS
-				rs_data_row.push_back(std::string(!rs->getString(3)->compare("PROCEDURE")? procRetNoRes:procRetRes));	// PROCEDURE_TYPE
+				rs_data_row.push_back(sql::SQLString(!rs->getString(3)->compare("PROCEDURE")? procRetNoRes:procRetRes));	// PROCEDURE_TYPE
 
 				rs_data->push_back(rs_data_row);
 			}
@@ -3342,11 +3344,11 @@ MySQL_ConnectionMetaData::getProcedures(const std::string& /*catalog*/, const st
 
 
 /* {{{ MySQL_ConnectionMetaData::getProcedureTerm() -I- */
-const std::string &
+const sql::SQLString &
 MySQL_ConnectionMetaData::getProcedureTerm()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getProcedureTerm");
-	static const std::string term("procedure");
+	static const sql::SQLString term("procedure");
 	return term;
 }
 /* }}} */
@@ -3370,7 +3372,7 @@ MySQL_ConnectionMetaData::getSchemas()
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
 
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 	rs_field_data.push_back("TABLE_SCHEM");
 	rs_field_data.push_back("TABLE_CATALOG");
 
@@ -3402,33 +3404,33 @@ MySQL_ConnectionMetaData::getSchemas()
 
 
 /* {{{ MySQL_ConnectionMetaData::getSchemaTerm() -I- */
-const std::string&
+const sql::SQLString&
 MySQL_ConnectionMetaData::getSchemaTerm()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getSchemaTerm");
-	static const std::string term("database");
+	static const sql::SQLString term("database");
 	return term;
 }
 /* }}} */
 
 
 /* {{{ MySQL_ConnectionMetaData::getSearchStringEscape() -I- */
-const std::string&
+const sql::SQLString&
 MySQL_ConnectionMetaData::getSearchStringEscape()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getSearchStringEscape");
-	static const std::string escape("\\");
+	static const sql::SQLString escape("\\");
 	return escape;
 }
 /* }}} */
 
 
 /* {{{ MySQL_ConnectionMetaData::getSQLKeywords() -I- */
-const std::string&
+const sql::SQLString&
 MySQL_ConnectionMetaData::getSQLKeywords()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getSQLKeywords");
-	static const std::string keywords(
+	static const sql::SQLString keywords(
 				"ACCESSIBLE, ADD, ALL,"\
 				"ALTER, ANALYZE, AND, AS, ASC, ASENSITIVE, BEFORE,"\
 				"BETWEEN, BIGINT, BINARY, BLOB, BOTH, BY, CALL,"\
@@ -3487,11 +3489,11 @@ MySQL_ConnectionMetaData::getSQLStateType()
 
 
 /* {{{ MySQL_ConnectionMetaData::getStringFunctions() -I- */
-const std::string&
+const sql::SQLString&
 MySQL_ConnectionMetaData::getStringFunctions()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getStringFunctions");
-	static const std::string funcs(
+	static const sql::SQLString funcs(
 		"ASCII,BIN,BIT_LENGTH,CHAR,CHARACTER_LENGTH,CHAR_LENGTH,CONCAT,"
 		"CONCAT_WS,CONV,ELT,EXPORT_SET,FIELD,FIND_IN_SET,HEX,INSERT,"
 		"INSTR,LCASE,LEFT,LENGTH,LOAD_FILE,LOCATE,LOCATE,LOWER,LPAD,"
@@ -3506,10 +3508,10 @@ MySQL_ConnectionMetaData::getStringFunctions()
 
 /* {{{ MySQL_ConnectionMetaData::getSuperTables() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getSuperTables(const std::string& /*catalog*/, const std::string& /*schemaPattern*/, const std::string& /*tableNamePattern*/)
+MySQL_ConnectionMetaData::getSuperTables(const sql::SQLString& /*catalog*/, const sql::SQLString& /*schemaPattern*/, const sql::SQLString& /*tableNamePattern*/)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getSuperTables");
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 
 	rs_field_data.push_back("TABLE_CAT");
 	rs_field_data.push_back("TABLE_SCHEM");
@@ -3528,10 +3530,10 @@ MySQL_ConnectionMetaData::getSuperTables(const std::string& /*catalog*/, const s
 
 /* {{{ MySQL_ConnectionMetaData::getSuperTypes() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getSuperTypes(const std::string& /*catalog*/, const std::string& /*schemaPattern*/, const std::string& /*typeNamePattern*/)
+MySQL_ConnectionMetaData::getSuperTypes(const sql::SQLString& /*catalog*/, const sql::SQLString& /*schemaPattern*/, const sql::SQLString& /*typeNamePattern*/)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getSuperTypes");
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 
 	rs_field_data.push_back("TYPE_CAT");
 	rs_field_data.push_back("TYPE_SCHEM");
@@ -3551,11 +3553,11 @@ MySQL_ConnectionMetaData::getSuperTypes(const std::string& /*catalog*/, const st
 
 
 /* {{{ MySQL_ConnectionMetaData::getSystemFunctions() -I- */
-const std::string&
+const sql::SQLString&
 MySQL_ConnectionMetaData::getSystemFunctions()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getSystemFunctions");
-	static const std::string funcs(
+	static const sql::SQLString funcs(
 			"DATABASE,USER,SYSTEM_USER,"
 			"SESSION_USER,PASSWORD,ENCRYPT,LAST_INSERT_ID,VERSION");
 	return funcs;
@@ -3565,32 +3567,32 @@ MySQL_ConnectionMetaData::getSystemFunctions()
 
 /* {{{ MySQL_ConnectionMetaData::getTablePrivileges() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const std::string& schemaPattern, const std::string& tableNamePattern)
+MySQL_ConnectionMetaData::getTablePrivileges(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& tableNamePattern)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getTablePrivileges");
 
 	boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
 	boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery("SHOW GRANTS"));
 
-	std::list< std::string > aPrivileges, aSchemas, aTables;
+	std::list< sql::SQLString > aPrivileges, aSchemas, aTables;
 
-	std::string strAllPrivs("ALTER, DELETE, DROP, INDEX, INSERT, LOCK TABLES, SELECT, UPDATE");
+	sql::SQLString strAllPrivs("ALTER, DELETE, DROP, INDEX, INSERT, LOCK TABLES, SELECT, UPDATE");
 
-	std::string cQuote(getIdentifierQuoteString());
+	sql::SQLString cQuote(getIdentifierQuoteString());
 
 	while (rs->next() ) {
-		std::string aGrant = rs->getString(1);
+		sql::SQLString aGrant = rs->getString(1);
 		aGrant = aGrant.replace(0, 6, "");
 
 		size_t pos = aGrant.find("ALL PRIVILEGES");
 
-		if (pos != std::string::npos) {
+		if (pos != sql::SQLString::npos) {
 			aGrant = aGrant.replace(pos, sizeof("ALL PRIVILEGES") - 1, strAllPrivs);
 		}
 
 		pos = aGrant.find("ON");
 
-		//ASSERT(pos != std::string::npos);
+		//ASSERT(pos != sql::SQLString::npos);
 
 		aPrivileges.push_back(aGrant.substr(0, pos - 1)); /* -1 for trim */
 
@@ -3599,7 +3601,7 @@ MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const s
 			pos = 1;
 			do {
 				pos = aGrant.find(cQuote, pos);
-			} while (pos != std::string::npos && aGrant[pos - 1] == '\\');
+			} while (pos != sql::SQLString::npos && aGrant[pos - 1] == '\\');
 			aSchemas.push_back(aGrant.substr(1, pos - 1)); /* From pos 1, without the quoting */
 			aGrant = aGrant.replace(0, pos + 1 + 1, ""); // remove the quote, the dot too
 		} else {
@@ -3615,7 +3617,7 @@ MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const s
 			pos = idx;
 			do {
 				pos = aGrant.find(cQuote, pos);
-			} while (pos != std::string::npos && aGrant[pos - 1] == '\\');
+			} while (pos != sql::SQLString::npos && aGrant[pos - 1] == '\\');
 			aTables.push_back(aGrant.substr(1, pos - 1));
 		} else {
 			aTables.push_back("*");
@@ -3629,7 +3631,7 @@ MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const s
 		  ` - x = 10 - 7 = 3 -> xyz
 		*/
 	}
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 	rs_field_data.push_back("TABLE_CAT");
 	rs_field_data.push_back("TABLE_SCHEM");
 	rs_field_data.push_back("TABLE_NAME");
@@ -3641,15 +3643,15 @@ MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const s
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
 
-	std::list< std::string > tableTypes;
-	tableTypes.push_back(std::string("TABLE"));
+	std::list< sql::SQLString > tableTypes;
+	tableTypes.push_back(sql::SQLString("TABLE"));
 
 	boost::scoped_ptr< sql::ResultSet > tables(getTables(catalog, schemaPattern, tableNamePattern, tableTypes));
-	std::string schema, table;
+	sql::SQLString schema, table;
 	while (tables->next()) {
 		schema = tables->getString(2);
 		table = tables->getString(3);
-		std::list<std::string>::const_iterator it_priv, it_schemas, it_tables;
+		std::list<sql::SQLString>::const_iterator it_priv, it_schemas, it_tables;
 		it_priv = aPrivileges.begin();
 		it_schemas = aSchemas.begin();
 		it_tables = aTables.begin();
@@ -3663,16 +3665,16 @@ MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const s
 					while ((*it_priv)[pos] == ' ') ++pos; // Eat the whitespace
 
 					idx = it_priv->find(",", pos);
-					std::string privToken;
-					// check for std::string::npos
-					if (idx != std::string::npos) {
+					sql::SQLString privToken;
+					// check for sql::SQLString::npos
+					if (idx != sql::SQLString::npos) {
 						privToken = it_priv->substr(pos, idx - pos);
 						pos = idx + 1; /* skip ',' */
 					} else {
 						privToken = it_priv->substr(pos, it_priv->length() - pos);
 					}
 					// ToDo: Why?
-					if (privToken.find_first_of('/') == std::string::npos) {
+					if (privToken.find_first_of('/') == sql::SQLString::npos) {
 						MySQL_ArtResultSet::row_t rs_data_row;
 
 						rs_data_row.push_back("def");			// TABLE_CAT
@@ -3685,7 +3687,7 @@ MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const s
 
 						rs_data->push_back(rs_data_row);
 					}
-				} while (idx != std::string::npos);
+				} while (idx != sql::SQLString::npos);
 				break;
 			}
 		}
@@ -3701,14 +3703,14 @@ MySQL_ConnectionMetaData::getTablePrivileges(const std::string& catalog, const s
 
 /* {{{ MySQL_ConnectionMetaData::getTables() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getTables(const std::string& /* catalog */, const std::string& schemaPattern,
-									const std::string& tableNamePattern, std::list<std::string> &types)
+MySQL_ConnectionMetaData::getTables(const sql::SQLString& /* catalog */, const sql::SQLString& schemaPattern,
+									const sql::SQLString& tableNamePattern, std::list<sql::SQLString> &types)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getTables");
 	CPP_INFO_FMT("schemaPattern=%s tablePattern=%s", schemaPattern.c_str(), tableNamePattern.c_str());
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 	rs_field_data.push_back("TABLE_CAT");
 	rs_field_data.push_back("TABLE_SCHEM");
 	rs_field_data.push_back("TABLE_NAME");
@@ -3717,7 +3719,7 @@ MySQL_ConnectionMetaData::getTables(const std::string& /* catalog */, const std:
 
 	/* Bind Problems with 49999, check later why */
 	if (use_info_schema && server_version > 49999) {
-		const std::string query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
+		const sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
 							"IF(STRCMP(TABLE_TYPE,'BASE TABLE'), TABLE_TYPE, 'TABLE') AS TABLE_TYPE, TABLE_COMMENT AS REMARKS\n"
 							"FROM INFORMATION_SCHEMA.TABLES\nWHERE TABLE_SCHEMA  LIKE ? AND TABLE_NAME LIKE ?\n"
 							"ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME");
@@ -3729,7 +3731,7 @@ MySQL_ConnectionMetaData::getTables(const std::string& /* catalog */, const std:
 		boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery());
 
 		while (rs->next()) {
-			std::list<std::string>::const_iterator it = types.begin();
+			std::list<sql::SQLString>::const_iterator it = types.begin();
 			for (; it != types.end(); ++it) {
 				if (*it == rs->getString(4)) {
 					MySQL_ArtResultSet::row_t rs_data_row;
@@ -3746,21 +3748,21 @@ MySQL_ConnectionMetaData::getTables(const std::string& /* catalog */, const std:
 			}
 		}
 	} else {
-		std::string query1("SHOW DATABASES LIKE '");
+		sql::SQLString query1("SHOW DATABASES LIKE '");
 		query1.append(schemaPattern).append("'");
 
 		boost::scoped_ptr< sql::Statement > stmt1(connection->createStatement());
 		boost::scoped_ptr< sql::ResultSet > rs1(stmt1->executeQuery(query1));
 		while (rs1->next()) {
 			boost::scoped_ptr< sql::Statement > stmt2(connection->createStatement());
-			std::string current_schema(rs1->getString(1));
-			std::string query2("SHOW TABLES FROM `");
+			sql::SQLString current_schema(rs1->getString(1));
+			sql::SQLString query2("SHOW TABLES FROM `");
 			query2.append(current_schema).append("` LIKE '").append(tableNamePattern).append("'");
 
 			boost::scoped_ptr< sql::ResultSet > rs2(stmt2->executeQuery(query2));
 
 			while (rs2->next()) {
-				std::list< std::string >::const_iterator it = types.begin();
+				std::list< sql::SQLString >::const_iterator it = types.begin();
 				for (; it != types.end(); ++it) {
 					/* < 49999 knows only TABLE, no VIEWS */
 					/* TODO: Optimize this everytime checking, put it outside of the loop */
@@ -3798,7 +3800,7 @@ MySQL_ConnectionMetaData::getTableTypes()
 	static const char * const table_types[] = {"TABLE", "VIEW", "LOCAL TEMPORARY"};
 	static unsigned int requiredVersion[] = {32200, 50000, 32200};
 
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 	rs_field_data.push_back("TABLE_TYPE");
 
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
@@ -3821,11 +3823,11 @@ MySQL_ConnectionMetaData::getTableTypes()
 
 
 /* {{{ MySQL_ConnectionMetaData::getTimeDateFunctions() -I- */
-const std::string&
+const sql::SQLString&
 MySQL_ConnectionMetaData::getTimeDateFunctions()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getTimeDateFunctions");
-	static const std::string funcs(
+	static const sql::SQLString funcs(
 		"DAYOFWEEK,WEEKDAY,DAYOFMONTH,DAYOFYEAR,MONTH,DAYNAME,"
 		"MONTHNAME,QUARTER,WEEK,YEAR,HOUR,MINUTE,SECOND,PERIOD_ADD,"
 		"PERIOD_DIFF,TO_DAYS,FROM_DAYS,DATE_FORMAT,TIME_FORMAT,"
@@ -3843,7 +3845,7 @@ MySQL_ConnectionMetaData::getTypeInfo()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getTypeInfo");
 
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 	rs_field_data.push_back("TYPE_NAME");
 	rs_field_data.push_back("DATA_TYPE");
 	rs_field_data.push_back("PRECISION");
@@ -3903,11 +3905,11 @@ MySQL_ConnectionMetaData::getTypeInfo()
 
 /* {{{ MySQL_ConnectionMetaData::getUDTs() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getUDTs(const std::string& /*catalog*/, const std::string& /*schemaPattern*/,
-								  const std::string& /*typeNamePattern*/, std::list<int> & /*types*/)
+MySQL_ConnectionMetaData::getUDTs(const sql::SQLString& /*catalog*/, const sql::SQLString& /*schemaPattern*/,
+								  const sql::SQLString& /*typeNamePattern*/, std::list<int> & /*types*/)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getUDTs");
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 
 	rs_field_data.push_back("TYPE_CAT");
 	rs_field_data.push_back("TYPE_SCHEM");
@@ -3945,7 +3947,7 @@ MySQL_ConnectionMetaData::getUserName()
 	boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
 	boost::scoped_ptr< sql::ResultSet > rset(stmt->executeQuery("SELECT USER()"));
 	if (rset->next()) {
-		return std::string(rset->getString(1));
+		return sql::SQLString(rset->getString(1));
 	}
 	return "";
 }
@@ -3954,10 +3956,10 @@ MySQL_ConnectionMetaData::getUserName()
 
 /* {{{ MySQL_ConnectionMetaData::getVersionColumns() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getVersionColumns(const std::string& /*catalog*/, const std::string& /*schema*/, const std::string& /*table*/)
+MySQL_ConnectionMetaData::getVersionColumns(const sql::SQLString& /*catalog*/, const sql::SQLString& /*schema*/, const sql::SQLString& /*table*/)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getVersionColumns");
-	std::list<std::string> rs_field_data;
+	std::list<sql::SQLString> rs_field_data;
 
 	rs_field_data.push_back("SCOPE");
 	rs_field_data.push_back("COLUMN_NAME");
@@ -5019,8 +5021,8 @@ MySQL_ConnectionMetaData::usesLocalFiles()
 
 /* {{{ MySQL_ConnectionMetaData::matchTable() -I- */
 bool
-MySQL_ConnectionMetaData::matchTable(const std::string & sPattern, const std::string & tPattern,
-									 const std::string & schema, const std::string & table)
+MySQL_ConnectionMetaData::matchTable(const sql::SQLString & sPattern, const sql::SQLString & tPattern,
+									 const sql::SQLString & schema, const sql::SQLString & table)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::matchTable");
 	return (!sPattern.compare("*") || !sPattern.compare(schema)) && (!tPattern.compare("*") || !tPattern.compare(table));

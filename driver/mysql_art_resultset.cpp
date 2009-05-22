@@ -11,7 +11,6 @@
 
 #include <sstream>
 #include <math.h>
-#include <boost/scoped_array.hpp>
 
 #include "mysql_util.h"
 #include "mysql_art_resultset.h"
@@ -26,13 +25,13 @@ namespace sql
 namespace mysql
 {
 
-
 /* {{{ MyVal::MyVal() -I- */
-MyVal::MyVal(const std::string & s)
+MyVal::MyVal(const sql::SQLString & s)
   : val_type(typeString)
 {
-	val.str = new std::string(s);
+	val.str = new sql::SQLString(s);
 }
+
 /* }}} */
 
 
@@ -41,22 +40,13 @@ MyVal::MyVal(const char * const s)
   : val_type(typeString)
 {
 	// Init it clearly
-	val.str = new std::string(s);
-}
-/* }}} */
-
-
-/* {{{ MyVal::MyVal() -I- */
-MyVal::MyVal(const SQLString & s)
-  : val_type(typeString)
-{
-  val.str = new std::string(s);
+	val.str = new sql::SQLString(s);
 }
 /* }}} */
 
 
 /* {{{ MyVal::getString() -I- */
-std::string
+sql::SQLString
 MyVal::getString()
 {
 	switch (val_type) {
@@ -66,25 +56,25 @@ MyVal::getString()
 		{
 			char buf[31];
 			size_t len = snprintf(buf, sizeof(buf) - 1, "%14.14Lf", val.dval);
-			return std::string(buf, len);
+			return sql::SQLString(buf, len);
 		}
 		case typeInt:
 		{
 			char buf[20];
 			size_t len = snprintf(buf, sizeof(buf) - 1, "%lld", (long long int)val.lval);
-			return std::string(buf, len);
+			return sql::SQLString(buf, len);
 		}
 		case typeUInt:
 		{
 			char buf[20];
 			size_t len = snprintf(buf, sizeof(buf) - 1, "%llu", (long long unsigned int)val.ulval);
-			return std::string(buf, len);
+			return sql::SQLString(buf, len);
 		}
 		case typeBool:
 		{
 			char buf[3];
 			size_t len = snprintf(buf, sizeof(buf) - 1, "%d", val.bval);
-			return std::string(buf, len);
+			return sql::SQLString(buf, len);
 		}
 		case typePtr:
 			return "";
@@ -191,21 +181,20 @@ MyVal::getBool()
 
 /* {{{ MySQL_ArtResultSet::MySQL_ArtResultSet() -I- */
 MySQL_ArtResultSet::MySQL_ArtResultSet(const StringList& fn, rset_t * const rs, boost::shared_ptr< MySQL_DebugLogger > & l)
-  : rset(rs), current_record(rset->begin()), started(false), row_position(0), is_closed(false), logger(l)
+  : num_fields(static_cast<int>(fn.size())), rset(rs), current_record(rset->begin()),
+    started(false), field_index_to_name_map(new sql::SQLString[num_fields]),
+	num_rows(rset->size()), row_position(0), is_closed(false), logger(l)
 {
 	CPP_ENTER("MySQL_ArtResultSet::MySQL_ArtResultSet");
 	CPP_INFO_FMT("metadata.size=%d resultset.size=%d", fn.size(), rset->size());
-	num_fields = static_cast<int>(fn.size());
 
-	num_rows = rset->size();
-
-	field_index_to_name_map = new std::string[num_fields];
+//	field_index_to_name_map = new sql::SQLString[num_fields];
 
 	unsigned int idx = 0;
 	for (StringList::const_iterator it = fn.begin(), e = fn.end(); it != e; ++it, ++idx) {
 		boost::scoped_array< char > upstring(sql::mysql::util::utf8_strup(it->c_str(), 0));
-		field_name_to_index_map[std::string(upstring.get())] = idx;
-		field_index_to_name_map[idx] = std::string(upstring.get());
+		field_name_to_index_map[sql::SQLString(upstring.get())] = idx;
+		field_index_to_name_map[idx] = upstring.get();
 	}
 
 	meta.reset(new MySQL_ArtResultSetMetaData(this, logger));
@@ -344,7 +333,7 @@ MySQL_ArtResultSet::close()
 {
 	CPP_ENTER("MySQL_ArtResultSet::close");
 	checkValid();
-	delete [] field_index_to_name_map;
+//	delete [] field_index_to_name_map;
 	is_closed = true;
 }
 /* }}} */
@@ -352,12 +341,13 @@ MySQL_ArtResultSet::close()
 
 /* {{{ MySQL_ArtResultSet::findColumn() -I- */
 uint32_t
-MySQL_ArtResultSet::findColumn(const std::string& columnLabel) const
+MySQL_ArtResultSet::findColumn(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::columnLabel");
 	checkValid();
 
 	boost::scoped_array< char > upstring(sql::mysql::util::utf8_strup(columnLabel.c_str(), 0));
+
 	FieldNameIndexMap::const_iterator iter = field_name_to_index_map.find(upstring.get());
 
 	if (iter == field_name_to_index_map.end()) {
@@ -401,7 +391,7 @@ MySQL_ArtResultSet::getBlob(const uint32_t columnIndex) const
 
 /* {{{ MySQL_ArtResultSet::getBlob() -I- */
 std::istream *
-MySQL_ArtResultSet::getBlob(const std::string& columnLabel) const
+MySQL_ArtResultSet::getBlob(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getBlob(string)");
 	return new std::istringstream(getString(columnLabel));
@@ -426,7 +416,7 @@ MySQL_ArtResultSet::getBoolean(const uint32_t columnIndex) const
 
 /* {{{ MySQL_ArtResultSet::getBoolean() -I- */
 bool
-MySQL_ArtResultSet::getBoolean(const std::string& columnLabel) const
+MySQL_ArtResultSet::getBoolean(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getBoolean(string)");
 	return getInt(columnLabel) != 0;
@@ -480,7 +470,7 @@ MySQL_ArtResultSet::getDouble(uint32_t columnIndex) const
 
 /* {{{ MySQL_ArtResultSet::getDouble() -I- */
 long double
-MySQL_ArtResultSet::getDouble(const std::string& columnLabel) const
+MySQL_ArtResultSet::getDouble(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getDouble(string)");
 	return getDouble(findColumn(columnLabel));
@@ -536,7 +526,7 @@ MySQL_ArtResultSet::getInt(uint32_t columnIndex) const
 
 /* {{{ MySQL_ArtResultSet::getInt() -I- */
 int32_t
-MySQL_ArtResultSet::getInt(const std::string& columnLabel) const
+MySQL_ArtResultSet::getInt(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getInt(string)");
 	return getInt(findColumn(columnLabel));
@@ -556,7 +546,7 @@ MySQL_ArtResultSet::getUInt(uint32_t columnIndex) const
 
 /* {{{ MySQL_ArtResultSet::getUInt() -I- */
 uint32_t
-MySQL_ArtResultSet::getUInt(const std::string& columnLabel) const
+MySQL_ArtResultSet::getUInt(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getUInt(string)");
 	return getUInt(findColumn(columnLabel));
@@ -586,7 +576,7 @@ MySQL_ArtResultSet::getInt64(const uint32_t columnIndex) const
 
 /* {{{ MySQL_ArtResultSet::getInt64() -I- */
 int64_t
-MySQL_ArtResultSet::getInt64(const std::string& columnLabel) const
+MySQL_ArtResultSet::getInt64(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getInt64(string)");
 	return getInt64(findColumn(columnLabel));
@@ -616,7 +606,7 @@ MySQL_ArtResultSet::getUInt64(const uint32_t columnIndex) const
 
 /* {{{ MySQL_ArtResultSet::getUInt64() -I- */
 uint64_t
-MySQL_ArtResultSet::getUInt64(const std::string& columnLabel) const
+MySQL_ArtResultSet::getUInt64(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getUInt64(string)");
 	return getUInt64(findColumn(columnLabel));
@@ -661,7 +651,7 @@ MySQL_ArtResultSet::getRowId(uint32_t)
 
 /* {{{ MySQL_ArtResultSet::getRowId() -U- */
 sql::RowID *
-MySQL_ArtResultSet::getRowId(const std::string &)
+MySQL_ArtResultSet::getRowId(const sql::SQLString &)
 {
 	CPP_ENTER("MySQL_ArtResultSet::getRowId");
 	checkValid();
@@ -705,7 +695,7 @@ MySQL_ArtResultSet::getString(uint32_t columnIndex) const
 
 /* {{{ MySQL_ArtResultSet::getString() -I- */
 SQLString
-MySQL_ArtResultSet::getString(const std::string& columnLabel) const
+MySQL_ArtResultSet::getString(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::getString(string)");
 	return getString(findColumn(columnLabel));
@@ -823,7 +813,7 @@ MySQL_ArtResultSet::isNull(const uint32_t columnIndex) const
 
 /* {{{ MySQL_ArtResultSet::isNull() -I- */
 bool
-MySQL_ArtResultSet::isNull(const std::string& columnLabel) const
+MySQL_ArtResultSet::isNull(const sql::SQLString& columnLabel) const
 {
 	CPP_ENTER("MySQL_ArtResultSet::isNull(string)");
 	return isNull(findColumn(columnLabel));

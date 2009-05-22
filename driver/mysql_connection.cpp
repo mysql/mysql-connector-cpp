@@ -47,7 +47,7 @@ namespace mysql
 {
 
 /* {{{ MySQL_Savepoint::MySQL_Savepoint() -I- */
-MySQL_Savepoint::MySQL_Savepoint(const std::string &savepoint):
+MySQL_Savepoint::MySQL_Savepoint(const sql::SQLString &savepoint):
   name(savepoint)
 {
 }
@@ -65,7 +65,7 @@ MySQL_Savepoint::getSavepointId()
 
 
 /* {{{ MySQL_Savepoint::getSavepointName() -I- */
-std::string
+sql::SQLString
 MySQL_Savepoint::getSavepointName()
 {
 	return name;
@@ -74,15 +74,15 @@ MySQL_Savepoint::getSavepointName()
 
 
 /* {{{ MySQL_Connection::MySQL_Connection() -I- */
-MySQL_Connection::MySQL_Connection(const std::string& hostName, const std::string& userName, const std::string& password)
+MySQL_Connection::MySQL_Connection(const sql::SQLString& hostName, const sql::SQLString& userName, const sql::SQLString& password)
 	: intern(NULL)
 {
-	std::map<std::string, sql::ConnectPropertyVal> connection_properties;
-	connection_properties[std::string("hostName")] = sql::ConnectPropertyVal(hostName);
-	connection_properties[std::string("userName")] = sql::ConnectPropertyVal(userName);
-	connection_properties[std::string("password")] = sql::ConnectPropertyVal(password);
+	sql::ConnectOptionsMap connection_properties;
+	connection_properties["hostName"] = hostName;
+	connection_properties["userName"] = userName;
+	connection_properties["password"] = password;
 
-	boost::shared_ptr<MySQL_DebugLogger> tmp_logger(new MySQL_DebugLogger());
+	boost::shared_ptr< MySQL_DebugLogger > tmp_logger(new MySQL_DebugLogger());
 	std::auto_ptr< MySQL_ConnectionData > tmp_intern(new MySQL_ConnectionData(tmp_logger));
 	intern = tmp_intern.get();
 
@@ -95,7 +95,7 @@ MySQL_Connection::MySQL_Connection(const std::string& hostName, const std::strin
 
 
 /* {{{ MySQL_Connection::MySQL_Connection() -I- */
-MySQL_Connection::MySQL_Connection(std::map< std::string, sql::ConnectPropertyVal > & properties)
+MySQL_Connection::MySQL_Connection(sql::ConnectOptionsMap & properties)
 	:intern(NULL)
 {
 	boost::shared_ptr<MySQL_DebugLogger> tmp_logger(new MySQL_DebugLogger());
@@ -167,47 +167,47 @@ MySQL_Connection::~MySQL_Connection()
 
 
 /* {{{ MySQL_Connection::init() -I- */
-void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & properties)
+void MySQL_Connection::init(ConnectOptionsMap & properties)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::init");
 
 	intern->is_valid = true;
 	bool protocol_tcp = true;
-	std::string host;
-	std::string socket_or_pipe;
+	sql::SQLString host;
+	sql::SQLString socket_or_pipe;
 	unsigned int port = 3306;
 
-	std::string hostName;
-	std::string userName;
-	std::string password;
-	std::string schema;
-	std::string defaultCharset("utf8");
-	std::string characterSetResults("utf8");
+	sql::SQLString hostName;
+	sql::SQLString userName;
+	sql::SQLString password;
+	sql::SQLString schema;
+	sql::SQLString defaultCharset("utf8");
+	sql::SQLString characterSetResults("utf8");
 
-	std::string sslKey, sslCert, sslCA, sslCAPath, sslCipher;
+	sql::SQLString sslKey, sslCert, sslCA, sslCAPath, sslCipher;
 	bool ssl_used = false, schema_used = false;
 	int flags = CLIENT_MULTI_RESULTS;
 
 	const long long * p_ll;
 	const bool * p_b;
-	const std::string * p_s;
+	const sql::SQLString * p_s;
 	
-	std::map<std::string, sql::ConnectPropertyVal>::const_iterator it = properties.begin();
+	sql::ConnectOptionsMap::const_iterator it = properties.begin();
 	for (; it != properties.end(); ++it) {
 		if (!it->first.compare("hostName")) {
-			if ((p_s = boost::get<std::string>(&it->second))) {
+			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
 				hostName = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for hostName");
 			}
 		} else if (!it->first.compare("userName")) {
-			if ((p_s = boost::get<std::string>(&it->second))) {
+			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
 				userName = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for userName");
 			}
 		} else if (!it->first.compare("password")) {
-			if ((p_s = boost::get<std::string>(&it->second))) {
+			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
 				password = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for password");
@@ -219,62 +219,62 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 				throw sql::InvalidArgumentException("No long long value passed for port");
 			}
 		} else if (!it->first.compare("socket")) {
-			if ((p_s = boost::get<std::string>(&it->second))) {
+			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
 				socket_or_pipe = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for socket");
 			}
 			protocol_tcp = false;
 		} else if (!it->first.compare("pipe")) {
-			if ((p_s = boost::get<std::string>(&it->second))) {
+			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
 				socket_or_pipe = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for pipe");
 			}
 			protocol_tcp = false;
 		} else if (!it->first.compare("schema")) {
-			if ((p_s = boost::get<std::string>(&it->second))) {
+			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
 				schema = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for schema");
 			}
 			schema_used = true;
 		} else if (!it->first.compare("characterSetResults")) {
-			if ((p_s = boost::get<std::string>(&it->second))) {
+			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
 				characterSetResults = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for characterSetResults");
 			}
 		} else if (!it->first.compare("sslKey")) {
-			if ((p_s = boost::get<std::string>(&it->second))) {
+			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
 				sslKey = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for sslKey");
 			}
 			ssl_used = true;
 		} else if (!it->first.compare("sslCert")) {
-			if ((p_s = boost::get<std::string>(&it->second))) {
+			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
 				sslCert = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for sslCert");
 			}
 			ssl_used = true;
 		} else if (!it->first.compare("sslCA")) {
-			if ((p_s = boost::get<std::string>(&it->second))) {
+			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
 				sslCA = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for sslCA");
 			}
 			ssl_used = true;
 		} else if (!it->first.compare("sslCAPath")) {
-			if ((p_s = boost::get<std::string>(&it->second))) {
+			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
 				sslCAPath = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for sslCAPath");
 			}
 			ssl_used = true;
 		} else if (!it->first.compare("sslCipher")) {
-			if ((p_s = boost::get<std::string>(&it->second))) {
+			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
 				sslCipher = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for sslCipher");
@@ -392,7 +392,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 #if !defined(_WIN32) && !defined(_WIN64)
 	if (!hostName.compare(0, sizeof("unix://") - 1, "unix://")) {
 		protocol_tcp = false;
-		socket_or_pipe = hostName.substr(sizeof("unix://") - 1, std::string::npos);
+		socket_or_pipe = hostName.substr(sizeof("unix://") - 1, sql::SQLString::npos);
 		host = "localhost";
 		int tmp_protocol = MYSQL_PROTOCOL_SOCKET;
 		mysql_options(intern->mysql, MYSQL_OPT_PROTOCOL, (const char *) &tmp_protocol);
@@ -400,7 +400,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 #else
 	if (!hostName.compare(0, sizeof("pipe://") - 1, "pipe://")) {
 		protocol_tcp = false;
-		socket_or_pipe = hostName.substr(sizeof("pipe://") - 1, std::string::npos);
+		socket_or_pipe = hostName.substr(sizeof("pipe://") - 1, sql::SQLString::npos);
 		host = ".";
 		int tmp_protocol = MYSQL_PROTOCOL_PIPE;
 		mysql_options(intern->mysql, MYSQL_OPT_PROTOCOL, (const char *) &tmp_protocol);
@@ -408,19 +408,19 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 #endif
 	if (!hostName.compare(0, sizeof("tcp://") - 1, "tcp://") ) {
 		size_t port_pos, schema_pos;
-		host = hostName.substr(sizeof("tcp://") - 1, std::string::npos);
+		host = hostName.substr(sizeof("tcp://") - 1, sql::SQLString::npos);
 		schema_pos = host.find('/');
-		if (schema_pos != std::string::npos) {
+		if (schema_pos != sql::SQLString::npos) {
 			++schema_pos; // skip the slash
 							/* TODO: tcp://127.0.0.1/
 							-> host set, schema empty, schema property ignored */
-			schema = host.substr(schema_pos, host.size() - schema_pos);
+			schema = host.substr(schema_pos, host.length() - schema_pos);
 			schema_used = true;
 			host = host.substr(0, schema_pos - 1);
 		}
-		port_pos = host.find_last_of(':', std::string::npos);
-		if (port_pos != std::string::npos) {
-		port = atoi(host.substr(port_pos + 1, std::string::npos).c_str());
+		port_pos = host.find_last_of(':', sql::SQLString::npos);
+		if (port_pos != sql::SQLString::npos) {
+		port = atoi(host.substr(port_pos + 1, sql::SQLString::npos).c_str());
 			host = host.substr(0, port_pos);
 		}
 	} else {
@@ -430,28 +430,49 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 	if (protocol_tcp && !host.compare(0, sizeof("localhost") - 1, "localhost")) {
 		host = "127.0.0.1";
 	}
-#if A0
-	std::map<std::string, sql::ConnectPropertyVal>::const_iterator it_tmp = properties.begin();
-	for (; it_tmp != properties.end(); ++it_tmp) {
-		if (!it_tmp->first.compare("OPT_CONNECT_TIMEOUT")) {
-			mysql_options(intern->mysql, MYSQL_OPT_CONNECT_TIMEOUT, (const char *) &it_tmp->second.lval);
-		} else if (!it_tmp->first.compare("OPT_READ_TIMEOUT")) {
-			mysql_options(intern->mysql, MYSQL_OPT_READ_TIMEOUT, (const char *) &it_tmp->second.lval);
-		} else if (!it_tmp->first.compare("OPT_WRITE_TIMEOUT")) {
-			mysql_options(intern->mysql, MYSQL_OPT_WRITE_TIMEOUT, (const char *) &it_tmp->second.lval);
-		} else if (!it_tmp->first.compare("OPT_RECONNECT")) {
-			mysql_options(intern->mysql, MYSQL_OPT_RECONNECT, (const char *) &it_tmp->second.bval);
-		} else if (!it_tmp->first.compare("OPT_CHARSET_NAME")) {
-			defaultCharset = it_tmp->second.str.val;
-		} else if (!it_tmp->first.compare("OPT_REPORT_DATA_TRUNCATION")) {
-			mysql_options(intern->mysql, MYSQL_REPORT_DATA_TRUNCATION, (const char *) &it_tmp->second.bval);
+
+	it = properties.begin();
+	for (; it != properties.end(); ++it) {
+		if (!it->first.compare("OPT_CONNECT_TIMEOUT")) {
+			if (!(p_b = boost::get< bool >(&it->second))) {
+				throw sql::InvalidArgumentException("No bool value passed for OPT_CONNECT_TIMEOUT");
+			}
+			mysql_options(intern->mysql, MYSQL_OPT_CONNECT_TIMEOUT, (const char *) &p_b);
+		} else if (!it->first.compare("OPT_READ_TIMEOUT")) {
+			if (!(p_ll = boost::get<long long>(&it->second))) {
+				throw sql::InvalidArgumentException("No long long value passed for OPT_READ_TIMEOUT");
+			}
+			long l_tmp = *p_ll;
+			mysql_options(intern->mysql, MYSQL_OPT_READ_TIMEOUT, (const char *) &l_tmp);
+		} else if (!it->first.compare("OPT_WRITE_TIMEOUT")) {
+			if (!(p_ll = boost::get<long long>(&it->second))) {
+				throw sql::InvalidArgumentException("No long long value passed for OPT_WRITE_TIMEOUT");
+			}
+			long l_tmp = *p_ll;
+			mysql_options(intern->mysql, MYSQL_OPT_WRITE_TIMEOUT, (const char *) &l_tmp);
+		} else if (!it->first.compare("OPT_RECONNECT")) {
+			if (!(p_ll = boost::get<long long>(&it->second))) {
+				throw sql::InvalidArgumentException("No long long value passed for OPT_RECONNECT");
+			}
+			long l_tmp = *p_ll;
+			mysql_options(intern->mysql, MYSQL_OPT_RECONNECT, (const char *) &l_tmp);
+		} else if (!it->first.compare("OPT_CHARSET_NAME")) {
+			if (!(p_s = boost::get< sql::SQLString >(&it->second))) {
+				throw sql::InvalidArgumentException("No long long value passed for OPT_CHARSET_NAME");
+			}
+			defaultCharset = *p_s;
+		} else if (!it->first.compare("OPT_REPORT_DATA_TRUNCATION")) {
+			if (!(p_b = boost::get<bool>(&it->second))) {
+				throw sql::InvalidArgumentException("No bool value passed for OPT_CONNECT_TIMEOUT");
+			}
+			mysql_options(intern->mysql, MYSQL_REPORT_DATA_TRUNCATION, (const char *) &p_b);
 #if defined(_WIN32) || defined(_WIN64)
-		} else if (!it_tmp->first.compare("OPT_NAMED_PIPE")) {
+		} else if (!it->first.compare("OPT_NAMED_PIPE")) {
 			mysql_options(intern->mysql, MYSQL_OPT_NAMED_PIPE, NULL);
 #endif
 		}
 	}
-#endif
+
 	{
 		my_bool tmp_bool = 1;
 		mysql_options(intern->mysql, MYSQL_SECURE_AUTH, (const char *) &tmp_bool);
@@ -472,7 +493,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 						host.c_str(),
 						userName.c_str(),
 						password.c_str(),
-						schema_used && schema.size()? schema.c_str():NULL /* schema */,
+						schema_used && schema.length()? schema.c_str():NULL /* schema */,
 						port,
 						protocol_tcp == false? socket_or_pipe.c_str():NULL /*socket or named pipe */,
 						flags)) {
@@ -486,7 +507,7 @@ void MySQL_Connection::init(std::map<std::string, sql::ConnectPropertyVal> & pro
 	setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
 	// Different Values means we have to set different result set encoding
 	if (characterSetResults.compare(defaultCharset)) {
-		setSessionVariable("character_set_results", characterSetResults.length() ? characterSetResults:std::string("NULL"));
+		setSessionVariable("character_set_results", characterSetResults.length() ? characterSetResults:"NULL");
 	}
 	intern->meta.reset(new MySQL_ConnectionMetaData(this, intern->logger));
 }
@@ -561,12 +582,12 @@ MySQL_Connection::getAutoCommit()
 
 
 /* {{{ MySQL_Connection::getCatalog() -I- */
-std::string
+sql::SQLString
 MySQL_Connection::getCatalog()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getCatalog");
 	checkClosed();
-	return mysql_get_server_version(intern->mysql) > 60006 ? std::string("def") : std::string("");
+	return mysql_get_server_version(intern->mysql) > 60006 ? "def" : "";
 }
 /* }}} */
 
@@ -575,7 +596,7 @@ MySQL_Connection::getCatalog()
   Added for consistency. Not present in jdbc interface. Is still subject for discussion.
 */
 /* {{{ MySQL_Connection::getSchema() -I- */
-std::string
+sql::SQLString
 MySQL_Connection::getSchema()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getSchema");
@@ -589,10 +610,10 @@ MySQL_Connection::getSchema()
 
 
 /* {{{ MySQL_Connection::getClientInfo() -I- */
-std::string
+sql::SQLString
 MySQL_Connection::getClientInfo()
 {
-	static const std::string clientInfo("cppconn");
+	const sql::SQLString clientInfo("cppconn");
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getClientInfo");
 	return clientInfo;
 }
@@ -601,7 +622,7 @@ MySQL_Connection::getClientInfo()
 
 /* {{{ MySQL_Connection::getClientOption() -I- */
 void
-MySQL_Connection::getClientOption(const std::string & optionName, void * optionValue)
+MySQL_Connection::getClientOption(const sql::SQLString & optionName, void * optionValue)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getClientOption");
 	if (!optionName.compare("metadataUseInfoSchema")) {
@@ -611,7 +632,7 @@ MySQL_Connection::getClientOption(const std::string & optionName, void * optionV
 	} else if (!optionName.compare("defaultPreparedStatementResultType")) {
 		*(static_cast<int *>(optionValue)) = intern->defaultPreparedStatementResultType;
 	} else if (!optionName.compare("characterSetResults")) {
-		*(static_cast<std::string **>(optionValue)) = new std::string(getSessionVariable("characterSetResults"));
+		*(static_cast<sql::SQLString **>(optionValue)) = new sql::SQLString(getSessionVariable("characterSetResults"));
 	}
 }
 /* }}} */
@@ -687,19 +708,19 @@ MySQL_Connection::isReadOnly()
 
 
 /* {{{ MySQL_Connection::nativeSQL() -I- */
-std::string
-MySQL_Connection::nativeSQL(const std::string& sql)
+sql::SQLString
+MySQL_Connection::nativeSQL(const sql::SQLString& sql)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::nativeSQL");
 	checkClosed();
-	return std::string(sql.c_str());
+	return sql::SQLString(sql.c_str());
 }
 /* }}} */
 
 
 /* {{{ MySQL_Connection::prepareStatement() -I- */
 sql::PreparedStatement *
-MySQL_Connection::prepareStatement(const std::string& sql)
+MySQL_Connection::prepareStatement(const sql::SQLString& sql)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
 	CPP_INFO_FMT("query=%s", sql.c_str());
@@ -725,11 +746,11 @@ MySQL_Connection::prepareStatement(const std::string& sql)
 
 /* {{{ MySQL_Connection::prepareStatement() -U- */
 sql::PreparedStatement *
-MySQL_Connection::prepareStatement(const std::string& /* sql */, int /* autoGeneratedKeys */)
+MySQL_Connection::prepareStatement(const sql::SQLString& /* sql */, int /* autoGeneratedKeys */)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
 	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Connection::prepareStatement(const std::string& sql, int autoGeneratedKeys)");
+	throw sql::MethodNotImplementedException("MySQL_Connection::prepareStatement(const sql::SQLString& sql, int autoGeneratedKeys)");
 	return NULL; // fool compiler
 }
 /* }}} */
@@ -737,11 +758,11 @@ MySQL_Connection::prepareStatement(const std::string& /* sql */, int /* autoGene
 
 /* {{{ MySQL_Connection::prepareStatement() -U- */
 sql::PreparedStatement *
-MySQL_Connection::prepareStatement(const std::string& /* sql */, int /* columnIndexes */ [])
+MySQL_Connection::prepareStatement(const sql::SQLString& /* sql */, int /* columnIndexes */ [])
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
 	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Connection::prepareStatement(const std::string& sql, int* columnIndexes)");
+	throw sql::MethodNotImplementedException("MySQL_Connection::prepareStatement(const sql::SQLString& sql, int* columnIndexes)");
 	return NULL; // fool compiler
 }
 /* }}} */
@@ -749,11 +770,11 @@ MySQL_Connection::prepareStatement(const std::string& /* sql */, int /* columnIn
 
 /* {{{ MySQL_Connection::prepareStatement() -U- */
 sql::PreparedStatement *
-MySQL_Connection::prepareStatement(const std::string& /* sql */, int /* resultSetType */, int /* resultSetConcurrency */)
+MySQL_Connection::prepareStatement(const sql::SQLString& /* sql */, int /* resultSetType */, int /* resultSetConcurrency */)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
 	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Connection::prepareStatement(const std::string& sql, int resultSetType, int resultSetConcurrency)");
+	throw sql::MethodNotImplementedException("MySQL_Connection::prepareStatement(const sql::SQLString& sql, int resultSetType, int resultSetConcurrency)");
 	return NULL; // fool compiler
 }
 /* }}} */
@@ -761,11 +782,11 @@ MySQL_Connection::prepareStatement(const std::string& /* sql */, int /* resultSe
 
 /* {{{ MySQL_Connection::prepareStatement() -U- */
 sql::PreparedStatement *
-MySQL_Connection::prepareStatement(const std::string& /* sql */, int /* resultSetType */, int /* resultSetConcurrency */, int /* resultSetHoldability */)
+MySQL_Connection::prepareStatement(const sql::SQLString& /* sql */, int /* resultSetType */, int /* resultSetConcurrency */, int /* resultSetHoldability */)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
 	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Connection::prepareStatement(const std::string& sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)");
+	throw sql::MethodNotImplementedException("MySQL_Connection::prepareStatement(const sql::SQLString& sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)");
 	return NULL; // fool compiler
 }
 /* }}} */
@@ -773,11 +794,11 @@ MySQL_Connection::prepareStatement(const std::string& /* sql */, int /* resultSe
 
 /* {{{ MySQL_Connection::prepareStatement() -U- */
 sql::PreparedStatement *
-MySQL_Connection::prepareStatement(const std::string& /* sql */, std::string /* columnNames*/ [])
+MySQL_Connection::prepareStatement(const sql::SQLString& /* sql */, sql::SQLString /* columnNames*/ [])
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
 	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Connection::prepareStatement(const std::string& sql, std::string columnNames[])");
+	throw sql::MethodNotImplementedException("MySQL_Connection::prepareStatement(const sql::SQLString& sql, sql::SQLString columnNames[])");
 	return NULL; // fool compiler
 }
 /* }}} */
@@ -795,7 +816,7 @@ MySQL_Connection::releaseSavepoint(Savepoint * savepoint)
 	if (getAutoCommit()) {
 		throw sql::InvalidArgumentException("The connection is in autoCommit mode");
 	}
-	std::string sql("RELEASE SAVEPOINT ");
+	sql::SQLString sql("RELEASE SAVEPOINT ");
 	sql.append(savepoint->getSavepointName());
 
 	boost::scoped_ptr<sql::Statement> stmt(createStatement());
@@ -824,7 +845,7 @@ MySQL_Connection::rollback(Savepoint * savepoint)
 	if (getAutoCommit()) {
 		throw sql::InvalidArgumentException("The connection is in autoCommit mode");
 	}
-	std::string sql("ROLLBACK TO SAVEPOINT ");
+	sql::SQLString sql("ROLLBACK TO SAVEPOINT ");
 	sql.append(savepoint->getSavepointName());
 
 	boost::scoped_ptr< sql::Statement > stmt(createStatement());
@@ -835,7 +856,7 @@ MySQL_Connection::rollback(Savepoint * savepoint)
 
 /* {{{ MySQL_Connection::setCatalog() -I- */
 void
-MySQL_Connection::setCatalog(const std::string&)
+MySQL_Connection::setCatalog(const sql::SQLString&)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setCatalog");
 	checkClosed();
@@ -845,11 +866,11 @@ MySQL_Connection::setCatalog(const std::string&)
 
 /* {{{ MySQL_Connection::setSchema() -I- (not part of JDBC) */
 void
-MySQL_Connection::setSchema(const std::string& catalog)
+MySQL_Connection::setSchema(const sql::SQLString& catalog)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setCatalog");
 	checkClosed();
-	std::string sql("USE ");
+	sql::SQLString sql("USE ");
 	sql.append(catalog);
 
 	boost::scoped_ptr< sql::Statement > stmt(createStatement());
@@ -860,7 +881,7 @@ MySQL_Connection::setSchema(const std::string& catalog)
 
 /* {{{ MySQL_Connection::setClientOption() -I- */
 sql::Connection *
-MySQL_Connection::setClientOption(const std::string & optionName, const void * optionValue)
+MySQL_Connection::setClientOption(const sql::SQLString & optionName, const void * optionValue)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setClientOption");
 	if (!optionName.compare("libmysql_debug")) {
@@ -874,7 +895,7 @@ MySQL_Connection::setClientOption(const std::string & optionName, const void * o
 			CPP_INFO("Tracing disabled");
 		}
 	} else if (!optionName.compare("characterSetResults")) {
-		setSessionVariable("character_set_results", optionValue? static_cast<const char *>(optionValue) : std::string("NULL"));
+		setSessionVariable("character_set_results", optionValue? static_cast<const char *>(optionValue) : sql::SQLString("NULL"));
 	} else if (!optionName.compare("metadataUseInfoSchema")) {
 		intern->metadata_use_info_schema = *(static_cast<const bool *>(optionValue));
 	} else if (!optionName.compare("defaultStatementResultType")) {
@@ -932,7 +953,7 @@ MySQL_Connection::setSavepoint()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setSavepoint");
 	checkClosed();
-	throw sql::MethodNotImplementedException("Please use MySQL_Connection::setSavepoint(const std::string& name)");
+	throw sql::MethodNotImplementedException("Please use MySQL_Connection::setSavepoint(const sql::SQLString& name)");
 	return NULL;
 }
 /* }}} */
@@ -940,7 +961,7 @@ MySQL_Connection::setSavepoint()
 
 /* {{{ MySQL_Connection::setSavepoint() -I- */
 sql::Savepoint *
-MySQL_Connection::setSavepoint(const std::string& name)
+MySQL_Connection::setSavepoint(const sql::SQLString& name)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setSavepoint");
 	checkClosed();
@@ -950,7 +971,7 @@ MySQL_Connection::setSavepoint(const std::string& name)
 	if (!name.length()) {
 		throw sql::InvalidArgumentException("Savepoint name cannot be empty string");
 	}
-	std::string sql("SAVEPOINT ");
+	sql::SQLString sql("SAVEPOINT ");
 	sql.append(name);
 
 	boost::scoped_ptr< sql::Statement > stmt(createStatement());
@@ -1003,27 +1024,26 @@ MySQL_Connection::setTransactionIsolation(enum_transaction_isolation level)
 
 
 /* {{{ MySQL_Connection::getSessionVariable() -I- */
-std::string
-MySQL_Connection::getSessionVariable(const std::string & varname)
+sql::SQLString
+MySQL_Connection::getSessionVariable(const sql::SQLString & varname)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getSessionVariable");
 	checkClosed();
 
-	if (intern->cache_sql_mode && intern->sql_mode_set == true &&
-		!strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1))
-	{
+	if (intern->cache_sql_mode && intern->sql_mode_set == true && !varname.compare("sql_mode")) {
 		CPP_INFO_FMT("sql_mode=%s", intern->sql_mode.c_str());
 		return intern->sql_mode;
 	}
 	boost::scoped_ptr< sql::Statement > stmt(createStatement());
-	std::string q = std::string("SHOW SESSION VARIABLES LIKE '").append(varname).append("'");
+	sql::SQLString q("SHOW SESSION VARIABLES LIKE '");
+	q.append(varname).append("'");
 
+//	printf("[%p]%s|||\n", &q, q.c_str());
+//	std::cout << q << "]]\n";
 	boost::scoped_ptr< sql::ResultSet > rset(stmt->executeQuery(q));
 
 	if (rset->next()) {
-		if (intern->cache_sql_mode && intern->sql_mode_set == false &&
-			!strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1))
-		{
+		if (intern->cache_sql_mode && intern->sql_mode_set == false && !varname.compare("sql_mode")) {
 			intern->sql_mode = rset->getString(2);
 			intern->sql_mode_set = true;
 		}
@@ -1036,13 +1056,15 @@ MySQL_Connection::getSessionVariable(const std::string & varname)
 
 /* {{{ MySQL_Connection::setSessionVariable() -I- */
 void
-MySQL_Connection::setSessionVariable(const std::string & varname, const std::string & value)
+MySQL_Connection::setSessionVariable(const sql::SQLString & varname, const sql::SQLString & value)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setSessionVariable");
 	checkClosed();
 
 	boost::scoped_ptr< sql::Statement > stmt(createStatement());
-	std::string q(std::string("SET SESSION ").append(varname).append("="));
+	sql::SQLString q("SET SESSION ");
+	q.append(varname).append("=");
+
 	if (!value.compare("NULL")) {
 		q.append("NULL");
 	} else {

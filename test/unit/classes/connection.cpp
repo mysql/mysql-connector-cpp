@@ -352,14 +352,14 @@ void connection::connectUsingMap()
 
   try
   {
-    std::map<std::string, sql::ConnectPropertyVal> connection_properties;
+    sql::ConnectOptionsMap connection_properties;
 
-    connection_properties["hostName"]=sql::ConnectPropertyVal(url);
-    connection_properties["userName"]=sql::ConnectPropertyVal(user);
-    connection_properties["password"]=sql::ConnectPropertyVal(passwd);
+    connection_properties["hostName"]=url;
+    connection_properties["userName"]=user;
+    connection_properties["password"]=passwd;
 
     bool bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
-    connection_properties["metadataUseInfoSchema"]=sql::ConnectPropertyVal(bval);
+    connection_properties["metadataUseInfoSchema"]=(bval);
 
     created_objects.clear();
     con.reset(driver->connect(connection_properties));
@@ -383,7 +383,7 @@ void connection::connectUsingMap()
         if (port == -1)
         {
           /* The user is using TCP/IP and default port 3306 */
-		  connection_properties["password"]=sql::ConnectPropertyVal(port);
+		  connection_properties["password"]=(port);
           try
           {
             created_objects.clear();
@@ -416,7 +416,7 @@ void connection::connectUsingMap()
       else
       {
         /* We must be using a socket connection - all port settings shall be ignored */
-        connection_properties["port"]=sql::ConnectPropertyVal(port);
+        connection_properties["port"]=(port);
         /* Must not throw an exception */
         try
         {
@@ -495,7 +495,7 @@ void connection::connectUsingMap()
       {
         logMsg("... schema not set through the URL");
 
-        connection_properties[std::string("schema")]=sql::ConnectPropertyVal(schema);
+        connection_properties[std::string("schema")]=schema;
 
         try
         {
@@ -514,7 +514,7 @@ void connection::connectUsingMap()
         logMsg("... trying to connect to mysql schema, may or may not work");
 
         connection_properties.erase("schema");
-        connection_properties["schema"]=sql::ConnectPropertyVal(myschema);
+        connection_properties["schema"]=(myschema);
 
         try
         {
@@ -561,7 +561,7 @@ void connection::connectUsingMap()
         }
 
         /* property set */
-        connection_properties["schema"]=sql::ConnectPropertyVal(myschema);
+        connection_properties["schema"]=(myschema);
         try
         {
           created_objects.clear();
@@ -591,11 +591,11 @@ void connection::connectUsingMap()
     {
       logMsg("... setting bogus SSL properties");
       std::string sql("ramdom bogus value");
-      connection_properties["sslKey"]=sql::ConnectPropertyVal(sql);
-      connection_properties["sslCert"]=sql::ConnectPropertyVal(sql);
-      connection_properties["sslCA"]=sql::ConnectPropertyVal(sql);
-      connection_properties["sslCAPath"]=sql::ConnectPropertyVal(sql);
-      connection_properties["sslCipher"]=sql::ConnectPropertyVal(sql);
+      connection_properties["sslKey"]=(sql);
+      connection_properties["sslCert"]=(sql);
+      connection_properties["sslCA"]=(sql);
+      connection_properties["sslCAPath"]=(sql);
+      connection_properties["sslCipher"]=(sql);
       /*
        mysql_ssl_set is silly:
        This function always returns 0.
@@ -623,7 +623,7 @@ void connection::connectUsingMap()
     connection_properties.erase("CLIENT_COMPRESS");
     {
       logMsg("... testing CLIENT_COMPRESS");
-      connection_properties["CLIENT_COMPRESS"]=sql::ConnectPropertyVal(true);
+      connection_properties["CLIENT_COMPRESS"]=(true);
       try
       {
         created_objects.clear();
@@ -633,7 +633,7 @@ void connection::connectUsingMap()
       {
       }
 
-      connection_properties["CLIENT_COMPRESS"]=sql::ConnectPropertyVal(false);
+      connection_properties["CLIENT_COMPRESS"]=(false);
       try
       {
         created_objects.clear();
@@ -649,7 +649,7 @@ void connection::connectUsingMap()
     connection_properties.erase("CLIENT_FOUND_ROWS");
     {
       logMsg("... testing CLIENT_FOUND_ROWS");
-      connection_properties["CLIENT_FOUND_ROWS"]=sql::ConnectPropertyVal(true);
+      connection_properties["CLIENT_FOUND_ROWS"]=(true);
       try
       {
         created_objects.clear();
@@ -659,7 +659,7 @@ void connection::connectUsingMap()
       {
       }
 
-      connection_properties["CLIENT_FOUND_ROWS"]=sql::ConnectPropertyVal(true);
+      connection_properties["CLIENT_FOUND_ROWS"]=(true);
       try
       {
         created_objects.clear();
@@ -670,7 +670,7 @@ void connection::connectUsingMap()
       }
 
       connection_properties.erase("CLIENT_FOUND_ROWS");
-      connection_properties["CLIENT_FOUND_ROWS"]=sql::ConnectPropertyVal(false);
+      connection_properties["CLIENT_FOUND_ROWS"]=(false);
       try
       {
         created_objects.clear();
@@ -686,7 +686,7 @@ void connection::connectUsingMap()
     connection_properties.erase("CLIENT_IGNORE_SIGPIPE");
     {
       logMsg("... testing CLIENT_IGNORE_SIGPIPE");
-      connection_properties["CLIENT_IGNORE_SIGPIPE"]=sql::ConnectPropertyVal(true);
+      connection_properties["CLIENT_IGNORE_SIGPIPE"]=(true);
       try
       {
         created_objects.clear();
@@ -696,7 +696,7 @@ void connection::connectUsingMap()
       {
       }
 
-      connection_properties["CLIENT_IGNORE_SIGPIPE"]=sql::ConnectPropertyVal(true);
+      connection_properties["CLIENT_IGNORE_SIGPIPE"]=(true);
       try
       {
         created_objects.clear();
@@ -706,7 +706,7 @@ void connection::connectUsingMap()
       {
       }
 
-      connection_properties["CLIENT_IGNORE_SIGPIPE"]=sql::ConnectPropertyVal(false);
+      connection_properties["CLIENT_IGNORE_SIGPIPE"]=(false);
       try
       {
         created_objects.clear();
@@ -722,7 +722,7 @@ void connection::connectUsingMap()
     connection_properties.erase("CLIENT_IGNORE_SPACE");
     {
       logMsg("... testing CLIENT_IGNORE_SPACE");
-      connection_properties["CLIENT_IGNORE_SPACE"]=sql::ConnectPropertyVal(true);
+      connection_properties["CLIENT_IGNORE_SPACE"]=(true);
       try
       {
         created_objects.clear();
@@ -732,7 +732,7 @@ void connection::connectUsingMap()
       {
       }
 
-      connection_properties["CLIENT_IGNORE_SPACE"]=sql::ConnectPropertyVal(true);
+      connection_properties["CLIENT_IGNORE_SPACE"]=(true);
       try
       {
         created_objects.clear();
@@ -743,7 +743,7 @@ void connection::connectUsingMap()
       }
 
       connection_properties.erase("CLIENT_IGNORE_SPACE");
-      connection_properties["CLIENT_IGNORE_SPACE"]=sql::ConnectPropertyVal(false);
+      connection_properties["CLIENT_IGNORE_SPACE"]=(false);
       try
       {
         created_objects.clear();
@@ -759,7 +759,7 @@ void connection::connectUsingMap()
     connection_properties.erase("CLIENT_INTERACTIVE");
     {
       logMsg("... testing CLIENT_INTERACTIVE");
-      connection_properties["CLIENT_INTERACTIVE"]=sql::ConnectPropertyVal(true);
+      connection_properties["CLIENT_INTERACTIVE"]=(true);
       try
       {
         created_objects.clear();
@@ -769,7 +769,7 @@ void connection::connectUsingMap()
       {
       }
 
-      connection_properties["CLIENT_INTERACTIVE"]=sql::ConnectPropertyVal(true);
+      connection_properties["CLIENT_INTERACTIVE"]=(true);
       try
       {
         created_objects.clear();
@@ -780,7 +780,7 @@ void connection::connectUsingMap()
       }
 
       connection_properties.erase("CLIENT_INTERACTIVE");
-      connection_properties["CLIENT_INTERACTIVE"]=sql::ConnectPropertyVal(false);
+      connection_properties["CLIENT_INTERACTIVE"]=(false);
       try
       {
         created_objects.clear();
@@ -797,7 +797,7 @@ void connection::connectUsingMap()
     connection_properties.erase("CLIENT_LOCAL_FILES");
     {
       logMsg("... testing CLIENT_LOCAL_FILES");
-      connection_properties["CLIENT_LOCAL_FILES"]=sql::ConnectPropertyVal(true);
+      connection_properties["CLIENT_LOCAL_FILES"]=(true);
       try
       {
         created_objects.clear();
@@ -807,7 +807,7 @@ void connection::connectUsingMap()
       {
       }
 
-      connection_properties["CLIENT_LOCAL_FILES"]=sql::ConnectPropertyVal(true);
+      connection_properties["CLIENT_LOCAL_FILES"]=(true);
       try
       {
         created_objects.clear();
@@ -818,7 +818,7 @@ void connection::connectUsingMap()
       }
 
       connection_properties.erase("CLIENT_LOCAL_FILES");
-      connection_properties["CLIENT_LOCAL_FILES"]=sql::ConnectPropertyVal(false);
+      connection_properties["CLIENT_LOCAL_FILES"]=(false);
       try
       {
         created_objects.clear();
@@ -835,7 +835,7 @@ void connection::connectUsingMap()
     connection_properties.erase("CLIENT_MULTI_RESULTS");
     {
       logMsg("... testing CLIENT_MULTI_RESULTS");
-      connection_properties["CLIENT_MULTI_RESULTS"]=sql::ConnectPropertyVal(true);
+      connection_properties["CLIENT_MULTI_RESULTS"]=(true);
       try
       {
         created_objects.clear();
@@ -845,7 +845,7 @@ void connection::connectUsingMap()
       {
       }
 
-      connection_properties["CLIENT_MULTI_RESULTS"]=sql::ConnectPropertyVal(true);
+      connection_properties["CLIENT_MULTI_RESULTS"]=(true);
       try
       {
         created_objects.clear();
@@ -856,7 +856,7 @@ void connection::connectUsingMap()
       }
 
       connection_properties.erase("CLIENT_MULTI_RESULTS");
-      connection_properties["CLIENT_MULTI_RESULTS"]=sql::ConnectPropertyVal(false);
+      connection_properties["CLIENT_MULTI_RESULTS"]=(false);
       try
       {
         created_objects.clear();
@@ -873,7 +873,7 @@ void connection::connectUsingMap()
     connection_properties.erase("CLIENT_MULTI_STATEMENTS");
     {
       logMsg("... testing CLIENT_MULTI_STATEMENTS");
-      connection_properties["CLIENT_MULTI_STATEMENTS"]=sql::ConnectPropertyVal(true);
+      connection_properties["CLIENT_MULTI_STATEMENTS"]=(true);
       try
       {
         created_objects.clear();
@@ -883,7 +883,7 @@ void connection::connectUsingMap()
       {
       }
 
-      connection_properties["CLIENT_MULTI_STATEMENTS"]=sql::ConnectPropertyVal(true);
+      connection_properties["CLIENT_MULTI_STATEMENTS"]=(true);
       try
       {
         created_objects.clear();
@@ -894,7 +894,7 @@ void connection::connectUsingMap()
       }
 
       connection_properties.erase("CLIENT_MULTI_STATEMENTS");
-      connection_properties["CLIENT_MULTI_STATEMENTS"]=sql::ConnectPropertyVal(false);
+      connection_properties["CLIENT_MULTI_STATEMENTS"]=(false);
       try
       {
         created_objects.clear();
@@ -910,7 +910,7 @@ void connection::connectUsingMap()
     connection_properties.erase("CLIENT_NO_SCHEMA");
     {
       logMsg("... testing CLIENT_NO_SCHEMA");
-      connection_properties["CLIENT_NO_SCHEMA"]=sql::ConnectPropertyVal(true);
+      connection_properties["CLIENT_NO_SCHEMA"]=(true);
       try
       {
         created_objects.clear();
@@ -920,7 +920,7 @@ void connection::connectUsingMap()
       {
       }
 
-      connection_properties["CLIENT_NO_SCHEMA"]=sql::ConnectPropertyVal(true);
+      connection_properties["CLIENT_NO_SCHEMA"]=(true);
       try
       {
         created_objects.clear();
@@ -931,7 +931,7 @@ void connection::connectUsingMap()
       }
 
       connection_properties.erase("CLIENT_NO_SCHEMA");
-      connection_properties["CLIENT_NO_SCHEMA"]=sql::ConnectPropertyVal(false);
+      connection_properties["CLIENT_NO_SCHEMA"]=(false);
       try
       {
         created_objects.clear();
@@ -951,7 +951,7 @@ void connection::connectUsingMap()
        C-API does not care about the actual value, its passed down to the OS,
        The OS may or may not detect bogus values such as negative values.
        */
-      connection_properties["OPT_CONNECT_TIMEOUT"]=sql::ConnectPropertyVal((long long)1);
+      connection_properties["OPT_CONNECT_TIMEOUT"]=((long long)1);
       try
       {
         created_objects.clear();
@@ -972,7 +972,7 @@ void connection::connectUsingMap()
        C-API does not care about the actual value, its passed down to the OS,
        The OS may or may not detect bogus values such as negative values.
        */
-      connection_properties["OPT_READ_TIMEOUT"]=sql::ConnectPropertyVal((long long)1);
+      connection_properties["OPT_READ_TIMEOUT"]=((long long)1);
       try
       {
         created_objects.clear();
@@ -990,7 +990,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing OPT_WRITE_TIMEOUT");
       /* C-API does not care about the actual value */
-      connection_properties["OPT_WRITE_TIMEOUT"]=sql::ConnectPropertyVal((long long)1);
+      connection_properties["OPT_WRITE_TIMEOUT"]=((long long)1);
       try
       {
         created_objects.clear();
@@ -1008,7 +1008,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing OPT_RECONNECT");
       /* C-API does not care about the actual value */
-      connection_properties["OPT_RECONNECT"]=sql::ConnectPropertyVal((long long)1);
+      connection_properties["OPT_RECONNECT"]=((long long)1);
       try
       {
         created_objects.clear();
@@ -1027,7 +1027,7 @@ void connection::connectUsingMap()
       logMsg("... testing OPT_SET_CHARSET_NAME");
       std::string charset("utf8");
       /* C-API does not care about the actual value */
-      connection_properties["OPT_SET_CHARSET_NAME"]=sql::ConnectPropertyVal(charset);
+      connection_properties["OPT_SET_CHARSET_NAME"]=(charset);
       try
       {
         created_objects.clear();
@@ -1046,7 +1046,7 @@ void connection::connectUsingMap()
       logMsg("... testing REPORT_DATA_TRUNCATION");
       std::string charset("1");
       /* C-API does not care about the actual value */
-      connection_properties["REPORT_DATA_TRUNCATION"]=sql::ConnectPropertyVal(charset);
+      connection_properties["REPORT_DATA_TRUNCATION"]=(charset);
       try
       {
         created_objects.clear();
@@ -1064,7 +1064,7 @@ void connection::connectUsingMap()
     connection_properties.erase("metadataUseInfoSchema");
     {
       logMsg("... testing metadataUseInfoSchema");
-      connection_properties["metadataUseInfoSchema"]=sql::ConnectPropertyVal(true);
+      connection_properties["metadataUseInfoSchema"]=(true);
       try
       {
         created_objects.clear();
@@ -1076,7 +1076,7 @@ void connection::connectUsingMap()
       }
 
       connection_properties.erase("metadataUseInfoSchema");
-      connection_properties["metadataUseInfoSchema"]=sql::ConnectPropertyVal(false);
+      connection_properties["metadataUseInfoSchema"]=(false);
       try
       {
         created_objects.clear();
@@ -1093,7 +1093,7 @@ void connection::connectUsingMap()
     connection_properties.erase("defaultStatementResultType");
     {
       logMsg("... testing defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]=sql::ConnectPropertyVal((long long)sql::ResultSet::TYPE_FORWARD_ONLY);
+      connection_properties["defaultStatementResultType"]=((long long)sql::ResultSet::TYPE_FORWARD_ONLY);
       try
       {
         created_objects.clear();
@@ -1105,7 +1105,7 @@ void connection::connectUsingMap()
       }
 
       connection_properties.erase("defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]=sql::ConnectPropertyVal((long long)sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
+      connection_properties["defaultStatementResultType"]=((long long)sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
       try
       {
         created_objects.clear();
@@ -1117,7 +1117,7 @@ void connection::connectUsingMap()
       }
 
       connection_properties.erase("defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]=sql::ConnectPropertyVal((long long)sql::ResultSet::TYPE_SCROLL_SENSITIVE);
+      connection_properties["defaultStatementResultType"]=((long long)sql::ResultSet::TYPE_SCROLL_SENSITIVE);
       try
       {
         created_objects.clear();
@@ -1146,7 +1146,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing OPT_NAMED_PIPE");
       std::string pipe("IGNORED");
-      connection_properties["OPT_NAMED_PIPE"]=sql::ConnectPropertyVal(pipe);
+      connection_properties["OPT_NAMED_PIPE"]=(pipe);
       try
       {
         created_objects.clear();
@@ -1165,7 +1165,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing OPT_CHARSET_NAME");
       std::string charset("utf8");
-      connection_properties["OPT_CHARSET_NAME"]=sql::ConnectPropertyVal(charset);
+      connection_properties["OPT_CHARSET_NAME"]=(charset);
       try
       {
         created_objects.clear();
@@ -1183,7 +1183,7 @@ void connection::connectUsingMap()
     connection_properties.erase("OPT_REPORT_DATA_TRUNCATION");
     {
       logMsg("... testing OPT_REPORT_DATA_TRUNCATION");
-      connection_properties["OPT_REPORT_DATA_TRUNCATION"]=sql::ConnectPropertyVal(true);
+      connection_properties["OPT_REPORT_DATA_TRUNCATION"]=(true);
       try
       {
         created_objects.clear();
@@ -1195,7 +1195,7 @@ void connection::connectUsingMap()
       }
 
       connection_properties.erase("OPT_REPORT_DATA_TRUNCATION");
-      connection_properties["OPT_REPORT_DATA_TRUNCATION"]=sql::ConnectPropertyVal(false);
+      connection_properties["OPT_REPORT_DATA_TRUNCATION"]=(false);
       try
       {
         created_objects.clear();

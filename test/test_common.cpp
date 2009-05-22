@@ -2145,7 +2145,7 @@ static void test_not_implemented_connection(std::auto_ptr<sql::Connection> & con
 
 	std::string bar("bar");
 	int int_array[] = {1, 2, 3};
-	std::string string_array[] = {"a", "b", "c"};
+	sql::SQLString string_array[] = {"a", "b", "c"};
 
 	try {
 

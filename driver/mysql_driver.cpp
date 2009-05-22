@@ -60,15 +60,15 @@ MySQL_Driver::~MySQL_Driver()
 }
 
 
-sql::Connection * MySQL_Driver::connect(const std::string& hostName,
-										const std::string& userName,
-										const std::string& password)
+sql::Connection * MySQL_Driver::connect(const sql::SQLString& hostName,
+										const sql::SQLString& userName,
+										const sql::SQLString& password)
 {
 	return new MySQL_Connection(hostName, userName, password);
 }
 
 
-sql::Connection * MySQL_Driver::connect(std::map<std::string, sql::ConnectPropertyVal> & properties)
+sql::Connection * MySQL_Driver::connect(sql::ConnectOptionsMap & properties)
 {
 	return new MySQL_Connection(properties);
 }
@@ -89,9 +89,9 @@ int MySQL_Driver::getPatchVersion()
 	return 6;
 }
 
-const std::string & MySQL_Driver::getName()
+const sql::SQLString & MySQL_Driver::getName()
 {
-	static const std::string name("MySQL Connector C++ (libmysql)");
+	static const sql::SQLString name("MySQL Connector C++ (libmysql)");
 	return name;
 }
 

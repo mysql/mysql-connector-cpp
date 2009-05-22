@@ -11,7 +11,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <string>
 #include <memory>
 
 #include <cppconn/datatype.h>
@@ -333,7 +332,7 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
 
 /* {{{ mysql_to_datatype() -I- */
 int
-mysql_string_type_to_datatype(const std::string & name)
+mysql_string_type_to_datatype(const sql::SQLString & name)
 {
 	/*
 	  I_S.COLUMNS is buggy, because it deflivers (float|double) unsigned

@@ -30,11 +30,9 @@ public:
 
 	static MySQL_Driver * Instance();
 
-	sql::Connection * connect(const std::string& hostName,
-							const std::string& userName,
-							const std::string& password);
+	sql::Connection * connect(const sql::SQLString& hostName, const sql::SQLString& userName, const sql::SQLString& password);
 
-	sql::Connection * connect(std::map<std::string, sql::ConnectPropertyVal> & options);
+	sql::Connection * connect(sql::ConnectOptionsMap & options);
 
 	int getMajorVersion();
 
@@ -42,7 +40,7 @@ public:
 
 	int getPatchVersion();
 
-	const std::string & getName();
+	const sql::SQLString & getName();
 
 private:
 	/* Prevent use of these */

@@ -15,7 +15,6 @@
 #include <boost/shared_ptr.hpp>
 
 #include <cppconn/metadata.h>
-#include <string>
 #include <map>
 
 namespace sql
@@ -34,7 +33,7 @@ class MySQL_ConnectionMetaData : public sql::DatabaseMetaData
 	unsigned long server_version;
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 
-	std::string lower_case_table_names;
+	sql::SQLString lower_case_table_names;
 
 	bool use_info_schema;
 public:
@@ -54,23 +53,23 @@ public:
 
 	bool doesMaxRowSizeIncludeBlobs();
 
-	sql::ResultSet * getAttributes(const std::string& catalog, const std::string& schemaPattern, const std::string& typeNamePattern, const std::string& attributeNamePattern);
+	sql::ResultSet * getAttributes(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& typeNamePattern, const sql::SQLString& attributeNamePattern);
 
-	sql::ResultSet * getBestRowIdentifier(const std::string& catalog, const std::string& schema, const std::string& table, int scope, bool nullable);
+	sql::ResultSet * getBestRowIdentifier(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table, int scope, bool nullable);
 
 	sql::ResultSet * getCatalogs();
 
-	const std::string& getCatalogSeparator();
+	const sql::SQLString& getCatalogSeparator();
 
-	const std::string& getCatalogTerm();
+	const sql::SQLString& getCatalogTerm();
 
-	sql::ResultSet * getColumnPrivileges(const std::string& catalog, const std::string& schema, const std::string& table, const std::string& columnNamePattern);
+	sql::ResultSet * getColumnPrivileges(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table, const sql::SQLString& columnNamePattern);
 
-	sql::ResultSet * getColumns(const std::string& catalog, const std::string& schemaPattern, const std::string& tableNamePattern, const std::string& columnNamePattern);
+	sql::ResultSet * getColumns(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& tableNamePattern, const sql::SQLString& columnNamePattern);
 
 	sql::Connection * getConnection();
 
-	sql::ResultSet * getCrossReference(const std::string& primaryCatalog, const std::string& primarySchema, const std::string& primaryTable, const std::string& foreignCatalog, const std::string& foreignSchema, const std::string& foreignTable);
+	sql::ResultSet * getCrossReference(const sql::SQLString& primaryCatalog, const sql::SQLString& primarySchema, const sql::SQLString& primaryTable, const sql::SQLString& foreignCatalog, const sql::SQLString& foreignSchema, const sql::SQLString& foreignTable);
 
 	unsigned int getDatabaseMajorVersion();
 
@@ -78,7 +77,7 @@ public:
 
 	unsigned int getDatabasePatchVersion();
 
-	const std::string& getDatabaseProductName();
+	const sql::SQLString& getDatabaseProductName();
 
 	SQLString getDatabaseProductVersion();
 
@@ -90,19 +89,19 @@ public:
 
 	unsigned int getDriverPatchVersion();
 
-	const std::string& getDriverName();
+	const sql::SQLString& getDriverName();
 
-	const std::string& getDriverVersion();
+	const sql::SQLString& getDriverVersion();
 
-	sql::ResultSet * getExportedKeys(const std::string& catalog, const std::string& schema, const std::string& table);
+	sql::ResultSet * getExportedKeys(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table);
 
-	const std::string& getExtraNameCharacters();
+	const sql::SQLString& getExtraNameCharacters();
 
-	const std::string& getIdentifierQuoteString();
+	const sql::SQLString& getIdentifierQuoteString();
 
-	sql::ResultSet * getImportedKeys(const std::string& catalog, const std::string& schema, const std::string& table);
+	sql::ResultSet * getImportedKeys(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table);
 
-	sql::ResultSet * getIndexInfo(const std::string& catalog, const std::string& schema, const std::string& table, bool unique, bool approximate);
+	sql::ResultSet * getIndexInfo(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table, bool unique, bool approximate);
 
 	unsigned int getCDBCMajorVersion();
 
@@ -148,53 +147,53 @@ public:
 
 	unsigned int getMaxUserNameLength();
 
-	const std::string& getNumericFunctions();
+	const sql::SQLString& getNumericFunctions();
 
-	sql::ResultSet * getPrimaryKeys(const std::string& catalog, const std::string& schema, const std::string& table);
+	sql::ResultSet * getPrimaryKeys(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table);
 
-	sql::ResultSet * getProcedureColumns(const std::string& catalog, const std::string& schemaPattern, const std::string& procedureNamePattern, const std::string& columnNamePattern);
+	sql::ResultSet * getProcedureColumns(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& procedureNamePattern, const sql::SQLString& columnNamePattern);
 
-	sql::ResultSet * getProcedures(const std::string& catalog, const std::string& schemaPattern, const std::string& procedureNamePattern);
+	sql::ResultSet * getProcedures(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& procedureNamePattern);
 
-	const std::string& getProcedureTerm();
+	const sql::SQLString& getProcedureTerm();
 
 	int getResultSetHoldability();
 
 	sql::ResultSet * getSchemas();
 
-	const std::string& getSchemaTerm();
+	const sql::SQLString& getSchemaTerm();
 
-	const std::string& getSearchStringEscape();
+	const sql::SQLString& getSearchStringEscape();
 
-	const std::string& getSQLKeywords();
+	const sql::SQLString& getSQLKeywords();
 
 	int getSQLStateType();
 
-	const std::string& getStringFunctions();
+	const sql::SQLString& getStringFunctions();
 
-	sql::ResultSet * getSuperTables(const std::string& catalog, const std::string& schemaPattern, const std::string& tableNamePattern);
+	sql::ResultSet * getSuperTables(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& tableNamePattern);
 
-	sql::ResultSet * getSuperTypes(const std::string& catalog, const std::string& schemaPattern, const std::string& typeNamePattern);
+	sql::ResultSet * getSuperTypes(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& typeNamePattern);
 
-	const std::string& getSystemFunctions();
+	const sql::SQLString& getSystemFunctions();
 
-	sql::ResultSet * getTablePrivileges(const std::string& catalog, const std::string& schemaPattern, const std::string& tableNamePattern);
+	sql::ResultSet * getTablePrivileges(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& tableNamePattern);
 
-	sql::ResultSet * getTables(const std::string& catalog, const std::string& schemaPattern, const std::string& tableNamePattern, std::list<std::string> &types);
+	sql::ResultSet * getTables(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& tableNamePattern, std::list<sql::SQLString> &types);
 
 	sql::ResultSet * getTableTypes();
 
-	const std::string& getTimeDateFunctions();
+	const sql::SQLString& getTimeDateFunctions();
 
 	sql::ResultSet * getTypeInfo();
 
-	sql::ResultSet * getUDTs(const std::string& catalog, const std::string& schemaPattern, const std::string& typeNamePattern, std::list<int> &types);
+	sql::ResultSet * getUDTs(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& typeNamePattern, std::list<int> &types);
 
 	SQLString getURL();
 
 	SQLString getUserName();
 
-	sql::ResultSet * getVersionColumns(const std::string& catalog, const std::string& schema, const std::string& table);
+	sql::ResultSet * getVersionColumns(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table);
 
 	bool insertsAreDetected(int type);
 
@@ -378,21 +377,21 @@ public:
 
 	bool usesLocalFiles();
 
-	sql::ResultSet *getSchemata(const std::string& catalogName = "");
+	sql::ResultSet *getSchemata(const sql::SQLString& catalogName = "");
 
-	sql::ResultSet *getSchemaObjects(const std::string& catalogName = "", const std::string& schemaName = "", const std::string& objectType = "");
+	sql::ResultSet *getSchemaObjects(const sql::SQLString& catalogName = "", const sql::SQLString& schemaName = "", const sql::SQLString& objectType = "");
 
 	// Returns all schema object types this database supports
 	sql::ResultSet *getSchemaObjectTypes();
 
 private:
-	bool matchTable(const std::string& sPattern, const std::string& tPattern, const std::string& schema, const std::string& table);
+	bool matchTable(const sql::SQLString& sPattern, const sql::SQLString& tPattern, const sql::SQLString& schema, const sql::SQLString& table);
 	bool parseImportedKeys(
-		const std::string& def,
-		std::string & constraint_name,
-		std::map< std::string, std::string > & keywords_names,
-		std::map< std::string, std::list< std::string > > & referenced_fields,
-		std::map< std::string, int > & update_cascade
+		const sql::SQLString& def,
+		sql::SQLString & constraint_name,
+		std::map< sql::SQLString, sql::SQLString > & keywords_names,
+		std::map< sql::SQLString, std::list< sql::SQLString > > & referenced_fields,
+		std::map< sql::SQLString, int > & update_delete_action
 	);
 
 	/* Prevent use of these */

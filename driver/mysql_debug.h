@@ -44,7 +44,6 @@
 	static inline void CPP_ERR_FMT(...) {}
 #endif
 
-#include <string>
 #include <stack>
 #include "mysql_util.h"
 

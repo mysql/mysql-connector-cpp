@@ -110,7 +110,7 @@ MySQL_Statement::cancel()
 
 /* {{{ MySQL_Statement::execute() -I- */
 bool
-MySQL_Statement::execute(const std::string& sql)
+MySQL_Statement::execute(const sql::SQLString& sql)
 {
 	CPP_ENTER("MySQL_Statement::execute");
 	CPP_INFO_FMT("this=%p", this);
@@ -126,7 +126,7 @@ MySQL_Statement::execute(const std::string& sql)
 
 /* {{{ MySQL_Statement::executeQuery() -I- */
 sql::ResultSet *
-MySQL_Statement::executeQuery(const std::string& sql)
+MySQL_Statement::executeQuery(const sql::SQLString& sql)
 {
 	CPP_ENTER("MySQL_Statement::executeQuery");
 	CPP_INFO_FMT("this=%p", this);
@@ -149,7 +149,7 @@ MySQL_Statement::executeQuery(const std::string& sql)
 
 /* {{{ MySQL_Statement::executeUpdate() -I- */
 int
-MySQL_Statement::executeUpdate(const std::string& sql)
+MySQL_Statement::executeUpdate(const sql::SQLString& sql)
 {
 	CPP_ENTER("MySQL_Statement::executeUpdate");
 	CPP_INFO_FMT("this=%p", this);
@@ -385,7 +385,7 @@ MySQL_Statement::getWarnings()
 
 /* {{{ MySQL_Statement::setCursorName() -U- */
 void
-MySQL_Statement::setCursorName(const std::string &)
+MySQL_Statement::setCursorName(const sql::SQLString &)
 {
 	checkClosed();
 	throw sql::MethodNotImplementedException("MySQL_Statement::setCursorName");
