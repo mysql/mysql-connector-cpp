@@ -1808,7 +1808,7 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const sql::SQLString& /*catalog*/,
 
 				while (privs[pos] == ' ') ++pos; // Eat the whitespace
 
-				idx = privs.get().find(",", pos);
+				idx = privs.find(",", pos);
 
 				if (idx != sql::SQLString::npos) {
 					privToken = privs.substr(pos, idx - pos);

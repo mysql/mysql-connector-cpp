@@ -81,7 +81,7 @@ namespace sql
 			return realStr.compare(pos1, n1, s);
 		}
 
-		const std::string & get() const
+		const std::string & asStdString() const
 		{
 			return realStr;
 		}
@@ -146,32 +146,33 @@ namespace sql
 
 		const SQLString & operator+=(const SQLString & op2)
 		{
-			realStr += op2.get();
+			realStr += op2.realStr;
 			return *this;
 		}
 };
 
+
 /*
   Operators that can and have to be not a member.
 */
-inline const SQLString operator+( const SQLString & op1, const SQLString & op2 )
+inline const SQLString operator+(const SQLString & op1, const SQLString & op2)
 {
-	return sql::SQLString(op1.get() + op2.get());
+	return sql::SQLString(op1.asStdString() + op2.asStdString());
 }
 
-inline bool operator ==( const SQLString & op1, const SQLString & op2 )
+inline bool operator ==(const SQLString & op1, const SQLString & op2)
 {
-	return (op1.get() == op2.get());
+	return (op1.asStdString() == op2.asStdString());
 }
 
 inline bool operator !=(const SQLString & op1, const SQLString & op2)
 {
-	return (op1.get() != op2.get());
+	return (op1.asStdString() != op2.asStdString());
 }
 
 inline bool operator <(const SQLString & op1, const SQLString & op2)
 {
-	return op1.get() < op2.get();
+	return op1.asStdString() < op2.asStdString();
 } 
 
 
@@ -183,7 +184,7 @@ namespace std
 	// operator << for SQLString output
 	inline ostream & operator << (ostream & os, const sql::SQLString & str )
 	{
-		return os << str.get();
+		return os << str.asStdString();
 	}
 }
 #endif
