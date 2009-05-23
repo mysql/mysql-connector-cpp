@@ -1024,7 +1024,7 @@ MySQL_Prepared_Statement::setResultSetConcurrency(int)
 
 /* {{{ MySQL_Prepared_Statement::setResultSetType() -U- */
 sql::PreparedStatement *
-MySQL_Prepared_Statement::setResultSetType(sql::ResultSet::enum_type type)
+MySQL_Prepared_Statement::setResultSetType(sql::ResultSet::enum_type /* type */)
 {
 	checkClosed();
 #if WE_SUPPORT_USE_RESULT_WITH_PS
