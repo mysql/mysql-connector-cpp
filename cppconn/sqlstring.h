@@ -141,7 +141,7 @@ namespace sql
 
 		size_t find_last_of(char c, size_t pos = npos) const
 		{
-			return realStr.find_last_of(c, npos);
+			return realStr.find_last_of(c, pos);
 		}
 
 		const SQLString & operator+=(const SQLString & op2)
