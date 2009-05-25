@@ -214,7 +214,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			}
 		} else if (!it->first.compare("port")) {
 			if ((p_ll = boost::get<long long>(&it->second))) {
-				port = *p_ll;
+        port = static_cast<unsigned int>(*p_ll);
 			} else {
 				throw sql::InvalidArgumentException("No long long value passed for port");
 			}

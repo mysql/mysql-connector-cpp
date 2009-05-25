@@ -35,9 +35,13 @@ void TestsListener::setVerbose(bool verbosity)
   theInstance().verbose=verbosity;
 }
 
-void TestsListener::doTiming(bool timing)
+bool TestsListener::doTiming(bool timing)
 {
+  bool preserve= theInstance().timing;
+
   theInstance().timing=timing;
+
+  return preserve;
 }
 
 //TODO: "set" counterparts
@@ -177,8 +181,8 @@ void TestsListener::testHasFinished(TestRunResult result, const String & msg)
     tmp << std::setw(13) << std::right << total << "s";
     tmp << " (100.00%)" << std::endl;
 
-    std::list<String> names=Timer::getNames(testFullName());
-    std::list<String>::const_iterator it=names.begin();
+    const List & names=Timer::getNames(testFullName());
+    ConstIterator it=names.begin();
     for (; it != names.end(); ++it)
     {
       time=Timer::getTime(*it);
@@ -196,7 +200,7 @@ void TestsListener::testHasFinished(TestRunResult result, const String & msg)
       }
       tmp << "%)";
       
-      tmp << " (line " << Timer::getLine(*it) << "ff)" << std::endl;
+      tmp << " (line " << Timer::getLine(*it) << ")" << std::endl;
     }
 
     timingResult=tmp.str();

@@ -192,9 +192,9 @@ const String Timer::getFile(const String & test, const String & name)
   return theInstance().timeRecorder[test].timers[name].file;
 }
 
-std::list<String> Timer::getNames()
+const List & Timer::getNames()
 {
-  static std::list<String> names;
+  static List names;
 
   std::map<String, test_timer>::const_iterator cit=theInstance().timeRecorder.find("perf_statement::anonymousSelect");
   std::map<String, timer>::const_iterator it;
@@ -210,9 +210,9 @@ std::list<String> Timer::getNames()
   return names;
 }
 
-std::list<String> Timer::getNames(const String & test)
+const List & Timer::getNames(const String & test)
 {
-  static std::list<String> names;
+  static List names;
 
   std::map<String, test_timer>::const_iterator cit=theInstance().timeRecorder.find(test);
   if (cit == theInstance().timeRecorder.end())

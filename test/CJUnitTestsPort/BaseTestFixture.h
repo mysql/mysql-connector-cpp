@@ -364,6 +364,8 @@ protected:
   bool runTestIfSysPropDefined(const String & propName);
 
   bool runMultiHostTests();
+
+
   /**
    * Checks whether the database we're connected to meets the given version
    * minimum
@@ -378,30 +380,10 @@ protected:
    * @throws SQLException
    *             if an error occurs.
    */
-
   /* throws SQLException */
-
-  bool versionMeetsMinimum(int major, int minor);
-  /**
-   * Checks whether the database we're connected to meets the given version
-   * minimum
-   *
-   * @param major
-   *            the major version to meet
-   * @param minor
-   *            the minor version to meet
-   *
-   * @return boolean if the major/minor is met
-   *
-   * @throws SQLException
-   *             if an error occurs.
-   */
-
-  /* throws SQLException */
-
-  bool versionMeetsMinimum(int major
+  bool versionMeetsMinimum( int major
                            , int minor
-                           , int subminor);
+                           , int subminor= 0 );
 
   /*bool          isClassAvailable            (String classname);*/
 
