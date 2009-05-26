@@ -354,7 +354,6 @@ void preparedstatement::InsertSelectAllTypes()
           len=it->as_string.length();
           char* blob_out=new char(len);
           blob_output_stream->read(blob_out, len);
-          blob_out[len]='\0';
           if (blob_out != it->as_string)
           {
             sql.str("");
@@ -363,14 +362,14 @@ void preparedstatement::InsertSelectAllTypes()
             logMsg(sql.str());
             got_warning=true;
           }
+          delete blob_out;
         }
 
         {
           blob_output_stream=res->getBlob("id");
           len=it->as_string.length();
           char* blob_out=new char(len);
-          blob_output_stream->read(blob_out, len);
-          blob_out[len]='\0';
+          blob_output_stream->read(blob_out, len);          
           if (blob_out != it->as_string)
           {
             sql.str("");
@@ -379,6 +378,7 @@ void preparedstatement::InsertSelectAllTypes()
             logMsg(sql.str());
             got_warning=true;
           }
+          delete blob_out;
         }
       }
       try
