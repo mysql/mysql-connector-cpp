@@ -13,6 +13,8 @@
 #include <time.h>
 #include "BlobTest.h"
 
+#include <boost/scoped_ptr.hpp>
+
 #define BYTE_MAX_VALUE 255
 #define BYTE_MIN_VALUE 0
 
@@ -43,7 +45,9 @@ namespace simple
       requiredSize = 8 * 1024 * 1024;
     }
 
+    Timer::startTimer( "BlobTest::testByteStreamInsert", "Blob File Creation", __FILE__, __LINE__ );
     createBlobFile(requiredSize);
+    TestsListener::messagesLog() << "Blob File Creation" << Timer::translate2seconds( Timer::stopTimer( "BlobTest::testByteStreamInsert", "Blob File Creation" ) ) << std::endl;
 
     createTestTable();
   }
@@ -85,9 +89,11 @@ namespace simple
 
     ASSERT( ! bIn.fail() );
 
+    TIMER_START( "Populating blob table" );
     pstmt.reset( conn->prepareStatement("INSERT INTO BLOBTEST(blobdata) VALUES (?)") );
     pstmt->setBlob( 1, & bIn );
     pstmt->execute();
+    TIMER_STOP( "Populating blob table" );
     pstmt->clearParameters();
 
     doRetrieval();
@@ -204,29 +210,42 @@ namespace simple
   {
     bool passed = false;
 
+    TIMER_START( "Blob Retrieval" );
     rs.reset( stmt->executeQuery("SELECT blobdata from BLOBTEST LIMIT 1") );
 
     rs->next();
+    TIMER_STOP( "Blob Retrieval" );
 
+    TIMER_START( "getString" );
     String s( rs->getString(1) );
+    TIMER_STOP( "getString" );
 
+    TIMER_START( "Blob Check 1" );
     passed = checkBlob(s);
+    TIMER_STOP( "Blob Check 1" );
 
     ASSERT_MESSAGE(passed,
         "Inserted BLOB data did not match retrieved BLOB data for getString()." );
 
     s.clear();
 
-    std::istream * inStr = rs->getBlob(1);
-    char buff[8192];
+    TIMER_START( "getBlob" );
+    boost::scoped_ptr<std::istream> inStr(rs->getBlob(1));
+    TIMER_STOP( "getBlob" );
+
+    TIMER_START( "Stream Reading" );
+    char buff[1048];
 
     while ( ! inStr->eof() )
     {
       inStr->read( buff, sizeof(buff) );
       s.append( buff,inStr->gcount() );
     }
+    TIMER_STOP( "Stream Reading" );
 
+    TIMER_START( "Blob Check 2" );
     passed = checkBlob(s);
+    TIMER_STOP( "Blob Check 2" );
 
     ASSERT_MESSAGE( passed, "Inserted BLOB data did not match retrieved BLOB data for getBlob()." );
 
@@ -260,6 +279,7 @@ namespace simple
   {
     if (testBlobFile.get() != NULL && testBlobFile->getSize() != size)
     {
+      TestsListener::messagesLog( "creating file!!!" );
       testBlobFile->deleteFile();
       //testBlobFile.reset( FileUtils::ccppFile::createTempFile(TEST_BLOB_FILE_PREFIX, ".dat") );
 
