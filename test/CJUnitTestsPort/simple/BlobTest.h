@@ -33,6 +33,8 @@ namespace simple
 
     std::auto_ptr<FileUtils::ccppFile> testBlobFile;
 
+    bool realFrameworkTiming;
+
   /**
 	 * Tests inserting blob data as a stream
 	 *

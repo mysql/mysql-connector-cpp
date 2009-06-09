@@ -36,6 +36,8 @@ namespace simple
   {
     super::setUp();
 
+    realFrameworkTiming= TestsListener::doTiming();
+
     testBlobFile.reset( new FileUtils::ccppFile( TEST_BLOB_FILE_PREFIX + ".dat" ) );
 
     int requiredSize = 32 * 1024 * 1024;
@@ -65,6 +67,8 @@ namespace simple
     stmt->executeUpdate( "DROP TABLE IF EXISTS BLOBTEST" );
 
     testBlobFile.reset();
+
+    TestsListener::doTiming( realFrameworkTiming );
 
     super::tearDown();
   }

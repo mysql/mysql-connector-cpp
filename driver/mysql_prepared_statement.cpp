@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <sstream>
+#include <boost/scoped_array.hpp>
 #include <cppconn/exception.h>
 #include "mysql_util.h"
 #include "mysql_connection.h"
@@ -35,7 +36,7 @@ namespace sql
 namespace mysql
 {
 
-
+static const unsigned int MAX_SEND_LONGDATA_BUFFER= 1 << 19; //1 << 19=512k;
 
 class MySQL_ParamBind
 {
@@ -189,7 +190,7 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 {
 	CPP_ENTER("MySQL_Prepared_Statement::sendLongDataBeforeParamBind");
 	MYSQL_BIND * bind = param_bind->get();
-	char buf[1024];
+  boost::scoped_array<char> buf(new char[MAX_SEND_LONGDATA_BUFFER]);
 	for (unsigned int i = 0; i < param_count; ++i) {
 		if (bind[i].buffer_type == MYSQL_TYPE_LONG_BLOB) {
 			std::istream * my_blob = param_bind->getBlobObject(i);
@@ -197,7 +198,7 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 				if ((my_blob->rdstate() & std::istream::eofbit) != 0 ) {
 					break;
 				}
-				my_blob->read(buf, sizeof(buf));
+				my_blob->read(buf.get(), MAX_SEND_LONGDATA_BUFFER);
 
 				if ((my_blob->rdstate() & std::istream::badbit) != 0) {
 					throw SQLException("Error while reading from blob (bad)");
@@ -206,7 +207,7 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 						throw SQLException("Error while reading from blob (fail)");
 					}
 				}
-				if (mysql_stmt_send_long_data(stmt, i, buf, static_cast<unsigned long>(my_blob->gcount()))) {
+				if (mysql_stmt_send_long_data(stmt, i, buf.get(), static_cast<unsigned long>(my_blob->gcount()))) {
 					CPP_ERR_FMT("Couldn't send long data : %d:(%s) %s", mysql_stmt_errno(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_error(stmt));
 					switch (mysql_stmt_errno(stmt)) {
 						case CR_OUT_OF_MEMORY:
