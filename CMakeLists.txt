@@ -9,6 +9,10 @@
 
 PROJECT(MYSQLCPPCONN)
 
+# Bump this every time we change the API/ABI
+SET(MYSQLCPPCONN_SOVERSION "2")
+
+
 IF(WIN32)
 # We need this for mysqlcppconn_EXPORTS needed for the static build
 	cmake_minimum_required(VERSION 2.6.2)
