@@ -163,10 +163,12 @@ ciString;
 
 #endif
 
-typedef std::vector<String> List;
-typedef List::iterator Iterator;
+typedef std::vector<String>   List;
+typedef List::iterator        Iterator;
+typedef List::const_iterator  ConstIterator;
 
-typedef std::map<String, String> Properties;
-typedef Properties::iterator  PropsIterator;
+typedef std::map<String, String>  Properties;
+typedef Properties::iterator      PropsIterator;
+typedef List::const_iterator      PropsConstIterator;
 
 #endif /* __C_CPP_TYPES_H_ */

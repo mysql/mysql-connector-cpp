@@ -214,7 +214,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			}
 		} else if (!it->first.compare("port")) {
 			if ((p_ll = boost::get<long long>(&it->second))) {
-				port = *p_ll;
+        port = static_cast<unsigned int>(*p_ll);
 			} else {
 				throw sql::InvalidArgumentException("No long long value passed for port");
 			}
@@ -442,19 +442,19 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			if (!(p_ll = boost::get<long long>(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for OPT_READ_TIMEOUT");
 			}
-			long l_tmp = *p_ll;
+      long l_tmp = static_cast<long>(*p_ll);
 			mysql_options(intern->mysql, MYSQL_OPT_READ_TIMEOUT, (const char *) &l_tmp);
 		} else if (!it->first.compare("OPT_WRITE_TIMEOUT")) {
 			if (!(p_ll = boost::get<long long>(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for OPT_WRITE_TIMEOUT");
 			}
-			long l_tmp = *p_ll;
+			long l_tmp = static_cast<long>(*p_ll);
 			mysql_options(intern->mysql, MYSQL_OPT_WRITE_TIMEOUT, (const char *) &l_tmp);
 		} else if (!it->first.compare("OPT_RECONNECT")) {
 			if (!(p_ll = boost::get<long long>(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for OPT_RECONNECT");
 			}
-			long l_tmp = *p_ll;
+			long l_tmp = static_cast<long>(*p_ll);
 			mysql_options(intern->mysql, MYSQL_OPT_RECONNECT, (const char *) &l_tmp);
 		} else if (!it->first.compare("OPT_CHARSET_NAME")) {
 			if (!(p_s = boost::get< sql::SQLString >(&it->second))) {

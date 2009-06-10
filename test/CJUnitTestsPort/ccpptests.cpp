@@ -29,7 +29,7 @@ int main(int argc, char** argv)
   defaultStringValues.insert( Properties::value_type( "dbUser"  , "root" ) );
   defaultStringValues.insert( Properties::value_type( "dbPasswd", "root" ) );
   defaultStringValues.insert( Properties::value_type( "dbSchema", "test" ) );
-  defaultStringValues.insert( Properties::value_type( "filter"  , "!BlobTest::*" ) );
+  defaultStringValues.insert( Properties::value_type( "filter"  , "" ) );
 
   std::map<String, bool> defaultBoolValues;
 

@@ -71,7 +71,7 @@ public:
   int   recordFailed    ();
 
   static void setVerbose( bool verbosity    );
-  static void doTiming  ( bool timing= true );
+  static bool doTiming  ( bool timing= true );
 
   inline int failed()
   {

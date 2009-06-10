@@ -13,6 +13,8 @@
 #include <time.h>
 #include "BlobTest.h"
 
+#include <boost/scoped_ptr.hpp>
+
 #define BYTE_MAX_VALUE 255
 #define BYTE_MIN_VALUE 0
 
@@ -34,6 +36,8 @@ namespace simple
   {
     super::setUp();
 
+    realFrameworkTiming= TestsListener::doTiming();
+
     testBlobFile.reset( new FileUtils::ccppFile( TEST_BLOB_FILE_PREFIX + ".dat" ) );
 
     int requiredSize = 32 * 1024 * 1024;
@@ -43,7 +47,9 @@ namespace simple
       requiredSize = 8 * 1024 * 1024;
     }
 
+    Timer::startTimer( "BlobTest::testByteStreamInsert", "Blob File Creation", __FILE__, __LINE__ );
     createBlobFile(requiredSize);
+    TestsListener::messagesLog() << "Blob File Creation" << Timer::translate2seconds( Timer::stopTimer( "BlobTest::testByteStreamInsert", "Blob File Creation" ) ) << std::endl;
 
     createTestTable();
   }
@@ -61,6 +67,8 @@ namespace simple
     stmt->executeUpdate( "DROP TABLE IF EXISTS BLOBTEST" );
 
     testBlobFile.reset();
+
+    TestsListener::doTiming( realFrameworkTiming );
 
     super::tearDown();
   }
@@ -85,9 +93,11 @@ namespace simple
 
     ASSERT( ! bIn.fail() );
 
+    TIMER_START( "Populating blob table" );
     pstmt.reset( conn->prepareStatement("INSERT INTO BLOBTEST(blobdata) VALUES (?)") );
     pstmt->setBlob( 1, & bIn );
     pstmt->execute();
+    TIMER_STOP( "Populating blob table" );
     pstmt->clearParameters();
 
     doRetrieval();
@@ -104,73 +114,65 @@ namespace simple
     bIn.seekg( 0, std::ios_base::beg );
 
     ASSERT_MESSAGE( !bIn.fail(), "seekg 0 position from the beginning - failed" );
+    ASSERT_MESSAGE( !bIn.eof(), "stream is at eof" );
 
     unsigned int fileLength = testBlobFile->getSize();
 
-    if (retrBytes.size() == fileLength)
+    ASSERT_EQUALS(retrBytes.size(), fileLength);
+
+    int substrIdx= 0;
+
+    while ( ! bIn.eof() )
     {
-      int substrIdx= 0;
+      char fromFile[8192];
+      bIn.read( fromFile, sizeof(fromFile) );
 
-      while ( ! bIn.eof() )
+      ASSERT_MESSAGE( !bIn.fail() || bIn.eof(), "read from file failed" );
+
+      if ( retrBytes.compare( substrIdx, bIn.gcount(), fromFile, bIn.gcount() ) != 0 )
       {
-        char fromFile[8192];
-        bIn.read( fromFile, sizeof(fromFile) );
+        passed = false;
+        int j = 0;
 
-        ASSERT_MESSAGE( !bIn.fail() || bIn.eof(), "read from file failed" );
+				TestsListener::errorsLog() << "compare returned !=0 at " << substrIdx
+					<< ", read from file " << bIn.gcount() << std::endl;
 
-        if ( retrBytes.compare( substrIdx, bIn.gcount(), fromFile, bIn.gcount() ) != 0 )
+        while ( j < bIn.gcount() && fromFile[ j ] == retrBytes[substrIdx + j] )
+          ++j;
+
+
+        if ( j < bIn.gcount() )
         {
-          passed = false;
-          int j = 0;
+          TestsListener::errorsLog() << "Byte pattern differed at position "
+            << j << " , Retrieved: " << retrBytes[ substrIdx + j ]
+            << "(" <<  StringUtils::toHexString( retrBytes[ substrIdx + j ] )
+            << ") != From File:" << fromFile[ j ] << "("
+            << StringUtils::toHexString( fromFile[ j ] ) << ")"
+            << std::endl;
 
-					TestsListener::errorsLog() << "compare returned !=0 at " << substrIdx
-						<< ", read from file " << bIn.gcount() << std::endl;
-
-          while ( j < bIn.gcount() && fromFile[ j ] == retrBytes[substrIdx + j] )
-            ++j;
-
-
-          if ( j < bIn.gcount() )
+          if ( j < bIn.gcount() - 1 )
           {
-            TestsListener::errorsLog() << "Byte pattern differed at position "
-              << j << " , Retrieved: " << retrBytes[ substrIdx + j ]
-              << "(" <<  StringUtils::toHexString( retrBytes[ substrIdx + j ] )
-              << ") != From File:" << fromFile[ j ] << "("
-              << StringUtils::toHexString( fromFile[ j ] ) << ")"
-              << std::endl;
+            TestsListener::errorsLog() << "Following bytes (table:file):";
 
-            if ( j < bIn.gcount() - 1 )
+            while ( j < bIn.gcount()  )
             {
-              TestsListener::errorsLog() << "Following bytes (table:file):";
-
-              while ( j < bIn.gcount()  )
-              {
-                // current byte was already printed;
-                ++j;
-                TestsListener::errorsLog()
-                  << " (" << StringUtils::toHexString( retrBytes[ substrIdx + j ] )
-                  << ":" << StringUtils::toHexString( fromFile[ j ] ) << ")";
-              }
-
-              TestsListener::errorsLog() << std::endl;
+              // current byte was already printed;
+              ++j;
+              TestsListener::errorsLog()
+                << " (" << StringUtils::toHexString( retrBytes[ substrIdx + j ] )
+                << ":" << StringUtils::toHexString( fromFile[ j ] ) << ")";
             }
-          }
 
-          break;
+            TestsListener::errorsLog() << std::endl;
+          }
         }
 
-				substrIdx+= static_cast<int>(bIn.gcount());
+        break;
       }
-    }
-    else
-    {
-      passed = false;
 
-      TestsListener::errorsLog() << "retrBytes.length("
-        << retrBytes.size()
-        << ") != testBlob.length(" << fileLength << ")" << std::endl;
+			substrIdx+= static_cast<int>(bIn.gcount());
     }
-
+ 
     return passed;
   }
 
@@ -204,29 +206,42 @@ namespace simple
   {
     bool passed = false;
 
+    TIMER_START( "Blob Retrieval" );
     rs.reset( stmt->executeQuery("SELECT blobdata from BLOBTEST LIMIT 1") );
 
     rs->next();
+    TIMER_STOP( "Blob Retrieval" );
 
+    TIMER_START( "getString" );
     String s( rs->getString(1) );
+    TIMER_STOP( "getString" );
 
+    TIMER_START( "Blob Check 1" );
     passed = checkBlob(s);
+    TIMER_STOP( "Blob Check 1" );
 
     ASSERT_MESSAGE(passed,
         "Inserted BLOB data did not match retrieved BLOB data for getString()." );
 
     s.clear();
 
-    std::istream * inStr = rs->getBlob(1);
-    char buff[8192];
+    TIMER_START( "getBlob" );
+    boost::scoped_ptr<std::istream> inStr(rs->getBlob(1));
+    TIMER_STOP( "getBlob" );
+
+    TIMER_START( "Stream Reading" );
+    char buff[1048];
 
     while ( ! inStr->eof() )
     {
       inStr->read( buff, sizeof(buff) );
       s.append( buff,inStr->gcount() );
     }
+    TIMER_STOP( "Stream Reading" );
 
+    TIMER_START( "Blob Check 2" );
     passed = checkBlob(s);
+    TIMER_STOP( "Blob Check 2" );
 
     ASSERT_MESSAGE( passed, "Inserted BLOB data did not match retrieved BLOB data for getBlob()." );
 
@@ -260,6 +275,7 @@ namespace simple
   {
     if (testBlobFile.get() != NULL && testBlobFile->getSize() != size)
     {
+      TestsListener::messagesLog( "creating file!!!" );
       testBlobFile->deleteFile();
       //testBlobFile.reset( FileUtils::ccppFile::createTempFile(TEST_BLOB_FILE_PREFIX, ".dat") );
 

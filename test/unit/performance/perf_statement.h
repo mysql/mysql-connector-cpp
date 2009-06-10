@@ -25,7 +25,8 @@ class perf_statement : public unit_fixture
 {
 private:
   typedef unit_fixture super;
-  
+
+  bool    realFrameworkTiming;
 protected:
 public:
 
@@ -38,6 +39,10 @@ public:
    * SELECT ' ' as string
    */
   void simpleSelect1k();
+
+  void setUp();
+
+  void tearDown();
 
 };
 

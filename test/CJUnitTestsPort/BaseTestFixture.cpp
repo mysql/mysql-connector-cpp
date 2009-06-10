@@ -804,27 +804,6 @@ void BaseTestFixture::tearDown()
 
 }
 
-/**
- * Checks whether the database we're connected to meets the given version
- * minimum
- *
- * @param major
- *            the major version to meet
- * @param minor
- *            the minor version to meet
- *
- * @return bool if the major/minor is met
- *
- * @throws SQLException &
- *             if an error occurs.
- */
-
-/* throws SQLException & */
-
-bool BaseTestFixture::versionMeetsMinimum(int major, int minor)
-{
-  return versionMeetsMinimum(major, minor, 0);
-}
 
 /**
  * Checks whether the database we're connected to meets the given version
@@ -845,7 +824,10 @@ bool BaseTestFixture::versionMeetsMinimum(int major, int minor)
 
 bool BaseTestFixture::versionMeetsMinimum(int major, int minor, int subminor)
 {
-  return true;
+
+  return ( conn->getMetaData()->getDatabaseMajorVersion() >= major
+        && conn->getMetaData()->getDatabaseMinorVersion() >= minor
+        && conn->getMetaData()->getDatabasePatchVersion() >= subminor );
 
   /*(dynamic_cast<sql::mysql::MySQL_Connection*> (this->conn))->versionMeetsMinimum(
   major, minor, subminor);*/

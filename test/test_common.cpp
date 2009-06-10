@@ -872,7 +872,7 @@ static void test_statement_10(std::auto_ptr<sql::Connection> & conn, std::auto_p
 		try {
 			ensure_equal_str("Table name differs", meta->getTableName(1), std::string("test_function"));
 			ensure("Exception not correctly thrown", false);
-		} catch (sql::SQLException &e) {
+		} catch (sql::SQLException &/*e*/) {
 			// exception correctly thrown
 		}
 		/* Clean */

@@ -16,6 +16,9 @@
 #include "preparedstatement.h"
 #include <stdlib.h>
 
+#include <boost/scoped_ptr.hpp>
+#include <boost/scoped_array.hpp>
+
 namespace testsuite
 {
 namespace classes
@@ -350,12 +353,12 @@ void preparedstatement::InsertSelectAllTypes()
       if (it->check_as_string)
       {
         {
-          blob_output_stream=res->getBlob(1);
+          boost::scoped_ptr<std::istream> blob_output_stream(res->getBlob(1));
           len=it->as_string.length();
-          char* blob_out=new char(len);
-          blob_output_stream->read(blob_out, len);
-          blob_out[len]='\0';
-          if (blob_out != it->as_string)
+          boost::scoped_array<char> blob_out(new char[len]);
+          blob_output_stream->read(blob_out.get(), len);
+          if ( it->as_string.compare(0, blob_output_stream->gcount()
+                              , blob_out.get(), blob_output_stream->gcount() ) )
           {
             sql.str("");
             sql << "... \t\tWARNING - SQL: '" << it->sqldef << "' - expecting '" << it->as_string << "'";
@@ -366,12 +369,12 @@ void preparedstatement::InsertSelectAllTypes()
         }
 
         {
-          blob_output_stream=res->getBlob("id");
+          boost::scoped_ptr<std::istream> blob_output_stream( res->getBlob("id") );
           len=it->as_string.length();
-          char* blob_out=new char(len);
-          blob_output_stream->read(blob_out, len);
-          blob_out[len]='\0';
-          if (blob_out != it->as_string)
+          boost::scoped_array<char> blob_out(new char[len]);
+          blob_output_stream->read(blob_out.get(), len);          
+          if ( it->as_string.compare(0, blob_output_stream->gcount()
+                              , blob_out.get(), blob_output_stream->gcount() ) )
           {
             sql.str("");
             sql << "... \t\tWARNING - SQL: '" << it->sqldef << "' - expecting '" << it->as_string << "'";
