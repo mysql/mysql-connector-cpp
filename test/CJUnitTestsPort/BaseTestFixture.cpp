@@ -822,7 +822,7 @@ void BaseTestFixture::tearDown()
 
 /* throws SQLException & */
 
-bool BaseTestFixture::versionMeetsMinimum(int major, int minor, int subminor)
+bool BaseTestFixture::versionMeetsMinimum(unsigned int major, unsigned int minor, unsigned int subminor)
 {
 
   return ( conn->getMetaData()->getDatabaseMajorVersion() >= major
