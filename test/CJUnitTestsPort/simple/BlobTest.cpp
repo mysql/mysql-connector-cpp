@@ -118,7 +118,7 @@ namespace simple
 
     unsigned int fileLength = testBlobFile->getSize();
 
-    ASSERT_EQUALS(retrBytes.size(), fileLength);
+    ASSERT_EQUALS((unsigned int)retrBytes.size(), fileLength);
 
     int substrIdx= 0;
 
