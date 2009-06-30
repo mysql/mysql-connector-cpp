@@ -1,4 +1,9 @@
 GA  1.0.6 - 2009-06-xx
+
+- Fixed a performance issue of Prepared Statements. Reading large result sets has
+  been slow - think O(n^2). Patch by Frank Schoenheit from the OpenOffice.org 
+  Base team. (Ulf)
+
 - Exchanged most use cases of std::auto_ptr with boost::scoped_ptr. Migrated from
   own solution to boost::scoped_array. In addition, migrated from another own
   solution to boost::shared_ptr/weak_ptr for guarding access around result sets.
