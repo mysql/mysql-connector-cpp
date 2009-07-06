@@ -332,56 +332,56 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for CLIENT_COMPRESS");
 			}
-			if (*p_b && (flags & CLIENT_COMPRESS)) {
+			if (*p_b) {
 				flags |= CLIENT_COMPRESS;
 			}
 		} else if (!it->first.compare("CLIENT_FOUND_ROWS")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for CLIENT_FOUND_ROWS");
 			}
-			if (*p_b  && (flags & CLIENT_FOUND_ROWS)) {
+			if (*p_b) {
 				flags |= CLIENT_FOUND_ROWS;
 			}
 		} else if (!it->first.compare("CLIENT_IGNORE_SIGPIPE")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for CLIENT_IGNORE_SIGPIPE");
 			}
-			if (*p_b  && (flags & CLIENT_IGNORE_SIGPIPE)) {
+			if (*p_b) {
 				flags |= CLIENT_IGNORE_SIGPIPE;
 			}
 		} else if (!it->first.compare("CLIENT_IGNORE_SPACE")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for CLIENT_IGNORE_SPACE");
 			}
-			if (*p_b  && (flags & CLIENT_IGNORE_SPACE)) {
+			if (*p_b) {
 				flags |= CLIENT_IGNORE_SPACE;
 			}
 		} else if (!it->first.compare("CLIENT_INTERACTIVE")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for CLIENT_INTERACTIVE");
 			}
-			if (*p_b  && (flags & CLIENT_INTERACTIVE)) {
+			if (*p_b) {
 				flags |= CLIENT_INTERACTIVE;
 			}
 		} else if (!it->first.compare("CLIENT_LOCAL_FILES")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for CLIENT_LOCAL_FILES");
 			}
-			if (*p_b  && (flags & CLIENT_LOCAL_FILES)) {
+			if (*p_b) {
 				flags |= CLIENT_LOCAL_FILES;
 			}
 		} else if (!it->first.compare("CLIENT_MULTI_STATEMENTS")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for CLIENT_MULTI_STATEMENTS");
 			}
-			if (*p_b  && (flags & CLIENT_MULTI_STATEMENTS)) {
+			if (*p_b) {
 				flags |= CLIENT_MULTI_STATEMENTS;
 			}
 		} else if (!it->first.compare("CLIENT_NO_SCHEMA")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for CLIENT_NO_SCHEMA");
 			}
-			if (*p_b  && (flags & CLIENT_NO_SCHEMA)) {
+			if (*p_b) {
 				flags |= CLIENT_NO_SCHEMA;
 			}
 		}
