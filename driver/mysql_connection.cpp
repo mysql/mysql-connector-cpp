@@ -434,10 +434,11 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	it = properties.begin();
 	for (; it != properties.end(); ++it) {
 		if (!it->first.compare("OPT_CONNECT_TIMEOUT")) {
-			if (!(p_b = boost::get< bool >(&it->second))) {
-				throw sql::InvalidArgumentException("No bool value passed for OPT_CONNECT_TIMEOUT");
+			if (!(p_ll = boost::get<long long>(&it->second))) {
+				throw sql::InvalidArgumentException("No long long value passed for OPT_CONNECT_TIMEOUT");
 			}
-			mysql_options(intern->mysql, MYSQL_OPT_CONNECT_TIMEOUT, (const char *) &p_b);
+      long l_tmp = static_cast<long>(*p_ll);
+			mysql_options(intern->mysql, MYSQL_OPT_CONNECT_TIMEOUT, (const char *) &l_tmp);
 		} else if (!it->first.compare("OPT_READ_TIMEOUT")) {
 			if (!(p_ll = boost::get<long long>(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for OPT_READ_TIMEOUT");
@@ -451,11 +452,10 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			long l_tmp = static_cast<long>(*p_ll);
 			mysql_options(intern->mysql, MYSQL_OPT_WRITE_TIMEOUT, (const char *) &l_tmp);
 		} else if (!it->first.compare("OPT_RECONNECT")) {
-			if (!(p_ll = boost::get<long long>(&it->second))) {
-				throw sql::InvalidArgumentException("No long long value passed for OPT_RECONNECT");
+			if (!(p_b = boost::get<bool>(&it->second))) {
+				throw sql::InvalidArgumentException("No bool value passed for OPT_RECONNECT");
 			}
-			long l_tmp = static_cast<long>(*p_ll);
-			mysql_options(intern->mysql, MYSQL_OPT_RECONNECT, (const char *) &l_tmp);
+			mysql_options(intern->mysql, MYSQL_OPT_RECONNECT, (const char *) &p_b);
 		} else if (!it->first.compare("OPT_CHARSET_NAME")) {
 			if (!(p_s = boost::get< sql::SQLString >(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for OPT_CHARSET_NAME");
@@ -463,7 +463,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			defaultCharset = *p_s;
 		} else if (!it->first.compare("OPT_REPORT_DATA_TRUNCATION")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
-				throw sql::InvalidArgumentException("No bool value passed for OPT_CONNECT_TIMEOUT");
+				throw sql::InvalidArgumentException("No bool value passed for OPT_REPORT_DATA_TRUNCATION");
 			}
 			mysql_options(intern->mysql, MYSQL_REPORT_DATA_TRUNCATION, (const char *) &p_b);
 #if defined(_WIN32) || defined(_WIN64)
