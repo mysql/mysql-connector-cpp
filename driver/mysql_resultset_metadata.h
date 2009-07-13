@@ -12,6 +12,8 @@
 #ifndef _MYSQL_RESULTSET_METADATA_H_
 #define _MYSQL_RESULTSET_METADATA_H_
 
+#include <stdio.h>
+
 #include <boost/weak_ptr.hpp>
 
 #include <cppconn/resultset_metadata.h>
