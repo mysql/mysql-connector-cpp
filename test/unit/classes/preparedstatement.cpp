@@ -67,6 +67,10 @@ void preparedstatement::InsertSelectAllTypes()
       checkResultSetScrolling(res);
       ASSERT(res->next());
 
+      res.reset(pstmt->executeQuery());
+      checkResultSetScrolling(res);
+      ASSERT(res->next());
+
       if (it->check_as_string && (res->getString(1) != it->as_string))
       {
         sql.str("");
