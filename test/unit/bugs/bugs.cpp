@@ -18,9 +18,34 @@ namespace regression
 
 void bugs::net_write_timeout39878()
 {
-  logMsg("Test for #39878 - not fixed. And looks like there is no way to fix it at the moment.");
+  logMsg( "Test for #39878 - not fixed. And looks like there is no way to fix it at the moment." );
+  logMsg( "If the test doesn't fail - that rather means that you should tweak parameters for your system" );
+  logMsg( "You can do that with command line parameters:");
+  logMsg( " --nwtTimeout=<val> for the value net_write timeout to set to (default 1)" );
+  logMsg( " --nwtPause=<val> for the length of pause test shoud take while fetching rows (default 2)" );
+  logMsg( " --nwtRows=<val> for the number of rows to insert into table (default 9230)" );
 
-  stmt->execute( "set net_write_timeout=2" );
+  int timeout=  1;
+  int pause=    2;
+  int rows=     9230;
+
+  int tmp= TestsRunner::getStartOptions()->getInt( "nwtTimeout" );
+  if ( tmp > 0 )
+    timeout= tmp;
+
+
+  tmp= TestsRunner::getStartOptions()->getInt( "nwtPause" );
+  if ( tmp > 0 )
+      pause= tmp;
+
+  tmp= TestsRunner::getStartOptions()->getInt( "nwtRows" );
+  if ( tmp > 0 )
+      rows= tmp;
+
+
+  pstmt.reset( con->prepareStatement( "set net_write_timeout=?" ) );
+  pstmt->setInt( 1, timeout );
+  pstmt->execute();
 
   res.reset( stmt->executeQuery( "show variables like \"net_write_timeout\"" ) );
 
@@ -36,7 +61,7 @@ void bugs::net_write_timeout39878()
 
   pstmt.reset( con->prepareStatement( "insert into bug39878 ( id ) values( ? )" ) );
 
-  for (int i=1; i < 8000; ++i )
+  for (int i=1; i <= rows; ++i )
   {
       pstmt->setInt( 1, i );
       pstmt->execute();
@@ -67,7 +92,10 @@ void bugs::net_write_timeout39878()
       while ( res->next() )
       {
           if ( rowsRead == 0 )
-              SLEEP(5);
+          {
+              TestsListener::messagesLog() << "Pause " << pause << "s." << std::endl;
+              SLEEP(pause);
+          }
 
           ++rowsRead;
       }
@@ -81,6 +109,8 @@ void bugs::net_write_timeout39878()
 
       return;
   }
+
+  TestsListener::messagesLog() << "We've fetched " << rowsRead << " rows." << std::endl;
 
   try
   {

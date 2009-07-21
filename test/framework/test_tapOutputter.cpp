@@ -93,7 +93,7 @@ void TAP::Summary( unsigned           testsRun
   if ( testsRun < testsFailed )
       testsFailed= testsRun;
 
-  if ( testsRun )
+  if ( testsRun != 0 )
     sprintf(percentage, "%3.2f"
             , static_cast<float> (testsRun - testsFailed)*100 / testsRun);
   else
