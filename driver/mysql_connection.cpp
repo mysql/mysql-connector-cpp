@@ -19,7 +19,12 @@
 
 #include "mysql_util.h"
 
-#if defined(_WIN32) || defined(_WIN64)
+/*
+ * _WIN32 is defined by 64bit compiler too
+ * (see http://msdn.microsoft.com/en-us/library/aa489554.aspx)
+ * So no need to check for _WIN64 too
+ */
+#ifdef _WIN32
 /* MySQL 5.1 might have defined it before in include/config-win.h */
 #ifdef strncasecmp
 #undef strncasecmp
@@ -389,7 +394,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	if (!(intern->mysql = mysql_init(NULL))) {
 		throw sql::SQLException("Insufficient memory: cannot create MySQL handle using mysql_init()");
 	}
-#if !defined(_WIN32) && !defined(_WIN64)
+#ifndef _WIN32
 	if (!hostName.compare(0, sizeof("unix://") - 1, "unix://")) {
 		protocol_tcp = false;
 		socket_or_pipe = hostName.substr(sizeof("unix://") - 1, sql::SQLString::npos);
@@ -466,7 +471,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 				throw sql::InvalidArgumentException("No bool value passed for OPT_REPORT_DATA_TRUNCATION");
 			}
 			mysql_options(intern->mysql, MYSQL_REPORT_DATA_TRUNCATION, (const char *) &p_b);
-#if defined(_WIN32) || defined(_WIN64)
+#ifdef _WIN32
 		} else if (!it->first.compare("OPT_NAMED_PIPE")) {
 			mysql_options(intern->mysql, MYSQL_OPT_NAMED_PIPE, NULL);
 #endif

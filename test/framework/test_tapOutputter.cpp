@@ -89,7 +89,7 @@ void TAP::Summary( unsigned           testsRun
 {
   char percentage[7];
 
-  // Little data validation - otherwise sprintf can corrupt our precious buffer
+  // Little data validation - otherwise sprintf can corrupt our precious stack
   if ( testsRun < testsFailed )
       testsFailed= testsRun;
 

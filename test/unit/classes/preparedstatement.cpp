@@ -32,7 +32,6 @@ void preparedstatement::InsertSelectAllTypes()
   std::vector<columndefinition>::iterator it;
   stmt.reset(con->createStatement());
   bool got_warning=false;
-  std::istream * blob_output_stream;
   size_t len;
 
   try
