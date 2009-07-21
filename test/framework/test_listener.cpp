@@ -153,7 +153,7 @@ void TestsListener::testHasStarted()
 {
   //std::cout << ".";
   ++theInstance().executed;
-  theInstance().executionComment="";
+  theInstance().executionComment= "";
 
   if (theInstance().timing)
   {
@@ -237,7 +237,7 @@ void TestsListener::testHasFinished(TestRunResult result, const String & msg)
 
 void TestsListener::setTestExecutionComment(const String & msg)
 {
-  theInstance().executionComment=msg;
+  theInstance().executionComment= msg;
 }
 
 void TestsListener::testHasFailed(const String & msg)
@@ -252,7 +252,7 @@ void TestsListener::testHasFailed(const String & msg)
 void TestsListener::summary()
 {
   outputter->Summary(executed
-                     , failed() + exceptions
+                     , failed() /*+ exceptions - exceptions are already counted in failed()*/
                      , failedTests);
 }
 

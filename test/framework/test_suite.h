@@ -27,7 +27,7 @@
 namespace testsuite
 {
 
-  class TestSuite : public Test, virtual public Private::TestContainer
+class TestSuite : public Test, virtual public Private::TestContainer
 {
 private:
 
