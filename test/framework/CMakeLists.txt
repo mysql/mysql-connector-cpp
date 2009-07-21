@@ -42,6 +42,7 @@ SET(testframework_sources
 IF(WIN32)
 	SET(testframework_sources
     		${testframework_sources}
+		framework.h
 		test_runner.h
 		test_suite.h
 		test_case.h
@@ -53,7 +54,7 @@ IF(WIN32)
 		test_container.h
 		test_timer.h
 		start_options.h
-	  test_filter.h
+		test_filter.h
 		../common/stringutils.h
 		../common/file.h
 		)
