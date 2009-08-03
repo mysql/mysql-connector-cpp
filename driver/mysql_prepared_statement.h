@@ -12,8 +12,6 @@
 #ifndef _MYSQL_PREPARED_STATEMENT_H_
 #define _MYSQL_PREPARED_STATEMENT_H_
 
-#include <stdio.h>
-
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <cppconn/prepared_statement.h>

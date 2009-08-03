@@ -10,6 +10,8 @@
 */
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+
 #include <iostream>
 #include <sstream>
 #include <boost/scoped_array.hpp>

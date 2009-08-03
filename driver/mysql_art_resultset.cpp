@@ -11,6 +11,7 @@
 
 #include <sstream>
 #include <math.h>
+#include <stdio.h>
 
 #include "mysql_util.h"
 #include "mysql_art_resultset.h"

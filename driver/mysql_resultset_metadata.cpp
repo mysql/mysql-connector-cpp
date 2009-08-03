@@ -12,6 +12,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+
 #include <iostream>
 #include <sstream>
 #include <boost/shared_ptr.hpp>

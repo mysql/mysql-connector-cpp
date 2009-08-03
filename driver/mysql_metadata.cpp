@@ -11,6 +11,7 @@
 
 #include <stdlib.h>
 #include <string>
+
 #include <memory>
 #include <boost/scoped_ptr.hpp>
 #include <cppconn/exception.h>
