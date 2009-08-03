@@ -1,4 +1,10 @@
-GA  1.0.6 - 2009-06-xx
+GA  1.0.6 - 2009-08-xx
+
+- Fixed http://bugs.mysql.com/bug.php?id=45843: cmake error if configuring an out 
+  of source build [when not calling cmake in the root directory] (Ulf)
+
+- Fixed http://bugs.mysql.com/bug.php?id=44931: missing includes when using GCC 4.4.
+  Note that GCC 4.4 is not yet in use for any official MySQL builds. (Ulf, Lawrin)
 
 - Fixed a performance issue of Prepared Statements. Reading large result sets has
   been slow - think O(n^2). Patch by Frank Schoenheit from the OpenOffice.org 
