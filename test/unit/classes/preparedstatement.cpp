@@ -32,7 +32,6 @@ void preparedstatement::InsertSelectAllTypes()
   std::vector<columndefinition>::iterator it;
   stmt.reset(con->createStatement());
   bool got_warning=false;
-  std::istream * blob_output_stream;
   size_t len;
 
   try
@@ -63,6 +62,10 @@ void preparedstatement::InsertSelectAllTypes()
       ASSERT_EQUALS(1, pstmt->executeUpdate());
 
       pstmt.reset(con->prepareStatement("SELECT id, NULL FROM test"));
+      res.reset(pstmt->executeQuery());
+      checkResultSetScrolling(res);
+      ASSERT(res->next());
+
       res.reset(pstmt->executeQuery());
       checkResultSetScrolling(res);
       ASSERT(res->next());

@@ -32,8 +32,8 @@ private:
   BoolParamsType                  defBoolValues;
   Properties                      defStringValues;
 
-	BoolParamsType		              bOptions;
-	Properties                      sOptions;
+  BoolParamsType		          bOptions;
+  Properties                      sOptions;
 
 protected:
 
@@ -58,6 +58,8 @@ public:
 
         bool      getBool    ( const String & name ) const;
   const String &  getString  ( const String & param) const;
+
+        int       getInt     ( const String & param) const;
 
 };
 

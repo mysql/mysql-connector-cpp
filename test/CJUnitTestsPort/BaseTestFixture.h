@@ -381,9 +381,9 @@ protected:
    *             if an error occurs.
    */
   /* throws SQLException */
-  bool versionMeetsMinimum( int major
-                           , int minor
-                           , int subminor= 0 );
+  bool versionMeetsMinimum(unsigned int major
+                           , unsigned int minor
+                           , unsigned int subminor= 0 );
 
   /*bool          isClassAvailable            (String classname);*/
 

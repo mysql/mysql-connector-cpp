@@ -794,8 +794,7 @@ void resultsetmetadata::isCaseSensitive()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + std::string(e.getSQLState()));
-    printf("%s", e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));    
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -868,8 +867,7 @@ void resultsetmetadata::isZerofill()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    logErr("SQLState: " + std::string(e.getSQLState()));
-    printf("%s", e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));    
     fail(e.what(), __FILE__, __LINE__);
   }
 }

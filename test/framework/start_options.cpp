@@ -96,7 +96,7 @@ namespace testsuite
   }
 
 
-	bool StartOptions::parseParams(int paramsNumber, char** paramsValues)
+  bool StartOptions::parseParams(int paramsNumber, char** paramsValues)
   {
     List paramPair;
 
@@ -195,5 +195,10 @@ namespace testsuite
     return defaultStringValue( param );
   }
 
+
+  int StartOptions::getInt( const String & param) const
+  {
+    return StringUtils::toInt( getString( param ) );
+  }
 } // namespace testsuite
 

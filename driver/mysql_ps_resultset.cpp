@@ -509,7 +509,7 @@ MySQL_Prepared_ResultSet::getInt(const uint32_t columnIndex) const
 	if (*result_bind->rbind[columnIndex - 1].is_null) {
 		return 0;
 	}
-	
+
 	return static_cast<int32_t>(getInt64_intern(columnIndex, true));
 }
 /* }}} */
@@ -761,13 +761,13 @@ MySQL_Prepared_ResultSet::getUInt64_intern(const uint32_t columnIndex, bool /* c
 					if (is_it_unsigned) {
 						ret =  !is_it_null? *reinterpret_cast<uint64_t *>(result_bind->rbind[columnIndex - 1].buffer):0;
 					} else {
-						ret =  !is_it_null? *reinterpret_cast<int64_t *>(result_bind->rbind[columnIndex - 1].buffer):0;				
+						ret =  !is_it_null? *reinterpret_cast<int64_t *>(result_bind->rbind[columnIndex - 1].buffer):0;
 #if WE_WANT_TO_SEE_MORE_FAILURES_IN_UNIT_RESULTSET
 						if (is_it_null) {
 							if (cutTooBig && *reinterpret_cast<int64_t *>(result_bind->rbind[columnIndex - 1].buffer) < 0) {
-								ret =  *reinterpret_cast<uint64_t *>(result_bind->rbind[columnIndex - 1].buffer);				
+								ret =  *reinterpret_cast<uint64_t *>(result_bind->rbind[columnIndex - 1].buffer);
 							} else {
-								ret =  *reinterpret_cast<int64_t *>(result_bind->rbind[columnIndex - 1].buffer);				
+								ret =  *reinterpret_cast<int64_t *>(result_bind->rbind[columnIndex - 1].buffer);
 							}
 						} else {
 							ret = 0;
@@ -943,7 +943,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 			if (result_bind->rbind[columnIndex - 1].is_unsigned) {
 				my_ul_to_a(buf, sizeof(buf) - 1, getUInt64_intern(columnIndex, false));
 			} else {
-				my_l_to_a(buf, sizeof(buf) - 1, getInt64_intern(columnIndex, false));			
+				my_l_to_a(buf, sizeof(buf) - 1, getInt64_intern(columnIndex, false));
 			}
 			return sql::SQLString(buf);
 		}
@@ -968,7 +968,7 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 			CPP_INFO("It's a string");
 			return  sql::SQLString(static_cast<char *>(result_bind->rbind[columnIndex - 1].buffer), *result_bind->rbind[columnIndex - 1].length);
 		default:
-			break;		
+			break;
 		// ToDo : Geometry? default ?
 	}
 
@@ -1163,7 +1163,20 @@ MySQL_Prepared_ResultSet::next()
 			++row_position;
 			ret = false;
 		} else if (row_position < num_rows + 1) {
-			mysql_stmt_data_seek(stmt, row_position);
+
+			if (row_position == 0) {
+				mysql_stmt_data_seek(stmt, row_position);
+			} else {
+				/*
+				NOTE: Buffered only optimization.
+
+				If our position is anything else but beforeFirst/afterLast, then the last
+				cursor operation ended with a mysql_stmt_fetch call, which by definition (?)
+				moves the cursor to the next row after the fetched one. So, we do not need
+				any positioning here.
+				*/
+			}
+
 			int result = mysql_stmt_fetch(stmt);
 			if (!result || result == MYSQL_DATA_TRUNCATED) {
 				ret = true;

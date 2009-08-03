@@ -89,13 +89,17 @@ void TAP::Summary( unsigned           testsRun
 {
   char percentage[7];
 
-  if (testsRun)
+  // Little data validation - otherwise sprintf can corrupt our precious stack
+  if ( testsRun < testsFailed )
+      testsFailed= testsRun;
+
+  if ( testsRun != 0 )
     sprintf(percentage, "%3.2f"
             , static_cast<float> (testsRun - testsFailed)*100 / testsRun);
   else
     strcpy(percentage, "0.00");
 
-  if (testsFailed > 0)
+  if ( testsFailed > 0 )
   {
     //TODO: move is string utils as "join" or smth
     std::vector<int>::const_iterator cit=failedTestsNum.begin();

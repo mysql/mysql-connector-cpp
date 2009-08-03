@@ -19,7 +19,12 @@
 
 #include "mysql_util.h"
 
-#if defined(_WIN32) || defined(_WIN64)
+/*
+ * _WIN32 is defined by 64bit compiler too
+ * (see http://msdn.microsoft.com/en-us/library/aa489554.aspx)
+ * So no need to check for _WIN64 too
+ */
+#ifdef _WIN32
 /* MySQL 5.1 might have defined it before in include/config-win.h */
 #ifdef strncasecmp
 #undef strncasecmp
@@ -332,56 +337,56 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for CLIENT_COMPRESS");
 			}
-			if (*p_b && (flags & CLIENT_COMPRESS)) {
+			if (*p_b) {
 				flags |= CLIENT_COMPRESS;
 			}
 		} else if (!it->first.compare("CLIENT_FOUND_ROWS")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for CLIENT_FOUND_ROWS");
 			}
-			if (*p_b  && (flags & CLIENT_FOUND_ROWS)) {
+			if (*p_b) {
 				flags |= CLIENT_FOUND_ROWS;
 			}
 		} else if (!it->first.compare("CLIENT_IGNORE_SIGPIPE")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for CLIENT_IGNORE_SIGPIPE");
 			}
-			if (*p_b  && (flags & CLIENT_IGNORE_SIGPIPE)) {
+			if (*p_b) {
 				flags |= CLIENT_IGNORE_SIGPIPE;
 			}
 		} else if (!it->first.compare("CLIENT_IGNORE_SPACE")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for CLIENT_IGNORE_SPACE");
 			}
-			if (*p_b  && (flags & CLIENT_IGNORE_SPACE)) {
+			if (*p_b) {
 				flags |= CLIENT_IGNORE_SPACE;
 			}
 		} else if (!it->first.compare("CLIENT_INTERACTIVE")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for CLIENT_INTERACTIVE");
 			}
-			if (*p_b  && (flags & CLIENT_INTERACTIVE)) {
+			if (*p_b) {
 				flags |= CLIENT_INTERACTIVE;
 			}
 		} else if (!it->first.compare("CLIENT_LOCAL_FILES")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for CLIENT_LOCAL_FILES");
 			}
-			if (*p_b  && (flags & CLIENT_LOCAL_FILES)) {
+			if (*p_b) {
 				flags |= CLIENT_LOCAL_FILES;
 			}
 		} else if (!it->first.compare("CLIENT_MULTI_STATEMENTS")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for CLIENT_MULTI_STATEMENTS");
 			}
-			if (*p_b  && (flags & CLIENT_MULTI_STATEMENTS)) {
+			if (*p_b) {
 				flags |= CLIENT_MULTI_STATEMENTS;
 			}
 		} else if (!it->first.compare("CLIENT_NO_SCHEMA")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for CLIENT_NO_SCHEMA");
 			}
-			if (*p_b  && (flags & CLIENT_NO_SCHEMA)) {
+			if (*p_b) {
 				flags |= CLIENT_NO_SCHEMA;
 			}
 		}
@@ -389,7 +394,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	if (!(intern->mysql = mysql_init(NULL))) {
 		throw sql::SQLException("Insufficient memory: cannot create MySQL handle using mysql_init()");
 	}
-#if !defined(_WIN32) && !defined(_WIN64)
+#ifndef _WIN32
 	if (!hostName.compare(0, sizeof("unix://") - 1, "unix://")) {
 		protocol_tcp = false;
 		socket_or_pipe = hostName.substr(sizeof("unix://") - 1, sql::SQLString::npos);
@@ -434,10 +439,11 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	it = properties.begin();
 	for (; it != properties.end(); ++it) {
 		if (!it->first.compare("OPT_CONNECT_TIMEOUT")) {
-			if (!(p_b = boost::get< bool >(&it->second))) {
-				throw sql::InvalidArgumentException("No bool value passed for OPT_CONNECT_TIMEOUT");
+			if (!(p_ll = boost::get<long long>(&it->second))) {
+				throw sql::InvalidArgumentException("No long long value passed for OPT_CONNECT_TIMEOUT");
 			}
-			mysql_options(intern->mysql, MYSQL_OPT_CONNECT_TIMEOUT, (const char *) &p_b);
+      long l_tmp = static_cast<long>(*p_ll);
+			mysql_options(intern->mysql, MYSQL_OPT_CONNECT_TIMEOUT, (const char *) &l_tmp);
 		} else if (!it->first.compare("OPT_READ_TIMEOUT")) {
 			if (!(p_ll = boost::get<long long>(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for OPT_READ_TIMEOUT");
@@ -451,11 +457,10 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			long l_tmp = static_cast<long>(*p_ll);
 			mysql_options(intern->mysql, MYSQL_OPT_WRITE_TIMEOUT, (const char *) &l_tmp);
 		} else if (!it->first.compare("OPT_RECONNECT")) {
-			if (!(p_ll = boost::get<long long>(&it->second))) {
-				throw sql::InvalidArgumentException("No long long value passed for OPT_RECONNECT");
+			if (!(p_b = boost::get<bool>(&it->second))) {
+				throw sql::InvalidArgumentException("No bool value passed for OPT_RECONNECT");
 			}
-			long l_tmp = static_cast<long>(*p_ll);
-			mysql_options(intern->mysql, MYSQL_OPT_RECONNECT, (const char *) &l_tmp);
+			mysql_options(intern->mysql, MYSQL_OPT_RECONNECT, (const char *) &p_b);
 		} else if (!it->first.compare("OPT_CHARSET_NAME")) {
 			if (!(p_s = boost::get< sql::SQLString >(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for OPT_CHARSET_NAME");
@@ -463,10 +468,10 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			defaultCharset = *p_s;
 		} else if (!it->first.compare("OPT_REPORT_DATA_TRUNCATION")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
-				throw sql::InvalidArgumentException("No bool value passed for OPT_CONNECT_TIMEOUT");
+				throw sql::InvalidArgumentException("No bool value passed for OPT_REPORT_DATA_TRUNCATION");
 			}
 			mysql_options(intern->mysql, MYSQL_REPORT_DATA_TRUNCATION, (const char *) &p_b);
-#if defined(_WIN32) || defined(_WIN64)
+#ifdef _WIN32
 		} else if (!it->first.compare("OPT_NAMED_PIPE")) {
 			mysql_options(intern->mysql, MYSQL_OPT_NAMED_PIPE, NULL);
 #endif

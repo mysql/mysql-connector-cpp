@@ -20,6 +20,17 @@
 #include "test_factory.h"
 #include "test_timer.h"
 
+#ifdef _WIN32
+
+#include <windows.h>
+#define SLEEP(x) Sleep((x)*1000)
+
+#else
+
+#include <unistd.h>
+#define SLEEP(x) sleep((x))
+
+#endif
 
 #define REGISTER_FIXTURE( theFixtureClass ) \
   \
