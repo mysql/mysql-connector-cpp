@@ -24,7 +24,10 @@ IF(WIN32)
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(test_connection ${test_connection_sources})
-SET_TARGET_PROPERTIES(test_connection PROPERTIES OUTPUT_NAME "connection")
+SET_TARGET_PROPERTIES(test_connection PROPERTIES
+					OUTPUT_NAME "connection"
+					LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
+					COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV} ${MYSQL_CXXFLAGS}")
 TARGET_LINK_LIBRARIES(test_connection ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 MESSAGE(STATUS "Configuring unit tests - connection")
@@ -42,7 +45,10 @@ IF(WIN32)
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(test_databasemetadata ${test_databasemetadata_sources})
-SET_TARGET_PROPERTIES(test_databasemetadata PROPERTIES OUTPUT_NAME "databasemetadata")
+SET_TARGET_PROPERTIES(test_databasemetadata PROPERTIES
+					OUTPUT_NAME "databasemetadata"
+					LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
+					COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV} ${MYSQL_CXXFLAGS}")
 TARGET_LINK_LIBRARIES(test_databasemetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 MESSAGE(STATUS "Configuring unit tests - databasemetadata")
@@ -61,7 +67,10 @@ IF(WIN32)
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(test_resultsetmetadata ${test_resultsetmetadata_sources})
-SET_TARGET_PROPERTIES(test_resultsetmetadata PROPERTIES OUTPUT_NAME "resultsetmetadata")
+SET_TARGET_PROPERTIES(test_resultsetmetadata PROPERTIES
+					OUTPUT_NAME "resultsetmetadata"
+					LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
+					COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV} ${MYSQL_CXXFLAGS}")
 TARGET_LINK_LIBRARIES(test_resultsetmetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 MESSAGE(STATUS "Configuring unit tests - resultsetmetadata")
@@ -79,7 +88,10 @@ IF(WIN32)
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(test_resultset ${test_resultset_sources})
-SET_TARGET_PROPERTIES(test_resultset PROPERTIES OUTPUT_NAME "resultset")
+SET_TARGET_PROPERTIES(test_resultset PROPERTIES
+					OUTPUT_NAME "resultset"
+					LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
+					COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV} ${MYSQL_CXXFLAGS}")
 TARGET_LINK_LIBRARIES(test_resultset ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 MESSAGE(STATUS "Configuring unit tests - resultset")
@@ -97,7 +109,10 @@ IF(WIN32)
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(test_savepoint ${test_savepoint_sources})
-SET_TARGET_PROPERTIES(test_savepoint PROPERTIES OUTPUT_NAME "savepoint")
+SET_TARGET_PROPERTIES(test_savepoint PROPERTIES
+					OUTPUT_NAME "savepoint"
+					LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
+					COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV} ${MYSQL_CXXFLAGS}")
 TARGET_LINK_LIBRARIES(test_savepoint ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 MESSAGE(STATUS "Configuring unit tests - savepoint")
@@ -115,7 +130,10 @@ IF(WIN32)
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(test_preparedstatement ${test_preparedstatement_sources})
-SET_TARGET_PROPERTIES(test_preparedstatement PROPERTIES OUTPUT_NAME "preparedstatement")
+SET_TARGET_PROPERTIES(test_preparedstatement PROPERTIES
+					OUTPUT_NAME "preparedstatement"
+					LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
+					COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV} ${MYSQL_CXXFLAGS}")
 TARGET_LINK_LIBRARIES(test_preparedstatement ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 MESSAGE(STATUS "Configuring unit tests - preparedstatement")
@@ -133,7 +151,10 @@ IF(WIN32)
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(test_parametermetadata ${test_parametermetadata_sources})
-SET_TARGET_PROPERTIES(test_parametermetadata PROPERTIES OUTPUT_NAME "parametermetadata")
+SET_TARGET_PROPERTIES(test_parametermetadata PROPERTIES
+					OUTPUT_NAME "parametermetadata"
+					LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
+					COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV} ${MYSQL_CXXFLAGS}")
 TARGET_LINK_LIBRARIES(test_parametermetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 MESSAGE(STATUS "Configuring unit tests - parametermetadata")
@@ -153,7 +174,10 @@ IF(WIN32)
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(test_art_resultset ${test_art_resultset_sources})
-SET_TARGET_PROPERTIES(test_art_resultset PROPERTIES OUTPUT_NAME "art_resultset")
+SET_TARGET_PROPERTIES(test_art_resultset PROPERTIES
+					OUTPUT_NAME "art_resultset"
+					LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
+					COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV} ${MYSQL_CXXFLAGS}")
 
 IF(WIN32)
 	#MESSAGE("${MY_TARGET_LINK_LIBRARIES_STATIC_CPPLIB}")
@@ -177,7 +201,10 @@ IF(WIN32)
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(test_statement ${test_statement_sources})
-SET_TARGET_PROPERTIES(test_statement PROPERTIES OUTPUT_NAME "statement")
+SET_TARGET_PROPERTIES(test_statement PROPERTIES
+					OUTPUT_NAME "statement"
+					LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
+					COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV} ${MYSQL_CXXFLAGS}")
 TARGET_LINK_LIBRARIES(test_statement ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 MESSAGE(STATUS "Configuring unit tests - statement")
