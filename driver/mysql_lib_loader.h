@@ -17,11 +17,11 @@
 #else
 // if HAVE_DLFCN_H is not defined - this header(mysql_lib_loader.h) won't be included
 // by cmake rule. So following check of HAVE_DLFCN_H might be redundant
-# ifdef HAVE_DLFCN_H
+//# ifdef HAVE_DLFCN_H
 #  include <dlfcn.h>
-# else
-#  error This should never happen - if this header is included, one of macros above supposed to be defined.
-# endif
+//# else
+//#  error This should never happen - if this header is included, one of macros above supposed to be defined.
+//# endif
 #endif
 
 #include <boost/noncopyable.hpp>
