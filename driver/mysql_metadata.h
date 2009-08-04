@@ -27,17 +27,25 @@ namespace mysql
 class MySQL_Connection;
 class MySQL_DebugLogger;
 
+namespace NativeAPI
+{
+class IMySQLCAPI;
+}
+
+
 class MySQL_ConnectionMetaData : public sql::DatabaseMetaData
 {
 	MySQL_Connection * connection;
 	unsigned long server_version;
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 
+    boost::shared_ptr<NativeAPI::IMySQLCAPI> capi;
+
 	sql::SQLString lower_case_table_names;
 
 	bool use_info_schema;
 public:
-	MySQL_ConnectionMetaData(MySQL_Connection * const conn, boost::shared_ptr< MySQL_DebugLogger > & l);
+    MySQL_ConnectionMetaData(MySQL_Connection * const conn, boost::shared_ptr<NativeAPI::IMySQLCAPI> _capi, boost::shared_ptr< MySQL_DebugLogger > & l);
 
 	virtual ~MySQL_ConnectionMetaData();
 

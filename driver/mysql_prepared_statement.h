@@ -30,11 +30,18 @@ class MySQL_ParameterMetaData;
 class MySQL_Prepared_ResultSetMetaData;
 class MySQL_ResultBind;
 
+namespace NativeAPI
+{
+class IMySQLCAPI;
+}
+
+
 class MySQL_Prepared_Statement : public sql::PreparedStatement
 {
 protected:
 	sql::Connection * connection;
 	MYSQL_STMT * stmt;
+    boost::shared_ptr<NativeAPI::IMySQLCAPI> capi;
 	boost::scoped_ptr< MySQL_ParamBind > param_bind;
 	unsigned int param_count;
 
@@ -62,7 +69,7 @@ protected:
 public:
 
 	MySQL_Prepared_Statement(MYSQL_STMT * s, sql::Connection * conn, sql::ResultSet::enum_type rset_type,
-							 boost::shared_ptr< MySQL_DebugLogger > & log);
+							 boost::shared_ptr<NativeAPI::IMySQLCAPI> & _capi, boost::shared_ptr< MySQL_DebugLogger > & log);
 	virtual ~MySQL_Prepared_Statement();
 
 	sql::Connection *getConnection();

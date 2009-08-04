@@ -25,6 +25,8 @@
 #include "mysql_statement.h"
 #include "mysql_resultset.h"
 #include "mysql_warning.h"
+#include "mysql_resultset_data.h"
+#include "mysql_client_api.h"
 
 #include "mysql_debug.h"
 
@@ -34,8 +36,9 @@ namespace mysql
 {
 
 /* {{{ MySQL_Statement::MySQL_Statement() -I- */
-MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & l)
-	: warnings(NULL), connection(conn), isClosed(false),
+MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, boost::shared_ptr<NativeAPI::IMySQLCAPI> & _capi,
+                                 sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & l)
+	: warnings(NULL), connection(conn), capi(_capi), isClosed(false),
 	  last_update_count(UL64(~0)), logger(l),
 	  resultset_type(rset_type)
 {
@@ -67,16 +70,16 @@ MySQL_Statement::do_query(const char *q, size_t length)
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 	MYSQL * mysql = connection->getMySQLHandle();
-	if (mysql_real_query(mysql, q, static_cast<unsigned long>(length)) && mysql_errno(mysql)) {
-		CPP_ERR_FMT("Error during mysql_real_query : %d:(%s) %s", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
-		sql::mysql::util::throwSQLException(mysql);
+	if (capi->mysql_real_query(mysql, q, static_cast<unsigned long>(length)) && capi->mysql_errno(mysql)) {
+		CPP_ERR_FMT("Error during capi->mysql_real_query : %d:(%s) %s", capi->mysql_errno(mysql), capi->mysql_sqlstate(mysql), capi->mysql_error(mysql));
+		sql::mysql::util::throwSQLException(*capi.get(), mysql);
 	}
 }
 /* }}} */
 
 
 /* {{{ MySQL_Statement::get_resultset() -I- */
-boost::shared_ptr< MYSQL_RES >
+boost::shared_ptr< MySQL_ResultsetData >
 MySQL_Statement::get_resultset()
 {
 	CPP_ENTER("MySQL_Statement::get_resultset");
@@ -85,13 +88,13 @@ MySQL_Statement::get_resultset()
 
 	MYSQL * mysql = connection->getMySQLHandle();
 
-	MYSQL_RES  * result = resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? mysql_use_result(mysql):mysql_store_result(mysql);
+	MYSQL_RES  * result = resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? capi->mysql_use_result(mysql):capi->mysql_store_result(mysql);
 	if (result == NULL) {
 		CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
-					mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
-		sql::mysql::util::throwSQLException(mysql);
+					capi->mysql_errno(mysql), capi->mysql_sqlstate(mysql), capi->mysql_error(mysql));
+		sql::mysql::util::throwSQLException(*capi.get(), mysql);
 	}
-	return boost::shared_ptr< MYSQL_RES >(result, &mysql_free_result);
+	return boost::shared_ptr< MySQL_ResultsetData >( new MySQL_ResultsetData( result, capi, logger ) );
 }
 /* }}} */
 
@@ -117,8 +120,8 @@ MySQL_Statement::execute(const sql::SQLString& sql)
 	CPP_INFO_FMT("query=%s", sql.c_str());
 	checkClosed();
 	do_query(sql.c_str(), static_cast<int>(sql.length()));
-	bool ret = mysql_field_count(connection->getMySQLHandle()) > 0;
-	last_update_count = ret? UL64(~0):mysql_affected_rows(connection->getMySQLHandle());
+	bool ret = capi->mysql_field_count(connection->getMySQLHandle()) > 0;
+	last_update_count = ret? UL64(~0):capi->mysql_affected_rows(connection->getMySQLHandle());
 	return ret;
 }
 /* }}} */
@@ -156,10 +159,10 @@ MySQL_Statement::executeUpdate(const sql::SQLString& sql)
 	CPP_INFO_FMT("query=%s", sql.c_str());
 	checkClosed();
 	do_query(sql.c_str(), static_cast<int>(sql.length()));
-	if (mysql_field_count(connection->getMySQLHandle())) {
+	if (capi->mysql_field_count(connection->getMySQLHandle())) {
 		throw sql::InvalidArgumentException("Statement returning result set");
 	}
-	return static_cast<int>(last_update_count = mysql_affected_rows(connection->getMySQLHandle()));
+	return static_cast<int>(last_update_count = capi->mysql_affected_rows(connection->getMySQLHandle()));
 }
 /* }}} */
 
@@ -204,11 +207,11 @@ MySQL_Statement::getResultSet()
 	sql::ResultSet::enum_type tmp_type;
 	switch (resultset_type) {
 		case sql::ResultSet::TYPE_FORWARD_ONLY:
-			result = mysql_use_result(mysql);
+			result = capi->mysql_use_result(mysql);
 			tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
 			break;
 		default:
-			result = mysql_store_result(mysql);
+			result = capi->mysql_store_result(mysql);
 			tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
 	}
 	if (!result) {
@@ -216,7 +219,7 @@ MySQL_Statement::getResultSet()
 		return NULL;
 	}
 
-	boost::shared_ptr< MYSQL_RES > wrapper(result, &mysql_free_result);
+	boost::shared_ptr< MySQL_ResultsetData > wrapper( new MySQL_ResultsetData( result, capi, logger ) );
 	sql::ResultSet * ret = new MySQL_ResultSet(wrapper, tmp_type, this, logger);
 
 	CPP_INFO_FMT("res=%p", ret);
@@ -316,13 +319,13 @@ MySQL_Statement::getMoreResults()
 	checkClosed();
 	last_update_count = UL64(~0);
 	MYSQL * conn = connection->getMySQLHandle();
-	if (mysql_more_results(conn)) {
-		int next_result = mysql_next_result(conn);
+	if (capi->mysql_more_results(conn)) {
+		int next_result = capi->mysql_next_result(conn);
 		if (next_result > 0) {
-			CPP_ERR_FMT("Error during getMoreResults : %d:(%s) %s", mysql_errno(conn), mysql_sqlstate(conn), mysql_error(conn));
-			sql::mysql::util::throwSQLException(conn);
+			CPP_ERR_FMT("Error during getMoreResults : %d:(%s) %s", capi->mysql_errno(conn), capi->mysql_sqlstate(conn), capi->mysql_error(conn));
+			sql::mysql::util::throwSQLException(*capi.get(), conn);
 		} else if (next_result == 0) {
-			return mysql_field_count(conn) != 0;
+			return capi->mysql_field_count(conn) != 0;
 		} else if (next_result == -1) {
 			throw sql::SQLException("Impossible! more_results() said true, next_result says no more results");
 		}

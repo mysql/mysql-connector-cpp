@@ -16,7 +16,7 @@
 #include <cppconn/datatype.h>
 #include <cppconn/exception.h>
 #include "mysql_util.h"
-
+#include "mysql_client_api.h"
 
 namespace sql {
 namespace mysql {
@@ -24,17 +24,17 @@ namespace util {
 
 
 /* {{{ throwSQLException -I- */
-void throwSQLException(MYSQL * mysql)
+void throwSQLException(::sql::mysql::NativeAPI::IMySQLCAPI & capi, MYSQL * mysql)
 {
-	throw sql::SQLException(mysql_error(mysql), mysql_sqlstate(mysql), mysql_errno(mysql));
+	throw sql::SQLException(capi.mysql_error(mysql), capi.mysql_sqlstate(mysql), capi.mysql_errno(mysql));
 }
 /* }}} */
 
 
 /* {{{ throwSQLException -I- */
-void throwSQLException(MYSQL_STMT * stmt)
+void throwSQLException(::sql::mysql::NativeAPI::IMySQLCAPI & capi, MYSQL_STMT * stmt)
 {
-	throw sql::SQLException(mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_errno(stmt));
+	throw sql::SQLException(capi.mysql_stmt_error(stmt), capi.mysql_stmt_sqlstate(stmt), capi.mysql_stmt_errno(stmt));
 }
 /* }}} */
 

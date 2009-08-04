@@ -51,10 +51,13 @@
 
 namespace sql {
 namespace mysql {
+namespace NativeAPI {
+class IMySQLCAPI;
+}
 namespace util {
 
-void throwSQLException(MYSQL * mysql);
-void throwSQLException(MYSQL_STMT * stmt);
+void throwSQLException(::sql::mysql::NativeAPI::IMySQLCAPI & capi, MYSQL * mysql);
+void throwSQLException(::sql::mysql::NativeAPI::IMySQLCAPI & capi, MYSQL_STMT * stmt);
 
 int mysql_string_type_to_datatype(const sql::SQLString & name);
 int mysql_type_to_datatype(const MYSQL_FIELD * const field);

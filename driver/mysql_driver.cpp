@@ -9,11 +9,13 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
-#include "mysql_driver.h"
 #include "mysql_connection.h"
 
 #include "mysql_private_iface.h"
 #include <cppconn/exception.h>
+
+// Looks like this one should go after private_iface
+#include "mysql_driver.h"
 
 static bool module_already_loaded = 0;
 
@@ -45,7 +47,7 @@ MySQL_Driver * MySQL_Driver::Instance()
 MySQL_Driver::MySQL_Driver()
 {
 	if (!module_already_loaded) {
-		mysql_library_init(0, NULL, NULL);
+		//mysql_library_init(0, NULL, NULL);
 		module_already_loaded = true;
 	} else {
 		throw sql::InvalidArgumentException("You should not call directly the constructor");
@@ -56,7 +58,6 @@ MySQL_Driver::MySQL_Driver()
 
 MySQL_Driver::~MySQL_Driver()
 {
-	mysql_library_end();
 }
 
 

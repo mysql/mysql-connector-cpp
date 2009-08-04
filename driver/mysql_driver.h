@@ -19,11 +19,19 @@ namespace sql
 {
 namespace mysql
 {
+namespace util
+{
+
+class MySQL_Client_Loader;
+
+}
+
 class Connection;
 class ConnectProperty;
 
 class CPPCONN_PUBLIC_FUNC MySQL_Driver : public sql::Driver
 {
+
 public:
 	MySQL_Driver(); /* DON'T CALL THIS, USE Instance() */
 	virtual ~MySQL_Driver();/* DON'T CALL THIS, MEMORY WILL BE AUTOMAGICALLY CLEANED */

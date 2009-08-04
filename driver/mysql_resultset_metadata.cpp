@@ -23,6 +23,7 @@
 #include "mysql_util.h"
 #include "mysql_resultset.h"
 #include "mysql_resultset_metadata.h"
+#include "mysql_resultset_data.h"
 
 #include "mysql_debug.h"
 
@@ -33,13 +34,13 @@ namespace mysql
 
 
 /* {{{ MySQL_ResultSetMetaData::MySQL_ResultSetMetaData -I- */
-MySQL_ResultSetMetaData::MySQL_ResultSetMetaData(boost::shared_ptr< MYSQL_RES > res, boost::shared_ptr< MySQL_DebugLogger > & l)
+MySQL_ResultSetMetaData::MySQL_ResultSetMetaData(boost::shared_ptr< MySQL_ResultsetData > res, boost::shared_ptr< MySQL_DebugLogger > & l)
   : result(res), logger(l)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::MySQL_ResultSetMetaData");
-	boost::shared_ptr< MYSQL_RES > result_p = result.lock();
+    boost::shared_ptr< MySQL_ResultsetData > result_p = result.lock();
 	if (result_p) {
-		num_fields = mysql_num_fields(result_p.get());
+		num_fields = result_p->num_fields();
 	}
 }
 /* }}} */
@@ -69,7 +70,7 @@ void
 MySQL_ResultSetMetaData::checkValid() const
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::checkValid");
-	boost::shared_ptr< MYSQL_RES > result_p = result.lock();
+    boost::shared_ptr< MySQL_ResultsetData > result_p = result.lock();
 	if (!result_p) {
 		throw sql::InvalidArgumentException("ResultSet is not valid anymore");
 	}
@@ -171,8 +172,8 @@ MySQL_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 MYSQL_FIELD *
 MySQL_ResultSetMetaData::getFieldMeta(unsigned int columnIndex) const
 {
-	boost::shared_ptr< MYSQL_RES > result_p = result.lock();
-	return mysql_fetch_field_direct(result_p.get(), columnIndex - 1);
+	boost::shared_ptr< MySQL_ResultsetData > result_p = result.lock();
+	return result_p->fetch_field_direct(columnIndex - 1);
 }
 /* }}} */
 

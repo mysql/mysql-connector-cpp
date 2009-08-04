@@ -8,35 +8,21 @@
    FLOSS License Exception
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
+
+
 #include <cppconn/exception.h>
 #include "mysql_util.h"
 #include "mysql_debug.h"
 #include "mysql_resultbind.h"
+#include "mysql_client_api.h"
+#include "mysql_resultset_data.h"
 
 #include <string.h>
 
 namespace sql
 {
-
 namespace mysql
 {
-
-
-class MySQL_AutoResultSet
-{
-	MYSQL_RES * result;
-public:
-	MySQL_AutoResultSet(MYSQL_RES * res) : result(res) {}
-	~MySQL_AutoResultSet() { mysql_free_result(result); }
-
-	MYSQL_RES * get() const throw() { return result; }
-private:
-	/* Prevent use of these */
-	MySQL_AutoResultSet(const MySQL_AutoResultSet &);
-	void operator=(MySQL_AutoResultSet &);
-};
-
-
 
 struct st_buffer_size_type
 {
@@ -107,6 +93,16 @@ allocate_buffer_for_field(const MYSQL_FIELD * const field)
 /* }}} */
 
 
+/* {{{ MySQL_ResultBind::MySQL_ResultBind -I- */
+MySQL_ResultBind::MySQL_ResultBind(MYSQL_STMT * s, boost::shared_ptr< NativeAPI::IMySQLCAPI > & _capi,
+                 boost::shared_ptr< MySQL_DebugLogger > & log)
+                 : num_fields(0), is_null(NULL), err(NULL), len(NULL), capi(_capi), logger(log),
+                 stmt(s), rbind(NULL)
+{
+}
+/* }}} */
+
+
 /* {{{ MySQL_ResultBind::~MySQL_ResultBind() -I- */
 MySQL_ResultBind::~MySQL_ResultBind()
 {
@@ -131,7 +127,7 @@ void MySQL_ResultBind::bindResult()
 	err.reset(NULL);
 	len.reset(NULL);
 
-	num_fields = mysql_stmt_field_count(stmt);
+	num_fields = capi->mysql_stmt_field_count(stmt);
 	if (!num_fields) {
 		return;
 	}
@@ -148,10 +144,11 @@ void MySQL_ResultBind::bindResult()
 	len.reset(new unsigned long[num_fields]);
 	memset(len.get(), 0, sizeof(unsigned long) * num_fields);
 
-	MySQL_AutoResultSet resultMetaGuard(mysql_stmt_result_metadata(stmt));
-	MYSQL_RES * result_meta = resultMetaGuard.get();
+
+	MySQL_ResultsetData resultMeta(capi->mysql_stmt_result_metadata(stmt), capi, logger);
+
 	for (unsigned int i = 0; i < num_fields; ++i) {
-		MYSQL_FIELD * field = mysql_fetch_field(result_meta);
+		MYSQL_FIELD * field = resultMeta.fetch_field();
 
 		struct st_buffer_size_type p = allocate_buffer_for_field(field);
 		rbind[i].buffer_type	= p.type;
@@ -162,9 +159,9 @@ void MySQL_ResultBind::bindResult()
 		rbind[i].error		= &err[i];
 		rbind[i].is_unsigned = field->flags & UNSIGNED_FLAG;
 	}
-	if (mysql_stmt_bind_result(stmt, rbind.get())) {
-		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", mysql_stmt_errno(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_error(stmt));
-		sql::mysql::util::throwSQLException(stmt);
+	if (capi->mysql_stmt_bind_result(stmt, rbind.get())) {
+		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", capi->mysql_stmt_errno(stmt), capi->mysql_stmt_sqlstate(stmt), capi->mysql_stmt_error(stmt));
+		sql::mysql::util::throwSQLException(*capi.get(), stmt);
 	}
 }
 /* }}} */

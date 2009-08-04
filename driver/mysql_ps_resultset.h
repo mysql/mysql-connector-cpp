@@ -27,11 +27,18 @@ class MySQL_DebugLogger;
 class MySQL_Prepared_ResultSetMetaData;
 class MySQL_ResultBind;
 
+namespace NativeAPI
+{
+class IMySQLCAPI;
+}
+
 class MySQL_Prepared_ResultSet : public sql::ResultSet
 {
 private:
 	MYSQL_ROW row;
 	MYSQL_STMT *stmt;
+
+    boost::shared_ptr< NativeAPI::IMySQLCAPI > capi;
 
 	mutable int last_queried_column;  // this is updated by calls to getInt(int), getString(int), etc...
 
@@ -68,7 +75,8 @@ protected:
 
 public:
 	MySQL_Prepared_ResultSet(MYSQL_STMT * s, MySQL_ResultBind * r_bind, sql::ResultSet::enum_type rset_type,
-							 MySQL_Prepared_Statement * par, boost::shared_ptr< MySQL_DebugLogger > &l);
+        MySQL_Prepared_Statement * par, boost::shared_ptr< NativeAPI::IMySQLCAPI> & _capi,
+        boost::shared_ptr< MySQL_DebugLogger > &l);
 
 	virtual ~MySQL_Prepared_ResultSet();
 

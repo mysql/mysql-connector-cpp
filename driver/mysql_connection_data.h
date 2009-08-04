@@ -24,9 +24,14 @@ namespace sql
 namespace mysql
 {
 
-
 class MySQL_DebugLogger;
 class MySQL_ConnectionMetaData;
+
+namespace NativeAPI
+{
+    class IMySQLCAPI;
+}
+
 
 class MySQL_ConnectionData
 {
@@ -46,14 +51,14 @@ public:
 	enum_transaction_isolation txIsolationLevel;
 
 	/* disable compile warnings on Windows */
-#if defined(_WIN32) || defined(_WIN64)
+#ifdef _WIN32
 #pragma warning(push)
 #pragma warning (disable : 4251)
 #endif
 
 	boost::scoped_ptr<const sql::SQLWarning> warnings;
 
-#if defined(_WIN32) || defined(_WIN64)
+#ifdef _WIN32
 #pragma warning (pop)
 #endif
 
@@ -70,6 +75,8 @@ public:
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 
 	boost::scoped_ptr< MySQL_ConnectionMetaData > meta;
+
+    boost::shared_ptr< NativeAPI::IMySQLCAPI > capi;
 
 	struct ::st_mysql * mysql; /* let it be last . If wrong dll is used we will get valgrind error or runtime error !*/
 };

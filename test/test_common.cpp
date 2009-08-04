@@ -58,10 +58,6 @@ static int silent = 1;
 
 extern "C"
 {
-#if defined(_WIN32) || defined(_WIN64)
-#include "my_global.h"
-#endif
-
 #include "mysql.h"
 }
 /* mysql.h introduces bool */

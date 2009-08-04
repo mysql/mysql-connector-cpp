@@ -16,20 +16,35 @@
 #include <cppconn/resultset_metadata.h>
 #include "mysql_private_iface.h"
 
+#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
+
 namespace sql
 {
 namespace mysql
 {
 class MySQL_DebugLogger;
+class MySQL_ResultsetData;
+
+namespace NativeAPI
+{
+    class IMySQLCAPI;
+}
 
 class MySQL_Prepared_ResultSetMetaData : public sql::ResultSetMetaData
 {
-	boost::shared_ptr< MySQL_DebugLogger> logger;
-	MYSQL_RES * result_meta;
+    boost::shared_ptr< NativeAPI::IMySQLCAPI >  capi;
+
+	boost::shared_ptr< MySQL_DebugLogger >      logger;
+
+    boost::scoped_ptr< MySQL_ResultsetData >   result_meta;
+
 	unsigned int num_fields;
 
 public:
-	MySQL_Prepared_ResultSetMetaData(MYSQL_STMT * s, boost::shared_ptr< MySQL_DebugLogger> & l);
+	MySQL_Prepared_ResultSetMetaData(MYSQL_STMT * s, boost::shared_ptr<NativeAPI::IMySQLCAPI> & _capi,
+        boost::shared_ptr< MySQL_DebugLogger> & l);
+
 	virtual ~MySQL_Prepared_ResultSetMetaData();
 
 	SQLString getCatalogName(unsigned int columnIndex);
@@ -77,7 +92,7 @@ public:
 protected:
 	void checkColumnIndex(unsigned int columnIndex) const;
 
-	MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const { return mysql_fetch_field_direct(result_meta, columnIndex - 1); }
+	MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const;
 
 private:
 	/* Prevent use of these */

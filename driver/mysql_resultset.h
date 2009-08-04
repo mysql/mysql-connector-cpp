@@ -24,12 +24,13 @@ namespace mysql
 {
 class MySQL_Statement;
 class MySQL_DebugLogger;
+class MySQL_ResultsetData;
 class MySQL_ResultSetMetaData;
 
 class MySQL_ResultSet : public sql::ResultSet
 {
 	MYSQL_ROW				row;
-	boost::shared_ptr< MYSQL_RES > result;
+    boost::shared_ptr< MySQL_ResultsetData > result;
 	unsigned int			num_fields;
 	my_ulonglong			num_rows;
 	my_ulonglong			row_position;
@@ -55,10 +56,10 @@ protected:
 	bool isBeforeFirstOrAfterLast() const;
 	void seek();
 
-	MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const { return mysql_fetch_field_direct(result.get(), columnIndex - 1); }
+	MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const;
 
 public:
-	MySQL_ResultSet(boost::shared_ptr< MYSQL_RES > res, sql::ResultSet::enum_type rset_type, MySQL_Statement * par,
+	MySQL_ResultSet(boost::shared_ptr< MySQL_ResultsetData > res, sql::ResultSet::enum_type rset_type, MySQL_Statement * par,
 					boost::shared_ptr< MySQL_DebugLogger > & l);
 
 	virtual ~MySQL_ResultSet();

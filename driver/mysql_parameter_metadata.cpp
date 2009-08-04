@@ -12,6 +12,7 @@
 #include <stdlib.h>
 
 #include "mysql_parameter_metadata.h"
+#include "mysql_client_api.h"
 #include <cppconn/exception.h>
 
 namespace sql
@@ -21,9 +22,10 @@ namespace mysql
 
 
 /* {{{ MySQL_ParameterMetaData::MySQL_ParameterMetaData -I- */
-MySQL_ParameterMetaData::MySQL_ParameterMetaData(const MYSQL_STMT * const stmt)
+MySQL_ParameterMetaData::MySQL_ParameterMetaData(const MYSQL_STMT * const stmt, NativeAPI::IMySQLCAPI * capi)
 {
-	param_count = mysql_stmt_param_count(const_cast<MYSQL_STMT *>(stmt));
+    // 2nd parameter is to be changed to boost::shared_ptr in case it's kept in the object
+	param_count = capi->mysql_stmt_param_count(const_cast<MYSQL_STMT *>(stmt));
 }
 /* }}} */
 

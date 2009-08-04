@@ -22,15 +22,16 @@ namespace sql
 namespace mysql
 {
 class MySQL_DebugLogger;
+class MySQL_ResultsetData;
 
 class MySQL_ResultSetMetaData : public sql::ResultSetMetaData
 {
-	boost::weak_ptr< MYSQL_RES > result;
+	boost::weak_ptr< MySQL_ResultsetData > result;
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 	unsigned int num_fields;
 
 public:
-	MySQL_ResultSetMetaData(boost::shared_ptr< MYSQL_RES > res, boost::shared_ptr< MySQL_DebugLogger > & l);
+	MySQL_ResultSetMetaData(boost::shared_ptr< MySQL_ResultsetData > res, boost::shared_ptr< MySQL_DebugLogger > & l);
 	virtual ~MySQL_ResultSetMetaData();
 
 	SQLString getCatalogName(unsigned int columnIndex);

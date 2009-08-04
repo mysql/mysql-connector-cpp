@@ -20,12 +20,16 @@ namespace sql
 {
 namespace mysql
 {
+namespace NativeAPI
+{
+    class IMySQLCAPI;
+}
 
 class MySQL_ParameterMetaData : public sql::ParameterMetaData
 {
 	unsigned int param_count;
 public:
-	MySQL_ParameterMetaData(const MYSQL_STMT * const stmt);
+    MySQL_ParameterMetaData(const MYSQL_STMT * const stmt, NativeAPI::IMySQLCAPI * capi);
 
 	virtual ~MySQL_ParameterMetaData() {}
 

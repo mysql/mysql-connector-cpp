@@ -20,6 +20,9 @@
 #include "mysql_ps_resultset.h"
 #include "mysql_ps_resultset_metadata.h"
 
+#include "mysql_client_api.h"
+#include "mysql_resultset_data.h"
+
 #include "mysql_debug.h"
 
 #define MAX_LEN_PER_CHAR 4
@@ -31,8 +34,12 @@ namespace mysql
 
 
 /* {{{ MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData -I- */
-MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData(MYSQL_STMT * s, boost::shared_ptr< MySQL_DebugLogger> & l)
-  :logger(l), result_meta(mysql_stmt_result_metadata(s)), num_fields(mysql_stmt_field_count(s))
+MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData(MYSQL_STMT * s,
+                                    boost::shared_ptr<NativeAPI::IMySQLCAPI> & _capi,
+                                    boost::shared_ptr< MySQL_DebugLogger> & l)
+    :   capi(_capi), logger(l),
+        result_meta(new MySQL_ResultsetData(_capi->mysql_stmt_result_metadata(s), _capi, l)),
+        num_fields(_capi->mysql_stmt_field_count(s))
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData");
 }
@@ -44,7 +51,6 @@ MySQL_Prepared_ResultSetMetaData::~MySQL_Prepared_ResultSetMetaData()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::~MySQL_Prepared_ResultSetMetaData");
 	CPP_INFO_FMT("this=%p", this);
-	mysql_free_result(result_meta);
 }
 /* }}} */
 
@@ -150,6 +156,14 @@ MySQL_Prepared_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 	return sql::mysql::util::mysql_type_to_string(
 				getFieldMeta(columnIndex)
 			);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_ResultSetMetaData::getFieldMeta -I- */
+MYSQL_FIELD * MySQL_Prepared_ResultSetMetaData::getFieldMeta(unsigned int columnIndex) const
+{
+    return result_meta->fetch_field_direct(columnIndex - 1);
 }
 /* }}} */
 

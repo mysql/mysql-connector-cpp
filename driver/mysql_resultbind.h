@@ -24,6 +24,11 @@ namespace sql
 {
 namespace mysql
 {
+namespace NativeAPI
+{
+class IMySQLCAPI;
+}
+
 
 class MySQL_ResultBind
 {
@@ -32,6 +37,8 @@ class MySQL_ResultBind
 	boost::scoped_array< my_bool > err;
 	boost::scoped_array< unsigned long > len;
 
+    boost::shared_ptr< NativeAPI::IMySQLCAPI > capi;
+
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 	MYSQL_STMT * stmt;
 
@@ -39,8 +46,9 @@ public:
 	boost::scoped_array< MYSQL_BIND > rbind;
 
 
-	MySQL_ResultBind(MYSQL_STMT * s, boost::shared_ptr< MySQL_DebugLogger > & log)
-		: num_fields(0), is_null(NULL), err(NULL), len(NULL), logger(log), stmt(s), rbind(NULL) {}
+	MySQL_ResultBind(MYSQL_STMT * s, boost::shared_ptr< NativeAPI::IMySQLCAPI > & _capi,
+        boost::shared_ptr< MySQL_DebugLogger > & log);
+
 	~MySQL_ResultBind();
 
 	void bindResult();

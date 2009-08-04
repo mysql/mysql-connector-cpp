@@ -25,7 +25,7 @@
 #include "mysql_parameter_metadata.h"
 #include "mysql_warning.h"
 #include "mysql_resultbind.h"
-
+#include "mysql_client_api.h"
 
 #define mysql_stmt_conn(s) (s)->mysql
 
@@ -38,7 +38,7 @@ namespace sql
 namespace mysql
 {
 
-static const unsigned int MAX_SEND_LONGDATA_BUFFER= 1 << 19; //1 << 19=512k;
+static const unsigned int MAX_SEND_LONGDATA_BUFFER= 1 << 18; //1 << 18=256k;
 
 class MySQL_ParamBind
 {
@@ -155,18 +155,18 @@ public:
 /* {{{ MySQL_Prepared_Statement::MySQL_Prepared_Statement() -I- */
 MySQL_Prepared_Statement::MySQL_Prepared_Statement(
 			MYSQL_STMT *s, sql::Connection * conn, sql::ResultSet::enum_type rset_type,
-			boost::shared_ptr< MySQL_DebugLogger > & log
+			boost::shared_ptr<NativeAPI::IMySQLCAPI> & _capi, boost::shared_ptr< MySQL_DebugLogger > & log
 		)
-	:connection(conn), stmt(s), isClosed(false),
-	 logger(log), resultset_type(rset_type)
+	:connection(conn), stmt(s), capi(_capi), isClosed(false),
+	    logger(log), resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::MySQL_Prepared_Statement");
 	CPP_INFO_FMT("this=%p", this);
-	param_count = mysql_stmt_param_count(s);
+	param_count = capi->mysql_stmt_param_count(s);
 	param_bind.reset(new MySQL_ParamBind(param_count));
 
-	res_meta.reset(new MySQL_Prepared_ResultSetMetaData(stmt, logger));
-	param_meta.reset(new MySQL_ParameterMetaData(stmt));
+	res_meta.reset(new MySQL_Prepared_ResultSetMetaData(stmt, capi, logger));
+	param_meta.reset(new MySQL_ParameterMetaData(stmt, capi.get()));
 }
 /* }}} */
 
@@ -209,9 +209,9 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 						throw SQLException("Error while reading from blob (fail)");
 					}
 				}
-				if (mysql_stmt_send_long_data(stmt, i, buf.get(), static_cast<unsigned long>(my_blob->gcount()))) {
-					CPP_ERR_FMT("Couldn't send long data : %d:(%s) %s", mysql_stmt_errno(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_error(stmt));
-					switch (mysql_stmt_errno(stmt)) {
+				if (capi->mysql_stmt_send_long_data(stmt, i, buf.get(), static_cast<unsigned long>(my_blob->gcount()))) {
+					CPP_ERR_FMT("Couldn't send long data : %d:(%s) %s", capi->mysql_stmt_errno(stmt), capi->mysql_stmt_sqlstate(stmt), capi->mysql_stmt_error(stmt));
+					switch (capi->mysql_stmt_errno(stmt)) {
 						case CR_OUT_OF_MEMORY:
 							throw std::bad_alloc();
 						case CR_INVALID_BUFFER_USE:
@@ -219,7 +219,7 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 						case CR_SERVER_GONE_ERROR:
 						case CR_COMMANDS_OUT_OF_SYNC:
 						default:		
-							sql::mysql::util::throwSQLException(stmt);
+							sql::mysql::util::throwSQLException(*capi.get(), stmt);
 					}
 				}
 			} while (1);
@@ -239,13 +239,13 @@ MySQL_Prepared_Statement::do_query()
 		CPP_ERR("Value not set for all parameters");
 		throw sql::SQLException("Value not set for all parameters");
 	}
-	if (mysql_stmt_bind_param(stmt, param_bind->get())) {
-		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", mysql_stmt_errno(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_error(stmt));
-		sql::mysql::util::throwSQLException(stmt);
+	if (capi->mysql_stmt_bind_param(stmt, param_bind->get())) {
+		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", capi->mysql_stmt_errno(stmt), capi->mysql_stmt_sqlstate(stmt), capi->mysql_stmt_error(stmt));
+		sql::mysql::util::throwSQLException(*capi.get(), stmt);
 	}
-	if (!sendLongDataBeforeParamBind() || mysql_stmt_execute(stmt)) {
-		CPP_ERR_FMT("Couldn't execute : %d:(%s) %s", mysql_stmt_errno(stmt), mysql_stmt_sqlstate(stmt), mysql_stmt_error(stmt));
-		sql::mysql::util::throwSQLException(stmt);
+	if (!sendLongDataBeforeParamBind() || capi->mysql_stmt_execute(stmt)) {
+		CPP_ERR_FMT("Couldn't execute : %d:(%s) %s", capi->mysql_stmt_errno(stmt), capi->mysql_stmt_sqlstate(stmt), capi->mysql_stmt_error(stmt));
+		sql::mysql::util::throwSQLException(*capi.get(), stmt);
 	}
 }
 /* }}} */
@@ -283,7 +283,7 @@ MySQL_Prepared_Statement::execute()
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 	do_query();
-	return (mysql_stmt_field_count(stmt) > 0);
+	return (capi->mysql_stmt_field_count(stmt) > 0);
 }
 /* }}} */
 
@@ -310,10 +310,10 @@ MySQL_Prepared_Statement::executeQuery()
 	do_query();
 
 	my_bool	bool_tmp=1;
-	mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
+	capi->mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
 	sql::ResultSet::enum_type tmp_type;
 	if (resultset_type == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
-		mysql_stmt_store_result(stmt);
+		capi->mysql_stmt_store_result(stmt);
 		tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
 	} else if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
 		tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
@@ -323,7 +323,7 @@ MySQL_Prepared_Statement::executeQuery()
 	// MySQL_Prepared_ResultSet takes responsibility about the newly created
 	// MySQL_ResultBind object. The former uses scoped_ptr and will clean it in
 	// any case. See http://www.gotw.ca/gotw/062.htm
-	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, new MySQL_ResultBind(stmt, logger), tmp_type, this, logger);
+	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, new MySQL_ResultBind(stmt, capi, logger), tmp_type, this, capi, logger);
 
 	CPP_INFO_FMT("rset=%p", tmp);
 	return tmp;
@@ -349,7 +349,7 @@ MySQL_Prepared_Statement::executeUpdate()
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 	do_query();
-	return static_cast<int>(mysql_stmt_affected_rows(stmt));
+	return static_cast<int>(capi->mysql_stmt_affected_rows(stmt));
 }
 /* }}} */
 
@@ -823,15 +823,15 @@ MySQL_Prepared_Statement::getResultSet()
 	CPP_ENTER("MySQL_Prepared_Statement::getResultSet");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	if (mysql_more_results(mysql_stmt_conn(stmt))) {
-		mysql_next_result(mysql_stmt_conn(stmt));
+	if (capi->mysql_more_results(mysql_stmt_conn(stmt))) {
+		capi->mysql_next_result(mysql_stmt_conn(stmt));
 	}
 
 	my_bool	bool_tmp = 1;
-	mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
+	capi->mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
 	sql::ResultSet::enum_type tmp_type;
 	if (resultset_type == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
-		mysql_stmt_store_result(stmt);
+		capi->mysql_stmt_store_result(stmt);
 		tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
 	} else if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
 		tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
@@ -842,7 +842,7 @@ MySQL_Prepared_Statement::getResultSet()
 	// MySQL_Prepared_ResultSet takes responsibility about the newly created
 	// MySQL_ResultBind object. The former uses scoped_ptr and will clean it in
 	// any case. See http://www.gotw.ca/gotw/062.htm
-	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, new MySQL_ResultBind(stmt, logger), tmp_type, this, logger);
+	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, new MySQL_ResultBind(stmt, capi, logger), tmp_type, this, capi, logger);
 
 	CPP_INFO_FMT("rset=%p", tmp);
 	return tmp;
@@ -1059,7 +1059,7 @@ void
 MySQL_Prepared_Statement::closeIntern()
 {
 	CPP_ENTER("MySQL_Prepared_Statement::closeIntern");
-	mysql_stmt_close(stmt);
+	capi->mysql_stmt_close(stmt);
 	clearParameters();
 
 	isClosed = true;
