@@ -9,9 +9,6 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
-#ifdef _WIN32
-#include "my_global.h"
-#endif
 
 #include "driver/mysql_public_iface.h"
 #include <string>

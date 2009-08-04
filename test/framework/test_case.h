@@ -21,7 +21,6 @@
 
 #include "../common/ccppTypes.h"
 #include "../common/stringutils.h"
-#include "../common/nocopy.h"
 
 #include "test_container.h"
 
