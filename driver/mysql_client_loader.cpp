@@ -24,7 +24,7 @@ namespace NativeAPI
 #ifdef _WIN32
     const char * MySQL_Client_Loader::baseName= "libmysql.dll";
 #else
-    const char * MySQL_Client_Loader::baseName= "libmysqlclient.so";
+    const char * MySQL_Client_Loader::baseName= "libmysqlclient_r.so";
 #endif
 
     MySQL_Client_Loader::MySQL_Client_Loader()
