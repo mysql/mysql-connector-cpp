@@ -56,7 +56,7 @@ public:
 
 	void debug(const char *);
 
-	unsigned int errno(MYSQL *);
+	unsigned int mysql_errno(MYSQL *);
 
 	const char *  error(MYSQL *);
 

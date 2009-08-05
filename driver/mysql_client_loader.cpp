@@ -152,7 +152,7 @@ MySQL_Client_Loader::debug(const char * debug)
 
 /* {{{ MySQL_Client_Loader::errno() */
 unsigned int
-MySQL_Client_Loader::errno(MYSQL * mysql)
+MySQL_Client_Loader::mysql_errno(MYSQL * mysql)
 {
 	ptr2mysql_errno ptr2_errno = reinterpret_cast<ptr2mysql_errno>(GetProcAddr("mysql_errno"));
 

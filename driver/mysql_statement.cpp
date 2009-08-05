@@ -70,8 +70,8 @@ MySQL_Statement::do_query(const char *q, size_t length)
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 	MYSQL * mysql = connection->getMySQLHandle();
-	if (capi->real_query(mysql, q, static_cast<unsigned long>(length)) && capi->errno(mysql)) {
-		CPP_ERR_FMT("Error during capi->real_query : %d:(%s) %s", capi->errno(mysql), capi->sqlstate(mysql), capi->error(mysql));
+	if (capi->real_query(mysql, q, static_cast<unsigned long>(length)) && capi->mysql_errno(mysql)) {
+		CPP_ERR_FMT("Error during capi->real_query : %d:(%s) %s", capi->mysql_errno(mysql), capi->sqlstate(mysql), capi->error(mysql));
 		sql::mysql::util::throwSQLException(*capi.get(), mysql);
 	}
 }
@@ -91,7 +91,7 @@ MySQL_Statement::get_resultset()
 	MYSQL_RES  * result = resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? capi->use_result(mysql):capi->store_result(mysql);
 	if (result == NULL) {
 		CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
-					capi->errno(mysql), capi->sqlstate(mysql), capi->error(mysql));
+					capi->mysql_errno(mysql), capi->sqlstate(mysql), capi->error(mysql));
 		sql::mysql::util::throwSQLException(*capi.get(), mysql);
 	}
 	return boost::shared_ptr< MySQL_ResultsetData >( new MySQL_ResultsetData( result, capi, logger ) );
@@ -322,7 +322,7 @@ MySQL_Statement::getMoreResults()
 	if (capi->more_results(conn)) {
 		int next_result = capi->next_result(conn);
 		if (next_result > 0) {
-			CPP_ERR_FMT("Error during getMoreResults : %d:(%s) %s", capi->errno(conn), capi->sqlstate(conn), capi->error(conn));
+			CPP_ERR_FMT("Error during getMoreResults : %d:(%s) %s", capi->mysql_errno(conn), capi->sqlstate(conn), capi->error(conn));
 			sql::mysql::util::throwSQLException(*capi.get(), conn);
 		} else if (next_result == 0) {
 			return capi->field_count(conn) != 0;
