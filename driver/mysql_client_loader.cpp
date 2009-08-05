@@ -99,7 +99,7 @@ MySQL_Client_Loader::affected_rows(MYSQL * mysql)
 my_bool
 MySQL_Client_Loader::autocommit(MYSQL * mysql, my_bool mode)
 {
-	ptr2mysql_autocommit ptr2_autocommit = reinterpret_cast<ptr2mysql_autocommit>(GetProcAddr("mysql_autocommit"));
+	ptr2mysql_autocommit ptr2_autocommit = *reinterpret_cast<ptr2mysql_autocommit*>(&GetProcAddr("mysql_autocommit"));
 
 	return (*ptr2_autocommit)(mysql, mode);
 }
