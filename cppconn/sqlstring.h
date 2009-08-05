@@ -25,7 +25,7 @@ namespace sql
 	public:
 #ifdef _WIN32
         //TODO something less dirty-hackish.
-        static const size_t npos = static_cast<size_t>(-1);
+        static const size_t npos = static_cast<std::string::size_type>(-1);
 #else
 		static const size_t npos = std::string::npos;
 #endif

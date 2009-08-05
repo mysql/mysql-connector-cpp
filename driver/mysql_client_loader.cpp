@@ -57,7 +57,7 @@ MySQL_Client_Loader::MySQL_Client_Loader(const SQLString & dir2look, const SQLSt
 /* {{{ MySQL_Client_Loader::~MySQL_Client_Loader() */
 MySQL_Client_Loader::~MySQL_Client_Loader()
 {
-        ptr2mysql_library_end endProc= *reinterpret_cast<ptr2mysql_library_end*>(&GetProcAddr("mysql_server_end"));
+        ptr2mysql_library_end endProc= *reinterpret_cast<ptr2mysql_library_end*>(&(GetProcAddr("mysql_server_end")));
 	
 	if (endProc != NULL) {
 		(*endProc)();
@@ -70,7 +70,7 @@ MySQL_Client_Loader::~MySQL_Client_Loader()
 void
 MySQL_Client_Loader::init_loader()
 {
-	ptr2mysql_library_init initProc = *reinterpret_cast<ptr2mysql_library_init*>(&GetProcAddr("mysql_server_init"));
+	ptr2mysql_library_init initProc = (ptr2mysql_library_init)GetProcAddr("mysql_server_init");
 	
 	if (initProc != NULL) {
 		(*initProc)(0, NULL, NULL);
@@ -88,7 +88,7 @@ MySQL_Client_Loader::init_loader()
 my_ulonglong
 MySQL_Client_Loader::affected_rows(MYSQL * mysql)
 {
-	ptr2mysql_affected_rows ptr2_affected_rows = *reinterpret_cast<ptr2mysql_affected_rows*>(&GetProcAddr("mysql_affected_rows"));
+	ptr2mysql_affected_rows ptr2_affected_rows = *reinterpret_cast<ptr2mysql_affected_rows*>(&(GetProcAddr("mysql_affected_rows")));
 
 	return (*ptr2_affected_rows)(mysql);
 }
@@ -99,7 +99,7 @@ MySQL_Client_Loader::affected_rows(MYSQL * mysql)
 my_bool
 MySQL_Client_Loader::autocommit(MYSQL * mysql, my_bool mode)
 {
-	ptr2mysql_autocommit ptr2_autocommit = *reinterpret_cast<ptr2mysql_autocommit*>(&GetProcAddr("mysql_autocommit"));
+	ptr2mysql_autocommit ptr2_autocommit = *reinterpret_cast<ptr2mysql_autocommit*>(&(GetProcAddr("mysql_autocommit")));
 
 	return (*ptr2_autocommit)(mysql, mode);
 }
