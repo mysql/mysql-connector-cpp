@@ -51,7 +51,7 @@ namespace NativeAPI
 
     MySQL_Client_Loader::~MySQL_Client_Loader()
     {
-        ptr2mysql_library_end endProc= reinterpret_cast<ptr2mysql_library_end>(GetProcAddr("mysql_server_end"));
+        ptr2mysql_library_end endProc= *reinterpret_cast<ptr2mysql_library_end*>(&GetProcAddr("mysql_server_end"));
         
         if ( endProc != NULL )
             (*endProc)();
