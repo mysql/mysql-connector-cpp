@@ -99,7 +99,8 @@ MySQL_Client_Loader::affected_rows(MYSQL * mysql)
 my_bool
 MySQL_Client_Loader::autocommit(MYSQL * mysql, my_bool mode)
 {
-	ptr2mysql_autocommit ptr2_autocommit = *reinterpret_cast<ptr2mysql_autocommit*>(&(GetProcAddr("mysql_autocommit")));
+    ::sql::mysql::util::SymbolHandle raw= GetProcAddr("mysql_autocommit");
+	ptr2mysql_autocommit ptr2_autocommit = *reinterpret_cast<ptr2mysql_autocommit*>(&raw);
 
 	return (*ptr2_autocommit)(mysql, mode);
 }
@@ -110,7 +111,7 @@ MySQL_Client_Loader::autocommit(MYSQL * mysql, my_bool mode)
 void
 MySQL_Client_Loader::close(MYSQL * mysql)
 {
-	ptr2mysql_close ptr2_close = reinterpret_cast<ptr2mysql_close>(GetProcAddr("mysql_close"));
+	ptr2mysql_close ptr2_close = reinterpret_cast<ptr2mysql_close>(reinterpret_cast<long>(GetProcAddr("mysql_close")));
 
 	return (*ptr2_close)(mysql);
 }
@@ -121,7 +122,7 @@ MySQL_Client_Loader::close(MYSQL * mysql)
 my_bool
 MySQL_Client_Loader::commit(MYSQL * mysql)
 {
-	ptr2mysql_commit ptr2_commit = reinterpret_cast<ptr2mysql_commit>(GetProcAddr("mysql_commit"));
+	ptr2mysql_commit ptr2_commit = reinterpret_cast<ptr2mysql_commit>(reinterpret_cast<long>(GetProcAddr("mysql_commit")));
 
 	return (*ptr2_commit)(mysql);
 }
