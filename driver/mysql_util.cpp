@@ -26,7 +26,7 @@ namespace util {
 /* {{{ throwSQLException -I- */
 void throwSQLException(::sql::mysql::NativeAPI::IMySQLCAPI & capi, MYSQL * mysql)
 {
-	throw sql::SQLException(capi.mysql_error(mysql), capi.mysql_sqlstate(mysql), capi.mysql_errno(mysql));
+	throw sql::SQLException(capi.error(mysql), capi.sqlstate(mysql), capi.errno(mysql));
 }
 /* }}} */
 
@@ -34,7 +34,7 @@ void throwSQLException(::sql::mysql::NativeAPI::IMySQLCAPI & capi, MYSQL * mysql
 /* {{{ throwSQLException -I- */
 void throwSQLException(::sql::mysql::NativeAPI::IMySQLCAPI & capi, MYSQL_STMT * stmt)
 {
-	throw sql::SQLException(capi.mysql_stmt_error(stmt), capi.mysql_stmt_sqlstate(stmt), capi.mysql_stmt_errno(stmt));
+	throw sql::SQLException(capi.stmt_error(stmt), capi.stmt_sqlstate(stmt), capi.stmt_errno(stmt));
 }
 /* }}} */
 

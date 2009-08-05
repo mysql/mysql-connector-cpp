@@ -28,61 +28,61 @@ namespace NativeAPI
 }
 
 
-MySQL_ResultsetData::MySQL_ResultsetData( MYSQL_RES * res
+MySQL_ResultsetData::MySQL_ResultsetData(MYSQL_RES * res
                                 , boost::shared_ptr<NativeAPI::IMySQLCAPI> & _capi
-                                , boost::shared_ptr< MySQL_DebugLogger > & l )
-                                : logger( l     )
-                                , capi  ( _capi )
-                                , rs    ( res   )
+                                , boost::shared_ptr< MySQL_DebugLogger > & l)
+                                : logger(l    )
+                                , capi  (_capi)
+                                , rs    (res  )
 {
 }
 
 
 MySQL_ResultsetData::~MySQL_ResultsetData()
 {
-    capi->mysql_free_result( rs );
+    capi->free_result(rs);
 }
 
 
-void MySQL_ResultsetData::data_seek( my_ulonglong offset )
+void MySQL_ResultsetData::data_seek(my_ulonglong offset)
 {
-    capi->mysql_data_seek( rs, offset );
+    capi->data_seek(rs, offset);
 }
 
 
 MYSQL_FIELD * MySQL_ResultsetData::fetch_field()
 {
-    return capi->mysql_fetch_field( rs );
+    return capi->fetch_field(rs);
 }
 
 
-MYSQL_FIELD * MySQL_ResultsetData::fetch_field_direct( unsigned int field_nr )
+MYSQL_FIELD * MySQL_ResultsetData::fetch_field_direct(unsigned int field_nr)
 {
-    return capi->mysql_fetch_field_direct( rs, field_nr );
+    return capi->fetch_field_direct(rs, field_nr);
 }
 
 
 unsigned long * MySQL_ResultsetData::fetch_lengths()
 {
-    return capi->mysql_fetch_lengths( rs );
+    return capi->fetch_lengths(rs);
 }
 
 
 MYSQL_ROW MySQL_ResultsetData::fetch_row()
 {
-    return capi->mysql_fetch_row( rs );
+    return capi->fetch_row(rs);
 }
 
 
 unsigned int MySQL_ResultsetData::num_fields()
 {
-    return capi->mysql_num_fields( rs );
+    return capi->num_fields(rs);
 }
 
 
 my_ulonglong MySQL_ResultsetData::num_rows()
 {
-    return capi->mysql_num_rows( rs );
+    return capi->num_rows(rs);
 }
 
 
