@@ -524,6 +524,9 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 						protocol_tcp == false? socket_or_pipe.c_str():NULL /*socket or named pipe */,
 						flags))
 	{
+		CPP_ERR_FMT("Couldn't connect : %d", intern->capi->errno(intern->mysql));
+		CPP_ERR_FMT("Couldn't connect : (%s)", intern->capi->sqlstate(intern->mysql));
+		CPP_ERR_FMT("Couldn't connect : %s", intern->capi->error(intern->mysql));
 		CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", intern->capi->errno(intern->mysql), intern->capi->sqlstate(intern->mysql), intern->capi->error(intern->mysql));
 		sql::SQLException e(intern->capi->error(intern->mysql), intern->capi->sqlstate(intern->mysql), intern->capi->errno(intern->mysql));
 		intern->capi->close(intern->mysql);
