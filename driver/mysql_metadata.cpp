@@ -1197,7 +1197,7 @@ MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(MySQL_Connection * const conn
   : connection(conn), logger(l), capi(_capi), use_info_schema(true)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::MySQL_ConnectionMetaData");
-	server_version = capi->mysql_get_server_version(connection->getMySQLHandle());
+	server_version = capi->get_server_version(connection->getMySQLHandle());
 	lower_case_table_names = connection->getSessionVariable("lower_case_table_names");
 
 	connection->getClientOption("metadata_use_info_schema", (void *) &use_info_schema);
@@ -2228,7 +2228,7 @@ SQLString
 MySQL_ConnectionMetaData::getDatabaseProductVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDatabaseProductVersion");
-	return capi->mysql_get_server_info(connection->getMySQLHandle());
+	return capi->get_server_info(connection->getMySQLHandle());
 }
 /* }}} */
 

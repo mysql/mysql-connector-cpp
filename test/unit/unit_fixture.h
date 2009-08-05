@@ -383,7 +383,7 @@ public:
 } /* namespace testsuite */
 
 #define EXAMPLE_TEST_FIXTURE( theFixtureClass ) typedef theFixtureClass TestSuiteClass;\
-  theFixtureClass( const String & name ) \
+  theFixtureClass( const String & /* name */ ) \
   : unit_fixture( #theFixtureClass )
 
 #endif // _UNIT_FIXTURE_

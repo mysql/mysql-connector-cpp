@@ -78,16 +78,16 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
 
 	result_bind->bindResult();
 
-	MYSQL_RES * result_meta = capi->mysql_stmt_result_metadata(stmt);
-	num_fields = capi->mysql_stmt_field_count(stmt);
-	num_rows = capi->mysql_stmt_num_rows(stmt);
+	MYSQL_RES * result_meta = capi->stmt_result_metadata(stmt);
+	num_fields = capi->stmt_field_count(stmt);
+	num_rows = capi->stmt_num_rows(stmt);
 
 	CPP_INFO_FMT("num_fields=%u num_rows=%u", num_fields, num_rows);
 	for (unsigned int i = 0; i < num_fields; ++i) {
-		boost::scoped_array< char > upstring(sql::mysql::util::utf8_strup(capi->mysql_fetch_field(result_meta)->name, 0));
+		boost::scoped_array< char > upstring(sql::mysql::util::utf8_strup(capi->fetch_field(result_meta)->name, 0));
 		field_name_to_index_map[sql::SQLString(upstring.get())] = i;
 	}
-	capi->mysql_free_result(result_meta);
+	capi->free_result(result_meta);
 	result_meta = NULL;
 	rs_meta.reset(new MySQL_Prepared_ResultSetMetaData(stmt, capi, logger));
 }
@@ -156,7 +156,7 @@ MySQL_Prepared_ResultSet::beforeFirst()
 	CPP_ENTER("MySQL_Prepared_ResultSet::beforeFirst");
 	checkValid();
 	checkScrollable();
-	capi->mysql_stmt_data_seek(stmt, 0);
+	capi->stmt_data_seek(stmt, 0);
 	row_position = 0;
 }
 /* }}} */
@@ -1166,7 +1166,7 @@ MySQL_Prepared_ResultSet::next()
 		} else if (row_position < num_rows + 1) {
 
 			if (row_position == 0) {
-				capi->mysql_stmt_data_seek(stmt, row_position);
+				capi->stmt_data_seek(stmt, row_position);
 			} else {
 				/*
 				NOTE: Buffered only optimization.
@@ -1178,7 +1178,7 @@ MySQL_Prepared_ResultSet::next()
 				*/
 			}
 
-			int result = capi->mysql_stmt_fetch(stmt);
+			int result = capi->stmt_fetch(stmt);
 			if (!result || result == MYSQL_DATA_TRUNCATED) {
 				ret = true;
 			}
@@ -1189,7 +1189,7 @@ MySQL_Prepared_ResultSet::next()
 		}
 		CPP_INFO_FMT("new_row_position=%llu ret=%d", row_position, ret);
 	} else {
-		int result = capi->mysql_stmt_fetch(stmt);
+		int result = capi->stmt_fetch(stmt);
 		if (!result || result == MYSQL_DATA_TRUNCATED) {
 			ret = true;
 		}
@@ -1216,8 +1216,8 @@ MySQL_Prepared_ResultSet::previous()
 		return false;
 	} else if (row_position > 1) {
 		--row_position;
-		capi->mysql_stmt_data_seek(stmt, row_position - 1);
-		int result = capi->mysql_stmt_fetch(stmt);
+		capi->stmt_data_seek(stmt, row_position - 1);
+		int result = capi->stmt_fetch(stmt);
 		if (!result || result == MYSQL_DATA_TRUNCATED) {
 			return true;
 		}
@@ -1254,7 +1254,7 @@ MySQL_Prepared_ResultSet::relative(const int rows)
 			row_position = rows > 0? num_rows + 1 : 0; /* after last or before first */
 		} else {
 			row_position += rows;
-			capi->mysql_stmt_data_seek(stmt, row_position - 1);
+			capi->stmt_data_seek(stmt, row_position - 1);
 		}
 	}
 
@@ -1306,7 +1306,7 @@ MySQL_Prepared_ResultSet::rowsCount() const
 	CPP_ENTER("MySQL_Prepared_ResultSet::rowsCount");
 	checkValid();
 	checkScrollable();
-	return static_cast<size_t>(capi->mysql_stmt_num_rows(stmt));
+	return static_cast<size_t>(capi->stmt_num_rows(stmt));
 }
 /* }}} */
 
@@ -1353,8 +1353,8 @@ void
 MySQL_Prepared_ResultSet::seek()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::seek");
-	capi->mysql_stmt_data_seek(stmt, row_position - 1);
-	capi->mysql_stmt_fetch(stmt);
+	capi->stmt_data_seek(stmt, row_position - 1);
+	capi->stmt_fetch(stmt);
 }
 /* }}} */
 

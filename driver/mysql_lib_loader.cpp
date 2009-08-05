@@ -41,6 +41,7 @@ namespace util {
         if ( (loadedLibHandle= LoadLibrary( libFileName.c_str() )) == NULL )
 #else
         std::string fullname( dir2look );
+        fullname+= "/";
         fullname+= libFileName;
         if ( (loadedLibHandle= LoadLibrary( fullname.c_str() )) == NULL )
 #endif   

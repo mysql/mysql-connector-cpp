@@ -70,8 +70,8 @@ MySQL_Statement::do_query(const char *q, size_t length)
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 	MYSQL * mysql = connection->getMySQLHandle();
-	if (capi->mysql_real_query(mysql, q, static_cast<unsigned long>(length)) && capi->mysql_errno(mysql)) {
-		CPP_ERR_FMT("Error during capi->mysql_real_query : %d:(%s) %s", capi->mysql_errno(mysql), capi->mysql_sqlstate(mysql), capi->mysql_error(mysql));
+	if (capi->real_query(mysql, q, static_cast<unsigned long>(length)) && capi->mysql_errno(mysql)) {
+		CPP_ERR_FMT("Error during capi->real_query : %d:(%s) %s", capi->mysql_errno(mysql), capi->sqlstate(mysql), capi->error(mysql));
 		sql::mysql::util::throwSQLException(*capi.get(), mysql);
 	}
 }
@@ -88,10 +88,10 @@ MySQL_Statement::get_resultset()
 
 	MYSQL * mysql = connection->getMySQLHandle();
 
-	MYSQL_RES  * result = resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? capi->mysql_use_result(mysql):capi->mysql_store_result(mysql);
+	MYSQL_RES  * result = resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? capi->use_result(mysql):capi->store_result(mysql);
 	if (result == NULL) {
 		CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
-					capi->mysql_errno(mysql), capi->mysql_sqlstate(mysql), capi->mysql_error(mysql));
+					capi->mysql_errno(mysql), capi->sqlstate(mysql), capi->error(mysql));
 		sql::mysql::util::throwSQLException(*capi.get(), mysql);
 	}
 	return boost::shared_ptr< MySQL_ResultsetData >( new MySQL_ResultsetData( result, capi, logger ) );
@@ -120,8 +120,8 @@ MySQL_Statement::execute(const sql::SQLString& sql)
 	CPP_INFO_FMT("query=%s", sql.c_str());
 	checkClosed();
 	do_query(sql.c_str(), static_cast<int>(sql.length()));
-	bool ret = capi->mysql_field_count(connection->getMySQLHandle()) > 0;
-	last_update_count = ret? UL64(~0):capi->mysql_affected_rows(connection->getMySQLHandle());
+	bool ret = capi->field_count(connection->getMySQLHandle()) > 0;
+	last_update_count = ret? UL64(~0):capi->affected_rows(connection->getMySQLHandle());
 	return ret;
 }
 /* }}} */
@@ -159,10 +159,10 @@ MySQL_Statement::executeUpdate(const sql::SQLString& sql)
 	CPP_INFO_FMT("query=%s", sql.c_str());
 	checkClosed();
 	do_query(sql.c_str(), static_cast<int>(sql.length()));
-	if (capi->mysql_field_count(connection->getMySQLHandle())) {
+	if (capi->field_count(connection->getMySQLHandle())) {
 		throw sql::InvalidArgumentException("Statement returning result set");
 	}
-	return static_cast<int>(last_update_count = capi->mysql_affected_rows(connection->getMySQLHandle()));
+	return static_cast<int>(last_update_count = capi->affected_rows(connection->getMySQLHandle()));
 }
 /* }}} */
 
@@ -207,11 +207,11 @@ MySQL_Statement::getResultSet()
 	sql::ResultSet::enum_type tmp_type;
 	switch (resultset_type) {
 		case sql::ResultSet::TYPE_FORWARD_ONLY:
-			result = capi->mysql_use_result(mysql);
+			result = capi->use_result(mysql);
 			tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
 			break;
 		default:
-			result = capi->mysql_store_result(mysql);
+			result = capi->store_result(mysql);
 			tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
 	}
 	if (!result) {
@@ -319,13 +319,13 @@ MySQL_Statement::getMoreResults()
 	checkClosed();
 	last_update_count = UL64(~0);
 	MYSQL * conn = connection->getMySQLHandle();
-	if (capi->mysql_more_results(conn)) {
-		int next_result = capi->mysql_next_result(conn);
+	if (capi->more_results(conn)) {
+		int next_result = capi->next_result(conn);
 		if (next_result > 0) {
-			CPP_ERR_FMT("Error during getMoreResults : %d:(%s) %s", capi->mysql_errno(conn), capi->mysql_sqlstate(conn), capi->mysql_error(conn));
+			CPP_ERR_FMT("Error during getMoreResults : %d:(%s) %s", capi->mysql_errno(conn), capi->sqlstate(conn), capi->error(conn));
 			sql::mysql::util::throwSQLException(*capi.get(), conn);
 		} else if (next_result == 0) {
-			return capi->mysql_field_count(conn) != 0;
+			return capi->field_count(conn) != 0;
 		} else if (next_result == -1) {
 			throw sql::SQLException("Impossible! more_results() said true, next_result says no more results");
 		}

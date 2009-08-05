@@ -127,7 +127,7 @@ void MySQL_ResultBind::bindResult()
 	err.reset(NULL);
 	len.reset(NULL);
 
-	num_fields = capi->mysql_stmt_field_count(stmt);
+	num_fields = capi->stmt_field_count(stmt);
 	if (!num_fields) {
 		return;
 	}
@@ -145,7 +145,7 @@ void MySQL_ResultBind::bindResult()
 	memset(len.get(), 0, sizeof(unsigned long) * num_fields);
 
 
-	MySQL_ResultsetData resultMeta(capi->mysql_stmt_result_metadata(stmt), capi, logger);
+	MySQL_ResultsetData resultMeta(capi->stmt_result_metadata(stmt), capi, logger);
 
 	for (unsigned int i = 0; i < num_fields; ++i) {
 		MYSQL_FIELD * field = resultMeta.fetch_field();
@@ -159,8 +159,8 @@ void MySQL_ResultBind::bindResult()
 		rbind[i].error		= &err[i];
 		rbind[i].is_unsigned = field->flags & UNSIGNED_FLAG;
 	}
-	if (capi->mysql_stmt_bind_result(stmt, rbind.get())) {
-		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", capi->mysql_stmt_errno(stmt), capi->mysql_stmt_sqlstate(stmt), capi->mysql_stmt_error(stmt));
+	if (capi->stmt_bind_result(stmt, rbind.get())) {
+		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", capi->stmt_errno(stmt), capi->stmt_sqlstate(stmt), capi->stmt_error(stmt));
 		sql::mysql::util::throwSQLException(*capi.get(), stmt);
 	}
 }

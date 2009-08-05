@@ -38,8 +38,8 @@ MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData(MYSQL_STMT * 
                                     boost::shared_ptr<NativeAPI::IMySQLCAPI> & _capi,
                                     boost::shared_ptr< MySQL_DebugLogger> & l)
     :   capi(_capi), logger(l),
-        result_meta(new MySQL_ResultsetData(_capi->mysql_stmt_result_metadata(s), _capi, l)),
-        num_fields(_capi->mysql_stmt_field_count(s))
+        result_meta(new MySQL_ResultsetData(_capi->stmt_result_metadata(s), _capi, l)),
+        num_fields(_capi->stmt_field_count(s))
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData");
 }
