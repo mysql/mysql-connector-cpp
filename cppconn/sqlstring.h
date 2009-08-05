@@ -23,7 +23,7 @@ namespace sql
 		std::string realStr;
 
 	public:
-		static const size_t npos = -1;
+		static const size_t npos = std::string::npos;
 	
 		~SQLString() {}
 

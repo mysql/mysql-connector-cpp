@@ -503,9 +503,9 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 		my_bool tmp_bool = 1;
 		intern->capi->options(intern->mysql, MYSQL_SECURE_AUTH, (const char *) &tmp_bool);
 	}
-	{
-		intern->capi->options(intern->mysql, MYSQL_SET_CHARSET_NAME, defaultCharset.c_str());
-	}
+
+	intern->capi->options(intern->mysql, MYSQL_SET_CHARSET_NAME, defaultCharset.c_str());
+	
 	if (ssl_used) {
 		/* According to the docs, always returns 0 */
 		intern->capi->ssl_set(intern->mysql, sslKey.c_str(), sslCert.c_str(), sslCA.c_str(), sslCAPath.c_str(), sslCipher.c_str());
@@ -522,7 +522,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 						schema_used && schema.length()? schema.c_str():NULL /* schema */,
 						port,
 						protocol_tcp == false? socket_or_pipe.c_str():NULL /*socket or named pipe */,
-						flags)) {
+						flags))
+	{
 		CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", intern->capi->errno(intern->mysql), intern->capi->sqlstate(intern->mysql), intern->capi->error(intern->mysql));
 		sql::SQLException e(intern->capi->error(intern->mysql), intern->capi->sqlstate(intern->mysql), intern->capi->errno(intern->mysql));
 		intern->capi->close(intern->mysql);
