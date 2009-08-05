@@ -194,7 +194,7 @@ MYSQL_FIELD *
 MySQL_Client_Loader::fetch_field_direct(MYSQL_RES * result, unsigned int fieldnr)
 {
 	ptr2mysql_fetch_field_direct ptr2fetchFieldDirect=
-		reinterpret_cast<ptr2mysql_fetch_field_direct>(GetProcAddr("mysql_fetch_field_direct"));
+        symbol_safe_cast<ptr2mysql_fetch_field_direct>(GetProcAddr("mysql_fetch_field_direct"));
 
 	return (*ptr2fetchFieldDirect)(result, fieldnr);
 }
@@ -390,7 +390,7 @@ MySQL_Client_Loader::real_connect(MYSQL * mysql,
 												unsigned long client_flag)
 {
 	ptr2mysql_real_connect ptr2_real_connect=
-		reinterpret_cast<ptr2mysql_real_connect>(GetProcAddr("mysql_real_connect"));
+		symbol_safe_cast<ptr2mysql_real_connect>(GetProcAddr("mysql_real_connect"));
 
 	return (*ptr2_real_connect)(mysql, host, user, passwd, db, port, unix_socket, client_flag);
 }
