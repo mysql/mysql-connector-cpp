@@ -70,7 +70,7 @@ MySQL_Client_Loader::~MySQL_Client_Loader()
 void
 MySQL_Client_Loader::init_loader()
 {
-	ptr2mysql_library_init initProc = reinterpret_cast<ptr2mysql_library_init>(GetProcAddr("mysql_server_init"));
+	ptr2mysql_library_init initProc = *reinterpret_cast<ptr2mysql_library_init*>(&GetProcAddr("mysql_server_init"));
 	
 	if (initProc != NULL) {
 		(*initProc)(0, NULL, NULL);
