@@ -88,7 +88,7 @@ MySQL_Client_Loader::init_loader()
 my_ulonglong
 MySQL_Client_Loader::affected_rows(MYSQL * mysql)
 {
-	ptr2mysql_affected_rows ptr2_affected_rows = reinterpret_cast<ptr2mysql_affected_rows>(GetProcAddr("mysql_affected_rows"));
+	ptr2mysql_affected_rows ptr2_affected_rows = *reinterpret_cast<ptr2mysql_affected_rows*>(&GetProcAddr("mysql_affected_rows"));
 
 	return (*ptr2_affected_rows)(mysql);
 }
