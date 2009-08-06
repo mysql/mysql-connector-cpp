@@ -521,11 +521,11 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 						protocol_tcp == false? socket_or_pipe.c_str():NULL /*socket or named pipe */,
 						flags))
 	{
-		CPP_ERR_FMT("Couldn't connect : %d", intern->capi->mysql_errno(intern->mysql));
+		CPP_ERR_FMT("Couldn't connect : %d", intern->capi->errno(intern->mysql));
 		CPP_ERR_FMT("Couldn't connect : (%s)", intern->capi->sqlstate(intern->mysql));
 		CPP_ERR_FMT("Couldn't connect : %s", intern->capi->error(intern->mysql));
-		CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", intern->capi->mysql_errno(intern->mysql), intern->capi->sqlstate(intern->mysql), intern->capi->error(intern->mysql));
-		sql::SQLException e(intern->capi->error(intern->mysql), intern->capi->sqlstate(intern->mysql), intern->capi->mysql_errno(intern->mysql));
+		CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", intern->capi->errno(intern->mysql), intern->capi->sqlstate(intern->mysql), intern->capi->error(intern->mysql));
+		sql::SQLException e(intern->capi->error(intern->mysql), intern->capi->sqlstate(intern->mysql), intern->capi->errno(intern->mysql));
 		intern->capi->close(intern->mysql);
 		intern->mysql = NULL;
 		throw e;
@@ -755,7 +755,7 @@ MySQL_Connection::prepareStatement(const sql::SQLString& sql)
 	MYSQL_STMT * stmt = intern->capi->stmt_init(intern->mysql);
 
 	if (!stmt) {
-		CPP_ERR_FMT("No statement : %d:(%s) %s", intern->capi->mysql_errno(intern->mysql), intern->capi->sqlstate(intern->mysql), intern->capi->error(intern->mysql));
+		CPP_ERR_FMT("No statement : %d:(%s) %s", intern->capi->errno(intern->mysql), intern->capi->sqlstate(intern->mysql), intern->capi->error(intern->mysql));
 		sql::mysql::util::throwSQLException(*intern->capi.get(), intern->mysql);
 	}
 
