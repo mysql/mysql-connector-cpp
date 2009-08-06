@@ -23,6 +23,8 @@ namespace NativeAPI
 
 #ifdef _WIN32
 static const char * const baseName = "libmysql.dll";
+#elif defined(__APPLE__)
+static const char * const baseName = "libmysqlclient_r.dylib";
 #else
 static const char * const baseName = "libmysqlclient_r.so";
 #endif
