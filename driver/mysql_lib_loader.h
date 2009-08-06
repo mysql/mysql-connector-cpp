@@ -33,21 +33,13 @@ namespace mysql
 {
 namespace util
 {
-/* TODO consider using of dlopen, dlsym and dlclose definitions in my_global.h
- * sort of doesn't like that.
- */
+
 #ifdef _WIN32
 typedef HMODULE ModuleHandle;
 typedef FARPROC SymbolHandle;
-
 #else
 typedef void *  ModuleHandle;
 typedef void *  SymbolHandle;
-
-#define LoadLibrary(p)          ::dlopen(p, RTLD_LAZY)
-#define FreeLibrary(p)          ::dlclose(p)
-#define GetProcAddress(p1,p2)   ::dlsym(p1,p2)
-
 #endif
 
 /* possibly C_LibraryLoader would be better name */

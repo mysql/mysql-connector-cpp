@@ -16,6 +16,15 @@
 #define _WIN32_WINNT	0x0502
 #include "mysql_lib_loader.h"
 
+/* TODO consider using of dlopen, dlsym and dlclose definitions in my_global.h
+ * sort of doesn't like that.
+ */
+#ifndef _WIN32
+#define LoadLibrary(p)          ::dlopen(p, RTLD_LAZY)
+#define FreeLibrary(p)          ::dlclose(p)
+#define GetProcAddress(p1,p2)   ::dlsym(p1,p2)
+#endif
+
 
 namespace sql {
 namespace mysql {
