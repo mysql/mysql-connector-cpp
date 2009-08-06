@@ -30,12 +30,28 @@ namespace sql {
 namespace mysql {
 namespace util {
 
+    std::string ErrorMessage()
+    {
+#ifdef _WIN32
+        TCHAR buffer[255];
+        DWORD _errcode = GetLastError(); 
+        ::FormatMessage( FORMAT_MESSAGE_FROM_SYSTEM,
+            NULL, _errcode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+            buffer, sizeof(buffer), NULL );
+
+        return buffer;
+#else
+        return dlerror();
+#endif
+    }
+
 /* {{{ LibraryLoader::LibraryLoader() */
 LibraryLoader::LibraryLoader(const std::string & path2libFile)
 	: loadedLibHandle (NULL)
 {
 	if ((loadedLibHandle = LoadLibrary(path2libFile.c_str())) == NULL) {
-		throw std::runtime_error((std::string("Couldn't load library ") + path2libFile).c_str());
+		throw std::runtime_error((std::string("Couldn't load library ") + path2libFile
+                                                + ": " + ErrorMessage()).c_str());
 	}
 }
 /* }}} */
@@ -55,7 +71,8 @@ LibraryLoader::LibraryLoader(const std::string & dir2look, const std::string & l
 	fullname += libFileName;
 	if ((loadedLibHandle = LoadLibrary(fullname.c_str())) == NULL) {
 #endif
-		throw std::runtime_error((std::string("Couldn't load library ") + libFileName).c_str());
+		throw std::runtime_error((std::string("Couldn't load library ") + libFileName
+                                                + ": " + ErrorMessage() ).c_str());
 	}
 }
 /* }}} */

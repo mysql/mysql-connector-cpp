@@ -180,7 +180,7 @@ public:
 
      virtual void          debug              ( const char *  )   _PURE;
 
-     virtual unsigned int  errno        	  ( MYSQL *mysql  )   _PURE;
+     virtual unsigned int  mysql_errno        	  ( MYSQL *mysql  )   _PURE;
 
      virtual const char *  error              ( MYSQL *mysql  )   _PURE;
 
