@@ -2198,8 +2198,8 @@ char * utf8_strup(const char * const src, size_t srclen)
   Fix described :
   --------
   union { 
-     long_double l_d; 
-     long double ld; 
+	long_double l_d;
+	long double ld;
   } u; 
   // convert str to a long_double; store return val in union
   //(Putting value into union enables converted value to be 

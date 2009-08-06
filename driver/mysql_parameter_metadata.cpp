@@ -24,7 +24,7 @@ namespace mysql
 /* {{{ MySQL_ParameterMetaData::MySQL_ParameterMetaData -I- */
 MySQL_ParameterMetaData::MySQL_ParameterMetaData(const MYSQL_STMT * const stmt, NativeAPI::IMySQLCAPI * capi)
 {
-    // 2nd parameter is to be changed to boost::shared_ptr in case it's kept in the object
+	// 2nd parameter is to be changed to boost::shared_ptr in case it's kept in the object
 	param_count = capi->stmt_param_count(const_cast<MYSQL_STMT *>(stmt));
 }
 /* }}} */
@@ -128,5 +128,3 @@ MySQL_ParameterMetaData::isSigned(unsigned int /* paramNo */)
  * vim600: noet sw=4 ts=4 fdm=marker
  * vim<600: noet sw=4 ts=4
  */
-
-

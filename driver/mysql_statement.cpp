@@ -37,10 +37,8 @@ namespace mysql
 
 /* {{{ MySQL_Statement::MySQL_Statement() -I- */
 MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, boost::shared_ptr<NativeAPI::IMySQLCAPI> & _capi,
-                                 sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & l)
-	: warnings(NULL), connection(conn), capi(_capi), isClosed(false),
-	  last_update_count(UL64(~0)), logger(l),
-	  resultset_type(rset_type)
+									sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & l)
+	: warnings(NULL), connection(conn), capi(_capi), isClosed(false), last_update_count(UL64(~0)), logger(l), resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_Statement::MySQL_Statement");
 	CPP_INFO_FMT("this=%p", this);
@@ -88,7 +86,7 @@ MySQL_Statement::get_resultset()
 
 	MYSQL * mysql = connection->getMySQLHandle();
 
-	MYSQL_RES  * result = resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? capi->use_result(mysql):capi->store_result(mysql);
+	MYSQL_RES * result = (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY)? capi->use_result(mysql):capi->store_result(mysql);
 	if (result == NULL) {
 		CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
 					capi->mysql_errno(mysql), capi->sqlstate(mysql), capi->error(mysql));

@@ -36,13 +36,12 @@ boost::shared_ptr<IMySQLCAPI> getCApiHandle( sql::SQLString & name )
     return MySQL_Client_Static::theInstance();
 #else
 
-    std::map< sql::SQLString, boost::shared_ptr<IMySQLCAPI> >::const_iterator cit;
+    std::map< sql::SQLString, boost::shared_ptr< IMySQLCAPI > >::const_iterator cit;
 
     if ((cit= wrapper.find(name)) != wrapper.end()) {
         return cit->second;
     } else {
         boost::shared_ptr<IMySQLCAPI> newWrapper;
-
 
         newWrapper.reset(new MySQL_Client_Loader(name));
         wrapper[name] = newWrapper;

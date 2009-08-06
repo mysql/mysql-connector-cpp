@@ -35,11 +35,10 @@ namespace mysql
 
 /* {{{ MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData -I- */
 MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData(MYSQL_STMT * s,
-                                    boost::shared_ptr<NativeAPI::IMySQLCAPI> & _capi,
-                                    boost::shared_ptr< MySQL_DebugLogger> & l)
-    :   capi(_capi), logger(l),
-        result_meta(new MySQL_ResultsetData(_capi->stmt_result_metadata(s), _capi, l)),
-        num_fields(_capi->stmt_field_count(s))
+																	boost::shared_ptr< NativeAPI::IMySQLCAPI > & _capi,
+																	boost::shared_ptr< MySQL_DebugLogger> & l)
+	: capi(_capi), logger(l), result_meta(new MySQL_ResultsetData(_capi->stmt_result_metadata(s), _capi, l)),
+		num_fields(_capi->stmt_field_count(s))
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData");
 }
@@ -163,7 +162,7 @@ MySQL_Prepared_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 /* {{{ MySQL_Prepared_ResultSetMetaData::getFieldMeta -I- */
 MYSQL_FIELD * MySQL_Prepared_ResultSetMetaData::getFieldMeta(unsigned int columnIndex) const
 {
-    return result_meta->fetch_field_direct(columnIndex - 1);
+	return result_meta->fetch_field_direct(columnIndex - 1);
 }
 /* }}} */
 

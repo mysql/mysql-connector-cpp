@@ -68,11 +68,11 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
 			MySQL_ResultBind * r_bind,
 			sql::ResultSet::enum_type rset_type,
 			MySQL_Prepared_Statement * par,
-            boost::shared_ptr< NativeAPI::IMySQLCAPI> & _capi,
+			boost::shared_ptr< NativeAPI::IMySQLCAPI> & _capi,
 			boost::shared_ptr< MySQL_DebugLogger > & l
 		)
 	: row(NULL), stmt(s), capi(_capi), row_position(0), parent(par), is_valid(true),
-	   logger(l), result_bind(r_bind), resultset_type(rset_type)
+		logger(l), result_bind(r_bind), resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet");
 

@@ -24,66 +24,89 @@ class MySQL_ConnectionMetaData;
 
 namespace NativeAPI
 {
-    class IMySQLCAPI;
+	class IMySQLCAPI;
 }
 
 
-MySQL_ResultsetData::MySQL_ResultsetData(MYSQL_RES * res
-                                , boost::shared_ptr<NativeAPI::IMySQLCAPI> & _capi
-                                , boost::shared_ptr< MySQL_DebugLogger > & l)
-                                : logger(l    )
-                                , capi  (_capi)
-                                , rs    (res  )
+/* {{{ MySQL_ResultsetData::MySQL_ResultsetData */
+MySQL_ResultsetData::MySQL_ResultsetData(MYSQL_RES * res,
+											boost::shared_ptr< NativeAPI::IMySQLCAPI > & _capi,
+											boost::shared_ptr< MySQL_DebugLogger > & l)
+	: logger(l), capi(_capi), rs(res)
 {
 }
+/* }}} */
 
 
+/* {{{ MySQL_ResultsetData::~MySQL_ResultsetData */
 MySQL_ResultsetData::~MySQL_ResultsetData()
 {
-    capi->free_result(rs);
+	capi->free_result(rs);
 }
+/* }}} */
 
 
-void MySQL_ResultsetData::data_seek(my_ulonglong offset)
+/* {{{ MySQL_ResultsetData::data_seek */
+void
+MySQL_ResultsetData::data_seek(my_ulonglong offset)
 {
-    capi->data_seek(rs, offset);
+	capi->data_seek(rs, offset);
 }
+/* }}} */
 
 
-MYSQL_FIELD * MySQL_ResultsetData::fetch_field()
+/* {{{ MySQL_ResultsetData::fetch_field */
+MYSQL_FIELD *
+MySQL_ResultsetData::fetch_field()
 {
-    return capi->fetch_field(rs);
+	return capi->fetch_field(rs);
 }
+/* }}} */
 
 
-MYSQL_FIELD * MySQL_ResultsetData::fetch_field_direct(unsigned int field_nr)
+/* {{{ MySQL_ResultsetData::fetch_field_direct */
+MYSQL_FIELD *
+MySQL_ResultsetData::fetch_field_direct(unsigned int field_nr)
 {
-    return capi->fetch_field_direct(rs, field_nr);
+	return capi->fetch_field_direct(rs, field_nr);
 }
+/* }}} */
 
 
-unsigned long * MySQL_ResultsetData::fetch_lengths()
+/* {{{ MySQL_ResultsetData::fetch_lengths */
+unsigned long *
+MySQL_ResultsetData::fetch_lengths()
 {
-    return capi->fetch_lengths(rs);
+	return capi->fetch_lengths(rs);
 }
+/* }}} */
 
 
-MYSQL_ROW MySQL_ResultsetData::fetch_row()
+/* {{{ MySQL_ResultsetData::fetch_row */
+MYSQL_ROW
+MySQL_ResultsetData::fetch_row()
 {
-    return capi->fetch_row(rs);
+	return capi->fetch_row(rs);
 }
+/* }}} */
 
 
-unsigned int MySQL_ResultsetData::num_fields()
+/* {{{ MySQL_ResultsetData::num_fields */
+unsigned int
+MySQL_ResultsetData::num_fields()
 {
-    return capi->num_fields(rs);
+	return capi->num_fields(rs);
 }
+/* }}} */
 
 
-my_ulonglong MySQL_ResultsetData::num_rows()
+/* {{{ MySQL_ResultsetData::num_rows */
+my_ulonglong
+MySQL_ResultsetData::num_rows()
 {
-    return capi->num_rows(rs);
+	return capi->num_rows(rs);
 }
+/* }}} */
 
 
 } /* namespace mysql */

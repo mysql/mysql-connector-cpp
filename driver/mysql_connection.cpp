@@ -460,13 +460,13 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			if (!(p_ll = boost::get<long long>(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for OPT_CONNECT_TIMEOUT");
 			}
-      long l_tmp = static_cast<long>(*p_ll);
+			long l_tmp = static_cast<long>(*p_ll);
 			intern->capi->options(intern->mysql, MYSQL_OPT_CONNECT_TIMEOUT, (const char *) &l_tmp);
 		} else if (!it->first.compare("OPT_READ_TIMEOUT")) {
 			if (!(p_ll = boost::get<long long>(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for OPT_READ_TIMEOUT");
 			}
-      long l_tmp = static_cast<long>(*p_ll);
+			long l_tmp = static_cast<long>(*p_ll);
 			intern->capi->options(intern->mysql, MYSQL_OPT_READ_TIMEOUT, (const char *) &l_tmp);
 		} else if (!it->first.compare("OPT_WRITE_TIMEOUT")) {
 			if (!(p_ll = boost::get<long long>(&it->second))) {

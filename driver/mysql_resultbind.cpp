@@ -86,7 +86,7 @@ allocate_buffer_for_field(const MYSQL_FIELD * const field)
 			return st_buffer_size_type(new char[8], 8, MYSQL_TYPE_LONGLONG);
 		case MYSQL_TYPE_GEOMETRY:
 		default:
-                        // TODO: Andrey, there can be crashes when we go through this. Please fix.			
+			// TODO: Andrey, there can be crashes when we go through this. Please fix.
 			throw sql::InvalidArgumentException("allocate_buffer_for_field: invalid rbind data type");
 	}
 }
@@ -95,9 +95,8 @@ allocate_buffer_for_field(const MYSQL_FIELD * const field)
 
 /* {{{ MySQL_ResultBind::MySQL_ResultBind -I- */
 MySQL_ResultBind::MySQL_ResultBind(MYSQL_STMT * s, boost::shared_ptr< NativeAPI::IMySQLCAPI > & _capi,
-                 boost::shared_ptr< MySQL_DebugLogger > & log)
-                 : num_fields(0), is_null(NULL), err(NULL), len(NULL), capi(_capi), logger(log),
-                 stmt(s), rbind(NULL)
+									boost::shared_ptr< MySQL_DebugLogger > & log)
+	: num_fields(0), is_null(NULL), err(NULL), len(NULL), capi(_capi), logger(log), stmt(s), rbind(NULL)
 {
 }
 /* }}} */

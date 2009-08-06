@@ -157,8 +157,7 @@ MySQL_Prepared_Statement::MySQL_Prepared_Statement(
 			MYSQL_STMT *s, sql::Connection * conn, sql::ResultSet::enum_type rset_type,
 			boost::shared_ptr<NativeAPI::IMySQLCAPI> & _capi, boost::shared_ptr< MySQL_DebugLogger > & log
 		)
-	:connection(conn), stmt(s), capi(_capi), isClosed(false),
-	    logger(log), resultset_type(rset_type)
+	:connection(conn), stmt(s), capi(_capi), isClosed(false), logger(log), resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::MySQL_Prepared_Statement");
 	CPP_INFO_FMT("this=%p", this);
@@ -192,7 +191,7 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 {
 	CPP_ENTER("MySQL_Prepared_Statement::sendLongDataBeforeParamBind");
 	MYSQL_BIND * bind = param_bind->get();
-  boost::scoped_array<char> buf(new char[MAX_SEND_LONGDATA_BUFFER]);
+	boost::scoped_array<char> buf(new char[MAX_SEND_LONGDATA_BUFFER]);
 	for (unsigned int i = 0; i < param_count; ++i) {
 		if (bind[i].buffer_type == MYSQL_TYPE_LONG_BLOB) {
 			std::istream * my_blob = param_bind->getBlobObject(i);
@@ -218,7 +217,7 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 							throw InvalidArgumentException("MySQL_Prepared_Statement::setBlob: can't set blob value on that column");
 						case CR_SERVER_GONE_ERROR:
 						case CR_COMMANDS_OUT_OF_SYNC:
-						default:		
+						default:
 							sql::mysql::util::throwSQLException(*capi.get(), stmt);
 					}
 				}

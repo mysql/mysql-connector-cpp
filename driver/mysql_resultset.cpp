@@ -381,7 +381,7 @@ MySQL_ResultSet::getFetchSize()
 /* {{{ MySQL_ResultSet::getFieldMeta() -U- */
 MYSQL_FIELD * MySQL_ResultSet::getFieldMeta(unsigned int columnIndex) const
 {
-    return result->fetch_field_direct(columnIndex - 1);
+	return result->fetch_field_direct(columnIndex - 1);
 }
 /* }}} */
 

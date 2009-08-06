@@ -35,10 +35,10 @@ namespace mysql
 
 /* {{{ MySQL_ResultSetMetaData::MySQL_ResultSetMetaData -I- */
 MySQL_ResultSetMetaData::MySQL_ResultSetMetaData(boost::shared_ptr< MySQL_ResultsetData > res, boost::shared_ptr< MySQL_DebugLogger > & l)
-  : result(res), logger(l)
+	: result(res), logger(l)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::MySQL_ResultSetMetaData");
-    boost::shared_ptr< MySQL_ResultsetData > result_p = result.lock();
+	boost::shared_ptr< MySQL_ResultsetData > result_p = result.lock();
 	if (result_p) {
 		num_fields = result_p->num_fields();
 	}
@@ -70,7 +70,7 @@ void
 MySQL_ResultSetMetaData::checkValid() const
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::checkValid");
-    boost::shared_ptr< MySQL_ResultsetData > result_p = result.lock();
+	boost::shared_ptr< MySQL_ResultsetData > result_p = result.lock();
 	if (!result_p) {
 		throw sql::InvalidArgumentException("ResultSet is not valid anymore");
 	}
