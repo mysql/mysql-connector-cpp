@@ -1342,11 +1342,11 @@ void preparedstatement::getWarnings()
 void preparedstatement::blob()
 {
   logMsg("preparedstatement::blob() - MySQL_PreparedStatement::*");
-  char blob_input[256];
+  char blob_input[512];
   std::stringstream blob_input_stream;
   std::stringstream msg;
   std::istream * blob_output_stream;
-  char blob_output[256];
+  char blob_output[512];
   int id;
   int offset=0;
 
@@ -1362,9 +1362,14 @@ void preparedstatement::blob()
     pstmt.reset(con->prepareStatement("INSERT INTO test(id, col1) VALUES (?, ?)"));
 
     for (char ascii_code=CHAR_MIN; ascii_code < CHAR_MAX; ascii_code++)
+    {      
+      blob_output[offset]='\0';
+      blob_input[offset++]=ascii_code;
+    }
+    blob_input[offset]='\0';
+    blob_output[offset]='\0';
+    for (char ascii_code=CHAR_MAX; ascii_code > CHAR_MIN; ascii_code--)
     {
-      if (ascii_code == 10)
-        continue;
       blob_output[offset]='\0';
       blob_input[offset++]=ascii_code;
     }
