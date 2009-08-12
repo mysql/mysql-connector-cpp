@@ -13,8 +13,7 @@
 #define _MYSQL_CONNECTION_H_
 
 #include <cppconn/connection.h>
-struct st_mysql;
-
+#include <boost/shared_ptr.hpp>
 
 namespace sql
 {
@@ -43,6 +42,11 @@ private:
 class MySQL_DebugLogger;
 class MySQL_ConnectionData; /* PIMPL */
 
+namespace NativeAPI
+{
+class Connection_Proxy;
+}
+
 class CPPCONN_PUBLIC_FUNC MySQL_Connection : public sql::Connection
 {
 public:
@@ -51,8 +55,6 @@ public:
 	MySQL_Connection(std::map< sql::SQLString, sql::ConnectPropertyVal > & options);
 
 	virtual ~MySQL_Connection();
-
-	struct ::st_mysql * getMySQLHandle();
 
 	void clearWarnings();
 
@@ -129,6 +131,8 @@ protected:
 	void init(std::map< sql::SQLString, sql::ConnectPropertyVal > & properties);
 
 	MySQL_ConnectionData * intern; /* pimpl */
+
+    boost::shared_ptr<NativeAPI::Connection_Proxy> proxy;
 
 private:
 	/* Prevent use of these */

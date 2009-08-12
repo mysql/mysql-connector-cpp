@@ -12,9 +12,9 @@
 #ifndef _MYSQL_PARAMETER_METADATA_H_
 #define _MYSQL_PARAMETER_METADATA_H_
 
-#include <cppconn/parameter_metadata.h>
+#include <boost/shared_ptr.hpp>
 
-#include "mysql_private_iface.h"
+#include <cppconn/parameter_metadata.h>
 
 namespace sql
 {
@@ -22,14 +22,14 @@ namespace mysql
 {
 namespace NativeAPI
 {
-    class IMySQLCAPI;
+    class Statement_Proxy;
 }
 
 class MySQL_ParameterMetaData : public sql::ParameterMetaData
 {
 	unsigned int param_count;
 public:
-    MySQL_ParameterMetaData(const MYSQL_STMT * const stmt, NativeAPI::IMySQLCAPI * capi);
+    MySQL_ParameterMetaData( boost::shared_ptr<NativeAPI::Statement_Proxy> & stmt);
 
 	virtual ~MySQL_ParameterMetaData() {}
 

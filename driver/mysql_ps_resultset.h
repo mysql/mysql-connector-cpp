@@ -15,9 +15,10 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <cppconn/resultset.h>
+#include <config.h>
 
-#include "mysql_private_iface.h"
 
+#include "nativeapi/mysql_private_iface.h"
 namespace sql
 {
 namespace mysql
@@ -29,22 +30,21 @@ class MySQL_ResultBind;
 
 namespace NativeAPI
 {
-class IMySQLCAPI;
+class Statement_Proxy;
 }
 
 class MySQL_Prepared_ResultSet : public sql::ResultSet
 {
 private:
 	MYSQL_ROW row;
-	MYSQL_STMT *stmt;
 
-    boost::shared_ptr< NativeAPI::IMySQLCAPI > capi;
+    boost::shared_ptr< NativeAPI::Statement_Proxy > proxy;
 
 	mutable int last_queried_column;  // this is updated by calls to getInt(int), getString(int), etc...
 
 	unsigned int num_fields;
-	my_ulonglong num_rows;
-	my_ulonglong row_position;
+	uint64_t num_rows;
+	uint64_t row_position;
 
 	typedef std::map< sql::SQLString, unsigned int > FieldNameIndexMap;
 
@@ -74,9 +74,9 @@ protected:
 	uint64_t getUInt64_intern(const uint32_t columnIndex, bool cutTooBig) const;
 
 public:
-	MySQL_Prepared_ResultSet(MYSQL_STMT * s, MySQL_ResultBind * r_bind, sql::ResultSet::enum_type rset_type,
-        MySQL_Prepared_Statement * par, boost::shared_ptr< NativeAPI::IMySQLCAPI> & _capi,
-        boost::shared_ptr< MySQL_DebugLogger > &l);
+	MySQL_Prepared_ResultSet(boost::shared_ptr< NativeAPI::Statement_Proxy > & s,
+        MySQL_ResultBind * r_bind, sql::ResultSet::enum_type rset_type,
+        MySQL_Prepared_Statement * par, boost::shared_ptr< MySQL_DebugLogger > &l);
 
 	virtual ~MySQL_Prepared_ResultSet();
 

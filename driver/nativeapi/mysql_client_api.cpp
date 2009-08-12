@@ -13,6 +13,8 @@
 #include <boost/shared_ptr.hpp>
 #include <cppconn/sqlstring.h>
 
+#include "binding_config.h"
+
 #ifdef MYSQLCLIENT_STATIC_BINDING
 /* MySQL client library is linked */
 # include "mysql_client_static.h"
@@ -30,7 +32,7 @@ namespace NativeAPI
 
 static std::map< sql::SQLString, boost::shared_ptr<IMySQLCAPI> > wrapper;
 
-boost::shared_ptr<IMySQLCAPI> getCApiHandle( sql::SQLString & name )
+boost::shared_ptr<IMySQLCAPI> getCApiHandle( const sql::SQLString & name )
 {
 #ifdef MYSQLCLIENT_STATIC_BINDING
     return MySQL_Client_Static::theInstance();

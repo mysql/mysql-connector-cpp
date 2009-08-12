@@ -832,7 +832,7 @@ MySQL_ArtResultSet::last()
 		row_position = num_rows;
 		seek();
 	}
-	return num_rows? true:false;
+	return num_rows != 0;
 }
 /* }}} */
 

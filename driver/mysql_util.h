@@ -12,7 +12,7 @@
 #ifndef _MYSQL_UTIL_H_
 #define _MYSQL_UTIL_H_
 
-#include "mysql_private_iface.h"
+#include "nativeapi/mysql_private_iface.h"
 #include <cppconn/config.h>
 #include <cppconn/sqlstring.h>
 
@@ -52,12 +52,13 @@
 namespace sql {
 namespace mysql {
 namespace NativeAPI {
-class IMySQLCAPI;
+class Connection_Proxy;
+class Statement_Proxy;
 }
 namespace util {
 
-void throwSQLException(::sql::mysql::NativeAPI::IMySQLCAPI & capi, MYSQL * mysql);
-void throwSQLException(::sql::mysql::NativeAPI::IMySQLCAPI & capi, MYSQL_STMT * stmt);
+void throwSQLException(::sql::mysql::NativeAPI::Connection_Proxy & proxy);
+void throwSQLException(::sql::mysql::NativeAPI::Statement_Proxy & proxy);
 
 int mysql_string_type_to_datatype(const sql::SQLString & name);
 int mysql_type_to_datatype(const MYSQL_FIELD * const field);

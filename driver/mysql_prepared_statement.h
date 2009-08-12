@@ -17,8 +17,6 @@
 #include <cppconn/prepared_statement.h>
 #include <cppconn/parameter_metadata.h>
 
-#include "mysql_private_iface.h"
-
 
 namespace sql
 {
@@ -32,7 +30,7 @@ class MySQL_ResultBind;
 
 namespace NativeAPI
 {
-class IMySQLCAPI;
+class Statement_Proxy;
 }
 
 
@@ -40,8 +38,7 @@ class MySQL_Prepared_Statement : public sql::PreparedStatement
 {
 protected:
 	sql::Connection * connection;
-	MYSQL_STMT * stmt;
-    boost::shared_ptr<NativeAPI::IMySQLCAPI> capi;
+    boost::shared_ptr<NativeAPI::Statement_Proxy> proxy;
 	boost::scoped_ptr< MySQL_ParamBind > param_bind;
 	unsigned int param_count;
 
@@ -68,8 +65,9 @@ protected:
 
 public:
 
-	MySQL_Prepared_Statement(MYSQL_STMT * s, sql::Connection * conn, sql::ResultSet::enum_type rset_type,
-							 boost::shared_ptr<NativeAPI::IMySQLCAPI> & _capi, boost::shared_ptr< MySQL_DebugLogger > & log);
+    MySQL_Prepared_Statement(boost::shared_ptr<NativeAPI::Statement_Proxy> & s,
+                            sql::Connection * conn, sql::ResultSet::enum_type rset_type,
+							boost::shared_ptr< MySQL_DebugLogger > & log);
 	virtual ~MySQL_Prepared_Statement();
 
 	sql::Connection *getConnection();
@@ -111,7 +109,7 @@ public:
 
 	uint64_t getUpdateCount();
 
-	const SQLWarning * getWarnings();/* should return differen type */
+	const SQLWarning * getWarnings();/* should return different type */
 
 	Statement * setBuffered();
 

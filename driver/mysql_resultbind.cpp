@@ -14,8 +14,9 @@
 #include "mysql_util.h"
 #include "mysql_debug.h"
 #include "mysql_resultbind.h"
-#include "mysql_client_api.h"
-#include "mysql_resultset_data.h"
+
+#include "nativeapi/statement_proxy.h"
+#include "nativeapi/resultset_proxy.h"
 
 #include <string.h>
 
@@ -94,9 +95,9 @@ allocate_buffer_for_field(const MYSQL_FIELD * const field)
 
 
 /* {{{ MySQL_ResultBind::MySQL_ResultBind -I- */
-MySQL_ResultBind::MySQL_ResultBind(MYSQL_STMT * s, boost::shared_ptr< NativeAPI::IMySQLCAPI > & _capi,
+MySQL_ResultBind::MySQL_ResultBind( boost::shared_ptr< NativeAPI::Statement_Proxy > & stmt,
 									boost::shared_ptr< MySQL_DebugLogger > & log)
-	: num_fields(0), is_null(NULL), err(NULL), len(NULL), capi(_capi), logger(log), stmt(s), rbind(NULL)
+	: num_fields(0), is_null(NULL), err(NULL), len(NULL), proxy(), logger(log), rbind(NULL)
 {
 }
 /* }}} */
@@ -126,7 +127,7 @@ void MySQL_ResultBind::bindResult()
 	err.reset(NULL);
 	len.reset(NULL);
 
-	num_fields = capi->stmt_field_count(stmt);
+	num_fields = proxy->field_count();
 	if (!num_fields) {
 		return;
 	}
@@ -144,23 +145,23 @@ void MySQL_ResultBind::bindResult()
 	memset(len.get(), 0, sizeof(unsigned long) * num_fields);
 
 
-	MySQL_ResultsetData resultMeta(capi->stmt_result_metadata(stmt), capi, logger);
+    NativeAPI::Resultset_Proxy & resultMeta= proxy->result_metadata();
 
 	for (unsigned int i = 0; i < num_fields; ++i) {
 		MYSQL_FIELD * field = resultMeta.fetch_field();
 
 		struct st_buffer_size_type p = allocate_buffer_for_field(field);
-		rbind[i].buffer_type	= p.type;
+		rbind[i].buffer_type= p.type;
 		rbind[i].buffer		= p.buffer;
 		rbind[i].buffer_length= static_cast<unsigned long>(p.size);
 		rbind[i].length		= &len[i];
 		rbind[i].is_null	= &is_null[i];
 		rbind[i].error		= &err[i];
-		rbind[i].is_unsigned = field->flags & UNSIGNED_FLAG;
+		rbind[i].is_unsigned= field->flags & UNSIGNED_FLAG;
 	}
-	if (capi->stmt_bind_result(stmt, rbind.get())) {
-		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", capi->stmt_errno(stmt), capi->stmt_sqlstate(stmt), capi->stmt_error(stmt));
-		sql::mysql::util::throwSQLException(*capi.get(), stmt);
+	if (proxy->bind_result(rbind.get())) {
+		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+		sql::mysql::util::throwSQLException(*proxy.get());
 	}
 }
 /* }}} */

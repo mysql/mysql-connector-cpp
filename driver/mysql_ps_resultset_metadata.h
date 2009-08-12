@@ -14,7 +14,7 @@
 
 #include <cppconn/resultset.h>
 #include <cppconn/resultset_metadata.h>
-#include "mysql_private_iface.h"
+#include "nativeapi/mysql_private_iface.h"
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
@@ -23,26 +23,27 @@ namespace sql
 {
 namespace mysql
 {
-class MySQL_DebugLogger;
-class MySQL_ResultsetData;
-
 namespace NativeAPI
 {
-    class IMySQLCAPI;
+class Resultset_Proxy;
+class Statement_Proxy;
 }
+
+class MySQL_DebugLogger;
+
 
 class MySQL_Prepared_ResultSetMetaData : public sql::ResultSetMetaData
 {
-    boost::shared_ptr< NativeAPI::IMySQLCAPI >  capi;
+    boost::shared_ptr< NativeAPI::Statement_Proxy >  proxy;
 
 	boost::shared_ptr< MySQL_DebugLogger >      logger;
 
-    boost::scoped_ptr< MySQL_ResultsetData >   result_meta;
+    boost::scoped_ptr< NativeAPI::Resultset_Proxy >   result_meta;
 
 	unsigned int num_fields;
 
 public:
-	MySQL_Prepared_ResultSetMetaData(MYSQL_STMT * s, boost::shared_ptr<NativeAPI::IMySQLCAPI> & _capi,
+	MySQL_Prepared_ResultSetMetaData(boost::shared_ptr<NativeAPI::Statement_Proxy> & _proxy,
         boost::shared_ptr< MySQL_DebugLogger> & l);
 
 	virtual ~MySQL_Prepared_ResultSetMetaData();

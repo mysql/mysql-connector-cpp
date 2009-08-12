@@ -16,7 +16,7 @@
 
 #include <cppconn/resultset.h>
 
-#include "mysql_private_iface.h"
+#include "nativeapi/mysql_private_iface.h"
 
 namespace sql
 {
@@ -24,16 +24,20 @@ namespace mysql
 {
 class MySQL_Statement;
 class MySQL_DebugLogger;
-class MySQL_ResultsetData;
 class MySQL_ResultSetMetaData;
+
+namespace NativeAPI
+{
+    class Resultset_Proxy;
+}
 
 class MySQL_ResultSet : public sql::ResultSet
 {
 	MYSQL_ROW				row;
-    boost::shared_ptr< MySQL_ResultsetData > result;
+    boost::shared_ptr< NativeAPI::Resultset_Proxy > result;
 	unsigned int			num_fields;
-	my_ulonglong			num_rows;
-	my_ulonglong			row_position;
+	uint64_t			    num_rows;
+	uint64_t			    row_position;
 	/* 0 = before first row, 1 - first row, 'num_rows + 1' - after last row */
 
 	typedef std::map< sql::SQLString, unsigned int> FieldNameIndexMap;
@@ -59,7 +63,7 @@ protected:
 	MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const;
 
 public:
-	MySQL_ResultSet(boost::shared_ptr< MySQL_ResultsetData > res, sql::ResultSet::enum_type rset_type, MySQL_Statement * par,
+    MySQL_ResultSet(boost::shared_ptr< NativeAPI::Resultset_Proxy > & res, sql::ResultSet::enum_type rset_type, MySQL_Statement * par,
 					boost::shared_ptr< MySQL_DebugLogger > & l);
 
 	virtual ~MySQL_ResultSet();

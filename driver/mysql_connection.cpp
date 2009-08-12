@@ -17,7 +17,9 @@
 #include <stdio.h>
 #include <cppconn/exception.h>
 
-#include "mysql_client_api.h"
+#include "nativeapi/connection_proxy.h"
+#include "nativeapi/statement_proxy.h"
+
 #include "mysql_util.h"
 
 /*
@@ -127,10 +129,8 @@ MySQL_Connection::~MySQL_Connection()
 	*/
 	{
 		CPP_ENTER_WL(intern->logger, "MySQL_Connection::~MySQL_Connection");
-		if (!isClosed()) {
-			intern->capi->close(intern->mysql);
-		}
 	}
+
 	delete intern;
 }
 /* }}} */
@@ -404,21 +404,19 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	}
 
     try {
-        intern->capi = NativeAPI::getCApiHandle(clientlib);
+        proxy.reset( NativeAPI::createConnectionProxy(clientlib));
     } catch (std::runtime_error & e) {
         throw sql::InvalidArgumentException(e.what());
     }
 
-	if (!(intern->mysql = intern->capi->init(NULL))) {
-		throw sql::SQLException("Insufficient memory: cannot create MySQL handle using mysql_init()");
-	}
+
 #ifndef _WIN32
 	if (!hostName.compare(0, sizeof("unix://") - 1, "unix://")) {
 		protocol_tcp = false;
 		socket_or_pipe = hostName.substr(sizeof("unix://") - 1, sql::SQLString::npos);
 		host = "localhost";
 		int tmp_protocol = MYSQL_PROTOCOL_SOCKET;
-		intern->capi->options(intern->mysql, MYSQL_OPT_PROTOCOL, (const char *) &tmp_protocol);
+		proxy->options(MYSQL_OPT_PROTOCOL, (const char *) &tmp_protocol);
 	} else
 #else
 	if (!hostName.compare(0, sizeof("pipe://") - 1, "pipe://")) {
@@ -426,7 +424,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 		socket_or_pipe = hostName.substr(sizeof("pipe://") - 1, sql::SQLString::npos);
 		host = ".";
 		int tmp_protocol = MYSQL_PROTOCOL_PIPE;
-		intern->capi->options(intern->mysql, MYSQL_OPT_PROTOCOL, (const char *) &tmp_protocol);
+		proxy->options(MYSQL_OPT_PROTOCOL, (const char *) &tmp_protocol);
 	} else
 #endif
 	if (!hostName.compare(0, sizeof("tcp://") - 1, "tcp://") ) {
@@ -461,24 +459,24 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 				throw sql::InvalidArgumentException("No long long value passed for OPT_CONNECT_TIMEOUT");
 			}
 			long l_tmp = static_cast<long>(*p_ll);
-			intern->capi->options(intern->mysql, MYSQL_OPT_CONNECT_TIMEOUT, (const char *) &l_tmp);
+			proxy->options(MYSQL_OPT_CONNECT_TIMEOUT, (const char *) &l_tmp);
 		} else if (!it->first.compare("OPT_READ_TIMEOUT")) {
 			if (!(p_ll = boost::get<long long>(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for OPT_READ_TIMEOUT");
 			}
 			long l_tmp = static_cast<long>(*p_ll);
-			intern->capi->options(intern->mysql, MYSQL_OPT_READ_TIMEOUT, (const char *) &l_tmp);
+			proxy->options(MYSQL_OPT_READ_TIMEOUT, (const char *) &l_tmp);
 		} else if (!it->first.compare("OPT_WRITE_TIMEOUT")) {
 			if (!(p_ll = boost::get<long long>(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for OPT_WRITE_TIMEOUT");
 			}
 			long l_tmp = static_cast<long>(*p_ll);
-			intern->capi->options(intern->mysql, MYSQL_OPT_WRITE_TIMEOUT, (const char *) &l_tmp);
+			proxy->options(MYSQL_OPT_WRITE_TIMEOUT, (const char *) &l_tmp);
 		} else if (!it->first.compare("OPT_RECONNECT")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for OPT_RECONNECT");
 			}
-			intern->capi->options(intern->mysql, MYSQL_OPT_RECONNECT, (const char *) &p_b);
+			proxy->options(MYSQL_OPT_RECONNECT, (const char *) &p_b);
 		} else if (!it->first.compare("OPT_CHARSET_NAME")) {
 			if (!(p_s = boost::get< sql::SQLString >(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for OPT_CHARSET_NAME");
@@ -488,46 +486,44 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for OPT_REPORT_DATA_TRUNCATION");
 			}
-			intern->capi->options(intern->mysql, MYSQL_REPORT_DATA_TRUNCATION, (const char *) &p_b);
+			proxy->options(MYSQL_REPORT_DATA_TRUNCATION, (const char *) &p_b);
 #ifdef _WIN32
 		} else if (!it->first.compare("OPT_NAMED_PIPE")) {
-			intern->capi->options(intern->mysql, MYSQL_OPT_NAMED_PIPE, NULL);
+			proxy->options(MYSQL_OPT_NAMED_PIPE, NULL);
 #endif
 		}
 	}
 
 	{
 		my_bool tmp_bool = 1;
-		intern->capi->options(intern->mysql, MYSQL_SECURE_AUTH, (const char *) &tmp_bool);
+		proxy->options(MYSQL_SECURE_AUTH, (const char *) &tmp_bool);
 	}
 
-	intern->capi->options(intern->mysql, MYSQL_SET_CHARSET_NAME, defaultCharset.c_str());
+	proxy->options(MYSQL_SET_CHARSET_NAME, defaultCharset.c_str());
 	
 	if (ssl_used) {
 		/* According to the docs, always returns 0 */
-		intern->capi->ssl_set(intern->mysql, sslKey.c_str(), sslCert.c_str(), sslCA.c_str(), sslCAPath.c_str(), sslCipher.c_str());
+		proxy->ssl_set(sslKey.c_str(), sslCert.c_str(), sslCA.c_str(), sslCAPath.c_str(), sslCipher.c_str());
 	}
 	CPP_INFO_FMT("hostName=%s", hostName.c_str());
 	CPP_INFO_FMT("user=%s", userName.c_str());
 	CPP_INFO_FMT("port=%d", port);
 	CPP_INFO_FMT("schema=%s", schema.c_str());
 	CPP_INFO_FMT("socket/pipe=%s", socket_or_pipe.c_str());
-	if (!intern->capi->real_connect(intern->mysql,
-						host.c_str(),
-						userName.c_str(),
-						password.c_str(),
-						schema_used && schema.length()? schema.c_str():NULL /* schema */,
+	if (!proxy->connect(host,
+						userName,
+						password,
+						schema_used && schema.length()? schema: (schema= "") /* schema */,
 						port,
-						protocol_tcp == false? socket_or_pipe.c_str():NULL /*socket or named pipe */,
+						protocol_tcp == false? socket_or_pipe : "" /*socket or named pipe */,
 						flags))
 	{
-		CPP_ERR_FMT("Couldn't connect : %d", intern->capi->mysql_errno(intern->mysql));
-		CPP_ERR_FMT("Couldn't connect : (%s)", intern->capi->sqlstate(intern->mysql));
-		CPP_ERR_FMT("Couldn't connect : %s", intern->capi->error(intern->mysql));
-		CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", intern->capi->mysql_errno(intern->mysql), intern->capi->sqlstate(intern->mysql), intern->capi->error(intern->mysql));
-		sql::SQLException e(intern->capi->error(intern->mysql), intern->capi->sqlstate(intern->mysql), intern->capi->mysql_errno(intern->mysql));
-		intern->capi->close(intern->mysql);
-		intern->mysql = NULL;
+		CPP_ERR_FMT("Couldn't connect : %d", proxy->errNo());
+		CPP_ERR_FMT("Couldn't connect : (%s)", proxy->sqlstate());
+		CPP_ERR_FMT("Couldn't connect : %s", proxy->error());
+		CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+		sql::SQLException e(proxy->error(), proxy->sqlstate(), proxy->errNo());
+		proxy.reset();
 		throw e;
 	}
 	setAutoCommit(true);
@@ -536,7 +532,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	if (characterSetResults.compare(defaultCharset)) {
 		setSessionVariable("character_set_results", characterSetResults.length() ? characterSetResults:"NULL");
 	}
-	intern->meta.reset(new MySQL_ConnectionMetaData(this, intern->capi, intern->logger));
+	intern->meta.reset(new MySQL_ConnectionMetaData(this, proxy, intern->logger));
 }
 /* }}} */
 
@@ -569,8 +565,7 @@ MySQL_Connection::close()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::close");
 	checkClosed();
-	intern->capi->close(intern->mysql);
-	intern->mysql = NULL;
+	proxy.reset();
 	intern->is_valid = false;
 }
 /* }}} */
@@ -582,7 +577,7 @@ MySQL_Connection::commit()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::commit");
 	checkClosed();
-	intern->capi->commit(intern->mysql);
+	proxy->commit();
 }
 /* }}} */
 
@@ -592,7 +587,7 @@ sql::Statement * MySQL_Connection::createStatement()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::createStatement");
 	checkClosed();
-	return new MySQL_Statement(this, intern->capi, intern->defaultStatementResultType, intern->logger);
+	return new MySQL_Statement(this, proxy, intern->defaultStatementResultType, intern->logger);
 }
 /* }}} */
 
@@ -614,7 +609,7 @@ MySQL_Connection::getCatalog()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getCatalog");
 	checkClosed();
-	return intern->capi->get_server_version(intern->mysql) > 60006 ? "def" : "";
+	return proxy->get_server_version() > 60006 ? "def" : "";
 }
 /* }}} */
 
@@ -672,17 +667,6 @@ MySQL_Connection::getMetaData()
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getMetaData");
 	checkClosed();
 	return intern->meta.get();
-}
-/* }}} */
-
-
-/* {{{ MySQL_Connection::getMySQLHandle() -I- */
-MYSQL *
-MySQL_Connection::getMySQLHandle()
-{
-	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getMySQLHandle");
-	checkClosed();
-	return intern->mysql;
 }
 /* }}} */
 
@@ -752,21 +736,28 @@ MySQL_Connection::prepareStatement(const sql::SQLString& sql)
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
 	CPP_INFO_FMT("query=%s", sql.c_str());
 	checkClosed();
-	MYSQL_STMT * stmt = intern->capi->stmt_init(intern->mysql);
+    boost::shared_ptr<NativeAPI::Statement_Proxy> stmt;
 
-	if (!stmt) {
-		CPP_ERR_FMT("No statement : %d:(%s) %s", intern->capi->mysql_errno(intern->mysql), intern->capi->sqlstate(intern->mysql), intern->capi->error(intern->mysql));
-		sql::mysql::util::throwSQLException(*intern->capi.get(), intern->mysql);
-	}
+    //TODO change - probably no need to catch and throw here. Logging can be done inside proxy
+    try
+    {
+         stmt.reset( & proxy->stmt_init() );
+    }
+    catch (::sql::SQLException& e)
+    {
+    	CPP_ERR_FMT("No statement : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+        throw e;
+    }
 
-	if (intern->capi->stmt_prepare(stmt, sql.c_str(), static_cast<unsigned long>(sql.length()))) {
-		CPP_ERR_FMT("Cannot prepare %d:(%s) %s", intern->capi->stmt_errno(stmt), intern->capi->stmt_sqlstate(stmt), intern->capi->stmt_error(stmt));
-		sql::SQLException e(intern->capi->stmt_error(stmt), intern->capi->stmt_sqlstate(stmt), intern->capi->stmt_errno(stmt));
-		intern->capi->stmt_close(stmt);
+
+	if (stmt->prepare(sql)) {
+		CPP_ERR_FMT("Cannot prepare %d:(%s) %s", stmt->errNo(), stmt->sqlstate(), stmt->error());
+		sql::SQLException e(stmt->error(), stmt->sqlstate(), stmt->errNo());
+		stmt.reset();
 		throw e;
 	}
 
-	return new MySQL_Prepared_Statement(stmt, this, intern->defaultPreparedStatementResultType, intern->capi, intern->logger);
+	return new MySQL_Prepared_Statement(stmt, this, intern->defaultPreparedStatementResultType, intern->logger);
 }
 /* }}} */
 
@@ -837,7 +828,7 @@ MySQL_Connection::releaseSavepoint(Savepoint * savepoint)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::releaseSavepoint");
 	checkClosed();
-	if (intern->capi->get_server_version(intern->mysql) < 50001) {
+	if (proxy->get_server_version() < 50001) {
 		throw sql::MethodNotImplementedException("releaseSavepoint not available in this server version");
 	}
 	if (getAutoCommit()) {
@@ -858,7 +849,7 @@ MySQL_Connection::rollback()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::rollback");
 	checkClosed();
-	intern->capi->rollback(intern->mysql);
+	proxy->rollback();
 }
 /* }}} */
 
@@ -912,7 +903,7 @@ MySQL_Connection::setClientOption(const sql::SQLString & optionName, const void 
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setClientOption");
 	if (!optionName.compare("libmysql_debug")) {
-		intern->capi->debug(static_cast<const char *>(optionValue));
+		proxy->debug(static_cast<const char *>(optionValue));
 	} else if (!optionName.compare("clientTrace")) {
 		if (*(static_cast<const bool *>(optionValue))) {
 			intern->logger->enableTracing();
@@ -1015,7 +1006,7 @@ MySQL_Connection::setAutoCommit(bool autoCommit)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setAutoCommit");
 	checkClosed();
-	intern->capi->autocommit(intern->mysql, autoCommit);
+	proxy->autocommit(autoCommit);
 	intern->autocommit = autoCommit;
 }
 /* }}} */
@@ -1045,7 +1036,7 @@ MySQL_Connection::setTransactionIsolation(enum_transaction_isolation level)
 			throw sql::InvalidArgumentException("MySQL_Connection::setTransactionIsolation()");
 	}
 	intern->txIsolationLevel = level;
-	intern->capi->query(intern->mysql, q);
+	proxy->query(q);
 }
 /* }}} */
 

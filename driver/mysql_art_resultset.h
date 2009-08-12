@@ -23,8 +23,6 @@
 
 #include <cppconn/resultset.h>
 
-#include "mysql_private_iface.h"
-
 
 namespace sql
 {
@@ -244,8 +242,8 @@ public:
 	FieldNameIndexMap field_name_to_index_map;
 	boost::scoped_array< sql::SQLString > field_index_to_name_map;
 
-	my_ulonglong num_rows;
-	my_ulonglong row_position; /* 0 = before first row, 1 - first row, 'num_rows + 1' - after last row */
+	uint64_t num_rows;
+	uint64_t row_position; /* 0 = before first row, 1 - first row, 'num_rows + 1' - after last row */
 
 	bool is_closed;
 

@@ -17,7 +17,7 @@
 #include <cppconn/prepared_statement.h>
 #include <cppconn/parameter_metadata.h>
 
-#include "mysql_private_iface.h"
+#include "nativeapi/mysql_private_iface.h"
 #include "mysql_util.h"
 
 namespace sql
@@ -26,27 +26,26 @@ namespace mysql
 {
 namespace NativeAPI
 {
-class IMySQLCAPI;
+class Statement_Proxy;
 }
 
 
 class MySQL_ResultBind
 {
 	unsigned int num_fields;
-	boost::scoped_array< my_bool > is_null;
-	boost::scoped_array< my_bool > err;
+	boost::scoped_array< char > is_null;
+	boost::scoped_array< char > err;
 	boost::scoped_array< unsigned long > len;
 
-    boost::shared_ptr< NativeAPI::IMySQLCAPI > capi;
+    boost::shared_ptr< NativeAPI::Statement_Proxy > proxy;
 
 	boost::shared_ptr< MySQL_DebugLogger > logger;
-	MYSQL_STMT * stmt;
 
 public:
 	boost::scoped_array< MYSQL_BIND > rbind;
 
 
-	MySQL_ResultBind(MYSQL_STMT * s, boost::shared_ptr< NativeAPI::IMySQLCAPI > & _capi,
+	MySQL_ResultBind( boost::shared_ptr< NativeAPI::Statement_Proxy > & _capi,
         boost::shared_ptr< MySQL_DebugLogger > & log);
 
 	~MySQL_ResultBind();

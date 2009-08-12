@@ -27,12 +27,6 @@ namespace mysql
 class MySQL_DebugLogger;
 class MySQL_ConnectionMetaData;
 
-namespace NativeAPI
-{
-    class IMySQLCAPI;
-}
-
-
 class MySQL_ConnectionData
 {
 public:
@@ -42,7 +36,7 @@ public:
 		  metadata_use_info_schema(true),
 		  defaultStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
 		  defaultPreparedStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
-		  logger(l), meta(NULL), mysql(NULL) {}
+		  logger(l), meta(NULL) {}
 
 	~MySQL_ConnectionData() {}
 
@@ -75,10 +69,6 @@ public:
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 
 	boost::scoped_ptr< MySQL_ConnectionMetaData > meta;
-
-    boost::shared_ptr< NativeAPI::IMySQLCAPI > capi;
-
-	struct ::st_mysql * mysql; /* let it be last . If wrong dll is used we will get valgrind error or runtime error !*/
 };
 
 } /* namespace mysql */

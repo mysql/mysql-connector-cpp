@@ -25,7 +25,8 @@
 #include "mysql_parameter_metadata.h"
 #include "mysql_warning.h"
 #include "mysql_resultbind.h"
-#include "mysql_client_api.h"
+
+#include "nativeapi/statement_proxy.h"
 
 #define mysql_stmt_conn(s) (s)->mysql
 
@@ -154,18 +155,18 @@ public:
 
 /* {{{ MySQL_Prepared_Statement::MySQL_Prepared_Statement() -I- */
 MySQL_Prepared_Statement::MySQL_Prepared_Statement(
-			MYSQL_STMT *s, sql::Connection * conn, sql::ResultSet::enum_type rset_type,
-			boost::shared_ptr<NativeAPI::IMySQLCAPI> & _capi, boost::shared_ptr< MySQL_DebugLogger > & log
+            boost::shared_ptr<NativeAPI::Statement_Proxy> & s, sql::Connection * conn,
+            sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & log
 		)
-	:connection(conn), stmt(s), capi(_capi), isClosed(false), logger(log), resultset_type(rset_type)
+	:connection(conn), proxy(s), isClosed(false), logger(log), resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::MySQL_Prepared_Statement");
 	CPP_INFO_FMT("this=%p", this);
-	param_count = capi->stmt_param_count(s);
+	param_count = proxy->param_count();
 	param_bind.reset(new MySQL_ParamBind(param_count));
 
-	res_meta.reset(new MySQL_Prepared_ResultSetMetaData(stmt, capi, logger));
-	param_meta.reset(new MySQL_ParameterMetaData(stmt, capi.get()));
+	res_meta.reset(new MySQL_Prepared_ResultSetMetaData(proxy, logger));
+	param_meta.reset(new MySQL_ParameterMetaData(proxy));
 }
 /* }}} */
 
@@ -208,9 +209,9 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 						throw SQLException("Error while reading from blob (fail)");
 					}
 				}
-				if (capi->stmt_send_long_data(stmt, i, buf.get(), static_cast<unsigned long>(my_blob->gcount()))) {
-					CPP_ERR_FMT("Couldn't send long data : %d:(%s) %s", capi->stmt_errno(stmt), capi->stmt_sqlstate(stmt), capi->stmt_error(stmt));
-					switch (capi->stmt_errno(stmt)) {
+				if (proxy->send_long_data(i, buf.get(), static_cast<unsigned long>(my_blob->gcount()))) {
+					CPP_ERR_FMT("Couldn't send long data : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+					switch (proxy->errNo()) {
 						case CR_OUT_OF_MEMORY:
 							throw std::bad_alloc();
 						case CR_INVALID_BUFFER_USE:
@@ -218,7 +219,7 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 						case CR_SERVER_GONE_ERROR:
 						case CR_COMMANDS_OUT_OF_SYNC:
 						default:
-							sql::mysql::util::throwSQLException(*capi.get(), stmt);
+							sql::mysql::util::throwSQLException(*proxy.get());
 					}
 				}
 			} while (1);
@@ -238,13 +239,13 @@ MySQL_Prepared_Statement::do_query()
 		CPP_ERR("Value not set for all parameters");
 		throw sql::SQLException("Value not set for all parameters");
 	}
-	if (capi->stmt_bind_param(stmt, param_bind->get())) {
-		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", capi->stmt_errno(stmt), capi->stmt_sqlstate(stmt), capi->stmt_error(stmt));
-		sql::mysql::util::throwSQLException(*capi.get(), stmt);
+	if (proxy->bind_param(param_bind->get())) {
+		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+		sql::mysql::util::throwSQLException(*proxy.get());
 	}
-	if (!sendLongDataBeforeParamBind() || capi->stmt_execute(stmt)) {
-		CPP_ERR_FMT("Couldn't execute : %d:(%s) %s", capi->stmt_errno(stmt), capi->stmt_sqlstate(stmt), capi->stmt_error(stmt));
-		sql::mysql::util::throwSQLException(*capi.get(), stmt);
+	if (!sendLongDataBeforeParamBind() || proxy->execute()) {
+		CPP_ERR_FMT("Couldn't execute : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+		sql::mysql::util::throwSQLException(*proxy.get());
 	}
 }
 /* }}} */
@@ -282,7 +283,7 @@ MySQL_Prepared_Statement::execute()
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 	do_query();
-	return (capi->stmt_field_count(stmt) > 0);
+	return (proxy->field_count() > 0);
 }
 /* }}} */
 
@@ -309,10 +310,10 @@ MySQL_Prepared_Statement::executeQuery()
 	do_query();
 
 	my_bool	bool_tmp=1;
-	capi->stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
+	proxy->attr_set( STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
 	sql::ResultSet::enum_type tmp_type;
 	if (resultset_type == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
-		capi->stmt_store_result(stmt);
+		proxy->store_result();
 		tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
 	} else if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
 		tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
@@ -322,7 +323,7 @@ MySQL_Prepared_Statement::executeQuery()
 	// MySQL_Prepared_ResultSet takes responsibility about the newly created
 	// MySQL_ResultBind object. The former uses scoped_ptr and will clean it in
 	// any case. See http://www.gotw.ca/gotw/062.htm
-	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, new MySQL_ResultBind(stmt, capi, logger), tmp_type, this, capi, logger);
+	sql::ResultSet * tmp= new MySQL_Prepared_ResultSet(proxy, new MySQL_ResultBind(proxy, logger), tmp_type, this, logger);
 
 	CPP_INFO_FMT("rset=%p", tmp);
 	return tmp;
@@ -348,7 +349,7 @@ MySQL_Prepared_Statement::executeUpdate()
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 	do_query();
-	return static_cast<int>(capi->stmt_affected_rows(stmt));
+	return static_cast<int>(proxy->affected_rows());
 }
 /* }}} */
 
@@ -822,26 +823,26 @@ MySQL_Prepared_Statement::getResultSet()
 	CPP_ENTER("MySQL_Prepared_Statement::getResultSet");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	if (capi->more_results(mysql_stmt_conn(stmt))) {
-		capi->next_result(mysql_stmt_conn(stmt));
+	if (proxy->more_results()) {
+		proxy->next_result();
 	}
 
 	my_bool	bool_tmp = 1;
-	capi->stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
+	proxy->attr_set(STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
 	sql::ResultSet::enum_type tmp_type;
 	if (resultset_type == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
-		capi->stmt_store_result(stmt);
+		proxy->store_result();
 		tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
 	} else if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
 		tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
 	} else {
-		throw SQLException("Invalid valude for result set type");
+		throw SQLException("Invalid value for result set type");
 	}
 
 	// MySQL_Prepared_ResultSet takes responsibility about the newly created
 	// MySQL_ResultBind object. The former uses scoped_ptr and will clean it in
 	// any case. See http://www.gotw.ca/gotw/062.htm
-	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(stmt, new MySQL_ResultBind(stmt, capi, logger), tmp_type, this, capi, logger);
+	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(proxy, new MySQL_ResultBind(proxy, logger), tmp_type, this, logger);
 
 	CPP_INFO_FMT("rset=%p", tmp);
 	return tmp;
@@ -1058,7 +1059,7 @@ void
 MySQL_Prepared_Statement::closeIntern()
 {
 	CPP_ENTER("MySQL_Prepared_Statement::closeIntern");
-	capi->stmt_close(stmt);
+	proxy.reset();
 	clearParameters();
 
 	isClosed = true;

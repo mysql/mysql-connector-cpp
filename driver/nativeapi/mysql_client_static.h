@@ -62,51 +62,51 @@ public:
 
     // MySQL C-API calls wrappers
 
-    my_ulonglong affected_rows       (MYSQL * mysql);
+    my_ulonglong affected_rows      (MYSQL * mysql);
 
-    my_bool      autocommit          (MYSQL *, my_bool);
+    my_bool      autocommit         (MYSQL *, my_bool);
 
-    void         close               (MYSQL * mysql);
+    void         close              (MYSQL * mysql);
 
-    my_bool      commit              (MYSQL * mysql);
+    my_bool      commit             (MYSQL * mysql);
 
-    void         data_seek           (MYSQL_RES *, my_ulonglong);
+    void         data_seek          (MYSQL_RES *, my_ulonglong);
 
-    void         debug               (const char *);
+    void         debug              (const char *);
 
-    unsigned int errno         (MYSQL * mysql);
+    unsigned int mysql_errno        (MYSQL * mysql);
 
-    const char * error               (MYSQL * mysql);
+    const char * error              (MYSQL * mysql);
 
-    MYSQL_FIELD *fetch_field         (MYSQL_RES *);
+    MYSQL_FIELD *fetch_field        (MYSQL_RES *);
 
-    MYSQL_FIELD *fetch_field_direct  (MYSQL_RES *, unsigned int);
+    MYSQL_FIELD *fetch_field_direct (MYSQL_RES *, unsigned int);
 
-    unsigned long *fetch_lengths     (MYSQL_RES *);
+    unsigned long *fetch_lengths    (MYSQL_RES *);
 
-    MYSQL_ROW    fetch_row           (MYSQL_RES *);
+    MYSQL_ROW    fetch_row          (MYSQL_RES *);
 
-    unsigned int field_count         (MYSQL * mysql);
+    unsigned int field_count        (MYSQL * mysql);
 
-    void         free_result         (MYSQL_RES *);
+    void         free_result        (MYSQL_RES *);
 
-    unsigned long get_client_version  ();
+    unsigned long get_client_version();
 
-    const char * get_server_info     (MYSQL * mysql);
+    const char * get_server_info    (MYSQL * mysql);
 
-    unsigned long get_server_version (MYSQL * mysql);
+    unsigned long get_server_version(MYSQL * mysql);
 
-    MYSQL *      init                (MYSQL * mysql);
+    MYSQL *      init               (MYSQL * mysql);
 
-    int          library_init        (int, char **, char **);
+    int          library_init       (int, char **, char **);
 
-    void         library_end         ();
+    void         library_end        ();
 
-    my_bool      more_results        (MYSQL * mysql);
+    my_bool      more_results       (MYSQL * mysql);
 
-    int          next_result         (MYSQL * mysql);
+    int          next_result        (MYSQL * mysql);
 
-    unsigned int num_fields          (MYSQL_RES *);
+    unsigned int num_fields         (MYSQL_RES *);
 
     my_ulonglong num_rows            (MYSQL_RES *);
 

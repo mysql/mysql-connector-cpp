@@ -10,7 +10,7 @@
  */
 
 
-#include "../driver/mysql_private_iface.h"
+#include "../driver/nativeapi/mysql_private_iface.h"
 
 #include "PreparedStatementTest.h"
 

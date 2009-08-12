@@ -23,11 +23,12 @@ namespace mysql
 {
 class MySQL_Connection;
 class MySQL_DebugLogger;
-class MySQL_ResultsetData;
+
 
 namespace NativeAPI
 {
-class IMySQLCAPI;
+class Resultset_Proxy;
+class Connection_Proxy;
 }
 
 class MySQL_Statement : public sql::Statement
@@ -35,7 +36,7 @@ class MySQL_Statement : public sql::Statement
 protected:
 	sql::SQLWarning * warnings;
 	MySQL_Connection * connection;
-    boost::shared_ptr<NativeAPI::IMySQLCAPI> capi;
+    boost::shared_ptr<NativeAPI::Connection_Proxy> proxy;
 
 	void do_query(const char *q, size_t length);
 	bool isClosed;
@@ -46,11 +47,11 @@ protected:
 
 	sql::ResultSet::enum_type resultset_type;
 
-	virtual boost::shared_ptr< MySQL_ResultsetData > get_resultset();
+	virtual boost::shared_ptr< NativeAPI::Resultset_Proxy > get_resultset();
 	virtual void checkClosed();
 
 public:
-    MySQL_Statement(MySQL_Connection * conn, boost::shared_ptr<NativeAPI::IMySQLCAPI> & _capi,
+    MySQL_Statement(MySQL_Connection * conn, boost::shared_ptr<NativeAPI::Connection_Proxy> & _proxy,
         sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & l);
 
 	~MySQL_Statement();

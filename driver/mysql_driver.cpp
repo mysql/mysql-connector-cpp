@@ -11,7 +11,6 @@
 
 #include "mysql_connection.h"
 
-#include "mysql_private_iface.h"
 #include <cppconn/exception.h>
 
 // Looks like this one should go after private_iface

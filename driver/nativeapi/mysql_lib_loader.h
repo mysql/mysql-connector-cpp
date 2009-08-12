@@ -12,16 +12,14 @@
 #ifndef _MYSQL_LIB_LOADER_H_
 #define _MYSQL_LIB_LOADER_H_
 
+#include "binding_config.h"
+
 #ifdef _WIN32
 #include <windows.h>
+#elif defined(HAVE_DLFCN_H)
+# include <dlfcn.h>
 #else
-// if HAVE_DLFCN_H is not defined - this header(mysql_lib_loader.h) won't be included
-// by cmake rule. So following check of HAVE_DLFCN_H might be redundant
-//# ifdef HAVE_DLFCN_H
-#  include <dlfcn.h>
-//# else
-//#  error This should never happen - if this header is included, one of macros above supposed to be defined.
-//# endif
+# error This should never happen - if this header is included, one of macros above supposed to be defined.
 #endif
 
 #include <boost/noncopyable.hpp>

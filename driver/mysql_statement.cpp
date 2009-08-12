@@ -25,8 +25,8 @@
 #include "mysql_statement.h"
 #include "mysql_resultset.h"
 #include "mysql_warning.h"
-#include "mysql_resultset_data.h"
-#include "mysql_client_api.h"
+#include "nativeapi/resultset_proxy.h"
+#include "nativeapi/connection_proxy.h"
 
 #include "mysql_debug.h"
 
@@ -36,9 +36,9 @@ namespace mysql
 {
 
 /* {{{ MySQL_Statement::MySQL_Statement() -I- */
-MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, boost::shared_ptr<NativeAPI::IMySQLCAPI> & _capi,
+MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, boost::shared_ptr<NativeAPI::Connection_Proxy> & _proxy,
 									sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & l)
-	: warnings(NULL), connection(conn), capi(_capi), isClosed(false), last_update_count(UL64(~0)), logger(l), resultset_type(rset_type)
+	: warnings(NULL), connection(conn), proxy(_proxy), isClosed(false), last_update_count(UL64(~0)), logger(l), resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_Statement::MySQL_Statement");
 	CPP_INFO_FMT("this=%p", this);
@@ -67,32 +67,37 @@ MySQL_Statement::do_query(const char *q, size_t length)
 	CPP_ENTER("MySQL_Statement::do_query");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	MYSQL * mysql = connection->getMySQLHandle();
-	if (capi->real_query(mysql, q, static_cast<unsigned long>(length)) && capi->mysql_errno(mysql)) {
-		CPP_ERR_FMT("Error during capi->real_query : %d:(%s) %s", capi->mysql_errno(mysql), capi->sqlstate(mysql), capi->error(mysql));
-		sql::mysql::util::throwSQLException(*capi.get(), mysql);
+
+    if (proxy->query( ::sql::SQLString(q, length) ) && proxy->errNo()) {
+		CPP_ERR_FMT("Error during proxy->query : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+		sql::mysql::util::throwSQLException(*proxy.get());
 	}
 }
 /* }}} */
 
 
 /* {{{ MySQL_Statement::get_resultset() -I- */
-boost::shared_ptr< MySQL_ResultsetData >
+boost::shared_ptr< NativeAPI::Resultset_Proxy >
 MySQL_Statement::get_resultset()
 {
 	CPP_ENTER("MySQL_Statement::get_resultset");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-	MYSQL * mysql = connection->getMySQLHandle();
-
-	MYSQL_RES * result = (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY)? capi->use_result(mysql):capi->store_result(mysql);
-	if (result == NULL) {
-		CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
-					capi->mysql_errno(mysql), capi->sqlstate(mysql), capi->error(mysql));
-		sql::mysql::util::throwSQLException(*capi.get(), mysql);
-	}
-	return boost::shared_ptr< MySQL_ResultsetData >( new MySQL_ResultsetData( result, capi, logger ) );
+    NativeAPI::Resultset_Proxy * result;
+    //TODO: again - probably no need to catch-n-throw here. O maybe no need to throw further
+    try
+    {
+         result= (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY)? & proxy->use_result(): & proxy->store_result();
+    }
+    catch (::sql::SQLException & e)
+    {
+        CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
+            proxy->errNo(), proxy->sqlstate(), proxy->error());
+        throw e;
+    }
+    
+	return boost::shared_ptr< NativeAPI::Resultset_Proxy >( result );
 }
 /* }}} */
 
@@ -118,8 +123,8 @@ MySQL_Statement::execute(const sql::SQLString& sql)
 	CPP_INFO_FMT("query=%s", sql.c_str());
 	checkClosed();
 	do_query(sql.c_str(), static_cast<int>(sql.length()));
-	bool ret = capi->field_count(connection->getMySQLHandle()) > 0;
-	last_update_count = ret? UL64(~0):capi->affected_rows(connection->getMySQLHandle());
+	bool ret = proxy->field_count() > 0;
+	last_update_count = ret? UL64(~0):proxy->affected_rows();
 	return ret;
 }
 /* }}} */
@@ -157,10 +162,10 @@ MySQL_Statement::executeUpdate(const sql::SQLString& sql)
 	CPP_INFO_FMT("query=%s", sql.c_str());
 	checkClosed();
 	do_query(sql.c_str(), static_cast<int>(sql.length()));
-	if (capi->field_count(connection->getMySQLHandle())) {
+	if (proxy->field_count()) {
 		throw sql::InvalidArgumentException("Statement returning result set");
 	}
-	return static_cast<int>(last_update_count = capi->affected_rows(connection->getMySQLHandle()));
+	return static_cast<int>(last_update_count = proxy->affected_rows());
 }
 /* }}} */
 
@@ -200,16 +205,17 @@ MySQL_Statement::getResultSet()
 
 	last_update_count = UL64(~0);
 
-	MYSQL * mysql = connection->getMySQLHandle();
-	MYSQL_RES * result = NULL;
+
+    boost::shared_ptr< NativeAPI::Resultset_Proxy > result;
+
 	sql::ResultSet::enum_type tmp_type;
 	switch (resultset_type) {
 		case sql::ResultSet::TYPE_FORWARD_ONLY:
-			result = capi->use_result(mysql);
+			result.reset(& proxy->use_result());
 			tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
 			break;
 		default:
-			result = capi->store_result(mysql);
+			result.reset(& proxy->store_result());
 			tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
 	}
 	if (!result) {
@@ -217,8 +223,7 @@ MySQL_Statement::getResultSet()
 		return NULL;
 	}
 
-	boost::shared_ptr< MySQL_ResultsetData > wrapper( new MySQL_ResultsetData( result, capi, logger ) );
-	sql::ResultSet * ret = new MySQL_ResultSet(wrapper, tmp_type, this, logger);
+    sql::ResultSet * ret = new MySQL_ResultSet(result, tmp_type, this, logger);
 
 	CPP_INFO_FMT("res=%p", ret);
 	return ret;
@@ -316,14 +321,13 @@ MySQL_Statement::getMoreResults()
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 	last_update_count = UL64(~0);
-	MYSQL * conn = connection->getMySQLHandle();
-	if (capi->more_results(conn)) {
-		int next_result = capi->next_result(conn);
+	if (proxy->more_results()) {
+		int next_result = proxy->next_result();
 		if (next_result > 0) {
-			CPP_ERR_FMT("Error during getMoreResults : %d:(%s) %s", capi->mysql_errno(conn), capi->sqlstate(conn), capi->error(conn));
-			sql::mysql::util::throwSQLException(*capi.get(), conn);
+			CPP_ERR_FMT("Error during getMoreResults : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+			sql::mysql::util::throwSQLException(*proxy.get());
 		} else if (next_result == 0) {
-			return capi->field_count(conn) != 0;
+			return proxy->field_count() != 0;
 		} else if (next_result == -1) {
 			throw sql::SQLException("Impossible! more_results() said true, next_result says no more results");
 		}

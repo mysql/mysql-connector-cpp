@@ -89,9 +89,9 @@ MySQL_Client_Static::debug(const char * debug)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::errno() */
+/* {{{ MySQL_Client_Loader::mysql_errno() */
 unsigned int
-MySQL_Client_Static::errno(MYSQL * mysql)
+MySQL_Client_Static::mysql_errno(MYSQL * mysql)
 {
 	return ::mysql_errno(mysql);
 }

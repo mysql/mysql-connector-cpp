@@ -169,25 +169,25 @@ public:
      virtual my_ulonglong  affected_rows      ( MYSQL *       )   _PURE;
 
      virtual my_bool       autocommit         ( MYSQL *
-                                                    , my_bool       )   _PURE;
+                                              , my_bool       )   _PURE;
 
      virtual void          close              ( MYSQL *mysql  )   _PURE;
 
      virtual my_bool       commit             ( MYSQL *mysql  )   _PURE;
 
      virtual void          data_seek          ( MYSQL_RES *
-                                                    , my_ulonglong  )   _PURE;
+                                              , my_ulonglong  )   _PURE;
 
      virtual void          debug              ( const char *  )   _PURE;
 
-     virtual unsigned int  mysql_errno        	  ( MYSQL *mysql  )   _PURE;
+     virtual unsigned int  mysql_errno        ( MYSQL *mysql  )   _PURE;
 
      virtual const char *  error              ( MYSQL *mysql  )   _PURE;
 
      virtual MYSQL_FIELD * fetch_field        ( MYSQL_RES *   )   _PURE;
 
      virtual MYSQL_FIELD * fetch_field_direct ( MYSQL_RES *
-                                                    , unsigned int  )   _PURE;
+                                              , unsigned int  )   _PURE;
 
      virtual unsigned long * fetch_lengths    ( MYSQL_RES *   )   _PURE;
 
@@ -206,8 +206,8 @@ public:
      virtual MYSQL *       init               ( MYSQL *mysql  )   _PURE;
 
      virtual int           library_init       ( int   argc
-                                                    , char **argv
-                                                    , char **groups )   _PURE;
+                                              , char **argv
+                                              , char **groups )   _PURE;
 
      virtual void          library_end        ()                  _PURE;
 
@@ -220,35 +220,35 @@ public:
      virtual my_ulonglong  num_rows           ( MYSQL_RES *   )   _PURE;
 
      virtual int           options            ( MYSQL *
-                                                    , enum mysql_option option
-                                                    , const void *arg ) _PURE;
+                                              , enum mysql_option option
+                                              , const void *arg ) _PURE;
 
      virtual int		   query              ( MYSQL *
-                                                    , const char *  )   _PURE;
+                                              , const char *  )   _PURE;
 
      virtual MYSQL *       real_connect       ( MYSQL *       mysql
-                                                    , const char *  host
-                                                    , const char *  user
-                                                    , const char *  passwd
-                                                    , const char *  db
-                                                    , unsigned int  port
-                                                    , const char *  unix_socket
-                                                    , unsigned long client_flag) _PURE;
+                                              , const char *  host
+                                              , const char *  user
+                                              , const char *  passwd
+                                              , const char *  db
+                                              , unsigned int  port
+                                              , const char *  unix_socket
+                                              , unsigned long client_flag) _PURE;
 
      virtual int           real_query         ( MYSQL *
-                                                    , const char *
-                                                    , unsigned long )   _PURE;
+                                              , const char *
+                                              , unsigned long )   _PURE;
 
      virtual my_bool       rollback           ( MYSQL *       )   _PURE;
 
      virtual const char *  sqlstate           ( MYSQL *       )   _PURE;
 
      virtual my_bool       ssl_set            ( MYSQL      * mysql
-                                                    , const char * key
-                                                    , const char * cert
-                                                    , const char * ca
-                                                    , const char * capath
-                                                    , const char * cipher ) _PURE;
+                                              , const char * key
+                                              , const char * cert
+                                              , const char * ca
+                                              , const char * capath
+                                              , const char * cipher ) _PURE;
 
      virtual MYSQL_RES *   store_result       ( MYSQL *       )   _PURE;
 
@@ -258,19 +258,19 @@ public:
      virtual my_ulonglong  stmt_affected_rows ( MYSQL_STMT *  )   _PURE;
 
      virtual my_bool       stmt_attr_set      ( MYSQL_STMT *stmt
-                                                    , enum enum_stmt_attr_type option
-                                                    , const void *arg ) _PURE;
+                                              , enum enum_stmt_attr_type option
+                                              , const void *arg ) _PURE;
 
      virtual my_bool       stmt_bind_param    ( MYSQL_STMT *
-                                                    , MYSQL_BIND *  )   _PURE;
+                                              , MYSQL_BIND *  )   _PURE;
 
      virtual my_bool       stmt_bind_result   ( MYSQL_STMT *
-                                                    , MYSQL_BIND *  )   _PURE;
+                                              , MYSQL_BIND *  )   _PURE;
 
      virtual my_bool       stmt_close         ( MYSQL_STMT *  )   _PURE;
 
      virtual void          stmt_data_seek     ( MYSQL_STMT *
-                                                    , my_ulonglong  )   _PURE;
+                                              , my_ulonglong  )   _PURE;
 
      virtual unsigned int  stmt_errno         ( MYSQL_STMT *  )   _PURE;
 
@@ -289,22 +289,22 @@ public:
      virtual unsigned long stmt_param_count   ( MYSQL_STMT *  )   _PURE;
 
      virtual int           stmt_prepare       ( MYSQL_STMT *
-                                                    , const char *
-                                                    , unsigned long )   _PURE;
+                                              , const char *
+                                              , unsigned long )   _PURE;
 
      virtual MYSQL_RES *   stmt_result_metadata( MYSQL_STMT * )   _PURE;
 
      virtual my_bool       stmt_send_long_data( MYSQL_STMT *  stmt 
-                                                    , unsigned int  par_number
-                                                    , const char *  data
-                                                    , unsigned long len) _PURE;
+                                              , unsigned int  par_number
+                                              , const char *  data
+                                              , unsigned long len) _PURE;
 
      virtual const char *  stmt_sqlstate      ( MYSQL_STMT *  )   _PURE;
 
      virtual int           stmt_store_result  ( MYSQL_STMT *  )   _PURE;
 };
 
-boost::shared_ptr<IMySQLCAPI> getCApiHandle( sql::SQLString & name );
+boost::shared_ptr<IMySQLCAPI> getCApiHandle( const sql::SQLString & name );
 
 }
 }

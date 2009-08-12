@@ -15,23 +15,29 @@
 #include <boost/weak_ptr.hpp>
 
 #include <cppconn/resultset_metadata.h>
-#include "mysql_private_iface.h"
+
+struct st_mysql_field;
 
 namespace sql
 {
 namespace mysql
 {
+namespace
+{
+class Resultset_Proxy;
+}
+
 class MySQL_DebugLogger;
-class MySQL_ResultsetData;
+
 
 class MySQL_ResultSetMetaData : public sql::ResultSetMetaData
 {
-	boost::weak_ptr< MySQL_ResultsetData > result;
+    boost::weak_ptr< NativeAPI::Resultset_Proxy > result;
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 	unsigned int num_fields;
 
 public:
-	MySQL_ResultSetMetaData(boost::shared_ptr< MySQL_ResultsetData > res, boost::shared_ptr< MySQL_DebugLogger > & l);
+	MySQL_ResultSetMetaData(boost::shared_ptr< NativeAPI::Resultset_Proxy > res, boost::shared_ptr< MySQL_DebugLogger > & l);
 	virtual ~MySQL_ResultSetMetaData();
 
 	SQLString getCatalogName(unsigned int columnIndex);
@@ -81,7 +87,7 @@ protected:
 
 	void checkColumnIndex(unsigned int columnIndex) const;
 
-	MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const;
+    ::st_mysql_field * getFieldMeta(unsigned int columnIndex) const;
 
 private:
 

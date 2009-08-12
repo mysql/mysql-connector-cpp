@@ -9,8 +9,12 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
+#include "binding_config.h"
+#ifndef MYSQLCLIENT_STATIC_BINDING
+
 #include <string>
 #include <stdexcept>
+
 
 // Needed to make SetDllDirectory available
 #define _WIN32_WINNT	0x0502
@@ -116,6 +120,8 @@ LibraryLoader::GetProcAddr(const std::string & name)
 } /* namespace util */
 } /* namespace mysql */
 } /* namespace sql */
+
+#endif
 
 /*
  * Local variables:

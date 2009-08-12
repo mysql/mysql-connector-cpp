@@ -41,20 +41,24 @@ IF(MYSQLCPPCONN_TRACE_ENABLE)
 ENDIF(MYSQLCPPCONN_TRACE_ENABLE)
 
 SET(MYSQLCLIENT_STATIC_BINDING 0 CACHE BOOL "enable static binding")
-IF(MYSQLCLIENT_STATIC_BINDING)
-  ADD_DEFINITIONS(-DMYSQLCLIENT_STATIC_BINDING)
-ELSE(MYSQLCLIENT_STATIC_BINDING)
+
+IF(NOT MYSQLCLIENT_STATIC_BINDING)
 	IF(NOT WIN32)
 		CHECK_INCLUDE_FILES(dlfcn.h HAVE_DLFCN_H)
 		# We are not on windows and don't have dlfcn.h - so we need static binding
-		IF(HAVE_DLFCN_H)
-			ADD_DEFINITIONS(-DHAVE_DLFCN_H)
-		ELSE(HAVE_DLFCN_H)
-			ADD_DEFINITIONS(-DMYSQLCLIENT_STATIC_BINDING)
-		ENDIF(HAVE_DLFCN_H)
+		IF(NOT HAVE_DLFCN_H)
+			SET(MYSQLCLIENT_STATIC_BINDING 1)
+		ENDIF(NOT HAVE_DLFCN_H)
 	ENDIF(NOT WIN32)
+ENDIF(NOT MYSQLCLIENT_STATIC_BINDING)
+
+IF(MYSQLCLIENT_STATIC_BINDING)
+  MESSAGE("-- Using static libmysql binding")
+ELSE(MYSQLCLIENT_STATIC_BINDING)
+  MESSAGE("-- Using dynamic libmysql binding")
 ENDIF(MYSQLCLIENT_STATIC_BINDING)
 
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/nativeapi/binding_config.h.cm ${CMAKE_CURRENT_BINARY_DIR}/nativeapi/binding_config.h)
 
 SET(MYSQLCPPCONN_SOURCES
 	mysql_art_resultset.cpp
@@ -73,22 +77,13 @@ SET(MYSQLCPPCONN_SOURCES
 	mysql_statement.cpp
 	mysql_util.cpp
 	mysql_warning.cpp
-  mysql_client_api.cpp
-  mysql_resultset_data.cpp)
+  nativeapi/mysql_connection_proxy.cpp
+  nativeapi/mysql_statement_proxy.cpp
+  nativeapi/mysql_client_api.cpp
+  nativeapi/mysql_resultset_proxy.cpp
+	nativeapi/mysql_lib_loader.cpp
+  nativeapi/mysql_client.cpp)
 
-IF(MYSQLCLIENT_STATIC_BINDING)
-	SET(MYSQLCPPCONN_SOURCES
-		${MYSQLCPPCONN_SOURCES}
-		mysql_client_static.cpp
-	)
-ELSE(MYSQLCLIENT_STATIC_BINDING)
-	SET(MYSQLCPPCONN_SOURCES
-		${MYSQLCPPCONN_SOURCES}
-		mysql_lib_loader.cpp
-		mysql_client_loader.cpp
-	)
-
-ENDIF(MYSQLCLIENT_STATIC_BINDING)
 
 IF(WIN32)
 	# adding headers to sources, so they will be included to VS projects
@@ -111,22 +106,33 @@ IF(WIN32)
 		mysql_statement.h
 		mysql_util.h
 		mysql_warning.h
-		mysql_client_api.h
-    mysql_resultset_data.h)
+    nativeapi/mysql_connection_proxy.h
+    nativeapi/connection_proxy.h
+    nativeapi/mysql_statement_proxy.h
+    nativeapi/statement_proxy.h
+		nativeapi/mysql_client_api.h
+    nativeapi/mysql_resultset_proxy.h
+    nativeapi/resultset_proxy.h
+    )
 
 	IF(MYSQLCLIENT_STATIC_BINDING)
-	        SET(MYSQLCPPCONN_SOURCES
-                ${MYSQLCPPCONN_SOURCES}
-                mysql_client_static.h
-        	)
+	  SET(MYSQLCPPCONN_SOURCES
+      ${MYSQLCPPCONN_SOURCES}
+      nativeapi/mysql_client_static.inc
+      nativeapi/mysql_client_static.h
+    )
 	ELSE(MYSQLCLIENT_STATIC_BINDING)
-        	SET(MYSQLCPPCONN_SOURCES
-                	${MYSQLCPPCONN_SOURCES}
-			mysql_lib_loader.h
-	                mysql_client_loader.h
-        	)
+    SET(MYSQLCPPCONN_SOURCES
+      ${MYSQLCPPCONN_SOURCES}
+			nativeapi/mysql_lib_loader.h
+      nativeapi/mysql_client_loader.inc
+      nativeapi/mysql_client_loader.h
+    )
 
 	ENDIF(MYSQLCLIENT_STATIC_BINDING)
+
+  # Used to create source filter in projects in VS
+  SOURCE_GROUP(NativeApi nativeapi/.+)
 ENDIF(WIN32)
 
 

@@ -9,12 +9,14 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
-#ifndef _MYSQL_RESULTSET_DATA_H_
-#define _MYSQL_RESULTSET_DATA_H_
+#ifndef _MYSQL_RESULTSET_PROXY_H_
+#define _MYSQL_RESULTSET_PROXY_H_
 
 #include <boost/shared_ptr.hpp>
-#include <boost/noncopyable.hpp>
-#include "mysql_private_iface.h"
+
+#include "resultset_proxy.h"
+
+struct st_mysql_res;
 
 namespace sql
 {
@@ -25,49 +27,49 @@ class MySQL_DebugLogger;
 
 namespace NativeAPI
 {
-    class IMySQLCAPI;
-}
+class IMySQLCAPI;
 
 
-class MySQL_ResultsetData : public boost::noncopyable
+class MySQL_Resultset_Proxy : public Resultset_Proxy
 {
 public:
-    MySQL_ResultsetData( MYSQL_RES *
-                        , boost::shared_ptr<NativeAPI::IMySQLCAPI> &
-                        , boost::shared_ptr< MySQL_DebugLogger > & l);
+                    MySQL_Resultset_Proxy( ::st_mysql_res *
+                                        , boost::shared_ptr<NativeAPI::IMySQLCAPI> &
+                        /*, boost::shared_ptr< MySQL_DebugLogger > & l*/);
 
-	~MySQL_ResultsetData();
+	                ~MySQL_Resultset_Proxy();
 
-    void            data_seek           ( my_ulonglong  );
+    void            data_seek           ( uint64_t  );
 
-    MYSQL_FIELD *   fetch_field         ();
+    ::st_mysql_field * fetch_field         ();
 
-    MYSQL_FIELD *   fetch_field_direct  ( unsigned int  );
+    ::st_mysql_field * fetch_field_direct  ( unsigned int  );
 
     unsigned long * fetch_lengths       ();
 
-    MYSQL_ROW       fetch_row           ();
+    char**          fetch_row           ();
 
     unsigned int    num_fields          ();
 
-    my_ulonglong    num_rows            ();
+    uint64_t        num_rows            ();
 
     //boost::shared_ptr<IMySQLCAPI> getApiHandle();
 
 private:
 
-    MySQL_ResultsetData(){}
+    MySQL_Resultset_Proxy(){}
     //Also need to decide should it be copyable
 
-	boost::shared_ptr< MySQL_DebugLogger > logger;
+	boost::shared_ptr< MySQL_DebugLogger >      logger;
 
-    boost::shared_ptr< NativeAPI::IMySQLCAPI > capi;
+    boost::shared_ptr< NativeAPI::IMySQLCAPI >  capi;
 
-	MYSQL_RES * rs;
+    ::st_mysql_res * rs;
 };
 
-} /* namespace mysql */
-} /* namespace sql */
+} /* namespace NativeAPI */
+} /* namespace mysql     */
+} /* namespace sql       */
 
 #endif // _MYSQL_RESULTSET_DATA_H_
 
