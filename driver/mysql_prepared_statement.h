@@ -25,7 +25,7 @@ namespace mysql
 class MySQL_DebugLogger;
 class MySQL_ParamBind;
 class MySQL_ParameterMetaData;
-class MySQL_Prepared_ResultSetMetaData;
+class MySQL_PreparedResultSetMetaData;
 class MySQL_ResultBind;
 
 namespace NativeAPI
@@ -38,7 +38,7 @@ class MySQL_Prepared_Statement : public sql::PreparedStatement
 {
 protected:
 	sql::Connection * connection;
-    boost::shared_ptr<NativeAPI::Statement_Proxy> proxy;
+	boost::shared_ptr< NativeAPI::Statement_Proxy > proxy;
 	boost::scoped_ptr< MySQL_ParamBind > param_bind;
 	unsigned int param_count;
 
@@ -51,7 +51,7 @@ protected:
 
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 
-	boost::scoped_ptr< MySQL_Prepared_ResultSetMetaData > res_meta;
+	boost::scoped_ptr< MySQL_PreparedResultSetMetaData > res_meta;
 	boost::scoped_ptr< MySQL_ParameterMetaData > param_meta;
 
 	sql::ResultSet::enum_type resultset_type;
@@ -65,8 +65,8 @@ protected:
 
 public:
 
-    MySQL_Prepared_Statement(boost::shared_ptr<NativeAPI::Statement_Proxy> & s,
-                            sql::Connection * conn, sql::ResultSet::enum_type rset_type,
+	MySQL_Prepared_Statement(boost::shared_ptr<NativeAPI::Statement_Proxy> & s,
+							sql::Connection * conn, sql::ResultSet::enum_type rset_type,
 							boost::shared_ptr< MySQL_DebugLogger > & log);
 	virtual ~MySQL_Prepared_Statement();
 

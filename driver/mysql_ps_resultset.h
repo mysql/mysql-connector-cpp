@@ -25,7 +25,7 @@ namespace mysql
 {
 class MySQL_Prepared_Statement;
 class MySQL_DebugLogger;
-class MySQL_Prepared_ResultSetMetaData;
+class MySQL_PreparedResultSetMetaData;
 class MySQL_ResultBind;
 
 namespace NativeAPI
@@ -38,7 +38,7 @@ class MySQL_Prepared_ResultSet : public sql::ResultSet
 private:
 	MYSQL_ROW row;
 
-    boost::shared_ptr< NativeAPI::Statement_Proxy > proxy;
+	boost::shared_ptr< NativeAPI::Statement_Proxy > proxy;
 
 	mutable int last_queried_column;  // this is updated by calls to getInt(int), getString(int), etc...
 
@@ -57,7 +57,7 @@ private:
 
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 
-	boost::scoped_ptr< MySQL_Prepared_ResultSetMetaData > rs_meta;
+	boost::scoped_ptr< MySQL_PreparedResultSetMetaData > rs_meta;
 	boost::scoped_ptr< MySQL_ResultBind > result_bind;
 
 	sql::ResultSet::enum_type resultset_type;
@@ -75,8 +75,8 @@ protected:
 
 public:
 	MySQL_Prepared_ResultSet(boost::shared_ptr< NativeAPI::Statement_Proxy > & s,
-        MySQL_ResultBind * r_bind, sql::ResultSet::enum_type rset_type,
-        MySQL_Prepared_Statement * par, boost::shared_ptr< MySQL_DebugLogger > &l);
+		MySQL_ResultBind * r_bind, sql::ResultSet::enum_type rset_type,
+		MySQL_Prepared_Statement * par, boost::shared_ptr< MySQL_DebugLogger > &l);
 
 	virtual ~MySQL_Prepared_ResultSet();
 

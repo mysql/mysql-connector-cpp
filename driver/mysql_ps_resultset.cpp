@@ -66,7 +66,7 @@ static inline char * my_f_to_a(char * buf, size_t buf_size, double a)
 
 /* {{{ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet() -I- */
 MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
-            boost::shared_ptr< NativeAPI::Statement_Proxy > & s,
+			boost::shared_ptr< NativeAPI::Statement_Proxy > & s,
 			MySQL_ResultBind * r_bind,
 			sql::ResultSet::enum_type rset_type,
 			MySQL_Prepared_Statement * par,
@@ -79,7 +79,7 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
 
 	result_bind->bindResult();
 
-    boost::scoped_ptr<NativeAPI::Resultset_Proxy> result_meta( proxy->result_metadata() );
+	boost::scoped_ptr<NativeAPI::Resultset_Proxy> result_meta( proxy->result_metadata() );
 	num_fields = proxy->field_count();
 	num_rows = proxy->num_rows();
 
@@ -89,7 +89,7 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
 		field_name_to_index_map[sql::SQLString(upstring.get())] = i;
 	}
 
-	rs_meta.reset(new MySQL_Prepared_ResultSetMetaData(proxy, logger));
+	rs_meta.reset(new MySQL_PreparedResultSetMetaData(proxy, logger));
 }
 /* }}} */
 

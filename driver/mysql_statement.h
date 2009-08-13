@@ -36,7 +36,7 @@ class MySQL_Statement : public sql::Statement
 protected:
 	sql::SQLWarning * warnings;
 	MySQL_Connection * connection;
-    boost::shared_ptr<NativeAPI::Connection_Proxy> proxy;
+	boost::shared_ptr< NativeAPI::Connection_Proxy > proxy;
 
 	void do_query(const char *q, size_t length);
 	bool isClosed;
@@ -51,8 +51,8 @@ protected:
 	virtual void checkClosed();
 
 public:
-    MySQL_Statement(MySQL_Connection * conn, boost::shared_ptr<NativeAPI::Connection_Proxy> & _proxy,
-        sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & l);
+	MySQL_Statement(MySQL_Connection * conn, boost::shared_ptr<NativeAPI::Connection_Proxy> & _proxy,
+					sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & l);
 
 	~MySQL_Statement();
 

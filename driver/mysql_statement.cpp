@@ -68,7 +68,7 @@ MySQL_Statement::do_query(const char *q, size_t length)
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-    if (proxy->query( ::sql::SQLString(q, length) ) && proxy->errNo()) {
+	if (proxy->query( ::sql::SQLString(q, length) ) && proxy->errNo()) {
 		CPP_ERR_FMT("Error during proxy->query : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 		sql::mysql::util::throwSQLException(*proxy.get());
 	}
@@ -84,19 +84,19 @@ MySQL_Statement::get_resultset()
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-    NativeAPI::Resultset_Proxy * result;
-    //TODO: again - probably no need to catch-n-throw here. O maybe no need to throw further
-    try
-    {
-         result= (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY)? & proxy->use_result(): & proxy->store_result();
-    }
-    catch (::sql::SQLException & e)
-    {
-        CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
-            proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
-        throw e;
-    }
-    
+	NativeAPI::Resultset_Proxy * result;
+	//TODO: again - probably no need to catch-n-throw here. O maybe no need to throw further
+	try
+	{
+		 result= (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY)? & proxy->use_result(): & proxy->store_result();
+	}
+	catch (::sql::SQLException & e)
+	{
+		CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
+			proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
+		throw e;
+	}
+	
 	return boost::shared_ptr< NativeAPI::Resultset_Proxy >( result );
 }
 /* }}} */
@@ -206,30 +206,30 @@ MySQL_Statement::getResultSet()
 	last_update_count = UL64(~0);
 
 
-    boost::shared_ptr< NativeAPI::Resultset_Proxy > result;
+	boost::shared_ptr< NativeAPI::Resultset_Proxy > result;
 
 	sql::ResultSet::enum_type tmp_type;
 
-    try {
-	    switch (resultset_type) {
-		    case sql::ResultSet::TYPE_FORWARD_ONLY:
-			    result.reset(& proxy->use_result());
-			    tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
-			    break;
-		    default:
-			    result.reset(& proxy->store_result());
-			    tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
-	    }
-    } catch (::sql::SQLException & /*e*/ ) {
-        return NULL;
-    }
+	try {
+		switch (resultset_type) {
+			case sql::ResultSet::TYPE_FORWARD_ONLY:
+				result.reset(& proxy->use_result());
+				tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
+				break;
+			default:
+				result.reset(& proxy->store_result());
+				tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
+		}
+	} catch (::sql::SQLException & /*e*/ ) {
+		return NULL;
+	}
 
 	if (!result) {
 		/* if there was an update then this method should return NULL and not throw */
 		return NULL;
 	}
 
-    sql::ResultSet * ret = new MySQL_ResultSet(result, tmp_type, this, logger);
+	sql::ResultSet * ret = new MySQL_ResultSet(result, tmp_type, this, logger);
 
 	CPP_INFO_FMT("res=%p", ret);
 	return ret;

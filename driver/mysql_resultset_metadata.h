@@ -32,7 +32,7 @@ class MySQL_DebugLogger;
 
 class MySQL_ResultSetMetaData : public sql::ResultSetMetaData
 {
-    boost::weak_ptr< NativeAPI::Resultset_Proxy > result;
+	boost::weak_ptr< NativeAPI::Resultset_Proxy > result;
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 	unsigned int num_fields;
 
@@ -48,7 +48,7 @@ public:
 
 	SQLString getColumnLabel(unsigned int columnIndex);
 
-  SQLString getColumnName(unsigned int columnIndex);
+	SQLString getColumnName(unsigned int columnIndex);
 
 	int getColumnType(unsigned int columnIndex);
 
@@ -87,7 +87,7 @@ protected:
 
 	void checkColumnIndex(unsigned int columnIndex) const;
 
-    ::st_mysql_field * getFieldMeta(unsigned int columnIndex) const;
+	::st_mysql_field * getFieldMeta(unsigned int columnIndex) const;
 
 private:
 

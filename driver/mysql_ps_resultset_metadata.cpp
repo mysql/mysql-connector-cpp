@@ -33,29 +33,29 @@ namespace mysql
 {
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData -I- */
-MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData(boost::shared_ptr< NativeAPI::Statement_Proxy > & _proxy,
+/* {{{ MySQL_PreparedResultSetMetaData::MySQL_PreparedResultSetMetaData -I- */
+MySQL_PreparedResultSetMetaData::MySQL_PreparedResultSetMetaData(boost::shared_ptr< NativeAPI::Statement_Proxy > & _proxy,
 																	boost::shared_ptr< MySQL_DebugLogger> & l)
 	: proxy(_proxy), logger(l), result_meta( _proxy->result_metadata()),
 		num_fields(_proxy->field_count())
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::MySQL_PreparedResultSetMetaData");
 }
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::~MySQL_Prepared_ResultSetMetaData -I- */
-MySQL_Prepared_ResultSetMetaData::~MySQL_Prepared_ResultSetMetaData()
+/* {{{ MySQL_PreparedResultSetMetaData::~MySQL_PreparedResultSetMetaData -I- */
+MySQL_PreparedResultSetMetaData::~MySQL_PreparedResultSetMetaData()
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::~MySQL_Prepared_ResultSetMetaData");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::~MySQL_PreparedResultSetMetaData");
 	CPP_INFO_FMT("this=%p", this);
 }
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::checkColumnIndex -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::checkColumnIndex -I- */
 void
-MySQL_Prepared_ResultSetMetaData::checkColumnIndex(unsigned int columnIndex) const
+MySQL_PreparedResultSetMetaData::checkColumnIndex(unsigned int columnIndex) const
 {
 	if (columnIndex == 0 || columnIndex > num_fields) {
 		throw sql::InvalidArgumentException("Invalid value for columnIndex");
@@ -64,11 +64,11 @@ MySQL_Prepared_ResultSetMetaData::checkColumnIndex(unsigned int columnIndex) con
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::getCatalogName -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::getCatalogName -I- */
 SQLString
-MySQL_Prepared_ResultSetMetaData::getCatalogName(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::getCatalogName(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getCatalogName");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::getCatalogName");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	return getFieldMeta(columnIndex)->catalog;
@@ -76,22 +76,22 @@ MySQL_Prepared_ResultSetMetaData::getCatalogName(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::getColumnCount -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::getColumnCount -I- */
 unsigned int
-MySQL_Prepared_ResultSetMetaData::getColumnCount()
+MySQL_PreparedResultSetMetaData::getColumnCount()
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getColumnCount");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::getColumnCount");
 	CPP_INFO_FMT("this=%p", this);
 	return num_fields;
 }
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::getColumnDisplaySize -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::getColumnDisplaySize -I- */
 unsigned int
-MySQL_Prepared_ResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getColumnDisplaySize");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::getColumnDisplaySize");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	int ret = getFieldMeta(columnIndex)->length;
@@ -101,11 +101,11 @@ MySQL_Prepared_ResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::getColumnLabel -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::getColumnLabel -I- */
 SQLString
-MySQL_Prepared_ResultSetMetaData::getColumnLabel(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::getColumnLabel(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getColumnLabel");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::getColumnLabel");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	return getFieldMeta(columnIndex)->name;
@@ -113,11 +113,11 @@ MySQL_Prepared_ResultSetMetaData::getColumnLabel(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::getColumnName -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::getColumnName -I- */
 SQLString
-MySQL_Prepared_ResultSetMetaData::getColumnName(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::getColumnName(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getColumnName");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::getColumnName");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	return getFieldMeta(columnIndex)->name;
@@ -125,11 +125,11 @@ MySQL_Prepared_ResultSetMetaData::getColumnName(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::getColumnType -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::getColumnType -I- */
 int
-MySQL_Prepared_ResultSetMetaData::getColumnType(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::getColumnType(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getColumnType");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::getColumnType");
 	CPP_INFO_FMT("this=%p", this);
 	CPP_INFO_FMT("column=%u", columnIndex);
 	checkColumnIndex(columnIndex);
@@ -144,11 +144,11 @@ MySQL_Prepared_ResultSetMetaData::getColumnType(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::getColumnTypeName -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::getColumnTypeName -I- */
 SQLString
-MySQL_Prepared_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getColumnTypeName");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::getColumnTypeName");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	return sql::mysql::util::mysql_type_to_string(
@@ -158,8 +158,8 @@ MySQL_Prepared_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::getFieldMeta -I- */
-MYSQL_FIELD * MySQL_Prepared_ResultSetMetaData::getFieldMeta(unsigned int columnIndex) const
+/* {{{ MySQL_PreparedResultSetMetaData::getFieldMeta -I- */
+MYSQL_FIELD * MySQL_PreparedResultSetMetaData::getFieldMeta(unsigned int columnIndex) const
 {
 	return result_meta->fetch_field_direct(columnIndex - 1);
 }
@@ -167,11 +167,11 @@ MYSQL_FIELD * MySQL_Prepared_ResultSetMetaData::getFieldMeta(unsigned int column
 
 
 // Scale - Number of digits right of the decimal point
-/* {{{ MySQL_Prepared_ResultSetMetaData::getPrecision -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::getPrecision -I- */
 unsigned int
-MySQL_Prepared_ResultSetMetaData::getPrecision(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::getPrecision(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getPrecision");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::getPrecision");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	unsigned int ret = getFieldMeta(columnIndex)->decimals;
@@ -182,11 +182,11 @@ MySQL_Prepared_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 
 
 // Precision - total number of digits
-/* {{{ MySQL_Prepared_ResultSetMetaData::getScale -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::getScale -I- */
 unsigned int
-MySQL_Prepared_ResultSetMetaData::getScale(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::getScale(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getScale");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::getScale");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	unsigned int precision = getPrecision(columnIndex);
@@ -201,11 +201,11 @@ MySQL_Prepared_ResultSetMetaData::getScale(unsigned int columnIndex)
 
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::getSchemaName -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::getSchemaName -I- */
 SQLString
-MySQL_Prepared_ResultSetMetaData::getSchemaName(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::getSchemaName(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getSchemaName");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::getSchemaName");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	const char * const db = getFieldMeta(columnIndex)->db;
@@ -214,11 +214,11 @@ MySQL_Prepared_ResultSetMetaData::getSchemaName(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::getTableName -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::getTableName -I- */
 SQLString
-MySQL_Prepared_ResultSetMetaData::getTableName(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::getTableName(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::getTableName");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::getTableName");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	return getFieldMeta(columnIndex)->org_table;
@@ -226,11 +226,11 @@ MySQL_Prepared_ResultSetMetaData::getTableName(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::isAutoIncrement -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::isAutoIncrement -I- */
 bool
-MySQL_Prepared_ResultSetMetaData::isAutoIncrement(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::isAutoIncrement(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isAutoIncrement");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::isAutoIncrement");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	return (getFieldMeta(columnIndex)->flags & AUTO_INCREMENT_FLAG ) != 0;
@@ -238,11 +238,11 @@ MySQL_Prepared_ResultSetMetaData::isAutoIncrement(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::isCaseSensitive -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::isCaseSensitive -I- */
 bool
-MySQL_Prepared_ResultSetMetaData::isCaseSensitive(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::isCaseSensitive(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isCaseSensitive");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::isCaseSensitive");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	const MYSQL_FIELD * const field = getFieldMeta(columnIndex);
@@ -260,11 +260,11 @@ MySQL_Prepared_ResultSetMetaData::isCaseSensitive(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::isCurrency -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::isCurrency -I- */
 bool
-MySQL_Prepared_ResultSetMetaData::isCurrency(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::isCurrency(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isCurrency");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::isCurrency");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	return false;
@@ -272,11 +272,11 @@ MySQL_Prepared_ResultSetMetaData::isCurrency(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::isDefinitelyWritable -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::isDefinitelyWritable -I- */
 bool
-MySQL_Prepared_ResultSetMetaData::isDefinitelyWritable(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::isDefinitelyWritable(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isDefinitelyWritable");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::isDefinitelyWritable");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	return isWritable(columnIndex);
@@ -284,11 +284,11 @@ MySQL_Prepared_ResultSetMetaData::isDefinitelyWritable(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::isNullable -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::isNullable -I- */
 int
-MySQL_Prepared_ResultSetMetaData::isNullable(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::isNullable(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isNullable");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::isNullable");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	return getFieldMeta(columnIndex)->flags & NOT_NULL_FLAG? columnNoNulls : columnNullable;
@@ -296,11 +296,11 @@ MySQL_Prepared_ResultSetMetaData::isNullable(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::isReadOnly -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::isReadOnly -I- */
 bool
-MySQL_Prepared_ResultSetMetaData::isReadOnly(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::isReadOnly(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isReadOnly");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::isReadOnly");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	/* Seems for Views, where the value is generated DB is empty everything else is set */
@@ -310,11 +310,11 @@ MySQL_Prepared_ResultSetMetaData::isReadOnly(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::isSearchable -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::isSearchable -I- */
 bool
-MySQL_Prepared_ResultSetMetaData::isSearchable(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::isSearchable(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isSearchable");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::isSearchable");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	return true;
@@ -322,11 +322,11 @@ MySQL_Prepared_ResultSetMetaData::isSearchable(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::isSigned -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::isSigned -I- */
 bool
-MySQL_Prepared_ResultSetMetaData::isSigned(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::isSigned(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isSigned");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::isSigned");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	if (getFieldMeta(columnIndex)->type == FIELD_TYPE_YEAR) {
@@ -337,11 +337,11 @@ MySQL_Prepared_ResultSetMetaData::isSigned(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::isWritable -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::isWritable -I- */
 bool
-MySQL_Prepared_ResultSetMetaData::isWritable(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::isWritable(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isWritable");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::isWritable");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	return !isReadOnly(columnIndex);
@@ -349,11 +349,11 @@ MySQL_Prepared_ResultSetMetaData::isWritable(unsigned int columnIndex)
 /* }}} */
 
 
-/* {{{ MySQL_Prepared_ResultSetMetaData::isZerofill -I- */
+/* {{{ MySQL_PreparedResultSetMetaData::isZerofill -I- */
 bool
-MySQL_Prepared_ResultSetMetaData::isZerofill(unsigned int columnIndex)
+MySQL_PreparedResultSetMetaData::isZerofill(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::isZerofill");
+	CPP_ENTER("MySQL_PreparedResultSetMetaData::isZerofill");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
 	return (getFieldMeta(columnIndex)->flags & ZEROFILL_FLAG) != 0;

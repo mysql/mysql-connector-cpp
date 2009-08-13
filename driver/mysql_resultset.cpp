@@ -35,7 +35,7 @@ namespace mysql
 
 /* {{{ MySQL_ResultSet::MySQL_ResultSet() -I- */
 MySQL_ResultSet::MySQL_ResultSet(
-                                 boost::shared_ptr< NativeAPI::Resultset_Proxy > res, sql::ResultSet::enum_type rset_type,
+								 boost::shared_ptr< NativeAPI::Resultset_Proxy > res, sql::ResultSet::enum_type rset_type,
 			MySQL_Statement * par, boost::shared_ptr< MySQL_DebugLogger > & l
 		)
 	: row(NULL), result(res), row_position(0), was_null(false), parent(par),

@@ -32,21 +32,21 @@ class Statement_Proxy;
 class MySQL_DebugLogger;
 
 
-class MySQL_Prepared_ResultSetMetaData : public sql::ResultSetMetaData
+class MySQL_PreparedResultSetMetaData : public sql::ResultSetMetaData
 {
-    boost::shared_ptr< NativeAPI::Statement_Proxy >  proxy;
+	boost::shared_ptr< NativeAPI::Statement_Proxy > proxy;
 
-	boost::shared_ptr< MySQL_DebugLogger >      logger;
+	boost::shared_ptr< MySQL_DebugLogger > logger;
 
-    boost::scoped_ptr< NativeAPI::Resultset_Proxy >   result_meta;
+	boost::scoped_ptr< NativeAPI::Resultset_Proxy > result_meta;
 
 	unsigned int num_fields;
 
 public:
-	MySQL_Prepared_ResultSetMetaData(boost::shared_ptr<NativeAPI::Statement_Proxy> & _proxy,
-        boost::shared_ptr< MySQL_DebugLogger> & l);
+	MySQL_PreparedResultSetMetaData(boost::shared_ptr<NativeAPI::Statement_Proxy> & _proxy,
+										boost::shared_ptr< MySQL_DebugLogger> & l);
 
-	virtual ~MySQL_Prepared_ResultSetMetaData();
+	virtual ~MySQL_PreparedResultSetMetaData();
 
 	SQLString getCatalogName(unsigned int columnIndex);
 
@@ -97,8 +97,8 @@ protected:
 
 private:
 	/* Prevent use of these */
-	MySQL_Prepared_ResultSetMetaData(const MySQL_Prepared_ResultSetMetaData &);
-	void operator=(MySQL_Prepared_ResultSetMetaData &);
+	MySQL_PreparedResultSetMetaData(const MySQL_PreparedResultSetMetaData &);
+	void operator=(MySQL_PreparedResultSetMetaData &);
 };
 
 

@@ -155,8 +155,8 @@ public:
 
 /* {{{ MySQL_Prepared_Statement::MySQL_Prepared_Statement() -I- */
 MySQL_Prepared_Statement::MySQL_Prepared_Statement(
-            boost::shared_ptr<NativeAPI::Statement_Proxy> & s, sql::Connection * conn,
-            sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & log
+			boost::shared_ptr<NativeAPI::Statement_Proxy> & s, sql::Connection * conn,
+			sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & log
 		)
 	:connection(conn), proxy(s), isClosed(false), logger(log), resultset_type(rset_type)
 {
@@ -165,7 +165,7 @@ MySQL_Prepared_Statement::MySQL_Prepared_Statement(
 	param_count = proxy->param_count();
 	param_bind.reset(new MySQL_ParamBind(param_count));
 
-	res_meta.reset(new MySQL_Prepared_ResultSetMetaData(proxy, logger));
+	res_meta.reset(new MySQL_PreparedResultSetMetaData(proxy, logger));
 	param_meta.reset(new MySQL_ParameterMetaData(proxy));
 }
 /* }}} */

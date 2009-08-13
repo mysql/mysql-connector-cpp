@@ -190,8 +190,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	sql::SQLString schema;
 	sql::SQLString defaultCharset("utf8");
 	sql::SQLString characterSetResults("utf8");
-    // "" means default mysqlclient library name
-    sql::SQLString clientlib("");
+	// "" means default mysqlclient library name
+	sql::SQLString clientlib("");
 
 	sql::SQLString sslKey, sslCert, sslCA, sslCAPath, sslCipher;
 	bool ssl_used = false, schema_used = false;
@@ -223,7 +223,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			}
 		} else if (!it->first.compare("port")) {
 			if ((p_ll = boost::get<long long>(&it->second))) {
-        port = static_cast<unsigned int>(*p_ll);
+			port = static_cast<unsigned int>(*p_ll);
 			} else {
 				throw sql::InvalidArgumentException("No long long value passed for port");
 			}
@@ -289,14 +289,14 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 				throw sql::InvalidArgumentException("No string value passed for sslCipher");
 			}
 			ssl_used = true;
-        } else if (it->first.compare("clientlib") == 0)
-        {
-            if ((p_s = boost::get< sql::SQLString >(&it->second))) {
-                    clientlib= *p_s;
-            } else {
-                throw sql::InvalidArgumentException("No string value passed for driver");
-            }
-            
+		} else if (it->first.compare("clientlib") == 0)
+		{
+			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
+					clientlib= *p_s;
+			} else {
+				throw sql::InvalidArgumentException("No string value passed for driver");
+			}
+			
 		} else if (!it->first.compare("defaultStatementResultType")) {
 			if (!(p_ll = boost::get<long long>(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for defaultStatementResultType");
@@ -404,11 +404,11 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 		}
 	}
 
-    try {
-        proxy.reset( NativeAPI::createConnectionProxy(clientlib));
-    } catch (std::runtime_error & e) {
-        throw sql::InvalidArgumentException(e.what());
-    }
+	try {
+		proxy.reset( NativeAPI::createConnectionProxy(clientlib));
+	} catch (std::runtime_error & e) {
+		throw sql::InvalidArgumentException(e.what());
+	}
 
 
 #ifndef _WIN32
@@ -737,19 +737,15 @@ MySQL_Connection::prepareStatement(const sql::SQLString& sql)
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
 	CPP_INFO_FMT("query=%s", sql.c_str());
 	checkClosed();
-    boost::shared_ptr<NativeAPI::Statement_Proxy> stmt;
+	boost::shared_ptr<NativeAPI::Statement_Proxy> stmt;
 
-    //TODO change - probably no need to catch and throw here. Logging can be done inside proxy
-    try
-    {
-         stmt.reset( & proxy->stmt_init() );
-    }
-    catch (::sql::SQLException& e)
-    {
-    	CPP_ERR_FMT("No statement : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
-        throw e;
-    }
-
+	//TODO change - probably no need to catch and throw here. Logging can be done inside proxy
+	try {
+		 stmt.reset(&proxy->stmt_init());
+	} catch (sql::SQLException& e) {
+		CPP_ERR_FMT("No statement : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
+		throw e;
+	}
 
 	if (stmt->prepare(sql)) {
 		CPP_ERR_FMT("Cannot prepare %d:(%s) %s", stmt->errNo(), stmt->sqlstate().c_str(), stmt->error().c_str());
@@ -1057,8 +1053,6 @@ MySQL_Connection::getSessionVariable(const sql::SQLString & varname)
 	sql::SQLString q("SHOW SESSION VARIABLES LIKE '");
 	q.append(varname).append("'");
 
-//	printf("[%p]%s|||\n", &q, q.c_str());
-//	std::cout << q << "]]\n";
 	boost::scoped_ptr< sql::ResultSet > rset(stmt->executeQuery(q));
 
 	if (rset->next()) {

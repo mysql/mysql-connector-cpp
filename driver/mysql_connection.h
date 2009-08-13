@@ -132,7 +132,7 @@ protected:
 
 	MySQL_ConnectionData * intern; /* pimpl */
 
-    boost::shared_ptr<NativeAPI::Connection_Proxy> proxy;
+	boost::shared_ptr<NativeAPI::Connection_Proxy> proxy;
 
 private:
 	/* Prevent use of these */

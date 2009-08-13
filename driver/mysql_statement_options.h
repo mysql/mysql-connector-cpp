@@ -20,27 +20,27 @@ namespace mysql
 
 enum MySQL_Statement_Options
 {
-    /*
-    When doing mysql_stmt_store_result calculate max_length attribute
-    of statement metadata. This is to be consistent with the old API, 
-    where this was done automatically.
-    In the new API we do that only by request because it slows down
-    mysql_stmt_store_result sufficiently.
-    */
-    STMT_ATTR_UPDATE_MAX_LENGTH,
-    /*
-    unsigned long with combination of cursor flags (read only, for update,
-    etc)
-    */
-    STMT_ATTR_CURSOR_TYPE,
-    /*
-    Amount of rows to retrieve from server per one fetch if using cursors.
-    Accepts unsigned long attribute in the range 1 - ulong_max
-    */
-    STMT_ATTR_PREFETCH_ROWS
+	/*
+	When doing mysql_stmt_store_result calculate max_length attribute
+	of statement metadata. This is to be consistent with the old API, 
+	where this was done automatically.
+	In the new API we do that only by request because it slows down
+	mysql_stmt_store_result sufficiently.
+	*/
+	STMT_ATTR_UPDATE_MAX_LENGTH,
+	/*
+	unsigned long with combination of cursor flags (read only, for update,
+	etc)
+	*/
+	STMT_ATTR_CURSOR_TYPE,
+	/*
+	Amount of rows to retrieve from server per one fetch if using cursors.
+	Accepts unsigned long attribute in the range 1 - ulong_max
+	*/
+	STMT_ATTR_PREFETCH_ROWS
 };
 
-}
-}
+} /* namespace mysql */
+} /* namespace sql */
 
 #endif
