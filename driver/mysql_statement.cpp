@@ -25,8 +25,8 @@
 #include "mysql_statement.h"
 #include "mysql_resultset.h"
 #include "mysql_warning.h"
-#include "nativeapi/resultset_proxy.h"
 #include "nativeapi/native_connection_wrapper.h"
+#include "nativeapi/native_resultset_wrapper.h"
 
 #include "mysql_debug.h"
 
@@ -77,14 +77,14 @@ MySQL_Statement::do_query(const char *q, size_t length)
 
 
 /* {{{ MySQL_Statement::get_resultset() -I- */
-boost::shared_ptr< NativeAPI::Resultset_Proxy >
+boost::shared_ptr< NativeAPI::NativeResultsetWrapper >
 MySQL_Statement::get_resultset()
 {
 	CPP_ENTER("MySQL_Statement::get_resultset");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-	NativeAPI::Resultset_Proxy * result;
+	NativeAPI::NativeResultsetWrapper * result;
 	//TODO: again - probably no need to catch-n-throw here. O maybe no need to throw further
 	try
 	{
@@ -97,7 +97,7 @@ MySQL_Statement::get_resultset()
 		throw e;
 	}
 	
-	return boost::shared_ptr< NativeAPI::Resultset_Proxy >( result );
+	return boost::shared_ptr< NativeAPI::NativeResultsetWrapper >( result );
 }
 /* }}} */
 
@@ -206,7 +206,7 @@ MySQL_Statement::getResultSet()
 	last_update_count = UL64(~0);
 
 
-	boost::shared_ptr< NativeAPI::Resultset_Proxy > result;
+	boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result;
 
 	sql::ResultSet::enum_type tmp_type;
 

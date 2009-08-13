@@ -24,7 +24,7 @@ namespace mysql
 {
 namespace
 {
-class Resultset_Proxy;
+class NativeResultsetWrapper;
 }
 
 class MySQL_DebugLogger;
@@ -32,12 +32,12 @@ class MySQL_DebugLogger;
 
 class MySQL_ResultSetMetaData : public sql::ResultSetMetaData
 {
-	boost::weak_ptr< NativeAPI::Resultset_Proxy > result;
+	boost::weak_ptr< NativeAPI::NativeResultsetWrapper > result;
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 	unsigned int num_fields;
 
 public:
-	MySQL_ResultSetMetaData(boost::shared_ptr< NativeAPI::Resultset_Proxy > res, boost::shared_ptr< MySQL_DebugLogger > & l);
+	MySQL_ResultSetMetaData(boost::shared_ptr< NativeAPI::NativeResultsetWrapper > res, boost::shared_ptr< MySQL_DebugLogger > & l);
 	virtual ~MySQL_ResultSetMetaData();
 
 	SQLString getCatalogName(unsigned int columnIndex);

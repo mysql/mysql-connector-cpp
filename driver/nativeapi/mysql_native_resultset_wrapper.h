@@ -9,12 +9,12 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
-#ifndef _MYSQL_RESULTSET_PROXY_H_
-#define _MYSQL_RESULTSET_PROXY_H_
+#ifndef _MYSQL_NativeResultsetWrapper_H_
+#define _MYSQL_NativeResultsetWrapper_H_
 
 #include <boost/shared_ptr.hpp>
 
-#include "resultset_proxy.h"
+#include "native_resultset_wrapper.h"
 
 struct st_mysql_res;
 
@@ -30,12 +30,12 @@ namespace NativeAPI
 class IMySQLCAPI;
 
 
-class MySQL_Resultset_Proxy : public Resultset_Proxy
+class MySQL_NativeResultsetWrapper : public NativeResultsetWrapper
 {
 public:
-	MySQL_Resultset_Proxy(::st_mysql_res *, boost::shared_ptr<NativeAPI::IMySQLCAPI> &/*, boost::shared_ptr< MySQL_DebugLogger > & l*/);
+	MySQL_NativeResultsetWrapper(::st_mysql_res *, boost::shared_ptr<NativeAPI::IMySQLCAPI> &/*, boost::shared_ptr< MySQL_DebugLogger > & l*/);
 
-	~MySQL_Resultset_Proxy();
+	~MySQL_NativeResultsetWrapper();
 
 	void data_seek(uint64_t);
 
@@ -55,7 +55,7 @@ public:
 
 private:
 
-	MySQL_Resultset_Proxy(){}
+	MySQL_NativeResultsetWrapper(){}
 	//Also need to decide should it be copyable
 
 	boost::shared_ptr< MySQL_DebugLogger > logger;

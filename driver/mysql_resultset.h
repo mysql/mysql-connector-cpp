@@ -28,19 +28,19 @@ class MySQL_ResultSetMetaData;
 
 namespace NativeAPI
 {
-	class Resultset_Proxy;
+	class NativeResultsetWrapper;
 }
 
 class MySQL_ResultSet : public sql::ResultSet
 {
 	MYSQL_ROW				row;
-	boost::shared_ptr< NativeAPI::Resultset_Proxy > result;
+	boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result;
 	unsigned int			num_fields;
 	uint64_t				num_rows;
 	uint64_t				row_position;
 	/* 0 = before first row, 1 - first row, 'num_rows + 1' - after last row */
 
-	typedef std::map< sql::SQLString, unsigned int> FieldNameIndexMap;
+	typedef std::map< sql::SQLString, unsigned int > FieldNameIndexMap;
 
 	FieldNameIndexMap	field_name_to_index_map;
 	mutable bool		was_null;
@@ -63,7 +63,7 @@ protected:
 	MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const;
 
 public:
-	MySQL_ResultSet(boost::shared_ptr< NativeAPI::Resultset_Proxy > res, sql::ResultSet::enum_type rset_type, MySQL_Statement * par,
+	MySQL_ResultSet(boost::shared_ptr< NativeAPI::NativeResultsetWrapper > res, sql::ResultSet::enum_type rset_type, MySQL_Statement * par,
 					boost::shared_ptr< MySQL_DebugLogger > & l);
 
 	virtual ~MySQL_ResultSet();

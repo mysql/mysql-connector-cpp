@@ -18,7 +18,7 @@
 #include <cppconn/exception.h>
 
 #include "nativeapi/native_connection_wrapper.h"
-#include "nativeapi/statement_proxy.h"
+#include "nativeapi/native_statement_wrapper.h"
 
 #include "mysql_connection_options.h"
 #include "mysql_util.h"
@@ -737,7 +737,7 @@ MySQL_Connection::prepareStatement(const sql::SQLString& sql)
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
 	CPP_INFO_FMT("query=%s", sql.c_str());
 	checkClosed();
-	boost::shared_ptr<NativeAPI::Statement_Proxy> stmt;
+	boost::shared_ptr< NativeAPI::NativeStatementWrapper > stmt;
 
 	//TODO change - probably no need to catch and throw here. Logging can be done inside proxy
 	try {

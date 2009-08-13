@@ -30,7 +30,7 @@ class MySQL_ResultBind;
 
 namespace NativeAPI
 {
-class Statement_Proxy;
+class NativeStatementWrapper;
 }
 
 class MySQL_Prepared_ResultSet : public sql::ResultSet
@@ -38,7 +38,7 @@ class MySQL_Prepared_ResultSet : public sql::ResultSet
 private:
 	MYSQL_ROW row;
 
-	boost::shared_ptr< NativeAPI::Statement_Proxy > proxy;
+	boost::shared_ptr< NativeAPI::NativeStatementWrapper > proxy;
 
 	mutable int last_queried_column;  // this is updated by calls to getInt(int), getString(int), etc...
 
@@ -74,7 +74,7 @@ protected:
 	uint64_t getUInt64_intern(const uint32_t columnIndex, bool cutTooBig) const;
 
 public:
-	MySQL_Prepared_ResultSet(boost::shared_ptr< NativeAPI::Statement_Proxy > & s,
+	MySQL_Prepared_ResultSet(boost::shared_ptr< NativeAPI::NativeStatementWrapper > & s,
 		MySQL_ResultBind * r_bind, sql::ResultSet::enum_type rset_type,
 		MySQL_Prepared_Statement * par, boost::shared_ptr< MySQL_DebugLogger > &l);
 

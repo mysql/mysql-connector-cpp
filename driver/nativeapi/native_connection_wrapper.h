@@ -9,8 +9,8 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
-#ifndef _CONNECTION_PROXY_H_
-#define _CONNECTION_PROXY_H_
+#ifndef _NATIVE_CONNECTION_WRAPPER_H_
+#define _NATIVE_CONNECTION_WRAPPER_H_
 
 #include <boost/noncopyable.hpp>
 #include <config.h>
@@ -27,8 +27,8 @@ namespace mysql
 
 namespace NativeAPI
 {
-class Resultset_Proxy;
-class Statement_Proxy;
+class NativeResultsetWrapper;
+class NativeStatementWrapper;
 
 class NativeConnectionWrapper : public boost::noncopyable
 {
@@ -84,11 +84,11 @@ public:
 						const ::sql::SQLString & capath,
 						const ::sql::SQLString & cipher) = 0;
 
-	virtual Resultset_Proxy * store_result() = 0;
+	virtual NativeResultsetWrapper * store_result() = 0;
 
-	virtual Resultset_Proxy * use_result() = 0;
+	virtual NativeResultsetWrapper * use_result() = 0;
 
-	virtual Statement_Proxy & stmt_init() = 0;
+	virtual NativeStatementWrapper & stmt_init() = 0;
 };
 
 NativeConnectionWrapper * createNativeConnectionWrapper(const SQLString & clientFileName);
@@ -96,7 +96,7 @@ NativeConnectionWrapper * createNativeConnectionWrapper(const SQLString & client
 } /* namespace NativeAPI */
 } /* namespace mysql */
 } /* namespace sql */
-#endif
+#endif /* _NATIVE_CONNECTION_WRAPPER_H_ */
 
 /*
  * Local variables:

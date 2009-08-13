@@ -12,7 +12,7 @@
 #include <stdlib.h>
 
 #include "mysql_parameter_metadata.h"
-#include "nativeapi/statement_proxy.h"
+#include "nativeapi/native_statement_wrapper.h"
 #include <cppconn/exception.h>
 
 namespace sql
@@ -22,7 +22,7 @@ namespace mysql
 
 
 /* {{{ MySQL_ParameterMetaData::MySQL_ParameterMetaData -I- */
-MySQL_ParameterMetaData::MySQL_ParameterMetaData(boost::shared_ptr<NativeAPI::Statement_Proxy> & stmt)
+MySQL_ParameterMetaData::MySQL_ParameterMetaData(boost::shared_ptr< NativeAPI::NativeStatementWrapper > & stmt)
 {
 	// 2nd parameter is to be changed to boost::shared_ptr in case it's kept in the object
 	param_count= stmt->param_count();

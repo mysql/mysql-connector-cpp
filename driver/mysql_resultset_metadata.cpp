@@ -24,7 +24,7 @@
 #include "mysql_resultset.h"
 #include "mysql_resultset_metadata.h"
 
-#include "nativeapi/resultset_proxy.h"
+#include "nativeapi/native_resultset_wrapper.h"
 
 #include "mysql_debug.h"
 
@@ -35,11 +35,11 @@ namespace mysql
 
 
 /* {{{ MySQL_ResultSetMetaData::MySQL_ResultSetMetaData -I- */
-MySQL_ResultSetMetaData::MySQL_ResultSetMetaData(boost::shared_ptr< NativeAPI::Resultset_Proxy > res, boost::shared_ptr< MySQL_DebugLogger > & l)
+MySQL_ResultSetMetaData::MySQL_ResultSetMetaData(boost::shared_ptr< NativeAPI::NativeResultsetWrapper > res, boost::shared_ptr< MySQL_DebugLogger > & l)
 	: result(res), logger(l)
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::MySQL_ResultSetMetaData");
-	boost::shared_ptr< NativeAPI::Resultset_Proxy > result_p = result.lock();
+	boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result_p = result.lock();
 	if (result_p) {
 		num_fields = result_p->num_fields();
 	}
@@ -71,7 +71,7 @@ void
 MySQL_ResultSetMetaData::checkValid() const
 {
 	CPP_ENTER("MySQL_ResultSetMetaData::checkValid");
-	boost::shared_ptr< NativeAPI::Resultset_Proxy > result_p = result.lock();
+	boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result_p = result.lock();
 	if (!result_p) {
 		throw sql::InvalidArgumentException("ResultSet is not valid anymore");
 	}
@@ -173,7 +173,7 @@ MySQL_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 MYSQL_FIELD *
 MySQL_ResultSetMetaData::getFieldMeta(unsigned int columnIndex) const
 {
-	boost::shared_ptr< NativeAPI::Resultset_Proxy > result_p = result.lock();
+	boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result_p = result.lock();
 	return result_p->fetch_field_direct(columnIndex - 1);
 }
 /* }}} */

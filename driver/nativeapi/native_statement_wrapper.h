@@ -9,8 +9,8 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
-#ifndef _STATEMENT_PROXY_H_
-#define _STATEMENT_PROXY_H_
+#ifndef _NATIVE_STATEMENT_WRAPPER_H_
+#define _NATIVE_STATEMENT_WRAPPER_H_
 
 #include <config.h>
 #include <boost/noncopyable.hpp>
@@ -29,17 +29,17 @@ namespace mysql
 {
 namespace NativeAPI
 {
-class Resultset_Proxy;
+class NativeResultsetWrapper;
 /*
  *
  *
  *
  */
-class Statement_Proxy : public boost::noncopyable
+class NativeStatementWrapper : public boost::noncopyable
 {
 public:
 
-	virtual ~Statement_Proxy(){}
+	virtual ~NativeStatementWrapper(){}
 
 	virtual uint64_t affected_rows() = 0;
 
@@ -71,7 +71,7 @@ public:
 
 	virtual int prepare(const ::sql::SQLString &) = 0;
 
-	virtual Resultset_Proxy * result_metadata () = 0;
+	virtual NativeResultsetWrapper * result_metadata () = 0;
 
 	virtual bool send_long_data(unsigned int par_number, const char * data, unsigned long len) = 0;
 
@@ -85,7 +85,7 @@ public:
 } /* namespace mysql */
 } /* namespace sql */
 
-#endif
+#endif /* _NATIVE_STATEMENT_WRAPPER_H_ */
 
 /*
  * Local variables:

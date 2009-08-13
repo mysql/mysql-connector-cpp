@@ -9,13 +9,13 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
-#ifndef _MYSQL_STATEMENT_PROXY_H_
-#define _MYSQL_STATEMENT_PROXY_H_
+#ifndef _MYSQL_NativeStatementWrapper_H_
+#define _MYSQL_NativeStatementWrapper_H_
 
 
 #include <boost/shared_ptr.hpp>
 
-#include "statement_proxy.h"
+#include "native_statement_wrapper.h"
 
 struct st_mysql_stmt;
 
@@ -33,26 +33,26 @@ class NativeConnectionWrapper;
  *
  *
  */
-class MySQL_Statement_Proxy : public Statement_Proxy
+class MySQL_NativeStatementWrapper : public NativeStatementWrapper
 {
 
 	boost::shared_ptr<IMySQLCAPI>	api;
 	::st_mysql_stmt *				stmt;
 	NativeConnectionWrapper *		conn;
 
-	MySQL_Statement_Proxy(){}
+	MySQL_NativeStatementWrapper(){}
 
 public:
-	MySQL_Statement_Proxy(::st_mysql_stmt *, boost::shared_ptr<IMySQLCAPI>, NativeConnectionWrapper * connProxy);
-	~MySQL_Statement_Proxy();
+	MySQL_NativeStatementWrapper(::st_mysql_stmt *, boost::shared_ptr<IMySQLCAPI>, NativeConnectionWrapper * connProxy);
+	~MySQL_NativeStatementWrapper();
 
 	uint64_t affected_rows();
 
 	bool attr_set(MySQL_Statement_Options option, const void *arg);
 
-	bool bind_param(::st_mysql_bind * );
+	bool bind_param(::st_mysql_bind *);
 
-	bool bind_result(::st_mysql_bind * );
+	bool bind_result(::st_mysql_bind *);
 
 	void data_seek(uint64_t );
 
@@ -76,7 +76,7 @@ public:
 
 	int prepare (const ::sql::SQLString &);
 
-	Resultset_Proxy * result_metadata ();
+	NativeResultsetWrapper * result_metadata();
 
 	bool send_long_data(unsigned int par_number, const char * data, unsigned long len);
 

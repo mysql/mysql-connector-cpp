@@ -27,7 +27,7 @@ class MySQL_DebugLogger;
 
 namespace NativeAPI
 {
-class Resultset_Proxy;
+class NativeResultsetWrapper;
 class NativeConnectionWrapper;
 }
 
@@ -47,7 +47,7 @@ protected:
 
 	sql::ResultSet::enum_type resultset_type;
 
-	virtual boost::shared_ptr< NativeAPI::Resultset_Proxy > get_resultset();
+	virtual boost::shared_ptr< NativeAPI::NativeResultsetWrapper > get_resultset();
 	virtual void checkClosed();
 
 public:

@@ -78,9 +78,9 @@ SET(MYSQLCPPCONN_SOURCES
 	mysql_util.cpp
 	mysql_warning.cpp
 	nativeapi/mysql_native_connection_wrapper.cpp
-	nativeapi/mysql_statement_proxy.cpp
+	nativeapi/mysql_native_statement_wrapper.cpp
 	nativeapi/mysql_client_api.cpp
-	nativeapi/mysql_resultset_proxy.cpp
+	nativeapi/mysql_native_resultset_wrapper.cpp
 	nativeapi/library_loader.cpp)
 
 
@@ -107,11 +107,11 @@ IF(WIN32)
 		mysql_warning.h
 		nativeapi/mysql_native_connection_wrapper.h
 		nativeapi/native_connection_wrapper.h
-		nativeapi/mysql_statement_proxy.h
-		nativeapi/statement_proxy.h
+		nativeapi/mysql_native_statement_wrapper.h
+		nativeapi/native_statement_wrapper.h
 		nativeapi/mysql_client_api.h
-		nativeapi/mysql_resultset_proxy.h
-		nativeapi/resultset_proxy.h
+		nativeapi/mysql_native_resultset_wrapper.h
+		nativeapi/native_resultset_wrapper.h
 	)
 
 	IF(MYSQLCLIENT_STATIC_BINDING)

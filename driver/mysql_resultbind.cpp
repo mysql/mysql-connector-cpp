@@ -15,8 +15,8 @@
 #include "mysql_debug.h"
 #include "mysql_resultbind.h"
 
-#include "nativeapi/statement_proxy.h"
-#include "nativeapi/resultset_proxy.h"
+#include "nativeapi/native_statement_wrapper.h"
+#include "nativeapi/native_resultset_wrapper.h"
 
 #include <string.h>
 
@@ -95,7 +95,7 @@ allocate_buffer_for_field(const MYSQL_FIELD * const field)
 
 
 /* {{{ MySQL_ResultBind::MySQL_ResultBind -I- */
-MySQL_ResultBind::MySQL_ResultBind( boost::shared_ptr< NativeAPI::Statement_Proxy > & stmt,
+MySQL_ResultBind::MySQL_ResultBind(boost::shared_ptr< NativeAPI::NativeStatementWrapper > & stmt,
 									boost::shared_ptr< MySQL_DebugLogger > & log)
 	: num_fields(0), is_null(NULL), err(NULL), len(NULL), proxy(stmt), logger(log), rbind(NULL)
 {
@@ -145,7 +145,7 @@ void MySQL_ResultBind::bindResult()
 	memset(len.get(), 0, sizeof(unsigned long) * num_fields);
 
 
-	NativeAPI::Resultset_Proxy * resultMeta= proxy->result_metadata();
+	NativeAPI::NativeResultsetWrapper * resultMeta= proxy->result_metadata();
 
 	for (unsigned int i = 0; i < num_fields; ++i) {
 		MYSQL_FIELD * field= resultMeta->fetch_field();

@@ -20,8 +20,8 @@
 #include "mysql_ps_resultset.h"
 #include "mysql_ps_resultset_metadata.h"
 
-#include "nativeapi/statement_proxy.h"
-#include "nativeapi/resultset_proxy.h"
+#include "nativeapi/native_statement_wrapper.h"
+#include "nativeapi/native_resultset_wrapper.h"
 
 #include "mysql_debug.h"
 
@@ -34,7 +34,7 @@ namespace mysql
 
 
 /* {{{ MySQL_PreparedResultSetMetaData::MySQL_PreparedResultSetMetaData -I- */
-MySQL_PreparedResultSetMetaData::MySQL_PreparedResultSetMetaData(boost::shared_ptr< NativeAPI::Statement_Proxy > & _proxy,
+MySQL_PreparedResultSetMetaData::MySQL_PreparedResultSetMetaData(boost::shared_ptr< NativeAPI::NativeStatementWrapper > & _proxy,
 																	boost::shared_ptr< MySQL_DebugLogger> & l)
 	: proxy(_proxy), logger(l), result_meta( _proxy->result_metadata()),
 		num_fields(_proxy->field_count())

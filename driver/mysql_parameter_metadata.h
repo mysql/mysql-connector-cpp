@@ -22,14 +22,14 @@ namespace mysql
 {
 namespace NativeAPI
 {
-	class Statement_Proxy;
+	class NativeStatementWrapper;
 }
 
 class MySQL_ParameterMetaData : public sql::ParameterMetaData
 {
 	unsigned int param_count;
 public:
-	MySQL_ParameterMetaData( boost::shared_ptr<NativeAPI::Statement_Proxy> & stmt);
+	MySQL_ParameterMetaData( boost::shared_ptr< NativeAPI::NativeStatementWrapper > & stmt);
 
 	virtual ~MySQL_ParameterMetaData() {}
 

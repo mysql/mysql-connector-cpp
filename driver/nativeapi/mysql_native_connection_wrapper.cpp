@@ -16,8 +16,8 @@
 #include "../mysql_connection_options.h"
 
 #include "mysql_client_api.h"
-#include "mysql_resultset_proxy.h"
-#include "mysql_statement_proxy.h"
+#include "mysql_native_resultset_wrapper.h"
+#include "mysql_native_statement_wrapper.h"
 
 #include "mysql_native_connection_wrapper.h"
 
@@ -234,7 +234,7 @@ MySQL_NativeConnectionWrapper::ssl_set(const SQLString & key,
 
 
 /* {{{ MySQL_NativeConnectionWrapper::store_result() */
-Resultset_Proxy *
+NativeResultsetWrapper *
 MySQL_NativeConnectionWrapper::store_result()
 {
 	::st_mysql_res * raw= api->store_result(mysql);
@@ -245,13 +245,13 @@ MySQL_NativeConnectionWrapper::store_result()
 		return NULL;
 	}
 
-	return new MySQL_Resultset_Proxy(raw, api);
+	return new MySQL_NativeResultsetWrapper(raw, api);
 }
 /* }}} */
 
 
 /* {{{ MySQL_NativeConnectionWrapper::use_result() */
-Resultset_Proxy *
+NativeResultsetWrapper *
 MySQL_NativeConnectionWrapper::use_result()
 {
 	::st_mysql_res * raw= api->use_result(mysql);
@@ -262,13 +262,13 @@ MySQL_NativeConnectionWrapper::use_result()
 		return NULL;
 	}
 
-	return new MySQL_Resultset_Proxy(raw, api);
+	return new MySQL_NativeResultsetWrapper(raw, api);
 }
 /* }}} */
 
 
 /* {{{ MySQL_NativeConnectionWrapper::stmt_init() */
-Statement_Proxy &
+NativeStatementWrapper &
 MySQL_NativeConnectionWrapper::stmt_init()
 {
 	::st_mysql_stmt * raw= api->stmt_init(mysql);
@@ -278,7 +278,7 @@ MySQL_NativeConnectionWrapper::stmt_init()
 		::sql::mysql::util::throwSQLException(*this);
 	}
 
-	return *(new MySQL_Statement_Proxy(raw, api, this));
+	return *(new MySQL_NativeStatementWrapper(raw, api, this));
 }
 /* }}} */
 

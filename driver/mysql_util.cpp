@@ -17,7 +17,7 @@
 #include <cppconn/exception.h>
 #include "mysql_util.h"
 #include "nativeapi/native_connection_wrapper.h"
-#include "nativeapi/statement_proxy.h"
+#include "nativeapi/native_statement_wrapper.h"
 
 namespace sql {
 namespace mysql {
@@ -33,7 +33,7 @@ void throwSQLException(::sql::mysql::NativeAPI::NativeConnectionWrapper & proxy)
 
 
 /* {{{ throwSQLException -I- */
-void throwSQLException(::sql::mysql::NativeAPI::Statement_Proxy & proxy)
+void throwSQLException(::sql::mysql::NativeAPI::NativeStatementWrapper & proxy)
 {
 	throw sql::SQLException(proxy.error(), proxy.sqlstate(), proxy.errNo());
 }

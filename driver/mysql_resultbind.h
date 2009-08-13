@@ -26,7 +26,7 @@ namespace mysql
 {
 namespace NativeAPI
 {
-class Statement_Proxy;
+class NativeStatementWrapper;
 }
 
 
@@ -37,7 +37,7 @@ class MySQL_ResultBind
 	boost::scoped_array< char > err;
 	boost::scoped_array< unsigned long > len;
 
-	boost::shared_ptr< NativeAPI::Statement_Proxy > proxy;
+	boost::shared_ptr< NativeAPI::NativeStatementWrapper > proxy;
 
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 
@@ -45,7 +45,7 @@ public:
 	boost::scoped_array< MYSQL_BIND > rbind;
 
 
-	MySQL_ResultBind( boost::shared_ptr< NativeAPI::Statement_Proxy > & _capi, boost::shared_ptr< MySQL_DebugLogger > & log);
+	MySQL_ResultBind( boost::shared_ptr< NativeAPI::NativeStatementWrapper > & _capi, boost::shared_ptr< MySQL_DebugLogger > & log);
 
 	~MySQL_ResultBind();
 

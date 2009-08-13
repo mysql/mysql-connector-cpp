@@ -56,13 +56,13 @@ namespace mysql
 namespace NativeAPI
 {
 class NativeConnectionWrapper;
-class Statement_Proxy;
+class NativeStatementWrapper;
 } /* namespace NativeAPI */
 
 namespace util {
 
 void throwSQLException(::sql::mysql::NativeAPI::NativeConnectionWrapper & proxy);
-void throwSQLException(::sql::mysql::NativeAPI::Statement_Proxy & proxy);
+void throwSQLException(::sql::mysql::NativeAPI::NativeStatementWrapper & proxy);
 
 int mysql_string_type_to_datatype(const sql::SQLString & name);
 int mysql_type_to_datatype(const MYSQL_FIELD * const field);

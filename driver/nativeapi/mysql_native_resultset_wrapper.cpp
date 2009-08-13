@@ -9,7 +9,7 @@
    <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 */
 
-#include "mysql_resultset_proxy.h"
+#include "mysql_native_resultset_wrapper.h"
 #include "mysql_client_api.h"
 
 
@@ -24,82 +24,80 @@ class MySQL_ConnectionMetaData;
 namespace NativeAPI
 {
 
-/* {{{ MySQL_Resultset_Proxy::MySQL_Resultset_Proxy */
-MySQL_Resultset_Proxy::MySQL_Resultset_Proxy(::st_mysql_res * res,
-											boost::shared_ptr< NativeAPI::IMySQLCAPI > & _capi
-											/*, boost::shared_ptr< MySQL_DebugLogger > & l*/
-											)
+/* {{{ MySQL_NativeResultsetWrapper::MySQL_NativeResultsetWrapper */
+MySQL_NativeResultsetWrapper::MySQL_NativeResultsetWrapper(::st_mysql_res * res, boost::shared_ptr< NativeAPI::IMySQLCAPI > & _capi
+											/*, boost::shared_ptr< MySQL_DebugLogger > & l*/)
 	: /*logger(l),*/ capi(_capi), rs(res)
 {
 }
 /* }}} */
 
 
-/* {{{ MySQL_Resultset_Proxy::~MySQL_Resultset_Proxy */
-MySQL_Resultset_Proxy::~MySQL_Resultset_Proxy()
+/* {{{ MySQL_NativeResultsetWrapper::~MySQL_NativeResultsetWrapper */
+MySQL_NativeResultsetWrapper::~MySQL_NativeResultsetWrapper()
 {
 	capi->free_result(rs);
 }
 /* }}} */
 
 
-/* {{{ MySQL_Resultset_Proxy::data_seek */
+/* {{{ MySQL_NativeResultsetWrapper::data_seek */
 void
-MySQL_Resultset_Proxy::data_seek(uint64_t offset)
+MySQL_NativeResultsetWrapper::data_seek(uint64_t offset)
 {
 	capi->data_seek(rs, offset);
 }
 /* }}} */
 
 
-/* {{{ MySQL_Resultset_Proxy::fetch_field */
+/* {{{ MySQL_NativeResultsetWrapper::fetch_field */
 ::st_mysql_field *
-MySQL_Resultset_Proxy::fetch_field()
+MySQL_NativeResultsetWrapper::fetch_field()
 {
 	return capi->fetch_field(rs);
 }
 /* }}} */
 
 
-/* {{{ MySQL_Resultset_Proxy::fetch_field_direct */
+/* {{{ MySQL_NativeResultsetWrapper::fetch_field_direct */
 ::st_mysql_field *
-MySQL_Resultset_Proxy::fetch_field_direct(unsigned int field_nr)
+MySQL_NativeResultsetWrapper::fetch_field_direct(unsigned int field_nr)
 {
 	return capi->fetch_field_direct(rs, field_nr);
 }
 /* }}} */
 
 
-/* {{{ MySQL_Resultset_Proxy::fetch_lengths */
+/* {{{ MySQL_NativeResultsetWrapper::fetch_lengths */
 unsigned long *
-MySQL_Resultset_Proxy::fetch_lengths()
+MySQL_NativeResultsetWrapper::fetch_lengths()
 {
 	return capi->fetch_lengths(rs);
 }
 /* }}} */
 
 
-/* {{{ MySQL_Resultset_Proxy::fetch_row */
+/* {{{ MySQL_NativeResultsetWrapper::fetch_row */
 char**
-MySQL_Resultset_Proxy::fetch_row()
+MySQL_NativeResultsetWrapper::fetch_row()
 {
 	return capi->fetch_row(rs);
 }
 /* }}} */
 
 
-/* {{{ MySQL_Resultset_Proxy::num_fields */
+/* {{{ MySQL_NativeResultsetWrapper::num_fields */
 unsigned int
-MySQL_Resultset_Proxy::num_fields()
+MySQL_NativeResultsetWrapper::num_fields()
 {
 	return capi->num_fields(rs);
 }
 /* }}} */
 
 
-/* {{{ MySQL_Resultset_Proxy::num_rows */
+/* {{{ MySQL_NativeResultsetWrapper::num_rows */
 uint64_t
-MySQL_Resultset_Proxy::num_rows()
+MySQL_NativeResultsetWrapper::num_rows()
 {
 	return capi->num_rows(rs);
 }

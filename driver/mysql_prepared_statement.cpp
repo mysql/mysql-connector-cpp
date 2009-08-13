@@ -26,7 +26,7 @@
 #include "mysql_warning.h"
 #include "mysql_resultbind.h"
 
-#include "nativeapi/statement_proxy.h"
+#include "nativeapi/native_statement_wrapper.h"
 
 #define mysql_stmt_conn(s) (s)->mysql
 
@@ -155,7 +155,7 @@ public:
 
 /* {{{ MySQL_Prepared_Statement::MySQL_Prepared_Statement() -I- */
 MySQL_Prepared_Statement::MySQL_Prepared_Statement(
-			boost::shared_ptr<NativeAPI::Statement_Proxy> & s, sql::Connection * conn,
+			boost::shared_ptr< NativeAPI::NativeStatementWrapper > & s, sql::Connection * conn,
 			sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & log
 		)
 	:connection(conn), proxy(s), isClosed(false), logger(log), resultset_type(rset_type)

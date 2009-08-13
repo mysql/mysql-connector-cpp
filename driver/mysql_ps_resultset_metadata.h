@@ -25,8 +25,8 @@ namespace mysql
 {
 namespace NativeAPI
 {
-class Resultset_Proxy;
-class Statement_Proxy;
+class NativeResultsetWrapper;
+class NativeStatementWrapper;
 }
 
 class MySQL_DebugLogger;
@@ -34,16 +34,16 @@ class MySQL_DebugLogger;
 
 class MySQL_PreparedResultSetMetaData : public sql::ResultSetMetaData
 {
-	boost::shared_ptr< NativeAPI::Statement_Proxy > proxy;
+	boost::shared_ptr< NativeAPI::NativeStatementWrapper > proxy;
 
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 
-	boost::scoped_ptr< NativeAPI::Resultset_Proxy > result_meta;
+	boost::scoped_ptr< NativeAPI::NativeResultsetWrapper > result_meta;
 
 	unsigned int num_fields;
 
 public:
-	MySQL_PreparedResultSetMetaData(boost::shared_ptr<NativeAPI::Statement_Proxy> & _proxy,
+	MySQL_PreparedResultSetMetaData(boost::shared_ptr< NativeAPI::NativeStatementWrapper > & _proxy,
 										boost::shared_ptr< MySQL_DebugLogger> & l);
 
 	virtual ~MySQL_PreparedResultSetMetaData();

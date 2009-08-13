@@ -94,12 +94,12 @@ public:
 				const ::sql::SQLString & capath,
 				const ::sql::SQLString & cipher);
 
-	Resultset_Proxy * store_result();
+	NativeResultsetWrapper * store_result();
 
-	Resultset_Proxy * use_result();
+	NativeResultsetWrapper * use_result();
 
 
-	Statement_Proxy & stmt_init();
+	NativeStatementWrapper & stmt_init();
 };
 
 } /* namespace NativeAPI */
