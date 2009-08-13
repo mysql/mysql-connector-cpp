@@ -20,7 +20,7 @@
 # include "mysql_client_static.h"
 #else
 /* MySQL client library will be dynamically loaded */
-# include "mysql_client_loader.h"
+# include "libmysql_dynamic_proxy.h"
 #endif
 
 namespace sql
@@ -35,7 +35,7 @@ static std::map< sql::SQLString, boost::shared_ptr<IMySQLCAPI> > wrapper;
 boost::shared_ptr<IMySQLCAPI> getCApiHandle( const sql::SQLString & name )
 {
 #ifdef MYSQLCLIENT_STATIC_BINDING
-    return MySQL_Client_Static::theInstance();
+    return LibmysqlStaticProxy::theInstance();
 #else
 
     std::map< sql::SQLString, boost::shared_ptr< IMySQLCAPI > >::const_iterator cit;

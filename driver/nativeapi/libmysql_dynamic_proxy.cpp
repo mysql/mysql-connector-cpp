@@ -10,7 +10,7 @@
 */
 
 
-#include "mysql_client_loader.h"
+#include "libmysql_dynamic_proxy.h"
 
 #include <cppconn/exception.h>
 

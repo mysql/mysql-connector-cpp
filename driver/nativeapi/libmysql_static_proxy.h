@@ -50,15 +50,15 @@ namespace NativeAPI
 {
 
 
-class MySQL_Client_Static : public IMySQLCAPI, public ::sql::mysql::util::Singleton< MySQL_Client_Static >
+class LibmysqlStaticProxy : public IMySQLCAPI, public ::sql::mysql::util::Singleton< LibmysqlStaticProxy >
 {
 private:
 
-    CCPP_SINGLETON(MySQL_Client_Static);
+    CCPP_SINGLETON(LibmysqlStaticProxy);
 
 public:
 
-    virtual ~MySQL_Client_Static();
+    virtual ~LibmysqlStaticProxy();
 
     // MySQL C-API calls wrappers
 
@@ -188,9 +188,9 @@ public:
 
 };
 
-}
-}
-}
+} /* namespace NativeAPI */
+} /* namespace mysql */
+} /* namespace sql */
 #endif
 
 /*

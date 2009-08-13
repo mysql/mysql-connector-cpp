@@ -15,7 +15,7 @@
 #ifdef MYSQLCLIENT_STATIC_BINDING
 # include "mysql_client_static.inc"
 #else
-# include "mysql_client_loader.inc"
+# include "libmysql_dynamic_proxy.cpp"
 #endif
 
 /*
