@@ -77,7 +77,7 @@ SET(MYSQLCPPCONN_SOURCES
 	mysql_statement.cpp
 	mysql_util.cpp
 	mysql_warning.cpp
-	nativeapi/mysql_connection_proxy.cpp
+	nativeapi/mysql_native_connection_wrapper.cpp
 	nativeapi/mysql_statement_proxy.cpp
 	nativeapi/mysql_client_api.cpp
 	nativeapi/mysql_resultset_proxy.cpp
@@ -105,8 +105,8 @@ IF(WIN32)
 		mysql_statement.h
 		mysql_util.h
 		mysql_warning.h
-		nativeapi/mysql_connection_proxy.h
-		nativeapi/connection_proxy.h
+		nativeapi/mysql_native_connection_wrapper.h
+		nativeapi/native_connection_wrapper.h
 		nativeapi/mysql_statement_proxy.h
 		nativeapi/statement_proxy.h
 		nativeapi/mysql_client_api.h

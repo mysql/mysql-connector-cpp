@@ -28,27 +28,26 @@ namespace NativeAPI
 class Resultset_Proxy : public boost::noncopyable
 {
 public:
+	virtual ~Resultset_Proxy(){}
 
-    virtual			            ~Resultset_Proxy    (){}
+	virtual void data_seek(uint64_t) = 0;
 
-    virtual void                data_seek           ( uint64_t ) =0;
+	virtual ::st_mysql_field * fetch_field() = 0;
 
-    virtual ::st_mysql_field *  fetch_field         () =0;
+	virtual ::st_mysql_field * fetch_field_direct(unsigned int) = 0;
 
-    virtual ::st_mysql_field *  fetch_field_direct  ( unsigned int  ) =0;
+	virtual unsigned long * fetch_lengths() = 0;
 
-    virtual unsigned long *     fetch_lengths       () =0;
+	virtual char** fetch_row() = 0;
 
-    virtual char**              fetch_row           () =0;
+	virtual unsigned int num_fields() = 0;
 
-    virtual unsigned int        num_fields          () =0;
-
-    virtual uint64_t            num_rows            () =0;
+	virtual uint64_t num_rows() = 0;
 };
 
 } /* namespace NativeAPI*/
-} /* namespace mysql    */
-} /* namespace sql      */
+} /* namespace mysql */
+} /* namespace sql */
 
 #endif // _RESULTSET_PROXY_H_
 

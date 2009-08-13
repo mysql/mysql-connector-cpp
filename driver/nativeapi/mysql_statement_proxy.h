@@ -27,7 +27,7 @@ namespace NativeAPI
 {
 
 class IMySQLCAPI;
-class Connection_Proxy;
+class NativeConnectionWrapper;
 /*
  *
  *
@@ -38,12 +38,12 @@ class MySQL_Statement_Proxy : public Statement_Proxy
 
 	boost::shared_ptr<IMySQLCAPI>	api;
 	::st_mysql_stmt *				stmt;
-	Connection_Proxy *				conn;
+	NativeConnectionWrapper *		conn;
 
 	MySQL_Statement_Proxy(){}
 
 public:
-	MySQL_Statement_Proxy(::st_mysql_stmt *, boost::shared_ptr<IMySQLCAPI>, Connection_Proxy * connProxy);
+	MySQL_Statement_Proxy(::st_mysql_stmt *, boost::shared_ptr<IMySQLCAPI>, NativeConnectionWrapper * connProxy);
 	~MySQL_Statement_Proxy();
 
 	uint64_t affected_rows();

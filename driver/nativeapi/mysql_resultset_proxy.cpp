@@ -25,9 +25,9 @@ namespace NativeAPI
 {
 
 /* {{{ MySQL_Resultset_Proxy::MySQL_Resultset_Proxy */
-MySQL_Resultset_Proxy::MySQL_Resultset_Proxy( ::st_mysql_res * res,
+MySQL_Resultset_Proxy::MySQL_Resultset_Proxy(::st_mysql_res * res,
 											boost::shared_ptr< NativeAPI::IMySQLCAPI > & _capi
-                                            /*, boost::shared_ptr< MySQL_DebugLogger > & l*/
+											/*, boost::shared_ptr< MySQL_DebugLogger > & l*/
 											)
 	: /*logger(l),*/ capi(_capi), rs(res)
 {
@@ -106,8 +106,8 @@ MySQL_Resultset_Proxy::num_rows()
 /* }}} */
 
 } /* namespace NativeAPI */
-} /* namespace mysql     */
-} /* namespace sql       */
+} /* namespace mysql */
+} /* namespace sql */
 
 
 /*

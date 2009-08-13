@@ -44,7 +44,7 @@ class MySQL_ConnectionData; /* PIMPL */
 
 namespace NativeAPI
 {
-class Connection_Proxy;
+class NativeConnectionWrapper;
 }
 
 class CPPCONN_PUBLIC_FUNC MySQL_Connection : public sql::Connection
@@ -132,7 +132,7 @@ protected:
 
 	MySQL_ConnectionData * intern; /* pimpl */
 
-	boost::shared_ptr<NativeAPI::Connection_Proxy> proxy;
+	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy;
 
 private:
 	/* Prevent use of these */

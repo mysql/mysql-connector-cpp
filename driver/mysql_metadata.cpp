@@ -23,7 +23,7 @@
 #include "mysql_prepared_statement.h"
 #include "mysql_debug.h"
 
-#include "nativeapi/connection_proxy.h"
+#include "nativeapi/native_connection_wrapper.h"
 
 // For snprintf
 #include <stdio.h>
@@ -1194,7 +1194,8 @@ static inline const char * my_i_to_a(char * buf, size_t buf_size, int a)
 
 
 /* {{{ MySQL_ConnectionMetaData::MySQL_ConnectionMetaData() -I- */
-MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(MySQL_Connection * const conn, boost::shared_ptr<NativeAPI::Connection_Proxy> _proxy, boost::shared_ptr< MySQL_DebugLogger > & l)
+MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(MySQL_Connection * const conn, boost::shared_ptr<NativeAPI::NativeConnectionWrapper> _proxy,
+													boost::shared_ptr< MySQL_DebugLogger > & l)
   : connection(conn), logger(l), proxy(_proxy), use_info_schema(true)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::MySQL_ConnectionMetaData");

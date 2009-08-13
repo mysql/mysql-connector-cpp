@@ -26,7 +26,7 @@
 #include "mysql_resultset.h"
 #include "mysql_warning.h"
 #include "nativeapi/resultset_proxy.h"
-#include "nativeapi/connection_proxy.h"
+#include "nativeapi/native_connection_wrapper.h"
 
 #include "mysql_debug.h"
 
@@ -36,7 +36,7 @@ namespace mysql
 {
 
 /* {{{ MySQL_Statement::MySQL_Statement() -I- */
-MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, boost::shared_ptr<NativeAPI::Connection_Proxy> & _proxy,
+MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, boost::shared_ptr< NativeAPI::NativeConnectionWrapper > & _proxy,
 									sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & l)
 	: warnings(NULL), connection(conn), proxy(_proxy), isClosed(false), last_update_count(UL64(~0)), logger(l), resultset_type(rset_type)
 {

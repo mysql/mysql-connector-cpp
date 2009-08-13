@@ -49,15 +49,19 @@
 #endif	//	_WIN32
 
 
-namespace sql {
-namespace mysql {
-namespace NativeAPI {
-class Connection_Proxy;
+namespace sql
+{
+namespace mysql
+{
+namespace NativeAPI
+{
+class NativeConnectionWrapper;
 class Statement_Proxy;
-}
+} /* namespace NativeAPI */
+
 namespace util {
 
-void throwSQLException(::sql::mysql::NativeAPI::Connection_Proxy & proxy);
+void throwSQLException(::sql::mysql::NativeAPI::NativeConnectionWrapper & proxy);
 void throwSQLException(::sql::mysql::NativeAPI::Statement_Proxy & proxy);
 
 int mysql_string_type_to_datatype(const sql::SQLString & name);

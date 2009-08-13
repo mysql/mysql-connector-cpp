@@ -30,10 +30,10 @@ namespace NativeAPI
 class Resultset_Proxy;
 class Statement_Proxy;
 
-class Connection_Proxy : public boost::noncopyable
+class NativeConnectionWrapper : public boost::noncopyable
 {
 public:
-	virtual ~Connection_Proxy(){}
+	virtual ~NativeConnectionWrapper() {}
 
 
 	virtual uint64_t affected_rows() = 0;
@@ -91,7 +91,7 @@ public:
 	virtual Statement_Proxy & stmt_init() = 0;
 };
 
-Connection_Proxy * createConnectionProxy(const SQLString & clientFileName);
+NativeConnectionWrapper * createNativeConnectionWrapper(const SQLString & clientFileName);
 
 } /* namespace NativeAPI */
 } /* namespace mysql */

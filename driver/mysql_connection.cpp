@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <cppconn/exception.h>
 
-#include "nativeapi/connection_proxy.h"
+#include "nativeapi/native_connection_wrapper.h"
 #include "nativeapi/statement_proxy.h"
 
 #include "mysql_connection_options.h"
@@ -405,7 +405,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	}
 
 	try {
-		proxy.reset( NativeAPI::createConnectionProxy(clientlib));
+		proxy.reset( NativeAPI::createNativeConnectionWrapper(clientlib));
 	} catch (std::runtime_error & e) {
 		throw sql::InvalidArgumentException(e.what());
 	}

@@ -33,43 +33,41 @@ class IMySQLCAPI;
 class MySQL_Resultset_Proxy : public Resultset_Proxy
 {
 public:
-                    MySQL_Resultset_Proxy( ::st_mysql_res *
-                                        , boost::shared_ptr<NativeAPI::IMySQLCAPI> &
-                        /*, boost::shared_ptr< MySQL_DebugLogger > & l*/);
+	MySQL_Resultset_Proxy(::st_mysql_res *, boost::shared_ptr<NativeAPI::IMySQLCAPI> &/*, boost::shared_ptr< MySQL_DebugLogger > & l*/);
 
-	                ~MySQL_Resultset_Proxy();
+	~MySQL_Resultset_Proxy();
 
-    void            data_seek           ( uint64_t  );
+	void data_seek(uint64_t);
 
-    ::st_mysql_field * fetch_field         ();
+	::st_mysql_field * fetch_field();
 
-    ::st_mysql_field * fetch_field_direct  ( unsigned int  );
+	::st_mysql_field * fetch_field_direct(unsigned int);
 
-    unsigned long * fetch_lengths       ();
+	unsigned long * fetch_lengths();
 
-    char**          fetch_row           ();
+	char** fetch_row();
 
-    unsigned int    num_fields          ();
+	unsigned int num_fields();
 
-    uint64_t        num_rows            ();
+	uint64_t num_rows();
 
-    //boost::shared_ptr<IMySQLCAPI> getApiHandle();
+	//boost::shared_ptr<IMySQLCAPI> getApiHandle();
 
 private:
 
-    MySQL_Resultset_Proxy(){}
-    //Also need to decide should it be copyable
+	MySQL_Resultset_Proxy(){}
+	//Also need to decide should it be copyable
 
-	boost::shared_ptr< MySQL_DebugLogger >      logger;
+	boost::shared_ptr< MySQL_DebugLogger > logger;
 
-    boost::shared_ptr< NativeAPI::IMySQLCAPI >  capi;
+	boost::shared_ptr< NativeAPI::IMySQLCAPI > capi;
 
-    ::st_mysql_res * rs;
+	::st_mysql_res * rs;
 };
 
 } /* namespace NativeAPI */
-} /* namespace mysql     */
-} /* namespace sql       */
+} /* namespace mysql	 */
+} /* namespace sql	   */
 
 #endif // _MYSQL_RESULTSET_DATA_H_
 
