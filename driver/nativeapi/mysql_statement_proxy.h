@@ -48,7 +48,7 @@ public:
 
     uint64_t            affected_rows   ();
 
-    bool                attr_set        ( enum ::enum_stmt_attr_type option
+    bool                attr_set        ( MySQL_Statement_Options option
                                         , const void *arg );
 
     bool                bind_param      ( ::st_mysql_bind *  );

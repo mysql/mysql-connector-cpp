@@ -15,6 +15,8 @@
 #include <boost/noncopyable.hpp>
 #include <config.h>
 
+#include "../mysql_connection_options.h"
+
 //TODO - move following definitions elsewhere and have them in one place only
 #ifndef _ABSTRACT
 #define _ABSTRACT
@@ -24,9 +26,6 @@
 #define _PURE =0
 #endif
 
-//TEMPORARY
-struct  st_mysql_res;
-enum    mysql_option;
 
 namespace sql
 {
@@ -35,6 +34,8 @@ class SQLString;
 
 namespace mysql
 {
+enum MySQL_Connection_Options;
+
 namespace NativeAPI
 {
 class Resultset_Proxy;
@@ -80,7 +81,7 @@ public:
 
     virtual int                 next_result         ()			_PURE;
 
-    virtual int                 options             ( enum ::mysql_option
+    virtual int                 options             ( ::sql::mysql::MySQL_Connect_Options
                                                     , const void *      )   _PURE;
 
     virtual int		            query               ( const SQLString & )   _PURE;

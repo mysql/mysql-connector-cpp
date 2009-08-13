@@ -15,6 +15,8 @@
 #include <config.h>
 #include <boost/noncopyable.hpp>
 
+#include "../mysql_statement_options.h"
+
 #ifndef _ABSTRACT
 #define _ABSTRACT
 #endif
@@ -23,7 +25,6 @@
 #define _PURE =0
 #endif
 
-enum enum_stmt_attr_type;
 struct st_mysql_bind;
 struct st_mysql_res;
 
@@ -49,7 +50,7 @@ public:
 
     virtual uint64_t            affected_rows   ()  _PURE;
 
-    virtual bool                attr_set        ( enum ::enum_stmt_attr_type option
+    virtual bool                attr_set        ( MySQL_Statement_Options attr
                                                 , const void *arg ) _PURE;
 
     virtual bool                bind_param      ( ::st_mysql_bind * ) _PURE;

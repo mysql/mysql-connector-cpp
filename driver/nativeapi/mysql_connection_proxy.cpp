@@ -13,6 +13,7 @@
 #include <exception.h>
 
 #include "../mysql_util.h"
+#include "../mysql_connection_options.h"
 
 #include "mysql_client_api.h"
 #include "mysql_resultset_proxy.h"
@@ -136,10 +137,10 @@ namespace NativeAPI
 	}
 
 
-    int MySQL_Connection_Proxy::options( enum ::mysql_option option
+    int MySQL_Connection_Proxy::options( ::sql::mysql::MySQL_Connect_Options option
                                         , const void * value )
 	{
-        return api->options( mysql, option, value );
+        return api->options( mysql, static_cast<::mysql_option>(option), value );
 	}
 
 

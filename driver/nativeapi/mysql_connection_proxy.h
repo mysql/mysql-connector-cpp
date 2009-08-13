@@ -77,7 +77,7 @@ public:
     int                         next_result         ();
 
 
-    int                         options             ( enum ::mysql_option
+    int                         options             ( ::sql::mysql::MySQL_Connect_Options
                                                     , const void *  );
 
     int		                    query               ( const ::sql::SQLString & );
