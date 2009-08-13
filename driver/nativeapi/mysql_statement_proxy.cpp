@@ -51,7 +51,7 @@ namespace NativeAPI
     bool MySQL_Statement_Proxy::attr_set( MySQL_Statement_Options option
                                         , const void *arg )
 	{
-        return ( api->stmt_attr_set( stmt, static_cast<::enum_stmt_attr_type>(option), arg ) != '\0' );
+        return ( api->stmt_attr_set( stmt, static_cast< enum_stmt_attr_type >(option), arg ) != '\0' );
 	}
 
 

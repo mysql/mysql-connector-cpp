@@ -522,7 +522,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 		CPP_ERR_FMT("Couldn't connect : %d", proxy->errNo());
 		CPP_ERR_FMT("Couldn't connect : (%s)", proxy->sqlstate().c_str());
 		CPP_ERR_FMT("Couldn't connect : %s", proxy->error().c_str());
-		CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+		CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 		sql::SQLException e(proxy->error(), proxy->sqlstate(), proxy->errNo());
 		proxy.reset();
 		throw e;
