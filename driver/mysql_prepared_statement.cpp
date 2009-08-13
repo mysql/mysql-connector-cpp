@@ -210,7 +210,7 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 					}
 				}
 				if (proxy->send_long_data(i, buf.get(), static_cast<unsigned long>(my_blob->gcount()))) {
-					CPP_ERR_FMT("Couldn't send long data : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+					CPP_ERR_FMT("Couldn't send long data : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 					switch (proxy->errNo()) {
 						case CR_OUT_OF_MEMORY:
 							throw std::bad_alloc();
@@ -240,11 +240,11 @@ MySQL_Prepared_Statement::do_query()
 		throw sql::SQLException("Value not set for all parameters");
 	}
 	if (proxy->bind_param(param_bind->get())) {
-		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 		sql::mysql::util::throwSQLException(*proxy.get());
 	}
 	if (!sendLongDataBeforeParamBind() || proxy->execute()) {
-		CPP_ERR_FMT("Couldn't execute : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+		CPP_ERR_FMT("Couldn't execute : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 		sql::mysql::util::throwSQLException(*proxy.get());
 	}
 }

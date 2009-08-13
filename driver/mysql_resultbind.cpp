@@ -160,7 +160,7 @@ void MySQL_ResultBind::bindResult()
 		rbind[i].is_unsigned= field->flags & UNSIGNED_FLAG;
 	}
 	if (proxy->bind_result(rbind.get())) {
-		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 		sql::mysql::util::throwSQLException(*proxy.get());
 	}
 }
