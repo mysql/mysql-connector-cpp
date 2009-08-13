@@ -88,7 +88,7 @@ MySQL_Statement::get_resultset()
 	//TODO: again - probably no need to catch-n-throw here. O maybe no need to throw further
 	try
 	{
-		result= (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY)? & proxy->use_result(): & proxy->store_result();
+		result= (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY)? proxy->use_result(): proxy->store_result();
 	}
 	catch (::sql::SQLException & e)
 	{
@@ -213,11 +213,11 @@ MySQL_Statement::getResultSet()
 	try {
 		switch (resultset_type) {
 			case sql::ResultSet::TYPE_FORWARD_ONLY:
-				result.reset(& proxy->use_result());
+				result.reset(proxy->use_result());
 				tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
 				break;
 			default:
-				result.reset(& proxy->store_result());
+				result.reset(proxy->store_result());
 				tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
 		}
 	} catch (::sql::SQLException & /*e*/ ) {
