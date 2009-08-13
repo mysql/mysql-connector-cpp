@@ -13,7 +13,7 @@
 #include "binding_config.h"
 
 #ifdef MYSQLCLIENT_STATIC_BINDING
-# include "mysql_client_static.inc"
+# include "libmysql_static_proxy.cpp"
 #else
 # include "libmysql_dynamic_proxy.cpp"
 #endif
