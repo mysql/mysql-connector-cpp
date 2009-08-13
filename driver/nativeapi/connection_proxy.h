@@ -34,7 +34,6 @@ class SQLString;
 
 namespace mysql
 {
-enum MySQL_Connection_Options;
 
 namespace NativeAPI
 {
@@ -81,7 +80,7 @@ public:
 
     virtual int                 next_result         ()			_PURE;
 
-    virtual int                 options             ( ::sql::mysql::MySQL_Connect_Options
+    virtual int                 options             ( ::sql::mysql::MySQL_Connection_Options
                                                     , const void *      )   _PURE;
 
     virtual int		            query               ( const SQLString & )   _PURE;

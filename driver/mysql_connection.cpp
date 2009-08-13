@@ -20,6 +20,7 @@
 #include "nativeapi/connection_proxy.h"
 #include "nativeapi/statement_proxy.h"
 
+#include "mysql_connection_options.h"
 #include "mysql_util.h"
 
 /*

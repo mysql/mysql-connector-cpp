@@ -18,7 +18,7 @@ namespace sql
 namespace mysql
 {
 
-enum MySQL_Connect_Options
+enum MySQL_Connection_Options
 {
   MYSQL_OPT_CONNECT_TIMEOUT, MYSQL_OPT_COMPRESS, MYSQL_OPT_NAMED_PIPE,
   MYSQL_INIT_COMMAND, MYSQL_READ_DEFAULT_FILE, MYSQL_READ_DEFAULT_GROUP,

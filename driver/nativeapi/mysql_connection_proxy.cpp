@@ -137,7 +137,7 @@ namespace NativeAPI
 	}
 
 
-    int MySQL_Connection_Proxy::options( ::sql::mysql::MySQL_Connect_Options option
+    int MySQL_Connection_Proxy::options( ::sql::mysql::MySQL_Connection_Options option
                                         , const void * value )
 	{
         return api->options( mysql, static_cast<::mysql_option>(option), value );
