@@ -81,8 +81,7 @@ SET(MYSQLCPPCONN_SOURCES
 	nativeapi/mysql_statement_proxy.cpp
 	nativeapi/mysql_client_api.cpp
 	nativeapi/mysql_resultset_proxy.cpp
-	nativeapi/library_loader.cpp
-	nativeapi/mysql_client.cpp)
+	nativeapi/library_loader.cpp)
 
 
 IF(WIN32)

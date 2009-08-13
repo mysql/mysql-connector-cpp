@@ -26,23 +26,23 @@ template <class T>
 class Singleton: public boost::noncopyable
 {
 protected:
-    Singleton(){}
+	Singleton(){}
 
 public:
 
-    static boost::shared_ptr<T> & theInstance()
-    {
-        //shared::ptr is used only to be able to use in getCApiHandle
-        static boost::shared_ptr<T> instance(new T());
+	static boost::shared_ptr<T> & theInstance()
+	{
+		//shared::ptr is used only to be able to use in getCApiHandle
+		static boost::shared_ptr<T> instance(new T());
 
-        return instance;
-    }
+		return instance;
+	}
 };
 
 
 // macros to use in private/protected part of singleton-ed class
 #define CCPP_SINGLETON(classname) classname();\
-    friend class sql::mysql::util::Singleton<classname>
+	friend class sql::mysql::util::Singleton<classname>
 }
 
 namespace NativeAPI
@@ -53,136 +53,130 @@ class LibmysqlStaticProxy : public IMySQLCAPI, public ::sql::mysql::util::Single
 {
 private:
 
-    CCPP_SINGLETON(LibmysqlStaticProxy);
+	CCPP_SINGLETON(LibmysqlStaticProxy);
 
 public:
 
-    virtual ~LibmysqlStaticProxy();
+	virtual ~LibmysqlStaticProxy();
 
-    // MySQL C-API calls wrappers
+	// MySQL C-API calls wrappers
 
-    my_ulonglong affected_rows      (MYSQL * mysql);
+	my_ulonglong affected_rows(MYSQL * mysql);
 
-    my_bool      autocommit         (MYSQL *, my_bool);
+	my_bool autocommit(MYSQL *, my_bool);
 
-    void         close              (MYSQL * mysql);
+	void close(MYSQL * mysql);
 
-    my_bool      commit             (MYSQL * mysql);
+	my_bool commit(MYSQL * mysql);
 
-    void         data_seek          (MYSQL_RES *, my_ulonglong);
+	void data_seek(MYSQL_RES *, my_ulonglong);
 
-    void         debug              (const char *);
+	void debug(const char *);
 
-    unsigned int mysql_errno        (MYSQL * mysql);
+	unsigned int mysql_errno(MYSQL * mysql);
 
-    const char * error              (MYSQL * mysql);
+	const char * error(MYSQL * mysql);
 
-    MYSQL_FIELD *fetch_field        (MYSQL_RES *);
+	MYSQL_FIELD *fetch_field(MYSQL_RES *);
 
-    MYSQL_FIELD *fetch_field_direct (MYSQL_RES *, unsigned int);
+	MYSQL_FIELD *fetch_field_direct(MYSQL_RES *, unsigned int);
 
-    unsigned long *fetch_lengths    (MYSQL_RES *);
+	unsigned long *fetch_lengths(MYSQL_RES *);
 
-    MYSQL_ROW    fetch_row          (MYSQL_RES *);
+	MYSQL_ROW fetch_row(MYSQL_RES *);
 
-    unsigned int field_count        (MYSQL * mysql);
+	unsigned int field_count(MYSQL * mysql);
 
-    void         free_result        (MYSQL_RES *);
+	void free_result(MYSQL_RES *);
 
-    unsigned long get_client_version();
+	unsigned long get_client_version();
 
-    const char * get_server_info    (MYSQL * mysql);
+	const char * get_server_info(MYSQL * mysql);
 
-    unsigned long get_server_version(MYSQL * mysql);
+	unsigned long get_server_version(MYSQL * mysql);
 
-    MYSQL *      init               (MYSQL * mysql);
+	MYSQL * init(MYSQL * mysql);
 
-    int          library_init       (int, char **, char **);
+	int library_init(int, char **, char **);
 
-    void         library_end        ();
+	void library_end();
 
-    my_bool      more_results       (MYSQL * mysql);
+	my_bool more_results(MYSQL * mysql);
 
-    int          next_result        (MYSQL * mysql);
+	int next_result(MYSQL * mysql);
 
-    unsigned int num_fields         (MYSQL_RES *);
+	unsigned int num_fields(MYSQL_RES *);
 
-    my_ulonglong num_rows            (MYSQL_RES *);
+	my_ulonglong num_rows(MYSQL_RES *);
 
-    int          options             (MYSQL *, enum mysql_option, const void *);
+	int options(MYSQL *, enum mysql_option, const void *);
 
-    int		     query               (MYSQL *, const char *);
+	int query(MYSQL *, const char *);
 
-    MYSQL *      real_connect        (MYSQL *       mysql
-                                            , const char *  host
-                                            , const char *  user
-                                            , const char *  passwd
-                                            , const char *  db
-                                            , unsigned int  port
-                                            , const char *  unix_socket
-                                            , unsigned long client_flag);
+	MYSQL * real_connect(MYSQL * mysql,
+						const char *  host,
+						const char *  user,
+						const char *  passwd,
+						const char *  db,
+						unsigned int  port,
+						const char *  unix_socket,
+						unsigned long client_flag);
 
-    int          real_query          (MYSQL *, const char *, unsigned long);
+	int real_query(MYSQL *, const char *, unsigned long);
 
-    my_bool      rollback            (MYSQL * mysql);
+	my_bool rollback(MYSQL * mysql);
 
-    const char * sqlstate            (MYSQL * mysql);
+	const char * sqlstate(MYSQL * mysql);
 
-    my_bool      ssl_set             (MYSQL * mysql
-                                            , const char * key
-                                            , const char * cert
-                                            , const char * ca
-                                            , const char * capath
-                                            , const char * cipher);
+	my_bool ssl_set(MYSQL * mysql,
+					const char * key,
+					const char * cert,
+					const char * ca,
+					const char * capath,
+					const char * cipher);
 
-    MYSQL_RES *  store_result        (MYSQL * mysql);
+	MYSQL_RES *  store_result(MYSQL * mysql);
 
-    MYSQL_RES *  use_result          (MYSQL * mysql);
+	MYSQL_RES *  use_result(MYSQL * mysql);
 
-    /* Prepared Statementstmt_* functions */
-    my_ulonglong stmt_affected_rows  (MYSQL_STMT *);
+	/* Prepared Statementstmt_* functions */
+	my_ulonglong stmt_affected_rows(MYSQL_STMT *);
 
-    my_bool      stmt_attr_set       (MYSQL_STMT *, enum enum_stmt_attr_type, const void *);
+	my_bool stmt_attr_set(MYSQL_STMT *, enum enum_stmt_attr_type, const void *);
 
-    my_bool      stmt_bind_param     (MYSQL_STMT *, MYSQL_BIND *);
+	my_bool stmt_bind_param(MYSQL_STMT *, MYSQL_BIND *);
 
-    my_bool      stmt_bind_result    (MYSQL_STMT *, MYSQL_BIND *);
+	my_bool stmt_bind_result(MYSQL_STMT *, MYSQL_BIND *);
 
-    my_bool      stmt_close          (MYSQL_STMT *);
+	my_bool stmt_close(MYSQL_STMT *);
 
-    void         stmt_data_seek      (MYSQL_STMT *
-                                            , my_ulonglong);
+	void stmt_data_seek(MYSQL_STMT *, my_ulonglong);
 
-    unsigned int stmt_errno          (MYSQL_STMT *);
+	unsigned int stmt_errno(MYSQL_STMT *);
 
-    const char * stmt_error          (MYSQL_STMT *);
+	const char * stmt_error(MYSQL_STMT *);
 
-    int          stmt_execute        (MYSQL_STMT *);
+	int stmt_execute(MYSQL_STMT *);
 
-    int          stmt_fetch          (MYSQL_STMT *);
+	int stmt_fetch(MYSQL_STMT *);
 
-    unsigned int stmt_field_count    (MYSQL_STMT *);
+	unsigned int stmt_field_count(MYSQL_STMT *);
 
-    MYSQL_STMT * stmt_init           (MYSQL * mysql);
+	MYSQL_STMT * stmt_init(MYSQL * mysql);
 
-    my_ulonglong stmt_num_rows       (MYSQL_STMT *);
+	my_ulonglong stmt_num_rows(MYSQL_STMT *);
 
-    unsigned long stmt_param_count    (MYSQL_STMT *);
+	unsigned long stmt_param_count(MYSQL_STMT *);
 
-    int          stmt_prepare        (MYSQL_STMT *
-                                            , const char *
-                                            , unsigned long);
+	int stmt_prepare(MYSQL_STMT *, const char *, unsigned long);
 
-    MYSQL_RES *  stmt_result_metadata(MYSQL_STMT *);
+	MYSQL_RES * stmt_result_metadata(MYSQL_STMT *);
 
-    my_bool      stmt_send_long_data (MYSQL_STMT * 
-                                            , unsigned int
-                                            , const char * 
-                                            , unsigned long);
+	my_bool stmt_send_long_data(MYSQL_STMT *, unsigned int, const char *, unsigned long);
 
-    const char * stmt_sqlstate       (MYSQL_STMT *);
+	const char * stmt_sqlstate(MYSQL_STMT *);
 
-    int          stmt_store_result   (MYSQL_STMT *); 
+	int stmt_store_result(MYSQL_STMT *);
 };
 
 } /* namespace NativeAPI */

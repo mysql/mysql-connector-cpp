@@ -32,9 +32,7 @@ class Statement_Proxy;
 
 class Connection_Proxy : public boost::noncopyable
 {
-
 public:
-
 	virtual ~Connection_Proxy(){}
 
 

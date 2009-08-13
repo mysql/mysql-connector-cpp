@@ -110,11 +110,12 @@ public:
 
 	const char * sqlstate(MYSQL *);
 
-	my_bool ssl_set(MYSQL * mysql, const char * key,
-										const char * cert,
-										const char * ca,
-										const char * capath,
-										const char * cipher);
+	my_bool ssl_set(MYSQL * mysql,
+					const char * key,
+					const char * cert,
+					const char * ca,
+					const char * capath,
+					const char * cipher);
 
 	MYSQL_RES * store_result(MYSQL *);
 
