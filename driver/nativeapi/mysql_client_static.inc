@@ -20,14 +20,14 @@ namespace mysql
 namespace NativeAPI
 {
 
-/* {{{ MySQL_Client_Loader::MySQL_Client_Static() */
+/* {{{ MySQL_Client_Static::MySQL_Client_Static() */
 MySQL_Client_Static::MySQL_Client_Static()
 {
 	this->library_init(0, NULL, NULL);
 }
 /* }}} */
 
-/* {{{ MySQL_Client_Loader::~MySQL_Client_Static() */
+/* {{{ MySQL_Client_Static::~MySQL_Client_Static() */
 MySQL_Client_Static::~MySQL_Client_Static()
 {
 	this->library_end();
@@ -36,7 +36,7 @@ MySQL_Client_Static::~MySQL_Client_Static()
 
 // MySQL C-API calls wrappers
 
-/* {{{ MySQL_Client_Loader::affected_rows() */
+/* {{{ MySQL_Client_Static::affected_rows() */
 my_ulonglong
 MySQL_Client_Static::affected_rows(MYSQL * mysql)
 {
@@ -45,7 +45,7 @@ MySQL_Client_Static::affected_rows(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::autocommit() */
+/* {{{ MySQL_Client_Static::autocommit() */
 my_bool
 MySQL_Client_Static::autocommit(MYSQL * mysql, my_bool mode)
 {
@@ -54,7 +54,7 @@ MySQL_Client_Static::autocommit(MYSQL * mysql, my_bool mode)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::close() */
+/* {{{ MySQL_Client_Static::close() */
 void
 MySQL_Client_Static::close(MYSQL * mysql)
 {
@@ -63,7 +63,7 @@ MySQL_Client_Static::close(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::commit() */
+/* {{{ MySQL_Client_Static::commit() */
 my_bool
 MySQL_Client_Static::commit(MYSQL * mysql)
 {
@@ -72,7 +72,7 @@ MySQL_Client_Static::commit(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::data_seek() */
+/* {{{ MySQL_Client_Static::data_seek() */
 void
 MySQL_Client_Static::data_seek(MYSQL_RES * result, my_ulonglong offset)
 {
@@ -80,7 +80,7 @@ MySQL_Client_Static::data_seek(MYSQL_RES * result, my_ulonglong offset)
 }
 /* }}} */
 
-/* {{{ MySQL_Client_Loader::debug() */
+/* {{{ MySQL_Client_Static::debug() */
 void
 MySQL_Client_Static::debug(const char * debug)
 {
@@ -89,7 +89,7 @@ MySQL_Client_Static::debug(const char * debug)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::mysql_errno() */
+/* {{{ MySQL_Client_Static::mysql_errno() */
 unsigned int
 MySQL_Client_Static::mysql_errno(MYSQL * mysql)
 {
@@ -98,7 +98,7 @@ MySQL_Client_Static::mysql_errno(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::error() */
+/* {{{ MySQL_Client_Static::error() */
 const char *
 MySQL_Client_Static::error(MYSQL * mysql)
 {
@@ -107,7 +107,7 @@ MySQL_Client_Static::error(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::fetch_field() */
+/* {{{ MySQL_Client_Static::fetch_field() */
 MYSQL_FIELD *
 MySQL_Client_Static::fetch_field(MYSQL_RES * result)
 {
@@ -115,7 +115,7 @@ MySQL_Client_Static::fetch_field(MYSQL_RES * result)
 }
 /* }}} */
 
-/* {{{ MySQL_Client_Loader::fetch_field_direct() */
+/* {{{ MySQL_Client_Static::fetch_field_direct() */
 MYSQL_FIELD *
 MySQL_Client_Static::fetch_field_direct(MYSQL_RES * result, unsigned int fieldnr)
 {
@@ -124,7 +124,7 @@ MySQL_Client_Static::fetch_field_direct(MYSQL_RES * result, unsigned int fieldnr
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::fetch_lengths() */
+/* {{{ MySQL_Client_Static::fetch_lengths() */
 unsigned long *
 MySQL_Client_Static::fetch_lengths(MYSQL_RES * result)
 {
@@ -133,7 +133,7 @@ MySQL_Client_Static::fetch_lengths(MYSQL_RES * result)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::fetch_row() */
+/* {{{ MySQL_Client_Static::fetch_row() */
 MYSQL_ROW
 MySQL_Client_Static::fetch_row(MYSQL_RES * result)
 {
@@ -142,7 +142,7 @@ MySQL_Client_Static::fetch_row(MYSQL_RES * result)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::field_count() */
+/* {{{ MySQL_Client_Static::field_count() */
 unsigned int
 MySQL_Client_Static::field_count(MYSQL * mysql)
 {
@@ -151,7 +151,7 @@ MySQL_Client_Static::field_count(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::free_result() */
+/* {{{ MySQL_Client_Static::free_result() */
 void
 MySQL_Client_Static::free_result(MYSQL_RES * result)
 {
@@ -160,7 +160,7 @@ MySQL_Client_Static::free_result(MYSQL_RES * result)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::get_client_version() */
+/* {{{ MySQL_Client_Static::get_client_version() */
 unsigned long
 MySQL_Client_Static::get_client_version()
 {
@@ -169,7 +169,7 @@ MySQL_Client_Static::get_client_version()
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::get_server_info() */
+/* {{{ MySQL_Client_Static::get_server_info() */
 const char *
 MySQL_Client_Static::get_server_info(MYSQL * mysql)
 {
@@ -178,7 +178,7 @@ MySQL_Client_Static::get_server_info(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::get_server_version() */
+/* {{{ MySQL_Client_Static::get_server_version() */
 unsigned long
 MySQL_Client_Static::get_server_version(MYSQL * mysql)
 {
@@ -187,7 +187,7 @@ MySQL_Client_Static::get_server_version(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::init() */
+/* {{{ MySQL_Client_Static::init() */
 MYSQL *
 MySQL_Client_Static::init(MYSQL * mysql)
 {
@@ -196,7 +196,7 @@ MySQL_Client_Static::init(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::library_init() */
+/* {{{ MySQL_Client_Static::library_init() */
 int
 MySQL_Client_Static::library_init(int argc,char **argv,char **groups)
 {
@@ -205,7 +205,7 @@ MySQL_Client_Static::library_init(int argc,char **argv,char **groups)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::library_end() */
+/* {{{ MySQL_Client_Static::library_end() */
 void
 MySQL_Client_Static::library_end()
 {
@@ -214,7 +214,7 @@ MySQL_Client_Static::library_end()
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::more_results() */
+/* {{{ MySQL_Client_Static::more_results() */
 my_bool
 MySQL_Client_Static::more_results(MYSQL * mysql)
 {
@@ -223,7 +223,7 @@ MySQL_Client_Static::more_results(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::next_result() */
+/* {{{ MySQL_Client_Static::next_result() */
 int
 MySQL_Client_Static::next_result(MYSQL * mysql)
 {
@@ -232,7 +232,7 @@ MySQL_Client_Static::next_result(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::num_fields() */
+/* {{{ MySQL_Client_Static::num_fields() */
 unsigned int
 MySQL_Client_Static::num_fields(MYSQL_RES * result)
 {
@@ -241,7 +241,7 @@ MySQL_Client_Static::num_fields(MYSQL_RES * result)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::num_rows() */
+/* {{{ MySQL_Client_Static::num_rows() */
 my_ulonglong
 MySQL_Client_Static::num_rows(MYSQL_RES * result)
 {
@@ -250,7 +250,7 @@ MySQL_Client_Static::num_rows(MYSQL_RES * result)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::options() */
+/* {{{ MySQL_Client_Static::options() */
 int
 MySQL_Client_Static::options(MYSQL * mysql, enum mysql_option option, const void *arg)
 {
@@ -260,7 +260,7 @@ MySQL_Client_Static::options(MYSQL * mysql, enum mysql_option option, const void
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::data_seek() */
+/* {{{ MySQL_Client_Static::data_seek() */
 int
 MySQL_Client_Static::query(MYSQL * mysql, const char *stmt_str)
 {
@@ -269,7 +269,7 @@ MySQL_Client_Static::query(MYSQL * mysql, const char *stmt_str)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::real_connect() */
+/* {{{ MySQL_Client_Static::real_connect() */
 MYSQL *
 MySQL_Client_Static::real_connect(MYSQL * mysql,
 								const char * host,
@@ -285,7 +285,7 @@ MySQL_Client_Static::real_connect(MYSQL * mysql,
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::real_query() */
+/* {{{ MySQL_Client_Static::real_query() */
 int
 MySQL_Client_Static::real_query(MYSQL *mysql,const char *stmt_str, unsigned long len)
 {
@@ -294,7 +294,7 @@ MySQL_Client_Static::real_query(MYSQL *mysql,const char *stmt_str, unsigned long
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::rollback() */
+/* {{{ MySQL_Client_Static::rollback() */
 my_bool
 MySQL_Client_Static::rollback(MYSQL * mysql)
 {
@@ -303,7 +303,7 @@ MySQL_Client_Static::rollback(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::sqlstate() */
+/* {{{ MySQL_Client_Static::sqlstate() */
 const char *
 MySQL_Client_Static::sqlstate(MYSQL * mysql)
 {
@@ -312,7 +312,7 @@ MySQL_Client_Static::sqlstate(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::ssl_set() */
+/* {{{ MySQL_Client_Static::ssl_set() */
 my_bool
 MySQL_Client_Static::ssl_set(MYSQL* mysql,
 							const char * key,
@@ -326,7 +326,7 @@ MySQL_Client_Static::ssl_set(MYSQL* mysql,
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::store_result() */
+/* {{{ MySQL_Client_Static::store_result() */
 MYSQL_RES *
 MySQL_Client_Static::store_result(MYSQL * mysql)
 {
@@ -335,7 +335,7 @@ MySQL_Client_Static::store_result(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::use_result() */
+/* {{{ MySQL_Client_Static::use_result() */
 MYSQL_RES *
 MySQL_Client_Static::use_result(MYSQL * mysql)
 {
@@ -345,7 +345,7 @@ MySQL_Client_Static::use_result(MYSQL * mysql)
 
 
 /* Prepared Statement mysql_stmt_* functions */
-/* {{{ MySQL_Client_Loader::stmt_affected_rows() */
+/* {{{ MySQL_Client_Static::stmt_affected_rows() */
 my_ulonglong
 MySQL_Client_Static::stmt_affected_rows(MYSQL_STMT *stmt)
 {
@@ -354,7 +354,7 @@ MySQL_Client_Static::stmt_affected_rows(MYSQL_STMT *stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_attr_set() */
+/* {{{ MySQL_Client_Static::stmt_attr_set() */
 my_bool
 MySQL_Client_Static::stmt_attr_set(MYSQL_STMT * stmt, enum enum_stmt_attr_type option, const void * arg)
 {
@@ -363,7 +363,7 @@ MySQL_Client_Static::stmt_attr_set(MYSQL_STMT * stmt, enum enum_stmt_attr_type o
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_bind_param() */
+/* {{{ MySQL_Client_Static::stmt_bind_param() */
 my_bool
 MySQL_Client_Static::stmt_bind_param(MYSQL_STMT * stmt, MYSQL_BIND * bind)
 {
@@ -372,7 +372,7 @@ MySQL_Client_Static::stmt_bind_param(MYSQL_STMT * stmt, MYSQL_BIND * bind)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_bind_result() */
+/* {{{ MySQL_Client_Static::stmt_bind_result() */
 my_bool
 MySQL_Client_Static::stmt_bind_result(MYSQL_STMT * stmt, MYSQL_BIND * bind)
 {
@@ -381,7 +381,7 @@ MySQL_Client_Static::stmt_bind_result(MYSQL_STMT * stmt, MYSQL_BIND * bind)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_close() */
+/* {{{ MySQL_Client_Static::stmt_close() */
 my_bool
 MySQL_Client_Static::stmt_close(MYSQL_STMT * stmt)
 {
@@ -390,7 +390,7 @@ MySQL_Client_Static::stmt_close(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_data_seek() */
+/* {{{ MySQL_Client_Static::stmt_data_seek() */
 void
 MySQL_Client_Static::stmt_data_seek(MYSQL_STMT * stmt, my_ulonglong row_nr)
 {
@@ -399,7 +399,7 @@ MySQL_Client_Static::stmt_data_seek(MYSQL_STMT * stmt, my_ulonglong row_nr)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_errno() */
+/* {{{ MySQL_Client_Static::stmt_errno() */
 unsigned int
 MySQL_Client_Static::stmt_errno(MYSQL_STMT * stmt)
 {
@@ -408,7 +408,7 @@ MySQL_Client_Static::stmt_errno(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_error() */
+/* {{{ MySQL_Client_Static::stmt_error() */
 const char *
 MySQL_Client_Static::stmt_error(MYSQL_STMT * stmt)
 {
@@ -417,7 +417,7 @@ MySQL_Client_Static::stmt_error(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_execute() */
+/* {{{ MySQL_Client_Static::stmt_execute() */
 int
 MySQL_Client_Static::stmt_execute(MYSQL_STMT * stmt)
 {
@@ -426,7 +426,7 @@ MySQL_Client_Static::stmt_execute(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::data_seek() */
+/* {{{ MySQL_Client_Static::data_seek() */
 int
 MySQL_Client_Static::stmt_fetch(MYSQL_STMT * stmt)
 {
@@ -435,7 +435,7 @@ MySQL_Client_Static::stmt_fetch(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_field_count() */
+/* {{{ MySQL_Client_Static::stmt_field_count() */
 unsigned int
 MySQL_Client_Static::stmt_field_count(MYSQL_STMT * stmt)
 {
@@ -444,7 +444,7 @@ MySQL_Client_Static::stmt_field_count(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_init() */
+/* {{{ MySQL_Client_Static::stmt_init() */
 MYSQL_STMT *
 MySQL_Client_Static::stmt_init(MYSQL * mysql)
 {
@@ -453,7 +453,7 @@ MySQL_Client_Static::stmt_init(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_num_rows() */
+/* {{{ MySQL_Client_Static::stmt_num_rows() */
 my_ulonglong
 MySQL_Client_Static::stmt_num_rows(MYSQL_STMT * stmt)
 {
@@ -462,7 +462,7 @@ MySQL_Client_Static::stmt_num_rows(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_param_count() */
+/* {{{ MySQL_Client_Static::stmt_param_count() */
 unsigned long
 MySQL_Client_Static::stmt_param_count(MYSQL_STMT * stmt)
 {
@@ -471,7 +471,7 @@ MySQL_Client_Static::stmt_param_count(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_prepare() */
+/* {{{ MySQL_Client_Static::stmt_prepare() */
 int
 MySQL_Client_Static::stmt_prepare(MYSQL_STMT * stmt, const char * stmt_str, unsigned long len)
 {
@@ -480,7 +480,7 @@ MySQL_Client_Static::stmt_prepare(MYSQL_STMT * stmt, const char * stmt_str, unsi
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_result_metadata() */
+/* {{{ MySQL_Client_Static::stmt_result_metadata() */
 MYSQL_RES *
 MySQL_Client_Static::stmt_result_metadata(MYSQL_STMT * stmt)
 {
@@ -489,7 +489,7 @@ MySQL_Client_Static::stmt_result_metadata(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_send_long_data() */
+/* {{{ MySQL_Client_Static::stmt_send_long_data() */
 my_bool
 MySQL_Client_Static::stmt_send_long_data(MYSQL_STMT * stmt,
 										unsigned int  par_number,
@@ -501,7 +501,7 @@ MySQL_Client_Static::stmt_send_long_data(MYSQL_STMT * stmt,
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_sqlstate() */
+/* {{{ MySQL_Client_Static::stmt_sqlstate() */
 const char *
 MySQL_Client_Static::stmt_sqlstate(MYSQL_STMT * stmt)
 {
@@ -510,7 +510,7 @@ MySQL_Client_Static::stmt_sqlstate(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_store_result() */
+/* {{{ MySQL_Client_Static::stmt_store_result() */
 int
 MySQL_Client_Static::stmt_store_result(MYSQL_STMT * stmt)
 {

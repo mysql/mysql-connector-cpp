@@ -22,7 +22,7 @@ namespace mysql
 namespace util
 {
 
-class MySQL_Client_Loader;
+class Libmysql_Dynamic_Proxy;
 
 }
 

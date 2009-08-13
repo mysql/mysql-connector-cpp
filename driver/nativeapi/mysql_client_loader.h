@@ -25,21 +25,21 @@ namespace mysql
 namespace NativeAPI
 {
 
-class MySQL_Client_Loader : public sql::mysql::util::LibraryLoader, public IMySQLCAPI
+class Libmysql_Dynamic_Proxy : public sql::mysql::util::LibraryLoader, public IMySQLCAPI
 {
 private:
 	void init_loader();
 
 public:
 
-	MySQL_Client_Loader();
+	Libmysql_Dynamic_Proxy();
 
-	MySQL_Client_Loader(const MySQL_Client_Loader &);
+	Libmysql_Dynamic_Proxy(const Libmysql_Dynamic_Proxy &);
 
-	MySQL_Client_Loader(const SQLString & path2libFile);
-	MySQL_Client_Loader(const SQLString & dir2look, const SQLString & libFileName);
+	Libmysql_Dynamic_Proxy(const SQLString & path2libFile);
+	Libmysql_Dynamic_Proxy(const SQLString & dir2look, const SQLString & libFileName);
 
-	virtual ~MySQL_Client_Loader();
+	virtual ~Libmysql_Dynamic_Proxy();
 
 
 	// MySQL C-API calls wrappers

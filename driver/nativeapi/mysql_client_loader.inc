@@ -35,8 +35,8 @@ FunctionType symbol_safe_cast( ::sql::mysql::util::SymbolHandle raw )
     return *reinterpret_cast<FunctionType*>(&raw);
 }
 
-/* {{{ MySQL_Client_Loader::MySQL_Client_Loader() */
-MySQL_Client_Loader::MySQL_Client_Loader()
+/* {{{ Libmysql_Dynamic_Proxy::Libmysql_Dynamic_Proxy() */
+Libmysql_Dynamic_Proxy::Libmysql_Dynamic_Proxy()
 	: LibraryLoader(baseName)
 {
 	init_loader();
@@ -44,8 +44,8 @@ MySQL_Client_Loader::MySQL_Client_Loader()
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::MySQL_Client_Loader() */
-MySQL_Client_Loader::MySQL_Client_Loader(const SQLString & path2libFile)
+/* {{{ Libmysql_Dynamic_Proxy::Libmysql_Dynamic_Proxy() */
+Libmysql_Dynamic_Proxy::Libmysql_Dynamic_Proxy(const SQLString & path2libFile)
 	: LibraryLoader(path2libFile.length() > 0 ? path2libFile : baseName)
 {
 	init_loader();
@@ -53,8 +53,8 @@ MySQL_Client_Loader::MySQL_Client_Loader(const SQLString & path2libFile)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::MySQL_Client_Loader() */
-MySQL_Client_Loader::MySQL_Client_Loader(const SQLString & dir2look, const SQLString & libFileName)
+/* {{{ Libmysql_Dynamic_Proxy::Libmysql_Dynamic_Proxy() */
+Libmysql_Dynamic_Proxy::Libmysql_Dynamic_Proxy(const SQLString & dir2look, const SQLString & libFileName)
 	: LibraryLoader(dir2look, libFileName.length() > 0 ? libFileName : baseName)
 {
 	init_loader();
@@ -62,8 +62,8 @@ MySQL_Client_Loader::MySQL_Client_Loader(const SQLString & dir2look, const SQLSt
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::~MySQL_Client_Loader() */
-MySQL_Client_Loader::~MySQL_Client_Loader()
+/* {{{ Libmysql_Dynamic_Proxy::~Libmysql_Dynamic_Proxy() */
+Libmysql_Dynamic_Proxy::~Libmysql_Dynamic_Proxy()
 {
     ptr2mysql_library_end endProc= symbol_safe_cast<ptr2mysql_library_end>(GetProcAddr("mysql_server_end"));
 	
@@ -74,9 +74,9 @@ MySQL_Client_Loader::~MySQL_Client_Loader()
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::init_loader() */
+/* {{{ Libmysql_Dynamic_Proxy::init_loader() */
 void
-MySQL_Client_Loader::init_loader()
+Libmysql_Dynamic_Proxy::init_loader()
 {
 	ptr2mysql_library_init initProc = symbol_safe_cast<ptr2mysql_library_init>(GetProcAddr("mysql_server_init"));
 	
@@ -92,9 +92,9 @@ MySQL_Client_Loader::init_loader()
 /************************************************************************/
 /* MySQL C-API calls wrappers											*/
 /************************************************************************/
-/* {{{ MySQL_Client_Loader::affected_rows() */
+/* {{{ Libmysql_Dynamic_Proxy::affected_rows() */
 my_ulonglong
-MySQL_Client_Loader::affected_rows(MYSQL * mysql)
+Libmysql_Dynamic_Proxy::affected_rows(MYSQL * mysql)
 {
 	ptr2mysql_affected_rows ptr2_affected_rows = symbol_safe_cast<ptr2mysql_affected_rows>(GetProcAddr("mysql_affected_rows"));
 
@@ -103,9 +103,9 @@ MySQL_Client_Loader::affected_rows(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::autocommit() */
+/* {{{ Libmysql_Dynamic_Proxy::autocommit() */
 my_bool
-MySQL_Client_Loader::autocommit(MYSQL * mysql, my_bool mode)
+Libmysql_Dynamic_Proxy::autocommit(MYSQL * mysql, my_bool mode)
 {
 	ptr2mysql_autocommit ptr2_autocommit = symbol_safe_cast<ptr2mysql_autocommit>(GetProcAddr("mysql_autocommit"));
 
@@ -114,9 +114,9 @@ MySQL_Client_Loader::autocommit(MYSQL * mysql, my_bool mode)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::close() */
+/* {{{ Libmysql_Dynamic_Proxy::close() */
 void
-MySQL_Client_Loader::close(MYSQL * mysql)
+Libmysql_Dynamic_Proxy::close(MYSQL * mysql)
 {
     ptr2mysql_close ptr2_close = symbol_safe_cast<ptr2mysql_close>(GetProcAddr("mysql_close"));
 
@@ -125,9 +125,9 @@ MySQL_Client_Loader::close(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::commit() */
+/* {{{ Libmysql_Dynamic_Proxy::commit() */
 my_bool
-MySQL_Client_Loader::commit(MYSQL * mysql)
+Libmysql_Dynamic_Proxy::commit(MYSQL * mysql)
 {
 	ptr2mysql_commit ptr2_commit = symbol_safe_cast<ptr2mysql_commit>(GetProcAddr("mysql_commit"));
 
@@ -136,9 +136,9 @@ MySQL_Client_Loader::commit(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::data_seek() */
+/* {{{ Libmysql_Dynamic_Proxy::data_seek() */
 void
-MySQL_Client_Loader::data_seek(MYSQL_RES * result, my_ulonglong offset)
+Libmysql_Dynamic_Proxy::data_seek(MYSQL_RES * result, my_ulonglong offset)
 {
 	ptr2mysql_data_seek ptr2_data_seek = symbol_safe_cast<ptr2mysql_data_seek>(GetProcAddr("mysql_data_seek"));
 
@@ -147,9 +147,9 @@ MySQL_Client_Loader::data_seek(MYSQL_RES * result, my_ulonglong offset)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::debug() */
+/* {{{ Libmysql_Dynamic_Proxy::debug() */
 void
-MySQL_Client_Loader::debug(const char * debug)
+Libmysql_Dynamic_Proxy::debug(const char * debug)
 {
 	ptr2mysql_debug ptr2_debug = symbol_safe_cast<ptr2mysql_debug>(GetProcAddr("mysql_debug"));
 
@@ -158,9 +158,9 @@ MySQL_Client_Loader::debug(const char * debug)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::errno() */
+/* {{{ Libmysql_Dynamic_Proxy::errno() */
 unsigned int
-MySQL_Client_Loader::mysql_errno(MYSQL * mysql)
+Libmysql_Dynamic_Proxy::mysql_errno(MYSQL * mysql)
 {
 	ptr2mysql_errno ptr2_errno = symbol_safe_cast<ptr2mysql_errno>(GetProcAddr("mysql_errno"));
 
@@ -169,9 +169,9 @@ MySQL_Client_Loader::mysql_errno(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::error() */
+/* {{{ Libmysql_Dynamic_Proxy::error() */
 const char *
-MySQL_Client_Loader::error(MYSQL * mysql)
+Libmysql_Dynamic_Proxy::error(MYSQL * mysql)
 {
 	ptr2mysql_error ptr2_error = symbol_safe_cast<ptr2mysql_error>(GetProcAddr("mysql_error"));
 
@@ -180,9 +180,9 @@ MySQL_Client_Loader::error(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::fetch_field() */
+/* {{{ Libmysql_Dynamic_Proxy::fetch_field() */
 MYSQL_FIELD *
-MySQL_Client_Loader::fetch_field(MYSQL_RES * result)
+Libmysql_Dynamic_Proxy::fetch_field(MYSQL_RES * result)
 {
 	ptr2mysql_fetch_field ptr2_fetch_field = symbol_safe_cast<ptr2mysql_fetch_field>(GetProcAddr("mysql_fetch_field"));
 
@@ -191,9 +191,9 @@ MySQL_Client_Loader::fetch_field(MYSQL_RES * result)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::fetch_field_direct() */
+/* {{{ Libmysql_Dynamic_Proxy::fetch_field_direct() */
 MYSQL_FIELD *
-MySQL_Client_Loader::fetch_field_direct(MYSQL_RES * result, unsigned int fieldnr)
+Libmysql_Dynamic_Proxy::fetch_field_direct(MYSQL_RES * result, unsigned int fieldnr)
 {
 	ptr2mysql_fetch_field_direct ptr2fetchFieldDirect=
         symbol_safe_cast<ptr2mysql_fetch_field_direct>(GetProcAddr("mysql_fetch_field_direct"));
@@ -203,9 +203,9 @@ MySQL_Client_Loader::fetch_field_direct(MYSQL_RES * result, unsigned int fieldnr
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::fetch_lengths() */
+/* {{{ Libmysql_Dynamic_Proxy::fetch_lengths() */
 unsigned long *
-MySQL_Client_Loader::fetch_lengths(MYSQL_RES * result)
+Libmysql_Dynamic_Proxy::fetch_lengths(MYSQL_RES * result)
 {
 	ptr2mysql_fetch_lengths ptr2_fetch_lengths = symbol_safe_cast<ptr2mysql_fetch_lengths>(GetProcAddr("mysql_fetch_lengths"));
 
@@ -214,9 +214,9 @@ MySQL_Client_Loader::fetch_lengths(MYSQL_RES * result)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::fetch_row() */
+/* {{{ Libmysql_Dynamic_Proxy::fetch_row() */
 MYSQL_ROW
-MySQL_Client_Loader::fetch_row(MYSQL_RES * result)
+Libmysql_Dynamic_Proxy::fetch_row(MYSQL_RES * result)
 {
 	ptr2mysql_fetch_row ptr2_fetch_row = symbol_safe_cast<ptr2mysql_fetch_row>(GetProcAddr("mysql_fetch_row"));
 
@@ -225,9 +225,9 @@ MySQL_Client_Loader::fetch_row(MYSQL_RES * result)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::field_count() */
+/* {{{ Libmysql_Dynamic_Proxy::field_count() */
 unsigned int
-MySQL_Client_Loader::field_count(MYSQL * mysql)
+Libmysql_Dynamic_Proxy::field_count(MYSQL * mysql)
 {
 	ptr2mysql_field_count ptr2_field_count = symbol_safe_cast<ptr2mysql_field_count>(GetProcAddr("mysql_field_count"));
 
@@ -236,9 +236,9 @@ MySQL_Client_Loader::field_count(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::free_result() */
+/* {{{ Libmysql_Dynamic_Proxy::free_result() */
 void
-MySQL_Client_Loader::free_result(MYSQL_RES * result)
+Libmysql_Dynamic_Proxy::free_result(MYSQL_RES * result)
 {
 	ptr2mysql_free_result ptr2_free_result = symbol_safe_cast<ptr2mysql_free_result>(GetProcAddr("mysql_free_result"));
 
@@ -247,9 +247,9 @@ MySQL_Client_Loader::free_result(MYSQL_RES * result)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::get_client_version() */
+/* {{{ Libmysql_Dynamic_Proxy::get_client_version() */
 unsigned long
-MySQL_Client_Loader::get_client_version()
+Libmysql_Dynamic_Proxy::get_client_version()
 {
 	ptr2mysql_get_client_version ptr2_get_client_version=
 		(ptr2mysql_get_client_version)(GetProcAddr("mysql_get_client_version"));
@@ -259,9 +259,9 @@ MySQL_Client_Loader::get_client_version()
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::get_server_info() */
+/* {{{ Libmysql_Dynamic_Proxy::get_server_info() */
 const char *
-MySQL_Client_Loader::get_server_info(MYSQL * mysql)
+Libmysql_Dynamic_Proxy::get_server_info(MYSQL * mysql)
 {
 	ptr2mysql_get_server_info ptr2_get_server_info = symbol_safe_cast<ptr2mysql_get_server_info>(GetProcAddr("mysql_get_server_info"));
 
@@ -270,9 +270,9 @@ MySQL_Client_Loader::get_server_info(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::get_server_version() */
+/* {{{ Libmysql_Dynamic_Proxy::get_server_version() */
 unsigned long
-MySQL_Client_Loader::get_server_version(MYSQL * mysql)
+Libmysql_Dynamic_Proxy::get_server_version(MYSQL * mysql)
 {
 	ptr2mysql_get_server_version ptr2_get_server_version = symbol_safe_cast<ptr2mysql_get_server_version>(GetProcAddr("mysql_get_server_version"));
 
@@ -281,9 +281,9 @@ MySQL_Client_Loader::get_server_version(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::init() */
+/* {{{ Libmysql_Dynamic_Proxy::init() */
 MYSQL *
-MySQL_Client_Loader::init(MYSQL * mysql)
+Libmysql_Dynamic_Proxy::init(MYSQL * mysql)
 {
 	ptr2mysql_init ptr2init = symbol_safe_cast<ptr2mysql_init>(GetProcAddr("mysql_init"));
 
@@ -292,9 +292,9 @@ MySQL_Client_Loader::init(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::library_init() */
+/* {{{ Libmysql_Dynamic_Proxy::library_init() */
 int
-MySQL_Client_Loader::library_init(int argc,char **argv,char **groups)
+Libmysql_Dynamic_Proxy::library_init(int argc,char **argv,char **groups)
 {
 	ptr2mysql_library_init ptr2_library_init = symbol_safe_cast<ptr2mysql_library_init>(GetProcAddr("mysql_library_init"));
 
@@ -303,9 +303,9 @@ MySQL_Client_Loader::library_init(int argc,char **argv,char **groups)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::library_end() */
+/* {{{ Libmysql_Dynamic_Proxy::library_end() */
 void
-MySQL_Client_Loader::library_end()
+Libmysql_Dynamic_Proxy::library_end()
 {
 	ptr2mysql_library_end ptr2_library_end = symbol_safe_cast<ptr2mysql_library_end>(GetProcAddr("mysql_library_end"));
 
@@ -314,9 +314,9 @@ MySQL_Client_Loader::library_end()
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::more_results() */
+/* {{{ Libmysql_Dynamic_Proxy::more_results() */
 my_bool
-MySQL_Client_Loader::more_results(MYSQL * mysql)
+Libmysql_Dynamic_Proxy::more_results(MYSQL * mysql)
 {
 	ptr2mysql_more_results ptr2_more_results = symbol_safe_cast<ptr2mysql_more_results>(GetProcAddr("mysql_more_results"));
 
@@ -325,9 +325,9 @@ MySQL_Client_Loader::more_results(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::next_result() */
+/* {{{ Libmysql_Dynamic_Proxy::next_result() */
 int
-MySQL_Client_Loader::next_result(MYSQL * mysql)
+Libmysql_Dynamic_Proxy::next_result(MYSQL * mysql)
 {
 	ptr2mysql_next_result ptr2_next_result = symbol_safe_cast<ptr2mysql_next_result>(GetProcAddr("mysql_next_result"));
 
@@ -336,9 +336,9 @@ MySQL_Client_Loader::next_result(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::num_fields() */
+/* {{{ Libmysql_Dynamic_Proxy::num_fields() */
 unsigned int
-MySQL_Client_Loader::num_fields(MYSQL_RES * result)
+Libmysql_Dynamic_Proxy::num_fields(MYSQL_RES * result)
 {
 	ptr2mysql_num_fields ptr2_num_fields = symbol_safe_cast<ptr2mysql_num_fields>(GetProcAddr("mysql_num_fields"));
 
@@ -347,9 +347,9 @@ MySQL_Client_Loader::num_fields(MYSQL_RES * result)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::num_rows() */
+/* {{{ Libmysql_Dynamic_Proxy::num_rows() */
 my_ulonglong
-MySQL_Client_Loader::num_rows(MYSQL_RES * result)
+Libmysql_Dynamic_Proxy::num_rows(MYSQL_RES * result)
 {
 	ptr2mysql_num_rows ptr2_num_rows = symbol_safe_cast<ptr2mysql_num_rows>(GetProcAddr("mysql_num_rows"));
 
@@ -358,9 +358,9 @@ MySQL_Client_Loader::num_rows(MYSQL_RES * result)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::options() */
+/* {{{ Libmysql_Dynamic_Proxy::options() */
 int
-MySQL_Client_Loader::options(MYSQL * mysql, enum mysql_option option, const void *arg)
+Libmysql_Dynamic_Proxy::options(MYSQL * mysql, enum mysql_option option, const void *arg)
 {
 	ptr2mysql_options ptr2_options = symbol_safe_cast<ptr2mysql_options>(GetProcAddr("mysql_options"));
 
@@ -369,9 +369,9 @@ MySQL_Client_Loader::options(MYSQL * mysql, enum mysql_option option, const void
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::query() */
+/* {{{ Libmysql_Dynamic_Proxy::query() */
 int
-MySQL_Client_Loader::query(MYSQL * mysql, const char *stmt_str)
+Libmysql_Dynamic_Proxy::query(MYSQL * mysql, const char *stmt_str)
 {
 	ptr2mysql_query ptr2_query = symbol_safe_cast<ptr2mysql_query>(GetProcAddr("mysql_query"));
 
@@ -380,9 +380,9 @@ MySQL_Client_Loader::query(MYSQL * mysql, const char *stmt_str)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::real_connect() */
+/* {{{ Libmysql_Dynamic_Proxy::real_connect() */
 MYSQL *
-MySQL_Client_Loader::real_connect(MYSQL * mysql,
+Libmysql_Dynamic_Proxy::real_connect(MYSQL * mysql,
 												const char * host,
 												const char * user,
 												const char * passwd,
@@ -399,9 +399,9 @@ MySQL_Client_Loader::real_connect(MYSQL * mysql,
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::real_query() */
+/* {{{ Libmysql_Dynamic_Proxy::real_query() */
 int
-MySQL_Client_Loader::real_query(MYSQL *mysql,const char *stmt_str, unsigned long len)
+Libmysql_Dynamic_Proxy::real_query(MYSQL *mysql,const char *stmt_str, unsigned long len)
 {
 	ptr2mysql_real_query ptr2_real_query = symbol_safe_cast<ptr2mysql_real_query>(GetProcAddr("mysql_real_query"));
 
@@ -410,9 +410,9 @@ MySQL_Client_Loader::real_query(MYSQL *mysql,const char *stmt_str, unsigned long
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::rollback() */
+/* {{{ Libmysql_Dynamic_Proxy::rollback() */
 my_bool
-MySQL_Client_Loader::rollback(MYSQL * mysql)
+Libmysql_Dynamic_Proxy::rollback(MYSQL * mysql)
 {
 	ptr2mysql_rollback ptr2_rollback = symbol_safe_cast<ptr2mysql_rollback>(GetProcAddr("mysql_rollback"));
 
@@ -421,9 +421,9 @@ MySQL_Client_Loader::rollback(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::sqlstate() */
+/* {{{ Libmysql_Dynamic_Proxy::sqlstate() */
 const char *
-MySQL_Client_Loader::sqlstate(MYSQL * mysql)
+Libmysql_Dynamic_Proxy::sqlstate(MYSQL * mysql)
 {
 	ptr2mysql_sqlstate ptr2_sqlstate = symbol_safe_cast<ptr2mysql_sqlstate>(GetProcAddr("mysql_sqlstate"));
 
@@ -432,9 +432,9 @@ MySQL_Client_Loader::sqlstate(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::ssl_set() */
+/* {{{ Libmysql_Dynamic_Proxy::ssl_set() */
 my_bool
-MySQL_Client_Loader::ssl_set(MYSQL * mysql,
+Libmysql_Dynamic_Proxy::ssl_set(MYSQL * mysql,
 											const char * key,
 											const char * cert,
 											const char * ca,
@@ -448,9 +448,9 @@ MySQL_Client_Loader::ssl_set(MYSQL * mysql,
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::store_result() */
+/* {{{ Libmysql_Dynamic_Proxy::store_result() */
 MYSQL_RES *
-MySQL_Client_Loader::store_result(MYSQL * mysql)
+Libmysql_Dynamic_Proxy::store_result(MYSQL * mysql)
 {
 	ptr2mysql_store_result ptr2_store_result = symbol_safe_cast<ptr2mysql_store_result>(GetProcAddr("mysql_store_result"));
 
@@ -459,9 +459,9 @@ MySQL_Client_Loader::store_result(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::use_result() */
+/* {{{ Libmysql_Dynamic_Proxy::use_result() */
 MYSQL_RES *
-MySQL_Client_Loader::use_result(MYSQL * mysql)
+Libmysql_Dynamic_Proxy::use_result(MYSQL * mysql)
 {
 	ptr2mysql_use_result ptr2_use_result = symbol_safe_cast<ptr2mysql_use_result>(GetProcAddr("mysql_use_result"));
 
@@ -472,9 +472,9 @@ MySQL_Client_Loader::use_result(MYSQL * mysql)
 
 /* Prepared Statement mysql_stmt_* functions */
 
-/* {{{ MySQL_Client_Loader::stmt_affected_rows() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_affected_rows() */
 my_ulonglong
-MySQL_Client_Loader::stmt_affected_rows(MYSQL_STMT *stmt)
+Libmysql_Dynamic_Proxy::stmt_affected_rows(MYSQL_STMT *stmt)
 {
 	ptr2mysql_stmt_affected_rows ptr2_stmt_affected_rows = symbol_safe_cast<ptr2mysql_stmt_affected_rows>(GetProcAddr("mysql_stmt_affected_rows"));
 
@@ -483,9 +483,9 @@ MySQL_Client_Loader::stmt_affected_rows(MYSQL_STMT *stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_attr_set() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_attr_set() */
 my_bool
-MySQL_Client_Loader::stmt_attr_set(MYSQL_STMT * stmt, enum enum_stmt_attr_type option, const void * arg)
+Libmysql_Dynamic_Proxy::stmt_attr_set(MYSQL_STMT * stmt, enum enum_stmt_attr_type option, const void * arg)
 {
 	ptr2mysql_stmt_attr_set ptr2_stmt_attr_set = symbol_safe_cast<ptr2mysql_stmt_attr_set>(GetProcAddr("mysql_stmt_attr_set"));
 
@@ -494,9 +494,9 @@ MySQL_Client_Loader::stmt_attr_set(MYSQL_STMT * stmt, enum enum_stmt_attr_type o
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_bind_param() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_bind_param() */
 my_bool
-MySQL_Client_Loader::stmt_bind_param(MYSQL_STMT * stmt, MYSQL_BIND * bind)
+Libmysql_Dynamic_Proxy::stmt_bind_param(MYSQL_STMT * stmt, MYSQL_BIND * bind)
 {
 	ptr2mysql_stmt_bind_param ptr2_stmt_bind_param = symbol_safe_cast<ptr2mysql_stmt_bind_param>(GetProcAddr("mysql_stmt_bind_param"));
 
@@ -505,9 +505,9 @@ MySQL_Client_Loader::stmt_bind_param(MYSQL_STMT * stmt, MYSQL_BIND * bind)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_bind_result() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_bind_result() */
 my_bool
-MySQL_Client_Loader::stmt_bind_result(MYSQL_STMT * stmt, MYSQL_BIND * bind)
+Libmysql_Dynamic_Proxy::stmt_bind_result(MYSQL_STMT * stmt, MYSQL_BIND * bind)
 {
 	ptr2mysql_stmt_bind_result ptr2_stmt_bind_result = symbol_safe_cast<ptr2mysql_stmt_bind_result>(GetProcAddr("mysql_stmt_bind_result"));
 
@@ -516,9 +516,9 @@ MySQL_Client_Loader::stmt_bind_result(MYSQL_STMT * stmt, MYSQL_BIND * bind)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_close() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_close() */
 my_bool
-MySQL_Client_Loader::stmt_close(MYSQL_STMT * stmt)
+Libmysql_Dynamic_Proxy::stmt_close(MYSQL_STMT * stmt)
 {
 	ptr2mysql_stmt_close ptr2_stmt_close = symbol_safe_cast<ptr2mysql_stmt_close>(GetProcAddr("mysql_stmt_close"));
 
@@ -527,9 +527,9 @@ MySQL_Client_Loader::stmt_close(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_data_seek() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_data_seek() */
 void
-MySQL_Client_Loader::stmt_data_seek(MYSQL_STMT * stmt, my_ulonglong row_nr)
+Libmysql_Dynamic_Proxy::stmt_data_seek(MYSQL_STMT * stmt, my_ulonglong row_nr)
 {
 	ptr2mysql_stmt_data_seek ptr2_stmt_data_seek = symbol_safe_cast<ptr2mysql_stmt_data_seek>(GetProcAddr("mysql_stmt_data_seek"));
 
@@ -538,9 +538,9 @@ MySQL_Client_Loader::stmt_data_seek(MYSQL_STMT * stmt, my_ulonglong row_nr)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_errno() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_errno() */
 unsigned int
-MySQL_Client_Loader::stmt_errno(MYSQL_STMT * stmt)
+Libmysql_Dynamic_Proxy::stmt_errno(MYSQL_STMT * stmt)
 {
 	ptr2mysql_stmt_errno ptr2_stmt_errno = symbol_safe_cast<ptr2mysql_stmt_errno>(GetProcAddr("mysql_stmt_errno"));
 
@@ -549,9 +549,9 @@ MySQL_Client_Loader::stmt_errno(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_error() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_error() */
 const char *
-MySQL_Client_Loader::stmt_error(MYSQL_STMT * stmt)
+Libmysql_Dynamic_Proxy::stmt_error(MYSQL_STMT * stmt)
 {
 	ptr2mysql_stmt_error ptr2_stmt_error = symbol_safe_cast<ptr2mysql_stmt_error>(GetProcAddr("mysql_stmt_error"));
 
@@ -560,9 +560,9 @@ MySQL_Client_Loader::stmt_error(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_execute() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_execute() */
 int
-MySQL_Client_Loader::stmt_execute(MYSQL_STMT * stmt)
+Libmysql_Dynamic_Proxy::stmt_execute(MYSQL_STMT * stmt)
 {
 	ptr2mysql_stmt_execute ptr2_stmt_execute = symbol_safe_cast<ptr2mysql_stmt_execute>(GetProcAddr("mysql_stmt_execute"));
 
@@ -571,9 +571,9 @@ MySQL_Client_Loader::stmt_execute(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_fetch() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_fetch() */
 int
-MySQL_Client_Loader::stmt_fetch(MYSQL_STMT * stmt)
+Libmysql_Dynamic_Proxy::stmt_fetch(MYSQL_STMT * stmt)
 {
 	ptr2mysql_stmt_fetch ptr2_stmt_fetch = symbol_safe_cast<ptr2mysql_stmt_fetch>(GetProcAddr("mysql_stmt_fetch"));
 
@@ -582,9 +582,9 @@ MySQL_Client_Loader::stmt_fetch(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_field_count() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_field_count() */
 unsigned int
-MySQL_Client_Loader::stmt_field_count(MYSQL_STMT * stmt)
+Libmysql_Dynamic_Proxy::stmt_field_count(MYSQL_STMT * stmt)
 {
 	ptr2mysql_stmt_field_count ptr2_stmt_field_count = symbol_safe_cast<ptr2mysql_stmt_field_count>(GetProcAddr("mysql_stmt_field_count"));
 
@@ -593,9 +593,9 @@ MySQL_Client_Loader::stmt_field_count(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_init() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_init() */
 MYSQL_STMT *
-MySQL_Client_Loader::stmt_init(MYSQL * mysql)
+Libmysql_Dynamic_Proxy::stmt_init(MYSQL * mysql)
 {
 	ptr2mysql_stmt_init ptr2_stmt_init = symbol_safe_cast<ptr2mysql_stmt_init>(GetProcAddr("mysql_stmt_init"));
 
@@ -604,9 +604,9 @@ MySQL_Client_Loader::stmt_init(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_num_rows() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_num_rows() */
 my_ulonglong
-MySQL_Client_Loader::stmt_num_rows(MYSQL_STMT * stmt)
+Libmysql_Dynamic_Proxy::stmt_num_rows(MYSQL_STMT * stmt)
 {
 	ptr2mysql_stmt_num_rows ptr2_stmt_num_rows = symbol_safe_cast<ptr2mysql_stmt_num_rows>(GetProcAddr("mysql_stmt_num_rows"));
 
@@ -615,9 +615,9 @@ MySQL_Client_Loader::stmt_num_rows(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_param_count() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_param_count() */
 unsigned long
-MySQL_Client_Loader::stmt_param_count(MYSQL_STMT * stmt)
+Libmysql_Dynamic_Proxy::stmt_param_count(MYSQL_STMT * stmt)
 {
 	ptr2mysql_stmt_param_count ptr2_stmt_param_count = symbol_safe_cast<ptr2mysql_stmt_param_count>(GetProcAddr("mysql_stmt_param_count"));
 
@@ -626,9 +626,9 @@ MySQL_Client_Loader::stmt_param_count(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_prepare() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_prepare() */
 int
-MySQL_Client_Loader::stmt_prepare(MYSQL_STMT * stmt, const char * stmt_str, unsigned long len)
+Libmysql_Dynamic_Proxy::stmt_prepare(MYSQL_STMT * stmt, const char * stmt_str, unsigned long len)
 {
 	ptr2mysql_stmt_prepare ptr2_stmt_prepare = symbol_safe_cast<ptr2mysql_stmt_prepare>(GetProcAddr("mysql_stmt_prepare"));
 
@@ -637,9 +637,9 @@ MySQL_Client_Loader::stmt_prepare(MYSQL_STMT * stmt, const char * stmt_str, unsi
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_result_metadata() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_result_metadata() */
 MYSQL_RES *
-MySQL_Client_Loader::stmt_result_metadata(MYSQL_STMT * stmt)
+Libmysql_Dynamic_Proxy::stmt_result_metadata(MYSQL_STMT * stmt)
 {
 	ptr2mysql_stmt_result_metadata ptr2_stmt_result_metadata = symbol_safe_cast<ptr2mysql_stmt_result_metadata>(GetProcAddr("mysql_stmt_result_metadata"));
 
@@ -648,9 +648,9 @@ MySQL_Client_Loader::stmt_result_metadata(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_send_long_data() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_send_long_data() */
 my_bool
-MySQL_Client_Loader::stmt_send_long_data(MYSQL_STMT * stmt, unsigned int par_number, const char * data, unsigned long len)
+Libmysql_Dynamic_Proxy::stmt_send_long_data(MYSQL_STMT * stmt, unsigned int par_number, const char * data, unsigned long len)
 {
 	ptr2mysql_stmt_send_long_data ptr2_stmt_send_long_data = symbol_safe_cast<ptr2mysql_stmt_send_long_data>(GetProcAddr("mysql_stmt_send_long_data"));
 
@@ -659,9 +659,9 @@ MySQL_Client_Loader::stmt_send_long_data(MYSQL_STMT * stmt, unsigned int par_num
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_sqlstate() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_sqlstate() */
 const char *
-MySQL_Client_Loader::stmt_sqlstate(MYSQL_STMT * stmt)
+Libmysql_Dynamic_Proxy::stmt_sqlstate(MYSQL_STMT * stmt)
 {
 	ptr2mysql_stmt_sqlstate ptr2_stmt_sqlstate = symbol_safe_cast<ptr2mysql_stmt_sqlstate>(GetProcAddr("mysql_stmt_sqlstate"));
 
@@ -670,9 +670,9 @@ MySQL_Client_Loader::stmt_sqlstate(MYSQL_STMT * stmt)
 /* }}} */
 
 
-/* {{{ MySQL_Client_Loader::stmt_store_result() */
+/* {{{ Libmysql_Dynamic_Proxy::stmt_store_result() */
 int
-MySQL_Client_Loader::stmt_store_result(MYSQL_STMT * stmt)
+Libmysql_Dynamic_Proxy::stmt_store_result(MYSQL_STMT * stmt)
 {
 	ptr2mysql_stmt_store_result ptr2_stmt_store_result = symbol_safe_cast<ptr2mysql_stmt_store_result>(GetProcAddr("mysql_stmt_store_result"));
 

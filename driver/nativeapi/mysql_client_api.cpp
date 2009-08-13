@@ -45,7 +45,7 @@ boost::shared_ptr<IMySQLCAPI> getCApiHandle( const sql::SQLString & name )
     } else {
         boost::shared_ptr<IMySQLCAPI> newWrapper;
 
-        newWrapper.reset(new MySQL_Client_Loader(name));
+        newWrapper.reset(new Libmysql_Dynamic_Proxy(name));
         wrapper[name] = newWrapper;
 
         return newWrapper;
