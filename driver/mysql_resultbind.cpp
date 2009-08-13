@@ -97,7 +97,7 @@ allocate_buffer_for_field(const MYSQL_FIELD * const field)
 /* {{{ MySQL_ResultBind::MySQL_ResultBind -I- */
 MySQL_ResultBind::MySQL_ResultBind( boost::shared_ptr< NativeAPI::Statement_Proxy > & stmt,
 									boost::shared_ptr< MySQL_DebugLogger > & log)
-	: num_fields(0), is_null(NULL), err(NULL), len(NULL), proxy(), logger(log), rbind(NULL)
+	: num_fields(0), is_null(NULL), err(NULL), len(NULL), proxy(stmt), logger(log), rbind(NULL)
 {
 }
 /* }}} */
