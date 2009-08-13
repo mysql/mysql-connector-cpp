@@ -25,21 +25,21 @@ namespace mysql
 namespace NativeAPI
 {
 
-class Libmysql_Dynamic_Proxy : public sql::mysql::util::LibraryLoader, public IMySQLCAPI
+class LibmysqlDynamicProxy : public sql::mysql::util::LibraryLoader, public IMySQLCAPI
 {
 private:
 	void init_loader();
 
 public:
 
-	Libmysql_Dynamic_Proxy();
+	LibmysqlDynamicProxy();
 
-	Libmysql_Dynamic_Proxy(const Libmysql_Dynamic_Proxy &);
+	LibmysqlDynamicProxy(const LibmysqlDynamicProxy &);
 
-	Libmysql_Dynamic_Proxy(const SQLString & path2libFile);
-	Libmysql_Dynamic_Proxy(const SQLString & dir2look, const SQLString & libFileName);
+	LibmysqlDynamicProxy(const SQLString & path2libFile);
+	LibmysqlDynamicProxy(const SQLString & dir2look, const SQLString & libFileName);
 
-	virtual ~Libmysql_Dynamic_Proxy();
+	virtual ~LibmysqlDynamicProxy();
 
 
 	// MySQL C-API calls wrappers
@@ -96,13 +96,13 @@ public:
 
 	int query(MYSQL *, const char *);
 
-	MYSQL * real_connect(MYSQL * mysql, const char *  host
-											, const char *  user
-											, const char *  passwd
-											, const char *  db
-											, unsigned int  port
-											, const char *  unix_socket
-											, unsigned long client_flag);
+	MYSQL * real_connect(MYSQL * mysql, const char *  host,
+							const char *  user,
+							const char *  passwd,
+							const char *  db,
+							unsigned int  port,
+							const char *  unix_socket,
+							unsigned long client_flag);
 
 	int real_query(MYSQL *, const char *, unsigned long);
 
@@ -110,7 +110,7 @@ public:
 
 	const char * sqlstate(MYSQL *);
 
-	my_bool ssl_set(MYSQL * mysql,const char * key,
+	my_bool ssl_set(MYSQL * mysql, const char * key,
 										const char * cert,
 										const char * ca,
 										const char * capath,
