@@ -77,12 +77,12 @@ SET(MYSQLCPPCONN_SOURCES
 	mysql_statement.cpp
 	mysql_util.cpp
 	mysql_warning.cpp
-  nativeapi/mysql_connection_proxy.cpp
-  nativeapi/mysql_statement_proxy.cpp
-  nativeapi/mysql_client_api.cpp
-  nativeapi/mysql_resultset_proxy.cpp
-	nativeapi/mysql_lib_loader.cpp
-  nativeapi/mysql_client.cpp)
+	nativeapi/mysql_connection_proxy.cpp
+	nativeapi/mysql_statement_proxy.cpp
+	nativeapi/mysql_client_api.cpp
+	nativeapi/mysql_resultset_proxy.cpp
+	nativeapi/library_loader.cpp
+	nativeapi/mysql_client.cpp)
 
 
 IF(WIN32)
@@ -106,33 +106,28 @@ IF(WIN32)
 		mysql_statement.h
 		mysql_util.h
 		mysql_warning.h
-    nativeapi/mysql_connection_proxy.h
-    nativeapi/connection_proxy.h
-    nativeapi/mysql_statement_proxy.h
-    nativeapi/statement_proxy.h
+		nativeapi/mysql_connection_proxy.h
+		nativeapi/connection_proxy.h
+		nativeapi/mysql_statement_proxy.h
+		nativeapi/statement_proxy.h
 		nativeapi/mysql_client_api.h
-    nativeapi/mysql_resultset_proxy.h
-    nativeapi/resultset_proxy.h
-    )
+		nativeapi/mysql_resultset_proxy.h
+		nativeapi/resultset_proxy.h
+	)
 
 	IF(MYSQLCLIENT_STATIC_BINDING)
-	  SET(MYSQLCPPCONN_SOURCES
-      ${MYSQLCPPCONN_SOURCES}
-      nativeapi/mysql_client_static.inc
-      nativeapi/mysql_client_static.h
-    )
+		SET(MYSQLCPPCONN_SOURCES ${MYSQLCPPCONN_SOURCES}
+									nativeapi/libmysql_static_proxy.cpp
+									nativeapi/libmysql_static_proxy.h)
 	ELSE(MYSQLCLIENT_STATIC_BINDING)
-    SET(MYSQLCPPCONN_SOURCES
-      ${MYSQLCPPCONN_SOURCES}
-			nativeapi/mysql_lib_loader.h
-      nativeapi/mysql_client_loader.inc
-      nativeapi/mysql_client_loader.h
-    )
-
+		SET(MYSQLCPPCONN_SOURCES ${MYSQLCPPCONN_SOURCES}
+									nativeapi/library_loader.h
+									nativeapi/libmysql_dynamic_proxy.cpp
+									nativeapi/libmysql_dynamic_proxy.h)
 	ENDIF(MYSQLCLIENT_STATIC_BINDING)
 
-  # Used to create source filter in projects in VS
-  SOURCE_GROUP(NativeApi nativeapi/.+)
+	# Used to create source filter in projects in VS
+	SOURCE_GROUP(NativeApi nativeapi/.+)
 ENDIF(WIN32)
 
 
@@ -157,12 +152,11 @@ IF(WIN32)
 	#Disables bunch of pretty useless warnings on win
 	ADD_DEFINITIONS("-D_SCL_SECURE_NO_WARNINGS")
 
-
-  IF(MYSQLCLIENT_STATIC_BINDING)
-	  SET(MY_TARGET_LINK_LIBRARIES_DYNAMIC libmysql ws2_32)
-  ELSE(MYSQLCLIENT_STATIC_BINDING)
-    SET(MY_TARGET_LINK_LIBRARIES_DYNAMIC ws2_32)
-  ENDIF(MYSQLCLIENT_STATIC_BINDING)
+	IF(MYSQLCLIENT_STATIC_BINDING)
+		SET(MY_TARGET_LINK_LIBRARIES_DYNAMIC libmysql ws2_32)
+	ELSE(MYSQLCLIENT_STATIC_BINDING)
+		SET(MY_TARGET_LINK_LIBRARIES_DYNAMIC ws2_32)
+	ENDIF(MYSQLCLIENT_STATIC_BINDING)
 
 	SET(MY_TARGET_LINK_LIBRARIES_STATIC mysqlclient ws2_32)
 ELSEIF(NOT WIN32)
@@ -171,10 +165,10 @@ ELSEIF(NOT WIN32)
 
 	SET(MY_TARGET_LINK_LIBRARIES_STATIC ${MYSQL_LIBRARIES} ${MYSQL_LINK_FLAGS})
 
-  IF(NOT MYSQLCLIENT_STATIC_BINDING)
-    SET(MY_TARGET_LINK_LIBRARIES_DYNAMIC ${MY_TARGET_LINK_LIBRARIES_DYNAMIC} "dl")
-    SET(MY_TARGET_LINK_LIBRARIES_STATIC ${MY_TARGET_LINK_LIBRARIES_STATIC} "dl")
-  ENDIF(NOT MYSQLCLIENT_STATIC_BINDING)
+	IF(NOT MYSQLCLIENT_STATIC_BINDING)
+		SET(MY_TARGET_LINK_LIBRARIES_DYNAMIC ${MY_TARGET_LINK_LIBRARIES_DYNAMIC} "dl")
+		SET(MY_TARGET_LINK_LIBRARIES_STATIC ${MY_TARGET_LINK_LIBRARIES_STATIC} "dl")
+	ENDIF(NOT MYSQLCLIENT_STATIC_BINDING)
 ENDIF(WIN32)
 
 

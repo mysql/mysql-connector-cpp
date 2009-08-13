@@ -10,13 +10,6 @@
 */
 
 
-#include "binding_config.h"
-
-#ifdef MYSQLCLIENT_STATIC_BINDING
-# include "mysql_client_static.inc"
-#else
-# include "libmysql_dynamic_proxy.cpp"
-#endif
 
 /*
  * Local variables:

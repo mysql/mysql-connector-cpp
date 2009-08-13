@@ -17,7 +17,7 @@
 
 #ifdef MYSQLCLIENT_STATIC_BINDING
 /* MySQL client library is linked */
-# include "mysql_client_static.h"
+# include "libmysql_static_proxy.h"
 #else
 /* MySQL client library will be dynamically loaded */
 # include "libmysql_dynamic_proxy.h"
@@ -32,30 +32,38 @@ namespace NativeAPI
 
 static std::map< sql::SQLString, boost::shared_ptr<IMySQLCAPI> > wrapper;
 
-boost::shared_ptr<IMySQLCAPI> getCApiHandle( const sql::SQLString & name )
+boost::shared_ptr<IMySQLCAPI> getCApiHandle(const sql::SQLString & name)
 {
 #ifdef MYSQLCLIENT_STATIC_BINDING
-    return LibmysqlStaticProxy::theInstance();
+	return LibmysqlStaticProxy::theInstance();
 #else
 
-    std::map< sql::SQLString, boost::shared_ptr< IMySQLCAPI > >::const_iterator cit;
+	std::map< sql::SQLString, boost::shared_ptr< IMySQLCAPI > >::const_iterator cit;
 
-    if ((cit= wrapper.find(name)) != wrapper.end()) {
-        return cit->second;
-    } else {
-        boost::shared_ptr<IMySQLCAPI> newWrapper;
+	if ((cit= wrapper.find(name)) != wrapper.end()) {
+		return cit->second;
+	} else {
+		boost::shared_ptr< IMySQLCAPI > newWrapper;
 
-        newWrapper.reset(new LibmysqlDynamicProxy(name));
-        wrapper[name] = newWrapper;
+		newWrapper.reset(new LibmysqlDynamicProxy(name));
+		wrapper[name] = newWrapper;
 
-        return newWrapper;
-    }
+		return newWrapper;
+	}
 #endif
 }
 
 } /* namespace NativeAPI */
 } /* namespace mysql */
 } /* namespace sql */
+
+#include "binding_config.h"
+
+#ifdef MYSQLCLIENT_STATIC_BINDING
+# include "libmysql_static_proxy.cpp"
+#else
+# include "libmysql_dynamic_proxy.cpp"
+#endif
 
 /*
  * Local variables:

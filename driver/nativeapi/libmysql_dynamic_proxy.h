@@ -16,7 +16,7 @@
 #include <cppconn/sqlstring.h>
 
 #include "mysql_client_api.h"
-#include "mysql_lib_loader.h"
+#include "library_loader.h"
 
 namespace sql
 {

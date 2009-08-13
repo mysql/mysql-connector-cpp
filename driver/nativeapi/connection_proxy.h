@@ -30,78 +30,74 @@ namespace NativeAPI
 class Resultset_Proxy;
 class Statement_Proxy;
 
-class  Connection_Proxy : public boost::noncopyable
+class Connection_Proxy : public boost::noncopyable
 {
 
 public:
 
-    virtual                     ~Connection_Proxy   (){}
+	virtual ~Connection_Proxy(){}
 
 
-    virtual uint64_t            affected_rows       ()          =0;
+	virtual uint64_t affected_rows() = 0;
 
-    virtual bool                autocommit          ( bool )    =0;
+	virtual bool autocommit(bool) = 0;
 
-    virtual bool                connect             ( const ::sql::SQLString   & host
-                                                      , const ::sql::SQLString & user
-                                                      , const ::sql::SQLString & passwd
-                                                      , const ::sql::SQLString & db
-                                                      , unsigned int             port
-                                                      , const ::sql::SQLString & socket_or_pipe
-                                                      , unsigned long            client_flag ) =0;
+	virtual bool connect(const ::sql::SQLString & host,
+						const ::sql::SQLString & user,
+						const ::sql::SQLString & passwd,
+						const ::sql::SQLString & db,
+						unsigned int			 port,
+						const ::sql::SQLString & socket_or_pipe,
+						unsigned long			client_flag) = 0;
 
-    virtual bool                commit              ()          =0;
+	virtual bool commit() = 0;
 
-    virtual void                debug               ( const ::sql::SQLString & ) =0;
+	virtual void debug(const ::sql::SQLString &) = 0;
 
-    virtual unsigned int        errNo               ()          =0;
+	virtual unsigned int errNo() = 0;
 
-    virtual ::sql::SQLString    error               ()          =0;
+	virtual ::sql::SQLString error() = 0;
 
-    virtual unsigned int        field_count         ()			=0;
+	virtual unsigned int field_count() = 0;
 
-    virtual unsigned long       get_client_version  ()			=0;
+	virtual unsigned long get_client_version() = 0;
 
-    virtual const ::sql::SQLString & get_server_info()			=0;
+	virtual const ::sql::SQLString & get_server_info() = 0;
 
-    virtual unsigned long       get_server_version  ()			=0;
+	virtual unsigned long get_server_version() = 0;
 
-    virtual bool                more_results        ()			=0;
+	virtual bool more_results() = 0;
 
-    virtual int                 next_result         ()			=0;
+	virtual int next_result() = 0;
 
-    virtual int                 options             ( ::sql::mysql::MySQL_Connection_Options
-                                                    , const void *      )   =0;
+	virtual int options(::sql::mysql::MySQL_Connection_Options, const void *) = 0;
 
-    virtual int		            query               ( const SQLString & )   =0;
+	virtual int query(const SQLString &) = 0;
 
-    /*
-    virtual int                 real_query          ( const SQLString &
-                                                        , uint64_t          )   =0;*/
-    
+	/* virtual int real_query(const SQLString &, uint64_t) = 0;*/
 
-    virtual bool                rollback            ()			=0;
+	virtual bool rollback() = 0;
 
-    virtual ::sql::SQLString    sqlstate            ()			=0;
+	virtual ::sql::SQLString sqlstate() = 0;
 
-    virtual bool                ssl_set             ( const ::sql::SQLString & key
-                                                    , const ::sql::SQLString & cert
-                                                    , const ::sql::SQLString & ca
-                                                    , const ::sql::SQLString & capath
-                                                    , const ::sql::SQLString & cipher ) =0;
+	virtual bool ssl_set(const ::sql::SQLString & key,
+						const ::sql::SQLString & cert,
+						const ::sql::SQLString & ca,
+						const ::sql::SQLString & capath,
+						const ::sql::SQLString & cipher) = 0;
 
-    virtual Resultset_Proxy *   store_result        ()			=0;
+	virtual Resultset_Proxy * store_result() = 0;
 
-    virtual Resultset_Proxy *   use_result          ()			=0;
- 
-    virtual Statement_Proxy &   stmt_init           ()			=0;
+	virtual Resultset_Proxy * use_result() = 0;
+
+	virtual Statement_Proxy & stmt_init() = 0;
 };
 
-Connection_Proxy * createConnectionProxy( const SQLString & clientFileName );
+Connection_Proxy * createConnectionProxy(const SQLString & clientFileName);
 
-}
-}
-}
+} /* namespace NativeAPI */
+} /* namespace mysql */
+} /* namespace sql */
 #endif
 
 /*

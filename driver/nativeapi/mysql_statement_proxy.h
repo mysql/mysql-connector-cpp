@@ -17,7 +17,7 @@
 
 #include "statement_proxy.h"
 
-struct ::st_mysql_stmt;
+struct st_mysql_stmt;
 
 namespace sql
 {
@@ -29,63 +29,60 @@ namespace NativeAPI
 class IMySQLCAPI;
 class Connection_Proxy;
 /*
- * 
- * 
- * 
+ *
+ *
+ *
  */
 class MySQL_Statement_Proxy : public Statement_Proxy
 {
 
-    boost::shared_ptr<IMySQLCAPI>   api;
-    ::st_mysql_stmt *               stmt;
-    Connection_Proxy *              conn;
+	boost::shared_ptr<IMySQLCAPI>	api;
+	::st_mysql_stmt *				stmt;
+	Connection_Proxy *				conn;
 
-                        MySQL_Statement_Proxy(){}
+	MySQL_Statement_Proxy(){}
 
 public:
-                        MySQL_Statement_Proxy( ::st_mysql_stmt *, boost::shared_ptr<IMySQLCAPI>, Connection_Proxy * connProxy );
-                        ~MySQL_Statement_Proxy();
+	MySQL_Statement_Proxy(::st_mysql_stmt *, boost::shared_ptr<IMySQLCAPI>, Connection_Proxy * connProxy);
+	~MySQL_Statement_Proxy();
 
-    uint64_t            affected_rows   ();
+	uint64_t affected_rows();
 
-    bool                attr_set        ( MySQL_Statement_Options option
-                                        , const void *arg );
+	bool attr_set(MySQL_Statement_Options option, const void *arg);
 
-    bool                bind_param      ( ::st_mysql_bind *  );
+	bool bind_param(::st_mysql_bind * );
 
-    bool                bind_result     ( ::st_mysql_bind *  );
+	bool bind_result(::st_mysql_bind * );
 
-    void                data_seek       ( uint64_t  );
+	void data_seek(uint64_t );
 
-    unsigned int        errNo           ();
+	unsigned int errNo();
 
-    ::sql::SQLString    error           ();
+	sql::SQLString error();
 
-    int                 execute         ();
+	int execute ();
 
-    int                 fetch           ();
+	int fetch();
 
-    unsigned int        field_count     ();
+	unsigned int field_count();
 
-    bool                more_results    ();
+	bool more_results();
 
-    int                 next_result     ();
+	int next_result();
 
-    uint64_t            num_rows        ();
+	uint64_t num_rows();
 
-    unsigned long       param_count     ();
+	unsigned long param_count();
 
-    int                 prepare         ( const ::sql::SQLString & );
+	int prepare (const ::sql::SQLString &);
 
-    Resultset_Proxy *   result_metadata ();
+	Resultset_Proxy * result_metadata ();
 
-    bool                send_long_data  ( unsigned int  par_number
-                                        , const char *  data
-                                        , unsigned long len);
+	bool send_long_data(unsigned int par_number, const char * data, unsigned long len);
 
-    ::sql::SQLString    sqlstate        ();
+	::sql::SQLString sqlstate();
 
-    int                 store_result    ();
+	int store_result();
 };
 
 

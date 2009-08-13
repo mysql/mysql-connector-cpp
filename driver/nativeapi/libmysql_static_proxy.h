@@ -26,7 +26,6 @@ template <class T>
 class Singleton: public boost::noncopyable
 {
 protected:
-
     Singleton(){}
 
 public:
@@ -184,8 +183,6 @@ public:
     const char * stmt_sqlstate       (MYSQL_STMT *);
 
     int          stmt_store_result   (MYSQL_STMT *); 
-
-
 };
 
 } /* namespace NativeAPI */

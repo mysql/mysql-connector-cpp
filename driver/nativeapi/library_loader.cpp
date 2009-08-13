@@ -18,15 +18,15 @@
 
 // Needed to make SetDllDirectory available
 #define _WIN32_WINNT	0x0502
-#include "mysql_lib_loader.h"
+#include "library_loader.h"
 
 /* TODO consider using of dlopen, dlsym and dlclose definitions in my_global.h
  * sort of doesn't like that.
  */
 #ifndef _WIN32
-#define LoadLibrary(p)          ::dlopen(p, RTLD_LAZY)
-#define FreeLibrary(p)          ::dlclose(p)
-#define GetProcAddress(p1,p2)   ::dlsym(p1,p2)
+#define LoadLibrary(p)			::dlopen(p, RTLD_LAZY)
+#define FreeLibrary(p)			::dlclose(p)
+#define GetProcAddress(p1,p2)	::dlsym(p1,p2)
 #endif
 
 
@@ -34,28 +34,27 @@ namespace sql {
 namespace mysql {
 namespace util {
 
-    std::string ErrorMessage()
-    {
+std::string ErrorMessage()
+{
 #ifdef _WIN32
-        TCHAR buffer[255];
-        DWORD _errcode = GetLastError(); 
-        ::FormatMessage( FORMAT_MESSAGE_FROM_SYSTEM,
-            NULL, _errcode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-            buffer, sizeof(buffer), NULL );
+	TCHAR buffer[255];
+	DWORD _errcode = GetLastError(); 
+	::FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
+					NULL, _errcode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+					buffer, sizeof(buffer), NULL);
 
-        return buffer;
+	return buffer;
 #else
-        return dlerror();
+	return dlerror();
 #endif
-    }
+}
 
 /* {{{ LibraryLoader::LibraryLoader() */
 LibraryLoader::LibraryLoader(const std::string & path2libFile)
 	: loadedLibHandle (NULL)
 {
 	if ((loadedLibHandle = LoadLibrary(path2libFile.c_str())) == NULL) {
-		throw std::runtime_error((std::string("Couldn't load library ") + path2libFile
-                                                + ": " + ErrorMessage()).c_str());
+		throw std::runtime_error("Couldn't load library " + path2libFile + ": " + ErrorMessage());
 	}
 }
 /* }}} */
@@ -75,8 +74,7 @@ LibraryLoader::LibraryLoader(const std::string & dir2look, const std::string & l
 	fullname += libFileName;
 	if ((loadedLibHandle = LoadLibrary(fullname.c_str())) == NULL) {
 #endif
-		throw std::runtime_error((std::string("Couldn't load library ") + libFileName
-                                                + ": " + ErrorMessage() ).c_str());
+		throw std::runtime_error("Couldn't load library " + libFileName + ": " + ErrorMessage());
 	}
 }
 /* }}} */
@@ -107,7 +105,7 @@ LibraryLoader::GetProcAddr(const std::string & name)
 	SymbolHandle proc = GetProcAddress(loadedLibHandle, name.c_str());
 
 	if (proc == NULL) {
-		throw std::runtime_error(std::string("Couldn't find symbol ") + name);
+		throw std::runtime_error("Couldn't find symbol " + name);
 	}
 
 	functions.insert(std::make_pair(name, proc));
