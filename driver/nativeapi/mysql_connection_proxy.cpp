@@ -174,33 +174,33 @@ namespace NativeAPI
 	}
 
 
-    Resultset_Proxy & MySQL_Connection_Proxy::store_result()
+    Resultset_Proxy * MySQL_Connection_Proxy::store_result()
 	{
         ::st_mysql_res * raw= api->store_result( mysql );
 
-        if ( raw == 0 )
+        if ( raw == NULL )
         {
             /*CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
             this->errNo(), this->sqlstate(), this->error());*/
-            ::sql::mysql::util::throwSQLException(*this);
+            return NULL;
         }
 
-        return *(new MySQL_Resultset_Proxy( raw, api ) );
+        return new MySQL_Resultset_Proxy( raw, api );
 	}
 
 
-    Resultset_Proxy & MySQL_Connection_Proxy::use_result()
+    Resultset_Proxy * MySQL_Connection_Proxy::use_result()
 	{
         ::st_mysql_res * raw= api->use_result( mysql );
 
-        if ( raw == 0 )
+        if ( raw == NULL )
         {
             /*CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
                             this->errNo(), this->sqlstate(), this->error());*/
-              ::sql::mysql::util::throwSQLException(*this);
+            return NULL;
         }
 
-        return *(new MySQL_Resultset_Proxy( raw, api ) );
+        return new MySQL_Resultset_Proxy( raw, api );
 	}
 
  

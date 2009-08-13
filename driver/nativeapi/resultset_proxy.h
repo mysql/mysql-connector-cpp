@@ -15,15 +15,6 @@
 #include <boost/noncopyable.hpp>
 #include <config.h>
 
-#ifndef _ABSTRACT
-#define _ABSTRACT
-#endif
-
-#ifdef _PURE
-#undef _PURE
-#endif
-
-#define _PURE =0
 
 struct st_mysql_field;
 
@@ -34,25 +25,25 @@ namespace mysql
 namespace NativeAPI
 {
 
-_ABSTRACT class Resultset_Proxy : public boost::noncopyable
+class Resultset_Proxy : public boost::noncopyable
 {
 public:
 
     virtual			            ~Resultset_Proxy    (){}
 
-    virtual void                data_seek           ( uint64_t ) _PURE;
+    virtual void                data_seek           ( uint64_t ) =0;
 
-    virtual ::st_mysql_field *  fetch_field         () _PURE;
+    virtual ::st_mysql_field *  fetch_field         () =0;
 
-    virtual ::st_mysql_field *  fetch_field_direct  ( unsigned int  ) _PURE;
+    virtual ::st_mysql_field *  fetch_field_direct  ( unsigned int  ) =0;
 
-    virtual unsigned long *     fetch_lengths       () _PURE;
+    virtual unsigned long *     fetch_lengths       () =0;
 
-    virtual char**              fetch_row           () _PURE;
+    virtual char**              fetch_row           () =0;
 
-    virtual unsigned int        num_fields          () _PURE;
+    virtual unsigned int        num_fields          () =0;
 
-    virtual uint64_t            num_rows            () _PURE;
+    virtual uint64_t            num_rows            () =0;
 };
 
 } /* namespace NativeAPI*/

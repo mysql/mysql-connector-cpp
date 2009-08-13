@@ -17,13 +17,6 @@
 
 #include "../mysql_statement_options.h"
 
-#ifndef _ABSTRACT
-#define _ABSTRACT
-#endif
-
-#ifndef _PURE
-#define _PURE =0
-#endif
 
 struct st_mysql_bind;
 struct st_mysql_res;
@@ -42,52 +35,52 @@ class Resultset_Proxy;
  * 
  * 
  */
-_ABSTRACT class Statement_Proxy : public boost::noncopyable
+class Statement_Proxy : public boost::noncopyable
 {
 public:
 
     virtual                     ~Statement_Proxy(){}
 
-    virtual uint64_t            affected_rows   ()  _PURE;
+    virtual uint64_t            affected_rows   ()  =0;
 
     virtual bool                attr_set        ( MySQL_Statement_Options attr
-                                                , const void *arg ) _PURE;
+                                                , const void *arg ) =0;
 
-    virtual bool                bind_param      ( ::st_mysql_bind * ) _PURE;
+    virtual bool                bind_param      ( ::st_mysql_bind * ) =0;
 
-    virtual bool                bind_result     ( ::st_mysql_bind * ) _PURE;
+    virtual bool                bind_result     ( ::st_mysql_bind * ) =0;
 
-    virtual void                data_seek       ( uint64_t ) _PURE;
+    virtual void                data_seek       ( uint64_t ) =0;
 
-    virtual unsigned int        errNo           ()  _PURE;
+    virtual unsigned int        errNo           ()  =0;
 
-    virtual ::sql::SQLString    error           ()  _PURE;
+    virtual ::sql::SQLString    error           ()  =0;
 
-    virtual int                 execute         ()  _PURE;
+    virtual int                 execute         ()  =0;
 
-    virtual int                 fetch           ()  _PURE;
+    virtual int                 fetch           ()  =0;
 
-    virtual unsigned int        field_count     ()  _PURE;
+    virtual unsigned int        field_count     ()  =0;
 
-    virtual bool                more_results    ()  _PURE;
+    virtual bool                more_results    ()  =0;
 
-    virtual int                 next_result     ()  _PURE;
+    virtual int                 next_result     ()  =0;
 
-    virtual uint64_t            num_rows        ()  _PURE;
+    virtual uint64_t            num_rows        ()  =0;
 
-    virtual unsigned long       param_count     ()  _PURE;
+    virtual unsigned long       param_count     ()  =0;
 
-    virtual int                 prepare         ( const ::sql::SQLString & ) _PURE;
+    virtual int                 prepare         ( const ::sql::SQLString & ) =0;
 
-    virtual Resultset_Proxy *   result_metadata ()  _PURE;
+    virtual Resultset_Proxy *   result_metadata ()  =0;
 
     virtual bool                send_long_data  ( unsigned int  par_number
                                                 , const char *  data
-                                                , unsigned long len ) _PURE;
+                                                , unsigned long len ) =0;
 
-    virtual ::sql::SQLString    sqlstate        ()  _PURE;
+    virtual ::sql::SQLString    sqlstate        ()  =0;
 
-    virtual int                 store_result    ()  _PURE;
+    virtual int                 store_result    ()  =0;
 };
 
 

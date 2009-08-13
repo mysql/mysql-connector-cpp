@@ -97,9 +97,9 @@ public:
                                                     , const ::sql::SQLString & capath
                                                     , const ::sql::SQLString & cipher );
 
-    Resultset_Proxy &           store_result        ();
+    Resultset_Proxy *           store_result        ();
 
-    Resultset_Proxy &           use_result          ();
+    Resultset_Proxy *           use_result          ();
 
 
     Statement_Proxy &           stmt_init           ();

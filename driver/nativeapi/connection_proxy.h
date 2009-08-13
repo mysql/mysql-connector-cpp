@@ -17,19 +17,9 @@
 
 #include "../mysql_connection_options.h"
 
-//TODO - move following definitions elsewhere and have them in one place only
-#ifndef _ABSTRACT
-#define _ABSTRACT
-#endif
-
-#ifndef _PURE
-#define _PURE =0
-#endif
-
 
 namespace sql
 {
-
 class SQLString;
 
 namespace mysql
@@ -40,7 +30,7 @@ namespace NativeAPI
 class Resultset_Proxy;
 class Statement_Proxy;
 
-_ABSTRACT class  Connection_Proxy : public boost::noncopyable
+class  Connection_Proxy : public boost::noncopyable
 {
 
 public:
@@ -48,9 +38,9 @@ public:
     virtual                     ~Connection_Proxy   (){}
 
 
-    virtual uint64_t            affected_rows       ()          _PURE;
+    virtual uint64_t            affected_rows       ()          =0;
 
-    virtual bool                autocommit          ( bool )    _PURE;
+    virtual bool                autocommit          ( bool )    =0;
 
     virtual bool                connect             ( const ::sql::SQLString   & host
                                                       , const ::sql::SQLString & user
@@ -58,53 +48,53 @@ public:
                                                       , const ::sql::SQLString & db
                                                       , unsigned int             port
                                                       , const ::sql::SQLString & socket_or_pipe
-                                                      , unsigned long            client_flag ) _PURE;
+                                                      , unsigned long            client_flag ) =0;
 
-    virtual bool                commit              ()          _PURE;
+    virtual bool                commit              ()          =0;
 
-    virtual void                debug               ( const ::sql::SQLString & ) _PURE;
+    virtual void                debug               ( const ::sql::SQLString & ) =0;
 
-    virtual unsigned int        errNo               ()          _PURE;
+    virtual unsigned int        errNo               ()          =0;
 
-    virtual ::sql::SQLString    error               ()          _PURE;
+    virtual ::sql::SQLString    error               ()          =0;
 
-    virtual unsigned int        field_count         ()			_PURE;
+    virtual unsigned int        field_count         ()			=0;
 
-    virtual unsigned long       get_client_version  ()			_PURE;
+    virtual unsigned long       get_client_version  ()			=0;
 
-    virtual const ::sql::SQLString & get_server_info()			_PURE;
+    virtual const ::sql::SQLString & get_server_info()			=0;
 
-    virtual unsigned long       get_server_version  ()			_PURE;
+    virtual unsigned long       get_server_version  ()			=0;
 
-    virtual bool                more_results        ()			_PURE;
+    virtual bool                more_results        ()			=0;
 
-    virtual int                 next_result         ()			_PURE;
+    virtual int                 next_result         ()			=0;
 
     virtual int                 options             ( ::sql::mysql::MySQL_Connection_Options
-                                                    , const void *      )   _PURE;
+                                                    , const void *      )   =0;
 
-    virtual int		            query               ( const SQLString & )   _PURE;
+    virtual int		            query               ( const SQLString & )   =0;
 
     /*
     virtual int                 real_query          ( const SQLString &
-                                                        , uint64_t          )   _PURE;*/
+                                                        , uint64_t          )   =0;*/
     
 
-    virtual bool                rollback            ()			_PURE;
+    virtual bool                rollback            ()			=0;
 
-    virtual ::sql::SQLString    sqlstate            ()			_PURE;
+    virtual ::sql::SQLString    sqlstate            ()			=0;
 
     virtual bool                ssl_set             ( const ::sql::SQLString & key
                                                     , const ::sql::SQLString & cert
                                                     , const ::sql::SQLString & ca
                                                     , const ::sql::SQLString & capath
-                                                    , const ::sql::SQLString & cipher ) _PURE;
+                                                    , const ::sql::SQLString & cipher ) =0;
 
-    virtual Resultset_Proxy &   store_result        ()			_PURE;
+    virtual Resultset_Proxy *   store_result        ()			=0;
 
-    virtual Resultset_Proxy &   use_result          ()			_PURE;
+    virtual Resultset_Proxy *   use_result          ()			=0;
  
-    virtual Statement_Proxy &   stmt_init           ()			_PURE;
+    virtual Statement_Proxy &   stmt_init           ()			=0;
 };
 
 Connection_Proxy * createConnectionProxy( const SQLString & clientFileName );
