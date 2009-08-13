@@ -133,14 +133,14 @@ namespace NativeAPI
 	}
 
 
-    Resultset_Proxy &  MySQL_Statement_Proxy::result_metadata()
+    Resultset_Proxy *  MySQL_Statement_Proxy::result_metadata()
 	{
         ::st_mysql_res * raw= api->stmt_result_metadata( stmt );
 
-        if ( raw == 0 )
-            ::sql::mysql::util::throwSQLException( *this );
+        if ( raw == NULL )
+            return NULL;
 
-        return *( new MySQL_Resultset_Proxy( raw, api ) );
+        return new MySQL_Resultset_Proxy( raw, api );
 	}
 
 

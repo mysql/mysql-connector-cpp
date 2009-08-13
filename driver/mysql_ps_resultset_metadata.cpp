@@ -36,7 +36,7 @@ namespace mysql
 /* {{{ MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData -I- */
 MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData(boost::shared_ptr< NativeAPI::Statement_Proxy > & _proxy,
 																	boost::shared_ptr< MySQL_DebugLogger> & l)
-	: proxy(_proxy), logger(l), result_meta( & _proxy->result_metadata()),
+	: proxy(_proxy), logger(l), result_meta( _proxy->result_metadata()),
 		num_fields(_proxy->field_count())
 {
 	CPP_ENTER("MySQL_Prepared_ResultSetMetaData::MySQL_Prepared_ResultSetMetaData");

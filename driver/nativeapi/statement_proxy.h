@@ -79,7 +79,7 @@ public:
 
     virtual int                 prepare         ( const ::sql::SQLString & ) _PURE;
 
-    virtual Resultset_Proxy &   result_metadata ()  _PURE;
+    virtual Resultset_Proxy *   result_metadata ()  _PURE;
 
     virtual bool                send_long_data  ( unsigned int  par_number
                                                 , const char *  data

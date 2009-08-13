@@ -79,7 +79,7 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
 
 	result_bind->bindResult();
 
-    boost::scoped_ptr<NativeAPI::Resultset_Proxy> result_meta( & proxy->result_metadata() );
+    boost::scoped_ptr<NativeAPI::Resultset_Proxy> result_meta( proxy->result_metadata() );
 	num_fields = proxy->field_count();
 	num_rows = proxy->num_rows();
 

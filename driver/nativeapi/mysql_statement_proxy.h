@@ -77,7 +77,7 @@ public:
 
     int                 prepare         ( const ::sql::SQLString & );
 
-    Resultset_Proxy &   result_metadata ();
+    Resultset_Proxy *   result_metadata ();
 
     bool                send_long_data  ( unsigned int  par_number
                                         , const char *  data

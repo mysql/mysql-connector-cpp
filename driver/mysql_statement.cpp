@@ -209,15 +209,21 @@ MySQL_Statement::getResultSet()
     boost::shared_ptr< NativeAPI::Resultset_Proxy > result;
 
 	sql::ResultSet::enum_type tmp_type;
-	switch (resultset_type) {
-		case sql::ResultSet::TYPE_FORWARD_ONLY:
-			result.reset(& proxy->use_result());
-			tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
-			break;
-		default:
-			result.reset(& proxy->store_result());
-			tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
-	}
+
+    try {
+	    switch (resultset_type) {
+		    case sql::ResultSet::TYPE_FORWARD_ONLY:
+			    result.reset(& proxy->use_result());
+			    tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
+			    break;
+		    default:
+			    result.reset(& proxy->store_result());
+			    tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
+	    }
+    } catch (::sql::SQLException & /*e*/ ) {
+        return NULL;
+    }
+
 	if (!result) {
 		/* if there was an update then this method should return NULL and not throw */
 		return NULL;
