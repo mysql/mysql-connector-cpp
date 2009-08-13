@@ -63,7 +63,7 @@ protected:
 	MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const;
 
 public:
-    MySQL_ResultSet(boost::shared_ptr< NativeAPI::Resultset_Proxy > & res, sql::ResultSet::enum_type rset_type, MySQL_Statement * par,
+    MySQL_ResultSet(boost::shared_ptr< NativeAPI::Resultset_Proxy > res, sql::ResultSet::enum_type rset_type, MySQL_Statement * par,
 					boost::shared_ptr< MySQL_DebugLogger > & l);
 
 	virtual ~MySQL_ResultSet();

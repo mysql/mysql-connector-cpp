@@ -69,7 +69,7 @@ MySQL_Statement::do_query(const char *q, size_t length)
 	checkClosed();
 
     if (proxy->query( ::sql::SQLString(q, length) ) && proxy->errNo()) {
-		CPP_ERR_FMT("Error during proxy->query : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+		CPP_ERR_FMT("Error during proxy->query : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 		sql::mysql::util::throwSQLException(*proxy.get());
 	}
 }
@@ -93,7 +93,7 @@ MySQL_Statement::get_resultset()
     catch (::sql::SQLException & e)
     {
         CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
-            proxy->errNo(), proxy->sqlstate(), proxy->error());
+            proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
         throw e;
     }
     

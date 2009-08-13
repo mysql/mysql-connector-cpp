@@ -520,8 +520,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 						flags))
 	{
 		CPP_ERR_FMT("Couldn't connect : %d", proxy->errNo());
-		CPP_ERR_FMT("Couldn't connect : (%s)", proxy->sqlstate());
-		CPP_ERR_FMT("Couldn't connect : %s", proxy->error());
+		CPP_ERR_FMT("Couldn't connect : (%s)", proxy->sqlstate().c_str());
+		CPP_ERR_FMT("Couldn't connect : %s", proxy->error().c_str());
 		CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
 		sql::SQLException e(proxy->error(), proxy->sqlstate(), proxy->errNo());
 		proxy.reset();
@@ -746,13 +746,13 @@ MySQL_Connection::prepareStatement(const sql::SQLString& sql)
     }
     catch (::sql::SQLException& e)
     {
-    	CPP_ERR_FMT("No statement : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+    	CPP_ERR_FMT("No statement : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
         throw e;
     }
 
 
 	if (stmt->prepare(sql)) {
-		CPP_ERR_FMT("Cannot prepare %d:(%s) %s", stmt->errNo(), stmt->sqlstate(), stmt->error());
+		CPP_ERR_FMT("Cannot prepare %d:(%s) %s", stmt->errNo(), stmt->sqlstate().c_str(), stmt->error().c_str());
 		sql::SQLException e(stmt->error(), stmt->sqlstate(), stmt->errNo());
 		stmt.reset();
 		throw e;
