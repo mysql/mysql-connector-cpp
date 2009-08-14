@@ -40,7 +40,7 @@ boost::shared_ptr<IMySQLCAPI> getCApiHandle(const sql::SQLString & name)
 
 	std::map< sql::SQLString, boost::shared_ptr< IMySQLCAPI > >::const_iterator cit;
 
-	if ((cit= wrapper.find(name)) != wrapper.end()) {
+	if ((cit = wrapper.find(name)) != wrapper.end()) {
 		return cit->second;
 	} else {
 		boost::shared_ptr< IMySQLCAPI > newWrapper;

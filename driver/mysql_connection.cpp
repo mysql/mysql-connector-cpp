@@ -289,10 +289,9 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 				throw sql::InvalidArgumentException("No string value passed for sslCipher");
 			}
 			ssl_used = true;
-		} else if (it->first.compare("clientlib") == 0)
-		{
+		} else if (it->first.compare("clientlib") == 0) {
 			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
-					clientlib= *p_s;
+				clientlib = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for driver");
 			}
@@ -405,11 +404,10 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	}
 
 	try {
-		proxy.reset( NativeAPI::createNativeConnectionWrapper(clientlib));
+		proxy.reset(NativeAPI::createNativeConnectionWrapper(clientlib));
 	} catch (std::runtime_error & e) {
 		throw sql::InvalidArgumentException(e.what());
 	}
-
 
 #ifndef _WIN32
 	if (!hostName.compare(0, sizeof("unix://") - 1, "unix://")) {

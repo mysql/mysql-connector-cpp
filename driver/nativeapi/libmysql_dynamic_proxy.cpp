@@ -30,9 +30,9 @@ static const char * const baseName = "libmysqlclient_r.so";
 #endif
 
 template<typename FunctionType>
-FunctionType symbol_safe_cast( ::sql::mysql::util::SymbolHandle raw )
+FunctionType symbol_safe_cast(::sql::mysql::util::SymbolHandle raw)
 {
-    return *reinterpret_cast<FunctionType*>(&raw);
+    return *reinterpret_cast< FunctionType* >(&raw);
 }
 
 /* {{{ LibmysqlDynamicProxy::LibmysqlDynamicProxy() */
