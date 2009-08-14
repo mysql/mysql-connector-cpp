@@ -191,9 +191,7 @@ MySQL_PreparedResultSetMetaData::getScale(unsigned int columnIndex)
 	checkColumnIndex(columnIndex);
 	unsigned int precision = getPrecision(columnIndex);
 	unsigned int ret = getFieldMeta(columnIndex)->length;
-	if (precision) {
-		ret = precision - ret;
-	}
+	ret -= precision;
 	CPP_INFO_FMT("column=%u precision=%d", columnIndex, ret);
 	return ret;
 }
