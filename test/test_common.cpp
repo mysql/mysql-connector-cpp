@@ -245,7 +245,7 @@ static void test_autocommit(std::auto_ptr<sql::Connection> & conn)
 		conn->setAutoCommit(0);
 		ensure("AutoCommit", conn->getAutoCommit() == false);
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -288,7 +288,7 @@ static void test_connection_0(std::auto_ptr<sql::Connection> & conn)
 		}
 		ensure("connection is open", conn->isClosed() == false);
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -348,7 +348,7 @@ static void test_connection_1(std::auto_ptr<sql::Connection> & conn, std::string
 		printf("\n# SKIP: RELEASE SAVEPOINT not available in this MySQL version\n");
 		printf("# ");
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -381,7 +381,7 @@ static void test_connection_2(std::auto_ptr<sql::Connection> & conn, std::string
 	} catch (sql::SQLException &e) {
 		/* Error: 1049 SQLSTATE: 42000  (ER_BAD_DB_ERROR)  - information_schema not available */
 		if (e.getErrorCode() != 1049) {
-			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 			printf("# ");
 			++total_errors;
 		}
@@ -399,7 +399,7 @@ static void test_connection_3(std::auto_ptr<sql::Connection> & conn, std::string
 		sql::DatabaseMetaData * meta = conn->getMetaData();
 		ensure("getUserName() failed", user == meta->getUserName().substr(0, user.length()));
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -416,7 +416,7 @@ static void test_statement_0(std::auto_ptr<sql::Connection> & conn)
 		std::auto_ptr<sql::Statement> stmt(conn->createStatement());
 		ensure("AutoCommit", conn.get() == stmt->getConnection());
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -443,7 +443,7 @@ static void test_statement_1(std::auto_ptr<sql::Connection> & conn, std::auto_pt
 		stmt2->execute("USE " + database);
 		stmt2->execute("DROP TABLE test_function");
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -474,7 +474,7 @@ static void test_statement_2(std::auto_ptr<sql::Connection> & conn, std::auto_pt
 		stmt2->execute("USE " + database);
 		stmt2->execute("DROP TABLE test_function");
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -501,7 +501,7 @@ static void test_statement_3(std::auto_ptr<sql::Connection> & conn, std::auto_pt
 			std::auto_ptr<sql::ResultSet> rset(stmt->executeQuery("SELECT * FROM test_function"));
 			ensure("NULL returned for result set", rset.get() != NULL);
 		} catch (sql::SQLException &e) {
-			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 			++total_errors;
 			printf("# ");
 		}
@@ -512,7 +512,7 @@ static void test_statement_3(std::auto_ptr<sql::Connection> & conn, std::auto_pt
 		stmt2->execute("USE " + database);
 		stmt2->execute("DROP TABLE test_function");
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -541,7 +541,7 @@ static void test_statement_4(std::auto_ptr<sql::Connection> & conn, std::auto_pt
 			ensure_equal_int("Non-empty result set", false, rset->next());
 
 		} catch (sql::SQLException &e) {
-			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 			printf("# ");
 			++total_errors;
 		}
@@ -552,7 +552,7 @@ static void test_statement_4(std::auto_ptr<sql::Connection> & conn, std::auto_pt
 		stmt2->execute("USE " + database);
 		stmt2->execute("DROP TABLE test_function");
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -591,7 +591,7 @@ static void test_statement_5(std::auto_ptr<sql::Connection> & conn, std::auto_pt
 		stmt2->execute("USE " + database);
 		stmt2->execute("DROP TABLE test_function");
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -617,7 +617,7 @@ static void test_statement_6(std::auto_ptr<sql::Connection> & conn, std::auto_pt
 		try {
 			ensure("Number of updated rows", stmt->executeUpdate("UPDATE test_function SET a = 123") == 1);
 		} catch (sql::SQLException &e) {
-			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 			++total_errors;
 		}
 
@@ -627,7 +627,7 @@ static void test_statement_6(std::auto_ptr<sql::Connection> & conn, std::auto_pt
 		stmt2->execute("USE " + database);
 		stmt2->execute("DROP TABLE test_function");
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -666,7 +666,7 @@ static void test_statement_7(std::auto_ptr<sql::Connection> & conn, std::auto_pt
 		stmt2->execute("USE " + database);
 		stmt2->execute("DROP TABLE test_function");
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -691,7 +691,7 @@ static void test_statement_xx(std::auto_ptr<sql::Connection> & conn, std::auto_p
 
 		ensure("fetchSize is negative", stmt->getFetchSize() > 0);
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -718,7 +718,7 @@ static void test_statement_xx(std::auto_ptr<sql::Connection> & conn)
 
 		ensure_equal("Non-equal", setFetchSize, stmt->getFetchSize());
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -746,7 +746,7 @@ static void test_statement_xx(std::auto_ptr<sql::Connection> & conn)
 			printf("INFO: Caught sql::InvalidArgumentException\n");
 		}
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -773,7 +773,7 @@ static void test_statement_xx(std::auto_ptr<sql::Connection> & conn)
 			printf("\n# ERR:No exception\n");
 		} catch (sql::InvalidArgumentException &) {}
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -808,7 +808,7 @@ static void test_statement_8(std::auto_ptr<sql::Connection> & conn, std::auto_pt
 		stmt2->execute("USE " + database);
 		stmt2->execute("DROP TABLE test_function");
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -841,7 +841,7 @@ static void test_statement_9(std::auto_ptr<sql::Connection> & conn, std::auto_pt
 		stmt2->execute("USE " + database);
 		stmt2->execute("DROP TABLE test_function");
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -881,7 +881,7 @@ static void test_statement_10(std::auto_ptr<sql::Connection> & conn, std::auto_p
 		stmt2->execute("USE " + database);
 		stmt2->execute("DROP TABLE test_function");
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -908,7 +908,7 @@ static void test_result_set_0(std::auto_ptr<sql::Connection> & conn)
 
 		ensure_equal_int("isLast", result->isLast(), false);
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -935,7 +935,7 @@ static void test_result_set_1(std::auto_ptr<sql::Connection> & conn)
 		ensure("res1 is empty", rset1->next() != false);
 		ensure("res2 is empty", rset2->next() != false);
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -963,7 +963,7 @@ static void test_result_set_2(std::auto_ptr<sql::Connection> & conn, std::string
 
 		stmt1->execute("DROP TABLE test_function");
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -1029,7 +1029,7 @@ static void test_result_set_3(std::auto_ptr<sql::Connection> & conn, std::string
 
 		conn->setAutoCommit(old_commit_mode);
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -1111,7 +1111,7 @@ static void test_result_set_4(std::auto_ptr<sql::Connection> & conn, std::string
 
 		conn->setAutoCommit(old_commit_mode);
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -1133,7 +1133,7 @@ static void test_result_set_5(std::auto_ptr<sql::Connection> & conn)
 			ensure("ERR: Exception not thrown", false);
 		} catch (sql::SQLException &) {}
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -1212,7 +1212,7 @@ static void test_result_set_check_out_of_bound(sql::ResultSet *rset1)
 
 		ensure_equal_int("res1 has more rows ", rset1->next(), false);
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -1238,7 +1238,7 @@ static void test_result_set_6(std::auto_ptr<sql::Connection> & conn, std::string
 
 		stmt1->execute("DROP TABLE test_function_tx");
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -1266,7 +1266,7 @@ static void test_result_set_7(std::auto_ptr<sql::Connection> & conn, std::string
 		std::auto_ptr<sql::PreparedStatement> stmt2(conn->prepareStatement("DROP TABLE test_function_tx"));
 		stmt2->execute();
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -1354,7 +1354,7 @@ static void test_result_set_8(std::auto_ptr<sql::Connection> & conn, std::string
 
 		conn->setAutoCommit(old_commit_mode);
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -1374,7 +1374,7 @@ static void test_result_set_9(std::auto_ptr<sql::Connection> & conn)
 			ensure("ERR: Exception not thrown", false);
 		} catch (sql::SQLException &) {}
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -1437,7 +1437,7 @@ static void test_result_set_10(std::auto_ptr<sql::Connection> & conn, std::strin
 		}
 #endif
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -1508,7 +1508,7 @@ static void test_result_set_11(std::auto_ptr<sql::Connection> & conn, std::strin
 
 
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -1535,7 +1535,7 @@ static void test_general_0(std::auto_ptr<sql::Connection> & conn)
 			}
 		}
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		++total_errors;
 	}
 	LEAVE_FUNCTION();
@@ -1576,7 +1576,7 @@ static void test_general_1(std::auto_ptr<sql::Connection> & conn)
 
 		stmt->execute("DROP TABLE IF EXISTS test.product");
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -1595,7 +1595,7 @@ static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 			stmt->execute();
 			std::auto_ptr<sql::ResultSet> rset1(stmt->getResultSet());
 		} catch (sql::SQLException &e) {
-			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 			printf("# ");
 			++total_errors;
 		}
@@ -1603,7 +1603,7 @@ static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 		try {
 			std::auto_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ?"));
 		} catch (sql::SQLException &e) {
-			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 			printf("# ");
 			++total_errors;
 		}
@@ -1613,7 +1613,7 @@ static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 			std::auto_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ?, ?, ?"));
 			stmt->setInt(1, 1);
 		} catch (sql::SQLException &e) {
-			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 			printf("# ");
 			++total_errors;
 		}
@@ -1625,7 +1625,7 @@ static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 			stmt->setInt(1, 42);
 			stmt->execute();
 		} catch (sql::SQLException &e) {
-			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 			printf("# ");
 			++total_errors;
 		}
@@ -1639,7 +1639,7 @@ static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 			stmt->setDateTime(4, "2006-11-10 16:17:18");
 			stmt->execute();
 		} catch (sql::SQLException &e) {
-			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 			printf("# ");
 			++total_errors;
 		}
@@ -1662,7 +1662,7 @@ static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 			ensure("Incorrect value for col 2", rset->getInt(3) == 42 && false == rset->wasNull());
 			ensure("Incorrect value for col 2", !rset->getString(3).compare("42") && false == rset->wasNull());
 		} catch (sql::SQLException &e) {
-			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 			printf("# ");
 			++total_errors;
 		}
@@ -1675,7 +1675,7 @@ static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 				std::auto_ptr<sql::ResultSet> rset(stmt->executeQuery());
 			}
 		} catch (sql::SQLException &e) {
-			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 			printf("# ");
 			++total_errors;
 		}
@@ -1687,7 +1687,7 @@ static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 				stmt->setInt(1, 13);
 				std::auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
 			} catch (sql::SQLException &e) {
-				printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+				printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 				printf("# ");
 				++total_errors;
 			}
@@ -1723,7 +1723,7 @@ static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 
 				ensure("Incorrect value for col 3", rset->getDouble(2) == 1.25 && false == rset->wasNull());
 			} catch (sql::SQLException &e) {
-				printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+				printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 				printf("# ");
 				++total_errors;
 			}
@@ -1740,7 +1740,7 @@ static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 		}
 
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	}
@@ -1775,7 +1775,7 @@ static void test_prep_statement_1(std::auto_ptr<sql::Connection> & conn, std::au
 		ensure("stmt3 is NULL", stmt3.get() != NULL);
 		stmt3->execute();
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -1807,7 +1807,7 @@ static void test_prep_statement_2(std::auto_ptr<sql::Connection> & conn, std::st
 		} catch (sql::SQLException &) {}
 
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -1935,7 +1935,7 @@ static void test_prep_statement_3(std::auto_ptr<sql::Connection> & conn, std::au
 		ensure("stmt5 is NULL", stmt5.get() != NULL);
 		stmt5->execute();
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -1997,7 +1997,7 @@ static void test_prep_statement_blob(std::auto_ptr<sql::Connection> & conn, std:
 
 		stmt2->execute("DELETE FROM test_blob WHERE 1");
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -2117,7 +2117,7 @@ static void test_get_table_privileges_1(const std::string & host, const std::str
 				ensure_equal_int("Bad PRIVILEGE data(1)", found, expectedPrivilegesList_it->size());
 				ensure_equal_int("Bad PRIVILEGE data(2)", found, rows);
 			} catch (sql::SQLException &e) {
-				printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+				printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 				printf("# ");
 				++total_errors;
 			} catch (...) {
@@ -2129,7 +2129,7 @@ static void test_get_table_privileges_1(const std::string & host, const std::str
 			root_stmt->execute(drop_db);
 		}
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -2216,7 +2216,7 @@ static void test_not_implemented_connection(std::auto_ptr<sql::Connection> & con
 		} catch (sql::MethodNotImplementedException &) {}
 
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -2315,7 +2315,7 @@ static void test_not_implemented_statement(std::auto_ptr<sql::Connection> & conn
 		} catch (sql::MethodNotImplementedException &) {}
 
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -2364,7 +2364,7 @@ static void test_not_implemented_conn_meta(std::auto_ptr<sql::Connection> & conn
 		} catch (sql::MethodNotImplementedException &) {}
 
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -2502,7 +2502,7 @@ static void test_not_implemented_ps(std::auto_ptr<sql::Connection> & conn, const
 		} catch (sql::MethodNotImplementedException &) {}
 
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -2637,7 +2637,7 @@ static void test_not_implemented_resultset(std::auto_ptr<sql::Connection> & conn
 		} catch (sql::MethodNotImplementedException &) {}
 
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -2772,7 +2772,7 @@ static void test_not_implemented_ps_resultset(std::auto_ptr<sql::Connection> & c
 		} catch (sql::MethodNotImplementedException &) {}
 
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -2906,7 +2906,7 @@ static void test_not_implemented_cs_resultset(std::auto_ptr<sql::Connection> & c
 		} catch (sql::MethodNotImplementedException &) {}
 
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -2934,7 +2934,7 @@ static void test_not_implemented_rs_meta(std::auto_ptr<sql::Connection> & conn)
 		} catch (sql::MethodNotImplementedException &) {}
 
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -2982,7 +2982,7 @@ static void test_not_implemented_cs_rs_meta(std::auto_ptr<sql::Connection> & con
 		} catch (sql::MethodNotImplementedException &) {}
 
 	} catch (sql::SQLException &e) {
-		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
 		++total_errors;
 	} catch (...) {
@@ -3032,7 +3032,7 @@ int run_tests(int argc, const char **argv)
 		try {
 			conn.reset(get_connection(host, user, pass));
 		} catch (sql::SQLException &e) {
-			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 			printf("not ok\n");
 			return 1;
 		}
@@ -3067,7 +3067,7 @@ int run_tests(int argc, const char **argv)
 
 			stmt->execute("USE " + database);
 		} catch (sql::SQLException &e) {
-			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLState());
+			printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 			printf("# ");
 			return 1;
 		}

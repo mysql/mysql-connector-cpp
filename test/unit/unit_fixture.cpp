@@ -349,7 +349,7 @@ sql::Connection * unit_fixture::getConnection()
 {
   if (driver == NULL)
   {
-    driver=get_driver_instance();
+    driver= sql::mysql::get_driver_instance();
   }
 
   sql::ConnectOptionsMap connection_properties;

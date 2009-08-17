@@ -19,7 +19,7 @@ int loops = 2;
 static sql::Connection *
 get_connection(const std::string& host, const std::string& user, const std::string& pass)
 {
-	static sql::Driver * driver = get_driver_instance();
+	static sql::Driver * driver = sql::mysql::get_driver_instance();
 	if (loops % 2) {
 		return driver->connect(host, /*port,*/ user, pass);
 	} else {

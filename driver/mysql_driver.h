@@ -14,6 +14,10 @@
 
 #include <cppconn/driver.h>
 
+extern "C"
+{
+CPPCONN_PUBLIC_FUNC void  * sql_mysql_get_driver_instance();
+}
 
 namespace sql
 {
@@ -56,7 +60,8 @@ private:
 	void operator=(MySQL_Driver &);
 };
 
-CPPCONN_PUBLIC_FUNC MySQL_Driver *get_mysql_driver_instance();
+CPPCONN_PUBLIC_FUNC MySQL_Driver * get_driver_instance();
+static inline MySQL_Driver * get_mysql_driver_instance() { return get_driver_instance(); }
 
 
 } /* namespace mysql */

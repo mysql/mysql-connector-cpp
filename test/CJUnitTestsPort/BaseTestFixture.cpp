@@ -753,7 +753,7 @@ sql::Connection * BaseTestFixture::getConnection()
   //props.setProperty("runningCTS13", "true");
   if (driver == NULL)
   {
-    driver=get_driver_instance();
+    driver= sql::mysql::get_driver_instance();
     logMsg(String(_T("Done: loaded ")) + driver->getName());
   }
 

@@ -55,7 +55,7 @@ int main(int argc, const char **argv)
 
 	try {
 		/* Using the Driver to create a conection */
-		std::auto_ptr< sql::Connection > con(get_driver_instance()->connect(url, user, pass));
+		std::auto_ptr< sql::Connection > con(sql::mysql::get_driver_instance()->connect(url, user, pass));
 
 		con->setSchema(database);
 

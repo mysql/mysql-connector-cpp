@@ -27,6 +27,7 @@
 #include <cppconn/resultset_metadata.h>
 #include <cppconn/statement.h>
 /*#include <cppconn/connection.h"*/
+#include "mysql_driver.h"
 #include "mysql_connection.h"
 //#include <cppconn/types.h>
 

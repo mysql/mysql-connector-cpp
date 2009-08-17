@@ -16,26 +16,29 @@
 // Looks like this one should go after private_iface
 #include "mysql_driver.h"
 
-static bool module_already_loaded = 0;
 
-CPPCONN_PUBLIC_FUNC sql::Driver * get_driver_instance()
+extern "C"
 {
-	return sql::mysql::MySQL_Driver::Instance();
+CPPCONN_PUBLIC_FUNC void * sql_mysql_get_driver_instance()
+{
+	return sql::mysql::get_driver_instance();
 }
+} /* extern "C" */
 
 namespace sql
 {
 namespace mysql
 {
 
+static bool module_already_loaded = 0;
 
-CPPCONN_PUBLIC_FUNC MySQL_Driver * get_mysql_driver_instance()
+
+CPPCONN_PUBLIC_FUNC sql::mysql::MySQL_Driver * get_driver_instance()
 {
 	return sql::mysql::MySQL_Driver::Instance();
 }
 
 static sql::mysql::MySQL_Driver d;
-
 
 MySQL_Driver * MySQL_Driver::Instance()
 {

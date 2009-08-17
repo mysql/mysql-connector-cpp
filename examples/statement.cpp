@@ -52,7 +52,7 @@ int main(int argc, const char **argv)
 
 	try {
 		/* Using the Driver to create a connection */
-		driver = get_driver_instance();
+		driver = sql::mysql::get_driver_instance();
 		std::auto_ptr< sql::Connection > con(driver->connect(url, user, pass));
 		con->setSchema(database);
 

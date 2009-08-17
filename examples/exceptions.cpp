@@ -49,8 +49,8 @@ int main(int argc, const char **argv)
 
 	try {
 		/* Using the Driver to create a connection */
-		driver = get_driver_instance();
-		std::auto_ptr< sql::Connection> con(driver->connect(host, user, pass));
+		driver = sql::mysql::get_driver_instance();
+		std::auto_ptr< sql::Connection > con(driver->connect(host, user, pass));
 
 		/* Run in autocommit mode */
 		con->setAutoCommit(1);

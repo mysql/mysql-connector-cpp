@@ -39,7 +39,7 @@ try {
   sql::ResultSet *res;
 
   /* Create a connection */
-  driver = get_driver_instance();
+  driver = sql::mysql::get_driver_instance();
   con = driver->connect("tcp://127.0.0.1:3306", "root", "root");
   /* Connect to the MySQL test database */
   con->setSchema("test");
