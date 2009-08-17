@@ -45,7 +45,7 @@ typedef void *  SymbolHandle;
 class LibraryLoader : public boost::noncopyable
 {
 private:
-	typedef std::map< const std::string, SymbolHandle > ProcCache;
+	typedef std::map< std::string, SymbolHandle > ProcCache;
 
 	ProcCache		functions;
 	ModuleHandle	loadedLibHandle;
