@@ -1710,7 +1710,11 @@ static void test_prep_statement_0(std::auto_ptr<sql::Connection> & conn)
 				std::auto_ptr<sql::ResultSet> rset(stmt->executeQuery());
 				ensure("No result set", rset.get() != NULL);
 				ensure("Result set is empty", rset->next() != false);
-				ensure("Incorrect value for col 1", !rset->getString(4).length() == 0 && true == rset->wasNull());
+
+                                ensure("Non empty string returned for NULL", rset->getString(4).length() == 0);
+                                ensure("wasNull() not properly set for NULL", rset->wasNull());
+                                ensure("isNull() is wrong", rset->isNull(4));
+                                ensure("Incorrect value for col 4", !rset->getString(4).compare("") && true == rset->wasNull());
 
 				ensure("Incorrect value for col 0", !rset->getString(1).compare("Hello MYSQL") && false == rset->wasNull());
 
