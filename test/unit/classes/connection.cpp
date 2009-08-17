@@ -1008,7 +1008,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing OPT_RECONNECT");
       /* C-API does not care about the actual value */
-      connection_properties["OPT_RECONNECT"]=((long long)1);
+      connection_properties["OPT_RECONNECT"]=true;
       try
       {
         created_objects.clear();

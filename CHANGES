@@ -1,5 +1,7 @@
 GA  1.0.6 - 2009-08-xx
 
+- Connection map property OPT_RECONNECT is now of type boolean (was long long).
+
 - We now check LDFLAGS, CXXFLAGS and CPPFLAGS from the environment for every binary
   we generate. (Ulf, Kent)
 
