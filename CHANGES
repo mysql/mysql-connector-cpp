@@ -1,5 +1,8 @@
 GA  1.0.6 - 2009-08-xx
 
+- Fixed http://bugs.mysql.com/bug.php?id=45846 . Excluding dynamically generated
+  and platform specific header files source packages generated using cpack (Ulf).
+
 - Connection map property OPT_RECONNECT is now of type boolean (was long long).
 
 - We now check LDFLAGS, CXXFLAGS and CPPFLAGS from the environment for every binary
