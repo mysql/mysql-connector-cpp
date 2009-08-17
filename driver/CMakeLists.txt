@@ -114,16 +114,10 @@ IF(WIN32)
 		nativeapi/native_resultset_wrapper.h
 	)
 
-	IF(MYSQLCLIENT_STATIC_BINDING)
+	IF(NOT MYSQLCLIENT_STATIC_BINDING)
 		SET(MYSQLCPPCONN_SOURCES ${MYSQLCPPCONN_SOURCES}
-									nativeapi/libmysql_static_proxy.cpp
-									nativeapi/libmysql_static_proxy.h)
-	ELSE(MYSQLCLIENT_STATIC_BINDING)
-		SET(MYSQLCPPCONN_SOURCES ${MYSQLCPPCONN_SOURCES}
-									nativeapi/library_loader.h
-									nativeapi/libmysql_dynamic_proxy.cpp
-									nativeapi/libmysql_dynamic_proxy.h)
-	ENDIF(MYSQLCLIENT_STATIC_BINDING)
+									nativeapi/library_loader.h)
+	ENDIF(NOT MYSQLCLIENT_STATIC_BINDING)
 
 	# Used to create source filter in projects in VS
 	SOURCE_GROUP(NativeApi nativeapi/.+)
