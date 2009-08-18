@@ -179,28 +179,27 @@ MySQL_ResultSetMetaData::getFieldMeta(unsigned int columnIndex) const
 /* }}} */
 
 
-/* {{{ MySQL_ResultSetMetaData::getScale -I- */
+// Precision - total number of digits
+/* {{{ MySQL_ResultSetMetaData::getPrecision -I- */
 unsigned int
-MySQL_ResultSetMetaData::getScale(unsigned int columnIndex)
+MySQL_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::getScale");
+	CPP_ENTER("MySQL_ResultSetMetaData::getPrecision");
 	checkValid();
 	checkColumnIndex(columnIndex);
 
-	unsigned int precision = getPrecision(columnIndex);
-	unsigned int ret = getFieldMeta(columnIndex)->length;
-	ret -= precision;
+	unsigned int ret = getFieldMeta(columnIndex)->max_length - getScale(columnIndex);
 	CPP_INFO_FMT("column=%u precision=%d", columnIndex, ret);
 	return ret;
 }
 /* }}} */
 
 
-/* {{{ MySQL_ResultSetMetaData::getPrecision -I- */
+/* {{{ MySQL_ResultSetMetaData::getScale -I- */
 unsigned int
-MySQL_ResultSetMetaData::getPrecision(unsigned int columnIndex)
+MySQL_ResultSetMetaData::getScale(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::getPrecision");
+	CPP_ENTER("MySQL_ResultSetMetaData::getScale");
 	checkValid();
 	checkColumnIndex(columnIndex);
 

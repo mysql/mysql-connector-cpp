@@ -1,5 +1,8 @@
 GA  1.0.6 - 2009-08-xx
 
+- Fixed bug in ResultSetMetaData for normal statements and prepared ones, getScale
+  and getPrecision did return wrong results. (Andrey)
+
 - Fixed http://bugs.mysql.com/bug.php?id=45846 . Excluding dynamically generated
   and platform specific header files source packages generated using cpack (Ulf).
 

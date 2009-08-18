@@ -166,7 +166,7 @@ MYSQL_FIELD * MySQL_PreparedResultSetMetaData::getFieldMeta(unsigned int columnI
 /* }}} */
 
 
-// Scale - Number of digits right of the decimal point
+// Precision - total number of digits
 /* {{{ MySQL_PreparedResultSetMetaData::getPrecision -I- */
 unsigned int
 MySQL_PreparedResultSetMetaData::getPrecision(unsigned int columnIndex)
@@ -174,14 +174,14 @@ MySQL_PreparedResultSetMetaData::getPrecision(unsigned int columnIndex)
 	CPP_ENTER("MySQL_PreparedResultSetMetaData::getPrecision");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
-	unsigned int ret = getFieldMeta(columnIndex)->decimals;
-	CPP_INFO_FMT("column=%u scale=%d", columnIndex, ret);
+	unsigned int ret = getFieldMeta(columnIndex)->max_length - getScale(columnIndex);
+	CPP_INFO_FMT("column=%u precision=%d", columnIndex, ret);
 	return ret;
 }
 /* }}} */
 
 
-// Precision - total number of digits
+// Scale - Number of digits right of the decimal point
 /* {{{ MySQL_PreparedResultSetMetaData::getScale -I- */
 unsigned int
 MySQL_PreparedResultSetMetaData::getScale(unsigned int columnIndex)
@@ -189,10 +189,8 @@ MySQL_PreparedResultSetMetaData::getScale(unsigned int columnIndex)
 	CPP_ENTER("MySQL_PreparedResultSetMetaData::getScale");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
-	unsigned int precision = getPrecision(columnIndex);
-	unsigned int ret = getFieldMeta(columnIndex)->length;
-	ret -= precision;
-	CPP_INFO_FMT("column=%u precision=%d", columnIndex, ret);
+	unsigned int ret = getFieldMeta(columnIndex)->decimals;
+	CPP_INFO_FMT("column=%u scale=%d", columnIndex, ret);
 	return ret;
 }
 /* }}} */
