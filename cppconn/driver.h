@@ -44,7 +44,7 @@ public:
 
 extern "C"
 {
-  CPPCONN_PUBLIC_FUNC sql::Driver *get_driver_instance();
+	CPPCONN_PUBLIC_FUNC sql::Driver * get_driver_instance();
 }
 
 #endif /* _SQL_DRIVER_H_ */

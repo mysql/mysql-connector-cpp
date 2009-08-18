@@ -23,6 +23,14 @@ CPPCONN_PUBLIC_FUNC void * sql_mysql_get_driver_instance()
 {
 	return sql::mysql::get_driver_instance();
 }
+
+#ifdef mysqlcppconn_EXPORTS
+CPPCONN_PUBLIC_FUNC sql::Driver * get_driver_instance()
+{
+	return sql::mysql::get_driver_instance();
+}
+#endif
+
 } /* extern "C" */
 
 namespace sql

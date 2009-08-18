@@ -1,5 +1,12 @@
 GA  1.0.6 - 2009-08-xx
 
+- get_driver_instance() is only available in dynamic library builds, static builds
+  won't have this symbol. This is done, because someone might decided to load the
+  dll with LoadLibrary/dlopen and needs an entry point to start using the library
+  (some kind of a Driver Manager). For those, who don't use cmake for building
+  you need to define mysqlcppconn_EXPORTS if you are loading dynamically and want
+  to use that entry point. (Andrey)
+
 - Fixed bug in ResultSetMetaData for normal statements and prepared ones, getScale
   and getPrecision did return wrong results. (Andrey)
 
