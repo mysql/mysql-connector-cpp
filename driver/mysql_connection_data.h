@@ -17,6 +17,7 @@
 #include <boost/shared_ptr.hpp>
 #include <cppconn/resultset.h>
 #include "mysql_util.h"
+#include "mysql_metadata.h"
 struct st_mysql;
 
 namespace sql
