@@ -361,8 +361,8 @@ void preparedstatement::InsertSelectAllTypes()
           len=it->as_string.length();
           boost::scoped_array<char> blob_out(new char[len]);
           blob_output_stream->read(blob_out.get(), len);
-          if ( it->as_string.compare(0, blob_output_stream->gcount()
-                              , blob_out.get(), blob_output_stream->gcount() ) )
+          if (it->as_string.compare(0, blob_output_stream->gcount()
+                                    , blob_out.get(), blob_output_stream->gcount()))
           {
             sql.str("");
             sql << "... \t\tWARNING - SQL: '" << it->sqldef << "' - expecting '" << it->as_string << "'";
@@ -373,12 +373,12 @@ void preparedstatement::InsertSelectAllTypes()
         }
 
         {
-          boost::scoped_ptr<std::istream> blob_output_stream( res->getBlob("id") );
+          boost::scoped_ptr<std::istream> blob_output_stream(res->getBlob("id"));
           len=it->as_string.length();
           boost::scoped_array<char> blob_out(new char[len]);
-          blob_output_stream->read(blob_out.get(), len);          
-          if ( it->as_string.compare(0, blob_output_stream->gcount()
-                              , blob_out.get(), blob_output_stream->gcount() ) )
+          blob_output_stream->read(blob_out.get(), len);
+          if (it->as_string.compare(0, blob_output_stream->gcount()
+                                    , blob_out.get(), blob_output_stream->gcount()))
           {
             sql.str("");
             sql << "... \t\tWARNING - SQL: '" << it->sqldef << "' - expecting '" << it->as_string << "'";
@@ -945,7 +945,7 @@ bool preparedstatement::createSP(std::string sp_code)
   try
   {
     pstmt.reset(con->prepareStatement(sp_code));
-    ASSERT(!pstmt->execute());    
+    ASSERT(!pstmt->execute());
     logMsg("... using PS for everything");
   }
   catch (sql::SQLException &e)
@@ -1045,10 +1045,10 @@ void preparedstatement::callSPInOut()
       if (e.getErrorCode() != 1295)
       {
         logErr(e.what());
-        std::stringstream msg;
-        msg.str("");
-        msg << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
-        logErr(msg.str());
+        std::stringstream msg1;
+        msg1.str("");
+        msg1 << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
+        logErr(msg1.str());
         fail(e.what(), __FILE__, __LINE__);
       }
       // PS protocol does not support CALL
@@ -1063,10 +1063,10 @@ void preparedstatement::callSPInOut()
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    std::stringstream msg;
-    msg.str("");
-    msg << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
-    logErr(msg.str());
+    std::stringstream msg2;
+    msg2.str("");
+    msg2 << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
+    logErr(msg2.str());
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -1075,9 +1075,6 @@ void preparedstatement::callSPWithPS()
 {
   logMsg("preparedstatement::callSPWithPS() - MySQL_PreparedStatement::*()");
 
-  std::stringstream msg;
-  std::string sp_code("CREATE PROCEDURE p(IN val VARCHAR(25)) BEGIN SET @sql = CONCAT('SELECT \"', val, '\"'); PREPARE stmt FROM @sql; EXECUTE stmt; DROP PREPARE stmt; END;");
-
   try
   {
 
@@ -1085,6 +1082,7 @@ void preparedstatement::callSPWithPS()
     if (mysql_version < 60000)
       SKIP("http://bugs.mysql.com/bug.php?id=44495 - Server crash");
 
+    std::string sp_code("CREATE PROCEDURE p(IN val VARCHAR(25)) BEGIN SET @sql = CONCAT('SELECT \"', val, '\"'); PREPARE stmt FROM @sql; EXECUTE stmt; DROP PREPARE stmt; END;");
     if (!createSP(sp_code))
     {
       logMsg("... skipping:");
@@ -1101,10 +1099,10 @@ void preparedstatement::callSPWithPS()
       if (e.getErrorCode() != 1295)
       {
         logErr(e.what());
-        std::stringstream msg;
-        msg.str("");
-        msg << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
-        logErr(msg.str());
+        std::stringstream msg1;
+        msg1.str("");
+        msg1 << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
+        logErr(msg1.str());
         fail(e.what(), __FILE__, __LINE__);
       }
       // PS interface cannot call this kind of statement
@@ -1112,9 +1110,10 @@ void preparedstatement::callSPWithPS()
     }
     ASSERT(res->next());
     ASSERT_EQUALS("abc", res->getString(1));
-    msg.str("");
-    msg << "... val = '" << res->getString(1) << "'";
-    logMsg(msg.str());
+    std::stringstream msg2;
+    msg2.str("");
+    msg2 << "... val = '" << res->getString(1) << "'";
+    logMsg(msg2.str());
 
     try
     {
@@ -1127,10 +1126,10 @@ void preparedstatement::callSPWithPS()
       if (e.getErrorCode() != 1295)
       {
         logErr(e.what());
-        std::stringstream msg;
-        msg.str("");
-        msg << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
-        logErr(msg.str());
+        std::stringstream msg3;
+        msg3.str("");
+        msg3 << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
+        logErr(msg3.str());
         fail(e.what(), __FILE__, __LINE__);
       }
       // PS interface cannot call this kind of statement
@@ -1143,10 +1142,10 @@ void preparedstatement::callSPWithPS()
     if (e.getErrorCode() != 1295)
     {
       logErr(e.what());
-      std::stringstream msg;
-      msg.str("");
-      msg << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
-      logErr(msg.str());
+      std::stringstream msg4;
+      msg4.str("");
+      msg4 << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
+      logErr(msg4.str());
       fail(e.what(), __FILE__, __LINE__);
     }
   }
@@ -1160,11 +1159,10 @@ void preparedstatement::callSPMultiRes()
   if (mysql_version < 60008)
     SKIP("http://bugs.mysql.com/bug.php?id=44521 - Server crash");
 
-  std::stringstream msg;
-  std::string sp_code("CREATE PROCEDURE p() BEGIN SELECT 1; SELECT 2; SELECT 3; END;");
 
   try
   {
+    std::string sp_code("CREATE PROCEDURE p() BEGIN SELECT 1; SELECT 2; SELECT 3; END;");
     if (!createSP(sp_code))
     {
       logMsg("... skipping:");
@@ -1181,10 +1179,10 @@ void preparedstatement::callSPMultiRes()
       if (e.getErrorCode() != 1295)
       {
         logErr(e.what());
-        std::stringstream msg;
-        msg.str("");
-        msg << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
-        logErr(msg.str());
+        std::stringstream msg1;
+        msg1.str("");
+        msg1 << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
+        logErr(msg1.str());
         fail(e.what(), __FILE__, __LINE__);
       }
       // PS interface cannot call this kind of statement
@@ -1192,26 +1190,27 @@ void preparedstatement::callSPMultiRes()
     }
 
     // Should not work prior to MySQL 6.0
-    msg.str("");
+    std::stringstream msg2;
+    msg2.str("");
     do
     {
       res.reset(pstmt->getResultSet());
     while (res->next())
     {
-      msg << res->getString(1);
+      msg2 << res->getString(1);
     }
     }
     while (pstmt->getMoreResults());
 
-    ASSERT_EQUALS("123", msg.str());
+    ASSERT_EQUALS("123", msg2.str());
   }
   catch (sql::SQLException &e)
   {
     logErr(e.what());
-    std::stringstream msg;
-    msg.str("");
-    msg << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
-    logErr(msg.str());
+    std::stringstream msg3;
+    msg3.str("");
+    msg3 << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
+    logErr(msg3.str());
     fail(e.what(), __FILE__, __LINE__);
   }
 }
@@ -1362,7 +1361,7 @@ void preparedstatement::blob()
     pstmt.reset(con->prepareStatement("INSERT INTO test(id, col1) VALUES (?, ?)"));
 
     for (char ascii_code=CHAR_MIN; ascii_code < CHAR_MAX; ascii_code++)
-    {      
+    {
       blob_output[offset]='\0';
       blob_input[offset++]=ascii_code;
     }
