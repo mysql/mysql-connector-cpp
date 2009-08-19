@@ -1379,5 +1379,31 @@ void connection::setTransactionIsolation()
   }
 }
 
+/* Exploiting bug that different wrapper is currently created if requested for ""
+ * and default lib name. just to test that nothing bad happens.
+ * Test itself shouldn't fail.
+ */
+#ifndef MYSQLCLIENT_STATIC_BINDING
+void connection::loadSameLibraryTwice()
+{
+#ifdef _WIN32
+    const sql::SQLString baseName("libmysql.dll");
+#elif defined(__APPLE__)
+    const sql::SQLString baseName("libmysqlclient_r.dylib");
+#else
+    const sql::SQLString baseName("libmysqlclient_r.so");
+#endif
+
+    sql::ConnectOptionsMap connection_properties;
+    connection_properties["hostName"] = url;
+    connection_properties["userName"] = user;
+    connection_properties["password"] = passwd;
+
+    connection_properties["clientlib"]= baseName;
+
+    con.reset(driver->connect(connection_properties));
+}
+#endif
+
 } /* namespace connection */
 } /* namespace testsuite */

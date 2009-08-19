@@ -44,6 +44,10 @@ public:
     TODO: do we want to add this to sql::Connection?
     TEST_CASE(setSessionVariable);
      */
+    // Test doesn't make sense for static binding.
+#ifndef MYSQLCLIENT_STATIC_BINDING
+    TEST_CASE(loadSameLibraryTwice);
+#endif
   }
 
   /**
@@ -123,7 +127,18 @@ public:
    */
   void setTransactionIsolation();
 
+
+#ifndef MYSQLCLIENT_STATIC_BINDING
+  /*
+   * Tries to load same library twice - 1 time just by the name, 2nd time - by full path
+   * (need to know which lib file is picked by name)
+   * nothing should happen in the test. But crash is possible at the end of work of the program
+   */
+  void loadSameLibraryTwice();
+#endif
+
 };
+
 
 REGISTER_FIXTURE(connection);
 } /* namespace classes */
