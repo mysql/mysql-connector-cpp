@@ -1345,7 +1345,6 @@ void preparedstatement::blob()
   char blob_input[512];
   std::stringstream blob_input_stream;
   std::stringstream msg;
-  std::istream * blob_output_stream;
   char blob_output[512];
   int id;
   int offset=0;
@@ -1406,12 +1405,12 @@ void preparedstatement::blob()
     ASSERT_EQUALS(res->getString("col1"), blob_input_stream.str());
     ASSERT_EQUALS(res->getString("col1"), blob_input);
 
-    blob_output_stream=res->getBlob(2);
+    std::auto_ptr< std::istream > blob_output_stream(res->getBlob(2));
     blob_output_stream->seekg(std::ios::beg);
     blob_output_stream->get(blob_output, offset + 1);
     ASSERT_EQUALS(blob_input_stream.str(), blob_output);
 
-    blob_output_stream=res->getBlob("col1");
+    blob_output_stream.reset(res->getBlob("col1"));
     blob_output_stream->seekg(std::ios::beg);
     blob_output_stream->get(blob_output, offset + 1);
     ASSERT_EQUALS(blob_input, blob_output);
