@@ -66,6 +66,7 @@ void preparedstatement::InsertSelectAllTypes()
       checkResultSetScrolling(res);
       ASSERT(res->next());
 
+	  res.reset();
       res.reset(pstmt->executeQuery());
       checkResultSetScrolling(res);
       ASSERT(res->next());

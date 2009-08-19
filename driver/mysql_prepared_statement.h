@@ -56,6 +56,8 @@ protected:
 
 	sql::ResultSet::enum_type resultset_type;
 
+	boost::shared_ptr< MySQL_ResultBind > result_bind;
+
 	virtual void do_query();
 	virtual void checkClosed();
 	virtual void closeIntern();

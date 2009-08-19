@@ -65,7 +65,7 @@ LibmysqlDynamicProxy::LibmysqlDynamicProxy(const SQLString & dir2look, const SQL
 /* {{{ LibmysqlDynamicProxy::~LibmysqlDynamicProxy() */
 LibmysqlDynamicProxy::~LibmysqlDynamicProxy()
 {
-    ptr2mysql_library_end endProc= symbol_safe_cast<ptr2mysql_library_end>(GetProcAddr("mysql_server_end"));
+    ptr2mysql_library_end endProc = symbol_safe_cast<ptr2mysql_library_end>(GetProcAddr("mysql_server_end"));
 	
 	if (endProc != NULL) {
 		(*endProc)();

@@ -185,7 +185,7 @@ MySQL_NativeStatementWrapper::prepare(const ::sql::SQLString & stmt_str)
 NativeResultsetWrapper *
 MySQL_NativeStatementWrapper::result_metadata()
 {
-	::st_mysql_res * raw= api->stmt_result_metadata(stmt);
+	::st_mysql_res * raw = api->stmt_result_metadata(stmt);
 
 	if (raw == NULL) {
 		return NULL;

@@ -67,7 +67,7 @@ static inline char * my_f_to_a(char * buf, size_t buf_size, double a)
 /* {{{ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet() -I- */
 MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
 			boost::shared_ptr< NativeAPI::NativeStatementWrapper > & s,
-			MySQL_ResultBind * r_bind,
+			boost::shared_ptr< MySQL_ResultBind > & r_bind,
 			sql::ResultSet::enum_type rset_type,
 			MySQL_Prepared_Statement * par,
 			boost::shared_ptr< MySQL_DebugLogger > & l

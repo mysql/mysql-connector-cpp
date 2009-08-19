@@ -58,7 +58,8 @@ private:
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 
 	boost::scoped_ptr< MySQL_PreparedResultSetMetaData > rs_meta;
-	boost::scoped_ptr< MySQL_ResultBind > result_bind;
+
+	boost::shared_ptr< MySQL_ResultBind > result_bind;
 
 	sql::ResultSet::enum_type resultset_type;
 
@@ -75,7 +76,7 @@ protected:
 
 public:
 	MySQL_Prepared_ResultSet(boost::shared_ptr< NativeAPI::NativeStatementWrapper > & s,
-		MySQL_ResultBind * r_bind, sql::ResultSet::enum_type rset_type,
+		boost::shared_ptr< MySQL_ResultBind > & r_bind, sql::ResultSet::enum_type rset_type,
 		MySQL_Prepared_Statement * par, boost::shared_ptr< MySQL_DebugLogger > &l);
 
 	virtual ~MySQL_Prepared_ResultSet();

@@ -1,5 +1,8 @@
 GA  1.0.6 - 2009-08-xx
 
+- Fixed Bug #45048 "prepared statements corrupt the heap". ResultBind is back in
+  the prepared statement, but shared with the result set. (Andrey)
+
 - get_driver_instance() is only available in dynamic library builds, static builds
   won't have this symbol. This is done, because someone might decided to load the
   dll with LoadLibrary/dlopen and needs an entry point to start using the library

@@ -32,7 +32,7 @@ namespace NativeAPI
 
 static std::map< sql::SQLString, boost::shared_ptr<IMySQLCAPI> > wrapper;
 
-boost::shared_ptr<IMySQLCAPI> getCApiHandle(const sql::SQLString & name)
+boost::shared_ptr< IMySQLCAPI > getCApiHandle(const sql::SQLString & name)
 {
 #ifdef MYSQLCLIENT_STATIC_BINDING
 	return LibmysqlStaticProxy::theInstance();

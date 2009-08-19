@@ -144,11 +144,10 @@ void MySQL_ResultBind::bindResult()
 	len.reset(new unsigned long[num_fields]);
 	memset(len.get(), 0, sizeof(unsigned long) * num_fields);
 
-
-	NativeAPI::NativeResultsetWrapper * resultMeta= proxy->result_metadata();
+	std::auto_ptr< NativeAPI::NativeResultsetWrapper > resultMeta(proxy->result_metadata());
 
 	for (unsigned int i = 0; i < num_fields; ++i) {
-		MYSQL_FIELD * field= resultMeta->fetch_field();
+		MYSQL_FIELD * field = resultMeta->fetch_field();
 
 		struct st_buffer_size_type p = allocate_buffer_for_field(field);
 		rbind[i].buffer_type= p.type;

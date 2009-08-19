@@ -158,7 +158,8 @@ MySQL_Prepared_Statement::MySQL_Prepared_Statement(
 			boost::shared_ptr< NativeAPI::NativeStatementWrapper > & s, sql::Connection * conn,
 			sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & log
 		)
-	:connection(conn), proxy(s), isClosed(false), logger(log), resultset_type(rset_type)
+	:connection(conn), proxy(s), isClosed(false), logger(log), resultset_type(rset_type), result_bind(new MySQL_ResultBind(proxy, logger))
+
 {
 	CPP_ENTER("MySQL_Prepared_Statement::MySQL_Prepared_Statement");
 	CPP_INFO_FMT("this=%p", this);
@@ -320,10 +321,7 @@ MySQL_Prepared_Statement::executeQuery()
 	} else {
 		throw SQLException("Invalid value for result set type");
 	}
-	// MySQL_Prepared_ResultSet takes responsibility about the newly created
-	// MySQL_ResultBind object. The former uses scoped_ptr and will clean it in
-	// any case. See http://www.gotw.ca/gotw/062.htm
-	sql::ResultSet * tmp= new MySQL_Prepared_ResultSet(proxy, new MySQL_ResultBind(proxy, logger), tmp_type, this, logger);
+	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(proxy, result_bind, tmp_type, this, logger);
 
 	CPP_INFO_FMT("rset=%p", tmp);
 	return tmp;
@@ -839,10 +837,7 @@ MySQL_Prepared_Statement::getResultSet()
 		throw SQLException("Invalid value for result set type");
 	}
 
-	// MySQL_Prepared_ResultSet takes responsibility about the newly created
-	// MySQL_ResultBind object. The former uses scoped_ptr and will clean it in
-	// any case. See http://www.gotw.ca/gotw/062.htm
-	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(proxy, new MySQL_ResultBind(proxy, logger), tmp_type, this, logger);
+	sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(proxy, result_bind, tmp_type, this, logger);
 
 	CPP_INFO_FMT("rset=%p", tmp);
 	return tmp;
