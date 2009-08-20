@@ -372,7 +372,8 @@ void connection::connectUsingMap()
     /* 1) Port */
     connection_properties.erase("port");
     {
-      long long port= -1;
+      int
+	   port= -1;
       if (url.compare(0, sizeof ("tcp://") - 1, "tcp://") == 0)
       {
         size_t port_pos;
@@ -383,7 +384,7 @@ void connection::connectUsingMap()
         if (port == -1)
         {
           /* The user is using TCP/IP and default port 3306 */
-		  connection_properties["password"]=(port);
+		  connection_properties["password"]= port;
           try
           {
             created_objects.clear();
@@ -951,7 +952,7 @@ void connection::connectUsingMap()
        C-API does not care about the actual value, its passed down to the OS,
        The OS may or may not detect bogus values such as negative values.
        */
-      connection_properties["OPT_CONNECT_TIMEOUT"]=((long long)1);
+      connection_properties["OPT_CONNECT_TIMEOUT"] = 1;
       try
       {
         created_objects.clear();
@@ -972,7 +973,7 @@ void connection::connectUsingMap()
        C-API does not care about the actual value, its passed down to the OS,
        The OS may or may not detect bogus values such as negative values.
        */
-      connection_properties["OPT_READ_TIMEOUT"]=((long long)1);
+      connection_properties["OPT_READ_TIMEOUT"] = 1;
       try
       {
         created_objects.clear();
@@ -990,7 +991,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing OPT_WRITE_TIMEOUT");
       /* C-API does not care about the actual value */
-      connection_properties["OPT_WRITE_TIMEOUT"]=((long long)1);
+      connection_properties["OPT_WRITE_TIMEOUT"] = 1;
       try
       {
         created_objects.clear();
@@ -1093,7 +1094,7 @@ void connection::connectUsingMap()
     connection_properties.erase("defaultStatementResultType");
     {
       logMsg("... testing defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]=((long long)sql::ResultSet::TYPE_FORWARD_ONLY);
+      connection_properties["defaultStatementResultType"]=(sql::ResultSet::TYPE_FORWARD_ONLY);
       try
       {
         created_objects.clear();
@@ -1105,7 +1106,7 @@ void connection::connectUsingMap()
       }
 
       connection_properties.erase("defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]=((long long)sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
+      connection_properties["defaultStatementResultType"]=(sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
       try
       {
         created_objects.clear();
@@ -1117,7 +1118,7 @@ void connection::connectUsingMap()
       }
 
       connection_properties.erase("defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]=((long long)sql::ResultSet::TYPE_SCROLL_SENSITIVE);
+      connection_properties["defaultStatementResultType"]=(sql::ResultSet::TYPE_SCROLL_SENSITIVE);
       try
       {
         created_objects.clear();

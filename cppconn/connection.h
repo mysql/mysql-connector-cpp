@@ -23,7 +23,7 @@ namespace sql
 {
 
 
-typedef boost::variant<long long, double, bool, sql::SQLString > ConnectPropertyVal;
+typedef boost::variant<int, double, bool, sql::SQLString > ConnectPropertyVal;
 
 typedef std::map< sql::SQLString, ConnectPropertyVal > ConnectOptionsMap;
 
