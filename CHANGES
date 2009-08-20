@@ -1,5 +1,11 @@
 GA  1.0.6 - 2009-08-xx
 
+- Connection::getClientOption(const sql::SQLString & optionName, void * optionValue)
+  now accepts the optionName values "metadataUseInfoSchema", 
+  "defaultStatementResultType", "defaultPreparedStatementResultType",
+  "characterSetResults". In the previous version only "metadataUseInfoSchema" 
+  was allowed. The same is true for Connection::setClientOption().
+
 - Fixed Bug #45048 "prepared statements corrupt the heap". ResultBind is back in
   the prepared statement, but shared with the result set. (Andrey)
 
