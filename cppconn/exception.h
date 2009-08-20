@@ -27,8 +27,7 @@ namespace sql
 	void* operator new[](size_t) throw (std::bad_alloc); \
 	void* operator new[](size_t, void*) throw(); \
 	void* operator new[](size_t, const std::nothrow_t&) throw(); \
-	void* operator new(size_t N, std::allocator<Class>&); \
-	virtual SQLException* copy() { return new Class(*this); }
+	void* operator new(size_t N, std::allocator<Class>&);
 
 #ifdef _WIN32
 #pragma warning (disable : 4290)
@@ -88,27 +87,18 @@ struct CPPCONN_PUBLIC_FUNC MethodNotImplementedException : public SQLException
 {
 	MethodNotImplementedException(const MethodNotImplementedException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
 	MethodNotImplementedException(const std::string& reason) : SQLException(reason, "", 0) {}
-
-private:
-	virtual SQLException* copy() { return new MethodNotImplementedException(*this); }
 };
 
 struct CPPCONN_PUBLIC_FUNC InvalidArgumentException : public SQLException
 {
 	InvalidArgumentException(const InvalidArgumentException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
 	InvalidArgumentException(const std::string& reason) : SQLException(reason, "", 0) {}
-
-private:
-	virtual SQLException* copy() { return new InvalidArgumentException(*this); }
 };
 
 struct CPPCONN_PUBLIC_FUNC InvalidInstanceException : public SQLException
 {
 	InvalidInstanceException(const InvalidInstanceException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
 	InvalidInstanceException(const std::string& reason) : SQLException(reason, "", 0) {}
-
-private:
-	virtual SQLException* copy() { return new InvalidInstanceException(*this); }
 };
 
 
@@ -116,9 +106,6 @@ struct CPPCONN_PUBLIC_FUNC NonScrollableException : public SQLException
 {
 	NonScrollableException(const NonScrollableException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
 	NonScrollableException(const std::string& reason) : SQLException(reason, "", 0) {}
-
-private:
-	virtual SQLException* copy() { return new NonScrollableException(*this); }
 };
 
 } /* namespace sql */

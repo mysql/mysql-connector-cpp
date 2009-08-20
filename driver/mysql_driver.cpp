@@ -24,7 +24,7 @@ CPPCONN_PUBLIC_FUNC void * sql_mysql_get_driver_instance()
 	return sql::mysql::get_driver_instance();
 }
 
-#ifdef mysqlcppconn_EXPORTS
+#ifdef CPPCONN_SO_BUILD
 CPPCONN_PUBLIC_FUNC sql::Driver * get_driver_instance()
 {
 	return sql::mysql::get_driver_instance();

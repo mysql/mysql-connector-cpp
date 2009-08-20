@@ -72,8 +72,6 @@ public:
 
 	virtual void close() = 0;
 
-	virtual void deleteRow() { /* We don't support row deletion */ }
-
 	virtual uint32_t findColumn(const sql::SQLString& columnLabel) const = 0;
 
 	virtual bool first() = 0;
