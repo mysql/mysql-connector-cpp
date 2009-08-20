@@ -303,7 +303,7 @@ void statement::unbufferedFetch()
     logMsg("... setting TYPE_FORWARD_ONLY through connection map");
     connection_properties.erase("defaultStatementResultType");
     {
-      connection_properties["defaultStatementResultType"]=(long long)sql::ResultSet::TYPE_FORWARD_ONLY;
+      connection_properties["defaultStatementResultType"]= sql::ResultSet::TYPE_FORWARD_ONLY;
 
       try
       {

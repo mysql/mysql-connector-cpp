@@ -197,7 +197,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	bool ssl_used = false, schema_used = false;
 	int flags = CLIENT_MULTI_RESULTS;
 
-	const long long * p_ll;
+	const int * p_i;
 	const bool * p_b;
 	const sql::SQLString * p_s;
 	
@@ -222,8 +222,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 				throw sql::InvalidArgumentException("No string value passed for password");
 			}
 		} else if (!it->first.compare("port")) {
-			if ((p_ll = boost::get<long long>(&it->second))) {
-			port = static_cast<unsigned int>(*p_ll);
+			if ((p_i = boost::get< int >(&it->second))) {
+				port = static_cast<unsigned int>(*p_i);
 			} else {
 				throw sql::InvalidArgumentException("No long long value passed for port");
 			}
@@ -297,43 +297,43 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			}
 			
 		} else if (!it->first.compare("defaultStatementResultType")) {
-			if (!(p_ll = boost::get<long long>(&it->second))) {
+			if (!(p_i = boost::get< int >(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for defaultStatementResultType");
 			}
 			do {
-				if (static_cast< int >(sql::ResultSet::TYPE_FORWARD_ONLY) == *p_ll) break;
-				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_INSENSITIVE) == *p_ll) break;
-				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_SENSITIVE) == *p_ll) {
+				if (static_cast< int >(sql::ResultSet::TYPE_FORWARD_ONLY) == *p_i) break;
+				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_INSENSITIVE) == *p_i) break;
+				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_SENSITIVE) == *p_i) {
 					std::ostringstream msg;
-					msg << "Invalid value " << *p_ll <<
+					msg << "Invalid value " << *p_i <<
 						" for option defaultStatementResultType. TYPE_SCROLL_SENSITIVE is not supported";
 					throw sql::InvalidArgumentException(msg.str());
 				}
 				std::ostringstream msg;
-				msg << "Invalid value (" << *p_ll << " for option defaultStatementResultType";
+				msg << "Invalid value (" << *p_i << " for option defaultStatementResultType";
 				throw sql::InvalidArgumentException(msg.str());
 			} while (0);
-			intern->defaultStatementResultType = static_cast< sql::ResultSet::enum_type >(*p_ll);
+			intern->defaultStatementResultType = static_cast< sql::ResultSet::enum_type >(*p_i);
 		/* The connector is not ready for unbuffered as we need to refetch */
 		} else if (!it->first.compare("defaultPreparedStatementResultType")) {
 #if WE_SUPPORT_USE_RESULT_WITH_PS
-			if (!(p_ll = boost::get<long long>(&it->second))) {
+			if (!(p_i = boost::get< int >(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for defaultPreparedStatementResultType");
 			}
 			do {
-				if (static_cast< int >(sql::ResultSet::TYPE_FORWARD_ONLY) == *p_ll) break;
-				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_INSENSITIVE) == *p_ll) break;
-				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_SENSITIVE) == *p_ll) {
+				if (static_cast< int >(sql::ResultSet::TYPE_FORWARD_ONLY) == *p_i) break;
+				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_INSENSITIVE) == *p_i) break;
+				if (static_cast< int >(sql::ResultSet::TYPE_SCROLL_SENSITIVE) == *p_i) {
 					std::ostringstream msg;
-					msg << "Invalid value " << *p_ll <<
+					msg << "Invalid value " << *p_i <<
 						" for option defaultPreparedStatementResultType. TYPE_SCROLL_SENSITIVE is not supported";
 					throw sql::InvalidArgumentException(msg.str());
 				}
 				std::ostringstream msg;
-				msg << "Invalid value (" << *p_ll << " for option defaultPreparedStatementResultType";
+				msg << "Invalid value (" << *p_i << " for option defaultPreparedStatementResultType";
 				throw sql::InvalidArgumentException(msg.str());
 			} while (0);
-			intern->defaultPreparedStatementResultType = static_cast< sql::ResultSet::enum_type >(*p_ll);
+			intern->defaultPreparedStatementResultType = static_cast< sql::ResultSet::enum_type >(*p_i);
 #else
 			throw SQLException("defaultPreparedStatementResultType parameter still not implemented");
 
@@ -454,22 +454,22 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	it = properties.begin();
 	for (; it != properties.end(); ++it) {
 		if (!it->first.compare("OPT_CONNECT_TIMEOUT")) {
-			if (!(p_ll = boost::get<long long>(&it->second))) {
+			if (!(p_i = boost::get< int >(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for OPT_CONNECT_TIMEOUT");
 			}
-			long l_tmp = static_cast<long>(*p_ll);
+			long l_tmp = static_cast<long>(*p_i);
 			proxy->options(MYSQL_OPT_CONNECT_TIMEOUT, (const char *) &l_tmp);
 		} else if (!it->first.compare("OPT_READ_TIMEOUT")) {
-			if (!(p_ll = boost::get<long long>(&it->second))) {
+			if (!(p_i = boost::get< int >(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for OPT_READ_TIMEOUT");
 			}
-			long l_tmp = static_cast<long>(*p_ll);
+			long l_tmp = static_cast<long>(*p_i);
 			proxy->options(MYSQL_OPT_READ_TIMEOUT, (const char *) &l_tmp);
 		} else if (!it->first.compare("OPT_WRITE_TIMEOUT")) {
-			if (!(p_ll = boost::get<long long>(&it->second))) {
+			if (!(p_i = boost::get< int >(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for OPT_WRITE_TIMEOUT");
 			}
-			long l_tmp = static_cast<long>(*p_ll);
+			long l_tmp = static_cast<long>(*p_i);
 			proxy->options(MYSQL_OPT_WRITE_TIMEOUT, (const char *) &l_tmp);
 		} else if (!it->first.compare("OPT_RECONNECT")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
@@ -478,11 +478,11 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			proxy->options(MYSQL_OPT_RECONNECT, (const char *) &p_b);
 		} else if (!it->first.compare("OPT_CHARSET_NAME")) {
 			if (!(p_s = boost::get< sql::SQLString >(&it->second))) {
-				throw sql::InvalidArgumentException("No long long value passed for OPT_CHARSET_NAME");
+				throw sql::InvalidArgumentException("No SQLString value passed for OPT_CHARSET_NAME");
 			}
 			defaultCharset = *p_s;
 		} else if (!it->first.compare("OPT_REPORT_DATA_TRUNCATION")) {
-			if (!(p_b = boost::get<bool>(&it->second))) {
+			if (!(p_b = boost::get< bool >(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for OPT_REPORT_DATA_TRUNCATION");
 			}
 			proxy->options(MYSQL_REPORT_DATA_TRUNCATION, (const char *) &p_b);

@@ -40,9 +40,9 @@ get_connection(const std::string & host, const std::string & user, const std::st
 			return mysql_driver->connect(host, user, pass);
 		} else {
 			sql::ConnectOptionsMap connection_properties;
-			connection_properties["hostName"] = sql::ConnectPropertyVal(host);
-			connection_properties["userName"] = sql::ConnectPropertyVal(user);
-			connection_properties["password"] = sql::ConnectPropertyVal(pass);
+			connection_properties["hostName"] = host;
+			connection_properties["userName"] = user;
+			connection_properties["password"] = pass;
 			return mysql_driver->connect(connection_properties);
 		}
 	} catch (sql::SQLException &e) {
