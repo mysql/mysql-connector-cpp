@@ -38,6 +38,7 @@ public:
     TEST_CASE(getNoWarningsAfterClear);
     TEST_CASE(checkClosed);
     TEST_CASE(connectUsingMap);
+    TEST_CASE(connectUsingMapWrongTypes);
     TEST_CASE(invalidCredentials);
     TEST_CASE(setTransactionIsolation);
     /*
@@ -97,6 +98,13 @@ public:
   void checkClosed();
 
   /*
+   * Use a map to establish a connection but passing wrong types
+   *
+   * Pretty similar to connectUsingMap but just consistenly wrong types
+   */
+  void connectUsingMapWrongTypes();
+
+   /*
    * Use a map to establish a connection
    *
    * This one does not check if the connection settings passed do anything

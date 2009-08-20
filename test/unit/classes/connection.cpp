@@ -346,6 +346,79 @@ void connection::checkClosed()
   }
 }
 
+void connection::connectUsingMapWrongTypes()
+{
+  logMsg("connection::connectUsingMapWrongTypes - using map to pass connection parameters but parameter of wrong type");
+
+  try
+  {
+    sql::ConnectOptionsMap connection_properties;
+    bool boolval=true;
+
+    try
+    {
+      connection_properties["hostName"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("hostName");
+    connection_properties["hostName"]=url;
+
+    try
+    {
+      connection_properties["userName"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("userName");
+    connection_properties["userName"]=user;
+
+    try
+    {
+      connection_properties["password"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("password");
+    connection_properties["password"]=passwd;
+
+    try
+    {
+      connection_properties["port"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("port");
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 void connection::connectUsingMap()
 {
   logMsg("connection::connectUsingMap - using map to pass connection parameters");
@@ -372,8 +445,7 @@ void connection::connectUsingMap()
     /* 1) Port */
     connection_properties.erase("port");
     {
-      int
-	   port= -1;
+      int port= -1;
       if (url.compare(0, sizeof ("tcp://") - 1, "tcp://") == 0)
       {
         size_t port_pos;
@@ -384,7 +456,7 @@ void connection::connectUsingMap()
         if (port == -1)
         {
           /* The user is using TCP/IP and default port 3306 */
-		  connection_properties["password"]= port;
+          connection_properties["password"]=(port);
           try
           {
             created_objects.clear();
@@ -952,7 +1024,7 @@ void connection::connectUsingMap()
        C-API does not care about the actual value, its passed down to the OS,
        The OS may or may not detect bogus values such as negative values.
        */
-      connection_properties["OPT_CONNECT_TIMEOUT"] = 1;
+      connection_properties["OPT_CONNECT_TIMEOUT"]= 1;
       try
       {
         created_objects.clear();
@@ -973,7 +1045,7 @@ void connection::connectUsingMap()
        C-API does not care about the actual value, its passed down to the OS,
        The OS may or may not detect bogus values such as negative values.
        */
-      connection_properties["OPT_READ_TIMEOUT"] = 1;
+      connection_properties["OPT_READ_TIMEOUT"]= 1;
       try
       {
         created_objects.clear();
@@ -991,7 +1063,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing OPT_WRITE_TIMEOUT");
       /* C-API does not care about the actual value */
-      connection_properties["OPT_WRITE_TIMEOUT"] = 1;
+      connection_properties["OPT_WRITE_TIMEOUT"]= 1;
       try
       {
         created_objects.clear();
@@ -1094,7 +1166,7 @@ void connection::connectUsingMap()
     connection_properties.erase("defaultStatementResultType");
     {
       logMsg("... testing defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]=(sql::ResultSet::TYPE_FORWARD_ONLY);
+      connection_properties["defaultStatementResultType"]=( sql::ResultSet::TYPE_FORWARD_ONLY);
       try
       {
         created_objects.clear();
@@ -1106,7 +1178,7 @@ void connection::connectUsingMap()
       }
 
       connection_properties.erase("defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]=(sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
+      connection_properties["defaultStatementResultType"]=( sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
       try
       {
         created_objects.clear();
@@ -1118,7 +1190,7 @@ void connection::connectUsingMap()
       }
 
       connection_properties.erase("defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]=(sql::ResultSet::TYPE_SCROLL_SENSITIVE);
+      connection_properties["defaultStatementResultType"]=( sql::ResultSet::TYPE_SCROLL_SENSITIVE);
       try
       {
         created_objects.clear();
@@ -1385,24 +1457,25 @@ void connection::setTransactionIsolation()
  * Test itself shouldn't fail.
  */
 #ifndef MYSQLCLIENT_STATIC_BINDING
+
 void connection::loadSameLibraryTwice()
 {
 #ifdef _WIN32
-    const sql::SQLString baseName("libmysql.dll");
+  const sql::SQLString baseName("libmysql.dll");
 #elif defined(__APPLE__)
-    const sql::SQLString baseName("libmysqlclient_r.dylib");
+  const sql::SQLString baseName("libmysqlclient_r.dylib");
 #else
-    const sql::SQLString baseName("libmysqlclient_r.so");
+  const sql::SQLString baseName("libmysqlclient_r.so");
 #endif
 
-    sql::ConnectOptionsMap connection_properties;
-    connection_properties["hostName"] = url;
-    connection_properties["userName"] = user;
-    connection_properties["password"] = passwd;
+  sql::ConnectOptionsMap connection_properties;
+  connection_properties["hostName"]=url;
+  connection_properties["userName"]=user;
+  connection_properties["password"]=passwd;
 
-    connection_properties["clientlib"]= baseName;
+  connection_properties["clientlib"]=baseName;
 
-    con.reset(driver->connect(connection_properties));
+  con.reset(driver->connect(connection_properties));
 }
 #endif
 
