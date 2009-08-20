@@ -48,23 +48,51 @@ void connection::getClientOption()
   try
   {
     const std::string option("metadataUseInfoSchema");
-    bool input_value=true;
-    bool output_value=false;
-    void * input;
-    void * output;
 
-    input=(static_cast<bool *> (&input_value));
-    output=(static_cast<bool *> (&output_value));
+    {
+      bool input_value=true;
+      bool output_value=false;
+      void * input;
+      void * output;
 
-    con->setClientOption("metadataUseInfoSchema", input);
-    con->getClientOption("metadataUseInfoSchema", output);
+      input=(static_cast<bool *> (&input_value));
+      output=(static_cast<bool *> (&output_value));
 
-    ASSERT_EQUALS(input_value, output_value);
+      con->setClientOption("metadataUseInfoSchema", input);
+      con->getClientOption("metadataUseInfoSchema", output);
+      ASSERT_EQUALS(input_value, output_value);
 
-    input_value=false;
-    con->setClientOption("metadataUseInfoSchema", input);
-    con->getClientOption("metadataUseInfoSchema", output);
-    ASSERT_EQUALS(input_value, output_value);
+      con->setClientOption("metadataUseInfoSchema", input);
+      con->getClientOption("metadataUseInfoSchema", output);
+      ASSERT_EQUALS(input_value, output_value);
+
+      input_value=false;
+      output_value=true;
+      con->setClientOption("metadataUseInfoSchema", input);
+      con->getClientOption("metadataUseInfoSchema", output);
+      ASSERT_EQUALS(input_value, output_value);
+    }
+
+    {
+      int input_value=sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
+      int output_value=sql::ResultSet::TYPE_FORWARD_ONLY;
+      void * input;
+      void * output;
+
+      input=(static_cast<int *> (&input_value));
+      output=(static_cast<int *> (&output_value));
+
+      con->setClientOption("defaultStatementResultType", input);
+      con->getClientOption("defaultStatementResultType", output);
+      ASSERT_EQUALS(input_value, output_value);
+
+      input_value=sql::ResultSet::TYPE_FORWARD_ONLY;
+      output_value=sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
+      con->setClientOption("defaultStatementResultType", input);
+      con->getClientOption("defaultStatementResultType", output);
+      ASSERT_EQUALS(input_value, output_value);
+    }
+
   }
   catch (sql::SQLException &e)
   {
@@ -354,6 +382,7 @@ void connection::connectUsingMapWrongTypes()
   {
     sql::ConnectOptionsMap connection_properties;
     bool boolval=true;
+    std::string strval("");
 
     try
     {
@@ -409,6 +438,331 @@ void connection::connectUsingMapWrongTypes()
       /* expected */
     }
     connection_properties.erase("port");
+
+    try
+    {
+      connection_properties["socket"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("socket");
+
+    try
+    {
+      connection_properties["pipe"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("pipe");
+
+    try
+    {
+      connection_properties["schema"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("schema");
+
+    try
+    {
+      connection_properties["characterSetResults"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("characterSetResults");
+
+    try
+    {
+      connection_properties["sslKey"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("sslKey");
+
+    try
+    {
+      connection_properties["sslCert"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("sslCert");
+
+    try
+    {
+      connection_properties["sslCA"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("sslCA");
+
+    try
+    {
+      connection_properties["sslCAPath"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("sslCAPath");
+
+    try
+    {
+      connection_properties["sslCipher"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("sslCipher");
+
+    try
+    {
+      connection_properties["clientlib"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("clientlib");
+
+    try
+    {
+      connection_properties["defaultStatementResultType"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("defaultStatementResultType");
+
+    try
+    {
+      connection_properties["metadataUseInfoSchema"]=(strval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("metadataUseInfoSchema");
+
+    try
+    {
+      connection_properties["CLIENT_COMPRESS"]=(strval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("CLIENT_COMPRESS");
+
+    try
+    {
+      connection_properties["CLIENT_FOUND_ROWS"]=(strval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("CLIENT_FOUND_ROWS");
+
+    try
+    {
+      connection_properties["CLIENT_IGNORE_SIGPIPE"]=(strval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("CLIENT_IGNORE_SIGPIPE");
+
+    try
+    {
+      connection_properties["CLIENT_IGNORE_SPACE"]=(strval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("CLIENT_IGNORE_SPACE");
+
+    try
+    {
+      connection_properties["CLIENT_INTERACTIVE"]=(strval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("CLIENT_INTERACTIVE");
+
+    try
+    {
+      connection_properties["CLIENT_LOCAL_FILES"]=(strval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("CLIENT_LOCAL_FILES");
+
+    try
+    {
+      connection_properties["CLIENT_NO_SCHEMA"]=(strval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("CLIENT_NO_SCHEMA");
+
+    try
+    {
+      connection_properties["OPT_CONNECT_TIMEOUT"]=(strval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("OPT_CONNECT_TIMEOUT");
+
+    try
+    {
+      connection_properties["OPT_READ_TIMEOUT"]=(strval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("OPT_READ_TIMEOUT");
+
+    try
+    {
+      connection_properties["OPT_WRITE_TIMEOUT"]=(strval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("OPT_WRITE_TIMEOUT");
+
+    try
+    {
+      connection_properties["OPT_RECONNECT"]=(strval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("OPT_RECONNECT");
+
+    try
+    {
+      connection_properties["OPT_CHARSET_NAME"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("OPT_CHARSET_NAME");
+
+    try
+    {
+      connection_properties["OPT_REPORT_DATA_TRUNCATION"]=(strval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("OPT_REPORT_DATA_TRUNCATION");
 
   }
   catch (sql::SQLException &e)
