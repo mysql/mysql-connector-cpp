@@ -1888,6 +1888,37 @@ void connection::setTransactionIsolation()
   }
 }
 
+void connection::rollback()
+{
+  try
+  {
+    con->setAutoCommit(false);
+    try
+    {
+      try
+      {
+        con->setAutoCommit(true);
+        con->rollback(con->setSavepoint("foo"));
+        FAIL("autoCommit mode not detected");
+      }
+      catch (sql::InvalidArgumentException &e)
+      {
+        ASSERT_EQUALS(e.what(), "The connection is in autoCommit mode");
+      }
+    }
+    catch (sql::SQLException &)
+    {
+      /* no support for savepoints, bad luck... */
+    }
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 /* Exploiting bug that different wrapper is currently created if requested for ""
  * and default lib name. just to test that nothing bad happens.
  * Test itself shouldn't fail.

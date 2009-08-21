@@ -41,6 +41,7 @@ public:
     TEST_CASE(connectUsingMapWrongTypes);
     TEST_CASE(invalidCredentials);
     TEST_CASE(setTransactionIsolation);
+    TEST_CASE(rollback);
     /*
     TODO: do we want to add this to sql::Connection?
     TEST_CASE(setSessionVariable);
@@ -134,6 +135,11 @@ public:
    *
    */
   void setTransactionIsolation();
+
+  /*
+   * Test of rollback to savepoint with autocommit turned on
+   */
+  void rollback();
 
 
 #ifndef MYSQLCLIENT_STATIC_BINDING
