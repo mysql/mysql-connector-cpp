@@ -91,7 +91,72 @@ void connection::getClientOption()
       con->setClientOption("defaultStatementResultType", input);
       con->getClientOption("defaultStatementResultType", output);
       ASSERT_EQUALS(input_value, output_value);
+
+      try
+      {
+        input_value=sql::ResultSet::TYPE_SCROLL_SENSITIVE;
+        con->setClientOption("defaultStatementResultType", input);
+        FAIL("API Change or bug, please check");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+        /* expected */
+      }
+
+      try
+      {
+        input_value=sql::ResultSet::TYPE_SCROLL_SENSITIVE + sql::ResultSet::TYPE_SCROLL_INSENSITIVE + sql::ResultSet::TYPE_FORWARD_ONLY;
+        con->setClientOption("defaultStatementResultType", input);
+        FAIL("API Change or bug, please check");
+      }
+      catch (sql::InvalidArgumentException &)
+      {
+        /* expected */
+      }
     }
+
+    try
+    {
+      bool input_value=true;
+      bool output_value=false;
+      void * input;
+      void * output;
+
+      input=(static_cast<bool *> (&input_value));
+      output=(static_cast<bool *> (&output_value));
+
+      con->setClientOption("defaultPreparedStatementResultType", input);
+      con->getClientOption("defaultPreparedStatementResultType", output);
+      ASSERT_EQUALS(input_value, output_value);
+
+      input_value=false;
+      output_value=true;
+      con->setClientOption("defaultPreparedStatementResultType", input);
+      con->getClientOption("defaultPreparedStatementResultType", output);
+      ASSERT_EQUALS(input_value, output_value);
+
+    }
+    catch (sql::MethodNotImplementedException &)
+    {
+      /* compiled without -DWE_SUPPORT_USE_RESULT_WITH_PS */
+    }
+
+    /*
+     TODO
+    {
+      sql::SQLString input_value("latin1");
+      sql::SQLString output_value("latin2");
+      void * input;
+      void * output;
+
+      input=(static_cast<sql::SQLString *> (&input_value));
+      output=(static_cast<sql::SQLString *> (&output_value));
+
+      con->setClientOption("characterSetResults", input);
+      con->getClientOption("characterSetResults", output);
+      ASSERT_EQUALS(input_value, output_value);
+    }
+     */
 
   }
   catch (sql::SQLException &e)
@@ -1378,7 +1443,7 @@ void connection::connectUsingMap()
        C-API does not care about the actual value, its passed down to the OS,
        The OS may or may not detect bogus values such as negative values.
        */
-      connection_properties["OPT_CONNECT_TIMEOUT"]= 1;
+      connection_properties["OPT_CONNECT_TIMEOUT"]=1;
       try
       {
         created_objects.clear();
@@ -1399,7 +1464,7 @@ void connection::connectUsingMap()
        C-API does not care about the actual value, its passed down to the OS,
        The OS may or may not detect bogus values such as negative values.
        */
-      connection_properties["OPT_READ_TIMEOUT"]= 1;
+      connection_properties["OPT_READ_TIMEOUT"]=1;
       try
       {
         created_objects.clear();
@@ -1417,7 +1482,7 @@ void connection::connectUsingMap()
     {
       logMsg("... testing OPT_WRITE_TIMEOUT");
       /* C-API does not care about the actual value */
-      connection_properties["OPT_WRITE_TIMEOUT"]= 1;
+      connection_properties["OPT_WRITE_TIMEOUT"]=1;
       try
       {
         created_objects.clear();
@@ -1520,7 +1585,7 @@ void connection::connectUsingMap()
     connection_properties.erase("defaultStatementResultType");
     {
       logMsg("... testing defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]=( sql::ResultSet::TYPE_FORWARD_ONLY);
+      connection_properties["defaultStatementResultType"]=(sql::ResultSet::TYPE_FORWARD_ONLY);
       try
       {
         created_objects.clear();
@@ -1532,7 +1597,7 @@ void connection::connectUsingMap()
       }
 
       connection_properties.erase("defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]=( sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
+      connection_properties["defaultStatementResultType"]=(sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
       try
       {
         created_objects.clear();
@@ -1544,7 +1609,7 @@ void connection::connectUsingMap()
       }
 
       connection_properties.erase("defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]=( sql::ResultSet::TYPE_SCROLL_SENSITIVE);
+      connection_properties["defaultStatementResultType"]=(sql::ResultSet::TYPE_SCROLL_SENSITIVE);
       try
       {
         created_objects.clear();
@@ -1634,6 +1699,23 @@ void connection::connectUsingMap()
       }
     }
     connection_properties.erase("OPT_REPORT_DATA_TRUNCATION");
+
+    /* 24) defaultPreparedStatementResultType */
+    connection_properties.erase("defaultPreparedStatementResultType");
+    {
+      logMsg("... testing defaultPreparedStatementResultType");
+      connection_properties["defaultPreparedStatementResultType"]=sql::ResultSet::TYPE_FORWARD_ONLY;
+      try
+      {
+        created_objects.clear();
+        con.reset(driver->connect(connection_properties));
+      }
+      catch (sql::SQLException &e)
+      {
+        /* may not be compiled in - ignore */
+      }
+    }
+    connection_properties.erase("defaultPreparedStatementResultType");
 
   }
   catch (sql::SQLException &e)

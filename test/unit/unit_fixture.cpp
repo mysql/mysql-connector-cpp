@@ -174,7 +174,10 @@ void unit_fixture::init()
   columns.push_back(columndefinition("TINYBLOB", "TINYTEXT CHARACTER SET binary", sql::DataType::VARBINARY, "a", true, 255, 0, true, "", 255, "NO", false));
   columns.push_back(columndefinition("TINYTEXT", "TINYTEXT CHARACTER SET 'utf8'", sql::DataType::VARCHAR, "a", true, 255, 0, true, "", 255, "NO", false));
   columns.push_back(columndefinition("TINYTEXT", "TINYTEXT CHARACTER SET 'utf8' COLLATE 'utf8_bin'", sql::DataType::VARCHAR, "a", true, 255, 0, true, "", 255, "NO", false));
-
+  columns.push_back(columndefinition("BLOB", "BLOB", sql::DataType::LONGVARBINARY, "a", true, 65535, 0, true, "", 65536, "NO", false));
+  columns.push_back(columndefinition("BLOB", "BLOB NOT NULL", sql::DataType::LONGVARBINARY, "a", true, 65535, 0, false, "", 65535, "NO", false));
+  columns.push_back(columndefinition("TEXT", "TEXT", sql::DataType::LONGVARCHAR, "a", true, 65535, 0, true, "", 65536, "NO", false));
+  columns.push_back(columndefinition("TEXT", "TEXT NOT NULL", sql::DataType::LONGVARCHAR, "a", true, 65535, 0, false, "", 65535, "NO", false));
   columns.push_back(columndefinition("MEDIUMBLOB", "MEDIUMBLOB", sql::DataType::LONGVARBINARY, "a", true, 16777215, 0, true, "", 16777215, "NO", false));
   columns.push_back(columndefinition("MEDIUMBLOB", "MEDIUMBLOB NOT NULL", sql::DataType::LONGVARBINARY, "a", true, 16777215, 0, false, "", 16777215, "NO", false));
   columns.push_back(columndefinition("MEDIUMTEXT", "MEDIUMTEXT", sql::DataType::LONGVARCHAR, "a", true, 16777215, 0, true, "", 16777215, "NO", false));
@@ -349,13 +352,13 @@ sql::Connection * unit_fixture::getConnection()
 {
   if (driver == NULL)
   {
-    driver= sql::mysql::get_driver_instance();
+    driver=sql::mysql::get_driver_instance();
   }
 
   sql::ConnectOptionsMap connection_properties;
-  connection_properties["hostName"] = url;
-  connection_properties["userName"] = user;
-  connection_properties["password"] = passwd;
+  connection_properties["hostName"]=url;
+  connection_properties["userName"]=user;
+  connection_properties["password"]=passwd;
 
   bool bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
   connection_properties["metadataUseInfoSchema"]=bval;
