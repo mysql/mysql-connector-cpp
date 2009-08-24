@@ -737,6 +737,19 @@ void connection::connectUsingMapWrongTypes()
       /* expected */
     }
     connection_properties.erase("CLIENT_LOCAL_FILES");
+    
+    try
+    {
+      connection_properties["CLIENT_MULTI_STATEMENTS"]=(strval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("CLIENT_MULTI_STATEMENTS");
 
     try
     {
