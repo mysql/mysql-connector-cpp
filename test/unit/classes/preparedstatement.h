@@ -32,10 +32,10 @@ private:
 public:
 
   EXAMPLE_TEST_FIXTURE(preparedstatement)
-  {    
+  {
     TEST_CASE(crash);
     TEST_CASE(anonymousSelect);
-    TEST_CASE(InsertSelectAllTypes);    
+    TEST_CASE(InsertSelectAllTypes);
     TEST_CASE(assortedSetType);
     TEST_CASE(setNull);
     TEST_CASE(checkClosed);
@@ -44,8 +44,9 @@ public:
     TEST_CASE(callSPInOut);
     TEST_CASE(callSPWithPS);
     TEST_CASE(callSPMultiRes);
-    TEST_CASE(getWarnings);   
-    TEST_CASE(blob);     
+    TEST_CASE(getWarnings);
+    TEST_CASE(blob);
+    TEST_CASE(executeQuery);
   }
 
   /**
@@ -112,6 +113,14 @@ public:
    * Check BLOB/LOB handling
    */
   void blob();
+
+  /**
+   * Check executeQuery() and invalid fetch mode
+   *
+   * TODO - the test does focus on code coverage not functionality
+   */
+  void executeQuery();
+
 
 };
 

@@ -39,6 +39,7 @@ public:
   EXAMPLE_TEST_FIXTURE(connectionmetadata)
   {
     TEST_CASE(getSchemata);
+    TEST_CASE(getSchemaObjects);
     TEST_CASE(getAttributes);
     TEST_CASE(getBestRowIdentifier);
     TEST_CASE(getCatalogs);
@@ -88,6 +89,13 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void getSchemata();
+
+  /**
+   * Test for DatabaseMetaData:getSchemaObjects*()
+   *
+   * TODO - HACK _ FIXME - Focus on code coverage only!
+   */
+  void getSchemaObjects();
 
   /**
    * Test for DatabaseMetaData:getAttributes()

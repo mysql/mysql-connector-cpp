@@ -66,7 +66,7 @@ void preparedstatement::InsertSelectAllTypes()
       checkResultSetScrolling(res);
       ASSERT(res->next());
 
-	  res.reset();
+      res.reset();
       res.reset(pstmt->executeQuery());
       checkResultSetScrolling(res);
       ASSERT(res->next());
@@ -1454,6 +1454,47 @@ void preparedstatement::blob()
     fail(e.what(), __FILE__, __LINE__);
   }
 
+}
+
+void preparedstatement::executeQuery()
+{
+  logMsg("preparedstatement::executeQuery() - MySQL_PreparedStatement::executeQuery");
+  try
+  {
+    const sql::SQLString option("defaultPreparedStatementResultType");
+    int value=sql::ResultSet::TYPE_FORWARD_ONLY;
+    con->setClientOption(option, static_cast<void *> (&value));
+  }
+  catch (sql::MethodNotImplementedException &e)
+  {
+    /* not available */
+    return;
+  }
+  try
+  {
+
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT UNSIGNED)");
+    stmt->execute("INSERT INTO test(id) VALUES (1), (2), (3)");
+
+    pstmt.reset(con->prepareStatement("SELECT id FROM test ORDER BY id ASC"));
+    res.reset(pstmt->executeQuery());
+    ASSERT(res->next());
+    ASSERT_EQUALS(res->getInt("id"), 1);
+
+    pstmt.reset(con->prepareStatement("DROP TABLE IF EXISTS test"));
+    pstmt->execute();
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    std::stringstream msg;
+    msg.str("");
+    msg << "SQLState: " << e.getSQLState() << ", MySQL error code: " << e.getErrorCode();
+    logErr(msg.str());
+    fail(e.what(), __FILE__, __LINE__);
+  }
 }
 
 } /* namespace preparedstatement */

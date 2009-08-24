@@ -31,7 +31,7 @@ void connectionmetadata::getSchemata()
   std::stringstream msg;
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     ResultSet resdbm1(dbmeta->getSchemata());
     checkResultSetScrolling(resdbm1);
     ResultSet resdbm2(dbmeta->getSchemaObjects(con->getCatalog(), "", "schema"));
@@ -66,6 +66,31 @@ void connectionmetadata::getSchemata()
   }
 }
 
+void connectionmetadata::getSchemaObjects()
+{
+  logMsg("connectionmetadata::getSchemaObject() - MySQL_ConnectionMetaData::getSchemaObjects");
+
+  try
+  {
+    DatabaseMetaData * dbmeta=con->getMetaData();
+    ResultSet resdbm1(dbmeta->getSchemaObjects());
+    checkResultSetScrolling(resdbm1);
+    ResultSet resdbm2;
+    while (resdbm1->next())
+    {
+      resdbm2.reset(dbmeta->getSchemaObjects(con->getCatalog(), "", resdbm1->getString(1)));
+      checkResultSetScrolling(resdbm2);
+    }
+  }
+  catch (sql::SQLException &e)
+  {
+
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 void connectionmetadata::getAttributes()
 {
   logMsg("connectionmetadata::getAttributes() - MySQL_ConnectionMetaData::getAttributes");
@@ -74,10 +99,10 @@ void connectionmetadata::getAttributes()
   std::stringstream msg;
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     res.reset(dbmeta->getAttributes(con->getCatalog(), con->getSchema(), "", ""));
     checkResultSetScrolling(res);
-    ResultSetMetaData * resmeta = res->getMetaData();
+    ResultSetMetaData * resmeta=res->getMetaData();
     it=attributes.begin();
     for (i=1; i <= resmeta->getColumnCount(); i++)
     {
@@ -99,6 +124,7 @@ void connectionmetadata::getAttributes()
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -113,7 +139,7 @@ void connectionmetadata::getBestRowIdentifier()
   bool got_warning=false;
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     stmt.reset(con->createStatement());
 
     logMsg("... looping over all kinds of column types");
@@ -210,6 +236,7 @@ void connectionmetadata::getBestRowIdentifier()
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -228,7 +255,7 @@ void connectionmetadata::getColumnPrivileges()
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(col1 INT, col2 INT)");
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
 
     res.reset(dbmeta->getColumnPrivileges(con->getCatalog(), con->getSchema(), "test", "id"));
     ASSERT_EQUALS(false, res->next());
@@ -293,6 +320,7 @@ void connectionmetadata::getColumnPrivileges()
 
   if (got_warning)
   {
+
     FAIL("TODO - See --verbose warnings");
   }
 }
@@ -306,7 +334,7 @@ void connectionmetadata::getColumns()
   bool got_todo_warning=false;
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     stmt.reset(con->createStatement());
     bool isVer6=dbmeta->getDatabaseMajorVersion() == 6;
 
@@ -469,6 +497,7 @@ void connectionmetadata::getColumns()
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -483,17 +512,18 @@ void connectionmetadata::getConnection()
   {
     stmt.reset(con->createStatement());
     stmt->execute("SET @this_is_my_connection_id=101");
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     same_con.reset(dbmeta->getConnection());
     stmt.reset(same_con->createStatement());
     res.reset(stmt->executeQuery("SELECT @this_is_my_connection_id AS _connection_id"));
     ASSERT(res->next());
     ASSERT_EQUALS(101, res->getInt("_connection_id"));
     ASSERT_EQUALS(res->getInt(1), res->getInt("_connection_id"));
-	same_con.release(); // if the same don't clean it, it will be double free
+    same_con.release(); // if the same don't clean it, it will be double free
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -506,7 +536,7 @@ void connectionmetadata::getDatabaseVersions()
   std::stringstream prodversion;
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     ASSERT_GT(2, dbmeta->getDatabaseMajorVersion());
     ASSERT_LT(7, dbmeta->getDatabaseMajorVersion());
 
@@ -537,6 +567,7 @@ void connectionmetadata::getDatabaseVersions()
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -549,7 +580,7 @@ void connectionmetadata::getDriverVersions()
   std::stringstream prodversion;
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     ASSERT_GT(0, dbmeta->getDriverMajorVersion());
     ASSERT_LT(2, dbmeta->getDriverMajorVersion());
 
@@ -580,6 +611,7 @@ void connectionmetadata::getDriverVersions()
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -592,7 +624,7 @@ void connectionmetadata::getDefaultTransactionIsolation()
   int server_version;
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
 
     server_version=(10000 * dbmeta->getDatabaseMajorVersion())
             + (100 * dbmeta->getDriverMinorVersion())
@@ -609,6 +641,7 @@ void connectionmetadata::getDefaultTransactionIsolation()
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -620,11 +653,12 @@ void connectionmetadata::getExtraNameCharacters()
   logMsg("connectionmetadata::getExtraNameCharacters() - MySQL_ConnectionMetaData::getExtraNameCharacters()");
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     ASSERT_EQUALS("#@", dbmeta->getExtraNameCharacters());
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -637,7 +671,7 @@ void connectionmetadata::getIdentifierQuoteString()
 
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     stmt.reset(con->createStatement());
     try
     {
@@ -661,6 +695,7 @@ void connectionmetadata::getIdentifierQuoteString()
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -674,7 +709,7 @@ void connectionmetadata::getImportedKeys()
 
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     stmt.reset(con->createStatement());
 
     stmt->execute("DROP TABLE IF EXISTS child");
@@ -737,6 +772,7 @@ void connectionmetadata::getImportedKeys()
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -749,7 +785,7 @@ void connectionmetadata::getExportedKeys()
 
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     stmt.reset(con->createStatement());
 
     stmt->execute("DROP TABLE IF EXISTS child");
@@ -817,6 +853,7 @@ void connectionmetadata::getExportedKeys()
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -899,6 +936,7 @@ void connectionmetadata::checkForeignKey(Connection &mycon, ResultSet &myres)
 
   if (got_warning)
   {
+
     TODO("See --verbose warnings!");
     FAIL("TODO - See --verbose warnings!");
   }
@@ -913,7 +951,7 @@ void connectionmetadata::getIndexInfo()
   bool got_todo_warning=false;
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(col1 INT NOT NULL, col2 INT NOT NULL, col3 INT NOT NULL, col4 INT, col5 INT, PRIMARY KEY(col1))");
@@ -1080,6 +1118,7 @@ void connectionmetadata::getIndexInfo()
 
   if (got_todo_warning)
   {
+
     TODO("See --verbose warnings!");
     FAIL("TODO - see --verbose warnings");
   }
@@ -1100,7 +1139,7 @@ void connectionmetadata::getLimitsAndStuff()
 
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     ASSERT_EQUALS(3, dbmeta->getCDBCMajorVersion());
     ASSERT_EQUALS(0, dbmeta->getCDBCMinorVersion());
     ASSERT_EQUALS(16777208, dbmeta->getMaxBinaryLiteralLength());
@@ -1289,6 +1328,7 @@ void connectionmetadata::getLimitsAndStuff()
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -1306,7 +1346,7 @@ void connectionmetadata::getPrimaryKeys()
 
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(col2 INT NOT NULL, col1 INT NOT NULL, PRIMARY KEY(col2, col1))");
@@ -1368,6 +1408,7 @@ void connectionmetadata::getPrimaryKeys()
 
   if (got_warning)
   {
+
     TODO("See --verbose warnings!");
     FAIL("TODO - see --verbose warnings!");
   }
@@ -1380,7 +1421,7 @@ void connectionmetadata::getProcedures()
   std::stringstream msg;
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     stmt.reset(con->createStatement());
     try
     {
@@ -1438,6 +1479,7 @@ void connectionmetadata::getProcedures()
 
   if (got_warning)
   {
+
     TODO("See --verbose warnings!");
     FAIL("TODO - see --verbose warnings!");
   }
@@ -1445,6 +1487,7 @@ void connectionmetadata::getProcedures()
 
 
 #ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
+
 void connectionmetadata::getProcedureColumns()
 {
   logMsg("connectionmetadata::getProcedureColumns() - MySQL_ConnectionMetaData::getProcedureColumns()");
@@ -1454,7 +1497,7 @@ void connectionmetadata::getProcedureColumns()
 
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     stmt.reset(con->createStatement());
     try
     {
@@ -1490,6 +1533,7 @@ void connectionmetadata::getProcedureColumns()
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -1502,17 +1546,18 @@ void connectionmetadata::getCatalogs()
   logMsg("connectionmetadata::getCatalogs() - MySQL_ConnectionMetaData::getCatalogs()");
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     res.reset(dbmeta->getCatalogs());
     ASSERT(res->next());
     ASSERT(!res->next());
-    ResultSetMetaData * resmeta = res->getMetaData();
+    ResultSetMetaData * resmeta=res->getMetaData();
     /* http://java.sun.com/j2se/1.4.2/docs/api/java/sql/DatabaseMetaData.html#getCatalogs() */
     ASSERT_EQUALS((unsigned int) 1, resmeta->getColumnCount());
     ASSERT_EQUALS("TABLE_CAT", resmeta->getColumnLabel(1));
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -1524,11 +1569,12 @@ void connectionmetadata::getCatalogSeparator()
   logMsg("connectionmetadata::getCatalogSeparator() - MySQL_ConnectionMetaData::getCatalogSeparator()");
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     ASSERT_EQUALS("", dbmeta->getCatalogSeparator());
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -1540,11 +1586,12 @@ void connectionmetadata::getCatalogTerm()
   logMsg("connectionmetadata::getCatalogTerm() - MySQL_ConnectionMetaData::getCatalogTerm()");
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     ASSERT_EQUALS("n/a", dbmeta->getCatalogTerm());
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -1556,7 +1603,7 @@ void connectionmetadata::getCrossReference()
   logMsg("connectionmetadata::getCrossReference() - MySQL_ConnectionMetaData::getCrossReference()");
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     stmt.reset(con->createStatement());
 
     stmt->execute("DROP TABLE IF EXISTS child");
@@ -1591,6 +1638,7 @@ void connectionmetadata::getCrossReference()
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -1602,11 +1650,12 @@ void connectionmetadata::getProcedureTerm()
   logMsg("connectionmetadata::getProcedureTerm() - MySQL_ConnectionMetaData::getProcedureTerm");
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     ASSERT_EQUALS("procedure", dbmeta->getProcedureTerm());
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -1618,12 +1667,13 @@ void connectionmetadata::getResultSetHoldability()
   logMsg("connectionmetadata::getResultSetHoldability() - MySQL_ConnectionMetaData::getResultSetHoldability()");
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     ASSERT_EQUALS(sql::ResultSet::HOLD_CURSORS_OVER_COMMIT, dbmeta->getResultSetHoldability());
     ASSERT(sql::ResultSet::CLOSE_CURSORS_AT_COMMIT != dbmeta->getResultSetHoldability());
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -1635,11 +1685,12 @@ void connectionmetadata::getSchemaTerm()
   logMsg("connectionmetadata::getSchemaTerm() - MySQL_ConnectionMetaData::getSchemaTerm()");
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     ASSERT_EQUALS("database", dbmeta->getSchemaTerm());
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -1651,11 +1702,12 @@ void connectionmetadata::getSearchStringEscape()
   logMsg("connectionmetadata::getSearchStringEscape - MySQL_ConnectionMetaData::getSearchStringEscape()");
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     ASSERT_EQUALS("\\", dbmeta->getSearchStringEscape());
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -1710,11 +1762,12 @@ void connectionmetadata::getSQLKeywords()
 
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     ASSERT_EQUALS(keywords, dbmeta->getSQLKeywords());
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -1726,14 +1779,14 @@ void connectionmetadata::getSuperTables()
   logMsg("connectionmetadata::getSuperTables - MySQL_ConnectionMetaData::getSuperTables()");
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT)");
     res.reset(dbmeta->getSuperTables(con->getCatalog(), con->getSchema(), "test"));
     checkResultSetScrolling(res);
     ASSERT(!res->next());
-    ResultSetMetaData * resmeta = res->getMetaData();
+    ResultSetMetaData * resmeta=res->getMetaData();
     ASSERT_EQUALS((unsigned int) 4, resmeta->getColumnCount());
     ASSERT_EQUALS("TABLE_CAT", resmeta->getColumnLabel(1));
     ASSERT_EQUALS("TABLE_SCHEM", resmeta->getColumnLabel(2));
@@ -1744,6 +1797,7 @@ void connectionmetadata::getSuperTables()
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -1755,14 +1809,14 @@ void connectionmetadata::getSuperTypes()
   logMsg("connectionmetadata::getSuperTypes - MySQL_ConnectionMetaData::getSuperTypes()");
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT)");
     res.reset(dbmeta->getSuperTypes(con->getCatalog(), con->getSchema(), "test"));
     checkResultSetScrolling(res);
     ASSERT(!res->next());
-    ResultSetMetaData * resmeta = res->getMetaData();
+    ResultSetMetaData * resmeta=res->getMetaData();
     ASSERT_EQUALS((unsigned int) 6, resmeta->getColumnCount());
     ASSERT_EQUALS("TYPE_CAT", resmeta->getColumnLabel(1));
     ASSERT_EQUALS("TYPE_SCHEM", resmeta->getColumnLabel(2));
@@ -1775,6 +1829,7 @@ void connectionmetadata::getSuperTypes()
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -1787,7 +1842,7 @@ void connectionmetadata::classAttributes()
   TODO("Check if JDBC compliance requires certain values");
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
 
     ASSERT_EQUALS(0, dbmeta->attributeNoNulls);
     ASSERT_EQUALS(1, dbmeta->attributeNullable);
@@ -1861,6 +1916,7 @@ void connectionmetadata::classAttributes()
   }
   catch (sql::SQLException &e)
   {
+
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
@@ -1876,7 +1932,7 @@ void connectionmetadata::getColumnsTypeConversions()
   bool got_warning;
   try
   {
-    DatabaseMetaData * dbmeta = con->getMetaData();
+    DatabaseMetaData * dbmeta=con->getMetaData();
     stmt.reset(con->createStatement());
 
     got_warning=false;
