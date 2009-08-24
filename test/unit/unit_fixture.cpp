@@ -363,6 +363,14 @@ sql::Connection * unit_fixture::getConnection()
   bool bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
   connection_properties["metadataUseInfoSchema"]=bval;
 
+  bval=TestsRunner::getStartOptions()->getBool("use-dynamic-load");
+  if (bval)
+  {
+    sql::SQLString clientlib(DYNLOAD_MYSQL_LIB);
+    connection_properties["clientlib"]=clientlib;
+    logMsg("Connection using dynamic load of clientlib " DYNLOAD_MYSQL_LIB);
+  }
+
   return driver->connect(connection_properties);
 }
 
