@@ -21,10 +21,12 @@ namespace mysql
 namespace NativeAPI
 {
 
-#ifdef _WIN32
+#if defined(_WIN32)
 static const char * const baseName = "libmysql.dll";
 #elif defined(__APPLE__)
 static const char * const baseName = "libmysqlclient_r.dylib";
+#elif defined(__hpux) && defined(__hppa)
+static const char * const baseName = "libmysqlclient_r.sl";
 #else
 static const char * const baseName = "libmysqlclient_r.so";
 #endif

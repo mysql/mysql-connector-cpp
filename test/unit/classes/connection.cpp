@@ -1940,10 +1940,12 @@ void connection::rollback()
 
 void connection::loadSameLibraryTwice()
 {
-#ifdef _WIN32
+#if defined(_WIN32)
   const sql::SQLString baseName("libmysql.dll");
 #elif defined(__APPLE__)
   const sql::SQLString baseName("libmysqlclient_r.dylib");
+#elif defined(__hpux) && defined(__hppa)
+  const sql::SQLString baseName("libmysqlclient_r.sl");
 #else
   const sql::SQLString baseName("libmysqlclient_r.so");
 #endif
