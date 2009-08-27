@@ -1,6 +1,6 @@
 <Include>
-  <Property Id="ARPCOMMENTS" Value="Some Comments" />
-  <Property Id="ARPCONTACT" Value="SuperInternetHero@Sun.COM" />
+  <Property Id="ARPCOMMENTS" Value="MySQL Connector/C++ is a MySQL database connector for C++." />
+  <Property Id="ARPCONTACT" Value="http://www.mysql.com/about/contact/" />
   <Property Id="ARPPRODUCTICON" Value="InstConfIcon.exe" />
   <Property Id="ARPHELPLINK" Value="http://forums.mysql.com/list.php?167" />
   <Property Id="ARPURLINFOABOUT" Value="http://dev.mysql.com/downloads/connector/cpp/" />
