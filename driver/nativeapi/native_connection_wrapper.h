@@ -14,6 +14,7 @@
 
 #include <boost/noncopyable.hpp>
 #include <config.h>
+#include <stdint.h>
 
 #include "../mysql_connection_options.h"
 

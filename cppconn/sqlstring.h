@@ -62,7 +62,7 @@ namespace sql
 		}
 
 		// Conversion to st::string. Comes in play for stuff like std::string str= SQLString_var;
-		operator std::string const&() const
+		operator const std::string &() const
 		{
 			return realStr;
 		}

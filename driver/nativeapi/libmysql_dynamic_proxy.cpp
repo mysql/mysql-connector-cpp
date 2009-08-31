@@ -48,7 +48,7 @@ LibmysqlDynamicProxy::LibmysqlDynamicProxy()
 
 /* {{{ LibmysqlDynamicProxy::LibmysqlDynamicProxy() */
 LibmysqlDynamicProxy::LibmysqlDynamicProxy(const SQLString & path2libFile)
-	: LibraryLoader(path2libFile.length() > 0 ? path2libFile : baseName)
+	: LibraryLoader(path2libFile.length() > 0 ? path2libFile.asStdString() : baseName)
 {
 	init_loader();
 }
@@ -57,7 +57,7 @@ LibmysqlDynamicProxy::LibmysqlDynamicProxy(const SQLString & path2libFile)
 
 /* {{{ LibmysqlDynamicProxy::LibmysqlDynamicProxy() */
 LibmysqlDynamicProxy::LibmysqlDynamicProxy(const SQLString & dir2look, const SQLString & libFileName)
-	: LibraryLoader(dir2look, libFileName.length() > 0 ? libFileName : baseName)
+	: LibraryLoader(dir2look.asStdString(), libFileName.length() > 0 ? libFileName.asStdString() : baseName)
 {
 	init_loader();
 }
