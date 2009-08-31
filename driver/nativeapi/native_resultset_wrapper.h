@@ -14,6 +14,9 @@
 
 #include <boost/noncopyable.hpp>
 #include <config.h>
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
 
 
 struct st_mysql_field;

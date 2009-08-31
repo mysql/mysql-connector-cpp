@@ -15,7 +15,9 @@
 #include <memory>
 #include <sstream>
 #include <stdio.h>
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 #include <cppconn/exception.h>
 
 #include "nativeapi/native_connection_wrapper.h"

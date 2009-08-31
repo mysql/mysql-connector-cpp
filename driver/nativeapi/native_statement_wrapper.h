@@ -14,7 +14,9 @@
 
 #include <config.h>
 #include <boost/noncopyable.hpp>
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 
 #include "../mysql_statement_options.h"
 
