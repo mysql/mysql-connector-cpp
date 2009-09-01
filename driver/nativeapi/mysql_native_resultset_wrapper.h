@@ -13,7 +13,6 @@
 #define _MYSQL_NativeResultsetWrapper_H_
 
 #include <boost/shared_ptr.hpp>
-#include <stdint.h>
 
 #include "native_resultset_wrapper.h"
 
