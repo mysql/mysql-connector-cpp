@@ -2210,28 +2210,31 @@ char * utf8_strup(const char * const src, size_t srclen)
   reinterpret_cast doesn't work :(
 */
 
-#if defined(HAVE_FUNCTION_STRTOLD) && defined(__hpux) && defined(_LONG_DOUBLE)
-typedef union {
-	long_double l_d;
-	long double ld;
-} hpux_ld;
-
-#endif
 
 long double strtold(const char *nptr, char **endptr)
 {
-#ifndef HAVE_FUNCTION_STRTOLD
-	return ::strtod(nptr, endptr);
+/*
+ * Experienced odd compilation errors on one of windows build hosts -
+ * cmake reported there is strold function. Since double and long double on windows
+ * are of the same size - we are using strtod on those platforms regardless
+ * to the HAVE_FUNCTION_STRTOLD value
+ */
+#ifdef _WIN32
+  return ::strtod(nptr, endptr);
 #else
-# if defined(__hpux) && defined(_LONG_DOUBLE)
+# ifndef HAVE_FUNCTION_STRTOLD
+	return ::strtod(nptr, endptr);
+# else
+#  if defined(__hpux) && defined(_LONG_DOUBLE)
 	union { 
 		long_double l_d; 
 		long double ld; 
 	} u; 
 	u.l_d = ::strtold( nptr, endptr);
 	return u.ld;
-# else
+#  else
 	return ::strtold(nptr, endptr);
+#  endif
 # endif
 #endif
 
