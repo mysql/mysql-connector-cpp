@@ -47,15 +47,16 @@ IF(NOT MYSQLCLIENT_STATIC_BINDING)
 		CHECK_INCLUDE_FILES(dlfcn.h HAVE_DLFCN_H)
 		# We are not on windows and don't have dlfcn.h - so we need static binding
 		IF(NOT HAVE_DLFCN_H)
+                        MESSAGE(FATAL_ERROR "Dynamic binding has been requested but we cannot find dlfcn.h!")
 			SET(MYSQLCLIENT_STATIC_BINDING 1)
 		ENDIF(NOT HAVE_DLFCN_H)
 	ENDIF(NOT WIN32)
 ENDIF(NOT MYSQLCLIENT_STATIC_BINDING)
 
 IF(MYSQLCLIENT_STATIC_BINDING)
-  MESSAGE("-- Using static libmysql binding")
+  MESSAGE(STATUS "Using static libmysql binding")
 ELSE(MYSQLCLIENT_STATIC_BINDING)
-  MESSAGE("-- Using dynamic libmysql binding")
+  MESSAGE(STATUS "Using dynamic libmysql binding")
 ENDIF(MYSQLCLIENT_STATIC_BINDING)
 
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/nativeapi/binding_config.h.cm ${CMAKE_CURRENT_BINARY_DIR}/nativeapi/binding_config.h)
