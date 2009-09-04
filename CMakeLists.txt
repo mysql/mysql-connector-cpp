@@ -28,7 +28,6 @@ MESSAGE(STATUS "Environment compile flags: ${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
 SET(MYSQLCPPCONN_LINK_FLAGS_ENV "$ENV{LDFLAGS}")
 MESSAGE(STATUS "Environment link flags: ${MYSQLCPPCONN_LINK_FLAGS_ENV}")
 
-
 #-----------------
 # ICU
 
