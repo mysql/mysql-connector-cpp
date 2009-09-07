@@ -16,7 +16,7 @@ We have improved the driver and added a couple of new features since the last be
 - Fixed performance issue of Prepared Statements when reading large result sets.
 - API incompatible change: ConnectPropertyVal is no more a struct but a typedef that uses boost::variant.
 - Connection::getClientOption() now supports "metadataUseInfoSchema", "defaultStatementResultType", "defaultPreparedStatementResultType" and "characterSetResults".
-- We make use of some Boost components (http://www.boost.org). For compiling from source you need to have Boost 1.3.4 or newer installed.
+- We make use of some Boost components (http://www.boost.org). For compiling from source you need to have Boost 1.34.0 or newer installed. There are no new dependencies for binary builds.
 
 You can find further details, including usages examples, in the documentation at:
 

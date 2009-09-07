@@ -65,8 +65,8 @@ PREREQUISITES FOR BUILDING CONNECTOR/C++
   cmake yourself.
 
   As of version 1.1.0 Connector/C++ makes use of Boost (http://www.boost.org).
-  You need to have Boost installed on your build system. The MySQL driver
-  for C++ makes use of Boost variant, any and some pointers.
+  You need to have Boost 1.34.0 or newer installed on your build system.
+  The MySQL driverfor C++ makes use of Boost variant, any and some pointers.
   All of those are "headers only". When installing Boost on your system,
   you can disable all components that require building any kind
   of binaries.

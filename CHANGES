@@ -72,9 +72,9 @@ GA  1.1.0 - 2009-09-xx
   snippets in the Connector were fixed. (Andrey)
 
 - The driver makes use of some Boost components (http://www.boost.org).
-  You need to have Boost 1.3.4 or newer installed on your system in
-  order to compile the driver from source. Binary installations have no
-  additional dependency over 1.0.5.
+  You need to have Boost 1.34.0 or newer installed on your system in
+  order to compile the driver from source. Binary distributions have no
+  additional dependencies over 1.0.5.
 
 
 GA  1.0.5 - 2009-04-20
