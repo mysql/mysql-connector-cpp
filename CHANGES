@@ -1,9 +1,9 @@
 GA  1.1.0 - 2009-09-xx
 
 - Connection::getClientOption(const sql::SQLString & optionName, void * optionValue)
-  now accepts the optionName values "metadataUseInfoSchema", 
+  now accepts the optionName values "metadataUseInfoSchema",
   "defaultStatementResultType", "defaultPreparedStatementResultType",
-  "characterSetResults". In the previous version only "metadataUseInfoSchema" 
+  "characterSetResults". In the previous version only "metadataUseInfoSchema"
   was allowed. The same is true for Connection::setClientOption().
 
 - Fixed Bug #45048 "prepared statements corrupt the heap". ResultBind is back in
@@ -16,6 +16,13 @@ GA  1.1.0 - 2009-09-xx
   you need to define mysqlcppconn_EXPORTS if you are loading dynamically and want
   to use that entry point. (Andrey)
 
+- ABI change - added support for optional run-time dynamic loading of the MySQL Client Library.
+  This is useful if you want to re-distribute a certain client library with
+  the connector and make sure that it gets used. It also allows you to
+  use a different client library for every connection. As it is an advanced
+  feature it is not enabled by default. By default the MySQL Client Library
+  will be linked at compile time just as in every version before.
+
 - Fixed bug in ResultSetMetaData for normal statements and prepared ones, getScale
   and getPrecision did return wrong results. (Andrey)
 
@@ -27,14 +34,14 @@ GA  1.1.0 - 2009-09-xx
 - We now check LDFLAGS, CXXFLAGS and CPPFLAGS from the environment for every binary
   we generate. (Ulf, Kent)
 
-- Fixed http://bugs.mysql.com/bug.php?id=45843: cmake error if configuring an out 
+- Fixed http://bugs.mysql.com/bug.php?id=45843: cmake error if configuring an out
   of source build [when not calling cmake in the root directory]. (Ulf)
 
 - Fixed http://bugs.mysql.com/bug.php?id=44931: missing includes when using GCC 4.4.
   Note that GCC 4.4 is not yet in use for any official MySQL builds. (Ulf, Lawrin)
 
 - Fixed a performance issue of Prepared Statements. Reading large result sets has
-  been slow - think O(n^2). Patch by Frank Schoenheit from the OpenOffice.org 
+  been slow - think O(n^2). Patch by Frank Schoenheit from the OpenOffice.org
   Base team. (Ulf)
 
 - Exchanged most use cases of std::auto_ptr with boost::scoped_ptr. Migrated from
@@ -63,6 +70,11 @@ GA  1.1.0 - 2009-09-xx
   any parameters was leading to exception, which was a problem, and was leading
   to another problem which manifested itself with double free. All similar code
   snippets in the Connector were fixed. (Andrey)
+
+- The driver makes use of some Boost components (http://www.boost.org).
+  You need to have Boost 1.3.4 or newer installed on your system in
+  order to compile the driver from source. Binary installations have no
+  additional dependency over 1.0.5.
 
 
 GA  1.0.5 - 2009-04-20
