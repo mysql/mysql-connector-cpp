@@ -40,7 +40,7 @@ INSTALLATION
 
   Please check the Reference Manual for further information at:
 
-    http://dev.mysql.com/doc/refman/6.0/en/connector-cpp.html
+    http://dev.mysql.com/doc/refman/5.1/en/connector-cpp.html
 
   Notes on building the driver from source can be found in the Reference
   Manual and below. At the end of this file you may find settings
@@ -64,6 +64,12 @@ PREREQUISITES FOR BUILDING CONNECTOR/C++
   NOTE: cmake binaries are available for most systems. You do not need to build
   cmake yourself.
 
+  As of version 1.1.0 Connector/C++ makes use of Boost (http://www.boost.org).
+  You need to have Boost installed on your build system. The MySQL driver
+  for C++ makes use of Boost variant, any and some pointers.
+  All of those are "headers only". When installing Boost on your system,
+  you can disable all components that require building any kind
+  of binaries.
 
 BUILDING ON UNIX
 
@@ -97,9 +103,9 @@ BUILDING ON UNIX
     me@host:/path/to/mysql-connector-cpp> make clean
     me@host:/path/to/mysql-connector-cpp> make
     Scanning dependencies of target mysqlcppconn
-    [  0%] Building CXX object driver/CMakeFiles/mysqlcppconn.dir/mysql_art_resultset.o
-    [  1%] Building CXX object driver/CMakeFiles/mysqlcppconn.dir/mysql_art_rset_metadata.o
-    [  2%] Building CXX object driver/CMakeFiles/mysqlcppconn.dir/mysql_connection.o
+    [  0%] Building CXX object driver/CMakeFiles/mysqlcppconn.dir/mysql_art_resultset.cpp.o
+    [  1%] Building CXX object driver/CMakeFiles/mysqlcppconn.dir/mysql_art_rset_metadata.cpp.o
+    [  2%] Building CXX object driver/CMakeFiles/mysqlcppconn.dir/mysql_connection.cpp.o
     [...]
     [100%] Building CXX object test/unit/template_bug_group/CMakeFiles/bug456.dir/bug456.o
     Linking CXX executable bug456
@@ -118,14 +124,16 @@ BUILDING ON UNIX
 
     me@host:/path/to/mysql-connector-cpp> cmake -L
     [...]
-    CMAKE_BACKWARDS_COMPATIBILITY:STRING=2.4
     CMAKE_BUILD_TYPE:STRING=
     CMAKE_INSTALL_PREFIX:PATH=/usr/local
-    EXECUTABLE_OUTPUT_PATH:PATH=
-    LIBRARY_OUTPUT_PATH:PATH=
+    MYSQLCLIENT_STATIC_BINDING:BOOL=1
     MYSQLCPPCONN_BUILD_EXAMPLES:BOOL=1
+    MYSQLCPPCONN_DT_RPATH:STRING=
+    MYSQLCPPCONN_DYNLOAD_MYSQL_LIB:FILEPATH=/usr/lib64/libmysqlclient_r.so
     MYSQLCPPCONN_GCOV_ENABLE:BOOL=0
+    MYSQLCPPCONN_ICU_ENABLE:BOOL=0
     MYSQLCPPCONN_STLPORT_ENABLE:BOOL=0
+    MYSQLCPPCONN_TEST_NOT_IMPLEMENTED:BOOL=0
     MYSQLCPPCONN_TRACE_ENABLE:BOOL=0
     MYSQL_CONFIG_EXECUTABLE:FILEPATH=/usr/bin/mysql_config
 
@@ -142,16 +150,18 @@ BUILDING ON UNIX
 
     me@host:/path/to/mysql-connector-cpp> cmake -L
     [...]
-    CMAKE_BACKWARDS_COMPATIBILITY:STRING=2.4
-    CMAKE_BUILD_TYPE:STRING=Debug
+    CMAKE_BUILD_TYPE:STRING=
     CMAKE_INSTALL_PREFIX:PATH=/usr/local
-    EXECUTABLE_OUTPUT_PATH:PATH=
-    LIBRARY_OUTPUT_PATH:PATH=
+    MYSQLCLIENT_STATIC_BINDING:BOOL=1
     MYSQLCPPCONN_BUILD_EXAMPLES:BOOL=1
+    MYSQLCPPCONN_DT_RPATH:STRING=
+    MYSQLCPPCONN_DYNLOAD_MYSQL_LIB:FILEPATH=/usr/lib64/libmysqlclient_r.so
     MYSQLCPPCONN_GCOV_ENABLE:BOOL=0
+    MYSQLCPPCONN_ICU_ENABLE:BOOL=0
     MYSQLCPPCONN_STLPORT_ENABLE:BOOL=0
+    MYSQLCPPCONN_TEST_NOT_IMPLEMENTED:BOOL=0
     MYSQLCPPCONN_TRACE_ENABLE:BOOL=0
-    MYSQL_CONFIG_EXECUTABLE=/path/to/my/mysql/server/bin/mysql_config
+    MYSQL_CONFIG_EXECUTABLE:FILEPATH=/path/to/my/mysql/server/bin/mysql_config
 
   Procees with make clean; make as described at point 2.)
 
