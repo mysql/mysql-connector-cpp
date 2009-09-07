@@ -191,9 +191,10 @@ void statement::callSP()
 
     ASSERT(!stmt->execute("DROP TABLE IF EXISTS test"));
     ASSERT(!stmt->execute("CREATE TABLE test(id INT)"));
-    ASSERT(!stmt->execute("CREATE PROCEDURE p() BEGIN INSERT INTO test(id) VALUES (123); END;"));
+    ASSERT(!stmt->execute("CREATE PROCEDURE p() BEGIN INSERT INTO test(id) VALUES (123), (456); END;"));
     ASSERT(!stmt->execute("CALL p()"));
-    ASSERT(stmt->execute("SELECT id FROM test"));
+    ASSERT_EQUALS(2, (int)stmt->getUpdateCount());
+    ASSERT(stmt->execute("SELECT id FROM test ORDER BY id ASC"));
     res.reset(stmt->getResultSet());
     ASSERT(res->next());
     ASSERT_EQUALS(123, res->getInt("id"));
