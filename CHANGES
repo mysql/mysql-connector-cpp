@@ -1,4 +1,4 @@
-GA  1.0.6 - 2009-08-xx
+GA  1.1.0 - 2009-09-xx
 
 - Connection::getClientOption(const sql::SQLString & optionName, void * optionValue)
   now accepts the optionName values "metadataUseInfoSchema", 

@@ -1709,7 +1709,7 @@ MySQL_ConnectionMetaData::getCatalogs()
 	{
 		MySQL_ArtResultSet::row_t rs_data_row;
 		rs_data_row.push_back("def");
-		rs_data->push_back(rs_data_row);	
+		rs_data->push_back(rs_data_row);
 	}
 
 	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
@@ -2282,7 +2282,7 @@ const sql::SQLString&
 MySQL_ConnectionMetaData::getDriverVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverVersion");
-	static const sql::SQLString version("1.0.6-GA");
+	static const sql::SQLString version("1.1.0-GA");
 	return version;
 }
 /* }}} */
@@ -3318,7 +3318,7 @@ MySQL_ConnectionMetaData::getProcedures(const sql::SQLString& /*catalog*/, const
 		if (got_exception) {
 			sql::SQLString query("SHOW PROCEDURE STATUS");
 
-			boost::scoped_ptr< sql::PreparedStatement > stmt(connection->prepareStatement(query));				
+			boost::scoped_ptr< sql::PreparedStatement > stmt(connection->prepareStatement(query));
 
 			boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery());
 			while (rs->next()) {
