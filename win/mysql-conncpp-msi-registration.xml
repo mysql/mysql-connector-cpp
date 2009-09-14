@@ -63,7 +63,7 @@
                                Icon='SunReg.exe' IconIndex='0' />
                </File>
                <File Id='XmlSettings' Name='svctag.xml' Source='./registration/svctag.xml' DiskId='1' />
-               <File Id='RegisterLoginHeader' Name='sunconnect.jpg' Source='./registration/sunconnect.jpg' DiskId='1' />
+               <File Id='RegisterLoginHeader' Name='suncon.jpg' Source='./registration/suncon.jpg' DiskId='1' />
                <XmlFile Id='XmlSettings1' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[%COMPUTERNAME]' ElementPath='//registration_data/environment/hostname' Sequence='1' />
                <XmlFile Id='XmlSettings2' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[%OS]' ElementPath='//registration_data/environment/osName' Sequence='2' />
                <XmlFile Id='XmlSettings3' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[WindowsVerName] [WindowsVerSP] ([VersionNT].[WindowsBuild])' ElementPath='//registration_data/environment/osVersion' Sequence='3' />
