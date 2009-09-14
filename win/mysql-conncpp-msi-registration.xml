@@ -46,7 +46,7 @@
         <CustomAction Id="PostRegistration.SetProperty" Return="check" Property="PostRegistration" Value="[INSTALLDIR]" />
         <CustomAction Id="PostRegistration" BinaryKey="mysqlca" DllEntry="CASendServiceTag" Execute="immediate" Return="asyncNoWait" HideTarget="yes"/>
         <!-- Use Service Tag Client Registration -->
-        <CustomAction Id='STClientRegister.SetProperty' Property='QtExecCmdLine' 
+        <CustomAction Id='STClientRegister.SetProperty' Property='QtExecCmdLine'
         Value='"[STCLIENT]" -a -i [InstanceUrn] -p "[ProductName]" -e [ProductVersion] -t [ProductURN] -S [RegistrationPackage].msi -F N/A -P N/A -m "[Manufacturer]" -A [%PROCESSOR_ARCHITECTURE] -z N/A -I -1' />
         <CustomAction Id='STClientRegister' BinaryKey='wixca' DllEntry='CAQuietExec' Execute='immediate' Return='check'/>
     </Fragment>
@@ -57,13 +57,13 @@
      <DirectoryRef Id='INSTALLDIR'>
           <Component Id='Registration' Guid='F3F8CC64-6169-4b23-9972-9C56855AF39A'>
                <File Id='RegisterSVCTag' Name='register.htm' Source='./registration/register.htm' DiskId='1'>
-                    <Shortcut Id='RegisterSVCTag.Shortcut' Directory='MySQLProductMenuFolder' Name='Register' 
+                    <Shortcut Id='RegisterSVCTag.Shortcut' Directory='MySQLProductMenuFolder' Name='Register'
                                LongName='SunInventory Registration'
                                Description='SunInventory Registration'
                                Icon='SunReg.exe' IconIndex='0' />
                </File>
                <File Id='XmlSettings' Name='svctag.xml' Source='./registration/svctag.xml' DiskId='1' />
-               <File Id='RegisterLoginHeader' Name='loginhdr.jpg' Source='./registration/loginhdr.jpg' DiskId='1' />
+               <File Id='RegisterLoginHeader' Name='sunconnect.jpg' Source='./registration/sunconnect.jpg' DiskId='1' />
                <XmlFile Id='XmlSettings1' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[%COMPUTERNAME]' ElementPath='//registration_data/environment/hostname' Sequence='1' />
                <XmlFile Id='XmlSettings2' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[%OS]' ElementPath='//registration_data/environment/osName' Sequence='2' />
                <XmlFile Id='XmlSettings3' File='[INSTALLDIR]svctag.xml' Action='setValue' Value='[WindowsVerName] [WindowsVerSP] ([VersionNT].[WindowsBuild])' ElementPath='//registration_data/environment/osVersion' Sequence='3' />
