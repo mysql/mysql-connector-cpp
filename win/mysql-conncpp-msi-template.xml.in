@@ -36,7 +36,7 @@ already installed." />
 
                 <Component Id="AdditionalFiles" Guid="85f15863-ccbb-40b6-8610-5afedc9fa44f" DiskId="1">
                   <File Id="file0031" Name="README" LongName="README" Source="..\README" />
-                  <File Id="file0032" Name="COPYING" LongName="COPYING" Source="..\COPYING" />
+                  <File Id="file0032" Name="@LIC_SHORT_NAME@" LongName="@LIC_NAME@" Source="..\@LIC_NAME@" />
                 </Component>
 
               <!-- *****************************************************************************************
