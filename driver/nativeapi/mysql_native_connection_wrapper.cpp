@@ -86,9 +86,10 @@ MySQL_NativeConnectionWrapper::connect(const ::sql::SQLString & host,
 									const ::sql::SQLString & socket_or_pipe,
 									unsigned long			client_flag)
 {
-	return (NULL != api->real_connect(mysql, host.c_str(), user.c_str(), passwd.c_str(),
-										db.length() > 0 ? db.c_str() : NULL, port,
-										socket_or_pipe.length() > 0 ? socket_or_pipe.c_str() : NULL, client_flag));
+	return (NULL != api->real_connect(mysql, nullIfEmpty(host), user.c_str(),
+									nullIfEmpty(passwd),
+									nullIfEmpty(db), port,
+									nullIfEmpty(socket_or_pipe), client_flag));
 }
 /* }}} */
 
@@ -228,7 +229,8 @@ MySQL_NativeConnectionWrapper::ssl_set(const SQLString & key,
 								const SQLString & capath,
 								const SQLString & cipher)
 {
-	return ('\0' != api->ssl_set(mysql, key.c_str(), cert.c_str(), ca.c_str() , capath.c_str(), cipher.c_str()));
+  return ('\0' != api->ssl_set(mysql, nullIfEmpty(key), nullIfEmpty(cert),
+							nullIfEmpty(ca), nullIfEmpty(capath), nullIfEmpty(cipher)));
 }
 /* }}} */
 

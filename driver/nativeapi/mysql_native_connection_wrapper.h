@@ -26,6 +26,12 @@ namespace NativeAPI
 class IMySQLCAPI;
 
 
+inline const char * nullIfEmpty(const ::sql::SQLString & str)
+{
+  return str.length() > 0 ? str.c_str() : NULL;
+}
+
+
 class MySQL_NativeConnectionWrapper : public NativeConnectionWrapper
 {
 	boost::shared_ptr< IMySQLCAPI >	api;
