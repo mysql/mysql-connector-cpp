@@ -87,7 +87,7 @@ const OUR_CHARSET our_charsets60[] =
 	{  28, "gbk", "gbk_chinese_ci", 1, 2, "", cppconn_mbcharlen_gbk, check_mb_gbk},
 	{  30, "latin5", "latin5_turkish_ci", 1, 1, "", NULL, NULL},
 	{  32, "armscii8", "armscii8_general_ci", 1, 1, "", NULL, NULL},
-	{  33, "utf8", "utf8_general_ci", 1, 2, "UTF-8 Unicode", cppconn_mbcharlen_utf8,  check_mb_utf8_valid},
+	{  33, "utf8", "utf8_general_ci", 1, 3, "UTF-8 Unicode", cppconn_mbcharlen_utf8,  check_mb_utf8_valid},
 	{  35, "ucs2", "ucs2_general_ci", 2, 2, "UCS-2 Unicode", cppconn_mbcharlen_ucs2, check_mb_ucs2},
 	{  36, "cp866", "cp866_general_ci", 1, 1, "", NULL, NULL},
 	{  37, "keybcs2", "keybcs2_general_ci", 1, 1, "", NULL, NULL},
@@ -117,8 +117,6 @@ const OUR_CHARSET our_charsets60[] =
 	{  42, "latin7", "latin7_general_cs", 1, 1, "", NULL, NULL},
 	{  43, "macce", "macce_bin", 1, 1, "", NULL, NULL},
 	{  44, "cp1250", "cp1250_croatian_ci", 1, 1, "", NULL, NULL},
-	{  45, "utf8", "utf8_general_ci", 1, 1, "", NULL, NULL},
-	{  46, "utf8", "utf8_bin", 1, 1, "", NULL, NULL},
 	{  47, "latin1", "latin1_bin", 1, 1, "", NULL, NULL},
 	{  48, "latin1", "latin1_general_ci", 1, 1, "", NULL, NULL},
 	{  49, "latin1", "latin1_general_cs", 1, 1, "", NULL, NULL},
@@ -145,7 +143,7 @@ const OUR_CHARSET our_charsets60[] =
 	{  81, "cp852", "cp852_bin", 1, 1, "", NULL, NULL},
 	{  82, "swe7", "swe7_bin", 1, 1, "", NULL, NULL},
 	{  93, "geostd8", "geostd8_bin", 1, 1, "", NULL, NULL},
-	{  83, "utf8", "utf8_bin", 1, 2, "UTF-8 Unicode", cppconn_mbcharlen_utf8,  check_mb_utf8_valid},
+	{  83, "utf8", "utf8_bin", 1, 3, "UTF-8 Unicode", cppconn_mbcharlen_utf8,  check_mb_utf8_valid},
 	{  84, "big5", "big5_bin", 1, 2, "", cppconn_mbcharlen_big5, check_mb_big5},
 	{  85, "euckr", "euckr_bin", 1, 2, "", cppconn_mbcharlen_euckr, check_mb_euckr},
 	{  86, "gb2312", "gb2312_bin", 1, 2, "", cppconn_mbcharlen_gb2312, check_mb_gb2312},
@@ -438,11 +436,26 @@ mysql_type_to_string(const MYSQL_FIELD * const field)
 		case MYSQL_TYPE_BLOB:
 		{
 			bool isBlob = field->charsetnr == MAGIC_BINARY_CHARSET_NR;
-			switch (field->length) {
+			int char_maxlen = 1;
+			if (!isBlob) {
+				const sql::mysql::util::OUR_CHARSET * cset = find_charset(field->charsetnr);
+				if (!cset) {
+					return "UNKNOWN";
+				}
+				char_maxlen = cset->char_maxlen;
+			}
+			if (field->length == L64(4294967295)) {
+				/*
+				  The C/S Protocol can't hold more than 4 byte.
+				  Thus LONGTEXT which is 0xFFFFFFFF multiplied by char_len will overflow.
+				  To overcome this the server serves just 0xFF FF FF FF
+				*/
+				return isBlob? "LONGBLOB":"LONGTEXT";
+			}
+			switch (field->length / char_maxlen) {
 				case 255: return isBlob? "TINYBLOB":"TINYTEXT";
 				case 65535: return isBlob? "BLOB":"TEXT";
 				case 16777215: return isBlob? "MEDIUMBLOB":"MEDIUMTEXT";
-				case L64(4294967295): return isBlob? "LONGBLOB":"LONGTEXT";
 				default:
 					return "UNKNOWN";
 			}
