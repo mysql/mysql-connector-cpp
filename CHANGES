@@ -1,5 +1,7 @@
 GA  1.1.0 - 2009-09-xx
 
+- BIT fields are now correctly decoded. (Andrey)
+
 - Connection::getClientOption(const sql::SQLString & optionName, void * optionValue)
   now accepts the optionName values "metadataUseInfoSchema",
   "defaultStatementResultType", "defaultPreparedStatementResultType",
