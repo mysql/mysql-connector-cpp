@@ -886,8 +886,8 @@ MySQL_Connection::setSchema(const sql::SQLString& catalog)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setCatalog");
 	checkClosed();
-	sql::SQLString sql("USE ");
-	sql.append(catalog);
+	sql::SQLString sql("USE `");
+	sql.append(catalog).append("`");
 
 	boost::scoped_ptr< sql::Statement > stmt(createStatement());
 	stmt->execute(sql);
