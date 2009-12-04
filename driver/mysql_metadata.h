@@ -388,7 +388,7 @@ public:
 
 	sql::ResultSet *getSchemata(const sql::SQLString& catalogName = "");
 
-	sql::ResultSet *getSchemaObjects(const sql::SQLString& catalogName = "", const sql::SQLString& schemaName = "", const sql::SQLString& objectType = "");
+	sql::ResultSet *getSchemaObjects(const sql::SQLString& catalogName = "", const sql::SQLString& schemaName = "", const sql::SQLString& objectType = "", bool including_ddl = true);
 
 	// Returns all schema object types this database supports
 	sql::ResultSet *getSchemaObjectTypes();

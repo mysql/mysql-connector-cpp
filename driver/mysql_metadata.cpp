@@ -1229,7 +1229,7 @@ MySQL_ConnectionMetaData::getSchemata(const sql::SQLString& /*catalogName*/)
 
 /* {{{ MySQL_ConnectionMetaData::getSchemaObjects() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName */, const sql::SQLString& schemaName, const sql::SQLString& objectType)
+MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName */, const sql::SQLString& schemaName, const sql::SQLString& objectType, bool including_ddl)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getSchemaObjects");
 	// for now catalog name is ignored
@@ -1456,6 +1456,8 @@ MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName 
 			throw sql::InvalidArgumentException("MySQL_DatabaseMetaData::getSchemaObjects: invalid OBJECT_TYPE returned from query");
 		}
 
+		if (including_ddl)
+		{
 		// due to bugs in server code some queries can fail.
 		// here we want to gather as much info as possible
 		try  {
@@ -1496,6 +1498,11 @@ MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName 
 			}
 			rs_data_row.push_back(ddl);
 		} catch (SQLException) {
+			rs_data_row.push_back("");
+		}
+		}
+		else
+		{
 			rs_data_row.push_back("");
 		}
 
