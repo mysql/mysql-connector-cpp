@@ -37,49 +37,6 @@ namespace mysql
 {
 
 
-#define bit_uint1korr(A)	(*(((uint8_t*)(A))))
-
-#define bit_uint2korr(A) ((uint16_t) (((uint16_t) (((unsigned char*) (A))[1])) +\
-                                   ((uint16_t) (((unsigned char*) (A))[0]) << 8)))
-#define bit_uint3korr(A) ((uint32_t) (((uint32_t) (((unsigned char*) (A))[2])) +\
-                                   (((uint32_t) (((unsigned char*) (A))[1])) << 8) +\
-                                   (((uint32_t) (((unsigned char*) (A))[0])) << 16)))
-#define bit_uint4korr(A) ((uint32_t) (((uint32_t) (((unsigned char*) (A))[3])) +\
-                                   (((uint32_t) (((unsigned char*) (A))[2])) << 8) +\
-                                   (((uint32_t) (((unsigned char*) (A))[1])) << 16) +\
-                                   (((uint32_t) (((unsigned char*) (A))[0])) << 24)))
-#define bit_uint5korr(A) ((uint64_t)(((uint32_t) (((unsigned char*) (A))[4])) +\
-                                    (((uint32_t) (((unsigned char*) (A))[3])) << 8) +\
-                                    (((uint32_t) (((unsigned char*) (A))[2])) << 16) +\
-                                    (((uint32_t) (((unsigned char*) (A))[1])) << 24)) +\
-                                    (((uint64_t) (((unsigned char*) (A))[0])) << 32))
-#define bit_uint6korr(A) ((uint64_t)(((uint32_t) (((unsigned char*) (A))[5])) +\
-                                    (((uint32_t) (((unsigned char*) (A))[4])) << 8) +\
-                                    (((uint32_t) (((unsigned char*) (A))[3])) << 16) +\
-                                    (((uint32_t) (((unsigned char*) (A))[2])) << 24)) +\
-                        (((uint64_t) (((uint32_t) (((unsigned char*) (A))[1])) +\
-                                    (((uint32_t) (((unsigned char*) (A))[0]) << 8)))) <<\
-                                     32))
-#define bit_uint7korr(A) ((uint64_t)(((uint32_t) (((unsigned char*) (A))[6])) +\
-                                    (((uint32_t) (((unsigned char*) (A))[5])) << 8) +\
-                                    (((uint32_t) (((unsigned char*) (A))[4])) << 16) +\
-                                    (((uint32_t) (((unsigned char*) (A))[3])) << 24)) +\
-                        (((uint64_t) (((uint32_t) (((unsigned char*) (A))[2])) +\
-                                    (((uint32_t) (((unsigned char*) (A))[1])) << 8) +\
-                                    (((uint32_t) (((unsigned char*) (A))[0])) << 16))) <<\
-                                     32))
-#define bit_uint8korr(A) ((uint64_t)(((uint32_t) (((unsigned char*) (A))[7])) +\
-                                    (((uint32_t) (((unsigned char*) (A))[6])) << 8) +\
-                                    (((uint32_t) (((unsigned char*) (A))[5])) << 16) +\
-                                    (((uint32_t) (((unsigned char*) (A))[4])) << 24)) +\
-                        (((uint64_t) (((uint32_t) (((unsigned char*) (A))[3])) +\
-                                    (((uint32_t) (((unsigned char*) (A))[2])) << 8) +\
-                                    (((uint32_t) (((unsigned char*) (A))[1])) << 16) +\
-                                    (((uint32_t) (((unsigned char*) (A))[0])) << 24))) <<\
-                                    32))
-
-
-
 /* {{{ my_l_to_a() -I- */
 static inline char * my_l_to_a(char * buf, size_t buf_size, int64_t a)
 {
@@ -633,7 +590,10 @@ MySQL_Prepared_ResultSet::getInt64_intern(const uint32_t columnIndex, bool /* cu
 		case sql::DataType::BIT:
 		{
 			int64_t uval = 0;
-			switch (result_bind->rbind[columnIndex - 1].buffer_length) {
+			std::div_t length= std::div(result_bind->rbind[columnIndex - 1].buffer_length, 8);
+			if (length.rem)
+				++length.quot;
+			switch (length.quot) {
 				case 8:uval = (int64_t) bit_uint8korr(result_bind->rbind[columnIndex - 1].buffer);break;
 				case 7:uval = (int64_t) bit_uint7korr(result_bind->rbind[columnIndex - 1].buffer);break;
 				case 6:uval = (int64_t) bit_uint6korr(result_bind->rbind[columnIndex - 1].buffer);break;
@@ -779,7 +739,10 @@ MySQL_Prepared_ResultSet::getUInt64_intern(const uint32_t columnIndex, bool /* c
 		case sql::DataType::BIT:
 		{
 			uint64_t uval = 0;
-			switch (result_bind->rbind[columnIndex - 1].buffer_length) {
+			std::div_t length= std::div(result_bind->rbind[columnIndex - 1].buffer_length, 8);
+			if (length.rem)
+				++length.quot;
+			switch (length.quot) {
 				case 8:uval = (uint64_t) bit_uint8korr(result_bind->rbind[columnIndex - 1].buffer);break;
 				case 7:uval = (uint64_t) bit_uint7korr(result_bind->rbind[columnIndex - 1].buffer);break;
 				case 6:uval = (uint64_t) bit_uint6korr(result_bind->rbind[columnIndex - 1].buffer);break;

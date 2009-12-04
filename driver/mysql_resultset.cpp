@@ -478,6 +478,24 @@ MySQL_ResultSet::getInt64(const uint32_t columnIndex) const
 	}
 	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
+	if (getMetaData()->getColumnType(columnIndex) == sql::DataType::BIT) {
+		uint64_t uval = 0;
+		std::div_t length= std::div(getFieldMeta(columnIndex)->length, 8);
+		if (length.rem)
+			++length.quot;
+		switch (length.quot) {
+			case 8:uval = (uint64_t) bit_uint8korr(row[columnIndex - 1]);break;
+			case 7:uval = (uint64_t) bit_uint7korr(row[columnIndex - 1]);break;
+			case 6:uval = (uint64_t) bit_uint6korr(row[columnIndex - 1]);break;
+			case 5:uval = (uint64_t) bit_uint5korr(row[columnIndex - 1]);break;
+			case 4:uval = (uint64_t) bit_uint4korr(row[columnIndex - 1]);break;
+			case 3:uval = (uint64_t) bit_uint3korr(row[columnIndex - 1]);break;
+			case 2:uval = (uint64_t) bit_uint2korr(row[columnIndex - 1]);break;
+			case 1:uval = (uint64_t) bit_uint1korr(row[columnIndex - 1]);break;
+		}
+		return uval;
+	}
+
 	if (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG) {
 		return strtoull(row[columnIndex - 1], NULL, 10);
 	}
@@ -517,6 +535,24 @@ MySQL_ResultSet::getUInt64(const uint32_t columnIndex) const
 	}
 	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
+	if (getMetaData()->getColumnType(columnIndex) == sql::DataType::BIT) {
+		uint64_t uval = 0;
+		std::div_t length= std::div(getFieldMeta(columnIndex)->length, 8);
+		if (length.rem)
+			++length.quot;
+		switch (length.quot) {
+			case 8:uval = (uint64_t) bit_uint8korr(row[columnIndex - 1]);break;
+			case 7:uval = (uint64_t) bit_uint7korr(row[columnIndex - 1]);break;
+			case 6:uval = (uint64_t) bit_uint6korr(row[columnIndex - 1]);break;
+			case 5:uval = (uint64_t) bit_uint5korr(row[columnIndex - 1]);break;
+			case 4:uval = (uint64_t) bit_uint4korr(row[columnIndex - 1]);break;
+			case 3:uval = (uint64_t) bit_uint3korr(row[columnIndex - 1]);break;
+			case 2:uval = (uint64_t) bit_uint2korr(row[columnIndex - 1]);break;
+			case 1:uval = (uint64_t) bit_uint1korr(row[columnIndex - 1]);break;
+		}
+		return uval;
+	}
+
 	if (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG) {
 		return strtoull(row[columnIndex - 1], NULL, 10);	
 	}
@@ -612,6 +648,18 @@ MySQL_ResultSet::getString(const uint32_t columnIndex) const
 		was_null = true;
 		return "";
 	}
+
+	if (getMetaData()->getColumnType(columnIndex) == sql::DataType::BIT){
+		char buf[30];
+		CPP_INFO("It's an int");
+		if (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG) {
+			snprintf(buf, sizeof(buf) - 1, "%llu", (unsigned long long) getUInt64(columnIndex));
+		} else {
+			snprintf(buf, sizeof(buf) - 1, "%lld", (long long) getInt64(columnIndex));
+		}
+		return sql::SQLString(buf);
+	}
+
 	size_t len = result->fetch_lengths()[columnIndex - 1];
 	CPP_INFO_FMT("value=%*s",  len> 50? 50:len, row[columnIndex - 1]);
 	was_null = false;

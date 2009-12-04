@@ -49,6 +49,47 @@
 #endif	//	_WIN32
 
 
+#define bit_uint1korr(A)	(*(((uint8_t*)(A))))
+
+#define bit_uint2korr(A) ((uint16_t) (((uint16_t) (((unsigned char*) (A))[1])) +\
+                                   ((uint16_t) (((unsigned char*) (A))[0]) << 8)))
+#define bit_uint3korr(A) ((uint32_t) (((uint32_t) (((unsigned char*) (A))[2])) +\
+                                   (((uint32_t) (((unsigned char*) (A))[1])) << 8) +\
+                                   (((uint32_t) (((unsigned char*) (A))[0])) << 16)))
+#define bit_uint4korr(A) ((uint32_t) (((uint32_t) (((unsigned char*) (A))[3])) +\
+                                   (((uint32_t) (((unsigned char*) (A))[2])) << 8) +\
+                                   (((uint32_t) (((unsigned char*) (A))[1])) << 16) +\
+                                   (((uint32_t) (((unsigned char*) (A))[0])) << 24)))
+#define bit_uint5korr(A) ((uint64_t)(((uint32_t) (((unsigned char*) (A))[4])) +\
+                                    (((uint32_t) (((unsigned char*) (A))[3])) << 8) +\
+                                    (((uint32_t) (((unsigned char*) (A))[2])) << 16) +\
+                                   (((uint32_t) (((unsigned char*) (A))[1])) << 24)) +\
+                                    (((uint64_t) (((unsigned char*) (A))[0])) << 32))
+#define bit_uint6korr(A) ((uint64_t)(((uint32_t) (((unsigned char*) (A))[5])) +\
+                                    (((uint32_t) (((unsigned char*) (A))[4])) << 8) +\
+                                    (((uint32_t) (((unsigned char*) (A))[3])) << 16) +\
+                                    (((uint32_t) (((unsigned char*) (A))[2])) << 24)) +\
+                        (((uint64_t) (((uint32_t) (((unsigned char*) (A))[1])) +\
+                                    (((uint32_t) (((unsigned char*) (A))[0]) << 8)))) <<\
+                                     32))
+#define bit_uint7korr(A) ((uint64_t)(((uint32_t) (((unsigned char*) (A))[6])) +\
+                                    (((uint32_t) (((unsigned char*) (A))[5])) << 8) +\
+                                    (((uint32_t) (((unsigned char*) (A))[4])) << 16) +\
+                                   (((uint32_t) (((unsigned char*) (A))[3])) << 24)) +\
+                        (((uint64_t) (((uint32_t) (((unsigned char*) (A))[2])) +\
+                                    (((uint32_t) (((unsigned char*) (A))[1])) << 8) +\
+                                    (((uint32_t) (((unsigned char*) (A))[0])) << 16))) <<\
+                                     32))
+#define bit_uint8korr(A) ((uint64_t)(((uint32_t) (((unsigned char*) (A))[7])) +\
+                                    (((uint32_t) (((unsigned char*) (A))[6])) << 8) +\
+                                    (((uint32_t) (((unsigned char*) (A))[5])) << 16) +\
+                                    (((uint32_t) (((unsigned char*) (A))[4])) << 24)) +\
+                        (((uint64_t) (((uint32_t) (((unsigned char*) (A))[3])) +\
+                                    (((uint32_t) (((unsigned char*) (A))[2])) << 8) +\
+                                    (((uint32_t) (((unsigned char*) (A))[1])) << 16) +\
+                                    (((uint32_t) (((unsigned char*) (A))[0])) << 24))) <<\
+                                    32))
+
 namespace sql
 {
 namespace mysql
