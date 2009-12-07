@@ -87,6 +87,8 @@ public:
 
 	int query(const ::sql::SQLString &);
 
+	int ping();
+
 	/* int real_query(const ::sql::SQLString &, uint64_t);*/
 	
 

@@ -94,6 +94,8 @@ public:
 
 	int options (MYSQL *, enum mysql_option, const void *);
 
+	int ping(MYSQL *);
+
 	int query(MYSQL *, const char *);
 
 	MYSQL * real_connect(MYSQL * mysql, const char *  host,

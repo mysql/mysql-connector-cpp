@@ -703,7 +703,13 @@ bool
 MySQL_Connection::isClosed()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::isClosed");
-	return !intern->is_valid;
+	if (intern->is_valid) {
+		if (!proxy->ping()) {
+			return false;
+		}
+		close();
+	}
+	return true;
 }
 /* }}} */
 

@@ -260,11 +260,20 @@ LibmysqlStaticProxy::options(MYSQL * mysql, enum mysql_option option, const void
 /* }}} */
 
 
-/* {{{ LibmysqlStaticProxy::data_seek() */
+/* {{{ LibmysqlStaticProxy::query() */
 int
 LibmysqlStaticProxy::query(MYSQL * mysql, const char *stmt_str)
 {
 	return ::mysql_query(mysql, stmt_str);
+}
+/* }}} */
+
+
+/* {{{ LibmysqlStaticProxy::ping() */
+int
+LibmysqlStaticProxy::ping(MYSQL * mysql)
+{
+	return ::mysql_ping(mysql);
 }
 /* }}} */
 

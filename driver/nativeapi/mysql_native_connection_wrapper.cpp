@@ -203,6 +203,15 @@ MySQL_NativeConnectionWrapper::query(const SQLString & stmt_str)
 /* }}} */
 
 
+/* {{{ MySQL_NativeConnectionWrapper::ping() */
+int
+MySQL_NativeConnectionWrapper::ping()
+{
+	return api->ping(mysql);
+}
+/* }}} */
+
+
 /* {{{ MySQL_NativeConnectionWrapper::rollback() */
 bool
 MySQL_NativeConnectionWrapper::rollback()
