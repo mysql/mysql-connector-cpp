@@ -340,6 +340,9 @@ MySQL_ResultSet::getDouble(const uint32_t columnIndex) const
 		return 0.0;
 	}
 	was_null = false;
+	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT) {
+		return getInt64(columnIndex);
+	}
 	return sql::mysql::util::strtold(row[columnIndex - 1], NULL);
 }
 /* }}} */
@@ -479,11 +482,13 @@ MySQL_ResultSet::getInt64(const uint32_t columnIndex) const
 	}
 	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
-	if (getMetaData()->getColumnType(columnIndex) == sql::DataType::BIT) {
+	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT) {
 		uint64_t uval = 0;
 		std::div_t length= std::div(getFieldMeta(columnIndex)->length, 8);
-		if (length.rem)
+		if (length.rem) {
 			++length.quot;
+		}
+
 		switch (length.quot) {
 			case 8:uval = (uint64_t) bit_uint8korr(row[columnIndex - 1]);break;
 			case 7:uval = (uint64_t) bit_uint7korr(row[columnIndex - 1]);break;
@@ -536,11 +541,12 @@ MySQL_ResultSet::getUInt64(const uint32_t columnIndex) const
 	}
 	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
-	if (getMetaData()->getColumnType(columnIndex) == sql::DataType::BIT) {
+	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT) {
 		uint64_t uval = 0;
 		std::div_t length= std::div(getFieldMeta(columnIndex)->length, 8);
-		if (length.rem)
+		if (length.rem) {
 			++length.quot;
+		}
 		switch (length.quot) {
 			case 8:uval = (uint64_t) bit_uint8korr(row[columnIndex - 1]);break;
 			case 7:uval = (uint64_t) bit_uint7korr(row[columnIndex - 1]);break;
@@ -650,14 +656,9 @@ MySQL_ResultSet::getString(const uint32_t columnIndex) const
 		return "";
 	}
 
-	if (getMetaData()->getColumnType(columnIndex) == sql::DataType::BIT){
+	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT) {
 		char buf[30];
-		CPP_INFO("It's an int");
-		if (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG) {
-			snprintf(buf, sizeof(buf) - 1, "%llu", (unsigned long long) getUInt64(columnIndex));
-		} else {
-			snprintf(buf, sizeof(buf) - 1, "%lld", (long long) getInt64(columnIndex));
-		}
+		snprintf(buf, sizeof(buf) - 1, "%llu", (unsigned long long) getUInt64(columnIndex));
 		return sql::SQLString(buf);
 	}
 
