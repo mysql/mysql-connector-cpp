@@ -37,6 +37,7 @@ public:
   {
     TEST_CASE(fetchBigint);
     TEST_CASE(fetchBitAsInt);
+    TEST_CASE(fetchBitAsDouble);
     TEST_CASE(getInt);
     TEST_CASE(getTypes);
     TEST_CASE(getResultSetType);
@@ -93,6 +94,11 @@ public:
    * Calling methods which throw "not implemented" to detect API changes
    */
   void fetchBitAsInt();
+
+    /**
+   * Calling methods which throw "not implemented" to detect API changes
+   */
+  void fetchBitAsDouble();
 
 };
 
