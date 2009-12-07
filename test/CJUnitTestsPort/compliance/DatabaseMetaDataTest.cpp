@@ -5637,8 +5637,6 @@ void DatabaseMetaDataTest::testSupportsConvert03()
 /* throws Exception */
 void DatabaseMetaDataTest::testSupportsConvert04()
 {
-
-#ifdef WE_HAVE_DATATYPE_AGAIN
   logMsg("Calling supportsConvert(BIT, VARCHAR) on DatabaseMetaData");
   bool retValue=dbmd->supportsConvert(sql::DataType::BIT, sql::DataType::VARCHAR);
   if (retValue) {
@@ -5646,9 +5644,6 @@ void DatabaseMetaDataTest::testSupportsConvert04()
   } else {
     logMsg("supportsConvert(BIT, VARCHAR) method is not supported");
   }
-#else
-  logMsg("supportsConvert(BIT, VARCHAR) method is not supported");
-#endif
 }
 
 /*
@@ -6661,16 +6656,13 @@ void DatabaseMetaDataTest::testSupportsConvert29()
 {
 
   logMsg("Calling supportsConvert(BIT, INTEGER) on DatabaseMetaData");
-#ifdef WE_HAVE_DATATYPE_AGAIN
+
   bool retValue=dbmd->supportsConvert(sql::DataType::BIT, sql::DataType::INTEGER);
   if (retValue) {
     logMsg("supportsConvert(BIT, INTEGER) method is supported");
   } else {
     logMsg("supportsConvert(BIT, INTEGER) method is not supported");
   }
-#else
-  logMsg("supportsConvert(BIT, INTEGER) method is not supported");
-#endif
 }
 
 /*
