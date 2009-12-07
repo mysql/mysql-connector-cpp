@@ -11,7 +11,7 @@ The major feature addition in version 1.1.0 is run-time dynamic loading of the M
 We have improved the driver and added a couple of new features since the last beta release. Please see the documentation and the CHANGES file in the source distribution for a detailed description of bugs that have been fixed. Among others the following changes have been made:
 
 
-- Fixed bugs #45048, #45846, #45843, #44931
+- Fixed bugs #45048, #45846, #45843, #44931, #36239
 - Fixed bug in ResultSetMetaData for normal statements and prepared ones, getScale() and getPrecision() did return wrong results.
 - Fixed performance issue of Prepared Statements when reading large result sets.
 - API incompatible change: ConnectPropertyVal is no more a struct but a typedef that uses boost::variant.

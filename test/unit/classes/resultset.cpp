@@ -25,7 +25,7 @@ namespace classes
 
 void resultset::getInt()
 {
-  bool on_off = true;
+  bool on_off=true;
   con->setClientOption("clientTrace", &on_off);
   // Message for --verbose output
   logMsg("resultset::getInt - MySQL_ResultSet::getInt*");
@@ -141,7 +141,7 @@ void resultset::getInt()
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
-  on_off = false;
+  on_off=false;
   con->setClientOption("clientTrace", &on_off);
 }
 
@@ -712,6 +712,7 @@ void resultset::getTypesMinorIssues()
 
 
 #ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
+
 void resultset::notImplemented()
 {
   logMsg("resultset::notImplemented - MySQL_ResultSet::*");
@@ -738,7 +739,6 @@ void resultset::notImplemented()
     fail(e.what(), __FILE__, __LINE__);
   }
 }
-
 
 void resultset::doNotImplemented()
 {
@@ -817,7 +817,6 @@ void resultset::doNotImplemented()
 }
 #endif
 
-
 void resultset::fetchBigint()
 {
   std::stringstream msg;
@@ -860,6 +859,77 @@ void resultset::fetchBigint()
   }
 }
 
+void resultset::fetchBitAsInt()
+{
+  std::stringstream msg;
+
+  logMsg("resultset::fetchBitAsInt - MySQL_ResultSet::*");
+  try
+  {
+    logMsg("... BIT(0) - non-PS");
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id BIT(1))");
+    stmt->execute("INSERT INTO test(id) VALUES (0)");
+    stmt->execute("INSERT INTO test(id) VALUES (1)");
+
+    res.reset(stmt->executeQuery("SELECT id, CAST(id AS SIGNED) AS bit_as_signed FROM test ORDER BY id"));
+    while (res->next())
+    {
+      ASSERT_EQUALS(res->getInt("id"), res->getInt("bit_as_signed"));
+      ASSERT_EQUALS(res->getInt("id"), res->getInt(1));
+    }
+
+    logMsg("... BIT(0) - PS");
+    pstmt.reset(con->prepareStatement("SELECT id, CAST(id AS SIGNED) AS bit_as_signed FROM test ORDER BY id"));
+    res.reset(pstmt->executeQuery());
+    while (res->next())
+    {
+      ASSERT_EQUALS(res->getInt("id"), res->getInt("bit_as_signed"));
+      ASSERT_EQUALS(res->getInt("id"), res->getInt(1));
+    }
+
+
+    uint64_t    c1 = UL64(4294967295),
+                c2 = UL64(18446744073709551615);
+
+    logMsg("... BIT(32), BIT(64) - non-PS");
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(col1 BIT(32), col2 BIT(64))");
+    stmt->execute("INSERT INTO test(col1, col2) VALUES(b'11111111111111111111111111111111', b'1111111111111111111111111111111111111111111111111111111111111111')");
+
+    res.reset(stmt->executeQuery("SELECT col1, CAST(col1 AS UNSIGNED) AS col1_as_unsigned, col2, CAST(col2 AS UNSIGNED) AS col2_as_unsigned FROM test"));
+    ASSERT(res->next());
+    ASSERT_EQUALS(c1, res->getUInt64(1));
+    ASSERT_EQUALS(res->getUInt64("col1_as_unsigned"), res->getUInt64(1));
+    ASSERT_EQUALS(c2, res->getUInt64("col2"));
+    ASSERT_EQUALS(res->getUInt64("col2_as_unsigned"), res->getUInt64("col2"));
+    
+    logMsg("... BIT(32), BIT(64) - PS");
+    stmt->execute("DELETE FROM test");
+    pstmt.reset(con->prepareStatement("INSERT INTO test(col1, col2) VALUES(?,?)"));
+    pstmt->setUInt64(1, c1);
+    pstmt->setUInt64(1, c2);
+    ASSERT(pstmt->execute());
+
+    pstmt.reset(con->prepareStatement("SELECT col1, CAST(col1 AS UNSIGNED) AS col1_as_unsigned, col2, CAST(col2 AS UNSIGNED) AS col2_as_unsigned FROM test"));
+    res.reset(pstmt->executeQuery());
+    ASSERT(res->next());
+    ASSERT_EQUALS(c1, res->getUInt64(1));
+    ASSERT_EQUALS(res->getUInt64("col1_as_unsigned"), res->getUInt64(1));
+    ASSERT_EQUALS(c2, res->getUInt64("col2"));
+    ASSERT_EQUALS(res->getUInt64("col2_as_unsigned"), res->getUInt64("col2"));
+    
+    stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 void resultset::getResultSetType()
 {
 
@@ -880,7 +950,7 @@ void resultset::getResultSetType()
     connection_properties.erase("defaultStatementResultType");
     {
       logMsg("... testing defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]= sql::ResultSet::TYPE_FORWARD_ONLY;
+      connection_properties["defaultStatementResultType"]=sql::ResultSet::TYPE_FORWARD_ONLY;
       try
       {
         created_objects.clear();
@@ -899,7 +969,7 @@ void resultset::getResultSetType()
       ASSERT_EQUALS(pstmt->getResultSetType(), sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
 
       connection_properties.erase("defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]= sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
+      connection_properties["defaultStatementResultType"]=sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
       try
       {
         created_objects.clear();
@@ -916,7 +986,7 @@ void resultset::getResultSetType()
       ASSERT_EQUALS(pstmt->getResultSetType(), sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
 
       connection_properties.erase("defaultStatementResultType");
-      connection_properties["defaultStatementResultType"]= sql::ResultSet::TYPE_SCROLL_SENSITIVE;
+      connection_properties["defaultStatementResultType"]=sql::ResultSet::TYPE_SCROLL_SENSITIVE;
       try
       {
         created_objects.clear();

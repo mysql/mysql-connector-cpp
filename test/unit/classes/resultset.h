@@ -36,6 +36,7 @@ public:
   EXAMPLE_TEST_FIXTURE(resultset)
   {
     TEST_CASE(fetchBigint);
+    TEST_CASE(fetchBitAsInt);
     TEST_CASE(getInt);
     TEST_CASE(getTypes);
     TEST_CASE(getResultSetType);
@@ -87,6 +88,11 @@ public:
    * Calling methods which throw "not implemented" to detect API changes
    */
   void fetchBigint();
+
+  /**
+   * Calling methods which throw "not implemented" to detect API changes
+   */
+  void fetchBitAsInt();
 
 };
 
