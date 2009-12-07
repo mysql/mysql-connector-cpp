@@ -909,8 +909,8 @@ void resultset::fetchBitAsInt()
     stmt->execute("DELETE FROM test");
     pstmt.reset(con->prepareStatement("INSERT INTO test(col1, col2) VALUES(?,?)"));
     pstmt->setUInt64(1, c1);
-    pstmt->setUInt64(1, c2);
-    ASSERT(pstmt->execute());
+    pstmt->setUInt64(2, c2);
+    ASSERT_EQUALS(false, pstmt->execute());
 
     pstmt.reset(con->prepareStatement("SELECT col1, CAST(col1 AS UNSIGNED) AS col1_as_unsigned, col2, CAST(col2 AS UNSIGNED) AS col2_as_unsigned FROM test"));
     res.reset(pstmt->executeQuery());
