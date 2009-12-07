@@ -75,6 +75,8 @@ public:
 
 	virtual int query(const SQLString &) = 0;
 
+	virtual int ping() = 0;
+
 	/* virtual int real_query(const SQLString &, uint64_t) = 0;*/
 
 	virtual bool rollback() = 0;

@@ -382,6 +382,17 @@ LibmysqlDynamicProxy::query(MYSQL * mysql, const char *stmt_str)
 /* }}} */
 
 
+/* {{{ LibmysqlDynamicProxy::ping() */
+int
+LibmysqlDynamicProxy::ping(MYSQL * mysql)
+{
+	ptr2mysql_ping ptr2_ping = symbol_safe_cast<ptr2mysql_ping>(GetProcAddr("mysql_ping"));
+
+	return (*ptr2_ping)(mysql);
+}
+/* }}} */
+
+
 /* {{{ LibmysqlDynamicProxy::real_connect() */
 MYSQL *
 LibmysqlDynamicProxy::real_connect(MYSQL * mysql,
