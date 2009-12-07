@@ -590,9 +590,11 @@ MySQL_Prepared_ResultSet::getInt64_intern(const uint32_t columnIndex, bool /* cu
 		case sql::DataType::BIT:
 		{
 			int64_t uval = 0;
-			std::div_t length= std::div(result_bind->rbind[columnIndex - 1].buffer_length, 8);
-			if (length.rem)
+			std::div_t length = std::div(result_bind->rbind[columnIndex - 1].buffer_length, 8);
+			if (length.rem) {
 				++length.quot;
+			}
+
 			switch (length.quot) {
 				case 8:uval = (int64_t) bit_uint8korr(result_bind->rbind[columnIndex - 1].buffer);break;
 				case 7:uval = (int64_t) bit_uint7korr(result_bind->rbind[columnIndex - 1].buffer);break;
@@ -739,9 +741,10 @@ MySQL_Prepared_ResultSet::getUInt64_intern(const uint32_t columnIndex, bool /* c
 		case sql::DataType::BIT:
 		{
 			uint64_t uval = 0;
-			std::div_t length= std::div(result_bind->rbind[columnIndex - 1].buffer_length, 8);
-			if (length.rem)
+			std::div_t length = std::div(result_bind->rbind[columnIndex - 1].buffer_length, 8);
+			if (length.rem) {
 				++length.quot;
+			}
 			switch (length.quot) {
 				case 8:uval = (uint64_t) bit_uint8korr(result_bind->rbind[columnIndex - 1].buffer);break;
 				case 7:uval = (uint64_t) bit_uint7korr(result_bind->rbind[columnIndex - 1].buffer);break;

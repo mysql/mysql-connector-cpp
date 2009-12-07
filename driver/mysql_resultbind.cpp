@@ -84,7 +84,7 @@ allocate_buffer_for_field(const MYSQL_FIELD * const field)
 		case MYSQL_TYPE_SET:
 #endif
 		case MYSQL_TYPE_BIT:
-			return st_buffer_size_type(new char[8], 8, MYSQL_TYPE_LONGLONG);
+			return st_buffer_size_type(new char[8], 8, MYSQL_TYPE_BIT);
 		case MYSQL_TYPE_GEOMETRY:
 		default:
 			// TODO: Andrey, there can be crashes when we go through this. Please fix.
