@@ -1862,6 +1862,7 @@ void connection::connectOptReconnect()
       logMsg("... we seem to be luck, we have killed a connection");
       try
       {
+        stmt.reset(con->createStatement());
         stmt->execute("DROP TABLE IF EXISTS test");
         FAIL("Statement object is still usable");
       }
@@ -1875,6 +1876,43 @@ void connection::connectOptReconnect()
     {
       /* KILL has failed - that is OK, we may not have permissions */
 
+    }
+
+    logMsg("... OPT_RECONNECT enabled and KILL");
+
+    connection_properties.erase("OPT_RECONNECT");
+    connection_properties["OPT_RECONNECT"]=true;
+
+    created_objects.clear();
+    con.reset(driver->connect(connection_properties));
+    con->setSchema(db);
+    res.reset(stmt->executeQuery("SELECT CONNECTION_ID() as _pid"));
+    ASSERT(res->next());
+    msg.str("");
+    msg << "KILL " << res->getInt("_pid");
+
+    try
+    {
+      Connection my_con(getConnection());
+      my_con->setSchema(db);
+      Statement my_stmt(my_con->createStatement());
+      my_stmt->execute(msg.str());
+      logMsg("... we seem to be luck, we have killed a connection");
+      try
+      {
+        stmt.reset(con->createStatement());
+        stmt->execute("DROP TABLE IF EXISTS test");
+      }
+      catch (sql::SQLException &e)
+      {
+        logErr(e.what());
+        logErr("SQLState: " + std::string(e.getSQLState()));
+        FAIL("Automatic reconnect should happen");
+      }
+    }
+    catch (sql::SQLException &e)
+    {
+      /* KILL has failed - that is OK, we may not have permissions */
     }
 
   }
