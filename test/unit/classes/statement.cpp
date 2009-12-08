@@ -99,9 +99,10 @@ void statement::getWarnings()
     }
 
     stmt->clearWarnings();
-    for (const sql::SQLWarning* warn=stmt->getWarnings(); warn; warn=warn->getNextWarning()) {
+    for (const sql::SQLWarning* warn=stmt->getWarnings(); warn; warn=warn->getNextWarning())
+    {
       FAIL("There should be no more warnings!");
-  }
+    }
 
     // TODO - how to use getNextWarning() ?
     stmt->execute("DROP TABLE IF EXISTS test");
@@ -193,7 +194,7 @@ void statement::callSP()
     ASSERT(!stmt->execute("CREATE TABLE test(id INT)"));
     ASSERT(!stmt->execute("CREATE PROCEDURE p() BEGIN INSERT INTO test(id) VALUES (123), (456); END;"));
     ASSERT(!stmt->execute("CALL p()"));
-    ASSERT_EQUALS(2, (int)stmt->getUpdateCount());
+    ASSERT_EQUALS(2, (int) stmt->getUpdateCount());
     ASSERT(stmt->execute("SELECT id FROM test ORDER BY id ASC"));
     res.reset(stmt->getResultSet());
     ASSERT(res->next());
@@ -227,11 +228,12 @@ void statement::callSP()
     do
     {
       res.reset(stmt->getResultSet());
-      while (res->next())
-      {
-        msg << res->getInt("id") << res->getString(2);
-      }
-    } while (stmt->getMoreResults());
+    while (res->next())
+    {
+      msg << res->getInt("id") << res->getString(2);
+    }
+    }
+    while (stmt->getMoreResults());
     ASSERT_EQUALS("1a2b3c", msg.str());
 
     stmt->execute("DROP PROCEDURE IF EXISTS p");
@@ -241,11 +243,12 @@ void statement::callSP()
     do
     {
       res.reset(stmt->getResultSet());
-      while (res->next())
-      {
-        msg << res->getInt("id") << res->getString(2);
-      }
-    } while (stmt->getMoreResults());
+    while (res->next())
+    {
+      msg << res->getInt("id") << res->getString(2);
+    }
+    }
+    while (stmt->getMoreResults());
     ASSERT_EQUALS("1a2b3c3c2b1a", msg.str());
 
   }
@@ -304,7 +307,7 @@ void statement::unbufferedFetch()
     logMsg("... setting TYPE_FORWARD_ONLY through connection map");
     connection_properties.erase("defaultStatementResultType");
     {
-      connection_properties["defaultStatementResultType"]= sql::ResultSet::TYPE_FORWARD_ONLY;
+      connection_properties["defaultStatementResultType"]=sql::ResultSet::TYPE_FORWARD_ONLY;
 
       try
       {
@@ -322,9 +325,13 @@ void statement::unbufferedFetch()
 
       stmt->execute("CREATE TABLE test(id INT)");
       stmt->execute("INSERT INTO test(id) VALUES (0), (2), (3), (4), (5)");
-      ASSERT_EQUALS(5, (int)stmt->getUpdateCount());
+      ASSERT_EQUALS(5, (int) stmt->getUpdateCount());
       stmt->execute("UPDATE test SET id = 1 WHERE id = 0");
-      ASSERT_EQUALS(1, (int)stmt->getUpdateCount());
+      ASSERT_EQUALS(1, (int) stmt->getUpdateCount());
+      stmt->execute("DELETE FROM test WHERE id = 1");
+      ASSERT_EQUALS(1, (int) stmt->getUpdateCount());
+      stmt->execute("INSERT INTO test(id) VALUES (1)");
+      ASSERT_EQUALS(1, (int) stmt->getUpdateCount());
 
       logMsg("... simple forward reading");
       res.reset(stmt->executeQuery("SELECT id FROM test ORDER BY id ASC"));
@@ -415,7 +422,7 @@ void statement::unbufferedFetch()
     stmt.reset(con->createStatement());
     res.reset((stmt->setResultSetType(sql::ResultSet::TYPE_FORWARD_ONLY)->executeQuery("SELECT id FROM test ORDER BY id ASC")));
     logMsg("... simple forward reading");
-    
+
     id=0;
     while (res->next())
     {
@@ -444,7 +451,7 @@ void statement::unbufferedFetch()
       id--;
     }
 
-   stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("DROP TABLE IF EXISTS test");
 
   }
   catch (sql::SQLException &e)
@@ -458,10 +465,10 @@ void statement::unbufferedFetch()
 void statement::unbufferedOutOfSync()
 {
   logMsg("statement::unbufferedOutOfSync() - MySQL_Statement::*");
-  
+
   try
   {
-    stmt.reset(con->createStatement());        
+    stmt.reset(con->createStatement());
     res.reset((stmt->setResultSetType(sql::ResultSet::TYPE_FORWARD_ONLY)->executeQuery("SELECT 1")));
     ASSERT_EQUALS(stmt->getResultSetType(), sql::ResultSet::TYPE_FORWARD_ONLY);
 
