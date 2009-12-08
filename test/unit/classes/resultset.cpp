@@ -890,8 +890,8 @@ void resultset::fetchBitAsInt()
     }
 
 
-    uint64_t    c1 = UL64(4294967295),
-                c2 = UL64(18446744073709551615);
+    uint64_t c1=UL64(4294967295),
+            c2=UL64(18446744073709551615);
 
     logMsg("... BIT(32), BIT(64) - non-PS");
     stmt->execute("DROP TABLE IF EXISTS test");
@@ -904,7 +904,7 @@ void resultset::fetchBitAsInt()
     ASSERT_EQUALS(res->getUInt64("col1_as_unsigned"), res->getUInt64(1));
     ASSERT_EQUALS(c2, res->getUInt64("col2"));
     ASSERT_EQUALS(res->getUInt64("col2_as_unsigned"), res->getUInt64("col2"));
-    
+
     logMsg("... BIT(32), BIT(64) - PS");
     stmt->execute("DELETE FROM test");
     pstmt.reset(con->prepareStatement("INSERT INTO test(col1, col2) VALUES(?,?)"));
@@ -920,46 +920,6 @@ void resultset::fetchBitAsInt()
     ASSERT_EQUALS(res->getUInt64("col1_as_unsigned"), res->getUInt64(1));
     ASSERT_EQUALS(c2, res->getUInt64("col2"));
     ASSERT_EQUALS(res->getUInt64("col2_as_unsigned"), res->getUInt64("col2"));
-    
-    stmt->execute("DROP TABLE IF EXISTS test");
-  }
-  catch (sql::SQLException &e)
-  {
-    logErr(e.what());
-    logErr("SQLState: " + std::string(e.getSQLState()));
-    fail(e.what(), __FILE__, __LINE__);
-  }
-}
-
-void resultset::fetchBitAsDouble()
-{
-  std::stringstream msg;
-
-  logMsg("resultset::fetchBitAsInt - MySQL_ResultSet::*");
-  try
-  {
-    logMsg("... BIT(0) - non-PS");
-    stmt.reset(con->createStatement());
-    stmt->execute("DROP TABLE IF EXISTS test");
-    stmt->execute("CREATE TABLE test(id BIT(1))");
-    stmt->execute("INSERT INTO test(id) VALUES (0)");
-    stmt->execute("INSERT INTO test(id) VALUES (1)");
-
-    res.reset(stmt->executeQuery("SELECT id, CAST(id AS SIGNED) AS bit_as_signed FROM test ORDER BY id"));
-    while (res->next())
-    {
-      ASSERT_EQUALS(res->getDouble("id"), res->getDouble("bit_as_signed"));
-      ASSERT_EQUALS(res->getDouble("id"), res->getDouble(1));
-    }
-
-    logMsg("... BIT(0) - PS");
-    pstmt.reset(con->prepareStatement("SELECT id, CAST(id AS SIGNED) AS bit_as_signed FROM test ORDER BY id"));
-    res.reset(pstmt->executeQuery());
-    while (res->next())
-    {
-      ASSERT_EQUALS(res->getDouble("id"), res->getDouble("bit_as_signed"));
-      ASSERT_EQUALS(res->getDouble("id"), res->getDouble(1));
-    }
 
     stmt->execute("DROP TABLE IF EXISTS test");
   }
