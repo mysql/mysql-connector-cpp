@@ -203,6 +203,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	const int * p_i;
 	const bool * p_b;
 	const sql::SQLString * p_s;
+	bool opt_reconnect = false;
+	bool opt_reconnect_value = false;
 	
 	sql::ConnectOptionsMap::const_iterator it = properties.begin();
 	for (; it != properties.end(); ++it) {
@@ -478,7 +480,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for OPT_RECONNECT");
 			}
-			proxy->options(MYSQL_OPT_RECONNECT, (const char *) &p_b);
+			opt_reconnect = true;
+			opt_reconnect_value = *p_b;
 		} else if (!it->first.compare("OPT_CHARSET_NAME")) {
 			if (!(p_s = boost::get< sql::SQLString >(&it->second))) {
 				throw sql::InvalidArgumentException("No SQLString value passed for OPT_CHARSET_NAME");
@@ -488,7 +491,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			if (!(p_b = boost::get< bool >(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for OPT_REPORT_DATA_TRUNCATION");
 			}
-			proxy->options(MYSQL_REPORT_DATA_TRUNCATION, (const char *) &p_b);
+			proxy->options(MYSQL_REPORT_DATA_TRUNCATION, (const char *) p_b);
 #ifdef _WIN32
 		} else if (!it->first.compare("OPT_NAMED_PIPE")) {
 			proxy->options(MYSQL_OPT_NAMED_PIPE, NULL);
@@ -528,6 +531,10 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 		proxy.reset();
 		throw e;
 	}
+	if (opt_reconnect) {
+		proxy->options(MYSQL_OPT_RECONNECT, (const char *) &opt_reconnect_value);
+	}
+
 	setAutoCommit(true);
 	setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
 	// Different Values means we have to set different result set encoding
