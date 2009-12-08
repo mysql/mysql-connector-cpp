@@ -1842,6 +1842,7 @@ void connection::connectOptReconnect()
 
     logMsg("... OPT_RECONNECT disabled and KILL");
 
+
     connection_properties.erase("OPT_RECONNECT");
     connection_properties["OPT_RECONNECT"]=false;
 
@@ -1859,10 +1860,13 @@ void connection::connectOptReconnect()
       my_con->setSchema(db);
       Statement my_stmt(my_con->createStatement());
       my_stmt->execute(msg.str());
-      logMsg("... we seem to be luck, we have killed a connection");
+      logMsg("... we seem to be lucky, we have killed a connection");
+      logMsg(msg.str());
       try
       {
-        stmt.reset(con->createStatement());
+        msg.str("");
+        msg << "USE " << db;
+        stmt->execute(msg.str());
         stmt->execute("DROP TABLE IF EXISTS test");
         FAIL("Statement object is still usable");
       }
@@ -1875,13 +1879,10 @@ void connection::connectOptReconnect()
     catch (sql::SQLException &e)
     {
       /* KILL has failed - that is OK, we may not have permissions */
-
     }
 
-    logMsg("... OPT_RECONNECT enabled and KILL");
-
-    connection_properties.erase("OPT_RECONNECT");
-    connection_properties["OPT_RECONNECT"]=true;
+        connection_properties.erase("OPT_RECONNECT");
+    connection_properties["OPT_RECONNECT"]=false;
 
     created_objects.clear();
     con.reset(driver->connect(connection_properties));
@@ -1897,17 +1898,19 @@ void connection::connectOptReconnect()
       my_con->setSchema(db);
       Statement my_stmt(my_con->createStatement());
       my_stmt->execute(msg.str());
-      logMsg("... we seem to be luck, we have killed a connection");
+      logMsg("... we seem to be lucky, we have killed a connection");
+      logMsg(msg.str());
       try
       {
         stmt.reset(con->createStatement());
+        logMsg("... we got a new statement object");
         stmt->execute("DROP TABLE IF EXISTS test");
+        FAIL("Statement object is still usable");
       }
       catch (sql::SQLException &e)
       {
-        logErr(e.what());
-        logErr("SQLState: " + std::string(e.getSQLState()));
-        FAIL("Automatic reconnect should happen");
+        /* Any error message is fine, connection should have been killed */
+        logMsg(e.what());
       }
     }
     catch (sql::SQLException &e)
