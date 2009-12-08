@@ -1849,6 +1849,7 @@ void connection::connectOptReconnect()
     created_objects.clear();
     con.reset(driver->connect(connection_properties));
     con->setSchema(db);
+    stmt.reset(con->createStatement());
     res.reset(stmt->executeQuery("SELECT CONNECTION_ID() as _pid"));
     ASSERT(res->next());
     msg.str("");
@@ -1887,6 +1888,7 @@ void connection::connectOptReconnect()
     created_objects.clear();
     con.reset(driver->connect(connection_properties));
     con->setSchema(db);
+    stmt.reset(con->createStatement());
     res.reset(stmt->executeQuery("SELECT CONNECTION_ID() as _pid"));
     ASSERT(res->next());
     msg.str("");
