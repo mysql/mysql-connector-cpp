@@ -321,7 +321,10 @@ void statement::unbufferedFetch()
       stmt->execute("DROP TABLE IF EXISTS test");
 
       stmt->execute("CREATE TABLE test(id INT)");
-      stmt->execute("INSERT INTO test(id) VALUES (1), (2), (3), (4), (5)");
+      stmt->execute("INSERT INTO test(id) VALUES (0), (2), (3), (4), (5)");
+      ASSERT_EQUALS(5, (int)stmt->getUpdateCount());
+      stmt->execute("UPDATE test SET id = 1 WHERE id = 0");
+      ASSERT_EQUALS(1, (int)stmt->getUpdateCount());
 
       logMsg("... simple forward reading");
       res.reset(stmt->executeQuery("SELECT id FROM test ORDER BY id ASC"));

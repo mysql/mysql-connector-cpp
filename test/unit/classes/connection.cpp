@@ -1872,16 +1872,16 @@ void connection::connectOptReconnect()
       }
       catch (sql::SQLException &e)
       {
-        /* Any error message is fine, connection should have been killed */
+        // Any error message is fine, connection should have been killed
         logMsg(e.what());
       }
     }
     catch (sql::SQLException &e)
     {
-      /* KILL has failed - that is OK, we may not have permissions */
+      // KILL has failed - that is OK, we may not have permissions
     }
 
-        connection_properties.erase("OPT_RECONNECT");
+    connection_properties.erase("OPT_RECONNECT");
     connection_properties["OPT_RECONNECT"]=false;
 
     created_objects.clear();

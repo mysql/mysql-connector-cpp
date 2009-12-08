@@ -184,6 +184,7 @@ void resultset::getTypes()
       msg.str("");
       msg << "INSERT INTO test(id) VALUES ('" << it->value << "')";
       stmt->execute(msg.str());
+      ASSERT_EQUALS(1, (int)stmt->getUpdateCount());
 
       res.reset(stmt->executeQuery("SELECT id, NULL FROM test"));
       checkResultSetScrolling(res);
@@ -618,6 +619,7 @@ void resultset::getTypesMinorIssues()
       msg.str("");
       msg << "INSERT INTO test(id) VALUES ('" << it->value << "')";
       stmt->execute(msg.str());
+      ASSERT_EQUALS(1, (int)stmt->getUpdateCount());
 
       res.reset(stmt->executeQuery("SELECT id, NULL FROM test"));
       checkResultSetScrolling(res);
