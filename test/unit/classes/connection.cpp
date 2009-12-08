@@ -737,7 +737,7 @@ void connection::connectUsingMapWrongTypes()
       /* expected */
     }
     connection_properties.erase("CLIENT_LOCAL_FILES");
-    
+
     try
     {
       connection_properties["CLIENT_MULTI_STATEMENTS"]=(strval);
@@ -1729,6 +1729,153 @@ void connection::connectUsingMap()
       }
     }
     connection_properties.erase("defaultPreparedStatementResultType");
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+}
+
+void connection::connectOptReconnect()
+{
+  logMsg("connection::connectOptReconnect - OPT_RECONNECT");
+  std::stringstream msg;
+
+  try
+  {
+    sql::ConnectOptionsMap connection_properties;
+
+    connection_properties["hostName"]=url;
+    connection_properties["userName"]=user;
+    connection_properties["password"]=passwd;
+
+    bool bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
+    connection_properties["metadataUseInfoSchema"]=(bval);
+
+    logMsg("... OPT_RECONNECT disabled");
+
+    connection_properties.erase("OPT_RECONNECT");
+    connection_properties["OPT_RECONNECT"]=false;
+
+    created_objects.clear();
+    con.reset(driver->connect(connection_properties));
+    con->setSchema(db);
+
+    con->close();
+    ASSERT(con->isClosed());
+    try
+    {
+      stmt.reset(con->createStatement());
+      stmt->execute("DROP TABLE IF EXISTS test");
+      FAIL("Can create statement although connection has been closed");
+    }
+    catch (sql::SQLException &e)
+    {
+      /* expected */
+    }
+
+    connection_properties.erase("OPT_RECONNECT");
+    connection_properties["OPT_RECONNECT"]=false;
+
+    created_objects.clear();
+    con.reset(driver->connect(connection_properties));
+    con->setSchema(db);
+
+    ASSERT_EQUALS(false, con->isClosed());
+    try
+    {
+      stmt.reset(con->createStatement());
+      stmt->execute("DROP TABLE IF EXISTS test");
+    }
+    catch (sql::SQLException &e)
+    {
+      logErr(e.what());
+      logErr("SQLState: " + std::string(e.getSQLState()));
+      fail(e.what(), __FILE__, __LINE__);
+    }
+
+    logMsg("... OPT_RECONNECT enabled");
+
+    connection_properties.erase("OPT_RECONNECT");
+    connection_properties["OPT_RECONNECT"]=true;
+
+    created_objects.clear();
+    con.reset(driver->connect(connection_properties));
+    con->setSchema(db);
+
+    con->close();
+    ASSERT(con->isClosed());
+    try
+    {
+      stmt.reset(con->createStatement());
+      stmt->execute("DROP TABLE IF EXISTS test");
+      FAIL("Can create statement although connection has been closed");
+    }
+    catch (sql::SQLException &e)
+    {
+      /* expected */
+    }
+
+    connection_properties.erase("OPT_RECONNECT");
+    connection_properties["OPT_RECONNECT"]=true;
+
+    created_objects.clear();
+    con.reset(driver->connect(connection_properties));
+    con->setSchema(db);
+
+    ASSERT_EQUALS(false, con->isClosed());
+    try
+    {
+      stmt.reset(con->createStatement());
+      stmt->execute("DROP TABLE IF EXISTS test");
+    }
+    catch (sql::SQLException &e)
+    {
+      logErr(e.what());
+      logErr("SQLState: " + std::string(e.getSQLState()));
+      fail(e.what(), __FILE__, __LINE__);
+    }
+
+    logMsg("... OPT_RECONNECT disabled and KILL");
+
+    connection_properties.erase("OPT_RECONNECT");
+    connection_properties["OPT_RECONNECT"]=false;
+
+    created_objects.clear();
+    con.reset(driver->connect(connection_properties));
+    con->setSchema(db);
+    res.reset(stmt->executeQuery("SELECT CONNECTION_ID() as _pid"));
+    ASSERT(res->next());
+    msg.str("");
+    msg << "KILL " << res->getInt("_pid");
+
+    try
+    {
+      Connection my_con(getConnection());
+      my_con->setSchema(db);
+      Statement my_stmt(my_con->createStatement());
+      my_stmt->execute(msg.str());
+      logMsg("... we seem to be luck, we have killed a connection");
+      try
+      {
+        stmt->execute("DROP TABLE IF EXISTS test");
+        FAIL("Statement object is still usable");
+      }
+      catch (sql::SQLException &e)
+      {
+        /* Any error message is fine, connection should have been killed */
+        logMsg(e.what());
+      }
+    }
+    catch (sql::SQLException &e)
+    {
+      /* KILL has failed - that is OK, we may not have permissions */
+
+    }
 
   }
   catch (sql::SQLException &e)

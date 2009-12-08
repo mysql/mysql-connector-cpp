@@ -39,6 +39,7 @@ public:
     TEST_CASE(checkClosed);
     TEST_CASE(connectUsingMap);
     TEST_CASE(connectUsingMapWrongTypes);
+    TEST_CASE(connectOptReconnect);
     TEST_CASE(invalidCredentials);
     TEST_CASE(setTransactionIsolation);
     TEST_CASE(rollback);
@@ -113,6 +114,13 @@ public:
    * impact of a setting shall be tested by other dedicated test methods.
    */
   void connectUsingMap();
+
+  /*
+   * OPT_RECONNECT
+   *
+   * Check if it does what it is supposed to do
+   */
+  void connectOptReconnect();
 
   /*
    * Test of MySQL_Connection::setSessionVariable()
