@@ -1,5 +1,5 @@
 /*
-   Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+   Copyright 2009 - 2010 Sun Microsystems, Inc.  All rights reserved.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -22,7 +22,7 @@ enum MySQL_Statement_Options
 {
 	/*
 	When doing mysql_stmt_store_result calculate max_length attribute
-	of statement metadata. This is to be consistent with the old API, 
+	of statement metadata. This is to be consistent with the old API,
 	where this was done automatically.
 	In the new API we do that only by request because it slows down
 	mysql_stmt_store_result sufficiently.

@@ -1,4 +1,4 @@
-/* Copyright 2000-2008 MySQL AB, 2008-2009 Sun Microsystems, Inc.  All rights reserved.
+/* Copyright 2000-2008 MySQL AB, 2008-2010 Sun Microsystems, Inc.  All rights reserved.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -160,7 +160,7 @@ my_bool my_thread_global_init(void)
 #endif /* TARGET_OS_LINUX */
 
   /* Mutex used by my_thread_init() and after my_thread_destroy_mutex() */
-  my_pthread_mutex_init(&THR_LOCK_threads, MY_MUTEX_INIT_FAST, 
+  my_pthread_mutex_init(&THR_LOCK_threads, MY_MUTEX_INIT_FAST,
                         "THR_LOCK_threads", MYF_NO_DEADLOCK_DETECTION);
   my_pthread_mutex_init(&THR_LOCK_malloc, MY_MUTEX_INIT_FAST,
                         "THR_LOCK_malloc", MYF_NO_DEADLOCK_DETECTION);
@@ -270,7 +270,7 @@ void my_thread_destroy_mutex(void)
   if (tmp)
   {
     safe_mutex_free_deadlock_data(&tmp->mutex);
-  }  
+  }
 
   pthread_mutex_destroy(&THR_LOCK_open);
   pthread_mutex_destroy(&THR_LOCK_lock);
@@ -491,7 +491,7 @@ static uint get_thread_lib(void)
 {
 #ifdef _CS_GNU_LIBPTHREAD_VERSION
   char buff[64];
-    
+
   confstr(_CS_GNU_LIBPTHREAD_VERSION, buff, sizeof(buff));
 
   if (!strncasecmp(buff, "NPTL", 4))
@@ -507,7 +507,7 @@ static uint get_thread_lib(void)
   In Visual Studio 2005 and later, default SIGABRT handler will overwrite
   any unhandled exception filter set by the application  and will try to
   call JIT debugger. This is not what we want, this we calling __debugbreak
-  to stop in debugger, if process is being debugged or to generate 
+  to stop in debugger, if process is being debugged or to generate
   EXCEPTION_BREAKPOINT and then handle_segfault will do its magic.
 */
 

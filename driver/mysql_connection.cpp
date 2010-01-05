@@ -1,5 +1,5 @@
 /*
-   Copyright 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.  All rights reserved.
+   Copyright 2007 - 2008 MySQL AB, 2008 - 2010 Sun Microsystems, Inc.  All rights reserved.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -205,7 +205,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	const sql::SQLString * p_s;
 	bool opt_reconnect = false;
 	bool opt_reconnect_value = false;
-	
+
 	sql::ConnectOptionsMap::const_iterator it = properties.begin();
 	for (; it != properties.end(); ++it) {
 		if (!it->first.compare("hostName")) {
@@ -300,7 +300,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for driver");
 			}
-			
+
 		} else if (!it->first.compare("defaultStatementResultType")) {
 			if (!(p_i = boost::get< int >(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for defaultStatementResultType");
@@ -505,7 +505,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	}
 
 	proxy->options(MYSQL_SET_CHARSET_NAME, defaultCharset.c_str());
-	
+
 	if (ssl_used) {
 		/* According to the docs, always returns 0 */
 		proxy->ssl_set(sslKey.c_str(), sslCert.c_str(), sslCA.c_str(), sslCAPath.c_str(), sslCipher.c_str());

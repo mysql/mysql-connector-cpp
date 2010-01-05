@@ -1,4 +1,4 @@
-#   Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+#   Copyright 2009 - 2010 Sun Microsystems, Inc.  All rights reserved.
 #
 #   The MySQL Connector/C++ is licensed under the terms of the GPL
 #   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -68,7 +68,7 @@ ENDFOREACH(arg ${DEPENDENTS})
 
 SET(CONNECTOR_PRODUCT_DEST "MySQL Connector C++ ${CONNECTOR_PRODUCT_VERSION}")
 
-# Generate GUID 
+# Generate GUID
 EXECUTE_PROCESS(COMMAND uuidgen
                 OUTPUT_VARIABLE CONNECTOR_PKG_ID1)
 STRING(STRIP ${CONNECTOR_PKG_ID1} CONNECTOR_PKG_ID1)

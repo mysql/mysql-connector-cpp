@@ -1,5 +1,5 @@
 /*
-   Copyright 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.  All rights reserved.
+   Copyright 2007 - 2008 MySQL AB, 2008 - 2010 Sun Microsystems, Inc.  All rights reserved.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -418,7 +418,7 @@ MySQL_ResultSet::getInt(const uint32_t columnIndex) const
 	if (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG) {
 		return static_cast<uint32_t>(getInt64(columnIndex));
 	}
-	return static_cast<int32_t>(getInt64(columnIndex));	
+	return static_cast<int32_t>(getInt64(columnIndex));
 }
 /* }}} */
 
@@ -561,9 +561,9 @@ MySQL_ResultSet::getUInt64(const uint32_t columnIndex) const
 	}
 
 	if (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG) {
-		return strtoull(row[columnIndex - 1], NULL, 10);	
+		return strtoull(row[columnIndex - 1], NULL, 10);
 	}
-	return strtoll(row[columnIndex - 1], NULL, 10);	
+	return strtoll(row[columnIndex - 1], NULL, 10);
 }
 /* }}} */
 
@@ -861,7 +861,7 @@ MySQL_ResultSet::next()
 	} else {
 		row = result->fetch_row();
 		++row_position;
-		ret = (row != NULL);	
+		ret = (row != NULL);
 	}
 	CPP_INFO_FMT("new_position=%llu num_rows=%llu", row_position, num_rows);
 	return ret;

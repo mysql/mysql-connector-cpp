@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
-  <Product Id="57a2f5dc-bc16-410f-b3ed-27ac57f693c2" Name="MySQL Connector C++" Language="1033" Version="1.0.4.0" Manufacturer="Sun Microsystems">
-    <Package Id="18bc08b4-926d-4293-88d3-ed8154ab3980" Keywords="Installer,MSI,Database" Description="MySQL C++ Connector 1.0.4.0" InstallerVersion="200" Platforms="x64" Compressed="yes" SummaryCodepage="1252" />
+  <Product Id="57a2f5dc-bc16-410f-b3ed-27ac57f693c2" Name="MySQL Connector C++" Language="1033" Version="1.1.0.0" Manufacturer="Sun Microsystems">
+    <Package Id="18bc08b4-926d-4293-88d3-ed8154ab3980" Keywords="Installer,MSI,Database" Description="MySQL C++ Connector 1.1.0.0" InstallerVersion="200" Platforms="x64" Compressed="yes" SummaryCodepage="1252" />
     <Media Id="1" Cabinet="Product.cab" EmbedCab="yes" />
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFiles64Folder">
         <Directory Id="MYSQL" Name="MySQL">
-          <Directory Id="MysqlLibraryDir" Name="MYSQLCPP.CON" LongName="MySQL Connector C++ 1.0.4.0">
+          <Directory Id="MysqlLibraryDir" Name="MYSQLCPP.CON" LongName="MySQL Connector C++ 1.1.0.0">
             <Directory Id="INSTALLDIR" Name=".">
 
               <!-- *****************************************************************************************
@@ -36,7 +36,7 @@
 
 		  </Component>
                 </Directory>
-	
+
 	      </Directory>
               <!-- *****************************************************************************************
                    lib directory
@@ -58,7 +58,7 @@
                     <File Id="file0152" Name="mycpstat.lib" LongName="mysqlcppconn-static.lib" Source="..\driver\relwithdebinfo\mysqlcppconn-static.lib" />
 		  </Component>
 		  <Component Id="MSRedistributables" Guid="e50ed3bb-e5bd-42b5-9029-9ca2356fd0f3" DiskId="1">
-                    
+
 <File Id="file0161" Name="MSVCP80.dll" LongName="MSVCP80.dll" Source="F:\Program Files (x86)\Microsoft Visual Studio 8\VC\redist\amd64\Microsoft.VC80.CRT\MSVCP80.dll" />
 <File Id="file0162" Name="MSVCR80.dll" LongName="MSVCR80.dll" Source="F:\Program Files (x86)\Microsoft Visual Studio 8\VC\redist\amd64\Microsoft.VC80.CRT\MSVCR80.dll" />
                   </Component>

@@ -1,5 +1,5 @@
 /*
-   Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+   Copyright 2009 - 2010 Sun Microsystems, Inc.  All rights reserved.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -95,7 +95,7 @@ MySQL_NativeConnectionWrapper::connect(const ::sql::SQLString & host,
 
 
 /* {{{ MySQL_NativeConnectionWrapper::commit() */
-bool 
+bool
 MySQL_NativeConnectionWrapper::commit()
 {
 	return (api->commit(mysql) != '\0');

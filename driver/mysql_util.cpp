@@ -1,5 +1,5 @@
 /*
-   Copyright 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.  All rights reserved.
+   Copyright 2007 - 2008 MySQL AB, 2008 - 2010 Sun Microsystems, Inc.  All rights reserved.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -284,7 +284,7 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
 				if ((field->flags & BINARY_FLAG) && field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
 					return sql::DataType::VARBINARY;
 				}
-				return sql::DataType::VARCHAR;				
+				return sql::DataType::VARCHAR;
 			}
 			// Over the wire only MYSQL_TYPE_BLOB appears
 			if ((field->flags & BINARY_FLAG) && field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
@@ -505,7 +505,7 @@ mysql_type_to_string(const MYSQL_FIELD * const field)
 /* The following code is from libmysql and is under the following license */
 
 /*
-   Copyright 2000 - 2008 MySQL AB,  2008 - 2009 Sun Microsystems, Inc.
+   Copyright 2000 - 2008 MySQL AB,  2008 - 2010 Sun Microsystems, Inc.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -2208,17 +2208,17 @@ char * utf8_strup(const char * const src, size_t srclen)
   HPUX has some problems with long double : http://docs.hp.com/en/B3782-90716/ch02s02.html
 
   strtold() has implementations that return struct long_double, 128bit one,
-  which contains four 32bit words. 
+  which contains four 32bit words.
   Fix described :
   --------
-  union { 
+  union {
 	long_double l_d;
 	long double ld;
-  } u; 
+  } u;
   // convert str to a long_double; store return val in union
-  //(Putting value into union enables converted value to be 
+  //(Putting value into union enables converted value to be
   // accessed as an ANSI C long double)
-  u.l_d = strtold( (const char *)str, (char **)NULL); 
+  u.l_d = strtold( (const char *)str, (char **)NULL);
   --------
   reinterpret_cast doesn't work :(
 */
@@ -2239,10 +2239,10 @@ long double strtold(const char *nptr, char **endptr)
 	return ::strtod(nptr, endptr);
 # else
 #  if defined(__hpux) && defined(_LONG_DOUBLE)
-	union { 
-		long_double l_d; 
-		long double ld; 
-	} u; 
+	union {
+		long_double l_d;
+		long double ld;
+	} u;
 	u.l_d = ::strtold( nptr, endptr);
 	return u.ld;
 #  else

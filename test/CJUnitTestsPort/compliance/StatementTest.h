@@ -1,5 +1,5 @@
 /*
-   Copyright 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.  All rights reserved.
+   Copyright 2007 - 2008 MySQL AB, 2008 - 2010 Sun Microsystems, Inc.  All rights reserved.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -42,7 +42,7 @@ public:
     TEST_CASE(testExecute02);
     TEST_CASE(testExecuteQuery01);
     TEST_CASE(testExecuteQuery02);
-    
+
     TEST_CASE(testExecuteQuery03);
     TEST_CASE(testExecuteUpdate01);
     TEST_CASE(testExecuteUpdate03);
@@ -79,7 +79,7 @@ public:
     TEST_CASE(testGetResultSetType03);
     TEST_CASE(testGetResultSetConcurrency01);
     TEST_CASE(testGetFetchDirection);
-#endif 
+#endif
   }
 
   /*

@@ -1,5 +1,5 @@
 /*
-Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+Copyright 2009 - 2010 Sun Microsystems, Inc.  All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPL
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -14,7 +14,7 @@ FLOSS License Exception
 #include "../BaseTestFixture.h"
 
 /**
- * 
+ *
  * @author Mark Matthews
  * @version $Id: TransactionTest.java,v 1.1.2.1 2005/05/13 18:58:37 mmatthews
  *          Exp $
@@ -34,10 +34,10 @@ namespace simple
 
 /* throws sql::DbcException */
 
-    void createTestTable() ;  
+    void createTestTable() ;
 
 protected:
-  
+
   public:
     TEST_FIXTURE( TransactionTest )
     {
@@ -50,7 +50,7 @@ protected:
 
   /**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws sql::SQLException
 	 *             DOCUMENT ME!
 	 */

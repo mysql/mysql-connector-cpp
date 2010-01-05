@@ -1,4 +1,4 @@
-/* Copyright 2000-2008 MySQL AB, 2008-2009 Sun Microsystems, Inc.  All rights reserved.
+/* Copyright 2000-2008 MySQL AB, 2008-2010 Sun Microsystems, Inc.  All rights reserved.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 extern "C" {
 #else
 #define EXTERNC
-#endif /* __cplusplus */ 
+#endif /* __cplusplus */
 
 #if defined(_WIN32) || defined(_WIN64)
 typedef CRITICAL_SECTION pthread_mutex_t;
@@ -49,7 +49,7 @@ typedef struct st_pthread_link {
 typedef struct {
   uint32 waiting;
   CRITICAL_SECTION lock_waiting;
- 
+
   enum {
     SIGNAL= 0,
     BROADCAST= 1,
@@ -149,7 +149,7 @@ int pthread_join(pthread_t thread, void **value_ptr);
 #define pthread_detach_this_thread()
 #define pthread_condattr_init(A)
 #define pthread_condattr_destroy(A)
-#define pthread_yield() SwitchToThread() 
+#define pthread_yield() SwitchToThread()
 
 
 #else /* Normal threads */
@@ -505,7 +505,7 @@ typedef struct st_my_pthread_fastmutex_t
 } my_pthread_fastmutex_t;
 void fastmutex_global_init(void);
 
-int my_pthread_fastmutex_init(my_pthread_fastmutex_t *mp, 
+int my_pthread_fastmutex_init(my_pthread_fastmutex_t *mp,
                               const pthread_mutexattr_t *attr);
 int my_pthread_fastmutex_lock(my_pthread_fastmutex_t *mp);
 

@@ -1,5 +1,5 @@
 /*
-Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+Copyright 2009 - 2010 Sun Microsystems, Inc.  All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPL
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -15,7 +15,7 @@ FLOSS License Exception
 
 /**
  * Tests SubQueries on MySQL > 4.1
- * 
+ *
  * @author Mark Matthews
  * @version $Id: SubqueriesRegressionTest.java,v 1.1.2.1 2005/05/13 18:58:38
  *          mmatthews Exp $
@@ -37,10 +37,10 @@ namespace regression
 
 
 /* throws std::exception * */
-    void dropTables() ; 
+    void dropTables() ;
 
   protected:
-  
+
   public:
 
     TEST_FIXTURE( SubqueriesRegressionTest )
@@ -63,7 +63,7 @@ namespace regression
 
     /**
 	   * DOCUMENT ME!
-	   * 
+	   *
 	   * @throws std::exception *
 	   *             DOCUMENT ME!
 	   */
@@ -73,7 +73,7 @@ namespace regression
 
     /**
 	   * DOCUMENT ME!
-	   * 
+	   *
 	   * @throws std::exception *
 	   *             DOCUMENT ME!
 	   */
@@ -83,7 +83,7 @@ namespace regression
 
     /**
 	   * DOCUMENT ME!
-	   * 
+	   *
 	   * @throws std::exception *
 	   *             DOCUMENT ME!
 	   */
@@ -93,7 +93,7 @@ namespace regression
 
     /**
 	   * DOCUMENT ME!
-	   * 
+	   *
 	   * @throws std::exception *
 	   *             DOCUMENT ME!
 	   */
@@ -103,7 +103,7 @@ namespace regression
 
     /**
 	   * DOCUMENT ME!
-	   * 
+	   *
 	   * @throws std::exception *
 	   *             DOCUMENT ME!
 	   */

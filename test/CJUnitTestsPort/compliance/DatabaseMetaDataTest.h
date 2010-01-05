@@ -1,5 +1,5 @@
 /*
-   Copyright 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.  All rights reserved.
+   Copyright 2007 - 2008 MySQL AB, 2008 - 2010 Sun Microsystems, Inc.  All rights reserved.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -65,7 +65,7 @@ protected:
 public:
 
   TEST_FIXTURE(DatabaseMetaDataTest)
-  {    
+  {
     TEST_CASE(testAllProceduresAreCallable);
     TEST_CASE(testAllTablesAreSelectable);
     TEST_CASE(testDataDefinitionCausesTransactionCommit);
@@ -283,7 +283,7 @@ public:
     TEST_CASE(testUpdatesAreDetected1);
     TEST_CASE(testUpdatesAreDetected2);
     TEST_CASE(testUpdatesAreDetected3);
-     
+
     TEST_CASE(testUsesLocalFilePerTable);
 
 #ifdef INCLUDE_NOT_IMPLEMENTED_METHODS

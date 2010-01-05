@@ -1,5 +1,5 @@
 
-#   Copyright 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.  All rights reserved.
+#   Copyright 2007 - 2008 MySQL AB, 2008 - 2010 Sun Microsystems, Inc.  All rights reserved.
 #
 #   The MySQL Connector/C++ is licensed under the terms of the GPL
 #   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -26,7 +26,7 @@ IF(MYSQLCPPCONN_TRACE_ENABLE)
 		IF(CMAKE_GENERATOR MATCHES "Visual Studio 8"
 			OR CMAKE_GENERATOR MATCHES "Visual Studio 9"
 			OR CMAKE_GENERATOR MATCHES "NMake Makefiles")
-			
+
 			ADD_DEFINITIONS("-DCPPCONN_TRACE_ENABLED")
 		ELSE(CMAKE_GENERATOR MATCHES "Visual Studio 8"
 				OR CMAKE_GENERATOR MATCHES "Visual Studio 9"
@@ -73,9 +73,9 @@ IF(MYSQLCPPCONN_DT_RPATH)
 
 ELSE(MYSQLCPPCONN_DT_RPATH)
 	SET(CMAKE_SKIP_RPATH TRUE)
-	
+
 	MESSAGE(STATUS "DT_RPATH will not be set")
-	
+
 ENDIF(MYSQLCPPCONN_DT_RPATH)
 
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/nativeapi/binding_config.h.cm ${CMAKE_CURRENT_BINARY_DIR}/nativeapi/binding_config.h)
@@ -179,7 +179,7 @@ ELSEIF(NOT WIN32)
 		SET(MY_TARGET_LINK_LIBRARIES_STATIC ${MYSQL_LIBRARIES} ${MYSQL_LINK_FLAGS})
 	ELSE(MYSQLCLIENT_STATIC_BINDING)
 		FOREACH(_lib ${MYSQL_LIBRARIES})
-			IF(NOT _lib MATCHES "libmysqlclient.*" AND NOT _lib MATCHES "mysqlclient.*")                                
+			IF(NOT _lib MATCHES "libmysqlclient.*" AND NOT _lib MATCHES "mysqlclient.*")
 				SET(MY_TARGET_LINK_LIBRARIES_DYNAMIC ${MY_TARGET_LINK_LIBRARIES_DYNAMIC} ${_lib})
 				SET(MY_TARGET_LINK_LIBRARIES_STATIC ${MY_TARGET_LINK_LIBRARIES_STATIC} ${_lib})
 			ENDIF(NOT _lib MATCHES "libmysqlclient.*" AND NOT _lib MATCHES "mysqlclient.*")

@@ -1,4 +1,4 @@
-#   Copyright 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.  All rights reserved.
+#   Copyright 2007 - 2008 MySQL AB, 2008 - 2010 Sun Microsystems, Inc.  All rights reserved.
 #
 #   The MySQL Connector/C++ is licensed under the terms of the GPL
 #   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -35,7 +35,7 @@ IF(MYSQLCPPCONN_BUILD_EXAMPLES)
 		SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn-static)
                 IF(MYSQLCLIENT_STATIC_BINDING)
 			SET(MY_TARGET_LINK_LIBRARIES ${MY_TARGET_LINK_LIBRARIES} mysqlclient_r)
-                ENDIF(MYSQLCLIENT_STATIC_BINDING)                 
+                ENDIF(MYSQLCLIENT_STATIC_BINDING)
 	ENDIF(WIN32)
 
 	IF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)

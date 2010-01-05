@@ -1,5 +1,5 @@
 /*
-   Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+   Copyright 2009 - 2010 Sun Microsystems, Inc.  All rights reserved.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -38,7 +38,7 @@ std::string ErrorMessage()
 {
 #ifdef _WIN32
 	TCHAR buffer[255];
-	DWORD _errcode = GetLastError(); 
+	DWORD _errcode = GetLastError();
 	::FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
 					NULL, _errcode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 					buffer, sizeof(buffer), NULL);

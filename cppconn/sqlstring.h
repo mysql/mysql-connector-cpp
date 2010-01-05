@@ -1,5 +1,5 @@
 /*
-Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+Copyright 2009 - 2010 Sun Microsystems, Inc.  All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPL
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -29,7 +29,7 @@ namespace sql
 #else
 		static const size_t npos = std::string::npos;
 #endif
-	
+
 		~SQLString() {}
 
 		SQLString() {}
@@ -81,7 +81,7 @@ namespace sql
 
 		int compare(const char * s) const
 		{
-			return realStr.compare(s);	
+			return realStr.compare(s);
 		}
 
 		int compare(size_t pos1, size_t n1, const char * s) const
@@ -101,7 +101,7 @@ namespace sql
 
 		size_t length() const
 		{
-			return realStr.length();		
+			return realStr.length();
 		}
 
 		SQLString & append(const std::string & str)
@@ -181,7 +181,7 @@ inline bool operator !=(const SQLString & op1, const SQLString & op2)
 inline bool operator <(const SQLString & op1, const SQLString & op2)
 {
 	return op1.asStdString() < op2.asStdString();
-} 
+}
 
 
 }// namespace sql

@@ -1,5 +1,5 @@
 /*
-   Copyright 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.  All rights reserved.
+   Copyright 2007 - 2008 MySQL AB, 2008 - 2010 Sun Microsystems, Inc.  All rights reserved.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -216,7 +216,7 @@ hasSps(true)
 
 
 void BaseTestFixture::createStandardTable(standard_tables table)
-{  
+{
   try {
   switch (table) {
   case TABLE_CTSTABLE1:
@@ -261,7 +261,7 @@ void BaseTestFixture::createStandardTable(standard_tables table)
   case TABLE_BIGINTTAB:
     createTable("Bigint_Tab", "(MAX_VAL bigint(20) default NULL, MIN_VAL bigint(20) default NULL, NULL_VAL bigint(20) default NULL) ENGINE=InnoDB");
     break;
-    
+
   case TABLE_CHARTAB:
     createTable("Char_Tab", "(COFFEE_NAME char(30) default NULL, NULL_VAL char(30) default NULL) ENGINE=InnoDB");
     break;
@@ -278,17 +278,17 @@ void BaseTestFixture::createStandardTable(standard_tables table)
     createTable("Smallint_Tab", "(MAX_VAL smallint(6) default NULL, MIN_VAL smallint(6) default NULL,  NULL_VAL smallint(6) default NULL) ENGINE=InnoDB");
     break;
 
-  case TABLE_LONGVARCHARNULLTAB:    
+  case TABLE_LONGVARCHARNULLTAB:
     createTable("Longvarcharnull_Tab", "(NULL_VAL mediumtext) ENGINE=InnoDB");
     break;
 
   }
 
-  } catch (sql::SQLException &e) {    
+  } catch (sql::SQLException &e) {
     logErr(e.what());
     fail(e.what(), __FILE__, __LINE__);
   }
-  
+
 }
 /* throws SQLException & */
 void BaseTestFixture::createSchemaObject(String objectType, String objectName,
@@ -308,7 +308,7 @@ void BaseTestFixture::createSchemaObject(String objectType, String objectName,
   createSql.append(" ");
   createSql.append(objectName);
   createSql.append(" ");
-  createSql.append(columnsAndOtherStuff);  
+  createSql.append(columnsAndOtherStuff);
   this->stmt->executeUpdate(createSql);
 }
 

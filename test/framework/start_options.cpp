@@ -1,5 +1,5 @@
 /*
-   Copyright 2008 - 2009 Sun Microsystems, Inc.  All rights reserved.
+   Copyright 2008 - 2010 Sun Microsystems, Inc.  All rights reserved.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -115,7 +115,7 @@ namespace testsuite
           StringUtils::split( paramPair, param.substr(2).c_str(), "=" );
 
            // Latter shouldn't really ever happen
-          if ( paramPair.size() > 2 || paramPair.size() == 0 ) 
+          if ( paramPair.size() > 2 || paramPair.size() == 0 )
           {
             std::cerr << "Can't parse. Wrong start parameter: " << *paramsValues
               << std::endl;

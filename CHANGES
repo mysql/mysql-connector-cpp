@@ -1,4 +1,4 @@
-GA  1.1.0 - 2009-12-xx
+GA  1.1.0 - 2010-01-xx
 
 - BIT fields are now correctly decoded (Workbench bug #36239). (Andrey)
 

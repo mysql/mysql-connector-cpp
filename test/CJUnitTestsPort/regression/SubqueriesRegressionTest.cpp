@@ -1,5 +1,5 @@
 /*
-Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+Copyright 2009 -  2010 Sun Microsystems, Inc.  All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPL
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -21,11 +21,11 @@ namespace regression
 
   /*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see junit.framework.TestCase#setUp()
 	 */
   /* throws Exception */
-  void SubqueriesRegressionTest::setUp() 
+  void SubqueriesRegressionTest::setUp()
   {
     super::setUp();
     createTables();
@@ -34,11 +34,11 @@ namespace regression
 
   /*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see junit.framework.TestCase#tearDown()
 	 */
   /* throws Exception */
-  void SubqueriesRegressionTest::tearDown() 
+  void SubqueriesRegressionTest::tearDown()
   {
     dropTables();
     super::tearDown();
@@ -47,12 +47,12 @@ namespace regression
 
   /**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws Exception
 	 *             DOCUMENT ME!
 	 */
   /* throws Exception */
-  void SubqueriesRegressionTest::testSubQuery1() 
+  void SubqueriesRegressionTest::testSubQuery1()
   {
     if (versionMeetsMinimum(4, 1))
     {
@@ -75,12 +75,12 @@ namespace regression
 
   /**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws Exception
 	 *             DOCUMENT ME!
 	 */
   /* throws Exception */
-  void SubqueriesRegressionTest::testSubQuery2() 
+  void SubqueriesRegressionTest::testSubQuery2()
   {
     if (versionMeetsMinimum(4, 1))
     {
@@ -101,12 +101,12 @@ namespace regression
 
   /**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws Exception
 	 *             DOCUMENT ME!
 	 */
   /* throws Exception */
-  void SubqueriesRegressionTest::testSubQuery3() 
+  void SubqueriesRegressionTest::testSubQuery3()
   {
     if (versionMeetsMinimum(4, 1))
     {
@@ -126,12 +126,12 @@ namespace regression
 
   /**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws Exception
 	 *             DOCUMENT ME!
 	 */
   /* throws Exception */
-  void SubqueriesRegressionTest::testSubQuery4() 
+  void SubqueriesRegressionTest::testSubQuery4()
   {
     if ( versionMeetsMinimum(4, 1) )
     {
@@ -173,12 +173,12 @@ namespace regression
 
   /**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws Exception
 	 *             DOCUMENT ME!
 	 */
   /* throws Exception */
-  void SubqueriesRegressionTest::testSubQuery5() 
+  void SubqueriesRegressionTest::testSubQuery5()
   {
     if ( versionMeetsMinimum(4, 1) )
     {
@@ -202,7 +202,7 @@ namespace regression
 
 
 /* throws Exception */
-  void SubqueriesRegressionTest::createTables() 
+  void SubqueriesRegressionTest::createTables()
   {
     stmt->executeUpdate("drop table if exists t1");
     stmt->executeUpdate("drop table if exists t2");
@@ -228,7 +228,7 @@ namespace regression
 
 
 /* throws Exception */
-  void SubqueriesRegressionTest::dropTables() 
+  void SubqueriesRegressionTest::dropTables()
   {
     stmt->executeUpdate("drop table if exists t1");
     stmt->executeUpdate("drop table if exists t2");

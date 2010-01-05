@@ -1,5 +1,5 @@
 /*
-   Copyright 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.  All rights reserved.
+   Copyright 2007 - 2008 MySQL AB, 2008 - 2010 Sun Microsystems, Inc.  All rights reserved.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -74,7 +74,7 @@ public:
 
 	MyVal(uint64_t ul) : val_type(typeUInt) { val.ulval = ul; }
 
-	MyVal(bool b) : val_type(typeBool) { val.bval = b; } 
+	MyVal(bool b) : val_type(typeBool) { val.bval = b; }
 
 	MyVal(void * p) : val_type(typePtr) { val.pval = p; }
 

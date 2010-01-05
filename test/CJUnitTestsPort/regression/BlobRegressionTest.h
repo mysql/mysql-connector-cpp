@@ -1,5 +1,5 @@
 /*
-   Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+   Copyright 2009 - 2010 Sun Microsystems, Inc.  All rights reserved.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -31,7 +31,7 @@ namespace regression
   public:
     TEST_FIXTURE( BlobRegressionTest )
     {
-      
+
       //TEST_CASE( testBug2670 );
       //TEST_CASE( testUpdatableBlobsWithCharsets );
       TEST_CASE( testBug5490                    );
@@ -42,7 +42,7 @@ namespace regression
       TEST_CASE( testBug10850                   );
       TEST_CASE( testBug34677                   );
       // TEST_CASE( testUpdateLongBlobGT16M        );
-      
+
     }
 
   /**

@@ -1,5 +1,5 @@
 /*
-   Copyright 2008 - 2009 Sun Microsystems, Inc.  All rights reserved.
+   Copyright 2008 - 2010 Sun Microsystems, Inc.  All rights reserved.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -171,8 +171,8 @@ void TestsListener::testHasFinished(TestRunResult result, const String & msg)
 
     clock_t time=Timer::stopTest(testFullName());
     float total = Timer::translate2seconds(time);
-    
-    static std::stringstream tmp;    
+
+    static std::stringstream tmp;
 
     tmp.precision(10);
     tmp.str("");
@@ -188,7 +188,7 @@ void TestsListener::testHasFinished(TestRunResult result, const String & msg)
       time=Timer::getTime(*it);
       tmp << "#   " << std::setw(38) << std::left << *it;
       tmp << " = " << std::setw(13) << std::right << Timer::translate2seconds(time) << "s";
-      
+
       tmp << " (";
       tmp << std::setw(6) << std::right;
       if (total > 0.0) {
@@ -199,7 +199,7 @@ void TestsListener::testHasFinished(TestRunResult result, const String & msg)
         tmp << "n/a ";
       }
       tmp << "%)";
-      
+
       tmp << " (line " << Timer::getLine(*it) << ")" << std::endl;
     }
 

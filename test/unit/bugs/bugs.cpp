@@ -1,5 +1,5 @@
 /*
-   Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+   Copyright 2009 - 2010 Sun Microsystems, Inc.  All rights reserved.
 
    The MySQL Connector/C++ is licensed under the terms of the GPL
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -80,7 +80,7 @@ void bugs::net_write_timeout39878()
 
   // Must set ResultSet Type  to TYPE_FORWARD_ONLY
   stmt->setResultSetType( sql::ResultSet::TYPE_FORWARD_ONLY );
-  
+
   res.reset( stmt->executeQuery( "select * from bug39878" ) );
 
   TestsListener::messagesLog() << "ResultSetType: " << stmt->getResultSetType() << std::endl;
