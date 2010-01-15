@@ -451,7 +451,8 @@ public:
 	virtual ResultSet *getSchemaObjects(const sql::SQLString& catalogName = "",
 										const sql::SQLString& schemaName = "",
 										const sql::SQLString& objectType = "",
-										bool including_ddl = true) = 0;
+										bool includingDdl = true,
+										const sql::SQLString& objectName = "") = 0;
 
 	virtual ResultSet *getSchemaObjectTypes() = 0;
 };

@@ -1229,7 +1229,7 @@ MySQL_ConnectionMetaData::getSchemata(const sql::SQLString& /*catalogName*/)
 
 /* {{{ MySQL_ConnectionMetaData::getSchemaObjects() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName */, const sql::SQLString& schemaName, const sql::SQLString& objectType, bool including_ddl)
+MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName */, const sql::SQLString& schemaName, const sql::SQLString& objectType, bool includingDdl, const sql::SQLString& objectName)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getSchemaObjects");
 	// for now catalog name is ignored
@@ -1255,11 +1255,20 @@ MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName 
 	const sql::SQLString trigger_ddl_column("SQL Original Statement");
 
 	if (schemaName.length() > 0) {
-		tables_where_clause.append(" WHERE table_type<>'VIEW' AND table_schema = '").append(schemaName).append("' ");
 		schemata_where_clause.append(" WHERE schema_name = '").append(schemaName).append("' ");
+		tables_where_clause.append(" WHERE table_type<>'VIEW' AND table_schema = '").append(schemaName).append("' ");
 		views_where_clause.append(" WHERE table_schema = '").append(schemaName).append("' ");
 		routines_where_clause.append(" WHERE routine_schema = '").append(schemaName).append("' ");
 		triggers_where_clause.append(" WHERE trigger_schema = '").append(schemaName).append("' ");
+	}
+	if (objectName.length() > 0) {
+		std::string predicate_mediator= (schemaName.length() > 0) ? " AND " : " WHERE ";
+		predicate_mediator += "'" + objectName + "'=";
+		schemata_where_clause += predicate_mediator + "SCHEMA_NAME";
+		tables_where_clause += predicate_mediator + "TABLE_NAME";
+		views_where_clause += predicate_mediator + "TABLE_NAME";
+		routines_where_clause += predicate_mediator + "ROUTINE_NAME";
+		triggers_where_clause += predicate_mediator + "TRIGGER_NAME";
 	}
 
 	if (objectType.length() == 0) {
@@ -1456,7 +1465,7 @@ MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName 
 			throw sql::InvalidArgumentException("MySQL_DatabaseMetaData::getSchemaObjects: invalid OBJECT_TYPE returned from query");
 		}
 
-		if (including_ddl)
+		if (includingDdl)
 		{
 		// due to bugs in server code some queries can fail.
 		// here we want to gather as much info as possible
