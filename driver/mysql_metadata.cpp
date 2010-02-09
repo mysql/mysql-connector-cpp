@@ -1768,6 +1768,10 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const sql::SQLString& /*catalog*/,
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getColumnPrivileges");
 
+	sql::SQLString escapedSchema = connection->escapeString(schema);
+	sql::SQLString escapedTableName = connection->escapeString(table);
+	sql::SQLString escapedColumnNamePattern = connection->escapeString(columnNamePattern);
+
 	std::list<sql::SQLString> rs_field_data;
 	rs_field_data.push_back("TABLE_CAT");
 	rs_field_data.push_back("TABLE_SCHEM");
@@ -1789,9 +1793,9 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const sql::SQLString& /*catalog*/,
 						"WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME=? AND COLUMN_NAME LIKE ?\n"
 						"ORDER BY COLUMN_NAME, PRIVILEGE_TYPE");
 		boost::scoped_ptr< sql::PreparedStatement > stmt(connection->prepareStatement(query));
-		stmt->setString(1, schema);
-		stmt->setString(2, table);
-		stmt->setString(3, columnNamePattern);
+		stmt->setString(1, escapedSchema);
+		stmt->setString(2, escapedTableName);
+		stmt->setString(3, escapedColumnNamePattern);
 
 		boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery());
 
@@ -1811,7 +1815,7 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const sql::SQLString& /*catalog*/,
 	} else {
 		size_t idx;
 		sql::SQLString query("SHOW FULL COLUMNS FROM `");
-		query.append(schema).append("`.`").append(table).append("` LIKE '").append(columnNamePattern).append("'");
+		query.append(schema).append("`.`").append(table).append("` LIKE '").append(escapedColumnNamePattern).append("'");
 
 		boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
 		boost::scoped_ptr< sql::ResultSet > res(NULL);
@@ -1868,6 +1872,11 @@ MySQL_ConnectionMetaData::getColumns(const sql::SQLString& /*catalog*/, const sq
 									 const sql::SQLString& tableNamePattern, const sql::SQLString& columnNamePattern)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getColumns");
+
+	sql::SQLString escapedSchemaPattern = connection->escapeString(schemaPattern);
+	sql::SQLString escapedTableNamePattern = connection->escapeString(tableNamePattern);
+	sql::SQLString escapedColumnNamePattern = connection->escapeString(columnNamePattern);
+
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
 	std::list<sql::SQLString> rs_field_data;
@@ -1949,9 +1958,9 @@ MySQL_ConnectionMetaData::getColumns(const sql::SQLString& /*catalog*/, const sq
 
 		boost::scoped_ptr< sql::PreparedStatement > stmt(connection->prepareStatement(query));
 
-		stmt->setString(1, schemaPattern);
-		stmt->setString(2, tableNamePattern);
-		stmt->setString(3, columnNamePattern);
+		stmt->setString(1, escapedSchemaPattern);
+		stmt->setString(2, escapedTableNamePattern);
+		stmt->setString(3, escapedColumnNamePattern);
 
 		boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery());
 
@@ -1988,7 +1997,7 @@ MySQL_ConnectionMetaData::getColumns(const sql::SQLString& /*catalog*/, const sq
 	} else {
 		/* get schemata */
 		sql::SQLString query1("SHOW DATABASES LIKE '");
-		query1.append(schemaPattern).append("'");
+		query1.append(escapedSchemaPattern).append("'");
 
 		boost::scoped_ptr< sql::Statement > stmt1(connection->createStatement());
 		boost::scoped_ptr< sql::ResultSet > rs1(stmt1->executeQuery(query1));
@@ -1996,7 +2005,7 @@ MySQL_ConnectionMetaData::getColumns(const sql::SQLString& /*catalog*/, const sq
 		while (rs1->next()) {
 			sql::SQLString current_schema(rs1->getString(1));
 			sql::SQLString query2("SHOW TABLES FROM `");
-			query2.append(current_schema).append("` LIKE '").append(tableNamePattern).append("'");
+			query2.append(current_schema).append("` LIKE '").append(escapedTableNamePattern).append("'");
 
 			boost::scoped_ptr< sql::Statement > stmt2(connection->createStatement());
 			boost::scoped_ptr< sql::ResultSet > rs2(stmt2->executeQuery(query2));
@@ -2011,7 +2020,7 @@ MySQL_ConnectionMetaData::getColumns(const sql::SQLString& /*catalog*/, const sq
 				sql::ResultSetMetaData * rs3_meta = rs3->getMetaData();
 
 				sql::SQLString query4("SHOW FULL COLUMNS FROM `");
-				query4.append(current_schema).append("`.`").append(current_table).append("` LIKE '").append(columnNamePattern).append("'");
+				query4.append(current_schema).append("`.`").append(current_table).append("` LIKE '").append(escapedColumnNamePattern).append("'");
 				boost::scoped_ptr< sql::Statement > stmt4(connection->createStatement());
 				boost::scoped_ptr< sql::ResultSet > rs4(stmt1->executeQuery(query4));
 
@@ -3245,6 +3254,9 @@ MySQL_ConnectionMetaData::getProcedures(const sql::SQLString& /*catalog*/, const
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getProcedures");
 
+	sql::SQLString escapedSchemaPattern = connection->escapeString(schemaPattern);
+	sql::SQLString escapedProcedureNamePattern = connection->escapeString(procedureNamePattern);
+
 	std::list<sql::SQLString> rs_field_data;
 	rs_field_data.push_back("PROCEDURE_CAT");
 	rs_field_data.push_back("PROCEDURE_SCHEM");
@@ -3279,8 +3291,8 @@ MySQL_ConnectionMetaData::getProcedures(const sql::SQLString& /*catalog*/, const
 					"ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME");
 
 		boost::scoped_ptr< sql::PreparedStatement > stmt(connection->prepareStatement(query));
-		stmt->setString(1, schemaPattern);
-		stmt->setString(2, procedureNamePattern.length() ? procedureNamePattern : "%");
+		stmt->setString(1, escapedSchemaPattern);
+		stmt->setString(2, escapedProcedureNamePattern.length() ? escapedProcedureNamePattern : "%");
 
 		boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery());
 		while (rs->next()) {
@@ -3308,8 +3320,8 @@ MySQL_ConnectionMetaData::getProcedures(const sql::SQLString& /*catalog*/, const
 			query.append("\n END AS PROCEDURE_TYPE\nFROM mysql.proc WHERE name LIKE ? AND db <=> ? ORDER BY name");
 
 			boost::scoped_ptr< sql::PreparedStatement > stmt(connection->prepareStatement(query));
-			stmt->setString(1, procedureNamePattern);
-			stmt->setString(2, schemaPattern);
+			stmt->setString(1, escapedProcedureNamePattern);
+			stmt->setString(2, escapedSchemaPattern);
 
 			boost::scoped_ptr< sql::ResultSet > rs(NULL);
 			try {
@@ -3731,6 +3743,10 @@ MySQL_ConnectionMetaData::getTables(const sql::SQLString& /* catalog */, const s
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getTables");
 	CPP_INFO_FMT("schemaPattern=%s tablePattern=%s", schemaPattern.c_str(), tableNamePattern.c_str());
+
+	sql::SQLString escapedSchemaPattern = connection->escapeString(schemaPattern);
+	sql::SQLString escapedTableNamePattern = connection->escapeString(tableNamePattern);
+
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
 	std::list<sql::SQLString> rs_field_data;
@@ -3748,8 +3764,8 @@ MySQL_ConnectionMetaData::getTables(const sql::SQLString& /* catalog */, const s
 							"ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME");
 
 		boost::scoped_ptr< sql::PreparedStatement > stmt(connection->prepareStatement(query));
-		stmt->setString(1, schemaPattern);
-		stmt->setString(2, tableNamePattern);
+		stmt->setString(1, escapedSchemaPattern);
+		stmt->setString(2, escapedTableNamePattern);
 
 		boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery());
 
@@ -3772,7 +3788,7 @@ MySQL_ConnectionMetaData::getTables(const sql::SQLString& /* catalog */, const s
 		}
 	} else {
 		sql::SQLString query1("SHOW DATABASES LIKE '");
-		query1.append(schemaPattern).append("'");
+		query1.append(escapedSchemaPattern).append("'");
 
 		boost::scoped_ptr< sql::Statement > stmt1(connection->createStatement());
 		boost::scoped_ptr< sql::ResultSet > rs1(stmt1->executeQuery(query1));
@@ -3780,7 +3796,7 @@ MySQL_ConnectionMetaData::getTables(const sql::SQLString& /* catalog */, const s
 			boost::scoped_ptr< sql::Statement > stmt2(connection->createStatement());
 			sql::SQLString current_schema(rs1->getString(1));
 			sql::SQLString query2("SHOW TABLES FROM `");
-			query2.append(current_schema).append("` LIKE '").append(tableNamePattern).append("'");
+			query2.append(current_schema).append("` LIKE '").append(escapedTableNamePattern).append("'");
 
 			boost::scoped_ptr< sql::ResultSet > rs2(stmt2->executeQuery(query2));
 
