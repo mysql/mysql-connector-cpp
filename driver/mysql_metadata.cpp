@@ -1235,6 +1235,9 @@ MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName 
 	// for now catalog name is ignored
 	sql::SQLString query;
 
+	sql::SQLString escapedSchemaName = connection->escapeString(schemaName);
+	sql::SQLString escapedObjectName = connection->escapeString(objectName);
+
 	sql::SQLString schemata_where_clause;
 	sql::SQLString tables_where_clause;
 	sql::SQLString views_where_clause;
@@ -1254,16 +1257,16 @@ MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName 
 	const sql::SQLString function_ddl_column("Create Function");
 	const sql::SQLString trigger_ddl_column("SQL Original Statement");
 
-	if (schemaName.length() > 0) {
-		schemata_where_clause.append(" WHERE schema_name = '").append(schemaName).append("' ");
-		tables_where_clause.append(" WHERE table_type<>'VIEW' AND table_schema = '").append(schemaName).append("' ");
-		views_where_clause.append(" WHERE table_schema = '").append(schemaName).append("' ");
-		routines_where_clause.append(" WHERE routine_schema = '").append(schemaName).append("' ");
-		triggers_where_clause.append(" WHERE trigger_schema = '").append(schemaName).append("' ");
+	if (escapedSchemaName.length() > 0) {
+		schemata_where_clause.append(" WHERE schema_name = '").append(escapedSchemaName).append("' ");
+		tables_where_clause.append(" WHERE table_type<>'VIEW' AND table_schema = '").append(escapedSchemaName).append("' ");
+		views_where_clause.append(" WHERE table_schema = '").append(escapedSchemaName).append("' ");
+		routines_where_clause.append(" WHERE routine_schema = '").append(escapedSchemaName).append("' ");
+		triggers_where_clause.append(" WHERE trigger_schema = '").append(escapedSchemaName).append("' ");
 	}
-	if (objectName.length() > 0) {
-		std::string predicate_mediator= (schemaName.length() > 0) ? " AND " : " WHERE ";
-		predicate_mediator += "'" + objectName + "'=";
+	if (escapedObjectName.length() > 0) {
+		std::string predicate_mediator= (escapedSchemaName.length() > 0) ? " AND " : " WHERE ";
+		predicate_mediator += "'" + escapedObjectName + "'=";
 		schemata_where_clause += predicate_mediator + "SCHEMA_NAME";
 		tables_where_clause += predicate_mediator + "TABLE_NAME";
 		views_where_clause += predicate_mediator + "TABLE_NAME";
