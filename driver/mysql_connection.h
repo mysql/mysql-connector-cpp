@@ -64,6 +64,8 @@ public:
 
 	sql::Statement * createStatement();
 
+	sql::SQLString escapeString(const sql::SQLString &);
+
 	bool getAutoCommit();
 
 	sql::SQLString getCatalog();
