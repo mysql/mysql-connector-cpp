@@ -124,6 +124,8 @@ public:
 						const char *  unix_socket,
 						unsigned long client_flag);
 
+	unsigned long real_escape_string(MYSQL * mysql, char * to, const char * from, unsigned long length);
+
 	int real_query(MYSQL *, const char *, unsigned long);
 
 	my_bool rollback(MYSQL * mysql);

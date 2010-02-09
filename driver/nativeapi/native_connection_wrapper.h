@@ -59,6 +59,8 @@ public:
 
 	virtual ::sql::SQLString error() = 0;
 
+	virtual ::sql::SQLString escapeString(const ::sql::SQLString &) = 0;
+
 	virtual unsigned int field_count() = 0;
 
 	virtual unsigned long get_client_version() = 0;

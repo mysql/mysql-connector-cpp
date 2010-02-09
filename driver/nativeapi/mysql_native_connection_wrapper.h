@@ -70,6 +70,8 @@ public:
 
 	::sql::SQLString error();
 
+	::sql::SQLString escapeString(const ::sql::SQLString &);
+
 	unsigned int field_count();
 
 	unsigned long get_client_version();
@@ -81,7 +83,6 @@ public:
 	bool more_results();
 
 	int next_result();
-
 
 	int options(::sql::mysql::MySQL_Connection_Options, const void * );
 

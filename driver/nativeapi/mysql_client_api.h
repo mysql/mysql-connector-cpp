@@ -80,6 +80,8 @@ typedef int (STDCALL *ptr2mysql_ping)(MYSQL *);
 
 typedef MYSQL * (STDCALL *ptr2mysql_real_connect)(MYSQL *, const char *, const char *, const char * , const char *, unsigned int, const char *, unsigned long);
 
+typedef unsigned long (STDCALL *ptr2mysql_real_escape_string)(MYSQL * mysql, char *, const char *, unsigned long);
+
 typedef int (STDCALL *ptr2mysql_real_query)(MYSQL *, const char *, unsigned long);
 
 typedef my_bool (STDCALL *ptr2mysql_rollback)(MYSQL *mysql);
@@ -203,9 +205,9 @@ public:
 								const char *  unix_socket,
 								unsigned long client_flag) = 0;
 
-	virtual int real_query(MYSQL *
-									 , const char *
-									 , unsigned long) = 0;
+	virtual unsigned long real_escape_string(MYSQL * mysql, char * to, const char * from, unsigned long length) = 0;
+
+	virtual int real_query(MYSQL *, const char *, unsigned long) = 0;
 
 	virtual my_bool rollback(MYSQL *) = 0;
 
