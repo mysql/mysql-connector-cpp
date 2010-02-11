@@ -412,6 +412,17 @@ LibmysqlDynamicProxy::real_connect(MYSQL * mysql,
 /* }}} */
 
 
+/* {{{ LibmysqlDynamicProxy::real_escape_string() */
+unsigned long
+LibmysqlDynamicProxy::real_escape_string(MYSQL * mysql, char * to, const char * from, unsigned long length)
+{
+	ptr2mysql_realescapestring ptr2_realescapestring = symbol_safe_cast<ptr2mysql_realescapestring>(GetProcAddr("mysql_real_escape_string"));
+
+	return (*ptr2_realescapestring)(mysql, to, from, length);
+}
+/* }}} */
+
+
 /* {{{ LibmysqlDynamicProxy::real_query() */
 int
 LibmysqlDynamicProxy::real_query(MYSQL *mysql,const char *stmt_str, unsigned long len)

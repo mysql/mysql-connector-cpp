@@ -601,6 +601,16 @@ sql::Statement * MySQL_Connection::createStatement()
 /* }}} */
 
 
+/* {{{ MySQL_Connection::escapeString() -I- */
+sql::SQLString MySQL_Connection::escapeString(const sql::SQLString & s)
+{
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::escapeString");
+	checkClosed();
+	return proxy->escapeString(s);
+}
+/* }}} */
+
+
 /* {{{ MySQL_Connection::getAutoCommit() -I- */
 bool
 MySQL_Connection::getAutoCommit()

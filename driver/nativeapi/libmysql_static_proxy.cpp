@@ -294,6 +294,15 @@ LibmysqlStaticProxy::real_connect(MYSQL * mysql,
 /* }}} */
 
 
+/* {{{ LibmysqlStaticProxy::real_escape_string() */
+unsigned long
+LibmysqlStaticProxy::real_escape_string(MYSQL * mysql, char * to, const char * from, unsigned long length)
+{
+	return ::mysql_real_escape_string(mysql, to, from, length);
+}
+/* }}} */
+
+
 /* {{{ LibmysqlStaticProxy::real_query() */
 int
 LibmysqlStaticProxy::real_query(MYSQL *mysql,const char *stmt_str, unsigned long len)

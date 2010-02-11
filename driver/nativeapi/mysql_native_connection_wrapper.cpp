@@ -12,6 +12,8 @@
 #include <sqlstring.h>
 #include <exception.h>
 
+#include <boost/scoped_array.hpp>
+
 #include "../mysql_util.h"
 #include "../mysql_connection_options.h"
 
@@ -121,6 +123,20 @@ MySQL_NativeConnectionWrapper::errNo()
 /* }}} */
 
 
+/* {{{ MySQL_NativeConnectionWrapper::escapeString() */
+SQLString
+MySQL_NativeConnectionWrapper::escapeString(const SQLString & s)
+{
+	boost::scoped_array< char > buffer(new char[s.length() * 2 + 1]);
+	if (!buffer.get()) {
+		return "";
+	}
+	unsigned long return_len = api->real_escape_string(mysql, buffer.get(), s.c_str(), (unsigned long) s.length());
+	return sql::SQLString(buffer.get(), return_len);
+}
+/* }}} */
+
+
 /* {{{ MySQL_NativeConnectionWrapper::error() */
 SQLString
 MySQL_NativeConnectionWrapper::error()
@@ -152,7 +168,7 @@ MySQL_NativeConnectionWrapper::get_client_version()
 const SQLString &
 MySQL_NativeConnectionWrapper::get_server_info()
 {
-	serverInfo= api->get_server_info(mysql);
+	serverInfo = api->get_server_info(mysql);
 	return serverInfo;
 }
 /* }}} */
