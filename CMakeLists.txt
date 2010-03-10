@@ -1,4 +1,4 @@
-#   Copyright 2007 - 2008 MySQL AB, 2008 - 2010 Sun Microsystems, Inc.  All rights reserved.
+#   Copyright (C) 2008, 2010 Oracle and/or its affiliates. All rights reserved. 
 #
 #   The MySQL Connector/C++ is licensed under the terms of the GPL
 #   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -183,7 +183,7 @@ SET(CPACK_PACKAGE_VERSION_MAJOR 1)
 SET(CPACK_PACKAGE_VERSION_MINOR 1)
 SET(CPACK_PACKAGE_VERSION_PATCH 0)
 SET(CPACK_PACKAGE_RELEASE_TYPE "")
-SET(CPACK_PACKAGE_VENDOR "Sun Microsystems, Inc.")
+SET(CPACK_PACKAGE_VENDOR "Oracle and/or its affiliates")
 IF(EXISTS "${CMAKE_SOURCE_DIR}/COPYING")
   SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING")
 ELSE(EXISTS "${CMAKE_SOURCE_DIR}/COPYING")
