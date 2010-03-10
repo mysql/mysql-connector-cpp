@@ -1,4 +1,4 @@
-/* Copyright 2000-2008 MySQL AB, 2008 Sun Microsystems, Inc.  All rights reserved.
+/* Copyright (C) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -535,7 +535,7 @@ int safe_mutex_destroy(safe_mutex_t *mp, const char *file, uint line)
   /* Free all entries that points to this one */
   safe_mutex_free_deadlock_data(mp);
 
-#ifdef __WIN__ 
+#ifdef __WIN__
   pthread_mutex_destroy(&mp->global);
   pthread_mutex_destroy(&mp->mutex);
 #else
@@ -699,7 +699,7 @@ static my_bool remove_from_locked_mutex(safe_mutex_t *mp,
   safe_mutex_deadlock_t *found;
   DBUG_ENTER("remove_from_locked_mutex");
   DBUG_PRINT("enter", ("delete_mutex: 0x%lx  mutex: 0x%lx  (id: %lu <- %lu)",
-                       (ulong) delete_mutex, (ulong) mp, 
+                       (ulong) delete_mutex, (ulong) mp,
                        delete_mutex->id, mp->id));
 
   found= (safe_mutex_deadlock_t*) my_hash_search(mp->locked_mutex,
@@ -722,7 +722,7 @@ static my_bool remove_from_used_mutex(safe_mutex_deadlock_t *locked_mutex,
 {
   DBUG_ENTER("remove_from_used_mutex");
   DBUG_PRINT("enter", ("delete_mutex: 0x%lx  mutex: 0x%lx  (id: %lu <- %lu)",
-                       (ulong) mutex, (ulong) locked_mutex, 
+                       (ulong) mutex, (ulong) locked_mutex,
                        mutex->id, locked_mutex->id));
   if (my_hash_delete(locked_mutex->mutex->used_mutex, (uchar*) mutex))
   {
@@ -801,8 +801,8 @@ ulong mutex_delay(ulong delayloops)
   for (i = 0; i < delayloops * 50; i++)
     j += i;
 
-  return(j); 
-}	
+  return(j);
+}
 
 #define MY_PTHREAD_FASTMUTEX_SPINS 8
 #define MY_PTHREAD_FASTMUTEX_DELAY 4
@@ -813,11 +813,11 @@ int my_pthread_fastmutex_init(my_pthread_fastmutex_t *mp,
                               const pthread_mutexattr_t *attr)
 {
   if ((cpu_count > 1) && (attr == MY_MUTEX_INIT_FAST))
-    mp->spins= MY_PTHREAD_FASTMUTEX_SPINS; 
+    mp->spins= MY_PTHREAD_FASTMUTEX_SPINS;
   else
     mp->spins= 0;
   mp->rng_state= 1;
-  return pthread_mutex_init(&mp->mutex, attr); 
+  return pthread_mutex_init(&mp->mutex, attr);
 }
 
 /**
@@ -826,7 +826,7 @@ int my_pthread_fastmutex_init(my_pthread_fastmutex_t *mp,
 
   x_{k+1} = (x_k g) mod n
 
-  Popular pair of parameters: n = 2^32 �− 5 = 4294967291 and g = 279470273.
+  Popular pair of parameters: n = 2^32 �− 5 = 4294967291 and g = 279470273.
   The period of the generator is about 2^31.
   Largest value that can be returned: 2147483646 (RAND_MAX)
 
@@ -872,5 +872,5 @@ void fastmutex_global_init(void)
   cpu_count= sysconf(_SC_NPROCESSORS_CONF);
 #endif
 }
-  
-#endif /* defined(THREAD) && defined(MY_PTHREAD_FASTMUTEX) && !defined(SAFE_MUTEX) */ 
+
+#endif /* defined(THREAD) && defined(MY_PTHREAD_FASTMUTEX) && !defined(SAFE_MUTEX) */

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
-  <Product Id="57a2f5dc-bc16-410f-b3ed-27ac57f693c2" Name="MySQL Connector C++" Language="1033" Version="1.1.0.0" Manufacturer="Sun Microsystems">
+	<Product Id="57a2f5dc-bc16-410f-b3ed-27ac57f693c2" Name="MySQL Connector C++" Language="1033" Version="1.1.0.0" Manufacturer="Oracle and/or its affiliates">
     <Package Id="18bc08b4-926d-4293-88d3-ed8154ab3980" Keywords="Installer,MSI,Database" Description="MySQL C++ Connector 1.1.0.0" InstallerVersion="200" Platforms="x64" Compressed="yes" SummaryCodepage="1252" />
     <Media Id="1" Cabinet="Product.cab" EmbedCab="yes" />
     <Directory Id="TARGETDIR" Name="SourceDir">

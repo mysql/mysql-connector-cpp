@@ -1,5 +1,5 @@
 /*
-   Copyright 2008 - 2010 Sun Microsystems, Inc.  All rights reserved.
+   Copyright (C) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

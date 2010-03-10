@@ -1,4 +1,4 @@
-/* Copyright (C) 2000 MySQL AB
+/* Copyright (C) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr)
 {
   cond->waiting= 0;
   InitializeCriticalSection(&cond->lock_waiting);
-    
+
   cond->events[SIGNAL]= CreateEvent(NULL,  /* no security */
                                     FALSE, /* auto-reset event */
                                     FALSE, /* non-signaled initially */
@@ -46,7 +46,7 @@ int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr)
                                            TRUE,  /* manual-reset */
                                            TRUE,  /* signaled initially */
                                            NULL); /* unnamed */
-  
+
   if( cond->events[SIGNAL] == NULL ||
       cond->events[BROADCAST] == NULL ||
       cond->broadcast_block_event == NULL )
@@ -76,7 +76,7 @@ int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
                            struct timespec *abstime)
 {
   int result;
-  long timeout; 
+  long timeout;
   union ft64 now;
 
   if( abstime != NULL )
@@ -89,7 +89,7 @@ int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
       - convert to millisec by dividing with 10000
     */
     timeout= (long)((abstime->tv.i64 - now.i64) / 10000);
-    
+
     /* Don't allow the timeout to be negative */
     if (timeout < 0)
       timeout= 0L;
@@ -108,7 +108,7 @@ int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
     timeout= INFINITE;
   }
 
-  /* 
+  /*
     Block access if previous broadcast hasn't finished.
     This is just for safety and should normally not
     affect the total time spent in this function.
@@ -122,15 +122,15 @@ int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
   LeaveCriticalSection(mutex);
 
   result= WaitForMultipleObjects(2, cond->events, FALSE, timeout);
-  
+
   EnterCriticalSection(&cond->lock_waiting);
   cond->waiting--;
-  
+
   if (cond->waiting == 0)
   {
     /*
       We're the last waiter to be notified or to stop waiting, so
-      reset the manual event. 
+      reset the manual event.
     */
     /* Close broadcast gate */
     ResetEvent(cond->events[BROADCAST]);
@@ -138,7 +138,7 @@ int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
     SetEvent(cond->broadcast_block_event);
   }
   LeaveCriticalSection(&cond->lock_waiting);
-  
+
   EnterCriticalSection(mutex);
 
   return result == WAIT_TIMEOUT ? ETIMEDOUT : 0;
@@ -147,12 +147,12 @@ int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 int pthread_cond_signal(pthread_cond_t *cond)
 {
   EnterCriticalSection(&cond->lock_waiting);
-  
+
   if(cond->waiting > 0)
     SetEvent(cond->events[SIGNAL]);
 
   LeaveCriticalSection(&cond->lock_waiting);
-  
+
   return 0;
 }
 
@@ -168,12 +168,12 @@ int pthread_cond_broadcast(pthread_cond_t *cond)
   if(cond->waiting > 0)
   {
     /* Close block gate */
-    ResetEvent(cond->broadcast_block_event); 
+    ResetEvent(cond->broadcast_block_event);
     /* Open broadcast gate */
     SetEvent(cond->events[BROADCAST]);
   }
 
-  LeaveCriticalSection(&cond->lock_waiting);  
+  LeaveCriticalSection(&cond->lock_waiting);
 
   return 0;
 }

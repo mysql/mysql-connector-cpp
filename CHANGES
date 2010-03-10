@@ -1,4 +1,8 @@
-GA  1.1.0 - 2010-01-xx
+/*
+  Copyright (C) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+*/
+
+GA  1.1.0 - 2010-03-xx
 
 - BIT fields are now correctly decoded (Workbench bug #36239). (Andrey)
 
