@@ -2291,7 +2291,7 @@ unsigned int
 MySQL_ConnectionMetaData::getDriverMinorVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverMinorVersion");
-	return 0;
+	return 1;
 }
 /* }}} */
 
@@ -2300,7 +2300,7 @@ unsigned int
 MySQL_ConnectionMetaData::getDriverPatchVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverPatchVersion");
-	return 6;
+	return 0;
 }
 /* }}} */
 
