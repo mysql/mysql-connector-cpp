@@ -452,7 +452,8 @@ public:
 										const sql::SQLString& schemaName = "",
 										const sql::SQLString& objectType = "",
 										bool includingDdl = true,
-										const sql::SQLString& objectName = "") = 0;
+										const sql::SQLString& objectName = "",
+										const sql::SQLString& contextTableName = "") = 0;
 
 	virtual ResultSet *getSchemaObjectTypes() = 0;
 };

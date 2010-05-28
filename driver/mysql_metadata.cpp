@@ -1229,7 +1229,7 @@ MySQL_ConnectionMetaData::getSchemata(const sql::SQLString& /*catalogName*/)
 
 /* {{{ MySQL_ConnectionMetaData::getSchemaObjects() -I- */
 sql::ResultSet *
-MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName */, const sql::SQLString& schemaName, const sql::SQLString& objectType, bool includingDdl, const sql::SQLString& objectName)
+MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName */, const sql::SQLString& schemaName, const sql::SQLString& objectType, bool includingDdl, const sql::SQLString& objectName, const sql::SQLString& contextTableName)
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getSchemaObjects");
 	// for now catalog name is ignored
@@ -1237,6 +1237,7 @@ MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName 
 
 	sql::SQLString escapedSchemaName = connection->escapeString(schemaName);
 	sql::SQLString escapedObjectName = connection->escapeString(objectName);
+	sql::SQLString escapedContextTableName = connection->escapeString(contextTableName);
 
 	sql::SQLString schemata_where_clause;
 	sql::SQLString tables_where_clause;
@@ -1272,6 +1273,11 @@ MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName 
 		views_where_clause += predicate_mediator + "TABLE_NAME";
 		routines_where_clause += predicate_mediator + "ROUTINE_NAME";
 		triggers_where_clause += predicate_mediator + "TRIGGER_NAME";
+	}
+	if (escapedContextTableName.length() > 0) {
+		std::string predicate_mediator= ((escapedSchemaName.length() > 0) || (escapedObjectName.length() > 0)) ? " AND " : " WHERE ";
+		predicate_mediator += "'" + escapedContextTableName + "'=";
+		triggers_where_clause += predicate_mediator + "EVENT_OBJECT_TABLE";
 	}
 
 	if (objectType.length() == 0) {
