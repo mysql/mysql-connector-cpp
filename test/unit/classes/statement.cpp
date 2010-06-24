@@ -574,7 +574,7 @@ void statement::bug49694()
 	res.reset(stmt->executeQuery("SELECT pat_id, episode_id, enc_id FROM test ORDER BY pat_id ASC"));
 
 	ASSERT(res->next());
-    ASSERT_EQUALS("1", res->getString(1));
+    ASSERT_EQUALS("100", res->getString(1));
   }
   catch (sql::SQLException &e)
   {
