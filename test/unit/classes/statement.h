@@ -43,6 +43,7 @@ public:
     TEST_CASE(selectZero);
     TEST_CASE(unbufferedFetch);
     TEST_CASE(unbufferedOutOfSync);
+	TEST_CASE(bug49694);
   }
 
   /**
@@ -80,6 +81,7 @@ public:
    */
   void unbufferedOutOfSync();
 
+  void bug49694();
 
 };
 
