@@ -205,19 +205,25 @@ MySQL_Statement::getResultSet()
 
 	last_update_count = UL64(~0);
 
-
 	boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result;
 
 	sql::ResultSet::enum_type tmp_type;
 
 	try {
+		NativeAPI::NativeResultsetWrapper * tmp_ptr;
 		switch (resultset_type) {
 			case sql::ResultSet::TYPE_FORWARD_ONLY:
-				result.reset(proxy->use_result());
+				if (!(tmp_ptr = proxy->use_result())) {
+					sql::mysql::util::throwSQLException(*proxy.get());				
+				}
+				result.reset(tmp_ptr);
 				tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
 				break;
 			default:
-				result.reset(proxy->store_result());
+				if (!(tmp_ptr = proxy->store_result())) {
+					sql::mysql::util::throwSQLException(*proxy.get());		
+				}
+				result.reset(tmp_ptr);
 				tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
 		}
 	} catch (::sql::SQLException & /*e*/ ) {

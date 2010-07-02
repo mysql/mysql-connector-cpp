@@ -823,15 +823,17 @@ MySQL_Prepared_Statement::getResultSet()
 	CPP_ENTER("MySQL_Prepared_Statement::getResultSet");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	if (proxy->more_results()) {
-		proxy->next_result();
+	if (proxy->more_results() && proxy->next_result()) {
+		sql::mysql::util::throwSQLException(*proxy.get());
 	}
 
 	my_bool	bool_tmp = 1;
 	proxy->attr_set(STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
 	sql::ResultSet::enum_type tmp_type;
 	if (resultset_type == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
-		proxy->store_result();
+		if (proxy->store_result()) {
+			sql::mysql::util::throwSQLException(*proxy.get());
+		}
 		tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
 	} else if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
 		tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
