@@ -34,6 +34,7 @@ public:
   EXAMPLE_TEST_FIXTURE(bugs)
   {
     TEST_CASE(net_write_timeout39878);
+	TEST_CASE(store_result_error_51562);
   }
 
   /**
@@ -44,6 +45,11 @@ public:
    * we won't receive all rows, and no error occures.
    */
   void net_write_timeout39878();
+
+  /**
+  * http://bugs.mysql.com/bug.php?id=51562
+  */
+  void store_result_error_51562();
 };
 
 REGISTER_FIXTURE(bugs);

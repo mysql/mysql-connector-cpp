@@ -10,6 +10,7 @@
  */
 
 #include "bugs.h"
+#include <sstream>
 
 namespace testsuite
 {
@@ -128,6 +129,35 @@ void bugs::net_write_timeout39878()
   }
 
   ASSERT_EQUALS( rowsCount, rowsRead );
+}
+
+
+void bugs::store_result_error_51562() {
+  std::stringstream msg;
+
+  logMsg("Regression test for #51562");
+  try
+  {
+    stmt.reset(con->createStatement());
+    /* Running a SELECT and storing the returned result set in this->res */
+    res.reset(stmt->executeQuery("select 1, (select 'def' union all select 'abc')"));
+
+	fail("SQL error not detected or the server has changed its behavior", __FILE__, __LINE__);
+  }
+  catch (sql::SQLException &e)
+  {
+    /* If anything goes wrong, write some info to the log... */
+	logMsg("Expecting error: ERROR 1242 (21000): Subquery returns more than 1 row, got:");
+    logMsg(e.what());
+    logMsg("SQLState: " + std::string(e.getSQLState()));
+	if (e.getErrorCode() != 1242) {
+		msg.str("");
+		msg << "Expecting MySQL error code 1242, got " << e.getErrorCode() << ".";
+		msg << "This may be a compatible and acceptable code - check manually and update test if nedded!";
+		logMsg(msg.str());
+		fail("Wrong error code, check verbose output for details", __FILE__, __LINE__);
+	}
+  }
 }
 
 
