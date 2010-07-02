@@ -533,57 +533,5 @@ void statement::checkUnbufferedScrolling()
   }
 }
 
-void statement::bug49694()
-{
-  int row = 0;
-  sql::ConnectOptionsMap connection_properties;
-  std::stringstream sql;
-  std::stringstream csv_file;
-
-  logMsg("statement::bug49694() - MySQL_Statement::*");
-
-  try {
-    connection_properties["hostName"]=url;
-    connection_properties["userName"]=user;
-    connection_properties["password"]=passwd;
-	connection_properties["CLIENT_LOCAL_FILES"]=(true);
-
-    bool bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
-    connection_properties["metadataUseInfoSchema"]=(bval);
-
-    created_objects.clear();
-    con.reset(driver->connect(connection_properties));
-	con->setSchema(db);
-
-    stmt.reset(con->createStatement());
-    stmt->execute("DROP TABLE IF EXISTS test");
-    stmt->execute("CREATE TABLE test(pat_id INT(11) NOT NULL, episode_id INT(11) NOT NULL, enc_id double NOT NULL, PRIMARY KEY (pat_id, episode_id, enc_id)) ENGINE=MyISAM DEFAULT CHARSET=latin1");
-
-
-	csv_file.str("tmp_bug49694.csv");
-
-
-	sql.str("");
-    sql << "LOAD DATA LOCAL INFILE '";
-	sql << csv_file.str();
-	sql << "' INTO TABLE test FIELDS TERMINATED BY \",\" OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY \"\r\n\"  IGNORE 1 LINES (pat_id, episode_id, enc_id)";
-	logMsg("... " + sql.str());
-	stmt->execute(sql.str());
-
-
-	res.reset(stmt->executeQuery("SELECT pat_id, episode_id, enc_id FROM test ORDER BY pat_id ASC"));
-
-	ASSERT(res->next());
-    ASSERT_EQUALS("100", res->getString(1));
-  }
-  catch (sql::SQLException &e)
-  {
-    logErr(e.what());
-    logErr("SQLState: " + std::string(e.getSQLState()));
-    fail(e.what(), __FILE__, __LINE__);
-  }
-
-}
-
 } /* namespace statement */
 } /* namespace testsuite */
