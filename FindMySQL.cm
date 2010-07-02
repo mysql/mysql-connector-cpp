@@ -81,6 +81,7 @@ IF (WIN32)
 	FIND_LIBRARY(MYSQL_LIB NAMES mysqlclient
 				 PATHS
 				 $ENV{MYSQL_DIR}/lib/${libsuffixDist}
+				 $ENV{MYSQL_DIR}/lib 			#mysqlclient may be in lib for some c/c distros
 				 $ENV{MYSQL_DIR}/libmysql/${libsuffixBuild}
 				 $ENV{MYSQL_DIR}/client/${libsuffixBuild}
 				 $ENV{ProgramFiles}/MySQL/*/lib/${libsuffixDist}
