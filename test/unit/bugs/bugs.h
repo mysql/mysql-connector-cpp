@@ -34,7 +34,7 @@ public:
   EXAMPLE_TEST_FIXTURE(bugs)
   {
     TEST_CASE(net_write_timeout39878);
-	TEST_CASE(store_result_error_51562);
+    TEST_CASE(store_result_error_51562);
   }
 
   /**
@@ -47,8 +47,8 @@ public:
   void net_write_timeout39878();
 
   /**
-  * http://bugs.mysql.com/bug.php?id=51562
-  */
+   * http://bugs.mysql.com/bug.php?id=51562
+   */
   void store_result_error_51562();
 };
 

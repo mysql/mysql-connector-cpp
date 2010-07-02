@@ -19,144 +19,132 @@ namespace regression
 
 void bugs::net_write_timeout39878()
 {
-  logMsg( "Test for #39878 - not fixed. And looks like there is no way to fix it at the moment." );
-  logMsg( "If the test doesn't fail - that rather means that you should tweak parameters for your system" );
-  logMsg( "You can do that with command line parameters:");
-  logMsg( " --nwtTimeout=<val> for the value net_write timeout to set to (default 1)" );
-  logMsg( " --nwtPause=<val> for the length of pause test shoud take while fetching rows (default 2)" );
-  logMsg( " --nwtRows=<val> for the number of rows to insert into table (default 9230)" );
+  logMsg("Test for #39878 - not fixed. And looks like there is no way to fix it at the moment.");
+  logMsg("If the test doesn't fail - that rather means that you should tweak parameters for your system");
+  logMsg("You can do that with command line parameters:");
+  logMsg(" --nwtTimeout=<val> for the value net_write timeout to set to (default 1)");
+  logMsg(" --nwtPause=<val> for the length of pause test shoud take while fetching rows (default 2)");
+  logMsg(" --nwtRows=<val> for the number of rows to insert into table (default 9230)");
 
-  int timeout=  1;
-  int pause=    2;
-  int rows=     9230;
+  int timeout = 1;
+  int pause = 2;
+  int rows = 9230;
 
-  int tmp= TestsRunner::getStartOptions()->getInt( "nwtTimeout" );
-  if ( tmp > 0 )
-    timeout= tmp;
-
-
-  tmp= TestsRunner::getStartOptions()->getInt( "nwtPause" );
-  if ( tmp > 0 )
-      pause= tmp;
-
-  tmp= TestsRunner::getStartOptions()->getInt( "nwtRows" );
-  if ( tmp > 0 )
-      rows= tmp;
+  int tmp = TestsRunner::getStartOptions()->getInt("nwtTimeout");
+  if (tmp > 0)
+    timeout = tmp;
 
 
-  pstmt.reset( con->prepareStatement( "set net_write_timeout=?" ) );
-  pstmt->setInt( 1, timeout );
+  tmp = TestsRunner::getStartOptions()->getInt("nwtPause");
+  if (tmp > 0)
+    pause = tmp;
+
+  tmp = TestsRunner::getStartOptions()->getInt("nwtRows");
+  if (tmp > 0)
+    rows = tmp;
+
+
+  pstmt.reset(con->prepareStatement("set net_write_timeout=?"));
+  pstmt->setInt(1, timeout);
   pstmt->execute();
 
-  res.reset( stmt->executeQuery( "show variables like \"net_write_timeout\"" ) );
+  res.reset(stmt->executeQuery("show variables like \"net_write_timeout\""));
 
   res->next();
 
   TestsListener::messagesLog() << "We've set net_write_timeout to " << res->getString(2) << std::endl;
 
 
-  stmt->execute( "drop table if exists bug39878" );
-  stmt->execute( "create table bug39878 (id int unsigned not null)" );
+  stmt->execute("drop table if exists bug39878");
+  stmt->execute("create table bug39878 (id int unsigned not null)");
 
-  stmt->execute( "lock table bug39878 write" );
+  stmt->execute("lock table bug39878 write");
 
-  pstmt.reset( con->prepareStatement( "insert into bug39878 ( id ) values( ? )" ) );
+  pstmt.reset(con->prepareStatement("insert into bug39878 ( id ) values( ? )"));
 
-  for (int i=1; i <= rows; ++i )
-  {
-      pstmt->setInt( 1, i );
-      pstmt->execute();
+  for (int i = 1; i <= rows; ++i) {
+    pstmt->setInt(1, i);
+    pstmt->execute();
   }
 
-  stmt->execute( "unlock tables" );
+  stmt->execute("unlock tables");
 
 
-  res.reset( stmt->executeQuery( "select count(*) from bug39878" ) );
+  res.reset(stmt->executeQuery("select count(*) from bug39878"));
 
   res->next();
 
-  uint32_t rowsCount= res->getUInt(1);
+  uint32_t rowsCount = res->getUInt(1);
 
   TestsListener::messagesLog() << "Now we have " << rowsCount << " rows in the table" << std::endl;
 
   // Must set ResultSet Type  to TYPE_FORWARD_ONLY
-  stmt->setResultSetType( sql::ResultSet::TYPE_FORWARD_ONLY );
+  stmt->setResultSetType(sql::ResultSet::TYPE_FORWARD_ONLY);
 
-  res.reset( stmt->executeQuery( "select * from bug39878" ) );
+  res.reset(stmt->executeQuery("select * from bug39878"));
 
   TestsListener::messagesLog() << "ResultSetType: " << stmt->getResultSetType() << std::endl;
 
-  uint32_t rowsRead= 0;
+  uint32_t rowsRead = 0;
 
-  try
-  {
-      while ( res->next() )
-      {
-          if ( rowsRead == 0 )
-          {
-              TestsListener::messagesLog() << "Pause " << pause << "s." << std::endl;
-              SLEEP(pause);
-          }
-
-          ++rowsRead;
+  try {
+    while (res->next()) {
+      if (rowsRead == 0) {
+        TestsListener::messagesLog() << "Pause " << pause << "s." << std::endl;
+        SLEEP(pause);
       }
-  }
-  catch (sql::SQLException& /*e*/)
-  {
-      //if ( e.errNo == 2006 )
 
-      /* let's think that exception is a god result itself.
-         also not sure which errno should it be */
+      ++rowsRead;
+    }
+  } catch (sql::SQLException& /*e*/) {
+    //if ( e.errNo == 2006 )
 
-      return;
+    /* let's think that exception is a god result itself.
+       also not sure which errno should it be */
+
+    return;
   }
 
   TestsListener::messagesLog() << "We've fetched " << rowsRead << " rows." << std::endl;
 
-  try
-  {
-      stmt->execute( "drop table if exists bug39878" );
-  }
-  catch ( sql::SQLException& e )
-  {
-      // Expected, that Server has gone away
-      logMsg( e.what() );
+  try {
+    stmt->execute("drop table if exists bug39878");
+  } catch (sql::SQLException& e) {
+    // Expected, that Server has gone away
+    logMsg(e.what());
 
-      // Lazy way to reconnect
-  	  setUp();
+    // Lazy way to reconnect
+    setUp();
 
-      stmt->execute( "drop table if exists bug39878" );
+    stmt->execute("drop table if exists bug39878");
   }
 
-  ASSERT_EQUALS( rowsCount, rowsRead );
+  ASSERT_EQUALS(rowsCount, rowsRead);
 }
 
-
-void bugs::store_result_error_51562() {
+void bugs::store_result_error_51562()
+{
   std::stringstream msg;
 
   logMsg("Regression test for #51562");
-  try
-  {
+  try {
     stmt.reset(con->createStatement());
     /* Running a SELECT and storing the returned result set in this->res */
     res.reset(stmt->executeQuery("select 1, (select 'def' union all select 'abc')"));
 
-	fail("SQL error not detected or the server has changed its behavior", __FILE__, __LINE__);
-  }
-  catch (sql::SQLException &e)
-  {
+    fail("SQL error not detected or the server has changed its behavior", __FILE__, __LINE__);
+  } catch (sql::SQLException &e) {
     /* If anything goes wrong, write some info to the log... */
-	logMsg("Expecting error: ERROR 1242 (21000): Subquery returns more than 1 row, got:");
+    logMsg("Expecting error: ERROR 1242 (21000): Subquery returns more than 1 row, got:");
     logMsg(e.what());
     logMsg("SQLState: " + std::string(e.getSQLState()));
-	if (e.getErrorCode() != 1242) {
-		msg.str("");
-		msg << "Expecting MySQL error code 1242, got " << e.getErrorCode() << ".";
-		msg << "This may be a compatible and acceptable code - check manually and update test if nedded!";
-		logMsg(msg.str());
-		fail("Wrong error code, check verbose output for details", __FILE__, __LINE__);
-	}
+    if (e.getErrorCode() != 1242) {
+      msg.str("");
+      msg << "Expecting MySQL error code 1242, got " << e.getErrorCode() << ".";
+      msg << "This may be a compatible and acceptable code - check manually and update test if nedded!";
+      logMsg(msg.str());
+      fail("Wrong error code, check verbose output for details", __FILE__, __LINE__);
+    }
   }
 }
 
