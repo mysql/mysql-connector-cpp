@@ -86,18 +86,18 @@ MySQL_Statement::get_resultset()
 
 	NativeAPI::NativeResultsetWrapper * result;
 	//TODO: again - probably no need to catch-n-throw here. O maybe no need to throw further
-	try
-	{
+	try {
 		result= (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY)? proxy->use_result(): proxy->store_result();
-	}
-	catch (::sql::SQLException & e)
-	{
+		if (!result) {
+			sql::mysql::util::throwSQLException(*proxy.get());
+		}
+	} catch (::sql::SQLException & e) {
 		CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
 			proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 		throw e;
 	}
 
-	return boost::shared_ptr< NativeAPI::NativeResultsetWrapper >( result );
+	return boost::shared_ptr< NativeAPI::NativeResultsetWrapper >(result);
 }
 /* }}} */
 
