@@ -132,6 +132,21 @@ IF(WIN32)
 		nativeapi/mysql_client_api.h
 		nativeapi/mysql_native_resultset_wrapper.h
 		nativeapi/native_resultset_wrapper.h
+		../cppconn/warning.h
+		../cppconn/statement.h
+		../cppconn/sqlstring.h
+		../cppconn/resultset_metadata.h
+		../cppconn/resultset.h
+		../cppconn/prepared_statement.h
+		../cppconn/parameter_metadata.h
+		../cppconn/metadata.h
+		../cppconn/exception.h
+		../cppconn/driver.h
+		../cppconn/datatype.h
+		../cppconn/connection.h
+		../cppconn/config.h
+		../cppconn/build_config.h
+		
 	)
 
 	IF(NOT MYSQLCLIENT_STATIC_BINDING)
@@ -141,6 +156,7 @@ IF(WIN32)
 
 	# Used to create source filter in projects in VS
 	SOURCE_GROUP(NativeApi nativeapi/.+)
+	SOURCE_GROUP(API ../cppconn/.+)
 ENDIF(WIN32)
 
 

@@ -85,7 +85,9 @@ IF (WIN32)
 				 $ENV{MYSQL_DIR}/libmysql/${libsuffixBuild}
 				 $ENV{MYSQL_DIR}/client/${libsuffixBuild}
 				 $ENV{ProgramFiles}/MySQL/*/lib/${libsuffixDist}
-				 $ENV{SystemDrive}/MySQL/*/lib/${libsuffixDist})
+				 $ENV{ProgramFiles}/MySQL/*/lib
+				 $ENV{SystemDrive}/MySQL/*/lib/${libsuffixDist}
+				 $ENV{SystemDrive}/MySQL/*/lib)
 	IF(MYSQL_LIB)
 		SET(MYSQLCPPCONN_DYNLOAD_MYSQL_LIB MYSQL_LIB)
 		GET_FILENAME_COMPONENT(MYSQL_LIB_DIR ${MYSQL_LIB} PATH)
