@@ -74,7 +74,10 @@ namespace FileUtils
                                 | ( binary ? std::ios_base::binary : static_cast<std::ios_base::openmode>(0) ) );
     }
     else
+    {
       stream.clear();
+      stream.seekg(0);
+    }
 
     return stream;
   }
@@ -86,6 +89,38 @@ namespace FileUtils
       return -1;
 
     return static_cast<int>( fileInfo.st_size );
+  }
+
+
+  String::size_type ccppFile::readFile( String & str )
+  {
+    str.reserve(getSize());
+
+    char buff[1024];
+
+    std::fstream & fStr= getStream();
+    //String::size_type size = 0;
+
+    while ( ! fStr.eof() )
+    {
+      fStr.read( buff, sizeof(buff) );
+
+      if ( fStr.bad() )
+      {
+        throw std::exception("Error while reading from file stream (bad)");
+      }
+      else if ( fStr.fail() )
+      {
+        if (! fStr.eof() )
+        {
+          throw std::exception("Error while reading from file stream (fail)");
+        }
+      }
+      str.append( buff,fStr.gcount() );
+      //size+= fStr.gcount();
+    }
+
+    return str.length();
   }
 
 

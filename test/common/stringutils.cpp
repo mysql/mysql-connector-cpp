@@ -175,7 +175,7 @@ namespace StringUtils
     return result;
   }
 
-  String::size_type toHexString( String & buff, char c[], int count, bool leading0x )
+  String::size_type toHexString( String & buff, const char c[], int count, bool leading0x )
   {
     while( --count >= 0 )
     {
@@ -189,6 +189,15 @@ namespace StringUtils
     }
 
     return buff.size();
+  }
+
+  String toHexString( const char * c, int count, bool leading0x )
+  {
+      String tmp;
+
+      toHexString( tmp, c, count, leading0x );
+
+      return tmp;
   }
 
   String & concatSeparated( String & to, const String & add, const String & separator )

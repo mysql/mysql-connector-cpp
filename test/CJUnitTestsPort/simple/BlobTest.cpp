@@ -33,24 +33,28 @@ const String BlobTest::TEST_BLOB_FILE_PREFIX("cmj-testblob");
  */
 void BlobTest::setUp()
 {
-  super::setUp();
+	static int counter= 0;
+	// Just to make 2nd run(setString) to use smaller file(and be faster)
+	++counter;
 
-  realFrameworkTiming=TestsListener::doTiming();
+	super::setUp();
 
-  testBlobFile.reset(new FileUtils::ccppFile(TEST_BLOB_FILE_PREFIX + ".dat"));
+	realFrameworkTiming=TestsListener::doTiming();
 
-  int requiredSize=32 * 1024 * 1024;
+	testBlobFile.reset(new FileUtils::ccppFile(TEST_BLOB_FILE_PREFIX + ".dat"));
 
-  if (!versionMeetsMinimum(4, 0))
-  {
-    requiredSize=8 * 1024 * 1024;
-  }
+	int requiredSize=32 * 1024 * 1024/counter - (counter - 1)*128;
 
-  Timer::startTimer("BlobTest::testByteStreamInsert", "Blob File Creation", __FILE__, __LINE__);
-  createBlobFile(requiredSize);
-  TestsListener::messagesLog() << "Blob File Creation" << Timer::translate2seconds(Timer::stopTimer("BlobTest::testByteStreamInsert", "Blob File Creation")) << std::endl;
+	if (!versionMeetsMinimum(4, 0))
+	{
+		requiredSize=8 * 1024 * 1024;
+	}
 
-  createTestTable();
+	Timer::startTimer("BlobTest::testByteStreamInsert", "Blob File Creation", __FILE__, __LINE__);
+	createBlobFile(requiredSize);
+	TestsListener::messagesLog() << "Blob File Creation" << Timer::translate2seconds(Timer::stopTimer("BlobTest::testByteStreamInsert", "Blob File Creation")) << std::endl;
+
+	createTestTable();
 }
 
 /**
@@ -73,28 +77,46 @@ void BlobTest::tearDown()
 }
 
 /* throws Exception */
-void BlobTest::testByteStreamInsert()
-{
-  //SKIP("too slow");
-  testByteStreamInsert(conn);
-}
+  void BlobTest::testBlobStreamInsert()
+  {
+    //SKIP("too slow");
+    testBlobInsert( conn );
+  }
 
-/**
- * Tests inserting blob data as a stream
- *
- * @throws Exception
- *             if an error occurs
- */
-void BlobTest::testByteStreamInsert(Connection & c)
-{
-  std::fstream & bIn=testBlobFile->getStream();
 
-  ASSERT(!bIn.fail());
+  void BlobTest::testBlobStringInsert()
+  {
+    //SKIP("too slow");
+    testBlobInsert( conn, true );
+  }
 
-  TIMER_START("Populating blob table");
-  pstmt.reset(conn->prepareStatement("INSERT INTO BLOBTEST(blobdata) VALUES (?)"));
-  pstmt->setBlob(1, & bIn);
-  pstmt->execute();
+  /**
+	 * Tests inserting blob data as a stream
+	 *
+	 * @throws Exception
+	 *             if an error occurs
+	 */
+  void BlobTest::testBlobInsert( Connection & c, bool asString )
+  {
+    TIMER_START( "Populating blob table" );
+    pstmt.reset( conn->prepareStatement("INSERT INTO BLOBTEST(blobdata) VALUES (?)") );
+
+    if ( asString )
+    {
+      sql::SQLString str;
+      testBlobFile->readFile( const_cast<std::string&>(str.asStdString()) );
+
+      pstmt->setString( 1, str );
+      pstmt->execute();
+    }
+    else
+    {
+      std::fstream & bIn= testBlobFile->getStream();
+      ASSERT( ! bIn.fail() );
+
+      pstmt->setBlob( 1, & bIn );
+      pstmt->execute();
+    }
   TIMER_STOP("Populating blob table");
   pstmt->clearParameters();
 

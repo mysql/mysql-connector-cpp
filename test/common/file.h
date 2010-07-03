@@ -50,6 +50,7 @@ namespace FileUtils
                   ~ccppFile();
 
     std::fstream & getStream();
+    String::size_type readFile( String & );
 
     int           getSize () const;
 

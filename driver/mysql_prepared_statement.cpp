@@ -14,7 +14,9 @@
 
 #include <iostream>
 #include <sstream>
+#include <boost/variant.hpp>
 #include <boost/scoped_array.hpp>
+
 #include <cppconn/exception.h>
 #include "mysql_util.h"
 #include "mysql_connection.h"
@@ -28,7 +30,6 @@
 
 #include "nativeapi/native_statement_wrapper.h"
 
-#define mysql_stmt_conn(s) (s)->mysql
 
 #include "mysql_debug.h"
 
@@ -39,22 +40,173 @@ namespace sql
 namespace mysql
 {
 
-static const unsigned int MAX_SEND_LONGDATA_BUFFER= 1 << 18; //1 << 18=256k;
+static const unsigned int MAX_SEND_LONGDATA_BUFFER= 1 << 18; //1<<18=256k (for istream)
+static const unsigned int MAX_SEND_LONGDATA_CHUNK=  1 << 18; //1<<19=512k (for string)
+
+// Visitor class to send long data contained in blob_bind
+class LongDataSender : public boost::static_visitor<bool>
+{
+	unsigned	position;
+	boost::shared_ptr< NativeAPI::NativeStatementWrapper > proxy;
+
+	LongDataSender()
+	{}
+
+public:
+
+	LongDataSender(unsigned int i, boost::shared_ptr< NativeAPI::NativeStatementWrapper > & _proxy)
+		: position( i		)
+		, proxy	( _proxy)
+	{
+	}
+
+	bool operator()(std::istream * my_blob) const
+	{
+		if (my_blob == NULL)
+			return false;
+
+		//char buf[MAX_SEND_LONGDATA_BUFFER];
+		boost::scoped_array<char> buf(new char[MAX_SEND_LONGDATA_BUFFER]);
+
+		do {
+			if (my_blob->eof()) {
+				break;
+			}
+			my_blob->read(buf.get(), MAX_SEND_LONGDATA_BUFFER);
+
+			if (my_blob->bad()) {
+				throw SQLException("Error while reading from blob (bad)");
+			} else if (my_blob->fail()) {
+				if (!my_blob->eof()) {
+					throw SQLException("Error while reading from blob (fail)");
+				}
+			}
+			if (proxy->send_long_data(position, buf.get(), static_cast<unsigned long>(my_blob->gcount()))) {
+				CPP_ERR_FMT("Couldn't send long data : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+				switch (proxy->errNo()) {
+				case CR_OUT_OF_MEMORY:
+					throw std::bad_alloc();
+				case CR_INVALID_BUFFER_USE:
+					throw InvalidArgumentException("MySQL_Prepared_Statement::setBlob: can't set blob value on that column");
+				case CR_SERVER_GONE_ERROR:
+				case CR_COMMANDS_OUT_OF_SYNC:
+				default:
+					sql::mysql::util::throwSQLException(*proxy.get());
+				}
+			}
+		} while (1);
+
+		return true;
+	}
+
+	bool operator()(sql::SQLString * str) const
+	{
+		if ( str == NULL )
+			return false;
+
+		unsigned int sent= 0, chunkSize;
+
+		while (sent < str->length())
+		{
+			chunkSize= (sent + MAX_SEND_LONGDATA_CHUNK > str->length()
+						? str->length() - sent
+						: MAX_SEND_LONGDATA_CHUNK);
+
+			if (proxy->send_long_data(position, str->c_str() + sent, chunkSize)) {
+				CPP_ERR_FMT("Couldn't send long data : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+				switch (proxy->errNo()) {
+				case CR_OUT_OF_MEMORY:
+					throw std::bad_alloc();
+				case CR_INVALID_BUFFER_USE:
+					throw InvalidArgumentException("MySQL_Prepared_Statement::setBlob: can't set blob value on that column");
+				case CR_SERVER_GONE_ERROR:
+				case CR_COMMANDS_OUT_OF_SYNC:
+				default:
+					sql::mysql::util::throwSQLException(*proxy.get());
+				}
+			}
+
+			sent+= chunkSize;
+		}
+
+		return true;
+	}
+};
+
+
+class BlobBindDeleter : public boost::static_visitor<>
+{
+public:
+
+	void operator()(sql::SQLString *& str) const
+	{
+		if (str != NULL) {
+		delete str;
+		str= NULL;
+		}
+	}
+
+	void operator()(std::istream *& my_blob) const
+	{
+		if (my_blob!= NULL) {
+			delete my_blob;
+			my_blob= NULL;
+		}
+	}
+};
+
+class BlobIsNull : public boost::static_visitor<bool>
+{
+public:
+
+	bool operator()(sql::SQLString *& str) const
+	{
+		return str == NULL;
+	}
+
+	bool operator()(std::istream *& my_blob) const
+	{
+		return my_blob == NULL;
+	}
+};
+
+
+void resetBlobBind(MYSQL_BIND & param)
+{
+	delete [] static_cast<char *>(param.buffer);
+
+	param.buffer_type=		MYSQL_TYPE_LONG_BLOB;
+	param.buffer=			NULL;
+	param.buffer_length=	0;
+	param.is_null_value=	0;
+
+	delete param.length;
+	param.length=			new unsigned long(0);
+}
+
 
 class MySQL_ParamBind
 {
+public:
+
+	typedef boost::variant< std::istream *, sql::SQLString *> Blob_t;
+
+private:
+
 	unsigned int param_count;
 	boost::scoped_array< MYSQL_BIND > bind;
 	boost::scoped_array< bool > value_set;
 	boost::scoped_array< bool > delete_blob_after_execute;
 
-	boost::scoped_array< std::istream	* > blob_bind;
+	typedef std::map<unsigned int, Blob_t > Blobs;
+
+	Blobs blob_bind;
 
 public:
 
 	MySQL_ParamBind(unsigned int paramCount)
 		: param_count(paramCount), bind(NULL), value_set(NULL),
-		  delete_blob_after_execute(NULL), blob_bind(NULL)
+		  delete_blob_after_execute(NULL)
 	{
 		if (param_count) {
 			bind.reset(new MYSQL_BIND[paramCount]);
@@ -67,9 +219,6 @@ public:
 				value_set[i] = false;
 				delete_blob_after_execute[i] = false;
 			}
-
-			blob_bind.reset(new std::istream *[paramCount]);
-			memset(blob_bind.get(), 0, sizeof(std::istream *) * paramCount);
 		}
 	}
 
@@ -77,13 +226,11 @@ public:
 	{
 		clearParameters();
 
-		if (blob_bind.get()) {
-			for (unsigned int i = 0; i < param_count; ++i) {
-				if (delete_blob_after_execute[i]) {
-					delete_blob_after_execute[i] = false;
-					delete blob_bind[i];
-					blob_bind[i] = NULL;
-				}
+		for (Blobs::iterator it= blob_bind.begin();
+			it != blob_bind.end(); ++it) {
+			if (delete_blob_after_execute[it->first]) {
+				delete_blob_after_execute[it->first] = false;
+				boost::apply_visitor(BlobBindDeleter(), it->second);
 			}
 		}
 	}
@@ -98,19 +245,37 @@ public:
 		value_set[position] = false;
 		if (delete_blob_after_execute[position]) {
 			delete_blob_after_execute[position] = false;
-			delete blob_bind[position];
-			blob_bind[position] = NULL;
+			boost::apply_visitor(BlobBindDeleter(),blob_bind[position]);
+			blob_bind.erase(position);
 		}
 	}
 
-	void setBlob(unsigned int position, std::istream * blob, bool delete_after_execute)
+
+	void setBlob(unsigned int position, Blob_t & blob, bool delete_after_execute)
 	{
-		if (blob_bind[position] && delete_blob_after_execute[position]) {
-			delete blob_bind[position];
+		set(position);
+
+		resetBlobBind(bind[position]);
+
+		Blobs::iterator it = blob_bind.find(position);
+		if (it != blob_bind.end() && delete_blob_after_execute[position]) {
+				boost::apply_visitor(BlobBindDeleter(), it->second);
+			}
+
+		if (boost::apply_visitor(BlobIsNull(), blob))
+		{
+		  if (it != blob_bind.end())
+			blob_bind.erase(it);
+
+		  delete_blob_after_execute[position] = false;
 		}
-		blob_bind[position] = blob;
-		delete_blob_after_execute[position] = delete_after_execute;
+		else
+		{
+			  blob_bind[position] = blob;
+			  delete_blob_after_execute[position] = delete_after_execute;
+		}
 	}
+
 
 	bool isAllSet()
 	{
@@ -122,6 +287,7 @@ public:
 		return true;
 	}
 
+
 	void clearParameters()
 	{
 		for (unsigned int i = 0; i < param_count; ++i) {
@@ -130,27 +296,36 @@ public:
 			delete[] (char*) bind[i].buffer;
 			bind[i].buffer = NULL;
 			if (value_set[i]) {
-				if (blob_bind[i] && delete_blob_after_execute[i]) {
-					delete blob_bind[i];
+				Blobs::iterator it= blob_bind.find(i);
+				if (it != blob_bind.end() && delete_blob_after_execute[i]) {
+					boost::apply_visitor(BlobBindDeleter(), it->second);
+					blob_bind.erase(it);
 				}
-				blob_bind[i] = NULL;
+				blob_bind[i] = Blob_t();
 				value_set[i] = false;
 			}
 		}
 	}
 
-	MYSQL_BIND * get()
+
+	// Name get() was too confusing, since class objects are used with smart pointers
+	MYSQL_BIND * getBindObject()
 	{
 		return bind.get();
 	}
 
-	std::istream * getBlobObject(unsigned int position)
+
+	boost::variant< std::istream *, SQLString *> getBlobObject(unsigned int position)
 	{
-		return blob_bind[position];
+		Blobs::iterator it= blob_bind.find( position );
+
+		if (it != blob_bind.end()) 
+			return it->second;
+
+		return Blob_t();
 	}
 
 };
-
 
 
 /* {{{ MySQL_Prepared_Statement::MySQL_Prepared_Statement() -I- */
@@ -192,39 +367,15 @@ bool
 MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 {
 	CPP_ENTER("MySQL_Prepared_Statement::sendLongDataBeforeParamBind");
-	MYSQL_BIND * bind = param_bind->get();
-	boost::scoped_array<char> buf(new char[MAX_SEND_LONGDATA_BUFFER]);
+
+	MYSQL_BIND * bind= param_bind->getBindObject();
+
 	for (unsigned int i = 0; i < param_count; ++i) {
 		if (bind[i].buffer_type == MYSQL_TYPE_LONG_BLOB) {
-			std::istream * my_blob = param_bind->getBlobObject(i);
-			do {
-				if ((my_blob->rdstate() & std::istream::eofbit) != 0 ) {
-					break;
-				}
-				my_blob->read(buf.get(), MAX_SEND_LONGDATA_BUFFER);
-
-				if ((my_blob->rdstate() & std::istream::badbit) != 0) {
-					throw SQLException("Error while reading from blob (bad)");
-				} else if ((my_blob->rdstate() & std::istream::failbit) != 0) {
-					if ((my_blob->rdstate() & std::istream::eofbit) == 0) {
-						throw SQLException("Error while reading from blob (fail)");
-					}
-				}
-				if (proxy->send_long_data(i, buf.get(), static_cast<unsigned long>(my_blob->gcount()))) {
-					CPP_ERR_FMT("Couldn't send long data : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
-					switch (proxy->errNo()) {
-						case CR_OUT_OF_MEMORY:
-							throw std::bad_alloc();
-						case CR_INVALID_BUFFER_USE:
-							throw InvalidArgumentException("MySQL_Prepared_Statement::setBlob: can't set blob value on that column");
-						case CR_SERVER_GONE_ERROR:
-						case CR_COMMANDS_OUT_OF_SYNC:
-						default:
-							sql::mysql::util::throwSQLException(*proxy.get());
-					}
-				}
-			} while (1);
+			LongDataSender lv( i, proxy );
+			boost::apply_visitor(lv, param_bind->getBlobObject(i));
 		}
+
 	}
 	return true;
 }
@@ -240,7 +391,7 @@ MySQL_Prepared_Statement::do_query()
 		CPP_ERR("Value not set for all parameters");
 		throw sql::SQLException("Value not set for all parameters");
 	}
-	if (proxy->bind_param(param_bind->get())) {
+	if (proxy->bind_param(param_bind->getBindObject())) {
 		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 		sql::mysql::util::throwSQLException(*proxy.get());
 	}
@@ -375,17 +526,20 @@ MySQL_Prepared_Statement::setBigInt(unsigned int parameterIndex, const sql::SQLS
 
 
 /* {{{ MySQL_Prepared_Statement::setBlob_intern() -I- */
+/*
 void
-MySQL_Prepared_Statement::setBlob_intern(unsigned int parameterIndex, std::istream * blob, bool deleteBlobAfterExecute)
+setBlob_intern(unsigned int parameterIndex
+										 , / *boost::variant< std::istream *, sql::SQLString *>* /MySQL_ParamBind::Blob_t & blob
+                                         , bool deleteBlobAfterExecute)
 {
 	CPP_ENTER("MySQL_Prepared_Statement::setBlob_intern");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-	--parameterIndex; /* DBC counts from 1 */
+	--parameterIndex; / * DBC counts from 1 * /
 
 	param_bind->set(parameterIndex);
-	MYSQL_BIND * param = &param_bind->get()[parameterIndex];
+	MYSQL_BIND * param = &param_bind->getBindObject()[parameterIndex];
 
 	delete [] static_cast<char *>(param->buffer);
 
@@ -398,7 +552,8 @@ MySQL_Prepared_Statement::setBlob_intern(unsigned int parameterIndex, std::istre
 	param->length = new unsigned long(0);
 
 	param_bind->setBlob(parameterIndex, blob, deleteBlobAfterExecute);
-}
+}*/
+
 /* }}} */
 
 
@@ -414,7 +569,7 @@ MySQL_Prepared_Statement::setBlob(unsigned int parameterIndex, std::istream * bl
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setBlob: invalid 'parameterIndex'");
 	}
 
-	setBlob_intern(parameterIndex, blob, false);
+	param_bind->setBlob(--parameterIndex, MySQL_ParamBind::Blob_t(blob), false);
 }
 /* }}} */
 
@@ -510,8 +665,8 @@ MySQL_Prepared_Statement::setDouble(unsigned int parameterIndex, double value)
 	}
 	--parameterIndex; /* DBC counts from 1 */
 
-	if (param_bind->getBlobObject(parameterIndex)) {
-		param_bind->setBlob(parameterIndex, NULL, false);
+	{
+    param_bind->setBlob(parameterIndex, MySQL_ParamBind::Blob_t(), false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -520,7 +675,7 @@ MySQL_Prepared_Statement::setDouble(unsigned int parameterIndex, double value)
 	BufferSizePair p = allocate_buffer_for_type(t);
 
 	param_bind->set(parameterIndex);
-	MYSQL_BIND * param = &param_bind->get()[parameterIndex];
+	MYSQL_BIND * param = &param_bind->getBindObject()[parameterIndex];
 
 	param->buffer_type	= t;
 	delete [] static_cast<char *>(param->buffer);
@@ -549,8 +704,8 @@ MySQL_Prepared_Statement::setInt(unsigned int parameterIndex, int32_t value)
 	}
 	--parameterIndex; /* DBC counts from 1 */
 
-	if (param_bind->getBlobObject(parameterIndex)) {
-		param_bind->setBlob(parameterIndex, NULL, false);
+	{
+    param_bind->setBlob(parameterIndex, MySQL_ParamBind::Blob_t(), false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -559,7 +714,7 @@ MySQL_Prepared_Statement::setInt(unsigned int parameterIndex, int32_t value)
 	BufferSizePair p = allocate_buffer_for_type(t);
 
 	param_bind->set(parameterIndex);
-	MYSQL_BIND * param = &param_bind->get()[parameterIndex];
+	MYSQL_BIND * param = &param_bind->getBindObject()[parameterIndex];
 
 	param->buffer_type	= t;
 	delete [] static_cast<char *>(param->buffer);
@@ -588,8 +743,8 @@ MySQL_Prepared_Statement::setUInt(unsigned int parameterIndex, uint32_t value)
 	}
 	--parameterIndex; /* DBC counts from 1 */
 
-	if (param_bind->getBlobObject(parameterIndex)) {
-		param_bind->setBlob(parameterIndex, NULL, false);
+	{
+    param_bind->setBlob(parameterIndex, MySQL_ParamBind::Blob_t(), false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -598,7 +753,7 @@ MySQL_Prepared_Statement::setUInt(unsigned int parameterIndex, uint32_t value)
 	BufferSizePair p = allocate_buffer_for_type(t);
 
 	param_bind->set(parameterIndex);
-	MYSQL_BIND * param = &param_bind->get()[parameterIndex];
+	MYSQL_BIND * param = &param_bind->getBindObject()[parameterIndex];
 
 	param->buffer_type	= t;
 	delete [] static_cast<char *>(param->buffer);
@@ -627,8 +782,8 @@ MySQL_Prepared_Statement::setInt64(unsigned int parameterIndex, int64_t value)
 	}
 	--parameterIndex; /* DBC counts from 1 */
 
-	if (param_bind->getBlobObject(parameterIndex)) {
-		param_bind->setBlob(parameterIndex, NULL, false);
+	{
+		param_bind->setBlob(parameterIndex, MySQL_ParamBind::Blob_t(), false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -637,7 +792,7 @@ MySQL_Prepared_Statement::setInt64(unsigned int parameterIndex, int64_t value)
 	BufferSizePair p = allocate_buffer_for_type(t);
 
 	param_bind->set(parameterIndex);
-	MYSQL_BIND * param = &param_bind->get()[parameterIndex];
+	MYSQL_BIND * param = &param_bind->getBindObject()[parameterIndex];
 
 	param->buffer_type	= t;
 	delete [] static_cast<char *>(param->buffer);
@@ -665,8 +820,8 @@ MySQL_Prepared_Statement::setUInt64(unsigned int parameterIndex, uint64_t value)
 	}
 	--parameterIndex; /* DBC counts from 1 */
 
-	if (param_bind->getBlobObject(parameterIndex)) {
-		param_bind->setBlob(parameterIndex, NULL, false);
+	{
+		param_bind->setBlob(parameterIndex, MySQL_ParamBind::Blob_t(), false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -676,7 +831,7 @@ MySQL_Prepared_Statement::setUInt64(unsigned int parameterIndex, uint64_t value)
 	BufferSizePair p = allocate_buffer_for_type(t);
 
 	param_bind->set(parameterIndex);
-	MYSQL_BIND * param = &param_bind->get()[parameterIndex];
+	MYSQL_BIND * param = &param_bind->getBindObject()[parameterIndex];
 
 	param->buffer_type	= t;
 	delete [] static_cast<char *>(param->buffer);
@@ -706,8 +861,8 @@ MySQL_Prepared_Statement::setNull(unsigned int parameterIndex, int /* sqlType */
 	}
 	--parameterIndex; /* DBC counts from 1 */
 
-	if (param_bind->getBlobObject(parameterIndex)) {
-		param_bind->setBlob(parameterIndex, NULL, false);
+	{
+		param_bind->setBlob(parameterIndex, MySQL_ParamBind::Blob_t(), false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -716,7 +871,7 @@ MySQL_Prepared_Statement::setNull(unsigned int parameterIndex, int /* sqlType */
 	BufferSizePair p = allocate_buffer_for_type(t);
 
 	param_bind->set(parameterIndex);
-	MYSQL_BIND * param = &param_bind->get()[parameterIndex];
+	MYSQL_BIND * param = &param_bind->getBindObject()[parameterIndex];
 
 	param->buffer_type	= t;
 	delete [] static_cast<char *>(param->buffer);
@@ -741,20 +896,20 @@ MySQL_Prepared_Statement::setString(unsigned int parameterIndex, const sql::SQLS
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setString: invalid 'parameterIndex'");
 	}
 	if (value.length() > 256*1024) {
-		return setBlob_intern(parameterIndex, new std::istringstream(value), true);
+		return param_bind->setBlob(--parameterIndex, MySQL_ParamBind::Blob_t(const_cast<sql::SQLString*>(&value)), false);
 	}
 
 	--parameterIndex; /* DBC counts from 1 */
 
-	if (param_bind->getBlobObject(parameterIndex)) {
-		param_bind->setBlob(parameterIndex, NULL, false);
+	{
+		param_bind->setBlob(parameterIndex, MySQL_ParamBind::Blob_t(), false);
 		param_bind->unset(parameterIndex);
 	}
 
 	enum_field_types t = MYSQL_TYPE_STRING;
 
 	param_bind->set(parameterIndex);
-	MYSQL_BIND * param = &param_bind->get()[parameterIndex];
+	MYSQL_BIND * param = &param_bind->getBindObject()[parameterIndex];
 
 	delete [] static_cast<char *>(param->buffer);
 

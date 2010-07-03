@@ -43,7 +43,7 @@ namespace simple
 	 */
 
     /* throws std::exception * */
-    void testByteStreamInsert( Connection & c );
+    void testBlobInsert( Connection & c, bool asString= false );
 
 
     /* throws std::exception * */
@@ -74,7 +74,8 @@ namespace simple
   public:
     TEST_FIXTURE( BlobTest )
     {
-			TEST_CASE( testByteStreamInsert );
+		TEST_CASE( testBlobStreamInsert );
+		TEST_CASE( testBlobStringInsert );
     }
 
 
@@ -96,7 +97,8 @@ namespace simple
 
 
     /* throws std::exception * */
-    void testByteStreamInsert();
+    void testBlobStreamInsert();
+    void testBlobStringInsert();
 
   };
 

@@ -48,7 +48,7 @@ namespace StringUtils
 
   String toHexString( char c, bool leading0x= false );
 
-  String toHexString( char c[], int count, bool leading0x= false );
+  String toHexString( const char * c, int count, bool leading0x= false );
 
   String & concatSeparated( String & to, const String & add, const String & separator= " " );
 }
