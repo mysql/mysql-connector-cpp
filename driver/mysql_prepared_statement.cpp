@@ -373,7 +373,8 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 	for (unsigned int i = 0; i < param_count; ++i) {
 		if (bind[i].buffer_type == MYSQL_TYPE_LONG_BLOB) {
 			::sql::mysql::LongDataSender lv( i, proxy );
-			boost::apply_visitor(lv, param_bind->getBlobObject(i));
+      MySQL_ParamBind::Blob_t dummy(param_bind->getBlobObject(i));
+			boost::apply_visitor(lv, dummy);
 		}
 
 	}

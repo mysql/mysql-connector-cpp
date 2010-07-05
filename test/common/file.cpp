@@ -12,6 +12,7 @@
 #include "file.h"
 #include "stringutils.h"
 #include <stdlib.h>
+#include <exception>
 
 namespace FileUtils
 {
