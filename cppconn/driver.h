@@ -12,8 +12,6 @@
 #ifndef _SQL_DRIVER_H_
 #define _SQL_DRIVER_H_
 
-#include <string>
-#include <map>
 #include "connection.h"
 #include "build_config.h"
 
@@ -45,6 +43,7 @@ public:
 extern "C"
 {
 	CPPCONN_PUBLIC_FUNC sql::Driver * get_driver_instance();
+	CPPCONN_PUBLIC_FUNC sql::Driver * get_driver_instance_by_name(const char * const clientlib);
 }
 
 #endif /* _SQL_DRIVER_H_ */

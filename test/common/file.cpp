@@ -12,7 +12,6 @@
 #include "file.h"
 #include "stringutils.h"
 #include <stdlib.h>
-#include <exception>
 
 namespace FileUtils
 {
@@ -108,13 +107,15 @@ namespace FileUtils
 
       if ( fStr.bad() )
       {
-        throw std::exception("Error while reading from file stream (bad)");
+				const char msg[]= "Error while reading from file stream (bad)";
+				throw std::exception(msg);
       }
       else if ( fStr.fail() )
       {
         if (! fStr.eof() )
         {
-          throw std::exception("Error while reading from file stream (fail)");
+					const char msg[]= "Error while reading from file stream (fail)";
+					throw std::exception(msg);
         }
       }
       str.append( buff,fStr.gcount() );
