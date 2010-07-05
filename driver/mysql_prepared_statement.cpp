@@ -569,7 +569,8 @@ MySQL_Prepared_Statement::setBlob(unsigned int parameterIndex, std::istream * bl
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setBlob: invalid 'parameterIndex'");
 	}
 
-	param_bind->setBlob(--parameterIndex, MySQL_ParamBind::Blob_t(blob), false);
+	MySQL_ParamBind::Blob_t dummy(blob);
+	param_bind->setBlob(--parameterIndex, dummy, false);
 }
 /* }}} */
 
@@ -666,7 +667,8 @@ MySQL_Prepared_Statement::setDouble(unsigned int parameterIndex, double value)
 	--parameterIndex; /* DBC counts from 1 */
 
 	{
-    param_bind->setBlob(parameterIndex, MySQL_ParamBind::Blob_t(), false);
+		MySQL_ParamBind::Blob_t dummy;
+    param_bind->setBlob(parameterIndex, dummy, false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -705,7 +707,8 @@ MySQL_Prepared_Statement::setInt(unsigned int parameterIndex, int32_t value)
 	--parameterIndex; /* DBC counts from 1 */
 
 	{
-    param_bind->setBlob(parameterIndex, MySQL_ParamBind::Blob_t(), false);
+		MySQL_ParamBind::Blob_t dummy;
+		param_bind->setBlob(parameterIndex, dummy, false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -744,7 +747,8 @@ MySQL_Prepared_Statement::setUInt(unsigned int parameterIndex, uint32_t value)
 	--parameterIndex; /* DBC counts from 1 */
 
 	{
-    param_bind->setBlob(parameterIndex, MySQL_ParamBind::Blob_t(), false);
+		MySQL_ParamBind::Blob_t dummy;
+    param_bind->setBlob(parameterIndex, dummy, false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -783,7 +787,8 @@ MySQL_Prepared_Statement::setInt64(unsigned int parameterIndex, int64_t value)
 	--parameterIndex; /* DBC counts from 1 */
 
 	{
-		param_bind->setBlob(parameterIndex, MySQL_ParamBind::Blob_t(), false);
+		MySQL_ParamBind::Blob_t dummy;
+		param_bind->setBlob(parameterIndex, dummy, false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -821,7 +826,8 @@ MySQL_Prepared_Statement::setUInt64(unsigned int parameterIndex, uint64_t value)
 	--parameterIndex; /* DBC counts from 1 */
 
 	{
-		param_bind->setBlob(parameterIndex, MySQL_ParamBind::Blob_t(), false);
+		MySQL_ParamBind::Blob_t dummy;
+		param_bind->setBlob(parameterIndex, dummy, false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -862,7 +868,8 @@ MySQL_Prepared_Statement::setNull(unsigned int parameterIndex, int /* sqlType */
 	--parameterIndex; /* DBC counts from 1 */
 
 	{
-		param_bind->setBlob(parameterIndex, MySQL_ParamBind::Blob_t(), false);
+		MySQL_ParamBind::Blob_t dummy;
+		param_bind->setBlob(parameterIndex, dummy, false);
 		param_bind->unset(parameterIndex);
 	}
 
@@ -896,13 +903,15 @@ MySQL_Prepared_Statement::setString(unsigned int parameterIndex, const sql::SQLS
 		throw InvalidArgumentException("MySQL_Prepared_Statement::setString: invalid 'parameterIndex'");
 	}
 	if (value.length() > 256*1024) {
-		return param_bind->setBlob(--parameterIndex, MySQL_ParamBind::Blob_t(const_cast<sql::SQLString*>(&value)), false);
+		MySQL_ParamBind::Blob_t dummy(const_cast<sql::SQLString*>(&value));
+		return param_bind->setBlob(--parameterIndex, dummy, false);
 	}
 
 	--parameterIndex; /* DBC counts from 1 */
 
 	{
-		param_bind->setBlob(parameterIndex, MySQL_ParamBind::Blob_t(), false);
+		MySQL_ParamBind::Blob_t dummy;
+		param_bind->setBlob(parameterIndex, dummy, false);
 		param_bind->unset(parameterIndex);
 	}
 
