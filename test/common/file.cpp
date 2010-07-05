@@ -107,15 +107,13 @@ namespace FileUtils
 
       if ( fStr.bad() )
       {
-				const char msg[]= "Error while reading from file stream (bad)";
-				throw std::exception(msg);
+				throw std::runtime_error("Error while reading from file stream (bad)");
       }
       else if ( fStr.fail() )
       {
         if (! fStr.eof() )
         {
-					const char msg[]= "Error while reading from file stream (fail)";
-					throw std::exception(msg);
+					throw std::runtime_error("Error while reading from file stream (fail)");
         }
       }
       str.append( buff,fStr.gcount() );
