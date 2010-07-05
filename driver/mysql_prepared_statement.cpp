@@ -230,7 +230,7 @@ public:
 			it != blob_bind.end(); ++it) {
 			if (delete_blob_after_execute[it->first]) {
 				delete_blob_after_execute[it->first] = false;
-				boost::apply_visitor(BlobBindDeleter(), it->second);
+				boost::apply_visitor(::sql::mysql::BlobBindDeleter(), it->second);
 			}
 		}
 	}
@@ -245,7 +245,7 @@ public:
 		value_set[position] = false;
 		if (delete_blob_after_execute[position]) {
 			delete_blob_after_execute[position] = false;
-			boost::apply_visitor(BlobBindDeleter(),blob_bind[position]);
+			boost::apply_visitor(::sql::mysql::BlobBindDeleter(),blob_bind[position]);
 			blob_bind.erase(position);
 		}
 	}
@@ -259,10 +259,10 @@ public:
 
 		Blobs::iterator it = blob_bind.find(position);
 		if (it != blob_bind.end() && delete_blob_after_execute[position]) {
-				boost::apply_visitor(BlobBindDeleter(), it->second);
+				boost::apply_visitor(::sql::mysql::BlobBindDeleter(), it->second);
 			}
 
-		if (boost::apply_visitor(BlobIsNull(), blob))
+		if (boost::apply_visitor(::sql::mysql::BlobIsNull(), blob))
 		{
 		  if (it != blob_bind.end())
 			blob_bind.erase(it);
@@ -298,7 +298,7 @@ public:
 			if (value_set[i]) {
 				Blobs::iterator it= blob_bind.find(i);
 				if (it != blob_bind.end() && delete_blob_after_execute[i]) {
-					boost::apply_visitor(BlobBindDeleter(), it->second);
+					boost::apply_visitor(::sql::mysql::BlobBindDeleter(), it->second);
 					blob_bind.erase(it);
 				}
 				blob_bind[i] = Blob_t();
@@ -372,7 +372,7 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 
 	for (unsigned int i = 0; i < param_count; ++i) {
 		if (bind[i].buffer_type == MYSQL_TYPE_LONG_BLOB) {
-			LongDataSender lv( i, proxy );
+			::sql::mysql::LongDataSender lv( i, proxy );
 			boost::apply_visitor(lv, param_bind->getBlobObject(i));
 		}
 
