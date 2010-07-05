@@ -2,7 +2,17 @@
   Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
 */
 
-GA  1.1.0 - 2010-03-xx
+GA  1.1.0 - 2010-08-xx
+
+- Changed FindMySQL.cm so it looks for mysqlclient in the ENV{MySQL_DIR}\lib,
+  as that is where it's located in (some) Connector/C distros. (Lawrin)
+
+- Fixed bug in CmakeLists.txt - it didn't really use ENV{BOOST_ROOT}, boost wasn't
+  searched in the directory set in that environment variable. (Lawrin)
+
+- Fixed http://bugs.mysql.com/bug.php?id=51562 : error messages did not get
+  reported properly if error occured after query execution and before fetching
+  data within the underlying C API call mysql_use|store_result. (Andrey)
 
 - BIT fields are now correctly decoded (Workbench bug #36239). (Andrey)
 
