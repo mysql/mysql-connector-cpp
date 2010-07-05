@@ -33,6 +33,7 @@
 #endif
 #endif
 
+#define NULLCSTR static_cast<char *>(0)
 
 #ifndef _WIN32
 #  ifndef HAVE_FUNCTION_STRTOLL

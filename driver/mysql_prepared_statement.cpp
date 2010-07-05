@@ -625,7 +625,7 @@ allocate_buffer_for_type(enum_field_types t)
 		case MYSQL_TYPE_VAR_STRING:
 #endif
 		case MYSQL_TYPE_STRING:
-			return BufferSizePair(NULL, 0);
+			return BufferSizePair(NULLCSTR, 0);
 
 #if A1
 		// We don't use these now. When we have setXXX, we can enable them
@@ -647,7 +647,7 @@ allocate_buffer_for_type(enum_field_types t)
 		case MYSQL_TYPE_BIT:
 #endif
 		case MYSQL_TYPE_NULL:
-			return BufferSizePair(NULL, 0);
+			return BufferSizePair(NULLCSTR, 0);
 		default:
 			throw sql::InvalidArgumentException("allocate_buffer_for_type: invalid result_bind data type");
 	}
