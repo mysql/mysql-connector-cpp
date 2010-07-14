@@ -27,7 +27,7 @@ get_connection(const std::string& host, const std::string& user, const std::stri
 		connection_properties["hostName"] = host;
 		connection_properties["userName"] = user;
 		connection_properties["password"] = pass;
-		return new sql::mysql::MySQL_Connection(connection_properties);
+		return driver->connect(connection_properties);
 	}
 }
 /* }}} */

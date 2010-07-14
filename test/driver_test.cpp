@@ -34,7 +34,7 @@ get_connection(const std::string & host, const std::string & user, const std::st
 	try {
 		/* There will be concurrency problem if we had threads, but don't have, then it's ok */
 		if (!mysql_driver) {
-			mysql_driver = sql::mysql::MySQL_Driver::Instance();
+			mysql_driver = get_driver_instance();
 		}
 		if (loops % 2) {
 			return mysql_driver->connect(host, user, pass);
