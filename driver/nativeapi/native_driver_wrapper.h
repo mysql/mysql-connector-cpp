@@ -1,0 +1,58 @@
+/*
+   Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+
+   The MySQL Connector/C++ is licensed under the terms of the GPL
+   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+   MySQL Connectors. There are special exceptions to the terms and
+   conditions of the GPL as it is applied to this software, see the
+   FLOSS License Exception
+   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+*/
+
+#ifndef _NATIVE_DRIVER_WRAPPER_H_
+#define _NATIVE_DRIVER_WRAPPER_H_
+
+#include <boost/noncopyable.hpp>
+#include <config.h>
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+
+namespace sql
+{
+namespace mysql
+{
+namespace NativeAPI
+{
+
+class NativeConnectionWrapper;
+
+class NativeDriverWrapper : public boost::noncopyable
+{
+public:
+	virtual ~NativeDriverWrapper(){}
+
+	virtual NativeConnectionWrapper & conn_init() = 0;
+
+	virtual void thread_end() = 0;
+
+	virtual void thread_init() = 0;
+};
+
+NativeDriverWrapper * createNativeDriverWrapper(const SQLString & clientFileName);
+
+
+} /* namespace NativeAPI*/
+} /* namespace mysql */
+} /* namespace sql */
+
+#endif // _NATIVE_DRIVER_WRAPPER_H_
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: noet sw=4 ts=4 fdm=marker
+ * vim<600: noet sw=4 ts=4
+ */
