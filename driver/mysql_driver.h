@@ -12,6 +12,8 @@
 #ifndef _MYSQL_DRIVER_H_
 #define _MYSQL_DRIVER_H_
 
+#include <boost/scoped_ptr.hpp>
+
 #include <cppconn/driver.h>
 
 extern "C"
@@ -23,24 +25,22 @@ namespace sql
 {
 namespace mysql
 {
-namespace util
+namespace NativeAPI
 {
-
-class LibmysqlDynamicProxy;
-
+	class NativeDriverWrapper;
 }
 
-class Connection;
-class ConnectProperty;
+//class sql::mysql::NativeAPI::NativeDriverWrapper;
 
 class CPPCONN_PUBLIC_FUNC MySQL_Driver : public sql::Driver
 {
+	boost::scoped_ptr< ::sql::mysql::NativeAPI::NativeDriverWrapper > proxy;
 
 public:
-	MySQL_Driver(); /* DON'T CALL THIS, USE Instance() */
-	virtual ~MySQL_Driver();/* DON'T CALL THIS, MEMORY WILL BE AUTOMAGICALLY CLEANED */
+	MySQL_Driver();
+	MySQL_Driver(const ::sql::SQLString & clientLib);
 
-	static MySQL_Driver * Instance();
+	virtual ~MySQL_Driver();
 
 	sql::Connection * connect(const sql::SQLString& hostName, const sql::SQLString& userName, const sql::SQLString& password);
 
@@ -54,11 +54,21 @@ public:
 
 	const sql::SQLString & getName();
 
+	void threadInit();
+
+	void threadEnd();
+
 private:
 	/* Prevent use of these */
 	MySQL_Driver(const MySQL_Driver &);
 	void operator=(MySQL_Driver &);
 };
+
+/** We do not hide the function if MYSQLCLIENT_STATIC_BINDING(or anything else) not defined
+    because the counterpart C function is declared in the cppconn and is always visible.
+    If dynamic loading is not enabled then its result is just like of get_driver_instance()
+*/
+CPPCONN_PUBLIC_FUNC MySQL_Driver * get_driver_instance_by_name(const char * const clientlib);
 
 CPPCONN_PUBLIC_FUNC MySQL_Driver * get_driver_instance();
 static inline MySQL_Driver * get_mysql_driver_instance() { return get_driver_instance(); }

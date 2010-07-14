@@ -31,19 +31,9 @@ namespace mysql
 namespace NativeAPI
 {
 
-
-/* {{{ createStMysqlWrapper() */
-NativeConnectionWrapper *
-createNativeConnectionWrapper(const SQLString & clientFileName)
-{
-	return new MySQL_NativeConnectionWrapper(clientFileName);
-}
-/* }}} */
-
-
 /* {{{ MySQL_NativeConnectionWrapper::MySQL_NativeConnectionWrapper() */
-MySQL_NativeConnectionWrapper::MySQL_NativeConnectionWrapper(const ::sql::SQLString & clientFileName)
-	: api(::sql::mysql::NativeAPI::getCApiHandle(clientFileName)), mysql(api->init(NULL))
+MySQL_NativeConnectionWrapper::MySQL_NativeConnectionWrapper(boost::shared_ptr<IMySQLCAPI> _api)
+	: api(_api), mysql(api->init(NULL))
 {
 	if (mysql == NULL) {
 		throw sql::SQLException("Insufficient memory: cannot create MySQL handle using mysql_init()");

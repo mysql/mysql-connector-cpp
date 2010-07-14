@@ -15,21 +15,30 @@
 
 // Looks like this one should go after private_iface
 #include "mysql_driver.h"
+#include "nativeapi/native_driver_wrapper.h"
 
 
 extern "C"
 {
 CPPCONN_PUBLIC_FUNC void * sql_mysql_get_driver_instance()
 {
-	return sql::mysql::get_driver_instance();
+	void * ret = sql::mysql::get_driver_instance();
+	return ret;
 }
 
-#ifdef CPPCONN_SO_BUILD
+
+/* these are the functions without namespace - from cppconn/driver.h */
+CPPCONN_PUBLIC_FUNC sql::Driver * get_driver_instance_by_name(const char * const clientlib)
+{
+	return sql::mysql::get_driver_instance_by_name(clientlib);
+}
+
+
 CPPCONN_PUBLIC_FUNC sql::Driver * get_driver_instance()
 {
 	return sql::mysql::get_driver_instance();
 }
-#endif
+
 
 } /* extern "C" */
 
@@ -38,32 +47,53 @@ namespace sql
 namespace mysql
 {
 
-static bool module_already_loaded = 0;
-
+static const ::sql::SQLString emptyStr("");
+/* Mapping by client name is probably not enough here */
+static std::map< sql::SQLString, boost::shared_ptr<MySQL_Driver> > driver;
 
 CPPCONN_PUBLIC_FUNC sql::mysql::MySQL_Driver * get_driver_instance()
 {
-	return sql::mysql::MySQL_Driver::Instance();
+	return get_driver_instance_by_name("");
 }
 
-static sql::mysql::MySQL_Driver d;
 
-MySQL_Driver * MySQL_Driver::Instance()
+CPPCONN_PUBLIC_FUNC sql::mysql::MySQL_Driver * get_driver_instance_by_name(const char * const clientlib)
 {
-	return &d;
+	::sql::SQLString dummy(clientlib);
+
+  std::map< sql::SQLString, boost::shared_ptr< MySQL_Driver > >::const_iterator cit;
+
+  if ((cit = driver.find(dummy)) != driver.end()) {
+    return cit->second.get();
+	} else {
+    boost::shared_ptr< MySQL_Driver > newDriver;
+
+		newDriver.reset(new MySQL_Driver(dummy));
+    driver[dummy] = newDriver;
+
+    return newDriver.get();
+  }
 }
 
 
 MySQL_Driver::MySQL_Driver()
 {
-	if (!module_already_loaded) {
-		//mysql_library_init(0, NULL, NULL);
-		module_already_loaded = true;
-	} else {
-		throw sql::InvalidArgumentException("You should not call directly the constructor");
+	try {
+		proxy.reset(::sql::mysql::NativeAPI::createNativeDriverWrapper(emptyStr));
+	}	catch(std::runtime_error & e)	{
+		throw sql::InvalidArgumentException(e.what());
 	}
 }
 
+
+MySQL_Driver::MySQL_Driver(const ::sql::SQLString & clientLib)
+{
+	try {
+		proxy.reset(::sql::mysql::NativeAPI::createNativeDriverWrapper(clientLib));
+	}	catch(std::runtime_error & e)	{
+		throw sql::InvalidArgumentException(e.what());
+	}
+}
 
 
 MySQL_Driver::~MySQL_Driver()
@@ -75,13 +105,13 @@ sql::Connection * MySQL_Driver::connect(const sql::SQLString& hostName,
 										const sql::SQLString& userName,
 										const sql::SQLString& password)
 {
-	return new MySQL_Connection(hostName, userName, password);
+	return new MySQL_Connection(this, proxy->conn_init(),hostName, userName, password);
 }
 
 
 sql::Connection * MySQL_Driver::connect(sql::ConnectOptionsMap & properties)
 {
-	return new MySQL_Connection(properties);
+	return new MySQL_Connection(this, proxy->conn_init(),properties);
 }
 
 
@@ -104,6 +134,18 @@ const sql::SQLString & MySQL_Driver::getName()
 {
 	static const sql::SQLString name("MySQL Connector C++ (libmysql)");
 	return name;
+}
+
+
+void MySQL_Driver::threadInit()
+{
+	proxy->thread_init();
+}
+
+
+void MySQL_Driver::threadEnd()
+{
+	proxy->thread_end();
 }
 
 } /* namespace mysql */

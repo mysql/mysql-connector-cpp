@@ -98,8 +98,6 @@ public:
 	virtual NativeStatementWrapper & stmt_init() = 0;
 };
 
-NativeConnectionWrapper * createNativeConnectionWrapper(const SQLString & clientFileName);
-
 } /* namespace NativeAPI */
 } /* namespace mysql */
 } /* namespace sql */

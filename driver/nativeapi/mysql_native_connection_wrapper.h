@@ -14,6 +14,7 @@
 
 #include "native_connection_wrapper.h"
 
+#include <cppconn/sqlstring.h>
 #include <boost/shared_ptr.hpp>
 
 
@@ -34,6 +35,7 @@ inline const char * nullIfEmpty(const ::sql::SQLString & str)
 
 class MySQL_NativeConnectionWrapper : public NativeConnectionWrapper
 {
+	/* api should be declared before mysql here */
 	boost::shared_ptr< IMySQLCAPI >	api;
 
 	struct ::st_mysql *				mysql;
@@ -45,7 +47,7 @@ class MySQL_NativeConnectionWrapper : public NativeConnectionWrapper
 
 public:
 
-	MySQL_NativeConnectionWrapper(const ::sql::SQLString & clientFileName);
+	MySQL_NativeConnectionWrapper(boost::shared_ptr<IMySQLCAPI> _api);
 
 	virtual ~MySQL_NativeConnectionWrapper();
 

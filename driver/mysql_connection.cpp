@@ -86,8 +86,12 @@ MySQL_Savepoint::getSavepointName()
 
 
 /* {{{ MySQL_Connection::MySQL_Connection() -I- */
-MySQL_Connection::MySQL_Connection(const sql::SQLString& hostName, const sql::SQLString& userName, const sql::SQLString& password)
-	: intern(NULL)
+MySQL_Connection::MySQL_Connection(Driver * _driver,
+								   ::sql::mysql::NativeAPI::NativeConnectionWrapper& _proxy,
+								   const sql::SQLString& hostName,
+								   const sql::SQLString& userName,
+								   const sql::SQLString& password)
+	: driver(_driver), proxy(&_proxy), intern(NULL)
 {
 	sql::ConnectOptionsMap connection_properties;
 	connection_properties["hostName"] = hostName;
@@ -107,8 +111,10 @@ MySQL_Connection::MySQL_Connection(const sql::SQLString& hostName, const sql::SQ
 
 
 /* {{{ MySQL_Connection::MySQL_Connection() -I- */
-MySQL_Connection::MySQL_Connection(sql::ConnectOptionsMap & properties)
-	:intern(NULL)
+MySQL_Connection::MySQL_Connection(Driver * _driver,
+								   ::sql::mysql::NativeAPI::NativeConnectionWrapper& _proxy,
+								   sql::ConnectOptionsMap & properties)
+	: driver(_driver), proxy(&_proxy), intern(NULL)
 {
 	boost::shared_ptr<MySQL_DebugLogger> tmp_logger(new MySQL_DebugLogger());
 	std::auto_ptr< MySQL_ConnectionData > tmp_intern(new MySQL_ConnectionData(tmp_logger));
@@ -193,8 +199,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	sql::SQLString schema;
 	sql::SQLString defaultCharset("utf8");
 	sql::SQLString characterSetResults("utf8");
-	// "" means default mysqlclient library name
-	sql::SQLString clientlib("");
 
 	sql::SQLString sslKey, sslCert, sslCA, sslCAPath, sslCipher;
 	bool ssl_used = false, schema_used = false;
@@ -294,13 +298,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 				throw sql::InvalidArgumentException("No string value passed for sslCipher");
 			}
 			ssl_used = true;
-		} else if (it->first.compare("clientlib") == 0) {
-			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
-				clientlib = *p_s;
-			} else {
-				throw sql::InvalidArgumentException("No string value passed for driver");
-			}
-
 		} else if (!it->first.compare("defaultStatementResultType")) {
 			if (!(p_i = boost::get< int >(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for defaultStatementResultType");
@@ -406,12 +403,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 				flags |= CLIENT_NO_SCHEMA;
 			}
 		}
-	}
-
-	try {
-		proxy.reset(NativeAPI::createNativeConnectionWrapper(clientlib));
-	} catch (std::runtime_error & e) {
-		throw sql::InvalidArgumentException(e.what());
 	}
 
 #ifndef _WIN32
@@ -629,6 +620,14 @@ MySQL_Connection::getCatalog()
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getCatalog");
 	checkClosed();
 	return proxy->get_server_version() > 60006 ? "def" : "";
+}
+/* }}} */
+
+
+/* {{{ MySQL_Connection::getDriver() -I- */
+Driver * MySQL_Connection::getDriver()
+{
+	return driver;
 }
 /* }}} */
 

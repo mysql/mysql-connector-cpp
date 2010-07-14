@@ -54,7 +54,7 @@ LibraryLoader::LibraryLoader(const std::string & path2libFile)
 	: loadedLibHandle (NULL)
 {
 	if ((loadedLibHandle = LoadLibrary(path2libFile.c_str())) == NULL) {
-		throw std::runtime_error("Couldn't load library " + path2libFile + ": " + ErrorMessage());
+		throw std::runtime_error(std::string("Couldn't load library ") + path2libFile + ": " + ErrorMessage());
 	}
 }
 /* }}} */
@@ -74,7 +74,7 @@ LibraryLoader::LibraryLoader(const std::string & dir2look, const std::string & l
 	fullname += libFileName;
 	if ((loadedLibHandle = LoadLibrary(fullname.c_str())) == NULL) {
 #endif
-		throw std::runtime_error("Couldn't load library " + libFileName + ": " + ErrorMessage());
+		throw std::runtime_error(std::string("Couldn't load library ") + libFileName + ": " + ErrorMessage());
 	}
 }
 /* }}} */

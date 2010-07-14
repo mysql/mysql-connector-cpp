@@ -181,6 +181,10 @@ public:
 	const char * stmt_sqlstate(MYSQL_STMT *);
 
 	int stmt_store_result(MYSQL_STMT *);
+
+	void thread_init();
+
+	void thread_end();
 };
 
 } /* namespace NativeAPI */

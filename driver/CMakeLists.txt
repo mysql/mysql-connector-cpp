@@ -97,11 +97,13 @@ SET(MYSQLCPPCONN_SOURCES
 	mysql_statement.cpp
 	mysql_util.cpp
 	mysql_warning.cpp
+	nativeapi/mysql_client_api.cpp
+	nativeapi/library_loader.cpp
+	nativeapi/mysql_native_driver_wrapper.cpp
 	nativeapi/mysql_native_connection_wrapper.cpp
 	nativeapi/mysql_native_statement_wrapper.cpp
-	nativeapi/mysql_client_api.cpp
 	nativeapi/mysql_native_resultset_wrapper.cpp
-	nativeapi/library_loader.cpp)
+)
 
 
 IF(WIN32)
@@ -125,11 +127,13 @@ IF(WIN32)
 		mysql_statement.h
 		mysql_util.h
 		mysql_warning.h
+		nativeapi/mysql_client_api.h
+		nativeapi/mysql_native_driver_wrapper.h
+		nativeapi/native_driver_wrapper.h
 		nativeapi/mysql_native_connection_wrapper.h
 		nativeapi/native_connection_wrapper.h
 		nativeapi/mysql_native_statement_wrapper.h
 		nativeapi/native_statement_wrapper.h
-		nativeapi/mysql_client_api.h
 		nativeapi/mysql_native_resultset_wrapper.h
 		nativeapi/native_resultset_wrapper.h
 		../cppconn/warning.h

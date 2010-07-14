@@ -36,6 +36,10 @@ public:
 	virtual int getPatchVersion() = 0;
 
 	virtual const sql::SQLString & getName() = 0;
+
+	virtual void threadInit() = 0;
+
+	virtual void threadEnd() = 0;
 };
 
 } /* namespace sql */
@@ -43,6 +47,8 @@ public:
 extern "C"
 {
 	CPPCONN_PUBLIC_FUNC sql::Driver * get_driver_instance();
+
+  /* If dynamic loading is disabled in a driver then this function works just like get_driver_instance() */
 	CPPCONN_PUBLIC_FUNC sql::Driver * get_driver_instance_by_name(const char * const clientlib);
 }
 

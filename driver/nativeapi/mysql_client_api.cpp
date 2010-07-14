@@ -30,6 +30,7 @@ namespace mysql
 namespace NativeAPI
 {
 
+/* We need probably multi_index map by path and HMODULE/void * as we can load same library by different name */
 static std::map< sql::SQLString, boost::shared_ptr<IMySQLCAPI> > wrapper;
 
 boost::shared_ptr< IMySQLCAPI > getCApiHandle(const sql::SQLString & name)

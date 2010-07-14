@@ -705,6 +705,28 @@ LibmysqlDynamicProxy::stmt_store_result(MYSQL_STMT * stmt)
 /* }}} */
 
 
+/* {{{ LibmysqlDynamicProxy::thread_end() */
+void
+LibmysqlDynamicProxy::thread_end()
+{
+	ptr2mysql_thread_end ptr2_thread_end = symbol_safe_cast<ptr2mysql_thread_end>(GetProcAddr("mysql_thread_end"));
+
+	(*ptr2_thread_end)();
+}
+/* }}} */
+
+
+/* {{{ LibmysqlDynamicProxy::thread_init() */
+void
+LibmysqlDynamicProxy::thread_init()
+{
+	ptr2mysql_thread_init ptr2_thread_init = symbol_safe_cast<ptr2mysql_thread_init>(GetProcAddr("mysql_thread_init"));
+
+	(*ptr2_thread_init)();
+}
+/* }}} */
+
+
 } /* namespace util */
 } /* namespace mysql */
 } /* namespace sql */

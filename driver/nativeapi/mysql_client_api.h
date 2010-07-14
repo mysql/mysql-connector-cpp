@@ -133,6 +133,9 @@ typedef const char * (STDCALL *ptr2mysql_stmt_sqlstate)(MYSQL_STMT *);
 
 typedef int (STDCALL *ptr2mysql_stmt_store_result)(MYSQL_STMT *);
 
+typedef void (STDCALL *ptr2mysql_thread_init)();
+
+typedef void (STDCALL *ptr2mysql_thread_end)();
 
 /*
  * Interface MySQL C-API wrapper class should implement.
@@ -262,6 +265,10 @@ public:
 	virtual const char *  stmt_sqlstate(MYSQL_STMT *) = 0;
 
 	virtual int stmt_store_result(MYSQL_STMT *) = 0;
+
+	virtual void thread_end() = 0;
+
+	virtual void thread_init() = 0;
 };
 
 boost::shared_ptr<IMySQLCAPI> getCApiHandle(const sql::SQLString & name);

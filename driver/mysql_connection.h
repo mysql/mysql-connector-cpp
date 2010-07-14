@@ -50,9 +50,14 @@ class NativeConnectionWrapper;
 class CPPCONN_PUBLIC_FUNC MySQL_Connection : public sql::Connection
 {
 public:
-	MySQL_Connection(const sql::SQLString& hostName, const sql::SQLString& userName, const sql::SQLString& password);
+	MySQL_Connection(Driver * _driver,
+					::sql::mysql::NativeAPI::NativeConnectionWrapper & _proxy,
+					const sql::SQLString& hostName,
+					const sql::SQLString& userName,
+					const sql::SQLString& password);
 
-	MySQL_Connection(std::map< sql::SQLString, sql::ConnectPropertyVal > & options);
+	MySQL_Connection(Driver * _driver, ::sql::mysql::NativeAPI::NativeConnectionWrapper & _proxy,
+					std::map< sql::SQLString, sql::ConnectPropertyVal > & options);
 
 	virtual ~MySQL_Connection();
 
@@ -69,6 +74,8 @@ public:
 	bool getAutoCommit();
 
 	sql::SQLString getCatalog();
+
+	Driver *getDriver();
 
 	sql::SQLString getSchema();
 
@@ -135,6 +142,7 @@ protected:
 	MySQL_ConnectionData * intern; /* pimpl */
 
 	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy;
+	Driver * driver;
 
 private:
 	/* Prevent use of these */

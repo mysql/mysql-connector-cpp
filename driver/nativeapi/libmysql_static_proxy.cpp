@@ -536,6 +536,24 @@ LibmysqlStaticProxy::stmt_store_result(MYSQL_STMT * stmt)
 }
 /* }}} */
 
+
+/* {{{ LibmysqlStaticProxy::thread_end() */
+void
+LibmysqlStaticProxy::thread_end()
+{
+	::mysql_thread_end();
+}
+/* }}} */
+
+
+/* {{{ LibmysqlStaticProxy::thread_init() */
+void
+LibmysqlStaticProxy::thread_init()
+{
+	::mysql_thread_init();
+}
+/* }}} */
+
 } /* namespace NativeAPI */
 } /* namespace mysql */
 } /* namespace sql */

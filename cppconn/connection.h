@@ -30,6 +30,7 @@ typedef std::map< sql::SQLString, ConnectPropertyVal > ConnectOptionsMap;
 class DatabaseMetaData;
 class PreparedStatement;
 class Statement;
+class Driver;
 
 typedef enum transaction_isolation
 {
@@ -76,6 +77,8 @@ public:
 	virtual bool getAutoCommit() = 0;
 
 	virtual sql::SQLString getCatalog() = 0;
+
+	virtual Driver *getDriver() = 0;
 
 	virtual sql::SQLString getSchema() = 0;
 
