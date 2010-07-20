@@ -26,7 +26,11 @@
 *
 * To run the example on Linux try something similar to:
 *
-*  LD_LIBRARY_PATH=/usr/local/lib/ ./standalone localhost root root
+*  LD_LIBRARY_PATH=/usr/local/lib/ ./standalone
+*
+* or:
+*
+*  LD_LIBRARY_PATH=/usr/local/lib/ ./standalone host user password database
 *
 */
 
