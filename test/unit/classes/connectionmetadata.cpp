@@ -539,15 +539,7 @@ void connectionmetadata::getDatabaseVersions()
     DatabaseMetaData * dbmeta=con->getMetaData();
     ASSERT_GT(2, dbmeta->getDatabaseMajorVersion());
     ASSERT_LT(7, dbmeta->getDatabaseMajorVersion());
-
-    if (dbmeta->getDatabaseMinorVersion() < 0)
-      FAIL("getDatabaseMinorVersion returns negative value.");
-
     ASSERT_LT(100, dbmeta->getDatabaseMinorVersion());
-
-    if (dbmeta->getDatabasePatchVersion() < 0)
-      FAIL("getDatabasePatchVersuin returns negative value.");
-
     ASSERT_LT(100, dbmeta->getDatabasePatchVersion());
 
     ASSERT_EQUALS("MySQL", dbmeta->getDatabaseProductName());
