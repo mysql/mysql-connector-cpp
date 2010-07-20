@@ -583,10 +583,11 @@ void resultset::getTypes()
 void resultset::getTypesMinorIssues()
 {
   logMsg("resultset::getTypesMinorIssues - MySQL_ResultSet::get*");
+  TODO("Will bail on very minor differences we may never address");
   std::vector<columndefinition>::iterator it;
   std::stringstream msg;
   bool got_warning=false;
-  bool got_minor_warning=false;
+  bool got_minor_warning=false;  
   ResultSet pres;
   std::string ps_value;
   std::string::size_type len_st;
