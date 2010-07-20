@@ -454,7 +454,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["hostName"]=(boolval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception I");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -468,7 +468,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["userName"]=(boolval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception II");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -482,7 +482,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["password"]=(boolval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception III");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -496,7 +496,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["port"]=(boolval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception IV");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -509,7 +509,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["socket"]=(boolval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception V");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -522,7 +522,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["pipe"]=(boolval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception VI");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -535,7 +535,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["schema"]=(boolval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception VII");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -548,7 +548,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["characterSetResults"]=(boolval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception VIII");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -561,7 +561,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["sslKey"]=(boolval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception IX");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -574,7 +574,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["sslCert"]=(boolval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception X");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -587,7 +587,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["sslCA"]=(boolval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XI");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -600,7 +600,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["sslCAPath"]=(boolval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XII");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -613,7 +613,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["sslCipher"]=(boolval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XIII");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -621,25 +621,28 @@ void connection::connectUsingMapWrongTypes()
     }
     connection_properties.erase("sslCipher");
 
+    /*
+    TODO -- will be moved into driver class.
     try
     {
       connection_properties["clientlib"]=(boolval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XIV");
     }
     catch (sql::InvalidArgumentException)
     {
-      /* expected */
+      expected 
     }
     connection_properties.erase("clientlib");
+    */
 
     try
     {
       connection_properties["defaultStatementResultType"]=(boolval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XV");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -652,7 +655,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["metadataUseInfoSchema"]=(strval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XVI");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -665,7 +668,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["CLIENT_COMPRESS"]=(strval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XVII");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -678,7 +681,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["CLIENT_FOUND_ROWS"]=(strval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XVIII");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -691,7 +694,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["CLIENT_IGNORE_SIGPIPE"]=(strval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XIX");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -704,7 +707,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["CLIENT_IGNORE_SPACE"]=(strval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XX");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -717,7 +720,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["CLIENT_INTERACTIVE"]=(strval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XXI");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -730,7 +733,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["CLIENT_LOCAL_FILES"]=(strval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XXII");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -743,7 +746,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["CLIENT_MULTI_STATEMENTS"]=(strval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XXIII");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -756,7 +759,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["CLIENT_NO_SCHEMA"]=(strval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XXIV");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -769,7 +772,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["OPT_CONNECT_TIMEOUT"]=(strval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XXV");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -782,7 +785,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["OPT_READ_TIMEOUT"]=(strval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XXVI");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -795,7 +798,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["OPT_WRITE_TIMEOUT"]=(strval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XXVII");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -808,7 +811,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["OPT_RECONNECT"]=(strval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XXVIII");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -821,7 +824,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["OPT_CHARSET_NAME"]=(boolval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XXIX");
     }
     catch (sql::InvalidArgumentException)
     {
@@ -834,7 +837,7 @@ void connection::connectUsingMapWrongTypes()
       connection_properties["OPT_REPORT_DATA_TRUNCATION"]=(strval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
-      FAIL("No exception");
+      FAIL("No exception XXX");
     }
     catch (sql::InvalidArgumentException)
     {
