@@ -69,6 +69,14 @@ void resultsetmetadata::doGetCatalogName(bool is_ps, bool &got_warning)
     logMsg(msg.str());
   }
 
+  if (meta->getCatalogName(1) != "" && meta->getCatalogName(1) != "def") {
+    got_warning=true;
+    msg.str("");
+    msg << "...\t\tWARNING expecting catalog = 'def'";
+    msg << " got '" << meta->getCatalogName(1) << "'";
+    logMsg(msg.str());
+  }
+
   try
   {
     meta->getCatalogName(0);
