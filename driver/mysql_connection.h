@@ -139,10 +139,10 @@ protected:
 	void checkClosed();
 	void init(std::map< sql::SQLString, sql::ConnectPropertyVal > & properties);
 
-	MySQL_ConnectionData * intern; /* pimpl */
-
-	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy;
 	Driver * driver;
+	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy;
+
+	MySQL_ConnectionData * intern; /* pimpl */
 
 private:
 	/* Prevent use of these */
