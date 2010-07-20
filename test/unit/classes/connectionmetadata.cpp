@@ -267,7 +267,7 @@ void connectionmetadata::getColumnPrivileges()
     {
       rows++;
 
-      if (con->getCatalog() != res->getString(1))
+      if (con->getCatalog() != "" && res->getString(1) != "" && con->getCatalog() != res->getString(1))
       {
         got_warning=true;
         msg.str("");
@@ -362,7 +362,7 @@ void connectionmetadata::getColumns()
       res.reset(dbmeta->getColumns(con->getCatalog(), con->getSchema(), "test", "id"));
       checkResultSetScrolling(res);
       ASSERT_EQUALS(true, res->next());
-      if (con->getCatalog() != res->getString("TABLE_CAT"))
+      if (con->getCatalog() != "" && res->getString(1) != "" && con->getCatalog() != res->getString("TABLE_CAT"))
       {
         got_todo_warning=true;
         msg.str();
@@ -958,7 +958,7 @@ void connectionmetadata::getIndexInfo()
     stmt->execute("INSERT INTO test(col1, col2, col3) VALUES (1, 1, 1)");
     res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
     ASSERT(res->next());
-    if (con->getCatalog() != res->getString(1))
+    if (con->getCatalog() != "" && res->getString(1) != "" && con->getCatalog() != res->getString(1))
     {
       got_todo_warning=true;
       msg.str("");
@@ -1357,7 +1357,7 @@ void connectionmetadata::getPrimaryKeys()
     while (res->next())
     {
       row_num++;
-      if (con->getCatalog() != res->getString("TABLE_CAT"))
+      if (con->getCatalog() != "" && res->getString("TABLE_CAT") != "" && con->getCatalog() != res->getString("TABLE_CAT"))
       {
         got_warning=true;
         msg.str("");
@@ -1446,7 +1446,7 @@ void connectionmetadata::getProcedures()
     logMsg("...is it you, getProcedures()?");
     ASSERT(res->next());
 
-    if (con->getCatalog() != res->getString("PROCEDURE_CAT"))
+    if (con->getCatalog() != "" && res->getString("PROCEDURE_CAT") != "" && con->getCatalog() != res->getString("PROCEDURE_CAT"))
     {
       got_warning=true;
       msg.str("");
