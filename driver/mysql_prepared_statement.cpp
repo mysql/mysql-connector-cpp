@@ -86,7 +86,7 @@ public:
 				}
 			}
 			if (proxy->send_long_data(position, buf.get(), static_cast<unsigned long>(my_blob->gcount()))) {
-				CPP_ERR_FMT("Couldn't send long data : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+				CPP_ERR_FMT("Couldn't send long data : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 				switch (proxy->errNo()) {
 				case CR_OUT_OF_MEMORY:
 					throw std::bad_alloc();
