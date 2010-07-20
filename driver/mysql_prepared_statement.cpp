@@ -48,20 +48,24 @@ class LongDataSender : public boost::static_visitor<bool>
 {
 	unsigned	position;
 	boost::shared_ptr< NativeAPI::NativeStatementWrapper > proxy;
+	boost::shared_ptr<MySQL_DebugLogger> logger;
 
 	LongDataSender()
 	{}
 
 public:
 
-	LongDataSender(unsigned int i, boost::shared_ptr< NativeAPI::NativeStatementWrapper > & _proxy)
-		: position( i		)
-		, proxy	( _proxy)
+	LongDataSender(unsigned int i, boost::shared_ptr< NativeAPI::NativeStatementWrapper > & _proxy,
+    boost::shared_ptr<MySQL_DebugLogger> _logger)
+		: position	( i			)
+		, proxy		( _proxy	)
+		, logger	( _logger	)
 	{
 	}
 
 	bool operator()(std::istream * my_blob) const
 	{
+		CPP_ENTER("LongDataSender::operator()(std::istream *)");
 		if (my_blob == NULL)
 			return false;
 
@@ -101,6 +105,7 @@ public:
 
 	bool operator()(sql::SQLString * str) const
 	{
+		CPP_ENTER("LongDataSender::operator()(sql::SQLString *)");
 		if ( str == NULL )
 			return false;
 
@@ -372,7 +377,7 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 
 	for (unsigned int i = 0; i < param_count; ++i) {
 		if (bind[i].buffer_type == MYSQL_TYPE_LONG_BLOB) {
-			::sql::mysql::LongDataSender lv( i, proxy );
+			::sql::mysql::LongDataSender lv(i, proxy, logger);
       MySQL_ParamBind::Blob_t dummy(param_bind->getBlobObject(i));
 			boost::apply_visitor(lv, dummy);
 		}
