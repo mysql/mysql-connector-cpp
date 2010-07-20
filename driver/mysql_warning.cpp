@@ -23,7 +23,7 @@ namespace mysql
 * TODO: implement it. Probably it's not the right place for this function
 */
 const sql::SQLString &
-errCode2SqlState(int32_t errCode)
+errCode2SqlState(int errCode)
 {
 	static const sql::SQLString state("");
 
@@ -163,7 +163,7 @@ loadMysqlWarnings(sql::Connection * connection)
 			// 1 - Level
 			// 2 - Code
 			// 3 - Message
-			int32_t errCode = rset->getInt(2);
+			int errCode = rset->getInt(2);
 
 			if (current == NULL) {
 				first = current = new SQLWarning(sql::SQLString(rset->getString(3)), errCode2SqlState(errCode), errCode);
