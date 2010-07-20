@@ -48,22 +48,23 @@ int main(int argc, const char **argv)
 
 	cout << boolalpha;
 	cout << "1..1" << endl;
-	cout << "# Connector/C++ result set.." << endl;
+	cout << "# Connector/C++ dynamic loading.." << endl;
 
 	try {
-		/* Using the Driver to create a connection */
-		driver = sql::mysql::get_driver_instance();
-
-		/* 'standard' connection properties */
-		connection_properties["hostName"] = url;
-		connection_properties["userName"] = user;
-		connection_properties["password"] = pass;
-		connection_properties["schema"] = database;
-
 		/*
 			Driver / client library to load.
-			If you set the "clientlib" property, Connector/C++ will not load
-			the default C library to establish a connection to MySQL but the one
+
+			The preprocessor constant DYNLOAD_MYSQL_LIB comes from the build environment.
+			It should contain the path of the C library which Connector/C++ has been
+			linked against.
+
+			For testing the functionality, feed free to replace DYNLOAD_MYSQL_LIB with
+			any constant string containing the path of an alternate client library.
+
+			get_driver_instance_by_name(const char * const clientlib)
+
+			If you use get_driver_instance_by_name Connector/C++ will not load the
+			default C client library to establish a connection to MySQL but the one
 			you specify. The default C library is the one found during cmake (configure)
 			and used for building Connector/C++. On most systems this
 			will be the MySQL Client Library shipped together with the
@@ -71,20 +72,22 @@ int main(int argc, const char **argv)
 			advise Connector/C++ to dynamically load a different MySQL Client Library.
 			This can be a MySQL Client Library from another MySQL Server or the
 			library of Connector/C.
+
+			CAUTION: In some development versions of C/C++ 1.1.0 a connection property
+			has been used to set the library. This has changed. The temporary syntax
+			has been like this:
+
+				sql::SQLString lib(DYNLOAD_MYSQL_LIB);
+				connection_properties["clientlib"] = lib;
+
 		*/
+		driver = sql::mysql::get_driver_instance_by_name(DYNLOAD_MYSQL_LIB);
 
-		/*
-		NOTE
-		The preprocessor constant DYNLOAD_MYSQL_LIB comes from the build environment.
-		It should contain the path of the C library which Connector/C++ has been
-		linked against.
-
-		For testing the functionality, feed free to replace DYNLOAD_MYSQL_LIB with
-		any constant string containing the path of an alternate client library.
-		NOTE
-		 */
-		sql::SQLString lib(DYNLOAD_MYSQL_LIB);
-		connection_properties["clientlib"] = lib;
+		/* 'standard' connection properties */
+		connection_properties["hostName"] = url;
+		connection_properties["userName"] = user;
+		connection_properties["password"] = pass;
+		connection_properties["schema"] = database;
 
 		std::auto_ptr< sql::Connection > con(driver->connect(connection_properties));
 
@@ -169,7 +172,7 @@ int main(int argc, const char **argv)
 		return EXIT_FAILURE;
 	}
 
-	cout << "ok 1 - examples/resultset.cpp" << endl;
+	cout << "ok 1 - examples/dynamic_load.cpp" << endl;
 	return EXIT_SUCCESS;
 }
 
