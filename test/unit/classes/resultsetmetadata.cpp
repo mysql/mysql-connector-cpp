@@ -60,7 +60,7 @@ void resultsetmetadata::doGetCatalogName(bool is_ps, bool &got_warning)
 {
   std::stringstream msg;
   ResultSetMetaData * meta=res->getMetaData();
-  if (con->getCatalog() != meta->getCatalogName(1))
+  if (con->getCatalog() != "" && meta->getCatalogName(1) != "" && (con->getCatalog() != meta->getCatalogName(1)))
   {
     got_warning=true;
     msg.str("");
