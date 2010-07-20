@@ -20,16 +20,11 @@ namespace mysql
 {
 
 /*
-* TODO: implement it. Probably it's not the right place for this function
+* 
 */
 const sql::SQLString &
-errCode2SqlState(int errCode)
+errCode2SqlState(int32_t errCode, sql::SQLString & state)
 {
-	static const sql::SQLString state("");
-
-	return state;
-	/*
-
 	switch (errCode) {
 		case 1037:
 		case 1038:
@@ -146,7 +141,6 @@ errCode2SqlState(int errCode)
 	}
 
 	return state;
-	*/
 }
 
 
@@ -154,6 +148,7 @@ sql::SQLWarning *
 loadMysqlWarnings(sql::Connection * connection)
 {
 	SQLWarning * first = NULL, * current = NULL;
+	SQLString state;
 
 	if (connection != NULL) {
 		boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
@@ -163,12 +158,12 @@ loadMysqlWarnings(sql::Connection * connection)
 			// 1 - Level
 			// 2 - Code
 			// 3 - Message
-			int errCode = rset->getInt(2);
+			int32_t errCode = rset->getInt(2);
 
 			if (current == NULL) {
-				first = current = new SQLWarning(sql::SQLString(rset->getString(3)), errCode2SqlState(errCode), errCode);
+				first = current = new SQLWarning(sql::SQLString(rset->getString(3)), errCode2SqlState(errCode, state), errCode);
 			} else {
-				SQLWarning * tmp = new SQLWarning(sql::SQLString(rset->getString(3)), errCode2SqlState(errCode), errCode);
+				SQLWarning * tmp = new SQLWarning(sql::SQLString(rset->getString(3)), errCode2SqlState(errCode, state), errCode);
 				current->setNextWarning(tmp);
 				current = tmp;
 			}

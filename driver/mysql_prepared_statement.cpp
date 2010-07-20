@@ -118,7 +118,7 @@ public:
 						: MAX_SEND_LONGDATA_CHUNK);
 
 			if (proxy->send_long_data(position, str->c_str() + sent, chunkSize)) {
-				CPP_ERR_FMT("Couldn't send long data : %d:(%s) %s", proxy->errNo(), proxy->sqlstate(), proxy->error());
+				CPP_ERR_FMT("Couldn't send long data : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 				switch (proxy->errNo()) {
 				case CR_OUT_OF_MEMORY:
 					throw std::bad_alloc();

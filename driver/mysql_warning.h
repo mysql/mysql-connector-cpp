@@ -14,12 +14,13 @@
 
 #include "mysql_connection.h"
 #include <cppconn/warning.h>
+#include <cppconn/config.h>
 
 namespace sql
 {
 namespace mysql
 {
-	const sql::SQLString & errCode2SqlState(int errCode);
+	const sql::SQLString & errCode2SqlState(int32_t errCode, ::sql::SQLString & state);
 
 	sql::SQLWarning * loadMysqlWarnings(sql::Connection * connection);
 

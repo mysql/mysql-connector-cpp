@@ -55,13 +55,12 @@ static int silent = 1;
 #pragma warning(disable:4800)
 #endif
 
-
-extern "C"
-{
 #ifdef _WIN32
 #include "my_global.h"
 #endif
 
+extern "C"
+{
 #include "mysql.h"
 }
 /* mysql.h introduces bool */
