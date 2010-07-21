@@ -280,7 +280,12 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
 		case MYSQL_TYPE_MEDIUM_BLOB:// should no appear over the wire
 		case MYSQL_TYPE_LONG_BLOB:// should no appear over the wire
 		case MYSQL_TYPE_BLOB:
-			if (255 == field->length) {
+		{
+			const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
+			if (!cs) {
+				throw SQLException("Server sent uknown charsetnr. Please report");
+			}
+			if (255 == (field->length / cs->char_maxlen)) {
 				if ((field->flags & BINARY_FLAG) && field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
 					return sql::DataType::VARBINARY;
 				}
@@ -291,6 +296,7 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
 				return sql::DataType::LONGVARBINARY;
 			}
 			return sql::DataType::LONGVARCHAR;
+		}
 		case MYSQL_TYPE_VARCHAR:
 		case MYSQL_TYPE_VAR_STRING:
 			if (field->flags & SET_FLAG) {

@@ -4,6 +4,9 @@
 
 GA  1.1.0 - 2010-08-xx
 
+- Fixed ResultSetMetaData::getColumnType() to return sql::DataType::VARCHAR
+  even for multi-type character sets. (Fix from Andrey)
+
 - Fixed ResultSetMetaData::getColumnDisplaySize() to return number
   of characters instead of number of bytes. However, there are cases
   when the MySQL server returns wrong or insufficient meta data, see also
@@ -11,7 +14,7 @@ GA  1.1.0 - 2010-08-xx
   on getColumnDisplaySize() returning at least the number of required
   characters. Application developers shall not expect the exact number
   for a given result set. The driver cannot get any closer but 
-  returning the maximum number for a given result set.
+  returning the maximum number for a given result set (Fix from Andrey)
 
 - Changed FindMySQL.cm so it looks for mysqlclient in the ENV{MySQL_DIR}\lib,
   as that is where it's located in (some) Connector/C distros. (Lawrin)
