@@ -109,8 +109,15 @@ MySQL_ResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
 	CPP_ENTER("MySQL_ResultSetMetaData::getColumnDisplaySize");
 	checkValid();
 	checkColumnIndex(columnIndex);
+	const MYSQL_FIELD * const field = getFieldMeta(columnIndex);
+	const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
+	if (!cs) {
+		std::ostringstream msg("Server sent uknown charsetnr (");
+		msg << field->charsetnr << ") . Please report";
+		throw SQLException(msg.str());
+	}
+	int ret = field->length / cs->char_maxlen;
 
-	int ret = getFieldMeta(columnIndex)->length;
 	CPP_INFO_FMT("column=%u name=%s display_size=%d", columnIndex, getFieldMeta(columnIndex)->name, ret);
 	return ret;
 }
