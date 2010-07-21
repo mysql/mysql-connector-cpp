@@ -857,7 +857,7 @@ void connectionmetadata::checkForeignKey(Connection &mycon, ResultSet &myres)
   bool got_warning=false;
   std::stringstream msg;
 
-  if (mycon->getCatalog() != myres->getString(1))
+  if (mycon->getCatalog() != "" && mycon->getCatalog() != myres->getString(1))
   {
     got_warning=true;
     msg.str("");
@@ -876,7 +876,7 @@ void connectionmetadata::checkForeignKey(Connection &mycon, ResultSet &myres)
   ASSERT_EQUALS("pid", myres->getString(4));
   ASSERT_EQUALS(myres->getString(4), myres->getString("PKCOLUMN_NAME"));
 
-  if (mycon->getCatalog() != myres->getString(5))
+  if (mycon->getCatalog() != "" && mycon->getCatalog() != myres->getString(5))
   {
     got_warning=true;
     msg.str("");
