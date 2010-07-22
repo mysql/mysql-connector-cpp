@@ -43,7 +43,7 @@ void BlobTest::setUp()
 
 	testBlobFile.reset(new FileUtils::ccppFile(TEST_BLOB_FILE_PREFIX + ".dat"));
 
-	int requiredSize=32 * 1024 * 1024/counter - (counter - 1)*128;
+	int requiredSize=16 * 1024 * 1024/counter - (counter - 1)*128;
 
 	if (!versionMeetsMinimum(4, 0))
 	{

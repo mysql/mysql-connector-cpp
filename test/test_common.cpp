@@ -285,7 +285,7 @@ static void test_connection_0(std::auto_ptr<sql::Connection> & conn)
 		} catch (sql::SQLException &) {
 			ensure("Exception correctly thrown", true);
 		}
-		ensure("connection is open", conn->isClosed() == false);
+		ensure("connection is still open", conn->isClosed() == true);
 	} catch (sql::SQLException &e) {
 		printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
 		printf("# ");
