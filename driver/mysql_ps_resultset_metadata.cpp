@@ -158,9 +158,7 @@ MySQL_PreparedResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 	CPP_ENTER("MySQL_PreparedResultSetMetaData::getColumnTypeName");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
-	return sql::mysql::util::mysql_type_to_string(
-				getFieldMeta(columnIndex)
-			);
+	return sql::mysql::util::mysql_type_to_string(getFieldMeta(columnIndex), this->logger);
 }
 /* }}} */
 

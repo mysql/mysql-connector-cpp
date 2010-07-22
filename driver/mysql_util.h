@@ -15,6 +15,7 @@
 #include "nativeapi/mysql_private_iface.h"
 #include <cppconn/config.h>
 #include <cppconn/sqlstring.h>
+#include <boost/shared_ptr.hpp>
 
 
 #ifndef UL64
@@ -95,11 +96,15 @@ namespace sql
 {
 namespace mysql
 {
+
+class MySQL_DebugLogger;
+
 namespace NativeAPI
 {
 class NativeConnectionWrapper;
 class NativeStatementWrapper;
 } /* namespace NativeAPI */
+
 
 namespace util {
 
@@ -108,7 +113,7 @@ void throwSQLException(::sql::mysql::NativeAPI::NativeStatementWrapper & proxy);
 
 int mysql_string_type_to_datatype(const sql::SQLString & name);
 int mysql_type_to_datatype(const MYSQL_FIELD * const field);
-const char * mysql_type_to_string(const MYSQL_FIELD * const field);
+const char * mysql_type_to_string(const MYSQL_FIELD * const field, boost::shared_ptr< sql::mysql::MySQL_DebugLogger > & l);
 
 char * utf8_strup(const char * const src, size_t srclen);
 

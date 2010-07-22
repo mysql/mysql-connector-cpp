@@ -171,7 +171,7 @@ MySQL_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 	checkValid();
 	checkColumnIndex(columnIndex);
 
-	return sql::mysql::util::mysql_type_to_string(getFieldMeta(columnIndex));
+	return sql::mysql::util::mysql_type_to_string(getFieldMeta(columnIndex), this->logger);
 }
 /* }}} */
 

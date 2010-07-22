@@ -16,6 +16,7 @@
 #include <cppconn/datatype.h>
 #include <cppconn/exception.h>
 #include "mysql_util.h"
+#include "mysql_debug.h"
 #include "nativeapi/native_connection_wrapper.h"
 #include "nativeapi/native_statement_wrapper.h"
 
@@ -402,8 +403,10 @@ mysql_string_type_to_datatype(const sql::SQLString & name)
 
 /* {{{ mysql_to_datatype() -I- */
 const char *
-mysql_type_to_string(const MYSQL_FIELD * const field)
+mysql_type_to_string(const MYSQL_FIELD * const field, boost::shared_ptr< sql::mysql::MySQL_DebugLogger > & l)
 {
+	CPP_ENTER_WL(l, "mysql_type_to_string");
+
 	bool isUnsigned = (field->flags & UNSIGNED_FLAG) != 0;
 	bool isZerofill = (field->flags & ZEROFILL_FLAG) != 0;
 	switch (field->type) {
@@ -442,7 +445,7 @@ mysql_type_to_string(const MYSQL_FIELD * const field)
 		case MYSQL_TYPE_BLOB:
 		{
 			bool isBlob = field->charsetnr == MAGIC_BINARY_CHARSET_NR;
-			int char_maxlen = 1;
+			unsigned int char_maxlen = 1;
 			if (!isBlob) {
 				const sql::mysql::util::OUR_CHARSET * cset = find_charset(field->charsetnr);
 				if (!cset) {
@@ -450,6 +453,7 @@ mysql_type_to_string(const MYSQL_FIELD * const field)
 				}
 				char_maxlen = cset->char_maxlen;
 			}
+			CPP_INFO_FMT("char_maxlen=%u field->length=%lu", char_maxlen, field->length);
 			if (field->length == L64(4294967295)) {
 				/*
 				  The C/S Protocol can't hold more than 4 byte.
@@ -463,6 +467,8 @@ mysql_type_to_string(const MYSQL_FIELD * const field)
 				case 65535: return isBlob? "BLOB":"TEXT";
 				case 16777215: return isBlob? "MEDIUMBLOB":"MEDIUMTEXT";
 				default:
+					CPP_ERR_FMT("What kind of type is this??? char_maxlen=%u field->length=%lu field->length/char_maxlen=%lu",
+									char_maxlen, field->length, field->length / char_maxlen);
 					return "UNKNOWN";
 			}
 		}
