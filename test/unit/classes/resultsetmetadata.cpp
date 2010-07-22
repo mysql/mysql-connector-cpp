@@ -313,6 +313,7 @@ void resultsetmetadata::getColumnType()
     std::vector<columndefinition>::iterator it;
     stmt.reset(con->createStatement());
     bool type_found=false;
+    int on_off = 1;
 
     sql::DatabaseMetaData * dbmeta=con->getMetaData();
     ResultSet restypes(dbmeta->getTypeInfo());
@@ -337,7 +338,12 @@ void resultsetmetadata::getColumnType()
         ResultSetMetaData * meta=res->getMetaData();
         logMsg(it->sqldef);
         ASSERT_EQUALS(it->ctype, meta->getColumnType(1));
+
+        on_off = 1;
+        con->setClientOption("clientTrace", &on_off);
         ASSERT_EQUALS(it->name, meta->getColumnTypeName(1));
+        on_off = 0;
+        con->setClientOption("clientTrace", &on_off);
 
         sql.str("");
         sql << "... OK, SQL:" << it->sqldef << " -> Type = " << it->name;
