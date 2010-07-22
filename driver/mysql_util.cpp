@@ -446,7 +446,7 @@ mysql_type_to_string(const MYSQL_FIELD * const field)
 			if (!isBlob) {
 				const sql::mysql::util::OUR_CHARSET * cset = find_charset(field->charsetnr);
 				if (!cset) {
-					return "UNKNOWN";
+					throw SQLException("Server sent uknown charsetnr. Please report");
 				}
 				char_maxlen = cset->char_maxlen;
 			}
