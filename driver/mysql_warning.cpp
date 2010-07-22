@@ -173,6 +173,16 @@ loadMysqlWarnings(sql::Connection * connection)
 	return first;
 }
 
+
+/* Deletes all warnings starting from the root */
+void clearMysqlWarnings(SQLWarning * root)
+{
+	for (sql::SQLWarning * tmp = root, * next_tmp = root; tmp; tmp = next_tmp) {
+		next_tmp = const_cast<sql::SQLWarning *>(tmp->getNextWarning());
+		delete tmp;
+	}
+}
+
 } /* namespace mysql */
 } /* namespace sql   */
 

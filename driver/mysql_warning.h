@@ -24,6 +24,9 @@ namespace mysql
 
 	sql::SQLWarning * loadMysqlWarnings(sql::Connection * connection);
 
+	/* Deletes all warnings starting from the root */
+	void clearMysqlWarnings(SQLWarning * root);
+
 } /* namespace mysql */
 } /* namespace sql   */
 #endif

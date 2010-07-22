@@ -18,6 +18,7 @@
 #include <cppconn/resultset.h>
 #include "mysql_util.h"
 #include "mysql_metadata.h"
+#include "mysql_warning.h"
 struct st_mysql;
 
 namespace sql
@@ -39,7 +40,11 @@ public:
 		  defaultPreparedStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
 		  logger(l), meta(NULL) {}
 
-	~MySQL_ConnectionData() {}
+	~MySQL_ConnectionData()
+	{
+		if (warnings)
+			clearMysqlWarnings(const_cast<::sql::SQLWarning*>(warnings->getNextWarning()));
+	}
 
 	bool closed;
 	bool autocommit;
