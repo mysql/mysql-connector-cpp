@@ -512,8 +512,6 @@ mysql_type_to_string(const MYSQL_FIELD * const field, boost::shared_ptr< sql::my
 /* }}} */
 
 
-
-
 /* The following code is from libmysql and is under the following license */
 
 /*
