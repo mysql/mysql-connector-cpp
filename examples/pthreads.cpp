@@ -41,6 +41,9 @@
 #include <sstream>
 #include <stdexcept>
 
+/* usleep() */
+#include <unistd.h>
+
 /* Threading stuff */
 #include <pthread.h>
 
@@ -70,6 +73,7 @@ sql::Driver *driver;
 std::auto_ptr< sql::Connection > con;
 std::auto_ptr< sql::Statement > stmt;
 std::auto_ptr< sql::ResultSet > res;
+int thread_finished = 0;
 
 string url;
 string user;
@@ -86,11 +90,12 @@ int main(int argc, const char **argv)
 	pass = (argc >= 4) ? argv[3] : EXAMPLE_PASS;
 	database = (argc >= 5) ? argv[4] : EXAMPLE_DB;
 
+	int status;
 	pthread_t thread_one;
-	int status_one;
+
 
 	cout << endl;
-	cout << "Connector/C++ phthreads program example..." << endl;
+	cout << "Main thread: Connector/C++ phthreads program example..." << endl;
 	cout << endl;
 
 	try {
@@ -101,13 +106,16 @@ int main(int argc, const char **argv)
 		con->setSchema(database);
 
 		/* Worker thread */
-		cout << "Creating Thread 1..." << endl;
-		status_one = pthread_create(&thread_one, NULL, thread_one_action, NULL);
-		cout << "Thread 1 status: " << status_one << endl;
-		if (status_one != 0)
+		cout << "Main thread: creating thread 1..." << endl;
+		status = pthread_create(&thread_one, NULL, thread_one_action, NULL);
+		cout << "Main thread: thread 1 status = " << status << " (0 = no error)" << endl;
+		if (status != 0)
 				throw std::runtime_error("Thread creation has failed");
 
-		sleep(1);
+		while (thread_finished == 0) {
+			cout << "Main thread: waiting for thread to finish fetching data..." << endl;
+			usleep(500000);
+		}
 
 	} catch (sql::SQLException &e) {
 
@@ -130,7 +138,7 @@ int main(int argc, const char **argv)
 	}
 
 	cout << endl;
-	cout << "... find more at http://www.mysql.com" << endl;
+	cout << "Main thread: ... find more at http://www.mysql.com" << endl;
 	cout << endl;
 	return EXIT_SUCCESS;
 }
@@ -140,33 +148,25 @@ void* thread_one_action(void *arg) {
 	int status;
 
 	/* In every new thread you must call threadInit() *before* doing anything the connector */
-	cout << "\t... Thread 1: driver->threadInit()" << endl;
+	cout << "\tThread 1: driver->threadInit()" << endl;
 	driver->threadInit();
 
-	cout << "\t... Thread 1: pthread_detach()" << endl;
-	status = pthread_detach(pthread_self());
-	if (status != 0) {
-		/* You must call threadEnd() when the thread finishes! */
-		driver->threadEnd();
-		cout << "#\t...Thread 1: ERR: phtread_detach() statu = " << status << endl;
-		new std::runtime_error("Thread 1: pthread_detach() failed");
-	}
-
-	cout << "\t... Thread 1: statement object created" << endl;
+	cout << "\tThread 1: ... statement object created" << endl;
 	stmt.reset(con->createStatement());
 
-	cout << "\t... Thread 1: running 'SELECT 'Welcome to Connector/C++' AS _message'" << endl;
-	res.reset(stmt->executeQuery("SELECT 'Welcome to Connector/C++' AS _message"));
+	cout << "\tThread 1: ... running 'SELECT SLEEP(1), 'Welcome to Connector/C++' AS _message'" << endl;
+	res.reset(stmt->executeQuery("SELECT SLEEP(1), 'Welcome to Connector/C++' AS _message"));
 
-	cout << "\t... Thread 1: fetching result" << endl;
+	cout << "\tThread 1: ... fetching result" << endl;
 	while (res->next()) {
 		cout << "\t... Thread 1: MySQL replies: " << res->getString("_message") << endl;
 		cout << "\t... Thread 1: say it again, MySQL" << endl;
-		cout << "\t....Thread 1: MySQL replies: " << res->getString(1) << endl;
+		cout << "\t....Thread 1: MySQL replies: " << res->getString(2) << endl;
 	}
 
-	cout << "\t... Thread 1: driver->threadEnd()" << endl;
+	cout << "\tThread 1: ... driver->threadEnd()" << endl;
 	driver->threadEnd();
+	thread_finished = 1;
 
 	return NULL;
 }
