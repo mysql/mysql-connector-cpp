@@ -32,24 +32,27 @@ protected:
 
 	const sql::SQLString	sql_state;
 	const int				errNo;
-	SQLWarning *			next;
 	const sql::SQLString	descr;
+	SQLWarning *			next;
 
 public:
 
-	SQLWarning(const sql::SQLString& reason, const sql::SQLString& SQLState, int vendorCode) :sql_state(SQLState), errNo(vendorCode),descr(reason)
+	SQLWarning(const sql::SQLString& reason, const sql::SQLString& SQLState, int vendorCode)
+		:sql_state(SQLState), errNo(vendorCode), descr(reason), next(NULL)
 	{
 	}
 
-	SQLWarning(const sql::SQLString& reason, const sql::SQLString& SQLState) :sql_state (SQLState), errNo(0), descr(reason)
+	SQLWarning(const sql::SQLString& reason, const sql::SQLString& SQLState)
+		:sql_state (SQLState), errNo(0), descr(reason), next(NULL)
 	{
 	}
 
-	SQLWarning(const sql::SQLString& reason) : sql_state ("HY000"), errNo(0), descr(reason)
+	SQLWarning(const sql::SQLString& reason)
+		: sql_state ("HY000"), errNo(0), descr(reason), next(NULL)
 	{
 	}
 
-	SQLWarning() : sql_state ("HY000"), errNo(0) {}
+	SQLWarning() : sql_state ("HY000"), errNo(0), next(NULL) {}
 
 
 	const sql::SQLString & getMessage() const
@@ -78,7 +81,7 @@ public:
 		next = _next;
 	}
 
-	virtual ~SQLWarning() throw () {};
+	virtual ~SQLWarning() throw (){};
 
 protected:
 

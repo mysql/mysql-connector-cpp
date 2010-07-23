@@ -542,7 +542,12 @@ void
 MySQL_Connection::clearWarnings()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::clearWarnings");
-	intern->warnings.reset();
+
+	if (intern->warnings)
+	{
+		clearMysqlWarnings(const_cast<::sql::SQLWarning*>(intern->warnings->getNextWarning()));
+		intern->warnings.reset();
+	}
 }
 /* }}} */
 
@@ -566,6 +571,7 @@ MySQL_Connection::close()
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::close");
 	checkClosed();
 	proxy.reset();
+	clearWarnings();
 	intern->is_valid = false;
 }
 /* }}} */
@@ -706,6 +712,8 @@ MySQL_Connection::getWarnings()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getWarnings");
 	checkClosed();
+
+	clearWarnings();
 
 	intern->warnings.reset(loadMysqlWarnings(this));
 

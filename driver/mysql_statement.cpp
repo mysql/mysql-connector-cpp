@@ -52,10 +52,7 @@ MySQL_Statement::~MySQL_Statement()
 	CPP_ENTER("MySQL_Statement::~MySQL_Statement");
 	CPP_INFO_FMT("this=%p", this);
 
-	for (sql::SQLWarning * tmp = warnings, * next_tmp = warnings; tmp; tmp = next_tmp) {
-		next_tmp = const_cast<sql::SQLWarning *>(tmp->getNextWarning());
-		delete tmp;
-	}
+	clearMysqlWarnings(warnings);
 }
 /* }}} */
 
@@ -274,10 +271,7 @@ MySQL_Statement::clearWarnings()
 	CPP_ENTER("MySQL_Statement::clearWarnings");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	for (sql::SQLWarning * tmp = warnings, * next_tmp = warnings; tmp; tmp = next_tmp) {
-		next_tmp = const_cast<sql::SQLWarning *>(tmp->getNextWarning());
-		delete tmp;
-	}
+	clearMysqlWarnings(warnings);
 	warnings = NULL;
 }
 /* }}} */
@@ -290,10 +284,7 @@ MySQL_Statement::close()
 	CPP_ENTER("MySQL_Statement::close");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	for (sql::SQLWarning * tmp = warnings, * next_tmp = warnings; tmp; tmp = next_tmp) {
-		next_tmp = const_cast<sql::SQLWarning *>(tmp->getNextWarning());
-		delete tmp;
-	}
+	clearWarnings();
 	isClosed = true;
 }
 /* }}} */
@@ -394,6 +385,10 @@ MySQL_Statement::getWarnings()
 	CPP_ENTER("MySQL_Statement::getWarnings");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
+
+	clearMysqlWarnings(warnings);
+
+	warnings= loadMysqlWarnings(connection);
 
 	return warnings;
 }

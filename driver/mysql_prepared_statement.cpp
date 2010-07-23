@@ -1046,7 +1046,11 @@ MySQL_Prepared_Statement::clearWarnings()
 	CPP_ENTER("MySQL_Prepared_Statement::clearWarnings");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	warnings.reset();
+	if (warnings)
+	{
+		clearMysqlWarnings(const_cast<::sql::SQLWarning*>(warnings->getNextWarning()));
+		warnings.reset();
+	}
 }
 /* }}} */
 
@@ -1137,7 +1141,11 @@ MySQL_Prepared_Statement::getWarnings()
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-	warnings.reset( loadMysqlWarnings( dynamic_cast<MySQL_Connection*>(connection) ) );
+	/* Clearing old warnings "tree" before loading a new one */
+	if (warnings)
+		clearMysqlWarnings(const_cast<::sql::SQLWarning*>(warnings->getNextWarning()));
+
+	warnings.reset( loadMysqlWarnings(connection) );
 
 	return warnings.get();
 }
@@ -1230,6 +1238,7 @@ MySQL_Prepared_Statement::closeIntern()
 	CPP_ENTER("MySQL_Prepared_Statement::closeIntern");
 	proxy.reset();
 	clearParameters();
+	clearWarnings();
 
 	isClosed = true;
 }
