@@ -545,7 +545,7 @@ MySQL_Connection::clearWarnings()
 
 	if (intern->warnings)
 	{
-		clearMysqlWarnings(const_cast<::sql::SQLWarning*>(intern->warnings->getNextWarning()));
+		clearMysqlWarnings(const_cast<sql::SQLWarning*>(intern->warnings->getNextWarning()));
 		intern->warnings.reset();
 	}
 }

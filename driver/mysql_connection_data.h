@@ -43,7 +43,7 @@ public:
 	~MySQL_ConnectionData()
 	{
 		if (warnings)
-			clearMysqlWarnings(const_cast<::sql::SQLWarning*>(warnings->getNextWarning()));
+			clearMysqlWarnings(const_cast<sql::SQLWarning*>(warnings->getNextWarning()));
 	}
 
 	bool closed;

@@ -324,7 +324,7 @@ public:
 	{
 		Blobs::iterator it= blob_bind.find( position );
 
-		if (it != blob_bind.end()) 
+		if (it != blob_bind.end())
 			return it->second;
 
 		return Blob_t();
@@ -472,7 +472,7 @@ MySQL_Prepared_Statement::executeQuery()
 	sql::ResultSet::enum_type tmp_type;
 	if (resultset_type == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
 		if (proxy->store_result()) {
-			sql::mysql::util::throwSQLException(*proxy.get());		
+			sql::mysql::util::throwSQLException(*proxy.get());
 		}
 		tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
 	} else if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
@@ -1048,7 +1048,7 @@ MySQL_Prepared_Statement::clearWarnings()
 	checkClosed();
 	if (warnings)
 	{
-		clearMysqlWarnings(const_cast<::sql::SQLWarning*>(warnings->getNextWarning()));
+		clearMysqlWarnings(const_cast<sql::SQLWarning*>(warnings->getNextWarning()));
 		warnings.reset();
 	}
 }
@@ -1143,7 +1143,7 @@ MySQL_Prepared_Statement::getWarnings()
 
 	/* Clearing old warnings "tree" before loading a new one */
 	if (warnings)
-		clearMysqlWarnings(const_cast<::sql::SQLWarning*>(warnings->getNextWarning()));
+		clearMysqlWarnings(const_cast<sql::SQLWarning*>(warnings->getNextWarning()));
 
 	warnings.reset( loadMysqlWarnings(connection) );
 
