@@ -66,10 +66,10 @@ using namespace std;
 
 void* thread_one_action(void *arg);
 
+sql::Driver *driver;
 std::auto_ptr< sql::Connection > con;
 std::auto_ptr< sql::Statement > stmt;
 std::auto_ptr< sql::ResultSet > res;
-sql::Driver * driver;
 
 string url;
 string user;
@@ -107,16 +107,7 @@ int main(int argc, const char **argv)
 		if (status_one != 0)
 				throw std::runtime_error("Thread creation has failed");
 
-		/*
-		stmt.reset(con->createStatement());
-	res.reset(stmt->executeQuery("SELECT 'Welcome to Connector/C++' AS _message"));
-	cout << "\t... Thread 1: running 'SELECT 'Welcome to Connector/C++' AS _message'" << endl;
-	while (res->next()) {
-		cout << "\t... Thread 1: MySQL replies: " << res->getString("_message") << endl;
-		cout << "\t... Thread 1: say it again, MySQL" << endl;
-		cout << "\t....Thread 1: MySQL replies: " << res->getString(1) << endl;
-	}
-		*/
+		sleep(1);
 
 	} catch (sql::SQLException &e) {
 
@@ -161,16 +152,20 @@ void* thread_one_action(void *arg) {
 		new std::runtime_error("Thread 1: pthread_detach() failed");
 	}
 
-	cout << "\t... Thread 1: running 'SELECT 'Welcome to Connector/C++' AS _message'" << endl;
+	cout << "\t... Thread 1: statement object created" << endl;
 	stmt.reset(con->createStatement());
+
+	cout << "\t... Thread 1: running 'SELECT 'Welcome to Connector/C++' AS _message'" << endl;
 	res.reset(stmt->executeQuery("SELECT 'Welcome to Connector/C++' AS _message"));
+
+	cout << "\t... Thread 1: fetching result" << endl;
 	while (res->next()) {
 		cout << "\t... Thread 1: MySQL replies: " << res->getString("_message") << endl;
 		cout << "\t... Thread 1: say it again, MySQL" << endl;
 		cout << "\t....Thread 1: MySQL replies: " << res->getString(1) << endl;
 	}
 
-	cout << "\t Thread 1: driver->threadEnd()" << endl;
+	cout << "\t... Thread 1: driver->threadEnd()" << endl;
 	driver->threadEnd();
 
 	return NULL;
