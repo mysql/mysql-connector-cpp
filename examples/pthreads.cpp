@@ -19,18 +19,18 @@
 * To compile the standalone example on Linux try something like:
 *
 * /usr/bin/c++
-*   -o standalone
+*   -o pthread
 *   -I/usr/local/include/cppconn/
-*   -Wl,-Bdynamic -lmysqlcppconn
-*    examples/standalone_example.cpp
+*   -Wl,-Bdynamic -lmysqlcppconn -pthread
+*    examples/pthread.cpp
 *
 * To run the example on Linux try something similar to:
 *
-*  LD_LIBRARY_PATH=/usr/local/lib/ ./standalone
+*  LD_LIBRARY_PATH=/usr/local/lib/ ./pthread
 *
 * or:
 *
-*  LD_LIBRARY_PATH=/usr/local/lib/ ./standalone host user password database
+*  LD_LIBRARY_PATH=/usr/local/lib/ ./pthread host user password database
 *
 */
 
@@ -114,8 +114,9 @@ int main(int argc, const char **argv)
 
 		while (thread_finished == 0) {
 			cout << "Main thread: waiting for thread to finish fetching data..." << endl;
-			usleep(500000);
+			usleep(300000);
 		}
+		cout << "Main thread: thread 1 has finished fetching data from MySQL..." << endl;
 
 	} catch (sql::SQLException &e) {
 
@@ -147,13 +148,31 @@ int main(int argc, const char **argv)
 void* thread_one_action(void *arg) {
 	int status;
 
-	/* In every new thread you must call threadInit() *before* doing anything the connector */
+	/*
+		NOTE:
+		In every new thread you must call threadInit() *before*
+		doing anything with the Connector. If you omit this
+		step anything, including a crash, may happen.
+	*/
 	cout << "\tThread 1: driver->threadInit()" << endl;
 	driver->threadInit();
+
+	status = pthread_detach(pthread_self());
+	if (0 != status) {
+		cout << "\tThread 1: detach failed with status = " << status << endl;
+		/* See below */
+		driver->threadEnd();
+		throw std::runtime_error("Thread 1: pthread_detach failed");
+	}
 
 	cout << "\tThread 1: ... statement object created" << endl;
 	stmt.reset(con->createStatement());
 
+	/*
+		Sharing resultset among threads should
+		be avoided. Its possible but requires further
+		action from you.
+	*/
 	cout << "\tThread 1: ... running 'SELECT SLEEP(1), 'Welcome to Connector/C++' AS _message'" << endl;
 	res.reset(stmt->executeQuery("SELECT SLEEP(1), 'Welcome to Connector/C++' AS _message"));
 
@@ -165,7 +184,18 @@ void* thread_one_action(void *arg) {
 	}
 
 	cout << "\tThread 1: ... driver->threadEnd()" << endl;
+
+	/*
+		NOTE:
+		You must call threadEnd() when the thread
+		exits If you omit this step you get messages
+		from the C Client Library like this:
+
+		Error in my_thread_global_end(): 1 threads didn't exit
+
+	*/
 	driver->threadEnd();
+
 	thread_finished = 1;
 
 	return NULL;
