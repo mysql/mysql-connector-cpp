@@ -22,7 +22,7 @@
 *   -o pthread
 *   -I/usr/local/include/cppconn/
 *   -Wl,-Bdynamic -lmysqlcppconn -pthread
-*    examples/pthread.cpp
+*    examples/pthreads.cpp
 *
 * To run the example on Linux try something similar to:
 *
@@ -93,7 +93,6 @@ int main(int argc, const char **argv)
 	int status;
 	pthread_t thread_one;
 
-
 	cout << endl;
 	cout << "Main thread: Connector/C++ phthreads program example..." << endl;
 	cout << endl;
@@ -108,11 +107,19 @@ int main(int argc, const char **argv)
 		/* Worker thread */
 		cout << "Main thread: creating thread 1..." << endl;
 		status = pthread_create(&thread_one, NULL, thread_one_action, NULL);
-		cout << "Main thread: thread 1 status = " << status << " (0 = no error)" << endl;
 		if (status != 0)
-				throw std::runtime_error("Thread creation has failed");
+			throw std::runtime_error("Thread creation has failed");
+
+		status = pthread_join(thread_one, NULL);
+		if (status != 0)
+			throw std::runtime_error("Joining thread has failed");
 
 		while (thread_finished == 0) {
+			/*
+			The worker is using global resources which the main thread shall not
+			free before the worker thread is done. For example, the worker
+			thread is using the Connection object.
+			*/
 			cout << "Main thread: waiting for thread to finish fetching data..." << endl;
 			usleep(300000);
 		}
@@ -154,16 +161,9 @@ void* thread_one_action(void *arg) {
 		doing anything with the Connector. If you omit this
 		step anything, including a crash, may happen.
 	*/
+	cout << endl;
 	cout << "\tThread 1: driver->threadInit()" << endl;
 	driver->threadInit();
-
-	status = pthread_detach(pthread_self());
-	if (0 != status) {
-		cout << "\tThread 1: detach failed with status = " << status << endl;
-		/* See below */
-		driver->threadEnd();
-		throw std::runtime_error("Thread 1: pthread_detach failed");
-	}
 
 	cout << "\tThread 1: ... statement object created" << endl;
 	stmt.reset(con->createStatement());
@@ -178,12 +178,12 @@ void* thread_one_action(void *arg) {
 
 	cout << "\tThread 1: ... fetching result" << endl;
 	while (res->next()) {
-		cout << "\t... Thread 1: MySQL replies: " << res->getString("_message") << endl;
-		cout << "\t... Thread 1: say it again, MySQL" << endl;
-		cout << "\t....Thread 1: MySQL replies: " << res->getString(2) << endl;
+		cout << "\tThread 1: ... MySQL replies: " << res->getString("_message") << endl;
+		cout << "\tThread 1: ... say it again, MySQL" << endl;
+		cout << "\tThread 1: ... MySQL replies: " << res->getString(2) << endl;
 	}
 
-	cout << "\tThread 1: ... driver->threadEnd()" << endl;
+	cout << "\tThread 1: driver->threadEnd()" << endl;
 
 	/*
 		NOTE:
@@ -195,6 +195,7 @@ void* thread_one_action(void *arg) {
 
 	*/
 	driver->threadEnd();
+	cout << endl;
 
 	thread_finished = 1;
 
