@@ -42,25 +42,13 @@ public:
 
 	~MySQL_ConnectionData()
 	{
-		if (warnings)
-			clearMysqlWarnings(const_cast<sql::SQLWarning*>(warnings->getNextWarning()));
 	}
 
 	bool closed;
 	bool autocommit;
 	enum_transaction_isolation txIsolationLevel;
 
-	/* disable compile warnings on Windows */
-#ifdef _WIN32
-#pragma warning(push)
-#pragma warning (disable : 4251)
-#endif
-
-	boost::scoped_ptr<const sql::SQLWarning> warnings;
-
-#ifdef _WIN32
-#pragma warning (pop)
-#endif
+	boost::scoped_ptr<const MySQL_Warning> warnings;
 
 	bool is_valid;
 

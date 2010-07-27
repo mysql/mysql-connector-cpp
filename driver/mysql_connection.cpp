@@ -543,11 +543,7 @@ MySQL_Connection::clearWarnings()
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::clearWarnings");
 
-	if (intern->warnings)
-	{
-		clearMysqlWarnings(const_cast<sql::SQLWarning*>(intern->warnings->getNextWarning()));
-		intern->warnings.reset();
-	}
+	intern->warnings.reset();
 }
 /* }}} */
 

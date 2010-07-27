@@ -338,7 +338,8 @@ MySQL_Prepared_Statement::MySQL_Prepared_Statement(
 			boost::shared_ptr< NativeAPI::NativeStatementWrapper > & s, sql::Connection * conn,
 			sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & log
 		)
-	:connection(conn), proxy(s), isClosed(false), logger(log), resultset_type(rset_type), result_bind(new MySQL_ResultBind(proxy, logger))
+	:connection(conn), proxy(s), isClosed(false), warningsHasBeenLoaded(true), logger(log),
+		resultset_type(rset_type), result_bind(new MySQL_ResultBind(proxy, logger))
 
 {
 	CPP_ENTER("MySQL_Prepared_Statement::MySQL_Prepared_Statement");
@@ -405,6 +406,8 @@ MySQL_Prepared_Statement::do_query()
 		CPP_ERR_FMT("Couldn't execute : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 		sql::mysql::util::throwSQLException(*proxy.get());
 	}
+
+	warningsHasBeenLoaded= false;
 }
 /* }}} */
 
@@ -1048,7 +1051,6 @@ MySQL_Prepared_Statement::clearWarnings()
 	checkClosed();
 	if (warnings)
 	{
-		clearMysqlWarnings(const_cast<sql::SQLWarning*>(warnings->getNextWarning()));
 		warnings.reset();
 	}
 }
@@ -1141,11 +1143,11 @@ MySQL_Prepared_Statement::getWarnings()
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-	/* Clearing old warnings "tree" before loading a new one */
-	if (warnings)
-		clearMysqlWarnings(const_cast<sql::SQLWarning*>(warnings->getNextWarning()));
-
-	warnings.reset( loadMysqlWarnings(connection) );
+	if (!warningsHasBeenLoaded)
+	{
+		warnings.reset( loadMysqlWarnings(connection) );
+		warningsHasBeenLoaded= true;
+	}
 
 	return warnings.get();
 }

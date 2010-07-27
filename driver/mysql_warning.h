@@ -16,16 +16,64 @@
 #include <cppconn/warning.h>
 #include <cppconn/config.h>
 
+#include <boost/scoped_ptr.hpp>
 namespace sql
 {
 namespace mysql
 {
+
+	class MySQL_Warning : public ::sql::SQLWarning
+	{
+	private:
+
+		const sql::SQLString				sql_state;
+		const int							errNo;
+		const sql::SQLString				descr;
+		boost::scoped_ptr<MySQL_Warning>	next;
+
+	public:
+
+		MySQL_Warning(const sql::SQLString& reason, const sql::SQLString& SQLState, int vendorCode);
+
+		MySQL_Warning(const sql::SQLString& reason, const sql::SQLString& SQLState);
+
+		MySQL_Warning(const sql::SQLString& reason);
+
+		MySQL_Warning();
+
+		const sql::SQLString & getMessage() const;
+
+		const sql::SQLString & getSQLState() const;
+
+		int getErrorCode() const;
+
+		const SQLWarning * getNextWarning() const;
+
+		~MySQL_Warning();
+
+	private:
+
+		/* We don't really want it to be called, but we need to implement it */
+		void setNextWarning(SQLWarning * _next);
+
+	public:
+
+		void setNextWarning(MySQL_Warning * _next);
+
+	private:
+
+		MySQL_Warning(const MySQL_Warning& w);
+
+		MySQL_Warning(const ::sql::SQLWarning & w);
+
+		const MySQL_Warning & operator = (const MySQL_Warning & rhs);
+
+	};
+
 	const sql::SQLString & errCode2SqlState(int32_t errCode, ::sql::SQLString & state);
 
-	sql::SQLWarning * loadMysqlWarnings(sql::Connection * connection);
+	MySQL_Warning * loadMysqlWarnings(sql::Connection * connection);
 
-	/* Deletes all warnings starting from the root */
-	void clearMysqlWarnings(SQLWarning * root);
 
 } /* namespace mysql */
 } /* namespace sql   */

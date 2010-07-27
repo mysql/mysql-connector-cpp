@@ -15,6 +15,9 @@
 #include <boost/shared_ptr.hpp>
 #include <cppconn/statement.h>
 #include <cppconn/resultset.h>
+
+#include "mysql_warning.h"
+
 #include "mysql_util.h"
 
 namespace sql
@@ -34,12 +37,13 @@ class NativeConnectionWrapper;
 class MySQL_Statement : public sql::Statement
 {
 protected:
-	sql::SQLWarning * warnings;
+	boost::scoped_ptr<MySQL_Warning> warnings;
 	MySQL_Connection * connection;
 	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy;
 
 	void do_query(const char *q, size_t length);
 	bool isClosed;
+	bool warningsHasBeenLoaded;
 
 	uint64_t last_update_count;
 

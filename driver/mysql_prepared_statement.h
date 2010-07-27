@@ -28,6 +28,7 @@ class MySQL_ParamBind;
 class MySQL_ParameterMetaData;
 class MySQL_PreparedResultSetMetaData;
 class MySQL_ResultBind;
+class MySQL_Warning;
 
 namespace NativeAPI
 {
@@ -46,9 +47,10 @@ protected:
 	int resultSetConcurrency;
 	int resultSetType;
 
-	boost::scoped_ptr< sql::SQLWarning > warnings;
+	boost::scoped_ptr< MySQL_Warning > warnings;
 
 	bool isClosed;
+	bool warningsHasBeenLoaded;
 
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 

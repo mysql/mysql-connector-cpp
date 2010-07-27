@@ -18,6 +18,81 @@ namespace sql
 {
 namespace mysql
 {
+	MySQL_Warning::MySQL_Warning(const sql::SQLString& reason, const sql::SQLString& SQLState, int vendorCode)
+		:sql_state(SQLState), errNo(vendorCode), descr(reason), next(NULL)
+	{
+	}
+
+	MySQL_Warning::MySQL_Warning(const sql::SQLString& reason, const sql::SQLString& SQLState)
+		:sql_state (SQLState), errNo(0), descr(reason), next(NULL)
+	{
+	}
+
+	MySQL_Warning::MySQL_Warning(const sql::SQLString& reason)
+		: sql_state ("HY000"), errNo(0), descr(reason), next(NULL)
+	{
+	}
+
+	MySQL_Warning::MySQL_Warning() : sql_state ("HY000"), errNo(0), next(NULL) {}
+
+
+	const sql::SQLString & MySQL_Warning::getMessage() const
+	{
+		return descr;
+	}
+
+
+	const sql::SQLString & MySQL_Warning::getSQLState() const
+	{
+		return sql_state;
+	}
+
+	int MySQL_Warning::getErrorCode() const
+	{
+		return errNo;
+	}
+
+	const SQLWarning * MySQL_Warning::getNextWarning() const
+	{
+		return next.get();
+	}
+
+	MySQL_Warning::~MySQL_Warning()
+	{
+	}
+
+
+    /* We don't really want it to be called, but we need to implement it */
+	void MySQL_Warning::setNextWarning(SQLWarning * _next)
+	{
+		if (_next)
+		{
+			next.reset(new MySQL_Warning(*_next));
+		}
+		else
+		{
+			next.reset();
+		}
+	}
+
+
+	void MySQL_Warning::setNextWarning(MySQL_Warning * _next)
+	{
+		next.reset(_next);
+	}
+
+	MySQL_Warning::MySQL_Warning(const MySQL_Warning& w)
+		: sql_state(w.sql_state), errNo(w.errNo), next(w.next.get()), descr(w.descr) {}
+
+	MySQL_Warning::MySQL_Warning(const ::sql::SQLWarning & w)
+		:	sql_state	(w.getSQLState()),
+			errNo		(w.getErrorCode()),
+			descr		(w.getMessage())
+	{
+		
+		setNextWarning(const_cast<::sql::SQLWarning*>(w.getNextWarning()));
+	}
+
 
 /*
 * 
@@ -144,10 +219,10 @@ errCode2SqlState(int32_t errCode, sql::SQLString & state)
 }
 
 
-sql::SQLWarning *
+MySQL_Warning *
 loadMysqlWarnings(sql::Connection * connection)
 {
-	SQLWarning * first = NULL, * current = NULL;
+	MySQL_Warning * first = NULL, * current = NULL;
 	SQLString state;
 
 	if (connection != NULL) {
@@ -161,9 +236,9 @@ loadMysqlWarnings(sql::Connection * connection)
 			int32_t errCode = rset->getInt(2);
 
 			if (current == NULL) {
-				first = current = new SQLWarning(sql::SQLString(rset->getString(3)), errCode2SqlState(errCode, state), errCode);
+				first = current = new MySQL_Warning(sql::SQLString(rset->getString(3)), errCode2SqlState(errCode, state), errCode);
 			} else {
-				SQLWarning * tmp = new SQLWarning(sql::SQLString(rset->getString(3)), errCode2SqlState(errCode, state), errCode);
+				MySQL_Warning * tmp = new MySQL_Warning(sql::SQLString(rset->getString(3)), errCode2SqlState(errCode, state), errCode);
 				current->setNextWarning(tmp);
 				current = tmp;
 			}
@@ -173,15 +248,6 @@ loadMysqlWarnings(sql::Connection * connection)
 	return first;
 }
 
-
-/* Deletes all warnings starting from the root */
-void clearMysqlWarnings(SQLWarning * root)
-{
-	for (sql::SQLWarning * tmp = root, * next_tmp = root; tmp; tmp = next_tmp) {
-		next_tmp = const_cast<sql::SQLWarning *>(tmp->getNextWarning());
-		delete tmp;
-	}
-}
 
 } /* namespace mysql */
 } /* namespace sql   */

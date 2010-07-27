@@ -28,69 +28,25 @@ namespace sql
 
 class SQLWarning
 {
-protected:
-
-	const sql::SQLString	sql_state;
-	const int				errNo;
-	const sql::SQLString	descr;
-	SQLWarning *			next;
-
 public:
 
-	SQLWarning(const sql::SQLString& reason, const sql::SQLString& SQLState, int vendorCode)
-		:sql_state(SQLState), errNo(vendorCode), descr(reason), next(NULL)
-	{
-	}
+	SQLWarning(){}
 
-	SQLWarning(const sql::SQLString& reason, const sql::SQLString& SQLState)
-		:sql_state (SQLState), errNo(0), descr(reason), next(NULL)
-	{
-	}
+	virtual const sql::SQLString & getMessage() const = 0;
 
-	SQLWarning(const sql::SQLString& reason)
-		: sql_state ("HY000"), errNo(0), descr(reason), next(NULL)
-	{
-	}
+	virtual const sql::SQLString & getSQLState() const = 0;
 
-	SQLWarning() : sql_state ("HY000"), errNo(0), next(NULL) {}
+	virtual int getErrorCode() const = 0;
 
+	virtual const SQLWarning * getNextWarning() const = 0; 
 
-	const sql::SQLString & getMessage() const
-	{
-		return descr;
-	}
-
-
-	const sql::SQLString & getSQLState() const
-	{
-		return sql_state;
-	}
-
-	int getErrorCode() const
-	{
-		return errNo;
-	}
-
-	const SQLWarning * getNextWarning() const
-	{
-		return next;
-	}
-
-	void setNextWarning(SQLWarning * _next)
-	{
-		next = _next;
-	}
-
-	virtual ~SQLWarning() throw (){};
+	virtual void setNextWarning(SQLWarning * _next) = 0;
 
 protected:
 
-	SQLWarning(const SQLWarning& e) : sql_state(e.sql_state), errNo(e.errNo), next(e.next), descr(e.descr) {}
+	virtual ~SQLWarning(){};
 
-	virtual SQLWarning * copy()
-	{
-		return new SQLWarning(*this);
-	}
+	SQLWarning(const SQLWarning& e){};
 
 private:
 	const SQLWarning & operator = (const SQLWarning & rhs);

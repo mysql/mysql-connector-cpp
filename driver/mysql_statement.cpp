@@ -38,7 +38,8 @@ namespace mysql
 /* {{{ MySQL_Statement::MySQL_Statement() -I- */
 MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, boost::shared_ptr< NativeAPI::NativeConnectionWrapper > & _proxy,
 									sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & l)
-	: warnings(NULL), connection(conn), proxy(_proxy), isClosed(false), last_update_count(UL64(~0)), logger(l), resultset_type(rset_type)
+	: warnings(NULL), connection(conn), proxy(_proxy), isClosed(false), warningsHasBeenLoaded(true),
+		last_update_count(UL64(~0)), logger(l),	resultset_type(rset_type) 
 {
 	CPP_ENTER("MySQL_Statement::MySQL_Statement");
 	CPP_INFO_FMT("this=%p", this);
@@ -52,7 +53,7 @@ MySQL_Statement::~MySQL_Statement()
 	CPP_ENTER("MySQL_Statement::~MySQL_Statement");
 	CPP_INFO_FMT("this=%p", this);
 
-	clearMysqlWarnings(warnings);
+	warnings.reset();
 }
 /* }}} */
 
@@ -69,6 +70,8 @@ MySQL_Statement::do_query(const char *q, size_t length)
 		CPP_ERR_FMT("Error during proxy->query : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 		sql::mysql::util::throwSQLException(*proxy.get());
 	}
+
+	warningsHasBeenLoaded= false;
 }
 /* }}} */
 
@@ -271,8 +274,7 @@ MySQL_Statement::clearWarnings()
 	CPP_ENTER("MySQL_Statement::clearWarnings");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	clearMysqlWarnings(warnings);
-	warnings = NULL;
+	warnings.reset();
 }
 /* }}} */
 
@@ -386,11 +388,13 @@ MySQL_Statement::getWarnings()
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-	clearMysqlWarnings(warnings);
+	if (!warningsHasBeenLoaded)
+	{
+		warnings.reset(loadMysqlWarnings(connection));
+		warningsHasBeenLoaded= true;
+	}
 
-	warnings= loadMysqlWarnings(connection);
-
-	return warnings;
+	return warnings.get();
 }
 /* }}} */
 
