@@ -202,7 +202,7 @@ void statement::callSP()
     ASSERT(!stmt->execute("DROP TABLE IF EXISTS test"));
     stmt->execute("DROP PROCEDURE IF EXISTS p");
 
-    ASSERT(!stmt->execute("CREATE PROCEDURE p(OUT ver_param VARCHAR(25)) BEGIN SELECT VERSION() INTO ver_param; END;"));
+    ASSERT(!stmt->execute("CREATE PROCEDURE p(OUT ver_param VARCHAR(250)) BEGIN SELECT VERSION() INTO ver_param; END;"));
     ASSERT(!stmt->execute("CALL p(@version)"));
     ASSERT(stmt->execute("SELECT @version AS _version"));
     res.reset(stmt->getResultSet());
@@ -210,7 +210,7 @@ void statement::callSP()
     ASSERT_EQUALS(dbmeta->getDatabaseProductVersion(), res->getString("_version"));
 
     stmt->execute("DROP PROCEDURE IF EXISTS p");
-    ASSERT(!stmt->execute("CREATE PROCEDURE p(IN ver_in VARCHAR(25), OUT ver_out VARCHAR(25)) BEGIN SELECT ver_in INTO ver_out; END;"));
+    ASSERT(!stmt->execute("CREATE PROCEDURE p(IN ver_in VARCHAR(250), OUT ver_out VARCHAR(250)) BEGIN SELECT ver_in INTO ver_out; END;"));
     ASSERT(!stmt->execute("CALL p('myver', @version)"));
     ASSERT(stmt->execute("SELECT @version AS _version"));
     res.reset(stmt->getResultSet());
