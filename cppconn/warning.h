@@ -40,7 +40,7 @@ public:
 
 	virtual const SQLWarning * getNextWarning() const = 0; 
 
-	virtual void setNextWarning(SQLWarning * _next) = 0;
+	virtual void setNextWarning(const SQLWarning * _next) = 0;
 
 protected:
 

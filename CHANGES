@@ -104,6 +104,9 @@ GA  1.1.0 - 2010-08-xx
   order to compile the driver from source. Binary distributions have no
   additional dependencies over 1.0.5.
 
+- API change: parameter to setNextQuery in SQLWarning got const qualifier.
+  SQLWarning itself is now an interface with protected destructor.
+
 
 GA  1.0.5 - 2009-04-20
 

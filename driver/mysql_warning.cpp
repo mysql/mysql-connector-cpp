@@ -63,7 +63,7 @@ namespace mysql
 
 
     /* We don't really want it to be called, but we need to implement it */
-	void MySQL_Warning::setNextWarning(SQLWarning * _next)
+	void MySQL_Warning::setNextWarning(const SQLWarning * _next)
 	{
 		if (_next)
 		{
@@ -90,7 +90,7 @@ namespace mysql
 			descr		(w.getMessage())
 	{
 		
-		setNextWarning(const_cast< ::sql::SQLWarning* >(w.getNextWarning()));
+		setNextWarning(w.getNextWarning());
 	}
 
 

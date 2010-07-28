@@ -1726,7 +1726,7 @@ void connection::connectUsingMap()
         created_objects.clear();
         con.reset(driver->connect(connection_properties));
       }
-      catch (sql::SQLException &e)
+      catch (sql::SQLException &/*e*/)
       {
         /* may not be compiled in - ignore */
       }
@@ -1776,7 +1776,7 @@ void connection::connectOptReconnect()
       stmt->execute("DROP TABLE IF EXISTS test");
       FAIL("Can create statement although connection has been closed");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &/*e*/)
     {
       /* expected */
     }
@@ -1818,7 +1818,7 @@ void connection::connectOptReconnect()
       stmt->execute("DROP TABLE IF EXISTS test");
       FAIL("Can create statement although connection has been closed");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &/*e*/)
     {
       /* expected */
     }
@@ -1880,7 +1880,7 @@ void connection::connectOptReconnect()
         logMsg(e.what());
       }
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &/*e*/)
     {
       // KILL has failed - that is OK, we may not have permissions
     }
@@ -1918,7 +1918,7 @@ void connection::connectOptReconnect()
         logMsg(e.what());
       }
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &/*e*/)
     {
       /* KILL has failed - that is OK, we may not have permissions */
     }

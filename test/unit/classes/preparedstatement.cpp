@@ -1465,7 +1465,7 @@ void preparedstatement::executeQuery()
     int value=sql::ResultSet::TYPE_FORWARD_ONLY;
     con->setClientOption(option, static_cast<void *> (&value));
   }
-  catch (sql::MethodNotImplementedException &e)
+  catch (sql::MethodNotImplementedException &/*e*/)
   {
     /* not available */
     return;

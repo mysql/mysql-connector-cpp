@@ -54,7 +54,7 @@ namespace mysql
 	private:
 
 		/* We don't really want it to be called, but we need to implement it */
-		void setNextWarning(SQLWarning * _next);
+		void setNextWarning(const SQLWarning * _next);
 
 	public:
 
