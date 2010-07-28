@@ -170,5 +170,31 @@ void bugs::store_result_error_51562()
 }
 
 
+void bugs::getResultSet_54840()
+{
+  stmt->executeUpdate("DROP function if exists _getActivePost");
+  stmt->executeUpdate("CREATE Function _getActivePost(_author INT) "
+						"RETURNS INT "
+						"DETERMINISTIC "
+						"BEGIN "
+						"	RETURN 55;"
+						"END");
+
+  ASSERT(stmt->execute("select _getActivePost()"));
+
+  try
+  {
+    res.reset(stmt->getResultSet());
+  }
+  catch (::sql::SQLException & /*e*/)
+  {
+    stmt->executeUpdate("DROP function _getActivePost");
+    return; /* Everything is fine */
+  }
+
+  stmt->executeUpdate("DROP function _getActivePost");
+  FAIL("Exception wasn't thrown by getResultSet");
+}
+
 } /* namespace regression */
 } /* namespace testsuite */

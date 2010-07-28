@@ -226,8 +226,10 @@ MySQL_Statement::getResultSet()
 				result.reset(tmp_ptr);
 				tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
 		}
-	} catch (::sql::SQLException & /*e*/ ) {
-		return NULL;
+	} catch (::sql::SQLException & e ) {
+		CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
+			proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
+		throw e;
 	}
 
 	if (!result) {
