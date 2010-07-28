@@ -4,6 +4,18 @@
 
 GA  1.1.0 - 2010-08-xx
 
+- Added Driver::threadInit() and Driver::threadEnd() methods. Every thread
+  of a threaded client must call Driver::threadInit() at the very start
+  of the thread before it does anything else with Connector/C++ and every
+  thread must call Driver::threadEnd() when it finishes. You can find an 
+  example demonstrating the use in examples/pthreads.cpp. It is strongly
+  discouraged to share connections between threads. It is theoretically
+  possible, if you set certain undocumented mutexes, but it is not 
+  supported at all. Use one connection per thread. Do not have two 
+  threads using the same connection at the same time. Please
+  check the C API notes on threading on the MySQL manual. Connector/C++
+  wraps the C API. (Lawrin, Andrey, Ulf)
+
 - Fixed ResultSetMetaData::getColumnType() to return sql::DataType::VARCHAR
   even for multi-type character sets. (Fix from Andrey)
 
