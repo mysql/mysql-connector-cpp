@@ -90,7 +90,7 @@ namespace mysql
 			descr		(w.getMessage())
 	{
 		
-		setNextWarning(const_cast<::sql::SQLWarning*>(w.getNextWarning()));
+		setNextWarning(const_cast< ::sql::SQLWarning* >(w.getNextWarning()));
 	}
 
 
