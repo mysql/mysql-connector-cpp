@@ -65,14 +65,14 @@
 #define EXAMPLE_PASS ""
 #define EXAMPLE_DB "test"
 
+struct st_worker_thread_param {
+	sql::Driver *driver;
+	sql::Connection *con;
+};
+
 using namespace std;
 
 void* thread_one_action(void *arg);
-
-sql::Driver *driver;
-std::auto_ptr< sql::Connection > con;
-std::auto_ptr< sql::Statement > stmt;
-std::auto_ptr< sql::ResultSet > res;
 int thread_finished = 0;
 
 string url;
@@ -80,11 +80,15 @@ string user;
 string pass;
 string database;
 
+
 /**
 * Usage example for Driver, Connection, (simple) Statement, ResultSet
 */
 int main(int argc, const char **argv)
 {
+	sql::Driver *driver;
+	std::auto_ptr< sql::Connection > con;
+
 	url = (argc >= 2) ? argv[1] : EXAMPLE_HOST;
 	user = (argc >= 3) ? argv[2] : EXAMPLE_USER;
 	pass = (argc >= 4) ? argv[3] : EXAMPLE_PASS;
@@ -105,8 +109,23 @@ int main(int argc, const char **argv)
 		con->setSchema(database);
 
 		/* Worker thread */
+
 		cout << "Main thread: creating thread 1..." << endl;
-		status = pthread_create(&thread_one, NULL, thread_one_action, NULL);
+		/*
+			A little bloat.
+			We don't want global auto_ptr objects. Therefore
+			we wrap the object in an object. An alternative
+			would have been to use global sql::Driver, sql::Connection
+			objects [plain objects and no auto_ptr] but then
+			we'd have to add bloat for making sure we explicitly
+			delete them, e.g. in case of an exception.
+			It is not nice in either case. Let's use parameter struct.
+		*/
+		struct st_worker_thread_param *param = new st_worker_thread_param;
+		param->driver = driver;
+		param->con = con.get();
+
+		status = pthread_create(&thread_one, NULL, thread_one_action, (void *)param);
 		if (status != 0)
 			throw std::runtime_error("Thread creation has failed");
 
@@ -123,6 +142,9 @@ int main(int argc, const char **argv)
 			cout << "Main thread: waiting for thread to finish fetching data..." << endl;
 			usleep(300000);
 		}
+
+		delete param;
+
 		cout << "Main thread: thread 1 has finished fetching data from MySQL..." << endl;
 
 	} catch (sql::SQLException &e) {
@@ -154,6 +176,10 @@ int main(int argc, const char **argv)
 
 void* thread_one_action(void *arg) {
 	int status;
+	std::auto_ptr< sql::Statement > stmt;
+	std::auto_ptr< sql::ResultSet > res;
+
+	struct st_worker_thread_param *handles = (struct st_worker_thread_param*) arg;
 
 	/*
 		NOTE:
@@ -163,10 +189,10 @@ void* thread_one_action(void *arg) {
 	*/
 	cout << endl;
 	cout << "\tThread 1: driver->threadInit()" << endl;
-	driver->threadInit();
+	handles->driver->threadInit();
 
 	cout << "\tThread 1: ... statement object created" << endl;
-	stmt.reset(con->createStatement());
+	stmt.reset(handles->con->createStatement());
 
 	/*
 		Sharing resultset among threads should
@@ -194,7 +220,7 @@ void* thread_one_action(void *arg) {
 		Error in my_thread_global_end(): 1 threads didn't exit
 
 	*/
-	driver->threadEnd();
+	handles->driver->threadEnd();
 	cout << endl;
 
 	thread_finished = 1;
