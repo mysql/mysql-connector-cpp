@@ -1,5 +1,25 @@
 /*
   Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+
+  The MySQL Connector/C++ is licensed under the terms of the GPLv2
+  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+  MySQL Connectors. There are special exceptions to the terms and
+  conditions of the GPLv2 as it is applied to this software, see the
+  FLOSS License Exception
+  <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published
+  by the Free Software Foundation; version 2 of the License.
+
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+  for more details.
+
+  You should have received a copy of the GNU General Public License along
+  with this program; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
 GA  1.1.0 - 2010-08-xx
@@ -7,11 +27,11 @@ GA  1.1.0 - 2010-08-xx
 - Added Driver::threadInit() and Driver::threadEnd() methods. Every thread
   of a threaded client must call Driver::threadInit() at the very start
   of the thread before it does anything else with Connector/C++ and every
-  thread must call Driver::threadEnd() when it finishes. You can find an 
+  thread must call Driver::threadEnd() when it finishes. You can find an
   example demonstrating the use in examples/pthreads.cpp. It is strongly
   discouraged to share connections between threads. It is theoretically
-  possible, if you set certain undocumented mutexes, but it is not 
-  supported at all. Use one connection per thread. Do not have two 
+  possible, if you set certain undocumented mutexes, but it is not
+  supported at all. Use one connection per thread. Do not have two
   threads using the same connection at the same time. Please
   check the C API notes on threading on the MySQL manual. Connector/C++
   wraps the C API. (Lawrin, Andrey, Ulf)
@@ -22,10 +42,10 @@ GA  1.1.0 - 2010-08-xx
 - Fixed ResultSetMetaData::getColumnDisplaySize() to return number
   of characters instead of number of bytes. However, there are cases
   when the MySQL server returns wrong or insufficient meta data, see also
-  http://bugs.mysql.com/bug.php?id=6399 . Application developers can rely 
+  http://bugs.mysql.com/bug.php?id=6399 . Application developers can rely
   on getColumnDisplaySize() returning at least the number of required
   characters. Application developers shall not expect the exact number
-  for a given result set. The driver cannot get any closer but 
+  for a given result set. The driver cannot get any closer but
   returning the maximum number for a given result set (Fix from Andrey)
 
 - Changed FindMySQL.cm so it looks for mysqlclient in the ENV{MySQL_DIR}\lib,
