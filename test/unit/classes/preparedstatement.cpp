@@ -968,7 +968,7 @@ bool preparedstatement::createSP(std::string sp_code)
 void preparedstatement::callSP()
 {
   logMsg("preparedstatement::callSP() - MySQL_PreparedStatement::*()");
-  std::string sp_code("CREATE PROCEDURE p(OUT ver_param VARCHAR(25)) BEGIN SELECT VERSION() INTO ver_param; END;");
+  std::string sp_code("CREATE PROCEDURE p(OUT ver_param VARCHAR(250)) BEGIN SELECT VERSION() INTO ver_param; END;");
   try
   {
     if (!createSP(sp_code))
