@@ -249,6 +249,15 @@ MySQL_NativeConnectionWrapper::sqlstate()
 /* }}} */
 
 
+/* {{{ MySQL_NativeConnectionWrapper::sqlstate() */
+SQLString
+MySQL_NativeConnectionWrapper::info()
+{
+	return api->info(mysql);
+}
+/* }}} */
+
+
 /* {{{ MySQL_NativeConnectionWrapper::ssl_set() */
 bool
 MySQL_NativeConnectionWrapper::ssl_set(const SQLString & key,

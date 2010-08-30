@@ -296,6 +296,17 @@ LibmysqlDynamicProxy::get_server_version(MYSQL * mysql)
 /* }}} */
 
 
+/* {{{ LibmysqlDynamicProxy::info() */
+const char *
+LibmysqlDynamicProxy::info(MYSQL * mysql)
+{
+	ptr2mysql_info ptr2_info = symbol_safe_cast<ptr2mysql_info>(GetProcAddr("mysql_info"));
+
+	return (*ptr2_info)(mysql);
+}
+/* }}} */
+
+
 /* {{{ LibmysqlDynamicProxy::init() */
 MYSQL *
 LibmysqlDynamicProxy::init(MYSQL * mysql)

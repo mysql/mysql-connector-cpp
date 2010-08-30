@@ -1078,6 +1078,18 @@ MySQL_Connection::setTransactionIsolation(enum_transaction_isolation level)
 /* }}} */
 
 
+/* {{{ MySQL_Connection::getLastStatementInfo() -I- */
+sql::SQLString
+MySQL_Connection::getLastStatementInfo()
+{
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getLastStatementInfo");
+	checkClosed();
+
+	return proxy->info();
+}
+/* }}} */
+
+
 /* {{{ MySQL_Connection::getSessionVariable() -I- */
 sql::SQLString
 MySQL_Connection::getSessionVariable(const sql::SQLString & varname)

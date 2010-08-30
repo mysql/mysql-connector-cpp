@@ -91,6 +91,8 @@ public:
 
 	unsigned long get_server_version(MYSQL *);
 
+	const char * info(MYSQL *);
+
 	MYSQL * init(MYSQL *mysql);
 
 	int library_init(int, char **, char **);

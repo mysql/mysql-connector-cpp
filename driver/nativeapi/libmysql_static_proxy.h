@@ -108,6 +108,8 @@ public:
 
 	unsigned long get_server_version(MYSQL * mysql);
 
+	const char * info(MYSQL * mysql);
+
 	MYSQL * init(MYSQL * mysql);
 
 	int library_init(int, char **, char **);

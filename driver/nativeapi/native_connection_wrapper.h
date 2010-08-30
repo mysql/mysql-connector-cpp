@@ -98,6 +98,8 @@ public:
 
 	virtual ::sql::SQLString sqlstate() = 0;
 
+	virtual ::sql::SQLString info() = 0;
+
 	virtual bool ssl_set(const ::sql::SQLString & key,
 						const ::sql::SQLString & cert,
 						const ::sql::SQLString & ca,

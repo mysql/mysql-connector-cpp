@@ -71,6 +71,8 @@ typedef const char * (STDCALL *ptr2mysql_get_server_info)(MYSQL *);
 
 typedef unsigned long (STDCALL *ptr2mysql_get_server_version)(MYSQL *);
 
+typedef char * (STDCALL *ptr2mysql_info)(MYSQL *mysql);
+
 typedef MYSQL * (STDCALL *ptr2mysql_init)(MYSQL *mysql);
 
 typedef int (STDCALL *ptr2mysql_library_init)(int, char **, char **);
@@ -191,6 +193,8 @@ public:
 	virtual const char * get_server_info(MYSQL *) = 0;
 
 	virtual unsigned long get_server_version(MYSQL *) = 0;
+
+	virtual const char * info(MYSQL *mysql) = 0;
 
 	virtual MYSQL * init(MYSQL *mysql) = 0;
 

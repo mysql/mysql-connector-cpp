@@ -118,6 +118,8 @@ public:
 				const ::sql::SQLString & capath,
 				const ::sql::SQLString & cipher);
 
+	::sql::SQLString info();
+
 	NativeResultsetWrapper * store_result();
 
 	NativeResultsetWrapper * use_result();

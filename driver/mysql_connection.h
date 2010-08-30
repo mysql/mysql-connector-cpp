@@ -144,9 +144,11 @@ public:
 
 	void setTransactionIsolation(enum_transaction_isolation level);
 
-	sql::SQLString getSessionVariable(const sql::SQLString & varname);
+	virtual sql::SQLString getSessionVariable(const sql::SQLString & varname);
 
-	void setSessionVariable(const sql::SQLString & varname, const sql::SQLString & value);
+	virtual void setSessionVariable(const sql::SQLString & varname, const sql::SQLString & value);
+
+	virtual sql::SQLString getLastStatementInfo();
 
 protected:
 	void checkClosed();

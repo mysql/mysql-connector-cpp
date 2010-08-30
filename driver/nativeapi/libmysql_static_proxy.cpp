@@ -200,6 +200,15 @@ LibmysqlStaticProxy::get_server_version(MYSQL * mysql)
 /* }}} */
 
 
+/* {{{ LibmysqlStaticProxy::info() */
+const char *
+LibmysqlStaticProxy::info(MYSQL * mysql)
+{
+	return ::mysql_info(mysql);
+}
+/* }}} */
+
+
 /* {{{ LibmysqlStaticProxy::init() */
 MYSQL *
 LibmysqlStaticProxy::init(MYSQL * mysql)
