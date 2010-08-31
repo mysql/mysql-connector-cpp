@@ -253,7 +253,8 @@ MySQL_NativeConnectionWrapper::sqlstate()
 SQLString
 MySQL_NativeConnectionWrapper::info()
 {
-	return api->info(mysql);
+  const char * result= api->info(mysql);
+  return (result ? result : "");
 }
 /* }}} */
 
