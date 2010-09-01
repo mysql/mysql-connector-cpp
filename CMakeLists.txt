@@ -193,11 +193,30 @@ IF(EXTRA_NAME_SUFFIX)
 ELSE(EXTRA_NAME_SUFFIX)
   SET(CPACK_PACKAGE_NAME "mysql-connector-c++")
 ENDIF(EXTRA_NAME_SUFFIX)
+
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY
+    "Connector/C++, a library for connecting to MySQL servers.")
 SET(CPACK_PACKAGE_VERSION_MAJOR 1)
 SET(CPACK_PACKAGE_VERSION_MINOR 1)
 SET(CPACK_PACKAGE_VERSION_PATCH 0)
 SET(CPACK_PACKAGE_RELEASE_TYPE "")
 SET(CPACK_PACKAGE_VENDOR "Oracle and/or its affiliates")
+SET(CPACK_RPM_PACKAGE_DESCRIPTION
+"The MySQL Connector/C++ is a MySQL database connector for C++. The
+MySQL Driver for C++ can be used to connect to the MySQL Server from
+C++ applications. The MySQL Driver for C++ mimics the JDBC 4.0 API. It
+is recommended to use the connector with MySQL 5.1 or later. Note -
+its full functionality is not available when connecting to MySQL 5.0.
+The MySQL Driver for C++ cannot connect to MySQL 4.1 or earlier. MySQL
+is a trademark of ${CPACK_PACKAGE_VENDOR}
+
+The MySQL software has Dual Licensing, which means you can use the MySQL
+software free of charge under the GNU General Public License
+(http://www.gnu.org/licenses/). You can also purchase commercial MySQL
+licenses from ${CPACK_PACKAGE_VENDOR} if you do not wish to be
+bound by the terms of the GPL. See the chapter "Licensing and Support"
+in the manual for further info.")
+
 IF(EXISTS "${CMAKE_SOURCE_DIR}/COPYING")
   SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING")
 ELSE(EXISTS "${CMAKE_SOURCE_DIR}/COPYING")
