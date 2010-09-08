@@ -112,14 +112,7 @@ already installed." />
             <ComponentRef Id="ClientLibraryDebug" />
           </Feature>
         </Feature>
-        <ComponentRef Id="Registration" />
     </Feature>
-
-    <Property Id="RegistrationPackage">@WIXOUT@</Property>
-    <!-- Product URN must be unique for each product/version and must be defined in CMakeLists.txt. -->
-    <Property Id="ProductURN">@ProductURN@</Property>
-    <FragmentRef Id="ServiceTagProperties" />
-    <FragmentRef Id="ServiceTagActions" />
 
     <UIRef Id="MySQL_Connector_UI" />
     <UIRef Id="WixUI_ErrorProgressText" />

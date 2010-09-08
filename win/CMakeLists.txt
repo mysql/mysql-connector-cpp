@@ -137,10 +137,10 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/mysql-conncpp-msi-template.xml.in
 MESSAGE(STATUS "${WIXOUT}")
 
 ADD_CUSTOM_COMMAND(OUTPUT "${WIXOUT}.wixobj"
-                   COMMAND ${CONNECTOR_WIX_DIR}/candle mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.xml mysql-conncpp-msi-ui.xml mysql-conncpp-msi-registration.xml)
+                   COMMAND ${CONNECTOR_WIX_DIR}/candle mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.xml mysql-conncpp-msi-ui.xml)
 
 ADD_CUSTOM_COMMAND(OUTPUT ${WIXOUT}.msi
-                   COMMAND ${CONNECTOR_WIX_DIR}/light -o ${WIXOUT}.msi mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.wixobj mysql-conncpp-msi-ui.wixobj mysql-conncpp-msi-registration.wixobj ${CONNECTOR_WIX_DIR}/WixUI.wixlib ${CONNECTOR_WIX_DIR}/wixca.wixlib -loc ${CONNECTOR_WIX_DIR}/WixUI_en-us.wxl
+                   COMMAND ${CONNECTOR_WIX_DIR}/light -o ${WIXOUT}.msi mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.wixobj mysql-conncpp-msi-ui.wixobj ${CONNECTOR_WIX_DIR}/WixUI.wixlib ${CONNECTOR_WIX_DIR}/wixca.wixlib -loc ${CONNECTOR_WIX_DIR}/WixUI_en-us.wxl
                    DEPENDS "${WIXOUT}.wixobj")
 
 ADD_CUSTOM_TARGET(MSI ALL DEPENDS "${WIXOUT}.msi")

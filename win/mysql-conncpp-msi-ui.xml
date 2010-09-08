@@ -33,8 +33,6 @@
     <UI>
       <Dialog Id="MySQL_ExitDialog" Width="370" Height="270" Title="$(loc.ExitDialog_Title)">
         <Control Id="Finish" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Cancel="yes" Text="$(loc.WixUIFinish)">
-          <Publish Event="DoAction" Value="PostRegistration.SetProperty">RegisterServer and not Installed and ACTION="INSTALL"</Publish>
-          <Publish Event="DoAction" Value="PostRegistration">RegisterServer and not Installed and ACTION="INSTALL"</Publish>
           <Publish Event="EndDialog" Value="Return">1</Publish>
         </Control>
         <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Disabled="yes" Text="$(loc.WixUICancel)" />
@@ -44,9 +42,6 @@
         <Control Id="Description" Type="Text" X="135" Y="70" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="$(loc.ExitDialogDescription)" />
         <Control Id="Title" Type="Text" X="135" Y="20" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="$(loc.ExitDialogTitle)" />
         <!-- Default Above. Custom Below -->
-        <Control Id="LaunchCheckBox" Type="CheckBox" X="10" Y="243" Width="170" Height="17" Hidden="yes" Property="RegisterServer" Integer="yes" CheckBoxValue="1" Text=" Register [ProductName] with Sun.">
-            <Condition Action="show">NOT Installed</Condition>
-        </Control>
       </Dialog>
 
       <InstallUISequence>
