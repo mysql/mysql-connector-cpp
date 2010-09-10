@@ -22,12 +22,13 @@
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-GA  1.1.1 - 201x-xx-xx
+GA  1.1.1 - 2010-xx-xx
+
 - Added MySQL_Connection::getLastStatementInfo() which returns back the
   value of the mysql_info() function of libmysql / Connector/C. (Andrey)
 
 
-GA  1.1.0 - 2010-08-xx
+GA  1.1.0 - 2010-09-13
 
 - Added Driver::threadInit() and Driver::threadEnd() methods. Every thread
   of a threaded client must call Driver::threadInit() at the very start
