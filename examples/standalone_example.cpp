@@ -113,7 +113,7 @@ int main(int argc, const char **argv)
 		- sql::SQLException (derived from std::runtime_error)
 		*/
 		cout << "# ERR: SQLException in " << __FILE__;
-		cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << endl;
+		cout << "(" << EXAMPLE_FUNCTION << ") on line " << __LINE__ << endl;
 		/* Use what() (derived from std::runtime_error) to fetch the error message */
 		cout << "# ERR: " << e.what();
 		cout << " (MySQL error code: " << e.getErrorCode();

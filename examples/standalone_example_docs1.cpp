@@ -1,4 +1,4 @@
-/*
+// /*
   Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/C++ is licensed under the terms of the GPLv2
@@ -73,7 +73,7 @@ try {
 
 } catch (sql::SQLException &e) {
   cout << "# ERR: SQLException in " << __FILE__;
-  cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << endl;
+  cout << "(" << EXAMPLE_FUNCTION << ") on line " << __LINE__ << endl;
   cout << "# ERR: " << e.what();
   cout << " (MySQL error code: " << e.getErrorCode();
   cout << ", SQLState: " << e.getSQLState() << " )" << endl;

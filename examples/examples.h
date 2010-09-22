@@ -25,15 +25,35 @@
 #ifndef _EXAMPLES_H
 #define	_EXAMPLES_H
 
-// Portable __FUNCTION__
-#ifndef __FUNCTION__
- #ifdef __func__
-   #define __FUNCTION__ __func__
- #else
-   #define __FUNCTION__ "(function n/a)"
- #endif
+/*
+  __FUNCTION__/__func__ is not portable. We do not promise 
+  that  our example definition covers each and every compiler.
+  If not, it is up to you to find a different definition for 
+  your setup.
+*/
+
+#if __STDC_VERSION__ < 199901L
+#  if __GNUC__ >= 2
+#    define EXAMPLE_FUNCTION __FUNCTION__
+#  else
+#    define EXAMPLE_FUNCTION "(function n/a)"
+#  endif
+#elif defined(_MSC_VER)
+#  if _MSC_VER < 1300
+#    define EXAMPLE_FUNCTION "(function n/a)"
+#  else
+#    define EXAMPLE_FUNCTION __FUNCTION__
+#  endif
+#elif (defined __func__)
+#  define EXAMPLE_FUNCTION __func__
+#else
+#  define EXAMPLE_FUNCTION "(function n/a)"
 #endif
 
+/*
+  Again, either you are lucky and this definition 
+  works for you or you have to find your own.
+*/
 #ifndef __LINE__
   #define __LINE__ "(line number n/a)"
 #endif
@@ -56,4 +76,3 @@ static _test_data test_data[EXAMPLE_NUM_TEST_ROWS] = {
 
 
 #endif	/* _EXAMPLES_H */
-

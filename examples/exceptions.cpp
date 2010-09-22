@@ -150,7 +150,7 @@ int main(int argc, const char **argv)
 		*/
 		cout << endl;
 		cout << "# ERR: DbcException in " << __FILE__;
-		cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << endl;
+		cout << "(" << EXAMPLE_FUNCTION << ") on line " << __LINE__ << endl;
 		/* Use what(), getErrorCode() and getSQLState() */
 		cout << "# ERR: " << e.what();
 		cout << " (MySQL error code: " << e.getErrorCode();
@@ -170,7 +170,7 @@ int main(int argc, const char **argv)
 
 		cout << endl;
 		cout << "# ERR: runtime_error in " << __FILE__;
-		cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << endl;
+		cout << "(" << EXAMPLE_FUNCTION << ") on line " << __LINE__ << endl;
 		cout << "# ERR: " << e.what() << endl;
 		cout << "not ok 1 - examples/exceptions.cpp" << endl;
 

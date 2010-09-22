@@ -32,15 +32,28 @@
 #include <inttypes.h>
 #endif
 
-// Portable __FUNCTION__
-#ifndef __FUNCTION__
- #ifdef __func__
-   #define CPPCONN_FUNC __func__
- #else
-   #define CPPCONN_FUNC "(function n/a)"
- #endif
+/*
+  __FUNCTION__/__func__ is not portable. We do not promise
+  that  our example definition covers each and every compiler.
+  If not, it is up to you to find a different definition for
+  your setup.
+*/
+#if __STDC_VERSION__ < 199901L
+#  if __GNUC__ >= 2
+#    define CPPCONN_FUNC __FUNCTION__
+#  else
+#    define CPPCONN_FUNC "(function n/a)"
+#  endif
+#elif defined(_MSC_VER)
+#  if _MSC_VER < 1300
+#    define CPPCONN_FUNC "(function n/a)"
+#  else
+#    define CPPCONN_FUNC __FUNCTION__
+#  endif
+#elif (defined __func__)
+#  define CPPCONN_FUNC __func__
 #else
-#define CPPCONN_FUNC __FUNCTION__
+#  define CPPCONN_FUNC "(function n/a)"
 #endif
 
 #ifndef __LINE__

@@ -163,7 +163,7 @@ int main(int argc, const char **argv)
 	} catch (sql::SQLException &e) {
 
 		cout << "# ERR: SQLException in " << __FILE__;
-		cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << endl;
+		cout << "(" << EXAMPLE_FUNCTION << ") on line " << __LINE__ << endl;
 		cout << "# ERR: " << e.what();
 		cout << " (MySQL error code: " << e.getErrorCode();
 		cout << ", SQLState: " << e.getSQLState() << " )" << endl;
@@ -173,7 +173,7 @@ int main(int argc, const char **argv)
 	} catch (std::runtime_error &e) {
 
 		cout << "# ERR: runtime_error in " << __FILE__;
-		cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << endl;
+		cout << "(" << EXAMPLE_FUNCTION << ") on line " << __LINE__ << endl;
 		cout << "# ERR: " << e.what() << endl;
 		cout << "not ok 1 - examples/connect.php" << endl;
 
