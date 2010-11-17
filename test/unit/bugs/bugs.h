@@ -49,6 +49,7 @@ public:
     TEST_CASE(net_write_timeout39878);
     TEST_CASE(store_result_error_51562);
     TEST_CASE(getResultSet_54840);
+	TEST_CASE(supportIssue_52319);
   }
 
   /**
@@ -66,6 +67,12 @@ public:
   void store_result_error_51562();
 
   void getResultSet_54840();
+
+  /**
+  * MySQL customer suppoer issue #52319
+  */
+  void supportIssue_52319();
+
 };
 
 REGISTER_FIXTURE(bugs);

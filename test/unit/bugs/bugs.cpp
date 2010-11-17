@@ -209,5 +209,49 @@ void bugs::getResultSet_54840()
   FAIL("Exception wasn't thrown by getResultSet");
 }
 
+void bugs::supportIssue_52319() {
+	std::stringstream msg;
+
+	unsigned int uiStartTime = 1289837776;
+	unsigned int uiProductsID = 20;
+	unsigned int uiParSetID = 2;
+
+
+	logMsg("Test for MySQL support issue 52319");
+
+	stmt->execute("DROP TABLE IF EXISTS products");
+	stmt->execute("CREATE TABLE products (uiProductsIdx int(10) unsigned NOT NULL AUTO_INCREMENT, startTime timestamp NULL DEFAULT NULL, stopTime timestamp NULL DEFAULT NULL, uiProductsID int(10) DEFAULT NULL, uiParameterSetID int(10) unsigned DEFAULT NULL, PRIMARY KEY (uiProductsIdx))");
+
+	stmt->execute("DROP PROCEDURE IF EXISTS insertProduct");
+	stmt->execute("CREATE PROCEDURE insertProduct(IN dwStartTimeIN INT UNSIGNED, IN uiProductsIDIN INT UNSIGNED, IN dwParSetIDIN INT UNSIGNED) BEGIN DECLARE stStartTime TIMESTAMP; SET stStartTime = FROM_UNIXTIME(dwStartTimeIN); INSERT INTO `products` (startTime, uiProductsID, uiParameterSetID) VALUES (stStartTime, uiProductsIDIN, dwParSetIDIN); END");
+
+	pstmt.reset(con->prepareStatement("CALL insertProduct(?, ?, ?)"));
+	pstmt->setInt(1, uiStartTime);
+	pstmt->setInt(2, uiProductsID);
+	pstmt->setInt(3, uiParSetID);
+
+	pstmt->execute();
+	logMsg("Procedure called, checking products table contents");
+
+
+	res.reset(stmt->executeQuery("SELECT uiProductsIdx, startTime, stopTime, uiProductsID, uiParameterSetID FROM products"));
+    ASSERT(res->next());
+
+
+	msg.str("");
+	msg << "uiProductsIdx     = " << res->getString("uiProductsIdx") << "\n";
+	msg << "startTime         = " << res->getString("startTime") << "\n";
+	msg << "stopTime          = " << res->getString("stopTime") << "\n";
+	msg << "uiPrpductsID      = " << res->getString("uiProductsID") << "\n";
+	msg << "uiParameterSetID  = " << res->getString("uiParameterSetID") << "\n";
+	logMsg(msg.str());
+
+	ASSERT_EQUALS("2010-11-15 17:16:16", res->getString("startTime"));
+	ASSERT_EQUALS("20", res->getString("uiProductsID"));
+	ASSERT_EQUALS("2", res->getString("uiParameterSetID"));
+
+	ASSERT(!res->next());
+}
+
 } /* namespace regression */
 } /* namespace testsuite */
