@@ -73,6 +73,8 @@ public:
 
 	virtual int isNullable(unsigned int column) = 0;
 
+	virtual bool isNumeric(unsigned int column) = 0;
+
 	virtual bool isReadOnly(unsigned int column) = 0;
 
 	virtual bool isSearchable(unsigned int column) = 0;

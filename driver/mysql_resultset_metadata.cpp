@@ -332,6 +332,19 @@ MySQL_ResultSetMetaData::isNullable(unsigned int columnIndex)
 /* }}} */
 
 
+/* {{{ MySQL_ResultSetMetaData::isNumeric -I- */
+bool
+MySQL_ResultSetMetaData::isNumeric(unsigned int columnIndex)
+{
+	CPP_ENTER("MySQL_ResultSetMetaData::isNumeric");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	return (getFieldMeta(columnIndex)->flags & NUM_FLAG) != 0;
+}
+/* }}} */
+
+
 /* {{{ MySQL_ResultSetMetaData::isReadOnly -I- */
 bool
 MySQL_ResultSetMetaData::isReadOnly(unsigned int columnIndex)

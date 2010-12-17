@@ -27,6 +27,8 @@ GA  1.1.1 - 2010-xx-xx
 - Added MySQL_Connection::getLastStatementInfo() which returns back the
   value of the mysql_info() function of libmysql / Connector/C. (Andrey)
 
+- Added new method ResultSetMetaData::isNumeric() and implemented it in
+  all classes that subclass from it. (Andrey)
 
 GA  1.1.0 - 2010-09-13
 

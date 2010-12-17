@@ -278,6 +278,19 @@ MySQL_ArtResultSetMetaData::isNullable(unsigned int columnIndex)
 /* }}} */
 
 
+/* {{{ MySQL_ArtResultSetMetaData::isNumeric() -I- */
+bool
+MySQL_ArtResultSetMetaData::isNumeric(unsigned int columnIndex)
+{
+	CPP_ENTER("MySQL_ArtResultSetMetaData::isNumeric");
+	CPP_INFO_FMT("this=%p", this);
+	checkColumnIndex(columnIndex);
+
+	return false;
+}
+/* }}} */
+
+
 /* {{{ MySQL_ArtResultSetMetaData::isReadOnly() -I- */
 bool
 MySQL_ArtResultSetMetaData::isReadOnly(unsigned int columnIndex)

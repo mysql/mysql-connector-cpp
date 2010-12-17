@@ -85,6 +85,8 @@ public:
 
 	int isNullable(unsigned int columnIndex);
 
+	bool isNumeric(unsigned int columnIndex);
+
 	bool isReadOnly(unsigned int columnIndex);
 
 	bool isSearchable(unsigned int columnIndex);
