@@ -1,6 +1,12 @@
 MySQL Connector/C++
+
+This is a release of MySQL Connector/C++, Oracle's
+dual-license C++ API for connecting client applications
+to MySQL.
+
 Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
 
+--------------------------------------------------------------------------------
 
 CONTENTS
 
@@ -254,9 +260,9 @@ SOURCE LAYOUT
 
 FURTHER PLATFORM NOTES ON BUILDING
 
-If this README file is contained in a binary package, you will see below
+If this INSTALL file is contained in a binary package, you will see below
 what settings we have used to create the biary.
 
-If this README file is contained in a source package and, you have build
+If this INSTALL file is contained in a source package and, you have build
 issues, please download a binary package for your platform and check
-the platform specific notes found in its README.
+the platform specific notes found in its INSTALL.
