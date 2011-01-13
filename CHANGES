@@ -24,6 +24,10 @@
 
 GA  1.1.1 - 2010-xx-xx
 
+- DatabaseMetaData::getSQLKeywords() updated to match MySQL 5.5. Note
+  that C/C++, just like C/JDBC, returns the same list for every
+  MySQL database version. (Ulf)
+
 - Added MySQL_Connection::getLastStatementInfo() which returns back the
   value of the mysql_info() function of libmysql / Connector/C. (Andrey)
 
