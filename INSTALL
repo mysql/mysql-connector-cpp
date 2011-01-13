@@ -261,8 +261,9 @@ SOURCE LAYOUT
 FURTHER PLATFORM NOTES ON BUILDING
 
 If this INSTALL file is contained in a binary package, you will see below
-what settings we have used to create the biary.
+what settings we have used to create the binary.
 
 If this INSTALL file is contained in a source package and, you have build
 issues, please download a binary package for your platform and check
-the platform specific notes found in its INSTALL.
+the platform specific settings found in its INSTALL file. It may help 
+to check the settings used by us for building.
