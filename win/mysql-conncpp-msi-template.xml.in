@@ -37,6 +37,7 @@ already installed." />
                 <Component Id="AdditionalFiles" Guid="85f15863-ccbb-40b6-8610-5afedc9fa44f" DiskId="1">
                   <File Id="file0031" Name="README" LongName="README" Source="..\README" />
                   <File Id="file0032" Name="@LIC_SHORT_NAME@" LongName="@LIC_NAME@" Source="..\@LIC_NAME@" />
+                  <File Id="file0033" Name="LIC_3RDP.TXT" LongName="Licenses_for_Third-Party_Components.txt" Source="..\Licenses_for_Third-Party_Components.txt" />
                 </Component>
 
               <!-- *****************************************************************************************
