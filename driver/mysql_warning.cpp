@@ -28,6 +28,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <boost/scoped_ptr.hpp>
 #include <cppconn/statement.h>
 #include <cppconn/resultset.h>
+#include <sstream>
 
 namespace sql
 {
@@ -235,12 +236,14 @@ errCode2SqlState(int32_t errCode, sql::SQLString & state)
 
 
 MySQL_Warning *
-loadMysqlWarnings(sql::Connection * connection)
+loadMysqlWarnings(sql::Connection * connection, unsigned int warningsCount)
 {
 	MySQL_Warning * first = NULL, * current = NULL;
 	SQLString state;
+	unsigned int count;
+	
 
-	if (connection != NULL) {
+	if (warningsCount >0 && connection != NULL) {
 		boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
 		boost::scoped_ptr< sql::ResultSet > rset(stmt->executeQuery("SHOW WARNINGS"));
 

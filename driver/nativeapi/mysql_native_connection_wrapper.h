@@ -124,10 +124,13 @@ public:
 
 	NativeResultsetWrapper * store_result();
 
+	int use_protocol(Protocol_Type protocol);
+
 	NativeResultsetWrapper * use_result();
 
-
 	NativeStatementWrapper & stmt_init();
+
+  unsigned int warning_count();
 };
 
 } /* namespace NativeAPI */

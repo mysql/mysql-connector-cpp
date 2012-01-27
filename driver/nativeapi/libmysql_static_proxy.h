@@ -160,6 +160,8 @@ public:
 
 	MYSQL_RES *  use_result(MYSQL * mysql);
 
+  unsigned int warning_count(MYSQL * mysql);
+
 	/* Prepared Statementstmt_* functions */
 	my_ulonglong stmt_affected_rows(MYSQL_STMT *);
 

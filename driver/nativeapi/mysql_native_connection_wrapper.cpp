@@ -292,6 +292,25 @@ MySQL_NativeConnectionWrapper::store_result()
 /* }}} */
 
 
+static const int protocolType2mysql[PROTOCOL_COUNT][2]= {
+	{PROTOCOL_TCP,		MYSQL_PROTOCOL_TCP},
+	{PROTOCOL_SOCKET,	MYSQL_PROTOCOL_SOCKET},
+	{PROTOCOL_PIPE,		MYSQL_PROTOCOL_PIPE}
+};
+/* {{{ MySQL_NativeConnectionWrapper::use_protocol() */
+int MySQL_NativeConnectionWrapper::use_protocol(Protocol_Type protocol)
+{
+	for (int i= 0; i< PROTOCOL_COUNT; ++i)
+	{
+		if (protocolType2mysql[i][0] == protocol)
+			return options(MYSQL_OPT_PROTOCOL, (const char *)&protocolType2mysql[i][1]);
+	}
+
+	return -1;
+}
+/* }}} */
+
+
 /* {{{ MySQL_NativeConnectionWrapper::use_result() */
 NativeResultsetWrapper *
 MySQL_NativeConnectionWrapper::use_result()
@@ -321,6 +340,15 @@ MySQL_NativeConnectionWrapper::stmt_init()
 	}
 
 	return *(new MySQL_NativeStatementWrapper(raw, api, this));
+}
+/* }}} */
+
+
+/* {{{ MySQL_NativeConnectionWrapper::warning_count() */
+unsigned int
+MySQL_NativeConnectionWrapper::warning_count()
+{
+	return api->warning_count(mysql);
 }
 /* }}} */
 

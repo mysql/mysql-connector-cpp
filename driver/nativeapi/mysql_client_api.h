@@ -111,6 +111,8 @@ typedef MYSQL_RES * (STDCALL *ptr2mysql_store_result)(MYSQL *);
 
 typedef MYSQL_RES * (STDCALL *ptr2mysql_use_result)(MYSQL *);
 
+typedef unsigned int (STDCALL *ptr2mysql_warning_count)(MYSQL *);
+
 /* Prepared Statement stmt_* functions */
 typedef my_ulonglong (STDCALL *ptr2mysql_stmt_affected_rows)(MYSQL_STMT *);
 
@@ -245,6 +247,8 @@ public:
 	virtual MYSQL_RES * store_result(MYSQL *) = 0;
 
 	virtual MYSQL_RES * use_result(MYSQL *) = 0;
+
+  virtual unsigned int warning_count(MYSQL *) = 0;
 
 	/* Methods - wrappers of prepared statement stmt_* functions */
 	virtual my_ulonglong  stmt_affected_rows (MYSQL_STMT *) = 0;

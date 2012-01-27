@@ -386,6 +386,15 @@ LibmysqlStaticProxy::use_result(MYSQL * mysql)
 /* }}} */
 
 
+/* {{{ LibmysqlStaticProxy::warning_count() */
+unsigned int
+LibmysqlStaticProxy::warning_count(MYSQL * mysql)
+{
+	return ::mysql_warning_count(mysql);
+}
+/* }}} */
+
+
 /* Prepared Statement mysql_stmt_* functions */
 /* {{{ LibmysqlStaticProxy::stmt_affected_rows() */
 my_ulonglong

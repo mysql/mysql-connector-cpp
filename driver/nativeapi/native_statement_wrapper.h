@@ -96,6 +96,9 @@ public:
 	virtual ::sql::SQLString sqlstate() = 0;
 
 	virtual int store_result() = 0;
+
+	/* some enhancements comparing to mysql api */
+	virtual unsigned int warning_count() = 0;
 };
 
 

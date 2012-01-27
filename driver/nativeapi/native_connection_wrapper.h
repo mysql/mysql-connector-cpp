@@ -48,6 +48,15 @@ namespace NativeAPI
 class NativeResultsetWrapper;
 class NativeStatementWrapper;
 
+enum Protocol_Type
+{
+	PROTOCOL_TCP,
+	PROTOCOL_SOCKET,
+	PROTOCOL_PIPE,
+	/* Total number of supported protocol types */
+	PROTOCOL_COUNT
+};
+
 class NativeConnectionWrapper : public boost::noncopyable
 {
 public:
@@ -110,9 +119,13 @@ public:
 
 	virtual NativeResultsetWrapper * store_result() = 0;
 
+	virtual int use_protocol(Protocol_Type) = 0;
+
 	virtual NativeResultsetWrapper * use_result() = 0;
 
 	virtual NativeStatementWrapper & stmt_init() = 0;
+
+	virtual unsigned int warning_count() = 0;
 };
 
 } /* namespace NativeAPI */
