@@ -134,6 +134,25 @@ ELSE(EXISTS "../COPYING")
   SET(LIC_NAME       "LICENSE.mysql")
 ENDIF(EXISTS "../COPYING")
 
+#-----------------------------------------------------
+
+IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.mysql")
+  SET(LICENSE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.mysql")
+  SET(LICENSE_RTF  "${CMAKE_CURRENT_BINARY_DIR}/License.rtf")
+ELSE()
+  SET(LICENSE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../COPYING")
+  SET(LICENSE_RTF  "${CMAKE_CURRENT_BINARY_DIR}/License.rtf")
+ENDIF()
+FILE(READ ${LICENSE_FILE} CONTENTS)
+STRING(REGEX REPLACE "\n" "\\\\par\n" CONTENTS "${CONTENTS}")
+STRING(REGEX REPLACE "\t" "\\\\tab" CONTENTS "${CONTENTS}")
+FILE(WRITE "${LICENSE_RTF}"
+     "{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0\\fnil\\fcharset0 Courier New;}}\\viewkind4\\uc1\\pard\\lang1031\\f0\\fs15")
+FILE(APPEND "${LICENSE_RTF}" "${CONTENTS}")
+FILE(APPEND "${LICENSE_RTF}" "\n}\n")
+
+#-----------------------------------------------------
+
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/mysql-conncpp-msi-template.xml.in
                ${CMAKE_CURRENT_SOURCE_DIR}/mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.xml @ONLY)
 
