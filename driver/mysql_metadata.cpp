@@ -4197,7 +4197,7 @@ bool
 MySQL_ConnectionMetaData::storesLowerCaseIdentifiers()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::storesLowerCaseIdentifiers");
-	return ((lower_case_table_names.compare("1") || lower_case_table_names.compare("2")));
+	return (lower_case_table_names.compare("1")==0 || lower_case_table_names.compare("2")==0);
 }
 /* }}} */
 
@@ -4207,7 +4207,7 @@ bool
 MySQL_ConnectionMetaData::storesLowerCaseQuotedIdentifiers()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::storesLowerCaseQuotedIdentifiers");
-	return ((lower_case_table_names.compare("1") || lower_case_table_names.compare("2")));
+	return (lower_case_table_names.compare("1")==0 || lower_case_table_names.compare("2")==0);
 }
 /* }}} */
 
@@ -4217,7 +4217,7 @@ bool
 MySQL_ConnectionMetaData::storesMixedCaseIdentifiers()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::storesMixedCaseIdentifiers");
-	return !((lower_case_table_names.compare("1") || lower_case_table_names.compare("2")));
+	return !(lower_case_table_names.compare("1")==0 || lower_case_table_names.compare("2")==0);
 }
 /* }}} */
 
@@ -4227,7 +4227,7 @@ bool
 MySQL_ConnectionMetaData::storesMixedCaseQuotedIdentifiers()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::storesMixedCaseQuotedIdentifiers");
-	return !((lower_case_table_names.compare("1") || lower_case_table_names.compare("2")));
+	return !(lower_case_table_names.compare("1")==0 || lower_case_table_names.compare("2")==0);
 }
 /* }}} */
 
