@@ -36,7 +36,7 @@ ELSE(WIN32)
 	cmake_minimum_required(VERSION 2.6)
 ENDIF(WIN32)
 
-if(COMMAND cmake_policy)
+if(COMMAND cmake_policy AND POLICY CMP0015)
 	cmake_policy(SET CMP0015 NEW)
 endif(COMMAND cmake_policy)
 
