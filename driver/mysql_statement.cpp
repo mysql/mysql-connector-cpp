@@ -53,8 +53,8 @@ namespace mysql
 /* {{{ MySQL_Statement::MySQL_Statement() -I- */
 MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, boost::shared_ptr< NativeAPI::NativeConnectionWrapper > & _proxy,
 									sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & l)
-	: warnings(NULL), connection(conn), proxy(_proxy), isClosed(false), warningsHasBeenLoaded(true),
-		last_update_count(UL64(~0)), logger(l),	resultset_type(rset_type)
+	: warnings(NULL), connection(conn), proxy(_proxy), isClosed(false), warningsHaveBeenLoaded(true),
+  last_update_count(UL64(~0)), logger(l), resultset_type(rset_type), warningsCount(0)
 {
 	CPP_ENTER("MySQL_Statement::MySQL_Statement");
 	CPP_INFO_FMT("this=%p", this);
@@ -86,7 +86,9 @@ MySQL_Statement::do_query(const char *q, size_t length)
 		sql::mysql::util::throwSQLException(*proxy.get());
 	}
 
-	warningsHasBeenLoaded= false;
+	warningsCount= proxy->warning_count();
+
+	warningsHaveBeenLoaded= false;
 }
 /* }}} */
 
@@ -100,7 +102,7 @@ MySQL_Statement::get_resultset()
 	checkClosed();
 
 	NativeAPI::NativeResultsetWrapper * result;
-	//TODO: again - probably no need to catch-n-throw here. O maybe no need to throw further
+	//TODO: again - probably no need to catch-n-throw here. Or maybe no need to throw further
 	try {
 		result= (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY)? proxy->use_result(): proxy->store_result();
 		if (!result) {
@@ -412,10 +414,10 @@ MySQL_Statement::getWarnings()
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-	if (!warningsHasBeenLoaded)
+	if (!warningsHaveBeenLoaded)
 	{
-		warnings.reset(loadMysqlWarnings(connection));
-		warningsHasBeenLoaded= true;
+		warnings.reset(loadMysqlWarnings(connection, warningsCount));
+		warningsHaveBeenLoaded= true;
 	}
 
 	return warnings.get();

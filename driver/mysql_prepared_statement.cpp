@@ -353,8 +353,9 @@ MySQL_Prepared_Statement::MySQL_Prepared_Statement(
 			boost::shared_ptr< NativeAPI::NativeStatementWrapper > & s, sql::Connection * conn,
 			sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & log
 		)
-	:connection(conn), proxy(s), isClosed(false), warningsHasBeenLoaded(true), logger(log),
-		resultset_type(rset_type), result_bind(new MySQL_ResultBind(proxy, logger))
+	:connection(conn), proxy(s), isClosed(false), warningsHaveBeenLoaded(true), logger(log),
+		resultset_type(rset_type), result_bind(new MySQL_ResultBind(proxy, logger)),
+		warningsCount(0)
 
 {
 	CPP_ENTER("MySQL_Prepared_Statement::MySQL_Prepared_Statement");
@@ -413,16 +414,20 @@ MySQL_Prepared_Statement::do_query()
 		CPP_ERR("Value not set for all parameters");
 		throw sql::SQLException("Value not set for all parameters");
 	}
+
 	if (proxy->bind_param(param_bind->getBindObject())) {
 		CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 		sql::mysql::util::throwSQLException(*proxy.get());
 	}
+
 	if (!sendLongDataBeforeParamBind() || proxy->execute()) {
 		CPP_ERR_FMT("Couldn't execute : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 		sql::mysql::util::throwSQLException(*proxy.get());
 	}
 
-	warningsHasBeenLoaded= false;
+	warningsCount= proxy->warning_count();
+
+	warningsHaveBeenLoaded= false;
 }
 /* }}} */
 
@@ -1158,10 +1163,11 @@ MySQL_Prepared_Statement::getWarnings()
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-	if (!warningsHasBeenLoaded)
+	if (!warningsHaveBeenLoaded)
 	{
-		warnings.reset( loadMysqlWarnings(connection) );
-		warningsHasBeenLoaded= true;
+		if (warningsCount)
+		warnings.reset( loadMysqlWarnings(connection, warningsCount) );
+		warningsHaveBeenLoaded= true;
 	}
 
 	return warnings.get();

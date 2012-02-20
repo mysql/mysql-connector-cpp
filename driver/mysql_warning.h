@@ -87,7 +87,8 @@ namespace mysql
 
 	const sql::SQLString & errCode2SqlState(int32_t errCode, ::sql::SQLString & state);
 
-	MySQL_Warning * loadMysqlWarnings(sql::Connection * connection);
+	MySQL_Warning * loadMysqlWarnings(	sql::Connection * connection,
+										unsigned int warningsCount=0);
 
 
 } /* namespace mysql */

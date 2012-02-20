@@ -98,6 +98,8 @@ public:
 	::sql::SQLString sqlstate();
 
 	int store_result();
+
+	unsigned int warning_count();
 };
 
 

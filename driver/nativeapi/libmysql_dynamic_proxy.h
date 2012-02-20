@@ -142,6 +142,8 @@ public:
 
 	MYSQL_RES * use_result(MYSQL *);
 
+  unsigned int warning_count(MYSQL *);
+
 	/* Prepared Statement stmt_* functions */
 	my_ulonglong  stmt_affected_rows  (MYSQL_STMT *);
 

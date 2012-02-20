@@ -58,13 +58,15 @@ protected:
 
 	void do_query(const char *q, size_t length);
 	bool isClosed;
-	bool warningsHasBeenLoaded;
+	bool warningsHaveBeenLoaded;
 
 	uint64_t last_update_count;
 
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 
 	sql::ResultSet::enum_type resultset_type;
+
+	unsigned int warningsCount;
 
 	virtual boost::shared_ptr< NativeAPI::NativeResultsetWrapper > get_resultset();
 	virtual void checkClosed();

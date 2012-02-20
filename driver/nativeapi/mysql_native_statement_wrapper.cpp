@@ -236,6 +236,16 @@ MySQL_NativeStatementWrapper::store_result()
 }
 /* }}} */
 
+
+/* {{{ MySQL_NativeStatementWrapper::warning_count() */
+unsigned int
+MySQL_NativeStatementWrapper::warning_count()
+{
+	return conn->warning_count();
+}
+/* }}} */
+
+
 } /* namespace NativeAPI */
 } /* namespace mysql */
 } /* namespace sql */

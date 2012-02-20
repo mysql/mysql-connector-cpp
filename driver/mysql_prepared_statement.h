@@ -65,7 +65,7 @@ protected:
 	boost::scoped_ptr< MySQL_Warning > warnings;
 
 	bool isClosed;
-	bool warningsHasBeenLoaded;
+	bool warningsHaveBeenLoaded;
 
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 
@@ -75,6 +75,8 @@ protected:
 	sql::ResultSet::enum_type resultset_type;
 
 	boost::shared_ptr< MySQL_ResultBind > result_bind;
+
+	unsigned int warningsCount;
 
 	virtual void do_query();
 	virtual void checkClosed();
