@@ -69,6 +69,12 @@
 #if defined(_WIN32)
 #ifndef CPPCONN_DONT_TYPEDEF_MS_TYPES_TO_C99_TYPES
 
+#if _MSC_VER >= 1600
+
+#include <stdint.h>
+
+#else
+
 #if !defined(HAVE_INT8_T) && defined(HAVE_MS_INT8)
 typedef __int8			int8_t;
 #endif
@@ -99,5 +105,6 @@ typedef __int64			int64_t;
 typedef unsigned __int64	uint64_t;
 #endif
 
+#endif  // _MSC_VER >= 1600
 #endif	// CPPCONN_DONT_TYPEDEF_MS_TYPES_TO_C99_TYPES
 #endif	//	_WIN32

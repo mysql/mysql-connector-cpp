@@ -2,6 +2,8 @@
 *.la
 *.spec
 *.vcproj
+*.vcxproj
+*.vcxproj.*
 *.sln
 *.ncb
 *.suo

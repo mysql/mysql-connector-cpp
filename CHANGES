@@ -22,7 +22,7 @@
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-GA  1.1.1 - 2010-xx-xx
+GA  1.1.1 - 2012-0x-xx
 
 - DatabaseMetaData::getSQLKeywords() updated to match MySQL 5.5. Note
   that C/C++, just like C/JDBC, returns the same list for every
@@ -33,6 +33,17 @@ GA  1.1.1 - 2010-xx-xx
 
 - Added new method ResultSetMetaData::isNumeric() and implemented it in
   all classes that subclass from it. (Andrey)
+  
+- Fixed the bug causing compilation errors in Microsoft Visual Studio 2010 if
+  stdint.h was included. See http://bugs.mysql.com/bug.php?id=60307
+
+- Fixed bug making statement that did not raise any warning to return
+  warnings from previously executed statement.
+
+- Fixed stores(Lower|Mixed)Case(Quoted)Identifiers methods. 
+
+- Built against libmysql 5.5.24 enabling support of authentification plugins
+  and IPv6.
 
 GA  1.1.0 - 2010-09-13
 
