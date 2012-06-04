@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1292,10 +1292,15 @@ void preparedstatement::getWarnings()
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT UNSIGNED)");
 
+	// Generating 2  warnings to make sure we get only the last 1 - won't hurt
     // Lets hope that this will always cause a 1264 or similar warning
-    pstmt.reset(con->prepareStatement("INSERT INTO test(id) VALUES (-1)"));
+    pstmt.reset(con->prepareStatement("INSERT INTO test(id) VALUES (?)"));
+	pstmt->setInt(1, -2);
     pstmt->executeUpdate();
+	pstmt->setInt(1, -1);
+	pstmt->executeUpdate();
 
+	int count= 0;
     for (const sql::SQLWarning* warn=pstmt->getWarnings(); warn; warn=warn->getNextWarning())
     {
       msg.str("");
@@ -1314,7 +1319,11 @@ void preparedstatement::getWarnings()
         ASSERT(("" != warn->getSQLState()));
       }
       ASSERT(("" != warn->getMessage()));
+
+	  ++count;
     }
+
+	ASSERT_EQUALS(1, count);
 
     for (const sql::SQLWarning* warn=pstmt->getWarnings(); warn; warn=warn->getNextWarning())
     {
@@ -1341,6 +1350,15 @@ void preparedstatement::getWarnings()
     {
       FAIL("There should be no more warnings!");
     }
+
+	pstmt->setInt(1, -3);
+	pstmt->executeUpdate();
+	ASSERT(pstmt->getWarnings() != NULL);
+	// Statement without tables access does not reset warnings.
+	pstmt.reset(con->prepareStatement("SELECT 1"));
+    res.reset(pstmt->executeQuery());
+	ASSERT(pstmt->getWarnings() == NULL);
+    ASSERT(res->next());
 
     // TODO - how to use getNextWarning() ?
     stmt->execute("DROP TABLE IF EXISTS test");
