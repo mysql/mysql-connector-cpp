@@ -61,8 +61,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #    define HAVE_FUNCTION_STRTOULL 1
 #  endif
 #else
+# ifndef strtoll
 #  define strtoll(x, e, b) _strtoi64((x), (e), (b))
+# endif
+# ifndef strtoull
 #  define strtoull(x, e, b) _strtoui64((x), (e), (b))
+# endif
 #endif	//	_WIN32
 
 
@@ -122,6 +126,9 @@ class NativeStatementWrapper;
 
 
 namespace util {
+
+extern const sql::SQLString EMPTYSTR;
+extern const sql::SQLString LOCALHOST;
 
 void throwSQLException(::sql::mysql::NativeAPI::NativeConnectionWrapper & proxy);
 void throwSQLException(::sql::mysql::NativeAPI::NativeStatementWrapper & proxy);

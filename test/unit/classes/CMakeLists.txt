@@ -22,16 +22,25 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 #
 
-SET(test_connection_sources
+SET(test_common_sources
 	../unit_fixture.cpp
-	../main.cpp
+	../main.cpp)
+
+IF(WIN32)
+	SET(test_common_sources
+		${test_common_sources}
+		../unit_fixture.h)
+
+ENDIF(WIN32)
+
+SET(test_connection_sources
+	${test_common_sources}
 	connection.cpp)
 
 IF(WIN32)
 	SET(test_connection_sources
     		${test_connection_sources}
-	../unit_fixture.h
-	connection.h)
+		connection.h)
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(test_connection ${test_connection_sources})
@@ -219,3 +228,25 @@ SET_TARGET_PROPERTIES(test_statement PROPERTIES
 TARGET_LINK_LIBRARIES(test_statement ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 MESSAGE(STATUS "Configuring unit tests - statement")
+
+SET(test_uri_sources
+	${test_common_sources}
+	"${CMAKE_SOURCE_DIR}/driver/mysql_uri.cpp"
+	"${CMAKE_SOURCE_DIR}/driver/mysql_util.cpp"
+	uri.cpp)
+
+IF(WIN32)
+	SET(test_uri_sources
+    		${test_uri_sources}
+		"${CMAKE_SOURCE_DIR}/driver/mysql_uri.h"
+		uri.h)
+ENDIF(WIN32)
+
+ADD_EXECUTABLE(test_uri ${test_uri_sources})
+SET_TARGET_PROPERTIES(test_uri PROPERTIES
+					OUTPUT_NAME "uri"
+					LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
+					COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV} ${MYSQL_CXXFLAGS}")
+TARGET_LINK_LIBRARIES(test_uri ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
+MESSAGE(STATUS "Configuring unit tests - uri")

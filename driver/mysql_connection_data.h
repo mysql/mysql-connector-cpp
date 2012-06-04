@@ -34,7 +34,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "mysql_util.h"
 #include "mysql_metadata.h"
 #include "mysql_warning.h"
-struct st_mysql;
 
 namespace sql
 {

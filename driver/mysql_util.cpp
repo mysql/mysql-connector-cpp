@@ -39,6 +39,10 @@ namespace sql {
 namespace mysql {
 namespace util {
 
+/* just for cases when we need to return const empty string reference */
+const sql::SQLString EMPTYSTR("");
+const sql::SQLString LOCALHOST("localhost");
+
 
 /* {{{ throwSQLException -I- */
 void throwSQLException(::sql::mysql::NativeAPI::NativeConnectionWrapper & proxy)

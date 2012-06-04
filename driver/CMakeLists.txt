@@ -112,6 +112,7 @@ SET(MYSQLCPPCONN_SOURCES
 	mysql_statement.cpp
 	mysql_util.cpp
 	mysql_warning.cpp
+	mysql_uri.cpp
 	nativeapi/mysql_client_api.cpp
 	nativeapi/library_loader.cpp
 	nativeapi/mysql_native_driver_wrapper.cpp
@@ -142,6 +143,7 @@ IF(WIN32)
 		mysql_statement.h
 		mysql_util.h
 		mysql_warning.h
+		mysql_uri.h
 		nativeapi/mysql_client_api.h
 		nativeapi/mysql_native_driver_wrapper.h
 		nativeapi/native_driver_wrapper.h

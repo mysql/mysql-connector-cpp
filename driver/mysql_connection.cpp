@@ -40,6 +40,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "mysql_connection_options.h"
 #include "mysql_util.h"
+#include "mysql_uri.h"
 
 /*
  * _WIN32 is defined by 64bit compiler too
@@ -106,7 +107,9 @@ MySQL_Connection::MySQL_Connection(Driver * _driver,
 								   const sql::SQLString& hostName,
 								   const sql::SQLString& userName,
 								   const sql::SQLString& password)
-	: driver(_driver), proxy(&_proxy), intern(NULL)
+	:	driver	(_driver),
+		proxy	(&_proxy),
+		intern	(NULL)
 {
 	sql::ConnectOptionsMap connection_properties;
 	connection_properties["hostName"] = hostName;
@@ -203,20 +206,16 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::init");
 
 	intern->is_valid = true;
-	bool protocol_tcp = true;
-	sql::SQLString host;
-	sql::SQLString socket_or_pipe;
-	unsigned int port = 3306;
 
-	sql::SQLString hostName;
+	MySQL_Uri uri;
+
 	sql::SQLString userName;
 	sql::SQLString password;
-	sql::SQLString schema;
 	sql::SQLString defaultCharset("utf8");
 	sql::SQLString characterSetResults("utf8");
 
 	sql::SQLString sslKey, sslCert, sslCA, sslCAPath, sslCipher;
-	bool ssl_used = false, schema_used = false;
+	bool ssl_used = false;
 	int flags = CLIENT_MULTI_RESULTS;
 
 	const int * p_i;
@@ -225,15 +224,23 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	bool opt_reconnect = false;
 	bool opt_reconnect_value = false;
 
-	sql::ConnectOptionsMap::const_iterator it = properties.begin();
-	for (; it != properties.end(); ++it) {
-		if (!it->first.compare("hostName")) {
-			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
-				hostName = *p_s;
-			} else {
-				throw sql::InvalidArgumentException("No string value passed for hostName");
-			}
-		} else if (!it->first.compare("userName")) {
+
+	/* Values set in properties individually should have priority over those
+	   we restore from Uri */
+	sql::ConnectOptionsMap::const_iterator it = properties.find("hostName");
+
+	if (it != properties.end())
+	{
+		if ((p_s = boost::get< sql::SQLString >(&it->second))) {
+
+				parseUri(*p_s, uri);
+		} else {
+			throw sql::InvalidArgumentException("No string value passed for hostName");
+		}
+	}
+
+	for (it = properties.begin(); it != properties.end(); ++it) {
+		if (!it->first.compare("userName")) {
 			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
 				userName = *p_s;
 			} else {
@@ -247,31 +254,28 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			}
 		} else if (!it->first.compare("port")) {
 			if ((p_i = boost::get< int >(&it->second))) {
-				port = static_cast<unsigned int>(*p_i);
+				uri.setPort(static_cast<unsigned int>(*p_i));
 			} else {
 				throw sql::InvalidArgumentException("No long long value passed for port");
 			}
 		} else if (!it->first.compare("socket")) {
 			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
-				socket_or_pipe = *p_s;
+				uri.setSocket(*p_s);
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for socket");
 			}
-			protocol_tcp = false;
 		} else if (!it->first.compare("pipe")) {
 			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
-				socket_or_pipe = *p_s;
+				uri.setPipe(*p_s);
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for pipe");
 			}
-			protocol_tcp = false;
 		} else if (!it->first.compare("schema")) {
 			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
-				schema = *p_s;
+				uri.setSchema(*p_s);
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for schema");
 			}
-			schema_used = true;
 		} else if (!it->first.compare("characterSetResults")) {
 			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
 				characterSetResults = *p_s;
@@ -420,46 +424,10 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 		}
 	}
 
-#ifndef _WIN32
-	if (!hostName.compare(0, sizeof("unix://") - 1, "unix://")) {
-		protocol_tcp = false;
-		socket_or_pipe = hostName.substr(sizeof("unix://") - 1, sql::SQLString::npos);
-		host = "localhost";
-		int tmp_protocol = MYSQL_PROTOCOL_SOCKET;
-		proxy->options(MYSQL_OPT_PROTOCOL, (const char *) &tmp_protocol);
-	} else
-#else
-	if (!hostName.compare(0, sizeof("pipe://") - 1, "pipe://")) {
-		protocol_tcp = false;
-		socket_or_pipe = hostName.substr(sizeof("pipe://") - 1, sql::SQLString::npos);
-		host = ".";
-		int tmp_protocol = MYSQL_PROTOCOL_PIPE;
-		proxy->options(MYSQL_OPT_PROTOCOL, (const char *) &tmp_protocol);
-	} else
-#endif
-	if (!hostName.compare(0, sizeof("tcp://") - 1, "tcp://") ) {
-		size_t port_pos, schema_pos;
-		host = hostName.substr(sizeof("tcp://") - 1, sql::SQLString::npos);
-		schema_pos = host.find('/');
-		if (schema_pos != sql::SQLString::npos) {
-			++schema_pos; // skip the slash
-							/* TODO: tcp://127.0.0.1/
-							-> host set, schema empty, schema property ignored */
-			schema = host.substr(schema_pos, host.length() - schema_pos);
-			schema_used = true;
-			host = host.substr(0, schema_pos - 1);
-		}
-		port_pos = host.find_last_of(':', sql::SQLString::npos);
-		if (port_pos != sql::SQLString::npos) {
-		port = atoi(host.substr(port_pos + 1, sql::SQLString::npos).c_str());
-			host = host.substr(0, port_pos);
-		}
-	} else {
-		host = hostName.c_str();
-	}
+
 	/* libmysql shouldn't think it is too smart */
-	if (protocol_tcp && !host.compare(0, sizeof("localhost") - 1, "localhost")) {
-		host = "127.0.0.1";
+	if (tcpProtocol(uri) && !uri.Host().compare(util::LOCALHOST)) {
+		uri.setHost("127.0.0.1");
 	}
 
 	it = properties.begin();
@@ -498,12 +466,23 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 				throw sql::InvalidArgumentException("No bool value passed for OPT_REPORT_DATA_TRUNCATION");
 			}
 			proxy->options(MYSQL_REPORT_DATA_TRUNCATION, (const char *) p_b);
-#ifdef _WIN32
 		} else if (!it->first.compare("OPT_NAMED_PIPE")) {
-			proxy->options(MYSQL_OPT_NAMED_PIPE, NULL);
-#endif
+			/* Not sure it is really needed */
+			uri.setProtocol(NativeAPI::PROTOCOL_PIPE);
 		}
 	}
+
+// Throwing in case of wrong protocol
+#ifdef _WIN32
+	if (uri.Protocol() == NativeAPI::PROTOCOL_SOCKET) {
+		throw sql::InvalidArgumentException("Invalid for this platform protocol requested(MYSQL_PROTOCOL_SOCKET)");
+	}
+#else
+	if (uri.Protocol() == NativeAPI::PROTOCOL_PIPE) {
+		throw sql::InvalidArgumentException("Invalid for this platform protocol requested(MYSQL_PROTOCOL_PIPE)");
+	}
+#endif
+	proxy->use_protocol(uri.Protocol());
 
 	{
 		my_bool tmp_bool = 1;
@@ -516,17 +495,17 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 		/* According to the docs, always returns 0 */
 		proxy->ssl_set(sslKey.c_str(), sslCert.c_str(), sslCA.c_str(), sslCAPath.c_str(), sslCipher.c_str());
 	}
-	CPP_INFO_FMT("hostName=%s", hostName.c_str());
+	CPP_INFO_FMT("hostName=%s", uri.Host().c_str());
 	CPP_INFO_FMT("user=%s", userName.c_str());
-	CPP_INFO_FMT("port=%d", port);
-	CPP_INFO_FMT("schema=%s", schema.c_str());
-	CPP_INFO_FMT("socket/pipe=%s", socket_or_pipe.c_str());
-	if (!proxy->connect(host,
+	CPP_INFO_FMT("port=%d", uri.Port());
+	CPP_INFO_FMT("schema=%s", uri.Schema().c_str());
+	CPP_INFO_FMT("socket/pipe=%s", uri.SocketOrPipe().c_str());
+	if (!proxy->connect(uri.Host(),
 						userName,
 						password,
-						schema_used && schema.length()? schema: (schema= "") /* schema */,
-						port,
-						protocol_tcp == false? socket_or_pipe : "" /*socket or named pipe */,
+						uri.Schema() /* schema */,
+						uri.Port(),
+						uri.SocketOrPipe() /*socket or named pipe */,
 						flags))
 	{
 		CPP_ERR_FMT("Couldn't connect : %d", proxy->errNo());
