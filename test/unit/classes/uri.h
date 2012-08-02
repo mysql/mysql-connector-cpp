@@ -46,7 +46,7 @@ class uri: public unit_fixture
 private:
 	typedef unit_fixture super;
 
-	boost::scoped_ptr<::sql::mysql::MySQL_Uri> _uri;
+	boost::scoped_ptr< ::sql::mysql::MySQL_Uri> _uri;
 
 	::sql::SQLString conn_string;
 
