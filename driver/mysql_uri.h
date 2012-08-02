@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -52,10 +52,10 @@ public:
 	inline	NativeAPI::Protocol_Type	Protocol()	{return protocol;}
 	
 
-	inline	void setHost	(const sql::SQLString &h);
+			void setHost	(const sql::SQLString &h);
 			void setSocket	(const sql::SQLString &s);
-	inline	void setPipe	(const sql::SQLString &p);
-	inline	void setPort	(int p);
+			void setPipe	(const sql::SQLString &p);
+			void setPort	(int p);
 	inline	void setSchema	(const sql::SQLString &s)	{schema= s.c_str();}
 
 	inline	void setProtocol(NativeAPI::Protocol_Type p){protocol= p;}
