@@ -55,7 +55,7 @@ public:
 			void setHost	(const sql::SQLString &h);
 			void setSocket	(const sql::SQLString &s);
 			void setPipe	(const sql::SQLString &p);
-			void setPort	(int p);
+			void setPort	(unsigned int p);
 	inline	void setSchema	(const sql::SQLString &s)	{schema= s.c_str();}
 
 	inline	void setProtocol(NativeAPI::Protocol_Type p){protocol= p;}

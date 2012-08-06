@@ -115,7 +115,7 @@ void MySQL_Uri::setPipe(const sql::SQLString &p)
 
 
 /* {{{ MySQL_Uri::setPort() -I- */
-void MySQL_Uri::setPort(int p)
+void MySQL_Uri::setPort(unsigned int p)
 {
 	setProtocol(NativeAPI::PROTOCOL_TCP);
 	port= p;
@@ -131,6 +131,10 @@ bool tcpProtocol(MySQL_Uri& uri)
 
 
 /* {{{ Parse_Uri() -I- */
+/* URI formats tcp://[host]:port/schema
+               unix://socket
+               pipe://named_pipe
+ */
 bool parseUri(const sql::SQLString & str, MySQL_Uri& uri)
 {
 	if (!str.compare(0, sizeof(MYURI_SOCKET_PREFIX) - 1, MYURI_SOCKET_PREFIX))

@@ -232,8 +232,9 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	if (it != properties.end())
 	{
 		if ((p_s = boost::get< sql::SQLString >(&it->second))) {
-
-				parseUri(*p_s, uri);
+            /* Parsing uri prior to processing all parameters, so indivudually
+               specified parameters precede over those in the uri */
+			parseUri(*p_s, uri);
 		} else {
 			throw sql::InvalidArgumentException("No string value passed for hostName");
 		}
