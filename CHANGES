@@ -22,7 +22,7 @@
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-GA  1.1.1 - 2012-0x-xx
+GA  1.1.1 - 2012-08-06
 
 - DatabaseMetaData::getSQLKeywords() updated to match MySQL 5.5. Note
   that C/C++, just like C/JDBC, returns the same list for every
@@ -42,7 +42,7 @@ GA  1.1.1 - 2012-0x-xx
 
 - Fixed stores(Lower|Mixed)Case(Quoted)Identifiers methods. 
 
-- Built against libmysql 5.5.24 enabling support of authentification plugins
+- Built against libmysql 5.5.27 enabling support of authentification plugins
   and IPv6.
 
 GA  1.1.0 - 2010-09-13
