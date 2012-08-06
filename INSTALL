@@ -4,7 +4,7 @@ This is a release of MySQL Connector/C++, Oracle's
 dual-license C++ API for connecting client applications
 to MySQL.
 
-Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
 
 --------------------------------------------------------------------------------
 
@@ -31,9 +31,7 @@ CONTACT
 
  Bugs can be reported at http://bugs.mysql.com .
 
- For sales related questions please write to <sales@mysql.com>.
-
- See also http://forge.mysql.com/wiki/Connector_C%2B%2B .
+ See also https://wikis.oracle.com/pages/viewpage.action?pageId=27394600
 
 
 INSTALLATION
@@ -46,7 +44,7 @@ INSTALLATION
 
   Please check the Reference Manual for further information at:
 
-    http://dev.mysql.com/doc/refman/5.1/en/connector-cpp.html
+    http://dev.mysql.com/doc/refman/5.5/en/connector-cpp.html
 
   Notes on building the driver from source can be found in the Reference
   Manual and below. At the end of this file you may find settings

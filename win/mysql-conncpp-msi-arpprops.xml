@@ -6,7 +6,7 @@
   <Property Id="ARPURLINFOABOUT" Value="http://dev.mysql.com/downloads/connector/cpp/" />
   <Property Id="ARPURLUPDATEINFO" Value="http://dev.mysql.com/downloads/connector/cpp/" />
   <!--Property Id="ARPHELPTELEPHONE" Value="URL where one can find support phone numbers" /-->
-  <Property Id="ARPAUTHORIZEDCDFPREFIX" Value="http://dev.mysql.com/doc/refman/5.1/en/connector-cpp.html" />
+  <Property Id="ARPAUTHORIZEDCDFPREFIX" Value="http://dev.mysql.com/doc/refman/5.5/en/connector-cpp.html" />
   <Property Id="ARPSIZE" Value="3" />
 
   <!--

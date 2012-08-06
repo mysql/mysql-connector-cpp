@@ -4,7 +4,7 @@ This is a release of MySQL Connector/C++, Oracle's
 dual-license C++ API for connecting client applications
 to MySQL.
 
-Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
 
 --------------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ connecting client applications to the MySQL Server 5.1 or newer. You can downloa
 
 The MySQL driver for C++ offers an easy to use API derived from JDBC 4.0. MySQL Workbench is using it successfully since years. 
 
-The major changes in 1.1.1 are;
+The major changes in 1.1.1 are:
 
 - DatabaseMetaData::getSQLKeywords() updated to match MySQL 5.5. Note
   that C/C++, just like C/JDBC, returns the same list for every
