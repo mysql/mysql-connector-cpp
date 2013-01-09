@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -57,7 +57,7 @@ bool TestsRunner::runTests()
     dummy= *cit;
     dummy+= "::"; // to be caught by filters like "!SuiteName::*"
 
-    if ( Admits( dummy ) )
+	if ( 1 ) //TestsWillRunCount( suiteName, testCases )( dummy ) )
     {
       Test * ts= TestSuiteFactory::theInstance().createTest( *cit );
       ts->runTest();

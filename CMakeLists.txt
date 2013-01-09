@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/C++ is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -205,7 +205,7 @@ SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY
     "Connector/C++, a library for connecting to MySQL servers.")
 SET(CPACK_PACKAGE_VERSION_MAJOR 1)
 SET(CPACK_PACKAGE_VERSION_MINOR 1)
-SET(CPACK_PACKAGE_VERSION_PATCH 1)
+SET(CPACK_PACKAGE_VERSION_PATCH 2)
 SET(CPACK_PACKAGE_RELEASE_TYPE "")
 SET(CPACK_PACKAGE_VENDOR "Oracle and/or its affiliates")
 SET(CPACK_RPM_PACKAGE_DESCRIPTION

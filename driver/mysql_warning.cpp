@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -240,8 +240,6 @@ loadMysqlWarnings(sql::Connection * connection, unsigned int warningsCount)
 {
 	MySQL_Warning * first = NULL, * current = NULL;
 	SQLString state;
-	unsigned int count;
-	
 
 	if (warningsCount >0 && connection != NULL) {
 		boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
@@ -256,9 +254,9 @@ loadMysqlWarnings(sql::Connection * connection, unsigned int warningsCount)
 			if (current == NULL) {
 				first = current = new MySQL_Warning(sql::SQLString(rset->getString(3)), errCode2SqlState(errCode, state), errCode);
 			} else {
-				MySQL_Warning * tmp = new MySQL_Warning(sql::SQLString(rset->getString(3)), errCode2SqlState(errCode, state), errCode);
+				MySQL_Warning * tmp= new MySQL_Warning(sql::SQLString(rset->getString(3)), errCode2SqlState(errCode, state), errCode);
 				current->setNextWarning(tmp);
-				current = tmp;
+				current= tmp;
 			}
 		}
 	}

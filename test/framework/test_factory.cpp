@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -51,6 +51,7 @@ Test *  TestSuiteFactory::createTest( const String::value_type * name )
   return NULL;
 }
 
+
 int TestSuiteFactory::RegisterTestSuite(const String::value_type * name, TestSuiteCreator creator)
 {
   TestSuiteFactory::theInstance().testSuites.insert(std::make_pair(name
@@ -69,6 +70,7 @@ List::size_type TestSuiteFactory::getTestsList( std::vector<const String::value_
 
   return list.size();
 }
+
 
 TestSuiteFactory::~TestSuiteFactory()
 {
