@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -74,14 +74,16 @@ MySQL_Statement::~MySQL_Statement()
 
 
 /* {{{ MySQL_Statement::do_query() -I- */
+/* All callers passed c_str from string, and we here created new string to pass to 
+   proxy->query. It didn't make much sense so changed interface here */
 void
-MySQL_Statement::do_query(const char *q, size_t length)
+MySQL_Statement::do_query(const ::sql::SQLString &q)
 {
 	CPP_ENTER("MySQL_Statement::do_query");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-	if (proxy->query( ::sql::SQLString(q, length) ) && proxy->errNo()) {
+	if (proxy->query(q) && proxy->errNo()) {
 		CPP_ERR_FMT("Error during proxy->query : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 		sql::mysql::util::throwSQLException(*proxy.get());
 	}
@@ -104,7 +106,9 @@ MySQL_Statement::get_resultset()
 	NativeAPI::NativeResultsetWrapper * result;
 	//TODO: again - probably no need to catch-n-throw here. Or maybe no need to throw further
 	try {
-		result= (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY)? proxy->use_result(): proxy->store_result();
+		result= (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY)
+				? proxy->use_result()
+				: proxy->store_result();
 		if (!result) {
 			sql::mysql::util::throwSQLException(*proxy.get());
 		}
@@ -139,7 +143,7 @@ MySQL_Statement::execute(const sql::SQLString& sql)
 	CPP_INFO_FMT("this=%p", this);
 	CPP_INFO_FMT("query=%s", sql.c_str());
 	checkClosed();
-	do_query(sql.c_str(), static_cast<int>(sql.length()));
+	do_query(sql);
 	bool ret = proxy->field_count() > 0;
 	last_update_count = ret? UL64(~0):proxy->affected_rows();
 	return ret;
@@ -156,11 +160,11 @@ MySQL_Statement::executeQuery(const sql::SQLString& sql)
 	CPP_INFO_FMT("query=%s", sql.c_str());
 	checkClosed();
 	last_update_count = UL64(~0);
-	do_query(sql.c_str(), static_cast<int>(sql.length()));
+	do_query(sql);
 	sql::ResultSet *tmp =
 				new MySQL_ResultSet(
 						get_resultset(),
-						resultset_type==sql::ResultSet::TYPE_FORWARD_ONLY? resultset_type:sql::ResultSet::TYPE_SCROLL_INSENSITIVE,
+						resultset_type==sql::ResultSet::TYPE_FORWARD_ONLY ? resultset_type : sql::ResultSet::TYPE_SCROLL_INSENSITIVE,
 						this,
 						logger
 				);
@@ -170,6 +174,14 @@ MySQL_Statement::executeQuery(const sql::SQLString& sql)
 /* }}} */
 
 
+/*{{{ sql::mysql::dirty_drop_resultset -I- */
+void
+dirty_drop_rs(boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy)
+{
+	boost::scoped_ptr<NativeAPI::NativeResultsetWrapper> result(proxy->store_result());
+	// Destructor will do the job on result freeing
+}
+
 /* {{{ MySQL_Statement::executeUpdate() -I- */
 int
 MySQL_Statement::executeUpdate(const sql::SQLString& sql)
@@ -178,11 +190,43 @@ MySQL_Statement::executeUpdate(const sql::SQLString& sql)
 	CPP_INFO_FMT("this=%p", this);
 	CPP_INFO_FMT("query=%s", sql.c_str());
 	checkClosed();
-	do_query(sql.c_str(), static_cast<int>(sql.length()));
-	if (proxy->field_count()) {
-		throw sql::InvalidArgumentException("Statement returning result set");
-	}
-	return static_cast<int>(last_update_count = proxy->affected_rows());
+
+	do_query(sql);
+	
+	bool got_rs= false; 
+
+	do {
+		if (proxy->field_count()) {
+			/* We can't just throw - we need to walk through rest of results */
+			got_rs= true;
+			dirty_drop_rs(proxy);
+		} else {
+			/* We return update count for last query */
+			last_update_count= proxy->affected_rows();
+		}
+
+		if (!proxy->more_results()) {
+			if (got_rs){
+				throw sql::InvalidArgumentException("Statement returning result set");
+			} else {
+				return static_cast<int>(last_update_count);
+			}
+		}
+
+		switch (proxy->next_result()) {
+		case 0:
+			// There is next result and we go on next cycle iteration to process it
+			break;
+		case -1:
+			throw sql::SQLException("Impossible! more_results() said true, next_result says no more results");
+		default/* > 0 */: 
+			CPP_ERR_FMT("Error during executeUpdate : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
+			sql::mysql::util::throwSQLException(*proxy.get());
+		}
+	} while (1);
+
+	/* Should not actually get here*/
+	return 0;
 }
 /* }}} */
 
@@ -353,7 +397,9 @@ MySQL_Statement::getMoreResults()
 	checkClosed();
 	last_update_count = UL64(~0);
 	if (proxy->more_results()) {
+
 		int next_result = proxy->next_result();
+
 		if (next_result > 0) {
 			CPP_ERR_FMT("Error during getMoreResults : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 			sql::mysql::util::throwSQLException(*proxy.get());

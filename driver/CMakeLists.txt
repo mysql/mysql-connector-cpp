@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/C++ is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -130,8 +130,10 @@ IF(WIN32)
 		mysql_art_resultset.h
 		mysql_art_rset_metadata.h
 		mysql_connection.h
+		mysql_connection_options.h
 		mysql_debug.h
 		mysql_driver.h
+		mysql_error.h
 		mysql_metadata.h
 		mysql_parameter_metadata.h
 		mysql_prepared_statement.h

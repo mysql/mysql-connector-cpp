@@ -48,21 +48,22 @@ already installed." />
                 <Component Id="IncludeFiles" Guid="dfc7126d-b5b0-4ffb-b509-749523297faa" DiskId="1">
                   <File Id="file0021" Name="mydrv.h" LongName="mysql_driver.h" Source="..\driver\mysql_driver.h" />
                   <File Id="file0022" Name="myconn.h" LongName="mysql_connection.h" Source="..\driver\mysql_connection.h" />
+                  <File Id="file0023" Name="mysql_error.h" Source="..\driver\mysql_error.h" />
                 </Component>
 
 	        <Directory Id="cppconn" Name="cppconn">
 		  <Component Id="CppconnIncludes" Guid="3b8df956-dc82-48ac-8101-0784368dcd83" DiskId="1">
-                    <File Id="file0001" Name="connect~.h" LongName="connection.h" Source="..\cppconn\connection.h" />
-                    <File Id="file0002" Name="datatype.h" Source="..\cppconn\datatype.h" />
-                    <File Id="file0003" Name="driver.h" Source="..\cppconn\driver.h" />
-                    <File Id="file0004" Name="excepti~.h" LongName="exception.h" Source="..\cppconn\exception.h" />
-                    <File Id="file0005" Name="metadata.h" Source="..\cppconn\metadata.h" />
-                    <File Id="file0006" Name="paramet~.h" LongName="parameter_metadata.h" Source="..\cppconn\parameter_metadata.h" />
-                    <File Id="file0007" Name="prepare~.h" LongName="prepared_statement.h" Source="..\cppconn\prepared_statement.h" />
-                    <File Id="file0008" Name="results.h" LongName="resultset.h" Source="..\cppconn\resultset.h" />
-                    <File Id="file0009" Name="resultme.h" LongName="resultset_metadata.h" Source="..\cppconn\resultset_metadata.h" />
-                    <File Id="file0010" Name="statem~.h" LongName="statement.h" Source="..\cppconn\statement.h" />
-                    <File Id="file0012" Name="warning.h" Source="..\cppconn\warning.h" />
+        <File Id="file0001" Name="connect~.h" LongName="connection.h" Source="..\cppconn\connection.h" />
+        <File Id="file0002" Name="datatype.h" Source="..\cppconn\datatype.h" />
+        <File Id="file0003" Name="driver.h" Source="..\cppconn\driver.h" />
+        <File Id="file0004" Name="excepti~.h" LongName="exception.h" Source="..\cppconn\exception.h" />
+        <File Id="file0005" Name="metadata.h" Source="..\cppconn\metadata.h" />
+        <File Id="file0006" Name="paramet~.h" LongName="parameter_metadata.h" Source="..\cppconn\parameter_metadata.h" />
+        <File Id="file0007" Name="prepare~.h" LongName="prepared_statement.h" Source="..\cppconn\prepared_statement.h" />
+        <File Id="file0008" Name="results.h" LongName="resultset.h" Source="..\cppconn\resultset.h" />
+        <File Id="file0009" Name="resultme.h" LongName="resultset_metadata.h" Source="..\cppconn\resultset_metadata.h" />
+        <File Id="file0010" Name="statem~.h" LongName="statement.h" Source="..\cppconn\statement.h" />
+        <File Id="file0012" Name="warning.h" Source="..\cppconn\warning.h" />
 		    <File Id="file0013" Name="config.h" Source="..\cppconn\config.h" />
 		    <File Id="file0014" Name="build_c~.h" LongName="build_config.h" Source="..\cppconn\build_config.h" />
 

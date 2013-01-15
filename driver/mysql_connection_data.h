@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -43,9 +43,8 @@ namespace mysql
 class MySQL_DebugLogger;
 class MySQL_ConnectionMetaData;
 
-class MySQL_ConnectionData
+struct MySQL_ConnectionData
 {
-public:
 	MySQL_ConnectionData(boost::shared_ptr< MySQL_DebugLogger > & l)
 		: closed(false), autocommit(false), txIsolationLevel(TRANSACTION_READ_COMMITTED),
 		  is_valid(false), sql_mode_set(false), cache_sql_mode(false),

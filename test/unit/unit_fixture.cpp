@@ -347,12 +347,15 @@ void unit_fixture::createTable(String table_name, String columns_and_other_stuff
   createSchemaObject("TABLE", table_name, columns_and_other_stuff);
 }
 
+
 void unit_fixture::dropTable(String table_name)
 {
   dropSchemaObject("TABLE", table_name);
 }
 
-sql::Connection * unit_fixture::getConnection()
+
+sql::Connection *
+unit_fixture::getConnection(sql::ConnectOptionsMap *additional_options)
 {
   if (driver == NULL)
   {
@@ -375,6 +378,15 @@ sql::Connection * unit_fixture::getConnection()
     logMsg("Connection using dynamic load of clientlib " DYNLOAD_MYSQL_LIB);
   }
 
+  if (additional_options != NULL)
+  {
+    for (sql::ConnectOptionsMap::const_iterator cit= additional_options->begin();
+         cit != additional_options->end(); ++cit)
+	{
+	  connection_properties[cit->first]= cit->second;
+	}
+  }
+
   return driver->connect(connection_properties);
 }
 
@@ -388,11 +400,14 @@ void unit_fixture::logErr(const String & message)
   TestsListener::errorsLog(message + "\n");
 }
 
+
 void unit_fixture::logDebug(const String & message)
 {
   logMsg(message);
 }
 
+
+/* There is not really need to have it as a class method */
 int unit_fixture::getMySQLVersion(Connection & con)
 {
   DatabaseMetaData * dbmeta=con->getMetaData();

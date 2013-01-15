@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -356,7 +356,7 @@ MySQL_ResultSet::getDouble(const uint32_t columnIndex) const
 	}
 	was_null = false;
 	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT) {
-		return getInt64(columnIndex);
+		return static_cast<long double>(getInt64(columnIndex));
 	}
 	return sql::mysql::util::strtold(row[columnIndex - 1], NULL);
 }

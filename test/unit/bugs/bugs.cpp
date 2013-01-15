@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2009, 2013, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -26,6 +26,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "bugs.h"
 #include <sstream>
+#include "driver/mysql_error.h"
 
 namespace testsuite
 {
@@ -211,49 +212,151 @@ void bugs::getResultSet_54840()
   FAIL("Exception wasn't thrown by getResultSet");
 }
 
-void bugs::supportIssue_52319() {
-	std::stringstream msg;
+void bugs::supportIssue_52319()
+{
+  std::stringstream msg;
 
-	unsigned int uiStartTime = 1289837776;
-	unsigned int uiProductsID = 20;
-	unsigned int uiParSetID = 2;
+  unsigned int uiStartTime = 1289837776;
+  unsigned int uiProductsID = 20;
+  unsigned int uiParSetID = 2;
+
+  logMsg("Test for MySQL support issue 52319");
+
+  stmt->execute("DROP TABLE IF EXISTS products");
+  stmt->execute("CREATE TABLE products (uiProductsIdx int(10) unsigned NOT NULL AUTO_INCREMENT, startTime timestamp NULL DEFAULT NULL, stopTime timestamp NULL DEFAULT NULL, uiProductsID int(10) DEFAULT NULL, uiParameterSetID int(10) unsigned DEFAULT NULL, PRIMARY KEY (uiProductsIdx))");
+
+  stmt->execute("DROP PROCEDURE IF EXISTS insertProduct");
+  stmt->execute("CREATE PROCEDURE insertProduct(IN dwStartTimeIN INT UNSIGNED, IN uiProductsIDIN INT UNSIGNED, IN dwParSetIDIN INT UNSIGNED) BEGIN DECLARE stStartTime TIMESTAMP; SET stStartTime = FROM_UNIXTIME(dwStartTimeIN); INSERT INTO `products` (startTime, uiProductsID, uiParameterSetID) VALUES (stStartTime, uiProductsIDIN, dwParSetIDIN); END");
+
+  pstmt.reset(con->prepareStatement("CALL insertProduct(?, ?, ?)"));
+  pstmt->setInt(1, uiStartTime);
+  pstmt->setInt(2, uiProductsID);
+  pstmt->setInt(3, uiParSetID);
+
+  pstmt->execute();
+  logMsg("Procedure called, checking products table contents");
+
+  res.reset(stmt->executeQuery("SELECT uiProductsIdx, startTime, stopTime, uiProductsID, uiParameterSetID FROM products"));
+  ASSERT(res->next());
 
 
-	logMsg("Test for MySQL support issue 52319");
+  msg.str("");
+  msg << "uiProductsIdx     = " << res->getString("uiProductsIdx") << "\n";
+  msg << "startTime         = " << res->getString("startTime") << "\n";
+  msg << "stopTime          = " << res->getString("stopTime") << "\n";
+  msg << "uiPrpductsID      = " << res->getString("uiProductsID") << "\n";
+  msg << "uiParameterSetID  = " << res->getString("uiParameterSetID") << "\n";
+  logMsg(msg.str());
 
-	stmt->execute("DROP TABLE IF EXISTS products");
-	stmt->execute("CREATE TABLE products (uiProductsIdx int(10) unsigned NOT NULL AUTO_INCREMENT, startTime timestamp NULL DEFAULT NULL, stopTime timestamp NULL DEFAULT NULL, uiProductsID int(10) DEFAULT NULL, uiParameterSetID int(10) unsigned DEFAULT NULL, PRIMARY KEY (uiProductsIdx))");
+  /* SKIP - timezone may trick us ASSERT_EQUALS("2010-11-15 17:16:16", res->getString("startTime")); */
+  ASSERT_EQUALS("20", res->getString("uiProductsID"));
+  ASSERT_EQUALS("2", res->getString("uiParameterSetID"));
 
-	stmt->execute("DROP PROCEDURE IF EXISTS insertProduct");
-	stmt->execute("CREATE PROCEDURE insertProduct(IN dwStartTimeIN INT UNSIGNED, IN uiProductsIDIN INT UNSIGNED, IN dwParSetIDIN INT UNSIGNED) BEGIN DECLARE stStartTime TIMESTAMP; SET stStartTime = FROM_UNIXTIME(dwStartTimeIN); INSERT INTO `products` (startTime, uiProductsID, uiParameterSetID) VALUES (stStartTime, uiProductsIDIN, dwParSetIDIN); END");
-
-	pstmt.reset(con->prepareStatement("CALL insertProduct(?, ?, ?)"));
-	pstmt->setInt(1, uiStartTime);
-	pstmt->setInt(2, uiProductsID);
-	pstmt->setInt(3, uiParSetID);
-
-	pstmt->execute();
-	logMsg("Procedure called, checking products table contents");
-
-
-	res.reset(stmt->executeQuery("SELECT uiProductsIdx, startTime, stopTime, uiProductsID, uiParameterSetID FROM products"));
-    ASSERT(res->next());
-
-
-	msg.str("");
-	msg << "uiProductsIdx     = " << res->getString("uiProductsIdx") << "\n";
-	msg << "startTime         = " << res->getString("startTime") << "\n";
-	msg << "stopTime          = " << res->getString("stopTime") << "\n";
-	msg << "uiPrpductsID      = " << res->getString("uiProductsID") << "\n";
-	msg << "uiParameterSetID  = " << res->getString("uiParameterSetID") << "\n";
-	logMsg(msg.str());
-
-	/* SKIP - timezone may trick us ASSERT_EQUALS("2010-11-15 17:16:16", res->getString("startTime")); */
-	ASSERT_EQUALS("20", res->getString("uiProductsID"));
-	ASSERT_EQUALS("2", res->getString("uiParameterSetID"));
-
-	ASSERT(!res->next());
+  ASSERT(!res->next());
 }
 
+
+/* Bug#15936764/67325 */
+void bugs::expired_pwd()
+{
+  if (getMySQLVersion(con) < 56006)
+  {
+    SKIP("The server does not support tested functionality(expired password)");
+  }
+
+  stmt->executeUpdate("DROP TABLE IF EXISTS test.ccpp_expired_pwd");
+
+  try
+  {
+    stmt->executeUpdate("DROP USER ccpp_expired_pwd");
+  }
+  catch (sql::SQLException &) {
+    // Catching exception if user did not exist
+  }
+
+  stmt->executeUpdate("DROP TABLE IF EXISTS test.ccpp_expired_pwd");
+  stmt->executeUpdate("CREATE USER ccpp_expired_pwd IDENTIFIED BY 'foo'");
+  stmt->executeUpdate("GRANT ALL ON test to ccpp_expired_pwd");
+  stmt->executeUpdate("ALTER USER ccpp_expired_pwd PASSWORD EXPIRE");
+
+  sql::ConnectOptionsMap opts;
+
+  opts["userName"]=							sql::SQLString("ccpp_expired_pwd");
+  opts["password"]=							sql::SQLString("foo");
+
+  testsuite::Connection c2;
+
+  /* Seeing error first without OPT_CAN_HANDLE_EXPIRED_PASSWORDS ... */
+  try
+  {
+    c2.reset(getConnection(&opts));
+  }
+  catch (sql::SQLException &e)
+  {
+    ASSERT_EQUALS(1862, e.getErrorCode()/*ER_MUST_CHANGE_PASSWORD_LOGIN*/);
+  }
+
+  /* ... Now with it */
+  opts["OPT_CAN_HANDLE_EXPIRED_PASSWORDS"]= true;
+
+  try
+  {
+    c2.reset(getConnection(&opts));
+  }
+  catch (sql::SQLException &e)
+  {
+	/* In case of sql::mysql::mydeCL_CANT_HANDLE_EXP_PWD tests fail - means that in
+	   the setup where test is run the driver does not support expired password */
+	ASSERT_EQUALS(1820, e.getErrorCode(), 1820/*ER_MUST_CHANGE_PASSWORD*/);
+  }
+
+  // Now setting new password and getting fully functional connection
+  opts["preInit"]= sql::SQLString("set password= password('bar')");
+
+  // Connect should go thru fine
+  try
+  {
+	c2.reset(getConnection(&opts));
+  }
+  catch(sql::SQLException &e)
+  {
+	// We can get here in case of old libmysql library
+	ASSERT_EQUALS(sql::mysql::deCL_CANT_HANDLE_EXP_PWD, e.getErrorCode());
+	// Wrong libmysql - we can't test anything else as we can't get connection
+	return;
+  }
+
+  // Trying to connect with new pwd
+  opts["password"]= sql::SQLString("bar");
+  opts["CLIENT_MULTI_STATEMENTS"]= true;
+  opts["postInit"]= sql::SQLString("create table test.ccpp_expired_pwd(i int);"
+							"insert into test.ccpp_expired_pwd(i) values(2)");
+
+  c2.reset(getConnection(&opts));
+
+  // postInit is introduced anong with preInit - testing it too
+  Statement s2(c2->createStatement());
+
+  /* Checking 2 things - that executeUpdate detects a resultset returning stmt, and that
+     connection is usable after that */
+  try
+  {
+	s2->executeUpdate("insert into test.ccpp_expired_pwd(i) values(7);select i from test.ccpp_expired_pwd");
+	FAIL("Driver had to throw \"Query returning resultset\" exception!");
+  }
+  catch (sql::SQLException &)
+  {
+  }
+
+  res.reset(s2->executeQuery("select i from test.ccpp_expired_pwd"));
+
+  ASSERT(res->next());
+
+  ASSERT_EQUALS(2, res->getInt(1));
+
+  c2->close();
+  stmt->executeUpdate("DROP TABLE test.ccpp_expired_pwd");
+  stmt->executeUpdate("DROP USER ccpp_expired_pwd");
+}
 } /* namespace regression */
 } /* namespace testsuite */

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -33,6 +33,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
+#include <mysqld_error.h>
 #include <cppconn/exception.h>
 
 #include "nativeapi/native_connection_wrapper.h"
@@ -41,6 +42,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "mysql_connection_options.h"
 #include "mysql_util.h"
 #include "mysql_uri.h"
+#include "mysql_error.h"
 
 /*
  * _WIN32 is defined by 64bit compiler too
@@ -101,6 +103,16 @@ MySQL_Savepoint::getSavepointName()
 /* }}} */
 
 
+/* {{{ MySQL_Connection::createServiceStmt() */
+MySQL_Statement *
+MySQL_Connection::createServiceStmt() {
+
+	/* We need to have it storing results, not using */
+	return new MySQL_Statement(this, proxy,
+							   sql::ResultSet::TYPE_SCROLL_INSENSITIVE,
+							   intern->logger);
+}
+
 /* {{{ MySQL_Connection::MySQL_Connection() -I- */
 MySQL_Connection::MySQL_Connection(Driver * _driver,
 								   ::sql::mysql::NativeAPI::NativeConnectionWrapper& _proxy,
@@ -120,6 +132,8 @@ MySQL_Connection::MySQL_Connection(Driver * _driver,
 	std::auto_ptr< MySQL_ConnectionData > tmp_intern(new MySQL_ConnectionData(tmp_logger));
 	intern = tmp_intern.get();
 
+	service.reset(createServiceStmt());
+
 	init(connection_properties);
 	// No exception so far, thus intern can still point to the MySQL_ConnectionData object
 	// and in the dtor we will clean it up
@@ -137,6 +151,8 @@ MySQL_Connection::MySQL_Connection(Driver * _driver,
 	boost::shared_ptr<MySQL_DebugLogger> tmp_logger(new MySQL_DebugLogger());
 	std::auto_ptr< MySQL_ConnectionData > tmp_intern(new MySQL_ConnectionData(tmp_logger));
 	intern = tmp_intern.get();
+
+	service.reset(createServiceStmt());
 
 	init(properties);
 	// No exception so far, thus intern can still point to the MySQL_ConnectionData object
@@ -161,6 +177,52 @@ MySQL_Connection::~MySQL_Connection()
 
 	delete intern;
 }
+/* }}} */
+
+/* A struct to keep const reference data for mapping string value to int */
+struct String2IntMap
+{
+	const char * key;
+	int		     value;
+};
+
+static const String2IntMap flagsOptions[]=
+	{
+		{"CLIENT_COMPRESS",			CLIENT_COMPRESS},
+		{"CLIENT_FOUND_ROWS",		CLIENT_FOUND_ROWS},
+		{"CLIENT_IGNORE_SIGPIPE",	CLIENT_IGNORE_SIGPIPE},
+		{"CLIENT_IGNORE_SPACE",		CLIENT_IGNORE_SPACE},
+		{"CLIENT_INTERACTIVE",		CLIENT_INTERACTIVE},
+		{"CLIENT_LOCAL_FILES",		CLIENT_LOCAL_FILES},
+		{"CLIENT_MULTI_STATEMENTS",	CLIENT_MULTI_STATEMENTS},
+		{"CLIENT_NO_SCHEMA",		CLIENT_NO_SCHEMA}
+	};
+
+/* {{{ readFlag(::sql::SQLString, int= 0) -I- */
+/** Check if connection option pointed by map iterator defines a connection
+    flag */
+static bool read_flag(ConnectOptionsMap::const_iterator &cit, int &flags)
+{
+	const bool * value;
+
+	for (int i = 0; i < sizeof(flagsOptions)/sizeof(String2IntMap); ++i) {
+
+		if (!cit->first.compare(flagsOptions[i].key)) {
+
+			if (!(value = boost::get<bool>(&cit->second))) {
+				sql::SQLString err("No bool value passed for ");
+				err.append(flagsOptions[i].key);
+				throw sql::InvalidArgumentException(err);
+			}
+			if (*value) {
+				flags |= flagsOptions[i].value;
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
 /* }}} */
 
 /*
@@ -214,7 +276,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	sql::SQLString defaultCharset("utf8");
 	sql::SQLString characterSetResults("utf8");
 
-	sql::SQLString sslKey, sslCert, sslCA, sslCAPath, sslCipher;
+	sql::SQLString sslKey, sslCert, sslCA, sslCAPath, sslCipher, postInit;
 	bool ssl_used = false;
 	int flags = CLIENT_MULTI_RESULTS;
 
@@ -223,14 +285,14 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	const sql::SQLString * p_s;
 	bool opt_reconnect = false;
 	bool opt_reconnect_value = false;
+	bool client_doesnt_support_exp_pwd = false;
 
 
 	/* Values set in properties individually should have priority over those
 	   we restore from Uri */
 	sql::ConnectOptionsMap::const_iterator it = properties.find("hostName");
 
-	if (it != properties.end())
-	{
+	if (it != properties.end())	{
 		if ((p_s = boost::get< sql::SQLString >(&it->second))) {
             /* Parsing uri prior to processing all parameters, so indivudually
                specified parameters precede over those in the uri */
@@ -366,74 +428,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			} else {
 				throw sql::InvalidArgumentException("No bool value passed for metadataUseInfoSchema");
 			}
-		} else if (!it->first.compare("CLIENT_COMPRESS")) {
-			if (!(p_b = boost::get<bool>(&it->second))) {
-				throw sql::InvalidArgumentException("No bool value passed for CLIENT_COMPRESS");
-			}
-			if (*p_b) {
-				flags |= CLIENT_COMPRESS;
-			}
-		} else if (!it->first.compare("CLIENT_FOUND_ROWS")) {
-			if (!(p_b = boost::get<bool>(&it->second))) {
-				throw sql::InvalidArgumentException("No bool value passed for CLIENT_FOUND_ROWS");
-			}
-			if (*p_b) {
-				flags |= CLIENT_FOUND_ROWS;
-			}
-		} else if (!it->first.compare("CLIENT_IGNORE_SIGPIPE")) {
-			if (!(p_b = boost::get<bool>(&it->second))) {
-				throw sql::InvalidArgumentException("No bool value passed for CLIENT_IGNORE_SIGPIPE");
-			}
-			if (*p_b) {
-				flags |= CLIENT_IGNORE_SIGPIPE;
-			}
-		} else if (!it->first.compare("CLIENT_IGNORE_SPACE")) {
-			if (!(p_b = boost::get<bool>(&it->second))) {
-				throw sql::InvalidArgumentException("No bool value passed for CLIENT_IGNORE_SPACE");
-			}
-			if (*p_b) {
-				flags |= CLIENT_IGNORE_SPACE;
-			}
-		} else if (!it->first.compare("CLIENT_INTERACTIVE")) {
-			if (!(p_b = boost::get<bool>(&it->second))) {
-				throw sql::InvalidArgumentException("No bool value passed for CLIENT_INTERACTIVE");
-			}
-			if (*p_b) {
-				flags |= CLIENT_INTERACTIVE;
-			}
-		} else if (!it->first.compare("CLIENT_LOCAL_FILES")) {
-			if (!(p_b = boost::get<bool>(&it->second))) {
-				throw sql::InvalidArgumentException("No bool value passed for CLIENT_LOCAL_FILES");
-			}
-			if (*p_b) {
-				flags |= CLIENT_LOCAL_FILES;
-			}
-		} else if (!it->first.compare("CLIENT_MULTI_STATEMENTS")) {
-			if (!(p_b = boost::get<bool>(&it->second))) {
-				throw sql::InvalidArgumentException("No bool value passed for CLIENT_MULTI_STATEMENTS");
-			}
-			if (*p_b) {
-				flags |= CLIENT_MULTI_STATEMENTS;
-			}
-		} else if (!it->first.compare("CLIENT_NO_SCHEMA")) {
-			if (!(p_b = boost::get<bool>(&it->second))) {
-				throw sql::InvalidArgumentException("No bool value passed for CLIENT_NO_SCHEMA");
-			}
-			if (*p_b) {
-				flags |= CLIENT_NO_SCHEMA;
-			}
-		}
-	}
-
-
-	/* libmysql shouldn't think it is too smart */
-	if (tcpProtocol(uri) && !uri.Host().compare(util::LOCALHOST)) {
-		uri.setHost("127.0.0.1");
-	}
-
-	it = properties.begin();
-	for (; it != properties.end(); ++it) {
-		if (!it->first.compare("OPT_CONNECT_TIMEOUT")) {
+		}else if (!it->first.compare("OPT_CONNECT_TIMEOUT")) {
 			if (!(p_i = boost::get< int >(&it->second))) {
 				throw sql::InvalidArgumentException("No long long value passed for OPT_CONNECT_TIMEOUT");
 			}
@@ -470,7 +465,46 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 		} else if (!it->first.compare("OPT_NAMED_PIPE")) {
 			/* Not sure it is really needed */
 			uri.setProtocol(NativeAPI::PROTOCOL_PIPE);
+		} else if (!it->first.compare("OPT_CAN_HANDLE_EXPIRED_PASSWORDS")) {
+			/* We need to know client version at runtime */
+			long client_ver= proxy->get_client_version();
+			if (proxy->get_client_version() < 50610) {
+				// TODO: I think we should throw a warning here
+				/* We only need this flag set if application has said it supports expired
+				   password mode */
+				client_doesnt_support_exp_pwd= true;
+			} else {
+				if (!(p_b = boost::get< bool >(&it->second))) {
+					throw sql::InvalidArgumentException("No bool value passed for "
+														"OPT_CAN_HANDLE_EXPIRED_PASSWORDS");
+				}
+				/* We do not care here about server version */
+				proxy->options(MYSQL_OPT_CAN_HANDLE_EXPIRED_PASSWORDS, (const char*)p_b);
+			}
+
+		} else if (!it->first.compare("preInit")) {
+			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
+				proxy->options(MYSQL_INIT_COMMAND, p_s->c_str());
+			} else {
+				throw sql::InvalidArgumentException("No string value passed for preInit");
+			}
+		}else if (!it->first.compare("postInit")) {
+			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
+				postInit= *p_s;
+			} else {
+				throw sql::InvalidArgumentException("No string value passed for postInit");
+			}
+		} else if (read_flag(it, flags)) {
+			// Nothing to do here
+		} else {
+			// TODO: Shouldn't we really create a warning here? as soon as we are able to
+			//       create a warning
 		}
+	}
+
+	/* libmysql shouldn't think it is too smart */
+	if (tcpProtocol(uri) && !uri.Host().compare(util::LOCALHOST)) {
+		uri.setHost("127.0.0.1");
 	}
 
 // Throwing in case of wrong protocol
@@ -483,11 +517,12 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 		throw sql::InvalidArgumentException("Invalid for this platform protocol requested(MYSQL_PROTOCOL_PIPE)");
 	}
 #endif
+
 	proxy->use_protocol(uri.Protocol());
 
 	{
-		my_bool tmp_bool = 1;
-		proxy->options(MYSQL_SECURE_AUTH, (const char *) &tmp_bool);
+		const char tmp_bool = 1;
+		proxy->options(MYSQL_SECURE_AUTH, &tmp_bool);
 	}
 
 	proxy->options(MYSQL_SET_CHARSET_NAME, defaultCharset.c_str());
@@ -513,10 +548,29 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 		CPP_ERR_FMT("Couldn't connect : (%s)", proxy->sqlstate().c_str());
 		CPP_ERR_FMT("Couldn't connect : %s", proxy->error().c_str());
 		CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
-		sql::SQLException e(proxy->error(), proxy->sqlstate(), proxy->errNo());
+
+		/* If error is "Password has expired" and application supports it while 
+		   mysql client lib does not */
+		std::string error_message;
+		int native_error= proxy->errNo();
+
+		if (native_error == ER_MUST_CHANGE_PASSWORD_LOGIN
+			&& client_doesnt_support_exp_pwd) {
+
+			native_error= deCL_CANT_HANDLE_EXP_PWD;
+			error_message= "Your password has expired, but the underlying mysql"
+				" client library does not allow to change it. Please"
+				" update it to at least version 5.6.10 or change your MySQL"
+				" password using other application.";
+		} else {
+			error_message= proxy->error();
+		}
+
+		sql::SQLException e(error_message, proxy->sqlstate(), native_error);
 		proxy.reset();
 		throw e;
 	}
+
 	if (opt_reconnect) {
 		proxy->options(MYSQL_OPT_RECONNECT, (const char *) &opt_reconnect_value);
 	}
@@ -527,7 +581,11 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	if (characterSetResults.compare(defaultCharset)) {
 		setSessionVariable("character_set_results", characterSetResults.length() ? characterSetResults:"NULL");
 	}
-	intern->meta.reset(new MySQL_ConnectionMetaData(this, proxy, intern->logger));
+	intern->meta.reset(new MySQL_ConnectionMetaData(service.get(), proxy, intern->logger));
+
+	if (postInit.length() > 0) {
+		service->executeUpdate(postInit);
+	}
 }
 /* }}} */
 
@@ -1055,7 +1113,8 @@ MySQL_Connection::setTransactionIsolation(enum_transaction_isolation level)
 			throw sql::InvalidArgumentException("MySQL_Connection::setTransactionIsolation()");
 	}
 	intern->txIsolationLevel = level;
-	proxy->query(q);
+
+	service->executeUpdate(q);
 }
 /* }}} */
 
@@ -1083,11 +1142,10 @@ MySQL_Connection::getSessionVariable(const sql::SQLString & varname)
 		CPP_INFO_FMT("sql_mode=%s", intern->sql_mode.c_str());
 		return intern->sql_mode;
 	}
-	boost::scoped_ptr< sql::Statement > stmt(createStatement());
 	sql::SQLString q("SHOW SESSION VARIABLES LIKE '");
 	q.append(varname).append("'");
 
-	boost::scoped_ptr< sql::ResultSet > rset(stmt->executeQuery(q));
+	boost::scoped_ptr< sql::ResultSet > rset(service->executeQuery(q));
 
 	if (rset->next()) {
 		if (intern->cache_sql_mode && intern->sql_mode_set == false && !varname.compare("sql_mode")) {
@@ -1108,7 +1166,6 @@ MySQL_Connection::setSessionVariable(const sql::SQLString & varname, const sql::
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setSessionVariable");
 	checkClosed();
 
-	boost::scoped_ptr< sql::Statement > stmt(createStatement());
 	sql::SQLString q("SET SESSION ");
 	q.append(varname).append("=");
 
@@ -1118,13 +1175,12 @@ MySQL_Connection::setSessionVariable(const sql::SQLString & varname, const sql::
 		q.append("'").append(value).append("'");
 	}
 
-	stmt->executeUpdate(q);
+	service->executeUpdate(q);
 	if (intern->cache_sql_mode && !strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1)) {
-		intern->sql_mode = value;
+		intern->sql_mode= value;
 	}
 }
 /* }}} */
-
 
 } /* namespace mysql */
 } /* namespace sql */

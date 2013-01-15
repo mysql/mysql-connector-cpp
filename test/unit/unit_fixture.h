@@ -143,6 +143,7 @@ struct columndefinition
 
 };
 
+
 struct udtattribute
 {
   std::string name;
@@ -155,6 +156,7 @@ struct udtattribute
   }
 
 };
+
 
 class unit_fixture : public TestSuite
 {
@@ -311,7 +313,7 @@ protected:
    *
    * @throws SQLException &
    */
-  sql::Connection * getConnection();
+  sql::Connection * getConnection(sql::ConnectOptionsMap *additional_opts=NULL);
 
   /**
    * Checks if the passed SQLException is caused by the specified error

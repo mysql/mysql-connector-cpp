@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -29,6 +29,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <cppconn/connection.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 
 namespace sql
 {
@@ -55,7 +56,8 @@ private:
 
 
 class MySQL_DebugLogger;
-class MySQL_ConnectionData; /* PIMPL */
+struct MySQL_ConnectionData; /* PIMPL */
+class MySQL_Statement;
 
 namespace NativeAPI
 {
@@ -64,6 +66,8 @@ class NativeConnectionWrapper;
 
 class CPPCONN_PUBLIC_FUNC MySQL_Connection : public sql::Connection
 {
+	MySQL_Statement * createServiceStmt();
+
 public:
 	MySQL_Connection(Driver * _driver,
 					::sql::mysql::NativeAPI::NativeConnectionWrapper & _proxy,
@@ -152,16 +156,20 @@ public:
 
 	virtual sql::SQLString getLastStatementInfo();
 
-protected:
+private:
+	/* We do not really think this class has to be subclassed*/
 	void checkClosed();
 	void init(std::map< sql::SQLString, sql::ConnectPropertyVal > & properties);
 
 	Driver * driver;
 	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy;
 
+	/* statement handle to execute queries initiated by driver. Perhaps it is
+	   a good idea to move it to a separate helper class */
+	boost::scoped_ptr< ::sql::mysql::MySQL_Statement > service;
+
 	MySQL_ConnectionData * intern; /* pimpl */
 
-private:
 	/* Prevent use of these */
 	MySQL_Connection(const MySQL_Connection &);
 	void operator=(MySQL_Connection &);

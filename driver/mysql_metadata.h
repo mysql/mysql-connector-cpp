@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -50,6 +50,7 @@ class IMySQLCAPI;
 
 class MySQL_ConnectionMetaData : public sql::DatabaseMetaData
 {
+	sql::Statement * stmt;
 	MySQL_Connection * connection;
 	unsigned long server_version;
 	boost::shared_ptr< MySQL_DebugLogger > logger;
@@ -59,8 +60,9 @@ class MySQL_ConnectionMetaData : public sql::DatabaseMetaData
 	sql::SQLString lower_case_table_names;
 
 	bool use_info_schema;
+
 public:
-	MySQL_ConnectionMetaData(MySQL_Connection * const conn, boost::shared_ptr<NativeAPI::NativeConnectionWrapper> _capi,
+	MySQL_ConnectionMetaData(sql::Statement * const service, boost::shared_ptr<NativeAPI::NativeConnectionWrapper> _capi,
 							boost::shared_ptr< MySQL_DebugLogger > & l);
 
 	virtual ~MySQL_ConnectionMetaData();
