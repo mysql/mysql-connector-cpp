@@ -70,6 +70,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "mysql_warning.h"
 #include "mysql_debug.h"
 
+#ifndef ER_MUST_CHANGE_PASSWORD_LOGIN
+# define ER_MUST_CHANGE_PASSWORD_LOGIN 1862
+#endif
 
 namespace sql
 {
@@ -558,10 +561,13 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			&& client_doesnt_support_exp_pwd) {
 
 			native_error= deCL_CANT_HANDLE_EXP_PWD;
-			error_message= "Your password has expired, but the underlying mysql"
-				" client library does not allow to change it. Please"
-				" update it to at least version 5.6.10 or change your MySQL"
-				" password using other application.";
+			error_message= "Your password has expired. Your instance of"
+				" Connector/C++ is not linked against mysql client library that"
+				" allows to change it. resetting of an expired password. To"
+				" resolve this, you either need to change the password with"
+				" mysql client that can do it or rebuild your instance of"
+				" Connector/C++ against mysql client library that supports"
+				" resetting of an expired password.";
 		} else {
 			error_message= proxy->error();
 		}
