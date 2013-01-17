@@ -48,7 +48,7 @@ already installed." />
                 <Component Id="IncludeFiles" Guid="dfc7126d-b5b0-4ffb-b509-749523297faa" DiskId="1">
                   <File Id="file0021" Name="mydrv.h" LongName="mysql_driver.h" Source="..\driver\mysql_driver.h" />
                   <File Id="file0022" Name="myconn.h" LongName="mysql_connection.h" Source="..\driver\mysql_connection.h" />
-                  <File Id="file0023" Name="mysql_error.h" Source="..\driver\mysql_error.h" />
+                  <File Id="file0023" Name="myerror.h" LongName="mysql_error.h" Source="..\driver\mysql_error.h" />
                 </Component>
 
 	        <Directory Id="cppconn" Name="cppconn">
