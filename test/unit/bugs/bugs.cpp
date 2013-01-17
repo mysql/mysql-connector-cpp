@@ -307,7 +307,7 @@ void bugs::expired_pwd()
   {
 	/* In case of sql::mysql::mydeCL_CANT_HANDLE_EXP_PWD tests fail - means that in
 	   the setup where test is run the driver does not support expired password */
-	ASSERT_EQUALS(1820, e.getErrorCode(), 1820/*ER_MUST_CHANGE_PASSWORD*/);
+	ASSERT_EQUALS(1820, e.getErrorCode()/*ER_MUST_CHANGE_PASSWORD*/);
   }
 
   // Now setting new password and getting fully functional connection
