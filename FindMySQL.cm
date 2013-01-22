@@ -111,6 +111,16 @@ ELSE (WIN32)
 		_MYSQL_CONFIG(MYSQL_LIBRARIES    "(^| )-l" "--libs_r")
 		_MYSQL_CONFIG(MYSQL_LIB_DIR "(^| )-L" "--libs_r")
 
+		# In MySQL Server 5.6.10 "mysql_config" outputs -lssl
+                # -lcrypto dependencies. We want to be able to statically
+		# link with OpenSSL, so we honor a -DEXTRA_MYSQL_DEP=...
+		# argument on the command line, and assume that you want
+		# to add SSL libraries to link against yourself
+		IF (EXTRA_MYSQL_DEP)
+		   LIST(REMOVE_ITEM MYSQL_LIBRARIES "ssl" "crypto")
+		   LIST(APPEND MYSQL_LIBRARIES ${EXTRA_MYSQL_DEP})
+		ENDIF (EXTRA_MYSQL_DEP)
+
 		EXECUTE_PROCESS(COMMAND ${MYSQL_CONFIG_EXECUTABLE} "--version"
 						OUTPUT_VARIABLE __MYSQL_VERSION
 						)
