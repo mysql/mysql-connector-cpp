@@ -293,7 +293,7 @@ void bugs::expired_pwd()
   }
   catch (sql::SQLException &e)
   {
-    ASSERT_EQUALS(1862, e.getErrorCode()/*ER_MUST_CHANGE_PASSWORD_LOGIN*/);
+    ASSERT_EQUALS(1820, e.getErrorCode()/*ER_MUST_CHANGE_PASSWORD_LOGIN*/);
   }
 
   /* ... Now with it */
@@ -327,6 +327,8 @@ void bugs::expired_pwd()
   }
 
   // Trying to connect with new pwd
+  opts.erase("preInit");
+  opts.erase("OPT_CAN_HANDLE_EXPIRED_PASSWORDS");
   opts["password"]= sql::SQLString("bar");
   opts["CLIENT_MULTI_STATEMENTS"]= true;
   opts["postInit"]= sql::SQLString("create table test.ccpp_expired_pwd(i int);"

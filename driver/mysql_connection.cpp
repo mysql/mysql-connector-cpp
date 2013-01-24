@@ -71,7 +71,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "mysql_debug.h"
 
 #ifndef ER_MUST_CHANGE_PASSWORD_LOGIN
-# define ER_MUST_CHANGE_PASSWORD_LOGIN 1862
+# define ER_MUST_CHANGE_PASSWORD_LOGIN 1820
 #endif
 
 namespace sql
