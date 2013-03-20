@@ -22,6 +22,11 @@
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+GA  1.1.3 - 
+- Added boolean connection option OPT_ENABLE_CLEARTEXT_PLUGIN allowing to
+  enable cleartext libmysql plugin. That plugin is required for some
+  authentication methods, e.g. PAM. (Bug#16520952)
+
 GA  1.1.2 - 2013-01-16
 - Expired password support. Connection options
   OPT_CAN_HANDLE_EXPIRED_PASSWORDS(bool, application can deal with expired
@@ -34,6 +39,9 @@ GA  1.1.2 - 2013-01-16
 - Statement::executeUpdate can now execute multiple statements.
   CLIENT_MULTI_STATEMENTS connection option still has to be selected.
   getUpdateCount will return data for the last executed statement.
+
+- ABI change - MySQL_Connection class object size changed. If you don't use
+  that class directly you shouldn't be affected by that.
 
 - Built against libmysql 5.6.10
 

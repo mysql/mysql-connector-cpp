@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2009, 2013, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -213,6 +213,35 @@ MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options op
 	return api->options(mysql, static_cast< mysql_option >(option), value);
 }
 /* }}} */
+
+
+/* {{{ MySQL_NativeConnectionWrapper::options(SQLString &) */
+int
+MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options option,
+									   const ::sql::SQLString &str)
+{
+	return api->options(mysql, static_cast< mysql_option >(option), str.c_str());
+}
+/* }}} */
+
+
+/* {{{ MySQL_NativeConnectionWrapper::options(bool &) */
+int
+MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options option,
+									   const bool &option_val)
+{
+	my_bool dummy= option_val ? '\1' : '\0';
+	return api->options(mysql, static_cast< mysql_option >(option), &dummy);
+}
+
+
+/* {{{ MySQL_NativeConnectionWrapper::options(int &) */
+int
+MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options option,
+									   const int &option_val)
+{
+	return api->options(mysql, static_cast< mysql_option >(option), &option_val);
+}
 
 
 /* {{{ MySQL_NativeConnectionWrapper::query() */

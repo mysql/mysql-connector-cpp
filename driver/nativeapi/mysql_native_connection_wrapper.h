@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2009, 2013, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -102,6 +102,10 @@ public:
 	int next_result();
 
 	int options(::sql::mysql::MySQL_Connection_Options, const void * );
+	int options(::sql::mysql::MySQL_Connection_Options,
+				const ::sql::SQLString &);
+	int options(::sql::mysql::MySQL_Connection_Options, const bool &);
+	int options(::sql::mysql::MySQL_Connection_Options, const int &);
 
 	int query(const ::sql::SQLString &);
 

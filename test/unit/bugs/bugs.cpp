@@ -270,7 +270,8 @@ void bugs::expired_pwd()
   {
     stmt->executeUpdate("DROP USER ccpp_expired_pwd");
   }
-  catch (sql::SQLException &) {
+  catch (sql::SQLException &)
+  {
     // Catching exception if user did not exist
   }
 

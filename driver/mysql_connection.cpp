@@ -204,7 +204,7 @@ static const String2IntMap flagsOptions[]=
 /* {{{ readFlag(::sql::SQLString, int= 0) -I- */
 /** Check if connection option pointed by map iterator defines a connection
     flag */
-static bool read_flag(ConnectOptionsMap::const_iterator &cit, int &flags)
+static bool read_connection_flag(ConnectOptionsMap::const_iterator &cit, int &flags)
 {
 	const bool * value;
 
@@ -225,8 +225,54 @@ static bool read_flag(ConnectOptionsMap::const_iterator &cit, int &flags)
 	}
 	return false;
 }
-
 /* }}} */
+
+/* Array for mapping of boolean connection options to mysql_options call */
+static const String2IntMap booleanOptions[]= 
+	{
+		{"OPT_REPORT_DATA_TRUNCATION",	MYSQL_REPORT_DATA_TRUNCATION},
+		{"OPT_ENABLE_CLEARTEXT_PLUGIN",	MYSQL_ENABLE_CLEARTEXT_PLUGIN}
+	};
+/* Array for mapping of integer connection options to mysql_options call */
+static const String2IntMap intOptions[]= 
+	{
+		{"OPT_CONNECT_TIMEOUT",	MYSQL_OPT_CONNECT_TIMEOUT},
+		{"OPT_READ_TIMEOUT",	MYSQL_OPT_READ_TIMEOUT},
+		{"OPT_WRITE_TIMEOUT",	MYSQL_OPT_WRITE_TIMEOUT}
+	};
+/* Array for mapping of string connection options to mysql_options call */
+static const String2IntMap stringOptions[]= 
+	{
+		{"preInit",	MYSQL_INIT_COMMAND}
+	};
+
+template<class T>
+bool process_connection_option(ConnectOptionsMap::const_iterator &option,
+								const String2IntMap options_map[],
+								size_t map_size,
+								boost::shared_ptr< NativeAPI::NativeConnectionWrapper > &proxy)
+{
+	const T * value;
+
+	for (unsigned int i = 0; i < map_size; ++i) {
+
+		if (!option->first.compare(options_map[i].key)) {
+
+			if (!(value = boost::get<T>(&option->second))) {
+				sql::SQLString err("Option ");
+				err.append(option->first).append(" is not of expected type"); 
+				throw sql::InvalidArgumentException(err); 
+			}
+			proxy->options(static_cast<sql::mysql::MySQL_Connection_Options>(options_map[i].value),
+							*value);
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
 
 /*
   We support :
@@ -262,8 +308,16 @@ static bool read_flag(ConnectOptionsMap::const_iterator &cit, int &flags)
   - OPT_RECONNECT
   - OPT_CHARSET_NAME
   - OPT_REPORT_DATA_TRUNCATION
-*/
+  - OPT_CAN_HANDLE_EXPIRED_PASSWORDS
+  - OPT_ENABLE_CLEARTEXT_PLUGIN
+  - preInit
+  - postInit
 
+  To add new connection option that maps to a myql_options call, only add its
+  mapping to sql::mysql::MySQL_Connection_Options value to one of arrays above
+  - booleanOptions, intOptions, stringOptions. You might need to add new member
+  to the sql::mysql::MySQL_Connection_Options enum
+*/
 
 /* {{{ MySQL_Connection::init() -I- */
 void MySQL_Connection::init(ConnectOptionsMap & properties)
@@ -304,6 +358,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			throw sql::InvalidArgumentException("No string value passed for hostName");
 		}
 	}
+
+#define PROCESS_CONN_OPTION(option_type, options_map) process_connection_option< option_type >(it, options_map, sizeof(options_map)/sizeof(String2IntMap), proxy)
 
 	for (it = properties.begin(); it != properties.end(); ++it) {
 		if (!it->first.compare("userName")) {
@@ -431,24 +487,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			} else {
 				throw sql::InvalidArgumentException("No bool value passed for metadataUseInfoSchema");
 			}
-		}else if (!it->first.compare("OPT_CONNECT_TIMEOUT")) {
-			if (!(p_i = boost::get< int >(&it->second))) {
-				throw sql::InvalidArgumentException("No long long value passed for OPT_CONNECT_TIMEOUT");
-			}
-			long l_tmp = static_cast<long>(*p_i);
-			proxy->options(MYSQL_OPT_CONNECT_TIMEOUT, (const char *) &l_tmp);
-		} else if (!it->first.compare("OPT_READ_TIMEOUT")) {
-			if (!(p_i = boost::get< int >(&it->second))) {
-				throw sql::InvalidArgumentException("No long long value passed for OPT_READ_TIMEOUT");
-			}
-			long l_tmp = static_cast<long>(*p_i);
-			proxy->options(MYSQL_OPT_READ_TIMEOUT, (const char *) &l_tmp);
-		} else if (!it->first.compare("OPT_WRITE_TIMEOUT")) {
-			if (!(p_i = boost::get< int >(&it->second))) {
-				throw sql::InvalidArgumentException("No long long value passed for OPT_WRITE_TIMEOUT");
-			}
-			long l_tmp = static_cast<long>(*p_i);
-			proxy->options(MYSQL_OPT_WRITE_TIMEOUT, (const char *) &l_tmp);
 		} else if (!it->first.compare("OPT_RECONNECT")) {
 			if (!(p_b = boost::get<bool>(&it->second))) {
 				throw sql::InvalidArgumentException("No bool value passed for OPT_RECONNECT");
@@ -460,11 +498,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 				throw sql::InvalidArgumentException("No SQLString value passed for OPT_CHARSET_NAME");
 			}
 			defaultCharset = *p_s;
-		} else if (!it->first.compare("OPT_REPORT_DATA_TRUNCATION")) {
-			if (!(p_b = boost::get< bool >(&it->second))) {
-				throw sql::InvalidArgumentException("No bool value passed for OPT_REPORT_DATA_TRUNCATION");
-			}
-			proxy->options(MYSQL_REPORT_DATA_TRUNCATION, (const char *) p_b);
 		} else if (!it->first.compare("OPT_NAMED_PIPE")) {
 			/* Not sure it is really needed */
 			uri.setProtocol(NativeAPI::PROTOCOL_PIPE);
@@ -484,26 +517,36 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 				/* We do not care here about server version */
 				proxy->options(MYSQL_OPT_CAN_HANDLE_EXPIRED_PASSWORDS, (const char*)p_b);
 			}
-
-		} else if (!it->first.compare("preInit")) {
-			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
-				proxy->options(MYSQL_INIT_COMMAND, p_s->c_str());
-			} else {
-				throw sql::InvalidArgumentException("No string value passed for preInit");
-			}
-		}else if (!it->first.compare("postInit")) {
+		} else if (!it->first.compare("postInit")) {
 			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
 				postInit= *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for postInit");
 			}
-		} else if (read_flag(it, flags)) {
+
+		/* If you need to add new integer connection option that should result in
+		   calling mysql_optiong - add its mapping to the intOptions array
+		 */
+		} else if (PROCESS_CONN_OPTION(int, intOptions)) {
+			// Nothing to do here
+
+		/* For boolean coonection option - add mapping to booleanOptions array */
+		} else if (PROCESS_CONN_OPTION(bool, booleanOptions)) {
+			// Nothing to do here
+
+		/* For string coonection option - add mapping to stringOptions array */
+		} else if (PROCESS_CONN_OPTION(sql::SQLString, stringOptions)) {
+			// Nothing to do here
+		} else if (read_connection_flag(it, flags)) {
 			// Nothing to do here
 		} else {
 			// TODO: Shouldn't we really create a warning here? as soon as we are able to
 			//       create a warning
 		}
-	}
+        
+	} /* End of cycle on connection options map */
+
+#undef PROCESS_CONNSTR_OPTION
 
 	/* libmysql shouldn't think it is too smart */
 	if (tcpProtocol(uri) && !uri.Host().compare(util::LOCALHOST)) {
@@ -561,13 +604,12 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			&& client_doesnt_support_exp_pwd) {
 
 			native_error= deCL_CANT_HANDLE_EXP_PWD;
-			error_message= "Your password has expired. Your instance of"
+			error_message= "Your password has expired, but your instance of"
 				" Connector/C++ is not linked against mysql client library that"
-				" allows to change it. resetting of an expired password. To"
-				" resolve this, you either need to change the password with"
-				" mysql client that can do it or rebuild your instance of"
-				" Connector/C++ against mysql client library that supports"
-				" resetting of an expired password.";
+				" allows to reset it. To resolve this you either need to change"
+				" the password with mysql client that is capable to do that,"
+				" or rebuild your instance of Connector/C++ against mysql client"
+				" library that supports resetting of an expired password.";
 		} else {
 			error_message= proxy->error();
 		}

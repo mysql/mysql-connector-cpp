@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -2168,6 +2168,79 @@ void connection::loadSameLibraryTwice()
   con.reset(driver->connect(connection_properties));
 }
 #endif
+
+
+/* Test of the OPT_ENABLE_CLEARTEXT_PLUGIN connection of the text
+   The test idea - we try to create fake PAM authorized user and try to connect
+   using that user first without, and then with the new option selected. In
+   first case the error has to be that cleartext plugin could not be loaded, and
+   in second case the error has to be different */
+void connection::enableClearTextAuth()
+{
+  int serverVersion= getMySQLVersion(con);
+  if ( serverVersion < 55027 || serverVersion > 56000 && serverVersion < 56007)
+  {
+    SKIP("The server does not support tested functionality(cleartext plugin enabling)");
+  }
+
+  try
+  {
+    stmt->executeUpdate("DROP USER 't_ct_user'@'%'");
+  }
+  catch (sql::SQLException &)
+  {
+    // Catching exception if user did not exist
+  }
+
+  try
+  {
+    stmt->executeUpdate("GRANT ALL ON 't_ct_plugin' TO 't_ct_user' IDENTIFIED WITH "
+                        "'authentication_pam'");
+  }
+  catch (sql::SQLException &)
+  {
+    SKIP("The authentication_pam plugin not loaded");
+  }
+
+  sql::ConnectOptionsMap opts;
+  testsuite::Connection c2;
+
+  opts["userName"]= sql::SQLString("t_ct_user");
+  opts["password"]= sql::SQLString("foo");
+
+  /* 
+    Expecting error CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR 
+    without option ENABLE_CLEARTEXT_PLUGIN
+  */
+  try
+  {
+    c2.reset(getConnection(&opts));
+  }
+  catch (sql::SQLException &e)
+  {
+    /* We should have dropped the created user here if assertion fails -
+       TODO: Add sort of dropSchemaObject for created users in tearDown */
+    ASSERT_EQUALS(2059, e.getErrorCode()/*CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR*/);
+  }  
+
+  /* 
+    Expecting error other then CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR 
+    as option ENABLE_CLEARTEXT_PLUGIN is used
+  */
+  opts["OPT_ENABLE_CLEARTEXT_PLUGIN"]= true;
+
+  try
+  {
+    c2.reset(getConnection(&opts));
+  }
+  catch (sql::SQLException &e)
+  {
+    ASSERT(e.getErrorCode() != 2059);
+  }
+
+  stmt->executeUpdate("DROP USER 't_ct_user'@'%'");
+}
+
 
 } /* namespace connection */
 } /* namespace testsuite */

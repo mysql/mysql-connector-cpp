@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -66,6 +66,7 @@ public:
 #ifndef MYSQLCLIENT_STATIC_BINDING
     TEST_CASE(loadSameLibraryTwice);
 #endif
+	TEST_CASE(enableClearTextAuth);
   }
 
   /**
@@ -164,7 +165,6 @@ public:
    */
   void rollback();
 
-
 #ifndef MYSQLCLIENT_STATIC_BINDING
   /*
    * Tries to load same library twice - 1 time just by the name, 2nd time - by full path
@@ -174,6 +174,7 @@ public:
   void loadSameLibraryTwice();
 #endif
 
+  void enableClearTextAuth();
 };
 
 

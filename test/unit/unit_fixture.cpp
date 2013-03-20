@@ -382,9 +382,9 @@ unit_fixture::getConnection(sql::ConnectOptionsMap *additional_options)
   {
     for (sql::ConnectOptionsMap::const_iterator cit= additional_options->begin();
          cit != additional_options->end(); ++cit)
-	{
-	  connection_properties[cit->first]= cit->second;
-	}
+    {
+      connection_properties[cit->first]= cit->second;
+    }
   }
 
   return driver->connect(connection_properties);
