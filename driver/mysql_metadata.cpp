@@ -1221,7 +1221,7 @@ MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(sql::Statement * const servic
 	server_version = proxy->get_server_version();
 	lower_case_table_names = connection->getSessionVariable("lower_case_table_names");
 
-	connection->getClientOption("metadata_use_info_schema", (void *) &use_info_schema);
+	connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
 }
 /* }}} */
 
