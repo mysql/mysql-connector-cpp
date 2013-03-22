@@ -22,10 +22,12 @@
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-GA  1.1.3 - 
+GA  1.1.3 - 2013-03-22
 - Added boolean connection option OPT_ENABLE_CLEARTEXT_PLUGIN allowing to
   enable cleartext libmysql plugin. That plugin is required for some
   authentication methods, e.g. PAM. (Bug#16520952)
+- getBestRowIdentifier() now considers unique not nullable indexes in case
+  when primary key does not exist. (Bug#16277170)
 
 GA  1.1.2 - 2013-01-16
 - Expired password support. Connection options
