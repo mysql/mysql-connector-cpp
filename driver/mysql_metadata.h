@@ -177,7 +177,9 @@ public:
 
 	sql::ResultSet * getPrimaryKeys(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table);
 
-	sql::ResultSet * getProcedureColumns(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& procedureNamePattern, const sql::SQLString& columnNamePattern);
+  sql::ResultSet * getUniqueNonNullableKeys(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table);
+  
+  sql::ResultSet * getProcedureColumns(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& procedureNamePattern, const sql::SQLString& columnNamePattern);
 
 	sql::ResultSet * getProcedures(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& procedureNamePattern);
 

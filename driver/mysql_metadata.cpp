@@ -1709,6 +1709,9 @@ MySQL_ConnectionMetaData::getBestRowIdentifier(const sql::SQLString& catalog, co
 
 	boost::scoped_ptr< sql::ResultSet > rs(getPrimaryKeys(catalog, schema, table));
 
+  if (!rs->rowsCount())
+    rs.reset(getUniqueNonNullableKeys(catalog, schema, table));
+
 	while (rs->next()) {
 		sql::SQLString columnNamePattern(rs->getString(4));
 
@@ -3224,6 +3227,91 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const sql::SQLString& catalog, const sq
 }
 /* }}} */
 
+/* {{{ MySQL_ConnectionMetaData::getUniqueNonNullableKeys() -I- */
+sql::ResultSet *
+MySQL_ConnectionMetaData::getUniqueNonNullableKeys(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table)
+{
+	CPP_ENTER("MySQL_ConnectionMetaData::getPrimaryKeys");
+	CPP_INFO_FMT("catalog=%s schema=%s table=%s", catalog.c_str(), schema.c_str(), table.c_str());
+
+	std::list<sql::SQLString> rs_field_data;
+	rs_field_data.push_back("TABLE_CAT");
+	rs_field_data.push_back("TABLE_SCHEM");
+	rs_field_data.push_back("TABLE_NAME");
+	rs_field_data.push_back("COLUMN_NAME");
+	rs_field_data.push_back("KEY_SEQ");
+	rs_field_data.push_back("PK_NAME");
+
+
+	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+
+	/* Bind Problems with 49999, check later why */
+	if (use_info_schema && server_version > 50002) {
+		const sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
+                               "  COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, INDEX_NAME AS PK_NAME "
+                               "FROM INFORMATION_SCHEMA.STATISTICS "
+                               "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND INDEX_NAME <> 'PRIMARY'"
+                               "  AND NON_UNIQUE = 0 AND NULLABLE <> 'YES'"
+					                     "ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX");
+
+		boost::scoped_ptr< sql::PreparedStatement > stmt(connection->prepareStatement(query));
+		stmt->setString(1, schema);
+		stmt->setString(2, table);
+
+		boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery());
+
+		while (rs->next()) {
+			MySQL_ArtResultSet::row_t rs_data_row;
+
+			rs_data_row.push_back(rs->getString(1));	// TABLE_CAT
+			rs_data_row.push_back(rs->getString(2));	// TABLE_SCHEM
+			rs_data_row.push_back(rs->getString(3));	// TABLE_NAME
+			rs_data_row.push_back(rs->getString(4));	// COLUMN_NAME
+			rs_data_row.push_back(rs->getString(5));	// KEY_SEQ
+			rs_data_row.push_back(rs->getString(6));	// PK_NAME
+
+			rs_data->push_back(rs_data_row);
+		}
+	} else {
+		sql::SQLString query("SHOW KEYS FROM `");
+		query.append(schema).append("`.`").append(table).append("`");
+
+		boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
+		boost::scoped_ptr< sql::ResultSet > rs(NULL);
+		try {
+			rs.reset(stmt->executeQuery(query));
+		} catch (SQLException &) {
+			// probably schema and/or table doesn't exist. return empty set
+			// do nothing here
+		}
+
+		if (rs.get()) {
+			while (rs->next()) {
+				int non_unique = rs->getInt("Non_unique");
+				sql::SQLString nullable = rs->getString("Null");
+				if (non_unique == 0 && nullable.compare("YES")) {
+					sql::SQLString key_name = rs->getString("Key_name");
+					MySQL_ArtResultSet::row_t rs_data_row;
+
+					rs_data_row.push_back("def");							// TABLE_CAT
+					rs_data_row.push_back(schema);							// TABLE_SCHEM
+					rs_data_row.push_back(rs->getString(1));				// TABLE_NAME
+					rs_data_row.push_back(rs->getString("Column_name"));	// COLUMN_NAME
+					rs_data_row.push_back(rs->getString("Seq_in_index"));	// KEY_SEQ
+					rs_data_row.push_back(key_name);						// PK_NAME
+
+					rs_data->push_back(rs_data_row);
+				}
+			}
+		}
+	}
+
+	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
+	// If there is no exception we can release otherwise on function exit memory will be freed
+	rs_data.release();
+	return ret;
+}
+/* }}} */
 
 /* {{{ MySQL_ConnectionMetaData::getProcedureColumns() -U- */
 sql::ResultSet *

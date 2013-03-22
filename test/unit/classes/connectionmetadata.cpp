@@ -2122,5 +2122,27 @@ void connectionmetadata::getColumnsTypeConversions()
     FAIL("See --verbose warnings!");
 }
 
+
+/* Simple testcase of getBestRowIdentifier returns columns making UNIQUE not Null filters
+   in case of primary key is not present
+ */
+void connectionmetadata::bestIdUniqueNotNull()
+{
+  createSchemaObject("TABLE", "bestIdUniqueNotNull", "(id int not null, value varchar(25),"
+                                                     "UNIQUE INDEX(id))");
+  createSchemaObject("TABLE", "bestIdUniqueNull", "(id int, value varchar(25),"
+                                                     "UNIQUE INDEX(id))");
+
+  DatabaseMetaData *dbmeta= con->getMetaData();
+  res.reset(dbmeta->getBestRowIdentifier(con->getCatalog(), con->getSchema(), "bestIdUniqueNotNull", 0, false));
+
+  ASSERT(res->next());
+  ASSERT_EQUALS("id", res->getString(2));
+  ASSERT(!res->next());
+
+  res.reset(dbmeta->getBestRowIdentifier(con->getCatalog(), con->getSchema(), "bestIdUniqueNull", 0, false));
+  ASSERT(!res->next());
+}
+
 } /* namespace connectionmetadata */
 } /* namespace testsuite */

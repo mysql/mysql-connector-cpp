@@ -325,8 +325,7 @@ void unit_fixture::createSchemaObject(String object_type, String object_name,
   dropSchemaObject(object_type, object_name);
 
   String sql("CREATE  ");
-  sql.resize(object_name.length()
-             + object_type.length() + columns_and_other_stuff.length() + 10);
+
   sql.append(object_type);
   sql.append(" ");
   sql.append(object_name);

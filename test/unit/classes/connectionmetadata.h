@@ -95,6 +95,7 @@ public:
     TEST_CASE(classAttributes);
      */
     TEST_CASE(getColumnsTypeConversions);
+	TEST_CASE(bestIdUniqueNotNull);
   }
 
   /**
@@ -351,6 +352,9 @@ public:
    *
    */
   void getColumnsTypeConversions();
+
+
+  void bestIdUniqueNotNull();
 
 };
 
