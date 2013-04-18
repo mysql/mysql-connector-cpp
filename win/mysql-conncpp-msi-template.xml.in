@@ -65,7 +65,8 @@ already installed." />
         <File Id="file0010" Name="statem~.h" LongName="statement.h" Source="..\cppconn\statement.h" />
         <File Id="file0012" Name="warning.h" Source="..\cppconn\warning.h" />
 		    <File Id="file0013" Name="config.h" Source="..\cppconn\config.h" />
-		    <File Id="file0014" Name="build_c~.h" LongName="build_config.h" Source="..\cppconn\build_config.h" />
+        <File Id="file0014" Name="build_c~.h" LongName="build_config.h" Source="..\cppconn\build_config.h" />
+        <File Id="file0015" Name="sqlstri~.h" LongName="sqlstring.h" Source="..\cppconn\sqlstring.h" />
 
 		  </Component>
                 </Directory>
