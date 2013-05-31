@@ -22,6 +22,11 @@
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+GA  1.1.4 - 2013-05-22
+- Both static and dynamic driver libraries are now linked statically against
+  libmysql library
+- Built against libmysql 5.6.11
+
 GA  1.1.3 - 2013-03-22
 - Added boolean connection option OPT_ENABLE_CLEARTEXT_PLUGIN allowing to
   enable cleartext libmysql plugin. That plugin is required for some

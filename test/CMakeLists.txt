@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/C++ is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -34,9 +34,9 @@ IF(WIN32)
 	ADD_DEFINITIONS("-D_SCL_SECURE_NO_WARNINGS")
 	ADD_DEFINITIONS("-D_CRT_SECURE_NO_WARNINGS")
 
-	SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn libmysql ${MYSQLCPPCONN_STLPORT_LIB})
+	SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn ${MYSQLCPPCONN_STLPORT_LIB})
 ELSEIF(NOT WIN32)
-	SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn mysqlclient_r ${MYSQLCPPCONN_STLPORT_LIB})
+	SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn ${MYSQLCPPCONN_STLPORT_LIB})
 ENDIF(WIN32)
 
 IF(CMAKE_COMPILER_IS_GNUCC AND MYSQLCPPCONN_GCOV_ENABLE)

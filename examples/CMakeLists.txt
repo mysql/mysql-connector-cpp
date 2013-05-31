@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/C++ is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -45,12 +45,12 @@ IF(MYSQLCPPCONN_BUILD_EXAMPLES)
 
                 SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn)
                 IF(MYSQLCLIENT_STATIC_BINDING)
-			SET(MY_TARGET_LINK_LIBRARIES ${MY_TARGET_LINK_LIBRARIES} libmysql)
+			SET(MY_TARGET_LINK_LIBRARIES ${MY_TARGET_LINK_LIBRARIES})
                 ENDIF(MYSQLCLIENT_STATIC_BINDING)
 	ELSEIF(NOT WIN32)
 		SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn-static)
                 IF(MYSQLCLIENT_STATIC_BINDING)
-			SET(MY_TARGET_LINK_LIBRARIES ${MY_TARGET_LINK_LIBRARIES} mysqlclient_r)
+			SET(MY_TARGET_LINK_LIBRARIES ${MY_TARGET_LINK_LIBRARIES})
                 ENDIF(MYSQLCLIENT_STATIC_BINDING)
 	ENDIF(WIN32)
 

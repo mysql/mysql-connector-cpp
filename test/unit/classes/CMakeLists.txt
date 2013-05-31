@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/C++ is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -200,8 +200,11 @@ SET_TARGET_PROPERTIES(test_art_resultset PROPERTIES
 					COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV} ${MYSQL_CXXFLAGS}")
 
 IF(WIN32)
-	#MESSAGE("${MY_TARGET_LINK_LIBRARIES_STATIC_CPPLIB}")
 	TARGET_LINK_LIBRARIES(test_art_resultset ${MY_TARGET_LINK_LIBRARIES_STATIC_CPPLIB} ${MY_GCOV_LINK_LIBRARIES})
+	SET_TARGET_PROPERTIES(test_art_resultset PROPERTIES
+    LINK_FLAGS_DEBUG "/NODEFAULTLIB:LIBCMTD"
+    LINK_FLAGS_RELWITHDEBINFO "/NODEFAULTLIB:LIBCMT"
+    LINK_FLAGS_RELEASE "/NODEFAULTLIB:LIBCMT")
 ELSE(WIN32)
 	TARGET_LINK_LIBRARIES(test_art_resultset ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 ENDIF(WIN32)

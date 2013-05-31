@@ -143,7 +143,7 @@ int MySQL_Driver::getMinorVersion()
 
 int MySQL_Driver::getPatchVersion()
 {
-	return 3;
+	return 4;
 }
 
 const sql::SQLString & MySQL_Driver::getName()

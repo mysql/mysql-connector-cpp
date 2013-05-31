@@ -38,7 +38,7 @@ ENDIF(WIN32)
 
 if(COMMAND cmake_policy AND POLICY CMP0015)
 	cmake_policy(SET CMP0015 NEW)
-endif(COMMAND cmake_policy)
+endif(COMMAND cmake_policy AND POLICY CMP0015)
 
 #-----------------
 # CPPFLAGS, CXXFLAGS and LDFLAGS from the environment
@@ -170,7 +170,7 @@ ENDIF(MYSQLCPPCONN_STLPORT_ENABLE)
 # Make tests cover methods that throw not implemented to detect API changes?
 SET(MYSQLCPPCONN_TEST_NOT_IMPLEMENTED 0 CACHE BOOL "HEAD/trunk QA: invoke methods that should return not implemented to detect API changes")
 
-INCLUDE(${CMAKE_SOURCE_DIR}/FindMySQL.cm)
+INCLUDE(${CMAKE_SOURCE_DIR}/FindMySQL.cmake)
 
 # ----------------------------------------------------------------------
 # Create package script
@@ -205,7 +205,7 @@ SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY
     "Connector/C++, a library for connecting to MySQL servers.")
 SET(CPACK_PACKAGE_VERSION_MAJOR 1)
 SET(CPACK_PACKAGE_VERSION_MINOR 1)
-SET(CPACK_PACKAGE_VERSION_PATCH 3)
+SET(CPACK_PACKAGE_VERSION_PATCH 4)
 SET(CPACK_PACKAGE_RELEASE_TYPE "")
 SET(CPACK_PACKAGE_VENDOR "Oracle and/or its affiliates")
 SET(CPACK_RPM_PACKAGE_DESCRIPTION

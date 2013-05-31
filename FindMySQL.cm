@@ -1,4 +1,4 @@
-#   Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+#   Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 #
 #   The MySQL Connector/C++ is licensed under the terms of the GPLv2
 #   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -136,7 +136,7 @@ ELSE (WIN32)
 		STRING(REGEX REPLACE "[\r\n]$" "" __MYSQL_VERSION "${__MYSQL_VERSION}")
 		STRING(REGEX MATCHALL "(4.1.[0-9]+|[5-9].[0-9]+.[0-9]+)" MYSQL_VERSION "${__MYSQL_VERSION}")
 
-		FIND_LIBRARY(MYSQLCPPCONN_DYNLOAD_MYSQL_LIB NAMES mysqlclient_r
+		FIND_LIBRARY(MYSQLCPPCONN_DYNLOAD_MYSQL_LIB NAMES libmysqlclient_r.a
 					 PATHS
 					 $ENV{MYSQL_DIR}/libmysql_r/.libs
 					 $ENV{MYSQL_DIR}/lib
@@ -151,7 +151,7 @@ ELSE (WIN32)
 		ADD_DEFINITIONS("-DDYNLOAD_MYSQL_LIB=\"${MYSQLCPPCONN_DYNLOAD_MYSQL_LIB}\"")
 
 	ELSE (MYSQL_CONFIG_EXECUTABLE)
-		FIND_LIBRARY(MYSQL_LIB NAMES mysqlclient_r
+		FIND_LIBRARY(MYSQL_LIB NAMES libmysqlclient_r.a
 					 PATHS
 					 $ENV{MYSQL_DIR}/libmysql_r/.libs
 					 $ENV{MYSQL_DIR}/lib

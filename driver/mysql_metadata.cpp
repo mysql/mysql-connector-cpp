@@ -2331,7 +2331,7 @@ const sql::SQLString&
 MySQL_ConnectionMetaData::getDriverVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverVersion");
-	static const sql::SQLString version("1.1.0-GA");
+	static const sql::SQLString version("1.1.4-GA");
 	return version;
 }
 /* }}} */

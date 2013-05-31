@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -30,7 +30,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <iostream>
 #include <sstream>
 #include <string>
-#if !defined(_WIN32) && !defined(_WIN64)
+#ifndef _WIN32
 #include <inttypes.h>
 #endif
 
@@ -3025,11 +3025,7 @@ static void test_not_implemented_cs_rs_meta(std::auto_ptr<sql::Connection> & con
 /* {{{ */
 int run_tests(int argc, const char **argv)
 {
-
 	printf("1..%d\n#\n", loops);
-#ifndef DRIVER_TEST
-	printf("# Client version: %s\n", mysql_get_client_info());
-#endif
 
 	std::auto_ptr<sql::Connection> conn, conn2;
 	int last_error_total = 0;
