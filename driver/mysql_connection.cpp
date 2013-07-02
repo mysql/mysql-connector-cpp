@@ -343,6 +343,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	bool opt_reconnect = false;
 	bool opt_reconnect_value = false;
 	bool client_doesnt_support_exp_pwd = false;
+  bool secure_auth= true;
 
 
 	/* Values set in properties individually should have priority over those
@@ -523,7 +524,12 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for postInit");
 			}
-
+		} else if (!it->first.compare("useLegacyAuth")) {
+			if ((p_b = boost::get< bool >(&it->second))) {
+				secure_auth= !*p_b;
+			} else {
+				throw sql::InvalidArgumentException("No bool value passed for useLegacyAuth");
+			}
 		/* If you need to add new integer connection option that should result in
 		   calling mysql_optiong - add its mapping to the intOptions array
 		 */
@@ -566,10 +572,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
 	proxy->use_protocol(uri.Protocol());
 
-	{
-		const char tmp_bool = 1;
-		proxy->options(MYSQL_SECURE_AUTH, &tmp_bool);
-	}
+	proxy->options(MYSQL_SECURE_AUTH, &secure_auth);
 
 	proxy->options(MYSQL_SET_CHARSET_NAME, defaultCharset.c_str());
 

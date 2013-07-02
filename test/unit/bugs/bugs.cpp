@@ -275,7 +275,6 @@ void bugs::expired_pwd()
     // Catching exception if user did not exist
   }
 
-  stmt->executeUpdate("DROP TABLE IF EXISTS test.ccpp_expired_pwd");
   stmt->executeUpdate("CREATE USER ccpp_expired_pwd IDENTIFIED BY 'foo'");
   stmt->executeUpdate("GRANT ALL ON test to ccpp_expired_pwd");
   stmt->executeUpdate("ALTER USER ccpp_expired_pwd PASSWORD EXPIRE");
@@ -321,10 +320,10 @@ void bugs::expired_pwd()
   }
   catch(sql::SQLException &e)
   {
-	// We can get here in case of old libmysql library
-	ASSERT_EQUALS(sql::mysql::deCL_CANT_HANDLE_EXP_PWD, e.getErrorCode());
-	// Wrong libmysql - we can't test anything else as we can't get connection
-	return;
+    // We can get here in case of old libmysql library
+    ASSERT_EQUALS(sql::mysql::deCL_CANT_HANDLE_EXP_PWD, e.getErrorCode());
+    // Wrong libmysql - we can't test anything else as we can't get connection
+    return;
   }
 
   // Trying to connect with new pwd
@@ -344,8 +343,8 @@ void bugs::expired_pwd()
      connection is usable after that */
   try
   {
-	s2->executeUpdate("insert into test.ccpp_expired_pwd(i) values(7);select i from test.ccpp_expired_pwd");
-	FAIL("Driver had to throw \"Query returning resultset\" exception!");
+    s2->executeUpdate("insert into test.ccpp_expired_pwd(i) values(7);select i from test.ccpp_expired_pwd");
+    FAIL("Driver had to throw \"Query returning resultset\" exception!");
   }
   catch (sql::SQLException &)
   {
@@ -361,5 +360,97 @@ void bugs::expired_pwd()
   stmt->executeUpdate("DROP TABLE test.ccpp_expired_pwd");
   stmt->executeUpdate("DROP USER ccpp_expired_pwd");
 }
+
+
+/* Bug#16970753/69492
+ * Cannot Connect error when using legacy authentication
+ */
+void bugs::legacy_auth()
+{
+  try
+  {
+    stmt->executeUpdate("DROP USER ccpp_legacy_auth");
+  }
+  catch (sql::SQLException &)
+  {
+    // Catching exception if user did not exist
+  }
+
+  res.reset(stmt->executeQuery("SELECT @@secure_auth"));
+  res->next();
+  /* We need to know if we need to set it back*/
+  int secure_auth= res->getInt(1);
+
+  if (secure_auth)
+  {
+    try
+    {
+      stmt->executeUpdate("SET GLOBAL secure_auth= OFF");
+    }
+    catch(sql::SQLException &)
+    {
+      SKIP("For this test user should be able to set global variables.");
+    }
+  }
+
+  try
+  {
+    stmt->executeUpdate("CREATE USER ccpp_legacy_auth@'%' IDENTIFIED BY 'foo'");
+    stmt->executeUpdate("GRANT ALL ON test to ccpp_legacy_auth@'%'");
+  }
+  catch(sql::SQLException &)
+  {
+    SKIP("For this test user should have GRANT privelege");
+  }
+
+  /* Simplest way to create user identified with old password on all server versions */
+  stmt->executeUpdate("UPDATE mysql.user SET Password=old_password('foo')\
+                       WHERE User='ccpp_legacy_auth' AND Host='%'");
+
+  try
+  {
+    stmt->executeUpdate("UPDATE mysql.user SET Plugin=''\
+                        WHERE User='ccpp_legacy_auth' AND Host='%'");
+  }
+  catch(sql::SQLException &)
+  {
+    /* Doing nothing - catching for case of old server that does not have Plugin field */
+  }
+
+  stmt->executeUpdate("FLUSH PRIVILEGES");
+  testsuite::Connection c2;
+
+  sql::ConnectOptionsMap opts;
+
+  opts["useLegacyAuth"]=  false;
+  opts["userName"]=       sql::SQLString("ccpp_legacy_auth");
+  opts["password"]=       sql::SQLString("foo");
+  opts["schema"]=         sql::SQLString("test");
+
+  /* First verifying that we can't connect without the option */
+  try
+  {
+    c2.reset(getConnection(&opts));
+  }
+  catch (sql::SQLException &e)
+  {
+    ASSERT_EQUALS(2049, e.getErrorCode() /*CR_SECURE_AUTH*/);
+  }
+
+  opts["useLegacyAuth"]= true;
+  c2.reset(getConnection(&opts));
+  /* If this passed - we are fine */
+
+  c2->close();
+
+  /* Returning secure_auth if needed */
+  if (secure_auth)
+  {
+    stmt->executeUpdate("SET GLOBAL secure_auth= ON");
+  }
+
+  stmt->executeUpdate("DROP USER ccpp_legacy_auth");
+}
+
 } /* namespace regression */
 } /* namespace testsuite */
