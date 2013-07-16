@@ -7,7 +7,6 @@
 *.sln
 *.ncb
 *.suo
-*.cmake
 *.user
 *.pdb
 *.manifest
