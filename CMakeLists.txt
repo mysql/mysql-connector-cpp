@@ -261,7 +261,7 @@ INSTALL(FILES
 	DESTINATION "." OPTIONAL)
 
 SET(COMMON_IGNORE_FILES "/CMakeFiles/" "/Testing/" "/.bzr/" "_CPack_Packages/"
-    ".cmake$" "~" ".swp" ".log" ".gz" ".directory$" "CMakeCache.txt" "Makefile"
+    "~" ".swp" ".log" ".gz" ".directory$" "CMakeCache.txt" "Makefile"
 	"install_manifest.txt")
 SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} "ANNOUNCEMENT_102_ALPHA" "ANNOUNCEMENT_103_ALPHA" "ANNOUNCEMENT_104_BETA" "ANNOUNCEMENT_105_GA" "ANNOUNCEMENT_110_GA" "ANNOUNCEMENT_111_GA" "ANNOUNCEMENT_DRAFT" )
 
