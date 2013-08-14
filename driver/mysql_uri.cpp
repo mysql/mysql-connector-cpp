@@ -23,6 +23,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 
+#include <stdlib.h>
 #include "mysql_uri.h"
 #include "mysql_util.h"
 
