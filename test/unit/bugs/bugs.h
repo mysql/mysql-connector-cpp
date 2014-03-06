@@ -54,6 +54,7 @@ public:
     TEST_CASE(supportIssue_52319);
     TEST_CASE(expired_pwd);
     TEST_CASE(legacy_auth);
+	TEST_CASE(bug71606);
   }
 
   /**
@@ -80,6 +81,8 @@ public:
   void expired_pwd();
 
   void legacy_auth();
+
+  void bug71606();
 
 };
 

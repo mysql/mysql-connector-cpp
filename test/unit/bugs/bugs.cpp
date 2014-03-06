@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009, 2013, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -71,8 +71,8 @@ void bugs::net_write_timeout39878()
   TestsListener::messagesLog() << "We've set net_write_timeout to " << res->getString(2) << std::endl;
 
 
-  stmt->execute("drop table if exists bug39878");
-  stmt->execute("create table bug39878 (id int unsigned not null)");
+  stmt->executeUpdate("drop table if exists bug39878");
+  stmt->executeUpdate("create table bug39878 (id int unsigned not null)");
 
   stmt->execute("lock table bug39878 write");
 
@@ -137,6 +137,7 @@ void bugs::net_write_timeout39878()
 
   ASSERT_EQUALS(rowsCount, rowsRead);
 }
+
 
 void bugs::store_result_error_51562()
 {
@@ -223,7 +224,9 @@ void bugs::supportIssue_52319()
   logMsg("Test for MySQL support issue 52319");
 
   stmt->execute("DROP TABLE IF EXISTS products");
-  stmt->execute("CREATE TABLE products (uiProductsIdx int(10) unsigned NOT NULL AUTO_INCREMENT, startTime timestamp NULL DEFAULT NULL, stopTime timestamp NULL DEFAULT NULL, uiProductsID int(10) DEFAULT NULL, uiParameterSetID int(10) unsigned DEFAULT NULL, PRIMARY KEY (uiProductsIdx))");
+  createSchemaObject("TABLE",
+                     "products",
+                     "(uiProductsIdx int(10) unsigned NOT NULL AUTO_INCREMENT, startTime timestamp NULL DEFAULT NULL, stopTime timestamp NULL DEFAULT NULL, uiProductsID int(10) DEFAULT NULL, uiParameterSetID int(10) unsigned DEFAULT NULL, PRIMARY KEY (uiProductsIdx))");
 
   stmt->execute("DROP PROCEDURE IF EXISTS insertProduct");
   stmt->execute("CREATE PROCEDURE insertProduct(IN dwStartTimeIN INT UNSIGNED, IN uiProductsIDIN INT UNSIGNED, IN dwParSetIDIN INT UNSIGNED) BEGIN DECLARE stStartTime TIMESTAMP; SET stStartTime = FROM_UNIXTIME(dwStartTimeIN); INSERT INTO `products` (startTime, uiProductsID, uiParameterSetID) VALUES (stStartTime, uiProductsIDIN, dwParSetIDIN); END");
@@ -281,8 +284,8 @@ void bugs::expired_pwd()
 
   sql::ConnectOptionsMap opts;
 
-  opts["userName"]=							sql::SQLString("ccpp_expired_pwd");
-  opts["password"]=							sql::SQLString("foo");
+  opts["userName"]=	sql::SQLString("ccpp_expired_pwd");
+  opts["password"]=	sql::SQLString("foo");
 
   testsuite::Connection c2;
 
@@ -450,6 +453,49 @@ void bugs::legacy_auth()
   }
 
   stmt->executeUpdate("DROP USER ccpp_legacy_auth");
+}
+
+
+/* Bug #18193771/71605 - The driver does not recognize utf8mb4 charset */
+void bugs::bug71606()
+{
+  if (getMySQLVersion(con) < 56000)
+  {
+    SKIP("The server does not support tested functionality(utf8mb4 charset)");
+  }
+
+  /* We only loop thru default collations - thus the testcase does not cover all
+     possible cases */
+  res.reset(stmt->executeQuery("SHOW CHARSET"));
+
+  /* Connection is reset after the testcase finishes - thus we can safely "set names" here */
+  Statement stmt2(con->createStatement());
+  pstmt.reset(con->prepareStatement("SELECT 'a'"));
+  ResultSet res2;
+  ResultSetMetaData *rsmd2;
+
+  while (res->next())
+  {
+    String csname(res->getString(1));
+    String query("SET NAMES ");
+
+    query.append(res->getString(1));
+
+    try
+    {
+      stmt2->executeUpdate(query);
+    }
+    catch(sql::SQLException &)
+    {
+      /* Assuming this particular charset charset cannot be set as client charset,
+         like atm we can't do that with utf16/32 */
+      continue;
+    }
+
+    res2.reset(pstmt->executeQuery());
+    rsmd2= res2->getMetaData();
+    rsmd2->isCaseSensitive(1);
+  }
 }
 
 } /* namespace regression */
