@@ -860,6 +860,45 @@ void connection::connectUsingMapWrongTypes()
     }
     connection_properties.erase("OPT_REPORT_DATA_TRUNCATION");
 
+    try
+    {
+      connection_properties["sslVerify"]=(strval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception XXXI - sslVerify");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("sslVerify");
+
+    try
+    {
+      connection_properties["sslCRL"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception XXXII - sslCRL");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("sslCRL");
+
+    try
+    {
+      connection_properties["sslCRLPath"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception XXXIII - sslCRLPath");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("sslCRLPath");
+
   }
   catch (sql::SQLException &e)
   {

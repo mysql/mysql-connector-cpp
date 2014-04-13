@@ -22,11 +22,15 @@
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-GA  1.1.4 - 2013-07-02
+GA  1.1.4 - 
 - Both static and dynamic driver libraries are now linked statically against
   libmysql library
 - Cannot Connect error when using legacy authentication. (Bug#16970753/69492)
-- Built against libmysql 5.6.11
+- Connector/C++ doesn't implement MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
+  MYSQL_OPT_SSL_CRL, MYSQL_OPT_SSL_CRLPATH. Introduced connection options
+  "sslVerify"(boolean), "sslCRL" and "sslCRLPath"(string). (Bug#18461451)
+
+- Built against libmysql 5.6.
 
 GA  1.1.3 - 2013-03-22
 - Added boolean connection option OPT_ENABLE_CLEARTEXT_PLUGIN allowing to

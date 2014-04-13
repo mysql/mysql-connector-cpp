@@ -231,7 +231,8 @@ static bool read_connection_flag(ConnectOptionsMap::const_iterator &cit, int &fl
 static const String2IntMap booleanOptions[]= 
 	{
 		{"OPT_REPORT_DATA_TRUNCATION",	MYSQL_REPORT_DATA_TRUNCATION},
-		{"OPT_ENABLE_CLEARTEXT_PLUGIN",	MYSQL_ENABLE_CLEARTEXT_PLUGIN}
+		{"OPT_ENABLE_CLEARTEXT_PLUGIN",	MYSQL_ENABLE_CLEARTEXT_PLUGIN},
+		{"sslVerify",					MYSQL_OPT_SSL_VERIFY_SERVER_CERT}
 	};
 /* Array for mapping of integer connection options to mysql_options call */
 static const String2IntMap intOptions[]= 
@@ -243,7 +244,9 @@ static const String2IntMap intOptions[]=
 /* Array for mapping of string connection options to mysql_options call */
 static const String2IntMap stringOptions[]= 
 	{
-		{"preInit",	MYSQL_INIT_COMMAND}
+		{"preInit",		MYSQL_INIT_COMMAND},
+		{"sslCRL",		MYSQL_OPT_SSL_CRL},
+		{"sslCRLPath",	MYSQL_OPT_SSL_CRLPATH}
 	};
 
 template<class T>
@@ -343,7 +346,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	bool opt_reconnect = false;
 	bool opt_reconnect_value = false;
 	bool client_doesnt_support_exp_pwd = false;
-  bool secure_auth= true;
+	bool secure_auth= true;
 
 
 	/* Values set in properties individually should have priority over those
