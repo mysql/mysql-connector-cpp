@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/C++ is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -29,6 +29,8 @@ GA  1.1.4 -
 - Connector/C++ doesn't implement MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
   MYSQL_OPT_SSL_CRL, MYSQL_OPT_SSL_CRLPATH. Introduced connection options
   "sslVerify"(boolean), "sslCRL" and "sslCRLPath"(string). (Bug#18461451)
+- Methods returning driver version information are now parametrized, and those
+  parameters take their values from cmake config (Bug#14680878/66975)
 
 - Built against libmysql 5.6.
 

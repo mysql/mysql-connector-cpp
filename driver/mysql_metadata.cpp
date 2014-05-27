@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -37,6 +37,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "mysql_statement.h"
 #include "mysql_prepared_statement.h"
 #include "mysql_debug.h"
+#include "version_info.h"
 
 #include "nativeapi/native_connection_wrapper.h"
 
@@ -2302,7 +2303,7 @@ unsigned int
 MySQL_ConnectionMetaData::getDriverMajorVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverMajorVersion");
-	return 1;
+	return MYCPPCONN_MAJOR_VERSION;
 }
 /* }}} */
 
@@ -2312,7 +2313,7 @@ unsigned int
 MySQL_ConnectionMetaData::getDriverMinorVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverMinorVersion");
-	return 1;
+	return MYCPPCONN_MINOR_VERSION;
 }
 /* }}} */
 
@@ -2321,7 +2322,7 @@ unsigned int
 MySQL_ConnectionMetaData::getDriverPatchVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverPatchVersion");
-	return 0;
+	return MYCPPCONN_PATCH_VERSION;
 }
 /* }}} */
 
@@ -2331,7 +2332,7 @@ const sql::SQLString&
 MySQL_ConnectionMetaData::getDriverVersion()
 {
 	CPP_ENTER("MySQL_ConnectionMetaData::getDriverVersion");
-	static const sql::SQLString version("1.1.4-GA");
+	static const sql::SQLString version(MYCPPCONN_STRVERSION);
 	return version;
 }
 /* }}} */

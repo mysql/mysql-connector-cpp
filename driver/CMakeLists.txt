@@ -146,6 +146,7 @@ IF(WIN32)
 		mysql_util.h
 		mysql_warning.h
 		mysql_uri.h
+		version_info.h
 		nativeapi/mysql_client_api.h
 		nativeapi/mysql_native_driver_wrapper.h
 		nativeapi/native_driver_wrapper.h

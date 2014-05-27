@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -25,6 +25,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 #include "mysql_connection.h"
+#include "version_info.h"
 
 #include <cppconn/exception.h>
 
@@ -133,17 +134,17 @@ sql::Connection * MySQL_Driver::connect(sql::ConnectOptionsMap & properties)
 //TODO: That has to be defined in cmake files
 int MySQL_Driver::getMajorVersion()
 {
-	return 1;
+	return MYCPPCONN_MAJOR_VERSION;
 }
 
 int MySQL_Driver::getMinorVersion()
 {
-	return 1;
+	return MYCPPCONN_MINOR_VERSION;
 }
 
 int MySQL_Driver::getPatchVersion()
 {
-	return 4;
+	return MYCPPCONN_PATCH_VERSION;
 }
 
 const sql::SQLString & MySQL_Driver::getName()
