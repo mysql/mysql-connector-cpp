@@ -91,9 +91,6 @@ already installed." />
                     <File Id="file0151" Name="mycppcon.lib" LongName="mysqlcppconn.lib" Source="..\driver\relwithdebinfo\mysqlcppconn.lib" />
                     <File Id="file0152" Name="mycpstat.lib" LongName="mysqlcppconn-static.lib" Source="..\driver\relwithdebinfo\mysqlcppconn-static.lib" />
 		  </Component>
-		  <Component Id="MSRedistributables" Guid="e50ed3bb-e5bd-42b5-9029-9ca2356fd0f3" DiskId="1">
-                    @REQUIRED_REDISTRIBUTABLE_LIBS@
-                  </Component>
                 </Directory>
               </Directory>
 
@@ -109,7 +106,6 @@ already installed." />
           <ComponentRef Id="IncludeFiles" />
 	  <ComponentRef Id="CppconnIncludes" />
           <ComponentRef Id="ClientLibraryRelease" />
-          <ComponentRef Id="MSRedistributables" />
 
           <Feature Id="DebugLibraries" Title="Debug Libary" Description="Debug library and symbols." Level="1000">
             <ComponentRef Id="ClientLibraryDebug" />

@@ -25,7 +25,7 @@
 SET(CONNECTOR_MAJOR "1")
 SET(CONNECTOR_MINOR "1")
 SET(CONNECTOR_PATCH "4")
-SET(CONNECTOR_LEVEL "-GA")
+SET(CONNECTOR_LEVEL "")     # "-alpha", "-beta", empty if GA
 SET(CONNECTOR_QUALITY "GA")
 
 # Bump this every time we change the API/ABI
