@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+   Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; version 2 of the License.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+-->
 <Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
   <Product Id="@CONNECTOR_PKG_ID1@" Name="MySQL Connector C++ @CONNECTOR_PRODUCT_VERSION@" Language="1033" Version="@CONNECTOR_PRODUCT_VERSION@" Manufacturer="Oracle and/or its affiliates" UpgradeCode="fe990d78-8bb1-4880-930a-0430e707f3ca">
     <Package Id="@CONNECTOR_PKG_ID2@" Keywords="Installer,MSI,Database" Description="MySQL C++ Connector @CONNECTOR_PRODUCT_VERSION@" InstallerVersion="200" Platforms="@CONNECTOR_PLATFORM@" Compressed="yes" SummaryCodepage="1252" />

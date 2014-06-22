@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/C++ is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -29,11 +29,11 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6.0 FATAL_ERROR)
 # This is Windows only, so just set one of two possible
 
 SET(CONNECTOR_PLATFORM "Intel")
-SET(CONNECTOR_PLATFORM_SUFFIX "win32")
+SET(CONNECTOR_PLATFORM_SUFFIX "windows-x86-32bit")
 SET(CONNECTOR_DEFAULT_DEST "ProgramFilesFolder")
 IF(CMAKE_SIZEOF_VOID_P MATCHES 8)
   SET(CONNECTOR_PLATFORM "x64")
-  SET(CONNECTOR_PLATFORM_SUFFIX "winx64")
+  SET(CONNECTOR_PLATFORM_SUFFIX "windows-x86-64bit")
   SET(CONNECTOR_DEFAULT_DEST "ProgramFiles64Folder")
 ENDIF(CMAKE_SIZEOF_VOID_P MATCHES 8)
 
