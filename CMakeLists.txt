@@ -181,6 +181,13 @@ IF(MYSQLCPPCONN_STLPORT_ENABLE)
 	ELSE(STLPORT_INCLUDE_DIR)
 		MESSAGE(FATAL_ERROR "STLPORT not found. Please set \$ENV{STLPORT_INCLUDE_DIR} if installed in non-standard location")
 	ENDIF(STLPORT_INCLUDE_DIR)
+
+        # We want to set the inclusion of the library globally
+        ADD_DEFINITIONS(-library=stlport4) # Not a macro defintion, but CMake manual says I can!! ;)
+        SET(CMAKE_EXE_LINKER_FLAGS        "${CMAKE_EXE_LINKER_FLAGS} -library=stlport4")
+        SET(CMAKE_SHARED_LINKER_FLAGS     "${CMAKE_SHARED_LINKER_FLAGS} -library=stlport4")
+        SET(CMAKE_MODULE_LINKER_FLAGS     "${CMAKE_MODULE_LINKER_FLAGS} -library=stlport4")
+
 ELSE(MYSQLCPPCONN_STLPORT_ENABLE)
 	SET(MYSQLCPPCONN_STLPORT_LIB "")
 ENDIF(MYSQLCPPCONN_STLPORT_ENABLE)
