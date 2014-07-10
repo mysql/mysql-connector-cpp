@@ -161,6 +161,32 @@ MySQL_ArtResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 /* }}} */
 
 
+/* {{{ MySQL_ArtResultSetMetaData::getColumnCharset() -I- */
+SQLString
+MySQL_ArtResultSetMetaData::getColumnCharset(unsigned int columnIndex)
+{
+	CPP_ENTER("MySQL_ArtResultSetMetaData::getColumnCharset");
+	CPP_INFO_FMT("this=%p", this);
+	checkColumnIndex(columnIndex);
+
+	return "";
+}
+/* }}} */
+
+
+/* {{{ MySQL_ArtResultSetMetaData::getColumnCollation() -I- */
+SQLString
+MySQL_ArtResultSetMetaData::getColumnCollation(unsigned int columnIndex)
+{
+	CPP_ENTER("MySQL_ArtResultSetMetaData::getColumnCollation");
+	CPP_INFO_FMT("this=%p", this);
+	checkColumnIndex(columnIndex);
+
+	return "";
+}
+/* }}} */
+
+
 /* {{{ MySQL_ArtResultSetMetaData::getPrecision() -U- */
 unsigned int
 MySQL_ArtResultSetMetaData::getPrecision(unsigned int columnIndex)

@@ -96,6 +96,10 @@ public:
      */
     TEST_CASE(getColumnsTypeConversions);
 	TEST_CASE(bestIdUniqueNotNull);
+	TEST_CASE(getSchemaCollation);
+	TEST_CASE(getSchemaCharset);
+	TEST_CASE(getTableCollation);
+	TEST_CASE(getTableCharset);
   }
 
   /**
@@ -355,6 +359,26 @@ public:
 
 
   void bestIdUniqueNotNull();
+
+  /**
+   * Test for DatabaseMetaData::getSchemaCollation()
+   */
+  void getSchemaCollation();
+
+  /**
+   * Test for DatabaseMetaData::getSchemaCharset()
+   */
+  void getSchemaCharset();
+
+  /**
+   * Test for DatabaseMetaData::getTableCollation()
+   */
+  void getTableCollation();
+
+  /**
+   * Test for DatabaseMetaData::getTableCharset()
+   */
+  void getTableCharset();
 
 };
 

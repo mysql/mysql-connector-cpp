@@ -62,6 +62,10 @@ public:
 
 	SQLString getColumnTypeName(unsigned int columnIndex);
 
+	SQLString getColumnCharset(unsigned int columnIndex);
+
+	SQLString getColumnCollation(unsigned int columnIndex);
+
 	unsigned int getPrecision(unsigned int columnIndex);
 
 	unsigned int getScale(unsigned int columnIndex);

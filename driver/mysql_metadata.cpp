@@ -3549,6 +3549,88 @@ MySQL_ConnectionMetaData::getSchemaTerm()
 /* }}} */
 
 
+/* {{{ MySQL_ConnectionMetaData::getSchemaCollation() -I- */
+sql::ResultSet *
+MySQL_ConnectionMetaData::getSchemaCollation(const sql::SQLString& /* catalog */,
+                                    const sql::SQLString& schemaPattern)
+{
+	CPP_ENTER("MySQL_ConnectionMetaData::getSchemaCollation");
+	CPP_INFO_FMT("schemaPattern=%s", schemaPattern.c_str());
+
+	sql::SQLString escapedSchemaPattern = connection->escapeString(schemaPattern);
+
+	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+
+	std::list<sql::SQLString> rs_field_data;
+	rs_field_data.push_back("SCHEMA_CAT");
+	rs_field_data.push_back("SCHEMA_NAME");
+	rs_field_data.push_back("SCHEMA_COLLATION");
+
+	sql::SQLString query("SELECT CATALOG_NAME AS SCHEMA_CAT, SCHEMA_NAME, "
+	"DEFAULT_COLLATION_NAME AS SCHEMA_COLLATION FROM INFORMATION_SCHEMA.SCHEMATA "
+	"where SCHEMA_NAME LIKE '");
+	query.append(escapedSchemaPattern).append("'");
+
+	boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
+	boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery(query));
+	while (rs->next()) {
+		MySQL_ArtResultSet::row_t rs_data_row;
+
+		rs_data_row.push_back(rs->getString(1)); // SCHEMA_CAT
+		rs_data_row.push_back(rs->getString(2)); // SCHEMA_NAME
+		rs_data_row.push_back(rs->getString(3)); // SCHEMA_COLLATION
+
+		rs_data->push_back(rs_data_row);
+	}
+	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
+	// If there is no exception we can release otherwise on function exit memory will be freed
+	rs_data.release();
+	return ret;
+}
+/* }}} */
+
+
+/* {{{ MySQL_ConnectionMetaData::getSchemaCharset() -I- */
+sql::ResultSet *
+MySQL_ConnectionMetaData::getSchemaCharset(const sql::SQLString& /* catalog */,
+                                    const sql::SQLString& schemaPattern)
+{
+	CPP_ENTER("MySQL_ConnectionMetaData::getSchemaCharset");
+	CPP_INFO_FMT("schemaPattern=%s", schemaPattern.c_str());
+
+	sql::SQLString escapedSchemaPattern = connection->escapeString(schemaPattern);
+
+	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+
+	std::list<sql::SQLString> rs_field_data;
+	rs_field_data.push_back("SCHEMA_CAT");
+	rs_field_data.push_back("SCHEMA_NAME");
+	rs_field_data.push_back("SCHEMA_CHARSET");
+
+	sql::SQLString query("SELECT CATALOG_NAME AS SCHEMA_CAT, SCHEMA_NAME, "
+	"DEFAULT_CHARACTER_SET_NAME AS SCHEMA_CHARSET FROM INFORMATION_SCHEMA.SCHEMATA "
+	"where SCHEMA_NAME LIKE '");
+	query.append(escapedSchemaPattern).append("'");
+
+	boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
+	boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery(query));
+	while (rs->next()) {
+		MySQL_ArtResultSet::row_t rs_data_row;
+
+		rs_data_row.push_back(rs->getString(1)); // SCHEMA_CAT
+		rs_data_row.push_back(rs->getString(2)); // SCHEMA_NAME
+		rs_data_row.push_back(rs->getString(3)); // SCHEMA_CHARSET
+
+		rs_data->push_back(rs_data_row);
+	}
+	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
+	// If there is no exception we can release otherwise on function exit memory will be freed
+	rs_data.release();
+	return ret;
+}
+/* }}} */
+
+
 /* {{{ MySQL_ConnectionMetaData::getSearchStringEscape() -I- */
 const sql::SQLString&
 MySQL_ConnectionMetaData::getSearchStringEscape()
@@ -3958,6 +4040,100 @@ MySQL_ConnectionMetaData::getTableTypes()
 	return ret;
 }
 /* }}} */
+
+
+/* {{{ MySQL_ConnectionMetaData::getTableCollation() -I- */
+sql::ResultSet *
+MySQL_ConnectionMetaData::getTableCollation(const sql::SQLString& /* catalog */,
+											const sql::SQLString& schemaPattern,
+											const sql::SQLString& tableNamePattern)
+{
+	CPP_ENTER("MySQL_ConnectionMetaData::getTableCollation");
+	CPP_INFO_FMT("schemaPattern=%s tablePattern=%s", schemaPattern.c_str(), tableNamePattern.c_str());
+
+	sql::SQLString escapedSchemaPattern = connection->escapeString(schemaPattern);
+	sql::SQLString escapedTableNamePattern = connection->escapeString(tableNamePattern);
+
+	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+
+	std::list<sql::SQLString> rs_field_data;
+	rs_field_data.push_back("TABLE_CAT");
+	rs_field_data.push_back("TABLE_SCHEMA");
+	rs_field_data.push_back("TABLE_NAME");
+	rs_field_data.push_back("TABLE_COLLATION");
+
+	sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEMA, "
+	"TABLE_NAME, TABLE_COLLATION FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME LIKE '");
+	query.append(escapedTableNamePattern).append("' ").append("AND TABLE_SCHEMA LIKE '");
+	query.append(escapedSchemaPattern).append("'");
+
+	boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
+	boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery(query));
+	while (rs->next()) {
+		MySQL_ArtResultSet::row_t rs_data_row;
+
+		rs_data_row.push_back(rs->getString(1)); // TABLE_CAT
+		rs_data_row.push_back(rs->getString(2)); // TABLE_SCHEM
+		rs_data_row.push_back(rs->getString(3)); // TABLE_NAME
+		rs_data_row.push_back(rs->getString(4)); // TABLE_COLLATION
+
+		rs_data->push_back(rs_data_row);
+	}
+	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
+	// If there is no exception we can release otherwise on function exit memory will be freed
+	rs_data.release();
+	return ret;
+}
+/* }}} */
+
+
+/* {{{ MySQL_ConnectionMetaData::getTableCharset() -I- */
+sql::ResultSet *
+MySQL_ConnectionMetaData::getTableCharset(const sql::SQLString& /* catalog */,
+                                    const sql::SQLString& schemaPattern,
+									const sql::SQLString& tableNamePattern)
+{
+	CPP_ENTER("MySQL_ConnectionMetaData::getTableCharset");
+	CPP_INFO_FMT("schemaPattern=%s tablePattern=%s", schemaPattern.c_str(), tableNamePattern.c_str());
+
+	sql::SQLString escapedSchemaPattern = connection->escapeString(schemaPattern);
+	sql::SQLString escapedTableNamePattern = connection->escapeString(tableNamePattern);
+
+	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+
+	std::list<sql::SQLString> rs_field_data;
+	rs_field_data.push_back("TABLE_CAT");
+	rs_field_data.push_back("TABLE_SCHEMA");
+	rs_field_data.push_back("TABLE_NAME");
+	rs_field_data.push_back("TABLE_CHARSET");
+
+	sql::SQLString query("SELECT t.TABLE_CATALOG AS TABLE_CAT, t.TABLE_SCHEMA AS TABLE_SCHEMA, t.TABLE_NAME, "
+							"c.CHARACTER_SET_NAME AS TABLE_CHARSET FROM INFORMATION_SCHEMA.TABLES t, "
+							"INFORMATION_SCHEMA.COLLATION_CHARACTER_SET_APPLICABILITY c "
+							"WHERE t.TABLE_COLLATION = c.COLLATION_NAME AND t.TABLE_NAME LIKE '");
+	query.append(escapedTableNamePattern).append("' ").append("AND t.TABLE_SCHEMA LIKE '");
+	query.append(escapedSchemaPattern).append("'");
+
+	boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
+	boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery(query));
+	while (rs->next()) {
+		MySQL_ArtResultSet::row_t rs_data_row;
+
+		rs_data_row.push_back(rs->getString(1)); // TABLE_CAT
+		rs_data_row.push_back(rs->getString(2)); // TABLE_SCHEM
+		rs_data_row.push_back(rs->getString(3)); // TABLE_NAME
+		rs_data_row.push_back(rs->getString(4)); // TABLE_CHARSET
+
+		rs_data->push_back(rs_data_row);
+	}
+	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
+	// If there is no exception we can release otherwise on function exit memory will be freed
+	rs_data.release();
+	return ret;
+}
+/* }}} */
+
+
 
 
 /* {{{ MySQL_ConnectionMetaData::getTimeDateFunctions() -I- */

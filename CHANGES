@@ -35,6 +35,8 @@ GA  1.1.4 -
   argument and calls mysql_options4(). (Bug#18803313)
 - MySQL_ResultSetMetaData::getColumnTypeName() returns UNKNOWN for LONG_BLOB
   fields. (Bug#18803414/72700)
+- Missing collation info in the column metadata methods for a result.
+  (Bug#18803345/72698)
 
 - Built against libmysql 5.6.
 

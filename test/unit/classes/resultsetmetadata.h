@@ -71,6 +71,8 @@ protected:
   void doIsSearchable(bool is_ps);
   void doIsSigned(bool is_ps);
   void doIsWritable(bool is_ps);
+  void doGetColumnCharset(bool is_ps);
+  void doGetColumnCollation(bool is_ps);
 
 public:
 
@@ -95,6 +97,8 @@ public:
     TEST_CASE(isSearchable);
     TEST_CASE(isSigned);
     TEST_CASE(isWritable);
+    TEST_CASE(getColumnCharset);
+    TEST_CASE(getColumnCollation);
   }
 
   /**
@@ -248,6 +252,22 @@ public:
    * JDBC compliance tests should take care that it does what its supposed to do
    */
   void isWritable();
+
+  /**
+   * Test for ResultSetMetaData::getColumnCharset
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getColumnCharset();
+
+  /**
+   * Test for ResultSetMetaData::getColumnCollation
+   *
+   * Focus on code coverage: invalid parameter, invalid resultset
+   * JDBC compliance tests should take care that it does what its supposed to do
+   */
+  void getColumnCollation();
 
 };
 

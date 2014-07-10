@@ -191,6 +191,46 @@ MySQL_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 /* }}} */
 
 
+/* {{{ MySQL_ResultSetMetaData::getColumnCharset -I- */
+SQLString
+MySQL_ResultSetMetaData::getColumnCharset(unsigned int columnIndex)
+{
+	CPP_ENTER("MySQL_ResultSetMetaData::getColumnCharset");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	const MYSQL_FIELD * const field = getFieldMeta(columnIndex);
+	const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
+	if (!cs) {
+		std::ostringstream msg;
+		msg << "Server sent uknown charsetnr (" << field->charsetnr << ") . Please report";
+		throw SQLException(msg.str());
+	}
+	return cs->name;
+}
+/* }}} */
+
+
+/* {{{ MySQL_ResultSetMetaData::getColumnCollation -I- */
+SQLString
+MySQL_ResultSetMetaData::getColumnCollation(unsigned int columnIndex)
+{
+	CPP_ENTER("MySQL_ResultSetMetaData::getColumnCollation");
+	checkValid();
+	checkColumnIndex(columnIndex);
+
+	const MYSQL_FIELD * const field = getFieldMeta(columnIndex);
+	const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
+	if (!cs) {
+		std::ostringstream msg;
+		msg << "Server sent uknown charsetnr (" << field->charsetnr << ") . Please report";
+		throw SQLException(msg.str());
+	}
+	return cs->collation;
+}
+/* }}} */
+
+
 /* {{{ MySQL_ResultSetMetaData::getFieldMeta -I- */
 MYSQL_FIELD *
 MySQL_ResultSetMetaData::getFieldMeta(unsigned int columnIndex) const

@@ -1422,6 +1422,109 @@ void resultsetmetadata::doIsWritable(bool is_ps)
   }
 }
 
+
+void resultsetmetadata::getColumnCharset()
+{
+  logMsg("resultsetmetadata::getColumnCharset() - MySQL_ResultSetMetaData::getColumnCharset()");
+  try
+  {
+	stmt.reset(con->createStatement());
+	stmt->execute("DROP TABLE IF EXISTS columnCharset");
+	stmt->execute("CREATE TABLE columnCharset(col1 VARCHAR(10) CHARACTER SET latin1 COLLATE latin1_general_ci)");
+	stmt->execute("INSERT INTO columnCharset VALUES ('cal1val')");
+	stmt->execute("SET @@character_set_results=NULL");
+
+	/* This is a dull test, its about code coverage not achieved with the JDBC tests */
+	logMsg("... Statement");
+	res.reset(stmt->executeQuery("SELECT col1 from columnCharset"));
+	doGetColumnCharset(false);
+
+	logMsg("... PreparedStatement");
+	pstmt.reset(con->prepareStatement("SELECT col1 from columnCharset"));
+	res.reset(pstmt->executeQuery());
+	checkResultSetScrolling(res);
+	doGetColumnCharset(true);
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+
+void resultsetmetadata::doGetColumnCharset(bool is_ps)
+{
+  ResultSetMetaData * meta=res->getMetaData();
+  ASSERT_EQUALS("latin1", meta->getColumnCharset(1));
+
+  if (!is_ps)
+  {
+    res->close();
+    try
+    {
+      meta->getCatalogName(1);
+      FAIL("Can fetch meta from invalid resultset");
+    }
+    catch (sql::SQLException &)
+    {
+    }
+  }
+}
+
+
+void resultsetmetadata::getColumnCollation()
+{
+  logMsg("resultsetmetadata::getColumnCollation() - MySQL_ResultSetMetaData::getColumnCollation()");
+  try
+  {
+	stmt.reset(con->createStatement());
+	stmt->execute("DROP TABLE IF EXISTS columnCollation");
+	stmt->execute("CREATE TABLE columnCollation(col1 VARCHAR(10) COLLATE latin1_general_ci)");
+	stmt->execute("INSERT INTO columnCollation VALUES ('cal1val')");
+	stmt->execute("SET @@character_set_results=NULL");
+
+	/* This is a dull test, its about code coverage not achieved with the JDBC tests */
+	logMsg("... Statement");
+	res.reset(stmt->executeQuery("SELECT col1 from columnCollation"));
+	doGetColumnCollation(false);
+
+	logMsg("... PreparedStatement");
+	pstmt.reset(con->prepareStatement("SELECT col1 from columnCollation"));
+	res.reset(pstmt->executeQuery());
+	checkResultSetScrolling(res);
+	doGetColumnCollation(true);
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+
+void resultsetmetadata::doGetColumnCollation(bool is_ps)
+{
+  ResultSetMetaData * meta=res->getMetaData();
+  ASSERT_EQUALS("latin1_general_ci", meta->getColumnCollation(1));
+
+  if (!is_ps)
+  {
+    res->close();
+    try
+    {
+      meta->getColumnCollation(1);
+      FAIL("Can fetch meta from invalid resultset");
+    }
+    catch (sql::SQLException &)
+    {
+    }
+  }
+}
+
+
 void resultsetmetadata::runStandardQuery()
 {
   stmt.reset(con->createStatement());

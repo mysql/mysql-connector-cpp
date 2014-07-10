@@ -57,6 +57,10 @@ public:
 
 	virtual SQLString getColumnTypeName(unsigned int column) = 0;
 
+	virtual SQLString getColumnCharset(unsigned int columnIndex) = 0;
+
+	virtual SQLString getColumnCollation(unsigned int columnIndex) = 0;
+
 	virtual unsigned int getPrecision(unsigned int column) = 0;
 
 	virtual unsigned int getScale(unsigned int column) = 0;
