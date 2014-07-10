@@ -370,25 +370,28 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
 		case MYSQL_TYPE_DATETIME:
 			return sql::DataType::TIMESTAMP;
 		case MYSQL_TYPE_TINY_BLOB:// should no appear over the wire
+		{
+			bool isBinary = (field->flags & BINARY_FLAG) &&
+							field->charsetnr == MAGIC_BINARY_CHARSET_NR;
+			const sql::mysql::util::OUR_CHARSET * const cs =
+							sql::mysql::util::find_charset(field->charsetnr);
+			if (!cs) {
+				throw SQLException("Server sent uknown charsetnr. Please report");
+			}
+			return isBinary ? sql::DataType::VARBINARY : sql::DataType::VARCHAR;
+		}
 		case MYSQL_TYPE_MEDIUM_BLOB:// should no appear over the wire
 		case MYSQL_TYPE_LONG_BLOB:// should no appear over the wire
 		case MYSQL_TYPE_BLOB:
 		{
-			const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
+			bool isBinary = (field->flags & BINARY_FLAG) &&
+							field->charsetnr == MAGIC_BINARY_CHARSET_NR;
+			const sql::mysql::util::OUR_CHARSET * const cs =
+							sql::mysql::util::find_charset(field->charsetnr);
 			if (!cs) {
 				throw SQLException("Server sent uknown charsetnr. Please report");
 			}
-			if (255 == (field->length / cs->char_maxlen)) {
-				if ((field->flags & BINARY_FLAG) && field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
-					return sql::DataType::VARBINARY;
-				}
-				return sql::DataType::VARCHAR;
-			}
-			// Over the wire only MYSQL_TYPE_BLOB appears
-			if ((field->flags & BINARY_FLAG) && field->charsetnr == MAGIC_BINARY_CHARSET_NR) {
-				return sql::DataType::LONGVARBINARY;
-			}
-			return sql::DataType::LONGVARCHAR;
+			return isBinary ? sql::DataType::LONGVARBINARY : sql::DataType::LONGVARCHAR;
 		}
 		case MYSQL_TYPE_VARCHAR:
 		case MYSQL_TYPE_VAR_STRING:
@@ -532,13 +535,10 @@ mysql_type_to_string(const MYSQL_FIELD * const field, boost::shared_ptr< sql::my
 		case MYSQL_TYPE_DATETIME:
 			return "DATETIME";
 		case MYSQL_TYPE_TINY_BLOB:// should no appear over the wire
-		case MYSQL_TYPE_MEDIUM_BLOB:// should no appear over the wire
-		case MYSQL_TYPE_LONG_BLOB:// should no appear over the wire
-		case MYSQL_TYPE_BLOB:
 		{
-			bool isBlob = field->charsetnr == MAGIC_BINARY_CHARSET_NR;
+			bool isBinary = field->charsetnr == MAGIC_BINARY_CHARSET_NR;
 			unsigned int char_maxlen = 1;
-			if (!isBlob) {
+			if (!isBinary) {
 				const sql::mysql::util::OUR_CHARSET * cset = find_charset(field->charsetnr);
 				if (!cset) {
 					throw SQLException("Server sent uknown charsetnr. Please report");
@@ -546,23 +546,52 @@ mysql_type_to_string(const MYSQL_FIELD * const field, boost::shared_ptr< sql::my
 				char_maxlen = cset->char_maxlen;
 			}
 			CPP_INFO_FMT("char_maxlen=%u field->length=%lu", char_maxlen, field->length);
-			if (field->length == L64(4294967295)) {
-				/*
-				  The C/S Protocol can't hold more than 4 byte.
-				  Thus LONGTEXT which is 0xFFFFFFFF multiplied by char_len will overflow.
-				  To overcome this the server serves just 0xFF FF FF FF
-				*/
-				return isBlob? "LONGBLOB":"LONGTEXT";
+
+			return isBinary? "TINYBLOB":"TINYTEXT";
+		}
+		case MYSQL_TYPE_MEDIUM_BLOB:// should no appear over the wire
+		{
+			bool isBinary = field->charsetnr == MAGIC_BINARY_CHARSET_NR;
+			unsigned int char_maxlen = 1;
+			if (!isBinary) {
+				const sql::mysql::util::OUR_CHARSET * cset = find_charset(field->charsetnr);
+				if (!cset) {
+					throw SQLException("Server sent uknown charsetnr. Please report");
+				}
+				char_maxlen = cset->char_maxlen;
 			}
-			switch (field->length / char_maxlen) {
-				case 255: return isBlob? "TINYBLOB":"TINYTEXT";
-				case 65535: return isBlob? "BLOB":"TEXT";
-				case 16777215: return isBlob? "MEDIUMBLOB":"MEDIUMTEXT";
-				default:
-					CPP_ERR_FMT("What kind of type is this??? char_maxlen=%u field->length=%lu field->length/char_maxlen=%lu",
-									char_maxlen, field->length, field->length / char_maxlen);
-					return "UNKNOWN";
+			CPP_INFO_FMT("char_maxlen=%u field->length=%lu", char_maxlen, field->length);
+
+			return isBinary? "MEDIUMBLOB":"MEDIUMTEXT";
+		}
+		case MYSQL_TYPE_LONG_BLOB:// should no appear over the wire
+		{
+			bool isBinary = field->charsetnr == MAGIC_BINARY_CHARSET_NR;
+			unsigned int char_maxlen = 1;
+			if (!isBinary) {
+				const sql::mysql::util::OUR_CHARSET * cset = find_charset(field->charsetnr);
+				if (!cset) {
+					throw SQLException("Server sent uknown charsetnr. Please report");
+				}
+				char_maxlen = cset->char_maxlen;
 			}
+			CPP_INFO_FMT("char_maxlen=%u field->length=%lu", char_maxlen, field->length);
+
+			return isBinary? "LONGBLOB":"LONGTEXT";
+		}
+		case MYSQL_TYPE_BLOB:
+		{
+			bool isBinary= field->charsetnr == MAGIC_BINARY_CHARSET_NR;
+			unsigned int char_maxlen = 1;
+			if (!isBinary) {
+				const sql::mysql::util::OUR_CHARSET * cset = find_charset(field->charsetnr);
+				if (!cset) {
+					throw SQLException("Server sent uknown charsetnr. Please report");
+				}
+				char_maxlen = cset->char_maxlen;
+			}
+			CPP_INFO_FMT("char_maxlen=%u field->length=%lu", char_maxlen, field->length);
+			return isBinary? "BLOB":"TEXT";
 		}
 		case MYSQL_TYPE_VARCHAR:
 		case MYSQL_TYPE_VAR_STRING:

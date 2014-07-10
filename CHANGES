@@ -33,6 +33,8 @@ GA  1.1.4 -
   parameters take their values from cmake config (Bug#14680878/66975)
 - Added MYSQL_OPT_CONNECT_ATTR_ADD connection option accepting std::map
   argument and calls mysql_options4(). (Bug#18803313)
+- MySQL_ResultSetMetaData::getColumnTypeName() returns UNKNOWN for LONG_BLOB
+  fields. (Bug#18803414/72700)
 
 - Built against libmysql 5.6.
 

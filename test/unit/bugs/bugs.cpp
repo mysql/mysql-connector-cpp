@@ -498,5 +498,25 @@ void bugs::bug71606()
   }
 }
 
+
+void bugs::bug72700()
+{
+  ASSERT(stmt->execute("select astext(geomfromtext('point(10 10)'))"));
+
+  try
+  {
+	res.reset(stmt->getResultSet());
+	checkResultSetScrolling(res);
+	ResultSetMetaData * meta=res->getMetaData();
+	ASSERT_EQUALS(meta->getColumnType(1), 15);
+	ASSERT_EQUALS(meta->getColumnTypeName(1), "LONGTEXT");
+  }
+  catch (::sql::SQLException & /*e*/)
+  {
+	return; /* Everything is fine */
+  }
+}
+
+
 } /* namespace regression */
 } /* namespace testsuite */
