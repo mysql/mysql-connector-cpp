@@ -67,6 +67,7 @@ public:
     TEST_CASE(loadSameLibraryTwice);
 #endif
 	TEST_CASE(enableClearTextAuth);
+	TEST_CASE(connectAttrAdd);
   }
 
   /**
@@ -175,6 +176,8 @@ public:
 #endif
 
   void enableClearTextAuth();
+
+  void connectAttrAdd();
 };
 
 

@@ -111,6 +111,8 @@ public:
 
 	int options (MYSQL *, enum mysql_option, const void *);
 
+	int options (MYSQL *, enum mysql_option, const void *, const void *);
+
 	int ping(MYSQL *);
 
 	int query(MYSQL *, const char *);

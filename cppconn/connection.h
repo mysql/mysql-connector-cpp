@@ -37,8 +37,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 namespace sql
 {
 
-
-typedef boost::variant<int, double, bool, sql::SQLString > ConnectPropertyVal;
+typedef boost::variant<int, double, bool, sql::SQLString, std::map< sql::SQLString, sql::SQLString > > ConnectPropertyVal;
 
 typedef std::map< sql::SQLString, ConnectPropertyVal > ConnectOptionsMap;
 

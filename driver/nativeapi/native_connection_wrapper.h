@@ -104,6 +104,9 @@ public:
 						const bool &) = 0;
 	virtual int options(::sql::mysql::MySQL_Connection_Options,
 						const int &) = 0;
+	virtual int options(::sql::mysql::MySQL_Connection_Options,
+						const ::sql::SQLString &, 
+						const ::sql::SQLString &) = 0;
 
 	virtual int query(const SQLString &) = 0;
 

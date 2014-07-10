@@ -244,6 +244,16 @@ MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options op
 }
 
 
+/* {{{ MySQL_NativeConnectionWrapper::options(SQLString &, SQLString &) */
+int
+MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options option,
+						   const ::sql::SQLString &key, const ::sql::SQLString &value)
+{
+	return api->options(mysql, static_cast< mysql_option >(option), key.c_str(), value.c_str());
+}
+/* }}} */
+
+
 /* {{{ MySQL_NativeConnectionWrapper::query() */
 int
 MySQL_NativeConnectionWrapper::query(const SQLString & stmt_str)

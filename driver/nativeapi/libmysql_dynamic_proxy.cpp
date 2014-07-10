@@ -392,7 +392,29 @@ LibmysqlDynamicProxy::options(MYSQL * mysql, enum mysql_option option, const voi
 {
 	ptr2mysql_options ptr2_options = symbol_safe_cast<ptr2mysql_options>(GetProcAddr("mysql_options"));
 
-	return (*ptr2_options)(mysql, option, arg);
+	if ((*ptr2_options)(mysql, option, arg)) {
+		throw sql::InvalidArgumentException("Unsupported option provided to mysql_options()");
+	} else {
+		return 0;
+	}
+}
+/* }}} */
+
+
+/* {{{ LibmysqlDynamicProxy::options() */
+int
+LibmysqlDynamicProxy::options(MYSQL * mysql, enum mysql_option option, const void *arg1, const void *arg2)
+{
+	ptr2mysql_options4 ptr2_options = symbol_safe_cast<ptr2mysql_options4>(GetProcAddr("mysql_options4"));
+	if (ptr2_options != NULL) {
+		if (((*ptr2_options)(mysql, option, arg1, arg2))) {
+			throw sql::InvalidArgumentException("Unsupported option provided to mysql_options4()");
+		} else {
+			return 0;
+		}
+	} else {
+		throw ::sql::MethodNotImplementedException("::mysql_options4()");
+	}
 }
 /* }}} */
 

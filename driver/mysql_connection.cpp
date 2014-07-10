@@ -30,6 +30,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <memory>
 #include <sstream>
 #include <stdio.h>
+#include <map>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
@@ -266,9 +267,13 @@ bool process_connection_option(ConnectOptionsMap::const_iterator &option,
 				err.append(option->first).append(" is not of expected type"); 
 				throw sql::InvalidArgumentException(err); 
 			}
-			proxy->options(static_cast<sql::mysql::MySQL_Connection_Options>(options_map[i].value),
+			try {
+				proxy->options(static_cast<sql::mysql::MySQL_Connection_Options>(options_map[i].value),
 							*value);
-
+			} catch (sql::InvalidArgumentException& e) {
+				std::string errorOption(options_map[i].key);
+				throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
+			}
 			return true;
 		}
 	}
@@ -345,7 +350,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	const sql::SQLString * p_s;
 	bool opt_reconnect = false;
 	bool opt_reconnect_value = false;
-	bool client_doesnt_support_exp_pwd = false;
+	int  client_exp_pwd = false;
 	bool secure_auth= true;
 
 
@@ -506,20 +511,15 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			/* Not sure it is really needed */
 			uri.setProtocol(NativeAPI::PROTOCOL_PIPE);
 		} else if (!it->first.compare("OPT_CAN_HANDLE_EXPIRED_PASSWORDS")) {
-			/* We need to know client version at runtime */
-			long client_ver= proxy->get_client_version();
-			if (proxy->get_client_version() < 50610) {
-				// TODO: I think we should throw a warning here
-				/* We only need this flag set if application has said it supports expired
-				   password mode */
-				client_doesnt_support_exp_pwd= true;
-			} else {
-				if (!(p_b = boost::get< bool >(&it->second))) {
-					throw sql::InvalidArgumentException("No bool value passed for "
-														"OPT_CAN_HANDLE_EXPIRED_PASSWORDS");
-				}
-				/* We do not care here about server version */
-				proxy->options(MYSQL_OPT_CAN_HANDLE_EXPIRED_PASSWORDS, (const char*)p_b);
+			if (!(p_b = boost::get< bool >(&it->second))) {
+				throw sql::InvalidArgumentException("No bool value passed for "
+													"OPT_CAN_HANDLE_EXPIRED_PASSWORDS");
+			}
+			try {
+				client_exp_pwd= proxy->options(MYSQL_OPT_CAN_HANDLE_EXPIRED_PASSWORDS, (const char*)p_b);
+			} catch (sql::InvalidArgumentException& e) {
+				std::string errorOption("MYSQL_OPT_CAN_HANDLE_EXPIRED_PASSWORDS");
+				throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
 			}
 		} else if (!it->first.compare("postInit")) {
 			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
@@ -533,6 +533,19 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			} else {
 				throw sql::InvalidArgumentException("No bool value passed for useLegacyAuth");
 			}
+		} else if (!it->first.compare("OPT_CONNECT_ATTR_ADD")) {
+			const std::map< sql::SQLString, sql::SQLString > *conVal= 
+				boost::get< std::map< sql::SQLString, sql::SQLString > >(&it->second);
+			std::map< sql::SQLString, sql::SQLString >::const_iterator conn_attr_it; 
+			for (conn_attr_it = conVal->begin(); conn_attr_it != conVal->end(); conn_attr_it++) {
+				try {
+					proxy->options(MYSQL_OPT_CONNECT_ATTR_ADD, conn_attr_it->first, conn_attr_it->second);
+				} catch (sql::InvalidArgumentException& e) {
+					std::string errorOption("MYSQL_OPT_CONNECT_ATTR_ADD");
+					throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
+				}
+			}
+
 		/* If you need to add new integer connection option that should result in
 		   calling mysql_optiong - add its mapping to the intOptions array
 		 */
@@ -575,9 +588,20 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
 	proxy->use_protocol(uri.Protocol());
 
-	proxy->options(MYSQL_SECURE_AUTH, &secure_auth);
+	try {
+		proxy->options(MYSQL_SECURE_AUTH, &secure_auth);
+	} catch (sql::InvalidArgumentException& e) {
+		std::string errorOption("MYSQL_SECURE_AUTH");
+		throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
+	}
 
-	proxy->options(MYSQL_SET_CHARSET_NAME, defaultCharset.c_str());
+	try {
+		proxy->options(MYSQL_SET_CHARSET_NAME, defaultCharset.c_str());
+	} catch (sql::InvalidArgumentException& e) {
+		std::string errorOption("MYSQL_SET_CHARSET_NAME");
+		throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
+	}
+
 
 	if (ssl_used) {
 		/* According to the docs, always returns 0 */
@@ -607,7 +631,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 		int native_error= proxy->errNo();
 
 		if (native_error == ER_MUST_CHANGE_PASSWORD_LOGIN
-			&& client_doesnt_support_exp_pwd) {
+			&& client_exp_pwd) {
 
 			native_error= deCL_CANT_HANDLE_EXP_PWD;
 			error_message= "Your password has expired, but your instance of"
@@ -626,7 +650,12 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	}
 
 	if (opt_reconnect) {
-		proxy->options(MYSQL_OPT_RECONNECT, (const char *) &opt_reconnect_value);
+		try {
+			proxy->options(MYSQL_OPT_RECONNECT, (const char *) &opt_reconnect_value);
+		} catch (sql::InvalidArgumentException& e) {
+			std::string errorOption("MYSQL_OPT_RECONNECT");
+			throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
+		}
 	}
 
 	setAutoCommit(true);

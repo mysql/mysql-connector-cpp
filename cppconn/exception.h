@@ -123,6 +123,28 @@ struct CPPCONN_PUBLIC_FUNC NonScrollableException : public SQLException
 	NonScrollableException(const std::string& reason) : SQLException(reason, "", 0) {}
 };
 
+struct CPPCONN_PUBLIC_FUNC SQLUnsupportedOptionException : public SQLException
+{
+	SQLUnsupportedOptionException(const SQLUnsupportedOptionException& e, const std::string conn_option) :
+		SQLException(e.what(), e.sql_state, e.errNo),
+		option(conn_option )  
+	{}
+
+	SQLUnsupportedOptionException(const std::string& reason, const std::string conn_option) : 
+		SQLException(reason, "", 0),
+		option(conn_option )  
+	{}
+
+	const char *getConnectionOption() const
+	{
+		return option.c_str();
+	}
+
+	~SQLUnsupportedOptionException() throw () {};
+protected:
+	const std::string option;
+};
+
 } /* namespace sql */
 
 #endif /* _SQL_EXCEPTION_H_ */

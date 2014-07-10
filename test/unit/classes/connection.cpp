@@ -2281,5 +2281,47 @@ void connection::enableClearTextAuth()
 }
 
 
+void connection::connectAttrAdd()
+{
+  logMsg("connection::connectAttrAdd - MYSQL_OPT_CONNECT_ATTR_ADD");
+
+  try
+  {
+    sql::ConnectOptionsMap connection_properties;
+    std::map< sql::SQLString, sql::SQLString > connectAttrMap;
+    connectAttrMap["keyConnectAttrAdd1"] = "value1";
+    connectAttrMap["keyConnectAttrAdd2"] = "value2";
+
+    connection_properties["hostName"]=url;
+    connection_properties["userName"]=user;
+    connection_properties["password"]=passwd;
+
+    connection_properties.erase("OPT_CONNECT_ATTR_ADD");
+    connection_properties["OPT_CONNECT_ATTR_ADD"]= connectAttrMap;
+
+    created_objects.clear();
+    con.reset(driver->connect(connection_properties));
+
+    stmt.reset(con->createStatement());
+    res.reset(stmt->executeQuery("SELECT ATTR_NAME, ATTR_VALUE FROM "
+                "performance_schema.session_account_connect_attrs WHERE "
+                "ATTR_NAME LIKE '%keyConnectAttrAdd%' ORDER BY ATTR_NAME ASC;"));
+    res->next();
+    ASSERT_EQUALS(res->getString("ATTR_NAME"), "keyConnectAttrAdd1");
+    ASSERT_EQUALS(res->getString("ATTR_VALUE"), "value1");
+
+    res->next();
+    ASSERT_EQUALS(res->getString("ATTR_NAME"), "keyConnectAttrAdd2");
+    ASSERT_EQUALS(res->getString("ATTR_VALUE"), "value2");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+
 } /* namespace connection */
 } /* namespace testsuite */

@@ -91,6 +91,8 @@ typedef my_ulonglong (STDCALL *ptr2mysql_num_rows)(MYSQL_RES *);
 
 typedef int (STDCALL *ptr2mysql_options)(MYSQL *, enum mysql_option, const void *);
 
+typedef int (STDCALL *ptr2mysql_options4)(MYSQL *, enum mysql_option, const void *, const void *);
+
 typedef int (STDCALL *ptr2mysql_query)(MYSQL *, const char *);
 
 typedef int (STDCALL *ptr2mysql_ping)(MYSQL *);
@@ -215,6 +217,8 @@ public:
 	virtual my_ulonglong num_rows(MYSQL_RES * ) = 0;
 
 	virtual int options(MYSQL *, enum mysql_option option , const void *arg) = 0;
+
+	virtual int options(MYSQL *, enum mysql_option option , const void *arg1, const void *arg2) = 0;
 
 	virtual int ping(MYSQL *) = 0;
 

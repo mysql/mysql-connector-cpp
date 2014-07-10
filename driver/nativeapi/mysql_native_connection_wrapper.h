@@ -106,6 +106,8 @@ public:
 				const ::sql::SQLString &);
 	int options(::sql::mysql::MySQL_Connection_Options, const bool &);
 	int options(::sql::mysql::MySQL_Connection_Options, const int &);
+	int options(::sql::mysql::MySQL_Connection_Options,
+				const ::sql::SQLString &, const ::sql::SQLString &);
 
 	int query(const ::sql::SQLString &);
 

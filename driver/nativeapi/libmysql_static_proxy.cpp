@@ -27,6 +27,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "libmysql_static_proxy.h"
 
+#include <cppconn/exception.h>
 
 namespace sql
 {
@@ -279,7 +280,28 @@ int
 LibmysqlStaticProxy::options(MYSQL * mysql, enum mysql_option option, const void *arg)
 {
 	// in 5.0 mysql_options's 3rd parameter is "const char *"
-	return ::mysql_options(mysql, option, static_cast<const char *>(arg));
+	if ((::mysql_options(mysql, option, static_cast<const char *>(arg)))) {
+		throw sql::InvalidArgumentException("Unsupported option provided to mysql_options()");
+	} else {
+		return 0;
+	}
+}
+/* }}} */
+
+
+/* {{{ LibmysqlStaticProxy::options4() */
+int
+LibmysqlStaticProxy::options(MYSQL * mysql, enum mysql_option option, const void *arg1, const void *arg2)
+{
+#if MYSQL_VERSION_ID >= 50606	
+	if ((::mysql_options4(mysql, option, static_cast<const char *>(arg1), static_cast<const char *>(arg2)))) {
+		throw sql::InvalidArgumentException("Unsupported option provided to mysql_options4()");
+	} else {
+		return 0;
+	}
+#else
+	throw ::sql::MethodNotImplementedException("::mysql_options4()");
+#endif
 }
 /* }}} */
 

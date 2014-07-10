@@ -31,6 +31,8 @@ GA  1.1.4 -
   "sslVerify"(boolean), "sslCRL" and "sslCRLPath"(string). (Bug#18461451)
 - Methods returning driver version information are now parametrized, and those
   parameters take their values from cmake config (Bug#14680878/66975)
+- Added MYSQL_OPT_CONNECT_ATTR_ADD connection option accepting std::map
+  argument and calls mysql_options4(). (Bug#18803313)
 
 - Built against libmysql 5.6.
 
