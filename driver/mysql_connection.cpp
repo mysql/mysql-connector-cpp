@@ -247,7 +247,8 @@ static const String2IntMap stringOptions[]=
 	{
 		{"preInit",		MYSQL_INIT_COMMAND},
 		{"sslCRL",		MYSQL_OPT_SSL_CRL},
-		{"sslCRLPath",	MYSQL_OPT_SSL_CRLPATH}
+		{"sslCRLPath",	MYSQL_OPT_SSL_CRLPATH},
+		{"rsaKey",		MYSQL_SERVER_PUBLIC_KEY}
 	};
 
 template<class T>

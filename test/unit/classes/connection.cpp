@@ -899,6 +899,19 @@ void connection::connectUsingMapWrongTypes()
     }
     connection_properties.erase("sslCRLPath");
 
+    try
+    {
+      connection_properties["rsaKey"]=(boolval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception XXXIII - rsaKey");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("rsaKey");
+
   }
   catch (sql::SQLException &e)
   {

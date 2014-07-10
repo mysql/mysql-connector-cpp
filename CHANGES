@@ -37,6 +37,8 @@ GA  1.1.4 -
   fields. (Bug#18803414/72700)
 - Missing collation info in the column metadata methods for a result.
   (Bug#18803345/72698)
+- Added connection option "rsaKey" to specify RSA public key path name 
+  (wl#7972).
 
 - Built against libmysql 5.6.
 
