@@ -515,6 +515,24 @@ void bugs::bug72700()
   {
 	return; /* Everything is fine */
   }
+
+  stmt->execute("DROP TABLE IF EXISTS bug72700");
+  stmt->execute("CREATE TABLE bug72700(valtext longtext)");
+  ASSERT(stmt->execute("SELECT valtext FROM bug72700"));
+  try
+  {
+	res.reset(stmt->getResultSet());
+	checkResultSetScrolling(res);
+	ResultSetMetaData * meta=res->getMetaData();
+	ASSERT_EQUALS(meta->getColumnType(1), 15);
+	ASSERT_EQUALS(meta->getColumnTypeName(1), "TEXT");
+  }
+  catch (::sql::SQLException & /*e*/)
+  {
+	return; /* Everything is fine */
+  }
+
+  stmt->execute("DROP TABLE IF EXISTS bug72700");
 }
 
 

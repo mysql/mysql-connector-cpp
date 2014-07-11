@@ -27,6 +27,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <string.h>
 #include <stdlib.h>
 #include <memory>
+#include <sstream>
 
 #include <cppconn/datatype.h>
 #include <cppconn/exception.h>
@@ -376,7 +377,9 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
 			const sql::mysql::util::OUR_CHARSET * const cs =
 							sql::mysql::util::find_charset(field->charsetnr);
 			if (!cs) {
-				throw SQLException("Server sent uknown charsetnr. Please report");
+				std::ostringstream msg("Server sent unknown charsetnr (");
+				msg << field->charsetnr << ") . Please report";
+				throw SQLException(msg.str());
 			}
 			return isBinary ? sql::DataType::VARBINARY : sql::DataType::VARCHAR;
 		}
@@ -389,7 +392,9 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
 			const sql::mysql::util::OUR_CHARSET * const cs =
 							sql::mysql::util::find_charset(field->charsetnr);
 			if (!cs) {
-				throw SQLException("Server sent uknown charsetnr. Please report");
+				std::ostringstream msg("Server sent unknown charsetnr (");
+				msg << field->charsetnr << ") . Please report";
+				throw SQLException(msg.str());
 			}
 			return isBinary ? sql::DataType::LONGVARBINARY : sql::DataType::LONGVARCHAR;
 		}
@@ -541,7 +546,9 @@ mysql_type_to_string(const MYSQL_FIELD * const field, boost::shared_ptr< sql::my
 			if (!isBinary) {
 				const sql::mysql::util::OUR_CHARSET * cset = find_charset(field->charsetnr);
 				if (!cset) {
-					throw SQLException("Server sent uknown charsetnr. Please report");
+					std::ostringstream msg("Server sent unknown charsetnr (");
+					msg << field->charsetnr << ") . Please report";
+					throw SQLException(msg.str());
 				}
 				char_maxlen = cset->char_maxlen;
 			}
@@ -556,7 +563,9 @@ mysql_type_to_string(const MYSQL_FIELD * const field, boost::shared_ptr< sql::my
 			if (!isBinary) {
 				const sql::mysql::util::OUR_CHARSET * cset = find_charset(field->charsetnr);
 				if (!cset) {
-					throw SQLException("Server sent uknown charsetnr. Please report");
+					std::ostringstream msg("Server sent unknown charsetnr (");
+					msg << field->charsetnr << ") . Please report";
+					throw SQLException(msg.str());
 				}
 				char_maxlen = cset->char_maxlen;
 			}
@@ -571,7 +580,9 @@ mysql_type_to_string(const MYSQL_FIELD * const field, boost::shared_ptr< sql::my
 			if (!isBinary) {
 				const sql::mysql::util::OUR_CHARSET * cset = find_charset(field->charsetnr);
 				if (!cset) {
-					throw SQLException("Server sent uknown charsetnr. Please report");
+					std::ostringstream msg("Server sent unknown charsetnr (");
+					msg << field->charsetnr << ") . Please report";
+					throw SQLException(msg.str());
 				}
 				char_maxlen = cset->char_maxlen;
 			}
@@ -586,7 +597,9 @@ mysql_type_to_string(const MYSQL_FIELD * const field, boost::shared_ptr< sql::my
 			if (!isBinary) {
 				const sql::mysql::util::OUR_CHARSET * cset = find_charset(field->charsetnr);
 				if (!cset) {
-					throw SQLException("Server sent uknown charsetnr. Please report");
+					std::ostringstream msg("Server sent unknown charsetnr (");
+					msg << field->charsetnr << ") . Please report";
+					throw SQLException(msg.str());
 				}
 				char_maxlen = cset->char_maxlen;
 			}

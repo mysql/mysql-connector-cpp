@@ -112,7 +112,7 @@ MySQL_PreparedResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
 	const MYSQL_FIELD * const field = getFieldMeta(columnIndex);
 	const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
 	if (!cs) {
-		std::ostringstream msg("Server sent uknown charsetnr (");
+		std::ostringstream msg("Server sent unknown charsetnr (");
 		msg << field->charsetnr << ") . Please report";
 		throw SQLException(msg.str());
 	}
@@ -189,7 +189,7 @@ MySQL_PreparedResultSetMetaData::getColumnCharset(unsigned int columnIndex)
     const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
     if (!cs) {
         std::ostringstream msg;
-        msg << "Server sent uknown charsetnr (" << field->charsetnr << ") . Please report";
+        msg << "Server sent unknown charsetnr (" << field->charsetnr << ") . Please report";
         throw SQLException(msg.str());
     }
     return cs->name;
@@ -208,7 +208,7 @@ MySQL_PreparedResultSetMetaData::getColumnCollation(unsigned int columnIndex)
     const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
     if (!cs) {
         std::ostringstream msg;
-        msg << "Server sent uknown charsetnr (" << field->charsetnr << ") . Please report";
+        msg << "Server sent unknown charsetnr (" << field->charsetnr << ") . Please report";
         throw SQLException(msg.str());
     }
     return cs->collation;
@@ -305,7 +305,7 @@ MySQL_PreparedResultSetMetaData::isCaseSensitive(unsigned int columnIndex)
 	}
 	const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
 	if (!cs) {
-		std::ostringstream msg("Server sent uknown charsetnr (");
+		std::ostringstream msg("Server sent unknown charsetnr (");
 		msg << field->charsetnr << ") . Please report";
 		throw SQLException(msg.str());
 	}
