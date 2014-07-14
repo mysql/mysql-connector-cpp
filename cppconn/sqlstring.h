@@ -108,24 +108,24 @@ namespace sql
 		int caseCompare(const SQLString &s) const
 		{	
 			std::string tmp(realStr), str(s);
-			transform(tmp.begin(), tmp.end(), tmp.begin(), tolower);
-			transform(str.begin(), str.end(), str.begin(), tolower);
+			std::transform(tmp.begin(), tmp.end(), tmp.begin(), tolower);
+			std::transform(str.begin(), str.end(), str.begin(), tolower);
 			return tmp.compare(str);
 		}
 
 		int caseCompare(const char * s) const
 		{
 			std::string tmp(realStr), str(s);
-			transform(str.begin(), str.end(), str.begin(), tolower);
-			transform(tmp.begin(), tmp.end(), tmp.begin(), tolower);
+			std::transform(str.begin(), str.end(), str.begin(), tolower);
+			std::transform(tmp.begin(), tmp.end(), tmp.begin(), tolower);
 			return tmp.compare(str);
 		}
 
 		int caseCompare(size_t pos1, size_t n1, const char * s) const
 		{
 			std::string tmp(realStr.c_str() + pos1, n1), str(s);
-			transform(str.begin(), str.end(), str.begin(), tolower);
-			transform(tmp.begin(), tmp.end(), tmp.begin(), tolower);
+			std::transform(str.begin(), str.end(), str.begin(), tolower);
+			std::transform(tmp.begin(), tmp.end(), tmp.begin(), tolower);
 			return tmp.compare(str);
 		}
 
