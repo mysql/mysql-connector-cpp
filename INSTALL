@@ -4,7 +4,7 @@ This is a release of MySQL Connector/C++, Oracle's
 dual-license C++ API for connecting client applications
 to MySQL.
 
-Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 --------------------------------------------------------------------------------
 
@@ -73,7 +73,8 @@ PREREQUISITES FOR BUILDING CONNECTOR/C++
   The MySQL driver for C++ makes use of Boost variant, any and some pointers.
   All of those are "headers only". When installing Boost on your system,
   you can disable all components that require building any kind
-  of binaries.
+  of binaries. Connector/C++ source version 1.1.4 must use Boost 1.54.0. Also 
+  applications using Connector/C++ 1.1.4 should use Boost 1.54.0.
 
 BUILDING ON UNIX
 

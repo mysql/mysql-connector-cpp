@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -108,24 +108,24 @@ namespace sql
 		int caseCompare(const SQLString &s) const
 		{	
 			std::string tmp(realStr), str(s);
-			std::transform(tmp.begin(), tmp.end(), tmp.begin(), tolower);
-			std::transform(str.begin(), str.end(), str.begin(), tolower);
+			std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
+			std::transform(str.begin(), str.end(), str.begin(), ::tolower);
 			return tmp.compare(str);
 		}
 
 		int caseCompare(const char * s) const
 		{
 			std::string tmp(realStr), str(s);
-			std::transform(str.begin(), str.end(), str.begin(), tolower);
-			std::transform(tmp.begin(), tmp.end(), tmp.begin(), tolower);
+			std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+			std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
 			return tmp.compare(str);
 		}
 
 		int caseCompare(size_t pos1, size_t n1, const char * s) const
 		{
 			std::string tmp(realStr.c_str() + pos1, n1), str(s);
-			std::transform(str.begin(), str.end(), str.begin(), tolower);
-			std::transform(tmp.begin(), tmp.end(), tmp.begin(), tolower);
+			std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+			std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
 			return tmp.compare(str);
 		}
 
