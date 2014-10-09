@@ -70,6 +70,7 @@ SET(MYSQLCPPCONN_INSTALL_HEADERS
 		resultset_metadata.h
 		statement.h
 		sqlstring.h
-		warning.h)
+		warning.h
+		version_info.h)
 
 INSTALL(FILES ${MYSQLCPPCONN_INSTALL_HEADERS} DESTINATION include/cppconn)

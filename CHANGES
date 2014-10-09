@@ -31,6 +31,7 @@ GA  1.1.5 -
   column name. (Bug#19244736)
 - ResultSetMetaData::getTables() not returning result for VIEW when 
   metadatauseinfoschema=false. (Bug#19505348)
+- Version macros missing from installed headers file. (Bug#19553971)
 
 GA  1.1.4 -
 - Both static and dynamic driver libraries are now linked statically against
