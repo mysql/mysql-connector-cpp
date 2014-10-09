@@ -100,6 +100,7 @@ public:
 	TEST_CASE(getSchemaCharset);
 	TEST_CASE(getTableCollation);
 	TEST_CASE(getTableCharset);
+	TEST_CASE(getTables);
   }
 
   /**
@@ -379,6 +380,11 @@ public:
    * Test for DatabaseMetaData::getTableCharset()
    */
   void getTableCharset();
+
+  /**
+   * Test for DatabaseMetaData::getTables()
+   */
+  void getTables();
 
 };
 

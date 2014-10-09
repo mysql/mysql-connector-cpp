@@ -2346,5 +2346,51 @@ void connectionmetadata::getTableCharset()
 }
 
 
+void connectionmetadata::getTables()
+{
+  logMsg("connectionmetadata::getTables - MySQL_ConnectionMetaData::getTables()");
+  try
+  {
+	ResultSetMetaData * resmeta;
+	DatabaseMetaData * dbmeta=con->getMetaData();
+	std::list< sql::SQLString > tableTypes;
+
+	stmt.reset(con->createStatement());
+	stmt->execute("DROP TABLE IF EXISTS testTable1");
+	stmt->execute("CREATE TABLE testTable1(id INT)");
+	stmt->execute("DROP VIEW IF EXISTS testView1");
+	stmt->execute("CREATE VIEW testView1 AS SELECT * FROM testTable1");
+
+	/* for tableType = TABLE */
+	tableTypes.clear();
+	tableTypes.push_back(sql::SQLString("TABLE"));
+	res.reset(dbmeta->getTables("", "%", "testTable%", tableTypes));
+	ASSERT(res->next());
+
+	ASSERT_EQUALS(res->getString(3), "testTable1");
+	ASSERT_EQUALS(res->getString(4), "TABLE");
+
+	/* for tableType = VIEW */
+	tableTypes.clear();
+	tableTypes.push_back(sql::SQLString("VIEW"));
+	res.reset(dbmeta->getTables("", "%", "testView%", tableTypes));
+	ASSERT(res->next());
+
+	ASSERT_EQUALS(res->getString(3), "testView1");
+	ASSERT_EQUALS(res->getString(4), "VIEW");
+
+  	stmt->execute("DROP TABLE IF EXISTS testTable1");
+	stmt->execute("DROP VIEW IF EXISTS testView1");
+  }
+  catch (sql::SQLException &e)
+  {
+
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+
 } /* namespace connectionmetadata */
 } /* namespace testsuite */

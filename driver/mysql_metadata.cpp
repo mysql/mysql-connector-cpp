@@ -3974,7 +3974,9 @@ MySQL_ConnectionMetaData::getTables(const sql::SQLString& /* catalog */, const s
 	/* Bind Problems with 49999, check later why */
 	if (use_info_schema && server_version > 49999) {
 		const sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
-							"IF(STRCMP(TABLE_TYPE,'BASE TABLE'), TABLE_TYPE, 'TABLE') AS TABLE_TYPE, TABLE_COMMENT AS REMARKS\n"
+							"IF(STRCMP(TABLE_TYPE,'BASE TABLE'), "
+							"IF(STRCMP(TABLE_TYPE,'SYSTEM VIEW'), TABLE_TYPE, 'VIEW'),"
+							" 'TABLE') AS TABLE_TYPE, TABLE_COMMENT AS REMARKS\n"
 							"FROM INFORMATION_SCHEMA.TABLES\nWHERE TABLE_SCHEMA  LIKE ? AND TABLE_NAME LIKE ?\n"
 							"ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME");
 
@@ -4008,7 +4010,7 @@ MySQL_ConnectionMetaData::getTables(const sql::SQLString& /* catalog */, const s
 		boost::scoped_ptr< sql::ResultSet > rs1(stmt->executeQuery(query1));
 		while (rs1->next()) {
 			sql::SQLString current_schema(rs1->getString(1));
-			sql::SQLString query2("SHOW TABLES FROM `");
+			sql::SQLString query2("SHOW FULL TABLES FROM `");
 			query2.append(current_schema).append("` LIKE '").append(escapedTableNamePattern).append("'");
 
 			boost::scoped_ptr< sql::ResultSet > rs2(stmt->executeQuery(query2));
@@ -4018,7 +4020,7 @@ MySQL_ConnectionMetaData::getTables(const sql::SQLString& /* catalog */, const s
 				for (; it != types.end(); ++it) {
 					/* < 49999 knows only TABLE, no VIEWS */
 					/* TODO: Optimize this everytime checking, put it outside of the loop */
-					if (!it->compare("TABLE")) {
+					if (!it->compare("TABLE") && !(rs2->getString(2)).compare("BASE TABLE")) {
 						MySQL_ArtResultSet::row_t rs_data_row;
 
 						CPP_INFO_FMT("[][%s][%s][TABLE][]", current_schema.c_str(), rs2->getString(1).c_str());
@@ -4026,6 +4028,18 @@ MySQL_ConnectionMetaData::getTables(const sql::SQLString& /* catalog */, const s
 						rs_data_row.push_back(current_schema);		// TABLE_SCHEM
 						rs_data_row.push_back(rs2->getString(1));	// TABLE_NAME
 						rs_data_row.push_back("TABLE");				// TABLE_TYPE
+						rs_data_row.push_back("");					// REMARKS
+
+						rs_data->push_back(rs_data_row);
+						break;
+					} else if (!it->compare(rs2->getString(2)) && server_version > 49999) {
+						MySQL_ArtResultSet::row_t rs_data_row;
+
+						CPP_INFO_FMT("[][%s][%s][TABLE][]", current_schema.c_str(), rs2->getString(1).c_str());
+						rs_data_row.push_back("def");				// TABLE_CAT
+						rs_data_row.push_back(current_schema);		// TABLE_SCHEM
+						rs_data_row.push_back(rs2->getString(1));	// TABLE_NAME
+						rs_data_row.push_back("VIEW");				// TABLE_TYPE
 						rs_data_row.push_back("");					// REMARKS
 
 						rs_data->push_back(rs_data_row);
