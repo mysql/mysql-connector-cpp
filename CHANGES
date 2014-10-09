@@ -22,7 +22,11 @@
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-GA  1.1.4 - 
+GA  1.1.5 -
+- DatabaseMetaData::getProcedures() returns syntax error for connection option
+  metadatauseinfoschema=false (Bug#19505421)
+
+GA  1.1.4 -
 - Both static and dynamic driver libraries are now linked statically against
   libmysql library
 - Cannot Connect error when using legacy authentication. (Bug#16970753/69492)

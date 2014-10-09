@@ -3418,9 +3418,9 @@ MySQL_ConnectionMetaData::getProcedures(const sql::SQLString& /*catalog*/, const
 			sql::SQLString query("SELECT 'def' AS PROCEDURE_CAT, db as PROCEDURE_SCHEM, "
 									"name AS PROCEDURE_NAME, NULL as RESERVERD_1, NULL as RESERVERD_2, "
 									"NULL AS RESERVERD_3, comment as REMARKS, ");
-			query.append("CASE WHEN TYPE=='FUNCTION' THEN ").append(procRetRes).append("\n");
-			query.append("WHEN TYPE='PROCEDURE' THEN").append(procRetNoRes).append("ELSE ").append(procRetUnknown);
-			query.append("\n END AS PROCEDURE_TYPE\nFROM mysql.proc WHERE name LIKE ? AND db <=> ? ORDER BY name");
+			query.append(" CASE WHEN TYPE='FUNCTION' THEN ").append(procRetRes);
+			query.append(" WHEN TYPE='PROCEDURE' THEN ").append(procRetNoRes).append(" ELSE ").append(procRetUnknown);
+			query.append(" END AS PROCEDURE_TYPE FROM mysql.proc WHERE name LIKE ? AND db <=> ? ORDER BY name");
 
 			boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
 			pStmt->setString(1, escapedProcedureNamePattern);
