@@ -25,6 +25,8 @@
 GA  1.1.5 -
 - DatabaseMetaData::getProcedures() returns syntax error for connection option
   metadatauseinfoschema=false (Bug#19505421)
+- DatabaseMetaData::getColumns() returns empty resultset when
+  metadataUseInfoSchema is true and for no schema. (Bug#19147897)
 
 GA  1.1.4 -
 - Both static and dynamic driver libraries are now linked statically against
@@ -41,7 +43,7 @@ GA  1.1.4 -
   fields. (Bug#18803414/72700)
 - Missing collation info in the column metadata methods for a result.
   (Bug#18803345/72698)
-- Added connection option "rsaKey" to specify RSA public key path name 
+- Added connection option "rsaKey" to specify RSA public key path name
   (wl#7972).
 
 - Built against libmysql 5.6.

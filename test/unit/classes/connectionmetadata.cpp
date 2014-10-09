@@ -506,6 +506,41 @@ void connectionmetadata::getColumns()
       FAIL("TODO - see --verbose warnings");
     }
 
+    try {
+      bool input_value=true;
+      bool output_value=false;
+      void * input;
+      void * output;
+
+      stmt->execute("CREATE TABLE test(id INT,val VARCHAR(20))");
+
+      input=(static_cast<bool *> (&input_value));
+      output=(static_cast<bool *> (&output_value));
+
+      con->setClientOption("metadataUseInfoSchema", input);
+      con->getClientOption("metadataUseInfoSchema", output);
+      ASSERT_EQUALS(input_value, output_value);
+
+      dbmeta=con->getMetaData();
+      res.reset(dbmeta->getColumns(con->getCatalog(), "", "test", "%"));
+      ASSERT(res->rowsCount() == 2);
+
+      input_value=false;
+      output_value=true;
+
+      con->setClientOption("metadataUseInfoSchema", input);
+      con->getClientOption("metadataUseInfoSchema", output);
+      ASSERT_EQUALS(input_value, output_value);
+
+      dbmeta=con->getMetaData();
+      res.reset(dbmeta->getColumns(con->getCatalog(), "", "test", "%"));
+      ASSERT(res->rowsCount() == 2);
+    }
+    catch (sql::SQLException &)
+    {
+      FAIL("getColumns() does not work properly for metadataUseInfoSchema");
+    }
+
     stmt->execute("DROP TABLE IF EXISTS test");
     res.reset(dbmeta->getColumns(con->getCatalog(), con->getSchema(), "test", "id"));
     ASSERT(!res->next());

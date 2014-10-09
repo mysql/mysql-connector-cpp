@@ -1809,11 +1809,13 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const sql::SQLString& /*catalog*/,
 
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
+	connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
+
 	/* I_S seems currently (20080220) not to work */
 	if (use_info_schema && server_version > 69999) {
 #if A0
 		sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
-				 		"COLUMN_NAME, NULL AS GRANTOR, GRANTEE, PRIVILEGE_TYPE AS PRIVILEGE, IS_GRANTABLE\n"
+						"COLUMN_NAME, NULL AS GRANTOR, GRANTEE, PRIVILEGE_TYPE AS PRIVILEGE, IS_GRANTABLE\n"
 						"FROM INFORMATION_SCHEMA.COLUMN_PRIVILEGES\n"
 						"WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME=? AND COLUMN_NAME LIKE ?\n"
 						"ORDER BY COLUMN_NAME, PRIVILEGE_TYPE");
@@ -1930,6 +1932,8 @@ MySQL_ConnectionMetaData::getColumns(const sql::SQLString& /*catalog*/, const sq
 	rs_field_data.push_back("SOURCE_DATA_TYPE");
 	rs_field_data.push_back("IS_AUTOINCREMENT");
 
+	connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
+
 	if (use_info_schema && server_version > 50020) {
 		char buf[5];
 		sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, COLUMN_NAME, DATA_TYPE,"
@@ -1977,14 +1981,25 @@ MySQL_ConnectionMetaData::getColumns(const sql::SQLString& /*catalog*/, const sq
 			"NULL AS SCOPE_TABLE,"
 			"NULL AS SOURCE_DATA_TYPE,"
 			"IF (EXTRA LIKE '%auto_increment%','YES','NO') AS IS_AUTOINCREMENT "
-			"FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND COLUMN_NAME LIKE ? "
+			"FROM INFORMATION_SCHEMA.COLUMNS WHERE ");
+		if (schemaPattern.length()) {
+			query.append(" TABLE_SCHEMA LIKE ? ");
+		} else {
+			query.append(" TABLE_SCHEMA = DATABASE() ");
+		}
+		query.append("AND TABLE_NAME LIKE ? AND COLUMN_NAME LIKE ? "
 			"ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION");
 
 		boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
 
-		pStmt->setString(1, escapedSchemaPattern);
-		pStmt->setString(2, escapedTableNamePattern);
-		pStmt->setString(3, escapedColumnNamePattern);
+		if (schemaPattern.length()) {
+			pStmt->setString(1, escapedSchemaPattern);
+			pStmt->setString(2, escapedTableNamePattern);
+			pStmt->setString(3, escapedColumnNamePattern);
+		} else {
+			pStmt->setString(1, escapedTableNamePattern);
+			pStmt->setString(2, escapedColumnNamePattern);
+		}
 
 		boost::scoped_ptr< sql::ResultSet > rs(pStmt->executeQuery());
 
@@ -2137,6 +2152,8 @@ MySQL_ConnectionMetaData::getCrossReference(const sql::SQLString& primaryCatalog
 	rs_field_data.push_back("FK_NAME");
 	rs_field_data.push_back("PK_NAME");
 	rs_field_data.push_back("DEFERRABILITY");
+
+	connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
 
 	/* Not sure which version, let it not be 5.1.0, just something above which is anyway not used anymore */
 	if (use_info_schema && server_version >= 50110) {
@@ -2372,6 +2389,8 @@ MySQL_ConnectionMetaData::getExportedKeys(const sql::SQLString& catalog, const s
 	rs_field_data.push_back("FK_NAME");
 	rs_field_data.push_back("PK_NAME");
 	rs_field_data.push_back("DEFERRABILITY");
+
+	connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
 
 	/* Not sure which version, let it not be 5.1.0, just something above which is anyway not used anymore */
 	if (use_info_schema && server_version >= 50110) {
@@ -2650,6 +2669,8 @@ MySQL_ConnectionMetaData::getImportedKeys(const sql::SQLString& catalog, const s
 	rs_field_data.push_back("PK_NAME");
 	rs_field_data.push_back("DEFERRABILITY");
 
+	connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
+
 	if (use_info_schema && server_version >= 50116) {
 		/* This just doesn't work */
 		/* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
@@ -2833,6 +2854,8 @@ MySQL_ConnectionMetaData::getIndexInfo(const sql::SQLString& /*catalog*/, const 
 	char indexOther[5];
 
 	snprintf(indexOther, sizeof(indexOther), "%d", DatabaseMetaData::tableIndexOther);
+
+	connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
 
 	if (use_info_schema && server_version > 50020) {
 		char indexHash[5];
@@ -3167,6 +3190,8 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const sql::SQLString& catalog, const sq
 
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
+	connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
+
 	/* Bind Problems with 49999, check later why */
 	if (use_info_schema && server_version > 49999) {
 		const sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, "
@@ -3245,6 +3270,8 @@ MySQL_ConnectionMetaData::getUniqueNonNullableKeys(const sql::SQLString& catalog
 
 
 	std::auto_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+
+	connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
 
 	/* Bind Problems with 49999, check later why */
 	if (use_info_schema && server_version > 50002) {
@@ -3379,6 +3406,8 @@ MySQL_ConnectionMetaData::getProcedures(const sql::SQLString& /*catalog*/, const
 	char procRetUnknown[5];
 	my_i_to_a(procRetUnknown, sizeof(procRetUnknown) - 1, procedureResultUnknown);
 
+	connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
+
 	if (use_info_schema && server_version > 49999) {
 		sql::SQLString query("SELECT ROUTINE_CATALOG AS PROCEDURE_CAT, ROUTINE_SCHEMA AS PROCEDURE_SCHEM, "
 						"ROUTINE_NAME AS PROCEDURE_NAME, NULL AS RESERVED_1, NULL AS RESERVERD_2, NULL as RESERVED_3,"
@@ -3511,6 +3540,7 @@ MySQL_ConnectionMetaData::getSchemas()
 	std::list<sql::SQLString> rs_field_data;
 	rs_field_data.push_back("TABLE_SCHEM");
 	rs_field_data.push_back("TABLE_CATALOG");
+	connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
 
 	boost::scoped_ptr< sql::ResultSet > rs(
 		stmt->executeQuery(use_info_schema && server_version > 49999?
@@ -3938,6 +3968,8 @@ MySQL_ConnectionMetaData::getTables(const sql::SQLString& /* catalog */, const s
 	rs_field_data.push_back("TABLE_NAME");
 	rs_field_data.push_back("TABLE_TYPE");
 	rs_field_data.push_back("REMARKS");
+
+	connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
 
 	/* Bind Problems with 49999, check later why */
 	if (use_info_schema && server_version > 49999) {

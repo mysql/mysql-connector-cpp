@@ -97,9 +97,9 @@ void unit_fixture::init()
   columns.push_back(columndefinition("BIGINT", "BIGINT", sql::DataType::BIGINT, "-9223372036854775808", true, 19, 0, true, "", 0, "NO", true, "-9223372036854775808"));
 
   columns.push_back(columndefinition("BIGINT", "BIGINT NOT NULL", sql::DataType::BIGINT, "-9223372036854775808", true, 19, 0, false, "", 0, "NO", true));
-  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT UNSIGNED", sql::DataType::BIGINT, "18446744073709551615", false, 19, 0, true, "", 0, "NO", false, "18446744073709551615"));
-  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT UNSIGNED", sql::DataType::BIGINT, "18446744073709551615", false, 19, 0, true, "", 0, "NO", false));
-  columns.push_back(columndefinition("BIGINT UNSIGNED ZEROFILL", "BIGINT(4) ZEROFILL DEFAULT 10101", sql::DataType::BIGINT, "2", false, 19, 0, true, "10101", 0, "NO", false));
+  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT UNSIGNED", sql::DataType::BIGINT, "18446744073709551615", false, 20, 0, true, "", 0, "NO", false, "18446744073709551615"));
+  columns.push_back(columndefinition("BIGINT UNSIGNED", "BIGINT UNSIGNED", sql::DataType::BIGINT, "18446744073709551615", false, 20, 0, true, "", 0, "NO", false));
+  columns.push_back(columndefinition("BIGINT UNSIGNED ZEROFILL", "BIGINT(4) ZEROFILL DEFAULT 10101", sql::DataType::BIGINT, "2", false, 20, 0, true, "10101", 0, "NO", false));
   columns.push_back(columndefinition("FLOAT", "FLOAT", sql::DataType::REAL, "-1.01", true, 12, 0, true, "", 0, "NO", true));
   columns.push_back(columndefinition("FLOAT", "FLOAT NOT NULL", sql::DataType::REAL, "-1.01", true, 12, 0, false, "", 0, "NO", true));
   columns.push_back(columndefinition("FLOAT UNSIGNED", "FLOAT UNSIGNED", sql::DataType::REAL, "1.01", false, 12, 0, true, "", 0, "NO", false));
@@ -132,7 +132,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("YEAR", "YEAR NOT NULL", sql::DataType::YEAR, "1902", false, 4, 0, false, "", 0, "NO", false));
   columns.push_back(columndefinition("YEAR", "YEAR(4)", sql::DataType::YEAR, "2009", false, 4, 0, true, "", 0, "NO", false, "2009"));
 
-  columns.push_back(columndefinition("YEAR", "YEAR(2)", sql::DataType::YEAR, "1", false, 2, 0, true, "", 0, "NO", false));
+  columns.push_back(columndefinition("YEAR", "YEAR(2)", sql::DataType::YEAR, "1", false, 4, 0, true, "", 0, "NO", false));
   columns.push_back(columndefinition("YEAR", "YEAR(3) DEFAULT '2009'", sql::DataType::YEAR, "1", false, 4, 0, true, "2009", 0, "NO", false));
 
   columns.push_back(columndefinition("CHAR", "CHAR", sql::DataType::CHAR, "a", true, 1, 0, true, "", 0, "NO", false, "a"));
