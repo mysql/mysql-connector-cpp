@@ -160,7 +160,7 @@ MySQL_ResultSetMetaData::getColumnName(unsigned int columnIndex)
 	checkValid();
 	checkColumnIndex(columnIndex);
 
-	return getFieldMeta(columnIndex)->name;
+	return getFieldMeta(columnIndex)->org_name;
 }
 /* }}} */
 

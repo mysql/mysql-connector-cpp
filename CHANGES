@@ -27,6 +27,8 @@ GA  1.1.5 -
   metadatauseinfoschema=false (Bug#19505421)
 - DatabaseMetaData::getColumns() returns empty resultset when
   metadataUseInfoSchema is true and for no schema. (Bug#19147897)
+- ResultSetMetaData::getColumnName() returns display name instead of actual
+  column name. (Bug#19244736)
 
 GA  1.1.4 -
 - Both static and dynamic driver libraries are now linked statically against

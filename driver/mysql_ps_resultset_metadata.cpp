@@ -142,7 +142,7 @@ MySQL_PreparedResultSetMetaData::getColumnName(unsigned int columnIndex)
 	CPP_ENTER("MySQL_PreparedResultSetMetaData::getColumnName");
 	CPP_INFO_FMT("this=%p", this);
 	checkColumnIndex(columnIndex);
-	return getFieldMeta(columnIndex)->name;
+	return getFieldMeta(columnIndex)->org_name;
 }
 /* }}} */
 

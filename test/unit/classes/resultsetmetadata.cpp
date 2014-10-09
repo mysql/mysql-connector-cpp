@@ -236,13 +236,18 @@ void resultsetmetadata::getColumnNameAndLabel()
   {
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
     logMsg("... Statement");
-    runStandardQuery();
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS getColumnNameAndLabel");
+    stmt->execute("CREATE TABLE getColumnNameAndLabel(col1 INT, col2 VARCHAR(10))");
+    res.reset(stmt->executeQuery("SELECT col1 AS intColumn, col2 AS charColumn FROM getColumnNameAndLabel"));
     doGetColumnNameAndLabel(false);
 
     logMsg("... PreparedStatement");
-    runStandardPSQuery();
+    pstmt.reset(con->prepareStatement("SELECT col1 AS intColumn, col2 AS charColumn FROM getColumnNameAndLabel"));
+    res.reset(pstmt->executeQuery());
     doGetColumnNameAndLabel(true);
 
+    stmt->execute("DROP TABLE IF EXISTS getColumnNameAndLabel");
   }
   catch (sql::SQLException &e)
   {
@@ -255,17 +260,11 @@ void resultsetmetadata::getColumnNameAndLabel()
 void resultsetmetadata::doGetColumnNameAndLabel(bool is_ps)
 {
   ResultSetMetaData * meta=res->getMetaData();
-  ASSERT_EQUALS("a", meta->getColumnName(1));
-  ASSERT_EQUALS(meta->getColumnLabel(1), meta->getColumnName(1));
-  /* NOTE: " " -> "" */
-  ASSERT_EQUALS("", meta->getColumnName(2));
-  ASSERT_EQUALS(meta->getColumnLabel(2), meta->getColumnName(2));
-  ASSERT_EQUALS("world", meta->getColumnName(3));
-  ASSERT_EQUALS(meta->getColumnLabel(3), meta->getColumnName(3));
-  ASSERT_EQUALS("!", meta->getColumnName(4));
-  ASSERT_EQUALS(meta->getColumnLabel(4), meta->getColumnName(4));
-  ASSERT_EQUALS("z", meta->getColumnName(5));
-  ASSERT_EQUALS(meta->getColumnLabel(5), meta->getColumnName(5));
+  ASSERT_EQUALS("col1", meta->getColumnName(1));
+  ASSERT_EQUALS("intColumn", meta->getColumnLabel(1));
+
+  ASSERT_EQUALS("col2", meta->getColumnName(2));
+  ASSERT_EQUALS("charColumn", meta->getColumnLabel(2));
 
   try
   {
