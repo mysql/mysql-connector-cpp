@@ -285,6 +285,20 @@ void bugs::expired_pwd()
   sql::ConnectOptionsMap opts;
 
   opts["userName"]=	sql::SQLString("ccpp_expired_pwd");
+  opts["password"]=	sql::SQLString("");
+
+  try
+  {
+	if (getConnection(&opts))
+	{
+	  SKIP("The expired password does not work with anonymous-user accounts.");
+	}
+  }
+  catch (sql::SQLException &e)
+  {
+	/* If no anonymous user present then continue */
+  }
+
   opts["password"]=	sql::SQLString("foo");
 
   testsuite::Connection c2;
@@ -296,7 +310,7 @@ void bugs::expired_pwd()
   }
   catch (sql::SQLException &e)
   {
-    ASSERT_EQUALS(1820, e.getErrorCode()/*ER_MUST_CHANGE_PASSWORD_LOGIN*/);
+    ASSERT_EQUALS(1862, e.getErrorCode()/*ER_MUST_CHANGE_PASSWORD_LOGIN*/);
   }
 
   /* ... Now with it */

@@ -327,7 +327,7 @@ void connection::invalidCredentials()
       myuser.append(user);
       try
       {
-        con.reset(driver->connect(url, myuser, passwd));
+        con.reset(driver->connect(url, myuser, myuser));
         FAIL("... using invalid user should have failed");
       }
       catch (sql::SQLException &)
@@ -336,7 +336,7 @@ void connection::invalidCredentials()
         con.reset(driver->connect(url, user, passwd));
         try
         {
-          con.reset(driver->connect(url, myuser, passwd));
+          con.reset(driver->connect(url, myuser, myuser));
           FAIL("Should have caused exception");
         }
         catch (sql::SQLException &)
