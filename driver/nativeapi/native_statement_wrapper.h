@@ -97,6 +97,8 @@ public:
 
 	virtual int store_result() = 0;
 
+	virtual int stmt_next_result() = 0;
+
 	/* some enhancements comparing to mysql api */
 	virtual unsigned int warning_count() = 0;
 };

@@ -592,6 +592,19 @@ LibmysqlStaticProxy::stmt_store_result(MYSQL_STMT * stmt)
 /* }}} */
 
 
+/* {{{ LibmysqlStaticProxy::stmt_next_result() */
+int
+LibmysqlStaticProxy::stmt_next_result(MYSQL_STMT * stmt)
+{
+#if MYSQL_VERSION_ID >= 50503
+	return ::mysql_stmt_next_result(stmt);
+#else
+	throw ::sql::MethodNotImplementedException("::mysql_stmt_next_result()");
+#endif
+}
+/* }}} */
+
+
 /* {{{ LibmysqlStaticProxy::thread_end() */
 void
 LibmysqlStaticProxy::thread_end()

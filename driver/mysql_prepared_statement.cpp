@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1016,9 +1016,6 @@ MySQL_Prepared_Statement::getResultSet()
 	CPP_ENTER("MySQL_Prepared_Statement::getResultSet");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	if (proxy->more_results() && proxy->next_result()) {
-		sql::mysql::util::throwSQLException(*proxy.get());
-	}
 
 	my_bool	bool_tmp = 1;
 	proxy->attr_set(STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
@@ -1115,9 +1112,25 @@ MySQL_Prepared_Statement::getMaxRows()
 bool
 MySQL_Prepared_Statement::getMoreResults()
 {
+	CPP_ENTER("MySQL_Prepared_Statement::getMoreResults");
+	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	throw MethodNotImplementedException("MySQL_Prepared_Statement::getMoreResults");
-	return false; // fool compilers
+
+	if (proxy->more_results()) {
+
+		int next_result = proxy->stmt_next_result();
+
+		if (next_result == 0) {
+			return proxy->field_count() != 0;
+		} else if (next_result == -1) {
+			throw sql::SQLException("Impossible! more_results() said true, next_result says no more results");
+		} else {
+			CPP_ERR_FMT("Error during getMoreResults : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
+			sql::mysql::util::throwSQLException(*proxy.get());
+		}
+	}
+	return false;
+
 }
 /* }}} */
 

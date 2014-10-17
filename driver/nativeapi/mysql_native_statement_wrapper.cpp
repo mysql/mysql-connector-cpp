@@ -237,6 +237,15 @@ MySQL_NativeStatementWrapper::store_result()
 /* }}} */
 
 
+/* {{{ MySQL_NativeStatementWrapper::next_result() */
+int
+MySQL_NativeStatementWrapper::stmt_next_result()
+{
+	return api->stmt_next_result(stmt);
+}
+/* }}} */
+
+
 /* {{{ MySQL_NativeStatementWrapper::warning_count() */
 unsigned int
 MySQL_NativeStatementWrapper::warning_count()

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -392,7 +392,7 @@ MySQL_Statement::getMaxRows()
 bool
 MySQL_Statement::getMoreResults()
 {
-	CPP_ENTER("MySQL_Statement::getMaxRows");
+	CPP_ENTER("MySQL_Statement::getMoreResults");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 	last_update_count = UL64(~0);

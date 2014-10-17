@@ -764,6 +764,20 @@ LibmysqlDynamicProxy::stmt_store_result(MYSQL_STMT * stmt)
 /* }}} */
 
 
+/* {{{ LibmysqlDynamicProxy::stmt_next_result() */
+int
+LibmysqlDynamicProxy::stmt_next_result(MYSQL_STMT * stmt)
+{
+	ptr2mysql_stmt_next_result ptr2_stmt_next_result = symbol_safe_cast<ptr2mysql_stmt_next_result>(GetProcAddr("mysql_stmt_next_result"));
+	if (ptr2_stmt_next_result != NULL) {
+		return (*ptr2_stmt_next_result)(stmt);
+	} else {
+		throw ::sql::MethodNotImplementedException("::mysql_stmt_next_result()");
+	}
+}
+/* }}} */
+
+
 /* {{{ LibmysqlDynamicProxy::thread_end() */
 void
 LibmysqlDynamicProxy::thread_end()

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -59,6 +59,8 @@ public:
 	virtual ResultSetMetaData * getMetaData() = 0;
 
 	virtual ParameterMetaData * getParameterMetaData() = 0;
+
+	virtual bool getMoreResults() = 0;
 
 	virtual void setBigInt(unsigned int parameterIndex, const sql::SQLString& value) = 0;
 

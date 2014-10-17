@@ -99,6 +99,8 @@ public:
 
 	int store_result();
 
+	int stmt_next_result();
+
 	unsigned int warning_count();
 };
 

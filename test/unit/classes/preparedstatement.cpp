@@ -1169,11 +1169,6 @@ void preparedstatement::callSPMultiRes()
 {
   logMsg("preparedstatement::callSPMultiRes() - MySQL_PreparedStatement::*()");
 
-  int mysql_version=getMySQLVersion(con);
-  if (mysql_version < 60008)
-    SKIP("http://bugs.mysql.com/bug.php?id=44521 - Server crash");
-
-
   try
   {
     std::string sp_code("CREATE PROCEDURE p() BEGIN SELECT 1; SELECT 2; SELECT 3; END;");

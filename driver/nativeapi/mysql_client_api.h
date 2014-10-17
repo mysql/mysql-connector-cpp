@@ -154,6 +154,8 @@ typedef const char * (STDCALL *ptr2mysql_stmt_sqlstate)(MYSQL_STMT *);
 
 typedef int (STDCALL *ptr2mysql_stmt_store_result)(MYSQL_STMT *);
 
+typedef int (STDCALL *ptr2mysql_stmt_next_result)(MYSQL_STMT *);
+
 typedef void (STDCALL *ptr2mysql_thread_init)();
 
 typedef void (STDCALL *ptr2mysql_thread_end)();
@@ -252,7 +254,7 @@ public:
 
 	virtual MYSQL_RES * use_result(MYSQL *) = 0;
 
-  virtual unsigned int warning_count(MYSQL *) = 0;
+	virtual unsigned int warning_count(MYSQL *) = 0;
 
 	/* Methods - wrappers of prepared statement stmt_* functions */
 	virtual my_ulonglong  stmt_affected_rows (MYSQL_STMT *) = 0;
@@ -292,6 +294,8 @@ public:
 	virtual const char *  stmt_sqlstate(MYSQL_STMT *) = 0;
 
 	virtual int stmt_store_result(MYSQL_STMT *) = 0;
+
+	virtual int stmt_next_result(MYSQL_STMT *) = 0;
 
 	virtual void thread_end() = 0;
 
