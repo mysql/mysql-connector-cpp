@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -38,6 +38,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "mysql_resultset_metadata.h"
 #include "mysql_statement.h"
 
+#include "nativeapi/native_connection_wrapper.h"
 #include "nativeapi/native_resultset_wrapper.h"
 
 #include "mysql_debug.h"
@@ -50,11 +51,11 @@ namespace mysql
 
 
 /* {{{ MySQL_ResultSet::MySQL_ResultSet() -I- */
-MySQL_ResultSet::MySQL_ResultSet(boost::shared_ptr< NativeAPI::NativeResultsetWrapper > res, sql::ResultSet::enum_type rset_type,
+MySQL_ResultSet::MySQL_ResultSet(boost::shared_ptr< NativeAPI::NativeResultsetWrapper > res, boost::shared_ptr< NativeAPI::NativeConnectionWrapper > _proxy, sql::ResultSet::enum_type rset_type,
 			MySQL_Statement * par, boost::shared_ptr< MySQL_DebugLogger > & l
 		)
-	: row(NULL), result(res), row_position(0), was_null(false), parent(par),
-	  logger(l), resultset_type(rset_type)
+	: row(NULL), result(res), proxy(_proxy), row_position(0), was_null(false),
+	  parent(par), logger(l), resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_ResultSet::MySQL_ResultSet");
 	num_rows = result->num_rows();
@@ -870,11 +871,27 @@ MySQL_ResultSet::next()
 			afterLast();
 		} else if (row_position < num_rows + 1) {
 			row = result->fetch_row();
+			if (row == NULL && (proxy->errNo() == 2013 ||
+								proxy->errNo() == 2000)) {
+				CPP_ERR_FMT("Error fetching next row %d:(%s) %s",
+							proxy->errNo(), proxy->sqlstate().c_str(),
+							proxy->error().c_str());
+				sql::SQLException e(proxy->error(), proxy->sqlstate(), proxy->errNo());
+				throw e;
+			}
 			++row_position;
 			ret = (row != NULL);
 		}
 	} else {
 		row = result->fetch_row();
+		if (row == NULL && (proxy->errNo() == 2013 ||
+							proxy->errNo() == 2000)) {
+			CPP_ERR_FMT("Error fetching next row %d:(%s) %s",
+						proxy->errNo(), proxy->sqlstate().c_str(),
+						proxy->error().c_str());
+			sql::SQLException e(proxy->error(), proxy->sqlstate(), proxy->errNo());
+			throw e;
+		}
 		++row_position;
 		ret = (row != NULL);
 	}

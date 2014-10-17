@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1230,6 +1230,13 @@ MySQL_Prepared_ResultSet::next()
 			if (result == MYSQL_NO_DATA) {
 				ret = false;
 			}
+			if (result == 1) {
+				CPP_ERR_FMT("Error fetching next row %d:(%s) %s",
+							proxy->errNo(), proxy->sqlstate().c_str(),
+							proxy->error().c_str());
+				sql::SQLException e(proxy->error(), proxy->sqlstate(), proxy->errNo());
+				throw e;
+			}
 			++row_position;
 		}
 		CPP_INFO_FMT("new_row_position=%llu ret=%d", row_position, ret);
@@ -1240,6 +1247,13 @@ MySQL_Prepared_ResultSet::next()
 		}
 		if (result == MYSQL_NO_DATA) {
 			ret = false;
+		}
+		if (result == 1) {
+			CPP_ERR_FMT("Error fetching next row %d:(%s) %s",
+						proxy->errNo(), proxy->sqlstate().c_str(),
+						proxy->error().c_str());
+			sql::SQLException e(proxy->error(), proxy->sqlstate(), proxy->errNo());
+			throw e;
 		}
 		++row_position;
 	}

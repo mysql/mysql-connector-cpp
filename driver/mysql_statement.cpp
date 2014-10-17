@@ -164,6 +164,7 @@ MySQL_Statement::executeQuery(const sql::SQLString& sql)
 	sql::ResultSet *tmp =
 				new MySQL_ResultSet(
 						get_resultset(),
+						proxy,
 						resultset_type==sql::ResultSet::TYPE_FORWARD_ONLY ? resultset_type : sql::ResultSet::TYPE_SCROLL_INSENSITIVE,
 						this,
 						logger
@@ -305,7 +306,7 @@ MySQL_Statement::getResultSet()
 		return NULL;
 	}
 
-	sql::ResultSet * ret = new MySQL_ResultSet(result, tmp_type, this, logger);
+	sql::ResultSet * ret = new MySQL_ResultSet(result, proxy, tmp_type, this, logger);
 
 	CPP_INFO_FMT("res=%p", ret);
 	return ret;

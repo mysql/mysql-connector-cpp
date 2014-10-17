@@ -34,6 +34,8 @@ GA  1.1.5 -
 - Version macros missing from installed headers file. (Bug#19553971)
 - Getting multiple resultset from procedure using prepared statement gives
   error (Bug#19147677).
+- Connection losses are not detected while fetching resultset using next()
+  (Bug#18886278/69031).
 
 GA  1.1.4 -
 - Both static and dynamic driver libraries are now linked statically against

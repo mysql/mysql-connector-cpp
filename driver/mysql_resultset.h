@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -50,6 +50,7 @@ class MySQL_ResultSet : public sql::ResultSet
 {
 	MYSQL_ROW				row;
 	boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result;
+	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy;
 	unsigned int			num_fields;
 	uint64_t				num_rows;
 	uint64_t				row_position;
@@ -78,7 +79,7 @@ protected:
 	MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const;
 
 public:
-	MySQL_ResultSet(boost::shared_ptr< NativeAPI::NativeResultsetWrapper > res, sql::ResultSet::enum_type rset_type, MySQL_Statement * par,
+	MySQL_ResultSet(boost::shared_ptr< NativeAPI::NativeResultsetWrapper > res, boost::shared_ptr< NativeAPI::NativeConnectionWrapper > _proxy, sql::ResultSet::enum_type rset_type, MySQL_Statement * par,
 					boost::shared_ptr< MySQL_DebugLogger > & l);
 
 	virtual ~MySQL_ResultSet();
