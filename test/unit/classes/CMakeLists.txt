@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/C++ is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -253,3 +253,25 @@ SET_TARGET_PROPERTIES(test_uri PROPERTIES
 TARGET_LINK_LIBRARIES(test_uri ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 MESSAGE(STATUS "Configuring unit tests - uri")
+
+
+SET(test_variant_sources
+	../unit_fixture.cpp
+	../main.cpp
+	variant.cpp)
+
+IF(WIN32)
+	SET(test_variant_sources
+		${test_variant_sources}
+		../unit_fixture.h
+		variant.h)
+ENDIF(WIN32)
+
+ADD_EXECUTABLE(test_variant ${test_variant_sources})
+SET_TARGET_PROPERTIES(test_variant PROPERTIES
+					OUTPUT_NAME "variant"
+					LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
+					COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV} ${MYSQL_CXXFLAGS}")
+TARGET_LINK_LIBRARIES(test_variant ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
+MESSAGE(STATUS "Configuring unit tests - variant")

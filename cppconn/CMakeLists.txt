@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/C++ is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -71,6 +71,7 @@ SET(MYSQLCPPCONN_INSTALL_HEADERS
 		statement.h
 		sqlstring.h
 		warning.h
-		version_info.h)
+		version_info.h
+		variant.h)
 
 INSTALL(FILES ${MYSQLCPPCONN_INSTALL_HEADERS} DESTINATION include/cppconn)

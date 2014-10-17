@@ -167,6 +167,7 @@ IF(WIN32)
 		../cppconn/exception.h
 		../cppconn/driver.h
 		../cppconn/datatype.h
+		../cppconn/variant.h
 		../cppconn/connection.h
 		../cppconn/config.h
 		../cppconn/build_config.h

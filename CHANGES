@@ -29,13 +29,14 @@ GA  1.1.5 -
   metadataUseInfoSchema is true and for no schema. (Bug#19147897)
 - ResultSetMetaData::getColumnName() returns display name instead of actual
   column name. (Bug#19244736)
-- ResultSetMetaData::getTables() not returning result for VIEW when 
+- ResultSetMetaData::getTables() not returning result for VIEW when
   metadatauseinfoschema=false. (Bug#19505348)
 - Version macros missing from installed headers file. (Bug#19553971)
 - Getting multiple resultset from procedure using prepared statement gives
   error (Bug#19147677).
 - Connection losses are not detected while fetching resultset using next()
   (Bug#18886278/69031).
+- Remove boost variant from API (wl#7030)
 
 GA  1.1.4 -
 - Both static and dynamic driver libraries are now linked statically against
@@ -95,14 +96,14 @@ GA  1.1.1 - 2012-08-06
 
 - Added new method ResultSetMetaData::isNumeric() and implemented it in
   all classes that subclass from it. (Andrey)
-  
+
 - Fixed the bug causing compilation errors in Microsoft Visual Studio 2010 if
   stdint.h was included. See http://bugs.mysql.com/bug.php?id=60307
 
 - Fixed bug making statement that did not raise any warning to return
   warnings from previously executed statement.
 
-- Fixed stores(Lower|Mixed)Case(Quoted)Identifiers methods. 
+- Fixed stores(Lower|Mixed)Case(Quoted)Identifiers methods.
 
 - Built against libmysql 5.5.27 enabling support of authentification plugins
   and IPv6.

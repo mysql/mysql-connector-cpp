@@ -209,11 +209,19 @@ static bool read_connection_flag(ConnectOptionsMap::const_iterator &cit, int &fl
 {
 	const bool * value;
 
-	for (int i = 0; i < sizeof(flagsOptions)/sizeof(String2IntMap); ++i) {
+	for (size_t i = 0; i < sizeof(flagsOptions)/sizeof(String2IntMap); ++i) {
 
 		if (!cit->first.compare(flagsOptions[i].key)) {
 
-			if (!(value = boost::get<bool>(&cit->second))) {
+			try {
+				value = (cit->second).get< bool >();
+			} catch (sql::InvalidArgumentException& e) {
+				std::ostringstream msg;
+				msg << "Wrong type passed for " << flagsOptions[i].key <<
+						" expected bool";
+				throw sql::InvalidArgumentException(msg.str());
+			}
+			if (!value) {
 				sql::SQLString err("No bool value passed for ");
 				err.append(flagsOptions[i].key);
 				throw sql::InvalidArgumentException(err);
@@ -229,21 +237,21 @@ static bool read_connection_flag(ConnectOptionsMap::const_iterator &cit, int &fl
 /* }}} */
 
 /* Array for mapping of boolean connection options to mysql_options call */
-static const String2IntMap booleanOptions[]= 
+static const String2IntMap booleanOptions[]=
 	{
 		{"OPT_REPORT_DATA_TRUNCATION",	MYSQL_REPORT_DATA_TRUNCATION},
 		{"OPT_ENABLE_CLEARTEXT_PLUGIN",	MYSQL_ENABLE_CLEARTEXT_PLUGIN},
 		{"sslVerify",					MYSQL_OPT_SSL_VERIFY_SERVER_CERT}
 	};
 /* Array for mapping of integer connection options to mysql_options call */
-static const String2IntMap intOptions[]= 
+static const String2IntMap intOptions[]=
 	{
 		{"OPT_CONNECT_TIMEOUT",	MYSQL_OPT_CONNECT_TIMEOUT},
 		{"OPT_READ_TIMEOUT",	MYSQL_OPT_READ_TIMEOUT},
 		{"OPT_WRITE_TIMEOUT",	MYSQL_OPT_WRITE_TIMEOUT}
 	};
 /* Array for mapping of string connection options to mysql_options call */
-static const String2IntMap stringOptions[]= 
+static const String2IntMap stringOptions[]=
 	{
 		{"preInit",		MYSQL_INIT_COMMAND},
 		{"sslCRL",		MYSQL_OPT_SSL_CRL},
@@ -262,12 +270,21 @@ bool process_connection_option(ConnectOptionsMap::const_iterator &option,
 	for (unsigned int i = 0; i < map_size; ++i) {
 
 		if (!option->first.compare(options_map[i].key)) {
-
-			if (!(value = boost::get<T>(&option->second))) {
-				sql::SQLString err("Option ");
-				err.append(option->first).append(" is not of expected type"); 
-				throw sql::InvalidArgumentException(err); 
+			try {
+				value = (option->second).get<T>();
+			} catch (sql::InvalidArgumentException& e) {
+				std::ostringstream msg;
+				msg << "Wrong type passed for " << options_map[i].key <<
+						" expected " << typeid(value).name();
+				throw sql::InvalidArgumentException(msg.str());
 			}
+
+			if (!value) {
+				sql::SQLString err("Option ");
+				err.append(option->first).append(" is not of expected type");
+				throw sql::InvalidArgumentException(err);
+			}
+
 			try {
 				proxy->options(static_cast<sql::mysql::MySQL_Connection_Options>(options_map[i].value),
 							*value);
@@ -360,9 +377,16 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	sql::ConnectOptionsMap::const_iterator it = properties.find("hostName");
 
 	if (it != properties.end())	{
-		if ((p_s = boost::get< sql::SQLString >(&it->second))) {
-            /* Parsing uri prior to processing all parameters, so indivudually
-               specified parameters precede over those in the uri */
+		try {
+			p_s = (it->second).get< sql::SQLString >();
+		} catch (sql::InvalidArgumentException& e) {
+			throw sql::InvalidArgumentException("Wrong type passed for userName expected sql::SQLString");
+		}
+		if (p_s) {
+			/*
+			  Parsing uri prior to processing all parameters, so indivudually
+			  specified parameters precede over those in the uri
+			*/
 			parseUri(*p_s, uri);
 		} else {
 			throw sql::InvalidArgumentException("No string value passed for hostName");
@@ -373,84 +397,149 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
 	for (it = properties.begin(); it != properties.end(); ++it) {
 		if (!it->first.compare("userName")) {
-			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
+			try {
+				p_s = (it->second).get< sql::SQLString >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for userName expected sql::SQLString");
+			}
+			if (p_s) {
 				userName = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for userName");
 			}
 		} else if (!it->first.compare("password")) {
-			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
+			try {
+				p_s = (it->second).get< sql::SQLString >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for password expected sql::SQLString");
+			}
+			if (p_s) {
 				password = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for password");
 			}
 		} else if (!it->first.compare("port")) {
-			if ((p_i = boost::get< int >(&it->second))) {
+			try {
+				p_i = (it->second).get< int >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for port expected int");
+			}
+			if (p_i) {
 				uri.setPort(static_cast<unsigned int>(*p_i));
 			} else {
 				throw sql::InvalidArgumentException("No long long value passed for port");
 			}
 		} else if (!it->first.compare("socket")) {
-			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
+			try {
+				p_s = (it->second).get< sql::SQLString >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for socket expected sql::SQLString");
+			}
+			if (p_s) {
 				uri.setSocket(*p_s);
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for socket");
 			}
 		} else if (!it->first.compare("pipe")) {
-			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
+			try {
+				p_s = (it->second).get< sql::SQLString >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for pipe expected sql::SQLString");
+			}
+			if (p_s) {
 				uri.setPipe(*p_s);
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for pipe");
 			}
 		} else if (!it->first.compare("schema")) {
-			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
+			try {
+				p_s = (it->second).get< sql::SQLString >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for schema expected sql::SQLString");
+			}
+			if (p_s) {
 				uri.setSchema(*p_s);
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for schema");
 			}
 		} else if (!it->first.compare("characterSetResults")) {
-			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
+			try {
+				p_s = (it->second).get< sql::SQLString >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for characterSetResults expected sql::SQLString");
+			}
+			if (p_s) {
 				characterSetResults = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for characterSetResults");
 			}
 		} else if (!it->first.compare("sslKey")) {
-			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
+			try {
+				p_s = (it->second).get< sql::SQLString >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for sslKey expected sql::SQLString");
+			}
+			if (p_s) {
 				sslKey = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for sslKey");
 			}
 			ssl_used = true;
 		} else if (!it->first.compare("sslCert")) {
-			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
+			try {
+				p_s = (it->second).get< sql::SQLString >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for sslCert expected sql::SQLString");
+			}
+			if (p_s) {
 				sslCert = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for sslCert");
 			}
 			ssl_used = true;
 		} else if (!it->first.compare("sslCA")) {
-			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
+			try {
+				p_s = (it->second).get< sql::SQLString >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for sslCA expected sql::SQLString");
+			}
+			if (p_s) {
 				sslCA = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for sslCA");
 			}
 			ssl_used = true;
 		} else if (!it->first.compare("sslCAPath")) {
-			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
+			try {
+				p_s = (it->second).get< sql::SQLString >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for sslCAPath expected sql::SQLString");
+			}
+			if (p_s) {
 				sslCAPath = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for sslCAPath");
 			}
 			ssl_used = true;
 		} else if (!it->first.compare("sslCipher")) {
-			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
+			try {
+				p_s = (it->second).get< sql::SQLString >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for sslCipher expected sql::SQLString");
+			}
+			if (p_s) {
 				sslCipher = *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for sslCipher");
 			}
 			ssl_used = true;
 		} else if (!it->first.compare("defaultStatementResultType")) {
-			if (!(p_i = boost::get< int >(&it->second))) {
+			try {
+				p_i = (it->second).get< int >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for defaultStatementResultType expected sql::SQLString");
+			}
+			if (!p_i) {
 				throw sql::InvalidArgumentException("No long long value passed for defaultStatementResultType");
 			}
 			do {
@@ -470,7 +559,12 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 		/* The connector is not ready for unbuffered as we need to refetch */
 		} else if (!it->first.compare("defaultPreparedStatementResultType")) {
 #if WE_SUPPORT_USE_RESULT_WITH_PS
-			if (!(p_i = boost::get< int >(&it->second))) {
+			try {
+				p_i = (it->second).get< int >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for defaultPreparedStatementResultType expected sql::SQLString");
+			}
+			if (!(p_i)) {
 				throw sql::InvalidArgumentException("No long long value passed for defaultPreparedStatementResultType");
 			}
 			do {
@@ -492,19 +586,34 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
 #endif
 		} else if (!it->first.compare("metadataUseInfoSchema")) {
-			if ((p_b = boost::get<bool>(&it->second))) {
+			try {
+				p_b = (it->second).get<bool>();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for metadataUseInfoSchema expected bool");
+			}
+			if (p_b) {
 				intern->metadata_use_info_schema = *p_b;
 			} else {
 				throw sql::InvalidArgumentException("No bool value passed for metadataUseInfoSchema");
 			}
 		} else if (!it->first.compare("OPT_RECONNECT")) {
-			if (!(p_b = boost::get<bool>(&it->second))) {
+			try {
+				p_b = (it->second).get<bool>();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for OPT_RECONNECT expected bool");
+			}
+			if (!(p_b)) {
 				throw sql::InvalidArgumentException("No bool value passed for OPT_RECONNECT");
 			}
 			opt_reconnect = true;
 			opt_reconnect_value = *p_b;
 		} else if (!it->first.compare("OPT_CHARSET_NAME")) {
-			if (!(p_s = boost::get< sql::SQLString >(&it->second))) {
+			try {
+				p_s = (it->second).get< sql::SQLString >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for OPT_CHARSET_NAME expected sql::SQLString");
+			}
+			if (!p_s) {
 				throw sql::InvalidArgumentException("No SQLString value passed for OPT_CHARSET_NAME");
 			}
 			defaultCharset = *p_s;
@@ -512,7 +621,12 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			/* Not sure it is really needed */
 			uri.setProtocol(NativeAPI::PROTOCOL_PIPE);
 		} else if (!it->first.compare("OPT_CAN_HANDLE_EXPIRED_PASSWORDS")) {
-			if (!(p_b = boost::get< bool >(&it->second))) {
+			try {
+				p_b = (it->second).get<bool>();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for OPT_CAN_HANDLE_EXPIRED_PASSWORDS expected bool");
+			}
+			if (!(p_b)) {
 				throw sql::InvalidArgumentException("No bool value passed for "
 													"OPT_CAN_HANDLE_EXPIRED_PASSWORDS");
 			}
@@ -523,21 +637,35 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 				throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
 			}
 		} else if (!it->first.compare("postInit")) {
-			if ((p_s = boost::get< sql::SQLString >(&it->second))) {
+			try {
+				p_s = (it->second).get< sql::SQLString >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for postInit expected sql::SQLString");
+			}
+			if (p_s) {
 				postInit= *p_s;
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for postInit");
 			}
 		} else if (!it->first.compare("useLegacyAuth")) {
-			if ((p_b = boost::get< bool >(&it->second))) {
+			try {
+				p_b = (it->second).get< bool >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for useLegacyAuth expected sql::SQLString");
+			}
+			if (p_b) {
 				secure_auth= !*p_b;
 			} else {
 				throw sql::InvalidArgumentException("No bool value passed for useLegacyAuth");
 			}
 		} else if (!it->first.compare("OPT_CONNECT_ATTR_ADD")) {
-			const std::map< sql::SQLString, sql::SQLString > *conVal= 
-				boost::get< std::map< sql::SQLString, sql::SQLString > >(&it->second);
-			std::map< sql::SQLString, sql::SQLString >::const_iterator conn_attr_it; 
+			const std::map< sql::SQLString, sql::SQLString > *conVal;
+			try {
+				conVal= (it->second).get< std::map< sql::SQLString, sql::SQLString > >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for OPT_CONNECT_ATTR_ADD expected std::map< sql::SQLString, sql::SQLString >");
+			}
+			std::map< sql::SQLString, sql::SQLString >::const_iterator conn_attr_it;
 			for (conn_attr_it = conVal->begin(); conn_attr_it != conVal->end(); conn_attr_it++) {
 				try {
 					proxy->options(MYSQL_OPT_CONNECT_ATTR_ADD, conn_attr_it->first, conn_attr_it->second);
@@ -566,7 +694,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			// TODO: Shouldn't we really create a warning here? as soon as we are able to
 			//       create a warning
 		}
-        
+
 	} /* End of cycle on connection options map */
 
 #undef PROCESS_CONNSTR_OPTION
@@ -626,7 +754,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 		CPP_ERR_FMT("Couldn't connect : %s", proxy->error().c_str());
 		CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 
-		/* If error is "Password has expired" and application supports it while 
+		/* If error is "Password has expired" and application supports it while
 		   mysql client lib does not */
 		std::string error_message;
 		int native_error= proxy->errNo();

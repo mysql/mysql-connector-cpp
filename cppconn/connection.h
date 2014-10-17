@@ -28,16 +28,16 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define _SQL_CONNECTION_H_
 
 #include <map>
-#include <boost/variant.hpp>
 
 #include "build_config.h"
 #include "warning.h"
 #include "sqlstring.h"
+#include "variant.h"
 
 namespace sql
 {
 
-typedef boost::variant<int, double, bool, sql::SQLString, std::map< sql::SQLString, sql::SQLString > > ConnectPropertyVal;
+typedef sql::Variant ConnectPropertyVal;
 
 typedef std::map< sql::SQLString, ConnectPropertyVal > ConnectOptionsMap;
 
