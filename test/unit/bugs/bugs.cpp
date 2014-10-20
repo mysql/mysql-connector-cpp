@@ -550,5 +550,37 @@ void bugs::bug72700()
 }
 
 
+void bugs::bug66871()
+{
+  sql::Connection *con;
+  sql::Statement *stmt;
+  sql::ResultSet *res;
+
+  try
+  {
+    con = getConnection(NULL);
+    stmt = con->createStatement();
+    ASSERT(stmt->execute("select 1"));
+    res= stmt->getResultSet();
+    ASSERT(res->next());
+    ASSERT_EQUALS(res->getInt(1), 1);
+
+    con->close();
+    delete con;
+
+    ASSERT(stmt->execute("select 2"));
+    res= stmt->getResultSet();
+    ASSERT(res->next());
+    ASSERT_EQUALS(res->getInt(1), 2);
+  }
+  catch (::sql::SQLException & /*e*/)
+  {
+    return; /* Everything is fine */
+  }
+
+  FAIL("Exception wasn't thrown by execute");
+}
+
+
 } /* namespace regression */
 } /* namespace testsuite */

@@ -37,6 +37,8 @@ GA  1.1.5 -
 - Connection losses are not detected while fetching resultset using next()
   (Bug#18886278/69031).
 - Remove boost variant from API (wl#7030)
+- Make close() method or destructor of Connection object to always close
+  the connection with server (wl#7028)
 
 GA  1.1.4 -
 - Both static and dynamic driver libraries are now linked statically against

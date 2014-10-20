@@ -74,7 +74,7 @@ MySQL_Statement::~MySQL_Statement()
 
 
 /* {{{ MySQL_Statement::do_query() -I- */
-/* All callers passed c_str from string, and we here created new string to pass to 
+/* All callers passed c_str from string, and we here created new string to pass to
    proxy->query. It didn't make much sense so changed interface here */
 void
 MySQL_Statement::do_query(const ::sql::SQLString &q)
@@ -83,12 +83,17 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 
-	if (proxy->query(q) && proxy->errNo()) {
-		CPP_ERR_FMT("Error during proxy->query : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
-		sql::mysql::util::throwSQLException(*proxy.get());
+	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+	if (!proxy_p) {
+		throw sql::InvalidInstanceException("Connection has been closed");
 	}
 
-	warningsCount= proxy->warning_count();
+	if (proxy_p->query(q) && proxy_p->errNo()) {
+		CPP_ERR_FMT("Error during proxy->query : %d:(%s) %s", proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
+		sql::mysql::util::throwSQLException(*proxy_p.get());
+	}
+
+	warningsCount= proxy_p->warning_count();
 
 	warningsHaveBeenLoaded= false;
 }
@@ -104,17 +109,23 @@ MySQL_Statement::get_resultset()
 	checkClosed();
 
 	NativeAPI::NativeResultsetWrapper * result;
+
+	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+	if (!proxy_p) {
+		throw sql::InvalidInstanceException("Connection has been closed");
+	}
+
 	//TODO: again - probably no need to catch-n-throw here. Or maybe no need to throw further
 	try {
 		result= (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY)
-				? proxy->use_result()
-				: proxy->store_result();
+				? proxy_p->use_result()
+				: proxy_p->store_result();
 		if (!result) {
-			sql::mysql::util::throwSQLException(*proxy.get());
+			sql::mysql::util::throwSQLException(*proxy_p.get());
 		}
 	} catch (::sql::SQLException & e) {
 		CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
-			proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
+			proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
 		throw e;
 	}
 
@@ -144,8 +155,12 @@ MySQL_Statement::execute(const sql::SQLString& sql)
 	CPP_INFO_FMT("query=%s", sql.c_str());
 	checkClosed();
 	do_query(sql);
-	bool ret = proxy->field_count() > 0;
-	last_update_count = ret? UL64(~0):proxy->affected_rows();
+	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+	if (!proxy_p) {
+		throw sql::InvalidInstanceException("Connection has been closed");
+	}
+	bool ret = proxy_p->field_count() > 0;
+	last_update_count = ret? UL64(~0):proxy_p->affected_rows();
 	return ret;
 }
 /* }}} */
@@ -193,20 +208,25 @@ MySQL_Statement::executeUpdate(const sql::SQLString& sql)
 	checkClosed();
 
 	do_query(sql);
-	
-	bool got_rs= false; 
+
+	bool got_rs= false;
+
+	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+	if (!proxy_p) {
+		throw sql::InvalidInstanceException("Connection has been closed");
+	}
 
 	do {
-		if (proxy->field_count()) {
+		if (proxy_p->field_count()) {
 			/* We can't just throw - we need to walk through rest of results */
 			got_rs= true;
-			dirty_drop_rs(proxy);
+			dirty_drop_rs(proxy_p);
 		} else {
 			/* We return update count for last query */
-			last_update_count= proxy->affected_rows();
+			last_update_count= proxy_p->affected_rows();
 		}
 
-		if (!proxy->more_results()) {
+		if (!proxy_p->more_results()) {
 			if (got_rs){
 				throw sql::InvalidArgumentException("Statement returning result set");
 			} else {
@@ -214,15 +234,15 @@ MySQL_Statement::executeUpdate(const sql::SQLString& sql)
 			}
 		}
 
-		switch (proxy->next_result()) {
+		switch (proxy_p->next_result()) {
 		case 0:
 			// There is next result and we go on next cycle iteration to process it
 			break;
 		case -1:
 			throw sql::SQLException("Impossible! more_results() said true, next_result says no more results");
-		default/* > 0 */: 
-			CPP_ERR_FMT("Error during executeUpdate : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
-			sql::mysql::util::throwSQLException(*proxy.get());
+		default/* > 0 */:
+			CPP_ERR_FMT("Error during executeUpdate : %d:(%s) %s", proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
+			sql::mysql::util::throwSQLException(*proxy_p.get());
 		}
 	} while (1);
 
@@ -269,30 +289,36 @@ MySQL_Statement::getResultSet()
 
 	boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result;
 
+	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+
+	if (!proxy_p) {
+		throw sql::InvalidInstanceException("Connection has been closed");
+	}
+
 	sql::ResultSet::enum_type tmp_type;
 
 	try {
 		NativeAPI::NativeResultsetWrapper * tmp_ptr;
 		switch (resultset_type) {
 			case sql::ResultSet::TYPE_FORWARD_ONLY:
-				if (!(tmp_ptr = proxy->use_result())) {
-					sql::mysql::util::throwSQLException(*proxy.get());
+				if (!(tmp_ptr = proxy_p->use_result())) {
+					sql::mysql::util::throwSQLException(*proxy_p.get());
 				}
 				result.reset(tmp_ptr);
 				tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
 				break;
 			default:
-				if (!(tmp_ptr = proxy->store_result())) {
-					sql::mysql::util::throwSQLException(*proxy.get());
+				if (!(tmp_ptr = proxy_p->store_result())) {
+					sql::mysql::util::throwSQLException(*proxy_p.get());
 				}
 				result.reset(tmp_ptr);
 				tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
 		}
 	} catch (::sql::SQLException & e ) {
-		if (proxy->errNo() != 0)
+		if (proxy_p->errNo() != 0)
 		{
 			CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
-				proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
+				proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
 			throw e;
 		}
 		else
@@ -397,15 +423,21 @@ MySQL_Statement::getMoreResults()
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
 	last_update_count = UL64(~0);
-	if (proxy->more_results()) {
+	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
 
-		int next_result = proxy->next_result();
+	if (!proxy_p) {
+		throw sql::InvalidInstanceException("Connection has been closed");
+	}
+
+	if (proxy_p->more_results()) {
+
+		int next_result = proxy_p->next_result();
 
 		if (next_result > 0) {
-			CPP_ERR_FMT("Error during getMoreResults : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
-			sql::mysql::util::throwSQLException(*proxy.get());
+			CPP_ERR_FMT("Error during getMoreResults : %d:(%s) %s", proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
+			sql::mysql::util::throwSQLException(*proxy_p.get());
 		} else if (next_result == 0) {
-			return proxy->field_count() != 0;
+			return proxy_p->field_count() != 0;
 		} else if (next_result == -1) {
 			throw sql::SQLException("Impossible! more_results() said true, next_result says no more results");
 		}

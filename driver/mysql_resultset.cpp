@@ -51,7 +51,7 @@ namespace mysql
 
 
 /* {{{ MySQL_ResultSet::MySQL_ResultSet() -I- */
-MySQL_ResultSet::MySQL_ResultSet(boost::shared_ptr< NativeAPI::NativeResultsetWrapper > res, boost::shared_ptr< NativeAPI::NativeConnectionWrapper > _proxy, sql::ResultSet::enum_type rset_type,
+MySQL_ResultSet::MySQL_ResultSet(boost::shared_ptr< NativeAPI::NativeResultsetWrapper > res, boost::weak_ptr< NativeAPI::NativeConnectionWrapper > _proxy, sql::ResultSet::enum_type rset_type,
 			MySQL_Statement * par, boost::shared_ptr< MySQL_DebugLogger > & l
 		)
 	: row(NULL), result(res), proxy(_proxy), row_position(0), was_null(false),
@@ -871,12 +871,17 @@ MySQL_ResultSet::next()
 			afterLast();
 		} else if (row_position < num_rows + 1) {
 			row = result->fetch_row();
-			if (row == NULL && (proxy->errNo() == 2013 ||
-								proxy->errNo() == 2000)) {
+			boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+			if (!proxy_p) {
+				throw sql::InvalidInstanceException("Connection has been closed");
+			}
+
+			if (row == NULL && (proxy_p->errNo() == 2013 ||
+								proxy_p->errNo() == 2000)) {
 				CPP_ERR_FMT("Error fetching next row %d:(%s) %s",
-							proxy->errNo(), proxy->sqlstate().c_str(),
-							proxy->error().c_str());
-				sql::SQLException e(proxy->error(), proxy->sqlstate(), proxy->errNo());
+							proxy_p->errNo(), proxy_p->sqlstate().c_str(),
+							proxy_p->error().c_str());
+				sql::SQLException e(proxy_p->error(), proxy_p->sqlstate(), proxy_p->errNo());
 				throw e;
 			}
 			++row_position;
@@ -884,12 +889,17 @@ MySQL_ResultSet::next()
 		}
 	} else {
 		row = result->fetch_row();
-		if (row == NULL && (proxy->errNo() == 2013 ||
-							proxy->errNo() == 2000)) {
+		boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+		if (!proxy_p) {
+			throw sql::InvalidInstanceException("Connection has been closed");
+		}
+
+		if (row == NULL && (proxy_p->errNo() == 2013 ||
+							proxy_p->errNo() == 2000)) {
 			CPP_ERR_FMT("Error fetching next row %d:(%s) %s",
-						proxy->errNo(), proxy->sqlstate().c_str(),
-						proxy->error().c_str());
-			sql::SQLException e(proxy->error(), proxy->sqlstate(), proxy->errNo());
+						proxy_p->errNo(), proxy_p->sqlstate().c_str(),
+						proxy_p->error().c_str());
+			sql::SQLException e(proxy_p->error(), proxy_p->sqlstate(), proxy_p->errNo());
 			throw e;
 		}
 		++row_position;

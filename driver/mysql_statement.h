@@ -28,6 +28,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define _MYSQL_STATEMENT_H_
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <cppconn/statement.h>
 #include <cppconn/resultset.h>
 
@@ -54,7 +55,7 @@ class MySQL_Statement : public sql::Statement
 protected:
 	boost::scoped_ptr<MySQL_Warning> warnings;
 	MySQL_Connection * connection;
-	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy;
+	boost::weak_ptr< NativeAPI::NativeConnectionWrapper > proxy;
 
 	void do_query(const ::sql::SQLString &q);
 	bool isClosed;
