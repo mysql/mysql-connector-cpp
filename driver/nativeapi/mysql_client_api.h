@@ -73,6 +73,8 @@ typedef const char * (STDCALL *ptr2mysql_get_server_info)(MYSQL *);
 
 typedef unsigned long (STDCALL *ptr2mysql_get_server_version)(MYSQL *);
 
+typedef void (STDCALL *ptr2mysql_get_character_set_info)(MYSQL *, void *);
+
 typedef char * (STDCALL *ptr2mysql_info)(MYSQL *mysql);
 
 typedef MYSQL * (STDCALL *ptr2mysql_init)(MYSQL *mysql);
@@ -92,6 +94,8 @@ typedef my_ulonglong (STDCALL *ptr2mysql_num_rows)(MYSQL_RES *);
 typedef int (STDCALL *ptr2mysql_options)(MYSQL *, enum mysql_option, const void *);
 
 typedef int (STDCALL *ptr2mysql_options4)(MYSQL *, enum mysql_option, const void *, const void *);
+
+typedef int (STDCALL *ptr2mysql_get_option)(MYSQL *, enum mysql_option, const void *);
 
 typedef int (STDCALL *ptr2mysql_query)(MYSQL *, const char *);
 
@@ -202,6 +206,8 @@ public:
 
 	virtual unsigned long get_server_version(MYSQL *) = 0;
 
+	virtual void get_character_set_info(MYSQL *, void *) = 0;
+
 	virtual const char * info(MYSQL *mysql) = 0;
 
 	virtual MYSQL * init(MYSQL *mysql) = 0;
@@ -221,6 +227,8 @@ public:
 	virtual int options(MYSQL *, enum mysql_option option , const void *arg) = 0;
 
 	virtual int options(MYSQL *, enum mysql_option option , const void *arg1, const void *arg2) = 0;
+
+	virtual int get_option(MYSQL *, enum mysql_option option , const void *arg) = 0;
 
 	virtual int ping(MYSQL *) = 0;
 

@@ -29,6 +29,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <cppconn/warning.h>
 #include "statement.h"
 #include <stdlib.h>
+#include <time.h>
 
 namespace testsuite
 {
@@ -564,6 +565,36 @@ void statement::checkUnbufferedScrolling()
   {
   }
 }
+
+
+void statement::queryTimeout()
+{
+  logMsg("statement::queryTimeout() - MySQL_Statement::setQueryTimeout");
+  int serverVersion= getMySQLVersion(con);
+  int timeout= 2;
+  if ( serverVersion < 57004 )
+  {
+    SKIP("Server version >= 5.7.4 needed to run this test");
+  }
+
+  stmt.reset(con->createStatement());
+  try
+  {
+	stmt->setQueryTimeout(timeout);
+	ASSERT_EQUALS(timeout, stmt->getQueryTimeout());
+	time_t t1= time(NULL);
+    stmt->execute("select sleep(5)");
+	time_t t2= time(NULL);
+	ASSERT((t2 -t1) < 5);
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 
 } /* namespace statement */
 } /* namespace testsuite */

@@ -97,6 +97,8 @@ public:
 
 	unsigned long get_server_version();
 
+	void get_character_set_info(void *cs);
+
 	bool more_results();
 
 	int next_result();
@@ -108,6 +110,12 @@ public:
 	int options(::sql::mysql::MySQL_Connection_Options, const int &);
 	int options(::sql::mysql::MySQL_Connection_Options,
 				const ::sql::SQLString &, const ::sql::SQLString &);
+
+	int get_option(::sql::mysql::MySQL_Connection_Options, const void * );
+	int get_option(::sql::mysql::MySQL_Connection_Options,
+				const ::sql::SQLString &);
+	int get_option(::sql::mysql::MySQL_Connection_Options, const bool &);
+	int get_option(::sql::mysql::MySQL_Connection_Options, const int &);
 
 	int query(const ::sql::SQLString &);
 

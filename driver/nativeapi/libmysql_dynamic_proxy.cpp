@@ -298,6 +298,17 @@ LibmysqlDynamicProxy::get_server_version(MYSQL * mysql)
 /* }}} */
 
 
+/* {{{ LibmysqlDynamicProxy::get_character_set_info() */
+void
+LibmysqlDynamicProxy::get_character_set_info(MYSQL * mysql, void *cs)
+{
+	ptr2mysql_get_character_set_info ptr2_get_character_set_info = symbol_safe_cast<ptr2mysql_get_character_set_info>(GetProcAddr("mysql_get_character_set_info"));
+
+	return (*ptr2_get_character_set_info)(mysql, static_cast<MY_CHARSET_INFO *>(cs));
+}
+/* }}} */
+
+
 /* {{{ LibmysqlDynamicProxy::info() */
 const char *
 LibmysqlDynamicProxy::info(MYSQL * mysql)
@@ -414,6 +425,24 @@ LibmysqlDynamicProxy::options(MYSQL * mysql, enum mysql_option option, const voi
 		}
 	} else {
 		throw ::sql::MethodNotImplementedException("::mysql_options4()");
+	}
+}
+/* }}} */
+
+
+/* {{{ LibmysqlDynamicProxy::get_option() */
+int
+LibmysqlDynamicProxy::get_option(MYSQL * mysql, enum mysql_option option, const void *arg)
+{
+	ptr2mysql_get_option ptr2_get_option = symbol_safe_cast<ptr2mysql_options4>(GetProcAddr("mysql_get_option"));
+	if (ptr2_get_option != NULL) {
+		if (((*ptr2_get_option)(mysql, option, arg))) {
+			throw sql::InvalidArgumentException("Unsupported option provided to mysql_get_option()");
+		} else {
+			return 0;
+		}
+	} else {
+		throw ::sql::MethodNotImplementedException("::mysql_get_option()");
 	}
 }
 /* }}} */

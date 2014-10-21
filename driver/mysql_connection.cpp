@@ -239,24 +239,32 @@ static bool read_connection_flag(ConnectOptionsMap::const_iterator &cit, int &fl
 /* Array for mapping of boolean connection options to mysql_options call */
 static const String2IntMap booleanOptions[]=
 	{
-		{"OPT_REPORT_DATA_TRUNCATION",	MYSQL_REPORT_DATA_TRUNCATION},
-		{"OPT_ENABLE_CLEARTEXT_PLUGIN",	MYSQL_ENABLE_CLEARTEXT_PLUGIN},
-		{"sslVerify",					MYSQL_OPT_SSL_VERIFY_SERVER_CERT}
+		{"OPT_REPORT_DATA_TRUNCATION",  MYSQL_REPORT_DATA_TRUNCATION},
+		{"OPT_ENABLE_CLEARTEXT_PLUGIN", MYSQL_ENABLE_CLEARTEXT_PLUGIN},
+		{"sslVerify",                   MYSQL_OPT_SSL_VERIFY_SERVER_CERT},
+		{"sslEnforce",                  MYSQL_OPT_SSL_ENFORCE}
 	};
 /* Array for mapping of integer connection options to mysql_options call */
 static const String2IntMap intOptions[]=
 	{
-		{"OPT_CONNECT_TIMEOUT",	MYSQL_OPT_CONNECT_TIMEOUT},
-		{"OPT_READ_TIMEOUT",	MYSQL_OPT_READ_TIMEOUT},
-		{"OPT_WRITE_TIMEOUT",	MYSQL_OPT_WRITE_TIMEOUT}
+		{"OPT_CONNECT_TIMEOUT", MYSQL_OPT_CONNECT_TIMEOUT},
+		{"OPT_READ_TIMEOUT",    MYSQL_OPT_READ_TIMEOUT},
+		{"OPT_WRITE_TIMEOUT",   MYSQL_OPT_WRITE_TIMEOUT},
+		{"OPT_LOCAL_INFILE",    MYSQL_OPT_LOCAL_INFILE}
 	};
 /* Array for mapping of string connection options to mysql_options call */
 static const String2IntMap stringOptions[]=
 	{
-		{"preInit",		MYSQL_INIT_COMMAND},
-		{"sslCRL",		MYSQL_OPT_SSL_CRL},
-		{"sslCRLPath",	MYSQL_OPT_SSL_CRLPATH},
-		{"rsaKey",		MYSQL_SERVER_PUBLIC_KEY}
+		{"preInit",            MYSQL_INIT_COMMAND},
+		{"sslCRL",             MYSQL_OPT_SSL_CRL},
+		{"sslCRLPath",         MYSQL_OPT_SSL_CRLPATH},
+		{"rsaKey",             MYSQL_SERVER_PUBLIC_KEY},
+		{"charsetDir",         MYSQL_SET_CHARSET_DIR},
+		{"pluginDir",          MYSQL_PLUGIN_DIR},
+		{"defaultAuth",        MYSQL_DEFAULT_AUTH},
+		{"OPT_CONNECT_ATTR_DELETE", MYSQL_OPT_CONNECT_ATTR_DELETE},
+		{"readDefaultGroup",   MYSQL_READ_DEFAULT_GROUP},
+		{"readDefaultFile",    MYSQL_READ_DEFAULT_FILE}
 	};
 
 template<class T>
@@ -267,7 +275,7 @@ bool process_connection_option(ConnectOptionsMap::const_iterator &option,
 {
 	const T * value;
 
-	for (unsigned int i = 0; i < map_size; ++i) {
+	for (size_t i = 0; i < map_size; ++i) {
 
 		if (!option->first.compare(options_map[i].key)) {
 			try {
@@ -300,6 +308,27 @@ bool process_connection_option(ConnectOptionsMap::const_iterator &option,
 }
 
 
+bool get_connection_option(const sql::SQLString optionName,
+								void *optionValue,
+								const String2IntMap options_map[],
+								size_t map_size,
+								boost::shared_ptr< NativeAPI::NativeConnectionWrapper > &proxy)
+{
+	for (size_t i = 0; i < map_size; ++i) {
+		if (!optionName.compare(options_map[i].key)) {
+			try {
+				proxy->get_option(static_cast<sql::mysql::MySQL_Connection_Options>(options_map[i].value), optionValue);
+			} catch (sql::InvalidArgumentException& e) {
+				std::string errorOption(options_map[i].key);
+				throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
+
 /*
   We support :
   - hostName
@@ -315,6 +344,7 @@ bool process_connection_option(ConnectOptionsMap::const_iterator &option,
   - sslCA
   - sslCAPath
   - sslCipher
+  - sslEnforce
   - defaultStatementResultType
   - defaultPreparedStatementResultType
   - CLIENT_COMPRESS
@@ -336,8 +366,18 @@ bool process_connection_option(ConnectOptionsMap::const_iterator &option,
   - OPT_REPORT_DATA_TRUNCATION
   - OPT_CAN_HANDLE_EXPIRED_PASSWORDS
   - OPT_ENABLE_CLEARTEXT_PLUGIN
+  - OPT_LOCAL_INFILE
+  - OPT_CONNECT_ATTR_ADD
+  - OPT_CONNECT_ATTR_DELETE
+  - OPT_CONNECT_ATTR_RESET
   - preInit
   - postInit
+  - rsaKey
+  - charsetDir
+  - pluginDir
+  - defaultAuth
+  - readDefaultGroup
+  - readDefaultFile
 
   To add new connection option that maps to a myql_options call, only add its
   mapping to sql::mysql::MySQL_Connection_Options value to one of arrays above
@@ -674,6 +714,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 					throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
 				}
 			}
+		} else if (!it->first.compare("OPT_CONNECT_ATTR_RESET")) {
+			proxy->options(MYSQL_OPT_CONNECT_ATTR_RESET, 0);
 
 		/* If you need to add new integer connection option that should result in
 		   calling mysql_optiong - add its mapping to the intOptions array
@@ -926,6 +968,8 @@ MySQL_Connection::getClientInfo()
 }
 /* }}} */
 
+#define GET_CONN_OPTION(option_type, option_value, options_map) \
+get_connection_option(option_type, option_value, options_map, sizeof(options_map)/sizeof(String2IntMap), proxy)
 
 /* {{{ MySQL_Connection::getClientOption() -I- */
 void
@@ -938,9 +982,52 @@ MySQL_Connection::getClientOption(const sql::SQLString & optionName, void * opti
 		*(static_cast<int *>(optionValue)) = intern->defaultStatementResultType;
 	} else if (!optionName.compare("defaultPreparedStatementResultType")) {
 		*(static_cast<int *>(optionValue)) = intern->defaultPreparedStatementResultType;
-	} else if (!optionName.compare("characterSetResults")) {
-		*(static_cast<sql::SQLString **>(optionValue)) = new sql::SQLString(getSessionVariable("characterSetResults"));
+	} else if (!optionName.compare("multiByteMinLength")) {
+		MY_CHARSET_INFO cs;
+		proxy->get_character_set_info(&cs);
+		*(static_cast<int *>(optionValue)) = cs.mbminlen;
+	} else if (!optionName.compare("multiByteMaxLength")) {
+		MY_CHARSET_INFO cs;
+		proxy->get_character_set_info(&cs);
+		*(static_cast<int *>(optionValue)) = cs.mbmaxlen;
+	/* mysql_get_option() was added in mysql 5.7.3 version */
+	} else if ( proxy->get_server_version() >= 50703 ) {
+		try {
+			if (GET_CONN_OPTION(optionName, &optionValue, intOptions)) {
+				return;
+			} else if (GET_CONN_OPTION(optionName, &optionValue, booleanOptions)) {
+				return;
+			} else if (GET_CONN_OPTION(optionName, &optionValue, stringOptions)) {
+				return;
+			}
+		} catch (sql::SQLUnsupportedOptionException& e) {
+			CPP_ERR_FMT("Unsupported option : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
+			throw e;
+		}
 	}
+}
+/* }}} */
+
+
+/* {{{ MySQL_Connection::getClientOption() -I- */
+sql::SQLString *
+MySQL_Connection::getClientOption(const sql::SQLString & optionName)
+{
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getClientOption");
+
+	if (!optionName.compare("characterSetResults")) {
+		return new sql::SQLString(getSessionVariable("character_set_results"));
+	} else if (!optionName.compare("characterSetDirectory")) {
+		MY_CHARSET_INFO cs;
+		proxy->get_character_set_info(&cs);
+		return new sql::SQLString(cs.dir);
+	} else if ( proxy->get_server_version() >= 50703 ) {
+		const char* optionValue;
+		if (GET_CONN_OPTION(optionName, &optionValue, stringOptions)) {
+			return new sql::SQLString(optionValue);
+		}
+	}
+	return 0;
 }
 /* }}} */
 
@@ -1201,8 +1288,6 @@ MySQL_Connection::setClientOption(const sql::SQLString & optionName, const void 
 			intern->logger->disableTracing();
 			CPP_INFO("Tracing disabled");
 		}
-	} else if (!optionName.compare("characterSetResults")) {
-		setSessionVariable("character_set_results", optionValue? static_cast<const char *>(optionValue) : sql::SQLString("NULL"));
 	} else if (!optionName.compare("metadataUseInfoSchema")) {
 		intern->metadata_use_info_schema = *(static_cast<const bool *>(optionValue));
 	} else if (!optionName.compare("defaultStatementResultType")) {
@@ -1228,6 +1313,19 @@ MySQL_Connection::setClientOption(const sql::SQLString & optionName, const void 
 #else
 		throw MethodNotImplementedException("MySQL_Prepared_Statement::setResultSetType");
 #endif
+	}
+	return this;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Connection::setClientOption() -I- */
+sql::Connection *
+MySQL_Connection::setClientOption(const sql::SQLString & optionName, const sql::SQLString & optionValue)
+{
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setClientOption");
+	if (!optionName.compare("characterSetResults")) {
+		setSessionVariable("character_set_results", optionValue);
 	}
 	return this;
 }
@@ -1378,19 +1476,42 @@ MySQL_Connection::setSessionVariable(const sql::SQLString & varname, const sql::
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setSessionVariable");
 	checkClosed();
 
-	sql::SQLString q("SET SESSION ");
-	q.append(varname).append("=");
+	sql::SQLString query("SET SESSION ");
+	query.append(varname).append("=");
 
 	if (!value.compare("NULL")) {
-		q.append("NULL");
+		query.append("NULL");
 	} else {
-		q.append("'").append(value).append("'");
+		query.append("'").append(value).append("'");
 	}
 
-	service->executeUpdate(q);
+	service->executeUpdate(query);
 	if (intern->cache_sql_mode && !strncasecmp(varname.c_str(), "sql_mode", sizeof("sql_mode") - 1)) {
 		intern->sql_mode= value;
 	}
+}
+/* }}} */
+
+
+/* {{{ MySQL_Connection::setSessionVariable() -I- */
+void
+MySQL_Connection::setSessionVariable(const sql::SQLString & varname, unsigned int value)
+{
+	CPP_ENTER_WL(intern->logger, "MySQL_Connection::setSessionVariable");
+	checkClosed();
+
+	sql::SQLString query("SET SESSION ");
+	query.append(varname).append("=");
+
+	if (!value) {
+		query.append("0");
+	} else {
+		std::ostringstream qstr;
+		qstr << value;
+		query.append(qstr.str());
+	}
+
+	service->executeUpdate(query);
 }
 /* }}} */
 

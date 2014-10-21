@@ -100,6 +100,8 @@ public:
 
 	virtual void getClientOption(const sql::SQLString & optionName, void * optionValue) = 0;
 
+	virtual sql::SQLString * getClientOption(const sql::SQLString & optionName) = 0;
+
 	virtual DatabaseMetaData * getMetaData() = 0;
 
 	virtual enum_transaction_isolation getTransactionIsolation() = 0;
@@ -137,6 +139,8 @@ public:
 	virtual void setSchema(const sql::SQLString& catalog) = 0;
 
 	virtual sql::Connection * setClientOption(const sql::SQLString & optionName, const void * optionValue) = 0;
+
+	virtual sql::Connection * setClientOption(const sql::SQLString & optionName, const sql::SQLString & optionValue) = 0;
 
 	virtual void setHoldability(int holdability) = 0;
 

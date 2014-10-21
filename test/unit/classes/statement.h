@@ -58,6 +58,7 @@ public:
     TEST_CASE(selectZero);
     TEST_CASE(unbufferedFetch);
     TEST_CASE(unbufferedOutOfSync);
+    TEST_CASE(queryTimeout);
   }
 
   /**
@@ -94,6 +95,11 @@ public:
    * Unbuffered fetch - ouf of sync
    */
   void unbufferedOutOfSync();
+
+  /**
+   * check setQueryTimeout() and getQueryTimeout
+   */
+  void queryTimeout();
 
 };
 

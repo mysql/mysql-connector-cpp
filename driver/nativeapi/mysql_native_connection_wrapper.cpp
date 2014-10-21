@@ -188,6 +188,15 @@ MySQL_NativeConnectionWrapper::get_server_version()
 /* }}} */
 
 
+/* {{{ MySQL_NativeConnectionWrapper::get_character_set_info() */
+void
+MySQL_NativeConnectionWrapper::get_character_set_info(void *cs)
+{
+	return api->get_character_set_info(mysql, cs);
+}
+/* }}} */
+
+
 /* {{{ MySQL_NativeConnectionWrapper::more_results() */
 bool
 MySQL_NativeConnectionWrapper::more_results()
@@ -252,6 +261,44 @@ MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options op
 	return api->options(mysql, static_cast< mysql_option >(option), key.c_str(), value.c_str());
 }
 /* }}} */
+
+
+/* {{{ MySQL_NativeConnectionWrapper::get_option() */
+int
+MySQL_NativeConnectionWrapper::get_option(::sql::mysql::MySQL_Connection_Options option, const void * value)
+{
+	return api->get_option(mysql, static_cast< mysql_option >(option), value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_NativeConnectionWrapper::get_option(SQLString &) */
+int
+MySQL_NativeConnectionWrapper::get_option(::sql::mysql::MySQL_Connection_Options option,
+									   const ::sql::SQLString &str)
+{
+	return api->get_option(mysql, static_cast< mysql_option >(option), str.c_str());
+}
+/* }}} */
+
+
+/* {{{ MySQL_NativeConnectionWrapper::get_option(bool &) */
+int
+MySQL_NativeConnectionWrapper::get_option(::sql::mysql::MySQL_Connection_Options option,
+									   const bool &option_val)
+{
+	my_bool dummy= option_val ? '\1' : '\0';
+	return api->get_option(mysql, static_cast< mysql_option >(option), &dummy);
+}
+
+
+/* {{{ MySQL_NativeConnectionWrapper::get_option(int &) */
+int
+MySQL_NativeConnectionWrapper::get_option(::sql::mysql::MySQL_Connection_Options option,
+									   const int &option_val)
+{
+	return api->get_option(mysql, static_cast< mysql_option >(option), &option_val);
+}
 
 
 /* {{{ MySQL_NativeConnectionWrapper::query() */

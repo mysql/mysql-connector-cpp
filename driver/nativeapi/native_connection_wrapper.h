@@ -35,7 +35,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "../mysql_connection_options.h"
 
-
 namespace sql
 {
 class SQLString;
@@ -93,6 +92,8 @@ public:
 
 	virtual unsigned long get_server_version() = 0;
 
+	virtual void get_character_set_info(void *cs) = 0;
+
 	virtual bool more_results() = 0;
 
 	virtual int next_result() = 0;
@@ -105,8 +106,16 @@ public:
 	virtual int options(::sql::mysql::MySQL_Connection_Options,
 						const int &) = 0;
 	virtual int options(::sql::mysql::MySQL_Connection_Options,
-						const ::sql::SQLString &, 
+						const ::sql::SQLString &,
 						const ::sql::SQLString &) = 0;
+
+	virtual int get_option(::sql::mysql::MySQL_Connection_Options, const void *) = 0;
+	virtual int get_option(::sql::mysql::MySQL_Connection_Options,
+						const ::sql::SQLString &) = 0;
+	virtual int get_option(::sql::mysql::MySQL_Connection_Options,
+						const bool &) = 0;
+	virtual int get_option(::sql::mysql::MySQL_Connection_Options,
+						const int &) = 0;
 
 	virtual int query(const SQLString &) = 0;
 

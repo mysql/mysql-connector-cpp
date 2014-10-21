@@ -203,6 +203,15 @@ LibmysqlStaticProxy::get_server_version(MYSQL * mysql)
 /* }}} */
 
 
+/* {{{ LibmysqlStaticProxy::get_character_set_info() */
+void
+LibmysqlStaticProxy::get_character_set_info(MYSQL * mysql, void *cs)
+{
+	return ::mysql_get_character_set_info(mysql, static_cast<MY_CHARSET_INFO *>(cs));
+}
+/* }}} */
+
+
 /* {{{ LibmysqlStaticProxy::info() */
 const char *
 LibmysqlStaticProxy::info(MYSQL * mysql)
@@ -293,7 +302,7 @@ LibmysqlStaticProxy::options(MYSQL * mysql, enum mysql_option option, const void
 int
 LibmysqlStaticProxy::options(MYSQL * mysql, enum mysql_option option, const void *arg1, const void *arg2)
 {
-#if MYSQL_VERSION_ID >= 50606	
+#if MYSQL_VERSION_ID >= 50606
 	if ((::mysql_options4(mysql, option, static_cast<const char *>(arg1), static_cast<const char *>(arg2)))) {
 		throw sql::InvalidArgumentException("Unsupported option provided to mysql_options4()");
 	} else {
@@ -301,6 +310,23 @@ LibmysqlStaticProxy::options(MYSQL * mysql, enum mysql_option option, const void
 	}
 #else
 	throw ::sql::MethodNotImplementedException("::mysql_options4()");
+#endif
+}
+/* }}} */
+
+
+/* {{{ LibmysqlStaticProxy::get_option() */
+int
+LibmysqlStaticProxy::get_option(MYSQL * mysql, enum mysql_option option, const void *arg)
+{
+#if MYSQL_VERSION_ID >= 50703
+	if (::mysql_get_option(mysql, option, arg)) {
+		throw sql::InvalidArgumentException("Unsupported option provided to mysql_get_option()");
+	} else {
+		return 0;
+	}
+#else
+	throw ::sql::MethodNotImplementedException("::mysql_get_option()");
 #endif
 }
 /* }}} */

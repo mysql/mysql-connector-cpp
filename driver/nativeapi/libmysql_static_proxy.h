@@ -110,6 +110,8 @@ public:
 
 	unsigned long get_server_version(MYSQL * mysql);
 
+	void get_character_set_info(MYSQL * mysql, void *cs);
+
 	const char * info(MYSQL * mysql);
 
 	MYSQL * init(MYSQL * mysql);
@@ -129,6 +131,8 @@ public:
 	int options(MYSQL *, enum mysql_option, const void *);
 
 	int options(MYSQL *, enum mysql_option, const void *, const void *);
+
+	int get_option(MYSQL *, enum mysql_option, const void *);
 
 	int ping(MYSQL *);
 

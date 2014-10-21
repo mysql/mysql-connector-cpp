@@ -26,6 +26,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <memory>
 #include <algorithm>
+#include <sstream>
 
 /*
  * mysql_util.h includes private_iface, ie libmysql headers. and they must go
@@ -354,12 +355,12 @@ MySQL_Statement::setFetchSize(size_t /* fetch */)
 
 /* {{{ MySQL_Statement::setQueryTimeout() -U- */
 void
-MySQL_Statement::setQueryTimeout(unsigned int)
+MySQL_Statement::setQueryTimeout(unsigned int timeout)
 {
 	CPP_ENTER("MySQL_Statement::setQueryTimeout");
 	CPP_INFO_FMT("this=%p", this);
 	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::setQueryTimeout");
+	connection->setSessionVariable("max_statement_time", timeout);
 }
 /* }}} */
 
@@ -452,8 +453,19 @@ unsigned int
 MySQL_Statement::getQueryTimeout()
 {
 	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::getQueryTimeout");
-	return 0; // fool compilers
+	sql::SQLString value= connection->getSessionVariable("max_statement_time");
+	if (value.length() > 0) {
+		unsigned int timeout;
+		std::istringstream buffer(value);
+		buffer >> timeout;
+		if (buffer.rdstate() & std::istringstream::failbit) {
+			return 0;
+		} else {
+			return timeout;
+		}
+	} else {
+		return 0;
+	}
 }
 /* }}} */
 

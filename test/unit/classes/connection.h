@@ -61,13 +61,19 @@ public:
     /*
     TODO: do we want to add this to sql::Connection?
     TEST_CASE(setSessionVariable);
-     */
+    */
     // Test doesn't make sense for static binding.
 #ifndef MYSQLCLIENT_STATIC_BINDING
     TEST_CASE(loadSameLibraryTwice);
 #endif
 	TEST_CASE(enableClearTextAuth);
 	TEST_CASE(connectAttrAdd);
+	TEST_CASE(connectAttrReset);
+	TEST_CASE(connectCharsetDir);
+	TEST_CASE(connectSSLEnforce);
+	TEST_CASE(setAuthDir);
+	TEST_CASE(setDefaultAuth);
+	TEST_CASE(localInfile);
   }
 
   /**
@@ -177,7 +183,42 @@ public:
 
   void enableClearTextAuth();
 
+  /*
+   * Test for Connection attributes options MYSQL_OPT_CONNECT_ATTR_ADD
+   * | MYSQL_OPT_CONNECT_ATTR_DELETE
+   */
   void connectAttrAdd();
+
+  /*
+   * Test for Connection attributes options MYSQL_OPT_CONNECT_ATTR_RESET
+   */
+  void connectAttrReset();
+
+  /*
+   * Test for Connection attributes options MYSQL_SET_CHARSET_DIR
+   */
+  void connectCharsetDir();
+
+  /*
+   * Test for Connection attributes options MYSQL_OPT_SSL_ENFORCE
+   */
+  void connectSSLEnforce();
+
+  /*
+   * Test for Connection attributes options MYSQL_PLUGIN_DIR
+   */
+  void setAuthDir();
+
+  /*
+   * Test for Connection attributes options MYSQL_DEFAULT_AUTH
+   */
+  void setDefaultAuth();
+
+  /*
+   * Test for Connection attributes options MYSQL_OPT_LOCAL_INFILE
+   */
+  void localInfile();
+
 };
 
 
