@@ -43,6 +43,8 @@ GA  1.1.5 -
   MYSQL_PLUGIN_DIR, MYSQL_SET_CHARSET_DIR, MYSQL_READ_DEFAULT_FILE,
   MYSQL_READ_DEFAULT_GROUP, MYSQL_OPT_CONNECT_ATTR_DELETE,
   MYSQL_OPT_CONNECT_ATTR_RESET, MYSQL_OPT_LOCAL_INFILE) (Bug#19479950)
+- Added missing sort order for DatabaseMetaData::getImportedKeys() and
+  DatabaseMetaData::getIndexInfo() for no_i_s case. (Bug#19505248)
 
 GA  1.1.4 -
 - Both static and dynamic driver libraries are now linked statically against

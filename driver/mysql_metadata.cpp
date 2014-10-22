@@ -26,6 +26,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <stdlib.h>
 #include <string>
+#include <sstream>
 
 #include <memory>
 #include <boost/scoped_ptr.hpp>
@@ -2644,6 +2645,16 @@ MySQL_ConnectionMetaData::parseImportedKeys(
 /* }}} */
 
 
+/* ORDER BY PKTABLE_SCHEM, PKTABLE_NAME, KEY_SEQ 1,2,8 */
+bool compareImportedKeys(std::vector< MyVal > &first, std::vector< MyVal > &second)
+{
+	return (first[1].getString().compare(second[1].getString()) < 0) ||
+           ((first[1].getString().compare(second[1].getString()) == 0) && (first[2].getString().compare(second[2].getString()) < 0)) ||
+           ((first[1].getString().compare(second[1].getString()) == 0) && (first[2].getString().compare(second[2].getString()) == 0) &&
+            (first[8].getString().caseCompare(second[8].getString()) < 0 ));
+}
+
+
 /* {{{ MySQL_ConnectionMetaData::getImportedKeys() -I- */
 sql::ResultSet *
 MySQL_ConnectionMetaData::getImportedKeys(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table)
@@ -2810,13 +2821,14 @@ MySQL_ConnectionMetaData::getImportedKeys(const sql::SQLString& catalog, const s
 
 					rs_data_row.push_back(constraint_name);		// FK_NAME
 					// ToDo: Should it really be PRIMARY?
-					rs_data_row.push_back("");					// PK_NAME
+					rs_data_row.push_back("PRIMARY");					// PK_NAME
 					rs_data_row.push_back((int64_t) importedKeyNotDeferrable);	// DEFERRABILITY
 
 					rs_data->push_back(rs_data_row);
 				}
 			}
 		}
+		rs_data.get()->sort(compareImportedKeys);
 	}
 
 	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
@@ -2825,6 +2837,19 @@ MySQL_ConnectionMetaData::getImportedKeys(const sql::SQLString& catalog, const s
 	return ret;
 }
 /* }}} */
+
+
+/* ORDER BY NON_UNIQUE, TYPE, INDEX_NAME, ORDINAL_POSITION */
+bool compareIndexInfo(std::vector< MyVal > &first, std::vector< MyVal > &second)
+{
+	return (first[3].getBool() < second[3].getBool()) ||
+           ((first[3].getBool() == second[3].getBool()) && (first[6].getString().compare(second[6].getString()) < 0)) ||
+           ((first[3].getBool() == second[3].getBool()) && (first[6].getString().compare(second[6].getString()) == 0) &&
+            (first[5].getString().caseCompare(second[5].getString()) < 0 )) ||
+           ((first[3].getBool() == second[3].getBool()) && (first[6].getString().compare(second[6].getString()) == 0) &&
+            (first[5].getString().caseCompare(second[5].getString()) == 0 ) &&
+			(first[7].getString().caseCompare(second[7].getString()) < 0 ));
+}
 
 
 /* {{{ MySQL_ConnectionMetaData::getIndexInfo() -I- */
@@ -2852,15 +2877,14 @@ MySQL_ConnectionMetaData::getIndexInfo(const sql::SQLString& /*catalog*/, const 
 	rs_field_data.push_back("FILTER_CONDITION");
 
 	char indexOther[5];
+	char indexHash[5];
 
 	snprintf(indexOther, sizeof(indexOther), "%d", DatabaseMetaData::tableIndexOther);
+	snprintf(indexHash, sizeof(indexHash), "%d", DatabaseMetaData::tableIndexHashed);
 
 	connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
 
 	if (use_info_schema && server_version > 50020) {
-		char indexHash[5];
-		snprintf(indexHash, sizeof(indexHash), "%d", DatabaseMetaData::tableIndexHashed);
-
 		sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, NON_UNIQUE, "
 						 "TABLE_SCHEMA AS INDEX_QUALIFIER, INDEX_NAME, CASE WHEN INDEX_TYPE='HASH' THEN ");
 		query.append(indexHash).append(" ELSE ").append(indexOther);
@@ -2911,6 +2935,14 @@ MySQL_ConnectionMetaData::getIndexInfo(const sql::SQLString& /*catalog*/, const 
 		}
 
 		while (rs.get() && rs->next()) {
+		unsigned int row_unique;
+		std::istringstream buffer(rs->getString("Non_unique"));
+		buffer >> row_unique;
+		if (!(buffer.rdstate() & std::istringstream::failbit)
+				&& unique && row_unique != 0){
+			continue;
+		}
+
 			MySQL_ArtResultSet::row_t rs_data_row;
 
 			rs_data_row.push_back("def");							// TABLE_CAT
@@ -2919,7 +2951,11 @@ MySQL_ConnectionMetaData::getIndexInfo(const sql::SQLString& /*catalog*/, const 
 			rs_data_row.push_back(atoi(rs->getString("Non_unique").c_str())? true:false);	// NON_UNIQUE
 			rs_data_row.push_back(schema);							// INDEX_QUALIFIER
 			rs_data_row.push_back(rs->getString("Key_name"));		// INDEX_NAME
-			rs_data_row.push_back((const char *) indexOther);				// TYPE
+			if (!rs->getString("Index_type").compare("HASH")) {
+				rs_data_row.push_back((const char *) indexHash);	// TYPE
+			} else {
+				rs_data_row.push_back((const char *) indexOther);	// TYPE
+			}
 			rs_data_row.push_back(rs->getString("Seq_in_index"));	// ORDINAL_POSITION
 			rs_data_row.push_back(rs->getString("Column_name"));	// COLUMN_NAME
 			rs_data_row.push_back(rs->getString("Collation"));		// ASC_OR_DESC
@@ -2929,6 +2965,7 @@ MySQL_ConnectionMetaData::getIndexInfo(const sql::SQLString& /*catalog*/, const 
 
 			rs_data->push_back(rs_data_row);
 		}
+		rs_data.get()->sort(compareIndexInfo);
 	}
 
 	MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data.get(), logger);
