@@ -74,6 +74,8 @@ public:
 	TEST_CASE(setAuthDir);
 	TEST_CASE(setDefaultAuth);
 	TEST_CASE(localInfile);
+	TEST_CASE(isValid);
+	TEST_CASE(reconnect);
   }
 
   /**
@@ -219,6 +221,17 @@ public:
    */
   void localInfile();
 
+  /*
+   * Test of MySQL_Connection::isValid()
+   *
+   */
+  void isValid();
+
+  /*
+   * Test of MySQL_Connection::reconnect()
+   *
+   */
+  void reconnect();
 };
 
 

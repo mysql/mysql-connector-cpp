@@ -2579,5 +2579,106 @@ void connection::localInfile()
 }
 
 
+void connection::isValid()
+{
+  logMsg("connection::isValid");
+
+  try
+  {
+	if (!con->isValid())
+	{
+	  FAIL("Connection is not active");
+	}
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+
+void connection::reconnect()
+{
+  logMsg("connection::connectOptReconnect - OPT_RECONNECT");
+
+  logMsg("OPT_RECONNECT disabled");
+  try
+  {
+    try
+    {
+      sql::ConnectOptionsMap connection_properties;
+
+      connection_properties["hostName"]=url;
+      connection_properties["userName"]=user;
+      connection_properties["password"]=passwd;
+      connection_properties["OPT_READ_TIMEOUT"]= 1;
+
+      connection_properties.erase("OPT_RECONNECT");
+      connection_properties["OPT_RECONNECT"]= false;
+
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      con->setSchema(db);
+      stmt.reset(con->createStatement());
+      res.reset(stmt->executeQuery("SELECT sleep(10);"));
+      FAIL("Connection didn't timed out");
+    }
+    catch (sql::SQLException /*&e*/)
+    {
+      ASSERT(con->reconnect());
+      res.reset(stmt->executeQuery("SELECT 1;"));
+      ASSERT(res->next());
+      ASSERT_EQUALS(res->getInt(1), 1);
+    }
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+
+  logMsg("OPT_RECONNECT enabled");
+  try
+  {
+    try
+    {
+      sql::ConnectOptionsMap connection_properties;
+
+      connection_properties["hostName"]=url;
+      connection_properties["userName"]=user;
+      connection_properties["password"]=passwd;
+      connection_properties["OPT_READ_TIMEOUT"]= 1;
+
+      connection_properties.erase("OPT_RECONNECT");
+      connection_properties["OPT_RECONNECT"]= true;
+
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      con->setSchema(db);
+      stmt.reset(con->createStatement());
+      res.reset(stmt->executeQuery("SELECT sleep(10);"));
+      FAIL("Connection didn't timed out");
+    }
+    catch (sql::SQLException /*&e*/)
+    {
+      ASSERT(con->reconnect());
+      res.reset(stmt->executeQuery("SELECT 1;"));
+      ASSERT(res->next());
+      ASSERT_EQUALS(res->getInt(1), 1);
+    }
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+
 } /* namespace connection */
 } /* namespace testsuite */

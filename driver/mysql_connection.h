@@ -114,6 +114,10 @@ public:
 
 	bool isReadOnly();
 
+	bool isValid();
+
+	bool reconnect();
+
 	sql::SQLString nativeSQL(const sql::SQLString& sql);
 
 	sql::PreparedStatement * prepareStatement(const sql::SQLString& sql);

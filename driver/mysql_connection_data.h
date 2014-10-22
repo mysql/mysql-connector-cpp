@@ -48,7 +48,7 @@ struct MySQL_ConnectionData
 	MySQL_ConnectionData(boost::shared_ptr< MySQL_DebugLogger > & l)
 		: closed(false), autocommit(false), txIsolationLevel(TRANSACTION_READ_COMMITTED),
 		  is_valid(false), sql_mode_set(false), cache_sql_mode(false),
-		  metadata_use_info_schema(true),
+		  metadata_use_info_schema(true), reconnect(false),
 		  defaultStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
 		  defaultPreparedStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
 		  logger(l), meta(NULL) {}
@@ -69,6 +69,7 @@ struct MySQL_ConnectionData
 	bool sql_mode_set;
 	bool cache_sql_mode;
 	bool metadata_use_info_schema;
+	bool reconnect;
 
 	sql::ResultSet::enum_type defaultStatementResultType;
 	sql::ResultSet::enum_type defaultPreparedStatementResultType;

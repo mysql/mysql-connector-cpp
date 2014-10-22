@@ -112,6 +112,10 @@ public:
 
 	virtual bool isReadOnly() = 0;
 
+	virtual bool isValid() = 0;
+
+	virtual bool reconnect() = 0;
+
 	virtual sql::SQLString nativeSQL(const sql::SQLString& sql) = 0;
 
 	virtual PreparedStatement * prepareStatement(const sql::SQLString& sql) = 0;

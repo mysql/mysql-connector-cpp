@@ -407,7 +407,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	const bool * p_b;
 	const sql::SQLString * p_s;
 	bool opt_reconnect = false;
-	bool opt_reconnect_value = false;
 	int  client_exp_pwd = false;
 	bool secure_auth= true;
 
@@ -646,7 +645,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 				throw sql::InvalidArgumentException("No bool value passed for OPT_RECONNECT");
 			}
 			opt_reconnect = true;
-			opt_reconnect_value = *p_b;
+			intern->reconnect= *p_b;
 		} else if (!it->first.compare("OPT_CHARSET_NAME")) {
 			try {
 				p_s = (it->second).get< sql::SQLString >();
@@ -822,7 +821,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
 	if (opt_reconnect) {
 		try {
-			proxy->options(MYSQL_OPT_RECONNECT, (const char *) &opt_reconnect_value);
+			proxy->options(MYSQL_OPT_RECONNECT, (const char *) &intern->reconnect);
 		} catch (sql::InvalidArgumentException& e) {
 			std::string errorOption("MYSQL_OPT_RECONNECT");
 			throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
@@ -1514,6 +1513,87 @@ MySQL_Connection::setSessionVariable(const sql::SQLString & varname, unsigned in
 	service->executeUpdate(query);
 }
 /* }}} */
+
+
+/* {{{ MySQL_Connection::isValid() -I- */
+bool
+MySQL_Connection::isValid()
+{
+   CPP_ENTER_WL(intern->logger, "MySQL_Connection::isValid");
+   bool is_active= false;
+   if (intern->is_valid) {
+	   if (intern->reconnect) {
+		   bool opt_reconnect_value= false;
+		   try {
+				   proxy->options(MYSQL_OPT_RECONNECT, (const char *) &opt_reconnect_value);
+		   } catch (sql::InvalidArgumentException& e) {
+				   std::string errorOption("MYSQL_OPT_RECONNECT");
+				   throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
+		   }
+
+		   is_active= proxy->ping();
+
+		   opt_reconnect_value= true;
+		   try {
+				   proxy->options(MYSQL_OPT_RECONNECT, (const char *) &opt_reconnect_value);
+		   } catch (sql::InvalidArgumentException& e) {
+				   std::string errorOption("MYSQL_OPT_RECONNECT");
+				   throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
+		   }
+
+		   if (is_active == 0) {
+				   return true;
+		   }
+	   } else {
+		   if (!proxy->ping()) {
+				   return true;
+		   }
+	   }
+   }
+   return false;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Connection::reconnect() -I- */
+bool
+MySQL_Connection::reconnect()
+{
+   CPP_ENTER_WL(intern->logger, "MySQL_Connection::reconnect");
+   bool is_active= false;
+   if (intern->is_valid) {
+	   if (intern->reconnect) {
+		   if (!proxy->ping()) {
+				   return true;
+		   }
+	   } else {
+		   bool opt_reconnect_value= true;
+		   try {
+			   proxy->options(MYSQL_OPT_RECONNECT, (const char *) &opt_reconnect_value);
+		   } catch (sql::InvalidArgumentException& e) {
+			   std::string errorOption("MYSQL_OPT_RECONNECT");
+			   throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
+		   }
+
+		   is_active= proxy->ping();
+
+		   opt_reconnect_value= false;
+		   try {
+			   proxy->options(MYSQL_OPT_RECONNECT, (const char *) &opt_reconnect_value);
+		   } catch (sql::InvalidArgumentException& e) {
+			   std::string errorOption("MYSQL_OPT_RECONNECT");
+			   throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
+		   }
+
+		   if (is_active == 0) {
+				   return true;
+		   }
+	   }
+   }
+   return false;
+}
+/* }}} */
+
 
 } /* namespace mysql */
 } /* namespace sql */
