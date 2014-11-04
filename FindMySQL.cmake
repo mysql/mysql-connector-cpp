@@ -38,10 +38,10 @@
 #   MYSQL_LIB_DIR     - Set in environment or as parameter to "cmake",
 #                       this is the library directory where to find
 #                       the client library
-#   MYSQL_CLIENT_STATIC_LINKING
+#   MYSQLCLIENT_STATIC_LINKING
 #                     - Specify that you want static linking, dynamic
 #                       linking is the default
-#   MYSQL_CLIENT_NO_THREADS
+#   MYSQLCLIENT_NO_THREADS
 #                     - Specify to link against the single threaded
 #                       library, "libmysqlclient". Note that in 5.5
 #                       and up "libmysqlclient" is multithreaded and
@@ -86,7 +86,7 @@
 #       #define LIBMYSQL_VERSION           "6.1.5"
 #       #define LIBMYSQL_VERSION_ID         60105
 # FIXME can MYSQL_LIB_DIR be a list of paths?
-# FIXME is MYSQL_CLIENT_LIBS a better name?
+# FIXME is MYSQLCLIENT_LIBS a better name?
 # FIXME cache variables, makes them command line args?
 # FIXME really do include_directories() and link_directories()? Likely
 # FIXME add check that if not static, not picked up .a or mysqlclient.lib
@@ -112,8 +112,8 @@ set(ENV_OR_OPT_VARS
   MYSQL_CFLAGS
   MYSQL_CXXFLAGS
   MYSQL_CONFIG_EXECUTABLE
-  MYSQL_CLIENT_STATIC_LINKING
-  MYSQL_CLIENT_NO_THREADS
+  MYSQLCLIENT_STATIC_LINKING
+  MYSQLCLIENT_NO_THREADS
   MYSQL_CXX_LINKAGE
   MYSQL_EXTRA_LIBRARIES
   MYSQL_LINK_FLAGS
@@ -265,7 +265,7 @@ if(WIN32)
   set(_dynamic_libs   "libmysql")
   set(_static_libs    "mysqlclient")
   set(_static_lib_ext ".lib")   # Careful, can be import library for DLL
-elseif(MYSQL_CLIENT_NO_THREADS)
+elseif(MYSQLCLIENT_NO_THREADS)
   # In 5.1 and below there is a single threaded library
   set(_dynamic_libs   "mysqlclient")
   set(_static_libs    "libmysqlclient.a")
@@ -280,7 +280,7 @@ else()
   set(_static_lib_ext ".a")
 endif()
 
-if(MYSQL_CLIENT_STATIC_LINKING)
+if(MYSQLCLIENT_STATIC_LINKING)
   set(_link_type   "static")
   set(_search_libs ${_static_libs})
 else()
@@ -295,7 +295,7 @@ string(REPLACE ";" " " _pp_lib_fallback_path     "${_lib_fallback_path}")
 string(REPLACE ";" " " _pp_include_fallback_path "${_include_fallback_path}")
 
 message(STATUS "You will link ${_link_type}ally to the MySQL client"
-               " library (set with -DMYSQL_CLIENT_STATIC_LINKING=<bool>)")
+               " library (set with -DMYSQLCLIENT_STATIC_LINKING=<bool>)")
 message(STATUS "Searching for ${_link_type} libraries with the base name(s) \"${_pp_search_libs}\"")
 
 ##########################################################################
@@ -402,7 +402,7 @@ macro(_check_lib_search_error _lib_dir_var _lib_var _exta_err_string)
   # Unix only the extension differs. So we check here that we
   # got the library kind we expected.
   if(NOT WIN32)
-    if(NOT MYSQL_CLIENT_STATIC_LINKING)
+    if(NOT MYSQLCLIENT_STATIC_LINKING)
       get_filename_component(_ext ${_lib} EXT)
       if(${_ext} STREQUAL ${_static_lib_ext})
         message(FATAL_ERROR ${_err_string})
@@ -636,7 +636,7 @@ elseif(MYSQL_CONFIG_EXECUTABLE)
   # might not be correct for static libraries, so we might need to
   # adjust MYSQL_LIB_DIR later on.
 
-  if(MYSQL_CLIENT_STATIC_LINKING)
+  if(MYSQLCLIENT_STATIC_LINKING)
 
     # Find the static library, might be one level down
     find_library(MYSQL_LIB
@@ -704,14 +704,15 @@ endif()
 #
 ##########################################################################
 
-if(MYSQLCLIENT_STATIC_LINKING AND
+# FIXME needed?!
+if(NOT WIN32 AND MYSQLCLIENT_STATIC_LINKING AND
    NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   list(APPEND MYSQL_LIBRARIES "rt")
 endif()
 
-separate_arguments(MYSQL_EXTRA_LIBRARIES)
 if(MYSQL_EXTRA_LIBRARIES)
-   list(APPEND MYSQL_LIBRARIES ${MYSQL_EXTRA_LIBRARIES})
+  separate_arguments(MYSQL_EXTRA_LIBRARIES)
+  list(APPEND MYSQL_LIBRARIES ${MYSQL_EXTRA_LIBRARIES})
 endif()
 
 ##########################################################################
@@ -739,11 +740,11 @@ message(STATUS "  MYSQL_DIR                   : ${MYSQL_DIR}")
 message(STATUS "  MYSQL_INCLUDE_DIR           : ${MYSQL_INCLUDE_DIR}")
 message(STATUS "  MYSQL_LIB_DIR               : ${MYSQL_LIB_DIR}")
 message(STATUS "  MYSQL_CONFIG_EXECUTABLE     : ${MYSQL_CONFIG_EXECUTABLE}")
-message(STATUS "  MYSQL_CLIENT_STATIC_LINKING : ${MYSQL_CLIENT_STATIC_LINKING}")
-message(STATUS "  MYSQL_CLIENT_NO_THREADS     : ${MYSQL_CLIENT_NO_THREADS}")
 message(STATUS "  MYSQL_CXX_LINKAGE           : ${MYSQL_CXX_LINKAGE}")
 message(STATUS "  MYSQL_CFLAGS                : ${MYSQL_CFLAGS}")
 message(STATUS "  MYSQL_CXXFLAGS              : ${MYSQL_CXXFLAGS}")
+message(STATUS "  MYSQLCLIENT_STATIC_LINKING  : ${MYSQLCLIENT_STATIC_LINKING}")
+message(STATUS "  MYSQLCLIENT_NO_THREADS      : ${MYSQLCLIENT_NO_THREADS}")
 
 message(STATUS "MySQL client optional environment/cmake variables set by the user")
 
