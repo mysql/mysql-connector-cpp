@@ -36,7 +36,7 @@
 
   <!-- Set up ARPINSTALLLOCATION property -->
   <CustomAction Id="SetARPINSTALLLOCATION" Property="ARPINSTALLLOCATION" Value="[INSTALLDIR]" />
-  <CustomAction Id="SetARPREADME" Property="ARPREADME" Value="[INSTALLDIR]README" />
+  <CustomAction Id="SetARPREADME" Property="ARPREADME" Value="[INSTALLDIR]README.txt" />
 
   <!-- Sequences -->
   <InstallExecuteSequence>

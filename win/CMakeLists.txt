@@ -84,11 +84,11 @@ SET(WIXOUT "mysql-connector-c++${EXTRA_NAME_SUFFIX}-${CONNECTOR_PRODUCT_VERSION}
 SET(ProductURN "MSQZP-100-ZZZZ")
 
 IF(EXISTS "../COPYING")
-  SET(LIC_SHORT_NAME "COPYING")
-  SET(LIC_NAME       "COPYING")
+  SET(LIC_SHORT_NAME "COPYING.txt")
+  SET(LIC_NAME       "COPYING.txt")
 ELSE(EXISTS "../COPYING")
-  SET(LIC_SHORT_NAME "LICENSE.mys")
-  SET(LIC_NAME       "LICENSE.mysql")
+  SET(LIC_SHORT_NAME "LICENSE.txt")
+  SET(LIC_NAME       "LICENSE.mysql.txt")
 ENDIF(EXISTS "../COPYING")
 
 #-----------------------------------------------------
