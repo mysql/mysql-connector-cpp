@@ -242,7 +242,9 @@ static const String2IntMap booleanOptions[]=
 		{"OPT_REPORT_DATA_TRUNCATION",  MYSQL_REPORT_DATA_TRUNCATION},
 		{"OPT_ENABLE_CLEARTEXT_PLUGIN", MYSQL_ENABLE_CLEARTEXT_PLUGIN},
 		{"sslVerify",                   MYSQL_OPT_SSL_VERIFY_SERVER_CERT},
-		{"sslEnforce",                  MYSQL_OPT_SSL_ENFORCE}
+		{"OPT_RECONNECT",               MYSQL_OPT_RECONNECT},
+		{"sslEnforce",                  MYSQL_OPT_SSL_ENFORCE},
+		{"useLegacyAuth",               MYSQL_SECURE_AUTH}
 	};
 /* Array for mapping of integer connection options to mysql_options call */
 static const String2IntMap intOptions[]=
@@ -255,16 +257,23 @@ static const String2IntMap intOptions[]=
 /* Array for mapping of string connection options to mysql_options call */
 static const String2IntMap stringOptions[]=
 	{
-		{"preInit",            MYSQL_INIT_COMMAND},
-		{"sslCRL",             MYSQL_OPT_SSL_CRL},
-		{"sslCRLPath",         MYSQL_OPT_SSL_CRLPATH},
-		{"rsaKey",             MYSQL_SERVER_PUBLIC_KEY},
-		{"charsetDir",         MYSQL_SET_CHARSET_DIR},
-		{"pluginDir",          MYSQL_PLUGIN_DIR},
-		{"defaultAuth",        MYSQL_DEFAULT_AUTH},
+		{"preInit",          MYSQL_INIT_COMMAND},
+		{"sslKey",           MYSQL_OPT_SSL_KEY},
+		{"sslCert",          MYSQL_OPT_SSL_CERT},
+		{"sslCA",            MYSQL_OPT_SSL_CA},
+		{"sslCAPath",        MYSQL_OPT_SSL_CAPATH},
+		{"sslCipher",        MYSQL_OPT_SSL_CIPHER},
+		{"sslCRL",           MYSQL_OPT_SSL_CRL},
+		{"sslCRLPath",       MYSQL_OPT_SSL_CRLPATH},
+		{"rsaKey",           MYSQL_SERVER_PUBLIC_KEY},
+		{"charsetDir",       MYSQL_SET_CHARSET_DIR},
+		{"pluginDir",        MYSQL_PLUGIN_DIR},
+		{"defaultAuth",      MYSQL_DEFAULT_AUTH},
 		{"OPT_CONNECT_ATTR_DELETE", MYSQL_OPT_CONNECT_ATTR_DELETE},
-		{"readDefaultGroup",   MYSQL_READ_DEFAULT_GROUP},
-		{"readDefaultFile",    MYSQL_READ_DEFAULT_FILE}
+		{"readDefaultGroup", MYSQL_READ_DEFAULT_GROUP},
+		{"readDefaultFile",  MYSQL_READ_DEFAULT_FILE},
+		{"OPT_CAN_HANDLE_EXPIRED_PASSWORDS", MYSQL_OPT_CAN_HANDLE_EXPIRED_PASSWORDS},
+		{"OPT_CHARSET_NAME", MYSQL_SET_CHARSET_NAME}
 	};
 
 template<class T>
@@ -399,8 +408,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 	sql::SQLString defaultCharset("utf8");
 	sql::SQLString characterSetResults("utf8");
 
-	sql::SQLString sslKey, sslCert, sslCA, sslCAPath, sslCipher, postInit;
-	bool ssl_used = false;
+	sql::SQLString postInit;
 	int flags = CLIENT_MULTI_RESULTS;
 
 	const int * p_i;
@@ -512,66 +520,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 			} else {
 				throw sql::InvalidArgumentException("No string value passed for characterSetResults");
 			}
-		} else if (!it->first.compare("sslKey")) {
-			try {
-				p_s = (it->second).get< sql::SQLString >();
-			} catch (sql::InvalidArgumentException& e) {
-				throw sql::InvalidArgumentException("Wrong type passed for sslKey expected sql::SQLString");
-			}
-			if (p_s) {
-				sslKey = *p_s;
-			} else {
-				throw sql::InvalidArgumentException("No string value passed for sslKey");
-			}
-			ssl_used = true;
-		} else if (!it->first.compare("sslCert")) {
-			try {
-				p_s = (it->second).get< sql::SQLString >();
-			} catch (sql::InvalidArgumentException& e) {
-				throw sql::InvalidArgumentException("Wrong type passed for sslCert expected sql::SQLString");
-			}
-			if (p_s) {
-				sslCert = *p_s;
-			} else {
-				throw sql::InvalidArgumentException("No string value passed for sslCert");
-			}
-			ssl_used = true;
-		} else if (!it->first.compare("sslCA")) {
-			try {
-				p_s = (it->second).get< sql::SQLString >();
-			} catch (sql::InvalidArgumentException& e) {
-				throw sql::InvalidArgumentException("Wrong type passed for sslCA expected sql::SQLString");
-			}
-			if (p_s) {
-				sslCA = *p_s;
-			} else {
-				throw sql::InvalidArgumentException("No string value passed for sslCA");
-			}
-			ssl_used = true;
-		} else if (!it->first.compare("sslCAPath")) {
-			try {
-				p_s = (it->second).get< sql::SQLString >();
-			} catch (sql::InvalidArgumentException& e) {
-				throw sql::InvalidArgumentException("Wrong type passed for sslCAPath expected sql::SQLString");
-			}
-			if (p_s) {
-				sslCAPath = *p_s;
-			} else {
-				throw sql::InvalidArgumentException("No string value passed for sslCAPath");
-			}
-			ssl_used = true;
-		} else if (!it->first.compare("sslCipher")) {
-			try {
-				p_s = (it->second).get< sql::SQLString >();
-			} catch (sql::InvalidArgumentException& e) {
-				throw sql::InvalidArgumentException("Wrong type passed for sslCipher expected sql::SQLString");
-			}
-			if (p_s) {
-				sslCipher = *p_s;
-			} else {
-				throw sql::InvalidArgumentException("No string value passed for sslCipher");
-			}
-			ssl_used = true;
 		} else if (!it->first.compare("defaultStatementResultType")) {
 			try {
 				p_i = (it->second).get< int >();
@@ -772,11 +720,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 		throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
 	}
 
-
-	if (ssl_used) {
-		/* According to the docs, always returns 0 */
-		proxy->ssl_set(sslKey.c_str(), sslCert.c_str(), sslCA.c_str(), sslCAPath.c_str(), sslCipher.c_str());
-	}
 	CPP_INFO_FMT("hostName=%s", uri.Host().c_str());
 	CPP_INFO_FMT("user=%s", userName.c_str());
 	CPP_INFO_FMT("port=%d", uri.Port());
@@ -992,11 +935,11 @@ MySQL_Connection::getClientOption(const sql::SQLString & optionName, void * opti
 	/* mysql_get_option() was added in mysql 5.7.3 version */
 	} else if ( proxy->get_server_version() >= 50703 ) {
 		try {
-			if (GET_CONN_OPTION(optionName, &optionValue, intOptions)) {
+			if (GET_CONN_OPTION(optionName, optionValue, intOptions)) {
 				return;
-			} else if (GET_CONN_OPTION(optionName, &optionValue, booleanOptions)) {
+			} else if (GET_CONN_OPTION(optionName, optionValue, booleanOptions)) {
 				return;
-			} else if (GET_CONN_OPTION(optionName, &optionValue, stringOptions)) {
+			} else if (GET_CONN_OPTION(optionName, optionValue, stringOptions)) {
 				return;
 			}
 		} catch (sql::SQLUnsupportedOptionException& e) {

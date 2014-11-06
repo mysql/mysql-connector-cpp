@@ -174,6 +174,88 @@ void connection::getClientOption()
 	  fail(e.what(), __FILE__, __LINE__);
 	}
 
+	int serverVersion= getMySQLVersion(con);
+	if ( serverVersion >= 57003)
+	{
+	  try
+	  {
+		sql::ConnectOptionsMap opts;
+		int input_value= 111;
+		int output_value= 2367;
+		void * output;
+
+		opts["hostName"]=url;
+		opts["userName"]=user;
+		opts["password"]=passwd;
+		opts["OPT_READ_TIMEOUT"]= 111;
+
+		created_objects.clear();
+		con.reset(driver->connect(opts));
+
+		output=(static_cast<int *> (&output_value));
+		con->getClientOption("OPT_READ_TIMEOUT", output);
+		ASSERT_EQUALS(input_value, output_value);
+	  }
+	  catch (sql::SQLException &e)
+	  {
+		logErr(e.what());
+		logErr("SQLState: " + std::string(e.getSQLState()));
+		fail(e.what(), __FILE__, __LINE__);
+	  }
+
+	  try
+	  {
+		sql::ConnectOptionsMap opts;
+		bool input_value= true;
+		bool output_value= false;
+		void * output;
+
+		opts["hostName"]=url;
+		opts["userName"]=user;
+		opts["password"]=passwd;
+		opts["OPT_RECONNECT"]= input_value;
+
+		created_objects.clear();
+		con.reset(driver->connect(opts));
+
+		output=(static_cast<bool *> (&output_value));
+		con->getClientOption("OPT_RECONNECT", output);
+		ASSERT_EQUALS(input_value, output_value);
+	  }
+	  catch (sql::SQLException &e)
+	  {
+		logErr(e.what());
+		logErr("SQLState: " + std::string(e.getSQLState()));
+		fail(e.what(), __FILE__, __LINE__);
+	  }
+
+	  try
+	  {
+		sql::ConnectOptionsMap opts;
+		sql::SQLString input_value("../lib/plugin/");
+		char *output_value= "../lib/plugin/";
+		void * output;
+
+		opts["hostName"]=url;
+		opts["userName"]=user;
+		opts["password"]=passwd;
+		opts["pluginDir"]= input_value;
+
+		created_objects.clear();
+		con.reset(driver->connect(opts));
+
+		output=(static_cast<char **> (&output_value));
+		con->getClientOption("pluginDir", output);
+
+		ASSERT_EQUALS(input_value, output_value);
+	  }
+	  catch (sql::SQLException &e)
+	  {
+		logErr(e.what());
+		logErr("SQLState: " + std::string(e.getSQLState()));
+		fail(e.what(), __FILE__, __LINE__);
+	  }
+	}
   }
   catch (sql::SQLException &e)
   {
@@ -2404,12 +2486,17 @@ void connection::connectCharsetDir()
     opts["userName"]=user;
     opts["password"]=passwd;
     opts["charsetDir"]= charDir;
+	opts["OPT_READ_TIMEOUT"]= 123;
+	opts["pluginDir"]= sql::SQLString("../lib/plugin/");
+	opts["OPT_RECONNECT"]= true;
 
     created_objects.clear();
     con.reset(driver->connect(opts));
 
 	sql::SQLString *outDir = con->getClientOption("characterSetDirectory");
+
 	ASSERT_EQUALS(charDir, *outDir);
+
   }
   catch (sql::SQLException &e)
   {
@@ -2445,7 +2532,7 @@ void connection::setAuthDir()
 {
   logMsg("connection::setAuthDir - MYSQL_PLUGIN_DIR");
   int serverVersion= getMySQLVersion(con);
-  if ( serverVersion >= 50703 )
+  if ( serverVersion < 57003 )
   {
     SKIP("Server version >= 5.7.3 needed to run this test");
   }
