@@ -2479,24 +2479,19 @@ void connection::connectCharsetDir()
 {
   try
   {
-	sql::ConnectOptionsMap opts;
-	sql::SQLString charDir("/tmp/");
+    sql::ConnectOptionsMap opts;
+    sql::SQLString charDir("/tmp/");
 
     opts["hostName"]=url;
     opts["userName"]=user;
     opts["password"]=passwd;
     opts["charsetDir"]= charDir;
-	opts["OPT_READ_TIMEOUT"]= 123;
-	opts["pluginDir"]= sql::SQLString("../lib/plugin/");
-	opts["OPT_RECONNECT"]= true;
 
     created_objects.clear();
     con.reset(driver->connect(opts));
 
-	sql::SQLString *outDir = con->getClientOption("characterSetDirectory");
-
-	ASSERT_EQUALS(charDir, *outDir);
-
+    sql::SQLString *outDir = con->getClientOption("characterSetDirectory");
+    ASSERT_EQUALS(charDir, *outDir);
   }
   catch (sql::SQLException &e)
   {
