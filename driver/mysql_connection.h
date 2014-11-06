@@ -102,7 +102,7 @@ public:
 
 	void getClientOption(const sql::SQLString & optionName, void * optionValue);
 
-	sql::SQLString * getClientOption(const sql::SQLString & optionName);
+	sql::SQLString getClientOption(const sql::SQLString & optionName);
 
 	sql::DatabaseMetaData * getMetaData();
 

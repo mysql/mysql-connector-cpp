@@ -160,12 +160,12 @@ void connection::getClientOption()
 	try
     {
       sql::SQLString input_value("latin1");
-      sql::SQLString *output_value;
+      sql::SQLString output_value;
 
       con->setClientOption("characterSetResults", input_value);
 
       output_value= con->getClientOption("characterSetResults");
-      ASSERT_EQUALS(input_value, *output_value);
+      ASSERT_EQUALS(input_value, output_value);
     }
 	catch (sql::SQLException &e)
 	{
@@ -255,6 +255,18 @@ void connection::getClientOption()
 		logErr("SQLState: " + std::string(e.getSQLState()));
 		fail(e.what(), __FILE__, __LINE__);
 	  }
+	}
+
+	try 
+	{	
+	  sql::SQLString tmp = con->getClientOption("characterSetDirectory");
+	  tmp = con->getClientOption("readDefaultFile");
+	}
+	catch (sql::SQLException &e)
+	{
+	  logErr(e.what());
+	  logErr("SQLState: " + std::string(e.getSQLState()));
+	  fail(e.what(), __FILE__, __LINE__);
 	}
   }
   catch (sql::SQLException &e)
@@ -2490,8 +2502,8 @@ void connection::connectCharsetDir()
     created_objects.clear();
     con.reset(driver->connect(opts));
 
-    sql::SQLString *outDir = con->getClientOption("characterSetDirectory");
-    ASSERT_EQUALS(charDir, *outDir);
+    sql::SQLString outDir = con->getClientOption("characterSetDirectory");
+    ASSERT_EQUALS(charDir, outDir);
   }
   catch (sql::SQLException &e)
   {
@@ -2551,9 +2563,9 @@ void connection::setAuthDir()
 	created_objects.clear();
 	conn1.reset(driver->connect(opts));
 
-	sql::SQLString *out_plugin_dir= conn1->getClientOption(sql::SQLString("pluginDir"));
+	sql::SQLString out_plugin_dir= conn1->getClientOption(sql::SQLString("pluginDir"));
 
-	ASSERT_EQUALS(in_plugin_dir, *out_plugin_dir);
+	ASSERT_EQUALS(in_plugin_dir, out_plugin_dir);
 
   }
   catch (sql::SQLException &e)
