@@ -107,7 +107,7 @@ already installed." />
                     <File Id="file0150" Name="mycppcon.dll" LongName="mysqlcppconn.dll" Source="..\driver\relwithdebinfo\mysqlcppconn.dll" />
                     <File Id="file0151" Name="mycppcon.lib" LongName="mysqlcppconn.lib" Source="..\driver\relwithdebinfo\mysqlcppconn.lib" />
                     <File Id="file0152" Name="mycpstat.lib" LongName="mysqlcppconn-static.lib" Source="..\driver\relwithdebinfo\mysqlcppconn-static.lib" />
-        		  </Component>
+                  </Component>
                 </Directory>
               </Directory>
 
@@ -121,7 +121,7 @@ already installed." />
         <Feature Id="ConnectorCPP" Title="Library" Description="The release library and headers." Level="1" Display="expand">
           <ComponentRef Id="AdditionalFiles" />
           <ComponentRef Id="IncludeFiles" />
-	      <ComponentRef Id="CppconnIncludes" />
+          <ComponentRef Id="CppconnIncludes" />
           <ComponentRef Id="ClientLibraryRelease" />
 
           <Feature Id="DebugLibraries" Title="Debug Libary" Description="Debug library and symbols." Level="1000">
