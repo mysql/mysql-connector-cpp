@@ -273,8 +273,7 @@ static const String2IntMap stringOptions[]=
 		{"defaultAuth",      MYSQL_DEFAULT_AUTH, 0},
 		{"readDefaultGroup", MYSQL_READ_DEFAULT_GROUP, 0},
 		{"readDefaultFile",  MYSQL_READ_DEFAULT_FILE, 0},
-		{"OPT_CHARSET_NAME", MYSQL_SET_CHARSET_NAME, 1},
-		{"OPT_CONNECT_ATTR_DELETE", MYSQL_OPT_CONNECT_ATTR_DELETE, 0}
+		{"OPT_CHARSET_NAME", MYSQL_SET_CHARSET_NAME, 1}
 	};
 
 template<class T>
@@ -720,6 +719,22 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 					proxy->options(MYSQL_OPT_CONNECT_ATTR_ADD, conn_attr_it->first, conn_attr_it->second);
 				} catch (sql::InvalidArgumentException& e) {
 					std::string errorOption("MYSQL_OPT_CONNECT_ATTR_ADD");
+					throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
+				}
+			}
+		} else if (!it->first.compare("OPT_CONNECT_ATTR_DELETE")) {
+			const std::list< sql::SQLString > *conVal;
+			try {
+				conVal= (it->second).get< std::list< sql::SQLString > >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for OPT_CONNECT_ATTR_DELETE expected std::list< sql::SQLString >");
+			}
+			std::list< sql::SQLString >::const_iterator conn_attr_it;
+			for (conn_attr_it = conVal->begin(); conn_attr_it != conVal->end(); conn_attr_it++) {
+				try {
+					proxy->options(MYSQL_OPT_CONNECT_ATTR_DELETE, *conn_attr_it);
+				} catch (sql::InvalidArgumentException& e) {
+					std::string errorOption("MYSQL_OPT_CONNECT_ATTR_DELETE");
 					throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
 				}
 			}

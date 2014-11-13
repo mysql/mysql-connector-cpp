@@ -29,6 +29,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <string>
 #include <map>
+#include <list>
 #include <algorithm>
 #include <typeinfo>
 
@@ -111,7 +112,7 @@ public:
 		return *this;
 	}
 
-	virtual BaseVariantImpl* Clone() {
+	virtual VariantImpl* Clone() {
 		return new VariantImpl(*this);
 	}
 
@@ -132,19 +133,19 @@ private:
 
 
 template<class T>
-class  VariantMap : public VariantImpl<T>
+class  VariantMap : public BaseVariantImpl
 {
 public:
-	VariantMap(T i) : VariantImpl<T>(i) {}
+	VariantMap(T i) : BaseVariantImpl(new T(i), typeid(i).name()) {}
 
 	~VariantMap() {
 		destroy_content();
 	}
 
-	VariantMap(VariantMap& that) :
-		VariantImpl<T>(that)
-	{
-		copy_content(that);
+	VariantMap(VariantMap& that) : BaseVariantImpl(that) {
+		if (this != &that) {
+			copy_content(that);
+		}
 	}
 
 	VariantMap& operator=(VariantMap& that) {
@@ -155,32 +156,85 @@ public:
 		return *this;
 	}
 
-	virtual BaseVariantImpl* Clone() {
+	virtual VariantMap* Clone() {
 		return new VariantMap(*this);
+	}
+
+
+private:
+	void destroy_content() {
+		T *tmp=  static_cast< T *> (cvptr);
+		if (tmp) {
+			tmp->clear();
+			delete tmp;	
+			cvptr= NULL;
+		}
+	}
+
+	void copy_content(VariantMap& var) {
+		T *tmp=  static_cast< T *> (var.cvptr);
+		if (tmp) {
+			cvptr= new T();
+			typename T::const_iterator cit = tmp->begin();
+			while(cit != tmp->end()) {
+				(static_cast< T * >(cvptr))->insert(
+						std::make_pair(sql::SQLString(cit->first), 
+										sql::SQLString(cit->second)));
+				++cit;
+			}
+		}
+	}
+};
+
+
+template<class T>
+class  VariantList : public BaseVariantImpl
+{
+public:
+	VariantList(T i) : BaseVariantImpl(new T(i), typeid(i).name()) {}
+
+	~VariantList() {
+		destroy_content();
+	}
+
+	VariantList(VariantList& that) : BaseVariantImpl(that) {
+		if (this != &that) {
+			copy_content(that);
+		}
+	}
+
+	VariantList& operator=(VariantList& that) {
+		if (this != &that) {
+			destroy_content();
+			copy_content(that);
+		}
+		return *this;
+	}
+
+	virtual VariantList* Clone() {
+		return new VariantList(*this);
 	}
 
 
 private:
 	void destroy_content()
 	{
-		void *cvptr= BaseVariantImpl::get< void >();
 		T *tmp=  static_cast< T *> (cvptr);
 		if (tmp) {
-			tmp->erase(tmp->begin(), tmp->end());
+			tmp->clear();
+			delete tmp;	
+			cvptr= NULL;
 		}
 	}
 
-	void copy_content(VariantMap& var)
+	void copy_content(VariantList& var)
 	{
-		void *cvptr= BaseVariantImpl::get< void >();
-		T *tmp=  static_cast< T *> (var.BaseVariantImpl::get< void >());
+		T *tmp=  static_cast< T *> (var.cvptr);
 		if (tmp) {
 			cvptr= new T();
 			typename T::const_iterator cit = tmp->begin();
 			while(cit != tmp->end()) {
-				std::pair< sql::SQLString, sql::SQLString >
-							map_pair (cit->first, cit->second);
-				(static_cast< T * >(cvptr))->insert(map_pair);
+				(static_cast< T * >(cvptr))->push_back(sql::SQLString(*cit));
 				++cit;
 			}
 		}
@@ -206,6 +260,12 @@ public:
 	Variant(const sql::SQLString &i) :
 		variant(new VariantImpl< sql::SQLString >(i)) {}
 
+	Variant(const std::list< std::string > &i) :
+		variant(new VariantList< std::list < std::string > >(i)) {}
+
+	Variant(const std::list< sql::SQLString > &i) :
+		variant(new VariantList< std::list < sql::SQLString > >(i)) {}
+
 	Variant(const std::map< std::string, std::string > &i) :
 		variant(new VariantMap< std::map< std::string, std::string > >(i)) {}
 
@@ -220,7 +280,9 @@ public:
 	}
 
 	Variant(const Variant& that) {
-		variant= that.variant->Clone();
+		if (this != &that) {
+			variant= that.variant->Clone();
+		}
 	}
 
 	Variant& operator=(const Variant& that) {
