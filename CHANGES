@@ -49,6 +49,7 @@ GA  1.1.5 -
 - CMake picking up libmysqlclient from system path (Bug#19940663)
 - Assertion failure in getClientOption when the provided option is not set
   (Bug#19938922)
+- WB sends unnecessary COM_PING operations. (Bug#17186530)
 
 GA  1.1.4 -
 - Both static and dynamic driver libraries are now linked statically against
