@@ -2406,7 +2406,7 @@ void connection::connectAttrAdd()
 	testsuite::Connection conn1;
 	sql::ConnectOptionsMap opts;
     std::map< sql::SQLString, sql::SQLString > connectAttrMap;
-    std::list< sql::SQLString > connectAttrList;
+    std::list< std::string > connectAttrList;
 
     opts["hostName"]=url;
     opts["userName"]=user;
@@ -2418,8 +2418,8 @@ void connection::connectAttrAdd()
     connectAttrMap["keyc4"] = "value4";
     connectAttrMap["keyc5"] = "value5";
 
-    connectAttrList.push_back(sql::SQLString("keyc2"));
-    connectAttrList.push_back(sql::SQLString("keyc5"));
+    connectAttrList.push_back(std::string("keyc2"));
+    connectAttrList.push_back(std::string("keyc5"));
 
     opts.erase("OPT_CONNECT_ATTR_ADD");
     opts["OPT_CONNECT_ATTR_ADD"]= connectAttrMap;
