@@ -1025,24 +1025,24 @@ MySQL_Connection::getClientOption(const sql::SQLString & optionName, void * opti
 
 
 /* {{{ MySQL_Connection::getClientOption() -I- */
-sql::SQLString *
+sql::SQLString
 MySQL_Connection::getClientOption(const sql::SQLString & optionName)
 {
 	CPP_ENTER_WL(intern->logger, "MySQL_Connection::getClientOption");
 
 	if (!optionName.compare("characterSetResults")) {
-		return new sql::SQLString(getSessionVariable("character_set_results"));
+		return sql::SQLString(getSessionVariable("character_set_results"));
 	} else if (!optionName.compare("characterSetDirectory")) {
 		MY_CHARSET_INFO cs;
 		proxy->get_character_set_info(&cs);
-		return new sql::SQLString(cs.dir);
+		return cs.dir ? sql::SQLString(cs.dir) : "";
 	} else if ( proxy->get_server_version() >= 50703 ) {
-		const char* optionValue;
+		const char* optionValue= NULL;
 		if (GET_CONN_OPTION(optionName, &optionValue, stringOptions)) {
-			return new sql::SQLString(optionValue);
+			return optionValue ? sql::SQLString(optionValue) : "";
 		}
 	}
-	return 0;
+	return "";
 }
 /* }}} */
 
