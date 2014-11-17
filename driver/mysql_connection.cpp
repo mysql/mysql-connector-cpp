@@ -187,20 +187,19 @@ MySQL_Connection::~MySQL_Connection()
 struct String2IntMap
 {
 	const char * key;
-	int          value;
-	bool         skip_list;
+	int		     value;
 };
 
 static const String2IntMap flagsOptions[]=
 	{
-		{"CLIENT_COMPRESS",			CLIENT_COMPRESS, 0},
-		{"CLIENT_FOUND_ROWS",		CLIENT_FOUND_ROWS, 0},
-		{"CLIENT_IGNORE_SIGPIPE",	CLIENT_IGNORE_SIGPIPE, 0},
-		{"CLIENT_IGNORE_SPACE",		CLIENT_IGNORE_SPACE, 0},
-		{"CLIENT_INTERACTIVE",		CLIENT_INTERACTIVE, 0},
-		{"CLIENT_LOCAL_FILES",		CLIENT_LOCAL_FILES, 0},
-		{"CLIENT_MULTI_STATEMENTS",	CLIENT_MULTI_STATEMENTS, 0},
-		{"CLIENT_NO_SCHEMA",		CLIENT_NO_SCHEMA, 0}
+		{"CLIENT_COMPRESS",			CLIENT_COMPRESS},
+		{"CLIENT_FOUND_ROWS",		CLIENT_FOUND_ROWS},
+		{"CLIENT_IGNORE_SIGPIPE",	CLIENT_IGNORE_SIGPIPE},
+		{"CLIENT_IGNORE_SPACE",		CLIENT_IGNORE_SPACE},
+		{"CLIENT_INTERACTIVE",		CLIENT_INTERACTIVE},
+		{"CLIENT_LOCAL_FILES",		CLIENT_LOCAL_FILES},
+		{"CLIENT_MULTI_STATEMENTS",	CLIENT_MULTI_STATEMENTS},
+		{"CLIENT_NO_SCHEMA",		CLIENT_NO_SCHEMA}
 	};
 
 /* {{{ readFlag(::sql::SQLString, int= 0) -I- */
@@ -240,40 +239,32 @@ static bool read_connection_flag(ConnectOptionsMap::const_iterator &cit, int &fl
 /* Array for mapping of boolean connection options to mysql_options call */
 static const String2IntMap booleanOptions[]=
 	{
-		{"OPT_REPORT_DATA_TRUNCATION",  MYSQL_REPORT_DATA_TRUNCATION, 0},
-		{"OPT_ENABLE_CLEARTEXT_PLUGIN", MYSQL_ENABLE_CLEARTEXT_PLUGIN, 0},
-		{"sslVerify",                   MYSQL_OPT_SSL_VERIFY_SERVER_CERT, 0},
-		{"OPT_CAN_HANDLE_EXPIRED_PASSWORDS", MYSQL_OPT_CAN_HANDLE_EXPIRED_PASSWORDS, 1},
-		{"OPT_CONNECT_ATTR_RESET",      MYSQL_OPT_CONNECT_ATTR_RESET, 1},
-		{"OPT_RECONNECT",      			MYSQL_OPT_RECONNECT, 1},
-		{"sslEnforce",                  MYSQL_OPT_SSL_ENFORCE, 0}
+		{"OPT_REPORT_DATA_TRUNCATION",  MYSQL_REPORT_DATA_TRUNCATION},
+		{"OPT_ENABLE_CLEARTEXT_PLUGIN", MYSQL_ENABLE_CLEARTEXT_PLUGIN},
+		{"sslVerify",                   MYSQL_OPT_SSL_VERIFY_SERVER_CERT},
+		{"sslEnforce",                  MYSQL_OPT_SSL_ENFORCE}
 	};
 /* Array for mapping of integer connection options to mysql_options call */
 static const String2IntMap intOptions[]=
 	{
-		{"OPT_CONNECT_TIMEOUT", MYSQL_OPT_CONNECT_TIMEOUT, 0},
-		{"OPT_READ_TIMEOUT",    MYSQL_OPT_READ_TIMEOUT, 0},
-		{"OPT_WRITE_TIMEOUT",   MYSQL_OPT_WRITE_TIMEOUT, 0},
-		{"OPT_LOCAL_INFILE",    MYSQL_OPT_LOCAL_INFILE, 0}
+		{"OPT_CONNECT_TIMEOUT", MYSQL_OPT_CONNECT_TIMEOUT},
+		{"OPT_READ_TIMEOUT",    MYSQL_OPT_READ_TIMEOUT},
+		{"OPT_WRITE_TIMEOUT",   MYSQL_OPT_WRITE_TIMEOUT},
+		{"OPT_LOCAL_INFILE",    MYSQL_OPT_LOCAL_INFILE}
 	};
 /* Array for mapping of string connection options to mysql_options call */
 static const String2IntMap stringOptions[]=
 	{
-		{"preInit",          MYSQL_INIT_COMMAND, 0},
-		{"sslKey",           MYSQL_OPT_SSL_KEY, 1},
-		{"sslCert",          MYSQL_OPT_SSL_CERT, 1},
-		{"sslCA",            MYSQL_OPT_SSL_CA, 1},
-		{"sslCAPath",        MYSQL_OPT_SSL_CAPATH, 1},
-		{"sslCipher",        MYSQL_OPT_SSL_CIPHER, 1},
-		{"sslCRL",           MYSQL_OPT_SSL_CRL, 0},
-		{"sslCRLPath",       MYSQL_OPT_SSL_CRLPATH, 0},
-		{"rsaKey",           MYSQL_SERVER_PUBLIC_KEY, 0},
-		{"charsetDir",       MYSQL_SET_CHARSET_DIR, 0},
-		{"pluginDir",        MYSQL_PLUGIN_DIR, 0},
-		{"defaultAuth",      MYSQL_DEFAULT_AUTH, 0},
-		{"readDefaultGroup", MYSQL_READ_DEFAULT_GROUP, 0},
-		{"readDefaultFile",  MYSQL_READ_DEFAULT_FILE, 0},
-		{"OPT_CHARSET_NAME", MYSQL_SET_CHARSET_NAME, 1}
+		{"preInit",            MYSQL_INIT_COMMAND},
+		{"sslCRL",             MYSQL_OPT_SSL_CRL},
+		{"sslCRLPath",         MYSQL_OPT_SSL_CRLPATH},
+		{"rsaKey",             MYSQL_SERVER_PUBLIC_KEY},
+		{"charsetDir",         MYSQL_SET_CHARSET_DIR},
+		{"pluginDir",          MYSQL_PLUGIN_DIR},
+		{"defaultAuth",        MYSQL_DEFAULT_AUTH},
+		{"OPT_CONNECT_ATTR_DELETE", MYSQL_OPT_CONNECT_ATTR_DELETE},
+		{"readDefaultGroup",   MYSQL_READ_DEFAULT_GROUP},
+		{"readDefaultFile",    MYSQL_READ_DEFAULT_FILE}
 	};
 
 template<class T>
@@ -286,7 +277,7 @@ bool process_connection_option(ConnectOptionsMap::const_iterator &option,
 
 	for (size_t i = 0; i < map_size; ++i) {
 
-		if (!option->first.compare(options_map[i].key) && !options_map[i].skip_list) {
+		if (!option->first.compare(options_map[i].key)) {
 			try {
 				value = (option->second).get<T>();
 			} catch (sql::InvalidArgumentException& e) {
@@ -1017,11 +1008,11 @@ MySQL_Connection::getClientOption(const sql::SQLString & optionName, void * opti
 	/* mysql_get_option() was added in mysql 5.7.3 version */
 	} else if ( proxy->get_server_version() >= 50703 ) {
 		try {
-			if (GET_CONN_OPTION(optionName, optionValue, intOptions)) {
+			if (GET_CONN_OPTION(optionName, &optionValue, intOptions)) {
 				return;
-			} else if (GET_CONN_OPTION(optionName, optionValue, booleanOptions)) {
+			} else if (GET_CONN_OPTION(optionName, &optionValue, booleanOptions)) {
 				return;
-			} else if (GET_CONN_OPTION(optionName, optionValue, stringOptions)) {
+			} else if (GET_CONN_OPTION(optionName, &optionValue, stringOptions)) {
 				return;
 			}
 		} catch (sql::SQLUnsupportedOptionException& e) {
