@@ -100,7 +100,7 @@ public:
 
 	virtual void getClientOption(const sql::SQLString & optionName, void * optionValue) = 0;
 
-	virtual sql::SQLString getClientOption(const sql::SQLString & optionName) = 0;
+	virtual sql::SQLString * getClientOption(const sql::SQLString & optionName) = 0;
 
 	virtual DatabaseMetaData * getMetaData() = 0;
 

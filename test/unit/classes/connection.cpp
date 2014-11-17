@@ -162,12 +162,12 @@ void connection::getClientOption()
 	try
     {
       sql::SQLString input_value("latin1");
-      sql::SQLString output_value;
+      sql::SQLString *output_value;
 
       con->setClientOption("characterSetResults", input_value);
 
       output_value= con->getClientOption("characterSetResults");
-      ASSERT_EQUALS(input_value, output_value);
+      ASSERT_EQUALS(input_value, *output_value);
     }
 	catch (sql::SQLException &e)
 	{
@@ -176,17 +176,87 @@ void connection::getClientOption()
 	  fail(e.what(), __FILE__, __LINE__);
 	}
 
-
-	try 
-	{	
-	  sql::SQLString tmp = con->getClientOption("characterSetDirectory");
-	  tmp = con->getClientOption("readDefaultFile");
-	}
-	catch (sql::SQLException &e)
+	int serverVersion=getMySQLVersion(con);
+	if ( serverVersion >= 57003)
 	{
-	  logErr(e.what());
-	  logErr("SQLState: " + std::string(e.getSQLState()));
-	  fail(e.what(), __FILE__, __LINE__);
+	  try
+	  {
+		sql::ConnectOptionsMap opts;
+		int input_value=111;
+		int output_value=2367;
+		void * output;
+
+		opts["hostName"]=url;
+		opts["userName"]=user;
+		opts["password"]=passwd;
+		opts["OPT_READ_TIMEOUT"]=111;
+
+		created_objects.clear();
+		con.reset(driver->connect(opts));
+
+		output=(static_cast<int *> (&output_value));
+		con->getClientOption("OPT_READ_TIMEOUT", output);
+		ASSERT_EQUALS(input_value, output_value);
+	  }
+	  catch (sql::SQLException &e)
+	  {
+		logErr(e.what());
+		logErr("SQLState: " + std::string(e.getSQLState()));
+		fail(e.what(), __FILE__, __LINE__);
+	  }
+
+	  try
+	  {
+		sql::ConnectOptionsMap opts;
+		bool input_value=true;
+		bool output_value=false;
+		void * output;
+
+		opts["hostName"]=url;
+		opts["userName"]=user;
+		opts["password"]=passwd;
+		opts["OPT_RECONNECT"]=input_value;
+
+		created_objects.clear();
+		con.reset(driver->connect(opts));
+
+		output=(static_cast<bool *> (&output_value));
+		con->getClientOption("OPT_RECONNECT", output);
+		ASSERT_EQUALS(input_value, output_value);
+	  }
+	  catch (sql::SQLException &e)
+	  {
+		logErr(e.what());
+		logErr("SQLState: " + std::string(e.getSQLState()));
+		fail(e.what(), __FILE__, __LINE__);
+	  }
+
+	  try
+	  {
+		sql::ConnectOptionsMap opts;
+		sql::SQLString input_value("../lib/plugin/");
+		char *output_value="../lib/plugin/";
+		void * output;
+
+		opts["hostName"]=url;
+		opts["userName"]=user;
+		opts["password"]=passwd;
+		opts["pluginDir"]=input_value;
+
+		created_objects.clear();
+		con.reset(driver->connect(opts));
+
+		output=(static_cast<char **> (&output_value));
+		con->getClientOption("pluginDir", output);
+
+		ASSERT_EQUALS(input_value, output_value);
+	  }
+	  catch (sql::SQLException &e)
+	  {
+		logErr(e.what());
+		logErr("SQLState: " + std::string(e.getSQLState()));
+		fail(e.what(), __FILE__, __LINE__);
+	  }
 	}
   }
   catch (sql::SQLException &e)
@@ -2432,8 +2502,8 @@ void connection::connectCharsetDir()
     created_objects.clear();
     con.reset(driver->connect(opts));
 
-    sql::SQLString outDir = con->getClientOption("characterSetDirectory");
-    ASSERT_EQUALS(charDir, outDir);
+    sql::SQLString *outDir = con->getClientOption("characterSetDirectory");
+    ASSERT_EQUALS(charDir, *outDir);
   }
   catch (sql::SQLException &e)
   {
@@ -2493,9 +2563,9 @@ void connection::setAuthDir()
 	created_objects.clear();
 	conn1.reset(driver->connect(opts));
 
-	sql::SQLString out_plugin_dir= conn1->getClientOption(sql::SQLString("pluginDir"));
+	sql::SQLString *out_plugin_dir= conn1->getClientOption(sql::SQLString("pluginDir"));
 
-	ASSERT_EQUALS(in_plugin_dir, out_plugin_dir);
+	ASSERT_EQUALS(in_plugin_dir, *out_plugin_dir);
 
   }
   catch (sql::SQLException &e)
