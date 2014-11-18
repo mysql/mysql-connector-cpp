@@ -70,14 +70,7 @@ public:
 			(vTypeName ==
 				typeid(std::map< sql::SQLString, sql::SQLString >).name() &&
 			typeid(T).name() ==
-				typeid(std::map< std::string, std::string >).name()) ||
-			(vTypeName == typeid(std::list< std::string >).name() &&
-			typeid(T).name() ==
-				typeid(std::list< sql::SQLString >).name()) ||
-			(vTypeName ==
-				typeid(std::list< sql::SQLString >).name() &&
-			typeid(T).name() ==
-				typeid(std::list< std::string >).name()))
+				typeid(std::map< std::string, std::string >).name()))
 		{
 			return static_cast< T * > (cvptr);
 		}
