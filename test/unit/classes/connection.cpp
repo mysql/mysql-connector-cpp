@@ -33,8 +33,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <driver/mysql_connection.h>
 #include <cppconn/exception.h>
 
-#include <list>
-
 namespace testsuite
 {
 namespace classes
@@ -2310,7 +2308,6 @@ void connection::connectAttrAdd()
 	testsuite::Connection conn1;
 	sql::ConnectOptionsMap opts;
     std::map< sql::SQLString, sql::SQLString > connectAttrMap;
-    std::list< sql::SQLString > connectAttrList;
 
     opts["hostName"]=url;
     opts["userName"]=user;
@@ -2319,15 +2316,10 @@ void connection::connectAttrAdd()
     connectAttrMap["keyc1"] = "value1";
     connectAttrMap["keyc2"] = "value2";
     connectAttrMap["keyc3"] = "value3";
-    connectAttrMap["keyc4"] = "value4";
-    connectAttrMap["keyc5"] = "value5";
-
-    connectAttrList.push_back(sql::SQLString("keyc2"));
-    connectAttrList.push_back(sql::SQLString("keyc5"));
 
     opts.erase("OPT_CONNECT_ATTR_ADD");
     opts["OPT_CONNECT_ATTR_ADD"]= connectAttrMap;
-    opts["OPT_CONNECT_ATTR_DELETE"]= connectAttrList;
+    opts["OPT_CONNECT_ATTR_DELETE"]= sql::SQLString("keyc2");
 
     created_objects.clear();
     conn1.reset(driver->connect(opts));
@@ -2343,10 +2335,6 @@ void connection::connectAttrAdd()
     ASSERT(res->next());
     ASSERT_EQUALS(res->getString("ATTR_NAME"), "keyc3");
     ASSERT_EQUALS(res->getString("ATTR_VALUE"), "value3");
-
-    ASSERT(res->next());
-    ASSERT_EQUALS(res->getString("ATTR_NAME"), "keyc4");
-    ASSERT_EQUALS(res->getString("ATTR_VALUE"), "value4");
 
     ASSERT(!res->next());
   }
