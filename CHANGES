@@ -49,6 +49,8 @@ GA  1.1.5 -
 - WB sends unnecessary COM_PING operations. (Bug#17186530)
 - Double free or corruption error due to global extern string variable localhost 
   referenced at more then one places (Bug#19910311)
+- Assertion failure in getClientOption when the provided option is not set
+  (Bug#19938922)
 
 GA  1.1.4 -
 - Both static and dynamic driver libraries are now linked statically against

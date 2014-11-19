@@ -160,12 +160,12 @@ void connection::getClientOption()
 	try
     {
       sql::SQLString input_value("latin1");
-      sql::SQLString *output_value;
+      sql::SQLString output_value;
 
       con->setClientOption("characterSetResults", input_value);
 
-      output_value= con->getClientOption("characterSetResults");
-      ASSERT_EQUALS(input_value, *output_value);
+      output_value=con->getClientOption("characterSetResults");
+      ASSERT_EQUALS(input_value, output_value);
     }
 	catch (sql::SQLException &e)
 	{
@@ -173,6 +173,101 @@ void connection::getClientOption()
 	  logErr("SQLState: " + std::string(e.getSQLState()));
 	  fail(e.what(), __FILE__, __LINE__);
 	}
+
+    int serverVersion=getMySQLVersion(con);
+    if ( serverVersion >= 57003)
+    {
+      try
+      {
+        sql::ConnectOptionsMap opts;
+        int input_value=111;
+        int output_value=2367;
+        void * output;
+
+        opts["hostName"]=url;
+        opts["userName"]=user;
+        opts["password"]=passwd;
+        opts["OPT_READ_TIMEOUT"]=111;
+
+        created_objects.clear();
+        con.reset(driver->connect(opts));
+
+        output=(static_cast<int *> (&output_value));
+        con->getClientOption("OPT_READ_TIMEOUT", output);
+        ASSERT_EQUALS(input_value, output_value);
+      }
+      catch (sql::SQLException &e)
+      {
+        logErr(e.what());
+        logErr("SQLState: " + std::string(e.getSQLState()));
+        fail(e.what(), __FILE__, __LINE__);
+      }
+
+      try
+      {
+        sql::ConnectOptionsMap opts;
+        bool input_value=true;
+        bool output_value=false;
+        void * output;
+
+        opts["hostName"]=url;
+        opts["userName"]=user;
+        opts["password"]=passwd;
+        opts["OPT_RECONNECT"]=input_value;
+
+        created_objects.clear();
+        con.reset(driver->connect(opts));
+
+        output=(static_cast<bool *> (&output_value));
+        con->getClientOption("OPT_RECONNECT", output);
+        ASSERT_EQUALS(input_value, output_value);
+      }
+      catch (sql::SQLException &e)
+      {
+        logErr(e.what());
+        logErr("SQLState: " + std::string(e.getSQLState()));
+        fail(e.what(), __FILE__, __LINE__);
+      }
+
+      try
+      {
+        sql::ConnectOptionsMap opts;
+        sql::SQLString input_value("../lib/plugin/");
+        char *output_value="../lib/plugin/";
+        void * output;
+
+        opts["hostName"]=url;
+        opts["userName"]=user;
+        opts["password"]=passwd;
+        opts["pluginDir"]=input_value;
+
+        created_objects.clear();
+        con.reset(driver->connect(opts));
+
+        output=(static_cast<char **> (&output_value));
+        con->getClientOption("pluginDir", output);
+
+        ASSERT_EQUALS(input_value, output_value);
+      }
+      catch (sql::SQLException &e)
+      {
+        logErr(e.what());
+        logErr("SQLState: " + std::string(e.getSQLState()));
+        fail(e.what(), __FILE__, __LINE__);
+      }
+    }
+
+    try
+    {
+      sql::SQLString tmp=con->getClientOption("characterSetDirectory");
+      tmp=con->getClientOption("readDefaultFile");
+    }
+    catch (sql::SQLException &e)
+    {
+      logErr(e.what());
+      logErr("SQLState: " + std::string(e.getSQLState()));
+      fail(e.what(), __FILE__, __LINE__);
+    }
 
   }
   catch (sql::SQLException &e)
@@ -2230,7 +2325,7 @@ void connection::loadSameLibraryTwice()
    in second case the error has to be different */
 void connection::enableClearTextAuth()
 {
-  int serverVersion= getMySQLVersion(con);
+  int serverVersion=getMySQLVersion(con);
   if ( serverVersion < 55027 || serverVersion > 56000 && serverVersion < 56007)
   {
     SKIP("The server does not support tested functionality(cleartext plugin enabling)");
@@ -2258,8 +2353,8 @@ void connection::enableClearTextAuth()
   sql::ConnectOptionsMap opts;
   testsuite::Connection c2;
 
-  opts["userName"]= sql::SQLString("t_ct_user");
-  opts["password"]= sql::SQLString("foo");
+  opts["userName"]=sql::SQLString("t_ct_user");
+  opts["password"]=sql::SQLString("foo");
 
   /*
     Expecting error CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR
@@ -2280,7 +2375,7 @@ void connection::enableClearTextAuth()
     Expecting error other then CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR
     as option ENABLE_CLEARTEXT_PLUGIN is used
   */
-  opts["OPT_ENABLE_CLEARTEXT_PLUGIN"]= true;
+  opts["OPT_ENABLE_CLEARTEXT_PLUGIN"]=true;
 
   try
   {
@@ -2298,7 +2393,7 @@ void connection::enableClearTextAuth()
 void connection::connectAttrAdd()
 {
   logMsg("connection::connectAttr - MYSQL_OPT_CONNECT_ATTR_ADD|MYSQL_OPT_CONNECT_ATTR_DELETE");
-  int serverVersion= getMySQLVersion(con);
+  int serverVersion=getMySQLVersion(con);
   if ( serverVersion < 56006)
   {
     SKIP("The server does not support tested functionality(cleartext plugin enabling)");
@@ -2314,11 +2409,12 @@ void connection::connectAttrAdd()
     opts["userName"]=user;
     opts["password"]=passwd;
 
-    connectAttrMap["keyc1"] = "value1";
-    connectAttrMap["keyc2"] = "value2";
-    connectAttrMap["keyc3"] = "value3";
+    connectAttrMap["keyc1"]="value1";
+    connectAttrMap["keyc2"]="value2";
+    connectAttrMap["keyc3"]="value3";
 
     opts.erase("OPT_CONNECT_ATTR_ADD");
+    opts.erase("OPT_CONNECT_ATTR_DELETE");
     opts["OPT_CONNECT_ATTR_ADD"]= connectAttrMap;
     opts["OPT_CONNECT_ATTR_DELETE"]= sql::SQLString("keyc2");
 
@@ -2367,13 +2463,13 @@ void connection::connectAttrReset()
     opts["userName"]=user;
     opts["password"]=passwd;
 
-    connectAttrMap["keyd1"] = "value1";
-    connectAttrMap["keyd2"] = "value2";
-    connectAttrMap["keyd3"] = "value3";
+    connectAttrMap["keyd1"]="value1";
+    connectAttrMap["keyd2"]="value2";
+    connectAttrMap["keyd3"]="value3";
 
     opts.erase("OPT_CONNECT_ATTR_ADD");
-    opts["OPT_CONNECT_ATTR_ADD"]= connectAttrMap;
-    opts["OPT_CONNECT_ATTR_RESET"]= 0;
+    opts["OPT_CONNECT_ATTR_ADD"]=connectAttrMap;
+    opts["OPT_CONNECT_ATTR_RESET"]=0;
 
     created_objects.clear();
     conn2.reset(driver->connect(opts));
@@ -2403,13 +2499,13 @@ void connection::connectCharsetDir()
     opts["hostName"]=url;
     opts["userName"]=user;
     opts["password"]=passwd;
-    opts["charsetDir"]= charDir;
+    opts["charsetDir"]=charDir;
 
     created_objects.clear();
     con.reset(driver->connect(opts));
 
-	sql::SQLString *outDir = con->getClientOption("characterSetDirectory");
-	ASSERT_EQUALS(charDir, *outDir);
+	sql::SQLString outDir=con->getClientOption("characterSetDirectory");
+	ASSERT_EQUALS(charDir, outDir);
   }
   catch (sql::SQLException &e)
   {
@@ -2429,7 +2525,7 @@ void connection::connectSSLEnforce()
     opts["hostName"]=url;
     opts["userName"]=user;
     opts["password"]=passwd;
-    opts["sslEnforce"]= true;
+    opts["sslEnforce"]=true;
 
     created_objects.clear();
     con.reset(driver->connect(opts));
@@ -2444,7 +2540,7 @@ void connection::connectSSLEnforce()
 void connection::setAuthDir()
 {
   logMsg("connection::setAuthDir - MYSQL_PLUGIN_DIR");
-  int serverVersion= getMySQLVersion(con);
+  int serverVersion=getMySQLVersion(con);
   if ( serverVersion >= 50703 )
   {
     SKIP("Server version >= 5.7.3 needed to run this test");
@@ -2460,18 +2556,18 @@ void connection::setAuthDir()
 	opts["userName"]=user;
 	opts["password"]=passwd;
 #ifdef _WIN32
-	in_plugin_dir= sql::SQLString("C:\test_plugin");
+	in_plugin_dir=sql::SQLString("C:\test_plugin");
 #else
-	in_plugin_dir= sql::SQLString("\tmp\test_plugin");
+	in_plugin_dir=sql::SQLString("\tmp\test_plugin");
 #endif //_WIN32
 
-	opts["pluginDir"]= in_plugin_dir;
+	opts["pluginDir"]=in_plugin_dir;
 	created_objects.clear();
 	conn1.reset(driver->connect(opts));
 
-	sql::SQLString *out_plugin_dir= conn1->getClientOption(sql::SQLString("pluginDir"));
+	sql::SQLString out_plugin_dir=conn1->getClientOption(sql::SQLString("pluginDir"));
 
-	ASSERT_EQUALS(in_plugin_dir, *out_plugin_dir);
+	ASSERT_EQUALS(in_plugin_dir, out_plugin_dir);
 
   }
   catch (sql::SQLException &e)
@@ -2486,7 +2582,7 @@ void connection::setAuthDir()
 void connection::setDefaultAuth()
 {
   logMsg("connection::setDefaultAuth - MYSQL_DEFAULT_AUTH");
-  int serverVersion= getMySQLVersion(con);
+  int serverVersion=getMySQLVersion(con);
   if ( serverVersion < 50703 )
   {
     SKIP("Server version >= 5.7.3 needed to run this test");
@@ -2502,7 +2598,7 @@ void connection::setDefaultAuth()
 	opts["hostName"]=url;
 	opts["userName"]=user;
 	opts["password"]=passwd;
-	opts["defaultAuth"]= def_auth;
+	opts["defaultAuth"]=def_auth;
 	created_objects.clear();
 
 	try
@@ -2548,7 +2644,7 @@ void connection::localInfile()
 	opts["userName"]=user;
 	opts["password"]=passwd;
 	opts["schema"]=schema;
-	opts["OPT_LOCAL_INFILE"]= 1;
+	opts["OPT_LOCAL_INFILE"]=1;
 	created_objects.clear();
 	conn1.reset(driver->connect(opts));
 
@@ -2613,10 +2709,10 @@ void connection::reconnect()
       connection_properties["hostName"]=url;
       connection_properties["userName"]=user;
       connection_properties["password"]=passwd;
-      connection_properties["OPT_READ_TIMEOUT"]= 1;
+      connection_properties["OPT_READ_TIMEOUT"]=1;
 
       connection_properties.erase("OPT_RECONNECT");
-      connection_properties["OPT_RECONNECT"]= false;
+      connection_properties["OPT_RECONNECT"]=false;
 
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
@@ -2651,10 +2747,10 @@ void connection::reconnect()
       connection_properties["hostName"]=url;
       connection_properties["userName"]=user;
       connection_properties["password"]=passwd;
-      connection_properties["OPT_READ_TIMEOUT"]= 1;
+      connection_properties["OPT_READ_TIMEOUT"]=1;
 
       connection_properties.erase("OPT_RECONNECT");
-      connection_properties["OPT_RECONNECT"]= true;
+      connection_properties["OPT_RECONNECT"]=true;
 
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
