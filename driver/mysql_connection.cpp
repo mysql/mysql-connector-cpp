@@ -723,6 +723,22 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 					throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
 				}
 			}
+		} else if (!it->first.compare("OPT_CONNECT_ATTR_DELETE")) {
+			const std::list< sql::SQLString > *conVal;
+			try {
+				conVal= (it->second).get< std::list< sql::SQLString > >();
+			} catch (sql::InvalidArgumentException& e) {
+				throw sql::InvalidArgumentException("Wrong type passed for OPT_CONNECT_ATTR_DELETE expected std::list< sql::SQLString >");
+			}
+			std::list< sql::SQLString >::const_iterator conn_attr_it;
+			for (conn_attr_it = conVal->begin(); conn_attr_it != conVal->end(); conn_attr_it++) {
+				try {
+					proxy->options(MYSQL_OPT_CONNECT_ATTR_DELETE, *conn_attr_it);
+				} catch (sql::InvalidArgumentException& e) {
+					std::string errorOption("MYSQL_OPT_CONNECT_ATTR_DELETE");
+					throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
+				}
+			}
 		} else if (!it->first.compare("OPT_CONNECT_ATTR_RESET")) {
 			proxy->options(MYSQL_OPT_CONNECT_ATTR_RESET, 0);
 

@@ -33,6 +33,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <driver/mysql_connection.h>
 #include <cppconn/exception.h>
 
+#include <list>
+
 namespace testsuite
 {
 namespace classes
@@ -2401,9 +2403,10 @@ void connection::connectAttrAdd()
 
   try
   {
-	testsuite::Connection conn1;
-	sql::ConnectOptionsMap opts;
+    testsuite::Connection conn1;
+    sql::ConnectOptionsMap opts;
     std::map< sql::SQLString, sql::SQLString > connectAttrMap;
+    std::list< std::string > connectAttrList;
 
     opts["hostName"]=url;
     opts["userName"]=user;
@@ -2412,11 +2415,16 @@ void connection::connectAttrAdd()
     connectAttrMap["keyc1"]="value1";
     connectAttrMap["keyc2"]="value2";
     connectAttrMap["keyc3"]="value3";
+    connectAttrMap["keyc4"]="value4";
+    connectAttrMap["keyc5"]="value5";
+
+    connectAttrList.push_back(std::string("keyc2"));
+    connectAttrList.push_back(std::string("keyc5"));
 
     opts.erase("OPT_CONNECT_ATTR_ADD");
     opts.erase("OPT_CONNECT_ATTR_DELETE");
-    opts["OPT_CONNECT_ATTR_ADD"]= connectAttrMap;
-    opts["OPT_CONNECT_ATTR_DELETE"]= sql::SQLString("keyc2");
+    opts["OPT_CONNECT_ATTR_ADD"]=connectAttrMap;
+    opts["OPT_CONNECT_ATTR_DELETE"]=connectAttrList;
 
     created_objects.clear();
     conn1.reset(driver->connect(opts));
@@ -2433,7 +2441,178 @@ void connection::connectAttrAdd()
     ASSERT_EQUALS(res->getString("ATTR_NAME"), "keyc3");
     ASSERT_EQUALS(res->getString("ATTR_VALUE"), "value3");
 
+    ASSERT(res->next());
+    ASSERT_EQUALS(res->getString("ATTR_NAME"), "keyc4");
+    ASSERT_EQUALS(res->getString("ATTR_VALUE"), "value4");
+
     ASSERT(!res->next());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+
+  /*
+    Check for empty OPT_CONNECT_ATTR_ADD map
+    should not result in errors
+  */
+  try
+  {
+    testsuite::Connection conn1;
+    sql::ConnectOptionsMap opts;
+    std::map< sql::SQLString, sql::SQLString > connectAttrMap;
+
+    opts["hostName"]=url;
+    opts["userName"]=user;
+    opts["password"]=passwd;
+
+    opts.erase("OPT_CONNECT_ATTR_ADD");
+    opts["OPT_CONNECT_ATTR_ADD"]=connectAttrMap;
+
+    created_objects.clear();
+    conn1.reset(driver->connect(opts));
+
+    stmt.reset(conn1->createStatement());
+    res.reset(stmt->executeQuery("SELECT 1"));
+    ASSERT(res->next());
+    ASSERT_EQUALS(res->getInt(1), 1);
+
+    ASSERT(!res->next());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+
+  /*
+    Check for empty OPT_CONNECT_ATTR_DELETE list
+  */
+  try
+  {
+    testsuite::Connection conn1;
+    sql::ConnectOptionsMap opts;
+    std::map< sql::SQLString, sql::SQLString > connectAttrMap;
+    std::list< std::string > connectAttrList;
+
+    opts["hostName"]=url;
+    opts["userName"]=user;
+    opts["password"]=passwd;
+
+    connectAttrMap["keya1"]="value1";
+    connectAttrMap["keya2"]="value2";
+
+    opts.erase("OPT_CONNECT_ATTR_ADD");
+    opts.erase("OPT_CONNECT_ATTR_DELETE");
+    opts["OPT_CONNECT_ATTR_ADD"]=connectAttrMap;
+    opts["OPT_CONNECT_ATTR_DELETE"]=connectAttrList;
+
+    created_objects.clear();
+    conn1.reset(driver->connect(opts));
+
+    stmt.reset(conn1->createStatement());
+    res.reset(stmt->executeQuery("SELECT ATTR_NAME, ATTR_VALUE FROM "
+                "performance_schema.session_account_connect_attrs WHERE "
+                "ATTR_NAME LIKE '%keya%' ORDER BY ATTR_NAME ASC;"));
+    ASSERT(res->next());
+    ASSERT_EQUALS(res->getString("ATTR_NAME"), "keya1");
+    ASSERT_EQUALS(res->getString("ATTR_VALUE"), "value1");
+
+    ASSERT(res->next());
+    ASSERT_EQUALS(res->getString("ATTR_NAME"), "keya2");
+    ASSERT_EQUALS(res->getString("ATTR_VALUE"), "value2");
+
+    ASSERT(!res->next());
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+  /*
+    Check with inserting max allowed key-value pair i.e. lesser then size
+    of performance_schema_session_connect_attrs_size
+  */
+  try
+  {
+    testsuite::Connection conn1;
+    sql::ConnectOptionsMap opts;
+    int max_count;
+
+    opts["hostName"]=url;
+    opts["userName"]=user;
+    opts["password"]=passwd;
+
+    created_objects.clear();
+    conn1.reset(driver->connect(opts));
+
+    stmt.reset(conn1->createStatement());
+    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE "
+                      "'performance_schema_session_connect_attrs_size';"));
+
+    ASSERT(res->next());
+    ASSERT_EQUALS(res->getString("Variable_name"), "performance_schema_session_connect_attrs_size");
+    int perf_conn_attr_size= res->getInt("Value");
+    if (perf_conn_attr_size < 512) {
+      SKIP("The performance_schema_session_connect_attrs_size is less then 512");
+    } else if (perf_conn_attr_size >= 512 && perf_conn_attr_size < 1024) {
+      max_count= 32;
+    } else if (perf_conn_attr_size >= 1024 && perf_conn_attr_size < 2048) {
+      max_count= 64;
+    } else if (perf_conn_attr_size >= 2048) {
+      max_count= 128;
+    }
+
+    try
+    {
+      testsuite::Connection conn2;
+      std::map< sql::SQLString, sql::SQLString > connectAttrMap;
+      std::list< std::string > connectAttrList;
+      std::stringstream skey;
+      int i;
+
+      for (i=1; i <= max_count; ++i) {
+        skey.str("");
+        skey << "keymu" << i;
+        connectAttrMap[skey.str()] = "value";
+      }
+
+      opts.erase("OPT_CONNECT_ATTR_ADD");
+      opts.erase("OPT_CONNECT_ATTR_DELETE");
+      opts["OPT_CONNECT_ATTR_ADD"]= connectAttrMap;
+
+      created_objects.clear();
+      conn2.reset(driver->connect(opts));
+
+      stmt.reset(conn2->createStatement());
+      res.reset(stmt->executeQuery("SELECT ATTR_NAME, ATTR_VALUE FROM "
+            "performance_schema.session_account_connect_attrs WHERE "
+            "ATTR_NAME LIKE '%keymu%' ORDER BY SUBSTRING(ATTR_NAME, 6)+0 ASC;"));
+
+      i=0;
+      while (res->next()) {
+        skey.str("");
+        skey << "keymu" << ++i;
+        ASSERT_EQUALS(res->getString("ATTR_NAME"), skey.str());
+        ASSERT_EQUALS(res->getString("ATTR_VALUE"), "value");
+      }
+      ASSERT(max_count == i);
+
+      ASSERT(!res->next());
+    }
+    catch (sql::SQLException &e)
+    {
+      logErr(e.what());
+      logErr("SQLState: " + std::string(e.getSQLState()));
+      fail(e.what(), __FILE__, __LINE__);
+    }
   }
   catch (sql::SQLException &e)
   {
