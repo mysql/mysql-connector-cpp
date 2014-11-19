@@ -51,6 +51,9 @@ GA  1.1.5 -
   referenced at more then one places (Bug#19910311)
 - Assertion failure in getClientOption when the provided option is not set
   (Bug#19938922)
+- Memory leak while adding parameter OPT_CONNECT_ATTR_ADD to options list
+  (Bug#19938970)
+- CMake picking up libmysqlclient from system path (Bug#19940663)
 
 GA  1.1.4 -
 - Both static and dynamic driver libraries are now linked statically against
