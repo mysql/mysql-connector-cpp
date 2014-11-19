@@ -47,6 +47,8 @@ GA  1.1.5 -
   DatabaseMetaData::getIndexInfo() for no_i_s case. (Bug#19505248)
 - There is no reconnection function in Connector/C++ (Bug#14207722)
 - WB sends unnecessary COM_PING operations. (Bug#17186530)
+- Double free or corruption error due to global extern string variable localhost 
+  referenced at more then one places (Bug#19910311)
 
 GA  1.1.4 -
 - Both static and dynamic driver libraries are now linked statically against

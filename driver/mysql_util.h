@@ -127,8 +127,8 @@ class NativeStatementWrapper;
 
 namespace util {
 
-extern const sql::SQLString EMPTYSTR;
-extern const sql::SQLString LOCALHOST;
+extern const char *EMPTYSTR;
+extern const char *LOCALHOST;
 
 void throwSQLException(::sql::mysql::NativeAPI::NativeConnectionWrapper & proxy);
 void throwSQLException(::sql::mysql::NativeAPI::NativeStatementWrapper & proxy);
