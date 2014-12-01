@@ -173,6 +173,7 @@ void connection::getClientOption()
 	  logErr("SQLState: " + std::string(e.getSQLState()));
 	  fail(e.what(), __FILE__, __LINE__);
 	}
+
   }
   catch (sql::SQLException &e)
   {
@@ -2407,8 +2408,8 @@ void connection::connectCharsetDir()
     created_objects.clear();
     con.reset(driver->connect(opts));
 
-    sql::SQLString *outDir = con->getClientOption("characterSetDirectory");
-    ASSERT_EQUALS(charDir, *outDir);
+	sql::SQLString *outDir = con->getClientOption("characterSetDirectory");
+	ASSERT_EQUALS(charDir, *outDir);
   }
   catch (sql::SQLException &e)
   {
