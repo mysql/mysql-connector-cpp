@@ -41,8 +41,8 @@ namespace mysql {
 namespace util {
 
 /* just for cases when we need to return const empty string reference */
-const sql::SQLString EMPTYSTR("");
-const sql::SQLString LOCALHOST("localhost");
+const char *EMPTYSTR= "";
+const char *LOCALHOST= "localhost";
 
 
 /* {{{ throwSQLException -I- */
