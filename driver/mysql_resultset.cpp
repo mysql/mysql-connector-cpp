@@ -667,7 +667,7 @@ MySQL_ResultSet::getString(const uint32_t columnIndex) const
 		throw sql::InvalidArgumentException("MySQL_ResultSet::getString: invalid value of 'columnIndex'");
 	}
 
-	if (row[columnIndex - 1] == NULL) {
+	if (row == NULL || row[columnIndex - 1] == NULL) {
 		was_null = true;
 		return "";
 	}
@@ -902,8 +902,11 @@ MySQL_ResultSet::next()
 			sql::SQLException e(proxy_p->error(), proxy_p->sqlstate(), proxy_p->errNo());
 			throw e;
 		}
-		++row_position;
-		ret = (row != NULL);
+		if (ret = (row != NULL)) {
+			++row_position;
+		} else {
+			row_position = 0;
+		}
 	}
 	CPP_INFO_FMT("new_position=%llu num_rows=%llu", row_position, num_rows);
 	return ret;

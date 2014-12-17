@@ -581,6 +581,46 @@ void bugs::bug66871()
   FAIL("Exception wasn't thrown by execute");
 }
 
+/*
+  Segementation fault in row retrieval when defaultstatementresulttype=
+  forward_only and row position is after last row
+*/
+void bugs::bug20085944()
+{
+  try
+  {
+    sql::ConnectOptionsMap connection_properties;
+
+    connection_properties["hostName"]=url;
+    connection_properties["userName"]=user;
+    connection_properties["password"]=passwd;
+    connection_properties["defaultStatementResultType"]=sql::ResultSet::TYPE_FORWARD_ONLY;
+
+    created_objects.clear();
+    con.reset(driver->connect(connection_properties));
+    con->setSchema(db);
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS bug20085944");
+    stmt->execute("CREATE TABLE bug20085944(id INT)");
+    stmt->execute("INSERT INTO bug20085944 VALUES(1),(2),(3)");
+    res.reset(stmt->executeQuery("SELECT * FROM bug20085944"));
+
+    for (int i=1; i <= 3; ++i) {
+      ASSERT(res->next());
+      ASSERT_EQUALS(i, res->getInt(1));
+    }
+
+    ASSERT(!res->next());
+    res->getInt(1);
+  }
+  catch (::sql::SQLException & /*e*/)
+  {
+    return; /* Everything is fine */
+  }
+
+  FAIL("Exception wasn't thrown by getInt() in bug20085944()");
+}
+
 
 } /* namespace regression */
 } /* namespace testsuite */

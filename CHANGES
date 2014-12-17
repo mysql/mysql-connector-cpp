@@ -25,6 +25,9 @@
 GA  1.1.6 -
 - C/C++ won't build against Boost-devel-1.41.0-25.EL6.I686 (Bug#20125824)
 - Make install fail for out of source build (Bug#19447498)
+- Segmentation fault in retrieval of value using getter methods when 
+  defaultstatementresulttype=forward_only and row position is after last row.
+  (Bug#20085944)
 
 GA  1.1.5 -
 - DatabaseMetaData::getProcedures() returns syntax error for connection option
