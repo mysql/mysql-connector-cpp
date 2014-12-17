@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -102,7 +102,7 @@ string database;
 int main(int argc, const char **argv)
 {
 	sql::Driver *driver;
-	std::auto_ptr< sql::Connection > con;
+	boost::scoped_ptr< sql::Connection > con;
 
 	url = (argc >= 2) ? argv[1] : EXAMPLE_HOST;
 	user = (argc >= 3) ? argv[2] : EXAMPLE_USER;
@@ -128,10 +128,10 @@ int main(int argc, const char **argv)
 		cout << "Main thread: creating thread 1..." << endl;
 		/*
 			A little bloat.
-			We don't want global auto_ptr objects. Therefore
+			We don't want global scoped_ptr objects. Therefore
 			we wrap the object in an object. An alternative
 			would have been to use global sql::Driver, sql::Connection
-			objects [plain objects and no auto_ptr] but then
+			objects [plain objects and no scoped_ptr] but then
 			we'd have to add bloat for making sure we explicitly
 			delete them, e.g. in case of an exception.
 			It is not nice in either case. Let's use parameter struct.
@@ -191,8 +191,8 @@ int main(int argc, const char **argv)
 
 void* thread_one_action(void *arg) {
 	int status;
-	std::auto_ptr< sql::Statement > stmt;
-	std::auto_ptr< sql::ResultSet > res;
+	boost::scoped_ptr< sql::Statement > stmt;
+	boost::scoped_ptr< sql::ResultSet > res;
 
 	struct st_worker_thread_param *handles = (struct st_worker_thread_param*) arg;
 

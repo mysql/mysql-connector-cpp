@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -33,15 +33,17 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <stdlib.h>
 #include <cppconn/connection.h>
 
+#include <boost/scoped_ptr.hpp>
+
 namespace testsuite
 {
 /* TODO - document */
-typedef std::auto_ptr<sql::Connection> Connection;
-typedef std::auto_ptr<sql::PreparedStatement> PreparedStatement;
+typedef boost::scoped_ptr<sql::Connection> Connection;
+typedef boost::scoped_ptr<sql::PreparedStatement> PreparedStatement;
 typedef sql::ParameterMetaData ParameterMetaData;
-typedef std::auto_ptr<sql::Statement> Statement;
-typedef std::auto_ptr<sql::Savepoint> Savepoint;
-typedef std::auto_ptr<sql::ResultSet> ResultSet;
+typedef boost::scoped_ptr<sql::Statement> Statement;
+typedef boost::scoped_ptr<sql::Savepoint> Savepoint;
+typedef boost::scoped_ptr<sql::ResultSet> ResultSet;
 typedef sql::Driver Driver;
 typedef sql::ResultSetMetaData ResultSetMetaData;
 typedef sql::DatabaseMetaData DatabaseMetaData;
@@ -308,7 +310,7 @@ protected:
    * Returns a Connector/C++ connection object
    *
    * Note: you are responsible for handling the object, you might
-   * want to use typedef std::auto_ptr<sql::Connection>con(getConnection())
+   * want to use typedef boost::scoped_ptr<sql::Connection>con(getConnection())
    * or similar for convenience reasons.
    *
    * @throws SQLException &

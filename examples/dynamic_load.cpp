@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -35,12 +35,14 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <sstream>
 #include <stdexcept>
 
+#include <boost/scoped_ptr.hpp>
+
 /* Public interface of the MySQL Connector/C++ */
 #include <driver/mysql_public_iface.h>
 /* Connection parameter and sample data */
 #include "examples.h"
 
-static void validateResultSet(std::auto_ptr< sql::ResultSet > & res, struct _test_data *min, struct _test_data *max);
+static void validateResultSet(boost::scoped_ptr< sql::ResultSet > & res, struct _test_data *min, struct _test_data *max);
 
 using namespace std;
 
@@ -104,10 +106,10 @@ int main(int argc, const char **argv)
 		connection_properties["password"] = pass;
 		connection_properties["schema"] = database;
 
-		std::auto_ptr< sql::Connection > con(driver->connect(connection_properties));
+		boost::scoped_ptr< sql::Connection > con(driver->connect(connection_properties));
 
 		/* Creating a "simple" statement - "simple" = not a prepared statement */
-		std::auto_ptr< sql::Statement > stmt(con->createStatement());
+		boost::scoped_ptr< sql::Statement > stmt(con->createStatement());
 		stmt->execute("DROP TABLE IF EXISTS test");
 		stmt->execute("CREATE TABLE test(id INT, label CHAR(1))");
 		cout << "#\t Test table created" << endl;
@@ -143,7 +145,7 @@ int main(int argc, const char **argv)
 		*/
 		cout << "#\t Testing sql::Statement based resultset" << endl;
 		{
-			std::auto_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id, label FROM test ORDER BY id ASC"));
+			boost::scoped_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id, label FROM test ORDER BY id ASC"));
 			validateResultSet(res, &min, &max);
 		}
 
@@ -151,8 +153,8 @@ int main(int argc, const char **argv)
 		cout << "#\t Testing sql::PreparedStatment based resultset" << endl;
 
 		{
-			std::auto_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("SELECT id, label FROM test ORDER BY id ASC"));
-			std::auto_ptr< sql::ResultSet > res(prep_stmt->executeQuery());
+			boost::scoped_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("SELECT id, label FROM test ORDER BY id ASC"));
+			boost::scoped_ptr< sql::ResultSet > res(prep_stmt->executeQuery());
 			validateResultSet(res, &min, &max);
 		}
 
@@ -191,7 +193,7 @@ int main(int argc, const char **argv)
 	return EXIT_SUCCESS;
 }
 
-static void validateRow(std::auto_ptr< sql::ResultSet > & res, struct _test_data *exp)
+static void validateRow(boost::scoped_ptr< sql::ResultSet > & res, struct _test_data *exp)
 {
 	stringstream msg;
 
@@ -206,7 +208,7 @@ static void validateRow(std::auto_ptr< sql::ResultSet > & res, struct _test_data
 	}
 }
 
-static void validateResultSet(std::auto_ptr< sql::ResultSet > & res, struct _test_data *min, struct _test_data *max) {
+static void validateResultSet(boost::scoped_ptr< sql::ResultSet > & res, struct _test_data *min, struct _test_data *max) {
 
 	size_t row;
 

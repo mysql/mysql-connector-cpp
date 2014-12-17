@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1432,7 +1432,7 @@ void preparedstatement::blob()
     ASSERT_EQUALS(res->getString("col1"), blob_input_stream.str());
     ASSERT_EQUALS(res->getString("col1"), blob_input);
 
-    std::auto_ptr< std::istream > blob_output_stream(res->getBlob(2));
+    boost::scoped_ptr< std::istream > blob_output_stream(res->getBlob(2));
     blob_output_stream->seekg(std::ios::beg);
     blob_output_stream->get(blob_output, offset + 1);
     ASSERT_EQUALS(blob_input_stream.str(), blob_output);

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -25,6 +25,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 #include <fstream>
+#include <boost/scoped_ptr.hpp>
 
 #include "../../common/file.h"
 
@@ -46,7 +47,7 @@ namespace simple
   private:
     typedef BaseTestFixture super;
 
-    std::auto_ptr<FileUtils::ccppFile> testBlobFile;
+    boost::scoped_ptr<FileUtils::ccppFile> testBlobFile;
 
     bool realFrameworkTiming;
 

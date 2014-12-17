@@ -557,19 +557,18 @@ void connectionmetadata::getColumns()
 void connectionmetadata::getConnection()
 {
   logMsg("connectionmetadata::getConnection() - MySQL_ConnectionMetaData::getConnection");
-  Connection same_con;
+  sql::Connection *same_con;
   try
   {
     stmt.reset(con->createStatement());
     stmt->execute("SET @this_is_my_connection_id=101");
     DatabaseMetaData * dbmeta=con->getMetaData();
-    same_con.reset(dbmeta->getConnection());
+    same_con= dbmeta->getConnection();
     stmt.reset(same_con->createStatement());
     res.reset(stmt->executeQuery("SELECT @this_is_my_connection_id AS _connection_id"));
     ASSERT(res->next());
     ASSERT_EQUALS(101, res->getInt("_connection_id"));
     ASSERT_EQUALS(res->getInt(1), res->getInt("_connection_id"));
-    same_con.release(); // if the same don't clean it, it will be double free
   }
   catch (sql::SQLException &e)
   {

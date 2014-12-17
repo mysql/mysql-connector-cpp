@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -32,6 +32,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "savepoint.h"
 #include <stdlib.h>
 
+#include <boost/scoped_ptr.hpp>
+
 namespace testsuite
 {
 namespace classes
@@ -44,7 +46,7 @@ void savepoint::getSavepointId()
   try
   {
     con->setAutoCommit(true);
-    std::auto_ptr< sql::Savepoint > sp(con->setSavepoint("mysavepoint"));
+    boost::scoped_ptr< sql::Savepoint > sp(con->setSavepoint("mysavepoint"));
     FAIL("You should not be able to set a savepoint in autoCommit mode");
   }
   catch (sql::SQLException &)
@@ -54,7 +56,7 @@ void savepoint::getSavepointId()
   try
   {
     con->setAutoCommit(false);
-    std::auto_ptr< sql::Savepoint > sp(con->setSavepoint("mysavepoint"));
+    boost::scoped_ptr< sql::Savepoint > sp(con->setSavepoint("mysavepoint"));
     try
     {
       sp->getSavepointId();
@@ -79,7 +81,7 @@ void savepoint::getSavepointName()
   try
   {
     con->setAutoCommit(false);
-    std::auto_ptr< sql::Savepoint > sp(con->setSavepoint("mysavepoint"));
+    boost::scoped_ptr< sql::Savepoint > sp(con->setSavepoint("mysavepoint"));
     ASSERT_EQUALS("mysavepoint", sp->getSavepointName());
     con->releaseSavepoint(sp.get());
   }

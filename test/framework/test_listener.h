@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -33,6 +33,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <list>
 #include <vector>
 
+#include <boost/scoped_ptr.hpp>
+
 #include "start_options.h"
 #include "test_tapOutputter.h"
 #include <cppconn/exception.h>
@@ -53,7 +55,7 @@ class TestsListener : public policies::Singleton<TestsListener>
 {
   CCPP_SINGLETON(TestsListener);
 
-  std::auto_ptr<TestOutputter> outputter;
+  boost::scoped_ptr<TestOutputter> outputter;
 
   String            curSuiteName;
   String            curTestName;

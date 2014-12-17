@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -56,6 +56,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <sstream>
 #include <stdexcept>
 
+#include <boost/scoped_ptr.hpp>
+
 
 /*
   Include directly the different
@@ -94,11 +96,11 @@ int main(int argc, const char **argv)
 	try {
 		sql::Driver * driver = sql::mysql::get_driver_instance();
 		/* Using the Driver to create a connection */
-		std::auto_ptr< sql::Connection > con(driver->connect(url, user, pass));
+		boost::scoped_ptr< sql::Connection > con(driver->connect(url, user, pass));
 		con->setSchema(database);
 
-		std::auto_ptr< sql::Statement > stmt(con->createStatement());
-		std::auto_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT 'Welcome to Connector/C++' AS _message"));
+		boost::scoped_ptr< sql::Statement > stmt(con->createStatement());
+		boost::scoped_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT 'Welcome to Connector/C++' AS _message"));
 		cout << "\t... running 'SELECT 'Welcome to Connector/C++' AS _message'" << endl;
 		while (res->next()) {
 			cout << "\t... MySQL replies: " << res->getString("_message") << endl;

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -124,7 +124,7 @@ public:
 	typedef std::vector< MyVal > row_t;
 	typedef std::list< row_t > rset_t;
 
-	MySQL_ArtResultSet(const StringList& fn, rset_t * const rset, boost::shared_ptr< MySQL_DebugLogger > & l);
+	MySQL_ArtResultSet(const StringList& fn, boost::shared_ptr< rset_t > &rset, boost::shared_ptr< MySQL_DebugLogger > & l);
 	virtual ~MySQL_ArtResultSet();
 
 	bool absolute(int row);
@@ -248,7 +248,7 @@ protected:
 public:
 
 	unsigned int num_fields;
-	boost::scoped_ptr< MySQL_ArtResultSet::rset_t > rset;
+	boost::shared_ptr< MySQL_ArtResultSet::rset_t > rset;
 	rset_t::iterator current_record;
 	bool started;
 

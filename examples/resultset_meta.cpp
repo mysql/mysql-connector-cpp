@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -36,6 +36,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <sstream>
 #include <stdexcept>
 
+#include <boost/scoped_ptr.hpp>
+
 /*
   Public interface of the MySQL Connector/C++.
   You might not use it but directly include directly the different
@@ -46,7 +48,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 /* Connection parameter and sample data */
 #include "examples.h"
 
-static void printResultSetMetaData(std::auto_ptr< sql::ResultSet > &res, std::auto_ptr< sql::ResultSet > &ps_res);
+static void printResultSetMetaData(boost::scoped_ptr< sql::ResultSet > &res, boost::scoped_ptr< sql::ResultSet > &ps_res);
 
 using namespace std;
 
@@ -70,12 +72,12 @@ int main(int argc, const char **argv)
 
 	try {
 		/* Using the Driver to create a conection */
-		std::auto_ptr< sql::Connection > con(sql::mysql::get_driver_instance()->connect(url, user, pass));
+		boost::scoped_ptr< sql::Connection > con(sql::mysql::get_driver_instance()->connect(url, user, pass));
 
 		con->setSchema(database);
 
 		/* Create a test table demonstrating the use of sql::Statement.execute() */
-		std::auto_ptr< sql::Statement > stmt(con->createStatement());
+		boost::scoped_ptr< sql::Statement > stmt(con->createStatement());
 		stmt->execute("DROP TABLE IF EXISTS test");
 		stmt->execute("CREATE TABLE test(id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, label CHAR(1))");
 		cout << "#\t Test table created" << endl;
@@ -92,25 +94,25 @@ int main(int argc, const char **argv)
 		cout << "#\t Test table populated" << endl;
 
 		{
-			std::auto_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id AS column_alias, label FROM test AS table_alias LIMIT 1"));
-			std::auto_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("SELECT id AS column_alias, label FROM test AS table_alias LIMIT 1"));
-			std::auto_ptr< sql::ResultSet > ps_res(prep_stmt->executeQuery());
+			boost::scoped_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id AS column_alias, label FROM test AS table_alias LIMIT 1"));
+			boost::scoped_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("SELECT id AS column_alias, label FROM test AS table_alias LIMIT 1"));
+			boost::scoped_ptr< sql::ResultSet > ps_res(prep_stmt->executeQuery());
 			cout << "#\t SELECT id AS column_alias, label FROM test AS table_alias LIMIT 1" << endl;
 			printResultSetMetaData(res, ps_res);
 		}
 
 		{
-			std::auto_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT 1.01, 'Hello world!'"));
-			std::auto_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("SELECT 1.01, 'Hello world!'"));
-			std::auto_ptr< sql::ResultSet > ps_res(prep_stmt->executeQuery());
+			boost::scoped_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT 1.01, 'Hello world!'"));
+			boost::scoped_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("SELECT 1.01, 'Hello world!'"));
+			boost::scoped_ptr< sql::ResultSet > ps_res(prep_stmt->executeQuery());
 			cout << "#\t SELECT 1.01, 'Hello world!'" << endl;
 			printResultSetMetaData(res, ps_res);
 		}
 
 		{
-			std::auto_ptr< sql::ResultSet > res(stmt->executeQuery("DESCRIBE test"));
-			std::auto_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("DESCRIBE test"));
-			std::auto_ptr< sql::ResultSet > ps_res(prep_stmt->executeQuery());
+			boost::scoped_ptr< sql::ResultSet > res(stmt->executeQuery("DESCRIBE test"));
+			boost::scoped_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("DESCRIBE test"));
+			boost::scoped_ptr< sql::ResultSet > ps_res(prep_stmt->executeQuery());
 			cout << "# \tDESCRIBE test" << endl;
 			printResultSetMetaData(res, ps_res);
 		}
@@ -156,7 +158,7 @@ int main(int argc, const char **argv)
 * Prints all meta data associated with an result set
 *
 */
-static void printResultSetMetaData(std::auto_ptr< sql::ResultSet > &res, std::auto_ptr< sql::ResultSet > &ps_res)
+static void printResultSetMetaData(boost::scoped_ptr< sql::ResultSet > &res, boost::scoped_ptr< sql::ResultSet > &ps_res)
 {
 	/* ResultSetMetaData object */
 	sql::ResultSetMetaData * meta;

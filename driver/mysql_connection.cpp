@@ -119,13 +119,13 @@ MySQL_Connection::createServiceStmt() {
 
 /* {{{ MySQL_Connection::MySQL_Connection() -I- */
 MySQL_Connection::MySQL_Connection(Driver * _driver,
-								   ::sql::mysql::NativeAPI::NativeConnectionWrapper& _proxy,
-								   const sql::SQLString& hostName,
-								   const sql::SQLString& userName,
-								   const sql::SQLString& password)
-	:	driver	(_driver),
-		proxy	(&_proxy),
-		intern	(NULL)
+                                   ::sql::mysql::NativeAPI::NativeConnectionWrapper& _proxy,
+                                   const sql::SQLString& hostName,
+                                   const sql::SQLString& userName,
+                                   const sql::SQLString& password)
+                                   :  driver (_driver),
+                                      proxy  (&_proxy),
+                                      intern (NULL)
 {
 	sql::ConnectOptionsMap connection_properties;
 	connection_properties["hostName"] = hostName;
@@ -133,15 +133,10 @@ MySQL_Connection::MySQL_Connection(Driver * _driver,
 	connection_properties["password"] = password;
 
 	boost::shared_ptr< MySQL_DebugLogger > tmp_logger(new MySQL_DebugLogger());
-	std::auto_ptr< MySQL_ConnectionData > tmp_intern(new MySQL_ConnectionData(tmp_logger));
-	intern = tmp_intern.get();
+	intern.reset(new MySQL_ConnectionData(tmp_logger));
 
 	service.reset(createServiceStmt());
-
 	init(connection_properties);
-	// No exception so far, thus intern can still point to the MySQL_ConnectionData object
-	// and in the dtor we will clean it up
-	tmp_intern.release();
 }
 /* }}} */
 
@@ -153,15 +148,10 @@ MySQL_Connection::MySQL_Connection(Driver * _driver,
 	: driver(_driver), proxy(&_proxy), intern(NULL)
 {
 	boost::shared_ptr<MySQL_DebugLogger> tmp_logger(new MySQL_DebugLogger());
-	std::auto_ptr< MySQL_ConnectionData > tmp_intern(new MySQL_ConnectionData(tmp_logger));
-	intern = tmp_intern.get();
+	intern.reset(new MySQL_ConnectionData(tmp_logger));
 
 	service.reset(createServiceStmt());
-
 	init(properties);
-	// No exception so far, thus intern can still point to the MySQL_ConnectionData object
-	// and in the dtor we will clean it up
-	tmp_intern.release();
 }
 /* }}} */
 
@@ -178,8 +168,6 @@ MySQL_Connection::~MySQL_Connection()
 	{
 		CPP_ENTER_WL(intern->logger, "MySQL_Connection::~MySQL_Connection");
 	}
-
-	delete intern;
 }
 /* }}} */
 

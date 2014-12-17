@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -78,17 +78,17 @@ void example_test_class::test_hello_world2()
     /*
      Connection, Statement and ResultSet are typedefs from unit_fixture.h:
 
-     typedef std::auto_ptr<sql::Connection> Connection;
-     typedef std::auto_ptr<sql::PreparedStatement> PreparedStatement;
-     typedef std::auto_ptr<sql::ParameterMetaData> ParameterMetaData;
-     typedef std::auto_ptr<sql::Statement> Statement;
-     typedef std::auto_ptr<sql::Savepoint> Savepoint;
-     typedef std::auto_ptr<sql::ResultSet> ResultSet;
+     typedef boost::scoped_ptr<sql::Connection> Connection;
+     typedef boost::scoped_ptr<sql::PreparedStatement> PreparedStatement;
+     typedef boost::scoped_ptr<sql::ParameterMetaData> ParameterMetaData;
+     typedef boost::scoped_ptr<sql::Statement> Statement;
+     typedef boost::scoped_ptr<sql::Savepoint> Savepoint;
+     typedef boost::scoped_ptr<sql::ResultSet> ResultSet;
      typedef sql::Driver Driver;
-     typedef std::auto_ptr<sql::ResultSetMetaData> ResultSetMetaData;
-     typedef std::auto_ptr<sql::DatabaseMetaData> DatabaseMetaData;
+     typedef boost::scoped_ptr<sql::ResultSetMetaData> ResultSetMetaData;
+     typedef boost::scoped_ptr<sql::DatabaseMetaData> DatabaseMetaData;
 
-     Do yourself a favour and use auto_ptr in tests!
+     Do yourself a favour and use boost::scoped_ptr in tests!
      */
     Connection my_con(getConnection());
     Statement my_stmt(my_con->createStatement());

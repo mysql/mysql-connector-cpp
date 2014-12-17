@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -63,6 +63,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <sstream>
 #include <stdexcept>
 
+#include <boost/scoped_ptr.hpp>
+
 /*
   Public interface of the MySQL Connector/C++.
   You might not use it but directly include directly the different
@@ -73,8 +75,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 /* Connection parameter and sample data */
 #include "examples.h"
 
-bool prepare_execute(std::auto_ptr< sql::Connection > & con, const char *sql);
-sql::Statement* emulate_prepare_execute(std::auto_ptr< sql::Connection > & con, const char *sql);
+bool prepare_execute(boost::scoped_ptr< sql::Connection > & con, const char *sql);
+sql::Statement* emulate_prepare_execute(boost::scoped_ptr< sql::Connection > & con, const char *sql);
 
 using namespace std;
 
@@ -100,10 +102,10 @@ int main(int argc, const char **argv)
 	try {
 		/* Using the Driver to create a connection */
 		driver = sql::mysql::get_driver_instance();
-		std::auto_ptr< sql::Connection > con(driver->connect(url, user, pass));
+		boost::scoped_ptr< sql::Connection > con(driver->connect(url, user, pass));
 
 		/* The usage of USE is not supported by the prepared statement protocol */
-		std::auto_ptr< sql::Statement > stmt(con->createStatement());
+		boost::scoped_ptr< sql::Statement > stmt(con->createStatement());
 		stmt->execute("USE " + database);
 
 		/*
@@ -124,7 +126,7 @@ int main(int argc, const char **argv)
 		the example program will continue to do it to demonstrate the (ab)use of
 		prepared statements (and to prove that you really can do more than SELECT with PS).
 		*/
-		std::auto_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("DROP TABLE IF EXISTS test"));
+		boost::scoped_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("DROP TABLE IF EXISTS test"));
 		prep_stmt->execute();
 
 		prepare_execute(con, "CREATE TABLE test(id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, label CHAR(1))");
@@ -153,9 +155,9 @@ int main(int argc, const char **argv)
 		cout << "#\t Test table populated" << endl;
 
 		/* We will reuse the SELECT a bit later... */
-		std::auto_ptr< sql::PreparedStatement > prep_select(con->prepareStatement("SELECT id, label FROM test ORDER BY id ASC"));
+		boost::scoped_ptr< sql::PreparedStatement > prep_select(con->prepareStatement("SELECT id, label FROM test ORDER BY id ASC"));
 		cout << "#\t Running 'SELECT id, label FROM test ORDER BY id ASC'" << endl;
-		std::auto_ptr< sql::ResultSet > res(prep_select->executeQuery());
+		boost::scoped_ptr< sql::ResultSet > res(prep_select->executeQuery());
 		row = 0;
 		while (res->next()) {
 			cout << "#\t\t Row " << row << " - id = " << res->getInt("id");
@@ -278,7 +280,7 @@ int main(int argc, const char **argv)
 }
 
 
-bool prepare_execute(std::auto_ptr< sql::Connection > & con, const char *sql)
+bool prepare_execute(boost::scoped_ptr< sql::Connection > & con, const char *sql)
 {
 	sql::PreparedStatement * prep_stmt;
 
@@ -290,7 +292,7 @@ bool prepare_execute(std::auto_ptr< sql::Connection > & con, const char *sql)
 }
 
 
-sql::Statement* emulate_prepare_execute(std::auto_ptr< sql::Connection > & con, const char *sql)
+sql::Statement* emulate_prepare_execute(boost::scoped_ptr< sql::Connection > & con, const char *sql)
 {
 	sql::PreparedStatement *prep_stmt;
 	sql::Statement *stmt = NULL;

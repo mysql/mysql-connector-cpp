@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -35,6 +35,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+
+#include <boost/scoped_ptr.hpp>
 
 /*
   Public interface of the MySQL Connector/C++.
@@ -72,10 +74,10 @@ int main(int argc, const char **argv)
 	try {
 		sql::Driver * driver = sql::mysql::get_driver_instance();
 		/* Using the Driver to create a connection */
-		std::auto_ptr< sql::Connection > con(driver->connect(url, user, pass));
+		boost::scoped_ptr< sql::Connection > con(driver->connect(url, user, pass));
 
 		/* Creating a "simple" statement - "simple" = not a prepared statement */
-		std::auto_ptr< sql::Statement > stmt(con->createStatement());
+		boost::scoped_ptr< sql::Statement > stmt(con->createStatement());
 
 		/* Create a test table demonstrating the use of sql::Statement.execute() */
 		stmt->execute("USE " + database);
@@ -101,7 +103,7 @@ int main(int argc, const char **argv)
 			Run a query which returns exactly one result set like SELECT
 			Stored procedures (CALL) may return more than one result set
 			*/
-			std::auto_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id, label FROM test ORDER BY id ASC"));
+			boost::scoped_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id, label FROM test ORDER BY id ASC"));
 			cout << "#\t Running 'SELECT id, label FROM test ORDER BY id ASC'" << endl;
 
 			/* Number of rows in the result set */
@@ -127,7 +129,7 @@ int main(int argc, const char **argv)
 
 		{
 			/* Fetching again but using type convertion methods */
-			std::auto_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id FROM test ORDER BY id DESC"));
+			boost::scoped_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id FROM test ORDER BY id DESC"));
 			cout << "#\t Fetching 'SELECT id FROM test ORDER BY id DESC' using type conversion" << endl;
 			row = 0;
 			while (res->next()) {
@@ -150,7 +152,7 @@ int main(int argc, const char **argv)
 		}
 
 		{
-			std::auto_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id, label FROM test WHERE id = 100"));
+			boost::scoped_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id, label FROM test WHERE id = 100"));
 
 			res->next();
 			if ((res->getInt("id") != 100) || (res->getString("label") != "y")) {

@@ -28,6 +28,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define _MYSQL_RESULTSET_H_
 
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
 #include <cppconn/resultset.h>
@@ -66,7 +67,7 @@ class MySQL_ResultSet : public sql::ResultSet
 
 	boost::shared_ptr< MySQL_DebugLogger > logger;
 
-	std::auto_ptr< MySQL_ResultSetMetaData > rs_meta;
+	boost::scoped_ptr< MySQL_ResultSetMetaData > rs_meta;
 
 	sql::ResultSet::enum_type resultset_type;
 

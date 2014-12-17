@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -34,6 +34,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+
+#include <boost/scoped_ptr.hpp>
 
 /* Public interface of the MySQL Connector/C++ */
 #include <driver/mysql_public_iface.h>
@@ -72,10 +74,10 @@ int main(int argc, const char **argv)
 	try {
 		/* Using the Driver to create a connection */
 		driver = sql::mysql::get_driver_instance();
-		std::auto_ptr< sql::Connection > con(driver->connect(url, user, pass));
+		boost::scoped_ptr< sql::Connection > con(driver->connect(url, user, pass));
 		con->setSchema(database);
 
-		std::auto_ptr< sql::Statement > stmt(con->createStatement());
+		boost::scoped_ptr< sql::Statement > stmt(con->createStatement());
 		stmt->execute("DROP TABLE IF EXISTS test");
 
 		/*
@@ -89,7 +91,7 @@ int main(int argc, const char **argv)
 			"c_long BIGINT, c_double DOUBLE, c_null INT DEFAULT NULL)");
 		cout << "#\t Test table created" << endl;
 
-		std::auto_ptr< sql::PreparedStatement> prep_stmt(
+		boost::scoped_ptr< sql::PreparedStatement> prep_stmt(
 			con->prepareStatement("INSERT INTO test(id, label, c_bool, c_long, "
 				" c_double) VALUES (?, ?, ?, ?, ?)"));
 
@@ -113,7 +115,7 @@ int main(int argc, const char **argv)
 		}
 		cout << "#\t Test table populated" << endl;
 
-		std::auto_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id, label, c_bool, c_long, c_double, c_null FROM test ORDER BY id ASC"));
+		boost::scoped_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id, label, c_bool, c_long, c_double, c_null FROM test ORDER BY id ASC"));
 		while (res->next()) {
 			/* sql::ResultSet.rowsCount() returns size_t */
 			size_t row = res->getRow() - 1;

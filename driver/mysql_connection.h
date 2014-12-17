@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -178,7 +178,7 @@ private:
 	   a good idea to move it to a separate helper class */
 	boost::scoped_ptr< ::sql::mysql::MySQL_Statement > service;
 
-	MySQL_ConnectionData * intern; /* pimpl */
+	boost::scoped_ptr< ::sql::mysql::MySQL_ConnectionData > intern; /* pimpl */
 
 	/* Prevent use of these */
 	MySQL_Connection(const MySQL_Connection &);

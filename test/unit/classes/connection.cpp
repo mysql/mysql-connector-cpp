@@ -33,6 +33,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <driver/mysql_connection.h>
 #include <cppconn/exception.h>
 
+#include <boost/scoped_ptr.hpp>
 #include <list>
 
 namespace testsuite
@@ -286,7 +287,7 @@ void connection::getSessionVariable()
   try
   {
     std::string value("");
-    std::auto_ptr< sql::mysql::MySQL_Connection > my_con(dynamic_cast<sql::mysql::MySQL_Connection*> (driver->connect(url, user, passwd)));
+    boost::scoped_ptr< sql::mysql::MySQL_Connection > my_con(dynamic_cast<sql::mysql::MySQL_Connection*> (driver->connect(url, user, passwd)));
     value=my_con->getSessionVariable("sql_mode");
 
     my_con->setSessionVariable("sql_mode", "ANSI");

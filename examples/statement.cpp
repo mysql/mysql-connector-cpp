@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -35,6 +35,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <sstream>
 #include <stdexcept>
 
+#include <boost/scoped_ptr.hpp>
+
 /* Public interface of the MySQL Connector/C++ */
 #include <driver/mysql_public_iface.h>
 /* Connection parameter and sample data */
@@ -68,11 +70,11 @@ int main(int argc, const char **argv)
 	try {
 		/* Using the Driver to create a connection */
 		driver = sql::mysql::get_driver_instance();
-		std::auto_ptr< sql::Connection > con(driver->connect(url, user, pass));
+		boost::scoped_ptr< sql::Connection > con(driver->connect(url, user, pass));
 		con->setSchema(database);
 
 		/* Creating a "simple" statement - "simple" = not a prepared statement */
-		std::auto_ptr< sql::Statement > stmt(con->createStatement());
+		boost::scoped_ptr< sql::Statement > stmt(con->createStatement());
 
 		/* Create a test table demonstrating the use of sql::Statement.execute() */
 		stmt->execute("DROP TABLE IF EXISTS test");
@@ -105,7 +107,7 @@ int main(int argc, const char **argv)
 			NOTE: If stmt.getMoreResults() would be implemented already one
 			would use a do { ... } while (stmt.getMoreResults()) loop
 			*/
-			std::auto_ptr< sql::ResultSet > res(stmt->getResultSet());
+			boost::scoped_ptr< sql::ResultSet > res(stmt->getResultSet());
 			row = 0;
 			while (res->next()) {
 				cout << "#\t\t Row " << row << " - id = " << res->getInt("id");

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -34,6 +34,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "nativeapi/native_resultset_wrapper.h"
 
 #include <string.h>
+
+#include <boost/scoped_ptr.hpp>
 
 namespace sql
 {
@@ -159,7 +161,7 @@ void MySQL_ResultBind::bindResult()
 	len.reset(new unsigned long[num_fields]);
 	memset(len.get(), 0, sizeof(unsigned long) * num_fields);
 
-	std::auto_ptr< NativeAPI::NativeResultsetWrapper > resultMeta(proxy->result_metadata());
+	boost::scoped_ptr< NativeAPI::NativeResultsetWrapper > resultMeta(proxy->result_metadata());
 
 	for (unsigned int i = 0; i < num_fields; ++i) {
 		MYSQL_FIELD * field = resultMeta->fetch_field();
