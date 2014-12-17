@@ -565,6 +565,35 @@ if(FINDMYSQL_DEBUG)
   message("DBG: MYSQL_INCLUDE_DIR = \"${MYSQL_INCLUDE_DIR}\"")
 endif()
 
+if (MYSQL_INCLUDE_DIR AND NOT MYSQL_NUM_VERSION)
+  try_run(RUN_RESULT_VAR COMPILE_RESULT_VAR
+    "${CMAKE_SOURCE_DIR}"
+    "${CMAKE_SOURCE_DIR}/cmake/getmysqlversion.c"
+    CMAKE_FLAGS -DINCLUDE_DIRECTORIES:STRING=${MYSQL_INCLUDE_DIR}
+    ARGS "${CMAKE_BINARY_DIR}/cmake/mysql_version_info.cmake"
+         "MYSQL_SERVER_VERSION"
+         "MYSQL_VERSION_ID"
+         "LIBMYSQL_VERSION"
+         "LIBMYSQL_VERSION_ID")
+
+    if(COMPILE_RESULT_VAR AND RUN_RESULT_VAR)
+      include(${CMAKE_SOURCE_DIR}/cmake/mysql_version_info.cmake)
+      if(NOT LIBMYSQL_CPP_VERSION STREQUAL "")
+        set(MYSQL_VERSION "${LIBMYSQL_CPP_VERSION}")
+      elseif(NOT MYSQL_CPP_SERVER_VERSION STREQUAL "")
+        set(MYSQL_VERSION "${MYSQL_CPP_SERVER_VERSION}")
+      endif(NOT LIBMYSQL_CPP_VERSION STREQUAL "")
+      string(REGEX MATCHALL "([0-9]+.[0-9]+.[0-9]+)" MYSQL_VERSION "${MYSQL_VERSION}")
+
+      if(LIBMYSQL_CPP_VERSION_ID)
+        set(MYSQL_NUM_VERSION ${LIBMYSQL_CPP_VERSION_ID})
+      elseif(MYSQL_CPP_SERVER_VERSION_ID)
+        set(MYSQL_NUM_VERSION ${MYSQL_CPP_SERVER_VERSION_ID})
+      endif(LIBMYSQL_CPP_VERSION_ID)
+    endif(COMPILE_RESULT_VAR AND RUN_RESULT_VAR)
+endif()
+
+
 ##########################################################################
 #
 # Find MYSQL_LIB_DIR, MYSQL_LIB and MYSQL_LIBRARIES

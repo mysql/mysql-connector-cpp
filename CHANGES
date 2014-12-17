@@ -28,6 +28,8 @@ GA  1.1.6 -
 - Segmentation fault in retrieval of value using getter methods when 
   defaultstatementresulttype=forward_only and row position is after last row.
   (Bug#20085944)
+- C/C++ should provide libmysqlclient and boost version macros with which
+  it is build. (Bug#75250)
 
 GA  1.1.5 -
 - DatabaseMetaData::getProcedures() returns syntax error for connection option
