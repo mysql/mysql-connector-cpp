@@ -87,8 +87,8 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
 			MySQL_Prepared_Statement * par,
 			boost::shared_ptr< MySQL_DebugLogger > & l
 		)
-	: row(NULL), proxy(s), row_position(0), parent(par), is_valid(true),
-		logger(l), result_bind(r_bind), resultset_type(rset_type)
+	: row(NULL), proxy(s), last_queried_column(-1), row_position(0), parent(par),
+	 is_valid(true), logger(l), result_bind(r_bind), resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet");
 
@@ -1390,6 +1390,9 @@ MySQL_Prepared_ResultSet::wasNull() const
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::wasNull: can't fetch because not on result set");
+	}
+	if (last_queried_column == -1) {
+		throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::wasNull: should be called only after one of the getter methods");
 	}
 	return *result_bind->rbind[last_queried_column - 1].is_null != 0;
 }

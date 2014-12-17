@@ -160,7 +160,7 @@ void connection::getClientOption()
       /* compiled without -DWE_SUPPORT_USE_RESULT_WITH_PS */
     }
 
-	try
+    try
     {
       sql::SQLString input_value("latin1");
       sql::SQLString output_value;
@@ -170,12 +170,12 @@ void connection::getClientOption()
       output_value=con->getClientOption("characterSetResults");
       ASSERT_EQUALS(input_value, output_value);
     }
-	catch (sql::SQLException &e)
-	{
-	  logErr(e.what());
-	  logErr("SQLState: " + std::string(e.getSQLState()));
-	  fail(e.what(), __FILE__, __LINE__);
-	}
+    catch (sql::SQLException &e)
+    {
+      logErr(e.what());
+      logErr("SQLState: " + std::string(e.getSQLState()));
+      fail(e.what(), __FILE__, __LINE__);
+    }
 
     int serverVersion=getMySQLVersion(con);
     if ( serverVersion >= 57003)
@@ -2635,8 +2635,8 @@ void connection::connectAttrReset()
 
   try
   {
-	testsuite::Connection conn2;
-	sql::ConnectOptionsMap opts;
+    testsuite::Connection conn2;
+    sql::ConnectOptionsMap opts;
     std::map< sql::SQLString, sql::SQLString > connectAttrMap;
 
     opts["hostName"]=url;
@@ -2673,8 +2673,8 @@ void connection::connectCharsetDir()
 {
   try
   {
-	sql::ConnectOptionsMap opts;
-	sql::SQLString charDir("/tmp/");
+    sql::ConnectOptionsMap opts;
+    sql::SQLString charDir("/tmp/");
 
     opts["hostName"]=url;
     opts["userName"]=user;
@@ -2684,8 +2684,8 @@ void connection::connectCharsetDir()
     created_objects.clear();
     con.reset(driver->connect(opts));
 
-	sql::SQLString outDir=con->getClientOption("characterSetDirectory");
-	ASSERT_EQUALS(charDir, outDir);
+    sql::SQLString outDir=con->getClientOption("characterSetDirectory");
+    ASSERT_EQUALS(charDir, outDir);
   }
   catch (sql::SQLException &e)
   {
@@ -2700,7 +2700,7 @@ void connection::connectSSLEnforce()
 {
   try
   {
-	sql::ConnectOptionsMap opts;
+    sql::ConnectOptionsMap opts;
 
     opts["hostName"]=url;
     opts["userName"]=user;
@@ -2728,33 +2728,33 @@ void connection::setAuthDir()
 
   try
   {
-	testsuite::Connection conn1;
-	sql::ConnectOptionsMap opts;
-	sql::SQLString in_plugin_dir;
+    testsuite::Connection conn1;
+    sql::ConnectOptionsMap opts;
+    sql::SQLString in_plugin_dir;
 
-	opts["hostName"]=url;
-	opts["userName"]=user;
-	opts["password"]=passwd;
+    opts["hostName"]=url;
+    opts["userName"]=user;
+    opts["password"]=passwd;
 #ifdef _WIN32
-	in_plugin_dir=sql::SQLString("C:\test_plugin");
+    in_plugin_dir=sql::SQLString("C:\test_plugin");
 #else
-	in_plugin_dir=sql::SQLString("\tmp\test_plugin");
+    in_plugin_dir=sql::SQLString("\tmp\test_plugin");
 #endif //_WIN32
 
-	opts["pluginDir"]=in_plugin_dir;
-	created_objects.clear();
-	conn1.reset(driver->connect(opts));
+    opts["pluginDir"]=in_plugin_dir;
+    created_objects.clear();
+    conn1.reset(driver->connect(opts));
 
-	sql::SQLString out_plugin_dir=conn1->getClientOption(sql::SQLString("pluginDir"));
+    sql::SQLString out_plugin_dir=conn1->getClientOption(sql::SQLString("pluginDir"));
 
-	ASSERT_EQUALS(in_plugin_dir, out_plugin_dir);
+    ASSERT_EQUALS(in_plugin_dir, out_plugin_dir);
 
   }
   catch (sql::SQLException &e)
   {
-	logErr(e.what());
-	logErr("SQLState: " + std::string(e.getSQLState()));
-	fail(e.what(), __FILE__, __LINE__);
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -2770,33 +2770,32 @@ void connection::setDefaultAuth()
 
   try
   {
-	testsuite::Connection conn1;
-	sql::ConnectOptionsMap opts;
-	sql::SQLString in_plugin_dir;
-	sql::SQLString def_auth("test_set_default_password");
+    testsuite::Connection conn1;
+    sql::ConnectOptionsMap opts;
+    sql::SQLString in_plugin_dir;
+    sql::SQLString def_auth("test_set_default_password");
 
-	opts["hostName"]=url;
-	opts["userName"]=user;
-	opts["password"]=passwd;
-	opts["defaultAuth"]=def_auth;
-	created_objects.clear();
+    opts["hostName"]=url;
+    opts["userName"]=user;
+    opts["password"]=passwd;
+    opts["defaultAuth"]=def_auth;
+    created_objects.clear();
 
-	try
-	{
-	  conn1.reset(driver->connect(opts));
-	}
-	catch (sql::SQLException &e)
-	{
-	  /* Error expected as trying to load unknown authentication plugin */
-	  ASSERT_EQUALS(2059, e.getErrorCode()/*CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR*/);
-	}
-
+    try
+    {
+      conn1.reset(driver->connect(opts));
+    }
+    catch (sql::SQLException &e)
+    {
+      /* Error expected as trying to load unknown authentication plugin */
+      ASSERT_EQUALS(2059, e.getErrorCode()/*CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR*/);
+    }
   }
   catch (sql::SQLException &e)
   {
-	logErr(e.what());
-	logErr("SQLState: " + std::string(e.getSQLState()));
-	fail(e.what(), __FILE__, __LINE__);
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
   }
 }
 
@@ -2808,48 +2807,48 @@ void connection::localInfile()
 #ifdef _UNIX_
   try
   {
-	testsuite::Connection conn1;
-	sql::ConnectOptionsMap opts;
-	sql::SQLString in_plugin_dir;
-	sql::SQLString schema("test");
-	std::ofstream infile;
+    testsuite::Connection conn1;
+    sql::ConnectOptionsMap opts;
+    sql::SQLString in_plugin_dir;
+    sql::SQLString schema("test");
+    std::ofstream infile;
 
-	infile.open("test_infile.txt");
-	infile << "1,\"val1\"\n";
-	infile << "2,\"val2\"\n";
+    infile.open("test_infile.txt");
+    infile << "1,\"val1\"\n";
+    infile << "2,\"val2\"\n";
 
-	infile.close();
+    infile.close();
 
-	opts["hostName"]=url;
-	opts["userName"]=user;
-	opts["password"]=passwd;
-	opts["schema"]=schema;
-	opts["OPT_LOCAL_INFILE"]=1;
-	created_objects.clear();
-	conn1.reset(driver->connect(opts));
+    opts["hostName"]=url;
+    opts["userName"]=user;
+    opts["password"]=passwd;
+    opts["schema"]=schema;
+    opts["OPT_LOCAL_INFILE"]=1;
+    created_objects.clear();
+    conn1.reset(driver->connect(opts));
 
-	stmt.reset(conn1->createStatement());
-	stmt->execute("DROP TABLE IF EXISTS test_local_infile");
-	stmt->execute("CREATE TABLE test_local_infile(id INT, value VARCHAR(20))");
-	stmt->execute("LOAD DATA LOCAL INFILE 'test_infile.txt' "
-			  "INTO TABLE test_local_infile FIELDS TERMINATED BY ',' OPTIONALLY "
-			  "ENCLOSED BY '\"' LINES TERMINATED BY '\n'");
+    stmt.reset(conn1->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test_local_infile");
+    stmt->execute("CREATE TABLE test_local_infile(id INT, value VARCHAR(20))");
+    stmt->execute("LOAD DATA LOCAL INFILE 'test_infile.txt' "
+          "INTO TABLE test_local_infile FIELDS TERMINATED BY ',' OPTIONALLY "
+          "ENCLOSED BY '\"' LINES TERMINATED BY '\n'");
 
-	res.reset(stmt->executeQuery("SELECT * FROM test_local_infile ORDER BY id ASC;"));
-	ASSERT(res->next());
-	ASSERT_EQUALS("1", res->getInt(1));
-	ASSERT_EQUALS("val1", res->getString(2));
+    res.reset(stmt->executeQuery("SELECT * FROM test_local_infile ORDER BY id ASC;"));
+    ASSERT(res->next());
+    ASSERT_EQUALS("1", res->getInt(1));
+    ASSERT_EQUALS("val1", res->getString(2));
 
-	ASSERT(res->next());
-	ASSERT_EQUALS("2", res->getInt(1));
-	ASSERT_EQUALS("val2", res->getString(2));
-	ASSERT(!res->next());
-  }
+    ASSERT(res->next());
+    ASSERT_EQUALS("2", res->getInt(1));
+    ASSERT_EQUALS("val2", res->getString(2));
+    ASSERT(!res->next());
+}
   catch (sql::SQLException &e)
   {
-	logErr(e.what());
-	logErr("SQLState: " + std::string(e.getSQLState()));
-	fail(e.what(), __FILE__, __LINE__);
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
   }
 #endif //_UNIX_
 }
@@ -2861,10 +2860,10 @@ void connection::isValid()
 
   try
   {
-	if (!con->isValid())
-	{
-	  FAIL("Connection is not active");
-	}
+    if (!con->isValid())
+    {
+      FAIL("Connection is not active");
+    }
   }
   catch (sql::SQLException &e)
   {

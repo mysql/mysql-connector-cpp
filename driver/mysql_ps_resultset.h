@@ -55,7 +55,7 @@ private:
 
 	boost::shared_ptr< NativeAPI::NativeStatementWrapper > proxy;
 
-	mutable int last_queried_column;  // this is updated by calls to getInt(int), getString(int), etc...
+	mutable uint32_t last_queried_column;  // this is updated by calls to getInt(int), getString(int), etc...
 
 	unsigned int num_fields;
 	uint64_t num_rows;

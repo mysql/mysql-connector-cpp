@@ -55,7 +55,7 @@ MySQL_ResultSet::MySQL_ResultSet(boost::shared_ptr< NativeAPI::NativeResultsetWr
 			MySQL_Statement * par, boost::shared_ptr< MySQL_DebugLogger > & l
 		)
 	: row(NULL), result(res), proxy(_proxy), row_position(0), was_null(false),
-	  parent(par), logger(l), resultset_type(rset_type)
+	  last_queried_column(-1), parent(par), logger(l), resultset_type(rset_type)
 {
 	CPP_ENTER("MySQL_ResultSet::MySQL_ResultSet");
 	num_rows = result->num_rows();
@@ -356,6 +356,7 @@ MySQL_ResultSet::getDouble(const uint32_t columnIndex) const
 		return 0.0;
 	}
 	was_null = false;
+	last_queried_column = columnIndex;
 	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT) {
 		return static_cast<long double>(getInt64(columnIndex));
 	}
@@ -498,6 +499,7 @@ MySQL_ResultSet::getInt64(const uint32_t columnIndex) const
 	}
 	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
+	last_queried_column = columnIndex;
 	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT) {
 		uint64_t uval = 0;
 		std::div_t length= std::div(getFieldMeta(columnIndex)->length, 8);
@@ -557,6 +559,7 @@ MySQL_ResultSet::getUInt64(const uint32_t columnIndex) const
 	}
 	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
+	last_queried_column = columnIndex;
 	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT) {
 		uint64_t uval = 0;
 		std::div_t length= std::div(getFieldMeta(columnIndex)->length, 8);
@@ -672,6 +675,7 @@ MySQL_ResultSet::getString(const uint32_t columnIndex) const
 		return "";
 	}
 
+	last_queried_column = columnIndex;
 	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT) {
 		char buf[30];
 		snprintf(buf, sizeof(buf) - 1, "%llu", (unsigned long long) getUInt64(columnIndex));
@@ -1038,6 +1042,9 @@ MySQL_ResultSet::wasNull() const
 	if (isBeforeFirstOrAfterLast()) {
 		throw sql::InvalidArgumentException("MySQL_ResultSet::wasNull: can't fetch because not on result set");
 	}
+	if (last_queried_column == -1) {
+		throw sql::InvalidArgumentException("MySQL_ResultSet::wasNull: should be called only after one of the getter methods");
+    }
 	return was_null;
 }
 /* }}} */

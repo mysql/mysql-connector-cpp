@@ -72,14 +72,14 @@ void statement::getWarnings()
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT UNSIGNED)");
 
-	// Generating 2  warnings to make sure we get only the last 1 - won't hurt
-	stmt->execute("INSERT INTO test(id) VALUES (-2)");
+    // Generating 2  warnings to make sure we get only the last 1 - won't hurt
+    stmt->execute("INSERT INTO test(id) VALUES (-2)");
     // Lets hope that this will always cause a 1264 or similar warning
     stmt->execute("INSERT INTO test(id) VALUES (-1)");
 
     for (const sql::SQLWarning* warn=stmt->getWarnings(); warn; warn=warn->getNextWarning())
     {
-		++count;
+      ++count;
       msg.str("");
       msg << "... ErrorCode = '" << warn->getErrorCode() << "', ";
       msg << "SQLState = '" << warn->getSQLState() << "', ";
@@ -98,7 +98,7 @@ void statement::getWarnings()
       ASSERT(("" != warn->getMessage()));
     }
 
-	ASSERT_EQUALS(1, count);
+    ASSERT_EQUALS(1, count);
 
     for (const sql::SQLWarning* warn=stmt->getWarnings(); warn; warn=warn->getNextWarning())
     {
@@ -126,16 +126,16 @@ void statement::getWarnings()
       FAIL("There should be no more warnings!");
     }
 
-	// New warning
-	stmt->execute("INSERT INTO test(id) VALUES (-3)");
-	// Verifying we have warnings now
-	ASSERT(stmt->getWarnings() != NULL);
+    // New warning
+    stmt->execute("INSERT INTO test(id) VALUES (-3)");
+    // Verifying we have warnings now
+    ASSERT(stmt->getWarnings() != NULL);
 
     // Statement without tables access does not reset warnings.
-	stmt->execute("SELECT 1");
-	ASSERT(stmt->getWarnings() == NULL);
-	res.reset(stmt->getResultSet());
-	res->next();
+    stmt->execute("SELECT 1");
+    ASSERT(stmt->getWarnings() == NULL);
+    res.reset(stmt->getResultSet());
+    res->next();
 
     // TODO - how to use getNextWarning() ?
     stmt->execute("DROP TABLE IF EXISTS test");
@@ -261,10 +261,10 @@ void statement::callSP()
     do
     {
       res.reset(stmt->getResultSet());
-    while (res->next())
-    {
-      msg << res->getInt("id") << res->getString(2);
-    }
+      while (res->next())
+      {
+        msg << res->getInt("id") << res->getString(2);
+      }
     }
     while (stmt->getMoreResults());
     ASSERT_EQUALS("1a2b3c", msg.str());
@@ -276,10 +276,10 @@ void statement::callSP()
     do
     {
       res.reset(stmt->getResultSet());
-    while (res->next())
-    {
-      msg << res->getInt("id") << res->getString(2);
-    }
+      while (res->next())
+      {
+        msg << res->getInt("id") << res->getString(2);
+      }
     }
     while (stmt->getMoreResults());
     ASSERT_EQUALS("1a2b3c3c2b1a", msg.str());
@@ -580,12 +580,12 @@ void statement::queryTimeout()
   stmt.reset(con->createStatement());
   try
   {
-	stmt->setQueryTimeout(timeout);
-	ASSERT_EQUALS(timeout, stmt->getQueryTimeout());
-	time_t t1= time(NULL);
+    stmt->setQueryTimeout(timeout);
+    ASSERT_EQUALS(timeout, stmt->getQueryTimeout());
+    time_t t1= time(NULL);
     stmt->execute("select sleep(5)");
-	time_t t2= time(NULL);
-	ASSERT((t2 -t1) < 5);
+    time_t t2= time(NULL);
+    ASSERT((t2 -t1) < 5);
   }
   catch (sql::SQLException &e)
   {

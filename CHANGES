@@ -31,6 +31,8 @@ GA  1.1.6 -
 - C/C++ should provide libmysqlclient and boost version macros with which
   it is build. (Bug#75250)
 - C++11 support and replace deprecated auto_ptr. (Bug#75251)
+- wasNull() method call before fetching the data results in assert failure
+  (Bug#19938873)
 
 GA  1.1.5 -
 - DatabaseMetaData::getProcedures() returns syntax error for connection option

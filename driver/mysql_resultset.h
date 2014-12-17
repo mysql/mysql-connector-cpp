@@ -61,7 +61,10 @@ class MySQL_ResultSet : public sql::ResultSet
 	typedef std::map< sql::SQLString, unsigned int > FieldNameIndexMap;
 
 	FieldNameIndexMap	field_name_to_index_map;
+
 	mutable bool		was_null;
+        // this is updated by calls to getInt(int), getString(int), etc...
+	mutable uint32_t        last_queried_column;
 
 	const MySQL_Statement * parent;
 

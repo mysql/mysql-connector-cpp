@@ -191,11 +191,11 @@ void bugs::getResultSet_54840()
 {
   stmt->executeUpdate("DROP function if exists _getActivePost");
   stmt->executeUpdate("CREATE Function _getActivePost(_author INT) "
-						"RETURNS INT "
-						"DETERMINISTIC "
-						"BEGIN "
-						"	RETURN 55;"
-						"END");
+                                                "RETURNS INT "
+                                                "DETERMINISTIC "
+                                                "BEGIN "
+                                                "       RETURN 55;"
+                                                "END");
 
   ASSERT(stmt->execute("select _getActivePost()"));
 
@@ -284,22 +284,22 @@ void bugs::expired_pwd()
 
   sql::ConnectOptionsMap opts;
 
-  opts["userName"]=	sql::SQLString("ccpp_expired_pwd");
-  opts["password"]=	sql::SQLString("");
+  opts["userName"]=     sql::SQLString("ccpp_expired_pwd");
+  opts["password"]=     sql::SQLString("");
 
   try
   {
-	if (getConnection(&opts))
-	{
-	  SKIP("The expired password does not work with anonymous-user accounts.");
-	}
+    if (getConnection(&opts))
+    {
+      SKIP("The expired password does not work with anonymous-user accounts.");
+    }
   }
   catch (sql::SQLException &e)
   {
-	/* If no anonymous user present then continue */
+    /* If no anonymous user present then continue */
   }
 
-  opts["password"]=	sql::SQLString("foo");
+  opts["password"]=     sql::SQLString("foo");
 
   testsuite::Connection c2;
 
@@ -322,9 +322,11 @@ void bugs::expired_pwd()
   }
   catch (sql::SQLException &e)
   {
-	/* In case of sql::mysql::mydeCL_CANT_HANDLE_EXP_PWD tests fail - means that in
-	   the setup where test is run the driver does not support expired password */
-	ASSERT_EQUALS(1820, e.getErrorCode()/*ER_MUST_CHANGE_PASSWORD*/);
+    /*
+      In case of sql::mysql::mydeCL_CANT_HANDLE_EXP_PWD tests fail - means that in
+      the setup where test is run the driver does not support expired password
+    */
+    ASSERT_EQUALS(1820, e.getErrorCode()/*ER_MUST_CHANGE_PASSWORD*/);
   }
 
   // Now setting new password and getting fully functional connection
@@ -333,7 +335,7 @@ void bugs::expired_pwd()
   // Connect should go thru fine
   try
   {
-	c2.reset(getConnection(&opts));
+    c2.reset(getConnection(&opts));
   }
   catch(sql::SQLException &e)
   {
@@ -349,7 +351,7 @@ void bugs::expired_pwd()
   opts["password"]= sql::SQLString("bar");
   opts["CLIENT_MULTI_STATEMENTS"]= true;
   opts["postInit"]= sql::SQLString("create table test.ccpp_expired_pwd(i int);"
-							"insert into test.ccpp_expired_pwd(i) values(2)");
+                                   "insert into test.ccpp_expired_pwd(i) values(2)");
 
   c2.reset(getConnection(&opts));
 
@@ -519,15 +521,15 @@ void bugs::bug72700()
 
   try
   {
-	res.reset(stmt->getResultSet());
-	checkResultSetScrolling(res);
-	ResultSetMetaData * meta=res->getMetaData();
-	ASSERT_EQUALS(meta->getColumnType(1), 15);
-	ASSERT_EQUALS(meta->getColumnTypeName(1), "LONGTEXT");
+    res.reset(stmt->getResultSet());
+    checkResultSetScrolling(res);
+    ResultSetMetaData * meta=res->getMetaData();
+    ASSERT_EQUALS(meta->getColumnType(1), 15);
+    ASSERT_EQUALS(meta->getColumnTypeName(1), "LONGTEXT");
   }
   catch (::sql::SQLException & /*e*/)
   {
-	return; /* Everything is fine */
+    return; /* Everything is fine */
   }
 
   stmt->execute("DROP TABLE IF EXISTS bug72700");
@@ -535,15 +537,15 @@ void bugs::bug72700()
   ASSERT(stmt->execute("SELECT valtext FROM bug72700"));
   try
   {
-	res.reset(stmt->getResultSet());
-	checkResultSetScrolling(res);
-	ResultSetMetaData * meta=res->getMetaData();
-	ASSERT_EQUALS(meta->getColumnType(1), 15);
-	ASSERT_EQUALS(meta->getColumnTypeName(1), "TEXT");
+    res.reset(stmt->getResultSet());
+    checkResultSetScrolling(res);
+    ResultSetMetaData * meta=res->getMetaData();
+    ASSERT_EQUALS(meta->getColumnType(1), 15);
+    ASSERT_EQUALS(meta->getColumnTypeName(1), "TEXT");
   }
   catch (::sql::SQLException & /*e*/)
   {
-	return; /* Everything is fine */
+    return; /* Everything is fine */
   }
 
   stmt->execute("DROP TABLE IF EXISTS bug72700");
@@ -619,6 +621,42 @@ void bugs::bug20085944()
   }
 
   FAIL("Exception wasn't thrown by getInt() in bug20085944()");
+}
+
+
+void bugs::bug19938873_pstmt()
+{
+  try
+  {
+    pstmt.reset(con->prepareStatement("SELECT NULL"));
+    res.reset(pstmt->executeQuery());
+    ASSERT(res->next());
+    res->wasNull();
+  }
+  catch (sql::SQLException & /*e*/)
+  {
+    return; /* Everything is fine */
+  }
+
+  FAIL("Exception wasn't thrown by wasNull()");
+}
+
+
+void bugs::bug19938873_stmt()
+{
+  try
+  {
+    stmt.reset(con->createStatement());
+    res.reset(stmt->executeQuery("SELECT NULL"));
+    ASSERT(res->next());
+    res->wasNull();
+  }
+  catch (sql::SQLException & /*e*/)
+  {
+    return; /* Everything is fine */
+  }
+
+  FAIL("Exception wasn't thrown by wasNull()");
 }
 
 
