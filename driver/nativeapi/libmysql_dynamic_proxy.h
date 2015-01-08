@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -190,6 +190,8 @@ public:
 	int stmt_store_result(MYSQL_STMT *);
 
 	int stmt_next_result(MYSQL_STMT *);
+
+	bool stmt_free_result(MYSQL_STMT *);
 
 	void thread_init();
 

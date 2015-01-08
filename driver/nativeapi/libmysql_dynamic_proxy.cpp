@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -803,6 +803,17 @@ LibmysqlDynamicProxy::stmt_next_result(MYSQL_STMT * stmt)
 	} else {
 		throw ::sql::MethodNotImplementedException("::mysql_stmt_next_result()");
 	}
+}
+/* }}} */
+
+
+/* {{{ LibmysqlDynamicProxy::stmt_free_result() */
+bool
+LibmysqlDynamicProxy::stmt_free_result(MYSQL_STMT * stmt)
+{
+        ptr2mysql_stmt_free_result ptr2_stmt_free_result = symbol_safe_cast<ptr2mysql_stmt_free_result>(GetProcAddr("mysql_stmt_free_result"));
+
+        return (*ptr2_stmt_next_result)(stmt);
 }
 /* }}} */
 

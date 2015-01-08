@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/C++ is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -33,6 +33,7 @@ GA  1.1.6 -
 - C++11 support and replace deprecated auto_ptr. (Bug#75251)
 - wasNull() method call before fetching the data results in assert failure
   (Bug#19938873)
+- Memory leak if result set of prepared statement used (Bug#18135088/wl#7925)
 
 GA  1.1.5 -
 - DatabaseMetaData::getProcedures() returns syntax error for connection option
