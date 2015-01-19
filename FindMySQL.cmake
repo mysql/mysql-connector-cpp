@@ -570,7 +570,7 @@ if (MYSQL_INCLUDE_DIR AND NOT MYSQL_NUM_VERSION)
     "${CMAKE_SOURCE_DIR}"
     "${CMAKE_SOURCE_DIR}/cmake/getmysqlversion.c"
     CMAKE_FLAGS -DINCLUDE_DIRECTORIES:STRING=${MYSQL_INCLUDE_DIR}
-    ARGS "${CMAKE_BINARY_DIR}/cmake/mysql_version_info.cmake"
+    ARGS "${CMAKE_SOURCE_DIR}/cmake/mysql_version_info.cmake"
          "MYSQL_SERVER_VERSION"
          "MYSQL_VERSION_ID"
          "LIBMYSQL_VERSION"

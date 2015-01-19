@@ -32,11 +32,11 @@ int main(int argc, char *argv[]) {
   int i;
 
   if (argc < 3) {
-    return 1;
+    return 0;
   }
 
   if (!(fp = fopen(argv[1],  "w"))) {
-    return 1;
+    return 0;
   }
 
   i = 2;
