@@ -660,5 +660,32 @@ void bugs::bug19938873_stmt()
 }
 
 
+void bugs::bug68523()
+{
+  try
+  {
+    stmt->execute("DROP TABLE IF EXISTS bug68523");
+    stmt->execute("CREATE TABLE bug68523(ts TIMESTAMP(6))");
+    stmt->execute("INSERT INTO bug68523(ts) values('2015-01-20 16:14:36.709649')");
+
+    pstmt.reset(con->prepareStatement("SELECT ts, TIME(ts) from bug68523"));
+    res.reset(pstmt->executeQuery());
+    ASSERT(res->next());
+
+    ASSERT_EQUALS(res->getString(1), "2015-01-20 16:14:36.709649");
+    ASSERT_EQUALS(res->getString(2), "16:14:36.709649");
+
+    stmt->execute("DROP TABLE IF EXISTS bug68523");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+}
+
+
 } /* namespace regression */
 } /* namespace testsuite */

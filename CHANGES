@@ -34,6 +34,8 @@ GA  1.1.6 -
 - wasNull() method call before fetching the data results in assert failure
   (Bug#19938873)
 - Memory leak if result set of prepared statement used (Bug#18135088/wl#7925)
+- ResultSet::getString does not return fractional seconds from DATETIME(N)
+  columns (Bug#68523)
 
 GA  1.1.5 -
 - DatabaseMetaData::getProcedures() returns syntax error for connection option

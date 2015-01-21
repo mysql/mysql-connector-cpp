@@ -955,9 +955,15 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 	switch (rs_meta->getColumnType(columnIndex)) {
 		case sql::DataType::TIMESTAMP:
 		{
-			char buf[22];
+			char buf[28];
 			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(result_bind->rbind[columnIndex - 1].buffer);
-			snprintf(buf, sizeof(buf) - 1, "%04d-%02d-%02d %02d:%02d:%02d", t->year, t->month, t->day, t->hour, t->minute, t->second);
+                        if (t->second_part) {
+			        snprintf(buf, sizeof(buf) - 1, "%04d-%02d-%02d %02d:%02d:%02d.%06lu",
+                                                t->year, t->month, t->day, t->hour, t->minute, t->second, t->second_part);
+                        } else {
+			        snprintf(buf, sizeof(buf) - 1, "%04d-%02d-%02d %02d:%02d:%02d",
+                                                t->year, t->month, t->day, t->hour, t->minute, t->second);
+                        }
 			CPP_INFO_FMT("It's a datetime/timestamp %s", buf);
 			return sql::SQLString(buf);
 		}
@@ -971,9 +977,13 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 		}
 		case sql::DataType::TIME:
 		{
-			char buf[12];
+			char buf[18];
 			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(result_bind->rbind[columnIndex - 1].buffer);
-			snprintf(buf, sizeof(buf) - 1, "%s%02d:%02d:%02d", t->neg? "-":"", t->hour, t->minute, t->second);
+                        if (t->second_part) {
+			        snprintf(buf, sizeof(buf) - 1, "%s%02d:%02d:%02d.%06lu", t->neg? "-":"", t->hour, t->minute, t->second, t->second_part);
+                        } else {
+			        snprintf(buf, sizeof(buf) - 1, "%s%02d:%02d:%02d", t->neg? "-":"", t->hour, t->minute, t->second);
+                        }
 			CPP_INFO_FMT("It's a time %s", buf);
 			return sql::SQLString(buf);
 		}
