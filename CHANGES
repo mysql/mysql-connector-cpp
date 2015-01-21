@@ -36,6 +36,7 @@ GA  1.1.6 -
 - Memory leak if result set of prepared statement used (Bug#18135088/wl#7925)
 - ResultSet::getString does not return fractional seconds from DATETIME(N)
   columns (Bug#68523)
+- make install/fast fails if static library is not built (Bug#52281)
 
 GA  1.1.5 -
 - DatabaseMetaData::getProcedures() returns syntax error for connection option
