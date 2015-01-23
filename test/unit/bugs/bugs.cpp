@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -262,6 +262,7 @@ void bugs::supportIssue_52319()
 /* Bug#15936764/67325 */
 void bugs::expired_pwd()
 {
+  logMsg("bugs::expired_pwd");
   if (getMySQLVersion(con) < 56006)
   {
     SKIP("The server does not support tested functionality(expired password)");
@@ -386,6 +387,7 @@ void bugs::expired_pwd()
  */
 void bugs::legacy_auth()
 {
+  logMsg("bugs::legacy_auth");
   try
   {
     stmt->executeUpdate("DROP USER ccpp_legacy_auth");
@@ -475,6 +477,7 @@ void bugs::legacy_auth()
 /* Bug #18193771/71605 - The driver does not recognize utf8mb4 charset */
 void bugs::bug71606()
 {
+  logMsg("bugs::bug71606");
   if (getMySQLVersion(con) < 56000)
   {
     SKIP("The server does not support tested functionality(utf8mb4 charset)");
@@ -517,6 +520,7 @@ void bugs::bug71606()
 
 void bugs::bug72700()
 {
+  logMsg("bugs::bug72700");
   ASSERT(stmt->execute("select astext(geomfromtext('point(10 10)'))"));
 
   try
@@ -558,6 +562,7 @@ void bugs::bug66871()
   sql::Statement *stmt;
   sql::ResultSet *res;
 
+  logMsg("bugs::bug66871");
   try
   {
     con = getConnection(NULL);
@@ -589,6 +594,7 @@ void bugs::bug66871()
 */
 void bugs::bug20085944()
 {
+  logMsg("bugs::bug20085944");
   try
   {
     sql::ConnectOptionsMap connection_properties;
@@ -626,6 +632,7 @@ void bugs::bug20085944()
 
 void bugs::bug19938873_pstmt()
 {
+  logMsg("bugs::bug19938873_pstmt");
   try
   {
     pstmt.reset(con->prepareStatement("SELECT NULL"));
@@ -644,6 +651,7 @@ void bugs::bug19938873_pstmt()
 
 void bugs::bug19938873_stmt()
 {
+  logMsg("bugs::bug19938873_stmt");
   try
   {
     stmt.reset(con->createStatement());
@@ -684,6 +692,44 @@ void bugs::bug68523()
     fail(e.what(), __FILE__, __LINE__);
   }
 
+}
+
+
+void bugs::bug66235()
+{
+  logMsg("bug::bug66235");
+  try
+  {
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id BIT(3))");
+    stmt->execute("INSERT INTO test(id) VALUES(1), (10), (1), (1), (10), (111);");
+
+    res.reset(stmt->executeQuery("SELECT MAX(id), MIN(id) FROM test"));
+    while (res->next())
+    {
+      ASSERT_EQUALS(res->getString(1), "7");
+      ASSERT_EQUALS(res->getInt(1), 7);
+
+      ASSERT_EQUALS(res->getString(2), "1");
+      ASSERT_EQUALS(res->getInt(2), 1);
+    }
+
+    res.reset(stmt->executeQuery("SELECT id FROM test limit 1"));
+    while (res->next())
+    {
+      ASSERT_EQUALS(res->getString(1), "1");
+      ASSERT_EQUALS(res->getInt(1), 1);
+    }
+
+    stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
 }
 
 

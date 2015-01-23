@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -500,7 +500,8 @@ MySQL_ResultSet::getInt64(const uint32_t columnIndex) const
 	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
 	last_queried_column = columnIndex;
-	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT) {
+	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT &&
+                getFieldMeta(columnIndex)->flags != (BINARY_FLAG|UNSIGNED_FLAG)) {
 		uint64_t uval = 0;
 		std::div_t length= std::div(getFieldMeta(columnIndex)->length, 8);
 		if (length.rem) {
@@ -560,12 +561,14 @@ MySQL_ResultSet::getUInt64(const uint32_t columnIndex) const
 	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
 	last_queried_column = columnIndex;
-	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT) {
+	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT &&
+                getFieldMeta(columnIndex)->flags != (BINARY_FLAG|UNSIGNED_FLAG)) {
 		uint64_t uval = 0;
 		std::div_t length= std::div(getFieldMeta(columnIndex)->length, 8);
 		if (length.rem) {
 			++length.quot;
 		}
+
 		switch (length.quot) {
 			case 8:uval = (uint64_t) bit_uint8korr(row[columnIndex - 1]);break;
 			case 7:uval = (uint64_t) bit_uint7korr(row[columnIndex - 1]);break;

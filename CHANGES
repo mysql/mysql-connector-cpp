@@ -37,6 +37,7 @@ GA  1.1.6 -
 - ResultSet::getString does not return fractional seconds from DATETIME(N)
   columns (Bug#68523)
 - make install/fast fails if static library is not built (Bug#52281)
+- MySQL_ResultSet::getString() returns bad value for BIT data (Bug#66235)
 
 GA  1.1.5 -
 - DatabaseMetaData::getProcedures() returns syntax error for connection option
