@@ -4,85 +4,49 @@ This is a release of MySQL Connector/C++, Oracle's
 dual-license C++ API for connecting client applications
 to MySQL.
 
-Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
 
 --------------------------------------------------------------------------------
 
 Dear MySQL Users,
 
-A new GA (general availability) version of MySQL Connector/C++ has been made available: MySQL Connector/C++ 1.1.5 GA. The MySQL Connector/C++ provides a C++ API for
-connecting client applications to the MySQL Server 5.5 or newer. You can download the production release at:
+A new GA (general availability) version of MySQL Connector/C++ has
+been made available: MySQL Connector/C++ 1.1.6 GA. The MySQL
+Connector/C++ provides a C++ API for connecting client applications to
+the MySQL Server 5.5 or newer. You can download the production release
+at:
 
  http://dev.mysql.com/downloads/connector/cpp/1.1.html
 
-The MySQL driver for C++ offers an easy to use API derived from JDBC 4.0. MySQL Workbench is using it successfully since years. 
+The MySQL driver for C++ offers an easy to use API derived from JDBC
+4.0. MySQL Workbench is using it successfully since years.
 
-The major changes in 1.1.5 are:
+The major changes in 1.1.6 are:
 
-   Functionality Added or Changed
+       option was specified and the MySQL installation path
+       contained the characters -m. Installation failed if the
+       build directory was not in the top source directory. (Bug
+       #73502, Bug #19447498)
 
-     * MySQL_Prepared_Statement::getMoreResults() functionality
-       has been implemented, so multiple result sets now can be
-       fetched using a prepared statement. (Bug #19147677)
+     * For prepared statements, getString() did not return the
+       fractional seconds part from temporal columns that had a
+       fractional sections part. (Bug #68523, Bug #17218692)
 
-     * The following connection options have been implemented:
-       MYSQL_DEFAULT_AUTH, MYSQL_OPT_CONNECT_ATTR_DELETE,
-       MYSQL_OPT_CONNECT_ATTR_RESET, MYSQL_OPT_LOCAL_INFILE,
-       MYSQL_PLUGIN_DIR, MYSQL_READ_DEFAULT_FILE,
-       MYSQL_READ_DEFAULT_GROUP, MYSQL_SET_CHARSET_DIR, and
-       max_statement_timeout for session-based query timeout.
-       (Bug #73665, Bug #19479950)
+     * For queries of the form SELECT MAX(bit_col) FROM
+       table_with_bit_col, getString() returned an incorrect
+       result. (Bug #66235, Bug #14520822)
 
-     * These functions were added: Connection::isValid() checks
-       whether the connection is alive, and
-       Connection::reconnect() reconnects if the connection has
-       gone down. (Bug #65640, Bug #14207722)
+     * For Connector/C++ builds from source, make install failed
+       if only the static library had been built without the
+       dynamic library. (Bug #52281, Bug #11759926)
 
-   Bugs Fixed
-
-     * Several metadata flaws were corrected:
-
-          + getTables() did not return a correct result when
-            TableType=VIEW and metadataUseInfoSchema=false.
-
-          + getColumns() did not return column inforomation when
-            metadataUseInfoSchema=TRUE.
-
-          + getColumnName() returned the display name instead of
-            the actual column name.
-
-          + getProcedures() returned a syntax error when
-            metadataUseInfoSchema=false.
-       (Bug #19505348, Bug #19147897, Bug #19244736, Bug
-       #19505421)
-
-     * CMake did not pick up the libmysqlclient path from the
-       MYSQL_LIB_DIR option. (Bug #19370844)
-
-     * driver/version_info.h (containing version macros) was not
-       included in the installed header files. (Bug #73795, Bug
-       #19553971)
-
-     * CMake could misconfigure the link flags. (Bug #73427, Bug
-       #19315635)
-
-     * With the result set type set to TYPE_FORWARD_ONLY,
-       Statement::executeQuery() returns almost immediately, but
-       MySQL_ResultSet::next() and
-       MySQL_Prepared_ResultSet::next() returned false if the
-       connection was lost rather than throwing an exception,
-       making it impossible to distinguish loss of connection
-       from normal end of the result set.
-       MySQL_ResultSet::next() and
-       MySQL_Prepared_ResultSet::next() now throw an exception
-       when the connection is lost. (Bug #69031, Bug #18886278)
-
-You can find further details, including usages examples, in the documentation at:
+You can find further details, including usages examples, in the
+documentation at:
 
   http://dev.mysql.com/doc/en/connector-cpp.html
 
-
-You may also want to contribute to the MySQL Forum on C/C++ at http://forums.mysql.com/list.php?167 or join the MySQL Connector/C++ mailing list
-http://lists.mysql.com/connector-cplusplus .
+You may also want to contribute to the MySQL Forum on C/C++ at
+http://forums.mysql.com/list.php?167 or join the MySQL Connector/C++
+mailing list http://lists.mysql.com/connector-cplusplus .
 
 Enjoy!
