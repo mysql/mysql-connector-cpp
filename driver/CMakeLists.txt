@@ -22,15 +22,11 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 #
 
+# There is a generated "version_info.h" in "cppconn/" as well,
+# specify that we want the one built from this directory
+INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
 LINK_DIRECTORIES(${MYSQLCPPCONN_BOOST_LIBRARY_DIRS})
-
-
-INCLUDE_DIRECTORIES(${MYSQLCPPCONN_SOURCE_DIR})
-INCLUDE_DIRECTORIES(${MYSQLCPPCONN_SOURCE_DIR}/cppconn)
-INCLUDE_DIRECTORIES(${MYSQLCPPCONN_BOOST_INCLUDE_DIRS})
-MESSAGE(STATUS "BOOST_INCLUDE_DIRS=${MYSQLCPPCONN_BOOST_INCLUDE_DIRS}")
-
 
 SET(MYSQLCPPCONN_TRACE_ENABLE 0 CACHE BOOL "trace-enabled")
 
@@ -88,7 +84,8 @@ ELSE(MYSQLCPPCONN_DT_RPATH)
   MESSAGE(STATUS "DT_RPATH will not be set")
 ENDIF(MYSQLCPPCONN_DT_RPATH)
 
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/nativeapi/binding_config.h.cm ${CMAKE_CURRENT_SOURCE_DIR}/nativeapi/binding_config.h)
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/nativeapi/binding_config.h.cm
+               ${CMAKE_CURRENT_BINARY_DIR}/nativeapi/binding_config.h)
 
 SET(MYSQLCPPCONN_SOURCES
   mysql_art_resultset.cpp
@@ -141,7 +138,7 @@ IF(WIN32)
     mysql_util.h
     mysql_warning.h
     mysql_uri.h
-    version_info.h
+    ${CMAKE_CURRENT_BINARY_DIR}/version_info.h
     nativeapi/mysql_client_api.h
     nativeapi/mysql_native_driver_wrapper.h
     nativeapi/native_driver_wrapper.h

@@ -23,10 +23,51 @@ The MySQL driver for C++ offers an easy to use API derived from JDBC
 
 The major changes in 1.1.6 are:
 
+  Security Notes
+
+     * Connector/C++ 1.1.6 Commercial upgrades the linked OpenSSL
+       library to version 1.0.1m which has been publicly reported
+       as not vulnerable to CVE-2015-0286
+       (http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2015-0286).
+
+   Functionality Added or Changed
+
+     * The std::auto_ptr class template is deprecated in C++11,
+       and its usage has been replaced with
+       boost::scoped_ptr/shared_ptr.
+       The CMAKE_ENABLE_C++11 CMake option has been added to
+       permit enabling C++11 support. (Bug #75251)
+
+     * Connector/C++ now provides macros to indicate the
+       versions of libraries against which it was built:
+       MYCPPCONN_STATIC_MYSQL_VERSION and
+       MYCPPCONN_STATIC_MYSQL_VERSION_ID (MySQL client library
+       version, string and numeric), and MYCPPCONN_BOOST_VERSION
+       (Boost library version, numeric). (Bug #75250)
+
+   Bugs Fixed
+
+     * With defaultStatementResultType=FORWARD_ONLY and a row
+       position after the last row, using getter methods such as
+       getInt() or getString() resulted in a segmentation fault.
+       (Bug #20085944)
+
+     * For prepared statements, calling wasNull() before
+       fetching data resulted in an assertion failure.
+       (Bug #19938873)
+
+     * Result sets from prepared statements were not freed.
+       (Bug #18135088)
+
+     * MySQL Connector/C++ failed to build against
+       Boost-devel-1.41.0-25 on OLE6.
+       (Bug #75063, Bug #20125824)
+
+     * Configuration failed if the MYSQL_CONFIG_EXECUTABLE
        option was specified and the MySQL installation path
        contained the characters -m. Installation failed if the
-       build directory was not in the top source directory. (Bug
-       #73502, Bug #19447498)
+       build directory was not in the top source directory.
+       (Bug #73502, Bug #19447498)
 
      * For prepared statements, getString() did not return the
        fractional seconds part from temporal columns that had a
