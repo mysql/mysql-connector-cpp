@@ -264,6 +264,21 @@ TARGET_LINK_LIBRARIES(mysqlcppconn-static  ${MY_TARGET_LINK_LIBRARIES_STATIC}
   ${MYSQLCPPCONN_EXTRA_LIBRARIES}
   ${MYSQLCPPCONN_ICU_LIBRARY})
 
+IF(CMAKE_SYSTEM_NAME MATCHES "SunOS")
+  # We pass objects from our C client library in the
+  # STATIC_LIBRARY_FLAGS property to create a
+  # "libmysqlcppconn-static.a" with both the C client library and
+  # Connector/C++ objects.
+  #
+  # In CMake 2.8.5 "SunPro-CXX.cmake" will define the creation of AR
+  # archives to use "CC -xar ..." but leave out LINK_FLAGS where
+  # the objects passed to STATIC_LIBRARY_FLAGS will end up. So no
+  # C client library objects will be in the resulting library.
+  #
+  # We set it the archive creation line to the default "ar cr ..."
+  SET(CMAKE_CXX_CREATE_STATIC_LIBRARY "<CMAKE_AR> cr <TARGET> <LINK_FLAGS> <OBJECTS>")
+ENDIF()
+
 SET_TARGET_PROPERTIES(mysqlcppconn-static PROPERTIES
   LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
   COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV} ${MYSQL_CXXFLAGS}"
