@@ -738,16 +738,6 @@ void bugs::bug21053335()
   logMsg("bugs::bug21053335");
   try
   {
-    sql::ConnectOptionsMap connection_properties;
-
-    connection_properties["hostName"]=url;
-    connection_properties["userName"]=user;
-    connection_properties["password"]=passwd;
-
-    created_objects.clear();
-    con.reset(driver->connect(connection_properties));
-    con->setSchema(db);
-    stmt.reset(con->createStatement());
 
     stmt->execute("DROP TABLE IF EXISTS bug21053335");
     stmt->execute("CREATE TABLE bug21053335(c char(10))");
