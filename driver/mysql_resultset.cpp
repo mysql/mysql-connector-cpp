@@ -162,6 +162,8 @@ MySQL_ResultSet::checkScrollable() const
 	if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
 		throw sql::NonScrollableException("Nonscrollable result set");
 	}
+    // reset last_queried_column
+    last_queried_column = -1;
 }
 /* }}} */
 
@@ -351,12 +353,14 @@ MySQL_ResultSet::getDouble(const uint32_t columnIndex) const
 	if (columnIndex == 0 || columnIndex > num_fields) {
 		throw sql::InvalidArgumentException("MySQL_ResultSet::getDouble: invalid value of 'columnIndex'");
 	}
+
+    last_queried_column = columnIndex;
+
 	if (row[columnIndex - 1] == NULL) {
 		was_null = true;
 		return 0.0;
 	}
 	was_null = false;
-	last_queried_column = columnIndex;
 	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT) {
 		return static_cast<long double>(getInt64(columnIndex));
 	}
@@ -497,9 +501,11 @@ MySQL_ResultSet::getInt64(const uint32_t columnIndex) const
 		was_null = true;
 		return 0;
 	}
+
+    last_queried_column = columnIndex;
+
 	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
-	last_queried_column = columnIndex;
 	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT &&
                 getFieldMeta(columnIndex)->flags != (BINARY_FLAG|UNSIGNED_FLAG)) {
 		uint64_t uval = 0;
@@ -558,9 +564,11 @@ MySQL_ResultSet::getUInt64(const uint32_t columnIndex) const
 		was_null = true;
 		return 0;
 	}
+
+    last_queried_column = columnIndex;
+
 	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
-	last_queried_column = columnIndex;
 	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT &&
                 getFieldMeta(columnIndex)->flags != (BINARY_FLAG|UNSIGNED_FLAG)) {
 		uint64_t uval = 0;
@@ -673,12 +681,13 @@ MySQL_ResultSet::getString(const uint32_t columnIndex) const
 		throw sql::InvalidArgumentException("MySQL_ResultSet::getString: invalid value of 'columnIndex'");
 	}
 
+    last_queried_column = columnIndex;
+
 	if (row == NULL || row[columnIndex - 1] == NULL) {
 		was_null = true;
 		return "";
 	}
 
-	last_queried_column = columnIndex;
 	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT) {
 		char buf[30];
 		snprintf(buf, sizeof(buf) - 1, "%llu", (unsigned long long) getUInt64(columnIndex));

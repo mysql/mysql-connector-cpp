@@ -733,5 +733,62 @@ void bugs::bug66235()
 }
 
 
+void bugs::bug21053335()
+{
+  logMsg("bugs::bug21053335");
+  try
+  {
+    sql::ConnectOptionsMap connection_properties;
+
+    connection_properties["hostName"]=url;
+    connection_properties["userName"]=user;
+    connection_properties["password"]=passwd;
+
+    created_objects.clear();
+    con.reset(driver->connect(connection_properties));
+    con->setSchema(db);
+    stmt.reset(con->createStatement());
+
+    stmt->execute("DROP TABLE IF EXISTS bug21053335");
+    stmt->execute("CREATE TABLE bug21053335(c char(10))");
+    stmt->execute("INSERT INTO bug21053335 values(NULL), (1)");
+    res.reset(stmt->executeQuery("select c from bug21053335"));
+    res->next();
+    std::stringstream log;
+    log << "Data :" <<res->getString(1);
+    log<<"\nrs->wasNull(1) : "<<res->wasNull()<<std::endl;
+    logMsg(log.str().c_str());
+
+    ASSERT(res->wasNull());
+
+    res->next();
+
+    try{
+      ASSERT(res->wasNull());
+      FAIL("Exception was not thrown by wasNull()");
+    }
+    catch (sql::SQLException & e)
+    {
+      // Everything is ok
+    }
+
+    log.flush();
+    log << "Data :" <<res->getString(1);
+    log<<"\nrs->wasNull(1) : "<<res->wasNull()<<std::endl;
+    logMsg(log.str().c_str());
+
+    ASSERT(!res->wasNull());
+
+  }
+  catch (sql::SQLException & e)
+  {
+    FAIL("Exception thrown by wasNull()");
+    throw;
+  }
+
+
+}
+
+
 } /* namespace regression */
 } /* namespace testsuite */
