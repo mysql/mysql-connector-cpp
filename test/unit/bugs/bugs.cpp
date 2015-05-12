@@ -703,7 +703,7 @@ void bugs::bug66235()
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id BIT(3))");
-    stmt->execute("INSERT INTO test(id) VALUES(1), (10), (1), (1), (10), (111);");
+    stmt->execute("INSERT INTO test(id) VALUES(0b1), (0b10), (0b1), (0b1), (0b10), (0b111);");
 
     res.reset(stmt->executeQuery("SELECT MAX(id), MIN(id) FROM test"));
     while (res->next())
@@ -730,6 +730,48 @@ void bugs::bug66235()
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
+}
+
+
+void bugs::bug14520822()
+{
+  logMsg("bug::bug14520822");
+  try
+  {
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS bug14520822");
+    stmt->execute("CREATE TABLE bug14520822(b BIT NOT NULL DEFAULT 0)");
+    stmt->execute("INSERT INTO bug14520822(b) VALUES(0b0), (0b1)");
+
+    res.reset(stmt->executeQuery("select min(b) ,max(b) from bug14520822"));
+    res->next();
+    ASSERT_EQUALS("0", res->getString(1));
+    ASSERT_EQUALS("1", res->getString(2));
+    ASSERT_EQUALS(false, res->getBoolean(1));
+    ASSERT_EQUALS(true, res->getBoolean(2));
+    ASSERT_EQUALS(0L, res->getInt64(1));
+    ASSERT_EQUALS(1L, res->getInt64(2));
+
+    pstmt.reset(con->prepareStatement("select min(b) ,max(b) from bug14520822"));
+    res.reset(pstmt->executeQuery());
+    res->next();
+    ASSERT_EQUALS("0", res->getString(1));
+    ASSERT_EQUALS("1", res->getString(2));
+    ASSERT_EQUALS(false, res->getBoolean(1));
+    ASSERT_EQUALS(true, res->getBoolean(2));
+    ASSERT_EQUALS(0L, res->getInt64(1));
+    ASSERT_EQUALS(1L, res->getInt64(2));
+
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+
 }
 
 
