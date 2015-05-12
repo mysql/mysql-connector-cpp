@@ -733,5 +733,41 @@ void bugs::bug66235()
 }
 
 
+void bugs::bug17218692()
+{
+  logMsg("bugs::bug17218692");
+  try
+  {
+
+    stmt->execute("DROP TABLE IF EXISTS bug17218692");
+    stmt->execute("CREATE TABLE bug17218692(c1  time(6))");
+    stmt->execute("INSERT INTO bug17218692 VALUES('-838:59:58.987657')");
+
+    res.reset(stmt->executeQuery("select * from bug17218692"));
+    res->next();
+
+    std::stringstream log;
+    log<<"["<<res->getString(1)<<"]";
+
+    ASSERT_EQUALS(log.str(), "[-838:59:58.987657]");
+
+    pstmt.reset(con->prepareStatement("select * from bug17218692 "));
+    res.reset(pstmt->executeQuery());
+    res->next();
+
+    std::stringstream log2;
+    log2 << "["<<res->getString(1)<<"]";
+    ASSERT_EQUALS(log.str(), log2.str());
+
+  }
+  catch (sql::SQLException & e)
+  {
+    FAIL("Exception thrown");
+    throw;
+  }
+
+
+}
+
 } /* namespace regression */
 } /* namespace testsuite */
