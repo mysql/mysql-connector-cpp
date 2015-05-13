@@ -62,6 +62,7 @@ public:
     TEST_CASE(bug68523);
     TEST_CASE(bug66235);
     TEST_CASE(bug14520822);
+    TEST_CASE(bug17218692);
     TEST_CASE(bug21053335);
   }
 
@@ -107,6 +108,8 @@ public:
   void bug66235();
 
   void bug14520822();
+
+  void bug17218692();
 
   void bug21053335();
 

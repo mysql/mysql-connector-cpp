@@ -980,9 +980,9 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 			char buf[18];
 			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(result_bind->rbind[columnIndex - 1].buffer);
                         if (t->second_part) {
-			        snprintf(buf, sizeof(buf) - 1, "%s%02d:%02d:%02d.%06lu", t->neg? "-":"", t->hour, t->minute, t->second, t->second_part);
+                          snprintf(buf, sizeof(buf), "%s%02d:%02d:%02d.%06lu", t->neg? "-":"", t->hour, t->minute, t->second, t->second_part);
                         } else {
-			        snprintf(buf, sizeof(buf) - 1, "%s%02d:%02d:%02d", t->neg? "-":"", t->hour, t->minute, t->second);
+                          snprintf(buf, sizeof(buf), "%s%02d:%02d:%02d", t->neg? "-":"", t->hour, t->minute, t->second);
                         }
 			CPP_INFO_FMT("It's a time %s", buf);
 			return sql::SQLString(buf);
