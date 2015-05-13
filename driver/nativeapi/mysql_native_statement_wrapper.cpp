@@ -56,6 +56,7 @@ MySQL_NativeStatementWrapper::MySQL_NativeStatementWrapper(::st_mysql_stmt * _st
 /* {{{ MySQL_NativeStatementWrapper::~MySQL_NativeStatementWrapper() */
 MySQL_NativeStatementWrapper::~MySQL_NativeStatementWrapper()
 {
+	stmt_free_result();
 	api->stmt_close(stmt);
 }
 /* }}} */
