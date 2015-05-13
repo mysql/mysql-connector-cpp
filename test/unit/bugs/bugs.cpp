@@ -735,9 +735,11 @@ void bugs::bug66235()
 
 void bugs::bug14520822()
 {
+
   logMsg("bug::bug14520822");
   try
   {
+
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS bug14520822");
     stmt->execute("CREATE TABLE bug14520822(b BIT NOT NULL DEFAULT 0)");
@@ -762,7 +764,6 @@ void bugs::bug14520822()
     ASSERT_EQUALS(0L, res->getInt64(1));
     ASSERT_EQUALS(1L, res->getInt64(2));
 
-
   }
   catch (sql::SQLException &e)
   {
@@ -770,7 +771,53 @@ void bugs::bug14520822()
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
+}
 
+void bugs::bug21053335()
+{
+
+  logMsg("bugs::bug21053335");
+  try
+  {
+
+    stmt->execute("DROP TABLE IF EXISTS bug21053335");
+    stmt->execute("CREATE TABLE bug21053335(c char(10))");
+    stmt->execute("INSERT INTO bug21053335 values(NULL), (1)");
+    res.reset(stmt->executeQuery("select c from bug21053335"));
+    res->next();
+    std::stringstream log;
+    log << "Data :" <<res->getString(1);
+    log<<"\nrs->wasNull(1) : "<<res->wasNull()<<std::endl;
+    logMsg(log.str().c_str());
+
+    ASSERT(res->wasNull());
+
+    res->next();
+
+    try{
+      ASSERT(res->wasNull());
+      FAIL("Exception was not thrown by wasNull()");
+    }
+    catch (sql::SQLException & e)
+    {
+      // Everything is ok
+    }
+
+    log.flush();
+    log << "Data :" <<res->getString(1);
+    log<<"\nrs->wasNull(1) : "<<res->wasNull()<<std::endl;
+    logMsg(log.str().c_str());
+
+    ASSERT(!res->wasNull());
+
+
+  }
+
+  catch (sql::SQLException &e)
+  {
+    FAIL("Exception thrown by wasNull()");
+    throw;
+  }
 
 }
 
