@@ -162,8 +162,8 @@ MySQL_ResultSet::checkScrollable() const
 	if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
 		throw sql::NonScrollableException("Nonscrollable result set");
 	}
-    // reset last_queried_column
-    last_queried_column = -1;
+	// reset last_queried_column
+	last_queried_column = -1;
 }
 /* }}} */
 
@@ -354,7 +354,7 @@ MySQL_ResultSet::getDouble(const uint32_t columnIndex) const
 		throw sql::InvalidArgumentException("MySQL_ResultSet::getDouble: invalid value of 'columnIndex'");
 	}
 
-    last_queried_column = columnIndex;
+	last_queried_column = columnIndex;
 
 	if (row[columnIndex - 1] == NULL) {
 		was_null = true;
@@ -497,12 +497,13 @@ MySQL_ResultSet::getInt64(const uint32_t columnIndex) const
 		throw sql::InvalidArgumentException("MySQL_ResultSet::getInt64: invalid value of 'columnIndex'");
 	}
 
+	last_queried_column = columnIndex;
+
 	if (row[columnIndex - 1] == NULL) {
 		was_null = true;
 		return 0;
 	}
 
-    last_queried_column = columnIndex;
 
 	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
@@ -560,12 +561,13 @@ MySQL_ResultSet::getUInt64(const uint32_t columnIndex) const
 		throw sql::InvalidArgumentException("MySQL_ResultSet::getUInt64: invalid value of 'columnIndex'");
 	}
 
+	last_queried_column = columnIndex;
+
 	if (row[columnIndex - 1] == NULL) {
 		was_null = true;
 		return 0;
 	}
 
-    last_queried_column = columnIndex;
 
 	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
@@ -681,7 +683,7 @@ MySQL_ResultSet::getString(const uint32_t columnIndex) const
 		throw sql::InvalidArgumentException("MySQL_ResultSet::getString: invalid value of 'columnIndex'");
 	}
 
-    last_queried_column = columnIndex;
+	last_queried_column = columnIndex;
 
 	if (row == NULL || row[columnIndex - 1] == NULL) {
 		was_null = true;
