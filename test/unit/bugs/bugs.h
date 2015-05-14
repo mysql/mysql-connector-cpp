@@ -65,6 +65,7 @@ public:
     TEST_CASE(bug17218692);
     TEST_CASE(bug21053335);
     TEST_CASE(bug21067193);
+    TEST_CASE(bug21066575);
   }
 
   /**
