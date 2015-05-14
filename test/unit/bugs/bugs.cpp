@@ -26,6 +26,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "bugs.h"
 #include <sstream>
+#include <limits>
 #include "driver/mysql_error.h"
 
 namespace testsuite
@@ -579,11 +580,18 @@ void bugs::bug66871()
     res= stmt->getResultSet();
     ASSERT(res->next());
     ASSERT_EQUALS(res->getInt(1), 2);
+
   }
   catch (::sql::SQLException & /*e*/)
   {
+    delete res;
+    delete stmt;
+
     return; /* Everything is fine */
   }
+
+  delete res;
+  delete stmt;
 
   FAIL("Exception wasn't thrown by execute");
 }
@@ -703,7 +711,7 @@ void bugs::bug66235()
     stmt.reset(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id BIT(3))");
-    stmt->execute("INSERT INTO test(id) VALUES(1), (10), (1), (1), (10), (111);");
+    stmt->execute("INSERT INTO test(id) VALUES(0b1), (0b10), (0b1), (0b1), (0b10), (0b111);");
 
     res.reset(stmt->executeQuery("SELECT MAX(id), MIN(id) FROM test"));
     while (res->next())
@@ -732,6 +740,228 @@ void bugs::bug66235()
   }
 }
 
+void bugs::bug21066575()
+{
+  logMsg("bug::bug21066575");
+  try
+  {
+
+
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS bug21066575");
+    stmt->execute("CREATE TABLE bug21066575(txt text)");
+    stmt->execute("INSERT INTO bug21066575(txt) VALUES('abc')");
+
+    pstmt.reset(con->prepareStatement("select * from bug21066575"));
+
+    for (int i = 0; i < 10; ++i)
+    {
+      res.reset(pstmt->executeQuery());
+      res->next();
+      ASSERT_EQUALS("abc", res->getString(1));
+    }
+
+    stmt->execute("DROP TABLE IF EXISTS bug21066575_2");
+
+    stmt->execute("CREATE TABLE `bug21066575_2` (\
+                  `f1` longtext,\
+                  `id` int(11) NOT NULL AUTO_INCREMENT,\
+                  PRIMARY KEY (`id`)\
+                  ) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1");
+
+    stmt->execute("insert into bug21066575_2(f1) values(repeat('f',1024000)),"
+                  "(repeat('f',1024000)),"
+                  "(repeat('f',1024000)),"
+                  "(repeat('f',1024000))");
+
+    //Detect with Valgrind if there are memory leaks
+    for(int i= 0; i < 100; i++)
+    {
+      pstmt.reset(con->prepareStatement("select id, f1 from bug21066575_2"));
+
+      //pstmt->setInt(1, i);
+      res.reset(pstmt->executeQuery());
+      while (res->next()) {
+        std::stringstream ss;
+        ss << "id = " << res->getInt(1);
+        ss << std::endl;
+        ss << "f1 = " << res->getString(2);
+        logMsg(ss.str().c_str());
+      }
+    }
+
+    res.reset();
+    pstmt.reset();
+
+    sleep(1);
+
+    stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void bugs::bug14520822()
+{
+
+  logMsg("bug::bug14520822");
+  try
+  {
+
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS bug14520822");
+    stmt->execute("CREATE TABLE bug14520822(b BIT NOT NULL DEFAULT 0)");
+    stmt->execute("INSERT INTO bug14520822(b) VALUES(0b0), (0b1)");
+
+    res.reset(stmt->executeQuery("select min(b) ,max(b) from bug14520822"));
+    res->next();
+    ASSERT_EQUALS("0", res->getString(1));
+    ASSERT_EQUALS("1", res->getString(2));
+    ASSERT_EQUALS(false, res->getBoolean(1));
+    ASSERT_EQUALS(true, res->getBoolean(2));
+    ASSERT_EQUALS(0L, res->getInt64(1));
+    ASSERT_EQUALS(1L, res->getInt64(2));
+
+    pstmt.reset(con->prepareStatement("select min(b) ,max(b) from bug14520822"));
+    res.reset(pstmt->executeQuery());
+    res->next();
+    ASSERT_EQUALS("0", res->getString(1));
+    ASSERT_EQUALS("1", res->getString(2));
+    ASSERT_EQUALS(false, res->getBoolean(1));
+    ASSERT_EQUALS(true, res->getBoolean(2));
+    ASSERT_EQUALS(0L, res->getInt64(1));
+    ASSERT_EQUALS(1L, res->getInt64(2));
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+void bugs::bug21053335()
+{
+
+  logMsg("bugs::bug21053335");
+  try
+  {
+
+    stmt->execute("DROP TABLE IF EXISTS bug21053335");
+    stmt->execute("CREATE TABLE bug21053335(c char(10))");
+    stmt->execute("INSERT INTO bug21053335 values(NULL), (1)");
+    res.reset(stmt->executeQuery("select c from bug21053335"));
+    res->next();
+    std::stringstream log;
+    log << "Data :" <<res->getString(1);
+    log<<"\nrs->wasNull(1) : "<<res->wasNull()<<std::endl;
+    logMsg(log.str().c_str());
+
+    ASSERT(res->wasNull());
+
+    res->next();
+
+    try{
+      ASSERT(res->wasNull());
+      FAIL("Exception was not thrown by wasNull()");
+    }
+    catch (sql::SQLException & e)
+    {
+      // Everything is ok
+    }
+
+    log.flush();
+    log << "Data :" <<res->getString(1);
+    log<<"\nrs->wasNull(1) : "<<res->wasNull()<<std::endl;
+    logMsg(log.str().c_str());
+
+    ASSERT(!res->wasNull());
+
+
+  }
+
+  catch (sql::SQLException &e)
+  {
+    FAIL("Exception thrown by wasNull()");
+    throw;
+  }
+
+}
+
+
+void bugs::bug17218692()
+{
+  logMsg("bugs::bug17218692");
+  try
+  {
+
+    stmt->execute("DROP TABLE IF EXISTS bug17218692");
+    stmt->execute("CREATE TABLE bug17218692(c1  time(6))");
+    stmt->execute("INSERT INTO bug17218692 VALUES('-838:59:58.987657')");
+
+    res.reset(stmt->executeQuery("select * from bug17218692"));
+    res->next();
+
+    std::stringstream log;
+    log<<"["<<res->getString(1)<<"]";
+
+    ASSERT_EQUALS(log.str(), "[-838:59:58.987657]");
+
+    pstmt.reset(con->prepareStatement("select * from bug17218692 "));
+    res.reset(pstmt->executeQuery());
+    res->next();
+
+    std::stringstream log2;
+    log2 << "["<<res->getString(1)<<"]";
+    ASSERT_EQUALS(log.str(), log2.str());
+
+  }
+  catch (sql::SQLException & e)
+  {
+    FAIL("Exception thrown");
+    throw;
+  }
+
+
+}
+
+void bugs::bug21067193()
+{
+  logMsg("bugs::bug21067193");
+  try
+  {
+    int x = std::numeric_limits<int>::max();
+    int y = std::numeric_limits<int>::min();
+
+
+    stmt->execute("DROP TABLE IF EXISTS bug21067193");
+    stmt->execute("create table bug21067193(id int)");
+    stmt->execute("insert into bug21067193 values(1),(2),(3)");
+
+    res.reset((stmt->setResultSetType(sql::ResultSet::TYPE_SCROLL_SENSITIVE)->executeQuery("select * from bug21067193")));
+
+    ASSERT_EQUALS(true, res->absolute(2));
+    ASSERT_EQUALS(2, res->getInt(1));
+
+    ASSERT_EQUALS(true, res->absolute(-1));
+    ASSERT_EQUALS(3, res->getInt(1));
+
+    ASSERT_EQUALS(false, res->absolute(std::numeric_limits<int>::min())); //Invalid position, Returns FALSE
+
+  }
+  catch (sql::SQLException & e)
+  {
+//	Error....
+      throw;
+  }
+
+
+}
 
 } /* namespace regression */
 } /* namespace testsuite */

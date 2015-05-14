@@ -340,7 +340,9 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
 {
 	switch (field->type) {
 		case MYSQL_TYPE_BIT:
-			return sql::DataType::BIT;
+        if (field->flags !=(BINARY_FLAG|UNSIGNED_FLAG))
+          return sql::DataType::BIT;
+        return sql::DataType::BINARY;
 		case MYSQL_TYPE_DECIMAL:
 		case MYSQL_TYPE_NEWDECIMAL:
 			return sql::DataType::DECIMAL;
