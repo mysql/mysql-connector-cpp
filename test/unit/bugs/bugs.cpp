@@ -579,11 +579,18 @@ void bugs::bug66871()
     res= stmt->getResultSet();
     ASSERT(res->next());
     ASSERT_EQUALS(res->getInt(1), 2);
+
   }
   catch (::sql::SQLException & /*e*/)
   {
+    delete res;
+    delete stmt;
+
     return; /* Everything is fine */
   }
+
+  delete res;
+  delete stmt;
 
   FAIL("Exception wasn't thrown by execute");
 }
@@ -732,6 +739,70 @@ void bugs::bug66235()
   }
 }
 
+void bugs::bug21066575()
+{
+  logMsg("bug::bug21066575");
+  try
+  {
+
+
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS bug21066575");
+    stmt->execute("CREATE TABLE bug21066575(txt text)");
+    stmt->execute("INSERT INTO bug21066575(txt) VALUES('abc')");
+
+    pstmt.reset(con->prepareStatement("select * from bug21066575"));
+
+    for (int i = 0; i < 10; ++i)
+    {
+      res.reset(pstmt->executeQuery());
+      res->next();
+      ASSERT_EQUALS("abc", res->getString(1));
+    }
+
+    stmt->execute("DROP TABLE IF EXISTS bug21066575_2");
+
+    stmt->execute("CREATE TABLE `bug21066575_2` (\
+                  `f1` longtext,\
+                  `id` int(11) NOT NULL AUTO_INCREMENT,\
+                  PRIMARY KEY (`id`)\
+                  ) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1");
+
+    stmt->execute("insert into bug21066575_2(f1) values(repeat('f',1024000)),"
+                  "(repeat('f',1024000)),"
+                  "(repeat('f',1024000)),"
+                  "(repeat('f',1024000))");
+
+    //Detect with Valgrind if there are memory leaks
+    for(int i= 0; i < 100; i++)
+    {
+      pstmt.reset(con->prepareStatement("select id, f1 from bug21066575_2"));
+
+      //pstmt->setInt(1, i);
+      res.reset(pstmt->executeQuery());
+      while (res->next()) {
+        std::stringstream ss;
+        ss << "id = " << res->getInt(1);
+        ss << std::endl;
+        ss << "f1 = " << res->getString(2);
+        logMsg(ss.str().c_str());
+      }
+    }
+
+    res.reset();
+    pstmt.reset();
+
+    sleep(1);
+
+    stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
 
 void bugs::bug14520822()
 {
