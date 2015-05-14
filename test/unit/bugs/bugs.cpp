@@ -26,6 +26,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "bugs.h"
 #include <sstream>
+#include <limits>
 #include "driver/mysql_error.h"
 
 namespace testsuite
@@ -924,6 +925,39 @@ void bugs::bug17218692()
   {
     FAIL("Exception thrown");
     throw;
+  }
+
+
+}
+
+void bugs::bug21067193()
+{
+  logMsg("bugs::bug21067193");
+  try
+  {
+    int x = std::numeric_limits<int>::max();
+    int y = std::numeric_limits<int>::min();
+
+
+    stmt->execute("DROP TABLE IF EXISTS bug21067193");
+    stmt->execute("create table bug21067193(id int)");
+    stmt->execute("insert into bug21067193 values(1),(2),(3)");
+
+    res.reset((stmt->setResultSetType(sql::ResultSet::TYPE_SCROLL_SENSITIVE)->executeQuery("select * from bug21067193")));
+
+    ASSERT_EQUALS(true, res->absolute(2));
+    ASSERT_EQUALS(2, res->getInt(1));
+
+    ASSERT_EQUALS(true, res->absolute(-1));
+    ASSERT_EQUALS(3, res->getInt(1));
+
+    ASSERT_EQUALS(false, res->absolute(std::numeric_limits<int>::min())); //Invalid position, Returns FALSE
+
+  }
+  catch (sql::SQLException & e)
+  {
+//	Error....
+      throw;
   }
 
 

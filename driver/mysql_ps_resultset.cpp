@@ -28,6 +28,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <string.h>
 #include <stdlib.h>
 #include <sstream>
+#include <limits>
 #include <boost/scoped_array.hpp>
 
 
@@ -134,7 +135,7 @@ MySQL_Prepared_ResultSet::absolute(const int new_pos)
 			return true;
 		}
 	} else if (new_pos < 0) {
-		if ((-new_pos) > (int) num_rows) {
+        if ((-new_pos) > (int) num_rows || (new_pos == std::numeric_limits<int>::min())) {
 			row_position = 0; /* before first new_pos */
 		} else {
 			row_position = num_rows - (-new_pos) + 1;
