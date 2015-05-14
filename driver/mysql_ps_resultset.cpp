@@ -253,7 +253,6 @@ void
 MySQL_Prepared_ResultSet::closeIntern()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::closeIntern");
-	proxy->stmt_free_result();
 	is_valid = false;
 }
 /* }}} */

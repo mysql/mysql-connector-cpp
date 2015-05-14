@@ -935,8 +935,6 @@ void bugs::bug21067193()
   logMsg("bugs::bug21067193");
   try
   {
-    int x = std::numeric_limits<int>::max();
-    int y = std::numeric_limits<int>::min();
 
 
     stmt->execute("DROP TABLE IF EXISTS bug21067193");
