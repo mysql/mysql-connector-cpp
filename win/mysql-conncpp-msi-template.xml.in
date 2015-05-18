@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-   Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
+   Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ already installed." />
 
                 <Component Id="AdditionalFiles" Guid="85f15863-ccbb-40b6-8610-5afedc9fa44f" DiskId="1">
                   <File Id="file0031" Name="README.TXT" LongName="README.txt" Source="..\README" />
-                  <File Id="file0032" Name="@LIC_SHORT_NAME@" LongName="@LIC_NAME@" Source="..\@LIC_NAME@" />
+                  <File Id="file0032" Name="@LIC_SHORT_NAME@" LongName="@LIC_NAME@" Source="@LICENSE_FILE@" />
                   <File Id="file0033" Name="LIC_3RDP.TXT" LongName="Licenses_for_Third-Party_Components.txt" Source="..\Licenses_for_Third-Party_Components.txt" />
                   <File Id="file0034" Name="INSTALL.TXT" LongName="INSTALL.txt" Source="..\INSTALL" />
                   <File Id="file0035" Name="ANNOUNCE.TXT" LongName="ANNOUNCEMENT.txt" Source="..\ANNOUNCEMENT" />
@@ -82,11 +82,11 @@ already installed." />
                     <File Id="file0009" Name="resultme.h" LongName="resultset_metadata.h" Source="..\cppconn\resultset_metadata.h" />
                     <File Id="file0010" Name="statem~.h" LongName="statement.h" Source="..\cppconn\statement.h" />
                     <File Id="file0012" Name="warning.h" Source="..\cppconn\warning.h" />
-                    <File Id="file0013" Name="config.h" Source="..\cppconn\config.h" />
+                    <File Id="file0013" Name="config.h" Source="$(var.BuildDir)\..\cppconn\config.h" />
                     <File Id="file0014" Name="build_c~.h" LongName="build_config.h" Source="..\cppconn\build_config.h" />
                     <File Id="file0015" Name="sqlstri~.h" LongName="sqlstring.h" Source="..\cppconn\sqlstring.h" />
                     <File Id="file0016" Name="variant.h" LongName="variant.h" Source="..\cppconn\variant.h" />
-                    <File Id="file0017" Name="version~.h" LongName="version_info.h" Source="..\cppconn\version_info.h" />
+                    <File Id="file0017" Name="version~.h" LongName="version_info.h" Source="$(var.BuildDir)\..\cppconn\version_info.h" />
                   </Component>
                 </Directory>
 
@@ -95,20 +95,22 @@ already installed." />
                    lib directory
                 -->
               <Directory Id="lib" Name="lib">
+<!--
                 <Directory Id="debug" Name="debug">
                   <Component Id="ClientLibraryDebug" Guid="9cdd3e41-c4fb-4a47-88a2-6f0c82a4834d" DiskId="1">
-                    <File Id="file0100" Name="mycppcon.dll" LongName="mysqlcppconn.dll" Source="..\driver\debug\mysqlcppconn.dll" />
-                    <File Id="file0101" Name="mycppcon.lib" LongName="mysqlcppconn.lib" Source="..\driver\debug\mysqlcppconn.lib" />
-                    <File Id="file0102" Name="mycppcon.pdb" LongName="mysqlcppconn.pdb" Source="..\driver\debug\mysqlcppconn.pdb" />
-                    <File Id="file0103" Name="mycpstat.lib" LongName="mysqlcppconn-static.lib" Source="..\driver\debug\mysqlcppconn-static.lib" />
-                    <File Id="file0104" Name="mycpstat.pdb" LongName="mysqlcppconn-static.pdb" Source="..\driver\debug\mysqlcppconn-static.pdb" />
+                    <File Id="file0100" Name="mycppcon.dll" LongName="mysqlcppconn.dll" Source="$(var.BuildDir)\..\driver\debug\mysqlcppconn.dll" />
+                    <File Id="file0101" Name="mycppcon.lib" LongName="mysqlcppconn.lib" Source="$(var.BuildDir)\..\driver\debug\mysqlcppconn.lib" />
+                    <File Id="file0102" Name="mycppcon.pdb" LongName="mysqlcppconn.pdb" Source="$(var.BuildDir)\..\driver\debug\mysqlcppconn.pdb" />
+                    <File Id="file0103" Name="mycpstat.lib" LongName="mysqlcppconn-static.lib" Source="$(var.BuildDir)\..\driver\debug\mysqlcppconn-static.lib" />
+                    <File Id="file0104" Name="mycpstat.pdb" LongName="mysqlcppconn-static.pdb" Source="$(var.BuildDir)\..\driver\debug\mysqlcppconn-static.pdb" />
 		          </Component>
                 </Directory>
+-->
                 <Directory Id="opt" Name="opt">
                   <Component Id="ClientLibraryRelease" Guid="00328709-7f5e-4a3c-a189-e79f92243377" DiskId="1">
-                    <File Id="file0150" Name="mycppcon.dll" LongName="mysqlcppconn.dll" Source="..\driver\relwithdebinfo\mysqlcppconn.dll" />
-                    <File Id="file0151" Name="mycppcon.lib" LongName="mysqlcppconn.lib" Source="..\driver\relwithdebinfo\mysqlcppconn.lib" />
-                    <File Id="file0152" Name="mycpstat.lib" LongName="mysqlcppconn-static.lib" Source="..\driver\relwithdebinfo\mysqlcppconn-static.lib" />
+                    <File Id="file0150" Name="mycppcon.dll" LongName="mysqlcppconn.dll" Source="$(var.BuildDir)\..\driver\relwithdebinfo\mysqlcppconn.dll" />
+                    <File Id="file0151" Name="mycppcon.lib" LongName="mysqlcppconn.lib" Source="$(var.BuildDir)\..\driver\relwithdebinfo\mysqlcppconn.lib" />
+                    <File Id="file0152" Name="mycpstat.lib" LongName="mysqlcppconn-static.lib" Source="$(var.BuildDir)\..\driver\relwithdebinfo\mysqlcppconn-static.lib" />
                   </Component>
                 </Directory>
               </Directory>
@@ -125,10 +127,11 @@ already installed." />
           <ComponentRef Id="IncludeFiles" />
           <ComponentRef Id="CppconnIncludes" />
           <ComponentRef Id="ClientLibraryRelease" />
-
+<!--
           <Feature Id="DebugLibraries" Title="Debug Libary" Description="Debug library and symbols." Level="1000">
             <ComponentRef Id="ClientLibraryDebug" />
           </Feature>
+-->
         </Feature>
     </Feature>
 
