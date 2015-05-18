@@ -253,6 +253,9 @@ void
 MySQL_Prepared_ResultSet::closeIntern()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::closeIntern");
+	//if this is the only one, free result
+	if (result_bind.use_count() == 2)
+		proxy->stmt_free_result();
 	is_valid = false;
 }
 /* }}} */
