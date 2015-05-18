@@ -253,7 +253,10 @@ void
 MySQL_Prepared_ResultSet::closeIntern()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::closeIntern");
-	//if this is the only one, free result
+	//We nee here to check how many MySQL_Prepared_ResultSet instances
+	//exist. Since each one of them has a result_bind, we can use his use_cont
+	//to check if it equals 2 (1 here + 1 on MySQL_Prepared_Statement (parent))
+	//Only on this case, we can call proxy->stmt_free_result();
 	if (result_bind.use_count() == 2)
 		proxy->stmt_free_result();
 	is_valid = false;
