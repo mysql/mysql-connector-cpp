@@ -1,7 +1,7 @@
 # -*- indent-tabs-mode:nil; -*-
 # vim: set expandtab:
 #
-#   Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
+#   Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
 #
 #   The MySQL Connector/C++ is licensed under the terms of the GPLv2
 #   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -550,14 +550,12 @@ else()
   endif()
 
   # No specific paths, try some common install paths
-  find_path(_found_header mysql.h ${_include_fallback_path})
+  find_path(MYSQL_INCLUDE_DIR mysql.h ${_include_fallback_path})
 
-  if(NOT _found_header)
+  if(NOT MYSQL_INCLUDE_DIR)
     message(FATAL_ERROR "Could not find \"mysql.h\" from searching "
                         "\"${_pp_include_fallback_path}\"")
   endif()
-
-  get_filename_component(MYSQL_INCLUDE_DIR ${_found_header} PATH)
 
 endif()
 
@@ -567,17 +565,17 @@ endif()
 
 if (MYSQL_INCLUDE_DIR AND NOT MYSQL_NUM_VERSION)
   try_run(RUN_RESULT_VAR COMPILE_RESULT_VAR
-    "${CMAKE_SOURCE_DIR}"
+    "${CMAKE_BINARY_DIR}"
     "${CMAKE_SOURCE_DIR}/cmake/getmysqlversion.c"
     CMAKE_FLAGS -DINCLUDE_DIRECTORIES:STRING=${MYSQL_INCLUDE_DIR}
-    ARGS "${CMAKE_SOURCE_DIR}/cmake/mysql_version_info.cmake"
+    ARGS "${CMAKE_BINARY_DIR}/cmake/mysql_version_info.cmake"
          "MYSQL_SERVER_VERSION"
          "MYSQL_VERSION_ID"
          "LIBMYSQL_VERSION"
          "LIBMYSQL_VERSION_ID")
 
     if(COMPILE_RESULT_VAR AND RUN_RESULT_VAR)
-      include(${CMAKE_SOURCE_DIR}/cmake/mysql_version_info.cmake)
+      include(${CMAKE_BINARY_DIR}/cmake/mysql_version_info.cmake)
       if(NOT LIBMYSQL_CPP_VERSION STREQUAL "")
         set(MYSQL_VERSION "${LIBMYSQL_CPP_VERSION}")
       elseif(NOT MYSQL_CPP_SERVER_VERSION STREQUAL "")
@@ -734,7 +732,8 @@ endif()
 ##########################################################################
 
 # FIXME needed?!
-if(NOT WIN32 AND MYSQLCLIENT_STATIC_LINKING AND
+if(MYSQLCLIENT_STATIC_LINKING AND
+   NOT WIN32 AND
    NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   list(APPEND MYSQL_LIBRARIES "rt")
 endif()

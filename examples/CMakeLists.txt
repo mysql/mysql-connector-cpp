@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/C++ is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -27,12 +27,9 @@ SET(CMAKE_VERBOSE_MAKEFILE 0)
 
 SET(MYSQLCPPCONN_BUILD_EXAMPLES 1 CACHE BOOL "build-examples")
 IF(MYSQLCPPCONN_BUILD_EXAMPLES)
-  INCLUDE_DIRECTORIES(${MYSQLCPPCONN_SOURCE_DIR})
-  LINK_DIRECTORIES(${MYSQLCPPCONN_SOURCE_DIR}/cppconn)
+  LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/cppconn)
 
   IF(WIN32)
-    INCLUDE_DIRECTORIES(${MYSQLCPPCONN_SOURCE_DIR/cppconn})
-
     IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
       LINK_DIRECTORIES(${MYSQL_DIR}/lib/debug)
     ELSEIF(CMAKE_BUILD_TYPE STREQUAL "")

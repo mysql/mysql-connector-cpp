@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/C++ is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -37,7 +37,7 @@ IF(CMAKE_SIZEOF_VOID_P MATCHES 8)
   SET(CONNECTOR_DEFAULT_DEST "ProgramFiles64Folder")
 ENDIF(CMAKE_SIZEOF_VOID_P MATCHES 8)
 
-INCLUDE("config.cmake")
+INCLUDE(${CMAKE_BINARY_DIR}/config.cmake)
 
 SET(CONNECTOR_PRODUCT_DEST "MySQL Connector C++ ${CONNECTOR_PRODUCT_VERSION}")
 
@@ -83,22 +83,18 @@ SET(WIXOUT "mysql-connector-c++${EXTRA_NAME_SUFFIX}-${CONNECTOR_PRODUCT_VERSION}
 
 SET(ProductURN "MSQZP-100-ZZZZ")
 
-IF(EXISTS "../COPYING")
-  SET(LIC_SHORT_NAME "COPYING.txt")
-  SET(LIC_NAME       "COPYING.txt")
-ELSE(EXISTS "../COPYING")
-  SET(LIC_SHORT_NAME "LICENSE.txt")
-  SET(LIC_NAME       "LICENSE.mysql.txt")
-ENDIF(EXISTS "../COPYING")
-
 #-----------------------------------------------------
 
-IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.mysql")
-  SET(LICENSE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.mysql")
-  SET(LICENSE_RTF  "${CMAKE_CURRENT_BINARY_DIR}/License.rtf")
+IF(EXISTS "${CMAKE_SOURCE_DIR}/../LICENSE.mysql")
+  SET(LIC_SHORT_NAME "LICENSE.txt")
+  SET(LIC_NAME       "LICENSE.mysql.txt")
+  SET(LICENSE_FILE "${CMAKE_SOURCE_DIR}/../LICENSE.mysql")
+  SET(LICENSE_RTF  "${CMAKE_BINARY_DIR}/License.rtf")
 ELSE()
-  SET(LICENSE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../COPYING")
-  SET(LICENSE_RTF  "${CMAKE_CURRENT_BINARY_DIR}/License.rtf")
+  SET(LIC_SHORT_NAME "COPYING.txt")
+  SET(LIC_NAME       "COPYING.txt")
+  SET(LICENSE_FILE "${CMAKE_SOURCE_DIR}/../COPYING")
+  SET(LICENSE_RTF  "${CMAKE_BINARY_DIR}/License.rtf")
 ENDIF()
 FILE(READ ${LICENSE_FILE} CONTENTS)
 STRING(REGEX REPLACE "\n" "\\\\par\n" CONTENTS "${CONTENTS}")
@@ -110,19 +106,44 @@ FILE(APPEND "${LICENSE_RTF}" "\n}\n")
 
 #-----------------------------------------------------
 
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/mysql-conncpp-msi-template.xml.in
-               ${CMAKE_CURRENT_SOURCE_DIR}/mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.xml @ONLY)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/mysql-conncpp-msi-template.xml.in
+               ${CMAKE_BINARY_DIR}/mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.xml @ONLY)
 
 MESSAGE(STATUS "${WIXOUT}")
 
-ADD_CUSTOM_COMMAND(OUTPUT "${WIXOUT}.wixobj"
-                   COMMAND ${CONNECTOR_WIX_DIR}/candle mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.xml mysql-conncpp-msi-ui.xml)
+SET(XML1                        mysql-conncpp-msi-ui.xml)
+SET(WIXOBJ1 ${CMAKE_BINARY_DIR}/mysql-conncpp-msi-ui.wixobj)
+SET(XML2    ${CMAKE_BINARY_DIR}/mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.xml)
+SET(WIXOBJ2 ${CMAKE_BINARY_DIR}/mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.wixobj)
 
-ADD_CUSTOM_COMMAND(OUTPUT ${WIXOUT}.msi
-                   COMMAND ${CONNECTOR_WIX_DIR}/light -o ${WIXOUT}.msi mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.wixobj mysql-conncpp-msi-ui.wixobj ${CONNECTOR_WIX_DIR}/WixUI.wixlib ${CONNECTOR_WIX_DIR}/wixca.wixlib -loc ${CONNECTOR_WIX_DIR}/WixUI_en-us.wxl
-                   DEPENDS "${WIXOUT}.wixobj")
+ADD_CUSTOM_COMMAND(OUTPUT "${WIXOBJ1}"
+                   COMMAND "${CONNECTOR_WIX_DIR}/candle"
+                     "-dBuildDir=${CMAKE_BINARY_DIR}"
+                     "-I${CMAKE_SOURCE_DIR}"
+                     -o "${WIXOBJ1}"
+                     "${XML1}"
+                   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 
-ADD_CUSTOM_TARGET(MSI ALL DEPENDS "${WIXOUT}.msi")
+ADD_CUSTOM_COMMAND(OUTPUT "${WIXOBJ2}"
+                   COMMAND "${CONNECTOR_WIX_DIR}/candle"
+                     "-dBuildDir=${CMAKE_BINARY_DIR}"
+                     "-I${CMAKE_SOURCE_DIR}"
+                     -o "${WIXOBJ2}"
+                     "${XML2}"
+                   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+
+ADD_CUSTOM_COMMAND(OUTPUT "${CMAKE_BINARY_DIR}/${WIXOUT}.msi"
+                   COMMAND "${CONNECTOR_WIX_DIR}/light"
+                     -o "${CMAKE_BINARY_DIR}/${WIXOUT}.msi"
+                     "${WIXOBJ1}"
+                     "${WIXOBJ2}"
+                     "${CONNECTOR_WIX_DIR}/WixUI.wixlib"
+                     "${CONNECTOR_WIX_DIR}/wixca.wixlib"
+                     -loc "${CONNECTOR_WIX_DIR}/WixUI_en-us.wxl"
+                   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                   DEPENDS "${WIXOBJ1}" "${WIXOBJ2}")
+
+ADD_CUSTOM_TARGET(MSI ALL DEPENDS "${CMAKE_BINARY_DIR}/${WIXOUT}.msi")
 
 IF(CONNECTOR_SIGNED)
   ADD_CUSTOM_COMMAND(OUTPUT "${WIXOUT}.msi.md5"
