@@ -754,6 +754,8 @@ void bugs::bug21066575()
 
     pstmt.reset(con->prepareStatement("select * from bug21066575"));
 
+    res.reset();
+
     for (int i = 0; i < 10; ++i)
     {
       res.reset(pstmt->executeQuery());
@@ -774,7 +776,7 @@ void bugs::bug21066575()
                   "(repeat('f',1024000)),"
                   "(repeat('f',1024000))");
 
-    //Detect with Valgrind if there are memory leaks
+
     for(int i= 0; i < 100; i++)
     {
       pstmt.reset(con->prepareStatement("select id, f1 from bug21066575_2"));
@@ -788,14 +790,10 @@ void bugs::bug21066575()
         ss << "f1 = " << res->getString(2);
         logMsg(ss.str().c_str());
       }
+      //Detect if process frees ResultSet resources.
+      res.reset();
     }
 
-    res.reset();
-    pstmt.reset();
-
-    sleep(1);
-
-    stmt->execute("DROP TABLE IF EXISTS test");
   }
   catch (sql::SQLException &e)
   {
