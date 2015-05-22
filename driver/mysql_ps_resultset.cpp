@@ -135,7 +135,7 @@ MySQL_Prepared_ResultSet::absolute(const int new_pos)
 			return true;
 		}
 	} else if (new_pos < 0) {
-        if ((-new_pos) > (int) num_rows || (new_pos == std::numeric_limits<int>::min())) {
+		if ((-new_pos) > (int) num_rows || (new_pos == std::numeric_limits<int>::min())) {
 			row_position = 0; /* before first new_pos */
 		} else {
 			row_position = num_rows - (-new_pos) + 1;
@@ -211,6 +211,8 @@ MySQL_Prepared_ResultSet::checkScrollable() const
 	if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
 		throw sql::NonScrollableException("Nonscrollable result set");
 	}
+	// reset last_queried_column
+	last_queried_column = -1;
 }
 /* }}} */
 
@@ -963,13 +965,13 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 		{
 			char buf[28];
 			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(result_bind->rbind[columnIndex - 1].buffer);
-                        if (t->second_part) {
-			        snprintf(buf, sizeof(buf) - 1, "%04d-%02d-%02d %02d:%02d:%02d.%06lu",
-                                                t->year, t->month, t->day, t->hour, t->minute, t->second, t->second_part);
-                        } else {
-			        snprintf(buf, sizeof(buf) - 1, "%04d-%02d-%02d %02d:%02d:%02d",
-                                                t->year, t->month, t->day, t->hour, t->minute, t->second);
-                        }
+			if (t->second_part) {
+				snprintf(buf, sizeof(buf) - 1, "%04d-%02d-%02d %02d:%02d:%02d.%06lu",
+						 t->year, t->month, t->day, t->hour, t->minute, t->second, t->second_part);
+			} else {
+				snprintf(buf, sizeof(buf) - 1, "%04d-%02d-%02d %02d:%02d:%02d",
+						 t->year, t->month, t->day, t->hour, t->minute, t->second);
+			}
 			CPP_INFO_FMT("It's a datetime/timestamp %s", buf);
 			return sql::SQLString(buf);
 		}
@@ -985,11 +987,11 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 		{
 			char buf[18];
 			MYSQL_TIME * t = static_cast<MYSQL_TIME *>(result_bind->rbind[columnIndex - 1].buffer);
-                        if (t->second_part) {
-                          snprintf(buf, sizeof(buf), "%s%02d:%02d:%02d.%06lu", t->neg? "-":"", t->hour, t->minute, t->second, t->second_part);
-                        } else {
-                          snprintf(buf, sizeof(buf), "%s%02d:%02d:%02d", t->neg? "-":"", t->hour, t->minute, t->second);
-                        }
+			if (t->second_part) {
+				snprintf(buf, sizeof(buf), "%s%02d:%02d:%02d.%06lu", t->neg? "-":"", t->hour, t->minute, t->second, t->second_part);
+			} else {
+				snprintf(buf, sizeof(buf), "%s%02d:%02d:%02d", t->neg? "-":"", t->hour, t->minute, t->second);
+			}
 			CPP_INFO_FMT("It's a time %s", buf);
 			return sql::SQLString(buf);
 		}
