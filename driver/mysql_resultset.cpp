@@ -101,7 +101,7 @@ MySQL_ResultSet::absolute(const int new_pos)
 			return true;
 		}
 	} else if (new_pos < 0) {
-        if ((-new_pos) > (int) num_rows || (new_pos == std::numeric_limits<int>::min())) {
+		if ((-new_pos) > (int) num_rows || (new_pos == std::numeric_limits<int>::min())) {
 			row_position = 0; /* before first new_pos */
 		} else {
 			row_position = num_rows - (-new_pos)  + 1;
@@ -509,7 +509,7 @@ MySQL_ResultSet::getInt64(const uint32_t columnIndex) const
 	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
 	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT &&
-                getFieldMeta(columnIndex)->flags != (BINARY_FLAG|UNSIGNED_FLAG)) {
+				getFieldMeta(columnIndex)->flags != (BINARY_FLAG|UNSIGNED_FLAG)) {
 		uint64_t uval = 0;
 		std::div_t length= std::div(getFieldMeta(columnIndex)->length, 8);
 		if (length.rem) {
@@ -573,7 +573,7 @@ MySQL_ResultSet::getUInt64(const uint32_t columnIndex) const
 	CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
 	was_null = false;
 	if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT &&
-                getFieldMeta(columnIndex)->flags != (BINARY_FLAG|UNSIGNED_FLAG)) {
+				getFieldMeta(columnIndex)->flags != (BINARY_FLAG|UNSIGNED_FLAG)) {
 		uint64_t uval = 0;
 		std::div_t length= std::div(getFieldMeta(columnIndex)->length, 8);
 		if (length.rem) {
@@ -907,6 +907,8 @@ MySQL_ResultSet::next()
 			ret = (row != NULL);
 		}
 	} else {
+		// reset last_queried_column
+		last_queried_column = -1;
 		row = result->fetch_row();
 		boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
 		if (!proxy_p) {
@@ -1059,7 +1061,7 @@ MySQL_ResultSet::wasNull() const
 	}
 	if (last_queried_column == -1) {
 		throw sql::InvalidArgumentException("MySQL_ResultSet::wasNull: should be called only after one of the getter methods");
-    }
+	}
 	return was_null;
 }
 /* }}} */
