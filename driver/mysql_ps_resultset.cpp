@@ -1286,6 +1286,8 @@ bool
 MySQL_Prepared_ResultSet::previous()
 {
 	CPP_ENTER("MySQL_Prepared_ResultSet::previous");
+
+	checkScrollable();
 	/* isBeforeFirst checks for validity */
 	if (isBeforeFirst()) {
 		return false;
