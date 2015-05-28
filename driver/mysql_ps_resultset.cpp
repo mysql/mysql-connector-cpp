@@ -1260,6 +1260,8 @@ MySQL_Prepared_ResultSet::next()
 		}
 		CPP_INFO_FMT("new_row_position=%llu ret=%d", row_position, ret);
 	} else {
+		// reset last_queried_column
+		last_queried_column = -1;
 		int result = proxy->fetch();
 		if (!result || result == MYSQL_DATA_TRUNCATED) {
 			ret = true;
