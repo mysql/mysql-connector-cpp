@@ -40,9 +40,9 @@ int main(int argc, char** argv)
 
   Properties defaultStringValues;
 
-  defaultStringValues.insert(Properties::value_type("dbUrl", "tcp://127.0.0.1:13000"));
+  defaultStringValues.insert(Properties::value_type("dbUrl", "tcp://127.0.0.1:3306"));
   defaultStringValues.insert(Properties::value_type("dbUser", "root"));
-  defaultStringValues.insert(Properties::value_type("dbPasswd", ""));
+  defaultStringValues.insert(Properties::value_type("dbPasswd", "root"));
   defaultStringValues.insert(Properties::value_type("dbSchema", "test"));
 
   std::map<String, bool> defaultBoolValues;
