@@ -22,8 +22,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-//Prevent windows min() macro
-#define NOMINMAX
 
 
 #include <string.h>
@@ -45,6 +43,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "nativeapi/native_resultset_wrapper.h"
 
 #include "mysql_debug.h"
+
+//Prevent windows min() macro
+#undef min
 
 namespace sql
 {
