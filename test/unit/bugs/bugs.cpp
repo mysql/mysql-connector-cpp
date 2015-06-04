@@ -22,7 +22,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-
+//Prevent windows min() macro
+#define NOMINMAX
 
 #include "bugs.h"
 #include <sstream>
