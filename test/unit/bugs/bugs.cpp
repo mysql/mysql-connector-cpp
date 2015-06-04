@@ -823,8 +823,8 @@ void bugs::bug14520822()
     ASSERT_EQUALS("1", res->getString(2));
     ASSERT_EQUALS(false, res->getBoolean(1));
     ASSERT_EQUALS(true, res->getBoolean(2));
-    ASSERT_EQUALS(0L, res->getInt64(1));
-    ASSERT_EQUALS(1L, res->getInt64(2));
+    ASSERT_EQUALS((int64_t)0, res->getInt64(1));
+    ASSERT_EQUALS((int64_t)1, res->getInt64(2));
 
     pstmt.reset(con->prepareStatement("select min(b) ,max(b) from bug14520822"));
     res.reset(pstmt->executeQuery());
@@ -833,8 +833,8 @@ void bugs::bug14520822()
     ASSERT_EQUALS("1", res->getString(2));
     ASSERT_EQUALS(false, res->getBoolean(1));
     ASSERT_EQUALS(true, res->getBoolean(2));
-    ASSERT_EQUALS(0L, res->getInt64(1));
-    ASSERT_EQUALS(1L, res->getInt64(2));
+    ASSERT_EQUALS((int64_t)0, res->getInt64(1));
+    ASSERT_EQUALS((int64_t)1, res->getInt64(2));
 
   }
   catch (sql::SQLException &e)
