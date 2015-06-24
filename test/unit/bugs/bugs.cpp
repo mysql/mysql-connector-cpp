@@ -28,7 +28,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <limits>
 #include "driver/mysql_error.h"
 
-//Prevent windows min() macro
+//Prevent windows min() macro because of std::numeric_limits<int>::min()
 #undef min
 
 namespace testsuite

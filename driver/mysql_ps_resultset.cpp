@@ -47,7 +47,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "mysql_debug.h"
 
-//Prevent windows min() macro
+//Prevent windows min() macro because of std::numeric_limits<int>::min()
 #undef min
 
 namespace sql
