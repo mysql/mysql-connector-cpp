@@ -1,8 +1,3 @@
-.. Client Development Kit documentation master file, created by
-   sphinx-quickstart on Tue Feb  3 13:14:22 2015.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to MySQL Connector/C++ 2.0 documentation!
 =================================================
 
@@ -15,7 +10,27 @@ Synopsis
   is implemented yet and things might change as we go. See usage section for
   examples of code that works with current implementation of Connector/C++.
 
-.. todo:: Give simple usage scenario (execution of SQL query and examine results)
+
+.. code-block:: c++
+
+  #include <mysqlxx.h>
+
+  Session s(33060, "user", "password");
+
+  SqlResult r= s.executeSql("SELECT @server_version");
+
+  const StringList &col_names = r.getColumnNames();
+
+  Row *row;
+  while (row = r.next())
+  {
+    cout <<"== next row ==" <<endl;
+    for (unsigned i=0; i < r.getColumnCount(); ++i)
+    {
+      cout <<"col#" <<i <<" (" <<col_names[i] <<")"
+           <<" : " <<(*row)[i] <<endl;
+    }
+  }
 
 
 Usage
