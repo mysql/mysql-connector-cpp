@@ -56,15 +56,22 @@ ENDIF()
 # Add Boost
 #
 
-#INCLUDE(boost)
-#SETUP_BOOST()
+INCLUDE(boost)
+SETUP_BOOST()
+
+#
+# CDK
+# 
+SET(WITH_CDK_DOC 0)
+ADD_SUBDIRECTORY(cdk)
+INCLUDE_DIRECTORIES(${CDK_INCLUDE_DIR})
 
 #
 # Project's public headers
 #
 
-#ADD_SUBDIRECTORY(include)
-#INCLUDE_DIRECTORIES(include)
+ADD_SUBDIRECTORY(include)
+INCLUDE_DIRECTORIES(include)
 
 
 #
@@ -79,7 +86,7 @@ ENDIF()
 #
 
 ADD_SUBDIRECTORY(doc)
-
+ADD_SUBDIRECTORY(connector)
 
 #
 # Target for running all declared tests (run_unit_tests)
@@ -95,5 +102,6 @@ ADD_SUBDIRECTORY(doc)
 #
 
 ADD_EXECUTABLE(try try.cc)
+TARGET_LINK_LIBRARIES(try concplus)
 #  ADD_GCOV(try)
 

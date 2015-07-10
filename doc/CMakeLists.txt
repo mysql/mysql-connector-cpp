@@ -13,7 +13,7 @@ IF(NOT DEFINED WITH_DOC)
 ENDIF()
 
 IF(WITH_DOC)
-MESSAGE("Building CDK documentation")
+MESSAGE("Building C/C++ documentation")
 
 find_package(Sphinx)
 #MESSAGE("SPHINX_EXECUTABLE: ${SPHINX_EXECUTABLE}")
@@ -76,6 +76,10 @@ CONFIGURE_FILE(conf.py.in ${CMAKE_CURRENT_SOURCE_DIR}/conf.py @ONLY)
 
 #LIST(APPEND sphinxopts -c "${CMAKE_CURRENT_BINARY_DIR}/")      # location of conf.py
 LIST(APPEND sphinxopts -d ${SPHINX_CACHE_DIR}) # location of index caches
+
+#
+# TODO: remove conflict with CDK's build_docs target
+#
 
 #MESSAGE("sphinxopts: ${sphinxopts}")
 ADD_CUSTOM_TARGET(build_docs

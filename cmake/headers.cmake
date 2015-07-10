@@ -68,7 +68,7 @@ MACRO(SETUP_HEADERS base_dir)
   MESSAGE(STATUS "Public headers directory: ${hdr_base_dir}")
   SET(hdr_include_dir ${CMAKE_CURRENT_SOURCE_DIR})
   CONFIGURE_FILE(${headers_dir}/check.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/CMakeLists.txt @ONLY)
-  SET(hdrs_init 1)
+  #SET(hdrs_init 1)
 
 ENDMACRO(SETUP_HEADERS)
 
