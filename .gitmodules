@@ -1,4 +1,4 @@
 [submodule "cdk"]
 	path = cdk
-	url = git@myrepo.no.oracle.com:/cdkbase
+	url = ../cdkbase.git
 	branch = master
