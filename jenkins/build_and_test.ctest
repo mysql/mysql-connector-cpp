@@ -15,53 +15,59 @@
 #  -D STATIC_MSVCRT=yes/no  # passed to build configuration
 #
 
-set(BRANCH $ENV{branch})
-if(NOT BRANCH)
-  set(BRANCH local)
-endif()
-set(CTEST_BUILD_NAME "${BRANCH}-${CMAKE_HOST_SYSTEM_NAME}")
+#
+#  TODO:
+#  - abort and submit to cdash in case of errors (macro fail(msg))
+#
 
-macro(check name msg)
-if (NOT DEFINED ${name})
-  message(FATAL_ERROR "Set ${msg} with -D ${name}=... option")
-endif()
-endmacro()
+GET_FILENAME_COMPONENT(current_dir ${CMAKE_CURRENT_LIST_FILE} PATH)
+LIST(APPEND CMAKE_MODULE_PATH ${current_dir})
+#MESSAGE("added module path: ${CMAKE_MODULE_PATH}")
 
-check(SITE "cdash site name")
+include(common)
+
+#
+#  Parameters
+#
+
+check_param(SITE "cdash site name")
 set(CTEST_SITE ${SITE})
 
-check(SOURCE "source location")
+check_param(SOURCE "source location")
 get_filename_component(CTEST_SOURCE_DIRECTORY ${SOURCE} ABSOLUTE)
 
-if(NOT BUILD)
- set(BUILD build)
-endif()
+set_param(BUILD "build location" build)
 get_filename_component(CTEST_BINARY_DIRECTORY ${BUILD} ABSOLUTE)
 
-check(GENERATOR "cmake generator name")
-set(CTEST_CMAKE_GENERATOR ${GENERATOR})
+set_param(GENERATOR "cmake generator name")
 
-check(WITH_PROTOBUF "protobuf location")
+check_param(WITH_PROTOBUF "protobuf location")
 get_filename_component(WITH_PROTOBUF ${WITH_PROTOBUF} ABSOLUTE)
 
-if (WITH_BOOST)
+set_param(WITH_BOOST "boost location")
+if (DEFINED WITH_BOOST)
 get_filename_component(WITH_BOOST ${WITH_BOOST} ABSOLUTE)
 endif()
 
-check(WITH_GTEST "gtest location")
-get_filename_component(WITH_GTEST ${WITH_GTEST} ABSOLUTE)
+#check_param(WITH_GTEST "gtest location")
+#get_filename_component(WITH_GTEST ${WITH_GTEST} ABSOLUTE)
 
-if(NOT CTEST_MODEL)
-  if(BRANCH STREQUAL "master")
-    set(CTEST_MODEL Continuous)
-  else()
-    set(CTEST_MODEL Experimental)
-  endif()
-endif()
+set_param(branch "branch name for cdash build name" local)
+set(CTEST_BUILD_NAME "${branch}-${CMAKE_HOST_SYSTEM_NAME}")
+
 
 #
-# Start dashboard and configure build
+# Start building and testing
 #
+
+start()
+
+message("Building from sources at: ${CTEST_SOURCE_DIRECTORY}")
+message("Building in: ${CTEST_BINARY_DIRECTORY}")
+message("")
+
+
+message("Cleaning build location")
 
 if(CTEST_BINARY_DIRECTORY STREQUAL CTEST_SOURCE_DIRECTORY)
   message(FATAL_ERROR "build location the same as source location"
@@ -71,20 +77,35 @@ endif()
 file(REMOVE_RECURSE ${CTEST_BINARY_DIRECTORY})
 file(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY})
 
-ctest_start(${CTEST_MODEL})
 
-list(APPEND CONFIG_OPTIONS -DWITH_TESTS=1)
+step("Configure build")
+#######################
+
+if(DEFINED GENERATOR)
+  set(CTEST_CMAKE_GENERATOR ${GENERATOR})
+else()
+  if (WIN32)
+    set(CTEST_CMAKE_GENERATOR "Visual Studio 12")
+  else()
+    set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
+  endif()
+endif()
+
+message("Using cmake generator: ${CTEST_CMAKE_GENERATOR}")
+
+
+list(APPEND CONFIG_OPTIONS -DWITH_TESTS=0)
 list(APPEND CONFIG_OPTIONS -DWITH_DOC=0)
 list(APPEND CONFIG_OPTIONS -DWITH_PROTOBUF=${WITH_PROTOBUF})
-if(WITH_BOOST)
+if(DEFINED WITH_BOOST)
   list(APPEND CONFIG_OPTIONS -DWITH_BOOST=${WITH_BOOST})
 else()
   if(NOT WIN32)
     list(APPEND CONFIG_OPTIONS -DBOOST_SYSTEM_LIBS=1)
   endif()
 endif()
-list(APPEND CONFIG_OPTIONS -DWITH_GTEST=${WITH_GTEST})
-if(DEFINED STATIC_MSVCRT)
+#list(APPEND CONFIG_OPTIONS -DWITH_GTEST=${WITH_GTEST})
+if(WIN32 AND STATIC_MSVCRT)
   list(APPEND CONFIG_OPTIONS -DSTATIC_MSVCRT=${STATIC_MSVCRT})
 endif()
 if(NOT WIN32)
@@ -98,19 +119,80 @@ ctest_configure(
   OPTIONS "${CONFIG_OPTIONS}"
   RETURN_VALUE config_result)
 
-if(NOT config_result)
+if(config_result)
+ fail("build configuration failed")
+endif()
 
-#
-# Build code
-#
+
+step("Build code")
+##################
+
+#if(WIN32)
+#  set(CTEST_CONFIGURATION_TYPE "RelWithDebInfo")
+#endif()
 
 ctest_build(RETURN_VALUE build_result)
+message("build_result: ${build_result}")
 
-#
-# Generate test group information and run tests
-#
+if(build_result)
+ fail("build failed")
+endif()
 
-if(NOT build_result)
+
+if(DEFINED ENV{XPLUGIN_BUILD_DIR})
+
+  step("Start xplugin server at: $ENV{XPLUGIN_BUILD_DIR}")
+  ########################################################
+
+  if(NOT EXISTS $ENV{XPLUGIN_BUILD_DIR}/mysql-test/mtr)
+
+    message(WARNING "Server build not found at XPLUGIN_BUILD_DIR location")
+
+  else()
+
+  execute_process(
+    COMMAND ./mtr --start-and-exit
+                --vardir=$ENV{WORKSPACE}/mysqldata
+                --mysqld=--plugin-dir=$ENV{XPLUGIN_BUILD_DIR}/plugin/x
+                --mysqld=--plugin-load=mysqlxplugin=mysqlxplugin.so
+    WORKING_DIRECTORY "$ENV{XPLUGIN_BUILD_DIR}/mysql-test"
+    RESULT_VARIABLE xplugin_run
+  )
+
+  if(xplugin_run)
+    message(WARNING "Failed to start xplugin server: ${xplugin_run}")
+  else()
+    set(ENV{XPLUGIN_PORT} 33060)
+    set(ENV{XPLUGIN_USER} root)
+    message("")
+
+    find_program(MYSQLADMIN mysqladmin
+      PATHS "$ENV{XPLUGIN_BUILD_DIR}/client"
+      PATH_SUFFIXES Debug Release RelWithDebInfo
+      NO_DEFAULT_PATH
+    )
+
+  endif()
+
+  endif(NOT EXISTS $ENV{XPLUGIN_BUILD_DIR}/mysql-test/mtr)
+
+endif()
+
+
+step("Run try programm")
+########################
+
+find_program(TRY try
+  PATHS ${CTEST_BINARY_DIRECTORY}
+  PATH_SUFFIXES Debug Release RelWithDebInfo
+  NO_DEFAULT_PATH
+)
+#message("try executable: ${TRY}")
+
+execute_process(COMMAND ${TRY})
+
+
+if(0)
 
 # Find run_unit_tests program generated by build phase
 
@@ -180,13 +262,17 @@ endif(CTEST_MEMORYCHECK_COMMAND)
 
 endif(gen_groups_result)
 endif(NOT RUN_UNIT_TESTS)
-endif(NOT build_result)
-endif(NOT config_result)
-
-#
-# Submit results
-#
-
-if(NOT DEFINED SUBMIT OR SUBMIT)
-  ctest_submit()
 endif()
+
+
+if(DEFINED MYSQLADMIN)
+
+  step("Shutting down xplugin server")
+  ####################################
+  execute_process(
+    COMMAND ${MYSQLADMIN} --protocol=tcp --port=13000 --user=root shutdown
+  )
+
+endif()
+
+done()
