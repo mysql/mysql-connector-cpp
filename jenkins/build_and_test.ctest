@@ -60,7 +60,7 @@ set(CTEST_BUILD_NAME "${branch}-${CMAKE_HOST_SYSTEM_NAME}")
 # Start building and testing
 #
 
-start()
+start(${branch})
 
 message("Building from sources at: ${CTEST_SOURCE_DIRECTORY}")
 message("Building in: ${CTEST_BINARY_DIRECTORY}")

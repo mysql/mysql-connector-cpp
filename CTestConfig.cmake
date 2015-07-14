@@ -7,10 +7,10 @@
 ##   INCLUDE(CTest)
 
 
-set(CTEST_PROJECT_NAME "MySQL_CONCPLS")
+set(CTEST_PROJECT_NAME "ConnectorCPP")
 set(CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 
 set(CTEST_DROP_METHOD "http")
 set(CTEST_DROP_SITE "pandora03.se.oracle.com")
-set(CTEST_DROP_LOCATION "/cdash/submit.php?project=CONCPLS")
+set(CTEST_DROP_LOCATION "/cdash/submit.php?project=ConnectorCPP")
 set(CTEST_DROP_SITE_CDASH TRUE)
