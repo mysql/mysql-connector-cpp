@@ -109,10 +109,11 @@ if(WIN32 AND STATIC_MSVCRT)
   list(APPEND CONFIG_OPTIONS -DSTATIC_MSVCRT=${STATIC_MSVCRT})
 endif()
 if(NOT WIN32)
-  list(APPEND CONFIG_OPTIONS -DWITH_COVERAGE=1)
   list(APPEND CONFIG_OPTIONS -DCMAKE_CXX_FLAGS_DEBUG="-Wall -Wextra")
-  find_program(CTEST_COVERAGE_COMMAND NAMES gcov)
-  find_program(CTEST_MEMORYCHECK_COMMAND NAMES valgrind)
+  # TODO: Add coverage/valgrind when supported by project
+  #list(APPEND CONFIG_OPTIONS -DWITH_COVERAGE=1)
+  #find_program(CTEST_COVERAGE_COMMAND NAMES gcov)
+  #find_program(CTEST_MEMORYCHECK_COMMAND NAMES valgrind)
 endif()
 
 ctest_configure(
