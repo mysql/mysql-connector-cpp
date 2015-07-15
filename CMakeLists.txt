@@ -80,6 +80,21 @@ INCLUDE_DIRECTORIES(include)
 #INCLUDE(testing)
 #SETUP_TESTING()
 
+#
+# Set higher warning level on Windows to catch non-portable
+# code.
+#
+
+IF(WIN32)
+
+foreach(LANG C CXX)
+  set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /W4 /wd4512")
+  foreach(TYPE RELEASE RELWITHDEBINFO MINSIZEREL)
+    set(CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}} /W4 /wd4512")
+  endforeach()
+endforeach(LANG)
+
+ENDIF()
 
 #
 # CDK components
