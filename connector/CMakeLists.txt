@@ -1,2 +1,2 @@
-ADD_LIBRARY(concplus STATIC session.cc)
+ADD_LIBRARY(concplus STATIC session.cc result.cc)
 ADD_CDK(concplus)
