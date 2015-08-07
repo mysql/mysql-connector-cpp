@@ -89,12 +89,12 @@ class Result::Impl
   bool row_begin(row_count_t pos)
   {
     m_pos= pos;
-    m_rows.insert(std::pair<col_count_t,Row_data>(pos, Row_data()));
+    m_rows.insert(std::pair<row_count_t,Row_data>(pos, Row_data()));
     return true;
   }
   void row_end(row_count_t) {}
 
-  size_t field_begin(col_count_t pos);
+  size_t field_begin(col_count_t pos, size_t);
   void   field_end(col_count_t) {}
   void   field_null(col_count_t) {}
   size_t field_data(col_count_t pos, bytes);
@@ -182,7 +182,7 @@ void Result::Impl::read_rows(cdk::Cursor &cur)
 
 
 
-size_t Result::Impl::field_begin(col_count_t pos)
+size_t Result::Impl::field_begin(col_count_t pos, size_t)
 {
   Row_data &rd= m_rows[m_pos];
   rd.insert(std::pair<col_count_t,Buffer>(pos, Buffer()));
