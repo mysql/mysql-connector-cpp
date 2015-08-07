@@ -15,7 +15,7 @@ Synopsis
 
   #include <mysqlxx.h>
 
-  Session s(33060, "user", "password");
+  NodeSession s(33060, "user", "password");
 
   SqlResult r= s.executeSql("SELECT @server_version");
 
