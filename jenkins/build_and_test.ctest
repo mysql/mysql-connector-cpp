@@ -155,7 +155,7 @@ if(DEFINED ENV{XPLUGIN_BUILD_DIR})
     COMMAND ./mtr --start-and-exit
                 --vardir=$ENV{WORKSPACE}/mysqldata
                 --mysqld=--plugin-dir=$ENV{XPLUGIN_BUILD_DIR}/plugin/x
-                --mysqld=--plugin-load=mysqlx=mysqlxplugin.so
+                --mysqld=--plugin-load=mysqlx=mysqlx.so
     WORKING_DIRECTORY "$ENV{XPLUGIN_BUILD_DIR}/mysql-test"
     RESULT_VARIABLE xplugin_run
   )
