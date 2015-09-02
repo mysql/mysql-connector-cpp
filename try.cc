@@ -49,7 +49,7 @@ try {
 
   Row *row;
 
-  while ((row= res.next()))
+  while (NULL != (row= res.next()))
   {
     cout <<"== next row ==" <<endl;
     for (unsigned i=0; i < res.getColumnCount(); ++i)
