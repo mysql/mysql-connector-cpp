@@ -197,15 +197,24 @@ size_t Result::Impl::field_data(col_count_t pos, bytes data)
 
 
 
-Result::Result(Session::Result_init init)
+Result::Result(cdk::Reply *init)
   : m_reply(init)
   , m_cursor(NULL)
   , m_pos(0)
+  , m_impl(NULL)
 {
-  if (m_reply.has_results())
+  if (!init)
+    return;
+
+  m_reply->wait();
+
+  if (m_reply->entry_count() > 0)
+    return;
+
+  if (m_reply->has_results())
   {
     m_impl= new Impl();
-    m_cursor= new cdk::Cursor(m_reply);
+    m_cursor= new cdk::Cursor(*m_reply);
     m_cursor->wait();
     // TODO: do it asynchronously
     m_impl->read_rows(*m_cursor);
@@ -217,6 +226,7 @@ Result::Result(Session::Result_init init)
 
 Result::~Result()
 {
+  delete m_reply;
   delete m_cursor;
   delete m_impl;
 }

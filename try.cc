@@ -2,6 +2,10 @@
 #include <mysqlxx.h>
 //#include <mysql/cdk.h>
 
+namespace mysqlx {
+
+}
+
 using namespace ::std;
 //using namespace ::cdk;
 using namespace ::mysqlx;
@@ -13,13 +17,14 @@ try {
 
 #if 0
 
-  ds::TCPIP ds("nike22.se.oracle.com", 13010);
-  ds::Options opt;
-  connection::TCPIP conn("localhost", 13010);
-  conn.connect();
+  ds::TCPIP ds("localhost", 13010);
+  ds::Options opt("root", NULL);
+  //connection::TCPIP conn("localhost", 13010);
+  //conn.connect();
 
-  mysqlx::Session sess(conn, opt);
+  Session sess(ds, opt);
 
+  sess.wait();
   if (!sess.is_valid())
     throw sess.get_error();
 
@@ -32,7 +37,15 @@ try {
 
   NodeSession sess(13010, "root");
 
-  cout <<"Session accepted, sending query..." <<endl;
+  cout <<"Session accepted, creating collection..." <<endl;
+
+  Schema sch= sess.getSchema("test");
+  Collection coll= sch.createCollection("c1", true);
+
+  cout <<"inserting document..." <<endl;
+
+  //coll.add("{ \"_id\": \"uuid-5\", \"name\": \"foo\", \"age\": 7 }").execute();
+
   /*
     TODO:
 
@@ -43,10 +56,12 @@ try {
     Perhaps using const reference as result initializer will avoid this.
   */
 
-  Result res(sess.executeSql(L"SELECT * FROM mysql.user"));
+  cout <<"querying collection..." <<endl;
+
+  Result res(sess.executeSql(L"SELECT * FROM test.c1"));
 
   cout <<"Query sent, reading rows..." <<endl;
-
+  cout <<"There are " <<res.getColumnCount() <<" columns in the result" <<endl;
   Row *row;
 
   while (NULL != (row= res.next()))
@@ -67,10 +82,10 @@ catch (const cdk::Error &err)
   // TODO: why these errors are not caught as std::exception?
   cout <<"CDK ERROR: " <<err <<endl;
 }
-catch (const mysqlx::Error &err)
-{
-  cout <<"ERROR: " <<err <<endl;
-}
+//catch (const mysqlx::Error &err)
+//{
+//  cout <<"ERROR: " <<err <<endl;
+//}
 catch (std::exception &ex)
 {
   cout <<"STD EXCEPTION: " <<ex.what() <<endl;
