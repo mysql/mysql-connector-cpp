@@ -1,62 +1,51 @@
 #include <mysqlxx.h>
-#include <mysql/cdk/mysqlx/session.h>
+#include <mysql/cdk.h>
 
+#include <boost/format.hpp>
 #include <iostream>
 
-using namespace ::std;
 
-namespace mysqlx {
+using namespace ::mysqlx;
 
-class Executable::Impl : nocopy
+class Session::Impl
 {
-protected:
+  cdk::ds::TCPIP   m_ds;
+  std::string      m_pwd;
+  cdk::ds::Options m_opt;
+  cdk::Session     m_sess;
 
-  Session &m_sess;
+  Impl(const char *host, unsigned short port,
+       const string &user, const char *pwd =NULL)
+    : m_ds(host, port)
+    , m_pwd(pwd ? pwd : "")
+    , m_opt(user, pwd ? &m_pwd : NULL)
+    , m_sess(m_ds, m_opt)
+  {
+    if (!m_sess.is_valid())
+      m_sess.get_error().rethrow();
+  }
 
-  Impl(Session &sess) : m_sess(sess)
-  {}
-
-  typedef Executable::Result_init Result_init;
-
-  virtual Result_init execute() =0;
-
-  friend class Executable;
+  friend class Session;
 };
 
 
-Executable::~Executable()
+Session::Session(unsigned short port,
+                 const string  &user,
+                 const char    *pwd)
+{
+  m_impl= new Impl("localhost", port, user, pwd);
+}
+
+
+Session::~Session()
 {
   delete m_impl;
 }
 
-Executable::Result_init Executable::execute()
+cdk::Session& Session::get_cdk_session()
 {
-  return m_impl->execute();
+  return m_impl->m_sess;
 }
-
-
-class Executable::Op_collection_add : public Executable::Impl
-{
-  Collection &m_coll;
-  const string m_json;
-
-  Op_collection_add(Collection &coll, const string &json)
-    : Impl(coll.m_schema.m_sess)
-    , m_coll(coll), m_json(json)
-  {}
-
-  Result_init execute()
-  {
-    Result_init r= m_sess.add_document(m_coll.getSchema().getName(), m_coll.getName(), m_json);
-    r->wait();
-    if (0 < r->entry_count())
-      r->get_error().rethrow();
-    return r;
-  }
-
-  friend class Collection;
-};
-
 
 Schema Session::getSchema(const string &name)
 {
@@ -64,10 +53,27 @@ Schema Session::getSchema(const string &name)
 }
 
 
+Result NodeSession::executeSql(const string &query)
+{
+  cdk::Reply *r= new cdk::Reply(get_cdk_session().sql(query));
+  r->wait();
+  if (0 < r->entry_count())
+    r->get_error().rethrow();
+  return Result(r);
+}
+
+
+/*
+  Schema.createCollection()
+  =========================
+*/
+
 class Create_args
   : public cdk::Any_list
   , public cdk::Any
 {
+  typedef cdk::Any Any;
+
   unsigned m_pos;
   const string &m_schema;
   const string &m_name;
@@ -87,87 +93,52 @@ public:
 
   void process(Any::Processor &ep) const
   {
-    const std::string str(0 == m_pos ? m_schema : m_name); // NOTE: conversion to UTF8
-    // TODO: Add utf8 CS id
-    ep.str(cdk::bytes((byte*)str.data(), str.size())); 
+    // NOTE: uses utf8
+    ep.str((0 == m_pos ? m_schema : m_name)); 
   }
 };
 
-Session::Result_init
-Session::create_collection(const string &schema,
-                           const string &name,
-                           bool reuse)
+
+Collection Schema::getCollection(const string &name, bool /*check*/)
 {
-  cout <<"Creating collection `" <<name <<"`"
-       <<" in schema `" <<schema <<"`"
-       <<endl;
-  Create_args args(schema, name);
-  cdk::Reply *r= new cdk::Reply(m_sess.admin("create_collection", args));
-  r->wait();
-  if (0 < r->entry_count())
+  return Collection(*this, name);
+}
+
+Collection Schema::createCollection(const string &name, bool reuse)
+{
+  Create_args args(m_name, name);
+  cdk::Reply r(m_sess.get_cdk_session().admin("create_collection", args));
+  r.wait();
+  if (0 < r.entry_count())
   {
-    const cdk::Error &err= r->get_error();
+    const cdk::Error &err= r.get_error();
     // 1050 = table already exists
     if (!reuse || cdk::server_error(1050) != err.code())
       err.rethrow();
   }
-  //r->discard();
-  return Result_init(r);
-}
-
-
-class Schema_ref : public cdk::api::Schema_ref
-{
-  const string &m_name;
-
-  const string& name() const { return m_name; }
-
-public:
-
-  Schema_ref(const string &name) : m_name(name) {}
-};
-
-class Table_ref : public cdk::api::Table_ref
-{
-  Schema_ref m_schema;
-  const string &m_name;
-
-  const string& name() const { return m_name; }
-  const cdk::api::Schema_ref* schema() const { return &m_schema; }
-
-public:
-
-  Table_ref(const string &schema, const string &name)
-    : m_schema(schema), m_name(name)
-  {}
-};
-
-Session::Result_init
-Session::add_document(const string &schema,
-                      const string &name,
-                      const string &json)
-{
-  cout <<"Adding document " <<json
-       <<" to collection `" <<name <<"`"
-       <<" in schema `" <<schema <<"`"
-       <<endl;
-  Table_ref doc(schema, name);
-  cdk::Reply *r= new cdk::Reply(m_sess.coll_add(doc, json));
-  return r;
-}
-
-
-Collection Schema::createCollection(const string &name, bool reuse)
-{
-  Result res(m_sess.create_collection(m_name, name, reuse));
   return Collection(*this, name);
 }
 
-Executable Collection::add(const string &json)
+
+string::string(const std::string &other)
+  : std::wstring(cdk::string(other))
+{}
+
+string::string(const char *other)
+  : std::wstring(cdk::string(other))
+{}
+
+string::operator const std::string() const
 {
-  return Executable(new Executable::Op_collection_add(*this, json));
+  return std::string(cdk::string(*this));
 }
 
+/*
+string::operator const cdk::foundation::string&() const
+{
+  return cdk::string(*static_cast<const std::wstring*>(this));
+}
+*/
 
 ostream& operator<<(ostream &out, const Error&)
 {
@@ -175,4 +146,3 @@ ostream& operator<<(ostream &out, const Error&)
   return out;
 }
 
-}  // mysqlx
