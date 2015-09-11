@@ -55,6 +55,7 @@ endif()
 set_param(branch "branch name for cdash build name" local)
 set(CTEST_BUILD_NAME "${branch}-${CMAKE_HOST_SYSTEM_NAME}")
 
+set_param(VERBOSE "generate verbose makefile" no)
 
 #
 # Start building and testing
@@ -114,6 +115,9 @@ if(NOT WIN32)
   #list(APPEND CONFIG_OPTIONS -DWITH_COVERAGE=1)
   #find_program(CTEST_COVERAGE_COMMAND NAMES gcov)
   #find_program(CTEST_MEMORYCHECK_COMMAND NAMES valgrind)
+endif()
+if(VERBOSE)
+  list(APPEND CONFIG_OPTIONS -DCMAKE_VERBOSE_MAKEFILE=yes)
 endif()
 
 ctest_configure(

@@ -25,6 +25,13 @@ IF(WITH_NGCOMMON)
 ENDIF()
 
 #
+# Tell cmake to not use compiler specific extensions
+#
+
+INCLUDE(compiler_features)
+SET(CMAKE_CXX_EXTENSIONS no)
+
+#
 # Configure static runtime library on Windows if requested
 #
 
@@ -118,5 +125,6 @@ ADD_SUBDIRECTORY(connector)
 
 ADD_EXECUTABLE(try try.cc)
 TARGET_LINK_LIBRARIES(try concplus)
+SET_INTERFACE_OPTIONS(try concplus)
 #  ADD_GCOV(try)
 
