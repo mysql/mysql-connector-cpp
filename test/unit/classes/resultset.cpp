@@ -1068,7 +1068,9 @@ void resultset::JSON_support()
     res->next();
 
     msg.str();
+    ASSERT_EQUALS(1, res->getInt(1));
     msg << "... PS: id = " << res->getInt(1);
+    ASSERT_EQUALS("[1]", res->getString(2));
     msg << "... PS: jval = " << res->getString(2);
     logMsg(msg.str());
 
@@ -1076,7 +1078,9 @@ void resultset::JSON_support()
     res->next();
 
     msg.str();
+    ASSERT_EQUALS(1, res->getInt(1));
     msg << "... Statement: id = " << res->getInt(1);
+    ASSERT_EQUALS("[1]", res->getString(2));
     msg << "... Statement: jval = " << res->getString(2);
     logMsg(msg.str());
 
