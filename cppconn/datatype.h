@@ -59,7 +59,8 @@ public:
 		GEOMETRY,
 		ENUM,
 		SET,
-		SQLNULL
+		SQLNULL,
+		JSON
 	};
 };
 

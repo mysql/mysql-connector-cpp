@@ -431,6 +431,8 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
 			return sql::DataType::SET;
 		case MYSQL_TYPE_GEOMETRY:
 			return sql::DataType::GEOMETRY;
+		case MYSQL_TYPE_JSON:
+		  return sql::DataType::JSON;
 		default:
 			return sql::DataType::UNKNOWN;
 	}
@@ -496,6 +498,8 @@ mysql_string_type_to_datatype(const sql::SQLString & name)
 		return sql::DataType::SET;
 	} else if (!name.compare("geometry")) {
 		return sql::DataType::GEOMETRY;
+	} else if (!name.compare("json")) {
+	  return sql::DataType::JSON;
 	} else {
 		return sql::DataType::UNKNOWN;
 	}

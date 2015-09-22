@@ -56,6 +56,7 @@ public:
     TEST_CASE(getTypes);
     TEST_CASE(getResultSetType);
     TEST_CASE(getTypesMinorIssues);
+    TEST_CASE(JSON_support);
 
 #ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
     TEST_CASE(notImplemented);
@@ -108,6 +109,13 @@ public:
    * Fetching BIT values as integers - edge cases
    */
   void fetchBitAsInt();
+
+  /**
+   * Test for resultset::getString() on JSON type columns
+   *
+   * Test of the assorted methods to fetch JSON strings
+   */
+  void JSON_support();
 
 
 };

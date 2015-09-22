@@ -926,7 +926,7 @@ MySQL_ResultSet::next()
             sql::SQLException e(proxy_p->error(), proxy_p->sqlstate(), proxy_p->errNo());
             throw e;
         }
-        if (ret = (row != NULL)) {
+        if ((ret = (row != NULL))) {
             ++row_position;
         } else {
             row_position = 0;

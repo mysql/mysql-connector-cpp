@@ -1047,6 +1047,49 @@ void resultset::getResultSetType()
   }
 }
 
+void resultset::JSON_support()
+{
+  std::stringstream msg;
+
+  logMsg("resultset::JSON_support - MySQL_ResultSet::*");
+  try
+  {
+    stmt.reset(con->createStatement());
+    stmt->execute("DROP TABLE IF EXISTS test");
+    stmt->execute("CREATE TABLE test(id INT, jval JSON)");
+    stmt->execute("INSERT INTO test(id, jval) VALUES(1, '[1]')");
+
+#ifdef INCLUDE_NOT_IMPLEMENTED_METHODS
+    doNotImplemented();
+#endif
+
+    pstmt.reset(con->prepareStatement("SELECT * FROM test"));
+    res.reset(pstmt->executeQuery());
+    res->next();
+
+    msg.str();
+    msg << "... PS: id = " << res->getInt(1);
+    msg << "... PS: jval = " << res->getString(2);
+    logMsg(msg.str());
+
+    res.reset(stmt->executeQuery("SELECT * FROM test"));
+    res->next();
+
+    msg.str();
+    msg << "... Statement: id = " << res->getInt(1);
+    msg << "... Statement: jval = " << res->getString(2);
+    logMsg(msg.str());
+
+    stmt->execute("DROP TABLE IF EXISTS test");
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
 
 } /* namespace resultset */
 } /* namespace testsuite */

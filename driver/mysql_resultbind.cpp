@@ -85,6 +85,7 @@ allocate_buffer_for_field(const MYSQL_FIELD * const field)
 		case MYSQL_TYPE_BLOB:
 		case MYSQL_TYPE_STRING:
 		case MYSQL_TYPE_VAR_STRING:
+    case MYSQL_TYPE_JSON:
 			return st_buffer_size_type(new char[field->max_length + 1], field->max_length + 1, field->type);
 
 		case MYSQL_TYPE_DECIMAL:
