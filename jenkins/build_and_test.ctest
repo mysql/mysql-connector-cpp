@@ -167,9 +167,10 @@ if(DEFINED ENV{XPLUGIN_BUILD_DIR})
   if(xplugin_run)
     message(WARNING "Failed to start xplugin server: ${xplugin_run}")
   else()
-    set(ENV{XPLUGIN_PORT} 33060)
+
+    set(ENV{XPLUGIN_PORT} 13010)
     set(ENV{XPLUGIN_USER} root)
-    message("")
+    message("xplugin connection: $ENV{XPLUGIN_PORT}, $ENV{XPLUGIN_USER}")
 
     find_program(MYSQLADMIN mysqladmin
       PATHS "$ENV{XPLUGIN_BUILD_DIR}/client"
