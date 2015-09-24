@@ -155,10 +155,22 @@ if(DEFINED ENV{XPLUGIN_BUILD_DIR})
 
   else()
 
+  find_path(PLUGIN_DIR mysqlx.so
+    PATHS $ENV{XPLUGIN_BUILD_DIR}/lib/plugin
+          $ENV{XPLUGIN_BUILD_DIR}/plugin/x
+    NO_DEFAULT_PATH
+  )
+
+  if(NOT PLUGIN_DIR)
+
+    message(WARNING "Xplugin not found in $ENV{XPLUGIN_BUILD_DIR}")
+
+  else()
+
   execute_process(
     COMMAND ./mtr --start-and-exit
                 --vardir=$ENV{WORKSPACE}/mysqldata
-                --mysqld=--plugin-dir=$ENV{XPLUGIN_BUILD_DIR}/plugin/x
+                --mysqld=--plugin-dir=${PLUGIN_DIR}
                 --mysqld=--plugin-load=mysqlx=mysqlx.so
     WORKING_DIRECTORY "$ENV{XPLUGIN_BUILD_DIR}/mysql-test"
     RESULT_VARIABLE xplugin_run
@@ -180,6 +192,7 @@ if(DEFINED ENV{XPLUGIN_BUILD_DIR})
 
   endif()
 
+  endif(NOT PLUGIN_DIR)
   endif(NOT EXISTS $ENV{XPLUGIN_BUILD_DIR}/mysql-test/mtr)
 
 endif()
