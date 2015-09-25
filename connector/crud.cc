@@ -38,10 +38,10 @@ class Task::Impl : nocopy
 {
 protected:
 
-  Session &m_sess;
+  XSession &m_sess;
   cdk::Reply *m_reply;
 
-  Impl(Session &sess)
+  Impl(XSession &sess)
     : m_sess(sess), m_reply(NULL)
   {}
   Impl(Collection &coll)

@@ -196,7 +196,7 @@ public:
 int main()
 try {
 
-#if 1
+#if 0
 
 #define TEST_ERROR(Code) \
   try { try { Code; } CATCH_AND_WRAP } \
@@ -235,7 +235,7 @@ try {
 
 #else
 
-  Session sess(13010, "root");
+  XSession sess(13010, "root");
 
   cout <<"Session accepted, creating collection..." <<endl;
 

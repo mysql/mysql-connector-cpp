@@ -15,23 +15,23 @@ class Session;
 
 namespace mysqlx {
 
-class Session;
+class XSession;
 class Schema;
 class Collection;
 
 
 class Schema
 {
-  Session &m_sess;
+  XSession &m_sess;
   const string m_name;
 
 public:
 
-  Schema(Session &sess, const string &name)
+  Schema(XSession &sess, const string &name)
     : m_sess(sess), m_name(name)
   {}
 
-  Schema(Session&); // default schema of the session
+  Schema(XSession&); // default schema of the session
 
   const string& getName() const { return m_name; }
 
@@ -77,7 +77,7 @@ public:
   =======
 */
 
-class Session : nocopy
+class XSession : nocopy
 {
 protected:
 
@@ -88,16 +88,17 @@ protected:
 
 public:
 
-  /*
-  Session(const char *host, unsigned short port,
-          const string  &user,
-          const char    *pwd =NULL);
-  */
+  XSession(const char *host, unsigned short port,
+           const string  &user,
+           const char    *pwd =NULL);
 
-  Session(unsigned short port,
-          const string  &user,
-          const char    *pwd =NULL);
-  virtual ~Session();
+  XSession(unsigned short port,
+           const string  &user,
+           const char    *pwd = NULL)
+    : XSession("localhost", port, user, pwd)
+  {}
+
+  virtual ~XSession();
 
   Schema getSchema(const string&);
 
@@ -110,22 +111,21 @@ private:
 };
 
 
-class NodeSession: public Session
+class NodeSession: public XSession
 {
 public:
 
-/*
+
   NodeSession(const char* host, unsigned short port,
               const string  &user,
               const char    *pwd =NULL)
-   : Session(host, port, user, pwd)
+   : XSession(host, port, user, pwd)
   {}
-*/
 
   NodeSession(unsigned short port,
               const string  &user,
               const char    *pwd =NULL)
-   : Session(port, user, pwd)
+   : NodeSession("localhost", port, user, pwd)
   {}
 
   Result executeSql(const string &query);

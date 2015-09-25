@@ -7,7 +7,7 @@
 
 using namespace ::mysqlx;
 
-class Session::Impl
+class XSession::Impl
 {
   cdk::ds::TCPIP   m_ds;
   std::string      m_pwd;
@@ -25,31 +25,31 @@ class Session::Impl
       m_sess.get_error().rethrow();
   }
 
-  friend class Session;
+  friend class XSession;
 };
 
 
-Session::Session(unsigned short port,
-                 const string  &user,
-                 const char    *pwd)
+XSession::XSession(const char *host, unsigned short port,
+                   const string  &user,
+                   const char    *pwd)
 try {
-  m_impl= new Impl("localhost", port, user, pwd);
+  m_impl= new Impl(host, port, user, pwd);
 }
 CATCH_AND_WRAP
 
 
-Session::~Session()
+XSession::~XSession()
 try {
   delete m_impl;
 }
 CATCH_AND_WRAP
 
-cdk::Session& Session::get_cdk_session()
+cdk::Session& XSession::get_cdk_session()
 {
   return m_impl->m_sess;
 }
 
-Schema Session::getSchema(const string &name)
+Schema XSession::getSchema(const string &name)
 try {
   return Schema(*this, name);
 }
