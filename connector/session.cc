@@ -1,4 +1,4 @@
-#include <mysqlxx.h>
+#include <mysqlx.h>
 #include <mysql/cdk.h>
 
 #include <boost/format.hpp>
@@ -32,15 +32,17 @@ class Session::Impl
 Session::Session(unsigned short port,
                  const string  &user,
                  const char    *pwd)
-{
+try {
   m_impl= new Impl("localhost", port, user, pwd);
 }
+CATCH_AND_WRAP
 
 
 Session::~Session()
-{
+try {
   delete m_impl;
 }
+CATCH_AND_WRAP
 
 cdk::Session& Session::get_cdk_session()
 {
@@ -48,19 +50,21 @@ cdk::Session& Session::get_cdk_session()
 }
 
 Schema Session::getSchema(const string &name)
-{
+try {
   return Schema(*this, name);
 }
+CATCH_AND_WRAP
 
 
 Result NodeSession::executeSql(const string &query)
-{
+try {
   cdk::Reply *r= new cdk::Reply(get_cdk_session().sql(query));
   r->wait();
   if (0 < r->entry_count())
     r->get_error().rethrow();
   return Result(r);
 }
+CATCH_AND_WRAP
 
 
 /*
@@ -100,12 +104,13 @@ public:
 
 
 Collection Schema::getCollection(const string &name, bool /*check*/)
-{
+try {
   return Collection(*this, name);
 }
+CATCH_AND_WRAP
 
 Collection Schema::createCollection(const string &name, bool reuse)
-{
+try {
   Create_args args(m_name, name);
   cdk::Reply r(m_sess.get_cdk_session().admin("create_collection", args));
   r.wait();
@@ -118,6 +123,7 @@ Collection Schema::createCollection(const string &name, bool reuse)
   }
   return Collection(*this, name);
 }
+CATCH_AND_WRAP
 
 
 string::string(const std::string &other)

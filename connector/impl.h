@@ -5,7 +5,7 @@
   Internal implementations for public DevAPI classes.
 */
 
-#include <mysqlxx.h>
+#include <mysqlx.h>
 #include <map>
 #include <memory>
 

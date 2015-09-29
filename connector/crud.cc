@@ -1,4 +1,4 @@
-#include <mysqlxx.h>
+#include <mysqlx.h>
 #include <mysql/cdk.h>
 #include <expr_parser.h>
 
@@ -7,6 +7,7 @@
 using namespace mysqlx;
 using cdk::string;
 using namespace parser;
+
 
 void mysqlx::GUID::generate()
 {
@@ -47,6 +48,8 @@ protected:
     : m_sess(coll.m_schema.m_sess), m_reply(NULL)
   {}
 
+  ~Impl() {}
+
   cdk::Session& get_cdk_session() { return m_sess.get_cdk_session(); }
 
   bool is_completed() { return m_reply->is_completed(); }
@@ -72,10 +75,16 @@ protected:
 
 // Implementation of Task API using internal implementation object
 
-Task::~Task() { delete m_impl; }
-bool Task::is_completed() { return m_impl->is_completed(); }
-Result Task::wait() { return m_impl->wait(); }
-void Task::cont() { m_impl->cont(); }
+Task::~Task() try { delete m_impl; } CATCH_AND_WRAP
+
+bool Task::is_completed()
+try { return m_impl->is_completed(); } CATCH_AND_WRAP
+
+Result Task::wait()
+try { return m_impl->wait(); } CATCH_AND_WRAP
+
+void Task::cont()
+try { m_impl->cont(); } CATCH_AND_WRAP
 
 
 
@@ -168,7 +177,7 @@ class Op_collection_add
   void doc_begin() {}
   void doc_end() {}
 
-  void key_doc(const string &key, const Document&) {}
+  void key_doc(const string&, const Document&) {}
 
   void key_val(const string &key, const Value &val)
   {
@@ -192,9 +201,10 @@ class Op_collection_add
 
 
 Executable Collection::add(const mysqlx::string &json)
-{
+try {
   return Executable(new Op_collection_add(*this, json));
 }
+CATCH_AND_WRAP
 
 
 /*
@@ -305,9 +315,10 @@ class Op_collection_remove : public Task::Access::Impl
 };
 
 Executable Collection::remove()
-{
+try {
   return Executable(new Op_collection_remove(*this));
 }
+CATCH_AND_WRAP
 
 
 /*
@@ -341,12 +352,14 @@ class Op_collection_find
 };
 
 Executable Collection::find()
-{
+try {
   return Executable(new Op_collection_find(*this));
 }
+CATCH_AND_WRAP
 
 Executable Collection::find(const mysqlx::string &expr)
-{
+try {
   return Executable(new Op_collection_find(*this, expr));
 }
+CATCH_AND_WRAP
 

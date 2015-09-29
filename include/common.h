@@ -2,6 +2,7 @@
 #define MYSQLX_COMMON_H
 
 #include <string>
+#include <stdexcept>
 #include <ostream>
 #include <memory>
 #include <string.h>  // for memcpy
@@ -138,6 +139,36 @@ public:
   }
 };
 
+
+/*
+  TODO: Derive from std::system_error and introduce proper
+  error codes.
+*/
+
+class Error : public std::runtime_error
+{
+public:
+
+  Error(const char *msg)
+    : std::runtime_error(msg)
+  {}
+};
+
+inline
+std::ostream& operator<<(std::ostream &out, const Error &e)
+{
+  out << e.what();
+  return out;
+}
+
+#define CATCH_AND_WRAP \
+  catch (const ::mysqlx::Error&) { throw; }       \
+  catch (const std::exception &e)                 \
+  { throw ::mysqlx::Error(e.what()); }            \
+  catch (const char *e)                           \
+  { throw ::mysqlx::Error(e); }                   \
+  catch (...)                                     \
+  { throw ::mysqlx::Error("Unknown exception"); } \
 
 }  // mysqlx
 

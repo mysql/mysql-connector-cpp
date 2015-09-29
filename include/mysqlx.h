@@ -132,11 +132,6 @@ public:
 };
 
 
-class Error
-{};
-
-ostream& operator<<(ostream&, const Error&);
-
 }  // mysqlx
 
 #endif

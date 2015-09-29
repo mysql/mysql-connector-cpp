@@ -1,5 +1,5 @@
 #include <mysql/cdk.h>
-#include <mysqlxx.h>
+#include <mysqlx.h>
 
 /**
 @file Implementation of DbDoc and related classes.

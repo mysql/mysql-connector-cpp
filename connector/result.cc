@@ -1,5 +1,5 @@
 #include <mysql/cdk.h>
-#include <mysqlxx.h>
+#include <mysqlx.h>
 
 #include "impl.h"
 
@@ -267,29 +267,34 @@ size_t Result::Impl::field_data(col_count_t pos, bytes data)
 
 
 Result::Result(cdk::Reply *r)
-{
+try {
   m_impl= new Impl(r);
 }
+CATCH_AND_WRAP
+
 
 Result::Result(cdk::Reply *r, const GUID &guid)
-{
+try {
   m_impl= new Impl(r,guid);
 }
+CATCH_AND_WRAP
 
 
 Result::~Result()
-{
+try {
   if (m_owns_impl)
     delete m_impl;
 }
+CATCH_AND_WRAP
 
 
 const GUID& Result::getLastDocumentId() const
-{
+try {
   if (!m_impl)
     throw "Empty result";
   return m_impl->m_guid;
 }
+CATCH_AND_WRAP
 
 
 /*
@@ -299,19 +304,21 @@ const GUID& Result::getLastDocumentId() const
 
 
 Row* RowResult::next()
-{
+try {
   return m_impl->get_row(m_pos++);
 }
+CATCH_AND_WRAP
 
 
 col_count_t RowResult::getColumnCount() const
-{
+try {
   if (!m_impl)
     throw "Empty result";
   if (!m_impl->m_cursor)
     throw "No result set";
   return m_impl->m_cursor->col_count();
 }
+CATCH_AND_WRAP
 
 
 /*
@@ -340,9 +347,10 @@ DbDoc& DocResult::first()
 }
 
 DbDoc* DocResult::next()
-{
+try {
   m_doc_impl->next_doc();
   return (m_doc_impl->has_doc() ? &(m_doc_impl->m_doc) : NULL);
 }
+CATCH_AND_WRAP
 
 

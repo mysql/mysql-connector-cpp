@@ -1,6 +1,6 @@
 #include <iostream>
-#include <mysqlxx.h>
-//#include <mysql/cdk.h>
+#include <mysqlx.h>
+#include <mysql/cdk.h>
 //#include <expr_parser.h>
 
 
@@ -196,7 +196,20 @@ public:
 int main()
 try {
 
-#if 0
+#if 1
+
+#define TEST_ERROR(Code) \
+  try { try { Code; } CATCH_AND_WRAP } \
+  catch (const Error &e) { std::cout <<"Error: " <<e <<std::endl; } \
+  catch (const std::exception &e) { std::cout <<"Std Exception: " <<e.what() <<std::endl; } \
+  catch (const char *e) { std::cout <<"Bare string: " <<e <<std::endl; } \
+  catch (...) { std::cout <<"Unkown exception" <<std::endl; }
+
+  TEST_ERROR(throw Error("c/c++ error"));
+  TEST_ERROR(cdk::throw_error(cdk::cdkerrc::protobuf_error, "foo"));
+  TEST_ERROR(throw std::runtime_error("std exception"));
+  TEST_ERROR(throw "bare string");
+  TEST_ERROR(throw 7);
 
 #else
 
