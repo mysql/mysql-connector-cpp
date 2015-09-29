@@ -141,11 +141,18 @@ ADD_SUBDIRECTORY(connector)
 #ENDIF()
 
 #
+#  Target which builds the final connector library.
+#
+
+INCLUDE(libutil)
+MERGE_STATIC_LIBS(libconcpp "concpp-2.0" connector)
+
+#
 # Sample code to try things out
 #
 
 ADD_EXECUTABLE(try try.cc)
-TARGET_LINK_LIBRARIES(try concplus)
-SET_INTERFACE_OPTIONS(try concplus)
+TARGET_LINK_LIBRARIES(try libconcpp)
+SET_INTERFACE_OPTIONS(try connector)
 #  ADD_GCOV(try)
 

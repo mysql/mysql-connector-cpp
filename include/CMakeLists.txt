@@ -1,5 +1,5 @@
 #
-# MySQL CDK Public Headers
+# MySQL Connector/C++ Public Headers
 #
 # see headers.cmake for explanations how project's public
 # headers are declared and processed.
