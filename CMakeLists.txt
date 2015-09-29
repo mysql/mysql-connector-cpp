@@ -5,6 +5,16 @@ PROJECT(MySQL_CONCPLS)
 # Set up cmake module search patch.
 #
 
+#
+# First, use modules that are local to this project
+#
+
+LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
+#
+# If WITH_NGCOMMON option is set, add modules defined there.
+#
+
 SET(WITH_NGCOMMON $ENV{WITH_NGCOMMON} CACHE PATH "Path to ngcommon sources")
 
 #IF(NOT WITH_NGCOMMON)
@@ -16,13 +26,21 @@ MESSAGE(WARNING "Could not find required ngcommon files under location"
                 " specified with WITH_NGCOMMON: ${WITH_NGCOMMON}")
 ENDIF()
 
-LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-#MESSAGE("added module path: ${PROJECT_SOURCE_DIR}/cmake")
-
 IF(WITH_NGCOMMON)
   LIST(APPEND CMAKE_MODULE_PATH ${WITH_NGCOMMON}/cmake)
   #MESSAGE("added module path: ${WITH_NGCOMMON}/cmake")
+
+ELSE()
+
+#
+# Otherwise use modules from CDK sub-project
+#
+
+LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cdk/cmake)
+LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cdk/common/cmake)
+
 ENDIF()
+
 
 #
 # Tell cmake to not use compiler specific extensions
