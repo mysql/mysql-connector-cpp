@@ -1,5 +1,8 @@
 #include <mysql/cdk.h>
 #include <mysqlxx.h>
+
+#include "impl.h"
+
 #include <vector>
 #include <sstream>
 #include <iomanip>
@@ -18,8 +21,12 @@ using std::endl;
 class bytes::Access
 {
 public:
-  static bytes mk(byte *beg, size_t len) { return bytes(beg, beg+len); }
-  static bytes mk(const cdk::bytes &data) { return bytes(data.begin(), data.end()); }
+  
+  static bytes mk(byte *beg, size_t len)
+  { return bytes(beg, beg+len); }
+  
+  static bytes mk(const cdk::bytes &data)
+  { return bytes(data.begin(), data.end()); }
 };
 
 /*
@@ -312,108 +319,6 @@ col_count_t RowResult::getColumnCount() const
   =========
 */
 
-
-class JSON_printer
-  : public cdk::JSON::Processor
-{
-  ostream &m_out;
-  unsigned m_indent;
-  cdk::string m_op_name;
-
-public:
-
-  JSON_printer(ostream &out, unsigned ind =0)
-    : m_out(out), m_indent(ind)
-  {}
-
-  ostream& out_ind()
-  {
-    for (unsigned i=0; i < 2*m_indent; ++i)
-      m_out.put(' ');
-    return m_out;
-  }
-
-  ostream& out_key(const cdk::string &key)
-  {
-    return out_ind() <<key <<": ";
-  }
-
-  // JSON processor
-
-  void doc_begin()
-  {
-    out_ind() <<"{" <<endl;
-    m_indent++;
-  }
-
-  void doc_end()
-  {
-    m_indent--;
-    out_ind() <<"}" <<endl;
-  }
-
-  void key_doc(const cdk::string &key, const Document &val)
-  {
-    out_key(key) <<"<sub-document>" <<endl;
-    m_indent++;
-    val.process(*this);
-    m_indent--;
-  }
-
-  void key_val(const cdk::string &key, const Value &val)
-  {
-    out_key(key);
-    val.process(*this);
-    m_out <<endl;
-  }
-
-  void str(const cdk::string &val) { m_out <<val; }
-  void num(uint64_t val) { m_out <<val; }
-  void num(int64_t val) { m_out <<val; }
-  void num(float val) { m_out <<val; }
-  void num(double val) { m_out <<val; }
-  void yesno(bool val) { m_out <<(val ? "true" : "false"); }
-
-};
-
-
-class DocResult::Impl
-  : public DbDoc
-  , RowResult
-{
-  Row    *m_row;
-  bool   m_at_front;
-
-  Impl(Result &init)
-    : RowResult(std::move(init)), m_at_front(true)
-  {
-    m_row= next();
-  }
-
-  void next_row()
-  {
-    if (m_at_front)
-      m_at_front= false;
-    else
-      m_row= next();
-  }
-
-  // DbDoc
-
-  void print(ostream &out) const
-  {
-    if (!m_row)
-      throw "No documents";
-    bytes data= m_row->getBytes(0);
-    cdk::Codec<cdk::TYPE_DOCUMENT> codec;
-    JSON_printer dp(out);
-    codec.from_bytes(cdk::bytes(data.begin(), data.end()-1), dp);
-  }
-
-  friend class DocResult;
-};
-
-
 void DocResult::operator=(Result &&init)
 {
   Result::operator=(std::move(init));
@@ -429,13 +334,15 @@ DocResult::~DocResult()
 
 DbDoc& DocResult::first()
 {
-  return *m_doc_impl;
+  if (!m_doc_impl->has_doc())
+    throw "Empty result";
+  return (m_doc_impl->m_doc);
 }
 
 DbDoc* DocResult::next()
 {
-  m_doc_impl->next_row();
-  return m_doc_impl->m_row ? m_doc_impl : NULL;
+  m_doc_impl->next_doc();
+  return (m_doc_impl->has_doc() ? &(m_doc_impl->m_doc) : NULL);
 }
 
 

@@ -4,7 +4,8 @@
 //#include <expr_parser.h>
 
 
-using namespace ::std;
+using ::std::cout;
+using ::std::endl;
 //using namespace ::cdk;
 using namespace ::mysqlx;
 
@@ -243,7 +244,7 @@ try {
     add= coll.add("{ \"name\": \"bar\", \"age\": 2 }").execute();
     cout <<"- added doc with id: " <<add.getLastDocumentId() <<endl;
 
-    add= coll.add("{ \"name\": \"baz\", \"age\": 3 }").execute();
+    add= coll.add("{ \"name\": \"baz\", \"age\": 3, \"date\": { \"day\": 20, \"month\": \"Apr\" }}").execute();
     cout <<"- added doc with id: " <<add.getLastDocumentId() <<endl;
 
     add= coll.add("{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }").execute();
@@ -287,13 +288,38 @@ try {
 
   cout <<"Fetching documents..." <<endl;
 
-  DocResult docs= coll.find("age > 1 and name like 'ba%'").execute();
+  DocResult docs = coll.find().execute(); // "age > 1 and name like 'ba%'").execute();
   cout <<"first doc: " <<docs.first() <<endl;
 
   DbDoc *doc= docs.next();
+
   for(int i=0; doc; ++i, doc= docs.next())
   {
     cout <<"doc#" <<i <<": " <<*doc <<endl;
+
+    for (Field fld : *doc)
+    {
+      cout << " field `" << fld << "`: " <<(*doc)[fld] << endl;
+    }
+
+    string name = (*doc)["name"];
+    cout << " name: " << name << endl;
+
+    if (doc->hasField("date") && Value::DOCUMENT == doc->fieldType("date"))
+    {
+      cout << "- date field" << endl;
+      DbDoc date = (*doc)["date"];
+      for (Field fld : date)
+      {
+        cout << "  date `" << fld << "`: " << date[fld] << endl;
+      }
+      string month = (*doc)["date"][Field("month")];
+      int day = date["day"];
+      cout << "  month: " << month << endl;
+      cout << "  day: " << day << endl;
+    }
+
+    cout << endl;
   }
 
 
