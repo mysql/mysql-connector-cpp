@@ -143,8 +143,11 @@ ADD_SUBDIRECTORY(connector)
 #
 #  Target which builds the final connector library.
 #
-#  TODO: static/dynamic runtime variant (use different output names)
+#  TODO: static/dynamic runtime variant for Win (use different output names)
+#        also, different variants for different MSVC versions.
 #  TODO: debug/non-debug variant
+#  TODO: naming strategy
+#  TODO: interface options for libconcpp target
 #
 
 INCLUDE(libutil)
