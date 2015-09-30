@@ -9,9 +9,13 @@ INCLUDE(headers)
 
 SETUP_HEADERS(${CMAKE_CURRENT_SOURCE_DIR})
 
-ADD_HEADERS(mysqlx.h common.h result.h task.h document.h)
+SET(headers mysqlx.h common.h result.h task.h document.h)
+
+ADD_HEADERS(${headers})
 
 #IF(cdk_stand_alone)
   ADD_HEADERS_TARGET()
 #ENDIF()
+
+INSTALL(FILES ${headers} DESTINATION include)
 

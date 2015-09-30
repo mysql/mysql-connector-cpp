@@ -143,9 +143,13 @@ ADD_SUBDIRECTORY(connector)
 #
 #  Target which builds the final connector library.
 #
+#  TODO: static/dynamic runtime variant (use different output names)
+#  TODO: debug/non-debug variant
+#
 
 INCLUDE(libutil)
 MERGE_STATIC_LIBS(libconcpp "concpp-2.0" connector)
+INSTALL(TARGETS libconcpp DESTINATION lib)
 
 #
 # Sample code to try things out
