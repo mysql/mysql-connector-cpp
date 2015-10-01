@@ -238,14 +238,13 @@ try {
       add= coll.add("{ \"name\": \"foo\", \"age\": 1 }").execute();
       cout <<"- added doc with id: " <<add.getLastDocumentId() <<endl;
 
-      add= coll.add("{ \"name\": \"bar\", \"age\": 2 }").execute();
-      cout <<"- added doc with id: " <<add.getLastDocumentId() <<endl;
+    add= coll.add("{ \"name\": \"bar\", \"age\": 2 }")
+             .add("{ \"name\": \"baz\", \"age\": 3, \"date\": { \"day\": 20, \"month\": \"Apr\" }}").execute();
+    cout << "- added 2 docs, last id: " << add.getLastDocumentId() << endl;
 
-      add= coll.add("{ \"name\": \"baz\", \"age\": 3, \"date\": { \"day\": 20, \"month\": \"Apr\" }}").execute();
-      cout <<"- added doc with id: " <<add.getLastDocumentId() <<endl;
-
-      add= coll.add("{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }").execute();
-      cout <<"- added doc with id: " <<add.getLastDocumentId() <<endl;
+    add= coll.add("{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }",
+                  "{ \"name\": \"buz\", \"age\": 17 }").execute();
+    cout <<"- added 2 docs, last id: " <<add.getLastDocumentId() <<endl;
     }
 
     cout <<"Fetching documents..." <<endl;

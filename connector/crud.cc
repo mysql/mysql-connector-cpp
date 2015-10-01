@@ -52,9 +52,15 @@ struct Result::Access
 struct Task::Access
 {
   typedef Task::Impl Impl;
+
   static void reset(Task &task, Impl *impl)
   {
     task.reset(impl);
+  }
+
+  static Impl* get_impl(Task &task)
+  {
+    return task.m_impl;
   }
 };
 
@@ -174,27 +180,24 @@ class Op_collection_add
   typedef cdk::string string;
 
   Table_ref    m_coll;
-  const string m_json;
+  std::vector<string> m_json;
   mysqlx::GUID  m_id;
   bool  m_generated_id;
 
-  Op_collection_add(Collection &coll, const string &json)
+  Op_collection_add(Collection &coll)
     : Impl(coll)
-    , m_coll(coll), m_json(json)
+    , m_coll(coll)
     , m_generated_id(true)
   {
-    // Parse JSON string to find _id if defined.
-    // TODO: Avoid parsing (if inserted document id is returned by server).
-
-    cdk::Codec<cdk::TYPE_DOCUMENT> codec;
-    codec.from_bytes(cdk::bytes(m_json), *this);
-    if (m_generated_id)
-      m_id.generate();
-
     // Issue coll_add statement where documents are described by list
     // of expressions defined by this instance.
 
     m_reply= new cdk::Reply(get_cdk_session().coll_add(m_coll, *this));
+  }
+
+  void add_json(const string &json)
+  {
+    m_json.push_back(json);
   }
 
   Result get_result()
@@ -204,9 +207,14 @@ class Op_collection_add
 
   // Expr_list
 
-  unsigned count() const { return 1; }
-  const cdk::Expression& get(unsigned) const
-  { return *this; }
+  unsigned m_pos;
+
+  unsigned count() const { return m_json.size(); }
+  const cdk::Expression& get(unsigned pos) const
+  {
+    const_cast<Op_collection_add*>(this)->m_pos = pos;
+    return *this;
+  }
 
   void process(Expression::Processor &ep) const;
 
@@ -238,12 +246,19 @@ class Op_collection_add
 };
 
 
-Executable& Collection::add(const mysqlx::string &json)
-try {
-  Task::Access::reset(m_task, new Op_collection_add(*this, json));
-  return *this;
+void Collection::prepare_add()
+{
+  if (NONE == m_op)
+    Task::Access::reset(m_task, new Op_collection_add(*this));
+  m_op = ADD;
 }
-CATCH_AND_WRAP
+
+void Collection::do_add(const mysqlx::string &json)
+{
+  auto *impl
+    = static_cast<Op_collection_add*>(Task::Access::get_impl(m_task));
+  impl->add_json(json);
+}
 
 
 /*
@@ -318,16 +333,27 @@ class Insert_id
 
 void Op_collection_add::process(Expression::Processor &ep) const
 {
+  const string &json = m_json.at(m_pos);
+  auto self = const_cast<Op_collection_add*>(this);
+
+  // Parse JSON string to find _id if defined.
+  // TODO: Avoid parsing (if inserted document id is returned by server).
+
+  cdk::Codec<cdk::TYPE_DOCUMENT> codec;
+  self->m_generated_id = true;
+  codec.from_bytes(cdk::bytes(json), *self);
+
   if (m_generated_id)
   {
+    self->m_id.generate();
     std::string id(m_id);
-    Insert_id expr(m_json, id);
+    Insert_id expr(json, id);
     ep.call(expr, expr);
   }
   else
   {
     // TODO: ep.val(TYPE_DOCUMENT, json_format, cdk::bytes())
-    ep.str(m_json);
+    ep.str(json);
   }
 }
 

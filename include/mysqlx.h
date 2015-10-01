@@ -57,29 +57,66 @@ protected:
 
 public:
 
-  Result execute()
+  virtual Result execute()
   {
     return m_task.wait();
   }
 };
 
+class Collection_add
+  : virtual public Executable
+{
+  virtual void prepare_add() = 0;
+  virtual void do_add(const string&) = 0;
+
+public:
+
+  // add document(s) given by json string
+
+  Collection_add& add(const string &json)
+  try {
+    prepare_add();
+    do_add(json);
+    return *this;
+  }
+  CATCH_AND_WRAP
+
+  template<typename... Types>
+  Collection_add& add(const string &json, Types... rest)
+  try {
+    add(json);
+    return add(rest...);
+  }
+  CATCH_AND_WRAP
+};
+
 
 class Collection
-  : public Executable
+  : public Collection_add
 {
   Schema &m_schema;
   const string m_name;
 
+  enum { NONE, ADD } m_op;
+
+  Result execute()
+  {
+    m_op = NONE;
+    return Executable::execute();
+  }
+
+  void prepare_add();
+  void do_add(const string&);
+
 public:
 
   Collection(Schema &sch, const string &name)
-    : m_schema(sch), m_name(name)
+    : m_schema(sch), m_name(name), m_op(NONE)
   {}
 
   const string& getName() const { return m_name; }
   const Schema& getSchema() const { return m_schema; }
 
-  Executable& add(const string&); // add document given by json string
   Executable& remove();
   Executable& remove(const string&);
   Executable& find();
