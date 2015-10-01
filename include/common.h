@@ -1,11 +1,13 @@
 #ifndef MYSQLX_COMMON_H
 #define MYSQLX_COMMON_H
 
+
 #include <string>
 #include <stdexcept>
 #include <ostream>
 #include <memory>
 #include <string.h>  // for memcpy
+
 
 namespace cdk {
 namespace foundation {
@@ -115,8 +117,10 @@ class GUID : public Printable
 
   void set(const char *data)
   {
-    memcpy(m_data, data, sizeof(m_data));
-    m_data[sizeof(m_data) - 1] = '\0';
+    // Note: Windows gives compile warnings when using strncpy
+
+    for(unsigned i=0; data[i] && i < sizeof(m_data); ++i)
+      m_data[i]= data[i];
   }
 
   void set(const std::string &data) { set(data.c_str()); }
@@ -125,17 +129,22 @@ public:
 
   GUID()
   {
-    m_data[0] = '\0';
+    memset(m_data, 0, sizeof(m_data));
   }
 
   template <typename T> GUID(T data) { set(data); }
   template<typename T>  GUID& operator=(T data) { set(data); return *this; }
-  operator const char*() const { return m_data; }
+
+  operator const std::string() const
+  {
+    return std::string(m_data, m_data + sizeof(m_data));
+  }
+
   void generate();
 
   void print(std::ostream &out) const
   {
-    out << m_data;
+    out << std::string(*this);
   }
 };
 
