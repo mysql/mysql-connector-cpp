@@ -302,21 +302,36 @@ void Op_collection_add::process(Expression::Processor &ep) const
 class Op_collection_remove : public Task::Access::Impl
 {
   Table_ref m_coll;
+  parser::Expr_parser m_expr;
 
   Op_collection_remove(Collection &coll)
     : Impl(coll)
     , m_coll(coll)
   {
-    // TODO: selection criteria
-    m_reply= new cdk::Reply(get_cdk_session().coll_remove(m_coll));
+    m_reply= new cdk::Reply(get_cdk_session().coll_remove(m_coll, NULL));
+  }
+
+  Op_collection_remove(Collection &coll, const mysqlx::string &expr)
+    : Impl(coll)
+    , m_coll(coll)
+    , m_expr(expr)
+  {
+    m_reply = new cdk::Reply(get_cdk_session().coll_remove(m_coll, &m_expr));
   }
 
   friend class mysqlx::Collection;
 };
 
+
 Executable Collection::remove()
 try {
   return Executable(new Op_collection_remove(*this));
+}
+CATCH_AND_WRAP
+
+Executable Collection::remove(const mysqlx::string &expr)
+try {
+  return Executable(new Op_collection_remove(*this, expr));
 }
 CATCH_AND_WRAP
 

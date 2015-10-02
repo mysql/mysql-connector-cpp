@@ -65,6 +65,7 @@ public:
 
   Executable add(const string&); // add document given by json string
   Executable remove();
+  Executable remove(const string&);
   Executable find();
   Executable find(const string&);
 
