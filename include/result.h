@@ -100,11 +100,10 @@ public:
 
   virtual const string getString(col_count_t pos) =0;
   virtual bytes getBytes(col_count_t pos) =0;
+  virtual Value get(col_count_t) = 0;
 
-  // TODO: Use Value class (needs to be extended)
-
-  const string operator[](col_count_t pos)
-  { return getString(pos); }
+  const Value operator[](col_count_t pos)
+  { return get(pos); }
 };
 
 

@@ -140,6 +140,7 @@ class Result::Impl
 
   const mysqlx::string getString(mysqlx::col_count_t pos);
   mysqlx::bytes getBytes(mysqlx::col_count_t pos);
+  Value get(mysqlx::col_count_t pos);
 
   // Row_processor
 
@@ -166,6 +167,117 @@ class Result::Impl
 bytes Result::Impl::getBytes(mysqlx::col_count_t pos)
 {
   return mysqlx::bytes::Access::mk(m_rows.at(m_pos).at(pos).data());
+}
+
+
+struct Value::Access
+{
+  static Value mk_raw(const cdk::bytes data)
+  {
+    Value ret;
+    ret.m_type = Value::RAW;
+    ret.m_str.assign(data.begin(), data.end());
+    return std::move(ret);
+  }
+
+  static Value mk_doc(const string &json)
+  {
+    Value ret;
+    ret.m_type = Value::DOCUMENT;
+    ret.m_doc = DbDoc(json);
+    return std::move(ret);
+  }
+};
+
+
+Value Result::Impl::get(mysqlx::col_count_t pos)
+{
+  using cdk::Format;
+  using cdk::Codec;
+
+  if (!m_cursor)
+    throw "empty row";
+  if (pos > m_cursor->col_count())
+    throw "pos out of range";
+
+  Row_data &rd = m_rows.at(m_pos);
+
+  try {
+    // will throw out_of_range exception if column at `pos` is NULL
+    cdk::bytes data = rd.at(pos).data();
+
+    switch (m_cursor->type(pos))
+    {
+    case cdk::TYPE_STRING:
+      {
+        Codec<cdk::TYPE_STRING> codec(m_cursor->format(pos));
+        cdk::string str;
+        codec.from_bytes(data, str);
+        return Value(std::move(str));
+      }
+
+    case cdk::TYPE_INTEGER:
+    {
+      Codec<cdk::TYPE_INTEGER>  codec(m_cursor->format(pos));
+      Format<cdk::TYPE_INTEGER> fmt(m_cursor->format(pos));
+
+      if (fmt.is_unsigned())
+      {
+        uint64_t val;
+        codec.from_bytes(data, val);
+        return Value(val);
+      }
+      else
+      {
+        int64_t val;
+        codec.from_bytes(data, val);
+        return Value(val);
+      }
+    }
+
+    case cdk::TYPE_FLOAT:
+    {
+      Format<cdk::TYPE_FLOAT> fmt(m_cursor->format(pos));
+
+      // Note: DECIMAL format not yet supported by CDK
+
+      if (fmt.FLOAT == fmt.type() || fmt.DOUBLE == fmt.type())
+      {
+        Codec<cdk::TYPE_FLOAT> codec(m_cursor->format(pos));
+        double val;
+        codec.from_bytes(data, val);
+        return Value(val);
+      }
+
+      return Value::Access::mk_raw(data);
+    }
+
+    case cdk::TYPE_DOCUMENT:
+      {
+        /*
+          Note: this assumes that document is represented as json string
+          - thanks to this we can take benefit of lazy parsing.
+
+          Otherwise, implementation that would not assume what underlying
+          representation is used for documnets should use a Codec to decode
+          the raw bytes and build a representation of the documnent to be
+          stored in the Value instance.
+        */
+        return Value::Access::mk_doc(std::string(data.begin(), data.end()));
+      }
+
+    // TODO: Other "natural" conversions
+    // TODO: User-defined conversions (also to user-defined types)
+
+    default:
+      return Value::Access::mk_raw(data);
+    }
+  }
+  catch (std::out_of_range&)
+  {
+    // NULL value
+    return Value();
+  }
 }
 
 /*

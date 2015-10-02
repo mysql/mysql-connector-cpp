@@ -32,7 +32,7 @@ void Value::print(ostream &out) const
   case BOOL: out << (m_val._bool_v ? "true" : "false"); return;
   case STRING: out << (std::string)m_str; return;
   case DOCUMENT: out << m_doc; return;
-
+  case RAW: out << "<" << m_str.size() << " raw bytes>"; return;
   default:  out << "<unknown value>"; return;
   }
 }

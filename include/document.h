@@ -128,6 +128,7 @@ public:
     BOOL,
     STRING,
     DOCUMENT,
+    RAW,
     // TODO: ARRAY
   };
 

@@ -213,146 +213,160 @@ try {
 
 #else
 
-  cout <<"Creating session on localhost..." <<endl;
-
-#if 0
-
-  ds::TCPIP ds("localhost", 13010);
-  ds::Options opt("root", NULL);
-  //connection::TCPIP conn("localhost", 13010);
-  //conn.connect();
-
-  Session sess(ds, opt);
-
-  sess.wait();
-  if (!sess.is_valid())
-    throw sess.get_error();
-
-  cout <<"Session accepted, sending query..." <<endl;
-
-  //Reply r= sess.sql(L"SELECT 1, 'ala'");
-  //Cursor c(r);
-
-#else
-
-  XSession sess(13010, "root");
-
-  cout <<"Session accepted, creating collection..." <<endl;
-
-  Schema sch= sess.getSchema("test");
-  Collection coll= sch.createCollection("c1", true);
-
-  cout <<"inserting document..." <<endl;
-
-  coll.remove().execute();
-
-#if 1
-
-  {
-    Result add;
-
-    add= coll.add("{ \"name\": \"foo\", \"age\": 1 }").execute();
-    cout <<"- added doc with id: " <<add.getLastDocumentId() <<endl;
-
-    add= coll.add("{ \"name\": \"bar\", \"age\": 2 }").execute();
-    cout <<"- added doc with id: " <<add.getLastDocumentId() <<endl;
-
-    add= coll.add("{ \"name\": \"baz\", \"age\": 3, \"date\": { \"day\": 20, \"month\": \"Apr\" }}").execute();
-    cout <<"- added doc with id: " <<add.getLastDocumentId() <<endl;
-
-    add= coll.add("{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }").execute();
-    cout <<"- added doc with id: " <<add.getLastDocumentId() <<endl;
-  }
-
-#endif
-
   /*
-    TODO:
-
-    On Linux and OSX, doing it this way invokes copy constructor:
-
-    Result res= sess.executeSql(...);
-
-    Perhaps using const reference as result initializer will avoid this.
+    Using CRUD API
+    ==============
   */
 
-#if 0
-  cout <<"querying collection..." <<endl;
-
-#if 0
-  RowResult res= sess.executeSql(L"SELECT * FROM test.c1");
-#else
-  RowResult res= coll.find().execute();
-#endif
-
-  cout <<"Query sent, reading rows..." <<endl;
-  cout <<"There are " <<res.getColumnCount() <<" columns in the result" <<endl;
-  Row *row;
-
-  while (NULL != (row= res.next()))
   {
-    cout <<"== next row ==" <<endl;
-    for (unsigned i=0; i < res.getColumnCount(); ++i)
+    cout << "Creating session on localhost..." << endl;
+
+    XSession sess(13010, "root");
+
+    cout <<"Session accepted, creating collection..." <<endl;
+
+    Schema sch= sess.getSchema("test");
+    Collection coll= sch.createCollection("c1", true);
+
+    cout <<"inserting document..." <<endl;
+
+    coll.remove().execute();
+
     {
-      cout <<"col#" <<i <<": " <<(*row)[i] <<endl;
-    }
-  }
-#else
+      Result add;
 
-  cout <<"Fetching documents..." <<endl;
+      add= coll.add("{ \"name\": \"foo\", \"age\": 1 }").execute();
+      cout <<"- added doc with id: " <<add.getLastDocumentId() <<endl;
 
-  DocResult docs = coll.find().execute(); // "age > 1 and name like 'ba%'").execute();
-  cout <<"first doc: " <<docs.first() <<endl;
+      add= coll.add("{ \"name\": \"bar\", \"age\": 2 }").execute();
+      cout <<"- added doc with id: " <<add.getLastDocumentId() <<endl;
 
-  DbDoc *doc= docs.next();
+      add= coll.add("{ \"name\": \"baz\", \"age\": 3, \"date\": { \"day\": 20, \"month\": \"Apr\" }}").execute();
+      cout <<"- added doc with id: " <<add.getLastDocumentId() <<endl;
 
-  for(int i=0; doc; ++i, doc= docs.next())
-  {
-    cout <<"doc#" <<i <<": " <<*doc <<endl;
-
-    for (Field fld : *doc)
-    {
-      cout << " field `" << fld << "`: " <<(*doc)[fld] << endl;
+      add= coll.add("{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }").execute();
+      cout <<"- added doc with id: " <<add.getLastDocumentId() <<endl;
     }
 
-    string name = (*doc)["name"];
-    cout << " name: " << name << endl;
+    cout <<"Fetching documents..." <<endl;
 
-    if (doc->hasField("date") && Value::DOCUMENT == doc->fieldType("date"))
+    DocResult docs = coll.find().execute(); // "age > 1 and name like 'ba%'").execute();
+    cout <<"first doc: " <<docs.first() <<endl;
+
+    DbDoc *doc= docs.next();
+
+    for (int i = 0; doc; ++i, doc = docs.next())
     {
-      cout << "- date field" << endl;
-      DbDoc date = (*doc)["date"];
-      for (Field fld : date)
+      cout << "doc#" << i << ": " << *doc << endl;
+
+      for (Field fld : *doc)
       {
-        cout << "  date `" << fld << "`: " << date[fld] << endl;
+        cout << " field `" << fld << "`: " <<(*doc)[fld] << endl;
       }
-      string month = (*doc)["date"][Field("month")];
-      int day = date["day"];
-      cout << "  month: " << month << endl;
-      cout << "  day: " << day << endl;
-    }
 
-    cout << endl;
+      string name = (*doc)["name"];
+      cout << " name: " << name << endl;
+
+      if (doc->hasField("date") && Value::DOCUMENT == doc->fieldType("date"))
+      {
+        cout << "- date field" << endl;
+        DbDoc date = (*doc)["date"];
+        for (Field fld : date)
+        {
+          cout << "  date `" << fld << "`: " << date[fld] << endl;
+        }
+        string month = (*doc)["date"][Field("month")];
+        int day = date["day"];
+        cout << "  month: " << month << endl;
+        cout << "  day: " << day << endl;
+      }
+
+      cout << endl;
+    }
   }
 
+  /*
+    Using SQL
+    =========
+  */
+
+  {
+    cout << "querying collection with SQL ..." << endl;
+
+    NodeSession sess(13010, "root");
+
+    RowResult res = sess.executeSql(L"SELECT * FROM test.c1");
+
+    cout << "Query sent, reading rows..." << endl;
+    cout << "There are " << res.getColumnCount() << " columns in the result" << endl;
+    Row *row;
+
+    while (NULL != (row = res.next()))
+    {
+      cout << "== next row ==" << endl;
+      for (unsigned i = 0; i < res.getColumnCount(); ++i)
+      {
+        cout << "col#" << i << ": " << (*row)[i] << endl;
+      }
+    }
+  }
+
+  /*
+    Test some SQL types
+    ===================
+  */
+
+  {
+    cout << endl;
+
+    NodeSession sess(13010, "root");
+
+    cout << "Preparing test.types..." << endl;
+
+    sess.executeSql("DROP TABLE IF EXISTS test.types");
+    sess.executeSql(
+      "CREATE TABLE test.types("
+      "  c0 INT,"
+      "  c1 DECIMAL,"
+      "  c2 FLOAT,"
+      "  c3 DOUBLE"
+      ")");
+    sess.executeSql(
+      "INSERT INTO test.types VALUES"
+      "(7, 3.14, 3.1415, 3.141592)"
+      );
+
+    cout << "Table prepared, querying it..." << endl;
+
+    RowResult res = sess.executeSql(L"SELECT * FROM test.types");
+
+    cout << "Query sent, reading rows..." << endl;
+    cout << "There are " << res.getColumnCount() << " columns in the result" << endl;
+    Row *row;
+
+    while (NULL != (row = res.next()))
+    {
+      cout << "== next row ==" << endl;
+      for (unsigned i = 0; i < res.getColumnCount(); ++i)
+      {
+        cout << "col#" << i << ": " << (*row)[i] << endl;
+      }
+    }
+
+  }
 
 #endif
-
-#endif
-
-#endif
-
-  cout <<"Done!" <<endl;
+  cout << "Done!" << endl;
 }
 //catch (const cdk::Error &err)
 //{
 //  // TODO: why these errors are not caught as std::exception?
 //  cout <<"CDK ERROR: " <<err <<endl;
 //}
-//catch (const mysqlx::Error &err)
-//{
-//  cout <<"ERROR: " <<err <<endl;
-//}
+catch (const mysqlx::Error &err)
+{
+  cout <<"ERROR: " <<err <<endl;
+}
 catch (std::exception &ex)
 {
   cout <<"STD EXCEPTION: " <<ex.what() <<endl;
