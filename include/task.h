@@ -33,13 +33,15 @@ protected:
   class Impl;
   Impl  *m_impl;
 
-  Task(Impl *impl) : m_impl(impl)
+  Task() : m_impl(NULL)
   {}
 
   Task(Task &&other) : m_impl(other.m_impl)
   {
     other.m_impl = NULL;
   }
+
+  void reset(Impl*);
 
 public:
 
@@ -57,21 +59,7 @@ public:
 
   struct Access;
   friend struct Access;
-};
-
-
-class Executable : public Task
-{
-public:
-
-  Executable(Impl *impl) : Task(impl)
-  {}
-
-  Result execute()
-  {
-    return wait();
-  }
-
+  friend class Executable;
 };
 
 

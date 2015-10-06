@@ -52,6 +52,10 @@ struct Result::Access
 struct Task::Access
 {
   typedef Task::Impl Impl;
+  static void reset(Task &task, Impl *impl)
+  {
+    task.reset(impl);
+  }
 };
 
 
@@ -99,14 +103,27 @@ protected:
 Task::~Task() try { delete m_impl; } CATCH_AND_WRAP
 
 bool Task::is_completed()
-try { return m_impl->is_completed(); } CATCH_AND_WRAP
+try { return m_impl ? m_impl->is_completed() : true; } CATCH_AND_WRAP
 
 Result Task::wait()
-try { return m_impl->wait(); } CATCH_AND_WRAP
+try {
+  if (!m_impl)
+    throw Error("Attempt to wait on empty task");
+  return m_impl->wait();
+} CATCH_AND_WRAP
 
 void Task::cont()
-try { m_impl->cont(); } CATCH_AND_WRAP
+try {
+  if (!m_impl)
+    throw Error("Attempt to continue an empty task");
+  m_impl->cont();
+} CATCH_AND_WRAP
 
+void Task::reset(Impl *impl)
+{
+  delete m_impl;
+  m_impl = impl;
+}
 
 
 class Schema_ref : public cdk::api::Schema_ref
@@ -221,9 +238,10 @@ class Op_collection_add
 };
 
 
-Executable Collection::add(const mysqlx::string &json)
+Executable& Collection::add(const mysqlx::string &json)
 try {
-  return Executable(new Op_collection_add(*this, json));
+  Task::Access::reset(m_task, new Op_collection_add(*this, json));
+  return *this;
 }
 CATCH_AND_WRAP
 
@@ -344,15 +362,17 @@ class Op_collection_remove : public Task::Access::Impl
 };
 
 
-Executable Collection::remove()
+Executable& Collection::remove()
 try {
-  return Executable(new Op_collection_remove(*this));
+  Task::Access::reset(m_task, new Op_collection_remove(*this));
+  return *this;
 }
 CATCH_AND_WRAP
 
-Executable Collection::remove(const mysqlx::string &expr)
+Executable& Collection::remove(const mysqlx::string &expr)
 try {
-  return Executable(new Op_collection_remove(*this, expr));
+  Task::Access::reset(m_task, new Op_collection_remove(*this, expr));
+  return *this;
 }
 CATCH_AND_WRAP
 
@@ -387,15 +407,17 @@ class Op_collection_find
   friend class mysqlx::Collection;
 };
 
-Executable Collection::find()
+Executable& Collection::find()
 try {
-  return Executable(new Op_collection_find(*this));
+  Task::Access::reset(m_task, new Op_collection_find(*this));
+  return *this;
 }
 CATCH_AND_WRAP
 
-Executable Collection::find(const mysqlx::string &expr)
+Executable& Collection::find(const mysqlx::string &expr)
 try {
-  return Executable(new Op_collection_find(*this, expr));
+  Task::Access::reset(m_task, new Op_collection_find(*this, expr));
+  return *this;
 }
 CATCH_AND_WRAP
 

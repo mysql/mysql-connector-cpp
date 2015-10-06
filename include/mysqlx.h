@@ -49,7 +49,23 @@ public:
 */
 
 
+class Executable
+{
+protected:
+
+  Task m_task;
+
+public:
+
+  Result execute()
+  {
+    return m_task.wait();
+  }
+};
+
+
 class Collection
+  : public Executable
 {
   Schema &m_schema;
   const string m_name;
@@ -63,11 +79,11 @@ public:
   const string& getName() const { return m_name; }
   const Schema& getSchema() const { return m_schema; }
 
-  Executable add(const string&); // add document given by json string
-  Executable remove();
-  Executable remove(const string&);
-  Executable find();
-  Executable find(const string&);
+  Executable& add(const string&); // add document given by json string
+  Executable& remove();
+  Executable& remove(const string&);
+  Executable& find();
+  Executable& find(const string&);
 
   friend class Task;
 };
