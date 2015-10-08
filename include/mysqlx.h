@@ -3,9 +3,12 @@
 
 /**
   @file
-  Main Connector/C++ 2.0 header.
+  Main Connector/C++ header.
 
-  This is more text about this header.
+  This header should be included by code that wants to use Connector/C++.
+  It defines classes that form public API implemented by the connector.
+
+  @sa result.h
 */
 
 
@@ -27,14 +30,36 @@ class XSession;
 class Schema;
 class Collection;
 
+
 /**
   Represents a schema in a given XSession.
 
-  All operations on the schema are performed using XSession
-  instance for which this Schema object was created.
+  A `Schema` instance  can be obtained from `XSession::getSchema()`
+  method:
 
-  @note When creating Schema object no checks are made that
-  it actually exists in the database.
+  ~~~~~~
+  XSession session;
+  Schema   mySchema;
+
+  mySchema= session.getSchema("My Schema");
+  ~~~~~~
+
+  or it can be directly constructed as follows:
+
+  ~~~~~~
+  XSession   session;
+  Schema     mySchema(session, "My Schema");
+  ~~~~~~
+
+  Each `Schema` instance is tied to a particular session and all
+  the operations on the schema and its objects are performed using
+  that session. If session is deleted, attempt to use schema of
+  that session would yield an error.
+
+  When creating Schema object, by default no checks are made that
+  it actually exists in the database. Operation that is executed
+  on the server and involves such non-existent schema will throw
+  an error at execution time.
 */
 
 class Schema
@@ -44,15 +69,44 @@ class Schema
 
 public:
 
+  /// @costructor
   Schema(XSession &sess, const string &name)
     : m_sess(sess), m_name(name)
   {}
 
-  Schema(XSession&); // default schema of the session
+  /**
+    Construct schema object representing the default schema
+    of the session.
 
+    @todo Clarify what "default schema" is.
+  */
+  Schema(XSession&);
+
+  /// Get schema name
   const string& getName() const { return m_name; }
 
+  /**
+    Create new collection in the schema. If `reuse` is false
+    and collection already exists, an error is thrown. Otherwise,
+    if collection with given name already exists, it is returned
+    as if `getCollection()` was called.
+  */
+
   Collection createCollection(const string&, bool reuse= false);
+
+  /**
+    Return `Collection` object representing named collection in
+    the shcema. If `check_exists` is true and named collection
+    does not exist, an error will be thrown. Otherwise, if named
+    collection does not exists, the returned object will refer
+    to non-existent collection.
+
+    @note Checking existence of the collection involves
+    communication with the server. If `check_exists` is false,
+    on the other hand, no I/O is involved when creating a
+    `Collection` instance.
+  */
+
   Collection getCollection(const string&, bool check_exists= false);
 
   friend class Collection;
@@ -61,13 +115,17 @@ public:
 
 
 /*
-  Collection
-  ==========
+  Collection and its operations
+  =============================
 */
 
 
 /**
-  Base class for operations that can be executed.
+  Represents an operation that can be executed.
+
+  Creating an operation does not involve any communication
+  with the server. Only when `execute()` method is called
+  operation is sent to the server for execution.
 */
 
 class Executable
@@ -87,7 +145,14 @@ public:
 };
 
 
-/// Operation which adds documents to a collection.
+/**
+  Operation which adds documents to a collection.
+
+  Operation stores a list of documents that will be added
+  to a given collection when this operation is executed.
+
+  Documents are added to the list with `add()` method.
+*/
 
 class CollectionAdd
   : virtual public Executable
@@ -98,7 +163,6 @@ class CollectionAdd
 public:
 
   /**
-    @name add
     Add document(s) to a collection.
 
     Documents are described by JSON strings. Several documents
@@ -117,6 +181,7 @@ public:
   }
 
 
+  /// @member add
   template<typename... Types>
   CollectionAdd& add(const string &json, Types... rest)
   {
@@ -131,6 +196,13 @@ public:
 };
 
 
+/**
+  Operation which removes documents from a collection.
+
+  @todo Sorting and limiting the range of deleted documents.
+  @todo Binding values for operation parameters.
+*/
+
 class CollectionRemove
   : virtual public Executable
 {
@@ -143,6 +215,14 @@ public:
   virtual Executable& remove(const string&) =0;
 };
 
+
+/**
+  Operation which finds documents satisfying given criteria.
+
+  @todo Sorting and limiting the result.
+  @todo Binding values for operation parameters.
+  @todo Grouping of returned documents.
+*/
 
 class CollectionFind
   : virtual public Executable
@@ -163,15 +243,19 @@ public:
   Collection object can be obtained from `Schema::getCollection()`
   method:
 
-      Schema db;
-      Collection myColl;
+  ~~~~~~
+  Schema db;
+  Collection myColl;
 
-      myColl= db.getCollection("My Collection");
+  myColl= db.getCollection("My Collection");
+  ~~~~~~
 
-  Collection instance can be also directly constructed as follows:
+  or directly constructed as follows:
 
-      Schema db;
-      Collection myColl(db, "My Collection");
+  ~~~~~~
+  Schema db;
+  Collection myColl(db, "My Collection");
+  ~~~~~~
 
   Documents can be added and removed using @link add `add()`@endlink
   and `remove()` method, respectively. Method `find()`
@@ -224,6 +308,22 @@ public:
   =======
 */
 
+
+/**
+  Represents a session which gives access to data stored
+  in the data store.
+
+  When creating new session a host name, TCP/IP port,
+  user name and password are specified. Once created,
+  session is ready to be used. Session destructor closes
+  session and cleans up after it.
+
+  If it is not possible to create a valid session for some
+  reason, errors are thrown from session constructor.
+
+  @todo Add all `XSession` methods defined by DevAPI.
+*/
+
 class XSession : nocopy
 {
 protected:
@@ -235,10 +335,12 @@ protected:
 
 public:
 
+  /// @constructor
   XSession(const char *host, unsigned short port,
            const string  &user,
            const char    *pwd =NULL);
 
+  /// Create session for database on localhost.
   XSession(unsigned short port,
            const string  &user,
            const char    *pwd = NULL)
@@ -246,6 +348,14 @@ public:
   {}
 
   virtual ~XSession();
+
+  /**
+    Get named schema object in a given session.
+
+    The object does not have to exist in the database.
+    Errors will be thrown if one tries to use non-existing
+    schema.
+  */
 
   Schema getSchema(const string&);
 
@@ -258,25 +368,35 @@ private:
 };
 
 
+/**
+  A session which is always connected to a single
+  MySQL node.
+
+  In addition to `XSession` functionality, `NodeSession`
+  allows for execution of arbitrary SQL queries.
+*/
+
 class NodeSession
   : public XSession
   , public Executable
 {
 public:
 
-
+  /// @constructor
   NodeSession(const char* host, unsigned short port,
               const string  &user,
               const char    *pwd =NULL)
    : XSession(host, port, user, pwd)
   {}
 
+  /// @constructor
   NodeSession(unsigned short port,
               const string  &user,
               const char    *pwd =NULL)
    : NodeSession("localhost", port, user, pwd)
   {}
 
+  /// @member
   Executable& sql(const string &query);
 };
 

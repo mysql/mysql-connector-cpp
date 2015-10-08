@@ -23,5 +23,5 @@ To use Connector/C++ API source code should contain `#include <mysqlx.h>`
 directive. All Connector/C++ API symbols live in `mysqlx` namespace.
 
 @todo Dynamic version of the connector library
-@todo Dynamic linking with connector dependencies.
+@todo Dynamic linking with other connector dependencies.
 @todo Instructions for Windows and other platforms.
