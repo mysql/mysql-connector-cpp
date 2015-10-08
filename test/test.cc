@@ -42,11 +42,10 @@ try {
   cout <<"Fetching documents..." <<endl;
 
   DocResult docs = coll.find().execute(); // "age > 1 and name like 'ba%'").execute();
-  cout <<"first doc: " <<docs.first() <<endl;
 
-  DbDoc *doc= docs.next();
+  DbDoc *doc = docs.fetchOne();
 
-  for(int i=0; doc; ++i, doc= docs.next())
+  for (int i = 0; doc; ++i, doc = docs.fetchOne())
   {
     cout <<"doc#" <<i <<": " <<*doc <<endl;
 

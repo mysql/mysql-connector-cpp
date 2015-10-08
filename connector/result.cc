@@ -63,7 +63,7 @@ public:
   not yet implemented.
 */
 
-class Result::Impl
+class BaseResult::Impl
   : public Row
   , public cdk::Row_processor
 {
@@ -159,6 +159,7 @@ class Result::Impl
   void   end_of_data() {}
 
   friend class Row_builder;
+  friend class BaseResult;
   friend class Result;
   friend class RowResult;
 };
@@ -378,21 +379,21 @@ size_t Result::Impl::field_data(col_count_t pos, bytes data)
 */
 
 
-Result::Result(cdk::Reply *r)
+BaseResult::BaseResult(cdk::Reply *r)
 try {
   m_impl= new Impl(r);
 }
 CATCH_AND_WRAP
 
 
-Result::Result(cdk::Reply *r, const GUID &guid)
+BaseResult::BaseResult(cdk::Reply *r, const GUID &guid)
 try {
   m_impl= new Impl(r,guid);
 }
 CATCH_AND_WRAP
 
 
-Result::~Result()
+BaseResult::~BaseResult()
 try {
   if (m_owns_impl)
     delete m_impl;
@@ -415,7 +416,7 @@ CATCH_AND_WRAP
 */
 
 
-Row* RowResult::next()
+Row* RowResult::fetchOne()
 try {
   return m_impl->get_row(m_pos++);
 }
@@ -438,9 +439,9 @@ CATCH_AND_WRAP
   =========
 */
 
-void DocResult::operator=(Result &&init)
+void DocResult::operator=(BaseResult &&init)
 {
-  Result::operator=(std::move(init));
+  BaseResult::operator=(std::move(init));
   delete m_doc_impl;
   m_doc_impl= new Impl(init);
 }
@@ -451,14 +452,7 @@ DocResult::~DocResult()
 }
 
 
-DbDoc& DocResult::first()
-{
-  if (!m_doc_impl->has_doc())
-    throw "Empty result";
-  return (m_doc_impl->m_doc);
-}
-
-DbDoc* DocResult::next()
+DbDoc* DocResult::fetchOne()
 try {
   m_doc_impl->next_doc();
   return (m_doc_impl->has_doc() ? &(m_doc_impl->m_doc) : NULL);

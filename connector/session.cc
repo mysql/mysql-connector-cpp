@@ -4,6 +4,7 @@
 #include <boost/format.hpp>
 #include <iostream>
 
+#include "impl.h"
 
 using namespace ::mysqlx;
 
@@ -52,17 +53,6 @@ cdk::Session& XSession::get_cdk_session()
 Schema XSession::getSchema(const string &name)
 try {
   return Schema(*this, name);
-}
-CATCH_AND_WRAP
-
-
-Result NodeSession::executeSql(const string &query)
-try {
-  cdk::Reply *r= new cdk::Reply(get_cdk_session().sql(query));
-  r->wait();
-  if (0 < r->entry_count())
-    r->get_error().rethrow();
-  return Result(r);
 }
 CATCH_AND_WRAP
 
@@ -124,6 +114,36 @@ try {
   return Collection(*this, name);
 }
 CATCH_AND_WRAP
+
+
+/*
+  Executing SQL queries
+  =====================
+*/
+
+
+struct Op_sql : public Task::Access::Impl
+{
+  Op_sql(XSession &sess, const string &query)
+    : Impl(sess)
+  {
+    m_reply = new cdk::Reply(get_cdk_session().sql(query));
+  }
+};
+
+
+Executable& NodeSession::sql(const string &query)
+try {
+  Task::Access::reset(m_task, new Op_sql(*this, query));
+  return *this;
+}
+CATCH_AND_WRAP
+
+
+/*
+  Other
+  =====
+*/
 
 
 string::string(const std::string &other)

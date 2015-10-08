@@ -80,7 +80,7 @@ public:
 
   /// Execute given operation and wait for its result.
 
-  virtual Result execute()
+  virtual BaseResult execute()
   {
     return m_task.wait();
   }
@@ -192,7 +192,7 @@ class Collection
 
   enum { NONE, ADD } m_op;
 
-  Result execute()
+  BaseResult execute()
   {
     m_op = NONE;
     return Executable::execute();
@@ -258,7 +258,9 @@ private:
 };
 
 
-class NodeSession: public XSession
+class NodeSession
+  : public XSession
+  , public Executable
 {
 public:
 
@@ -275,7 +277,7 @@ public:
    : NodeSession("localhost", port, user, pwd)
   {}
 
-  Result executeSql(const string &query);
+  Executable& sql(const string &query);
 };
 
 

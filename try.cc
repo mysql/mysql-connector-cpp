@@ -250,11 +250,10 @@ try {
     cout <<"Fetching documents..." <<endl;
 
     DocResult docs = coll.find().execute(); // "age > 1 and name like 'ba%'").execute();
-    cout <<"first doc: " <<docs.first() <<endl;
 
-    DbDoc *doc= docs.next();
+    DbDoc *doc = docs.fetchOne();
 
-    for (int i = 0; doc; ++i, doc = docs.next())
+    for (int i = 0; doc; ++i, doc = docs.fetchOne())
     {
       cout << "doc#" << i << ": " << *doc << endl;
 
@@ -294,13 +293,13 @@ try {
 
     NodeSession sess(13010, "root");
 
-    RowResult res = sess.executeSql(L"SELECT * FROM test.c1");
+    RowResult res = sess.sql(L"SELECT * FROM test.c1").execute();
 
     cout << "Query sent, reading rows..." << endl;
     cout << "There are " << res.getColumnCount() << " columns in the result" << endl;
     Row *row;
 
-    while (NULL != (row = res.next()))
+    while (NULL != (row = res.fetchOne()))
     {
       cout << "== next row ==" << endl;
       for (unsigned i = 0; i < res.getColumnCount(); ++i)
@@ -322,28 +321,28 @@ try {
 
     cout << "Preparing test.types..." << endl;
 
-    sess.executeSql("DROP TABLE IF EXISTS test.types");
-    sess.executeSql(
+    sess.sql("DROP TABLE IF EXISTS test.types").execute();
+    sess.sql(
       "CREATE TABLE test.types("
       "  c0 INT,"
       "  c1 DECIMAL,"
       "  c2 FLOAT,"
       "  c3 DOUBLE"
-      ")");
-    sess.executeSql(
+      ")").execute();
+    sess.sql(
       "INSERT INTO test.types VALUES"
       "(7, 3.14, 3.1415, 3.141592)"
-      );
+      ).execute();
 
     cout << "Table prepared, querying it..." << endl;
 
-    RowResult res = sess.executeSql(L"SELECT * FROM test.types");
+    RowResult res = sess.sql(L"SELECT * FROM test.types").execute();
 
     cout << "Query sent, reading rows..." << endl;
     cout << "There are " << res.getColumnCount() << " columns in the result" << endl;
     Row *row;
 
-    while (NULL != (row = res.next()))
+    while (NULL != (row = res.fetchOne()))
     {
       cout << "== next row ==" << endl;
       for (unsigned i = 0; i < res.getColumnCount(); ++i)

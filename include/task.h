@@ -50,7 +50,7 @@ public:
 
   virtual ~Task();
   bool is_completed();
-  Result wait();
+  BaseResult wait();
   void cont();
 
   friend class Impl;

@@ -35,28 +35,66 @@ class Task;
 class Executable;
 
 
-class Result : nocopy
+class BaseResult : nocopy
 {
   class Impl;
   Impl  *m_impl;
   bool m_owns_impl;
   row_count_t  m_pos;
 
-  Result(cdk::Reply*);
-  Result(cdk::Reply*, const GUID&);
-  void init(Result&&);
+  BaseResult(cdk::Reply*);
+  BaseResult(cdk::Reply*, const GUID&);
 
-public:
+protected:
 
-  Result()
+  BaseResult()
     : m_impl(NULL), m_owns_impl(true)
     , m_pos(0)
   {}
 
-  Result(Result &&other) { init(std::move(other)); }
-  virtual ~Result();
+  BaseResult& operator=(BaseResult &&other)
+  {
+    init(std::move(other));
+    return *this;
+  }
 
-  Result& operator=(Result &&other)
+  void init(BaseResult&&);
+
+public:
+
+  BaseResult(BaseResult &&other) { init(std::move(other)); }
+  virtual ~BaseResult();
+
+  friend class NodeSession;
+  friend class Result;
+  friend class RowResult;
+  friend class DocResult;
+  friend class Task;
+
+  struct Access;
+  friend struct Access;
+};
+
+inline
+void BaseResult::init(BaseResult &&init)
+{
+  m_pos = 0;
+  m_impl = init.m_impl;
+  if (!init.m_owns_impl)
+    m_owns_impl = false;
+  else
+  {
+    m_owns_impl = true;
+    init.m_owns_impl = false;
+  }
+}
+
+
+class Result : public BaseResult
+{
+public:
+
+  Result& operator=(BaseResult &&other)
   {
     init(std::move(other));
     return *this;
@@ -64,29 +102,12 @@ public:
 
   const GUID& getLastDocumentId() const;
 
-  friend class Task;
-  friend class RowResult;
-  friend class DocResult;
-  friend class NodeSession;
-
-  struct Access;
-  friend struct Access;
+  //friend class Task;
+  //friend class RowResult;
+  //friend class DocResult;
+  //friend class NodeSession;
 };
 
-
-inline
-void Result::init(Result &&init)
-{
-  m_pos= 0;
-  m_impl= init.m_impl;
-  if (!init.m_owns_impl)
-    m_owns_impl= false;
-  else
-  {
-    m_owns_impl= true;
-    init.m_owns_impl= false;
-  }
-}
 
 
 // Row based results
@@ -108,7 +129,7 @@ public:
 };
 
 
-class RowResult : public Result
+class RowResult : public BaseResult
 {
 
 public:
@@ -138,15 +159,15 @@ public:
   */
 
   RowResult(RowResult &&other)
-    : Result(std::move(static_cast<Result&>(other)))
+    : BaseResult(std::move(static_cast<BaseResult&>(other)))
   {}
 
-  RowResult(Result &&init)
-    : Result(std::move(init))
+  RowResult(BaseResult &&init)
+    : BaseResult(std::move(init))
   {}
 
   col_count_t getColumnCount() const;
-  Row* next();
+  Row* fetchOne();
 
   friend class Task;
 };
@@ -156,7 +177,7 @@ public:
 // ----------------------
 
 
-class DocResult : public Result
+class DocResult : public BaseResult
 {
   class Impl;
   Impl *m_doc_impl;
@@ -166,10 +187,10 @@ public:
   DocResult(DocResult &&other)
     : m_doc_impl(NULL)
   {
-    *this = std::move(static_cast<Result&>(other));
+    *this = std::move(static_cast<BaseResult&>(other));
   }
 
-  DocResult(Result &&init)
+  DocResult(BaseResult &&init)
     : m_doc_impl(NULL)
   {
     *this = std::move(init);
@@ -177,10 +198,9 @@ public:
 
   virtual ~DocResult();
 
-  void operator=(Result &&init);
+  void operator=(BaseResult &&init);
 
-  DbDoc& first();
-  DbDoc* next();
+  DbDoc* fetchOne();
 
   friend class Impl;
   friend class Task;

@@ -1,11 +1,11 @@
 #include <mysqlx.h>
-#include <mysql/cdk.h>
 #include <expr_parser.h>
 #include <uuid_gen.h>
 
 #include <time.h>
 #include <boost/format.hpp>
 
+#include "impl.h"
 
 using namespace mysqlx;
 using cdk::string;
@@ -40,96 +40,15 @@ void mysqlx::GUID::generate()
 }
 
 
-struct Result::Access
+struct BaseResult::Access
 {
   template <typename A>
-  static Result mk(A a) { return Result(a); }
+  static BaseResult mk(A a) { return BaseResult(a); }
 
   template <typename A, typename B>
-  static Result mk(A a, B b) { return Result(a, b); }
+  static BaseResult mk(A a, B b) { return BaseResult(a, b); }
 };
 
-struct Task::Access
-{
-  typedef Task::Impl Impl;
-
-  static void reset(Task &task, Impl *impl)
-  {
-    task.reset(impl);
-  }
-
-  static Impl* get_impl(Task &task)
-  {
-    return task.m_impl;
-  }
-};
-
-
-class Task::Impl : nocopy
-{
-protected:
-
-  XSession &m_sess;
-  cdk::Reply *m_reply;
-
-  Impl(XSession &sess)
-    : m_sess(sess), m_reply(NULL)
-  {}
-  Impl(Collection &coll)
-    : m_sess(coll.m_schema.m_sess), m_reply(NULL)
-  {}
-
-  ~Impl() {}
-
-  cdk::Session& get_cdk_session() { return m_sess.get_cdk_session(); }
-
-  bool is_completed() { return m_reply->is_completed(); }
-  void cont() { m_reply->cont(); }
-
-  Result wait()
-  {
-    m_reply->wait();
-    if (0 < m_reply->entry_count())
-      m_reply->get_error().rethrow();
-    return get_result();
-  }
-
-  virtual Result get_result()
-  {
-    return Result(m_reply);
-  }
-
-  friend class Task;
-  friend class Executable;
-};
-
-
-// Implementation of Task API using internal implementation object
-
-Task::~Task() try { delete m_impl; } CATCH_AND_WRAP
-
-bool Task::is_completed()
-try { return m_impl ? m_impl->is_completed() : true; } CATCH_AND_WRAP
-
-Result Task::wait()
-try {
-  if (!m_impl)
-    throw Error("Attempt to wait on empty task");
-  return m_impl->wait();
-} CATCH_AND_WRAP
-
-void Task::cont()
-try {
-  if (!m_impl)
-    throw Error("Attempt to continue an empty task");
-  m_impl->cont();
-} CATCH_AND_WRAP
-
-void Task::reset(Impl *impl)
-{
-  delete m_impl;
-  m_impl = impl;
-}
 
 
 class Schema_ref : public cdk::api::Schema_ref
@@ -200,7 +119,7 @@ class Op_collection_add
     m_json.push_back(json);
   }
 
-  Result get_result()
+  BaseResult get_result()
   {
     return Result::Access::mk(m_reply, m_id);
   }
