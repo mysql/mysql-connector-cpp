@@ -2,7 +2,8 @@
 #define MYSQLX_RESULT_H
 
 /**
-  @file DevAPI classes used to access query results.
+  @file
+  DevAPI classes used to access query results.
 */
 
 

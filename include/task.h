@@ -2,7 +2,10 @@
 #define MYSQLX_TASK_H
 
 /**
-  @file Classes to control (asynchronous) execution of commands.
+  @file
+  Classes to control (asynchronous) execution of commands.
+
+  @note Asynchronous execution is not implemented yet.
 */
 
 

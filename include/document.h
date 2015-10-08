@@ -2,7 +2,8 @@
 #define MYSQLX_DOCUMENT_H
 
 /**
-  @file Declaration of DbDoc and related classes.
+  @file
+  Declaration of DbDoc and related classes.
 */
 
 #include "common.h"

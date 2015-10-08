@@ -1,0 +1,16 @@
+MySQL Connector/C++ Documentation  {#mainpage}
+=================================
+
+Connector/C++ is a library for applications written in C++ that want to
+communicate with MySQL database servers. Version 2.0 of Connector/C++
+implements the new MySQL DevAPI.
+
+Sample code which uses Connector/C++ to connect to a database, create
+collection, add few documents and then query them might look as
+follows:
+
+@include test.cc
+
+More information:
+
+- [How to build code that uses Connector/C++](@ref usage)

@@ -2,7 +2,8 @@
 #include <mysqlx.h>
 
 /**
-@file Implementation of DbDoc and related classes.
+  @file
+  Implementation of DbDoc and related classes.
 */
 
 #include "impl.h"
@@ -73,7 +74,7 @@ void DbDoc::print(std::ostream &out) const
 // -------------
 
 
-/**
+/*
   JSON processor which builds document implementation adding 
   key-value pairs to document's map.
 */

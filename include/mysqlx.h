@@ -1,6 +1,14 @@
 #ifndef MYSQLXX_H
 #define MYSQLXX_H
 
+/**
+  @file
+  Main Connector/C++ 2.0 header.
+
+  This is more text about this header.
+*/
+
+
 #include "common.h"
 #include "result.h"
 #include "task.h"
@@ -19,6 +27,15 @@ class XSession;
 class Schema;
 class Collection;
 
+/**
+  Represents a schema in a given XSession.
+
+  All operations on the schema are performed using XSession
+  instance for which this Schema object was created.
+
+  @note When creating Schema object no checks are made that
+  it actually exists in the database.
+*/
 
 class Schema
 {
@@ -44,10 +61,14 @@ public:
 
 
 /*
-  Database objects
-  ================
+  Collection
+  ==========
 */
 
+
+/**
+  Base class for operations that can be executed.
+*/
 
 class Executable
 {
@@ -57,11 +78,16 @@ protected:
 
 public:
 
+  /// Execute given operation and wait for its result.
+
   virtual Result execute()
   {
     return m_task.wait();
   }
 };
+
+
+/// Operation which adds documents to a collection.
 
 class Collection_add
   : virtual public Executable
@@ -71,25 +97,64 @@ class Collection_add
 
 public:
 
-  // add document(s) given by json string
+  /**
+    @name add
+    Add document(s) to a collection.
+
+    Documents are described by JSON strings. Several documents
+    can be passed to single `add()` call.
+  */
+  //@{
 
   Collection_add& add(const string &json)
-  try {
-    prepare_add();
-    do_add(json);
-    return *this;
+  {
+    try {
+      prepare_add();
+      do_add(json);
+      return *this;
+    }
+    CATCH_AND_WRAP
   }
-  CATCH_AND_WRAP
+
 
   template<typename... Types>
   Collection_add& add(const string &json, Types... rest)
-  try {
-    add(json);
-    return add(rest...);
+  {
+    try {
+      add(json);
+      return add(rest...);
+    }
+    CATCH_AND_WRAP
   }
-  CATCH_AND_WRAP
+
+  //@}
 };
 
+
+/**
+  Represents collection of documents in a schema.
+
+  Collection object can be obtained from `Schema::getCollection()`
+  method:
+
+      Schema db;
+      Collection myColl;
+
+      myColl= db.getCollection("My Collection");
+
+  Collection instance can be also directly constructed as follows:
+
+      Schema db;
+      Collection myColl(db, "My Collection");
+
+  Documents can be added and removed using @link add `add()`@endlink
+  and `remove()` method, respectively. Method `find()`
+  is used to query documents that satisfy given criteria.
+
+  @todo `update()` method.
+  @todo Support for parameterized collection operations.
+  @todo Sorting and limiting returned results.
+*/
 
 class Collection
   : public Collection_add
@@ -117,9 +182,15 @@ public:
   const string& getName() const { return m_name; }
   const Schema& getSchema() const { return m_schema; }
 
+  /// Remove all documents from the collection.
   Executable& remove();
+
+  /// Remove documents satisfying given expression.
   Executable& remove(const string&);
+
+  /// Return all the documents in the collection.
   Executable& find();
+  /// Find documents that satisfy given expression.
   Executable& find(const string&);
 
   friend class Task;

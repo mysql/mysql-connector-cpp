@@ -1,0 +1,27 @@
+Using Connector/C++ 2.0  {#usage}
+=======================
+
+Assume that Connector/C++ was installed to _MYSQL_CONCPP_DIR_ location.
+
+When compiling code which uses MySQL Connector/C++ one should add
+_MYSQL_CONCPP_DIR_`/include` to the include path of the project, and
+link compiled code with _MYSQL_CONCPP_DIR_`/lib/mysqlconcpp.a` library
+as well as `pthread` library on which Connector/C++ depends.
+
+Example `Makefile` to build a simple application with sources in `app.cc`
+would look as follows:
+
+~~~~~~~
+MYSQL_CONCPP_DIR= ...
+CPPFLAGS = -I $(MYSQL_CONCPP_DIR)/include
+LDLIBS = pthread
+
+app : app.o $(MYSQL_CONCPP_DIR)/lib/mysqlconcpp.a
+~~~~~~~
+
+To use Connector/C++ API source code should contain `#include <mysqlx.h>`
+directive. All Connector/C++ API symbols live in `mysqlx` namespace.
+
+@todo Dynamic version of the connector library
+@todo Dynamic linking with connector dependencies.
+@todo Instructions for Windows and other platforms.
