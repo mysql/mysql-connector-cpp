@@ -273,7 +273,7 @@ try {
         {
           cout << "  date `" << fld << "`: " << date[fld] << endl;
         }
-        string month = (*doc)["date"][Field("month")];
+        string month = (*doc)["date"]["month"];
         int day = date["day"];
         cout << "  month: " << month << endl;
         cout << "  day: " << day << endl;

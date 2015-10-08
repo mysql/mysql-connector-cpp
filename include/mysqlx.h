@@ -165,10 +165,8 @@ public:
   /**
     Add document(s) to a collection.
 
-    Documents are described by JSON strings. Several documents
-    can be passed to single `add()` call.
+    Documents are described by JSON strings.
   */
-  //@{
 
   CollectionAdd& add(const string &json)
   {
@@ -180,8 +178,11 @@ public:
     CATCH_AND_WRAP
   }
 
+  /**
+    @copydoc add(const string&)
+    Several documents can be passed to single `add()` call.
+  */
 
-  /// @member add
   template<typename... Types>
   CollectionAdd& add(const string &json, Types... rest)
   {
@@ -192,7 +193,6 @@ public:
     CATCH_AND_WRAP
   }
 
-  //@}
 };
 
 

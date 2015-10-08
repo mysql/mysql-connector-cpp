@@ -96,6 +96,31 @@ public:
 };
 
 
+// Field class
+// ===========
+
+/**
+Field object/values represent fields in a document.
+
+TODO: _fld suffix
+*/
+
+class Field : public string
+{
+public:
+
+  Field(const string &s) : string(s)
+  {}
+
+  // TODO: is it auto generated?
+  Field(string &&s) : string(s)
+  {}
+
+  Field(const char *s) : string(s)
+  {}
+};
+
+
 // Value class
 // ===========
 
@@ -119,27 +144,46 @@ class Value : public Printable
 {
 public:
 
+  /**
+    Possible types of values.
+
+    @sa getType()
+  */
+
   enum Type
   {
-    VNULL,
-    UINT64,
-    INT64,
-    FLOAT,
-    DOUBLE,
-    BOOL,
-    STRING,
-    DOCUMENT,
-    RAW,
+    VNULL,      ///< Null value
+    UINT64,     ///< Unsigned integer
+    INT64,      ///< Signed integer
+    FLOAT,      ///< Float number
+    DOUBLE,     ///< Double number
+    BOOL,       ///< Boolean
+    STRING,     ///< String
+    DOCUMENT,   ///< Document
+    RAW,        ///< Raw bytes
     // TODO: ARRAY
   };
 
-  Value();
+  ///@name Value Constructors
+  ///@{
+
+  Value();  ///< Constructs Null value.
   Value(const string&);
   Value(int64_t);
   Value(uint64_t);
   Value(float);
   Value(double);
   Value(bool);
+
+  ///@}
+
+  /**
+    @name Conversion to C++ Types
+
+    Attempt to convert value of non-compatible type will
+    throw an error.
+  */
+  //@{
 
   operator int();
   operator float();
@@ -148,33 +192,32 @@ public:
   operator string();
   operator DbDoc();
 
-  /// Get type of the value stored in this instance (or VNULL if no
-  /// value is stored).
+  //@}
+
+  /**
+    Return type of the value stored in this instance (or VNULL if no
+    value is stored).
+  */
 
   Type  getType() const { return m_type; }
 
-  /// Check if document value contains given (top-level) field.
-  /// Throws error if this is not a document value.
+  /**
+    Check if document value contains given (top-level) field.
+    Throws error if this is not a document value.
+  */
 
   bool  hasField(const Field&);
 
-  /*
-    Note: thre is built-in operator <intege>[<pointer>]. Since Value
-    can be converted to integer, expression val["name"] is ambiguous:
-    it could be a call of Value::operator[] but, since "name" literal
-    is trated as const char pointer, it can also be treated
-    as a call to the builtin operator after converting val to integer
-    value. To disambiguate one has to type val[Field("name")].
-
-    TODO: Can this ambiguity be removed somehow?
+  /**
+    If this value is not a document, throws error. Otherwise
+    returns value of given field of the document.
   */
 
-  /// If this value is not a document, throws error. Otherwise
-  /// returns value of given field of the document.
-
   Value operator[](const Field&);
+  Value operator[](const char *name) { return (*this)[Field(name)]; }
+  Value operator[](const wchar_t *name) { return (*this)[Field(name)]; }
 
-  /// Prtint stored value to a stream.
+  /// Print the value to a stream.
 
   void print(std::ostream&) const;
 
@@ -328,31 +371,6 @@ int DbDoc::fieldType(const Field &fld)
 {
   return (*this)[fld].getType();
 }
-
-
-// Field class
-// ===========
-
-/**
-  Field object/values represent fields in a document.
-
-  TODO: _fld suffix
-*/
-
-class Field : public string
-{
-public:
-
-  Field(const string &s) : string(s)
-  {}
-
-  // TODO: is it auto generated?
-  Field(string &&s) : string(s)
-  {}
-
-  Field(const char *s) : string(s)
-  {}
-};
 
 
 }  // mysqlx
