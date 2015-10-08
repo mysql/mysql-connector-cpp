@@ -89,7 +89,7 @@ public:
 
 /// Operation which adds documents to a collection.
 
-class Collection_add
+class CollectionAdd
   : virtual public Executable
 {
   virtual void prepare_add() = 0;
@@ -106,7 +106,7 @@ public:
   */
   //@{
 
-  Collection_add& add(const string &json)
+  CollectionAdd& add(const string &json)
   {
     try {
       prepare_add();
@@ -118,7 +118,7 @@ public:
 
 
   template<typename... Types>
-  Collection_add& add(const string &json, Types... rest)
+  CollectionAdd& add(const string &json, Types... rest)
   {
     try {
       add(json);
@@ -128,6 +128,32 @@ public:
   }
 
   //@}
+};
+
+
+class CollectionRemove
+  : virtual public Executable
+{
+public:
+
+  /// Remove all documents from the collection.
+  virtual Executable& remove() =0;
+
+  /// Remove documents satisfying given expression.
+  virtual Executable& remove(const string&) =0;
+};
+
+
+class CollectionFind
+  : virtual public Executable
+{
+public:
+
+  /// Return all the documents in the collection.
+  virtual Executable& find() =0;
+
+  /// Find documents that satisfy given expression.
+  virtual Executable& find(const string&) =0;
 };
 
 
@@ -157,7 +183,9 @@ public:
 */
 
 class Collection
-  : public Collection_add
+  : public CollectionAdd
+  , public CollectionRemove
+  , public CollectionFind
 {
   Schema &m_schema;
   const string m_name;
@@ -182,15 +210,9 @@ public:
   const string& getName() const { return m_name; }
   const Schema& getSchema() const { return m_schema; }
 
-  /// Remove all documents from the collection.
   Executable& remove();
-
-  /// Remove documents satisfying given expression.
   Executable& remove(const string&);
-
-  /// Return all the documents in the collection.
   Executable& find();
-  /// Find documents that satisfy given expression.
   Executable& find(const string&);
 
   friend class Task;
