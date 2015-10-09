@@ -28,12 +28,17 @@ class Collection;
 class Result;
 class Row;
 class RowResult;
+class SqlResult;
 class DbDoc;
 class DocResult;
 
 class Task;
 class Executable;
 
+
+/*
+  @todo Add diagnostics information (warnings)
+*/
 
 class BaseResult : nocopy
 {
@@ -68,6 +73,7 @@ public:
   friend class NodeSession;
   friend class Result;
   friend class RowResult;
+  friend class SqlResult;
   friend class DocResult;
   friend class Task;
 
@@ -186,7 +192,7 @@ class RowResult : public BaseResult
 public:
 
   /*
-    Note: Even though we have RowResult(Result&&) constructor below,
+    Note: Even though we have RowResult(BaseResult&&) constructor below,
     we still need move-ctor for such copy-initialization to work:
 
       RowResult res= coll...execute();
@@ -229,6 +235,50 @@ public:
   Row* fetchOne();
 
   friend class Task;
+};
+
+
+/**
+  %Result of SQL query or command.
+
+  Such result can contain one or more results returned from a
+  single command or query. When created, SqlResult instance gives
+  access to the first result. Method `nextResult()` moves to the next
+  result if there is any.
+
+  @todo implement `nextResult()` and other methods specified by DevAPI.
+*/
+
+class SqlResult : public RowResult
+{
+public:
+
+  SqlResult(SqlResult &&other)
+    : RowResult(std::move(static_cast<BaseResult&>(other)))
+  {}
+
+  SqlResult(BaseResult &&init)
+    : RowResult(std::move(init))
+  {}
+
+  /**
+    Tels if current result contains rows.
+
+    If this is the case, rows can be accessed using `RowResult` interface.
+    Otherwise calling `RowResult` methods throws an error.
+  */
+
+  bool hasData() const;
+
+  /**
+    Move to next result if there is one.
+
+    Returns true if next result is available, false if there are no more
+    results in the reply. Calling `nextResult()` discards the current result
+    and all the data it contains (if any).
+  */
+
+  bool nextResult();
 };
 
 

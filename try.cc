@@ -293,7 +293,7 @@ try {
 
     NodeSession sess(13010, "root");
 
-    RowResult res = sess.sql(L"SELECT * FROM test.c1").execute();
+    SqlResult res = sess.sql(L"SELECT * FROM test.c1").execute();
 
     cout << "Query sent, reading rows..." << endl;
     cout << "There are " << res.getColumnCount() << " columns in the result" << endl;
@@ -336,7 +336,7 @@ try {
 
     cout << "Table prepared, querying it..." << endl;
 
-    RowResult res = sess.sql(L"SELECT * FROM test.types").execute();
+    SqlResult res = sess.sql(L"SELECT * FROM test.types").execute();
 
     cout << "Query sent, reading rows..." << endl;
     cout << "There are " << res.getColumnCount() << " columns in the result" << endl;

@@ -162,6 +162,7 @@ class BaseResult::Impl
   friend class BaseResult;
   friend class Result;
   friend class RowResult;
+  friend class SqlResult;
 };
 
 
@@ -430,6 +431,13 @@ try {
   if (!m_impl->m_cursor)
     throw "No result set";
   return m_impl->m_cursor->col_count();
+}
+CATCH_AND_WRAP
+
+
+bool SqlResult::hasData() const
+try {
+  return NULL != m_impl->m_cursor;
 }
 CATCH_AND_WRAP
 
