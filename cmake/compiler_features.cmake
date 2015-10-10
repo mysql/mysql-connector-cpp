@@ -20,7 +20,7 @@
 
 function(target_compile_features TARGET MODE)
 
-if (CMAKE_COMPILER_IS_GNUCXX)
+if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   target_compile_options(${TARGET} ${MODE} "-std=c++11")
   return()
 endif()
