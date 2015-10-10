@@ -1,3 +1,22 @@
+/*
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; version 2 of the
+ * License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301  USA
+ */
+
 #ifndef MYSQLX_RESULT_H
 #define MYSQLX_RESULT_H
 
@@ -197,14 +216,14 @@ public:
 
       RowResult res= coll...execute();
 
-    This copy-initialization works as follows 
+    This copy-initialization works as follows
     (see http://en.cppreference.com/w/cpp/language/copy_initialization):
 
     1. A temporary prvalue of type RowResult is created by type-conversion
        of the Result prvalue coll...execute(). Constructor RowResult(Result&&)
        is calld to do the conversion.
 
-    2. Now res is direct-initialized 
+    2. Now res is direct-initialized
        (http://en.cppreference.com/w/cpp/language/direct_initialization)
        from the prvalue produced in step 1.
 

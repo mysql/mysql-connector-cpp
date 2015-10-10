@@ -1,3 +1,22 @@
+/*
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; version 2 of the
+ * License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301  USA
+ */
+
 #ifndef MYSQLX_DOCUMENT_H
 #define MYSQLX_DOCUMENT_H
 
@@ -47,16 +66,16 @@ public:
   /// Check if named field is a top-level filed in the document.
 
   virtual bool hasField(const Field&);
-  
+
   /// Return Value::XXX constant that identifies type of value
   /// stored at given field.
 
   virtual int  fieldType(const Field&);
-  
+
   /// Return value of given field.
 
   virtual Value operator[](const Field&);
-  
+
   /// Print JSON description of the document.
 
   virtual void print(std::ostream&) const;
@@ -280,7 +299,7 @@ inline Value::operator int()
   if (UINT64 != m_type && INT64 != m_type)
     throw "Not an integer value";
 
-  if (UINT64 == m_type 
+  if (UINT64 == m_type
       && m_val._uint64_v > (uint64_t)std::numeric_limits<int64_t>::max())
     throw "Overflow";
 
