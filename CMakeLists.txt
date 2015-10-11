@@ -17,7 +17,7 @@
 
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.11)
-CMAKE_POLICY(VERSION 2.8)
+CMAKE_POLICY(VERSION 2.8.11)
 
 PROJECT(MySQL_CONCPLS)
 
@@ -169,7 +169,27 @@ ADD_SUBDIRECTORY(connector)
 #
 
 INCLUDE(libutil)
-MERGE_STATIC_LIBS(libconcpp "concpp-2.0" connector)
+
+#
+# Get location of non-debug protobuf library to merge it in.
+#
+# TODO: Do it better
+#
+
+INCLUDE(protobuf)
+#message(${PROTOBUF_LIBRARIES})
+
+LIST(FIND PROTOBUF_LIBRARIES "optimized" pos)
+IF(pos LESS 0)
+  LIST(GET PROTOBUF_LIBRARIES 0 protobuf)
+ELSE()
+  MATH(EXPR pos "${pos}+1")
+  LIST(GET PROTOBUF_LIBRARIES ${pos} protobuf)
+ENDIF()
+#message("protobuf: ${protobuf}")
+
+MERGE_STATIC_LIBS(libconcpp "mysql_concpp"
+                  "connector;${protobuf}")
 INSTALL(TARGETS libconcpp DESTINATION lib)
 
 #

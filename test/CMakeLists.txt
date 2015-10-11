@@ -41,7 +41,7 @@ if(NOT EXISTS "${CONCPLS_INCLUDES}/mysqlx.h")
   )
 endif()
 
-find_library(CONCPLS_LIB concpp-2.0
+find_library(CONCPLS_LIB mysql_concpp
   PATHS "${WITH_CONCPLS}/lib"
   NO_DEFAULT_PATH
 )

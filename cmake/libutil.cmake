@@ -13,6 +13,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA 
 
+#
+# Code below reads LOCATION property of targets. This has been deprecated
+# in later cmake versions. To remove this policy more thought is needed how
+# to deal with target locations (which can not be reliably determined at
+# build configuration time).
+#
+if(CMP0026)
+  cmake_policy(SET CMP0026 OLD)
+endif()
 
 # This file exports macros that emulate some functionality found  in GNU libtool
 # on Unix systems. One such feature is convenience libraries. In this context,
@@ -88,6 +97,7 @@ MACRO(MERGE_STATIC_LIBS TARGET OUTPUT_NAME LIBS_TO_MERGE)
   #message("dependent libs: ${LIBS}")
 
   SET(OSLIBS)
+  SET(ORIGINAL ${LIBS_TO_MERGE})
 
   FOREACH(LIB ${LIBS})
 
@@ -121,7 +131,21 @@ MACRO(MERGE_STATIC_LIBS TARGET OUTPUT_NAME LIBS_TO_MERGE)
 
     ELSE()
 
-      LIST(APPEND OSLIBS ${LIB})
+      #
+      # If non-target library was passed as input, assume it is
+      # a static library that should be merged in, otherwise treat
+      # non-targets as system libs
+      #
+      # Note: macro arguments like LIBS_TO_MERGE can not be used
+      # with list(FIND ...)
+      #
+
+      LIST(FIND ORIGINAL ${LIB} pos)
+      IF(pos LESS 0)
+        LIST(APPEND OSLIBS ${LIB})
+      ELSE()
+        LIST(APPEND STATIC_LIBS ${LIB})
+      ENDIF()
 
     ENDIF()
 
@@ -197,8 +221,11 @@ FUNCTION(GET_DEPENDENT_LIBS targets result)
 
   list(GET targets 0 first)
   list(REMOVE_AT targets 0)
+  set(LIBS)
 
+  if(TARGET ${first})
   get_target_property(LIBS ${first} LINK_LIBRARIES)
+  endif()
   #message("- processing ${first}: ${LIBS}")
 
   # Add LIBS to the list of remaining targets and
