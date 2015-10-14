@@ -9,7 +9,7 @@
 PROJECT(CONCPP_Doc NONE)
 
 IF(NOT DEFINED WITH_DOC)
-  OPTION(WITH_DOC "Build Project's documentation" ON)
+  OPTION(WITH_DOC "Build Project's documentation" OFF)
 ENDIF()
 
 IF(WITH_DOC)

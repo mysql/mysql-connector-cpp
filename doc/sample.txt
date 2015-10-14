@@ -1,0 +1,8 @@
+Sample code which uses Connector/C++ 2.0  {#sample}
+========================================
+
+Code below uses Connector/C++ to connect to a database, create
+collection, add few documents and then query them might look as
+follows:
+
+@include test.cc
