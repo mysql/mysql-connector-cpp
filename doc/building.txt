@@ -84,8 +84,20 @@ $ perl mysql-test-run.pl --start-and-exit --mysqld=--plugin-load=mysqlx
 This should start test server instance with MySQL Hybrid plugin loaded
 into it. By default the plugin will listen on port 13010.
 
-Now one can start `test` program and see the output which should look
-similar to this:
+Now one can start `test` program and see the output similar to one presented
+beolw. The program accepts port number as the first argument, with default
+value 33060. Thus, if server was started as described above, one should run
+
+~~~~~~~
+$ test 13010
+~~~~~~~
+
+The program uses `root` user account without any password and assumes that
+there is `test` schema in the server (these assumptions hold for server started
+using `mysql-test-run.pl`). Different user credentials can be passed as second
+and third argument of `test` invocation.
+
+If everything goes well, `test` should produce output similar to this:
 
 ~~~~~~~
 Creating session on localhost...
@@ -129,8 +141,6 @@ doc#3: {"_id": "myuuid-1", "age": 7, "name": "foo"}
 
 Done!
 ~~~~~~~
-
-@todo test invocation description after this is fixed.
 
 Windows notes
 -------------
