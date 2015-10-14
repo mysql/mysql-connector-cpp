@@ -201,3 +201,56 @@ TARGET_LINK_LIBRARIES(try libconcpp)
 SET_INTERFACE_OPTIONS(try connector)
 #  ADD_GCOV(try)
 
+#
+# Packaging instructions
+#
+# TODO
+# - Use CPACK_SOURCE_INGNORE/STRIP_FILES to ensure correct
+#   files are included in the source package.
+# - Generate HTML docs with Doxygen and include in bin packages
+#
+# Note: CPACK_XXX variables must be set before include(CPack)
+#
+
+if(WIN32)
+  set(CPACK_GENERATOR ZIP)
+  set(CPACK_SOURCE_GENERATOR ZIP)
+else()
+  set(CPACK_GENERATOR TGZ)
+  set(CPACK_SOURCE_GENERATOR TGZ)
+endif()
+
+set(CPACK_PACKAGE_NAME mysql_connnector_cpp)
+set(CPACK_PACKAGE_VENDOR Oracle)
+set(CPACK_PACKAGE_VERSION "2.0-preview")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "mysql/conncpp/2.0")
+
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-src")
+#
+# note: double escaping required to get correct pattern string in
+# CPackSourceConfig.cmake
+#
+set(CPACK_SOURCE_IGNORE_FILES "\\\\.git.*")
+
+#set(CPACK_XXX_COMPONENT_INSTALL 1)
+#set(CPACK_PROJECT_CONFIG_FILE <path>)
+#set(CPACK_SOURCE_PACKAGE_FILE_NAME <name>)
+
+include(CPack)
+
+#
+# Custom target to build packages.
+#
+
+add_custom_target(build_packages
+  COMMAND cpack --config CPackConfig.cmake -C $<CONFIGURATION>
+  COMMAND cpack --config CPackSourceConfig.cmake
+  DEPENDS clean_source_tree
+)
+
+add_custom_target(clean_source_tree
+  COMMAND git clean -x -d -f
+  COMMAND git submodule foreach --recursive git clean -x -d -f
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  COMMENT "Cleaning source tree"
+)
