@@ -220,7 +220,7 @@ else()
   set(CPACK_SOURCE_GENERATOR TGZ)
 endif()
 
-set(CPACK_PACKAGE_NAME mysql_connnector_cpp)
+set(CPACK_PACKAGE_NAME mysql_connector_cpp)
 set(CPACK_PACKAGE_VENDOR Oracle)
 set(CPACK_PACKAGE_VERSION "2.0-preview")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "mysql/conncpp/2.0")
