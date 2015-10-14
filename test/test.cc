@@ -26,12 +26,23 @@ using ::std::endl;
 using namespace ::mysqlx;
 
 
-int main()
+int main(int argc, const char* argv[])
 try {
 
-  cout <<"Creating session on localhost..." <<endl;
+  unsigned short port = (argc > 1 ? atoi(argv[1]) : 0);
+  const char    *user = (argc > 2 ? argv[2] : "root");
+  const char    *pwd  = (argc > 3 ? argv[3] : NULL);
 
-  XSession sess(13010, "root");
+  if (0 == port)
+  {
+    // Default MySQL X port
+    port = 33060;
+  }
+
+  cout << "Creating session on localhost, port " << port
+       << " ..." << endl;
+
+  XSession sess("localhost", port, user, pwd);
 
   cout <<"Session accepted, creating collection..." <<endl;
 
@@ -60,7 +71,10 @@ try {
 
   cout <<"Fetching documents..." <<endl;
 
-  DocResult docs = coll.find().execute(); // "age > 1 and name like 'ba%'").execute();
+  // TODO: Add select criteria when myc-125 is fixed.
+
+  DocResult docs = coll.find().execute();
+                     //.find("age > 1 and name like 'ba%'").execute();
 
   DbDoc *doc = docs.fetchOne();
 
@@ -98,12 +112,15 @@ try {
 catch (const mysqlx::Error &err)
 {
   cout <<"ERROR: " <<err <<endl;
+  return 1;
 }
 catch (std::exception &ex)
 {
   cout <<"STD EXCEPTION: " <<ex.what() <<endl;
+  return 1;
 }
 catch (const char *ex)
 {
   cout <<"EXCEPTION: " <<ex <<endl;
+  return 1;
 }

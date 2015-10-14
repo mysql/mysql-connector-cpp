@@ -83,5 +83,11 @@ find_program(TEST test
 )
 message("test executable: ${TEST}")
 
-execute_process(COMMAND ${TEST})
+execute_process(COMMAND ${TEST} 13010
+  RESULT_VARIABLE run_result
+)
+
+if(run_result)
+  fail("Test run failed.")
+endif()
 

@@ -268,7 +268,9 @@ try {
 
     cout <<"Fetching documents..." <<endl;
 
-    DocResult docs = coll.find().execute(); // "age > 1 and name like 'ba%'").execute();
+    // TODO: Add select criteria when myc-125 is fixed.
+
+    DocResult docs = coll.find().execute();
 
     DbDoc *doc = docs.fetchOne();
 
