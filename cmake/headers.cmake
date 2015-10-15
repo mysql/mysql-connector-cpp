@@ -166,6 +166,7 @@ MACRO(ADD_HEADERS)
 
     FOREACH(hdr ${ARGV})
       GET_FILENAME_COMPONENT(hdrn ${hdr} NAME)
+      GET_FILENAME_COMPONENT(hdr ${hdr} ABSOLUTE)
       MESSAGE(STATUS " - ${hdrn}")
       LIST(APPEND hdr_list ${hdr})
     ENDFOREACH(hdr)
@@ -177,7 +178,8 @@ MACRO(ADD_HEADERS)
     SET(headers_${hdr_group} ${hdr_list}
         CACHE INTERNAL "Public headers from ${hdr_group}"
         FORCE)
-    
+    #MESSAGE("Added the following headers: ${headers_${hdr_group}}")
+
     #
     # Update parent's hdr_groups list to make sure that it contains
     # all header groups collected so far
@@ -307,6 +309,8 @@ MACRO(ADD_HEADERS_TARGET)
     ENDIF()
     SOURCE_GROUP(${group_name} FILES ${headers_${group}})
   ENDFOREACH(group)
+
+  #MESSAGE("all headers: ${all_headers}")
 
   #
   # Add the Header target which builds the sanity check project. All public headers are

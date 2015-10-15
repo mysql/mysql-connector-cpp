@@ -93,3 +93,11 @@ add_custom_target(clean_source_tree
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
   COMMENT "Cleaning source tree"
 )
+
+set_property(TARGET clean_source_tree build_packages
+  PROPERTY EXCLUDE_FROM_ALL 1
+)
+
+set_property(TARGET clean_source_tree build_packages
+  PROPERTY EXCLUDE_FROM_DEFAULT_BUILD 1
+)

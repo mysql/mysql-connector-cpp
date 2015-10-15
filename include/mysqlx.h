@@ -31,9 +31,9 @@
 */
 
 
-#include "common.h"
-#include "result.h"
-#include "task.h"
+#include "mysqlx/common.h"
+#include "mysqlx/result.h"
+#include "mysqlx/task.h"
 
 
 namespace cdk {

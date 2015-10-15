@@ -15,26 +15,6 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301  USA
 
-
-#
-# MySQL Connector/C++ Public Headers
-#
-# see headers.cmake for explanations how project's public
-# headers are declared and processed.
-#
-
-INCLUDE(headers)
-
-SETUP_HEADERS(${CMAKE_CURRENT_SOURCE_DIR})
-
-SET(headers mysqlx.h)
-
-ADD_HEADERS_DIR(mysqlx)
+SET(headers common.h result.h task.h document.h)
 ADD_HEADERS(${headers})
-
-#IF(cdk_stand_alone)
-  ADD_HEADERS_TARGET()
-#ENDIF()
-
-INSTALL(FILES ${headers} DESTINATION include)
-
+INSTALL(FILES ${headers} DESTINATION include/mysqlx)
