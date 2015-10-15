@@ -66,12 +66,19 @@ message("Binary package name: ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${C
 #
 
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-src")
+
 #
-# note: double escaping required to get correct pattern string (with single
+# note: Using regex patterns for CPACK_SOURCE_IGNORE_FILES is fragile because
+# they are matched against the full path which can vary depending on where the
+# build takes place. Unfortunatelly, I (Rafal) could not find any other mechanism
+# for specifying what source files should be excluded from the source package.
+#
+# note: Double escaping required to get correct pattern string (with single
 # escapes) in CPackSourceConfig.cmake
 #
+
 list(APPEND CPACK_SOURCE_IGNORE_FILES "\\\\.git.*")
-list(APPEND CPACK_SOURCE_IGNORE_FILES "jenkins")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "/jenkins/")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "CTestConfig.cmake")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "PackageSpecs.cmake")
 
