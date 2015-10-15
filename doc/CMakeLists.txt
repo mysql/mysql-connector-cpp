@@ -1,92 +1,68 @@
 #
-# Generate project documentation using Sphinx system.
-# Assumes that Sphinx is installed and sphinx-build command
-# is in the path.
+# Generate project documentation using Doxygen.
 #
-# TODO: Detect Sphinx installation.
-#
-
-PROJECT(CONCPP_Doc NONE)
 
 IF(NOT DEFINED WITH_DOC)
   OPTION(WITH_DOC "Build Project's documentation" OFF)
 ENDIF()
 
 IF(WITH_DOC)
+
+set(WITH_DOC OFF)
+
+# Find Doxygen
+
+if(DEFINED WITH_DOXYGEN)
+
+  find_program(DOXYGEN_EXECUTABLE
+    NAMES doxygen
+    PATHS ${WITH_DOXYGEN}
+    DOC "Doxygen documentation generation tool"
+  )
+
+  if(NOT DOXYGEN_EXECUTABLE)
+    message(WARNING "Could not find Doxygen at specified location: ${WITH_DOXYGEN},"
+            " will not build documentation")
+    return()
+  endif()
+
+  set(DOXGEN_FOUND YES)
+  execute_process(COMMAND ${DOXYGEN_EXECUTABLE} "--version" OUTPUT_VARIABLE DOXYGEN_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+else()
+
+  find_package(Doxygen)
+
+  if(NOT DOXYGEN_FOUND)
+    message(WARNING "Could not find Doxygen, will not build documentation."
+            " Custom Doxygen location can be specified using WITH_DOXYGEN option")
+    set(WITH_DOXYGEN "" CACHE PATH "Doxygen install location")
+    return()
+  endif()
+
+endif()
+
+set(WITH_DOC ON)
 MESSAGE("Building C/C++ documentation")
 
-find_package(Sphinx)
-#MESSAGE("SPHINX_EXECUTABLE: ${SPHINX_EXECUTABLE}")
-
-# configured documentation tools and intermediate build results
-set(BINARY_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/_build")
-
-# Sphinx cache with pickled ReST documents
-set(SPHINX_CACHE_DIR "${CMAKE_CURRENT_BINARY_DIR}/_doctrees")
-
-# HTML output directory
-set(SPHINX_HTML_DIR "${CMAKE_CURRENT_BINARY_DIR}/html")
-
-
-FILE(GLOB_RECURSE sources *.rst)
-LIST(APPEND sources conf.py.in)
-
-
-#
-# Set up plantuml with Sphinx
-#
-
-SET(WITH_PLANTUML $ENV{WITH_PLANTUML} CACHE PATH "Folder where plantuml.jar is stored")
-SET(PLANTUML_JAR "${WITH_PLANTUML}/plantuml.jar")
-
-IF(NOT EXISTS ${PLANTUML_JAR})
-
-  IF (SPHINX_EXECUTABLE)
-    MESSAGE(WARNING "Could not find plantuml at this location: ${PLANTUML_JAR}")
-  ENDIF()
-  SET(PLANTUML_COMMAND)
-
-ELSE()
-
-  LIST(APPEND SPHINX_EXTENSIONS "'sphinxcontrib.plantuml'")
-  LIST(APPEND plantuml_opts "-Dplantuml.include.path=\"${CMAKE_CURRENT_SOURCE_DIR}/\"")
-  SET(PLANTUML_COMMAND "java ${plantuml_opts} -jar ${PLANTUML_JAR}")
-
-ENDIF()
-
-
-#
-#  sphinx-build has -c <config dir> option which allows storing
-#  conf.py in a different location than documentation sources
-#  (see http://sphinx-doc.org/invocation.html#cmdoption-sphinx-build-c)
-#
-#  When I (rafal) used it on Windows, I got nasty exceptions from
-#  sphinx. Since I could not solve it, for the moment I generate
-#  conf.py in the source tree (and tell git to ignore it).
-#
-#  Variables used in conf.py.in:
-#
-#  SPHINX_EXTENSIONS
-#  PLANTUML_COMMAND
-#
-
-#MESSAGE("SPHINX_EXTENSIONS: ${SPHINX_EXTENSIONS}")
-#MESSAGE("PLANTUML_COMMAND: ${PLANTUML_COMMAND}")
-CONFIGURE_FILE(conf.py.in ${CMAKE_CURRENT_SOURCE_DIR}/conf.py @ONLY)
-
-#LIST(APPEND sphinxopts -c "${CMAKE_CURRENT_BINARY_DIR}/")      # location of conf.py
-LIST(APPEND sphinxopts -d ${SPHINX_CACHE_DIR}) # location of index caches
 
 #
 # TODO: remove conflict with CDK's build_docs target
 #
 
-#MESSAGE("sphinxopts: ${sphinxopts}")
+set(OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+configure_file(doxygen.cfg.in doxygen.cfg @ONLY)
+
+set(OUTPUT_DIRECTORY "$(OUTPUT_DIRECTORY)")
+configure_file(doxygen.cfg.in ${CMAKE_CURRENT_SOURCE_DIR}/doxygen.cfg @ONLY)
+
+FILE(GLOB_RECURSE sources *.txt)
+LIST(APPEND sources doxygen.cfg.in)
+
+
 ADD_CUSTOM_TARGET(build_docs
-  COMMAND ${SPHINX_EXECUTABLE} -b html ${sphinxopts}
-          ${CMAKE_CURRENT_SOURCE_DIR}
-          ${SPHINX_HTML_DIR}
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxygen.cfg
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
   COMMENT "Building project documentation"
   SOURCES ${sources}
 )
