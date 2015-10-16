@@ -62,18 +62,15 @@ class Executable;
 class BaseResult : nocopy
 {
   class Impl;
-  Impl  *m_impl;
-  bool m_owns_impl;
-  row_count_t  m_pos;
+  Impl  *m_impl = NULL;
+  bool m_owns_impl = false;
+  row_count_t  m_pos = 0;
 
   BaseResult(cdk::Reply*);
   BaseResult(cdk::Reply*, const GUID&);
 
 protected:
-
-  BaseResult()
-    : m_impl(NULL), m_owns_impl(true)
-    , m_pos(0)
+ BaseResult()
   {}
 
   BaseResult& operator=(BaseResult &&other)
@@ -176,7 +173,7 @@ public:
   `row[pos]` expression. Fields are identified by 0-based position.
   It is also possible to get raw bytes representing value of a
   given field with `getBytes()` method.
-  
+
   @sa `Value` class.
   @todo Support for iterating over row fields with range-for loop.
 */

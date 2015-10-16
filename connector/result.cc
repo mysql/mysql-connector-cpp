@@ -398,9 +398,11 @@ size_t Result::Impl::field_data(col_count_t pos, bytes data)
   ======
 */
 
+#include <iostream>
 
 BaseResult::BaseResult(cdk::Reply *r)
 try {
+  m_owns_impl = true;
   m_impl= new Impl(r);
 }
 CATCH_AND_WRAP
@@ -408,6 +410,7 @@ CATCH_AND_WRAP
 
 BaseResult::BaseResult(cdk::Reply *r, const GUID &guid)
 try {
+  m_owns_impl = true;
   m_impl= new Impl(r,guid);
 }
 CATCH_AND_WRAP
