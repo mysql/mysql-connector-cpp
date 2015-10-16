@@ -26,7 +26,7 @@
 #include <ostream>
 #include <memory>
 #include <string.h>  // for memcpy
-
+#include <utility>   // std::move etc
 
 namespace cdk {
 namespace foundation {
@@ -72,7 +72,7 @@ public:
   string(const std::string&);
 
   //  operator cdk::foundation::string&();
-  operator const std::string() const;  // conversion to utf-8
+  operator std::string() const;  // conversion to utf-8
 //  operator const cdk::foundation::string&() const;
 };
 
@@ -80,7 +80,8 @@ public:
 inline
 std::ostream& operator<<(std::ostream &out, const string &str)
 {
-  out << (std::string)str;
+  const std::string utf8(str);
+  out << utf8;
   return out;
 }
 
@@ -154,7 +155,7 @@ public:
   template <typename T> GUID(T data) { set(data); }
   template<typename T>  GUID& operator=(T data) { set(data); return *this; }
 
-  operator const std::string() const
+  operator std::string() const
   {
     return std::string(m_data, m_data + sizeof(m_data));
   }

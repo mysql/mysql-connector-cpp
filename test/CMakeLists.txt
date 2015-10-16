@@ -93,6 +93,6 @@ ENDIF()
 
 # We must enable C++11 to use Connector/C++ 2.0
 
-if (CMAKE_COMPILER_IS_GNUCXX)
+if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   target_compile_options(test PRIVATE "-std=c++11")
 endif()

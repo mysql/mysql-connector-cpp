@@ -173,7 +173,7 @@ string::string(const char *other)
   : std::wstring(cdk::string(other))
 {}
 
-string::operator const std::string() const
+string::operator std::string() const
 {
   return std::string(cdk::string(*this));
 }
