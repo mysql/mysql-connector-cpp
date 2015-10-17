@@ -56,7 +56,8 @@ endif()
 list(APPEND CONCPLS_LIBS "${CONCPLS_LIB}")
 
 #
-# Use clang's native C++ runtime library.
+# Use clang's native C++ runtime library to match the one used
+# by Connector/C++.
 #
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")

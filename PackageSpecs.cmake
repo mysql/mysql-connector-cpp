@@ -59,6 +59,22 @@ if(WIN32)
   set(CPACK_SYSTEM_NAME "winXX")
 endif()
 
+if(APPLE)
+
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    message(FATAL_ERROR "To create packages for OSX, build with clang compiler.")
+  endif()
+
+  if(NOT DEFINED ENV{MACOSX_DEPLOYMENT_TARGET})
+    message(FATAL_ERROR "To create packages on OSX, set deployment target"
+            " using MACOSX_DEPLOYMENT_TARGET environment variable")
+  endif()
+
+  set(osx_version $ENV{MACOSX_DEPLOYMENT_TARGET})
+  set(CPACK_SYSTEM_NAME "osx${osx_version}-${CMAKE_SYSTEM_PROCESSOR}")
+
+endif()
+
 message("Binary package name: ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME}")
 
 #
