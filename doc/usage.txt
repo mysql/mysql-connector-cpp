@@ -8,20 +8,51 @@ _MYSQL_CONCPP_DIR_`/include` to the include path of the project, and
 link compiled code with _MYSQL_CONCPP_DIR_`/lib/mysqlconcpp.a` library
 as well as `pthread` library on which Connector/C++ depends.
 
-Example `Makefile` to build a simple application with sources in `app.cc`
-would look as follows:
+Since Connector/C++ uses C++11 language, one should enable C++11 support
+in the compiler, unless it is the default. For `gcc` and `clang`
+compilers this can be done using `-std=c++11` option.
+
+Example `Makefile` to build an application using Connector/C++,
+with sources in `app.cc` would look as follows:
 
 ~~~~~~~
 MYSQL_CONCPP_DIR= ...
 CPPFLAGS = -I $(MYSQL_CONCPP_DIR)/include
 LDLIBS = pthread
+CXXFLAGS = -std=c++11
 
-app : app.o $(MYSQL_CONCPP_DIR)/lib/mysqlconcpp.a
+app : app.o $(MYSQL_CONCPP_DIR)/lib/libmysql_concpp.a
 ~~~~~~~
 
 To use Connector/C++ API source code should contain `#include <mysqlx.h>`
 directive. All Connector/C++ API symbols live in `mysqlx` namespace.
 
+OSX Notes
+---------
+
+Binary distribution of Connector/C++ for OSX is compiled using OSX native
+`clang` compiler. For that reason it is best to build an application that
+uses the connector with `clang` too.
+
+Clang compiler can use two different implementations of the C++ runtime
+library: either native `libc++` or GNU `libstdc++`. It is important that
+application uses the same runtime implementation as Connector/C++, that
+is, native `libc++`. To ensure that, `-stdlib=libc++` option should be
+passed to compiler and linker invocations.
+
+A `Makefile` for OSX build might look as follows:
+
+~~~~~~~
+MYSQL_CONCPP_DIR= ...
+CPPFLAGS = -I $(MYSQL_CONCPP_DIR)/include
+LDLIBS = pthread
+CXX = clang++ -stdlib=libc++
+CXXFLAGS = -std=c++11
+
+app : app.o $(MYSQL_CONCPP_DIR)/lib/libmysql_concpp.a
+~~~~~~~
+
+@todo How to build on OSX with XCode
 @todo Dynamic version of the connector library
 @todo Dynamic linking with other connector dependencies.
 @todo Instructions for Windows and other platforms.
