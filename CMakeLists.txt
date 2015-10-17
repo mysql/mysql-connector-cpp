@@ -24,7 +24,8 @@ PROJECT(MySQL_CONCPLS)
 message("Building on system: ${CMAKE_SYSTEM} (${CMAKE_SYSTEM_PROCESSOR})")
 
 #
-# Set up cmake module search patch.
+# Set up cmake module search patch
+# ================================
 #
 
 #
@@ -63,6 +64,10 @@ LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cdk/common/cmake)
 
 ENDIF()
 
+#
+# Compiler settings
+# =================
+#
 
 #
 # Tell cmake to not use compiler specific extensions
@@ -70,6 +75,23 @@ ENDIF()
 
 INCLUDE(compiler_features)
 SET(CMAKE_CXX_EXTENSIONS no)
+
+#
+# If Clang is used and deployment target is not specified
+# with MACOSX_DEPLOYMENT_TARGET environment variable, make
+# sure that clang's native implementation of C++ runtime
+# libarary (libc++) is used. Otherwise clang defaults to
+# GNU version (libstdc++) which is outdated and does
+# not handle C++11 well.
+#
+# TODO: Add option to use the default runtime if user wishes
+# so.
+#
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang"
+   AND NOT DEFINED ENV{MACOSX_DEPLOYMENT_TARGET})
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+endif()
 
 #
 # Configure static runtime library on Windows if requested
@@ -98,6 +120,10 @@ ENDIF()
 #  message("c++ ${TYPE} flags: ${CMAKE_CXX_FLAGS_${TYPE}}")
 #endforeach()
 
+#
+# Main project and its dependencies
+# =================================
+#
 
 #
 # Add Boost
@@ -121,13 +147,6 @@ INCLUDE_DIRECTORIES(cdk/parser)
 ADD_SUBDIRECTORY(include)
 INCLUDE_DIRECTORIES(include)
 
-
-#
-# Testing framework
-#
-#INCLUDE(testing)
-#SETUP_TESTING()
-
 #
 # Set higher warning level on Windows to catch non-portable
 # code.
@@ -145,20 +164,11 @@ endforeach(LANG)
 ENDIF()
 
 #
-# CDK components
+# Connector/C++ components
 #
 
 ADD_SUBDIRECTORY(doc)
 ADD_SUBDIRECTORY(connector)
-
-#
-# Target for running all declared tests (run_unit_tests)
-#
-
-#IF(WITH_TESTS)
-#  ADD_TEST_TARGET()
-#  ADD_DEPENDENCIES(run_unit_tests foundation_tests_server ngs_mockup)
-#ENDIF()
 
 #
 #  Target which builds the final connector library.
@@ -168,6 +178,7 @@ ADD_SUBDIRECTORY(connector)
 #  TODO: debug/non-debug variant
 #  TODO: naming strategy
 #  TODO: interface options for libconcpp target
+#  TODO: restrict exported symbols
 #
 
 INCLUDE(libutil)
@@ -195,6 +206,11 @@ MERGE_STATIC_LIBS(libconcpp "mysql_concpp"
 INSTALL(TARGETS libconcpp DESTINATION lib)
 
 #
+# Tests
+# =====
+#
+
+#
 # Sample code to try things out
 #
 
@@ -204,7 +220,26 @@ SET_INTERFACE_OPTIONS(try connector)
 #  ADD_GCOV(try)
 
 #
+# Target for running all declared tests (run_unit_tests)
+# TODO: add unit tests
+#
+
+#
+# Testing framework
+#
+#INCLUDE(testing)
+#SETUP_TESTING()
+
+#
+#IF(WITH_TESTS)
+#  ADD_TEST_TARGET()
+#  ADD_DEPENDENCIES(run_unit_tests foundation_tests_server ngs_mockup)
+#ENDIF()
+
+
+#
 # Packaging specifications
+# ========================
 #
 
 include(PackageSpecs.cmake OPTIONAL)
