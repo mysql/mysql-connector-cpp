@@ -242,5 +242,8 @@ SET_INTERFACE_OPTIONS(try connector)
 # ========================
 #
 
-include(PackageSpecs.cmake OPTIONAL)
+option(WITH_PACKAGES "Configure for building binary/source packages" OFF)
+if(WITH_PACKAGES)
+  include(PackageSpecs.cmake)
+endif()
 

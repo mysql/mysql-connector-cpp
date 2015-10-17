@@ -31,6 +31,7 @@
 #  -D WITH_BOOST=<boost location>
 #  -D SUBMIT=0   # do not submit to cdash
 #  -D STATIC_MSVCRT=yes/no  # passed to build configuration
+#  -D WITH_PACKAGES=yes/no  # configure for package build
 #
 
 #
@@ -66,6 +67,8 @@ set_param(WITH_BOOST "boost location")
 if (DEFINED WITH_BOOST)
 get_filename_component(WITH_BOOST ${WITH_BOOST} ABSOLUTE)
 endif()
+
+set_param(WITH_PACKAGES "package build")
 
 #check_param(WITH_GTEST "gtest location")
 #get_filename_component(WITH_GTEST ${WITH_GTEST} ABSOLUTE)
@@ -136,6 +139,9 @@ if(NOT WIN32)
 endif()
 if(VERBOSE)
   list(APPEND CONFIG_OPTIONS -DCMAKE_VERBOSE_MAKEFILE=yes)
+endif()
+if(WITH_PACKAGES)
+  list(APPEND CONFIG_OPTIONS -DWITH_PACKAGES=yes)
 endif()
 
 ctest_configure(
