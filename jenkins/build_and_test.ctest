@@ -104,7 +104,7 @@ step("Configure build")
 #######################
 
 if(DEFINED GENERATOR)
-  set(CTEST_CMAKE_GENERATOR ${GENERATOR})
+  set(CTEST_CMAKE_GENERATOR "${GENERATOR}")
 else()
   if (WIN32)
     set(CTEST_CMAKE_GENERATOR "Visual Studio 12")
