@@ -272,29 +272,29 @@ try {
 
     DocResult docs = coll.find().execute();
 
-    DbDoc *doc = docs.fetchOne();
+    DbDoc doc = docs.fetchOne();
 
     for (int i = 0; doc; ++i, doc = docs.fetchOne())
     {
-      cout << "doc#" << i << ": " << *doc << endl;
+      cout << "doc#" << i << ": " << doc << endl;
 
-      for (Field fld : *doc)
+      for (Field fld : doc)
       {
-        cout << " field `" << fld << "`: " <<(*doc)[fld] << endl;
+        cout << " field `" << fld << "`: " <<doc[fld] << endl;
       }
 
-      string name = (*doc)["name"];
+      string name = doc["name"];
       cout << " name: " << name << endl;
 
-      if (doc->hasField("date") && Value::DOCUMENT == doc->fieldType("date"))
+      if (doc.hasField("date") && Value::DOCUMENT == doc.fieldType("date"))
       {
         cout << "- date field" << endl;
-        DbDoc date = (*doc)["date"];
+        DbDoc date = doc["date"];
         for (Field fld : date)
         {
           cout << "  date `" << fld << "`: " << date[fld] << endl;
         }
-        string month = (*doc)["date"]["month"];
+        string month = doc["date"]["month"];
         int day = date["day"];
         cout << "  month: " << month << endl;
         cout << "  day: " << day << endl;
@@ -318,15 +318,44 @@ try {
 
     cout << "Query sent, reading rows..." << endl;
     cout << "There are " << res.getColumnCount() << " columns in the result" << endl;
-    Row *row;
+    Row row;
 
-    while (NULL != (row = res.fetchOne()))
+    while ((row = res.fetchOne()))
     {
       cout << "== next row ==" << endl;
       for (unsigned i = 0; i < res.getColumnCount(); ++i)
       {
-        cout << "col#" << i << ": " << (*row)[i] << endl;
+        cout << "col#" << i << ": " << row[i] << endl;
       }
+    }
+
+
+    /*
+      Check that rows returned from RowResult and fields of a row
+      each have its own, independent life-time.
+    */
+
+    cout << endl << "reading just the first row from collection" << endl;
+
+    {
+      DbDoc first;
+
+      {
+        Row row1;
+
+        {
+          row1 = RowResult(sess.sql(L"SELECT * FROM test.c1").execute()).fetchOne();
+
+          // Note: we use group to make sure that the tmp RowResult instance
+          // is deleted when we acces the row below.
+        }
+
+        first = row1[0];
+      }
+
+      // Simialr, row1 is now deleted when we access first document.
+
+      cout << "first document: " << first << endl;
     }
   }
 
@@ -361,14 +390,14 @@ try {
 
     cout << "Query sent, reading rows..." << endl;
     cout << "There are " << res.getColumnCount() << " columns in the result" << endl;
-    Row *row;
+    Row row;
 
-    while (NULL != (row = res.fetchOne()))
+    while ((row = res.fetchOne()))
     {
       cout << "== next row ==" << endl;
       for (unsigned i = 0; i < res.getColumnCount(); ++i)
       {
-        cout << "col#" << i << ": " << (*row)[i] << endl;
+        cout << "col#" << i << ": " << row[i] << endl;
       }
     }
 

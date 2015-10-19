@@ -81,6 +81,8 @@ protected:
 
   void init(BaseResult&&);
 
+  Impl& get_impl();
+
 public:
 
   BaseResult(BaseResult &&other) { init(std::move(other)); }
@@ -160,6 +162,7 @@ public:
 // Row based results
 // -----------------
 
+class RowResult;
 
 /**
   Represents a single row from a result that contains rows.
@@ -180,21 +183,52 @@ public:
 
 class Row : nocopy
 {
+  class Impl;
+  Impl  *m_impl = NULL;
+  bool  m_owns_impl = false;
+
+  Impl& get_impl()
+  { return const_cast<Impl&>(const_cast<const Row*>(this)->get_impl()); }
+  const Impl& get_impl() const;
+
+  Row(Impl *impl) { init(impl); }
+
+  void init(Impl*);
+
+  void init(Row &other)
+  {
+    init(other.m_impl);
+    other.m_owns_impl = false;
+  }
+
 public:
 
-  virtual ~Row() {}
+  Row() {}
+  Row(Row &&other) { init(other); }
 
-  virtual const string getString(col_count_t pos) =0;
+  virtual ~Row();
+
+  Row& operator=(Row &&other)
+  {
+    init(other);
+    return *this;
+  }
 
   /// Get raw bytes representing value of row field at position `pos`.
-  virtual bytes getBytes(col_count_t pos) =0;
+  bytes getBytes(col_count_t pos) const;
 
   /// Get value of row field at position `pos`.
-  virtual Value get(col_count_t) = 0;
+  const Value get(col_count_t) const;
 
   /// Convenience operator equivalent to `get()`.
-  const Value operator[](col_count_t pos)
+  const Value operator[](col_count_t pos) const
   { return get(pos); }
+
+  /// Check if this row contains fields or is null.
+  bool isNull() const { return NULL == m_impl; }
+  operator bool() const { return !isNull(); }
+
+  friend class RowResult;
 };
 
 
@@ -248,7 +282,7 @@ public:
     If there are no more rows in this result, returns NULL.
   */
 
-  Row* fetchOne();
+  Row fetchOne();
 
   friend class Task;
 };
@@ -332,10 +366,10 @@ public:
   /**
     Return current document and move to the next one in the sequence.
 
-    If there are no more documents in this result returns NULL.
+    If there are no more documents in this result returns null document.
   */
 
-  DbDoc* fetchOne();
+  DbDoc fetchOne();
 
   friend class Impl;
   friend class Task;

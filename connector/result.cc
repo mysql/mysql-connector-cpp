@@ -26,6 +26,8 @@
 #include <sstream>
 #include <iomanip>
 
+#include <boost/variant.hpp>
+
 /*
   Implementation of Result and Row interfaces.
 */
@@ -73,25 +75,379 @@ public:
 };
 
 
+/*
+  Storage for column meta-data information
+  ========================================
+
+  To correctly decode raw bytes that represent values stored in
+  a row we need type and encoding information provided by cdk.
+  First a Type_info constant T and then:
+
+  - encoding format information which is a value of type Fromat<T>
+  - codec object of type Codec<T>.
+
+  For convenience, encoding format information and codec are kept
+  together in single Format_descr<T> structure.
+*/
+
+template <cdk::Type_info T>
+struct Format_descr
+{
+  cdk::Format<T> m_format;
+  cdk::Codec<T>  m_codec;
+
+  Format_descr(const cdk::Format_info &fi)
+    : m_format(fi), m_codec(fi)
+  {}
+};
+
+template <>
+struct Format_descr<cdk::TYPE_DOCUMENT>
+{
+  cdk::Format<cdk::TYPE_DOCUMENT> m_format;
+  cdk::Codec<cdk::TYPE_DOCUMENT>  m_codec;
+
+  Format_descr(const cdk::Format_info &fi)
+    : m_format(fi)
+  {}
+};
+
+
+/*
+  Structure Format_info holds information about the type
+  of a column (m_type) and about its encoding format in
+  Format_descr<T> structure. Since C++ type of Format_descr<T>
+  is different for each T, a boost::variant is used to store
+  the appropriate Format_descr<T> value.
+*/
+
+typedef boost::variant <
+  Format_descr<cdk::TYPE_STRING>,
+  Format_descr<cdk::TYPE_INTEGER>,
+  Format_descr<cdk::TYPE_FLOAT>,
+  Format_descr<cdk::TYPE_DOCUMENT>
+> Format_info_base;
+
+struct Format_info
+  : public Format_info_base
+{
+  cdk::Type_info m_type;
+
+  template <cdk::Type_info T>
+  Format_info(const Format_descr<T> &fd)
+    : Format_info_base(fd), m_type(T)
+  {}
+
+  template <cdk::Type_info T>
+  Format_descr<T>& get() const
+  {
+    /*
+      Note: we cast away constness here, because using a codec can
+      modify it, and thus the Format_descr<T> must be mutable.
+    */
+    return const_cast<Format_descr<T>&>(boost::get<Format_descr<T>>(*this));
+  }
+};
+
+
+/*
+  Meta_data holds type and format information for all columns in
+  a row set. An instance is filled given information provided by
+  cdk::Meta_data interface.
+*/
+
+struct Meta_data
+  : private std::map<cdk::col_count_t, Format_info>
+{
+  Meta_data(cdk::Meta_data&);
+
+  col_count_t col_count() const { return m_col_count;  }
+
+  const Format_info& get_format(cdk::col_count_t pos) const
+  {
+    return at(pos);
+  }
+
+  cdk::Type_info get_type(cdk::col_count_t pos) const
+  {
+    return get_format(pos).m_type;
+  }
+
+private:
+
+  cdk::col_count_t  m_col_count;
+
+  /*
+    Add to this Meta_data instance information about column
+    at position `pos`. The type and format information is given
+    by cdk::Format_info object.
+  */
+  template<cdk::Type_info T>
+  void add(cdk::col_count_t pos, const cdk::Format_info &fi)
+  {
+    emplace(pos, Format_descr<T>(fi));
+  }
+};
+
+
+/*
+  Create Meta_data instance using information provided by
+  cdk::Meta_data interface.
+*/
+
+Meta_data::Meta_data(cdk::Meta_data &md)
+  : m_col_count(md.col_count())
+{
+  for (col_count_t pos = 0; pos < m_col_count; ++pos)
+  {
+    cdk::Type_info ti = md.type(pos);
+    const cdk::Format_info &fi = md.format(pos);
+
+    switch (ti)
+    {
+    case cdk::TYPE_STRING:    add<cdk::TYPE_STRING>(pos, fi);   break;
+    case cdk::TYPE_INTEGER:   add<cdk::TYPE_INTEGER>(pos, fi);  break;
+    case cdk::TYPE_FLOAT:     add<cdk::TYPE_FLOAT>(pos, fi);    break;
+    case cdk::TYPE_DOCUMENT:  add<cdk::TYPE_DOCUMENT>(pos, fi); break;
+    }
+  }
+}
+
+
+/*
+  Data structure used to hold raw row data. It holds a Buffer with
+  raw bytes for each non-null field of a row.
+*/
+
+typedef std::map<col_count_t, Buffer> Row_data;
+
+
+/*
+  Implementation for single Row instance. It holds a copy of row
+  raw data and a shared pointer to row set meta-data.
+
+  Using meta-data information, it can decode raw bytes of each
+  field into appropriate Value.
+*/
+
+class Row::Impl
+{
+  Row_data m_data;
+  std::shared_ptr<Meta_data> m_mdata;
+
+  Impl(const Row_data&, std::shared_ptr<Meta_data>&);
+
+  bytes get_bytes(col_count_t pos) const
+  {
+    return mysqlx::bytes::Access::mk(m_data.at(pos).data());
+  }
+
+  // Get value of field at given position after converting to Value.
+
+  template<cdk::Type_info T>
+  const Value get(col_count_t pos) const
+  {
+    const Format_info &fi = m_mdata->get_format(pos);
+    return convert(m_data.at(pos).data(), fi.get<T>());
+  }
+
+  // Convert raw bytes to Value using given encoding format description.
+
+  template<cdk::Type_info T>
+  const Value convert(cdk::bytes, Format_descr<T>&) const;
+
+  friend class Row;
+  friend class RowResult;
+  friend class SqlResult;
+};
+
+
+// Note: row data is copied
+
+Row::Impl::Impl(const Row_data &data, std::shared_ptr<Meta_data> &mdata)
+  : m_data(data), m_mdata(mdata)
+{}
+
+
+void Row::init(Impl *impl)
+{
+  m_impl = impl;
+  m_owns_impl = true;
+}
+
+
+Row::~Row()
+{
+  /*
+     Note: catch wrapper removed to avoid compile warnings --
+     add back if Impl destructor can throw any exceptions.
+  */
+//  try {
+    if (m_owns_impl)
+      delete m_impl;
+//  }
+//  CATCH_AND_WRAP
+}
+
+
+const Row::Impl& Row::get_impl() const
+{
+  if (!m_impl)
+    throw "Attempt to use null Row instance";
+  return *m_impl;
+}
+
+
+bytes Row::getBytes(col_count_t pos) const
+{
+  return get_impl().get_bytes(pos);
+}
+
+
+struct Value::Access
+{
+  static Value mk_raw(const cdk::bytes data)
+  {
+    Value ret;
+    ret.m_type = Value::RAW;
+    ret.m_str.assign(data.begin(), data.end());
+    return std::move(ret);
+  }
+
+  static Value mk_doc(const string &json)
+  {
+    Value ret;
+    ret.m_type = Value::DOCUMENT;
+    ret.m_doc = DbDoc(json);
+    return std::move(ret);
+  }
+};
+
+
+const Value Row::get(mysqlx::col_count_t pos) const
+{
+  const Impl &impl = get_impl();
+
+  try {
+    // will throw out_of_range exception if column at `pos` is NULL
+    cdk::bytes data = impl.m_data.at(pos).data();
+
+    switch (impl.m_mdata->get_type(pos))
+    {
+    case cdk::TYPE_STRING:    return impl.get<cdk::TYPE_STRING>(pos);
+    case cdk::TYPE_INTEGER:   return impl.get<cdk::TYPE_INTEGER>(pos);
+    case cdk::TYPE_FLOAT:     return impl.get<cdk::TYPE_FLOAT>(pos);
+    case cdk::TYPE_DOCUMENT:  return impl.get<cdk::TYPE_DOCUMENT>(pos);
+
+      // TODO: Other "natural" conversions
+      // TODO: User-defined conversions (also to user-defined types)
+
+    default:
+      return Value::Access::mk_raw(data);
+    }
+  }
+  catch (std::out_of_range&)
+  {
+    // NULL value
+    return Value();
+  }
+}
+
+
+/*
+  Conversions of raw value representation to Value objects.
+
+  Note: gcc complains if templates are not specialized in the same namespace
+  in which they were declared.
+*/
+
+namespace mysqlx {
+
+  template<>
+  const Value
+    Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_STRING> &fd) const
+  {
+    auto &codec = fd.m_codec;
+    cdk::string str;
+    codec.from_bytes(data, str);
+    return Value(std::move(str));
+  }
+
+  template<>
+  const Value
+    Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_INTEGER> &fd) const
+  {
+    auto &codec = fd.m_codec;
+    auto &fmt = fd.m_format;
+
+    if (fmt.is_unsigned())
+    {
+      uint64_t val;
+      codec.from_bytes(data, val);
+      return Value(val);
+    }
+    else
+    {
+      int64_t val;
+      codec.from_bytes(data, val);
+      return Value(val);
+    }
+  }
+
+  template<>
+  const Value
+    Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_FLOAT> &fd) const
+  {
+    auto &fmt = fd.m_format;
+
+    // Note: DECIMAL format not yet supported by CDK
+
+    if (fmt.FLOAT == fmt.type() || fmt.DOUBLE == fmt.type())
+    {
+      double val;
+      fd.m_codec.from_bytes(data, val);
+      return Value(val);
+    }
+
+    return Value::Access::mk_raw(data);
+  }
+
+  template<>
+  const Value
+    Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_DOCUMENT>&) const
+  {
+    /*
+    Note: this assumes that document is represented as json string
+    - thanks to this we can take benefit of lazy parsing.
+
+    Otherwise, implementation that would not assume what underlying
+    representation is used for documnets should use a Codec to decode
+    the raw bytes and build a representation of the documnent to be
+    stored in the Value instance.
+    */
+    return Value::Access::mk_doc(std::string(data.begin(), data.end()));
+  }
+
+}
+
 
 /*
   Result implementation
   =====================
   This implementation stores all rows received from server in
-  m_rows member. Done like this because cdk::Cursor::get_row() is
-  not yet implemented.
+  m_rows member.
+
+  @todo Non-buffering implementation which reads single rows
+  from cursor.
 */
 
 class BaseResult::Impl
-  : public Row
-  , public cdk::Row_processor
+  : public cdk::Row_processor
 {
-  typedef std::map<col_count_t,Buffer> Row_data;
-
   cdk::Reply  *m_reply;
   cdk::Cursor *m_cursor;
   std::map<row_count_t,Row_data> m_rows;
-  row_count_t  m_pos;
+  std::shared_ptr<Meta_data>     m_mdata;
   GUID         m_guid;
 
   Impl(cdk::Reply *r)
@@ -119,12 +475,15 @@ class BaseResult::Impl
 
     if (m_reply->has_results())
     {
-      m_cursor= new cdk::Cursor(*m_reply);
+      m_cursor = new cdk::Cursor(*m_reply);
       m_cursor->wait();
       // TODO: do it asynchronously
       read_rows();
       m_cursor->close();
-      // Note: we keep cursor instance because it gives access to meta-data
+      m_pos = 0;
+
+      // copy meta-data information from cursor
+      m_mdata = std::make_shared<Meta_data>(*m_cursor);
     }
   }
 
@@ -140,28 +499,9 @@ class BaseResult::Impl
 
   void read_rows();
 
-  /*
-    This class instance works as Row instance too. The
-    m_pos member tells which row is being accessed.
-  */
-
-  Row* get_row(row_count_t pos)
-  {
-    if (!m_cursor)
-      return NULL;
-    if (pos >= m_rows.size())
-      return NULL;
-    m_pos= pos;
-    return this;
-  }
-
-  // Row
-
-  const mysqlx::string getString(mysqlx::col_count_t pos);
-  mysqlx::bytes getBytes(mysqlx::col_count_t pos);
-  Value get(mysqlx::col_count_t pos);
-
   // Row_processor
+
+  row_count_t m_pos;
 
   bool row_begin(row_count_t pos)
   {
@@ -183,190 +523,6 @@ class BaseResult::Impl
   friend class RowResult;
   friend class SqlResult;
 };
-
-
-bytes Result::Impl::getBytes(mysqlx::col_count_t pos)
-{
-  return mysqlx::bytes::Access::mk(m_rows.at(m_pos).at(pos).data());
-}
-
-
-struct Value::Access
-{
-  static Value mk_raw(const cdk::bytes data)
-  {
-    Value ret;
-    ret.m_type = Value::RAW;
-    ret.m_str.assign(data.begin(), data.end());
-    return std::move(ret);
-  }
-
-  static Value mk_doc(const string &json)
-  {
-    Value ret;
-    ret.m_type = Value::DOCUMENT;
-    ret.m_doc = DbDoc(json);
-    return std::move(ret);
-  }
-};
-
-
-Value Result::Impl::get(mysqlx::col_count_t pos)
-{
-  using cdk::Format;
-  using cdk::Codec;
-
-  if (!m_cursor)
-    throw "empty row";
-  if (pos > m_cursor->col_count())
-    throw "pos out of range";
-
-  Row_data &rd = m_rows.at(m_pos);
-
-  try {
-    // will throw out_of_range exception if column at `pos` is NULL
-    cdk::bytes data = rd.at(pos).data();
-
-    switch (m_cursor->type(pos))
-    {
-    case cdk::TYPE_STRING:
-      {
-        Codec<cdk::TYPE_STRING> codec(m_cursor->format(pos));
-        cdk::string str;
-        codec.from_bytes(data, str);
-        return Value(std::move(str));
-      }
-
-    case cdk::TYPE_INTEGER:
-    {
-      Codec<cdk::TYPE_INTEGER>  codec(m_cursor->format(pos));
-      Format<cdk::TYPE_INTEGER> fmt(m_cursor->format(pos));
-
-      if (fmt.is_unsigned())
-      {
-        uint64_t val;
-        codec.from_bytes(data, val);
-        return Value(val);
-      }
-      else
-      {
-        int64_t val;
-        codec.from_bytes(data, val);
-        return Value(val);
-      }
-    }
-
-    case cdk::TYPE_FLOAT:
-    {
-      Format<cdk::TYPE_FLOAT> fmt(m_cursor->format(pos));
-
-      // Note: DECIMAL format not yet supported by CDK
-
-      if (fmt.FLOAT == fmt.type() || fmt.DOUBLE == fmt.type())
-      {
-        Codec<cdk::TYPE_FLOAT> codec(m_cursor->format(pos));
-        double val;
-        codec.from_bytes(data, val);
-        return Value(val);
-      }
-
-      return Value::Access::mk_raw(data);
-    }
-
-    case cdk::TYPE_DOCUMENT:
-      {
-        /*
-          Note: this assumes that document is represented as json string
-          - thanks to this we can take benefit of lazy parsing.
-
-          Otherwise, implementation that would not assume what underlying
-          representation is used for documnets should use a Codec to decode
-          the raw bytes and build a representation of the documnent to be
-          stored in the Value instance.
-        */
-        return Value::Access::mk_doc(std::string(data.begin(), data.end()));
-      }
-
-    // TODO: Other "natural" conversions
-    // TODO: User-defined conversions (also to user-defined types)
-
-    default:
-      return Value::Access::mk_raw(data);
-    }
-  }
-  catch (std::out_of_range&)
-  {
-    // NULL value
-    return Value();
-  }
-}
-
-/*
-  Get value stored in column `pos` in row `m_pos` as a string.
-
-  For debugging purposes no real conversion to native C++ types
-  is done, but instead the returned string has format:
-
-    "<type>: <bytes>"
-
-  where <type> is the type of the column as reported by CDK and <bytes>
-  is a hex dump of the value. For STRING values we assume they are ascii
-  strings and show as stings, NULL values are shown as "<null>".
-*/
-
-const mysqlx::string Result::Impl::getString(mysqlx::col_count_t pos)
-{
-  if (!m_cursor)
-    throw "empty row";
-  if (pos > m_cursor->col_count())
-    throw "pos out of range";
-
-  std::wstringstream out;
-
-  // Add prefix with name of the CDK column type
-
-#define TYPE_NAME(X)  case cdk::TYPE_##X: out <<#X <<": "; break;
-
-  switch (m_cursor->type(pos))
-  {
-    CDK_TYPE_LIST(TYPE_NAME)
-  default:
-    out <<"UNKNOWN(" <<m_cursor->type(pos) <<"): "; break;
-  }
-
-  // Append value bytes
-
-  Row_data &rd= m_rows.at(m_pos);
-
-  try {
-    // will throw out_of_range exception if column at `pos` is NULL
-    cdk::bytes data= rd.at(pos).data();
-
-    switch (m_cursor->type(pos))
-    {
-    case cdk::TYPE_STRING:
-      // assume ascii string
-      out <<'"' <<std::string(data.begin(), data.end()-1).c_str() <<'"';
-      break;
-
-    default:
-
-      // Output other values as sequences of hex digits
-
-      for(byte *ptr= data.begin(); ptr < data.end(); ++ptr)
-      {
-        out <<std::setw(2) <<std::setfill(L'0') <<std::hex <<(unsigned)*ptr;
-      };
-      break;
-    }
-  }
-  catch (std::out_of_range&)
-  {
-    out <<"<null>";
-  }
-
-  return out.str();
-}
 
 
 void Result::Impl::read_rows()
@@ -424,6 +580,14 @@ try {
 CATCH_AND_WRAP
 
 
+BaseResult::Impl& BaseResult::get_impl()
+try {
+  if (!m_impl)
+    throw "Attempt to use null result instance";
+  return *m_impl;
+}
+CATCH_AND_WRAP
+
 const GUID& Result::getLastDocumentId() const
 try {
   if (!m_impl)
@@ -439,9 +603,18 @@ CATCH_AND_WRAP
 */
 
 
-Row* RowResult::fetchOne()
+Row RowResult::fetchOne()
 try {
-  return m_impl->get_row(m_pos++);
+  Impl &impl = get_impl();
+  cdk::row_count_t pos = impl.m_pos;
+
+  if (!impl.m_cursor)
+    throw "Attempt to fetch row from result without any data";
+  if (pos >= impl.m_rows.size())
+    return Row();
+
+  impl.m_pos++;
+  return Row(new Row::Impl(impl.m_rows.at(pos), impl.m_mdata));
 }
 CATCH_AND_WRAP
 
@@ -458,10 +631,13 @@ CATCH_AND_WRAP
 
 
 bool SqlResult::hasData() const
-try {
+//try
+{
+  // Note: add try catch wrapper if the code here
+  // can throw errors.
   return NULL != m_impl->m_cursor;
 }
-CATCH_AND_WRAP
+//CATCH_AND_WRAP
 
 
 /*
@@ -482,10 +658,11 @@ DocResult::~DocResult()
 }
 
 
-DbDoc* DocResult::fetchOne()
+DbDoc DocResult::fetchOne()
 try {
+  DbDoc doc = m_doc_impl->get_current_doc();
   m_doc_impl->next_doc();
-  return (m_doc_impl->has_doc() ? &(m_doc_impl->m_doc) : NULL);
+  return std::move(doc);
 }
 CATCH_AND_WRAP
 

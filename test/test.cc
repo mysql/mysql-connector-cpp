@@ -76,29 +76,29 @@ try {
   DocResult docs = coll.find().execute();
                      //.find("age > 1 and name like 'ba%'").execute();
 
-  DbDoc *doc = docs.fetchOne();
+  DbDoc doc = docs.fetchOne();
 
   for (int i = 0; doc; ++i, doc = docs.fetchOne())
   {
-    cout <<"doc#" <<i <<": " <<*doc <<endl;
+    cout <<"doc#" <<i <<": " <<doc <<endl;
 
-    for (Field fld : *doc)
+    for (Field fld : doc)
     {
-      cout << " field `" << fld << "`: " <<(*doc)[fld] << endl;
+      cout << " field `" << fld << "`: " <<doc[fld] << endl;
     }
 
-    string name = (*doc)["name"];
+    string name = doc["name"];
     cout << " name: " << name << endl;
 
-    if (doc->hasField("date") && Value::DOCUMENT == doc->fieldType("date"))
+    if (doc.hasField("date") && Value::DOCUMENT == doc.fieldType("date"))
     {
       cout << "- date field" << endl;
-      DbDoc date = (*doc)["date"];
+      DbDoc date = doc["date"];
       for (Field fld : date)
       {
         cout << "  date `" << fld << "`: " << date[fld] << endl;
       }
-      string month = (*doc)["date"]["month"];
+      string month = doc["date"]["month"];
       int day = date["day"];
       cout << "  month: " << month << endl;
       cout << "  day: " << day << endl;

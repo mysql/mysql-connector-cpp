@@ -119,37 +119,33 @@ public:
 class DocResult::Impl
   : RowResult
 {
-  bool   m_at_front;
-  DbDoc  m_doc;
+  Row  m_row;
 
   Impl(BaseResult &init)
     : RowResult(std::move(init))
-    , m_at_front(true)
   {
-    get_next_doc();
+    next_doc();
   }
 
-  void get_next_doc()
+  DbDoc get_current_doc()
   {
-    m_doc.m_impl.reset();
-    Row *row = fetchOne();
-    if (!row)
-      return;
-    bytes data = row->getBytes(0);
-    m_doc = DbDoc(std::string(data.begin(), data.end() - 1));
+    if (!m_row)
+      return DbDoc();
+
+    // @todo Avoid copying of document string.
+
+    bytes data = m_row.getBytes(0);
+    return DbDoc(std::string(data.begin(), data.end() - 1));
   }
 
   bool has_doc() const
   {
-    return (bool)m_doc.m_impl;
+    return (bool)m_row;
   }
 
   void next_doc()
   {
-    if (m_at_front)
-      m_at_front = false;
-    else
-      get_next_doc();
+    m_row = fetchOne();
   }
 
   friend class DocResult;

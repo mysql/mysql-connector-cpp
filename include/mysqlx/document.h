@@ -37,6 +37,36 @@ class Field;
 class DbDoc;
 class DocResult;
 
+
+// Field class
+// ===========
+
+/**
+  Field object/values represent fields in a document.
+
+  TODO: _fld suffix
+*/
+
+class Field : public string
+{
+public:
+
+  Field(const string &s) : string(s)
+  {}
+
+  // TODO: is it auto generated?
+  Field(string &&s) : string(s)
+  {}
+
+  Field(const char *s) : string(s)
+  {}
+};
+
+
+// Document class
+// ==============
+
+
 /**
   Represents a collection of key-value pairs where value can be a scalar
   or another document.
@@ -53,9 +83,17 @@ class DbDoc
   std::shared_ptr<Impl> m_impl;
 
   DbDoc(const std::shared_ptr<Impl>&);
-  DbDoc() {}
 
 public:
+
+  /**
+    Create null document instance.
+
+    @note Null document is different from empty document that has
+    no fields.
+  */
+
+  DbDoc() {}
 
   /**
     Creates DbDoc instance out of given JSON string description.
@@ -63,7 +101,12 @@ public:
 
   DbDoc(const std::string&);
 
-  /// Check if named field is a top-level filed in the document.
+  /// Check if document is null
+
+  bool isNull() const { return NULL == m_impl.get(); }
+  operator bool() const { return !isNull(); }
+
+  /// Check if named field is a top-level field in the document.
 
   virtual bool hasField(const Field&);
 
@@ -75,6 +118,8 @@ public:
   /// Return value of given field.
 
   virtual Value operator[](const Field&);
+  Value operator[](const char *name);
+  Value operator[](const wchar_t *name);
 
   /// Print JSON description of the document.
 
@@ -112,31 +157,6 @@ public:
   const Field& operator*();
 
   friend class DbDoc;
-};
-
-
-// Field class
-// ===========
-
-/**
-Field object/values represent fields in a document.
-
-TODO: _fld suffix
-*/
-
-class Field : public string
-{
-public:
-
-  Field(const string &s) : string(s)
-  {}
-
-  // TODO: is it auto generated?
-  Field(string &&s) : string(s)
-  {}
-
-  Field(const char *s) : string(s)
-  {}
 };
 
 
@@ -204,12 +224,12 @@ public:
   */
   //@{
 
-  operator int();
-  operator float();
-  operator double();
-  operator bool();
-  operator string();
-  operator DbDoc();
+  operator int() const;
+  operator float() const;
+  operator double() const;
+  operator bool() const;
+  operator string() const;
+  operator DbDoc() const;
 
   //@}
 
@@ -219,6 +239,10 @@ public:
   */
 
   Type  getType() const { return m_type; }
+
+  /// Convenience method for checking if value is null.
+
+  bool isNull() const { return VNULL == getType(); }
 
   /**
     Check if document value contains given (top-level) field.
@@ -244,7 +268,7 @@ protected:
 
   Type m_type;
 
-  void check_type(Type t)
+  void check_type(Type t) const
   {
     if (m_type != t)
       throw "Invalid value type";
@@ -262,7 +286,7 @@ protected:
   /*
     TODO: Above union can not have members of type string or DbDoc.
     Find another way of sharing memory between representations of
-    different values.
+    different values (try boost::variant?)
   */
 
   string m_str;
@@ -274,6 +298,17 @@ public:
 
   friend class DbDoc;
 };
+
+
+inline
+Value DbDoc::operator[](const char *name)
+{ return (*this)[Field(name)]; }
+
+inline
+Value DbDoc::operator[](const wchar_t *name)
+{
+  return (*this)[Field(name)];
+}
 
 
 // Value type conversions
@@ -294,7 +329,7 @@ inline Value::Value(uint64_t val) : m_type(UINT64)
 
 // TODO: Other integer conversions
 
-inline Value::operator int()
+inline Value::operator int() const
 {
   if (UINT64 != m_type && INT64 != m_type)
     throw "Not an integer value";
@@ -317,7 +352,7 @@ inline Value::Value(float val) : m_type(FLOAT)
 }
 
 inline
-Value::operator float()
+Value::operator float() const
 {
   check_type(FLOAT);
   return m_val._float_v;
@@ -330,7 +365,7 @@ inline Value::Value(double val) : m_type(DOUBLE)
 }
 
 inline
-Value::operator double()
+Value::operator double() const
 {
   check_type(DOUBLE);
   return m_val._double_v;
@@ -343,7 +378,7 @@ inline Value::Value(bool val) : m_type(BOOL)
 }
 
 inline
-Value::operator bool()
+Value::operator bool() const
 {
   check_type(BOOL);
   return m_val._bool_v;
@@ -356,14 +391,14 @@ inline Value::Value(const string &val) : m_type(STRING)
 }
 
 inline
-Value::operator string()
+Value::operator string() const
 {
   check_type(STRING);
   return m_str;
 }
 
 inline
-Value::operator DbDoc()
+Value::operator DbDoc() const
 {
   check_type(DOCUMENT);
   return m_doc;

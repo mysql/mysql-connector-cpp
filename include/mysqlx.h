@@ -27,7 +27,7 @@
   This header should be included by code that wants to use Connector/C++.
   It defines classes that form public API implemented by the connector.
 
-  @sa result.h
+  @sa result.h, document.h
 */
 
 
