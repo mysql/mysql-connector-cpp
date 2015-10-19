@@ -3,9 +3,9 @@ Building Connector/C++ 2.0  {#building}
 
 Prerequisites
 -------------
-To build Connector/C++ one needs the following tools and libraries:
+To build Connector/C++, the following tools and libraries are required:
 
-- C++ compiler that supports C++11. The following compilers have
+- A C++ compiler that supports C++11. These compilers have
   been tested: gcc 4.8.4, MS Visual Studio 2013.
 
 - CMake 2.8.11 or later.
@@ -16,16 +16,16 @@ To build Connector/C++ one needs the following tools and libraries:
 
 Build configuration
 -------------------
-Only out-of-source builds are supported. To configure build
-one executes `cmake` in a dedicated build location (not in the
-source directory) as usuall:
+Only out-of-source builds are supported. To configure build, execute
+`cmake` in a dedicated build location (not in the source directory)
+as usual:
 
 ~~~~~~~
 $ cmake -G ... -D ... <Connector/C++ source location>
 ~~~~~~~
 
 If `cmake` can not find Boost or Protobuf, or if they are installed
-in non-standard locations, then one should specify correct locations
+in non-standard locations, specify correct locations
 with options:
 
 - `-DWITH_BOOST=<Boost location>`
@@ -33,69 +33,70 @@ with options:
 
 Building and testing
 --------------------
-One can start a build with the following cmake invocation in the build
+A build can be started with the following cmake invocation in the build
 location:
 
 ~~~~~~~
 $ cmake --build . --config=CCC
 ~~~~~~~
 
-where `CCC` is the build configuration, such as `Release` or `Debug`,
-which we want to build.
+where `CCC` is the build configuration to use, such as `Release`
+or `Debug`.
 
-After successful build, build location shouild contain Connector/C++
-static library `libmysql_concpp.a` (`CCC/mysql_concpp.lib` on Windows).
+After a successful build, the build location shouild contain
+the Connector/C++ static library `libmysql_concpp.a` (`CCC/mysql_concpp.lib` on Windows).
 
 ### Testing
 
-To perform basic test of the functionality, one can build and run the
-test program included in `test` subfolder of the source location. A
-running MySQL 5.7 Server instance is needed to run `test` application
-(see below).
+To perform basic testing of the functionality, build and run the
+test program included in the `test` subdirectory of the source location.
+A running MySQL 5.7 Server instance is needed to run the `test`
+application (see below).
 
-Before building `test` program Connector/C++ needs to be installed
-somewhere. After picking suitable location, one executes in
-Connector/C++ location:
+Before building the `test` program Connector/C++ must be installed
+somewhere. After picking a suitable location, executes the following
+command in the Connector/C++ build location:
 
 ~~~~~~~
 $ cmake --build . --target install -- DESTDIR=<install location>
 ~~~~~~~
 
-Building `test` program is managed by `cmake` again. After picking
-a build location for `test` one issues the following commands there:
+To build the `test` program, run `cmake` again. After picking
+a build location for `test`, issue the following commands there:
 
 ~~~~~~~
 $ cmake -G ... -DWITH_CONCPLS=<install location>/usr/local <source location>/test
 $ cmake --build . --target test
 ~~~~~~~
 
-This should create `test` executable in the build location.
+This should create the `test` executable in the build location.
 
-Before running `test` one has to ensure that a MySQL Server instance
-is running with MySQL Hybrid plugin loaded into it. Easiest way of
+Before running `test`, ensure that a MySQL Server instance
+is running with MySQL Hybrid plugin loaded into it. The easiest way of
 arranging this is to use `mysql-test-run.pl` script from MySQL Server
-distribution. In the `mysql-test` subfolder of the MySQL Server
-location one can ivoke:
+distribution. In the `mysql-test` subdirectory of that distribution,
+invoke this command:
 
 ~~~~~~~
 $ perl mysql-test-run.pl --start-and-exit --mysqld=--plugin-load=mysqlx
 ~~~~~~~
 
-This should start test server instance with MySQL Hybrid plugin loaded
+This should start a test server instance with MySQL Hybrid plugin loaded
 into it. By default the plugin will listen on port 13010.
 
-Now one can start `test` program and see the output similar to one presented
-beolw. The program accepts port number as the first argument, with default
-value 33060. Thus, if server was started as described above, one should run
+Now one can start the `test` program and see the output similar to the
+one presented below. The program accepts port number as the first argument,
+with the default value 33060. Thus, if the server was started as described
+previously, run the test program as follows:
 
 ~~~~~~~
 $ test 13010
 ~~~~~~~
 
-The program uses `root` user account without any password and assumes that
-there is `test` schema in the server (these assumptions hold for server started
-using `mysql-test-run.pl`). Different user credentials can be passed as second
-and third argument of `test` invocation.
+The program uses the `root` user account without any password and assumes
+that there is a `test` schema in the server (these assumptions hold for
+a server started using `mysql-test-run.pl`). Different user credentials
+can be passed as the second and the third argument of `test` invocation.
 
 If everything goes well, `test` should produce output similar to this:
 
@@ -142,16 +143,31 @@ doc#3: {"_id": "myuuid-1", "age": 7, "name": "foo"}
 Done!
 ~~~~~~~
 
-Windows notes
+Windows Notes
 -------------
-On Windows one can request that Connector/C++ uses static runtime
+On Windows one can request that Connector/C++ uses the static runtime
 library (The `/MT*` compiler option) by setting:
 
 - `-DSTATIC_MSVCRT=yes`
 
 This might be necessary if code which uses Connector/C++ also uses
-static runtime. Also, Protobuf's library dynamic/static runtime type
+the static runtime. Also, Protobuf's library dynamic/static runtime type
 must match that of Connector/C++.
 
 @todo
-  Document caveats with Debug/Release missmatch.
+  Document caveats with Debug/Release mismatch.
+
+OSX Notes
+---------
+Connector/C++ is built on OSX using the `clang` compiler with the `libc++`
+C++ runtime library. The same runtime library should be used by
+applications that link against Connector/C++. To arrange this,
+pass `-stdlib=libc++` to compiler and linker invocations. One can also
+define deployment target by setting the nevironment variable
+`MACOSX_DEPLOYMENT_TARGET` to the OSX version and then compiler defaults
+appropriate for that version will be used. Binary distribution of
+Connector/C++ is built with `MACOSX_DEPLOYMENT_TARGET` set to `10.9`.
+
+Building Connector/C++ with `gcc` or its `libstdc++` runtime
+implementation has not been tested and there is no support in the build
+system for using an alternative C++ runtime library.
