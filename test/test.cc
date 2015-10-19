@@ -49,7 +49,7 @@ try {
   Schema sch= sess.getSchema("test");
   Collection coll= sch.createCollection("c1", true);
 
-  cout <<"inserting document..." <<endl;
+  cout <<"Inserting documents..." <<endl;
 
   coll.remove().execute();
 
@@ -71,10 +71,7 @@ try {
 
   cout <<"Fetching documents..." <<endl;
 
-  // TODO: Add select criteria when myc-125 is fixed.
-
-  DocResult docs = coll.find().execute();
-                     //.find("age > 1 and name like 'ba%'").execute();
+  DocResult docs = coll.find("age > 1 and name like 'ba%'").execute();
 
   DbDoc doc = docs.fetchOne();
 
