@@ -22,7 +22,6 @@
 #  -D SITE=<cdash site name>
 #  -D SOURCE=<src location>
 #  -D GENERATOR=<cmake generator name>
-#  -D WITH_PROTOBUF=<protobuf location>
 #  -D WITH_GTEST=<gtest location>
 #
 #  additional options that can be specified
@@ -59,9 +58,6 @@ set_param(BUILD "build location" build)
 get_filename_component(CTEST_BINARY_DIRECTORY ${BUILD} ABSOLUTE)
 
 set_param(GENERATOR "cmake generator name")
-
-check_param(WITH_PROTOBUF "protobuf location")
-get_filename_component(WITH_PROTOBUF ${WITH_PROTOBUF} ABSOLUTE)
 
 set_param(WITH_BOOST "boost location")
 if (DEFINED WITH_BOOST)
@@ -118,7 +114,6 @@ message("Using cmake generator: ${CTEST_CMAKE_GENERATOR}")
 
 list(APPEND CONFIG_OPTIONS -DWITH_TESTS=0)
 list(APPEND CONFIG_OPTIONS -DWITH_DOC=0)
-list(APPEND CONFIG_OPTIONS -DWITH_PROTOBUF=${WITH_PROTOBUF})
 if(DEFINED WITH_BOOST)
   list(APPEND CONFIG_OPTIONS -DWITH_BOOST=${WITH_BOOST})
 else()

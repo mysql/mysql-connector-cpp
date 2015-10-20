@@ -183,26 +183,8 @@ ADD_SUBDIRECTORY(connector)
 
 INCLUDE(libutil)
 
-#
-# Get location of non-debug protobuf library to merge it in.
-#
-# TODO: Do it better
-#
-
-INCLUDE(protobuf)
-#message(${PROTOBUF_LIBRARIES})
-
-LIST(FIND PROTOBUF_LIBRARIES "optimized" pos)
-IF(pos LESS 0)
-  LIST(GET PROTOBUF_LIBRARIES 0 protobuf)
-ELSE()
-  MATH(EXPR pos "${pos}+1")
-  LIST(GET PROTOBUF_LIBRARIES ${pos} protobuf)
-ENDIF()
-#message("protobuf: ${protobuf}")
-
 MERGE_STATIC_LIBS(libconcpp "mysql_concpp"
-                  "connector;${protobuf}")
+                  "connector")
 INSTALL(TARGETS libconcpp DESTINATION lib)
 
 #
@@ -218,6 +200,25 @@ ADD_EXECUTABLE(try try.cc)
 TARGET_LINK_LIBRARIES(try libconcpp)
 SET_INTERFACE_OPTIONS(try connector)
 #  ADD_GCOV(try)
+
+#
+# Show dynamic library dependencies for try program.
+#
+
+find_program(LDD ldd)
+if(NOT LDD)
+  find_program(LDD otool)
+  if(LDD)
+    set(LDD_OPTS "-L")
+  endif()
+endif()
+
+if(LDD)
+  add_custom_command(TARGET try POST_BUILD
+    COMMAND ${LDD} ${LDD_OPTS} $<TARGET_FILE:try>
+    COMMENT "Checking dynamic library dependencies:"
+  )
+endif()
 
 #
 # Target for running all declared tests (run_unit_tests)
