@@ -10,3 +10,4 @@ More information:
 - [Sample code which uses Connector/C++] (@ref sample)
 - [How to build code that uses Connector/C++](@ref usage)
 - [Building Connector/C++] (@ref building)
+- [MySQL DevAPI User Guide] (http://insidemysql.com/mysqlx/docs/mysqlx-devapi-userguide/en/index.html)

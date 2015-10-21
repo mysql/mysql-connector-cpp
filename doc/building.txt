@@ -10,9 +10,7 @@ To build Connector/C++, the following tools and libraries are required:
 
 - CMake 2.8.11 or later.
 
-- Boost library - source distribution. Tested with Boost 1.56.
-
-- Protobuf library. Tested with version 1.6.
+- Boost library version 1.55 or higher. Tested with Boost 1.56.
 
 Build configuration
 -------------------
@@ -24,12 +22,11 @@ as usual:
 $ cmake -G ... -D ... <Connector/C++ source location>
 ~~~~~~~
 
-If `cmake` can not find Boost or Protobuf, or if they are installed
-in non-standard locations, specify correct locations
-with options:
+If `cmake` can not find correct Boost version, or if it is installed
+in non-standard location, specify correct location using option:
 
 - `-DWITH_BOOST=<Boost location>`
-- `-DWITH_PROTOBUF=<Protobuf location>`
+
 
 Building and testing
 --------------------
@@ -44,7 +41,8 @@ where `CCC` is the build configuration to use, such as `Release`
 or `Debug`.
 
 After a successful build, the build location shouild contain
-the Connector/C++ static library `libmysql_concpp.a` (`CCC/mysql_concpp.lib` on Windows).
+the Connector/C++ static library `libmysql_concpp.a`
+(`CCC/mysql_concpp.lib` on Windows).
 
 ### Testing
 
@@ -53,8 +51,8 @@ test program included in the `test` subdirectory of the source location.
 A running MySQL 5.7 Server instance is needed to run the `test`
 application (see below).
 
-Before building the `test` program Connector/C++ must be installed
-somewhere. After picking a suitable location, executes the following
+Before building the `test` program, Connector/C++ must be installed
+somewhere. After picking a suitable location, execute the following
 command in the Connector/C++ build location:
 
 ~~~~~~~
@@ -82,7 +80,8 @@ $ perl mysql-test-run.pl --start-and-exit --mysqld=--plugin-load=mysqlx
 ~~~~~~~
 
 This should start a test server instance with MySQL Hybrid plugin loaded
-into it. By default the plugin will listen on port 13010.
+into it. When started like this, the plugin will listen on port 13010
+instead of the standard 33060 one.
 
 Now one can start the `test` program and see the output similar to the
 one presented below. The program accepts port number as the first argument,
@@ -110,14 +109,14 @@ inserting document...
 - added doc with id: 3492B4BF6B72E511BD76001E684A06F0
 - added doc with id: myuuid-1
 Fetching documents...
-doc#0: {"_id": "2885B4BF6B72E511BD76001E684A06F0", "age": 2, "name": "bar"}
- field `_id`: 2885B4BF6B72E511BD76001E684A06F0
+doc#0: {"_id": "82C29A44EB77E5116134001E684A06F0", "age": 2, "name": "bar"}
+ field `_id`: 82C29A44EB77E5116134001E684A06F0
  field `age`: 2
  field `name`: bar
  name: bar
 
-doc#1: {"_id": "3492B4BF6B72E511BD76001E684A06F0", "age": 3, "date": {"day": 20, "month": "Apr"}, "name": "baz"}
- field `_id`: 3492B4BF6B72E511BD76001E684A06F0
+doc#1: {"_id": "AEFD9C44EB77E5116134001E684A06F0", "age": 3, "date": {"day": 20, "month": "Apr"}, "name": "baz"}
+ field `_id`: AEFD9C44EB77E5116134001E684A06F0
  field `age`: 3
  field `date`: <document>
  field `name`: baz
@@ -127,18 +126,6 @@ doc#1: {"_id": "3492B4BF6B72E511BD76001E684A06F0", "age": 3, "date": {"day": 20,
   date `month`: Apr
   month: Apr
   day: 20
-
-doc#2: {"_id": "AA71B4BF6B72E511BD76001E684A06F0", "age": 1, "name": "foo"}
- field `_id`: AA71B4BF6B72E511BD76001E684A06F0
- field `age`: 1
- field `name`: foo
- name: foo
-
-doc#3: {"_id": "myuuid-1", "age": 7, "name": "foo"}
- field `_id`: myuuid-1
- field `age`: 7
- field `name`: foo
- name: foo
 
 Done!
 ~~~~~~~
@@ -151,22 +138,22 @@ library (The `/MT*` compiler option) by setting:
 - `-DSTATIC_MSVCRT=yes`
 
 This might be necessary if code which uses Connector/C++ also uses
-the static runtime. Also, Protobuf's library dynamic/static runtime type
-must match that of Connector/C++.
+the static runtime.
 
 @todo
   Document caveats with Debug/Release mismatch.
 
-OSX Notes
----------
-Connector/C++ is built on OSX using the `clang` compiler with the `libc++`
+OS X Notes
+----------
+On OS X, Connector/C++ is built using the `clang` compiler with the `libc++`
 C++ runtime library. The same runtime library should be used by
 applications that link against Connector/C++. To arrange this,
-pass `-stdlib=libc++` to compiler and linker invocations. One can also
-define deployment target by setting the nevironment variable
-`MACOSX_DEPLOYMENT_TARGET` to the OSX version and then compiler defaults
-appropriate for that version will be used. Binary distribution of
-Connector/C++ is built with `MACOSX_DEPLOYMENT_TARGET` set to `10.9`.
+pass `-stdlib=libc++` to compiler and linker invocations. Another option is
+to set the required deployment target and then compiler defaults
+are changed accordingly. To define the deployment target, set the nevironment
+variable `MACOSX_DEPLOYMENT_TARGET` to the requested OS X version.
+Binary distributions of Connector/C++ are built with `MACOSX_DEPLOYMENT_TARGET`
+set to `10.9`.
 
 Building Connector/C++ with `gcc` or its `libstdc++` runtime
 implementation has not been tested and there is no support in the build
