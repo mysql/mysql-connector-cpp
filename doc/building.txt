@@ -10,9 +10,7 @@ To build Connector/C++, the following tools and libraries are required:
 
 - CMake 2.8.11 or later.
 
-- Boost library - source distribution. Tested with Boost 1.56.
-
-- Protobuf library. Tested with version 1.6.
+- Boost library version 1.55 or higher - source distribution. Tested with Boost 1.56.
 
 Build configuration
 -------------------
@@ -24,12 +22,11 @@ as usual:
 $ cmake -G ... -D ... <Connector/C++ source location>
 ~~~~~~~
 
-If `cmake` can not find Boost or Protobuf, or if they are installed
-in non-standard locations, specify correct locations
-with options:
+If `cmake` can not find correct Boost version, or if it is installed
+in non-standard location, specify correct location using option:
 
 - `-DWITH_BOOST=<Boost location>`
-- `-DWITH_PROTOBUF=<Protobuf location>`
+
 
 Building and testing
 --------------------
@@ -44,7 +41,8 @@ where `CCC` is the build configuration to use, such as `Release`
 or `Debug`.
 
 After a successful build, the build location shouild contain
-the Connector/C++ static library `libmysql_concpp.a` (`CCC/mysql_concpp.lib` on Windows).
+the Connector/C++ static library `libmysql_concpp.a`
+(`CCC/mysql_concpp.lib` on Windows).
 
 ### Testing
 
