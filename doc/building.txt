@@ -27,6 +27,13 @@ in non-standard location, specify correct location using option:
 
 - `-DWITH_BOOST=<Boost location>`
 
+To specify installation location (see below), use option:
+
+- `-DCMAKE_INSTALL_PREFIX=<Install location>`
+
+If not specified, the install location defaults to
+`/usr/local/mysql/connector-c++-2.0` (`<User home>/MySQL/"MySQL Connector C++ 2.0"`
+on Windows).
 
 Building and testing
 --------------------
@@ -52,18 +59,19 @@ A running MySQL 5.7 Server instance is needed to run the `test`
 application (see below).
 
 Before building the `test` program, Connector/C++ must be installed
-somewhere. After picking a suitable location, execute the following
-command in the Connector/C++ build location:
+first. To instal Connector/C++ to the default location or to the one specified 
+with `CMAKE_INSTALL_PREFIX` option during the configuration process,
+execute the following command in the build location:
 
 ~~~~~~~
-$ cmake --build . --target install -- DESTDIR=<install location>
+$ cmake --build . --target install
 ~~~~~~~
 
 To build the `test` program, run `cmake` again. After picking
 a build location for `test`, issue the following commands there:
 
 ~~~~~~~
-$ cmake -G ... -DWITH_CONCPLS=<install location>/usr/local <source location>/test
+$ cmake -G ... -DWITH_CONCPLS=<Connector/C++ install location> <source location>/test
 $ cmake --build . --target test
 ~~~~~~~
 
