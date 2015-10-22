@@ -4,8 +4,9 @@ Using Connector/C++ 2.0  {#usage}
 When compiling code which uses MySQL Connector/C++, add
 `<Connector/C++ install location>/include` to the include path of
 the project, and link compiled code with
-the `<Connector/C++ install location>/lib/libmysql_concpp.a` library
-as well as the `pthread` library on which Connector/C++ depends.
+the `<Connector/C++ install location>/lib/libmysql_concpp.a` library.
+On a Linux platform, also link with the `pthread` library on which
+Connector/C++ depends on that platform.
 
 Since Connector/C++ uses C++11 language, one should enable C++11 support
 in the compiler, unless it is the default. For `gcc` and `clang`
@@ -17,7 +18,7 @@ with sources in `app.cc` looks like this:
 ~~~~~~~
 MYSQL_CONCPP_DIR= ...
 CPPFLAGS = -I $(MYSQL_CONCPP_DIR)/include
-LDLIBS = pthread
+LDLIBS = -lpthread
 CXXFLAGS = -std=c++11
 LINK.o = $(LINK.cc)  # use c++ linker
 
@@ -59,7 +60,6 @@ A `Makefile` for OS X build might look as follows:
 ~~~~~~~
 MYSQL_CONCPP_DIR= ...
 CPPFLAGS = -I $(MYSQL_CONCPP_DIR)/include
-LDLIBS = pthread
 CXX = clang++ -stdlib=libc++
 CXXFLAGS = -std=c++11
 LINK.o = $(LINK.cc)  # use c++ linker

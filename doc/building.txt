@@ -19,7 +19,7 @@ Only out-of-source builds are supported. To configure build, execute
 as usual:
 
 ~~~~~~~
-$ cmake -G ... -D ... <Connector/C++ source location>
+$ cmake <Connector/C++ source location>
 ~~~~~~~
 
 If `cmake` can not find correct Boost version, or if it is installed
@@ -85,7 +85,7 @@ To build the `test` program, pick a build location for it and issue the followin
 commands there:
 
 ~~~~~~~
-$ cmake -G ... -DWITH_CONCPLS=<Connector/C++ install location> <source location>/test
+$ cmake -DWITH_CONCPLS=<Connector/C++ install location> <source location>/test
 $ cmake --build . --target test --config CCC
 ~~~~~~~
 
@@ -122,7 +122,7 @@ with the default value 33060. Thus, if the server was started as described
 previously, run the test program as follows:
 
 ~~~~~~~
-$ test 13010
+$ ./test 13010
 ~~~~~~~
 
 The program uses the `root` user account without any password and assumes
