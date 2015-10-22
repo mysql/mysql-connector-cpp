@@ -65,23 +65,40 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 #
-# Use static runtime library on Windows, beacuase MySQL Connector/C++ is
-# built using static runtime.
+# On Windows, if MySQL Connector/C++ was built with the static runtime
+# then we must do the same here. Option STATIC_MSVCRT selects the static
+# runtime.
 #
 
 IF(WIN32)
 
-message("Using static runtime library")
+  OPTION(STATIC_MSVCRT "Use static MSVC runtime library" OFF)
 
-foreach(LANG C CXX)
-  set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /MT")
-  foreach(TYPE RELEASE RELWITHDEBINFO MINSIZEREL)
-    set(CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}} /MT")
-  endforeach()
-  set(CMAKE_${LANG}_FLAGS_DEBUG "${CMAKE_${LANG}_FLAGS_DEBUG} /MTd")
-endforeach(LANG)
+  set(runtime "dynamic")
+
+  IF(STATIC_MSVCRT)
+
+  set(runtime "static")
+
+  foreach(LANG C CXX)
+    set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /MT")
+    foreach(TYPE RELEASE RELWITHDEBINFO MINSIZEREL)
+      set(CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}} /MT")
+    endforeach()
+    set(CMAKE_${LANG}_FLAGS_DEBUG "${CMAKE_${LANG}_FLAGS_DEBUG} /MTd")
+  endforeach(LANG)
+
+  ENDIF()
+
+  # TODO: Some automatic check of the runtime used by C/C++ and hard error here.
+
+  message("Using ${runtime} runtime library."
+          " Make sure that the connector given by WITH_CONCPLS uses"
+          " the same runtime type - otherwise linking will fail due to"
+          " runtime missmatch.")
 
 ENDIF()
+
 
 #
 # Test program that uses MySQL Connector/C++ 2.0.

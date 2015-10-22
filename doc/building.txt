@@ -41,7 +41,7 @@ A build can be started with the following cmake invocation in the build
 location:
 
 ~~~~~~~
-$ cmake --build . --config=CCC
+$ cmake --build . --config CCC
 ~~~~~~~
 
 where `CCC` is the build configuration to use, such as `Release`
@@ -67,15 +67,30 @@ execute the following command in the build location:
 $ cmake --build . --target install
 ~~~~~~~
 
-To build the `test` program, run `cmake` again. After picking
-a build location for `test`, issue the following commands there:
+@note
+  It is possible to change the `CMAKE_INSTALL_PREFIX` setting before doing
+  the installation. To change it, issue the following command before building
+  `install` target:
+  ~~~~~~~
+  $ cmake -DCMAKE_INSTALL_PREFIX=<new location> .
+  ~~~~~~~
+
+To build the `test` program, pick a build location for it and issue the following
+commands there:
 
 ~~~~~~~
 $ cmake -G ... -DWITH_CONCPLS=<Connector/C++ install location> <source location>/test
-$ cmake --build . --target test
+$ cmake --build . --target test --config CCC
 ~~~~~~~
 
-This should create the `test` executable in the build location.
+The `CCC` build configuration used for `test` should match the one that was
+used when builiding the connector. Above commands should create the `test`
+executable in the build location (on Windows, in the `CCC` subdirectory).
+
+@note
+  On Windows, if the connector was built with the static runtime
+  by specifying `-DSTATC_MSVCRT=yes` configuration option (see below),
+  the same option must be added to the `test` build configuration.
 
 Before running `test`, ensure that a MySQL Server instance
 is running with MySQL Hybrid plugin loaded into it. The easiest way of
@@ -140,6 +155,9 @@ Done!
 
 Windows Notes
 -------------
+Connector/C++ uses C++11 language and for that reason it is not possible
+to build it with Microsoft Visual Studio 2010 or earlier.
+
 On Windows one can request that Connector/C++ uses the static runtime
 library (The `/MT*` compiler option) by setting:
 

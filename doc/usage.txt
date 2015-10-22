@@ -27,6 +27,17 @@ app : app.o $(MYSQL_CONCPP_DIR)/lib/libmysql_concpp.a
 To use Connector/C++ API the source code should include the `mysqlx.h` header.
 All Connector/C++ API symbols live in the `mysqlx` namespace.
 
+
+Windows Notes
+-------------
+
+On Windows, Connector/C++ can be built with the static or the dynamic runtime
+library (as selected by the `STATIC_MSVCRT` configuration option, see @ref building).
+The runtime type of an application which uses Connector/C++ must match the runtime
+type of the connector. The correct runtime type is selected using `/MD` or `/MT`
+compiler option which can be configured, e.g., from Visual Studio project settings.
+
+
 OS X Notes
 ----------
 
