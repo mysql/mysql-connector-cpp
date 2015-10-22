@@ -39,7 +39,6 @@ step("Install")
 execute_process(COMMAND ${CMAKE_COMMAND}
   --build .
   --target install
-#  -- DESTDIR=${CTEST_BINARY_DIRECTORY}/install
   WORKING_DIRECTORY ${CTEST_BINARY_DIRECTORY}
 )
 
@@ -49,8 +48,13 @@ step("Configure test project")
 file(REMOVE_RECURSE ${CTEST_BINARY_DIRECTORY}/test)
 file(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/test)
 
+if(WIN32 AND DEFINED STATIC_MSVCRT)
+  set(config_options "-DSTATIC_MSVCRT=${STATIC_MSVCRT}")
+endif()
+
 execute_process(COMMAND ${CMAKE_COMMAND}
   -DWITH_CONCPLS=${CTEST_BINARY_DIRECTORY}/install
+  ${config_options}
   ${CTEST_SOURCE_DIRECTORY}/test
   WORKING_DIRECTORY ${CTEST_BINARY_DIRECTORY}/test
   RESULT_VARIABLE config_result
