@@ -93,7 +93,7 @@ class Schema
 
 public:
 
-  /// @costructor
+  /// Construct named schema object.
   Schema(XSession &sess, const string &name)
     : m_sess(sess), m_name(name)
   {}
@@ -406,21 +406,21 @@ class NodeSession
 {
 public:
 
-  /// @constructor
+  /// Create a single node session.
   NodeSession(const char* host, unsigned short port,
               const string  &user,
               const char    *pwd =NULL)
    : XSession(host, port, user, pwd)
   {}
 
-  /// @constructor
+  /// Create a single node session on localhost.
   NodeSession(unsigned short port,
               const string  &user,
               const char    *pwd =NULL)
    : NodeSession("localhost", port, user, pwd)
   {}
 
-  /// @member
+  /// Operation that runs arbitrary SQL query on the node.
   Executable& sql(const string &query);
 };
 

@@ -44,8 +44,8 @@ removed first:
 The `remove()` method can also accept an expression argument which selects
 documents to be removed. Note that the `remove()` method returns
 an operation that must be explicitly executed to take effect.
-When executed, operation returns a result, but we ignore it here
-(ignored here; the results are used later).
+When executed, operation returns a result (ignored here; the results are
+used later).
 
 To insert documents use the `Collection::add()` method.
 Documents are described by JSON strings using the same syntax
@@ -71,12 +71,13 @@ longer needed.
 to pass several documents to a single `add()` call:
 `coll.add(doc1, ..., docN).execute()`.
 
+@todo Adding documents described by `DbDoc` objects.
+
 To query documents of a collection use the `Collection::find()`
 method:
 
 @skipline find()
 
-The `DocResult` variable stores 
 The result of the `find()` operation is stored in a variable of type
 `DocResult` because it contains the returned sequence of documents that
 satisfy the selection criteria. These documents can be fetched one by one
@@ -100,13 +101,12 @@ fields:
 
 The value of a field is automatically converted to a corresponding
 C++ type. If the C++ type does not match the type of the field value,
-conversion error is thrown.
-Currently only strings, numbers and documents are converted to C++ types.
-Document values are convertible to the `DbDoc` type.
+conversion error is thrown. Currently only strings, numbers and documents are
+converted to C++ types. Document values are convertible to the `DbDoc` type.
 
-The `DbDoc::hasField()` and `DbDoc::fieldType()` methods.can be used
+The `DbDoc::hasField()` and `DbDoc::fieldType()` methods can be used
 to examine fields of a document. The following code demonstrats how
-to process a `"date"` field of a docuemnt which is a subdocument:
+to process a `"date"` field of a document which is a subdocument:
 
 @skipline if
 @until }
@@ -118,9 +118,9 @@ and can be processed as follows:
 @skipline catch
 @until }
 
-See full documentation of DevAPI implemented by Connector/C++.
-
-@todo Links to DevAPI documentation.
+See [full documentation of DevAPI] (http://insidemysql.com/mysqlx/docs/mysqlx-devapi-userguide/en/index.html)
+implemented by Connector/C++. Note however, that the implementation is not yet
+complete.
 
 The complete code of the example is presented below:
 
@@ -138,14 +138,14 @@ inserting document...
 - added doc with id: 3492B4BF6B72E511BD76001E684A06F0
 - added doc with id: myuuid-1
 Fetching documents...
-doc#0: {"_id": "2885B4BF6B72E511BD76001E684A06F0", "age": 2, "name": "bar"}
- field `_id`: 2885B4BF6B72E511BD76001E684A06F0
+doc#0: {"_id": "82C29A44EB77E5116134001E684A06F0", "age": 2, "name": "bar"}
+ field `_id`: 82C29A44EB77E5116134001E684A06F0
  field `age`: 2
  field `name`: bar
  name: bar
 
-doc#1: {"_id": "3492B4BF6B72E511BD76001E684A06F0", "age": 3, "date": {"day": 20, "month": "Apr"}, "name": "baz"}
- field `_id`: 3492B4BF6B72E511BD76001E684A06F0
+doc#1: {"_id": "AEFD9C44EB77E5116134001E684A06F0", "age": 3, "date": {"day": 20, "month": "Apr"}, "name": "baz"}
+ field `_id`: AEFD9C44EB77E5116134001E684A06F0
  field `age`: 3
  field `date`: <document>
  field `name`: baz
@@ -156,18 +156,30 @@ doc#1: {"_id": "3492B4BF6B72E511BD76001E684A06F0", "age": 3, "date": {"day": 20,
   month: Apr
   day: 20
 
-doc#2: {"_id": "AA71B4BF6B72E511BD76001E684A06F0", "age": 1, "name": "foo"}
- field `_id`: AA71B4BF6B72E511BD76001E684A06F0
- field `age`: 1
- field `name`: foo
- name: foo
-
-doc#3: {"_id": "myuuid-1", "age": 7, "name": "foo"}
- field `_id`: myuuid-1
- field `age`: 7
- field `name`: foo
- name: foo
-
 Done!
 ~~~~~~~
 
+
+<!--
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+
+  The MySQL Connector/C++ is licensed under the terms of the GPLv2
+  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+  MySQL Connectors. There are special exceptions to the terms and
+  conditions of the GPLv2 as it is applied to this software, see the
+  FLOSS License Exception
+  <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published
+  by the Free Software Foundation; version 2 of the License.
+
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+  for more details.
+
+  You should have received a copy of the GNU General Public License along
+  with this program; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+-->

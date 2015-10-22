@@ -142,11 +142,6 @@ class Result : public BaseResult
 {
 public:
 
-  /**
-    Construct empty `Result` instance that can
-    store results returned by `execute()` method.
-  */
-
   Result& operator=(BaseResult &&other)
   {
     init(std::move(other));

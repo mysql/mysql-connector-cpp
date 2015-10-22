@@ -24,9 +24,8 @@ LINK.o = $(LINK.cc)  # use c++ linker
 app : app.o $(MYSQL_CONCPP_DIR)/lib/libmysql_concpp.a
 ~~~~~~~
 
-To use Connector/C++ API the source code should contain
-`#include <mysqlx.h>` directive. All Connector/C++ API symbols live in
-the `mysqlx` namespace.
+To use Connector/C++ API the source code should include the `mysqlx.h` header.
+All Connector/C++ API symbols live in the `mysqlx` namespace.
 
 OS X Notes
 ----------
@@ -36,11 +35,10 @@ OS X native `clang` compiler. For that reason it is best to build
 an application that uses the connector with the same `clang` compiler.
 
 The `clang` compiler can use two different implementations of
-the C++ runtime library: either the native `libc++` or the GNU `libstdc++`.
-It is important that an application uses the same runtime implementation
-as Connector/C++, that is, the native `libc++`. To ensure that,
-the `-stdlib=libc++` option should be passed to compiler and linker
-invocations.
+the C++ runtime library: either the native `libc++` or the GNU `libstdc++`
+library. It is important that an application uses the same runtime implementation
+as Connector/C++, that is, the native `libc++`. To ensure that, the
+`-stdlib=libc++` option should be passed to compiler and linker invocations.
 
 A `Makefile` for OS X build might look as follows:
 
@@ -59,3 +57,28 @@ app : app.o $(MYSQL_CONCPP_DIR)/lib/libmysql_concpp.a
 @todo Dynamic version of the connector library
 @todo Dynamic linking with other connector dependencies.
 @todo Instructions for Windows and other platforms.
+
+
+<!--
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+
+  The MySQL Connector/C++ is licensed under the terms of the GPLv2
+  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+  MySQL Connectors. There are special exceptions to the terms and
+  conditions of the GPLv2 as it is applied to this software, see the
+  FLOSS License Exception
+  <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published
+  by the Free Software Foundation; version 2 of the License.
+
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+  for more details.
+
+  You should have received a copy of the GNU General Public License along
+  with this program; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+-->

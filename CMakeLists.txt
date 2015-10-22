@@ -24,6 +24,14 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.11)
 CMAKE_POLICY(VERSION 2.8.11)
 
+#
+# Prevent cmake from setting its default value of CMAKE_INSTALL_PREFIX
+# inside PROJECT() command.
+# Thanks to this, we can detect if user has set CMAKE_INSTALL_PREFIX
+# or not, and then set our own default in the latter case.
+#
+set(CMAKE_INSTALL_PREFIX "" CACHE PATH "Install location")
+
 PROJECT(MySQL_CONCPLS)
 
 message("Building on system: ${CMAKE_SYSTEM} (${CMAKE_SYSTEM_PROCESSOR})")
@@ -247,6 +255,27 @@ endif()
 # Packaging specifications
 # ========================
 #
+
+if(NOT CMAKE_INSTALL_PREFIX)
+
+  if(WIN32)
+
+    if(DEFINED ENV{HOMEPATH})
+      string(REPLACE "\\" "/" install_prefix "$ENV{HOMEDRIVE}$ENV{HOMEPATH}")
+    else()
+      set(install_prefix "C:/Program Files (x86)")
+    endif()
+    set(CMAKE_INSTALL_PREFIX "${install_prefix}/MySQL/MySQL Connector C++ 2.0")
+
+  else()
+
+    set(CMAKE_INSTALL_PREFIX "/usr/local/mysql/connector-c++-2.0")
+
+  endif()
+
+endif()
+
+message("Install location: ${CMAKE_INSTALL_PREFIX}")
 
 option(WITH_PACKAGES "Configure for building binary/source packages" OFF)
 if(WITH_PACKAGES)

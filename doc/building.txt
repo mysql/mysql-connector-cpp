@@ -10,7 +10,7 @@ To build Connector/C++, the following tools and libraries are required:
 
 - CMake 2.8.11 or later.
 
-- Boost library version 1.55 or higher - source distribution. Tested with Boost 1.56.
+- Boost library version 1.55 or higher. Tested with Boost 1.56.
 
 Build configuration
 -------------------
@@ -27,6 +27,13 @@ in non-standard location, specify correct location using option:
 
 - `-DWITH_BOOST=<Boost location>`
 
+To specify installation location (see below), use option:
+
+- `-DCMAKE_INSTALL_PREFIX=<Install location>`
+
+If not specified, the install location defaults to
+`/usr/local/mysql/connector-c++-2.0` (`<User home>/MySQL/"MySQL Connector C++ 2.0"`
+on Windows).
 
 Building and testing
 --------------------
@@ -51,19 +58,20 @@ test program included in the `test` subdirectory of the source location.
 A running MySQL 5.7 Server instance is needed to run the `test`
 application (see below).
 
-Before building the `test` program Connector/C++ must be installed
-somewhere. After picking a suitable location, executes the following
-command in the Connector/C++ build location:
+Before building the `test` program, Connector/C++ must be installed
+first. To instal Connector/C++ to the default location or to the one specified 
+with `CMAKE_INSTALL_PREFIX` option during the configuration process,
+execute the following command in the build location:
 
 ~~~~~~~
-$ cmake --build . --target install -- DESTDIR=<install location>
+$ cmake --build . --target install
 ~~~~~~~
 
 To build the `test` program, run `cmake` again. After picking
 a build location for `test`, issue the following commands there:
 
 ~~~~~~~
-$ cmake -G ... -DWITH_CONCPLS=<install location>/usr/local <source location>/test
+$ cmake -G ... -DWITH_CONCPLS=<Connector/C++ install location> <source location>/test
 $ cmake --build . --target test
 ~~~~~~~
 
@@ -80,7 +88,8 @@ $ perl mysql-test-run.pl --start-and-exit --mysqld=--plugin-load=mysqlx
 ~~~~~~~
 
 This should start a test server instance with MySQL Hybrid plugin loaded
-into it. By default the plugin will listen on port 13010.
+into it. When started like this, the plugin will listen on port 13010
+instead of the standard 33060 one.
 
 Now one can start the `test` program and see the output similar to the
 one presented below. The program accepts port number as the first argument,
@@ -108,14 +117,14 @@ inserting document...
 - added doc with id: 3492B4BF6B72E511BD76001E684A06F0
 - added doc with id: myuuid-1
 Fetching documents...
-doc#0: {"_id": "2885B4BF6B72E511BD76001E684A06F0", "age": 2, "name": "bar"}
- field `_id`: 2885B4BF6B72E511BD76001E684A06F0
+doc#0: {"_id": "82C29A44EB77E5116134001E684A06F0", "age": 2, "name": "bar"}
+ field `_id`: 82C29A44EB77E5116134001E684A06F0
  field `age`: 2
  field `name`: bar
  name: bar
 
-doc#1: {"_id": "3492B4BF6B72E511BD76001E684A06F0", "age": 3, "date": {"day": 20, "month": "Apr"}, "name": "baz"}
- field `_id`: 3492B4BF6B72E511BD76001E684A06F0
+doc#1: {"_id": "AEFD9C44EB77E5116134001E684A06F0", "age": 3, "date": {"day": 20, "month": "Apr"}, "name": "baz"}
+ field `_id`: AEFD9C44EB77E5116134001E684A06F0
  field `age`: 3
  field `date`: <document>
  field `name`: baz
@@ -125,18 +134,6 @@ doc#1: {"_id": "3492B4BF6B72E511BD76001E684A06F0", "age": 3, "date": {"day": 20,
   date `month`: Apr
   month: Apr
   day: 20
-
-doc#2: {"_id": "AA71B4BF6B72E511BD76001E684A06F0", "age": 1, "name": "foo"}
- field `_id`: AA71B4BF6B72E511BD76001E684A06F0
- field `age`: 1
- field `name`: foo
- name: foo
-
-doc#3: {"_id": "myuuid-1", "age": 7, "name": "foo"}
- field `_id`: myuuid-1
- field `age`: 7
- field `name`: foo
- name: foo
 
 Done!
 ~~~~~~~
@@ -149,23 +146,48 @@ library (The `/MT*` compiler option) by setting:
 - `-DSTATIC_MSVCRT=yes`
 
 This might be necessary if code which uses Connector/C++ also uses
-the static runtime. Also, Protobuf's library dynamic/static runtime type
-must match that of Connector/C++.
+the static runtime.
 
 @todo
   Document caveats with Debug/Release mismatch.
 
-OSX Notes
----------
-Connector/C++ is built on OSX using the `clang` compiler with the `libc++`
+OS X Notes
+----------
+On OS X, Connector/C++ is built using the `clang` compiler with the `libc++`
 C++ runtime library. The same runtime library should be used by
 applications that link against Connector/C++. To arrange this,
-pass `-stdlib=libc++` to compiler and linker invocations. One can also
-define deployment target by setting the nevironment variable
-`MACOSX_DEPLOYMENT_TARGET` to the OSX version and then compiler defaults
-appropriate for that version will be used. Binary distribution of
-Connector/C++ is built with `MACOSX_DEPLOYMENT_TARGET` set to `10.9`.
+pass `-stdlib=libc++` to compiler and linker invocations. Another option is
+to set the required deployment target and then compiler defaults
+are changed accordingly. To define the deployment target, set the nevironment
+variable `MACOSX_DEPLOYMENT_TARGET` to the requested OS X version.
+Binary distributions of Connector/C++ are built with `MACOSX_DEPLOYMENT_TARGET`
+set to `10.9`.
 
 Building Connector/C++ with `gcc` or its `libstdc++` runtime
 implementation has not been tested and there is no support in the build
 system for using an alternative C++ runtime library.
+
+
+<!--
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+
+  The MySQL Connector/C++ is licensed under the terms of the GPLv2
+  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+  MySQL Connectors. There are special exceptions to the terms and
+  conditions of the GPLv2 as it is applied to this software, see the
+  FLOSS License Exception
+  <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published
+  by the Free Software Foundation; version 2 of the License.
+
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+  for more details.
+
+  You should have received a copy of the GNU General Public License along
+  with this program; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+-->

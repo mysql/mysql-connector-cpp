@@ -42,12 +42,12 @@ else()
 endif()
 
 # TODO: Decide on installation layout
-#set(CPACK_PACKAGE_INSTALL_DIRECTORY "mysql/connector-cpp/2.0")
+#set(CPACK_PACKAGE_INSTALL_DIRECTORY "mysql/connector-c++-2.0")
 
 #
 # Architecture tag
 #
-# TODO: Cover OSX and other architectures we suport
+# TODO: Cover Windows and other architectures we suport
 #
 # TODO: Decide on proper tagging for Windows: VS version, static/dynamic
 # runtime, debug/non-debug etc. Note: some of these differences can/should
@@ -61,7 +61,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
 endif()
 
 if(WIN32)
-  set(CPACK_SYSTEM_NAME "winXX")
+  set(CPACK_SYSTEM_NAME "winXX")  # FIXME
 endif()
 
 if(APPLE)
@@ -81,6 +81,32 @@ if(APPLE)
 endif()
 
 message("Binary package name: ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME}")
+
+#
+# Licenses for binary packages
+#
+
+set(info_files README COPYING)
+
+foreach(file ${info_files})
+
+  #message("installing file: ${file}")
+
+  set(file_src "${file}.txt")
+  set(file_bin "${CMAKE_CURRENT_BINARY_DIR}/${file}")
+  set(newline UNIX)
+
+  if(WIN32)
+    set(file_bin "${file_bin}.txt")
+    set(newline WIN32)
+  endif()
+
+  configure_file(${file_src}  ${file_bin} NEWLINE_STYLE ${newline})
+
+  install(FILES ${file_bin} DESTINATION .)
+
+endforeach()
+
 
 #
 # Specs for source package
