@@ -1,17 +1,24 @@
 # Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
-# 
+#
+# The MySQL Connector/C++ is licensed under the terms of the GPLv2
+# <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+# MySQL Connectors. There are special exceptions to the terms and
+# conditions of the GPLv2 as it is applied to this software, see the
+# FLOSS License Exception
+# <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+#
 # This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; version 2 of the License.
-# 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+# it under the terms of the GNU General Public License as published
+# by the Free Software Foundation; version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 #
 # Infrastructure for managing public headers of the project
@@ -77,7 +84,7 @@ ENDMACRO(SETUP_HEADERS)
 # Initialize current folder for public header declarations.
 #
 # A sub-folder foo/bar/baz of the base headers folder adds its headers to group
-# named "foo\\bar\\baz". The name of the grup and its variant of the form 
+# named "foo\\bar\\baz". The name of the grup and its variant of the form
 # "foo_bar_baz" are computed in hdr_group and hdr_prefix variables. If this is the
 # base headers folder then hdr_group is ".". If this folder is outside of the headers
 # base folder then hdr_group is "".
@@ -315,7 +322,7 @@ MACRO(ADD_HEADERS_TARGET)
   #
   # Add the Header target which builds the sanity check project. All public headers are
   # listed as sources of this target (which gives easy access to them in GUI systems).
-  # 
+  #
   ADD_CUSTOM_TARGET(Headers
     COMMAND ${CMAKE_COMMAND} --build . --clean-first
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
