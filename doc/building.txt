@@ -45,7 +45,13 @@ $ cmake --build . --config CCC
 ~~~~~~~
 
 where `CCC` is the build configuration to use, such as `Release`
-or `Debug`.
+or `Debug`. It is also possible to ommit `--config CCC` option in which
+case the default `Debug` build configuration will be used.
+
+@note
+  In what follows the same build configuration `CCC` must be used
+  for all the steps such as installing the connector or building
+  the test program.
 
 After a successful build, the build location shouild contain
 the Connector/C++ static library `libmysql_concpp.a`
@@ -64,7 +70,7 @@ with `CMAKE_INSTALL_PREFIX` option during the configuration process,
 execute the following command in the build location:
 
 ~~~~~~~
-$ cmake --build . --target install
+$ cmake --build . --target install --config CCC
 ~~~~~~~
 
 @note
@@ -83,14 +89,18 @@ $ cmake -G ... -DWITH_CONCPLS=<Connector/C++ install location> <source location>
 $ cmake --build . --target test --config CCC
 ~~~~~~~
 
-The `CCC` build configuration used for `test` should match the one that was
-used when builiding the connector. Above commands should create the `test`
-executable in the build location (on Windows, in the `CCC` subdirectory).
+This should create the `test` executable in the build location (on Windows,
+in the `CCC` subdirectory).
 
 @note
   On Windows, if the connector was built with the static runtime
   by specifying `-DSTATC_MSVCRT=yes` configuration option (see below),
   the same option must be added to the `test` build configuration.
+
+@note
+  The 32/64-bit Windows `cmake` generator (`"Visual Studio 12 2013 Win64"` vs
+  `"Visual Studio 12 2013"`) used to build the test application must match
+  the one used to build the connector.
 
 Before running `test`, ensure that a MySQL Server instance
 is running with MySQL Hybrid plugin loaded into it. The easiest way of
@@ -165,6 +175,11 @@ library (The `/MT*` compiler option) by setting:
 
 This might be necessary if code which uses Connector/C++ also uses
 the static runtime.
+
+Selecting cmake generator such as `"Visual Studio 12 2013 Win64"` vs
+`"Visual Studio 12 2013"` selects the 64 or 32 bit platform for which
+the connector is built. An application which uses Connector/C++ must
+be built for the same platform as the connector.
 
 @todo
   Document caveats with Debug/Release mismatch.

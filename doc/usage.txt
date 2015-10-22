@@ -37,6 +37,9 @@ The runtime type of an application which uses Connector/C++ must match the runti
 type of the connector. The correct runtime type is selected using `/MD` or `/MT`
 compiler option which can be configured, e.g., from Visual Studio project settings.
 
+Similar, the 64/32-bit platform for which Connector/C++ was built (as selected by
+cmake generator such as `"Visual Studio 12 2013 Win64"` vs `"Visual Studio 12 2013"`)
+must match the one for which an application which uses the connector is built.
 
 OS X Notes
 ----------
