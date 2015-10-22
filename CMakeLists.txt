@@ -35,6 +35,7 @@ set(CMAKE_INSTALL_PREFIX "" CACHE PATH "Install location")
 PROJECT(MySQL_CONCPLS)
 
 message("Building on system: ${CMAKE_SYSTEM} (${CMAKE_SYSTEM_PROCESSOR})")
+message("Using cmake generator: ${CMAKE_GENERATOR}")
 
 #
 # Set up cmake module search patch
@@ -217,6 +218,8 @@ SET_INTERFACE_OPTIONS(try connector)
 #
 # Show dynamic library dependencies for try program.
 #
+
+set(LDD_OPTS "" CACHE INTERNAL "options for linker debugger")
 
 find_program(LDD ldd)
 if(NOT LDD)
