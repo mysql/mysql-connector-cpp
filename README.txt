@@ -44,7 +44,8 @@ DOCUMENTATION LOCATION
 ======================
 
 You may also find the latest copy of the documentation on
-the MySQL website at <http://dev.mysql.com/doc/connector-cpp/en/>
+the MySQL website at
+<http://insidemysql.com/mysqlx/docs/mysqlx-connector-cpp/en/>
 
 
 CONTACT
