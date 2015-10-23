@@ -439,31 +439,26 @@ namespace mysqlx {
 /*
   Result implementation
   =====================
-  This implementation stores all rows received from server in
-  m_rows member.
-
-  @todo Non-buffering implementation which reads single rows
-  from cursor.
 */
 
 class BaseResult::Impl
   : public cdk::Row_processor
 {
-  cdk::Reply  *m_reply;
-  cdk::Cursor *m_cursor;
-  std::map<row_count_t,Row_data> m_rows;
-  std::shared_ptr<Meta_data>     m_mdata;
+  cdk::Reply  *m_reply = NULL;
+  cdk::Cursor *m_cursor = NULL;
+  Row_data     m_row;
+  std::shared_ptr<Meta_data>  m_mdata;
   GUID         m_guid;
+  bool         m_cursor_closed = false;
 
   Impl(cdk::Reply *r)
     : m_reply(r)
-    , m_cursor(NULL)
   {
     init();
   }
 
   Impl(cdk::Reply *r, const GUID &guid)
-    : m_reply(r), m_cursor(NULL), m_guid(guid)
+    : m_reply(r), m_guid(guid)
   {
     init();
   }
@@ -482,11 +477,6 @@ class BaseResult::Impl
     {
       m_cursor = new cdk::Cursor(*m_reply);
       m_cursor->wait();
-      // TODO: do it asynchronously
-      read_rows();
-      m_cursor->close();
-      m_pos = 0;
-
       // copy meta-data information from cursor
       m_mdata = std::make_shared<Meta_data>(*m_cursor);
     }
@@ -494,24 +484,23 @@ class BaseResult::Impl
 
   ~Impl()
   {
-    delete m_reply;
+    // Note: Cursor must be deleted before reply.
     delete m_cursor;
+    delete m_reply;
   }
 
   /*
-    Read all rows and store raw data in m_rows.
+    Read next row from the cursor. Returns NULL if there are no
+    more rows. Throws exeption if this result has no data.
   */
 
-  void read_rows();
+  const Row_data *get_row();
 
   // Row_processor
 
-  row_count_t m_pos;
-
-  bool row_begin(row_count_t pos)
+  bool row_begin(row_count_t)
   {
-    m_pos= pos;
-    m_rows.insert(std::pair<row_count_t,Row_data>(pos, Row_data()));
+    m_row.clear();
     return true;
   }
   void row_end(row_count_t) {}
@@ -530,26 +519,38 @@ class BaseResult::Impl
 };
 
 
-void Result::Impl::read_rows()
+const Row_data* Result::Impl::get_row()
 {
   if (!m_cursor)
-    return;
-  m_cursor->get_rows(*this);
-  m_cursor->wait();
+    throw "Attempt to read row from empty result";
+
+  if (m_cursor_closed)
+    return NULL;
+
+  /*
+    TODO: Row cache for better I/O performance (read several
+    rows at once)
+  */
+  if (m_cursor->get_row(*this))
+    return &m_row;
+
+  m_cursor->close();
+  m_cursor_closed = true;
+
+  return NULL;
 }
 
 
 
 size_t Result::Impl::field_begin(col_count_t pos, size_t)
 {
-  Row_data &rd= m_rows[m_pos];
-  rd.insert(std::pair<col_count_t,Buffer>(pos, Buffer()));
+  m_row.insert(std::pair<col_count_t, Buffer>(pos, Buffer()));
   return 1024;
 }
 
 size_t Result::Impl::field_data(col_count_t pos, bytes data)
 {
-  m_rows[(unsigned)m_pos][(unsigned)pos].append(mysqlx::bytes::Access::mk(data));
+  m_row[(unsigned)pos].append(mysqlx::bytes::Access::mk(data));
   return 1024;
 }
 
@@ -559,7 +560,6 @@ size_t Result::Impl::field_data(col_count_t pos, bytes data)
   ======
 */
 
-#include <iostream>
 
 BaseResult::BaseResult(cdk::Reply *r)
 try {
@@ -611,15 +611,12 @@ CATCH_AND_WRAP
 Row RowResult::fetchOne()
 try {
   Impl &impl = get_impl();
-  cdk::row_count_t pos = impl.m_pos;
+  const Row_data *row = impl.get_row();
 
-  if (!impl.m_cursor)
-    throw "Attempt to fetch row from result without any data";
-  if (pos >= impl.m_rows.size())
+  if (!row)
     return Row();
 
-  impl.m_pos++;
-  return Row(new Row::Impl(impl.m_rows.at(pos), impl.m_mdata));
+  return Row(new Row::Impl(*row, impl.m_mdata));
 }
 CATCH_AND_WRAP
 
