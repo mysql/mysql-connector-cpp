@@ -295,7 +295,7 @@ class Collection
   , public CollectionRemove
   , public CollectionFind
 {
-  Schema &m_schema;
+  Schema m_schema;
   const string m_name;
 
   enum { NONE, ADD } m_op;
@@ -311,7 +311,7 @@ class Collection
 
 public:
 
-  Collection(Schema &sch, const string &name)
+  Collection(const Schema &sch, const string &name)
     : m_schema(sch), m_name(name), m_op(NONE)
   {}
 
