@@ -219,13 +219,11 @@ SET_INTERFACE_OPTIONS(try connector)
 # Show dynamic library dependencies for try program.
 #
 
-set(LDD_OPTS "" CACHE INTERNAL "options for linker debugger")
-
 find_program(LDD ldd)
 if(NOT LDD)
   find_program(LDD otool)
   if(LDD)
-    set(LDD_OPTS "-L")
+    set(LDD_OPTS "-L" CACHE INTERNAL "options for linker debugger")
   endif()
 endif()
 
