@@ -645,6 +645,8 @@ mysql_type_to_string(const MYSQL_FIELD * const field, boost::shared_ptr< sql::my
       return "SET";
     case MYSQL_TYPE_GEOMETRY:
       return "GEOMETRY";
+    case MYSQL_TYPE_JSON:
+      return "JSON";
     default:
       return "UNKNOWN";
   }
