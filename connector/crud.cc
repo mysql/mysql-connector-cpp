@@ -27,6 +27,7 @@
 #include <uuid_gen.h>
 
 #include <time.h>
+#include <sstream>
 #include <boost/format.hpp>
 
 #include "impl.h"
@@ -71,6 +72,15 @@ struct BaseResult::Access
 
   template <typename A, typename B>
   static BaseResult mk(A a, B b) { return BaseResult(a, b); }
+};
+
+
+struct Executable::Access
+{
+  static void reset_task(Executable &exec, Task::Impl *impl)
+  {
+    exec.m_task.reset(impl);
+  }
 };
 
 
@@ -143,6 +153,16 @@ class Op_collection_add
     m_json.push_back(json);
   }
 
+  void add_doc(const DbDoc &doc)
+  {
+    // TODO: Instead of sending JSON string, send structured description
+    // of the document (requires support for document expressions MYC-113)
+
+    std::ostringstream buf;
+    buf << doc;
+    m_json.push_back(buf.str());
+  }
+
   BaseResult get_result()
   {
     return Result::Access::mk(m_reply, m_id);
@@ -185,22 +205,29 @@ class Op_collection_add
     m_id= val;
   }
 
-  friend class mysqlx::Collection;
+  friend class mysqlx::CollectionAddExec;
 };
 
 
-void Collection::prepare_add()
+void CollectionAddExec::initialize()
 {
-  if (NONE == m_op)
-    Task::Access::reset(m_task, new Op_collection_add(*this));
-  m_op = ADD;
+  Task::Access::reset(m_task, new Op_collection_add(m_coll));
 }
 
-void Collection::do_add(const mysqlx::string &json)
+CollectionAddExec& CollectionAddExec::do_add(const mysqlx::string &json)
 {
   auto *impl
     = static_cast<Op_collection_add*>(Task::Access::get_impl(m_task));
   impl->add_json(json);
+  return *this;
+}
+
+CollectionAddExec& CollectionAddExec::do_add(const DbDoc &doc)
+{
+  auto *impl
+    = static_cast<Op_collection_add*>(Task::Access::get_impl(m_task));
+  impl->add_doc(doc);
+  return *this;
 }
 
 
@@ -327,21 +354,21 @@ class Op_collection_remove : public Task::Access::Impl
     m_reply = new cdk::Reply(get_cdk_session().coll_remove(m_coll, &m_expr));
   }
 
-  friend class mysqlx::Collection;
+  friend class mysqlx::CollectionRemove;
 };
 
 
-Executable& Collection::remove()
+Executable& CollectionRemove::remove()
 try {
-  Task::Access::reset(m_task, new Op_collection_remove(*this));
-  return *this;
+  Executable::Access::reset_task(m_exec, new Op_collection_remove(m_coll));
+  return m_exec;
 }
 CATCH_AND_WRAP
 
-Executable& Collection::remove(const mysqlx::string &expr)
+Executable& CollectionRemove::remove(const mysqlx::string &expr)
 try {
-  Task::Access::reset(m_task, new Op_collection_remove(*this, expr));
-  return *this;
+  Executable::Access::reset_task(m_exec, new Op_collection_remove(m_coll, expr));
+  return m_exec;
 }
 CATCH_AND_WRAP
 
@@ -373,20 +400,20 @@ class Op_collection_find
     m_reply= new cdk::Reply(get_cdk_session().coll_find(m_coll, &m_expr));
   }
 
-  friend class mysqlx::Collection;
+  friend class mysqlx::CollectionFind;
 };
 
-Executable& Collection::find()
+Executable& CollectionFind::find()
 try {
-  Task::Access::reset(m_task, new Op_collection_find(*this));
-  return *this;
+  Executable::Access::reset_task(m_exec, new Op_collection_find(m_coll));
+  return m_exec;
 }
 CATCH_AND_WRAP
 
-Executable& Collection::find(const mysqlx::string &expr)
+Executable& CollectionFind::find(const mysqlx::string &expr)
 try {
-  Task::Access::reset(m_task, new Op_collection_find(*this, expr));
-  return *this;
+  Executable::Access::reset_task(m_exec, new Op_collection_find(m_coll, expr));
+  return m_exec;
 }
 CATCH_AND_WRAP
 

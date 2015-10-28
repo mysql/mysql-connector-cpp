@@ -259,7 +259,9 @@ try {
     {
       Result add;
 
-      add= coll.add("{ \"name\": \"foo\", \"age\": 1 }").execute();
+      DbDoc doc("{ \"name\": \"foo\", \"age\": 1 }");
+
+      add= coll.add(doc, doc).execute();
       cout <<"- added doc with id: " <<add.getLastDocumentId() <<endl;
 
     add= coll.add("{ \"name\": \"bar\", \"age\": 2 }")

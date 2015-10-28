@@ -196,3 +196,30 @@ ostream& operator<<(ostream &out, const Error&)
   return out;
 }
 
+
+// Implementation of Task API using internal implementation object
+
+Task::~Task() try { delete m_impl; } CATCH_AND_WRAP
+
+bool Task::is_completed()
+try { return m_impl ? m_impl->is_completed() : true; } CATCH_AND_WRAP
+
+BaseResult Task::wait()
+try {
+  if (!m_impl)
+    throw Error("Attempt to wait on empty task");
+  return m_impl->wait();
+} CATCH_AND_WRAP
+
+void Task::cont()
+try {
+  if (!m_impl)
+    throw Error("Attempt to continue an empty task");
+  m_impl->cont();
+} CATCH_AND_WRAP
+
+void Task::reset(Impl *impl)
+{
+  delete m_impl;
+  m_impl = impl;
+}
