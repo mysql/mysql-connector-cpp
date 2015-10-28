@@ -34,6 +34,8 @@
 #include "common.h"
 #include "document.h"
 
+#include <memory>
+
 
 namespace cdk {
 
@@ -181,55 +183,107 @@ class RowResult;
   @todo Support for iterating over row fields with range-for loop.
 */
 
-class Row : nocopy
+class Row
 {
   class Impl;
-  Impl  *m_impl = NULL;
-  bool  m_owns_impl = false;
+  std::shared_ptr<Impl>  m_impl;
 
   Impl& get_impl()
   { return const_cast<Impl&>(const_cast<const Row*>(this)->get_impl()); }
   const Impl& get_impl() const;
 
-  Row(Impl *impl) { init(impl); }
+  Row(std::shared_ptr<Impl> &&impl) : m_impl(std::move(impl))
+  {}
 
-  void init(Impl*);
-
-  void init(Row &other)
+  class Setter
   {
-    init(other.m_impl);
-    other.m_owns_impl = false;
+    Row         &m_row;
+    col_count_t m_pos;
+
+    Setter(Row &row, col_count_t pos)
+      : m_row(row), m_pos(pos)
+    {}
+
+  public:
+
+    Setter& operator=(const Value &val)
+    {
+      m_row.set(m_pos, val);
+      return *this;
+    }
+
+    operator Value() const
+    {
+      return m_row.get(m_pos);
+    }
+
+    template<typename T> operator T()
+    {
+      return (T)m_row.get(m_pos);
+    }
+
+    friend class Row;
+  };
+
+  void set_values(col_count_t pos, const Value &val)
+  {
+    set(pos, val);
+  }
+
+  template<typename... Types>
+  void set_values(col_count_t pos, const Value &val, Types... rest)
+  {
+    set(pos, val);
+    set_values(pos + 1, rest...);
   }
 
 public:
 
   Row() {}
-  Row(Row &&other) { init(other); }
 
-  virtual ~Row();
-
-  Row& operator=(Row &&other)
+  template<typename... Types>
+  Row(const Value &val, Types... vals)
   {
-    init(other);
-    return *this;
+    set_values(0, val, vals...);
   }
+
+  virtual ~Row() {}
+
+  col_count_t colCount() const;
 
   /// Get raw bytes representing value of row field at position `pos`.
   bytes getBytes(col_count_t pos) const;
 
   /// Get value of row field at position `pos`.
-  const Value get(col_count_t) const;
+  Value get(col_count_t pos) const;
+
+  /// Set value of row field at position `pos`.
+  void set(col_count_t pos, const Value&);
 
   /// Convenience operator equivalent to `get()`.
-  const Value operator[](col_count_t pos) const
+  Value operator[](col_count_t pos) const
   { return get(pos); }
+
+  Setter operator[](col_count_t pos)
+  {
+    return Setter(*this, pos);
+  }
 
   /// Check if this row contains fields or is null.
   bool isNull() const { return NULL == m_impl; }
   operator bool() const { return !isNull(); }
 
+  void clear();
+
   friend class RowResult;
+  friend std::ostream& operator<<(std::ostream &out, const Row::Setter &rs);
 };
+
+inline
+std::ostream& operator<<(std::ostream &out, const Row::Setter &rs)
+{
+  return (out << (Value)rs);
+}
 
 
 /**

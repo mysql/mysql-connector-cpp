@@ -40,6 +40,8 @@
 #include "mysqlx/result.h"
 #include "mysqlx/task.h"
 #include "mysqlx/collection_crud.h"
+#include "mysqlx/table_crud.h"
+
 
 namespace cdk {
 
@@ -53,6 +55,7 @@ namespace mysqlx {
 class XSession;
 class Schema;
 class Collection;
+class Table;
 
 
 /**
@@ -133,6 +136,8 @@ public:
 
   Collection getCollection(const string&, bool check_exists= false);
 
+  Table getTable(const string&);
+
   friend class Collection;
   friend class Task;
 };
@@ -181,6 +186,59 @@ public:
     : CollectionAdd(*this)
     , CollectionRemove(*this)
     , CollectionFind(*this)
+    , m_schema(sch), m_name(name)
+  {}
+
+  const string& getName() const { return m_name; }
+  const Schema& getSchema() const { return m_schema; }
+
+
+  friend class Task;
+};
+
+
+/*
+  Table object
+  ============
+*/
+
+
+/**
+  Represents a table in a schema.
+
+  Collection object can be obtained from `Schema::getTable()`
+  method:
+
+  ~~~~~~
+  Schema db;
+  Table  myTable;
+
+  myTable= db.getTable("My Table");
+  ~~~~~~
+
+  or directly constructed as follows:
+
+  ~~~~~~
+  Schema db;
+  Table myTable(db, "My Table");
+  ~~~~~~
+
+  Rows can be added to a table using `insert()` method followed
+  by `values()` calls, which prepare insert operation.
+
+  @todo Other CRUD operations on a table.
+*/
+
+class Table
+  : public TableInsert
+{
+  Schema m_schema;
+  const string m_name;
+
+public:
+
+  Table(const Schema &sch, const string &name)
+    : TableInsert(*this)
     , m_schema(sch), m_name(name)
   {}
 

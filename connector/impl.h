@@ -183,24 +183,47 @@ class Task::Impl : nocopy
 protected:
 
   XSession &m_sess;
-  cdk::Reply *m_reply;
+  cdk::Reply *m_reply = NULL;
 
   Impl(XSession &sess)
-    : m_sess(sess), m_reply(NULL)
+    : m_sess(sess)
   {}
   Impl(Collection &coll)
-    : m_sess(coll.m_schema.m_sess), m_reply(NULL)
+    : m_sess(coll.m_schema.m_sess)
+  {}
+  Impl(Table &tbl)
+    : m_sess(tbl.m_schema.m_sess)
   {}
 
-  ~Impl() {}
+  virtual ~Impl() {}
 
   cdk::Session& get_cdk_session() { return m_sess.get_cdk_session(); }
 
-  bool is_completed() { return m_reply->is_completed(); }
-  void cont() { m_reply->cont(); }
+
+  virtual cdk::Reply* send_command() = 0;
+
+  void init()
+  {
+    if (m_reply)
+      return;
+    m_reply = send_command();
+  }
+
+  bool is_completed()
+  {
+    init();
+    return m_reply->is_completed();
+  }
+
+  void cont()
+  {
+    init();
+    m_reply->cont();
+  }
 
   BaseResult wait()
   {
+    init();
     m_reply->wait();
     if (0 < m_reply->entry_count())
       m_reply->get_error().rethrow();
@@ -214,6 +237,32 @@ protected:
 
   friend class Task;
   friend class Executable;
+};
+
+
+
+struct Value::Access
+{
+  static Value mk_raw(const cdk::bytes data)
+  {
+    Value ret;
+    ret.m_type = Value::RAW;
+    ret.m_str.assign(data.begin(), data.end());
+    return std::move(ret);
+  }
+
+  static Value mk_doc(const string &json)
+  {
+    Value ret;
+    ret.m_type = Value::DOCUMENT;
+    ret.m_doc = DbDoc(json);
+    return std::move(ret);
+  }
+
+  static cdk::bytes get_bytes(const Value &val)
+  {
+    return cdk::bytes(val.m_str);
+  }
 };
 
 }

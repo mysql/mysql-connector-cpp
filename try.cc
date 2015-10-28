@@ -384,12 +384,17 @@ try {
       "  c0 INT,"
       "  c1 DECIMAL,"
       "  c2 FLOAT,"
-      "  c3 DOUBLE"
+      "  c3 DOUBLE,"
+      "  c4 VARCHAR(32)"
       ")").execute();
-    sess.sql(
-      "INSERT INTO test.types VALUES"
-      "(7, 3.14, 3.1415, 3.141592)"
-      ).execute();
+
+    Table types = sess.getSchema("test").getTable("types");
+
+    Row row(7, 3.14, 3.1415, 3.141592, "First row");
+    types.insert()
+         .values(row)
+         .values(-7, -2.71, (float)-2.7182, -2.718281, "Second row")
+         .execute();
 
     cout << "Table prepared, querying it..." << endl;
 
@@ -397,7 +402,6 @@ try {
 
     cout << "Query sent, reading rows..." << endl;
     cout << "There are " << res.getColumnCount() << " columns in the result" << endl;
-    Row row;
 
     while ((row = res.fetchOne()))
     {

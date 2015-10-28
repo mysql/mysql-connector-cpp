@@ -140,6 +140,13 @@ try {
 CATCH_AND_WRAP
 
 
+Table Schema::getTable(const string &name)
+try {
+  return Table(*this, name);
+}
+CATCH_AND_WRAP
+
+
 /*
   Executing SQL queries
   =====================
@@ -152,6 +159,11 @@ struct Op_sql : public Task::Access::Impl
     : Impl(sess)
   {
     m_reply = new cdk::Reply(get_cdk_session().sql(query));
+  }
+
+  cdk::Reply* send_command()
+  {
+    return m_reply;
   }
 };
 
