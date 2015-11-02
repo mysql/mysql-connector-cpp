@@ -315,16 +315,17 @@ class Op_collection_remove : public Task::Access::Impl
   Op_collection_remove(Collection &coll)
     : Impl(coll)
     , m_coll(coll)
+    , m_expr(parser::Parser_mode::DOCUMENT)
   {
-    m_reply= new cdk::Reply(get_cdk_session().coll_remove(m_coll, NULL));
+    m_reply= new cdk::Reply(get_cdk_session().coll_remove(m_coll, NULL, NULL));
   }
 
   Op_collection_remove(Collection &coll, const mysqlx::string &expr)
     : Impl(coll)
     , m_coll(coll)
-    , m_expr(expr)
+    , m_expr(parser::Parser_mode::DOCUMENT, expr)
   {
-    m_reply = new cdk::Reply(get_cdk_session().coll_remove(m_coll, &m_expr));
+    m_reply = new cdk::Reply(get_cdk_session().coll_remove(m_coll, &m_expr, NULL));
   }
 
   friend class mysqlx::Collection;
@@ -361,16 +362,17 @@ class Op_collection_find
   Op_collection_find(Collection &coll)
     : Impl(coll)
     , m_coll(coll)
+    , m_expr(parser::Parser_mode::DOCUMENT)
   {
-    m_reply= new cdk::Reply(get_cdk_session().coll_find(m_coll, NULL));
+    m_reply= new cdk::Reply(get_cdk_session().coll_find(m_coll, NULL, NULL));
   }
 
   Op_collection_find(Collection &coll, const mysqlx::string &expr)
     : Impl(coll)
     , m_coll(coll)
-    , m_expr(expr)
+    , m_expr(parser::Parser_mode::DOCUMENT, expr)
   {
-    m_reply= new cdk::Reply(get_cdk_session().coll_find(m_coll, &m_expr));
+    m_reply= new cdk::Reply(get_cdk_session().coll_find(m_coll, &m_expr, NULL));
   }
 
   friend class mysqlx::Collection;
