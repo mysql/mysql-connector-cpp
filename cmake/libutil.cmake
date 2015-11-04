@@ -26,7 +26,7 @@
 # to deal with target locations (which can not be reliably determined at
 # build configuration time).
 #
-if(CMP0026)
+if(POLICY CMP0026)
   cmake_policy(SET CMP0026 OLD)
 endif()
 
