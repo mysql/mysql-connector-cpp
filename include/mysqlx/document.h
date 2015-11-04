@@ -213,11 +213,15 @@ public:
 
   Value();  ///< Constructs Null value.
   Value(const string&);
+  Value(const char *str) : Value(string(str)) {}
+  Value(const wchar_t *str) : Value(string(str)) {}
   Value(int64_t);
   Value(uint64_t);
   Value(float);
   Value(double);
   Value(bool);
+  Value(int x) : Value((int64_t)x) {}
+  Value(unsigned x) : Value((uint64_t)x) {}
 
   ///@}
 
@@ -230,6 +234,7 @@ public:
   //@{
 
   operator int() const;
+  operator unsigned() const;
   operator float() const;
   operator double() const;
   operator bool() const;
@@ -348,6 +353,22 @@ inline Value::operator int() const
     throw "Overflow";
 
   return (int)val;
+}
+
+inline Value::operator unsigned() const
+{
+  if (UINT64 != m_type && INT64 != m_type)
+    throw "Not an integer value";
+
+  if (INT64 == m_type
+    && 0 > m_val._int64_v)
+    throw "Converting negative integer to unsigned value";
+
+  uint64_t val = (UINT64 == m_type ? m_val._uint64_v : (uint64_t)m_val._int64_v);
+  if (val > std::numeric_limits<unsigned>::max())
+    throw "Overflow";
+
+  return (unsigned)val;
 }
 
 

@@ -27,6 +27,8 @@
 #include <uuid_gen.h>
 
 #include <time.h>
+#include <sstream>
+#include <forward_list>
 #include <boost/format.hpp>
 
 #include "impl.h"
@@ -66,11 +68,27 @@ void mysqlx::GUID::generate()
 
 struct BaseResult::Access
 {
+  static BaseResult mk_empty() { return BaseResult(); }
+
   template <typename A>
   static BaseResult mk(A a) { return BaseResult(a); }
 
   template <typename A, typename B>
   static BaseResult mk(A a, B b) { return BaseResult(a, b); }
+};
+
+
+struct Executable::Access
+{
+  static void reset_task(Executable &exec, Task::Impl *impl)
+  {
+    exec.m_task.reset(impl);
+  }
+
+  static Task::Access::Impl* get_impl(Executable &exec)
+  {
+    return Task::Access::get_impl(exec.m_task);
+  }
 };
 
 
@@ -102,11 +120,133 @@ public:
     , m_name(coll.getName())
   {}
 
+  Table_ref(const Table &tbl)
+    : m_schema(tbl.getSchema().getName())
+    , m_name(tbl.getName())
+  {}
+
   Table_ref(const cdk::string &schema, const cdk::string &name)
     : m_schema(schema), m_name(name)
   {}
 };
 
+
+/*
+  Table.insert()
+  ==============
+*/
+
+
+class Op_table_insert
+  : public Task::Access::Impl
+  , public cdk::Row_source
+  , public cdk::Expression
+  , public cdk::Format_info
+{
+  using string = cdk::string;
+  using Row_list = std::forward_list < Row >;
+
+  Table_ref m_table;
+  Row_list  m_rows;
+  Row_list::const_iterator m_cur_row;
+  Row_list::iterator m_end;
+
+  Op_table_insert(Table &tbl)
+    : Impl(tbl)
+    , m_table(tbl)
+  {}
+
+  void reset()
+  {
+    m_rows.clear();
+    m_cur_row = m_rows.cbegin();
+    m_end = m_rows.before_begin();
+  }
+
+  // Task::Impl
+
+  cdk::Reply* send_command()
+  {
+    // Prepare iterators to make a pass through m_rows list.
+    m_cur_row = m_rows.cbegin();
+    m_end = m_rows.end();
+    return new cdk::Reply(get_cdk_session().table_insert(m_table, *this));
+  }
+
+  // Row_source (Iterator)
+
+  void next() { ++m_cur_row;  }
+  bool is_valid() { return m_cur_row != m_end; }
+
+  // Row_source (Expr_list)
+
+  unsigned m_pos;
+
+  unsigned count() const { return m_cur_row->colCount(); }
+  const cdk::Expression& get(unsigned pos) const
+  {
+    const_cast<Op_table_insert*>(this)->m_pos = pos;
+    return *this;
+  }
+
+  void process(Expression::Processor &ep) const;
+
+  // Format_info
+
+  bool for_type(cdk::Type_info) const { return true; }
+  void get_info(cdk::Format<cdk::TYPE_BYTES>&) const {}
+  using cdk::Format_info::get_info;
+
+  friend class mysqlx::TableInsertValues;
+};
+
+
+inline
+Op_table_insert& get_impl(TableInsertValues *p)
+{
+  return *static_cast<Op_table_insert*>(Executable::Access::get_impl(*p));
+}
+
+
+void TableInsertValues::prepare()
+{
+  Task::Access::reset(m_task, new Op_table_insert(m_table));
+  get_impl(this).reset();
+}
+
+
+Row& TableInsertValues::add_row()
+{
+  auto &impl = get_impl(this);
+  impl.m_end = impl.m_rows.emplace_after(impl.m_end);
+  return *impl.m_end;
+}
+
+void TableInsertValues::add_row(const Row &row)
+{
+  auto &impl = get_impl(this);
+  impl.m_end = impl.m_rows.emplace_after(impl.m_end, row);
+}
+
+
+void Op_table_insert::process(Expression::Processor &ep) const
+{
+  const Value &val = m_cur_row->get(m_pos);
+
+  switch (val.getType())
+  {
+  case Value::VNULL:  ep.null(); return;
+  case Value::STRING: ep.str((string)val); return;
+  case Value::INT64:  ep.num((int64_t)(int)val); return;
+  case Value::UINT64: ep.num((uint64_t)(unsigned)val); return;
+  case Value::FLOAT:  ep.num((float)val); return;
+  case Value::DOUBLE: ep.num((double)val); return;
+    // TODO: handle other value types
+  default:
+    ep.value(cdk::TYPE_BYTES, *this, Value::Access::get_bytes(val));
+    return;
+  }
+}
 
 
 /*
@@ -131,16 +271,29 @@ class Op_collection_add
     : Impl(coll)
     , m_coll(coll)
     , m_generated_id(true)
-  {
-    // Issue coll_add statement where documents are described by list
-    // of expressions defined by this instance.
-
-    m_reply= new cdk::Reply(get_cdk_session().coll_add(m_coll, *this));
-  }
+  {}
 
   void add_json(const string &json)
   {
     m_json.push_back(json);
+  }
+
+  void add_doc(const DbDoc &doc)
+  {
+    // TODO: Instead of sending JSON string, send structured description
+    // of the document (requires support for document expressions MYC-113)
+
+    std::ostringstream buf;
+    buf << doc;
+    m_json.push_back(buf.str());
+  }
+
+  cdk::Reply* send_command()
+  {
+    // Issue coll_add statement where documents are described by list
+    // of expressions defined by this instance.
+
+    return new cdk::Reply(get_cdk_session().coll_add(m_coll, *this));
   }
 
   BaseResult get_result()
@@ -185,22 +338,29 @@ class Op_collection_add
     m_id= val;
   }
 
-  friend class mysqlx::Collection;
+  friend class mysqlx::CollectionAddExec;
 };
 
 
-void Collection::prepare_add()
+void CollectionAddExec::initialize()
 {
-  if (NONE == m_op)
-    Task::Access::reset(m_task, new Op_collection_add(*this));
-  m_op = ADD;
+  Task::Access::reset(m_task, new Op_collection_add(m_coll));
 }
 
-void Collection::do_add(const mysqlx::string &json)
+CollectionAddExec& CollectionAddExec::do_add(const mysqlx::string &json)
 {
   auto *impl
     = static_cast<Op_collection_add*>(Task::Access::get_impl(m_task));
   impl->add_json(json);
+  return *this;
+}
+
+CollectionAddExec& CollectionAddExec::do_add(const DbDoc &doc)
+{
+  auto *impl
+    = static_cast<Op_collection_add*>(Task::Access::get_impl(m_task));
+  impl->add_doc(doc);
+  return *this;
 }
 
 
@@ -328,21 +488,26 @@ class Op_collection_remove : public Task::Access::Impl
     m_reply = new cdk::Reply(get_cdk_session().coll_remove(m_coll, &m_expr, NULL));
   }
 
-  friend class mysqlx::Collection;
+  cdk::Reply* send_command()
+  {
+    return m_reply;
+  }
+
+  friend class mysqlx::CollectionRemove;
 };
 
 
-Executable& Collection::remove()
+Executable& CollectionRemove::remove()
 try {
-  Task::Access::reset(m_task, new Op_collection_remove(*this));
-  return *this;
+  Executable::Access::reset_task(m_exec, new Op_collection_remove(m_coll));
+  return m_exec;
 }
 CATCH_AND_WRAP
 
-Executable& Collection::remove(const mysqlx::string &expr)
+Executable& CollectionRemove::remove(const mysqlx::string &expr)
 try {
-  Task::Access::reset(m_task, new Op_collection_remove(*this, expr));
-  return *this;
+  Executable::Access::reset_task(m_exec, new Op_collection_remove(m_coll, expr));
+  return m_exec;
 }
 CATCH_AND_WRAP
 
@@ -375,20 +540,25 @@ class Op_collection_find
     m_reply= new cdk::Reply(get_cdk_session().coll_find(m_coll, &m_expr, NULL));
   }
 
-  friend class mysqlx::Collection;
+  cdk::Reply* send_command()
+  {
+    return m_reply;
+  }
+
+  friend class mysqlx::CollectionFind;
 };
 
-Executable& Collection::find()
+Executable& CollectionFind::find()
 try {
-  Task::Access::reset(m_task, new Op_collection_find(*this));
-  return *this;
+  Executable::Access::reset_task(m_exec, new Op_collection_find(m_coll));
+  return m_exec;
 }
 CATCH_AND_WRAP
 
-Executable& Collection::find(const mysqlx::string &expr)
+Executable& CollectionFind::find(const mysqlx::string &expr)
 try {
-  Task::Access::reset(m_task, new Op_collection_find(*this, expr));
-  return *this;
+  Executable::Access::reset_task(m_exec, new Op_collection_find(m_coll, expr));
+  return m_exec;
 }
 CATCH_AND_WRAP
 

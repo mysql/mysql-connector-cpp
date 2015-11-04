@@ -183,24 +183,47 @@ class Task::Impl : nocopy
 protected:
 
   XSession &m_sess;
-  cdk::Reply *m_reply;
+  cdk::Reply *m_reply = NULL;
 
   Impl(XSession &sess)
-    : m_sess(sess), m_reply(NULL)
+    : m_sess(sess)
   {}
   Impl(Collection &coll)
-    : m_sess(coll.m_schema.m_sess), m_reply(NULL)
+    : m_sess(coll.m_schema.m_sess)
+  {}
+  Impl(Table &tbl)
+    : m_sess(tbl.m_schema.m_sess)
   {}
 
-  ~Impl() {}
+  virtual ~Impl() {}
 
   cdk::Session& get_cdk_session() { return m_sess.get_cdk_session(); }
 
-  bool is_completed() { return m_reply->is_completed(); }
-  void cont() { m_reply->cont(); }
+
+  virtual cdk::Reply* send_command() = 0;
+
+  void init()
+  {
+    if (m_reply)
+      return;
+    m_reply = send_command();
+  }
+
+  bool is_completed()
+  {
+    init();
+    return m_reply->is_completed();
+  }
+
+  void cont()
+  {
+    init();
+    m_reply->cont();
+  }
 
   BaseResult wait()
   {
+    init();
     m_reply->wait();
     if (0 < m_reply->entry_count())
       m_reply->get_error().rethrow();
@@ -217,37 +240,30 @@ protected:
 };
 
 
-// Implementation of Task API using internal implementation object
 
-inline
-Task::~Task() try { delete m_impl; } CATCH_AND_WRAP
-
-inline
-bool Task::is_completed()
-try { return m_impl ? m_impl->is_completed() : true; } CATCH_AND_WRAP
-
-inline
-BaseResult Task::wait()
-try {
-  if (!m_impl)
-    throw Error("Attempt to wait on empty task");
-  return m_impl->wait();
-} CATCH_AND_WRAP
-
-inline
-void Task::cont()
-try {
-  if (!m_impl)
-    throw Error("Attempt to continue an empty task");
-  m_impl->cont();
-} CATCH_AND_WRAP
-
-inline
-void Task::reset(Impl *impl)
+struct Value::Access
 {
-  delete m_impl;
-  m_impl = impl;
-}
+  static Value mk_raw(const cdk::bytes data)
+  {
+    Value ret;
+    ret.m_type = Value::RAW;
+    ret.m_str.assign(data.begin(), data.end());
+    return std::move(ret);
+  }
+
+  static Value mk_doc(const string &json)
+  {
+    Value ret;
+    ret.m_type = Value::DOCUMENT;
+    ret.m_doc = DbDoc(json);
+    return std::move(ret);
+  }
+
+  static cdk::bytes get_bytes(const Value &val)
+  {
+    return cdk::bytes(val.m_str);
+  }
+};
 
 }
 

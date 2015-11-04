@@ -237,10 +237,24 @@ typedef std::map<col_count_t, Buffer> Row_data;
 
 class Row::Impl
 {
+public:
+
+  Impl() {}
+  Impl(const Row_data&, std::shared_ptr<Meta_data>&);
+
+private:
+
   Row_data m_data;
   std::shared_ptr<Meta_data> m_mdata;
+  std::map<col_count_t, Value> m_vals;
+  col_count_t m_col_count = 0;
 
-  Impl(const Row_data&, std::shared_ptr<Meta_data>&);
+  void clear()
+  {
+    m_data.clear();
+    m_vals.clear();
+    m_mdata.reset();
+  }
 
   bytes get_bytes(col_count_t pos) const
   {
@@ -274,32 +288,19 @@ Row::Impl::Impl(const Row_data &data, std::shared_ptr<Meta_data> &mdata)
 {}
 
 
-void Row::init(Impl *impl)
-{
-  m_impl = impl;
-  m_owns_impl = true;
-}
-
-
-Row::~Row()
-{
-  /*
-     Note: catch wrapper removed to avoid compile warnings --
-     add back if Impl destructor can throw any exceptions.
-  */
-//  try {
-    if (m_owns_impl)
-      delete m_impl;
-//  }
-//  CATCH_AND_WRAP
-}
-
-
 const Row::Impl& Row::get_impl() const
 {
   if (!m_impl)
     throw "Attempt to use null Row instance";
   return *m_impl;
+}
+
+
+col_count_t Row::colCount() const
+{
+  const Impl &impl = get_impl();
+  col_count_t cnt = (impl.m_mdata ? impl.m_mdata->col_count() : 0);
+  return impl.m_col_count > cnt ? impl.m_col_count : cnt;
 }
 
 
@@ -309,29 +310,29 @@ bytes Row::getBytes(col_count_t pos) const
 }
 
 
-struct Value::Access
-{
-  static Value mk_raw(const cdk::bytes data)
-  {
-    Value ret;
-    ret.m_type = Value::RAW;
-    ret.m_str.assign(data.begin(), data.end());
-    return std::move(ret);
-  }
-
-  static Value mk_doc(const string &json)
-  {
-    Value ret;
-    ret.m_type = Value::DOCUMENT;
-    ret.m_doc = DbDoc(json);
-    return std::move(ret);
-  }
-};
-
-
-const Value Row::get(mysqlx::col_count_t pos) const
+Value Row::get(mysqlx::col_count_t pos) const
 {
   const Impl &impl = get_impl();
+
+  // First try to return explicit value stored in the row.
+
+  try {
+    return impl.m_vals.at(pos);
+  }
+  catch (std::out_of_range&)
+  {}
+
+  /*
+    If no explicit value is set, and we have no data from
+    server (meta-data is not set) return null value.
+  */
+
+  if (!impl.m_mdata)
+    return Value();
+
+  /*
+    Otherwise convert raw data from server into a value.
+  */
 
   try {
     // will throw out_of_range exception if column at `pos` is NULL
@@ -353,11 +354,29 @@ const Value Row::get(mysqlx::col_count_t pos) const
   }
   catch (std::out_of_range&)
   {
-    // NULL value
+    // null value
     return Value();
   }
 }
 
+
+void Row::set(col_count_t pos, const Value &val)
+{
+  if (!m_impl)
+    m_impl = std::make_shared<Impl>();
+
+  Impl &impl = get_impl();
+
+  impl.m_vals.emplace(pos, val);
+
+  if (pos + 1 > impl.m_col_count)
+    impl.m_col_count = pos + 1;
+}
+
+void Row::clear()
+{
+  m_impl.reset();
+}
 
 /*
   Conversions of raw value representation to Value objects.
@@ -616,7 +635,7 @@ try {
   if (!row)
     return Row();
 
-  return Row(new Row::Impl(*row, impl.m_mdata));
+  return Row(std::make_shared<Row::Impl>(*row, impl.m_mdata));
 }
 CATCH_AND_WRAP
 

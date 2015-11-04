@@ -40,14 +40,6 @@ namespace mysqlx {
 
 using std::ostream;
 
-class Session;
-class Schema;
-class Collection;
-class Result;
-class Row;
-class RowResult;
-class DbDoc;
-class DocResult;
 
 class Task;
 class Executable;
@@ -58,35 +50,62 @@ class Task : nocopy
 protected:
 
   class Impl;
-  Impl  *m_impl;
+  Impl  *m_impl;  // TODO: use unique_ptr<> instead.
 
   Task() : m_impl(NULL)
   {}
+
+  void reset(Impl*);
+
+public:
 
   Task(Task &&other) : m_impl(other.m_impl)
   {
     other.m_impl = NULL;
   }
 
-  void reset(Impl*);
-
-public:
-
   virtual ~Task();
   bool is_completed();
   BaseResult wait();
   void cont();
 
-  friend class Impl;
-  friend class Session;
-  friend class NodeSession;
-  friend class Result;
-  friend class Collection;
-  friend class Schema;
-
   struct Access;
   friend struct Access;
   friend class Executable;
+};
+
+
+/**
+  Represents an operation that can be executed.
+
+  Creating an operation does not involve any communication
+  with the server. Only when `execute()` method is called
+  operation is sent to the server for execution.
+*/
+
+class Executable
+{
+protected:
+
+  Task m_task;
+
+public:
+
+  Executable() {}
+
+  Executable(Executable &&other)
+    : m_task(std::move(other.m_task))
+  {}
+
+  /// Execute given operation and wait for its result.
+
+  virtual BaseResult execute()
+  {
+    return m_task.wait();
+  }
+
+  struct Access;
+  friend struct Access;
 };
 
 

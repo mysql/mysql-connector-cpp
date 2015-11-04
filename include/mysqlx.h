@@ -39,6 +39,8 @@
 #include "mysqlx/common.h"
 #include "mysqlx/result.h"
 #include "mysqlx/task.h"
+#include "mysqlx/collection_crud.h"
+#include "mysqlx/table_crud.h"
 
 
 namespace cdk {
@@ -53,6 +55,7 @@ namespace mysqlx {
 class XSession;
 class Schema;
 class Collection;
+class Table;
 
 
 /**
@@ -133,131 +136,10 @@ public:
 
   Collection getCollection(const string&, bool check_exists= false);
 
+  Table getTable(const string&);
+
   friend class Collection;
   friend class Task;
-};
-
-
-/*
-  Collection and its operations
-  =============================
-*/
-
-
-/**
-  Represents an operation that can be executed.
-
-  Creating an operation does not involve any communication
-  with the server. Only when `execute()` method is called
-  operation is sent to the server for execution.
-*/
-
-class Executable
-{
-protected:
-
-  Task m_task;
-
-public:
-
-  /// Execute given operation and wait for its result.
-
-  virtual BaseResult execute()
-  {
-    return m_task.wait();
-  }
-};
-
-
-/**
-  Operation which adds documents to a collection.
-
-  Operation stores a list of documents that will be added
-  to a given collection when this operation is executed.
-
-  Documents are added to the list with `add()` method.
-*/
-
-class CollectionAdd
-  : virtual public Executable
-{
-  virtual void prepare_add() = 0;
-  virtual void do_add(const string&) = 0;
-
-public:
-
-  /**
-    Add document(s) to a collection.
-
-    Documents are described by JSON strings.
-  */
-
-  CollectionAdd& add(const string &json)
-  {
-    try {
-      prepare_add();
-      do_add(json);
-      return *this;
-    }
-    CATCH_AND_WRAP
-  }
-
-  /**
-    @copydoc add(const string&)
-    Several documents can be passed to single `add()` call.
-  */
-
-  template<typename... Types>
-  CollectionAdd& add(const string &json, Types... rest)
-  {
-    try {
-      add(json);
-      return add(rest...);
-    }
-    CATCH_AND_WRAP
-  }
-
-};
-
-
-/**
-  Operation which removes documents from a collection.
-
-  @todo Sorting and limiting the range of deleted documents.
-  @todo Binding values for operation parameters.
-*/
-
-class CollectionRemove
-  : virtual public Executable
-{
-public:
-
-  /// Remove all documents from the collection.
-  virtual Executable& remove() =0;
-
-  /// Remove documents satisfying given expression.
-  virtual Executable& remove(const string&) =0;
-};
-
-
-/**
-  Operation which finds documents satisfying given criteria.
-
-  @todo Sorting and limiting the result.
-  @todo Binding values for operation parameters.
-  @todo Grouping of returned documents.
-*/
-
-class CollectionFind
-  : virtual public Executable
-{
-public:
-
-  /// Return all the documents in the collection.
-  virtual Executable& find() =0;
-
-  /// Find documents that satisfy given expression.
-  virtual Executable& find(const string&) =0;
 };
 
 
@@ -298,39 +180,73 @@ class Collection
   Schema m_schema;
   const string m_name;
 
-  enum { NONE, ADD } m_op;
-
-  BaseResult execute()
-  {
-    m_op = NONE;
-    return Executable::execute();
-  }
-
-  void prepare_add();
-  void do_add(const string&);
-
 public:
 
   Collection(const Schema &sch, const string &name)
-    : m_schema(sch), m_name(name), m_op(NONE)
+    : CollectionAdd(*this)
+    , CollectionRemove(*this)
+    , CollectionFind(*this)
+    , m_schema(sch), m_name(name)
   {}
 
   const string& getName() const { return m_name; }
   const Schema& getSchema() const { return m_schema; }
 
-  Executable& remove();
-  Executable& remove(const string&);
-  Executable& find();
-  Executable& find(const string&);
 
   friend class Task;
 };
 
 
 /*
-  Session
-  =======
+  Table object
+  ============
 */
+
+
+/**
+  Represents a table in a schema.
+
+  Collection object can be obtained from `Schema::getTable()`
+  method:
+
+  ~~~~~~
+  Schema db;
+  Table  myTable;
+
+  myTable= db.getTable("My Table");
+  ~~~~~~
+
+  or directly constructed as follows:
+
+  ~~~~~~
+  Schema db;
+  Table myTable(db, "My Table");
+  ~~~~~~
+
+  Rows can be added to a table using `insert()` method followed
+  by `values()` calls, which prepare insert operation.
+
+  @todo Other CRUD operations on a table.
+*/
+
+class Table
+  : public TableInsert
+{
+  Schema m_schema;
+  const string m_name;
+
+public:
+
+  Table(const Schema &sch, const string &name)
+    : TableInsert(*this)
+    , m_schema(sch), m_name(name)
+  {}
+
+  const string& getName() const { return m_name; }
+  const Schema& getSchema() const { return m_schema; }
+
+  friend class Task;
+};
 
 
 /**

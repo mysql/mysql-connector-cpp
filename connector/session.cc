@@ -140,6 +140,13 @@ try {
 CATCH_AND_WRAP
 
 
+Table Schema::getTable(const string &name)
+try {
+  return Table(*this, name);
+}
+CATCH_AND_WRAP
+
+
 /*
   Executing SQL queries
   =====================
@@ -152,6 +159,11 @@ struct Op_sql : public Task::Access::Impl
     : Impl(sess)
   {
     m_reply = new cdk::Reply(get_cdk_session().sql(query));
+  }
+
+  cdk::Reply* send_command()
+  {
+    return m_reply;
   }
 };
 
@@ -196,3 +208,30 @@ ostream& operator<<(ostream &out, const Error&)
   return out;
 }
 
+
+// Implementation of Task API using internal implementation object
+
+Task::~Task() try { delete m_impl; } CATCH_AND_WRAP
+
+bool Task::is_completed()
+try { return m_impl ? m_impl->is_completed() : true; } CATCH_AND_WRAP
+
+BaseResult Task::wait()
+try {
+  if (!m_impl)
+    throw Error("Attempt to wait on empty task");
+  return m_impl->wait();
+} CATCH_AND_WRAP
+
+void Task::cont()
+try {
+  if (!m_impl)
+    throw Error("Attempt to continue an empty task");
+  m_impl->cont();
+} CATCH_AND_WRAP
+
+void Task::reset(Impl *impl)
+{
+  delete m_impl;
+  m_impl = impl;
+}
