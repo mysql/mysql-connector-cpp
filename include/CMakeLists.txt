@@ -36,6 +36,7 @@ SET(headers mysqlx.h)
 
 ADD_HEADERS_DIR(mysqlx)
 ADD_HEADERS(${headers})
+ADD_HEADER_CHECKS()
 
 #IF(cdk_stand_alone)
   ADD_HEADERS_TARGET()

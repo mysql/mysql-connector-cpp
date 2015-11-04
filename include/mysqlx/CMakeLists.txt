@@ -22,4 +22,5 @@
 
 SET(headers common.h result.h task.h document.h)
 ADD_HEADERS(${headers})
+ADD_HEADER_CHECKS()
 INSTALL(FILES ${headers} DESTINATION include/mysqlx)
