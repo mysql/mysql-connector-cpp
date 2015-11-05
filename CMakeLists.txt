@@ -37,46 +37,47 @@ PROJECT(MySQL_CONCPLS)
 message("Building on system: ${CMAKE_SYSTEM} (${CMAKE_SYSTEM_PROCESSOR})")
 message("Using cmake generator: ${CMAKE_GENERATOR}")
 
+
+#
+# Ngcommon path
+# =============
+#
+
+if(NOT DEFINED WITH_NGCOMMON)
+  set(WITH_NGCOMMON $ENV{WITH_NGCOMMON})
+  if(NOT WITH_NGCOMMON)
+    set(WITH_NGCOMMON "${PROJECT_SOURCE_DIR}/cdk/common")
+  endif()
+endif()
+
+message("ngcommon location: ${WITH_NGCOMMON}")
+
+SET(WITH_NGCOMMON ${WITH_NGCOMMON} CACHE PATH "Path to ngcommon sources")
+
+
+IF (NOT EXISTS "${WITH_NGCOMMON}/cmake")
+MESSAGE(WARNING "Could not find required ngcommon files under location"
+                " specified with WITH_NGCOMMON: ${WITH_NGCOMMON}")
+ENDIF()
+
+
 #
 # Set up cmake module search patch
 # ================================
 #
 
-#
 # First, use modules that are local to this project
-#
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-#
-# If WITH_NGCOMMON option is set, add modules defined there.
-#
-
-SET(WITH_NGCOMMON $ENV{WITH_NGCOMMON} CACHE PATH "Path to ngcommon sources")
-
-#IF(NOT WITH_NGCOMMON)
-#  SET(WITH_NGCOMMON ${PROJECT_SOURCE_DIR}/common)
-#ENDIF()
-
-IF (WITH_NGCOMMON AND NOT EXISTS "${WITH_NGCOMMON}/cmake")
-MESSAGE(WARNING "Could not find required ngcommon files under location"
-                " specified with WITH_NGCOMMON: ${WITH_NGCOMMON}")
-ENDIF()
-
-IF(WITH_NGCOMMON)
-  LIST(APPEND CMAKE_MODULE_PATH ${WITH_NGCOMMON}/cmake)
-  #MESSAGE("added module path: ${WITH_NGCOMMON}/cmake")
-
-ELSE()
-
-#
-# Otherwise use modules from CDK sub-project
-#
+# Then use modules from CDK sub-project
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cdk/cmake)
-LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cdk/common/cmake)
 
-ENDIF()
+# Finally ngcommon modules
+
+LIST(APPEND CMAKE_MODULE_PATH ${WITH_NGCOMMON}/cmake)
+
 
 #
 # Compiler settings
@@ -150,9 +151,17 @@ SETUP_BOOST()
 # CDK
 #
 SET(WITH_CDK_DOC 0)
+OPTION(WITH_CDK_TESTS "cdk tests" OFF)
 ADD_SUBDIRECTORY(cdk)
 INCLUDE_DIRECTORIES(${CDK_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(cdk/parser)
+
+#
+# Unit tests framework
+#
+
+INCLUDE(testing)
+SETUP_TESTING()
 
 #
 # Project's public headers
@@ -205,6 +214,8 @@ INSTALL(TARGETS libconcpp DESTINATION lib)
 # Tests
 # =====
 #
+
+ADD_TEST_TARGET()
 
 #
 # Sample code to try things out

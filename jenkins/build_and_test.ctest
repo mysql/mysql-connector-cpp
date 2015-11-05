@@ -71,8 +71,8 @@ endif()
 
 set_param(WITH_PACKAGES "package build")
 
-#check_param(WITH_GTEST "gtest location")
-#get_filename_component(WITH_GTEST ${WITH_GTEST} ABSOLUTE)
+check_param(WITH_GTEST "gtest location")
+get_filename_component(WITH_GTEST ${WITH_GTEST} ABSOLUTE)
 
 set_param(branch "branch name for cdash build name" local)
 set(CTEST_BUILD_NAME "${branch}-${CMAKE_HOST_SYSTEM_NAME}")
@@ -118,7 +118,7 @@ message("Using cmake generator: ${CTEST_CMAKE_GENERATOR}")
 
 
 list(APPEND CONFIG_OPTIONS "-DCMAKE_INSTALL_PREFIX=${CTEST_BINARY_DIRECTORY}/install")
-list(APPEND CONFIG_OPTIONS -DWITH_TESTS=0)
+list(APPEND CONFIG_OPTIONS -DWITH_TESTS=1)
 list(APPEND CONFIG_OPTIONS -DWITH_DOC=0)
 if(DEFINED WITH_BOOST)
   list(APPEND CONFIG_OPTIONS -DWITH_BOOST=${WITH_BOOST})
@@ -127,7 +127,7 @@ else()
     list(APPEND CONFIG_OPTIONS -DBOOST_SYSTEM_LIBS=1)
   endif()
 endif()
-#list(APPEND CONFIG_OPTIONS -DWITH_GTEST=${WITH_GTEST})
+list(APPEND CONFIG_OPTIONS -DWITH_GTEST=${WITH_GTEST})
 if(WIN32 AND STATIC_MSVCRT)
   list(APPEND CONFIG_OPTIONS -DSTATIC_MSVCRT=${STATIC_MSVCRT})
 endif()
