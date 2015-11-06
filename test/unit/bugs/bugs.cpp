@@ -961,5 +961,26 @@ void bugs::bug21067193()
 
 }
 
+void bugs::bug21152054()
+{
+
+  stmt->execute("DROP TABLE IF EXISTS bug21152054");
+  stmt->execute("create table bug21152054(c1 int);" );
+  stmt->execute("insert into  bug21152054 values(1), (2), (3), (4);" );
+  pstmt.reset( con->prepareStatement("select c1 from bug21152054;") );
+  res.reset( pstmt->executeQuery() );
+  ASSERT_EQUALS(true, res->absolute(4));
+  ASSERT_EQUALS(4, res->getInt(1));
+  int line = 4;
+  ASSERT_EQUALS(true, res->relative(-1));
+  do
+  {
+    --line;
+    ASSERT_EQUALS(line, res->getInt(1));
+  }  while(res->relative(-1));
+
+
+}
+
 } /* namespace regression */
 } /* namespace testsuite */

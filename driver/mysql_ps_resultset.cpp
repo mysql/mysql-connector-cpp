@@ -1340,7 +1340,7 @@ MySQL_Prepared_ResultSet::relative(const int rows)
             row_position = rows > 0? num_rows + 1 : 0; /* after last or before first */
         } else {
             row_position += rows;
-            proxy->data_seek(row_position - 1);
+            seek();
         }
     }
 
