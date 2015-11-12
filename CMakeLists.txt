@@ -7,16 +7,16 @@
 # conditions of the GPLv2 as it is applied to this software, see the
 # FLOSS License Exception
 # <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published
 # by the Free Software Foundation; version 2 of the License.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 # for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
@@ -80,11 +80,6 @@ IF(CMAKE_ENABLE_C++11)
   ENDIF(COMPILER_SUPPORTS_CXX11)
 ENDIF(CMAKE_ENABLE_C++11)
 
-SET(MYSQLCPPCONN_COMPILE_FLAGS_ENV "$ENV{CPPFLAGS} ${MYSQL_CXXFLAGS} $ENV{CXXFLAGS}")
-MESSAGE(STATUS "Environment compile flags: ${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
-
-SET(MYSQLCPPCONN_LINK_FLAGS_ENV "$ENV{LDFLAGS}")
-MESSAGE(STATUS "Environment link flags: ${MYSQLCPPCONN_LINK_FLAGS_ENV}")
 
 #-----------------
 # ICU
@@ -233,6 +228,21 @@ IF(MYSQLCLIENT_STATIC_BINDING AND EXISTS "${CMAKE_SOURCE_DIR}/cmake/mysql_versio
   ENDIF(LIBMYSQL_CPP_VERSION_ID)
 ENDIF()
 
+
+OPTION(USE_SERVER_CXXFLAGS "USE MYSQL_CXXFLAGS on connector build" 0)
+
+message(STATUS "USE_SERVER_FLAGS : ${USE_SERVER_CXXFLAGS}")
+if (USE_SERVER_CXXFLAGS)
+  SET(MYSQLCPPCONN_COMPILE_FLAGS_ENV "$ENV{CPPFLAGS} ${MYSQL_CXXFLAGS} $ENV{CXXFLAGS}")
+else (USE_SERVER_CXXFLAGS)
+  SET(MYSQLCPPCONN_COMPILE_FLAGS_ENV "$ENV{CPPFLAGS} $ENV{CXXFLAGS}")
+endif(USE_SERVER_CXXFLAGS)
+
+MESSAGE(STATUS "Environment compile flags: ${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
+
+SET(MYSQLCPPCONN_LINK_FLAGS_ENV "$ENV{LDFLAGS}")
+MESSAGE(STATUS "Environment link flags: ${MYSQLCPPCONN_LINK_FLAGS_ENV}")
+
 # Configuring header file with DM version info
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cppconn/version_info.h.cmake
                ${CMAKE_BINARY_DIR}/cppconn/version_info.h @ONLY)
@@ -306,12 +316,12 @@ IF(RPM_LAYOUT)
 ENDIF()
 
 INSTALL(FILES
-	${CPACK_RESOURCE_FILE_README}
-	${CPACK_RESOURCE_FILE_INSTALL}
-	${CPACK_RESOURCE_FILE_LICENSE}
-	"${CMAKE_SOURCE_DIR}/Licenses_for_Third-Party_Components.txt"
-	"${CMAKE_SOURCE_DIR}/ANNOUNCEMENT"
-	DESTINATION ${DOC_DESTINATION} OPTIONAL)
+  ${CPACK_RESOURCE_FILE_README}
+  ${CPACK_RESOURCE_FILE_INSTALL}
+  ${CPACK_RESOURCE_FILE_LICENSE}
+  "${CMAKE_SOURCE_DIR}/Licenses_for_Third-Party_Components.txt"
+  "${CMAKE_SOURCE_DIR}/ANNOUNCEMENT"
+  DESTINATION ${DOC_DESTINATION} OPTIONAL)
 
 SET(COMMON_IGNORE_FILES
         "/CMakeFiles/"
@@ -325,25 +335,25 @@ SET(COMMON_IGNORE_FILES
         ".directory$"
         "CMakeCache.txt"
         "Makefile"
-	"install_manifest.txt"
+  "install_manifest.txt"
 )
 SET(PRJ_COMMON_IGNORE_FILES
         ${COMMON_IGNORE_FILES}
-	"ANNOUNCEMENT_102_ALPHA"
-	"ANNOUNCEMENT_103_ALPHA"
-	"ANNOUNCEMENT_104_BETA"
-	"ANNOUNCEMENT_105_GA"
-	"ANNOUNCEMENT_110_GA"
-	"ANNOUNCEMENT_111_GA"
-	"ANNOUNCEMENT_DRAFT"
+  "ANNOUNCEMENT_102_ALPHA"
+  "ANNOUNCEMENT_103_ALPHA"
+  "ANNOUNCEMENT_104_BETA"
+  "ANNOUNCEMENT_105_GA"
+  "ANNOUNCEMENT_110_GA"
+  "ANNOUNCEMENT_111_GA"
+  "ANNOUNCEMENT_DRAFT"
 )
 
 SET(CPACK_SOURCE_IGNORE_FILES
-	${PRJ_COMMON_IGNORE_FILES}
-	"cppconn/config.h$"
-	"cppconn/version_info.h$"
-	"driver/nativeapi/binding_config.h$"
-	"driver/version_info.h$"
+  ${PRJ_COMMON_IGNORE_FILES}
+  "cppconn/config.h$"
+  "cppconn/version_info.h$"
+  "driver/nativeapi/binding_config.h$"
+  "driver/version_info.h$"
 )
 SET(CPACK_PACKAGE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "something_there" )
 SET(CPACK_SOURCE_GENERATOR "TGZ")

@@ -7,16 +7,16 @@
 # conditions of the GPLv2 as it is applied to this software, see the
 # FLOSS License Exception
 # <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published
 # by the Free Software Foundation; version 2 of the License.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 # for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
@@ -24,22 +24,22 @@
 
 
 SET(example_sources
-	../unit_fixture.cpp
-	../main.cpp
-	example.cpp)
+  ../unit_fixture.cpp
+  ../main.cpp
+  example.cpp)
 
 IF(WIN32)
-	SET(example_sources
-    		${example_sources}
-	../unit_fixture.h
-	example.h)
+  SET(example_sources
+        ${example_sources}
+  ../unit_fixture.h
+  example.h)
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(example ${example_sources})
 SET_TARGET_PROPERTIES(example PROPERTIES
-					OUTPUT_NAME "example"
-					LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
-					COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV} ${MYSQL_CXXFLAGS}")
+          OUTPUT_NAME "example"
+          LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
+          COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
 TARGET_LINK_LIBRARIES(example ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 #
