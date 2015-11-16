@@ -62,7 +62,8 @@
 #include <stdint.h>
 #endif
 
-#ifdef HAVE_INTTYPES_H
+
+#if defined(HAVE_INTTYPES_H) && !defined(_WIN32)
 #include <inttypes.h>
 #endif
 
