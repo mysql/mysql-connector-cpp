@@ -108,11 +108,13 @@ MACRO(MERGE_STATIC_LIBS TARGET OUTPUT_NAME LIBS_TO_MERGE)
 
   FOREACH(LIB ${LIBS})
 
+    #message("- processing ${LIB}")
+
     IF(TARGET ${LIB})
 
       GET_TARGET_PROPERTY(LIB_LOCATION ${LIB} LOCATION)
       GET_TARGET_PROPERTY(LIB_TYPE ${LIB} TYPE)
-      #message("- processing ${LIB} (${LIB_TYPE}): ${LIB_LOCATION}")
+      #message("-- target ${LIB_TYPE}: ${LIB_LOCATION}")
 
       IF(NOT LIB_LOCATION)
 
@@ -149,8 +151,10 @@ MACRO(MERGE_STATIC_LIBS TARGET OUTPUT_NAME LIBS_TO_MERGE)
 
       LIST(FIND ORIGINAL ${LIB} pos)
       IF(pos LESS 0)
+        #message("-- treating as OS lib")
         LIST(APPEND OSLIBS ${LIB})
       ELSE()
+        #message("-- explicitly specified static library")
         LIST(APPEND STATIC_LIBS ${LIB})
       ENDIF()
 
@@ -231,7 +235,7 @@ FUNCTION(GET_DEPENDENT_LIBS targets result)
   set(LIBS)
 
   if(TARGET ${first})
-  get_target_property(LIBS ${first} LINK_LIBRARIES)
+  get_target_property(LIBS ${first} INTERFACE_LINK_LIBRARIES)
   endif()
   #message("- processing ${first}: ${LIBS}")
 
