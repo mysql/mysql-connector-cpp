@@ -7,16 +7,16 @@
 # conditions of the GPLv2 as it is applied to this software, see the
 # FLOSS License Exception
 # <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published
 # by the Free Software Foundation; version 2 of the License.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 # for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
@@ -24,7 +24,7 @@
 
 SET(CONNECTOR_MAJOR "1")
 SET(CONNECTOR_MINOR "1")
-SET(CONNECTOR_PATCH "6")
+SET(CONNECTOR_PATCH "7")
 SET(CONNECTOR_LEVEL "")     # "-alpha", "-beta", empty if GA
 SET(CONNECTOR_QUALITY "GA")
 
@@ -58,6 +58,6 @@ SET(CPACK_PACKAGE_RELEASE_TYPE "")
 IF(EXTRA_VERSION)
   SET(MYSQLCPPCONN_VERSION "${CONNECTOR_NUMERIC_VERSION}${EXTRA_VERSION}${CPACK_PACKAGE_RELEASE_TYPE}")
 ELSE(EXTRA_VERSION)
-	SET(MYSQLCPPCONN_VERSION "${CONNECTOR_NUMERIC_VERSION}${CPACK_PACKAGE_RELEASE_TYPE}")
+  SET(MYSQLCPPCONN_VERSION "${CONNECTOR_NUMERIC_VERSION}${CPACK_PACKAGE_RELEASE_TYPE}")
 ENDIF(EXTRA_VERSION)
 
