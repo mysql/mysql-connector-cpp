@@ -25,7 +25,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 #include "test_tapOutputter.h"
-#include <stdio.h>
+#include <iomanip>
 #include <sstream>
 
 namespace testsuite
@@ -102,17 +102,16 @@ void TAP::Summary( unsigned           testsRun
                  , unsigned           testsFailed
                  , std::vector<int> & failedTestsNum)
 {
-  char percentage[7];
+  std::stringstream percentage;
 
   // Little data validation - otherwise sprintf can corrupt our precious stack
   if ( testsRun < testsFailed )
       testsFailed= testsRun;
 
   if ( testsRun != 0 )
-    sprintf(percentage, "%3.2f"
-            , static_cast<float> (testsRun - testsFailed)*100 / testsRun);
+    percentage << std::fixed <<std::setprecision(2) <<static_cast<float> (testsRun - testsFailed)*100.0 / testsRun;
   else
-    strcpy(percentage, "0.00");
+    percentage << std::fixed <<std::setprecision(2) <<(float) 0.0;
 
   if ( testsFailed > 0 )
   {
@@ -128,7 +127,7 @@ void TAP::Summary( unsigned           testsRun
   }
 
   output << std::endl << "Failed " << testsFailed << "/" << testsRun
-          << ", " << percentage << "% okay" << std::endl;
+          << ", " << percentage.str() << "% okay" << std::endl;
 
 }
 
