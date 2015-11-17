@@ -182,7 +182,7 @@ namespace StringUtils
       result= "0x";
 
     std::stringstream buf;
-    buf << std::hex() << (int)(c & 0xff);
+    buf << std::hex << (int)(c & 0xff);
 
     result.append( buf.str() );
 
