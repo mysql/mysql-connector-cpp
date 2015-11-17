@@ -25,8 +25,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 #include "stringutils.h"
-#include <stdlib.h>
-#include <stdio.h>
+#include <iomanip>
+#include <sstream>
 
 namespace StringUtils
 {
@@ -181,11 +181,10 @@ namespace StringUtils
     if ( leading0x )
       result= "0x";
 
-    char buf[3];
+    std::stringstream buf;
+    buf << std::hex() << (int)(c & 0xff);
 
-    sprintf( buf, "%02x", c & 0xff );
-
-    result.append( buf );
+    result.append( buf.str() );
 
     return result;
   }
