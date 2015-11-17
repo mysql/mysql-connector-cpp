@@ -30,6 +30,15 @@
 
 INCLUDE(headers)
 
+#
+# Headers require C++11 compiler. Set appropriate option
+# for gcc/clang compilers.
+#
+
+if(NOT WIN32)
+  set(HEADER_CHECK_OPTIONS "-std=c++11")
+endif()
+
 SETUP_HEADERS(${CMAKE_CURRENT_SOURCE_DIR})
 
 SET(headers mysqlx.h)
@@ -38,9 +47,7 @@ ADD_HEADERS_DIR(mysqlx)
 ADD_HEADERS(${headers})
 ADD_HEADER_CHECKS()
 
-#IF(cdk_stand_alone)
-  ADD_HEADERS_TARGET()
-#ENDIF()
+ADD_HEADERS_TARGET()
 
 INSTALL(FILES ${headers} DESTINATION include)
 
