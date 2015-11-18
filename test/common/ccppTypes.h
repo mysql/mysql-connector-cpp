@@ -41,7 +41,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #endif
 
 #include "cppconn/config.h"
-#ifndef _WIN32
+#if !defined(_WIN32) || (_MSC_VER >=1800)
 #  include <stdlib.h>
 #  ifndef HAVE_FUNCTION_STRTOLL
 #    ifdef HAVE_FUNCTION_STRTOL
