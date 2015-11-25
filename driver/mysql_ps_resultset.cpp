@@ -91,7 +91,7 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
             MySQL_Prepared_Statement * par,
             boost::shared_ptr< MySQL_DebugLogger > & l
         )
-    : row(NULL), proxy(s), last_queried_column(-1), row_position(0), parent(par),
+    : row(NULL), proxy(s), last_queried_column(std::numeric_limits<uint32_t>::max()), row_position(0), parent(par),
      is_valid(true), logger(l), result_bind(r_bind), resultset_type(rset_type)
 {
     CPP_ENTER("MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet");
@@ -215,7 +215,9 @@ MySQL_Prepared_ResultSet::checkScrollable() const
         throw sql::NonScrollableException("Nonscrollable result set");
     }
     // reset last_queried_column
-    last_queried_column = -1;
+    last_queried_column = std::numeric_limits<uint32_t>::max();
+
+
 }
 /* }}} */
 
@@ -1265,7 +1267,7 @@ MySQL_Prepared_ResultSet::next()
         CPP_INFO_FMT("new_row_position=%llu ret=%d", row_position, ret);
     } else {
         // reset last_queried_column
-        last_queried_column = -1;
+        last_queried_column = std::numeric_limits<uint32_t>::max();
         int result = proxy->fetch();
         if (!result || result == MYSQL_DATA_TRUNCATED) {
             ret = true;
@@ -1418,7 +1420,7 @@ MySQL_Prepared_ResultSet::wasNull() const
     if (isBeforeFirstOrAfterLast()) {
         throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::wasNull: can't fetch because not on result set");
     }
-    if (last_queried_column == -1) {
+    if (last_queried_column == std::numeric_limits<uint32_t>::max()) {
         throw sql::InvalidArgumentException("MySQL_Prepared_ResultSet::wasNull: should be called only after one of the getter methods");
     }
     return *result_bind->rbind[last_queried_column - 1].is_null != 0;

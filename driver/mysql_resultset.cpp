@@ -1062,7 +1062,7 @@ MySQL_ResultSet::wasNull() const
     if (isBeforeFirstOrAfterLast()) {
         throw sql::InvalidArgumentException("MySQL_ResultSet::wasNull: can't fetch because not on result set");
     }
-    if (last_queried_column == -1) {
+    if (last_queried_column == std::numeric_limits<uint32_t>::max()) {
         throw sql::InvalidArgumentException("MySQL_ResultSet::wasNull: should be called only after one of the getter methods");
     }
     return was_null;

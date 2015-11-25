@@ -273,7 +273,6 @@ void PreparedStatementTest::testExecute02()
 void PreparedStatementTest::testExecute03()
 
 {
-  bool retValue;
   bool sqlexcflag=false;
   String sPrepStmt=sqlProps[ "CoffeeTab_Delete" ];
   createStandardTable(TABLE_CTSTABLE2);
@@ -283,7 +282,7 @@ void PreparedStatementTest::testExecute03()
 
   try
   {
-    retValue=pstmt->execute();
+    pstmt->execute();
   }
   catch (sql::SQLException &)
   {
@@ -567,7 +566,6 @@ void PreparedStatementTest::testExecuteUpdate02()
 /* throws Exception */
 void PreparedStatementTest::testExecuteUpdate03()
 {
-  int retValue;
   bool sqlexcflag=false;
   String sPrepStmt=sqlProps[ "CoffeeTab_Delete" ];
   createStandardTable(TABLE_CTSTABLE2);
@@ -576,7 +574,7 @@ void PreparedStatementTest::testExecuteUpdate03()
   pstmt.reset(conn->prepareStatement(sPrepStmt));
   try
   {
-    retValue=pstmt->executeUpdate();
+    pstmt->executeUpdate();
   }
   catch (sql::SQLException &)
   {
@@ -1863,7 +1861,6 @@ void PreparedStatementTest::testSetNull01()
 {
   createStandardTable(TABLE_INTEGERTAB);
   bool NULLFlag;
-  int rIntegerVal=0;
 
   initTable("Integer_Tab", sqlProps, conn);
 
@@ -1883,7 +1880,7 @@ void PreparedStatementTest::testSetNull01()
   rs.reset(stmt->executeQuery(Null_Val_Query));
   rs->next();
 
-  rIntegerVal=rs->getInt(1);
+  rs->getInt(1);
   NULLFlag=rs->wasNull();
 
   TestsListener::messagesLog()
@@ -1928,7 +1925,6 @@ void PreparedStatementTest::testSetNull02()
 {
   createStandardTable(TABLE_FLOATTAB);
   bool NULLFlag;
-  float rFloatVal=0;
 
   initTable("Float_Tab", sqlProps, conn);
 
@@ -1944,7 +1940,7 @@ void PreparedStatementTest::testSetNull02()
   logMsg(Null_Val_Query);
   rs.reset(stmt->executeQuery(Null_Val_Query));
   rs->next();
-  rFloatVal=static_cast<float> (rs->getDouble(1));
+  static_cast<float> (rs->getDouble(1));
   NULLFlag=rs->wasNull();
 
   TestsListener::messagesLog()
@@ -1990,7 +1986,6 @@ void PreparedStatementTest::testSetNull03()
 {
   createStandardTable(TABLE_SMALLINTTAB);
   bool NULLFlag;
-  short rShortVal=0;
 
   initTable("Smallint_Tab", sqlProps, conn);
 
@@ -2009,7 +2004,7 @@ void PreparedStatementTest::testSetNull03()
 
   rs->next();
   // it's easier to hack the test, than comment it
-  rShortVal=static_cast<short> (rs->getInt(1));
+  rs->getInt(1);
   NULLFlag=rs->wasNull();
 
   logMsg(String("Boolean Value After Updation: ") + (NULLFlag ? "true" : "false"));
@@ -2388,7 +2383,6 @@ void PreparedStatementTest::testSetNull10()
 {
   createStandardTable(TABLE_DOUBLETAB);
   bool NULLFlag;
-  double rDoubleVal=0;
 
   initTable("Double_Tab", sqlProps, conn);
 
@@ -2404,7 +2398,7 @@ void PreparedStatementTest::testSetNull10()
   logMsg(Null_Val_Query);
   rs.reset(stmt->executeQuery(Null_Val_Query));
   rs->next();
-  rDoubleVal=rs->getDouble(1);
+  rs->getDouble(1);
 
   NULLFlag=rs->wasNull();
 
@@ -2448,7 +2442,6 @@ void PreparedStatementTest::testSetNull11()
 {
   createStandardTable(TABLE_BIGINTTAB);
   bool NULLFlag;
-  long long rLongVal=0;
 
   initTable("Bigint_Tab", sqlProps, conn);
   const String & sPrepStmt=sqlProps[ "Bigint_Tab_Null_Update" ];
@@ -2464,7 +2457,7 @@ void PreparedStatementTest::testSetNull11()
 
   rs.reset(stmt->executeQuery(Null_Val_Query));
   rs->next();
-  rLongVal=rs->getInt64(1);
+  rs->getInt64(1);
   NULLFlag=rs->wasNull();
 
   logMsg(String("Boolean Value After Updation: ") + (NULLFlag ? "true" : "false"));

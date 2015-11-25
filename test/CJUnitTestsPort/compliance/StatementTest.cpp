@@ -439,7 +439,6 @@ void StatementTest::testExecuteUpdate01()
 void StatementTest::testExecuteUpdate03()
 {
   bool sqlExceptFlag=false;
-  int updCount=0;
 
   String sSqlStmt=sqlProps[ "Sel_Coffee_Tab" ];
   logMsg(String("SQL String of non - existent row  :  ") + sSqlStmt);
@@ -447,7 +446,7 @@ void StatementTest::testExecuteUpdate03()
   try
   {
     logMsg("Calling executeUpdate method ");
-    updCount=stmt->executeUpdate(sSqlStmt);
+    stmt->executeUpdate(sSqlStmt);
   } catch (sql::SQLException &) {
     sqlExceptFlag=true;
   }

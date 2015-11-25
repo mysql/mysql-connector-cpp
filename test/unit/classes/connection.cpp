@@ -236,7 +236,7 @@ void connection::getClientOption()
       {
         sql::ConnectOptionsMap opts;
         sql::SQLString input_value("../lib/plugin/");
-        char *output_value="../lib/plugin/";
+        const char *output_value="../lib/plugin/";
         void * output;
 
         opts["hostName"]=url;
@@ -247,7 +247,7 @@ void connection::getClientOption()
         created_objects.clear();
         con.reset(driver->connect(opts));
 
-        output=(static_cast<char **> (&output_value));
+        output=(static_cast<const char **> (&output_value));
         con->getClientOption("pluginDir", output);
 
         ASSERT_EQUALS(input_value, output_value);
@@ -2329,7 +2329,8 @@ void connection::loadSameLibraryTwice()
 void connection::enableClearTextAuth()
 {
   int serverVersion=getMySQLVersion(con);
-  if ( serverVersion < 55027 || serverVersion > 56000 && serverVersion < 56007)
+
+  if ( ((serverVersion < 55027) || (serverVersion > 56000)) && (serverVersion < 56007))
   {
     SKIP("The server does not support tested functionality(cleartext plugin enabling)");
   }
