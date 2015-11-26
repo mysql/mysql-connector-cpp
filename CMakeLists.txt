@@ -80,6 +80,12 @@ IF(CMAKE_ENABLE_C++11)
   ENDIF(COMPILER_SUPPORTS_CXX11)
 ENDIF(CMAKE_ENABLE_C++11)
 
+#-----------------
+# Changing CRT from dynamic to static (Windows Only)
+IF(WIN32)
+  INCLUDE(${CMAKE_SOURCE_DIR}/changeCrt.cmake)
+  CHANGE_CRT("/MT")
+ENDIF(WIN32)
 
 #-----------------
 # ICU
