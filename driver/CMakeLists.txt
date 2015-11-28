@@ -306,8 +306,10 @@ IF(WIN32)
 #    STATIC_LIBRARY_FLAGS_RELEASE "/NODEFAULTLIB:LIBCMT")
 
   # Changing CRT from dynamic to static
-  #INCLUDE(${CMAKE_SOURCE_DIR}/changeCrt.cmake)
-  #CHANGE_CRT("/MT")
+  IF(MYSQLCLIENT_STATIC_BINDING)
+    INCLUDE(${CMAKE_SOURCE_DIR}/changeCrt.cmake)
+    CHANGE_CRT("/MT")
+  ENDIF()
 
   INSTALL(TARGETS mysqlcppconn mysqlcppconn-static
     RUNTIME DESTINATION lib
