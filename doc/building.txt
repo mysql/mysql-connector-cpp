@@ -5,8 +5,8 @@ Prerequisites
 -------------
 To build Connector/C++, the following tools and libraries are required:
 
-- A C++ compiler that supports C++11. These compilers have
-  been tested: gcc 4.8.4, MS Visual Studio 2013.
+- A C++ compiler that supports C++11. In case of gcc it must be at least
+  version 4.8. These compilers have been tested: gcc 4.8.4, MS Visual Studio 2013.
 
 - CMake 2.8.11 or later.
 

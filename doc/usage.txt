@@ -10,7 +10,8 @@ Connector/C++ depends on that platform.
 
 Since Connector/C++ uses C++11 language, one should enable C++11 support
 in the compiler, unless it is the default. For `gcc` and `clang`
-compilers this can be done using `-std=c++11` option.
+compilers this can be done using `-std=c++11` option. Connector/C++
+requires gcc version 4.8 or later.
 
 An example `Makefile` to build an application using Connector/C++,
 with sources in `app.cc` looks like this:
