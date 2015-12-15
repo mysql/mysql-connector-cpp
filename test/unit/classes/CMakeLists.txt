@@ -48,7 +48,9 @@ SET_TARGET_PROPERTIES(test_connection PROPERTIES
           OUTPUT_NAME "connection"
           LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
           COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
-TARGET_LINK_LIBRARIES(test_connection ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+TARGET_LINK_LIBRARIES(test_connection ${MY_TARGET_LINK_LIBRARIES}
+                                      ${MY_GCOV_LINK_LIBRARIES}
+                                      ${MYSQLCPPCONN_BOOST_THREAD_LIBS} )
 
 MESSAGE(STATUS "Configuring unit tests - connection")
 
