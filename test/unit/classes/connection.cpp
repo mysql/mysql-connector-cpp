@@ -34,6 +34,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <cppconn/exception.h>
 
 #include <boost/scoped_ptr.hpp>
+#include <boost/thread.hpp>
 #include <list>
 
 namespace testsuite
@@ -2953,6 +2954,69 @@ void connection::reconnect()
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
+}
+
+void connection::worker_thread()
+{
+  try
+  {
+    sql::Driver *driver;
+    sql::Connection *con;
+    sql::Statement *stmt;
+    sql::ResultSet *res;
+
+    driver = get_driver_instance_by_name(m_driver_name.c_str());
+
+    driver->threadInit();
+    con = driver->connect(url, user, passwd);
+    stmt = con->createStatement();
+    res = stmt->executeQuery("SELECT now() as n;");
+    while (res->next())
+    {
+      logMsg(res->getString("n"));
+    }
+
+    delete res;
+    delete stmt;
+    delete con;
+    driver->threadEnd();
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+  return;
+}
+
+
+void connection::get_driver_multithread()
+{
+  const int opt_threads=2;
+
+  for(int i =0; i < 100; ++i)
+  {
+    std::stringstream snum;
+    snum << i;
+    m_driver_name = snum.str();
+
+    std::vector< boost::shared_ptr<boost::thread> > work_threads;
+
+    for(unsigned int i=0;i<opt_threads;i++)
+      work_threads.push_back(
+            boost::shared_ptr<boost::thread>(
+              new boost::thread(boost::bind(&connection::worker_thread,this))));
+
+    std::vector< boost::shared_ptr<boost::thread> >::iterator it = work_threads.begin();
+    for(; it != work_threads.end() ;++it)
+    {
+      (*it)->join();
+    }
+  }
+
+  return;
 }
 
 
