@@ -446,6 +446,7 @@ MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
         case sql::DataType::LONGVARBINARY:
         case sql::DataType::SET:
         case sql::DataType::ENUM:
+        case sql::DataType::JSON:
         {
             CPP_INFO("It's a string");
             long double ret = sql::mysql::util::strtold(getString(columnIndex).c_str(), NULL);
@@ -614,6 +615,7 @@ MySQL_Prepared_ResultSet::getInt64_intern(const uint32_t columnIndex, bool /* cu
         case sql::DataType::LONGVARBINARY:
         case sql::DataType::SET:
         case sql::DataType::ENUM:
+        case sql::DataType::JSON:
             CPP_INFO("It's a string");
             return strtoll(getString(columnIndex).c_str(), NULL, 10);
         case sql::DataType::BIT:
@@ -761,6 +763,7 @@ MySQL_Prepared_ResultSet::getUInt64_intern(const uint32_t columnIndex, bool /* c
         case sql::DataType::LONGVARBINARY:
         case sql::DataType::SET:
         case sql::DataType::ENUM:
+        case sql::DataType::JSON:
             CPP_INFO("It's a string");
             return strtoull(getString(columnIndex).c_str(), NULL, 10);
         case sql::DataType::BIT:

@@ -982,5 +982,55 @@ void bugs::bug21152054()
 
 }
 
+void bugs::bug22292073()
+{
+
+  stmt->execute("DROP TABLE IF EXISTS bug22292073");
+  stmt->execute("create table bug22292073 (jdoc JSON);" );
+  stmt->execute("insert into bug22292073 values('{ \"name\": \"abc\", \"age\": 1 , \"misc\":\
+                1.2}'), ('{ \"name\": \"abcdef\", \"age\": 31 , \"misc\": 1.237843}');" );
+  pstmt.reset( con->prepareStatement("select JSON_EXTRACT(jdoc, '$.age') from bug22292073;") );
+  res.reset( pstmt->executeQuery() );
+
+  res->next();
+
+  ASSERT_EQUALS(true, res->getBoolean(1));
+  ASSERT_EQUALS(1, res->getInt(1));
+  ASSERT_EQUALS(1L, res->getInt64(1));
+  ASSERT_EQUALS(1, res->getUInt(1));
+  ASSERT_EQUALS(1UL, res->getUInt64(1));
+  ASSERT_EQUALS(1.0, res->getDouble(1));
+
+  res->next();
+
+  ASSERT_EQUALS(true, res->getBoolean(1));
+  ASSERT_EQUALS(31, res->getInt(1));
+  ASSERT_EQUALS(31L, res->getInt64(1));
+  ASSERT_EQUALS(31, res->getUInt(1));
+  ASSERT_EQUALS(31UL, res->getUInt64(1));
+  ASSERT_EQUALS(31.0, res->getDouble(1));
+
+  stmt.reset(con->createStatement());
+  res.reset(stmt->executeQuery("select JSON_EXTRACT(jdoc, '$.age') from bug22292073;"));
+
+  res->next();
+
+  ASSERT_EQUALS(true, res->getBoolean(1));
+  ASSERT_EQUALS(1, res->getInt(1));
+  ASSERT_EQUALS(1L, res->getInt64(1));
+  ASSERT_EQUALS(1, res->getUInt(1));
+  ASSERT_EQUALS(1UL, res->getUInt64(1));
+  ASSERT_EQUALS(1.0, res->getDouble(1));
+
+  res->next();
+
+  ASSERT_EQUALS(true, res->getBoolean(1));
+  ASSERT_EQUALS(31, res->getInt(1));
+  ASSERT_EQUALS(31L, res->getInt64(1));
+  ASSERT_EQUALS(31, res->getUInt(1));
+  ASSERT_EQUALS(31UL, res->getUInt64(1));
+  ASSERT_EQUALS(31.0, res->getDouble(1));
+}
+
 } /* namespace regression */
 } /* namespace testsuite */
