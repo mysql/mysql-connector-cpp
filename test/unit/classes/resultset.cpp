@@ -197,9 +197,27 @@ void resultset::getTypes()
       }
 
       msg.str("");
-      msg << "INSERT INTO test(id) VALUES ('" << it->value << "')";
-      stmt->execute(msg.str());
-      ASSERT_EQUALS(1, (int)stmt->getUpdateCount());
+      switch(it->ctype)
+      {
+      case sql::DataType::BIT:
+        msg << "INSERT INTO test(id) VALUES (" << it->value << ")";
+        break;
+      default:
+        msg << "INSERT INTO test(id) VALUES (\"" << it->value << "\")";
+      }
+
+      try
+      {
+        stmt->execute(msg.str());
+        ASSERT_EQUALS(1, (int)stmt->getUpdateCount());
+      }
+      catch (sql::SQLException &e)
+      {
+        logErr(e.what());
+        logErr("SQLState: " + std::string(e.getSQLState()));
+        logErr("SqlDef: " + it->sqldef);
+        fail(e.what(), __FILE__, __LINE__);
+      }
 
       res.reset(stmt->executeQuery("SELECT id, NULL FROM test"));
       checkResultSetScrolling(res);
@@ -633,9 +651,27 @@ void resultset::getTypesMinorIssues()
       }
 
       msg.str("");
-      msg << "INSERT INTO test(id) VALUES ('" << it->value << "')";
-      stmt->execute(msg.str());
-      ASSERT_EQUALS(1, (int)stmt->getUpdateCount());
+      switch(it->ctype)
+      {
+      case sql::DataType::BIT:
+        msg << "INSERT INTO test(id) VALUES (" << it->value << ")";
+        break;
+      default:
+        msg << "INSERT INTO test(id) VALUES (\"" << it->value << "\")";
+      }
+
+      try
+      {
+        stmt->execute(msg.str());
+        ASSERT_EQUALS(1, (int)stmt->getUpdateCount());
+      }
+      catch (sql::SQLException &e)
+      {
+        logErr(e.what());
+        logErr("SQLState: " + std::string(e.getSQLState()));
+        logErr("SqlDef: " + it->sqldef);
+        fail(e.what(), __FILE__, __LINE__);
+      }
 
       res.reset(stmt->executeQuery("SELECT id, NULL FROM test"));
       checkResultSetScrolling(res);
