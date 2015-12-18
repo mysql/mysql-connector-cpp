@@ -66,17 +66,16 @@ public:
 #ifndef MYSQLCLIENT_STATIC_BINDING
     TEST_CASE(loadSameLibraryTwice);
 #endif
-    TEST_CASE(enableClearTextAuth);
-    TEST_CASE(connectAttrAdd);
-    TEST_CASE(connectAttrReset);
-    TEST_CASE(connectCharsetDir);
-    TEST_CASE(connectSSLEnforce);
-    TEST_CASE(setAuthDir);
-    TEST_CASE(setDefaultAuth);
-    TEST_CASE(localInfile);
-    TEST_CASE(isValid);
-    TEST_CASE(reconnect);
-    TEST_CASE(get_driver_multithread);
+	TEST_CASE(enableClearTextAuth);
+	TEST_CASE(connectAttrAdd);
+	TEST_CASE(connectAttrReset);
+	TEST_CASE(connectCharsetDir);
+	TEST_CASE(connectSSLEnforce);
+	TEST_CASE(setAuthDir);
+	TEST_CASE(setDefaultAuth);
+	TEST_CASE(localInfile);
+	TEST_CASE(isValid);
+	TEST_CASE(reconnect);
   }
 
   /**
@@ -233,15 +232,6 @@ public:
    *
    */
   void reconnect();
-
-  /*
-   * Test of mysql_get_driver() multithread
-   *
-   */
-  std::string m_driver_name;
-  void worker_thread();
-  void get_driver_multithread();
-
 };
 
 
