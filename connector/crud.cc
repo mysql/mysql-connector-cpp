@@ -140,7 +140,6 @@ public:
 class Op_table_insert
   : public Task::Access::Impl
   , public cdk::Row_source
-  , public cdk::Expression
   , public cdk::Format_info
 {
   using string = cdk::string;
@@ -165,31 +164,32 @@ class Op_table_insert
 
   // Task::Impl
 
+  bool m_started;
+
   cdk::Reply* send_command()
   {
     // Prepare iterators to make a pass through m_rows list.
-    m_cur_row = m_rows.cbegin();
+    m_started = false;
     m_end = m_rows.end();
     return new cdk::Reply(get_cdk_session().table_insert(m_table, *this));
   }
 
   // Row_source (Iterator)
 
-  void next() { ++m_cur_row;  }
-  bool is_valid() { return m_cur_row != m_end; }
+  bool next()
+  {
+    if (!m_started)
+      m_cur_row = m_rows.cbegin();
+    else
+      ++m_cur_row;
+
+    m_started = true;
+    return m_cur_row != m_end;
+  }
 
   // Row_source (Expr_list)
 
-  unsigned m_pos;
-
-  unsigned count() const { return m_cur_row->colCount(); }
-  const cdk::Expression& get(unsigned pos) const
-  {
-    const_cast<Op_table_insert*>(this)->m_pos = pos;
-    return *this;
-  }
-
-  void process(Expression::Processor &ep) const;
+  void process(Expr_list::Processor &ep) const;
 
   // Format_info
 
@@ -229,23 +229,38 @@ void TableInsertValues::add_row(const Row &row)
 }
 
 
-void Op_table_insert::process(Expression::Processor &ep) const
+void Op_table_insert::process(Expr_list::Processor &lp) const
 {
-  const Value &val = m_cur_row->get(m_pos);
+  using Element_prc = Expr_list::Processor::Element_prc;
 
-  switch (val.getType())
+  lp.list_begin();
+
+  for (unsigned pos = 0; pos < m_cur_row->colCount(); ++pos)
   {
-  case Value::VNULL:  ep.null(); return;
-  case Value::STRING: ep.str((string)val); return;
-  case Value::INT64:  ep.num((int64_t)(int)val); return;
-  case Value::UINT64: ep.num((uint64_t)(unsigned)val); return;
-  case Value::FLOAT:  ep.num((float)val); return;
-  case Value::DOUBLE: ep.num((double)val); return;
-    // TODO: handle other value types
-  default:
-    ep.value(cdk::TYPE_BYTES, *this, Value::Access::get_bytes(val));
-    return;
+    Element_prc::Scalar_prc::Value_prc *vprc;
+    vprc = safe_prc(lp)->list_el()->scalar()->val();
+
+    if (!vprc)
+      continue;
+
+    const Value &val = m_cur_row->get(pos);
+
+    switch (val.getType())
+    {
+    case Value::VNULL:  vprc->null(); break;
+    case Value::STRING: vprc->str((string)val); break;
+    case Value::INT64:  vprc->num((int64_t)(int)val); break;
+    case Value::UINT64: vprc->num((uint64_t)(unsigned)val); break;
+    case Value::FLOAT:  vprc->num((float)val); break;
+    case Value::DOUBLE: vprc->num((double)val); break;
+      // TODO: handle other value types
+    default:
+      vprc->value(cdk::TYPE_BYTES, *this, Value::Access::get_bytes(val));
+      break;
+    }
   }
+
+  lp.list_end();
 }
 
 
@@ -256,9 +271,10 @@ void Op_table_insert::process(Expression::Processor &ep) const
 
 class Op_collection_add
   : public Task::Access::Impl
-  , public cdk::Expr_list
-  , public cdk::Expression
+  , public cdk::Doc_source
   , public cdk::JSON::Processor
+  , public cdk::JSON::Processor::Any_prc
+  , public cdk::JSON::Processor::Any_prc::Scalar_prc
 {
   typedef cdk::string string;
 
@@ -266,11 +282,14 @@ class Op_collection_add
   std::vector<string> m_json;
   mysqlx::GUID  m_id;
   bool  m_generated_id;
+  unsigned m_pos;
+
 
   Op_collection_add(Collection &coll)
     : Impl(coll)
     , m_coll(coll)
     , m_generated_id(true)
+    , m_pos(0)
   {}
 
   void add_json(const string &json)
@@ -301,15 +320,14 @@ class Op_collection_add
     return Result::Access::mk(m_reply, m_id);
   }
 
-  // Expr_list
+  // Doc_source
 
-  unsigned m_pos;
-
-  unsigned count() const { return m_json.size(); }
-  const cdk::Expression& get(unsigned pos) const
+  bool next()
   {
-    const_cast<Op_collection_add*>(this)->m_pos = pos;
-    return *this;
+    if (m_pos >= m_json.size())
+      return false;
+    ++m_pos;
+    return true;
   }
 
   void process(Expression::Processor &ep) const;
@@ -319,24 +337,42 @@ class Op_collection_add
   void doc_begin() {}
   void doc_end() {}
 
-  void key_doc(const string&, const Document&) {}
 
-  void key_val(const string &key, const Value &val)
+  cdk::JSON::Processor::Any_prc*
+  key_val(const string &key)
   {
     // look only at key '_id'
     if (key != string("_id"))
-      return;
+      return NULL;
     // process '_id' value
-    val.process(*this);
+    m_generated_id= false;
+    return this;
   }
 
-  // JSON::Value::Processor
+  // JSON::Processor::Any_prc
+
+  cdk::JSON::Processor::Any_prc::List_prc*
+  arr() { assert(false); return NULL; }
+  cdk::JSON::Processor::Any_prc::Doc_prc*
+  doc() { assert(false); return NULL; }
+
+  cdk::JSON::Processor::Any_prc::Scalar_prc*
+  scalar()
+  {
+    return this;
+  }
+
+  // JSON::Processor::Any_prc::Scalar_prc
 
   void str(const string &val)
   {
-    m_generated_id= false;
     m_id= val;
   }
+  void num(int64_t) { assert(false); }
+  void num(uint64_t) { assert(false); }
+  void num(float) { assert(false); }
+  void num(double) { assert(false); }
+  void yesno(bool) { assert(false); }
 
   friend class mysqlx::CollectionAddExec;
 };
@@ -375,7 +411,6 @@ CollectionAddExec& CollectionAddExec::do_add(const DbDoc &doc)
 class Insert_id
   : public cdk::api::Table_ref
   , public cdk::Expr_list
-  , public cdk::Expression
 {
   typedef cdk::string string;
 
@@ -394,27 +429,15 @@ class Insert_id
 
   // Expr_list (arguments)
 
-  unsigned count() const { return 3; }
+  using cdk::Expr_list::Processor;
 
-  unsigned m_pos;
-
-  const Expression& get(unsigned pos) const
+  void process(Processor &lp) const
   {
-    const_cast<Insert_id*>(this)->m_pos= pos;
-    return *this;
-  }
-
-  using cdk::Expression::Processor;
-
-  void process(Processor &ep) const
-  {
-    switch (m_pos)
-    {
-    case 0: ep.str(m_json); return;
-    case 1: ep.str(L"$._id"); return;
-    case 2: ep.str(m_id); return;
-    default: throw "index out of range";
-    }
+    lp.list_begin();   // FIXME
+    lp.list_el()->scalar()->val()->str(m_json);
+    lp.list_el()->scalar()->val()->str(L"$._id");
+    lp.list_el()->scalar()->val()->str(m_id);
+    lp.list_end();
   }
 
   friend class Op_collection_add;
@@ -436,7 +459,9 @@ class Insert_id
 
 void Op_collection_add::process(Expression::Processor &ep) const
 {
-  const string &json = m_json.at(m_pos);
+  assert(m_pos > 0);  // this method should be called after calling next()
+
+  const string &json = m_json.at(m_pos-1);
   auto self = const_cast<Op_collection_add*>(this);
 
   // Parse JSON string to find _id if defined.
@@ -451,12 +476,12 @@ void Op_collection_add::process(Expression::Processor &ep) const
     self->m_id.generate();
     std::string id(m_id);
     Insert_id expr(json, id);
-    ep.call(expr, expr);
+    expr.process(*ep.scalar()->call(expr));
   }
   else
   {
     // TODO: ep.val(TYPE_DOCUMENT, json_format, cdk::bytes())
-    ep.str(json);
+    ep.scalar()->val()->str(json);
   }
 }
 
