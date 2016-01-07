@@ -88,11 +88,9 @@ CATCH_AND_WRAP
 
 class Create_args
   : public cdk::Any_list
-  , public cdk::Any
 {
-  typedef cdk::Any Any;
+  typedef cdk::Any_list Any_list;
 
-  unsigned m_pos;
   const string &m_schema;
   const string &m_name;
 
@@ -102,17 +100,14 @@ public:
     : m_schema(schema), m_name(name)
   {}
 
-  unsigned count() const { return 2; }
-  const Any& get(unsigned pos) const
+  void process(Any_list::Processor &lp) const
   {
-    const_cast<Create_args*>(this)->m_pos= pos;
-    return *this;
-  }
-
-  void process(Any::Processor &ep) const
-  {
+    cdk::Safe_prc<Any_list::Processor> sp(lp);
+    sp->list_begin();
     // NOTE: uses utf8
-    ep.str((0 == m_pos ? m_schema : m_name));
+    sp->list_el()->scalar()->str(m_schema);
+    sp->list_el()->scalar()->str(m_name);
+    sp->list_end();
   }
 };
 

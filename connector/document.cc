@@ -35,6 +35,7 @@
 #include <vector>
 #include <sstream>
 #include <iomanip>
+#include <memory>
 
 using namespace ::mysqlx;
 
@@ -105,9 +106,11 @@ void DbDoc::print(std::ostream &out) const
 
 struct DbDoc::Impl::Builder
   : public cdk::JSON::Processor
+  , public cdk::JSON::Processor::Any_prc
+  , public cdk::JSON::Processor::Any_prc::Scalar_prc
 {
   Map  &m_map;
-  string m_key;
+  std::unique_ptr<Field> m_key;
 
 public:
 
@@ -126,10 +129,30 @@ public:
   {
   }
 
-  void key_doc(const cdk::string &key, const Document &val)
+  cdk::JSON::Processor::Any_prc*
+  key_val(const cdk::string &key)
+  {
+    m_key.reset(new Field(key));
+    return this;
+  }
+
+  // TODO: handle arrays
+
+  cdk::JSON::Processor::Any_prc::List_prc*
+  arr()
+  {
+    assert(false);
+    return NULL;
+  }
+
+
+  std::unique_ptr<Builder> m_doc_builder;
+
+  cdk::JSON::Processor::Any_prc::Doc_prc*
+  doc()
   {
     using mysqlx::Value;
-    Value &sub = m_map[Field(key)];
+    Value &sub = m_map[*m_key];
 
     // Turn the value to one storing a document.
 
@@ -138,14 +161,14 @@ public:
 
     // Use another builder to build the sub-document.
 
-    Builder bld(*sub.m_doc.m_impl);
-    val.process(bld);
+    m_doc_builder.reset(new Builder(*sub.m_doc.m_impl));
+    return m_doc_builder.get();
   }
 
-  void key_val(const cdk::string &key, const Value &val)
+  cdk::JSON::Processor::Any_prc::Scalar_prc*
+  scalar()
   {
-    m_key = key;
-    val.process(*this);
+    return this;
   }
 
   // callbacks for scalar values store the value under
@@ -153,13 +176,13 @@ public:
 
   void str(const cdk::string &val)
   {
-    m_map.emplace(m_key, string(val));
+    m_map.emplace(*m_key, Value(val));
   }
-  void num(uint64_t val)  { m_map.emplace(m_key, val); }
-  void num(int64_t val)   { m_map.emplace(m_key, val); }
-  void num(float val)     { m_map.emplace(m_key, val); }
-  void num(double val)    { m_map.emplace(m_key, val); }
-  void yesno(bool val)    { m_map.emplace(m_key, val); }
+  void num(uint64_t val)  { m_map.emplace(*m_key, val); }
+  void num(int64_t val)   { m_map.emplace(*m_key, val); }
+  void num(float val)     { m_map.emplace(*m_key, val); }
+  void num(double val)    { m_map.emplace(*m_key, val); }
+  void yesno(bool val)    { m_map.emplace(*m_key, val); }
 
 };
 
