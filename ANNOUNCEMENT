@@ -4,90 +4,96 @@ This is a release of MySQL Connector/C++, Oracle's
 dual-license C++ API for connecting client applications
 to MySQL.
 
-Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
 
 --------------------------------------------------------------------------------
 
 Dear MySQL Users,
 
 A new GA (general availability) version of MySQL Connector/C++ has
-been made available: MySQL Connector/C++ 1.1.6 GA. The MySQL
+been made available: MySQL Connector/C++ 1.1.7 GA. The MySQL
 Connector/C++ provides a C++ API for connecting client applications to
-the MySQL Server 5.5 or newer. You can download the production release
-at:
+the MySQL Server 5.5 or newer.
 
- http://dev.mysql.com/downloads/connector/cpp/1.1.html
+You can download the production release at:
+
+http://dev.mysql.com/downloads/connector/cpp/1.1.html
+
+MySQL Connector C++ (Commercial) will be available for download on the
+My Oracle Support (MOS) website. This release will be available on eDelivery
+(OSDC) in next month's upload cycle.
 
 The MySQL driver for C++ offers an easy to use API derived from JDBC
-4.0. MySQL Workbench is using it successfully since years.
+4.0. MySQL Workbench has used it successfully for years.
 
-The major changes in 1.1.6 are:
+We have improved the driver since the last GA release. Please see the
+documentation and the CHANGES file in the source distribution for a
+detailed description of bugs that have been fixed. Bug descriptions are
+also listed below.
 
-  Security Notes
+Enjoy!
 
-     * Connector/C++ 1.1.6 Commercial upgrades the linked OpenSSL
-       library to version 1.0.1m which has been publicly reported
-       as not vulnerable to CVE-2015-0286
-       (http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2015-0286).
+======================================================================
 
-   Functionality Added or Changed
+Changes in MySQL Connector/C++ 1.1.7
 
-     * The std::auto_ptr class template is deprecated in C++11,
-       and its usage has been replaced with
-       boost::scoped_ptr/shared_ptr.
-       The CMAKE_ENABLE_C++11 CMake option has been added to
-       permit enabling C++11 support. (Bug #75251)
+   Configuration Notes
 
-     * Connector/C++ now provides macros to indicate the
-       versions of libraries against which it was built:
-       MYCPPCONN_STATIC_MYSQL_VERSION and
-       MYCPPCONN_STATIC_MYSQL_VERSION_ID (MySQL client library
-       version, string and numeric), and MYCPPCONN_BOOST_VERSION
-       (Boost library version, numeric). (Bug #75250)
+     * Binary distributions for this release of MySQL
+       Connector/C++ were linked against libmysqlclient from
+       MySQL 5.7.10, except for OS X 10.8/10.9, for which
+       distributions were linked against MySQL 5.7.9. This
+       enables Connector/C++ to take advantage of features
+       present in recent client library versions. Some examples:
+
+          + Support for the MySQL JSON data type is available.
+            Current versions of MySQL Workbench require JSON
+            support, so to build MySQL Workbench 6.3.5 or higher
+            from source, it is necessary to use a version of
+            Connector/C++ at least as recent as 1.1.7.
+
+          + Applications will attempt to establish a secure
+            (encrypted) connection by default whenever the
+            server is enabled to support secure connections, and
+            fall back to an unencrypted connection otherwise.
+            (This is as described at Configuring MySQL to Use
+            Secure Connections
+            (http://dev.mysql.com/doc/refman/5.7/en/using-secure
+            -connections.html).) To enforce a secure connection,
+            such that an error occurs if secure connections are
+            not available, applications can enable the
+            sslEnforce connection option.
+       To build Connector/C++ from source, you must use either a
+       General Availability version of MySQL 5.7 (5.7.9 or
+       higher) or Connector/C 6.1.8 or higher. Set the MYSQL_DIR
+       CMake option appropriately at configuration time as
+       necessary. (Bug #22351273)
+
+   Security Notes
+
+     * The linked OpenSSL library for Connector/C++ Commercial
+       has been updated to version 1.0.1q. Issues fixed in the
+       new OpenSSL version are described at
+       http://www.openssl.org/news/vulnerabilities.html.
+       This change does not affect Oracle-produced MySQL
+       Community builds of Connector/C++, which use the yaSSL
+       library instead.
+
+   Spatial Data Support
+
+     * The required version of the Boost library for
+       Connector/C++ builds has been raised to 1.56.0.
 
    Bugs Fixed
 
-     * With defaultStatementResultType=FORWARD_ONLY and a row
-       position after the last row, using getter methods such as
-       getInt() or getString() resulted in a segmentation fault.
-       (Bug #20085944)
+     * MySQL_Prepared_ResultSet::relative() failed to fetch the
+       record due to a missing proxy->fetch() call. (Bug
+       #21152054)
 
-     * For prepared statements, calling wasNull() before
-       fetching data resulted in an assertion failure.
-       (Bug #19938873)
-
-     * Result sets from prepared statements were not freed.
-       (Bug #18135088)
-
-     * MySQL Connector/C++ failed to build against
-       Boost-devel-1.41.0-25 on OLE6.
-       (Bug #75063, Bug #20125824)
-
-     * Configuration failed if the MYSQL_CONFIG_EXECUTABLE
-       option was specified and the MySQL installation path
-       contained the characters -m. Installation failed if the
-       build directory was not in the top source directory.
-       (Bug #73502, Bug #19447498)
-
-     * For prepared statements, getString() did not return the
-       fractional seconds part from temporal columns that had a
-       fractional sections part. (Bug #68523, Bug #17218692)
-
-     * For queries of the form SELECT MAX(bit_col) FROM
-       table_with_bit_col, getString() returned an incorrect
-       result. (Bug #66235, Bug #14520822)
-
-     * For Connector/C++ builds from source, make install failed
-       if only the static library had been built without the
-       dynamic library. (Bug #52281, Bug #11759926)
-
-You can find further details, including usages examples, in the
-documentation at:
-
-  http://dev.mysql.com/doc/en/connector-cpp.html
-
-You may also want to contribute to the MySQL Forum on C/C++ at
-http://forums.mysql.com/list.php?167 or join the MySQL Connector/C++
-mailing list http://lists.mysql.com/connector-cplusplus .
+     * During Connector/C++ builds, the MySQL Server CXXFLAGS
+       and CFLAGS values were used rather than the system
+       default values. To specify explicitly to use the server
+       values, enable the new USE_SERVER_CXXFLAGS CMake option.
+       (Bug #77655, Bug #21391025)
 
 Enjoy!
