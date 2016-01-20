@@ -266,3 +266,101 @@ TEST_F(Crud, arrays)
   EXPECT_EQ(Value::DOCUMENT, arr[3][1].getType());
   EXPECT_EQ(123, (int)arr[3][1]["bar"]);
 }
+
+
+
+TEST_F(Crud, bind)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("c1", true);
+
+  coll.remove().execute();
+
+  {
+    RowResult res = sql("select count(*) from test.c1");
+    unsigned  cnt = res.fetchOne()[0];
+    EXPECT_EQ(0, cnt);
+  }
+
+  cout << "Inserting documents..." << endl;
+
+  {
+    Result add;
+
+    DbDoc doc("{ \"name\": \"foo\", \"age\": 1 }");
+
+    add = coll.add(doc, doc).execute();
+    cout << "- added doc with id: " << add.getLastDocumentId() << endl;
+
+    add = coll.add("{ \"name\": \"bar\", \"age\": 2 }")
+      .add("{ \"name\": \"baz\", \"age\": 3, \"date\": { \"day\": 20, \"month\": \"Apr\" }}").execute();
+    cout << "- added 2 docs, last id: " << add.getLastDocumentId() << endl;
+
+    add = coll.add("{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }",
+      "{ \"name\": \"buz\", \"age\": 17 }").execute();
+    cout << "- added 2 docs, last id: " << add.getLastDocumentId() << endl;
+  }
+
+  {
+    RowResult res = sql("select count(*) from test.c1");
+    unsigned  cnt = res.fetchOne()[0];
+    EXPECT_EQ(6, cnt);
+  }
+
+  cout << "Fetching documents..." << endl;
+
+  DocResult docs = coll.find("name like :name and age < :age")
+                       .bind("name", "ba%")
+                       .bind("age", 3)
+                       .execute();
+
+  DbDoc doc = docs.fetchOne();
+
+  unsigned i = 0;
+  for (; doc; ++i, doc = docs.fetchOne())
+  {
+    cout << "doc#" << i << ": " << doc << endl;
+
+    for (Field fld : doc)
+    {
+      cout << " field `" << fld << "`: " << doc[fld] << endl;
+    }
+
+    string name = doc["name"];
+    cout << " name: " << name << endl;
+
+    EXPECT_EQ(string("baz"), (string)doc["name"]);
+
+    cout << "  age: " << doc["age"] << endl;
+
+    EXPECT_EQ(2, (int)doc["age"]);
+
+    cout << endl;
+  }
+
+  EXPECT_EQ(1, i);
+
+  coll.remove("name like :name and age < :age")
+                         .bind("name", "ba%")
+                         .bind("age", 3)
+                         .execute();
+
+  docs = coll.find("name like :name and age < :age")
+                       .bind("name", "ba%")
+                       .bind("age", 3)
+                       .execute();
+
+  doc = docs.fetchOne();
+  EXPECT_EQ(false, doc);
+
+
+  cout << "Done!" << endl;
+}

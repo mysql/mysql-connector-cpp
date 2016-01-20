@@ -250,11 +250,149 @@ class CollectionAdd
   friend class Collection;
 };
 
+/*
+  Binding expression parameters
+  ================================
+
+*/
+
+
+/**
+  Base class for arguments binding operations.
+
+  This class defines `bind()` methods that bind values to its parameters.
+
+  @note This class is going to be used by different classes, each having  a
+  different return type of the `bind()` method. For that reason the base  class
+  is a template parameterized with return type of the `bind()` method.
+
+  @see `CollectionFindBind`, `CollectionRemoveBind`
+*/
+
+template <typename R>
+class CollectionBindBase
+{
+protected:
+
+  Collection &m_coll;
+
+  CollectionBindBase(Collection &coll)
+    : m_coll(coll)
+  {}
+
+  /*
+    These methods are overriden by derived operation classes.
+    They append given document to the list of documents to be
+    inserted and return resulting modified operation.
+  */
+
+  virtual R& do_bind(const string &parameter, bool val) =0;
+  virtual R& do_bind(const string &parameter, int val) =0;
+  virtual R& do_bind(const string &parameter, unsigned val) =0;
+  virtual R& do_bind(const string &parameter, float val) =0;
+  virtual R& do_bind(const string &parameter, double val) =0;
+  virtual R& do_bind(const string &parameter, const string &val) =0;
+
+public:
+
+  /**
+    Add document(s) to a collection.
+
+    Documents can be described by JSON strings or DbDoc objects.
+  */
+
+  template <typename V>
+  R& bind(const string& parameter, const V &value)
+  {
+    return do_bind(parameter, value);
+  }
+
+  /**
+    @copydoc add(const DbDoc&)
+    Several documents can be passed to single `add()` call.
+  */
+
+  template<typename D, typename... Types>
+  R& add(const D &first, Types... rest)
+  {
+    try {
+
+      /*
+        Note: When do_add() returns CollectionAddExec object then
+        the following add() will return reference to the same object.
+        Here we return CollectionAddExec by value, so a new instance
+        will be created from the one returned by add() using
+        move-constructor.
+      */
+
+      return std::move(do_add(first).add(rest...));
+    }
+    CATCH_AND_WRAP
+  }
+
+};
+
+
 
 /*
   Removing documents from a collection
   ====================================
 */
+
+class CollectionRemoveBind
+  : public CollectionBindBase<CollectionRemoveBind>
+  , public Executable
+{
+  using Base = CollectionBindBase<CollectionRemoveBind>;
+
+    public:
+
+      CollectionRemoveBind(Collection &coll)
+        : Base(coll)
+      {
+
+      }
+
+    protected:
+
+      virtual CollectionRemoveBind& do_bind(const string &parameter, bool val)
+      {
+        //TODO
+        return *this;
+      }
+
+      virtual CollectionRemoveBind& do_bind(const string &parameter, int val)
+      {
+        //TODO
+        return *this;
+      }
+
+      virtual CollectionRemoveBind& do_bind(const string &parameter, unsigned val)
+      {
+        //TODO
+        return *this;
+      }
+
+      virtual CollectionRemoveBind& do_bind(const string &parameter, float val)
+      {
+        //TODO
+        return *this;
+      }
+
+      virtual CollectionRemoveBind& do_bind(const string &parameter, double val)
+      {
+        //TODO
+        return *this;
+      }
+
+      virtual CollectionRemoveBind& do_bind(const string &parameter,
+                                          const string &val)
+      {
+        //TODO
+        return *this;
+      }
+
+    };
 
 
 /**
@@ -267,9 +405,11 @@ class CollectionAdd
 class CollectionRemove
 {
   Collection &m_coll;
-  Executable m_exec;
+  CollectionRemoveBind m_exec;
 
-  CollectionRemove(Collection &coll) : m_coll(coll)
+  CollectionRemove(Collection &coll)
+    : m_coll(coll)
+    , m_exec(coll)
   {}
 
 public:
@@ -278,7 +418,7 @@ public:
   virtual Executable& remove();
 
   /// Remove documents satisfying given expression.
-  virtual Executable& remove(const string&);
+  virtual CollectionRemoveBind& remove(const string&);
 
   friend class Collection;
 };
@@ -289,6 +429,60 @@ public:
   =======================================
 */
 
+class CollectionFindBind
+    : public CollectionBindBase<CollectionFindBind>
+    , public Executable
+{
+  using Base = CollectionBindBase<CollectionFindBind>;
+
+public:
+
+  CollectionFindBind(Collection &coll)
+    : Base(coll)
+  {
+
+  }
+
+protected:
+
+  virtual CollectionFindBind& do_bind(const string &parameter, bool val)
+  {
+    //TODO
+    return *this;
+  }
+
+  virtual CollectionFindBind& do_bind(const string &parameter, int val)
+  {
+    //TODO
+    return *this;
+  }
+
+  virtual CollectionFindBind& do_bind(const string &parameter, unsigned val)
+  {
+    //TODO
+    return *this;
+  }
+
+  virtual CollectionFindBind& do_bind(const string &parameter, float val)
+  {
+    //TODO
+    return *this;
+  }
+
+  virtual CollectionFindBind& do_bind(const string &parameter, double val)
+  {
+    //TODO
+    return *this;
+  }
+
+  virtual CollectionFindBind& do_bind(const string &parameter,
+                                      const string &val)
+  {
+    //TODO
+    return *this;
+  }
+
+};
 
 /**
   Operation which finds documents satisfying given criteria.
@@ -301,10 +495,14 @@ public:
 class CollectionFind
 {
   Collection &m_coll;
-  Executable m_exec;
+  CollectionFindBind m_exec;
 
-  CollectionFind(Collection &coll) : m_coll(coll)
-  {}
+  CollectionFind(Collection &coll)
+    : m_coll(coll)
+    , m_exec(coll)
+  {
+
+  }
 
 public:
 
@@ -312,7 +510,7 @@ public:
   virtual Executable& find();
 
   /// Find documents that satisfy given expression.
-  virtual Executable& find(const string&);
+  virtual CollectionFindBind& find(const string&);
 
   friend class Collection;
 };

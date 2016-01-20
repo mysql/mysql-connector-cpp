@@ -529,7 +529,7 @@ try {
 }
 CATCH_AND_WRAP
 
-Executable& CollectionRemove::remove(const mysqlx::string &expr)
+mysqlx::CollectionRemoveBind &CollectionRemove::remove(const mysqlx::string &expr)
 try {
   Executable::Access::reset_task(m_exec, new Op_collection_remove(m_coll, expr));
   return m_exec;
@@ -580,7 +580,7 @@ try {
 }
 CATCH_AND_WRAP
 
-Executable& CollectionFind::find(const mysqlx::string &expr)
+mysqlx::CollectionFindBind& CollectionFind::find(const mysqlx::string &expr)
 try {
   Executable::Access::reset_task(m_exec, new Op_collection_find(m_coll, expr));
   return m_exec;
