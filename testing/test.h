@@ -67,12 +67,16 @@ namespace mysqlx {
       const char *m_status;
       NodeSession *m_sess;
       unsigned short m_port;
+      const char *m_user;
+      const char *m_password;
 
       // You can define per-test set-up and tear-down logic as usual.
       virtual void SetUp()
       {
         m_status = NULL;
         m_port = 0;
+        m_user = NULL;
+        m_password = NULL;
         m_sess = NULL;
 
         const char *xplugin_port = getenv("XPLUGIN_PORT");
@@ -81,13 +85,17 @@ namespace mysqlx {
           m_status = "XPLUGIN_PORT not set";
           return;
         }
+        m_port = (short)atoi(xplugin_port);
 
         // By default use "root" user without any password.
-        // TODO: Add user/password options
+        m_user = getenv("XPLUGIN_USER");
+        if(!m_user)
+          m_user = "root";
 
-        m_port = (short)atoi(xplugin_port);
+        m_password = getenv("XPLUGIN_PASSWORD");
+
         try {
-          m_sess = new NodeSession(m_port, "root");
+          m_sess = new NodeSession(m_port, m_user, m_password);
         }
         catch (const Error &e)
         {
@@ -125,6 +133,16 @@ namespace mysqlx {
         return m_port;
       }
 
+      const char* get_user() const
+      {
+        return m_user;
+      }
+
+      const char* get_password() const
+      {
+        return m_password;
+      }
+
       bool has_xplugin() const
       {
         return NULL == m_status;
@@ -136,7 +154,7 @@ namespace mysqlx {
     public:
 
       XSession(const Xplugin *test)
-      : mysqlx::XSession(test->get_port(), "root")
+      : mysqlx::XSession(test->get_port(), test->get_user(), test->get_password())
       {}
     };
 

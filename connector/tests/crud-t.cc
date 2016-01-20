@@ -206,3 +206,27 @@ TEST_F(Crud, life_time)
   }
 
 }
+
+
+TEST_F(Crud, add_empty_doc_string)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  Collection coll = getSchema("test").createCollection("c1", true);
+
+  coll.remove().execute();
+
+  EXPECT_THROW(coll.add("").execute(), mysqlx::Error);
+}
+
+
+TEST_F(Crud, add_invalid_doc_string)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  Collection coll = getSchema("test").createCollection("c1", true);
+
+  coll.remove().execute();
+
+  EXPECT_THROW(coll.add("invaliddata").execute(), mysqlx::Error);
+}
