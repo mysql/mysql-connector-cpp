@@ -996,7 +996,7 @@ void bugs::bug22292073()
 
   ASSERT_EQUALS(true, res->getBoolean(1));
   ASSERT_EQUALS(1, res->getInt(1));
-  ASSERT_EQUALS(1L, res->getInt64(1));
+  ASSERT_EQUALS((int64_t)1L, res->getInt64(1));
   ASSERT_EQUALS(1, res->getUInt(1));
   ASSERT_EQUALS(1UL, res->getUInt64(1));
   ASSERT_EQUALS(1.0, res->getDouble(1));
@@ -1005,7 +1005,7 @@ void bugs::bug22292073()
 
   ASSERT_EQUALS(true, res->getBoolean(1));
   ASSERT_EQUALS(31, res->getInt(1));
-  ASSERT_EQUALS(31L, res->getInt64(1));
+  ASSERT_EQUALS((int64_t)31L, res->getInt64(1));
   ASSERT_EQUALS(31, res->getUInt(1));
   ASSERT_EQUALS(31UL, res->getUInt64(1));
   ASSERT_EQUALS(31.0, res->getDouble(1));
@@ -1017,7 +1017,7 @@ void bugs::bug22292073()
 
   ASSERT_EQUALS(true, res->getBoolean(1));
   ASSERT_EQUALS(1, res->getInt(1));
-  ASSERT_EQUALS(1L, res->getInt64(1));
+  ASSERT_EQUALS((int64_t)1L, res->getInt64(1));
   ASSERT_EQUALS(1, res->getUInt(1));
   ASSERT_EQUALS(1UL, res->getUInt64(1));
   ASSERT_EQUALS(1.0, res->getDouble(1));
@@ -1026,7 +1026,7 @@ void bugs::bug22292073()
 
   ASSERT_EQUALS(true, res->getBoolean(1));
   ASSERT_EQUALS(31, res->getInt(1));
-  ASSERT_EQUALS(31L, res->getInt64(1));
+  ASSERT_EQUALS((int64_t)31L, res->getInt64(1));
   ASSERT_EQUALS(31, res->getUInt(1));
   ASSERT_EQUALS(31UL, res->getUInt64(1));
   ASSERT_EQUALS(31.0, res->getDouble(1));
