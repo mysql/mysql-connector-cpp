@@ -41,4 +41,10 @@ ADD_CDK(connector)
 target_link_libraries(connector uuid_gen)
 target_compile_features(connector PUBLIC cxx_rvalue_references)
 
+# Required because of possible exception-related GCC bug.
+# (observed in GCC 4.8.4)
+if(CMAKE_COMPILER_IS_GNUCXX)
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O1")
+endif()
+
 add_subdirectory(tests)
