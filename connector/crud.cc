@@ -495,7 +495,7 @@ void Op_collection_add::process(Expression::Processor &ep) const
 class Op_collection_remove : public Task::Access::Impl
 {
   Table_ref m_coll;
-  parser::Expr_parser m_expr;
+  parser::Expression_parser m_expr;
 
   Op_collection_remove(Collection &coll)
     : Impl(coll)
@@ -547,7 +547,7 @@ class Op_collection_find
   : public Task::Access::Impl
 {
   Table_ref m_coll;
-  parser::Expr_parser m_expr;
+  parser::Expression_parser m_expr;
 
   Op_collection_find(Collection &coll)
     : Impl(coll)
