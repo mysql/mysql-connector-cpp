@@ -45,6 +45,7 @@ target_compile_features(connector PUBLIC cxx_rvalue_references)
 # (observed in GCC 4.8.4)
 if(CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O1")
+  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O1")
 endif()
 
 add_subdirectory(tests)
