@@ -211,11 +211,20 @@ void throw_error(const char *msg)
   throw ::mysqlx::Error(msg);
 }
 
-#undef THROW
+/*
+Note: we add throw statement to the definition of THROW() so that compiler won't
+complain if it is used in contexts where, e.g., a value should be returned from
+a function.
+*/
+
 #ifdef THROW_AS_ASSERT
-#define THROW(MSG)  assert(false && (MSG));
+
+#define THROW(MSG)  do { assert(false && (MSG)); throw (MSG); } while(false)
+
 #else
-#define THROW(MSG)  throw_error((MSG));
+
+#define THROW(MSG) do { throw_error(MSG); throw (MSG); } while(false)
+
 #endif
 
 }  // mysqlx
