@@ -204,6 +204,20 @@ std::ostream& operator<<(std::ostream &out, const Error &e)
   catch (...)                                     \
   { throw ::mysqlx::Error("Unknown exception"); } \
 
+
+inline
+void throw_error(const char *msg)
+{
+  throw ::mysqlx::Error(msg);
+}
+
+#undef THROW
+#ifdef THROW_AS_ASSERT
+#define THROW(MSG)  assert(false && (MSG));
+#else
+#define THROW(MSG)  throw_error((MSG));
+#endif
+
 }  // mysqlx
 
 

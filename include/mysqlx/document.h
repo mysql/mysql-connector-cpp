@@ -310,7 +310,7 @@ protected:
   void check_type(Type t) const
   {
     if (m_type != t)
-      throw "Invalid value type";
+      THROW("Invalid value type");
   }
 
   union
@@ -374,15 +374,15 @@ inline Value::Value(uint64_t val) : m_type(UINT64)
 inline Value::operator int() const
 {
   if (UINT64 != m_type && INT64 != m_type)
-    throw "Not an integer value";
+    THROW("Not an integer value");
 
   if (UINT64 == m_type
       && m_val._uint64_v > (uint64_t)std::numeric_limits<int64_t>::max())
-    throw "Overflow";
+    THROW("Overflow");
 
   int64_t val = (INT64 == m_type ? m_val._int64_v : (int64_t)m_val._uint64_v);
   if (val > std::numeric_limits<int>::max())
-    throw "Overflow";
+    THROW("Overflow");
 
   return (int)val;
 }
@@ -390,15 +390,15 @@ inline Value::operator int() const
 inline Value::operator unsigned() const
 {
   if (UINT64 != m_type && INT64 != m_type)
-    throw "Not an integer value";
+    THROW("Not an integer value");
 
   if (INT64 == m_type
     && 0 > m_val._int64_v)
-    throw "Converting negative integer to unsigned value";
+    THROW("Converting negative integer to unsigned value");
 
   uint64_t val = (UINT64 == m_type ? m_val._uint64_v : (uint64_t)m_val._int64_v);
   if (val > std::numeric_limits<unsigned>::max())
-    throw "Overflow";
+    THROW("Overflow");
 
   return (unsigned)val;
 }

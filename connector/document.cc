@@ -350,7 +350,7 @@ DbDoc::Iterator DbDoc::end()
 const Field& DbDoc::Iterator::operator*()
 {
   if (m_end)
-    throw "dereferencing past-the-end iterator";
+    THROW("dereferencing past-the-end iterator");
   return m_impl->get_current_fld();
 }
 

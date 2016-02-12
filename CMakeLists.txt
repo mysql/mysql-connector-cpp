@@ -140,6 +140,16 @@ ENDIF()
 # =================================
 #
 
+option(THROW_AS_ASSERT
+  "Turn THROW() statements in the code into asserts for easier debugging"
+  true)
+mark_as_advanced(THROW_AS_ASSERT)
+
+if(THROW_AS_ASSERT)
+  add_definitions(-DTHROW_AS_ASSERT)
+endif()
+
+
 #
 # Add Boost
 #

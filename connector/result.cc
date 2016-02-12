@@ -291,7 +291,7 @@ Row::Impl::Impl(const Row_data &data, std::shared_ptr<Meta_data> &mdata)
 const Row::Impl& Row::get_impl() const
 {
   if (!m_impl)
-    throw "Attempt to use null Row instance";
+    THROW("Attempt to use null Row instance");
   return *m_impl;
 }
 
@@ -541,7 +541,7 @@ class BaseResult::Impl
 const Row_data* Result::Impl::get_row()
 {
   if (!m_cursor)
-    throw "Attempt to read row from empty result";
+    THROW("Attempt to read row from empty result");
 
   if (m_cursor_closed)
     return NULL;
@@ -607,7 +607,7 @@ CATCH_AND_WRAP
 BaseResult::Impl& BaseResult::get_impl()
 try {
   if (!m_impl)
-    throw "Attempt to use null result instance";
+    THROW("Attempt to use null result instance");
   return *m_impl;
 }
 CATCH_AND_WRAP
@@ -615,7 +615,7 @@ CATCH_AND_WRAP
 const GUID& Result::getLastDocumentId() const
 try {
   if (!m_impl)
-    throw "Empty result";
+    THROW("Empty result");
   return m_impl->m_guid;
 }
 CATCH_AND_WRAP
@@ -643,9 +643,9 @@ CATCH_AND_WRAP
 col_count_t RowResult::getColumnCount() const
 try {
   if (!m_impl)
-    throw "Empty result";
+    THROW("Empty result");
   if (!m_impl->m_cursor)
-    throw "No result set";
+    THROW("No result set");
   return m_impl->m_cursor->col_count();
 }
 CATCH_AND_WRAP
