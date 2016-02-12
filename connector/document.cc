@@ -59,6 +59,8 @@ void Value::print(ostream &out) const
   case STRING: out << (std::string)m_str; return;
   case DOCUMENT: out << m_doc; return;
   case RAW: out << "<" << m_str.size() << " raw bytes>"; return;
+  // TODO: print array contnets
+  case ARRAY: out << "<array with " << elementCount() << " element(s)>"; return;
   default:  out << "<unknown value>"; return;
   }
 }
@@ -118,7 +120,7 @@ public:
     : m_map(doc.m_map)
   {}
 
-  // JSON processor
+  // JSON processor (to build the docuemnt)
 
   void doc_begin()
   {
@@ -133,16 +135,121 @@ public:
   key_val(const cdk::string &key)
   {
     m_key.reset(new Field(key));
+    // Return itself to process key value
     return this;
   }
 
-  // TODO: handle arrays
+
+  /*
+    Builder for array values.
+  */
+
+  struct Arr_builder
+    : cdk::JSON::Processor::Any_prc
+    , cdk::JSON::Processor::Any_prc::List_prc
+    , cdk::JSON::Processor::Any_prc::Scalar_prc
+  {
+    Value::Array *m_arr;
+
+
+    // List processor (to build the list)
+
+    void list_begin()
+    {
+      m_arr->clear();
+    }
+
+    void list_end() {}
+
+    Element_prc* list_el()
+    {
+      // Return itself to process list element.
+      return this;
+    }
+
+
+    // Any processor (to process elements of the list)
+
+    // Handle sub-arrray element.
+
+    std::unique_ptr<Arr_builder> m_arr_builder;
+
+    List_prc* arr()
+    {
+      // Create array value.
+
+      Value sub;
+      sub.m_type = Value::ARRAY;
+      sub.m_arr = std::make_shared<Value::Array>();
+
+      // Create builder for the sub-array.
+
+      m_arr_builder.reset(new Arr_builder());
+      m_arr_builder->m_arr = sub.m_arr.get();
+
+      // Append the sub-array to the main array.
+
+      m_arr->emplace_back(sub);
+
+      return m_arr_builder.get();
+    }
+
+    // Handle a document element
+
+    std::unique_ptr<Builder> m_doc_builder;
+
+    Doc_prc*  doc()
+    {
+      // Create document value and append it to the array.
+
+      Value sub;
+      sub.m_type = Value::DOCUMENT;
+      sub.m_doc.m_impl = std::make_shared<DbDoc::Impl>();
+      m_arr->emplace_back(sub);
+
+      // Create builder for the document and return it as the processor.
+
+      m_doc_builder.reset(new Builder(*sub.m_doc.m_impl));
+      return m_doc_builder.get();
+    }
+
+    // Handle scalar values using itself as a processor.
+
+    Scalar_prc* scalar()
+    { return this; }
+
+
+    // Sclar processor (to store scalar values in the list)
+
+    void str(const cdk::string &val)
+    {
+      m_arr->emplace_back(Value(val));
+    }
+    void num(uint64_t val) { m_arr->emplace_back(val); }
+    void num(int64_t val) { m_arr->emplace_back(val); }
+    void num(float val) { m_arr->emplace_back(val); }
+    void num(double val) { m_arr->emplace_back(val); }
+    void yesno(bool val) { m_arr->emplace_back(val); }
+
+  }
+  m_arr_builder;
+
 
   cdk::JSON::Processor::Any_prc::List_prc*
   arr()
   {
-    assert(false);
-    return NULL;
+    using mysqlx::Value;
+    Value &arr = m_map[*m_key];
+
+    // Turn the value to one storing an array.
+
+    arr.m_type = Value::ARRAY;
+    arr.m_arr  = std::make_shared<Value::Array>();
+
+    // Set up array builder for the new value.
+
+    m_arr_builder.m_arr = arr.m_arr.get();
+    return &m_arr_builder;
   }
 
 
@@ -171,7 +278,7 @@ public:
     return this;
   }
 
-  // callbacks for scalar values store the value under
+  // Callbacks for scalar values store the value under
   // key given by m_key.
 
   void str(const cdk::string &val)

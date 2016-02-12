@@ -158,7 +158,7 @@ class DocResult::Impl
 
 
 /*
-  Taks implementation
+  Task implementation
   ===================
 */
 

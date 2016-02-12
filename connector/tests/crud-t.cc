@@ -135,7 +135,7 @@ TEST_F(Crud, basic)
     {
       row_count++;
       cout << "== next row ==" << endl;
-      for (unsigned i = 0; i < res.getColumnCount(); ++i)
+      for (i = 0; i < res.getColumnCount(); ++i)
       {
         cout << "col#" << i << ": " << row[i] << endl;
       }
@@ -208,7 +208,7 @@ TEST_F(Crud, life_time)
 }
 
 
-TEST_F(Crud, add_empty_doc_string)
+TEST_F(Crud, add_doc_negative)
 {
   SKIP_IF_NO_XPLUGIN;
 
@@ -217,10 +217,12 @@ TEST_F(Crud, add_empty_doc_string)
   coll.remove().execute();
 
   EXPECT_THROW(coll.add("").execute(), mysqlx::Error);
+  EXPECT_THROW(coll.add("invaliddata").execute(), mysqlx::Error);
 }
 
 
-TEST_F(Crud, add_invalid_doc_string)
+
+TEST_F(Crud, arrays)
 {
   SKIP_IF_NO_XPLUGIN;
 
@@ -228,5 +230,39 @@ TEST_F(Crud, add_invalid_doc_string)
 
   coll.remove().execute();
 
-  EXPECT_THROW(coll.add("invaliddata").execute(), mysqlx::Error);
+  coll.add("{ \"arr\": [ 1, 2, \"foo\", [ 3, { \"bar\" : 123 } ] ] }")
+      .execute();
+
+  cout << "Document added" << endl;
+
+  DocResult find = coll.find().execute();
+  DbDoc     doc = find.fetchOne();
+
+  cout << "Document fetched" << endl;
+
+  EXPECT_EQ(Value::ARRAY, doc.fieldType("arr"));
+
+  auto arr = doc["arr"];
+
+  cout << "arr: " << arr << endl;
+
+  EXPECT_EQ(4, arr.elementCount());
+
+  unsigned pos = 0;
+  for (Value val : doc["arr"])
+    cout << "arr[" << pos++ << "]: " << val << endl;
+
+  EXPECT_EQ(1, (int)arr[0]);
+  EXPECT_EQ(2, (int)arr[1]);
+  EXPECT_EQ(string("foo"), (string)arr[2]);
+  EXPECT_EQ(Value::ARRAY, arr[3].getType());
+
+  cout << endl << "sub array arr[3]: " << arr[3] << endl;
+  pos = 0;
+  for (Value val : arr[3])
+    cout << "sub[" << pos++ << "]: " << val << endl;
+
+  EXPECT_EQ(3, (int)arr[3][0]);
+  EXPECT_EQ(Value::DOCUMENT, arr[3][1].getType());
+  EXPECT_EQ(123, (int)arr[3][1]["bar"]);
 }

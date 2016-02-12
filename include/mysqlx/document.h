@@ -34,6 +34,8 @@
 #include <memory>
 #include <stdint.h>
 #include <limits>
+#include <vector>
+#include <assert.h>
 
 namespace mysqlx {
 
@@ -169,12 +171,13 @@ public:
 // ===========
 
 /**
-  Value object can store value of scalar type, string or document.
+  Value object can store value of scalar type, string, array or document.
 
   Implicit conversions to and from corresponding C++ types are defined.
   If conversion to wrong type is attempted, an error is thrown. If Value
-  object holds a document, then fields of this document can be accessed
-  using operator[].
+  object holds an array or document, then array elements or fields of
+  the document can be accessed using operator[]. Array values can be used
+  as STL containers.
 
   Only direct conversions of stored value to the corresponding C++ type
   are supported. There are no implicit number->string conversions etc.
@@ -205,7 +208,7 @@ public:
     STRING,     ///< String
     DOCUMENT,   ///< Document
     RAW,        ///< Raw bytes
-    // TODO: ARRAY
+    ARRAY,      ///< Array of values
   };
 
   ///@name Value Constructors
@@ -222,6 +225,8 @@ public:
   Value(bool);
   Value(int x) : Value((int64_t)x) {}
   Value(unsigned x) : Value((uint64_t)x) {}
+
+  // TODO: Constructors for documents and arrays?
 
   ///@}
 
@@ -270,6 +275,30 @@ public:
   Value operator[](const char *name) { return (*this)[Field(name)]; }
   Value operator[](const wchar_t *name) { return (*this)[Field(name)]; }
 
+
+  typedef std::vector<Value>::iterator iterator;
+  typedef std::vector<Value>::const_iterator const_iterator;
+
+  /**
+    Access to elements of an array value.
+
+    If non-array value is accessed like an array, an error is thrown.
+  */
+  //@{
+
+  iterator begin();
+  iterator end();
+  size_t   elementCount() const;
+  Value    operator[](unsigned);
+  Value    operator[](int pos)
+  {
+    assert(pos >= 0);
+    return operator[]((unsigned)pos);
+  }
+
+  //@}
+
+
   /// Print the value to a stream.
 
   void print(std::ostream&) const;
@@ -299,8 +328,11 @@ protected:
     different values (try boost::variant?)
   */
 
+  typedef std::vector<Value> Array;
+
   string m_str;
   DbDoc  m_doc;
+  std::shared_ptr<Array>  m_arr;
 
 public:
   struct Access;
@@ -452,6 +484,40 @@ int DbDoc::fieldType(const Field &fld)
   return (*this)[fld].getType();
 }
 
+
+// Array access
+
+
+inline
+Value::iterator Value::begin()
+{
+  if (ARRAY != m_type)
+    throw Error("Attempt to iterate over non-array value");
+  return m_arr->begin();
+}
+
+inline
+Value::iterator Value::end()
+{
+  if (ARRAY != m_type)
+    throw Error("Attempt to iterate over non-array value");
+  return m_arr->end();
+}
+
+
+inline
+size_t Value::elementCount() const
+{
+  check_type(ARRAY);
+  return m_arr->size();
+}
+
+inline
+Value Value::operator[](unsigned pos)
+{
+  check_type(ARRAY);
+  return m_arr->at(pos);
+}
 
 }  // mysqlx
 
