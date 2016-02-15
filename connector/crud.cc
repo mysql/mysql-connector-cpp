@@ -171,7 +171,7 @@ class Op_table_insert
     // Prepare iterators to make a pass through m_rows list.
     m_started = false;
     m_end = m_rows.end();
-    return new cdk::Reply(get_cdk_session().table_insert(m_table, *this));
+    return new cdk::Reply(get_cdk_session().table_insert(m_table, *this, NULL));
   }
 
   // Row_source (Iterator)
@@ -312,7 +312,7 @@ class Op_collection_add
     // Issue coll_add statement where documents are described by list
     // of expressions defined by this instance.
 
-    return new cdk::Reply(get_cdk_session().coll_add(m_coll, *this));
+    return new cdk::Reply(get_cdk_session().coll_add(m_coll, *this, NULL));
   }
 
   BaseResult get_result()
