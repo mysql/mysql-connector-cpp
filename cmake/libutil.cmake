@@ -92,13 +92,15 @@ ENDMACRO()
 
 MACRO(MERGE_STATIC_LIBS TARGET OUTPUT_NAME LIBS_TO_MERGE)
 
-  # To produce a library we need at least one source file.
-  # It is created by ADD_CUSTOM_COMMAND below and will
-  # also help to track dependencies.
-
+  #
+  # Location and name of the generated source file used to create
+  # merged library.
+  #
   SET(SOURCE_FILE ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_depends.c)
-  ADD_LIBRARY(${TARGET} STATIC ${SOURCE_FILE})
-  SET_TARGET_PROPERTIES(${TARGET} PROPERTIES OUTPUT_NAME ${OUTPUT_NAME})
+
+  #
+  #  Compute list of libraries to be merged.
+  #
 
   GET_DEPENDENT_LIBS("${LIBS_TO_MERGE}" LIBS)
   #message("dependent libs: ${LIBS}")
@@ -130,7 +132,6 @@ MACRO(MERGE_STATIC_LIBS TARGET OUTPUT_NAME LIBS_TO_MERGE)
 
         IF(LIB_TYPE STREQUAL "STATIC_LIBRARY")
           LIST(APPEND STATIC_LIBS ${LIB_LOCATION})
-          ADD_DEPENDENCIES(${TARGET} ${LIB})
         ELSE()
           # This is a shared library our static lib depends on.
           LIST(APPEND OSLIBS ${LIB})
@@ -169,11 +170,23 @@ MACRO(MERGE_STATIC_LIBS TARGET OUTPUT_NAME LIBS_TO_MERGE)
 
   IF(OSLIBS)
     LIST(REMOVE_DUPLICATES OSLIBS)
-    TARGET_LINK_LIBRARIES(${TARGET} ${OSLIBS})
     MESSAGE(STATUS "Library ${TARGET} depends on OSLIBS ${OSLIBS}")
   ENDIF()
 
-  # Make the generated dummy source file depended on all static input
+  # Define the main library target
+  #
+  # First generate the source file for the main library target (a Library
+  # added using ADD_LIBRARY() must have at least one source).
+
+  # Add at least one external symbol to the generated source to avoid
+  # linker warnings.
+  # TODO: Use user provided template
+
+  FILE(WRITE ${SOURCE_FILE}
+    "const char *${OUTPUT_NAME}_dummy = 0;"
+  )
+
+  # Make the generated source file depended on all static input
   # libs. If input lib changes,the source file is touched
   # which causes the desired effect (relink).
 
@@ -182,7 +195,17 @@ MACRO(MERGE_STATIC_LIBS TARGET OUTPUT_NAME LIBS_TO_MERGE)
     COMMAND ${CMAKE_COMMAND}  -E touch ${SOURCE_FILE}
     DEPENDS ${STATIC_LIBS})
 
+  ADD_LIBRARY(${TARGET} STATIC ${SOURCE_FILE})
+  SET_TARGET_PROPERTIES(${TARGET} PROPERTIES OUTPUT_NAME ${OUTPUT_NAME})
+  ADD_DEPENDENCIES(${TARGET} ${LIBS_TO_MERGE})
+  TARGET_LINK_LIBRARIES(${TARGET} ${OSLIBS})
+
+  #
+  #  Now merge all the libraries into one.
+  #
+
   IF(MSVC)
+
     # To merge libs, just pass them to lib.exe command line.
     SET(LINKER_EXTRA_FLAGS "")
     FOREACH(LIB ${STATIC_LIBS})
@@ -190,31 +213,45 @@ MACRO(MERGE_STATIC_LIBS TARGET OUTPUT_NAME LIBS_TO_MERGE)
     ENDFOREACH()
     SET_TARGET_PROPERTIES(${TARGET} PROPERTIES STATIC_LIBRARY_FLAGS
       "${LINKER_EXTRA_FLAGS}")
+
   ELSE()
+
     GET_TARGET_PROPERTY(TARGET_LOCATION ${TARGET} LOCATION)
+
     IF(APPLE)
-      # Use OSX's libtool to merge archives (ihandles universal
+
+      # Use OSX's libtool to merge archives (it handles universal
       # binaries properly)
+
+      # TODO: We hide errors about duplicate input source file names
+      # in the library (this might be a problem when debugging).
+
       ADD_CUSTOM_COMMAND(TARGET ${TARGET} POST_BUILD
         COMMAND rm ${TARGET_LOCATION}
-        COMMAND /usr/bin/libtool -static -o ${TARGET_LOCATION}
+        COMMAND /usr/bin/libtool 2>/dev/null -static -o ${TARGET_LOCATION}
         ${STATIC_LIBS}
       )
+
     ELSE()
+
       # Generic Unix, Cygwin or MinGW. In post-build step, call
       # script, that extracts objects from archives with "ar x"
       # and repacks them with "ar r"
+
       SET(TARGET ${TARGET})
+
       CONFIGURE_FILE(
         ${MYSQL_CMAKE_SCRIPT_DIR}/merge_archives_unix.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/merge_archives_${TARGET}.cmake
         @ONLY
       )
+
       ADD_CUSTOM_COMMAND(TARGET ${TARGET} POST_BUILD
         COMMAND rm ${TARGET_LOCATION}
         COMMAND ${CMAKE_COMMAND} -P
         ${CMAKE_CURRENT_BINARY_DIR}/merge_archives_${TARGET}.cmake
       )
+
     ENDIF()
   ENDIF()
 ENDMACRO()

@@ -188,9 +188,9 @@ INCLUDE_DIRECTORIES(include)
 IF(WIN32)
 
 foreach(LANG C CXX)
-  set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /W4 /wd4512")
+  set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /W4 /wd4512 /wd4206 /wd4127")
   foreach(TYPE RELEASE RELWITHDEBINFO MINSIZEREL)
-    set(CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}} /W4 /wd4512")
+    set(CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}} /W4 /wd4512 /wd4206 /wd4127")
   endforeach()
 endforeach(LANG)
 

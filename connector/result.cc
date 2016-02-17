@@ -214,6 +214,9 @@ Meta_data::Meta_data(cdk::Meta_data &md)
     case cdk::TYPE_INTEGER:   add<cdk::TYPE_INTEGER>(pos, fi);  break;
     case cdk::TYPE_FLOAT:     add<cdk::TYPE_FLOAT>(pos, fi);    break;
     case cdk::TYPE_DOCUMENT:  add<cdk::TYPE_DOCUMENT>(pos, fi); break;
+    default:
+      THROW("Add support for the rest of types.");
+      break;
     }
   }
 }

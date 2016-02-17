@@ -217,6 +217,8 @@ complain if it is used in contexts where, e.g., a value should be returned from
 a function.
 */
 
+#undef THROW
+
 #ifdef THROW_AS_ASSERT
 
 #define THROW(MSG)  do { assert(false && (MSG)); throw (MSG); } while(false)
