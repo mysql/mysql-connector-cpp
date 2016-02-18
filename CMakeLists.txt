@@ -225,7 +225,12 @@ INSTALL(TARGETS libconcpp DESTINATION lib)
 # =====
 #
 
+# Unit tests declared with ADD_NG_TEST() (see cdk/cmake/testing.cmake)
 ADD_TEST_TARGET()
+
+# Test for public headers declared with ADD_HEADERS()
+# (see cdk/cmake/headers.cmake)
+ADD_HEADERS_TEST()
 
 #
 # Sample code to try things out
