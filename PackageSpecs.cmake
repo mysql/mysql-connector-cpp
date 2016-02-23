@@ -1,4 +1,4 @@
-# Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/C++ is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -29,9 +29,20 @@
 # Note: CPACK_XXX variables must be set before include(CPack)
 #
 
-set(CPACK_PACKAGE_NAME "mysql-connector-c++")
-set(CPACK_PACKAGE_VENDOR "Oracle Corporation")
-set(CPACK_PACKAGE_VERSION "2.0.1_preview")
+# ======================================================================
+# Set some initial CPack variables
+# ======================================================================
+
+set(CPACK_PACKAGE_NAME    "mysql-connector-c++")
+set(CPACK_PACKAGE_VERSION "${CONCPP_PACKAGE_VERSION}")
+set(CPACK_PACKAGE_VENDOR  "Oracle Corporation")
+set(CPACK_PACKAGE_CONTACT "MySQL Release Engineering <mysql-build@oss.oracle.com>")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
+    "MySQL Connector/C++, a C++ connector library")
+
+# ======================================================================
+# Set the default CPack generator
+# ======================================================================
 
 if(WIN32)
   set(CPACK_GENERATOR ZIP)
@@ -41,34 +52,31 @@ else()
   set(CPACK_SOURCE_GENERATOR TGZ)
 endif()
 
-# TODO: Decide on installation layout
-#set(CPACK_PACKAGE_INSTALL_DIRECTORY "mysql/connector-c++-2.0")
-
-#
-# Architecture tag
+# ======================================================================
+# Set the platform name, if not set from -DPLATFORM_NAME=...
+# ======================================================================
 #
 # TODO: Cover Windows and other architectures we suport
 #
 # TODO: Decide on proper tagging for Windows: VS version, static/dynamic
 # runtime, debug/non-debug etc. Note: some of these differences can/should
 # be covered by having several variants of the library added to the package.
-#
 
-set(CPACK_SYSTEM_NAME "?")
+if(PLATFORM_NAME)
 
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-  set(CPACK_SYSTEM_NAME "linux-${CMAKE_SYSTEM_PROCESSOR}")
-endif()
+  # Override with our own name
+  set(CPACK_SYSTEM_NAME "${PLATFORM_NAME}")
 
-if(WIN32)
-  set(CPACK_SYSTEM_NAME "winXX")  # FIXME
-endif()
+elseif(WIN32)
 
-if(APPLE)
-
-  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    message(FATAL_ERROR "To create packages for OSX, build with clang compiler.")
+  include(CheckTypeSize)
+  if(CMAKE_SIZEOF_VOID_P MATCHES 8)
+    set(CPACK_SYSTEM_NAME "winx64")
+  else()
+    set(CPACK_SYSTEM_NAME "win32")
   endif()
+
+elseif(APPLE)
 
   if(NOT DEFINED ENV{MACOSX_DEPLOYMENT_TARGET})
     message(FATAL_ERROR "To create packages on OSX, set deployment target"
@@ -78,43 +86,70 @@ if(APPLE)
   set(osx_version $ENV{MACOSX_DEPLOYMENT_TARGET})
   set(CPACK_SYSTEM_NAME "osx${osx_version}-${CMAKE_SYSTEM_PROCESSOR}")
 
+elseif(NOT CPACK_SYSTEM_NAME)
+
+  # If for some reason not set by CMake
+  if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    set(CPACK_SYSTEM_NAME "linux-${CMAKE_SYSTEM_PROCESSOR}")
+  else()
+    message(FATAL_ERROR "Can't deternine how to set the platform name")
+  endif()
+
 endif()
 
-message("Binary package name: ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME}")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME}")
+set(CPACK_PACKAGE_FILE_NAME         "${CPACK_PACKAGE_INSTALL_DIRECTORY}")
 
-#
+message("Binary package name: ${CPACK_PACKAGE_FILE_NAME}")
+
+# FIXME maybe place elsewhere?
+if(APPLE AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  message(FATAL_ERROR "To create packages for OSX, build with clang compiler.")
+endif()
+
+# ======================================================================
 # Licenses for binary packages
-#
+# ======================================================================
 
-set(info_files README COPYING)
+if(EXISTS "${CMAKE_SOURCE_DIR}/COPYING.txt")
+  set(LIC_FILE "COPYING")       # Without ".txt" extension
+else()
+  set(LIC_FILE "LICENSE.mysql") # Without ".txt" extension
+endif()
+
+if(WIN32)
+  set(info_ext ".txt")
+  set(newline WIN32)
+else()
+  set(info_ext "")
+  set(newline UNIX)
+endif()
+
+set(info_files README ${LIC_FILE})
 
 foreach(file ${info_files})
 
-  #message("installing file: ${file}")
+  set(file_src "${CMAKE_SOURCE_DIR}/${file}.txt")
+  set(file_bin "${CMAKE_BINARY_DIR}/${file}${info_ext}")
 
-  set(file_src "${file}.txt")
-  set(file_bin "${CMAKE_CURRENT_BINARY_DIR}/${file}")
-  set(newline UNIX)
-
-  if(WIN32)
-    set(file_bin "${file_bin}.txt")
-    set(newline WIN32)
-  endif()
-
-  configure_file(${file_src}  ${file_bin} NEWLINE_STYLE ${newline})
-
-  install(FILES ${file_bin} DESTINATION .)
+  configure_file("${file_src}" "${file_bin}" NEWLINE_STYLE ${newline})
+  install(FILES "${file_bin}" DESTINATION .)
 
 endforeach()
 
+set(CPACK_RESOURCE_FILE_README  "README${info_ext}")
+set(CPACK_RESOURCE_FILE_LICENSE "${LIC_FILE}${info_ext}")
+#set(CPACK_RESOURCE_FILE_INSTALL "...")    # FIXME
 
-#
+
+# ======================================================================
 # Specs for source package
-#
+# ======================================================================
 
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-src")
 
-#
+message("Source package name: ${CPACK_SOURCE_PACKAGE_FILE_NAME}")
+
 # note: Using regex patterns for CPACK_SOURCE_IGNORE_FILES is fragile because
 # they are matched against the full path which can vary depending on where the
 # build takes place. Unfortunatelly, I (Rafal) could not find any other mechanism
@@ -122,18 +157,17 @@ set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSIO
 #
 # note: Double escaping required to get correct pattern string (with single
 # escapes) in CPackSourceConfig.cmake
-#
 
 list(APPEND CPACK_SOURCE_IGNORE_FILES "\\\\.git.*")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "/jenkins/")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "CTestConfig.cmake")
-list(APPEND CPACK_SOURCE_IGNORE_FILES "PackageSpecs.cmake")
 
 include(CPack)
 
-#
+
+# ======================================================================
 # Custom target to build packages.
-#
+# ======================================================================
 
 add_custom_target(build_packages
   COMMAND cpack --config CPackConfig.cmake --verbose -C $<CONFIGURATION>
