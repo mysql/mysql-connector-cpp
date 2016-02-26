@@ -749,6 +749,8 @@ if(NOT WIN32)
     if(NOT MYSQL_CXXFLAGS)
       if(MYSQL_CXX_LINKAGE OR MYSQL_VERSION_ID GREATER 50603)
         _mysql_conf(MYSQL_CXXFLAGS "--cxxflags")
+        # remove no-rtti if set
+        string(REPLACE " -fno-rtti" "" MYSQL_CXXFLAGS  "${MYSQL_CXXFLAGS}")
         set(MYSQL_CXX_LINKAGE 1)
       else()
         set(MYSQL_CXXFLAGS "${MYSQL_CFLAGS}")
