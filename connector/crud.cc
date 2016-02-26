@@ -635,7 +635,7 @@ try {
 CATCH_AND_WRAP
 
 
-CollectionRemoveBind &CollectionRemoveBind::do_bind(const string &parameter,
+CollectionRemoveBind &CollectionRemoveBind::do_bind(const mysqlx::string &parameter,
                                                     Value val)
 {
   auto *impl
