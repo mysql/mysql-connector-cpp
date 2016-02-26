@@ -282,53 +282,31 @@ protected:
 
   /*
     These methods are overriden by derived operation classes.
-    They append given document to the list of documents to be
-    inserted and return resulting modified operation.
+    They add to a map the bind parameter name to the correspondent Value.
   */
 
-  virtual R& do_bind(const string &parameter, bool val) =0;
-  virtual R& do_bind(const string &parameter, int val) =0;
-  virtual R& do_bind(const string &parameter, unsigned val) =0;
-  virtual R& do_bind(const string &parameter, float val) =0;
-  virtual R& do_bind(const string &parameter, double val) =0;
-  virtual R& do_bind(const string &parameter, const string &val) =0;
+  virtual R& do_bind(const string &parameter, Value val) = 0;
+
 
 public:
 
   /**
-    Add document(s) to a collection.
+    Bind values to a parameter name.
 
-    Documents can be described by JSON strings or DbDoc objects.
+    Value can be native types as also Documents and Arrays of Values.
   */
 
   template <typename V>
   R& bind(const string& parameter, const V &value)
-  {
+  try{
     return do_bind(parameter, value);
-  }
+  }CATCH_AND_WRAP;
 
-  /**
-    @copydoc add(const DbDoc&)
-    Several documents can be passed to single `add()` call.
-  */
-
-  template<typename D, typename... Types>
-  R& add(const D &first, Types... rest)
-  {
-    try {
-
-      /*
-        Note: When do_add() returns CollectionAddExec object then
-        the following add() will return reference to the same object.
-        Here we return CollectionAddExec by value, so a new instance
-        will be created from the one returned by add() using
-        move-constructor.
-      */
-
-      return std::move(do_add(first).add(rest...));
-    }
-    CATCH_AND_WRAP
-  }
+  template <typename V>
+  R& bind(const string& parameter, const V &begin, const V &end)
+  try{
+    return do_bind(parameter, Value(begin, end));
+  }CATCH_AND_WRAP;
 
 };
 
@@ -355,43 +333,8 @@ class CollectionRemoveBind
 
     protected:
 
-      virtual CollectionRemoveBind& do_bind(const string &parameter, bool val)
-      {
-        //TODO
-        return *this;
-      }
-
-      virtual CollectionRemoveBind& do_bind(const string &parameter, int val)
-      {
-        //TODO
-        return *this;
-      }
-
-      virtual CollectionRemoveBind& do_bind(const string &parameter, unsigned val)
-      {
-        //TODO
-        return *this;
-      }
-
-      virtual CollectionRemoveBind& do_bind(const string &parameter, float val)
-      {
-        //TODO
-        return *this;
-      }
-
-      virtual CollectionRemoveBind& do_bind(const string &parameter, double val)
-      {
-        //TODO
-        return *this;
-      }
-
       virtual CollectionRemoveBind& do_bind(const string &parameter,
-                                          const string &val)
-      {
-        //TODO
-        return *this;
-      }
-
+                                            Value val);
     };
 
 
@@ -399,7 +342,6 @@ class CollectionRemoveBind
   Operation which removes documents from a collection.
 
   @todo Sorting and limiting the range of deleted documents.
-  @todo Binding values for operation parameters.
 */
 
 class CollectionRemove
@@ -445,50 +387,15 @@ public:
 
 protected:
 
-  virtual CollectionFindBind& do_bind(const string &parameter, bool val)
-  {
-    //TODO
-    return *this;
-  }
-
-  virtual CollectionFindBind& do_bind(const string &parameter, int val)
-  {
-    //TODO
-    return *this;
-  }
-
-  virtual CollectionFindBind& do_bind(const string &parameter, unsigned val)
-  {
-    //TODO
-    return *this;
-  }
-
-  virtual CollectionFindBind& do_bind(const string &parameter, float val)
-  {
-    //TODO
-    return *this;
-  }
-
-  virtual CollectionFindBind& do_bind(const string &parameter, double val)
-  {
-    //TODO
-    return *this;
-  }
 
   virtual CollectionFindBind& do_bind(const string &parameter,
-                                      const string &val)
-  {
-    //TODO
-    return *this;
-  }
-
+                                      Value val);
 };
 
 /**
   Operation which finds documents satisfying given criteria.
 
   @todo Sorting and limiting the result.
-  @todo Binding values for operation parameters.
   @todo Grouping of returned documents.
 */
 

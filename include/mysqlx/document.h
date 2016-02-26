@@ -211,6 +211,9 @@ public:
     ARRAY,      ///< Array of values
   };
 
+  typedef std::vector<Value>::iterator iterator;
+  typedef std::vector<Value>::const_iterator const_iterator;
+
   ///@name Value Constructors
   ///@{
 
@@ -225,8 +228,14 @@ public:
   Value(bool);
   Value(int x) : Value((int64_t)x) {}
   Value(unsigned x) : Value((uint64_t)x) {}
+  Value(const DbDoc& doc);
+  template <typename Iterator>
+  Value(Iterator begin, Iterator end)
+    : m_type(ARRAY)
+  {
+    m_arr = std::make_shared<Array>(begin,end);
+  }
 
-  // TODO: Constructors for documents and arrays?
 
   ///@}
 
@@ -240,6 +249,8 @@ public:
 
   operator int() const;
   operator unsigned() const;
+  explicit operator int64_t() const;
+  explicit operator uint64_t() const;
   operator float() const;
   operator double() const;
   operator bool() const;
@@ -276,8 +287,8 @@ public:
   Value operator[](const wchar_t *name) { return (*this)[Field(name)]; }
 
 
-  typedef std::vector<Value>::iterator iterator;
-  typedef std::vector<Value>::const_iterator const_iterator;
+//  typedef std::vector<Value>::iterator iterator;
+//  typedef std::vector<Value>::const_iterator const_iterator;
 
   /**
     Access to elements of an array value.
@@ -287,7 +298,9 @@ public:
   //@{
 
   iterator begin();
+  const_iterator begin() const;
   iterator end();
+  const_iterator end() const;
   size_t   elementCount() const;
   Value    operator[](unsigned);
   Value    operator[](int pos)
@@ -373,6 +386,25 @@ inline Value::Value(uint64_t val) : m_type(UINT64)
 
 inline Value::operator int() const
 {
+  int64_t val = (int64_t)*this;
+  if (val > std::numeric_limits<int>::max())
+    THROW("Overflow");
+
+  return (int) val;
+}
+
+inline Value::operator unsigned() const
+{
+  uint64_t val = static_cast<uint64_t>(*this);
+  if (val > std::numeric_limits<unsigned>::max())
+    THROW("Overflow");
+
+  return (unsigned) val;
+}
+
+
+inline Value::operator int64_t() const
+{
   if (UINT64 != m_type && INT64 != m_type)
     THROW("Not an integer value");
 
@@ -381,13 +413,11 @@ inline Value::operator int() const
     THROW("Overflow");
 
   int64_t val = (INT64 == m_type ? m_val._int64_v : (int64_t)m_val._uint64_v);
-  if (val > std::numeric_limits<int>::max())
-    THROW("Overflow");
 
-  return (int)val;
+  return val;
 }
 
-inline Value::operator unsigned() const
+inline Value::operator uint64_t() const
 {
   if (UINT64 != m_type && INT64 != m_type)
     THROW("Not an integer value");
@@ -397,12 +427,9 @@ inline Value::operator unsigned() const
     THROW("Converting negative integer to unsigned value");
 
   uint64_t val = (UINT64 == m_type ? m_val._uint64_v : (uint64_t)m_val._int64_v);
-  if (val > std::numeric_limits<unsigned>::max())
-    THROW("Overflow");
 
-  return (unsigned)val;
+  return val;
 }
-
 
 inline Value::Value(float val) : m_type(FLOAT)
 {
@@ -434,6 +461,14 @@ inline Value::Value(bool val) : m_type(BOOL)
 {
   m_val._bool_v = val;
 }
+
+inline Value::Value(const DbDoc &doc)
+  : m_type(DOCUMENT)
+  , m_doc(doc)
+{
+}
+
+
 
 inline
 Value::operator bool() const
@@ -497,6 +532,14 @@ Value::iterator Value::begin()
 }
 
 inline
+Value::const_iterator Value::begin() const
+{
+  if (ARRAY != m_type)
+    throw Error("Attempt to iterate over non-array value");
+  return m_arr->begin();
+}
+
+inline
 Value::iterator Value::end()
 {
   if (ARRAY != m_type)
@@ -504,6 +547,13 @@ Value::iterator Value::end()
   return m_arr->end();
 }
 
+inline
+Value::const_iterator Value::end() const
+{
+  if (ARRAY != m_type)
+    throw Error("Attempt to iterate over non-array value");
+  return m_arr->end();
+}
 
 inline
 size_t Value::elementCount() const

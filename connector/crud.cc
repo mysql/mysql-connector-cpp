@@ -491,34 +491,132 @@ void Op_collection_add::process(Expression::Processor &ep) const
   ===================
 */
 
+class Value_prc
+{
+  const Value &m_value;
+public:
+  Value_prc(const Value &val)
+    : m_value(val)
+  {}
+
+  void process(cdk::Safe_prc<cdk::api::Any_processor<cdk::Value_processor>> prc) const
+  {
+    switch (m_value.getType())
+    {
+      case Value::VNULL:
+        prc->scalar()->null();
+        break;
+      case Value::UINT64:
+        prc->scalar()->num(static_cast<uint64_t>(m_value));
+        break;
+      case Value::INT64:
+        prc->scalar()->num(static_cast<int64_t>(m_value));
+        break;
+      case Value::FLOAT:
+        prc->scalar()->num(static_cast<float>(m_value));
+        break;
+      case Value::DOUBLE:
+        prc->scalar()->num(static_cast<double>(m_value));
+        break;
+      case Value::BOOL:
+        prc->scalar()->yesno(static_cast<bool>(m_value));
+        break;
+      case Value::STRING:
+        prc->scalar()->str(static_cast<mysqlx::string>(m_value));
+        break;
+      case Value::DOCUMENT:
+        {
+          mysqlx::DbDoc doc = static_cast<mysqlx::DbDoc>(m_value);
+          prc->doc()->doc_begin();
+          for ( Field fld : doc)
+          {
+            Value_prc value(doc[fld]);
+            value.process(prc->doc()->key_val(fld));
+          }
+          prc->doc()->doc_end();
+        }
+        break;
+      case Value::RAW:
+        THROW("Unexpected Value Type RAW");
+        break;
+      case Value::ARRAY:
+        {
+          prc->arr()->list_begin();
+          for (Value val : m_value)
+          {
+            Value_prc value(val);
+            value.process(prc->arr()->list_el());
+          }
+          prc->arr()->list_end();
+        }
+        break;
+    }
+  }
+};
+
+class Param
+    : public cdk::Param_source
+{
+  std::map<mysqlx::string, mysqlx::Value> m_bind_map;
+public:
+
+  void bind(const mysqlx::string& key, Value& val)
+  {
+    m_bind_map[key] = std::move(val);
+  }
+
+  void process(Processor &prc) const
+  {
+    prc.doc_begin();
+    for (auto it : m_bind_map)
+    {
+      Value_prc(it.second).process(prc.key_val(it.first));
+    }
+    prc.doc_end();
+  }
+
+};
 
 class Op_collection_remove : public Task::Access::Impl
 {
   Table_ref m_coll;
   parser::Expression_parser m_expr;
+  bool has_expr = false;
+  Param m_param;
 
   Op_collection_remove(Collection &coll)
     : Impl(coll)
     , m_coll(coll)
     , m_expr(parser::Parser_mode::DOCUMENT)
-  {
-    m_reply= new cdk::Reply(get_cdk_session().coll_remove(m_coll, NULL, NULL));
-  }
+  { }
 
   Op_collection_remove(Collection &coll, const mysqlx::string &expr)
     : Impl(coll)
     , m_coll(coll)
     , m_expr(parser::Parser_mode::DOCUMENT, expr)
   {
-    m_reply = new cdk::Reply(get_cdk_session().coll_remove(m_coll, &m_expr, NULL));
+    has_expr = true;
   }
 
   cdk::Reply* send_command()
   {
+    m_reply =
+        new cdk::Reply(get_cdk_session().coll_remove(m_coll,
+                                                     has_expr ? &m_expr : nullptr,
+                                                     nullptr,
+                                                     nullptr,
+                                                     &m_param)
+                       );
     return m_reply;
   }
 
+  void bind(const mysqlx::string& key, Value val)
+  {
+    m_param.bind(key, val);
+  }
+
   friend class mysqlx::CollectionRemove;
+  friend class mysqlx::CollectionRemoveBind;
 };
 
 
@@ -537,6 +635,15 @@ try {
 CATCH_AND_WRAP
 
 
+CollectionRemoveBind &CollectionRemoveBind::do_bind(const string &parameter,
+                                                    Value val)
+{
+  auto *impl
+    = static_cast<Op_collection_remove*>(Task::Access::get_impl(m_task));
+  impl->bind(parameter, val);
+  return *this;
+}
+
 /*
   Collection.find()
   =================
@@ -548,13 +655,14 @@ class Op_collection_find
 {
   Table_ref m_coll;
   parser::Expression_parser m_expr;
+  bool has_expr = false;
+  Param m_param;
 
   Op_collection_find(Collection &coll)
     : Impl(coll)
     , m_coll(coll)
     , m_expr(parser::Parser_mode::DOCUMENT)
   {
-    m_reply= new cdk::Reply(get_cdk_session().coll_find(m_coll, NULL, NULL));
   }
 
   Op_collection_find(Collection &coll, const mysqlx::string &expr)
@@ -562,15 +670,27 @@ class Op_collection_find
     , m_coll(coll)
     , m_expr(parser::Parser_mode::DOCUMENT, expr)
   {
-    m_reply= new cdk::Reply(get_cdk_session().coll_find(m_coll, &m_expr, NULL));
+    has_expr = true;
   }
 
   cdk::Reply* send_command()
   {
+    m_reply =
+        new cdk::Reply(get_cdk_session().coll_find(m_coll,
+                                                   has_expr ? &m_expr : nullptr,
+                                                   nullptr,
+                                                   nullptr,
+                                                   &m_param));
     return m_reply;
   }
 
+  void bind(const mysqlx::string& key, Value& val)
+  {
+    m_param.bind(key, val);
+  }
+
   friend class mysqlx::CollectionFind;
+  friend class mysqlx::CollectionFindBind;
 };
 
 Executable& CollectionFind::find()
@@ -587,3 +707,12 @@ try {
 }
 CATCH_AND_WRAP
 
+
+CollectionFindBind &CollectionFindBind::do_bind(const mysqlx::string &parameter,
+                                                Value val)
+{
+  auto *impl
+    = static_cast<Op_collection_find*>(Task::Access::get_impl(m_task));
+  impl->bind(parameter, val);
+  return *this;
+}

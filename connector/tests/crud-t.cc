@@ -25,6 +25,7 @@
 #include <test.h>
 #include <mysqlx.h>
 #include <iostream>
+#include <list>
 
 using std::cout;
 using std::endl;
@@ -32,6 +33,8 @@ using namespace mysqlx;
 
 class Crud : public mysqlx::test::Xplugin
 {
+public:
+  void add_data(Collection &coll);
 };
 
 
@@ -268,6 +271,26 @@ TEST_F(Crud, arrays)
 }
 
 
+void Crud::add_data(Collection &coll)
+{
+  Result add;
+
+  DbDoc doc("{ \"name\": \"foo\", \"age\": 1 }");
+
+  add = coll.add(doc, doc).execute();
+  cout << "- added doc with id: " << add.getLastDocumentId() << endl;
+
+  add = coll.add("{ \"name\": \"bar\", \"age\": 2, \
+                    \"food\": [\"Milk\", \"Soup\"] }")
+        .add("{ \"name\": \"baz\", \"age\": 3,\
+                \"birth\": { \"day\": 20, \"month\": \"Apr\" } }").execute();
+  cout << "- added 2 docs, last id: " << add.getLastDocumentId() << endl;
+
+  add = coll.add("{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }",
+                 "{ \"name\": \"buz\", \"age\": 17 }").execute();
+  cout << "- added 2 docs, last id: " << add.getLastDocumentId() << endl;
+
+}
 
 TEST_F(Crud, bind)
 {
@@ -292,22 +315,7 @@ TEST_F(Crud, bind)
 
   cout << "Inserting documents..." << endl;
 
-  {
-    Result add;
-
-    DbDoc doc("{ \"name\": \"foo\", \"age\": 1 }");
-
-    add = coll.add(doc, doc).execute();
-    cout << "- added doc with id: " << add.getLastDocumentId() << endl;
-
-    add = coll.add("{ \"name\": \"bar\", \"age\": 2 }")
-      .add("{ \"name\": \"baz\", \"age\": 3, \"date\": { \"day\": 20, \"month\": \"Apr\" }}").execute();
-    cout << "- added 2 docs, last id: " << add.getLastDocumentId() << endl;
-
-    add = coll.add("{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }",
-      "{ \"name\": \"buz\", \"age\": 17 }").execute();
-    cout << "- added 2 docs, last id: " << add.getLastDocumentId() << endl;
-  }
+  add_data(coll);
 
   {
     RowResult res = sql("select count(*) from test.c1");
@@ -318,9 +326,9 @@ TEST_F(Crud, bind)
   cout << "Fetching documents..." << endl;
 
   DocResult docs = coll.find("name like :name and age < :age")
-                       .bind("name", "ba%")
-                       .bind("age", 3)
-                       .execute();
+         .bind("name", "ba%")
+         .bind("age", 3)
+         .execute();
 
   DbDoc doc = docs.fetchOne();
 
@@ -337,7 +345,7 @@ TEST_F(Crud, bind)
     string name = doc["name"];
     cout << " name: " << name << endl;
 
-    EXPECT_EQ(string("baz"), (string)doc["name"]);
+    EXPECT_EQ(string("bar"), (string)doc["name"]);
 
     cout << "  age: " << doc["age"] << endl;
 
@@ -347,6 +355,94 @@ TEST_F(Crud, bind)
   }
 
   EXPECT_EQ(1, i);
+
+
+  {
+
+    cout << "Fetching documents... using bind Documents" << endl;
+
+
+    EXPECT_THROW(docs = coll.find("birth like :bday")
+                     .bind("bday", DbDoc("{ \"day\": 20, \"month\": \"Apr\" }"))
+                     .execute(), mysqlx::Error);
+
+    docs = coll.find("birth like { \"day\": 20, \"month\": \"Apr\" }")
+                     .execute();
+
+    doc = docs.fetchOne();
+
+    i = 0;
+    for (; doc; ++i, doc = docs.fetchOne())
+    {
+      cout << "doc#" << i << ": " << doc << endl;
+
+      for (Field fld : doc)
+      {
+        cout << " field `" << fld << "`: " << doc[fld] << endl;
+      }
+
+      string name = doc["name"];
+      cout << " name: " << name << endl;
+
+      EXPECT_EQ(string("baz"), (string)doc["name"]);
+
+      cout << "  age: " << doc["age"] << endl;
+
+      EXPECT_EQ(3, (int)doc["age"]);
+
+      cout << endl;
+    }
+
+
+    EXPECT_EQ(1, i);
+
+  }
+
+
+  {
+
+    cout << "Fetching documents... using bind Arrays" << endl;
+
+    std::list<string> food_list;
+    food_list.push_back("Milk");
+    food_list.push_back("Soup");
+
+    EXPECT_THROW(
+    docs = coll.find("food like :food_list")
+                     .bind("food_list", food_list.begin(), food_list.end())
+                     .execute();
+        , mysqlx::Error);
+
+    docs = coll.find("food like [\"Milk\", \"Soup\"]")
+                     .execute();
+
+    doc = docs.fetchOne();
+
+    i = 0;
+    for (; doc; ++i, doc = docs.fetchOne())
+    {
+      cout << "doc#" << i << ": " << doc << endl;
+
+      for (Field fld : doc)
+      {
+        cout << " field `" << fld << "`: " << doc[fld] << endl;
+      }
+
+      string name = doc["name"];
+      cout << " name: " << name << endl;
+
+      EXPECT_EQ(string("bar"), (string)doc["name"]);
+
+      cout << "  age: " << doc["age"] << endl;
+
+      EXPECT_EQ(2, (int)doc["age"]);
+
+      cout << endl;
+    }
+
+    EXPECT_EQ(1, i);
+
+  }
 
   coll.remove("name like :name and age < :age")
                          .bind("name", "ba%")
