@@ -381,9 +381,7 @@ public:
 
   CollectionFindBind(Collection &coll)
     : Base(coll)
-  {
-
-  }
+  {}
 
 protected:
 
@@ -407,9 +405,7 @@ class CollectionFind
   CollectionFind(Collection &coll)
     : m_coll(coll)
     , m_exec(coll)
-  {
-
-  }
+  {}
 
 public:
 
