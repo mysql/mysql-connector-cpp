@@ -86,8 +86,10 @@ static struct st_buffer_size_type
     case MYSQL_TYPE_BLOB:
     case MYSQL_TYPE_STRING:
     case MYSQL_TYPE_VAR_STRING:
+#ifdef MYSQL_TYPE_JSON
     case MYSQL_TYPE_JSON:
       return st_buffer_size_type(new char[field->max_length + 1], field->max_length + 1, field->type);
+#endif
 
     case MYSQL_TYPE_DECIMAL:
     case MYSQL_TYPE_NEWDECIMAL:

@@ -431,8 +431,10 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
       return sql::DataType::SET;
     case MYSQL_TYPE_GEOMETRY:
       return sql::DataType::GEOMETRY;
+#ifdef MYSQL_TYPE_JSON
     case MYSQL_TYPE_JSON:
       return sql::DataType::JSON;
+#endif
     default:
       return sql::DataType::UNKNOWN;
   }
@@ -498,8 +500,10 @@ mysql_string_type_to_datatype(const sql::SQLString & name)
     return sql::DataType::SET;
   } else if (!name.compare("geometry")) {
     return sql::DataType::GEOMETRY;
+#ifdef MYSQL_TYPE_JSON
   } else if (!name.compare("json")) {
     return sql::DataType::JSON;
+#endif
   } else {
     return sql::DataType::UNKNOWN;
   }
@@ -645,8 +649,10 @@ mysql_type_to_string(const MYSQL_FIELD * const field, boost::shared_ptr< sql::my
       return "SET";
     case MYSQL_TYPE_GEOMETRY:
       return "GEOMETRY";
+#ifdef MYSQL_TYPE_JSON
     case MYSQL_TYPE_JSON:
       return "JSON";
+#endif
     default:
       return "UNKNOWN";
   }
