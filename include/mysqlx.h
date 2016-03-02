@@ -176,6 +176,7 @@ class Collection
   : public CollectionAdd
   , public CollectionRemove
   , public CollectionFind
+  , public CollectionModify
 {
   Schema m_schema;
   const string m_name;
@@ -186,6 +187,7 @@ public:
     : CollectionAdd(*this)
     , CollectionRemove(*this)
     , CollectionFind(*this)
+    , CollectionModify(*this)
     , m_schema(sch), m_name(name)
   {}
 

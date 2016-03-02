@@ -273,6 +273,16 @@ TEST_F(Crud, arrays)
 
 void Crud::add_data(Collection &coll)
 {
+  coll.remove().execute();
+
+  {
+    RowResult res = sql("select count(*) from test.c1");
+    unsigned  cnt = res.fetchOne()[0];
+    EXPECT_EQ(0, cnt);
+  }
+
+  cout << "Inserting documents..." << endl;
+
   Result add;
 
   DbDoc doc("{ \"name\": \"foo\", \"age\": 1 }");
@@ -290,6 +300,13 @@ void Crud::add_data(Collection &coll)
                  "{ \"name\": \"buz\", \"age\": 17 }").execute();
   cout << "- added 2 docs, last id: " << add.getLastDocumentId() << endl;
 
+  {
+    RowResult res = sql("select count(*) from test.c1");
+    unsigned  cnt = res.fetchOne()[0];
+    EXPECT_EQ(6, cnt);
+  }
+
+
 }
 
 TEST_F(Crud, bind)
@@ -305,23 +322,8 @@ TEST_F(Crud, bind)
   Schema sch = sess.getSchema("test");
   Collection coll = sch.createCollection("c1", true);
 
-  coll.remove().execute();
-
-  {
-    RowResult res = sql("select count(*) from test.c1");
-    unsigned  cnt = res.fetchOne()[0];
-    EXPECT_EQ(0, cnt);
-  }
-
-  cout << "Inserting documents..." << endl;
-
   add_data(coll);
 
-  {
-    RowResult res = sql("select count(*) from test.c1");
-    unsigned  cnt = res.fetchOne()[0];
-    EXPECT_EQ(6, cnt);
-  }
 
   cout << "Fetching documents..." << endl;
 
@@ -459,4 +461,96 @@ TEST_F(Crud, bind)
 
 
   cout << "Done!" << endl;
+}
+
+TEST_F(Crud, modify)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("c1", true);
+
+  add_data(coll);
+
+
+  cout << "Fetching documents..." << endl;
+
+  DocResult docs = coll.find("name like :name and age < :age")
+         .bind("name", "ba%")
+         .bind("age", 3)
+         .execute();
+
+  DbDoc doc = docs.fetchOne();
+
+  unsigned i = 0;
+  for (; doc; ++i, doc = docs.fetchOne())
+  {
+    cout << "doc#" << i << ": " << doc << endl;
+
+    for (Field fld : doc)
+    {
+      cout << " field `" << fld << "`: " << doc[fld] << endl;
+    }
+
+    string name = doc["name"];
+    cout << " name: " << name << endl;
+
+    EXPECT_EQ(string("bar"), (string)doc["name"]);
+
+    cout << "  age: " << doc["age"] << endl;
+
+    EXPECT_EQ(2, (int)doc["age"]);
+
+    cout << endl;
+  }
+
+  EXPECT_EQ(1, i);
+
+  cout << "Modify documents..." << endl;
+
+  coll.modify("name like :name and age < :age")
+      .set("name", "boo")
+      .bind("name", "ba%")
+      .bind("age", 3)
+      .execute();
+
+
+  cout << "Fetching documents..." << endl;
+
+
+  docs = coll.find("name like :name and age < :age")
+         .bind("name", "bo%")
+         .bind("age", 3)
+         .execute();
+
+  doc = docs.fetchOne();
+
+  i = 0;
+  for (; doc; ++i, doc = docs.fetchOne())
+  {
+    cout << "doc#" << i << ": " << doc << endl;
+
+    for (Field fld : doc)
+    {
+      cout << " field `" << fld << "`: " << doc[fld] << endl;
+    }
+
+    string name = doc["name"];
+    cout << " name: " << name << endl;
+
+    EXPECT_EQ(string("boo"), (string)doc["name"]);
+
+    cout << "  age: " << doc["age"] << endl;
+
+    EXPECT_EQ(2, (int)doc["age"]);
+
+    cout << endl;
+  }
+
 }

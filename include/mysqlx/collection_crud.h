@@ -419,6 +419,149 @@ public:
 };
 
 
+
+/*
+  Modifying documents in a collection
+  =======================================
+*/
+
+class CollectionModifyBind
+  : public CollectionBindBase<CollectionModifyBind>
+  , public Executable
+{
+
+  using Base = CollectionBindBase<CollectionModifyBind>;
+
+public:
+  CollectionModifyBind(Collection &coll)
+    : Base(coll)
+  {}
+
+  CollectionModifyBind &do_bind(const string &parameter, Value val);
+};
+
+template <typename R>
+class CollectionSetBase
+{
+public:
+  virtual R &set( const string &field, Value val)        = 0;
+  virtual R &unset(const string &field)                  = 0;
+  virtual R &arrayInsert(const string &field, Value val) = 0;
+  virtual R &arrayAppend(const string &field, Value val) = 0;
+  virtual R &arrayDelete(const string &field)            = 0;
+};
+
+class CollectionSet;
+
+class CollectionSetExec
+    : public CollectionSetBase<CollectionSetExec>
+    , public CollectionModifyBind
+{
+  friend class CollectionSet;
+
+  Executable m_exec;
+
+  CollectionSetExec(Collection &base);
+
+  CollectionSetExec(Collection &base, const string &expr);
+
+
+public:
+
+  CollectionSetExec &set( const string &field, Value val);
+  CollectionSetExec &unset(const string &field);
+  CollectionSetExec &arrayInsert(const string &field, Value val);
+  CollectionSetExec &arrayAppend(const string &field, Value val);
+  CollectionSetExec &arrayDelete(const string &field);
+
+};
+
+class CollectionSet
+  : public CollectionSetBase<CollectionSetExec>
+{
+
+  friend class CollectionModify;
+
+  CollectionSetExec m_collection_set;
+
+  CollectionSet(Collection &coll)
+    : m_collection_set(coll)
+  {}
+
+  CollectionSet(Collection &coll, const string &expr)
+  : m_collection_set(coll, expr)
+  {}
+
+public:
+
+  CollectionSetExec &set( const string &field, Value val)
+  {
+    m_collection_set.set(field, val);
+    return m_collection_set;
+  }
+
+  CollectionSetExec &unset(const string &field)
+  {
+    m_collection_set.unset(field);
+    return m_collection_set;
+  }
+
+  CollectionSetExec &arrayInsert(const string &field, Value val)
+  {
+    m_collection_set.arrayInsert(field, val);
+    return m_collection_set;
+  }
+
+  CollectionSetExec &arrayAppend(const string &field, Value val)
+  {
+    m_collection_set.arrayAppend(field, val);
+    return m_collection_set;
+  }
+
+  CollectionSetExec &arrayDelete(const string &field)
+  {
+    m_collection_set.arrayDelete(field);
+    return m_collection_set;
+  }
+
+};
+
+
+
+
+/**
+  Operation which modifies documents satisfying given criteria.
+
+  @todo Sorting and limiting the result.
+  @todo Grouping of returned documents.
+*/
+
+class CollectionModify
+{
+  Collection &m_coll;
+
+  CollectionModify(Collection &coll)
+    : m_coll(coll)
+  {}
+
+public:
+
+  /// Modify documents.
+  CollectionSet modify()
+  try{
+    return CollectionSet(m_coll);
+  }CATCH_AND_WRAP;
+
+  /// Modify documents that satisfy given expression.
+  CollectionSet modify(const string &expr)
+  try {
+    return CollectionSet(m_coll, expr);
+  }CATCH_AND_WRAP;
+
+  friend class Collection;
+};
+
+
 }  // mysqlx
 
 #endif

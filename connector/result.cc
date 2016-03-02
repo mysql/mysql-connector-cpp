@@ -504,7 +504,7 @@ class BaseResult::Impl
     }
   }
 
-  ~Impl()
+  virtual ~Impl()
   {
     // Note: Cursor must be deleted before reply.
     delete m_cursor;
