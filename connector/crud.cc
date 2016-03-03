@@ -678,8 +678,9 @@ class Op_collection_find
     m_reply =
         new cdk::Reply(get_cdk_session().coll_find(m_coll,
                                                    has_expr ? &m_expr : nullptr,
-                                                   nullptr,
-                                                   nullptr,
+                                                   nullptr,  // projection
+                                                   nullptr,  // order_by spec
+                                                   nullptr,  // limit spec
                                                    &m_param));
     return m_reply;
   }
