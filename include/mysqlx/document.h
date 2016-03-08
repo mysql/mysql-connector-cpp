@@ -31,6 +31,7 @@
 */
 
 #include "common.h"
+#include <mysql/cdk.h>
 #include <memory>
 #include <stdint.h>
 #include <limits>
@@ -54,7 +55,9 @@ class DocResult;
   TODO: _fld suffix
 */
 
-class Field : public string
+class Field
+    : public cdk::string
+    , public cdk::Doc_path
 {
 public:
 
@@ -67,6 +70,28 @@ public:
 
   Field(const char *s) : string(s)
   {}
+
+  virtual unsigned length() const
+  {
+    return empty() ? 0 : 1;
+  }
+
+  virtual Type get_type(unsigned pos) const
+  {
+    return Type::MEMBER;
+  }
+
+  virtual const cdk::string* get_name(unsigned pos) const
+  {
+    if (pos != 0)
+      return NULL;
+    return this;
+  }
+
+  virtual const uint32_t* get_index(unsigned pos) const
+  {
+    return NULL;
+  }
 };
 
 

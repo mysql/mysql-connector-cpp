@@ -30,6 +30,7 @@
 #include <sstream>
 #include <forward_list>
 #include <boost/format.hpp>
+#include <list>
 
 #include "impl.h"
 
@@ -144,7 +145,10 @@ public:
     : m_value(val)
   {}
 
-  void process(cdk::Safe_prc<cdk::api::Any_processor<cdk::Value_processor>> prc) const
+
+  void process(
+      cdk::Safe_prc<cdk::api::Any_processor<cdk::Value_processor>> prc
+      ) const
   {
     switch (m_value.getType())
     {
@@ -196,6 +200,68 @@ public:
         }
         break;
     }
+  }
+
+  void process(cdk::Expression::Processor *prc)
+  {
+    switch (m_value.getType())
+    {
+      case Value::STRING:
+        {
+          parser::Expression_parser expr(Parser_mode::DOCUMENT,
+                                         (mysqlx::string)m_value);
+
+          expr.process_if(prc);
+        }
+      break;
+
+      case Value::VNULL:
+        safe_prc(prc)->scalar()->val()->null();
+        break;
+      case Value::UINT64:
+        safe_prc(prc)->scalar()->val()->num(static_cast<uint64_t>(m_value));
+        break;
+      case Value::INT64:
+        safe_prc(prc)->scalar()->val()->num(static_cast<int64_t>(m_value));
+        break;
+      case Value::FLOAT:
+        safe_prc(prc)->scalar()->val()->num(static_cast<float>(m_value));
+        break;
+      case Value::DOUBLE:
+        safe_prc(prc)->scalar()->val()->num(static_cast<double>(m_value));
+        break;
+      case Value::BOOL:
+        safe_prc(prc)->scalar()->val()->yesno(static_cast<bool>(m_value));
+        break;
+      case Value::DOCUMENT:
+        {
+          mysqlx::DbDoc doc = static_cast<mysqlx::DbDoc>(m_value);
+          prc->doc()->doc_begin();
+          for ( Field fld : doc)
+          {
+            Value_prc value(doc[fld]);
+            value.process(prc->doc()->key_val(fld));
+          }
+          prc->doc()->doc_end();
+        }
+        break;
+      case Value::RAW:
+        THROW("Unexpected Value Type RAW");
+        break;
+      case Value::ARRAY:
+        {
+          prc->arr()->list_begin();
+          for (Value val : m_value)
+          {
+            Value_prc value(val);
+            value.process(prc->arr()->list_el());
+          }
+          prc->arr()->list_end();
+        }
+        break;
+    }
+
+
   }
 };
 
@@ -737,10 +803,9 @@ CollectionFindBind &CollectionFindBind::do_bind(const mysqlx::string &parameter,
 */
 
 class Op_collection_modify
-  : public Task::Access::Impl
-  , public Op_operation_bind_base
-  , public cdk::Update_spec
-    , public cdk::Expr_processor
+    : public Task::Access::Impl
+    , public Op_operation_bind_base
+    , public cdk::Update_spec
 {
 
   friend class mysqlx::CollectionSetExec;
@@ -751,7 +816,7 @@ class Op_collection_modify
 
   struct Field_Op
   {
-    enum class Type
+    enum Operation
     {
       SET,
       UNSET,
@@ -760,22 +825,20 @@ class Op_collection_modify
       ARRAY_DELETE
     } ;
 
-    Field_Op(const mysqlx::string &&field, Type op)
-      : m_field(std::move(field))
-      , m_op(op)
+    Operation m_op;
+    Field m_field;
+    Value m_val;
+
+    Field_Op(Operation op, const Field &field,Value &val)
+      : m_op(op)
+      , m_field(field)
+      , m_val(std::move(val))
     {}
 
-    bool operator <(const Field_Op &other) const
-    {
-      return this->m_op < other.m_op ? true : this->m_field < other.m_field;
-    }
-
-    mysqlx::string m_field;
-    Type m_op;
   };
 
-  std::map<Field_Op, mysqlx::string> m_update;
-  std::map<Field_Op, mysqlx::string>::const_iterator m_update_it = m_update.end();
+  std::list<Field_Op> m_update;
+  std::list<Field_Op>::const_iterator m_update_it = m_update.end();
 
 
   Op_collection_modify(Collection &coll)
@@ -804,11 +867,16 @@ class Op_collection_modify
     return m_reply;
   }
 
-  void add_field_operation(Field_Op::Type op,
-                           const mysqlx::string &field,
+  void add_field_operation(Field_Op::Operation op,
+                           Field field,
                            Value val = Value())
   {
-    m_update[std::move(Field_Op(std::move(field), op))] = std::move(val);
+    m_update.push_back(
+          Field_Op(
+            op,
+            field,
+            val)
+          );
   }
 
   // cdk::Update_spec implementation
@@ -818,7 +886,7 @@ class Op_collection_modify
     if (m_update_it == m_update.end())
     {
       m_update_it = m_update.begin();
-      return true;
+      return m_update_it!= m_update.end();
     }
     ++m_update_it;
     return m_update_it!= m_update.end();
@@ -826,23 +894,46 @@ class Op_collection_modify
 
   void process(Processor &prc) const override
   {
-    parser::Expression_parser field(Parser_mode::DOCUMENT,
-                                    m_update_it->first.m_field);
 
-    field.process(*this);
-
-    switch (m_update_it->first.m_op)
+    switch (m_update_it->m_op)
     {
-      case Field_Op::Type::SET:
+      case Field_Op::SET:
+        {
 
-        prc.set(*this);
+          Value_prc value_prc(m_update_it->m_val);
+
+          value_prc.process(prc.set(&m_update_it->m_field));
+
+
+        }
         break;
-      case Field_Op::Type::UNSET:        break;
-      case Field_Op::Type::ARRAY_INSERT: break;
-      case Field_Op::Type::ARRAY_APPEND: break;
-      case Field_Op::Type::ARRAY_DELETE: break;
+      case Field_Op::UNSET:
+        prc.remove(&m_update_it->m_field);
+        break;
+
+      case Field_Op::ARRAY_INSERT:
+        {
+          Value_prc value_prc(m_update_it->m_val);
+
+          value_prc.process(prc.array_insert(&m_update_it->m_field));
+        }
+        break;
+
+      case Field_Op::ARRAY_APPEND:
+        {
+          Value_prc value_prc(m_update_it->m_val);
+
+          value_prc.process(prc.array_append(&m_update_it->m_field));
+        }
+        break;
+      case Field_Op::ARRAY_DELETE:
+        prc.remove(&m_update_it->m_field);
+        break;
     }
+
   }
+
+
 
 };
 
@@ -850,64 +941,64 @@ class Op_collection_modify
 CollectionSetExec::CollectionSetExec(Collection &base)
   : CollectionModifyBind(base)
 {
-  Executable::Access::reset_task(m_exec, new Op_collection_modify(m_coll));
+  Task::Access::reset(m_task, new Op_collection_modify(m_coll));
 }
 
 
 CollectionSetExec::CollectionSetExec(Collection &base, const string &expr)
   : CollectionModifyBind(base)
 {
-  Executable::Access::reset_task(m_exec, new Op_collection_modify(m_coll, expr));
+  Task::Access::reset(m_task, new Op_collection_modify(m_coll, expr));
 }
 
 
 
-CollectionSetExec &CollectionSetExec::set(const string &field,
+CollectionSetExec &CollectionSetExec::set(const Field &field,
                                           Value val)
 try {
   auto *impl
     = static_cast<Op_collection_modify*>(Task::Access::get_impl(m_task));
-  impl->add_field_operation(Op_collection_modify::Field_Op::Type::SET,
+  impl->add_field_operation(Op_collection_modify::Field_Op::SET,
                             field,
                             val);
   return *this;
 }CATCH_AND_WRAP
 
-CollectionSetExec &CollectionSetExec::unset(const string &field)
+CollectionSetExec &CollectionSetExec::unset(const Field &field)
 try{
   auto *impl
     = static_cast<Op_collection_modify*>(Task::Access::get_impl(m_task));
-  impl->add_field_operation(Op_collection_modify::Field_Op::Type::UNSET,
+  impl->add_field_operation(Op_collection_modify::Field_Op::UNSET,
                             field);
   return *this;
 }CATCH_AND_WRAP
 
-CollectionSetExec &CollectionSetExec::arrayInsert(const string &field,
+CollectionSetExec &CollectionSetExec::arrayInsert(const Field &field,
                                                   Value val)
 try{
   auto *impl
     = static_cast<Op_collection_modify*>(Task::Access::get_impl(m_task));
-  impl->add_field_operation(Op_collection_modify::Field_Op::Type::ARRAY_INSERT,
+  impl->add_field_operation(Op_collection_modify::Field_Op::ARRAY_INSERT,
                             field,
                             val);
   return *this;
 }CATCH_AND_WRAP
 
-CollectionSetExec &CollectionSetExec::arrayAppend(const string &field, Value val)
+CollectionSetExec &CollectionSetExec::arrayAppend(const Field &field, Value val)
 try{
   auto *impl
     = static_cast<Op_collection_modify*>(Task::Access::get_impl(m_task));
-  impl->add_field_operation(Op_collection_modify::Field_Op::Type::ARRAY_APPEND,
+  impl->add_field_operation(Op_collection_modify::Field_Op::ARRAY_APPEND,
                             field,
                             val);
   return *this;
 }CATCH_AND_WRAP
 
-CollectionSetExec &CollectionSetExec::arrayDelete(const string &field)
+CollectionSetExec &CollectionSetExec::arrayDelete(const Field &field)
 try{
   auto *impl
     = static_cast<Op_collection_modify*>(Task::Access::get_impl(m_task));
-  impl->add_field_operation(Op_collection_modify::Field_Op::Type::ARRAY_DELETE,
+  impl->add_field_operation(Op_collection_modify::Field_Op::ARRAY_DELETE,
                             field);
   return *this;
 }CATCH_AND_WRAP

@@ -515,7 +515,10 @@ TEST_F(Crud, modify)
   cout << "Modify documents..." << endl;
 
   coll.modify("name like :name and age < :age")
-      .set("name", "boo")
+      .set("name", "'boo'")
+      .set("age", 3)
+      .arrayAppend("food", "'Popcorn'")
+      .arrayAppend("food", "'Coke'")
       .bind("name", "ba%")
       .bind("age", 3)
       .execute();
@@ -526,7 +529,7 @@ TEST_F(Crud, modify)
 
   docs = coll.find("name like :name and age < :age")
          .bind("name", "bo%")
-         .bind("age", 3)
+         .bind("age", 4)
          .execute();
 
   doc = docs.fetchOne();
@@ -538,8 +541,40 @@ TEST_F(Crud, modify)
 
     for (Field fld : doc)
     {
-      cout << " field `" << fld << "`: " << doc[fld] << endl;
+      cout << " field `" << fld << "`: ";
+
+      switch (doc[fld].getType())
+      {
+        case Value::ARRAY:
+          {
+            int elem = 0;
+            cout << "[";
+            for(auto it : doc[fld])
+            {
+              if (0 != elem)
+                cout << ", ";
+              cout << it;
+              switch (elem)
+              {
+                case 0: EXPECT_EQ(string("Milk"), (string)it); break;
+                case 1: EXPECT_EQ(string("Soup"), (string)it); break;
+                case 2: EXPECT_EQ(string("Popcorn"), (string)it); break;
+                case 3: EXPECT_EQ(string("Coke"), (string)it); break;
+              }
+
+              ++elem;
+            }
+            cout << "]";
+          }
+          break;
+        default:
+          cout << doc[fld];
+          break;
+      }
+      cout << endl;
     }
+
+
 
     string name = doc["name"];
     cout << " name: " << name << endl;
@@ -548,7 +583,7 @@ TEST_F(Crud, modify)
 
     cout << "  age: " << doc["age"] << endl;
 
-    EXPECT_EQ(2, (int)doc["age"]);
+    EXPECT_EQ(3, (int)doc["age"]);
 
     cout << endl;
   }

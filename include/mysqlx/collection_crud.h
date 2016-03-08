@@ -444,11 +444,11 @@ template <typename R>
 class CollectionSetBase
 {
 public:
-  virtual R &set( const string &field, Value val)        = 0;
-  virtual R &unset(const string &field)                  = 0;
-  virtual R &arrayInsert(const string &field, Value val) = 0;
-  virtual R &arrayAppend(const string &field, Value val) = 0;
-  virtual R &arrayDelete(const string &field)            = 0;
+  virtual R &set( const Field &field, Value val)        = 0;
+  virtual R &unset(const Field &field)                  = 0;
+  virtual R &arrayInsert(const Field &field, Value val) = 0;
+  virtual R &arrayAppend(const Field &field, Value val) = 0;
+  virtual R &arrayDelete(const Field &field)            = 0;
 };
 
 class CollectionSet;
@@ -459,8 +459,6 @@ class CollectionSetExec
 {
   friend class CollectionSet;
 
-  Executable m_exec;
-
   CollectionSetExec(Collection &base);
 
   CollectionSetExec(Collection &base, const string &expr);
@@ -468,11 +466,11 @@ class CollectionSetExec
 
 public:
 
-  CollectionSetExec &set( const string &field, Value val);
-  CollectionSetExec &unset(const string &field);
-  CollectionSetExec &arrayInsert(const string &field, Value val);
-  CollectionSetExec &arrayAppend(const string &field, Value val);
-  CollectionSetExec &arrayDelete(const string &field);
+  CollectionSetExec &set(const Field &field, Value val);
+  CollectionSetExec &unset(const Field &field);
+  CollectionSetExec &arrayInsert(const Field &field, Value val);
+  CollectionSetExec &arrayAppend(const Field &field, Value val);
+  CollectionSetExec &arrayDelete(const Field &field);
 
 };
 
@@ -494,31 +492,31 @@ class CollectionSet
 
 public:
 
-  CollectionSetExec &set( const string &field, Value val)
+  CollectionSetExec &set( const Field &field, Value val)
   {
     m_collection_set.set(field, val);
     return m_collection_set;
   }
 
-  CollectionSetExec &unset(const string &field)
+  CollectionSetExec &unset(const Field &field)
   {
     m_collection_set.unset(field);
     return m_collection_set;
   }
 
-  CollectionSetExec &arrayInsert(const string &field, Value val)
+  CollectionSetExec &arrayInsert(const Field &field, Value val)
   {
     m_collection_set.arrayInsert(field, val);
     return m_collection_set;
   }
 
-  CollectionSetExec &arrayAppend(const string &field, Value val)
+  CollectionSetExec &arrayAppend(const Field &field, Value val)
   {
     m_collection_set.arrayAppend(field, val);
     return m_collection_set;
   }
 
-  CollectionSetExec &arrayDelete(const string &field)
+  CollectionSetExec &arrayDelete(const Field &field)
   {
     m_collection_set.arrayDelete(field);
     return m_collection_set;
