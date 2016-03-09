@@ -36,6 +36,8 @@
 #include "common.h"
 #include "result.h"
 
+#include <map>
+
 namespace mysqlx {
 
 using std::ostream;
@@ -43,6 +45,7 @@ using std::ostream;
 
 class Task;
 class Executable;
+class BindExec;
 
 
 class Task : nocopy
@@ -72,6 +75,7 @@ public:
   struct Access;
   friend struct Access;
   friend class Executable;
+  friend class BindExec;
 };
 
 
@@ -106,6 +110,45 @@ public:
 
   struct Access;
   friend struct Access;
+};
+
+
+/**
+  Base class for arguments binding operations.
+
+  This class defines `bind()` methods that bind values to its parameters.
+
+  TODO: Better documentation.
+*/
+
+class BindExec : public Executable
+{
+protected:
+
+  typedef std::map<string, Value> param_map_t;
+  param_map_t m_map;
+
+public:
+
+  BaseResult execute();
+
+  BindExec& bind(const string &parameter, Value val)
+  {
+    m_map[parameter] = std::move(val);
+    return *this;
+  }
+
+  template <typename Iterator>
+  BindExec& bind(const string &parameter, const Iterator &begin, const Iterator &end)
+  {
+    m_map[parameter] = Value(begin, end);
+    return *this;
+  }
+
+  struct Access;
+  friend struct Access;
+  friend class Task;
+  friend class Task::Impl;
 };
 
 

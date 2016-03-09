@@ -73,6 +73,48 @@ class CollectionAddExec;
 
 
 /*
+  Class to identify usage of expressions
+
+*/
+
+
+class ExprValue
+    : public Value
+{
+  bool m_is_expr = false;
+
+public:
+  using Value::Value;
+
+  ExprValue()
+  {}
+
+  ExprValue(const Value &val)
+    : Value(std::move(val))
+  {}
+
+  ExprValue(Value &&val)
+    : Value(std::move(val))
+  {}
+
+  bool isExpression() const { return m_is_expr; }
+
+  template <typename V>
+  friend ExprValue expr(V s);
+};
+
+
+template <typename V>
+ExprValue expr(V s)
+{
+  ExprValue val(s);
+  val.m_is_expr = true;
+  return std::move(val);
+}
+
+
+
+/*
   Adding documents to a collection
   ================================
 
@@ -300,13 +342,15 @@ public:
   R& bind(const string& parameter, const V &value)
   try{
     return do_bind(parameter, value);
-  }CATCH_AND_WRAP;
+  }
+  CATCH_AND_WRAP;
 
   template <typename V>
   R& bind(const string& parameter, const V &begin, const V &end)
   try{
     return do_bind(parameter, Value(begin, end));
-  }CATCH_AND_WRAP;
+  }
+  CATCH_AND_WRAP;
 
 };
 
@@ -316,26 +360,6 @@ public:
   Removing documents from a collection
   ====================================
 */
-
-class CollectionRemoveBind
-  : public CollectionBindBase<CollectionRemoveBind>
-  , public Executable
-{
-  using Base = CollectionBindBase<CollectionRemoveBind>;
-
-    public:
-
-      CollectionRemoveBind(Collection &coll)
-        : Base(coll)
-      {
-
-      }
-
-    protected:
-
-      virtual CollectionRemoveBind& do_bind(const string &parameter,
-                                            Value val);
-    };
 
 
 /**
@@ -347,11 +371,10 @@ class CollectionRemoveBind
 class CollectionRemove
 {
   Collection &m_coll;
-  CollectionRemoveBind m_exec;
+  BindExec m_exec;
 
   CollectionRemove(Collection &coll)
     : m_coll(coll)
-    , m_exec(coll)
   {}
 
 public:
@@ -360,7 +383,7 @@ public:
   virtual Executable& remove();
 
   /// Remove documents satisfying given expression.
-  virtual CollectionRemoveBind& remove(const string&);
+  virtual BindExec& remove(const string&);
 
   friend class Collection;
 };
@@ -371,24 +394,6 @@ public:
   =======================================
 */
 
-class CollectionFindBind
-    : public CollectionBindBase<CollectionFindBind>
-    , public Executable
-{
-  using Base = CollectionBindBase<CollectionFindBind>;
-
-public:
-
-  CollectionFindBind(Collection &coll)
-    : Base(coll)
-  {}
-
-protected:
-
-
-  virtual CollectionFindBind& do_bind(const string &parameter,
-                                      Value val);
-};
 
 /**
   Operation which finds documents satisfying given criteria.
@@ -400,11 +405,10 @@ protected:
 class CollectionFind
 {
   Collection &m_coll;
-  CollectionFindBind m_exec;
+  BindExec m_exec;
 
   CollectionFind(Collection &coll)
     : m_coll(coll)
-    , m_exec(coll)
   {}
 
 public:
@@ -413,7 +417,7 @@ public:
   virtual Executable& find();
 
   /// Find documents that satisfy given expression.
-  virtual CollectionFindBind& find(const string&);
+  virtual BindExec& find(const string&);
 
   friend class Collection;
 };
@@ -425,105 +429,27 @@ public:
   =======================================
 */
 
-class CollectionModifyBind
-  : public CollectionBindBase<CollectionModifyBind>
-  , public Executable
-{
 
-  using Base = CollectionBindBase<CollectionModifyBind>;
-
-public:
-  CollectionModifyBind(Collection &coll)
-    : Base(coll)
-  {}
-
-  CollectionModifyBind &do_bind(const string &parameter, Value val);
-};
-
-template <typename R>
-class CollectionSetBase
-{
-public:
-  virtual R &set( const Field &field, Value val)        = 0;
-  virtual R &unset(const Field &field)                  = 0;
-  virtual R &arrayInsert(const Field &field, Value val) = 0;
-  virtual R &arrayAppend(const Field &field, Value val) = 0;
-  virtual R &arrayDelete(const Field &field)            = 0;
-};
-
-class CollectionSet;
-
-class CollectionSetExec
-    : public CollectionSetBase<CollectionSetExec>
-    , public CollectionModifyBind
-{
-  friend class CollectionSet;
-
-  CollectionSetExec(Collection &base);
-
-  CollectionSetExec(Collection &base, const string &expr);
-
-
-public:
-
-  CollectionSetExec &set(const Field &field, Value val);
-  CollectionSetExec &unset(const Field &field);
-  CollectionSetExec &arrayInsert(const Field &field, Value val);
-  CollectionSetExec &arrayAppend(const Field &field, Value val);
-  CollectionSetExec &arrayDelete(const Field &field);
-
-};
+class CollectionModify;
 
 class CollectionSet
-  : public CollectionSetBase<CollectionSetExec>
+    : public BindExec
 {
 
-  friend class CollectionModify;
+  CollectionSet(Collection &coll);
 
-  CollectionSetExec m_collection_set;
-
-  CollectionSet(Collection &coll)
-    : m_collection_set(coll)
-  {}
-
-  CollectionSet(Collection &coll, const string &expr)
-  : m_collection_set(coll, expr)
-  {}
+  CollectionSet(Collection &base, const string &expr);
 
 public:
 
-  CollectionSetExec &set( const Field &field, Value val)
-  {
-    m_collection_set.set(field, val);
-    return m_collection_set;
-  }
+  CollectionSet &set(const Field &field, ExprValue val);
+  CollectionSet &unset(const Field &field);
+  CollectionSet &arrayInsert(const Field &field, ExprValue val);
+  CollectionSet &arrayAppend(const Field &field, ExprValue val);
+  CollectionSet &arrayDelete(const Field &field);
 
-  CollectionSetExec &unset(const Field &field)
-  {
-    m_collection_set.unset(field);
-    return m_collection_set;
-  }
-
-  CollectionSetExec &arrayInsert(const Field &field, Value val)
-  {
-    m_collection_set.arrayInsert(field, val);
-    return m_collection_set;
-  }
-
-  CollectionSetExec &arrayAppend(const Field &field, Value val)
-  {
-    m_collection_set.arrayAppend(field, val);
-    return m_collection_set;
-  }
-
-  CollectionSetExec &arrayDelete(const Field &field)
-  {
-    m_collection_set.arrayDelete(field);
-    return m_collection_set;
-  }
-
+  friend class CollectionModify;
 };
-
 
 
 
@@ -548,13 +474,15 @@ public:
   CollectionSet modify()
   try{
     return CollectionSet(m_coll);
-  }CATCH_AND_WRAP;
+  }
+  CATCH_AND_WRAP;
 
   /// Modify documents that satisfy given expression.
   CollectionSet modify(const string &expr)
   try {
     return CollectionSet(m_coll, expr);
-  }CATCH_AND_WRAP;
+  }
+  CATCH_AND_WRAP;
 
   friend class Collection;
 };

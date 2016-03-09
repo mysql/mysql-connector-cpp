@@ -31,11 +31,148 @@
 
 #include <mysqlx.h>
 #include <mysql/cdk.h>
+#include <expr_parser.h>
 #include <map>
 #include <memory>
 
 
 namespace mysqlx {
+
+  class Value_prc
+  {
+    const Value &m_value;
+    bool m_is_expr = false;
+  public:
+    Value_prc(const Value &val)
+      : m_value(val)
+    {}
+
+    Value_prc(const ExprValue &val)
+      : m_value(val)
+    {
+      m_is_expr = val.isExpression();
+    }
+
+
+    void process(
+        cdk::Safe_prc<cdk::api::Any_processor<cdk::Value_processor>> prc
+        ) const
+    {
+      switch (m_value.getType())
+      {
+        case Value::VNULL:
+          prc->scalar()->null();
+          break;
+        case Value::UINT64:
+          prc->scalar()->num(static_cast<uint64_t>(m_value));
+          break;
+        case Value::INT64:
+          prc->scalar()->num(static_cast<int64_t>(m_value));
+          break;
+        case Value::FLOAT:
+          prc->scalar()->num(static_cast<float>(m_value));
+          break;
+        case Value::DOUBLE:
+          prc->scalar()->num(static_cast<double>(m_value));
+          break;
+        case Value::BOOL:
+          prc->scalar()->yesno(static_cast<bool>(m_value));
+          break;
+        case Value::STRING:
+          prc->scalar()->str(static_cast<mysqlx::string>(m_value));
+          break;
+        case Value::DOCUMENT:
+          {
+            mysqlx::DbDoc doc = static_cast<mysqlx::DbDoc>(m_value);
+            prc->doc()->doc_begin();
+            for ( Field fld : doc)
+            {
+              Value_prc value(doc[fld]);
+              value.process(prc->doc()->key_val(fld));
+            }
+            prc->doc()->doc_end();
+          }
+          break;
+        case Value::RAW:
+          THROW("Unexpected Value Type RAW");
+          break;
+        case Value::ARRAY:
+          {
+            prc->arr()->list_begin();
+            for (Value val : m_value)
+            {
+              Value_prc value(val);
+              value.process(prc->arr()->list_el());
+            }
+            prc->arr()->list_end();
+          }
+          break;
+      }
+    }
+
+    void process(cdk::Expression::Processor *prc)
+    {
+      switch (m_value.getType())
+      {
+        case Value::VNULL:
+          safe_prc(prc)->scalar()->val()->null();
+          break;
+        case Value::UINT64:
+          safe_prc(prc)->scalar()->val()->num(static_cast<uint64_t>(m_value));
+          break;
+        case Value::INT64:
+          safe_prc(prc)->scalar()->val()->num(static_cast<int64_t>(m_value));
+          break;
+        case Value::FLOAT:
+          safe_prc(prc)->scalar()->val()->num(static_cast<float>(m_value));
+          break;
+        case Value::DOUBLE:
+          safe_prc(prc)->scalar()->val()->num(static_cast<double>(m_value));
+          break;
+        case Value::BOOL:
+          safe_prc(prc)->scalar()->val()->yesno(static_cast<bool>(m_value));
+          break;
+        case Value::STRING:
+          if (m_is_expr)
+          {
+            parser::Expression_parser expr(parser::Parser_mode::DOCUMENT,
+                                           (mysqlx::string)m_value);
+
+            expr.process_if(prc);
+          }
+          else
+            safe_prc(prc)->scalar()->val()->str(static_cast<mysqlx::string>(m_value));
+          break;
+        case Value::DOCUMENT:
+          {
+            mysqlx::DbDoc doc = static_cast<mysqlx::DbDoc>(m_value);
+            safe_prc(prc)->doc()->doc_begin();
+            for ( Field fld : doc)
+            {
+              Value_prc value(doc[fld]);
+              value.process(prc->doc()->key_val(fld));
+            }
+            prc->doc()->doc_end();
+          }
+          break;
+        case Value::RAW:
+          THROW("Unexpected Value Type RAW");
+          break;
+        case Value::ARRAY:
+          {
+            prc->arr()->list_begin();
+            for (Value val : m_value)
+            {
+              Value_prc value(val);
+              value.process(prc->arr()->list_el());
+            }
+            prc->arr()->list_end();
+          }
+          break;
+      }
+    }
+  };
+
 
 /**
   DbDoc implementation which stores document data in std::map.
@@ -185,6 +322,8 @@ protected:
   XSession &m_sess;
   cdk::Reply *m_reply = NULL;
 
+  typedef BindExec::param_map_t param_map_t;
+
   Impl(XSession &sess)
     : m_sess(sess)
   {}
@@ -197,10 +336,36 @@ protected:
 
   virtual ~Impl() {}
 
+  virtual cdk::Reply* send_command() = 0;
+
   cdk::Session& get_cdk_session() { return m_sess.get_cdk_session(); }
 
 
-  virtual cdk::Reply* send_command() = 0;
+  struct : public cdk::Param_source
+  {
+    param_map_t *m_map = NULL;
+
+    void process(Processor &prc) const
+    {
+      prc.doc_begin();
+      for (auto it : *m_map)
+      {
+        Value_prc(it.second).process(prc.key_val(it.first));
+      }
+      prc.doc_end();
+    }
+  }
+  m_params;
+
+  cdk::Param_source* get_params()
+  {
+    return m_params.m_map ? &m_params : NULL;
+  }
+
+  void set_params(param_map_t &param_map)
+  {
+    m_params.m_map = &param_map;
+  }
 
   void init()
   {
@@ -237,6 +402,7 @@ protected:
 
   friend class Task;
   friend class Executable;
+  friend class BindExec;
 };
 
 
