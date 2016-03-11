@@ -455,7 +455,7 @@ TEST_F(Crud, bind)
                        .execute();
 
   doc = docs.fetchOne();
-  EXPECT_EQ(false, (bool)doc);
+  EXPECT_FALSE((bool)doc);
 
 
   cout << "Done!" << endl;
