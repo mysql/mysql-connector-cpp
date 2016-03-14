@@ -93,6 +93,17 @@ INCLUDE(compiler_features)
 SET(CMAKE_CXX_EXTENSIONS no)
 
 #
+# Globally enable C++11
+#
+
+if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  # Use C++11 also for CHECK_CXX_SOURCE_COMPILES()
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
+endif()
+
+
+#
 # If Clang is used and deployment target is not specified
 # with MACOSX_DEPLOYMENT_TARGET environment variable, make
 # sure that clang's native implementation of C++ runtime

@@ -53,7 +53,6 @@ set(CMAKE_CXX_FLAGS ${SAVED_CXX_FLAGS})
 ADD_LIBRARY(connector STATIC session.cc result.cc crud.cc document.cc)
 ADD_CDK(connector)
 target_link_libraries(connector uuid_gen)
-target_compile_features(connector PUBLIC cxx_rvalue_references)
 
 # Required because of possible exception-related GCC bug.
 # (observed in GCC 4.8.4)
