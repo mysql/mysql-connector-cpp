@@ -25,7 +25,6 @@
 #include <mysqlx.h>
 #include <mysql/cdk.h>
 
-#include <boost/format.hpp>
 #include <iostream>
 
 #include "impl.h"
