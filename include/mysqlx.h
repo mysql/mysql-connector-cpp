@@ -173,10 +173,10 @@ public:
 */
 
 class Collection
-  : public CollectionAdd
+  : public CollectionAddBase
   , public CollectionRemove
   , public CollectionFind
-  , public CollectionModify
+  , public CollectionModifyBase
 {
   Schema m_schema;
   const string m_name;
@@ -184,10 +184,10 @@ class Collection
 public:
 
   Collection(const Schema &sch, const string &name)
-    : CollectionAdd(*this)
+    : CollectionAddBase(*this)
     , CollectionRemove(*this)
     , CollectionFind(*this)
-    , CollectionModify(*this)
+    , CollectionModifyBase(*this)
     , m_schema(sch), m_name(name)
   {}
 

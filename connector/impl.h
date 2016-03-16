@@ -31,20 +31,84 @@
 
 #include <mysqlx.h>
 #include <mysql/cdk.h>
+#include "../cdk/mysqlx/converters.h"
 #include <expr_parser.h>
 #include <map>
 #include <memory>
+#include <stack>
 
 
 namespace mysqlx {
 
-  class Value_prc
+
+
+  struct Value_scalar_prc_converter
+      : public cdk::mysqlx::Converter<
+      Value_scalar_prc_converter,
+      cdk::Expr_processor,
+      cdk::Value_processor
+      >
   {
-    const Value &m_value;
+
+    virtual Value_prc*  val() override
+    {
+      return m_proc;
+    }
+
+    Args_prc*   op(const char*)
+    {
+      THROW("Unexpected expression usage operator");
+      return NULL;
+    }
+
+    Args_prc*   call(const Object_ref&)
+    {
+      THROW("Unexpected expression usage operator");
+      return NULL;
+    }
+
+    void ref(const Column_ref&, const Doc_path*)
+    {
+      THROW("Unexpected expression usage operator");
+    }
+
+    void ref(const Doc_path&)
+    {
+      THROW("Unexpected expression usage operator");
+    }
+
+    void param(const cdk::string&)
+    {
+      THROW("Unexpected expression usage operator");
+    }
+
+    void param(uint16_t)
+    {
+      THROW("Unexpected expression usage operator");
+    }
+
+    void var(const cdk::string&)
+    {
+      THROW("Unexpected expression usage operator");
+    }
+
+  };
+
+
+  typedef cdk::mysqlx::Expr_conv_base<cdk::mysqlx::Any_prc_converter<Value_scalar_prc_converter>> Value_converter;
+
+  class Value_prc
+      : public cdk::Expression
+  {
+    Value m_value;
     bool m_is_expr = false;
   public:
     Value_prc(const Value &val)
       : m_value(val)
+    {}
+
+    Value_prc(Value &&val)
+      : m_value(std::move(val))
     {}
 
     Value_prc(const ExprValue &val)
@@ -53,64 +117,13 @@ namespace mysqlx {
       m_is_expr = val.isExpression();
     }
 
-
-    void process(
-        cdk::Safe_prc<cdk::api::Any_processor<cdk::Value_processor>> prc
-        ) const
+    Value_prc(ExprValue &&val)
+      : m_value(std::move(val))
     {
-      switch (m_value.getType())
-      {
-        case Value::VNULL:
-          prc->scalar()->null();
-          break;
-        case Value::UINT64:
-          prc->scalar()->num(static_cast<uint64_t>(m_value));
-          break;
-        case Value::INT64:
-          prc->scalar()->num(static_cast<int64_t>(m_value));
-          break;
-        case Value::FLOAT:
-          prc->scalar()->num(static_cast<float>(m_value));
-          break;
-        case Value::DOUBLE:
-          prc->scalar()->num(static_cast<double>(m_value));
-          break;
-        case Value::BOOL:
-          prc->scalar()->yesno(static_cast<bool>(m_value));
-          break;
-        case Value::STRING:
-          prc->scalar()->str(static_cast<mysqlx::string>(m_value));
-          break;
-        case Value::DOCUMENT:
-          {
-            mysqlx::DbDoc doc = static_cast<mysqlx::DbDoc>(m_value);
-            prc->doc()->doc_begin();
-            for ( Field fld : doc)
-            {
-              Value_prc value(doc[fld]);
-              value.process(prc->doc()->key_val(fld));
-            }
-            prc->doc()->doc_end();
-          }
-          break;
-        case Value::RAW:
-          THROW("Unexpected Value Type RAW");
-          break;
-        case Value::ARRAY:
-          {
-            prc->arr()->list_begin();
-            for (Value val : m_value)
-            {
-              Value_prc value(val);
-              value.process(prc->arr()->list_el());
-            }
-            prc->arr()->list_end();
-          }
-          break;
-      }
+      m_is_expr = val.isExpression();
     }
 
-    void process(cdk::Expression::Processor *prc)
+    void process (Processor &prc) const
     {
       switch (m_value.getType())
       {
@@ -138,7 +151,7 @@ namespace mysqlx {
             parser::Expression_parser expr(parser::Parser_mode::DOCUMENT,
                                            (mysqlx::string)m_value);
 
-            expr.process_if(prc);
+            expr.process(prc);
           }
           else
             safe_prc(prc)->scalar()->val()->str(static_cast<mysqlx::string>(m_value));
@@ -150,9 +163,9 @@ namespace mysqlx {
             for ( Field fld : doc)
             {
               Value_prc value(doc[fld]);
-              value.process(prc->doc()->key_val(fld));
+              value.process_if(safe_prc(prc)->doc()->key_val(fld));
             }
-            prc->doc()->doc_end();
+            safe_prc(prc)->doc()->doc_end();
           }
           break;
         case Value::RAW:
@@ -160,17 +173,18 @@ namespace mysqlx {
           break;
         case Value::ARRAY:
           {
-            prc->arr()->list_begin();
+            safe_prc(prc)->arr()->list_begin();
             for (Value val : m_value)
             {
               Value_prc value(val);
-              value.process(prc->arr()->list_el());
+              value.process_if(safe_prc(prc)->arr()->list_el());
             }
-            prc->arr()->list_end();
+            safe_prc(prc)->arr()->list_end();
           }
           break;
       }
     }
+
   };
 
 
@@ -348,9 +362,14 @@ protected:
     void process(Processor &prc) const
     {
       prc.doc_begin();
+
+      Value_converter conv;
+
       for (auto it : *m_map)
       {
-        Value_prc(it.second).process(prc.key_val(it.first));
+        Value_prc value(it.second);
+        conv.reset(value);
+        conv.process_if(prc.key_val(it.first));
       }
       prc.doc_end();
     }

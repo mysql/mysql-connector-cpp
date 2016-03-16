@@ -394,16 +394,16 @@ class Op_collection_add
   void num(double) { assert(false); }
   void yesno(bool) { assert(false); }
 
-  friend class mysqlx::CollectionAddExec;
+  friend class mysqlx::CollectionAdd;
 };
 
 
-void CollectionAddExec::initialize()
+void CollectionAdd::initialize()
 {
   Task::Access::reset(m_task, new Op_collection_add(m_coll));
 }
 
-CollectionAddExec& CollectionAddExec::do_add(const mysqlx::string &json)
+CollectionAdd& CollectionAdd::do_add(const mysqlx::string &json)
 {
   auto *impl
     = static_cast<Op_collection_add*>(Task::Access::get_impl(m_task));
@@ -411,7 +411,7 @@ CollectionAddExec& CollectionAddExec::do_add(const mysqlx::string &json)
   return *this;
 }
 
-CollectionAddExec& CollectionAddExec::do_add(const DbDoc &doc)
+CollectionAdd& CollectionAdd::do_add(const DbDoc &doc)
 {
   auto *impl
     = static_cast<Op_collection_add*>(Task::Access::get_impl(m_task));
@@ -667,7 +667,7 @@ class Op_collection_modify
     , public cdk::Update_spec
 {
 
-  friend class mysqlx::CollectionSet;
+  friend class mysqlx::CollectionModify;
 
   Table_ref m_coll;
   parser::Expression_parser m_expr;
@@ -770,7 +770,7 @@ class Op_collection_modify
 
           Value_prc value_prc(m_update_it->m_val);
 
-          value_prc.process(prc.set(&field));
+          value_prc.process_if(prc.set(&field));
 
 
         }
@@ -783,7 +783,7 @@ class Op_collection_modify
         {
           Value_prc value_prc(m_update_it->m_val);
 
-          value_prc.process(prc.array_insert(&field));
+          value_prc.process_if(prc.array_insert(&field));
         }
         break;
 
@@ -791,7 +791,7 @@ class Op_collection_modify
         {
           Value_prc value_prc(m_update_it->m_val);
 
-          value_prc.process(prc.array_append(&field));
+          value_prc.process_if(prc.array_append(&field));
         }
         break;
       case Field_Op::ARRAY_DELETE:
@@ -806,20 +806,20 @@ class Op_collection_modify
 };
 
 
-CollectionSet::CollectionSet(Collection &coll)
+CollectionModify::CollectionModify(Collection &coll)
 {
   Task::Access::reset(m_task, new Op_collection_modify(coll));
 }
 
 
-CollectionSet::CollectionSet(Collection &coll, const string &expr)
+CollectionModify::CollectionModify(Collection &coll, const string &expr)
 {
   Task::Access::reset(m_task, new Op_collection_modify(coll, expr));
 }
 
 
 
-CollectionSet &CollectionSet::set(const Field &field,
+CollectionModify &CollectionModify::set(const Field &field,
                                   ExprValue val)
 {
   auto *impl
@@ -831,7 +831,7 @@ CollectionSet &CollectionSet::set(const Field &field,
 }
 
 
-CollectionSet &CollectionSet::unset(const Field &field)
+CollectionModify &CollectionModify::unset(const Field &field)
 {
   auto *impl
     = static_cast<Op_collection_modify*>(Task::Access::get_impl(m_task));
@@ -840,7 +840,7 @@ CollectionSet &CollectionSet::unset(const Field &field)
   return *this;
 }
 
-CollectionSet &CollectionSet::arrayInsert(const Field &field,
+CollectionModify &CollectionModify::arrayInsert(const Field &field,
                                                      ExprValue val)
 {
   auto *impl
@@ -851,7 +851,7 @@ CollectionSet &CollectionSet::arrayInsert(const Field &field,
   return *this;
 }
 
-CollectionSet &CollectionSet::arrayAppend(const Field &field,
+CollectionModify &CollectionModify::arrayAppend(const Field &field,
                                           ExprValue val)
 {
   auto *impl
@@ -863,7 +863,7 @@ CollectionSet &CollectionSet::arrayAppend(const Field &field,
 }
 
 
-CollectionSet &CollectionSet::arrayDelete(const Field &field)
+CollectionModify &CollectionModify::arrayDelete(const Field &field)
 {
   auto *impl
     = static_cast<Op_collection_modify*>(Task::Access::get_impl(m_task));

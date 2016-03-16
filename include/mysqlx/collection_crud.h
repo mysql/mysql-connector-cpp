@@ -68,8 +68,8 @@ namespace mysqlx {
 
 class XSession;
 class Collection;
+class CollectionAddBase;
 class CollectionAdd;
-class CollectionAddExec;
 
 
 /*
@@ -90,7 +90,7 @@ public:
   {}
 
   ExprValue(const Value &val)
-    : Value(std::move(val))
+    : Value(val)
   {}
 
   ExprValue(Value &&val)
@@ -146,13 +146,13 @@ ExprValue expr(V s)
 */
 
 template <typename R>
-class CollectionAddBase
+class CollectionAddInterface
 {
 protected:
 
   Collection &m_coll;
 
-  CollectionAddBase(Collection &coll)
+  CollectionAddInterface(Collection &coll)
     : m_coll(coll)
   {}
 
@@ -202,7 +202,7 @@ public:
     CATCH_AND_WRAP
   }
 
-  friend class CollectionAddExec;
+  friend class CollectionAdd;
 };
 
 
@@ -215,9 +215,9 @@ public:
   method.
 */
 
-class CollectionAddExec
+class CollectionAdd
 : public Executable
-, public CollectionAddBase<CollectionAddExec&>
+, public CollectionAddInterface<CollectionAdd&>
 {
   /*
     Note: We derive from CollectionAddBase<CollectionAddExec&>
@@ -227,9 +227,9 @@ class CollectionAddExec
     unnecessary copy/move-constructor invocations.
   */
 
-  using Base = CollectionAddBase < CollectionAddExec& > ;
+  using Base = CollectionAddInterface < CollectionAdd& > ;
 
-  CollectionAddExec(CollectionAddExec &&other)
+  CollectionAdd(CollectionAdd &&other)
     : Executable(std::move(other)), Base(other.m_coll)
   {}
 
@@ -240,7 +240,7 @@ class CollectionAddExec
   */
 
   template <typename D>
-  CollectionAddExec(Collection &coll, const D &doc)
+  CollectionAdd(Collection &coll, const D &doc)
     : Base(coll)
   {
     initialize();
@@ -248,11 +248,11 @@ class CollectionAddExec
   }
 
   void initialize();
-  CollectionAddExec& do_add(const string&);
-  CollectionAddExec& do_add(const DbDoc&);
+  CollectionAdd& do_add(const string&);
+  CollectionAdd& do_add(const DbDoc&);
 
-  friend class CollectionAdd;
-  friend class CollectionAddBase<CollectionAddExec>;
+  friend class CollectionAddBase;
+  friend class CollectionAddInterface<CollectionAdd>;
 };
 
 
@@ -264,12 +264,12 @@ class CollectionAddExec
   execute the operation.
 */
 
-class CollectionAdd
-  : public CollectionAddBase<CollectionAddExec>
+class CollectionAddBase
+  : public CollectionAddInterface<CollectionAdd>
 {
-  using Base = CollectionAddBase < CollectionAddExec >;
+  using Base = CollectionAddInterface < CollectionAdd >;
 
-  CollectionAdd(Collection &coll)
+  CollectionAddBase(Collection &coll)
     : Base(coll)
   {}
 
@@ -279,14 +279,14 @@ class CollectionAdd
     documents or executing the operation.
   */
 
-  CollectionAddExec do_add(const string &json)
+  CollectionAdd do_add(const string &json)
   {
-   return CollectionAddExec(m_coll, json);
+   return CollectionAdd(m_coll, json);
   }
 
-  CollectionAddExec do_add(const DbDoc &doc)
+  CollectionAdd do_add(const DbDoc &doc)
   {
-   return CollectionAddExec(m_coll, doc);
+   return CollectionAdd(m_coll, doc);
   }
 
   friend class Collection;
@@ -430,25 +430,25 @@ public:
 */
 
 
-class CollectionModify;
+class CollectionModifyBase;
 
-class CollectionSet
+class CollectionModify
     : public BindExec
 {
 
-  CollectionSet(Collection &coll);
+  CollectionModify(Collection &coll);
 
-  CollectionSet(Collection &base, const string &expr);
+  CollectionModify(Collection &base, const string &expr);
 
 public:
 
-  CollectionSet &set(const Field &field, ExprValue val);
-  CollectionSet &unset(const Field &field);
-  CollectionSet &arrayInsert(const Field &field, ExprValue val);
-  CollectionSet &arrayAppend(const Field &field, ExprValue val);
-  CollectionSet &arrayDelete(const Field &field);
+  CollectionModify &set(const Field &field, ExprValue val);
+  CollectionModify &unset(const Field &field);
+  CollectionModify &arrayInsert(const Field &field, ExprValue val);
+  CollectionModify &arrayAppend(const Field &field, ExprValue val);
+  CollectionModify &arrayDelete(const Field &field);
 
-  friend class CollectionModify;
+  friend class CollectionModifyBase;
 };
 
 
@@ -460,27 +460,27 @@ public:
   @todo Grouping of returned documents.
 */
 
-class CollectionModify
+class CollectionModifyBase
 {
   Collection &m_coll;
 
-  CollectionModify(Collection &coll)
+  CollectionModifyBase(Collection &coll)
     : m_coll(coll)
   {}
 
 public:
 
   /// Modify documents.
-  CollectionSet modify()
+  CollectionModify modify()
   try{
-    return CollectionSet(m_coll);
+    return CollectionModify(m_coll);
   }
   CATCH_AND_WRAP;
 
   /// Modify documents that satisfy given expression.
-  CollectionSet modify(const string &expr)
+  CollectionModify modify(const string &expr)
   try {
-    return CollectionSet(m_coll, expr);
+    return CollectionModify(m_coll, expr);
   }
   CATCH_AND_WRAP;
 
