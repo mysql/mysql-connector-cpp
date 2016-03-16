@@ -592,7 +592,7 @@ class Op_collection_find
     has_expr = true;
   }
 
-  cdk::Reply* send_command()
+  cdk::Reply* send_command() 
   {
     m_reply =
         new cdk::Reply(get_cdk_session().coll_find(m_coll,
@@ -650,13 +650,13 @@ public:
     return MEMBER;
   }
 
-  virtual const cdk::string* get_name(unsigned pos) const
+  virtual const cdk::string* get_name(unsigned pos) const override
   {
     if (pos == 0)
       return &m_field;
     return NULL;
   }
-  virtual const uint32_t* get_index(unsigned pos) const
+  virtual const uint32_t* get_index(unsigned pos) const override
   {
     return NULL;
   }
@@ -721,7 +721,7 @@ class Op_collection_modify
     has_expr = true;
   }
 
-  cdk::Reply* send_command()
+  cdk::Reply* send_command() override
   {
     m_reply =
         new cdk::Reply(get_cdk_session().coll_update(m_coll,
@@ -812,7 +812,7 @@ CollectionModify::CollectionModify(Collection &coll)
 }
 
 
-CollectionModify::CollectionModify(Collection &coll, const string &expr)
+CollectionModify::CollectionModify(Collection &coll, const mysqlx::string &expr)
 {
   Task::Access::reset(m_task, new Op_collection_modify(coll, expr));
 }

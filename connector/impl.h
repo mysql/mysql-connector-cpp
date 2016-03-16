@@ -55,39 +55,39 @@ namespace mysqlx {
       return m_proc;
     }
 
-    Args_prc*   op(const char*)
+    Args_prc*   op(const char*) override
     {
       THROW("Unexpected expression usage operator");
       return NULL;
     }
 
-    Args_prc*   call(const Object_ref&)
+    Args_prc*   call(const Object_ref&) override
     {
       THROW("Unexpected expression usage operator");
       return NULL;
     }
 
-    void ref(const Column_ref&, const Doc_path*)
+    void ref(const Column_ref&, const Doc_path*) override
     {
       THROW("Unexpected expression usage operator");
     }
 
-    void ref(const Doc_path&)
+    void ref(const Doc_path&) override
     {
       THROW("Unexpected expression usage operator");
     }
 
-    void param(const cdk::string&)
+    void param(const cdk::string&) override
     {
       THROW("Unexpected expression usage operator");
     }
 
-    void param(uint16_t)
+    void param(uint16_t) override
     {
       THROW("Unexpected expression usage operator");
     }
 
-    void var(const cdk::string&)
+    void var(const cdk::string&) override
     {
       THROW("Unexpected expression usage operator");
     }

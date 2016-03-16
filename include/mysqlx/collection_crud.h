@@ -84,12 +84,12 @@ class ExprValue
   bool m_is_expr = false;
 
 public:
-  using Value::Value;
 
   ExprValue()
   {}
 
-  ExprValue(const Value &val)
+  template <typename V>
+  ExprValue(V val)
     : Value(val)
   {}
 
