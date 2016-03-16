@@ -31,7 +31,7 @@
 
 #include <mysqlx.h>
 #include <mysql/cdk.h>
-#include "../cdk/mysqlx/converters.h"
+#include <mysql/cdk/converters.h>
 #include <expr_parser.h>
 #include <map>
 #include <memory>
@@ -43,7 +43,7 @@ namespace mysqlx {
 
 
   struct Value_scalar_prc_converter
-      : public cdk::mysqlx::Converter<
+      : public cdk::Converter<
       Value_scalar_prc_converter,
       cdk::Expr_processor,
       cdk::Value_processor
@@ -95,7 +95,9 @@ namespace mysqlx {
   };
 
 
-  typedef cdk::mysqlx::Expr_conv_base<cdk::mysqlx::Any_prc_converter<Value_scalar_prc_converter>> Value_converter;
+  typedef
+  cdk::Expr_conv_base<cdk::Any_prc_converter<Value_scalar_prc_converter>>
+  Value_converter;
 
   class Value_prc
       : public cdk::Expression

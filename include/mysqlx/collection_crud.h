@@ -118,14 +118,14 @@ ExprValue expr(V s)
   Adding documents to a collection
   ================================
 
-  We have two variants of this operation: `CollectionAdd` and
-  `CollectionAddExec`. The first variant has only `add()` methods but
+  We have two variants of this operation: `CollectionAddBase` and
+  `CollectionAdd`. The first variant has only `add()` methods but
   not `execute()`. Second variant has both `add()` and execute `add()`.
 
   The distinction is because insert operation can be executed only
   when at least one document has been specified. Thus, initially operation
   of type `CollectionAdd` has only `add()` methods. These methods return
-  new operation object of type `CollectionAddExec` which now can be either
+  new operation object of type `CollectionAdd` which now can be either
   extended with another call to `add()` or executed with `exec()`.
 */
 
@@ -142,7 +142,7 @@ ExprValue expr(V s)
   a different return type of the `add()` method. For that reason the base
   class is a template parametrised with return type of the `add()` method.
 
-  @see `CollectionAdd`, `CollectionAddExec`
+  @see `CollectionAddBase`, `CollectionAdd`
 */
 
 template <typename R>
@@ -190,9 +190,9 @@ public:
     try {
 
       /*
-        Note: When do_add() returns CollectionAddExec object then
+        Note: When do_add() returns CollectionAdd object then
         the following add() will return reference to the same object.
-        Here we return CollectionAddExec by value, so a new instance
+        Here we return CollectionAdd by value, so a new instance
         will be created from the one returned by add() using
         move-constructor.
       */
@@ -220,9 +220,9 @@ class CollectionAdd
 , public CollectionAddInterface<CollectionAdd&>
 {
   /*
-    Note: We derive from CollectionAddBase<CollectionAddExec&>
+    Note: We derive from CollectionAddInterface<CollectionAdd&>
     which means that `add()` methods will return references to
-    CollectionAddExec object. This way, after adding document
+    CollectionAdd object. This way, after adding document
     to the list, we can return reference to `*this` and avoid
     unnecessary copy/move-constructor invocations.
   */
@@ -234,8 +234,8 @@ class CollectionAdd
   {}
 
   /*
-    Note: This constructor is called from `CollectionAdd::add()`
-    to create CollectionAddExec instance with the first document
+    Note: This constructor is called from `CollectionAddBase::add()`
+    to create CollectionAdd instance with the first document
     put on the list.
   */
 
@@ -259,7 +259,7 @@ class CollectionAdd
 /**
   Operation which adds documents to a collection.
 
-  After adding the first document, a `CollectionAddExec` object
+  After adding the first document, a `CollectionAdd` object
   is returned which can be used to add further documents or
   execute the operation.
 */
@@ -274,7 +274,7 @@ class CollectionAddBase
   {}
 
   /*
-    Note: `do_add()` methods create CollectionAddExec
+    Note: `do_add()` methods create CollectionAdd
     instance which is then responsible for adding further
     documents or executing the operation.
   */
