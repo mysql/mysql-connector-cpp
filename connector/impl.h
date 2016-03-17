@@ -58,13 +58,11 @@ namespace mysqlx {
     Args_prc*   op(const char*) override
     {
       THROW("Unexpected expression usage operator");
-      return NULL;
     }
 
     Args_prc*   call(const Object_ref&) override
     {
       THROW("Unexpected expression usage operator");
-      return NULL;
     }
 
     void ref(const Column_ref&, const Doc_path*) override

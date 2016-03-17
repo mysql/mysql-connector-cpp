@@ -592,7 +592,7 @@ class Op_collection_find
     has_expr = true;
   }
 
-  cdk::Reply* send_command() 
+  cdk::Reply* send_command()
   {
     m_reply =
         new cdk::Reply(get_cdk_session().coll_find(m_coll,
@@ -645,7 +645,7 @@ public:
     return 1;
   }
 
-  virtual Type     get_type(unsigned pos) const override
+  virtual Type     get_type(unsigned /*pos*/) const override
   {
     return MEMBER;
   }
@@ -656,7 +656,7 @@ public:
       return &m_field;
     return NULL;
   }
-  virtual const uint32_t* get_index(unsigned pos) const override
+  virtual const uint32_t* get_index(unsigned /*pos*/) const override
   {
     return NULL;
   }
