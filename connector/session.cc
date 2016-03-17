@@ -73,16 +73,14 @@ cdk::Session& XSession::get_cdk_session()
   return m_impl->m_sess;
 }
 
-Schema XSession::getSchema(const string &name)
-try {
-  return Schema(*this, name);
-}
-CATCH_AND_WRAP
+
+// ---------------------------------------------------------------------
 
 
 /*
-  Schema.createCollection()
-  =========================
+  Class which acts as query parameter source, passing two parameters:
+  1. schema name
+  2. schema object name
 */
 
 class Create_args
@@ -111,8 +109,151 @@ public:
 };
 
 
-Collection Schema::getCollection(const string &name, bool /*check*/)
+// ---------------------------------------------------------------------
+
+
+/*
+  Code to check existence of data store objects.
+
+  Checks are done by querying INFORMATION_SCHEMA database. Sending
+  appropriate query is implemented by check_query<T> class which derives
+  from cdk::Reply (T is the type of object to check).
+*/
+
+enum obj_type { TABLE, SCHEMA };
+
+template <obj_type> struct check_query;
+
+template <>
+struct check_query<SCHEMA>
+  : public cdk::Reply
+  , public cdk::Any_list
+{
+  const string &m_name;
+  typedef const string& Args_t;
+
+  check_query(cdk::Session &sess, Args_t name)
+    : m_name(name)
+    , cdk::Reply(sess.sql(
+        L"SELECT 1 FROM INFORMATION_SCHEMA.SCHEMATA"
+        L" WHERE SCHEMA_NAME LIKE ?", this))
+  {
+    wait();
+    if (entry_count() > 0)
+    {
+      // TODO: Better error
+      THROW("Could not check existence of a schema (query failed)");
+    }
+  }
+
+  // Pass schema name as the value of an SQL placeholder.
+
+  void process(Processor &prc) const
+  {
+    prc.list_begin();
+    safe_prc(prc)->list_el()->scalar()->str(m_name);
+    prc.list_end();
+  }
+};
+
+template <>
+struct check_query<TABLE>
+  : public cdk::Reply
+{
+  typedef Create_args& Args_t;
+
+  check_query(cdk::Session &sess, Args_t args)
+    : cdk::Reply(sess.sql(
+        L"SELECT 1 FROM INFORMATION_SCHEMA.TABLES"
+        L" WHERE TABLE_SCHEMA LIKE ?"
+        L"   AND TABLE_NAME LIKE ?", &args))
+  {
+    wait();
+    if (entry_count() > 0)
+    {
+      // TODO: Better error
+      THROW("Could not check existence of a table (query failed)");
+    }
+  }
+};
+
+
+/*
+  Function which checks existence of an object of type T in the data store.
+
+  The arguments which describe object to check are different for different
+  types of objects, as defined by type check_query<T>::Args_t.
+*/
+
+template <obj_type T>
+bool check_existence(cdk::Session &sess, typename check_query<T>::Args_t args)
+{
+  check_query<T> check(sess, args);
+
+  // Row procesor which checks if reply has at least one row.
+
+  struct : public cdk::Row_processor
+  {
+    bool m_has_row;
+
+    bool row_begin(row_count_t)
+    {
+      m_has_row = true;
+      return false;
+    }
+
+    void row_end(row_count_t) {}
+    size_t field_begin(col_count_t, size_t) { return 0; }
+    void field_end(col_count_t) {}
+    void field_null(col_count_t) {}
+    size_t field_data(col_count_t, bytes) { return 0; }
+    void end_of_data() {}
+  }
+  rp;
+  rp.m_has_row = false;
+
+  cdk::Cursor c(check);
+  c.get_row(rp);
+  c.wait();
+
+  return rp.m_has_row;
+}
+
+
+// ---------------------------------------------------------------------
+
+
+Schema XSession::getSchema(const string &name, bool check)
 try {
+
+  if (check)
+  {
+    if (!check_existence<SCHEMA>(get_cdk_session(), name))
+      // TODO: Better error (schema name)
+      throw Error("No such schema");
+  }
+
+  return Schema(*this, name);
+}
+CATCH_AND_WRAP
+
+
+/*
+  Schema.createCollection()
+  =========================
+*/
+
+
+Collection Schema::getCollection(const string &name, bool check)
+try {
+
+  if (check)
+  {
+    Create_args args(m_name, name);
+    if (!check_existence<TABLE>(m_sess.get_cdk_session(), args))
+      // TODO: Better error (collection name)
+      throw Error("No such collection");
+  }
   return Collection(*this, name);
 }
 CATCH_AND_WRAP
@@ -134,8 +275,15 @@ try {
 CATCH_AND_WRAP
 
 
-Table Schema::getTable(const string &name)
+Table Schema::getTable(const string &name, bool check)
 try {
+  if (check)
+  {
+    Create_args args(m_name, name);
+    if (!check_existence<TABLE>(m_sess.get_cdk_session(), args))
+      // TODO: Better error (collection name)
+      throw Error("No such table");
+  }
   return Table(*this, name);
 }
 CATCH_AND_WRAP
@@ -170,10 +318,7 @@ try {
 CATCH_AND_WRAP
 
 
-/*
-  Other
-  =====
-*/
+// ---------------------------------------------------------------------
 
 
 string::string(const std::string &other)
@@ -201,6 +346,9 @@ ostream& operator<<(ostream &out, const Error&)
   out <<"MYSQLX Error!";
   return out;
 }
+
+
+// ---------------------------------------------------------------------
 
 
 // Implementation of Task API using internal implementation object

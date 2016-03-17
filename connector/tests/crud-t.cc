@@ -605,3 +605,28 @@ TEST_F(Crud, modify)
   }
 
 }
+
+
+TEST_F(Crud, existence_checks)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("coll", true);
+
+  cout << "Performing checks..." << endl;
+
+  EXPECT_NO_THROW(sess.getSchema("no_such_schema"));
+  EXPECT_THROW(sess.getSchema("no_such_schema", true), Error);
+  EXPECT_NO_THROW(sch.getTable("no_such_table"));
+  EXPECT_THROW(sch.getTable("no_such_table", true), Error);
+  EXPECT_NO_THROW(sch.getCollection("no_such_collection"));
+  EXPECT_THROW(sch.getCollection("no_such_collection", true), Error);
+  EXPECT_NO_THROW(sch.getCollection("coll", true));
+}

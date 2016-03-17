@@ -136,7 +136,7 @@ public:
 
   Collection getCollection(const string&, bool check_exists= false);
 
-  Table getTable(const string&);
+  Table getTable(const string&, bool check_existence = false);
 
   friend class Collection;
   friend class Task;
@@ -299,7 +299,7 @@ public:
     schema.
   */
 
-  Schema getSchema(const string&);
+  Schema getSchema(const string&, bool check_existence = false);
 
 private:
 
