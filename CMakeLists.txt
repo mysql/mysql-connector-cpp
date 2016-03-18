@@ -166,6 +166,7 @@ endif()
 # Add Boost
 #
 
+ADD_DEFINITIONS(-DBOOST_NO_AUTO_PTR=1)
 INCLUDE(boost)
 SETUP_BOOST()
 
