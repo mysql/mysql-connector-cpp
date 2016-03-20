@@ -355,7 +355,7 @@ protected:
   cdk::Session& get_cdk_session() { return m_sess.get_cdk_session(); }
 
 
-  struct : public cdk::Param_source
+  struct Params : public cdk::Param_source
   {
     param_map_t *m_map = NULL;
 
