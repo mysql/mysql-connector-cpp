@@ -599,6 +599,8 @@ class Op_collection_find
                                                    has_expr ? &m_expr : nullptr,
                                                    nullptr,  // projection
                                                    nullptr,  // order_by spec
+                                                   nullptr,  // group_by
+                                                   nullptr,  // having
                                                    nullptr,  // limit spec
                                                    get_params()));
     return m_reply;
