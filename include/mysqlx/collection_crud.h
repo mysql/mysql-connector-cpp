@@ -127,6 +127,23 @@ ExprValue expr(V s)
   of type `CollectionAdd` has only `add()` methods. These methods return
   new operation object of type `CollectionAdd` which now can be either
   extended with another call to `add()` or executed with `exec()`.
+
+  TODO: Reconsider this: currently Collection::add() returns CollectionAdd
+  object by value, while Collection::Add::add() returns a reference to itself.
+  Thus usage is bit different:
+
+     CollectionAdd add = coll.add(...);
+
+     vs.
+
+     CollecitonAdd &next = add.add(...);
+
+   1. It can be confusing to users to use references or values in different
+      contexts.
+
+   2. In "CollectionAdd add = coll.add(...)" there is question of a lifetime
+      of the returned operation. If the original collection gets deleted
+      should the add operation still be valid?
 */
 
 
@@ -229,9 +246,13 @@ class CollectionAdd
 
   using Base = CollectionAddInterface < CollectionAdd& > ;
 
+public:
+
   CollectionAdd(CollectionAdd &&other)
     : Executable(std::move(other)), Base(other.m_coll)
   {}
+
+private:
 
   /*
     Note: This constructor is called from `CollectionAddBase::add()`

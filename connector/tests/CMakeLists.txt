@@ -22,4 +22,4 @@
 
 ADD_TEST_INCLUDES(${PROJECT_SOURCE_DIR}/testing)
 ADD_TEST_LIBRARIES(connector)
-ADD_NG_TESTS(first-t.cc crud-t.cc types-t.cc)
+ADD_NG_TESTS(first-t.cc crud-t.cc types-t.cc batch-t.cc)
