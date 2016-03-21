@@ -140,6 +140,27 @@ endforeach(LANG)
 
 ENDIF()
 
+#
+# Disable MSVC unreachable code warnings unless requested.
+#
+
+option(UNREACHABLE_CODE_WARNINGS "Enable unreachable code compiler warnings")
+mark_as_advanced(UNREACHABLE_CODE_WARNINGS)
+
+if(WIN32 AND NOT UNREACHABLE_CODE_WARNINGS)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4702")
+endif()
+
+#
+# Disable MSVC warning C4297 as it seems to be buggy.
+# Seehttps://connect.microsoft.com/VisualStudio/feedback/details/897611/incorrect-warning-of-c4297-for-destructor-with-try-catch-statement
+#
+
+if(WIN32 AND NOT UNREACHABLE_CODE_WARNINGS)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4297")
+endif()
+
+
 #message("flags: ${CMAKE_C_FLAGS}")
 #message("c++ flags: ${CMAKE_CXX_FLAGS}")
 #foreach(TYPE DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
