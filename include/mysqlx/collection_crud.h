@@ -313,69 +313,6 @@ class CollectionAddBase
   friend class Collection;
 };
 
-/*
-  Binding expression parameters
-  ================================
-
-*/
-
-
-/**
-  Base class for arguments binding operations.
-
-  This class defines `bind()` methods that bind values to its parameters.
-
-  @note This class is going to be used by different classes, each having  a
-  different return type of the `bind()` method. For that reason the base  class
-  is a template parameterized with return type of the `bind()` method.
-
-  @see `CollectionFindBind`, `CollectionRemoveBind`
-*/
-
-template <typename R>
-class CollectionBindBase
-{
-protected:
-
-  Collection &m_coll;
-
-  CollectionBindBase(Collection &coll)
-    : m_coll(coll)
-  {}
-
-  /*
-    These methods are overriden by derived operation classes.
-    They add to a map the bind parameter name to the correspondent Value.
-  */
-
-  virtual R& do_bind(const string &parameter, Value val) = 0;
-
-
-public:
-
-  /**
-    Bind values to a parameter name.
-
-    Value can be native types as also Documents and Arrays of Values.
-  */
-
-  template <typename V>
-  R& bind(const string& parameter, const V &value)
-  try{
-    return do_bind(parameter, value);
-  }
-  CATCH_AND_WRAP;
-
-  template <typename V>
-  R& bind(const string& parameter, const V &begin, const V &end)
-  try{
-    return do_bind(parameter, Value(begin, end));
-  }
-  CATCH_AND_WRAP;
-
-};
-
-
 
 /*
   Removing documents from a collection
