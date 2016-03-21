@@ -81,21 +81,27 @@ DbDoc::DbDoc(const std::shared_ptr<Impl> &impl)
 
 bool DbDoc::hasField(const Field &fld)
 {
-  return m_impl->has_field(fld);
+  try {
+    return m_impl->has_field(fld);
+  }
+  CATCH_AND_WRAP
 }
-
 
 Value DbDoc::operator[](const Field &fld)
 {
-  return static_cast<const Value&>(m_impl->get(fld));
+  try {
+    return static_cast<const Value&>(m_impl->get(fld));
+  }
+  CATCH_AND_WRAP
 }
-
 
 void DbDoc::print(std::ostream &out) const
 {
-  m_impl->print(out);
+  try {
+    m_impl->print(out);
+  }
+  CATCH_AND_WRAP
 }
-
 
 // JSON document
 // -------------

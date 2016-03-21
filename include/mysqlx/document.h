@@ -359,7 +359,9 @@ public:
 
 inline
 Value DbDoc::operator[](const char *name)
-{ return (*this)[Field(name)]; }
+{
+  return (*this)[Field(name)];
+}
 
 inline
 Value DbDoc::operator[](const wchar_t *name)
@@ -508,24 +510,31 @@ Value::operator DbDoc() const
 inline
 bool Value::hasField(const Field &fld)
 {
-  check_type(DOCUMENT);
-  return m_doc.hasField(fld);
+  try {
+    check_type(DOCUMENT);
+    return m_doc.hasField(fld);
+  }
+  CATCH_AND_WRAP
 }
 
 inline
 Value Value::operator[](const Field &fld)
 {
-  check_type(DOCUMENT);
-  return m_doc[fld];
+  try {
+    check_type(DOCUMENT);
+    return m_doc[fld];
+  }
+  CATCH_AND_WRAP
 }
-
 
 inline
 int DbDoc::fieldType(const Field &fld)
 {
-  return (*this)[fld].getType();
+  try {
+    return (*this)[fld].getType();
+  }
+  CATCH_AND_WRAP
 }
-
 
 // Array access
 
@@ -571,10 +580,11 @@ size_t Value::elementCount() const
 
 inline
 Value Value::operator[](unsigned pos)
-{
+try {
   check_type(ARRAY);
   return m_arr->at(pos);
 }
+CATCH_AND_WRAP
 
 }  // mysqlx
 

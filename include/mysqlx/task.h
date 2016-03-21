@@ -87,7 +87,7 @@ public:
   operation is sent to the server for execution.
 */
 
-class Executable
+class Executable : nocopy
 {
 protected:
 

@@ -514,15 +514,16 @@ TEST_F(Crud, modify)
 
   cout << "Modify documents..." << endl;
 
-  auto op = coll.modify("name like :name and age < :age");
-  op.set(string("name"), Value("boo"));
-  op.set("age", expr("age+1"));
-  op.arrayAppend("food", "Popcorn");
-  op.arrayAppend("food", "Coke");
-  op.bind("name", "ba%");
-  op.bind("age", 3);
-  op.execute();
-
+  {
+    auto op = coll.modify("name like :name and age < :age");
+    op.set(string("name"), Value("boo"));
+    op.set("age", expr("age+1"));
+    op.arrayAppend("food", "Popcorn");
+    op.arrayAppend("food", "Coke");
+    op.bind("name", "ba%");
+    op.bind("age", 3);
+    op.execute();
+  }
 
   cout << "Fetching documents..." << endl;
 
@@ -585,10 +586,12 @@ TEST_F(Crud, modify)
 
     EXPECT_EQ(3, (int)doc["age"]);
 
-    auto op = coll.modify("name like :name");
-    op.unset("food");
-    op.bind("name", "bo%");
-    op.execute();
+    {
+      auto op = coll.modify("name like :name");
+      op.unset("food");
+      op.bind("name", "bo%");
+      op.execute();
+    }
 
     docs = coll.find("name like :name")
            .bind("name", "bo%")
@@ -596,7 +599,7 @@ TEST_F(Crud, modify)
 
     doc = docs.fetchOne();
 
-    EXPECT_THROW(doc["food"], std::out_of_range);
+    EXPECT_THROW(doc["food"], Error);
 
     cout << endl;
   }
