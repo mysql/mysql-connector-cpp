@@ -31,20 +31,17 @@ if(NOT EXISTS "${WITH_UUID}/src/CMakeLists.txt")
   message(FATAL_ERROR "Could not find UUID generator sources at: ${WITH_UUID}")
 endif()
 
-#
-#  Disable warning C4244 on Windows
-#
-
-set(SAVED_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244")
-endif()
-
 include_directories("${WITH_UUID}/include")
 
 add_subdirectory("${WITH_UUID}/src" uuid)
 
-set(CMAKE_CXX_FLAGS ${SAVED_CXX_FLAGS})
+#
+# Disable warnings in code which is not ours.
+#
+if(MSVC)
+target_compile_options(uuid_gen PRIVATE /wd4244 /wd4311 /wd4302)
+endif()
+
 
 #
 #  Connector code

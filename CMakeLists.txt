@@ -219,16 +219,24 @@ INCLUDE_DIRECTORIES(include)
 # code.
 #
 
+foreach(LANG C CXX)
+
 IF(WIN32)
 
-foreach(LANG C CXX)
-  set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /W4 /wd4512 /wd4206 /wd4127")
-  foreach(TYPE RELEASE RELWITHDEBINFO MINSIZEREL)
-    set(CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}} /W4 /wd4512 /wd4206 /wd4127")
-  endforeach()
-endforeach(LANG)
+  # 4127 = conditional expression is constant (needed for do {...} while(false))
+  # 4512 = assignment operator could not be generated
+  #
+  # Note: 4512 is disabled because according to C++11 standard the situations
+  # that triggers this warning should be handled automatically by the compiler
+  # (and this is the case for MSVC 2015).
+  # See: http://en.cppreference.com/w/cpp/language/copy_assignment
+
+  set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /W4 /wd4512 /wd4127")
 
 ENDIF()
+
+endforeach(LANG)
+
 
 #
 # Connector/C++ components
