@@ -52,7 +52,7 @@ class Table;
   list, it should be ?
 */
 
-class TableInsertValues
+class TableInsert
   : public Executable
 {
 protected:
@@ -60,11 +60,23 @@ protected:
   Table &m_table;
   Row   *m_row = NULL;
 
-  TableInsertValues(Table &table)
+  TableInsert(Table &table)
     : m_table(table)
   {
     prepare();
   }
+
+
+  template <typename I>
+  TableInsert(Table &table, const I& begin, const I& end)
+    : TableInsert(table)
+  {
+    for (auto it = begin; it != end; ++it)
+    {
+      add_column(*it);
+    }
+  }
+
 
   /*
     Methods below manipulate internal `Op_table_insert` object
@@ -72,6 +84,7 @@ protected:
   */
 
   void prepare();
+  void add_column(const string& column);
   Row& add_row();
   void add_row(const Row &row);
 
@@ -92,7 +105,7 @@ public:
 
   /// Add given row to the list of rows to be inserted.
 
-  virtual TableInsertValues& values(const Row &row)
+  virtual TableInsert& values(const Row &row)
   {
     add_row(row);
     return *this;
@@ -104,7 +117,7 @@ public:
   */
 
   template<typename... Types>
-  TableInsertValues& values(const Value &val, Types... rest)
+  TableInsert& values(const Value &val, Types... rest)
   {
     try {
       m_row = &add_row();
@@ -116,7 +129,7 @@ public:
 
   struct Access;
   friend struct Access;
-  friend class TableInsert;
+  friend class TableInsertBase;
 };
 
 
@@ -127,11 +140,11 @@ public:
   can be added to the list using .values() method.
 */
 
-class TableInsert
+class TableInsertBase
 {
   Table &m_table;
 
-  TableInsert(Table &table)
+  TableInsertBase(Table &table)
     : m_table(table)
   {}
 
@@ -147,14 +160,182 @@ public:
     count server reports error.
   */
 
-  virtual TableInsertValues insert()
+  TableInsert insert()
   {
-    return TableInsertValues(m_table);
+    return TableInsert(m_table);
+  }
+
+  /**
+    Insert into a full table restrincting the colums.
+
+    Each row passed to the following .values() call must have
+    the same number of values as the iterator passed by argument.
+  */
+  template <typename I>
+  TableInsert insert(const I& begin, const I& end)
+  {
+    return TableInsert(m_table, begin, end);
+  }
+
+  /**
+    Insert into a full table restrincting the colums.
+
+    Insert using initializer list: insert({"col1", "col2"})
+    Each row passed to the following .values() call must have
+    the same number of values as the list provided
+  */
+  template <typename I>
+  TableInsert insert(std::initializer_list<I> list)
+  {
+    return TableInsert(m_table, list.begin(), list.end());
+  }
+
+
+  friend class Table;
+};
+
+
+/**
+  TableSelect class which implements the select() operation
+
+  Data is filtered using the where() method.
+  */
+
+class TableSelect
+    : public BindExec
+{
+  Table &m_table;
+
+  TableSelect(Table &table)
+    : m_table(table)
+  {
+    prepare();
+  }
+
+
+  void prepare();
+
+public:
+
+  BindExec& where(const string& expr);
+
+  friend class TableSelectBase;
+};
+
+/**
+  Operation which retrieves rows from a table.
+
+
+  */
+
+class TableSelectBase
+{
+  Table &m_table;
+
+  TableSelectBase(Table &table)
+    : m_table(table)
+  {}
+
+public:
+
+  TableSelect select()
+  {
+    return TableSelect(m_table);
   }
 
   friend class Table;
 };
 
+
+/**
+  Class used to update values on tables
+
+  Class stores the field value pair to be updated.
+  Filter of updated rows is passed using the where() method.
+  */
+
+
+class TableUpdate
+    : public BindExec
+{
+  Table& m_table;
+
+  TableUpdate(Table& table)
+    : m_table(table)
+  {}
+
+public:
+
+  TableUpdate& set(const string& field, ExprValue);
+
+  BindExec& where(const string& expr);
+
+  friend class TableUpdateBase;
+};
+
+class TableUpdateBase
+{
+  Table &m_table;
+
+  TableUpdateBase(Table &table)
+    : m_table (table)
+  {}
+
+public:
+
+  TableUpdate update()
+  {
+    return TableUpdate(m_table);
+  }
+
+  friend class Table;
+};
+
+
+/**
+  Class used to remove rows
+
+  Rows removed are the ones that apply to the expression passed using the
+  where() method.
+  If where() is not used, all the rows of the table are removed.
+  */
+
+class TableRemoveBase;
+
+class TableRemove
+    : public BindExec
+{
+  Table& m_table;
+
+  TableRemove(Table& table)
+    : m_table(table)
+  {}
+
+public:
+
+  BindExec& where(const char*);
+
+  friend class TableRemoveBase;
+
+};
+
+class TableRemoveBase
+{
+  Table& m_table;
+
+  TableRemoveBase(Table& table)
+    : m_table(table)
+  {}
+
+public:
+
+  TableRemove remove()
+  {
+    return TableRemove(m_table);
+  }
+
+  friend class Table;
+};
 
 }  // mysqlx
 

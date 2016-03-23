@@ -586,6 +586,51 @@ try {
 }
 CATCH_AND_WRAP
 
+
+
+/*
+  Helper class to identify usage of expressions
+*/
+
+
+class ExprValue
+    : public Value
+{
+  bool m_is_expr = false;
+
+public:
+
+  ExprValue()
+  {}
+
+  template <typename V>
+  ExprValue(V val)
+    : Value(val)
+  {}
+
+  ExprValue(Value &&val)
+    : Value(std::move(val))
+  {}
+
+  bool isExpression() const { return m_is_expr; }
+
+  template <typename V>
+  friend ExprValue expr(V s);
+};
+
+/*
+  function to identify usage of expressions
+*/
+
+
+template <typename V>
+ExprValue expr(V s)
+{
+  ExprValue val(s);
+  val.m_is_expr = true;
+  return std::move(val);
+}
+
 }  // mysqlx
 
 

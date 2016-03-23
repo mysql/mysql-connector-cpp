@@ -232,7 +232,10 @@ public:
 */
 
 class Table
-  : public TableInsert
+    : public TableInsertBase
+    , public TableSelectBase
+    , public TableUpdateBase
+    , public TableRemoveBase
 {
   Schema m_schema;
   const string m_name;
@@ -240,7 +243,10 @@ class Table
 public:
 
   Table(const Schema &sch, const string &name)
-    : TableInsert(*this)
+    : TableInsertBase(*this)
+    , TableSelectBase(*this)
+    , TableUpdateBase(*this)
+    , TableRemoveBase(*this)
     , m_schema(sch), m_name(name)
   {}
 

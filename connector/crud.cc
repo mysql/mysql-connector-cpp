@@ -217,32 +217,37 @@ class Op_table_insert
   void get_info(cdk::Format<cdk::TYPE_BYTES>&) const {}
   using cdk::Format_info::get_info;
 
-  friend class mysqlx::TableInsertValues;
+  friend class mysqlx::TableInsert;
 };
 
 
 inline
-Op_table_insert& get_impl(TableInsertValues *p)
+Op_table_insert& get_impl(TableInsert *p)
 {
   return *static_cast<Op_table_insert*>(Executable::Access::get_impl(*p));
 }
 
 
-void TableInsertValues::prepare()
+void TableInsert::prepare()
 {
   Task::Access::reset(m_task, new Op_table_insert(m_table));
   get_impl(this).reset();
 }
 
 
-Row& TableInsertValues::add_row()
+void TableInsert::add_column(const string &column)
+{
+  //TODO
+}
+
+Row& TableInsert::add_row()
 {
   auto &impl = get_impl(this);
   impl.m_end = impl.m_rows.emplace_after(impl.m_end);
   return *impl.m_end;
 }
 
-void TableInsertValues::add_row(const Row &row)
+void TableInsert::add_row(const Row &row)
 {
   auto &impl = get_impl(this);
   impl.m_end = impl.m_rows.emplace_after(impl.m_end, row);
@@ -281,6 +286,98 @@ void Op_table_insert::process(Expr_list::Processor &lp) const
   }
 
   lp.list_end();
+}
+
+
+/*
+  Table.select()
+  ==============
+*/
+
+class Op_table_select
+    : public Task::Access::Impl
+{
+  typedef cdk::string string;
+
+  Table_ref m_table;
+  string m_where;
+  parser::Expression_parser m_expr;
+  bool m_has_expr;
+
+  cdk::Reply* send_command() override
+  {
+    return
+        new cdk::Reply(get_cdk_session().table_select(m_table,
+                                                      m_has_expr ? &m_expr : nullptr,
+                                                      NULL,
+                                                      NULL,
+                                                      NULL,
+                                                      get_params())
+                       );
+  }
+
+public:
+  Op_table_select(Table &table)
+    : Task::Access::Impl(table)
+    , m_table(table)
+    , m_expr(Parser_mode::TABLE)
+  {
+  }
+
+  Op_table_select(Table &table, string &expr)
+    : Task::Access::Impl(table)
+    , m_table(table)
+    , m_expr(Parser_mode::TABLE, expr)
+  {
+  }
+};
+
+inline
+Op_table_select& get_impl(TableSelect *p)
+{
+  return *static_cast<Op_table_select*>(BindExec::Access::get_impl(*p));
+}
+
+void TableSelect::prepare()
+{
+  BindExec::Access::reset_task(*this, new Op_table_select(m_table));
+}
+
+
+BindExec& TableSelect::where(const string &expr)
+{
+  // TODO
+  return *this;
+}
+
+
+/*
+  Table.update()
+  ==============
+*/
+
+
+TableUpdate& TableUpdate::set(const string &field, ExprValue)
+{
+  return *this;
+}
+
+BindExec& TableUpdate::where(const string &expr)
+{
+  // TODO
+  return *this;
+}
+
+
+/*
+  Table.remove()
+  ==============
+*/
+
+BindExec& TableRemove::where(const char *)
+{
+  //TODO
+  return *this;
 }
 
 

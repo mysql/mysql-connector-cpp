@@ -630,3 +630,101 @@ TEST_F(Crud, existence_checks)
   EXPECT_THROW(sch.getCollection("no_such_collection", true), Error);
   EXPECT_NO_THROW(sch.getCollection("coll", true));
 }
+
+TEST_F(Crud, table)
+{
+
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  sql("DROP TABLE IF EXISTS test.crud_table");
+  sql(
+    "CREATE TABLE test.crud_table("
+    "  _id INT,"
+    "  name VARCHAR(32),"
+    "  age DECIMAL,"
+    ")");
+
+  Schema sch = sess.getSchema("test");
+  Table tbl = sch.getTable("crud_table");
+
+
+  //Insert values on table
+
+  auto insert = tbl.insert({"_id", "age", "name"});
+  insert.values("ID#1", 10, "Foo");
+  insert.values("ID#2", 5 , "Bar" );
+  insert.values("ID#3", 3 , "Baz");
+  insert.execute();
+
+  //Check if values inserted are ok
+
+  {
+    auto op_select = tbl.select();
+    RowResult result =  op_select.where("name like :name")
+                        .bind("name", "Fo%")
+                        .execute();
+
+    //TODO: Check this -> need the const to call Value operator[]()
+    const Row r = result.fetchOne();
+
+    EXPECT_EQ(string("Foo"),(string)(Value)r[1]);
+    EXPECT_EQ(10,(int)(Value)r[2]);
+    EXPECT_EQ(true, result.fetchOne().isNull());
+  }
+
+
+  // Update values (name and age) where name = Fo%
+
+  auto upd = tbl.update();
+  upd.set("name","Qux");
+  upd.set("age",expr("age+1"));
+  upd.where("name like :name");
+  upd.bind("name", "Fo%");
+  upd.execute();
+
+  // Check if its ok
+
+  {
+    auto op_select = tbl.select();
+    op_select.where("name like :name");
+    op_select.bind("name", "Qu%");
+    RowResult result = op_select.execute();
+
+    const Row r = result.fetchOne();
+
+
+    EXPECT_EQ(string("Qux"), (string)(Value)r[1]);
+    EXPECT_EQ(11,(int)(Value) r[2]);
+    EXPECT_EQ(true, result.fetchOne().isNull());
+  }
+
+
+  // Delete rows where name = Qu%
+
+  auto rm = tbl.remove();
+  rm.where("name like :name");
+  rm.bind("name", "Qu%");
+  rm.execute();
+
+  {
+    auto op_select = tbl.select();
+    op_select.where("name like :name");
+    op_select.bind("name", "Qu%");
+    RowResult result = op_select.execute();
+
+    const Row r = result.fetchOne();
+
+    EXPECT_EQ(true, r.isNull());
+
+  }
+
+
+
+}
+
