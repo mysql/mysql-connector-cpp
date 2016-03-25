@@ -275,6 +275,16 @@ FUNCTION(GET_DEPENDENT_LIBS targets result)
   list(REMOVE_AT targets 0)
   set(LIBS)
 
+  # In some versions of cmake dependent libraries are listed
+  # in INTERFACE_LINK_LIBRARIES as $<LINK_ONLY:lib>. Detect
+  # such entries here and extract the bare name of the dependent
+  # library.
+
+  string(REGEX MATCH "^\\$<LINK_ONLY:(.*)>$" link_only ${first})
+  if (link_only)
+    set(first ${CMAKE_MATCH_1})
+  endif()
+
   if(TARGET ${first})
   get_target_property(LIBS ${first} INTERFACE_LINK_LIBRARIES)
   endif()
