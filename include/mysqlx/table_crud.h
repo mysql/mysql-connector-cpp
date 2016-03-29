@@ -66,15 +66,12 @@ protected:
     prepare();
   }
 
-
-  template <typename I>
-  TableInsert(Table &table, const I& begin, const I& end)
-    : TableInsert(table)
+  template <class Cols,class...Type>
+  TableInsert(Table &table, const Cols& cols, const Type... rest)
+    : m_table(table)
   {
-    for (auto it = begin; it != end; ++it)
-    {
-      add_column(*it);
-    }
+    prepare();
+    add_column(cols, rest...);
   }
 
 
@@ -84,7 +81,25 @@ protected:
   */
 
   void prepare();
-  void add_column(const string& column);
+
+  void add_column(const string& col);
+  void add_column(const char* col) { add_column(string(col)); }
+  template <typename Cols>
+  void add_column(const Cols& cols)
+  {
+    for (auto col : cols)
+    {
+      add_column(col);
+    }
+  }
+
+  template <class T,class...Type>
+  void add_column(const T &t, const Type... rest)
+  {
+    add_column(t);
+    add_column(rest...);
+  }
+
   Row& add_row();
   void add_row(const Row &row);
 
@@ -148,6 +163,15 @@ class TableInsertBase
     : m_table(table)
   {}
 
+  template <typename I>
+  void insert_range(TableInsert& obj, const I& begin, const I& end)
+  {
+    for(auto it = begin; it != end; ++it)
+    {
+      obj.add_column(*it);
+    }
+  }
+
 public:
 
   /**
@@ -165,31 +189,19 @@ public:
     return TableInsert(m_table);
   }
 
-  /**
-    Insert into a full table restrincting the colums.
-
-    Each row passed to the following .values() call must have
-    the same number of values as the iterator passed by argument.
-  */
-  template <typename I>
-  TableInsert insert(const I& begin, const I& end)
-  {
-    return TableInsert(m_table, begin, end);
-  }
 
   /**
-    Insert into a full table restrincting the colums.
+    Insert into a full table restricting the colums.
 
-    Insert using initializer list: insert({"col1", "col2"})
     Each row passed to the following .values() call must have
     the same number of values as the list provided
   */
-  template <typename I>
-  TableInsert insert(std::initializer_list<I> list)
-  {
-    return TableInsert(m_table, list.begin(), list.end());
-  }
 
+  template <class T,class... Types >
+   TableInsert insert(const T &t, Types... rest)
+   {
+     return TableInsert(m_table, t, rest...);
+   }
 
   friend class Table;
 };
@@ -262,7 +274,11 @@ class TableUpdate
 
   TableUpdate(Table& table)
     : m_table(table)
-  {}
+  {
+    prepare();
+  }
+
+  void prepare();
 
 public:
 
@@ -309,11 +325,15 @@ class TableRemove
 
   TableRemove(Table& table)
     : m_table(table)
-  {}
+  {
+    prepare();
+  }
+
+  void prepare();
 
 public:
 
-  BindExec& where(const char*);
+  BindExec& where(const string&);
 
   friend class TableRemoveBase;
 

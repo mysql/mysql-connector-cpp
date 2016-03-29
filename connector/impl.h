@@ -100,25 +100,41 @@ namespace mysqlx {
   class Value_prc
       : public cdk::Expression
   {
+    parser::Parser_mode::value m_parser_mode;
     Value m_value;
     bool m_is_expr = false;
+
+
+    //Private constructor to be used only inside Value_prc class
+    Value_prc(const Value &val,
+              bool is_expr,
+              parser::Parser_mode::value parser_mode)
+      : m_parser_mode(parser_mode)
+      , m_is_expr(is_expr)
+      , m_value(val)
+    {}
+
   public:
-    Value_prc(const Value &val)
-      : m_value(val)
+    Value_prc(const Value &val, parser::Parser_mode::value parser_mode)
+      : m_parser_mode(parser_mode)
+      , m_value(val)
     {}
 
-    Value_prc(Value &&val)
-      : m_value(std::move(val))
+    Value_prc(Value &&val, parser::Parser_mode::value parser_mode)
+      : m_parser_mode(parser_mode)
+      , m_value(std::move(val))
     {}
 
-    Value_prc(const ExprValue &val)
-      : m_value(val)
+    Value_prc(const ExprValue &val, parser::Parser_mode::value parser_mode)
+      : m_parser_mode(parser_mode)
+      , m_value(val)
     {
       m_is_expr = val.isExpression();
     }
 
-    Value_prc(ExprValue &&val)
-      : m_value(std::move(val))
+    Value_prc(ExprValue &&val, parser::Parser_mode::value parser_mode)
+      : m_parser_mode(parser_mode)
+      , m_value(std::move(val))
     {
       m_is_expr = val.isExpression();
     }
@@ -148,7 +164,7 @@ namespace mysqlx {
         case Value::STRING:
           if (m_is_expr)
           {
-            parser::Expression_parser expr(parser::Parser_mode::DOCUMENT,
+            parser::Expression_parser expr(m_parser_mode,
                                            (mysqlx::string)m_value);
 
             expr.process(prc);
@@ -162,7 +178,7 @@ namespace mysqlx {
             safe_prc(prc)->doc()->doc_begin();
             for ( Field fld : doc)
             {
-              Value_prc value(doc[fld]);
+              Value_prc value(doc[fld], m_is_expr, m_parser_mode);
               value.process_if(safe_prc(prc)->doc()->key_val(fld));
             }
             safe_prc(prc)->doc()->doc_end();
@@ -176,7 +192,7 @@ namespace mysqlx {
             safe_prc(prc)->arr()->list_begin();
             for (Value val : m_value)
             {
-              Value_prc value(val);
+              Value_prc value(val, m_is_expr, m_parser_mode);
               value.process_if(safe_prc(prc)->arr()->list_el());
             }
             safe_prc(prc)->arr()->list_end();
@@ -367,7 +383,7 @@ protected:
 
       for (auto it : *m_map)
       {
-        Value_prc value(it.second);
+        Value_prc value(it.second, parser::Parser_mode::DOCUMENT);
         conv.reset(value);
         conv.process_if(prc.key_val(it.first));
       }

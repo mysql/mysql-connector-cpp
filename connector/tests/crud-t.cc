@@ -645,9 +645,9 @@ TEST_F(Crud, table)
   sql("DROP TABLE IF EXISTS test.crud_table");
   sql(
     "CREATE TABLE test.crud_table("
-    "  _id INT,"
+    "  _id VARCHAR(32),"
     "  name VARCHAR(32),"
-    "  age DECIMAL,"
+    "  age INT"
     ")");
 
   Schema sch = sess.getSchema("test");
@@ -656,11 +656,16 @@ TEST_F(Crud, table)
 
   //Insert values on table
 
-  auto insert = tbl.insert({"_id", "age", "name"});
+  std::vector<string> cols = {"_id"};
+  //Using containers (vectors, const char* and string)
+  auto insert = tbl.insert(cols, "age", string("name"));
   insert.values("ID#1", 10, "Foo");
   insert.values("ID#2", 5 , "Bar" );
   insert.values("ID#3", 3 , "Baz");
   insert.execute();
+
+  //test inserting with 1 param only
+  tbl.insert("_id").values("ID#99").execute();
 
   //Check if values inserted are ok
 
@@ -671,10 +676,11 @@ TEST_F(Crud, table)
                         .execute();
 
     //TODO: Check this -> need the const to call Value operator[]()
-    const Row r = result.fetchOne();
+    Row r = result.fetchOne();
 
-    EXPECT_EQ(string("Foo"),(string)(Value)r[1]);
-    EXPECT_EQ(10,(int)(Value)r[2]);
+
+    EXPECT_EQ(string("Foo"),(string)r.get(1));
+    EXPECT_EQ(10,(int)r.get(2));
     EXPECT_EQ(true, result.fetchOne().isNull());
   }
 
@@ -718,7 +724,7 @@ TEST_F(Crud, table)
     op_select.bind("name", "Qu%");
     RowResult result = op_select.execute();
 
-    const Row r = result.fetchOne();
+    Row r = result.fetchOne();
 
     EXPECT_EQ(true, r.isNull());
 

@@ -158,17 +158,28 @@ public:
 
 
 class Op_table_insert
-  : public Task::Access::Impl
-  , public cdk::Row_source
-  , public cdk::Format_info
+    : public Task::Access::Impl
+    , public cdk::Row_source
+    , public cdk::api::Columns
+    , public cdk::Format_info
 {
   using string = cdk::string;
   using Row_list = std::forward_list < Row >;
+  using Col_list = std::forward_list < string >;
+  typedef cdk::api::Expr_base<
+            cdk::api::List_processor<
+              cdk::api::Any_processor<
+                cdk::Expr_processor>>> Expr_Row_list;
+  typedef cdk::api::Expr_base<
+            cdk::api::List_processor<
+              cdk::api::Column_processor>> Expr_Col_list;
 
   Table_ref m_table;
   Row_list  m_rows;
   Row_list::const_iterator m_cur_row;
-  Row_list::iterator m_end;
+  Row_list::iterator m_row_end;
+  Col_list m_cols;
+  Col_list::iterator m_col_end;
 
   Op_table_insert(Table &tbl)
     : Impl(tbl)
@@ -179,7 +190,9 @@ class Op_table_insert
   {
     m_rows.clear();
     m_cur_row = m_rows.cbegin();
-    m_end = m_rows.before_begin();
+    m_row_end = m_rows.before_begin();
+    m_cols.clear();
+    m_col_end = m_cols.before_begin();
   }
 
   // Task::Impl
@@ -190,8 +203,12 @@ class Op_table_insert
   {
     // Prepare iterators to make a pass through m_rows list.
     m_started = false;
-    m_end = m_rows.end();
-    return new cdk::Reply(get_cdk_session().table_insert(m_table, *this, NULL, NULL));
+    m_row_end = m_rows.end();
+
+    return new cdk::Reply(get_cdk_session().table_insert(m_table,
+                                                         *this,
+                                                         this,
+                                                         NULL));
   }
 
   // Row_source (Iterator)
@@ -204,12 +221,23 @@ class Op_table_insert
       ++m_cur_row;
 
     m_started = true;
-    return m_cur_row != m_end;
+    return m_cur_row != m_row_end;
+  }
+
+  // Columns
+  void process(Expr_Col_list::Processor& prc) const override
+  {
+    prc.list_begin();
+    for (auto el : m_cols)
+    {
+      cdk::safe_prc(prc)->list_el()->name(el);
+    }
+    prc.list_end();
   }
 
   // Row_source (Expr_list)
 
-  void process(Expr_list::Processor &ep) const;
+  void process(Expr_Row_list::Processor &ep) const;
 
   // Format_info
 
@@ -237,26 +265,28 @@ void TableInsert::prepare()
 
 void TableInsert::add_column(const string &column)
 {
-  //TODO
+  auto &impl = get_impl(this);
+  impl.m_col_end = impl.m_cols.emplace_after(impl.m_col_end, column);
 }
+
 
 Row& TableInsert::add_row()
 {
   auto &impl = get_impl(this);
-  impl.m_end = impl.m_rows.emplace_after(impl.m_end);
-  return *impl.m_end;
+  impl.m_row_end = impl.m_rows.emplace_after(impl.m_row_end);
+  return *impl.m_row_end;
 }
 
 void TableInsert::add_row(const Row &row)
 {
   auto &impl = get_impl(this);
-  impl.m_end = impl.m_rows.emplace_after(impl.m_end, row);
+  impl.m_row_end = impl.m_rows.emplace_after(impl.m_row_end, row);
 }
 
 
-void Op_table_insert::process(Expr_list::Processor &lp) const
+void Op_table_insert::process(cdk::api::Expr_base<cdk::api::List_processor<cdk::api::Any_processor<cdk::Expr_processor> > >::Processor &lp) const
 {
-  using Element_prc = Expr_list::Processor::Element_prc;
+  using Element_prc = Expr_Row_list::Processor::Element_prc;
 
   lp.list_begin();
 
@@ -301,14 +331,16 @@ class Op_table_select
 
   Table_ref m_table;
   string m_where;
-  parser::Expression_parser m_expr;
-  bool m_has_expr;
+  std::unique_ptr<parser::Expression_parser> m_expr;
 
   cdk::Reply* send_command() override
   {
+    if (!m_where.empty())
+      m_expr.reset(new parser::Expression_parser(Parser_mode::TABLE, m_where));
+
     return
         new cdk::Reply(get_cdk_session().table_select(m_table,
-                                                      m_has_expr ? &m_expr : nullptr,
+                                                      m_expr.get(),
                                                       NULL,
                                                       NULL,
                                                       NULL,
@@ -320,16 +352,16 @@ public:
   Op_table_select(Table &table)
     : Task::Access::Impl(table)
     , m_table(table)
-    , m_expr(Parser_mode::TABLE)
   {
   }
 
   Op_table_select(Table &table, string &expr)
     : Task::Access::Impl(table)
     , m_table(table)
-    , m_expr(Parser_mode::TABLE, expr)
   {
   }
+
+  friend class mysqlx::TableSelect;
 };
 
 inline
@@ -346,7 +378,7 @@ void TableSelect::prepare()
 
 BindExec& TableSelect::where(const string &expr)
 {
-  // TODO
+  get_impl(this).m_where = expr;
   return *this;
 }
 
@@ -356,15 +388,102 @@ BindExec& TableSelect::where(const string &expr)
   ==============
 */
 
-
-TableUpdate& TableUpdate::set(const string &field, ExprValue)
+class Op_table_update
+    : public Task::Access::Impl
+    , public cdk::Update_spec
+    , public cdk::api::Column_ref
 {
+  typedef cdk::string string;
+  typedef std::map<string,ExprValue> SetValues;
+
+  Table_ref m_table;
+  string m_where;
+  std::unique_ptr<parser::Expression_parser> m_expr;
+  SetValues m_set_values;
+  SetValues::const_iterator m_set_it;
+
+  cdk::Reply* send_command() override
+  {
+    if (!m_where.empty())
+      m_expr.reset(new parser::Expression_parser(Parser_mode::TABLE, m_where));
+
+    m_set_it = m_set_values.end();
+
+    return
+        new cdk::Reply(get_cdk_session().table_update(m_table,
+                                                      m_expr ? m_expr.get() : NULL,
+                                                      *this,
+                                                      NULL,
+                                                      get_params())
+                       );
+  }
+
+
+  // cdk::Update_spec
+
+  virtual bool next() override
+  {
+    if (m_set_it == m_set_values.end())
+    {
+      m_set_it = m_set_values.begin();
+      return m_set_it != m_set_values.end();
+    }
+    ++m_set_it;
+    return m_set_it != m_set_values.end();
+  }
+
+  void process(Processor &prc) const override
+  {
+    prc.column(*this);
+
+    Value_prc val_prc(m_set_it->second, parser::Parser_mode::TABLE);
+    val_prc.process_if(prc.set(NULL));
+  }
+
+  //  cdk::api::Column_ref
+
+  virtual const string name() const override
+  {
+    return m_set_it->first;
+  }
+
+  const Table_ref* table() const override
+  {
+    return NULL;
+  }
+
+
+public:
+  Op_table_update(Table &table)
+    : Task::Access::Impl(table)
+    , m_table(table)
+  {
+  }
+
+
+  friend class mysqlx::TableUpdate;
+};
+
+inline
+Op_table_update& get_impl(TableUpdate *p)
+{
+  return *static_cast<Op_table_update*>(BindExec::Access::get_impl(*p));
+}
+
+void TableUpdate::prepare()
+{
+  BindExec::Access::reset_task(*this, new Op_table_update(m_table));
+}
+
+TableUpdate& TableUpdate::set(const string &field, ExprValue val)
+{
+  get_impl(this).m_set_values[field] = std::move(val);
   return *this;
 }
 
 BindExec& TableUpdate::where(const string &expr)
 {
-  // TODO
+  get_impl(this).m_where = expr;
   return *this;
 }
 
@@ -374,9 +493,56 @@ BindExec& TableUpdate::where(const string &expr)
   ==============
 */
 
-BindExec& TableRemove::where(const char *)
+class Op_table_remove
+    : public Task::Access::Impl
 {
-  //TODO
+  typedef cdk::string string;
+
+  Table_ref m_table;
+  string m_where;
+  std::unique_ptr<parser::Expression_parser> m_expr;
+
+  cdk::Reply* send_command() override
+  {
+    if (!m_where.empty())
+      m_expr.reset(new parser::Expression_parser(Parser_mode::TABLE, m_where));
+
+    return
+        new cdk::Reply(get_cdk_session().table_delete(m_table,
+                                                      m_expr ? m_expr.get() : NULL,
+                                                      NULL,
+                                                      NULL,
+                                                      get_params())
+                       );
+  }
+
+
+
+public:
+  Op_table_remove(Table &table)
+    : Task::Access::Impl(table)
+    , m_table(table)
+  {
+  }
+
+
+  friend class mysqlx::TableRemove;
+};
+
+inline
+Op_table_remove& get_impl(TableRemove *p)
+{
+  return *static_cast<Op_table_remove*>(BindExec::Access::get_impl(*p));
+}
+
+void TableRemove::prepare()
+{
+  BindExec::Access::reset_task(*this, new Op_table_remove(m_table));
+}
+
+BindExec& TableRemove::where(const string& where)
+{
+  get_impl(this).m_where = where;
   return *this;
 }
 
@@ -867,7 +1033,7 @@ class Op_collection_modify
       case Field_Op::SET:
         {
 
-          Value_prc value_prc(m_update_it->m_val);
+          Value_prc value_prc(m_update_it->m_val, parser::Parser_mode::DOCUMENT);
 
           value_prc.process_if(prc.set(&field));
 
@@ -880,7 +1046,7 @@ class Op_collection_modify
 
       case Field_Op::ARRAY_INSERT:
         {
-          Value_prc value_prc(m_update_it->m_val);
+          Value_prc value_prc(m_update_it->m_val, parser::Parser_mode::DOCUMENT);
 
           value_prc.process_if(prc.array_insert(&field));
         }
@@ -888,7 +1054,7 @@ class Op_collection_modify
 
       case Field_Op::ARRAY_APPEND:
         {
-          Value_prc value_prc(m_update_it->m_val);
+          Value_prc value_prc(m_update_it->m_val, parser::Parser_mode::DOCUMENT);
 
           value_prc.process_if(prc.array_append(&field));
         }
