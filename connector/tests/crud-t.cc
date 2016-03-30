@@ -410,9 +410,9 @@ TEST_F(Crud, bind)
     food_list.push_back("Soup");
 
     EXPECT_THROW(
-    docs = coll.find("food like :food_list")
-                     .bind("food_list", food_list.begin(), food_list.end())
-                     .execute();
+      docs = coll.find("food like :food_list")
+                 .bind("food_list", Value(food_list.begin(), food_list.end()))
+                 .execute();
         , mysqlx::Error);
 
     docs = coll.find("food like [\"Milk\", \"Soup\"]")

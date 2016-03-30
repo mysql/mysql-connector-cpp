@@ -138,12 +138,24 @@ public:
     return *this;
   }
 
+#if 0
+
+  /*
+    Currently protocol supports binding only to scalar values,
+    not arrays or documents.
+
+    TODO: Add this overload when binding to arrays is supported
+    in the protocol.
+  */
+
   template <typename Iterator>
   BindExec& bind(const string &parameter, const Iterator &begin, const Iterator &end)
   {
     m_map[parameter] = Value(begin, end);
     return *this;
   }
+
+#endif
 
   struct Access;
   friend struct Access;
