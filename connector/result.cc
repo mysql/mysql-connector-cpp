@@ -567,12 +567,14 @@ const Row_data* Result::Impl::get_row()
 size_t Result::Impl::field_begin(col_count_t pos, size_t)
 {
   m_row.insert(std::pair<col_count_t, Buffer>(pos, Buffer()));
+  // FIX
   return 1024;
 }
 
 size_t Result::Impl::field_data(col_count_t pos, bytes data)
 {
   m_row[(unsigned)pos].append(mysqlx::bytes::Access::mk(data));
+  // FIX
   return 1024;
 }
 
