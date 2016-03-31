@@ -341,9 +341,11 @@ class Op_table_select
     return
         new cdk::Reply(get_cdk_session().table_select(m_table,
                                                       m_expr.get(),
-                                                      NULL,
-                                                      NULL,
-                                                      NULL,
+                                                      nullptr,
+                                                      nullptr,
+                                                      nullptr,
+                                                      nullptr,
+                                                      nullptr,
                                                       get_params())
                        );
   }
@@ -413,7 +415,8 @@ class Op_table_update
         new cdk::Reply(get_cdk_session().table_update(m_table,
                                                       m_expr ? m_expr.get() : NULL,
                                                       *this,
-                                                      NULL,
+                                                      nullptr,
+                                                      nullptr,
                                                       get_params())
                        );
   }
@@ -860,7 +863,7 @@ class Op_collection_find
     m_reply =
         new cdk::Reply(get_cdk_session().coll_find(m_coll,
                                                    has_expr ? &m_expr : nullptr,
-                                                   nullptr,  // projection
+                                                   nullptr,  //projection
                                                    nullptr,  // order_by spec
                                                    nullptr,  // group_by
                                                    nullptr,  // having
@@ -992,6 +995,7 @@ class Op_collection_modify
         new cdk::Reply(get_cdk_session().coll_update(m_coll,
                                                      has_expr ? &m_expr : nullptr,
                                                      *this,
+                                                     nullptr,
                                                      nullptr,
                                                      get_params()));
     return m_reply;
