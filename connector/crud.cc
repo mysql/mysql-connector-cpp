@@ -269,6 +269,11 @@ void TableInsert::add_column(const string &column)
   impl.m_col_end = impl.m_cols.emplace_after(impl.m_col_end, column);
 }
 
+void TableInsert::add_column(string&& column)
+{
+  auto &impl = get_impl(this);
+  impl.m_col_end = impl.m_cols.emplace_after(impl.m_col_end, std::move(column));
+}
 
 Row& TableInsert::add_row()
 {
@@ -352,12 +357,6 @@ class Op_table_select
 
 public:
   Op_table_select(Table &table)
-    : Task::Access::Impl(table)
-    , m_table(table)
-  {
-  }
-
-  Op_table_select(Table &table, string &expr)
     : Task::Access::Impl(table)
     , m_table(table)
   {
@@ -478,7 +477,7 @@ void TableUpdate::prepare()
   BindExec::Access::reset_task(*this, new Op_table_update(m_table));
 }
 
-TableUpdate& TableUpdate::set(const string &field, ExprValue val)
+TableUpdate& TableUpdate::set(const mysqlx::string& field, ExprValue val)
 {
   get_impl(this).m_set_values[field] = std::move(val);
   return *this;

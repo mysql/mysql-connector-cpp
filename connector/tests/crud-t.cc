@@ -675,15 +675,33 @@ TEST_F(Crud, table)
                         .bind("name", "Fo%")
                         .execute();
 
-    //TODO: Check this -> need the const to call Value operator[]()
-    Row r = result.fetchOne();
+    //FIXME: Fix when Row::Setter is fixed
+    const Row r = result.fetchOne();
 
 
-    EXPECT_EQ(string("Foo"),(string)r.get(1));
+    EXPECT_EQ(string("Foo"),(string)r[1]);
     EXPECT_EQ(10,(int)r.get(2));
     EXPECT_EQ(true, result.fetchOne().isNull());
   }
 
+  // Testing insert data without specifying columns
+  tbl.insert().values("ID#98","MasterZ","10").execute();
+
+  //Check if values inserted are ok
+
+  {
+    auto op_select = tbl.select();
+    RowResult result =  op_select.where("name like :name")
+    .bind("name", "Ma%")
+    .execute();
+
+    //FIXME: Fix when Row::Setter is fixed
+    const Row r = result.fetchOne();
+
+    EXPECT_EQ(string("MasterZ"),(string)r[1]);
+    EXPECT_EQ(10,(int)r[2]);
+    EXPECT_EQ(true, result.fetchOne().isNull());
+  }
 
   // Update values (name and age) where name = Fo%
 
@@ -702,11 +720,12 @@ TEST_F(Crud, table)
     op_select.bind("name", "Qu%");
     RowResult result = op_select.execute();
 
+    //FIXME: Fix when Row::Setter is fixed
     const Row r = result.fetchOne();
 
 
-    EXPECT_EQ(string("Qux"), (string)(Value)r[1]);
-    EXPECT_EQ(11,(int)(Value) r[2]);
+    EXPECT_EQ(string("Qux"), (string)r[1]);
+    EXPECT_EQ(11,(int)r[2]);
     EXPECT_EQ(true, result.fetchOne().isNull());
   }
 
@@ -729,7 +748,6 @@ TEST_F(Crud, table)
     EXPECT_EQ(true, r.isNull());
 
   }
-
 
 
 }

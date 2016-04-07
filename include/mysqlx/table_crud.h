@@ -66,12 +66,12 @@ protected:
     prepare();
   }
 
-  template <class Cols,class...Type>
-  TableInsert(Table &table, const Cols& cols, const Type... rest)
+  template <class... Cols>
+  TableInsert(Table &table, const Cols&... cols)
     : m_table(table)
   {
     prepare();
-    add_column(cols, rest...);
+    add_column(cols...);
   }
 
 
@@ -83,6 +83,7 @@ protected:
   void prepare();
 
   void add_column(const string& col);
+  void add_column(string&& col);
   void add_column(const char* col) { add_column(string(col)); }
   template <typename Cols>
   void add_column(const Cols& cols)
@@ -94,7 +95,7 @@ protected:
   }
 
   template <class T,class...Type>
-  void add_column(const T &t, const Type... rest)
+  void add_column(const T &t, const Type&... rest)
   {
     add_column(t);
     add_column(rest...);
@@ -164,7 +165,7 @@ class TableInsertBase
   {}
 
   template <typename I>
-  void insert_range(TableInsert& obj, const I& begin, const I& end)
+  void add_columns(TableInsert& obj, const I& begin, const I& end)
   {
     for(auto it = begin; it != end; ++it)
     {
@@ -197,10 +198,10 @@ public:
     the same number of values as the list provided
   */
 
-  template <class T,class... Types >
-   TableInsert insert(const T &t, Types... rest)
+  template <class... T>
+   TableInsert insert(const T&... t)
    {
-     return TableInsert(m_table, t, rest...);
+     return TableInsert(m_table, t...);
    }
 
   friend class Table;
@@ -282,7 +283,7 @@ class TableUpdate
 
 public:
 
-  TableUpdate& set(const string& field, ExprValue);
+  TableUpdate& set(const string& field, ExprValue val);
 
   BindExec& where(const string& expr);
 
