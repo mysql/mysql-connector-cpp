@@ -260,13 +260,13 @@ void TableInsert::prepare()
 }
 
 
-void TableInsert::add_column(const string &column)
+void TableInsert::add_column(const mysqlx::string &column)
 {
   auto &impl = get_impl(this);
   impl.m_col_end = impl.m_cols.emplace_after(impl.m_col_end, column);
 }
 
-void TableInsert::add_column(string&& column)
+void TableInsert::add_column(mysqlx::string&& column)
 {
   auto &impl = get_impl(this);
   impl.m_col_end = impl.m_cols.emplace_after(impl.m_col_end, std::move(column));
@@ -374,7 +374,7 @@ void TableSelect::prepare()
 }
 
 
-BindExec& TableSelect::where(const string &expr)
+BindExec& TableSelect::where(const mysqlx::string &expr)
 {
   get_impl(this).m_where = expr;
   return *this;
@@ -480,7 +480,7 @@ TableUpdate& TableUpdate::set(const mysqlx::string& field, ExprValue val)
   return *this;
 }
 
-BindExec& TableUpdate::where(const string &expr)
+BindExec& TableUpdate::where(const mysqlx::string &expr)
 {
   get_impl(this).m_where = expr;
   return *this;
@@ -539,7 +539,7 @@ void TableRemove::prepare()
   BindExec::Access::reset_task(*this, new Op_table_remove(m_table));
 }
 
-BindExec& TableRemove::where(const string& where)
+BindExec& TableRemove::where(const mysqlx::string& where)
 {
   get_impl(this).m_where = where;
   return *this;
