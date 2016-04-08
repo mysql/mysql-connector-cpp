@@ -166,13 +166,7 @@ class Op_table_insert
   using string = cdk::string;
   using Row_list = std::forward_list < Row >;
   using Col_list = std::forward_list < string >;
-  typedef cdk::api::Expr_base<
-            cdk::api::List_processor<
-              cdk::api::Any_processor<
-                cdk::Expr_processor>>> Expr_Row_list;
-  typedef cdk::api::Expr_base<
-            cdk::api::List_processor<
-              cdk::api::Column_processor>> Expr_Col_list;
+
 
   Table_ref m_table;
   Row_list  m_rows;
@@ -205,10 +199,12 @@ class Op_table_insert
     m_started = false;
     m_row_end = m_rows.end();
 
-    return new cdk::Reply(get_cdk_session().table_insert(m_table,
-                                                         *this,
-                                                         this,
-                                                         NULL));
+    return new cdk::Reply(
+      get_cdk_session().table_insert(m_table,
+                                     *this,
+                                     m_cols.empty() ? nullptr : this,
+                                     nullptr)
+                         );
   }
 
   // Row_source (Iterator)
@@ -225,7 +221,8 @@ class Op_table_insert
   }
 
   // Columns
-  void process(Expr_Col_list::Processor& prc) const override
+
+  void process(cdk::api::Columns::Processor& prc) const override
   {
     prc.list_begin();
     for (auto el : m_cols)
@@ -237,7 +234,7 @@ class Op_table_insert
 
   // Row_source (Expr_list)
 
-  void process(Expr_Row_list::Processor &ep) const;
+  void process(cdk::Expr_list::Processor &ep) const;
 
   // Format_info
 
@@ -289,9 +286,9 @@ void TableInsert::add_row(const Row &row)
 }
 
 
-void Op_table_insert::process(cdk::api::Expr_base<cdk::api::List_processor<cdk::api::Any_processor<cdk::Expr_processor> > >::Processor &lp) const
+void Op_table_insert::process(cdk::Expr_list::Processor &lp) const
 {
-  using Element_prc = Expr_Row_list::Processor::Element_prc;
+  using Element_prc = cdk::Expr_list::Processor::Element_prc;
 
   lp.list_begin();
 
