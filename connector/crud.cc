@@ -193,7 +193,7 @@ class Op_table_insert
 
   bool m_started;
 
-  cdk::Reply* send_command()
+  cdk::Reply* send_command() override
   {
     // Prepare iterators to make a pass through m_rows list.
     m_started = false;
@@ -209,7 +209,7 @@ class Op_table_insert
 
   // Row_source (Iterator)
 
-  bool next()
+  bool next() override
   {
     if (!m_started)
       m_cur_row = m_rows.cbegin();
@@ -234,12 +234,12 @@ class Op_table_insert
 
   // Row_source (Expr_list)
 
-  void process(cdk::Expr_list::Processor &ep) const;
+  void process(cdk::Expr_list::Processor &ep) const override;
 
   // Format_info
 
-  bool for_type(cdk::Type_info) const { return true; }
-  void get_info(cdk::Format<cdk::TYPE_BYTES>&) const {}
+  bool for_type(cdk::Type_info) const override { return true; }
+  void get_info(cdk::Format<cdk::TYPE_BYTES>&) const override {}
   using cdk::Format_info::get_info;
 
   friend class mysqlx::TableInsert;
