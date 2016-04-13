@@ -274,6 +274,50 @@ class CollectionAddBase
 };
 
 
+/**
+  Classes Interfaces used by other classes for sort
+ */
+
+
+template <typename R, typename H=R>
+class CollectionSort
+    : public virtual H
+{
+
+  virtual R& do_sort(const string&) = 0;
+
+public:
+
+  R& sort(const string& ord)
+  {
+    return do_sort(ord);
+  }
+
+  R& sort(const char* ord)
+  {
+    return do_sort(ord);
+  }
+
+  template <typename Ord>
+  R& sort(Ord ord)
+  {
+    R* ret = NULL;
+    for(auto el : ord)
+    {
+      ret = &do_sort(ord);
+    }
+    return *ret;
+  }
+
+  template <typename Ord, typename...Type>
+  R& sort(Ord ord, const Type...rest)
+  {
+    do_sort(ord);
+    return sort(rest...);
+  }
+
+};
+
 /*
   Removing documents from a collection
   ====================================
@@ -286,10 +330,22 @@ class CollectionAddBase
   @todo Sorting and limiting the range of deleted documents.
 */
 
+typedef Limit<BindExec> CollectionRemoveLimit;
+typedef CollectionSort<CollectionRemoveLimit> CollectionRemoveOrder;
+
+class RemoveExec
+  : public CollectionRemoveOrder
+{
+public:
+ BindExec& do_limit(unsigned rows) override;
+ CollectionRemoveLimit& do_sort(const string&) override;
+};
+
+
 class CollectionRemove
 {
   Collection &m_coll;
-  BindExec m_exec;
+  RemoveExec m_exec;
 
   CollectionRemove(Collection &coll)
     : m_coll(coll)
@@ -298,10 +354,10 @@ class CollectionRemove
 public:
 
   /// Remove all documents from the collection.
-  virtual Executable& remove();
+  virtual CollectionRemoveOrder& remove();
 
   /// Remove documents satisfying given expression.
-  virtual BindExec& remove(const string&);
+  virtual CollectionRemoveOrder& remove(const string&);
 
   friend class Collection;
 };
@@ -320,10 +376,26 @@ public:
   @todo Grouping of returned documents.
 */
 
+
+
+typedef Limit<Offset,BindExec> CollectionFindLimit;
+typedef CollectionSort<CollectionFindLimit> CollectionFindSort;
+
+class FindExec
+  : public CollectionFindSort
+  , public Offset
+{
+  CollectionFindSort& do_sort(const string&) override;
+
+  Offset& do_limit(unsigned rows) override;
+
+  BindExec& do_offset(unsigned rows) override;
+};
+
 class CollectionFind
 {
   Collection &m_coll;
-  BindExec m_exec;
+  FindExec m_exec;
 
   CollectionFind(Collection &coll)
     : m_coll(coll)
@@ -332,10 +404,10 @@ class CollectionFind
 public:
 
   /// Return all the documents in the collection.
-  virtual Executable& find();
+  CollectionFindSort& find();
 
   /// Find documents that satisfy given expression.
-  virtual BindExec& find(const string&);
+  CollectionFindSort& find(const string&);
 
   friend class Collection;
 };
@@ -347,16 +419,23 @@ public:
   =======================================
 */
 
+typedef Limit<BindExec> CollectionModifyLimit;
+typedef CollectionSort<CollectionModifyLimit> CollectionModifySort;
 
 class CollectionModifyBase;
 
 class CollectionModify
-    : public BindExec
+: public CollectionModifySort
 {
 
   CollectionModify(Collection &coll);
 
   CollectionModify(Collection &base, const string &expr);
+
+  CollectionModifyLimit& do_sort(const string&) override;
+
+  BindExec& do_limit(unsigned rows) override;
+
 
 public:
 
@@ -404,6 +483,8 @@ public:
 
   friend class Collection;
 };
+
+
 
 
 }  // mysqlx

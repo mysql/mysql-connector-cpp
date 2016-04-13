@@ -164,6 +164,35 @@ public:
 };
 
 
+
+class Offset
+: public virtual BindExec
+{
+
+  virtual BindExec& do_offset(unsigned rows) = 0;
+
+public:
+
+  BindExec& offset(unsigned rows)
+  {
+    return do_offset(rows);
+  }
+};
+
+
+template <typename R, typename H = R>
+class Limit : public virtual H
+{
+  virtual R& do_limit(unsigned rows) = 0;
+public:
+
+  R& limit(unsigned rows)
+  {
+    return do_limit(rows);
+  }
+};
+
+
 }  // mysqlx
 
 #endif

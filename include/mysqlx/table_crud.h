@@ -207,6 +207,52 @@ public:
   friend class Table;
 };
 
+/**
+
+/**
+ * Classes Interfaces used by other classes for sort
+ */
+
+
+template <class R, class H=R>
+class TableSort
+  : public virtual H
+{
+
+  virtual R& do_orderBy(const string&) = 0;
+
+public:
+
+  R& orderBy(const string& ord)
+  {
+    return do_orderBy(ord);
+  }
+
+  R& orderBy(const char* ord)
+  {
+    return do_orderBy(ord);
+  }
+
+  template <typename Ord>
+  R& orderBy(Ord ord)
+  {
+    R* ret = NULL;
+    for(auto el : ord)
+    {
+      ret = &do_orderBy(ord);
+    }
+    return *ret;
+  }
+
+  template <typename Ord, typename...Type>
+  R& orderBy(Ord ord, const Type...rest)
+  {
+    do_orderBy(ord);
+    return orderBy(rest...);
+  }
+
+};
+
 
 /**
   TableSelect class which implements the select() operation
@@ -214,23 +260,32 @@ public:
   Data is filtered using the where() method.
   */
 
+typedef Limit<Offset, BindExec> TableSelectLimit;
+typedef TableSort<TableSelectLimit> TableSelectOrderBy;
+
 class TableSelect
-    : public BindExec
+  : public TableSelectOrderBy
+  , Offset
 {
   Table &m_table;
 
   TableSelect(Table &table)
-    : m_table(table)
+  : m_table(table)
   {
     prepare();
   }
 
-
   void prepare();
+
+  TableSelectLimit& do_orderBy(const string&) override ;
+  Offset& do_limit(unsigned rows) override;
+  BindExec& do_offset(unsigned rows) override;
+
+
 
 public:
 
-  BindExec& where(const string& expr);
+  TableSelectOrderBy& where(const string& expr);
 
   friend class TableSelectBase;
 };
@@ -267,9 +322,11 @@ public:
   Filter of updated rows is passed using the where() method.
   */
 
+typedef Limit<BindExec> TableUpdateLimit;
+typedef TableSort<TableUpdateLimit> TableUpdateOrderBy;
 
 class TableUpdate
-    : public BindExec
+: public TableUpdateOrderBy
 {
   Table& m_table;
 
@@ -280,6 +337,9 @@ class TableUpdate
   }
 
   void prepare();
+
+  TableUpdateLimit& do_orderBy(const string&) override ;
+  BindExec& do_limit(unsigned rows) override;
 
 public:
 
@@ -317,10 +377,14 @@ public:
   If where() is not used, all the rows of the table are removed.
   */
 
+
+typedef Limit<BindExec> TableRemoveLimit;
+typedef TableSort<TableRemoveLimit> TableRemoveOrderBy;
+
 class TableRemoveBase;
 
 class TableRemove
-    : public BindExec
+: public TableRemoveOrderBy
 {
   Table& m_table;
 
@@ -332,9 +396,12 @@ class TableRemove
 
   void prepare();
 
+  TableRemoveLimit& do_orderBy(const string&) override ;
+  BindExec& do_limit(unsigned rows) override;
+
 public:
 
-  BindExec& where(const string&);
+  TableRemoveOrderBy& where(const string&);
 
   friend class TableRemoveBase;
 

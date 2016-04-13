@@ -152,6 +152,97 @@ public:
 
 
 /*
+   Limit helper class
+ */
+
+class Op_limit
+: public cdk::Limit
+{
+protected:
+
+  row_count_t m_limit = 0;
+  bool m_has_limit = false;
+  row_count_t m_offset = 0;
+  bool m_has_offset = false;
+
+public:
+
+  void limit(row_count_t lm)
+  {
+    m_has_limit = true;
+    m_limit = lm;
+  }
+
+  void offset(row_count_t _offset)
+  {
+    m_has_offset = true;
+    m_offset = _offset;
+  }
+
+
+  // cdk::Limit interface
+  row_count_t get_row_count() const override { return m_limit; }
+  const row_count_t* get_offset() const override
+  { return m_has_offset ? &m_offset : NULL; }
+
+
+};
+
+
+/*
+   Sort helper class
+ */
+
+template <parser::Parser_mode::value PM>
+class Op_order_by
+: public cdk::Order_by
+{
+protected:
+
+  std::vector<cdk::string> m_order;
+
+public:
+
+  // cdk::Order_by interface
+  void process(Processor& prc) const
+  {
+    prc.list_begin();
+
+    for (cdk::string el : m_order)
+    {
+
+      cdk::api::Sort_direction::value sort_direction = cdk::api::Sort_direction::ASC;
+
+      if (el.find(L" ASC", el.length()-4) != cdk::string::npos )
+      {
+        sort_direction = cdk::api::Sort_direction::ASC;
+        el.erase(el.length()-4);
+      }else if (el.find(L" DESC", el.length()-5) != cdk::string::npos )
+      {
+        sort_direction = cdk::api::Sort_direction::DESC;
+        el.erase(el.length()-5);
+      }
+
+      parser::Expression_parser expr(PM,
+                                     el);
+
+      auto list_el = prc.list_el();
+
+      if (list_el)
+      {
+        auto el_prc = list_el->sort_key(sort_direction);
+        if (el_prc)
+          expr.process(*el_prc);
+      }
+    }
+
+    prc.list_end();
+
+  }
+
+};
+
+/*
   Table.insert()
   ==============
 */
@@ -328,6 +419,8 @@ void Op_table_insert::process(cdk::Expr_list::Processor &lp) const
 
 class Op_table_select
     : public Task::Access::Impl
+    , public Op_order_by<parser::Parser_mode::TABLE>
+    , public Op_limit
 {
   typedef cdk::string string;
 
@@ -344,10 +437,10 @@ class Op_table_select
         new cdk::Reply(get_cdk_session().table_select(m_table,
                                                       m_expr.get(),
                                                       nullptr,
+                                                      m_order.empty() ? nullptr : this,
                                                       nullptr,
                                                       nullptr,
-                                                      nullptr,
-                                                      nullptr,
+                                                      m_has_limit ? this : nullptr,
                                                       get_params())
                        );
   }
@@ -374,12 +467,29 @@ void TableSelect::prepare()
 }
 
 
-BindExec& TableSelect::where(const mysqlx::string &expr)
+TableSelectOrderBy& TableSelect::where(const mysqlx::string &expr)
 {
   get_impl(this).m_where = expr;
   return *this;
 }
 
+TableSelectLimit& TableSelect::do_orderBy(const mysqlx::string& order)
+{
+  get_impl(this).m_order.push_back(order);
+  return *this;
+}
+
+Offset& TableSelect::do_limit(unsigned rows)
+{
+  get_impl(this).limit(rows);
+  return *this;
+}
+
+BindExec& TableSelect::do_offset(unsigned rows)
+{
+  get_impl(this).offset(rows);
+  return *this;
+}
 
 /*
   Table.update()
@@ -390,6 +500,8 @@ class Op_table_update
     : public Task::Access::Impl
     , public cdk::Update_spec
     , public cdk::api::Column_ref
+    , public Op_order_by<parser::Parser_mode::TABLE>
+    , public Op_limit
 {
   typedef cdk::string string;
   typedef std::map<string,ExprValue> SetValues;
@@ -408,13 +520,15 @@ class Op_table_update
     m_set_it = m_set_values.end();
 
     return
-        new cdk::Reply(get_cdk_session().table_update(m_table,
-                                                      m_expr ? m_expr.get() : NULL,
-                                                      *this,
-                                                      nullptr,
-                                                      nullptr,
-                                                      get_params())
-                       );
+        new cdk::Reply(
+          get_cdk_session().table_update(m_table,
+                                         m_expr ? m_expr.get() : nullptr,
+                                         *this,
+                                         m_order.empty() ? nullptr : this,
+                                         m_has_limit ? this : nullptr,
+                                         get_params()
+                                        )
+                      );
   }
 
 
@@ -431,7 +545,7 @@ class Op_table_update
     return m_set_it != m_set_values.end();
   }
 
-  void process(Processor &prc) const override
+  void process(cdk::Update_spec::Processor &prc) const override
   {
     prc.column(*this);
 
@@ -486,6 +600,17 @@ BindExec& TableUpdate::where(const mysqlx::string &expr)
   return *this;
 }
 
+TableUpdateLimit& TableUpdate::do_orderBy(const mysqlx::string& order)
+{
+  get_impl(this).m_order.push_back(order);
+  return *this;
+}
+
+BindExec& TableUpdate::do_limit(unsigned rows)
+{
+  get_impl(this).limit(rows);
+  return *this;
+}
 
 /*
   Table.remove()
@@ -494,6 +619,8 @@ BindExec& TableUpdate::where(const mysqlx::string &expr)
 
 class Op_table_remove
     : public Task::Access::Impl
+    , public Op_order_by<parser::Parser_mode::TABLE>
+    , public Op_limit
 {
   typedef cdk::string string;
 
@@ -507,12 +634,14 @@ class Op_table_remove
       m_expr.reset(new parser::Expression_parser(Parser_mode::TABLE, m_where));
 
     return
-        new cdk::Reply(get_cdk_session().table_delete(m_table,
-                                                      m_expr ? m_expr.get() : NULL,
-                                                      NULL,
-                                                      NULL,
-                                                      get_params())
-                       );
+        new cdk::Reply(
+          get_cdk_session().table_delete(m_table,
+                                         m_expr ? m_expr.get() : nullptr,
+                                         m_order.empty() ? nullptr : this,
+                                         m_has_limit ? this : nullptr,
+                                         get_params()
+                                        )
+                      );
   }
 
 
@@ -539,12 +668,23 @@ void TableRemove::prepare()
   BindExec::Access::reset_task(*this, new Op_table_remove(m_table));
 }
 
-BindExec& TableRemove::where(const mysqlx::string& where)
+TableRemoveOrderBy& TableRemove::where(const mysqlx::string& where)
 {
   get_impl(this).m_where = where;
   return *this;
 }
 
+TableRemoveLimit& TableRemove::do_orderBy(const mysqlx::string& order)
+{
+  get_impl(this).m_order.push_back(order);
+  return *this;
+}
+
+BindExec& TableRemove::do_limit(unsigned rows)
+{
+  get_impl(this).limit(rows);
+  return *this;
+}
 
 /*
   Collection.add()
@@ -767,7 +907,6 @@ void Op_collection_add::process(Expression::Processor &ep) const
   }
 }
 
-
 /*
   Collection.remove()
   ===================
@@ -775,6 +914,8 @@ void Op_collection_add::process(Expression::Processor &ep) const
 
 class Op_collection_remove
   : public Task::Access::Impl
+  , public Op_limit
+  , public Op_order_by<parser::Parser_mode::DOCUMENT>
 {
   Table_ref m_coll;
   parser::Expression_parser m_expr;
@@ -799,30 +940,48 @@ class Op_collection_remove
     m_reply =
         new cdk::Reply(get_cdk_session().coll_remove(m_coll,
                                                      has_expr ? &m_expr : nullptr,
-                                                     nullptr,
-                                                     nullptr,
+                                                     m_order.empty() ? nullptr : this, // order_by spec
+                                                     m_has_limit ? this : nullptr,  // limit spec
                                                      get_params())
                        );
     return m_reply;
   }
 
   friend class mysqlx::CollectionRemove;
+  friend class mysqlx::RemoveExec;
 };
 
+inline
+Op_collection_remove& get_impl(RemoveExec *p)
+{
+  return *static_cast<Op_collection_remove*>(BindExec::Access::get_impl(*p));
+}
 
-Executable& CollectionRemove::remove()
+CollectionRemoveOrder& CollectionRemove::remove()
 try {
   BindExec::Access::reset_task(m_exec, new Op_collection_remove(m_coll));
   return m_exec;
 }
 CATCH_AND_WRAP
 
-BindExec &CollectionRemove::remove(const mysqlx::string &expr)
+CollectionRemoveOrder &CollectionRemove::remove(const mysqlx::string &expr)
 try {
   BindExec::Access::reset_task(m_exec, new Op_collection_remove(m_coll, expr));
   return m_exec;
 }
 CATCH_AND_WRAP
+
+BindExec& RemoveExec::do_limit(unsigned rows)
+{
+  get_impl(this).limit(rows);
+  return *this;
+}
+
+CollectionRemoveLimit& RemoveExec::do_sort(const mysqlx::string& order)
+{
+  get_impl(this).m_order.push_back(order);
+  return *this;
+}
 
 
 /*
@@ -833,10 +992,13 @@ CATCH_AND_WRAP
 
 class Op_collection_find
   : public Task::Access::Impl
+  , public Op_limit
+  , public Op_order_by<parser::Parser_mode::DOCUMENT>
 {
   Table_ref m_coll;
   parser::Expression_parser m_expr;
   bool has_expr = false;
+
 
 
   Op_collection_find(Collection &coll)
@@ -860,27 +1022,54 @@ class Op_collection_find
         new cdk::Reply(get_cdk_session().coll_find(m_coll,
                                                    has_expr ? &m_expr : nullptr,
                                                    nullptr,  //projection
-                                                   nullptr,  // order_by spec
+                                                   m_order.empty() ? nullptr : this,  // order_by spec
                                                    nullptr,  // group_by
                                                    nullptr,  // having
-                                                   nullptr,  // limit spec
+                                                   m_has_limit ? this : nullptr,  // limit spec
                                                    get_params()));
     return m_reply;
   }
 
 
 
+
+
   friend class mysqlx::CollectionFind;
+  friend class mysqlx::FindExec;
 };
 
-Executable& CollectionFind::find()
+inline
+Op_collection_find& get_impl(FindExec *p)
+{
+  return *static_cast<Op_collection_find*>(BindExec::Access::get_impl(*p));
+}
+
+CollectionFindSort& FindExec::do_sort(const mysqlx::string& ord)
+{
+  get_impl(this).m_order.push_back(ord);
+  return *this;
+}
+
+Offset& FindExec::do_limit(unsigned rows)
+{
+  get_impl(this).limit(rows);
+  return *this;
+}
+
+BindExec& FindExec::do_offset(unsigned rows)
+{
+  get_impl(this).offset(rows);
+  return *this;
+}
+
+CollectionFindSort& CollectionFind::find()
 try {
   BindExec::Access::reset_task(m_exec, new Op_collection_find(m_coll));
   return m_exec;
 }
 CATCH_AND_WRAP
 
-BindExec &CollectionFind::find(const mysqlx::string &expr)
+CollectionFindSort &CollectionFind::find(const mysqlx::string &expr)
 try {
   BindExec::Access::reset_task(m_exec, new Op_collection_find(m_coll, expr));
   return m_exec;
@@ -929,6 +1118,9 @@ public:
 class Op_collection_modify
     : public Task::Access::Impl
     , public cdk::Update_spec
+    , public Op_order_by<parser::Parser_mode::DOCUMENT>
+    , public Op_limit
+
 {
 
   friend class mysqlx::CollectionModify;
@@ -991,8 +1183,8 @@ class Op_collection_modify
         new cdk::Reply(get_cdk_session().coll_update(m_coll,
                                                      has_expr ? &m_expr : nullptr,
                                                      *this,
-                                                     nullptr,
-                                                     nullptr,
+                                                     m_order.empty() ? nullptr : this,
+                                                     m_has_limit ? this : nullptr,
                                                      get_params()));
     return m_reply;
   }
@@ -1024,7 +1216,7 @@ class Op_collection_modify
     return m_update_it!= m_update.end();
   }
 
-  void process(Processor &prc) const override
+  void process(Update_spec::Processor &prc) const override
   {
     Field_parser field(m_update_it->m_field);
 
@@ -1070,6 +1262,12 @@ class Op_collection_modify
 
 };
 
+inline
+Op_collection_modify& get_impl(CollectionModify *p)
+{
+  return *static_cast<Op_collection_modify*>(BindExec::Access::get_impl(*p));
+}
+
 
 CollectionModify::CollectionModify(Collection &coll)
 {
@@ -1087,53 +1285,54 @@ CollectionModify::CollectionModify(Collection &coll, const mysqlx::string &expr)
 CollectionModify &CollectionModify::set(const Field &field,
                                   ExprValue val)
 {
-  auto *impl
-    = static_cast<Op_collection_modify*>(Task::Access::get_impl(m_task));
-  impl->add_field_operation(Op_collection_modify::Field_Op::SET,
-                            field,
-                            std::move(val));
+  get_impl(this).add_field_operation(Op_collection_modify::Field_Op::SET,
+                                     field,
+                                     std::move(val));
   return *this;
 }
 
 
 CollectionModify &CollectionModify::unset(const Field &field)
 {
-  auto *impl
-    = static_cast<Op_collection_modify*>(Task::Access::get_impl(m_task));
-  impl->add_field_operation(Op_collection_modify::Field_Op::UNSET,
-                            field);
+  get_impl(this).add_field_operation(Op_collection_modify::Field_Op::UNSET,
+                                     field);
   return *this;
 }
 
 CollectionModify &CollectionModify::arrayInsert(const Field &field,
                                                      ExprValue val)
 {
-  auto *impl
-    = static_cast<Op_collection_modify*>(Task::Access::get_impl(m_task));
-  impl->add_field_operation(Op_collection_modify::Field_Op::ARRAY_INSERT,
-                            field,
-                            std::move(val));
+  get_impl(this).add_field_operation(Op_collection_modify::Field_Op::ARRAY_INSERT,
+                                     field,
+                                     std::move(val));
   return *this;
 }
 
 CollectionModify &CollectionModify::arrayAppend(const Field &field,
                                           ExprValue val)
 {
-  auto *impl
-    = static_cast<Op_collection_modify*>(Task::Access::get_impl(m_task));
-  impl->add_field_operation(Op_collection_modify::Field_Op::ARRAY_APPEND,
-                            field,
-                            std::move(val));
+  get_impl(this).add_field_operation(Op_collection_modify::Field_Op::ARRAY_APPEND,
+                                     field,
+                                     std::move(val));
   return *this;
 }
 
 
 CollectionModify &CollectionModify::arrayDelete(const Field &field)
 {
-  auto *impl
-    = static_cast<Op_collection_modify*>(Task::Access::get_impl(m_task));
-  impl->add_field_operation(Op_collection_modify::Field_Op::ARRAY_DELETE,
-                            field);
+  get_impl(this).add_field_operation(Op_collection_modify::Field_Op::ARRAY_DELETE,
+                                     field);
   return *this;
 }
 
+CollectionModifyLimit& CollectionModify::do_sort(const mysqlx::string& ord)
+{
+  get_impl(this).m_order.push_back(ord);
+  return *this;
+}
+
+BindExec& CollectionModify::do_limit(unsigned rows)
+{
+  get_impl(this).limit(rows);
+  return *this;
+}

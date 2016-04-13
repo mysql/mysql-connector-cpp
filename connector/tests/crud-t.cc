@@ -290,10 +290,12 @@ void Crud::add_data(Collection &coll)
   add = coll.add(doc, doc).execute();
   cout << "- added doc with id: " << add.getLastDocumentId() << endl;
 
-  add = coll.add("{ \"name\": \"bar\", \"age\": 2, \
+  add = coll.add("{ \"name\": \"baz\", \"age\": 3,\
+                  \"birth\": { \"day\": 20, \"month\": \"Apr\" } }")
+        .add("{ \"name\": \"bar\", \"age\": 2, \
                     \"food\": [\"Milk\", \"Soup\"] }")
-        .add("{ \"name\": \"baz\", \"age\": 3,\
-                \"birth\": { \"day\": 20, \"month\": \"Apr\" } }").execute();
+
+        .execute();
   cout << "- added 2 docs, last id: " << add.getLastDocumentId() << endl;
 
   add = coll.add("{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }",
@@ -606,6 +608,89 @@ TEST_F(Crud, modify)
 
 }
 
+TEST_F(Crud, order_limit)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("c1", true);
+
+  add_data(coll);
+
+  DocResult docs = coll.find()
+                       .sort("age ASC")
+                       .limit(2)
+                       .offset(4)
+                       .execute();
+
+  DbDoc doc = docs.fetchOne();
+
+  //with the offset=4 first row is age = 7
+  int prev_val = 6;
+
+  int i = 0;
+  for (; doc; ++i, doc = docs.fetchOne())
+  {
+    cout << "doc#" << i << ": " << doc << endl;
+
+    EXPECT_LT(prev_val, (int)doc["age"]);
+    prev_val = doc["age"];
+
+  }
+
+
+  EXPECT_EQ(2, i);
+
+  // Modify the first line (ordered by age) incrementing 1 to the age.
+
+  coll.modify()
+      .set("age",expr("age+1"))
+      .sort("age ASC")
+      .limit(1)
+      .execute();
+
+
+  // Check if modify is ok.
+  // name DESC because now there are 2 documents with same age,
+  // checking the "foo" ones and ages 1 and 2
+
+  docs = coll.find().sort("age ASC", "name DESC")
+                    .limit(2)
+                    .execute();
+
+  doc = docs.fetchOne();
+
+  i = 0;
+  for (; doc; ++i, doc = docs.fetchOne())
+  {
+    cout << "doc#" << i << ": " << doc << endl;
+
+    // age 1 and 2
+    EXPECT_EQ(i+1, (int)doc["age"]);
+    EXPECT_EQ(string("foo"), (string)doc["name"] );
+
+  }
+
+  // Remove the two lines
+  coll.remove().sort("age ASC", "name DESC")
+               .limit(2)
+               .execute();
+
+  docs = coll.find().sort("age ASC", "name DESC")
+                    .limit(1)
+                    .execute();
+
+  EXPECT_NE(string("foo"), (string)docs.fetchOne()["name"]);
+  EXPECT_TRUE(docs.fetchOne().isNull());
+
+}
+
 
 TEST_F(Crud, existence_checks)
 {
@@ -749,6 +834,85 @@ TEST_F(Crud, table)
 
   }
 
-
 }
 
+
+TEST_F(Crud, table_order_limit)
+{
+
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  sql("DROP TABLE IF EXISTS test.crud_table");
+  sql(
+    "CREATE TABLE test.crud_table("
+    "  _id VARCHAR(32),"
+    "  name VARCHAR(32),"
+    "  age INT"
+    ")");
+
+  Schema sch = sess.getSchema("test");
+  Table tbl = sch.getTable("crud_table");
+
+
+  //Insert values on table
+
+  std::vector<string> cols = {"_id"};
+  //Using containers (vectors, const char* and string)
+  auto insert = tbl.insert(cols, "age", string("name"));
+  insert.values("ID#1", 10, "Foo");
+  insert.values("ID#2", 5 , "Bar" );
+  insert.values("ID#3", 3 , "Baz");
+  insert.execute();
+
+  {
+    RowResult result = tbl.select().orderBy("age ASC")
+                                .limit(1)
+                                .offset(1)
+                                .execute();
+
+    Row r = result.fetchOne();
+
+    EXPECT_EQ(5, (int)r[2]);
+    EXPECT_TRUE(result.fetchOne().isNull());
+  }
+
+  tbl.update().set("age", expr("age+1"))
+              .orderBy("age ASC")
+              .limit(1)
+              .execute();
+
+  {
+    RowResult result = tbl.select().orderBy("age ASC")
+                                   .limit(1)
+                                   .execute();
+
+    Row r = result.fetchOne();
+    EXPECT_EQ(4, (int)r[2]);
+    EXPECT_TRUE(result.fetchOne().isNull());
+  }
+
+  tbl.remove()
+     .where("age > 4")
+     .orderBy("age DESC")
+     .limit(1)
+     .execute();
+
+
+  {
+    RowResult result = tbl.select()
+                          .where("age > 4")
+                          .orderBy("age DESC")
+                          .limit(1)
+                          .execute();
+
+    Row r = result.fetchOne();
+    EXPECT_EQ(5, (int)r[2]);
+    EXPECT_TRUE(result.fetchOne().isNull());
+  }
+}
