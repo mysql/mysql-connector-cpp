@@ -521,10 +521,10 @@ TEST_F(Crud, modify)
     op.set(string("name"), Value("boo"));
     op.set("age", expr("age+1"));
     op.arrayAppend("food", "Popcorn");
-    op.arrayAppend("food", "Coke");
-    op.bind("name", "ba%");
-    op.bind("age", 3);
-    op.execute();
+    op.arrayAppend("food", "Coke")
+      .bind("name", "ba%")
+      .bind("age", 3)
+      .execute();
   }
 
   cout << "Fetching documents..." << endl;
@@ -590,9 +590,7 @@ TEST_F(Crud, modify)
 
     {
       auto op = coll.modify("name like :name");
-      op.unset("food");
-      op.bind("name", "bo%");
-      op.execute();
+      op.unset("food").bind("name", "bo%").execute();
     }
 
     docs = coll.find("name like :name")

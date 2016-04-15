@@ -140,9 +140,7 @@ TEST_F(Batch, crud)
     modify.set("food", expr("[]"));
     modify.arrayAppend("food", "milk");
     modify.arrayAppend("food", "soup");
-    modify.arrayAppend("food", "potatoes");
-
-    modify.execute();
+    modify.arrayAppend("food", "potatoes").execute();
   }
 
   {

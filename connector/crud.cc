@@ -211,29 +211,9 @@ public:
     for (cdk::string el : m_order)
     {
 
-      cdk::api::Sort_direction::value sort_direction = cdk::api::Sort_direction::ASC;
+      parser::Order_parser order_parser(PM, el);
+      order_parser.process_if(prc.list_el());
 
-      if (el.find(L" ASC", el.length()-4) != cdk::string::npos )
-      {
-        sort_direction = cdk::api::Sort_direction::ASC;
-        el.erase(el.length()-4);
-      }else if (el.find(L" DESC", el.length()-5) != cdk::string::npos )
-      {
-        sort_direction = cdk::api::Sort_direction::DESC;
-        el.erase(el.length()-5);
-      }
-
-      parser::Expression_parser expr(PM,
-                                     el);
-
-      auto list_el = prc.list_el();
-
-      if (list_el)
-      {
-        auto el_prc = list_el->sort_key(sort_direction);
-        if (el_prc)
-          expr.process(*el_prc);
-      }
     }
 
     prc.list_end();
@@ -1123,8 +1103,6 @@ class Op_collection_modify
 
 {
 
-  friend class mysqlx::CollectionModify;
-
   Table_ref m_coll;
   parser::Expression_parser m_expr;
   bool has_expr = false;
@@ -1258,12 +1236,26 @@ class Op_collection_modify
 
   }
 
-
+  friend class mysqlx::CollectionModify;
+  friend class mysqlx::CollectionModifyOp;
 
 };
 
+struct CollectionModify::Access
+{
+  static void reset_task(CollectionModify &exec, Task::Access::Impl *impl)
+  {
+    BindExec::Access::reset_task(exec, impl);
+  }
+
+  static Task::Access::Impl* get_impl(CollectionModify &exec)
+  {
+    return Task::Access::get_impl(exec.m_task);
+  }
+};
+
 inline
-Op_collection_modify& get_impl(CollectionModify *p)
+Op_collection_modify& get_impl(CollectionModifyOp *p)
 {
   return *static_cast<Op_collection_modify*>(BindExec::Access::get_impl(*p));
 }
@@ -1271,7 +1263,7 @@ Op_collection_modify& get_impl(CollectionModify *p)
 
 CollectionModify::CollectionModify(Collection &coll)
 {
-  Task::Access::reset(m_task, new Op_collection_modify(coll));
+  CollectionModify::Access::reset_task(*this, new Op_collection_modify(coll));
 }
 
 
@@ -1282,8 +1274,8 @@ CollectionModify::CollectionModify(Collection &coll, const mysqlx::string &expr)
 
 
 
-CollectionModify &CollectionModify::set(const Field &field,
-                                  ExprValue val)
+CollectionModifyOp& CollectionModifyOp::do_set(const Field &field,
+                                  ExprValue&& val)
 {
   get_impl(this).add_field_operation(Op_collection_modify::Field_Op::SET,
                                      field,
@@ -1291,16 +1283,15 @@ CollectionModify &CollectionModify::set(const Field &field,
   return *this;
 }
 
-
-CollectionModify &CollectionModify::unset(const Field &field)
+CollectionModifyOp& CollectionModifyOp::do_unset(const Field &field)
 {
   get_impl(this).add_field_operation(Op_collection_modify::Field_Op::UNSET,
                                      field);
   return *this;
 }
 
-CollectionModify &CollectionModify::arrayInsert(const Field &field,
-                                                     ExprValue val)
+CollectionModifyOp& CollectionModifyOp::do_arrayInsert(const Field &field,
+                                                     ExprValue&& val)
 {
   get_impl(this).add_field_operation(Op_collection_modify::Field_Op::ARRAY_INSERT,
                                      field,
@@ -1308,8 +1299,8 @@ CollectionModify &CollectionModify::arrayInsert(const Field &field,
   return *this;
 }
 
-CollectionModify &CollectionModify::arrayAppend(const Field &field,
-                                          ExprValue val)
+CollectionModifyOp& CollectionModifyOp::do_arrayAppend(const Field &field,
+                                          ExprValue&& val)
 {
   get_impl(this).add_field_operation(Op_collection_modify::Field_Op::ARRAY_APPEND,
                                      field,
@@ -1318,11 +1309,10 @@ CollectionModify &CollectionModify::arrayAppend(const Field &field,
 }
 
 
-CollectionModify &CollectionModify::arrayDelete(const Field &field)
+CollectionModifyOp& CollectionModifyOp::do_arrayDelete(const Field &field)
 {
   get_impl(this).add_field_operation(Op_collection_modify::Field_Op::ARRAY_DELETE,
                                      field);
-  return *this;
 }
 
 CollectionModifyLimit& CollectionModify::do_sort(const mysqlx::string& ord)

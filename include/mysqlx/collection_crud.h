@@ -422,10 +422,51 @@ public:
 typedef Limit<BindExec> CollectionModifyLimit;
 typedef CollectionSort<CollectionModifyLimit> CollectionModifySort;
 
+template <typename R>
+class CollectionModifyInterface
+
+{
+protected:
+  virtual R& do_set(const Field &field, ExprValue&& val) = 0;
+  virtual R& do_arrayInsert(const Field &field, ExprValue&& val) = 0;
+  virtual R& do_unset(const Field &field) = 0;
+  virtual R& do_arrayAppend(const Field &field, ExprValue&& val) = 0;
+  virtual R& do_arrayDelete(const Field &field) = 0;
+
+public:
+  R& set(const Field &field, ExprValue val)
+  { return do_set(field, std::move(val)); }
+
+  R& unset(const Field &field)
+  { return do_unset(field); }
+
+  R& arrayInsert(const Field &field, ExprValue val)
+  { return do_arrayInsert(field, std::move(val)); }
+
+  R& arrayAppend(const Field &field, ExprValue val)
+  { return do_arrayAppend(field, std::move(val)); }
+
+  R& arrayDelete(const Field &field)
+  { return do_arrayDelete(field); }
+};
+
+
+class CollectionModifyOp
+: public virtual CollectionModifyInterface<CollectionModifyOp>
+, public CollectionModifySort
+{
+  CollectionModifyOp& do_set(const Field &field, ExprValue&& val) override;
+  CollectionModifyOp& do_arrayInsert(const Field &field, ExprValue&& val) override;
+  CollectionModifyOp& do_unset(const Field &field) override;
+  CollectionModifyOp& do_arrayAppend(const Field &field, ExprValue&& val) override;
+  CollectionModifyOp& do_arrayDelete(const Field &field) override;
+};
+
 class CollectionModifyBase;
 
 class CollectionModify
-: public CollectionModifySort
+: CollectionModifyOp
+, public virtual CollectionModifyInterface<CollectionModifyOp>
 {
 
   CollectionModify(Collection &coll);
@@ -437,14 +478,11 @@ class CollectionModify
   BindExec& do_limit(unsigned rows) override;
 
 
+
 public:
 
-  CollectionModify &set(const Field &field, ExprValue val);
-  CollectionModify &unset(const Field &field);
-  CollectionModify &arrayInsert(const Field &field, ExprValue val);
-  CollectionModify &arrayAppend(const Field &field, ExprValue val);
-  CollectionModify &arrayDelete(const Field &field);
-
+  struct Access;
+  friend struct Access;
   friend class CollectionModifyBase;
 };
 
