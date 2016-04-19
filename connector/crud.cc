@@ -1269,7 +1269,7 @@ CollectionModify::CollectionModify(Collection &coll)
 
 CollectionModify::CollectionModify(Collection &coll, const mysqlx::string &expr)
 {
-  Task::Access::reset(m_task, new Op_collection_modify(coll, expr));
+  CollectionModify::Access::reset_task(*this, new Op_collection_modify(coll, expr));
 }
 
 

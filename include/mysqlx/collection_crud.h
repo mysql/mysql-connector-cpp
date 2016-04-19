@@ -422,37 +422,37 @@ public:
 typedef Limit<BindExec> CollectionModifyLimit;
 typedef CollectionSort<CollectionModifyLimit> CollectionModifySort;
 
-template <typename R>
+class CollectionModifyOp;
 class CollectionModifyInterface
 
 {
 protected:
-  virtual R& do_set(const Field &field, ExprValue&& val) = 0;
-  virtual R& do_arrayInsert(const Field &field, ExprValue&& val) = 0;
-  virtual R& do_unset(const Field &field) = 0;
-  virtual R& do_arrayAppend(const Field &field, ExprValue&& val) = 0;
-  virtual R& do_arrayDelete(const Field &field) = 0;
+  virtual CollectionModifyOp& do_set(const Field &field, ExprValue&& val) = 0;
+  virtual CollectionModifyOp& do_arrayInsert(const Field &field, ExprValue&& val) = 0;
+  virtual CollectionModifyOp& do_unset(const Field &field) = 0;
+  virtual CollectionModifyOp& do_arrayAppend(const Field &field, ExprValue&& val) = 0;
+  virtual CollectionModifyOp& do_arrayDelete(const Field &field) = 0;
 
 public:
-  R& set(const Field &field, ExprValue val)
+  CollectionModifyOp& set(const Field &field, ExprValue val)
   { return do_set(field, std::move(val)); }
 
-  R& unset(const Field &field)
+  CollectionModifyOp& unset(const Field &field)
   { return do_unset(field); }
 
-  R& arrayInsert(const Field &field, ExprValue val)
+  CollectionModifyOp& arrayInsert(const Field &field, ExprValue val)
   { return do_arrayInsert(field, std::move(val)); }
 
-  R& arrayAppend(const Field &field, ExprValue val)
+  CollectionModifyOp& arrayAppend(const Field &field, ExprValue val)
   { return do_arrayAppend(field, std::move(val)); }
 
-  R& arrayDelete(const Field &field)
+  CollectionModifyOp& arrayDelete(const Field &field)
   { return do_arrayDelete(field); }
 };
 
 
 class CollectionModifyOp
-: public virtual CollectionModifyInterface<CollectionModifyOp>
+: public virtual CollectionModifyInterface
 , public CollectionModifySort
 {
   CollectionModifyOp& do_set(const Field &field, ExprValue&& val) override;
@@ -466,7 +466,7 @@ class CollectionModifyBase;
 
 class CollectionModify
 : CollectionModifyOp
-, public virtual CollectionModifyInterface<CollectionModifyOp>
+, public virtual CollectionModifyInterface
 {
 
   CollectionModify(Collection &coll);
