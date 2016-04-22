@@ -1313,6 +1313,7 @@ CollectionModifyOp& CollectionModifyOp::do_arrayDelete(const Field &field)
 {
   get_impl(this).add_field_operation(Op_collection_modify::Field_Op::ARRAY_DELETE,
                                      field);
+  return *this;
 }
 
 CollectionModifyLimit& CollectionModify::do_sort(const mysqlx::string& ord)
