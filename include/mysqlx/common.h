@@ -212,9 +212,9 @@ void throw_error(const char *msg)
 }
 
 /*
-Note: we add throw statement to the definition of THROW() so that compiler won't
-complain if it is used in contexts where, e.g., a value should be returned from
-a function.
+  Note: we add throw statement to the definition of THROW() so that compiler won't
+  complain if it is used in contexts where, e.g., a value should be returned from
+  a function.
 */
 
 #undef THROW
@@ -228,6 +228,50 @@ a function.
 #define THROW(MSG) do { throw_error(MSG); throw (MSG); } while(false)
 
 #endif
+
+
+/*
+  Macros used to disable warnings for fragments of code.
+*/
+
+#undef PRAGMA
+#undef DISABLE_WARNING
+#undef DIAGNOSTIC_PUSH
+#undef DIAGNOSTIC_POP
+
+
+#if defined __GNUC__ || defined __clang__
+
+#define PRAGMA(X) _Pragma(#X)
+#define DISABLE_WARNING(W) PRAGMA(GCC diagnostic ignored #W)
+
+#if defined __clang__ || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#define DIAGNOSTIC_PUSH PRAGMA(GCC diagnostic push)
+#define DIAGNOSTIC_POP  PRAGMA(GCC diagnostic pop)
+#else
+#define DIAGNOSTIC_PUSH
+#define DIAGNOSTIC_POP
+#endif
+
+#elif defined _MSC_VER
+
+
+#define PRAGMA(X) __pragma(X)
+#define DISABLE_WARNING(W) PRAGMA(warning (disable:W))
+
+#define DIAGNOSTIC_PUSH  PRAGMA(warning (push))
+#define DIAGNOSTIC_POP   PRAGMA(warning (pop))
+
+#else
+
+#define PRAGMA(X)
+#define DISABLE_WARNING(W)
+
+#define DIAGNOSTIC_PUSH
+#define DIAGNOSTIC_POP
+
+#endif
+
 
 }  // mysqlx
 

@@ -39,6 +39,7 @@
 #include "mysqlx/common.h"
 #include "mysqlx/result.h"
 #include "mysqlx/task.h"
+#include "mysqlx/crud.h"
 #include "mysqlx/collection_crud.h"
 #include "mysqlx/table_crud.h"
 
@@ -173,21 +174,23 @@ public:
 */
 
 class Collection
-  : public CollectionAddBase
-  , public CollectionRemove
-  , public CollectionFind
-  , public CollectionModifyBase
+  : public internal::CollectionAddBase
+  , public internal::CollectionRemoveBase
+  , public internal::CollectionFindBase
+  , public internal::CollectionModifyBase
 {
   Schema m_schema;
   const string m_name;
 
 public:
 
+  Collection(const Collection &other)
+    : CollectionOpBase(*this)
+    , m_schema(other.m_schema), m_name(other.m_name)
+  {}
+
   Collection(const Schema &sch, const string &name)
-    : CollectionAddBase(*this)
-    , CollectionRemove(*this)
-    , CollectionFind(*this)
-    , CollectionModifyBase(*this)
+    : CollectionOpBase(*this)
     , m_schema(sch), m_name(name)
   {}
 
@@ -232,10 +235,10 @@ public:
 */
 
 class Table
-    : public TableInsertBase
-    , public TableSelectBase
-    , public TableUpdateBase
-    , public TableRemoveBase
+    : public internal::TableInsertBase
+    , public internal::TableSelectBase
+    , public internal::TableUpdateBase
+    , public internal::TableRemoveBase
 {
   Schema m_schema;
   const string m_name;
@@ -243,10 +246,7 @@ class Table
 public:
 
   Table(const Schema &sch, const string &name)
-    : TableInsertBase(*this)
-    , TableSelectBase(*this)
-    , TableUpdateBase(*this)
-    , TableRemoveBase(*this)
+    : internal::TableOpBase(*this)
     , m_schema(sch), m_name(name)
   {}
 

@@ -75,9 +75,9 @@ TEST_F(Batch, crud)
   };
 
   {
-    CollectionAdd add = coll.add(docs[0]);
+    CollectionAdd add(coll);
 
-    for (unsigned pos = 1; pos < sizeof(docs) / sizeof(string); ++pos)
+    for (unsigned pos = 0; pos < sizeof(docs) / sizeof(string); ++pos)
     {
       add.add(docs[pos]);
     }
@@ -114,7 +114,7 @@ TEST_F(Batch, crud)
 
     for (unsigned pos = 1; pos < sizeof(docs1) / sizeof(string); ++pos)
     {
-      add.add(docs[pos]);
+      add.add(docs1[pos]);
     }
 
     EXPECT_THROW(add.execute(),Error);
@@ -133,7 +133,7 @@ TEST_F(Batch, crud)
   // Perform several modifications in single modify operation.
 
   {
-    CollectionModify modify = coll.modify();
+    CollectionModify modify(coll);
 
     modify.set("age", expr("2*age"));
     modify.unset("date");

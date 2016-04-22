@@ -48,7 +48,7 @@ namespace mysqlx {
 
 using std::ostream;
 
-class Session;
+class NodeSession;
 class Schema;
 class Collection;
 class Result;
@@ -66,60 +66,64 @@ class Executable;
   @todo Add diagnostics information (warnings)
 */
 
-class BaseResult : nocopy
-{
-  class Impl;
-  Impl  *m_impl = NULL;
-  bool m_owns_impl = false;
-  row_count_t  m_pos = 0;
+namespace internal {
 
-  BaseResult(cdk::Reply*);
-  BaseResult(cdk::Reply*, const GUID&);
-
-protected:
- BaseResult()
-  {}
-
-  BaseResult& operator=(BaseResult &&other)
+  class BaseResult : nocopy
   {
-    init(std::move(other));
-    return *this;
+    class Impl;
+    Impl  *m_impl = NULL;
+    bool m_owns_impl = false;
+    row_count_t  m_pos = 0;
+
+    BaseResult(cdk::Reply*);
+    BaseResult(cdk::Reply*, const GUID&);
+
+  protected:
+
+    BaseResult()
+    {}
+
+    BaseResult& operator=(BaseResult &&other)
+    {
+      init(std::move(other));
+      return *this;
+    }
+
+    void init(BaseResult&&);
+
+    Impl& get_impl();
+
+  public:
+
+    BaseResult(BaseResult &&other) { init(std::move(other)); }
+    virtual ~BaseResult();
+
+    friend class mysqlx::NodeSession;
+    friend class mysqlx::Result;
+    friend class mysqlx::RowResult;
+    friend class mysqlx::SqlResult;
+    friend class mysqlx::DocResult;
+    friend class mysqlx::Task;
+
+    struct Access;
+    friend struct Access;
+  };
+
+  inline
+    void BaseResult::init(BaseResult &&init)
+  {
+    m_pos = 0;
+    m_impl = init.m_impl;
+    if (!init.m_owns_impl)
+      m_owns_impl = false;
+    else
+    {
+      m_owns_impl = true;
+      init.m_owns_impl = false;
+    }
   }
 
-  void init(BaseResult&&);
-
-  Impl& get_impl();
-
-public:
-
-  BaseResult(BaseResult &&other) { init(std::move(other)); }
-  virtual ~BaseResult();
-
-  friend class NodeSession;
-  friend class Result;
-  friend class RowResult;
-  friend class SqlResult;
-  friend class DocResult;
-  friend class Task;
-
-  struct Access;
-  friend struct Access;
-};
-
-inline
-void BaseResult::init(BaseResult &&init)
-{
-  m_pos = 0;
-  m_impl = init.m_impl;
-  if (!init.m_owns_impl)
-    m_owns_impl = false;
-  else
-  {
-    m_owns_impl = true;
-    init.m_owns_impl = false;
-  }
 }
-
 
 /**
   Represents result of an operation that does not return data.
@@ -140,7 +144,7 @@ void BaseResult::init(BaseResult &&init)
   the result specified by DevAPI.
 */
 
-class Result : public BaseResult
+class Result : public internal::BaseResult
 {
 public:
 
@@ -290,7 +294,7 @@ std::ostream& operator<<(std::ostream &out, const Row::Setter &rs)
   %Result of an operation that returns rows.
 */
 
-class RowResult : public BaseResult
+class RowResult : public internal::BaseResult
 {
 
 public:
@@ -394,7 +398,7 @@ public:
   %Result of an operation that returns documents.
 */
 
-class DocResult : public BaseResult
+class DocResult : public internal::BaseResult
 {
   class Impl;
   Impl *m_doc_impl;

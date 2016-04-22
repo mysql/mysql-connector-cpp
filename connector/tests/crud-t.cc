@@ -311,6 +311,7 @@ void Crud::add_data(Collection &coll)
 
 }
 
+
 TEST_F(Crud, bind)
 {
   SKIP_IF_NO_XPLUGIN;
@@ -448,15 +449,13 @@ TEST_F(Crud, bind)
 
   }
 
-  coll.remove("name like :name and age < :age")
-                         .bind("name", "ba%")
-                         .bind("age", 3)
-                         .execute();
+  CollectionRemove remove(coll, "name like :name and age < :age");
 
-  docs = coll.find("name like :name and age < :age")
-                       .bind("name", "ba%")
-                       .bind("age", 3)
-                       .execute();
+  remove.bind("name", "ba%").bind("age", 3).execute();
+
+  CollectionFind find(coll, "name like :name and age < :age");
+
+  docs = find.bind("name", "ba%").bind("age", 3).execute();
 
   doc = docs.fetchOne();
   EXPECT_FALSE((bool)doc);
@@ -464,6 +463,7 @@ TEST_F(Crud, bind)
 
   cout << "Done!" << endl;
 }
+
 
 TEST_F(Crud, modify)
 {
@@ -589,7 +589,7 @@ TEST_F(Crud, modify)
     EXPECT_EQ(3, (int)doc["age"]);
 
     {
-      auto op = coll.modify("name like :name");
+      CollectionModify op(coll, "name like :name");
       op.unset("food").bind("name", "bo%").execute();
     }
 
@@ -605,6 +605,7 @@ TEST_F(Crud, modify)
   }
 
 }
+
 
 TEST_F(Crud, order_limit)
 {
@@ -714,9 +715,9 @@ TEST_F(Crud, existence_checks)
   EXPECT_NO_THROW(sch.getCollection("coll", true));
 }
 
+
 TEST_F(Crud, table)
 {
-
   SKIP_IF_NO_XPLUGIN;
 
   cout << "Creating session..." << endl;
@@ -837,7 +838,6 @@ TEST_F(Crud, table)
 
 TEST_F(Crud, table_order_limit)
 {
-
   SKIP_IF_NO_XPLUGIN;
 
   cout << "Creating session..." << endl;
@@ -914,3 +914,138 @@ TEST_F(Crud, table_order_limit)
     EXPECT_TRUE(result.fetchOne().isNull());
   }
 }
+
+
+/*
+  Test move semantics for CRUD operation objects.
+*/
+#if 0
+TEST_F(Crud, move)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("coll",true);
+
+  cout << endl;
+  cout << "Collection.add 1" << endl;
+
+  {
+    auto a = coll.add("{\"foo\" : 7}");
+    auto b = a;
+
+    EXPECT_THROW(a.add(""), Error);
+    EXPECT_NO_THROW(b.add(""));
+  }
+
+  cout << "Collection.add 2" << endl;
+
+  {
+    auto a = coll.add("{\"foo\" : 7}");
+    auto b = a.add("");
+
+    EXPECT_THROW(a.add(""), Error);
+    EXPECT_NO_THROW(b.add(""));
+  }
+
+  cout << "Collection.add 3" << endl;
+
+  {
+    CollectionAdd a = coll.add("{\"foo\" : 7}");
+    CollectionAdd b = a.add("");
+
+    EXPECT_THROW(a.add(""), Error);
+    EXPECT_NO_THROW(b.add(""));
+  }
+
+  cout << endl;
+  cout << "Collection.find 1" << endl;
+
+  {
+    auto a = coll.find();
+    auto b = a;
+
+    EXPECT_THROW(a.execute(), Error);
+    EXPECT_NO_THROW(b.execute());
+  }
+
+  cout << "Collection.find 2" << endl;
+
+  {
+    CollectionFind a = coll.find();
+    CollectionFind b = a;
+
+    EXPECT_THROW(a.execute(), Error);
+    EXPECT_NO_THROW(b.execute());
+  }
+
+  cout << "Collection.find 3" << endl;
+
+  {
+    CollectionFind a = coll.find("foo = 7");
+    CollectionFind b = a;
+
+    EXPECT_THROW(a.execute(), Error);
+    EXPECT_NO_THROW(b.execute());
+  }
+
+  cout << endl;
+  cout << "Collection.modify 1" << endl;
+
+  {
+    auto a = coll.modify();
+    auto b = a;
+
+    EXPECT_THROW(a.set("",7), Error);
+    EXPECT_NO_THROW(b.set("",7));
+  }
+
+  cout << "Collection.modify 2" << endl;
+
+  {
+    auto a = coll.modify();
+    auto b = a.unset("");
+
+    EXPECT_THROW(a.set("", 7), Error);
+    EXPECT_NO_THROW(b.set("", 7));
+  }
+
+  cout << "Collection.modify 3" << endl;
+
+  {
+    CollectionModify a = coll.modify();
+    CollectionModify b = a.unset("");
+
+    EXPECT_THROW(a.set("", 7), Error);
+    EXPECT_NO_THROW(b.set("", 7));
+  }
+
+  cout << endl;
+  cout << "Collection.remove 1" << endl;
+
+  {
+    auto a = coll.remove();
+    auto b = a;
+
+    EXPECT_THROW(a.execute(), Error);
+    EXPECT_NO_THROW(b.execute());
+  }
+
+  cout << "Collection.remove 2" << endl;
+
+  {
+    CollectionRemove a = coll.remove();
+    CollectionRemove b = a;
+
+    EXPECT_THROW(a.execute(), Error);
+    EXPECT_NO_THROW(b.execute());
+  }
+
+  cout << endl;
+}
+
+#endif

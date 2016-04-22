@@ -28,12 +28,37 @@
 /**
   @file
   Crud operations on tables.
+
+  Classes declared here represent CRUD operations on a given table. They are
+  analogous to collection CRUD operation classes defined in collection_crud.h.
+
+  The following classes for table CRUD operations are defined:
+  - TableInsert
+  - TableDelete
+  - TableSelect
+  - TableUpdate
+
+  CRUD operation objects can be created directly, or assigned from
+  result of DevAPI methods that create such operations:
+  ~~~~~~
+  TableInsert  insert_op(table);
+  TableSelect  select_op = table.select(...).orderBy(...);
+  ~~~~~~
+
+  TODO: Fluent API grammar diagram.
+
+  CRUD operation objects do not have copy semantics. If CRUD object a is
+  constructed from b, like in "a = b", then the operation moves from b to
+  a and any attempt to execute or modify b will trigger error.
+
+  TODO: Revise and complete comments.
 */
 
 
-#include "mysqlx/common.h"
-#include "mysqlx/result.h"
-#include "mysqlx/task.h"
+#include "common.h"
+#include "result.h"
+#include "task.h"
+#include "crud.h"
 
 #include <forward_list>
 
@@ -43,8 +68,53 @@ namespace mysqlx {
 class Table;
 
 
+namespace internal {
+
+  /*
+    Virtual base class for TableXXXBase classes defined below.
+
+    It defines members that can be shared between the different
+    TableXXXBase classes which all are used as a base for
+    the Table class.
+  */
+
+  class TableOpBase
+  {
+  protected:
+
+    Table *m_table;
+
+    TableOpBase(Table &table) : m_table(&table)
+    {}
+
+    /*
+      This constructor is here only to alow defining
+      TableXXXBase classes without a need to explicitly
+      invoke TableOpBase constructor. But in the end,
+      only the constructor called from the Table class
+      should be used to initialize m_table member, not this one.
+      Thus we add assertion to verify that it is not used.
+    */
+
+    TableOpBase() : m_table(NULL)
+    {
+      assert(false);
+    }
+  };
+
+}  // internal
+
+// ----------------------------------------------------------------------------------
+
+namespace internal {
+  class TableInsertBase;
+}
+
 /**
-  Base of `TableInsert` class implementing `values()` methods.
+  Operation which inserts rows into a table.
+
+  The operation holds a list of rows to be inserted. New rows
+  can be added to the list using .values() method.
 
   @todo Check that every row passed to .values() call has
   the same number of values. The column count should match
@@ -57,20 +127,12 @@ class TableInsert
 {
 protected:
 
-  Table &m_table;
   Row   *m_row = NULL;
-
-  TableInsert(Table &table)
-    : m_table(table)
-  {
-    prepare();
-  }
 
   template <class... Cols>
   TableInsert(Table &table, const Cols&... cols)
-    : m_table(table)
   {
-    prepare();
+    prepare(table);
     add_column(cols...);
   }
 
@@ -80,7 +142,7 @@ protected:
     which holds the list of rows to be inserted (see crud.cc).
   */
 
-  void prepare();
+  void prepare(Table&);
 
   void add_column(const string& col);
   void add_column(string&& col);
@@ -119,6 +181,22 @@ protected:
 
 public:
 
+  /// Create operation which inserts rows into given table.
+
+  TableInsert(Table &table)
+  {
+    prepare(table);
+  }
+
+  TableInsert(TableInsert &other)
+    : Executable(other)
+    , m_row(other.m_row)
+  {
+    other.m_row = NULL;
+  }
+
+  TableInsert(TableInsert &&other) : TableInsert(other) {}
+
   /// Add given row to the list of rows to be inserted.
 
   virtual TableInsert& values(const Row &row)
@@ -145,227 +223,257 @@ public:
 
   struct Access;
   friend struct Access;
-  friend class TableInsertBase;
+  friend class internal::TableInsertBase;
 };
 
 
-/**
-  Operation which inserts rows into a table.
+namespace internal {
 
-  The operation holds a list of rows to be inserted. New rows
-  can be added to the list using .values() method.
-*/
-
-class TableInsertBase
-{
-  Table &m_table;
-
-  TableInsertBase(Table &table)
-    : m_table(table)
-  {}
-
-  template <typename I>
-  void add_columns(TableInsert& obj, const I& begin, const I& end)
+  class TableInsertBase : public virtual TableOpBase
   {
-    for(auto it = begin; it != end; ++it)
-    {
-      obj.add_column(*it);
-    }
-  }
 
-public:
+    template <typename I>
+    void add_columns(TableInsert& obj, const I& begin, const I& end)
+    {
+      for (auto it = begin; it != end; ++it)
+      {
+        obj.add_column(*it);
+      }
+    }
+
+  public:
+
+    /**
+      Insert into a full table without restrincting the colums.
+
+      Each row passed to the following .values() call must have
+      the same number of values as the number of columns of the
+      table. However, this check is done only after seding the insert
+      command to the server. If value count does not match table column
+      count server reports error.
+    */
+
+    TableInsert insert()
+    {
+      return TableInsert(*m_table);
+    }
+
+
+    /**
+      Insert into a full table restricting the colums.
+
+      Each row passed to the following .values() call must have
+      the same number of values as the list provided
+    */
+
+    template <class... T>
+    TableInsert insert(const T&... t)
+    {
+      return TableInsert(*m_table, t...);
+    }
+
+    friend class Table;
+  };
+
+}  // internal
+
+
+// ----------------------------------------------------------------------------------
+
+namespace internal {
 
   /**
-    Insert into a full table without restrincting the colums.
-
-    Each row passed to the following .values() call must have
-    the same number of values as the number of columns of the
-    table. However, this check is done only after seding the insert
-    command to the server. If value count does not match table column
-    count server reports error.
+    Class implementing CRUD sort operations on tables.
   */
 
-  TableInsert insert()
+  template <bool limit_with_offset>
+  class TableSort
+    : public SortBase<limit_with_offset>
   {
-    return TableInsert(m_table);
-  }
 
+  public:
 
-  /**
-    Insert into a full table restricting the colums.
-
-    Each row passed to the following .values() call must have
-    the same number of values as the list provided
-  */
-
-  template <class... T>
-   TableInsert insert(const T&... t)
-   {
-     return TableInsert(m_table, t...);
-   }
-
-  friend class Table;
-};
-
-/**
- * Classes Interfaces used by other classes for sort
- */
-
-
-template <class R, class H=R>
-class TableSort
-  : public virtual H
-{
-
-  virtual R& do_orderBy(const string&) = 0;
-
-public:
-
-  R& orderBy(const string& ord)
-  {
-    return do_orderBy(ord);
-  }
-
-  R& orderBy(const char* ord)
-  {
-    return do_orderBy(ord);
-  }
-
-  template <typename Ord>
-  R& orderBy(Ord ord)
-  {
-    R* ret = NULL;
-    for(auto el : ord)
+    TableSort& orderBy(const string& ord)
     {
-      ret = &do_orderBy(ord);
+      /*
+        Note: this-> is required by gcc because this is inside
+        a template and then one has to distinct methods from
+        global functions etc.
+        see: http://stackoverflow.com/questions/29390663/error-there-are-no-arguments-to-at-that-depend-on-a-template-parameter-so-a
+      */
+
+      this->do_sort(ord);
+      return *this;
     }
-    return *ret;
-  }
 
-  template <typename Ord, typename...Type>
-  R& orderBy(Ord ord, const Type...rest)
-  {
-    do_orderBy(ord);
-    return orderBy(rest...);
-  }
+    TableSort& orderBy(const char* ord)
+    {
+      this->do_sort(ord);
+      return *this;
+    }
 
-};
+    template <typename Ord>
+    TableSort& orderBy(Ord ord)
+    {
+      for (auto el : ord)
+      {
+        this->do_sort(ord);
+      }
+      return *this;
+    }
 
+    template <typename Ord, typename...Type>
+    TableSort& orderBy(Ord ord, const Type...rest)
+    {
+      this->do_sort(ord);
+      return orderBy(rest...);
+    }
+
+  };
+
+}  // internal
+
+
+// ----------------------------------------------------------------------------------
+
+namespace internal {
+  class TableSelectBase;
+}
 
 /**
   TableSelect class which implements the select() operation
 
   Data is filtered using the where() method.
-  */
-
-typedef Limit<Offset, BindExec> TableSelectLimit;
-typedef TableSort<TableSelectLimit> TableSelectOrderBy;
+*/
 
 class TableSelect
-  : public TableSelectOrderBy
-  , Offset
+  : public internal::TableSort<true>
 {
-  Table &m_table;
+
+  void prepare(Table &table);
+
+public:
+
+DIAGNOSTIC_PUSH
+
+#if _MSC_VER && _MSC_VER < 1900
+    /*
+    MSVC 2013 has problems with delegating constructors for classes which
+    use virtual inheritance.
+    See: https://www.daniweb.com/programming/software-development/threads/494204/visual-c-compiler-warning-initvbases
+    */
+    DISABLE_WARNING(4100)
+#endif
 
   TableSelect(Table &table)
-  : m_table(table)
   {
-    prepare();
+    prepare(table);
   }
 
-  void prepare();
-
-  TableSelectLimit& do_orderBy(const string&) override ;
-  Offset& do_limit(unsigned rows) override;
-  BindExec& do_offset(unsigned rows) override;
-
-
-
-public:
-
-  TableSelectOrderBy& where(const string& expr);
-
-  friend class TableSelectBase;
-};
-
-/**
-  Operation which retrieves rows from a table.
-
-
-  */
-
-class TableSelectBase
-{
-  Table &m_table;
-
-  TableSelectBase(Table &table)
-    : m_table(table)
-  {}
-
-public:
-
-  TableSelect select()
+  TableSelect(Table &table, const string &cond) : TableSelect(table)
   {
-    return TableSelect(m_table);
+    // TODO: After constructing this way, only TableSort methods should work.
+    where(cond);
   }
 
-  friend class Table;
+  TableSelect(TableSelect &other) : Executable(other) {}
+  TableSelect(TableSelect &&other) : TableSelect(other) {}
+
+DIAGNOSTIC_POP
+
+  TableSort& where(const string& expr);
+
+  friend class internal::TableSelectBase;
 };
 
+
+namespace internal {
+
+  class TableSelectBase : public virtual TableOpBase
+  {
+  public:
+
+    TableSelect select()
+    {
+      return TableSelect(*m_table);
+    }
+
+    friend class Table;
+  };
+
+}  // internal
+
+
+// ----------------------------------------------------------------------------------
+
+namespace internal {
+  class TableUpdateBase;
+}
 
 /**
   Class used to update values on tables
 
   Class stores the field value pair to be updated.
   Filter of updated rows is passed using the where() method.
-  */
-
-typedef Limit<BindExec> TableUpdateLimit;
-typedef TableSort<TableUpdateLimit> TableUpdateOrderBy;
+*/
 
 class TableUpdate
-: public TableUpdateOrderBy
+: public internal::TableSort<false>
 {
-  Table& m_table;
 
-  TableUpdate(Table& table)
-    : m_table(table)
-  {
-    prepare();
-  }
-
-  void prepare();
-
-  TableUpdateLimit& do_orderBy(const string&) override ;
-  BindExec& do_limit(unsigned rows) override;
+  void prepare(Table&);
 
 public:
+
+DIAGNOSTIC_PUSH
+
+#if _MSC_VER && _MSC_VER < 1900
+    DISABLE_WARNING(4100)
+#endif
+
+  TableUpdate(Table& table)
+  {
+    prepare(table);
+  }
+
+  // TODO: ctor with where condition?
+
+  TableUpdate(TableUpdate &other) : Executable(other) {}
+  TableUpdate(TableUpdate &&other) : TableUpdate(other) {}
+
+DIAGNOSTIC_POP
 
   TableUpdate& set(const string& field, ExprValue val);
 
-  BindExec& where(const string& expr);
+  // TODO: no sorting after where()?
+  Executable& where(const string& expr);
 
-  friend class TableUpdateBase;
+  friend class internal::TableUpdateBase;
 };
 
-class TableUpdateBase
-{
-  Table &m_table;
 
-  TableUpdateBase(Table &table)
-    : m_table (table)
-  {}
+namespace internal {
 
-public:
-
-  TableUpdate update()
+  class TableUpdateBase : public virtual TableOpBase
   {
-    return TableUpdate(m_table);
-  }
+  public:
 
-  friend class Table;
-};
+    TableUpdate update()
+    {
+      return TableUpdate(*m_table);
+    }
 
+    friend class Table;
+  };
+
+}  // internal
+
+
+// ----------------------------------------------------------------------------------
+
+namespace internal {
+  class TableRemoveBase;
+}
 
 /**
   Class used to remove rows
@@ -373,55 +481,56 @@ public:
   Rows removed are the ones that apply to the expression passed using the
   where() method.
   If where() is not used, all the rows of the table are removed.
-  */
+*/
 
-
-typedef Limit<BindExec> TableRemoveLimit;
-typedef TableSort<TableRemoveLimit> TableRemoveOrderBy;
-
-class TableRemoveBase;
 
 class TableRemove
-: public TableRemoveOrderBy
+: public internal::TableSort<false>
 {
-  Table& m_table;
+
+  void prepare(Table &);
+
+public:
+
+DIAGNOSTIC_PUSH
+
+#if _MSC_VER && _MSC_VER < 1900
+    DISABLE_WARNING(4100)
+#endif
 
   TableRemove(Table& table)
-    : m_table(table)
   {
-    prepare();
+    prepare(table);
   }
 
-  void prepare();
+  // TODO: ctor with where condition?
 
-  TableRemoveLimit& do_orderBy(const string&) override ;
-  BindExec& do_limit(unsigned rows) override;
+  TableRemove(TableRemove &other) : Executable(other) {}
+  TableRemove(TableRemove &&other) : TableRemove(other) {}
 
-public:
+DIAGNOSTIC_POP
 
-  TableRemoveOrderBy& where(const string&);
+  TableSort& where(const string&);
 
-  friend class TableRemoveBase;
-
+  friend class internal::TableRemoveBase;
 };
 
-class TableRemoveBase
-{
-  Table& m_table;
 
-  TableRemoveBase(Table& table)
-    : m_table(table)
-  {}
+namespace internal {
 
-public:
-
-  TableRemove remove()
+  class TableRemoveBase : public virtual TableOpBase
   {
-    return TableRemove(m_table);
-  }
+  public:
 
-  friend class Table;
-};
+    TableRemove remove()
+    {
+      return TableRemove(*m_table);
+    }
+
+    friend class Table;
+  };
+
+}  // internal
 
 }  // mysqlx
 

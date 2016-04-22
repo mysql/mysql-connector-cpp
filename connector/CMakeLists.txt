@@ -47,7 +47,15 @@ endif()
 #  Connector code
 #
 
-ADD_LIBRARY(connector STATIC session.cc result.cc crud.cc document.cc)
+ADD_LIBRARY(connector STATIC
+  session.cc
+  result.cc
+  document.cc
+  crud.cc
+  collection_crud.cc
+  table_crud.cc
+)
+
 ADD_CDK(connector)
 target_link_libraries(connector uuid_gen)
 

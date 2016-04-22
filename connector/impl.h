@@ -40,169 +40,237 @@
 
 namespace mysqlx {
 
+struct Value_scalar_prc_converter
+    : public cdk::Converter<
+    Value_scalar_prc_converter,
+    cdk::Expr_processor,
+    cdk::Value_processor
+    >
+{
 
-
-  struct Value_scalar_prc_converter
-      : public cdk::Converter<
-      Value_scalar_prc_converter,
-      cdk::Expr_processor,
-      cdk::Value_processor
-      >
+  virtual Value_prc*  val() override
   {
+    return m_proc;
+  }
 
-    virtual Value_prc*  val() override
-    {
-      return m_proc;
-    }
-
-    Args_prc*   op(const char*) override
-    {
-      THROW("Unexpected expression usage operator");
-    }
-
-    Args_prc*   call(const Object_ref&) override
-    {
-      THROW("Unexpected expression usage operator");
-    }
-
-    void ref(const Column_ref&, const Doc_path*) override
-    {
-      THROW("Unexpected expression usage operator");
-    }
-
-    void ref(const Doc_path&) override
-    {
-      THROW("Unexpected expression usage operator");
-    }
-
-    void param(const cdk::string&) override
-    {
-      THROW("Unexpected expression usage operator");
-    }
-
-    void param(uint16_t) override
-    {
-      THROW("Unexpected expression usage operator");
-    }
-
-    void var(const cdk::string&) override
-    {
-      THROW("Unexpected expression usage operator");
-    }
-
-  };
-
-
-  typedef
-  cdk::Expr_conv_base<cdk::Any_prc_converter<Value_scalar_prc_converter>>
-  Value_converter;
-
-  class Value_prc
-      : public cdk::Expression
+  Args_prc*   op(const char*) override
   {
-    parser::Parser_mode::value m_parser_mode;
-    Value m_value;
-    bool m_is_expr = false;
+    THROW("Unexpected expression usage operator");
+  }
+
+  Args_prc*   call(const Object_ref&) override
+  {
+    THROW("Unexpected expression usage operator");
+  }
+
+  void ref(const Column_ref&, const Doc_path*) override
+  {
+    THROW("Unexpected expression usage operator");
+  }
+
+  void ref(const Doc_path&) override
+  {
+    THROW("Unexpected expression usage operator");
+  }
+
+  void param(const cdk::string&) override
+  {
+    THROW("Unexpected expression usage operator");
+  }
+
+  void param(uint16_t) override
+  {
+    THROW("Unexpected expression usage operator");
+  }
+
+  void var(const cdk::string&) override
+  {
+    THROW("Unexpected expression usage operator");
+  }
+
+};
 
 
-    //Private constructor to be used only inside Value_prc class
-    Value_prc(const Value &val,
-              bool is_expr,
-              parser::Parser_mode::value parser_mode)
-      : m_parser_mode(parser_mode)
-      , m_is_expr(is_expr)
-      , m_value(val)
-    {}
+typedef
+cdk::Expr_conv_base<cdk::Any_prc_converter<Value_scalar_prc_converter>>
+Value_converter;
 
-  public:
-    Value_prc(const Value &val, parser::Parser_mode::value parser_mode)
-      : m_parser_mode(parser_mode)
-      , m_value(val)
-    {}
 
-    Value_prc(Value &&val, parser::Parser_mode::value parser_mode)
-      : m_parser_mode(parser_mode)
-      , m_value(std::move(val))
-    {}
+class Value_prc
+    : public cdk::Expression
+{
+  parser::Parser_mode::value m_parser_mode;
+  Value m_value;
+  bool m_is_expr = false;
 
-    Value_prc(const ExprValue &val, parser::Parser_mode::value parser_mode)
-      : m_parser_mode(parser_mode)
-      , m_value(val)
+
+  //Private constructor to be used only inside Value_prc class
+  Value_prc(const Value &val,
+            bool is_expr,
+            parser::Parser_mode::value parser_mode)
+    : m_parser_mode(parser_mode)
+    , m_is_expr(is_expr)
+    , m_value(val)
+  {}
+
+public:
+  Value_prc(const Value &val, parser::Parser_mode::value parser_mode)
+    : m_parser_mode(parser_mode)
+    , m_value(val)
+  {}
+
+  Value_prc(Value &&val, parser::Parser_mode::value parser_mode)
+    : m_parser_mode(parser_mode)
+    , m_value(std::move(val))
+  {}
+
+  Value_prc(const ExprValue &val, parser::Parser_mode::value parser_mode)
+    : m_parser_mode(parser_mode)
+    , m_value(val)
+  {
+    m_is_expr = val.isExpression();
+  }
+
+  Value_prc(ExprValue &&val, parser::Parser_mode::value parser_mode)
+    : m_parser_mode(parser_mode)
+    , m_value(std::move(val))
+  {
+    m_is_expr = val.isExpression();
+  }
+
+  void process (Processor &prc) const
+  {
+    switch (m_value.getType())
     {
-      m_is_expr = val.isExpression();
-    }
+      case Value::VNULL:
+        safe_prc(prc)->scalar()->val()->null();
+        break;
+      case Value::UINT64:
+        safe_prc(prc)->scalar()->val()->num(static_cast<uint64_t>(m_value));
+        break;
+      case Value::INT64:
+        safe_prc(prc)->scalar()->val()->num(static_cast<int64_t>(m_value));
+        break;
+      case Value::FLOAT:
+        safe_prc(prc)->scalar()->val()->num(static_cast<float>(m_value));
+        break;
+      case Value::DOUBLE:
+        safe_prc(prc)->scalar()->val()->num(static_cast<double>(m_value));
+        break;
+      case Value::BOOL:
+        safe_prc(prc)->scalar()->val()->yesno(static_cast<bool>(m_value));
+        break;
+      case Value::STRING:
+        if (m_is_expr)
+        {
+          parser::Expression_parser expr(m_parser_mode,
+                                          (mysqlx::string)m_value);
 
-    Value_prc(ExprValue &&val, parser::Parser_mode::value parser_mode)
-      : m_parser_mode(parser_mode)
-      , m_value(std::move(val))
-    {
-      m_is_expr = val.isExpression();
-    }
-
-    void process (Processor &prc) const
-    {
-      switch (m_value.getType())
-      {
-        case Value::VNULL:
-          safe_prc(prc)->scalar()->val()->null();
-          break;
-        case Value::UINT64:
-          safe_prc(prc)->scalar()->val()->num(static_cast<uint64_t>(m_value));
-          break;
-        case Value::INT64:
-          safe_prc(prc)->scalar()->val()->num(static_cast<int64_t>(m_value));
-          break;
-        case Value::FLOAT:
-          safe_prc(prc)->scalar()->val()->num(static_cast<float>(m_value));
-          break;
-        case Value::DOUBLE:
-          safe_prc(prc)->scalar()->val()->num(static_cast<double>(m_value));
-          break;
-        case Value::BOOL:
-          safe_prc(prc)->scalar()->val()->yesno(static_cast<bool>(m_value));
-          break;
-        case Value::STRING:
-          if (m_is_expr)
+          expr.process(prc);
+        }
+        else
+          safe_prc(prc)->scalar()->val()->str(static_cast<mysqlx::string>(m_value));
+        break;
+      case Value::DOCUMENT:
+        {
+          mysqlx::DbDoc doc = static_cast<mysqlx::DbDoc>(m_value);
+          safe_prc(prc)->doc()->doc_begin();
+          for ( Field fld : doc)
           {
-            parser::Expression_parser expr(m_parser_mode,
-                                           (mysqlx::string)m_value);
-
-            expr.process(prc);
+            Value_prc value(doc[fld], m_is_expr, m_parser_mode);
+            value.process_if(safe_prc(prc)->doc()->key_val(fld));
           }
-          else
-            safe_prc(prc)->scalar()->val()->str(static_cast<mysqlx::string>(m_value));
-          break;
-        case Value::DOCUMENT:
+          safe_prc(prc)->doc()->doc_end();
+        }
+        break;
+      case Value::RAW:
+        THROW("Unexpected Value Type RAW");
+        break;
+      case Value::ARRAY:
+        {
+          safe_prc(prc)->arr()->list_begin();
+          for (Value val : m_value)
           {
-            mysqlx::DbDoc doc = static_cast<mysqlx::DbDoc>(m_value);
-            safe_prc(prc)->doc()->doc_begin();
-            for ( Field fld : doc)
-            {
-              Value_prc value(doc[fld], m_is_expr, m_parser_mode);
-              value.process_if(safe_prc(prc)->doc()->key_val(fld));
-            }
-            safe_prc(prc)->doc()->doc_end();
+            Value_prc value(val, m_is_expr, m_parser_mode);
+            value.process_if(safe_prc(prc)->arr()->list_el());
           }
-          break;
-        case Value::RAW:
-          THROW("Unexpected Value Type RAW");
-          break;
-        case Value::ARRAY:
-          {
-            safe_prc(prc)->arr()->list_begin();
-            for (Value val : m_value)
-            {
-              Value_prc value(val, m_is_expr, m_parser_mode);
-              value.process_if(safe_prc(prc)->arr()->list_el());
-            }
-            safe_prc(prc)->arr()->list_end();
-          }
-          break;
-      }
+          safe_prc(prc)->arr()->list_end();
+        }
+        break;
     }
+  }
 
-  };
+};
 
+
+struct Value::Access
+{
+  static Value mk_raw(const cdk::bytes data)
+  {
+    Value ret;
+    ret.m_type = Value::RAW;
+    ret.m_str.assign(data.begin(), data.end());
+    return std::move(ret);
+  }
+
+  static Value mk_doc(const string &json)
+  {
+    Value ret;
+    ret.m_type = Value::DOCUMENT;
+    ret.m_doc = DbDoc(json);
+    return std::move(ret);
+  }
+
+  static cdk::bytes get_bytes(const Value &val)
+  {
+    return cdk::bytes(val.m_str);
+  }
+};
+
+
+// --------------------------------------------------------------------
+
+
+class Schema_ref : public cdk::api::Schema_ref
+{
+  const cdk::string m_name;
+
+  const cdk::string name() const { return m_name; }
+
+public:
+
+  Schema_ref(const mysqlx::string &name) : m_name(name) {}
+  Schema_ref(const cdk::string &name) : m_name(name) {}
+};
+
+
+class Table_ref : public cdk::api::Table_ref
+{
+  Schema_ref m_schema;
+  const cdk::string m_name;
+
+public:
+
+  const cdk::string name() const { return m_name; }
+  const cdk::api::Schema_ref* schema() const { return &m_schema; }
+
+  Table_ref(const Collection &coll)
+    : m_schema(coll.getSchema().getName())
+    , m_name(coll.getName())
+  {}
+
+  Table_ref(const Table &tbl)
+    : m_schema(tbl.getSchema().getName())
+    , m_name(tbl.getName())
+  {}
+
+  Table_ref(const cdk::string &schema, const cdk::string &name)
+    : m_schema(schema), m_name(name)
+  {}
+};
+
+
+// --------------------------------------------------------------------
 
 /**
   DbDoc implementation which stores document data in std::map.
@@ -324,10 +392,20 @@ class DocResult::Impl
 };
 
 
-/*
-  Task implementation
-  ===================
-*/
+// --------------------------------------------------------------------
+
+
+struct internal::BaseResult::Access
+{
+  static BaseResult mk_empty() { return BaseResult(); }
+
+  template <typename A>
+  static BaseResult mk(A a) { return BaseResult(a); }
+
+  template <typename A, typename B>
+  static BaseResult mk(A a, B b) { return BaseResult(a, b); }
+};
+
 
 struct Task::Access
 {
@@ -340,10 +418,50 @@ struct Task::Access
 
   static Impl* get_impl(Task &task)
   {
+    if (!task.m_impl)
+      THROW("Empty task implementation");
     return task.m_impl;
   }
 };
 
+
+struct internal::PlainExecutable::Access
+{
+  static void reset_task(PlainExecutable &exec, Task::Impl *impl)
+  {
+    exec.m_task.reset(impl);
+  }
+
+  static Task::Access::Impl* get_impl(PlainExecutable &exec)
+  {
+    exec.check_if_valid();
+    return Task::Access::get_impl(exec.m_task);
+  }
+};
+
+
+struct Executable::Access
+{
+  static void reset_task(Executable &exec, Task::Impl *impl)
+  {
+    exec.m_task.reset(impl);
+    exec.m_map.clear();
+  }
+
+  static Task::Access::Impl* get_impl(Executable &exec)
+  {
+    exec.check_if_valid();
+    return Task::Access::get_impl(exec.m_task);
+  }
+};
+
+
+// --------------------------------------------------------------------
+
+/*
+  Task implementation
+  ===================
+*/
 
 class Task::Impl : nocopy
 {
@@ -352,7 +470,7 @@ protected:
   XSession &m_sess;
   cdk::Reply *m_reply = NULL;
 
-  typedef BindExec::param_map_t param_map_t;
+  typedef Executable::param_map_t param_map_t;
 
   Impl(XSession &sess)
     : m_sess(sess)
@@ -421,7 +539,7 @@ protected:
     m_reply->cont();
   }
 
-  BaseResult wait()
+  internal::BaseResult wait()
   {
     init();
     m_reply->wait();
@@ -430,41 +548,110 @@ protected:
     return get_result();
   }
 
-  virtual BaseResult get_result()
+  virtual internal::BaseResult get_result()
   {
-    return BaseResult(m_reply);
+    return internal::BaseResult::Access::mk(m_reply);
   }
 
   friend class Task;
   friend class Executable;
-  friend class BindExec;
+//  friend class BindExec;
 };
 
 
+// --------------------------------------------------------------------
 
-struct Value::Access
+template <class X> struct Crud_impl;
+
+template <class X>
+inline
+typename Crud_impl<X>::type& get_impl(X *p)
 {
-  static Value mk_raw(const cdk::bytes data)
+  typedef typename Crud_impl<X>::type Op_type;
+  return *static_cast<Op_type*>(Executable::Access::get_impl(*p));
+}
+
+
+// --------------------------------------------------------------------
+
+/*
+  Helper classes for CRUD operations.
+*/
+
+
+class Op_base
+  : public Task::Access::Impl
+  , public cdk::Limit
+{
+protected:
+
+  row_count_t m_limit = 0;
+  bool m_has_limit = false;
+  row_count_t m_offset = 0;
+  bool m_has_offset = false;
+
+  std::vector<cdk::string> m_order;
+
+  template <typename T>
+  Op_base(T &x) : Impl(x)
+  {}
+
+public:
+
+  void limit(row_count_t lm)
   {
-    Value ret;
-    ret.m_type = Value::RAW;
-    ret.m_str.assign(data.begin(), data.end());
-    return std::move(ret);
+    m_has_limit = true;
+    m_limit = lm;
   }
 
-  static Value mk_doc(const string &json)
+  void offset(row_count_t _offset)
   {
-    Value ret;
-    ret.m_type = Value::DOCUMENT;
-    ret.m_doc = DbDoc(json);
-    return std::move(ret);
+    m_has_offset = true;
+    m_offset = _offset;
   }
 
-  static cdk::bytes get_bytes(const Value &val)
+  // cdk::Limit interface
+  row_count_t get_row_count() const override { return m_limit; }
+  const row_count_t* get_offset() const override
   {
-    return cdk::bytes(val.m_str);
+    return m_has_offset ? &m_offset : NULL;
+  }
+
+  friend class internal::SortBase<false>;
+  friend class internal::SortBase<true>;
+};
+
+
+template <parser::Parser_mode::value PM>
+class Op_sort
+  : public Op_base
+  , public cdk::Order_by
+{
+protected:
+
+  template <typename T>
+  Op_sort(T &x) : Op_base(x)
+  {}
+
+public:
+
+  // cdk::Order_by interface
+  void process(Processor& prc) const
+  {
+    prc.list_begin();
+
+    for (cdk::string el : m_order)
+    {
+
+      parser::Order_parser order_parser(PM, el);
+      order_parser.process_if(prc.list_el());
+
+    }
+
+    prc.list_end();
   }
 };
+
 
 }
 

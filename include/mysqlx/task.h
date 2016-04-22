@@ -45,11 +45,27 @@ using std::ostream;
 
 class Task;
 class Executable;
-class BindExec;
 
+namespace internal {
+  class PlainExecutable;
+}
 
 class Task : nocopy
 {
+public:
+
+  Task& operator=(Task &&other)
+  {
+    reset(other.m_impl);
+    other.m_impl = NULL;
+    return *this;
+  }
+
+  virtual ~Task();
+  bool is_completed();
+  internal::BaseResult wait();
+  void cont();
+
 protected:
 
   class Impl;
@@ -62,20 +78,10 @@ protected:
 
 public:
 
-  Task(Task &&other) : m_impl(other.m_impl)
-  {
-    other.m_impl = NULL;
-  }
-
-  virtual ~Task();
-  bool is_completed();
-  BaseResult wait();
-  void cont();
-
   struct Access;
   friend struct Access;
+  friend class internal::PlainExecutable;
   friend class Executable;
-  friend class BindExec;
 };
 
 
@@ -87,31 +93,42 @@ public:
   operation is sent to the server for execution.
 */
 
-class Executable : nocopy
-{
-protected:
+namespace internal {
 
-  Task m_task;
-
-public:
-
-  Executable() {}
-
-  Executable(Executable &&other)
-    : m_task(std::move(other.m_task))
-  {}
-
-  /// Execute given operation and wait for its result.
-
-  virtual BaseResult execute()
+  class PlainExecutable : nocopy
   {
-    return m_task.wait();
-  }
+  protected:
 
-  struct Access;
-  friend struct Access;
-};
+    Task m_task;
 
+    void check_if_valid()
+    {
+      if (!m_task.m_impl)
+        throw Error("Attempt to use invalid operation");
+    }
+
+    PlainExecutable() {}
+
+  public:
+
+    PlainExecutable(PlainExecutable &&other)
+    {
+      m_task = std::move(other.m_task);
+    }
+
+    /// Execute given operation and wait for its result.
+
+    virtual BaseResult execute()
+    {
+      check_if_valid();
+      return m_task.wait();
+    }
+
+    struct Access;
+    friend struct Access;
+  };
+
+}
 
 /**
   Base class for arguments binding operations.
@@ -121,19 +138,33 @@ public:
   TODO: Better documentation.
 */
 
-class BindExec : public Executable
+class Executable : public internal::PlainExecutable
 {
 protected:
 
   typedef std::map<string, Value> param_map_t;
   param_map_t m_map;
 
+  Executable() = default;
+
 public:
 
-  BaseResult execute();
+  Executable(Executable &other)
+    : PlainExecutable(std::move(other))
+    , m_map(std::move(other.m_map))
+  {}
 
-  BindExec& bind(const string &parameter, Value val)
+  Executable(Executable &&other) : Executable(other) {}
+  Executable(PlainExecutable &&other) : PlainExecutable(std::move(other))
   {
+    m_map.clear();
+  }
+
+  internal::BaseResult execute() override;
+
+  Executable& bind(const string &parameter, Value val)
+  {
+    check_if_valid();
     m_map[parameter] = std::move(val);
     return *this;
   }
@@ -161,35 +192,6 @@ public:
   friend struct Access;
   friend class Task;
   friend class Task::Impl;
-};
-
-
-
-class Offset
-: public virtual BindExec
-{
-
-  virtual BindExec& do_offset(unsigned rows) = 0;
-
-public:
-
-  BindExec& offset(unsigned rows)
-  {
-    return do_offset(rows);
-  }
-};
-
-
-template <typename R, typename H = R>
-class Limit : public virtual H
-{
-  virtual R& do_limit(unsigned rows) = 0;
-public:
-
-  R& limit(unsigned rows)
-  {
-    return do_limit(rows);
-  }
 };
 
 

@@ -463,7 +463,7 @@ namespace mysqlx {
   =====================
 */
 
-class BaseResult::Impl
+class internal::BaseResult::Impl
   : public cdk::Row_processor
 {
   cdk::Reply  *m_reply = NULL;
@@ -534,10 +534,10 @@ class BaseResult::Impl
   void   end_of_data() {}
 
   friend class Row_builder;
-  friend class BaseResult;
-  friend class Result;
-  friend class RowResult;
-  friend class SqlResult;
+  friend class internal::BaseResult;
+  friend class mysqlx::Result;
+  friend class mysqlx::RowResult;
+  friend class mysqlx::SqlResult;
 };
 
 
@@ -585,7 +585,7 @@ size_t Result::Impl::field_data(col_count_t pos, bytes data)
 */
 
 
-BaseResult::BaseResult(cdk::Reply *r)
+internal::BaseResult::BaseResult(cdk::Reply *r)
 try {
   m_owns_impl = true;
   m_impl= new Impl(r);
@@ -593,7 +593,7 @@ try {
 CATCH_AND_WRAP
 
 
-BaseResult::BaseResult(cdk::Reply *r, const GUID &guid)
+internal::BaseResult::BaseResult(cdk::Reply *r, const GUID &guid)
 try {
   m_owns_impl = true;
   m_impl= new Impl(r,guid);
@@ -601,7 +601,7 @@ try {
 CATCH_AND_WRAP
 
 
-BaseResult::~BaseResult()
+internal::BaseResult::~BaseResult()
 try {
   if (m_owns_impl)
     delete m_impl;
@@ -609,7 +609,7 @@ try {
 CATCH_AND_WRAP
 
 
-BaseResult::Impl& BaseResult::get_impl()
+internal::BaseResult::Impl& internal::BaseResult::get_impl()
 try {
   if (!m_impl)
     THROW("Attempt to use null result instance");

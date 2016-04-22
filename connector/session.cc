@@ -358,7 +358,7 @@ Task::~Task() try { delete m_impl; } CATCH_AND_WRAP
 bool Task::is_completed()
 try { return m_impl ? m_impl->is_completed() : true; } CATCH_AND_WRAP
 
-BaseResult Task::wait()
+internal::BaseResult Task::wait()
 try {
   if (!m_impl)
     throw Error("Attempt to wait on empty task");

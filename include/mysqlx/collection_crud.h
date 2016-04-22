@@ -35,27 +35,66 @@
   operation. The operation is sent to server for execution only when
   `execute()` method is called.
 
-  An object representing such an operation, has methods which modify
-  parameters of the operation, such as `CollectionAdd::add()` method.
-  Such method returns modified operation object whose methods can be
-  used again to modify it further until the operation is described
-  completely.
+  The following classes for collection CRUD operations are defined:
+  - CollectionAdd
+  - CollectionRemove
+  - CollectionFind
+  - CollectionModify
 
-  For example, a call to `CollectionAdd::add()` adds a document to
-  the list of documents that this operation should insert  into the
-  collection. Chaining several calls to add() like this:
+  CRUD operation objects can be created directly, or assigned from
+  result of DevAPI methods that create such operations:
   ~~~~~~
-    coll.add(doc1).add(doc2)...add(docN)
+     CollectionAdd  add_op(coll);
+     CollectionFind find_op = coll.find(...).sort(...);
   ~~~~~~
-  will produce an operation which has all documents `doc1`, ..., `docN`
-  in the list and will insert them all at once.
+
+  CRUD operation objects have methods which can modify the operation
+  before it gets executed. For example `CollectionAdd:add()`
+  appends a document to the list of documents that should be added
+  by given operation. These methods can be chained as allowed by
+  the fluent API grammar. In case of collection CRUD operations the
+  grammar can be described by the following diagram:
+
+    Collection -> CollectionAdd         : add()
+    Collection -> CollectionRemove      : remove()
+    Collection -> CollectionFind        : find()
+    Collection -> CollectionModifyFirst : modify()
+
+    CollectionAdd = Executable
+    CollectionAdd -> CollectionAdd : add()
+
+    CollectionRemove = CollectionSort<false>
+
+    CollectionFind = CollectionSort<true>
+
+    CollectionModifyFirst = Executable
+    CollectionModifyFirst -> CollectionModify : set()
+    CollectionModifyFirst -> CollectionModify : unset()
+    CollectionModifyFirst -> CollectionModify : arrayXXX()
+
+    CollectionModify = CollectionModifyFirst
+    CollectionModify = CollectionSort<false>
+
+    CollectionSort<F> = Limit<F>
+    CollectionSort<F> -> Limit<F> : sort()
+
+  In this diagram notation X -> Y : foo() means that class X defines
+  public method foo() with return type Y (roughly). Notation X = Y means
+  that X inherits public methods from Y. See crud.h for grammar
+  rules for Limit<> and other commoon classes.
+
+  CRUD operation objects do not have copy semantics. If CRUD object a is
+  constructed from b, like in "a = b", then the operation moves from b to
+  a and any attempt to execute or modify b will trigger error.
 */
 
 
-#include "mysqlx/common.h"
-#include "mysqlx/result.h"
-#include "mysqlx/task.h"
+#include "common.h"
+#include "result.h"
+#include "task.h"
+#include "crud.h"
 
+#include <utility>
 
 namespace cdk {
 
@@ -68,119 +107,128 @@ namespace mysqlx {
 
 class XSession;
 class Collection;
-class CollectionAddBase;
-class CollectionAdd;
 
 
+namespace internal {
 
+  /*
+    Virtual base class for CollectionXXXBase classes defined below.
+
+    It defines members that can be shared between the different
+    CollectionXXXBase classes which all are used as a base for
+    the Collection class.
+  */
+
+  class CollectionOpBase
+  {
+  protected:
+
+    Collection *m_coll;
+
+    CollectionOpBase(Collection &coll) : m_coll(&coll)
+    {}
+
+    CollectionOpBase(const CollectionOpBase&) = default;
+
+    /*
+      This constructor is here only to alow defining
+      CollectionXXXBase classes without a need to explicitly
+      invoke CollectionOpBase constructor. But in the end,
+      only the constructor called from the Collection class
+      should be used to initialize m_coll member, not this one.
+      Thus we add assertion to verify that it is not used.
+    */
+
+    CollectionOpBase() : m_coll(NULL)
+    {
+      assert(false);
+    }
+  };
+
+}  // internal
+
+// ----------------------------------------------------------------------
 
 /*
   Adding documents to a collection
   ================================
 
-  We have two variants of this operation: `CollectionAddBase` and
-  `CollectionAdd`. The first variant has only `add()` methods but
-  not `execute()`. Second variant has both `add()` and execute `add()`.
+  Base class CollectionAddBase defines the various forms of add() method
+  which produce CollectionAdd operation. The same methods are defined
+  by CollectionAdd class and can be used to append further documents
+  to the operation.
 
-  The distinction is because insert operation can be executed only
-  when at least one document has been specified. Thus, initially operation
-  of type `CollectionAdd` has only `add()` methods. These methods return
-  new operation object of type `CollectionAdd` which now can be either
-  extended with another call to `add()` or executed with `exec()`.
-
-  TODO: Reconsider this: currently Collection::add() returns CollectionAdd
-  object by value, while Collection::Add::add() returns a reference to itself.
-  Thus usage is bit different:
-
-     CollectionAdd add = coll.add(...);
-
-     vs.
-
-     CollecitonAdd &next = add.add(...);
-
-   1. It can be confusing to users to use references or values in different
-      contexts.
-
-   2. In "CollectionAdd add = coll.add(...)" there is question of a lifetime
-      of the returned operation. If the original collection gets deleted
-      should the add operation still be valid?
 */
 
+class CollectionAdd;
 
-/**
-  Base class for document adding operations.
 
-  This class defines `add()` methods that append new documents to the
-  list of documents that shuld be inserted by the operation. Documents
-  can be specified as JSON strings or DbDoc instances. Several documents
-  can be added in a single call to `add()`.
-
-  @note We have two variants of document adding operation each having
-  a different return type of the `add()` method. For that reason the base
-  class is a template parametrised with return type of the `add()` method.
-
-  @see `CollectionAddBase`, `CollectionAdd`
-*/
-
-template <typename R>
-class CollectionAddInterface
-{
-protected:
-
-  Collection &m_coll;
-
-  CollectionAddInterface(Collection &coll)
-    : m_coll(coll)
-  {}
-
-  /*
-    These methods are overriden by derived operation classes.
-    They append given document to the list of documents to be
-    inserted and return resulting modified operation.
-  */
-
-  virtual R do_add(const string &json) =0;
-  virtual R do_add(const DbDoc &doc) =0;
-
-public:
+namespace internal {
 
   /**
-    Add document(s) to a collection.
+    Class which defines various variants of `add()` method.
 
-    Documents can be described by JSON strings or DbDoc objects.
+    This class defines `add()` methods that append new documents to the
+    list of documents that shuld be inserted by a CollectionAdd operation.
+    Documents can be specified as JSON strings or DbDoc instances. Several
+    documents can be added in a single call to `add()`.
+
+    @note We have two variants of add() operations which differ by return type.
+    CollectionAddBase::add() returns CollectionAdd object by value while
+    CollectionAdd::add() returns reference to itself. For that reason
+    CollectionAddInterface<> is a template parametrised with return type of
+    the `add()` method. But in either case the AddOp type refers to
+    a CollectionAdd instance which implemnts do_add() method which appends a
+    document to the list.
   */
 
-  template <typename D>
-  R add(const D &doc)
+
+  template<class AddOp>
+  class CollectionAddInterface
   {
-    return do_add(doc);
-  }
+    /*
+      This method must be overriden by derived class to return an
+      empty add operation.
+    */
 
-  /**
-    @copydoc add(const DbDoc&)
-    Several documents can be passed to single `add()` call.
-  */
+    virtual AddOp get_op() = 0;
 
-  template<typename D, typename... Types>
-    R add(const D &first, Types... rest)
-  {
-    try {
+    static void add_docs(AddOp&) {}
 
-      /*
-        Note: When do_add() returns CollectionAdd object then
-        the following add() will return reference to the same object.
-        Here we return CollectionAdd by value, so a new instance
-        will be created from the one returned by add() using
-        move-constructor.
-      */
-
-      return std::move(do_add(first).add(rest...));
+    template<typename D, typename... Types>
+    static void add_docs(AddOp &op, const D &first, Types... rest)
+    {
+      op.do_add(first);
+      add_docs(op, rest...);
     }
-    CATCH_AND_WRAP
-  }
 
-  friend class CollectionAdd;
-};
+
+  public:
+
+    /**
+      Add document(s) to a collection.
+
+      Documents can be described by JSON strings or DbDoc objects.
+    */
+
+    template<typename... Types>
+    AddOp add(Types... docs)
+    {
+      try {
+        AddOp op = get_op();
+        add_docs(op, docs...);
+        return op;
+      }
+      CATCH_AND_WRAP
+    }
+
+    friend class CollectionAdd;
+  };
+
+
+  class CollectionAddBase;
+
+}  // internal
 
 
 /**
@@ -188,342 +236,430 @@ public:
 
   Operation stores a list of documents that will be added
   to a given collection when this operation is executed.
-  New documents can be appended to the list with `add()`
-  method.
+  New documents can be appended to the list with various variants
+  of `add()` method, as defined by CollectionAddInterface<>.
 */
 
 class CollectionAdd
-: public Executable
-, public CollectionAddInterface<CollectionAdd&>
+  : public Executable
+  , public internal::CollectionAddInterface<CollectionAdd&>
 {
-  /*
-    Note: We derive from CollectionAddInterface<CollectionAdd&>
-    which means that `add()` methods will return references to
-    CollectionAdd object. This way, after adding document
-    to the list, we can return reference to `*this` and avoid
-    unnecessary copy/move-constructor invocations.
-  */
-
-  using Base = CollectionAddInterface < CollectionAdd& > ;
-
 public:
 
-  CollectionAdd(CollectionAdd &&other)
-    : Executable(std::move(other)), Base(other.m_coll)
-  {}
+  /// Create empty add operation for a given collection.
+
+  CollectionAdd(Collection &coll);
+
+  CollectionAdd(CollectionAdd &other) : Executable(other) {}
+  CollectionAdd(CollectionAdd &&other) : CollectionAdd(other) {}
 
 private:
 
-  /*
-    Note: This constructor is called from `CollectionAddBase::add()`
-    to create CollectionAdd instance with the first document
-    put on the list.
-  */
-
-  template <typename D>
-  CollectionAdd(Collection &coll, const D &doc)
-    : Base(coll)
+  virtual CollectionAdd& get_op()
   {
-    initialize();
-    do_add(doc);
+    check_if_valid();
+    return *this;
   }
 
-  void initialize();
-  CollectionAdd& do_add(const string&);
-  CollectionAdd& do_add(const DbDoc&);
+  void do_add(const string&);
+  void do_add(const DbDoc&);
 
-  friend class CollectionAddBase;
-  friend class CollectionAddInterface<CollectionAdd>;
+  friend class internal::CollectionAddBase;
+  friend class internal::CollectionAddInterface<CollectionAdd>;
+  friend class internal::CollectionAddInterface<CollectionAdd&>;
 };
 
 
-/**
-  Operation which adds documents to a collection.
+namespace internal {
 
-  After adding the first document, a `CollectionAdd` object
-  is returned which can be used to add further documents or
-  execute the operation.
-*/
-
-class CollectionAddBase
-  : public CollectionAddInterface<CollectionAdd>
-{
-  using Base = CollectionAddInterface < CollectionAdd >;
-
-  CollectionAddBase(Collection &coll)
-    : Base(coll)
-  {}
-
-  /*
-    Note: `do_add()` methods create CollectionAdd
-    instance which is then responsible for adding further
-    documents or executing the operation.
-  */
-
-  CollectionAdd do_add(const string &json)
+  class CollectionAddBase
+    : public CollectionAddInterface<mysqlx::CollectionAdd>
+    , public virtual CollectionOpBase
   {
-   return CollectionAdd(m_coll, json);
-  }
-
-  CollectionAdd do_add(const DbDoc &doc)
-  {
-   return CollectionAdd(m_coll, doc);
-  }
-
-  friend class Collection;
-};
-
-
-/**
-  Classes Interfaces used by other classes for sort
- */
-
-
-template <typename R, typename H=R>
-class CollectionSort
-    : public virtual H
-{
-
-  virtual R& do_sort(const string&) = 0;
-
-public:
-
-  R& sort(const string& ord)
-  {
-    return do_sort(ord);
-  }
-
-  R& sort(const char* ord)
-  {
-    return do_sort(ord);
-  }
-
-  template <typename Ord>
-  R& sort(Ord ord)
-  {
-    R* ret = NULL;
-    for(auto el : ord)
+    mysqlx::CollectionAdd get_op()
     {
-      ret = &do_sort(ord);
+      return mysqlx::CollectionAdd(*m_coll);
     }
-    return *ret;
-  }
+  };
 
-  template <typename Ord, typename...Type>
-  R& sort(Ord ord, const Type...rest)
+}  // internal
+
+
+// ----------------------------------------------------------------------
+
+namespace internal {
+
+  /*
+    Sort interface for collection CRUD operations.
+
+    Note: the actual job of adding sort specification to the underlying
+    task is done by do_sort() method defined by SortBase<> (see crud.h)
+  */
+
+  template <bool limit_with_offset>
+  class CollectionSort
+    : public SortBase<limit_with_offset>
   {
-    do_sort(ord);
-    return sort(rest...);
-  }
+  public:
 
-};
+    Limit<limit_with_offset>& sort(const string& ord_spec)
+    {
+      this->do_sort(ord_spec);
+      return *this;
+    }
+
+    Limit<limit_with_offset>& sort(const char* ord_spec)
+    {
+      this->do_sort(ord_spec);
+      return *this;
+    }
+
+    template <typename Ord>
+    Limit<limit_with_offset>& sort(Ord ord)
+    {
+      for (auto el : ord)
+      {
+        this->do_sort(ord);
+      }
+      return *this;
+    }
+
+    template <typename Ord, typename...Type>
+    Limit<limit_with_offset>& sort(Ord ord, const Type...rest)
+    {
+      this->do_sort(ord);
+      return sort(rest...);
+    }
+
+  };
+
+}  // internal
+
+
+// ----------------------------------------------------------------------
 
 /*
   Removing documents from a collection
   ====================================
+
+  Class CollectionRemoveBase defines the remove() methods which return
+  CollectionRemove operation.
+
+  Note: CollectionRemove does not have any own methods except these
+  derived from CollectionSort<>.
 */
-
-
-/**
-  Operation which removes documents from a collection.
-
-  @todo Sorting and limiting the range of deleted documents.
-*/
-
-typedef Limit<BindExec> CollectionRemoveLimit;
-typedef CollectionSort<CollectionRemoveLimit> CollectionRemoveOrder;
-
-class RemoveExec
-  : public CollectionRemoveOrder
-{
-public:
- BindExec& do_limit(unsigned rows) override;
- CollectionRemoveLimit& do_sort(const string&) override;
-};
 
 
 class CollectionRemove
+  : public internal::CollectionSort<false>
 {
-  Collection &m_coll;
-  RemoveExec m_exec;
-
-  CollectionRemove(Collection &coll)
-    : m_coll(coll)
-  {}
-
 public:
 
-  /// Remove all documents from the collection.
-  virtual CollectionRemoveOrder& remove();
+  /// Create empty remove operation for a given collection.
 
-  /// Remove documents satisfying given expression.
-  virtual CollectionRemoveOrder& remove(const string&);
+  CollectionRemove(Collection &coll);
 
-  friend class Collection;
+  /**
+    Create remove operation for given collection and documents
+    selected by an expression.
+  */
+
+  CollectionRemove(Collection &coll, const string&);
+
+DIAGNOSTIC_PUSH
+
+#if _MSC_VER && _MSC_VER < 1900
+  /*
+    MSVC 2013 has problems with delegating constructors for classes which
+    use virtual inheritance.
+    See: https://www.daniweb.com/programming/software-development/threads/494204/visual-c-compiler-warning-initvbases
+  */
+  DISABLE_WARNING(4100)
+#endif
+
+  CollectionRemove(CollectionRemove &other) : Executable(other) {}
+  CollectionRemove(CollectionRemove &&other) : CollectionRemove(other) {}
+
+DIAGNOSTIC_POP
+
 };
 
+
+namespace internal {
+
+  class CollectionRemoveBase
+    : public virtual CollectionOpBase
+  {
+
+  public:
+
+    /// Remove all documents from the collection.
+    virtual CollectionRemove remove()
+    {
+      return CollectionRemove(*m_coll);
+    }
+
+    /// Remove documents satisfying given expression.
+    virtual CollectionRemove remove(const string &cond)
+    {
+      return CollectionRemove(*m_coll, cond);
+    }
+
+    friend class Collection;
+  };
+
+}  // internal
+
+
+// ----------------------------------------------------------------------
 
 /*
   Searching for documents in a collection
   =======================================
+
+  Class CollectionFindBase defines the find() methods which return
+  CollectionFind operation.
+
+  @todo Projections (.fields())
+  @todo Grouping/aggregation of returned documents.
 */
 
-
-/**
-  Operation which finds documents satisfying given criteria.
-
-  @todo Sorting and limiting the result.
-  @todo Grouping of returned documents.
-*/
-
-
-
-typedef Limit<Offset,BindExec> CollectionFindLimit;
-typedef CollectionSort<CollectionFindLimit> CollectionFindSort;
-
-class FindExec
-  : public CollectionFindSort
-  , public Offset
-{
-  CollectionFindSort& do_sort(const string&) override;
-
-  Offset& do_limit(unsigned rows) override;
-
-  BindExec& do_offset(unsigned rows) override;
-};
 
 class CollectionFind
+  : public internal::CollectionSort<true>
 {
-  Collection &m_coll;
-  FindExec m_exec;
-
-  CollectionFind(Collection &coll)
-    : m_coll(coll)
-  {}
-
 public:
 
-  /// Return all the documents in the collection.
-  CollectionFindSort& find();
+  /// Create operation which returns all documents from a collection.
 
-  /// Find documents that satisfy given expression.
-  CollectionFindSort& find(const string&);
+  CollectionFind(Collection &coll);
 
-  friend class Collection;
+  /**
+    Create opeartion which returns all documents from a collection
+    which satisfy given criteria.
+  */
+
+  CollectionFind(Collection &coll, const string&);
+
+DIAGNOSTIC_PUSH
+
+#if _MSC_VER && _MSC_VER < 1900
+    DISABLE_WARNING(4100)
+#endif
+
+  CollectionFind(CollectionFind &other) : Executable(other) {}
+  CollectionFind(CollectionFind &&other) : CollectionFind(other) {}
+
+DIAGNOSTIC_POP
+
+
 };
 
 
+namespace internal {
+
+  class CollectionFindBase
+    : public virtual CollectionOpBase
+  {
+  public:
+
+    /// Return all the documents in the collection.
+    CollectionFind find()
+    {
+      return CollectionFind(*m_coll);
+    }
+
+    /// Find documents that satisfy given expression.
+    CollectionFind find(const string &cond)
+    {
+      return CollectionFind(*m_coll, cond);
+    }
+
+    friend class Collection;
+  };
+
+}  // internal
+
+
+// ----------------------------------------------------------------------
 
 /*
   Modifying documents in a collection
-  =======================================
+  ===================================
+
+  Class CollectionModifyBase defines the modify() methods which return
+  CollectionModify operation.
+
+  To be precise, modify() methods return CollectionModifyFirst, which
+  is like CollectionModify, but it does not have sorting/limiting
+  metods. Only after specifying the first modification, one gets
+  CollectionModify object which inherits from CollectionSort<>.
 */
 
-typedef Limit<BindExec> CollectionModifyLimit;
-typedef CollectionSort<CollectionModifyLimit> CollectionModifySort;
+class CollectionModify;
 
-class CollectionModifyOp;
-class CollectionModifyInterface
+namespace internal {
 
-{
-protected:
-  virtual CollectionModifyOp& do_set(const Field &field, ExprValue&& val) = 0;
-  virtual CollectionModifyOp& do_arrayInsert(const Field &field, ExprValue&& val) = 0;
-  virtual CollectionModifyOp& do_unset(const Field &field) = 0;
-  virtual CollectionModifyOp& do_arrayAppend(const Field &field, ExprValue&& val) = 0;
-  virtual CollectionModifyOp& do_arrayDelete(const Field &field) = 0;
+  /*
+    Common implementaiton of modification clauses used by CollectionModify
+    and CollectionModifyFirst.
+  */
 
-public:
-  CollectionModifyOp& set(const Field &field, ExprValue val)
-  { return do_set(field, std::move(val)); }
+  class CollectionModifyInterface
+  {
+  protected:
 
-  CollectionModifyOp& unset(const Field &field)
-  { return do_unset(field); }
+    /*
+      This method must be overriden by derived class to return reference
+      to the operation that should be manipulated by the modify methods.
+    */
 
-  CollectionModifyOp& arrayInsert(const Field &field, ExprValue val)
-  { return do_arrayInsert(field, std::move(val)); }
+    virtual CollectionModify& get_op() = 0;
 
-  CollectionModifyOp& arrayAppend(const Field &field, ExprValue val)
-  { return do_arrayAppend(field, std::move(val)); }
+  public:
 
-  CollectionModifyOp& arrayDelete(const Field &field)
-  { return do_arrayDelete(field); }
-};
+    CollectionModify& set(const Field &field, ExprValue &&val);
+    CollectionModify& unset(const Field &field);
+    CollectionModify& arrayInsert(const Field &field, ExprValue &&val);
+    CollectionModify& arrayAppend(const Field &field, ExprValue &&val);
+    CollectionModify& arrayDelete(const Field &field);
 
+  };
 
-class CollectionModifyOp
-: public virtual CollectionModifyInterface
-, public CollectionModifySort
-{
-  CollectionModifyOp& do_set(const Field &field, ExprValue&& val) override;
-  CollectionModifyOp& do_arrayInsert(const Field &field, ExprValue&& val) override;
-  CollectionModifyOp& do_unset(const Field &field) override;
-  CollectionModifyOp& do_arrayAppend(const Field &field, ExprValue&& val) override;
-  CollectionModifyOp& do_arrayDelete(const Field &field) override;
-};
+  class CollectionModifyBase;
+  class CollectionModifyFirst;
 
-class CollectionModifyBase;
+}  // internal
+
 
 class CollectionModify
-: CollectionModifyOp
-, public virtual CollectionModifyInterface
+: public virtual internal::CollectionModifyInterface
+, public internal::CollectionSort<false>
 {
+public:
+
+  /// Create modify operation for all documents in a collection.
 
   CollectionModify(Collection &coll);
 
+  /// Create operation which modifies selected documents in a collection.
+
   CollectionModify(Collection &base, const string &expr);
 
-  CollectionModifyLimit& do_sort(const string&) override;
+DIAGNOSTIC_PUSH
 
-  BindExec& do_limit(unsigned rows) override;
+#if _MSC_VER && _MSC_VER < 1900
+    /*
+    MSVC 2013 has problems with delegating constructors for classes which
+    use virtual inheritance.
+    See: https://www.daniweb.com/programming/software-development/threads/494204/visual-c-compiler-warning-initvbases
+    */
+    DISABLE_WARNING(4100)
+#endif
 
+  CollectionModify(CollectionModify &other) : Executable(other) {}
+  CollectionModify(CollectionModify &&other) : CollectionModify(other) {}
+  CollectionModify(internal::CollectionModifyFirst &&other);
 
+DIAGNOSTIC_POP
 
-public:
+private:
+
+  CollectionModify& get_op() { return *this; }
 
   struct Access;
   friend struct Access;
-  friend class CollectionModifyBase;
+  friend class internal::CollectionModifyBase;
 };
 
 
-
-/**
-  Operation which modifies documents satisfying given criteria.
-
-  @todo Sorting and limiting the result.
-  @todo Grouping of returned documents.
-*/
-
-class CollectionModifyBase
-{
-  Collection &m_coll;
-
-  CollectionModifyBase(Collection &coll)
-    : m_coll(coll)
-  {}
-
-public:
-
-  /// Modify documents.
-  CollectionModify modify()
-  try{
-    return CollectionModify(m_coll);
-  }
-  CATCH_AND_WRAP;
-
-  /// Modify documents that satisfy given expression.
-  CollectionModify modify(const string &expr)
-  try {
-    return CollectionModify(m_coll, expr);
-  }
-  CATCH_AND_WRAP;
-
-  friend class Collection;
-};
+namespace internal {
 
 
+  /*
+    Class CollectionModifyFirst contains CollectionModify
+    but it does not expose sorting/limiting methods.
+  */
 
+  class CollectionModifyFirst
+    : public virtual CollectionModifyInterface
+    , public virtual Executable
+    , CollectionModify
+  {
+  public:
+
+    /*
+      Note: this constructor is needed for the following code to work:
+
+        auto op = coll.modify(...);
+
+      Method coll.modify() returns CollectionModifyFirst object by value
+      and it needs to be moved to the local variable.
+    */
+
+    CollectionModifyFirst(CollectionModifyFirst &&other)
+      : CollectionModify(std::move(other))
+      , Executable(other)
+    {}
+
+    CollectionModifyFirst(const CollectionModifyFirst&) = delete;
+
+  private:
+
+    CollectionModifyFirst(CollectionModify &&other)
+      : CollectionModify(other)
+      , Executable(other)
+    {}
+
+    CollectionModify& get_op()
+    {
+      return *static_cast<CollectionModify*>(this);
+    }
+
+    friend class CollectionModifyBase;
+    friend class mysqlx::CollectionModify;
+  };
+
+
+  class CollectionModifyBase
+    : public virtual CollectionOpBase
+  {
+  public:
+
+    /// Modify all documents.
+
+    CollectionModifyFirst modify()
+    try {
+      return CollectionModify(*m_coll);
+    }
+    CATCH_AND_WRAP;
+
+    /// Modify documents that satisfy given expression.
+
+    CollectionModifyFirst modify(const string &expr)
+    try {
+      return CollectionModify(*m_coll, expr);
+    }
+    CATCH_AND_WRAP;
+
+    friend class Collection;
+  };
+
+}  // internal
+
+
+DIAGNOSTIC_PUSH
+
+#if _MSC_VER && _MSC_VER < 1900
+  DISABLE_WARNING(4100)
+#endif
+
+inline
+CollectionModify::CollectionModify(internal::CollectionModifyFirst &&other)
+  : CollectionModify(other.get_op())
+{}
+
+DIAGNOSTIC_POP
 
 }  // mysqlx
 
