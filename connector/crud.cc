@@ -97,7 +97,6 @@ template<>
 void SortBase<true>::do_sort(const mysqlx::string &spec)
 {
   get_impl(this).m_order.emplace_back(spec);
-  return *this;
 }
 
 }  // internal
