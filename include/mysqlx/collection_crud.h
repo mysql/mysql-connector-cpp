@@ -338,6 +338,50 @@ namespace internal {
 
 // ----------------------------------------------------------------------
 
+namespace internal {
+
+
+class CollectionFields
+    : public CollectionSort<true>
+{
+
+  CollectionSort<true>& do_fields(const string&);
+
+public:
+
+  CollectionSort<true>& fields(const string& ord)
+  {
+    return do_fields(ord);
+  }
+
+  CollectionSort<true>& fields(const char* ord)
+  {
+    return do_fields(ord);
+  }
+
+  template <typename Ord>
+  CollectionSort<true>& fields(const Ord& ord)
+  {
+    for(auto el : ord)
+    {
+      fields(el);
+    }
+    return *this;
+  }
+
+  template <typename Ord, typename...Type>
+  CollectionSort<true>& fields(const Ord& ord, const Type&...rest)
+  {
+    fields(ord);
+    return fields(rest...);
+  }
+
+};
+
+}  // internal
+
+
+
 /*
   Removing documents from a collection
   ====================================
@@ -426,7 +470,7 @@ namespace internal {
 
 
 class CollectionFind
-  : public internal::CollectionSort<true>
+  : public internal::CollectionFields
 {
 public:
 

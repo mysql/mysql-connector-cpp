@@ -333,12 +333,13 @@ class Op_collection_remove
   cdk::Reply* send_command()
   {
     m_reply =
-        new cdk::Reply(get_cdk_session().coll_remove(m_coll,
-                                                     has_expr ? &m_expr : nullptr,
-                                                     m_order.empty() ? nullptr : this, // order_by spec
-                                                     m_has_limit ? this : nullptr,  // limit spec
-                                                     get_params())
-                       );
+        new cdk::Reply(get_cdk_session().coll_remove(
+                              m_coll,
+                              has_expr ? &m_expr : nullptr,
+                              m_order.empty() ? nullptr : this, // order_by spec
+                              m_has_limit ? this : nullptr,  // limit spec
+                              get_params())
+                      );
     return m_reply;
   }
 
@@ -378,7 +379,8 @@ CATCH_AND_WRAP
 */
 
 class Op_collection_find
-  : public Op_sort<parser::Parser_mode::DOCUMENT>
+    : public Op_sort<parser::Parser_mode::DOCUMENT>
+    , public Op_projection<parser::Parser_mode::DOCUMENT>
 {
   Table_ref m_coll;
   parser::Expression_parser m_expr;
@@ -404,14 +406,16 @@ class Op_collection_find
   cdk::Reply* send_command()
   {
     m_reply =
-        new cdk::Reply(get_cdk_session().coll_find(m_coll,
-                                                   has_expr ? &m_expr : nullptr,
-                                                   nullptr,  //projection
-                                                   m_order.empty() ? nullptr : this,  // order_by spec
-                                                   nullptr,  // group_by
-                                                   nullptr,  // having
-                                                   m_has_limit ? this : nullptr,  // limit spec
-                                                   get_params()));
+        new cdk::Reply(get_cdk_session().coll_find(
+                            m_coll,
+                            has_expr ? &m_expr : nullptr,
+                            has_projection()  ? this : nullptr, //projection
+                            m_order.empty() ? nullptr : this,  // order_by spec
+                            nullptr,  // group_by
+                            nullptr,  // having
+                            m_has_limit ? this : nullptr,  // limit spec
+                            get_params())
+                      );
     return m_reply;
   }
 
@@ -441,6 +445,28 @@ try {
   Executable::Access::reset_task(*this, new Op_collection_find(coll, expr));
 }
 CATCH_AND_WRAP
+
+
+namespace mysqlx {
+
+  template <>
+  struct Crud_impl<internal::CollectionFields>
+  {
+    typedef Op_collection_find type;
+  };
+
+namespace internal{
+
+  CollectionSort<true>& CollectionFields::do_fields(const string& field)
+  {
+    get_impl(this).add_projection(field);
+    return *this;
+  }
+
+
+} // mysqlx
+} // internal
+
 
 
 // --------------------------------------------------------------------
@@ -588,11 +614,9 @@ class Op_collection_modify
     {
       case Field_Op::SET:
         {
-
           Value_prc value_prc(m_update_it->m_val, parser::Parser_mode::DOCUMENT);
 
           value_prc.process_if(prc.set(&field));
-
 
         }
         break;

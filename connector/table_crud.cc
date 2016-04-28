@@ -223,6 +223,7 @@ void Op_table_insert::process(cdk::Expr_list::Processor &lp) const
 
 class Op_table_select
     : public Op_sort<parser::Parser_mode::TABLE>
+    , public Op_projection<parser::Parser_mode::TABLE>
 {
   typedef cdk::string string;
 
@@ -236,14 +237,16 @@ class Op_table_select
       m_expr.reset(new parser::Expression_parser(Parser_mode::TABLE, m_where));
 
     return
-        new cdk::Reply(get_cdk_session().table_select(m_table,
-                                                      m_expr.get(),
-                                                      nullptr,
-                                                      m_order.empty() ? nullptr : this,
-                                                      nullptr,
-                                                      nullptr,
-                                                      m_has_limit ? this : nullptr,
-                                                      get_params())
+        new cdk::Reply(get_cdk_session().table_select(
+                                          m_table,
+                                          m_expr.get(),
+                                          has_projection() ? this : nullptr,
+                                          m_order.empty() ? nullptr : this,
+                                          nullptr,
+                                          nullptr,
+                                          m_has_limit ? this : nullptr,
+                                          get_params()
+                                                     )
                        );
   }
 
@@ -274,6 +277,10 @@ void TableSelect::prepare(Table &table)
   Executable::Access::reset_task(*this, new Op_table_select(table));
 }
 
+void TableSelect::add_proj(const string& projection)
+{
+  get_impl(this).add_projection(projection);
+}
 
 internal::TableSort<true>& TableSelect::where(const mysqlx::string &expr)
 {

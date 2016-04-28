@@ -690,6 +690,46 @@ TEST_F(Crud, order_limit)
 
 }
 
+TEST_F(Crud, projections)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("c1", true);
+
+  add_data(coll);
+
+  std::vector<string> fields;
+  fields.push_back("age AS Age1");
+  fields.push_back("age AS Age2");
+
+  DocResult docs = coll.find()
+                       .fields("age AS age", "2016-age AS birthYear", fields)
+                       .execute();
+
+
+  for (DbDoc doc = docs.fetchOne();
+       !doc.isNull();
+       doc = docs.fetchOne())
+  {
+    int rows = 0;
+    for (auto col : doc)
+    {
+      ++rows;
+      cout << col << endl;
+    }
+    EXPECT_EQ(4, rows);
+    EXPECT_EQ( 2016-(int)doc["age"],(int)doc["birthYear"] );
+  }
+
+}
+
 
 TEST_F(Crud, existence_checks)
 {
@@ -913,6 +953,58 @@ TEST_F(Crud, table_order_limit)
     EXPECT_EQ(5, (int)r[2]);
     EXPECT_TRUE(result.fetchOne().isNull());
   }
+}
+
+
+TEST_F(Crud, table_projections)
+{
+
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  sql("DROP TABLE IF EXISTS test.crud_table");
+  sql(
+    "CREATE TABLE test.crud_table("
+    "  _id VARCHAR(32),"
+    "  name VARCHAR(32),"
+    "  age INT"
+    ")");
+
+  Schema sch = sess.getSchema("test");
+  Table tbl = sch.getTable("crud_table");
+
+
+  //Insert values on table
+
+  std::vector<string> cols = {"_id"};
+  //Using containers (vectors, const char* and string)
+  auto insert = tbl.insert(cols, "age", string("name"));
+  insert.values("ID#1", 10, "Foo");
+  insert.values("ID#2", 5 , "Bar" );
+  insert.values("ID#3", 3 , "Baz");
+  insert.execute();
+
+  std::vector<string> fields;
+  fields.push_back("age AS Age1");
+  fields.push_back("age AS Age2");
+
+  RowResult result = tbl.select("age", "2016-age AS birth_year", fields)
+                     .orderBy("age ASC")
+                     .execute();
+
+  for (Row r = result.fetchOne(); !r.isNull(); r = result.fetchOne())
+  {
+    EXPECT_EQ(4, r.colCount());
+    EXPECT_EQ(2016-static_cast<int>(r[0]), static_cast<int>(r[1]));
+  }
+
+
+
 }
 
 

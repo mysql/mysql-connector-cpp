@@ -653,6 +653,59 @@ public:
 };
 
 
+template <parser::Parser_mode::value PM>
+class Op_projection
+    : public cdk::Projection
+    , public cdk::Expression::Document
+{
+
+  std::vector<cdk::string> m_projections;
+
+public:
+
+  bool has_projection() { return !m_projections.empty(); }
+
+  void add_projection(const cdk::string& field)
+  {
+    m_projections.push_back(field);
+  }
+
+
+  void process(cdk::Expression::Document::Processor& prc) const
+  {
+    prc.doc_begin();
+
+    for (cdk::string field : m_projections)
+    {
+      parser::Projection_parser expr_parser(PM, field);
+      expr_parser.process(prc);
+    }
+
+    prc.doc_end();
+
+  }
+
+  // cdk::Order_by interface
+  void process(cdk::Projection::Processor& prc) const
+  {
+    prc.list_begin();
+
+    for (cdk::string el : m_projections)
+    {
+
+      parser::Projection_parser order_parser(PM, el);
+      auto prc_el = prc.list_el();
+      if (prc_el)
+        order_parser.process(*prc_el);
+
+    }
+
+    prc.list_end();
+
+  }
+
+};
+
 }
 
 #endif

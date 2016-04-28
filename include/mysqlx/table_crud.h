@@ -370,11 +370,33 @@ DIAGNOSTIC_PUSH
     prepare(table);
   }
 
-  TableSelect(Table &table, const string &cond) : TableSelect(table)
+  template <typename...PROJ>
+  TableSelect(Table &table, const PROJ&... proj) : TableSelect(table)
   {
-    // TODO: After constructing this way, only TableSort methods should work.
-    where(cond);
+    add_proj(proj...);
   }
+
+  void add_proj(const string& projection);
+  void add_proj(const char* projection)
+  {
+    add_proj(string(projection));
+  }
+
+  template <typename Proj>
+  void add_proj(const Proj& proj)
+  {
+    for(auto el : proj)
+    {
+      add_proj(el);
+    }
+  }
+  template <typename ... PROJ>
+  void add_proj(const string& projection, const PROJ&...rest)
+  {
+    add_proj(projection);
+    add_proj(rest...);
+  }
+
 
   TableSelect(TableSelect &other) : Executable(other) {}
   TableSelect(TableSelect &&other) : TableSelect(other) {}
@@ -393,9 +415,10 @@ namespace internal {
   {
   public:
 
-    TableSelect select()
+    template<typename ...PROJ>
+    TableSelect select(const PROJ&...proj)
     {
-      return TableSelect(*m_table);
+      return TableSelect(*m_table, proj...);
     }
 
     friend class Table;
