@@ -804,7 +804,7 @@ TEST_F(Crud, table)
 
 
     EXPECT_EQ(string("Foo"),(string)r[1]);
-    EXPECT_EQ(10,(int)r.get(2));
+    EXPECT_EQ(10, (int)r[2]);
     EXPECT_EQ(true, result.fetchOne().isNull());
   }
 

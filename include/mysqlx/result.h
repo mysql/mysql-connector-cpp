@@ -199,36 +199,6 @@ class Row
   Row(std::shared_ptr<Impl> &&impl) : m_impl(std::move(impl))
   {}
 
-  class Setter
-  {
-    Row         &m_row;
-    col_count_t m_pos;
-
-    Setter(Row &row, col_count_t pos)
-      : m_row(row), m_pos(pos)
-    {}
-
-  public:
-
-    Setter& operator=(const Value &val)
-    {
-      m_row.set(m_pos, val);
-      return *this;
-    }
-
-    operator Value() const
-    {
-      return m_row.get(m_pos);
-    }
-
-    template<typename T> operator T()
-    {
-      return (T)m_row.get(m_pos);
-    }
-
-    friend class Row;
-  };
-
   void set_values(col_count_t pos, const Value &val)
   {
     set(pos, val);
@@ -255,22 +225,66 @@ public:
 
   col_count_t colCount() const;
 
-  /// Get raw bytes representing value of row field at position `pos`.
+
+  /**
+    Get raw bytes representing value of row field at position `pos`.
+
+    @returns null bytes range if given field is NULL.
+    @throws out_of_range if given row was not fetched from server.
+  */
+
   bytes getBytes(col_count_t pos) const;
 
-  /// Get value of row field at position `pos`.
-  Value get(col_count_t pos) const;
 
-  /// Set value of row field at position `pos`.
-  void set(col_count_t pos, const Value&);
+  /**
+    Get reference to row field at position `pos`.
 
-  /// Convenience operator equivalent to `get()`.
-  Value operator[](col_count_t pos) const
-  { return get(pos); }
+    @throws out_of_range if given field does not exist in the row.
+  */
 
-  Setter operator[](col_count_t pos)
+  Value& get(col_count_t pos);
+
+
+  /**
+    Set value of row field at position `pos`.
+
+    Creates new field if it does not exist.
+
+    @returns Reference to the field that was set.
+  */
+
+  Value& set(col_count_t pos, const Value&);
+
+  /**
+    Get const reference to row field at position `pos`.
+
+    This is const version of method `get()`.
+
+    @throws out_of_range if given field does not exist in the row.
+  */
+
+  const Value& operator[](col_count_t pos) const
   {
-    return Setter(*this, pos);
+    return const_cast<Row*>(this)->get(pos);
+  }
+
+
+  /**
+    Get modifiable reference to row field at position `pos`.
+
+    The field is created if it does not exist. In this case
+    the initial value of the field is NULL.
+  */
+
+  Value& operator[](col_count_t pos)
+  {
+    try {
+      return get(pos);
+    }
+    catch (const out_of_range&)
+    {
+      return set(pos, Value());
+    }
   }
 
   /// Check if this row contains fields or is null.
@@ -280,14 +294,7 @@ public:
   void clear();
 
   friend class RowResult;
-  friend std::ostream& operator<<(std::ostream &out, const Row::Setter &rs);
 };
-
-inline
-std::ostream& operator<<(std::ostream &out, const Row::Setter &rs)
-{
-  return (out << (Value)rs);
-}
 
 
 /**

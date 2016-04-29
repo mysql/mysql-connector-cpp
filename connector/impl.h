@@ -298,9 +298,9 @@ class DbDoc::Impl
     return m_map.end() != m_map.find(fld);
   }
 
-  Value& get(const Field &fld)
+  const Value& get(const Field &fld) const
   {
-    prepare();
+    const_cast<Impl*>(this)->prepare();
     return m_map.at(fld);
   }
 

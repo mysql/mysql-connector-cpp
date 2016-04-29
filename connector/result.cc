@@ -265,12 +265,19 @@ private:
   }
 
   // Get value of field at given position after converting to Value.
+  // @throws std::out_of_range if given column does not exist in the row.
 
   template<cdk::Type_info T>
-  const Value get(col_count_t pos) const
+  Value& get(col_count_t pos)
   {
     const Format_info &fi = m_mdata->get_format(pos);
-    return convert(m_data.at(pos).data(), fi.get<T>());
+
+    m_vals.emplace(
+      pos,
+      convert(m_data.at(pos).data(), fi.get<T>())
+    );
+
+    return m_vals.at(pos);
   }
 
   // Convert raw bytes to Value using given encoding format description.
@@ -313,28 +320,31 @@ bytes Row::getBytes(col_count_t pos) const
 }
 
 
-Value Row::get(mysqlx::col_count_t pos) const
+Value& Row::get(mysqlx::col_count_t pos)
 {
-  const Impl &impl = get_impl();
+  Impl &impl = get_impl();
 
-  // First try to return explicit value stored in the row.
+  /*
+    First see if field value is already stored in
+    m_vals array.
+  */
 
   try {
     return impl.m_vals.at(pos);
   }
-  catch (std::out_of_range&)
-  {}
+  catch (const std::out_of_range&)
+  {
+    /*
+      If we have data from server (meta-data is set) then we convert
+      it into the value below - otherwise we throw out_of_range error.
+    */
+    if (!impl.m_mdata)
+      throw;
+  }
 
   /*
-    If no explicit value is set, and we have no data from
-    server (meta-data is not set) return null value.
-  */
-
-  if (!impl.m_mdata)
-    return Value();
-
-  /*
-    Otherwise convert raw data from server into a value.
+    We have data from server - convert it into a value and store
+    in m_vals.
   */
 
   try {
@@ -352,18 +362,18 @@ Value Row::get(mysqlx::col_count_t pos) const
       // TODO: User-defined conversions (also to user-defined types)
 
     default:
-      return Value::Access::mk_raw(data);
+      return set(pos, Value::Access::mk_raw(data));
     }
   }
   catch (std::out_of_range&)
   {
-    // null value
-    return Value();
+    // set to NULL
+    return set(pos, Value());
   }
 }
 
 
-void Row::set(col_count_t pos, const Value &val)
+Value& Row::set(col_count_t pos, const Value &val)
 {
   if (!m_impl)
     m_impl = std::make_shared<Impl>();
@@ -374,6 +384,8 @@ void Row::set(col_count_t pos, const Value &val)
 
   if (pos + 1 > impl.m_col_count)
     impl.m_col_count = pos + 1;
+
+  return impl.m_vals.at(pos);
 }
 
 void Row::clear()

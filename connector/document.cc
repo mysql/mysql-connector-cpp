@@ -87,10 +87,10 @@ bool DbDoc::hasField(const Field &fld)
   CATCH_AND_WRAP
 }
 
-Value DbDoc::operator[](const Field &fld)
+const Value& DbDoc::operator[](const Field &fld) const
 {
   try {
-    return static_cast<const Value&>(m_impl->get(fld));
+    return m_impl->get(fld);
   }
   CATCH_AND_WRAP
 }

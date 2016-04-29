@@ -125,9 +125,9 @@ public:
 
   /// Return value of given field.
 
-  virtual Value operator[](const Field&);
-  Value operator[](const char *name);
-  Value operator[](const wchar_t *name);
+  virtual const Value& operator[](const Field&) const;
+  const Value& operator[](const char *name) const;
+  const Value& operator[](const wchar_t *name) const;
 
   /// Print JSON description of the document.
 
@@ -284,9 +284,13 @@ public:
     returns value of given field of the document.
   */
 
-  Value operator[](const Field&);
-  Value operator[](const char *name) { return (*this)[Field(name)]; }
-  Value operator[](const wchar_t *name) { return (*this)[Field(name)]; }
+  const Value& operator[](const Field&) const;
+
+  const Value& operator[](const char *name) const
+  { return (*this)[Field(name)]; }
+
+  const Value& operator[](const wchar_t *name) const
+  { return (*this)[Field(name)]; }
 
 
 //  typedef std::vector<Value>::iterator iterator;
@@ -304,8 +308,9 @@ public:
   iterator end();
   const_iterator end() const;
   size_t   elementCount() const;
-  Value    operator[](unsigned);
-  Value    operator[](int pos)
+
+  const Value&  operator[](unsigned) const;
+  const Value&  operator[](int pos) const
   {
     assert(pos >= 0);
     return operator[]((unsigned)pos);
@@ -405,13 +410,13 @@ ExprValue expr(V s)
 
 
 inline
-Value DbDoc::operator[](const char *name)
+const Value& DbDoc::operator[](const char *name) const
 {
   return (*this)[Field(name)];
 }
 
 inline
-Value DbDoc::operator[](const wchar_t *name)
+const Value& DbDoc::operator[](const wchar_t *name) const
 {
   return (*this)[Field(name)];
 }
@@ -565,7 +570,7 @@ bool Value::hasField(const Field &fld)
 }
 
 inline
-Value Value::operator[](const Field &fld)
+const Value& Value::operator[](const Field &fld) const
 {
   try {
     check_type(DOCUMENT);
@@ -619,7 +624,7 @@ Value::const_iterator Value::end() const
 }
 
 inline
-Value Value::operator[](unsigned pos)
+const Value& Value::operator[](unsigned pos) const
 try {
  check_type(ARRAY);
  return m_arr->at(pos);

@@ -193,7 +193,7 @@ void Op_table_insert::process(cdk::Expr_list::Processor &lp) const
     if (!vprc)
       continue;
 
-    const Value &val = m_cur_row->get(pos);
+    const Value &val = (*m_cur_row)[pos];
 
     switch (val.getType())
     {

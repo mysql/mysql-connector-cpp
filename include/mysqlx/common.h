@@ -174,6 +174,8 @@ public:
 };
 
 
+using std::out_of_range;
+
 /*
   TODO: Derive from std::system_error and introduce proper
   error codes.
