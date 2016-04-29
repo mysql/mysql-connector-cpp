@@ -277,7 +277,7 @@ void TableSelect::prepare(Table &table)
   Executable::Access::reset_task(*this, new Op_table_select(table));
 }
 
-void TableSelect::add_proj(const string& projection)
+void TableSelect::add_proj(const mysqlx::string& projection)
 {
   get_impl(this).add_projection(projection);
 }
