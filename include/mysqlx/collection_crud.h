@@ -342,21 +342,23 @@ namespace internal {
 
 
 class CollectionFields
-    : public CollectionSort<true>
+  : public CollectionSort<true>
 {
 
-  CollectionSort<true>& do_fields(const string&);
+  void do_fields(const string&);
 
 public:
 
   CollectionSort<true>& fields(const string& ord)
   {
-    return do_fields(ord);
+    do_fields(ord);
+    return *this;
   }
 
   CollectionSort<true>& fields(const char* ord)
   {
-    return do_fields(ord);
+    do_fields(ord);
+    return *this;
   }
 
   template <typename Ord>
@@ -364,7 +366,7 @@ public:
   {
     for(auto el : ord)
     {
-      fields(el);
+      do_fields(el);
     }
     return *this;
   }
@@ -464,7 +466,6 @@ namespace internal {
   Class CollectionFindBase defines the find() methods which return
   CollectionFind operation.
 
-  @todo Projections (.fields())
   @todo Grouping/aggregation of returned documents.
 */
 

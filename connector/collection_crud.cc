@@ -457,10 +457,9 @@ namespace mysqlx {
 
 namespace internal{
 
-  CollectionSort<true>& CollectionFields::do_fields(const string& field)
+  void CollectionFields::do_fields(const mysqlx::string& field)
   {
     get_impl(this).add_projection(field);
-    return *this;
   }
 
 

@@ -990,16 +990,16 @@ TEST_F(Crud, table_projections)
   insert.execute();
 
   std::vector<string> fields;
-  fields.push_back("age AS Age1");
-  fields.push_back("age AS Age2");
+  fields.push_back("age");
+  fields.push_back("2016-age AS birth_year");
 
-  RowResult result = tbl.select("age", "2016-age AS birth_year", fields)
+  RowResult result = tbl.select(fields, "age AS dummy")
                      .orderBy("age ASC")
                      .execute();
 
   for (Row r = result.fetchOne(); !r.isNull(); r = result.fetchOne())
   {
-    EXPECT_EQ(4, r.colCount());
+    EXPECT_EQ(3, r.colCount());
     EXPECT_EQ(2016-static_cast<int>(r[0]), static_cast<int>(r[1]));
   }
 

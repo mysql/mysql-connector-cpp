@@ -670,7 +670,6 @@ public:
     m_projections.push_back(field);
   }
 
-
   void process(cdk::Expression::Document::Processor& prc) const
   {
     prc.doc_begin();
@@ -685,7 +684,6 @@ public:
 
   }
 
-  // cdk::Order_by interface
   void process(cdk::Projection::Processor& prc) const
   {
     prc.list_begin();

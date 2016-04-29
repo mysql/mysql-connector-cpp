@@ -390,8 +390,8 @@ DIAGNOSTIC_PUSH
       add_proj(el);
     }
   }
-  template <typename ... PROJ>
-  void add_proj(const string& projection, const PROJ&...rest)
+  template <typename PROJ, typename ... REST>
+  void add_proj(const PROJ& projection, const REST&...rest)
   {
     add_proj(projection);
     add_proj(rest...);
