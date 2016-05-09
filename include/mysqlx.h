@@ -43,6 +43,7 @@
 #include "mysqlx/collection_crud.h"
 #include "mysqlx/table_crud.h"
 
+#include <list>
 
 namespace cdk {
 
@@ -137,7 +138,46 @@ public:
 
   Collection getCollection(const string&, bool check_exists= false);
 
+  /**
+    Return `Table` object representing table and view in
+    the shcema. If `check_exists` is true and table
+    does not exist, an error will be thrown.
+    Otherwise, if table does not exists,
+    the returned object will refer
+    to non-existent collection.
+
+    @note Checking existence of the table involves
+    communication with the server. If `check_exists` is false,
+    on the other hand, no I/O is involved when creating a
+    `Table` instance.
+  */
+
   Table getTable(const string&, bool check_existence = false);
+
+  /**
+    Return list of `Collection` object representing collection in
+    the shcema.
+  */
+
+  std::list<Collection> getCollections();
+
+  /**
+    Return list of collection in the shcema.
+  */
+
+  std::list<string> getCollectionNames();
+
+  /**
+    Return list of `Table` object representing table and view in
+    the shcema.
+  */
+
+  std::list<Table> getTables();
+
+  /**
+    Return list of tables and views in the shcema.
+  */
+  std::list<string> getTableNames();
 
   friend class Collection;
   friend class Task;
@@ -242,6 +282,7 @@ class Table
 {
   Schema m_schema;
   const string m_name;
+  enum { YES, NO, UNDEFINED} m_isview = UNDEFINED;
 
 public:
 
@@ -250,8 +291,16 @@ public:
     , m_schema(sch), m_name(name)
   {}
 
+  Table(const Schema &sch, const string &name, bool isView)
+    : Table(sch, name)
+  {
+    m_isview = isView ? YES : NO;
+  }
+
   const string& getName() const { return m_name; }
   const Schema& getSchema() const { return m_schema; }
+
+  bool isView();
 
   friend class Task;
 };
@@ -305,7 +354,48 @@ public:
     schema.
   */
 
+  Schema createSchema(const string &name, bool reuse = false);
+
+  /**
+    Get named schema object in a given session.
+
+    The object does have to exist in the database.
+    Errors will be thrown if one tries to use non-existing
+    schema with check_existence = true.
+  */
+
   Schema getSchema(const string&, bool check_existence = false);
+
+  /**
+    Get list of schema object in a given session.
+  */
+
+  std::list<Schema> getSchemas();
+
+  /**
+    Drop the schema.
+
+    Errors will be thrown if schema doesn't exist,
+  */
+
+  void   dropSchema(const string &name);
+
+  /**
+    Drop a table from a schema.
+
+    Errors will be thrown if table doesn't exist,
+  */
+
+  void   dropTable(const string& schema, const string& table);
+
+  /**
+    Drop a collection from a schema.
+
+    Errors will be thrown if collection doesn't exist,
+  */
+
+  void   dropCollection(const string& schema, const string& collection);
+
 
 private:
 
