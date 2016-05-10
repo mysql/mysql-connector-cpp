@@ -477,42 +477,71 @@ namespace internal{
 
 class Field_parser
     : public cdk::Doc_path
+    , cdk::Expression::Processor
+    , cdk::Expression::Processor::Scalar_prc
 {
 
+  parser::Doc_path m_doc_path;
 
-  parser::Stored_any m_any;
+  //TODO proper errors on unexpected calls
+
+  //Expression_processor
+  Scalar_prc* scalar() override { return this; }
+  List_prc* arr() override {THROW("Unexpected Document Path"); return NULL; }
+  Doc_prc* doc() override {THROW("Unexpected Document Path"); return NULL; }
+
+
+  //Scalar_prc implementation
+  Value_prc*  val() override {THROW("Unexpected Document Path"); return NULL; }
+
+  Args_prc*   op(const char*) override
+  { THROW("Unexpected Document Path"); return NULL; }
+
+  Args_prc*   call(const Object_ref&) override
+  { THROW("Unexpected Document Path"); return NULL; }
+
+  void ref(const Column_ref&, const cdk::Doc_path*) override
+  { THROW("Unexpected Document Path"); }
+
+  void ref(const cdk::Doc_path& path) override
+  { m_doc_path = path; }
+
+  void param(const string&) override
+  { THROW("Unexpected Document Path"); }
+
+  void param(uint16_t) override
+  { THROW("Unexpected Document Path"); }
+
+  void var(const string&) override
+  { THROW("Unexpected Document Path"); }
+
 
   parser::Expression_parser expr_parser;
-
-//  cdk::string m_field;
 
 public:
   Field_parser(const Field &field)
     : expr_parser(parser::Parser_mode::DOCUMENT, field)
   {
-    expr_parser.process(m_any);
-    if (m_any.m_scalar.get() == nullptr &&
-        m_any.m_scalar->m_doc_path.length() != 0)
-      THROW("Expected document path!");
+    expr_parser.process(*this);
   }
 
   virtual unsigned length() const override
   {
-    return m_any.m_scalar->m_doc_path.length();
+    return m_doc_path.length();
   }
 
   virtual Type     get_type(unsigned pos) const override
   {
-    return m_any.m_scalar->m_doc_path.get_type(pos);
+    return m_doc_path.get_type(pos);
   }
 
   virtual const cdk::string* get_name(unsigned pos) const override
   {
-    m_any.m_scalar->m_doc_path.get_name(pos);
+    return m_doc_path.get_name(pos);
   }
   virtual const uint32_t* get_index(unsigned pos) const override
   {
-    return m_any.m_scalar->m_doc_path.get_index(pos);
+    return m_doc_path.get_index(pos);
   }
 };
 
