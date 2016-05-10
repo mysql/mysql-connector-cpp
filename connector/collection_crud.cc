@@ -479,32 +479,40 @@ class Field_parser
     : public cdk::Doc_path
 {
 
-  cdk::string m_field;
+
+  parser::Stored_any m_any;
+
+  parser::Expression_parser expr_parser;
+
+//  cdk::string m_field;
 
 public:
   Field_parser(const Field &field)
-    : m_field(field)
-  {}
+    : expr_parser(parser::Parser_mode::DOCUMENT, field)
+  {
+    expr_parser.process(m_any);
+    if (m_any.m_scalar.get() == nullptr &&
+        m_any.m_scalar->m_doc_path.length() != 0)
+      THROW("Expected document path!");
+  }
 
   virtual unsigned length() const override
   {
-    return 1;
+    return m_any.m_scalar->m_doc_path.length();
   }
 
-  virtual Type     get_type(unsigned /*pos*/) const override
+  virtual Type     get_type(unsigned pos) const override
   {
-    return MEMBER;
+    return m_any.m_scalar->m_doc_path.get_type(pos);
   }
 
   virtual const cdk::string* get_name(unsigned pos) const override
   {
-    if (pos == 0)
-      return &m_field;
-    return NULL;
+    m_any.m_scalar->m_doc_path.get_name(pos);
   }
-  virtual const uint32_t* get_index(unsigned /*pos*/) const override
+  virtual const uint32_t* get_index(unsigned pos) const override
   {
-    return NULL;
+    return m_any.m_scalar->m_doc_path.get_index(pos);
   }
 };
 

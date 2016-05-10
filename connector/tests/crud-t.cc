@@ -1141,3 +1141,29 @@ TEST_F(Crud, move)
 }
 
 #endif
+
+
+TEST_F(Crud, doc_path)
+{
+
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("coll",true);
+
+  coll.add( "{\"level1\": {\"level2\":\"value 2\"}}").execute();
+
+  coll.modify().set("level1.level2 + level1.level2", "newvalue" ).execute();
+
+  DocResult docs = coll.find().execute();
+
+  DbDoc doc = docs.fetchOne();
+
+  EXPECT_EQ(string("newvalue"), (string)doc["level1"]["level2"]);
+
+
+}
