@@ -59,6 +59,28 @@ class Schema;
 class Collection;
 class Table;
 
+/**
+  List_initializer class is used to initialize user std::vector, std::list or
+  own list imlpementations, as long as initialized by iterators of defied type
+  */
+
+template <typename T>
+struct List_init
+{
+   std::forward_list<T> m_data;
+
+   template <typename I>
+   List_init(const I& i)
+     : m_data(std::begin(i), std::end(i))
+   {}
+
+   template<typename U>
+   operator U()
+   {
+     return U(m_data.begin(), m_data.end());
+   }
+};
+
 
 /**
   Represents a schema in a given XSession.
@@ -139,12 +161,12 @@ public:
   Collection getCollection(const string&, bool check_exists= false);
 
   /**
-    Return `Table` object representing table and view in
+    Return `Table` object representing table or view in
     the shcema. If `check_exists` is true and table
     does not exist, an error will be thrown.
     Otherwise, if table does not exists,
     the returned object will refer
-    to non-existent collection.
+    to non-existent table.
 
     @note Checking existence of the table involves
     communication with the server. If `check_exists` is false,
@@ -155,29 +177,29 @@ public:
   Table getTable(const string&, bool check_existence = false);
 
   /**
-    Return list of `Collection` object representing collection in
+    Return list of `Collection` object representing collections in
     the shcema.
   */
 
   std::list<Collection> getCollections();
 
   /**
-    Return list of collection in the shcema.
+    Return list of names of collections in the schema.
   */
 
-  std::list<string> getCollectionNames();
+  List_init<string> getCollectionNames();
 
   /**
-    Return list of `Table` object representing table and view in
+    Return list of `Table` object representing tables and views in
     the shcema.
   */
 
-  std::list<Table> getTables();
+  List_init<Table> getTables();
 
   /**
     Return list of tables and views in the shcema.
   */
-  std::list<string> getTableNames();
+  List_init<string> getTableNames();
 
   friend class Collection;
   friend class Task;
@@ -359,7 +381,6 @@ public:
   /**
     Get named schema object in a given session.
 
-    The object does have to exist in the database.
     Errors will be thrown if one tries to use non-existing
     schema with check_existence = true.
   */
@@ -367,7 +388,7 @@ public:
   Schema getSchema(const string&, bool check_existence = false);
 
   /**
-    Get list of schema object in a given session.
+    Get list of schema objects in a given session.
   */
 
   std::list<Schema> getSchemas();

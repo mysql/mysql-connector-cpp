@@ -79,9 +79,8 @@ cdk::Session& XSession::get_cdk_session()
 
 
 /*
-  Class which acts as query parameter source, passing two parameters:
-  1. schema name
-  2. schema object name
+  Class which acts as query parameter source, passing an arbitrary list of
+  string parameters
 */
 
 class Args
@@ -105,6 +104,8 @@ class Args
 
 public:
 
+  Args() = default;
+
   template <typename... A>
   Args(A... args)
   {
@@ -124,176 +125,164 @@ public:
   }
 };
 
-class Create_args
-  : public Args
-{
-
-public:
-
-  Create_args(const string &schema, const string &name)
-    : Args(schema, name)
-  {}
-
-};
-
 
 // ---------------------------------------------------------------------
 
 
 /*
-  Code to check existence of data store objects.
+  Code to fetch list of SCHEMA, TABLE and COLLECTION.
 
-  Checks are done by querying INFORMATION_SCHEMA database. Sending
-  appropriate query is implemented by check_query<T> class which derives
-  from cdk::Reply (T is the type of object to check).
+  Checks are done by querying INFORMATION_SCHEMA database, or using SQL or admin
+  commands. Sending appropriate query is implemented by list_query<T> class
+  which derives from cdk::Reply (T is the type of object to check).
+  Each list_query object implements a static method add_data() which receives
+  data from cdk::Reply processor
 */
 
-enum obj_type { TABLE, SCHEMA };
+enum obj_type { TABLE, SCHEMA, COLLECTION };
 
-template <obj_type> struct check_query;
+template <obj_type> struct list_query;
 
-template <>
-struct check_query<SCHEMA>
-  : public Args
-  , public cdk::Reply
+template <typename E>
+struct list_query_base
+    : public cdk::Row_processor
 {
+  /*
+     It will be called for each row with the correspondant data and passing the
+     difined list element (template type).
+     If class implementing method returns false, the rest of row data is skipped
+     and the element not added to the list.
+   */
+  virtual bool field_data(E&, size_t col, cdk::string&&) = 0;
 
-  typedef const string& Args_t;
 
-  check_query(cdk::Session &sess, Args_t name)
-    : Args(name)
-    , cdk::Reply(sess.sql(
-        L"SELECT 1 FROM INFORMATION_SCHEMA.SCHEMATA"
-        L" WHERE SCHEMA_NAME LIKE ?", this))
+  template <typename I>
+  list_query_base(I& init)
+    : m_reply(init)
   {
-    wait();
-    if (entry_count() > 0)
-    {
-      // TODO: Better error
-      THROW("Could not check existence of a schema (query failed)");
-    }
+    m_reply.wait();
+    m_cursor.reset(new cdk::Cursor(m_reply));
+
+    m_list_it = m_list.before_begin();
   }
 
-};
+  cdk::Reply m_reply;
+  cdk::scoped_ptr<cdk::Cursor> m_cursor;
 
-template <>
-struct check_query<TABLE>
-  : public cdk::Reply
-{
-  typedef Create_args& Args_t;
+  bool m_skip_line = false;
+  E m_elem;
+  std::forward_list<E> m_list;
+  typename std::forward_list<E>::iterator m_list_it;
 
-  check_query(cdk::Session &sess, Args_t args)
-    : cdk::Reply(sess.sql(
-        L"SELECT 1 FROM INFORMATION_SCHEMA.TABLES"
-        L" WHERE TABLE_SCHEMA LIKE ?"
-        L"   AND TABLE_NAME LIKE ?", &args))
+
+
+
+  bool row_begin(row_count_t)
   {
-    wait();
-    if (entry_count() > 0)
-    {
-      // TODO: Better error
-      THROW("Could not check existence of a table (query failed)");
-    }
-  }
-};
-
-
-/*
-  Function which checks existence of an object of type T in the data store.
-
-  The arguments which describe object to check are different for different
-  types of objects, as defined by type check_query<T>::Args_t.
-*/
-
-template <obj_type T>
-bool check_existence(cdk::Session &sess, typename check_query<T>::Args_t args)
-{
-  check_query<T> check(sess, args);
-
-  // Row procesor which checks if reply has at least one row.
-
-  struct : public cdk::Row_processor
-  {
-    bool m_has_row;
-
-    bool row_begin(row_count_t)
-    {
-      m_has_row = true;
-      return false;
-    }
-
-    void row_end(row_count_t) {}
-    size_t field_begin(col_count_t, size_t) { return 0; }
-    void field_end(col_count_t) {}
-    void field_null(col_count_t) {}
-    size_t field_data(col_count_t, bytes) { return 0; }
-    void end_of_data() {}
-  }
-  rp;
-  rp.m_has_row = false;
-
-  cdk::Cursor c(check);
-  c.get_row(rp);
-  c.wait();
-
-  return rp.m_has_row;
-}
-
-/*
-   Function gets list of Schemas / Tables / Collections
-
-   The argument depends on
- */
-
-enum list_type { SCHEMAS, TABLES, COLLECTIONS };
-
-template <list_type> struct list_query;
-
-template<>
-struct list_query<list_type::SCHEMAS>
-    : cdk::Reply
-{
-
-  typedef string Elem_t;
-
-  list_query(cdk::Session &sess)
-    : cdk::Reply(sess.sql(L"SHOW SCHEMAS"))
-  {
-    wait();
-  }
-
-  //if returns false, skip current row
-  static bool add_data(string& elem, size_t col, string&& data)
-  {
-    if (0 == col)
-      elem = std::move(data);
+    m_skip_line = false;
     return true;
   }
+
+  void row_end(row_count_t)
+  {
+    if (!m_skip_line)
+      m_list_it = m_list.emplace_after(m_list_it, m_elem);
+  }
+  size_t field_begin(col_count_t, size_t s) { return s; }
+  void field_end(col_count_t) {}
+  void field_null(col_count_t) {}
+  size_t field_data(col_count_t col, bytes b)
+  {
+    cdk::Codec<cdk::TYPE_STRING> codec(m_cursor->format(col));
+
+    cdk::string data;
+    codec.from_bytes(b, data);
+
+    if (!m_skip_line)
+      m_skip_line = !field_data(m_elem, col, std::move(data));
+
+    return b.size();
+  }
+  void end_of_data() {}
+
+  std::forward_list<E> execute()
+  {
+    m_cursor->get_rows(*this);
+    m_cursor->wait();
+    return m_list;
+  }
+
 };
 
 
 template<>
-struct list_query<list_type::COLLECTIONS>
+struct list_query<obj_type::SCHEMA>
     : Args
-    , public cdk::Reply
+    , list_query_base<cdk::string>
 {
 
-  typedef string Elem_t;
+  list_query(cdk::Session &sess)
+    : list_query_base<cdk::string>(sess.sql(L"SHOW SCHEMAS"))
+  {
+  }
 
   list_query(cdk::Session &sess, const string& schema)
     : Args(schema)
-    , cdk::Reply(sess.admin("list_objects", *this))
+    , list_query_base<cdk::foundation::string>(sess.sql(L"SHOW SCHEMAS LIKE ?", this))
   {
-    wait();
   }
 
   //if returns false, skip current row
-  static bool add_data(string& elem, size_t col, string&& data)
+  bool field_data(cdk::string& elem, size_t col, cdk::string&& data) override
   {
     if (0 == col)
       elem = std::move(data);
-    if (1 == col)
-      return data.compare(L"COLLECTION") == 0;
+    return true;
+  }
+};
+
+
+/*
+  COLLECTION and TABLE list_query will use list_objects admin command.
+
+  list_objects return a list of TABLE, VIEW or COLLECTION.
+
+  As arguments, we can pass the schema and optionally can pass a filter to the
+  objects names.
+
+  The retieved data contains 2 columns
+  - Object name
+  - Type (TABLE/VIEW/COLLECTION)
+
+  */
+
+template<>
+struct list_query<obj_type::COLLECTION>
+    : Args
+    , list_query_base<cdk::string>
+{
+
+
+  list_query(cdk::Session &sess, const string& schema)
+    : Args(schema)
+    , list_query_base<cdk::string>(sess.admin("list_objects", *this))
+  {
+  }
+
+  list_query(cdk::Session &sess, const string& schema, const string& collection)
+    : Args(schema, collection)
+    , list_query_base<cdk::string>(sess.admin("list_objects", *this))
+  {
+  }
+
+  //if returns false, skip current row
+  bool field_data(cdk::string& elem, size_t col, cdk::string&& data) override
+  {
+    switch (col)
+    {
+      case 0: elem = std::move(data); break;
+      case 1: return data.compare(L"COLLECTION") == 0;
+    }
     return true;
   }
 
@@ -301,22 +290,19 @@ struct list_query<list_type::COLLECTIONS>
 
 
 template<>
-struct list_query<list_type::TABLES>
+struct list_query<obj_type::TABLE>
     : Args
-    , public cdk::Reply
+    , list_query_base<std::pair<cdk::string,bool>>
 {
-
-  typedef std::pair<string,bool> Elem_t;
 
   list_query(cdk::Session &sess, const string& schema, const string& table = string())
     : Args(schema, table)
-    , cdk::Reply(sess.admin("list_objects", *this))
+    , list_query_base<std::pair<cdk::string,bool>>(sess.admin("list_objects", *this))
   {
-    wait();
   }
 
   // if returns false, skip current row
-  static bool add_data(std::pair<string,bool>& elem, size_t col, string&& data)
+  bool field_data(std::pair<cdk::string,bool>& elem, size_t col, cdk::string&& data) override
   {
     switch (col)
     {
@@ -336,70 +322,6 @@ struct list_query<list_type::TABLES>
 
 };
 
-
-
-
-
-
-
-template<list_type T>
-struct List_process : public cdk::Row_processor
-{
-  cdk::Cursor& m_cursor;
-  std::list<typename list_query<T>::Elem_t> &m_list;
-  typename list_query<T>::Elem_t elem;
-  bool m_add_line = true;
-
-  List_process(cdk::Cursor& cursor,
-               std::list<typename list_query<T>::Elem_t>& list)
-    : m_cursor(cursor)
-    , m_list(list)
-  {}
-
-  bool row_begin(row_count_t)
-  {
-    return true;
-  }
-
-  void row_end(row_count_t)
-  {
-    if (m_add_line)
-      m_list.push_back(elem);
-    m_add_line = true;
-  }
-  size_t field_begin(col_count_t, size_t s) { return m_add_line ? s : 0; }
-  void field_end(col_count_t) {}
-  void field_null(col_count_t) {}
-  size_t field_data(col_count_t col, bytes b)
-  {
-    cdk::Codec<cdk::TYPE_STRING> codec(m_cursor.format(col));
-
-    cdk::string data;
-    codec.from_bytes(b, data);
-
-    if (m_add_line)
-      m_add_line = list_query<T>::add_data(elem, col, std::move(data));
-
-    return b.size();
-  }
-  void end_of_data() {}
-};
-
-template <list_type T>
-std::list<typename list_query<T>::Elem_t> get_list(list_query<T>&& qry)
-{
-  cdk::Cursor c(qry);
-
-  std::list<typename list_query<T>::Elem_t> list;
-
-  List_process<T> prc(c, list);
-  c.get_rows(prc);
-
-  c.wait();
-
-  return list;
-
-}
 
 
 // ---------------------------------------------------------------------
@@ -424,60 +346,58 @@ try {
 }
 CATCH_AND_WRAP
 
-void XSession::dropSchema(const string &name)
-try{
-  std::stringstream query;
-  query << "Drop Schema `" << name << "`";
-  cdk::Reply r(get_cdk_session().sql(query.str()));
 
+// helper function to wait on reply and throw errors
+void check_reply_skip_error_throw(cdk::Reply&& r, int skip_server_error)
+{
   r.wait();
 
   if (0 < r.entry_count())
   {
     const cdk::Error &err= r.get_error();
-    err.rethrow();
+    if (err.code() != cdk::server_error(skip_server_error))
+      err.rethrow();
   }
+}
+
+
+void XSession::dropSchema(const string &name)
+try{
+    Args args(name);
+    //skip server error 1008 = schema doesn't exist
+    check_reply_skip_error_throw(get_cdk_session().sql("Drop Schema ?", &args),
+                                 1008);
 }
 CATCH_AND_WRAP
 
+
+//TODO: better implementation: check if drop_collection can drop views also
 void XSession::dropTable(const mysqlx::string& schema, const string& table)
 try{
-  std::stringstream query;
-  query << "Drop Table `" << schema << "`.`" << table << "`";
-  cdk::Reply r(get_cdk_session().sql(query.str()));
-
-  r.wait();
-
-  if (0 < r.entry_count())
-  {
-    const cdk::Error &err= r.get_error();
-    err.rethrow();
-  }
+  Args args(schema, table);
+  // Doesn't throw if table doesn't exit (server error 1051)
+  check_reply_skip_error_throw(get_cdk_session().admin("drop_collection", args),
+                               1051);
 }
 CATCH_AND_WRAP
 
 void XSession::dropCollection(const mysqlx::string& schema,
                               const mysqlx::string& collection)
 try{
-  Create_args args(schema, collection);
-  cdk::Reply r(get_cdk_session().admin("drop_collection", args));
-
-  r.wait();
-
-  if (0 < r.entry_count())
-  {
-    const cdk::Error &err= r.get_error();
-    err.rethrow();
-  }
+  Args args(schema, collection);
+  // Doesn't throw if collection doesn't exit (server error 1051)
+  check_reply_skip_error_throw(get_cdk_session().admin("drop_collection", args),
+                               1051);
 }
 CATCH_AND_WRAP
+
 
 Schema XSession::getSchema(const string &name, bool check)
 try {
 
   if (check)
   {
-    if (!check_existence<SCHEMA>(get_cdk_session(), name))
+    if (list_query<SCHEMA>(get_cdk_session(), name).execute().empty())
       // TODO: Better error (schema name)
       throw Error("No such schema");
   }
@@ -490,7 +410,7 @@ std::list<Schema> XSession::getSchemas()
 try {
 
 
-  auto schemas_names = get_list(list_query<SCHEMAS>(get_cdk_session()));
+  auto schemas_names = list_query<SCHEMA>(get_cdk_session()).execute();
 
   std::list<Schema> schemas_list;
 
@@ -518,10 +438,15 @@ try {
 
   if (check)
   {
-    Create_args args(m_name, name);
-    if (!check_existence<TABLE>(m_sess.get_cdk_session(), args))
+
+    if (list_query<COLLECTION>(m_sess.get_cdk_session(),
+                               m_name,
+                               name )
+        .execute().empty())
+    {
       // TODO: Better error (collection name)
       throw Error("No such collection");
+    }
   }
   return Collection(*this, name);
 }
@@ -529,7 +454,7 @@ CATCH_AND_WRAP
 
 Collection Schema::createCollection(const string &name, bool reuse)
 try {
-  Create_args args(m_name, name);
+  Args args(m_name, name);
   cdk::Reply r(m_sess.get_cdk_session().admin("create_collection", args));
   r.wait();
   if (0 < r.entry_count())
@@ -548,10 +473,9 @@ Table Schema::getTable(const string &name, bool check)
 try {
   if (check)
   {
-    auto tb_list = get_list(list_query<TABLES>(m_sess.get_cdk_session(),
-                                               m_name,
-                                               name ) );
-
+    auto tb_list = list_query<TABLE>(m_sess.get_cdk_session(),
+                                     m_name,
+                                     name ).execute();
     if (tb_list.empty())
       // TODO: Better error (collection name)
       throw Error("No such table");
@@ -568,7 +492,7 @@ std::list<Collection> Schema::getCollections()
 try{
   std::list<Collection> list;
 
-  std::list<string> list_name = getCollectionNames();
+  std::forward_list<string> list_name = getCollectionNames();
 
   for (auto name : list_name)
   {
@@ -579,23 +503,20 @@ try{
 }
 CATCH_AND_WRAP
 
-std::list<string> Schema::getCollectionNames()
+List_init<string> Schema::getCollectionNames()
 try{
-  return get_list(list_query<list_type::COLLECTIONS>(
+  return list_query<COLLECTION>(
                     m_sess.get_cdk_session()
-                    , m_name)
-                  );
+                    , m_name).execute();
 }
 CATCH_AND_WRAP
 
-std::list<Table> Schema::getTables()
+List_init<Table> Schema::getTables()
 {
   std::list<Table> list;
 
-  auto tables_list = get_list(list_query<list_type::TABLES>(
-                                      m_sess.get_cdk_session()
-                                      , m_name)
-                                    );
+  auto tables_list = list_query<TABLE>(m_sess.get_cdk_session()
+                                       , m_name).execute();
 
   for (auto& prop : tables_list)
   {
@@ -605,13 +526,12 @@ std::list<Table> Schema::getTables()
   return list;
 }
 
-std::list<string> Schema::getTableNames()
+List_init<string> Schema::getTableNames()
 {
   std::list<string> list;
-  auto tables_list = get_list(list_query<list_type::TABLES>(
-                                      m_sess.get_cdk_session()
-                                      , m_name)
-                                    );
+  auto tables_list = list_query<TABLE>(m_sess.get_cdk_session()
+                                                   , m_name)
+                     .execute();
 
   for (auto& el : tables_list)
   {
