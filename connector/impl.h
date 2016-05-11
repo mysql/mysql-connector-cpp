@@ -40,6 +40,24 @@
 
 namespace mysqlx {
 
+
+struct Value::Access
+{
+  static Value mk_doc(const string &json)
+  {
+    Value ret;
+    ret.m_type = Value::DOCUMENT;
+    ret.m_doc = DbDoc(json);
+    return std::move(ret);
+  }
+
+  static cdk::bytes get_bytes(const Value &val)
+  {
+    return cdk::bytes(val.m_raw.begin(), val.m_raw.end());
+  }
+};
+
+
 struct Value_scalar_prc_converter
     : public cdk::Converter<
     Value_scalar_prc_converter,
@@ -96,16 +114,21 @@ cdk::Expr_conv_base<cdk::Any_prc_converter<Value_scalar_prc_converter>>
 Value_converter;
 
 
-class Value_prc
+/*
+  Present Value object as CDK expression.
+*/
+
+class Value_expr
     : public cdk::Expression
+    , cdk::Format_info
 {
   parser::Parser_mode::value m_parser_mode;
   Value m_value;
   bool m_is_expr = false;
 
 
-  //Private constructor to be used only inside Value_prc class
-  Value_prc(const Value &val,
+  //Private constructor to be used only inside Value_expr class
+  Value_expr(const Value &val,
             bool is_expr,
             parser::Parser_mode::value parser_mode)
     : m_parser_mode(parser_mode)
@@ -114,117 +137,129 @@ class Value_prc
   {}
 
 public:
-  Value_prc(const Value &val, parser::Parser_mode::value parser_mode)
+
+  Value_expr(const Value &val, parser::Parser_mode::value parser_mode)
     : m_parser_mode(parser_mode)
     , m_value(val)
   {}
 
-  Value_prc(Value &&val, parser::Parser_mode::value parser_mode)
+  Value_expr(Value &&val, parser::Parser_mode::value parser_mode)
     : m_parser_mode(parser_mode)
     , m_value(std::move(val))
   {}
 
-  Value_prc(const ExprValue &val, parser::Parser_mode::value parser_mode)
+  Value_expr(const ExprValue &val, parser::Parser_mode::value parser_mode)
     : m_parser_mode(parser_mode)
     , m_value(val)
   {
     m_is_expr = val.isExpression();
   }
 
-  Value_prc(ExprValue &&val, parser::Parser_mode::value parser_mode)
+  Value_expr(ExprValue &&val, parser::Parser_mode::value parser_mode)
     : m_parser_mode(parser_mode)
     , m_value(std::move(val))
   {
     m_is_expr = val.isExpression();
   }
 
-  void process (Processor &prc) const
+  void process (Processor &prc) const override
   {
+    // Handle expressions
+
+    if (m_is_expr)
+    {
+      assert(Value::STRING == m_value.getType());
+      parser::Expression_parser expr(m_parser_mode,
+        (mysqlx::string)m_value);
+      expr.process(prc);
+      return;
+    }
+
+    // Handle non scalar values
+
+    switch (m_value.getType())
+    {
+    case Value::DOCUMENT:
+      {
+        mysqlx::DbDoc doc = static_cast<mysqlx::DbDoc>(m_value);
+        Processor::Doc_prc *dprc = safe_prc(prc)->doc();
+        if (!dprc)
+          return;
+        dprc->doc_begin();
+        for (Field fld : doc)
+        {
+          Value_expr value(doc[fld], m_is_expr, m_parser_mode);
+          value.process_if(dprc->key_val(fld));
+        }
+        dprc->doc_end();
+      }
+      return;
+
+    case Value::ARRAY:
+      {
+        Processor::List_prc *lpr = safe_prc(prc)->arr();
+        if (!lpr)
+          return;
+        lpr->list_begin();
+        for (Value val : m_value)
+        {
+          Value_expr value(val, m_is_expr, m_parser_mode);
+          value.process_if(lpr->list_el());
+        }
+        lpr->list_end();
+      }
+      return;
+
+    default: break; // continue with scalar values
+    }
+
+    // Handle scalar values
+
+    Processor::Scalar_prc::Value_prc *vprc;
+    vprc = safe_prc(prc)->scalar()->val();
+
+    if (!vprc)
+      return;
+
     switch (m_value.getType())
     {
       case Value::VNULL:
-        safe_prc(prc)->scalar()->val()->null();
+        vprc->null();
         break;
       case Value::UINT64:
-        safe_prc(prc)->scalar()->val()->num(static_cast<uint64_t>(m_value));
+        vprc->num(static_cast<uint64_t>(m_value));
         break;
       case Value::INT64:
-        safe_prc(prc)->scalar()->val()->num(static_cast<int64_t>(m_value));
+        vprc->num(static_cast<int64_t>(m_value));
         break;
       case Value::FLOAT:
-        safe_prc(prc)->scalar()->val()->num(static_cast<float>(m_value));
+        vprc->num(static_cast<float>(m_value));
         break;
       case Value::DOUBLE:
-        safe_prc(prc)->scalar()->val()->num(static_cast<double>(m_value));
+        vprc->num(static_cast<double>(m_value));
         break;
       case Value::BOOL:
-        safe_prc(prc)->scalar()->val()->yesno(static_cast<bool>(m_value));
+        vprc->yesno(static_cast<bool>(m_value));
         break;
       case Value::STRING:
-        if (m_is_expr)
-        {
-          parser::Expression_parser expr(m_parser_mode,
-                                          (mysqlx::string)m_value);
-
-          expr.process(prc);
-        }
-        else
-          safe_prc(prc)->scalar()->val()->str(static_cast<mysqlx::string>(m_value));
-        break;
-      case Value::DOCUMENT:
-        {
-          mysqlx::DbDoc doc = static_cast<mysqlx::DbDoc>(m_value);
-          safe_prc(prc)->doc()->doc_begin();
-          for ( Field fld : doc)
-          {
-            Value_prc value(doc[fld], m_is_expr, m_parser_mode);
-            value.process_if(safe_prc(prc)->doc()->key_val(fld));
-          }
-          safe_prc(prc)->doc()->doc_end();
-        }
+        vprc->str(static_cast<mysqlx::string>(m_value));
         break;
       case Value::RAW:
-        THROW("Unexpected Value Type RAW");
+        vprc->value(cdk::TYPE_BYTES,
+                    static_cast<const cdk::Format_info&>(*this),
+                    Value::Access::get_bytes(m_value));
         break;
-      case Value::ARRAY:
-        {
-          safe_prc(prc)->arr()->list_begin();
-          for (Value val : m_value)
-          {
-            Value_prc value(val, m_is_expr, m_parser_mode);
-            value.process_if(safe_prc(prc)->arr()->list_el());
-          }
-          safe_prc(prc)->arr()->list_end();
-        }
-        break;
+      default:
+        THROW("Unexpected value type");
     }
   }
 
-};
+  // Trivial Format_info for raw byte values
 
+  bool for_type(cdk::Type_info) const override { return true; }
+  void get_info(cdk::Format<cdk::TYPE_BYTES>&) const override {}
+  using cdk::Format_info::get_info;
 
-struct Value::Access
-{
-  static Value mk_raw(const cdk::bytes data)
-  {
-    Value ret;
-    ret.m_type = Value::RAW;
-    ret.m_str.assign(data.begin(), data.end());
-    return std::move(ret);
-  }
-
-  static Value mk_doc(const string &json)
-  {
-    Value ret;
-    ret.m_type = Value::DOCUMENT;
-    ret.m_doc = DbDoc(json);
-    return std::move(ret);
-  }
-
-  static cdk::bytes get_bytes(const Value &val)
-  {
-    return cdk::bytes(val.m_str);
-  }
 };
 
 
@@ -501,7 +536,7 @@ protected:
 
       for (auto it : *m_map)
       {
-        Value_prc value(it.second, parser::Parser_mode::DOCUMENT);
+        Value_expr value(it.second, parser::Parser_mode::DOCUMENT);
         conv.reset(value);
         conv.process_if(prc.key_val(it.first));
       }

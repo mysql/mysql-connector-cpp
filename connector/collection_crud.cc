@@ -613,7 +613,7 @@ class Op_collection_modify
     {
       case Field_Op::SET:
         {
-          Value_prc value_prc(m_update_it->m_val, parser::Parser_mode::DOCUMENT);
+          Value_expr value_prc(m_update_it->m_val, parser::Parser_mode::DOCUMENT);
 
           value_prc.process_if(prc.set(&field));
 
@@ -625,7 +625,7 @@ class Op_collection_modify
 
       case Field_Op::ARRAY_INSERT:
         {
-          Value_prc value_prc(m_update_it->m_val, parser::Parser_mode::DOCUMENT);
+          Value_expr value_prc(m_update_it->m_val, parser::Parser_mode::DOCUMENT);
 
           value_prc.process_if(prc.array_insert(&field));
         }
@@ -633,7 +633,7 @@ class Op_collection_modify
 
       case Field_Op::ARRAY_APPEND:
         {
-          Value_prc value_prc(m_update_it->m_val, parser::Parser_mode::DOCUMENT);
+          Value_expr value_prc(m_update_it->m_val, parser::Parser_mode::DOCUMENT);
 
           value_prc.process_if(prc.array_append(&field));
         }

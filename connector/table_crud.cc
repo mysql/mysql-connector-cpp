@@ -50,7 +50,6 @@ class Op_table_insert
     : public Op_sort<Parser_mode::TABLE>
     , public cdk::Row_source
     , public cdk::api::Columns
-    , public cdk::Format_info
 {
   using string = cdk::string;
   using Row_list = std::forward_list < Row >;
@@ -125,12 +124,6 @@ class Op_table_insert
 
   void process(cdk::Expr_list::Processor &ep) const override;
 
-  // Format_info
-
-  bool for_type(cdk::Type_info) const override { return true; }
-  void get_info(cdk::Format<cdk::TYPE_BYTES>&) const override {}
-  using cdk::Format_info::get_info;
-
   friend class mysqlx::TableInsert;
 };
 
@@ -187,27 +180,8 @@ void Op_table_insert::process(cdk::Expr_list::Processor &lp) const
 
   for (unsigned pos = 0; pos < m_cur_row->colCount(); ++pos)
   {
-    Element_prc::Scalar_prc::Value_prc *vprc;
-    vprc = safe_prc(lp)->list_el()->scalar()->val();
-
-    if (!vprc)
-      continue;
-
-    const Value &val = (*m_cur_row)[pos];
-
-    switch (val.getType())
-    {
-    case Value::VNULL:  vprc->null(); break;
-    case Value::STRING: vprc->str((string)val); break;
-    case Value::INT64:  vprc->num((int64_t)(int)val); break;
-    case Value::UINT64: vprc->num((uint64_t)(unsigned)val); break;
-    case Value::FLOAT:  vprc->num((float)val); break;
-    case Value::DOUBLE: vprc->num((double)val); break;
-      // TODO: handle other value types
-    default:
-      vprc->value(cdk::TYPE_BYTES, *this, Value::Access::get_bytes(val));
-      break;
-    }
+    Value_expr ve((*m_cur_row)[pos], Parser_mode::TABLE);
+    ve.process_if(safe_prc(lp)->list_el());
   }
 
   lp.list_end();
@@ -347,7 +321,7 @@ class Op_table_update
   {
     prc.column(*this);
 
-    Value_prc val_prc(m_set_it->second, parser::Parser_mode::TABLE);
+    Value_expr val_prc(m_set_it->second, parser::Parser_mode::TABLE);
     val_prc.process_if(prc.set(NULL));
   }
 

@@ -360,7 +360,7 @@ public:
   @todo Add all `XSession` methods defined by DevAPI.
 */
 
-class XSession : nocopy
+class XSession : internal::nocopy
 {
 protected:
 

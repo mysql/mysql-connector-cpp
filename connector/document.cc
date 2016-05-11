@@ -58,7 +58,7 @@ void Value::print(ostream &out) const
   case BOOL: out << (m_val._bool_v ? "true" : "false"); return;
   case STRING: out << (std::string)m_str; return;
   case DOCUMENT: out << m_doc; return;
-  case RAW: out << "<" << m_str.size() << " raw bytes>"; return;
+  case RAW: out << "<" << m_raw.size() << " raw bytes>"; return;
   // TODO: print array contnets
   case ARRAY: out << "<array with " << elementCount() << " element(s)>"; return;
   default:  out << "<unknown value>"; return;
@@ -79,7 +79,7 @@ DbDoc::DbDoc(const std::shared_ptr<Impl> &impl)
 {}
 
 
-bool DbDoc::hasField(const Field &fld)
+bool DbDoc::hasField(const Field &fld) const
 {
   try {
     return m_impl->has_field(fld);
