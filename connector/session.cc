@@ -141,23 +141,23 @@ public:
 
 enum obj_type { TABLE, SCHEMA, COLLECTION };
 
-template <obj_type> struct list_query;
+template <obj_type> struct List_query;
 
 template <typename E>
-struct list_query_base
+struct List_query_base
     : public cdk::Row_processor
 {
   /*
-     It will be called for each row with the correspondant data and passing the
-     difined list element (template type).
+     It will be called for each row with the defined data for storing it on the
+     next item to be added to the list.
      If class implementing method returns false, the rest of row data is skipped
      and the element not added to the list.
    */
-  virtual bool field_data(E&, size_t col, cdk::string&&) = 0;
+  virtual bool field_data(size_t col, cdk::string&&) = 0;
 
 
   template <typename I>
-  list_query_base(I& init)
+  List_query_base(I& init)
     : m_reply(init)
   {
     m_reply.wait();
@@ -175,8 +175,6 @@ struct list_query_base
   typename std::forward_list<E>::iterator m_list_it;
 
 
-
-
   bool row_begin(row_count_t)
   {
     m_skip_line = false;
@@ -188,24 +186,29 @@ struct list_query_base
     if (!m_skip_line)
       m_list_it = m_list.emplace_after(m_list_it, m_elem);
   }
+
   size_t field_begin(col_count_t, size_t s) { return s; }
+
   void field_end(col_count_t) {}
+
   void field_null(col_count_t) {}
+
   size_t field_data(col_count_t col, bytes b)
   {
+    // TODO: the data should be saved here and only processed on field_end()
     cdk::Codec<cdk::TYPE_STRING> codec(m_cursor->format(col));
 
     cdk::string data;
     codec.from_bytes(b, data);
 
     if (!m_skip_line)
-      m_skip_line = !field_data(m_elem, col, std::move(data));
+      m_skip_line = !field_data(col, std::move(data));
 
-    return b.size();
+    return 1024;
   }
   void end_of_data() {}
 
-  std::forward_list<E> execute()
+  const std::forward_list<E> execute()
   {
     m_cursor->get_rows(*this);
     m_cursor->wait();
@@ -216,27 +219,28 @@ struct list_query_base
 
 
 template<>
-struct list_query<obj_type::SCHEMA>
+struct List_query<obj_type::SCHEMA>
     : Args
-    , list_query_base<cdk::string>
+    , List_query_base<cdk::string>
 {
 
-  list_query(cdk::Session &sess)
-    : list_query_base<cdk::string>(sess.sql(L"SHOW SCHEMAS"))
+  List_query(cdk::Session &sess)
+    : List_query_base<cdk::string>(sess.sql(L"SHOW SCHEMAS"))
   {
   }
 
-  list_query(cdk::Session &sess, const string& schema)
+  List_query(cdk::Session &sess, const string& schema)
     : Args(schema)
-    , list_query_base<cdk::foundation::string>(sess.sql(L"SHOW SCHEMAS LIKE ?", this))
+    , List_query_base<cdk::foundation::string>(
+        sess.sql(L"SHOW SCHEMAS LIKE ?", this))
   {
   }
 
   //if returns false, skip current row
-  bool field_data(cdk::string& elem, size_t col, cdk::string&& data) override
+  bool field_data(size_t col, cdk::string&& data) override
   {
     if (0 == col)
-      elem = std::move(data);
+      m_elem = std::move(data);
     return true;
   }
 };
@@ -250,37 +254,37 @@ struct list_query<obj_type::SCHEMA>
   As arguments, we can pass the schema and optionally can pass a filter to the
   objects names.
 
-  The retieved data contains 2 columns
+  The retrieved data contains 2 columns
   - Object name
   - Type (TABLE/VIEW/COLLECTION)
 
   */
 
 template<>
-struct list_query<obj_type::COLLECTION>
+struct List_query<obj_type::COLLECTION>
     : Args
-    , list_query_base<cdk::string>
+    , List_query_base<cdk::string>
 {
 
 
-  list_query(cdk::Session &sess, const string& schema)
+  List_query(cdk::Session &sess, const string& schema)
     : Args(schema)
-    , list_query_base<cdk::string>(sess.admin("list_objects", *this))
+    , List_query_base<cdk::string>(sess.admin("list_objects", *this))
   {
   }
 
-  list_query(cdk::Session &sess, const string& schema, const string& collection)
+  List_query(cdk::Session &sess, const string& schema, const string& collection)
     : Args(schema, collection)
-    , list_query_base<cdk::string>(sess.admin("list_objects", *this))
+    , List_query_base<cdk::string>(sess.admin("list_objects", *this))
   {
   }
 
   //if returns false, skip current row
-  bool field_data(cdk::string& elem, size_t col, cdk::string&& data) override
+  bool field_data(size_t col, cdk::string&& data) override
   {
     switch (col)
     {
-      case 0: elem = std::move(data); break;
+      case 0: m_elem = std::move(data); break;
       case 1: return data.compare(L"COLLECTION") == 0;
     }
     return true;
@@ -290,29 +294,29 @@ struct list_query<obj_type::COLLECTION>
 
 
 template<>
-struct list_query<obj_type::TABLE>
+struct List_query<obj_type::TABLE>
     : Args
-    , list_query_base<std::pair<cdk::string,bool>>
+    , List_query_base<std::pair<cdk::string,bool>>
 {
 
-  list_query(cdk::Session &sess, const string& schema, const string& table = string())
+  List_query(cdk::Session &sess, const string& schema, const string& table = string())
     : Args(schema, table)
-    , list_query_base<std::pair<cdk::string,bool>>(sess.admin("list_objects", *this))
+    , List_query_base<std::pair<cdk::string,bool>>(sess.admin("list_objects", *this))
   {
   }
 
   // if returns false, skip current row
-  bool field_data(std::pair<cdk::string,bool>& elem, size_t col, cdk::string&& data) override
+  bool field_data(size_t col, cdk::string&& data) override
   {
     switch (col)
     {
       // col 0 = name
       case 0:
-        elem.first = std::move(data);
+        m_elem.first = std::move(data);
         break;
       // col 1 = type (view/table)
       case 1:
-        elem.second = (data == (L"VIEW"));
+        m_elem.second = (data == (L"VIEW"));
         return (data.compare(L"TABLE") == 0) ||
                (data.compare(L"VIEW") == 0);
         break;
@@ -397,7 +401,7 @@ try {
 
   if (check)
   {
-    if (list_query<SCHEMA>(get_cdk_session(), name).execute().empty())
+    if (List_query<SCHEMA>(get_cdk_session(), name).execute().empty())
       // TODO: Better error (schema name)
       throw Error("No such schema");
   }
@@ -406,11 +410,11 @@ try {
 }
 CATCH_AND_WRAP
 
-std::list<Schema> XSession::getSchemas()
+List_init<Schema> XSession::getSchemas()
 try {
 
 
-  auto schemas_names = list_query<SCHEMA>(get_cdk_session()).execute();
+  auto schemas_names = List_query<SCHEMA>(get_cdk_session()).execute();
 
   std::list<Schema> schemas_list;
 
@@ -439,7 +443,7 @@ try {
   if (check)
   {
 
-    if (list_query<COLLECTION>(m_sess.get_cdk_session(),
+    if (List_query<COLLECTION>(m_sess.get_cdk_session(),
                                m_name,
                                name )
         .execute().empty())
@@ -473,7 +477,7 @@ Table Schema::getTable(const string &name, bool check)
 try {
   if (check)
   {
-    auto tb_list = list_query<TABLE>(m_sess.get_cdk_session(),
+    auto tb_list = List_query<TABLE>(m_sess.get_cdk_session(),
                                      m_name,
                                      name ).execute();
     if (tb_list.empty())
@@ -488,7 +492,7 @@ try {
 CATCH_AND_WRAP
 
 
-std::list<Collection> Schema::getCollections()
+List_init<Collection> Schema::getCollections()
 try{
   std::list<Collection> list;
 
@@ -505,7 +509,7 @@ CATCH_AND_WRAP
 
 List_init<string> Schema::getCollectionNames()
 try{
-  return list_query<COLLECTION>(
+  return List_query<COLLECTION>(
                     m_sess.get_cdk_session()
                     , m_name).execute();
 }
@@ -515,7 +519,7 @@ List_init<Table> Schema::getTables()
 {
   std::list<Table> list;
 
-  auto tables_list = list_query<TABLE>(m_sess.get_cdk_session()
+  auto tables_list = List_query<TABLE>(m_sess.get_cdk_session()
                                        , m_name).execute();
 
   for (auto& prop : tables_list)
@@ -529,7 +533,7 @@ List_init<Table> Schema::getTables()
 List_init<string> Schema::getTableNames()
 {
   std::list<string> list;
-  auto tables_list = list_query<TABLE>(m_sess.get_cdk_session()
+  auto tables_list = List_query<TABLE>(m_sess.get_cdk_session()
                                                    , m_name)
                      .execute();
 

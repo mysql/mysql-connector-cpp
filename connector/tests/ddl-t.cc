@@ -39,7 +39,7 @@ TEST_F(Ddl, create_drop)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Preparing test.types..." << endl;
+  cout << "Preparing test.ddl..." << endl;
 
   // Cleanup
 

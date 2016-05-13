@@ -67,12 +67,13 @@ class Table;
 template <typename T>
 struct List_init
 {
-   std::forward_list<T> m_data;
+   std::list<T> m_data;
 
    template <typename I>
-   List_init(const I& i)
-     : m_data(std::begin(i), std::end(i))
-   {}
+   List_init(I&& i)
+   {
+     std::move(i.begin(), i.end(), std::back_inserter(m_data));
+   }
 
    template<typename U>
    operator U()
@@ -181,7 +182,7 @@ public:
     the shcema.
   */
 
-  std::list<Collection> getCollections();
+  List_init<Collection> getCollections();
 
   /**
     Return list of names of collections in the schema.
@@ -391,7 +392,7 @@ public:
     Get list of schema objects in a given session.
   */
 
-  std::list<Schema> getSchemas();
+  List_init<Schema> getSchemas();
 
   /**
     Drop the schema.
