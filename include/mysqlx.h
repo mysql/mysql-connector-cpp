@@ -67,13 +67,11 @@ class Table;
 template <typename T>
 struct List_init
 {
-   std::list<T> m_data;
+   std::forward_list<T> m_data;
 
-   template <typename I>
-   List_init(I&& i)
-   {
-     std::move(i.begin(), i.end(), std::back_inserter(m_data));
-   }
+   List_init(std::forward_list<T>&& list)
+     : m_data(std::move(list))
+   {}
 
    template<typename U>
    operator U()
@@ -318,6 +316,11 @@ public:
     : Table(sch, name)
   {
     m_isview = isView ? YES : NO;
+  }
+
+  ~Table()
+  {
+    m_isview = NO;
   }
 
   const string& getName() const { return m_name; }

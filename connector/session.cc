@@ -208,11 +208,11 @@ struct List_query_base
   }
   void end_of_data() {}
 
-  const std::forward_list<E> execute()
+  std::forward_list<E> execute()
   {
     m_cursor->get_rows(*this);
     m_cursor->wait();
-    return m_list;
+    return std::move(m_list);
   }
 
 };
@@ -221,17 +221,17 @@ struct List_query_base
 template<>
 struct List_query<obj_type::SCHEMA>
     : Args
-    , List_query_base<cdk::string>
+    , List_query_base<mysqlx::string>
 {
 
   List_query(cdk::Session &sess)
-    : List_query_base<cdk::string>(sess.sql(L"SHOW SCHEMAS"))
+    : List_query_base<mysqlx::string>(sess.sql(L"SHOW SCHEMAS"))
   {
   }
 
   List_query(cdk::Session &sess, const string& schema)
     : Args(schema)
-    , List_query_base<cdk::foundation::string>(
+    , List_query_base<mysqlx::string>(
         sess.sql(L"SHOW SCHEMAS LIKE ?", this))
   {
   }
@@ -263,19 +263,19 @@ struct List_query<obj_type::SCHEMA>
 template<>
 struct List_query<obj_type::COLLECTION>
     : Args
-    , List_query_base<cdk::string>
+    , List_query_base<mysqlx::string>
 {
 
 
   List_query(cdk::Session &sess, const string& schema)
     : Args(schema)
-    , List_query_base<cdk::string>(sess.admin("list_objects", *this))
+    , List_query_base<mysqlx::string>(sess.admin("list_objects", *this))
   {
   }
 
   List_query(cdk::Session &sess, const string& schema, const string& collection)
     : Args(schema, collection)
-    , List_query_base<cdk::string>(sess.admin("list_objects", *this))
+    , List_query_base<mysqlx::string>(sess.admin("list_objects", *this))
   {
   }
 
@@ -296,12 +296,12 @@ struct List_query<obj_type::COLLECTION>
 template<>
 struct List_query<obj_type::TABLE>
     : Args
-    , List_query_base<std::pair<cdk::string,bool>>
+    , List_query_base<std::pair<mysqlx::string,bool>>
 {
 
   List_query(cdk::Session &sess, const string& schema, const string& table = string())
     : Args(schema, table)
-    , List_query_base<std::pair<cdk::string,bool>>(sess.admin("list_objects", *this))
+    , List_query_base<std::pair<mysqlx::string,bool>>(sess.admin("list_objects", *this))
   {
   }
 
@@ -367,9 +367,10 @@ void check_reply_skip_error_throw(cdk::Reply&& r, int skip_server_error)
 
 void XSession::dropSchema(const string &name)
 try{
-    Args args(name);
+    std::stringstream qry;
+    qry << "Drop Schema `" << name << "`";
     //skip server error 1008 = schema doesn't exist
-    check_reply_skip_error_throw(get_cdk_session().sql("Drop Schema ?", &args),
+    check_reply_skip_error_throw(get_cdk_session().sql(qry.str()),
                                  1008);
 }
 CATCH_AND_WRAP
@@ -416,14 +417,15 @@ try {
 
   auto schemas_names = List_query<SCHEMA>(get_cdk_session()).execute();
 
-  std::list<Schema> schemas_list;
+  std::forward_list<Schema> schemas_list;
+  std::forward_list<Schema>::iterator schema_it =  schemas_list.before_begin();
 
   for (auto el : schemas_names)
   {
-    schemas_list.push_back(Schema(*this, el));
+    schema_it = schemas_list.emplace_after(schema_it, Schema(*this, el));
   }
 
-  return schemas_list;
+  return std::move(schemas_list);
 }
 CATCH_AND_WRAP
 
@@ -494,16 +496,17 @@ CATCH_AND_WRAP
 
 List_init<Collection> Schema::getCollections()
 try{
-  std::list<Collection> list;
+  std::forward_list<Collection> list;
+  std::forward_list<Collection>::iterator list_it = list.before_begin();
 
-  std::forward_list<string> list_name = getCollectionNames();
+  std::list<string> list_name = getCollectionNames();
 
   for (auto name : list_name)
   {
-    list.push_back(Collection(*this, name));
+    list.emplace_after(list_it,Collection(*this, name));
   }
 
-  return list;
+  return std::move(list);
 }
 CATCH_AND_WRAP
 
@@ -517,32 +520,35 @@ CATCH_AND_WRAP
 
 List_init<Table> Schema::getTables()
 {
-  std::list<Table> list;
+  std::forward_list<Table> list;
+  std::forward_list<Table>::iterator list_it = list.before_begin();
 
   auto tables_list = List_query<TABLE>(m_sess.get_cdk_session()
                                        , m_name).execute();
 
   for (auto& prop : tables_list)
   {
-    list.push_back(Table(*this, prop.first, prop.second));
+    list_it = list.emplace_after(list_it,
+                                 Table(*this, prop.first, prop.second));
   }
 
-  return list;
+  return std::move(list);
 }
 
 List_init<string> Schema::getTableNames()
 {
-  std::list<string> list;
+  std::forward_list<string> list;
+  std::forward_list<string>::iterator list_it = list.before_begin();
   auto tables_list = List_query<TABLE>(m_sess.get_cdk_session()
                                                    , m_name)
                      .execute();
 
   for (auto& el : tables_list)
   {
-    list.push_back(std::move(el.first));
+    list.emplace_after(list_it, std::move(el.first));
   }
 
-  return list;
+  return std::move(list);
 
 }
 
