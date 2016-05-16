@@ -107,9 +107,9 @@ public:
   Args() = default;
 
   template <typename... A>
-  Args(A... args)
+  Args(const string& arg, A... args)
   {
-    add_arg(args...);
+    add_arg(arg, args...);
   }
 
   void process(Any_list::Processor &lp) const
