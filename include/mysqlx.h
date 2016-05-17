@@ -307,6 +307,17 @@ class Table
 
 public:
 
+  DIAGNOSTIC_PUSH
+
+  #if _MSC_VER && _MSC_VER < 1900
+      /*
+      MSVC 2013 has problems with delegating constructors for classes which
+      use virtual inheritance.
+      See: https://www.daniweb.com/programming/software-development/threads/494204/visual-c-compiler-warning-initvbases
+      */
+      DISABLE_WARNING(4100)
+  #endif
+
   Table(const Schema &sch, const string &name)
     : internal::TableOpBase(*this)
     , m_schema(sch), m_name(name)
@@ -317,6 +328,8 @@ public:
   {
     m_isview = isView ? YES : NO;
   }
+
+  DIAGNOSTIC_POP
 
   ~Table()
   {
