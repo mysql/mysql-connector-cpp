@@ -44,16 +44,16 @@ class string;
 
 namespace mysqlx {
 
-class nocopy
-{
-public:
-  nocopy(const nocopy&) = delete;
-  nocopy& operator=(const nocopy&) = delete;
-protected:
-  nocopy() {}
-};
-
 typedef unsigned char byte;
+
+
+/**
+  A wrapper around std::wstring that can perform
+  conversions from/to different character encodings
+  used by MySQL.
+
+  Currently only utf-8 encoding is supported.
+*/
 
 class string : public std::wstring
 {
@@ -94,49 +94,99 @@ std::ostream& operator<<(std::ostream &out, const string &str)
 typedef unsigned long col_count_t;
 typedef unsigned long row_count_t;
 
-class bytes
+
+/**
+  Class representing a region of memory holding raw bytes.
+
+  Method `begin()` returns pointer to the first byte in the
+  region, `end()` to one past the last byte in the region.
+
+  @note Instance of `bytes` type does not store the bytes -
+  it merely describes a region of memory and is equivalent
+  to a pair of pointers. It is very cheap to copy `bytes` and
+  pass them by value.
+
+  @note This class extends std::pair<byte *, size_t> to make
+  it consistent with how memory regions are described by
+  std::get_temporary_buffer(). It is also possible to initialize
+  bytes instance by buffer returned from
+  std::get_temporary_buffer(), as follows:
+
+    bytes buf = std::get_temporary_buffer<byte>(size);
+*/
+
+class bytes : public std::pair<byte*, size_t>
 {
-
-  byte *m_begin;
-  byte *m_end;
-
-  bytes(byte *beg, byte *end)
-    : m_begin(beg), m_end(end)
-  {}
 
 public:
 
-//  operator const cdk::foundation::bytes&() const;
-  virtual byte* begin() const { return m_begin; }
-  virtual byte* end() const { return m_end; }
-  size_t size() const { return m_begin && m_end ? m_end - m_begin : 0; }
+  bytes(byte *beg, byte *end)
+    : pair(beg, end-beg)
+  {}
+
+  bytes(byte *beg, size_t len) : pair(beg, len)
+  {}
+
+  bytes(const char *str) : pair((byte*)str,0)
+  {
+    if (NULL != str)
+      second = strlen(str);
+  }
+
+  bytes(std::pair<byte*, size_t> buf) : pair(buf)
+  {}
+
+  bytes() : pair(NULL, 0)
+  {}
+
+  bytes(const bytes &other) = default;
+
+  virtual byte* begin() const { return first; }
+  virtual byte* end() const { return first + second; }
+
+  size_t length() const { return second; }
+  size_t size() const { return length(); }
 
   class Access;
   friend class Access;
 };
 
 
-class Printable
-{
-  virtual void print(std::ostream&) const = 0;
-  friend std::ostream& operator<<(std::ostream&, const Printable&);
-};
+namespace internal {
 
-inline
-std::ostream& operator<<(std::ostream &out, const Printable &obj)
-{
-  obj.print(out);
-  return out;
-}
+  class nocopy
+  {
+  public:
+    nocopy(const nocopy&) = delete;
+    nocopy& operator=(const nocopy&) = delete;
+  protected:
+    nocopy() {}
+  };
+
+
+  class Printable
+  {
+    virtual void print(std::ostream&) const = 0;
+    friend std::ostream& operator<<(std::ostream&, const Printable&);
+  };
+
+  inline
+  std::ostream& operator<<(std::ostream &out, const Printable &obj)
+  {
+    obj.print(out);
+    return out;
+  }
+
+}  // internal
 
 
 /**
-Global unique identifiers for documents.
+  Global unique identifiers for documents.
 
-TODO: Windows GUID type
+  TODO: Windows GUID type
 */
 
-class GUID : public Printable
+class GUID : public internal::Printable
 {
   char m_data[32];
 

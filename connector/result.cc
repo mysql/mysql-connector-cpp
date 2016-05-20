@@ -48,9 +48,6 @@ class bytes::Access
 {
 public:
 
-  static bytes mk(byte *beg, size_t len)
-  { return bytes(beg, beg+len); }
-
   static bytes mk(const cdk::bytes &data)
   { return bytes(data.begin(), data.end()); }
 };
@@ -117,6 +114,16 @@ struct Format_descr<cdk::TYPE_DOCUMENT>
   {}
 };
 
+/*
+  Phony Format_descr<> structure used for raw bytes and values
+  of types which we do not process in any way (but present as
+  raw bytes).
+*/
+
+template <>
+struct Format_descr<cdk::TYPE_BYTES>
+{};
+
 
 /*
   Structure Format_info holds information about the type
@@ -130,7 +137,8 @@ typedef boost::variant <
   Format_descr<cdk::TYPE_STRING>,
   Format_descr<cdk::TYPE_INTEGER>,
   Format_descr<cdk::TYPE_FLOAT>,
-  Format_descr<cdk::TYPE_DOCUMENT>
+  Format_descr<cdk::TYPE_DOCUMENT>,
+  Format_descr<cdk::TYPE_BYTES>
 > Format_info_base;
 
 struct Format_info
@@ -141,6 +149,11 @@ struct Format_info
   template <cdk::Type_info T>
   Format_info(const Format_descr<T> &fd)
     : Format_info_base(fd), m_type(T)
+  {}
+
+  Format_info(cdk::Type_info type)
+    : Format_info_base(Format_descr<cdk::TYPE_BYTES>())
+    , m_type(type)
   {}
 
   template <cdk::Type_info T>
@@ -192,6 +205,14 @@ private:
   {
     emplace(pos, Format_descr<T>(fi));
   }
+
+
+  // Add raw column information (whose values are not decoded).
+
+  void add_raw(cdk::col_count_t pos, cdk::Type_info type)
+  {
+    emplace(pos, Format_info(type));
+  }
 };
 
 
@@ -215,7 +236,8 @@ Meta_data::Meta_data(cdk::Meta_data &md)
     case cdk::TYPE_FLOAT:     add<cdk::TYPE_FLOAT>(pos, fi);    break;
     case cdk::TYPE_DOCUMENT:  add<cdk::TYPE_DOCUMENT>(pos, fi); break;
     default:
-      THROW("Add support for the rest of types.");
+      // TODO: Better handle other types
+      add_raw(pos, ti);
       break;
     }
   }
@@ -322,6 +344,9 @@ bytes Row::getBytes(col_count_t pos) const
 
 Value& Row::get(mysqlx::col_count_t pos)
 {
+  if (!m_impl)
+    throw out_of_range("Accesing field of a null Row instance");
+
   Impl &impl = get_impl();
 
   /*
@@ -349,7 +374,7 @@ Value& Row::get(mysqlx::col_count_t pos)
 
   try {
     // will throw out_of_range exception if column at `pos` is NULL
-    cdk::bytes data = impl.m_data.at(pos).data();
+    bytes data = getBytes(pos);
 
     switch (impl.m_mdata->get_type(pos))
     {
@@ -361,8 +386,24 @@ Value& Row::get(mysqlx::col_count_t pos)
       // TODO: Other "natural" conversions
       // TODO: User-defined conversions (also to user-defined types)
 
+    case cdk::TYPE_BYTES:
+
+      /*
+        Note: in case of raw bytes, we trim the extra 0x00 byte added
+        at the end by the protocol (to handle NULL values).
+      */
+
+      return set(pos, bytes(data.begin(), data.end() - 1));
+
     default:
-      return set(pos, Value::Access::mk_raw(data));
+
+      /*
+        For all types for which we do not have a natural conversion
+        to C++ type, we return raw bytes representing the value as
+        returned by protocol.
+      */
+
+      return set(pos, data);
     }
   }
   catch (std::out_of_range&)
@@ -441,14 +482,21 @@ namespace mysqlx {
 
     // Note: DECIMAL format not yet supported by CDK
 
-    if (fmt.FLOAT == fmt.type() || fmt.DOUBLE == fmt.type())
+    if (fmt.FLOAT == fmt.type())
+    {
+      float val;
+      fd.m_codec.from_bytes(data, val);
+      return Value(val);
+    }
+
+    if (fmt.DOUBLE == fmt.type())
     {
       double val;
       fd.m_codec.from_bytes(data, val);
       return Value(val);
     }
 
-    return Value::Access::mk_raw(data);
+    return bytes(data.begin(), data.end());
   }
 
   template<>

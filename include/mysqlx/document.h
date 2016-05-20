@@ -84,7 +84,7 @@ public:
 */
 
 class DbDoc
-  : public Printable
+  : public internal::Printable
 {
   class Impl;
 
@@ -116,12 +116,12 @@ public:
 
   /// Check if named field is a top-level field in the document.
 
-  virtual bool hasField(const Field&);
+  virtual bool hasField(const Field&) const;
 
   /// Return Value::XXX constant that identifies type of value
   /// stored at given field.
 
-  virtual int  fieldType(const Field&);
+  virtual int  fieldType(const Field&) const;
 
   /// Return value of given field.
 
@@ -183,12 +183,16 @@ public:
   Only direct conversions of stored value to the corresponding C++ type
   are supported. There are no implicit number->string conversions etc.
 
+  Values of type RAW can refer to a region of memory containing raw bytes.
+  Such values are created from `bytes` and can by casted to `bytes` type.
+
   @note Value object copies the values it stores. Thus, after storing value
   in Value object, the original value can be destroyed without invalidating
-  the copy.
+  the copy. The only exception is RAW Value, which does not store the
+  bytes it describes - it only stores pointers describing a region of memory.
 */
 
-class Value : public Printable
+class Value : public internal::Printable
 {
 public:
 
@@ -223,6 +227,7 @@ public:
   Value(string&&);
   Value(const char *str) : Value(string(str)) {}
   Value(const wchar_t *str) : Value(string(str)) {}
+  Value(const bytes&);
   Value(int64_t);
   Value(uint64_t);
   Value(float);
@@ -231,13 +236,19 @@ public:
   Value(int x) : Value((int64_t)x) {}
   Value(unsigned x) : Value((uint64_t)x) {}
   Value(const DbDoc& doc);
+
+  Value(const std::initializer_list<Value> &list)
+    : m_type(ARRAY)
+  {
+    m_arr = std::make_shared<Array>(list);
+  }
+
   template <typename Iterator>
   Value(Iterator begin, Iterator end)
     : m_type(ARRAY)
   {
     m_arr = std::make_shared<Array>(begin,end);
   }
-
 
   ///@}
 
@@ -257,9 +268,18 @@ public:
   operator double() const;
   operator bool() const;
   operator string() const;
+  operator const bytes&() const;
   operator DbDoc() const;
 
   //@}
+
+
+  const bytes& getRawBytes() const
+  {
+    check_type(RAW);
+    return m_raw;
+  }
+
 
   /**
     Return type of the value stored in this instance (or VNULL if no
@@ -277,7 +297,7 @@ public:
     Throws error if this is not a document value.
   */
 
-  bool  hasField(const Field&);
+  bool  hasField(const Field&) const;
 
   /**
     If this value is not a document, throws error. Otherwise
@@ -330,7 +350,7 @@ protected:
   void check_type(Type t) const
   {
     if (m_type != t)
-      THROW("Invalid value type");
+      throw Error("Invalid value type");
   }
 
   union
@@ -350,6 +370,7 @@ protected:
 
   typedef std::vector<Value> Array;
 
+  bytes  m_raw;
   string m_str;
   DbDoc  m_doc;
   std::shared_ptr<Array>  m_arr;
@@ -424,6 +445,7 @@ const Value& DbDoc::operator[](const wchar_t *name) const
 
 // Value type conversions
 // ----------------------
+// TODO: more informative errors
 
 inline Value::Value() : m_type(VNULL)
 {}
@@ -438,13 +460,12 @@ inline Value::Value(uint64_t val) : m_type(UINT64)
   m_val._uint64_v = val;
 }
 
-// TODO: Other integer conversions
 
 inline Value::operator int() const
 {
   int64_t val = (int64_t)*this;
   if (val > std::numeric_limits<int>::max())
-    THROW("Overflow");
+    throw Error("Numeric conversion overflow");
 
   return (int) val;
 }
@@ -453,7 +474,7 @@ inline Value::operator unsigned() const
 {
   uint64_t val = static_cast<uint64_t>(*this);
   if (val > std::numeric_limits<unsigned>::max())
-    THROW("Overflow");
+    throw Error("Numeric conversion overflow");
 
   return (unsigned) val;
 }
@@ -461,12 +482,15 @@ inline Value::operator unsigned() const
 
 inline Value::operator int64_t() const
 {
-  if (UINT64 != m_type && INT64 != m_type)
-    THROW("Not an integer value");
+  if (UINT64 != m_type && INT64 != m_type && BOOL != m_type)
+    throw Error("Can not convert to integer value");
+
+  if (BOOL == m_type)
+    return m_val._bool_v ? 1 : 0;
 
   if (UINT64 == m_type
       && m_val._uint64_v > (uint64_t)std::numeric_limits<int64_t>::max())
-    THROW("Overflow");
+    throw Error("Numeric conversion overflow");
 
   int64_t val = (INT64 == m_type ? m_val._int64_v : (int64_t)m_val._uint64_v);
 
@@ -475,12 +499,15 @@ inline Value::operator int64_t() const
 
 inline Value::operator uint64_t() const
 {
-  if (UINT64 != m_type && INT64 != m_type)
-    THROW("Not an integer value");
+  if (UINT64 != m_type && INT64 != m_type && BOOL != m_type)
+    throw Error("Can not convert to integer value");
+
+  if (BOOL == m_type)
+    return m_val._bool_v ? 1 : 0;
 
   if (INT64 == m_type
     && 0 > m_val._int64_v)
-    THROW("Converting negative integer to unsigned value");
+    throw Error("Converting negative integer to unsigned value");
 
   uint64_t val = (UINT64 == m_type ? m_val._uint64_v : (uint64_t)m_val._int64_v);
 
@@ -495,8 +522,14 @@ inline Value::Value(float val) : m_type(FLOAT)
 inline
 Value::operator float() const
 {
-  check_type(FLOAT);
-  return m_val._float_v;
+  switch (m_type)
+  {
+  case INT64:  return 1.0F*m_val._int64_v;
+  case UINT64: return 1.0F*m_val._uint64_v;
+  case FLOAT:  return m_val._float_v;
+  default:
+    throw Error("Value can not be converted to float");
+  }
 }
 
 
@@ -508,8 +541,15 @@ inline Value::Value(double val) : m_type(DOUBLE)
 inline
 Value::operator double() const
 {
-  check_type(DOUBLE);
-  return m_val._double_v;
+  switch (m_type)
+  {
+  case INT64:  return 1.0*m_val._int64_v;
+  case UINT64: return 1.0*m_val._uint64_v;
+  case FLOAT:  return m_val._float_v;
+  case DOUBLE: return m_val._double_v;
+  default:
+    throw Error("Value can not be converted to double");
+  }
 }
 
 
@@ -525,12 +565,17 @@ inline Value::Value(const DbDoc &doc)
 }
 
 
-
 inline
 Value::operator bool() const
 {
-  check_type(BOOL);
-  return m_val._bool_v;
+  switch (m_type)
+  {
+  case INT64:  return m_val._int64_v != 0;
+  case UINT64: return m_val._uint64_v != 0;
+  case BOOL: return m_val._bool_v;
+  default:
+    throw Error("Value can not be converted to double");
+  }
 }
 
 
@@ -551,6 +596,19 @@ Value::operator string() const
   return m_str;
 }
 
+
+inline Value::Value(const bytes &data) : m_type(RAW)
+{
+  m_raw = data;
+}
+
+inline
+Value::operator const bytes&() const
+{
+  return getRawBytes();
+}
+
+
 inline
 Value::operator DbDoc() const
 {
@@ -560,7 +618,7 @@ Value::operator DbDoc() const
 
 
 inline
-bool Value::hasField(const Field &fld)
+bool Value::hasField(const Field &fld) const
 {
   try {
     check_type(DOCUMENT);
@@ -580,7 +638,7 @@ const Value& Value::operator[](const Field &fld) const
 }
 
 inline
-int DbDoc::fieldType(const Field &fld)
+int DbDoc::fieldType(const Field &fld) const
 {
   try {
     return (*this)[fld].getType();

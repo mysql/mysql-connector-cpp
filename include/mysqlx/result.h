@@ -338,6 +338,12 @@ public:
     : BaseResult(std::move(init))
   {}
 
+  RowResult& operator=(BaseResult &&init)
+  {
+    BaseResult::operator=(std::move(init));
+    return *this;
+  }
+
   /// Retrun number of fields in each row.
   col_count_t getColumnCount() const;
 
@@ -375,6 +381,12 @@ public:
   SqlResult(BaseResult &&init)
     : RowResult(std::move(init))
   {}
+
+  SqlResult& operator=(BaseResult &&init)
+  {
+    RowResult::operator=(std::move(init));
+    return *this;
+  }
 
   /**
     Tels if current result contains rows.

@@ -50,7 +50,7 @@ namespace internal {
   class PlainExecutable;
 }
 
-class Task : nocopy
+class Task : internal::nocopy
 {
 public:
 
