@@ -1151,19 +1151,31 @@ TEST_F(Crud, doc_path)
   cout << "Creating session..." << endl;
 
   XSession sess(this);
+  sess.dropCollection("test", "coll");
 
   Schema sch = sess.getSchema("test");
-  Collection coll = sch.createCollection("coll",true);
+  Collection coll = sch.createCollection("coll",false);
 
-  coll.add( "{\"level1\": {\"level2\":\"value 2\"}}").execute();
+  coll.add( "{\"date\": {\"monthName\":\"December\", \"days\":[1,2,3]}}").execute();
 
-  coll.modify().set("level1.level2 + level1.level2", "newvalue" ).execute();
+  coll.modify().set("date.monthName", "February" ).execute();
+  coll.modify().set("$.date.days[0]", 4 ).execute();
 
   DocResult docs = coll.find().execute();
 
   DbDoc doc = docs.fetchOne();
 
-  EXPECT_EQ(string("newvalue"), (string)doc["level1"]["level2"]);
+  EXPECT_EQ(string("February"), static_cast<string>(doc["date"]["monthName"]));
+  EXPECT_EQ(4, static_cast<int>(doc["date"]["days"][0]));
 
+  coll.modify().arrayDelete("date.days[0]").execute();
+  docs = coll.find().execute();
+  doc = docs.fetchOne();
+  EXPECT_EQ(2, static_cast<int>(doc["date"]["days"][0]));
+
+  coll.modify().unset("date.days").execute();
+  docs = coll.find().execute();
+  doc = docs.fetchOne();
+  EXPECT_THROW(static_cast<int>(doc["date"]["days"][0]), Error);
 
 }

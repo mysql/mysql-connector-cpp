@@ -475,77 +475,6 @@ namespace internal{
   ===================
 */
 
-class Field_parser
-    : public cdk::Doc_path
-    , cdk::Expression::Processor
-    , cdk::Expression::Processor::Scalar_prc
-{
-
-  parser::Doc_path m_doc_path;
-
-  //TODO proper errors on unexpected calls
-
-  //Expression_processor
-  Scalar_prc* scalar() override { return this; }
-  List_prc* arr() override {THROW("Unexpected Document Path"); return NULL; }
-  Doc_prc* doc() override {THROW("Unexpected Document Path"); return NULL; }
-
-
-  //Scalar_prc implementation
-  Value_prc*  val() override {THROW("Unexpected Document Path"); return NULL; }
-
-  Args_prc*   op(const char*) override
-  { THROW("Unexpected Document Path"); return NULL; }
-
-  Args_prc*   call(const Object_ref&) override
-  { THROW("Unexpected Document Path"); return NULL; }
-
-  void ref(const Column_ref&, const cdk::Doc_path*) override
-  { THROW("Unexpected Document Path"); }
-
-  void ref(const cdk::Doc_path& path) override
-  { m_doc_path = path; }
-
-  void param(const string&) override
-  { THROW("Unexpected Document Path"); }
-
-  void param(uint16_t) override
-  { THROW("Unexpected Document Path"); }
-
-  void var(const string&) override
-  { THROW("Unexpected Document Path"); }
-
-
-  parser::Expression_parser expr_parser;
-
-public:
-  Field_parser(const Field &field)
-    : expr_parser(parser::Parser_mode::DOCUMENT, field)
-  {
-    expr_parser.process(*this);
-  }
-
-  virtual unsigned length() const override
-  {
-    return m_doc_path.length();
-  }
-
-  virtual Type     get_type(unsigned pos) const override
-  {
-    return m_doc_path.get_type(pos);
-  }
-
-  virtual const cdk::string* get_name(unsigned pos) const override
-  {
-    return m_doc_path.get_name(pos);
-  }
-  virtual const uint32_t* get_index(unsigned pos) const override
-  {
-    return m_doc_path.get_index(pos);
-  }
-};
-
-
 class Op_collection_modify
     : public Op_sort<parser::Parser_mode::DOCUMENT>
     , public cdk::Update_spec
@@ -644,7 +573,7 @@ class Op_collection_modify
 
   void process(Update_spec::Processor &prc) const override
   {
-    Field_parser field(m_update_it->m_field);
+    Doc_field_parser doc_field(m_update_it->m_field);
 
     switch (m_update_it->m_op)
     {
@@ -652,19 +581,19 @@ class Op_collection_modify
         {
           Value_prc value_prc(m_update_it->m_val, parser::Parser_mode::DOCUMENT);
 
-          value_prc.process_if(prc.set(&field));
+          value_prc.process_if(prc.set(&doc_field));
 
         }
         break;
       case Field_Op::UNSET:
-        prc.remove(&field);
+        prc.remove(&doc_field);
         break;
 
       case Field_Op::ARRAY_INSERT:
         {
           Value_prc value_prc(m_update_it->m_val, parser::Parser_mode::DOCUMENT);
 
-          value_prc.process_if(prc.array_insert(&field));
+          value_prc.process_if(prc.array_insert(&doc_field));
         }
         break;
 
@@ -672,11 +601,11 @@ class Op_collection_modify
         {
           Value_prc value_prc(m_update_it->m_val, parser::Parser_mode::DOCUMENT);
 
-          value_prc.process_if(prc.array_append(&field));
+          value_prc.process_if(prc.array_append(&doc_field));
         }
         break;
       case Field_Op::ARRAY_DELETE:
-        prc.remove(&field);
+        prc.remove(&doc_field);
         break;
     }
 
