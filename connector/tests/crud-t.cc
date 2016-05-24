@@ -192,20 +192,16 @@ TEST_F(Crud, life_time)
       doc = row[1];
     }
 
-    // Simialr, row is now deleted when we access field and doc.
+    // Similar, row is now deleted when we access field and doc.
 
     cout << "field value: " << field << endl;
     EXPECT_EQ(value, (unsigned)field);
 
     cout << "document: " << doc << endl;
 
-    /*
-      FIXME: code below throws error
-      "CDK Error: Unknown character at 68"
-    */
-    //string name = doc["name"];
-    //EXPECT_EQ(2, (unsigned)doc["age"]);
-    //EXPECT_EQ(string("bar"), (string)doc["name"]);
+    string name = doc["name"];
+    EXPECT_EQ(2, (unsigned)doc["age"]);
+    EXPECT_EQ(string("bar"), (string)doc["name"]);
   }
 
 }
