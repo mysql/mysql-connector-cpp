@@ -25,6 +25,7 @@
 #include <test.h>
 #include <mysqlx.h>
 #include <iostream>
+#include <boost/format.hpp>
 
 using std::cout;
 using std::endl;
@@ -41,5 +42,52 @@ TEST_F(First, first)
 
   SqlResult res = get_sess().sql("SELECT @@version").execute();
   cout << "Talking to MySQL Server: " << res.fetchOne()[0] << endl;
+  cout << "Done!" << endl;
+}
+
+
+TEST_F(First, databaseObj)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "DatabaseObject implementation..." << endl;
+
+  const string schema_name = "schemaObj";
+  const string coll_name = "collObj";
+  const string tbl_name = "tblObj";
+
+  try {
+    get_sess().dropSchema(schema_name);
+  } catch (...) {}
+
+
+  Schema schema = get_sess().createSchema(schema_name);
+
+  //Test Schema Obj
+  EXPECT_TRUE(schema.existsInDatabase());
+  EXPECT_EQ(schema_name ,schema.getName());
+  EXPECT_FALSE(schema.getSession().getSchema("NOT_FOUND").existsInDatabase());
+
+  //Test Collection Obj
+  Collection coll = schema.createCollection(coll_name);
+
+  EXPECT_TRUE(coll.existsInDatabase());
+  EXPECT_EQ(coll_name, coll.getName());
+  EXPECT_FALSE(coll.getSession().getSchema(schema_name)
+               .getCollection("NOT_FOUND").existsInDatabase());
+
+
+  //Test Table Obj
+  get_sess().sql((boost::format("CREATE TABLE `%s`.`%s` (name VARCHAR(20) ,age INT);")
+                  %schema_name %tbl_name).str()).execute();
+
+  Table tbl = schema.getTable(tbl_name);
+
+  EXPECT_TRUE(tbl.existsInDatabase());
+  EXPECT_EQ(tbl_name, tbl.getName());
+  EXPECT_FALSE(tbl.getSession().getSchema(schema_name)
+               .getTable("NOT_FOUND").existsInDatabase());
+
+
   cout << "Done!" << endl;
 }

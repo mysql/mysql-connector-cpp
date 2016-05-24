@@ -432,11 +432,21 @@ CATCH_AND_WRAP
 
 
 
-
 /*
-  Schema.createCollection()
-  =========================
+  Schema
+  ======
 */
+
+bool Schema::existsInDatabase() const
+try {
+
+  auto schemas_names = List_query<SCHEMA>(m_sess.get_cdk_session(),
+                                          m_name).execute();
+
+  return !schemas_names.empty();
+
+}
+CATCH_AND_WRAP
 
 
 Collection Schema::getCollection(const string &name, bool check)
@@ -553,18 +563,49 @@ List_init<string> Schema::getTableNames()
 }
 
 /*
-   Table::isView
-   */
+  Collection
+  ==========
+*/
 
-  bool Table::isView()
+bool Collection::existsInDatabase() const
+try {
+
+  auto collection_names = List_query<COLLECTION>(m_sess.get_cdk_session(),
+                                              m_schema.getName(),
+                                              m_name).execute();
+
+  return !collection_names.empty();
+
+}
+CATCH_AND_WRAP
+
+
+/*
+  Table
+  =====
+*/
+
+bool Table::isView()
+{
+  if (UNDEFINED == m_isview)
   {
-    if (UNDEFINED == m_isview)
-    {
-      m_isview = m_schema.getTable(m_name, true).isView() ? YES : NO;
-    }
-
-    return m_isview == YES ? true : false;
+    m_isview = m_schema.getTable(m_name, true).isView() ? YES : NO;
   }
+
+  return m_isview == YES ? true : false;
+}
+
+bool Table::existsInDatabase() const
+try {
+
+  auto table_names = List_query<TABLE>(m_sess.get_cdk_session(),
+                                            m_schema.getName(),
+                                            m_name).execute();
+
+  return !table_names.empty();
+
+}
+CATCH_AND_WRAP
 
 /*
   Executing SQL queries

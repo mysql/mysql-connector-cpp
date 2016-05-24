@@ -80,6 +80,57 @@ struct List_init
    }
 };
 
+/**
+  Representa a database object
+
+  Inherited by Schema, Table and Collection. Can't be used alone.
+  */
+class DatabaseObject
+{
+
+protected:
+
+  XSession &m_sess;
+  const string m_name;
+
+  DatabaseObject(XSession& sess, const string& name = string())
+    : m_sess(sess), m_name(name)
+  {}
+
+  virtual ~DatabaseObject()
+  {}
+
+public:
+
+  /**
+     Get database object name
+    */
+  const string& getName() const { return m_name; }
+
+  /**
+    Get Session object
+    */
+  XSession& getSession() { return m_sess; }
+
+
+  /**
+     Get schema object
+   */
+  virtual const Schema& getSchema() const = 0;
+
+
+  /**
+     Check if database object exists
+   */
+  virtual bool existsInDatabase() const = 0;
+
+
+  friend class Schema;
+  friend class Table;
+  friend class Collection;
+
+};
+
 
 /**
   Represents a schema in a given XSession.
@@ -113,15 +164,14 @@ struct List_init
 */
 
 class Schema
+  : public DatabaseObject
 {
-  XSession &m_sess;
-  const string m_name;
 
 public:
 
   /// Construct named schema object.
   Schema(XSession &sess, const string &name)
-    : m_sess(sess), m_name(name)
+    : DatabaseObject(sess, name)
   {}
 
   /**
@@ -132,8 +182,18 @@ public:
   */
   Schema(XSession&);
 
-  /// Get schema name
-  const string& getName() const { return m_name; }
+
+  /**
+     Get schema object
+   */
+  const Schema& getSchema() const override { return *this; }
+
+
+  /**
+     Check if database object exists
+   */
+  bool existsInDatabase() const override;
+
 
   /**
     Create new collection in the schema. If `reuse` is false
@@ -235,28 +295,38 @@ public:
 */
 
 class Collection
-  : public internal::CollectionAddBase
+  : public DatabaseObject
+  , public internal::CollectionAddBase
   , public internal::CollectionRemoveBase
   , public internal::CollectionFindBase
   , public internal::CollectionModifyBase
 {
   Schema m_schema;
-  const string m_name;
 
 public:
 
   Collection(const Collection &other)
     : CollectionOpBase(*this)
-    , m_schema(other.m_schema), m_name(other.m_name)
+    , DatabaseObject(other.m_schema.m_sess, other.m_name)
+    , m_schema(other.m_schema)
   {}
 
   Collection(const Schema &sch, const string &name)
     : CollectionOpBase(*this)
-    , m_schema(sch), m_name(name)
+    , DatabaseObject(sch.m_sess, name)
+    , m_schema(sch)
   {}
 
-  const string& getName() const { return m_name; }
-  const Schema& getSchema() const { return m_schema; }
+
+  /**
+     Get schema object
+   */
+  const Schema& getSchema() const override { return m_schema; }
+
+  /**
+     Check if database object exists
+   */
+  bool existsInDatabase() const override;
 
 
   friend class Task;
@@ -296,13 +366,13 @@ public:
 */
 
 class Table
-    : public internal::TableInsertBase
+    : public DatabaseObject
+    , public internal::TableInsertBase
     , public internal::TableSelectBase
     , public internal::TableUpdateBase
     , public internal::TableRemoveBase
 {
   Schema m_schema;
-  const string m_name;
   enum { YES, NO, UNDEFINED} m_isview = UNDEFINED;
 
 public:
@@ -320,7 +390,8 @@ public:
 
   Table(const Schema &sch, const string &name)
     : internal::TableOpBase(*this)
-    , m_schema(sch), m_name(name)
+    , DatabaseObject(sch.m_sess, name)
+    , m_schema(sch)
   {}
 
   Table(const Schema &sch, const string &name, bool isView)
@@ -331,15 +402,13 @@ public:
 
   DIAGNOSTIC_POP
 
-  ~Table()
-  {
-    m_isview = NO;
-  }
-
-  const string& getName() const { return m_name; }
-  const Schema& getSchema() const { return m_schema; }
-
   bool isView();
+
+  // DatabaseObject methods
+  const Schema& getSchema() const override { return m_schema; }
+
+  bool existsInDatabase() const override;
+
 
   friend class Task;
 };
@@ -439,6 +508,7 @@ private:
 
   friend class Schema;
   friend class Collection;
+  friend class Table;
   friend class Result;
   friend class Task;
 };
