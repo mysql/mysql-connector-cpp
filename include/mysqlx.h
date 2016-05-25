@@ -81,7 +81,7 @@ struct List_init
 };
 
 /**
-  Representa a database object
+  Represents a database object
 
   Inherited by Schema, Table and Collection. Can't be used alone.
   */
