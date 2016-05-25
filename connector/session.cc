@@ -400,14 +400,16 @@ CATCH_AND_WRAP
 Schema XSession::getSchema(const string &name, bool check)
 try {
 
+  Schema schema(*this, name);
+
   if (check)
   {
-    if (List_query<SCHEMA>(get_cdk_session(), name).execute().empty())
+    if (!schema.existsInDatabase())
       // TODO: Better error (schema name)
       throw Error("No such schema");
   }
 
-  return Schema(*this, name);
+  return schema;
 }
 CATCH_AND_WRAP
 
@@ -452,19 +454,18 @@ CATCH_AND_WRAP
 Collection Schema::getCollection(const string &name, bool check)
 try {
 
+  Collection coll(*this, name);
+
   if (check)
   {
 
-    if (List_query<COLLECTION>(m_sess.get_cdk_session(),
-                               m_name,
-                               name )
-        .execute().empty())
+    if (!coll.existsInDatabase())
     {
       // TODO: Better error (collection name)
       throw Error("No such collection");
     }
   }
-  return Collection(*this, name);
+  return coll;
 }
 CATCH_AND_WRAP
 
@@ -487,19 +488,17 @@ CATCH_AND_WRAP
 
 Table Schema::getTable(const string &name, bool check)
 try {
+  Table tbl(*this, name);
+
   if (check)
   {
-    auto tb_list = List_query<TABLE>(m_sess.get_cdk_session(),
-                                     m_name,
-                                     name ).execute();
-    if (tb_list.empty())
+
+    if (!tbl.existsInDatabase())
       // TODO: Better error (collection name)
       throw Error("No such table");
 
-    auto el = tb_list.begin();
-    return Table(*this, el->first, el->second );
   }
-  return Table(*this, name);
+  return tbl;
 }
 CATCH_AND_WRAP
 
@@ -601,6 +600,10 @@ try {
   auto table_names = List_query<TABLE>(m_sess.get_cdk_session(),
                                             m_schema.getName(),
                                             m_name).execute();
+  if (!table_names.empty())
+  {
+    const_cast<Table*>(this)->m_isview = table_names.begin()->second ? YES : NO;
+  }
 
   return !table_names.empty();
 

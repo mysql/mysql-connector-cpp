@@ -311,11 +311,18 @@ public:
     , m_schema(other.m_schema)
   {}
 
+  Collection(Collection&& other)
+    : CollectionOpBase(*this)
+    , DatabaseObject(other.m_sess, std::move(other.m_name))
+    , m_schema(std::move(other.m_schema))
+  {}
+
   Collection(const Schema &sch, const string &name)
     : CollectionOpBase(*this)
     , DatabaseObject(sch.m_sess, name)
     , m_schema(sch)
   {}
+
 
 
   /**
@@ -388,6 +395,22 @@ public:
       DISABLE_WARNING(4100)
   #endif
 
+  Table(Table& other)
+    : internal::TableOpBase(*this)
+    , DatabaseObject(other.m_sess, other.m_name)
+    , m_schema(other.m_schema)
+  {
+    m_isview = other.m_isview;
+  }
+
+  Table(Table&& other)
+    : internal::TableOpBase(*this)
+    , DatabaseObject(other.m_sess, std::move(other.m_name))
+    , m_schema(std::move(other.m_schema))
+  {
+    m_isview = other.m_isview;
+  }
+
   Table(const Schema &sch, const string &name)
     : internal::TableOpBase(*this)
     , DatabaseObject(sch.m_sess, name)
@@ -399,6 +422,7 @@ public:
   {
     m_isview = isView ? YES : NO;
   }
+
 
   DIAGNOSTIC_POP
 
