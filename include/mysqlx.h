@@ -395,7 +395,7 @@ public:
       DISABLE_WARNING(4100)
   #endif
 
-  Table(Table& other)
+  Table(const Table& other)
     : internal::TableOpBase(*this)
     , DatabaseObject(other.m_sess, other.m_name)
     , m_schema(other.m_schema)
