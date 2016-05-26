@@ -128,6 +128,7 @@ public:
   friend class Schema;
   friend class Table;
   friend class Collection;
+  friend class Task;
 
 };
 
