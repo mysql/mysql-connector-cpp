@@ -165,6 +165,24 @@ class CollectionAdd;
 
 namespace internal {
 
+
+  /*
+    Type trait which is used to distinguish types which can describe a single
+    document from other types such as document collections. This is needed
+    to correctly defined CollectionAddInterface below.
+
+    Currently we have DbDoc type and also support documents described by JSON
+    strings.
+  */
+
+  template <typename D> struct is_doc_type
+  {
+    static const bool value
+      = std::is_convertible<D, DbDoc>::value
+      || std::is_convertible<D, string>::value;
+  };
+
+
   /**
     Class which defines various variants of `add()` method.
 
@@ -201,8 +219,70 @@ namespace internal {
       add_docs(op, rest...);
     }
 
+    /*
+      Method which extends given add operation with a range of
+      documents given by two iterators.
+    */
+
+    template<typename It>
+    void add_range(AddOp &op, const It &begin, const It &end)
+    {
+      for (It it = begin; it != end; ++it)
+      {
+        op.do_add(*it);
+      }
+    }
 
   public:
+
+    /**
+      Add all documents from a range defined by two iterators. These
+      iterators should return a document object of one of accepted types
+      (as given by the is_doc_type<> trait).
+
+      Note: We use enable_if to remove ambiguity between this overload
+      and the one which adds 2 documents: add(doc1,doc2). Thus this
+      overload is enabled only if type It is not a document type.
+    */
+
+    template <
+      typename It,
+      typename = enable_if_t<!is_doc_type<It>::value>
+    >
+    AddOp add(const It &begin, const It &end)
+    {
+      try {
+        AddOp add = get_op();
+        add_range(add, begin, end);
+        return add;
+      }
+      CATCH_AND_WRAP
+    }
+
+    /**
+      Add all documents within given container.
+
+      Any container type for which std::begin()/std::end() are defined
+      should work.
+
+      Note: we use enable_if to remove ambiguity between this overload
+      and the one which adds a single document: add(doc). Thus this
+      overload is enabled only if type Container is not a document type.
+    */
+
+    template <
+      class Container,
+      typename = enable_if_t<!is_doc_type<Container>::value>
+    >
+    AddOp add(const Container &c)
+    {
+      try {
+        AddOp add = get_op();
+        add_range(add, std::begin(c), std::end(c));
+        return add;
+      }
+      CATCH_AND_WRAP
+  }
 
     /**
       Add document(s) to a collection.

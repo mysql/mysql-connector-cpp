@@ -164,7 +164,6 @@ protected:
   }
 
   Row& add_row();
-  void add_row(const Row &row);
 
   void add_values(col_count_t pos, const Value &val)
   {
@@ -177,6 +176,24 @@ protected:
   {
     add_values(pos, val);
     add_values(pos + 1, rest...);
+  }
+
+  void add_row(const Row &row);
+
+  void add_rows() {}
+
+  template <typename... Types>
+  void add_rows(const Row &first, Types... rest)
+  {
+    add_row(first);
+    add_rows(rest...);
+  }
+
+  template<typename It>
+  void add_range(const It &begin, const It &end)
+  {
+    for (It it = begin; it != end; ++it)
+      add_row(*it);
   }
 
 public:
@@ -217,6 +234,36 @@ public:
     try {
       m_row = &add_row();
       add_values(0, val, rest...);
+      return *this;
+    }
+    CATCH_AND_WRAP
+  }
+
+  template<typename... Types>
+  TableInsert& rows(const Row &first, Types... rest)
+  {
+    try {
+      add_rows(first, rest...);
+      return *this;
+    }
+    CATCH_AND_WRAP
+  }
+
+  template<typename Container>
+  TableInsert& rows(const Container &cont)
+  {
+    try {
+      add_range(std::begin(cont), std::end(cont));
+      return *this;
+    }
+    CATCH_AND_WRAP
+  }
+
+  template<typename It>
+  TableInsert& rows(const It &begin, const It &end)
+  {
+    try {
+      add_range(begin, end);
       return *this;
     }
     CATCH_AND_WRAP

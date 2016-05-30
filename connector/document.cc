@@ -82,7 +82,7 @@ DbDoc::DbDoc(const std::shared_ptr<Impl> &impl)
 bool DbDoc::hasField(const Field &fld) const
 {
   try {
-    return m_impl->has_field(fld);
+    return m_impl && m_impl->has_field(fld);
   }
   CATCH_AND_WRAP
 }
@@ -98,7 +98,10 @@ const Value& DbDoc::operator[](const Field &fld) const
 void DbDoc::print(std::ostream &out) const
 {
   try {
-    m_impl->print(out);
+    if (m_impl)
+      m_impl->print(out);
+    else
+      out << "{}";
   }
   CATCH_AND_WRAP
 }

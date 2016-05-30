@@ -177,6 +177,15 @@ namespace internal {
     return out;
   }
 
+
+  /*
+    Defined here because std::enable_if_t is not defined on all platforms on
+    which we build (clang is missing one).
+  */
+
+  template<bool Cond, typename T = void>
+  using enable_if_t = typename std::enable_if<Cond, T>::type;
+
 }  // internal
 
 

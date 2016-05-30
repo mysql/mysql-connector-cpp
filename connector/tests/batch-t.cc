@@ -36,6 +36,25 @@ class Batch : public mysqlx::test::Xplugin
 };
 
 
+unsigned show_docs(Collection &coll)
+{
+  DocResult res = coll.find().execute();
+
+  unsigned count;
+  DbDoc doc;
+
+  cout << "== documents in the collection ==" << endl;
+
+  for (count = 0; (doc = res.fetchOne()); ++count)
+  {
+    cout << "doc#" << count << ": " << doc << endl;
+  }
+
+  cout << "== there are " << count << " documents ==" << endl;
+  return count;
+}
+
+
 /*
   Test CRUD multi operations such as inserting several documents
   or performing several modifications by a single CRUD operation.
@@ -158,5 +177,153 @@ TEST_F(Batch, crud)
   }
 
   cout << "Done!" << endl;
+}
+
+
+TEST_F(Batch, multi_add)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  Collection coll = getSchema("test").createCollection("multi_add", true);
+
+  std::vector<string> docs = {
+    "{ \"foo\": 1 }",
+    "{ \"foo\": 2 }",
+    "{ \"foo\": 3 }",
+    "{ \"foo\": 4 }",
+    "{ \"foo\": 5 }",
+  };
+
+  cout << endl << "1. Adding documents from a container" << endl;
+
+  coll.remove().execute();
+  coll.add(docs).execute();
+  EXPECT_EQ(5, show_docs(coll));
+
+  cout << endl << "2. Add range of documents from 1 to 3" << endl;
+
+  coll.remove().execute();
+  coll.add(docs.begin(), docs.begin() + 3).execute();
+  EXPECT_EQ(3, show_docs(coll));
+
+  cout << endl << "3. Mixed inserts" << endl;
+
+  coll.remove().execute();
+  coll.add(docs)
+    .add(docs[0])
+    .add(docs.begin(), docs.begin() + 3)
+    .add(docs[4])
+    .add(docs).execute();
+  EXPECT_EQ(15, show_docs(coll));
+
+  cout << endl << "4. Add documents in a loop" << endl;
+
+  {
+    coll.remove().execute();
+    CollectionAdd add_op(coll);
+    for (const string &json : docs)
+    {
+      add_op.add(json);
+    }
+    add_op.execute();
+    EXPECT_EQ(5, show_docs(coll));
+  }
+
+  cout << endl << "5. Using custom iterator" << endl;
+
+  struct It
+  {
+    unsigned m_pos;
+
+    DbDoc operator*()
+    {
+      std::ostringstream buf;
+      buf << "{ \"bar" << m_pos << "\": " << m_pos << " }";
+      return DbDoc(buf.str());
+    }
+
+    void operator++()
+    {
+      if (m_pos > 0)
+        m_pos--;
+    }
+
+    It(unsigned size = 0) : m_pos(size)
+    {}
+
+    bool operator==(const It &other)
+    {
+      return (other.m_pos == 0) && (m_pos == 0);
+    }
+
+    bool operator!=(const It &other)
+    {
+      return !(*this == other);
+    }
+  };
+
+  coll.remove().execute();
+  coll.add(It(5), It()).execute();
+  EXPECT_EQ(5, show_docs(coll));
+
+}
+
+
+TEST_F(Batch, table_insert)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  sql("DROP TABLE IF EXISTS test.table_insert");
+  sql(
+    "CREATE TABLE test.table_insert("
+    "  a INT,"
+    "  b VARCHAR(32)"
+    ")");
+
+  Table tbl = getSchema("test").getTable("table_insert");
+
+  std::vector<Row> rows;
+
+  rows.emplace_back(1, "foo");
+  rows.emplace_back(2, "bar");
+  rows.emplace_back(3, "baz");
+  rows.emplace_back(4, "buz");
+  rows.emplace_back(5, "bum");
+
+  tbl.insert().rows(rows).rows(rows[0],rows[1],rows[2]).execute();
+
+  {
+    RowResult res = sql("SELECT a,b FROM test.table_insert");
+
+    unsigned count;
+    Row row;
+
+    cout << "== rows in the table ==" << endl;
+
+    for (count = 0; (row = res.fetchOne()); ++count)
+    {
+      cout << "row#" << count << ": " << row[0] << ", " << row[1] << endl;
+    }
+
+    EXPECT_EQ(8, count);
+  }
+
+  tbl.insert().rows(rows.begin(), rows.end()).values(6, "new").execute();
+
+  {
+    RowResult res = sql("SELECT a,b FROM test.table_insert");
+
+    unsigned count;
+    Row row;
+
+    cout << "== rows in the table ==" << endl;
+
+    for (count = 0; (row = res.fetchOne()); ++count)
+    {
+      cout << "row#" << count << ": " << row[0] << ", " << row[1] << endl;
+    }
+
+    EXPECT_EQ(14, count);
+  }
 }
 
