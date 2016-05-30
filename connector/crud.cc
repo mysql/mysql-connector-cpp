@@ -45,12 +45,15 @@ internal::BaseResult Executable::execute()
 }
 
 
+namespace internal {
+
 template <bool with_offset>
 struct Crud_impl< internal::Limit<with_offset> >
 {
   typedef Op_base type;
 };
 
+}
 
 Executable& internal::Limit<false>::limit(unsigned rows)
 {
@@ -64,6 +67,7 @@ internal::Offset& internal::Limit<true>::limit(unsigned rows)
   return *this;
 }
 
+namespace internal {
 
 template<>
 struct Crud_impl<internal::Offset>
@@ -71,6 +75,7 @@ struct Crud_impl<internal::Offset>
   typedef Op_base type;
 };
 
+}
 
 Executable& internal::Offset::offset(unsigned rows)
 {
@@ -79,13 +84,14 @@ Executable& internal::Offset::offset(unsigned rows)
 }
 
 
+namespace internal {
+
 template<bool limit_with_offset>
 struct Crud_impl< internal::SortBase<limit_with_offset> >
 {
   typedef Op_base type;
 };
 
-namespace internal {
 
 template<>
 void SortBase<false>::do_sort(const mysqlx::string &spec)

@@ -347,6 +347,7 @@ public:
   /// Retrun number of fields in each row.
   col_count_t getColumnCount() const;
 
+
   /**
     Return current row and move to the next one in the sequence.
 
@@ -388,6 +389,7 @@ public:
     return *this;
   }
 
+
   /**
     Tels if current result contains rows.
 
@@ -396,6 +398,7 @@ public:
   */
 
   bool hasData() const;
+
 
   /**
     Move to next result if there is one.
@@ -439,6 +442,7 @@ public:
   virtual ~DocResult();
 
   void operator=(BaseResult &&init);
+
 
   /**
     Return current document and move to the next one in the sequence.

@@ -64,11 +64,13 @@ TEST_F(First, databaseObj)
   Schema schema = get_sess().createSchema(schema_name);
 
   //Test Schema Obj
+
   EXPECT_TRUE(schema.existsInDatabase());
   EXPECT_EQ(schema_name ,schema.getName());
   EXPECT_FALSE(schema.getSession().getSchema("NOT_FOUND").existsInDatabase());
 
   //Test Collection Obj
+
   Collection coll = schema.createCollection(coll_name);
 
   EXPECT_TRUE(coll.existsInDatabase());
@@ -78,6 +80,7 @@ TEST_F(First, databaseObj)
 
 
   //Test Table Obj
+
   get_sess().sql((boost::format("CREATE TABLE `%s`.`%s` (name VARCHAR(20) ,age INT);")
                   %schema_name %tbl_name).str()).execute();
 

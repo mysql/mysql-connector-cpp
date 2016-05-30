@@ -68,6 +68,7 @@ class Op_table_insert
     , m_table(tbl)
   {}
 
+
   void reset()
   {
     m_rows.clear();
@@ -76,6 +77,7 @@ class Op_table_insert
     m_cols.clear();
     m_col_end = m_cols.before_begin();
   }
+
 
   // Task::Impl
 
@@ -95,6 +97,7 @@ class Op_table_insert
                          );
   }
 
+
   // Row_source (Iterator)
 
   bool next() override
@@ -107,6 +110,7 @@ class Op_table_insert
     m_started = true;
     return m_cur_row != m_row_end;
   }
+
 
   // Columns
 
@@ -129,6 +133,7 @@ class Op_table_insert
 
 
 namespace mysqlx {
+namespace internal {
 
 template <>
 struct Crud_impl<TableInsert>
@@ -136,7 +141,7 @@ struct Crud_impl<TableInsert>
   typedef Op_table_insert type;
 };
 
-}
+}} // mysqlx::internal
 
 
 void TableInsert::prepare(Table &table)
@@ -205,6 +210,7 @@ class Op_table_select
   string m_where;
   std::unique_ptr<parser::Expression_parser> m_expr;
 
+
   cdk::Reply* send_command() override
   {
     if (!m_where.empty())
@@ -224,18 +230,19 @@ class Op_table_select
                        );
   }
 
+
 public:
   Op_table_select(Table &table)
     : Op_sort(table)
     , m_table(table)
-  {
-  }
+  {}
 
   friend class mysqlx::TableSelect;
 };
 
 
 namespace mysqlx {
+namespace internal {
 
 template <>
 struct Crud_impl<TableSelect>
@@ -243,7 +250,7 @@ struct Crud_impl<TableSelect>
   typedef Op_table_select type;
 };
 
-}
+}} // mysqlx::internal
 
 
 void TableSelect::prepare(Table &table)
@@ -251,10 +258,12 @@ void TableSelect::prepare(Table &table)
   Executable::Access::reset_task(*this, new Op_table_select(table));
 }
 
+
 void TableSelect::add_proj(const mysqlx::string& projection)
 {
   get_impl(this).add_projection(projection);
 }
+
 
 internal::TableSort<true>& TableSelect::where(const mysqlx::string &expr)
 {
@@ -283,6 +292,7 @@ class Op_table_update
   std::unique_ptr<parser::Expression_parser> m_expr;
   SetValues m_set_values;
   SetValues::const_iterator m_set_it;
+
 
   cdk::Reply* send_command() override
   {
@@ -325,6 +335,7 @@ class Op_table_update
     val_prc.process_if(prc.set(NULL));
   }
 
+
   //  cdk::api::Column_ref
 
   virtual const string name() const override
@@ -342,8 +353,7 @@ public:
   Op_table_update(Table &table)
     : Op_sort(table)
     , m_table(table)
-  {
-  }
+  {}
 
 
   friend class mysqlx::TableUpdate;
@@ -351,6 +361,7 @@ public:
 
 
 namespace mysqlx {
+namespace internal {
 
 template <>
 struct Crud_impl<TableUpdate>
@@ -358,7 +369,7 @@ struct Crud_impl<TableUpdate>
   typedef Op_table_update type;
 };
 
-}
+}} // mysqlx::internal
 
 
 void TableUpdate::prepare(Table &table)
@@ -366,11 +377,13 @@ void TableUpdate::prepare(Table &table)
   Executable::Access::reset_task(*this, new Op_table_update(table));
 }
 
+
 TableUpdate& TableUpdate::set(const mysqlx::string& field, ExprValue val)
 {
   get_impl(this).m_set_values[field] = std::move(val);
   return *this;
 }
+
 
 Executable& TableUpdate::where(const mysqlx::string &expr)
 {
@@ -395,6 +408,7 @@ class Op_table_remove
   string m_where;
   std::unique_ptr<parser::Expression_parser> m_expr;
 
+
   cdk::Reply* send_command() override
   {
     if (!m_where.empty())
@@ -416,14 +430,15 @@ public:
   Op_table_remove(Table &table)
     : Op_sort(table)
     , m_table(table)
-  {
-  }
+  {}
+
 
   friend class mysqlx::TableRemove;
 };
 
 
 namespace mysqlx {
+namespace internal {
 
 template <>
 struct Crud_impl<TableRemove>
@@ -431,13 +446,14 @@ struct Crud_impl<TableRemove>
   typedef Op_table_remove type;
 };
 
-}
+}} // mysqlx::internal
 
 
 void TableRemove::prepare(Table &table)
 {
   Executable::Access::reset_task(*this, new Op_table_remove(table));
 }
+
 
 internal::TableSort<false>& TableRemove::where(const mysqlx::string& where)
 {

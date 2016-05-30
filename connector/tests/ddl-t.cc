@@ -69,8 +69,10 @@ TEST_F(Ddl, create_drop)
   Schema schema = get_sess().createSchema(schema_name_1, true);
 
   //Tables Test
+
   {
     //TODO substitute with createTable when available
+
     sql(L"CREATE TABLE schema_to_drop_1.tb1 (`name` varchar(20), `age` int)");
     sql(L"CREATE TABLE schema_to_drop_1.tb2 (`name` varchar(20), `age` int)");
     sql(L"CREATE VIEW schema_to_drop_1.view1 as select * from schema_to_drop_1.tb1");
@@ -96,6 +98,7 @@ TEST_F(Ddl, create_drop)
     }
 
     //Drop Tables/Views
+
     std::list<string> names_list = schema.getTableNames();
 
     for (auto name : names_list)
@@ -111,6 +114,7 @@ TEST_F(Ddl, create_drop)
   }
 
   //Collection tests
+
   {
 
     const string collection_name_1 = "collection_1";
@@ -121,6 +125,7 @@ TEST_F(Ddl, create_drop)
     schema.createCollection(collection_name_2);
 
     // Get Collections
+
     std::list<Collection> list_coll = schema.getCollections();
 
     EXPECT_EQ(2, list_coll.size());
@@ -165,6 +170,7 @@ TEST_F(Ddl, create_drop)
   }
 
   // Drop Schemas doesn't throw if it doesnt exist
+
   for (auto schema : schemas)
   {
     if (schema.getName() == schema_name_1 ||

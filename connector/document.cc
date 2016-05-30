@@ -134,8 +134,7 @@ public:
   }
 
   void doc_end()
-  {
-  }
+  {}
 
   cdk::JSON::Processor::Any_prc*
   key_val(const cdk::string &key)
@@ -200,6 +199,7 @@ public:
       return m_arr_builder.get();
     }
 
+
     // Handle a document element
 
     std::unique_ptr<Builder> m_doc_builder;
@@ -218,6 +218,7 @@ public:
       m_doc_builder.reset(new Builder(*sub.m_doc.m_impl));
       return m_doc_builder.get();
     }
+
 
     // Handle scalar values using itself as a processor.
 
@@ -284,8 +285,10 @@ public:
     return this;
   }
 
-  // Callbacks for scalar values store the value under
-  // key given by m_key.
+  /*
+    Callbacks for scalar values store the value under
+    key given by m_key.
+  */
 
   void str(const cdk::string &val)
   {
@@ -370,8 +373,10 @@ DbDoc::Iterator& DbDoc::Iterator::operator++()
 
 bool DbDoc::Iterator::operator==(const Iterator &other) const
 {
-  // if this is end iterator, other is equal if it is also end
-  // iterator or it is at the end of sequence. And vice-versa.
+  /*
+    if this is end iterator, other is equal if it is also end
+    iterator or it is at the end of sequence. And vice-versa.
+  */
 
   if (m_end)
     return other.m_end || other.m_impl->at_end();
@@ -379,9 +384,11 @@ bool DbDoc::Iterator::operator==(const Iterator &other) const
   if (other.m_end)
     return m_end || m_impl->at_end();
 
-  // Otherwise two iterators are equal if they use the same
-  // document implementation (but such two iterators should not
-  // be used at the same time).
+  /*
+    Otherwise two iterators are equal if they use the same
+    document implementation (but such two iterators should not
+    be used at the same time).
+  */
 
   return m_impl == other.m_impl;
 }

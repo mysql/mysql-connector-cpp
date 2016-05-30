@@ -596,6 +596,8 @@ protected:
 
 // --------------------------------------------------------------------
 
+namespace internal {
+
 template <class X> struct Crud_impl;
 
 template <class X>
@@ -606,6 +608,7 @@ typename Crud_impl<X>::type& get_impl(X *p)
   return *static_cast<Op_type*>(Executable::Access::get_impl(*p));
 }
 
+}
 
 // --------------------------------------------------------------------
 

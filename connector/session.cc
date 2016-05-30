@@ -57,17 +57,21 @@ class XSession::Impl
 XSession::XSession(const char *host, unsigned short port,
                    const string  &user,
                    const char    *pwd)
-try {
-  m_impl= new Impl(host, port, user, pwd);
+{
+  try {
+    m_impl= new Impl(host, port, user, pwd);
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 
 XSession::~XSession()
-try {
-  delete m_impl;
+{
+  try {
+    delete m_impl;
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 cdk::Session& XSession::get_cdk_session()
 {
@@ -86,9 +90,11 @@ cdk::Session& XSession::get_cdk_session()
 class Args
     : public cdk::Any_list
 {
+
   typedef cdk::Any_list Any_list;
 
   std::vector<string> m_args;
+
 
   void add_arg(const string& arg)
   {
@@ -148,11 +154,11 @@ struct List_query_base
     : public cdk::Row_processor
 {
   /*
-     It will be called for each row with the defined data for storing it on the
-     next item to be added to the list.
-     If class implementing method returns false, the rest of row data is skipped
-     and the element not added to the list.
-   */
+    It will be called for each row with the defined data for storing it on the
+    next item to be added to the list.
+    If class implementing method returns false, the rest of row data is skipped
+    and the element not added to the list.
+  */
   virtual bool field_data(size_t col, cdk::string&&) = 0;
 
 
@@ -166,6 +172,7 @@ struct List_query_base
     m_list_it = m_list.before_begin();
   }
 
+
   cdk::Reply m_reply;
   cdk::scoped_ptr<cdk::Cursor> m_cursor;
 
@@ -174,6 +181,22 @@ struct List_query_base
   std::forward_list<E> m_list;
   typename std::forward_list<E>::iterator m_list_it;
 
+
+  /*
+    Method to be called to retrieve list of the queried elements
+  */
+
+  std::forward_list<E> execute()
+  {
+    m_cursor->get_rows(*this);
+    m_cursor->wait();
+    return std::move(m_list);
+  }
+
+
+  /*
+    cdk::Row_processor implementation
+  */
 
   bool row_begin(row_count_t)
   {
@@ -208,13 +231,6 @@ struct List_query_base
   }
   void end_of_data() {}
 
-  std::forward_list<E> execute()
-  {
-    m_cursor->get_rows(*this);
-    m_cursor->wait();
-    return std::move(m_list);
-  }
-
 };
 
 
@@ -236,7 +252,10 @@ struct List_query<obj_type::SCHEMA>
   {
   }
 
-  //if returns false, skip current row
+  /*
+    if returns false, skip current row
+  */
+
   bool field_data(size_t col, cdk::string&& data) override
   {
     if (0 == col)
@@ -257,8 +276,7 @@ struct List_query<obj_type::SCHEMA>
   The retrieved data contains 2 columns
   - Object name
   - Type (TABLE/VIEW/COLLECTION)
-
-  */
+*/
 
 template<>
 struct List_query<obj_type::COLLECTION>
@@ -279,7 +297,9 @@ struct List_query<obj_type::COLLECTION>
   {
   }
 
-  //if returns false, skip current row
+  /*
+    if returns false, skip current row
+  */
   bool field_data(size_t col, cdk::string&& data) override
   {
     switch (col)
@@ -327,31 +347,35 @@ struct List_query<obj_type::TABLE>
 };
 
 
-
 // ---------------------------------------------------------------------
 
 
 Schema XSession::createSchema(const string &name, bool reuse)
-try {
-  std::stringstream query;
-  query << "Create Schema `" << name << "`";
-  cdk::Reply r(get_cdk_session().sql(query.str()));
+{
+  try {
+    std::stringstream query;
+    query << "Create Schema `" << name << "`";
+    cdk::Reply r(get_cdk_session().sql(query.str()));
 
-  r.wait();
+    r.wait();
 
-  if (0 < r.entry_count())
-  {
-    const cdk::Error &err= r.get_error();
-    // 1007 = schema already exists
-    if (!reuse || cdk::server_error(1007) != err.code())
-      err.rethrow();
+    if (0 < r.entry_count())
+    {
+      const cdk::Error &err= r.get_error();
+      // 1007 = schema already exists
+      if (!reuse || cdk::server_error(1007) != err.code())
+        err.rethrow();
+    }
+    return Schema(*this, name);
   }
-  return Schema(*this, name);
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 
-// helper function to wait on reply and throw errors
+/*
+  Helper function to wait on reply and throw errors
+*/
+
 void check_reply_skip_error_throw(cdk::Reply&& r, int skip_server_error)
 {
   r.wait();
@@ -366,72 +390,85 @@ void check_reply_skip_error_throw(cdk::Reply&& r, int skip_server_error)
 
 
 void XSession::dropSchema(const string &name)
-try{
+{
+  try{
     std::stringstream qry;
     qry << "Drop Schema `" << name << "`";
     //skip server error 1008 = schema doesn't exist
     check_reply_skip_error_throw(get_cdk_session().sql(qry.str()),
                                  1008);
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 
-//TODO: better implementation: check if drop_collection can drop views also
+/*
+  TODO: better implementation: check if drop_collection can drop views also
+*/
+
 void XSession::dropTable(const mysqlx::string& schema, const string& table)
-try{
-  Args args(schema, table);
-  // Doesn't throw if table doesn't exit (server error 1051)
-  check_reply_skip_error_throw(get_cdk_session().admin("drop_collection", args),
-                               1051);
+{
+  try{
+    Args args(schema, table);
+    // Doesn't throw if table doesn't exit (server error 1051)
+    check_reply_skip_error_throw(get_cdk_session().admin("drop_collection", args),
+                                 1051);
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
+
 
 void XSession::dropCollection(const mysqlx::string& schema,
                               const mysqlx::string& collection)
-try{
-  Args args(schema, collection);
-  // Doesn't throw if collection doesn't exit (server error 1051)
-  check_reply_skip_error_throw(get_cdk_session().admin("drop_collection", args),
-                               1051);
+{
+  try{
+    Args args(schema, collection);
+    // Doesn't throw if collection doesn't exit (server error 1051)
+    check_reply_skip_error_throw(get_cdk_session().admin("drop_collection", args),
+                                 1051);
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 
 Schema XSession::getSchema(const string &name, bool check)
-try {
+{
+  try {
 
-  Schema schema(*this, name);
+    Schema schema(*this, name);
 
-  if (check)
-  {
-    if (!schema.existsInDatabase())
-      // TODO: Better error (schema name)
-      throw Error("No such schema");
+    if (check)
+    {
+      if (!schema.existsInDatabase())
+        // TODO: Better error (schema name)
+        throw Error("No such schema");
+    }
+
+    return schema;
   }
-
-  return schema;
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
+
 
 List_init<Schema> XSession::getSchemas()
-try {
+{
+  try {
 
 
-  auto schemas_names = List_query<SCHEMA>(get_cdk_session()).execute();
+    auto schemas_names = List_query<SCHEMA>(get_cdk_session()).execute();
 
-  std::forward_list<Schema> schemas_list;
-  std::forward_list<Schema>::iterator schema_it =  schemas_list.before_begin();
+    std::forward_list<Schema> schemas_list;
+    std::forward_list<Schema>::iterator schema_it =  schemas_list.before_begin();
 
-  for (auto el : schemas_names)
-  {
-    schema_it = schemas_list.emplace_after(schema_it, Schema(*this, el));
+    for (auto el : schemas_names)
+    {
+      schema_it = schemas_list.emplace_after(schema_it, Schema(*this, el));
+    }
+
+    return std::move(schemas_list);
   }
-
-  return std::move(schemas_list);
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
-
-
 
 
 /*
@@ -440,92 +477,105 @@ CATCH_AND_WRAP
 */
 
 bool Schema::existsInDatabase() const
-try {
+{
+  try {
 
-  auto schemas_names = List_query<SCHEMA>(m_sess.get_cdk_session(),
-                                          m_name).execute();
+    auto schemas_names = List_query<SCHEMA>(m_sess.get_cdk_session(),
+                                            m_name).execute();
 
-  return !schemas_names.empty();
+    return !schemas_names.empty();
 
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 
 Collection Schema::getCollection(const string &name, bool check)
-try {
+{
+  try {
 
-  Collection coll(*this, name);
+    Collection coll(*this, name);
 
-  if (check)
-  {
-
-    if (!coll.existsInDatabase())
+    if (check)
     {
-      // TODO: Better error (collection name)
-      throw Error("No such collection");
+
+      if (!coll.existsInDatabase())
+      {
+        // TODO: Better error (collection name)
+        throw Error("No such collection");
+      }
     }
+    return coll;
   }
-  return coll;
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
+
 
 Collection Schema::createCollection(const string &name, bool reuse)
-try {
-  Args args(m_name, name);
-  cdk::Reply r(m_sess.get_cdk_session().admin("create_collection", args));
-  r.wait();
-  if (0 < r.entry_count())
-  {
-    const cdk::Error &err= r.get_error();
-    // 1050 = table already exists
-    if (!reuse || cdk::server_error(1050) != err.code())
-      err.rethrow();
+{
+  try {
+    Args args(m_name, name);
+    cdk::Reply r(m_sess.get_cdk_session().admin("create_collection", args));
+    r.wait();
+    if (0 < r.entry_count())
+    {
+      const cdk::Error &err= r.get_error();
+      // 1050 = table already exists
+      if (!reuse || cdk::server_error(1050) != err.code())
+        err.rethrow();
+    }
+    return Collection(*this, name);
   }
-  return Collection(*this, name);
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 
 Table Schema::getTable(const string &name, bool check)
-try {
-  Table tbl(*this, name);
+{
+  try {
+    Table tbl(*this, name);
 
-  if (check)
-  {
+    if (check)
+    {
 
-    if (!tbl.existsInDatabase())
-      // TODO: Better error (collection name)
-      throw Error("No such table");
+      if (!tbl.existsInDatabase())
+        // TODO: Better error (collection name)
+        throw Error("No such table");
 
+    }
+    return tbl;
   }
-  return tbl;
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 
 List_init<Collection> Schema::getCollections()
-try{
-  std::forward_list<Collection> list;
-  std::forward_list<Collection>::iterator list_it = list.before_begin();
+{
+  try{
+    std::forward_list<Collection> list;
+    std::forward_list<Collection>::iterator list_it = list.before_begin();
 
-  std::list<string> list_name = getCollectionNames();
+    std::list<string> list_name = getCollectionNames();
 
-  for (auto name : list_name)
-  {
-    list.emplace_after(list_it,Collection(*this, name));
+    for (auto name : list_name)
+    {
+      list.emplace_after(list_it,Collection(*this, name));
+    }
+
+    return std::move(list);
   }
-
-  return std::move(list);
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 List_init<string> Schema::getCollectionNames()
-try{
-  return List_query<COLLECTION>(
-                    m_sess.get_cdk_session()
-                    , m_name).execute();
+{
+  try{
+    return List_query<COLLECTION>(
+          m_sess.get_cdk_session()
+          , m_name).execute();
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 List_init<Table> Schema::getTables()
 {
@@ -561,22 +611,25 @@ List_init<string> Schema::getTableNames()
 
 }
 
+
 /*
   Collection
   ==========
 */
 
 bool Collection::existsInDatabase() const
-try {
+{
+  try {
 
-  auto collection_names = List_query<COLLECTION>(m_sess.get_cdk_session(),
-                                              m_schema.getName(),
-                                              m_name).execute();
+    auto collection_names = List_query<COLLECTION>(m_sess.get_cdk_session(),
+                                                   m_schema.getName(),
+                                                   m_name).execute();
 
-  return !collection_names.empty();
+    return !collection_names.empty();
 
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 
 /*
@@ -595,20 +648,23 @@ bool Table::isView()
 }
 
 bool Table::existsInDatabase() const
-try {
+{
+  try {
 
-  auto table_names = List_query<TABLE>(m_sess.get_cdk_session(),
-                                            m_schema.getName(),
-                                            m_name).execute();
-  if (!table_names.empty())
-  {
-    const_cast<Table*>(this)->m_isview = table_names.begin()->second ? YES : NO;
+    auto table_names = List_query<TABLE>(m_sess.get_cdk_session(),
+                                         m_schema.getName(),
+                                         m_name).execute();
+    if (!table_names.empty())
+    {
+      const_cast<Table*>(this)->m_isview = table_names.begin()->second ? YES : NO;
+    }
+
+    return !table_names.empty();
+
   }
-
-  return !table_names.empty();
-
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
+
 
 /*
   Executing SQL queries
@@ -632,11 +688,13 @@ struct Op_sql : public Task::Access::Impl
 
 
 Executable& NodeSession::sql(const string &query)
-try {
-  Task::Access::reset(m_task, new Op_sql(*this, query));
-  return *this;
+{
+  try {
+    Task::Access::reset(m_task, new Op_sql(*this, query));
+    return *this;
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 
 // ---------------------------------------------------------------------
@@ -674,24 +732,28 @@ ostream& operator<<(ostream &out, const Error&)
 
 // Implementation of Task API using internal implementation object
 
-Task::~Task() try { delete m_impl; } CATCH_AND_WRAP
+Task::~Task() { try { delete m_impl; } CATCH_AND_WRAP }
 
 bool Task::is_completed()
-try { return m_impl ? m_impl->is_completed() : true; } CATCH_AND_WRAP
+{ try { return m_impl ? m_impl->is_completed() : true; } CATCH_AND_WRAP }
 
 internal::BaseResult Task::wait()
-try {
-  if (!m_impl)
-    throw Error("Attempt to wait on empty task");
-  return m_impl->wait();
-} CATCH_AND_WRAP
+{
+  try {
+    if (!m_impl)
+      throw Error("Attempt to wait on empty task");
+    return m_impl->wait();
+  } CATCH_AND_WRAP
+}
 
 void Task::cont()
-try {
-  if (!m_impl)
-    throw Error("Attempt to continue an empty task");
-  m_impl->cont();
-} CATCH_AND_WRAP
+{
+  try {
+    if (!m_impl)
+      throw Error("Attempt to continue an empty task");
+    m_impl->cont();
+  } CATCH_AND_WRAP
+}
 
 void Task::reset(Impl *impl)
 {

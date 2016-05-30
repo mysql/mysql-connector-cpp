@@ -182,7 +182,6 @@ namespace internal {
     document to the list.
   */
 
-
   template<class AddOp>
   class CollectionAddInterface
   {
@@ -246,7 +245,9 @@ class CollectionAdd
 {
 public:
 
-  /// Create empty add operation for a given collection.
+  /**
+    Create empty add operation for a given collection.
+  */
 
   CollectionAdd(Collection &coll);
 
@@ -401,7 +402,9 @@ class CollectionRemove
 {
 public:
 
-  /// Create empty remove operation for a given collection.
+  /**
+    Create empty remove operation for a given collection.
+  */
 
   CollectionRemove(Collection &coll);
 
@@ -439,17 +442,24 @@ namespace internal {
 
   public:
 
-    /// Remove all documents from the collection.
+    /**
+      Remove all documents from the collection.
+    */
+
     virtual CollectionRemove remove()
     {
       return CollectionRemove(*m_coll);
     }
 
-    /// Remove documents satisfying given expression.
+    /**
+      Remove documents satisfying given expression.
+    */
+
     virtual CollectionRemove remove(const string &cond)
     {
       return CollectionRemove(*m_coll, cond);
     }
+
 
     friend class Collection;
   };
@@ -475,7 +485,9 @@ class CollectionFind
 {
 public:
 
-  /// Create operation which returns all documents from a collection.
+  /**
+    Create operation which returns all documents from a collection.
+  */
 
   CollectionFind(Collection &coll);
 
@@ -508,17 +520,24 @@ namespace internal {
   {
   public:
 
-    /// Return all the documents in the collection.
+    /**
+      Return all the documents in the collection.
+    */
+
     CollectionFind find()
     {
       return CollectionFind(*m_coll);
     }
 
-    /// Find documents that satisfy given expression.
+    /**
+      Find documents that satisfy given expression.
+    */
+
     CollectionFind find(const string &cond)
     {
       return CollectionFind(*m_coll, cond);
     }
+
 
     friend class Collection;
   };
@@ -564,9 +583,13 @@ namespace internal {
   public:
 
     CollectionModify& set(const Field &field, ExprValue &&val);
+
     CollectionModify& unset(const Field &field);
+
     CollectionModify& arrayInsert(const Field &field, ExprValue &&val);
+
     CollectionModify& arrayAppend(const Field &field, ExprValue &&val);
+
     CollectionModify& arrayDelete(const Field &field);
 
   };
@@ -661,6 +684,7 @@ namespace internal {
       return *static_cast<CollectionModify*>(this);
     }
 
+
     friend class CollectionModifyBase;
     friend class mysqlx::CollectionModify;
   };
@@ -671,21 +695,30 @@ namespace internal {
   {
   public:
 
-    /// Modify all documents.
+    /**
+      Modify all documents.
+    */
 
     CollectionModifyFirst modify()
-    try {
-      return CollectionModify(*m_coll);
+    {
+      try {
+        return CollectionModify(*m_coll);
+      }
+      CATCH_AND_WRAP;
     }
-    CATCH_AND_WRAP;
 
-    /// Modify documents that satisfy given expression.
+    /**
+      Modify documents that satisfy given expression.
+    */
 
     CollectionModifyFirst modify(const string &expr)
-    try {
-      return CollectionModify(*m_coll, expr);
+    {
+      try {
+        return CollectionModify(*m_coll, expr);
+      }
+      CATCH_AND_WRAP;
     }
-    CATCH_AND_WRAP;
+
 
     friend class Collection;
   };

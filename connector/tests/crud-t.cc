@@ -651,9 +651,11 @@ TEST_F(Crud, order_limit)
       .execute();
 
 
-  // Check if modify is ok.
-  // name DESC because now there are 2 documents with same age,
-  // checking the "foo" ones and ages 1 and 2
+  /*
+    Check if modify is ok.
+    name DESC because now there are 2 documents with same age,
+    checking the "foo" ones and ages 1 and 2
+  */
 
   docs = coll.find().sort("age ASC", "name DESC")
                     .limit(2)
@@ -673,6 +675,7 @@ TEST_F(Crud, order_limit)
   }
 
   // Remove the two lines
+
   coll.remove().sort("age ASC", "name DESC")
                .limit(2)
                .execute();
@@ -777,7 +780,9 @@ TEST_F(Crud, table)
   //Insert values on table
 
   std::vector<string> cols = {"_id"};
+
   //Using containers (vectors, const char* and string)
+
   auto insert = tbl.insert(cols, "age", string("name"));
   insert.values("ID#1", 10, "Foo");
   insert.values("ID#2", 5 , "Bar" );
@@ -805,6 +810,7 @@ TEST_F(Crud, table)
   }
 
   // Testing insert data without specifying columns
+
   tbl.insert().values("ID#98","MasterZ","10").execute();
 
   //Check if values inserted are ok
@@ -998,8 +1004,6 @@ TEST_F(Crud, table_projections)
     EXPECT_EQ(3, r.colCount());
     EXPECT_EQ(2016-static_cast<int>(r[0]), static_cast<int>(r[1]));
   }
-
-
 
 }
 

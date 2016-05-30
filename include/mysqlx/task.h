@@ -79,9 +79,9 @@ protected:
 public:
 
   struct Access;
-  friend struct Access;
-  friend class internal::PlainExecutable;
-  friend class Executable;
+  friend Access;
+  friend internal::PlainExecutable;
+  friend Executable;
 };
 
 
@@ -160,7 +160,9 @@ public:
     m_map.clear();
   }
 
+
   internal::BaseResult execute() override;
+
 
   Executable& bind(const string &parameter, Value val)
   {
@@ -189,9 +191,9 @@ public:
 #endif
 
   struct Access;
-  friend struct Access;
-  friend class Task;
-  friend class Task::Impl;
+  friend Access;
+  friend Task;
+  friend Task::Impl;
 };
 
 

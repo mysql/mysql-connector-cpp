@@ -52,6 +52,7 @@ public:
   { return bytes(data.begin(), data.end()); }
 };
 
+
 /*
   Convenience wrapper around std container that is used
   to store incoming raw bytes sequence.
@@ -113,6 +114,7 @@ struct Format_descr<cdk::TYPE_DOCUMENT>
     : m_format(fi)
   {}
 };
+
 
 /*
   Phony Format_descr<> structure used for raw bytes and values
@@ -194,6 +196,7 @@ struct Meta_data
 private:
 
   cdk::col_count_t  m_col_count;
+
 
   /*
     Add to this Meta_data instance information about column
@@ -286,8 +289,10 @@ private:
     return mysqlx::bytes::Access::mk(m_data.at(pos).data());
   }
 
-  // Get value of field at given position after converting to Value.
-  // @throws std::out_of_range if given column does not exist in the row.
+  /*
+    Get value of field at given position after converting to Value.
+    @throws std::out_of_range if given column does not exist in the row.
+  */
 
   template<cdk::Type_info T>
   Value& get(col_count_t pos)
@@ -302,14 +307,16 @@ private:
     return m_vals.at(pos);
   }
 
+
   // Convert raw bytes to Value using given encoding format description.
 
   template<cdk::Type_info T>
   const Value convert(cdk::bytes, Format_descr<T>&) const;
 
-  friend class Row;
-  friend class RowResult;
-  friend class SqlResult;
+
+  friend Row;
+  friend RowResult;
+  friend SqlResult;
 };
 
 
@@ -383,8 +390,10 @@ Value& Row::get(mysqlx::col_count_t pos)
     case cdk::TYPE_FLOAT:     return impl.get<cdk::TYPE_FLOAT>(pos);
     case cdk::TYPE_DOCUMENT:  return impl.get<cdk::TYPE_DOCUMENT>(pos);
 
-      // TODO: Other "natural" conversions
-      // TODO: User-defined conversions (also to user-defined types)
+      /*
+        TODO: Other "natural" conversions
+        TODO: User-defined conversions (also to user-defined types)
+      */
 
     case cdk::TYPE_BYTES:
 
@@ -429,10 +438,12 @@ Value& Row::set(col_count_t pos, const Value &val)
   return impl.m_vals.at(pos);
 }
 
+
 void Row::clear()
 {
   m_impl.reset();
 }
+
 
 /*
   Conversions of raw value representation to Value objects.
@@ -443,67 +454,67 @@ void Row::clear()
 
 namespace mysqlx {
 
-  template<>
-  const Value
-    Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_STRING> &fd) const
+template<>
+const Value
+Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_STRING> &fd) const
+{
+  auto &codec = fd.m_codec;
+  cdk::string str;
+  codec.from_bytes(data, str);
+  return Value(std::move(str));
+}
+
+template<>
+const Value
+Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_INTEGER> &fd) const
+{
+  auto &codec = fd.m_codec;
+  auto &fmt = fd.m_format;
+
+  if (fmt.is_unsigned())
   {
-    auto &codec = fd.m_codec;
-    cdk::string str;
-    codec.from_bytes(data, str);
-    return Value(std::move(str));
+    uint64_t val;
+    codec.from_bytes(data, val);
+    return Value(val);
+  }
+  else
+  {
+    int64_t val;
+    codec.from_bytes(data, val);
+    return Value(val);
+  }
+}
+
+template<>
+const Value
+Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_FLOAT> &fd) const
+{
+  auto &fmt = fd.m_format;
+
+  // Note: DECIMAL format not yet supported by CDK
+
+  if (fmt.FLOAT == fmt.type())
+  {
+    float val;
+    fd.m_codec.from_bytes(data, val);
+    return Value(val);
   }
 
-  template<>
-  const Value
-    Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_INTEGER> &fd) const
+  if (fmt.DOUBLE == fmt.type())
   {
-    auto &codec = fd.m_codec;
-    auto &fmt = fd.m_format;
-
-    if (fmt.is_unsigned())
-    {
-      uint64_t val;
-      codec.from_bytes(data, val);
-      return Value(val);
-    }
-    else
-    {
-      int64_t val;
-      codec.from_bytes(data, val);
-      return Value(val);
-    }
+    double val;
+    fd.m_codec.from_bytes(data, val);
+    return Value(val);
   }
 
-  template<>
-  const Value
-    Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_FLOAT> &fd) const
-  {
-    auto &fmt = fd.m_format;
+  return bytes(data.begin(), data.end());
+}
 
-    // Note: DECIMAL format not yet supported by CDK
-
-    if (fmt.FLOAT == fmt.type())
-    {
-      float val;
-      fd.m_codec.from_bytes(data, val);
-      return Value(val);
-    }
-
-    if (fmt.DOUBLE == fmt.type())
-    {
-      double val;
-      fd.m_codec.from_bytes(data, val);
-      return Value(val);
-    }
-
-    return bytes(data.begin(), data.end());
-  }
-
-  template<>
-  const Value
-    Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_DOCUMENT>&) const
-  {
-    /*
+template<>
+const Value
+Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_DOCUMENT>&) const
+{
+  /*
     Note: this assumes that document is represented as json string
     - thanks to this we can take benefit of lazy parsing.
 
@@ -512,8 +523,8 @@ namespace mysqlx {
     the raw bytes and build a representation of the documnent to be
     stored in the Value instance.
     */
-    return Value::Access::mk_doc(std::string(data.begin(), data.end()));
-  }
+  return Value::Access::mk_doc(std::string(data.begin(), data.end()));
+}
 
 }
 
@@ -564,6 +575,7 @@ class internal::BaseResult::Impl
     }
   }
 
+
   virtual ~Impl()
   {
     // Note: Cursor must be deleted before reply.
@@ -571,12 +583,14 @@ class internal::BaseResult::Impl
     delete m_reply;
   }
 
+
   /*
     Read next row from the cursor. Returns NULL if there are no
     more rows. Throws exeption if this result has no data.
   */
 
   const Row_data *get_row();
+
 
   // Row_processor
 
@@ -587,6 +601,7 @@ class internal::BaseResult::Impl
   }
   void row_end(row_count_t) {}
 
+
   size_t field_begin(col_count_t pos, size_t);
   void   field_end(col_count_t) {}
   void   field_null(col_count_t) {}
@@ -594,10 +609,10 @@ class internal::BaseResult::Impl
   void   end_of_data() {}
 
   friend class Row_builder;
-  friend class internal::BaseResult;
-  friend class mysqlx::Result;
-  friend class mysqlx::RowResult;
-  friend class mysqlx::SqlResult;
+  friend internal::BaseResult;
+  friend mysqlx::Result;
+  friend mysqlx::RowResult;
+  friend mysqlx::SqlResult;
 };
 
 
@@ -610,8 +625,7 @@ const Row_data* Result::Impl::get_row()
     return NULL;
 
   /*
-    TODO: Row cache for better I/O performance (read several
-    rows at once)
+    TODO: Row cache for better I/O performance (read several rows at once)
   */
   if (m_cursor->get_row(*this))
     return &m_row;
@@ -621,7 +635,6 @@ const Row_data* Result::Impl::get_row()
 
   return NULL;
 }
-
 
 
 size_t Result::Impl::field_begin(col_count_t pos, size_t size)
@@ -646,44 +659,54 @@ size_t Result::Impl::field_data(col_count_t pos, bytes data)
 
 
 internal::BaseResult::BaseResult(cdk::Reply *r)
-try {
-  m_owns_impl = true;
-  m_impl= new Impl(r);
+{
+  try {
+    m_owns_impl = true;
+    m_impl= new Impl(r);
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
-
 
 internal::BaseResult::BaseResult(cdk::Reply *r, const GUID &guid)
-try {
-  m_owns_impl = true;
-  m_impl= new Impl(r,guid);
+{
+  try {
+    m_owns_impl = true;
+    m_impl= new Impl(r,guid);
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 
 internal::BaseResult::~BaseResult()
-try {
-  if (m_owns_impl)
-    delete m_impl;
+{
+  try {
+    if (m_owns_impl)
+      delete m_impl;
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 
 internal::BaseResult::Impl& internal::BaseResult::get_impl()
-try {
-  if (!m_impl)
-    THROW("Attempt to use null result instance");
-  return *m_impl;
+{
+  try {
+    if (!m_impl)
+      THROW("Attempt to use null result instance");
+    return *m_impl;
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
+
 
 const GUID& Result::getLastDocumentId() const
-try {
-  if (!m_impl)
-    THROW("Empty result");
-  return m_impl->m_guid;
+{
+  try {
+    if (!m_impl)
+      THROW("Empty result");
+    return m_impl->m_guid;
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 
 /*
@@ -691,39 +714,44 @@ CATCH_AND_WRAP
   =========
 */
 
-
 Row RowResult::fetchOne()
-try {
-  Impl &impl = get_impl();
-  const Row_data *row = impl.get_row();
+{
+  try {
+    Impl &impl = get_impl();
+    const Row_data *row = impl.get_row();
 
-  if (!row)
-    return Row();
+    if (!row)
+      return Row();
 
-  return Row(std::make_shared<Row::Impl>(*row, impl.m_mdata));
+    return Row(std::make_shared<Row::Impl>(*row, impl.m_mdata));
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 
 col_count_t RowResult::getColumnCount() const
-try {
-  if (!m_impl)
-    THROW("Empty result");
-  if (!m_impl->m_cursor)
-    THROW("No result set");
-  return m_impl->m_cursor->col_count();
+{
+  try {
+    if (!m_impl)
+      THROW("Empty result");
+    if (!m_impl->m_cursor)
+      THROW("No result set");
+    return m_impl->m_cursor->col_count();
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 
 bool SqlResult::hasData() const
-//try
 {
-  // Note: add try catch wrapper if the code here
-  // can throw errors.
-  return NULL != m_impl->m_cursor;
+  //try
+  {
+    // Note: add try catch wrapper if the code here
+    // can throw errors.
+    return NULL != m_impl->m_cursor;
+  }
+  //CATCH_AND_WRAP
 }
-//CATCH_AND_WRAP
 
 
 /*
@@ -745,11 +773,13 @@ DocResult::~DocResult()
 
 
 DbDoc DocResult::fetchOne()
-try {
-  DbDoc doc = m_doc_impl->get_current_doc();
-  m_doc_impl->next_doc();
-  return std::move(doc);
+{
+  try {
+    DbDoc doc = m_doc_impl->get_current_doc();
+    m_doc_impl->next_doc();
+    return std::move(doc);
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 

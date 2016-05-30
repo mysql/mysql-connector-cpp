@@ -59,10 +59,11 @@ class Schema;
 class Collection;
 class Table;
 
+
 /**
   List_initializer class is used to initialize user std::vector, std::list or
-  own list imlpementations, as long as initialized by iterators of defied type
-  */
+  own list imlpementations, as long as initialized by iterators of defined type
+*/
 
 template <typename T>
 struct List_init
@@ -80,11 +81,13 @@ struct List_init
    }
 };
 
+
 /**
   Represents a database object
 
   Inherited by Schema, Table and Collection. Can't be used alone.
-  */
+*/
+
 class DatabaseObject
 {
 
@@ -104,24 +107,31 @@ public:
 
   /**
      Get database object name
-    */
+  */
+
   const string& getName() const { return m_name; }
+
 
   /**
     Get Session object
-    */
+  */
+
   XSession& getSession() { return m_sess; }
 
 
   /**
      Get schema object
-   */
+  */
+
   virtual const Schema& getSchema() const = 0;
 
 
   /**
      Check if database object exists
-   */
+
+     Every check will contact server.
+  */
+
   virtual bool existsInDatabase() const = 0;
 
 
@@ -170,7 +180,10 @@ class Schema
 
 public:
 
-  /// Construct named schema object.
+  /**
+     Construct named schema object.
+  */
+
   Schema(XSession &sess, const string &name)
     : DatabaseObject(sess, name)
   {}
@@ -181,18 +194,21 @@ public:
 
     @todo Clarify what "default schema" is.
   */
+
   Schema(XSession&);
 
 
   /**
      Get schema object
-   */
+  */
+
   const Schema& getSchema() const override { return *this; }
 
 
   /**
      Check if database object exists
-   */
+  */
+
   bool existsInDatabase() const override;
 
 
@@ -259,6 +275,7 @@ public:
   /**
     Return list of tables and views in the shcema.
   */
+
   List_init<string> getTableNames();
 
   friend class Collection;
@@ -328,12 +345,14 @@ public:
 
   /**
      Get schema object
-   */
+  */
+
   const Schema& getSchema() const override { return m_schema; }
 
   /**
      Check if database object exists
-   */
+  */
+
   bool existsInDatabase() const override;
 
 
@@ -429,8 +448,17 @@ public:
 
   bool isView();
 
-  // DatabaseObject methods
+
+  /**
+     Get schema object
+  */
+
   const Schema& getSchema() const override { return m_schema; }
+
+
+  /**
+     Check if Table exists
+  */
 
   bool existsInDatabase() const override;
 
@@ -465,12 +493,18 @@ protected:
 
 public:
 
-  /// @constructor
+  /**
+    @constructor
+  */
+
   XSession(const char *host, unsigned short port,
            const string  &user,
            const char    *pwd =NULL);
 
-  /// Create session for database on localhost.
+  /**
+    Create session for database on localhost.
+  */
+
   XSession(unsigned short port,
            const string  &user,
            const char    *pwd = NULL)
@@ -553,21 +587,31 @@ class NodeSession
 {
 public:
 
-  /// Create a single node session.
+  /**
+    Create a single node session.
+  */
+
   NodeSession(const char* host, unsigned short port,
               const string  &user,
               const char    *pwd =NULL)
    : XSession(host, port, user, pwd)
   {}
 
-  /// Create a single node session on localhost.
+  /**
+    Create a single node session on localhost.
+  */
+
   NodeSession(unsigned short port,
               const string  &user,
               const char    *pwd =NULL)
    : NodeSession("localhost", port, user, pwd)
   {}
 
-  /// Operation that runs arbitrary SQL query on the node.
+
+  /**
+    Operation that runs arbitrary SQL query on the node.
+  */
+
   Executable& sql(const string &query);
 };
 

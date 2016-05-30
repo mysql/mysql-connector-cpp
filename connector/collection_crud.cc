@@ -111,6 +111,7 @@ class Op_collection_add
     m_json.push_back(buf.str());
   }
 
+
   cdk::Reply* send_command()
   {
     // Issue coll_add statement where documents are described by list
@@ -119,10 +120,12 @@ class Op_collection_add
     return new cdk::Reply(get_cdk_session().coll_add(m_coll, *this, NULL));
   }
 
+
   internal::BaseResult get_result()
   {
     return Result::Access::mk(m_reply, m_id);
   }
+
 
   // Doc_source
 
@@ -135,6 +138,7 @@ class Op_collection_add
   }
 
   void process(Expression::Processor &ep) const;
+
 
   // JSON::Processor
 
@@ -178,19 +182,21 @@ class Op_collection_add
   void num(double) { assert(false); }
   void yesno(bool) { assert(false); }
 
-  friend class mysqlx::CollectionAdd;
+  friend mysqlx::CollectionAdd;
 };
 
 
 namespace mysqlx {
+namespace internal {
 
 template <>
 struct Crud_impl<CollectionAdd>
 {
+
   typedef Op_collection_add type;
 };
 
-}
+}} // mysqlx::internal
 
 
 CollectionAdd::CollectionAdd(Collection &coll)
@@ -238,10 +244,12 @@ class Insert_id
     , m_id(id)
   {}
 
+
   // Table_ref (function name)
 
   const cdk::api::Schema_ref* schema() const { return NULL; }
   const string name() const { return L"JSON_INSERT"; }
+
 
   // Expr_list (arguments)
 
@@ -256,8 +264,9 @@ class Insert_id
     lp.list_end();
   }
 
-  friend class Op_collection_add;
+  friend Op_collection_add;
 };
+
 
 /*
   Expression describing single document to be inserted.
@@ -330,6 +339,7 @@ class Op_collection_remove
     has_expr = true;
   }
 
+
   cdk::Reply* send_command()
   {
     m_reply =
@@ -343,11 +353,12 @@ class Op_collection_remove
     return m_reply;
   }
 
-  friend class mysqlx::CollectionRemove;
+  friend mysqlx::CollectionRemove;
 };
 
 
 namespace mysqlx {
+namespace internal {
 
 template <>
 struct Crud_impl<CollectionRemove>
@@ -355,20 +366,24 @@ struct Crud_impl<CollectionRemove>
   typedef Op_collection_remove type;
 };
 
-}
+}} // mysqlx::internal
 
 
 CollectionRemove::CollectionRemove(Collection &coll)
-try {
-  Executable::Access::reset_task(*this, new Op_collection_remove(coll));
+{
+  try {
+    Executable::Access::reset_task(*this, new Op_collection_remove(coll));
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 CollectionRemove::CollectionRemove(Collection &coll, const mysqlx::string &expr)
-try {
-  Executable::Access::reset_task(*this, new Op_collection_remove(coll, expr));
+{
+  try {
+    Executable::Access::reset_task(*this, new Op_collection_remove(coll, expr));
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 
 // --------------------------------------------------------------------
@@ -403,6 +418,7 @@ class Op_collection_find
     has_expr = true;
   }
 
+
   cdk::Reply* send_command()
   {
     m_reply =
@@ -419,11 +435,12 @@ class Op_collection_find
     return m_reply;
   }
 
-  friend class mysqlx::CollectionFind;
+  friend mysqlx::CollectionFind;
 };
 
 
 namespace mysqlx {
+namespace internal {
 
 template <>
 struct Crud_impl<CollectionFind>
@@ -431,40 +448,41 @@ struct Crud_impl<CollectionFind>
   typedef Op_collection_find type;
 };
 
-}
+}} // mysqlx::internal
 
 
 CollectionFind::CollectionFind(Collection &coll)
-try {
-  Executable::Access::reset_task(*this, new Op_collection_find(coll));
+{
+  try {
+    Executable::Access::reset_task(*this, new Op_collection_find(coll));
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 CollectionFind::CollectionFind(Collection &coll, const mysqlx::string &expr)
-try {
-  Executable::Access::reset_task(*this, new Op_collection_find(coll, expr));
+{
+  try {
+    Executable::Access::reset_task(*this, new Op_collection_find(coll, expr));
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 
 namespace mysqlx {
+namespace internal {
 
-  template <>
-  struct Crud_impl<internal::CollectionFields>
-  {
-    typedef Op_collection_find type;
-  };
+template <>
+struct Crud_impl<internal::CollectionFields>
+{
+  typedef Op_collection_find type;
+};
 
-namespace internal{
+void CollectionFields::do_fields(const mysqlx::string& field)
+{
+  get_impl(this).add_projection(field);
+}
 
-  void CollectionFields::do_fields(const mysqlx::string& field)
-  {
-    get_impl(this).add_projection(field);
-  }
-
-
-} // mysqlx
-} // internal
+}} // mysqlx::internal
 
 
 
@@ -500,6 +518,7 @@ class Op_collection_modify
     Field m_field;
     ExprValue m_val;
 
+
     Field_Op(Operation op, const Field &field)
       : m_op(op)
       , m_field(field)
@@ -521,8 +540,7 @@ class Op_collection_modify
     : Op_sort(coll)
     , m_coll(coll)
     , m_expr(parser::Parser_mode::DOCUMENT)
-  {
-  }
+  {}
 
   Op_collection_modify(Collection &coll, const mysqlx::string &expr)
     : Op_sort(coll)
@@ -535,12 +553,13 @@ class Op_collection_modify
   cdk::Reply* send_command() override
   {
     m_reply =
-        new cdk::Reply(get_cdk_session().coll_update(m_coll,
-                                                     has_expr ? &m_expr : nullptr,
-                                                     *this,
-                                                     m_order.empty() ? nullptr : this,
-                                                     m_has_limit ? this : nullptr,
-                                                     get_params()));
+        new cdk::Reply(get_cdk_session()
+                       .coll_update(m_coll,
+                                    has_expr ? &m_expr : nullptr,
+                                    *this,
+                                    m_order.empty() ? nullptr : this,
+                                    m_has_limit ? this : nullptr,
+                                    get_params()));
     return m_reply;
   }
 
@@ -557,6 +576,7 @@ class Op_collection_modify
   {
     m_update.push_back(Field_Op(op, field));
   }
+
 
   // cdk::Update_spec implementation
 
@@ -579,7 +599,8 @@ class Op_collection_modify
     {
       case Field_Op::SET:
         {
-          Value_expr value_prc(m_update_it->m_val, parser::Parser_mode::DOCUMENT);
+          Value_expr value_prc(m_update_it->m_val,
+                               parser::Parser_mode::DOCUMENT);
 
           value_prc.process_if(prc.set(&doc_field));
 
@@ -591,7 +612,8 @@ class Op_collection_modify
 
       case Field_Op::ARRAY_INSERT:
         {
-          Value_expr value_prc(m_update_it->m_val, parser::Parser_mode::DOCUMENT);
+          Value_expr value_prc(m_update_it->m_val,
+                               parser::Parser_mode::DOCUMENT);
 
           value_prc.process_if(prc.array_insert(&doc_field));
         }
@@ -599,7 +621,8 @@ class Op_collection_modify
 
       case Field_Op::ARRAY_APPEND:
         {
-          Value_expr value_prc(m_update_it->m_val, parser::Parser_mode::DOCUMENT);
+          Value_expr value_prc(m_update_it->m_val,
+                               parser::Parser_mode::DOCUMENT);
 
           value_prc.process_if(prc.array_append(&doc_field));
         }
@@ -611,13 +634,13 @@ class Op_collection_modify
 
   }
 
-  friend class mysqlx::CollectionModify;
-  friend class internal::CollectionModifyInterface;
-
+  friend mysqlx::CollectionModify;
+  friend internal::CollectionModifyInterface;
 };
 
 
 namespace mysqlx {
+namespace internal {
 
 template <>
 struct Crud_impl<CollectionModify>
@@ -625,7 +648,7 @@ struct Crud_impl<CollectionModify>
   typedef Op_collection_modify type;
 };
 
-}
+}} // mysqlx::internal
 
 
 struct CollectionModify::Access
@@ -643,16 +666,21 @@ struct CollectionModify::Access
 
 
 CollectionModify::CollectionModify(Collection &coll)
-try {
-  CollectionModify::Access::reset_task(*this, new Op_collection_modify(coll));
+{
+  try {
+    CollectionModify::Access::reset_task(*this, new Op_collection_modify(coll));
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 CollectionModify::CollectionModify(Collection &coll, const mysqlx::string &expr)
-try {
-  CollectionModify::Access::reset_task(*this, new Op_collection_modify(coll, expr));
+{
+  try {
+    CollectionModify::Access::reset_task(*this,
+                                         new Op_collection_modify(coll, expr));
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 
 CollectionModify&
@@ -680,9 +708,10 @@ internal::CollectionModifyInterface::arrayInsert(const Field &field,
                                                  ExprValue &&val)
 {
   CollectionModify &op = get_op();
-  get_impl(&op).add_field_operation(Op_collection_modify::Field_Op::ARRAY_INSERT,
-                                    field,
-                                    std::move(val));
+  get_impl(&op)
+      .add_field_operation(Op_collection_modify::Field_Op::ARRAY_INSERT,
+                           field,
+                           std::move(val));
   return op;
 }
 
@@ -691,9 +720,10 @@ internal::CollectionModifyInterface::arrayAppend(const Field &field,
                                                  ExprValue &&val)
 {
   CollectionModify &op = get_op();
-  get_impl(&op).add_field_operation(Op_collection_modify::Field_Op::ARRAY_APPEND,
-                                    field,
-                                    std::move(val));
+  get_impl(&op)
+      .add_field_operation(Op_collection_modify::Field_Op::ARRAY_APPEND,
+                           field,
+                           std::move(val));
   return op;
 }
 
@@ -701,7 +731,8 @@ CollectionModify&
 internal::CollectionModifyInterface::arrayDelete(const Field &field)
 {
   CollectionModify &op = get_op();
-  get_impl(&op).add_field_operation(Op_collection_modify::Field_Op::ARRAY_DELETE,
-                                    field);
+  get_impl(&op)
+      .add_field_operation(Op_collection_modify::Field_Op::ARRAY_DELETE,
+                           field);
   return op;
 }

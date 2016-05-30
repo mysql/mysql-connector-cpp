@@ -197,6 +197,7 @@ public:
 
   TableInsert(TableInsert &&other) : TableInsert(other) {}
 
+
   /// Add given row to the list of rows to be inserted.
 
   virtual TableInsert& values(const Row &row)

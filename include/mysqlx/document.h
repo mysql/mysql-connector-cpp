@@ -109,27 +109,41 @@ public:
 
   DbDoc(const std::string&);
 
-  /// Check if document is null
+
+  /**
+    Check if document is null
+  */
 
   bool isNull() const { return NULL == m_impl.get(); }
   operator bool() const { return !isNull(); }
 
-  /// Check if named field is a top-level field in the document.
+
+  /**
+    Check if named field is a top-level field in the document.
+  */
 
   virtual bool hasField(const Field&) const;
 
-  /// Return Value::XXX constant that identifies type of value
-  /// stored at given field.
+
+  /**
+    Return Value::XXX constant that identifies type of value
+    stored at given field.
+  */
 
   virtual int  fieldType(const Field&) const;
 
-  /// Return value of given field.
+  /**
+    Return value of given field.
+  */
 
   virtual const Value& operator[](const Field&) const;
   const Value& operator[](const char *name) const;
   const Value& operator[](const wchar_t *name) const;
 
-  /// Print JSON description of the document.
+
+  /**
+    Print JSON description of the document.
+  */
 
   virtual void print(std::ostream&) const;
 
@@ -383,10 +397,9 @@ public:
 };
 
 
-/*
- * Helper class to identify usage of expressions
- */
-
+/**
+  Helper class to identify usage of expressions
+*/
 
 class ExprValue
 : public Value
@@ -413,10 +426,10 @@ public:
  friend ExprValue expr(V s);
 };
 
-/*
- * function to identify usage of expressions
- */
 
+/**
+  Function to identify usage of expressions
+*/
 
 template <typename V>
 ExprValue expr(V s)
@@ -425,9 +438,6 @@ ExprValue expr(V s)
  val.m_is_expr = true;
  return std::move(val);
 }
-
-
-//
 
 
 inline
@@ -443,9 +453,11 @@ const Value& DbDoc::operator[](const wchar_t *name) const
 }
 
 
-// Value type conversions
-// ----------------------
-// TODO: more informative errors
+/*
+  Value type conversions
+  ----------------------
+  TODO: more informative errors
+*/
 
 inline Value::Value() : m_type(VNULL)
 {}
@@ -683,11 +695,13 @@ Value::const_iterator Value::end() const
 
 inline
 const Value& Value::operator[](unsigned pos) const
-try {
- check_type(ARRAY);
- return m_arr->at(pos);
+{
+  try {
+    check_type(ARRAY);
+    return m_arr->at(pos);
+  }
+  CATCH_AND_WRAP
 }
-CATCH_AND_WRAP
 
 inline
 size_t Value::elementCount() const

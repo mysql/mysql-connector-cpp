@@ -78,7 +78,7 @@ public:
 
   //  operator cdk::foundation::string&();
   operator std::string() const;  // conversion to utf-8
-//  operator const cdk::foundation::string&() const;
+  //  operator const cdk::foundation::string&() const;
 };
 
 
@@ -193,7 +193,6 @@ class GUID : public internal::Printable
   void set(const char *data)
   {
     // Note: Windows gives compile warnings when using strncpy
-
     for(unsigned i=0; data[i] && i < sizeof(m_data); ++i)
       m_data[i]= data[i];
   }
