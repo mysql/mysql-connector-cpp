@@ -64,7 +64,8 @@ try {
     add= coll.add("{ \"name\": \"foo\", \"age\": 1 }").execute();
     cout <<"- added doc with id: " <<add.getLastDocumentId() <<endl;
 
-    add= coll.add("{ \"name\": \"bar\", \"age\": 2 }").execute();
+    add= coll.add("{ \"name\": \"bar\", \"age\": 2,"
+                  "  \"toys\": [ \"car\", \"ball\" ] }").execute();
     cout <<"- added doc with id: " <<add.getLastDocumentId() <<endl;
 
     add= coll.add("{ \"name\": \"baz\", \"age\": 3, \"date\": { \"day\": 20, \"month\": \"Apr\" }}").execute();
@@ -104,6 +105,15 @@ try {
       int day = date["day"];
       cout << "  month: " << month << endl;
       cout << "  day: " << day << endl;
+    }
+
+    if (doc.hasField("toys") && Value::ARRAY == doc.fieldType("toys"))
+    {
+      cout << "- toys:" << endl;
+      for (auto toy : doc["toys"])
+      {
+        cout << "  " << toy << endl;
+      }
     }
 
     cout << endl;

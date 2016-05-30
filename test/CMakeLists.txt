@@ -111,7 +111,7 @@ ENDIF()
 
 INCLUDE_DIRECTORIES(${CONCPLS_INCLUDES})
 
-ADD_EXECUTABLE(test test.cc)
+ADD_EXECUTABLE(cpptest test.cc)
 TARGET_LINK_LIBRARIES(test ${CONCPLS_LIBS})
 
 #
@@ -119,10 +119,10 @@ TARGET_LINK_LIBRARIES(test ${CONCPLS_LIBS})
 #
 
 IF(CMAKE_HOST_UNIX)
-TARGET_LINK_LIBRARIES(test pthread)
+TARGET_LINK_LIBRARIES(cpptest pthread)
 ENDIF()
 
-# We must enable C++11 to use Connector/C++ 2.0
+# To use Connector/C++ 2.0 we must enable C++11
 
 if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   target_compile_options(test PRIVATE "-std=c++11")
