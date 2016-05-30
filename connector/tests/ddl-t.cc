@@ -162,20 +162,19 @@ TEST_F(Ddl, create_drop)
 
   // Drop Schemas
 
-  for (auto schema : schemas)
+  for (auto schema_ : schemas)
   {
-    if (schema.getName() == schema_name_1 ||
-        schema.getName() == schema_name_2)
-      get_sess().dropSchema(schema.getName());
+    if (schema_.getName() == schema_name_1 ||
+        schema_.getName() == schema_name_2)
+      get_sess().dropSchema(schema_.getName());
   }
 
   // Drop Schemas doesn't throw if it doesnt exist
-
-  for (auto schema : schemas)
+  for (auto schema_ : schemas)
   {
-    if (schema.getName() == schema_name_1 ||
-        schema.getName() == schema_name_2)
-      EXPECT_NO_THROW(get_sess().dropSchema(schema.getName()));
+    if (schema_.getName() == schema_name_1 ||
+        schema_.getName() == schema_name_2)
+      EXPECT_NO_THROW(get_sess().dropSchema(schema_.getName()));
   }
 
   EXPECT_THROW(get_sess().getSchema(schema_name_1, true), mysqlx::Error);

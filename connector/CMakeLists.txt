@@ -59,9 +59,11 @@ ADD_LIBRARY(connector STATIC
 ADD_CDK(connector)
 target_link_libraries(connector uuid_gen)
 
-# Required because of possible exception-related GCC bug.
-# (observed in GCC 4.8.4)
 if(CMAKE_COMPILER_IS_GNUCXX)
+  target_compile_options(connector PRIVATE -Wall -Wextra)
+
+  # Required because of possible exception-related GCC bug.
+  # (observed in GCC 4.8.4)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O1")
   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O1")
 endif()

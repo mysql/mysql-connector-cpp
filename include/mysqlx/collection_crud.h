@@ -666,8 +666,8 @@ namespace internal {
     */
 
     CollectionModifyFirst(CollectionModifyFirst &&other)
-      : CollectionModify(std::move(other))
-      , Executable(other)
+      : Executable(other)
+      , CollectionModify(std::move(other))
     {}
 
     CollectionModifyFirst(const CollectionModifyFirst&) = delete;
@@ -675,8 +675,8 @@ namespace internal {
   private:
 
     CollectionModifyFirst(CollectionModify &&other)
-      : CollectionModify(other)
-      , Executable(other)
+      : Executable(other)
+      , CollectionModify(other)
     {}
 
     CollectionModify& get_op()

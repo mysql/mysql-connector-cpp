@@ -448,10 +448,10 @@ public:
     , m_schema(sch)
   {}
 
-  Table(const Schema &sch, const string &name, bool isView)
+  Table(const Schema &sch, const string &name, bool isView_)
     : Table(sch, name)
   {
-    m_isview = isView ? YES : NO;
+    m_isview = isView_ ? YES : NO;
   }
 
 

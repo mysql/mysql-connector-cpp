@@ -120,8 +120,8 @@ class bytes : public std::pair<byte*, size_t>
 
 public:
 
-  bytes(byte *beg, byte *end)
-    : pair(beg, end-beg)
+  bytes(byte *beg_, byte *end_)
+    : pair(beg_, end_ - beg_)
   {}
 
   bytes(byte *beg, size_t len) : pair(beg, len)
@@ -139,7 +139,7 @@ public:
   bytes() : pair(NULL, 0)
   {}
 
-  bytes(const bytes &other) = default;
+  bytes(const bytes &) = default;
 
   virtual byte* begin() const { return first; }
   virtual byte* end() const { return first + second; }

@@ -258,10 +258,10 @@ public:
   }
 
   template <typename Iterator>
-  Value(Iterator begin, Iterator end)
+  Value(Iterator begin_, Iterator end_)
     : m_type(ARRAY)
   {
-    m_arr = std::make_shared<Array>(begin,end);
+    m_arr = std::make_shared<Array>(begin_, end_);
   }
 
   ///@}

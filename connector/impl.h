@@ -132,8 +132,8 @@ class Value_expr
             bool is_expr,
             parser::Parser_mode::value parser_mode)
     : m_parser_mode(parser_mode)
-    , m_is_expr(is_expr)
     , m_value(val)
+    , m_is_expr(is_expr)
   {}
 
 public:

@@ -110,16 +110,16 @@ namespace internal {
   };
 
   inline
-    void BaseResult::init(BaseResult &&init)
+    void BaseResult::init(BaseResult &&init_)
   {
     m_pos = 0;
-    m_impl = init.m_impl;
-    if (!init.m_owns_impl)
+    m_impl = init_.m_impl;
+    if (!init_.m_owns_impl)
       m_owns_impl = false;
     else
     {
       m_owns_impl = true;
-      init.m_owns_impl = false;
+      init_.m_owns_impl = false;
     }
   }
 
@@ -334,13 +334,13 @@ public:
     : BaseResult(std::move(static_cast<BaseResult&>(other)))
   {}
 
-  RowResult(BaseResult &&init)
-    : BaseResult(std::move(init))
+  RowResult(BaseResult &&init_)
+    : BaseResult(std::move(init_))
   {}
 
-  RowResult& operator=(BaseResult &&init)
+  RowResult& operator=(BaseResult &&init_)
   {
-    BaseResult::operator=(std::move(init));
+    BaseResult::operator=(std::move(init_));
     return *this;
   }
 
@@ -379,13 +379,13 @@ public:
     : RowResult(std::move(static_cast<BaseResult&>(other)))
   {}
 
-  SqlResult(BaseResult &&init)
-    : RowResult(std::move(init))
+  SqlResult(BaseResult &&init_)
+    : RowResult(std::move(init_))
   {}
 
-  SqlResult& operator=(BaseResult &&init)
+  SqlResult& operator=(BaseResult &&init_)
   {
-    RowResult::operator=(std::move(init));
+    RowResult::operator=(std::move(init_));
     return *this;
   }
 
@@ -433,15 +433,15 @@ public:
     *this = std::move(static_cast<BaseResult&>(other));
   }
 
-  DocResult(BaseResult &&init)
+  DocResult(BaseResult &&init_)
     : m_doc_impl(NULL)
   {
-    *this = std::move(init);
+    *this = std::move(init_);
   }
 
   virtual ~DocResult();
 
-  void operator=(BaseResult &&init);
+  void operator=(BaseResult &&init_);
 
 
   /**

@@ -179,8 +179,6 @@ void TableInsert::add_row(const Row &row)
 
 void Op_table_insert::process(cdk::Expr_list::Processor &lp) const
 {
-  using Element_prc = cdk::Expr_list::Processor::Element_prc;
-
   lp.list_begin();
 
   for (unsigned pos = 0; pos < m_cur_row->colCount(); ++pos)
