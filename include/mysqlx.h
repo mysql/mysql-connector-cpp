@@ -45,6 +45,17 @@
 
 #include <list>
 
+
+/*
+  On Windows, dependency on the sockets library can be handled using
+  #pragma comment directive.
+*/
+
+#ifdef _WIN32
+#pragma comment(lib,"ws2_32")
+#endif
+
+
 namespace cdk {
 
 class Session;
