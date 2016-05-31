@@ -450,7 +450,7 @@ Schema XSession::getSchema(const string &name, bool check)
 }
 
 
-List_init<Schema> XSession::getSchemas()
+internal::List_init<Schema> XSession::getSchemas()
 {
   try {
 
@@ -549,7 +549,7 @@ Table Schema::getTable(const string &name, bool check)
 }
 
 
-List_init<Collection> Schema::getCollections()
+internal::List_init<Collection> Schema::getCollections()
 {
   try{
     std::forward_list<Collection> list;
@@ -567,7 +567,7 @@ List_init<Collection> Schema::getCollections()
   CATCH_AND_WRAP
 }
 
-List_init<string> Schema::getCollectionNames()
+internal::List_init<string> Schema::getCollectionNames()
 {
   try{
     return List_query<COLLECTION>(
@@ -577,7 +577,7 @@ List_init<string> Schema::getCollectionNames()
   CATCH_AND_WRAP
 }
 
-List_init<Table> Schema::getTables()
+internal::List_init<Table> Schema::getTables()
 {
   std::forward_list<Table> list;
   std::forward_list<Table>::iterator list_it = list.before_begin();
@@ -594,7 +594,7 @@ List_init<Table> Schema::getTables()
   return std::move(list);
 }
 
-List_init<string> Schema::getTableNames()
+internal::List_init<string> Schema::getTableNames()
 {
   std::forward_list<string> list;
   std::forward_list<string>::iterator list_it = list.before_begin();

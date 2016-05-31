@@ -183,7 +183,7 @@ namespace internal {
   };
 
 
-  /**
+  /*
     Class which defines various variants of `add()` method.
 
     This class defines `add()` methods that append new documents to the

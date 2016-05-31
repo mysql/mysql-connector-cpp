@@ -85,15 +85,15 @@ public:
 };
 
 
-/**
-  Represents an operation that can be executed.
-
-  Creating an operation does not involve any communication
-  with the server. Only when `execute()` method is called
-  operation is sent to the server for execution.
-*/
-
 namespace internal {
+
+  /*
+    Represents an operation that can be executed.
+
+    Creating an operation does not involve any communication
+    with the server. Only when `execute()` method is called
+    operation is sent to the server for execution.
+  */
 
   class PlainExecutable : nocopy
   {
@@ -130,12 +130,16 @@ namespace internal {
 
 }
 
+
 /**
-  Base class for arguments binding operations.
+  Represents an operation that can be executed.
 
-  This class defines `bind()` methods that bind values to its parameters.
+  Creating an operation does not involve any communication
+  with the server. Only when `execute()` method is called
+  operation is sent to the server for execution.
 
-  TODO: Better documentation.
+  If operation contains named parameters, then these parameter
+  values should be defined with `bind()` method prior to execution.
 */
 
 class Executable : public internal::PlainExecutable

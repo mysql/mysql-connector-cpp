@@ -283,7 +283,7 @@ class Op_table_update
     , public cdk::api::Column_ref
 {
   typedef cdk::string string;
-  typedef std::map<string,ExprValue> SetValues;
+  typedef std::map<string, internal::ExprValue> SetValues;
 
   Table_ref m_table;
   string m_where;
@@ -376,7 +376,8 @@ void TableUpdate::prepare(Table &table)
 }
 
 
-TableUpdate& TableUpdate::set(const mysqlx::string& field, ExprValue val)
+TableUpdate& TableUpdate::set(const mysqlx::string& field,
+                              internal::ExprValue val)
 {
   get_impl(this).m_set_values[field] = std::move(val);
   return *this;

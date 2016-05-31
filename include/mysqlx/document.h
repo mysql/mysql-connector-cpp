@@ -397,7 +397,9 @@ public:
 };
 
 
-/**
+namespace internal {
+
+/*
   Helper class to identify usage of expressions
 */
 
@@ -427,17 +429,38 @@ public:
 };
 
 
-/**
-  Function to identify usage of expressions
+/*
+  Function which indicates that a given string should be treated
+  as expression.
+
+  If `s` is a string value, then in contexts wehre values are
+  expected, `expr(s)` will treat `s` as a DevAPI expression. For
+  example statement
+
+  table.select("foo > 1").execute();
+
+  will return string `"foo > 1"` for each row in the table while
+
+  table.select(expr("foo > 1")).execute();
+
+  will return true/false, depending on the value of the expression.
+
+  TODO: Add this to doxygen docs somehow (without exposing internal
+  namespace).
 */
 
 template <typename V>
-ExprValue expr(V s)
+inline
+internal::ExprValue expr(V s)
 {
- ExprValue val(s);
- val.m_is_expr = true;
- return std::move(val);
+  internal::ExprValue val(s);
+  val.m_is_expr = true;
+  return std::move(val);
 }
+
+}  // internal
+
+using internal::expr;
 
 
 inline

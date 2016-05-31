@@ -307,7 +307,7 @@ namespace internal {
     }
 
 
-    /**
+    /*
       Insert into a full table restricting the colums.
 
       Each row passed to the following .values() call must have
@@ -330,7 +330,7 @@ namespace internal {
 
 namespace internal {
 
-  /**
+  /*
     Class implementing CRUD sort operations on tables.
   */
 
@@ -514,7 +514,7 @@ DIAGNOSTIC_PUSH
 
 DIAGNOSTIC_POP
 
-  TableUpdate& set(const string& field, ExprValue val);
+  TableUpdate& set(const string& field, internal::ExprValue val);
 
   // TODO: no sorting after where()?
   Executable& where(const string& expr);

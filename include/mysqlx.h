@@ -71,7 +71,9 @@ class Collection;
 class Table;
 
 
-/**
+namespace internal {
+
+/*
   List_initializer class is used to initialize user std::vector, std::list or
   own list imlpementations, as long as initialized by iterators of defined type
 */
@@ -91,6 +93,8 @@ struct List_init
      return U(m_data.begin(), m_data.end());
    }
 };
+
+}  // internal
 
 
 /**
@@ -155,7 +159,7 @@ public:
 
 
 /**
-  Represents a schema in a given XSession.
+  Represents a database schema.
 
   A `Schema` instance  can be obtained from `XSession::getSchema()`
   method:
@@ -268,26 +272,26 @@ public:
     the shcema.
   */
 
-  List_init<Collection> getCollections();
+  internal::List_init<Collection> getCollections();
 
   /**
     Return list of names of collections in the schema.
   */
 
-  List_init<string> getCollectionNames();
+  internal::List_init<string> getCollectionNames();
 
   /**
     Return list of `Table` object representing tables and views in
     the shcema.
   */
 
-  List_init<Table> getTables();
+  internal::List_init<Table> getTables();
 
   /**
     Return list of tables and views in the shcema.
   */
 
-  List_init<string> getTableNames();
+  internal::List_init<string> getTableNames();
 
   friend class Collection;
   friend class Task;
@@ -547,7 +551,7 @@ public:
     Get list of schema objects in a given session.
   */
 
-  List_init<Schema> getSchemas();
+  internal::List_init<Schema> getSchemas();
 
   /**
     Drop the schema.
@@ -585,8 +589,7 @@ private:
 
 
 /**
-  A session which is always connected to a single
-  MySQL node.
+  A session which offers SQL query execution.
 
   In addition to `XSession` functionality, `NodeSession`
   allows for execution of arbitrary SQL queries.
@@ -594,7 +597,7 @@ private:
 
 class NodeSession
   : public XSession
-  , public Executable
+  , Executable
 {
 public:
 

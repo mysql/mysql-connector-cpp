@@ -148,14 +148,14 @@ public:
     , m_value(std::move(val))
   {}
 
-  Value_expr(const ExprValue &val, parser::Parser_mode::value parser_mode)
+  Value_expr(const internal::ExprValue &val, parser::Parser_mode::value parser_mode)
     : m_parser_mode(parser_mode)
     , m_value(val)
   {
     m_is_expr = val.isExpression();
   }
 
-  Value_expr(ExprValue &&val, parser::Parser_mode::value parser_mode)
+  Value_expr(internal::ExprValue &&val, parser::Parser_mode::value parser_mode)
     : m_parser_mode(parser_mode)
     , m_value(std::move(val))
   {

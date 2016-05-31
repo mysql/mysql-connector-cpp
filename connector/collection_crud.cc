@@ -516,7 +516,7 @@ class Op_collection_modify
 
     Operation m_op;
     Field m_field;
-    ExprValue m_val;
+    internal::ExprValue m_val;
 
 
     Field_Op(Operation op, const Field &field)
@@ -524,7 +524,7 @@ class Op_collection_modify
       , m_field(field)
     {}
 
-    Field_Op(Operation op, const Field &field,ExprValue &&val)
+    Field_Op(Operation op, const Field &field, internal::ExprValue &&val)
       : Field_Op(op, field)
     {
       m_val = std::move(val);
