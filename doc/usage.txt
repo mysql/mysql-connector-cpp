@@ -43,6 +43,13 @@ Similar, the 64/32-bit platform for which Connector/C++ was built (as selected b
 cmake generator such as `"Visual Studio 12 2013 Win64"` vs `"Visual Studio 12 2013"`)
 must match the one for which an application which uses the connector is built.
 
+When building application in 'Debug' build configuration, one has to use Connector/C++
+library built in the same configuration. Note that binary packages provided by MySQL
+contain 'Release' build of the connector.
+
+@todo Building applications in 'Debug' mode using binary distribution of Connector/C++.
+@todo MSVC runtime version issues.
+
 OS X Notes
 ----------
 
@@ -68,14 +75,13 @@ LINK.o = $(LINK.cc)  # use c++ linker
 app : app.o $(MYSQL_CONCPP_DIR)/lib/libmysql_concpp.a
 ~~~~~~~
 
-@todo How to build on OSX with XCode
-@todo Dynamic version of the connector library
+@todo How to build on OSX with XCode.
+@todo Dynamic version of the connector library.
 @todo Dynamic linking with other connector dependencies.
-@todo Instructions for Windows and other platforms.
 
 
 <!--
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016 Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/C++ is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most

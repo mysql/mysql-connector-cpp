@@ -3,10 +3,10 @@ Sample code which uses Connector/C++ 2.0  {#sample}
 
 @todo Cross-reference links for classes and methods.
 
-The following Connector/C++ application connects to MySQL Hybrid plugin
-loaded into MySQL 5.7 Server, creates a document collection, adds a few
-documents to it, queries the collection and displays the result.
-See @ref usage for instructions on how to build the sample code.
+The following Connector/C++ application connects to MySQL Server with
+X Plugin, creates a document collection, adds a few documents to it,
+queries the collection and displays the result. See @ref usage for
+instructions on how to build the sample code.
 
 @dontinclude test.cc
 
@@ -17,11 +17,11 @@ API is declared within the `mysqlx` namespace:
 @until using namespace
 
 To create a session object, specify DNS name of the host running
-MySQL Server with MySQL Hybrid plugin, the port on which the plugin
+MySQL Server with X Plugin loaded into it, the port on which the plugin
 listens (default port is 33060) and the user credentials:
 
 @skipline main
-@until Session accepted
+@until XSession
 
 Once created, the session is ready to be used. If the session can not
 be established, the `XSession` constructor throws an error.
@@ -29,7 +29,7 @@ be established, the `XSession` constructor throws an error.
 To manipulate documents in a collection, create a `Collection` object,
 first asking session for that collection's `Schema` object:
 
-@skipline Schema
+@skipline cout
 @until Collection
 
 The `true` parameter to `createCollection()` method specifies that
@@ -69,20 +69,19 @@ longer needed.
 @note It is possible to chain several `add()` calls as follows:
 `coll.add(doc1).add(doc2)...add(docN).execute()`. It is also possible
 to pass several documents to a single `add()` call:
-`coll.add(doc1, ..., docN).execute()`.
-
-@todo Adding documents described by `DbDoc` objects.
+`coll.add(doc1, ..., docN).execute()`. Another option is to pass
+to `Collection::add()` an STL container with several documents.
 
 To query documents of a collection use the `Collection::find()`
 method:
 
-@skipline find()
+@skipline coll.find(
 
 The result of the `find()` operation is stored in a variable of type
 `DocResult` because it contains the returned sequence of documents that
 satisfy the selection criteria. These documents can be fetched one by one
 using the `RowResult::fetchOne()` method, until it returns a null row
-that signals end of sequence:
+that signals end of the sequence:
 
 @skipline fetchOne()
 @until cout
@@ -101,12 +100,20 @@ fields:
 
 The value of a field is automatically converted to a corresponding
 C++ type. If the C++ type does not match the type of the field value,
-conversion error is thrown. Currently only strings, numbers and documents are
-converted to C++ types. Document values are convertible to the `DbDoc` type.
+conversion error is thrown.
 
-The `DbDoc::hasField()` and `DbDoc::fieldType()` methods can be used
-to examine fields of a document. The following code demonstrats how
-to process a `"date"` field of a document which is a subdocument:
+Fields which are sub-documents can be converted to `DbDoc` type. The
+following code demonstrates how to process a `"date"` field which is
+a subdocument. Note how methods `DbDoc::hasField()` and `DbDoc::fieldType()`
+are used to examine existence and type of a field within document.
+
+@skipline if
+@until }
+@until }
+
+In case of arrays, currently no conversion to C++ types is defined.
+However, individual elements of an array value can be accessed
+using `operator[]` or they can be iterated using range for loop.
 
 @skipline if
 @until }
@@ -118,7 +125,7 @@ and can be processed as follows:
 @skipline catch
 @until }
 
-See [full documentation of DevAPI] (http://insidemysql.com/mysqlx/docs/mysqlx-devapi-userguide/en/index.html)
+See [full documentation of X DevAPI] (http://dev.mysql.com/doc/x-devapi-userguide/en/)
 implemented by Connector/C++. Note however, that the implementation is not yet
 complete.
 
@@ -129,22 +136,16 @@ The complete code of the example is presented below:
 A sample output produced by this code:
 
 ~~~~~~~
-Creating session on localhost...
-Auth Valid: 
+Creating session on localhost, port 13009 ...
 Session accepted, creating collection...
-inserting document...
+Inserting documents...
 - added doc with id: AA71B4BF6B72E511BD76001E684A06F0
 - added doc with id: 2885B4BF6B72E511BD76001E684A06F0
 - added doc with id: 3492B4BF6B72E511BD76001E684A06F0
 - added doc with id: myuuid-1
 Fetching documents...
-doc#0: {"_id": "82C29A44EB77E5116134001E684A06F0", "age": 2, "name": "bar"}
- field `_id`: 82C29A44EB77E5116134001E684A06F0
- field `age`: 2
- field `name`: bar
- name: bar
 
-doc#1: {"_id": "AEFD9C44EB77E5116134001E684A06F0", "age": 3, "date": {"day": 20, "month": "Apr"}, "name": "baz"}
+doc#0: {"_id": "AEFD9C44EB77E5116134001E684A06F0", "age": 3, "date": {"day": 20, "month": "Apr"}, "name": "baz"}
  field `_id`: AEFD9C44EB77E5116134001E684A06F0
  field `age`: 3
  field `date`: <document>
@@ -156,12 +157,22 @@ doc#1: {"_id": "AEFD9C44EB77E5116134001E684A06F0", "age": 3, "date": {"day": 20,
   month: Apr
   day: 20
 
+doc#1: {"_id": "A0ABC08DAABAD1110C120800273BD115", "age": 2, "name": "bar", "toys": ["car", "ball"]}
+ field `_id`: A0ABC08DAABAD1110C120800273BD115
+ field `age`: 2
+ field `name`: bar
+ field `toys`: <array with 2 element(s)>
+ name: bar
+- toys:
+  car
+  ball
+
 Done!
 ~~~~~~~
 
 
 <!--
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/C++ is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
