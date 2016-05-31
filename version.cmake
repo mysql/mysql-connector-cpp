@@ -22,9 +22,9 @@
 
 set(CONCPP_VERSION_MAJOR  2)
 set(CONCPP_VERSION_MINOR  0)
-set(CONCPP_VERSION_MICRO  1)
+set(CONCPP_VERSION_MICRO  2)
 # Level is "-alpha", "-beta", empty if GA
-set(CONCPP_VERSION_LEVEL  "-preview")
+set(CONCPP_VERSION_LEVEL  "")
 
 # **** IMPORTANT ****
 #
