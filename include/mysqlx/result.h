@@ -320,7 +320,23 @@ namespace internal {
       : m_impl(impl)
     {}
 
+#if defined _MSC_VER && _MSC_VER < 1900
+
+    /*
+      There is bug in earlier version of MSVC:
+      https://connectbeta.microsoft.com/VisualStudio/feedback/details/1255564/unable-to-implicit-specify-defaulted-move-constructor-and-move-assignment-operator
+    */
+
+    ColumnListInitializer(ColumnListInitializer &&other)
+      : m_impl(other.m_impl)
+    {}
+
+#else
+
     ColumnListInitializer(ColumnListInitializer&&) = default;
+
+#endif
+
     ColumnListInitializer(const ColumnListInitializer&) = delete;
 
   public:
