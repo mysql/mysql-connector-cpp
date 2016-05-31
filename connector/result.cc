@@ -79,19 +79,69 @@ public:
 
 
 /*
-  Storage for column meta-data information
-  ========================================
+  Handling column meta-data information
+  =====================================
 
-  To correctly decode raw bytes that represent values stored in
-  a row we need type and encoding information provided by cdk.
-  First a Type_info constant T and then:
+  Meta-data for result columns is provided by CDK cursor object which implements
+  cdk::Meta_data interface. This information is read from cursor
+  in BaseResult::Impl::init() method and is stored in m_mdata member of type
+  Meta_data.
 
-  - encoding format information which is a value of type Fromat<T>
-  - codec object of type Codec<T>.
+  Meta_data class contains a map from column positions to instances of Column
+  class. Each Column instance can store meta-data information for a single
+  column. The Column instances are created in the Meta_data constructor which
+  reads meta-data information from cdk::Meta_data interface and adds Column
+  objects using add() methods.
 
-  For convenience, encoding format information and codec are kept
-  together in single Format_descr<T> structure.
+  The CDK meta-data for a single column consists of:
+
+  - CDK type constant (cdk::Type_info)
+  - encoding format information (cdk::Format_info)
+  - additional column information (cdk::Column_info)
+
+  The first two items describe the type and encoding of the values that appear
+  in the result in the corresponding column. Additional column information
+  is mainly the column name etc.
+
+  Classes Format_descr<TTT> and Format_info are used to store type and encoding
+  format information for each column. For CDK type TTT, class Format_descr<TTT>
+  stores encoding format descriptor (instance of cdk::Format<TTT> class) and
+  encoder/decoder for the values (instance of cdk::Codec<TTT> class)
+  (Note: for some types TTT there is no codec or no format descriptor). Class
+  Format_info is a variant class that can store Format_descr<TTT> values
+  for different TTT.
+
+  Class Column::Impl extends Format_info with additional storage for
+  the cdk::Column_info data (column name etc). Class Column uses information
+  stored in Column::Impl to implement the DevAPI Column interface.
+
+  Using meta-data to decode result values
+  ---------------------------------------
+
+  Meta-data information stored in m_mdata member of RowResult::Impl class
+  is used to interpret raw bytes returned by CDK in the reply to a query.
+  This interpretation is done by Row::Impl class whose instance is created,
+  for example, in RowResult::fetchOne() passing the metad-data information
+  to Row::Impl constructor. This meta-data is used in Row::get() method, which
+  first checks the type of the value and then uses get<TTT>() method which
+  calls appropriate convert() method after extracting encoding format
+  information from the meta-data.
+
+  Presenting meta-data via DevAPI Column interface
+  ------------------------------------------------
+
+  This is done by the Column class, using column meta-data stored in
+  the Column::Impl instance. The type and encoding format information must
+  be translated to types defined by DevAPI. This translation happens
+  in Column::getType() method. For example, a CDK column of type FLOAT can
+  be reported as DevAPI type FLOAT, DOUBLE or DECIMAL, depending on the
+  encoding format that was reported by CDK. Additional encoding information
+  is exposed via other DevAPI Column methods such as isNumberSigned().
+  The information from cdk::Column_info interface is extracted and stored
+  in Column::Impl class by store_info() method. Then it is exposed by relevant
+  DevAPI Column methods.
 */
+
 
 template <cdk::Type_info T>
 struct Format_descr
@@ -126,6 +176,21 @@ template <>
 struct Format_descr<cdk::TYPE_BYTES>
 {};
 
+/*
+  Note: we do not decode temporal values yet, thus there is
+  no codec in Format_descr class.
+*/
+
+template<>
+struct Format_descr<cdk::TYPE_DATETIME>
+{
+  cdk::Format<cdk::TYPE_DATETIME> m_format;
+
+  Format_descr(const cdk::Format_info &fi)
+    : m_format(fi)
+  {}
+};
+
 
 /*
   Structure Format_info holds information about the type
@@ -140,7 +205,8 @@ typedef boost::variant <
   Format_descr<cdk::TYPE_INTEGER>,
   Format_descr<cdk::TYPE_FLOAT>,
   Format_descr<cdk::TYPE_DOCUMENT>,
-  Format_descr<cdk::TYPE_BYTES>
+  Format_descr<cdk::TYPE_BYTES>,
+  Format_descr<cdk::TYPE_DATETIME>
 > Format_info_base;
 
 struct Format_info
@@ -167,17 +233,34 @@ struct Format_info
     */
     return const_cast<Format_descr<T>&>(boost::get<Format_descr<T>>(*this));
   }
+
+};
+
+
+/*
+  Helper class to construct Column instances and access
+  non-public members.
+*/
+
+struct Column::Access
+{
+  static const Format_info& get_format(const Column&);
+
+  template <cdk::Type_info T>
+  static Column mk(const cdk::Column_info&, const Format_descr<T>&);
+
+  static Column mk_raw(const cdk::Column_info&, cdk::Type_info);
 };
 
 
 /*
   Meta_data holds type and format information for all columns in
-  a row set. An instance is filled given information provided by
+  a result. An instance is filled given information provided by
   cdk::Meta_data interface.
 */
 
 struct Meta_data
-  : private std::map<cdk::col_count_t, Format_info>
+  : private std::map<cdk::col_count_t, Column>
 {
   Meta_data(cdk::Meta_data&);
 
@@ -185,12 +268,17 @@ struct Meta_data
 
   const Format_info& get_format(cdk::col_count_t pos) const
   {
-    return at(pos);
+    return Column::Access::get_format(get_column(pos));
   }
 
   cdk::Type_info get_type(cdk::col_count_t pos) const
   {
     return get_format(pos).m_type;
+  }
+
+  const Column& get_column(cdk::col_count_t pos) const
+  {
+    return at(pos);
   }
 
 private:
@@ -201,20 +289,26 @@ private:
   /*
     Add to this Meta_data instance information about column
     at position `pos`. The type and format information is given
-    by cdk::Format_info object.
+    by cdk::Format_info object, aaditional column meta-data by
+    cdk::Column_info object.
   */
   template<cdk::Type_info T>
-  void add(cdk::col_count_t pos, const cdk::Format_info &fi)
+  void add(cdk::col_count_t pos,
+           const cdk::Column_info &ci, const cdk::Format_info &fi)
   {
-    emplace(pos, Format_descr<T>(fi));
+    emplace(pos, Column::Access::mk<T>(ci, fi));
   }
 
 
-  // Add raw column information (whose values are not decoded).
+  /*
+    Add raw column information (whose values are presented as
+    raw bytes).
+  */
 
-  void add_raw(cdk::col_count_t pos, cdk::Type_info type)
+  void add_raw(cdk::col_count_t pos,
+               const cdk::Column_info &ci, cdk::Type_info type)
   {
-    emplace(pos, Format_info(type));
+    emplace(pos, Column::Access::mk_raw(ci, type));
   }
 };
 
@@ -231,21 +325,345 @@ Meta_data::Meta_data(cdk::Meta_data &md)
   {
     cdk::Type_info ti = md.type(pos);
     const cdk::Format_info &fi = md.format(pos);
+    const cdk::Column_info &ci = md.col_info(pos);
 
     switch (ti)
     {
-    case cdk::TYPE_STRING:    add<cdk::TYPE_STRING>(pos, fi);   break;
-    case cdk::TYPE_INTEGER:   add<cdk::TYPE_INTEGER>(pos, fi);  break;
-    case cdk::TYPE_FLOAT:     add<cdk::TYPE_FLOAT>(pos, fi);    break;
-    case cdk::TYPE_DOCUMENT:  add<cdk::TYPE_DOCUMENT>(pos, fi); break;
+    // TODO: GEOMETRY, XML, ?
+    case cdk::TYPE_STRING:    add<cdk::TYPE_STRING>(pos, ci, fi);   break;
+    case cdk::TYPE_INTEGER:   add<cdk::TYPE_INTEGER>(pos, ci, fi);  break;
+    case cdk::TYPE_FLOAT:     add<cdk::TYPE_FLOAT>(pos, ci, fi);    break;
+    case cdk::TYPE_DOCUMENT:  add<cdk::TYPE_DOCUMENT>(pos, ci, fi); break;
+    case cdk::TYPE_DATETIME:  add<cdk::TYPE_DATETIME>(pos, ci, fi); break;
     default:
-      // TODO: Better handle other types
-      add_raw(pos, ti);
+      add_raw(pos, ci, ti);
       break;
     }
   }
 }
 
+
+/*
+  Column implementation.
+*/
+
+class Column::Impl : public Format_info
+{
+public:
+
+  string m_name;
+  string m_label;
+  string m_table_name;
+  string m_table_label;
+  string m_schema_name;
+
+  unsigned long m_length;
+  unsigned short m_decimals;
+
+  template <typename T>
+  Impl(const T &init) : Format_info(init)
+  {}
+
+  void store_info(const cdk::Column_info &ci)
+  {
+    m_name = ci.orig_name();
+    m_label = ci.name();
+
+    if (ci.table())
+    {
+      m_table_name = ci.table()->orig_name();
+      m_table_label = ci.table()->name();
+
+      if (ci.table()->schema())
+        m_schema_name = ci.table()->schema()->name();
+    }
+
+    m_length = ci.length();
+    assert(ci.decimals() < std::numeric_limits<short unsigned>::max());
+    m_decimals = static_cast<short unsigned>(ci.decimals());
+  }
+
+};
+
+
+template <cdk::Type_info T>
+Column Column::Access::mk(const cdk::Column_info &ci, const Format_descr<T> &fd)
+{
+  Column col;
+  col.m_impl = std::make_shared<Column::Impl>(fd);
+  col.m_impl->store_info(ci);
+  return std::move(col);
+}
+
+Column Column::Access::mk_raw(const cdk::Column_info &ci, cdk::Type_info type)
+{
+  Column col;
+  col.m_impl = std::make_shared<Column::Impl>(type);
+  col.m_impl->store_info(ci);
+  return std::move(col);
+}
+
+const Format_info& Column::Access::get_format(const Column &c)
+{
+  return *c.m_impl.get();
+}
+
+
+void Column::print(std::ostream &out) const
+{
+  if (!m_impl->m_schema_name.empty())
+    out << "`" << m_impl->m_schema_name << "`.";
+  string table_name = getTableLabel();
+  if (!table_name.empty())
+    out << "`" << table_name << "`.";
+  out << "`" << getColumnLabel() <<"`";
+}
+
+
+/*
+  Implementation of DevAPI Column interface.
+*/
+
+
+string Column::getSchemaName()  const
+{
+  assert(m_impl);
+  return m_impl->m_schema_name;
+}
+
+string Column::getTableName()   const
+{
+  assert(m_impl);
+  return m_impl->m_table_name;
+}
+
+string Column::getTableLabel()  const
+{
+  assert(m_impl);
+  return m_impl->m_table_label;
+}
+
+string Column::getColumnName()  const
+{
+  assert(m_impl);
+  return m_impl->m_name;
+}
+
+string Column::getColumnLabel() const
+{
+  assert(m_impl);
+  return m_impl->m_label;
+}
+
+unsigned long Column::getLength() const
+{
+  assert(m_impl);
+  return m_impl->m_length;
+}
+
+unsigned short Column::getFractionalDigits() const
+{
+  assert(m_impl);
+  return m_impl->m_decimals;
+}
+
+
+/*
+  Method getType() translates CDK type/format info into
+  DevAPI type information.
+*/
+
+Type Column::getType()   const
+{
+  assert(m_impl);
+
+  try {
+    switch (m_impl->m_type)
+    {
+    case cdk::TYPE_BYTES:
+      return Type::BYTES;
+
+    case cdk::TYPE_DOCUMENT:
+      return Type::JSON;
+
+    case cdk::TYPE_STRING:
+    {
+      const Format_descr<cdk::TYPE_STRING> &fd = m_impl->get<cdk::TYPE_STRING>();
+      if (fd.m_format.is_enum())
+        return Type::ENUM;
+      if (fd.m_format.is_set())
+        return Type::SET;
+      return Type::STRING;
+    }
+
+    case cdk::TYPE_INTEGER:
+      /*
+        TODO: Report more precise DevAPI type (TINYINT etc) based
+        on CDK type and encoding format information.
+      */
+      return Type::INT;
+
+    case cdk::TYPE_FLOAT:
+    {
+      const Format_descr<cdk::TYPE_FLOAT> &fd = m_impl->get<cdk::TYPE_FLOAT>();
+      switch (fd.m_format.type())
+      {
+      case cdk::Format<cdk::TYPE_FLOAT>::DOUBLE:  return Type::DOUBLE;
+      case cdk::Format<cdk::TYPE_FLOAT>::FLOAT:   return Type::FLOAT;
+      case cdk::Format<cdk::TYPE_FLOAT>::DECIMAL: return Type::DECIMAL;
+      }
+    }
+
+    case cdk::TYPE_DATETIME:
+    {
+      const Format_descr<cdk::TYPE_DATETIME> &fd = m_impl->get<cdk::TYPE_DATETIME>();
+      switch (fd.m_format.type())
+      {
+      case cdk::Format<cdk::TYPE_DATETIME>::TIME:
+        return Type::TIME;
+      case cdk::Format<cdk::TYPE_DATETIME>::TIMESTAMP:
+        return Type::TIMESTAMP;
+      case cdk::Format<cdk::TYPE_DATETIME>::DATETIME:
+        return fd.m_format.has_time() ? Type::DATETIME : Type::DATE;
+      }
+    }
+
+    // TODO: Handle GEOMETRY type
+    default: return Type::BYTES;
+    }
+  }
+  CATCH_AND_WRAP
+}
+
+
+bool Column::isNumberSigned() const
+{
+  assert(m_impl);
+
+  try {
+    if (cdk::TYPE_INTEGER != m_impl->m_type)
+      return false;
+
+    const Format_descr<cdk::TYPE_INTEGER> &fd = m_impl->get<cdk::TYPE_INTEGER>();
+    return !fd.m_format.is_unsigned();
+  }
+  CATCH_AND_WRAP
+}
+
+bool Column::isPadded() const
+{
+  // TODO (see pad_with format info)
+  return false;
+}
+
+
+/*
+  Handling haracter set and collation information
+  -----------------------------------------------
+
+  This information is obtained from format descriptor for columns of CDK
+  STRING type. Format descriptor gives the MySQL collation id as given by
+  the server. Function collation_from_charset_id() returns CollationInfo
+  constant corresponding to given collation id. This CollationInfo instance
+  can be then used to get collation name and the corresponding charcater
+  set.
+*/
+
+#define CS_SWITCH(CS)  COLLATIONS_##CS(COLL_SWITCH)
+
+#define COLL_SWITCH(CS,ID,COLL,CASE) \
+  case ID: return Collation<CharacterSet::CS>::COLL_CONST_NAME(COLL,CASE);
+
+const CollationInfo& collation_from_charset_id(cdk::charset_id_t id)
+{
+  switch (id)
+  {
+    CS_LIST(CS_SWITCH)
+  default:
+    THROW("Unknown collation id");
+  }
+}
+
+
+const CollationInfo& Column::getCollation() const
+{
+  try {
+    assert(m_impl);
+
+    switch (m_impl->m_type)
+    {
+    case cdk::TYPE_BYTES:
+      return Collation<CharacterSet::binary>::bin;
+
+    case cdk::TYPE_DOCUMENT:
+      return Collation<CharacterSet::utf8>::general_ci;
+
+    case cdk::TYPE_STRING:
+    {
+      const Format_descr<cdk::TYPE_STRING> &fd = m_impl->get<cdk::TYPE_STRING>();
+      return collation_from_charset_id(fd.m_format.charset());
+    }
+
+    case cdk::TYPE_INTEGER:
+    case cdk::TYPE_FLOAT:
+    case cdk::TYPE_DATETIME:
+    default:
+      THROW("No collation info for the type");
+    }
+  }
+  CATCH_AND_WRAP
+}
+
+CharacterSet Column::getCharacterSet() const
+{
+  return getCollation().getCharacterSet();
+}
+
+
+/*
+  Definitions of the CollationInfo constants describing all known collations
+  as defined in mysqlx/collations.h.
+*/
+
+struct CollationInfo::Access
+{
+  enum coll_case {
+    case_ci = CollationInfo::case_ci,
+    case_cs = CollationInfo::case_cs,
+    case_bin = CollationInfo::case_bin
+  };
+
+  static CollationInfo mk(CharacterSet _cs, unsigned _id, coll_case _case, const char *_name)
+  {
+    CollationInfo ci;
+    ci.m_cs = _cs;
+    ci.m_id = _id;
+    ci.m_case = CollationInfo::coll_case(_case);
+    ci.m_name = _name;
+    return std::move(ci);
+  }
+};
+
+#define COLL_DEFS(CS)  COLLATIONS_##CS(COLL_CONST_DEF)
+
+#define COLL_CONST_DEF(CS,ID,COLL,CASE) \
+const CollationInfo \
+Collation<CharacterSet::CS>::COLL_CONST_NAME(COLL,CASE) = \
+  CollationInfo::Access::mk(CharacterSet::CS, ID, \
+    CollationInfo::Access::case_##CASE, \
+    COLL_NAME_##CASE(CS,COLL));
+
+#define COLL_NAME_bin(CS,COLL) #CS "_bin"
+#define COLL_NAME_ci(CS,COLL)  #CS "_" #COLL "_ci"
+#define COLL_NAME_cs(CS,COLL)  #CS "_" #COLL "_cs"
+
+CS_LIST(COLL_DEFS)
+
+
+/*
+  Handling result data
+  ====================
+*/
 
 /*
   Data structure used to hold raw row data. It holds a Buffer with
@@ -458,6 +876,11 @@ template<>
 const Value
 Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_STRING> &fd) const
 {
+  // If this string value is in fact a SET, then return it as raw bytes.
+
+  if (fd.m_format.is_set())
+    return Value(bytes(data.begin(), data.end()));
+
   auto &codec = fd.m_codec;
   cdk::string str;
   codec.from_bytes(data, str);
@@ -729,28 +1152,43 @@ Row RowResult::fetchOne()
 }
 
 
+void RowResult::check_result() const
+{
+  if (!m_impl)
+    THROW("Empty result");
+  if (!m_impl->m_cursor)
+    THROW("No result set");
+}
+
+
 col_count_t RowResult::getColumnCount() const
 {
   try {
-    if (!m_impl)
-      THROW("Empty result");
-    if (!m_impl->m_cursor)
-      THROW("No result set");
+    check_result();
     return m_impl->m_cursor->col_count();
   }
   CATCH_AND_WRAP
 }
 
 
-bool SqlResult::hasData() const
+const Column& RowResult::getColumn(col_count_t pos) const
 {
-  //try
-  {
-    // Note: add try catch wrapper if the code here
-    // can throw errors.
+  try {
+    check_result();
+    return m_impl->m_mdata->get_column(pos);
+  }
+  CATCH_AND_WRAP
+}
+
+
+bool mysqlx::SqlResult::hasData() const
+{
+  try {
+    if (!m_impl)
+      THROW("Empty result");
     return NULL != m_impl->m_cursor;
   }
-  //CATCH_AND_WRAP
+  CATCH_AND_WRAP
 }
 
 

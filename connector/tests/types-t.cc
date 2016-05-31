@@ -27,16 +27,21 @@
 #include <iostream>
 #include <array>
 #include <cmath>  // for fabs()
+#include <vector>
 
 using std::cout;
+using std::wcout;
 using std::endl;
 using std::array;
 using std::fabs;
+using std::vector;
 using namespace mysqlx;
+
 
 class Types : public mysqlx::test::Xplugin
 {
 };
+
 
 TEST_F(Types, numeric)
 {
@@ -223,12 +228,42 @@ TEST_F(Types, basic)
   cout << "Query sent, reading rows..." << endl;
   cout << "There are " << res.getColumnCount() << " columns in the result" << endl;
 
+  vector<Column> cc = res.getColumns();
+
+  EXPECT_EQ(string("c0"), cc[0].getColumnName());
+  EXPECT_EQ(Type::INT, cc[0].getType());
+  EXPECT_TRUE(cc[0].isNumberSigned());
+  EXPECT_EQ(0, cc[0].getFractionalDigits());
+
+  EXPECT_EQ(string("c1"), cc[1].getColumnName());
+  EXPECT_EQ(Type::DECIMAL, cc[1].getType());
+  cout << "column " << cc[1] << " precision: "
+       << cc[1].getFractionalDigits() << endl;
+
+  EXPECT_EQ(string("c2"), cc[2].getColumnName());
+  EXPECT_EQ(Type::FLOAT, cc[2].getType());
+  cout << "column " << cc[2] << " precision: "
+    << cc[2].getFractionalDigits() << endl;
+
+  Column c3 = res.getColumns()[3];
+  EXPECT_EQ(string("c3"), c3.getColumnName());
+  EXPECT_EQ(Type::DOUBLE, c3.getType());
+  cout << "column " << c3 << " precision: "
+    << c3.getFractionalDigits() << endl;
+
+  Column  c4 = res.getColumn(4);
+  EXPECT_EQ(string("c4"), c4.getColumnName());
+  EXPECT_EQ(Type::STRING, c4.getType());
+  cout << "column " << res.getColumn(4) << " length: "
+    << c4.getLength();
+  cout << ", collation: " << c4.getCollationName() << endl;
+
   for (unsigned i = 0; (row = res.fetchOne()); ++i)
   {
     cout << "== next row ==" << endl;
     for (unsigned j = 0; j < res.getColumnCount(); ++j)
     {
-      cout << "- col#" << j << ": " << row[j] << endl;
+      cout << "col " << res.getColumn(j) << ": " << row[j] << endl;
     }
 
     EXPECT_EQ(Value::INT64, row[0].getType());
@@ -266,6 +301,74 @@ TEST_F(Types, basic)
 }
 
 
+TEST_F(Types, string)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Preparing test.types..." << endl;
+
+  sql("DROP TABLE IF EXISTS test.types");
+  sql(
+    "CREATE TABLE test.types("
+    "  c0 VARCHAR(10) COLLATE latin2_general_ci,"
+    "  c1 VARCHAR(32) COLLATE utf8_swedish_ci"
+    ")"
+  );
+
+  Table types = getSchema("test").getTable("types");
+
+  /*
+    FIXME: For table columns using non utf8 encoding, any non-ascii
+    characters are returned by xplugin using the column encoding. This
+    causes errors when reading data because we asssume xplugin
+    sends strings using utf8 encoding. Check X protocol specs.
+
+    When this is fixed, the first string should use some non-ascii
+    characters that can be represented in latin2 (str0 can be made
+    the same as str1).
+  */
+
+  string str0(L"Foobar");
+  string str1(L"Mog\u0119 je\u015B\u0107 szk\u0142o");
+
+  types.insert().values(str0, str1).execute();
+
+  cout << "Table prepared, querying it..." << endl;
+
+  RowResult res = getSchema("test").getTable("types").select().execute();
+
+  Column c0 = res.getColumn(0);
+  EXPECT_EQ(Type::STRING, c0.getType());
+  cout << "column #0 length: " << c0.getLength() << endl;
+  cout << "column #0 charset: " << c0.getCharacterSetName() << endl;
+  cout << "column #0 collation: " << c0.getCollationName() << endl;
+
+  EXPECT_EQ(10, c0.getLength());
+  EXPECT_EQ(CharacterSet::latin2, c0.getCharacterSet());
+  EXPECT_EQ(Collation<CharacterSet::latin2>::general_ci, c0.getCollation());
+
+  Column c1 = res.getColumn(1);
+  EXPECT_EQ(Type::STRING, c1.getType());
+  cout << "column #1 length: " << c1.getLength() << endl;
+  cout << "column #1 charset: " << c1.getCharacterSetName() << endl;
+  cout << "column #1 collation: " << c1.getCollationName() << endl;
+
+  /*
+    FIXME: getLength() returns length in bytes, but for strings it should
+    be length in characters (check X protocol specs).
+  */
+
+  //EXPECT_EQ(32, c0.getLength());
+  EXPECT_EQ(CharacterSet::utf8, c1.getCharacterSet());
+  EXPECT_EQ(Collation<CharacterSet::utf8>::swedish_ci, c1.getCollation());
+
+  Row row = res.fetchOne();
+
+  EXPECT_EQ(str0, (string)row[0]);
+  EXPECT_EQ(str1, (string)row[1]);
+}
+
+
 TEST_F(Types, blob)
 {
   SKIP_IF_NO_XPLUGIN;
@@ -289,15 +392,20 @@ TEST_F(Types, blob)
 
   RowResult res = types.select().execute();
 
+  Column c0 = res.getColumn(0);
+  EXPECT_EQ(Type::BYTES, c0.getType());
+  cout << "BLOB column length: " << c0.getLength() << endl;
+
   Row row = res.fetchOne();
 
   cout << "Got a row, checking data..." << endl;
 
-  Value c0 = row[0];
 
-  EXPECT_EQ(Value::RAW, c0.getType());
+  Value f0 = row[0];
 
-  const bytes &dd = c0.getRawBytes();
+  EXPECT_EQ(Value::RAW, f0.getType());
+
+  const bytes &dd = f0.getRawBytes();
 
   cout << "Data length: " << dd.size() << endl;
   EXPECT_EQ(data.size(), dd.size());
@@ -340,6 +448,9 @@ TEST_F(Types, json)
   RowResult res = types.select().execute();
 
   cout << "Got results, checking data..." << endl;
+
+  Column c0 = res.getColumn(0);
+  EXPECT_EQ(Type::JSON, c0.getType());
 
   Row row;
   for (unsigned i = 0; (row = res.fetchOne()); ++i)
@@ -427,6 +538,24 @@ TEST_F(Types, datetime)
   cout << "Table prepared, querying it..." << endl;
 
   RowResult res = types.select().execute();
+
+  Column c0 = res.getColumn(0);
+  cout << "column #0 type: " << c0.getType() << endl;
+  EXPECT_EQ(Type::DATE, c0.getType());
+
+  Column c1 = res.getColumn(1);
+  cout << "column #1 type: " << c1.getType() << endl;
+  EXPECT_EQ(Type::TIME, c1.getType());
+
+  Column c2 = res.getColumn(2);
+  cout << "column #2 type: " << c2.getType() << endl;
+  EXPECT_EQ(Type::DATETIME, c2.getType());
+
+  Column c3 = res.getColumn(3);
+  cout << "column #3 type: " << c3.getType() << endl;
+  EXPECT_EQ(Type::TIMESTAMP, c3.getType());
+
+
   Row row = res.fetchOne();
 
   EXPECT_TRUE(row);
@@ -475,6 +604,16 @@ TEST_F(Types, set_enum)
   RowResult res = types.select().execute();
 
   cout << "Got result, checking data..." << endl;
+
+  Column c0 = res.getColumn(0);
+  cout << "column #0 type: " << c0.getType() << endl;
+  //EXPECT_EQ(Type::SET, c0.getType());
+  cout << "- column #0 collation: " << c0.getCollationName() << endl;
+
+  Column c1 = res.getColumn(1);
+  cout << "column #1 type: " << c1.getType() << endl;
+  //EXPECT_EQ(Type::ENUM, c1.getType());
+  cout << "- column #1 collation: " << c1.getCollationName() << endl;
 
   Row row;
   for (unsigned i = 0; (row = res.fetchOne()); ++i)

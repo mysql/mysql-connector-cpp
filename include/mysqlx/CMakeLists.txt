@@ -21,7 +21,8 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 SET(headers common.h result.h task.h document.h
-            crud.h collection_crud.h table_crud.h)
+            crud.h collection_crud.h table_crud.h
+            collations.h)
 
 ADD_HEADERS(${headers})
 ADD_HEADER_CHECKS()

@@ -33,6 +33,7 @@
 
 #include "common.h"
 #include "document.h"
+#include "collations.h"
 
 #include <memory>
 
@@ -110,7 +111,7 @@ namespace internal {
   };
 
   inline
-    void BaseResult::init(BaseResult &&init_)
+  void BaseResult::init(BaseResult &&init_)
   {
     m_pos = 0;
     m_impl = init_.m_impl;
@@ -297,6 +298,43 @@ public:
 };
 
 
+class Column;
+
+namespace internal {
+
+  /*
+    Helper class which is used to initialize arbitrary STL container
+    that can store Column instances with all columns meta-data returned
+    by RowResult::getColumns(). An instance of ColumnListInitializer
+    is returned by RowResult::getColumns() and stores reference to the
+    RowResult object. It can be then used to initialize an STL container
+    via the type cast operator. ColumnListInitializer instances are not
+    to be used on its own.
+  */
+
+  class ColumnListInitializer
+  {
+    const RowResult &m_impl;
+
+    ColumnListInitializer(const RowResult &impl)
+      : m_impl(impl)
+    {}
+
+    ColumnListInitializer(ColumnListInitializer&&) = default;
+    ColumnListInitializer(const ColumnListInitializer&) = delete;
+
+  public:
+
+    const Column& operator[](col_count_t) const;
+
+    template <class C> operator C() const;
+
+    friend RowResult;
+  };
+
+} // internal
+
+
 /**
   %Result of an operation that returns rows.
 */
@@ -345,8 +383,26 @@ public:
   }
 
   /// Retrun number of fields in each row.
+
   col_count_t getColumnCount() const;
 
+  /// Return Column instance describing given result column.
+
+  const Column& getColumn(col_count_t pos) const;
+
+  /**
+    Return meta-data for all result columns. The returned data
+    can be stored in any STL container which can store Column
+    objects.
+  */
+
+  internal::ColumnListInitializer getColumns() const
+  {
+    try {
+      return internal::ColumnListInitializer(*this);
+    }
+    CATCH_AND_WRAP
+  }
 
   /**
     Return current row and move to the next one in the sequence.
@@ -356,8 +412,46 @@ public:
 
   Row fetchOne();
 
+private:
+
+  void check_result() const;
+
   friend class Task;
 };
+
+
+template <class C>
+inline
+internal::ColumnListInitializer::operator C() const
+{
+  try {
+
+    /*
+      Note: It is assumed that C is an STL container which can store
+      Column instances. They are added to the container using
+      C::emplace_back() method.
+    */
+
+    C columns;
+
+    for (col_count_t pos = 0; pos < m_impl.getColumnCount(); ++pos)
+      columns.emplace_back(m_impl.getColumn(pos));
+
+    return std::move(columns);
+  }
+  CATCH_AND_WRAP
+}
+
+
+inline
+const Column&
+internal::ColumnListInitializer::operator[](col_count_t pos) const
+{
+  try {
+    return m_impl.getColumn(pos);
+  }
+  CATCH_AND_WRAP
+}
 
 
 /**
@@ -410,6 +504,116 @@ public:
 
   bool nextResult();
 };
+
+
+// RowResult column meta-data
+// --------------------------
+
+/**
+  List of types defined by DevAPI. For each type TTT in this list
+  there is corresponding enumeration value Type::TTT.
+
+  Note: The class name declared for each type is ignored for now
+  - it is meant for future extensions.
+*/
+
+#define TYPE_LIST(X) \
+  X(BIT,        BlobType)     \
+  X(TINYINT,    IntegerType)  \
+  X(SMALLINT,   IntegerType)  \
+  X(MEDIUMINT,  IntegerType)  \
+  X(INT,        IntegerType)  \
+  X(BIGINT,     IntegerType)  \
+  X(FLOAT,      NumericType)  \
+  X(DECIMAL,    NumericType)  \
+  X(DOUBLE,     NumericType)  \
+  X(JSON,       Type)         \
+  X(STRING,     StringType)   \
+  X(BYTES,      BlobType)     \
+  X(TIME,       Type)         \
+  X(DATE,       Type)         \
+  X(DATETIME,   Type)         \
+  X(TIMESTAMP,  Type)         \
+  X(SET,        StringType)   \
+  X(ENUM,       StringType)   \
+  X(GEOMETRY,   Type)         \
+
+#undef TYPE_ENUM
+#define TYPE_ENUM(T,X) T,
+
+enum class Type : unsigned short
+{
+  TYPE_LIST(TYPE_ENUM)
+};
+
+
+#define TYPE_NAME(T,X) case Type::T: return #T;
+
+inline
+const char* typeName(Type t)
+{
+  switch (t)
+  {
+    TYPE_LIST(TYPE_NAME)
+    default:
+      THROW("Unkonwn type");
+  }
+}
+
+inline
+std::ostream& operator<<(std::ostream &out, Type t)
+{
+  return out << typeName(t);
+}
+
+
+/**
+  Class providing meta-data for a single result column.
+*/
+
+class Column : public internal::Printable
+{
+public:
+
+  string getSchemaName()  const;
+  string getTableName()   const;
+  string getTableLabel()  const;
+  string getColumnName()  const;
+  string getColumnLabel() const;
+
+  Type getType()   const;
+
+  unsigned long getLength() const;
+  unsigned short getFractionalDigits() const;
+  bool isNumberSigned() const;
+
+  CharacterSet getCharacterSet() const;
+  std::string getCharacterSetName() const
+  {
+    return characterSetName(getCharacterSet());
+  }
+
+  const CollationInfo& getCollation() const;
+  std::string getCollationName() const
+  {
+    return getCollation().getName();
+  }
+
+  bool isPadded() const;
+
+private:
+
+  class Impl;
+  std::shared_ptr<Impl> m_impl;
+  virtual void print(std::ostream&) const;
+
+  friend class Impl;
+
+public:
+  struct Access;
+  friend struct Access;
+};
+
 
 
 // Document based results
