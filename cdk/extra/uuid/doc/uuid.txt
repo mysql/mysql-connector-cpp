@@ -1,0 +1,159 @@
+.. uuid_doc documentation master file, created by
+   sphinx-quickstart on Fri Feb  6 18:39:23 2015.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+What is the UUID generator
+====================================
+
+The ``UUID`` generator is a **client-side** function generating a unique 16-byte ``UUID`` value.
+Its algorithm is based on the MySQL Server ``uuid()`` function, but with some differences that take into acccount the distribution of the clients that do not necessary run on the same host.
+
+Nevertheless, it must provide a close to impossible chance of repeating the same value disregard of any conditions such as:
+
+* two or more generators run on same or different hosts
+* two or more generators run within same or different processes
+* generators run concurrently or separated in time
+
+UUID structure
+====================================
+
+UUID has the following structure:
+
+ .. uml::
+
+    object TIME_LOW
+    object TIME_MID
+    object TIME_HI_VER
+    object PROCESS_ID
+    object HW_MAC_ADDR
+
+    TIME_LOW : 32-bit
+    TIME_MID : 16-bit
+    TIME_HI_VER : 16-bit
+    PROCESS_ID : 16-bit
+    HW_MAC_ADDR : 48-bit
+
+
+    TIME_LOW -down-> TIME_MID
+    TIME_MID -down-> TIME_HI_VER
+    TIME_HI_VER -down-> PROCESS_ID
+    PROCESS_ID -down-> HW_MAC_ADDR
+
+    note right of TIME_LOW
+      <b>represents the lower 32 bits of system timestamp
+      in order not to generate the same value the lower bits
+      can be "borrowed" from the future when two UUIDs generate
+      within the clock granularity
+
+      this protects against generating similar values within
+      the same process
+    end note
+
+    note right of TIME_MID
+      <b>represents the medium 16 bits of system timestamp
+      this component changes when TIME_LOW reaches its maximum
+    end note
+
+    note right of TIME_HI_VER
+      <b>represents the higher 16 bits of system timestamp
+      <b>and UUID version
+      system timestamp is considered a 64-bit structure,
+      so this component is obtained as
+      <b>timestamp >> 48 | UUID_VERSION   
+    end note
+
+    note right of PROCESS_ID
+      <b>represents the lower 16 bits of the current Process ID
+      to make sure the duplicate values would not be generated if
+      two independent processes running on the same host
+      getting UUID at the same time
+    end note
+
+    note right of HW_MAC_ADDR
+      <b>6 bytes from Hardware MAC address of the network adapter
+      this component eliminates the possibility of duplication on
+      two or more UUIDs generated on separate hosts at the same
+      moment of time
+
+      If MAC address could not be obtained this value is generated
+      randomly depending on time, the number of bytes sent,
+      Query ID (number), query performance frequency and
+      query performance offset
+    end note
+
+How to use UUID generator
+=========================
+UUID data type
+--------------
+To start using the ``UUID`` generator the client code has to use the header:
+
+.. code-block:: c
+
+  #include <uuid_gen.h>
+
+The header file contains the definitions for ``uuid_type`` as:
+
+.. code-block:: c
+
+  #define UUID_LENGTH_BIN 16
+  typedef unsigned char uuid_type[UUID_LENGTH_BIN];
+
+
+UUID functions
+--------------
+
+.. |vspace| raw:: latex
+
+   \vspace{5mm}
+
+* ``init_uuid(unsigned long seed)`` - initialization function, which should
+  be called only once before using the generator. The parameter `unsigned long seed` is
+  used to generate the 6-byte `Hardware MAC address` if it could not be obtained.
+  The seed can be a random value, system time, the query number, number of sent bytes, etc.
+
+|vspace|  
+  
+* ``generate_uuid(uuid_type& uuid)`` - generator returning the result into `uuid` parameter.
+  Could be called many times, sequentially or concurrently from different threads.
+  Requires `init_uuid()` function to be called before the first use of `generate_uuid`. 
+
+|vspace|  
+  
+* ``end_uuid()`` - should be called when the application exists or when UUID generator is
+  not needed. Destroys the mutexes used for synchronizing in concurrent threads.
+
+Usage example
+-------------
+
+.. code-block:: c
+
+  /* Initialize the UUID generator and create mutexes */
+  unsigned long seed = <get a random value, time, nuber of sent bytes etc>;
+  init_uuid(seed);
+  ...
+  /* 
+    Use the generator.
+    The result formatted and converted to text could look as:
+     bf17975b-4e44-d011-4c6b00268312fb20
+  */
+  generate_uuid(uuid);
+  ...
+  /* Destroy mutexes */
+  end_uuid();
+
+
+Contents:
+
+.. toctree::
+   :maxdepth: 2
+
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+

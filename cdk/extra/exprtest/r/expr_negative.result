@@ -1,0 +1,8 @@
+## col: foo->'$.bar'
+ERROR
+Expression_parser: could not parse string as expression (not all tokens consumed)
+
+## all: foo+
+ERROR
+unexpected end of string
+

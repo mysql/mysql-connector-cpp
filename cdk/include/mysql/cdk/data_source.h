@@ -1,0 +1,142 @@
+/*
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ *
+ * This code is licensed under the terms of the GPLv2
+ * <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+ * MySQL Connectors. There are special exceptions to the terms and
+ * conditions of the GPLv2 as it is applied to this software, see the
+ * FLOSS License Exception
+ * <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+ */
+
+#ifndef CDK_DATA_SOURCE_H
+#define CDK_DATA_SOURCE_H
+
+#include <mysql/cdk/foundation.h>
+
+namespace cdk {
+
+// Data source
+
+namespace ds {
+
+/*
+ * Generic session options which are valid for any data source.
+ */
+
+class Options
+{
+public:
+
+  Options() :
+    m_usr(L"root"), m_has_pwd(false)
+  {
+  }
+
+  Options(const Options &other) :
+    m_usr(other.m_usr), m_has_pwd(other.m_has_pwd), m_pwd(other.m_pwd)
+  {
+  }
+
+  Options(const string &usr, const std::string *pwd =NULL)
+    : m_usr(usr), m_has_pwd(false)
+  {
+    if (pwd)
+    {
+      m_has_pwd= true;
+      m_pwd= *pwd;
+    }
+  }
+
+  virtual ~Options() {}
+
+  virtual const string& user() const { return m_usr; }
+  virtual const std::string* password() const
+  { return m_has_pwd ? &m_pwd : NULL; }
+
+protected:
+
+  string m_usr;
+  bool   m_has_pwd;
+  std::string m_pwd;
+
+};
+
+
+namespace mysqlx {
+
+/*
+ * A TCPIP data source represents a MySQL server accessible via TCP/IP
+ * connection.
+ */
+
+class TCPIP
+{
+protected:
+  unsigned short m_port;
+  std::string m_host;
+
+public:
+
+  typedef ds::Options Options;
+
+  TCPIP(const std::string &_host="localhost", unsigned short _port =33060)
+  : m_port(_port), m_host(_host)
+  {}
+
+  virtual ~TCPIP() {}
+
+  virtual unsigned short port() const { return m_port; }
+  virtual const std::string& host() const { return m_host; }
+};
+
+} // mysqlx
+
+namespace mysql {
+
+/*
+ * Future Session with MYSQL
+ */
+
+
+class TCPIP : public cdk::ds::mysqlx::TCPIP
+{
+public:
+
+  TCPIP(const std::string &_host="localhost", unsigned short _port =3306)
+  : cdk::ds::mysqlx::TCPIP(_host, _port)
+  {}
+
+  virtual ~TCPIP() {}
+
+  typedef ds::Options Options;
+};
+
+} //mysql
+
+}  // ds
+
+
+//TCPIP defaults to mysqlx::TCPIP
+namespace ds {
+  typedef mysqlx::TCPIP TCPIP;
+  typedef mysql::TCPIP TCPIP_old;
+}
+
+
+} // cdk
+
+#endif // CDK_DATA_SOURCE_H
