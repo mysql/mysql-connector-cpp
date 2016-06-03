@@ -32,34 +32,12 @@ CMAKE_POLICY(VERSION 2.8.11)
 #
 set(CMAKE_INSTALL_PREFIX "" CACHE PATH "Install location")
 
-PROJECT(MySQL_CONCPLS)
+PROJECT(MySQL_CONCPP)
 
 message("Building on system: ${CMAKE_SYSTEM} (${CMAKE_SYSTEM_PROCESSOR})")
 message("Using cmake generator: ${CMAKE_GENERATOR}")
 
 include(version.cmake)
-
-#
-# Ngcommon path
-# =============
-#
-
-if(NOT DEFINED WITH_NGCOMMON)
-  set(WITH_NGCOMMON $ENV{WITH_NGCOMMON})
-  if(NOT WITH_NGCOMMON)
-    set(WITH_NGCOMMON "${PROJECT_SOURCE_DIR}/cdk/common")
-  endif()
-endif()
-
-message("ngcommon location: ${WITH_NGCOMMON}")
-
-SET(WITH_NGCOMMON ${WITH_NGCOMMON} CACHE PATH "Path to ngcommon sources")
-
-
-IF (NOT EXISTS "${WITH_NGCOMMON}/cmake")
-MESSAGE(WARNING "Could not find required ngcommon files under location"
-                " specified with WITH_NGCOMMON: ${WITH_NGCOMMON}")
-ENDIF()
 
 
 #
@@ -74,10 +52,6 @@ LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 # Then use modules from CDK sub-project
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cdk/cmake)
-
-# Finally ngcommon modules
-
-LIST(APPEND CMAKE_MODULE_PATH ${WITH_NGCOMMON}/cmake)
 
 
 #

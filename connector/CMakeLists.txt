@@ -25,7 +25,7 @@
 # We use UUID generator from common sub-module.
 #
 
-set(WITH_UUID "${PROJECT_SOURCE_DIR}/cdk/common/uuid")
+set(WITH_UUID "${PROJECT_SOURCE_DIR}/cdk/extra/uuid")
 
 if(NOT EXISTS "${WITH_UUID}/src/CMakeLists.txt")
   message(FATAL_ERROR "Could not find UUID generator sources at: ${WITH_UUID}")
