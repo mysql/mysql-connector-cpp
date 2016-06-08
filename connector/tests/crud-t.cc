@@ -1179,3 +1179,65 @@ TEST_F(Crud, doc_path)
   EXPECT_THROW(static_cast<int>(doc["date"]["days"][0]), Error);
 
 }
+
+
+TEST_F(Crud, row_error)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  sql("DROP TABLE IF EXISTS test.row_error");
+  sql(
+    "CREATE TABLE test.row_error("
+    "  _id VARCHAR(32),"
+    "  age BIGINT"
+    ")");
+
+  Schema sch = sess.getSchema("test");
+  Table tbl = sch.getTable("row_error");
+
+
+  //Insert values on table
+
+
+  auto insert = tbl.insert("_id", "age");
+  insert.values("ID#1", (int64_t)-9223372036854775807LL);
+  insert.values("ID#3", (int64_t)9223372036854775805LL);
+  insert.values("ID#4", (int64_t)9223372036854775806LL);
+  insert.execute();
+
+  //Overflow on second line
+
+  {
+    auto op_select = tbl.select("100000+age AS newAge");
+    RowResult result =  op_select.execute();
+
+    try {
+
+      Row r = result.fetchOne();
+
+      for ( ;
+            !r.isNull();
+            r = result.fetchOne())
+      {
+        std::cout << (int64_t)r.get(0) << std::endl;
+      }
+
+    }
+    catch (mysqlx::Error& e)
+    {
+      FAIL() << e;
+    }
+  }
+
+  //Everything should work as expected if dropped
+  {
+    auto op_select = tbl.select("100000+age");
+    RowResult result =  op_select.execute();
+  }
+}
