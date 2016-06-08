@@ -516,8 +516,7 @@ DIAGNOSTIC_POP
 
   TableUpdate& set(const string& field, internal::ExprValue val);
 
-  // TODO: no sorting after where()?
-  Executable& where(const string& expr);
+  internal::TableSort<false>& where(const string& expr);
 
   friend class internal::TableUpdateBase;
 };
