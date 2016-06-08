@@ -217,7 +217,10 @@ private:
 
   void error(unsigned int code, short int severity,
                      sql_state_t sql_state, const string &msg)
-  { m_session.error(code, severity, sql_state, msg); }
+  {
+    m_more_rows = false;
+    m_session.error(code, severity, sql_state, msg);
+  }
 
   void notice(unsigned int /*type*/, short int /*scope*/, bytes /*payload*/)
   { //TODO: Finish notice here

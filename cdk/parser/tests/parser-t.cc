@@ -558,6 +558,7 @@ const Expr_Test exprs[] =
   { parser::Parser_mode::DOCUMENT, L"-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName is not NULL "},
   { parser::Parser_mode::DOCUMENT, L"-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName not in ('foo%', 'bar%')"},
   { parser::Parser_mode::DOCUMENT, L"-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName not between 'foo%' AND 'bar%'"},
+  { parser::Parser_mode::DOCUMENT, L"-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName not regexp 'foo.*'"},
   { parser::Parser_mode::DOCUMENT, L"not (name <= 'foo' or not bar)"},
   { parser::Parser_mode::DOCUMENT, L"colName.Xpto[1].a[*].* + .1e-2"},
   { parser::Parser_mode::DOCUMENT, L"$.doc_path.Xpto[1].a[*].* + -.1e-2"},

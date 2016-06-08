@@ -121,6 +121,7 @@ Tokenizer::Maps::Maps()
   operator_names["not"] = "not";
   operator_names["xor"] = "xor";
   operator_names["is"] = "is";
+  operator_names["regexp"] = "regexp";
   operator_names["between"] = "between";
   operator_names["in"] = "in";
   operator_names["like"] = "like";
