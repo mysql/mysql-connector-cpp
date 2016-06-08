@@ -44,7 +44,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #undef max
 #endif
 
-#if ( defined(_WIN32) || defined(_WIN64) ) && !defined(snprintf)
+#if ( defined(_WIN32) || defined(_WIN64) ) && !defined(snprintf) && (_MSC_VER < 1900)
 #define snprintf _snprintf
 #endif
 
