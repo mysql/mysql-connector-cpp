@@ -384,7 +384,7 @@ TableUpdate& TableUpdate::set(const mysqlx::string& field,
 }
 
 
-Executable& TableUpdate::where(const mysqlx::string &expr)
+internal::TableSort<false>& TableUpdate::where(const mysqlx::string &expr)
 {
   get_impl(this).m_where = expr;
   return *this;
