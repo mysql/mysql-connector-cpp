@@ -86,11 +86,18 @@ namespace mysqlx {
   X(gb18030)  \
 
 
+// Fix for Solarix build
+#ifdef CS
+#  undef CS
+#endif
+
+
 /**
   Enumeration of known character sets. For each character set CS listed
   in CS_LIST() macro, there is CharacterSet:CS constant in this
   enumeration.
 */
+
 
 enum class CharacterSet : unsigned short
 {
