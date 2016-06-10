@@ -664,4 +664,49 @@ TEST_F(Types, set_enum)
   }
 }
 
-// TODO: Test GEOMETRY types
+
+TEST_F(Types, geometry)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Preparing test.types_geom..." << endl;
+
+  sql("DROP TABLE IF EXISTS test.types_geom");
+  sql(
+    "CREATE TABLE test.types_geom("
+    "  c0 GEOMETRY,"
+    "  c1 POINT,"
+    "  c2 LINESTRING,"
+    "  c3 POLYGON,"
+    "  c4 MULTIPOINT,"
+    "  c5 MULTILINESTRING,"
+    "  c6 MULTIPOLYGON,"
+    "  c7 GEOMETRYCOLLECTION"
+    ")"
+    );
+
+  Table types = getSchema("test").getTable("types_geom");
+
+  cout << "Table prepared, querying it..." << endl;
+
+  {
+    RowResult res = types.select().execute();
+
+    std::vector<Column> cc = res.getColumns();
+
+    for (unsigned c = 0; c < 8; ++c)
+    {
+      EXPECT_EQ(Type::GEOMETRY, cc[c].getType());
+    }
+  }
+
+  {
+    RowResult res = types.select("ST_AsBinary(c0)").execute();
+    EXPECT_EQ(Type::BYTES, res.getColumn(0).getType());
+  }
+
+  {
+    RowResult res = types.select("ST_AsText(c0)").execute();
+    EXPECT_EQ(Type::STRING, res.getColumn(0).getType());
+  }
+}
