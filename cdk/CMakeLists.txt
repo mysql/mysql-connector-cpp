@@ -308,7 +308,7 @@ IF(WITH_TESTS)
   # (see cmake/testing.cmake)
 
   ADD_TEST_TARGET()
-  ADD_DEPENDENCIES(run_unit_tests foundation_tests_server ngs_mockup)
+  ADD_DEPENDENCIES(${target_run_unit_tests} foundation_tests_server ngs_mockup)
 
   # Checks for public headers declared with ADD_HEADERS() (see cmake/headers.cmake)
 

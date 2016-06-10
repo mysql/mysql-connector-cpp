@@ -59,7 +59,7 @@ ADD_GCOV(expr_test)
 # Copy test files to build location so that files produced by runtest.py
 # do not pollute source tree.
 
-FILE(COPY "${CMAKE_SOURCE_DIR}/extra/exprtest"
+FILE(COPY "${PROJECT_SOURCE_DIR}/extra/exprtest"
      DESTINATION "${CMAKE_BINARY_DIR}")
 
 find_program(PYTHON_EXECUTABLE NAMES python
