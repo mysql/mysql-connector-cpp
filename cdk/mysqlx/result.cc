@@ -378,16 +378,20 @@ Type_info Cursor::type(col_count_t pos) const
     return TYPE_DATETIME;
 
   case col_type::BYTES:
-    if (content_type::JSON == md.m_content_type)
-      return TYPE_DOCUMENT;
-    return md.m_cs != BINARY_CS_ID ? TYPE_STRING : TYPE_BYTES;
+    switch (md.m_content_type)
+    {
+    case content_type::JSON: return TYPE_DOCUMENT;
+    case content_type::GEOMETRY: return TYPE_GEOMETRY;
+    case content_type::XML: return TYPE_XML;
+    default: return md.m_cs != BINARY_CS_ID ? TYPE_STRING : TYPE_BYTES;
+    }
 
   case col_type::SET:
   case col_type::ENUM:
     return TYPE_STRING;
 
   default:
-    // TODO: correctly handle all X types
+    // TODO: correctly handle all X types (BIT)
     return TYPE_BYTES;
   }
 }

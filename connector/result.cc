@@ -193,6 +193,28 @@ struct Format_descr<cdk::TYPE_DATETIME>
 
 
 /*
+  Note: For GEOMETRY and XML types we do not decode the values.
+  Also, CDK does not provide any encoding format information -
+  GEOMETRY uses some unspecified MySQL intenral representation
+  format and XML format is well known.
+*/
+
+template<>
+struct Format_descr<cdk::TYPE_GEOMETRY>
+{
+  Format_descr(const cdk::Format_info &)
+  {}
+};
+
+template<>
+struct Format_descr<cdk::TYPE_XML>
+{
+  Format_descr(const cdk::Format_info &)
+  {}
+};
+
+
+/*
   Structure Format_info holds information about the type
   of a column (m_type) and about its encoding format in
   Format_descr<T> structure. Since C++ type of Format_descr<T>
@@ -206,7 +228,9 @@ typedef boost::variant <
   Format_descr<cdk::TYPE_FLOAT>,
   Format_descr<cdk::TYPE_DOCUMENT>,
   Format_descr<cdk::TYPE_BYTES>,
-  Format_descr<cdk::TYPE_DATETIME>
+  Format_descr<cdk::TYPE_DATETIME>,
+  Format_descr<cdk::TYPE_GEOMETRY>,
+  Format_descr<cdk::TYPE_XML>
 > Format_info_base;
 
 struct Format_info
@@ -329,12 +353,13 @@ Meta_data::Meta_data(cdk::Meta_data &md)
 
     switch (ti)
     {
-    // TODO: GEOMETRY, XML, ?
     case cdk::TYPE_STRING:    add<cdk::TYPE_STRING>(pos, ci, fi);   break;
     case cdk::TYPE_INTEGER:   add<cdk::TYPE_INTEGER>(pos, ci, fi);  break;
     case cdk::TYPE_FLOAT:     add<cdk::TYPE_FLOAT>(pos, ci, fi);    break;
     case cdk::TYPE_DOCUMENT:  add<cdk::TYPE_DOCUMENT>(pos, ci, fi); break;
     case cdk::TYPE_DATETIME:  add<cdk::TYPE_DATETIME>(pos, ci, fi); break;
+    case cdk::TYPE_GEOMETRY:  add<cdk::TYPE_GEOMETRY>(pos, ci, fi); break;
+    case cdk::TYPE_XML:       add<cdk::TYPE_XML>(pos, ci, fi); break;
     default:
       add_raw(pos, ci, ti);
       break;
@@ -528,7 +553,10 @@ Type Column::getType()   const
       }
     }
 
-    // TODO: Handle GEOMETRY type
+    case cdk::TYPE_GEOMETRY:
+      return Type::GEOMETRY;
+
+    case cdk::TYPE_XML:
     default: return Type::BYTES;
     }
   }

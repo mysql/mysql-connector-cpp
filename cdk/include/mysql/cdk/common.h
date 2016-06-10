@@ -69,7 +69,9 @@ using protocol::mysqlx::charset_id_t;
   X(STRING) \
   X(DATETIME) \
   X(BYTES) \
-  X(DOCUMENT)
+  X(DOCUMENT) \
+  X(GEOMETRY) \
+  X(XML)
 
 
 #undef TYPE_ENUM

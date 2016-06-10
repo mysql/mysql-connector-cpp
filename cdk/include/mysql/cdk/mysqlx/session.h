@@ -428,9 +428,13 @@ private:
         return TYPE_DATETIME == type;
 
       case protocol::mysqlx::col_type::BYTES:
-        if (content_type::JSON == m_content_type
-            && TYPE_DOCUMENT == type)
-          return true;
+        switch (m_content_type)
+        {
+        case content_type::JSON: return TYPE_DOCUMENT == type;
+        case content_type::GEOMETRY: return TYPE_GEOMETRY == type;
+        case content_type::XML: return TYPE_XML == type;
+        default: break;
+        }
 
       case protocol::mysqlx::col_type::ENUM:
       default:
