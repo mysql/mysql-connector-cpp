@@ -301,6 +301,40 @@ TEST_F(Types, basic)
 }
 
 
+TEST_F(Types, integer)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Preparing test.int_types..." << endl;
+
+  sql("DROP TABLE IF EXISTS test.int_types");
+  sql(
+    "CREATE TABLE test.int_types("
+    "  c0 INT,"
+    "  c1 INT UNSIGNED"
+    ")");
+
+  Table types = getSchema("test").getTable("int_types");
+
+  types.insert().values(-7, 7).execute();
+
+  cout << "Table prepared, querying it..." << endl;
+
+  RowResult res = types.select().execute();
+
+  cout << "Query sent, reading rows..." << endl;
+  cout << "There are " << res.getColumnCount() << " columns in the result" << endl;
+
+  vector<Column> cc = res.getColumns();
+
+  EXPECT_EQ(Type::INT, cc[0].getType());
+  EXPECT_TRUE(cc[0].isNumberSigned());
+
+  EXPECT_EQ(Type::INT, cc[1].getType());
+  EXPECT_FALSE(cc[1].isNumberSigned());
+}
+
+
 TEST_F(Types, string)
 {
   SKIP_IF_NO_XPLUGIN;

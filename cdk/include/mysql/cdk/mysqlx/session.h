@@ -446,7 +446,7 @@ private:
         Format<TYPE_INTEGER>::Access::set_fmt(fmt, Format<TYPE_INTEGER>::SINT);
         break;
       case protocol::mysqlx::col_type::UINT:
-        Format<TYPE_INTEGER>::Access::set_fmt(fmt, Format<TYPE_INTEGER>::SINT);
+        Format<TYPE_INTEGER>::Access::set_fmt(fmt, Format<TYPE_INTEGER>::UINT);
         break;
       }
         Format<TYPE_INTEGER>::Access::set_length(fmt, m_length);
