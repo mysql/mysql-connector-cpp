@@ -37,15 +37,13 @@
 namespace mysqlx {
 
 
-internal::BaseResult Executable::execute()
+internal::BaseResult Statement::execute()
 {
   if (!m_map.empty())
-    m_task.m_impl->set_params(m_map);
-  return PlainExecutable::execute();
+    static_cast<Impl*>(m_task.m_impl)->set_params(m_map);
+  return Executable::execute();
 }
 
-
-namespace internal {
 
 template <bool with_offset>
 struct Crud_impl< internal::Limit<with_offset> >
@@ -53,9 +51,9 @@ struct Crud_impl< internal::Limit<with_offset> >
   typedef Op_base type;
 };
 
-}
 
-Executable& internal::Limit<false>::limit(unsigned rows)
+Statement&
+internal::Limit<false>::limit(unsigned rows)
 {
   get_impl(this).limit(rows);
   return *this;
@@ -67,7 +65,6 @@ internal::Offset& internal::Limit<true>::limit(unsigned rows)
   return *this;
 }
 
-namespace internal {
 
 template<>
 struct Crud_impl<internal::Offset>
@@ -75,16 +72,14 @@ struct Crud_impl<internal::Offset>
   typedef Op_base type;
 };
 
-}
 
-Executable& internal::Offset::offset(unsigned rows)
+Statement&
+internal::Offset::offset(unsigned rows)
 {
   get_impl(this).offset(rows);
   return *this;
 }
 
-
-namespace internal {
 
 template<bool limit_with_offset>
 struct Crud_impl< internal::SortBase<limit_with_offset> >
@@ -92,6 +87,8 @@ struct Crud_impl< internal::SortBase<limit_with_offset> >
   typedef Op_base type;
 };
 
+
+namespace internal {
 
 template<>
 void SortBase<false>::do_sort(const mysqlx::string &spec)

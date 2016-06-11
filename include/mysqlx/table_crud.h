@@ -123,7 +123,7 @@ namespace internal {
 */
 
 class TableInsert
-  : public Executable
+  : public Statement
 {
 protected:
 
@@ -206,7 +206,7 @@ public:
   }
 
   TableInsert(TableInsert &other)
-    : Executable(other)
+    : Statement(other)
     , m_row(other.m_row)
   {
     other.m_row = NULL;
@@ -446,7 +446,7 @@ DIAGNOSTIC_PUSH
   }
 
 
-  TableSelect(TableSelect &other) : Executable(other) {}
+  TableSelect(TableSelect &other) : Statement(other) {}
   TableSelect(TableSelect &&other) : TableSelect(other) {}
 
 DIAGNOSTIC_POP
@@ -509,7 +509,7 @@ DIAGNOSTIC_PUSH
 
   // TODO: ctor with where condition?
 
-  TableUpdate(TableUpdate &other) : Executable(other) {}
+  TableUpdate(TableUpdate &other) : Statement(other) {}
   TableUpdate(TableUpdate &&other) : TableUpdate(other) {}
 
 DIAGNOSTIC_POP
@@ -575,7 +575,7 @@ DIAGNOSTIC_PUSH
 
   // TODO: ctor with where condition?
 
-  TableRemove(TableRemove &other) : Executable(other) {}
+  TableRemove(TableRemove &other) : Statement(other) {}
   TableRemove(TableRemove &&other) : TableRemove(other) {}
 
 DIAGNOSTIC_POP

@@ -123,11 +123,14 @@ protected:
 
   Proto_op* start()
   {
-    Any_list_converter conv(*m_args);
+    Any_list_converter conv;
+    if (m_args)
+      conv.reset(*m_args);
     return &m_protocol.snd_StmtExecute(m_ns, m_stmt, m_args ? &conv : NULL);
   }
 
 public:
+
   SndStmt(Protocol& protocol, const char *ns,
           const string& stmt, Any_list *args)
     : Proto_delayed_op(protocol), m_ns(ns)

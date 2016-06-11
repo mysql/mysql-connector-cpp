@@ -150,10 +150,10 @@ public:
   virtual bool existsInDatabase() const = 0;
 
 
-  friend class Schema;
-  friend class Table;
-  friend class Collection;
-  friend class Task;
+  friend Schema;
+  friend Table;
+  friend Collection;
+  friend internal::Task;
 
 };
 
@@ -293,8 +293,8 @@ public:
 
   internal::List_init<string> getTableNames();
 
-  friend class Collection;
-  friend class Task;
+  friend Collection;
+  friend internal::Task;
 };
 
 
@@ -371,7 +371,7 @@ public:
   bool existsInDatabase() const override;
 
 
-  friend class Task;
+  friend internal::Task;
 };
 
 
@@ -478,7 +478,7 @@ public:
   bool existsInDatabase() const override;
 
 
-  friend class Task;
+  friend internal::Task;
 };
 
 
@@ -580,11 +580,11 @@ public:
 
 private:
 
-  friend class Schema;
-  friend class Collection;
-  friend class Table;
-  friend class Result;
-  friend class Task;
+  friend Schema;
+  friend Collection;
+  friend Table;
+  friend Result;
+  friend internal::Task;
 };
 
 
@@ -597,7 +597,6 @@ private:
 
 class NodeSession
   : public XSession
-  , Executable
 {
 public:
 
@@ -626,7 +625,11 @@ public:
     Operation that runs arbitrary SQL query on the node.
   */
 
-  Executable& sql(const string &query);
+  SqlStatement& sql(const string &query);
+
+private:
+
+  SqlStatement m_stmt;
 };
 
 

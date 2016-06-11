@@ -37,6 +37,7 @@
 #include "result.h"
 
 #include <map>
+#include <forward_list>
 
 namespace mysqlx {
 
@@ -45,10 +46,20 @@ using std::ostream;
 
 class Task;
 class Executable;
+class Statement;
 
 namespace internal {
-  class PlainExecutable;
-}
+
+class SqlStatement;
+
+/*
+  Object of this class controls asynchronous execution
+  of a task defined by class deriving from Task::Impl.
+
+  It wraps and manages the implementation instance and
+  provides the standard async execution methods:
+  cont(), is_completed() and wait().
+*/
 
 class Task : internal::nocopy
 {
@@ -80,55 +91,11 @@ public:
 
   struct Access;
   friend Access;
-  friend internal::PlainExecutable;
   friend Executable;
+  friend Statement;
 };
 
-
-namespace internal {
-
-  /*
-    Represents an operation that can be executed.
-
-    Creating an operation does not involve any communication
-    with the server. Only when `execute()` method is called
-    operation is sent to the server for execution.
-  */
-
-  class PlainExecutable : nocopy
-  {
-  protected:
-
-    Task m_task;
-
-    void check_if_valid()
-    {
-      if (!m_task.m_impl)
-        throw Error("Attempt to use invalid operation");
-    }
-
-    PlainExecutable() {}
-
-  public:
-
-    PlainExecutable(PlainExecutable &&other)
-    {
-      m_task = std::move(other.m_task);
-    }
-
-    /// Execute given operation and wait for its result.
-
-    virtual BaseResult execute()
-    {
-      check_if_valid();
-      return m_task.wait();
-    }
-
-    struct Access;
-    friend struct Access;
-  };
-
-}
+} // internal
 
 
 /**
@@ -137,52 +104,96 @@ namespace internal {
   Creating an operation does not involve any communication
   with the server. Only when `execute()` method is called
   operation is sent to the server for execution.
-
-  If operation contains named parameters, then these parameter
-  values should be defined with `bind()` method prior to execution.
 */
 
-class Executable : public internal::PlainExecutable
+class Executable : internal::nocopy
 {
 protected:
+
+  internal::Task m_task;
+
+  void check_if_valid()
+  {
+    if (!m_task.m_impl)
+      throw Error("Attempt to use invalid operation");
+  }
+
+  Executable() {}
+  Executable(internal::Task::Impl *impl)
+  {
+    m_task.reset(impl);
+  }
+
+public:
+
+  Executable(Executable &&other)
+  {
+    m_task = std::move(other.m_task);
+  }
+
+  /// Execute given operation and wait for its result.
+
+  virtual internal::BaseResult execute()
+  {
+    check_if_valid();
+    return m_task.wait();
+  }
+
+  struct Access;
+  friend struct Access;
+};
+
+
+/**
+  Represents a statement that can be executed.
+
+  Instances of this class are created by various methods creating
+  CRUD operations. Before executing a `Statement`, values of named
+  parameters that appear in expressions which define the statement
+  can be bound to values using `bind()` method.
+*/
+
+class Statement : public Executable
+{
+protected:
+
+  class Impl;
 
   typedef std::map<string, Value> param_map_t;
   param_map_t m_map;
 
-  Executable() = default;
+  Statement() = default;
+  Statement(Impl*);
 
 public:
 
-  Executable(Executable &other)
-    : PlainExecutable(std::move(other))
+  Statement(Statement &other)
+    : Executable(std::move(other))
     , m_map(std::move(other.m_map))
   {}
 
-  Executable(Executable &&other) : Executable(other) {}
-  Executable(PlainExecutable &&other) : PlainExecutable(std::move(other))
-  {
-    m_map.clear();
-  }
-
+  Statement(Statement &&other) : Statement(other) {}
 
   internal::BaseResult execute() override;
 
 
-  Executable& bind(const string &parameter, Value val)
+  /// Bind parameter with given name to the given value.
+
+  Statement& bind(const string &parameter, Value val)
   {
     check_if_valid();
-    m_map[parameter] = std::move(val);
+    m_map.emplace(parameter, val);
     return *this;
   }
 
 #if 0
 
   /*
-    Currently protocol supports binding only to scalar values,
-    not arrays or documents.
+  Currently protocol supports binding only to scalar values,
+  not arrays or documents.
 
-    TODO: Add this overload when binding to arrays is supported
-    in the protocol.
+  TODO: Add this overload when binding to arrays is supported
+  in the protocol.
   */
 
   template <typename Iterator>
@@ -196,10 +207,63 @@ public:
 
   struct Access;
   friend Access;
-  friend Task;
-  friend Task::Impl;
 };
 
+
+/**
+  Represents an operation which exececutes SQL statement.
+
+  Before executing the statement, values of "?" placeholders
+  that appear in it can be specified using `bind()` method.
+*/
+
+class SqlStatement : public Executable
+{
+protected:
+
+  SqlStatement() = default;
+
+  void add_param(const Value &val);
+
+public:
+
+  SqlStatement(SqlStatement &other)
+    : Executable(std::move(other))
+  {}
+
+  SqlStatement& bind(Value val)
+  {
+    check_if_valid();
+    add_param(val);
+    return *this;
+  }
+
+  template <typename... Types>
+  SqlStatement& bind(Value first, Types... rest)
+  {
+    check_if_valid();
+    add_param(first);
+    return bind(rest...);
+  }
+
+  template <
+    class Container,
+    typename = internal::enable_if_t<
+      !std::is_convertible<Container, Value>::value
+    >
+  >
+  SqlStatement& bind(const Container &c)
+  {
+    check_if_valid();
+    for (const auto &val : c)
+      add_param(val);
+    return *this;
+  }
+
+  struct Access;
+  friend Access;
+  friend NodeSession;
+};
 
 }  // mysqlx
 

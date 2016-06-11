@@ -133,7 +133,6 @@ class Op_table_insert
 
 
 namespace mysqlx {
-namespace internal {
 
 template <>
 struct Crud_impl<TableInsert>
@@ -141,12 +140,12 @@ struct Crud_impl<TableInsert>
   typedef Op_table_insert type;
 };
 
-}} // mysqlx::internal
+} // mysqlx
 
 
 void TableInsert::prepare(Table &table)
 {
-  Task::Access::reset(m_task, new Op_table_insert(table));
+  Statement::Access::reset_task(*this, new Op_table_insert(table));
   get_impl(this).reset();
 }
 
@@ -240,7 +239,6 @@ public:
 
 
 namespace mysqlx {
-namespace internal {
 
 template <>
 struct Crud_impl<TableSelect>
@@ -248,12 +246,12 @@ struct Crud_impl<TableSelect>
   typedef Op_table_select type;
 };
 
-}} // mysqlx::internal
+} // mysqlx
 
 
 void TableSelect::prepare(Table &table)
 {
-  Executable::Access::reset_task(*this, new Op_table_select(table));
+  Statement::Access::reset_task(*this, new Op_table_select(table));
 }
 
 
@@ -359,7 +357,6 @@ public:
 
 
 namespace mysqlx {
-namespace internal {
 
 template <>
 struct Crud_impl<TableUpdate>
@@ -367,12 +364,12 @@ struct Crud_impl<TableUpdate>
   typedef Op_table_update type;
 };
 
-}} // mysqlx::internal
+} // mysqlx
 
 
 void TableUpdate::prepare(Table &table)
 {
-  Executable::Access::reset_task(*this, new Op_table_update(table));
+  Statement::Access::reset_task(*this, new Op_table_update(table));
 }
 
 
@@ -437,7 +434,6 @@ public:
 
 
 namespace mysqlx {
-namespace internal {
 
 template <>
 struct Crud_impl<TableRemove>
@@ -445,12 +441,12 @@ struct Crud_impl<TableRemove>
   typedef Op_table_remove type;
 };
 
-}} // mysqlx::internal
+} // mysqlx
 
 
 void TableRemove::prepare(Table &table)
 {
-  Executable::Access::reset_task(*this, new Op_table_remove(table));
+  Statement::Access::reset_task(*this, new Op_table_remove(table));
 }
 
 

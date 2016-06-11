@@ -442,9 +442,9 @@ struct internal::BaseResult::Access
 };
 
 
-struct Task::Access
+struct internal::Task::Access
 {
-  typedef Task::Impl Impl;
+  typedef internal::Task::Impl Impl;
 
   static void reset(Task &task, Impl *impl)
   {
@@ -460,33 +460,17 @@ struct Task::Access
 };
 
 
-struct internal::PlainExecutable::Access
-{
-  static void reset_task(PlainExecutable &exec, Task::Impl *impl)
-  {
-    exec.m_task.reset(impl);
-  }
-
-  static Task::Access::Impl* get_impl(PlainExecutable &exec)
-  {
-    exec.check_if_valid();
-    return Task::Access::get_impl(exec.m_task);
-  }
-};
-
-
 struct Executable::Access
 {
-  static void reset_task(Executable &exec, Task::Impl *impl)
+  static void reset_task(Executable &exec, internal::Task::Impl *impl)
   {
     exec.m_task.reset(impl);
-    exec.m_map.clear();
   }
 
-  static Task::Access::Impl* get_impl(Executable &exec)
+  static internal::Task::Access::Impl* get_impl(Executable &exec)
   {
     exec.check_if_valid();
-    return Task::Access::get_impl(exec.m_task);
+    return internal::Task::Access::get_impl(exec.m_task);
   }
 };
 
@@ -498,14 +482,21 @@ struct Executable::Access
   ===================
 */
 
-class Task::Impl : nocopy
+/*
+  Classes deriving from Task::Impl define asynchronous operations which
+  send commands to the server. Derived class must define send_command()
+  method which sends a command using cdk::Session interface nad returns
+  a cdk::Reply object which represents async. operation which reads and
+  processes server reply to this command. Derived class can use
+  get_cdk_session() method to get the underlying cdk::Session object.
+*/
+
+class internal::Task::Impl : nocopy
 {
 protected:
 
   XSession &m_sess;
   cdk::Reply *m_reply = NULL;
-
-  typedef Executable::param_map_t param_map_t;
 
   Impl(XSession &sess)
     : m_sess(sess)
@@ -522,38 +513,6 @@ protected:
   virtual cdk::Reply* send_command() = 0;
 
   cdk::Session& get_cdk_session() { return m_sess.get_cdk_session(); }
-
-
-  struct Params : public cdk::Param_source
-  {
-    param_map_t *m_map = NULL;
-
-    void process(Processor &prc) const
-    {
-      prc.doc_begin();
-
-      Value_converter conv;
-
-      for (auto it : *m_map)
-      {
-        Value_expr value(it.second, parser::Parser_mode::DOCUMENT);
-        conv.reset(value);
-        conv.process_if(prc.key_val(it.first));
-      }
-      prc.doc_end();
-    }
-  }
-  m_params;
-
-  cdk::Param_source* get_params()
-  {
-    return m_params.m_map ? &m_params : NULL;
-  }
-
-  void set_params(param_map_t &param_map)
-  {
-    m_params.m_map = &param_map;
-  }
 
   void init()
   {
@@ -588,15 +547,97 @@ protected:
     return internal::BaseResult::Access::mk(m_reply);
   }
 
-  friend class Task;
-  friend class Executable;
-//  friend class BindExec;
+  friend Task;
+};
+
+
+/*
+  Class Statement::Impl extends Task::Impl with infrastructure
+  for defining named parameter values.
+
+  The values for named values can be defined with set_params()
+  method which ccepts reference to param_map_t object which is
+  std::map from strings to Values.
+
+  Derived classes can access values set by set_params() with
+  get_params() method which returns cdk::Param_source pointer.
+  This pointer is NULL if set_params() was not called.
+*/
+
+class Statement::Impl : public internal::Task::Impl
+{
+protected:
+
+  typedef Statement::param_map_t param_map_t;
+
+  template <class C>
+  Impl(C &sess)
+    : internal::Task::Impl(sess)
+  {}
+
+  virtual ~Impl() {}
+
+  struct Params : public cdk::Param_source
+  {
+    param_map_t *m_map = NULL;
+
+    void process(Processor &prc) const
+    {
+      prc.doc_begin();
+
+      Value_converter conv;
+
+      for (auto it : *m_map)
+      {
+        Value_expr value(it.second, parser::Parser_mode::DOCUMENT);
+        conv.reset(value);
+        conv.process_if(prc.key_val(it.first));
+      }
+      prc.doc_end();
+    }
+  }
+  m_params;
+
+  cdk::Param_source* get_params()
+  {
+    return m_params.m_map ? &m_params : NULL;
+  }
+
+  void set_params(param_map_t &param_map)
+  {
+    m_params.m_map = &param_map;
+  }
+
+  friend Statement;
+};
+
+
+inline
+Statement::Statement(Impl *impl)
+  : Executable(impl)
+{}
+
+
+struct Statement::Access
+{
+  typedef Statement::Impl  Impl;
+
+  static void reset_task(Statement &exec, Statement::Impl *impl)
+  {
+    exec.m_task.reset(impl);
+    exec.m_map.clear();
+  }
+
+  static Impl* get_impl(Statement &exec)
+  {
+    exec.check_if_valid();
+    return static_cast<Impl*>(internal::Task::Access::get_impl(exec.m_task));
+  }
 };
 
 
 // --------------------------------------------------------------------
 
-namespace internal {
 
 template <class X> struct Crud_impl;
 
@@ -605,10 +646,9 @@ inline
 typename Crud_impl<X>::type& get_impl(X *p)
 {
   typedef typename Crud_impl<X>::type Op_type;
-  return *static_cast<Op_type*>(Executable::Access::get_impl(*p));
+  return *static_cast<Op_type*>(Statement::Access::get_impl(*p));
 }
 
-}
 
 // --------------------------------------------------------------------
 
@@ -618,7 +658,7 @@ typename Crud_impl<X>::type& get_impl(X *p)
 
 
 class Op_base
-  : public Task::Access::Impl
+  : public Statement::Access::Impl
   , public cdk::Limit
 {
 protected:

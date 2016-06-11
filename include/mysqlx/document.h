@@ -266,6 +266,20 @@ public:
 
   ///@}
 
+private:
+
+  /*
+    Note: Avoid implicit conversion from pointer types to bool.
+    Without this declaration, Value(bool) constructor is invoked
+    for pointer types. Here we declare and hide an explicit constructor
+    for pointer types which prevents compiler to pick Value(bool).
+  */
+
+  template <typename T>
+  Value(const T*);
+
+public:
+
   /**
     @name Conversion to C++ Types
 

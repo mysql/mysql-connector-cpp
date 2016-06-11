@@ -94,3 +94,37 @@ TEST_F(First, databaseObj)
 
   cout << "Done!" << endl;
 }
+
+
+TEST_F(First, sql)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  sql("DROP TABLE IF EXISTS test.t");
+  sql("CREATE TABLE test.t(c0 INT, c1 TEXT)");
+
+  get_sess().sql(L"INSERT INTO test.t VALUES (?,?)")
+    .bind(33, L"foo")
+    .execute();
+  get_sess().sql(L"INSERT INTO test.t VALUES (?,?)")
+    .bind(13)
+    .bind(L"bar")
+    .execute();
+
+  int args[] = { 7, 30 };
+
+  RowResult res = get_sess().sql(L"SELECT *,? FROM test.t WHERE c0 > ?")
+                            .bind(args)
+                            .execute();
+
+  Row row = res.fetchOne();
+
+  cout << "col#0: " << row[0] << endl;
+  cout << "col#1: " << row[1] << endl;
+  cout << "col#2: " << row[2] << endl;
+
+  EXPECT_EQ(args[0], (int)row[2]);
+  EXPECT_LT(args[1], (int)row[0]);
+
+  cout << "Done!" << endl;
+}

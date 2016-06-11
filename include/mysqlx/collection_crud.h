@@ -320,7 +320,7 @@ namespace internal {
 */
 
 class CollectionAdd
-  : public Executable
+  : public Statement
   , public internal::CollectionAddInterface<CollectionAdd&>
 {
 public:
@@ -331,7 +331,7 @@ public:
 
   CollectionAdd(Collection &coll);
 
-  CollectionAdd(CollectionAdd &other) : Executable(other) {}
+  CollectionAdd(CollectionAdd &other) : Statement(other) {}
   CollectionAdd(CollectionAdd &&other) : CollectionAdd(other) {}
 
 private:
@@ -506,7 +506,7 @@ DIAGNOSTIC_PUSH
   DISABLE_WARNING(4100)
 #endif
 
-  CollectionRemove(CollectionRemove &other) : Executable(other) {}
+  CollectionRemove(CollectionRemove &other) : Statement(other) {}
   CollectionRemove(CollectionRemove &&other) : CollectionRemove(other) {}
 
 DIAGNOSTIC_POP
@@ -584,7 +584,7 @@ DIAGNOSTIC_PUSH
     DISABLE_WARNING(4100)
 #endif
 
-  CollectionFind(CollectionFind &other) : Executable(other) {}
+  CollectionFind(CollectionFind &other) : Statement(other) {}
   CollectionFind(CollectionFind &&other) : CollectionFind(other) {}
 
 DIAGNOSTIC_POP
@@ -705,7 +705,7 @@ DIAGNOSTIC_PUSH
     DISABLE_WARNING(4100)
 #endif
 
-  CollectionModify(CollectionModify &other) : Executable(other) {}
+  CollectionModify(CollectionModify &other) : Statement(other) {}
   CollectionModify(CollectionModify &&other) : CollectionModify(other) {}
   CollectionModify(internal::CollectionModifyFirst &&other);
 
@@ -731,7 +731,7 @@ namespace internal {
 
   class CollectionModifyFirst
     : public virtual CollectionModifyInterface
-    , public virtual Executable
+    , public virtual Statement
     , CollectionModify
   {
   public:
@@ -746,7 +746,7 @@ namespace internal {
     */
 
     CollectionModifyFirst(CollectionModifyFirst &&other)
-      : Executable(other)
+      : Statement(other)
       , CollectionModify(std::move(other))
     {}
 
@@ -755,7 +755,7 @@ namespace internal {
   private:
 
     CollectionModifyFirst(CollectionModify &&other)
-      : Executable(other)
+      : Statement(other)
       , CollectionModify(other)
     {}
 

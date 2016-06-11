@@ -90,7 +90,7 @@ namespace internal {
 
 
 class Offset
-: public virtual Executable
+: public virtual Statement
 {
 protected:
 
@@ -100,7 +100,7 @@ protected:
 
 public:
 
-  Executable& offset(unsigned rows);
+  Statement& offset(unsigned rows);
 };
 
 
@@ -108,7 +108,7 @@ template <bool with_offset> class Limit;
 
 template<>
 class Limit<false>
-  : public virtual Executable
+  : public virtual Statement
 {
 protected:
 
@@ -116,13 +116,13 @@ protected:
 
 public:
 
-  Executable& limit(unsigned rows);
+  Statement& limit(unsigned rows);
 };
 
 
 template<>
 class Limit<true>
-  : public virtual Executable
+  : public virtual Statement
   , Offset
 {
 protected:

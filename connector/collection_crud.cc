@@ -74,7 +74,7 @@ void mysqlx::GUID::generate()
 */
 
 class Op_collection_add
-  : public Task::Access::Impl
+  : public Statement::Access::Impl
   , public cdk::Doc_source
   , public cdk::JSON::Processor
   , public cdk::JSON::Processor::Any_prc
@@ -187,40 +187,34 @@ class Op_collection_add
 
 
 namespace mysqlx {
-namespace internal {
 
 template <>
 struct Crud_impl<CollectionAdd>
 {
-
   typedef Op_collection_add type;
 };
 
-}} // mysqlx::internal
+} // mysqlx
 
 
 CollectionAdd::CollectionAdd(Collection &coll)
-{
-  Task::Access::reset(m_task, new Op_collection_add(coll));
-}
+try
+  : Statement(new Op_collection_add(coll))
+{}
+CATCH_AND_WRAP
 
 
 void CollectionAdd::do_add(const mysqlx::string &json)
 {
   check_if_valid();
-  auto *impl
-    = static_cast<Op_collection_add*>(Task::Access::get_impl(m_task));
-  impl->add_json(json);
+  get_impl(this).add_json(json);
 }
 
 void CollectionAdd::do_add(const DbDoc &doc)
 {
   check_if_valid();
-  auto *impl
-    = static_cast<Op_collection_add*>(Task::Access::get_impl(m_task));
-  impl->add_doc(doc);
+  get_impl(this).add_doc(doc);
 }
-
 
 /*
   Class describing elements of expression:
@@ -358,7 +352,6 @@ class Op_collection_remove
 
 
 namespace mysqlx {
-namespace internal {
 
 template <>
 struct Crud_impl<CollectionRemove>
@@ -366,24 +359,20 @@ struct Crud_impl<CollectionRemove>
   typedef Op_collection_remove type;
 };
 
-}} // mysqlx::internal
+} // mysqlx
 
 
 CollectionRemove::CollectionRemove(Collection &coll)
-{
-  try {
-    Executable::Access::reset_task(*this, new Op_collection_remove(coll));
-  }
-  CATCH_AND_WRAP
-}
+try
+  : Statement(new Op_collection_remove(coll))
+{}
+CATCH_AND_WRAP
 
 CollectionRemove::CollectionRemove(Collection &coll, const mysqlx::string &expr)
-{
-  try {
-    Executable::Access::reset_task(*this, new Op_collection_remove(coll, expr));
-  }
-  CATCH_AND_WRAP
-}
+try
+  : Statement(new Op_collection_remove(coll, expr))
+{}
+CATCH_AND_WRAP
 
 
 // --------------------------------------------------------------------
@@ -440,7 +429,6 @@ class Op_collection_find
 
 
 namespace mysqlx {
-namespace internal {
 
 template <>
 struct Crud_impl<CollectionFind>
@@ -448,28 +436,23 @@ struct Crud_impl<CollectionFind>
   typedef Op_collection_find type;
 };
 
-}} // mysqlx::internal
+} // mysqlx
 
 
 CollectionFind::CollectionFind(Collection &coll)
-{
-  try {
-    Executable::Access::reset_task(*this, new Op_collection_find(coll));
-  }
-  CATCH_AND_WRAP
-}
+try
+  : Statement(new Op_collection_find(coll))
+{}
+CATCH_AND_WRAP
 
 CollectionFind::CollectionFind(Collection &coll, const mysqlx::string &expr)
-{
-  try {
-    Executable::Access::reset_task(*this, new Op_collection_find(coll, expr));
-  }
-  CATCH_AND_WRAP
-}
+try
+  : Statement(new Op_collection_find(coll, expr))
+{}
+CATCH_AND_WRAP
 
 
 namespace mysqlx {
-namespace internal {
 
 template <>
 struct Crud_impl<internal::CollectionFields>
@@ -477,12 +460,12 @@ struct Crud_impl<internal::CollectionFields>
   typedef Op_collection_find type;
 };
 
-void CollectionFields::do_fields(const mysqlx::string& field)
+void internal::CollectionFields::do_fields(const mysqlx::string& field)
 {
   get_impl(this).add_projection(field);
 }
 
-}} // mysqlx::internal
+} // mysqlx
 
 
 
@@ -640,7 +623,6 @@ class Op_collection_modify
 
 
 namespace mysqlx {
-namespace internal {
 
 template <>
 struct Crud_impl<CollectionModify>
@@ -648,39 +630,20 @@ struct Crud_impl<CollectionModify>
   typedef Op_collection_modify type;
 };
 
-}} // mysqlx::internal
-
-
-struct CollectionModify::Access
-{
-  static void reset_task(CollectionModify &exec, Task::Access::Impl *impl)
-  {
-    Executable::Access::reset_task(exec, impl);
-  }
-
-  static Task::Access::Impl* get_impl(CollectionModify &exec)
-  {
-    return Task::Access::get_impl(exec.m_task);
-  }
-};
+} // mysqlx::internal
 
 
 CollectionModify::CollectionModify(Collection &coll)
-{
-  try {
-    CollectionModify::Access::reset_task(*this, new Op_collection_modify(coll));
-  }
-  CATCH_AND_WRAP
-}
+try
+  : Statement(new Op_collection_modify(coll))
+{}
+CATCH_AND_WRAP
 
 CollectionModify::CollectionModify(Collection &coll, const mysqlx::string &expr)
-{
-  try {
-    CollectionModify::Access::reset_task(*this,
-                                         new Op_collection_modify(coll, expr));
-  }
-  CATCH_AND_WRAP
-}
+try
+  : Statement(new Op_collection_modify(coll, expr))
+{}
+CATCH_AND_WRAP
 
 
 CollectionModify&

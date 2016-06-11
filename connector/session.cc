@@ -672,30 +672,108 @@ bool Table::existsInDatabase() const
 */
 
 
-struct Op_sql : public Task::Access::Impl
+struct Op_sql : public internal::Task::Access::Impl
 {
+  string m_query;
+
+  typedef std::list<Value> param_list_t;
+
   Op_sql(XSession &sess, const string &query)
-    : Impl(sess)
+    : Impl(sess), m_query(query)
+  {}
+
+  struct
+    : public cdk::Any_list
+    , cdk::Format_info
   {
-    m_reply = new cdk::Reply(get_cdk_session().sql(query));
+    param_list_t m_values;
+
+    void process(Processor &prc) const override
+    {
+      prc.list_begin();
+
+      for (auto &val : m_values)
+      {
+        Processor::Element_prc::Scalar_prc
+         *sprc = safe_prc(prc)->list_el()->scalar();
+        if (!sprc)
+          continue;
+        switch (val.getType())
+        {
+        case Value::VNULL:
+          sprc->null();
+          break;
+        case Value::UINT64:
+          sprc->num(static_cast<uint64_t>(val));
+          break;
+        case Value::INT64:
+          sprc->num(static_cast<int64_t>(val));
+          break;
+        case Value::FLOAT:
+          sprc->num(static_cast<float>(val));
+          break;
+        case Value::DOUBLE:
+          sprc->num(static_cast<double>(val));
+          break;
+        case Value::BOOL:
+          sprc->yesno(static_cast<bool>(val));
+          break;
+        case Value::STRING:
+          sprc->str(static_cast<mysqlx::string>(val));
+          break;
+        case Value::RAW:
+          sprc->value(cdk::TYPE_BYTES,
+            static_cast<const cdk::Format_info&>(*this),
+            Value::Access::get_bytes(val));
+          break;
+        default:
+          THROW("Unexpected value type");
+        }
+      }
+
+      prc.list_end();
+    }
+
+    // Trivial Format_info for raw byte values
+
+    bool for_type(cdk::Type_info) const override { return true; }
+    void get_info(cdk::Format<cdk::TYPE_BYTES>&) const override {}
+    using cdk::Format_info::get_info;
+  }
+  m_params;
+
+  void add_param(const Value &val)
+  {
+    m_params.m_values.emplace_back(val);
   }
 
   cdk::Reply* send_command()
   {
-    return m_reply;
+    return new cdk::Reply(
+      get_cdk_session().sql(
+        m_query,
+        m_params.m_values.empty() ? NULL : &m_params
+      )
+    );
   }
 };
 
 
-Executable& NodeSession::sql(const string &query)
+SqlStatement& NodeSession::sql(const string &query)
 {
   try {
-    Task::Access::reset(m_task, new Op_sql(*this, query));
-    return *this;
+    Executable::Access::reset_task(m_stmt, new Op_sql(*this, query));
+    return m_stmt;
   }
   CATCH_AND_WRAP
 }
 
+
+void SqlStatement::add_param(const Value &val)
+{
+  auto *impl = static_cast<Op_sql*>(internal::Task::Access::get_impl(m_task));
+  impl->add_param(val);
+}
 
 // ---------------------------------------------------------------------
 
@@ -732,12 +810,12 @@ ostream& operator<<(ostream &out, const Error&)
 
 // Implementation of Task API using internal implementation object
 
-Task::~Task() { try { delete m_impl; } CATCH_AND_WRAP }
+internal::Task::~Task() { try { delete m_impl; } CATCH_AND_WRAP }
 
-bool Task::is_completed()
+bool internal::Task::is_completed()
 { try { return m_impl ? m_impl->is_completed() : true; } CATCH_AND_WRAP }
 
-internal::BaseResult Task::wait()
+internal::BaseResult internal::Task::wait()
 {
   try {
     if (!m_impl)
@@ -746,7 +824,7 @@ internal::BaseResult Task::wait()
   } CATCH_AND_WRAP
 }
 
-void Task::cont()
+void internal::Task::cont()
 {
   try {
     if (!m_impl)
@@ -755,7 +833,7 @@ void Task::cont()
   } CATCH_AND_WRAP
 }
 
-void Task::reset(Impl *impl)
+void internal::Task::reset(Impl *impl)
 {
   delete m_impl;
   m_impl = impl;
