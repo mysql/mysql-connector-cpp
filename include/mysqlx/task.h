@@ -186,6 +186,17 @@ public:
     return *this;
   }
 
+  template <class Map>
+  Executable& bind(const Map &args)
+  {
+    check_if_valid();
+    for(const auto &keyval : args)
+    {
+      m_map.emplace(keyval.first, keyval.second);
+    }
+    return *this;
+  }
+
 #if 0
 
   /*

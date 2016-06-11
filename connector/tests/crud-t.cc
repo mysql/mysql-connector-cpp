@@ -445,13 +445,19 @@ TEST_F(Crud, bind)
 
   }
 
+
+  std::map<string, Value> args;
+
+  args["name"] = "ba%";
+  args["age"] = 3;
+
   CollectionRemove remove(coll, "name like :name and age < :age");
 
-  remove.bind("name", "ba%").bind("age", 3).execute();
+  remove.bind(args).execute();
 
   CollectionFind find(coll, "name like :name and age < :age");
 
-  docs = find.bind("name", "ba%").bind("age", 3).execute();
+  docs = find.bind(args).execute();
 
   doc = docs.fetchOne();
   EXPECT_FALSE((bool)doc);
