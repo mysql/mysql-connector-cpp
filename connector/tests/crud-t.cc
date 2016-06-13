@@ -521,7 +521,7 @@ TEST_F(Crud, modify)
   {
     auto op = coll.modify("name like :name and age < :age");
     op.set(string("name"), Value("boo"));
-    op.set("age", expr("age+1"));
+    op.set("$.age", expr("age+1"));
     op.arrayAppend("food", "Popcorn");
     op.arrayAppend("food", "Coke")
       .bind("name", "ba%")
