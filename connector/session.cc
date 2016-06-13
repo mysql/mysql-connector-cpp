@@ -480,7 +480,7 @@ bool Schema::existsInDatabase() const
 {
   try {
 
-    auto schemas_names = List_query<SCHEMA>(m_sess.get_cdk_session(),
+    auto schemas_names = List_query<SCHEMA>(m_sess->get_cdk_session(),
                                             m_name).execute();
 
     return !schemas_names.empty();
@@ -515,7 +515,7 @@ Collection Schema::createCollection(const string &name, bool reuse)
 {
   try {
     Args args(m_name, name);
-    cdk::Reply r(m_sess.get_cdk_session().admin("create_collection", args));
+    cdk::Reply r(m_sess->get_cdk_session().admin("create_collection", args));
     r.wait();
     if (0 < r.entry_count())
     {
@@ -571,7 +571,7 @@ internal::List_init<string> Schema::getCollectionNames()
 {
   try{
     return List_query<COLLECTION>(
-          m_sess.get_cdk_session()
+          m_sess->get_cdk_session()
           , m_name).execute();
   }
   CATCH_AND_WRAP
@@ -582,7 +582,7 @@ internal::List_init<Table> Schema::getTables()
   std::forward_list<Table> list;
   std::forward_list<Table>::iterator list_it = list.before_begin();
 
-  auto tables_list = List_query<TABLE>(m_sess.get_cdk_session()
+  auto tables_list = List_query<TABLE>(m_sess->get_cdk_session()
                                        , m_name).execute();
 
   for (auto& prop : tables_list)
@@ -598,9 +598,8 @@ internal::List_init<string> Schema::getTableNames()
 {
   std::forward_list<string> list;
   std::forward_list<string>::iterator list_it = list.before_begin();
-  auto tables_list = List_query<TABLE>(m_sess.get_cdk_session()
-                                                   , m_name)
-                     .execute();
+  auto tables_list = List_query<TABLE>(m_sess->get_cdk_session()
+                                       , m_name).execute();
 
   for (auto& el : tables_list)
   {
@@ -621,7 +620,7 @@ bool Collection::existsInDatabase() const
 {
   try {
 
-    auto collection_names = List_query<COLLECTION>(m_sess.get_cdk_session(),
+    auto collection_names = List_query<COLLECTION>(m_sess->get_cdk_session(),
                                                    m_schema.getName(),
                                                    m_name).execute();
 
@@ -651,7 +650,7 @@ bool Table::existsInDatabase() const
 {
   try {
 
-    auto table_names = List_query<TABLE>(m_sess.get_cdk_session(),
+    auto table_names = List_query<TABLE>(m_sess->get_cdk_session(),
                                          m_schema.getName(),
                                          m_name).execute();
     if (!table_names.empty())

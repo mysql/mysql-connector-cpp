@@ -108,17 +108,18 @@ class DatabaseObject
 
 protected:
 
-  XSession &m_sess;
-  const string m_name;
+  XSession *m_sess;
+  string m_name;
 
   DatabaseObject(XSession& sess, const string& name = string())
-    : m_sess(sess), m_name(name)
+    : m_sess(&sess), m_name(name)
   {}
 
   virtual ~DatabaseObject()
   {}
 
 public:
+
 
   /**
      Get database object name
@@ -131,7 +132,7 @@ public:
     Get Session object
   */
 
-  XSession& getSession() { return m_sess; }
+  XSession& getSession() { return *m_sess; }
 
 
   /**
@@ -340,22 +341,29 @@ public:
 
   Collection(const Collection &other)
     : CollectionOpBase(*this)
-    , DatabaseObject(other.m_schema.m_sess, other.m_name)
+    , DatabaseObject(*other.m_schema.m_sess, other.m_name)
     , m_schema(other.m_schema)
   {}
 
   Collection(Collection&& other)
     : CollectionOpBase(*this)
-    , DatabaseObject(other.m_sess, std::move(other.m_name))
+    , DatabaseObject(*other.m_sess, std::move(other.m_name))
     , m_schema(std::move(other.m_schema))
   {}
 
   Collection(const Schema &sch, const string &name)
     : CollectionOpBase(*this)
-    , DatabaseObject(sch.m_sess, name)
+    , DatabaseObject(*sch.m_sess, name)
     , m_schema(sch)
   {}
 
+
+  Collection& operator=(const Collection &other)
+  {
+    DatabaseObject::operator=(other);
+    m_schema = other.m_schema;
+    return *this;
+  }
 
 
   /**
@@ -422,17 +430,17 @@ public:
   DIAGNOSTIC_PUSH
 
   #if _MSC_VER && _MSC_VER < 1900
-      /*
+    /*
       MSVC 2013 has problems with delegating constructors for classes which
       use virtual inheritance.
       See: https://www.daniweb.com/programming/software-development/threads/494204/visual-c-compiler-warning-initvbases
-      */
-      DISABLE_WARNING(4100)
+    */
+    DISABLE_WARNING(4100)
   #endif
 
   Table(const Table& other)
     : internal::TableOpBase(*this)
-    , DatabaseObject(other.m_sess, other.m_name)
+    , DatabaseObject(*other.m_sess, other.m_name)
     , m_schema(other.m_schema)
   {
     m_isview = other.m_isview;
@@ -440,7 +448,7 @@ public:
 
   Table(Table&& other)
     : internal::TableOpBase(*this)
-    , DatabaseObject(other.m_sess, std::move(other.m_name))
+    , DatabaseObject(*other.m_sess, std::move(other.m_name))
     , m_schema(std::move(other.m_schema))
   {
     m_isview = other.m_isview;
@@ -448,7 +456,7 @@ public:
 
   Table(const Schema &sch, const string &name)
     : internal::TableOpBase(*this)
-    , DatabaseObject(sch.m_sess, name)
+    , DatabaseObject(*sch.m_sess, name)
     , m_schema(sch)
   {}
 
@@ -458,8 +466,17 @@ public:
     m_isview = isView_ ? YES : NO;
   }
 
-
   DIAGNOSTIC_POP
+
+
+  Table& operator=(const Table &other)
+  {
+    DatabaseObject::operator=(other);
+    m_schema = other.m_schema;
+    m_isview = other.m_isview;
+    return *this;
+  }
+
 
   bool isView();
 

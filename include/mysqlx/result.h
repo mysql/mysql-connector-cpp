@@ -92,7 +92,13 @@ namespace internal {
 
     void init(BaseResult&&);
 
-    Impl& get_impl();
+    const Impl& get_impl() const;
+    Impl& get_impl()
+    {
+      return const_cast<Impl&>(
+        const_cast<const BaseResult*>(this)->get_impl()
+      );
+    }
 
   public:
 
@@ -360,6 +366,9 @@ class RowResult : public internal::BaseResult
 
 public:
 
+  RowResult()
+  {}
+
   /*
     Note: Even though we have RowResult(BaseResult&&) constructor below,
     we still need move-ctor for such copy-initialization to work:
@@ -428,7 +437,7 @@ public:
 
   Row fetchOne();
 
-private:
+protected:
 
   void check_result() const;
 
@@ -643,18 +652,21 @@ public:
 class DocResult : public internal::BaseResult
 {
   class Impl;
-  Impl *m_doc_impl;
+  Impl *m_doc_impl = NULL;
+
+  void check_result() const;
 
 public:
 
+  DocResult()
+  {}
+
   DocResult(DocResult &&other)
-    : m_doc_impl(NULL)
   {
     *this = std::move(static_cast<BaseResult&>(other));
   }
 
   DocResult(BaseResult &&init_)
-    : m_doc_impl(NULL)
   {
     *this = std::move(init_);
   }

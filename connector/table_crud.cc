@@ -229,6 +229,7 @@ class Op_table_select
 
 
 public:
+
   Op_table_select(Table &table)
     : Op_sort(table)
     , m_table(table)

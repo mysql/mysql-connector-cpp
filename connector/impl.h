@@ -495,24 +495,24 @@ class internal::Task::Impl : nocopy
 {
 protected:
 
-  XSession &m_sess;
+  XSession   *m_sess;
   cdk::Reply *m_reply = NULL;
 
   Impl(XSession &sess)
-    : m_sess(sess)
+    : m_sess(&sess)
   {}
   Impl(Collection &coll)
-    : m_sess(coll.m_schema.m_sess)
+    : m_sess(&coll.getSession())
   {}
   Impl(Table &tbl)
-    : m_sess(tbl.m_schema.m_sess)
+    : m_sess(&tbl.getSession())
   {}
 
   virtual ~Impl() {}
 
   virtual cdk::Reply* send_command() = 0;
 
-  cdk::Session& get_cdk_session() { return m_sess.get_cdk_session(); }
+  cdk::Session& get_cdk_session() { return m_sess->get_cdk_session(); }
 
   void init()
   {

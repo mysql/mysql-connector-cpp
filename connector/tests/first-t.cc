@@ -128,3 +128,36 @@ TEST_F(First, sql)
 
   cout << "Done!" << endl;
 }
+
+
+TEST_F(First, api)
+{
+  // Check that assignment works for database objects.
+
+  Schema s = get_sess().getSchema("foo");
+  s = get_sess().getSchema("test");
+
+  Table t = s.getTable("t1");
+  t = s.getTable("t");
+
+  Collection c = s.getCollection("c1");
+  c = s.getCollection("c");
+
+  SKIP_IF_NO_XPLUGIN;
+
+  sql("DROP TABLE IF EXISTS test.t");
+  sql("CREATE TABLE test.t(c0 INT, c1 TEXT)");
+  s.createCollection("c", true);
+
+  {
+    RowResult res;
+    EXPECT_THROW(res.fetchOne(),Error);
+    res = t.select().execute();
+  }
+
+  {
+    DocResult res;
+    EXPECT_THROW(res.fetchOne(),Error);
+    res = c.find().execute();
+  }
+}

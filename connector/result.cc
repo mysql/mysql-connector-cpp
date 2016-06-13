@@ -1138,11 +1138,13 @@ internal::BaseResult::~BaseResult()
 }
 
 
-internal::BaseResult::Impl& internal::BaseResult::get_impl()
+const internal::BaseResult::Impl&
+internal::BaseResult::get_impl() const
 {
   try {
     if (!m_impl)
-      THROW("Attempt to use null result instance");
+      // TODO: Better error
+      throw Error("Attempt to use null result instance");
     return *m_impl;
   }
   CATCH_AND_WRAP
@@ -1151,12 +1153,7 @@ internal::BaseResult::Impl& internal::BaseResult::get_impl()
 
 const GUID& Result::getLastDocumentId() const
 {
-  try {
-    if (!m_impl)
-      THROW("Empty result");
-    return m_impl->m_guid;
-  }
-  CATCH_AND_WRAP
+  return get_impl().m_guid;
 }
 
 
@@ -1182,9 +1179,7 @@ Row RowResult::fetchOne()
 
 void RowResult::check_result() const
 {
-  if (!m_impl)
-    THROW("Empty result");
-  if (!m_impl->m_cursor)
+  if (!get_impl().m_cursor)
     THROW("No result set");
 }
 
@@ -1212,9 +1207,7 @@ const Column& RowResult::getColumn(col_count_t pos) const
 bool mysqlx::SqlResult::hasData() const
 {
   try {
-    if (!m_impl)
-      THROW("Empty result");
-    return NULL != m_impl->m_cursor;
+    return NULL != get_impl().m_cursor;
   }
   CATCH_AND_WRAP
 }
@@ -1238,9 +1231,19 @@ DocResult::~DocResult()
 }
 
 
+void DocResult::check_result() const
+{
+  if (!m_doc_impl)
+    // TODO: Better error
+    throw Error("Attempt to use null result instance");
+  m_doc_impl->check_result();
+}
+
+
 DbDoc DocResult::fetchOne()
 {
   try {
+    check_result();
     DbDoc doc = m_doc_impl->get_current_doc();
     m_doc_impl->next_doc();
     return std::move(doc);
