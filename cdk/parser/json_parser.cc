@@ -58,6 +58,12 @@ bool JSON_scalar_parser::do_parse(It &first, const It &last, Processor *vp)
 
   switch (first->get_type())
   {
+  case Token::T_NULL:
+    if (vp)
+      vp->null();
+    ++first;
+    return true;
+
   case Token::LSTRING:
     if(vp)
       vp->str(first->get_text());

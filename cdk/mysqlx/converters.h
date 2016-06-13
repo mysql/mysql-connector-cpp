@@ -268,6 +268,7 @@ struct JSON_to_expr_prc_converter
       cdk::Expr_processor
     >
 {
+  void null()             { m_proc->val()->null();   }
   void num(int64_t val)   { m_proc->val()->num(val); }
   void num(uint64_t val)  { m_proc->val()->num(val); }
   void num(float val)     { m_proc->val()->num(val); }

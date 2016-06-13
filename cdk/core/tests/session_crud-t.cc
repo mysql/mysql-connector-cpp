@@ -619,6 +619,7 @@ protected:
 
   // We do not expect fields of these types.
 
+  void null()      { assert(false); }
   void num(float)  { assert(false); }
   void num(double) { assert(false); }
   void yesno(bool) { assert(false); }

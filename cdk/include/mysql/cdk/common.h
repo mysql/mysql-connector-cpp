@@ -388,6 +388,7 @@ class JSON_processor
 {
 public:
 
+  virtual void null()             =0;
   virtual void str(const string&) =0;
   virtual void num(uint64_t)      =0;
   virtual void num(int64_t)       =0;

@@ -84,6 +84,7 @@ public:
       : m_out(out)
     {}
 
+    void null() { m_out << "null" << endl; }
     void str(const cdk::string &val) { m_out <<val <<endl; }
     void num(uint64_t val) { m_out <<val <<endl; }
     void num(int64_t val) { m_out <<val <<endl; }
@@ -192,7 +193,7 @@ const wchar_t *docs[] =
   L"{'str': 'foo', 'num': 123, 'bool': true, 'float': 12.4}",
   L"{'str': 'bar', 'doc': {'str': 'foo', 'num': -123, 'bool': true}}",
   L"{'str': 'bar', 'arr': ['foo', 123, true, -12.4, {'str': 'foo', 'num': 123, 'bool': true}] }",
-//  L"{'null': null }" // TODO: null values
+  L"{'null': null }"
 };
 
 
@@ -255,6 +256,7 @@ TEST(Parser, json)
 
     // Scalar processor
 
+    void null() { assert(false && "unexpected null value"); }
     void str(const cdk::string &val) { assert(false && "unexpected string value"); }
     void num(uint64_t val) { assert(false && "unexpected uint value"); }
     void num(int64_t val) { assert(false && "unexpeted int value"); }
