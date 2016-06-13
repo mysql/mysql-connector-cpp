@@ -231,6 +231,7 @@ public:
 
     // Sclar processor (to store scalar values in the list)
 
+    void null() { m_arr->emplace_back(Value()); }
     void str(const cdk::string &val)
     {
       m_arr->emplace_back(Value(val));
@@ -293,6 +294,7 @@ public:
     key given by m_key.
   */
 
+  void null() { m_map.emplace(*m_key, Value()); }
   void str(const cdk::string &val)
   {
     m_map.emplace(*m_key, Value(val));

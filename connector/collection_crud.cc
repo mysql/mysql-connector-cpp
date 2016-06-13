@@ -176,6 +176,7 @@ class Op_collection_add
   {
     m_id= val;
   }
+  void null() { assert(false); }
   void num(int64_t) { assert(false); }
   void num(uint64_t) { assert(false); }
   void num(float) { assert(false); }
