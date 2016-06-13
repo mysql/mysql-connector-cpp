@@ -107,7 +107,7 @@ public:
     Creates DbDoc instance out of given JSON string description.
   */
 
-  DbDoc(const std::string&);
+  explicit DbDoc(const std::string&);
 
 
   /**
