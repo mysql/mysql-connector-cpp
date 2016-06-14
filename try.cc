@@ -23,17 +23,16 @@
  */
 
 #include <iostream>
-#include <mysql/cdk.h>
+#include <mysqlx.h>
 
 
 using ::std::cout;
 using ::std::endl;
-using namespace ::cdk;
+using namespace ::mysqlx;
 
 
 int main()
 try {
-
   cout << "Done!" << endl;
 }
 catch (const Error &err)

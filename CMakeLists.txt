@@ -115,6 +115,18 @@ endforeach(LANG)
 ENDIF()
 
 #
+# Enable MSVC Debug Format Information
+# Produces an .obj file containing full symbolic debugging information for use
+# with the debugger.
+#
+
+if(WIN32)
+  foreach(LANG C CXX)
+    set(CMAKE_${LANG}_FLAGS_DEBUG "${CMAKE_${LANG}_FLAGS_DEBUG} /Z7")
+  endforeach()
+endif()
+
+#
 # Disable MSVC unreachable code warnings unless requested.
 #
 
@@ -142,14 +154,18 @@ endif()
 #  message("c++ ${TYPE} flags: ${CMAKE_CXX_FLAGS_${TYPE}}")
 #endforeach()
 
+
 #
 # Main project and its dependencies
 # =================================
 #
 
-option(THROW_AS_ASSERT
+OPTION(WITH_TESTS "Build project's unit tests" 0)
+
+OPTION(THROW_AS_ASSERT
   "Turn THROW() statements in the code into asserts for easier debugging"
-  true)
+  0)
+
 mark_as_advanced(THROW_AS_ASSERT)
 
 if(THROW_AS_ASSERT)
@@ -241,12 +257,14 @@ INSTALL(TARGETS libconcpp DESTINATION lib)
 # =====
 #
 
-# Unit tests declared with ADD_NG_TEST() (see cdk/cmake/testing.cmake)
-ADD_TEST_TARGET()
+IF (WITH_TESTS)
+  # Unit tests declared with ADD_NG_TEST() (see cdk/cmake/testing.cmake)
+  ADD_TEST_TARGET()
 
-# Test for public headers declared with ADD_HEADERS()
-# (see cdk/cmake/headers.cmake)
-ADD_HEADERS_TEST()
+  # Test for public headers declared with ADD_HEADERS()
+  # (see cdk/cmake/headers.cmake)
+  ADD_HEADERS_TEST()
+ENDIF (WITH_TESTS)
 
 #
 # Sample code to try things out
