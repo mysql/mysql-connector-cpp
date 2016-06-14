@@ -43,8 +43,8 @@ of which version of the GPL is applied is otherwise unspecified.
 DOCUMENTATION LOCATION
 ======================
 
-You may find the documentation on the MySQL website at
-<http://devdocs.no.oracle.com/mysqlx/connector-cpp/>
+You can find the documentation on the MySQL website at
+<http://dev.mysql.com/doc/dev/connector-cpp/>
 
 
 CONTACT
