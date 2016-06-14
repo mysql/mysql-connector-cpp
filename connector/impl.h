@@ -43,6 +43,17 @@ namespace mysqlx {
 
 struct Value::Access
 {
+
+  static cdk::bytes get_bytes(const Value &val)
+  {
+    return cdk::bytes(val.m_raw.begin(), val.m_raw.end());
+  }
+
+  /*
+    Build document value from a JSON string which is
+    assumed to describe a document.
+  */
+
   static Value mk_doc(const string &json)
   {
     Value ret;
@@ -51,10 +62,13 @@ struct Value::Access
     return std::move(ret);
   }
 
-  static cdk::bytes get_bytes(const Value &val)
-  {
-    return cdk::bytes(val.m_raw.begin(), val.m_raw.end());
-  }
+  /*
+    Build value after parsing given JSON string. Depending
+    on the string, the value can be a document, array or
+    scalar.
+  */
+
+  static Value mk_from_json(const std::string &json);
 };
 
 
@@ -351,9 +365,10 @@ class DbDoc::Impl
 
   struct Builder;
 
-  friend class DocResult;
-  friend class DbDoc;
-  friend class RowDoc;
+  friend DocResult;
+  friend DbDoc;
+  friend RowResult;
+  friend Value::Access;
 };
 
 

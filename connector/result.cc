@@ -30,6 +30,7 @@
 #include <vector>
 #include <sstream>
 #include <iomanip>
+#include <cctype>
 
 #include <boost/variant.hpp>
 
@@ -973,9 +974,21 @@ Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_DOCUMENT>&) const
     representation is used for documnets should use a Codec to decode
     the raw bytes and build a representation of the documnent to be
     stored in the Value instance.
-    */
-  return Value::Access::mk_doc(std::string(data.begin(), data.end()));
+  */
+
+  // trim initial space
+
+  unsigned i;
+  for (i = 0; i < data.size() && std::isspace(*(data.begin() + i)); ++i);
+
+  std::string json(data.begin() + i, data.end());
+
+  if ('{' == *(data.begin() + i))
+    return Value::Access::mk_doc(json);
+
+  return Value::Access::mk_from_json(json);
 }
+
 
 }
 

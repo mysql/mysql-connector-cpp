@@ -24,6 +24,7 @@
 
 #include <mysql/cdk.h>
 #include <mysqlx.h>
+#include <json_parser.h>
 
 /**
   @file
@@ -121,7 +122,7 @@ struct DbDoc::Impl::Builder
   , public cdk::JSON::Processor::Any_prc::Scalar_prc
 {
   Map  &m_map;
-  std::unique_ptr<Field> m_key;
+  mysqlx::string m_key;
 
 public:
 
@@ -142,7 +143,7 @@ public:
   cdk::JSON::Processor::Any_prc*
   key_val(const cdk::string &key)
   {
-    m_key.reset(new Field(key));
+    m_key = key;
     // Return itself to process key value
     return this;
   }
@@ -250,7 +251,7 @@ public:
   arr()
   {
     using mysqlx::Value;
-    Value &arr = m_map[*m_key];
+    Value &arr = m_map[m_key];
 
     // Turn the value to one storing an array.
 
@@ -270,7 +271,7 @@ public:
   doc()
   {
     using mysqlx::Value;
-    Value &sub = m_map[*m_key];
+    Value &sub = m_map[m_key];
 
     // Turn the value to one storing a document.
 
@@ -294,16 +295,16 @@ public:
     key given by m_key.
   */
 
-  void null() { m_map.emplace(*m_key, Value()); }
+  void null() { m_map.emplace(m_key, Value()); }
   void str(const cdk::string &val)
   {
-    m_map.emplace(*m_key, Value(val));
+    m_map.emplace(m_key, Value(val));
   }
-  void num(uint64_t val)  { m_map.emplace(*m_key, val); }
-  void num(int64_t val)   { m_map.emplace(*m_key, val); }
-  void num(float val)     { m_map.emplace(*m_key, val); }
-  void num(double val)    { m_map.emplace(*m_key, val); }
-  void yesno(bool val)    { m_map.emplace(*m_key, val); }
+  void num(uint64_t val)  { m_map.emplace(m_key, val); }
+  void num(int64_t val)   { m_map.emplace(m_key, val); }
+  void num(float val)     { m_map.emplace(m_key, val); }
+  void num(double val)    { m_map.emplace(m_key, val); }
+  void yesno(bool val)    { m_map.emplace(m_key, val); }
 
 };
 
@@ -321,10 +322,89 @@ void DbDoc::Impl::JSONDoc::prepare()
 
 
 /*
+  Parse JSON string and build a corresponding Value.
+*/
+
+Value Value::Access::mk_from_json(const std::string &json)
+{
+  typedef parser::Any_parser<
+    parser::JSON_scalar_parser,
+    cdk::JSON_processor
+  > Parser;
+
+  // Create parser for the JSON string.
+
+  parser::Tokenizer toks(json);
+  toks.get_tokens();
+  auto first = toks.begin();
+  Parser parser(first, toks.end());
+
+  /*
+    Define builder which acts as JSON value processor and
+    builds the corresponding Value object.
+  */
+
+  struct Builder :
+    public cdk::JSON::Processor::Any_prc
+    , cdk::JSON_processor
+  {
+    Value *m_val = NULL;
+
+    // Any_prc
+
+    Scalar_prc *scalar() { return this; }
+
+    std::unique_ptr<DbDoc::Impl::Builder> m_doc_builder;
+
+    Doc_prc    *doc()
+    {
+      m_val->m_type = DOCUMENT;
+      m_doc_builder.reset(new DbDoc::Impl::Builder(*m_val->m_doc.m_impl));
+      return m_doc_builder.get();
+    }
+
+    DbDoc::Impl::Builder::Arr_builder m_arr_builder;
+
+    List_prc   *arr()
+    {
+      m_val->m_type = ARRAY;
+      m_val->m_arr = std::make_shared<Array>();
+      m_arr_builder.m_arr = m_val->m_arr.get();
+      return &m_arr_builder;
+    }
+
+    // JSON_processor
+
+    void null() {}
+
+    void str(const cdk::string &val)
+    {
+      *m_val = (mysqlx::string)val;
+    }
+
+    void num(uint64_t val) { *m_val = val; }
+    void num(int64_t val)  { *m_val = val; }
+    void num(float val)    { *m_val = val; }
+    void num(double val)   { *m_val = val; }
+    void yesno(bool val)   { *m_val = val; }
+  }
+  builder;
+
+  // Invoke parser to build the value.
+
+  Value val;
+  builder.m_val = &val;
+  parser.process(builder);
+
+  return std::move(val);
+}
+
+
+/*
   Iterating over document fields
   ------------------------------
   Iterator functionality is implemented by document implementation
-  object in forms of these methos:
+  object in forms of these methods:
 
   - reset()  - restart iteration form the beginning,
   - next()   - move to next document field,

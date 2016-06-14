@@ -160,9 +160,9 @@ public:
   virtual Iterator begin();
   virtual Iterator end();
 
-  friend class Impl;
-  friend class DocResult;
-  friend class Value;
+  friend Impl;
+  friend DocResult;
+  friend Value;
 };
 
 

@@ -508,36 +508,55 @@ TEST_F(Types, json)
     EXPECT_TRUE(doc["sub"].hasField("month"));
   }
 
-  cout << "Checking JSON array..." << endl;
+  cout << endl << "Checking extracted JSON fields" << endl;
 
-  types.remove().execute();
-  Value arr = { 1, "a", doc };
-
-  types.insert().values(arr).values("[1, \"a\"]").execute();
-
-  cout << "Arrays inserted, querying data..." << endl;
-
-  res = types.select().execute();
-
-  for (unsigned i = 0; (row = res.fetchOne()); ++i)
   {
-    /*
-      Note: Even though the value we receive is an array, we
-      see it as a JSON value and currently we assume that all
-      JSON values are documents. This needs to be fixed eventually,
-      so that arrays are returned as array values etc.
+    res = types.select("c0->$.foo","c0->$.sub.month","c0->$.no_such_field")
+               .execute();
+    EXPECT_EQ(Type::JSON, res.getColumn(0).getType());
+    EXPECT_EQ(Type::JSON, res.getColumn(1).getType());
+    EXPECT_EQ(Type::JSON, res.getColumn(2).getType());
+    row = res.fetchOne();
+    EXPECT_TRUE(row);
 
-      For the same reason we can not access non-document JSON
-      values through Value interface. Trying to store row[0]
-      in DbDoc will lead to JSON parse errors when DbDoc is accessed.
-      Currently we can only see and use the raw JSON string for such
-      non-document JSON values.
-    */
+    EXPECT_EQ(Value::INT64, row[0].getType());
+    int c0 = row[0];
+    cout << "c0 (int): " << c0 << endl;
 
-    EXPECT_EQ(Value::DOCUMENT, row[0].getType());
-    cout << "- array: " << row.getBytes(0).begin() << endl;
+    EXPECT_EQ(Value::STRING, row[1].getType());
+    string c1 = row[1];
+    cout << "c1 (string): " << c1 << endl;
+
+    EXPECT_EQ(Value::VNULL, row[2].getType());
   }
 
+  cout << endl << "Checking JSON array..." << endl;
+
+  {
+    types.remove().execute();
+    doc = DbDoc(json);
+    Value arr = { 1, "a", doc };
+
+    types.insert().values(arr).values("[1, \"a\"]").execute();
+
+    cout << "Arrays inserted, querying data..." << endl;
+
+    res = types.select().execute();
+
+    for (unsigned i = 0; (row = res.fetchOne()); ++i)
+    {
+      EXPECT_EQ(Value::ARRAY, row[0].getType());
+      cout << endl << "next row" << endl;
+      for (Value el : row[0])
+        cout << " el: " << el << endl;
+
+      EXPECT_EQ(1, (int)row[0][0]);
+      EXPECT_EQ(string("a"), (string)row[0][1]);
+
+      if (0 == i)
+        EXPECT_EQ(Value::DOCUMENT, row[0][2].getType());
+    }
+  }
 
 }
 
