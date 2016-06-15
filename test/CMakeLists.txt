@@ -46,18 +46,19 @@ if(NOT EXISTS "${CONCPLS_INCLUDES}/mysqlx.h")
   )
 endif()
 
-find_library(CONCPLS_LIB mysql_concpp
+find_library(CONCPLS_LIB mysqlcppconn2-static
   PATHS "${WITH_CONCPP}/lib"
   NO_DEFAULT_PATH
 )
 
 if(NOT CONCPLS_LIB)
   message(FATAL_ERROR
-    "Could not find MySQL Connector/C++ 2.0 library concpp-2.0 at specified"
+    "Could not find MySQL Connector/C++ 2.0 library mysqlcppconn2-static at specified"
     " location: ${WITH_CONCPP}/lib"
   )
 endif()
 
+message("Using Connector/C++ 2.0 library: ${CONCPLS_LIB}")
 list(APPEND CONCPLS_LIBS "${CONCPLS_LIB}")
 
 #
