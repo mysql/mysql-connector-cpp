@@ -40,6 +40,10 @@ message("Using cmake generator: ${CMAKE_GENERATOR}")
 include(version.cmake)
 
 
+# Base name for the connector libraries.
+
+set(LIB_NAME_BASE "mysqlcppconn2")
+
 #
 # Set up cmake module search patch
 # ================================
@@ -248,9 +252,10 @@ ADD_SUBDIRECTORY(connector)
 
 INCLUDE(libutil)
 
-MERGE_STATIC_LIBS(libconcpp "mysql_concpp"
+MERGE_STATIC_LIBS(libconcpp "${LIB_NAME_BASE}-static"
                   "connector")
 INSTALL(TARGETS libconcpp DESTINATION lib)
+
 
 #
 # Tests
