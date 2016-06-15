@@ -22,14 +22,14 @@
 
 
 cmake_minimum_required(VERSION 2.8)
-PROJECT(MySQL_CONCPLS_TEST)
+PROJECT(MySQL_CONCPP_TEST)
 
-set(WITH_CONCPLS $ENV{WITH_CONCPLS} CACHE PATH "MySQL Connector/C++ 2.0 install location")
+set(WITH_CONCPP $ENV{WITH_CONCPP} CACHE PATH "MySQL Connector/C++ 2.0 install location")
 
-if(NOT WITH_CONCPLS)
+if(NOT WITH_CONCPP)
   message(FATAL_ERROR
     "This project requires MySQL Connector/C++ 2.0, please specify install location"
-    " using WITH_CONCPLS setting"
+    " using WITH_CONCPP setting"
   )
 endif()
 
@@ -37,24 +37,24 @@ endif()
 # Find MySQL Connector/C++ 2.0 at specified location.
 #
 
-set(CONCPLS_INCLUDES "${WITH_CONCPLS}/include")
+set(CONCPLS_INCLUDES "${WITH_CONCPP}/include")
 
 if(NOT EXISTS "${CONCPLS_INCLUDES}/mysqlx.h")
   message(FATAL_ERROR
     "Could not find MySQL Connector/C++ 2.0 headers at specified"
-    " location: ${WITH_CONCPLS}/include"
+    " location: ${WITH_CONCPP}/include"
   )
 endif()
 
 find_library(CONCPLS_LIB mysql_concpp
-  PATHS "${WITH_CONCPLS}/lib"
+  PATHS "${WITH_CONCPP}/lib"
   NO_DEFAULT_PATH
 )
 
 if(NOT CONCPLS_LIB)
   message(FATAL_ERROR
     "Could not find MySQL Connector/C++ 2.0 library concpp-2.0 at specified"
-    " location: ${WITH_CONCPLS}/lib"
+    " location: ${WITH_CONCPP}/lib"
   )
 endif()
 
@@ -98,7 +98,7 @@ IF(WIN32)
   # TODO: Some automatic check of the runtime used by C/C++ and hard error here.
 
   message("Using ${runtime} runtime library."
-          " Make sure that the connector given by WITH_CONCPLS uses"
+          " Make sure that the connector given by WITH_CONCPP uses"
           " the same runtime type - otherwise linking will fail due to"
           " runtime missmatch.")
 
@@ -112,7 +112,7 @@ ENDIF()
 INCLUDE_DIRECTORIES(${CONCPLS_INCLUDES})
 
 ADD_EXECUTABLE(cpptest test.cc)
-TARGET_LINK_LIBRARIES(test ${CONCPLS_LIBS})
+TARGET_LINK_LIBRARIES(cpptest ${CONCPLS_LIBS})
 
 #
 # Connector/C++ requires pthread library on Unix.
