@@ -566,6 +566,7 @@ private:
   friend class Expression_parser;
   friend class Order_parser;
   friend class Projection_parser;
+  friend class Table_field_parser;
 };
 
 
@@ -694,6 +695,55 @@ public:
   void process(Document_processor &prc) const;
 
 };
+
+/*
+  Class Used to parse Table fields.
+  Format: table.column->@.field.arr[]
+*/
+
+class Table_field_parser
+    : public cdk::api::Column_ref
+{
+  Tokenizer m_tokenizer;
+  cdk::scoped_ptr<Expr_parser_base> m_table_field;
+
+public:
+
+  Table_field_parser(const cdk::string &table_field)
+    : m_tokenizer(table_field)
+  {
+    m_tokenizer.get_tokens();
+
+    It begin = m_tokenizer.begin();
+    const It end = m_tokenizer.end();
+
+    m_table_field.reset(new Expr_parser_base(begin,
+                                             end,
+                                             Parser_mode::TABLE));
+
+    m_table_field->parse_column_ident();
+
+  }
+
+  const cdk::string name() const
+  {
+    return m_table_field->m_col_ref.name();
+  }
+
+  const cdk::api::Table_ref *table() const
+  {
+    return m_table_field->m_col_ref.table();
+  }
+
+  const Doc_path *path() const
+  {
+    return m_table_field->m_path.length() == 0 ?
+          NULL :
+          &(m_table_field->m_path);
+  }
+
+};
+
 
 // ------------------------------------------------------------------------------
 
