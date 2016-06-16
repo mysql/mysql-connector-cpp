@@ -294,6 +294,16 @@ public:
 
   internal::List_init<string> getTableNames();
 
+  /**
+    Return Collection as a Table object.
+
+    @note Checking existence of the collection involves
+    communication with the server. If `check_exists` is false,
+    on the other hand, no I/O is involved when creating a
+    `Table` instance.
+  */
+  Table getCollectionAsTable(const string&, bool check_exists = true);
+
   friend Collection;
   friend internal::Task;
 };

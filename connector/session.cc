@@ -611,6 +611,16 @@ internal::List_init<string> Schema::getTableNames()
 }
 
 
+Table Schema::getCollectionAsTable(const string& name, bool check_exists)
+{
+  //Check if collection exists
+  if (check_exists)
+    getCollection(name, true);
+
+  return Table(*this, name);
+}
+
+
 /*
   Collection
   ==========
