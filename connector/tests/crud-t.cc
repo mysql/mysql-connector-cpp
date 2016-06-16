@@ -1195,7 +1195,7 @@ TEST_F(Crud, row_error)
 
   XSession sess(this);
 
-  cout << "Session accepted, creating collection..." << endl;
+  cout << "Session accepted, creating table..." << endl;
 
   sql("DROP TABLE IF EXISTS test.row_error");
   sql(
@@ -1246,4 +1246,74 @@ TEST_F(Crud, row_error)
     auto op_select = tbl.select("100000+age");
     RowResult result =  op_select.execute();
   }
+}
+
+TEST_F(Crud, coll_as_table)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("coll", true);
+
+  // Clean up
+  coll.remove().execute();
+
+  // Add Doc to collection
+  DbDoc doc("{ \"name\": \"foo\", \"age\": 1 }");
+
+  coll.add(doc, doc).execute();
+
+  // Get Collectionas Table
+  Table tbl = sch.getCollectionAsTable("coll");
+
+  // Check if we can get result from collection using table
+  RowResult tblResult = tbl.select("doc->$.name").execute();
+  Row r = tblResult.fetchOne();
+  EXPECT_EQ(string("foo"), static_cast<string>(r[0]));
+
+  // Update Collection using Table
+  tbl.update().set("doc->$.name", "bar").execute();
+
+  // Check if it was successful
+  tblResult = tbl.select("doc->$.name").execute();
+
+  r = tblResult.fetchOne();
+
+  EXPECT_EQ(string("bar"), static_cast<string>(r[0]));
+
+  // Check same result with Collection obj
+  DocResult docres = coll.find().fields("name as name").execute();
+
+  doc = docres.fetchOne();
+
+  EXPECT_EQ(string("bar"), static_cast<string>(doc["name"]));
+
+  sql("DROP TABLE IF EXISTS test.not_collection");
+  sql(
+    "CREATE TABLE test.not_collection("
+    "  _id VARCHAR(32),"
+    "  age BIGINT"
+    ")");
+
+  // Should throw exception if its not a collection
+  try {
+    sch.getCollectionAsTable("not_collection");
+    FAIL() << "Should throw error because this is not a collection";
+  } catch (Error &e) {
+  }
+
+  // Should NOT exception if its not a collection
+  try {
+    sch.getCollectionAsTable("not_collection", false);
+  } catch (Error &e) {
+    FAIL() << "Should throw error because this is not a collection";
+  }
+
+
 }

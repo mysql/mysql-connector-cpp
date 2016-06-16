@@ -1530,7 +1530,7 @@ void Projection_parser::process(Document_processor& prc) const
   parser.process(store_expr);
 
 
-  // get AS token if available
+  // AS is mandatory on Collections
   if (first == last)
     cdk::throw_error("Projections parser: Unexpected end of string when"
                      "expecting token 'AS'");
@@ -1546,13 +1546,14 @@ void Projection_parser::process(Document_processor& prc) const
     cdk::throw_error("Projections parser: Expected token <name>");
 
   if (first->get_type() != Token::ID &&
-      first->get_type() != Token::QUOTED_ID)
+      first->get_type() != Token::QUOTED_ID &&
+      !first->is_reserved_word())
     cdk::throw_error((boost::format("Projections parser: Unexpected token %s when expecting ID")
                       % first->get_name()).str());
 
   if (first+1 != last)
     cdk::throw_error("Expression_parser: could not parse string as expression"
-    " (not all tokens consumed)");
+                     " (not all tokens consumed)");
 
   store_expr.process_if(prc.key_val(first->get_text()));
 
