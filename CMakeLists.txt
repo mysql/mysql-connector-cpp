@@ -254,7 +254,29 @@ INCLUDE(libutil)
 
 MERGE_STATIC_LIBS(libconcpp "${LIB_NAME_BASE}-static"
                   "connector")
-INSTALL(TARGETS libconcpp DESTINATION lib)
+
+# Pick install location for the main library
+
+option(LIB_DIR    "Library subdirectory")
+
+set(VS_DIR)
+if(WIN32)
+  if(MSVC12)
+    set(VS_DIR "/vs12")
+  elseif(MSVC14)
+    set(VS_DIR "/vs14")
+  endif()
+endif()
+
+if(NOT LIB_DIR)
+  set(LIB_DIR "lib${VS_DIR}")
+  if(CMAKE_BUILD_TYPE STREQUAL Debug)
+    set(LIB_DIR "${LIB_DIR}/debug")
+  endif()
+endif()
+
+INSTALL(TARGETS libconcpp DESTINATION ${LIB_DIR})
+message("Connector library will be installed at: ${LIB_DIR}")
 
 
 #
