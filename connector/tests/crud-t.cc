@@ -1305,13 +1305,13 @@ TEST_F(Crud, coll_as_table)
   try {
     sch.getCollectionAsTable("not_collection");
     FAIL() << "Should throw error because this is not a collection";
-  } catch (Error &e) {
+  } catch (Error &) {
   }
 
   // Should NOT exception if its not a collection
   try {
     sch.getCollectionAsTable("not_collection", false);
-  } catch (Error &e) {
+  } catch (Error &) {
     FAIL() << "Should throw error because this is not a collection";
   }
 
