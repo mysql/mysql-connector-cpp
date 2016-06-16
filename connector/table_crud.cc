@@ -287,6 +287,7 @@ class Op_table_update
   Table_ref m_table;
   string m_where;
   std::unique_ptr<parser::Expression_parser> m_expr;
+  std::unique_ptr<parser::Table_field_parser> m_table_field;
   SetValues m_set_values;
   SetValues::const_iterator m_set_it;
 
@@ -313,15 +314,25 @@ class Op_table_update
 
   // cdk::Update_spec
 
+
+
   virtual bool next() override
   {
     if (m_set_it == m_set_values.end())
     {
       m_set_it = m_set_values.begin();
-      return m_set_it != m_set_values.end();
     }
-    ++m_set_it;
-    return m_set_it != m_set_values.end();
+    else
+    {
+      ++m_set_it;
+    }
+
+    bool more = m_set_it != m_set_values.end();
+
+    if (more)
+     m_table_field.reset(new parser::Table_field_parser(m_set_it->first));
+
+    return more;
   }
 
   void process(cdk::Update_spec::Processor &prc) const override
@@ -329,22 +340,21 @@ class Op_table_update
     prc.column(*this);
 
     Value_expr val_prc(m_set_it->second, parser::Parser_mode::TABLE);
-    val_prc.process_if(prc.set(NULL));
+    val_prc.process_if(prc.set(m_table_field->path()));
   }
 
 
   //  cdk::api::Column_ref
 
-  virtual const string name() const override
+  const string name() const override
   {
-    return m_set_it->first;
+    return m_table_field->name();
   }
 
-  const Table_ref* table() const override
+  const cdk::api::Table_ref* table() const override
   {
-    return NULL;
+    return m_table_field->table();
   }
-
 
 public:
   Op_table_update(Table &table)
