@@ -414,6 +414,9 @@ void Expr_parser_base::parse_column_ident1()
       m_col_ref.set(m_col_ref.table()->name());
   }
 
+  // Clear Document path
+  m_path.clear();
+
   if (cur_token_type_is(Token::ARROW))
   {
     consume_token(Token::ARROW);
@@ -433,7 +436,7 @@ void Expr_parser_base::parse_column_ident1()
     }
     else
     {
-      parse_document_field(true);
+      parse_document_field();
     }
   }
 
