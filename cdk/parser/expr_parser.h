@@ -648,8 +648,9 @@ public:
 
 
 /**
-   @brief The Projection_parser class parses "<expr> [ASC|DESC]" using
-          Order_expr_processor
+   @brief The Projection_parser class parses "<expr> AS <alias>"
+          specifications. When used in table mode the "AS <alias>" part
+          is optional, otherwise error is thrown if it is not present.
 
           This parser has can process 2 processor types:
           api::Projection_expr<Expression>::Processor
