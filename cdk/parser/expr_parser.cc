@@ -846,6 +846,7 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
 
     case Token::T_NULL:
       sprc->val()->null();
+      get_token();
       return stored.release();
 
     case Token::LNUM:
