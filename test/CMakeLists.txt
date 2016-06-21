@@ -22,14 +22,14 @@
 
 
 cmake_minimum_required(VERSION 2.8)
-PROJECT(MySQL_CONCPLS_TEST)
+PROJECT(MySQL_CONCPP_TEST)
 
-set(WITH_CONCPLS $ENV{WITH_CONCPLS} CACHE PATH "MySQL Connector/C++ 2.0 install location")
+set(WITH_CONCPP $ENV{WITH_CONCPP} CACHE PATH "MySQL Connector/C++ 2.0 install location")
 
-if(NOT WITH_CONCPLS)
+if(NOT WITH_CONCPP)
   message(FATAL_ERROR
     "This project requires MySQL Connector/C++ 2.0, please specify install location"
-    " using WITH_CONCPLS setting"
+    " using WITH_CONCPP setting"
   )
 endif()
 
@@ -37,28 +37,64 @@ endif()
 # Find MySQL Connector/C++ 2.0 at specified location.
 #
 
-set(CONCPLS_INCLUDES "${WITH_CONCPLS}/include")
+set(CONCPLS_INCLUDES "${WITH_CONCPP}/include")
 
 if(NOT EXISTS "${CONCPLS_INCLUDES}/mysqlx.h")
   message(FATAL_ERROR
     "Could not find MySQL Connector/C++ 2.0 headers at specified"
-    " location: ${WITH_CONCPLS}/include"
+    " location: ${WITH_CONCPP}/include"
   )
 endif()
 
-find_library(CONCPLS_LIB mysql_concpp
-  PATHS "${WITH_CONCPLS}/lib"
+set(LIB_PATH "${WITH_CONCPP}/lib")
+
+if(WIN32)
+  if(MSVC12)
+   set(LIB_PATH "${LIB_PATH}/vs12")
+  elseif(MSVC14)
+   set(LIB_PATH "${LIB_PATH}/vs14")
+  endif()
+endif()
+
+message("Looking for the connector library here: ${LIB_PATH}")
+
+find_library(CONCPP_LIB NAMES mysqlcppconn2-static mysqlcppconn2-static-mt
+  PATHS "${LIB_PATH}" "${WITH_CONCPP}/lib"
   NO_DEFAULT_PATH
 )
 
-if(NOT CONCPLS_LIB)
+find_library(CONCPP_LIB_DEBUG NAMES mysqlcppconn2-static mysqlcppconn2-static-mt
+  PATHS "${LIB_PATH}/debug" "${WITH_CONCPP}/lib/debug"
+  NO_DEFAULT_PATH
+)
+
+if(NOT CONCPP_LIB AND NOT CONCPP_LIB_DEBUG)
   message(FATAL_ERROR
-    "Could not find MySQL Connector/C++ 2.0 library concpp-2.0 at specified"
-    " location: ${WITH_CONCPLS}/lib"
+    "Could not find MySQL Connector/C++ 2.0 library mysqlcppconn2-static at specified"
+    " location: ${LIB_PATH}"
   )
 endif()
 
-list(APPEND CONCPLS_LIBS "${CONCPLS_LIB}")
+if(CONCPP_LIB)
+  message("Using Connector/C++ 2.0 library: ${CONCPP_LIB}")
+  if(CONCPP_LIB_DEBUG)
+    list(APPEND CONCPP_LIBS optimized "${CONCPP_LIB}")
+  else()
+    message(WARNING "Using generic library also for debug builds")
+    list(APPEND CONCPP_LIBS general "${CONCPP_LIB}")
+  endif()
+endif()
+
+if(CONCPP_LIB_DEBUG)
+  message("Debug library: ${CONCPP_LIB_DEBUG}")
+  if(CONCPP_LIB)
+    list(APPEND CONCPP_LIBS debug "${CONCPP_LIB_DEBUG}")
+  else()
+    message(WARNING "Using debug library also for non-debug builds")
+    list(APPEND CONCPP_LIBS general "${CONCPP_LIB_DEBUG}")
+  endif()
+endif()
+
 
 #
 # Use clang's native C++ runtime library to match the one used
@@ -98,7 +134,7 @@ IF(WIN32)
   # TODO: Some automatic check of the runtime used by C/C++ and hard error here.
 
   message("Using ${runtime} runtime library."
-          " Make sure that the connector given by WITH_CONCPLS uses"
+          " Make sure that the connector given by WITH_CONCPP uses"
           " the same runtime type - otherwise linking will fail due to"
           " runtime missmatch.")
 
@@ -112,7 +148,7 @@ ENDIF()
 INCLUDE_DIRECTORIES(${CONCPLS_INCLUDES})
 
 ADD_EXECUTABLE(cpptest test.cc)
-TARGET_LINK_LIBRARIES(test ${CONCPLS_LIBS})
+TARGET_LINK_LIBRARIES(cpptest ${CONCPP_LIBS})
 
 #
 # Connector/C++ requires pthread library on Unix.

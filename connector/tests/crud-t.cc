@@ -881,6 +881,32 @@ TEST_F(Crud, table)
 
   }
 
+  {
+
+    sql("DROP TABLE IF EXISTS test.crud_table");
+    sql(
+          "CREATE TABLE test.crud_table("
+          "c0 JSON,"
+          "c1 INT"
+          ")");
+
+    Schema sch = sess.getSchema("test");
+    Table tbl = sch.getTable("crud_table");
+
+    tbl.insert("c0","c1")
+        .values("{\"foo\": 1}", 1 )
+        .values("{\"foo\": 2}", 2 )
+        .values("{\"foo\": 3}", 3 ).execute();
+
+    RowResult res = tbl.select("c0->$.foo", "c1").where("c0->$.foo > 1 AND c1 < 3").execute();
+
+    Row r = res.fetchOne();
+
+    EXPECT_EQ(2, static_cast<int>(r[0]));
+    EXPECT_EQ(2, static_cast<int>(r[1]));
+
+  }
+
 }
 
 

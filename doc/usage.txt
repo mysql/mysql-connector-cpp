@@ -4,7 +4,8 @@ Using Connector/C++ 2.0  {#usage}
 When compiling code which uses MySQL Connector/C++, add
 `<Connector/C++ install location>/include` to the include path of
 the project, and link compiled code with
-the `<Connector/C++ install location>/lib/libmysql_concpp.a` library.
+the `<Connector/C++ install location>/lib/libmysqlcppconn2-static.a` library
+(currently only static library is available).
 On a Linux platform, also link with the `pthread` library on which
 Connector/C++ depends on that platform.
 
@@ -23,7 +24,7 @@ LDLIBS = -lpthread
 CXXFLAGS = -std=c++11
 LINK.o = $(LINK.cc)  # use c++ linker
 
-app : app.o $(MYSQL_CONCPP_DIR)/lib/libmysql_concpp.a
+app : app.o $(MYSQL_CONCPP_DIR)/lib/libmysqlcppconn2-static.a
 ~~~~~~~
 
 To use Connector/C++ API the source code should include the `mysqlx.h` header.
@@ -32,6 +33,8 @@ All Connector/C++ API symbols live in the `mysqlx` namespace.
 
 Windows Notes
 -------------
+
+The name of the static connector library on Windows is mysqlcppconn2-static.lib.
 
 On Windows, Connector/C++ can be built with the static or the dynamic runtime
 library (as selected by the `STATIC_MSVCRT` configuration option, see @ref building).
@@ -45,7 +48,7 @@ must match the one for which an application which uses the connector is built.
 
 When building application in 'Debug' build configuration, one has to use Connector/C++
 library built in the same configuration. Note that binary packages provided by MySQL
-contain 'Release' build of the connector.
+contain 'Release' build of the connector using dynamic runtime library.
 
 @todo Building applications in 'Debug' mode using binary distribution of Connector/C++.
 @todo MSVC runtime version issues.
@@ -72,7 +75,7 @@ CXX = clang++ -stdlib=libc++
 CXXFLAGS = -std=c++11
 LINK.o = $(LINK.cc)  # use c++ linker
 
-app : app.o $(MYSQL_CONCPP_DIR)/lib/libmysql_concpp.a
+app : app.o $(MYSQL_CONCPP_DIR)/lib/libmysqlcppconn2-static.a
 ~~~~~~~
 
 @todo How to build on OSX with XCode.

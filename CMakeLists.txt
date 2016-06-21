@@ -40,6 +40,10 @@ message("Using cmake generator: ${CMAKE_GENERATOR}")
 include(version.cmake)
 
 
+# Base name for the connector libraries.
+
+set(LIB_NAME_BASE "mysqlcppconn2")
+
 #
 # Set up cmake module search patch
 # ================================
@@ -238,19 +242,49 @@ ADD_SUBDIRECTORY(connector)
 #
 #  Target which builds the final connector library.
 #
-#  TODO: static/dynamic runtime variant for Win (use different output names)
-#        also, different variants for different MSVC versions.
 #  TODO: debug/non-debug variant
-#  TODO: naming strategy
 #  TODO: interface options for libconcpp target
 #  TODO: restrict exported symbols
 #
 
 INCLUDE(libutil)
 
-MERGE_STATIC_LIBS(libconcpp "mysql_concpp"
+# Pick output library name
+
+set(LIB_NAME_STATIC "${LIB_NAME_BASE}-static")
+if(WIN32 AND STATIC_MSVCRT)
+  set(LIB_NAME_STATIC "${LIB_NAME_STATIC}-mt")
+endif()
+message("Static library name: ${LIB_NAME_STATIC}")
+
+# Generate the main connector library.
+
+MERGE_STATIC_LIBS(libconcpp "${LIB_NAME_STATIC}"
                   "connector")
-INSTALL(TARGETS libconcpp DESTINATION lib)
+
+# Pick install location for the main library
+
+option(LIB_DIR    "Library subdirectory")
+
+set(VS_DIR)
+if(WIN32)
+  if(MSVC12)
+    set(VS_DIR "/vs12")
+  elseif(MSVC14)
+    set(VS_DIR "/vs14")
+  endif()
+endif()
+
+if(NOT LIB_DIR)
+  set(LIB_DIR "lib${VS_DIR}")
+  if(CMAKE_BUILD_TYPE STREQUAL Debug)
+    set(LIB_DIR "${LIB_DIR}/debug")
+  endif()
+endif()
+
+INSTALL(TARGETS libconcpp DESTINATION ${LIB_DIR})
+message("Connector library will be installed at: ${LIB_DIR}")
+
 
 #
 # Tests

@@ -182,8 +182,10 @@ MACRO(MERGE_STATIC_LIBS TARGET OUTPUT_NAME LIBS_TO_MERGE)
   # linker warnings.
   # TODO: Use user provided template
 
+  string(REPLACE "-" "_" out_name_id ${OUTPUT_NAME})
+
   FILE(WRITE ${SOURCE_FILE}
-    "const char *${OUTPUT_NAME}_dummy = 0;"
+    "const char *${out_name_id}_dummy = 0;"
   )
 
   # Make the generated source file depended on all static input
