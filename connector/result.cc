@@ -1005,8 +1005,8 @@ class internal::BaseResult::Impl
   cdk::Cursor *m_cursor = NULL;
   Row_data     m_row;
   std::shared_ptr<Meta_data>  m_mdata;
-  GUID         m_guid;
-  bool         m_cursor_closed = false;
+  std::vector<GUID>           m_guid;
+  bool                        m_cursor_closed = false;
 
   Impl(cdk::Reply *r)
     : m_reply(r)
@@ -1014,8 +1014,8 @@ class internal::BaseResult::Impl
     init();
   }
 
-  Impl(cdk::Reply *r, const GUID &guid)
-    : m_reply(r), m_guid(guid)
+  Impl(cdk::Reply *r, const std::vector<GUID> &guids)
+    : m_reply(r), m_guid(guids)
   {
     init();
   }
@@ -1131,11 +1131,11 @@ internal::BaseResult::BaseResult(cdk::Reply *r)
   CATCH_AND_WRAP
 }
 
-internal::BaseResult::BaseResult(cdk::Reply *r, const GUID &guid)
+internal::BaseResult::BaseResult(cdk::Reply *r, const std::vector<GUID> &guids)
 {
   try {
     m_owns_impl = true;
-    m_impl= new Impl(r,guid);
+    m_impl= new Impl(r,guids);
   }
   CATCH_AND_WRAP
 }
@@ -1164,9 +1164,24 @@ internal::BaseResult::get_impl() const
 }
 
 
-const GUID& Result::getLastDocumentId() const
+const GUID& Result::getDocumentId() const
 {
-  return get_impl().m_guid;
+  if (get_impl().m_guid.size() == 0)
+    throw Error("Can only be used on add operations.");
+  if (get_impl().m_guid.size() > 1)
+    throw Error("Multiple documents added... should use getDocumentIds()");
+
+  return get_impl().m_guid.front();
+}
+
+
+internal::List_init<GUID> Result::getDocumentIds() const
+{
+  if (get_impl().m_guid.size() == 0)
+    throw Error("Can only be used on add operations.");
+
+  auto &guid = get_impl().m_guid;
+  return std::forward_list<GUID>(guid.begin(), guid.end());
 }
 
 

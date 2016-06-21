@@ -37,6 +37,15 @@ public:
   void add_data(Collection &coll);
 };
 
+void output_id_list(Result& res)
+{
+  std::vector<mysqlx::GUID> ids = res.getDocumentIds();
+  for (auto id : ids)
+  {
+    cout << "- added doc with id: " << id  << endl;
+  }
+
+}
 
 TEST_F(Crud, basic)
 {
@@ -67,15 +76,15 @@ TEST_F(Crud, basic)
     DbDoc doc("{ \"name\": \"foo\", \"age\": 1 }");
 
     add = coll.add(doc, doc).execute();
-    cout << "- added doc with id: " << add.getLastDocumentId() << endl;
+    output_id_list(add);
 
     add = coll.add("{ \"name\": \"bar\", \"age\": 2 }")
       .add("{ \"name\": \"baz\", \"age\": 3, \"date\": { \"day\": 20, \"month\": \"Apr\" }}").execute();
-    cout << "- added 2 docs, last id: " << add.getLastDocumentId() << endl;
+    output_id_list(add);
 
     add = coll.add("{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }",
       "{ \"name\": \"buz\", \"age\": 17 }").execute();
-    cout << "- added 2 docs, last id: " << add.getLastDocumentId() << endl;
+    output_id_list(add);
   }
 
   {
@@ -284,7 +293,7 @@ void Crud::add_data(Collection &coll)
   DbDoc doc("{ \"name\": \"foo\", \"age\": 1 }");
 
   add = coll.add(doc, doc).execute();
-  cout << "- added doc with id: " << add.getLastDocumentId() << endl;
+  output_id_list(add);
 
   add = coll.add("{ \"name\": \"baz\", \"age\": 3,\
                   \"birth\": { \"day\": 20, \"month\": \"Apr\" } }")
@@ -292,11 +301,11 @@ void Crud::add_data(Collection &coll)
                     \"food\": [\"Milk\", \"Soup\"] }")
 
         .execute();
-  cout << "- added 2 docs, last id: " << add.getLastDocumentId() << endl;
+  output_id_list(add);
 
   add = coll.add("{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }",
                  "{ \"name\": \"buz\", \"age\": 17 }").execute();
-  cout << "- added 2 docs, last id: " << add.getLastDocumentId() << endl;
+  output_id_list(add);
 
   {
     RowResult res = sql("select count(*) from test.c1");
@@ -1314,6 +1323,52 @@ TEST_F(Crud, coll_as_table)
   } catch (Error &) {
     FAIL() << "Should throw error because this is not a collection";
   }
+
+
+}
+
+TEST_F(Crud, get_ids)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("coll", true);
+
+  // Clean up
+  coll.remove().execute();
+
+
+  // Add Doc to collection
+  DbDoc doc1("{ \"name\": \"foo\", \"age\": 1 }");
+  DbDoc doc2("{ \"_id\":\"ABCDEFGHIJKLMNOPQRTSUVWXYZ012345\","
+             " \"name\": \"bar\", \"age\": 2 }");
+
+  Result res;
+  res = coll.add(doc2).execute();
+
+  EXPECT_EQ(string("ABCDEFGHIJKLMNOPQRTSUVWXYZ012345"), string(res.getDocumentId()));
+
+  res = coll.remove().execute();
+
+  // This functions can only be used on add() operations
+  EXPECT_ANY_THROW(res.getDocumentId());
+  EXPECT_ANY_THROW(res.getDocumentIds());
+
+  res = coll.add(doc1).add(doc2).execute();
+
+  EXPECT_ANY_THROW(res.getDocumentId());
+
+  std::vector<mysqlx::GUID> list = res.getDocumentIds();
+
+  EXPECT_EQ(2, list.size());
+  EXPECT_NE(string("ABCDEFGHIJKLMNOPQRTSUVWXYZ012345"), string(list[0]));
+  EXPECT_EQ(string("ABCDEFGHIJKLMNOPQRTSUVWXYZ012345"), string(list[1]));
 
 
 }

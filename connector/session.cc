@@ -27,6 +27,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <list>
 
 #include "impl.h"
 
@@ -555,7 +556,7 @@ internal::List_init<Collection> Schema::getCollections()
     std::forward_list<Collection> list;
     std::forward_list<Collection>::iterator list_it = list.before_begin();
 
-    std::list<string> list_name = getCollectionNames();
+    std::forward_list<string> list_name = getCollectionNames();
 
     for (auto name : list_name)
     {
