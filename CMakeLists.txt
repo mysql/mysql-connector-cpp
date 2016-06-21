@@ -242,17 +242,24 @@ ADD_SUBDIRECTORY(connector)
 #
 #  Target which builds the final connector library.
 #
-#  TODO: static/dynamic runtime variant for Win (use different output names)
-#        also, different variants for different MSVC versions.
 #  TODO: debug/non-debug variant
-#  TODO: naming strategy
 #  TODO: interface options for libconcpp target
 #  TODO: restrict exported symbols
 #
 
 INCLUDE(libutil)
 
-MERGE_STATIC_LIBS(libconcpp "${LIB_NAME_BASE}-static"
+# Pick output library name
+
+set(LIB_NAME_STATIC "${LIB_NAME_BASE}-static")
+if(WIN32 AND STATIC_MSVCRT)
+  set(LIB_NAME_STATIC "${LIB_NAME_STATIC}-mt")
+endif()
+message("Static library name: ${LIB_NAME_STATIC}")
+
+# Generate the main connector library.
+
+MERGE_STATIC_LIBS(libconcpp "${LIB_NAME_STATIC}"
                   "connector")
 
 # Pick install location for the main library
