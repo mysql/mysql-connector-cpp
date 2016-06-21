@@ -46,20 +46,55 @@ if(NOT EXISTS "${CONCPLS_INCLUDES}/mysqlx.h")
   )
 endif()
 
-find_library(CONCPLS_LIB mysqlcppconn2-static
-  PATHS "${WITH_CONCPP}/lib"
+set(LIB_PATH "${WITH_CONCPP}/lib")
+
+if(WIN32)
+  if(MSVC12)
+   set(LIB_PATH "${LIB_PATH}/vs12")
+  elseif(MSVC14)
+   set(LIB_PATH "${LIB_PATH}/vs14")
+  endif()
+endif()
+
+message("Looking for the connector library here: ${LIB_PATH}")
+
+find_library(CONCPP_LIB NAMES mysqlcppconn2-static mysqlcppconn2-static-mt
+  PATHS "${LIB_PATH}" "${WITH_CONCPP}/lib"
   NO_DEFAULT_PATH
 )
 
-if(NOT CONCPLS_LIB)
+find_library(CONCPP_LIB_DEBUG NAMES mysqlcppconn2-static mysqlcppconn2-static-mt
+  PATHS "${LIB_PATH}/debug" "${WITH_CONCPP}/lib/debug"
+  NO_DEFAULT_PATH
+)
+
+if(NOT CONCPP_LIB AND NOT CONCPP_LIB_DEBUG)
   message(FATAL_ERROR
     "Could not find MySQL Connector/C++ 2.0 library mysqlcppconn2-static at specified"
-    " location: ${WITH_CONCPP}/lib"
+    " location: ${LIB_PATH}"
   )
 endif()
 
-message("Using Connector/C++ 2.0 library: ${CONCPLS_LIB}")
-list(APPEND CONCPLS_LIBS "${CONCPLS_LIB}")
+if(CONCPP_LIB)
+  message("Using Connector/C++ 2.0 library: ${CONCPP_LIB}")
+  if(CONCPP_LIB_DEBUG)
+    list(APPEND CONCPP_LIBS optimized "${CONCPP_LIB}")
+  else()
+    message(WARNING "Using generic library also for debug builds")
+    list(APPEND CONCPP_LIBS general "${CONCPP_LIB}")
+  endif()
+endif()
+
+if(CONCPP_LIB_DEBUG)
+  message("Debug library: ${CONCPP_LIB_DEBUG}")
+  if(CONCPP_LIB)
+    list(APPEND CONCPP_LIBS debug "${CONCPP_LIB_DEBUG}")
+  else()
+    message(WARNING "Using debug library also for non-debug builds")
+    list(APPEND CONCPP_LIBS general "${CONCPP_LIB_DEBUG}")
+  endif()
+endif()
+
 
 #
 # Use clang's native C++ runtime library to match the one used
@@ -113,7 +148,7 @@ ENDIF()
 INCLUDE_DIRECTORIES(${CONCPLS_INCLUDES})
 
 ADD_EXECUTABLE(cpptest test.cc)
-TARGET_LINK_LIBRARIES(cpptest ${CONCPLS_LIBS})
+TARGET_LINK_LIBRARIES(cpptest ${CONCPP_LIBS})
 
 #
 # Connector/C++ requires pthread library on Unix.
