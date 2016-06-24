@@ -85,6 +85,7 @@ class Op_collection_add
   Table_ref    m_coll;
   std::vector<string> m_json;
   mysqlx::GUID  m_id;
+  std::vector<mysqlx::GUID> m_id_list;
   bool  m_generated_id;
   unsigned m_pos;
 
@@ -123,7 +124,7 @@ class Op_collection_add
 
   internal::BaseResult get_result()
   {
-    return Result::Access::mk(m_reply, m_id);
+    return Result::Access::mk(m_reply, m_id_list);
   }
 
 
@@ -303,6 +304,9 @@ void Op_collection_add::process(Expression::Processor &ep) const
     // TODO: ep.val(TYPE_DOCUMENT, json_format, cdk::bytes())
     ep.scalar()->val()->str(json);
   }
+
+  //Save added "_id" to the list
+  self->m_id_list.push_back(m_id);
 }
 
 

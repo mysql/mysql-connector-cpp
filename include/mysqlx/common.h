@@ -30,6 +30,7 @@
 #include <stdexcept>
 #include <ostream>
 #include <memory>
+#include <forward_list>
 #include <string.h>  // for memcpy
 #include <utility>   // std::move etc
 
@@ -45,6 +46,32 @@ class string;
 namespace mysqlx {
 
 typedef unsigned char byte;
+
+
+namespace internal {
+
+/*
+  List_initializer class is used to initialize user std::vector, std::list or
+  own list imlpementations, as long as initialized by iterators of defined type
+*/
+
+template <typename T>
+struct List_init
+{
+   std::forward_list<T> m_data;
+
+   List_init(std::forward_list<T>&& list)
+     : m_data(std::move(list))
+   {}
+
+   template<typename U>
+   operator U()
+   {
+     return U(m_data.begin(), m_data.end());
+   }
+};
+
+}  // internal
 
 
 /**

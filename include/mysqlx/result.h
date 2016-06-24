@@ -77,7 +77,7 @@ namespace internal {
     row_count_t  m_pos = 0;
 
     BaseResult(cdk::Reply*);
-    BaseResult(cdk::Reply*, const GUID&);
+    BaseResult(cdk::Reply*, const std::vector<GUID>&);
 
   protected:
 
@@ -162,11 +162,16 @@ public:
   }
 
   /**
-    Return id of the last document which the operation
-    added to a collection.
+    Return id of the document added to a collection.
   */
 
-  const GUID& getLastDocumentId() const;
+  const GUID& getDocumentId() const;
+
+  /**
+    Return list of ids of documents added to a collection on a chain add() call.
+  */
+
+  internal::List_init<GUID> getDocumentIds() const;
 
 };
 

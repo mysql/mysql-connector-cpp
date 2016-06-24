@@ -25,6 +25,7 @@
 #include <test.h>
 #include <mysqlx.h>
 #include <iostream>
+#include <list>
 
 using std::cout;
 using std::endl;
