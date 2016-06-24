@@ -148,16 +148,30 @@ struct zigzag<T, false>
 
 template <typename T>
 inline
-uint64_t zigzag_encode(T val)
+uint64_t zigzag_encode_signed(T val)
 {
-  return zigzag<T, std::numeric_limits<T>::is_signed >::encode(val);
+  return zigzag<T, true>::encode(val);
 }
 
 template <typename T>
 inline
-T zigzag_decode(uint64_t val)
+uint64_t zigzag_encode_unsigned(T val)
 {
-  return zigzag<T, std::numeric_limits<T>::is_signed >::decode(val);
+  return zigzag<T, false>::encode(val);
+}
+
+template <typename T>
+inline
+T zigzag_decode_signed(uint64_t val)
+{
+  return zigzag<T, true>::decode(val);
+}
+
+template <typename T>
+inline
+T zigzag_decode_unsigned(uint64_t val)
+{
+  return zigzag<T, false>::decode(val);
 }
 
 
@@ -177,7 +191,10 @@ size_t Codec<TYPE_INTEGER>::internal_from_bytes(bytes buf, T &val)
                 "Codec<TYPE_INTEGER>: integer conversion error");
   }
 
-  val = zigzag_decode<T>(val_tmp);
+  if (m_fmt.is_unsigned())
+    val = zigzag_decode_unsigned<T>(val_tmp);
+  else
+    val = zigzag_decode_signed<T>(val_tmp);
 
   assert(input_buffer.CurrentPosition() >= 0);
   size_t sz = static_cast<size_t>(input_buffer.CurrentPosition());
@@ -243,7 +260,11 @@ size_t Codec<TYPE_INTEGER>::internal_to_bytes(T val, bytes buf)
 
   uint64_t val_tmp;
 
-  val_tmp = zigzag_encode(val);
+  if (m_fmt.is_unsigned())
+    val_tmp = zigzag_encode_unsigned(val);
+  else
+    val_tmp = zigzag_encode_signed(val);
+
   output_buffer.WriteVarint64(val_tmp);
 
   if (output_buffer.HadError())
