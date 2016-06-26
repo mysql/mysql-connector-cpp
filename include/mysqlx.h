@@ -363,6 +363,12 @@ public:
   bool existsInDatabase() const override;
 
 
+  /**
+    Get number of documents
+  */
+  uint64_t count();
+
+
   friend internal::Task;
 };
 
@@ -478,6 +484,10 @@ public:
 
   bool existsInDatabase() const override;
 
+  /**
+    Get number of rows
+  */
+  uint64_t count();
 
   friend internal::Task;
 };

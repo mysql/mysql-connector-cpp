@@ -1398,3 +1398,37 @@ TEST_F(Crud, get_ids)
 
 
 }
+
+TEST_F(Crud, count)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("coll", true);
+
+  //Remove all rows
+  coll.remove().execute();
+
+  for (int i=0; i < 1000; ++i)
+  {
+    std::stringstream json;
+    json << "{ \"name\": \"foo\", \"age\":" << i << " }";
+
+    coll.add(json.str()).execute();
+  }
+
+  EXPECT_EQ(1000, coll.count());
+
+  coll.remove().limit(500).execute();
+
+  Table tbl = sch.getCollectionAsTable("coll");
+
+  EXPECT_EQ(500, tbl.count());
+
+}

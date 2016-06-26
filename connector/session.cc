@@ -348,6 +348,84 @@ struct List_query<obj_type::TABLE>
 };
 
 
+/*
+  Helper class to execute SQL queries which count Collection/Table rows.
+  It assumes that SQL query returns a result set consisting of s single row with
+  one column containing integer number.
+
+  This number is returned by execute() method.
+*/
+
+struct Obj_row_count
+    : Args
+
+{
+
+  Obj_row_count(cdk::Session &sess, const string& qry_count)
+    : m_reply(sess.sql(qry_count))
+  {
+    m_reply.wait();
+  }
+
+  cdk::Reply m_reply;
+
+  struct
+      : public std::string
+      , public cdk::Row_processor
+  {
+
+    bool row_begin(row_count_t) { return true; }
+
+    void row_end(row_count_t) {}
+
+    size_t field_begin(col_count_t, size_t s)
+    {
+      clear();
+      reserve(s);
+      return s;
+    }
+
+    void field_end(col_count_t) {}
+
+    void field_null(col_count_t) {}
+
+    size_t field_data(col_count_t, bytes b)
+    {
+      insert(end(), b.begin(), b.end());
+
+      return 1024;
+    }
+
+    void end_of_data()
+    {}
+
+  } m_buffer;
+
+  /*
+    Method to be called to retrieve number of rows.
+  */
+
+  uint64_t execute()
+  {
+    cdk::Cursor cursor(m_reply);
+    cursor.get_rows(m_buffer);
+    cursor.wait();
+
+    // Only expecting 1 column
+    cdk::Codec<cdk::TYPE_INTEGER> codec(cursor.format(0));
+
+    uint64_t count;
+
+    codec.from_bytes(cdk::bytes(m_buffer), count);
+
+    return count;
+  }
+
+};
+
+
+
+
 // ---------------------------------------------------------------------
 
 
@@ -642,6 +720,15 @@ bool Collection::existsInDatabase() const
 }
 
 
+uint64_t Collection::count()
+{
+  std::stringstream qry;
+  qry << "select count(*) from " << m_schema.getName() << "." << m_name;
+
+  return Obj_row_count(m_sess->get_cdk_session(),qry.str()).execute();
+}
+
+
 /*
   Table
   =====
@@ -673,6 +760,15 @@ bool Table::existsInDatabase() const
 
   }
   CATCH_AND_WRAP
+}
+
+
+uint64_t Table::count()
+{
+  std::stringstream qry;
+  qry << "select count(*) from " << m_schema.getName() << "." << m_name;
+
+  return Obj_row_count(m_sess->get_cdk_session(),qry.str()).execute();
 }
 
 
