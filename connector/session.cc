@@ -71,7 +71,7 @@ XSession::~XSession()
   try {
     delete m_impl;
   }
-  CATCH_AND_WRAP
+  catch(...){}
 }
 
 cdk::Session& XSession::get_cdk_session()
@@ -916,7 +916,7 @@ ostream& operator<<(ostream &out, const Error&)
 
 // Implementation of Task API using internal implementation object
 
-internal::Task::~Task() { try { delete m_impl; } CATCH_AND_WRAP }
+internal::Task::~Task() { try { delete m_impl; } catch(...){} }
 
 bool internal::Task::is_completed()
 { try { return m_impl ? m_impl->is_completed() : true; } CATCH_AND_WRAP }

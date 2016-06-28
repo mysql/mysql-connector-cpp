@@ -1147,7 +1147,7 @@ internal::BaseResult::~BaseResult()
     if (m_owns_impl)
       delete m_impl;
   }
-  CATCH_AND_WRAP
+  catch(...) {}
 }
 
 
