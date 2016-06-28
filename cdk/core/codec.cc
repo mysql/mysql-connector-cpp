@@ -107,7 +107,16 @@ struct zigzag<T, true>
   static
   uint64_t encode(T val)
   {
-    return google::protobuf::internal::WireFormatLite::ZigZagEncode64(val);
+    // ZigZagEncode accepts signed 64-bit integer
+    // Note: cast to uint64_t to avoid signed/unsigned comparison
+
+    if ((val > 0) && ((uint64_t)val > (uint64_t)std::numeric_limits<int64_t>::max()))
+      throw_error(cdkerrc::conversion_error,
+                  "Codec<TYPE_INTEGER>: conversion overflow");
+
+    return google::protobuf::internal::WireFormatLite::ZigZagEncode64(
+             static_cast<int64_t>(val)
+           );
   }
 
   static
@@ -115,9 +124,16 @@ struct zigzag<T, true>
   {
     int64_t tmp = google::protobuf::internal::WireFormatLite::ZigZagDecode64(val);
 
-    if (tmp > std::numeric_limits<T>::max() || tmp < std::numeric_limits<T>::min())
-      throw cdk::Error(cdkerrc::conversion_error,
-        "Codec<TYPE_INTEGER>: conversion overflow");
+    /*
+      Note: to avoid singed/unsigned comparison we cast to uint64_t or
+      int64_t. Cast to int64_t happens only when tmp is <= 0 and thus it
+      is correct even for 64-bit unsigned numbers.
+    */
+
+    if (((tmp > 0) && ((uint64_t)tmp > (uint64_t)std::numeric_limits<T>::max()))
+        || ((int64_t)tmp < (int64_t)std::numeric_limits<T>::min()))
+      throw_error(cdkerrc::conversion_error,
+                  "Codec<TYPE_INTEGER>: conversion overflow");
 
     return static_cast<T>(tmp);
   }
@@ -131,7 +147,7 @@ struct zigzag<T, false>
   static
   uint64_t encode(T val)
   {
-    return val;
+    return static_cast<uint64_t>(val);
   }
 
   static
