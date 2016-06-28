@@ -96,7 +96,7 @@ public:
   {
     if (!m_session || has_results() || !m_session->m_executed)
       throw_error("Only available after end of query execute");
-    return m_session->m_affected_rows;
+    return m_session->m_stmt_stats.rows_affected;
   }
 
   virtual void discard();

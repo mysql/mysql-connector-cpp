@@ -117,8 +117,8 @@ class Session
     , private protocol::mysqlx::Auth_processor
     , private protocol::mysqlx::Reply_processor
     , private protocol::mysqlx::Mdata_processor
-    , private protocol::mysqlx::Row_processor
     , private protocol::mysqlx::Stmt_processor
+    , private protocol::mysqlx::SessionState_processor
 {
 
   friend class Reply;
@@ -141,15 +141,32 @@ protected:
   Any_list *m_cmd_args;
   const Table_ref *m_table;
 
-  bool m_executed;
+  unsigned long m_id;
+  bool m_expired;
+  string m_cur_schema;
 
-  row_count_t  m_affected_rows;
-  row_count_t  m_last_insert_id;
+  struct
+  {
+    row_count_t  last_insert_id;
+    row_count_t  rows_affected;
+    row_count_t  rows_found;
+    row_count_t  rows_matched;
+
+    void clear()
+    {
+      last_insert_id = 0;
+      rows_affected = 0;
+      rows_found = 0;
+      rows_matched = 0;
+    }
+  }
+  m_stmt_stats;
 
   std::deque< shared_ptr<Proto_op> > m_op_queue;
   std::deque< shared_ptr<Proto_op> > m_reply_op_queue;
   Cursor*                 m_current_cursor;
 
+  bool m_executed;
   bool m_has_results;
   bool m_discard;
 
@@ -165,14 +182,15 @@ public:
     , m_auth_interface(NULL)
     , m_cmd_args(NULL)
     , m_table(NULL)
-    , m_executed(false)
-    , m_affected_rows(0)
-    , m_last_insert_id(0)
+    , m_id(0)
+    , m_expired(false)
     , m_current_cursor(NULL)
+    , m_executed(false)
     , m_has_results(false)
     , m_discard(false)
     , m_nr_cols(0)
   {
+    m_stmt_stats.clear();
     authenticate(options);
   }
 
@@ -274,6 +292,12 @@ public:
   const Error& get_error()
   { return m_da.get_error(); }
 
+
+  const string& get_current_schema() const
+  {
+    return m_cur_schema;
+  }
+
 private:
 
   Reply_init &set_command(Proto_op *cmd);
@@ -319,11 +343,19 @@ private:
      Stmt_processor
   */
 
-    void rows_affected(row_count_t row_count);
-    void last_insert_id(row_count_t row_count);
-    void cursor_close_ok();
-    void stmt_close_ok();
-    virtual void execute_ok();
+  void execute_ok();
+  void notice(unsigned int /*type*/, short int /*scope*/, bytes /*payload*/);
+
+  /*
+    SessionState_processor
+  */
+
+  void client_id(unsigned long);
+  void account_expired();
+  void current_schema(const string&);
+  void row_stats(row_stats_t, row_count_t);
+  void last_insert_id(insert_id_t);
+  // TODO: void trx_event(trx_event_t);
 
   /*
      Helper functions to send/receive protocol messages
@@ -331,7 +363,7 @@ private:
 
   void send_cmd();
   void start_reading_row_set();
-  Proto_op* start_reading_row_data(Row_processor &prc);
+  Proto_op* start_reading_row_data(protocol::mysqlx::Row_processor &prc);
   void start_reading_stmt_reply();
   void start_authentication(const char* mechanism,bytes data,bytes response);
   void start_authentication_continue(bytes data);
@@ -344,8 +376,6 @@ private:
   bool do_cont();
   void do_wait();
   void do_cancel();
-
-
 
 
 private:

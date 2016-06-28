@@ -283,6 +283,31 @@ struct update_op
 };
 
 
+
+#define NOTICE_TYPE_LIST(X) \
+  NOTICE_TYPE(X,Warning, 1)               \
+  NOTICE_TYPE(X,SessionVariableChanged,2) \
+  NOTICE_TYPE(X,SessionStateChange,3)     \
+
+#define NOTICE_TYPE(X,T,N) NOTICE_TYPE_##X(T,N)
+
+#define NOTICE_TYPE_enum(T,N) T = N,
+
+struct notice_type
+{
+  enum value {
+    NOTICE_TYPE_LIST(enum)
+  };
+};
+
+
+struct notice_scope
+{
+  enum value { GLOBAL = 1, LOCAL = 2 };
+};
+
+
+
 /*
   A class to store SQL state values.
 */
@@ -460,6 +485,12 @@ private:
 
 
 typedef Protocol Protocol_client;
+
+
+template <notice_type::value NT> struct Notice;
+
+template <notice_type::value NT>
+void process_notice(const bytes &, typename Notice<NT>::Processor&);
 
 
 class Init_processor;
@@ -809,6 +840,33 @@ class Result_processor
 {
 public:
   virtual void execute_ok() {}
+};
+
+
+class SessionState_processor
+{
+public:
+  enum row_stats_t { ROWS_AFFECTED, ROWS_FOUND, ROWS_MATCHED };
+  enum trx_event_t { COMMIT, ROLLBACK };
+
+  virtual void client_id(unsigned long) {}
+  virtual void account_expired() {}
+  virtual void current_schema(const string&) {}
+  virtual void row_stats(row_stats_t, row_count_t) {}
+  virtual void last_insert_id(insert_id_t) {}
+  virtual void trx_event(trx_event_t) {}
+};
+
+template<>
+struct Notice<notice_type::SessionStateChange>
+{
+  typedef SessionState_processor Processor;
+};
+
+template<>
+struct Notice<notice_type::Warning>
+{
+  typedef Error_processor Processor;
 };
 
 

@@ -99,7 +99,7 @@ public:
   /*
     Data manipulation
     -----------------
-    Methods which manipulate data in the data store return vlaue 
+    Methods which manipulate data in the data store return vlaue
     of type Reply_init that is used to initialize a Reply instance.
     A Reply object is then used to examine server's reply to a given
     operation, including retreiving and processing result sets
@@ -142,7 +142,7 @@ public:
     documents and operations on tables. If an operation returns data,
     this data is in the form of one or more sets of rows (which can be
     processed using a Cursor object).
-            
+
     Different operations use these common arguments:
 
     Order_by *order_by -- optional specification of how to order results,
@@ -202,7 +202,7 @@ public:
 
     Note: Docuemnt id is also included in the document as a field with
     name "_id".
-    
+
     Selected documents can be projected to a different document given by
     document expression `proj`. This document expression describes a document
     in which values of fields are given by expressions that can use fields
@@ -335,6 +335,16 @@ public:
 public:
 
   bool is_completed() const { return m_session->is_completed(); }
+
+  /*
+    Note: This does not work correctly yet, because xplugin is not
+    correctly reporting current schema changes.
+  */
+
+  const string& current_schema() const
+  {
+    return m_session->get_current_schema();
+  }
 
 private:
 

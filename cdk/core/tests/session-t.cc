@@ -62,6 +62,7 @@ public:
 using ::std::cout;
 using ::std::endl;
 using namespace ::cdk;
+using namespace ::cdk::test;
 
 
 TEST_F(Session_core, basic)
@@ -421,6 +422,75 @@ TEST_F(Session_core, meta_data)
   cout <<"Done!" <<endl;
 
 }
+  CATCH_TEST_GENERIC
+}
+
+
+TEST_F(Session_core, affected)
+{
+  try {
+    SKIP_IF_NO_XPLUGIN;
+
+    Session s(this);
+
+    if (!s.is_valid())
+      FAIL() << "Invalid Session!";
+
+    do_sql(s, L"USE test");
+
+    cout << "Current schema: " << s.current_schema() << endl;
+
+    do_sql(s, L"DROP TABLE IF EXISTS affected");
+    do_sql(s, L"CREATE TABLE affected (c0 INT)");
+
+    Table_ref tbl("affected", "test");
+
+    struct : public Row_source
+    {
+      int m_val;
+
+      void process(Processor &prc) const
+      {
+        Safe_prc<Processor> sprc(prc);
+
+        prc.list_begin();
+        sprc->list_el()->scalar()->val()->num((int64_t)m_val);
+        prc.list_end();
+      }
+
+      bool next()
+      {
+        if (m_val <= 0)
+          return false;
+        m_val--;
+        return true;
+      }
+    }
+    data;
+    data.m_val = 7;
+
+    {
+      cout << "inserting data into table" << endl;
+
+      Reply rp(s.table_insert(tbl, data, NULL, NULL));
+      rp.wait();
+      cout << "affected rows: " << rp.affected_rows() << endl;
+      EXPECT_EQ(7, rp.affected_rows());
+    }
+
+    {
+      cout << "fetching data from table" << endl;
+
+      Reply rp(s.table_select(tbl, NULL));
+      rp.wait();
+      rp.discard();
+      cout << "affected rows: " << rp.affected_rows() << endl;
+      EXPECT_EQ(0, rp.affected_rows());
+    }
+
+    cout << "Done!" << endl;
+
+  }
   CATCH_TEST_GENERIC
 }
 

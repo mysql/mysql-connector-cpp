@@ -149,6 +149,98 @@ Protocol::Op& Protocol::rcv_AuthenticateReply(Auth_processor &prc)
 }
 
 
+// Parsing and processing protocol notices.
+
+template<>
+void process_notice<notice_type::SessionStateChange>(
+  const bytes &notice,
+  SessionState_processor &prc
+  )
+{
+  Mysqlx::Notice::SessionStateChanged msg;
+
+  if (!msg.ParseFromString(std::string(notice.begin(), notice.end())))
+    THROW("Could not parse notice payload");
+
+  switch (msg.param())
+  {
+  case Mysqlx::Notice::SessionStateChanged::CLIENT_ID_ASSIGNED:
+  {
+    uint64_t id = msg.value().v_unsigned_int();
+    assert(id < std::numeric_limits<unsigned long>::max());
+    prc.client_id((unsigned long)id);
+    break;
+  }
+
+  case Mysqlx::Notice::SessionStateChanged::ACCOUNT_EXPIRED:
+    prc.account_expired();
+    break;
+
+  case Mysqlx::Notice::SessionStateChanged::CURRENT_SCHEMA:
+    assert(msg.value().has_v_string());
+    // NOTE: Assuming the reported schema name is in utf8 encoding
+    prc.current_schema(msg.value().v_string().value());
+    break;
+
+  case Mysqlx::Notice::SessionStateChanged::ROWS_AFFECTED:
+    assert(msg.value().has_v_unsigned_int());
+    prc.row_stats(prc.ROWS_AFFECTED, msg.value().v_unsigned_int());
+    break;
+
+  case Mysqlx::Notice::SessionStateChanged::ROWS_FOUND:
+    assert(msg.value().has_v_unsigned_int());
+    prc.row_stats(prc.ROWS_FOUND, msg.value().v_unsigned_int());
+    break;
+
+  case Mysqlx::Notice::SessionStateChanged::ROWS_MATCHED:
+    assert(msg.value().has_v_unsigned_int());
+    prc.row_stats(prc.ROWS_MATCHED, msg.value().v_unsigned_int());
+    break;
+
+  case Mysqlx::Notice::SessionStateChanged::GENERATED_INSERT_ID:
+    assert(msg.value().has_v_unsigned_int());
+    prc.last_insert_id(msg.value().v_unsigned_int());
+    break;
+
+  case Mysqlx::Notice::SessionStateChanged::TRX_COMMITTED:
+    prc.trx_event(prc.COMMIT);
+    break;
+
+  case Mysqlx::Notice::SessionStateChanged::TRX_ROLLEDBACK:
+    prc.trx_event(prc.ROLLBACK);
+    break;
+
+  case Mysqlx::Notice::SessionStateChanged::PRODUCED_MESSAGE:
+  default: break;
+  }
+}
+
+template<>
+void process_notice<notice_type::Warning>(
+  const bytes &notice,
+  Error_processor &prc
+  )
+{
+  Mysqlx::Notice::Warning msg;
+
+  if (!msg.ParseFromString(std::string(notice.begin(), notice.end())))
+    THROW("Could not parse notice payload");
+
+  short int level;
+
+  switch (msg.level())
+  {
+  case Mysqlx::Notice::Warning::ERROR:   level = 2; break;
+  case Mysqlx::Notice::Warning::WARNING: level = 1; break;
+  case Mysqlx::Notice::Warning::NOTE:
+  default:
+    level = 0; break;
+  }
+
+  prc.error(msg.code(), level, sql_state_t(), msg.msg());
+}
+
+
 // Server-side API
 
 

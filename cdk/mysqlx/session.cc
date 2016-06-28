@@ -444,20 +444,43 @@ void Session::auth_fail(bytes data)
 }
 
 
+void Session::notice(unsigned int type, short int scope, bytes payload)
+{
+  using namespace protocol::mysqlx;
+
+  switch (type)
+  {
+  case notice_type::Warning:
+    process_notice<notice_type::Warning>(
+      payload,
+      *static_cast<Reply_processor*>(this)
+    );
+    return;
+
+  case notice_type::SessionStateChange:
+    if (notice_scope::LOCAL != scope)
+      return;
+    process_notice<notice_type::SessionStateChange>(payload, *this);
+    return;
+
+  default: return;
+  }
+}
+
+
 void Session::error(unsigned int code, short int severity,
                     sql_state_t sql_state, const string &msg)
 {
-
-  if (m_current_reply)
+  Severity::value level;
+  switch (severity)
   {
-    m_current_reply->m_da.add_entry(Severity::ERROR,
-                                    new Server_error(code, sql_state, msg));
-    m_current_reply->m_error = true;
+  case 0: level = Severity::INFO; break;
+  case 1: level = Severity::WARNING; break;
+  case 2:
+  default:
+    level = Severity::ERROR; break;
   }
-  else
-  {
-    m_da.add_entry(Severity::ERROR, new Server_error(code, sql_state, msg));
-  }
+  add_diagnostics(level, code, sql_state, msg);
 }
 
 
@@ -481,6 +504,8 @@ void Session::add_diagnostics(Severity::value level, unsigned code,
   if (m_current_reply)
   {
     m_current_reply->m_da.add_entry(level, new Server_error(code, sql_state, msg));
+    if (Severity::ERROR == level)
+      m_current_reply->m_error = true;
   }
   else
   {
@@ -601,37 +626,45 @@ void Session::col_flags(col_count_t pos, uint32_t flags)
 }
 
 
-void Session::rows_affected(row_count_t row_count)
-{
-  m_affected_rows = row_count;
-}
-
-
-void Session::last_insert_id(protocol::mysqlx::row_count_t row_count)
-{
-  m_last_insert_id = row_count;
-}
-
-
-void Session::cursor_close_ok()
-{
-
-}
-
-
-void Session::stmt_close_ok()
-{
-
-}
-
-
 void Session::execute_ok()
 {
-  /*
-     All done!
-  */
-
+  // All done!
   m_executed = true;
+}
+
+
+/*
+  Processing session state change notices.
+*/
+
+void Session::client_id(unsigned long val)
+{
+  m_id = val;
+}
+
+void Session::account_expired()
+{
+  m_expired = true;
+}
+
+void Session::current_schema(const string &val)
+{
+  m_cur_schema = val;
+}
+
+void Session::last_insert_id(insert_id_t val)
+{
+  m_stmt_stats.last_insert_id = val;
+}
+
+void Session::row_stats(row_stats_t stats, row_count_t val)
+{
+  switch (stats)
+  {
+  case ROWS_AFFECTED: m_stmt_stats.rows_affected = val; return;
+  case    ROWS_FOUND: m_stmt_stats.rows_found = val;    return;
+  case  ROWS_MATCHED: m_stmt_stats.rows_matched = val;  return;
+  }
 }
 
 
@@ -640,6 +673,7 @@ void Session::send_cmd()
   m_executed = false;
   m_reply_op_queue.push_back(m_cmd);
   m_cmd.reset();
+  m_stmt_stats.clear();
 }
 
 
@@ -653,7 +687,8 @@ void Session::start_reading_row_set()
 }
 
 
-Proto_op* Session::start_reading_row_data(Row_processor &prc)
+Proto_op*
+Session::start_reading_row_data(protocol::mysqlx::Row_processor &prc)
 {
   return &m_protocol.rcv_Rows(prc);
 }

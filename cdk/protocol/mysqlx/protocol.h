@@ -611,7 +611,11 @@ void Op_rcv::process_msg(msg_type_t type, Message &msg)
     Error_processor &ep= static_cast<Error_processor&>(*m_prc);
     Mysqlx::Error   &err= static_cast<Mysqlx::Error&>(msg);
     sql_state_t sqlstate(err.sql_state());
-    ep.error(err.code(), (short)err.severity(), sqlstate, err.msg());
+    /*
+      There are 2 error severities: 0 = ERROR, 1 = FATAL. For us both
+      are treated as 2 = ERROR.
+    */
+    ep.error(err.code(), 2, sqlstate, err.msg());
     return;
   }
 
