@@ -1192,6 +1192,16 @@ internal::List_init<GUID> Result::getDocumentIds() const
 
 Row RowResult::fetchOne()
 {
+  if (m_cache)
+  {
+    if (m_row_cache_size == 0)
+      return Row();
+
+    Row r = std::move(m_row_cache.front());
+    m_row_cache.pop_front();
+    m_row_cache_size--;
+    return r;
+  }
   try {
     Impl &impl = get_impl();
     const Row_data *row = impl.get_row();
@@ -1204,6 +1214,47 @@ Row RowResult::fetchOne()
   CATCH_AND_WRAP
 }
 
+uint64_t RowResult::count()
+{
+  if (!m_cache)
+    try {
+
+    m_cache = true;
+    Impl &impl = get_impl();
+
+    auto it = m_row_cache.before_begin();
+
+    for(const Row_data *row = impl.get_row();
+        row != nullptr;
+        row = impl.get_row())
+    {
+      ++m_row_cache_size;
+      it = m_row_cache.insert_after(it,
+                                    Row(std::make_shared<Row::Impl>(*row,
+                                                                    impl.m_mdata)
+                                        )
+                                    );
+    }
+  }
+  CATCH_AND_WRAP
+
+  return m_row_cache_size;
+}
+
+
+RowResult::Row_list_initializer RowResult::fetchAll()
+{
+  if (m_cache && m_row_cache_size == 0)
+  {
+    // Clear list because counter is empty.
+    m_row_cache.clear();
+    return m_row_cache;
+  }
+
+  count();
+  m_row_cache_size = 0;
+  return m_row_cache;
+}
 
 void RowResult::check_result() const
 {
@@ -1272,11 +1323,27 @@ DbDoc DocResult::fetchOne()
 {
   try {
     check_result();
-    DbDoc doc = m_doc_impl->get_current_doc();
-    m_doc_impl->next_doc();
-    return std::move(doc);
+    return m_doc_impl->get_next_doc();
   }
   CATCH_AND_WRAP
 }
 
+uint64_t DocResult::count()
+{
+  return m_doc_impl->count_docs();
+}
 
+DocResult::Doc_list_initializer DocResult::fetchAll()
+{
+  try {
+    check_result();
+    return m_doc_impl->get_all_docs();
+  }
+  CATCH_AND_WRAP
+}
+
+DbDoc DocResult::Doc_list_initializer::Doc_iterator::operator*() const noexcept
+{
+  // Use Cache_iterator operator* to retrieve Row
+  return  DocResult::Impl::doc_from_row(Cache_iterator::operator*());
+}

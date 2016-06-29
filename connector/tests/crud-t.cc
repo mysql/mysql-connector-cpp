@@ -1432,3 +1432,97 @@ TEST_F(Crud, count)
   EXPECT_EQ(500, tbl.count());
 
 }
+
+TEST_F(Crud, buffered)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("coll", true);
+
+  coll.remove().execute();
+
+  for (int i=0; i < 10000; ++i)
+  {
+    std::stringstream json;
+    json << "{ \"name\": \"foo\", \"age\": " << i << " }";
+    coll.add(json.str()).execute();
+  }
+
+  {
+    DocResult res = coll.find().sort("age").execute();
+
+    //Get first directly
+    DbDoc r = res.fetchOne();
+    EXPECT_EQ(0, static_cast<int>(r["age"]));
+
+    EXPECT_EQ(9999, res.count());
+
+    //Get second from cache, after count()
+    EXPECT_EQ(1, static_cast<int>(res.fetchOne()["age"]));
+
+    //Get the rest of it
+    std::vector<DbDoc> rows = res.fetchAll();
+
+    EXPECT_EQ(9998, rows.size());
+
+    auto row = rows.begin();
+    int i = 2;
+    for( ; row != rows.end() ; ++row, ++i)
+    {
+      EXPECT_EQ(i, static_cast<int>((*row)["age"]));
+    }
+
+    EXPECT_EQ(0, res.count());
+
+    std::vector<DbDoc> rows_empty = res.fetchAll();
+
+    EXPECT_EQ(0, rows_empty.size());
+
+  }
+
+  {
+    Table tbl = sch.getCollectionAsTable("coll");
+
+    RowResult res = tbl.select("doc->$.age AS age")
+                    .orderBy("doc->$.age")
+                    .execute();
+
+    //Get first directly
+    Row r = res.fetchOne();
+
+    EXPECT_EQ(0, static_cast<int>(r[0]));
+
+    EXPECT_EQ(9999, res.count());
+
+    //Get second from cache, after count()
+    EXPECT_EQ(1, static_cast<int>(res.fetchOne()[0]));
+
+    //Get the rest of it
+    std::vector<Row> rows = res.fetchAll();
+
+    EXPECT_EQ(9998, rows.size());
+
+    auto row = rows.begin();
+    int i = 2;
+    for( ; row != rows.end() ; ++row, ++i)
+    {
+      EXPECT_EQ(i, static_cast<int>((*row)[0]));
+    }
+
+    EXPECT_EQ(0, res.count());
+
+    std::vector<Row> rows_empty = res.fetchAll();
+
+    EXPECT_EQ(0, rows_empty.size());
+
+  }
+
+
+}

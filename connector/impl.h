@@ -406,36 +406,46 @@ public:
   using JSON data in the row.
 */
 
+
 class DocResult::Impl
   : RowResult
 {
+
+  static DbDoc doc_from_row(Row &m_row)
+  {
+  // @todo Avoid copying of document string.
+    bytes data = m_row.getBytes(0);
+    return DbDoc(std::string(data.begin(),data.end()-1));
+  }
+
+
+//  };
+
+
   Row  m_row;
 
   Impl(BaseResult &init)
     : RowResult(std::move(init))
-  {
-    next_doc();
-  }
+  {}
 
-  DbDoc get_current_doc()
+  DbDoc get_next_doc()
   {
+    m_row = fetchOne();
+
     if (!m_row)
       return DbDoc();
 
-    // @todo Avoid copying of document string.
-
-    bytes data = m_row.getBytes(0);
-    return DbDoc(std::string(data.begin(), data.end() - 1));
+    return doc_from_row(m_row);
   }
 
-  bool has_doc() const
+  uint64_t count_docs()
   {
-    return (bool)m_row;
+    return count();
   }
 
-  void next_doc()
+  DocResult::Doc_list_initializer get_all_docs()
   {
-    m_row = fetchOne();
+    return DocResult::Doc_list_initializer(fetchAll());
   }
 
   friend class DocResult;

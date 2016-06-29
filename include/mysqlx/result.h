@@ -368,6 +368,9 @@ namespace internal {
 
 class RowResult : public internal::BaseResult
 {
+  std::forward_list<Row> m_row_cache;
+  uint64_t m_row_cache_size = 0;
+  bool m_cache = false;
 
 public:
 
@@ -442,11 +445,63 @@ public:
 
   Row fetchOne();
 
+  /**
+    Return all remaining rows
+
+    Rows that have been fetched using fetchOne() will not be available when
+    calling fetchAll()
+   */
+
+private:
+
+  class Row_list_initializer
+  {
+  protected:
+
+    typedef std::forward_list<Row> Cache;
+    typedef std::forward_list<Row>::iterator Cache_iterator;
+
+    Cache &m_cache;
+
+    Row_list_initializer(std::forward_list<Row> &cache)
+      : m_cache(cache)
+    {}
+
+
+  public:
+
+    template <typename U>
+    operator U()
+    {
+      return U(m_cache.begin(), m_cache.end());
+    }
+
+    operator std::forward_list<Row>()
+    {
+      return std::move(m_cache);
+    }
+
+    friend RowResult;
+    friend DocResult;
+  };
+
+
+public:
+
+  Row_list_initializer fetchAll();
+
+  /**
+     Returns number of rows available on RowResult to be fetched
+   */
+
+  uint64_t count();
+
 protected:
 
   void check_result() const;
 
   friend class Task;
+  friend DocResult;
 };
 
 
@@ -688,6 +743,102 @@ public:
   */
 
   DbDoc fetchOne();
+
+  /**
+    Return all remaining documents.
+
+    Documents that have been fetched using fetchOne() will not be available when
+    calling fetchAll()
+   */
+
+private:
+
+  class Doc_list_initializer
+    : RowResult::Row_list_initializer
+  {
+
+    // Struct used to iterate and convert Row to DbDoc
+    struct Doc_iterator
+        : Cache_iterator
+    {
+
+      typedef DbDoc                             value_type;
+      typedef DbDoc*                            pointer;
+      typedef DbDoc&                            reference;
+      typedef Cache_iterator::difference_type   difference_type;
+      typedef Cache_iterator::iterator_category iterator_category;
+
+
+      Doc_iterator(const Doc_iterator &it)
+        : Cache_iterator(it)
+      {}
+
+      Doc_iterator(Cache_iterator it)
+        : Cache_iterator(it)
+      {}
+
+      Doc_iterator& operator=(const Doc_iterator &it)
+      {
+        Cache_iterator::operator=(it);
+        return *this;
+      }
+
+      bool operator!=(const Doc_iterator& other)const noexcept
+      {
+        return (*static_cast<const Cache_iterator*>(this)) != other;
+      }
+
+      bool operator==(const Doc_iterator& other)const noexcept
+      {
+        return (*static_cast<const Cache_iterator*>(this)) == other;
+      }
+
+      Doc_iterator& operator++() noexcept
+      {
+        Cache_iterator::operator++();
+        return *this;
+      }
+
+      Doc_iterator operator++(int) noexcept
+      {
+        Doc_iterator tmp(*this);
+        Cache_iterator::operator++();
+        return tmp;
+      }
+
+      DbDoc operator*() const noexcept;
+
+    };
+
+
+    Doc_list_initializer(const RowResult::Row_list_initializer &row_list)
+      : RowResult::Row_list_initializer(row_list)
+    {}
+
+
+  public:
+
+    template <typename U>
+    operator U()
+    {
+      return U(Doc_iterator(m_cache.begin()), Doc_iterator(m_cache.end()));
+    }
+
+
+    friend DocResult;
+
+  };
+
+public:
+
+  Doc_list_initializer fetchAll();
+
+  /**
+     Returns number of documents available on DocResult to be fetched.
+   */
+
+  uint64_t count();
+
 
   friend class Impl;
   friend class Task;
