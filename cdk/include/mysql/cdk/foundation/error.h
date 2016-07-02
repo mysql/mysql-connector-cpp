@@ -73,6 +73,7 @@ namespace foundation {
   X (auth_failure,       5, "Authentication failure")        \
   X (protobuf_error,     6, "Protobuf error")        \
   X (conversion_error,   7, "Value conversion error") \
+  X (parse_error,        8, "Parse error") \
 
 // Define constants for CDK error conditions in cdkerrc structure
 

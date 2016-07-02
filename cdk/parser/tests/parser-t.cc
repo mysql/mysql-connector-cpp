@@ -25,6 +25,9 @@
 #include <gtest/gtest.h>
 #include "../json_parser.h"
 #include "../expr_parser.h"
+#include "../uri_parser.h"
+
+#include <cstdarg>  // va_arg()
 
 /*
   TODO:
@@ -218,7 +221,7 @@ TEST(Parser, json)
   }
 
   {
-    const char *json = "invalid"; 
+    const char *json = "invalid";
     JSON_parser parser(json);
     EXPECT_THROW(parser.process(printer),cdk::Error);
     cout <<"Expected error when parsing invalid sting: " << json
@@ -226,7 +229,7 @@ TEST(Parser, json)
   }
 
   {
-    const char *json = "{ foo: 123, invalid }"; 
+    const char *json = "{ foo: 123, invalid }";
     JSON_parser parser(json);
     EXPECT_THROW(parser.process(printer),cdk::Error);
     cout <<"Expected error when parsing invalid sting: " << json
@@ -235,7 +238,7 @@ TEST(Parser, json)
 
   // numeric tests
 
-  static struct num_doc_t { 
+  static struct num_doc_t {
     const wchar_t *doc;
     double  val;
   }
@@ -272,7 +275,7 @@ TEST(Parser, json)
     }
 
     Doc_prc *doc()
-    { 
+    {
       assert(false && "Unexpected document field value");
       return NULL;
     }
@@ -609,6 +612,7 @@ TEST(Parser, expr)
   }
 }
 
+
 const Expr_Test order_exprs[] =
 {
   { parser::Parser_mode::DOCUMENT, L"$.age"},
@@ -625,7 +629,6 @@ const Expr_Test order_exprs[] =
   { parser::Parser_mode::TABLE   , L"`date`->$.year DESC"},
 
 };
-
 
 
 struct Order_printer
@@ -651,6 +654,7 @@ struct Order_printer
   }
 
 };
+
 
 TEST(Parser, order_expr)
 {
@@ -815,4 +819,414 @@ TEST(Parser, doc_path)
   {
     EXPECT_THROW(Doc_field_parser doc_path("date.date[*].**"), cdk::Error);
   }
+}
+
+
+/*
+  Tests for URI parser
+  ====================
+*/
+
+/*
+  Helper "optional string" type. It helps distinguishing null string
+  from empty one.
+*/
+
+struct string_opt : public std::string
+{
+  bool m_is_null;
+
+  string_opt() : m_is_null(true)
+  {}
+
+  template <typename T>
+  string_opt(T arg)
+    : std::string(arg), m_is_null(false)
+  {}
+
+  operator bool() const
+  {
+    return !m_is_null;
+  }
+
+  bool operator==(const string_opt &other) const
+  {
+    if (m_is_null)
+      return other.m_is_null;
+    return 0 == this->compare(other);
+  }
+};
+
+static const string_opt none;
+
+
+/*
+  Helper structure to hold result of URI parsing.
+*/
+
+struct URI_parts
+{
+  typedef std::string string;
+  typedef std::map<string, string_opt> query_t;
+
+  query_t query;
+
+  URI_parts() : port(0), has_query(false)
+  {}
+
+  URI_parts(
+    const string_opt &_user,
+    const string_opt &_pwd,
+    const string &_host,
+    short _port,
+    const string_opt &_path,
+    bool _has_query)
+    : user(_user)
+    , pwd(_pwd)
+    , host(_host)
+    , port(_port)
+    , path(_path)
+    , has_query(_has_query)
+  {}
+
+  string_opt user;
+  string_opt pwd;
+  string     host;
+  short      port;
+  string_opt path;
+  bool       has_query;
+
+  bool operator==(const URI_parts &other) const
+  {
+    return user == other.user
+      && pwd == other.pwd
+      && host == other.host
+      && port == other.port
+      && path == other.path
+      && has_query == other.has_query;
+  }
+};
+
+std::ostream& operator<<(std::ostream &out, URI_parts &data)
+{
+  if (data.user)
+    cout << " user: " << data.user << endl;
+  if (data.pwd)
+    cout << "  pwd: " << data.pwd << endl;
+    cout << " host: " << data.host << endl;
+    cout << " port: " << data.port << endl;
+  if (data.path)
+    cout << " path: " << data.path << endl;
+  if (data.has_query)
+  {
+    cout << "query:" << endl;
+    for (URI_parts::query_t::const_iterator it = data.query.begin()
+        ; it != data.query.end()
+        ; ++ it)
+    {
+      cout << "  " << it->first;
+      if (it->second)
+        cout << " -> " << it->second;
+      cout << endl;
+    }
+  }
+  return out;
+}
+
+#define EXPECT_EQ_URI(A,B) \
+  EXPECT_EQ((A).user,(B).user);  \
+  EXPECT_EQ((A).pwd,(B).pwd);    \
+  EXPECT_EQ((A).host,(B).host);  \
+  EXPECT_EQ((A).port,(B).port);  \
+  EXPECT_EQ((A).path,(B).path);  \
+  EXPECT_EQ((A).has_query,(B).has_query)
+
+
+/*
+  URI processor used for tests. It stores reported URI data in
+  an URI_parts structure.
+*/
+
+struct URI_prc : parser::URI_processor
+{
+  URI_parts *m_data;
+
+  URI_prc(URI_parts &data) : m_data(&data)
+  {}
+
+  void user(const std::string &val)
+  {
+    m_data->user = val;
+  }
+
+  void password(const std::string &val)
+  {
+    m_data->pwd = val;
+  }
+
+  void host(const std::string &val)
+  {
+    m_data->host = val;
+  }
+
+  void port(unsigned short val)
+  {
+    m_data->port = val;
+  }
+
+  void path(const std::string &val)
+  {
+    m_data->path = val;
+  }
+
+  void key_val(const std::string &key)
+  {
+    m_data->has_query = true;
+    m_data->query[key] = string_opt();
+  }
+
+  void key_val(const std::string &key, const std::string &val)
+  {
+    m_data->has_query = true;
+    m_data->query[key] = val;
+  }
+
+  void key_val(const std::string &key, const std::list<std::string> &val)
+  {
+    m_data->has_query = true;
+    std::string list("['");
+    bool start = true;
+
+    for (std::list<std::string>::const_iterator it = val.begin()
+        ; it != val.end()
+        ; ++it)
+    {
+      if (start)
+        start = false;
+      else
+        list.append(",'");
+      list.append(*it);
+      list.append("'");
+    }
+
+    list.append("]");
+    m_data->query[key] = list;
+  }
+};
+
+
+
+TEST(Parser, uri)
+{
+  using std::string;
+
+  cout << "---- positive tests ----" << endl;
+
+  static struct URI_test
+  {
+    std::string  uri;
+    URI_parts    data;
+  }
+  test_uri[] = {
+    {
+      "host",
+      URI_parts(none, none, "host", 0, none, false)
+    },
+    {
+      "host:123",
+      URI_parts(none, none, "host", 123, none, false)
+    },
+    {
+      "host:0",
+      URI_parts(none,none, "host", 0, none , false)
+    },
+    {
+      "host/path",
+      URI_parts(none , none, "host", 0, "path", false)
+    },
+    {
+      "host/",
+      URI_parts(none , none, "host", 0, "", false)
+    },
+    {
+      "user@host/path",
+      URI_parts("user" , none, "host", 0, "path", false)
+    },
+    {
+      "user%40host%2Fpath",
+      URI_parts(none , none, "user@host/path", 0, none, false)
+    },
+    {
+      "user:@host/path",
+      URI_parts("user" , "", "host", 0, "path", false)
+    },
+    {
+      "user:pwd@host",
+      URI_parts("user" , "pwd", "host", 0, none, false)
+    },
+    {
+      "user:pwd@host:123",
+      URI_parts("user" , "pwd", "host", 123, none, false)
+    },
+    {
+      "user:pwd@host:123/",
+      URI_parts("user" , "pwd", "host", 123, "", false)
+    },
+    {
+      "user:pwd@host:123/foo?key=val",
+      URI_parts("user" , "pwd", "host", 123, "foo", true)
+    },
+    {
+      "user:pwd@host:123?key=val",
+      URI_parts("user" , "pwd", "host", 123, none, true)
+    },
+    {
+      "user:pwd@host:123/?key=val",
+      URI_parts("user" , "pwd", "host", 123, none, true)
+    },
+  };
+
+  //unsigned pos = 3;
+  for (unsigned pos = 0; pos < sizeof(test_uri) / sizeof(URI_test); ++pos)
+  {
+    std::string uri = test_uri[pos].uri;
+    cout <<endl << "== parsing conn string#" <<pos << ": " << uri << endl;
+
+    for (unsigned i = 0; i < 2; ++i)
+    {
+      if (i > 0)
+        uri = string("mysqlx://") + uri;
+
+      URI_parser pp(uri, i>0);
+
+      URI_parts data;
+      URI_prc  up(data);
+
+      pp.process(up);
+      cout << data;
+      EXPECT_EQ_URI(data, test_uri[pos].data);
+      cout << "--" << endl;
+    }
+  }
+
+
+  cout << endl << "---- test queries ----" << endl;
+
+  struct Query_test
+  {
+    string query;
+    typedef std::map<string, string_opt> query_t;
+
+    query_t data;
+
+    Query_test(const char *q, ...)
+      : query(q)
+    {
+      const char *key;
+      va_list args;
+      va_start(args, q);
+
+      while (NULL != (key = va_arg(args, const char*)))
+      {
+        const char *val = va_arg(args, const char*);
+        data[key] = val ? val : none;
+      }
+
+      va_end(args);
+    }
+  }
+  test_q[] =
+  {
+    Query_test("a=[a,b,c]&b=valB&c",
+                "a", "['a','b','c']",
+                "b", "valB",
+                "c", NULL,
+                NULL)
+  };
+
+
+  for (unsigned pos = 0; pos < sizeof(test_q) / sizeof(Query_test); ++pos)
+  {
+    string uri = "host?";
+    uri.append(test_q[pos].query);
+    cout <<endl << "== parsing uri#" << pos << ": " << uri << endl;
+
+    URI_parser pp(uri);
+    URI_parts  data;
+    URI_prc    up(data);
+
+    pp.process(up);
+    cout << data;
+
+    for (Query_test::query_t::const_iterator it = test_q[pos].data.begin()
+         ; it != test_q[pos].data.end(); ++it)
+    {
+      EXPECT_EQ(it->second, data.query[it->first]);
+    }
+  }
+
+
+  cout << endl << "---- negative tests ----" << endl;
+
+  const char* test_err_uri[] =
+  {
+    "foobar",
+    "myfoobar",
+    "my%23oobarbaz",
+    "mysqlx",
+    "mysqlx//",
+    "mysqlx:",
+    "mysqlx:/host",
+    "mysqlx:host",
+  };
+
+  const char* test_err[] =
+  {
+    "host#",
+    "host:foo",
+    "host:",
+    "host:1234567",
+    "host:-127",
+    "user@host#",
+    "user:pwd@host#",
+    "user:pwd@host:foo",
+    "user:pwd@host:/db",
+    "host/db#foo",
+    "host/db/foo",
+    "host/db?query#foo",
+    "host/db?a=[a,b,c&b",
+    "host/db?a=[a,b,c]foo=bar",
+    "host/db?a=[a,b=foo"
+    //"host/db?l=[a,b&c]" TODO: should this fail?
+    // TODO: allowed chars in host/path component
+  };
+
+  for (unsigned i = 0; i < 3; ++i)
+  {
+    //unsigned pos = 3;
+    for (unsigned pos = 0;
+         pos < (i==0 ? sizeof(test_err_uri) : sizeof(test_err)) / sizeof(char*);
+         ++pos)
+    {
+      string uri = (i==0? test_err_uri[pos] : test_err[pos]);
+
+      if (2 == i)
+        uri = string("mysqlx://") + uri;
+
+      cout << endl << "== parsing string#" << pos << ": " << uri << endl;
+      try {
+        // require mysqlx scheme only in first iteration
+        URI_parser pp(uri, i==0);
+        URI_parts  data;
+        URI_prc    up(data);
+        pp.process(up);
+        EXPECT_TRUE(false) << "Expected error when parsing URI";
+      }
+      catch (const URI_parser::Error &e)
+      {
+        cout << "Expected error: " << e << endl;
+      }
+    }
+  }
+
 }

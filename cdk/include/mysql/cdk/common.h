@@ -417,6 +417,9 @@ struct Safe_prc<JSON_processor>
 
   using Base::m_prc;
 
+  void null()
+  { return m_prc ? m_prc->null() : (void)NULL; }
+
   void str(const string &val)
   { return m_prc ? m_prc->str(val) : (void)NULL; }
 
