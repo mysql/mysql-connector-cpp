@@ -42,6 +42,7 @@ typedef struct thread_attr {
 } pthread_attr_t ;
 
 #define pthread_getspecific(A) (TlsGetValue(A))
+#define pthread_self() (GetCurrentThreadId())
 #define pthread_mutex_init(A,B)  (InitializeCriticalSection(A),0)
 #define pthread_mutex_lock(A)	 (EnterCriticalSection(A),0)
 #define pthread_mutex_trylock(A) win_pthread_mutex_trylock((A))
@@ -107,6 +108,7 @@ static unsigned long long query_performance_offset= 0;
 
 static unsigned int nanoseq= 0;
 static unsigned long long uuid_time=0;
+static unsigned long long uuid_time2=0;
 
 /**
   number of 100-nanosecond intervals between
@@ -469,22 +471,25 @@ void generate_uuid(uuid_type &uuid)
 
   pthread_mutex_lock(&LOCK_uuid_generator);
 
-  if (! uuid_time) /* first UUID() call. initializing data */
+  /* The thread key address will be used for random number generation */
+#ifdef _WIN32
+  static DWORD key;
+#else
+  static pthread_t key;
+#endif
+
+  key= pthread_self();
+  void *thd = (void*)key;
+
+  int i;
+
+  if (!uuid_time2) /* first UUID() call. initializing data */
   {
     unsigned long client_start_time= time(0);
     randominit(&sql_rand,(unsigned long) client_start_time,(unsigned long) client_start_time/2);
     unsigned long tmp=sql_rnd_with_mutex();
-    int i;
     if (my_gethwaddr(uuid_internal.hw_mac))
     {
-      /* The thread key address will be used for random number generation */
-#ifdef _WIN32
-      static DWORD key;
-#else
-      static pthread_key_t key;
-#endif
-
-      void *thd= pthread_getspecific(key);
 
       /* purecov: begin inspected */
       /*
@@ -504,7 +509,7 @@ void generate_uuid(uuid_type &uuid)
 
   unsigned long long tv= my_getsystime() + UUID_TIME_OFFSET + nanoseq;
 
-  if (likely(tv > uuid_time))
+  if (likely(tv > uuid_time2))
   {
     /*
       Current time is ahead of last timestamp, as it should be.
@@ -516,14 +521,14 @@ void generate_uuid(uuid_type &uuid)
       /*
         -1 so we won't make tv= uuid_time for nanoseq >= (tv - uuid_time)
       */
-      unsigned long delta= std::min<unsigned long>(nanoseq, (unsigned long) (tv - uuid_time -1));
+      unsigned long delta= std::min<unsigned long>(nanoseq, (unsigned long) (tv - uuid_time2 -1));
       tv-= delta;
       nanoseq-= delta;
     }
   }
   else
   {
-    if (unlikely(tv == uuid_time))
+    if (unlikely(tv == uuid_time2))
     {
       /*
         For low-res system clocks. If several requests for UUIDs
@@ -540,7 +545,7 @@ void generate_uuid(uuid_type &uuid)
         ++tv;
     }
 
-    if (unlikely(tv <= uuid_time))
+    if (unlikely(tv <= uuid_time2))
     {
       /*
         If the admin changes the system clock (or due to Daylight
@@ -558,7 +563,7 @@ void generate_uuid(uuid_type &uuid)
     }
   }
 
-  uuid_time=tv;
+  uuid_time2=tv;
   pthread_mutex_unlock(&LOCK_uuid_generator);
 
   uuid_internal.time_low=            (uint32) (tv & 0xFFFFFFFF);
@@ -566,4 +571,14 @@ void generate_uuid(uuid_type &uuid)
   uuid_internal.time_hi_and_version= (uint16) ((tv >> 48) | UUID_VERSION);
 
   memcpy(uuid, &uuid_internal, sizeof(uuid_internal));
+
+  union thread_to_char
+  {
+    pthread_t thr;
+    unsigned char c[sizeof(pthread_t)];
+  }t_val;
+
+  t_val.thr = key;
+  for (i = 0; i < sizeof(key); ++i)
+    uuid[sizeof(uuid) - i - 1] ^= t_val.c[i]; 
 }
