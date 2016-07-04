@@ -107,7 +107,6 @@ static unsigned long long query_performance_offset= 0;
 
 
 static unsigned int nanoseq= 0;
-static unsigned long long uuid_time=0;
 static unsigned long long uuid_time2=0;
 
 /**
@@ -479,9 +478,8 @@ void generate_uuid(uuid_type &uuid)
 #endif
 
   key= pthread_self();
-  void *thd = (void*)key;
 
-  int i;
+  size_t i;
 
   if (!uuid_time2) /* first UUID() call. initializing data */
   {
@@ -498,7 +496,7 @@ void generate_uuid(uuid_type &uuid)
         with a clock_seq value (initialized random below), we use a separate
         randominit() here
       */
-      randominit(&uuid_rand, tmp + (unsigned long) thd, tmp + (unsigned long)uuid_seed);
+      randominit(&uuid_rand, tmp + (unsigned long) key, tmp + (unsigned long)uuid_seed);
       for (i=0; i < (int)sizeof(uuid_internal.hw_mac); i++)
         uuid_internal.hw_mac[i]=(unsigned char)(my_rnd(&uuid_rand)*255);
       /* purecov: end */
@@ -580,5 +578,5 @@ void generate_uuid(uuid_type &uuid)
 
   t_val.thr = key;
   for (i = 0; i < sizeof(key); ++i)
-    uuid[sizeof(uuid) - i - 1] ^= t_val.c[i]; 
+    uuid[sizeof(uuid) - i - 1] ^= t_val.c[i];
 }
