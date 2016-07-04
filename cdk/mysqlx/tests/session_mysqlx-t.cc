@@ -27,7 +27,6 @@
 */
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <process_launcher.h>
 #include <exception.h>
 #include <iostream>
 #include <mysql/cdk.h>
@@ -95,60 +94,6 @@ public:
     else
       print_test<cdk::TYPE_FLOAT, double>(codec, data);
   }
-
-
- protected:
-  // Per-test-case set-up.
-  // Called before the first test in this test case.
-  // Can be omitted if not needed.
-  static void SetUpTestCase()
-  {
-
-  }
-
-  // Per-test-case tear-down.
-  // Called after the last test in this test case.
-  // Can be omitted if not needed.
-  static void TearDownTestCase()
-  {
-
-  }
-
-  // You can define per-test set-up and tear-down logic as usual.
-  virtual void SetUp()
-  {
-    Xplugin::SetUp();
-
-    pl = NULL; // in case constructor fails
-
-    if (!has_xplugin())
-    {
-      const char *server = getenv("SESSION_SERVER");
-      if (!server)
-        server= "ngs_mockup/ngs_mockup";
-
-      try
-      {
-        const char* args[] = { server, NULL };
-        pl = new ngcommon::Process_launcher(server, args);
-        pl->read_one_char();
-      }
-      catch (ngcommon::Exception &e)
-      {
-        FAIL() <<"Could not launch test server (" <<server <<"): " <<e.what();
-      }
-    }
-  }
-
-  virtual void TearDown()
-  {
-    Xplugin::TearDown();
-    delete pl;
-  }
-
-  // Some expensive resource shared by all tests.
-  //boost::shared_ptr<ngcommon::Process_launcher> pl;
-  ngcommon::Process_launcher *pl;
 
 };
 

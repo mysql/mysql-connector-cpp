@@ -335,8 +335,7 @@ bool TCPIP_base::eos() const
 
 bool TCPIP_base::has_bytes() const
 {
-  const Impl &sock = get_base_impl();
-  return sock.is_open() && sock.available() > 0;
+  return get_base_impl().available() > 0;
 }
 
 bool TCPIP_base::is_ended() const
@@ -346,7 +345,7 @@ bool TCPIP_base::is_ended() const
 
 bool TCPIP_base::has_space() const
 {
-  return detail::select_one(get_base_impl().m_sock, detail::SELECT_MODE_WRITE, false) > 0;
+  return get_base_impl().has_space();
 }
 
 void TCPIP_base::flush()

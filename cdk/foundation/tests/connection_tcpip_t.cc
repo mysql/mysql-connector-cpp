@@ -307,9 +307,11 @@ TEST_F(Foundation_connection_tcpip, sudden_close)
   try
   {
     TCPIP::Read_op read_op(conn, inbuf);
+
+    cout << "Waiting for reply from server..." << endl;
     while (!read_op.cont())
     {
-      cout << "Waiting for reply from server..." << endl;
+      cdk::foundation::sleep(10);  // 10ms
     }
 
     inbuf_raw[read_op.get_result()]= 0;

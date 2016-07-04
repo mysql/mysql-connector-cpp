@@ -95,6 +95,9 @@ public:
 
   std::size_t available() const
   {
+    if (!is_open())
+      return 0;
+
     try
     {
       return detail::bytes_available(m_sock);
@@ -104,6 +107,13 @@ public:
       // We couldn't establish if there's still data to be read. Assuming there isn't.
       return 0;
     }
+  }
+
+  bool has_space() const
+  {
+    if (!is_open())
+      return false;
+    return detail::select_one(m_sock, detail::SELECT_MODE_WRITE, false) > 0;
   }
 
   virtual ~Impl()
