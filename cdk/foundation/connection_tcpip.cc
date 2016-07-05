@@ -65,17 +65,7 @@ void connection_TCPIP_impl::do_connect()
   if (is_open())
     return;
 
-  m_sock = detail::socket(true);
-
-  try
-  {
-    detail::connect(m_sock, m_host.c_str(), m_port);
-  }
-  catch (Error &)
-  {
-    close();
-    throw;
-  }
+  m_sock = detail::connect(m_host.c_str(), m_port);
 }
 
 

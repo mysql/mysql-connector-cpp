@@ -64,6 +64,8 @@ ADD_BOOST(${target_foundation})
 
 IF(WIN32)
   target_link_libraries(${target_foundation} ws2_32)
+  target_compile_definitions(${target_foundation}
+                             PRIVATE _CRT_SECURE_NO_WARNINGS)
 ENDIF(WIN32)
 
 if(CMAKE_SYSTEM_NAME MATCHES "SunOS")

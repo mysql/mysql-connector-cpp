@@ -25,6 +25,13 @@
 #include "socket_detail.h"
 #include <mysql/cdk/foundation/error.h>
 #include <mysql/cdk/foundation/connection_tcpip.h>
+PUSH_SYS_WARNINGS
+#include <cstdio>
+#include <limits>
+#ifndef _WIN32
+#include <arpa/inet.h>
+#endif
+POP_SYS_WARNINGS
 
 
 namespace cdk {
@@ -153,6 +160,67 @@ const int SOCKET_ERROR = -1;
 #endif // _WIN32
 
 
+/*
+  error_category_resolve class
+  ============================
+
+  Used for handling errors returned by network name resolution routines
+  related to `getaddrinfo`.
+*/
+
+class error_category_resolve : public error_category
+{
+  error_category_resolve() {}
+
+  const char* name() const { return "resolve"; }
+  std::string message(int code) const;
+
+  error_condition default_error_condition(int code) const
+  {
+    switch (code)
+    {
+      case EAI_AGAIN: return errc::resource_unavailable_try_again;
+      case EAI_BADFLAGS: return errc::invalid_argument;
+      case EAI_FAIL: return errc::address_not_available;
+      case EAI_FAMILY: return errc::address_family_not_supported;
+      case EAI_MEMORY: return errc::not_enough_memory;
+      case EAI_NODATA: return errc::address_not_available;
+      default:
+        throw_error(code, error_category_resolve());
+        return errc::no_error;  // suppress copile warnings
+    }
+  }
+
+  bool equivalent(int code, const error_condition &ec) const
+  {
+    try
+    {
+      return ec == default_error_condition(code);
+    }
+    catch (...)
+    {
+      return false;
+    }
+  }
+
+  friend const error_category& resolve_error_category();
+};
+
+
+std::string error_category_resolve::message(int code) const
+{
+  return gai_strerror(code);
+}
+
+
+const error_category& resolve_error_category()
+{
+  static const error_category_resolve instance;
+
+  return instance;
+}
+
+
 /**
   Throws thread specific socket error.
 */
@@ -234,9 +302,14 @@ void uninitialize_socket_system()
 }
 
 
-Socket socket(bool nonblocking)
+Socket socket(bool nonblocking, addrinfo* hints)
 {
-  Socket socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  Socket socket = NULL_SOCKET;
+
+  if (hints)
+    socket = ::socket(hints->ai_family, hints->ai_socktype, hints->ai_protocol);
+  else
+    socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
   if (socket != NULL_SOCKET)
   {
@@ -268,6 +341,9 @@ Socket socket(bool nonblocking)
 
 void close(Socket socket)
 {
+  if (socket == NULL_SOCKET)
+    return;
+
 #ifdef _WIN32
   if (::closesocket(socket) != 0)
 #else
@@ -309,58 +385,119 @@ void shutdown(Socket socket, Shutdown_mode mode)
 }
 
 
-void connect(Socket socket, const char *host_name, unsigned short port)
+addrinfo* addrinfo_from_string(const char* host_name, unsigned short port)
 {
-  hostent *host = ::gethostbyname(host_name);
+  addrinfo* result = NULL;
+  addrinfo hints = {};
+  in6_addr addr = {};
+  char str_port[6];
 
-  // TODO: Configurable number of attempts
+  if (std::sprintf(str_port, "%hu", port) < 0)
+    throw_error("Invalid port.");
 
-  for (short attempt = 0; !host && h_errno == TRY_AGAIN && attempt < 1; ++attempt)
-    host = ::gethostbyname(host_name);
+  hints.ai_flags = AI_NUMERICSERV;
+  hints.ai_family = AF_INET;
+  hints.ai_socktype = SOCK_STREAM;
 
-  if (!host)
+  if (inet_pton(AF_INET, host_name, &addr) == 1)
   {
-    // TODO: Better error messages which include host name
-
-    switch (h_errno)
-    {
-    case HOST_NOT_FOUND: THROW("Host name not found in DNS");
-    case NO_DATA: THROW("DNS returned no data when resolving host name");
-    case NO_RECOVERY: THROW("DNS failure while resolving host name");
-    case TRY_AGAIN:
-    default: THROW("Could not resolve host name");
-    }
-  }
-
-  sockaddr_in sock_addr = {};
-  sock_addr.sin_family = AF_INET;
-  sock_addr.sin_port = htons(port);
-  memcpy(&sock_addr.sin_addr.s_addr, host->h_addr,
-         static_cast<size_t>(host->h_length));
-
-  int connect_result = ::connect(socket, (struct sockaddr *)&sock_addr, sizeof(sock_addr));
-
-  if (connect_result == 0)
-  {
-    return;
-  }
-#ifdef _WIN32
-  else if (connect_result == SOCKET_ERROR && WSAGetLastError() == WSAEWOULDBLOCK)
-#else
-  else if (connect_result == SOCKET_ERROR && errno == EINPROGRESS)
-#endif
-  {
-    int select_result = select_one(socket, SELECT_MODE_WRITE, true);
-
-    if (select_result < 0)
-      throw_socket_error();
-    else
-      check_socket_error(socket);
+    hints.ai_family = AF_INET;
+    hints.ai_flags |= AI_NUMERICHOST;
   }
   else
   {
-    throw_socket_error();
+    if (inet_pton(AF_INET6, host_name, &addr) == 1)
+    {
+      hints.ai_family = AF_INET6;
+      hints.ai_flags |= AI_NUMERICHOST;
+    }
   }
+
+  int rc = getaddrinfo(host_name, str_port, &hints, &result);
+
+  if (rc != 0)
+    throw_error(rc, resolve_error_category());
+
+  if (!result)
+    throw_error(std::string("Invalid host name: ") + host_name);
+
+  return result;
+}
+
+
+Socket connect(const char *host_name, unsigned short port)
+{
+  Socket socket = NULL_SOCKET;
+  addrinfo* host_list = NULL;
+
+  // Resolve host name.
+  // TODO: Configurable number of attempts
+  int attempts = 2;
+  while (!host_list)
+  {
+    attempts--;
+    try
+    {
+      host_list = detail::addrinfo_from_string(host_name, port);
+    }
+    catch (Error& e)
+    {
+      if(e != errc::resource_unavailable_try_again || attempts <= 0)
+        throw;
+    }
+  }
+
+  struct AddrInfoGuard
+  {
+    addrinfo* list;
+    ~AddrInfoGuard() { freeaddrinfo(list); }
+  } guard = { host_list };
+
+  // Connect to host.
+  int connect_result = SOCKET_ERROR;
+  addrinfo* host = host_list;
+
+  while (connect_result != 0 && host)
+  {
+    try
+    {
+      socket = detail::socket(true, host);
+      connect_result = ::connect(socket, host->ai_addr, static_cast<int>(host->ai_addrlen));
+
+      if (connect_result != 0)
+      {
+      #ifdef _WIN32
+        if (connect_result == SOCKET_ERROR && WSAGetLastError() == WSAEWOULDBLOCK)
+      #else
+        if (connect_result == SOCKET_ERROR && errno == EINPROGRESS)
+      #endif
+        {
+          int select_result = select_one(socket, SELECT_MODE_WRITE, true);
+
+          if (select_result < 0)
+            throw_socket_error();
+          else
+            check_socket_error(socket);
+
+          connect_result = 0;
+        }
+        else
+        {
+          throw_socket_error();
+        }
+      }
+    }
+    catch (...)
+    {
+      close(socket);
+
+      host = host->ai_next;
+      if (!host)
+        throw;
+    }
+  }
+
+  return socket;
 }
 
 
@@ -491,7 +628,6 @@ void send(Socket socket, const byte *buffer, size_t buffer_size)
     bytes_sent += send_some(socket, buffer + bytes_sent, buffer_size - bytes_sent, true);
 }
 
-#include <limits>
 
 size_t recv_some(Socket socket, byte *buffer, size_t buffer_size, bool wait)
 {

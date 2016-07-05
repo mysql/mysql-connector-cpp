@@ -122,12 +122,14 @@ void uninitialize_socket_system();
   @param[in] nonblocking
     If `true`, creates a non-blocking socket. Otherwise, a blocking socket is
     created.
+  @param[in] hints
+    Optional hints for creating a socket.
 
   @throw cdk::foundation::Error
     Socket creation failed.
 */
 
-Socket socket(bool nonblocking);
+Socket socket(bool nonblocking, addrinfo* hints = 0);
 
 
 /**
@@ -163,16 +165,41 @@ void shutdown(Socket socket, Shutdown_mode mode);
 
 
 /**
-  Connect socket.
+  Create a `addrinfo` structure from a string.
 
-  Connects a socket to a TCP/IP host.
+  Creates a `addrinfo` structure from a string address representation and port.
 
-  @param[in] socket
-    Socket to be connected.
+  @param[in] host_name
+    Host name.
+  @param[in] port
+    Host port.
+
+  @return
+    `addrinfo` structure.
+
+  @throw cdk::foundation::Error
+    Failed to create a `addrinfo` structure.
+
+  @note
+    This function always blocks.
+    Result pointer needs to be released with `freeaddrinfo`.
+*/
+
+addrinfo* addrinfo_from_string(const char* host_name, unsigned short port);
+
+
+/**
+  Create and connect socket.
+
+  Creates and connects a socket to a TCP/IP host.
+
   @param[in] host
     Destination host name.
   @param[in] port
     Destination host port.
+
+  @return
+    Connected socket.
 
   @throw cdk::foundation::Error
     Connection failed.
@@ -181,7 +208,7 @@ void shutdown(Socket socket, Shutdown_mode mode);
     This function always blocks.
 */
 
-void connect(Socket socket, const char *host, unsigned short port);
+Socket connect(const char *host, unsigned short port);
 
 
 /**

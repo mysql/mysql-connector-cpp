@@ -189,6 +189,64 @@ TEST_F(Foundation_connection_tcpip, basic)
 
 
 /*
+  IPv4 connection test.
+
+  Note: Test server should be started before running this test.
+*/
+
+
+TEST_F(Foundation_connection_tcpip, IPv4_connection)
+{
+  using cdk::foundation::byte;
+  using connection::TCPIP;
+
+  TCPIP conn("127.0.0.1", PORT);
+
+  try
+  {
+    conn.connect();
+  }
+  catch (Error& e)
+  {
+    FAIL() << "IPv4 connection failed: " << e.what() << endl;
+  }
+  catch (...)
+  {
+    FAIL() << "IPv4 connection failed" << endl;
+  }
+}
+
+
+/*
+  IPv6 connection test.
+
+  Note: Test server should be started before running this test.
+*/
+
+
+TEST_F(Foundation_connection_tcpip, DISABLED_IPv6_connection)
+{
+  using cdk::foundation::byte;
+  using connection::TCPIP;
+
+  TCPIP conn("::1", PORT);
+
+  try
+  {
+    conn.connect();
+  }
+  catch (Error& e)
+  {
+    FAIL() << "IPv6 connection failed: " << e.what() << endl;
+  }
+  catch (...)
+  {
+    FAIL() << "IPv6 connection failed" << endl;
+  }
+}
+
+
+/*
   Basic test that connects to the test server, sends a message and
   reads server's reply. Using async API to wait for IO operations.
 

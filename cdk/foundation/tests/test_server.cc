@@ -32,6 +32,7 @@
 
 #include <mysql/cdk/foundation/socket.h>
 #include <iostream>
+#include <exception>
 
 using namespace ::std;
 using namespace ::cdk::foundation;
@@ -42,29 +43,39 @@ typedef Socket::Connection::Write_op      Wr_op;
 
 int main()
 {
-  Socket sock(PORT);
+  try
+  {
+    Socket sock(PORT);
 
-  cout <<"Waiting for connection on port " <<PORT <<" ..." <<endl;
+    cout <<"Waiting for connection on port " <<PORT <<" ..." <<endl;
 
-  Connection conn(sock);
-  conn.wait();
+    Connection conn(sock);
+    conn.wait();
 
-  cout <<"Connected, waiting for data ..." <<endl;
+    cout <<"Connected, waiting for data ..." <<endl;
 
-  char input[128];
+    char input[128];
 
-  Rd_op read(conn, buffers((byte*)input,sizeof(input)-1));
-  read.wait();
-  size_t howmuch= read.get_result();
-  input[howmuch]= '\0';
+    Rd_op read(conn, buffers((byte*)input,sizeof(input)-1));
+    read.wait();
+    size_t howmuch= read.get_result();
+    input[howmuch]= '\0';
 
-  cout <<"Received " <<howmuch <<" bytes: " <<input <<endl;
+    cout <<"Received " <<howmuch <<" bytes: " <<input <<endl;
 
-  cout <<"Sending back ..." <<endl;
+    cout <<"Sending back ..." <<endl;
 
-  Wr_op write(conn, buffers((byte*)input, howmuch+1));
-  write.wait();
+    Wr_op write(conn, buffers((byte*)input, howmuch+1));
+    write.wait();
 
-  cout <<"Done!" <<endl;
+    cout <<"Done!" <<endl;
+  }
+  catch (std::exception& e)
+  {
+    cout <<"Test server exit with exception: " <<e.what() <<endl;
+  }
+  catch (...)
+  {
+    cout <<"Test server exit with unknown exception." <<endl;
+  }
 }
-
