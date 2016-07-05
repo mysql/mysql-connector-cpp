@@ -108,12 +108,6 @@ protected:
         processing server reply is completed and there are no more
         stages to be performed.
       }
-
-      MDATA --> ROWS  : if column count > 0
-      MDATA --> CLOSE : if column count == 0 (no result-set)
-      ROWS  --> MDATA : if another result-set follows
-      ROWS  --> CLOSE : if this was the last result-set
-      CLOSE --> DONE
   */
 
   enum { MDATA, ROWS, CLOSE, DONE } m_result_state, m_next_state;
@@ -187,15 +181,17 @@ Rcv_result_base::Rcv_result_base(Protocol_impl &proto)
 
 void Rcv_result_base::resume(Mdata_processor &prc)
 {
-  if (MDATA != m_result_state || m_completed)
-    throw_error("Rcv_result: incorrect resume"); //TODO: Improve error report
+  if (MDATA != m_result_state)
+    throw_error("Rcv_result: incorrect resume: attempt to read meta-data"); //TODO: Improve error report
+  m_ccount = 0;
+  m_completed = false;
   read_msg(prc);
 }
 
 void Rcv_result_base::resume(Stmt_processor &prc)
 {
   if (CLOSE != m_result_state || !m_completed)
-    throw_error("Rcv_result: incorrect resume"); //TODO: Improve error report
+    throw_error("Rcv_result: incorrect resume: attempt to read final OK"); //TODO: Improve error report
   m_completed= false;
   read_msg(prc);
 }
@@ -203,7 +199,7 @@ void Rcv_result_base::resume(Stmt_processor &prc)
 void Rcv_result_base::resume(Row_processor &prc)
 {
   if (ROWS != m_result_state || !m_completed)
-    throw_error("Rcv_result: incorrect resume"); //TODO: Improve error report
+    throw_error("Rcv_result: incorrect resume: attempt to read rows"); //TODO: Improve error report
 
   // reset the row counter
   m_rcount = 0;
@@ -247,13 +243,50 @@ bool Rcv_result_base::process_next()
 
   This method is called after reading message header, but before reading and
   processing its payload (See Rcv_op::???). It maintains the state-machine
-  for processing server reply. Current state determines which messages are
-  expected and what next state is assumed after each expected message. If
-  given message completes the current processing stage the m_completed flag
-  is set to true. If the closing message should not be processed in this
-  stage but in the next one, method returns STOP to tell the Op_rcv logic
-  to keep the message pending (it will be available for the next read_msg()
-  call which is done when reply processing is resumed).
+  for processing server reply. After looking at the current state the logic
+  of this method determines the following things:
+
+  - Whether message of this type is expected, if not UNEXPECTED is returned.
+  - Whether this message ends current processing stage, if this is the case
+    then m_completed flag is set.
+  - In case current stage is ended, whether this message should be considered
+    part of the ended stage or of the new stage. If it belongs to the ended
+    stage then EXPECTED is returned. Otherwise STOP is returned and the message
+    will be processod again when the new stage is started.
+  - What is the next state after processing this message, this is stored in
+    m_next_state.
+
+  Note: current state is changed to the new one only after processing message
+  payload (so that state information is correct while processing the payload).
+  However, if current message will be processed in the next stage (this
+  method returns STOP), then the current state iformation needs to be updated
+  here.
+
+  Structure of a server reply which is traced by the state machine.
+
+  <reply> ::= (<rset> <more>)? StmtExecuteOk
+  <more> ::= FetchDone
+           | FetchDoneMoreResultsets <rset>? <more>
+  <rset> ::= MetaData+ Row*
+
+  Below are few examples of valid message sequences in server reply and how
+  they are distrbuted between different processing stages:
+  A = reading meta-data, B = reading rows, C = reading final OK.
+
+  1. A:[MetaData ...] B:[Row ... FetchDone] C:[StmtExecuteOk]
+  2. A:[MetaData ... FetchDone] C:[StmtExecuteOk]
+  3. A:[] C:[StmtExecuteOk]
+  4. A:[MetaData ...] B:[Row ... FetchDoneMoreResultsets] A:[MetaData ...] ... C:[StmtExecuteOk]
+  5. A:[MetaData ...] B:[Row ... FetchDoneMoreResultsets] A:[FetchDone] C:[StmtExecuteOk]
+
+  Example 1 is a typical result set with rows. Example 2 is a result-set
+  without any rows in it. Example 3 is a server reply without a result-set
+  (such as after INSERT/UPDATE statement). Example 4 is a multi-result-set.
+  Example 5 shows a multi-result set with no result-set at the end (such
+  sequence can be sent after stored routine exectuion).
+
+  TODO: Handle result-set for stored routine output parameters when xplugin
+  supports it.
 */
 
 Op_rcv::Next_msg Rcv_result_base::do_next_msg(msg_type_t type)
@@ -265,41 +298,75 @@ Op_rcv::Next_msg Rcv_result_base::do_next_msg(msg_type_t type)
   case MDATA:
 
     /*
-      In this state either ColumnMetaData messages describing columns of
-      a result-set are expected, or a StmtExecuteOk message if there is no
-      result-set in the reply.
+      In this state we expect (<rset>? <more>)? StmtExecuteOk sequence. It can
+      start with one of the following messages:
 
-      ColumnMeta data messages are processed in this stage until first Row
-      message arrives. In case there are no rows in the result-set, the next
-      message after last ColumnMetaData can be the FetchDone* one.
+      - ColumnMetaData - in this case we have a row-set (possibly empty), we
+                         continue in MDATA state until we see a row message
+                         or FetchDoneXXX which terminates empty row-set;
 
-      If first message that ends meta-data sequence is seen (either Row, or
-      Fetch* or StmtExecuteOk), message receiving operation is stopped at this
-      message. This and further messages are read when reply processing is
-      resumed with anther processor.
+      - Row            - such message should appear only after reading some
+                         ColumnMetaData ones and it starts the sequence of rows
+                         from the row-set;
+
+      - StmtExecuteOK  - this is the case where server reply contains no result
+                         set;
+
+      - FetchDoneXXX   - this is the case where there is no <rset> part but
+                         possibly more result sets follow;
     */
 
     switch (type)
     {
     case msg_type::ColumnMetaData: return EXPECTED;
 
+    /*
+      If we see Row message we move to ROWS state and will start next stage
+      (reading rows). The Row message belongs to the next stage.
+    */
+
     case msg_type::Row:
-    case msg_type::FetchDone: // This message will be processed by ROWS case
-    case msg_type::FetchDoneMoreResultsets: //This message will be processed by ROWS case
+      if (0 == m_ccount)
+        return UNEXPECTED;
       m_next_state = ROWS;
       break;
 
+    /*
+      If we see FetchDoneXXX then there are 2 cases:
+
+      1. If there was some meta-data info before (m_ccount > 0) then we have an
+      empty row-set without any rows in it. We will start row reading stage to
+      report 0 rows. This message will be part of the row reading stage.
+
+      2. If there was no meta-data info before (m_ccount == 0) then there is
+      no result set. We consume the current message as part of this stage, end
+      the meta-data stage and proceed to the next one (either CLOSE or MDATA
+      if another rset follows).
+    */
+
+    case msg_type::FetchDone:
+    case msg_type::FetchDoneMoreResultsets:
+      if (0 == m_ccount)
+        m_next_state = msg_type::FetchDone == type ? CLOSE : MDATA;
+      else
+        m_next_state = ROWS;
+      break;
+
+    /*
+      If we see StmtExecuteOk then the meta-data processing stage ends and we
+      proceed to the final stage. The message will be part of the next stage.
+    */
+
     case msg_type::StmtExecuteOk:
+      if (0 < m_ccount)
+        return UNEXPECTED;
       m_next_state = CLOSE;
       break;
 
     default: return UNEXPECTED;
     };
 
-    /*
-      If we reached here, then the current stage is completed and the
-      current message will be processed by the next stage.
-    */
+    //  If we reached here, then the current stage is completed.
     m_completed = true;
 
     /*
@@ -308,6 +375,16 @@ Op_rcv::Next_msg Rcv_result_base::do_next_msg(msg_type_t type)
       no meta-data) was present in the reply.
     */
     static_cast<Mdata_processor*>(m_prc)->col_count(m_ccount);
+
+    /*
+      If there is no result-set (no meta-data info was seen) then we either
+      look at StmtExecuteOk, which shuld be processed by the next stage, or at
+      some FetchDoneXXX messages which are consumed as part of this stage
+      (and ignored).
+    */
+
+    if (0 == m_ccount && msg_type::StmtExecuteOk != type)
+      return EXPECTED;
 
     /*
       Since we stop before processing message payload, we must update
@@ -320,9 +397,14 @@ Op_rcv::Next_msg Rcv_result_base::do_next_msg(msg_type_t type)
   case ROWS:
 
     /*
-      In this state Row messages are expected from the server. This ends when
-      first Fetch* message is seen. The terminating Fetch* message is
-      processed within this processing stage.
+      In this state we expect Row* <more> sequence. It can start with one of
+      the following messages:
+
+      - Row - next row from the row-set, we continue reading rows until we
+              see <more>;
+
+      - FetchDoneXXX - these messages start <more> sequence; they are consumed
+                       as part of this stage and the next stage starts.
     */
 
     switch (type)
@@ -428,7 +510,7 @@ namespace mysqlx {
 
 template<>
 void Rcv_result_base::process_msg_with(Mysqlx::Resultset::FetchDoneMoreResultsets &msg,
-                                  Row_processor &rp)
+                                       Row_processor &rp)
 {
   /*
     Inform the processor about finishing reading all rows from the
@@ -442,7 +524,7 @@ void Rcv_result_base::process_msg_with(Mysqlx::Resultset::FetchDoneMoreResultset
 
 template<>
 void Rcv_result_base::process_msg_with(Mysqlx::Resultset::FetchDone &msg,
-                                  Row_processor &rp)
+                                       Row_processor &rp)
 {
   /*
     Fetching all rows from the cursor is finished.
@@ -456,7 +538,7 @@ void Rcv_result_base::process_msg_with(Mysqlx::Resultset::FetchDone &msg,
 
 template<>
 void Rcv_result_base::process_msg_with(Mysqlx::Resultset::Row &row,
-                                  Row_processor &rp)
+                                       Row_processor &rp)
 {
   row_count_t rcount= m_rcount++;
 
@@ -500,7 +582,7 @@ void Rcv_result_base::process_msg_with(Mysqlx::Resultset::Row &row,
 
 template<>
 void Rcv_result_base::process_msg_with(Mysqlx::Resultset::ColumnMetaData &col_mdata,
-                                  Mdata_processor &mdata_proc)
+                                       Mdata_processor &mdata_proc)
 {
     col_count_t ccount= m_ccount++;
 
@@ -546,7 +628,7 @@ void Rcv_result_base::process_msg_with(Mysqlx::Resultset::ColumnMetaData &col_md
 
 template<>
 void Rcv_result_base::process_msg_with(Mysqlx::Sql::StmtExecuteOk &ok,
-                                  Stmt_processor &prc)
+                                       Stmt_processor &prc)
 {
   prc.execute_ok();
 }

@@ -495,6 +495,85 @@ TEST_F(Session_core, affected)
 }
 
 
+/*
+  Test handling of multi-result-sets
+*/
+
+TEST_F(Session_core, sql_multi_rset)
+{
+  try {
+    SKIP_IF_NO_XPLUGIN;
+
+    Session s(this);
+
+    if (!s.is_valid())
+      FAIL() << "Invalid Session!";
+
+    do_sql(s, L"DROP PROCEDURE IF EXISTS test.test");
+    do_sql(s, L"CREATE PROCEDURE test.test() BEGIN SELECT 1; SELECT 2, 'foo'; END");
+
+    {
+      Reply rp;
+      rp = s.sql(L"CALL test.test()");
+
+      EXPECT_TRUE(rp.has_results());
+      {
+        cout << "-- next result-set" << endl;
+        Cursor cursor(rp);
+        set_meta_data(cursor);
+        cursor.get_rows(*this);
+        cursor.wait();
+      }
+
+      EXPECT_TRUE(rp.has_results());
+      {
+        cout << "-- next result-set" << endl;
+        Cursor cursor(rp);
+        set_meta_data(cursor);
+        cursor.get_rows(*this);
+        cursor.wait();
+      }
+
+      EXPECT_FALSE(rp.has_results());
+    }
+
+    cout << "Test discarding of multi-result-set reply" << endl;
+
+    {
+      Reply rp;
+      rp = s.sql(L"CALL test.test()");
+
+      EXPECT_TRUE(rp.has_results());
+      {
+        Cursor cursor(rp);
+      }
+
+      EXPECT_TRUE(rp.has_results());
+    }
+
+    cout << "reply discarded" << endl;
+
+    {
+      Reply rp;
+      rp = s.sql(L"CALL test.test()");
+
+      EXPECT_TRUE(rp.has_results());
+    }
+
+    cout << "reply discarded" << endl;
+
+    // TODO: Test output parameters when xplugin supports it.
+    //do_sql(s, L"CREATE PROCEDURE test.test(OUT x INT) BEGIN SELECT 1; SET x = 2; END");
+    //rp = s.sql(L"CALL test.test(@ret)");
+
+    cout << "Done!" << endl;
+
+  }
+  CATCH_TEST_GENERIC
+}
+
+
+
 #if 0
 
 parser::JSON_parser m_parser;

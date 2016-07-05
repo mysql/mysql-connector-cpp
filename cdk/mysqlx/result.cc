@@ -539,7 +539,7 @@ void Cursor::done(bool eod, bool more)
   {
     m_session.start_reading_row_set();
   }
-  if (eod)
+  else if (eod)
   {
     m_session.start_reading_stmt_reply();
   }

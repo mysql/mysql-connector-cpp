@@ -1526,8 +1526,9 @@ CRUD_TEST_BEGIN(group_by)
     projection;
 
     /*
-      TODO: There is unknown problem with group_by + having on
-      document collections. Re-enable this when things are clarified/fixed.
+      TODO: There is problem with group_by + having on
+      document collections - bug#23738896. Re-enable this when
+      the bug is fixed.
     */
 
 #if 0

@@ -811,6 +811,15 @@ public:
   virtual size_t col_begin(col_count_t /*pos*/, size_t /*data_len*/) { return 0; }
   virtual size_t col_data(col_count_t /*pos*/, bytes /*data*/) { return 0;}
   virtual void col_end(col_count_t /*pos*/, size_t /*data_len*/) {}
+
+  /*
+    Note:
+    The first flag informs if all rows from the result set have been processed.
+    This can be not the case if only limited number of rows has been requested.
+
+    The second flag informs if there is anothr result set following the first one.
+  */
+
   virtual void done(bool /*eod*/, bool /*more*/) {}
 };
 
@@ -831,6 +840,25 @@ public:
   virtual void col_decimals(col_count_t /*pos*/, unsigned short /*decimals*/) {}
   virtual void col_content_type(col_count_t /*pos*/, unsigned short /*type*/) {}
   virtual void col_flags(col_count_t /*pos*/, uint32_t /*flags*/) {}
+
+  size_t message_begin(msg_type_t type, bool &flag)
+  {
+    size_t howmuch = Error_processor::message_begin(type, flag);
+
+    // Ignore messages which terminate meta-data
+
+    switch (type)
+    {
+    case msg_type::FetchDone:
+    case msg_type::FetchDoneMoreResultsets:
+    case msg_type::FetchDoneMoreOutParams:
+      flag = false;
+    default:
+      break;
+    }
+
+    return howmuch;
+  }
 };
 
 
