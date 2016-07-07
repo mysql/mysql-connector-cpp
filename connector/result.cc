@@ -1342,8 +1342,8 @@ DocResult::Doc_list_initializer DocResult::fetchAll()
   CATCH_AND_WRAP
 }
 
-DbDoc DocResult::Doc_list_initializer::Doc_iterator::operator*() const noexcept
+DbDoc DocResult::Doc_list_initializer::Doc_iterator::operator*() const
 {
   // Use Cache_iterator operator* to retrieve Row
-  return  DocResult::Impl::doc_from_row(Cache_iterator::operator*());
+  return  DocResult::Impl::doc_from_row(*m_it);
 }

@@ -758,55 +758,30 @@ private:
   {
 
     // Struct used to iterate and convert Row to DbDoc
-    struct Doc_iterator
-        : Cache_iterator
+    class Doc_iterator
+        : public std::iterator<Cache_iterator::iterator_category, DbDoc>
     {
 
-      typedef DbDoc                             value_type;
-      typedef DbDoc*                            pointer;
-      typedef DbDoc&                            reference;
-      typedef Cache_iterator::difference_type   difference_type;
-      typedef Cache_iterator::iterator_category iterator_category;
+      Cache_iterator m_it;
 
-
-      Doc_iterator(const Doc_iterator &it)
-        : Cache_iterator(it)
-      {}
+    public:
 
       Doc_iterator(Cache_iterator it)
-        : Cache_iterator(it)
+        : m_it(it)
       {}
 
-      Doc_iterator& operator=(const Doc_iterator &it)
+      bool operator!=(const Doc_iterator& other)const
       {
-        Cache_iterator::operator=(it);
+        return m_it != other.m_it;
+      }
+
+      Doc_iterator& operator++()
+      {
+        ++m_it;
         return *this;
       }
 
-      bool operator!=(const Doc_iterator& other)const noexcept
-      {
-        return (*static_cast<const Cache_iterator*>(this)) != other;
-      }
-
-      bool operator==(const Doc_iterator& other)const noexcept
-      {
-        return (*static_cast<const Cache_iterator*>(this)) == other;
-      }
-
-      Doc_iterator& operator++() noexcept
-      {
-        Cache_iterator::operator++();
-        return *this;
-      }
-
-      Doc_iterator operator++(int) noexcept
-      {
-        Doc_iterator tmp(*this);
-        Cache_iterator::operator++();
-        return tmp;
-      }
-
-      DbDoc operator*() const noexcept;
+      DbDoc operator*() const;
 
     };
 
