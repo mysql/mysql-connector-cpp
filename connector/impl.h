@@ -36,6 +36,7 @@
 #include <map>
 #include <memory>
 #include <stack>
+#include <list>
 
 
 namespace mysqlx {
@@ -321,7 +322,7 @@ public:
 
 // --------------------------------------------------------------------
 
-/**
+/*
   DbDoc implementation which stores document data in std::map.
 */
 
@@ -372,7 +373,7 @@ class DbDoc::Impl
 };
 
 
-/**
+/*
   DbDoc::Impl specialization which takes document data from
   a JSON string.
 */
@@ -399,7 +400,7 @@ public:
 };
 
 
-/**
+/*
   DocResult implementation over RowResult.
 
   This implementation takes rows from RowResult and builds a document
@@ -411,7 +412,7 @@ class DocResult::Impl
 {
   Row  m_row;
 
-  Impl(BaseResult &init)
+  Impl(RowResult &&init)
     : RowResult(std::move(init))
   {
     next_doc();
@@ -438,11 +439,20 @@ class DocResult::Impl
     m_row = fetchOne();
   }
 
-  friend class DocResult;
+  friend DocResult;
 };
 
 
 // --------------------------------------------------------------------
+
+
+struct XSession::Access
+{
+  static cdk::Session& get_cdk_session(XSession &sess)
+  {
+    return sess.get_cdk_session();
+  }
+};
 
 
 struct internal::BaseResult::Access
@@ -457,279 +467,281 @@ struct internal::BaseResult::Access
 };
 
 
-struct internal::Task::Access
-{
-  typedef internal::Task::Impl Impl;
-
-  static void reset(Task &task, Impl *impl)
-  {
-    task.reset(impl);
-  }
-
-  static Impl* get_impl(Task &task)
-  {
-    if (!task.m_impl)
-      THROW("Empty task implementation");
-    return task.m_impl;
-  }
-};
-
-
-struct Executable::Access
-{
-  static void reset_task(Executable &exec, internal::Task::Impl *impl)
-  {
-    exec.m_task.reset(impl);
-  }
-
-  static internal::Task::Access::Impl* get_impl(Executable &exec)
-  {
-    exec.check_if_valid();
-    return internal::Task::Access::get_impl(exec.m_task);
-  }
-};
-
-
 // --------------------------------------------------------------------
 
 /*
-  Task implementation
-  ===================
+  CRUD operation implementations
+  ==============================
+
+  Templates and classes defined in public headers crud.h,
+  collection_crud.h and table_crud.h define the public API of classes
+  representing CRUD operations.
+
+  Here we define templates that are used to build a hierarchy of
+  classes that implement these CRUD operations. Each CRUD operation
+  expects that its internal implementation object implements an
+  appropriate interface defined by XXX_impl classes. The interface
+  classes are structured into an inheritance chierarchy with
+  Executable_impl at the bottom. Thus each CRUD implementation object
+  must define the Executable_impl::execute() methods and then any
+  additional methods required by the CRUD operation being implemented.
 */
+
 
 /*
-  Classes deriving from Task::Impl define asynchronous operations which
-  send commands to the server. Derived class must define send_command()
-  method which sends a command using cdk::Session interface nad returns
-  a cdk::Reply object which represents async. operation which reads and
-  processes server reply to this command. Derived class can use
-  get_cdk_session() method to get the underlying cdk::Session object.
+  Base for CRUD implementation classes which implements the following
+  implementation aspects:
+
+  - Storing values of named parameters in `m_map` member,
+  - Storing limit/offset information (if any).
+
+  This information is available in forms expected by CDK:
+
+  - get_params() returns pointer to cdk::Param_source (NULL if no
+    parameter values were specified),
+  - get_limit() returns a pointer to cdk::Limit (NULL if no
+    limit/offset was specified).
+
+  This class also handles the final execution of an operation, which
+  is performed as follows (see method `wait`).
+
+  1. First, appropriate CRUD operation is sent to the server using
+     underlying CDK session. This produces a cdk::Reply object which
+     is used for further processing. Sending the CRUD operation is
+     performed by method `send_command` which should be overwriten by
+     derived class. Derived class has access to underlying CDK session
+     with method `get_cdk_session()`.
+
+  2. After getting cdk::Reply object implementation waits for it to
+     receive server reply and then returns BaseResult instance created
+     from the cdk::Reply object.
+
+  The Op_base template is parametrized by the implementation interface
+  `Impl` that derived class wants to implement. The Op_base template
+  implements some of the interface methods, other templates and derived
+  class should implement the rest.
 */
 
-class internal::Task::Impl : nocopy
+template<class Impl>
+class Op_base
+  : public Impl
+  , public cdk::Limit
+  , public cdk::Param_source
+  , internal::nocopy
 {
 protected:
 
   XSession   *m_sess;
   cdk::Reply *m_reply = NULL;
 
-  Impl(XSession &sess)
-    : m_sess(&sess)
-  {}
-  Impl(Collection &coll)
-    : m_sess(&coll.getSession())
-  {}
-  Impl(Table &tbl)
-    : m_sess(&tbl.getSession())
-  {}
-
-  virtual ~Impl() {}
-
-  virtual cdk::Reply* send_command() = 0;
-
-  cdk::Session& get_cdk_session() { return m_sess->get_cdk_session(); }
-
-  void init()
-  {
-    if (m_reply)
-      return;
-    m_reply = send_command();
-  }
-
-  bool is_completed()
-  {
-    init();
-    return m_reply->is_completed();
-  }
-
-  void cont()
-  {
-    init();
-    m_reply->cont();
-  }
-
-  internal::BaseResult wait()
-  {
-    init();
-    m_reply->wait();
-    if (0 < m_reply->entry_count())
-      m_reply->get_error().rethrow();
-    return get_result();
-  }
-
-  virtual internal::BaseResult get_result()
-  {
-    return internal::BaseResult::Access::mk(m_reply);
-  }
-
-  friend Task;
-};
-
-
-/*
-  Class Statement::Impl extends Task::Impl with infrastructure
-  for defining named parameter values.
-
-  The values for named values can be defined with set_params()
-  method which ccepts reference to param_map_t object which is
-  std::map from strings to Values.
-
-  Derived classes can access values set by set_params() with
-  get_params() method which returns cdk::Param_source pointer.
-  This pointer is NULL if set_params() was not called.
-*/
-
-class Statement::Impl : public internal::Task::Impl
-{
-protected:
-
-  typedef Statement::param_map_t param_map_t;
-
-  template <class C>
-  Impl(C &sess)
-    : internal::Task::Impl(sess)
-  {}
-
-  virtual ~Impl() {}
-
-  struct Params : public cdk::Param_source
-  {
-    param_map_t *m_map = NULL;
-
-    void process(Processor &prc) const
-    {
-      prc.doc_begin();
-
-      Value_converter conv;
-
-      for (auto it : *m_map)
-      {
-        Value_expr value(it.second, parser::Parser_mode::DOCUMENT);
-        conv.reset(value);
-        conv.process_if(prc.key_val(it.first));
-      }
-      prc.doc_end();
-    }
-  }
-  m_params;
-
-  cdk::Param_source* get_params()
-  {
-    return m_params.m_map ? &m_params : NULL;
-  }
-
-  void set_params(param_map_t &param_map)
-  {
-    m_params.m_map = &param_map;
-  }
-
-  friend Statement;
-};
-
-
-inline
-Statement::Statement(Impl *impl)
-  : Executable(impl)
-{}
-
-
-struct Statement::Access
-{
-  typedef Statement::Impl  Impl;
-
-  static void reset_task(Statement &exec, Statement::Impl *impl)
-  {
-    exec.m_task.reset(impl);
-    exec.m_map.clear();
-  }
-
-  static Impl* get_impl(Statement &exec)
-  {
-    exec.check_if_valid();
-    return static_cast<Impl*>(internal::Task::Access::get_impl(exec.m_task));
-  }
-};
-
-
-// --------------------------------------------------------------------
-
-
-template <class X> struct Crud_impl;
-
-template <class X>
-inline
-typename Crud_impl<X>::type& get_impl(X *p)
-{
-  typedef typename Crud_impl<X>::type Op_type;
-  return *static_cast<Op_type*>(Statement::Access::get_impl(*p));
-}
-
-
-// --------------------------------------------------------------------
-
-/*
-  Helper classes for CRUD operations.
-*/
-
-
-class Op_base
-  : public Statement::Access::Impl
-  , public cdk::Limit
-{
-protected:
-
   row_count_t m_limit = 0;
   bool m_has_limit = false;
   row_count_t m_offset = 0;
   bool m_has_offset = false;
 
-  std::vector<cdk::string> m_order;
+  typedef std::map<string, Value> param_map_t;
+  param_map_t m_map;
 
-  template <typename T>
-  Op_base(T &x) : Impl(x)
+
+  Op_base(XSession &sess)
+    : m_sess(&sess)
+  {}
+  Op_base(Collection &coll)
+    : m_sess(&coll.getSession())
+  {}
+  Op_base(Table &tbl)
+    : m_sess(&tbl.getSession())
   {}
 
-public:
 
-  void limit(row_count_t lm)
+  cdk::Session& get_cdk_session()
+  {
+    assert(m_sess);
+    return XSession::Access::get_cdk_session(*m_sess);
+  }
+
+  virtual cdk::Reply* send_command() = 0;
+
+
+  // Limit and offset
+
+  void set_limit(unsigned lm)
   {
     m_has_limit = true;
     m_limit = lm;
   }
 
-  void offset(row_count_t _offset)
+  void set_offset(unsigned offset)
   {
     m_has_offset = true;
-    m_offset = _offset;
+    m_offset = offset;
   }
 
+  cdk::Limit* get_limit()
+  {
+    return m_has_limit || m_has_offset ? this : nullptr;
+  }
+
+
+  // Parameters
+
+  void add_param(const mysqlx::string &name, Value val)
+  {
+    m_map.emplace(name, std::move(val));
+  }
+
+  void clear_params()
+  {
+    m_map.clear();
+  }
+
+  cdk::Param_source* get_params()
+  {
+    return m_map.empty() ? nullptr : this;
+  }
+
+
+  // Async execution
+
+  bool m_inited = false;
+  bool m_completed = false;
+
+  void init()
+  {
+    if (m_inited)
+      return;
+    m_inited = true;
+    m_reply = send_command();
+  }
+
+  bool is_completed()
+  {
+    if (m_completed)
+      return true;
+
+    init();
+    m_completed = (NULL == m_reply) || m_reply->is_completed();
+    return m_completed;
+  }
+
+  void cont()
+  {
+    if (m_completed)
+      return;
+    init();
+    if (m_reply)
+      m_reply->cont();
+  }
+
+  internal::BaseResult wait()
+  {
+    init();
+    if (m_reply)
+    {
+      m_reply->wait();
+      if (0 < m_reply->entry_count())
+        m_reply->get_error().rethrow();
+    }
+    return get_result();
+  }
+
+  virtual internal::BaseResult get_result()
+  {
+    if (!is_completed())
+      THROW("Attempt to get result of incomplete operation");
+
+    // Note: BaseResult takes ownership of the cdk::Reply object.
+
+    cdk::Reply *reply = m_reply;
+    m_reply = NULL;
+    return reply ? internal::BaseResult::Access::mk(reply)
+                 : internal::BaseResult::Access::mk_empty();
+  }
+
+
+  // Synchronous execution
+
+  internal::BaseResult execute()
+  {
+    if (m_completed)
+      THROW("Can not execute operation for the second time");
+    return wait();
+  }
+
+
   // cdk::Limit interface
-  row_count_t get_row_count() const override { return m_limit; }
-  const row_count_t* get_offset() const override
+
+  row_count_t get_row_count() const { return m_limit; }
+  const row_count_t* get_offset() const
   {
     return m_has_offset ? &m_offset : NULL;
   }
 
-  friend class internal::SortBase<false>;
-  friend class internal::SortBase<true>;
+
+  // cdk::Param_source
+
+  void process(Processor &prc) const
+  {
+    prc.doc_begin();
+
+    Value_converter conv;
+
+    for (auto it : m_map)
+    {
+      Value_expr value(it.second, parser::Parser_mode::DOCUMENT);
+      conv.reset(value);
+      conv.process_if(prc.key_val(it.first));
+    }
+    prc.doc_end();
+  }
+
 };
 
 
-template <parser::Parser_mode::value PM>
+/*
+  This template adds handling of order specifications on top of Op_base.
+
+  It implements the `add_order` method required by implementations of
+  CRUD operations that support ordering. Ordering information is stored
+  internally and transformed to the form expected by CDK: method
+  `get_order_by` returns pointer to cdk::Order_by or NULL if no order
+  specifications were given.
+
+  Template parameters are the implementation interface class being
+  implemented and parser mode for parsing expressions in order
+  specifications.
+*/
+
+template <class Impl, parser::Parser_mode::value PM>
 class Op_sort
-  : public Op_base
+  : public Op_base<Impl>
   , public cdk::Order_by
 {
+  std::list<cdk::string> m_order;
+
+  void add_sort(const mysqlx::string &sort)
+  {
+    m_order.push_back(sort);
+  }
+
 protected:
 
   template <typename T>
-  Op_sort(T &x) : Op_base(x)
+  Op_sort(T &x) : Op_base<Impl>(x)
   {}
 
 public:
 
+  cdk::Order_by* get_order_by()
+  {
+    return m_order.empty() ? nullptr : this;
+  }
+
+private:
+
   // cdk::Order_by interface
-  void process(Processor& prc) const
+
+  void process(Order_by::Processor& prc) const
   {
     prc.list_begin();
 
@@ -746,22 +758,56 @@ public:
 };
 
 
-template <parser::Parser_mode::value PM>
+/*
+  This template adds handling of projection specifications on top
+  of Op_order.
+
+  It implements the `add_proj` method required by implementations of
+  CRUD operations that support projection. Projection specifications
+  are stored internally and transformed to the form expected by CDK:
+  methods `get_xxx_proj` return pointer to cdk::Projection (as expected
+  for table projections) or cdk::Expression::Document (as expected by
+  document projections or NULL if no projection specifications were
+  given.
+
+  Template parameters are the implementation interface class being
+  implemented and parser mode for parsing expressions in projection
+  specifications.
+*/
+
+template <class Impl, parser::Parser_mode::value PM>
 class Op_projection
-    : public cdk::Projection
+    : public Op_sort<Impl, PM>
+    , public cdk::Projection
     , public cdk::Expression::Document
 {
 
   std::vector<cdk::string> m_projections;
 
+protected:
+
+  template <class X>
+  Op_projection(X &init) : Op_sort<Impl,PM>(init)
+  {}
+
 public:
 
-  bool has_projection() { return !m_projections.empty(); }
-
-  void add_projection(const cdk::string& field)
+  void add_proj(const mysqlx::string& field)
   {
     m_projections.push_back(field);
   }
+
+  cdk::Projection* get_tbl_proj()
+  {
+    return m_projections.empty() ? nullptr : this;
+  }
+
+  cdk::Expression::Document* get_doc_proj()
+  {
+    return m_projections.empty() ? nullptr : this;
+  }
+
+private:
 
   void process(cdk::Expression::Document::Processor& prc) const
   {
@@ -796,6 +842,47 @@ public:
   }
 
 };
+
+
+/*
+  This template adds handling of selection criteria on top
+  of Op_projection.
+
+  It implements the `add_where` method required by implementations of
+  CRUD operations that support document/row selection. The selection
+  criteria is transformed into the form expected by cdk: method
+  `get_where()` returns pointer to cdk::Expression or NULL if no
+  selection criteria was specified.
+
+  Template parameters are the base class which can be one of the other
+  implementation templates and parser mode for parsing selection
+  expression.
+*/
+
+template <class Base, parser::Parser_mode::value PM>
+class Op_select : public Base
+{
+protected:
+
+  std::unique_ptr<parser::Expression_parser> m_expr;
+
+  template <class X>
+  Op_select(X &init) : Base(init)
+  {}
+
+public:
+
+  void add_where(const mysqlx::string &expr)
+  {
+    m_expr.reset(new parser::Expression_parser(PM, expr));
+  }
+
+  cdk::Expression* get_where() const
+  {
+    return m_expr.get();
+  }
+};
+
 
 }
 

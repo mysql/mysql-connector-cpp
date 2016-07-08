@@ -59,8 +59,7 @@ class SqlResult;
 class DbDoc;
 class DocResult;
 
-class Task;
-class Executable;
+template <class Res> class Executable;
 
 
 /*
@@ -105,15 +104,14 @@ namespace internal {
     BaseResult(BaseResult &&other) { init(std::move(other)); }
     virtual ~BaseResult();
 
-    friend class mysqlx::NodeSession;
-    friend class mysqlx::Result;
-    friend class mysqlx::RowResult;
-    friend class mysqlx::SqlResult;
-    friend class mysqlx::DocResult;
-    friend class mysqlx::Task;
+    friend mysqlx::NodeSession;
+    friend mysqlx::Result;
+    friend mysqlx::RowResult;
+    friend mysqlx::SqlResult;
+    friend mysqlx::DocResult;
 
     struct Access;
-    friend struct Access;
+    friend Access;
   };
 
   inline
@@ -155,7 +153,14 @@ class Result : public internal::BaseResult
 {
 public:
 
-  Result& operator=(BaseResult &&other)
+  Result() = default;
+
+  Result(Result &&other)
+  {
+    *this = std::move(other);
+  }
+
+  Result& operator=(Result &&other)
   {
     init(std::move(other));
     return *this;
@@ -173,6 +178,14 @@ public:
 
   internal::List_init<GUID> getDocumentIds() const;
 
+private:
+
+  Result(BaseResult &&other)
+  {
+    init(std::move(other));
+  }
+
+  friend Executable<Result>;
 };
 
 
@@ -305,7 +318,7 @@ public:
 
   void clear();
 
-  friend class RowResult;
+  friend RowResult;
 };
 
 
@@ -368,11 +381,12 @@ namespace internal {
 
 class RowResult : public internal::BaseResult
 {
-
 public:
 
   RowResult()
   {}
+
+  virtual ~RowResult() {}
 
   /*
     Note: Even though we have RowResult(BaseResult&&) constructor below,
@@ -402,11 +416,7 @@ public:
     : BaseResult(std::move(static_cast<BaseResult&>(other)))
   {}
 
-  RowResult(BaseResult &&init_)
-    : BaseResult(std::move(init_))
-  {}
-
-  RowResult& operator=(BaseResult &&init_)
+  RowResult& operator=(RowResult &&init_)
   {
     BaseResult::operator=(std::move(init_));
     return *this;
@@ -446,7 +456,15 @@ protected:
 
   void check_result() const;
 
-  friend class Task;
+private:
+
+  RowResult(BaseResult &&init_)
+    : BaseResult(std::move(init_))
+  {}
+
+  friend Executable<RowResult>;
+  friend SqlResult;
+  friend DocResult;
 };
 
 
@@ -500,14 +518,11 @@ class SqlResult : public RowResult
 public:
 
   SqlResult(SqlResult &&other)
-    : RowResult(std::move(static_cast<BaseResult&>(other)))
+    : RowResult(std::move(static_cast<RowResult&>(other)))
   {}
 
-  SqlResult(BaseResult &&init_)
-    : RowResult(std::move(init_))
-  {}
 
-  SqlResult& operator=(BaseResult &&init_)
+  SqlResult& operator=(SqlResult &&init_)
   {
     RowResult::operator=(std::move(init_));
     return *this;
@@ -533,6 +548,14 @@ public:
   */
 
   bool nextResult();
+
+private:
+
+  SqlResult(BaseResult &&init_)
+    : RowResult(std::move(init_))
+  {}
+
+  friend Executable<SqlResult>;
 };
 
 
@@ -637,11 +660,12 @@ private:
   std::shared_ptr<Impl> m_impl;
   virtual void print(std::ostream&) const;
 
-  friend class Impl;
-
 public:
+
+  friend Impl;
+
   struct Access;
-  friend struct Access;
+  friend Access;
 };
 
 
@@ -654,7 +678,7 @@ public:
   %Result of an operation that returns documents.
 */
 
-class DocResult : public internal::BaseResult
+class DocResult // : public internal::BaseResult
 {
   class Impl;
   Impl *m_doc_impl = NULL;
@@ -668,18 +692,12 @@ public:
 
   DocResult(DocResult &&other)
   {
-    *this = std::move(static_cast<BaseResult&>(other));
-  }
-
-  DocResult(BaseResult &&init_)
-  {
-    *this = std::move(init_);
+    *this = std::move(other);
   }
 
   virtual ~DocResult();
 
-  void operator=(BaseResult &&init_);
-
+  void operator=(DocResult &&other);
 
   /**
     Return current document and move to the next one in the sequence.
@@ -689,9 +707,14 @@ public:
 
   DbDoc fetchOne();
 
-  friend class Impl;
-  friend class Task;
-  friend class DbDoc;
+private:
+
+  DocResult(internal::BaseResult&&);
+
+
+  friend Impl;
+  friend DbDoc;
+  friend Executable<DocResult>;
 };
 
 

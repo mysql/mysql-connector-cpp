@@ -175,7 +175,7 @@ public:
   size_t size() const { return length(); }
 
   class Access;
-  friend class Access;
+  friend Access;
 };
 
 

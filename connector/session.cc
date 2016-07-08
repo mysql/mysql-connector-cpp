@@ -51,7 +51,7 @@ class XSession::Impl
       m_sess.get_error().rethrow();
   }
 
-  friend class XSession;
+  friend XSession;
 };
 
 
@@ -778,14 +778,14 @@ uint64_t Table::count()
 */
 
 
-struct Op_sql : public internal::Task::Access::Impl
+struct Op_sql : public Op_base<internal::SqlStatement_impl>
 {
   string m_query;
 
   typedef std::list<Value> param_list_t;
 
   Op_sql(XSession &sess, const string &query)
-    : Impl(sess), m_query(query)
+    : Op_base(sess), m_query(query)
   {}
 
   struct
@@ -848,9 +848,9 @@ struct Op_sql : public internal::Task::Access::Impl
   }
   m_params;
 
-  void add_param(const Value &val)
+  void add_param(Value val)
   {
-    m_params.m_values.emplace_back(val);
+    m_params.m_values.emplace_back(std::move(val));
   }
 
   cdk::Reply* send_command()
@@ -865,21 +865,21 @@ struct Op_sql : public internal::Task::Access::Impl
 };
 
 
+void SqlStatement::reset(XSession &sess, const string &query)
+{
+  m_impl.reset(new Op_sql(sess, query));
+}
+
+
 SqlStatement& NodeSession::sql(const string &query)
 {
   try {
-    Executable::Access::reset_task(m_stmt, new Op_sql(*this, query));
+    m_stmt.reset(*this, query);
     return m_stmt;
   }
   CATCH_AND_WRAP
 }
 
-
-void SqlStatement::add_param(const Value &val)
-{
-  auto *impl = static_cast<Op_sql*>(internal::Task::Access::get_impl(m_task));
-  impl->add_param(val);
-}
 
 // ---------------------------------------------------------------------
 
@@ -908,39 +908,4 @@ ostream& operator<<(ostream &out, const Error&)
 {
   out <<"MYSQLX Error!";
   return out;
-}
-
-
-// ---------------------------------------------------------------------
-
-
-// Implementation of Task API using internal implementation object
-
-internal::Task::~Task() { try { delete m_impl; } catch(...){} }
-
-bool internal::Task::is_completed()
-{ try { return m_impl ? m_impl->is_completed() : true; } CATCH_AND_WRAP }
-
-internal::BaseResult internal::Task::wait()
-{
-  try {
-    if (!m_impl)
-      throw Error("Attempt to wait on empty task");
-    return m_impl->wait();
-  } CATCH_AND_WRAP
-}
-
-void internal::Task::cont()
-{
-  try {
-    if (!m_impl)
-      throw Error("Attempt to continue an empty task");
-    m_impl->cont();
-  } CATCH_AND_WRAP
-}
-
-void internal::Task::reset(Impl *impl)
-{
-  delete m_impl;
-  m_impl = impl;
 }

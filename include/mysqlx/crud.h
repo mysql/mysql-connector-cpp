@@ -27,35 +27,42 @@
 
 /**
   @file
-  Common classes used to define CRUD operation classes.
+  Common templates used to define CRUD operation classes.
 */
 
 /*
-  Different CRUD operation classes derive from Executable which defines
-  the execute() method that executes given operation. Derived classess
+  Different CRUD operation classes derive from `Executable` which defines
+  the `execute()` method that executes given operation. Derived classess
   define additional methods that can modify the operation before it gets
   executed.
 
   The hierarchy of classes reflects the grammar that defines the fluent
   CRUD API. The grammar can be described by the following diagram.
 
-    Executable -> Result : execute()
+    Executable<R> -> R : execute()
 
-    Offset = Executable
-    Offset -> Executable : offset()
+    Statement<R> = Executable<R>
+    Statement<R> -> Statement<R> : bind()
 
-    Limit<F> = Executable
-    Limit<false> -> Executable : limit()
-    Limit<true>  -> Offset     : limit()
+    Offset<R> = Statement<R>
+    Offset<R> -> Statement<R> : offset()
+
+    Limit<R,F> = Statement<R>
+    Limit<R,false> -> Statement<R> : limit()
+    Limit<R,true>  -> Offset<R>    : limit()
 
   In this diagram notation X -> Y : foo() means that class X defines
   public method foo() with return type Y (roughly). Notation X = Y means
-  that X inherits public methods from Y. Thus, for example, if x is
-  of type Limit<true> then:
+  that X inherits public methods from Y. R is the type of the result
+  produced by given CRUD operation.
 
-    x.limit()  - returns Offset
-    x.limit().offset() - returns Executable
-    x.execute()  - returns Result (Limit<true> inherits from Executable)
+  Thus, for example, if x is of type Limit<RowResult,true> then:
+
+    x.limit()  - returns Offset<RowResult>
+    x.limit().offset() - returns Statement<RowResult>
+    x.execute()  - returns RowResult (Limit<RowResult,true> inherits
+                   from Statemenent<RowResult> which inherits from
+                   Executable<RowResult>)
 
   We have 2 variants of Limit<> class, to distinguish the case where
   .offset() can follow .limit() from the case where only .limit() clause
@@ -65,92 +72,163 @@
   and tables can be found in collection_crud.h and table_crud.h,
   resepectively.
 
-  Each class eventually derives from Executable which holds the Task object
-  implementing given CRUD operation. This task is initialized when the
-  CRUD operation object is first created (see CollectionFind() constructors
-  for example). Then different clauses of the fluent CRUD API modify this
-  task object adding things like selection criteria, sorting specifications
-  etc. (to be precise, the internal implementaion of the task is modified
-  directly).
+  Each class eventually derives from Executable which holds the internal
+  implementation object which should implement the implementation
+  interface defined for given operation. The abstract interfaces to be
+  implemented by internal implementation objects are given by hierarchy
+  of XXX_impl classes based on Executable_impl. The public methods that
+  manipulate given CRUD operation are defined in terms of methods from
+  the implementation interface.
 
-  Note that Task and Executable have no copy semantics. If Executable
-  instance `a` is constructed from another Executable `b`, like in
-  `a = b`, then the task is moved from `b` to `a`. After this executable
-  `a` becomes "empty" and an attempt to execute it throws an error.
+  The internal implementation object is created and passed to the
+  constructor of the CRUD operation object which takes ownership of
+  the implementation (and deletes it upon destruction). Public methods
+  of the CRUD operation objects call methods of the internal
+  implementation object which holds the definition and parameters of the
+  operation to be performed. Eventually the `execute()` method is
+  forwarded to the internal implementation object which executes the
+  operation. Each CRUD operation base class has method `get_impl` which
+  returns pointer to the internal implementation object casted to
+  appropriate type.
+
+  An internal implementation object can not be shared between two CRUD
+  operation objects nor can it be copied. For that reason CRUD operations
+  do not have copy semantics. Assignment `a = b` moves internal
+  implementation from operation `b` to operation `a`. Using `b` after
+  such assignent throws errors.
+
+  Since internal implementation object is managed by the Executable<R>
+  class at the bottom of the inheritance hierarchy, this Executable<R>
+  class is a virtual base class. This ensures that there is only one copy
+  of Executable<R> in any object of derived class. It also means that
+  constructors of derived classes initialize the virtual base calss
+  directly and not through intermediate base class constructors.
+  For example, see constructor of `CollectionFind`.
 */
 
 
 #include "common.h"
-#include "task.h"
+#include "statement.h"
 
 #include <map>
 
 namespace mysqlx {
 namespace internal {
 
+/*
+  Interface to be implemented by internal implementations of
+  CRUD operations which support .limit() or .offset() clauses.
+*/
 
+struct Limit_impl : public Statement_impl
+{
+  virtual void set_offset(unsigned) = 0;
+  virtual void set_limit(unsigned) = 0;
+};
+
+
+template <class Res>
 class Offset
-: public virtual Statement
+  : public Statement<Res>
 {
 protected:
+
+  typedef Limit_impl Impl;
 
   // Make default constructor protected.
 
   Offset() = default;
 
-public:
+  using Statement<Res>::check_if_valid;
+  using Statement<Res>::m_impl;
 
-  Statement& offset(unsigned rows);
-};
-
-
-template <bool with_offset> class Limit;
-
-template<>
-class Limit<false>
-  : public virtual Statement
-{
-protected:
-
-  Limit() = default;
+  Impl* get_impl()
+  {
+    check_if_valid();
+    return static_cast<Impl*>(m_impl.get());
+  }
 
 public:
 
-  Statement& limit(unsigned rows);
-};
-
-
-template<>
-class Limit<true>
-  : public virtual Statement
-  , Offset
-{
-protected:
-
-  Limit() = default;
-
-public:
-
-  Offset& limit(unsigned rows);
+  Statement<Res>& offset(unsigned rows)
+  {
+    get_impl()->set_offset(rows);
+    return *this;
+  }
 };
 
 
 /*
-  Base class for CollectionSort<> and TableSort<>.
-
-  It defines the do_sort() method which modifies underlying task
-  instance. But the public API is different for collections and
-  tables and is defined in the derived classes.
+  The base class of Limit<R,F> is Offset<R> if F is true or
+  Statement<R> if F is false. But otherwise definition of Limit<R,F>
+  is the same in both cases. To use common template definition the
+  base calss of Limit<R,F> (which is also the return type of `limit`
+  method) is defined by LimitRet<R,F>::type.
 */
 
-template <bool limit_with_offset>
-class SortBase : public Limit<limit_with_offset>
+template <class Res, bool with_offset> struct LimitRet;
+
+template <class Res>
+struct LimitRet<Res,true>
+{
+  typedef Offset<Res> type;
+};
+
+template <class Res>
+struct LimitRet<Res,false>
+{
+  typedef Statement<Res> type;
+};
+
+
+template <class Res, bool with_offset>
+class Limit
+  : public LimitRet<Res, with_offset>::type
 {
 protected:
 
-  SortBase() = default;
-  void do_sort(const string&);
+  typedef Limit_impl Impl;
+
+  Limit() = default;
+
+  using LimitRet<Res, with_offset>::type::check_if_valid;
+  using LimitRet<Res, with_offset>::type::m_impl;
+
+  Impl* get_impl()
+  {
+    check_if_valid();
+    return static_cast<Impl*>(m_impl.get());
+  }
+
+public:
+
+  typename LimitRet<Res, with_offset>::type& limit(unsigned rows)
+  {
+    get_impl()->set_limit(rows);
+    return *this;
+  }
 };
+
+
+/*
+  Interfaces to be implemented by internal implementations of
+  CRUD operations which support sorting and projection specifications.
+  These specifications are passed to the implementation as sequences
+  of strings via multiple calls to `add_sort` or `add_proj` methods.
+  Implementation must parse these strings to get the specification.
+*/
+
+struct Sort_impl : public Limit_impl
+{
+  virtual void add_sort(const string&) = 0;
+};
+
+
+struct Proj_impl : public Sort_impl
+{
+  virtual void add_proj(const string&) = 0;
+};
+
 
 }}  // mysqlx::internal
 

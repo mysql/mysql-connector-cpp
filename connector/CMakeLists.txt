@@ -51,7 +51,6 @@ ADD_LIBRARY(connector STATIC
   session.cc
   result.cc
   document.cc
-  crud.cc
   collection_crud.cc
   table_crud.cc
 )

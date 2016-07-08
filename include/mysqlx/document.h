@@ -178,7 +178,7 @@ public:
   bool operator!=(const Iterator &other) const { return !(*this == other); }
   const Field& operator*();
 
-  friend class DbDoc;
+  friend DbDoc;
 };
 
 
@@ -404,10 +404,11 @@ protected:
   std::shared_ptr<Array>  m_arr;
 
 public:
+
+  friend DbDoc;
+
   struct Access;
   friend Access;
-
-  friend class DbDoc;
 };
 
 

@@ -49,39 +49,46 @@
   ~~~~~~
 
   CRUD operation objects have methods which can modify the operation
-  before it gets executed. For example `CollectionAdd:add()`
+  before it gets executed. For example `CollectionAdd::add()`
   appends a document to the list of documents that should be added
-  by given operation. These methods can be chained as allowed by
-  the fluent API grammar. In case of collection CRUD operations the
-  grammar can be described by the following diagram:
+  by given CollectionAdd operation. These methods can be chained
+  as allowed by the fluent API grammar. In case of collection CRUD
+  operations the grammar can be described by the following diagram:
 
-    Collection -> CollectionAdd         : add()
-    Collection -> CollectionRemove      : remove()
-    Collection -> CollectionFind        : find()
-    Collection -> CollectionModifyFirst : modify()
+    CollectionAddBase     -> CollectionAdd         : add()
+    CollectionRemoveBase  -> CollectionRemove      : remove()
+    CollectionFindBase    -> CollectionFind        : find()
+    CollectionModifyBase  -> CollectionModifyFirst : modify()
 
-    CollectionAdd = Executable
+    CollectionAdd = Executable<Result>
     CollectionAdd -> CollectionAdd : add()
 
-    CollectionRemove = CollectionSort<false>
+    CollectionRemove = CollectionSort<Result,false>
 
-    CollectionFind = CollectionSort<true>
+    CollectionFind = CollectionSort<DocResult,true>
 
-    CollectionModifyFirst = Executable
-    CollectionModifyFirst -> CollectionModify : set()
-    CollectionModifyFirst -> CollectionModify : unset()
-    CollectionModifyFirst -> CollectionModify : arrayXXX()
+    CollectionModify = CollectionSort<Result,false>
+    CollectionModify -> CollectionModify : set()
+    CollectionModify -> CollectionModify : unset()
+    CollectionModify -> CollectionModify : arrayXXX()
 
-    CollectionModify = CollectionModifyFirst
-    CollectionModify = CollectionSort<false>
+    CollectionSort<R,F> = Limit<R,F>
+    CollectionSort<R,F> -> Limit<R,F> : sort()
 
-    CollectionSort<F> = Limit<F>
-    CollectionSort<F> -> Limit<F> : sort()
+    Collection = CollectionAddBase
+    Collection = CollectionRemoveBase
+    Collection = CollectionFindBase
+    Collection = CollectionModifyBase
 
   In this diagram notation X -> Y : foo() means that class X defines
   public method foo() with return type Y (roughly). Notation X = Y means
   that X inherits public methods from Y. See crud.h for grammar
-  rules for Limit<> and other commoon classes.
+  rules for Limit<> and other common classes.
+
+  The top-level classes CollectionXXXBase correspond to four main kinds
+  of CRUD operations. Collection class, which supports all four kinds,
+  is derived from all the CollecitonXXXBase classes using multiple
+  inheritance.
 
   CRUD operation objects do not have copy semantics. If CRUD object a is
   constructed from b, like in "a = b", then the operation moves from b to
@@ -91,10 +98,11 @@
 
 #include "common.h"
 #include "result.h"
-#include "task.h"
+#include "statement.h"
 #include "crud.h"
 
 #include <utility>
+#include <sstream>
 
 namespace cdk {
 
@@ -116,7 +124,9 @@ namespace internal {
 
     It defines members that can be shared between the different
     CollectionXXXBase classes which all are used as a base for
-    the Collection class.
+    the Collection class. Currently the only common member is
+    `m_coll` which points to the collection on which the operation
+    is performed.
   */
 
   class CollectionOpBase
@@ -153,11 +163,16 @@ namespace internal {
   Adding documents to a collection
   ================================
 
-  Base class CollectionAddBase defines the various forms of add() method
-  which produce CollectionAdd operation. The same methods are defined
-  by CollectionAdd class and can be used to append further documents
-  to the operation.
+  Various forms of add() clause are defined by CollectionAddInterface
+  template. It is inherited by CollectionAdd and CollectionAddBase.
+  They differ by return type of the add() method. In case of
+  CollectionAddBase the add() method returns new CollectionAdd object
+  by value, while CollectionAdd::add() method returns reference to
+  itself.
 
+  Thus, once CRUD add operation is created by CollectionAddBase::add(),
+  this operation is then modified in-place by subsequent calls to
+  the add() method.
 */
 
 class CollectionAdd;
@@ -165,11 +180,10 @@ class CollectionAdd;
 
 namespace internal {
 
-
   /*
     Type trait which is used to distinguish types which can describe a single
     document from other types such as document collections. This is needed
-    to correctly defined CollectionAddInterface below.
+    to correctly define CollectionAddInterface below.
 
     Currently we have DbDoc type and also support documents described by JSON
     strings.
@@ -191,13 +205,11 @@ namespace internal {
     Documents can be specified as JSON strings or DbDoc instances. Several
     documents can be added in a single call to `add()`.
 
-    @note We have two variants of add() operations which differ by return type.
-    CollectionAddBase::add() returns CollectionAdd object by value while
-    CollectionAdd::add() returns reference to itself. For that reason
-    CollectionAddInterface<> is a template parametrised with return type of
-    the `add()` method. But in either case the AddOp type refers to
-    a CollectionAdd instance which implemnts do_add() method which appends a
-    document to the list.
+    Template is parametrized by return type of the `add()` method which
+    is different in case of `CollectionAddBase` and `CollcetionAdd`.
+    This return type is either `CollectionAdd` or reference to
+    `CollectionAdd`, respectively. In either case `CollectionAdd::do_add()`
+    method is used to append documents to the list.
   */
 
   template<class AddOp>
@@ -301,9 +313,24 @@ namespace internal {
       CATCH_AND_WRAP
     }
 
-    friend class CollectionAdd;
+    friend CollectionAdd;
   };
 
+
+  /*
+    Interface to be implemented by internal implementations
+    of CRUD add operation.
+  */
+
+  struct CollectionAdd_impl : public Executable_impl
+  {
+    /*
+      Note: Current implementation only supports sending
+      documents in form of JSON strings.
+    */
+
+    virtual void add_json(const string&) = 0;
+  };
 
   class CollectionAddBase;
 
@@ -313,14 +340,14 @@ namespace internal {
 /**
   Operation which adds documents to a collection.
 
-  Operation stores a list of documents that will be added
-  to a given collection when this operation is executed.
-  New documents can be appended to the list with various variants
-  of `add()` method, as defined by CollectionAddInterface<>.
+  The various `add()` methods defined by `CollectionAddInterface`
+  call `do_add()` to append documents to the list one by one. This
+  method, in turn, passes these documents to the internal
+  implementation object.
 */
 
 class CollectionAdd
-  : public Statement
+  : public virtual Executable<Result>
   , public internal::CollectionAddInterface<CollectionAdd&>
 {
 public:
@@ -331,23 +358,42 @@ public:
 
   CollectionAdd(Collection &coll);
 
-  CollectionAdd(CollectionAdd &other) : Statement(other) {}
+  CollectionAdd(CollectionAdd &other) : Executable(other) {}
   CollectionAdd(CollectionAdd &&other) : CollectionAdd(other) {}
 
 private:
 
-  virtual CollectionAdd& get_op()
+  typedef internal::CollectionAdd_impl Impl;
+
+  Impl* get_impl()
   {
     check_if_valid();
+    return static_cast<Impl*>(m_impl.get());
+  }
+
+  virtual CollectionAdd& get_op()
+  {
     return *this;
   }
 
-  void do_add(const string&);
-  void do_add(const DbDoc&);
+  void do_add(const string &json)
+  {
+    get_impl()->add_json(json);
+  }
 
-  friend class internal::CollectionAddBase;
-  friend class internal::CollectionAddInterface<CollectionAdd>;
-  friend class internal::CollectionAddInterface<CollectionAdd&>;
+  void do_add(const DbDoc &doc)
+  {
+    // TODO: Do it better when we support sending structured
+    // document descriptions to the server.
+
+    std::ostringstream buf;
+    buf << doc;
+    get_impl()->add_json(buf.str());
+  }
+
+  friend internal::CollectionAddBase;
+  friend internal::CollectionAddInterface<CollectionAdd>;
+  friend internal::CollectionAddInterface<CollectionAdd&>;
 };
 
 
@@ -371,44 +417,58 @@ namespace internal {
 namespace internal {
 
   /*
-    Sort interface for collection CRUD operations.
+    Base class defining various forms of CRUD .sort() clause.
 
     Note: the actual job of adding sort specification to the underlying
-    task is done by do_sort() method defined by SortBase<> (see crud.h)
+    implementation is done by calling `add_sort` method of `Sort_impl`
+    interface.
   */
 
-  template <bool limit_with_offset>
+  template <class Res, bool limit_with_offset>
   class CollectionSort
-    : public SortBase<limit_with_offset>
+    : public Limit<Res, limit_with_offset>
   {
+  protected:
+
+    typedef internal::Sort_impl Impl;
+
+    using Limit<Res, limit_with_offset>::check_if_valid;
+    using Limit<Res, limit_with_offset>::m_impl;
+
+    Impl* get_impl()
+    {
+      check_if_valid();
+      return static_cast<Impl*>(m_impl.get());
+    }
+
   public:
 
-    Limit<limit_with_offset>& sort(const string& ord_spec)
+    Limit<Res, limit_with_offset>& sort(const string& ord_spec)
     {
-      this->do_sort(ord_spec);
+      get_impl()->add_sort(ord_spec);
       return *this;
     }
 
-    Limit<limit_with_offset>& sort(const char* ord_spec)
+    Limit<Res, limit_with_offset>& sort(const char* ord_spec)
     {
-      this->do_sort(ord_spec);
+      get_impl()->add_sort(ord_spec);
       return *this;
     }
 
     template <typename Ord>
-    Limit<limit_with_offset>& sort(Ord ord)
+    Limit<Res, limit_with_offset>& sort(Ord ord)
     {
       for (auto el : ord)
       {
-        this->do_sort(ord);
+        get_impl()->add_sort(ord);
       }
       return *this;
     }
 
     template <typename Ord, typename...Type>
-    Limit<limit_with_offset>& sort(Ord ord, const Type...rest)
+    Limit<Res, limit_with_offset>& sort(Ord ord, const Type...rest)
     {
-      this->do_sort(ord);
+      get_impl()->add_sort(ord);
       return sort(rest...);
     }
 
@@ -418,51 +478,6 @@ namespace internal {
 
 
 // ----------------------------------------------------------------------
-
-namespace internal {
-
-
-class CollectionFields
-  : public CollectionSort<true>
-{
-
-  void do_fields(const string&);
-
-public:
-
-  CollectionSort<true>& fields(const string& ord)
-  {
-    do_fields(ord);
-    return *this;
-  }
-
-  CollectionSort<true>& fields(const char* ord)
-  {
-    do_fields(ord);
-    return *this;
-  }
-
-  template <typename Ord>
-  CollectionSort<true>& fields(const Ord& ord)
-  {
-    for(auto el : ord)
-    {
-      do_fields(el);
-    }
-    return *this;
-  }
-
-  template <typename Ord, typename...Type>
-  CollectionSort<true>& fields(const Ord& ord, const Type&...rest)
-  {
-    fields(ord);
-    return fields(rest...);
-  }
-
-};
-
-}  // internal
-
 
 
 /*
@@ -478,7 +493,7 @@ public:
 
 
 class CollectionRemove
-  : public internal::CollectionSort<false>
+  : public internal::CollectionSort<Result,false>
 {
 public:
 
@@ -506,7 +521,7 @@ DIAGNOSTIC_PUSH
   DISABLE_WARNING(4100)
 #endif
 
-  CollectionRemove(CollectionRemove &other) : Statement(other) {}
+  CollectionRemove(CollectionRemove &other) : Executable(other) {}
   CollectionRemove(CollectionRemove &&other) : CollectionRemove(other) {}
 
 DIAGNOSTIC_POP
@@ -541,7 +556,7 @@ namespace internal {
     }
 
 
-    friend class Collection;
+    friend Collection;
   };
 
 }  // internal
@@ -560,9 +575,28 @@ namespace internal {
 */
 
 
+/**
+  Operation which returns all or selected documents from a collection.
+
+  Apart from all the methods inherited from `CollectionSort` it defines
+  .fields() clauses which optionally specify final transformation of
+  the returned documents.
+*/
+
 class CollectionFind
-  : public internal::CollectionFields
+  : public internal::CollectionSort<DocResult, true>
 {
+protected:
+
+  typedef internal::Proj_impl Impl;
+  typedef internal::CollectionSort<DocResult, true>  CollectionSort;
+
+  Impl* get_impl()
+  {
+    check_if_valid();
+    return static_cast<Impl*>(m_impl.get());
+  }
+
 public:
 
   /**
@@ -584,12 +618,44 @@ DIAGNOSTIC_PUSH
     DISABLE_WARNING(4100)
 #endif
 
-  CollectionFind(CollectionFind &other) : Statement(other) {}
+  CollectionFind(CollectionFind &other) : Executable<DocResult>(other) {}
   CollectionFind(CollectionFind &&other) : CollectionFind(other) {}
 
 DIAGNOSTIC_POP
 
+public:
 
+  CollectionSort& fields(const string& ord)
+  {
+    get_impl()->add_proj(ord);
+    return *this;
+  }
+
+  CollectionSort& fields(const char* ord)
+  {
+    get_impl()->add_proj(ord);
+    return *this;
+  }
+
+  template <typename Ord>
+  CollectionSort& fields(const Ord& ord)
+  {
+    for (auto el : ord)
+    {
+      get_impl()->add_proj(el);
+    }
+    return *this;
+  }
+
+  template <typename Ord, typename...Type>
+  CollectionSort& fields(const Ord& ord, const Type&...rest)
+  {
+    fields(ord);
+    return fields(rest...);
+  }
+
+  struct Access;
+  friend Access;
 };
 
 
@@ -619,7 +685,7 @@ namespace internal {
     }
 
 
-    friend class Collection;
+    friend Collection;
   };
 
 }  // internal
@@ -634,56 +700,61 @@ namespace internal {
   Class CollectionModifyBase defines the modify() methods which return
   CollectionModify operation.
 
-  To be precise, modify() methods return CollectionModifyFirst, which
-  is like CollectionModify, but it does not have sorting/limiting
-  metods. Only after specifying the first modification, one gets
-  CollectionModify object which inherits from CollectionSort<>.
 */
 
 class CollectionModify;
 
 namespace internal {
 
+  class CollectionModifyBase;
+
   /*
-    Common implementaiton of modification clauses used by CollectionModify
-    and CollectionModifyFirst.
+    Interface to be implemented by internal implementations of
+    CRUD modify operation. Methods `add_operation` are used to
+    pass to the implementaiton object the moifications requested
+    by the user.
   */
 
-  class CollectionModifyInterface
+  struct CollectionModify_impl : public Sort_impl
   {
-  protected:
+    enum Operation
+    {
+      SET,
+      UNSET,
+      ARRAY_INSERT,
+      ARRAY_APPEND,
+      ARRAY_DELETE
+    };
 
-    /*
-      This method must be overriden by derived class to return reference
-      to the operation that should be manipulated by the modify methods.
-    */
-
-    virtual CollectionModify& get_op() = 0;
-
-  public:
-
-    CollectionModify& set(const Field &field, ExprValue &&val);
-
-    CollectionModify& unset(const Field &field);
-
-    CollectionModify& arrayInsert(const Field &field, ExprValue &&val);
-
-    CollectionModify& arrayAppend(const Field &field, ExprValue &&val);
-
-    CollectionModify& arrayDelete(const Field &field);
-
+    virtual void add_operation(Operation, const Field&, ExprValue&&) = 0;
+    virtual void add_operation(Operation, const Field&) = 0;
   };
-
-  class CollectionModifyBase;
-  class CollectionModifyFirst;
 
 }  // internal
 
 
+/**
+  Operation which modifies all or selected documents in a collection.
+
+   Apart from all the methods inherited from `CollectionSort` it defines
+   various clauses which specify modifications to be performed on each
+   document.
+*/
+
 class CollectionModify
-: public virtual internal::CollectionModifyInterface
-, public internal::CollectionSort<false>
+  : public internal::CollectionSort<Result,false>
 {
+private:
+
+  typedef internal::CollectionModify_impl Impl;
+
+  CollectionModify() = default;
+
+  Impl* get_impl()
+  {
+    return static_cast<Impl*>(m_impl.get());
+  }
+
 public:
 
   /// Create modify operation for all documents in a collection.
@@ -705,70 +776,61 @@ DIAGNOSTIC_PUSH
     DISABLE_WARNING(4100)
 #endif
 
-  CollectionModify(CollectionModify &other) : Statement(other) {}
+  CollectionModify(CollectionModify &other) : Executable<Result>(other) {}
   CollectionModify(CollectionModify &&other) : CollectionModify(other) {}
-  CollectionModify(internal::CollectionModifyFirst &&other);
 
 DIAGNOSTIC_POP
 
-private:
+  CollectionModify& set(const Field &field, internal::ExprValue &&val)
+  {
+    try {
+      get_impl()->add_operation(Impl::SET, field, std::move(val));
+      return *this;
+    }
+    CATCH_AND_WRAP
+  }
 
-  CollectionModify& get_op() { return *this; }
+  CollectionModify& unset(const Field &field)
+  {
+    try {
+      get_impl()->add_operation(Impl::UNSET, field);
+      return *this;
+    }
+    CATCH_AND_WRAP
+  }
 
-  struct Access;
-  friend struct Access;
-  friend class internal::CollectionModifyBase;
+  CollectionModify& arrayInsert(const Field &field, internal::ExprValue &&val)
+  {
+    try {
+      get_impl()->add_operation(Impl::ARRAY_INSERT, field, std::move(val));
+      return *this;
+    }
+    CATCH_AND_WRAP
+  }
+
+  CollectionModify& arrayAppend(const Field &field, internal::ExprValue &&val)
+  {
+    try {
+      get_impl()->add_operation(Impl::ARRAY_APPEND, field, std::move(val));
+      return *this;
+    }
+    CATCH_AND_WRAP
+  }
+
+  CollectionModify& arrayDelete(const Field &field)
+  {
+    try {
+      get_impl()->add_operation(Impl::ARRAY_DELETE, field);
+      return *this;
+    }
+    CATCH_AND_WRAP
+  }
+
+  friend internal::CollectionModifyBase;
 };
 
 
 namespace internal {
-
-
-  /*
-    Class CollectionModifyFirst contains CollectionModify
-    but it does not expose sorting/limiting methods.
-  */
-
-  class CollectionModifyFirst
-    : public virtual CollectionModifyInterface
-    , public virtual Statement
-    , CollectionModify
-  {
-  public:
-
-    /*
-      Note: this constructor is needed for the following code to work:
-
-        auto op = coll.modify(...);
-
-      Method coll.modify() returns CollectionModifyFirst object by value
-      and it needs to be moved to the local variable.
-    */
-
-    CollectionModifyFirst(CollectionModifyFirst &&other)
-      : Statement(other)
-      , CollectionModify(std::move(other))
-    {}
-
-    CollectionModifyFirst(const CollectionModifyFirst&) = delete;
-
-  private:
-
-    CollectionModifyFirst(CollectionModify &&other)
-      : Statement(other)
-      , CollectionModify(other)
-    {}
-
-    CollectionModify& get_op()
-    {
-      return *static_cast<CollectionModify*>(this);
-    }
-
-
-    friend class CollectionModifyBase;
-    friend class mysqlx::CollectionModify;
-  };
-
 
   class CollectionModifyBase
     : public virtual CollectionOpBase
@@ -779,7 +841,7 @@ namespace internal {
       Modify all documents.
     */
 
-    CollectionModifyFirst modify()
+    CollectionModify modify()
     {
       try {
         return CollectionModify(*m_coll);
@@ -791,7 +853,7 @@ namespace internal {
       Modify documents that satisfy given expression.
     */
 
-    CollectionModifyFirst modify(const string &expr)
+    CollectionModify modify(const string &expr)
     {
       try {
         return CollectionModify(*m_coll, expr);
@@ -800,24 +862,10 @@ namespace internal {
     }
 
 
-    friend class Collection;
+    friend Collection;
   };
 
 }  // internal
-
-
-DIAGNOSTIC_PUSH
-
-#if _MSC_VER && _MSC_VER < 1900
-  DISABLE_WARNING(4100)
-#endif
-
-inline
-CollectionModify::CollectionModify(internal::CollectionModifyFirst &&other)
-  : CollectionModify(other.get_op())
-{}
-
-DIAGNOSTIC_POP
 
 }  // mysqlx
 

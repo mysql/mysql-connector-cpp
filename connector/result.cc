@@ -587,7 +587,7 @@ bool Column::isPadded() const
 
 
 /*
-  Handling haracter set and collation information
+  Handling character set and collation information
   -----------------------------------------------
 
   This information is obtained from format descriptor for columns of CDK
@@ -1065,14 +1065,12 @@ class internal::BaseResult::Impl
   }
   void row_end(row_count_t) {}
 
-
   size_t field_begin(col_count_t pos, size_t);
   void   field_end(col_count_t) {}
   void   field_null(col_count_t) {}
   size_t field_data(col_count_t pos, bytes);
   void   end_of_data() {}
 
-  friend class Row_builder;
   friend internal::BaseResult;
   friend mysqlx::Result;
   friend mysqlx::RowResult;
@@ -1246,12 +1244,22 @@ bool mysqlx::SqlResult::hasData() const
   =========
 */
 
-void DocResult::operator=(BaseResult &&init)
+DocResult::DocResult(internal::BaseResult &&other)
 {
-  BaseResult::operator=(std::move(init));
-  delete m_doc_impl;
-  m_doc_impl= new Impl(init);
+  m_doc_impl = new Impl(RowResult(std::move(other)));
 }
+
+
+void DocResult::operator=(DocResult &&other)
+{
+  try {
+    delete m_doc_impl;
+    m_doc_impl = other.m_doc_impl;
+    other.m_doc_impl = NULL;
+  }
+  CATCH_AND_WRAP
+}
+
 
 DocResult::~DocResult()
 {

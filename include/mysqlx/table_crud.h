@@ -51,16 +51,13 @@
   constructed from b, like in "a = b", then the operation moves from b to
   a and any attempt to execute or modify b will trigger error.
 
-  TODO: Revise and complete comments.
 */
 
 
 #include "common.h"
 #include "result.h"
-#include "task.h"
+#include "statement.h"
 #include "crud.h"
-
-#include <forward_list>
 
 
 namespace mysqlx {
@@ -75,8 +72,10 @@ namespace internal {
 
     It defines members that can be shared between the different
     TableXXXBase classes which all are used as a base for
-    the Table class.
-  */
+    the Table class. Currently the only common member is
+    `m_table` which points to the table on which the operation
+    is performed.
+    */
 
   class TableOpBase
   {
@@ -107,14 +106,46 @@ namespace internal {
 // ----------------------------------------------------------------------------------
 
 namespace internal {
+
   class TableInsertBase;
-}
+
+  /*
+    Interface to be implemented by internal implementations of
+    table insert operation.
+  */
+
+  struct TableInsert_impl : public Executable_impl
+  {
+    /*
+      Pass to the implementation names of columns specified by
+      the user. Columns are passed one-by-one in the order in
+      which they were specified.
+    */
+
+    virtual void add_column(const string&) = 0;
+
+    /*
+      Pass to the implementation a row that should be inserted
+      into the table. Several rows can be passed.
+    */
+
+    virtual void add_row(const Row&) = 0;
+
+    /*
+      Request another row to be inserted by the operation. Method
+      should return empty Row istance to be filled with field data.
+    */
+    virtual Row& new_row() = 0;
+  };
+
+}  // internal
+
 
 /**
   Operation which inserts rows into a table.
 
-  The operation holds a list of rows to be inserted. New rows
-  can be added to the list using .values() method.
+  This class defines the .values() and .rows() cluses which
+  specify rows to be inserted.
 
   @todo Check that every row passed to .values() call has
   the same number of values. The column count should match
@@ -123,8 +154,16 @@ namespace internal {
 */
 
 class TableInsert
-  : public Statement
+  : public Executable<Result>
 {
+  typedef internal::TableInsert_impl Impl;
+
+  Impl* get_impl()
+  {
+    check_if_valid();
+    return static_cast<Impl*>(m_impl.get());
+  }
+
 protected:
 
   Row   *m_row = NULL;
@@ -133,37 +172,45 @@ protected:
   TableInsert(Table &table, const Cols&... cols)
   {
     prepare(table);
-    add_column(cols...);
+    add_columns(cols...);
   }
 
 
   /*
-    Methods below manipulate internal `Op_table_insert` object
-    which holds the list of rows to be inserted (see crud.cc).
+    Helper methods which pass column/row information to the
+    internal implementation object.
   */
 
   void prepare(Table&);
 
-  void add_column(const string& col);
-  void add_column(string&& col);
-  void add_column(const char* col) { add_column(string(col)); }
+  void add_columns()
+  {}
+
+  void add_columns(const string& col)
+  {
+    get_impl()->add_column(col);
+  }
+
+  void add_columns(const char* col)
+  {
+    add_columns(string(col));
+  }
+
   template <typename Cols>
-  void add_column(const Cols& cols)
+  void add_columns(const Cols& cols)
   {
     for (auto col : cols)
     {
-      add_column(col);
+      add_columns(col);
     }
   }
 
   template <class T,class...Type>
-  void add_column(const T &t, const Type&... rest)
+  void add_columns(const T &t, const Type&... rest)
   {
-    add_column(t);
-    add_column(rest...);
+    add_columns(t);
+    add_columns(rest...);
   }
-
-  Row& add_row();
 
   void add_values(col_count_t pos, const Value &val)
   {
@@ -178,14 +225,12 @@ protected:
     add_values(pos + 1, rest...);
   }
 
-  void add_row(const Row &row);
-
   void add_rows() {}
 
   template <typename... Types>
   void add_rows(const Row &first, Types... rest)
   {
-    add_row(first);
+    get_impl()->add_row(first);
     add_rows(rest...);
   }
 
@@ -193,7 +238,7 @@ protected:
   void add_range(const It &begin, const It &end)
   {
     for (It it = begin; it != end; ++it)
-      add_row(*it);
+      get_impl()->add_row(*it);
   }
 
 public:
@@ -206,7 +251,7 @@ public:
   }
 
   TableInsert(TableInsert &other)
-    : Statement(other)
+    : Executable(other)
     , m_row(other.m_row)
   {
     other.m_row = NULL;
@@ -219,7 +264,7 @@ public:
 
   virtual TableInsert& values(const Row &row)
   {
-    add_row(row);
+    get_impl()->add_row(row);
     return *this;
   }
 
@@ -232,7 +277,8 @@ public:
   TableInsert& values(const Value &val, Types... rest)
   {
     try {
-      m_row = &add_row();
+      m_row = &(get_impl()->new_row());
+      assert(m_row);
       add_values(0, val, rest...);
       return *this;
     }
@@ -270,8 +316,8 @@ public:
   }
 
   struct Access;
-  friend struct Access;
-  friend class internal::TableInsertBase;
+  friend Access;
+  friend internal::TableInsertBase;
 };
 
 
@@ -279,24 +325,14 @@ namespace internal {
 
   class TableInsertBase : public virtual TableOpBase
   {
-
-    template <typename I>
-    void add_columns(TableInsert& obj, const I& begin, const I& end)
-    {
-      for (auto it = begin; it != end; ++it)
-      {
-        obj.add_column(*it);
-      }
-    }
-
   public:
 
     /**
-      Insert into a full table without restrincting the colums.
+      Insert into a full table without restricting the colums.
 
       Each row passed to the following .values() call must have
       the same number of values as the number of columns of the
-      table. However, this check is done only after seding the insert
+      table. However, this check is done only after sending the insert
       command to the server. If value count does not match table column
       count server reports error.
     */
@@ -311,7 +347,7 @@ namespace internal {
       Insert into a full table restricting the colums.
 
       Each row passed to the following .values() call must have
-      the same number of values as the list provided
+      the same number of values as the columns specified by insert().
     */
 
     template <class... T>
@@ -320,7 +356,7 @@ namespace internal {
       return TableInsert(*m_table, t...);
     }
 
-    friend class Table;
+    friend Table;
   };
 
 }  // internal
@@ -331,32 +367,37 @@ namespace internal {
 namespace internal {
 
   /*
-    Class implementing CRUD sort operations on tables.
+    Class defining table CRUD .orderBy() clause.
   */
 
-  template <bool limit_with_offset>
+  template <class Res, bool limit_with_offset>
   class TableSort
-    : public SortBase<limit_with_offset>
+    : public Limit<Res, limit_with_offset>
   {
+  protected:
+
+    typedef internal::Sort_impl Impl;
+
+    using Limit<Res, limit_with_offset>::check_if_valid;
+    using Limit<Res, limit_with_offset>::m_impl;
+
+    Impl* get_impl()
+    {
+      check_if_valid();
+      return static_cast<Impl*>(m_impl.get());
+    }
 
   public:
 
     TableSort& orderBy(const string& ord)
     {
-      /*
-        Note: this-> is required by gcc because this is inside
-        a template and then one has to distinct methods from
-        global functions etc.
-        see: http://stackoverflow.com/questions/29390663/error-there-are-no-arguments-to-at-that-depend-on-a-template-parameter-so-a
-      */
-
-      this->do_sort(ord);
+      get_impl()->add_sort(ord);
       return *this;
     }
 
     TableSort& orderBy(const char* ord)
     {
-      this->do_sort(ord);
+      get_impl()->add_sort(ord);
       return *this;
     }
 
@@ -365,7 +406,7 @@ namespace internal {
     {
       for (auto el : ord)
       {
-        this->do_sort(ord);
+        get_impl()->add_sort(ord);
       }
       return *this;
     }
@@ -373,7 +414,7 @@ namespace internal {
     template <typename Ord, typename...Type>
     TableSort& orderBy(Ord ord, const Type...rest)
     {
-      this->do_sort(ord);
+      get_impl()->add_sort(ord);
       return orderBy(rest...);
     }
 
@@ -385,20 +426,73 @@ namespace internal {
 // ----------------------------------------------------------------------------------
 
 namespace internal {
+
   class TableSelectBase;
-}
+
+  /*
+    Interface to be implemented by internal implementations
+    of table CRUD select operation.
+
+    Method `add_where` is used to report selection criteria
+    to the implementation.
+  */
+
+  struct TableSelect_impl : public Proj_impl
+  {
+    virtual void add_where(const string&) = 0;
+  };
+
+}  // internal
+
 
 /**
-  TableSelect class which implements the select() operation
+  Operation which selects rows from a table.
 
-  Data is filtered using the where() method.
+  Apart from clauses defined by TableSort, it defines the
+  where() clause which specifies selection criteria.
+
+  For each row the operation can return all fields from the
+  row or a set of values defined by projection expressions
+  specified when operation was created.
 */
 
 class TableSelect
-  : public internal::TableSort<true>
+  : public internal::TableSort<RowResult, true>
 {
+  typedef internal::TableSelect_impl Impl;
+
+  Impl* get_impl()
+  {
+    check_if_valid();
+    return static_cast<Impl*>(m_impl.get());
+  }
 
   void prepare(Table &table);
+
+  void add_proj(const string& projection)
+  {
+    get_impl()->add_proj(projection);
+  }
+
+  void add_proj(const char* projection)
+  {
+    add_proj(string(projection));
+  }
+
+  template <typename Proj>
+  void add_proj(const Proj& proj)
+  {
+    for (auto el : proj)
+    {
+      add_proj(el);
+    }
+  }
+  template <typename PROJ, typename ... REST>
+  void add_proj(const PROJ& projection, const REST&...rest)
+  {
+    add_proj(projection);
+    add_proj(rest...);
+  }
 
 public:
 
@@ -424,36 +518,18 @@ DIAGNOSTIC_PUSH
     add_proj(proj...);
   }
 
-  void add_proj(const string& projection);
-  void add_proj(const char* projection)
-  {
-    add_proj(string(projection));
-  }
-
-  template <typename Proj>
-  void add_proj(const Proj& proj)
-  {
-    for(auto el : proj)
-    {
-      add_proj(el);
-    }
-  }
-  template <typename PROJ, typename ... REST>
-  void add_proj(const PROJ& projection, const REST&...rest)
-  {
-    add_proj(projection);
-    add_proj(rest...);
-  }
-
-
-  TableSelect(TableSelect &other) : Statement(other) {}
+  TableSelect(TableSelect &other) : Executable<RowResult>(other) {}
   TableSelect(TableSelect &&other) : TableSelect(other) {}
 
 DIAGNOSTIC_POP
 
-  TableSort& where(const string& expr);
+  TableSort& where(const string& expr)
+  {
+    get_impl()->add_where(expr);
+    return *this;
+  }
 
-  friend class internal::TableSelectBase;
+  friend internal::TableSelectBase;
 };
 
 
@@ -469,7 +545,7 @@ namespace internal {
       return TableSelect(*m_table, proj...);
     }
 
-    friend class Table;
+    friend Table;
   };
 
 }  // internal
@@ -477,20 +553,47 @@ namespace internal {
 
 // ----------------------------------------------------------------------------------
 
+
 namespace internal {
+
   class TableUpdateBase;
-}
+
+  /*
+    Interface to be implemented by internal implementations of
+    table CRUD update operation. Such update operation sets values
+    of fields in a row. Name of the column that should be set and
+    expression defining new value are reported to the implementation
+    using method `add_set`.
+  */
+
+  struct TableUpdate_impl : public TableSelect_impl
+  {
+    virtual void add_set(const string&, ExprValue&&) = 0;
+  };
+
+}  // internal
+
 
 /**
-  Class used to update values on tables
+  Operation which updates values stored in rows.
 
-  Class stores the field value pair to be updated.
-  Filter of updated rows is passed using the where() method.
+  Apart from clauses defined by `TableSort`, this class defines
+  .set() clause for specifying new field values and .where()
+  clause for narrowing set of rows to be modified.
 */
 
 class TableUpdate
-: public internal::TableSort<false>
+: public internal::TableSort<Result, false>
 {
+
+  typedef internal::TableUpdate_impl Impl;
+  typedef internal::TableSort<Result, false>  TableSort;
+
+  Impl* get_impl()
+  {
+    check_if_valid();
+    return static_cast<Impl*>(m_impl.get());
+  }
 
   void prepare(Table&);
 
@@ -509,16 +612,24 @@ DIAGNOSTIC_PUSH
 
   // TODO: ctor with where condition?
 
-  TableUpdate(TableUpdate &other) : Statement(other) {}
+  TableUpdate(TableUpdate &other) : Executable<Result>(other) {}
   TableUpdate(TableUpdate &&other) : TableUpdate(other) {}
 
 DIAGNOSTIC_POP
 
-  TableUpdate& set(const string& field, internal::ExprValue val);
+  TableUpdate& set(const string& field, internal::ExprValue val)
+  {
+    get_impl()->add_set(field, std::move(val));
+    return *this;
+  }
 
-  internal::TableSort<false>& where(const string& expr);
+  TableSort& where(const string& expr)
+  {
+    get_impl()->add_where(expr);
+    return *this;
+  }
 
-  friend class internal::TableUpdateBase;
+  friend internal::TableUpdateBase;
 };
 
 
@@ -533,7 +644,7 @@ namespace internal {
       return TableUpdate(*m_table);
     }
 
-    friend class Table;
+    friend Table;
   };
 
 }  // internal
@@ -541,22 +652,47 @@ namespace internal {
 
 // ----------------------------------------------------------------------------------
 
+
 namespace internal {
+
   class TableRemoveBase;
-}
+
+  /*
+    Interface to be implemented by internal implementations
+    of table CRUD remove operation.
+
+    Selection criteria which selects rows to be removed is
+    passed to the implementation using `add_where` method.
+  */
+
+  struct TableRemove_impl : public Sort_impl
+  {
+    virtual void add_where(const string&) = 0;
+  };
+
+}  // internal
+
 
 /**
-  Class used to remove rows
+  Operation which removes rows from a table.
 
-  Rows removed are the ones that apply to the expression passed using the
-  where() method.
-  If where() is not used, all the rows of the table are removed.
+  Apart from clauses defined by `TableSort` this class defines
+  .where() clause which selects rows to be removed.
 */
 
 
 class TableRemove
-: public internal::TableSort<false>
+: public internal::TableSort<Result, false>
 {
+
+  typedef internal::TableRemove_impl Impl;
+  typedef internal::TableSort<Result, false>  TableSort;
+
+  Impl* get_impl()
+  {
+    check_if_valid();
+    return static_cast<Impl*>(m_impl.get());
+  }
 
   void prepare(Table &);
 
@@ -575,14 +711,18 @@ DIAGNOSTIC_PUSH
 
   // TODO: ctor with where condition?
 
-  TableRemove(TableRemove &other) : Statement(other) {}
+  TableRemove(TableRemove &other) : Executable<Result>(other) {}
   TableRemove(TableRemove &&other) : TableRemove(other) {}
 
 DIAGNOSTIC_POP
 
-  TableSort& where(const string&);
+  TableSort& where(const string &expr)
+  {
+    get_impl()->add_where(expr);
+    return *this;
+  }
 
-  friend class internal::TableRemoveBase;
+  friend internal::TableRemoveBase;
 };
 
 
@@ -597,7 +737,7 @@ namespace internal {
       return TableRemove(*m_table);
     }
 
-    friend class Table;
+    friend Table;
   };
 
 }  // internal

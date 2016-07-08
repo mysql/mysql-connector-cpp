@@ -41,13 +41,27 @@ using namespace parser;
 // --------------------------------------------------------------------
 
 /*
-  Table.insert()
-  ==============
+  Table insert
+  ============
 */
 
+/*
+  Internal implementation for table CRUD insert operation.
+
+  Building on top of Op_sort<> this class implements remaining
+  methods of TableInsert_impl. It stores columns and rows specified
+  for the operation and presents them through cdk::Row_source and
+  cdk::api::Columns interfaces.
+
+  Overriden method Op_base::send_command() sends table insert command
+  to the CDK session.
+*/
 
 class Op_table_insert
-    : public Op_sort<Parser_mode::TABLE>
+    : public Op_sort<
+        internal::TableInsert_impl,
+        Parser_mode::TABLE
+      >
     , public cdk::Row_source
     , public cdk::api::Columns
 {
@@ -58,10 +72,12 @@ class Op_table_insert
 
   Table_ref m_table;
   Row_list  m_rows;
-  Row_list::const_iterator m_cur_row;
-  Row_list::iterator m_row_end;
+  Row_list::const_iterator m_cur_row = m_rows.cbegin();
+  Row_list::iterator m_row_end = m_rows.before_begin();
   Col_list m_cols;
-  Col_list::iterator m_col_end;
+  Col_list::iterator m_col_end = m_cols.before_begin();
+
+public:
 
   Op_table_insert(Table &tbl)
     : Op_sort(tbl)
@@ -69,22 +85,35 @@ class Op_table_insert
   {}
 
 
-  void reset()
+  void add_column(const mysqlx::string &column) override
   {
-    m_rows.clear();
-    m_cur_row = m_rows.cbegin();
-    m_row_end = m_rows.before_begin();
-    m_cols.clear();
-    m_col_end = m_cols.before_begin();
+    m_col_end = m_cols.emplace_after(m_col_end, column);
   }
 
+  Row& new_row() override
+  {
+    m_row_end = m_rows.emplace_after(m_row_end);
+    return *m_row_end;
+  }
 
-  // Task::Impl
+  void add_row(const Row &row) override
+  {
+    m_row_end = m_rows.emplace_after(m_row_end, row);
+  }
+
+private:
+
+  // Executable
 
   bool m_started;
 
   cdk::Reply* send_command() override
   {
+    // Do nothing if no rows were specified.
+
+    if (m_rows.empty())
+      return NULL;
+
     // Prepare iterators to make a pass through m_rows list.
     m_started = false;
     m_row_end = m_rows.end();
@@ -128,51 +157,13 @@ class Op_table_insert
 
   void process(cdk::Expr_list::Processor &ep) const override;
 
-  friend class mysqlx::TableInsert;
+  friend mysqlx::TableInsert;
 };
-
-
-namespace mysqlx {
-
-template <>
-struct Crud_impl<TableInsert>
-{
-  typedef Op_table_insert type;
-};
-
-} // mysqlx
 
 
 void TableInsert::prepare(Table &table)
 {
-  Statement::Access::reset_task(*this, new Op_table_insert(table));
-  get_impl(this).reset();
-}
-
-
-void TableInsert::add_column(const mysqlx::string &column)
-{
-  auto &impl = get_impl(this);
-  impl.m_col_end = impl.m_cols.emplace_after(impl.m_col_end, column);
-}
-
-void TableInsert::add_column(mysqlx::string&& column)
-{
-  auto &impl = get_impl(this);
-  impl.m_col_end = impl.m_cols.emplace_after(impl.m_col_end, std::move(column));
-}
-
-Row& TableInsert::add_row()
-{
-  auto &impl = get_impl(this);
-  impl.m_row_end = impl.m_rows.emplace_after(impl.m_row_end);
-  return *impl.m_row_end;
-}
-
-void TableInsert::add_row(const Row &row)
-{
-  auto &impl = get_impl(this);
-  impl.m_row_end = impl.m_rows.emplace_after(impl.m_row_end, row);
+  m_impl.reset(new Op_table_insert(table));
 }
 
 
@@ -193,128 +184,124 @@ void Op_table_insert::process(cdk::Expr_list::Processor &lp) const
 // --------------------------------------------------------------------
 
 /*
-  Table.select()
-  ==============
+  Table select
+  ============
+*/
+
+/*
+  Internal implementation for table CRUD select operation.
+
+  This implementation is built from Op_select<> and Op_projection<>
+  templates. It overrides Op_base::send_command() to send table select
+  command to the CDK session.
 */
 
 class Op_table_select
-    : public Op_sort<parser::Parser_mode::TABLE>
-    , public Op_projection<parser::Parser_mode::TABLE>
+  : public Op_select<
+      Op_projection<
+        internal::TableSelect_impl,
+        parser::Parser_mode::TABLE
+      >,
+      parser::Parser_mode::TABLE
+    >
 {
-  typedef cdk::string string;
+  //typedef cdk::string string;
 
   Table_ref m_table;
-  string m_where;
-  std::unique_ptr<parser::Expression_parser> m_expr;
-
 
   cdk::Reply* send_command() override
   {
-    if (!m_where.empty())
-      m_expr.reset(new parser::Expression_parser(Parser_mode::TABLE, m_where));
-
     return
         new cdk::Reply(get_cdk_session().table_select(
-                                          m_table,
-                                          m_expr.get(),
-                                          has_projection() ? this : nullptr,
-                                          m_order.empty() ? nullptr : this,
-                                          nullptr,
-                                          nullptr,
-                                          m_has_limit ? this : nullptr,
-                                          get_params()
-                                                     )
-                       );
+                          m_table,
+                          get_where(),
+                          get_tbl_proj(),
+                          get_order_by(),
+                          nullptr,
+                          nullptr,
+                          get_limit(),
+                          get_params()
+                       ));
   }
 
 
 public:
 
   Op_table_select(Table &table)
-    : Op_sort(table)
+    : Op_select(table)
     , m_table(table)
   {}
 
-  friend class mysqlx::TableSelect;
+  friend mysqlx::TableSelect;
 };
-
-
-namespace mysqlx {
-
-template <>
-struct Crud_impl<TableSelect>
-{
-  typedef Op_table_select type;
-};
-
-} // mysqlx
 
 
 void TableSelect::prepare(Table &table)
 {
-  Statement::Access::reset_task(*this, new Op_table_select(table));
-}
-
-
-void TableSelect::add_proj(const mysqlx::string& projection)
-{
-  get_impl(this).add_projection(projection);
-}
-
-
-internal::TableSort<true>& TableSelect::where(const mysqlx::string &expr)
-{
-  get_impl(this).m_where = expr;
-  return *this;
+  m_impl.reset(new Op_table_select(table));
 }
 
 
 // --------------------------------------------------------------------
 
 /*
-  Table.update()
-  ==============
+  Table update
+  ============
+*/
+
+/*
+  Internal implementation for table CRUD select operation.
+
+  This implementation is built from Op_select<> and Op_projection<>
+  templates and it implements the `add_set` method of TableUpdate_impl
+  implemantation interface. Update requests are stored in m_set_values
+  member and presented to CDK via cdk::Update_spec interface.
+
+  It overrides Op_base::send_command() to send table update command
+  to the CDK session.
 */
 
 class Op_table_update
-    : public Op_sort<parser::Parser_mode::TABLE>
+    : public Op_select<
+        Op_projection<
+          internal::TableUpdate_impl,
+          parser::Parser_mode::TABLE
+        >,
+        parser::Parser_mode::TABLE
+      >
     , public cdk::Update_spec
     , public cdk::api::Column_ref
 {
-  typedef cdk::string string;
-  typedef std::map<string, internal::ExprValue> SetValues;
+  //typedef cdk::string string;
+  typedef std::map<mysqlx::string, internal::ExprValue> SetValues;
 
   Table_ref m_table;
-  string m_where;
-  std::unique_ptr<parser::Expression_parser> m_expr;
   std::unique_ptr<parser::Table_field_parser> m_table_field;
   SetValues m_set_values;
   SetValues::const_iterator m_set_it;
 
+  void add_set(const mysqlx::string &field, internal::ExprValue &&val) override
+  {
+    m_set_values[field] = std::move(val);
+  }
 
   cdk::Reply* send_command() override
   {
-    if (!m_where.empty())
-      m_expr.reset(new parser::Expression_parser(Parser_mode::TABLE, m_where));
-
     m_set_it = m_set_values.end();
 
     return
-        new cdk::Reply(
-          get_cdk_session().table_update(m_table,
-                                         m_expr ? m_expr.get() : nullptr,
-                                         *this,
-                                         m_order.empty() ? nullptr : this,
-                                         m_has_limit ? this : nullptr,
-                                         get_params()
-                                        )
-                      );
+        new cdk::Reply(get_cdk_session().table_update(
+                        m_table,
+                        get_where(),
+                        *this,
+                        get_order_by(),
+                        get_limit(),
+                        get_params()
+                      ));
   }
 
 
   // cdk::Update_spec
-
-
 
   virtual bool next() override
   {
@@ -346,7 +333,7 @@ class Op_table_update
 
   //  cdk::api::Column_ref
 
-  const string name() const override
+  const cdk::string name() const override
   {
     return m_table_field->name();
   }
@@ -357,112 +344,76 @@ class Op_table_update
   }
 
 public:
+
   Op_table_update(Table &table)
-    : Op_sort(table)
+    : Op_select(table)
     , m_table(table)
   {}
 
 
-  friend class mysqlx::TableUpdate;
+  friend mysqlx::TableUpdate;
 };
-
-
-namespace mysqlx {
-
-template <>
-struct Crud_impl<TableUpdate>
-{
-  typedef Op_table_update type;
-};
-
-} // mysqlx
 
 
 void TableUpdate::prepare(Table &table)
 {
-  Statement::Access::reset_task(*this, new Op_table_update(table));
-}
-
-
-TableUpdate& TableUpdate::set(const mysqlx::string& field,
-                              internal::ExprValue val)
-{
-  get_impl(this).m_set_values[field] = std::move(val);
-  return *this;
-}
-
-
-internal::TableSort<false>& TableUpdate::where(const mysqlx::string &expr)
-{
-  get_impl(this).m_where = expr;
-  return *this;
+  m_impl.reset(new Op_table_update(table));
 }
 
 
 // --------------------------------------------------------------------
 
 /*
-  Table.remove()
-  ==============
+  Table remove
+  ============
+*/
+
+/*
+  Internal implementation for table CRUD remove operation.
+
+  This implementation is built using Op_select<> and Op_sort<>
+  templates. It overrides Op_base::send_command() to send table remove
+  command to the CDK session.
 */
 
 class Op_table_remove
-    : public Op_sort<parser::Parser_mode::TABLE>
+    : public Op_select<
+        Op_sort<
+          internal::TableRemove_impl,
+          parser::Parser_mode::TABLE
+        >,
+        parser::Parser_mode::TABLE
+      >
 {
   typedef cdk::string string;
 
   Table_ref m_table;
-  string m_where;
-  std::unique_ptr<parser::Expression_parser> m_expr;
-
 
   cdk::Reply* send_command() override
   {
-    if (!m_where.empty())
-      m_expr.reset(new parser::Expression_parser(Parser_mode::TABLE, m_where));
-
     return
-        new cdk::Reply(
-          get_cdk_session().table_delete(m_table,
-                                         m_expr ? m_expr.get() : nullptr,
-                                         m_order.empty() ? nullptr : this,
-                                         m_has_limit ? this : nullptr,
-                                         get_params()
-                                        )
-                      );
+        new cdk::Reply(get_cdk_session().table_delete(
+                          m_table,
+                          get_where(),
+                          get_order_by(),
+                          get_limit(),
+                          get_params()
+                      ));
   }
 
 public:
 
   Op_table_remove(Table &table)
-    : Op_sort(table)
+    : Op_select(table)
     , m_table(table)
   {}
 
 
-  friend class mysqlx::TableRemove;
+  friend mysqlx::TableRemove;
 };
-
-
-namespace mysqlx {
-
-template <>
-struct Crud_impl<TableRemove>
-{
-  typedef Op_table_remove type;
-};
-
-} // mysqlx
 
 
 void TableRemove::prepare(Table &table)
 {
-  Statement::Access::reset_task(*this, new Op_table_remove(table));
-}
-
-
-internal::TableSort<false>& TableRemove::where(const mysqlx::string& where)
-{
-  get_impl(this).m_where = where;
-  return *this;
+  m_impl.reset(new Op_table_remove(table));
 }

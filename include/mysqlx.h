@@ -38,7 +38,7 @@
 
 #include "mysqlx/common.h"
 #include "mysqlx/result.h"
-#include "mysqlx/task.h"
+#include "mysqlx/statement.h"
 #include "mysqlx/crud.h"
 #include "mysqlx/collection_crud.h"
 #include "mysqlx/table_crud.h"
@@ -128,7 +128,6 @@ public:
   friend Schema;
   friend Table;
   friend Collection;
-  friend internal::Task;
 
 };
 
@@ -279,7 +278,6 @@ public:
   Table getCollectionAsTable(const string&, bool check_exists = true);
 
   friend Collection;
-  friend internal::Task;
 };
 
 
@@ -368,8 +366,6 @@ public:
   */
   uint64_t count();
 
-
-  friend internal::Task;
 };
 
 
@@ -489,7 +485,6 @@ public:
   */
   uint64_t count();
 
-  friend internal::Task;
 };
 
 
@@ -589,13 +584,15 @@ public:
   void   dropCollection(const string& schema, const string& collection);
 
 
-private:
+public:
+
+  struct Access;
+  friend Access;
 
   friend Schema;
   friend Collection;
   friend Table;
   friend Result;
-  friend internal::Task;
 };
 
 

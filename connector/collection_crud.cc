@@ -38,6 +38,9 @@ using cdk::string;
 using namespace parser;
 
 
+// --------------------------------------------------------------------
+
+
 static struct UUID_initializer {
 
   UUID_initializer()
@@ -69,12 +72,24 @@ void mysqlx::GUID::generate()
 // --------------------------------------------------------------------
 
 /*
-  Collection.add()
-  ================
+  Collection add
+  ==============
+*/
+
+/*
+  Internal implementation for collection CRUD add operation.
+
+  Implementation object stores list of JSON strings describing documents
+  to be added and passed with `add_json` method. It presents this list
+  of documents via cdk::Doc_source interface. See method `process` for
+  details.
+
+  Overriden method Op_base::send_command() sends the collection add
+  command to the CDK session.
 */
 
 class Op_collection_add
-  : public Statement::Access::Impl
+  : public Op_base< internal::CollectionAdd_impl >
   , public cdk::Doc_source
   , public cdk::JSON::Processor
   , public cdk::JSON::Processor::Any_prc
@@ -91,30 +106,26 @@ class Op_collection_add
 
 
   Op_collection_add(Collection &coll)
-    : Impl(coll)
+    : Op_base(coll)
     , m_coll(coll)
     , m_generated_id(true)
     , m_pos(0)
   {}
 
-  void add_json(const string &json)
+
+  void add_json(const mysqlx::string &json) override
   {
     m_json.push_back(json);
   }
 
-  void add_doc(const DbDoc &doc)
+
+  cdk::Reply* send_command() override
   {
-    // TODO: Instead of sending JSON string, send structured description
-    // of the document (requires support for document expressions MYC-113)
+    // Do nothing if no documents were specified.
 
-    std::ostringstream buf;
-    buf << doc;
-    m_json.push_back(buf.str());
-  }
+    if (m_json.empty())
+      return NULL;
 
-
-  cdk::Reply* send_command()
-  {
     // Issue coll_add statement where documents are described by list
     // of expressions defined by this instance.
 
@@ -122,7 +133,7 @@ class Op_collection_add
   }
 
 
-  internal::BaseResult get_result()
+  internal::BaseResult get_result() override
   {
     return Result::Access::mk(m_reply, m_id_list);
   }
@@ -130,7 +141,7 @@ class Op_collection_add
 
   // Doc_source
 
-  bool next()
+  bool next() override
   {
     if (m_pos >= m_json.size())
       return false;
@@ -138,17 +149,17 @@ class Op_collection_add
     return true;
   }
 
-  void process(Expression::Processor &ep) const;
+  void process(Expression::Processor &ep) const override;
 
 
   // JSON::Processor
 
-  void doc_begin() {}
-  void doc_end() {}
+  void doc_begin() override {}
+  void doc_end() override {}
 
 
   cdk::JSON::Processor::Any_prc*
-  key_val(const string &key)
+  key_val(const string &key) override
   {
     // look only at key '_id'
     if (key != string("_id"))
@@ -161,62 +172,39 @@ class Op_collection_add
   // JSON::Processor::Any_prc
 
   cdk::JSON::Processor::Any_prc::List_prc*
-  arr() { assert(false); return NULL; }
+  arr() override { assert(false); return NULL; }
   cdk::JSON::Processor::Any_prc::Doc_prc*
-  doc() { assert(false); return NULL; }
+  doc() override { assert(false); return NULL; }
 
   cdk::JSON::Processor::Any_prc::Scalar_prc*
-  scalar()
+  scalar() override
   {
     return this;
   }
 
   // JSON::Processor::Any_prc::Scalar_prc
 
-  void str(const string &val)
+  void str(const string &val) override
   {
     m_id= val;
   }
-  void null() { assert(false); }
-  void num(int64_t) { assert(false); }
-  void num(uint64_t) { assert(false); }
-  void num(float) { assert(false); }
-  void num(double) { assert(false); }
-  void yesno(bool) { assert(false); }
+  void null() override { assert(false); }
+  void num(int64_t) override { assert(false); }
+  void num(uint64_t) override { assert(false); }
+  void num(float) override { assert(false); }
+  void num(double) override { assert(false); }
+  void yesno(bool) override { assert(false); }
 
   friend mysqlx::CollectionAdd;
 };
 
 
-namespace mysqlx {
-
-template <>
-struct Crud_impl<CollectionAdd>
-{
-  typedef Op_collection_add type;
-};
-
-} // mysqlx
-
-
 CollectionAdd::CollectionAdd(Collection &coll)
 try
-  : Statement(new Op_collection_add(coll))
+  : Executable(new Op_collection_add(coll))
 {}
 CATCH_AND_WRAP
 
-
-void CollectionAdd::do_add(const mysqlx::string &json)
-{
-  check_if_valid();
-  get_impl(this).add_json(json);
-}
-
-void CollectionAdd::do_add(const DbDoc &doc)
-{
-  check_if_valid();
-  get_impl(this).add_doc(doc);
-}
 
 /*
   Class describing elements of expression:
@@ -313,29 +301,39 @@ void Op_collection_add::process(Expression::Processor &ep) const
 // --------------------------------------------------------------------
 
 /*
-  Collection.remove()
-  ===================
+  Collection remove
+  =================
+*/
+
+/*
+  Internal implementation for collection CRUD remove operation.
+
+  This implementation is constructed from Op_sort<> and Op_select<>
+  templates. It defines `send_command` method to send the remove
+  operation to the underlying CDK session.
 */
 
 class Op_collection_remove
-  : public Op_sort<parser::Parser_mode::DOCUMENT>
+  : public Op_select<
+      Op_sort<
+        internal::Sort_impl,
+        parser::Parser_mode::DOCUMENT
+      >,
+      parser::Parser_mode::DOCUMENT
+    >
 {
   Table_ref m_coll;
-  parser::Expression_parser m_expr;
-  bool has_expr = false;
 
   Op_collection_remove(Collection &coll)
-    : Op_sort(coll)
+    : Op_select(coll)
     , m_coll(coll)
-    , m_expr(parser::Parser_mode::DOCUMENT)
   { }
 
   Op_collection_remove(Collection &coll, const mysqlx::string &expr)
-    : Op_sort(coll)
+    : Op_select(coll)
     , m_coll(coll)
-    , m_expr(parser::Parser_mode::DOCUMENT, expr)
   {
-    has_expr = true;
+    add_where(expr);
   }
 
 
@@ -344,11 +342,11 @@ class Op_collection_remove
     m_reply =
         new cdk::Reply(get_cdk_session().coll_remove(
                               m_coll,
-                              has_expr ? &m_expr : nullptr,
-                              m_order.empty() ? nullptr : this, // order_by spec
-                              m_has_limit ? this : nullptr,  // limit spec
-                              get_params())
-                      );
+                              get_where(),
+                              get_order_by(),
+                              get_limit(),
+                              get_params()
+                      ));
     return m_reply;
   }
 
@@ -356,26 +354,15 @@ class Op_collection_remove
 };
 
 
-namespace mysqlx {
-
-template <>
-struct Crud_impl<CollectionRemove>
-{
-  typedef Op_collection_remove type;
-};
-
-} // mysqlx
-
-
 CollectionRemove::CollectionRemove(Collection &coll)
 try
-  : Statement(new Op_collection_remove(coll))
+  : Executable(new Op_collection_remove(coll))
 {}
 CATCH_AND_WRAP
 
 CollectionRemove::CollectionRemove(Collection &coll, const mysqlx::string &expr)
 try
-  : Statement(new Op_collection_remove(coll, expr))
+  : Executable(new Op_collection_remove(coll, expr))
 {}
 CATCH_AND_WRAP
 
@@ -383,33 +370,36 @@ CATCH_AND_WRAP
 // --------------------------------------------------------------------
 
 /*
-  Collection.find()
-  =================
+  Collection find
+  ===============
+*/
+
+/*
+  Implementation of collection CRUD find operation.
 */
 
 class Op_collection_find
-    : public Op_sort<parser::Parser_mode::DOCUMENT>
-    , public Op_projection<parser::Parser_mode::DOCUMENT>
+    : public Op_select<
+        Op_projection<
+          internal::Proj_impl,
+          parser::Parser_mode::DOCUMENT
+        >,
+        parser::Parser_mode::DOCUMENT
+      >
 {
   Table_ref m_coll;
-  parser::Expression_parser m_expr;
-  bool has_expr = false;
-
-
 
   Op_collection_find(Collection &coll)
-    : Op_sort(coll)
+    : Op_select(coll)
     , m_coll(coll)
-    , m_expr(parser::Parser_mode::DOCUMENT)
   {
   }
 
   Op_collection_find(Collection &coll, const mysqlx::string &expr)
-    : Op_sort(coll)
+    : Op_select(coll)
     , m_coll(coll)
-    , m_expr(parser::Parser_mode::DOCUMENT, expr)
   {
-    has_expr = true;
+    add_where(expr);
   }
 
 
@@ -418,14 +408,14 @@ class Op_collection_find
     m_reply =
         new cdk::Reply(get_cdk_session().coll_find(
                             m_coll,
-                            has_expr ? &m_expr : nullptr,
-                            has_projection()  ? this : nullptr, //projection
-                            m_order.empty() ? nullptr : this,  // order_by spec
+                            get_where(),
+                            get_doc_proj(),
+                            get_order_by(),
                             nullptr,  // group_by
                             nullptr,  // having
-                            m_has_limit ? this : nullptr,  // limit spec
-                            get_params())
-                      );
+                            get_limit(),
+                            get_params()
+                      ));
     return m_reply;
   }
 
@@ -433,79 +423,56 @@ class Op_collection_find
 };
 
 
-namespace mysqlx {
-
-template <>
-struct Crud_impl<CollectionFind>
-{
-  typedef Op_collection_find type;
-};
-
-} // mysqlx
-
-
 CollectionFind::CollectionFind(Collection &coll)
 try
-  : Statement(new Op_collection_find(coll))
+  : Executable(new Op_collection_find(coll))
 {}
 CATCH_AND_WRAP
 
 CollectionFind::CollectionFind(Collection &coll, const mysqlx::string &expr)
 try
-  : Statement(new Op_collection_find(coll, expr))
+  : Executable(new Op_collection_find(coll, expr))
 {}
 CATCH_AND_WRAP
-
-
-namespace mysqlx {
-
-template <>
-struct Crud_impl<internal::CollectionFields>
-{
-  typedef Op_collection_find type;
-};
-
-void internal::CollectionFields::do_fields(const mysqlx::string& field)
-{
-  get_impl(this).add_projection(field);
-}
-
-} // mysqlx
-
 
 
 // --------------------------------------------------------------------
 
 /*
-  Collection.modify()
-  ===================
+  Collection modify
+  =================
+*/
+
+/*
+  Implementation of collection CRUD modify operation.
+
+  This implementation builds on top of Op_select<> and Op_sort<>
+  templates. It adds storage for update operations specified by
+  user. These update requests are presented via cdk::Update_spec
+  interface.
 */
 
 class Op_collection_modify
-    : public Op_sort<parser::Parser_mode::DOCUMENT>
+    : public Op_select<
+        Op_sort<
+          internal::CollectionModify_impl,
+          parser::Parser_mode::DOCUMENT
+        >,
+        parser::Parser_mode::DOCUMENT
+      >
     , public cdk::Update_spec
 {
+  typedef internal::CollectionModify_impl Impl;
 
   Table_ref m_coll;
-  parser::Expression_parser m_expr;
-  bool has_expr = false;
 
   struct Field_Op
   {
-
-    enum Operation
-    {
-      SET,
-      UNSET,
-      ARRAY_INSERT,
-      ARRAY_APPEND,
-      ARRAY_DELETE
-    } ;
+    typedef Impl::Operation Operation;
 
     Operation m_op;
     Field m_field;
     internal::ExprValue m_val;
-
 
     Field_Op(Operation op, const Field &field)
       : m_op(op)
@@ -517,7 +484,6 @@ class Op_collection_modify
     {
       m_val = std::move(val);
     }
-
   };
 
   std::list<Field_Op> m_update;
@@ -525,44 +491,47 @@ class Op_collection_modify
 
 
   Op_collection_modify(Collection &coll)
-    : Op_sort(coll)
+    : Op_select(coll)
     , m_coll(coll)
-    , m_expr(parser::Parser_mode::DOCUMENT)
   {}
 
   Op_collection_modify(Collection &coll, const mysqlx::string &expr)
-    : Op_sort(coll)
+    : Op_select(coll)
     , m_coll(coll)
-    , m_expr(parser::Parser_mode::DOCUMENT, expr)
   {
-    has_expr = true;
+    add_where(expr);
   }
 
   cdk::Reply* send_command() override
   {
+    // Do nothing if no update specifications were added
+
+    if (m_update.empty())
+      return NULL;
+
     m_reply =
-        new cdk::Reply(get_cdk_session()
-                       .coll_update(m_coll,
-                                    has_expr ? &m_expr : nullptr,
-                                    *this,
-                                    m_order.empty() ? nullptr : this,
-                                    m_has_limit ? this : nullptr,
-                                    get_params()));
+      new cdk::Reply(get_cdk_session().coll_update(
+                       m_coll,
+                       get_where(),
+                       *this,
+                       get_order_by(),
+                       get_limit(),
+                       get_params()
+                     ));
     return m_reply;
   }
 
-  template <typename V>
-  void add_field_operation(Field_Op::Operation op,
-                           const Field &field,
-                           V &&val)
+  void add_operation(Field_Op::Operation op,
+                     const Field &field,
+                     internal::ExprValue &&val) override
   {
-    m_update.push_back(Field_Op(op, field, std::move(val)));
+    m_update.emplace_back(op, field, std::move(val));
   }
 
-  void add_field_operation(Field_Op::Operation op,
-                           const Field &field)
+  void add_operation(Field_Op::Operation op,
+                     const Field &field) override
   {
-    m_update.push_back(Field_Op(op, field));
+    m_update.emplace_back(op, field);
   }
 
 
@@ -585,7 +554,7 @@ class Op_collection_modify
 
     switch (m_update_it->m_op)
     {
-      case Field_Op::SET:
+      case Impl::SET:
         {
           Value_expr value_prc(m_update_it->m_val,
                                parser::Parser_mode::DOCUMENT);
@@ -594,11 +563,11 @@ class Op_collection_modify
 
         }
         break;
-      case Field_Op::UNSET:
+      case Impl::UNSET:
         prc.remove(&doc_field);
         break;
 
-      case Field_Op::ARRAY_INSERT:
+      case Impl::ARRAY_INSERT:
         {
           Value_expr value_prc(m_update_it->m_val,
                                parser::Parser_mode::DOCUMENT);
@@ -607,7 +576,7 @@ class Op_collection_modify
         }
         break;
 
-      case Field_Op::ARRAY_APPEND:
+      case Impl::ARRAY_APPEND:
         {
           Value_expr value_prc(m_update_it->m_val,
                                parser::Parser_mode::DOCUMENT);
@@ -615,7 +584,7 @@ class Op_collection_modify
           value_prc.process_if(prc.array_append(&doc_field));
         }
         break;
-      case Field_Op::ARRAY_DELETE:
+      case Impl::ARRAY_DELETE:
         prc.remove(&doc_field);
         break;
     }
@@ -623,84 +592,17 @@ class Op_collection_modify
   }
 
   friend mysqlx::CollectionModify;
-  friend internal::CollectionModifyInterface;
 };
-
-
-namespace mysqlx {
-
-template <>
-struct Crud_impl<CollectionModify>
-{
-  typedef Op_collection_modify type;
-};
-
-} // mysqlx::internal
 
 
 CollectionModify::CollectionModify(Collection &coll)
 try
-  : Statement(new Op_collection_modify(coll))
+  : Executable(new Op_collection_modify(coll))
 {}
 CATCH_AND_WRAP
 
 CollectionModify::CollectionModify(Collection &coll, const mysqlx::string &expr)
 try
-  : Statement(new Op_collection_modify(coll, expr))
+  : Executable(new Op_collection_modify(coll, expr))
 {}
 CATCH_AND_WRAP
-
-
-CollectionModify&
-internal::CollectionModifyInterface::set(const Field &field,
-                                         ExprValue &&val)
-{
-  CollectionModify &op = get_op();
-  get_impl(&op).add_field_operation(Op_collection_modify::Field_Op::SET,
-                                     field,
-                                     std::move(val));
-  return op;
-}
-
-CollectionModify&
-internal::CollectionModifyInterface::unset(const Field &field)
-{
-  CollectionModify &op = get_op();
-  get_impl(&op).add_field_operation(Op_collection_modify::Field_Op::UNSET,
-                                    field);
-  return op;
-}
-
-CollectionModify&
-internal::CollectionModifyInterface::arrayInsert(const Field &field,
-                                                 ExprValue &&val)
-{
-  CollectionModify &op = get_op();
-  get_impl(&op)
-      .add_field_operation(Op_collection_modify::Field_Op::ARRAY_INSERT,
-                           field,
-                           std::move(val));
-  return op;
-}
-
-CollectionModify&
-internal::CollectionModifyInterface::arrayAppend(const Field &field,
-                                                 ExprValue &&val)
-{
-  CollectionModify &op = get_op();
-  get_impl(&op)
-      .add_field_operation(Op_collection_modify::Field_Op::ARRAY_APPEND,
-                           field,
-                           std::move(val));
-  return op;
-}
-
-CollectionModify&
-internal::CollectionModifyInterface::arrayDelete(const Field &field)
-{
-  CollectionModify &op = get_op();
-  get_impl(&op)
-      .add_field_operation(Op_collection_modify::Field_Op::ARRAY_DELETE,
-                           field);
-  return op;
-}

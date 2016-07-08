@@ -22,126 +22,116 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-#ifndef MYSQLX_TASK_H
-#define MYSQLX_TASK_H
+#ifndef MYSQLX_STATEMENT_H
+#define MYSQLX_STATEMENT_H
 
 /**
   @file
-  Classes to control (asynchronous) execution of commands.
-
-  @note Asynchronous execution is not implemented yet.
+  Classes which represent executable statements.
 */
 
 
 #include "common.h"
 #include "result.h"
 
-#include <map>
-#include <forward_list>
 
 namespace mysqlx {
 
 using std::ostream;
 
+class XSession;
 
-class Task;
-class Executable;
-class Statement;
 
 namespace internal {
 
-class SqlStatement;
-
 /*
-  Object of this class controls asynchronous execution
-  of a task defined by class deriving from Task::Impl.
+  Abstract interface to be implemented by internal implementaion
+  of an executable object.
 
-  It wraps and manages the implementation instance and
-  provides the standard async execution methods:
-  cont(), is_completed() and wait().
+  The execute() method returns a BaseStatement object which can be
+  used to initialize different result types used in DevAPI.
 */
 
-class Task : internal::nocopy
+struct Executable_impl
 {
-public:
-
-  Task& operator=(Task &&other)
-  {
-    reset(other.m_impl);
-    other.m_impl = NULL;
-    return *this;
-  }
-
-  virtual ~Task();
-  bool is_completed();
-  internal::BaseResult wait();
-  void cont();
-
-protected:
-
-  class Impl;
-  Impl  *m_impl;  // TODO: use unique_ptr<> instead.
-
-  Task() : m_impl(NULL)
-  {}
-
-  void reset(Impl*);
-
-public:
-
-  struct Access;
-  friend Access;
-  friend Executable;
-  friend Statement;
+  virtual BaseResult execute() = 0;
 };
 
-} // internal
-
+}  // internal
 
 /**
-  Represents an operation that can be executed.
+  Represents an operatiothat can be executed.
 
   Creating an operation does not involve any communication
   with the server. Only when `execute()` method is called
   operation is sent to the server for execution.
+
+  The template parameter `Res` is the type of result that
+  is returned by `execute()` method.
 */
 
-class Executable : internal::nocopy
+template <class Res>
+class Executable
 {
 protected:
 
-  internal::Task m_task;
+  typedef internal::Executable_impl Impl;
+
+  std::unique_ptr<Impl> m_impl;
+
+  Executable() = default;
+  Executable(Impl *impl)
+  {
+    m_impl.reset(impl);
+  }
 
   void check_if_valid()
   {
-    if (!m_task.m_impl)
+    if (!m_impl)
       throw Error("Attempt to use invalid operation");
-  }
-
-  Executable() {}
-  Executable(internal::Task::Impl *impl)
-  {
-    m_task.reset(impl);
   }
 
 public:
 
+  Executable(Executable &other) : Executable(std::move(other))
+  {}
+
   Executable(Executable &&other)
-  {
-    m_task = std::move(other.m_task);
-  }
+    : m_impl(std::move(other.m_impl))
+  {}
 
   /// Execute given operation and wait for its result.
 
-  virtual internal::BaseResult execute()
+  virtual Res execute()
   {
-    check_if_valid();
-    return m_task.wait();
+    try {
+      check_if_valid();
+      return m_impl->execute();
+    }
+    CATCH_AND_WRAP
   }
 
   struct Access;
-  friend struct Access;
+  friend Access;
 };
+
+
+namespace internal {
+
+/*
+  Interface to be implemented by internal implementation
+  of statement object.
+
+  Statement object uses `add_param` method to report values
+  bound to named parameters to the implementation.
+*/
+
+  struct Statement_impl : public Executable_impl
+{
+  virtual void add_param(const string&, Value) = 0;
+};
+
+}  // internal
 
 
 /**
@@ -151,48 +141,60 @@ public:
   CRUD operations. Before executing a `Statement`, values of named
   parameters that appear in expressions which define the statement
   can be bound to values using `bind()` method.
+
+  The template parameter `Res` is the type of result that
+  is returned by `execute()` method.
 */
 
-class Statement : public Executable
+template <class Res>
+class Statement
+  : public virtual Executable<Res>
 {
 protected:
 
-  class Impl;
-
-  typedef std::map<string, Value> param_map_t;
-  param_map_t m_map;
+  typedef internal::Statement_impl Impl;
 
   Statement() = default;
-  Statement(Impl*);
+  Statement(Impl *impl)
+    : Executable<Res>(impl)
+  {}
+
+  using Executable<Res>::check_if_valid;
+  using Executable<Res>::m_impl;
+
+  Impl* get_impl()
+  {
+    check_if_valid();
+    return static_cast<Impl*>(m_impl.get());
+  }
 
 public:
 
   Statement(Statement &other)
-    : Executable(std::move(other))
-    , m_map(std::move(other.m_map))
+    : Executable<Res>(std::move(other))
   {}
 
   Statement(Statement &&other) : Statement(other) {}
-
-  internal::BaseResult execute() override;
 
 
   /// Bind parameter with given name to the given value.
 
   Statement& bind(const string &parameter, Value val)
   {
-    check_if_valid();
-    m_map.emplace(parameter, val);
-    return *this;
+    try {
+      get_impl()->add_param(parameter, val);
+      return *this;
+    }
+    CATCH_AND_WRAP
   }
 
   template <class Map>
-  Executable& bind(const Map &args)
+  Executable<Res>& bind(const Map &args)
   {
     check_if_valid();
-    for(const auto &keyval : args)
+    for (const auto &keyval : args)
     {
-      m_map.emplace(keyval.first, keyval.second);
+      bind(keyval.first, keyval.second);
     }
     return *this;
   }
@@ -210,7 +212,7 @@ public:
   template <typename Iterator>
   BindExec& bind(const string &parameter, const Iterator &begin, const Iterator &end)
   {
-    m_map[parameter] = Value(begin, end);
+    get_impl()->add_param(parameter, Value(begin, end));
     return *this;
   }
 
@@ -221,39 +223,72 @@ public:
 };
 
 
+namespace internal {
+
+/*
+  Interface to be implemented by internal implementation
+  of SQL statement object.
+
+  Like with statement implementation, the `add_param` method
+  is used to report values bound to SQL query parameters.
+  Unlike the CRUD operations, SQL query parameters are
+  not named but positional.
+*/
+
+struct SqlStatement_impl : public Executable_impl
+{
+  virtual void add_param(Value) = 0;
+};
+
+}  // internal
+
+
 /**
   Represents an operation which exececutes SQL statement.
 
   Before executing the statement, values of "?" placeholders
   that appear in it can be specified using `bind()` method.
+
+  SqlStatement's method `execute` returns result of type
+  `SqlResult`.
 */
 
-class SqlStatement : public Executable
+class SqlStatement
+  : public virtual Executable<SqlResult>
 {
 protected:
 
+  typedef internal::SqlStatement_impl Impl;
+
   SqlStatement() = default;
 
-  void add_param(const Value &val);
+  using Executable<SqlResult>::check_if_valid;
+  using Executable<SqlResult>::m_impl;
+
+  Impl* get_impl()
+  {
+    check_if_valid();
+    return static_cast<Impl*>(m_impl.get());
+  }
+
+  void reset(XSession&, const string&);
 
 public:
 
   SqlStatement(SqlStatement &other)
-    : Executable(std::move(other))
+    : Executable<SqlResult>(std::move(other))
   {}
 
   SqlStatement& bind(Value val)
   {
-    check_if_valid();
-    add_param(val);
+    get_impl()->add_param(val);
     return *this;
   }
 
   template <typename... Types>
   SqlStatement& bind(Value first, Types... rest)
   {
-    check_if_valid();
-    add_param(first);
+    bind(first);
     return bind(rest...);
   }
 
@@ -267,7 +302,7 @@ public:
   {
     check_if_valid();
     for (const auto &val : c)
-      add_param(val);
+      get_impl()->add_param(val);
     return *this;
   }
 
