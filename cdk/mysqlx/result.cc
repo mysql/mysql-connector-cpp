@@ -58,7 +58,7 @@ void Reply::init(Reply_init &init)
 {
   m_session = &init;
 
-  init.register_reply(this);
+  m_session->register_reply(this);
 
   m_session->send_cmd();
   m_session->start_reading_row_set();
@@ -67,7 +67,12 @@ void Reply::init(Reply_init &init)
 
 void Reply::close_cursor()
 {
-  if (m_session && m_session->m_current_cursor)
+  if (NULL == m_session)
+    return;
+    
+  assert(this == m_session->m_current_reply);
+    
+  if (m_session->m_current_cursor)
     m_session->m_current_cursor->close();
 }
 
@@ -78,6 +83,8 @@ void Reply::discard()
 
   if (NULL == m_session)
     return;
+
+  assert(this == m_session->m_current_reply);
 
   if (m_session->m_current_cursor)
     throw_error("Cursor in usage!");
@@ -91,6 +98,7 @@ void Reply::discard()
 
   m_session->m_discard = false;
   m_session->deregister_reply(this);
+  m_session = NULL;
 }
 
 
@@ -98,6 +106,8 @@ bool Reply::has_results()
 {
   if (NULL == m_session)
     return false;
+
+  assert(this == m_session->m_current_reply);
 
   // If we hit error, do not continue.
 
@@ -119,6 +129,8 @@ void Reply::skip_result()
 {
   if (NULL == m_session)
     throw_error("Session not initialized");
+
+  assert(this == m_session->m_current_reply);
 
   if (entry_count() > 0)
     return;
@@ -146,6 +158,8 @@ bool Reply::is_completed() const
   if (!m_session)
     return true;
 
+  assert(this == m_session->m_current_reply);
+
   if (!m_session->m_reply_op_queue.empty())
     return false;
 
@@ -157,6 +171,8 @@ bool Reply::do_cont()
 {
   if (!m_session)
     return true;
+
+  assert(this == m_session->m_current_reply);
 
   if (m_session->m_reply_op_queue.empty())
     return true;
@@ -190,6 +206,8 @@ void Reply::do_wait()
 {
   while (m_session && !m_session->m_reply_op_queue.empty())
   {
+    assert(this == m_session->m_current_reply);
+
     if (m_error)
     {
       m_session->m_reply_op_queue.clear();

@@ -165,7 +165,8 @@ const int SOCKET_ERROR = -1;
   ============================
 
   Used for handling errors returned by network name resolution routines
-  related to `getaddrinfo`.
+  related to `getaddrinfo` (see
+  <http://pubs.opengroup.org/onlinepubs/009695399/functions/getaddrinfo.html>)
 */
 
 class error_category_resolve : public error_category
@@ -184,10 +185,31 @@ class error_category_resolve : public error_category
       case EAI_FAIL: return errc::address_not_available;
       case EAI_FAMILY: return errc::address_family_not_supported;
       case EAI_MEMORY: return errc::not_enough_memory;
-      case EAI_NODATA: return errc::address_not_available;
+      case EAI_NONAME: return errc::address_not_available;
+
+      case EAI_SERVICE:
+        //The service passed was not recognized for the specified socket type.
+        return errc::invalid_argument;
+
+      case EAI_SOCKTYPE:
+        //The intended socket type was not recognized.
+        return errc::not_a_socket;
+
+#ifdef EAI_OVERFLOW
+      case EAI_OVERFLOW:
+        //An argument buffer overflowed.
+        return errc::value_too_large;
+#endif
+
+#ifdef EAI_SYSTEM
+      case EAI_SYSTEM:
+        //A system error occurred; the error code can be found in errno.
+        return posix_error_category().default_error_condition(errno);
+#endif
+
       default:
         throw_error(code, error_category_resolve());
-        return errc::no_error;  // suppress copile warnings
+        return errc::no_error;  // suppress compile warnings
     }
   }
 
@@ -415,6 +437,11 @@ addrinfo* addrinfo_from_string(const char* host_name, unsigned short port)
 
   int rc = getaddrinfo(host_name, str_port, &hints, &result);
 
+#ifdef EAI_SYSTEM
+  if (EAI_SYSTEM == rc && errno)
+    throw_posix_error();
+#endif
+
   if (rc != 0)
     throw_error(rc, resolve_error_category());
 
@@ -447,11 +474,21 @@ Socket connect(const char *host_name, unsigned short port)
     }
   }
 
+DIAGNOSTIC_PUSH
+
+#ifdef _MSC_VER
+  // 4189 = local variable is initialized but not referenced
+  DISABLE_WARNING(4189)
+#endif
+
   struct AddrInfoGuard
   {
     addrinfo* list;
     ~AddrInfoGuard() { freeaddrinfo(list); }
-  } guard = { host_list };
+  }
+  guard = { host_list };
+
+DIAGNOSTIC_POP
 
   // Connect to host.
   int connect_result = SOCKET_ERROR;
