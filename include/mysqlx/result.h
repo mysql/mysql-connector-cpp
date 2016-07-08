@@ -64,6 +64,56 @@ class Executable;
 
 
 /*
+  Iterator class for RowResult and DocResult
+*/
+
+namespace internal {
+
+template<typename Result_type, typename Value_type>
+struct iterator
+    : std::iterator < std::input_iterator_tag, Value_type>
+{
+  Result_type& m_res;
+  Value_type m_val;
+
+  iterator(Result_type& res, Value_type doc)
+    : m_res(res)
+    , m_val(doc)
+  {}
+
+  bool operator !=(const iterator &other)
+  {
+    /*
+     Compares only if the objects are Null.
+    */
+    return m_val.isNull() != other.m_val.isNull();
+  }
+
+  iterator<Result_type, Value_type>& operator++()
+  {
+    m_val = m_res.fetchOne();
+    return *this;
+  }
+
+  iterator<Result_type, Value_type> operator++(int)
+  {
+    iterator<Result_type, Value_type> tmp(*this);
+    m_val = m_res.fetchOne();
+    return tmp;
+  }
+
+
+  Value_type operator*()
+  {
+    return m_val;
+  }
+
+};
+
+} // internal
+
+
+/*
   @todo Add diagnostics information (warnings)
 */
 
@@ -372,6 +422,8 @@ class RowResult : public internal::BaseResult
   uint64_t m_row_cache_size = 0;
   bool m_cache = false;
 
+  typedef internal::iterator<RowResult, Row> iterator;
+
 public:
 
   RowResult()
@@ -481,6 +533,21 @@ private:
       return std::move(m_cache);
     }
 
+    /**
+      Iterate over Rows
+     */
+
+    Cache_iterator begin()
+    {
+      return m_cache.begin();
+    }
+
+    Cache_iterator end() const
+    {
+      return m_cache.end();
+    }
+
+
     friend RowResult;
     friend DocResult;
   };
@@ -495,6 +562,24 @@ public:
    */
 
   uint64_t count();
+
+
+  /**
+   Iterate over Rows.
+
+   Rows that have been fetched using iterator will not be available when
+   calling fetchOne() or fetchAll()
+  */
+
+  iterator begin()
+  {
+    return iterator(*this, fetchOne());
+  }
+
+  iterator end() const
+  {
+    return iterator(*const_cast<RowResult*>(this), Row());
+  }
 
 protected:
 
@@ -716,6 +801,9 @@ class DocResult : public internal::BaseResult
 
   void check_result() const;
 
+  typedef internal::iterator<DocResult, DbDoc> iterator;
+
+
 public:
 
   DocResult()
@@ -799,6 +887,20 @@ private:
       return U(Doc_iterator(m_cache.begin()), Doc_iterator(m_cache.end()));
     }
 
+    /**
+     Iterate over Documents.
+    */
+
+    Doc_iterator begin()
+    {
+      return m_cache.begin();
+    }
+
+    Doc_iterator end() const
+    {
+      return m_cache.end();
+    }
+
 
     friend DocResult;
 
@@ -813,6 +915,23 @@ public:
    */
 
   uint64_t count();
+
+  /**
+   Iterate over Documents.
+
+   Documents that have been fetched using iterator will not be available when
+   calling fetchOne() or fetchAll()
+  */
+
+  iterator begin()
+  {
+    return iterator(*this, fetchOne());
+  }
+
+  iterator end() const
+  {
+    return iterator(*const_cast<DocResult*>(this), DbDoc());
+  }
 
 
   friend class Impl;

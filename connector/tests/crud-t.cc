@@ -1526,3 +1526,95 @@ TEST_F(Crud, buffered)
 
 
 }
+
+TEST_F(Crud, iterators)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("coll", true);
+
+  coll.remove().execute();
+
+  for (int i=0; i < 1000; ++i)
+  {
+    std::stringstream json;
+    json << "{ \"name\": \"foo\", \"age\": " << i << " }";
+    coll.add(json.str()).execute();
+  }
+
+  {
+    DocResult res = coll.find().sort("age").execute();
+
+    int age = 0;
+    for( DbDoc doc : res)
+    {
+      EXPECT_EQ(age, static_cast<int>(doc["age"]));
+
+      ++age;
+
+      //break ad half of the loop
+      if (age == 500)
+        break;
+    }
+
+    EXPECT_EQ(500, age);
+
+    for( DbDoc doc : res.fetchAll())
+    {
+      EXPECT_EQ(age, static_cast<int>(doc["age"]));
+
+      ++age;
+
+      //break the loop
+      if (age == 500)
+        break;
+    }
+
+    EXPECT_EQ(1000, age);
+
+  }
+
+  {
+    Table tbl = sch.getCollectionAsTable("coll");
+
+    RowResult res = tbl.select("doc->$.age AS age")
+                    .orderBy("doc->$.age")
+                    .execute();
+
+    int age = 0;
+    for( Row row : res)
+    {
+      EXPECT_EQ(age, static_cast<int>(row[0]));
+
+      ++age;
+
+      //break the loop
+      if (age == 500)
+        break;
+    }
+
+    EXPECT_EQ(500, age);
+
+    for( Row row : res.fetchAll())
+    {
+      EXPECT_EQ(age, static_cast<int>(row[0]));
+
+      ++age;
+
+      //break at half of the loop
+      if (age == 500)
+        break;
+    }
+
+    EXPECT_EQ(1000, age);
+
+  }
+}
+
