@@ -1559,22 +1559,19 @@ TEST_F(Crud, iterators)
 
       ++age;
 
-      //break ad half of the loop
+      //break the loop
       if (age == 500)
         break;
     }
 
     EXPECT_EQ(500, age);
 
+    //get the other 500
     for( DbDoc doc : res.fetchAll())
     {
       EXPECT_EQ(age, static_cast<int>(doc["age"]));
 
       ++age;
-
-      //break the loop
-      if (age == 500)
-        break;
     }
 
     EXPECT_EQ(1000, age);
@@ -1602,15 +1599,13 @@ TEST_F(Crud, iterators)
 
     EXPECT_EQ(500, age);
 
+    //get the other 500
     for( Row row : res.fetchAll())
     {
       EXPECT_EQ(age, static_cast<int>(row[0]));
 
       ++age;
 
-      //break at half of the loop
-      if (age == 500)
-        break;
     }
 
     EXPECT_EQ(1000, age);

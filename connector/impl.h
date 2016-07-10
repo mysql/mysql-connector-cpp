@@ -411,17 +411,6 @@ class DocResult::Impl
   : RowResult
 {
 
-  static DbDoc doc_from_row(Row &m_row)
-  {
-  // @todo Avoid copying of document string.
-    bytes data = m_row.getBytes(0);
-    return DbDoc(std::string(data.begin(),data.end()-1));
-  }
-
-
-//  };
-
-
   Row  m_row;
 
   Impl(BaseResult &init)
@@ -435,17 +424,14 @@ class DocResult::Impl
     if (!m_row)
       return DbDoc();
 
-    return doc_from_row(m_row);
+    // @todo Avoid copying of document string.
+    bytes data = m_row.getBytes(0);
+    return DbDoc(std::string(data.begin(),data.end()-1));
   }
 
   uint64_t count_docs()
   {
     return count();
-  }
-
-  DocResult::Doc_list_initializer get_all_docs()
-  {
-    return DocResult::Doc_list_initializer(fetchAll());
   }
 
   friend class DocResult;

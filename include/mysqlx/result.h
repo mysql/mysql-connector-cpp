@@ -81,7 +81,7 @@ struct iterator
     , m_val(doc)
   {}
 
-  bool operator !=(const iterator &other)
+  bool operator !=(const iterator &other) const
   {
     /*
      Compares only if the objects are Null.
@@ -95,18 +95,53 @@ struct iterator
     return *this;
   }
 
-  iterator<Result_type, Value_type> operator++(int)
-  {
-    iterator<Result_type, Value_type> tmp(*this);
-    m_val = m_res.fetchOne();
-    return tmp;
-  }
-
-
-  Value_type operator*()
+  Value_type operator*() const
   {
     return m_val;
   }
+
+};
+
+template <typename I>
+class List_iterator_init
+{
+protected:
+
+  I m_begin;
+  I m_end;
+
+  List_iterator_init(I begin,
+                     I end)
+    : m_begin(begin)
+    , m_end(end)
+  {}
+
+
+public:
+
+  template <typename U>
+  operator U()
+  {
+    return U(m_begin, m_end);
+  }
+
+
+  /**
+    Iterate over Rows
+   */
+
+  I begin()
+  {
+    return m_begin;
+  }
+
+  I end() const
+  {
+    return m_end;
+  }
+
+  friend RowResult;
+  friend DocResult;
 
 };
 
@@ -504,58 +539,10 @@ public:
     calling fetchAll()
    */
 
-private:
-
-  class Row_list_initializer
-  {
-  protected:
-
-    typedef std::forward_list<Row> Cache;
-    typedef std::forward_list<Row>::iterator Cache_iterator;
-
-    Cache &m_cache;
-
-    Row_list_initializer(std::forward_list<Row> &cache)
-      : m_cache(cache)
-    {}
-
-
-  public:
-
-    template <typename U>
-    operator U()
-    {
-      return U(m_cache.begin(), m_cache.end());
-    }
-
-    operator std::forward_list<Row>()
-    {
-      return std::move(m_cache);
-    }
-
-    /**
-      Iterate over Rows
-     */
-
-    Cache_iterator begin()
-    {
-      return m_cache.begin();
-    }
-
-    Cache_iterator end() const
-    {
-      return m_cache.end();
-    }
-
-
-    friend RowResult;
-    friend DocResult;
-  };
-
 
 public:
 
-  Row_list_initializer fetchAll();
+  internal::List_iterator_init<iterator> fetchAll();
 
   /**
      Returns number of rows available on RowResult to be fetched
@@ -839,76 +826,9 @@ public:
     calling fetchAll()
    */
 
-private:
-
-  class Doc_list_initializer
-    : RowResult::Row_list_initializer
-  {
-
-    // Struct used to iterate and convert Row to DbDoc
-    class Doc_iterator
-        : public std::iterator<Cache_iterator::iterator_category, DbDoc>
-    {
-
-      Cache_iterator m_it;
-
-    public:
-
-      Doc_iterator(Cache_iterator it)
-        : m_it(it)
-      {}
-
-      bool operator!=(const Doc_iterator& other)const
-      {
-        return m_it != other.m_it;
-      }
-
-      Doc_iterator& operator++()
-      {
-        ++m_it;
-        return *this;
-      }
-
-      DbDoc operator*() const;
-
-    };
-
-
-    Doc_list_initializer(const RowResult::Row_list_initializer &row_list)
-      : RowResult::Row_list_initializer(row_list)
-    {}
-
-
-  public:
-
-    template <typename U>
-    operator U()
-    {
-      return U(Doc_iterator(m_cache.begin()), Doc_iterator(m_cache.end()));
-    }
-
-    /**
-     Iterate over Documents.
-    */
-
-    Doc_iterator begin()
-    {
-      return m_cache.begin();
-    }
-
-    Doc_iterator end() const
-    {
-      return m_cache.end();
-    }
-
-
-    friend DocResult;
-
-  };
-
 public:
 
-  Doc_list_initializer fetchAll();
+  internal::List_iterator_init<iterator> fetchAll();
 
   /**
      Returns number of documents available on DocResult to be fetched.

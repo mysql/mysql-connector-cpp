@@ -1242,18 +1242,10 @@ uint64_t RowResult::count()
 }
 
 
-RowResult::Row_list_initializer RowResult::fetchAll()
+internal::List_iterator_init<mysqlx::RowResult::iterator> RowResult::fetchAll()
 {
-  if (m_cache && m_row_cache_size == 0)
-  {
-    // Clear list because counter is empty.
-    m_row_cache.clear();
-    return m_row_cache;
-  }
-
-  count();
-  m_row_cache_size = 0;
-  return m_row_cache;
+  return internal::List_iterator_init<mysqlx::RowResult::iterator>(begin(),
+                                                                   end());
 }
 
 void RowResult::check_result() const
@@ -1333,17 +1325,8 @@ uint64_t DocResult::count()
   return m_doc_impl->count_docs();
 }
 
-DocResult::Doc_list_initializer DocResult::fetchAll()
+internal::List_iterator_init<mysqlx::DocResult::iterator> DocResult::fetchAll()
 {
-  try {
-    check_result();
-    return m_doc_impl->get_all_docs();
-  }
-  CATCH_AND_WRAP
-}
-
-DbDoc DocResult::Doc_list_initializer::Doc_iterator::operator*() const
-{
-  // Use Cache_iterator operator* to retrieve Row
-  return  DocResult::Impl::doc_from_row(*m_it);
+  return internal::List_iterator_init<mysqlx::DocResult::iterator>(begin(),
+                                                                   end());
 }
