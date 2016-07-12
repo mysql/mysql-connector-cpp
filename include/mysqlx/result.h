@@ -63,6 +63,91 @@ template <class Res> class Executable;
 
 
 /*
+  Iterator class for RowResult and DocResult
+*/
+
+namespace internal {
+
+template<typename Result_type, typename Value_type>
+struct iterator
+    : std::iterator < std::input_iterator_tag, Value_type>
+{
+  Result_type& m_res;
+  Value_type m_val;
+
+  iterator(Result_type& res, Value_type doc)
+    : m_res(res)
+    , m_val(doc)
+  {}
+
+  bool operator !=(const iterator &other) const
+  {
+    /*
+     Compares only if the objects are Null.
+    */
+    return m_val.isNull() != other.m_val.isNull();
+  }
+
+  iterator<Result_type, Value_type>& operator++()
+  {
+    m_val = m_res.fetchOne();
+    return *this;
+  }
+
+  Value_type operator*() const
+  {
+    return m_val;
+  }
+
+};
+
+template <typename I>
+class List_iterator_init
+{
+protected:
+
+  I m_begin;
+  I m_end;
+
+  List_iterator_init(I begin,
+                     I end)
+    : m_begin(begin)
+    , m_end(end)
+  {}
+
+
+public:
+
+  template <typename U>
+  operator U()
+  {
+    return U(m_begin, m_end);
+  }
+
+
+  /**
+    Iterate over Rows
+   */
+
+  I begin()
+  {
+    return m_begin;
+  }
+
+  I end() const
+  {
+    return m_end;
+  }
+
+  friend RowResult;
+  friend DocResult;
+
+};
+
+} // internal
+
+
+/*
   @todo Add diagnostics information (warnings)
 */
 
@@ -381,6 +466,11 @@ namespace internal {
 
 class RowResult : public internal::BaseResult
 {
+  std::forward_list<Row> m_row_cache;
+  uint64_t m_row_cache_size = 0;
+  bool m_cache = false;
+
+  typedef internal::iterator<RowResult, Row> iterator;
 public:
 
   RowResult()
@@ -451,6 +541,42 @@ public:
   */
 
   Row fetchOne();
+
+  /**
+    Return all remaining rows
+
+    Rows that have been fetched using fetchOne() will not be available when
+    calling fetchAll()
+   */
+
+
+public:
+
+  internal::List_iterator_init<iterator> fetchAll();
+
+  /**
+     Returns number of rows available on RowResult to be fetched
+   */
+
+  uint64_t count();
+
+
+  /**
+   Iterate over Rows.
+
+   Rows that have been fetched using iterator will not be available when
+   calling fetchOne() or fetchAll()
+  */
+
+  iterator begin()
+  {
+    return iterator(*this, fetchOne());
+  }
+
+  iterator end() const
+  {
+    return iterator(*const_cast<RowResult*>(this), Row());
+  }
 
 protected:
 
@@ -685,6 +811,9 @@ class DocResult // : public internal::BaseResult
 
   void check_result() const;
 
+  typedef internal::iterator<DocResult, DbDoc> iterator;
+
+
 public:
 
   DocResult()
@@ -706,6 +835,41 @@ public:
   */
 
   DbDoc fetchOne();
+
+  /**
+    Return all remaining documents.
+
+    Documents that have been fetched using fetchOne() will not be available when
+    calling fetchAll()
+   */
+
+public:
+
+  internal::List_iterator_init<iterator> fetchAll();
+
+  /**
+     Returns number of documents available on DocResult to be fetched.
+   */
+
+  uint64_t count();
+
+  /**
+   Iterate over Documents.
+
+   Documents that have been fetched using iterator will not be available when
+   calling fetchOne() or fetchAll()
+  */
+
+  iterator begin()
+  {
+    return iterator(*this, fetchOne());
+  }
+
+  iterator end() const
+  {
+    return iterator(*const_cast<DocResult*>(this), DbDoc());
+  }
+
 
 private:
 

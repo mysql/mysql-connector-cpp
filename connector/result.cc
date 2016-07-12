@@ -1190,6 +1190,16 @@ internal::List_init<GUID> Result::getDocumentIds() const
 
 Row RowResult::fetchOne()
 {
+  if (m_cache)
+  {
+    if (m_row_cache_size == 0)
+      return Row();
+
+    Row r = std::move(m_row_cache.front());
+    m_row_cache.pop_front();
+    m_row_cache_size--;
+    return r;
+  }
   try {
     Impl &impl = get_impl();
     const Row_data *row = impl.get_row();
@@ -1202,6 +1212,39 @@ Row RowResult::fetchOne()
   CATCH_AND_WRAP
 }
 
+uint64_t RowResult::count()
+{
+  if (!m_cache)
+    try {
+
+    m_cache = true;
+    Impl &impl = get_impl();
+
+    auto it = m_row_cache.before_begin();
+
+    for(const Row_data *row = impl.get_row();
+        row != nullptr;
+        row = impl.get_row())
+    {
+      ++m_row_cache_size;
+      it = m_row_cache.insert_after(it,
+                                    Row(std::make_shared<Row::Impl>(*row,
+                                                                    impl.m_mdata)
+                                        )
+                                    );
+    }
+  }
+  CATCH_AND_WRAP
+
+  return m_row_cache_size;
+}
+
+
+internal::List_iterator_init<mysqlx::RowResult::iterator> RowResult::fetchAll()
+{
+  return internal::List_iterator_init<mysqlx::RowResult::iterator>(begin(),
+                                                                   end());
+}
 
 void RowResult::check_result() const
 {
@@ -1280,11 +1323,18 @@ DbDoc DocResult::fetchOne()
 {
   try {
     check_result();
-    DbDoc doc = m_doc_impl->get_current_doc();
-    m_doc_impl->next_doc();
-    return std::move(doc);
+    return m_doc_impl->get_next_doc();
   }
   CATCH_AND_WRAP
 }
 
+uint64_t DocResult::count()
+{
+  return m_doc_impl->count_docs();
+}
 
+internal::List_iterator_init<mysqlx::DocResult::iterator> DocResult::fetchAll()
+{
+  return internal::List_iterator_init<mysqlx::DocResult::iterator>(begin(),
+                                                                   end());
+}

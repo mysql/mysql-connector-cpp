@@ -1396,8 +1396,8 @@ TEST_F(Crud, get_ids)
   EXPECT_NE(string("ABCDEFGHIJKLMNOPQRTSUVWXYZ012345"), string(list[0]));
   EXPECT_EQ(string("ABCDEFGHIJKLMNOPQRTSUVWXYZ012345"), string(list[1]));
 
-
 }
+
 
 TEST_F(Crud, count)
 {
@@ -1415,12 +1415,18 @@ TEST_F(Crud, count)
   //Remove all rows
   coll.remove().execute();
 
-  for (int i=0; i < 1000; ++i)
   {
-    std::stringstream json;
-    json << "{ \"name\": \"foo\", \"age\":" << i << " }";
+    CollectionAdd add(coll);
 
-    coll.add(json.str()).execute();
+    for (int i = 0; i < 1000; ++i)
+    {
+      std::stringstream json;
+      json << "{ \"name\": \"foo\", \"age\":" << i << " }";
+
+      add.add(json.str());
+    }
+
+    add.execute();
   }
 
   EXPECT_EQ(1000, coll.count());
@@ -1432,3 +1438,197 @@ TEST_F(Crud, count)
   EXPECT_EQ(500, tbl.count());
 
 }
+
+
+TEST_F(Crud, buffered)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("coll", true);
+
+  coll.remove().execute();
+
+  for (int j = 0; j < 10; ++j)
+  {
+    CollectionAdd add(coll);
+    for (int i = 0; i < 1000; ++i)
+    {
+      std::stringstream json;
+      json << "{ \"name\": \"foo\", \"age\": " << 1000*j + i << " }";
+      add.add(json.str());
+    }
+    add.execute();
+  }
+
+  {
+    DocResult res = coll.find().sort("age").execute();
+
+    //Get first directly
+    DbDoc r = res.fetchOne();
+    EXPECT_EQ(0, static_cast<int>(r["age"]));
+
+    EXPECT_EQ(9999, res.count());
+
+    //Get second from cache, after count()
+    EXPECT_EQ(1, static_cast<int>(res.fetchOne()["age"]));
+
+    //Get the rest of it
+    std::vector<DbDoc> rows = res.fetchAll();
+
+    EXPECT_EQ(9998, rows.size());
+
+    auto row = rows.begin();
+    int i = 2;
+    for( ; row != rows.end() ; ++row, ++i)
+    {
+      EXPECT_EQ(i, static_cast<int>((*row)["age"]));
+    }
+
+    EXPECT_EQ(0, res.count());
+
+    std::vector<DbDoc> rows_empty = res.fetchAll();
+
+    EXPECT_EQ(0, rows_empty.size());
+
+  }
+
+  {
+    Table tbl = sch.getCollectionAsTable("coll");
+
+    RowResult res = tbl.select("doc->$.age AS age")
+                    .orderBy("doc->$.age")
+                    .execute();
+
+    //Get first directly
+    Row r = res.fetchOne();
+
+    EXPECT_EQ(0, static_cast<int>(r[0]));
+
+    EXPECT_EQ(9999, res.count());
+
+    //Get second from cache, after count()
+    EXPECT_EQ(1, static_cast<int>(res.fetchOne()[0]));
+
+    //Get the rest of it
+    std::vector<Row> rows = res.fetchAll();
+
+    EXPECT_EQ(9998, rows.size());
+
+    auto row = rows.begin();
+    int i = 2;
+    for( ; row != rows.end() ; ++row, ++i)
+    {
+      EXPECT_EQ(i, static_cast<int>((*row)[0]));
+    }
+
+    EXPECT_EQ(0, res.count());
+
+    std::vector<Row> rows_empty = res.fetchAll();
+
+    EXPECT_EQ(0, rows_empty.size());
+
+  }
+
+
+}
+
+TEST_F(Crud, iterators)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("coll", true);
+
+  coll.remove().execute();
+
+  {
+    CollectionAdd add(coll);
+
+    for (int i = 0; i < 1000; ++i)
+    {
+      std::stringstream json;
+      json << "{ \"name\": \"foo\", \"age\":" << i << " }";
+
+      add.add(json.str());
+    }
+
+    add.execute();
+  }
+
+  {
+    DocResult res = coll.find().sort("age").execute();
+
+    int age = 0;
+    for( DbDoc doc : res)
+    {
+      EXPECT_EQ(age, static_cast<int>(doc["age"]));
+
+      ++age;
+
+      //break the loop
+      if (age == 500)
+        break;
+    }
+
+    EXPECT_EQ(500, age);
+
+    //get the other 500
+    for( DbDoc doc : res.fetchAll())
+    {
+      EXPECT_EQ(age, static_cast<int>(doc["age"]));
+
+      ++age;
+    }
+
+    EXPECT_EQ(1000, age);
+
+  }
+
+  {
+    Table tbl = sch.getCollectionAsTable("coll");
+
+    RowResult res = tbl.select("doc->$.age AS age")
+                    .orderBy("doc->$.age")
+                    .execute();
+
+    int age = 0;
+    for( Row row : res)
+    {
+      EXPECT_EQ(age, static_cast<int>(row[0]));
+
+      ++age;
+
+      //break the loop
+      if (age == 500)
+        break;
+    }
+
+    EXPECT_EQ(500, age);
+
+    //get the other 500
+    for( Row row : res.fetchAll())
+    {
+      EXPECT_EQ(age, static_cast<int>(row[0]));
+
+      ++age;
+
+    }
+
+    EXPECT_EQ(1000, age);
+
+  }
+}
+

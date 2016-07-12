@@ -60,6 +60,12 @@ struct List_init
 {
    std::forward_list<T> m_data;
 
+   template <typename L>
+   List_init(L&& list)
+     : m_data(std::move(list.begin()), std::move(list.end()))
+   {}
+
+   //Special case for forward_list usnig move contructor
    List_init(std::forward_list<T>&& list)
      : m_data(std::move(list))
    {}
@@ -68,6 +74,11 @@ struct List_init
    operator U()
    {
      return U(m_data.begin(), m_data.end());
+   }
+
+   operator std::forward_list<T>()
+   {
+     return std::move(m_data);
    }
 };
 
