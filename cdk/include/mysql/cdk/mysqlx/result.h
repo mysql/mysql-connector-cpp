@@ -50,6 +50,13 @@ protected:
   Diagnostic_arena m_da;
   bool             m_error;
 
+  Session& get_session()
+  {
+    if (!m_session)
+      throw_error("Accessing session of empty result");
+    return *m_session;
+  }
+
 public:
 
   Reply()
@@ -139,7 +146,7 @@ class Cursor
 protected:
 
   Session& m_session;
-  bool   m_closed;
+  bool     m_closed;
 
   Proto_op*               m_rows_op;
   mysqlx::Row_processor*  m_row_prc;

@@ -476,6 +476,15 @@ TEST_F(Session_core, affected)
       rp.wait();
       cout << "affected rows: " << rp.affected_rows() << endl;
       EXPECT_EQ(7, rp.affected_rows());
+
+      rp.discard();
+
+      /*
+        After discarding reply, affected rows count is no
+        longer available.
+      */
+
+      EXPECT_THROW(rp.affected_rows(), Error);
     }
 
     {
@@ -483,9 +492,15 @@ TEST_F(Session_core, affected)
 
       Reply rp(s.table_select(tbl, NULL));
       rp.wait();
+
+      /*
+        Affected rows count is available only for statements
+        that do not produce results.
+      */
+
+      EXPECT_THROW(rp.affected_rows(), Error);
+
       rp.discard();
-      cout << "affected rows: " << rp.affected_rows() << endl;
-      EXPECT_EQ(0, rp.affected_rows());
     }
 
     cout << "Done!" << endl;

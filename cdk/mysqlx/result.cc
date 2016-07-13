@@ -69,9 +69,9 @@ void Reply::close_cursor()
 {
   if (NULL == m_session)
     return;
-    
+
   assert(this == m_session->m_current_reply);
-    
+
   if (m_session->m_current_cursor)
     m_session->m_current_cursor->close();
 }
@@ -251,7 +251,7 @@ const cdk::api::Event_info* Reply::get_event_info() const
 
 
 Cursor::Cursor(Reply &reply)
-  : m_session(*reply.m_session)
+  : m_session(reply.get_session())
   , m_closed(false)
   , m_rows_op(NULL)
   , m_row_prc(NULL)
