@@ -99,6 +99,13 @@ public:
     return m_session->m_stmt_stats.rows_affected;
   }
 
+  row_count_t last_insert_id()
+  {
+    if (!m_session || has_results() || !m_session->m_executed)
+      throw_error("Only available after end of query execute");
+    return m_session->m_stmt_stats.last_insert_id;
+  }
+
   virtual void discard();
 
 protected:

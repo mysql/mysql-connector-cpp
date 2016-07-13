@@ -64,6 +64,7 @@ public:
   bool has_results() { return m_impl.has_results(); }
   void skip_result() { m_impl.skip_result(); }
   row_count_t affected_rows() { return m_impl.affected_rows(); }
+  row_count_t last_insert_id() { return m_impl.last_insert_id(); }
   void discard() { m_impl.discard(); }
 
   // Diagnostics interface
