@@ -77,14 +77,18 @@ TEST_F(Crud, basic)
 
     add = coll.add(doc, doc).execute();
     output_id_list(add);
+    EXPECT_EQ(2U, add.getAffectedItemsCount());
 
     add = coll.add("{ \"name\": \"bar\", \"age\": 2 }")
       .add("{ \"name\": \"baz\", \"age\": 3, \"date\": { \"day\": 20, \"month\": \"Apr\" }}").execute();
     output_id_list(add);
+    EXPECT_EQ(2U, add.getAffectedItemsCount());
 
     add = coll.add("{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }",
       "{ \"name\": \"buz\", \"age\": 17 }").execute();
     output_id_list(add);
+    EXPECT_EQ(2U, add.getAffectedItemsCount());
+    EXPECT_EQ(0U, add.getAutoIncrementValue());
   }
 
   {
@@ -528,14 +532,17 @@ TEST_F(Crud, modify)
   cout << "Modify documents..." << endl;
 
   {
+    Result res;
     auto op = coll.modify("name like :name and age < :age");
     op.set(string("name"), Value("boo"));
     op.set("$.age", expr("age+1"));
     op.arrayAppend("food", "Popcorn");
-    op.arrayAppend("food", "Coke")
+    res = op.arrayAppend("food", "Coke")
       .bind("name", "ba%")
       .bind("age", 3)
       .execute();
+
+    EXPECT_EQ(1U, res.getAffectedItemsCount());
   }
 
   cout << "Fetching documents..." << endl;
@@ -790,7 +797,7 @@ TEST_F(Crud, table)
 
   Schema sch = sess.getSchema("test");
   Table tbl = sch.getTable("crud_table");
-
+  Result res;
 
   //Insert values on table
 
@@ -802,7 +809,9 @@ TEST_F(Crud, table)
   insert.values("ID#1", 10, "Foo");
   insert.values("ID#2", 5 , "Bar" );
   insert.values("ID#3", 3 , "Baz");
-  insert.execute();
+  res = insert.execute();
+
+  EXPECT_EQ(3U, res.getAffectedItemsCount());
 
   //test inserting with 1 param only
   tbl.insert("_id").values("ID#99").execute();
@@ -817,7 +826,6 @@ TEST_F(Crud, table)
 
     //FIXME: Fix when Row::Setter is fixed
     const Row r = result.fetchOne();
-
 
     EXPECT_EQ(string("Foo"),(string)r[1]);
     EXPECT_EQ(10, (int)r[2]);
@@ -851,7 +859,9 @@ TEST_F(Crud, table)
   upd.set("age",expr("age+1"));
   upd.where("name like :name");
   upd.bind("name", "Fo%");
-  upd.execute();
+  res = upd.execute();
+
+  EXPECT_EQ(1U, res.getAffectedItemsCount());
 
   // Check if its ok
 
@@ -876,7 +886,9 @@ TEST_F(Crud, table)
   auto rm = tbl.remove();
   rm.where("name like :name");
   rm.bind("name", "Qu%");
-  rm.execute();
+  res = rm.execute();
+
+  EXPECT_EQ(1U, res.getAffectedItemsCount());
 
   {
     auto op_select = tbl.select();
@@ -902,10 +914,12 @@ TEST_F(Crud, table)
     Schema sch = sess.getSchema("test");
     Table tbl = sch.getTable("crud_table");
 
-    tbl.insert("c0","c1")
-        .values("{\"foo\": 1}", 1 )
-        .values("{\"foo\": 2}", 2 )
-        .values("{\"foo\": 3}", 3 ).execute();
+    res = tbl.insert("c0","c1")
+             .values("{\"foo\": 1}", 1 )
+             .values("{\"foo\": 2}", 2 )
+             .values("{\"foo\": 3}", 3 ).execute();
+
+    EXPECT_EQ(3U, res.getAffectedItemsCount());
 
     RowResult res = tbl.select("c0->$.foo", "c1").where("c0->$.foo > 1 AND c1 < 3").execute();
 
@@ -913,6 +927,43 @@ TEST_F(Crud, table)
 
     EXPECT_EQ(2, static_cast<int>(r[0]));
     EXPECT_EQ(2, static_cast<int>(r[1]));
+
+  }
+
+  // Check generated auto-increment values
+
+  {
+
+    sql("DROP TABLE IF EXISTS test.crud_table");
+    sql(
+      "CREATE TABLE test.crud_table("
+      "c0 JSON,"
+      "c1 INT AUTO_INCREMENT,"
+      "PRIMARY KEY (c1)"
+      ")");
+
+    Schema sch = sess.getSchema("test");
+    Table tbl = sch.getTable("crud_table");
+
+    res = tbl.insert("c0")
+      .values("{\"foo\": 1}")
+      .values("{\"foo\": 2}")
+      .values("{\"foo\": 3}").execute();
+
+    EXPECT_EQ(1U, res.getAutoIncrementValue());
+    EXPECT_EQ(3U, res.getAffectedItemsCount());
+
+    res = tbl.insert("c0")
+      .values("{\"foo\": 4}")
+      .values("{\"foo\": 5}").execute();
+
+    EXPECT_EQ(4U, res.getAutoIncrementValue());
+    EXPECT_EQ(2U, res.getAffectedItemsCount());
+
+    RowResult res = tbl.select("c0->$.foo", "c1").execute();
+
+    for (Row r; (r = res.fetchOne());)
+      EXPECT_EQ((int)r[0], (int)r[1]);
 
   }
 
@@ -1283,6 +1334,7 @@ TEST_F(Crud, row_error)
   }
 }
 
+
 TEST_F(Crud, coll_as_table)
 {
   SKIP_IF_NO_XPLUGIN;
@@ -1353,6 +1405,7 @@ TEST_F(Crud, coll_as_table)
 
 }
 
+
 TEST_F(Crud, get_ids)
 {
   SKIP_IF_NO_XPLUGIN;
@@ -1383,8 +1436,8 @@ TEST_F(Crud, get_ids)
   res = coll.remove().execute();
 
   // This functions can only be used on add() operations
-  EXPECT_ANY_THROW(res.getDocumentId());
-  EXPECT_ANY_THROW(res.getDocumentIds());
+  EXPECT_THROW(res.getDocumentId(), Error);
+  EXPECT_THROW(res.getDocumentIds(), Error);
 
   res = coll.add(doc1).add(doc2).execute();
 
@@ -1538,6 +1591,7 @@ TEST_F(Crud, buffered)
 
 
 }
+
 
 TEST_F(Crud, iterators)
 {

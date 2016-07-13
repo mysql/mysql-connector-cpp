@@ -1056,6 +1056,20 @@ class internal::BaseResult::Impl
   const Row_data *get_row();
 
 
+  cdk::row_count_t get_affected_rows() const
+  {
+    if (!m_reply)
+      THROW("Attempt to get affected rows count on empty result");
+    return m_reply->affected_rows();
+  }
+
+  cdk::row_count_t get_auto_increment() const
+  {
+    if (!m_reply)
+      THROW("Attempt to get auto increment value on empty result");
+    return m_reply->last_insert_id();
+  }
+
   // Row_processor
 
   bool row_begin(row_count_t)
@@ -1159,6 +1173,18 @@ internal::BaseResult::get_impl() const
     return *m_impl;
   }
   CATCH_AND_WRAP
+}
+
+
+uint64_t Result::getAffectedItemsCount() const
+{
+  return get_impl().get_affected_rows();
+}
+
+
+uint64_t Result::getAutoIncrementValue() const
+{
+  return get_impl().get_auto_increment();
 }
 
 
