@@ -531,7 +531,7 @@ void Session::col_type(col_count_t pos, unsigned short type)
   if (m_discard)
     return;
 
-  m_col_metadata[pos].m_type = type;
+  (*m_col_metadata)[pos].m_type = type;
 }
 
 
@@ -540,7 +540,7 @@ void Session::col_content_type(col_count_t pos, unsigned short type)
   if (m_discard)
     return;
 
-  m_col_metadata[pos].m_content_type = type;
+  (*m_col_metadata)[pos].m_content_type = type;
 }
 
 // TODO: original name should be optional (pointer)
@@ -551,7 +551,7 @@ void Session::col_name(col_count_t pos,
   if (m_discard)
     return;
 
-  Col_metadata &md= m_col_metadata[pos];
+  Col_metadata &md= (*m_col_metadata)[pos];
 
   md.m_name= name;
   md.m_name_original = original;
@@ -565,7 +565,7 @@ void Session::col_table(col_count_t pos,
   if (m_discard)
     return;
 
-  Col_metadata &md= m_col_metadata[pos];
+  Col_metadata &md= (*m_col_metadata)[pos];
 
   md.m_has_table= true;
   md.m_table.m_name= table;
@@ -582,7 +582,7 @@ void Session::col_schema(col_count_t pos,
   if (m_discard)
     return;
 
-  Col_metadata &md= m_col_metadata[pos];
+  Col_metadata &md= (*m_col_metadata)[pos];
 
   md.m_table.m_has_schema= true;
   md.m_table.m_schema.m_name= schema;
@@ -595,7 +595,7 @@ void Session::col_charset(col_count_t pos, charset_id_t cs)
   if (m_discard)
     return;
 
-  m_col_metadata[pos].m_cs = cs;
+  (*m_col_metadata)[pos].m_cs = cs;
 }
 
 
@@ -604,7 +604,7 @@ void Session::col_length(col_count_t pos, uint32_t length)
   if (m_discard)
     return;
 
-  m_col_metadata[pos].m_length = length;
+  (*m_col_metadata)[pos].m_length = length;
 }
 
 
@@ -613,7 +613,7 @@ void Session::col_decimals(col_count_t pos, unsigned short decimals)
   if (m_discard)
     return;
 
-  m_col_metadata[pos].m_decimals = decimals;
+  (*m_col_metadata)[pos].m_decimals = decimals;
 }
 
 
@@ -622,7 +622,7 @@ void Session::col_flags(col_count_t pos, uint32_t flags)
   if (m_discard)
     return;
 
-  m_col_metadata[pos].m_flags = flags;
+  (*m_col_metadata)[pos].m_flags = flags;
 }
 
 
@@ -679,7 +679,7 @@ void Session::send_cmd()
 
 void Session::start_reading_row_set()
 {
-  m_col_metadata.clear();
+  m_col_metadata.reset(new Mdata_storage());
   m_executed = false;
   m_reply_op_queue.push_back(
     shared_ptr<Proto_op>(new RcvMetaData(m_protocol, *this))

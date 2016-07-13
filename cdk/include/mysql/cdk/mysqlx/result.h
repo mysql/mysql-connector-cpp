@@ -161,7 +161,7 @@ public:
 
   col_count_t col_count() const
   {
-    size_t cnt = m_session.m_col_metadata.size();
+    size_t cnt = m_metadata->size();
     assert(cnt <= std::numeric_limits<col_count_t>::max());
     return (col_count_t)cnt;
   }
@@ -169,7 +169,7 @@ public:
   // Information about type and encoding format of a column
 
   Type_info type(col_count_t pos) const;
-  Format_info& format(col_count_t pos) const;
+  const Format_info& format(col_count_t pos) const;
 
   //  Give other information about the column (if any).
 
@@ -188,9 +188,9 @@ public:
 
 private:
 
-  typedef mysqlx::Session::Col_metadata Col_metadata;
+  cdk::scoped_ptr<Mdata_storage> m_metadata;
 
-  Col_metadata& get_metadata(col_count_t pos) const;
+  const Col_metadata& get_metadata(col_count_t pos) const;
   void internal_get_rows(mysqlx::Row_processor& rp);
 
   /*

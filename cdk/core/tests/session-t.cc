@@ -510,7 +510,7 @@ TEST_F(Session_core, sql_multi_rset)
       FAIL() << "Invalid Session!";
 
     do_sql(s, L"DROP PROCEDURE IF EXISTS test.test");
-    do_sql(s, L"CREATE PROCEDURE test.test() BEGIN SELECT 1; SELECT 2, 'foo'; END");
+    do_sql(s, L"CREATE PROCEDURE test.test() BEGIN SELECT 1; SELECT 'foo', 2; END");
 
     {
       Reply rp;
@@ -523,6 +523,7 @@ TEST_F(Session_core, sql_multi_rset)
         set_meta_data(cursor);
         cursor.get_rows(*this);
         cursor.wait();
+        EXPECT_EQ(cdk::TYPE_INTEGER, cursor.type(0));
       }
 
       EXPECT_TRUE(rp.has_results());
@@ -532,6 +533,7 @@ TEST_F(Session_core, sql_multi_rset)
         set_meta_data(cursor);
         cursor.get_rows(*this);
         cursor.wait();
+        EXPECT_EQ(cdk::TYPE_STRING, cursor.type(0));
       }
 
       EXPECT_FALSE(rp.has_results());

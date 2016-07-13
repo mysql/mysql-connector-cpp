@@ -87,10 +87,239 @@ struct cdk::Format<cdk::TYPE_DATETIME>::Access
 namespace cdk {
 namespace mysqlx {
 
+class Session;
+class Cursor;
+
+
+// ---------------------------------------------------------
+
+/*
+  Classes to store meta-data information received from server.
+*/
+
+
+template <class Base>
+class Obj_ref : public Base
+{
+  string m_name;
+  string m_name_original;
+  bool   m_has_name_original;
+
+public:
+
+  Obj_ref()
+    : m_has_name_original(false)
+  {}
+
+  const string name() const { return m_name; }
+  const string orig_name() const
+  {
+    return m_has_name_original ? m_name_original : m_name;
+  }
+
+  friend class Session;
+};
+
+
+
+class Col_metadata
+  : public Obj_ref<cdk::Column_info>
+  , public cdk::Format_info
+{
+  typedef Column_info::length_t length_t;
+
+  int          m_type;
+  int          m_content_type;
+  length_t     m_length;
+  unsigned int m_decimals;
+  charset_id_t m_cs;
+  uint32_t     m_flags;
+
+  class : public Obj_ref<cdk::api::Table_ref>
+  {
+    class : public Obj_ref<cdk::api::Schema_ref>
+    {
+      Obj_ref<cdk::api::Ref_base> m_catalog;
+      const cdk::api::Ref_base* catalog() const { return &m_catalog; }
+      friend class Session;
+    } m_schema;
+
+    bool m_has_schema;
+
+    const cdk::api::Schema_ref* schema() const
+    {
+      return m_has_schema ? &m_schema : NULL;
+    }
+
+    friend class Session;
+  } m_table;
+
+  bool      m_has_table;
+
+  const cdk::api::Table_ref* table() const
+  {
+    return m_has_table ? &m_table : NULL;
+  }
+
+  // Encoding format information
+
+  bool for_type(Type_info type) const
+  {
+    switch (m_type)
+    {
+    case protocol::mysqlx::col_type::SINT:
+    case protocol::mysqlx::col_type::UINT:
+      return TYPE_INTEGER == type;
+
+    case protocol::mysqlx::col_type::FLOAT:
+    case protocol::mysqlx::col_type::DOUBLE:
+    case protocol::mysqlx::col_type::DECIMAL:
+      return TYPE_FLOAT == type;
+
+    case protocol::mysqlx::col_type::TIME:
+    case protocol::mysqlx::col_type::DATETIME:
+      return TYPE_DATETIME == type;
+
+    case protocol::mysqlx::col_type::BYTES:
+      switch (m_content_type)
+      {
+      case content_type::JSON: return TYPE_DOCUMENT == type;
+      case content_type::GEOMETRY: return TYPE_GEOMETRY == type;
+      case content_type::XML: return TYPE_XML == type;
+      default: break;
+      }
+
+    case protocol::mysqlx::col_type::ENUM:
+    default:
+      return TYPE_BYTES == type || TYPE_STRING == type;
+    }
+  }
+
+  void get_info(Format<TYPE_INTEGER>& fmt) const
+  {
+    switch (m_type)
+    {
+    case protocol::mysqlx::col_type::SINT:
+      Format<TYPE_INTEGER>::Access::set_fmt(fmt, Format<TYPE_INTEGER>::SINT);
+      break;
+    case protocol::mysqlx::col_type::UINT:
+      Format<TYPE_INTEGER>::Access::set_fmt(fmt, Format<TYPE_INTEGER>::UINT);
+      break;
+    }
+    Format<TYPE_INTEGER>::Access::set_length(fmt, m_length);
+  }
+
+  void get_info(Format<TYPE_FLOAT>& fmt) const
+  {
+    switch (m_type)
+    {
+    case protocol::mysqlx::col_type::FLOAT:
+      Format<TYPE_FLOAT>::Access::set_fmt(fmt, Format<TYPE_FLOAT>::FLOAT);
+      break;
+    case protocol::mysqlx::col_type::DOUBLE:
+      Format<TYPE_FLOAT>::Access::set_fmt(fmt, Format<TYPE_FLOAT>::DOUBLE);
+      break;
+    case protocol::mysqlx::col_type::DECIMAL:
+      Format<TYPE_FLOAT>::Access::set_fmt(fmt, Format<TYPE_FLOAT>::DECIMAL);
+      break;
+    }
+  }
+
+  void get_info(Format<TYPE_STRING>& fmt) const
+  {
+    /*
+    Note: Types ENUM and SET are generally treated as
+    strings, but we set a 'kind' flag in the format description
+    to be able to distinguish them from plain strings.
+    */
+
+    Format<TYPE_STRING>::Access::set_cs(fmt, m_cs);
+
+    switch (m_type)
+    {
+    case protocol::mysqlx::col_type::BYTES:
+      Format<TYPE_STRING>::Access::set_width(fmt, m_length);
+      break;
+    case protocol::mysqlx::col_type::SET:
+      Format<TYPE_STRING>::Access::set_kind_set(fmt);
+      break;
+    case protocol::mysqlx::col_type::ENUM:
+      Format<TYPE_STRING>::Access::set_kind_enum(fmt);
+      break;
+    }
+  }
+
+  void get_info(Format<TYPE_DATETIME>& fmt) const
+  {
+    switch (m_type)
+    {
+    case protocol::mysqlx::col_type::TIME:
+      Format<TYPE_DATETIME>::Access::set_fmt(fmt, Format<TYPE_DATETIME>::TIME, true);
+      break;
+
+    case protocol::mysqlx::col_type::DATETIME:
+
+      // Note: flag 0x01 distinguishes TIMESTAMP from DATETIME type.
+
+      if (m_flags & 0x01)
+        Format<TYPE_DATETIME>::Access::set_fmt(fmt,
+          Format<TYPE_DATETIME>::TIMESTAMP, true);
+      else
+      {
+        /*
+        Note: presence of time part is detected based on the length
+        of the column. Full DATETIME values occupy more than 10
+        positions.
+        */
+
+        Format<TYPE_DATETIME>::Access::set_fmt(fmt,
+          Format<TYPE_DATETIME>::DATETIME, m_length > 10);
+      }
+      break;
+    }
+  }
+
+  void get_info(Format<TYPE_BYTES> &fmt) const
+  {
+    Format<TYPE_BYTES>::Access::set_width(fmt, m_length);
+  }
+
+  /*
+    Note: Access to default implementation for all overloads that
+    are not explicitly defined above
+    (see: http://stackoverflow.com/questions/9995421/gcc-woverloaded-virtual-warnings
+  */
+
+  using Format_info::get_info;
+
+public:
+
+  Col_metadata()
+    : m_type(0)
+    , m_content_type(0)
+    , m_length(0)
+    , m_decimals(0)
+    , m_cs(BINARY_CS_ID)
+    , m_flags(0)
+    , m_has_table(false)
+  {}
+
+  length_t length() const { return m_length; }
+  length_t decimals() const { return m_decimals; }
+
+  friend class Session;
+  friend class Cursor;
+};
+
+
+typedef std::map<col_count_t, Col_metadata>  Mdata_storage;
+
+// ---------------------------------------------------------
+
+
 using cdk::Row_source;
 using cdk::Projection;
 
-class Session;
 typedef Session Reply_init;
 
 /*
@@ -382,217 +611,11 @@ private:
 
   // Meta data storage
 
-  template <class Base>
-  class Obj_ref : public Base
-  {
-    string m_name;
-    string m_name_original;
-    bool   m_has_name_original;
-
-  public:
-
-    Obj_ref()
-      : m_has_name_original(false)
-    {}
-
-    const string name() const { return m_name; }
-    const string orig_name() const
-    { return m_has_name_original ? m_name_original : m_name; }
-
-    friend class Session;
-  };
-
-
-  class Col_metadata
-      : public Obj_ref<cdk::Column_info>
-      , public cdk::Format_info
-  {
-    typedef Column_info::length_t length_t;
-
-    int          m_type;
-    int          m_content_type;
-    length_t     m_length;
-    unsigned int m_decimals;
-    charset_id_t m_cs;
-    uint32_t     m_flags;
-
-    class : public Obj_ref<cdk::api::Table_ref>
-    {
-      class : public Obj_ref<cdk::api::Schema_ref>
-      {
-        Obj_ref<cdk::api::Ref_base> m_catalog;
-        const cdk::api::Ref_base* catalog() const { return &m_catalog; }
-        friend class Session;
-      } m_schema;
-
-      bool m_has_schema;
-
-      const cdk::api::Schema_ref* schema() const
-      { return m_has_schema ? &m_schema : NULL; }
-
-      friend class Session;
-    } m_table;
-
-    bool      m_has_table;
-
-    const cdk::api::Table_ref* table() const
-    { return m_has_table ? &m_table : NULL; }
-
-    // Encoding format information
-
-    bool for_type(Type_info type) const
-    {
-      switch (m_type)
-      {
-      case protocol::mysqlx::col_type::SINT:
-      case protocol::mysqlx::col_type::UINT:
-        return TYPE_INTEGER == type;
-
-      case protocol::mysqlx::col_type::FLOAT:
-      case protocol::mysqlx::col_type::DOUBLE:
-      case protocol::mysqlx::col_type::DECIMAL:
-        return TYPE_FLOAT == type;
-
-      case protocol::mysqlx::col_type::TIME:
-      case protocol::mysqlx::col_type::DATETIME:
-        return TYPE_DATETIME == type;
-
-      case protocol::mysqlx::col_type::BYTES:
-        switch (m_content_type)
-        {
-        case content_type::JSON: return TYPE_DOCUMENT == type;
-        case content_type::GEOMETRY: return TYPE_GEOMETRY == type;
-        case content_type::XML: return TYPE_XML == type;
-        default: break;
-        }
-
-      case protocol::mysqlx::col_type::ENUM:
-      default:
-        return TYPE_BYTES == type || TYPE_STRING == type;
-      }
-    }
-
-    void get_info(Format<TYPE_INTEGER>& fmt) const
-    {
-      switch (m_type)
-      {
-      case protocol::mysqlx::col_type::SINT:
-        Format<TYPE_INTEGER>::Access::set_fmt(fmt, Format<TYPE_INTEGER>::SINT);
-        break;
-      case protocol::mysqlx::col_type::UINT:
-        Format<TYPE_INTEGER>::Access::set_fmt(fmt, Format<TYPE_INTEGER>::UINT);
-        break;
-      }
-        Format<TYPE_INTEGER>::Access::set_length(fmt, m_length);
-    }
-
-    void get_info(Format<TYPE_FLOAT>& fmt) const
-    {
-      switch (m_type)
-      {
-        case protocol::mysqlx::col_type::FLOAT:
-        Format<TYPE_FLOAT>::Access::set_fmt(fmt, Format<TYPE_FLOAT>::FLOAT);
-        break;
-      case protocol::mysqlx::col_type::DOUBLE:
-        Format<TYPE_FLOAT>::Access::set_fmt(fmt, Format<TYPE_FLOAT>::DOUBLE);
-        break;
-      case protocol::mysqlx::col_type::DECIMAL:
-        Format<TYPE_FLOAT>::Access::set_fmt(fmt, Format<TYPE_FLOAT>::DECIMAL);
-        break;
-      }
-    }
-
-    void get_info(Format<TYPE_STRING>& fmt) const
-    {
-      /*
-        Note: Types ENUM and SET are generally treated as
-        strings, but we set a 'kind' flag in the format description
-        to be able to distinguish them from plain strings.
-      */
-
-      Format<TYPE_STRING>::Access::set_cs(fmt, m_cs);
-
-      switch (m_type)
-      {
-        case protocol::mysqlx::col_type::BYTES:
-          Format<TYPE_STRING>::Access::set_width(fmt, m_length);
-          break;
-        case protocol::mysqlx::col_type::SET:
-          Format<TYPE_STRING>::Access::set_kind_set(fmt);
-          break;
-        case protocol::mysqlx::col_type::ENUM:
-          Format<TYPE_STRING>::Access::set_kind_enum(fmt);
-          break;
-      }
-    }
-
-    void get_info(Format<TYPE_DATETIME>& fmt) const
-    {
-      switch (m_type)
-      {
-      case protocol::mysqlx::col_type::TIME:
-        Format<TYPE_DATETIME>::Access::set_fmt(fmt, Format<TYPE_DATETIME>::TIME, true);
-        break;
-
-      case protocol::mysqlx::col_type::DATETIME:
-
-        // Note: flag 0x01 distinguishes TIMESTAMP from DATETIME type.
-
-        if (m_flags & 0x01)
-          Format<TYPE_DATETIME>::Access::set_fmt(fmt,
-            Format<TYPE_DATETIME>::TIMESTAMP, true);
-        else
-        {
-          /*
-            Note: presence of time part is detected based on the length
-            of the column. Full DATETIME values occupy more than 10
-            positions.
-          */
-
-          Format<TYPE_DATETIME>::Access::set_fmt(fmt,
-            Format<TYPE_DATETIME>::DATETIME, m_length > 10);
-        }
-        break;
-      }
-    }
-
-    void get_info(Format<TYPE_BYTES> &fmt) const
-    {
-      Format<TYPE_BYTES>::Access::set_width(fmt, m_length);
-    }
-
-    /*
-      Note: Access to default implementation for all overloads that
-      are not explicitly defined above
-      (see: http://stackoverflow.com/questions/9995421/gcc-woverloaded-virtual-warnings
-    */
-
-    using Format_info::get_info;
-
-  public:
-
-    Col_metadata()
-      : m_type(0)
-      , m_content_type(0)
-      , m_length(0)
-      , m_decimals(0)
-      , m_cs(BINARY_CS_ID)
-      , m_flags(0)
-      , m_has_table(false)
-    {}
-
-    length_t length() const { return m_length; }
-    length_t decimals() const { return m_decimals; }
-
-    friend class Session;
-    friend class Cursor;
-  };
-
-
-  std::map<col_count_t, Col_metadata> m_col_metadata;
+  cdk::scoped_ptr<Mdata_storage> m_col_metadata;
   col_count_t m_nr_cols;
 
 };
+
 
 using cdk::api::Column_ref;
 using cdk::api::Table_ref;

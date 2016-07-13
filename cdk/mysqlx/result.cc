@@ -58,7 +58,7 @@ void Reply::init(Reply_init &init)
 {
   m_session = &init;
 
-  m_session->register_reply(this);
+  init.register_reply(this);
 
   m_session->send_cmd();
   m_session->start_reading_row_set();
@@ -274,6 +274,10 @@ Cursor::Cursor(Reply &reply)
       throw_error("No results when creating cursor");
   }
 
+  Mdata_storage *mdata = m_session.m_col_metadata.release();
+  assert(mdata);
+  m_metadata.reset(mdata);
+
   m_more_rows = true;
 
   m_session.m_has_results = false;
@@ -378,7 +382,7 @@ Type_info Cursor::type(col_count_t pos) const
   typedef protocol::mysqlx::col_type  col_type;
   typedef mysqlx::content_type        content_type;
 
-  mysqlx::Session::Col_metadata &md= get_metadata(pos);
+  const Col_metadata &md= get_metadata(pos);
 
   switch (md.m_type)
   {
@@ -415,16 +419,18 @@ Type_info Cursor::type(col_count_t pos) const
 }
 
 
-Format_info& Cursor::format(col_count_t pos) const
+const Format_info& Cursor::format(col_count_t pos) const
 {
   return get_metadata(pos);
 }
 
 
-Cursor::Col_metadata& Cursor::get_metadata(col_count_t pos) const
+const Col_metadata& Cursor::get_metadata(col_count_t pos) const
 {
-  std::map<col_count_t, Col_metadata>::iterator it = m_session.m_col_metadata.find(pos);
-  if (it == m_session.m_col_metadata.end())
+  if (!m_metadata)
+    THROW("Attempt to get metadata from unitialized cursor");
+  Mdata_storage::const_iterator it = m_metadata->find(pos);
+  if (it == m_metadata->end())
     // TODO: Report nice error if no metadata present
     THROW("No meta-data for requested column");
   return it->second;
