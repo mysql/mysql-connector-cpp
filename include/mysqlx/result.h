@@ -68,6 +68,8 @@ template <class Res> class Executable;
 
 namespace internal {
 
+  class BaseResult;
+
 /*
   List_initializer object can be used to initialize a container of
   arbitrary type U with list of items taken from source object.
@@ -115,7 +117,7 @@ public:
 
   friend RowResult;
   friend DocResult;
-
+  friend BaseResult;
 };
 
 
@@ -185,6 +187,69 @@ struct iterator
 
 namespace internal {
 
+  class BaseResult;
+
+} // internal
+
+
+class Warning : public internal::Printable
+{
+public:
+
+  enum Level { ERROR, WARNING, INFO };
+
+private:
+
+  Level    m_level;
+  uint16_t m_code;
+  string   m_msg;
+
+  Warning(Level level, uint16_t code, const string &msg)
+    : m_level(level), m_code(code), m_msg(msg)
+  {}
+
+  void print(std::ostream&) const;
+
+public:
+
+  Level getLevel() const
+  {
+    return m_level;
+  }
+
+  uint16_t getCode() const
+  {
+    return m_code;
+  }
+
+  const string& getMessage() const
+  {
+    return m_msg;
+  }
+
+  struct Access;
+  friend Access;
+};
+
+inline
+void Warning::print(std::ostream &out) const
+{
+  switch (getLevel())
+  {
+  case ERROR: out << "Error"; break;
+  case WARNING: out << "Warning"; break;
+  case INFO: out << "Info"; break;
+  }
+
+  if (getCode())
+    out << " " << getCode();
+
+  out << ": " << getMessage();
+}
+
+
+namespace internal {
+
   class BaseResult : nocopy
   {
     class Impl;
@@ -218,14 +283,64 @@ namespace internal {
 
   public:
 
+    typedef internal::iterator<Warning, BaseResult> iterator;
+
     BaseResult(BaseResult &&other) { init(std::move(other)); }
     virtual ~BaseResult();
+
+
+    unsigned getWarningCount() const;
+    internal::List_initializer<BaseResult> getWarnings()
+    {
+      return List_initializer<BaseResult>(*this);
+    };
+
+    Warning getWarning(unsigned);
+
+    iterator begin()
+    {
+      return iterator(*this);
+    }
+
+    iterator end()
+    {
+      return iterator();
+    }
+
+  private:
+
+    // warning iterator implementation
+
+    unsigned m_wpos;
+    bool   m_at_begin;
+
+    void iterator_start()
+    {
+      m_wpos = 0;
+      m_at_begin = true;
+    }
+
+    bool iterator_next()
+    {
+      if (!m_at_begin)
+        m_wpos++;
+      m_at_begin = false;
+      return m_wpos < getWarningCount();
+    }
+
+    Warning iterator_get()
+    {
+      return getWarning(m_wpos);
+    }
+
+  public:
 
     friend mysqlx::NodeSession;
     friend mysqlx::Result;
     friend mysqlx::RowResult;
     friend mysqlx::SqlResult;
     friend mysqlx::DocResult;
+    friend iterator;
 
     struct Access;
     friend Access;

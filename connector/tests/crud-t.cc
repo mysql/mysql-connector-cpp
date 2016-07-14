@@ -1686,3 +1686,46 @@ TEST_F(Crud, iterators)
   }
 }
 
+
+TEST_F(Crud, diagnostic)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Preparing table..." << endl;
+
+  NodeSession &sess = get_sess();
+
+  sess.sql("DROP TABLE IF EXISTS test.t").execute();
+  sess.sql("CREATE TABLE test.t (a TINYINT NOT NULL, b CHAR(4))").execute();
+
+  Table t = sess.getSchema("test").getTable("t");
+
+  cout << "Table ready..." << endl;
+
+  /*
+    The following statement clears the default SQL mode in
+    which all warnings are upgraded to errors.
+  */
+
+  sess.sql("SET SESSION sql_mode=''").execute();
+
+  cout << "Inserting rows into the table..." << endl;
+
+  // This insert statement should generate warnings
+
+  Result res = t.insert().values(10, "mysql").values(300, "xyz").execute();
+
+  for (Warning w : res.getWarnings())
+  {
+    cout << w << endl;
+  }
+
+  EXPECT_EQ(2U, res.getWarningCount());
+
+  std::vector<Warning> warnings = res.getWarnings();
+
+  for (unsigned i = 0; i < res.getWarningCount(); ++i)
+  {
+    EXPECT_EQ(warnings[i].getCode(), res.getWarning(i).getCode());
+  }
+}

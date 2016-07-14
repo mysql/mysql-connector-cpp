@@ -1070,6 +1070,22 @@ class internal::BaseResult::Impl
     return m_reply->last_insert_id();
   }
 
+  unsigned get_warning_count() const
+  {
+    if (!m_reply)
+      THROW("Attempt to get warning count for empty result");
+    return m_reply->entry_count(cdk::api::Severity::WARNING);
+  }
+
+  std::vector<Warning> m_warnings;
+
+  Warning get_warning(unsigned pos) const
+  {
+    return m_warnings.at(pos);
+  }
+
+  void load_warnings();
+
 
   // Row_processor
 
@@ -1129,6 +1145,51 @@ size_t Result::Impl::field_data(col_count_t pos, bytes data)
 }
 
 
+struct Warning::Access
+{
+  static Warning mk(Level level, uint16_t code, const string &msg)
+  {
+    return Warning(level, code, msg);
+  }
+};
+
+void Result::Impl::load_warnings()
+{
+  if (!m_warnings.empty())
+    return;
+
+  auto &it = m_reply->get_entries(cdk::api::Severity::WARNING);
+
+  while (it.next())
+  {
+    auto &entry = it.entry();
+    uint16_t code = 0;
+    Warning::Level level = Warning::INFO;
+
+    switch (entry.severity())
+    {
+    case cdk::api::Severity::ERROR: level = Warning::ERROR; break;
+    case cdk::api::Severity::WARNING: level = Warning::WARNING; break;
+    default: break;
+    }
+
+    if (entry.code().category() == cdk::server_error_category())
+    {
+      int c = entry.code().value();
+      assert(c >= 0 && (unsigned)c < std::numeric_limits<uint16_t>::max());
+      code = (uint16_t)c;
+    }
+
+    m_warnings.emplace_back(
+      Warning::Access::mk(
+        level, code,
+        entry.get_error().description()
+        )
+      );
+  }
+}
+
+
 /*
   BaseResult
   ==========
@@ -1174,6 +1235,19 @@ internal::BaseResult::get_impl() const
     return *m_impl;
   }
   CATCH_AND_WRAP
+}
+
+
+unsigned
+internal::BaseResult::getWarningCount() const
+{
+  return get_impl().get_warning_count();
+}
+
+Warning internal::BaseResult::getWarning(unsigned pos)
+{
+  get_impl().load_warnings();
+  return get_impl().get_warning(pos);
 }
 
 
