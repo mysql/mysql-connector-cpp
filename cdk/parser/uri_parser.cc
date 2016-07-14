@@ -37,13 +37,13 @@ using namespace parser;
 using std::string;
 
 
-void parse_uri(const string &uri, URI_processor &up)
+void parser::parse_uri(const std::string &uri, URI_processor &up)
 {
   URI_parser    parser(uri, true);
   parser.process(up);
 }
 
-void parse_conn_str(const string &uri, URI_processor &up)
+void parser::parse_conn_str(const std::string &uri, URI_processor &up)
 {
   URI_parser    parser(uri);
   parser.process(up);
