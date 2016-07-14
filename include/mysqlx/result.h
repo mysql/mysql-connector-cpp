@@ -68,81 +68,113 @@ template <class Res> class Executable;
 
 namespace internal {
 
-template<typename Result_type, typename Value_type>
-struct iterator
-    : std::iterator < std::input_iterator_tag, Value_type>
-{
-  Result_type& m_res;
-  Value_type m_val;
+/*
+  List_initializer object can be used to initialize a container of
+  arbitrary type U with list of items taken from source object.
 
-  iterator(Result_type& res, Value_type doc)
-    : m_res(res)
-    , m_val(doc)
-  {}
+  It is assumed that the source object type Source defines iterator
+  type and that std::begin/end() return iterators to the beginning
+  and end of the sequence. The container type U is assumed to have
+  a constructor from begin/end iterator.
 
-  bool operator !=(const iterator &other) const
-  {
-    /*
-     Compares only if the objects are Null.
-    */
-    return m_val.isNull() != other.m_val.isNull();
-  }
+  List_iterator defines begin/end() methods, so it is possible to
+  iterate over the sequence without storing it in any container.
+*/
 
-  iterator<Result_type, Value_type>& operator++()
-  {
-    m_val = m_res.fetchOne();
-    return *this;
-  }
-
-  Value_type operator*() const
-  {
-    return m_val;
-  }
-
-};
-
-template <typename I>
-class List_iterator_init
+template <typename Source>
+class List_initializer
 {
 protected:
 
-  I m_begin;
-  I m_end;
+  Source &m_src;
 
-  List_iterator_init(I begin,
-                     I end)
-    : m_begin(begin)
-    , m_end(end)
+  List_initializer(Source &src)
+    : m_src(src)
   {}
 
 
 public:
 
+  typedef typename Source::iterator iterator;
+
   template <typename U>
   operator U()
   {
-    return U(m_begin, m_end);
+    return U(std::begin(m_src), std::end(m_src));
   }
 
-
-  /**
-    Iterate over Rows
-   */
-
-  I begin()
+  iterator begin()
   {
-    return m_begin;
+    return std::begin(m_src);
   }
 
-  I end() const
+  iterator end() const
   {
-    return m_end;
+    return std::end(m_src);
   }
 
   friend RowResult;
   friend DocResult;
 
 };
+
+
+/*
+  Iterator template.
+
+  It defines an STL input iterator which is implemented using an
+  implementation object of some type Impl. It is assumed that Impl
+  has the following methods:
+
+   void iterator_start() - puts iterator in "before begin" positon;
+   bool iterator_next() - moves iterator to next position, returns
+                          false if it was not possible;
+   Value_type iterator_get() - gets current value.
+*/
+
+template<typename Value_type, typename Impl>
+struct iterator
+  : std::iterator < std::input_iterator_tag, Value_type>
+{
+  Impl *m_impl = NULL;
+  bool m_at_end = false;
+
+  iterator(Impl& impl)
+    : m_impl(&impl)
+  {
+    m_impl->iterator_start();
+    m_at_end = !m_impl->iterator_next();
+  }
+
+  iterator()
+    : m_at_end(true)
+  {}
+
+  bool operator !=(const iterator &other) const
+  {
+    /*
+      Compares only if both iterators are at the end
+      of the sequence.
+    */
+    return !(m_at_end && other.m_at_end);
+  }
+
+  iterator<Value_type, Impl>& operator++()
+  {
+    if (m_impl && !m_at_end)
+      m_at_end = !m_impl->iterator_next();
+    return *this;
+  }
+
+  Value_type operator*() const
+  {
+    if (!m_impl || m_at_end)
+      THROW("Attempt to dereference null iterator");
+    return m_impl->iterator_get();
+  }
+
+};
+
 
 } // internal
 
@@ -291,6 +323,117 @@ private:
 // Row based results
 // -----------------
 
+
+// RowResult column meta-data
+// --------------------------
+
+/**
+List of types defined by DevAPI. For each type TTT in this list
+there is corresponding enumeration value Type::TTT.
+
+Note: The class name declared for each type is ignored for now
+- it is meant for future extensions.
+*/
+
+#define TYPE_LIST(X) \
+  X(BIT,        BlobType)     \
+  X(TINYINT,    IntegerType)  \
+  X(SMALLINT,   IntegerType)  \
+  X(MEDIUMINT,  IntegerType)  \
+  X(INT,        IntegerType)  \
+  X(BIGINT,     IntegerType)  \
+  X(FLOAT,      NumericType)  \
+  X(DECIMAL,    NumericType)  \
+  X(DOUBLE,     NumericType)  \
+  X(JSON,       Type)         \
+  X(STRING,     StringType)   \
+  X(BYTES,      BlobType)     \
+  X(TIME,       Type)         \
+  X(DATE,       Type)         \
+  X(DATETIME,   Type)         \
+  X(TIMESTAMP,  Type)         \
+  X(SET,        StringType)   \
+  X(ENUM,       StringType)   \
+  X(GEOMETRY,   Type)         \
+
+#undef TYPE_ENUM
+#define TYPE_ENUM(T,X) T,
+
+enum class Type : unsigned short
+{
+  TYPE_LIST(TYPE_ENUM)
+};
+
+
+#define TYPE_NAME(T,X) case Type::T: return #T;
+
+inline
+const char* typeName(Type t)
+{
+  switch (t)
+  {
+    TYPE_LIST(TYPE_NAME)
+  default:
+    THROW("Unkonwn type");
+  }
+}
+
+inline
+std::ostream& operator<<(std::ostream &out, Type t)
+{
+  return out << typeName(t);
+}
+
+
+/**
+Class providing meta-data for a single result column.
+*/
+
+class Column : public internal::Printable
+{
+public:
+
+  string getSchemaName()  const;
+  string getTableName()   const;
+  string getTableLabel()  const;
+  string getColumnName()  const;
+  string getColumnLabel() const;
+
+  Type getType()   const;
+
+  unsigned long getLength() const;
+  unsigned short getFractionalDigits() const;
+  bool isNumberSigned() const;
+
+  CharacterSet getCharacterSet() const;
+  std::string getCharacterSetName() const
+  {
+    return characterSetName(getCharacterSet());
+  }
+
+  const CollationInfo& getCollation() const;
+  std::string getCollationName() const
+  {
+    return getCollation().getName();
+  }
+
+  bool isPadded() const;
+
+private:
+
+  class Impl;
+  std::shared_ptr<Impl> m_impl;
+  virtual void print(std::ostream&) const;
+
+public:
+
+  friend Impl;
+
+  struct Access;
+  friend Access;
+};
+
+
 class RowResult;
 
 /**
@@ -420,71 +563,84 @@ public:
 };
 
 
-class Column;
-
-namespace internal {
-
-  /*
-    Helper class which is used to initialize arbitrary STL container
-    that can store Column instances with all columns meta-data returned
-    by RowResult::getColumns(). An instance of ColumnListInitializer
-    is returned by RowResult::getColumns() and stores reference to the
-    RowResult object. It can be then used to initialize an STL container
-    via the type cast operator. ColumnListInitializer instances are not
-    to be used on its own.
-  */
-
-  class ColumnListInitializer
-  {
-    const RowResult &m_impl;
-
-    ColumnListInitializer(const RowResult &impl)
-      : m_impl(impl)
-    {}
-
-#if defined _MSC_VER && _MSC_VER < 1900
-
-    /*
-      There is bug in earlier version of MSVC:
-      https://connectbeta.microsoft.com/VisualStudio/feedback/details/1255564/unable-to-implicit-specify-defaulted-move-constructor-and-move-assignment-operator
-    */
-
-    ColumnListInitializer(ColumnListInitializer &&other)
-      : m_impl(other.m_impl)
-    {}
-
-#else
-
-    ColumnListInitializer(ColumnListInitializer&&) = default;
-
-#endif
-
-    ColumnListInitializer(const ColumnListInitializer&) = delete;
-
-  public:
-
-    const Column& operator[](col_count_t) const;
-
-    template <class C> operator C() const;
-
-    friend RowResult;
-  };
-
-} // internal
-
-
 /**
   %Result of an operation that returns rows.
 */
 
 class RowResult : public internal::BaseResult
 {
+  // Column meta-data access
+
+  struct Columns_src
+  {
+    const RowResult &m_res;
+
+    Columns_src(const RowResult &res)
+      : m_res(res)
+    {}
+
+    typedef internal::iterator<Column, Columns_src> iterator;
+
+    iterator begin()
+    {
+      return iterator(*this);
+    }
+
+    iterator end()
+    {
+      return iterator();
+    }
+
+    // iterator implementation
+
+    col_count_t m_pos;
+    bool m_at_begin;
+
+    void iterator_start()
+    {
+      m_pos = 0;
+      m_at_begin = true;
+    }
+
+    bool iterator_next()
+    {
+      if (!m_at_begin)
+        m_pos++;
+      m_at_begin = false;
+      return m_pos < m_res.getColumnCount();
+    }
+
+    Column iterator_get()
+    {
+      return m_res.getColumn(m_pos);
+    }
+  };
+
+  struct Columns
+    : public internal::List_initializer<Columns_src>
+  {
+    Columns_src m_src;
+
+    Columns(const RowResult &res)
+      : List_initializer(m_src)
+      , m_src(res)
+    {}
+
+    Column operator[](col_count_t pos) const
+    {
+      return m_src.m_res.getColumn(pos);
+    }
+  };
+
+
   std::forward_list<Row> m_row_cache;
   uint64_t m_row_cache_size = 0;
   bool m_cache = false;
 
-  typedef internal::iterator<RowResult, Row> iterator;
+
 public:
+
+  typedef internal::iterator<Row, RowResult> iterator;
 
   RowResult()
   {}
@@ -539,10 +695,10 @@ public:
     objects.
   */
 
-  internal::ColumnListInitializer getColumns() const
+  Columns getColumns() const
   {
     try {
-      return internal::ColumnListInitializer(*this);
+      return Columns(*this);
     }
     CATCH_AND_WRAP
   }
@@ -565,7 +721,10 @@ public:
 
 public:
 
-  internal::List_iterator_init<iterator> fetchAll();
+  internal::List_initializer<RowResult> fetchAll()
+  {
+    return internal::List_initializer<RowResult>(*this);
+  }
 
   /**
      Returns number of rows available on RowResult to be fetched
@@ -583,12 +742,12 @@ public:
 
   iterator begin()
   {
-    return iterator(*this, fetchOne());
+    return iterator(*this);
   }
 
   iterator end() const
   {
-    return iterator(*const_cast<RowResult*>(this), Row());
+    return iterator();
   }
 
 protected:
@@ -601,44 +760,28 @@ private:
     : BaseResult(std::move(init_))
   {}
 
+  // iterator implementation
+
+  Row m_cur_row;
+
+  void iterator_start() {}
+
+  bool iterator_next()
+  {
+    m_cur_row = fetchOne();
+    return !m_cur_row.isNull();
+  }
+
+  Row iterator_get()
+  {
+    return m_cur_row;
+  }
+
   friend Executable<RowResult>;
   friend SqlResult;
   friend DocResult;
+  friend iterator;
 };
-
-
-template <class C>
-inline
-internal::ColumnListInitializer::operator C() const
-{
-  try {
-
-    /*
-      Note: It is assumed that C is an STL container which can store
-      Column instances. They are added to the container using
-      C::emplace_back() method.
-    */
-
-    C columns;
-
-    for (col_count_t pos = 0; pos < m_impl.getColumnCount(); ++pos)
-      columns.emplace_back(m_impl.getColumn(pos));
-
-    return std::move(columns);
-  }
-  CATCH_AND_WRAP
-}
-
-
-inline
-const Column&
-internal::ColumnListInitializer::operator[](col_count_t pos) const
-{
-  try {
-    return m_impl.getColumn(pos);
-  }
-  CATCH_AND_WRAP
-}
 
 
 /**
@@ -698,117 +841,6 @@ private:
 };
 
 
-// RowResult column meta-data
-// --------------------------
-
-/**
-  List of types defined by DevAPI. For each type TTT in this list
-  there is corresponding enumeration value Type::TTT.
-
-  Note: The class name declared for each type is ignored for now
-  - it is meant for future extensions.
-*/
-
-#define TYPE_LIST(X) \
-  X(BIT,        BlobType)     \
-  X(TINYINT,    IntegerType)  \
-  X(SMALLINT,   IntegerType)  \
-  X(MEDIUMINT,  IntegerType)  \
-  X(INT,        IntegerType)  \
-  X(BIGINT,     IntegerType)  \
-  X(FLOAT,      NumericType)  \
-  X(DECIMAL,    NumericType)  \
-  X(DOUBLE,     NumericType)  \
-  X(JSON,       Type)         \
-  X(STRING,     StringType)   \
-  X(BYTES,      BlobType)     \
-  X(TIME,       Type)         \
-  X(DATE,       Type)         \
-  X(DATETIME,   Type)         \
-  X(TIMESTAMP,  Type)         \
-  X(SET,        StringType)   \
-  X(ENUM,       StringType)   \
-  X(GEOMETRY,   Type)         \
-
-#undef TYPE_ENUM
-#define TYPE_ENUM(T,X) T,
-
-enum class Type : unsigned short
-{
-  TYPE_LIST(TYPE_ENUM)
-};
-
-
-#define TYPE_NAME(T,X) case Type::T: return #T;
-
-inline
-const char* typeName(Type t)
-{
-  switch (t)
-  {
-    TYPE_LIST(TYPE_NAME)
-    default:
-      THROW("Unkonwn type");
-  }
-}
-
-inline
-std::ostream& operator<<(std::ostream &out, Type t)
-{
-  return out << typeName(t);
-}
-
-
-/**
-  Class providing meta-data for a single result column.
-*/
-
-class Column : public internal::Printable
-{
-public:
-
-  string getSchemaName()  const;
-  string getTableName()   const;
-  string getTableLabel()  const;
-  string getColumnName()  const;
-  string getColumnLabel() const;
-
-  Type getType()   const;
-
-  unsigned long getLength() const;
-  unsigned short getFractionalDigits() const;
-  bool isNumberSigned() const;
-
-  CharacterSet getCharacterSet() const;
-  std::string getCharacterSetName() const
-  {
-    return characterSetName(getCharacterSet());
-  }
-
-  const CollationInfo& getCollation() const;
-  std::string getCollationName() const
-  {
-    return getCollation().getName();
-  }
-
-  bool isPadded() const;
-
-private:
-
-  class Impl;
-  std::shared_ptr<Impl> m_impl;
-  virtual void print(std::ostream&) const;
-
-public:
-
-  friend Impl;
-
-  struct Access;
-  friend Access;
-};
-
-
-
 // Document based results
 // ----------------------
 
@@ -824,10 +856,9 @@ class DocResult // : public internal::BaseResult
 
   void check_result() const;
 
-  typedef internal::iterator<DocResult, DbDoc> iterator;
-
-
 public:
+
+  typedef internal::iterator<DbDoc, DocResult> iterator;
 
   DocResult()
   {}
@@ -858,7 +889,10 @@ public:
 
 public:
 
-  internal::List_iterator_init<iterator> fetchAll();
+  internal::List_initializer<DocResult> fetchAll()
+  {
+    return internal::List_initializer<DocResult>(*this);
+  }
 
   /**
      Returns number of documents available on DocResult to be fetched.
@@ -875,12 +909,12 @@ public:
 
   iterator begin()
   {
-    return iterator(*this, fetchOne());
+    return iterator(*this);
   }
 
   iterator end() const
   {
-    return iterator(*const_cast<DocResult*>(this), DbDoc());
+    return iterator();
   }
 
 
@@ -888,10 +922,27 @@ private:
 
   DocResult(internal::BaseResult&&);
 
+  // iterator implementation
+
+  DbDoc m_cur_doc;
+
+  void iterator_start() {}
+
+  bool iterator_next()
+  {
+    m_cur_doc = fetchOne();
+    return !m_cur_doc.isNull();
+  }
+
+  DbDoc iterator_get()
+  {
+    return m_cur_doc;
+  }
 
   friend Impl;
   friend DbDoc;
   friend Executable<DocResult>;
+  friend iterator;
 };
 
 

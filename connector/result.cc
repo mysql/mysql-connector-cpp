@@ -1070,6 +1070,7 @@ class internal::BaseResult::Impl
     return m_reply->last_insert_id();
   }
 
+
   // Row_processor
 
   bool row_begin(row_count_t)
@@ -1129,8 +1130,8 @@ size_t Result::Impl::field_data(col_count_t pos, bytes data)
 
 
 /*
-  Result
-  ======
+  BaseResult
+  ==========
 */
 
 
@@ -1174,6 +1175,12 @@ internal::BaseResult::get_impl() const
   }
   CATCH_AND_WRAP
 }
+
+
+/*
+  Result
+  ======
+*/
 
 
 uint64_t Result::getAffectedItemsCount() const
@@ -1266,12 +1273,6 @@ uint64_t RowResult::count()
 }
 
 
-internal::List_iterator_init<mysqlx::RowResult::iterator> RowResult::fetchAll()
-{
-  return internal::List_iterator_init<mysqlx::RowResult::iterator>(begin(),
-                                                                   end());
-}
-
 void RowResult::check_result() const
 {
   if (!get_impl().m_cursor)
@@ -1359,8 +1360,3 @@ uint64_t DocResult::count()
   return m_doc_impl->count_docs();
 }
 
-internal::List_iterator_init<mysqlx::DocResult::iterator> DocResult::fetchAll()
-{
-  return internal::List_iterator_init<mysqlx::DocResult::iterator>(begin(),
-                                                                   end());
-}
