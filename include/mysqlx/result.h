@@ -741,6 +741,16 @@ class RowResult : public internal::BaseResult
       , m_src(res)
     {}
 
+    /*
+      Note: Without this empty destructor code crashes on
+      Solaris but works fine on all other platforms. The
+      crash is like if the m_src object gets destroyed too
+      early.
+    */
+
+    ~Columns()
+    {}
+
     Column operator[](col_count_t pos) const
     {
       return m_src.m_res.getColumn(pos);
