@@ -444,6 +444,8 @@ class DocResult::Impl
 
 struct XSession::Access
 {
+  typedef XSession::Options  Options;
+
   static cdk::Session& get_cdk_session(XSession &sess)
   {
     return sess.get_cdk_session();

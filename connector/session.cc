@@ -24,6 +24,7 @@
 
 #include <mysqlx.h>
 #include <mysql/cdk.h>
+#include <uri_parser.h>
 
 #include <iostream>
 #include <sstream>
@@ -31,21 +32,80 @@
 
 #include "impl.h"
 
+
 using namespace ::mysqlx;
+
+struct Endpoint
+{
+  enum Type { TCPIP };
+
+  virtual Type type() const = 0;
+};
+
+
+struct XSession::Options
+  : public cdk::ds::Options
+{
+  virtual string default_schema()
+  {
+    return m_schema;
+  }
+
+  Options(const string &usr, const std::string *pwd,
+          string schema = string())
+    : cdk::ds::Options(usr, pwd)
+    , m_schema(schema)
+  {}
+
+  Options() = default;
+
+private:
+
+  string m_schema;
+};
+
+
+namespace endpoint {
+
+  struct TCPIP
+    : public Endpoint
+  {
+    Type type() const { return Endpoint::TCPIP; }
+    virtual std::string host()
+    {
+      return m_host;
+    }
+
+    virtual uint16_t    port()
+    {
+      return m_port;
+    }
+
+    TCPIP(const std::string &host, uint16_t port)
+      : m_host(host), m_port(port)
+    {}
+
+  protected:
+
+    TCPIP() : m_port(DEFAULT_MYSQLX_PORT)
+    {}
+
+    std::string m_host;
+    uint16_t    m_port;
+  };
+
+} // endpoint
+
+
 
 class XSession::Impl
 {
   cdk::ds::TCPIP   m_ds;
-  std::string      m_pwd;
-  cdk::ds::Options m_opt;
   cdk::Session     m_sess;
 
-  Impl(const char *host, unsigned short port,
-       const string &user, const char *pwd =NULL)
-    : m_ds(host, port)
-    , m_pwd(pwd ? pwd : "")
-    , m_opt(user, pwd ? &m_pwd : NULL)
-    , m_sess(m_ds, m_opt)
+  Impl(endpoint::TCPIP &ep, XSession::Options &opt)
+    : m_ds(ep.host(), ep.port())
+    , m_sess(m_ds, opt)
   {
     if (!m_sess.is_valid())
       m_sess.get_error().rethrow();
@@ -55,12 +115,80 @@ class XSession::Impl
 };
 
 
-XSession::XSession(const char *host, unsigned short port,
+struct URI_parser
+  : public XSession::Access::Options
+  , public endpoint::TCPIP
+  , public parser::URI_processor
+{
+  URI_parser(const std::string &uri)
+  {
+    parser::parse_conn_str(uri, *this);
+  }
+
+
+  Endpoint& get_endpoint()
+  {
+    return *this;
+  }
+
+  void user(const std::string &usr)
+  {
+    m_usr = usr;
+  }
+
+  void password(const std::string &pwd)
+  {
+    m_pwd = pwd;
+    m_has_pwd = true;
+  }
+
+  void host(const std::string &host)
+  {
+    m_host = host;
+  }
+
+  void port(unsigned short port)
+  {
+    m_port = port;
+  }
+
+  virtual void path(const std::string&)
+  {
+    THROW("Default schema not supported yet");
+  }
+};
+
+
+XSession::XSession(const std::string &url)
+{
+  URI_parser parser(url);
+
+  try {
+    m_impl = new Impl(
+      static_cast<endpoint::TCPIP&>(parser.get_endpoint()),
+      static_cast<XSession::Options&>(parser)
+   );
+  }
+  CATCH_AND_WRAP
+}
+
+XSession::XSession(const std::string &host, unsigned port,
                    const string  &user,
                    const char    *pwd)
 {
   try {
-    m_impl= new Impl(host, port, user, pwd);
+    std::string pwd_str;
+
+    if (pwd)
+      pwd_str = pwd;
+
+    if (port > 65535U)
+      throw_error("Port value out of range");
+
+    endpoint::TCPIP ep(host, (uint16_t)port);
+    Options opt(user, pwd ? &pwd_str : NULL);
+
+    m_impl = new Impl(ep, opt);
   }
   CATCH_AND_WRAP
 }

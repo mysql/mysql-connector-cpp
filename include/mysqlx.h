@@ -44,6 +44,7 @@
 #include "mysqlx/table_crud.h"
 
 
+#define DEFAULT_MYSQLX_PORT 33060
 
 
 /*
@@ -512,25 +513,88 @@ protected:
 
   cdk::Session& get_cdk_session();
 
+  struct Options;
+
+  XSession(const Options&);
+
 public:
 
   /**
     @constructor
+    Create session specified by mysqlx connection string.
+
+    Connection string can be either an utf8 encoded single-byte
+    string or a wide string (which is converted to utf8 before
+    parsing).
   */
 
-  XSession(const char *host, unsigned short port,
-           const string  &user,
-           const char    *pwd =NULL);
+  XSession(const std::string &url);
+
+  XSession(const char *url)
+    : XSession(std::string(url))
+  {}
+
+  XSession(const string &url)
+    : XSession(std::string(url))
+  {}
+
 
   /**
-    Create session for database on localhost.
+    Create session explicitly specifying session parameters.
   */
 
-  XSession(unsigned short port,
+  XSession(const std::string &host, unsigned port,
+           const string  &user,
+           const char *pwd = NULL);
+
+  XSession(const std::string &host, unsigned port,
+           const string  &user,
+           const std::string &pwd)
+    : XSession(host, port, user, pwd.c_str())
+  {}
+
+  /**
+    Create session using the default port
+  */
+
+  XSession(const std::string &host,
+           const string  &user,
+           const char    *pwd = NULL)
+    : XSession(host, DEFAULT_MYSQLX_PORT, user, pwd)
+  {}
+
+  XSession(const std::string &host,
+           const string  &user,
+           const std::string &pwd)
+    : XSession(host, DEFAULT_MYSQLX_PORT, user, pwd)
+  {}
+
+  /**
+    Create session on localhost.
+  */
+
+  XSession(unsigned port,
            const string  &user,
            const char    *pwd = NULL)
     : XSession("localhost", port, user, pwd)
   {}
+
+  XSession(const string  &user, const char *pwd = NULL)
+    : XSession("localhost", DEFAULT_MYSQLX_PORT, user, pwd)
+  {}
+
+  XSession(unsigned port, const string  &user, const std::string &pwd)
+    : XSession("localhost", port, user, pwd)
+  {}
+
+  XSession(const string  &user, const std::string &pwd)
+    : XSession("localhost", DEFAULT_MYSQLX_PORT, user, pwd)
+  {}
+
+  XSession(unsigned port, const string  &user)
+    : XSession("localhost", port, user)
+  {}
+
 
   virtual ~XSession();
 
@@ -611,6 +675,10 @@ public:
   /**
     Create a single node session.
   */
+
+  NodeSession(const std::string &uri)
+    : XSession(uri)
+  {}
 
   NodeSession(const char* host, unsigned short port,
               const string  &user,
