@@ -84,6 +84,8 @@ TEST_F(First, api)
 {
   // Check that assignment works for database objects.
 
+  SKIP_IF_NO_XPLUGIN;
+
   Schema s = get_sess().getSchema("foo");
   s = get_sess().getSchema("test");
 
@@ -92,8 +94,6 @@ TEST_F(First, api)
 
   Collection c = s.getCollection("c1");
   c = s.getCollection("c");
-
-  SKIP_IF_NO_XPLUGIN;
 
   sql("DROP TABLE IF EXISTS test.t");
   sql("CREATE TABLE test.t(c0 INT, c1 TEXT)");

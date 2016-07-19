@@ -99,7 +99,27 @@ public:
 
   typedef typename Source::iterator iterator;
 
-  template <typename U>
+  /*
+    Narrow the set of types for which this template is instantiated
+    to avoid ambiguous conversion errors. It is important to disallow
+    conversion to std::initializer_list<> because this conversion path
+    is considered when assigning to STL containers.
+  */
+
+  template <
+    typename U
+    , typename
+      = typename std::is_constructible<
+          U, const iterator&, const iterator&
+        >::type
+    , typename
+      = typename std::enable_if<
+          !std::is_same<
+            U,
+            std::initializer_list<typename U::value_type>
+          >::value
+        >::type
+  >
   operator U()
   {
     return U(std::begin(m_src), std::end(m_src));
