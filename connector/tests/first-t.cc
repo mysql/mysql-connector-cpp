@@ -187,3 +187,206 @@ TEST_F(First, api)
   }
 }
 
+
+/*
+  Test different forms of session constructor.
+
+  The goal of this test is to check that session can be constructed
+  given session parameters of appropriate types. Different forms of
+  constructors are tested as well as whether implicit conversions for
+  parameter types work as expected.
+
+  The S_ctor_test<> template defines static method test() which calls
+  t0<T>::test() for different types T of the first session parameter.
+  The t0<T>::test() is defined in similar way, testing different possible
+  types of the second session parameter and so on.
+
+  Tests create a session for invalid IP address 0.0.0.0 expecting session
+  constructor to throw error.
+*/
+
+template <class Session>
+struct S_ctor_test
+{
+  template <typename A>
+  struct t0
+  {
+    template <typename B>
+    struct t1
+    {
+      template <typename C>
+      struct t2
+      {
+        template <typename D>
+        struct t3
+        {
+          template <typename E>
+          struct t4
+          {
+            static void test(A host, B port, C user, D pwd, E db)
+            {
+              try {
+                Session s(host, port, user, pwd, db);
+              }
+              catch (const Error&)
+              {}
+
+              try {
+                Session s(host, port, user, NULL, db);
+              }
+              catch (const Error&)
+              {}
+
+              try {
+                Session s(port, user, pwd, db);
+              }
+              catch (const Error&)
+              {
+              }
+
+              try {
+                Session s(port, user, NULL, db);
+              }
+              catch (const Error&)
+              {
+              }
+
+              try {
+                Session s(host, user, pwd, db);
+              }
+              catch (const Error&)
+              {
+              }
+
+              try {
+                Session s(host, user, NULL, db);
+              }
+              catch (const Error&)
+              {
+              }
+            }
+          };
+
+          static void test(A host, B port, C user, D pwd)
+          {
+            t4<string>::test(host, port, user, pwd, "db");
+            t4<std::string>::test(host, port, user, pwd, "db");
+            t4<const char*>::test(host, port, user, pwd, "db");
+            t4<const wchar_t*>::test(host, port, user, pwd, L"db");
+
+            try {
+              Session s(host, port, user, pwd);
+            }
+            catch (const Error&)
+            {}
+
+            try {
+              Session s(host, port, user, NULL);
+            }
+            catch (const Error&)
+            {}
+
+            try {
+              Session s(port, user, pwd);
+            }
+            catch (const Error&)
+            {
+            }
+
+            try {
+              Session s(port, user, NULL);
+            }
+            catch (const Error&)
+            {
+            }
+
+            try {
+              Session s(host, user, pwd);
+            }
+            catch (const Error&)
+            {
+            }
+
+            try {
+              Session s(host, user, NULL);
+            }
+            catch (const Error&)
+            {
+            }
+          }
+        };
+
+        static void test(A host, B port, C user)
+        {
+          t3<const char*>::test(host, port, user, "pwd");
+          t3<const char*>::test(host, port, user, NULL);
+          t3<std::string>::test(host, port, user, "pwd");
+
+          try {
+            Session s(host, port, user);
+          }
+          catch (const Error&)
+          {
+          }
+
+          try {
+            Session s(port, user);
+          }
+          catch (const Error&)
+          {
+          }
+
+          try {
+            Session s(host, user);
+          }
+          catch (const Error&)
+          {
+          }
+        }
+      };
+
+      static void test(A host, B port)
+      {
+        t2<string>::test(host, port, "user");
+        t2<std::string>::test(host, port, "user");
+        t2<const char*>::test(host, port, "user");
+        t2<const wchar_t*>::test(host, port, L"user");
+      }
+    };
+
+    static void test(A host)
+    {
+      t1<unsigned>::test(host, 0);
+      t1<unsigned short>::test(host, 0);
+      t1<int>::test(host, 0);
+
+      // Treat argument as URL
+
+      try {
+        Session s(host);
+      }
+      catch (const Error&)
+      {
+      }
+    }
+
+  };
+
+  static void test()
+  {
+    /*
+      Note: using invalid host name so that session constructor
+      fails early (preferably before doing any real i/o).
+    */
+    t0<string>::test("");
+    t0<std::string>::test("");
+    t0<const char*>::test("");
+  }
+};
+
+
+TEST_F(First, api_session)
+{
+  S_ctor_test<mysqlx::XSession>::test();
+  S_ctor_test<mysqlx::NodeSession>::test();
+}
