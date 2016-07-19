@@ -110,7 +110,10 @@ public:
 
   TCPIP(const std::string &_host="localhost", unsigned short _port =33060)
   : m_port(_port), m_host(_host)
-  {}
+  {
+    if (_host.empty() || 0 == _host.length())
+      throw_error("invalid empty host name");
+  }
 
   virtual ~TCPIP() {}
 
