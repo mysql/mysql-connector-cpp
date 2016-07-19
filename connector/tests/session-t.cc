@@ -150,3 +150,37 @@ TEST_F(Sess, url)
 
   cout << "Done!" << endl;
 }
+
+
+TEST_F(Sess, default_schema)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  EXPECT_THROW(get_sess().getDefaultSchema(),Error);
+
+  {
+    mysqlx::NodeSession s(m_port, m_user, m_password, "test");
+
+    EXPECT_EQ(string("test"), s.getDefaultSchema().getName());
+    SqlResult res = s.sql(L"SELECT DATABASE()").execute();
+    string db = res.fetchOne()[0];
+    EXPECT_EQ(string("test"), db);
+  }
+
+  {
+    std::string url = m_user;
+    url = url + "@localhost";
+    if (m_port)
+      url = url + ":" + std::to_string(m_port);
+    url = url + "/test";
+
+    mysqlx::NodeSession s(url);
+
+    EXPECT_EQ(string("test"), s.getDefaultSchema().getName());
+    SqlResult res = s.sql(L"SELECT DATABASE()").execute();
+    string db = res.fetchOne()[0];
+    EXPECT_EQ(string("test"), db);
+  }
+
+  cout << "Done!" << endl;
+}

@@ -545,12 +545,14 @@ public:
 
   XSession(const std::string &host, unsigned port,
            const string  &user,
-           const char *pwd = NULL);
+           const char *pwd = NULL,
+           const string &db = string());
 
   XSession(const std::string &host, unsigned port,
            const string  &user,
-           const std::string &pwd)
-    : XSession(host, port, user, pwd.c_str())
+           const std::string &pwd,
+           const string &db = string())
+    : XSession(host, port, user, pwd.c_str(), db)
   {}
 
   /**
@@ -559,14 +561,16 @@ public:
 
   XSession(const std::string &host,
            const string  &user,
-           const char    *pwd = NULL)
-    : XSession(host, DEFAULT_MYSQLX_PORT, user, pwd)
+           const char    *pwd = NULL,
+           const string  &db = string())
+    : XSession(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
   {}
 
   XSession(const std::string &host,
            const string  &user,
-           const std::string &pwd)
-    : XSession(host, DEFAULT_MYSQLX_PORT, user, pwd)
+           const std::string &pwd,
+           const string  &db = string())
+    : XSession(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
   {}
 
   /**
@@ -575,26 +579,17 @@ public:
 
   XSession(unsigned port,
            const string  &user,
-           const char    *pwd = NULL)
-    : XSession("localhost", port, user, pwd)
+           const char    *pwd = NULL,
+           const string  &db = string())
+    : XSession("localhost", port, user, pwd, db)
   {}
 
-  XSession(const string  &user, const char *pwd = NULL)
-    : XSession("localhost", DEFAULT_MYSQLX_PORT, user, pwd)
+  XSession(unsigned port,
+           const string  &user,
+           const std::string &pwd,
+           const string  &db = string())
+    : XSession("localhost", port, user, pwd.c_str(), db)
   {}
-
-  XSession(unsigned port, const string  &user, const std::string &pwd)
-    : XSession("localhost", port, user, pwd)
-  {}
-
-  XSession(const string  &user, const std::string &pwd)
-    : XSession("localhost", DEFAULT_MYSQLX_PORT, user, pwd)
-  {}
-
-  XSession(unsigned port, const string  &user)
-    : XSession("localhost", port, user)
-  {}
-
 
   virtual ~XSession();
 
@@ -616,6 +611,8 @@ public:
   */
 
   Schema getSchema(const string&, bool check_existence = false);
+
+  Schema getDefaultSchema();
 
   /**
     Get list of schema objects in a given session.
@@ -673,27 +670,51 @@ class NodeSession
 public:
 
   /**
-    Create a single node session.
+    NodeSession constructors accept the same parameters
+    as XSession constructors.
   */
 
-  NodeSession(const std::string &uri)
-    : XSession(uri)
+  template <
+    typename... T,
+    typename = typename std::enable_if<
+      std::is_constructible<XSession, T...>::value
+    >::type
+  >
+  NodeSession(T... args)
+    : XSession(args...)
   {}
 
-  NodeSession(const char* host, unsigned short port,
-              const string  &user,
-              const char    *pwd =NULL)
-   : XSession(host, port, user, pwd)
-  {}
-
-  /**
-    Create a single node session on localhost.
+  /*
+    Templates below are here to take care of the optional password
+    parameter of type const char* (which can be either 2-nd or 3-rd in
+    the parameter list). Without these templates passing
+    NULL as password does not work, because NULL is defined as 0
+    which has type int.
   */
 
-  NodeSession(unsigned short port,
-              const string  &user,
-              const char    *pwd =NULL)
-   : NodeSession("localhost", port, user, pwd)
+  template <
+    typename    A,
+    typename    B,
+    typename... T,
+    typename = typename std::enable_if<
+      std::is_constructible<XSession, A, B, const char*, T...>::value
+    >::type
+  >
+  NodeSession(A a, B b, void* p, T... args)
+    : XSession(a, b, (const char*)p, args...)
+  {}
+
+  template <
+    typename    A,
+    typename    B,
+    typename    C,
+    typename... T,
+    typename = typename std::enable_if<
+    std::is_constructible<XSession, A, B, C, const char*, T...>::value
+    >::type
+  >
+    NodeSession(A a, B b, C c, void* p, T... args)
+    : XSession(a, b, c, (const char*)p, args...)
   {}
 
 

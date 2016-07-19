@@ -46,22 +46,16 @@ struct Endpoint
 struct XSession::Options
   : public cdk::ds::Options
 {
-  virtual string default_schema()
-  {
-    return m_schema;
-  }
-
   Options(const string &usr, const std::string *pwd,
           string schema = string())
     : cdk::ds::Options(usr, pwd)
-    , m_schema(schema)
-  {}
+  {
+    if (!schema.empty())
+      set_database(schema);
+  }
 
   Options() = default;
 
-private:
-
-  string m_schema;
 };
 
 
@@ -102,11 +96,14 @@ class XSession::Impl
 {
   cdk::ds::TCPIP   m_ds;
   cdk::Session     m_sess;
+  cdk::string      m_default_db;
 
   Impl(endpoint::TCPIP &ep, XSession::Options &opt)
     : m_ds(ep.host(), ep.port())
     , m_sess(m_ds, opt)
   {
+    if (opt.database())
+    m_default_db = *opt.database();
     if (!m_sess.is_valid())
       m_sess.get_error().rethrow();
   }
@@ -152,9 +149,9 @@ struct URI_parser
     m_port = port;
   }
 
-  virtual void path(const std::string&)
+  virtual void path(const std::string &db)
   {
-    THROW("Default schema not supported yet");
+    set_database(db);
   }
 };
 
@@ -174,7 +171,8 @@ XSession::XSession(const std::string &url)
 
 XSession::XSession(const std::string &host, unsigned port,
                    const string  &user,
-                   const char    *pwd)
+                   const char    *pwd,
+                   const string  &db)
 {
   try {
     std::string pwd_str;
@@ -187,6 +185,9 @@ XSession::XSession(const std::string &host, unsigned port,
 
     endpoint::TCPIP ep(host, (uint16_t)port);
     Options opt(user, pwd ? &pwd_str : NULL);
+
+    if (!db.empty())
+      opt.set_database(db);
 
     m_impl = new Impl(ep, opt);
   }
@@ -637,6 +638,13 @@ void XSession::dropCollection(const mysqlx::string& schema,
   CATCH_AND_WRAP
 }
 
+Schema XSession::getDefaultSchema()
+{
+  if (m_impl->m_default_db.empty())
+    throw Error("No default schema set for the session");
+  return Schema(*this, m_impl->m_default_db);
+}
+
 
 Schema XSession::getSchema(const string &name, bool check)
 {
@@ -660,7 +668,6 @@ Schema XSession::getSchema(const string &name, bool check)
 internal::List_init<Schema> XSession::getSchemas()
 {
   try {
-
 
     auto schemas_names = List_query<SCHEMA>(get_cdk_session()).execute();
 
