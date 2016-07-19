@@ -782,6 +782,12 @@ class RowResult : public internal::BaseResult
   uint64_t m_row_cache_size = 0;
   bool m_cache = false;
 
+  void clear_cache()
+  {
+    m_row_cache.clear();
+    m_row_cache_size = 0;
+    m_cache = false;
+  }
 
 public:
 

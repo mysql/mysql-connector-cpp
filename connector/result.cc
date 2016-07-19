@@ -1032,6 +1032,8 @@ class internal::BaseResult::Impl
 
     if (m_reply->has_results())
     {
+      delete m_cursor;
+      m_cursor_closed = false;
       m_cursor = new cdk::Cursor(*m_reply);
       m_cursor->wait();
       // copy meta-data information from cursor
@@ -1039,6 +1041,22 @@ class internal::BaseResult::Impl
     }
   }
 
+  bool next_result()
+  {
+    /*
+      Note: closing cursor discards previous rset. Only then
+      we can move to the next rset (if any).
+    */
+
+    if (m_cursor)
+      m_cursor->close();
+
+    if (!m_reply || !m_reply->has_results())
+      return false;
+
+    init();
+    return true;
+  }
 
   virtual ~Impl()
   {
@@ -1378,6 +1396,19 @@ bool mysqlx::SqlResult::hasData() const
 {
   try {
     return NULL != get_impl().m_cursor;
+  }
+  CATCH_AND_WRAP
+}
+
+bool mysqlx::SqlResult::nextResult()
+{
+  try {
+    if (get_impl().next_result())
+    {
+      clear_cache();
+      return true;
+    };
+    return false;
   }
   CATCH_AND_WRAP
 }

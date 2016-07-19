@@ -80,6 +80,81 @@ TEST_F(First, sql)
 }
 
 
+TEST_F(First, sql_multi)
+{
+  // Testing multi result sets
+  SKIP_IF_NO_XPLUGIN;
+
+  sql(L"DROP PROCEDURE IF EXISTS test.test");
+  sql(L"CREATE PROCEDURE test.test() BEGIN SELECT 1; SELECT 2, 'foo'; END");
+
+  {
+    SqlResult res = get_sess().sql(L"CALL test.test()").execute();
+
+    EXPECT_TRUE(res.hasData());
+
+    cout << "-- first rset --" << endl;
+
+    EXPECT_EQ(1U, res.getColumnCount());
+
+    Row row = res.fetchOne();
+    EXPECT_TRUE(row);
+
+    for (unsigned i = 0; i < res.getColumnCount(); ++i)
+      cout << "- col#" << i << ": " << row[i] << endl;
+
+    EXPECT_TRUE(res.nextResult());
+    EXPECT_TRUE(res.hasData());
+
+    cout << "-- second rset --" << endl;
+
+    EXPECT_EQ(2U, res.getColumnCount());
+
+    row = res.fetchOne();
+    EXPECT_TRUE(row);
+
+    for (unsigned i = 0; i < res.getColumnCount(); ++i)
+      cout << "- col#" << i << ": " << row[i] << endl;
+
+    EXPECT_FALSE(res.nextResult());
+  }
+
+  // with buffering
+
+  {
+    SqlResult res = get_sess().sql(L"CALL test.test()").execute();
+
+    cout << "-- first rset --" << endl;
+
+    std::vector<Row> rows = res.fetchAll();
+    EXPECT_EQ(1U, rows.size());
+
+    EXPECT_TRUE(res.nextResult());
+
+    cout << "-- second rset --" << endl;
+    EXPECT_EQ(2U, res.getColumnCount());
+
+    rows = res.fetchAll();
+    EXPECT_EQ(1U, rows.size());
+
+    EXPECT_FALSE(res.nextResult());
+  }
+
+  // check discarding of multi-rset
+
+  {
+    SqlResult res = get_sess().sql(L"CALL test.test()").execute();
+    EXPECT_TRUE(res.fetchOne());
+  }
+
+  {
+    SqlResult res = get_sess().sql(L"CALL test.test()").execute();
+  }
+
+  cout << "Done!" << endl;
+}
+
+
 TEST_F(First, api)
 {
   // Check that assignment works for database objects.
