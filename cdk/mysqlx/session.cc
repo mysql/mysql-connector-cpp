@@ -119,6 +119,10 @@ class AuthPlain
   {
     std::string user(options.user());  // convert to utf8 before sending
 
+    // TODO: Check if this is correct way to sepcify default schema
+
+    if (options.database())
+      m_data.append(*options.database());
 
     m_data.push_back('\0'); // authz
     m_data.append(user).push_back('\0'); // authc
@@ -128,6 +132,7 @@ class AuthPlain
   }
 
   const char* auth_method() { return "PLAIN";}
+
   virtual bytes auth_data()
   {
     return bytes((byte*)m_data.c_str(), m_data.size());
@@ -150,17 +155,25 @@ class AuthMysql41
 
 protected:
 
-  const ds::Options &m_options;
+  std::string m_user;
+  std::string m_pass;
+  std::string m_db;
+
   std::string m_cont_data;
 
 public:
   AuthMysql41(const ds::Options &options)
-    : m_options(options)
-
-  {}
+    : m_user(options.user())
+  {
+    if (options.password())
+      m_pass = *options.password();
+    if (options.database())
+      m_db = *options.database();
+  }
 
 
   const char* auth_method() { return "MYSQL41";}
+
   virtual bytes auth_data()
   {
     return bytes((byte*)NULL, (byte*)NULL);
@@ -173,15 +186,8 @@ public:
 
   virtual bytes auth_continue(bytes data)
   {
-    std::string user(m_options.user());
-    std::string pass;
-    if (m_options.password())
-      pass = *m_options.password();
-
     m_cont_data = ::mysqlx::build_mysql41_authentication_response(std::string(data.begin(), data.end()),
-                                                                  user,
-                                                                  pass,
-                                                                  "");
+                                                                  m_user, m_pass, m_db);
 
    return bytes((byte*)m_cont_data.c_str(), m_cont_data.size());
   }

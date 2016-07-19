@@ -100,6 +100,90 @@ TEST_F(Session_core, basic)
 }
 
 
+TEST_F(Session_core, default_schema)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  try
+  {
+
+    ds::TCPIP ds("localhost", m_port);
+    ds::Options options("root");
+    options.set_database("test");
+
+    cdk::Session s(ds, options);
+
+
+    if (!s.is_valid())
+      FAIL() << "Invalid Session created";
+
+    if (!s.check_valid())
+      FAIL() << "Invalid Session created";
+
+    Reply r(s.sql(L"SELECT DATABASE()"));
+    r.wait();
+
+    Cursor c(r);
+
+    struct : cdk::Row_processor
+    {
+      // Row_processor callbacks
+
+      virtual bool row_begin(row_count_t row)
+      {
+        return true;
+      }
+      virtual void row_end(row_count_t row)
+      {}
+
+      virtual void field_null(col_count_t pos)
+      {}
+
+      virtual size_t field_begin(col_count_t pos, size_t)
+      {
+        return  SIZE_MAX;
+      }
+
+      size_t field_data(col_count_t pos, bytes data)
+      {
+        EXPECT_EQ(0, pos);
+
+        // We expect string with current schema name
+
+        cdk::foundation::Codec<cdk::foundation::Type::STRING> codec;
+        cdk::string db;
+
+        // Trim trailing \0
+        bytes d1(data.begin(), data.end() - 1);
+        codec.from_bytes(d1, db);
+
+        cout << "current schema: " << db << endl;
+        EXPECT_EQ(string("test"),db);
+
+        return 0;
+      }
+
+      virtual void field_end(col_count_t /*pos*/)
+      {}
+
+      virtual void end_of_data()
+      {}
+    }
+    prc;
+
+    set_meta_data(c);
+    c.get_rows(prc);
+    c.wait();
+
+  }
+  catch (Error &e)
+  {
+    FAIL() << "CDK error: " << e << endl;
+  }
+
+}
+
+
 TEST_F(Session_core, sql_basic)
 {
   try {

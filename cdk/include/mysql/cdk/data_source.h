@@ -41,18 +41,20 @@ class Options
 {
 public:
 
-  Options() :
-    m_usr(L"root"), m_has_pwd(false)
+  Options()
+    : m_usr(L"root"), m_has_pwd(false), m_has_db(false)
   {
   }
 
-  Options(const Options &other) :
-    m_usr(other.m_usr), m_has_pwd(other.m_has_pwd), m_pwd(other.m_pwd)
+  Options(const Options &other)
+    : m_usr(other.m_usr)
+    , m_has_pwd(other.m_has_pwd), m_pwd(other.m_pwd)
+    , m_has_db(false)
   {
   }
 
   Options(const string &usr, const std::string *pwd =NULL)
-    : m_usr(usr), m_has_pwd(false)
+    : m_usr(usr), m_has_pwd(false), m_has_db(false)
   {
     if (pwd)
     {
@@ -67,12 +69,25 @@ public:
   virtual const std::string* password() const
   { return m_has_pwd ? &m_pwd : NULL; }
 
+  virtual const string* database() const
+  {
+    return m_has_db ? &m_db : NULL;
+  }
+
+  void set_database(const string &db)
+  {
+    m_db = db;
+    m_has_db = true;
+  }
+
 protected:
 
   string m_usr;
   bool   m_has_pwd;
   std::string m_pwd;
 
+  bool    m_has_db;
+  string  m_db;
 };
 
 
