@@ -781,6 +781,7 @@ class Op_projection
 {
 
   std::vector<cdk::string> m_projections;
+  cdk::string  m_doc_proj;
 
 protected:
 
@@ -789,6 +790,11 @@ protected:
   {}
 
 public:
+
+  void set_proj(const mysqlx::string& doc)
+  {
+    m_doc_proj = doc;
+  }
 
   void add_proj(const mysqlx::string& field)
   {
@@ -802,13 +808,50 @@ public:
 
   cdk::Expression::Document* get_doc_proj()
   {
-    return m_projections.empty() ? nullptr : this;
+    return m_projections.empty() && m_doc_proj.empty() ? nullptr : this;
   }
 
 private:
 
   void process(cdk::Expression::Document::Processor& prc) const
   {
+    if (!m_doc_proj.empty())
+    {
+      struct : public cdk::Expression::Processor
+      {
+        Doc_prc *m_prc;
+
+        Scalar_prc* scalar()
+        {
+          throw_error("Scalar expression can not be used as projection");
+          return NULL;
+        }
+
+        List_prc* arr()
+        {
+          throw_error("Array expression can not be used as projection");
+          return NULL;
+        }
+
+        // Report that any value is a document.
+
+        Doc_prc* doc()
+        {
+          return m_prc;
+        }
+
+      }
+      eprc;
+
+      eprc.m_prc = &prc;
+
+      parser::Expression_parser parser(parser::Parser_mode::DOCUMENT, m_doc_proj);
+
+      parser.process(eprc);
+
+      return;
+    }
+
     prc.doc_begin();
 
     for (cdk::string field : m_projections)

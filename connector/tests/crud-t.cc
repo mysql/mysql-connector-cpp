@@ -726,29 +726,57 @@ TEST_F(Crud, projections)
 
   add_data(coll);
 
-  std::vector<string> fields;
-  fields.push_back("age AS Age1");
-  fields.push_back("age AS Age2");
-
-  DocResult docs = coll.find()
-                       .fields("age AS age", "2016-age AS birthYear", fields)
-                       .execute();
-
-
-  for (DbDoc doc = docs.fetchOne();
-       !doc.isNull();
-       doc = docs.fetchOne())
+  for (unsigned round = 0; round < 2; ++round)
   {
-    int rows = 0;
-    for (auto col : doc)
-    {
-      ++rows;
-      cout << col << endl;
-    }
-    EXPECT_EQ(4, rows);
-    EXPECT_EQ( 2016-(int)doc["age"],(int)doc["birthYear"] );
-  }
+    cout << "== round " << round << " ==" << endl;
 
+    DocResult docs;
+
+    switch (round)
+    {
+    case 0:
+    {
+      std::vector<string> fields;
+      fields.push_back("age AS Age1");
+      fields.push_back("age AS Age2");
+
+      docs = coll.find()
+        .fields("age AS age", "2016-age AS birthYear", fields)
+        .execute();
+
+      break;
+    }
+
+    case 1:
+    {
+      docs =  coll.find()
+                  .fields(expr(
+                    "{"
+                    "  \"age\": age,"
+                    "  \"birthYear\": 2016-age,"
+                    "  \"Age1\": age,"
+                    "  \"Age2\": age"
+                    "}"
+                   ))
+                  .execute();
+      break;
+    }
+    }
+
+    for (DbDoc doc = docs.fetchOne();
+         !doc.isNull();
+         doc = docs.fetchOne())
+    {
+      int rows = 0;
+      for (auto col : doc)
+      {
+        ++rows;
+        cout << col << endl;
+      }
+      EXPECT_EQ(4, rows);
+      EXPECT_EQ(2016 - (int)doc["age"], (int)doc["birthYear"]);
+    }
+  }
 }
 
 
@@ -1375,11 +1403,12 @@ TEST_F(Crud, coll_as_table)
   EXPECT_EQ(string("bar"), static_cast<string>(r[0]));
 
   // Check same result with Collection obj
-  DocResult docres = coll.find().fields("name as name").execute();
+  DocResult docres = coll.find().fields(expr("{\"name\": name, \"age\":age+1}")).execute();
 
   doc = docres.fetchOne();
 
   EXPECT_EQ(string("bar"), static_cast<string>(doc["name"]));
+  EXPECT_EQ(2, static_cast<int>(doc["age"]));
 
   sql("DROP TABLE IF EXISTS test.not_collection");
   sql(

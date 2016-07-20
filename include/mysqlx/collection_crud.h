@@ -625,6 +625,16 @@ DIAGNOSTIC_POP
 
 public:
 
+
+  CollectionSort& fields(internal::ExprValue proj)
+  {
+    if (!proj.isExpression())
+      throw_error("Invalid projection");
+    get_impl()->set_proj(proj);
+    return *this;
+  }
+
+
   CollectionSort& fields(const string& ord)
   {
     get_impl()->add_proj(ord);
@@ -647,8 +657,19 @@ public:
     return *this;
   }
 
-  template <typename Ord, typename...Type>
-  CollectionSort& fields(const Ord& ord, const Type&...rest)
+  /*
+    Note: If e is an expression (of type ExprValue) then only
+    .fields(e) is valid - the multi-argument variant .fields(e,...)
+    should be disabled.
+  */
+
+  template <
+    typename Proj, typename...Type,
+    typename = std::enable_if<
+      !std::is_same<Proj, internal::ExprValue>::value
+    >::type
+  >
+  CollectionSort& fields(const Proj& ord, const Type&...rest)
   {
     fields(ord);
     return fields(rest...);

@@ -227,6 +227,7 @@ struct Sort_impl : public Limit_impl
 struct Proj_impl : public Sort_impl
 {
   virtual void add_proj(const string&) = 0;
+  virtual void set_proj(const string&) = 0;
 };
 
 
