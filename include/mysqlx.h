@@ -644,6 +644,32 @@ public:
 
   void   dropCollection(const string& schema, const string& collection);
 
+  /**
+    Start a new transaction.
+
+    Throws error if previously opened transaction is not closed.
+  */
+
+  void startTransaction();
+
+  /**
+    Commit opened transaction, if any.
+
+    Does nothing if no transaction was opened. After commiting the
+    transaction is closed.
+  */
+
+  void commit();
+
+  /**
+    Rollback opened transaction, if any.
+
+    Does nothing if no transaction was opened. Transaction which was
+    rolled back is closed. To start a new transaction a call to
+    `startTransaction()` is needed.
+  */
+
+  void rollback();
 
 public:
 

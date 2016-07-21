@@ -198,6 +198,8 @@ XSession::XSession(const std::string &host, unsigned port,
 XSession::~XSession()
 {
   try {
+    // Rollback open transaction, if any.
+    get_cdk_session().rollback();
     delete m_impl;
   }
   catch(...){}
@@ -208,6 +210,37 @@ cdk::Session& XSession::get_cdk_session()
   return m_impl->m_sess;
 }
 
+
+// ---------------------------------------------------------------------
+/*
+  Transactions.
+*/
+
+void XSession::startTransaction()
+{
+  try {
+    get_cdk_session().begin();
+  }
+  CATCH_AND_WRAP
+}
+
+
+void XSession::commit()
+{
+  try {
+    get_cdk_session().commit();
+  }
+  CATCH_AND_WRAP
+}
+
+
+void XSession::rollback()
+{
+  try {
+    get_cdk_session().rollback();
+  }
+  CATCH_AND_WRAP
+}
 
 // ---------------------------------------------------------------------
 

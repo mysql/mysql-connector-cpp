@@ -184,3 +184,83 @@ TEST_F(Sess, default_schema)
 
   cout << "Done!" << endl;
 }
+
+
+TEST_F(Sess, trx)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  Collection coll = get_sess().getSchema("test").createCollection("c", true);
+  coll.remove().execute();
+
+  try {
+    coll.getSession().startTransaction();
+    coll.add("{\"foo\": 1}").execute();
+    coll.add("{\"foo\": 2}").execute();
+    coll.getSession().commit();
+
+    coll.getSession().startTransaction();
+    coll.add("{\"bar\": 3}").execute();
+    coll.add("{\"bar\": 4}").execute();
+    coll.getSession().rollback();
+  }
+  catch (...)
+  {
+    get_sess().rollback();
+    throw;
+  }
+
+  cout << "After insertions collection has " << coll.count()
+       << " documents." << endl;
+
+  EXPECT_EQ(2U, coll.count());
+
+  for (DbDoc doc : coll.find().execute())
+  {
+    cout << "- doc: " << doc << endl;
+    EXPECT_FALSE(doc.hasField("bar"));
+  }
+
+  /*
+    Check that deleted session rollbacks transaction that is not
+    committed.
+  */
+
+  {
+    XSession sess(this);
+    Collection coll = sess.getSchema("test").getCollection("c");
+
+    sess.startTransaction();
+    coll.add("{\"bar\": 5}").execute();
+    coll.add("{\"bar\": 6}").execute();
+  }
+
+  cout << "Collection has " << coll.count()
+    << " documents." << endl;
+
+  EXPECT_EQ(2U, coll.count());
+
+  for (DbDoc doc : coll.find().execute())
+  {
+    cout << "- doc: " << doc << endl;
+    EXPECT_FALSE(doc.hasField("bar"));
+  }
+
+  /*
+    Check error thrown if starting new transaction while previous
+    one is not closed.
+  */
+
+  get_sess().startTransaction();
+
+  try {
+    get_sess().startTransaction();
+    FAIL() << "Expected an error";
+  }
+  catch (const Error &e)
+  {
+    cout << "Expected error: " << e << endl;
+  }
+
+  cout << "Done!" << endl;
+}
