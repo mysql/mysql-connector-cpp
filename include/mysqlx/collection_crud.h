@@ -665,7 +665,7 @@ public:
 
   template <
     typename Proj, typename...Type,
-    typename = std::enable_if<
+    typename = typename std::enable_if<
       !std::is_same<Proj, internal::ExprValue>::value
     >::type
   >
