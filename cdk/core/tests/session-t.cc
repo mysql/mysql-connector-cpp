@@ -674,6 +674,167 @@ TEST_F(Session_core, sql_multi_rset)
 }
 
 
+TEST_F(Session_core, trx)
+{
+  try {
+    SKIP_IF_NO_XPLUGIN;
+
+    Session s(this);
+
+    if (!s.is_valid())
+      FAIL() << "Invalid Session!";
+
+    do_sql(s, L"DROP TABLE IF EXISTS t");
+    do_sql(s, L"CREATE TABLE t (a INT)");
+
+    // These commands should be no-op without any transaction.
+
+    s.commit();
+    s.rollback();
+
+    try {
+
+      s.begin();
+      do_sql(s, L"INSERT INTO t VALUES (1)");
+      do_sql(s, L"INSERT INTO t VALUES (2)");
+      s.commit();
+
+      s.begin();
+      do_sql(s, L"INSERT INTO t VALUES (3)");
+      do_sql(s, L"INSERT INTO t VALUES (4)");
+      s.rollback();
+    }
+    catch (...)
+    {
+      s.rollback();
+      throw;
+    }
+
+    /*
+      A processor used to process and chek result of SELECT a FROM t.
+    */
+
+    struct Prc : cdk::Row_processor
+    {
+      // integer encoding format used by the result
+      const Format_info *m_fi;
+      std::vector<int> m_vals;
+      size_t m_row_cnt;
+
+      Prc() : m_row_cnt(0) {}
+
+      void reset(Meta_data &md)
+      {
+        EXPECT_EQ(cdk::TYPE_INTEGER, md.type(0));
+        m_row_cnt = 0;
+        m_fi = &md.format(0);
+      }
+
+      void add(int x)
+      {
+        m_vals.push_back(x);
+      }
+
+      void clear()
+      {
+        m_vals.clear();
+      }
+
+      bool row_begin(row_count_t pos)
+      {
+        cout << "- row#" << pos << ": ";
+        return true;
+      }
+      void row_end(row_count_t pos)
+      {
+        cout << endl;
+        m_row_cnt++;
+      }
+
+      size_t field_begin(col_count_t pos, size_t data_len)
+      {
+        return 1024;
+      }
+      void field_end(col_count_t pos) {}
+
+      void field_null(col_count_t pos)
+      {
+        FAIL() << "Unexpected NULL value in reply";
+      }
+
+      size_t field_data(col_count_t pos, bytes data)
+      {
+        // only one column expected
+        EXPECT_EQ(0, pos);
+
+        assert(m_fi);
+        Codec<cdk::TYPE_INTEGER> codec(*m_fi);
+        int val;
+        codec.from_bytes(data, val);
+        cout << val;
+        EXPECT_EQ(m_vals.at(m_row_cnt), val);
+        return 0;
+      }
+
+      void end_of_data()
+      {
+        EXPECT_EQ(m_vals.size(), m_row_cnt);
+      }
+    };
+
+    Prc prc;
+    prc.add(1);
+    prc.add(2);
+
+    Reply r;
+
+    {
+      r = s.sql(L"SELECT a FROM t");
+      Cursor c(r);
+      prc.reset(c);
+      cout << "== processing rows ==" << endl;
+      c.get_rows(prc);
+      c.wait();
+      cout << "== end of data ==" << endl;
+    }
+
+    {
+      Session s1(this);
+      s1.begin();
+      do_sql(s1, "DELETE FROM t WHERE a = 2");
+      // when session is destroyed, opened transaction should
+      // be rolled back.
+    }
+
+    {
+      r = s.sql(L"SELECT a FROM t");
+      Cursor c(r);
+      prc.reset(c);
+      cout << "== processing rows ==" << endl;
+      c.get_rows(prc);
+      c.wait();
+      cout << "== end of data ==" << endl;
+    }
+
+    // Negative tests
+
+    s.begin();
+
+    try {
+      s.begin();
+    }
+    catch (const Error &e)
+    {
+      cout << "Expected error: " << e << endl;
+      EXPECT_EQ(cdkerrc::in_transaction, e.code());
+    }
+
+    cout << "Done!" << endl;
+
+  }
+  CATCH_TEST_GENERIC
+}
+
 
 #if 0
 

@@ -385,22 +385,14 @@ void throw_system_error()
 }
 
 
-bool operator== (const error_code &code, errc::code x)
+bool error_code::operator== (errc::code x) const
 {
-  return code == error_condition(x);
-}
-bool operator!= (const error_code &code, errc::code x)
-{
-  return !(code == x);
-}
-bool operator== (errc::code x, const error_code &code)
-{
-  return error_condition(x) == code;
-}
-bool operator!= (errc::code x, const error_code &code)
-{
-  return !(x == code);
+  return *this == error_condition(x);
 }
 
+bool error_code::operator== (cdkerrc::code x) const
+{
+  return *this == error_code(x);
+}
 
 }} // sdk::foundation

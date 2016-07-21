@@ -56,6 +56,8 @@ Reply::~Reply()
 
 void Reply::init(Reply_init &init)
 {
+  m_error = false;
+  m_da.clear();
   m_session = &init;
 
   init.register_reply(this);

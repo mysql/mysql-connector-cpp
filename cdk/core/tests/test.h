@@ -50,6 +50,7 @@ public:
   {
     // TODO: make it configurable through env. variables
     static ds::Options opts("root", NULL);
+    opts.set_database("test");
     return opts;
   }
 

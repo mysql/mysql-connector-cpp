@@ -221,7 +221,8 @@ bool error_category_test::equivalent(int code, const cdk::foundation::error_cond
 
   switch (code)
   {
-  case test_errc::FIRST: return cdk::foundation::cdkerrc::generic_error == ec.value();
+  case test_errc::FIRST:
+    return (int)cdk::foundation::cdkerrc::generic_error == ec.value();
   default: return false;
   }
 }

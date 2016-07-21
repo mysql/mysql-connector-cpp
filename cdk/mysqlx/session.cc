@@ -290,7 +290,6 @@ void Session::deregister_reply(Reply *reply)
 Reply_init& Session::sql(const string &stmt, Any_list *args)
 {
   return set_command(new SndStmt(m_protocol, "sql", stmt, args));
-
 }
 
 Reply_init& Session::admin(const char *cmd, Any_list &args)
@@ -302,6 +301,38 @@ Reply_init& Session::admin(const char *cmd, Any_list &args)
   m_cmd.reset(new SndStmt(m_protocol, "xplugin", m_stmt, &args));
   return *this;
 }
+
+
+/*
+  Note: current implementation of transaction operations simply uses
+  relevant SQL statements. Eventually we need something more fancy
+  which will work well in a distributed environment.
+*/
+
+void Session::begin()
+{
+  Reply r(sql(L"START TRANSACTION", NULL));
+  r.wait();
+  if (r.entry_count() > 0)
+    r.get_error().rethrow();
+}
+
+void Session::commit()
+{
+  Reply r(sql(L"COMMIT", NULL));
+  r.wait();
+  if (r.entry_count() > 0)
+    r.get_error().rethrow();
+}
+
+void Session::rollback()
+{
+  Reply r(sql(L"ROLLBACK", NULL));
+  r.wait();
+  if (r.entry_count() > 0)
+    r.get_error().rethrow();
+}
+
 
 Reply_init& Session::coll_add(const Table_ref &coll, Doc_source &docs, const Param_source *param)
 {

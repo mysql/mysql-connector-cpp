@@ -448,11 +448,23 @@ public:
   void close();
 
   /*
+    Transactions
+  */
+
+  void begin();
+  void commit();
+  void rollback();
+
+  /*
      SQL API
   */
 
   Reply_init &sql(const string&, Any_list*);
   Reply_init &admin(const char*, Any_list&);
+
+  /*
+    CRUD API
+  */
 
   Reply_init &coll_add(const Table_ref&,
                        Doc_source&,

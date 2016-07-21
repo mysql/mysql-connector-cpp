@@ -26,6 +26,7 @@
 #define CDK_SESSION_H
 
 #include "api/session.h"
+#include "api/transaction.h"
 #include "data_source.h"
 #include "reply.h"
 #include "mysqlx.h"
@@ -46,15 +47,19 @@ using cdk::mysqlx::Order_by;
 
 class Session
     : public api::Session
+    , public api::Transaction<Traits>
 {
 
 protected:
   mysqlx::Session *m_session;
   api::Connection *m_connection;
+  bool             m_trans;
 
   typedef Reply::Initializer Reply_init;
 
 public:
+
+  typedef api::Session::Diagnostics Diagnostics;
 
   /// Create session to a data store represented by `ds` object.
 
@@ -68,6 +73,54 @@ public:
   option_t check_valid() { return m_session->check_valid(); }
 
   void close() { return m_session->close(); }
+
+  /*
+    Transactions
+    ------------
+  */
+
+  /*
+    Start new transaction.
+
+    There can be only one open transaction in the session. If
+    a transaction is open then begin() throws error.
+  */
+
+  void begin() {
+    if (m_trans)
+      throw_error(cdkerrc::in_transaction, "While starting new transaction");
+    m_trans = true;
+    m_session->begin();
+  }
+
+  /*
+    Commit open transaction.
+
+    After commiting transaction is closed and another one can
+    be started with begin(). Does nothing if no transaction
+    is open.
+  */
+
+  void commit() {
+    if (m_trans)
+      m_session->commit();
+    m_trans = false;
+  }
+
+  /*
+    Rollback open transaction.
+
+    After rolling back, the transaction is closed and another one
+    can be started with begin(). Does nothing if no transaction is
+    open.
+  */
+
+  void rollback() {
+    if (m_trans)
+      m_session->rollback();
+    m_trans = false;
+  }
+
 
   /*
     Diagnostics

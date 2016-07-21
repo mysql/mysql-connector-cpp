@@ -33,6 +33,7 @@ namespace cdk {
 Session::Session(ds::TCPIP &ds, const ds::Options &options)
   : m_session(NULL)
   , m_connection(NULL)
+  , m_trans(false)
 {
   using foundation::connection::TCPIP;
 
@@ -54,6 +55,8 @@ Session::Session(ds::TCPIP &ds, const ds::Options &options)
 
 Session::~Session()
 {
+  if (m_trans)
+    rollback();
   delete m_session;
   delete m_connection;
 }

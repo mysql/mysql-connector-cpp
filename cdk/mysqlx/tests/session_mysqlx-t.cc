@@ -716,7 +716,7 @@ TEST_F(Session_mysqlx,sql_type_conv)
     catch (Error &e)
     {
       cout << e << endl;
-      EXPECT_EQ(cdkerrc::conversion_error, e.code().value());
+      EXPECT_EQ(cdkerrc::conversion_error, e.code());
     }
 
     //uint32 to uint64 overflow
@@ -736,7 +736,7 @@ TEST_F(Session_mysqlx,sql_type_conv)
     catch (Error &e)
     {
       cout << e << endl;
-      EXPECT_EQ(cdkerrc::conversion_error, e.code().value());
+      EXPECT_EQ(cdkerrc::conversion_error, e.code());
     }
 
     //destination buffer too small
@@ -757,7 +757,7 @@ TEST_F(Session_mysqlx,sql_type_conv)
     catch (Error &e)
     {
       cout << e << endl;
-      EXPECT_EQ(cdkerrc::conversion_error, e.code().value());
+      EXPECT_EQ(cdkerrc::conversion_error, e.code());
     }
 
     //destination buffer too small
@@ -777,7 +777,7 @@ TEST_F(Session_mysqlx,sql_type_conv)
     catch (Error &e)
     {
       cout << e << endl;
-      EXPECT_EQ(cdkerrc::conversion_error, e.code().value());
+      EXPECT_EQ(cdkerrc::conversion_error, e.code());
     }
 
 

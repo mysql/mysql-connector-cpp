@@ -74,6 +74,8 @@ namespace foundation {
   X (protobuf_error,     6, "Protobuf error")        \
   X (conversion_error,   7, "Value conversion error") \
   X (parse_error,        8, "Parse error") \
+  X (in_transaction,     9, "Open transaction") \
+  X (no_transaction,    10, "No transaction") \
 
 // Define constants for CDK error conditions in cdkerrc structure
 
@@ -107,7 +109,7 @@ public:
     : m_code(code), m_cat(cat)
   {}
 
-  error_code(int code)
+  explicit error_code(int code)
     : m_code(code), m_cat(generic_error_category())
   {}
 
@@ -121,26 +123,29 @@ public:
   {
     return m_cat == ec.m_cat && m_code == ec.m_code;
   }
-  bool operator!= (const error_code &ec) const
-  {
-    return !(*this == ec);
-  }
 
   bool operator== (const error_condition &ec) const
   {
     return m_cat.equivalent(m_code, ec);
   }
-  bool operator!= (const error_condition &ec) const
+
+  bool operator== (errc::code) const;
+  bool operator== (cdkerrc::code) const;
+
+  template <typename T>
+  bool operator!= (T other) const
   {
-    return !(*this == ec);
+    return !(*this == other);
   }
 };
 
 
-bool operator== (const error_code &code, errc::code x);
-bool operator!= (const error_code &code, errc::code x);
-bool operator== (errc::code x, const error_code &code);
-bool operator!= (errc::code x, const error_code &code);
+template <typename T>
+bool operator== (T x, const error_code &code)
+{
+  return code == x;
+}
+
 
 
 /*
@@ -215,6 +220,8 @@ void throw_error(const char *descr);
 template <typename S>
 void throw_error(const S &descr);
 void throw_error(int code, const error_category &ec);
+void throw_error(cdkerrc::code code);
+void throw_error(cdkerrc::code code, const string &prefix);
 void throw_error(const error_code &ec);
 void throw_error(const error_code &ec, const string &prefix);
 void rethrow_error();
@@ -283,6 +290,16 @@ public:
   Error(const error_code &ec, const S &descr)
     : std::runtime_error("")
     , m_code(ec)
+    , m_what_prefix(m_default_prefix)
+  {
+    m_what = new std::string(m_what_prefix);
+    m_what->append(descr);
+  }
+
+  template <typename S>
+  Error(int _code, const S &descr)
+    : std::runtime_error("")
+    , m_code(_code)
     , m_what_prefix(m_default_prefix)
   {
     m_what = new std::string(m_what_prefix);
@@ -424,7 +441,7 @@ public:
 
   template <typename S>
   Generic_error(const S &descr)
-    : Error(cdkerrc::generic_error, descr)
+    : Error(error_code(cdkerrc::generic_error), descr)
   {}
 
 };
@@ -527,6 +544,19 @@ inline
 void throw_error(int code, const error_category &ec)
 {
   throw_error(error_code(code, ec));
+}
+
+inline
+void throw_error(cdkerrc::code code)
+{
+  throw_error(error_code(code));
+  //, generic_error_category());
+}
+
+inline
+void throw_error(cdkerrc::code code, const string &prefix)
+{
+  throw_error(error_code(code), prefix);
 }
 
 inline
