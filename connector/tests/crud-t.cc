@@ -1758,3 +1758,42 @@ TEST_F(Crud, diagnostic)
     EXPECT_EQ(warnings[i].getCode(), res.getWarning(i).getCode());
   }
 }
+
+TEST_F(Crud, cached_results)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Preparing table..." << endl;
+
+  XSession sess(this);
+
+  Collection coll = sess.createSchema("test", true)
+                        .createCollection("test", true);
+
+  coll.remove().execute();
+
+  coll.add("{\"user\":\"Foo\"}").execute();
+  coll.add("{\"user\":\"Bar\"}").execute();
+  coll.add("{\"user\":\"Baz\"}").execute();
+
+  auto coll_op = coll.find();
+  auto coll_op2 = coll.find();
+
+  DocResult coll_res = coll_op.execute();
+  DocResult coll_res2 = coll_op2.execute();
+
+  DbDoc coll_row = coll_res.fetchOne();
+  DbDoc coll_row2 = coll_res2.fetchOne();
+
+  for (; coll_row && coll_row2;
+       coll_row = coll_res.fetchOne(),
+       coll_row2 = coll_res2.fetchOne())
+  {
+    EXPECT_EQ(static_cast<string>(coll_row["user"]),
+              static_cast<string>(coll_row2["user"]));
+
+    std::cout << "User: " << coll_row["user"] << std::endl;
+  }
+
+}
+

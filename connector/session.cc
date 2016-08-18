@@ -43,7 +43,7 @@ struct Endpoint
 };
 
 
-struct XSession::Options
+struct XSession_base::Options
   : public cdk::ds::Options
 {
   Options(const string &usr, const std::string *pwd,
@@ -92,13 +92,15 @@ namespace endpoint {
 
 
 
-class XSession::Impl
+class XSession_base::Impl
 {
   cdk::ds::TCPIP   m_ds;
   cdk::Session     m_sess;
   cdk::string      m_default_db;
 
-  Impl(endpoint::TCPIP &ep, XSession::Options &opt)
+  internal::BaseResult *m_current_result = NULL;
+
+  Impl(endpoint::TCPIP &ep, XSession_base::Options &opt)
     : m_ds(ep.host(), ep.port())
     , m_sess(m_ds, opt)
   {
@@ -108,12 +110,12 @@ class XSession::Impl
       m_sess.get_error().rethrow();
   }
 
-  friend XSession;
+  friend XSession_base;
 };
 
 
 struct URI_parser
-  : public XSession::Access::Options
+  : public XSession_base::Access::Options
   , public endpoint::TCPIP
   , public parser::URI_processor
 {
@@ -156,20 +158,20 @@ struct URI_parser
 };
 
 
-XSession::XSession(const std::string &url)
+XSession_base::XSession_base(const std::string &url)
 {
   URI_parser parser(url);
 
   try {
     m_impl = new Impl(
       static_cast<endpoint::TCPIP&>(parser.get_endpoint()),
-      static_cast<XSession::Options&>(parser)
+      static_cast<XSession_base::Options&>(parser)
    );
   }
   CATCH_AND_WRAP
 }
 
-XSession::XSession(const std::string &host, unsigned port,
+XSession_base::XSession_base(const std::string &host, unsigned port,
                    const string  &user,
                    const char    *pwd,
                    const string  &db)
@@ -195,17 +197,32 @@ XSession::XSession(const std::string &host, unsigned port,
 }
 
 
-XSession::~XSession()
+XSession_base::~XSession_base()
 {
   try {
-    // Rollback open transaction, if any.
     get_cdk_session().rollback();
     delete m_impl;
   }
   catch(...){}
 }
 
-cdk::Session& XSession::get_cdk_session()
+
+void XSession_base::register_result(internal::BaseResult *result)
+{
+  if (m_impl->m_current_result)
+    m_impl->m_current_result->deregister_notify();
+
+  m_impl->m_current_result = result;
+}
+
+void XSession_base::deregister_result(internal::BaseResult *result)
+{
+  if (m_impl->m_current_result == result)
+    m_impl->m_current_result = NULL;
+}
+
+
+cdk::Session& XSession_base::get_cdk_session()
 {
   return m_impl->m_sess;
 }
@@ -216,7 +233,7 @@ cdk::Session& XSession::get_cdk_session()
   Transactions.
 */
 
-void XSession::startTransaction()
+void XSession_base::startTransaction()
 {
   try {
     get_cdk_session().begin();
@@ -225,7 +242,7 @@ void XSession::startTransaction()
 }
 
 
-void XSession::commit()
+void XSession_base::commit()
 {
   try {
     get_cdk_session().commit();
@@ -234,7 +251,7 @@ void XSession::commit()
 }
 
 
-void XSession::rollback()
+void XSession_base::rollback()
 {
   try {
     get_cdk_session().rollback();
@@ -591,7 +608,7 @@ struct Obj_row_count
 // ---------------------------------------------------------------------
 
 
-Schema XSession::createSchema(const string &name, bool reuse)
+Schema XSession_base::createSchema(const string &name, bool reuse)
 {
   try {
     std::stringstream query;
@@ -630,7 +647,7 @@ void check_reply_skip_error_throw(cdk::Reply&& r, int skip_server_error)
 }
 
 
-void XSession::dropSchema(const string &name)
+void XSession_base::dropSchema(const string &name)
 {
   try{
     std::stringstream qry;
@@ -647,7 +664,7 @@ void XSession::dropSchema(const string &name)
   TODO: better implementation: check if drop_collection can drop views also
 */
 
-void XSession::dropTable(const mysqlx::string& schema, const string& table)
+void XSession_base::dropTable(const mysqlx::string& schema, const string& table)
 {
   try{
     Args args(schema, table);
@@ -659,7 +676,7 @@ void XSession::dropTable(const mysqlx::string& schema, const string& table)
 }
 
 
-void XSession::dropCollection(const mysqlx::string& schema,
+void XSession_base::dropCollection(const mysqlx::string& schema,
                               const mysqlx::string& collection)
 {
   try{
@@ -671,7 +688,7 @@ void XSession::dropCollection(const mysqlx::string& schema,
   CATCH_AND_WRAP
 }
 
-Schema XSession::getDefaultSchema()
+Schema XSession_base::getDefaultSchema()
 {
   if (m_impl->m_default_db.empty())
     throw Error("No default schema set for the session");
@@ -679,7 +696,7 @@ Schema XSession::getDefaultSchema()
 }
 
 
-Schema XSession::getSchema(const string &name, bool check)
+Schema XSession_base::getSchema(const string &name, bool check)
 {
   try {
 
@@ -698,7 +715,7 @@ Schema XSession::getSchema(const string &name, bool check)
 }
 
 
-internal::List_init<Schema> XSession::getSchemas()
+internal::List_init<Schema> XSession_base::getSchemas()
 {
   try {
 
@@ -952,7 +969,7 @@ struct Op_sql : public Op_base<internal::SqlStatement_impl>
 
   typedef std::list<Value> param_list_t;
 
-  Op_sql(XSession &sess, const string &query)
+  Op_sql(XSession_base &sess, const string &query)
     : Op_base(sess), m_query(query)
   {}
 
@@ -1033,7 +1050,7 @@ struct Op_sql : public Op_base<internal::SqlStatement_impl>
 };
 
 
-void SqlStatement::reset(XSession &sess, const string &query)
+void SqlStatement::reset(mysqlx::XSession_base &sess, const string &query)
 {
   m_impl.reset(new Op_sql(sess, query));
 }

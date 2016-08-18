@@ -83,10 +83,10 @@ class DatabaseObject
 
 protected:
 
-  XSession *m_sess;
+  XSession_base *m_sess;
   string m_name;
 
-  DatabaseObject(XSession& sess, const string& name = string())
+  DatabaseObject(XSession_base& sess, const string& name = string())
     : m_sess(&sess), m_name(name)
   {}
 
@@ -107,7 +107,7 @@ public:
     Get Session object
   */
 
-  XSession& getSession() { return *m_sess; }
+  XSession_base& getSession() { return *m_sess; }
 
 
   /**
@@ -174,7 +174,7 @@ public:
      Construct named schema object.
   */
 
-  Schema(XSession &sess, const string &name)
+  Schema(XSession_base &sess, const string &name)
     : DatabaseObject(sess, name)
   {}
 
@@ -185,7 +185,7 @@ public:
     @todo Clarify what "default schema" is.
   */
 
-  Schema(XSession&);
+  Schema(XSession_base&);
 
 
   /**
@@ -504,18 +504,21 @@ public:
   @todo Add all `XSession` methods defined by DevAPI.
 */
 
-class XSession : internal::nocopy
+class XSession_base : internal::nocopy
 {
 protected:
 
   class Impl;
   Impl  *m_impl;
 
+  void register_result(internal::BaseResult *result);
+  void deregister_result(internal::BaseResult *result);
+
   cdk::Session& get_cdk_session();
 
   struct Options;
 
-  XSession(const Options&);
+  XSession_base(const Options&);
 
 public:
 
@@ -528,14 +531,14 @@ public:
     parsing).
   */
 
-  XSession(const std::string &url);
+  XSession_base(const std::string &url);
 
-  XSession(const char *url)
-    : XSession(std::string(url))
+  XSession_base(const char *url)
+    : XSession_base(std::string(url))
   {}
 
-  XSession(const string &url)
-    : XSession(std::string(url))
+  XSession_base(const string &url)
+    : XSession_base(std::string(url))
   {}
 
 
@@ -543,55 +546,55 @@ public:
     Create session explicitly specifying session parameters.
   */
 
-  XSession(const std::string &host, unsigned port,
+  XSession_base(const std::string &host, unsigned port,
            const string  &user,
            const char *pwd = NULL,
            const string &db = string());
 
-  XSession(const std::string &host, unsigned port,
+  XSession_base(const std::string &host, unsigned port,
            const string  &user,
            const std::string &pwd,
            const string &db = string())
-    : XSession(host, port, user, pwd.c_str(), db)
+    : XSession_base(host, port, user, pwd.c_str(), db)
   {}
 
   /**
     Create session using the default port
   */
 
-  XSession(const std::string &host,
+  XSession_base(const std::string &host,
            const string  &user,
            const char    *pwd = NULL,
            const string  &db = string())
-    : XSession(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
+    : XSession_base(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
   {}
 
-  XSession(const std::string &host,
+  XSession_base(const std::string &host,
            const string  &user,
            const std::string &pwd,
            const string  &db = string())
-    : XSession(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
+    : XSession_base(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
   {}
 
   /**
     Create session on localhost.
   */
 
-  XSession(unsigned port,
+  XSession_base(unsigned port,
            const string  &user,
            const char    *pwd = NULL,
            const string  &db = string())
-    : XSession("localhost", port, user, pwd, db)
+    : XSession_base("localhost", port, user, pwd, db)
   {}
 
-  XSession(unsigned port,
+  XSession_base(unsigned port,
            const string  &user,
            const std::string &pwd,
            const string  &db = string())
-    : XSession("localhost", port, user, pwd.c_str(), db)
+    : XSession_base("localhost", port, user, pwd.c_str(), db)
   {}
 
-  virtual ~XSession();
+  virtual ~XSession_base();
 
   /**
     Get named schema object in a given session.
@@ -671,6 +674,7 @@ public:
 
   void rollback();
 
+
 public:
 
   struct Access;
@@ -680,6 +684,21 @@ public:
   friend Collection;
   friend Table;
   friend Result;
+  friend RowResult;
+
+  template <typename A>
+  friend class Op_base;
+
+  friend internal::BaseResult;
+};
+
+
+class XSession
+    : public XSession_base
+{
+
+  using XSession_base::XSession_base;
+
 };
 
 
@@ -691,7 +710,7 @@ public:
 */
 
 class NodeSession
-  : public XSession
+  : public XSession_base
 {
 public:
 
@@ -703,11 +722,11 @@ public:
   template <
     typename... T,
     typename = typename std::enable_if<
-      std::is_constructible<XSession, T...>::value
+      std::is_constructible<XSession_base, T...>::value
     >::type
   >
   NodeSession(T... args)
-    : XSession(args...)
+    : XSession_base(args...)
   {}
 
   /*
@@ -723,11 +742,11 @@ public:
     typename    B,
     typename... T,
     typename = typename std::enable_if<
-      std::is_constructible<XSession, A, B, const char*, T...>::value
+      std::is_constructible<XSession_base, A, B, const char*, T...>::value
     >::type
   >
   NodeSession(A a, B b, void* p, T... args)
-    : XSession(a, b, (const char*)p, args...)
+    : XSession_base(a, b, (const char*)p, args...)
   {}
 
   template <
@@ -736,11 +755,11 @@ public:
     typename    C,
     typename... T,
     typename = typename std::enable_if<
-    std::is_constructible<XSession, A, B, C, const char*, T...>::value
+    std::is_constructible<XSession_base, A, B, C, const char*, T...>::value
     >::type
   >
     NodeSession(A a, B b, C c, void* p, T... args)
-    : XSession(a, b, c, (const char*)p, args...)
+    : XSession_base(a, b, c, (const char*)p, args...)
   {}
 
 
@@ -753,6 +772,8 @@ public:
 private:
 
   SqlStatement m_stmt;
+
+  friend XSession;
 };
 
 

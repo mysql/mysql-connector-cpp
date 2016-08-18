@@ -34,6 +34,7 @@
 
 #include <boost/variant.hpp>
 
+
 /*
   Implementation of Result and Row interfaces.
 */
@@ -1214,20 +1215,27 @@ void Result::Impl::load_warnings()
 */
 
 
-internal::BaseResult::BaseResult(cdk::Reply *r)
+internal::BaseResult::BaseResult(XSession_base *sess,
+                                 cdk::Reply *r)
 {
   try {
     m_owns_impl = true;
     m_impl= new Impl(r);
+    m_sess = sess;
+    m_sess->register_result(this);
   }
   CATCH_AND_WRAP
 }
 
-internal::BaseResult::BaseResult(cdk::Reply *r, const std::vector<GUID> &guids)
+internal::BaseResult::BaseResult(XSession_base *sess,
+                                 cdk::Reply *r,
+                                 const std::vector<GUID> &guids)
 {
   try {
     m_owns_impl = true;
     m_impl= new Impl(r,guids);
+    m_sess = sess;
+    m_sess->register_result(this);
   }
   CATCH_AND_WRAP
 }
@@ -1236,10 +1244,33 @@ internal::BaseResult::BaseResult(cdk::Reply *r, const std::vector<GUID> &guids)
 internal::BaseResult::~BaseResult()
 {
   try {
+    m_sess->deregister_result(this);
     if (m_owns_impl)
       delete m_impl;
   }
   catch(...) {}
+}
+
+
+void mysqlx::internal::BaseResult::init(mysqlx::internal::BaseResult &&init_)
+{
+  m_pos = 0;
+  m_impl = init_.m_impl;
+  if (!init_.m_owns_impl)
+    m_owns_impl = false;
+  else
+  {
+    m_owns_impl = true;
+    init_.m_owns_impl = false;
+  }
+
+  m_sess = init_.m_sess;
+
+  // first deregister init result, since it registered itself on ctor
+  // otherwise it would trigger cache, and we are moving Result object
+  m_sess->deregister_result(&init_);
+  m_sess->register_result(this);
+
 }
 
 

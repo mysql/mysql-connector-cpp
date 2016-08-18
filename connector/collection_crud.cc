@@ -135,7 +135,7 @@ class Op_collection_add
 
   internal::BaseResult get_result() override
   {
-    return Result::Access::mk(m_reply, m_id_list);
+    return Result::Access::mk(m_sess, m_reply, m_id_list);
   }
 
 

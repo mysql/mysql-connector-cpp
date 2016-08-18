@@ -442,11 +442,11 @@ class DocResult::Impl
 // --------------------------------------------------------------------
 
 
-struct XSession::Access
+struct XSession_base::Access
 {
-  typedef XSession::Options  Options;
+  typedef XSession_base::Options  Options;
 
-  static cdk::Session& get_cdk_session(XSession &sess)
+  static cdk::Session& get_cdk_session(XSession_base &sess)
   {
     return sess.get_cdk_session();
   }
@@ -458,10 +458,16 @@ struct internal::BaseResult::Access
   static BaseResult mk_empty() { return BaseResult(); }
 
   template <typename A>
-  static BaseResult mk(A a) { return BaseResult(a); }
+  static BaseResult mk(XSession_base *sess, A a)
+  {
+    return BaseResult(sess, a);
+  }
 
   template <typename A, typename B>
-  static BaseResult mk(A a, B b) { return BaseResult(a, b); }
+  static BaseResult mk(XSession_base *sess, A a, B b)
+  {
+    return BaseResult(sess, a, b);
+  }
 };
 
 
@@ -529,7 +535,7 @@ class Op_base
 {
 protected:
 
-  XSession   *m_sess;
+  XSession_base   *m_sess;
   cdk::Reply *m_reply = NULL;
 
   row_count_t m_limit = 0;
@@ -541,7 +547,7 @@ protected:
   param_map_t m_map;
 
 
-  Op_base(XSession &sess)
+  Op_base(XSession_base &sess)
     : m_sess(&sess)
   {}
   Op_base(Collection &coll)
@@ -555,7 +561,7 @@ protected:
   cdk::Session& get_cdk_session()
   {
     assert(m_sess);
-    return XSession::Access::get_cdk_session(*m_sess);
+    return XSession_base::Access::get_cdk_session(*m_sess);
   }
 
   virtual cdk::Reply* send_command() = 0;
@@ -652,7 +658,7 @@ protected:
 
     cdk::Reply *reply = m_reply;
     m_reply = NULL;
-    return reply ? internal::BaseResult::Access::mk(reply)
+    return reply ? internal::BaseResult::Access::mk(m_sess, reply)
                  : internal::BaseResult::Access::mk_empty();
   }
 
@@ -661,6 +667,9 @@ protected:
 
   internal::BaseResult execute()
   {
+    // Deregister current Result, before creating a new one
+    m_sess->register_result(NULL);
+
     if (m_completed)
       THROW("Can not execute operation for the second time");
     return wait();

@@ -267,6 +267,8 @@ void Warning::print(std::ostream &out) const
   out << ": " << getMessage();
 }
 
+class XSession_base;
+
 
 namespace internal {
 
@@ -276,9 +278,10 @@ namespace internal {
     Impl  *m_impl = NULL;
     bool m_owns_impl = false;
     row_count_t  m_pos = 0;
+    XSession_base *m_sess = NULL;
 
-    BaseResult(cdk::Reply*);
-    BaseResult(cdk::Reply*, const std::vector<GUID>&);
+    BaseResult(XSession_base *sess, cdk::Reply*);
+    BaseResult(XSession_base *sess, cdk::Reply*, const std::vector<GUID>&);
 
   protected:
 
@@ -300,6 +303,9 @@ namespace internal {
         const_cast<const BaseResult*>(this)->get_impl()
       );
     }
+
+
+    virtual void deregister_notify(){}
 
   public:
 
@@ -355,7 +361,7 @@ namespace internal {
 
   public:
 
-    friend mysqlx::NodeSession;
+    friend mysqlx::XSession_base;
     friend mysqlx::Result;
     friend mysqlx::RowResult;
     friend mysqlx::SqlResult;
@@ -365,20 +371,6 @@ namespace internal {
     struct Access;
     friend Access;
   };
-
-  inline
-  void BaseResult::init(BaseResult &&init_)
-  {
-    m_pos = 0;
-    m_impl = init_.m_impl;
-    if (!init_.m_owns_impl)
-      m_owns_impl = false;
-    else
-    {
-      m_owns_impl = true;
-      init_.m_owns_impl = false;
-    }
-  }
 
 }
 
@@ -702,7 +694,9 @@ public:
   %Result of an operation that returns rows.
 */
 
-class RowResult : public internal::BaseResult
+
+class RowResult
+    : public internal::BaseResult
 {
   // Column meta-data access
 
@@ -789,6 +783,12 @@ class RowResult : public internal::BaseResult
     m_cache = false;
   }
 
+  void deregister_notify() override
+  {
+    //cache elements
+    count();
+  }
+
 public:
 
   typedef internal::iterator<Row, RowResult> iterator;
@@ -829,6 +829,7 @@ public:
   RowResult& operator=(RowResult &&init_)
   {
     BaseResult::operator=(std::move(init_));
+    clear_cache();
     return *this;
   }
 
