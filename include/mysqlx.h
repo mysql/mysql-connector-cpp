@@ -697,7 +697,79 @@ class XSession
     : public XSession_base
 {
 
-  using XSession_base::XSession_base;
+protected:
+  XSession(const Options &opt)
+    : XSession_base(opt)
+  {}
+
+public:
+
+  XSession(const std::string &url)
+    : XSession_base(url)
+  {}
+
+  XSession(const char *url)
+    : XSession_base(std::string(url))
+  {}
+
+  XSession(const string &url)
+    : XSession_base(std::string(url))
+  {}
+
+
+  /**
+    Create session explicitly specifying session parameters.
+  */
+
+  XSession(const std::string &host, unsigned port,
+           const string  &user,
+           const char *pwd = NULL,
+           const string &db = string())
+    : XSession_base(host, port, user, pwd, db)
+  {}
+
+  XSession(const std::string &host, unsigned port,
+           const string  &user,
+           const std::string &pwd,
+           const string &db = string())
+    : XSession_base(host, port, user, pwd.c_str(), db)
+  {}
+
+  /**
+    Create session using the default port
+  */
+
+  XSession(const std::string &host,
+           const string  &user,
+           const char    *pwd = NULL,
+           const string  &db = string())
+    : XSession_base(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
+  {}
+
+  XSession(const std::string &host,
+           const string  &user,
+           const std::string &pwd,
+           const string  &db = string())
+    : XSession_base(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
+  {}
+
+  /**
+    Create session on localhost.
+  */
+
+  XSession(unsigned port,
+           const string  &user,
+           const char    *pwd = NULL,
+           const string  &db = string())
+    : XSession_base("localhost", port, user, pwd, db)
+  {}
+
+  XSession(unsigned port,
+           const string  &user,
+           const std::string &pwd,
+           const string  &db = string())
+    : XSession_base("localhost", port, user, pwd.c_str(), db)
+  {}
 
 };
 
