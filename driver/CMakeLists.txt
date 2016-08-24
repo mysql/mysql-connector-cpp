@@ -138,7 +138,7 @@ IF(WIN32)
     mysql_util.h
     mysql_warning.h
     mysql_uri.h
-    ${CMAKE_CURRENT_BINARY_DIR}/version_info.h
+    ${CMAKE_BINARY_DIR}/cppconn/version_info.h
     nativeapi/mysql_client_api.h
     nativeapi/mysql_native_driver_wrapper.h
     nativeapi/native_driver_wrapper.h
@@ -307,7 +307,7 @@ IF(WIN32)
 
   # Changing CRT from dynamic to static
   IF(MYSQLCLIENT_STATIC_BINDING)
-    INCLUDE(${CMAKE_SOURCE_DIR}/changeCrt.cmake)
+    INCLUDE(${PROJECT_SOURCE_DIR}/changeCrt.cmake)
     CHANGE_CRT("/MT")
   ENDIF()
 
