@@ -21,15 +21,14 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 #
-# Code below reads LOCATION property of targets. This has been deprecated
-# in later cmake versions. To remove this policy more thought is needed how
-# to deal with target locations (which can not be reliably determined at
-# build configuration time).
+# Library utilities:
 #
-if(POLICY CMP0026)
-  cmake_policy(SET CMP0026 OLD)
-endif()
+# - convenient building of libraries from object library targets
+# - merging static libraries
+#
 
+get_filename_component(LIBUTILS_SCRIPT_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
+set(LIBUTILS_SCRIPT_DIR "${LIBUTILS_SCRIPT_DIR}/libutils")
 
 #
 # Add interface link libraries to a target, even if this is object
@@ -156,93 +155,81 @@ function(add_library_ex TARGET)
   endforeach()
 
   if(libs)
+
     if(${type} STREQUAL "STATIC")
         merge_static_libraries(${TARGET} ${libs})
         add_dependencies(${TARGET} ${libs})
     else()
       target_link_libraries(${TARGET} PRIVATE ${libs})
     endif()
+
   endif()
 
 endfunction(add_library_ex)
 
+#
+# Infrastructure for merging static libraries
+# ===========================================
+#
+# Static libraries that will be merged are prepared first. This is
+# done by prepere_for_merge() macro. During preparations the library
+# is copied to a known location (${MERGELIBS_DIR}) so that the Location
+# is not dependent on build configuraton.
+#
+# On Linux individual objects are also extracted from the library archive.
+# This is preliminary step for later merging of the object into single static
+# library.
+#
+#
+
+if(APPLE)
+  # TODO: find libtool instead of assuming its location
+  set(LIBTOOL_COMMAND /usr/bin/libtool CACHE INTERNAL "location of libtool")
+endif()
 
 
-GET_FILENAME_COMPONENT(MYSQL_CMAKE_SCRIPT_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
-
-#IF(WIN32 OR CYGWIN OR APPLE OR WITH_PIC OR DISABLE_SHARED OR NOT CMAKE_SHARED_LIBRARY_C_FLAGS)
-# SET(_SKIP_PIC 1)
-#ENDIF()
-
-
+#
 # Merge static libraries into a big static lib. The resulting library
 # should not not have dependencies on other static libraries.
 # We use it in MySQL to merge mysys,dbug,vio etc into mysqlclient
+#
 
 function(merge_static_libraries TARGET)
 
-  set(libs ${ARGN})
+  set(mergedir ${CMAKE_CURRENT_BINARY_DIR}/libmerge_${TARGET})
 
-  #
-  # Location and name of the generated source file used to create
-  # merged library.
-  #
-  set(source_file ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_depends.c)
-
-  set(oslibs)
-  set(libs_to_merge)
-
-  foreach(lib ${libs})
-
-    #message("- processing ${lib}")
-
-    if(TARGET ${lib})
-
-      get_target_property(lib_location ${lib} LOCATION)
-      get_target_property(lib_type ${lib} TYPE)
-      #message("-- target ${lib_type}: ${lib_location}")
-
-      if(NOT lib_location)
-
-         # 3rd party library like libz.so. Make sure that everything
-         # that links to our library links to this one as well.
-
-         list(APPEND oslibs ${lib})
-
-      else()
-
-        # This is a target in current project
-        # (can be a static or shared lib)
-
-        if(lib_type STREQUAL "STATIC_LIBRARY")
-          list(APPEND libs_to_merge ${lib_location})
-        else()
-          # This is a shared library our static lib depends on.
-          list(APPEND oslibs ${lib})
-        endif()
-
-      endif()
-
-    else()
-
-        #message("-- explicitly specified static library: ${lib}")
-        list(APPEND libs_to_merge ${lib})
-
-    endif()
-
-  endforeach()
-
-  message("Merging static libraries into ${TARGET}:")
-  foreach(lib ${libs_to_merge})
-    message(" - ${lib}")
-  endforeach()
-
-  if(oslibs)
-    list(REMOVE_DUPLICATES oslibs)
-    message(STATUS "Library ${TARGET} depends on OSLIBS ${oslibs}")
+  if(MSVC)
+    set(libs ${ARGN})
+  else()
+    set(libs ${TARGET} ${ARGN})
   endif()
 
-  target_link_libraries(${TARGET} ${oslibs})
+  #
+  # Prepare list of commands which copy each library file to a known location.
+  #
+
+  message("Merging static libraries into ${TARGET}:")
+  set(copy_libs)
+  foreach(lib ${libs})
+
+    message(" - ${lib}")
+
+    if(NOT TARGET ${lib})
+      message(FATAL_ERROR "mergelibs: Trying to merge non target: ${lib}")
+    endif()
+
+    get_target_property(lib_type ${lib} TYPE)
+
+    if(NOT lib_type STREQUAL "STATIC_LIBRARY")
+      message(FATAL_ERROR "mergelibs: Trying to merge target which is not a static library: ${lib}")
+    endif()
+
+    list(APPEND copy_libs COMMAND ${CMAKE_COMMAND} -E copy
+      $<TARGET_FILE:${lib}>
+      ${mergedir}/${lib}/lib${CMAKE_STATIC_LIBRARY_SUFFIX}
+    )
+
+  endforeach()
 
   #
   #  Now merge all the libraries into one.
@@ -254,115 +241,61 @@ function(merge_static_libraries TARGET)
     # STATIC_LIBRARY_FLAGS property.
 
     set(LINKER_EXTRA_FLAGS "")
-    foreach(lib ${libs_to_merge})
-      set(LINKER_EXTRA_FLAGS "${LINKER_EXTRA_FLAGS} ${lib}")
+
+    foreach(lib ${ARGN})
+      set(LINKER_EXTRA_FLAGS
+          "${LINKER_EXTRA_FLAGS} ${mergedir}/${lib}/lib.lib")
     endforeach()
+
     set_target_properties(${TARGET} PROPERTIES STATIC_LIBRARY_FLAGS
-      "${LINKER_EXTRA_FLAGS}")
+      "${LINKER_EXTRA_FLAGS}"
+    )
 
-    # Disable "empty translation unit warning"
+    # The PRE_BUILD command copies libraries into the predefined location
+    # before main library is linked.
 
-    target_compile_options(${TARGET} PRIVATE /wd4206)
-
-    add_custom_target(merge-test
-      COMMAND ${CMAKE_COMMAND}
-        -D FOO="Ala ma kota"
-        -P ${MYSQL_CMAKE_SCRIPT_DIR}/merge_archives.cmake
+    add_custom_command(TARGET ${TARGET} PRE_BUILD
+      COMMAND ${CMAKE_COMMAND} -E remove_directory ${mergedir}
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${mergedir}
+      ${copy_libs}
+      COMMENT "Preparing libraries for merging into: ${TARGET}"
     )
 
   else()
 
-    get_target_property(target_location ${TARGET} LOCATION)
+    #
+    # Generate cmake script which handles merging of the libraries.
+    # Apart from global cmake variables, script template uses the follwoing
+    # additional variables:
+    #
+    # STATIC_LIBS  -- static library targets to be merged
+    # MERGELIBS_DIR -- location where libraries are prepared for merging
+    #
 
-    if(APPLE)
+    set(STATIC_LIBS ${libs})
+    set(MERGELIBS_DIR ${mergedir})
 
-      # Use OSX's libtool to merge archives (it handles universal
-      # binaries properly)
+    CONFIGURE_FILE(
+      ${LIBUTILS_SCRIPT_DIR}/merge_archives.cmake.in
+      ${CMAKE_CURRENT_BINARY_DIR}/merge_archives_${TARGET}.cmake
+      @ONLY
+    )
 
-      # TODO: We hide errors about duplicate input source file names
-      # in the library (this might be a problem when debugging).
-      # TODO: find libtool instead of assuming its location
+    # The POST_BUILD action on the merged library target copies merged
+    # libraries to the predefined location and invokes the merge script.
 
-      add_custom_command(TARGET ${TARGET} POST_BUILD
-        COMMAND mv ${target_location} ${target_location}.main
-        COMMAND /usr/bin/libtool 2>/dev/null -static -o ${target_location}
-        ${target_location}.main ${libs_to_merge}
-      )
+    message("- copy libs: ${copy_libs}")
 
-    else()
+    add_custom_command(TARGET ${TARGET} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E remove_directory ${mergedir}
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${mergedir}
+      ${copy_libs}
+      COMMAND ${CMAKE_COMMAND}
+        -D TARGET_LOCATION=$<TARGET_FILE:${TARGET}>
+        -P ${CMAKE_CURRENT_BINARY_DIR}/merge_archives_${TARGET}.cmake
+      COMMENT "Merging libraries into: ${TARGET}"
+    )
 
-      # Generic Unix, Cygwin or MinGW. In post-build step, call
-      # script, that extracts objects from archives with "ar x"
-      # and repacks them with "ar r"
-
-      SET(TARGET ${TARGET})
-
-      CONFIGURE_FILE(
-        ${MYSQL_CMAKE_SCRIPT_DIR}/merge_archives_unix.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/merge_archives_${TARGET}.cmake
-        @ONLY
-      )
-
-      ADD_CUSTOM_COMMAND(TARGET ${TARGET} POST_BUILD
-        COMMAND rm ${TARGET_LOCATION}
-        COMMAND ${CMAKE_COMMAND} -P
-        ${CMAKE_CURRENT_BINARY_DIR}/merge_archives_${TARGET}.cmake
-      )
-
-    endif()
   endif()
 
 endfunction()
-
-
-#
-# Recursively extend given list of targets with all libraries
-# on which given targets depend (as given by LINK_LIBRARIES target
-# property).
-#
-
-FUNCTION(GET_DEPENDENT_LIBS targets result)
-
-  # Get dependencies of the first target in the list
-
-  list(GET targets 0 first)
-  list(REMOVE_AT targets 0)
-  set(LIBS)
-
-  # In some versions of cmake dependent libraries are listed
-  # in INTERFACE_LINK_LIBRARIES as $<LINK_ONLY:lib>. Detect
-  # such entries here and extract the bare name of the dependent
-  # library.
-
-  string(REGEX MATCH "^\\$<LINK_ONLY:(.*)>$" link_only ${first})
-  if (link_only)
-    set(first ${CMAKE_MATCH_1})
-  endif()
-
-  if(TARGET ${first})
-  get_target_property(LIBS ${first} INTERFACE_LINK_LIBRARIES)
-  endif()
-  #message("- processing ${first}: ${LIBS}")
-
-  # Add LIBS to the list of remaining targets and
-  # call this function recursively to process the new
-  # list.
-
-  if(LIBS)
-    list(APPEND targets ${LIBS})
-  endif(LIBS)
-
-  if(targets)
-    #message("rec call: ${targets}")
-    GET_DEPENDENT_LIBS("${targets}" ret)
-    #message("rec ret: ${ret}")
-  endif()
-
-  # Insert the first target back to the result and
-  # return it.
-
-  list(INSERT ret 0 ${first})
-  list(REMOVE_DUPLICATES ret)
-  set(${result} ${ret} PARENT_SCOPE)
-
-ENDFUNCTION(GET_DEPENDENT_LIBS)

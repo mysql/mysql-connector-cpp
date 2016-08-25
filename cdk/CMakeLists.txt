@@ -178,6 +178,12 @@ IF(WITH_SSL)
   ADD_DEFINITIONS(-DWITH_SSL)
 ENDIF()
 
+#
+# Clean exports file
+#
+
+file(REMOVE ${PROJECT_BINARY_DIR}/exports.cmake)
+
 
 #
 # Project's public headers

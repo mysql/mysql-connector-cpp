@@ -1,0 +1,138 @@
+# Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+#
+# This code is licensed under the terms of the GPLv2
+# <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+# MySQL Connectors. There are special exceptions to the terms and
+# conditions of the GPLv2 as it is applied to this software, see the
+# FLOSS License Exception
+# <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published
+# by the Free Software Foundation; version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+
+# List of static libraries to be merged
+
+SET(STATIC_LIBS "@STATIC_LIBS@")
+
+# Work location where libraries are merged. For each
+# library LIB from STATIC_LIBS, this location should
+# contain the library archive at ${MERGELIBS_DIR}/${LIB}/lib.a
+
+SET(MERGELIBS_DIR "@MERGELIBS_DIR@")
+
+# Othert settings
+
+SET(CMAKE_CURRENT_BINARY_DIR "@CMAKE_CURRENT_BINARY_DIR@")
+SET(CMAKE_AR "@CMAKE_AR@")
+SET(CMAKE_RANLIB "@CMAKE_RANLIB@")
+set(LIBTOOL_COMMAND "@LIBTOOL_COMMAND@")
+
+#message("mergelib script: ${MERGELIBS_DIR}")
+
+
+file(REMOVE ${TARGET_LOCATION})
+
+if(APPLE)
+
+  # On OSX we use libtool which can merge static libraries
+
+  set(merge_llibs)
+  foreach(lib ${STATIC_LIBS})
+    list(APPEND merge_libs ${MERGELIBS_DIR}/${lib}/lib.a)
+  endforeach()
+
+  execute_process(
+    COMMAND ${LIBTOOL_COMMAND} -static -o ${TARGET_LOCATION}
+      ${merge_libs}
+    ERROR_QUIET
+  )
+
+else()
+
+  # Otherwise we use ar to first unppack objects from all archives
+  # and then pack them back into a single static library
+
+  set(merge_objs)
+
+  foreach(lib ${STATIC_LIBS})
+
+    # Get list of objects in the archive
+
+    execute_process(
+      COMMAND ${CMAKE_AR} -t ${lib}/lib.a
+      WORKING_DIRECTORY ${MERGELIBS_DIR}
+      OUTPUT_VARIABLE objs
+    )
+
+    #message("extracting objs from ${lib}: ${objs}")
+
+    # split output into cmake list
+
+    string(REGEX MATCHALL "[^\n]+" objs ${objs})
+
+    #
+    # To handle the case of library archive containing several objects with
+    # the same name we diligently extract objects one-by-one and rename each
+    # xxx.o to N.xxx.o where N is the occurence number (starting from 1)
+    #
+
+    file(MAKE_DIRECTORY ${MERGELIBS_DIR}/${lib}/objs)
+
+    # for object xxx, variable xxx_cnt holds the occurence number. Reset
+    # counters first.
+
+    foreach(obj ${objs})
+      set(${obj}_cnt 0)
+    endforeach()
+
+    foreach(obj ${objs})
+
+      # increase occurence counter
+
+      math(EXPR ${obj}_cnt ${${obj}_cnt}+1)
+      #message("obj: ${obj} (${${obj}_cnt})")
+
+      # extract current occurence of the object ...
+
+      execute_process(
+        COMMAND ar xN ${${obj}_cnt} ../lib.a ${obj}
+        WORKING_DIRECTORY ${MERGELIBS_DIR}/${lib}/objs
+      )
+
+      # ... and rename it
+
+      file(RENAME
+        ${MERGELIBS_DIR}/${lib}/objs/${obj}
+        ${MERGELIBS_DIR}/${lib}/objs/${${obj}_cnt}.${obj}
+      )
+
+      list(APPEND merge_objs
+        ${MERGELIBS_DIR}/${lib}/objs/${${obj}_cnt}.${obj}
+      )
+
+    endforeach()
+
+  endforeach()
+
+  execute_process(
+    COMMAND ${CMAKE_AR} -r ${TARGET_LOCATION} ${merge_objs}
+  )
+  execute_process(
+    COMMAND ${CMAKE_RANLIB} ${TARGET_LOCATION}
+  )
+
+endif()
+
+#message("mergelibs script done")
+
+

@@ -39,7 +39,7 @@ add_library_ex(cdk STATIC session.cc codec.cc
 #MESSAGE("cdk depends on: ${target_mysqlx} ${target_parser}")
 
 EXPORT(TARGETS cdk
-  APPEND FILE ${CMAKE_BINARY_DIR}/exports.cmake
+  APPEND FILE ${PROJECT_BINARY_DIR}/exports.cmake
 )
 
 
