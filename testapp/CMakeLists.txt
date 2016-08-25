@@ -155,11 +155,11 @@ TARGET_LINK_LIBRARIES(cpptest ${CONCPP_LIBS})
 #
 
 IF(CMAKE_HOST_UNIX)
-TARGET_LINK_LIBRARIES(cpptest pthread)
+  TARGET_LINK_LIBRARIES(cpptest pthread)
 ENDIF()
 
 # To use Connector/C++ 2.0 we must enable C++11
 
 if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  target_compile_options(test PRIVATE "-std=c++11")
+  target_compile_options(cpptest PRIVATE "-std=c++11")
 endif()
