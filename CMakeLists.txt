@@ -37,6 +37,13 @@ PROJECT(MySQL_CONCPP)
 message("Building on system: ${CMAKE_SYSTEM} (${CMAKE_SYSTEM_PROCESSOR})")
 message("Using cmake generator: ${CMAKE_GENERATOR}")
 
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(IS64BIT 1)
+  message("Using 64bit generator")
+else()
+  message("Using 32bit genereator")
+endif()
+
 include(version.cmake)
 
 
@@ -266,24 +273,35 @@ MERGE_STATIC_LIBS(libconcpp "${LIB_NAME_STATIC}"
 
 option(LIB_DIR    "Library subdirectory")
 
-set(VS_DIR)
+if(NOT LIB_DIR)
+  if(IS64BIT)
+    set(LIB_DIR "lib64")
+  else()
+    set(LIB_DIR "lib")
+  endif()
+endif()
+
 if(WIN32)
   if(MSVC12)
-    set(VS_DIR "/vs12")
+    set(LIB_DIR "${LIB_DIR}/vs12")
   elseif(MSVC14)
-    set(VS_DIR "/vs14")
+    set(LIB_DIR "${LIB_DIR}/vs14")
   endif()
 endif()
 
-if(NOT LIB_DIR)
-  set(LIB_DIR "lib${VS_DIR}")
-  if(CMAKE_BUILD_TYPE STREQUAL Debug)
-    set(LIB_DIR "${LIB_DIR}/debug")
-  endif()
-endif()
+set(LIB_DIR_DEBUG "${LIB_DIR}/debug")
 
-INSTALL(TARGETS libconcpp DESTINATION ${LIB_DIR})
 message("Connector library will be installed at: ${LIB_DIR}")
+
+INSTALL(TARGETS libconcpp
+  CONFIGURATIONS Release RelWithDebInfo
+  DESTINATION ${LIB_DIR}
+)
+
+INSTALL(TARGETS libconcpp
+  CONFIGURATIONS Debug
+  DESTINATION ${LIB_DIR_DEBUG}
+)
 
 
 #

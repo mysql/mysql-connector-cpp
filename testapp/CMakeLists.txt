@@ -33,9 +33,31 @@ if(NOT WITH_CONCPP)
   )
 endif()
 
+OPTION(STATIC_MSVCRT "Use static MSVC runtime library" OFF)
+
+if(STATIC_MSVCRT)
+  message("Using static runtime library.")
+else()
+  message("Using dynamic runtime library.")
+endif()
+
+
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(IS64BIT 1)
+  message("Generationg 64bit code")
+else()
+  message("Generating 32bit code")
+endif()
+
+
 #
 # Find MySQL Connector/C++ 2.0 at specified location.
 #
+
+set(libconcpp_name mysqlcppconn2-static)
+if(STATIC_MSVCRT)
+  set(libconcpp_name "${libconcpp_name}-mt")
+endif()
 
 set(CONCPLS_INCLUDES "${WITH_CONCPP}/include")
 
@@ -46,7 +68,11 @@ if(NOT EXISTS "${CONCPLS_INCLUDES}/mysqlx.h")
   )
 endif()
 
-set(LIB_PATH "${WITH_CONCPP}/lib")
+if(IS64BIT)
+  set(LIB_PATH "${WITH_CONCPP}/lib64")
+else()
+  set(LIB_PATH "${WITH_CONCPP}/lib")
+endif()
 
 if(WIN32)
   if(MSVC12)
@@ -56,24 +82,25 @@ if(WIN32)
   endif()
 endif()
 
-message("Looking for the connector library here: ${LIB_PATH}")
+message("Looking for the connector library ${libconcpp_name} here: ${LIB_PATH}")
 
-find_library(CONCPP_LIB NAMES mysqlcppconn2-static mysqlcppconn2-static-mt
-  PATHS "${LIB_PATH}" "${WITH_CONCPP}/lib"
+find_library(CONCPP_LIB NAMES ${libconcpp_name}
+  PATHS "${LIB_PATH}"
   NO_DEFAULT_PATH
 )
 
-find_library(CONCPP_LIB_DEBUG NAMES mysqlcppconn2-static mysqlcppconn2-static-mt
-  PATHS "${LIB_PATH}/debug" "${WITH_CONCPP}/lib/debug"
+find_library(CONCPP_LIB_DEBUG NAMES ${libconcpp_name}
+  PATHS "${LIB_PATH}/debug"
   NO_DEFAULT_PATH
 )
 
 if(NOT CONCPP_LIB AND NOT CONCPP_LIB_DEBUG)
   message(FATAL_ERROR
-    "Could not find MySQL Connector/C++ 2.0 library mysqlcppconn2-static at specified"
+    "Could not find MySQL Connector/C++ 2.0 library ${libconcpp_name} at specified"
     " location: ${LIB_PATH}"
   )
 endif()
+
 
 if(CONCPP_LIB)
   message("Using Connector/C++ 2.0 library: ${CONCPP_LIB}")
@@ -113,8 +140,6 @@ endif()
 
 IF(WIN32)
 
-  OPTION(STATIC_MSVCRT "Use static MSVC runtime library" OFF)
-
   set(runtime "dynamic")
 
   IF(STATIC_MSVCRT)
@@ -130,13 +155,6 @@ IF(WIN32)
   endforeach(LANG)
 
   ENDIF()
-
-  # TODO: Some automatic check of the runtime used by C/C++ and hard error here.
-
-  message("Using ${runtime} runtime library."
-          " Make sure that the connector given by WITH_CONCPP uses"
-          " the same runtime type - otherwise linking will fail due to"
-          " runtime missmatch.")
 
 ENDIF()
 
