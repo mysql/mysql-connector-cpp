@@ -20,7 +20,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-
-cmake_minimum_required(VERSION 2.8)
+#
+# CDK protocol layer implementations.
+#
+# When we support different protocols we will have several implementations
+# but at the moment there is only one, using the MySQL X Protocol.
+#
 
 ADD_SUBDIRECTORY(mysqlx)

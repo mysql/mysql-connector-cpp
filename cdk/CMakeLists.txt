@@ -22,8 +22,13 @@
 
 
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.11)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
+
+
 PROJECT(MySQLCDK)
+
+cmake_policy(VERSION 2.8.12)
+cmake_policy(SET CMP0022 NEW)  # consistently use INTERFACE_LINK_LIBRARIES property
 
 #
 # Detect if we are configured as stand-alone project, or sub-project.
@@ -46,6 +51,7 @@ ENDIF()
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #MESSAGE("added module path: ${PROJECT_SOURCE_DIR}/cmake")
 
+include(libutils)
 
 #
 # Configure static runtime library on Windows if requested

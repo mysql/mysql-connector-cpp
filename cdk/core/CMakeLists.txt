@@ -28,9 +28,14 @@ ADD_SUBDIRECTORY(tests)
 # required by codec.cc
 INCLUDE_DIRECTORIES(${PROTOBUF_INCLUDE_DIR})
 
-ADD_LIBRARY(cdk STATIC session.cc codec.cc)
+add_library_ex(cdk STATIC session.cc codec.cc
+  OBJECTS
+    ${target_mysqlx}
+    ${target_proto_mysqlx}
+    ${target_foundation}
+    ${target_parser}
+)
 
-TARGET_LINK_LIBRARIES(cdk ${target_mysqlx} ${target_parser})
 #MESSAGE("cdk depends on: ${target_mysqlx} ${target_parser}")
 
 EXPORT(TARGETS cdk

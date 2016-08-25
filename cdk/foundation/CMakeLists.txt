@@ -59,16 +59,16 @@ ENDIF(NOT BOOST_SYSTEM_LIBS)
 SET(target_foundation ${cdk_target_prefix}foundation
     CACHE INTERNAL "CDK foundation target")
 
-ADD_LIBRARY(${target_foundation} ${sources})
-ADD_BOOST(${target_foundation})
+ADD_LIBRARY(${target_foundation} OBJECT ${sources})
+#ADD_BOOST(${target_foundation})
 
 IF(WIN32)
-  target_link_libraries(${target_foundation} ws2_32)
+  lib_interface_link_libraries(${target_foundation} ws2_32)
   target_compile_definitions(${target_foundation}
                              PRIVATE _CRT_SECURE_NO_WARNINGS)
 ENDIF(WIN32)
 
 if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
-  target_link_libraries(${target_foundation} socket nsl)
+  lib_interface_link_libraries(${target_foundation} socket nsl)
 endif()
 

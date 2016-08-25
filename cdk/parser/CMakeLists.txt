@@ -27,7 +27,7 @@ ADD_SUBDIRECTORY(tests)
 
 SET(target_parser ${cdk_target_prefix}parser CACHE INTERNAL "CDK parser target")
 
-add_library(${target_parser} STATIC
+add_library(${target_parser} OBJECT
   tokenizer.cc
   json_parser.cc
   expr_parser.cc

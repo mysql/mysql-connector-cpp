@@ -1155,17 +1155,12 @@ CRUD_TEST_BEGIN(parameters)
     struct Param_values
       : public Param_source
     {
-
        // Report parameter values.
 
       void process(Param_source::Processor &prc) const
       {
-        Param_values *self= const_cast<Param_values*>(this);
-
         safe_prc(prc)->key_val("name")->scalar()->str(name_pattern);
-
         safe_prc(prc)->key_val("age")->scalar()->num((int64_t)age_limit);
-
         safe_prc(prc)->key_val("new_age")->scalar()->num((int64_t)new_age);
       }
     }

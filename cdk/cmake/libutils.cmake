@@ -1,324 +1,368 @@
-# Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
-# 
+# Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+#
+# The MySQL Connector/C++ is licensed under the terms of the GPLv2
+# <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+# MySQL Connectors. There are special exceptions to the terms and
+# conditions of the GPLv2 as it is applied to this software, see the
+# FLOSS License Exception
+# <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+#
 # This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; version 2 of the License.
+# it under the terms of the GNU General Public License as published
+# by the Free Software Foundation; version 2 of the License.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA 
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-
-# This file exports macros that emulate some functionality found  in GNU libtool
-# on Unix systems. One such feature is convenience libraries. In this context,
-# convenience library is a static library that can be linked to shared library
-# On systems that force position-independent code, linking into shared library
-# normally requires compilation with a special flag (often -fPIC). To enable 
-# linking static libraries to shared, we compile source files that come into 
-# static library with the PIC flag (${CMAKE_SHARED_LIBRARY_C_FLAGS} in CMake)
-# Some systems, like Windows or OSX do not need special compilation (Windows 
-# never uses PIC and OSX always uses it). 
 #
-# The intention behind convenience libraries is simplify the build and to reduce
-# excessive recompiles.
-
-# Except for convenience libraries, this file provides macros to merge static 
-# libraries (we need it for mysqlclient) and to create shared library out of 
-# convenience libraries(again, for mysqlclient)
-
-# Following macros are exported
-# - ADD_CONVENIENCE_LIBRARY(target source1...sourceN)
-# This macro creates convenience library. The functionality is similar to 
-# ADD_LIBRARY(target STATIC source1...sourceN), the difference is that resulting 
-# library can always be linked to shared library
-# 
-# - MERGE_LIBRARIES(target [STATIC|SHARED|MODULE]  [linklib1 .... linklibN]
-#  [EXPORTS exported_func1 .... exported_func_N]
-#  [OUTPUT_NAME output_name]
-# This macro merges several static libraries into a single one or creates a shared
-# library from several convenience libraries
-
-# Important global flags 
-# - WITH_PIC : If set, it is assumed that everything is compiled as position
-# independent code (that is CFLAGS/CMAKE_C_FLAGS contain -fPIC or equivalent)
-# If defined, ADD_CONVENIENCE_LIBRARY does not add PIC flag to compile flags
+# Code below reads LOCATION property of targets. This has been deprecated
+# in later cmake versions. To remove this policy more thought is needed how
+# to deal with target locations (which can not be reliably determined at
+# build configuration time).
 #
-# - DISABLE_SHARED: If set, it is assumed that shared libraries are not produced
-# during the build. ADD_CONVENIENCE_LIBRARY does not add anything to compile flags
+if(POLICY CMP0026)
+  cmake_policy(SET CMP0026 OLD)
+endif()
 
 
-INCLUDE(CheckCCompilerFlag)
+#
+# Add interface link libraries to a target, even if this is object
+# library target.
+#
+
+function(lib_interface_link_libraries TARGET)
+
+  get_target_property(target_type ${TARGET} TYPE)
+
+  if(target_type STREQUAL "OBJECT_LIBRARY")
+    set_property(TARGET ${TARGET}
+      APPEND PROPERTY INTERFACE_LINK_LIBRARIES ${ARGN}
+    )
+  else()
+    target_link_libraries(${TARGET} INTERFACE ${ARGN})
+  endif()
+
+endfunction(lib_interface_link_libraries)
+
+
+#
+# Create static or shared library like add_library(). But library can be
+# built not only from source files but also from other libraries (object
+# or static).
+#
+# add_library_ex(TARGET TYPE
+#   [<sources>]
+#   [OBJECTS <object libs>]
+#   [LIBS    <static libs>]
+# )
+#
+# If static library is created then specified <static libs> are merged
+# with the main library (so that resulting library does not depend on
+# them at compile time).
+#
+
+function(add_library_ex TARGET)
+
+  set(type)
+  set(srcs)
+  set(objs)
+  set(libs)
+
+  list(GET ARGN 0 arg)
+  list(REMOVE_AT ARGN 0)
+
+  if(arg STREQUAL "STATIC")
+    #message("- creating static library")
+    set(type "STATIC")
+    list(GET ARGN 0 arg)
+    list(REMOVE_AT ARGN 0)
+  endif()
+
+  if(arg STREQUAL "SHARED")
+    #message("- creating shared library")
+    set(type "SHARED")
+    list(GET ARGN 0 arg)
+    list(REMOVE_AT ARGN 0)
+  endif()
+
+  while(1)
+
+    if(arg STREQUAL "OBJECTS" OR arg STREQUAL "LIBS")
+      break()
+    endif()
+
+    #message("- processing source: ${arg}")
+    list(APPEND srcs ${arg})
+
+    if(NOT ARGN)
+      break()
+    endif()
+    list(GET ARGN 0 arg)
+    list(REMOVE_AT ARGN 0)
+
+  endwhile()
+
+  if(arg STREQUAL "OBJECTS")
+  while(ARGN)
+
+    list(GET ARGN 0 arg)
+    list(REMOVE_AT ARGN 0)
+
+    if(arg STREQUAL "LIBS")
+      break()
+    endif()
+
+    #message("- processing object lib: ${arg}")
+    list(APPEND objs ${arg})
+
+  endwhile()
+  endif()
+
+  if(arg STREQUAL "LIBS")
+  while(ARGN)
+
+    list(GET ARGN 0 arg)
+    list(REMOVE_AT ARGN 0)
+
+    #message("- processing library: ${arg}")
+    list(APPEND libs ${arg})
+
+  endwhile()
+  endif()
+
+  foreach(obj ${objs})
+    list(APPEND srcs $<TARGET_OBJECTS:${obj}>)
+  endforeach()
+
+  add_library(${TARGET} ${type} ${srcs})
+  #message("- added ${type} library: ${TARGET}")
+
+  foreach(obj ${objs})
+
+    target_link_libraries(${TARGET}
+      INTERFACE $<TARGET_PROPERTY:${obj},INTERFACE_LINK_LIBRARIES>
+    )
+
+    target_include_directories(${TARGET}
+      INTERFACE $<TARGET_PROPERTY:${obj},INTERFACE_INCLUDE_DIRECTORIES>
+    )
+
+  endforeach()
+
+  if(libs)
+    if(${type} STREQUAL "STATIC")
+        merge_static_libraries(${TARGET} ${libs})
+        add_dependencies(${TARGET} ${libs})
+    else()
+      target_link_libraries(${TARGET} PRIVATE ${libs})
+    endif()
+  endif()
+
+endfunction(add_library_ex)
+
+
 
 GET_FILENAME_COMPONENT(MYSQL_CMAKE_SCRIPT_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
-IF(WIN32 OR APPLE OR WITH_PIC OR DISABLE_SHARED OR NOT CMAKE_SHARED_LIBRARY_C_FLAGS)
- SET(_SKIP_PIC 1)
-ENDIF()
 
-INCLUDE(${MYSQL_CMAKE_SCRIPT_DIR}/cmake_parse_arguments.cmake)
-# CREATE_EXPORT_FILE (VAR target api_functions)
-# Internal macro, used to create source file for shared libraries that 
-# otherwise consists entirely of "convenience" libraries. On Windows, 
-# also exports API functions as dllexport. On unix, creates a dummy file 
-# that references all exports and this prevents linker from creating an 
-# empty library(there are unportable alternatives, --whole-archive)
-MACRO(CREATE_EXPORT_FILE VAR TARGET API_FUNCTIONS)
-  IF(WIN32)
-    SET(DUMMY ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_dummy.c)
-    SET(EXPORTS ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_exports.def)
-    CONFIGURE_FILE_CONTENT("" ${DUMMY})
-    SET(CONTENT "EXPORTS\n")
-    FOREACH(FUNC ${API_FUNCTIONS})
-      SET(CONTENT "${CONTENT} ${FUNC}\n")
-    ENDFOREACH()
-    CONFIGURE_FILE_CONTENT(${CONTENT} ${EXPORTS})
-    SET(${VAR} ${DUMMY} ${EXPORTS})
-  ELSE()
-    SET(EXPORTS ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_exports_file.cc)
-    SET(CONTENT)
-    FOREACH(FUNC ${API_FUNCTIONS})
-      SET(CONTENT "${CONTENT} extern void* ${FUNC}\;\n")
-    ENDFOREACH()
-    SET(CONTENT "${CONTENT} void *${TARGET}_api_funcs[] = {\n")
-    FOREACH(FUNC ${API_FUNCTIONS})
-     SET(CONTENT "${CONTENT} &${FUNC},\n")
-    ENDFOREACH()
-    SET(CONTENT "${CONTENT} (void *)0\n}\;")
-    CONFIGURE_FILE_CONTENT(${CONTENT} ${EXPORTS})
-    SET(${VAR} ${EXPORTS})
-  ENDIF()
-ENDMACRO()
+#IF(WIN32 OR CYGWIN OR APPLE OR WITH_PIC OR DISABLE_SHARED OR NOT CMAKE_SHARED_LIBRARY_C_FLAGS)
+# SET(_SKIP_PIC 1)
+#ENDIF()
 
 
-# MYSQL_ADD_CONVENIENCE_LIBRARY(name source1...sourceN)
-# Create static library that can be linked to shared library.
-# On systems that force position-independent code, adds -fPIC or 
-# equivalent flag to compile flags.
-MACRO(ADD_CONVENIENCE_LIBRARY)
-  SET(TARGET ${ARGV0})
-  SET(SOURCES ${ARGN})
-  LIST(REMOVE_AT SOURCES 0)
-  ADD_LIBRARY(${TARGET} STATIC ${SOURCES})
-  IF(NOT _SKIP_PIC)
-    SET_TARGET_PROPERTIES(${TARGET} PROPERTIES  COMPILE_FLAGS
-    "${CMAKE_SHARED_LIBRARY_C_FLAGS}")
-  ENDIF()
-ENDMACRO()
-
-
-MACRO(ADD_CONVENIENCE_LIBRARY_DLL)
-  SET(TARGET ${ARGV0})
-  SET(SOURCES ${ARGN})
-  LIST(REMOVE_AT SOURCES 0)
-  ADD_LIBRARY(${TARGET} SHARED ${SOURCES})
-  IF(NOT _SKIP_PIC)
-    SET_TARGET_PROPERTIES(${TARGET} PROPERTIES  COMPILE_FLAGS
-    "${CMAKE_SHARED_LIBRARY_C_FLAGS}")
-  ENDIF()
-ENDMACRO()
-
-# Write content to file, using CONFIGURE_FILE
-# The advantage compared to FILE(WRITE) is that timestamp
-# does not change if file already has the same content
-MACRO(CONFIGURE_FILE_CONTENT content file)
- SET(CMAKE_CONFIGURABLE_FILE_CONTENT 
-  "${content}\n")
- CONFIGURE_FILE(
-  ${MYSQL_CMAKE_SCRIPT_DIR}/configurable_file_content.in
-  ${file}
-  @ONLY)
-ENDMACRO()
-
-# Merge static libraries into a big static lib. The resulting library 
+# Merge static libraries into a big static lib. The resulting library
 # should not not have dependencies on other static libraries.
 # We use it in MySQL to merge mysys,dbug,vio etc into mysqlclient
 
-MACRO(MERGE_STATIC_LIBS TARGET OUTPUT_NAME LIBS_TO_MERGE)
-  # To produce a library we need at least one source file.
-  # It is created by ADD_CUSTOM_COMMAND below and will
-  # also help to track dependencies.
-  SET(SOURCE_FILE ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_depends.cpp)
-  ADD_LIBRARY(${TARGET} STATIC ${SOURCE_FILE})
-  SET_TARGET_PROPERTIES(${TARGET} PROPERTIES OUTPUT_NAME ${OUTPUT_NAME})
+function(merge_static_libraries TARGET)
 
-  SET(OSLIBS)
-  FOREACH(LIB ${LIBS_TO_MERGE})
-    GET_TARGET_PROPERTY(LIB_LOCATION ${LIB} LOCATION)
-    GET_TARGET_PROPERTY(LIB_TYPE ${LIB} TYPE)
-    IF(NOT LIB_LOCATION)
-       # 3rd party library like libz.so. Make sure that everything
-       # that links to our library links to this one as well.
-       LIST(APPEND OSLIBS ${LIB})
-    ELSE()
-      # This is a target in current project
-      # (can be a static or shared lib)
-      IF(LIB_TYPE STREQUAL "STATIC_LIBRARY")
-        SET(STATIC_LIBS ${STATIC_LIBS} ${LIB_LOCATION})
-        ADD_DEPENDENCIES(${TARGET} ${LIB})
-        # Extract dependend OS libraries
-        GET_DEPENDEND_OS_LIBS(${LIB} LIB_OSLIBS)
-        LIST(APPEND OSLIBS ${LIB_OSLIBS})
-      ELSE()
-        # This is a shared library our static lib depends on.
-        LIST(APPEND OSLIBS ${LIB})
-      ENDIF()
-    ENDIF()
-  ENDFOREACH()
+  set(libs ${ARGN})
 
-  IF(OSLIBS)
-    LIST(REMOVE_DUPLICATES OSLIBS)
-    TARGET_LINK_LIBRARIES(${TARGET} ${OSLIBS})
-    MESSAGE(STATUS "Library ${TARGET} depends on OSLIBS ${OSLIBS}")
-  ENDIF()
+  #
+  # Location and name of the generated source file used to create
+  # merged library.
+  #
+  set(source_file ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_depends.c)
 
-  IF(STATIC_LIBS)
-    LIST(REMOVE_DUPLICATES STATIC_LIBS)
-  ENDIF()
+  set(oslibs)
+  set(libs_to_merge)
 
-  # Make the generated dummy source file depended on all static input
-  # libs. If input lib changes,the source file is touched
-  # which causes the desired effect (relink).
-  ADD_CUSTOM_COMMAND( 
-    OUTPUT  ${SOURCE_FILE}
-    COMMAND ${CMAKE_COMMAND}  -E touch ${SOURCE_FILE}
-    DEPENDS ${STATIC_LIBS})
+  foreach(lib ${libs})
 
-  IF(MSVC)
-    # To merge libs, just pass them to lib.exe command line.
-    SET(LINKER_EXTRA_FLAGS "")
-    FOREACH(LIB ${STATIC_LIBS})
-      SET(LINKER_EXTRA_FLAGS "${LINKER_EXTRA_FLAGS} ${LIB}")
-    ENDFOREACH()
-    SET_TARGET_PROPERTIES(${TARGET} PROPERTIES STATIC_LIBRARY_FLAGS 
+    #message("- processing ${lib}")
+
+    if(TARGET ${lib})
+
+      get_target_property(lib_location ${lib} LOCATION)
+      get_target_property(lib_type ${lib} TYPE)
+      #message("-- target ${lib_type}: ${lib_location}")
+
+      if(NOT lib_location)
+
+         # 3rd party library like libz.so. Make sure that everything
+         # that links to our library links to this one as well.
+
+         list(APPEND oslibs ${lib})
+
+      else()
+
+        # This is a target in current project
+        # (can be a static or shared lib)
+
+        if(lib_type STREQUAL "STATIC_LIBRARY")
+          list(APPEND libs_to_merge ${lib_location})
+        else()
+          # This is a shared library our static lib depends on.
+          list(APPEND oslibs ${lib})
+        endif()
+
+      endif()
+
+    else()
+
+        #message("-- explicitly specified static library: ${lib}")
+        list(APPEND libs_to_merge ${lib})
+
+    endif()
+
+  endforeach()
+
+  message("Merging static libraries into ${TARGET}:")
+  foreach(lib ${libs_to_merge})
+    message(" - ${lib}")
+  endforeach()
+
+  if(oslibs)
+    list(REMOVE_DUPLICATES oslibs)
+    message(STATUS "Library ${TARGET} depends on OSLIBS ${oslibs}")
+  endif()
+
+  target_link_libraries(${TARGET} ${oslibs})
+
+  #
+  #  Now merge all the libraries into one.
+  #
+
+  if(MSVC)
+
+    # To merge libs, just pass them to lib.exe command line via
+    # STATIC_LIBRARY_FLAGS property.
+
+    set(LINKER_EXTRA_FLAGS "")
+    foreach(lib ${libs_to_merge})
+      set(LINKER_EXTRA_FLAGS "${LINKER_EXTRA_FLAGS} ${lib}")
+    endforeach()
+    set_target_properties(${TARGET} PROPERTIES STATIC_LIBRARY_FLAGS
       "${LINKER_EXTRA_FLAGS}")
-  ELSE()
-    GET_TARGET_PROPERTY(TARGET_LOCATION ${TARGET} LOCATION)  
-    IF(APPLE)
-      # Use OSX's libtool to merge archives (ihandles universal 
+
+    # Disable "empty translation unit warning"
+
+    target_compile_options(${TARGET} PRIVATE /wd4206)
+
+    add_custom_target(merge-test
+      COMMAND ${CMAKE_COMMAND}
+        -D FOO="Ala ma kota"
+        -P ${MYSQL_CMAKE_SCRIPT_DIR}/merge_archives.cmake
+    )
+
+  else()
+
+    get_target_property(target_location ${TARGET} LOCATION)
+
+    if(APPLE)
+
+      # Use OSX's libtool to merge archives (it handles universal
       # binaries properly)
-      ADD_CUSTOM_COMMAND(TARGET ${TARGET} POST_BUILD
-        COMMAND rm ${TARGET_LOCATION}
-        COMMAND /usr/bin/libtool -static -o ${TARGET_LOCATION} 
-        ${STATIC_LIBS}
-      )  
-    ELSE()
-      # Generic Unix or MinGW. In post-build step, call
-      # script, that extracts objects from archives with "ar x" 
+
+      # TODO: We hide errors about duplicate input source file names
+      # in the library (this might be a problem when debugging).
+      # TODO: find libtool instead of assuming its location
+
+      add_custom_command(TARGET ${TARGET} POST_BUILD
+        COMMAND mv ${target_location} ${target_location}.main
+        COMMAND /usr/bin/libtool 2>/dev/null -static -o ${target_location}
+        ${target_location}.main ${libs_to_merge}
+      )
+
+    else()
+
+      # Generic Unix, Cygwin or MinGW. In post-build step, call
+      # script, that extracts objects from archives with "ar x"
       # and repacks them with "ar r"
+
       SET(TARGET ${TARGET})
+
       CONFIGURE_FILE(
         ${MYSQL_CMAKE_SCRIPT_DIR}/merge_archives_unix.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/merge_archives_${TARGET}.cmake 
+        ${CMAKE_CURRENT_BINARY_DIR}/merge_archives_${TARGET}.cmake
         @ONLY
       )
+
       ADD_CUSTOM_COMMAND(TARGET ${TARGET} POST_BUILD
         COMMAND rm ${TARGET_LOCATION}
-        COMMAND ${CMAKE_COMMAND} -P 
+        COMMAND ${CMAKE_COMMAND} -P
         ${CMAKE_CURRENT_BINARY_DIR}/merge_archives_${TARGET}.cmake
       )
-    ENDIF()
-  ENDIF()
-ENDMACRO()
 
-# Create libs from libs.
-# Merges static libraries, creates shared libraries out of convenience libraries.
-# MERGE_LIBRARIES(target [STATIC|SHARED|MODULE] 
-#  [linklib1 .... linklibN]
-#  [EXPORTS exported_func1 .... exportedFuncN]
-#  [OUTPUT_NAME output_name]
-#)
-MACRO(MERGE_LIBRARIES)
-  MYSQL_PARSE_ARGUMENTS(ARG
-    "EXPORTS;OUTPUT_NAME;COMPONENT"
-    "STATIC;SHARED;MODULE;NOINSTALL"
-    ${ARGN}
-  )
-  LIST(GET ARG_DEFAULT_ARGS 0 TARGET) 
-  SET(LIBS ${ARG_DEFAULT_ARGS})
-  LIST(REMOVE_AT LIBS 0)
-  IF(ARG_STATIC)
-    IF (NOT ARG_OUTPUT_NAME)
-      SET(ARG_OUTPUT_NAME ${TARGET})
-    ENDIF()
-    MERGE_STATIC_LIBS(${TARGET} ${ARG_OUTPUT_NAME} "${LIBS}") 
-  ELSEIF(ARG_SHARED OR ARG_MODULE)
-    IF(ARG_SHARED)
-      SET(LIBTYPE SHARED)
-    ELSE()
-      SET(LIBTYPE MODULE)
-    ENDIF()
-    # check for non-PIC libraries
-    IF(NOT _SKIP_PIC)
-      FOREACH(LIB ${LIBS})
-        GET_TARGET_PROPERTY(${LIB} TYPE LIBTYPE)
-        IF(LIBTYPE STREQUAL "STATIC_LIBRARY")
-          GET_TARGET_PROPERTY(LIB COMPILE_FLAGS LIB_COMPILE_FLAGS)
-          STRING(REPLACE "${CMAKE_SHARED_LIBRARY_C_FLAGS}" 
-          "<PIC_FLAG>" LIB_COMPILE_FLAGS ${LIB_COMPILE_FLAG})
-          IF(NOT LIB_COMPILE_FLAGS MATCHES "<PIC_FLAG>")
-            MESSAGE(FATAL_ERROR 
-            "Attempted to link non-PIC static library ${LIB} to shared library ${TARGET}\n"
-            "Please use ADD_CONVENIENCE_LIBRARY, instead of ADD_LIBRARY for ${LIB}"
-            )
-          ENDIF()
-        ENDIF()
-      ENDFOREACH()
-    ENDIF()
-    CREATE_EXPORT_FILE(SRC ${TARGET} "${ARG_EXPORTS}")
-    IF(NOT ARG_NOINSTALL)
-      ADD_VERSION_INFO(${TARGET} SHARED SRC)
-    ENDIF()
-    ADD_LIBRARY(${TARGET} ${LIBTYPE} ${SRC})
-    TARGET_LINK_LIBRARIES(${TARGET} ${LIBS})
-    IF(ARG_OUTPUT_NAME)
-      SET_TARGET_PROPERTIES(${TARGET} PROPERTIES OUTPUT_NAME "${ARG_OUTPUT_NAME}")
-    ENDIF()
-  ELSE()
-    MESSAGE(FATAL_ERROR "Unknown library type")
-  ENDIF()
-  IF(NOT ARG_NOINSTALL)
-    IF(ARG_COMPONENT)
-      SET(COMP COMPONENT ${ARG_COMPONENT}) 
-    ENDIF()
-    MYSQL_INSTALL_TARGETS(${TARGET} DESTINATION "${INSTALL_LIBDIR}" ${COMP})
-  ENDIF()
-  SET_TARGET_PROPERTIES(${TARGET} PROPERTIES LINK_INTERFACE_LIBRARIES "")
-ENDMACRO()
+    endif()
+  endif()
 
-FUNCTION(GET_DEPENDEND_OS_LIBS target result)
-  SET(deps ${${target}_LIB_DEPENDS})
-  IF(deps)
-   FOREACH(lib ${deps})
-    # Filter out keywords for used for debug vs optimized builds
-    IF(NOT lib MATCHES "general" AND NOT lib MATCHES "debug" AND NOT lib MATCHES "optimized")
-      GET_TARGET_PROPERTY(lib_location ${lib} LOCATION)
-      IF(NOT lib_location)
-        SET(ret ${ret} ${lib})
-      ENDIF()
-    ENDIF()
-   ENDFOREACH()
-  ENDIF()
-  SET(${result} ${ret} PARENT_SCOPE)
-ENDFUNCTION()
+endfunction()
 
-# We try to hide the symbols in yassl/zlib to avoid name clashes with
-# other libraries like openssl.
-FUNCTION(RESTRICT_SYMBOL_EXPORTS target)
-  IF(CMAKE_COMPILER_IS_GNUCXX AND UNIX)
-    SET(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Werror")
-    CHECK_C_COMPILER_FLAG("-fvisibility=hidden" HAVE_VISIBILITY_HIDDEN)
-    IF(HAVE_VISIBILITY_HIDDEN)
-      GET_TARGET_PROPERTY(COMPILE_FLAGS ${target} COMPILE_FLAGS)
-      IF(NOT COMPILE_FLAGS)
-        # Avoid COMPILE_FLAGS-NOTFOUND
-        SET(COMPILE_FLAGS)
-      ENDIF()
-      SET_TARGET_PROPERTIES(${target} PROPERTIES 
-        COMPILE_FLAGS "${COMPILE_FLAGS} -fvisibility=hidden")
-    ENDIF()
-  ENDIF()
-ENDFUNCTION()
+
+#
+# Recursively extend given list of targets with all libraries
+# on which given targets depend (as given by LINK_LIBRARIES target
+# property).
+#
+
+FUNCTION(GET_DEPENDENT_LIBS targets result)
+
+  # Get dependencies of the first target in the list
+
+  list(GET targets 0 first)
+  list(REMOVE_AT targets 0)
+  set(LIBS)
+
+  # In some versions of cmake dependent libraries are listed
+  # in INTERFACE_LINK_LIBRARIES as $<LINK_ONLY:lib>. Detect
+  # such entries here and extract the bare name of the dependent
+  # library.
+
+  string(REGEX MATCH "^\\$<LINK_ONLY:(.*)>$" link_only ${first})
+  if (link_only)
+    set(first ${CMAKE_MATCH_1})
+  endif()
+
+  if(TARGET ${first})
+  get_target_property(LIBS ${first} INTERFACE_LINK_LIBRARIES)
+  endif()
+  #message("- processing ${first}: ${LIBS}")
+
+  # Add LIBS to the list of remaining targets and
+  # call this function recursively to process the new
+  # list.
+
+  if(LIBS)
+    list(APPEND targets ${LIBS})
+  endif(LIBS)
+
+  if(targets)
+    #message("rec call: ${targets}")
+    GET_DEPENDENT_LIBS("${targets}" ret)
+    #message("rec ret: ${ret}")
+  endif()
+
+  # Insert the first target back to the result and
+  # return it.
+
+  list(INSERT ret 0 ${first})
+  list(REMOVE_DUPLICATES ret)
+  set(${result} ${ret} PARENT_SCOPE)
+
+ENDFUNCTION(GET_DEPENDENT_LIBS)

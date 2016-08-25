@@ -63,6 +63,15 @@ public:
     cout << val;
   }
 
+#if 0
+
+  /*
+    TODO: These methods were never calles because virtual methods in
+    cdk::test::Row_processor<> have different signatures. Either
+    remove them or fix them so that they are really called on result
+    data.
+  */
+
   virtual void process_field_val(col_count_t pos, bytes data,
                                  cdk::Type_info type, const cdk::Format_info &fi,
                                  uint64_t val)
@@ -94,6 +103,8 @@ public:
     else
       print_test<cdk::TYPE_FLOAT, double>(codec, data);
   }
+
+#endif
 
 };
 

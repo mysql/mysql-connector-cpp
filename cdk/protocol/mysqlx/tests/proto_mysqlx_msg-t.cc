@@ -92,6 +92,8 @@ struct Scalar_checker
   Scalar_checker(const Scalar &msg) : m_msg(msg)
   {}
 
+  virtual ~Scalar_checker() {}
+
   // value callbacks
 
   void null() { FAIL() <<"NULL value inside document"; }
@@ -159,6 +161,8 @@ struct Expr_checker_base
   const Msg &m_msg;
   Expr_checker_base(const Msg &msg) : m_msg(msg)
   {}
+
+  virtual ~Expr_checker_base() {}
 
   scoped_ptr<Scalar_checker> m_scalar_checker;
 

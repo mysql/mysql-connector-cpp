@@ -21,8 +21,6 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 
-cmake_minimum_required(VERSION 2.8)
-
 include(CheckIncludeFile)
 
 check_include_file(sys/endian.h HAVE_ENDIAN_H)
@@ -89,18 +87,30 @@ set(proto_mysqlx_defs ${proto_mysqlx_defs_lite})
 endif()
 
 
+mysqlx_protobuf_generate_cpp(PB_SRCS PB_HDRS ${proto_mysqlx_defs})
+
 SET(target_proto_mysqlx ${cdk_target_prefix}proto_mysqlx
     CACHE INTERNAL "CDK proto_mysql target")
 
 
-ADD_LIBRARY(${target_proto_mysqlx} STATIC
-            protocol.cc session.cc rset.cc stmt.cc crud.cc)
-ADD_PROTOBUF(${target_proto_mysqlx} ${proto_mysqlx_defs})
-TARGET_LINK_LIBRARIES(${target_proto_mysqlx} ${target_foundation})
+ADD_LIBRARY(${target_proto_mysqlx} OBJECT
+            protocol.cc session.cc rset.cc stmt.cc crud.cc
+            ${PB_SRCS})
 
+source_group(protobuf FILES ${PB_SRCS})
 
-IF(WIN32)
-  TARGET_LINK_LIBRARIES(${target_proto_mysqlx} ws2_32)
-ENDIF()
+target_include_directories(${target_proto_mysqlx} PRIVATE
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${PROTOBUF_INCLUDE_DIRS}
+)
+
+# TODO: protobuf-lite
+lib_interface_link_libraries(${target_proto_mysqlx} protobuf)
+
+# On UNIX protocol_mysqlx code uses pthread library
+if(UNIX)
+  lib_interface_link_libraries(${target_proto_mysqlx} pthread)
+endif()
+
 
 ADD_SUBDIRECTORY(tests)

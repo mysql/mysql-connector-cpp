@@ -293,7 +293,7 @@ public:
   virtual void col_charset(col_count_t pos, charset_id_t cs)
   { cout <<"Column #" <<pos <<" charset: " <<cs <<endl; }
 
-  virtual void col_decimals(col_count_t pos, unsigned int decimals)
+  virtual void col_decimals(col_count_t pos, unsigned short decimals)
   { cout <<"Column #" <<pos <<" decimals: " <<decimals <<endl; }
 
   virtual void col_content_type(col_count_t pos, unsigned short type)

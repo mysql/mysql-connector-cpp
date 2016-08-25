@@ -35,8 +35,8 @@ if(WIN32)
   )
 endif()
 
-ADD_LIBRARY(${target_mysqlx} STATIC session.cc result.cc auth_mysql41.cc)
-TARGET_LINK_LIBRARIES(${target_mysqlx} ${target_proto_mysqlx})
+ADD_LIBRARY(${target_mysqlx} OBJECT session.cc result.cc auth_mysql41.cc)
+#TARGET_LINK_LIBRARIES(${target_mysqlx} ${target_proto_mysqlx})
 
 
 ADD_SUBDIRECTORY(tests)
