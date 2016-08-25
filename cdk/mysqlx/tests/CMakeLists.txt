@@ -24,12 +24,6 @@ IF (WITH_TESTS)
 
 ADD_DEFINITIONS(-DDEFAULT_PORT=33060)
 
-ADD_NG_TESTS(session_mysqlx-t.cc)
-
-ADD_TEST_LIBRARIES(cdk)
-
-ADD_TEST_INCLUDES(${CMAKE_CURRENT_SOURCE_DIR})
-# This is needed for the mysql_auth41.h header
-ADD_TEST_INCLUDES(${CMAKE_CURRENT_SOURCE_DIR}/..)
+ADD_NG_TEST(mysqlx-t session_mysqlx-t.cc)
 
 ENDIF()

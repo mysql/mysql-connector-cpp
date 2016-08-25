@@ -26,7 +26,7 @@ IF (WITH_TESTS)
 
 
 ADD_EXECUTABLE(foundation_tests_server test_server.cc)
-TARGET_LINK_LIBRARIES(foundation_tests_server foundation)
+TARGET_LINK_LIBRARIES(foundation_tests_server cdk)
 SET_TARGET_PROPERTIES(foundation_tests_server
   PROPERTIES OUTPUT_NAME test_server
 )
@@ -39,17 +39,12 @@ add_custom_command(TARGET foundation_tests_server
 ADD_TEST_ENVIRONMENT("FOUNDATION_TEST_SERVER=${CMAKE_CURRENT_BINARY_DIR}/test_server${CMAKE_EXECUTABLE_SUFFIX}")
 
 
-ADD_NG_TESTS(error_t.cc time_t.cc
-             opaque_t.cc opaque_t_impl.cc
-             stream_t.cc connection_tcpip_t.cc
-             diagnostics_t.cc codec_t.cc)
-
-ADD_TEST_LIBRARIES(foundation)
-IF(UNIX AND CMAKE_COMPILER_IS_GNUCC)
-  ADD_TEST_LIBRARIES(rt)
-ENDIF(UNIX AND CMAKE_COMPILER_IS_GNUCC)
-
-
+ADD_NG_TEST(foundation-t
+  error_t.cc time_t.cc
+  opaque_t.cc opaque_t_impl.cc
+  stream_t.cc connection_tcpip_t.cc
+  diagnostics_t.cc codec_t.cc
+)
 
 
 ENDIF()

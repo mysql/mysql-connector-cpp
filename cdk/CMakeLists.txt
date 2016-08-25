@@ -193,11 +193,16 @@ if(WITH_TESTS)
     target_compile_options(process_launcher PRIVATE -Wno-unused-result)
   endif()
 
-  ADD_TEST_LIBRARIES(process_launcher)
+  ADD_TEST_LIBRARIES(process_launcher cdk)
   ADD_TEST_INCLUDES(
-    ${CMAKE_SOURCE_DIR}/extra/process_launcher/
-    ${CMAKE_SOURCE_DIR}/extra/common
+    ${PROJECT_SOURCE_DIR}/extra/process_launcher/
+    ${PROJECT_SOURCE_DIR}/extra/common
   )
+
+  # This folder contains test headers that can be used by all tests
+  # TODO: move it to a better place
+
+  add_test_includes(${PROJECT_SOURCE_DIR}/mysqlx/tests)
 
 endif()
 

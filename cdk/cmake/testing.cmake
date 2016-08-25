@@ -24,15 +24,19 @@
 # Infrastructure for defining unit tests for the project
 # ======================================================
 #
-# We use gtest framework. Add source files defining unit tests using:
+# We use gtest framework. Add unit tests using:
 #
-#   ADD_NG_TESTS(<sources>)
+#   ADD_NG_TEST(<name> <sources>)
+#
+# This creates an object library target with given name which compiles
+# sources for this test and which will become part of run_unit_tests
+# executable (see below).
 #
 # If unit tests require a library, add it using:
 #
 #   ADD_TEST_LIBRARIES(<list of libraries>)
 #
-# Additional include paths required by unit tests should be specified with:
+# Additional include paths required by all unit tests should be specified with:
 #
 #   ADD_TEST_INCLUDES(<list of include paths>)
 #
@@ -89,141 +93,143 @@ SET(tests_dir "${tests_dir}/testing" CACHE INTERNAL
     "Location of testing.cmake support files" FORCE)
 
 #
-# Global variable test_sources collects all source files with tests
+# Helper macro which sets global variable (so that its value is visible
+# in any cmake file of this project).
 #
 
-MACRO(test_source_add src)
-  LIST(APPEND test_sources ${src})
-  SET(test_sources ${test_sources} CACHE INTERNAL
-      "Unit tests defined in the project" FORCE)
-ENDMACRO(test_source_add)
+macro(set_global VAR)
 
-# Reset test_sources to be initially empty
+  set(${VAR} ${ARGN} CACHE INTERNAL "global variable" FORCE)
+  # so that the cache value is used
+  unset(${VAR})
 
-SET(test_sources "")
-test_source_add("")  # to clear cache entry
+endmacro()
 
 #
-# Global variable test_libs collects all libraries required by
-# unit tests
+# Reset global variables used by testing framework.
 #
 
-MACRO(test_lib_add lib)
-  LIST(APPEND test_libs ${lib})
-  SET(test_libs ${test_libs} CACHE INTERNAL
-      "Libraries used by unit tests" FORCE)
-ENDMACRO(test_lib_add)
-
-# Reset test_libs to be initially empty
-
-SET(test_libs "")
-test_lib_add("")  # to clear cache entry
-
-#
-# Global variable test_includes collects all include paths required by
-# unit tests
-#
-
-MACRO(test_includes_add path)
-  LIST(APPEND test_includes ${path})
-  SET(test_includes ${test_includes} CACHE INTERNAL
-      "Include paths used by unit tests" FORCE)
-ENDMACRO(test_includes_add)
-
-# Reset test_includes to be initially empty
-
-SET(test_includes "")
-test_includes_add("")  # to clear cache entry
+set_global(test_tests "")
+set_global(test_libs  "")
+set_global(test_includes "")
+set_global(test_environment "")
 
 
 #
-# Global variable test_environment collects all include paths required by
-# unit tests
+#  Add a unit test.
+#
+#  This creates a target (object library) with given name which compiles
+#  test sources. Test becomes part of run_unit_tests target.
+#
+#  When compiling test sources, include directories specified with
+#  add_test_includes() are in the include path. Additional include directories
+#  can be specified for the test target as usual (target_include_directories()).
+#
+#  Test sources can use libraries specified with add_test_libraries()
+#
+#
+#  Usage:
+#   add_ng_test(<test_name> <test_sources>)
 #
 
-MACRO(test_environment_add env_var)
-  LIST(APPEND test_environment ${env_var})
-  SET(test_environment ${test_environment} CACHE INTERNAL
-      "Environment Vars used by unit tests" FORCE)
-ENDMACRO(test_environment_add)
-
-# Reset test_includes to be initially empty
-
-SET(test_environment "")
-test_environment_add("")  # to clear cache entry
-
-MACRO(ADD_NG_TESTS)
-
+MACRO(ADD_NG_TEST TEST)
 IF(WITH_TESTS)
 
-  FOREACH(src ${ARGN})
+  list(APPEND test_tests ${TEST})
+  set_global(test_tests ${test_tests})
 
-    GET_FILENAME_COMPONENT(path ${src} ABSOLUTE)
-    test_source_add(${path})
-    MESSAGE(STATUS "Added unit tests: ${src}")
+  add_library(${TEST} OBJECT ${ARGN})
 
-  ENDFOREACH(src)
+  target_include_directories(${TEST} PRIVATE ${test_includes})
+
+  if (MSVC)
+
+    target_compile_options(${TEST} PRIVATE
+      /W3
+      /wd4244
+      /wd4267
+      /wd4701
+      /wd4018
+      /wd4456  # declaration of hides previous local declaration
+    )
+
+  elseif((CMAKE_SYSTEM_NAME MATCHES "SunOS") OR CMAKE_COMPILER_IS_GNUCXX)
+
+    target_compile_options(${TEST} PRIVATE
+      -Wno-unused-but-set-variable
+      -Wno-maybe-uninitialized
+      -Wno-unused-value
+    )
+
+  elseif((CMAKE_C_COMPILER_ID MATCHES "Clang") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+
+    target_compile_options(${TEST} PRIVATE
+      -Wno-unused-value
+    )
+
+  else()
+    #target_compile_options(${TEST} PRIVATE -Wno-unused-result)
+  endif()
+
+  message(STATUS "Added test: ${TEST}")
 
 ENDIF()
-
-ENDMACRO(ADD_NG_TESTS)
+ENDMACRO(ADD_NG_TEST)
 
 
 MACRO(ADD_TEST_LIBRARIES)
-
 IF(WITH_TESTS)
 
   FOREACH(lib ${ARGN})
 
-    test_lib_add(${lib})
+    list(APPEND test_libs ${lib})
+    set_global(test_libs ${test_libs})
     MESSAGE(STATUS "Added test library: ${lib}")
 
   ENDFOREACH(lib)
 
 ENDIF()
-
 ENDMACRO(ADD_TEST_LIBRARIES)
 
 
 MACRO(ADD_TEST_INCLUDES)
-
 IF(WITH_TESTS)
 
   FOREACH(path ${ARGN})
 
-    test_includes_add(${path})
+    list(APPEND test_includes ${path})
+    set_global(test_includes ${test_includes})
     MESSAGE(STATUS "Added test include path: ${path}")
 
   ENDFOREACH(path)
 
 ENDIF()
-
 ENDMACRO(ADD_TEST_INCLUDES)
 
-MACRO(ADD_TEST_ENVIRONMENT)
 
+MACRO(ADD_TEST_ENVIRONMENT)
 IF(WITH_TESTS)
 
   FOREACH(env_var ${ARGN})
 
-    test_environment_add(${env_var})
-    MESSAGE(STATUS "Added environment var: ${env_var}")
+    list(APPEND test_environment ${env_var})
+    set_global(test_environment ${test_environment})
+    MESSAGE(STATUS "Added test env. var: ${env_var}")
 
   ENDFOREACH(env_var)
 
 ENDIF()
-
 ENDMACRO(ADD_TEST_ENVIRONMENT)
+
 
 #
 # Define run_unit_ests and update_test_groups targets
 #
 
 MACRO(ADD_TEST_TARGET)
-
 IF(WITH_TESTS)
 
-  #MESSAGE("Adding run test target for unit tests from: ${test_sources}")
+  #MESSAGE("Adding run test target for unit tests from: ${test_tests}")
   #MESSAGE("Test libraries: ${test_libs}")
 
   #
@@ -237,15 +243,19 @@ IF(WITH_TESTS)
   SET(target_run_unit_tests ${cdk_target_prefix}run_unit_tests
     CACHE INTERNAL "CDK unit test target")
 
+  set(test_sources)
+  foreach(test ${test_tests})
+    list(APPEND test_sources "$<TARGET_OBJECTS:${test}>")
+  endforeach()
+
   ADD_EXECUTABLE(${target_run_unit_tests}
                  ${CMAKE_CURRENT_BINARY_DIR}/tests_main.cc
                  ${test_sources}
-                )
+  )
 
-  INCLUDE_DIRECTORIES(${test_includes})
   TARGET_LINK_LIBRARIES(${target_run_unit_tests} gtest)
   ADD_GCOV(${target_run_unit_tests})
-  ADD_BOOST(${target_run_unit_tests})
+  #ADD_BOOST(${target_run_unit_tests})
 
   #
   # Be more lame with warnings when compiling tests
@@ -306,7 +316,6 @@ IF(WITH_TESTS)
   )
 
 ENDIF()
-
 ENDMACRO(ADD_TEST_TARGET)
 
 

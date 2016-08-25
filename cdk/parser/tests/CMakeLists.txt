@@ -22,9 +22,7 @@
 
 IF (WITH_TESTS)
 
-ADD_NG_TESTS(parser-t.cc)
-
-ADD_TEST_LIBRARIES(${target_parser})
+ADD_NG_TEST(parser-t parser-t.cc)
 
 #
 # The expr_test program

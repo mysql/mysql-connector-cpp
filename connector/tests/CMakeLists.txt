@@ -20,8 +20,6 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-ADD_TEST_INCLUDES(${PROJECT_SOURCE_DIR}/testing)
-ADD_TEST_LIBRARIES(connector)
-ADD_NG_TESTS(
+ADD_NG_TEST(connector-t
   first-t.cc crud-t.cc types-t.cc batch-t.cc ddl-t.cc session-t.cc
 )

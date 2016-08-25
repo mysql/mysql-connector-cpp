@@ -208,6 +208,9 @@ INCLUDE_DIRECTORIES(cdk/parser)
 INCLUDE(testing)
 SETUP_TESTING()
 
+ADD_TEST_INCLUDES(${PROJECT_SOURCE_DIR}/testing)
+ADD_TEST_LIBRARIES(connector)
+
 #
 # Project's public headers
 #
