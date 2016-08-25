@@ -31,6 +31,9 @@
 #include "foundation/async.h"
 #include "foundation/stream.h"
 #include "foundation/connection_tcpip.h"
+#ifdef WITH_SSL_YASSL
+#include "foundation/connection_yassl.h"
+#endif // WITH_SSL_YASSL
 #include "foundation/diagnostics.h"
 #include "foundation/codec.h"
 //#include "foundation/socket.h"

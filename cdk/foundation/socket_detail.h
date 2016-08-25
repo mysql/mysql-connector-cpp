@@ -88,6 +88,23 @@ enum Select_mode
 
 
 /**
+  Changes socket's blocking mode.
+
+  Changes blocking mode of an existing TCP/IP socket.
+
+  @param[in] socket
+    Socket being modified.
+  @param[in] nonblocking
+    If `true`, sets socket mode to non-blocking. Otherwise, socket is set to
+    block.
+
+  @throw cdk::foundation::Error
+    Blocking mode change failed.
+*/
+void set_nonblocking(Socket socket, bool nonblocking);
+
+
+/**
   Initialize socket system.
 
   Initializes socket system (e.g. Winsock), if it is required by a given

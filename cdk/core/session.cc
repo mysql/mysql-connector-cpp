@@ -36,8 +36,9 @@ Session::Session(ds::TCPIP &ds, const ds::Options &options)
   , m_trans(false)
 {
   using foundation::connection::TCPIP;
+  using foundation::connection::TCPIP_base;
 
-  TCPIP *connection = new TCPIP(ds.host(), ds.port());
+  TCPIP* connection = new TCPIP(ds.host(), ds.port());
   try
   {
     connection->connect();
@@ -48,8 +49,50 @@ Session::Session(ds::TCPIP &ds, const ds::Options &options)
     rethrow_error();
   }
 
-  m_connection= connection;
-  m_session = new mysqlx::Session(*connection, options);
+#ifdef WITH_SSL
+  using foundation::connection::TLS;
+
+  if (options.use_tls())
+  {
+    // Negotiate TLS capabilities.
+    cdk::protocol::mysqlx::Protocol proto(*connection);
+
+    struct : cdk::protocol::mysqlx::api::Any::Document
+    {
+      void process(Processor &prc) const
+      {
+        prc.doc_begin();
+        cdk::safe_prc(prc)->key_val("tls")->scalar()->yesno(true);
+        prc.doc_end();
+      }
+    } tls_caps;
+
+    proto.snd_CapabilitiesSet(tls_caps).wait();
+
+    struct : cdk::protocol::mysqlx::Reply_processor
+    {
+      void error(unsigned int code, short int /*severity*/,
+        cdk::protocol::mysqlx::sql_state_t /*sql_state*/, const string &msg)
+      {
+        throw Error(static_cast<int>(code), msg);
+      }
+    } prc;
+
+    proto.rcv_Reply(prc).wait();
+    
+    //
+    TLS* tls = new TLS(connection);
+
+    tls->connect();
+    m_connection = tls;
+    m_session = new mysqlx::Session(*tls, options);
+  }
+  else
+#endif // WITH_SSL
+  {
+    m_connection = connection;
+    m_session = new mysqlx::Session(*connection, options);
+  }
 }
 
 

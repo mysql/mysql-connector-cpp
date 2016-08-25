@@ -26,6 +26,9 @@
 #include <mysql/cdk/foundation/error.h>
 #include <mysql/cdk/foundation/connection_tcpip.h>
 PUSH_SYS_WARNINGS
+#ifdef WITH_SSL_YASSL
+#include "../extra/yassl/include/openssl/ssl.h"
+#endif // WITH_SSL_YASSL
 #include <cstdio>
 #include <limits>
 #ifndef _WIN32
@@ -277,13 +280,10 @@ static void check_socket_error(Socket socket)
 }
 
 
-/**
-  Puts a socket into non-blocking mode.
-*/
-static void set_nonblocking(Socket socket)
+void set_nonblocking(Socket socket, bool nonblocking)
 {
 #ifdef _WIN32
-  u_long set_nonblocking = 1;
+  u_long set_nonblocking = nonblocking ? 1ul : 0ul;
 
   if (::ioctlsocket(socket, FIONBIO, &set_nonblocking) == SOCKET_ERROR)
     throw_socket_error();
@@ -292,7 +292,12 @@ static void set_nonblocking(Socket socket)
 
   if (flags >= 0)
   {
-    if (::fcntl(socket, F_SETFL, flags | O_NONBLOCK) != 0)
+    if (nonblocking)
+      flags |= O_NONBLOCK;
+    else
+      flags &= ~O_NONBLOCK;
+
+    if (::fcntl(socket, F_SETFL, flags) != 0)
       throw_socket_error();
   }
   else
@@ -312,6 +317,12 @@ void initialize_socket_system()
   if (::WSAStartup(version_requested, &wsa_data) != 0)
     throw_error("Winsock initialization failed.");
 #endif
+
+#ifdef WITH_SSL_YASSL
+  yaSSL::SSL_library_init();
+  yaSSL::OpenSSL_add_all_algorithms();
+  yaSSL::SSL_load_error_strings();
+#endif // WITH_SSL_YASSL
 }
 
 
@@ -339,17 +350,14 @@ Socket socket(bool nonblocking, addrinfo* hints)
     if (::setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse_addr, sizeof(reuse_addr)) != 0)
       throw_socket_error();
 
-    if (nonblocking)
+    try
     {
-      try
-      {
-        set_nonblocking(socket);
-      }
-      catch (...)
-      {
-        close(socket);
-        throw;
-      }
+      set_nonblocking(socket, nonblocking);
+    }
+    catch (...)
+    {
+      close(socket);
+      throw;
     }
   }
   else

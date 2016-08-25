@@ -42,6 +42,10 @@ ADD_SUBDIRECTORY(tests)
 SET(sources error.cc stream.cc connection_tcpip.cc socket.cc diagnostics.cc
             string.cc socket_detail.cc)
 
+IF(WITH_SSL STREQUAL "bundled")
+  SET(sources ${sources} connection_yassl.cc)
+ENDIF()
+
 #if linking free build, use boost_code because of boost_system implementation
 IF(NOT BOOST_SYSTEM_LIBS)
 
@@ -61,6 +65,10 @@ SET(target_foundation ${cdk_target_prefix}foundation
 
 ADD_LIBRARY(${target_foundation} OBJECT ${sources})
 #ADD_BOOST(${target_foundation})
+
+IF(WITH_SSL STREQUAL "bundled")
+  lib_interface_link_libraries(${target_foundation} yassl)
+ENDIF()
 
 IF(WIN32)
   lib_interface_link_libraries(${target_foundation} ws2_32)

@@ -29,6 +29,7 @@
 
 
 #include "protocol.h"
+#include "builders.h"
 
 
 PUSH_PB_WARNINGS
@@ -52,6 +53,40 @@ namespace mysqlx {
 
 
 // Client-side API
+
+
+struct Cap_builder : api::Any::Document::Processor
+{
+  Mysqlx::Connection::Capabilities *m_msg;
+  Any_builder m_ab;
+
+  Cap_builder() : m_msg(NULL)
+  {}
+
+  void reset(Mysqlx::Connection::CapabilitiesSet &msg)
+  {
+    m_msg = msg.mutable_capabilities();
+  }
+
+  Any_prc* key_val(const string &key)
+  {
+    Mysqlx::Connection::Capability *cap = m_msg->add_capabilities();
+    cap->set_name(key);
+    m_ab.reset(*cap->mutable_value());
+    return &m_ab;
+  }
+};
+
+
+Protocol::Op& Protocol::snd_CapabilitiesSet(const api::Any::Document& caps)
+{
+  Mysqlx::Connection::CapabilitiesSet msg;
+  Cap_builder builder;
+  builder.reset(msg);
+  caps.process(builder);
+  return get_impl().snd_start(msg, msg_type::cli_CapabilitiesSet);
+}
+
 
 Protocol::Op& Protocol::snd_AuthenticateStart(const char* mechanism,
                                               bytes data,

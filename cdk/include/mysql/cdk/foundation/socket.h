@@ -71,7 +71,7 @@ public:
 
 
 class Socket::Connection
-  : public connection::TCPIP_base
+  : public connection::TCPIP
   , public api::Async_op<void>
   , opaque_impl<Socket::Connection>
 {
@@ -81,7 +81,7 @@ public:
 
 private:
 
-  typedef TCPIP_base::Impl  Impl;
+  typedef TCPIP::Impl  Impl;
 
   Impl& get_base_impl();
 

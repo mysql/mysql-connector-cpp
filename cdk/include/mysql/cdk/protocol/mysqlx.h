@@ -427,6 +427,7 @@ public:
 
   template <class C> Protocol(C &conn);
 
+  Op& snd_CapabilitiesSet(const api::Any::Document& caps);
   Op& snd_AuthenticateStart(const char* mechanism, bytes data, bytes response);
   Op& snd_AuthenticateContinue(bytes data);
   Op& snd_Close();

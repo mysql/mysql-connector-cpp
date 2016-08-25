@@ -42,19 +42,19 @@ class Options
 public:
 
   Options()
-    : m_usr(L"root"), m_has_pwd(false), m_has_db(false)
+    : m_usr(L"root"), m_has_pwd(false), m_has_db(false), m_use_tls(false)
   {
   }
 
   Options(const Options &other)
     : m_usr(other.m_usr)
     , m_has_pwd(other.m_has_pwd), m_pwd(other.m_pwd)
-    , m_has_db(false)
+    , m_has_db(false), m_use_tls(other.m_use_tls)
   {
   }
 
   Options(const string &usr, const std::string *pwd =NULL)
-    : m_usr(usr), m_has_pwd(false), m_has_db(false)
+    : m_usr(usr), m_has_pwd(false), m_has_db(false), m_use_tls(false)
   {
     if (pwd)
     {
@@ -68,6 +68,9 @@ public:
   virtual const string& user() const { return m_usr; }
   virtual const std::string* password() const
   { return m_has_pwd ? &m_pwd : NULL; }
+
+  virtual bool use_tls() const { return m_use_tls; }
+  void set_tls(bool use_tls) { m_use_tls = use_tls; }
 
   virtual const string* database() const
   {
@@ -87,6 +90,7 @@ protected:
   std::string m_pwd;
 
   bool    m_has_db;
+  bool    m_use_tls;
   string  m_db;
 };
 

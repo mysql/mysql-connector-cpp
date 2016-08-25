@@ -76,6 +76,7 @@ namespace foundation {
   X (parse_error,        8, "Parse error") \
   X (in_transaction,     9, "Open transaction") \
   X (no_transaction,    10, "No transaction") \
+  X (tls_error,         11, "TLS error") \
 
 // Define constants for CDK error conditions in cdkerrc structure
 

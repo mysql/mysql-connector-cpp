@@ -98,7 +98,7 @@ void TCPIP_base::IO_op::do_cancel()
 }
 
 
-TCPIP_base::Read_op::Read_op(TCPIP_base &conn, const buffers &bufs, time_t deadline)
+TCPIP::Read_op::Read_op(TCPIP &conn, const buffers &bufs, time_t deadline)
   : IO_op(conn, bufs, deadline)
   , m_currentBufferIdx(0)
   , m_currentBufferOffset(0)
@@ -110,7 +110,7 @@ TCPIP_base::Read_op::Read_op(TCPIP_base &conn, const buffers &bufs, time_t deadl
 }
 
 
-bool TCPIP_base::Read_op::do_cont()
+bool TCPIP::Read_op::do_cont()
 {
   if (is_completed())
     return true;
@@ -138,7 +138,7 @@ bool TCPIP_base::Read_op::do_cont()
 }
 
 
-void TCPIP_base::Read_op::do_wait()
+void TCPIP::Read_op::do_wait()
 {
   if (is_completed())
     return;
@@ -160,7 +160,7 @@ void TCPIP_base::Read_op::do_wait()
 }
 
 
-TCPIP_base::Read_some_op::Read_some_op(TCPIP_base &conn, const buffers &bufs, time_t deadline)
+TCPIP::Read_some_op::Read_some_op(TCPIP &conn, const buffers &bufs, time_t deadline)
   : IO_op(conn, bufs, deadline)
 {
   Impl &impl = conn.get_base_impl();
@@ -170,7 +170,7 @@ TCPIP_base::Read_some_op::Read_some_op(TCPIP_base &conn, const buffers &bufs, ti
 }
 
 
-bool TCPIP_base::Read_some_op::do_cont()
+bool TCPIP::Read_some_op::do_cont()
 {
   common_read(false);
 
@@ -178,13 +178,13 @@ bool TCPIP_base::Read_some_op::do_cont()
 }
 
 
-void TCPIP_base::Read_some_op::do_wait()
+void TCPIP::Read_some_op::do_wait()
 {
   common_read(true);
 }
 
 
-void TCPIP_base::Read_some_op::common_read(bool wait)
+void TCPIP::Read_some_op::common_read(bool wait)
 {
   if (is_completed())
     return;
@@ -198,7 +198,7 @@ void TCPIP_base::Read_some_op::common_read(bool wait)
 }
 
 
-TCPIP_base::Write_op::Write_op(TCPIP_base &conn, const buffers &bufs, time_t deadline)
+TCPIP::Write_op::Write_op(TCPIP &conn, const buffers &bufs, time_t deadline)
   : IO_op(conn, bufs, deadline)
   , m_currentBufferIdx(0)
   , m_currentBufferOffset(0)
@@ -210,7 +210,7 @@ TCPIP_base::Write_op::Write_op(TCPIP_base &conn, const buffers &bufs, time_t dea
 }
 
 
-bool TCPIP_base::Write_op::do_cont()
+bool TCPIP::Write_op::do_cont()
 {
   if (is_completed())
     return true;
@@ -238,7 +238,7 @@ bool TCPIP_base::Write_op::do_cont()
 }
 
 
-void TCPIP_base::Write_op::do_wait()
+void TCPIP::Write_op::do_wait()
 {
   if (is_completed())
     return;
@@ -260,7 +260,7 @@ void TCPIP_base::Write_op::do_wait()
 }
 
 
-TCPIP_base::Write_some_op::Write_some_op(TCPIP_base &conn, const buffers &bufs, time_t deadline)
+TCPIP::Write_some_op::Write_some_op(TCPIP &conn, const buffers &bufs, time_t deadline)
   : IO_op(conn, bufs, deadline)
 {
   Impl &impl = conn.get_base_impl();
@@ -270,7 +270,7 @@ TCPIP_base::Write_some_op::Write_some_op(TCPIP_base &conn, const buffers &bufs, 
 }
 
 
-bool TCPIP_base::Write_some_op::do_cont()
+bool TCPIP::Write_some_op::do_cont()
 {
   common_write(false);
 
@@ -278,13 +278,13 @@ bool TCPIP_base::Write_some_op::do_cont()
 }
 
 
-void TCPIP_base::Write_some_op::do_wait()
+void TCPIP::Write_some_op::do_wait()
 {
   common_write(true);
 }
 
 
-void TCPIP_base::Write_some_op::common_write(bool wait)
+void TCPIP::Write_some_op::common_write(bool wait)
 {
   if (is_completed())
     return;
@@ -316,6 +316,11 @@ void TCPIP_base::close()
 bool TCPIP_base::is_closed() const
 {
   return !(get_base_impl().is_open());
+}
+
+unsigned int TCPIP_base::get_fd() const
+{
+  return get_base_impl().m_sock;
 }
 
 bool TCPIP_base::eos() const

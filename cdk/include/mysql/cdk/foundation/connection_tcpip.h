@@ -35,6 +35,11 @@ namespace cdk {
 namespace foundation {
 namespace connection {
 
+
+class TCPIP;
+class TLS;
+
+
 /*
   Defining cdkio error category
   =======================
@@ -96,16 +101,12 @@ public:
   class Impl;
   class IO_op;
 
-  class Read_op;
-  class Read_some_op;
-  class Write_op;
-  class Write_some_op;
-
   // Connection interface
 
   virtual void connect();
   virtual void close();
   virtual bool is_closed() const;
+  virtual unsigned int get_fd() const;
 
   // Input stream
 
@@ -127,6 +128,8 @@ protected:
   }
 
   friend class IO_op;
+  friend class TCPIP;
+  friend class TLS;
 };
 
 
@@ -135,6 +138,10 @@ class TCPIP
   , opaque_impl<TCPIP>
 {
 public:
+  class Read_op;
+  class Read_some_op;
+  class Write_op;
+  class Write_some_op;
 
   TCPIP(const std::string& host, unsigned short port);
 
@@ -166,10 +173,10 @@ protected:
 };
 
 
-class TCPIP_base::Read_op : public IO_op
+class TCPIP::Read_op : public IO_op
 {
 public:
-  Read_op(TCPIP_base &conn, const buffers &bufs, time_t deadline = 0);
+  Read_op(TCPIP &conn, const buffers &bufs, time_t deadline = 0);
 
   virtual bool do_cont();
   virtual void do_wait();
@@ -180,10 +187,10 @@ private:
 };
 
 
-class TCPIP_base::Read_some_op : public IO_op
+class TCPIP::Read_some_op : public IO_op
 {
 public:
-  Read_some_op(TCPIP_base &conn, const buffers &bufs, time_t deadline = 0);
+  Read_some_op(TCPIP &conn, const buffers &bufs, time_t deadline = 0);
 
   virtual bool do_cont();
   virtual void do_wait();
@@ -193,10 +200,10 @@ private:
 };
 
 
-class TCPIP_base::Write_op : public IO_op
+class TCPIP::Write_op : public IO_op
 {
 public:
-  Write_op(TCPIP_base &conn, const buffers &bufs, time_t deadline = 0);
+  Write_op(TCPIP &conn, const buffers &bufs, time_t deadline = 0);
 
   virtual bool do_cont();
   virtual void do_wait();
@@ -207,10 +214,10 @@ private:
 };
 
 
-class TCPIP_base::Write_some_op : public IO_op
+class TCPIP::Write_some_op : public IO_op
 {
 public:
-  Write_some_op(TCPIP_base &conn, const buffers &bufs, time_t deadline = 0);
+  Write_some_op(TCPIP &conn, const buffers &bufs, time_t deadline = 0);
 
   virtual bool do_cont();
   virtual void do_wait();

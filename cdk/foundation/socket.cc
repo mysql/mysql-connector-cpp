@@ -28,7 +28,7 @@
 
 
 class Socket_conn_impl
-  : public cdk::foundation::connection::TCPIP_base::Impl
+  : public cdk::foundation::connection::TCPIP::Impl
 {
 public:
   unsigned short m_port;
@@ -55,12 +55,13 @@ namespace foundation {
 
 
 Socket::Connection::Connection(const Socket &sock)
-  : opaque_impl<Socket::Connection>(NULL, sock.m_port)
+  : connection::TCPIP("", sock.m_port)
+  , opaque_impl<Socket::Connection>(NULL, sock.m_port)
 {}
 
 Socket::Connection::Impl& Socket::Connection::get_base_impl()
 {
-  return get_impl();
+  return opaque_impl<Socket::Connection>::get_impl();
 }
 
 void Socket::Connection::do_wait()
@@ -70,7 +71,7 @@ void Socket::Connection::do_wait()
 
 bool Socket::Connection::is_completed() const
 {
-  return get_impl().is_open();
+  return TCPIP_base::get_base_impl().is_open();
 }
 
 

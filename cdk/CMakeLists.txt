@@ -165,6 +165,21 @@ INCLUDE(protobuf)
 
 
 #
+# Add SSL
+#
+
+SET(WITH_SSL "bundled" CACHE STRING "")
+
+IF(WITH_SSL)
+  IF(WITH_SSL STREQUAL "bundled")
+    ADD_DEFINITIONS(-DWITH_SSL_YASSL)
+    ADD_SUBDIRECTORY(extra/yassl)
+  ENDIF()
+  ADD_DEFINITIONS(-DWITH_SSL)
+ENDIF()
+
+
+#
 # Project's public headers
 #
 
