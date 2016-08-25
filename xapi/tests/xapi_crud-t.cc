@@ -1,0 +1,1738 @@
+/*
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ *
+ * The MySQL Connector/C is licensed under the terms of the GPLv2
+ * <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+ * MySQL Connectors. There are special exceptions to the terms and
+ * conditions of the GPLv2 as it is applied to this software, see the
+ * FLOSS License Exception
+ * <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+ */
+
+#include <stdio.h>
+#include <string.h>
+#include "test.h"
+
+  const char *queries[5] = {
+     "DROP DATABASE IF EXISTS cc_crud_test",
+     "CREATE DATABASE cc_crud_test",
+     "CREATE TABLE cc_crud_test.crud_basic (id int auto_increment primary key, vctext varchar(32))",
+     "INSERT INTO cc_crud_test.crud_basic (id, vctext) VALUES (2, '012345'), (10, 'abcdef'), (20, 'ghijkl'), (30, 'mnopqr')",
+     "DROP TABLE cc_crud_test.crud_basic"
+  };
+
+  const char *json_row[5] = {
+       "{\"_id\": \"C8B27676E8A1D1E12C250850273BD110\", \"a_key\": 1, \"b_key\": \"hello world\", \"c_key\": 3.89}",
+       "{\"_id\": \"C8B27676E8A1D1E12C250850273BD111\", \"a_key\": 2, \"b_key\": \"how are you world\", \"c_key\": 4.321}",
+       "{\"_id\": \"C8B27676E8A1D1E12C250850273BD112\", \"a_key\": 3, \"b_key\": \"bye world\", \"c_key\": 13.8901}",
+       "{\"_id\": \"C8B27676E8A1D1E12C250850273BD113\", \"a_key\": 4, \"b_key\": \"hello again world\", \"c_key\": 7.00092}",
+       "{\"_id\": \"C8B27676E8A1D1E12C250850273BD114\", \"a_key\": 5, \"b_key\": \"so long world\", \"c_key\": 88.888}"
+  };
+
+TEST_F(xapi, basic)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  MYSQLX_ROW *row;
+  int row_num = 0, col_num = 0;
+  int i = 0;
+
+  const char *col_names[2] = { "id", "vctext" };
+  int64_t ids[2] = { 10, 20 };
+  const char *vctexts[2] = { "abcdef", "ghijkl" };
+
+  AUTHENTICATE();
+
+  for (i = 0; i < 4; i++)
+  {
+    exec_sql(queries[i]);
+  }
+
+  RESULT_CHECK(crud = mysqlx_table_select_new(get_session(), "cc_crud_test", "crud_basic"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_limit_and_offset(crud, 2, 0));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_where(crud, "(id / 2) > 4"));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  col_num = mysqlx_column_get_count(res);
+  EXPECT_EQ(col_num, 2);
+
+  for (i = 0; i < col_num; i++)
+  {
+    const char *col_name = mysqlx_column_get_name(res, i);
+    const char *col_orig_name = mysqlx_column_get_original_name(res, i);
+    const char *col_table = mysqlx_column_get_table(res, i);
+    const char *col_orig_table = mysqlx_column_get_original_table(res, i);
+    const char *col_schema = mysqlx_column_get_schema(res, i);
+    const char *col_cat = mysqlx_column_get_catalog(res, i);
+
+    printf("\n Column # %d", i + 1);
+    printf("\n * name: %s, orig name: %s, table: %s, orig table: %s, schema: %s, catalog: %s",
+      col_name, col_orig_name, col_table, col_orig_table, col_schema, col_cat);
+
+    EXPECT_STREQ(col_name, col_names[i]);
+    EXPECT_STREQ(col_orig_name, col_names[i]);
+    EXPECT_STREQ(col_table, "crud_basic");
+    EXPECT_STREQ(col_orig_table, "crud_basic");
+    EXPECT_STREQ(col_schema, "cc_crud_test");
+  }
+
+  printf("\n\nRows:");
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t id = 0;
+    char buf[256];
+    size_t buflen = sizeof(buf);
+    void *dummy_ptr = (void*)&buf;
+
+    // This should give error when column index is out of range
+    EXPECT_EQ(RESULT_ERROR, mysqlx_get_sint(row, 20, (int64_t*)dummy_ptr));
+    EXPECT_EQ(RESULT_ERROR, mysqlx_get_uint(row, 20, (uint64_t*)dummy_ptr));
+    EXPECT_EQ(RESULT_ERROR, mysqlx_get_bytes(row, 20, 0, dummy_ptr, &buflen));
+    EXPECT_EQ(RESULT_ERROR, mysqlx_get_double(row, 20, (double*)dummy_ptr));
+    EXPECT_EQ(RESULT_ERROR, mysqlx_get_float(row, 20, (float*)dummy_ptr));
+
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &id));
+
+    EXPECT_EQ(id, ids[row_num]);
+    printf("\n Row # %d: ", row_num);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, buf, &buflen));
+    EXPECT_EQ(buflen, strlen(vctexts[row_num]) + 1);
+    printf ("[ %d ] [ %s ]", (int)id, buf);
+    EXPECT_STREQ(buf, vctexts[row_num]);
+    ++row_num;
+  }
+
+  EXPECT_EQ(row_num, 2); // we expect only two rows
+  printf("\n");
+
+  RESULT_CHECK(crud = mysqlx_sql_query(get_session(), queries[4], strlen(queries[4])));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+}
+
+TEST_F(xapi, deleting)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  MYSQLX_ROW *row;
+  int row_num = 0;
+  int i = 0;
+
+  AUTHENTICATE();
+
+  // Skip drop/create database
+  for (i = 2; i < 4; i++)
+  {
+    exec_sql(queries[i]);
+  }
+
+  RESULT_CHECK(crud = mysqlx_table_delete_new(get_session(), "cc_crud_test", "crud_basic"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_delete_where(crud, "(id = 10) OR (id = 20) OR (id = 30)"));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+  EXPECT_EQ(mysqlx_get_affected_count(res), 3);
+
+  RESULT_CHECK(crud = mysqlx_table_select_new(get_session(), "cc_crud_test", "crud_basic"));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  row_num = 0;
+  printf("\n\nRows:");
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t id = 0;
+    char buf[256];
+    size_t buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &id));
+
+    EXPECT_EQ(id, 2);
+    printf("\n Row # %d: ", row_num);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, buf, &buflen));
+    EXPECT_EQ(buflen, 7);
+
+    printf ("[ %d ] [ %s ]", (int)id, buf);
+    EXPECT_STREQ(buf, "012345");
+    ++row_num;
+  }
+  EXPECT_EQ(row_num, 1);
+
+  printf("\n");
+}
+
+TEST_F(xapi, order_by_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  MYSQLX_ROW *row;
+  int row_num = 0;
+  int desc_ids[4] = { 30, 20, 10, 2};
+  const char* str_data[4] = {"mnopqr", "ghijkl", "abcdef", "012345" };
+  int i = 0;
+
+  AUTHENTICATE();
+
+  for (i = 0; i < 4; i++)
+  {
+    exec_sql(queries[i]);
+  }
+
+  RESULT_CHECK(crud = mysqlx_table_select_new(get_session(), "cc_crud_test", "crud_basic"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_order_by(crud, "cc_crud_test.crud_basic.id",
+                                               SORT_ORDER_DESC, PARAM_END));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  row_num = 0;
+  printf("\n\nRows:");
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t id = 0;
+    char buf[256];
+    size_t buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &id));
+
+    EXPECT_EQ(id, desc_ids[row_num]);
+    printf("\n Row # %d: ", row_num);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, buf, &buflen));
+    EXPECT_EQ(buflen, 7);
+    printf ("[ %d ] [ %s ]", (int)id, buf);
+    EXPECT_STREQ(buf, str_data[row_num]);
+    ++row_num;
+  }
+  EXPECT_EQ(row_num, 4);
+
+  printf("\n");
+}
+
+TEST_F(xapi, placeholder_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  MYSQLX_ROW *row;
+  int row_num = 0;
+  int i = 0;
+
+  const char *query = "INSERT INTO cc_crud_test.crud_placeholder_test " \
+                      "(sint, uint, flv, dbv, strv) VALUES (?,?,?,?,?)";
+  int64_t v_sint = -17;
+  uint64_t v_uint = 101;
+  float v_float = 3.31f;
+  double v_double = 1.7E+308;
+  const char *v_str = "just some text";
+
+  const char *queries2[] = {
+    "DROP TABLE IF EXISTS cc_crud_test.crud_placeholder_test",
+    "CREATE TABLE cc_crud_test.crud_placeholder_test " \
+      "(sint BIGINT, uint BIGINT UNSIGNED, flv FLOAT, dbv DOUBLE, strv VARCHAR(255))"
+  };
+
+  AUTHENTICATE();
+
+  for (i = 0; i < 2; i++)
+  {
+    exec_sql(queries2[i]);
+  }
+
+  RESULT_CHECK(crud = mysqlx_sql_query(get_session(), query, strlen(query)));
+  EXPECT_EQ(0, mysqlx_crud_bind(crud, PARAM_SINT(v_sint),
+                                  PARAM_UINT(v_uint),
+                                  PARAM_FLOAT(v_float),
+                                  PARAM_DOUBLE(v_double),
+                                  PARAM_STRING(v_str),
+                                  PARAM_END));
+
+  RESULT_CHECK(res = mysqlx_crud_execute(crud));
+
+  RESULT_CHECK(crud = mysqlx_table_select_new(get_session(), "cc_crud_test", "crud_placeholder_test"));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  row_num = 0;
+  printf("\n\nRows:");
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    printf("\n Row # %d: ", row_num);
+
+    int64_t v_sint2 = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &v_sint2));
+
+    EXPECT_EQ(v_sint, v_sint2);
+
+    uint64_t v_uint2 = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_uint(row, 1, &v_uint2));
+    EXPECT_EQ(v_uint, v_uint2);
+
+    float v_float2 = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_float(row, 2, &v_float2));
+    EXPECT_EQ(v_float, v_float2);
+
+    double v_double2 = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_double(row, 3, &v_double2));
+    EXPECT_EQ(v_double, v_double2);
+
+    char v_str2[256];
+    size_t buflen = sizeof(v_str2);
+
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 4, 0, v_str2, &buflen));
+    EXPECT_EQ(buflen, strlen(v_str) + 1);
+    EXPECT_STREQ(v_str2, v_str);
+    ++row_num;
+  }
+  EXPECT_EQ(row_num, 1);
+
+  printf("\n");
+}
+
+TEST_F(xapi, insert_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  MYSQLX_ROW *row;
+  int row_num = 0;
+  int i = 0;
+
+  int64_t v_sint[2] = { -17, 34 };
+  uint64_t v_uint[2] = { 101, 23234 };
+  float v_float[2] = { 3.31f, 12.27f };
+  double v_double[2] = { 1.7E+308, 2.8E-100 };
+  const char *v_str[2] = { "just some text", "more text" };
+
+  const char *init_queries[] = {
+    "DROP TABLE IF EXISTS cc_crud_test.crud_insert_test",
+    "CREATE TABLE cc_crud_test.crud_insert_test " \
+      "(sint BIGINT, uint BIGINT UNSIGNED, flv FLOAT, dbv DOUBLE, strv VARCHAR(255))"
+  };
+
+  AUTHENTICATE();
+
+  for (i = 0; i < 2; i++)
+  {
+    printf("\nExecuting query:\n  %s ... ", init_queries[i]);
+    RESULT_CHECK(crud = mysqlx_sql_query(get_session(), init_queries[i], strlen(init_queries[i])));
+    CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+  }
+
+  RESULT_CHECK(crud = mysqlx_table_insert_new(get_session(), "cc_crud_test",
+                                                             "crud_insert_test"));
+
+  // Give columns in different order than is defined in the table
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(crud, "strv", "sint", "dbv",
+                                                 "uint", "flv", PARAM_END));
+  for (i = 0; i < 2; ++i)
+  {
+    EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(crud,
+                                    PARAM_STRING(v_str[i]),
+                                    PARAM_SINT(v_sint[i]),
+                                    PARAM_DOUBLE(v_double[i]),
+                                    PARAM_UINT(v_uint[i]),
+                                    PARAM_FLOAT(v_float[i]),
+                                    PARAM_END));
+  }
+
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  RESULT_CHECK(crud = mysqlx_table_select_new(get_session(), "cc_crud_test", "crud_insert_test"));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  row_num = 0;
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t v_sint2 = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &v_sint2));
+
+    EXPECT_EQ(v_sint[row_num], v_sint2);
+
+    uint64_t v_uint2 = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_uint(row, 1, &v_uint2));
+    EXPECT_EQ(v_uint[row_num], v_uint2);
+
+    float v_float2 = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_float(row, 2, &v_float2));
+    EXPECT_EQ(v_float[row_num], v_float2);
+
+    double v_double2 = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_double(row, 3, &v_double2));
+    EXPECT_EQ(v_double[row_num], v_double2);
+
+    char v_str2[256];
+    size_t buflen = sizeof(v_str2);
+
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 4, 0, v_str2, &buflen));
+    EXPECT_EQ(buflen, strlen(v_str[row_num]) + 1);
+    EXPECT_STREQ(v_str2, v_str[row_num]);
+    ++row_num;
+  }
+  EXPECT_EQ(row_num, 2);
+
+}
+
+/*
+TEST_F(mysqlx_cc_xplugin, find_test)
+{
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  MYSQLX_DOC *doc;
+  int i = 0;
+
+  const char *init_queries[4] = {
+     "DROP DATABASE IF EXISTS cc_crud_test",
+     "CREATE DATABASE cc_crud_test",
+     "CREATE TABLE cc_crud_test.crud_collection (id int auto_increment primary key, doc JSON)",
+     "INSERT INTO cc_crud_test.crud_collection (doc) VALUES " \
+       "('{ \"mykey\" : 1, \"myvalue\" : \"hello world\",       \"dval\" : 3.89E-8 }')," \
+       "('{ \"mykey\" : 2, \"myvalue\" : \"how are you world\", \"dval\" : 4.3212392E+3 }')," \
+       "('{ \"mykey\" : 3, \"myvalue\" : \"bye world\",         \"dval\" : 3.8900001 }')," \
+       "('{ \"mykey\" : 4, \"myvalue\" : \"hello again world\", \"dval\" : 7.00092E-3 }')," \
+       "('{ \"mykey\" : 5, \"myvalue\" : \"so long world\",     \"dval\" : 8.888E+20 }')"
+  };
+
+  AUTHENTICATE();
+
+  for (i = 0; i < 4; i++)
+  {
+    printf("\nExecuting query:\n  %s ... ", init_queries[i]);
+    RESULT_CHECK(crud = mysqlx_sql_query(get_session(), init_queries[i], strlen(init_queries[i])));
+    CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+  }
+
+  RESULT_CHECK(crud = mysqlx_collection_find_new(get_session(), "cc_crud_test", "crud_collection"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_criteria(crud, "mykey > 1"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_limit_and_offset(crud, 2, 1));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  while ((doc = mysqlx_doc_fetch_one(res)) != NULL)
+  {
+    int64_t mykey = 0;
+    char myval[256];
+    size_t buflen = sizeof(myval);
+
+    EXPECT_EQ(RESULT_OK, mysqlx_doc_get_sint(doc, "mykey", &mykey));
+    printf("\n[mykey: %ld]", mykey);
+    if (mysqlx_doc_get_bytes(doc, "myvalue", 0, myval, &buflen) == RESULT_ERROR)
+    {
+      printf("[Expected error: %s]", mysqlx_crud_error_message(crud));
+    }
+
+    buflen = sizeof(myval);
+    EXPECT_EQ(RESULT_OK, mysqlx_doc_get_str(doc, "myvalue", 0, myval, &buflen));
+    printf("[myval: %s]", myval);
+  }
+}
+*/
+
+TEST_F(xapi, ddl_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_SESSION *sess;
+
+  AUTHENTICATE();
+
+  sess = get_session();
+
+  exec_sql("DROP DATABASE IF EXISTS cc_ddl_test");
+  exec_sql("CREATE DATABASE cc_ddl_test");
+  exec_sql("CREATE TABLE cc_ddl_test.ddl_table (id int)");
+  exec_sql("CREATE VIEW cc_ddl_test.ddl_view AS SELECT * FROM cc_ddl_test.ddl_table");
+
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(sess, "cc_ddl_test", "ddl_collection"));
+
+  // Check that the collection is created
+  exec_sql("SELECT * FROM cc_ddl_test.ddl_collection");
+
+  // Drop an existing collection. Expect OK
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_drop(sess, "cc_ddl_test", "ddl_collection"));
+
+  // Check that the collection is dropped
+  exec_sql_error("SELECT * FROM cc_ddl_test.ddl_collection");
+
+  // Drop a non-existing collection. Expect OK
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_drop(sess, "cc_ddl_test", "ddl_collection"));
+
+  // Try creating schema with the same name, expect OK
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_create(sess, "cc_ddl_test"));
+
+  // Try dropping schema, expect OK
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_drop(sess, "cc_ddl_test2"));
+
+  // The schema with this name should not exist at this stage, expect OK
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_create(sess, "cc_ddl_test2"));
+
+  // Check that the schema is created
+  exec_sql("CREATE TABLE cc_ddl_test2.wrong_table (id INT)");
+
+  // Dropping an existing schema, expect OK
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_drop(sess, "cc_ddl_test2"));
+
+  // Check that the schema is dropped
+  exec_sql_error("CREATE TABLE cc_ddl_test2.wrong_table (id INT)");
+
+  // Check that the view exists
+  exec_sql("SELECT * FROM cc_ddl_test.ddl_view");
+
+  // Dropping an existing view, expect OK
+  EXPECT_EQ(RESULT_OK, mysqlx_view_drop(sess, "cc_ddl_test",
+                                        "ddl_view"));
+
+  // Check that the view does not exist
+  exec_sql_error("SELECT * FROM cc_ddl_test.ddl_view");
+
+  // Dropping a non-existing view, expect OK
+  EXPECT_EQ(RESULT_OK, mysqlx_view_drop(sess, "cc_ddl_test",
+                                        "ddl_view"));
+
+  // Check that the table exists
+  exec_sql("SELECT * FROM cc_ddl_test.ddl_table");
+
+  // Dropping an existing table, expect OK
+  EXPECT_EQ(RESULT_OK, mysqlx_table_drop(sess, "cc_ddl_test",
+                                         "ddl_table"));
+
+  // Check that the table is dropped
+  exec_sql_error("SELECT * FROM cc_ddl_test.ddl_table");
+
+  // Dropping a non-existing table, expect OK
+  EXPECT_EQ(RESULT_OK, mysqlx_table_drop(get_session(), "cc_ddl_test",
+                                            "ddl_table"));
+
+  // Drop the test schema
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_drop(get_session(), "cc_ddl_test"));
+}
+
+
+TEST_F(xapi, json_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  const char * json_string = NULL;
+  int i = 0;
+  size_t json_len = 0;
+  char insert_buf[1024];
+
+  AUTHENTICATE();
+  exec_sql("DROP DATABASE IF EXISTS cc_crud_test");
+  exec_sql("CREATE DATABASE cc_crud_test");
+
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(get_session(), "cc_crud_test", "crud_collection"));
+
+  for (i = 0; i < 5; i++)
+  {
+    sprintf(insert_buf, "INSERT INTO cc_crud_test.crud_collection (doc) VALUES " \
+                        "('%s')", json_row[i]);
+    RESULT_CHECK(crud = mysqlx_sql_query(get_session(), insert_buf, strlen(insert_buf)));
+    CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+  }
+
+  RESULT_CHECK(crud = mysqlx_collection_find_new(get_session(), "cc_crud_test", "crud_collection"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_criteria(crud, "a_key > 1"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_limit_and_offset(crud, 2, 1));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  i = 2; // It is expected the rows will be returned starting from 2
+  while ((json_string = mysqlx_json_fetch_one(res, &json_len)) != NULL)
+  {
+    if (json_string)
+      printf("\n[json: %s]", json_string);
+
+    EXPECT_STREQ(json_row[i], json_string);
+    ++i;
+  }
+}
+
+TEST_F(xapi, null_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  MYSQLX_ROW *row;
+  int i = 0;
+
+  const char *init_queries[4] = {
+     "DROP DATABASE IF EXISTS cc_crud_test",
+     "CREATE DATABASE cc_crud_test",
+     "CREATE TABLE cc_crud_test.crud_null (id int primary key, " \
+       "sint BIGINT, uint BIGINT UNSIGNED, flv FLOAT, dbv DOUBLE, " \
+       "strv VARCHAR(255))",
+     "INSERT INTO cc_crud_test.crud_null (id) VALUES (1) "
+  };
+
+  AUTHENTICATE();
+
+  for (i = 0; i < 4; i++)
+  {
+    exec_sql(init_queries[i]);
+  }
+
+  RESULT_CHECK(crud = mysqlx_table_select_new(get_session(), "cc_crud_test", "crud_null"));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t v_sint = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &v_sint));
+    EXPECT_EQ(v_sint, 1);
+
+    int64_t v_sint2 = 0;
+    EXPECT_EQ(RESULT_NULL, mysqlx_get_sint(row, 1, &v_sint2));
+
+    uint64_t v_uint2 = 0;
+    EXPECT_EQ(RESULT_NULL, mysqlx_get_uint(row, 2, &v_uint2));
+
+    float v_float2 = 0;
+    EXPECT_EQ(RESULT_NULL, mysqlx_get_float(row, 3, &v_float2));
+
+    double v_double2 = 0;
+    EXPECT_EQ(RESULT_NULL, mysqlx_get_double(row, 4, &v_double2));
+
+    char v_str2[256];
+    size_t buflen = sizeof(v_str2);
+
+    EXPECT_EQ(RESULT_NULL, mysqlx_get_bytes(row, 5, 0, v_str2, &buflen));
+  }
+}
+
+TEST_F(xapi, long_data_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  MYSQLX_ROW *row;
+  uint32_t col_num = 0;
+  const char *col_name;
+  MYSQLX_DATA_TYPE col_type;
+  char *data_buf;
+  size_t buf_len = 2000000;
+  int i = 0;
+
+  // A long piece of data 1M
+  const char *query = "SELECT BINARY REPEAT('z', 1000000) as longdata";
+
+  AUTHENTICATE();
+
+  RESULT_CHECK(crud = mysqlx_sql_query(get_session(), query, strlen(query)));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  col_num = mysqlx_column_get_count(res);
+  EXPECT_EQ(col_num, 1);
+  col_name = mysqlx_column_get_name(res, 0);
+  EXPECT_STREQ(col_name, "longdata");
+  col_type = (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 0);
+  EXPECT_EQ(MYSQLX_TYPE_BYTES, col_type);
+
+  data_buf = (char*)malloc(buf_len);
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    memset(data_buf, 1, buf_len);
+    // Give the buffer with the size of 2M, but expect to get only 1M
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, data_buf, &buf_len));
+    /*
+      Take into account that data was converted from string with the trailing
+      '\0' byte at the end
+    */
+    EXPECT_EQ(1000001, buf_len);
+
+    // All bytes of the result must be set to the same value 'z'
+    for(i = 0; i < 1000000; ++i)
+    {
+      EXPECT_EQ('z', data_buf[i]);
+      if ('z' != data_buf[i])
+        break; // Don't flood the log with millions of error messages
+    }
+
+    EXPECT_EQ(0, data_buf[1000000]);
+
+    // All remaining bytes have to remain 1
+    for(i = 1000001; i < 2000000; ++i)
+    {
+      EXPECT_EQ(1, data_buf[i]);
+      if (1 != data_buf[i])
+        break; // Don't flood the log with millions of error messages
+    }
+  }
+  free(data_buf);
+}
+
+TEST_F(xapi, projections_tab)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  MYSQLX_ROW *row;
+  int row_num = 0, col_num = 0;
+  int i = 0;
+
+  AUTHENTICATE();
+
+  // Skip drop/create database
+  for (i = 0; i < 4; i++)
+  {
+    exec_sql(queries[i]);
+  }
+
+  RESULT_CHECK(crud = mysqlx_table_select_new(get_session(), "cc_crud_test", "crud_basic"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_items(crud, "id", "id*2 AS id2", "800", "vctext", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_where(crud, "id = 10"));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  col_num = mysqlx_column_get_count(res);
+  EXPECT_EQ(col_num, 4);
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t id = 0, id2 = 0, int800 = 0;
+
+    char buf[256];
+    size_t buflen = sizeof(buf);
+    printf("\n Row # %d: ", row_num);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &id));
+    EXPECT_EQ(10, id);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 1, &id2));
+    EXPECT_EQ(20, id2);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 2, &int800));
+    EXPECT_EQ(800, int800);
+
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 3, 0, buf, &buflen));
+    EXPECT_EQ(6 + 1, buflen);
+    printf ("[ %d ] [ %d ] [ %d ] [ %s ]\n", (int)id, (int)id2 , (int)int800, buf);
+    EXPECT_STREQ("abcdef", buf);
+    ++row_num;
+  }
+
+  EXPECT_EQ(row_num, 1); // we expect only one row
+
+  // Checking projection that involves document paths.
+
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(get_session(), "cc_crud_test", "crud_collection"));
+
+  for (i = 0; i < 5; i++)
+  {
+    const char *insert = "INSERT INTO cc_crud_test.crud_collection (doc) VALUES (?)";
+    RESULT_CHECK(crud = mysqlx_sql_query(get_session(), insert, strlen(insert)));
+    EXPECT_EQ(RESULT_OK, mysqlx_crud_bind(crud, PARAM_STRING(json_row[i]), PARAM_END));
+    CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+  }
+
+  RESULT_CHECK(crud = mysqlx_table_select_new(get_session(), "cc_crud_test", "crud_collection"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_items(crud, "doc->$.b_key AS msg", PARAM_END));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    char buf[256];
+    size_t buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, buf, &buflen));
+    printf("\n Row # %d: [ %s ]\n", row_num, buf);
+    ++row_num;
+  }
+}
+
+TEST_F(xapi, projections_doc)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  const char * json_string = NULL;
+  int i = 0;
+  size_t json_len = 0;
+  char insert_buf[1024];
+
+  const char *json_res[2][2] = {
+    { "\"key2\": 6", "\"b_key\": \"bye world\"" },
+    { "\"key2\": 8", "\"b_key\": \"hello again world\"" }
+  };
+
+  AUTHENTICATE();
+  exec_sql("DROP DATABASE IF EXISTS cc_crud_test");
+  exec_sql("CREATE DATABASE cc_crud_test");
+
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(get_session(), "cc_crud_test", "crud_collection"));
+
+  for (i = 0; i < 5; i++)
+  {
+    sprintf(insert_buf, "INSERT INTO cc_crud_test.crud_collection (doc) VALUES " \
+                        "('%s')", json_row[i]);
+    exec_sql(insert_buf);
+  }
+
+  RESULT_CHECK(crud = mysqlx_collection_find_new(get_session(), "cc_crud_test", "crud_collection"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_criteria(crud, "a_key > 1"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_projection(crud, "{key2: a_key*2, b_key: b_key}"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_order_by(crud, "key2", SORT_ORDER_ASC, PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_limit_and_offset(crud, 2, 1));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  i = 0; // It is expected the rows will be returned starting from 2
+  while ((json_string = mysqlx_json_fetch_one(res, &json_len)) != NULL)
+  {
+    if (json_string)
+      printf("\n[json: %s]", json_string);
+
+    EXPECT_TRUE(strstr(json_string, json_res[i][0]) != NULL);
+    EXPECT_TRUE(strstr(json_string, json_res[i][1]) != NULL);
+    ++i;
+  }
+}
+
+TEST_F(xapi, add_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  const char * json_string = NULL;
+  int i = 0, j = 0;
+  size_t json_len = 0;
+  char json_buf[1024];
+
+  const char *json_add[2][4] = {
+    { "a_key", "32768", "b_key", "Text value" },
+    { "a_key", "32777", "b_key", "Another text value" }
+  };
+
+  AUTHENTICATE();
+
+  for (i = 0; i < 2; ++i)
+  {
+    exec_sql(queries[i]);
+  }
+
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(get_session(), "cc_crud_test", "crud_collection"));
+
+  RESULT_CHECK(crud = mysqlx_collection_add_new(get_session(), "cc_crud_test", "crud_collection"));
+  for (i = 0; i < 2; ++i)
+  {
+    sprintf(json_buf, "{\"%s\": \"%s\", \"%s\": \"%s\"}", json_add[i][0], json_add[i][1],
+                                          json_add[i][2], json_add[i][3]);
+    EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(crud, json_buf));
+    printf("\nJSON FOR ADD %d [ %s ]", i + 1, json_buf);
+  }
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  RESULT_CHECK(crud = mysqlx_collection_find_new(get_session(), "cc_crud_test", "crud_collection"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_order_by(crud, "a_key", SORT_ORDER_ASC, PARAM_END));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  i = 0;
+  while ((json_string = mysqlx_json_fetch_one(res, &json_len)) != NULL)
+  {
+    if (json_string)
+      printf("\n[json: %s]", json_string);
+
+    for (j = 0; j < 4; ++j)
+      EXPECT_TRUE(strstr(json_string, json_add[i][j]) != NULL);
+    ++i;
+  }
+}
+
+TEST_F(xapi, collection_param_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  const char * json_string = NULL;
+  int i = 0;
+  size_t json_len = 0;
+  char json_buf[1024];
+
+  const char *json_add[2][4] = {
+    { "a_key", "32768", "b_key", "Text value" },
+    { "a_key", "32777", "b_key", "Another text value" }
+  };
+
+  AUTHENTICATE();
+
+  for (i = 0; i < 2; ++i)
+  {
+    exec_sql(queries[i]);
+  }
+
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(get_session(), "cc_crud_test", "crud_collection"));
+
+  RESULT_CHECK(crud = mysqlx_collection_add_new(get_session(), "cc_crud_test", "crud_collection"));
+  for (i = 0; i < 2; ++i)
+  {
+    sprintf(json_buf, "{\"%s\": \"%s\", \"%s\": \"%s\"}", json_add[i][0], json_add[i][1],
+                                          json_add[i][2], json_add[i][3]);
+    EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(crud, json_buf));
+    printf("\nJSON FOR ADD %d [ %s ]", i + 1, json_buf);
+  }
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  RESULT_CHECK(crud = mysqlx_collection_modify_new(get_session(), "cc_crud_test", "crud_collection"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_modify_criteria(crud, "a_key = :numv"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_modify_set(crud,
+                       "b_key", PARAM_STRING("New text value"),
+                       "a_key", PARAM_EXPR("a_key - 2*:numv2"),
+                       PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_crud_bind(crud, "numv", PARAM_STRING("32768"),
+                                              "numv2", PARAM_UINT(500),
+                                              PARAM_END));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  RESULT_CHECK(crud = mysqlx_collection_find_new(get_session(), "cc_crud_test", "crud_collection"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_criteria(crud, "a_key = :numv"));
+  EXPECT_EQ(RESULT_OK, mysqlx_crud_bind(crud, "numv", PARAM_UINT(31768), PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_order_by(crud, "a_key", SORT_ORDER_ASC, PARAM_END));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  i = 0;
+  while ((json_string = mysqlx_json_fetch_one(res, &json_len)) != NULL)
+  {
+    if (json_string)
+      printf("\n[json: %s]", json_string);
+
+   EXPECT_TRUE(strstr(json_string, "a_key") != NULL);
+   EXPECT_TRUE(strstr(json_string, "31768") != NULL);
+   EXPECT_TRUE(strstr(json_string, "b_key") != NULL);
+   EXPECT_TRUE(strstr(json_string, "New text value") != NULL);
+    ++i;
+  }
+}
+
+TEST_F(xapi, update_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  MYSQLX_ROW *row;
+  int i = 0, row_num;
+
+  int64_t v_sint[2] = { -17, 34 };
+  uint64_t v_uint[2] = { 101, 23234 };
+  float v_float[2] = { 3.31f, 12.27f };
+  double v_double[2] = { 1.7E+3, 2.8E-100 };
+  const char *v_str[2] = { "just some text", "more text" };
+  const char *v_doc[2] = { "{ \"key\": 1, \"val\": \"one\" }",
+                           "{ \"key\": 2, \"val\": \"twoo\" }" };
+
+  const char *init_queries[] = {
+    "DROP TABLE IF EXISTS cc_crud_test.crud_update_test",
+    "CREATE TABLE cc_crud_test.crud_update_test ("
+      "sint BIGINT,"
+      "uint BIGINT UNSIGNED,"
+      "flv FLOAT,"
+      "dbv DOUBLE,"
+      "strv VARCHAR(255),"
+      "docv JSON"
+    ")"
+  };
+
+  AUTHENTICATE();
+
+  for (i = 0; i < 2; i++)
+  {
+    exec_sql(init_queries[i]);
+  }
+
+  RESULT_CHECK(crud = mysqlx_table_insert_new(get_session(), "cc_crud_test", "crud_update_test"));
+
+  for (i = 0; i < 2; ++i)
+  {
+    EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(crud,
+                                    PARAM_SINT(v_sint[i]),
+                                    PARAM_UINT(v_uint[i]),
+                                    PARAM_FLOAT(v_float[i]),
+                                    PARAM_DOUBLE(v_double[i]),
+                                    PARAM_STRING(v_str[i]),
+                                    PARAM_STRING(v_doc[i]),
+                                    PARAM_END));
+  }
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  RESULT_CHECK(crud = mysqlx_table_update_new(get_session(),
+                                              "cc_crud_test",
+                                              "crud_update_test"));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_set_update_values(crud,
+                                    "sint", PARAM_SINT((int64_t)55),
+                                    "uint", PARAM_EXPR("(uint*200)+5"),
+                                    "flv",  PARAM_FLOAT((float)77),
+                                    "dbv",  PARAM_EXPR("(:param1-dbv)*2"),
+                                    "strv", PARAM_STRING("text 99"),
+                                    "docv->$.key", PARAM_SINT(7),
+                                    "docv->$.val", PARAM_STRING("foo"),
+                                    PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_update_where(crud, "uint < :param2"));
+  EXPECT_EQ(RESULT_OK, mysqlx_crud_bind(crud, "param1", PARAM_UINT(88),
+                                              "param2", PARAM_UINT(1000), PARAM_END));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  RESULT_CHECK(crud = mysqlx_table_select_new(get_session(), "cc_crud_test", "crud_update_test"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_order_by(crud, "uint", SORT_ORDER_ASC, PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_where(crud, "docv->$.val like :paramstr"));
+  EXPECT_EQ(RESULT_OK, mysqlx_crud_bind(crud, "paramstr", PARAM_STRING("%oo"), PARAM_END));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  /*
+    Set the expected values to the same ones as in the
+    mysqlx_set_update_values() call
+    TODO: Checking result of updates inside docv.
+  */
+  v_sint[0] = 55;
+  v_uint[0] = (v_uint[0]*200) + 5;
+  v_double[0] = (double)(88 - v_double[0])*2;
+  v_float[0] = (float)77;
+  v_str[0] = "text 99";
+
+  row_num = 0;
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t v_sint2 = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &v_sint2));
+
+    EXPECT_EQ(v_sint[row_num], v_sint2);
+
+    uint64_t v_uint2 = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_uint(row, 1, &v_uint2));
+    EXPECT_EQ(v_uint[row_num], v_uint2);
+
+    float v_float2 = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_float(row, 2, &v_float2));
+    EXPECT_EQ(v_float[row_num], v_float2);
+
+    double v_double2 = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_double(row, 3, &v_double2));
+    EXPECT_EQ(v_double[row_num], v_double2);
+
+    char v_str2[256];
+    size_t buflen = sizeof(v_str2);
+
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 4, 0, v_str2, &buflen));
+    EXPECT_EQ(buflen, strlen(v_str[row_num]) + 1);
+    EXPECT_STREQ(v_str2, v_str[row_num]);
+    ++row_num;
+  }
+  EXPECT_EQ(row_num, 2);
+}
+
+TEST_F(xapi, modify_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  const char * json_string = NULL;
+  int i = 0;
+  size_t json_len = 0;
+  char json_buf[1024];
+  double new_double_val = 9.87654321E3;
+
+  const char *json_add[2][6] = {
+    { "a_key", "32768", "b_key", "Text value", "c_key", "[11, 22, 33]" },
+    { "a_key", "32777", "b_key", "Another text value",  "c_key", "[77, 88, 99]"}
+  };
+
+  AUTHENTICATE();
+
+  for (i = 0; i < 2; ++i)
+  {
+    exec_sql(queries[i]);
+  }
+
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(get_session(), "cc_crud_test", "crud_collection"));
+
+  RESULT_CHECK(crud = mysqlx_collection_add_new(get_session(), "cc_crud_test", "crud_collection"));
+  for (i = 0; i < 2; ++i)
+  {
+    sprintf(json_buf, "{\"%s\": %s, \"%s\": \"%s\", \"%s\": %s}",
+                        json_add[i][0], json_add[i][1], json_add[i][2],
+                        json_add[i][3], json_add[i][4], json_add[i][5]);
+    EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(crud, json_buf));
+    printf("\nJSON FOR ADD %d [ %s ]", i + 1, json_buf);
+  }
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  RESULT_CHECK(crud = mysqlx_collection_modify_new(get_session(), "cc_crud_test", "crud_collection"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_modify_set(crud,
+                       "b_key", PARAM_STRING("New text value"),
+                       "a_key", PARAM_EXPR("a_key-1000"),
+                       "d_key", PARAM_DOUBLE(new_double_val), // This will be the new key-value in document
+                       PARAM_END));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_set_modify_array_insert(crud,
+                       "c_key[1]", PARAM_SINT(199),
+                       "c_key[3]", PARAM_SINT(399),
+                       PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_modify_criteria(crud, "a_key=32768"));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  RESULT_CHECK(crud = mysqlx_collection_modify_new(get_session(), "cc_crud_test", "crud_collection"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_modify_unset(crud, "b_key", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_modify_array_delete(crud, "c_key[1]", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_modify_array_append(crud, "c_key", PARAM_SINT(-100), PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_modify_criteria(crud, "a_key=32777"));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+
+  RESULT_CHECK(crud = mysqlx_collection_find_new(get_session(), "cc_crud_test", "crud_collection"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_order_by(crud, "a_key", SORT_ORDER_ASC, PARAM_END));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  i = 0;
+  while ((json_string = mysqlx_json_fetch_one(res, &json_len)) != NULL)
+  {
+    if (json_string)
+      printf("\n[json: %s]", json_string);
+
+    if (i == 0)
+    {
+      // Check setting value using expression
+      EXPECT_TRUE(strstr(json_string, "31768") != NULL);
+      // Check setting string value
+      EXPECT_TRUE(strstr(json_string, "New text value") != NULL);
+      EXPECT_TRUE(strstr(json_string, "c_key") != NULL);
+      // Check array insert
+      EXPECT_TRUE(strstr(json_string, "[11, 199, 22, 399, 33]") != NULL);
+      // Check that the new value was created
+      EXPECT_TRUE(strstr(json_string, "d_key") != NULL);
+      EXPECT_TRUE(strstr(json_string, "9876.54321") != NULL);
+    }
+    else
+    {
+      // this value is not changed
+      EXPECT_TRUE(strstr(json_string, "32777") != NULL);
+      // this was unset
+      EXPECT_TRUE(strstr(json_string, "b_key") == NULL);
+      // this key is present
+      EXPECT_TRUE(strstr(json_string, "c_key") != NULL);
+      // the array has one element [1] deleted and one element appended
+      EXPECT_TRUE(strstr(json_string, "[77, 99, -100]") != NULL);
+    }
+    ++i;
+  }
+}
+
+TEST_F(xapi, remove_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  const char * json_string = NULL;
+  int i = 0;
+  size_t json_len = 0;
+  char json_buf[1024];
+
+  const char *json_add[5][2] = {
+    { "my_key", "111" },
+    { "my_key", "222" },
+    { "my_key", "333" },
+    { "my_key", "444" },
+    { "my_key", "555" }
+  };
+
+  AUTHENTICATE();
+
+  for (i = 0; i < 2; ++i)
+  {
+    exec_sql(queries[i]);
+  }
+
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(get_session(), "cc_crud_test", "crud_collection"));
+
+  RESULT_CHECK(crud = mysqlx_collection_add_new(get_session(), "cc_crud_test", "crud_collection"));
+  for (i = 0; i < 5; ++i)
+  {
+    sprintf(json_buf, "{\"%s\": %s}", json_add[i][0], json_add[i][1]);
+    EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(crud, json_buf));
+    printf("\nJSON FOR ADD %d [ %s ]", i + 1, json_buf);
+  }
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  RESULT_CHECK(crud = mysqlx_collection_remove_new(get_session(), "cc_crud_test", "crud_collection"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_limit_and_offset(crud, 2, 0));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_order_by(crud, "my_key", SORT_ORDER_DESC, PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_where(crud, "my_key > 111"));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  RESULT_CHECK(crud = mysqlx_collection_find_new(get_session(), "cc_crud_test", "crud_collection"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_order_by(crud, "my_key", SORT_ORDER_ASC, PARAM_END));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  i = 0;
+  while ((json_string = mysqlx_json_fetch_one(res, &json_len)) != NULL)
+  {
+    if (json_string)
+      printf("\n[json: %s]", json_string);
+
+    switch(i)
+    {
+      case 0: EXPECT_TRUE(strstr(json_string, "111") != NULL); break;
+      case 1: EXPECT_TRUE(strstr(json_string, "222") != NULL); break;
+      case 2: EXPECT_TRUE(strstr(json_string, "333") != NULL); break;
+      default: // There should be no more documents
+        FAIL();
+        continue;
+    }
+    ++i;
+  }
+}
+
+TEST_F(xapi_bugs, myc_288_param_bytes)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  MYSQLX_ROW *row;
+  int row_num = 0;
+  int i = 0;
+
+  int64_t v_sint[2] = { 100, 200 };
+  const char *v_str[2] = { "just some text", "more text" };
+  const char *init_queries[] = {
+    "DROP TABLE IF EXISTS cc_crud_test.crud_myc_288",
+    "CREATE TABLE cc_crud_test.crud_myc_288 (id int, strv VARCHAR(255))"
+  };
+  const char *insert_query = "INSERT INTO cc_crud_test.crud_myc_288 " \
+                             "(id, strv) VALUES (? , ?)";
+  AUTHENTICATE();
+
+  for (i = 0; i < 2; i++)
+  {
+    printf("\nExecuting query:\n  %s ... ", init_queries[i]);
+    exec_sql(init_queries[i]);
+  }
+
+  /* Test plain SQL */
+  RESULT_CHECK(crud = mysqlx_sql_query(get_session(), insert_query,
+                                       strlen(insert_query)));
+  EXPECT_EQ(0, mysqlx_crud_bind(crud, PARAM_SINT(v_sint[0]),
+                                PARAM_BYTES(v_str[0], strlen(v_str[0])),
+                                PARAM_END));
+  RESULT_CHECK(res = mysqlx_crud_execute(crud));
+
+  RESULT_CHECK(crud = mysqlx_table_insert_new(get_session(), "cc_crud_test", "crud_myc_288"));
+
+  /* Test with CRUD Insert */
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(crud, PARAM_SINT(v_sint[1]),
+                                  PARAM_BYTES(v_str[1], strlen(v_str[1])),
+                                  PARAM_END));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  RESULT_CHECK(crud = mysqlx_table_select_new(get_session(), "cc_crud_test", "crud_myc_288"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_order_by(crud, "id", SORT_ORDER_ASC, PARAM_END));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  row_num = 0;
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t v_sint2 = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &v_sint2));
+
+    EXPECT_EQ(v_sint[row_num], v_sint2);
+
+    char v_str2[256];
+    size_t buflen = sizeof(v_str2);
+
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, v_str2, &buflen));
+    EXPECT_EQ(buflen, strlen(v_str[row_num]) + 1);
+    EXPECT_STREQ(v_str2, v_str[row_num]);
+    ++row_num;
+  }
+  EXPECT_EQ(row_num, 2);
+}
+
+TEST_F(xapi_bugs, myc_293_double_free)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  MYSQLX_ROW *row;
+  int i = 0;
+
+  AUTHENTICATE();
+
+  // Skip drop/create database
+  for (i = 0; i < 4; i++)
+  {
+    exec_sql(queries[i]);
+  }
+
+  RESULT_CHECK(crud = mysqlx_table_select_new(get_session(), "cc_crud_test", "crud_basic"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_items(crud, "id", "id*2", "800", "vctext", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_where(crud, "id = 10"));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {}
+
+  mysqlx_result_free(res);
+  mysqlx_crud_free(crud);
+}
+
+TEST_F(xapi_bugs, myc_338_update_null)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  MYSQLX_ROW *row;
+  int i = 0;
+  int64_t intval = 0;
+  char buf[30];
+  size_t len = sizeof(buf);
+
+  AUTHENTICATE();
+
+  // Skip drop/create database
+  for (i = 0; i < 4; i++)
+  {
+    exec_sql(queries[i]);
+  }
+
+  RESULT_CHECK(crud = mysqlx_table_update_new(get_session(), "cc_crud_test", "crud_basic"));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_set_update_values(crud,
+                                    "vctext", PARAM_NULL(), PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_update_where(crud, "id = 30"));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  RESULT_CHECK(crud = mysqlx_table_select_new(get_session(), "cc_crud_test", "crud_basic"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_where(crud, "id = 30"));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &intval));
+    EXPECT_EQ(30, intval);
+    EXPECT_EQ(RESULT_NULL, mysqlx_get_bytes(row, 1, 0, buf, &len));
+  }
+
+  mysqlx_result_free(res);
+  mysqlx_crud_free(crud);
+}
+
+TEST_F(xapi_bugs, myc_297_col_types)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  int col_num = 0;
+  int i = 0;
+
+  const char *init_queries[] = {
+    "DROP TABLE IF EXISTS cc_crud_test.crud_myc_297",
+    "CREATE TABLE cc_crud_test.crud_myc_297(c1 BIGINT, c2 BIGINT UNSIGNED, " \
+    "c3 INT, c4 INT UNSIGNED, c5 CHAR(100), c6 DOUBLE, c7 BINARY(100), " \
+    "c8 FLOAT, c9 DOUBLE, c10 JSON, c11 BOOL, c12 DATETIME, c13 TIME, " \
+    "c14 DECIMAL(10,5), c15 BIT(64), c16 ENUM('a', 'b', 'c')," \
+    "c17 SET('a', 'b', 'c'), c18 GEOMETRY)"
+  };
+  AUTHENTICATE();
+
+  for (i = 0; i < 2; i++)
+  {
+    printf("\nExecuting query:\n  %s ... ", init_queries[i]);
+    exec_sql(init_queries[i]);
+  }
+
+  RESULT_CHECK(crud = mysqlx_table_select_new(get_session(), "cc_crud_test", "crud_myc_297"));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  col_num = mysqlx_column_get_count(res);
+  EXPECT_EQ(col_num, 18);
+
+  // TODO: Uncomment when CDK supports GEOMETRY
+  EXPECT_EQ(MYSQLX_TYPE_SINT, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 0));
+  EXPECT_EQ(MYSQLX_TYPE_UINT, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 1));
+  EXPECT_EQ(MYSQLX_TYPE_SINT, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 2));
+  EXPECT_EQ(MYSQLX_TYPE_UINT, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 3));
+  EXPECT_EQ(MYSQLX_TYPE_STRING, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 4));
+  EXPECT_EQ(MYSQLX_TYPE_DOUBLE, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 5));
+  EXPECT_EQ(MYSQLX_TYPE_BYTES, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 6));
+  EXPECT_EQ(MYSQLX_TYPE_FLOAT, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 7));
+  EXPECT_EQ(MYSQLX_TYPE_DOUBLE, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 8));
+  EXPECT_EQ(MYSQLX_TYPE_JSON, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 9));
+  EXPECT_EQ(MYSQLX_TYPE_BOOL, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 10));
+  EXPECT_EQ(MYSQLX_TYPE_DATETIME, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 11));
+  EXPECT_EQ(MYSQLX_TYPE_TIME, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 12));
+  EXPECT_EQ(MYSQLX_TYPE_DECIMAL, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 13));
+  EXPECT_EQ(MYSQLX_TYPE_BYTES, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 14));
+  EXPECT_EQ(MYSQLX_TYPE_ENUM, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 15));
+  EXPECT_EQ(MYSQLX_TYPE_SET, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 16));
+  EXPECT_EQ(MYSQLX_TYPE_GEOMETRY, (MYSQLX_DATA_TYPE)mysqlx_column_get_type(res, 17));
+}
+
+TEST_F(xapi, update_collection_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_CRUD *crud;
+  MYSQLX_RESULT *res;
+  MYSQLX_ROW *row;
+  int i = 0;
+  char json_buf[1024];
+  size_t buflen;
+
+  const char *json_add[4] ={ "my_key", "111", "my_key2", "\"abcde\"" };
+
+  AUTHENTICATE();
+
+  for (i = 0; i < 2; ++i)
+  {
+    exec_sql(queries[i]);
+  }
+
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(get_session(), "cc_crud_test", "crud_collection"));
+
+  RESULT_CHECK(crud = mysqlx_collection_add_new(get_session(), "cc_crud_test", "crud_collection"));
+
+  sprintf(json_buf, "{\"%s\": %s, \"%s\": %s}",
+    json_add[0], json_add[1], json_add[2], json_add[3]);
+  EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(crud, json_buf));
+  printf("\nJSON FOR ADD [ %s ]", json_buf);
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  RESULT_CHECK(crud = mysqlx_table_update_new(get_session(), "cc_crud_test", "crud_collection"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_update_values(crud,
+                                    "doc->$.my_key", PARAM_SINT(222),
+                                    "doc->$.my_key2", PARAM_STRING("qwertyui"),
+                                    PARAM_END));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  RESULT_CHECK(crud = mysqlx_table_select_new(get_session(), "cc_crud_test", "crud_collection"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_items(crud, "doc->$.my_key as my_key", "doc->$.my_key2 as my_key2", PARAM_END));
+  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+
+  EXPECT_EQ(2, mysqlx_column_get_count(res));
+
+  EXPECT_EQ(MYSQLX_TYPE_JSON, mysqlx_column_get_type(res, 0));
+  EXPECT_EQ(MYSQLX_TYPE_JSON, mysqlx_column_get_type(res, 1));
+
+  EXPECT_STREQ(json_add[0], mysqlx_column_get_name(res, 0));
+  EXPECT_STREQ(json_add[2], mysqlx_column_get_name(res, 1));
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+      buflen = sizeof(json_buf);
+      EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, json_buf, &buflen));
+      EXPECT_STREQ("222", json_buf);
+      EXPECT_EQ(4, buflen);
+
+      buflen = sizeof(json_buf);
+      EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, json_buf, &buflen));
+      EXPECT_STREQ("\"qwertyui\"", json_buf);
+      EXPECT_EQ(11, buflen);
+  }
+}
+
+TEST_F(xapi, one_call_functions_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_RESULT *res;
+  MYSQLX_ROW *row;
+  int i = 0;
+  size_t buflen;
+  char buf[1024];
+  const char *str_val[4] = { "sample text", "another sample", "foo", "bar" };
+  uint64_t uval[4] = { 18, 88, 40, 99 };
+
+
+  AUTHENTICATE();
+
+  for (i = 0; i < 3; ++i)
+  {
+    // Drop/create database and table using one-shot mysqlx_sql_exec()
+    SESS_CHECK( res = mysqlx_sql_exec(get_session(), queries[i], MYSQLX_NULL_TERMINATED));
+  }
+
+  // Send the wron query
+  EXPECT_EQ(NULL, mysqlx_sql_exec(get_session(), "wrong query", MYSQLX_NULL_TERMINATED));
+  printf("\n Expected error: %s", mysqlx_error_message(mysqlx_session_error(get_session())));
+
+  SESS_CHECK( res = mysqlx_sql_exec_param(get_session(),
+    "INSERT INTO cc_crud_test.crud_basic (id, vctext) VALUES (?, ?), (?, ?)",
+    MYSQLX_NULL_TERMINATED,
+    PARAM_UINT(uval[0]),
+    PARAM_STRING(str_val[0]),
+    PARAM_UINT(uval[1]),
+    PARAM_STRING(str_val[1]),
+    PARAM_END));
+
+  SESS_CHECK( res = mysqlx_table_select_exec(get_session(), "cc_crud_test",
+                    "crud_basic", "(id > 50) AND (vctext LIKE '%sample')"));
+
+  while((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t val = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &val));
+    EXPECT_EQ(uval[1], val);
+    buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, buf, &buflen));
+    EXPECT_STREQ(str_val[1], buf);
+  }
+
+  SESS_CHECK( res = mysqlx_table_select_exec_limit(get_session(), "cc_crud_test",
+    "crud_basic", NULL, 100, 0, "id", SORT_ORDER_DESC, PARAM_END));
+
+  i = 0;
+  int rows = 2;
+  while((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t val = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &val));
+    EXPECT_EQ(uval[rows-i-1], val);
+    buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, buf, &buflen));
+    EXPECT_STREQ(str_val[rows-i-1], buf);
+    ++i;
+  }
+
+  SESS_CHECK( res = mysqlx_table_insert_exec(get_session(),
+    "cc_crud_test", "crud_basic",
+    "vctext", PARAM_STRING(str_val[2]),
+    "id", PARAM_UINT(uval[2]), PARAM_END));
+
+  SESS_CHECK( res = mysqlx_table_select_exec(get_session(), "cc_crud_test",
+                    "crud_basic", "id = 40"));
+
+  while((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t val = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &val));
+    EXPECT_EQ(uval[2], val);
+    buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, buf, &buflen));
+    EXPECT_STREQ(str_val[2], buf);
+  }
+
+  SESS_CHECK( res = mysqlx_table_update_exec(get_session(),
+    "cc_crud_test", "crud_basic", "id = 40",
+    "vctext", PARAM_STRING("aaa"),
+    "id", PARAM_UINT(111), PARAM_END));
+
+  SESS_CHECK( res = mysqlx_table_select_exec(get_session(), "cc_crud_test",
+                    "crud_basic", "id = 111"));
+
+  while((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t val = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &val));
+    EXPECT_EQ(111, val);
+    buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, buf, &buflen));
+    EXPECT_STREQ("aaa", buf);
+  }
+
+  SESS_CHECK( res = mysqlx_table_delete_exec(get_session(),
+    "cc_crud_test", "crud_basic", "id = 111"));
+
+  SESS_CHECK( res = mysqlx_table_select_exec(get_session(), "cc_crud_test",
+                    "crud_basic", "id = 111"));
+  EXPECT_EQ(NULL, mysqlx_row_fetch_one(res));
+}
+
+TEST_F(xapi, list_functions)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_RESULT *res;
+  MYSQLX_ROW *row;
+  char buf[256];
+  size_t buflen, rownum = 0;
+  int col_num = 0;
+  int i = 0;
+
+  AUTHENTICATE();
+
+  for (i = 0; i < 2; i++)
+  {
+    exec_sql(queries[i]);
+  }
+
+  SESS_CHECK( res = mysqlx_get_schemas(get_session(), "cc_crud_te%"));
+  col_num = mysqlx_column_get_count(res);
+  EXPECT_EQ(col_num, 1);
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, buf, &buflen));
+    EXPECT_STREQ("cc_crud_test", buf);
+  }
+
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(get_session(), "cc_crud_test", "collection_1"));
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(get_session(), "cc_crud_test", "collection_2"));
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(get_session(), "cc_crud_test", "collection_3"));
+
+  exec_sql("CREATE TABLE cc_crud_test.tab_1 (id int)");
+  exec_sql("CREATE TABLE cc_crud_test.tab_2 (id int)");
+  exec_sql("CREATE TABLE cc_crud_test.tab_3 (id int)");
+
+  exec_sql("CREATE VIEW cc_crud_test.view_1 AS SELECT * FROM cc_crud_test.tab_1");
+  exec_sql("CREATE VIEW cc_crud_test.view_2 AS SELECT * FROM cc_crud_test.tab_2");
+  exec_sql("CREATE VIEW cc_crud_test.view_3 AS SELECT * FROM cc_crud_test.tab_3");
+
+  // Get tables only
+  SESS_CHECK( res = mysqlx_get_tables(get_session(),
+    "cc_crud_test", "%", 0));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_store_result(res, &rownum));
+
+  col_num = mysqlx_column_get_count(res);
+  EXPECT_EQ(col_num, 2);
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, buf, &buflen));
+    EXPECT_TRUE(strstr(buf, "tab_") != NULL);
+    EXPECT_EQ(NULL, strstr(buf, "view_"));
+    printf("\n [%s]", buf);
+    buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, buf, &buflen));
+    printf(" [%s]", buf);
+  }
+
+  // Get tables and views
+  SESS_CHECK( res = mysqlx_get_tables(get_session(),
+    "cc_crud_test", "%", 1));
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, buf, &buflen));
+    EXPECT_TRUE(strstr(buf, "tab_") != NULL || strstr(buf, "view_") != NULL);
+    printf("\n [%s]", buf);
+    buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, buf, &buflen));
+    printf(" [%s]", buf);
+  }
+
+  // Get collections
+  SESS_CHECK( res = mysqlx_get_collections(get_session(), "cc_crud_test", "col%"));
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, buf, &buflen));
+    EXPECT_TRUE(strstr(buf, "collection_") != NULL);
+    printf("\n [%s]", buf);
+    buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, buf, &buflen));
+    printf(" [%s]", buf);
+  }
+}
+
+TEST_F(xapi, one_call_collection_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  MYSQLX_RESULT *res;
+  const char * json_string = NULL;
+  int i = 0, j = 0;
+  size_t json_len = 0;
+  char json_buf[2][1024] = { "", "" };
+  const char *new_str_val = "New string value";
+
+  const char *json_add[2][4] = {
+    { "a_key", "327", "b_key", "Text value" },
+    { "a_key", "320", "b_key", "Another text value" }
+  };
+
+  AUTHENTICATE();
+
+  mysqlx_schema_create(get_session(), "cc_crud_test");
+
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(get_session(), "cc_crud_test",
+                                                "collection_exec"));
+
+  for (i = 0; i < 2; ++i)
+    sprintf(json_buf[i], "{\"%s\": %s, \"%s\": \"%s\"}", json_add[i][0],
+            json_add[i][1], json_add[i][2], json_add[i][3]);
+
+  SESS_CHECK(res = mysqlx_collection_add_exec(get_session(), "cc_crud_test",
+             "collection_exec", json_buf[0], json_buf[1], PARAM_END));
+
+  SESS_CHECK(res = mysqlx_collection_find_exec(get_session(), "cc_crud_test",
+                                                "collection_exec",
+                                                "a_key = 327"));
+
+  i = 0;
+  while ((json_string = mysqlx_json_fetch_one(res, &json_len)) != NULL)
+  {
+    if (json_string)
+      printf("\n[json: %s]", json_string);
+
+    for (j = 0; j < 4; ++j)
+      EXPECT_TRUE(strstr(json_string, json_add[0][j]) != NULL);
+    ++i;
+  }
+
+  EXPECT_EQ(1, i);
+
+  SESS_CHECK(res = mysqlx_collection_modify_set_exec(get_session(), "cc_crud_test",
+                                                "collection_exec", "a_key = 327",
+                                                "c_key", PARAM_EXPR("a_key + 100"),
+                                                "b_key", PARAM_STRING(new_str_val),
+                                                PARAM_END));
+
+  SESS_CHECK(res = mysqlx_collection_modify_unset_exec(get_session(), "cc_crud_test",
+                                                "collection_exec",
+                                                "a_key = 327",
+                                                "a_key", PARAM_END));
+
+  SESS_CHECK(res = mysqlx_collection_find_exec(get_session(), "cc_crud_test",
+                                                "collection_exec",
+                                                "c_key = 427"));
+
+  while ((json_string = mysqlx_json_fetch_one(res, &json_len)) != NULL)
+  {
+    if (json_string)
+      printf("\n[json: %s]", json_string);
+
+    EXPECT_TRUE(strstr(json_string, "c_key") != NULL);
+    EXPECT_TRUE(strstr(json_string, "427") != NULL);
+    EXPECT_TRUE(strstr(json_string, new_str_val) != NULL);
+    EXPECT_TRUE(strstr(json_string, "a_key") == NULL); // it is unset
+    ++i;
+  }
+
+  // remove one document
+  SESS_CHECK(res = mysqlx_collection_remove_exec(get_session(), "cc_crud_test",
+                                                "collection_exec", "a_key = 320"));
+
+  SESS_CHECK(res = mysqlx_collection_find_exec(get_session(), "cc_crud_test",
+                                                "collection_exec",
+                                                "a_key = 320"));
+  EXPECT_EQ(NULL, mysqlx_json_fetch_one(res, &json_len));
+
+  SESS_CHECK(res = mysqlx_collection_remove_exec(get_session(), "cc_crud_test",
+                                                "collection_exec", ""));
+
+  SESS_CHECK(res = mysqlx_collection_find_exec(get_session(), "cc_crud_test",
+                                                "collection_exec", ""));
+  EXPECT_EQ(NULL, mysqlx_json_fetch_one(res, &json_len));
+
+}

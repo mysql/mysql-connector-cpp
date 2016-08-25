@@ -1,4 +1,4 @@
-# Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/C++ is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -20,34 +20,40 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-
 #
-# MySQL Connector/C++ Public Headers
-#
-# see headers.cmake for explanations how project's public
-# headers are declared and processed.
+#  DevAPI Implementation
 #
 
-INCLUDE(headers)
-
 #
-# Headers require C++11 compiler. Set appropriate option
-# for gcc/clang compilers.
+# Enable C++11
 #
 
-if(NOT WIN32)
-  set(HEADER_CHECK_OPTIONS "-std=c++11")
+if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  # Use C++11 also for CHECK_CXX_SOURCE_COMPILES()
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
 endif()
 
-SETUP_HEADERS(${CMAKE_CURRENT_SOURCE_DIR})
 
-SET(headers mysql_xapi.h mysql_devapi.h)
+include_directories("${WITH_UUID}/include")
 
-ADD_HEADERS_DIR(devapi)
-ADD_HEADERS(${headers})
-ADD_HEADER_CHECKS()
+ADD_LIBRARY(devapi OBJECT
+  session.cc
+  result.cc
+  document.cc
+  collection_crud.cc
+  table_crud.cc
+)
 
-ADD_HEADERS_TARGET()
+lib_interface_link_libraries(devapi cdk)
 
-INSTALL(FILES ${headers} DESTINATION include)
+if(CMAKE_COMPILER_IS_GNUCXX)
+  target_compile_options(devapi PRIVATE -Wall -Wextra)
 
+  # Required because of possible exception-related GCC bug.
+  # (observed in GCC 4.8.4)
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O1")
+  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O1")
+endif()
+
+add_subdirectory(tests)

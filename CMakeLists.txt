@@ -80,17 +80,6 @@ INCLUDE(compiler_features)
 SET(CMAKE_CXX_EXTENSIONS no)
 
 #
-# Globally enable C++11
-#
-
-if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-  # Use C++11 also for CHECK_CXX_SOURCE_COMPILES()
-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
-endif()
-
-
-#
 # If Clang is used and deployment target is not specified
 # with MACOSX_DEPLOYMENT_TARGET environment variable, make
 # sure that clang's native implementation of C++ runtime
@@ -185,6 +174,15 @@ if(THROW_AS_ASSERT)
   add_definitions(-DTHROW_AS_ASSERT)
 endif()
 
+#
+# We use UUID generator from common sub-module.
+#
+
+set(WITH_UUID "${PROJECT_SOURCE_DIR}/cdk/extra/uuid")
+
+if(NOT EXISTS "${WITH_UUID}/src/CMakeLists.txt")
+  message(FATAL_ERROR "Could not find UUID generator sources at: ${WITH_UUID}")
+endif()
 
 #
 # Add Boost
@@ -197,6 +195,7 @@ SETUP_BOOST()
 #
 # CDK
 #
+
 SET(WITH_CDK_DOC 0)
 OPTION(WITH_CDK_TESTS "cdk tests" OFF)
 ADD_SUBDIRECTORY(cdk)
@@ -249,10 +248,13 @@ endforeach(LANG)
 #
 
 ADD_SUBDIRECTORY(doc)
-ADD_SUBDIRECTORY(connector)
+ADD_SUBDIRECTORY(xapi)
+ADD_SUBDIRECTORY(devapi)
+
 
 #
-#  Target which builds the final connector library.
+#  Target which builds the final connector library
+#  ===============================================
 #
 #  TODO: debug/non-debug variant
 #  TODO: interface options for libconcpp target
@@ -274,10 +276,21 @@ if(WITH_SSL STREQUAL "bundled")
   list(APPEND libconcpp_libs yassl taocrypt)
 endif()
 
+# Disable warnings in code which is not ours.
+
+if(MSVC)
+  set_source_files_properties(${WITH_UUID}/src/uuid_gen.cc
+    PROPERTIES COMPILE_FLAGS "/wd4244 /wd4311 /wd4302"
+  )
+endif()
+
 add_library_ex(libconcpp STATIC
-    OBJECTS connector
+    ${WITH_UUID}/src/uuid_gen.cc
+    OBJECTS devapi xapi
     LIBS    ${libconcpp_libs}
 )
+
+target_include_directories(libconcpp PRIVATE "${WITH_UUID}/include")
 
 set_property(TARGET libconcpp PROPERTY OUTPUT_NAME ${LIB_NAME_STATIC})
 message("Static library name: ${LIB_NAME_STATIC}")
@@ -322,6 +335,16 @@ INSTALL(TARGETS libconcpp
 # =====
 #
 
+#
+# Enable C++11 for code that can use DevAPI
+#
+
+if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  # Use C++11 also for CHECK_CXX_SOURCE_COMPILES()
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
+endif()
+
 IF (WITH_TESTS)
   # Unit tests declared with ADD_NG_TEST() (see cdk/cmake/testing.cmake)
   ADD_TEST_TARGET()
@@ -337,7 +360,7 @@ ENDIF (WITH_TESTS)
 
 ADD_EXECUTABLE(try try.cc)
 TARGET_LINK_LIBRARIES(try libconcpp)
-SET_INTERFACE_OPTIONS(try connector)
+SET_INTERFACE_OPTIONS(try devapi)
 #  ADD_GCOV(try)
 
 #

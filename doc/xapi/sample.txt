@@ -1,0 +1,195 @@
+Connector/C code sample  {#sample}
+========================================
+
+@todo Cross-reference links for classes and methods.
+
+The following Connector/C test connects to MySQL X-plugin
+loaded into MySQL 5.7 Server, creates a table, adds a few
+rows into it using different ways such as plain SQL with parameters
+and CRUD INSERT.
+Next, the code reads the table rows and displays the result.
+
+See @ref build for instructions on how to build the sample code.
+
+@dontinclude sample.c
+
+Code which uses Connector/C should include the `mysqlx.h` header.
+
+@skipline mysqlx.h
+
+Checking for errors is an essential part of any program, but
+in this sample code it can take too much space, therefore we introduce
+the convenience macros that check for CRUD errors, result errors
+and general errors:
+
+@skipline Error processing
+@until _WIN32
+
+For simplicity reasons the connection credentials are hard-coded:
+@skipline host
+@until port
+
+On the connection stage there is a possibility when session could not be
+established. In that case the error message is returned into a pre-allocated
+buffer. Error code is used for obtaining the error code.
+@skipline conn_error
+@until conn_err_code
+
+Start with creating a session handler. As mentioned above the errors are
+returned into the output parameters of mysqlx_get_session_s() function.
+
+@skipline Connect and create
+@until }
+
+Once created, the session is ready to be used. If the session cannot be
+established the program prints the error and exits.
+
+Use the session to create a plain SQL CRUD handler:
+@note If a query is a null-terminated string the query length parameter can
+      be MYSQLX_NULL_TERMINATED, which directs the function to determine the
+      query string length using its own means.
+   
+@skipline Drop
+@until MYSQLX_NULL_TERMINATED
+
+Check the operation result:
+
+@skipline CRUD_CHECK
+
+At this stage the CRUD has been only created, but not yet executed.
+Execute the CRUD and check the result:
+
+@skipline mysqlx_crud_execute
+@until RESULT_CHECK
+
+In a similar fashion create a new table:
+
+@skipline Create a test table
+@until RESULT_CHECK
+
+The plain SQL queries executed before did not have any parameters.
+Next thing to do is to execute a plain INSERT with parameters ('?' symbols
+markers will be replaced by the actual parameter values later):
+
+@skipline Do insert
+@until CRUD_CHECK
+
+The parameter values for the above query are provided through calling
+mysqlx_crud_bind() function call. Parameters list consists of pairs <type, value>.
+The variable parameters functions in C do not have the means to know the
+exact number of given parameters on their own. Therefore, it is
+the caller's responsibility to put PARAM_END as the last parameter and
+in this way mark the end of the variable parameters list. Failure to do
+so cannot be detected at the build time, but it will most likely result
+in an abnormal program termination.
+
+In order to be able to correctly recognize the native parameter type
+in the parameter list each parameter must carry the type information.
+This is done using PARAM_XXTYPEXX() macros. It is important to use the
+correct macro for each type such as PARAM_DOUBLE(v_double) can only be
+used if v_double is declared as a double type variable or
+PARAM_STRING(v_str) can only be used on v_str declared as char *.
+
+@skipline Provide
+@until RESULT_CHECK
+
+@note The type identifier of the parameter must correspond to the actual C type
+      of the value. Otherwise the parameters stack might be corrupted.
+      For instance MYSQLX_TYPE_SINT indicates that the next parameter will
+      have the type of signed 64-bit integer (in this case v_sint declared as
+      int64_t).
+
+For the purpose of demonstration we will insert the next row using a specialized
+function. First, create a CRUD INSERT operation as follows:
+
+@skipline mysqlx_table_insert_new
+@until );
+
+Next step is to provide the row values using mysqlx_set_insert_row() function,
+which can be called multiple times on the same CRUD operation before the
+operation is executed. In this way the multi-row insert will be performed.
+
+In our example we will do a single-row insert. Same as in case of mysqlx_crud_bind()
+the row values are specified as <type, value> pairs and the list of function
+parameters is terminated by PARAM_END:
+
+@skipline Change
+@until RESULT_CHECK
+
+After the inserts are finished the code will read the rows. To do so it creates
+the CRUD SELECT operation, which is executed later:
+
+@skipline Read the rows
+@until CRUD_CHECK
+
+Add WHERE and LIMIT clauses to our SELECT:
+
+@skipline Add WHERE
+@until IS_OK
+
+@skipline Limit
+@until IS_OK
+
+The CRUD is ready to be executed:
+
+@skipline mysqlx_crud_execute
+@until RESULT_CHECK
+
+Fetch rows one by one:
+
+@skipline while
+
+The actual data is read using mysqlx_get_<type>() functions. These functions
+return the values through the output parameters.
+
+Along with the data the code can get metadata such as the column names.
+In this example we just print the column name returned by mysqlx_column_get_name():
+ 
+@skipline {
+@until }
+
+Close the session and implicitly free all handles associated with the session (results, rows, etc):
+
+@skipline mysqlx_session_close
+
+The complete code of the example is presented below:
+
+@include sample.c
+
+A sample output produced by this code:
+
+~~~~~~~
+Connected...
+Table created...
+Rows inserted...
+
+Reading Rows:
+Row # 1: [sint: -17] [uint: 101] [flv: 3.310000][dbv: 170000000.000000][strv: just some text [15 bytes]]
+Row # 2: [sint: -232] [uint: 789] [flv: 99.339996][dbv: 0.000028][strv: some more text [15 bytes]]
+Session closed
+~~~~~~~
+
+
+<!--
+  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+
+  The MySQL Connector/C is licensed under the terms of the GPLv2
+  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+  MySQL Connectors. There are special exceptions to the terms and
+  conditions of the GPLv2 as it is applied to this software, see the
+  FLOSS License Exception
+  <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published
+  by the Free Software Foundation; version 2 of the License.
+
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+  for more details.
+
+  You should have received a copy of the GNU General Public License along
+  with this program; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+-->

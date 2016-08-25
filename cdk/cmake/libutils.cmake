@@ -284,7 +284,7 @@ function(merge_static_libraries TARGET)
     # The POST_BUILD action on the merged library target copies merged
     # libraries to the predefined location and invokes the merge script.
 
-    message("- copy libs: ${copy_libs}")
+    #message("- copy libs: ${copy_libs}")
 
     add_custom_command(TARGET ${TARGET} POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E remove_directory ${mergedir}

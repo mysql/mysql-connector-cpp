@@ -1,0 +1,124 @@
+Connector/C concepts and overview {#concept}
+========================================
+
+The new Connector/C 7.0 offers the new MYSQLX API oriented to using the
+features of the X-protocol.
+
+One of the essential concepts of using Connector/C 7.0 is CRUD
+(CREATE-READ-UPDATE-DELETE). After a session connection is established the
+user code should initiate a CRUD operation in order to perform a database
+operation.
+
+CRUD operations can work with two major types of database objects:
+
+ - Tables that support SELECT, INSERT, UPDATE and DELETE
+ - Collections that support FIND, ADD, UPDATE and REMOVE
+
+In addition to the above operations the user code can execute plain SQL as
+a special type of CRUD operation, which is not limited to DML queries, but
+can also be any valid DDL (CREATE, ALTER, DROP, etc), DCL (GRANT, REVOKE),
+TCL (COMMIT, ROLLBACK) etc.
+
+Unlike the classic C API, which operates with the MYSQL* connection handler
+the MYSQLX API uses MYSQLX_CRUD* handler created for each specific operation.
+Also, initiating the CRUD operation does not actually execute it.
+
+Executing CRUD operations is done in the following steps:
+
+  1. Create a new MYSQLX_CRUD handler by initiating a CRUD operation
+
+  2. (Optional) Add data for INSERT/ADD types of CRUD operations
+
+  3. (Optional) Add clauses (depending on the operation type) such as
+     WHERE, ORDER BY, LIMIT, HAVINT etc.
+
+  4. (Optional) Bind parameter values
+
+  5. Execute the CRUD operation
+
+Only steps 1 and 5 are required for each CRUD operation.
+Steps 2, 3, and 4 can be repeated more than once depending on the type of
+CRUD. For instance, the user code can add multiple rows of data one by
+one on step 2.
+
+After a CRUD operation is executed the user code can get metadata containing
+the column types, names, flags etc. and start reading the data.
+
+The data result-set(s) can be buffered (in a similar way to C API
+mysql_store_result() function).
+
+Getting the actual data from the result is done differently from C API where
+the MYSQL_ROW structure can be read directly and the data is basically character.
+
+The MYSQLX API return the typed data that corresponds to the data type in
+the database. Instead of the character data in classic C API the MYSQLX API
+functions provide the native types results such as:
+
+ - Unsigned 64-bit integer number
+ - Signed 64-bit integer number
+ - Float number
+ - Double precision float number
+ - Bytes (BLOB, String etc)
+
+NOTE: It is important to call the right function for the desired type.
+      Otherwise the data might be corrupted when converting from protocol
+      into the native representation.
+
+Many functions in MYSQLX API have a variable parameters list allowing to
+provide more data using just one function call instead of doing several
+calls of the same function with fixed parameters.
+
+A good illustration of this approach would be a situation when the user
+code is going to execute an SQL query with any number of parameters inside
+the query string marked with '?' symbols.
+The function mysqlx_sql_bind() can bind the corresponding values to
+all parameters in just one call.
+
+For example:
+
+  mysqlx_sql_bind(crud, PARAM_SINT(v_sint),
+                        PARAM_UINT(v_uint), 
+                        PARAM_FLOAT(v_float),
+                        PARAM_DOUBLE(v_double),
+                        PARAM_STRING(v_str),
+                        PARAM_END);
+                        
+There are several things to keep in mind:
+
+ * In order to be able to correctly recognize the native parameter type
+   in the parameter list each parameter must carry the type information.
+   This is done using PARAM_XXTYPEXX() macros. It is important to use the
+   correct macro for each type such as PARAM_DOUBLE(v_double) can only be
+   used if v_double is declared as a double type variable or
+   PARAM_STRING(v_str) can only be used on v_str declared as char *.
+   
+ * The variable parameters functions in C do not have the means to know the
+   exact number of given parameters on their own. Therefore, it is
+   the caller's responsibility to put PARAM_END as the last parameter and
+   in this way mark the end of the variable parameters list. Failure to do
+   so cannot be detected at the build time, but it will most likely result
+   in an abnormal program termination.
+
+ <!--
+  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+
+  The MySQL Connector/C is licensed under the terms of the GPLv2
+  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+  MySQL Connectors. There are special exceptions to the terms and
+  conditions of the GPLv2 as it is applied to this software, see the
+  FLOSS License Exception
+  <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published
+  by the Free Software Foundation; version 2 of the License.
+
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+  for more details.
+
+  You should have received a copy of the GNU General Public License along
+  with this program; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+-->

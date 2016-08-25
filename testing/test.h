@@ -30,7 +30,7 @@
 #endif
 
 //#include "cdk_test.h"
-#include <mysqlx.h>
+#include <mysql_devapi.h>
 #include <gtest/gtest.h>
 
 namespace mysqlx {
