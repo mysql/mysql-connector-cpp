@@ -33,13 +33,15 @@ endif()
 
 include_directories("${WITH_UUID}/include")
 
-add_subdirectory("${WITH_UUID}/src" uuid)
+#add_subdirectory("${WITH_UUID}/src" uuid)
 
 #
 # Disable warnings in code which is not ours.
 #
 if(MSVC)
-target_compile_options(uuid_gen PRIVATE /wd4244 /wd4311 /wd4302)
+  set_source_files_properties(${WITH_UUID}/src/uuid_gen.cc
+    PROPERTIES COMPILE_FLAGS "/wd4244 /wd4311 /wd4302"
+  )
 endif()
 
 
@@ -47,16 +49,16 @@ endif()
 #  Connector code
 #
 
-ADD_LIBRARY(connector STATIC
+ADD_LIBRARY(connector OBJECT
   session.cc
   result.cc
   document.cc
   collection_crud.cc
   table_crud.cc
+  ${WITH_UUID}/src/uuid_gen.cc
 )
 
-ADD_CDK(connector)
-target_link_libraries(connector uuid_gen)
+lib_interface_link_libraries(connector cdk)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
   target_compile_options(connector PRIVATE -Wall -Wextra)

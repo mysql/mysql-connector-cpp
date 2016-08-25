@@ -23,6 +23,7 @@
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.11)
 CMAKE_POLICY(VERSION 2.8.11)
+cmake_policy(SET CMP0022 NEW)
 
 #
 # Prevent cmake from setting its default value of CMAKE_INSTALL_PREFIX
@@ -64,6 +65,7 @@ LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cdk/cmake)
 
+include(libutils)
 
 #
 # Compiler settings
@@ -209,7 +211,7 @@ INCLUDE(testing)
 SETUP_TESTING()
 
 ADD_TEST_INCLUDES(${PROJECT_SOURCE_DIR}/testing)
-ADD_TEST_LIBRARIES(connector)
+ADD_TEST_LIBRARIES(libconcpp)
 
 #
 # Project's public headers
@@ -257,20 +259,28 @@ ADD_SUBDIRECTORY(connector)
 #  TODO: restrict exported symbols
 #
 
-INCLUDE(libutil)
-
 # Pick output library name
 
 set(LIB_NAME_STATIC "${LIB_NAME_BASE}-static")
 if(WIN32 AND STATIC_MSVCRT)
   set(LIB_NAME_STATIC "${LIB_NAME_STATIC}-mt")
 endif()
-message("Static library name: ${LIB_NAME_STATIC}")
 
 # Generate the main connector library.
 
-MERGE_STATIC_LIBS(libconcpp "${LIB_NAME_STATIC}"
-                  "connector")
+set(libconcpp_libs cdk protobuf-lite)
+
+if(WITH_SSL STREQUAL "bundled")
+  list(APPEND libconcpp_libs yassl taocrypt)
+endif()
+
+add_library_ex(libconcpp STATIC
+    OBJECTS connector
+    LIBS    ${libconcpp_libs}
+)
+
+set_property(TARGET libconcpp PROPERTY OUTPUT_NAME ${LIB_NAME_STATIC})
+message("Static library name: ${LIB_NAME_STATIC}")
 
 # Pick install location for the main library
 
@@ -381,7 +391,7 @@ add_custom_target(link_test
     -D STATIC_MSVCRT=${STATIC_MSVCRT}
     ${PROJECT_SOURCE_DIR}/testapp
   COMMAND ${CMAKE_COMMAND} --build . --config $<CONFIGURATION>  --clean-first
-  DEPENDS libconcpp libconcpp-static
+  DEPENDS libconcpp
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/link_test
   VERBATIM
 )
