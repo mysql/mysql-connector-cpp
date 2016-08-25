@@ -85,15 +85,15 @@ SET(ProductURN "MSQZP-100-ZZZZ")
 
 #-----------------------------------------------------
 
-IF(EXISTS "${CMAKE_SOURCE_DIR}/../LICENSE.mysql")
+IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.mysql")
   SET(LIC_SHORT_NAME "LICENSE.txt")
   SET(LIC_NAME       "LICENSE.mysql.txt")
-  SET(LICENSE_FILE "${CMAKE_SOURCE_DIR}/../LICENSE.mysql")
+  SET(LICENSE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.mysql")
   SET(LICENSE_RTF  "${CMAKE_BINARY_DIR}/License.rtf")
 ELSE()
   SET(LIC_SHORT_NAME "COPYING.txt")
   SET(LIC_NAME       "COPYING.txt")
-  SET(LICENSE_FILE "${CMAKE_SOURCE_DIR}/../COPYING")
+  SET(LICENSE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../COPYING")
   SET(LICENSE_RTF  "${CMAKE_BINARY_DIR}/License.rtf")
 ENDIF()
 FILE(READ ${LICENSE_FILE} CONTENTS)
@@ -106,7 +106,7 @@ FILE(APPEND "${LICENSE_RTF}" "\n}\n")
 
 #-----------------------------------------------------
 
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/mysql-conncpp-msi-template.xml.in
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/mysql-conncpp-msi-template.xml.in
                ${CMAKE_BINARY_DIR}/mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}.xml @ONLY)
 
 MESSAGE(STATUS "${WIXOUT}")
@@ -119,18 +119,18 @@ SET(WIXOBJ2 ${CMAKE_BINARY_DIR}/mysql-conncpp-msi-template.${CONNECTOR_PLATFORM}
 ADD_CUSTOM_COMMAND(OUTPUT "${WIXOBJ1}"
                    COMMAND "${CONNECTOR_WIX_DIR}/candle"
                      "-dBuildDir=${CMAKE_BINARY_DIR}"
-                     "-I${CMAKE_SOURCE_DIR}"
+                     "-I${CMAKE_CURRENT_SOURCE_DIR}"
                      -o "${WIXOBJ1}"
                      "${XML1}"
-                   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 ADD_CUSTOM_COMMAND(OUTPUT "${WIXOBJ2}"
                    COMMAND "${CONNECTOR_WIX_DIR}/candle"
                      "-dBuildDir=${CMAKE_BINARY_DIR}"
-                     "-I${CMAKE_SOURCE_DIR}"
+                     "-I${CMAKE_CURRENT_SOURCE_DIR}"
                      -o "${WIXOBJ2}"
                      "${XML2}"
-                   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 ADD_CUSTOM_COMMAND(OUTPUT "${CMAKE_BINARY_DIR}/${WIXOUT}.msi"
                    COMMAND "${CONNECTOR_WIX_DIR}/light"
@@ -140,7 +140,7 @@ ADD_CUSTOM_COMMAND(OUTPUT "${CMAKE_BINARY_DIR}/${WIXOUT}.msi"
                      "${CONNECTOR_WIX_DIR}/WixUI.wixlib"
                      "${CONNECTOR_WIX_DIR}/wixca.wixlib"
                      -loc "${CONNECTOR_WIX_DIR}/WixUI_en-us.wxl"
-                   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
                    DEPENDS "${WIXOBJ1}" "${WIXOBJ2}")
 
 ADD_CUSTOM_TARGET(MSI ALL DEPENDS "${CMAKE_BINARY_DIR}/${WIXOUT}.msi")

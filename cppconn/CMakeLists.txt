@@ -54,12 +54,12 @@ CHECK_FUNCTION_EXISTS(strtoumax HAVE_FUNCTION_STRTOUMAX)
 
 
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cm
-               ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+               ${CMAKE_BINARY_DIR}/cppconn/config.h)
 
 
 SET(MYSQLCPPCONN_INSTALL_HEADERS
 		build_config.h
-		${CMAKE_CURRENT_BINARY_DIR}/config.h
+		${CMAKE_BINARY_DIR}/cppcon/config.h
 		connection.h
 		datatype.h
 		driver.h
@@ -72,7 +72,7 @@ SET(MYSQLCPPCONN_INSTALL_HEADERS
 		statement.h
 		sqlstring.h
 		warning.h
-		${CMAKE_CURRENT_BINARY_DIR}/version_info.h
+		${CMAKE_BINARY_DIR}/cppcon/version_info.h
 		variant.h)
 
 INSTALL(FILES ${MYSQLCPPCONN_INSTALL_HEADERS} DESTINATION include/cppconn)
