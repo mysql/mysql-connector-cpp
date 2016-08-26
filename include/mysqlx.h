@@ -510,6 +510,7 @@ protected:
 
   class Impl;
   Impl  *m_impl;
+  bool m_master_session = true;
 
   void register_result(internal::BaseResult *result);
   void deregister_result(internal::BaseResult *result);
@@ -519,6 +520,16 @@ protected:
   struct Options;
 
   XSession_base(const Options&);
+
+  /*
+    This constructor constructs a child session of a parent session.
+  */
+  XSession_base(XSession_base*);
+
+  /*
+    This notification is sent from parent session when it is closed.
+  */
+  void session_closed() { if (!m_master_session) m_impl = NULL; }
 
 public:
 
@@ -674,6 +685,14 @@ public:
 
   void rollback();
 
+  /**
+    Closes current session.
+
+    After a session is closed, any call to other method will thow Error.
+  */
+
+  void close();
+
 
 public:
 
@@ -771,6 +790,12 @@ public:
     : XSession_base("localhost", port, user, pwd.c_str(), db)
   {}
 
+
+  /*
+    Get NodeSession to default shard
+  */
+
+  NodeSession bindToDefaultShard();
 };
 
 
@@ -785,6 +810,11 @@ class NodeSession
   : public XSession_base
 {
 public:
+
+
+  NodeSession(NodeSession &&other)
+    : XSession_base(&other)
+  {}
 
   /**
     NodeSession constructors accept the same parameters
@@ -842,6 +872,12 @@ public:
   SqlStatement& sql(const string &query);
 
 private:
+
+  NodeSession(XSession_base* parent)
+    : XSession_base(parent)
+  {}
+
+
 
   SqlStatement m_stmt;
 
