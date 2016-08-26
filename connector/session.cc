@@ -1074,8 +1074,10 @@ string::string(const std::string &other)
 {}
 
 string::string(const char *other)
-  : std::wstring(cdk::string(other))
-{}
+{
+  if (other)
+    *this = std::string(other);
+}
 
 string::operator std::string() const
 {

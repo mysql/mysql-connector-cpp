@@ -1244,7 +1244,8 @@ internal::BaseResult::BaseResult(XSession_base *sess,
 internal::BaseResult::~BaseResult()
 {
   try {
-    m_sess->deregister_result(this);
+    if (m_sess)
+      m_sess->deregister_result(this);
     if (m_owns_impl)
       delete m_impl;
   }
