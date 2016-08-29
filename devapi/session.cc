@@ -98,6 +98,8 @@ class XSession_base::Impl
   cdk::Session     m_sess;
   cdk::string      m_default_db;
 
+  std::set<XSession_base*> m_nodes;
+
   internal::BaseResult *m_current_result = NULL;
 
   Impl(endpoint::TCPIP &ep, XSession_base::Options &opt)
@@ -196,12 +198,18 @@ XSession_base::XSession_base(const std::string &host, unsigned port,
   CATCH_AND_WRAP
 }
 
+XSession_base::XSession_base(XSession_base* master)
+{
+  m_impl = master->m_impl;
+  m_impl->m_nodes.insert(this);
+  m_master_session = false;
+}
 
 XSession_base::~XSession_base()
 {
   try {
-    get_cdk_session().rollback();
-    delete m_impl;
+    if (m_impl)
+      close();
   }
   catch(...){}
 }
@@ -209,6 +217,9 @@ XSession_base::~XSession_base()
 
 void XSession_base::register_result(internal::BaseResult *result)
 {
+  if (!m_impl)
+    throw Error("Session closed");
+
   if (m_impl->m_current_result)
     m_impl->m_current_result->deregister_notify();
 
@@ -217,6 +228,9 @@ void XSession_base::register_result(internal::BaseResult *result)
 
 void XSession_base::deregister_result(internal::BaseResult *result)
 {
+  if (!m_impl)
+    throw Error("Session closed");
+
   if (m_impl->m_current_result == result)
     m_impl->m_current_result = NULL;
 }
@@ -224,6 +238,9 @@ void XSession_base::deregister_result(internal::BaseResult *result)
 
 cdk::Session& XSession_base::get_cdk_session()
 {
+  if (!m_impl)
+    throw Error("Session closed");
+
   return m_impl->m_sess;
 }
 
@@ -257,6 +274,43 @@ void XSession_base::rollback()
     get_cdk_session().rollback();
   }
   CATCH_AND_WRAP
+}
+
+
+void XSession_base::close()
+{
+  try {
+    if (m_master_session)
+    {
+      // Results should cache their data before deleting the implementation.
+      register_result(NULL);
+
+      //Notify NodeSession nodes that master is being removed.
+      for (auto node : m_impl->m_nodes)
+      {
+        node->session_closed();
+      }
+
+      get_cdk_session().rollback();
+
+      delete m_impl;
+    }
+    else if (m_impl)
+    {
+      // Remove this NodeSession from nodes list
+      m_impl->m_nodes.erase(this);
+    }
+
+    m_impl = NULL;
+
+  }
+  CATCH_AND_WRAP
+}
+
+
+NodeSession XSession::bindToDefaultShard()
+{
+  return this;
 }
 
 // ---------------------------------------------------------------------
@@ -1066,6 +1120,10 @@ SqlStatement& NodeSession::sql(const string &query)
 }
 
 
+
+
+
+
 // ---------------------------------------------------------------------
 
 
@@ -1074,8 +1132,10 @@ string::string(const std::string &other)
 {}
 
 string::string(const char *other)
-  : std::wstring(cdk::string(other))
-{}
+{
+  if (other)
+    *this = std::string(other);
+}
 
 string::operator std::string() const
 {

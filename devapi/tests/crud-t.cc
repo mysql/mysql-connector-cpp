@@ -1796,3 +1796,27 @@ TEST_F(Crud, cached_results)
 
 }
 
+TEST_F(Crud, add_empty)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("c1", true);
+
+  coll.remove().execute();
+
+  //Check bug when Result was created uninitialized
+  Result add;
+
+  //Adding Empty docs throws Error
+  EXPECT_THROW(add = coll.add(static_cast<wchar_t*>(NULL)).execute(),
+               mysqlx::Error);
+  EXPECT_THROW(add = coll.add(static_cast<char*>(NULL)).execute(),
+               mysqlx::Error);
+}

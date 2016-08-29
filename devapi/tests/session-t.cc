@@ -263,3 +263,90 @@ TEST_F(Sess, trx)
 
   cout << "Done!" << endl;
 }
+
+
+TEST_F(Sess, bind_node_session)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+   XSession *sess = new XSession(this);
+
+   sess->dropSchema("node_session");
+   Schema sch = sess->createSchema("node_session");
+
+   // Create Collection with data
+   sch.createCollection("coll1")
+       .add("{\"name\":\"foo\"}")
+       .add("{\"name\":\"bar\"}")
+       .add("{\"name\":\"baz\"}").execute();
+
+   {
+     // Get first NodeSession
+     NodeSession node= sess->bindToDefaultShard();
+
+     // Execute query to be checked later
+     SqlResult res = node.sql("select * from node_session.coll1").execute();
+
+     // Closing NodeSession
+     // Only affects this session, no changes on other nodes or master XSession
+     node.close();
+
+     // Expect throw Error() because session is closed
+     EXPECT_THROW(node.sql("select * from node_session.coll1")
+                  .execute(),
+                  mysqlx::Error);
+
+     {
+       // Get second NodeSession
+       NodeSession node2= sess->bindToDefaultShard();
+
+       // Execute query but doesn't retrieve results right away
+       SqlResult res2 = node2.sql("select * from node_session.coll1").execute();
+
+       //Close Session so other NodeSession obj are closed.
+       sess->close();
+
+       // Expect throw Error() because session is closed
+       EXPECT_THROW(node2.sql("select * from node_session.coll1")
+                                .execute(),
+                    mysqlx::Error);
+
+
+       // Delete Xsession, so other NodeSession obj are closed.
+       delete sess;
+
+       // Expect throw Error() because session is closed
+       EXPECT_THROW(node2.sql("select * from node_session.coll1")
+                                .execute(),
+                    mysqlx::Error);
+
+       // Results are available, because where cached when destructing XSession
+       EXPECT_EQ(3U, res2.count());
+
+
+       int i = 0;
+       for (auto row : res2)
+       {
+         std::cout << "Row " << i << ": "
+                    << static_cast<string>(row[1]) << std::endl;
+         ++i;
+       }
+
+       EXPECT_EQ(3U, i);
+     }
+
+     //Same here
+     EXPECT_EQ(3U, res.count());
+
+     unsigned i = 0;
+     for (auto row : res)
+     {
+       std::cout << "Row " << i << ": " << static_cast<string>(row[1]) << std::endl;
+       ++i;
+     }
+
+     EXPECT_EQ(3U, i);
+   }
+
+  cout << "Done!" << endl;
+}

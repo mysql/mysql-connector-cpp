@@ -99,7 +99,11 @@ public:
 
   string() {}
 
-  string(const wchar_t *other) : std::wstring(other) {}
+  string(const wchar_t *other)
+  {
+    if (other)
+      assign(other);
+  }
   string(const std::wstring &other) : std::wstring(other) {}
   string(std::wstring &&other) : std::wstring(std::move(other)) {}
 
