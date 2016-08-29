@@ -176,7 +176,6 @@ if(THROW_AS_ASSERT)
   add_definitions(-DTHROW_AS_ASSERT)
 endif()
 
-
 #
 # Add Boost
 #

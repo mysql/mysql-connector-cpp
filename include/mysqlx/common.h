@@ -25,7 +25,6 @@
 #ifndef MYSQLX_COMMON_H
 #define MYSQLX_COMMON_H
 
-
 #include <string>
 #include <stdexcept>
 #include <ostream>
