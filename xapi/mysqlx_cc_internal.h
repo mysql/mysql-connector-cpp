@@ -148,7 +148,7 @@ public:
 
   mysqlx_result_struct(mysqlx_stmt_t &parent_crud, cdk::Reply &reply);
 
-  ~mysqlx_result_struct()
+  virtual ~mysqlx_result_struct()
   {
     close_cursor();
     clear_rows();
