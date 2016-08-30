@@ -60,7 +60,9 @@ if(APPLE)
 else()
 
   # Otherwise we use ar to first unppack objects from all archives
-  # and then pack them back into a single static library
+  # and then pack them back into a single static library.
+
+  file(MAKE_DIRECTORY ${MERGELIBS_DIR}/objs)
 
   set(merge_objs)
 
@@ -81,31 +83,19 @@ else()
     string(REGEX MATCHALL "[^\n]+" objs ${objs})
 
     #
-    # To handle the case of library archive containing several objects with
-    # the same name we diligently extract objects one-by-one and rename each
-    # xxx.o to N.xxx.o where N is the occurence number (starting from 1)
+    # Extract all objects and rename them, making sure that the resuliting
+    # names will be unique across the output library. This is done by adding
+    # library name prefix to each object comming from that library.
     #
 
     file(MAKE_DIRECTORY ${MERGELIBS_DIR}/${lib}/objs)
 
-    # for object xxx, variable xxx_cnt holds the occurence number. Reset
-    # counters first.
-
-    foreach(obj ${objs})
-      set(${obj}_cnt 0)
-    endforeach()
-
     foreach(obj ${objs})
 
-      # increase occurence counter
-
-      math(EXPR ${obj}_cnt ${${obj}_cnt}+1)
-      #message("obj: ${obj} (${${obj}_cnt})")
-
-      # extract current occurence of the object ...
+      # extract object from the library ...
 
       execute_process(
-        COMMAND ar xN ${${obj}_cnt} ../lib.a ${obj}
+        COMMAND ar x ../lib.a ${obj}
         WORKING_DIRECTORY ${MERGELIBS_DIR}/${lib}/objs
       )
 
@@ -113,11 +103,11 @@ else()
 
       file(RENAME
         ${MERGELIBS_DIR}/${lib}/objs/${obj}
-        ${MERGELIBS_DIR}/${lib}/objs/${${obj}_cnt}.${obj}
+        ${MERGELIBS_DIR}/objs/${lib}_${obj}
       )
 
       list(APPEND merge_objs
-        ${MERGELIBS_DIR}/${lib}/objs/${${obj}_cnt}.${obj}
+        ${MERGELIBS_DIR}/objs/${lib}_${obj}
       )
 
     endforeach()

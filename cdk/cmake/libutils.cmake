@@ -90,6 +90,10 @@ function(add_library_ex TARGET)
     list(REMOVE_AT ARGN 0)
   endif()
 
+  #
+  #  Collect library sources, up to first OBJECTS or LIBS word
+  #
+
   while(1)
 
     if(arg STREQUAL "OBJECTS" OR arg STREQUAL "LIBS")
@@ -107,6 +111,10 @@ function(add_library_ex TARGET)
 
   endwhile()
 
+  #
+  #  Collect object libraries, if present
+  #
+
   if(arg STREQUAL "OBJECTS")
   while(ARGN)
 
@@ -123,6 +131,10 @@ function(add_library_ex TARGET)
   endwhile()
   endif()
 
+  #
+  #  Collect static libraries, if present
+  #
+
   if(arg STREQUAL "LIBS")
   while(ARGN)
 
@@ -135,14 +147,56 @@ function(add_library_ex TARGET)
   endwhile()
   endif()
 
-  foreach(obj ${objs})
-    list(APPEND srcs $<TARGET_OBJECTS:${obj}>)
-  endforeach()
+  #
+  # We use different technology for building static library
+  # from object libraries on Linux and on Windows or OSX.
+  #
+  # Because of the way we merge static libraries on Linux it is
+  # important that all object files archived in a static library
+  # have unique names. This might be not the case if we compose
+  # the resulting library from several cmake object libraries. Two
+  # different object libraries can have source file with the same
+  # name and then the corresponding object files will also have
+  # the same name. To go around this, instead of using object
+  # libraries we use regular static libraries and then merge them
+  # into output library. The static library merging infrastructure
+  # ensures that object names are unique (see merge_archives.cmake.in).
+  #
+  # This is needed only for Linux builds. On Windows and OSX we have
+  # tools for merging static libraries which can deal with non-unique
+  # object names inside single library. On these platforms we prefer
+  # directly using object libraries instead of merging output library
+  # from static libs.
+  #
+
+  #
+  # Add objects of each object library to the "sources" of the
+  # output library. This is not done only if building static library
+  # on Linux.
+  #
+
+  if(type STREQUAL "SHARED" OR MSVC OR APPLE)
+    foreach(obj ${objs})
+      list(APPEND srcs $<TARGET_OBJECTS:${obj}>)
+    endforeach()
+  endif()
 
   add_library(${TARGET} ${type} ${srcs})
   #message("- added ${type} library: ${TARGET}")
 
   foreach(obj ${objs})
+
+    # If we are building static library on Linux, then for each object
+    # library OOO a corresponding static library OOO_objs is created.
+    # Then these static libraries are added to the list of libraries
+    # that will be merged into the resulting library.
+
+    if(type STREQUAL "STATIC" AND NOT MSVC AND NOT APPLE)
+      message(- "adding static library: ${obj}_objs")
+      add_library(${obj}_objs STATIC $<TARGET_OBJECTS:${obj}>)
+      list(APPEND libs ${obj}_objs)
+      add_dependencies(${TARGET} ${obj}_objs)
+    endif()
 
     target_link_libraries(${TARGET}
       INTERFACE $<TARGET_PROPERTY:${obj},INTERFACE_LINK_LIBRARIES>
@@ -166,6 +220,7 @@ function(add_library_ex TARGET)
   endif()
 
 endfunction(add_library_ex)
+
 
 #
 # Infrastructure for merging static libraries
