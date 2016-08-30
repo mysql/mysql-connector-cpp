@@ -270,11 +270,13 @@ endif()
 
 # Generate the main connector library.
 
-set(libconcpp_libs cdk protobuf-lite)
+add_library_ex(libconcpp STATIC
+    ${WITH_UUID}/src/uuid_gen.cc
+    OBJECTS devapi xapi
+    LIBS    cdk
+)
 
-if(WITH_SSL STREQUAL "bundled")
-  list(APPEND libconcpp_libs yassl taocrypt)
-endif()
+target_include_directories(libconcpp PRIVATE "${WITH_UUID}/include")
 
 # Disable warnings in code which is not ours.
 
@@ -284,16 +286,10 @@ if(MSVC)
   )
 endif()
 
-add_library_ex(libconcpp STATIC
-    ${WITH_UUID}/src/uuid_gen.cc
-    OBJECTS devapi xapi
-    LIBS    cdk
-)
-
-target_include_directories(libconcpp PRIVATE "${WITH_UUID}/include")
 
 set_property(TARGET libconcpp PROPERTY OUTPUT_NAME ${LIB_NAME_STATIC})
 message("Static library name: ${LIB_NAME_STATIC}")
+
 
 # Pick install location for the main library
 

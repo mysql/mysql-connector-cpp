@@ -17,6 +17,25 @@
 
 include_directories("${WITH_UUID}/include")
 
+#
+# TODO: Fix XAPI code instead of disabling these warnings
+#
+
+set(warning_list)
+
+IF(WIN32)
+
+  list(APPEND warnings_list "/wd4244")
+  list(APPEND warnings_list "/wd4267")
+  list(APPEND warnings_list "/wd4127")
+  list(APPEND warnings_list "/wd4996")
+  list(APPEND warnings_list "/wd4702")
+
+ENDIF()
+
+string(REPLACE ";" " " warning_options "${warnings_list}")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${warning_options}")
+
 
 SET(_libmysqlx_cc_src
          crud.cc
@@ -29,7 +48,6 @@ SET(_libmysqlx_cc_src
 
 ADD_LIBRARY(xapi OBJECT ${_libmysqlx_cc_src})
 
-lib_interface_link_libraries(xapi cdk)
 
 ADD_SUBDIRECTORY(tests)
 
