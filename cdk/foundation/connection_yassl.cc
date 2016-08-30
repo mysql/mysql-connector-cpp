@@ -22,7 +22,10 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
+#include <mysql/cdk/foundation/common.h>
+PUSH_SYS_WARNINGS
 #include "../extra/yassl/include/openssl/ssl.h"
+POP_SYS_WARNINGS
 #include <mysql/cdk/protocol/mysqlx.h>
 #include <mysql/cdk/foundation/error.h>
 #include <mysql/cdk/foundation/connection_yassl.h>

@@ -60,6 +60,12 @@ class error_category_winsock : public error_category
   const char* name() const { return "winsock"; }
   std::string message(int) const;
 
+DIAGNOSTIC_PUSH
+#ifdef _MSC_VER
+  // 4702 = unreachable code
+  DISABLE_WARNING(4702)
+#endif // _MSC_VER
+
   error_condition default_error_condition(int code) const
   {
     switch (code)
@@ -99,8 +105,9 @@ class error_category_winsock : public error_category
         throw_error(code, winsock_error_category());
         return errc::no_error;  // suppress copile warnings
     }
-
   }
+
+DIAGNOSTIC_POP
 
   bool equivalent(int code, const error_condition &ec) const
   {
@@ -179,6 +186,12 @@ class error_category_resolve : public error_category
   const char* name() const { return "resolve"; }
   std::string message(int code) const;
 
+DIAGNOSTIC_PUSH
+#ifdef _MSC_VER
+  // 4702 = unreachable code
+  DISABLE_WARNING(4702)
+#endif // _MSC_VER
+
   error_condition default_error_condition(int code) const
   {
     switch (code)
@@ -215,6 +228,8 @@ class error_category_resolve : public error_category
         return errc::no_error;  // suppress compile warnings
     }
   }
+
+DIAGNOSTIC_POP
 
   bool equivalent(int code, const error_condition &ec) const
   {
@@ -460,6 +475,13 @@ addrinfo* addrinfo_from_string(const char* host_name, unsigned short port)
 }
 
 
+DIAGNOSTIC_PUSH
+
+#ifdef _MSC_VER
+  // 4189 = local variable is initialized but not referenced
+  DISABLE_WARNING(4189)
+#endif
+
 Socket connect(const char *host_name, unsigned short port)
 {
   Socket socket = NULL_SOCKET;
@@ -482,21 +504,12 @@ Socket connect(const char *host_name, unsigned short port)
     }
   }
 
-DIAGNOSTIC_PUSH
-
-#ifdef _MSC_VER
-  // 4189 = local variable is initialized but not referenced
-  DISABLE_WARNING(4189)
-#endif
-
   struct AddrInfoGuard
   {
     addrinfo* list;
     ~AddrInfoGuard() { freeaddrinfo(list); }
   }
   guard = { host_list };
-
-DIAGNOSTIC_POP
 
   // Connect to host.
   int connect_result = SOCKET_ERROR;
@@ -545,6 +558,7 @@ DIAGNOSTIC_POP
   return socket;
 }
 
+DIAGNOSTIC_POP
 
 Socket listen_and_accept(unsigned short port)
 {

@@ -320,7 +320,7 @@ bool TCPIP_base::is_closed() const
 
 unsigned int TCPIP_base::get_fd() const
 {
-  return get_base_impl().m_sock;
+  return static_cast<unsigned int>(get_base_impl().m_sock);
 }
 
 bool TCPIP_base::eos() const
@@ -350,6 +350,11 @@ void TCPIP_base::flush()
 }
 
 
+DIAGNOSTIC_PUSH
+#ifdef _MSC_VER
+  // 4702 = unreachable code
+  DISABLE_WARNING(4702)
+#endif // _MSC_VER
 
 cdk::foundation::error_condition error_category_io::default_error_condition(int errc) const
 {
@@ -368,6 +373,8 @@ cdk::foundation::error_condition error_category_io::default_error_condition(int 
   // use return statement to suppress compiler warning
   return errc::no_error;
 }
+
+DIAGNOSTIC_POP
 
 
 bool  error_category_io::equivalent(int code, const cdk::foundation::error_condition &ec) const
