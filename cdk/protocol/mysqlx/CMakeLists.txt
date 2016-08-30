@@ -29,7 +29,7 @@ ADD_CONFIG(HAVE_ENDIAN_H)
 check_include_file(sys/byteorder.h HAVE_BYTEORDER_H)  # on Solaris
 ADD_CONFIG(HAVE_BYTEORDER_H)
 
-option(DEBUG_PROTOBUF "Debug Protobuf messages (needs WITH_TESTS=1)" OFF)
+option(DEBUG_PROTOBUF "Debug Protobuf messages" OFF)
 mark_as_advanced(DEBUG_PROTOBUF)
 
 set(use_full_protobuf ${WITH_TESTS})
@@ -104,8 +104,11 @@ target_include_directories(${target_proto_mysqlx} PRIVATE
   ${PROTOBUF_INCLUDE_DIRS}
 )
 
-# TODO: protobuf-lite
-lib_interface_link_libraries(${target_proto_mysqlx} protobuf)
+if(PROTOBUF_LITE)
+  lib_interface_link_libraries(${target_proto_mysqlx} protobuf-lite)
+else()
+  lib_interface_link_libraries(${target_proto_mysqlx} protobuf)
+endif()
 
 # On UNIX protocol_mysqlx code uses pthread library
 if(UNIX)

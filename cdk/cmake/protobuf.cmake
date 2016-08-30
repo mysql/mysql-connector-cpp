@@ -19,11 +19,8 @@
 #  INCLUDE(protobuf)
 #  [USE_FULL_PROTOBUF()]
 #
-#  ADD_LIBRARY(target ...)
-#  ADD_PROTOBUF(target foo.proto bar.proto ...)
-#
-# This will create new library "target_pb" with compiled protobuf code. The original
-# target "target" will depend on this "target_pb" library.
+#  MYSQLX_PROTOBUF_GENERATE_CPP(SRCS HDRS <protobuf definitions>)
+#  ADD_LIBRARY(target ... ${SRCS})
 #
 
 #

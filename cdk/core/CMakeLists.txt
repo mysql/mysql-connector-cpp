@@ -30,6 +30,10 @@ INCLUDE_DIRECTORIES(${PROTOBUF_INCLUDE_DIR})
 
 set(cdk_libs protobuf-lite)
 
+if(NOT PROTOBUF_LITE)
+  list(APPEND cdk_libs protobuf)
+endif()
+
 if(WITH_SSL STREQUAL "bundled")
   list(APPEND cdk_libs yassl taocrypt)
 endif()
