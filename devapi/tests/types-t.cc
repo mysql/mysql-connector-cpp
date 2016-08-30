@@ -728,3 +728,41 @@ TEST_F(Types, geometry)
     EXPECT_EQ(Type::STRING, res.getColumn(0).getType());
   }
 }
+
+TEST_F(Types, int64_conversion)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Preparing test.int64_conversion..." << endl;
+
+  Value value(std::numeric_limits<int64_t>::max());
+
+  int64_t int64_v = value;
+
+  EXPECT_EQ(std::numeric_limits<int64_t>::max(), int64_v);
+
+  //should overflow
+  int int_v;
+  EXPECT_ANY_THROW(int_v = value);
+
+  //now with min value
+  value = std::numeric_limits<int64_t>::min();
+
+  int64_v = value;
+
+  EXPECT_EQ(std::numeric_limits<int64_t>::min(), int64_v);
+
+  EXPECT_ANY_THROW(int_v = value);
+
+  //Now using the uint64_t max.
+  value = std::numeric_limits<uint64_t>::max();
+
+  uint64_t uint64_v = value;
+
+  EXPECT_EQ(std::numeric_limits<uint64_t>::max(), uint64_v);
+
+  EXPECT_ANY_THROW(int64_v = value);
+
+  EXPECT_ANY_THROW(int_v = value);
+
+}

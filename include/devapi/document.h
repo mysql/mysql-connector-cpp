@@ -37,6 +37,9 @@
 #include <vector>
 #include <assert.h>
 
+#undef min
+#undef max
+
 namespace mysqlx {
 
 class Value;
@@ -290,8 +293,8 @@ public:
 
   operator int() const;
   operator unsigned() const;
-  explicit operator int64_t() const;
-  explicit operator uint64_t() const;
+  operator int64_t() const;
+  operator uint64_t() const;
   operator float() const;
   operator double() const;
   operator bool() const;
@@ -515,6 +518,8 @@ inline Value::operator int() const
 {
   int64_t val = (int64_t)*this;
   if (val > std::numeric_limits<int>::max())
+    throw Error("Numeric conversion overflow");
+  if (val < std::numeric_limits<int>::min())
     throw Error("Numeric conversion overflow");
 
   return (int) val;
