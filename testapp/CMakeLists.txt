@@ -176,6 +176,14 @@ IF(CMAKE_HOST_UNIX)
   TARGET_LINK_LIBRARIES(cpptest pthread)
 ENDIF()
 
+#
+# On Solaris we additionally need socket and nsl libraries.
+#
+
+if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
+  target_link_libraries(cpptest socket nsl)
+endif()
+
 # To use Connector/C++ 2.0 we must enable C++11
 
 if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
