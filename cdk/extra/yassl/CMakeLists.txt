@@ -60,6 +60,8 @@ TARGET_LINK_LIBRARIES(yassl taocrypt)
 
 IF(MSVC)
   TARGET_COMPILE_OPTIONS(yassl PRIVATE /wd4267 /wd4334)
+ELSE()
+  TARGET_COMPILE_OPTIONS(yassl PRIVATE -Wno-unused-but-set-variable)
 ENDIF()
 
 #if(WIN32)
