@@ -46,7 +46,7 @@
 #
 
 if(NOT DEFINED WITH_HEADER_CHECKS)
-  option(WITH_HEADER_CHECKS "Add Public header checks to the project" ON)
+  option(WITH_HEADER_CHECKS "Add Public header checks to the project" OFF)
 endif()
 
 #
