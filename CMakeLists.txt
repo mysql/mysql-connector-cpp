@@ -287,7 +287,7 @@ endif()
 add_library_ex(libconcpp STATIC
     ${WITH_UUID}/src/uuid_gen.cc
     OBJECTS devapi xapi
-    LIBS    ${libconcpp_libs}
+    LIBS    cdk
 )
 
 target_include_directories(libconcpp PRIVATE "${WITH_UUID}/include")

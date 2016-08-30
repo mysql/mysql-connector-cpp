@@ -28,12 +28,20 @@ ADD_SUBDIRECTORY(tests)
 # required by codec.cc
 INCLUDE_DIRECTORIES(${PROTOBUF_INCLUDE_DIR})
 
+set(cdk_libs protobuf-lite)
+
+if(WITH_SSL STREQUAL "bundled")
+  list(APPEND cdk_libs yassl taocrypt)
+endif()
+
 add_library_ex(cdk STATIC session.cc codec.cc
   OBJECTS
     ${target_mysqlx}
     ${target_proto_mysqlx}
     ${target_foundation}
     ${target_parser}
+  LIBS
+    ${cdk_libs}
 )
 
 #MESSAGE("cdk depends on: ${target_mysqlx} ${target_parser}")
