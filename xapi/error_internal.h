@@ -22,85 +22,92 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-class MYSQLX_EXCEPTION
+class Mysqlx_exception
 {
 public:
 
-  enum mysqlx_exception_type {
+  enum Mysqlx_exception_type {
     MYSQLX_EXCEPTION_INTERNAL, MYSQLX_EXCEPTION_EXTERNAL
   };
 
-  MYSQLX_EXCEPTION(mysqlx_exception_type t, uint32_t code, std::string message) :
+  Mysqlx_exception(Mysqlx_exception_type t, uint32_t code, std::string message) :
     m_type(t), m_code(code), m_message(message)
   {}
 
-  MYSQLX_EXCEPTION(std::string message) :
+  Mysqlx_exception(std::string message) :
     m_type(MYSQLX_EXCEPTION_INTERNAL), m_code(0), m_message(message)
   {}
 
   std::string message() const { return m_message; }
-  mysqlx_exception_type type() const { return m_type; }
+  Mysqlx_exception_type type() const { return m_type; }
   uint32_t code() const { return m_code; }
 
 private:
-  mysqlx_exception_type m_type;
+  Mysqlx_exception_type m_type;
   uint32_t m_code;
   std::string m_message;
 };
 
 
-typedef struct MYSQLX_ERROR_T
+typedef struct mysqlx_error_struct mysqlx_error_t;
+
+class Mysqlx_diag_base
+{
+public:
+  virtual mysqlx_error_t * get_error() = 0;
+};
+
+typedef struct mysqlx_error_struct : public Mysqlx_diag_base
 {
   std::string m_message;
   unsigned int m_error_num;
-  const cdk::Error* m_cdk_error;
   bool m_is_warning;
 
-  MYSQLX_ERROR_T() : m_error_num(0), m_cdk_error(NULL), m_is_warning(false)
+  mysqlx_error_struct() : m_error_num(0), m_is_warning(false)
   {}
 
-  MYSQLX_ERROR_T(const char *m, unsigned int n, bool is_warning = false) : m_cdk_error(NULL), m_is_warning(is_warning)
+  mysqlx_error_struct(const char *m, unsigned int n, bool is_warning = false) : m_is_warning(is_warning)
   {
     set(m, n);
   }
   
-  MYSQLX_ERROR_T(const cdk::Error* cdk_error, bool is_warning = false) : m_cdk_error(NULL), m_is_warning(is_warning)
+  mysqlx_error_struct(const cdk::Error* cdk_error, bool is_warning = false) : m_is_warning(is_warning)
   {
     set(cdk_error);
   }
 
-  MYSQLX_ERROR_T(const cdk::Error &cdk_error, bool is_warning = false) : m_cdk_error(NULL), m_is_warning(is_warning)
+  mysqlx_error_struct(const cdk::Error &cdk_error, bool is_warning = false) : m_is_warning(is_warning)
   {
     set(&cdk_error);
   }
 
-  void set(const MYSQLX_EXCEPTION &ex)
+  void set(const Mysqlx_exception &ex)
   {
     m_message = ex.message();
     m_error_num = ex.code();
-    if(m_cdk_error)
-      delete m_cdk_error;
-    m_cdk_error = NULL;
   }
 
   void set(const char *m, unsigned int n)
   {
     m_message = std::string(m);
     m_error_num = n;
-    if(m_cdk_error)
-      delete m_cdk_error;
-    m_cdk_error = NULL;
   }
 
   void set(const cdk::Error* cdk_error)
   {
-    m_message = "";
-    m_error_num = 0;
+    if (!cdk_error)
+    {
+      m_message = "";
+      m_error_num = 0;
+      return;
+    }
 
-    if(m_cdk_error)
-      delete m_cdk_error;
+    m_message = cdk_error->description();
 
-    m_cdk_error = (cdk_error ? cdk_error->clone() : NULL);
+    if (!m_is_warning || cdk_error->code().category() == cdk::server_error_category())
+      m_error_num = (unsigned int)cdk_error->code().value();
+    else
+      m_error_num = 0;
   }
 
   void reset()
@@ -110,30 +117,42 @@ typedef struct MYSQLX_ERROR_T
 
   unsigned int error_num()
   {
-    if (m_cdk_error)
-    {
-      if (!m_is_warning || m_cdk_error->code().category() == cdk::server_error_category())
-        m_error_num = (unsigned int)m_cdk_error->code().value();
-      else
-        m_error_num = 0;
-    }
-
     return m_error_num;
   }
 
   const char* message()
   {
-    if (m_cdk_error)
-    {
-      m_message = m_cdk_error->description();
-    }
     return m_message.size() ? m_message.data() : NULL;
   }
 
-  ~MYSQLX_ERROR_T()
+  mysqlx_error_t * get_error()
   {
-    if(m_cdk_error)
-      delete m_cdk_error;
+    if (message() || error_num())
+      return this;
+    return NULL;
   }
 
-} MYSQLX_ERROR;
+} mysqlx_error_t;
+
+class Mysqlx_diag : public Mysqlx_diag_base
+{
+  protected:
+  mysqlx_error_t m_error;
+
+  public:
+  virtual void set_diagnostic(const Mysqlx_exception &ex)
+  { m_error.set(ex); }
+
+  virtual void set_diagnostic(const char *msg, unsigned int num)
+  { m_error.set(msg, num); }
+
+  mysqlx_error_t * get_error()
+  {
+    if (m_error.message() || m_error.error_num())
+      return &m_error;
+    return NULL;
+  }
+
+  virtual ~Mysqlx_diag() {}
+};
+

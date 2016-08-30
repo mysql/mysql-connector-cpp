@@ -48,32 +48,10 @@
 using cdk::foundation::string;
 
 class Diag_info_list;
-typedef struct MYSQLX_SESSION_T MYSQLX_SESSION;
-typedef struct MYSQLX_SESSION_OPTIONS_T MYSQLX_SESSION_OPTIONS;
+typedef struct mysqlx_session_struct mysqlx_session_t;
+typedef struct mysqlx_session_options_struct mysqlx_session_options_t;
 
-/*
-  Implementation of Schema_ref needed for Db_obj_ref
-*/
-/*
-  TODO: uncomment and use it when Parameters are supported
-class Param_source : public cdk::Param_source
-{
-  struct Param_item
-  {
-    string name;
-    MYSQLX_DATA_TYPE type;
-  };
-
-  typedef std::vector<Param_item> param_vector;
-  param_vector m_list;
-
-public:
-  void process(cdk::api::Doc_processor<cdk::Value_processor> &prc) const;
-};
-*/
-
-
-typedef struct MYSQLX_RESULT_T
+typedef struct mysqlx_result_struct : public Mysqlx_diag
 {
   /*
     Class for processing the rows obtained from xplugin
@@ -81,7 +59,7 @@ typedef struct MYSQLX_RESULT_T
   class Row_processor;
   /*
     Class for buffering the column info. It ensures that the data
-    is accessible as long as MYSQLX_RESULT exists
+    is accessible as long as mysqlx_result_t exists
 
     The constructor creates the instance with empty info
     (when resized the container vector)
@@ -146,12 +124,12 @@ private:
   cdk::Cursor *m_cursor;
   cdk::Reply &m_reply;
   Row_processor *m_row_proc;
-  MYSQLX_CRUD &m_crud; // parent CRUD handler
-  //MYSQLX_ROW m_row;
+  mysqlx_stmt_t &m_crud; // parent CRUD handler
+  //mysqlx_row_t m_row;
   bool m_store_result;
-  std::vector<MYSQLX_ROW*> m_row_set;
-  std::vector<MYSQLX_DOC*> m_doc_set;
-  cdk::scoped_ptr<MYSQLX_ERROR> m_current_warning;
+  std::vector<mysqlx_row_t*> m_row_set;
+  std::vector<mysqlx_doc_t*> m_doc_set;
+  cdk::scoped_ptr<mysqlx_error_t> m_current_warning;
 
   // We need column names in UTF8
   std::vector<Column_info> m_col_info;
@@ -168,9 +146,9 @@ public:
                        COL_INFO_TYPE, COL_INFO_COLLATION, COL_INFO_LENGTH,
                        COL_INFO_PRECISION, COL_INFO_FLAGS };
 
-  MYSQLX_RESULT_T(MYSQLX_CRUD &parent_crud, cdk::Reply &reply);
+  mysqlx_result_struct(mysqlx_stmt_t &parent_crud, cdk::Reply &reply);
 
-  ~MYSQLX_RESULT_T()
+  ~mysqlx_result_struct()
   {
     close_cursor();
     clear_rows();
@@ -207,22 +185,18 @@ public:
 
   uint32_t get_warning_count();
 
-  MYSQLX_ERROR *get_next_warning();
+  mysqlx_error_t *get_next_warning();
 
   /*
     Read the next row from the result set and advance the cursor position
   */
-  MYSQLX_ROW *read_row();
+  mysqlx_row_t *read_row();
 
-  MYSQLX_DOC *read_doc();
+  mysqlx_doc_t *read_doc();
 
   const char * read_json(size_t *json_byte_size);
 
-  void set_diagnostic(const MYSQLX_EXCEPTION &ex);
-
-  void set_diagnostic(const char *msg, unsigned int num);
-
-  bool row_filter(MYSQLX_ROW *row);
+  bool row_filter(mysqlx_row_t *row);
 
   void set_table_list_mask(uint32_t mask);
 
@@ -241,9 +215,9 @@ public:
   const char *get_next_doc_id();
 
   // Return the CRUD operation, which produced the current result
-  MYSQLX_CRUD &get_crud() { return m_crud; }
+  mysqlx_stmt_t &get_crud() { return m_crud; }
 
-} MYSQLX_RESULT;
+} mysqlx_result_t;
 
 /*
   Client-side implementation of Limit
@@ -378,28 +352,43 @@ public:
 };
 
 
-typedef struct MYSQLX_SESSION_OPTIONS_T : public parser::URI_processor,
-                                          public cdk::ds::Options,
-                                          public cdk::ds::TCPIP
+typedef struct mysqlx_session_options_struct : public Mysqlx_diag,
+                                               public parser::URI_processor,
+                                               public cdk::ds::Options
 {
-public:
+private:
+  std::string m_host;
+  unsigned short m_port;
+  /* The pointer is used because TCPIP options
+     can only be set in the constructor */
+  cdk::ds::TCPIP *m_tcp;
 
-  MYSQLX_SESSION_OPTIONS_T()
+public:
+  mysqlx_session_options_struct() : m_tcp(NULL)
   {}
 
-  MYSQLX_SESSION_OPTIONS_T(const std::string host, unsigned short port,
+  mysqlx_session_options_struct(const std::string host, unsigned short port,
                            const std::string usr, const std::string *pwd,
                            const std::string *db) :
                            cdk::ds::Options(usr, pwd),
-                           cdk::ds::TCPIP(host, port ? port : DEFAULT_MYSQLX_PORT)
+                           m_host(host), m_port(port ? port : DEFAULT_MYSQLX_PORT),
+                            m_tcp(NULL)
   {
     if (db)
       set_database(*db);
   }
 
+  mysqlx_session_options_struct(const std::string &conn_str) : m_tcp(NULL)
+  {
+    parser::parse_conn_str(conn_str, *this);
+  }
 
-  MYSQLX_SESSION_OPTIONS_T(const std::string &conn_str)
-  { parser::parse_conn_str(conn_str, *this); }
+  cdk::ds::TCPIP &get_tcpip()
+  {
+    if (!m_tcp)
+      m_tcp = new cdk::ds::TCPIP(m_host, m_port);
+    return *m_tcp;
+  }
 
   // Implementing URI_Processor interface
   void user(const std::string &usr)
@@ -414,39 +403,121 @@ public:
 
   // Implementing URI_Processor interface
   void host(const std::string &host)
-  { m_host = host; }
+  {
+    m_host = host;
+  }
 
   // Implementing URI_Processor interface
   void port(unsigned short port)
-  { m_port = port; }
+  {
+    m_port = port;
+  }
 
   // Implementing URI_Processor interface
   void path(const std::string &path)
   { set_database(path); }
 
-} MYSQLX_SESSION_OPTIONS;
+  std::string get_host() { return m_host; }
+  unsigned int get_port() { return m_port; }
+  std::string get_user() { return m_usr; }
+  std::string get_password() { return m_pwd; }
+  std::string get_db() { return m_db; }
+
+  ~mysqlx_session_options_struct()
+  {
+    if (m_tcp)
+      delete m_tcp;
+  }
+
+} mysqlx_session_options_t;
 
 
-typedef struct MYSQLX_SESSION_T
+typedef struct mysqlx_schema_struct : public Mysqlx_diag
+{
+private:
+  typedef std::map<cdk::string, mysqlx_collection_t> Collection_map;
+  Collection_map m_collection_map;
+
+  typedef std::map<cdk::string, mysqlx_table_t> Table_map;
+  Table_map m_table_map;
+
+  mysqlx_session_t &m_session;
+  cdk::string m_name;
+  mysqlx_stmt_t *m_stmt;
+
+public:
+  mysqlx_schema_struct(mysqlx_session_t &session, cdk::string name, bool check);
+
+  bool exists();
+  cdk::string &get_name() { return m_name; }
+  mysqlx_session_t &get_session() { return m_session; }
+  mysqlx_collection_t & get_collection(const char *name, bool check);
+  mysqlx_table_t & get_table(const char *name, bool check);
+  mysqlx_stmt_t *stmt_op(const cdk::string obj_name, mysqlx_op_t op_type);
+
+  ~mysqlx_schema_struct();
+} mysqlx_schema_t;
+
+
+typedef struct mysqlx_collection_struct : public Mysqlx_diag
+{
+private:
+  mysqlx_schema_t &m_schema;
+  cdk::string m_name;
+  mysqlx_stmt_t *m_stmt;
+
+public:
+  mysqlx_collection_struct(mysqlx_schema_t &schema, cdk::string name, bool check);
+  mysqlx_session_t &get_session() { return m_schema.get_session(); }
+  bool exists();
+  mysqlx_stmt_t *stmt_op(mysqlx_op_t op_type);
+  ~mysqlx_collection_struct();
+
+}mysqlx_collection_t;
+
+
+typedef struct mysqlx_table_struct : public Mysqlx_diag
+{
+private:
+  mysqlx_schema_t &m_schema;
+  cdk::string m_name;
+  mysqlx_stmt_t *m_stmt;
+
+public:
+  mysqlx_table_struct(mysqlx_schema_t &schema, cdk::string name, bool check);
+
+  mysqlx_session_t &get_session() { return m_schema.get_session(); }
+  bool exists();
+  mysqlx_stmt_t *stmt_op(mysqlx_op_t op_type);
+  ~mysqlx_table_struct();
+
+}mysqlx_table_t;
+
+
+typedef struct mysqlx_session_struct : public Mysqlx_diag
 {
 private:
 
-  MYSQLX_SESSION_OPTIONS m_sess_opt;
+  mysqlx_session_options_t m_sess_opt;
   cdk::Session m_session;
-  MYSQLX_CRUD *m_crud;
-  MYSQLX_ERROR m_error;
+  mysqlx_stmt_t *m_stmt;
   bool m_is_node_sess;
+
+  typedef std::map<cdk::string, mysqlx_schema_t> Schema_map;
+  Schema_map m_schema_map;
 
 public:
 
   enum Object_type { SCHEMA, TABLE, COLLECTION, VIEW };
 
-  MYSQLX_SESSION_T(const std::string host, unsigned int port, const string usr,
+  mysqlx_session_struct(const std::string host, unsigned int port, const string usr,
                    const std::string *pwd, const std::string *db, bool is_node_sess);
 
-  MYSQLX_SESSION_T(const std::string &conn_str, bool is_node_sess);
+  mysqlx_session_struct(const std::string &conn_str, bool is_node_sess);
 
-  bool is_valid() { return m_session.is_valid(); }
+  mysqlx_session_struct(mysqlx_session_options_t *opt, bool is_node_sess);
+
+  bool is_valid() { return m_session.is_valid() == cdk::option_t::YES; }
 
   const cdk::Error* get_cdk_error();
 
@@ -462,7 +533,7 @@ public:
       CRUD handler containing the results and/or error
 
   */
-  MYSQLX_CRUD *sql_query(const char *query, uint32_t length);
+  mysqlx_stmt_t *sql_query(const char *query, uint32_t length);
 
   /*
     Create a new CRUD operation (SELECT, INSERT, UPDATE, DELETE)
@@ -476,42 +547,34 @@ public:
 
     TODO: error must be set if op_type goes out of the allowed range
   */
-  MYSQLX_CRUD *crud_op(const char *schema, const char *obj_name,
-                       MYSQLX_OP op_type);
+  mysqlx_stmt_t *stmt_op(const cdk::string schema, const cdk::string obj_name,
+                       mysqlx_op_t op_type, bool delete_crud = true);
 
   /*
     Delete the CRUD object and reset the pointer
   */
-  void reset_crud(MYSQLX_CRUD*);
-
-  void set_diagnostic(const MYSQLX_EXCEPTION &ex);
-
-  void set_diagnostic(const char *msg, unsigned int num);
+  void reset_stmt(mysqlx_stmt_t*);
 
   void reset_diagnostic();
 
+  mysqlx_schema_t & get_schema(const char *name, bool check);
+
   void create_schema(const char *schema);
 
-  void drop_object(const char *schema, const char *name,
+  void drop_object(cdk::string schema, cdk::string name,
                    Object_type obj_type);
 
-  void admin_collection(const char *cmd, const char *schema,
-                       const char *coll_name);
+  void admin_collection(const char *cmd, cdk::string schema,
+                       cdk::string coll_name);
 
   void transaction_begin();
   void transaction_commit();
   void transaction_rollback();
 
-  MYSQLX_ERROR *get_last_error();
+  mysqlx_error_t *get_last_error();
 
-  ~MYSQLX_SESSION_T();
+  ~mysqlx_session_struct();
 
-} MYSQLX_SESSION;
-
-typedef struct MYSQLX_UPDATE_VALUE_T
-{
-                 // Not used
-  void *context; // TODO: add something meaningful
-}MYSQLX_UPDATE_VALUE;
+} mysqlx_session_t;
 
 #endif /* __MYSQLX_CC_INTERNAL_H__ */

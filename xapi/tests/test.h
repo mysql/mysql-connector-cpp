@@ -32,7 +32,7 @@
 using namespace ::std;
 
 #define SESS_CHECK(A) if((A) == NULL) { \
-  cout << endl << mysqlx_error_message(mysqlx_session_error(get_session())) << endl; \
+  cout << endl << mysqlx_error_message(mysqlx_error(get_session())) << endl; \
   FAIL(); \
 }
 
@@ -42,12 +42,12 @@ using namespace ::std;
 }
 
 #define CRUD_CHECK(A, C) if((A) == NULL) { \
-  cout << endl << "Error!" << mysqlx_crud_error_message(C) << endl; \
+  cout << endl << "Error!" << mysqlx_error_message(C) << endl; \
   FAIL(); \
 }
 
 #define ERR_CHECK(A, C) if((A) == RESULT_ERROR) { \
-  cout << endl << "Error!" << mysqlx_crud_error_message(C) << endl; \
+  cout << endl << "Error!" << mysqlx_stmt_error_message(C) << endl; \
   FAIL(); \
 }
 
@@ -61,14 +61,13 @@ using namespace ::std;
   if (get_session() == NULL) \
     FAIL()
 
-
 class xapi : public ::testing::Test
 {
 protected:
 
   unsigned short m_port;
   const char *m_status;
-  MYSQLX_SESSION *m_sess;
+  mysqlx_session_t *m_sess;
 
   xapi() : m_port(0), m_status(NULL), m_sess(NULL)
   {
@@ -89,23 +88,23 @@ protected:
 
   void exec_sql(const char *query)
   {
-    MYSQLX_RESULT *res = NULL;
-    MYSQLX_CRUD *crud = NULL;
-    RESULT_CHECK(crud = mysqlx_sql_query(get_session(), query, strlen(query)));
-    CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+    mysqlx_result_t *res = NULL;
+    mysqlx_stmt_t *stmt = NULL;
+    RESULT_CHECK(stmt = mysqlx_sql_new(get_session(), query, strlen(query)));
+    CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
   }
 
   void exec_sql_error(const char *query)
   {
-    MYSQLX_CRUD *crud = NULL;
-    RESULT_CHECK(crud = mysqlx_sql_query(get_session(), query, strlen(query)));
-    if (mysqlx_crud_execute(crud))
+    mysqlx_stmt_t *stmt = NULL;
+    RESULT_CHECK(stmt = mysqlx_sql_new(get_session(), query, strlen(query)));
+    if (mysqlx_execute(stmt))
     {
       FAIL() << " The error is expected. No error is reported!";
     }
     else
     {
-      cout << "Expected Error:" << mysqlx_crud_error_message(crud) << endl;
+      cout << "Expected Error:" << mysqlx_error_message(stmt) << endl;
     }
   }
 
@@ -126,7 +125,7 @@ protected:
     xplugin_pwd = (xplugin_pwd && strlen(xplugin_pwd) ? xplugin_pwd : NULL);
     xplugin_host = (xplugin_host && strlen(xplugin_host) ? xplugin_host : "127.0.0.1");
 
-    m_sess = mysqlx_get_node_session_s(xplugin_host, m_port, xplugin_usr, xplugin_pwd, db,
+    m_sess = mysqlx_get_node_session(xplugin_host, m_port, xplugin_usr, xplugin_pwd, db,
                                   conn_error, &conn_err_code);
 
     if (!m_sess)
@@ -146,9 +145,10 @@ protected:
 
 
 public:
-  MYSQLX_SESSION *get_session() { return m_sess; }
+  mysqlx_session_t *get_session() { return m_sess; }
 
 };
+
 
 #define SKIP_IF_NO_XPLUGIN  \
   if (m_status) { std::cerr <<"SKIPPED: " <<m_status <<std::endl; return; }
@@ -156,6 +156,7 @@ public:
 
 class xapi_bugs : public xapi
 {};
+
 
 class mysql_capi : public ::testing::Test
 {

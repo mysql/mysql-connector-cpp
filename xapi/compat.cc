@@ -53,7 +53,7 @@ MYSQL *	STDCALL mysql_real_connect(MYSQL *mysql, const char *host,
 {
   if (mysql)
   {
-    mysql->m_session.reset(mysqlx_get_node_session_s(host, port, user, passwd, db,
+    mysql->m_session.reset(mysqlx_get_node_session(host, port, user, passwd, db,
                                                 mysql->m_connect_error,
                                                 &mysql->m_connect_error_code));
   }
@@ -68,13 +68,13 @@ MYSQL *	STDCALL mysql_real_connect(MYSQL *mysql, const char *host,
 int STDCALL mysql_real_query(MYSQL *mysql, const char *q, unsigned long length)
 {
   // TODO: Error processing, correct error codes, etc.
-  if (!mysql->set_crud(mysqlx_sql_query(mysql->m_session.get(), q, length)))
+  if (!mysql->set_crud(mysqlx_sql_new(mysql->m_session.get(), q, length)))
   {
     mysql->m_error.set("Error initializing CRUD request", CR_UNKNOWN_ERROR);
     return CR_UNKNOWN_ERROR;
   }
 
-  if (!mysql->set_result(mysqlx_crud_execute(mysql->m_crud.get())))
+  if (!mysql->set_result(mysqlx_execute(mysql->m_crud.get())))
   {
     mysql->m_error.set("Error getting the result", CR_UNKNOWN_ERROR);
     return CR_UNKNOWN_ERROR;

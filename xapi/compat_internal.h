@@ -65,7 +65,7 @@ typedef struct MYSQL_RES_T
   };
 
 
-  MYSQLX_RESULT *m_result;
+  mysqlx_result_t *m_result;
   MYSQL_FIELD *m_fields;
   std::vector<MYSQL_ROW> m_rowset;
   std::vector<helper_row> m_helper_rowset;
@@ -75,7 +75,7 @@ typedef struct MYSQL_RES_T
   
   unsigned long *m_lengths;
 
-  MYSQL_RES_T(MYSQLX_RESULT *result) : m_result(result), m_store_result(false), m_cur_column(0)
+  MYSQL_RES_T(mysqlx_result_t *result) : m_result(result), m_store_result(false), m_cur_column(0)
   {
     m_col_count = mysqlx_column_get_count(m_result);
     if (m_col_count)
@@ -84,7 +84,7 @@ typedef struct MYSQL_RES_T
       m_fields = new MYSQL_FIELD[m_col_count];
       for (uint32_t pos = 0; pos < m_col_count; ++pos)
       {
-        m_lengths[pos] = result->column_get_info_int(pos, MYSQLX_RESULT::COL_INFO_LENGTH);
+        m_lengths[pos] = result->column_get_info_int(pos, mysqlx_result_t::COL_INFO_LENGTH);
         fill_column_info(pos, &m_fields[pos]);
       }
     }
@@ -104,15 +104,15 @@ typedef struct MYSQL_RES_T
 
   void fill_column_info(uint32_t pos, MYSQL_FIELD *f)
   {
-    f->name = const_cast<char*>(m_result->column_get_info_char(pos, MYSQLX_RESULT::COL_INFO_NAME));
-    f->org_name = const_cast<char*>(m_result->column_get_info_char(pos, MYSQLX_RESULT::COL_INFO_ORIG_NAME));
-    f->table = const_cast<char*>(m_result->column_get_info_char(pos, MYSQLX_RESULT::COL_INFO_TABLE));
-    f->org_table = const_cast<char*>(m_result->column_get_info_char(pos, MYSQLX_RESULT::COL_INFO_ORIG_TABLE));
-    f->db = const_cast<char*>(m_result->column_get_info_char(pos, MYSQLX_RESULT::COL_INFO_SCHEMA));
+    f->name = const_cast<char*>(m_result->column_get_info_char(pos, mysqlx_result_t::COL_INFO_NAME));
+    f->org_name = const_cast<char*>(m_result->column_get_info_char(pos, mysqlx_result_t::COL_INFO_ORIG_NAME));
+    f->table = const_cast<char*>(m_result->column_get_info_char(pos, mysqlx_result_t::COL_INFO_TABLE));
+    f->org_table = const_cast<char*>(m_result->column_get_info_char(pos, mysqlx_result_t::COL_INFO_ORIG_TABLE));
+    f->db = const_cast<char*>(m_result->column_get_info_char(pos, mysqlx_result_t::COL_INFO_SCHEMA));
 
-    f->length = m_result->column_get_info_int(pos, MYSQLX_RESULT::COL_INFO_LENGTH);
-    f->flags =  m_result->column_get_info_int(pos, MYSQLX_RESULT::COL_INFO_FLAGS);
-    f->type = (enum_field_types) m_result->column_get_info_int(pos, MYSQLX_RESULT::COL_INFO_TYPE);
+    f->length = m_result->column_get_info_int(pos, mysqlx_result_t::COL_INFO_LENGTH);
+    f->flags =  m_result->column_get_info_int(pos, mysqlx_result_t::COL_INFO_FLAGS);
+    f->type = (enum_field_types) m_result->column_get_info_int(pos, mysqlx_result_t::COL_INFO_TYPE);
   }
 
   void store_result()
@@ -141,7 +141,7 @@ typedef struct MYSQL_RES_T
 
       if (m_col_count && m_fields && m_lengths)
       {
-        MYSQLX_ROW *xrow = m_result->read_row();
+        mysqlx_row_t *xrow = m_result->read_row();
         if (!xrow)
           return NULL;
 
@@ -151,7 +151,7 @@ typedef struct MYSQL_RES_T
 
         for (uint32_t pos = 0; pos < m_col_count; ++pos)
         {
-          switch (m_result->column_get_info_int(pos, MYSQLX_RESULT::COL_INFO_TYPE))
+          switch (m_result->column_get_info_int(pos, mysqlx_result_t::COL_INFO_TYPE))
           {
             case MYSQL_TYPE_LONGLONG:
               if (m_fields[pos].flags & UNSIGNED_FLAG)
@@ -226,7 +226,7 @@ typedef struct MYSQL_RES_T
   uint32_t column_get_count()
   { return m_col_count; }
 
-  MYSQLX_RESULT *get() { return m_result; }
+  mysqlx_result_t *get() { return m_result; }
 
   ~MYSQL_RES_T()
   {
@@ -241,12 +241,12 @@ typedef struct MYSQL_RES_T
 
 typedef struct MYSQL_T
 {
-  cdk::scoped_ptr<MYSQLX_SESSION> m_session;
-  cdk::scoped_ptr<MYSQLX_CRUD> m_crud;
+  cdk::scoped_ptr<mysqlx_session_t> m_session;
+  cdk::scoped_ptr<mysqlx_stmt_t> m_crud;
   char m_connect_error[MYSQLX_MAX_ERROR_LEN];
   int m_connect_error_code;
 
-  MYSQLX_ERROR m_error;
+  mysqlx_error_t m_error;
   bool m_static_alloc;
 
   // Default constructor will be called if static variable is declared
@@ -270,15 +270,15 @@ typedef struct MYSQL_T
     m_connect_error_code = 0;
   }
 
-  MYSQLX_CRUD* get_crud() { return m_crud.get(); }
-  bool set_crud(MYSQLX_CRUD *crud)
+  mysqlx_stmt_t* get_crud() { return m_crud.get(); }
+  bool set_crud(mysqlx_stmt_t *crud)
   {
     m_crud.reset(crud);
     return m_crud.get() != NULL;
   }
 
-  MYSQLX_RESULT* get_result() { return m_crud->get_result(); }
-  bool set_result(MYSQLX_RESULT *result) { return m_crud->set_result(result); }
+  mysqlx_result_t* get_result() { return m_crud->get_result(); }
+  bool set_result(mysqlx_result_t *result) { return m_crud->set_result(result); }
 
   ~MYSQL_T()
   {}

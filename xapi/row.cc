@@ -25,7 +25,7 @@
 #include <mysql_xapi.h>
 #include <iostream>
 #include <iomanip>
-#include <uuid_gen.h>
+#include "../cdk/extra/uuid/include/uuid_gen.h"
 #include "mysqlx_cc_internal.h"
 
 static struct UUID_initializer {
@@ -50,7 +50,7 @@ static struct UUID_initializer {
 class Data_holder
 {
 private:
-  MYSQLX_DATA_TYPE m_type;
+  mysqlx_data_type_t m_type;
   cdk::byte *m_buf;
   cdk::bytes m_bytes;
   size_t m_full_data_len, m_data_offset;
@@ -81,7 +81,7 @@ public:
     init(data);
   }
 
-  Data_holder(cdk::bytes data, size_t full_data_len, MYSQLX_DATA_TYPE type) : m_type(type),
+  Data_holder(cdk::bytes data, size_t full_data_len, mysqlx_data_type_t type) : m_type(type),
      m_buf(new cdk::byte[full_data_len]), m_bytes(m_buf, full_data_len),
      m_full_data_len(full_data_len)
   {
@@ -106,7 +106,7 @@ public:
   ~Data_holder() { delete [] m_buf; }
 };
 
-void MYSQLX_ROW::clear()
+void mysqlx_row_t::clear()
 {
   for(std::vector<Data_holder*>::iterator it = m_row_data.begin();
       it != m_row_data.end(); ++it)
@@ -116,57 +116,37 @@ void MYSQLX_ROW::clear()
   m_row_data.clear();
 }
 
-void MYSQLX_ROW::set_diagnostic(const MYSQLX_EXCEPTION &ex)
-{
-  m_result.set_diagnostic(ex);
-}
-
-void MYSQLX_ROW::set_diagnostic(const char *msg, unsigned int num)
-{
-  m_result.set_diagnostic(msg, num);
-}
-
-MYSQLX_ROW::~MYSQLX_ROW_T()
+mysqlx_row_t::~mysqlx_row_struct()
 {
   clear();
 }
 
-void MYSQLX_ROW::add_field_null()
+void mysqlx_row_t::add_field_null()
 {
   m_row_data.push_back(new Data_holder());
 }
 
 
-void MYSQLX_ROW::add_field_data(cdk::foundation::bytes data, size_t full_len)
+void mysqlx_row_t::add_field_data(cdk::foundation::bytes data, size_t full_len)
 {
   m_row_data.push_back(new Data_holder(data, full_len));
 }
 
-void MYSQLX_ROW::append_field_data(cdk::col_count_t pos, cdk::bytes data)
+void mysqlx_row_t::append_field_data(cdk::col_count_t pos, cdk::bytes data)
 {
   if(pos + 1 <= m_row_data.size())
     m_row_data[pos]->append(data);
 }
 
-cdk::bytes MYSQLX_ROW::get_col_data(cdk::col_count_t pos) {
+cdk::bytes mysqlx_row_t::get_col_data(cdk::col_count_t pos) {
   return m_row_data[pos]->get_data();
 }
 
 
-MYSQLX_DOC::MYSQLX_DOC_T(MYSQLX_ROW &row) : m_crud(row.get_result().get_crud()),
+mysqlx_doc_t::mysqlx_doc_struct(mysqlx_row_t &row) : m_crud(row.get_result().get_crud()),
                                             m_bytes(row.get_col_data(0)),
                                             m_json_doc(m_bytes)
   { }
-
-void MYSQLX_DOC::set_diagnostic(const MYSQLX_EXCEPTION &ex)
-  {
-    m_crud.set_diagnostic(ex);
-  }
-
-void MYSQLX_DOC::set_diagnostic(const char *msg, unsigned int num)
-{
-  m_crud.set_diagnostic(msg, num);
-}
 
 void Value_item::process_any(cdk::Any::Processor &prc) const
 {
@@ -328,7 +308,7 @@ void Column_source::process(cdk::api::Columns::Processor& prc) const
 cdk::string Update_item::get_expr() const
 {
   if (!m_is_expr)
-    throw MYSQLX_EXCEPTION("Item is not MYSQLX_TYPE_EXPR type");
+    throw Mysqlx_exception("Item is not MYSQLX_TYPE_EXPR type");
 
   return get_string();
 }

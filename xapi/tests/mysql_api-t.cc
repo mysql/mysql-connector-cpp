@@ -23,6 +23,7 @@
  */
 
 #include <string.h>
+#include <mysql_classic.h>
 #include "test.h"
 
 TEST_F(mysql_capi, basic)

@@ -25,61 +25,75 @@
 #include <mysql_xapi.h>
 #include "mysqlx_cc_internal.h"
 
-MYSQLX_SESSION::MYSQLX_SESSION_T(const std::string host, unsigned int port, const string usr,
+mysqlx_session_t::mysqlx_session_struct(const std::string host, unsigned int port, const string usr,
                   const std::string *pwd, const std::string *db, bool is_node_sess)
-                  : m_sess_opt(host, port, usr, pwd, db), m_session(m_sess_opt, m_sess_opt),
-                    m_crud(NULL), m_is_node_sess(is_node_sess)
+                  : m_sess_opt(host, port, usr, pwd, db), m_session(m_sess_opt.get_tcpip(), m_sess_opt),
+                    m_stmt(NULL), m_is_node_sess(is_node_sess)
 { }
 
-MYSQLX_SESSION::MYSQLX_SESSION_T(const std::string &conn_str, bool is_node_sess)
-  : m_sess_opt(conn_str), m_session(m_sess_opt, m_sess_opt),
-    m_crud(NULL), m_is_node_sess(is_node_sess)
+mysqlx_session_t::mysqlx_session_struct(const std::string &conn_str, bool is_node_sess)
+  : m_sess_opt(conn_str), m_session(m_sess_opt.get_tcpip(), m_sess_opt),
+    m_stmt(NULL), m_is_node_sess(is_node_sess)
 {}
 
-MYSQLX_CRUD * MYSQLX_SESSION::sql_query(const char *query, uint32_t length)
+mysqlx_session_t::mysqlx_session_struct(mysqlx_session_options_t *opt, bool is_node_sess)
+  : m_sess_opt(*opt), m_session(m_sess_opt.get_tcpip(), m_sess_opt),
+    m_stmt(NULL), m_is_node_sess(is_node_sess)
+{}
+
+
+mysqlx_stmt_t * mysqlx_session_t::sql_query(const char *query, uint32_t length)
 {
   if (!m_is_node_sess)
-    throw MYSQLX_EXCEPTION(MYSQLX_EXCEPTION::MYSQLX_EXCEPTION_INTERNAL, 0,
+    throw Mysqlx_exception(Mysqlx_exception::MYSQLX_EXCEPTION_INTERNAL, 0,
                           "Executing SQL is not supported for this session type.");
   // This will be removed after adding multiple CRUD's per session
-  if (m_crud)
-    delete m_crud;
+  if (m_stmt)
+    delete m_stmt;
 
   if (length == MYSQLX_NULL_TERMINATED)
     length = (uint32_t)strlen(query);
 
-  m_crud = new MYSQLX_CRUD(this, query, length);
-  return m_crud;
+  m_stmt = new mysqlx_stmt_t(this, query, length);
+  return m_stmt;
 }
 
-MYSQLX_CRUD * MYSQLX_SESSION::crud_op(const char *schema, const char *obj_name,
-                                      MYSQLX_OP op_type)
+/*
+  This method creates a local statement operation that belongs to the session
+  or an external one, which belongs to the higher level objects such as
+  collection or a table
+*/
+mysqlx_stmt_t * mysqlx_session_t::stmt_op(const cdk::string schema, const cdk::string obj_name,
+                                      mysqlx_op_t op_type, bool session_crud)
 {
-  // This will be removed after adding multiple CRUD's per session
-  if (m_crud)
-    delete m_crud;
+  mysqlx_stmt_t *stmt;
 
-  if (!schema && !m_sess_opt.database())
+  // This will be removed after adding multiple CRUD's per session
+  if (session_crud && m_stmt)
+    delete m_stmt;
+
+  if (!schema.length() && !m_sess_opt.database())
   {
-    m_crud = NULL;
-    throw MYSQLX_EXCEPTION("The default schema is not specified");
+    if (session_crud)
+      m_stmt = NULL;
+    throw Mysqlx_exception("The default schema is not specified");
   }
 
-  m_crud = new MYSQLX_CRUD(this, schema ? schema : *m_sess_opt.database(), obj_name, op_type);
-  return m_crud;
+  stmt = new mysqlx_stmt_t(this, schema.length() ? schema : *m_sess_opt.database(), obj_name, op_type);
+  if (session_crud)
+    m_stmt = stmt;
+  return stmt;
 }
 
-void MYSQLX_SESSION::reset_crud(MYSQLX_CRUD*)
+void mysqlx_session_t::reset_stmt(mysqlx_stmt_t*)
 {
-  if (m_crud)
-    delete m_crud;
-  m_crud = NULL;
+  if (m_stmt)
+    delete m_stmt;
+  m_stmt = NULL;
 }
 
-MYSQLX_ERROR * MYSQLX_SESSION::get_last_error()
+mysqlx_error_t * mysqlx_session_t::get_last_error()
 {
-  // TODO: implement warnings and info using Diagnostic_iterator
-
   // Return session errors from CDK first
   if (m_session.entry_count())
   {
@@ -91,7 +105,7 @@ MYSQLX_ERROR * MYSQLX_SESSION::get_last_error()
   return &m_error;
 }
 
-const cdk::Error * MYSQLX_SESSION::get_cdk_error()
+const cdk::Error * mysqlx_session_t::get_cdk_error()
 {
   if (m_session.entry_count())
     return &m_session.get_error();
@@ -99,31 +113,21 @@ const cdk::Error * MYSQLX_SESSION::get_cdk_error()
   return NULL;
 }
 
-void MYSQLX_SESSION::set_diagnostic(const MYSQLX_EXCEPTION &ex)
-{
-  m_error.set(ex);
-}
-
-void MYSQLX_SESSION::set_diagnostic(const char *msg, unsigned int num)
-{
-  m_error.set(msg, num);
-}
-
-void MYSQLX_SESSION::reset_diagnostic()
+void mysqlx_session_t::reset_diagnostic()
 {
   m_error.reset();
 }
 
-void MYSQLX_SESSION::admin_collection(const char *cmd,
-                                     const char *schema,
-                                     const char *coll_name)
+void mysqlx_session_t::admin_collection(const char *cmd,
+                                     cdk::string schema,
+                                     cdk::string coll_name)
 {
-  if (!schema && !m_sess_opt.database())
+  if (!schema.length() && !m_sess_opt.database())
   {
-    throw MYSQLX_EXCEPTION("The default schema is not specified");
+    throw Mysqlx_exception("The default schema is not specified");
   }
 
-  Db_obj_ref tab_ref(schema ? schema : *m_sess_opt.database(), coll_name);
+  Db_obj_ref tab_ref(schema.length() ? schema : *m_sess_opt.database(), coll_name);
   cdk::Reply reply;
   reply = m_session.admin(cmd, tab_ref);
   reply.wait();
@@ -135,7 +139,7 @@ void MYSQLX_SESSION::admin_collection(const char *cmd,
   }
 }
 
-void MYSQLX_SESSION::create_schema(const char *schema)
+void mysqlx_session_t::create_schema(const char *schema)
 {
   std::stringstream sstr;
   sstr << "CREATE SCHEMA IF NOT EXISTS `" << schema << "`";
@@ -147,7 +151,20 @@ void MYSQLX_SESSION::create_schema(const char *schema)
     throw reply.get_error();
 }
 
-void MYSQLX_SESSION::drop_object(const char *schema, const char *name,
+mysqlx_schema_t & mysqlx_session_t::get_schema(const char *name, bool check)
+{
+  cdk::string schema_name = name;
+  Schema_map::iterator it = m_schema_map.find(schema_name);
+  // Return existing schema if it was requested before
+  if (it != m_schema_map.end())
+    return it->second;
+
+  m_schema_map.insert(std::make_pair(schema_name,
+                      mysqlx_schema_t(*this, schema_name, check)));
+  return m_schema_map.at(schema_name);
+}
+
+void mysqlx_session_t::drop_object(cdk::string schema, cdk::string name,
                                  Object_type obj_type)
 
 {
@@ -170,19 +187,19 @@ void MYSQLX_SESSION::drop_object(const char *schema, const char *name,
       sstr << "DROP VIEW "; break;
     break;
     default:
-      throw MYSQLX_EXCEPTION(MYSQLX_EXCEPTION::MYSQLX_EXCEPTION_INTERNAL, 0,
+      throw Mysqlx_exception(Mysqlx_exception::MYSQLX_EXCEPTION_INTERNAL, 0,
                              "Attempt to drop an object of unknown type.");
   }
 
   sstr << "IF EXISTS ";
 
-  if (schema && schema[0])
+  if (schema.length())
     sstr << " `" << schema << "`";
 
-  if (schema && schema[0] && name && name[0])
+  if (schema.length() && name.length())
     sstr << ".";
 
-  if (name && name[0])
+  if (name.length())
     sstr << " `" << name << "`";
 
   reply = m_session.sql(sstr.str());
@@ -192,26 +209,26 @@ void MYSQLX_SESSION::drop_object(const char *schema, const char *name,
     throw reply.get_error();
 }
 
-void MYSQLX_SESSION::transaction_begin()
+void mysqlx_session_t::transaction_begin()
 {
   m_session.begin();
 }
 
-void MYSQLX_SESSION::transaction_commit()
+void mysqlx_session_t::transaction_commit()
 {
   m_session.commit();
 }
 
-void MYSQLX_SESSION::transaction_rollback()
+void mysqlx_session_t::transaction_rollback()
 {
   m_session.rollback();
 }
 
-MYSQLX_SESSION::~MYSQLX_SESSION_T()
+mysqlx_session_t::~mysqlx_session_struct()
 {
   try
   {
-    reset_crud(m_crud);
+    reset_stmt(m_stmt);
     m_session.close();
   }
   catch(...)

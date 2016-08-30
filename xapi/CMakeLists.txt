@@ -44,6 +44,9 @@ SET(_libmysqlx_cc_src
          mysqlx.cc
          compat.cc
          session.cc
+         schema.cc
+         collection.cc
+         table.cc
 )
 
 ADD_LIBRARY(xapi OBJECT ${_libmysqlx_cc_src})

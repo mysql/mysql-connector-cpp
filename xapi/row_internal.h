@@ -23,8 +23,8 @@
  */
 
 class Data_holder;
-typedef struct MYSQLX_RESULT_T MYSQLX_RESULT;
-typedef struct MYSQLX_CRUD_T MYSQLX_CRUD;
+typedef struct mysqlx_result_struct mysqlx_result_t;
+typedef struct mysqlx_stmt_struct mysqlx_stmt_t;
 
 /*
   Class representing an entry in the list of values, which could be used as
@@ -33,7 +33,7 @@ typedef struct MYSQLX_CRUD_T MYSQLX_CRUD;
 class Value_item
 {
 protected:
-  MYSQLX_DATA_TYPE m_type;
+  mysqlx_data_type_t m_type;
 
   std::string m_str;
   cdk::bytes m_bytes;
@@ -83,35 +83,35 @@ public:
   uint64_t get_uint() const
   {
     if (m_type != MYSQLX_TYPE_UINT)
-      throw MYSQLX_EXCEPTION("Data cannot be converted to unsigned integer number");
+      throw Mysqlx_exception("Data cannot be converted to unsigned integer number");
     return m_val.v_uint;
   }
 
   int64_t get_sint() const
   {
     if (m_type != MYSQLX_TYPE_SINT)
-      throw MYSQLX_EXCEPTION("Data cannot be converted to signed integer number");
+      throw Mysqlx_exception("Data cannot be converted to signed integer number");
     return m_val.v_sint;
   }
 
   float get_float() const
   {
     if (m_type != MYSQLX_TYPE_FLOAT)
-      throw MYSQLX_EXCEPTION("Data cannot be converted to float number");
+      throw Mysqlx_exception("Data cannot be converted to float number");
     return m_val.v_float;
   }
 
   double get_double() const
   {
     if (m_type != MYSQLX_TYPE_DOUBLE)
-      throw MYSQLX_EXCEPTION("Data cannot be converted to double number");
+      throw Mysqlx_exception("Data cannot be converted to double number");
     return m_val.v_double;
   }
 
   cdk::bytes get_bytes() const
   {
     if (m_type != MYSQLX_TYPE_BYTES)
-      throw MYSQLX_EXCEPTION("Data cannot be converted to bytes");
+      throw Mysqlx_exception("Data cannot be converted to bytes");
     return m_bytes;
   }
 
@@ -119,11 +119,11 @@ public:
   {
     if (m_type != MYSQLX_TYPE_STRING && m_type != MYSQLX_TYPE_EXPR &&
         m_type != MYSQLX_TYPE_JSON)
-      throw MYSQLX_EXCEPTION("Data cannot be converted to string");
+      throw Mysqlx_exception("Data cannot be converted to string");
     return m_str;
   }
 
-  MYSQLX_DATA_TYPE get_type() const
+  mysqlx_data_type_t get_type() const
   {
     return m_type;
   }
@@ -132,23 +132,23 @@ public:
   void process_val(cdk::Value_processor &prc) const;
 };
 
-typedef struct MYSQLX_ROW_T
+typedef struct mysqlx_row_struct : public Mysqlx_diag
 {
 private:
   std::vector<Data_holder*> m_row_data;
-  MYSQLX_RESULT &m_result;
+  mysqlx_result_t &m_result;
 
 public:
-  MYSQLX_ROW_T(MYSQLX_RESULT &result) : m_result(result)
+  mysqlx_row_struct(mysqlx_result_t &result) : m_result(result)
   {}
 
-  ~MYSQLX_ROW_T();
+  ~mysqlx_row_struct();
 
   // Clear the data in the current row
   void clear();
 
   // Return the result the current row belongs to
-  MYSQLX_RESULT &get_result() { return m_result; }
+  mysqlx_result_t &get_result() { return m_result; }
 
   // Return the number of columns in the current row
   size_t row_size() { return m_row_data.size(); }
@@ -162,16 +162,12 @@ public:
   // add a null item to the list of row values
   void add_field_null();
 
-  void set_diagnostic(const MYSQLX_EXCEPTION &ex);
-
-  void set_diagnostic(const char *msg, unsigned int num);
-
   // get data from the column number pos
   cdk::bytes get_col_data(cdk::col_count_t pos);
 
-} MYSQLX_ROW;
+} mysqlx_row_t;
 
-typedef struct MYSQLX_DOC_T
+typedef struct mysqlx_doc_struct : public Mysqlx_diag
 {
 private:
 
@@ -257,18 +253,18 @@ private:
     Value_item& get_val(const cdk::string key)
     {
       if (!key_exists(key))
-        throw MYSQLX_EXCEPTION("Key does not exist!");
+        throw Mysqlx_exception("Key does not exist!");
       return m_map.at(key);
     }
   };
 
-  MYSQLX_CRUD &m_crud;
+  mysqlx_stmt_t &m_crud;
   cdk::bytes m_bytes;
   JSON_doc m_json_doc;
 
 public:
 
-  MYSQLX_DOC_T(MYSQLX_ROW &row);
+  mysqlx_doc_struct(mysqlx_row_t &row);
 
   uint64_t get_uint(const cdk::string key)
   { return m_json_doc.get_val(key).get_uint(); }
@@ -288,17 +284,14 @@ public:
   cdk::string get_string(const cdk::string key)
   { return m_json_doc.get_val(key).get_string(); }
 
-  void set_diagnostic(const MYSQLX_EXCEPTION &ex);
-  void set_diagnostic(const char *msg, unsigned int num);
-
-  MYSQLX_DATA_TYPE get_type(const cdk::string key)
+  mysqlx_data_type_t get_type(const cdk::string key)
   { return m_json_doc.get_val(key).get_type(); }
 
   bool key_exists(const cdk::string key)
   { return m_json_doc.key_exists(key); }
 
 
-} MYSQLX_DOC;
+} mysqlx_doc_t;
 
 class Expr_to_doc_prc_converter
   : public cdk::Converter<
@@ -308,8 +301,8 @@ class Expr_to_doc_prc_converter
     >
 {
   Doc_prc* doc() { return m_proc; }
-  Scalar_prc* scalar() { throw MYSQLX_EXCEPTION("Document expected"); }
-  List_prc* arr() { throw MYSQLX_EXCEPTION("Document expected"); }
+  Scalar_prc* scalar() { throw Mysqlx_exception("Document expected"); }
+  List_prc* arr() { throw Mysqlx_exception("Document expected"); }
 };
 
 class Param_item : public Value_item, public cdk::Any
@@ -400,12 +393,12 @@ public:
 class Projection_list : public cdk::Projection, public cdk::Expression::Document
 {
   typedef std::vector<cdk::string> Proj_vec;
-  MYSQLX_OP m_op_type;
+  mysqlx_op_t m_op_type;
   parser::Parser_mode::value m_mode;
   Proj_vec m_list;
 public:
 
-  Projection_list(MYSQLX_OP op_type) : m_op_type(op_type)
+  Projection_list(mysqlx_op_t op_type) : m_op_type(op_type)
   {
     switch(m_op_type)
     {
@@ -416,7 +409,7 @@ public:
         m_mode = parser::Parser_mode::DOCUMENT;
       break;
       default:
-        throw MYSQLX_EXCEPTION("Wrong operation type! " \
+        throw Mysqlx_exception("Wrong operation type! " \
                                "Only OP_SELECT and OP_FIND are supported!");
     }
   }
@@ -664,14 +657,14 @@ public:
 
 class Modify_item : public Update_item
 {
-  MYSQLX_MODIFY_OP m_op_type;
+  mysqlx_modify_op m_op_type;
 
   public:
 
   /*
-    This constructor is used for UNSET and ARRAY_DELETE operations
+    This constructor is used for SET(NULL), UNSET and ARRAY_DELETE operations
   */
-  Modify_item(MYSQLX_MODIFY_OP op_type, cdk::string path) :
+  Modify_item(mysqlx_modify_op op_type, cdk::string path) :
         Update_item(path), m_op_type(op_type)
   {}
 
@@ -681,14 +674,14 @@ class Modify_item : public Update_item
     is_expr - flag indicating whether the value is expression
     val - value for the item
   */
-  template <typename T> Modify_item(MYSQLX_MODIFY_OP op_type,
+  template <typename T> Modify_item(mysqlx_modify_op op_type,
                                     cdk::string path,
                                     bool is_expr,
                                     T val) : Update_item(path, is_expr, val),
                                              m_op_type(op_type)
   {}
 
-  MYSQLX_MODIFY_OP get_op_type() const { return m_op_type; }
+  mysqlx_modify_op get_op_type() const { return m_op_type; }
 
   // Processor for the expressions needs to be overriden
   void process(cdk::Expression::Processor &prc) const;
@@ -703,13 +696,13 @@ public:
   Modify_spec()
   { m_item_num = 0; }
 
-  void add_value(MYSQLX_MODIFY_OP modify_type, cdk::string path)
+  void add_value(mysqlx_modify_op modify_type, cdk::string path)
   {
     m_items.push_back(Modify_item(modify_type, path));
   }
 
   // Add values of various types
-  template <typename T> void add_value(MYSQLX_MODIFY_OP op_type,
+  template <typename T> void add_value(mysqlx_modify_op op_type,
                                        cdk::string path,
                                        bool is_expr,
                                        T val)
@@ -717,7 +710,10 @@ public:
     m_items.push_back(Modify_item(op_type, path, is_expr, val));
   }
 
-  void add_null_value();
+  void add_null_value(mysqlx_modify_op op_type, cdk::string path)
+  {
+    m_items.push_back(Modify_item(op_type, path));
+  }
 
   virtual void process(Processor &prc) const;
 };

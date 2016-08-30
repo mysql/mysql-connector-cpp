@@ -27,23 +27,22 @@
   Copy constructor must be disabled for this class
 */
 
-typedef struct MYSQLX_SESSION_T MYSQLX_SESSION;
+typedef struct mysqlx_session_struct mysqlx_session_t;
 class Db_obj_ref;
 class Limit;
 class Order_by;
 class Param_list;
 class Row_source;
 
-typedef struct MYSQLX_CRUD_T : public cdk::foundation::nocopy
+typedef struct mysqlx_stmt_struct : public cdk::foundation::nocopy, Mysqlx_diag
 {
 private:
-  MYSQLX_SESSION &m_session;
-  MYSQLX_ERROR m_error;
-  cdk::scoped_ptr<MYSQLX_RESULT> m_result; // TODO: multiple results
+  mysqlx_session_t &m_session;
+  cdk::scoped_ptr<mysqlx_result_t> m_result; // TODO: multiple results
   Db_obj_ref m_db_obj_ref;
   cdk::protocol::mysqlx::Data_model m_data_model;
   parser::Parser_mode::value m_parser_mode;
-  MYSQLX_OP m_op_type;
+  mysqlx_op_t m_op_type;
   cdk::Reply m_reply;
   cdk::scoped_ptr<cdk::Expression> m_where;
   cdk::scoped_ptr<Limit> m_limit;
@@ -59,7 +58,7 @@ private:
   cdk::string m_query;
 
 public:
-  MYSQLX_CRUD_T(MYSQLX_SESSION *session, const char *query, uint32_t length) :
+  mysqlx_stmt_struct(mysqlx_session_t *session, const char *query, uint32_t length) :
                                      m_session(*session),
                                      m_op_type(OP_SQL),
                                      m_query(std::string(query,length))
@@ -67,8 +66,8 @@ public:
     init_data_model();
   }
 
-  MYSQLX_CRUD_T(MYSQLX_SESSION *session, const cdk::string &schema, const cdk::string &name,
-                MYSQLX_OP op_type) : m_session(*session),
+  mysqlx_stmt_struct(mysqlx_session_t *session, const cdk::string &schema, const cdk::string &name,
+                mysqlx_op_t op_type) : m_session(*session),
                                      m_db_obj_ref(schema, name),
                                      m_op_type(op_type)
   {
@@ -81,23 +80,13 @@ public:
     This method will be extended in the future to handle
     multiple results.
   */
-  bool set_result(MYSQLX_RESULT *res)
+  bool set_result(mysqlx_result_t *res)
   {
     m_result.reset(res);
     return m_result.get() != NULL;
   }
 
-  void set_diagnostic(const MYSQLX_EXCEPTION &ex)
-  {
-    m_error.set(ex);
-  }
-
-  void set_diagnostic(const char *msg, unsigned int num)
-  {
-    m_error.set(msg, num);
-  }
-
-  MYSQLX_RESULT *get_result() { return m_result.get(); }
+  mysqlx_result_t *get_result() { return m_result.get(); }
 
   /*
     Get diagnostic info for the previously executed CRUD
@@ -107,15 +96,7 @@ public:
   void acquire_diag(cdk::foundation::api::Severity::value val =
                     cdk::foundation::api::Severity::ERROR);
 
-  MYSQLX_ERROR *get_last_error()
-  {
-    if (m_error.message() || m_error.error_num())
-      return &m_error;
-
-    return NULL;
-  }
-
-  ~MYSQLX_CRUD_T();
+  ~mysqlx_stmt_struct();
 
   /*
     Member function to init the data model and parser mode when
@@ -130,24 +111,26 @@ public:
 
   /*
     Execute a CRUD statement.
-    RETURN: pointer to MYSQLX_RESULT, which is being allocated each time
+    RETURN: pointer to mysqlx_result_t, which is being allocated each time
             when this function is called. The old result is freed automatically.
             On error the function returns NULL
 
     NOTE: no need to free the result in the end cdk::scoped_ptr will
           take care of it
   */
-  MYSQLX_RESULT *exec();
+  mysqlx_result_t *exec();
 
   int sql_bind(va_list args);
+  int sql_bind(cdk::string s);
+
   int param_bind(va_list args);
 
   /*
     Return the operation type OP_SELECT, OP_INSERT, OP_UPDATE, OP_DELETE,
     OP_FIND, OP_ADD, OP_MODIFY, OP_REMOVE, OP_SQL
   */
-  MYSQLX_OP op_type() { return m_op_type; }
-  MYSQLX_SESSION &get_session() { return m_session; }
+  mysqlx_op_t op_type() { return m_op_type; }
+  mysqlx_session_t &get_session() { return m_session; }
 
   /*
     Set WHERE for CRUD operation
@@ -184,7 +167,7 @@ public:
   int add_multiple_documents(va_list args);
   int add_projections(va_list args);
   int add_table_update_values(va_list args);
-  int add_coll_modify_values(va_list args, MYSQLX_MODIFY_OP op);
+  int add_coll_modify_values(va_list args, mysqlx_modify_op op);
 
   // Clear the list of ORDER BY items
   void clear_order_by();
@@ -192,4 +175,4 @@ public:
   // Return the session validity state
   bool session_valid();
 
-} MYSQLX_CRUD;
+} mysqlx_stmt_t;

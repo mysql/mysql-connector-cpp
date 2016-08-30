@@ -14,7 +14,9 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
 
-ADD_NG_TEST(xapi-t xapi_crud-t.cc xapi-t.cc mysql_api-t.cc)
+ADD_NG_TEST(xapi-t xapi_crud-t.cc xapi-t.cc)
+
+# mysql_api-t.cc)
 
 #if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
 #  ADD_TEST_LIBRARIES(nsl)

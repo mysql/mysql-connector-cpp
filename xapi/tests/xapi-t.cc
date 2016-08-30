@@ -30,9 +30,9 @@ TEST_F(xapi, store_result_select)
 {
   SKIP_IF_NO_XPLUGIN
 
-  MYSQLX_CRUD *crud;
-  MYSQLX_RESULT *res;
-  MYSQLX_ROW *row;
+  mysqlx_stmt_t *stmt;
+  mysqlx_result_t *res;
+  mysqlx_row_t *row;
   size_t row_num = 0, col_num = 0;
   /*
     Query produces 3 rows in one result-set
@@ -43,8 +43,8 @@ TEST_F(xapi, store_result_select)
 
   AUTHENTICATE();
 
-  RESULT_CHECK(crud = mysqlx_sql_query(get_session(), query, strlen(query)));
-  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+  RESULT_CHECK(stmt = mysqlx_sql_new(get_session(), query, strlen(query)));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
   col_num = mysqlx_column_get_count(res);
   EXPECT_EQ(3, col_num);
@@ -75,8 +75,11 @@ TEST_F(xapi, store_result_find)
 {
   SKIP_IF_NO_XPLUGIN
 
-  MYSQLX_CRUD *crud;
-  MYSQLX_RESULT *res;
+  mysqlx_stmt_t *stmt;
+  mysqlx_result_t *res;
+  mysqlx_schema_t *schema;
+  mysqlx_collection_t *collection;
+
   size_t row_num = 0, json_len = 0;
   int i;
   const char *c;
@@ -92,23 +95,26 @@ TEST_F(xapi, store_result_find)
   exec_sql("DROP DATABASE IF EXISTS cc_ddl_test");
   exec_sql("CREATE DATABASE cc_ddl_test");
 
-  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(get_session(), "cc_ddl_test", "store_result_test"));
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_ddl_test", 1)) != NULL);
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, "store_result_test"));
+  EXPECT_TRUE((collection = mysqlx_get_collection(schema, "store_result_test", 1)) != NULL);
 
-  RESULT_CHECK(crud = mysqlx_collection_add_new(get_session(), "cc_ddl_test", "store_result_test"));
+  RESULT_CHECK(stmt = mysqlx_collection_add_new(collection));
   for (i = 0; i < 3; ++i)
   {
-    EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(crud, json_add[i]));
+    EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, json_add[i]));
     printf("\nJSON FOR ADD %d [ %s ]", i + 1, json_add[i]);
   }
-  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
   // Expect error for an operation without the resulting data
   EXPECT_EQ(RESULT_ERROR, mysqlx_store_result(res, &row_num));
-  printf("\n Expected error: %s", mysqlx_crud_error_message(crud));
+  printf("\n Expected error: %s", mysqlx_error_message(stmt));
 
-  RESULT_CHECK(crud = mysqlx_collection_find_new(get_session(), "cc_ddl_test", "store_result_test"));
-  EXPECT_EQ(RESULT_OK, mysqlx_set_find_order_by(crud, "key_1", SORT_ORDER_ASC, PARAM_END));
-  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+  RESULT_CHECK(stmt = mysqlx_collection_find_new(collection));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_order_by(stmt, "key_1", SORT_ORDER_ASC, PARAM_END));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
   EXPECT_EQ(RESULT_OK, mysqlx_store_result(res, &row_num));
   EXPECT_EQ(3, row_num);
@@ -142,9 +148,9 @@ TEST_F(xapi, next_result)
 {
   SKIP_IF_NO_XPLUGIN
 
-  MYSQLX_CRUD *crud;
-  MYSQLX_RESULT *res;
-  MYSQLX_ROW *row;
+  mysqlx_stmt_t *stmt;
+  mysqlx_result_t *res;
+  mysqlx_row_t *row;
   size_t row_num = 0, col_num = 0;
 
   const char * drop_db = "DROP DATABASE IF EXISTS cc_api_test";
@@ -163,8 +169,8 @@ TEST_F(xapi, next_result)
   exec_sql(create_db);
   exec_sql(create_proc);
 
-  RESULT_CHECK(crud = mysqlx_sql_query(get_session(), query, strlen(query)));
-  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+  RESULT_CHECK(stmt = mysqlx_sql_new(get_session(), query, strlen(query)));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
   do
   {
@@ -193,13 +199,17 @@ TEST_F(xapi, next_result)
   cout << "DONE" << endl;
 }
 
+
 TEST_F(xapi, warnings_test)
 {
   SKIP_IF_NO_XPLUGIN
 
-  MYSQLX_CRUD *crud;
-  MYSQLX_RESULT *res;
-  MYSQLX_ERROR *warn;
+  mysqlx_stmt_t *stmt;
+  mysqlx_result_t *res;
+  mysqlx_error_t *warn;
+  mysqlx_schema_t *schema;
+  mysqlx_table_t *table;
+
   int warn_count = 0;
 
   authenticate();
@@ -207,13 +217,16 @@ TEST_F(xapi, warnings_test)
   exec_sql("CREATE TABLE cc_api_test.warn_tab (a TINYINT NOT NULL, b CHAR(4))");
   exec_sql("SET sql_mode=''"); // We want warnings, not errors
 
-  RESULT_CHECK(crud = mysqlx_table_insert_new(get_session(), "cc_api_test", "warn_tab"));
-  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(crud, "a", "b", PARAM_END));
-  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(crud, PARAM_SINT(100), PARAM_STRING("mysql"), PARAM_END));
-  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(crud, PARAM_NULL(), PARAM_STRING("test"), PARAM_END));
-  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(crud, PARAM_SINT(300), PARAM_STRING("xyz"), PARAM_END));
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_api_test", 1)) != NULL);
+  EXPECT_TRUE((table = mysqlx_get_table(schema, "warn_tab", 1)) != NULL);
 
-  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+  RESULT_CHECK(stmt = mysqlx_table_insert_new(table));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(stmt, "a", "b", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_SINT(100), PARAM_STRING("mysql"), PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_NULL(), PARAM_STRING("test"), PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_SINT(300), PARAM_STRING("xyz"), PARAM_END));
+
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
   EXPECT_EQ(3, mysqlx_result_warning_count(res));
 
@@ -225,12 +238,16 @@ TEST_F(xapi, warnings_test)
   EXPECT_EQ(3, warn_count);
 }
 
+
 TEST_F(xapi, auto_increment_test)
 {
   SKIP_IF_NO_XPLUGIN
 
-  MYSQLX_CRUD *crud;
-  MYSQLX_RESULT *res;
+  mysqlx_stmt_t *stmt;
+  mysqlx_result_t *res;
+  mysqlx_schema_t *schema;
+  mysqlx_table_t *table;
+
   int i = 0;
 
   authenticate();
@@ -238,28 +255,31 @@ TEST_F(xapi, auto_increment_test)
   exec_sql("CREATE TABLE cc_api_test.autoinc_tab" \
            "(id int auto_increment primary key, vchar varchar(32))");
 
-  RESULT_CHECK(crud = mysqlx_table_insert_new(get_session(), "cc_api_test", "autoinc_tab"));
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_api_test", 1)) != NULL);
+  EXPECT_TRUE((table = mysqlx_get_table(schema, "autoinc_tab", 1)) != NULL);
+  RESULT_CHECK(stmt = mysqlx_table_insert_new(table));
 
-  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(crud, "id", "vchar", PARAM_END));
-  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(crud, PARAM_SINT(100), PARAM_STRING("mysql"), PARAM_END));
-  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(stmt, "id", "vchar", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_SINT(100), PARAM_STRING("mysql"), PARAM_END));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
   EXPECT_EQ(100, mysqlx_get_auto_increment_value(res));
 
-  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(crud, "vchar", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(stmt, "vchar", PARAM_END));
   // Prepare 15 rows to insert
   for (i = 0; i < 15; ++i)
-    EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(crud, PARAM_STRING("mysql"), PARAM_END));
+    EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_STRING("mysql"), PARAM_END));
 
-  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
   EXPECT_EQ(101, mysqlx_get_auto_increment_value(res));
 
-  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(crud, "vchar", PARAM_END));
-  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(crud, PARAM_STRING("mysql"), PARAM_END));
-  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(stmt, "vchar", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_STRING("mysql"), PARAM_END));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
   EXPECT_EQ(116, mysqlx_get_auto_increment_value(res));
 }
+
 
 TEST_F(xapi, conn_string_test)
 {
@@ -274,10 +294,10 @@ TEST_F(xapi, conn_string_test)
   const char *xplugin_pwd = getenv("XPLUGIN_PASSWORD");
   const char *xplugin_host = getenv("XPLUGIN_HOST");
 
-  MYSQLX_SESSION *local_sess;
-  MYSQLX_CRUD *crud;
-  MYSQLX_RESULT *res;
-  MYSQLX_ROW *row;
+  mysqlx_session_t *local_sess;
+  mysqlx_stmt_t *stmt;
+  mysqlx_result_t *res;
+  mysqlx_row_t *row;
 
   if (xplugin_port)
     port= atoi(xplugin_port);
@@ -292,7 +312,7 @@ TEST_F(xapi, conn_string_test)
   else
     sprintf(conn_str, "%s@%s:%d", xplugin_usr, xplugin_host, port);
 
-  local_sess = mysqlx_get_node_session(conn_str, conn_error, &conn_err_code);
+  local_sess = mysqlx_get_node_session_from_url(conn_str, conn_error, &conn_err_code);
 
   if (!local_sess)
   {
@@ -301,8 +321,8 @@ TEST_F(xapi, conn_string_test)
   }
   cout << "Connected to xplugin..." << endl;
 
-  RESULT_CHECK(crud = mysqlx_sql_query(local_sess, "SELECT 'foo'", MYSQLX_NULL_TERMINATED));
-  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+  RESULT_CHECK(stmt = mysqlx_sql_new(local_sess, "SELECT 'foo'", MYSQLX_NULL_TERMINATED));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
   while ((row = mysqlx_row_fetch_one(res)) != NULL)
   {
@@ -314,26 +334,103 @@ TEST_F(xapi, conn_string_test)
   }
 }
 
+
+TEST_F(xapi, conn_options_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  unsigned int port = 0;
+  unsigned int port2 = 0;
+  char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
+  int conn_err_code = 0;
+  const char *xplugin_port = getenv("XPLUGIN_PORT");
+  const char *xplugin_usr = getenv("XPLUGIN_USER");
+  const char *xplugin_pwd = getenv("XPLUGIN_PASSWORD");
+  const char *xplugin_host = getenv("XPLUGIN_HOST");
+
+  char buf[1024];
+
+  mysqlx_session_t *local_sess;
+  mysqlx_session_options_t *opt = mysqlx_session_options_new();
+  mysqlx_stmt_t *stmt;
+  mysqlx_result_t *res;
+  mysqlx_row_t *row;
+
+  if (xplugin_port)
+    port= atoi(xplugin_port);
+
+
+  xplugin_usr = (xplugin_usr && strlen(xplugin_usr) ? xplugin_usr : "root");
+  xplugin_pwd = (xplugin_pwd && strlen(xplugin_pwd) ? xplugin_pwd : "");
+  xplugin_host = (xplugin_host && strlen(xplugin_host) ? xplugin_host : "127.0.0.1");
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_HOST, xplugin_host));
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_USER, xplugin_usr));
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_PWD, xplugin_pwd));
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_PORT, port));
+
+  EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(opt, (mysqlx_opt_type_t)127, port));
+  cout << "Expected error: " << mysqlx_error_message(mysqlx_error(opt)) << std::endl;
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_HOST, buf));
+  EXPECT_STREQ(xplugin_host, buf);
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_USER, buf));
+  EXPECT_STREQ(xplugin_usr, buf);
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_PWD, buf));
+  EXPECT_STREQ(xplugin_pwd, buf);
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_PORT, &port2));
+  EXPECT_EQ(true, port == port2);
+
+  local_sess = mysqlx_get_node_session_from_options(opt, conn_error, &conn_err_code);
+
+  if (!local_sess)
+  {
+    mysqlx_free_options(opt);
+    FAIL() << "Could not connect to xplugin. " << port << std::endl << conn_error <<
+            " ERROR CODE: " << conn_err_code;
+  }
+  cout << "Connected to xplugin..." << endl;
+
+  RESULT_CHECK(stmt = mysqlx_sql_new(local_sess, "SELECT 'foo'", MYSQLX_NULL_TERMINATED));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    char data[32];
+    size_t data_len = sizeof(data);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, data, &data_len));
+    EXPECT_STREQ("foo", data);
+    cout << "ROW DATA: " << data << " " << endl;
+  }
+  mysqlx_free_options(opt);
+}
+
+
 TEST_F(xapi, default_db_test)
 {
   SKIP_IF_NO_XPLUGIN
 
-  MYSQLX_CRUD *crud;
-  MYSQLX_RESULT *res;
-  MYSQLX_ROW *row;
+  mysqlx_stmt_t *stmt;
+  mysqlx_result_t *res;
+  mysqlx_row_t *row;
+  mysqlx_schema_t *schema;
+  mysqlx_table_t *table;
 
   // Use default user name and pwd, but set the database
   authenticate(NULL, NULL, "cc_api_test");
 
   exec_sql("CREATE TABLE default_tab(a INT, b VARCHAR(32))");
 
-  RESULT_CHECK(crud = mysqlx_table_insert_new(get_session(), NULL, "default_tab"));
-  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(crud, "a", "b", PARAM_END));
-  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(crud, PARAM_SINT(200), PARAM_STRING("mysql"), PARAM_END));
-  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_api_test", 1)) != NULL);
+  EXPECT_TRUE((table = mysqlx_get_table(schema, "default_tab", 1)) != NULL);
 
-  RESULT_CHECK(crud = mysqlx_table_select_new(get_session(), NULL, "default_tab"));
-  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+  RESULT_CHECK(stmt = mysqlx_table_insert_new(table));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(stmt, "a", "b", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_SINT(200), PARAM_STRING("mysql"), PARAM_END));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  RESULT_CHECK(stmt = mysqlx_table_select_new(table));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
   while ((row = mysqlx_row_fetch_one(res)) != NULL)
   {
@@ -349,37 +446,43 @@ TEST_F(xapi, default_db_test)
   }
 }
 
+
 TEST_F(xapi, no_cursor_test)
 {
   SKIP_IF_NO_XPLUGIN
 
-  MYSQLX_RESULT *res;
+  mysqlx_result_t *res;
 
   authenticate();
 
-  SESS_CHECK(res = mysqlx_sql_exec(get_session(), "set @any_var=1", MYSQLX_NULL_TERMINATED));
+  SESS_CHECK(res = mysqlx_sql(get_session(), "set @any_var=1", MYSQLX_NULL_TERMINATED));
   EXPECT_EQ(0, mysqlx_column_get_count(res));
   EXPECT_EQ(NULL, mysqlx_column_get_catalog(res, 0));
   EXPECT_EQ(0, mysqlx_column_get_type(res, 0));
 }
 
+
 TEST_F(xapi, transaction_test)
 {
   SKIP_IF_NO_XPLUGIN
 
-  MYSQLX_RESULT *res;
-  MYSQLX_ROW *row;
+  mysqlx_result_t *res;
+  mysqlx_row_t *row;
+  mysqlx_schema_t *schema;
+  mysqlx_table_t *table;
 
   authenticate(NULL, NULL, "cc_api_test");
   exec_sql("CREATE TABLE transact_tab(a INT)");
 
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_api_test", 1)) != NULL);
+  EXPECT_TRUE((table = mysqlx_get_table(schema, "transact_tab", 1)) != NULL);
+
   EXPECT_EQ(RESULT_OK, mysqlx_transaction_begin(get_session()));
-  SESS_CHECK( res = mysqlx_table_insert_exec(get_session(), NULL, "transact_tab",
-                                             "a", PARAM_SINT(200), PARAM_END));
+  SESS_CHECK( res = mysqlx_table_insert(table, "a", PARAM_SINT(200), PARAM_END));
   EXPECT_EQ(RESULT_OK, mysqlx_transaction_commit(get_session()));
 
   // Check how the row was inserted after committing the transaction
-  SESS_CHECK( res = mysqlx_table_select_exec(get_session(), NULL, "transact_tab", "a > 0"));
+  SESS_CHECK( res = mysqlx_table_select(table, "a > 0"));
 
   while ((row = mysqlx_row_fetch_one(res)) != NULL)
   {
@@ -389,11 +492,11 @@ TEST_F(xapi, transaction_test)
   }
 
   EXPECT_EQ(RESULT_OK, mysqlx_transaction_begin(get_session()));
-  SESS_CHECK(res = mysqlx_table_delete_exec(get_session(), NULL, "transact_tab", "a > 0"));
+  SESS_CHECK(res = mysqlx_table_delete(table, "a > 0"));
   EXPECT_EQ(RESULT_OK, mysqlx_transaction_rollback(get_session()));
 
   // Check how the row was not deleted after rolling back the transaction
-  SESS_CHECK( res = mysqlx_table_select_exec(get_session(), NULL, "transact_tab", "a > 0"));
+  SESS_CHECK( res = mysqlx_table_select(table, "a > 0"));
 
   while ((row = mysqlx_row_fetch_one(res)) != NULL)
   {
@@ -403,12 +506,16 @@ TEST_F(xapi, transaction_test)
   }
 }
 
+
 TEST_F(xapi, doc_id_test)
 {
   SKIP_IF_NO_XPLUGIN
 
-  MYSQLX_RESULT *res;
-  MYSQLX_CRUD *crud;
+  mysqlx_result_t *res;
+  mysqlx_stmt_t *stmt;
+  mysqlx_schema_t *schema;
+  mysqlx_collection_t *collection;
+
   const char *id;
   char id_buf[2][128];
   const char * json_string = NULL;
@@ -417,11 +524,14 @@ TEST_F(xapi, doc_id_test)
   size_t json_len = 0;
 
   authenticate(NULL, NULL, "cc_api_test");
-  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(get_session(), NULL, "doc_id_test"));
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_api_test", 1)) != NULL);
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, "doc_id_test"));
 
-  SESS_CHECK(res = mysqlx_collection_add_exec(get_session(), NULL, "doc_id_test",
-                   "{\"a\" : \"12345\"}", "{\"a\" : \"abcde\"}",
-                   PARAM_END));
+  EXPECT_TRUE((collection = mysqlx_get_collection(schema, "doc_id_test", 1)) != NULL);
+
+  SESS_CHECK(res = mysqlx_collection_add(collection,
+                                         "{\"a\" : \"12345\"}", "{\"a\" : \"abcde\"}",
+                                         PARAM_END));
 
   while ((id = mysqlx_fetch_doc_id(res)) != NULL)
   {
@@ -433,9 +543,9 @@ TEST_F(xapi, doc_id_test)
     ++id_index;
   }
 
-  RESULT_CHECK(crud = mysqlx_collection_find_new(get_session(), NULL, "doc_id_test"));
-  EXPECT_EQ(RESULT_OK, mysqlx_set_find_order_by(crud, "a", SORT_ORDER_ASC, PARAM_END));
-  CRUD_CHECK(res = mysqlx_crud_execute(crud), crud);
+  RESULT_CHECK(stmt = mysqlx_collection_find_new(collection));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_order_by(stmt, "a", SORT_ORDER_ASC, PARAM_END));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
   while ((json_string = mysqlx_json_fetch_one(res, &json_len)) != NULL)
   {

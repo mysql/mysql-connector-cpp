@@ -29,7 +29,7 @@
   Member function to init the data model and parser mode when
   CRUD is being created, so this could be re-used.
 */
-void MYSQLX_CRUD::init_data_model()
+void mysqlx_stmt_t::init_data_model()
 {
   /*
     Knowing the operation type is enough to determine the data model and
@@ -62,21 +62,21 @@ void MYSQLX_CRUD::init_data_model()
   }
 }
 
-void MYSQLX_CRUD::init_crud()
+void mysqlx_stmt_t::init_crud()
 {
   m_session.reset_diagnostic();
 }
 
 /*
   Member function for binding values for parametrized SQL queries.
-  This function should only be called by mysqlx_crud_bind()
+  This function should only be called by mysqlx_stmt_bind()
 
   PARAMETERS:
     args - variable list of parameters that follow as
-           (MYSQLX_DATA_TYPE)type, value, ..., 0
+           (mysqlx_data_type_t)type, value, ..., 0
            The list is closed by 0 value for type.
 
-           NOTE: the list is already initialized in mysqlx_crud_bind(),
+           NOTE: the list is already initialized in mysqlx_stmt_bind(),
                  so no need to call va_start()/va_end() in here.
 
   RETURN:
@@ -84,12 +84,12 @@ void MYSQLX_CRUD::init_crud()
     RESULT_ERROR - on error
 
   NOTE: Each new call resets the binds set by the previous call to
-        MYSQLX_CRUD::sql_bind()
+        mysqlx_stmt_t::sql_bind()
 */
-int MYSQLX_CRUD::sql_bind(va_list args)
+int mysqlx_stmt_t::sql_bind(va_list args)
 {
   m_param_list.clear();
-  // For variadic parameters MYSQLX_DATA_TYPE is used as value of void* pointer
+  // For variadic parameters mysqlx_data_type_t is used as value of void* pointer
   int64_t type = (int64_t)va_arg(args, void*);
   do
   {
@@ -136,16 +136,25 @@ int MYSQLX_CRUD::sql_bind(va_list args)
 }
 
 /*
+  This function will not clear the parameter list
+*/
+int mysqlx_stmt_t::sql_bind(cdk::string s)
+{
+   m_param_list.add_param_value(s);
+   return RESULT_OK;
+}
+
+/*
   Member function for binding values for parametrized CRUD queries.
-  This function should only be called by mysqlx_crud_bind()
+  This function should only be called by mysqlx_stmt_bind()
 
   PARAMETERS:
     args - variable list of parameters.
-           param_name, (MYSQLX_DATA_TYPE)type, value, ..., PARAM_END
+           param_name, (mysqlx_data_type_t)type, value, ..., PARAM_END
 
            The list is closed by PARAM_END value
 
-           NOTE: the list is already initialized in mysqlx_crud_bind(),
+           NOTE: the list is already initialized in mysqlx_stmt_bind(),
                  so no need to call va_start()/va_end() in here.
 
   RETURN:
@@ -153,15 +162,15 @@ int MYSQLX_CRUD::sql_bind(va_list args)
     RESULT_ERROR - on error
 
   NOTE: Each new call resets the binds set by the previous call to
-        MYSQLX_CRUD::param_bind()
+        mysqlx_stmt_t::param_bind()
 */
-int MYSQLX_CRUD::param_bind(va_list args)
+int mysqlx_stmt_t::param_bind(va_list args)
 {
   m_param_list.clear();
   m_param_source.clear();
-  // For variadic parameters MYSQLX_DATA_TYPE is used as value of void* pointer
+  // For variadic parameters mysqlx_data_type_t is used as value of void* pointer
   char *param_name = 0;
-  
+
   while((param_name = va_arg(args, char*)) != NULL)
   {
     int64_t type = (int64_t)va_arg(args, void*);
@@ -206,7 +215,7 @@ int MYSQLX_CRUD::param_bind(va_list args)
   return RESULT_OK;
 }
 
-int MYSQLX_CRUD::add_columns(va_list args)
+int mysqlx_stmt_t::add_columns(va_list args)
 {
   if (m_op_type != OP_INSERT)
   {
@@ -243,7 +252,7 @@ int MYSQLX_CRUD::add_columns(va_list args)
 
   NOTE: Each new call resets the column and row values
 */
-int MYSQLX_CRUD::add_row(bool get_columns, va_list args)
+int mysqlx_stmt_t::add_row(bool get_columns, va_list args)
 {
   if (m_op_type != OP_INSERT && m_op_type != OP_ADD)
   {
@@ -253,7 +262,7 @@ int MYSQLX_CRUD::add_row(bool get_columns, va_list args)
 
   m_row_source.add_new_row();
 
-  // For variadic parameters MYSQLX_DATA_TYPE is used as value of void* pointer
+  // For variadic parameters mysqlx_data_type_t is used as value of void* pointer
   int64_t type;
   char *col_name = NULL;
 
@@ -312,7 +321,7 @@ int MYSQLX_CRUD::add_row(bool get_columns, va_list args)
   return RESULT_OK;
 }
 
-int MYSQLX_CRUD::add_projections(va_list args)
+int mysqlx_stmt_t::add_projections(va_list args)
 {
   char *item = NULL;
   if (m_op_type != OP_SELECT && m_op_type != OP_FIND)
@@ -332,7 +341,7 @@ int MYSQLX_CRUD::add_projections(va_list args)
   return RESULT_OK;
 }
 
-int MYSQLX_CRUD::add_coll_modify_values(va_list args, MYSQLX_MODIFY_OP modify_type)
+int mysqlx_stmt_t::add_coll_modify_values(va_list args, mysqlx_modify_op modify_type)
 {
   char *path = NULL;
   if (m_op_type != OP_MODIFY)
@@ -382,6 +391,9 @@ int MYSQLX_CRUD::add_coll_modify_values(va_list args, MYSQLX_MODIFY_OP modify_ty
                                 va_arg(args, size_t)));
       }
       break;
+      case MYSQLX_TYPE_NULL:
+        m_modify_spec.add_null_value(modify_type, path);
+      break;
       default:
         m_error.set("Data type is not supported.", 0);
         return RESULT_ERROR;
@@ -390,7 +402,7 @@ int MYSQLX_CRUD::add_coll_modify_values(va_list args, MYSQLX_MODIFY_OP modify_ty
   return RESULT_OK;
 }
 
-int MYSQLX_CRUD::add_table_update_values(va_list args)
+int mysqlx_stmt_t::add_table_update_values(va_list args)
 {
   char *column = NULL;
 
@@ -443,14 +455,14 @@ int MYSQLX_CRUD::add_table_update_values(va_list args)
 
 /*
   Execute a CRUD statement.
-  RETURN: pointer to MYSQLX_RESULT, which is being allocated each time
+  RETURN: pointer to mysqlx_result_t, which is being allocated each time
           when this function is called. The old result is freed automatically.
           On error the function returns NULL
 
   NOTE: no need to free the result in the end cdk::scoped_ptr will
         take care of it
 */
-MYSQLX_RESULT *MYSQLX_CRUD::exec()
+mysqlx_result_t *mysqlx_stmt_t::exec()
 {
   cdk::Session &sess = m_session.get_session();
 
@@ -469,7 +481,7 @@ MYSQLX_RESULT *MYSQLX_CRUD::exec()
     case OP_INSERT:
       {
         if (!m_row_source.row_count())
-          throw MYSQLX_EXCEPTION(MYSQLX_EXCEPTION::MYSQLX_EXCEPTION_INTERNAL,
+          throw Mysqlx_exception(Mysqlx_exception::MYSQLX_EXCEPTION_INTERNAL,
                                  0, "Missing row data for INSERT! Use mysqlx_set_insert_row()");
         Row_source *row_src = &m_row_source;
         m_reply = sess.table_insert(m_db_obj_ref, *row_src,
@@ -479,7 +491,7 @@ MYSQLX_RESULT *MYSQLX_CRUD::exec()
       break;
     case OP_UPDATE:
         if (!m_update_spec.count())
-          throw MYSQLX_EXCEPTION(MYSQLX_EXCEPTION::MYSQLX_EXCEPTION_INTERNAL,
+          throw Mysqlx_exception(Mysqlx_exception::MYSQLX_EXCEPTION_INTERNAL,
                                  0, "Missing data for UPDATE! Use mysqlx_set_update_values()");
 
         m_reply = sess.table_update(m_db_obj_ref,
@@ -508,7 +520,7 @@ MYSQLX_RESULT *MYSQLX_CRUD::exec()
       break;
     case OP_ADD:
       if (!m_doc_source.count())
-          throw MYSQLX_EXCEPTION(MYSQLX_EXCEPTION::MYSQLX_EXCEPTION_INTERNAL,
+          throw Mysqlx_exception(Mysqlx_exception::MYSQLX_EXCEPTION_INTERNAL,
                                  0, "Missing JSON data for ADD! Use mysqlx_set_add_document()");
       m_reply = sess.coll_add(m_db_obj_ref,
                               m_doc_source,
@@ -516,7 +528,7 @@ MYSQLX_RESULT *MYSQLX_CRUD::exec()
       break;
     case OP_MODIFY:
       if (!m_modify_spec.count())
-          throw MYSQLX_EXCEPTION(MYSQLX_EXCEPTION::MYSQLX_EXCEPTION_INTERNAL,
+          throw Mysqlx_exception(Mysqlx_exception::MYSQLX_EXCEPTION_INTERNAL,
                                  0, "Missing data for MODIFY! Use mysqlx_set_modify_set(), " \
                                     "mysqlx_set_modify_unset(), mysqlx_set_modify_array_insert(), " \
                                     "mysqlx_set_modify_array_delete(), mysqlx_set_modify_array_append() " \
@@ -549,7 +561,7 @@ MYSQLX_RESULT *MYSQLX_CRUD::exec()
     default: // All other operations are not implemented
       return NULL;
   }
-  m_result.reset(new MYSQLX_RESULT(*this, m_reply));
+  m_result.reset(new mysqlx_result_t(*this, m_reply));
 
   m_reply.wait(); // wait for the operation to complete
 
@@ -577,7 +589,7 @@ MYSQLX_RESULT *MYSQLX_CRUD::exec()
 
   NOTE: each call to this function replaces previously set WHERE
 */
-int MYSQLX_CRUD::set_where(const char *where_expr)
+int mysqlx_stmt_t::set_where(const char *where_expr)
 {
   if (!where_expr || !where_expr[0])
     return RESULT_OK;
@@ -609,7 +621,7 @@ int MYSQLX_CRUD::set_where(const char *where_expr)
 
   NOTE: each call to this function replaces previously set LIMIT
 */
-int MYSQLX_CRUD::set_limit(row_count_t row_count, row_count_t offset)
+int mysqlx_stmt_t::set_limit(row_count_t row_count, row_count_t offset)
 {
   int res = RESULT_OK;
   try
@@ -638,18 +650,18 @@ int MYSQLX_CRUD::set_limit(row_count_t row_count, row_count_t offset)
 
   NOTE: each call to this function adds a new item to ORDER BY list
 */
-int MYSQLX_CRUD::add_order_by(va_list args)
+int mysqlx_stmt_t::add_order_by(va_list args)
 {
   char *item = NULL;
-  MYSQLX_SORT_DIRECTION sort_direction;
+  mysqlx_sort_direction_t sort_direction;
   clear_order_by();
   do
   {
     item = va_arg(args, char*);
     if (item && *item)
     {
-      // MYSQLX_SORT_DIRECTION is promoted to int
-      sort_direction = (MYSQLX_SORT_DIRECTION)va_arg(args, int);
+      // mysqlx_sort_direction_t is promoted to int
+      sort_direction = (mysqlx_sort_direction_t)va_arg(args, int);
       // Initial setup is done only once
       if (!m_order_by.get())
         m_order_by.reset(new Order_by(m_parser_mode));
@@ -668,12 +680,12 @@ int MYSQLX_CRUD::add_order_by(va_list args)
 }
 
 // Return the session validity state
-bool MYSQLX_CRUD::session_valid()
+bool mysqlx_stmt_t::session_valid()
 {
-  return m_session.get_session().check_valid() == cdk::option_t::YES;
+  return m_session.is_valid();
 }
 
-void MYSQLX_CRUD::acquire_diag(cdk::foundation::api::Severity::value val)
+void mysqlx_stmt_t::acquire_diag(cdk::foundation::api::Severity::value val)
 {
   // Free and reset the previous error
   m_error.set(NULL);
@@ -692,12 +704,12 @@ void MYSQLX_CRUD::acquire_diag(cdk::foundation::api::Severity::value val)
   }
 }
 
-void MYSQLX_CRUD::clear_order_by()
+void mysqlx_stmt_t::clear_order_by()
 {
   if(m_order_by.get()) m_order_by->clear();
 }
 
-MYSQLX_CRUD::~MYSQLX_CRUD_T()
+mysqlx_stmt_t::~mysqlx_stmt_struct()
 {
   try
   {
@@ -707,7 +719,7 @@ MYSQLX_CRUD::~MYSQLX_CRUD_T()
 
 }
 
-int MYSQLX_CRUD::add_document(const char *json_doc)
+int mysqlx_stmt_t::add_document(const char *json_doc)
 {
   int res = RESULT_OK;
   if (m_op_type != OP_ADD)
@@ -726,7 +738,7 @@ int MYSQLX_CRUD::add_document(const char *json_doc)
   return res;
 }
 
-int MYSQLX_CRUD::add_multiple_documents(va_list args)
+int mysqlx_stmt_t::add_multiple_documents(va_list args)
 {
   int rc = RESULT_OK;
   m_doc_source.clear();

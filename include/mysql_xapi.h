@@ -53,8 +53,7 @@ typedef object_id* MYSQLX_GUID;
 
 /*! @brief MYSQLX API
  * @details Macro definition to indicate a function/operation end with an error
-            mysqlx_get_crud_error() or mysqlx_get_session_error() should be called
-            to get more details
+            or mysqlx_error() should be called to get more details
  */
 #define RESULT_NULL 16
 #define RESULT_INFO 32
@@ -83,66 +82,73 @@ typedef object_id* MYSQLX_GUID;
 /* Opaque structures */
 /*! @brief MYSQLX API
  * @details structure for obtaining the error information from the session
- *          and CRUD operations (see mysqlx_get_session(), mysqlx_session_error()
- *          and mysqlx_crud_error())
+ *          and statement operations (see mysqlx_error())
 */
-typedef struct MYSQLX_ERROR_T MYSQLX_ERROR;
+typedef struct mysqlx_error_struct mysqlx_error_t;
 
 /*! @brief MYSQLX API
  *  @details structure containing the session context after the session is
- *   established (see mysqlx_get_session_s())
+ *   established (see mysqlx_get_session())
  */
-typedef struct MYSQLX_SESSION_T MYSQLX_SESSION;
+typedef struct mysqlx_session_struct mysqlx_session_t;
 
 /*! @brief MYSQLX API
  *  @details structure containing the connection options for the session before
- *   the connection is established (see mysqlx_get_session())
+ *   the connection is established (see mysqlx_get_session_from_url())
  */
-typedef struct MYSQLX_SESSION_OPTIONS_T MYSQLX_SESSION_OPTIONS;
+typedef struct mysqlx_session_options_struct mysqlx_session_options_t;
 
 /*! @brief MYSQLX API
- *  @details structure containing the context of the CRUD operation. See
- *    mysqlx_sql_query(), mysqlx_table_select_new(), mysqlx_table_insert_new(),
+ *  @details structure containing the schema context
+ *   (see mysqlx_get_schema())
+ */
+typedef struct mysqlx_schema_struct mysqlx_schema_t;
+
+/*! @brief MYSQLX API
+ *  @details structure containing the collection context
+ *   (see mysqlx_get_collection())
+ */
+typedef struct mysqlx_collection_struct mysqlx_collection_t;
+
+/*! @brief MYSQLX API
+ *  @details structure containing the table context
+ *   (see mysqlx_get_collection())
+ */
+typedef struct mysqlx_table_struct mysqlx_table_t;
+
+/*! @brief MYSQLX API
+ *  @details structure containing the context of the statement operation. See
+ *    mysqlx_sql_new(), mysqlx_table_select_new(), mysqlx_table_insert_new(),
  *    mysqlx_table_update_new(), mysqlx_table_delete_new(),
  *    mysqlx_collection_find_new(), mysqlx_collection_modify_new(), mysqlx_collection_add_new(),
  *    mysqlx_collection_remove_new()
  */
-typedef struct MYSQLX_CRUD_T MYSQLX_CRUD;
+typedef struct mysqlx_stmt_struct mysqlx_stmt_t;
 
 /*! @brief NOT IMPLEMENTED
  * Using of this structure is temporarily suspended
  */
-typedef struct MYSQLX_DOC_T MYSQLX_DOC;
+typedef struct mysqlx_doc_struct mysqlx_doc_t;
 
 /*! @brief MYSQLX API
  *  @details structure representing a row from a table resultset
  *  (see mysqlx_row_fetch_one())
  */
-typedef struct MYSQLX_ROW_T MYSQLX_ROW;
+typedef struct mysqlx_row_struct mysqlx_row_t;
 
 
 /*! @brief MYSQLX API
  *  @details Structure representing the result context along with the buffered
- *           rows/documents (see mysqlx_crud_execute(), mysqlx_store_result(),
+ *           rows/documents (see mysqlx_execute(), mysqlx_store_result(),
  *           mysqlx_row_fetch_one(), mysqlx_doc_fetch_one(), mysqlx_next_result())
  */
-typedef struct MYSQLX_RESULT_T MYSQLX_RESULT;
-
-/*! @brief NOT IMPLEMENTED
- *  @details Structure containig a list of values for INSERT/ADD operations
- */
-typedef struct MYSQLX_ROW_VALUE_T MYSQLX_ROW_VALUE;
-
-/*! @brief NOT IMPLEMENTED
- *  @details Structure containig a list of values for UPDATE/MODIFY operations
- */
-typedef struct MYSQLX_UPDATE_VALUE_T MYSQLX_UPDATE_VALUE;
+typedef struct mysqlx_result_struct mysqlx_result_t;
 
 /*!
-* \enum MYSQLX_DATA_TYPE
+* \enum mysqlx_data_type_t
 * The data type identifiers used in MYSQLX API
 */
-typedef enum MYSQLX_DATA_TYPE_T
+typedef enum mysqlx_data_type_enum
 {
   MYSQLX_TYPE_UNDEFINED = 0,
 
@@ -168,7 +174,7 @@ typedef enum MYSQLX_DATA_TYPE_T
 
   MYSQLX_TYPE_NULL     = 100, /*!< NULL value */
   MYSQLX_TYPE_EXPR     = 101  /*!< Expression type */
-} MYSQLX_DATA_TYPE;
+} mysqlx_data_type_t;
 
 #define PARAM_SINT(A) (void*)MYSQLX_TYPE_SINT, (int64_t)A
 #define PARAM_UINT(A) (void*)MYSQLX_TYPE_UINT, (uint64_t)A
@@ -182,14 +188,23 @@ typedef enum MYSQLX_DATA_TYPE_T
 #define PARAM_END (void*)0
 
 /*!
- * \enum MYSQLX_SORT_DIRECTION
+ * \enum mysqlx_sort_direction_t
  * Enumerating sort directions in sorting operations such as ORDER BY
 */
-typedef enum MYSQLX_SORT_DIRECTION_T
+typedef enum mysqlx_sort_direction_enum
 {
   SORT_ORDER_ASC = 1, /*!< Ascending sorting (Default) */
   SORT_ORDER_DESC = 2 /*!< Descending sorting */
-} MYSQLX_SORT_DIRECTION;
+} mysqlx_sort_direction_t;
+
+typedef enum mysqlx_opt_type_enum
+{
+  MYSQLX_OPT_HOST = 1,
+  MYSQLX_OPT_PORT = 2,
+  MYSQLX_OPT_USER = 3,
+  MYSQLX_OPT_PWD = 4,
+  MYSQLX_OPT_DB = 5
+} mysqlx_opt_type_t;
 
 /*! @brief MYSQLX API
  *
@@ -206,16 +221,16 @@ typedef enum MYSQLX_SORT_DIRECTION_T
  * @param[out] err_code if error happens during connect the error code
  *                   is returned through this parameter
  *
- * @return Pointer to MYSQLX_SESSION structure if connection is success,
+ * @return Pointer to mysqlx_session_t structure if connection is success,
  *         otherwise and the error is returned through
  *         the error [OUT] parameter
  *
- * @note The MYSQLX_SESSION pointer returned by the function must be
+ * @note The mysqlx_session_t pointer returned by the function must be
  *       properly closed using mysqlx_session_close()
  * @note This type of session does not support executing plain SQL queries
  */
-MYSQLX_SESSION * STDCALL
-mysqlx_get_session_s(const char *host, int port, const char *user,
+mysqlx_session_t * STDCALL
+mysqlx_get_session(const char *host, int port, const char *user,
                      const char *password, const char *database,
                      char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
 
@@ -230,17 +245,40 @@ mysqlx_get_session_s(const char *host, int port, const char *user,
  * @param[out] err_code if error happens during connect the error code
  *                   is returned through this parameter
  *
- * @return Pointer to MYSQLX_SESSION structure if connection is success,
+ * @return Pointer to mysqlx_session_t structure if connection is success,
  *         otherwise and the error is returned through
  *         the error [OUT] parameter
  *
- * @note The MYSQLX_SESSION pointer returned by the function must be
+ * @note The mysqlx_session_t pointer returned by the function must be
  *       properly closed using mysqlx_session_close()
  * @note This type of session does not support executing plain SQL queries
  */
-MYSQLX_SESSION * STDCALL
-mysqlx_get_session(const char *conn_string,
+mysqlx_session_t * STDCALL
+mysqlx_get_session_from_url(const char *conn_string,
                      char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
+
+/*! @brief MYSQLX API
+ *
+ * @details Establish a session using mysqlx_session_options_t structure
+ *
+ * @param opt pointer to mysqlx_session_options_t structure containing
+ *            the connection parameters
+ * @param[out] out_error if error happens during connect the error message
+ *                   is returned through this parameter
+ * @param[out] err_code if error happens during connect the error code
+ *                   is returned through this parameter
+ *
+ * @return Pointer to mysqlx_session_t structure if connection is success,
+ *         otherwise and the error is returned through
+ *         the error [OUT] parameter
+ *
+ * @note The mysqlx_session_t pointer returned by the function must be
+ *       properly closed using mysqlx_session_close()
+ * @note This type of session does not support executing plain SQL queries
+ */
+mysqlx_session_t * STDCALL
+mysqlx_get_session_from_options(mysqlx_session_options_t *opt,
+                       char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
 
 /*! @brief MYSQLX API
  *
@@ -258,16 +296,16 @@ mysqlx_get_session(const char *conn_string,
  * @param[out] err_code if error happens during connect the error code
  *                   is returned through this parameter
  *
- * @return Pointer to MYSQLX_SESSION structure if connection is success,
+ * @return Pointer to mysqlx_session_t structure if connection is success,
  *         otherwise and the error is returned through
  *         the error [OUT] parameter
  *
- * @note The MYSQLX_SESSION pointer returned by the function must be
+ * @note The mysqlx_session_t pointer returned by the function must be
  *       properly closed using mysqlx_session_close()
  * @note This type of session supports executing plain SQL queries
  */
-MYSQLX_SESSION * STDCALL
-mysqlx_get_node_session_s(const char *host, int port, const char *user,
+mysqlx_session_t * STDCALL
+mysqlx_get_node_session(const char *host, int port, const char *user,
                      const char *password, const char *database,
                      char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
 
@@ -283,97 +321,90 @@ mysqlx_get_node_session_s(const char *host, int port, const char *user,
  * @param[out] err_code if error happens during connect the error code
  *                   is returned through this parameter
  *
- * @return Pointer to MYSQLX_SESSION structure if connection is success,
+ * @return Pointer to mysqlx_session_t structure if connection is success,
  *         otherwise and the error is returned through
  *         the error [OUT] parameter
  *
- * @note The MYSQLX_SESSION pointer returned by the function must be
+ * @note The mysqlx_session_t pointer returned by the function must be
  *       properly closed using mysqlx_session_close()
  * @note This type of session supports executing plain SQL queries
  */
-MYSQLX_SESSION * STDCALL
-mysqlx_get_node_session(const char *conn_string,
+mysqlx_session_t * STDCALL
+mysqlx_get_node_session_from_url(const char *conn_string,
                      char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
 
-/* brief NOT IMPLEMENTED
+/*! @brief MYSQLX API
  *
- * @details Establish the session using MYSQLX_SESSION_OPTIONS
+ * @details Establish a node session using mysqlx_session_options_t structure
  *
- * @param options      MYSQLX_SESSION_OPTIONS structure with options
- * @param[out] error   if error happens during connect it is returned
- *                     through this parameter, otherwise it is NULL
+ * @param opt pointer to mysqlx_session_options_t structure containing
+ *            the connection parameters
+ * @param[out] out_error if error happens during connect the error message
+ *                   is returned through this parameter
+ * @param[out] err_code if error happens during connect the error code
+ *                   is returned through this parameter
  *
- * @return Pointer to MYSQLX_SESSION structure if connection is success,
+ * @return Pointer to mysqlx_session_t structure if connection is success,
  *         otherwise and the error is returned through
  *         the error [OUT] parameter
  *
- * @note: The MYSQLX_SESSION pointer returned by the function must be
+ * @note The mysqlx_session_t pointer returned by the function must be
  *       properly closed using mysqlx_session_close()
-
-MYSQLX_SESSION * STDCALL
-mysqlx_get_session(const MYSQLX_SESSION_OPTIONS *options,
-                   MYSQLX_ERROR *error);
-*/
+ * @note This type of session supports executing plain SQL queries
+ */
+mysqlx_session_t * STDCALL
+mysqlx_get_node_session_from_options(mysqlx_session_options_t *opt,
+                            char out_error[MYSQLX_MAX_ERROR_LEN],
+                            int *err_code);
 
 /*! @brief MYSQLX API
  *
  *  @details Closing the session. This function must be called by the user
  *  to prevent memory leaks.
  *
- *  @param session Pointer to MYSQLX_SESSION handler to close
+ *  @param session Pointer to mysqlx_session_t handler to close
 */
-void STDCALL mysqlx_session_close(MYSQLX_SESSION *session);
+void STDCALL mysqlx_session_close(mysqlx_session_t *session);
 
 /* brief NOT IMPLEMENTED
  *
  *  @details Closing the session. This function must be called by the user
  *  to prevent memory leaks.
  *
- *  @param session Pointer to MYSQLX_SESSION handler to close
+ *  @param session Pointer to mysqlx_session_t handler to close
  *
  *  @return session status
  *
-int STDCALL mysqlx_session_status(MYSQLX_SESSION *session);
+int STDCALL mysqlx_session_status(mysqlx_session_t *session);
 */
 
 /*! @brief MYSQLX API
  *
- *  @details Get session error after session-related operation fails
- *
- *  @param session Pointer to MYSQLX_SESSION handler get error from
- *
- *  @return Pointer to the error structure with the requested error details
-*/
-MYSQLX_ERROR * STDCALL
-mysqlx_session_error(MYSQLX_SESSION *session);
-
-/*! @brief MYSQLX API
- *
- * @details Create a CRUD handler for a plain SQL query.
+ * @details Create a statement handler for a plain SQL query.
  * The query supports parameters and placeholders that can be
- * added later using mysqlx_crud_bind() function
+ * added later using mysqlx_stmt_bind() function
  *
  * @param sess session handler
  * @param query SQL query
  * @param length length of the query
  *
  * @return
- *   CRUD handler containing the results and/or error.
+ *   statement handler containing the results and/or error.
  *   NULL can be returned only in case when there are problems
  *   allocating memory, which normally should not happen.
  *   It is very unlikely for this function to end with the error
  *   because it does not do any parsing, parameters checking etc.
  *
- * @note To actually execute the SQL query the returned CRUD has to be
- *       given to mysqlx_crud_execute()
+ * @note To actually execute the SQL query the returned statement has to be
+ *       given to mysqlx_execute()
  */
-MYSQLX_CRUD * STDCALL
-mysqlx_sql_query(MYSQLX_SESSION *sess, const char *query,
+mysqlx_stmt_t * STDCALL
+mysqlx_sql_new(mysqlx_session_t *sess, const char *query,
                  uint32_t length);
 
 /* brief MYSQLX API
  *
- * @details Create a CRUD handler for SQL query with parameters
+ * @details Create a statement handler for SQL query with parameters
  *
  * @param sess session handler
  * @param format SQL query format string with parameter markers as in printf()
@@ -381,17 +412,17 @@ mysqlx_sql_query(MYSQLX_SESSION *sess, const char *query,
  * @param ... parameter values of the types corresponding to the format string
  *
  * @return
- *   CRUD handler containing the results and/or error.
+ *   statement handler containing the results and/or error.
  *   NULL can be returned only in case when there are problems
  *   allocating memory, which normally should not happen.
  *   It is very unlikely for this function to end with the error
  *   because it does not do any parsing, parameters checking etc.
  *
- * @note To actually execute the SQL query the returned CRUD has to be
-        given to mysqlx_crud_execute()
+ * @note To actually execute the SQL query the returned statement has to be
+        given to mysqlx_execute()
 
-MYSQLX_CRUD * STDCALL
-mysqlx_sql_query_v(MYSQLX_SESSION *sess, const char *format,
+mysqlx_stmt_t * STDCALL
+mysqlx_sql_query_v(mysqlx_session_t *sess, const char *format,
                    uint32_t length, ...);
 */
 // Operations
@@ -400,24 +431,20 @@ mysqlx_sql_query_v(MYSQLX_SESSION *sess, const char *format,
  *
  * @details Start new table SELECT operation without actually executing it.
  *
- * @param sess pointer to the current session handlre
- * @param schema schema name. The default database will be used if NULL is specified
- *                            for this parameter.
- * @param table table name
+ * @param table table handle
  *
  * @return
- *   CRUD handler to the newly created SELECT operation.
+ *   STMT handler for the newly created SELECT operation.
  *   NULL can be returned only in case when there are problems
  *   allocating memory, which normally should not happen.
  *   It is very unlikely for this function to end with the error
  *   because it does not do any parsing, parameters checking etc.
  *
- * @note To actually execute the SQL query the returned CRUD has to be
-        given to mysqlx_crud_execute()
+ * @note To actually execute the SQL query the returned STMT has to be
+        given to mysqlx_execute()
 */
-MYSQLX_CRUD * STDCALL
-mysqlx_table_select_new(MYSQLX_SESSION *sess, const char *schema,
-                        const char *table);
+mysqlx_stmt_t * STDCALL
+mysqlx_table_select_new(mysqlx_table_t *table);
 /*
   All variadic parameters table functions must close the list of items with NULL value
 
@@ -438,7 +465,7 @@ mysqlx_table_select_new(MYSQLX_SESSION *sess, const char *schema,
  *           names, values, constants or expressions.
  *           operation. See mysqlx_set_where()
  *
- *  @param crud pointer to CRUD structure for which the projections are set
+ *  @param crud pointer to statement structure for which the projections are set
  *  @param  ... - variable parameters list consisting of character strings
  *         that define projections. The list is terminated by PARAM_END:
  *         proj_1, ..., proj_n, PARAM_END
@@ -450,7 +477,7 @@ mysqlx_table_select_new(MYSQLX_SESSION *sess, const char *schema,
  *        FIND operations (see mysqlx_table_select_new() and
  *        mysqlsx_collection_find_new())
  * */
-int STDCALL mysqlx_set_items(MYSQLX_CRUD *crud, ...);
+int STDCALL mysqlx_set_items(mysqlx_stmt_t *stmt, ...);
 
 /*! @brief MYSQLX API
  *  @details a macro defining a function for setting projections for SELECT
@@ -487,7 +514,7 @@ int STDCALL mysqlx_set_items(MYSQLX_CRUD *crud, ...);
 /*! @brief MYSQLX API
  *
  * @details
- * Limit given CRUD operation to rows/documents that satisfy given WHERE clause:
+ * Limit given statement operation to rows/documents that satisfy given WHERE clause:
  *  - for select/find operations limit the returned rows/documents,
  *  - for update/modify/delete/remove operations limit the rows/documents
  *    affected by the operations.
@@ -496,7 +523,7 @@ int STDCALL mysqlx_set_items(MYSQLX_CRUD *crud, ...);
  *   SELECT, FIND, UPDATE, MODIFY, DELETE, REMOVE
  * Calling it for INSERT or ADD will result in an error
  *
- * @param crud pointer to CRUD structure
+ * @param crud pointer to statement structure
  * @param where_expr character string containing WHERE clause,
  *                which will be parsed as required
  *
@@ -509,16 +536,16 @@ int STDCALL mysqlx_set_items(MYSQLX_CRUD *crud, ...);
  *       corresponding mysqlx_set_where() function.
  *       This way the unsupported operations will not be used.
  */
-int STDCALL mysqlx_set_where(MYSQLX_CRUD *crud, const char *where_expr);
+int STDCALL mysqlx_set_where(mysqlx_stmt_t *stmt, const char *where_expr);
 
 /*! @brief MYSQLX API
  *
- * @details Set ORDER BY clause for CRUD operation
+ * @details Set ORDER BY clause for statement operation
  * Operations supported by this function:
  * SELECT, FIND, UPDATE, MODIFY, DELETE, REMOVE
  * Calling it for INSERT or ADD will result in an error
  *
- * @param crud - pointer to CRUD structure
+ * @param crud - pointer to statement structure
  * @param  ... - variable parameters list consisting of (expression, direction) pairs
  *         terminated by PARAM_END:
  *         expr_1, direction_1, ..., expr_n, direction_n, PARAM_END
@@ -540,15 +567,15 @@ int STDCALL mysqlx_set_where(MYSQLX_CRUD *crud, const char *where_expr);
  *       corresponding mysqlx_set_order_by() function.
  *       This way the unsupported operations will not be used.
  */
-int STDCALL mysqlx_set_order_by(MYSQLX_CRUD *crud, ...);
+int STDCALL mysqlx_set_order_by(mysqlx_stmt_t *stmt, ...);
 
 /* brief NOT IMPLEMENTED
  *
- * @details Set GROUP BY clause for CRUD operation
+ * @details Set GROUP BY clause for statement operation
  * Operations supported by SELECT.
  * Calling it for INSERT or ADD will result in an error
  *
- * @param crud - pointer to CRUD structure
+ * @param crud - pointer to statement structure
  * @param expr - expression computing value used to group rows/documents
  * @param  ... - variable parameters list consisting of expressions
  *         terminated by PARAM_END:
@@ -557,7 +584,7 @@ int STDCALL mysqlx_set_order_by(MYSQLX_CRUD *crud, ...);
  *
  * @return RESULT_OK - on success; RESULT_ERR - on error
  *
-int STDCALL mysqlx_set_select_group_by(MYSQLX_CRUD *crud, const char *expr, ...); // NOT IMPLEMENTED
+int STDCALL mysqlx_set_select_group_by(mysqlx_stmt_t *stmt, const char *expr, ...); // NOT IMPLEMENTED
 */
 
 /* brief NOT IMPLEMENTED
@@ -565,12 +592,12 @@ int STDCALL mysqlx_set_select_group_by(MYSQLX_CRUD *crud, const char *expr, ...)
  * @note On the implementation stage the function can change its name,
  *       parameters or return type
  *
-int STDCALL mysqlx_set_having(MYSQLX_CRUD *crud, const char *criteria); // NOT IMPLEMENTED
+int STDCALL mysqlx_set_having(mysqlx_stmt_t *stmt, const char *criteria); // NOT IMPLEMENTED
 */
 
 /*! @brief MYSQLX API
  *
- * @details Set LIMIT and OFFSET for CRUD operations which work on ranges of rows/documents:
+ * @details Set LIMIT and OFFSET for statement operations which work on ranges of rows/documents:
  *   - for slect/find operations limit the number of returned rows/documents,
  *   - for update/delete limit the number of documents affected by the operation.
  *
@@ -580,7 +607,7 @@ int STDCALL mysqlx_set_having(MYSQLX_CRUD *crud, const char *criteria); // NOT I
  *
  * Calling it for INSERT or ADD will result in an error
  *
- * @param crud pointer to CRUD structure
+ * @param crud pointer to statement structure
  * @param row_count the number of result rows to return
  * @param offset the number of rows to skip before starting counting
  *
@@ -596,39 +623,34 @@ int STDCALL mysqlx_set_having(MYSQLX_CRUD *crud, const char *criteria); // NOT I
  * @note Each call to this function replaces previously set LIMIT
 */
 int STDCALL
-mysqlx_set_limit_and_offset(MYSQLX_CRUD *crud, uint64_t row_count,
+mysqlx_set_limit_and_offset(mysqlx_stmt_t *stmt, uint64_t row_count,
                             uint64_t offset);
 
 /*! @brief NOT IMPLEMENTED
  *
  * @details Start new table INSERT operation without actually executing it.
- *
- * @param sess pointer to the current session handlre
- * @param schema schema name. The default database will be used if NULL is specified
  *                            for this parameter.
- * @param table table name
+ * @param table table handle
  *
  * @return
- *   CRUD handler to the newly created INSERT operation.
+ *   STMT handle for the newly created INSERT operation.
  *   NULL can be returned only in case when there are problems
  *   allocating memory, which normally should not happen.
  *   It is very unlikely for this function to end with the error
  *   because it does not do any parsing, parameters checking etc.
  *
- * @note To actually execute the SQL query the returned CRUD has to be
-        given to mysqlx_crud_execute()
+ * @note To actually execute the SQL query the returned STMT has to be
+        given to mysqlx_execute()
 */
-MYSQLX_CRUD * STDCALL
-mysqlx_table_insert_new(MYSQLX_SESSION *sess,
-                        const char *schema,
-                        const char *table);
+mysqlx_stmt_t * STDCALL
+mysqlx_table_insert_new(mysqlx_table_t *table);
 
 /*! @brief MYSQLX API
  *
- * @details The function provides the column names for the CRUD INSERT.
+ * @details The function provides the column names for the statement INSERT.
  *  User code must ensure that the column values are correct
  *  because the names are not validated until receiving the query on
- *  the server side after executing mysqlx_crud_execute().
+ *  the server side after executing mysqlx_execute().
  *
  * @param crud pointer to CRUD
  * @param   ...  - variable parameters list consisting of column names
@@ -640,11 +662,11 @@ mysqlx_table_insert_new(MYSQLX_SESSION *sess,
  *       if it was set earlier
 */
 int STDCALL
-mysqlx_set_insert_columns(MYSQLX_CRUD *crud, ...);
+mysqlx_set_insert_columns(mysqlx_stmt_t *stmt, ...);
 
 /*! @brief MYSQLX API
  *
- * @details The function provides the row data for the CRUD INSERT.
+ * @details The function provides the row data for the statement INSERT.
  *  User code must ensure that the number of values and the order they are specified
  *  in the parameters is the same as the number of columns and their order in
  *  mysqlx_set_insert_columns(), which defines the column names for INSERT.
@@ -667,11 +689,11 @@ mysqlx_set_insert_columns(MYSQLX_CRUD *crud, ...);
  *       can be used for multi-row inserts
 */
 int STDCALL
-mysqlx_set_insert_row(MYSQLX_CRUD *crud, ...);
+mysqlx_set_insert_row(mysqlx_stmt_t *stmt, ...);
 
 /* brief MYSQLX API
  *
- * @details The function provides the columns data for the CRUD INSERT.
+ * @details The function provides the columns data for the statement INSERT.
  *  User code must ensure that the number of values in the parameters corresponds
  *  to the number of columns in the table because this is not checked
  *  until receiving the query on the server side.
@@ -689,51 +711,47 @@ mysqlx_set_insert_row(MYSQLX_CRUD *crud, ...);
  *          the value along with and all sequential types and values are most
  *          likely to be corrupted.
  *
- *          allowed types are listed in MYSQLX_DATA_TYPE enum.
+ *          allowed types are listed in mysqlx_data_type_t enum.
  * @return RESULT_OK - on success; RESULT_ERR - on error
  *
  * @note Each new call resets the row values set by the previous call to
  *       mysqlx_set_insert_columns()
  *
 int STDCALL
-mysqlx_set_insert_columns(MYSQLX_CRUD *crud, ...); // NOT IMPLEMENTED
+mysqlx_set_insert_columns(mysqlx_stmt_t *stmt, ...); // NOT IMPLEMENTED
 */
 
 /*! @brief MYSQLX API
  *
  * @details Start new table UPDATE operation without actually executing it.
  *
- * @param sess pointer to the current session handlre
- * @param schema schema name. The default database will be used if NULL is specified
- *                            for this parameter.
  * @param table table name
  *
  * @return
- *   CRUD handler to the newly created UPDATE operation.
+ *   STMT handle for the newly created UPDATE operation.
  *   NULL can be returned only in case when there are problems
  *   allocating memory, which normally should not happen.
  *   It is very unlikely for this function to end with the error
  *   because it does not do any parsing, parameters checking etc.
  *
- * @note To actually execute the SQL query the returned CRUD has to be
- *       given to mysqlx_crud_execute()
+ * @note To actually execute the SQL query the returned STMT has to be
+ *       given to mysqlx_execute()
 */
-MYSQLX_CRUD * STDCALL
-mysqlx_table_update_new(MYSQLX_SESSION *sess,
-                        const char *schema, const char *table);
+mysqlx_stmt_t * STDCALL
+mysqlx_table_update_new(mysqlx_table_t *table);
 
 /*! @brief MYSQLX API
  *
  * @details Set values for the columns in the UPDATE statement.
  *
- * @param crud - pointer to CRUD structure
+ * @param crud - pointer to statement structure
  * @param  ... - variable parameters list consisting of triplets
  *         <column_name, value_type, value_or_expression>
  *         representing column names, value types and values as
  *         expressions.The list is terminated by PARAM_END:
  *         column_1, type_1, val_1, ..., column_n, type_n, val_n, PARAM_END
  *         (PARAM_END marks the end of parameters list)
- *         The value type is defined in MYSQLX_DATA_TYPE enum.
+ *         The value type is defined in mysqlx_data_type_t enum.
  *         If the value is to be computed on the server side the type
  *         has to be set to MYSQLX_TYPE_EXPR. The value (expression)
  *         should be specified as a character string expression.
@@ -747,7 +765,7 @@ mysqlx_table_update_new(MYSQLX_SESSION *sess,
  *       otherwise the next call to this function will reset all parameters to
  *       their new values.
  */
-int STDCALL mysqlx_set_update_values(MYSQLX_CRUD *crud, ...);
+int STDCALL mysqlx_set_update_values(mysqlx_stmt_t *stmt, ...);
 
 /*! @brief MYSQLX API
  *  @details a macro defining a function for setting WHERE clause for UPDATE
@@ -773,24 +791,20 @@ int STDCALL mysqlx_set_update_values(MYSQLX_CRUD *crud, ...);
  *
  * @details Start new table DELETE operation without actually executing it.
  *
- * @param sess pointer to the current session handlre
- * @param schema schema name. The default database will be used if NULL is specified
- *                            for this parameter.
- * @param table table name
+ * @param table table handle
  *
  * @return
- *   CRUD handler to the newly created DELETE operation.
+ *   STMT handle for the newly created DELETE operation.
  *   NULL can be returned only in case when there are problems
  *   allocating memory, which normally should not happen.
  *   It is very unlikely for this function to end with the error
  *   because it does not do any parsing, parameters checking etc.
  *
- * @note To actually execute the SQL query the returned CRUD has to be
- *       given to mysqlx_crud_execute()
+ * @note To actually execute the SQL query the returned STMT has to be
+ *       given to mysqlx_execute()
 */
-MYSQLX_CRUD * STDCALL
-mysqlx_table_delete_new(MYSQLX_SESSION *sess,
-                        const char *schema, const char *table);
+mysqlx_stmt_t * STDCALL
+mysqlx_table_delete_new(mysqlx_table_t *table);
 
 /*! @brief MYSQLX API
  *  @details a macro defining a function for setting WHERE clause for DELETE
@@ -812,43 +826,43 @@ mysqlx_table_delete_new(MYSQLX_SESSION *sess,
 
 /*! @brief MYSQLX API
  *
- * @details Execute a CRUD statement created by mysqlx_table_select_new(),
+ * @details Execute a statement created by mysqlx_table_select_new(),
  *          mysqlx_table_insert_new(), mysqlx_table_update_new(),
- *          mysqlx_table_delete_new(), mysqlx_sql_query(), etc.
+ *          mysqlx_table_delete_new(), mysqlx_sql_new(), etc.
  *
- * @param crud pointer to CRUD structure
+ * @param crud pointer to statement structure
  *
  * @return  A MYSQL_RESULT handle that can be used to access results
  *          of the operation. Returned handle is valid until the CRUD
  *          handle is freed (when session is closed or explicitly with
- *          mysqlx_crud_free()) or until another call to mysqlx_crud_execute()
- *          on the same CRUD handle is made. It is also possible to close
+ *          mysqlx_free()) or until another call to mysqlx_execute()
+ *          on the same statement handle is made. It is also possible to close
  *          a RESULT hanlde and free all resources used by it earlier with
  *          mysqlx_result_free() call.
- *          On error NULL is returned. The error is set for CRUD handler.
+ *          On error NULL is returned. The error is set for statement handler.
  */
-MYSQLX_RESULT * STDCALL
-mysqlx_crud_execute(MYSQLX_CRUD *crud);
+mysqlx_result_t * STDCALL
+mysqlx_execute(mysqlx_stmt_t *stmt);
 
 /*! @brief MYSQLX_API
  *
  * @details Rows/documents contained in a result must be fetched in a timely fashion.
  *          Failing to do that can result in an error and lost access to the
  *          remaining part of the result. This function can store complete result
- *          in memory so it can be accessed at any time, as long as MYSQLX_RESULT
+ *          in memory so it can be accessed at any time, as long as mysqlx_result_t
  *          handle is valid.
  *
  * @param result result handler used for obtaining and buffering the result
  * @param[out] num number of records buffered
  *
  * @return RESULT_OK - on success; RESULT_ERR - on error. If the error occurred
- *         it can be retrieved by mysqlx_crud_error() function.
+ *         it can be retrieved by mysqlx_error() function.
  *
  * @note Even in case of an error some rows/documents might be buffered if they
  *       were retrieved before the error occurred.
  */
 int STDCALL
-mysqlx_store_result(MYSQLX_RESULT *result, size_t *num);
+mysqlx_store_result(mysqlx_result_t *result, size_t *num);
 
 /*! @brief MYSQLX API
  *
@@ -859,10 +873,10 @@ mysqlx_store_result(MYSQLX_RESULT *result, size_t *num);
  *
  * @return RESULT_OK - on success; RESULT_ERR - on error
  *         The error handle can be obtained from the session
- *         using mysqlx_session_error() function
+ *         using mysqlx_error() function
 */
 int STDCALL
-mysqlx_schema_create(MYSQLX_SESSION *sess, const char *schema);
+mysqlx_schema_create(mysqlx_session_t *sess, const char *schema);
 
 /*! @brief MYSQLX API
  *
@@ -873,101 +887,90 @@ mysqlx_schema_create(MYSQLX_SESSION *sess, const char *schema);
  *
  * @return RESULT_OK - on success; RESULT_ERR - on error
  *         The error handle can be obtained from the session
- *         using mysqlx_session_error() function
+ *         using mysqlx_error() function
 */
 int STDCALL
-mysqlx_schema_drop(MYSQLX_SESSION *sess, const char *schema);
+mysqlx_schema_drop(mysqlx_session_t *sess, const char *schema);
 
 /*! @brief MYSQLX API
  *
  * @details Drop a table
  *
- * @param sess session handler
- * @param schema the name of the schema containing table to drop
+ * @param schema schema handle
  * @param table the name of the table to drop
  *
  * @return RESULT_OK - on success; RESULT_ERR - on error
  *         The error handle can be obtained from the session
- *         using mysqlx_session_error() function
+ *         using mysqlx_error() function
 */
 int STDCALL
-mysqlx_table_drop(MYSQLX_SESSION *sess, const char *schema,
-                  const char *table);
+mysqlx_table_drop(mysqlx_schema_t *schema, const char *table);
 
 
 /*! @brief MYSQLX API
  *
  * @details Drop a view
  *
- * @param sess session handler
- * @param schema the name of the schema containing table to drop
- * @param table the name of the table to drop
+ * @param schema schema handle
+ * @param view the name of the view to drop
  *
  * @return RESULT_OK - on success; RESULT_ERR - on error
  *         The error handle can be obtained from the session
- *         using mysqlx_session_error() function
+ *         using mysqlx_error() function
 */
 int STDCALL
-mysqlx_view_drop(MYSQLX_SESSION *sess, const char *schema,
-                  const char *view);
+mysqlx_view_drop(mysqlx_schema_t *schema, const char *view);
 
 /*! @brief MYSQLX API
  *
  * @details Create a new collection in a specified schema
  *
- * @param sess session handler
- * @param schema schema in which to create the collection
- * @param collection collection name
+ * @param schema schema handle
+ * @param collection collection name to create
  *
  * @return RESULT_OK - on success; RESULT_ERR - on error
  *         The error handle can be obtained from the session
- *         using mysqlx_session_error() function
+ *         using mysqlx_error() function
 */
 int STDCALL
-mysqlx_collection_create(MYSQLX_SESSION *sess,
-                      const char *schema, const char *collection);
+mysqlx_collection_create(mysqlx_schema_t *schema, const char *collection);
 
 /*! @brief MYSQLX API
  *
  * @details Drop an existing collection in a specified schema
  *
- * @param sess session handler
- * @param schema schema in which to drop the collection
- * @param collection collection name
+ * @param schema schema handle
+ * @param collection collection name to drop
  *
  * @return RESULT_OK - on success; RESULT_ERR - on error
  *         The error handle can be obtained from the session
- *         using mysqlx_session_error() function
+ *         using mysqlx_error() function
 */
 int STDCALL
-mysqlx_collection_drop(MYSQLX_SESSION *sess,
-                      const char *schema, const char *collection);
+mysqlx_collection_drop(mysqlx_schema_t *schema, const char *collection);
 
 /*! @brief MYSQLX API
  *
- * @details Create a new CRUD operation for adding a new collection
+ * @details Create a new STMT operation for adding a new collection
  *
- * @param sess session handler
- * @param schema schema in which to add the collection
- * @param collection collection name
+ * @param collection collection handle
  *
  * @return
- *   CRUD handler to the newly created ADD operation.
+ *   STMT handle for the newly created ADD operation.
  *   NULL can be returned only in case when there are problems
  *   allocating memory, which normally should not happen.
  *   It is very unlikely for this function to end with the error
  *   because it does not do any parsing, parameters checking etc.
  *
- * @note To actually execute the operation the returned CRUD has to be
- *       given to mysqlx_crud_execute()
+ * @note To actually execute the operation the returned STMT has to be
+ *       given to mysqlx_execute()
 */
-MYSQLX_CRUD * STDCALL
-mysqlx_collection_add_new(MYSQLX_SESSION *sess,
-                      const char *schema, const char *collection);
+mysqlx_stmt_t * STDCALL
+mysqlx_collection_add_new(mysqlx_collection_t *collection);
 
 /*! @brief MYSQLX API
  *
- * @details The function provides the document data for the CRUD ADD as
+ * @details The function provides the document data for the statement ADD as
  * JSON document like "{ key_1: value_1, ..., key_N: value_N }"
  *  User code must ensure the validity of the document because it is
  * not checked until receiving the query on the server side.
@@ -977,44 +980,38 @@ mysqlx_collection_add_new(MYSQLX_SESSION *sess,
  * @return RESULT_OK - on success; RESULT_ERR - on error
  *
  * @note This function can only be called after mysqlx_collection_add_new()
- *       which creates a new CRUD operation
+ *       which creates a new statement operation
  * @note Each new call provides the values for the new document, which
  *       can be used for multi-document add operations
 */
 int STDCALL
-mysqlx_set_add_document(MYSQLX_CRUD *crud, const char *json_doc);
+mysqlx_set_add_document(mysqlx_stmt_t *stmt, const char *json_doc);
 
 /*! @brief MYSQLX API
  *
- * @details Find a collection
+ * @details Find a document in a collection
  *
- * @param sess session handler
- * @param schema schema name in which the collection is to be searched.
- *               The default database will be used if NULL is specified
- *               for this parameter.
- * @param collection collection name
+ * @param collection collection handle
  *
  * @return
- *   CRUD handler to the newly created FIND operation.
+ *   STMT handle for the newly created FIND operation.
  *   NULL can be returned only in case when there are problems
  *   allocating memory, which normally should not happen.
  *   It is very unlikely for this function to end with the error
  *   because it does not do any parsing, parameters checking etc.
  *
- * @note To actually execute the operation the returned CRUD has to be
- *       given to mysqlx_crud_execute()
+ * @note To actually execute the operation the returned STMT has to be
+ *       given to mysqlx_execute()
 */
-MYSQLX_CRUD * STDCALL
-mysqlx_collection_find_new(MYSQLX_SESSION *sess,
-                       const char *schema,
-                       const char *collection);
+mysqlx_stmt_t * STDCALL
+mysqlx_collection_find_new(mysqlx_collection_t *collection);
 
 /*! @brief MYSQLX API
  *  @details Setting projections (items to select or find) defined as column
  *           names, values, constants or expressions.
  *           operation. See mysqlx_set_where()
  *
- *  @param crud pointer to CRUD structure for which the projections are set
+ *  @param crud pointer to statement structure for which the projections are set
  *  @param proj projection specification describing JSON document projections as
  *  "{proj1: expr1, proj2: expr2}".
  *
@@ -1023,7 +1020,7 @@ mysqlx_collection_find_new(MYSQLX_SESSION *sess,
  *  @note This function can be only called for the collection
  *        FIND operations (see mysqlsx_collection_find_new())
  * */
-int STDCALL mysqlx_set_find_projection(MYSQLX_CRUD *crud, const char *proj);
+int STDCALL mysqlx_set_find_projection(mysqlx_stmt_t *stmt, const char *proj);
 
 /*! @brief MYSQLX API
  *  @details a macro defining a function for setting criteria for FIND
@@ -1059,7 +1056,7 @@ int STDCALL mysqlx_set_find_projection(MYSQLX_CRUD *crud, const char *proj);
  *          type_id1, value1, type_id2, value2, ..., type_id_n, value_n, PARAM_END
  *          (PARAM_END marks the end of parameters list).
  *
- *          For CRUD SELECT, INSERT, UPDATE, DELETE, FIND, ADD, MODIFY and REMOVE
+ *          For statement SELECT, INSERT, UPDATE, DELETE, FIND, ADD, MODIFY and REMOVE
  *          operations the parameters come as triplets (param_name, type, value).
  *
  *          name1, type_id1, value1, name2, type_id2, value2, ...,
@@ -1079,44 +1076,38 @@ int STDCALL mysqlx_set_find_projection(MYSQLX_CRUD *crud, const char *proj);
  * @return RESULT_OK - on success; RESULT_ERR - on error
  *
  * @note Each new call resets the binds set by the previous call to
- *       mysqlx_crud_bind()
+ *       mysqlx_stmt_bind()
 */
-int STDCALL mysqlx_crud_bind(MYSQLX_CRUD *crud, ...);
+int STDCALL mysqlx_stmt_bind(mysqlx_stmt_t *stmt, ...);
 
 /*! @brief MYSQLX API
  *
  * @details Create a Collection MODIFY operation
  *
- * @param sess session handler
- * @param schema schema name in which the collection is to be modified.
- *               The default database will be used if NULL is specified
- *               for this parameter.
- * @param collection collection name
+ * @param collection collection handle
  *
  * @return
- *   CRUD handler to the newly created FIND operation.
+ *   STMT handle for the newly created FIND operation.
  *   NULL can be returned only in case when there are problems
  *   allocating memory, which normally should not happen.
  *   It is very unlikely for this function to end with the error
  *   because it does not do any parsing, parameters checking etc.
  *
- * @note To actually execute the MODIFY query the returned CRUD has to be
- *       given to mysqlx_crud_execute()
+ * @note To actually execute the MODIFY query the returned STMT has to be
+ *       given to mysqlx_execute()
 */
-MYSQLX_CRUD * STDCALL
-mysqlx_collection_modify_new(MYSQLX_SESSION *sess,
-                         const char *schema,
-                         const char *collection);
+mysqlx_stmt_t * STDCALL
+mysqlx_collection_modify_new(mysqlx_collection_t *collection);
 
 /*! @brief MYSQLX API
  * @details Set fields in a document to the designated JSON values.
  *
- * @param crud pointer to CRUD initated for Collectin MODIFY operation
+ * @param crud pointer to statement initated for Collectin MODIFY operation
  * @ ... list of parameters that come as triplets
  *       <field_path, value_type, value>
  *       Each triplet represents a value inside a document that can
  *       be located by field_path. The value_type is the type identifier
- *       for the data type of value (see MYSQLX_DATA_TYPE enum)
+ *       for the data type of value (see mysqlx_data_type_t enum)
  *       The list is terminated by PARAM_END.
  *       For MYSQLX_TYPE_BYTES there will be one extra parameter specifying
  *       the length of the binary data:
@@ -1128,12 +1119,12 @@ mysqlx_collection_modify_new(MYSQLX_SESSION *sess,
  * @return RESULT_OK - on success; RESULT_ERR - on error
  */
 int STDCALL
-mysqlx_set_modify_set(MYSQLX_CRUD *crud, ...);
+mysqlx_set_modify_set(mysqlx_stmt_t *stmt, ...);
 
 /*! @brief MYSQLX API
  * @details Unset fields in a document
  *
- * @param crud pointer to CRUD initated for Collectin MODIFY operation
+ * @param crud pointer to statement initated for Collectin MODIFY operation
  * @param ... list of the documents fields paths that should be unset. Each
  *       entry in this list is a character string.
  *       The list is terminated by PARAM_END.
@@ -1141,17 +1132,17 @@ mysqlx_set_modify_set(MYSQLX_CRUD *crud, ...);
  * @return RESULT_OK - on success; RESULT_ERR - on error
  */
 int STDCALL
-mysqlx_set_modify_unset(MYSQLX_CRUD *crud, ...);
+mysqlx_set_modify_unset(mysqlx_stmt_t *stmt, ...);
 
 /*! @brief MYSQLX API
  * @details Insert elements into an array in a document
  *
- * @param crud pointer to CRUD initated for Collectin MODIFY operation
+ * @param crud pointer to statement initated for Collectin MODIFY operation
  * @param ... list of parameters that come as triplets
  *       <field_path, value_type, value>
  *       Each triplet represents a value inside a document that can
  *       be located by field_path. The value_type is the type identifier
- *       for the data type of value (see MYSQLX_DATA_TYPE enum)
+ *       for the data type of value (see mysqlx_data_type_t enum)
  *       The list is terminated by PARAM_END.
  *
  * @note For the convenience the code can use PARAM_XXXX(val) macros
@@ -1160,12 +1151,12 @@ mysqlx_set_modify_unset(MYSQLX_CRUD *crud, ...);
  * @return RESULT_OK - on success; RESULT_ERR - on error
  */
 int STDCALL
-mysqlx_set_modify_array_insert(MYSQLX_CRUD *crud, ...);
+mysqlx_set_modify_array_insert(mysqlx_stmt_t *stmt, ...);
 
 /*! @brief MYSQLX API
  * @details Append to an array in a document
  *
- * @param crud pointer to CRUD initated for Collectin MODIFY operation
+ * @param crud pointer to statement initated for Collectin MODIFY operation
  * @param ... list of parameters that come as triplets
  *       <field_path, value_type, value>
  *       The list is terminated by PARAM_END.
@@ -1176,44 +1167,38 @@ mysqlx_set_modify_array_insert(MYSQLX_CRUD *crud, ...);
  * @return RESULT_OK - on success; RESULT_ERR - on error
  */
 int STDCALL
-mysqlx_set_modify_array_append(MYSQLX_CRUD *crud, ...);
+mysqlx_set_modify_array_append(mysqlx_stmt_t *stmt, ...);
 
 /*! @brief MYSQLX API
  * @details Delete element in an array in a document
  *
- * @param crud pointer to CRUD initated for Collectin MODIFY operation
+ * @param crud pointer to statement initated for Collectin MODIFY operation
  * @param ... list of array elements paths that should be deleted from their arrays
  *       The list is terminated by PARAM_END.
  *
  *  @return RESULT_OK - on success; RESULT_ERR - on error
  */
-int mysqlx_set_modify_array_delete(MYSQLX_CRUD *crud, ...);
+int mysqlx_set_modify_array_delete(mysqlx_stmt_t *stmt, ...);
 
 #define mysqlx_set_modify_criteria mysqlx_set_where
 
 /*! @brief MYSQLX API
  * @details Remove a document from a collection
  *
- * @param sess session handler
- * @param schema schema name in which a collection will have
- *        a document removed. The default database will be used if NULL is specified
- *        for this parameter.
- * @param collection collection name
+ * @param collection collection handle
  *
  * @return
- *   CRUD handler to the newly created REMOVE operation.
+ *   STMT handle for the newly created REMOVE operation.
  *   NULL can be returned only in case when there are problems
  *   allocating memory, which normally should not happen.
  *   It is very unlikely for this function to end with the error
  *   because it does not do any parsing, parameters checking etc.
  *
- * @note To actually execute the REMOVE query the returned CRUD has to be
- *       given to mysqlx_crud_execute()
+ * @note To actually execute the REMOVE query the returned STMT has to be
+ *       given to mysqlx_execute()
  */
-MYSQLX_CRUD * STDCALL
-mysqlx_collection_remove_new(MYSQLX_SESSION *sess,
-                         const char *schema,
-                         const char *collection);
+mysqlx_stmt_t * STDCALL
+mysqlx_collection_remove_new(mysqlx_collection_t *collection);
 
 /*! @brief MYSQLX API
  *  @details a macro defining a function for setting WHERE for REMIVE
@@ -1240,13 +1225,13 @@ mysqlx_collection_remove_new(MYSQLX_SESSION *sess,
  *
  * @param res pointer to the result structure
  *
- * @return pointer to MYSQLX_ROW or NULL if no more rows left or if an error
+ * @return pointer to mysqlx_row_t or NULL if no more rows left or if an error
  *         occurred. In case of an error it can be retrieved using
- *         mysqlx_crud_error() or mysqlx_crud_error_message().
+ *         mysqlx_error() or mysqlx_error_message().
  *
  * @note The previously fetched row and its data will become invalid.
 */
-MYSQLX_ROW * STDCALL mysqlx_row_fetch_one(MYSQLX_RESULT *res);
+mysqlx_row_t * STDCALL mysqlx_row_fetch_one(mysqlx_result_t *res);
 
 /*! @brief MYSQLX API
  * @details Fetch one JSON document as a character string
@@ -1262,7 +1247,7 @@ MYSQLX_ROW * STDCALL mysqlx_row_fetch_one(MYSQLX_RESULT *res);
  *         handler.
  *
  */
-const char * STDCALL mysqlx_json_fetch_one(MYSQLX_RESULT *res, size_t *out_length);
+const char * STDCALL mysqlx_json_fetch_one(mysqlx_result_t *res, size_t *out_length);
 
 /*
  * @brief Fetch one document from the result and advance to
@@ -1270,9 +1255,9 @@ const char * STDCALL mysqlx_json_fetch_one(MYSQLX_RESULT *res, size_t *out_lengt
  *
  * @param res pointer to the result structure
  *
- * @return pointer to MYSQLX_DOC or NULL if no more rows left
+ * @return pointer to mysqlx_doc_t or NULL if no more rows left
  */
-//MYSQLX_DOC * STDCALL mysqlx_doc_fetch_one(MYSQLX_RESULT *res);
+//mysqlx_doc_t * STDCALL mysqlx_doc_fetch_one(mysqlx_result_t *res);
 
 /* brief MYSQLX API
  *
@@ -1281,7 +1266,7 @@ const char * STDCALL mysqlx_json_fetch_one(MYSQLX_RESULT *res, size_t *out_lengt
  *          function for data of the wrong type will result in error or
  *          wrong data being retrieved
  *
- * @param doc pointer to the MYSQLX_DOC structure returned by mysqlx_doc_fetch_one()
+ * @param doc pointer to the mysqlx_doc_t structure returned by mysqlx_doc_fetch_one()
  *  to get data from
  * @param key character string key to find the right value
  * @param[out] val the pointer to a variable of the 64-bit unsigned integer
@@ -1290,7 +1275,7 @@ const char * STDCALL mysqlx_json_fetch_one(MYSQLX_RESULT *res, size_t *out_lengt
  * @return RESULT_OK - on success; RESULT_NULL when the value is NULL;
  *         RESULT_ERR - on error
 */
-//int STDCALL mysqlx_doc_get_uint(MYSQLX_DOC *doc, const char *key, uint64_t *out);
+//int STDCALL mysqlx_doc_get_uint(mysqlx_doc_t *doc, const char *key, uint64_t *out);
 
 /* brief MYSQLX API
  *
@@ -1299,7 +1284,7 @@ const char * STDCALL mysqlx_json_fetch_one(MYSQLX_RESULT *res, size_t *out_lengt
  *          function for data of the wrong type will result in error or
  *          wrong data being retrieved
  *
- * @param doc pointer to the MYSQLX_DOC structure returned by mysqlx_doc_fetch_one()
+ * @param doc pointer to the mysqlx_doc_t structure returned by mysqlx_doc_fetch_one()
  *  to get data from
  * @param key character string key to find the right value
  * @param[out] val the pointer to a variable of the 64-bit signed integer
@@ -1308,7 +1293,7 @@ const char * STDCALL mysqlx_json_fetch_one(MYSQLX_RESULT *res, size_t *out_lengt
  * @return RESULT_OK - on success; RESULT_NULL when the value is NULL;
  *         RESULT_ERR - on error
 */
-//int STDCALL mysqlx_doc_get_sint(MYSQLX_DOC *doc, const char *key, int64_t *out);
+//int STDCALL mysqlx_doc_get_sint(mysqlx_doc_t *doc, const char *key, int64_t *out);
 
 /* brief MYSQLX API
  *
@@ -1317,7 +1302,7 @@ const char * STDCALL mysqlx_json_fetch_one(MYSQLX_RESULT *res, size_t *out_lengt
  *          function for data of the wrong type will result in error or
  *          wrong data being retrieved
  *
- * @param doc pointer to the MYSQLX_DOC structure returned by mysqlx_doc_fetch_one()
+ * @param doc pointer to the mysqlx_doc_t structure returned by mysqlx_doc_fetch_one()
  *  to get data from
  * @param key character string key to find the right value
  * @param[out] val the pointer to a variable of the float
@@ -1326,7 +1311,7 @@ const char * STDCALL mysqlx_json_fetch_one(MYSQLX_RESULT *res, size_t *out_lengt
  * @return RESULT_OK - on success; RESULT_NULL when the value is NULL;
  *         RESULT_ERR - on error
 */
-//int STDCALL mysqlx_doc_get_float(MYSQLX_DOC *doc, const char *key, float *out);
+//int STDCALL mysqlx_doc_get_float(mysqlx_doc_t *doc, const char *key, float *out);
 
 /* brief MYSQLX API
  *
@@ -1335,7 +1320,7 @@ const char * STDCALL mysqlx_json_fetch_one(MYSQLX_RESULT *res, size_t *out_lengt
  *          function for data of the wrong type will result in error or
  *          wrong data being retrieved
  *
- * @param doc pointer to the MYSQLX_DOC structure returned by mysqlx_doc_fetch_one()
+ * @param doc pointer to the mysqlx_doc_t structure returned by mysqlx_doc_fetch_one()
  *  to get data from
  * @param key character string key to find the right value
  * @param[out] val the pointer to a variable of the double
@@ -1344,13 +1329,13 @@ const char * STDCALL mysqlx_json_fetch_one(MYSQLX_RESULT *res, size_t *out_lengt
  * @return RESULT_OK - on success; RESULT_NULL when the value is NULL;
  *         RESULT_ERR - on error
 */
-//int STDCALL mysqlx_doc_get_double(MYSQLX_DOC *doc, const char *key, double *out);
+//int STDCALL mysqlx_doc_get_double(mysqlx_doc_t *doc, const char *key, double *out);
 
 /* brief MYSQLX API
  *
  * @details Write resulting bytes into a pre-allocated buffer
  *
- * @param doc pointer to the MYSQLX_DOC structure returned by mysqlx_doc_fetch_one()
+ * @param doc pointer to the mysqlx_doc_t structure returned by mysqlx_doc_fetch_one()
  *  to get data from
  * @param key character string key to find the right value
  * @param offset the number of bytes to skip before reading them from source document
@@ -1361,14 +1346,14 @@ const char * STDCALL mysqlx_json_fetch_one(MYSQLX_RESULT *res, size_t *out_lengt
  * @return RESULT_OK - on success; RESULT_NULL when the value is NULL;
  *         RESULT_ERR - on error
 */
-//int STDCALL mysqlx_doc_get_bytes(MYSQLX_DOC *doc, const char *key, uint64_t offset,
+//int STDCALL mysqlx_doc_get_bytes(mysqlx_doc_t *doc, const char *key, uint64_t offset,
 //                                 void *out, size_t *buf_len);
 
 /* brief MYSQLX API
  *
  * @details Write resulting character string into a pre-allocated buffer
  *
- * @param row pointer to the MYSQLX_DOC structure returned by mysqlx_doc_fetch_one()
+ * @param row pointer to the mysqlx_doc_t structure returned by mysqlx_doc_fetch_one()
  *  to get data from
  * @param key character string key to find the right value
  * @param offset the number of bytes to skip before reading them from source document
@@ -1379,7 +1364,7 @@ const char * STDCALL mysqlx_json_fetch_one(MYSQLX_RESULT *res, size_t *out_lengt
  * @return RESULT_OK - on success; RESULT_NULL when the value is NULL;
  *         RESULT_ERR - on error
 */
-//int STDCALL mysqlx_doc_get_str(MYSQLX_DOC *doc, const char *key, uint64_t offset,
+//int STDCALL mysqlx_doc_get_str(mysqlx_doc_t *doc, const char *key, uint64_t offset,
 //                                  char *out, size_t *buf_len);
 
 /* brief MYSQLX API
@@ -1388,39 +1373,39 @@ const char * STDCALL mysqlx_json_fetch_one(MYSQLX_RESULT *res, size_t *out_lengt
  *          one by one. Each call to this function gets the next key until all keys
  *          are returned. The keys sequence is not ordered.
  *
- * @param doc pointer to the MYSQLX_DOC structure returned by mysqlx_doc_fetch_one()
+ * @param doc pointer to the mysqlx_doc_t structure returned by mysqlx_doc_fetch_one()
  *  to get data from
  *
  * @return NULL-terminated character string key or NULL if all keys had been
  *  already returned by the previous calls
 */
-//char* STDCALL mysqlx_doc_get_key(MYSQLX_DOC *doc);
+//char* STDCALL mysqlx_doc_get_key(mysqlx_doc_t *doc);
 
 /* brief MYSQLX API
  *
  * @details Checks if the specific key exists in the document
  *
- * @param doc pointer to the MYSQLX_DOC structure to check for keys
+ * @param doc pointer to the mysqlx_doc_t structure to check for keys
  * @param key character string key to check
  *
  * @return true if the key exists, false otherwise
 */
-//bool STDCALL mysqlx_doc_key_exists(MYSQLX_DOC *doc, const char *key);
+//bool STDCALL mysqlx_doc_key_exists(mysqlx_doc_t *doc, const char *key);
 
 /* brief MYSQLX API
  *
  * @details Return the type identifier for the value with the specified
  *  key
  *
- * @param doc pointer to the MYSQLX_DOC structure to check for values
+ * @param doc pointer to the mysqlx_doc_t structure to check for values
  * @param key character string key to find the value
  *
  * @return 16-bit unsigned int number with the column type identifier
- * (see MYSQLX_DATA_TYPE enum). If the value with the specified key
+ * (see mysqlx_data_type_t enum). If the value with the specified key
  * does not exist or the error happens the function returns
  * MYSQLX_TYPE_UNDEFINED
 */
-//uint16_t STDCALL mysqlx_doc_get_type(MYSQLX_DOC *doc, const char *key);
+//uint16_t STDCALL mysqlx_doc_get_type(mysqlx_doc_t *doc, const char *key);
 
 
 /*! @brief MYSQLX_API
@@ -1428,54 +1413,24 @@ const char * STDCALL mysqlx_json_fetch_one(MYSQLX_RESULT *res, size_t *out_lengt
  * @details This function is used to process replies containing multiple result sets.
  *          Each time it is called the function reads the next result set.
  *
- * @param result result handle containing the statement/CRUD execute results
+ * @param result result handle containing the statement execute results
  *
  * @return RESULT_OK - on success; RESULT_NULL when there is no more results;
  *         RESULT_ERR - on error
  *
  */
-int STDCALL mysqlx_next_result(MYSQLX_RESULT *res);
-
-/*! @brief NOT IMPLEMENTED
- * @note On the implementation stage the function can change its name,
- *       parameters or return type
-uint64_t STDCALL
-mysqlx_get_last_insert_id(MYSQLX_RESULT *res);
- */
-
-/*! @brief NOT IMPLEMENTED
- * @note On the implementation stage the function can change its name,
- *       parameters or return type
-MYSQLX_GUID STDCALL
-mysqlx_get_last_document_id(MYSQLX_RESULT *res);
- */
-
-/* brief NOT IMPLEMENTED
- * @note On the implementation stage the function can change its name,
- *       parameters or return type
- *
-uint32_t STDCALL
-mysqlx_warning_count(MYSQLX_RESULT *res);
-*/
-
-/* brief NOT IMPLEMENTED
- * @note On the implementation stage the function can change its name,
- *       parameters or return type
- *
-MYSQLX_ROW * STDCALL
-mysqlx_get_warnings(MYSQLX_RESULT *res);
-*/
+int STDCALL mysqlx_next_result(mysqlx_result_t *res);
 
 /*! @brief MYSQLX API
  *
  * @details Get number of rows affected by the last operation
  *
- * @param res pointer to the result structure returned by mysqlx_crud_execute()
+ * @param res pointer to the result structure returned by mysqlx_execute()
  *
  * @return 64-bit unsigned int number containing the number of affected rows
 */
 uint64_t STDCALL
-mysqlx_get_affected_count(MYSQLX_RESULT *res);
+mysqlx_get_affected_count(mysqlx_result_t *res);
 
 // Metadata
 
@@ -1483,145 +1438,145 @@ mysqlx_get_affected_count(MYSQLX_RESULT *res);
  *
  * @details Get column type identifier
  *
- * @param res pointer to the result structure returned by mysqlx_crud_execute()
+ * @param res pointer to the result structure returned by mysqlx_execute()
  * @param pos zero-based column number
  *
  * @return 16-bit unsigned int number with the column type identifier
- * (see MYSQLX_DATA_TYPE enum)
+ * (see mysqlx_data_type_t enum)
 */
 uint16_t STDCALL
-mysqlx_column_get_type(MYSQLX_RESULT *res, uint32_t pos);
+mysqlx_column_get_type(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
  *
  * @details Get column collation number
  *
- * @param res pointer to the result structure returned by mysqlx_crud_execute()
+ * @param res pointer to the result structure returned by mysqlx_execute()
  * @param pos zero-based column number
  *
  * @return 16-bit unsigned int number with the column collation number
 */
 uint16_t STDCALL
-mysqlx_column_get_collation(MYSQLX_RESULT *res, uint32_t pos);
+mysqlx_column_get_collation(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
  *
  * @details Get column length
  *
- * @param res pointer to the result structure returned by mysqlx_crud_execute()
+ * @param res pointer to the result structure returned by mysqlx_execute()
  * @param pos zero-based column number
  *
  * @return 32-bit unsigned int number indicating the maximum data length
 */
 uint32_t STDCALL
-mysqlx_column_get_length(MYSQLX_RESULT *res, uint32_t pos);
+mysqlx_column_get_length(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
  *
  * @details Get column precision
  *
- * @param res pointer to the result structure returned by mysqlx_crud_execute()
+ * @param res pointer to the result structure returned by mysqlx_execute()
  * @param pos zero-based column number
  *
  * @return 16-bit unsigned int number of digits after the decimal point
 */
 uint16_t STDCALL
-mysqlx_column_get_precision(MYSQLX_RESULT *res, uint32_t pos);
+mysqlx_column_get_precision(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
  *
  * @details Get column flags
  *
- * @param res pointer to the result structure returned by mysqlx_crud_execute()
+ * @param res pointer to the result structure returned by mysqlx_execute()
  * @param pos zero-based column number
  *
  * @return 32-bit unsigned int number containing column flags
 */
 uint32_t STDCALL
-mysqlx_column_get_flags(MYSQLX_RESULT *res, uint32_t pos);
+mysqlx_column_get_flags(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
  *
  * @details Get the number of columns in the result
  *
- * @param res pointer to the result structure returned by mysqlx_crud_execute()
+ * @param res pointer to the result structure returned by mysqlx_execute()
  *
  * @return the number of columns
 */
 uint32_t STDCALL
-mysqlx_column_get_count(MYSQLX_RESULT *res);
+mysqlx_column_get_count(mysqlx_result_t *res);
 
 /*! @brief MYSQLX API
  *
  * @details Get column name
  *
- * @param res pointer to the result structure returned by mysqlx_crud_execute()
+ * @param res pointer to the result structure returned by mysqlx_execute()
  * @param pos zero-based column number
  *
  * @return character string containing the column name
 */
 const char * STDCALL
-mysqlx_column_get_name(MYSQLX_RESULT *res, uint32_t pos);
+mysqlx_column_get_name(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
  *
  * @details Get column original name
  *
- * @param res pointer to the result structure returned by mysqlx_crud_execute()
+ * @param res pointer to the result structure returned by mysqlx_execute()
  * @param pos zero-based column number
  *
  * @return character string containing the column original name
 */
 const char * STDCALL
-mysqlx_column_get_original_name(MYSQLX_RESULT *res, uint32_t pos);
+mysqlx_column_get_original_name(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
  *
  * @details Get column table
  *
- * @param res pointer to the result structure returned by mysqlx_crud_execute()
+ * @param res pointer to the result structure returned by mysqlx_execute()
  * @param pos zero-based column number
  *
  * @return character string containing the column table name
 */
 const char * STDCALL
-mysqlx_column_get_table(MYSQLX_RESULT *res, uint32_t pos);
+mysqlx_column_get_table(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
  *
  * @details Get column original table
  *
- * @param res pointer to the result structure returned by mysqlx_crud_execute()
+ * @param res pointer to the result structure returned by mysqlx_execute()
  * @param pos zero-based column number
  *
  * @return character string containing the column original table
 */
 const char * STDCALL
-mysqlx_column_get_original_table(MYSQLX_RESULT *res, uint32_t pos);
+mysqlx_column_get_original_table(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
  *
  * @details Get column schema
  *
- * @param res pointer to the result structure returned by mysqlx_crud_execute()
+ * @param res pointer to the result structure returned by mysqlx_execute()
  * @param pos zero-based column number
  *
  * @return character string containing the column schema
 */
 const char * STDCALL
-mysqlx_column_get_schema(MYSQLX_RESULT *res, uint32_t pos);
+mysqlx_column_get_schema(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
  *
  * @details Get column name
  *
- * @param res pointer to the result structure returned by mysqlx_crud_execute()
+ * @param res pointer to the result structure returned by mysqlx_execute()
  * @param pos zero-based column number
  *
  * @return character string containing the column name
 */
 const char * STDCALL
-mysqlx_column_get_catalog(MYSQLX_RESULT *res, uint32_t pos);
+mysqlx_column_get_catalog(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
  *
@@ -1639,7 +1594,7 @@ mysqlx_column_get_catalog(MYSQLX_RESULT *res, uint32_t pos);
  *         RESULT_ERR - on error
 */
 int STDCALL
-mysqlx_get_bytes(MYSQLX_ROW* row, uint32_t col,
+mysqlx_get_bytes(mysqlx_row_t* row, uint32_t col,
                  uint64_t offset, void *buf, size_t *buf_len);
 
 /*! @brief MYSQLX API
@@ -1659,7 +1614,7 @@ mysqlx_get_bytes(MYSQLX_ROW* row, uint32_t col,
  *         RESULT_ERR - on error
 */
 int STDCALL
-mysqlx_get_uint(MYSQLX_ROW* row, uint32_t col, uint64_t* val);
+mysqlx_get_uint(mysqlx_row_t* row, uint32_t col, uint64_t* val);
 
 /*! @brief MYSQLX API
  *
@@ -1678,7 +1633,7 @@ mysqlx_get_uint(MYSQLX_ROW* row, uint32_t col, uint64_t* val);
  *         RESULT_ERR - on error
 */
 int STDCALL
-mysqlx_get_sint(MYSQLX_ROW* row, uint32_t col, int64_t* val);
+mysqlx_get_sint(mysqlx_row_t* row, uint32_t col, int64_t* val);
 
 /*! @brief MYSQLX API
  *
@@ -1697,7 +1652,7 @@ mysqlx_get_sint(MYSQLX_ROW* row, uint32_t col, int64_t* val);
  *         RESULT_ERR - on error
 */
 int STDCALL
-mysqlx_get_float(MYSQLX_ROW* row, uint32_t col, float* val);
+mysqlx_get_float(mysqlx_row_t* row, uint32_t col, float* val);
 
 /*! @brief MYSQLX API
  *
@@ -1716,66 +1671,65 @@ mysqlx_get_float(MYSQLX_ROW* row, uint32_t col, float* val);
  *         RESULT_ERR - on error
 */
 int STDCALL
-mysqlx_get_double(MYSQLX_ROW* row, uint32_t col, double *val);
+mysqlx_get_double(mysqlx_row_t* row, uint32_t col, double *val);
 
 /*! @brief MYSQLX API
  *
  * @details Free the result explicitly, otherwise it will be done automatically
- * when CRUD handler is destroyed.
+ * when statement handler is destroyed.
  *
  * @param res the result handler, which should be freed
  *
  * @note make sure this function is called if the result handler is going to be
  *       re-used
 */
-void STDCALL mysqlx_result_free(MYSQLX_RESULT *res);
-// TODO: multi results
+void STDCALL mysqlx_result_free(mysqlx_result_t *res);
 
 /*! @brief MYSQLX API
  *
- * @details Get the last error related to the CRUD operation.
+ * @details Get the last error from the object
  *
- * @param crud the CRUD handler to extract the error information from
+ * @param obj the object handle to extract the error information from.
+ *            Supported types are mysqlx_session_t, mysqlx_session_options_t,
+ *            mysqlx_schema_t, mysqlx_collection_t, mysqlx_table_t,
+ *            mysqlx_stmt_t, mysqlx_result_t, mysqlx_row_t, mysqlx_error_t
  *
- * @return the error handler or NULL if there is no errors.
+ * @return the error handle or NULL if there is no errors.
 */
-MYSQLX_ERROR * STDCALL mysqlx_crud_error(MYSQLX_CRUD *crud);
+mysqlx_error_t * STDCALL
+mysqlx_error(void *obj);
 
 /*! @brief MYSQLX API
  *
- * @details Get the last error message string related to the CRUD operation.
+ * @details Get the error message from the object
  *
- * @param crud the CRUD handler to extract the error information from
+ * @param obj the object handle to extract the error information from.
+ *            Supported types are mysqlx_session_t, mysqlx_session_options_t,
+ *            mysqlx_schema_t, mysqlx_collection_t, mysqlx_table_t,
+ *            mysqlx_stmt_t, mysqlx_result_t, mysqlx_row_t, mysqlx_error_t
  *
  * @return the character string or NULL if there is no errors.
 */
-const char * STDCALL mysqlx_crud_error_message(MYSQLX_CRUD *crud);
+const char * STDCALL mysqlx_error_message(void *obj);
 
 /*! @brief MYSQLX API
  *
- * @details Get the error message from MYSQLX_ERROR
+ * @details Get the error message from the object
  *
- * @param error the MYSQLX_ERROR handler to extract the error information from
- *
- * @return the character string or NULL if there is no errors.
-*/
-const char * STDCALL mysqlx_error_message(MYSQLX_ERROR *error);
-
-/*! @brief MYSQLX API
- *
- * @details Get the error code from MYSQLX_ERROR
- *
- * @param error the MYSQLX_ERROR handler to extract the error information from
+ * @param obj the object handle to extract the error information from.
+ *            Supported types are mysqlx_session_t, mysqlx_session_options_t,
+ *            mysqlx_schema_t, mysqlx_collection_t, mysqlx_table_t,
+ *            mysqlx_stmt_t, mysqlx_result_t, mysqlx_row_t, mysqlx_error_t
  *
  * @return the error number or 0 if no error
 */
-unsigned int STDCALL mysqlx_error_num(MYSQLX_ERROR *error);
+unsigned int STDCALL mysqlx_error_num(void *obj);
 
 /*! @brief MYSQLX API
- * @details Free the CRUD handler explicitly, otherwise it will be done automatically
- * when CRUD the session is closed.
+ * @details Free the statement handler explicitly, otherwise it will be done automatically
+ * when statement the session is closed.
  *
- * @param crud the CRUD handler, which should be freed
+ * @param crud the statement handler, which should be freed
  *
  * @note make sure this function is called if the crud handler is going to be
  *       re-used
@@ -1784,7 +1738,7 @@ unsigned int STDCALL mysqlx_error_num(MYSQLX_ERROR *error);
  *   implement book-keeping to be able to free the lower-level objects
  *   by freeing the higher-level ones
 */
-void STDCALL mysqlx_crud_free(MYSQLX_CRUD *crud);
+void STDCALL mysqlx_free(mysqlx_stmt_t *stmt);
 
 /*! @brief MYSQLX API
  *
@@ -1799,11 +1753,11 @@ void STDCALL mysqlx_crud_free(MYSQLX_CRUD *crud);
  * @return
  *   Result handle containing the results of the query.
  *   NULL is returned only in case of an error. The error details
- *   can be obtained using mysqlx_session_error() function
+ *   can be obtained using mysqlx_error() function
  *
- * @note mysqlx_crud_execute() is not needed to execute the query
+ * @note mysqlx_execute() is not needed to execute the query
  */
-MYSQLX_RESULT * STDCALL mysqlx_sql_exec(MYSQLX_SESSION *sess,
+mysqlx_result_t * STDCALL mysqlx_sql(mysqlx_session_t *sess,
                                         const char *query,
                                         size_t query_len);
 
@@ -1827,52 +1781,45 @@ MYSQLX_RESULT * STDCALL mysqlx_sql_exec(MYSQLX_SESSION *sess,
  *          ensure that type_id corresponds to the actual value type. Otherwise,
  *          the value along with and all sequential types and values are most
  *          likely to be corrupted.
- *          Allowed types are listed in MYSQLX_DATA_TYPE enum.
+ *          Allowed types are listed in mysqlx_data_type_t enum.
  *          The MYSQLX API defines the convenience macros that help to specify
  *          the types and values: See PARAM_SINT, PARAM_UINT, PARAM_FLOAT,
  *          PARAM_DOUBLE, PARAM_BYTES, PARAM_STRING.
  *
  * @return Result handle containing the results of the query.
  *   NULL is returned only in case of an error. The error details
- *   can be obtained using mysqlx_session_error() function
+ *   can be obtained using mysqlx_error() function
  *
- * @note mysqlx_crud_execute() is not needed to execute the query
+ * @note mysqlx_execute() is not needed to execute the query
  */
 
-MYSQLX_RESULT * STDCALL mysqlx_sql_exec_param(MYSQLX_SESSION *sess,
+mysqlx_result_t * STDCALL mysqlx_sql_param(mysqlx_session_t *sess,
                                         const char *query,
                                         size_t query_len, ...);
 
 /*! @brief MYSQLX API
  *
- * @details Execute a table SELECT CRUD operation with a WHERE clause.
+ * @details Execute a table SELECT statement operation with a WHERE clause.
  *          All columns will be selected.
  *
- * @param sess pointer to the current session handle
- * @param schema schema name. The default database will be used if NULL is specified
- *                            for this parameter.
- * @param table table name
+ * @param table table handle
  * @param criteria a WHERE clause for SELECT
  *
  * @return Result handle containing the results of the query.
  *   NULL is returned only in case of an error. The error details
- *   can be obtained using mysqlx_session_error() function
+ *   can be obtained using mysqlx_error() function
  *
- * @note mysqlx_crud_execute() is not needed to execute the query
+ * @note mysqlx_execute() is not needed to execute the query
 */
-MYSQLX_RESULT * STDCALL
-mysqlx_table_select_exec(MYSQLX_SESSION *sess, const char *schema,
-                        const char *table, const char *criteria);
+mysqlx_result_t * STDCALL
+mysqlx_table_select(mysqlx_table_t *table, const char *criteria);
 
 /*! @brief MYSQLX API
  *
- * @details Start and execute a table SELECT CRUD operation with a WHERE,
+ * @details Start and execute a table SELECT statement operation with a WHERE,
  *          ORDER BY and LIMIT clauses
  *
- * @param sess pointer to the current session handle
- * @param schema schema name. The default database will be used if NULL is specified
- *                            for this parameter.
- * @param table table name
+ * @param table table handle
  * @param criteria a WHERE clause for SELECT
  * @param row_count a number of rows for LIMIT
  * @param offset an offset for LIMIT
@@ -1890,27 +1837,23 @@ mysqlx_table_select_exec(MYSQLX_SESSION *sess, const char *schema,
  *
  * @return Result handle containing the results of the query.
  *   NULL is returned only in case of an error. The error details
- *   can be obtained using mysqlx_session_error() function
+ *   can be obtained using mysqlx_error() function
  *
- * @note mysqlx_crud_execute() is not needed to execute the query
+ * @note mysqlx_execute() is not needed to execute the query
 */
-MYSQLX_RESULT * STDCALL
-mysqlx_table_select_exec_limit(MYSQLX_SESSION *sess, const char *schema,
-                               const char *table, const char *criteria,
+mysqlx_result_t * STDCALL
+mysqlx_table_select_limit(mysqlx_table_t *table, const char *criteria,
                                uint64_t row_count, uint64_t offset, ...);
 
 /*! @brief MYSQLX API
  *
  * @details Start and execute a table INSERT operation one row at a time
  *
- * @param sess pointer to the current session handle
- * @param schema schema name. The default database will be used if NULL is specified
- *                            for this parameter.
- * @param table table name
+ * @param table table handle
  * @param ... list of column-value specifications consisting of
  *            <column_name, value_type, value> triplets. The list
  *            should be terminated using PARAM_END.
- *            Allowed value types are listed in MYSQLX_DATA_TYPE enum.
+ *            Allowed value types are listed in mysqlx_data_type_t enum.
  *            The MYSQLX API defines the convenience macros that help to specify
  *            the types and values: See PARAM_SINT, PARAM_UINT, PARAM_FLOAT,
  *            PARAM_DOUBLE, PARAM_BYTES, PARAM_STRING:
@@ -1920,28 +1863,23 @@ mysqlx_table_select_exec_limit(MYSQLX_SESSION *sess, const char *schema,
  *
  * @return Result handle containing the result.
  *   NULL is returned only in case of an error. The error details
- *   can be obtained using mysqlx_session_error() function
+ *   can be obtained using mysqlx_error() function
  *
- * @note mysqlx_crud_execute() is not needed to execute the query
+ * @note mysqlx_execute() is not needed to execute the query
 */
-MYSQLX_RESULT * STDCALL
-mysqlx_table_insert_exec(MYSQLX_SESSION *sess,
-                        const char *schema,
-                        const char *table, ...);
+mysqlx_result_t * STDCALL
+mysqlx_table_insert(mysqlx_table_t *table, ...);
 
 /*! @brief MYSQLX API
  *
  * @details Start and execute a table UPDATE operation
  *
- * @param sess pointer to the current session handle
- * @param schema schema name. The default database will be used if NULL is specified
- *                            for this parameter.
- * @param table table name
+ * @param table table handle
  * @param criterie the WHERE clause for UPDATE
  * @param ... list of column-value specifications consisting of
  *            <column_name, value_type, value> triplets. The list
  *            should be terminated using PARAM_END.
- *            Allowed value types are listed in MYSQLX_DATA_TYPE enum.
+ *            Allowed value types are listed in mysqlx_data_type_t enum.
  *            The MYSQLX API defines the convenience macros that help to specify
  *            the types and values: See PARAM_SINT, PARAM_UINT, PARAM_FLOAT,
  *            PARAM_DOUBLE, PARAM_BYTES, PARAM_STRING, PARAM_EXPR:
@@ -1951,56 +1889,47 @@ mysqlx_table_insert_exec(MYSQLX_SESSION *sess,
  *
  * @return Result handle containing the result.
  *   NULL is returned only in case of an error. The error details
- *   can be obtained using mysqlx_session_error() function
+ *   can be obtained using mysqlx_error() function
  *
- * @note mysqlx_crud_execute() is not needed to execute the query
+ * @note mysqlx_execute() is not needed to execute the query
 */
-MYSQLX_RESULT * STDCALL
-mysqlx_table_update_exec(MYSQLX_SESSION *sess,
-                        const char *schema,
-                        const char *table,
+mysqlx_result_t * STDCALL
+mysqlx_table_update(mysqlx_table_t *table,
                         const char *criteria,
                         ...);
 
 /*! @brief MYSQLX API
  *
- * @details Execute a table DELETE CRUD operation with a WHERE clause
+ * @details Execute a table DELETE statement operation with a WHERE clause
  *
- * @param sess pointer to the current session handle
- * @param schema schema name. The default database will be used if NULL is specified
- *                            for this parameter.
- * @param table table name
+ * @param table table handle
  * @param criteria a WHERE clause for DELETE
  *
  * @return Result handle containing the result.
  *   NULL is returned only in case of an error. The error details
- *   can be obtained using mysqlx_session_error() function
+ *   can be obtained using mysqlx_error() function
  *
- * @note mysqlx_crud_execute() is not needed to execute the query
+ * @note mysqlx_execute() is not needed to execute the query
 */
-MYSQLX_RESULT * STDCALL
-mysqlx_table_delete_exec(MYSQLX_SESSION *sess, const char *schema,
-                        const char *table, const char *criteria);
+mysqlx_result_t * STDCALL
+mysqlx_table_delete(mysqlx_table_t *table, const char *criteria);
 
 /*! @brief MYSQLX API
  *
- * @details Execute a collection FIND CRUD operation with a specific find
+ * @details Execute a collection FIND statement operation with a specific find
  *          criteria.
  *
- * @param sess pointer to the current session handle
- * @param schema schema name
- * @param collection collection name
+ * @param collection collection handle
  * @param criteria criteria for finding documents
  *
  * @return Result handle containing the results of FIND.
  *   NULL is returned only in case of an error. The error details
- *   can be obtained using mysqlx_session_error() function
+ *   can be obtained using mysqlx_error() function
  *
- * @note mysqlx_crud_execute() is not needed to execute the query
+ * @note mysqlx_execute() is not needed to execute the query
 */
-MYSQLX_RESULT * STDCALL
-mysqlx_collection_find_exec(MYSQLX_SESSION *sess, const char *schema,
-                        const char *collection, const char *criteria);
+mysqlx_result_t * STDCALL
+mysqlx_collection_find(mysqlx_collection_t *collection, const char *criteria);
 
 /*! @brief MYSQLX API
  *
@@ -2008,9 +1937,7 @@ mysqlx_collection_find_exec(MYSQLX_SESSION *sess, const char *schema,
  *          The document is defined by a JSON string like
  *          "{ key_1: value_1, ..., key_N: value_N }"
  *
- * @param sess pointer to the current session handle
- * @param schema schema name
- * @param collection collection name
+ * @param collection collection handle
  * @param ... list of parameters containing the character JSON strings
  *            describing documents to be added. Each parameter
  *            is a separate document. The list has to be terminated by
@@ -2018,26 +1945,23 @@ mysqlx_collection_find_exec(MYSQLX_SESSION *sess, const char *schema,
  *
  * @return Result handle containing the result of ADD.
  *   NULL is returned only in case of an error. The error details
- *   can be obtained using mysqlx_session_error() function
+ *   can be obtained using mysqlx_error() function
  *
- * @note mysqlx_crud_execute() is not needed to execute the query
+ * @note mysqlx_execute() is not needed to execute the query
 */
-MYSQLX_RESULT * STDCALL
-mysqlx_collection_add_exec(MYSQLX_SESSION *sess, const char *schema,
-                        const char *collection, ...);
+mysqlx_result_t * STDCALL
+mysqlx_collection_add(mysqlx_collection_t *collection, ...);
 
 /*! @brief MYSQLX API
  * @details Set JSON values in a document using collection MODIFY operation.
  *
- * @param sess pointer to the current session handle
- * @param schema schema name
- * @param collection collection name
+ * @param collection collection handle
  * @param criteria criteria for modifying documents
  * @param ... list of parameters that come as triplets
  *       <field_path, value_type, value>
  *       Each triplet represents a value inside a document that can
  *       be located by field_path. The value_type is the type identifier
- *       for the data type of value (see MYSQLX_DATA_TYPE enum)
+ *       for the data type of value (see mysqlx_data_type_t enum)
  *       The list is terminated by PARAM_END.
  *       For MYSQLX_TYPE_BYTES there will be one extra parameter specifying
  *       the length of the binary data:
@@ -2051,54 +1975,47 @@ mysqlx_collection_add_exec(MYSQLX_SESSION *sess, const char *schema,
  *
  * @return Result handle containing the result of the operation
  *   NULL is returned only in case of an error. The error details
- *   can be obtained using mysqlx_session_error() function
+ *   can be obtained using mysqlx_error() function
  *
- * @note mysqlx_crud_execute() is not needed to execute the query
+ * @note mysqlx_execute() is not needed to execute the query
  */
-MYSQLX_RESULT * STDCALL
-mysqlx_collection_modify_set_exec(MYSQLX_SESSION *sess, const char *schema,
-                                  const char *collection, const char *criteria,
-                                  ...);
+mysqlx_result_t * STDCALL
+mysqlx_collection_modify_set(mysqlx_collection_t *collection,
+                             const char *criteria, ...);
 
 /*! @brief MYSQLX API
  * @details Unset a field in a document using MODIFY operation
  *
- * @param sess pointer to the current session handle
- * @param schema schema name
- * @param collection collection name
+ * @param collection collection handle
  * @param criteria criteria for modifying documents
  * @param ... list of field paths that should be unset.
  *            The list end is marked using PARAM_END
  *
  * @return Result handle containing the result of the operation
  *   NULL is returned only in case of an error. The error details
- *   can be obtained using mysqlx_session_error() function
+ *   can be obtained using mysqlx_error() function
  *
- * @note mysqlx_crud_execute() is not needed to execute the query
+ * @note mysqlx_execute() is not needed to execute the query
  */
-MYSQLX_RESULT * STDCALL
-mysqlx_collection_modify_unset_exec(MYSQLX_SESSION *sess, const char *schema,
-                                  const char *collection, const char *criteria,
-                                  ...);
+mysqlx_result_t * STDCALL
+mysqlx_collection_modify_unset(mysqlx_collection_t *collection,
+                               const char *criteria, ...);
 
 /*! @brief MYSQLX API
  * @details Remove a document from a collection that satisfies a given
  *          criteria
  *
- * @param sess pointer to the current session handle
- * @param schema schema name
- * @param collection collection name
+ * @param collection collection handle
  * @param criteria criteria for removing documents
  *
  * @return Result handle containing the result of the operation
  *   NULL is returned only in case of an error. The error details
- *   can be obtained using mysqlx_session_error() function
+ *   can be obtained using mysqlx_error() function
  *
- * @note mysqlx_crud_execute() is not needed to execute the query
+ * @note mysqlx_execute() is not needed to execute the query
  */
-MYSQLX_RESULT * STDCALL
-mysqlx_collection_remove_exec(MYSQLX_SESSION *sess, const char *schema,
-                              const char *collection, const char*criteria);
+mysqlx_result_t * STDCALL
+mysqlx_collection_remove(mysqlx_collection_t *collection, const char*criteria);
 
 /*! @brief MYSQLX API
  *
@@ -2111,22 +2028,21 @@ mysqlx_collection_remove_exec(MYSQLX_SESSION *sess, const char *schema,
  *
  * @return Result handle containing the result.
  *   NULL is returned only in case of an error. The error details
- *   can be obtained using mysqlx_session_error() function
+ *   can be obtained using mysqlx_error() function
  *
- * @note mysqlx_crud_execute() is not needed to execute the query
+ * @note mysqlx_execute() is not needed to execute the query
  * @note the list of schema names is returned as a set of rows. Therefore,
  *       the functins such as mysqlx_store_result() and mysqlx_row_fetch_one()
  *       could be used.
 */
-MYSQLX_RESULT * STDCALL
-mysqlx_get_schemas(MYSQLX_SESSION *sess, const char *schema_pattern);
+mysqlx_result_t * STDCALL
+mysqlx_get_schemas(mysqlx_session_t *sess, const char *schema_pattern);
 
 /*! @brief MYSQLX API
  *
  * @details Get a list of tables and views
  *
- * @param sess pointer to the current session handle
- * @param schema name of the schema to list tables and views
+ * @param schema schema handle
  * @param table_pattern table name pattern to search.
  *        Giving NULL for this parameter is equivalent to "%" and will
  *        result in searching for all tables in the given schema
@@ -2136,9 +2052,9 @@ mysqlx_get_schemas(MYSQLX_SESSION *sess, const char *schema_pattern);
  *
  * @return Result handle containing the result.
  *   NULL is returned only in case of an error. The error details
- *   can be obtained using mysqlx_session_error() function
+ *   can be obtained using mysqlx_error() function
  *
- * @note mysqlx_crud_execute() is not needed to execute the query
+ * @note mysqlx_execute() is not needed to execute the query
  *
  * @note the list of table/view names is returned as a set of rows. Therefore,
  *       the functins such as mysqlx_store_result() and mysqlx_row_fetch_one()
@@ -2147,9 +2063,8 @@ mysqlx_get_schemas(MYSQLX_SESSION *sess, const char *schema_pattern);
  * @note this function does not return table names that represent collections.
  *       use mysqlx_get_collections() function for getting collections.
 */
-MYSQLX_RESULT * STDCALL
-mysqlx_get_tables(MYSQLX_SESSION *sess,
-                  const char *schema,
+mysqlx_result_t * STDCALL
+mysqlx_get_tables(mysqlx_schema_t *schema,
                   const char *table_pattern,
                   int get_views);
 
@@ -2157,24 +2072,22 @@ mysqlx_get_tables(MYSQLX_SESSION *sess,
  *
  * @details Get a list of collections
  *
- * @param sess pointer to the current session handle
- * @param schema name of the schema to list tables and views
+ * @param schema handle
  * @param col_pattern collection name pattern to search.
  *        Giving NULL for this parameter is equivalent to "%" and will
  *        result in searching for all collections in the given schema
  *
  * @return Result handle containing the result.
  *   NULL is returned only in case of an error. The error details
- *   can be obtained using mysqlx_session_error() function
+ *   can be obtained using mysqlx_error() function
  *
- * @note mysqlx_crud_execute() is not needed to execute the query
+ * @note mysqlx_execute() is not needed to execute the query
  * @note the list of table/view names is returned as a set of rows. Therefore,
  *       the functins such as mysqlx_store_result() and mysqlx_row_fetch_one()
  *       could be used.
 */
-MYSQLX_RESULT * STDCALL
-mysqlx_get_collections(MYSQLX_SESSION *sess,
-                  const char *schema,
+mysqlx_result_t * STDCALL
+mysqlx_get_collections(mysqlx_schema_t *schema,
                   const char *col_pattern);
 
 
@@ -2182,25 +2095,25 @@ mysqlx_get_collections(MYSQLX_SESSION *sess,
  *
  *  @details Get the number of warnings generated by an operation
  *
- *  @param res Pointer to MYSQLX_RESULT handle to get warnings from
+ *  @param res Pointer to mysqlx_result_t handle to get warnings from
  *
  *  @return the number of warnings returned in the result structure
 */
 unsigned int STDCALL
-mysqlx_result_warning_count(MYSQLX_RESULT *res);
+mysqlx_result_warning_count(mysqlx_result_t *res);
 
 /*! @brief MYSQLX API
  *
  *  @details Get the next warning from the result. The warning pointer returned
  *           by a previous call is invalidated.
  *
- *  @param res Pointer to MYSQLX_RESULT handle to get warnings from
+ *  @param res Pointer to mysqlx_result_t handle to get warnings from
  *
- *  @return the MYSQLX_ERROR structure containing info about a warning or
+ *  @return the mysqlx_error_t structure containing info about a warning or
  *          NULL if there is no more warnings left to return.
 */
-MYSQLX_ERROR * STDCALL
-mysqlx_result_next_warning(MYSQLX_RESULT *res);
+mysqlx_error_t * STDCALL
+mysqlx_result_next_warning(mysqlx_result_t *res);
 
 
 /*! @brief MYSQLX API
@@ -2208,7 +2121,7 @@ mysqlx_result_next_warning(MYSQLX_RESULT *res);
  *  @details Get the value generated by the last insert in the table
  *           with auto_increment primary key
  *
- *  @param res Pointer to MYSQLX_RESULT handle to get the auto increment
+ *  @param res Pointer to mysqlx_result_t handle to get the auto increment
  *
  *  @return the auto incremented value
  *
@@ -2216,55 +2129,55 @@ mysqlx_result_next_warning(MYSQLX_RESULT *res);
  *        for the first row
 */
 uint64_t STDCALL
-mysqlx_get_auto_increment_value(MYSQLX_RESULT *res);
+mysqlx_get_auto_increment_value(mysqlx_result_t *res);
 
 /*! @brief MYSQLX API
  *
  * @details Begin a transaction for the session
  *
- * @param sess Pointer to MYSQLX_SESSION structure
+ * @param sess Pointer to mysqlx_session_t structure
  *
  * @return RESULT_OK - on success; RESULT_ERR - on error
  *
- * @note CRUD operation will belong to the transaction when
+ * @note statement operation will belong to the transaction when
  *       it is actually executed after the transaction began, but before
- *       it is committed or rolled back even if this CRUD operation
+ *       it is committed or rolled back even if this statement operation
  *       was created before mysqlx_transaction_begin() call
 */
 int STDCALL
-mysqlx_transaction_begin(MYSQLX_SESSION *sess);
+mysqlx_transaction_begin(mysqlx_session_t *sess);
 
 /*! @brief MYSQLX API
  *
  * @details Commit a transaction for the session
  *
- * @param sess Pointer to MYSQLX_SESSION structure
+ * @param sess Pointer to mysqlx_session_t structure
  *
  * @return RESULT_OK - on success; RESULT_ERR - on error
  *
- * @note CRUD operation will belong to the transaction when
+ * @note statement operation will belong to the transaction when
  *       it is actually executed after the transaction began, but before
- *       it is committed or rolled back even if this CRUD operation
+ *       it is committed or rolled back even if this statement operation
  *       was created before mysqlx_transaction_begin() call
 */
 int STDCALL
-mysqlx_transaction_commit(MYSQLX_SESSION *sess);
+mysqlx_transaction_commit(mysqlx_session_t *sess);
 
 /*! @brief MYSQLX API
  *
  * @details Rollback a transaction for the session
  *
- * @param sess Pointer to MYSQLX_SESSION structure
+ * @param sess Pointer to mysqlx_session_t structure
  *
  * @return RESULT_OK - on success; RESULT_ERR - on error
  *
- * @note CRUD operation will belong to the transaction when
+ * @note statement operation will belong to the transaction when
  *       it is actually executed after the transaction began, but before
- *       it is committed or rolled back even if this CRUD operation
+ *       it is committed or rolled back even if this statement operation
  *       was created before mysqlx_transaction_begin() call
 */
 int STDCALL
-mysqlx_transaction_rollback(MYSQLX_SESSION *sess);
+mysqlx_transaction_rollback(mysqlx_session_t *sess);
 
 /*! @brief MYSQLX API
  *
@@ -2273,7 +2186,7 @@ mysqlx_transaction_rollback(MYSQLX_SESSION *sess);
  *          the multi-document inserts. In this case each new generated
  *          UUID is returned by a new call to mysqlx_fetch_doc_id().
  *
- * @param result Pointer to MYSQLX_RESULT structure returned after
+ * @param result Pointer to mysqlx_result_t structure returned after
  *        executing the ADD operation
  *
  * @return Character string containing a generated UUID corresponding
@@ -2284,7 +2197,114 @@ mysqlx_transaction_rollback(MYSQLX_SESSION *sess);
  *       Starting a new operation will invalidate it.
 */
 const char * STDCALL
-mysqlx_fetch_doc_id(MYSQLX_RESULT *result);
+mysqlx_fetch_doc_id(mysqlx_result_t *result);
+
+int STDCALL
+mysqlx_session_valid(mysqlx_session_t *sess);
+/* brief MYSQLX API
+ *
+ * @details Allocate a mysqlx_session_options_t structure
+ *
+ * @return pointer to a newly allocated mysqlx_session_options_t structure
+ *
+ * @note The mysqlx_session_options_t structure allocated by
+ *       mysqlx_session_options_new() must be eventually freed by
+ *       mysqlx_free_options() to prevent memory leaks
+ */
+mysqlx_session_options_t * STDCALL
+mysqlx_session_options_new();
+
+/* brief MYSQLX API
+ *
+ * @details Free a mysqlx_session_options_t structure
+ *
+ * @param opt pointer to a mysqlx_session_options_t structure
+ *            that has to be freed
+ */
+void STDCALL
+mysqlx_free_options(mysqlx_session_options_t *opt);
+
+/* brief MYSQLX API
+ *
+ * @details Set a value into a mysqlx_session_options_t structure
+ *
+ * @param opt   mysqlx_session_options_t structure
+ * @param type  option type to set (see mysqlx_opt_type_t enum)
+ * @param ...   option value/values to set (the function can set more
+ *              than one value)
+ *
+ * @return RESULT_OK if option was sucessfully set; RESULT_ERROR
+ *         is set otherwise (use mysqlx_error() to get the error
+ *         information)
+ */
+int STDCALL
+mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type, ...);
+
+/* brief MYSQLX API
+ *
+ * @details Get a value from a mysqlx_session_options_t structure
+ *
+ * @param opt   mysqlx_session_options_t structure
+ * @param type  option type to get (see mysqlx_opt_type_t enum)
+ * @param ...[out] pointer to a buffer where to return the requested
+ *                 value
+ *
+ * @return RESULT_OK if option was sucessfully read; RESULT_ERROR
+ *         is set otherwise (use mysqlx_error() to get the error
+ *         information)
+ */
+int STDCALL
+mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
+                          ...);
+
+/* brief MYSQLX API
+ *
+ * @details Get a schema object and check if it esixts on the server
+ *
+ * @param sess  the session handle mysqlx_session_t
+ * @param schema_name name of the schema
+ * @param check flag to verify if the schema with the given name
+ *        exists on the server (1 - check, 0 - do not check)
+ *
+ * @return mysqlx_schema_t structure containing the schema context or NULL
+ *         if an error occurred or the schema does not exist on the server
+ */
+mysqlx_schema_t * STDCALL
+mysqlx_get_schema(mysqlx_session_t *sess, const char *schema_name,
+                  unsigned int check);
+
+/* brief MYSQLX API
+ *
+ * @details Get a collection object and check if it esixts in the schema
+ *
+ * @param schema the schema handle mysqlx_schema_t
+ * @param col_name name of the collection
+ * @param check flag to verify if the collection with the given name
+ *        exists in the schema (1 - check, 0 - do not check)
+ *
+ * @return mysqlx_collection_t structure containing the collection context or NULL
+ *         if an error occurred or the collection does not exist in the schema
+ */
+mysqlx_collection_t * STDCALL
+mysqlx_get_collection(mysqlx_schema_t *schema, const char *col_name,
+                      unsigned int check);
+
+
+/* brief MYSQLX API
+ *
+ * @details Get a table object and check if it esixts in the schema
+ *
+ * @param schema the schema handle mysqlx_schema_t
+ * @param tab_name name of the table
+ * @param check flag to verify if the table with the given name
+ *        exists in the schema (1 - check, 0 - do not check)
+ *
+ * @return mysqlx_table_t structure containing the collection context or NULL
+ *         if an error occurred or the table does not exist in the schema
+ */
+mysqlx_table_t * STDCALL
+mysqlx_get_table(mysqlx_schema_t *schema, const char *tab_name,
+                      unsigned int check);
 
 #ifdef	__cplusplus
 }

@@ -27,19 +27,19 @@
 #include <mysql/cdk/api/expression.h>
 #include <mysql/cdk/api/query.h>
 
-class MYSQLX_RESULT::Row_processor : public cdk::Row_processor
+class mysqlx_result_t::Row_processor : public cdk::Row_processor
 {
   bool m_buffer_created;
   size_t m_full_data_len;
 
 public:
-  MYSQLX_ROW *m_row;
+  mysqlx_row_t *m_row;
 
   /*
     Passing NULL for the constructor creates the processor, which
     discards all data.
   */
-  Row_processor(MYSQLX_ROW *row) : m_buffer_created(false),
+  Row_processor(mysqlx_row_t *row) : m_buffer_created(false),
                                    m_full_data_len(0),
                                    m_row(row)
   {}
@@ -94,7 +94,7 @@ public:
 };
 
 
-MYSQLX_RESULT::MYSQLX_RESULT_T(MYSQLX_CRUD &parent, cdk::Reply &reply) :
+mysqlx_result_t::mysqlx_result_struct(mysqlx_stmt_t &parent, cdk::Reply &reply) :
                                   m_current_row(0),
                                   m_reply(reply),/*, m_pos(0),*/
                                   m_row_proc(NULL),
@@ -105,7 +105,7 @@ MYSQLX_RESULT::MYSQLX_RESULT_T(MYSQLX_CRUD &parent, cdk::Reply &reply) :
   init_result(true);
 }
 
-bool MYSQLX_RESULT::init_result(bool wait)
+bool mysqlx_result_t::init_result(bool wait)
 {
   if (wait)
     m_reply.wait();
@@ -134,7 +134,7 @@ bool MYSQLX_RESULT::init_result(bool wait)
       MYSQLX_EXCEPTION_EXTERNAL means that the list of errors
       should be accessed through cdk::Reply
     */
-    throw MYSQLX_EXCEPTION(MYSQLX_EXCEPTION::MYSQLX_EXCEPTION_EXTERNAL, 0, "");
+    throw Mysqlx_exception(Mysqlx_exception::MYSQLX_EXCEPTION_EXTERNAL, 0, "");
   }
 
   return (m_cursor != NULL);
@@ -144,7 +144,7 @@ bool MYSQLX_RESULT::init_result(bool wait)
   Get metadata information such as column name, table, etc that could
   be represented by character strings
 */
-const char *MYSQLX_RESULT::column_get_info_char(uint32_t pos, col_info_type info_type)
+const char *mysqlx_result_t::column_get_info_char(uint32_t pos, col_info_type info_type)
 {
   if (!m_cursor || !m_cursor->col_count() || pos >= m_cursor->col_count())
     return NULL; // if no columns in the result
@@ -172,7 +172,7 @@ const char *MYSQLX_RESULT::column_get_info_char(uint32_t pos, col_info_type info
   Get metadata information such as column precision, flags, etc that could
   be represented by numbers
 */
-uint32_t MYSQLX_RESULT::column_get_info_int(uint32_t pos, col_info_type info_type)
+uint32_t mysqlx_result_t::column_get_info_int(uint32_t pos, col_info_type info_type)
 {
   if (!m_cursor || !m_cursor->col_count() || pos >= m_cursor->col_count())
     return 0; // if no columns in the result
@@ -257,14 +257,14 @@ uint32_t MYSQLX_RESULT::column_get_info_int(uint32_t pos, col_info_type info_typ
   return 0;
 }
 
-void MYSQLX_RESULT::set_table_list_mask(uint32_t mask)
+void mysqlx_result_t::set_table_list_mask(uint32_t mask)
 { m_filter_mask = mask; }
 
 /*
   The method which can filter out rows returned by the server on the client side.
   Returns true if the row is allowed to go through or false otherwise.
 */
-bool MYSQLX_RESULT::row_filter(MYSQLX_ROW *row)
+bool mysqlx_result_t::row_filter(mysqlx_row_t *row)
 {
   if (m_crud.op_type() != OP_ADMIN_LIST || row->row_size() < 2)
     return true;
@@ -288,7 +288,7 @@ bool MYSQLX_RESULT::row_filter(MYSQLX_ROW *row)
 /*
   Read the next row from the result set and advance the cursor position
 */
-MYSQLX_ROW *MYSQLX_RESULT::read_row()
+mysqlx_row_t *mysqlx_result_t::read_row()
 {
   if(!m_store_result)
   {
@@ -300,14 +300,14 @@ MYSQLX_ROW *MYSQLX_RESULT::read_row()
     /*
       We use m_row_set as the main storage for the data.
       In case of use_result only one entry in m_row_set is used.
-      If any error/exception happens the allocated MYSQLX_ROW will be
+      If any error/exception happens the allocated mysqlx_row_t will be
       freed anyway because the pointer is stored in m_row_set.
     */
-    m_row_set.push_back(new MYSQLX_ROW(*this));
+    m_row_set.push_back(new mysqlx_row_t(*this));
     Row_processor row_proc(m_row_set[0]);
 
     bool row_is_read;
-    
+
 READING_NEXT_ROW:
 
     row_is_read = m_cursor->get_row(row_proc);
@@ -345,7 +345,7 @@ READING_NEXT_ROW:
 /*
   Read the next document from the result and advance the cursor position
 */
-MYSQLX_DOC *MYSQLX_RESULT::read_doc()
+mysqlx_doc_t *mysqlx_result_t::read_doc()
 {
   if(!m_store_result)
   {
@@ -357,14 +357,14 @@ MYSQLX_DOC *MYSQLX_RESULT::read_doc()
     /*
       We use m_doc_set as the main storage for the data.
       In case of use_result only one entry in m_row_set is used.
-      If any error/exception happens the allocated MYSQLX_DOC will be
+      If any error/exception happens the allocated mysqlx_doc_t will be
       freed anyway because the pointer is stored in m_doc_set.
     */
-    MYSQLX_ROW row(*this);
+    mysqlx_row_t row(*this);
     Row_processor row_proc(&row);
     if (m_cursor->get_row(row_proc))
     {
-      m_doc_set.push_back(new MYSQLX_DOC(row));
+      m_doc_set.push_back(new mysqlx_doc_t(row));
       return m_doc_set[0];
     }
     else if(m_reply.entry_count())
@@ -388,7 +388,7 @@ MYSQLX_DOC *MYSQLX_RESULT::read_doc()
 /*
   Read the next JSON string from the result and advance the cursor position
 */
-const char * MYSQLX_RESULT::read_json(size_t *json_byte_size)
+const char * mysqlx_result_t::read_json(size_t *json_byte_size)
 {
   if(!m_store_result)
   {
@@ -400,10 +400,10 @@ const char * MYSQLX_RESULT::read_json(size_t *json_byte_size)
     /*
       We use m_row_set as the main storage for the data.
       In case of use_result only one entry in m_row_set is used.
-      If any error/exception happens the allocated MYSQLX_ROW will be
+      If any error/exception happens the allocated mysqlx_row_t will be
       freed anyway because the pointer is stored in m_row_set.
     */
-    m_row_set.push_back(new MYSQLX_ROW(*this));
+    m_row_set.push_back(new mysqlx_row_t(*this));
     Row_processor row_proc(m_row_set[0]);
     if (m_cursor->get_row(row_proc))
     {
@@ -437,15 +437,15 @@ const char * MYSQLX_RESULT::read_json(size_t *json_byte_size)
 }
 
 
-size_t MYSQLX_RESULT::store_result()
+size_t mysqlx_result_t::store_result()
 {
   if (m_store_result)
     return 0; // the function was already called for this result
 
-  MYSQLX_OP op = m_crud.op_type();
+  mysqlx_op_t op = m_crud.op_type();
 
   if (op != OP_FIND && op != OP_SELECT && op != OP_SQL && op != OP_ADMIN_LIST)
-    throw MYSQLX_EXCEPTION(MYSQLX_EXCEPTION::MYSQLX_EXCEPTION_INTERNAL, 0,
+    throw Mysqlx_exception(Mysqlx_exception::MYSQLX_EXCEPTION_INTERNAL, 0,
                            "Wrong operation type. Operation result cannot be stored.");
 
   clear_rows();
@@ -458,7 +458,7 @@ size_t MYSQLX_RESULT::store_result()
   size_t row_num = 0;
   do
   {
-    m_row_set.push_back(new MYSQLX_ROW(*this));
+    m_row_set.push_back(new mysqlx_row_t(*this));
 
 READING_NEXT_ROW:
     Row_processor row_proc(m_row_set[row_num]);
@@ -485,7 +485,7 @@ READING_NEXT_ROW:
   return m_row_set.size();
 }
 
-bool MYSQLX_RESULT::next_result()
+bool mysqlx_result_t::next_result()
 {
   /*
     Reading the next result starts with opening of the new cursor.
@@ -501,28 +501,28 @@ bool MYSQLX_RESULT::next_result()
 }
 
 // Return number of rows affected by the last operation
-uint64_t MYSQLX_RESULT::get_affected_count()
+uint64_t mysqlx_result_t::get_affected_count()
 {
   return m_reply.affected_rows();
 }
 
-uint64_t MYSQLX_RESULT::get_auto_increment_value()
+uint64_t mysqlx_result_t::get_auto_increment_value()
 {
   return m_reply.last_insert_id();
 }
 
-uint32_t MYSQLX_RESULT::get_warning_count()
+uint32_t mysqlx_result_t::get_warning_count()
 {
   return m_reply.entry_count(cdk::foundation::api::Severity::WARNING);
 }
 
-void MYSQLX_RESULT::copy_doc_ids(Doc_source &doc_src)
+void mysqlx_result_t::copy_doc_ids(Doc_source &doc_src)
 {
   m_current_id_index = 0;
   doc_src.copy_doc_ids(m_doc_id_list);
 }
 
-const char * MYSQLX_RESULT::get_next_doc_id()
+const char * mysqlx_result_t::get_next_doc_id()
 {
   if (m_current_id_index >= m_doc_id_list.size())
     return NULL;
@@ -532,17 +532,17 @@ const char * MYSQLX_RESULT::get_next_doc_id()
 }
 
 
-MYSQLX_ERROR * MYSQLX_RESULT::get_next_warning()
+mysqlx_error_t * mysqlx_result_t::get_next_warning()
 {
   if (get_warning_count())
   {
     if (m_warning_iter == NULL)
       m_warning_iter = &(m_reply.get_entries(cdk::foundation::api::Severity::WARNING));
     if (m_warning_iter->next())
-      m_current_warning.reset(new MYSQLX_ERROR(m_warning_iter->entry().get_error(), true));
+      m_current_warning.reset(new mysqlx_error_t(m_warning_iter->entry().get_error(), true));
     else
       m_current_warning.release();
-  
+
     return m_current_warning.get();
   }
 
@@ -550,19 +550,9 @@ MYSQLX_ERROR * MYSQLX_RESULT::get_next_warning()
 }
 
 
-void MYSQLX_RESULT::set_diagnostic(const MYSQLX_EXCEPTION &ex)
+void mysqlx_result_t::clear_rows()
 {
-  m_crud.set_diagnostic(ex);
-}
-
-void MYSQLX_RESULT::set_diagnostic(const char *msg, unsigned int num)
-{
-  m_crud.set_diagnostic(msg, num);
-}
-
-void MYSQLX_RESULT::clear_rows()
-{
-  for(std::vector<MYSQLX_ROW*>::iterator it = m_row_set.begin();
+  for(std::vector<mysqlx_row_t*>::iterator it = m_row_set.begin();
       it != m_row_set.end(); ++it)
   {
     delete *it;
@@ -571,9 +561,9 @@ void MYSQLX_RESULT::clear_rows()
   m_row_set.clear();
 }
 
-void MYSQLX_RESULT::clear_docs()
+void mysqlx_result_t::clear_docs()
 {
-  for(std::vector<MYSQLX_DOC*>::iterator it = m_doc_set.begin();
+  for(std::vector<mysqlx_doc_t*>::iterator it = m_doc_set.begin();
       it != m_doc_set.end(); ++it)
   {
     delete *it;
@@ -582,7 +572,7 @@ void MYSQLX_RESULT::clear_docs()
   m_doc_set.clear();
 }
 
-void MYSQLX_RESULT::close_cursor()
+void mysqlx_result_t::close_cursor()
 {
   if (m_cursor)
   {

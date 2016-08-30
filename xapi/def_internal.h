@@ -26,7 +26,7 @@ typedef parser::Expression_parser Expression_parser;
 typedef uint64_t row_count_t;
 typedef cdk::api::Sort_direction Sort_direction;
 
-typedef enum MYSQLX_OP_T
+typedef enum mysqlx_op_enum
 {
 /*
   Table operation codes
@@ -42,13 +42,13 @@ typedef enum MYSQLX_OP_T
   OP_SQL = 9,
 
   OP_ADMIN_LIST = 10
-} MYSQLX_OP;
+} mysqlx_op_t;
 
-typedef enum MYSQLX_MODIFY_OP_T
+typedef enum mysqlx_modify_op_enum
 {
   MODIFY_SET = 1,
   MODIFY_UNSET = 2,
   MODIFY_ARRAY_INSERT = 3,
   MODIFY_ARRAY_APPEND = 4,
   MODIFY_ARRAY_DELETE = 5
-} MYSQLX_MODIFY_OP;
+} mysqlx_modify_op;
