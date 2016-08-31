@@ -442,13 +442,18 @@ class DocResult::Impl
 // --------------------------------------------------------------------
 
 
-struct XSession_base::Access
+struct internal::XSession_base::Access
 {
   typedef XSession_base::Options  Options;
 
   static cdk::Session& get_cdk_session(XSession_base &sess)
   {
     return sess.get_cdk_session();
+  }
+
+  static void register_result(XSession_base &sess, BaseResult *res)
+  {
+    sess.register_result(res);
   }
 };
 
@@ -535,7 +540,7 @@ class Op_base
 {
 protected:
 
-  XSession_base   *m_sess;
+  internal::XSession_base   *m_sess;
   cdk::Reply *m_reply = NULL;
 
   row_count_t m_limit = 0;
@@ -547,7 +552,7 @@ protected:
   param_map_t m_map;
 
 
-  Op_base(XSession_base &sess)
+  Op_base(internal::XSession_base &sess)
     : m_sess(&sess)
   {}
   Op_base(Collection &coll)
@@ -561,7 +566,7 @@ protected:
   cdk::Session& get_cdk_session()
   {
     assert(m_sess);
-    return XSession_base::Access::get_cdk_session(*m_sess);
+    return internal::XSession_base::Access::get_cdk_session(*m_sess);
   }
 
   virtual cdk::Reply* send_command() = 0;
@@ -668,7 +673,7 @@ protected:
   internal::BaseResult execute()
   {
     // Deregister current Result, before creating a new one
-    m_sess->register_result(NULL);
+    internal::XSession_base::Access::register_result(*m_sess, NULL);
 
     if (m_completed)
       THROW("Can not execute operation for the second time");

@@ -39,7 +39,6 @@
   @sa result.h, document.h
 */
 
-
 #include "devapi/common.h"
 #include "devapi/result.h"
 #include "devapi/statement.h"
@@ -75,6 +74,9 @@ class Schema;
 class Collection;
 class Table;
 
+namespace internal {
+  class XSession_base;
+}
 
 /**
   Represents a database object
@@ -87,10 +89,10 @@ class DatabaseObject
 
 protected:
 
-  XSession_base *m_sess;
+  internal::XSession_base *m_sess;
   string m_name;
 
-  DatabaseObject(XSession_base& sess, const string& name = string())
+  DatabaseObject(internal::XSession_base& sess, const string& name = string())
     : m_sess(&sess), m_name(name)
   {}
 
@@ -111,7 +113,7 @@ public:
     Get Session object
   */
 
-  XSession_base& getSession() { return *m_sess; }
+  internal::XSession_base& getSession() { return *m_sess; }
 
 
   /**
@@ -178,7 +180,7 @@ public:
      Construct named schema object.
   */
 
-  Schema(XSession_base &sess, const string &name)
+  Schema(internal::XSession_base &sess, const string &name)
     : DatabaseObject(sess, name)
   {}
 
@@ -189,7 +191,7 @@ public:
     @todo Clarify what "default schema" is.
   */
 
-  Schema(XSession_base&);
+  Schema(internal::XSession_base&);
 
 
   /**
@@ -493,231 +495,235 @@ public:
 };
 
 
-/**
-  Represents a session which gives access to data stored
-  in the data store.
-
-  When creating new session a host name, TCP/IP port,
-  user name and password are specified. Once created,
-  session is ready to be used. Session destructor closes
-  session and cleans up after it.
-
-  If it is not possible to create a valid session for some
-  reason, errors are thrown from session constructor.
-
-  @todo Add all `XSession` methods defined by DevAPI.
-*/
-
-class XSession_base : internal::nocopy
-{
-protected:
-
-  class Impl;
-  Impl  *m_impl;
-  bool m_master_session = true;
-
-  void register_result(internal::BaseResult *result);
-  void deregister_result(internal::BaseResult *result);
-
-  cdk::Session& get_cdk_session();
-
-  struct Options;
-
-  XSession_base(const Options&);
-
-  /*
-    This constructor constructs a child session of a parent session.
-  */
-  XSession_base(XSession_base*);
-
-  /*
-    This notification is sent from parent session when it is closed.
-  */
-  void session_closed() { if (!m_master_session) m_impl = NULL; }
-
-public:
+namespace internal {
 
   /**
-    @constructor
-    Create session specified by mysqlx connection string.
+    Represents a session which gives access to data stored
+    in the data store.
 
-    Connection string can be either an utf8 encoded single-byte
-    string or a wide string (which is converted to utf8 before
-    parsing).
+    When creating new session a host name, TCP/IP port,
+    user name and password are specified. Once created,
+    session is ready to be used. Session destructor closes
+    session and cleans up after it.
+
+    If it is not possible to create a valid session for some
+    reason, errors are thrown from session constructor.
+
+    @todo Add all `XSession` methods defined by DevAPI.
   */
 
-  XSession_base(const std::string &url);
+  class XSession_base : nocopy
+  {
+  protected:
 
-  XSession_base(const char *url)
-    : XSession_base(std::string(url))
-  {}
+    class Impl;
+    Impl  *m_impl;
+    bool m_master_session = true;
 
-  XSession_base(const string &url)
-    : XSession_base(std::string(url))
-  {}
+    void register_result(internal::BaseResult *result);
+    void deregister_result(internal::BaseResult *result);
 
+    cdk::Session& get_cdk_session();
 
-  /**
-    Create session explicitly specifying session parameters.
-  */
+    struct Options;
 
-  XSession_base(const std::string &host, unsigned port,
-           const string  &user,
-           const char *pwd = NULL,
-           const string &db = string());
+    XSession_base(const Options&);
 
-  XSession_base(const std::string &host, unsigned port,
-           const string  &user,
-           const std::string &pwd,
-           const string &db = string())
-    : XSession_base(host, port, user, pwd.c_str(), db)
-  {}
+    /*
+      This constructor constructs a child session of a parent session.
+    */
+    XSession_base(XSession_base*);
 
-  /**
-    Create session using the default port
-  */
+    /*
+      This notification is sent from parent session when it is closed.
+    */
+    void session_closed() { if (!m_master_session) m_impl = NULL; }
 
-  XSession_base(const std::string &host,
-           const string  &user,
-           const char    *pwd = NULL,
-           const string  &db = string())
-    : XSession_base(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
-  {}
+  public:
 
-  XSession_base(const std::string &host,
-           const string  &user,
-           const std::string &pwd,
-           const string  &db = string())
-    : XSession_base(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
-  {}
+    /**
+      @constructor
+      Create session specified by mysqlx connection string.
 
-  /**
-    Create session on localhost.
-  */
+      Connection string can be either an utf8 encoded single-byte
+      string or a wide string (which is converted to utf8 before
+      parsing).
+    */
 
-  XSession_base(unsigned port,
-           const string  &user,
-           const char    *pwd = NULL,
-           const string  &db = string())
-    : XSession_base("localhost", port, user, pwd, db)
-  {}
+    XSession_base(const std::string &url);
 
-  XSession_base(unsigned port,
-           const string  &user,
-           const std::string &pwd,
-           const string  &db = string())
-    : XSession_base("localhost", port, user, pwd.c_str(), db)
-  {}
+    XSession_base(const char *url)
+      : XSession_base(std::string(url))
+    {}
 
-  virtual ~XSession_base();
-
-  /**
-    Get named schema object in a given session.
-
-    The object does not have to exist in the database.
-    Errors will be thrown if one tries to use non-existing
-    schema.
-  */
-
-  Schema createSchema(const string &name, bool reuse = false);
-
-  /**
-    Get named schema object in a given session.
-
-    Errors will be thrown if one tries to use non-existing
-    schema with check_existence = true.
-  */
-
-  Schema getSchema(const string&, bool check_existence = false);
-
-  Schema getDefaultSchema();
-
-  /**
-    Get list of schema objects in a given session.
-  */
-
-  internal::List_init<Schema> getSchemas();
-
-  /**
-    Drop the schema.
-
-    Errors will be thrown if schema doesn't exist,
-  */
-
-  void   dropSchema(const string &name);
-
-  /**
-    Drop a table from a schema.
-
-    Errors will be thrown if table doesn't exist,
-  */
-
-  void   dropTable(const string& schema, const string& table);
-
-  /**
-    Drop a collection from a schema.
-
-    Errors will be thrown if collection doesn't exist,
-  */
-
-  void   dropCollection(const string& schema, const string& collection);
-
-  /**
-    Start a new transaction.
-
-    Throws error if previously opened transaction is not closed.
-  */
-
-  void startTransaction();
-
-  /**
-    Commit opened transaction, if any.
-
-    Does nothing if no transaction was opened. After commiting the
-    transaction is closed.
-  */
-
-  void commit();
-
-  /**
-    Rollback opened transaction, if any.
-
-    Does nothing if no transaction was opened. Transaction which was
-    rolled back is closed. To start a new transaction a call to
-    `startTransaction()` is needed.
-  */
-
-  void rollback();
-
-  /**
-    Closes current session.
-
-    After a session is closed, any call to other method will thow Error.
-  */
-
-  void close();
+    XSession_base(const string &url)
+      : XSession_base(std::string(url))
+    {}
 
 
-public:
+    /**
+      Create session explicitly specifying session parameters.
+    */
 
-  struct Access;
-  friend Access;
+    XSession_base(const std::string &host, unsigned port,
+      const string  &user,
+      const char *pwd = NULL,
+      const string &db = string());
 
-  friend Schema;
-  friend Collection;
-  friend Table;
-  friend Result;
-  friend RowResult;
+    XSession_base(const std::string &host, unsigned port,
+      const string  &user,
+      const std::string &pwd,
+      const string &db = string())
+      : XSession_base(host, port, user, pwd.c_str(), db)
+    {}
 
-  template <typename A>
-  friend class Op_base;
+    /**
+      Create session using the default port
+    */
 
-  friend internal::BaseResult;
-};
+    XSession_base(const std::string &host,
+      const string  &user,
+      const char    *pwd = NULL,
+      const string  &db = string())
+      : XSession_base(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
+    {}
+
+    XSession_base(const std::string &host,
+      const string  &user,
+      const std::string &pwd,
+      const string  &db = string())
+      : XSession_base(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
+    {}
+
+    /**
+      Create session on localhost.
+    */
+
+    XSession_base(unsigned port,
+      const string  &user,
+      const char    *pwd = NULL,
+      const string  &db = string())
+      : XSession_base("localhost", port, user, pwd, db)
+    {}
+
+    XSession_base(unsigned port,
+      const string  &user,
+      const std::string &pwd,
+      const string  &db = string())
+      : XSession_base("localhost", port, user, pwd.c_str(), db)
+    {}
+
+    virtual ~XSession_base();
+
+    /**
+      Get named schema object in a given session.
+
+      The object does not have to exist in the database.
+      Errors will be thrown if one tries to use non-existing
+      schema.
+    */
+
+    Schema createSchema(const string &name, bool reuse = false);
+
+    /**
+      Get named schema object in a given session.
+
+      Errors will be thrown if one tries to use non-existing
+      schema with check_existence = true.
+    */
+
+    Schema getSchema(const string&, bool check_existence = false);
+
+    Schema getDefaultSchema();
+
+    /**
+      Get list of schema objects in a given session.
+    */
+
+    internal::List_init<Schema> getSchemas();
+
+    /**
+      Drop the schema.
+
+      Errors will be thrown if schema doesn't exist,
+    */
+
+    void   dropSchema(const string &name);
+
+    /**
+      Drop a table from a schema.
+
+      Errors will be thrown if table doesn't exist,
+    */
+
+    void   dropTable(const string& schema, const string& table);
+
+    /**
+      Drop a collection from a schema.
+
+      Errors will be thrown if collection doesn't exist,
+    */
+
+    void   dropCollection(const string& schema, const string& collection);
+
+    /**
+      Start a new transaction.
+
+      Throws error if previously opened transaction is not closed.
+    */
+
+    void startTransaction();
+
+    /**
+      Commit opened transaction, if any.
+
+      Does nothing if no transaction was opened. After commiting the
+      transaction is closed.
+    */
+
+    void commit();
+
+    /**
+      Rollback opened transaction, if any.
+
+      Does nothing if no transaction was opened. Transaction which was
+      rolled back is closed. To start a new transaction a call to
+      `startTransaction()` is needed.
+    */
+
+    void rollback();
+
+    /**
+      Closes current session.
+
+      After a session is closed, any call to other method will thow Error.
+    */
+
+    void close();
+
+
+  public:
+
+    struct Access;
+    friend Access;
+
+    friend Schema;
+    friend Collection;
+    friend Table;
+    friend Result;
+    friend RowResult;
+
+    //template <typename A>
+    //friend class mysqlx::Op_base;
+
+    friend internal::BaseResult;
+  };
+
+}  // internal
 
 
 class XSession
-    : public XSession_base
+    : public internal::XSession_base
 {
 
 protected:
@@ -811,7 +817,7 @@ public:
 */
 
 class NodeSession
-  : public XSession_base
+  : public internal::XSession_base
 {
 public:
 

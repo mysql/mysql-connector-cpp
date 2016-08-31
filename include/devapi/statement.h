@@ -39,10 +39,10 @@ namespace mysqlx {
 
 using std::ostream;
 
-class XSession_base;
-
 
 namespace internal {
+
+class XSession_base;
 
 /*
   Abstract interface to be implemented by internal implementaion
@@ -271,7 +271,7 @@ protected:
     return static_cast<Impl*>(m_impl.get());
   }
 
-  void reset(XSession_base&, const string&);
+  void reset(internal::XSession_base&, const string&);
 
 public:
 

@@ -267,10 +267,10 @@ void Warning::print(std::ostream &out) const
   out << ": " << getMessage();
 }
 
-class XSession_base;
-
 
 namespace internal {
+
+  class XSession_base;
 
   class BaseResult : nocopy
   {
@@ -361,7 +361,7 @@ namespace internal {
 
   public:
 
-    friend mysqlx::XSession_base;
+    friend mysqlx::internal::XSession_base;
     friend mysqlx::Result;
     friend mysqlx::RowResult;
     friend mysqlx::SqlResult;
