@@ -42,7 +42,6 @@ SET(_libmysqlx_cc_src
          result.cc
          row.cc
          mysqlx.cc
-         compat.cc
          session.cc
          schema.cc
          collection.cc

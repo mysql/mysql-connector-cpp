@@ -35,7 +35,18 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdint.h>
-#include <mysql_classic.h>
+
+/*
+  On Windows, dependency on the sockets library can be handled using
+  #pragma comment directive.
+*/
+
+#ifdef _WIN32
+#pragma comment(lib,"ws2_32")
+#endif
+
+// FIXME
+#define STDCALL
 
 ///////////////////// COMMON TYPE DECLARATIONS, REMOVE LATER
 
