@@ -389,3 +389,58 @@ TEST_F(First, api_session)
   S_ctor_test<mysqlx::XSession>::test();
   S_ctor_test<mysqlx::NodeSession>::test();
 }
+
+
+TEST_F(First, warnings_multi_rset)
+{
+
+  SKIP_IF_NO_XPLUGIN;
+
+  NodeSession &sess = get_sess();
+
+  sess.createSchema("test", true);
+
+  sess.sql(L"DROP PROCEDURE IF EXISTS test.Get").execute();
+
+  sess.sql("CREATE PROCEDURE test.Get()"\
+           "BEGIN"\
+           "  SELECT 1/0;"\
+           "  SELECT 1/0;"\
+           "END"
+           )
+      .execute();
+
+
+  SqlResult res = sess.sql("call test.Get()").execute();
+
+  std::vector<Row> rows = res.fetchAll();
+
+  /*
+    We are in the middle of processing query result (only
+    1st rset has been consumed. Thus getWarnings() might not
+    report all the warnings yet. The protocol does not specify
+    when during result transfer the warnings will be reported.
+  */
+
+  EXPECT_NO_THROW(res.getWarningCount());
+  EXPECT_NO_THROW(res.getWarnings());
+
+  res.nextResult();
+
+  rows = res.fetchAll();
+
+  /*
+    We have consumed whole query results so all warnings
+    should be available now.
+  */
+
+  std::vector<Warning> warnings = res.getWarnings();
+
+  EXPECT_EQ(1, warnings.size());
+  EXPECT_EQ(1, res.getWarningCount());
+
+  for(auto warn : warnings)
+  {
+    std::cout << warn << std::endl;
+  }
+}

@@ -1093,10 +1093,12 @@ class internal::BaseResult::Impl
   {
     if (!m_reply)
       THROW("Attempt to get warning count for empty result");
+    const_cast<Impl*>(this)->load_warnings();
     return m_reply->entry_count(cdk::api::Severity::WARNING);
   }
 
   std::vector<Warning> m_warnings;
+  bool m_all_warnings = false;
 
   Warning get_warning(unsigned pos) const
   {
@@ -1174,8 +1176,33 @@ struct Warning::Access
 
 void Result::Impl::load_warnings()
 {
-  if (!m_warnings.empty())
+  assert(m_reply);
+
+  /*
+    Flag m_all_warnings tells if all warnings for this result have
+    been collected in m_warnings. If this is the case then there is
+    nothing to do.
+
+    Otherwise we copy currently available warnings to m_warnings and
+    check if complete reply has been processed (m_reply->has_results()
+    returns false). In that case we can set m_all_warnings to true,
+    because we know that no more warnings will be reported. Otherwise
+    the flag remains false and we will re-load warnings on a next call.
+    This way newly reported warnings (if any) will land in m_warnings
+    list.
+
+    Note: A better handling of warnings would be with asynchronous
+    notifications about new warnings which would be appended to m_warnings
+    list. But this is not yet implemented in CDK.
+  */
+
+  if (m_all_warnings)
     return;
+
+  if (!m_reply->has_results())
+    m_all_warnings = true;
+
+  m_warnings.clear();
 
   auto &it = m_reply->get_entries(cdk::api::Severity::WARNING);
 
@@ -1300,6 +1327,12 @@ Warning internal::BaseResult::getWarning(unsigned pos)
   return get_impl().get_warning(pos);
 }
 
+internal::List_initializer<internal::BaseResult>
+internal::BaseResult::getWarnings()
+{
+  get_impl().load_warnings();
+  return List_initializer<BaseResult>(*this);
+};
 
 /*
   Result
