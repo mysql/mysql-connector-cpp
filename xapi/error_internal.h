@@ -132,6 +132,8 @@ typedef struct mysqlx_error_struct : public Mysqlx_diag_base
     return NULL;
   }
 
+  virtual ~mysqlx_error_struct()
+  {}
 } mysqlx_error_t;
 
 class Mysqlx_diag : public Mysqlx_diag_base
