@@ -122,6 +122,21 @@ if(CONCPP_LIB_DEBUG)
   endif()
 endif()
 
+#
+# Connector/C++ requires pthread library on Unix.
+#
+
+IF(CMAKE_HOST_UNIX)
+  list(APPEND CONCPP_LIBS pthread)
+ENDIF()
+
+#
+# On Solaris we additionally need socket and nsl libraries.
+#
+
+if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
+  list(APPEND CONCPP_LIBS socket nsl)
+endif()
 
 #
 # Use clang's native C++ runtime library to match the one used
@@ -165,27 +180,25 @@ ENDIF()
 
 INCLUDE_DIRECTORIES(${CONCPLS_INCLUDES})
 
-ADD_EXECUTABLE(cpptest test.cc)
-TARGET_LINK_LIBRARIES(cpptest ${CONCPP_LIBS})
+ADD_EXECUTABLE(devapi_test devapi_test.cc)
+TARGET_LINK_LIBRARIES(devapi_test ${CONCPP_LIBS})
 
-#
-# Connector/C++ requires pthread library on Unix.
-#
-
-IF(CMAKE_HOST_UNIX)
-  TARGET_LINK_LIBRARIES(cpptest pthread)
-ENDIF()
-
-#
-# On Solaris we additionally need socket and nsl libraries.
-#
-
-if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
-  target_link_libraries(cpptest socket nsl)
-endif()
-
-# To use Connector/C++ 2.0 we must enable C++11
+# To use DevAPI we must enable C++11
 
 if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  target_compile_options(cpptest PRIVATE "-std=c++11")
+  target_compile_options(devapi_test PRIVATE "-std=c++11")
 endif()
+
+ADD_EXECUTABLE(xapi_test xapi_test.c)
+TARGET_LINK_LIBRARIES(xapi_test ${CONCPP_LIBS})
+
+#
+# Note: Connector/C++ library depends on C++ runtime library.
+# For that reason, even code that is otherwise plain C, should
+# be linked using C++ linker, so that dependency on the C++ runtime
+# is correctly resolved. In cmake this is achieved by setting
+# LINKER_LANGUAGE to CXX. Alternatively one could use plain C linker
+# and specify stdc++ (and m) as additional libraries to be linked in.
+#
+
+set_target_properties(xapi_test PROPERTIES LINKER_LANGUAGE CXX)
