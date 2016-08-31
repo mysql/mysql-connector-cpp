@@ -316,11 +316,7 @@ namespace internal {
 
 
     unsigned getWarningCount() const;
-    internal::List_initializer<BaseResult> getWarnings()
-    {
-      return List_initializer<BaseResult>(*this);
-    };
-
+    internal::List_initializer<BaseResult> getWarnings();
     Warning getWarning(unsigned);
 
     iterator begin()
