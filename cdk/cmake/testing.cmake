@@ -54,6 +54,15 @@ IF(NOT DEFINED WITH_COVERAGE)
   OPTION(WITH_COVERAGE "Enable coverage support for gcc" OFF)
 ENDIF()
 
+#
+# Note: On Windows the runtime type must match the one used by gtest.
+#
+
+if(MSVC AND NOT DEFINED STATIC_TESTS_MSVCRT)
+ option(STATIC_TESTS_MSVCRT "Compile test code using static runtime" OFF)
+endif()
+
+
 IF(WITH_TESTS)
   IF(WITH_COVERAGE)
     MESSAGE("Building unit tests (with coverage, if supported)")
@@ -61,6 +70,7 @@ IF(WITH_TESTS)
     MESSAGE("Building unit tests")
   ENDIF()
 ENDIF()
+
 
 MACRO(ADD_GCOV target)
 IF (WITH_TESTS)
@@ -152,6 +162,13 @@ IF(WITH_TESTS)
       /wd4018
       /wd4456  # declaration of hides previous local declaration
     )
+
+    if(STATIC_TESTS_MSVCRT)
+      target_compile_options(${TEST} PRIVATE
+        $<$<CONFIG:Debug>:/MTd>
+        $<$<NOT:$<CONFIG:Debug>>:/MT>
+      )
+    endif()
 
   elseif((CMAKE_SYSTEM_NAME MATCHES "SunOS") OR CMAKE_COMPILER_IS_GNUCXX)
 
@@ -270,6 +287,13 @@ IF(WITH_TESTS)
       /wd4018
       /wd4456  # declaration of hides previous local declaration
     )
+
+    if(STATIC_TESTS_MSVCRT)
+      target_compile_options(${target_run_unit_tests} PRIVATE
+        $<$<CONFIG:Debug>:/MTd>
+        $<$<NOT:$<CONFIG:Debug>>:/MT>
+      )
+    endif()
 
   elseif((CMAKE_SYSTEM_NAME MATCHES "SunOS") OR CMAKE_COMPILER_IS_GNUCXX)
 
