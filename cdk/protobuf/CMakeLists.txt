@@ -39,6 +39,15 @@ PROJECT(Protobuf)
 
 file(WRITE ${PROJECT_BINARY_DIR}/config.h)
 
+#
+# Do not export any symbols
+#
+# Note: The LIBPROTOBUF_EXPORTS macro should *not* be defined
+#
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-fvisibility=hidden)
+endif()
 
 #
 # Configure static runtime library on Windows if requested
