@@ -124,7 +124,7 @@ const char* characterSetName(CharacterSet id)
   Structure that provies information about character set collation.
 */
 
-struct CollationInfo
+struct PUBLIC_API CollationInfo
 {
   /// Numeric collation id, as used by MySQL server.
 
@@ -521,7 +521,7 @@ template<> struct Collation<CharacterSet::CS> \
 { COLLATIONS_##CS(COLL_CONST) }; \
 
 #define COLL_CONST(CS,ID,COLL,CASE) \
-static const CollationInfo COLL_CONST_NAME(COLL,CASE);
+static PUBLIC_API const CollationInfo COLL_CONST_NAME(COLL,CASE);
 
 #define COLL_CONST_NAME(COLL,CASE) COLL_CONST_NAME_##CASE(COLL)
 

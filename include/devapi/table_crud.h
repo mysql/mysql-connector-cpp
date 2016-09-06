@@ -77,7 +77,7 @@ namespace internal {
     is performed.
     */
 
-  class TableOpBase
+  class PUBLIC_API TableOpBase
   {
   protected:
 
@@ -153,7 +153,7 @@ namespace internal {
   list, it should be ?
 */
 
-class TableInsert
+class PUBLIC_API TableInsert
   : public Executable<Result>
 {
   typedef internal::TableInsert_impl Impl;
@@ -181,7 +181,7 @@ protected:
     internal implementation object.
   */
 
-  void prepare(Table&);
+  INTERNAL void prepare(Table&);
 
   void add_columns()
   {}
@@ -315,7 +315,7 @@ public:
     CATCH_AND_WRAP
   }
 
-  struct Access;
+  struct INTERNAL Access;
   friend Access;
   friend internal::TableInsertBase;
 };
@@ -323,7 +323,7 @@ public:
 
 namespace internal {
 
-  class TableInsertBase : public virtual TableOpBase
+  class PUBLIC_API TableInsertBase : public virtual TableOpBase
   {
   public:
 
@@ -456,9 +456,14 @@ namespace internal {
   specified when operation was created.
 */
 
-class TableSelect
+DLL_WARNINGS_PUSH
+
+class PUBLIC_API TableSelect
   : public internal::TableSort<RowResult, true>
 {
+
+DLL_WARNINGS_POP
+
   typedef internal::TableSelect_impl Impl;
 
   Impl* get_impl()
@@ -467,7 +472,7 @@ class TableSelect
     return static_cast<Impl*>(m_impl.get());
   }
 
-  void prepare(Table &table);
+  INTERNAL void prepare(Table &table);
 
   void add_proj(const string& projection)
   {
@@ -535,7 +540,7 @@ DIAGNOSTIC_POP
 
 namespace internal {
 
-  class TableSelectBase : public virtual TableOpBase
+  class PUBLIC_API TableSelectBase : public virtual TableOpBase
   {
   public:
 
@@ -582,7 +587,7 @@ namespace internal {
   clause for narrowing set of rows to be modified.
 */
 
-class TableUpdate
+class PUBLIC_API TableUpdate
 : public internal::TableSort<Result, false>
 {
 
@@ -595,7 +600,7 @@ class TableUpdate
     return static_cast<Impl*>(m_impl.get());
   }
 
-  void prepare(Table&);
+  INTERNAL void prepare(Table&);
 
 public:
 
@@ -635,7 +640,7 @@ DIAGNOSTIC_POP
 
 namespace internal {
 
-  class TableUpdateBase : public virtual TableOpBase
+  class PUBLIC_API TableUpdateBase : public virtual TableOpBase
   {
   public:
 
@@ -681,7 +686,7 @@ namespace internal {
 */
 
 
-class TableRemove
+class PUBLIC_API TableRemove
 : public internal::TableSort<Result, false>
 {
 
@@ -694,7 +699,7 @@ class TableRemove
     return static_cast<Impl*>(m_impl.get());
   }
 
-  void prepare(Table &);
+  INTERNAL void prepare(Table &);
 
 public:
 
@@ -728,7 +733,7 @@ DIAGNOSTIC_POP
 
 namespace internal {
 
-  class TableRemoveBase : public virtual TableOpBase
+  class PUBLIC_API TableRemoveBase : public virtual TableOpBase
   {
   public:
 

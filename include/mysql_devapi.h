@@ -47,19 +47,6 @@
 #include "devapi/table_crud.h"
 
 
-#define DEFAULT_MYSQLX_PORT 33060
-
-
-/*
-  On Windows, dependency on the sockets library can be handled using
-  #pragma comment directive.
-*/
-
-#ifdef _WIN32
-#pragma comment(lib,"ws2_32")
-#endif
-
-
 namespace cdk {
 
 class Session;
@@ -84,7 +71,7 @@ namespace internal {
   Inherited by Schema, Table and Collection. Can't be used alone.
 */
 
-class DatabaseObject
+class PUBLIC_API DatabaseObject
 {
 
 protected:
@@ -170,7 +157,7 @@ public:
   an error at execution time.
 */
 
-class Schema
+class PUBLIC_API Schema
   : public DatabaseObject
 {
 
@@ -317,7 +304,7 @@ public:
   @todo Sorting and limiting returned results.
 */
 
-class Collection
+class PUBLIC_API Collection
   : public DatabaseObject
   , public internal::CollectionAddBase
   , public internal::CollectionRemoveBase
@@ -408,7 +395,7 @@ public:
   @todo Other CRUD operations on a table.
 */
 
-class Table
+class PUBLIC_API Table
     : public DatabaseObject
     , public internal::TableInsertBase
     , public internal::TableSelectBase
@@ -512,27 +499,27 @@ namespace internal {
     @todo Add all `XSession` methods defined by DevAPI.
   */
 
-  class XSession_base : nocopy
+  class PUBLIC_API XSession_base : nocopy
   {
   protected:
 
-    class Impl;
+    class INTERNAL Impl;
     Impl  *m_impl;
     bool m_master_session = true;
 
-    void register_result(internal::BaseResult *result);
-    void deregister_result(internal::BaseResult *result);
+    INTERNAL void register_result(internal::BaseResult *result);
+    INTERNAL void deregister_result(internal::BaseResult *result);
 
-    cdk::Session& get_cdk_session();
+    INTERNAL cdk::Session& get_cdk_session();
 
     struct Options;
 
-    XSession_base(const Options&);
+    //XSession_base(const Options&);
 
     /*
       This constructor constructs a child session of a parent session.
     */
-    XSession_base(XSession_base*);
+    INTERNAL XSession_base(XSession_base*);
 
     /*
       This notification is sent from parent session when it is closed.
@@ -704,7 +691,7 @@ namespace internal {
 
   public:
 
-    struct Access;
+    struct INTERNAL Access;
     friend Access;
 
     friend Schema;
@@ -722,14 +709,15 @@ namespace internal {
 }  // internal
 
 
-class XSession
+class PUBLIC_API XSession
     : public internal::XSession_base
 {
 
 protected:
-  XSession(const Options &opt)
-    : XSession_base(opt)
-  {}
+
+  //XSession(const Options &opt)
+  //  : XSession_base(opt)
+  //{}
 
 public:
 
@@ -816,7 +804,7 @@ public:
   allows for execution of arbitrary SQL queries.
 */
 
-class NodeSession
+class PUBLIC_API NodeSession
   : public internal::XSession_base
 {
 public:
@@ -886,8 +874,6 @@ private:
   NodeSession(XSession_base* parent)
     : XSession_base(parent)
   {}
-
-
 
   SqlStatement m_stmt;
 

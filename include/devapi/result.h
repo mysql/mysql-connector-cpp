@@ -212,7 +212,7 @@ namespace internal {
 } // internal
 
 
-class Warning : public internal::Printable
+class PUBLIC_API Warning : public internal::Printable
 {
 public:
 
@@ -272,16 +272,16 @@ namespace internal {
 
   class XSession_base;
 
-  class BaseResult : nocopy
+  class PUBLIC_API BaseResult : nocopy
   {
-    class Impl;
+    class INTERNAL Impl;
     Impl  *m_impl = NULL;
     bool m_owns_impl = false;
     row_count_t  m_pos = 0;
     XSession_base *m_sess = NULL;
 
-    BaseResult(XSession_base *sess, cdk::Reply*);
-    BaseResult(XSession_base *sess, cdk::Reply*, const std::vector<GUID>&);
+    INTERNAL BaseResult(XSession_base *sess, cdk::Reply*);
+    INTERNAL BaseResult(XSession_base *sess, cdk::Reply*, const std::vector<GUID>&);
 
   protected:
 
@@ -296,7 +296,7 @@ namespace internal {
 
     void init(BaseResult&&);
 
-    const Impl& get_impl() const;
+    INTERNAL const Impl& get_impl() const;
     Impl& get_impl()
     {
       return const_cast<Impl&>(
@@ -368,7 +368,7 @@ namespace internal {
     friend mysqlx::DocResult;
     friend iterator;
 
-    struct Access;
+    struct INTERNAL Access;
     friend Access;
   };
 
@@ -393,7 +393,7 @@ namespace internal {
   the result specified by DevAPI.
 */
 
-class Result : public internal::BaseResult
+class PUBLIC_API Result : public internal::BaseResult
 {
 public:
 
@@ -516,7 +516,7 @@ std::ostream& operator<<(std::ostream &out, Type t)
 Class providing meta-data for a single result column.
 */
 
-class Column : public internal::Printable
+class PUBLIC_API Column : public internal::Printable
 {
 public:
 
@@ -548,15 +548,17 @@ public:
 
 private:
 
-  class Impl;
+  class INTERNAL Impl;
+  DLL_WARNINGS_PUSH
   std::shared_ptr<Impl> m_impl;
+  DLL_WARNINGS_POP
   virtual void print(std::ostream&) const;
 
 public:
 
   friend Impl;
 
-  struct Access;
+  struct INTERNAL Access;
   friend Access;
 };
 
@@ -580,14 +582,16 @@ class RowResult;
   @todo Support for iterating over row fields with range-for loop.
 */
 
-class Row
+class PUBLIC_API Row
 {
-  class Impl;
+  class INTERNAL Impl;
+  DLL_WARNINGS_PUSH
   std::shared_ptr<Impl>  m_impl;
+  DLL_WARNINGS_POP
 
   Impl& get_impl()
   { return const_cast<Impl&>(const_cast<const Row*>(this)->get_impl()); }
-  const Impl& get_impl() const;
+  INTERNAL const Impl& get_impl() const;
 
   Row(std::shared_ptr<Impl> &&impl) : m_impl(std::move(impl))
   {}
@@ -695,7 +699,7 @@ public:
 */
 
 
-class RowResult
+class PUBLIC_API RowResult
     : public internal::BaseResult
 {
   // Column meta-data access
@@ -771,8 +775,9 @@ class RowResult
     }
   };
 
-
+  DLL_WARNINGS_PUSH
   std::forward_list<Row> m_row_cache;
+  DLL_WARNINGS_POP
   uint64_t m_row_cache_size = 0;
   bool m_cache = false;
 
@@ -947,7 +952,7 @@ private:
   @todo implement `nextResult()` and other methods specified by DevAPI.
 */
 
-class SqlResult : public RowResult
+class PUBLIC_API SqlResult : public RowResult
 {
 public:
 
@@ -1001,7 +1006,7 @@ private:
   %Result of an operation that returns documents.
 */
 
-class DocResult // : public internal::BaseResult
+class PUBLIC_API DocResult // : public internal::BaseResult
 {
   class Impl;
   Impl *m_doc_impl = NULL;

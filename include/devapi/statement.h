@@ -253,9 +253,14 @@ struct SqlStatement_impl : public Executable_impl
   `SqlResult`.
 */
 
-class SqlStatement
+DLL_WARNINGS_PUSH
+
+class PUBLIC_API SqlStatement
   : public virtual Executable<SqlResult>
 {
+
+DLL_WARNINGS_POP
+
 protected:
 
   typedef internal::SqlStatement_impl Impl;
@@ -271,7 +276,7 @@ protected:
     return static_cast<Impl*>(m_impl.get());
   }
 
-  void reset(internal::XSession_base&, const string&);
+  INTERNAL void reset(internal::XSession_base&, const string&);
 
 public:
 

@@ -57,7 +57,7 @@ class DocResult;
   TODO: _fld suffix
 */
 
-class Field : public string
+class PUBLIC_API Field : public string
 {
 public:
 
@@ -86,14 +86,18 @@ public:
   and thus using DbDoc objects should be cheap.
 */
 
-class DbDoc
+class PUBLIC_API DbDoc
   : public internal::Printable
 {
-  class Impl;
+  class INTERNAL Impl;
+
+DLL_WARNINGS_PUSH
 
   std::shared_ptr<Impl> m_impl;
 
-  DbDoc(const std::shared_ptr<Impl>&);
+DLL_WARNINGS_POP
+
+  INTERNAL DbDoc(const std::shared_ptr<Impl>&);
 
 public:
 
@@ -169,9 +173,11 @@ public:
 };
 
 
-class DbDoc::Iterator
+class PUBLIC_API DbDoc::Iterator
 {
+  DLL_WARNINGS_PUSH
   std::shared_ptr<DbDoc::Impl> m_impl;
+  DLL_WARNINGS_POP
   bool         m_end;
 
 public:
@@ -209,7 +215,7 @@ public:
   bytes it describes - it only stores pointers describing a region of memory.
 */
 
-class Value : public internal::Printable
+class PUBLIC_API Value : public internal::Printable
 {
 public:
 
@@ -404,13 +410,16 @@ protected:
   bytes  m_raw;
   string m_str;
   DbDoc  m_doc;
+
+  DLL_WARNINGS_PUSH
   std::shared_ptr<Array>  m_arr;
+  DLL_WARNINGS_POP
 
 public:
 
   friend DbDoc;
 
-  struct Access;
+  struct INTERNAL Access;
   friend Access;
 };
 

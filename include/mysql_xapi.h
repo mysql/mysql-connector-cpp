@@ -33,19 +33,11 @@
 extern "C" {
 #endif
 
+#include "mysql_common.h"
 #include <stdlib.h>
 #include <stdint.h>
 
-/*
-  On Windows, dependency on the sockets library can be handled using
-  #pragma comment directive.
-*/
-
-#ifdef _WIN32
-#pragma comment(lib,"ws2_32")
-#endif
-
-// FIXME
+// TODO
 #define STDCALL
 
 ///////////////////// COMMON TYPE DECLARATIONS, REMOVE LATER
@@ -240,7 +232,8 @@ typedef enum mysqlx_opt_type_enum
  *       properly closed using mysqlx_session_close()
  * @note This type of session does not support executing plain SQL queries
  */
-mysqlx_session_t * STDCALL
+PUBLIC_API
+mysqlx_session_t *
 mysqlx_get_session(const char *host, int port, const char *user,
                      const char *password, const char *database,
                      char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
@@ -264,7 +257,7 @@ mysqlx_get_session(const char *host, int port, const char *user,
  *       properly closed using mysqlx_session_close()
  * @note This type of session does not support executing plain SQL queries
  */
-mysqlx_session_t * STDCALL
+PUBLIC_API mysqlx_session_t *
 mysqlx_get_session_from_url(const char *conn_string,
                      char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
 
@@ -287,7 +280,7 @@ mysqlx_get_session_from_url(const char *conn_string,
  *       properly closed using mysqlx_session_close()
  * @note This type of session does not support executing plain SQL queries
  */
-mysqlx_session_t * STDCALL
+PUBLIC_API mysqlx_session_t *
 mysqlx_get_session_from_options(mysqlx_session_options_t *opt,
                        char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
 
@@ -315,7 +308,7 @@ mysqlx_get_session_from_options(mysqlx_session_options_t *opt,
  *       properly closed using mysqlx_session_close()
  * @note This type of session supports executing plain SQL queries
  */
-mysqlx_session_t * STDCALL
+PUBLIC_API mysqlx_session_t *
 mysqlx_get_node_session(const char *host, int port, const char *user,
                      const char *password, const char *database,
                      char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
@@ -340,7 +333,7 @@ mysqlx_get_node_session(const char *host, int port, const char *user,
  *       properly closed using mysqlx_session_close()
  * @note This type of session supports executing plain SQL queries
  */
-mysqlx_session_t * STDCALL
+PUBLIC_API mysqlx_session_t *
 mysqlx_get_node_session_from_url(const char *conn_string,
                      char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
 
@@ -363,7 +356,7 @@ mysqlx_get_node_session_from_url(const char *conn_string,
  *       properly closed using mysqlx_session_close()
  * @note This type of session supports executing plain SQL queries
  */
-mysqlx_session_t * STDCALL
+PUBLIC_API mysqlx_session_t *
 mysqlx_get_node_session_from_options(mysqlx_session_options_t *opt,
                             char out_error[MYSQLX_MAX_ERROR_LEN],
                             int *err_code);
@@ -375,7 +368,7 @@ mysqlx_get_node_session_from_options(mysqlx_session_options_t *opt,
  *
  *  @param session Pointer to mysqlx_session_t handler to close
 */
-void STDCALL mysqlx_session_close(mysqlx_session_t *session);
+PUBLIC_API void mysqlx_session_close(mysqlx_session_t *session);
 
 /* brief NOT IMPLEMENTED
  *
@@ -409,7 +402,7 @@ int STDCALL mysqlx_session_status(mysqlx_session_t *session);
  * @note To actually execute the SQL query the returned statement has to be
  *       given to mysqlx_execute()
  */
-mysqlx_stmt_t * STDCALL
+PUBLIC_API mysqlx_stmt_t *
 mysqlx_sql_new(mysqlx_session_t *sess, const char *query,
                  uint32_t length);
 
@@ -454,7 +447,7 @@ mysqlx_sql_query_v(mysqlx_session_t *sess, const char *format,
  * @note To actually execute the SQL query the returned STMT has to be
         given to mysqlx_execute()
 */
-mysqlx_stmt_t * STDCALL
+PUBLIC_API mysqlx_stmt_t *
 mysqlx_table_select_new(mysqlx_table_t *table);
 /*
   All variadic parameters table functions must close the list of items with NULL value
@@ -488,7 +481,7 @@ mysqlx_table_select_new(mysqlx_table_t *table);
  *        FIND operations (see mysqlx_table_select_new() and
  *        mysqlsx_collection_find_new())
  * */
-int STDCALL mysqlx_set_items(mysqlx_stmt_t *stmt, ...);
+PUBLIC_API int mysqlx_set_items(mysqlx_stmt_t *stmt, ...);
 
 /*! @brief MYSQLX API
  *  @details a macro defining a function for setting projections for SELECT
@@ -547,7 +540,7 @@ int STDCALL mysqlx_set_items(mysqlx_stmt_t *stmt, ...);
  *       corresponding mysqlx_set_where() function.
  *       This way the unsupported operations will not be used.
  */
-int STDCALL mysqlx_set_where(mysqlx_stmt_t *stmt, const char *where_expr);
+PUBLIC_API int mysqlx_set_where(mysqlx_stmt_t *stmt, const char *where_expr);
 
 /*! @brief MYSQLX API
  *
@@ -578,7 +571,7 @@ int STDCALL mysqlx_set_where(mysqlx_stmt_t *stmt, const char *where_expr);
  *       corresponding mysqlx_set_order_by() function.
  *       This way the unsupported operations will not be used.
  */
-int STDCALL mysqlx_set_order_by(mysqlx_stmt_t *stmt, ...);
+PUBLIC_API int mysqlx_set_order_by(mysqlx_stmt_t *stmt, ...);
 
 /* brief NOT IMPLEMENTED
  *
@@ -633,7 +626,7 @@ int STDCALL mysqlx_set_having(mysqlx_stmt_t *stmt, const char *criteria); // NOT
  *
  * @note Each call to this function replaces previously set LIMIT
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_set_limit_and_offset(mysqlx_stmt_t *stmt, uint64_t row_count,
                             uint64_t offset);
 
@@ -653,7 +646,7 @@ mysqlx_set_limit_and_offset(mysqlx_stmt_t *stmt, uint64_t row_count,
  * @note To actually execute the SQL query the returned STMT has to be
         given to mysqlx_execute()
 */
-mysqlx_stmt_t * STDCALL
+PUBLIC_API mysqlx_stmt_t *
 mysqlx_table_insert_new(mysqlx_table_t *table);
 
 /*! @brief MYSQLX API
@@ -672,7 +665,7 @@ mysqlx_table_insert_new(mysqlx_table_t *table);
  * @note Each new call clears the list of column for a given CRUD
  *       if it was set earlier
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_set_insert_columns(mysqlx_stmt_t *stmt, ...);
 
 /*! @brief MYSQLX API
@@ -699,7 +692,7 @@ mysqlx_set_insert_columns(mysqlx_stmt_t *stmt, ...);
  * @note Each new call provides the row values for the new row, which
  *       can be used for multi-row inserts
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_set_insert_row(mysqlx_stmt_t *stmt, ...);
 
 /* brief MYSQLX API
@@ -748,7 +741,7 @@ mysqlx_set_insert_columns(mysqlx_stmt_t *stmt, ...); // NOT IMPLEMENTED
  * @note To actually execute the SQL query the returned STMT has to be
  *       given to mysqlx_execute()
 */
-mysqlx_stmt_t * STDCALL
+PUBLIC_API mysqlx_stmt_t *
 mysqlx_table_update_new(mysqlx_table_t *table);
 
 /*! @brief MYSQLX API
@@ -776,7 +769,7 @@ mysqlx_table_update_new(mysqlx_table_t *table);
  *       otherwise the next call to this function will reset all parameters to
  *       their new values.
  */
-int STDCALL mysqlx_set_update_values(mysqlx_stmt_t *stmt, ...);
+PUBLIC_API int mysqlx_set_update_values(mysqlx_stmt_t *stmt, ...);
 
 /*! @brief MYSQLX API
  *  @details a macro defining a function for setting WHERE clause for UPDATE
@@ -814,7 +807,7 @@ int STDCALL mysqlx_set_update_values(mysqlx_stmt_t *stmt, ...);
  * @note To actually execute the SQL query the returned STMT has to be
  *       given to mysqlx_execute()
 */
-mysqlx_stmt_t * STDCALL
+PUBLIC_API mysqlx_stmt_t *
 mysqlx_table_delete_new(mysqlx_table_t *table);
 
 /*! @brief MYSQLX API
@@ -852,7 +845,7 @@ mysqlx_table_delete_new(mysqlx_table_t *table);
  *          mysqlx_result_free() call.
  *          On error NULL is returned. The error is set for statement handler.
  */
-mysqlx_result_t * STDCALL
+PUBLIC_API mysqlx_result_t *
 mysqlx_execute(mysqlx_stmt_t *stmt);
 
 /*! @brief MYSQLX_API
@@ -872,7 +865,7 @@ mysqlx_execute(mysqlx_stmt_t *stmt);
  * @note Even in case of an error some rows/documents might be buffered if they
  *       were retrieved before the error occurred.
  */
-int STDCALL
+PUBLIC_API int
 mysqlx_store_result(mysqlx_result_t *result, size_t *num);
 
 /*! @brief MYSQLX API
@@ -886,7 +879,7 @@ mysqlx_store_result(mysqlx_result_t *result, size_t *num);
  *         The error handle can be obtained from the session
  *         using mysqlx_error() function
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_schema_create(mysqlx_session_t *sess, const char *schema);
 
 /*! @brief MYSQLX API
@@ -900,7 +893,7 @@ mysqlx_schema_create(mysqlx_session_t *sess, const char *schema);
  *         The error handle can be obtained from the session
  *         using mysqlx_error() function
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_schema_drop(mysqlx_session_t *sess, const char *schema);
 
 /*! @brief MYSQLX API
@@ -914,7 +907,7 @@ mysqlx_schema_drop(mysqlx_session_t *sess, const char *schema);
  *         The error handle can be obtained from the session
  *         using mysqlx_error() function
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_table_drop(mysqlx_schema_t *schema, const char *table);
 
 
@@ -929,7 +922,7 @@ mysqlx_table_drop(mysqlx_schema_t *schema, const char *table);
  *         The error handle can be obtained from the session
  *         using mysqlx_error() function
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_view_drop(mysqlx_schema_t *schema, const char *view);
 
 /*! @brief MYSQLX API
@@ -943,7 +936,7 @@ mysqlx_view_drop(mysqlx_schema_t *schema, const char *view);
  *         The error handle can be obtained from the session
  *         using mysqlx_error() function
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_collection_create(mysqlx_schema_t *schema, const char *collection);
 
 /*! @brief MYSQLX API
@@ -957,7 +950,7 @@ mysqlx_collection_create(mysqlx_schema_t *schema, const char *collection);
  *         The error handle can be obtained from the session
  *         using mysqlx_error() function
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_collection_drop(mysqlx_schema_t *schema, const char *collection);
 
 /*! @brief MYSQLX API
@@ -976,7 +969,7 @@ mysqlx_collection_drop(mysqlx_schema_t *schema, const char *collection);
  * @note To actually execute the operation the returned STMT has to be
  *       given to mysqlx_execute()
 */
-mysqlx_stmt_t * STDCALL
+PUBLIC_API mysqlx_stmt_t *
 mysqlx_collection_add_new(mysqlx_collection_t *collection);
 
 /*! @brief MYSQLX API
@@ -995,7 +988,7 @@ mysqlx_collection_add_new(mysqlx_collection_t *collection);
  * @note Each new call provides the values for the new document, which
  *       can be used for multi-document add operations
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_set_add_document(mysqlx_stmt_t *stmt, const char *json_doc);
 
 /*! @brief MYSQLX API
@@ -1014,7 +1007,7 @@ mysqlx_set_add_document(mysqlx_stmt_t *stmt, const char *json_doc);
  * @note To actually execute the operation the returned STMT has to be
  *       given to mysqlx_execute()
 */
-mysqlx_stmt_t * STDCALL
+PUBLIC_API mysqlx_stmt_t *
 mysqlx_collection_find_new(mysqlx_collection_t *collection);
 
 /*! @brief MYSQLX API
@@ -1031,7 +1024,7 @@ mysqlx_collection_find_new(mysqlx_collection_t *collection);
  *  @note This function can be only called for the collection
  *        FIND operations (see mysqlsx_collection_find_new())
  * */
-int STDCALL mysqlx_set_find_projection(mysqlx_stmt_t *stmt, const char *proj);
+PUBLIC_API int mysqlx_set_find_projection(mysqlx_stmt_t *stmt, const char *proj);
 
 /*! @brief MYSQLX API
  *  @details a macro defining a function for setting criteria for FIND
@@ -1089,7 +1082,7 @@ int STDCALL mysqlx_set_find_projection(mysqlx_stmt_t *stmt, const char *proj);
  * @note Each new call resets the binds set by the previous call to
  *       mysqlx_stmt_bind()
 */
-int STDCALL mysqlx_stmt_bind(mysqlx_stmt_t *stmt, ...);
+PUBLIC_API int mysqlx_stmt_bind(mysqlx_stmt_t *stmt, ...);
 
 /*! @brief MYSQLX API
  *
@@ -1107,7 +1100,7 @@ int STDCALL mysqlx_stmt_bind(mysqlx_stmt_t *stmt, ...);
  * @note To actually execute the MODIFY query the returned STMT has to be
  *       given to mysqlx_execute()
 */
-mysqlx_stmt_t * STDCALL
+PUBLIC_API mysqlx_stmt_t *
 mysqlx_collection_modify_new(mysqlx_collection_t *collection);
 
 /*! @brief MYSQLX API
@@ -1129,7 +1122,7 @@ mysqlx_collection_modify_new(mysqlx_collection_t *collection);
  *
  * @return RESULT_OK - on success; RESULT_ERR - on error
  */
-int STDCALL
+PUBLIC_API int
 mysqlx_set_modify_set(mysqlx_stmt_t *stmt, ...);
 
 /*! @brief MYSQLX API
@@ -1142,7 +1135,7 @@ mysqlx_set_modify_set(mysqlx_stmt_t *stmt, ...);
  *
  * @return RESULT_OK - on success; RESULT_ERR - on error
  */
-int STDCALL
+PUBLIC_API int
 mysqlx_set_modify_unset(mysqlx_stmt_t *stmt, ...);
 
 /*! @brief MYSQLX API
@@ -1161,7 +1154,7 @@ mysqlx_set_modify_unset(mysqlx_stmt_t *stmt, ...);
  *
  * @return RESULT_OK - on success; RESULT_ERR - on error
  */
-int STDCALL
+PUBLIC_API int
 mysqlx_set_modify_array_insert(mysqlx_stmt_t *stmt, ...);
 
 /*! @brief MYSQLX API
@@ -1177,7 +1170,7 @@ mysqlx_set_modify_array_insert(mysqlx_stmt_t *stmt, ...);
  *
  * @return RESULT_OK - on success; RESULT_ERR - on error
  */
-int STDCALL
+PUBLIC_API int
 mysqlx_set_modify_array_append(mysqlx_stmt_t *stmt, ...);
 
 /*! @brief MYSQLX API
@@ -1189,7 +1182,8 @@ mysqlx_set_modify_array_append(mysqlx_stmt_t *stmt, ...);
  *
  *  @return RESULT_OK - on success; RESULT_ERR - on error
  */
-int mysqlx_set_modify_array_delete(mysqlx_stmt_t *stmt, ...);
+PUBLIC_API int
+mysqlx_set_modify_array_delete(mysqlx_stmt_t *stmt, ...);
 
 #define mysqlx_set_modify_criteria mysqlx_set_where
 
@@ -1208,7 +1202,7 @@ int mysqlx_set_modify_array_delete(mysqlx_stmt_t *stmt, ...);
  * @note To actually execute the REMOVE query the returned STMT has to be
  *       given to mysqlx_execute()
  */
-mysqlx_stmt_t * STDCALL
+PUBLIC_API mysqlx_stmt_t *
 mysqlx_collection_remove_new(mysqlx_collection_t *collection);
 
 /*! @brief MYSQLX API
@@ -1242,7 +1236,7 @@ mysqlx_collection_remove_new(mysqlx_collection_t *collection);
  *
  * @note The previously fetched row and its data will become invalid.
 */
-mysqlx_row_t * STDCALL mysqlx_row_fetch_one(mysqlx_result_t *res);
+PUBLIC_API mysqlx_row_t * mysqlx_row_fetch_one(mysqlx_result_t *res);
 
 /*! @brief MYSQLX API
  * @details Fetch one JSON document as a character string
@@ -1258,7 +1252,7 @@ mysqlx_row_t * STDCALL mysqlx_row_fetch_one(mysqlx_result_t *res);
  *         handler.
  *
  */
-const char * STDCALL mysqlx_json_fetch_one(mysqlx_result_t *res, size_t *out_length);
+PUBLIC_API const char * mysqlx_json_fetch_one(mysqlx_result_t *res, size_t *out_length);
 
 /*
  * @brief Fetch one document from the result and advance to
@@ -1430,7 +1424,7 @@ const char * STDCALL mysqlx_json_fetch_one(mysqlx_result_t *res, size_t *out_len
  *         RESULT_ERR - on error
  *
  */
-int STDCALL mysqlx_next_result(mysqlx_result_t *res);
+PUBLIC_API int mysqlx_next_result(mysqlx_result_t *res);
 
 /*! @brief MYSQLX API
  *
@@ -1440,7 +1434,7 @@ int STDCALL mysqlx_next_result(mysqlx_result_t *res);
  *
  * @return 64-bit unsigned int number containing the number of affected rows
 */
-uint64_t STDCALL
+PUBLIC_API uint64_t
 mysqlx_get_affected_count(mysqlx_result_t *res);
 
 // Metadata
@@ -1455,7 +1449,7 @@ mysqlx_get_affected_count(mysqlx_result_t *res);
  * @return 16-bit unsigned int number with the column type identifier
  * (see mysqlx_data_type_t enum)
 */
-uint16_t STDCALL
+PUBLIC_API uint16_t
 mysqlx_column_get_type(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
@@ -1467,7 +1461,7 @@ mysqlx_column_get_type(mysqlx_result_t *res, uint32_t pos);
  *
  * @return 16-bit unsigned int number with the column collation number
 */
-uint16_t STDCALL
+PUBLIC_API uint16_t
 mysqlx_column_get_collation(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
@@ -1479,7 +1473,7 @@ mysqlx_column_get_collation(mysqlx_result_t *res, uint32_t pos);
  *
  * @return 32-bit unsigned int number indicating the maximum data length
 */
-uint32_t STDCALL
+PUBLIC_API uint32_t
 mysqlx_column_get_length(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
@@ -1491,7 +1485,7 @@ mysqlx_column_get_length(mysqlx_result_t *res, uint32_t pos);
  *
  * @return 16-bit unsigned int number of digits after the decimal point
 */
-uint16_t STDCALL
+PUBLIC_API uint16_t
 mysqlx_column_get_precision(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
@@ -1503,7 +1497,7 @@ mysqlx_column_get_precision(mysqlx_result_t *res, uint32_t pos);
  *
  * @return 32-bit unsigned int number containing column flags
 */
-uint32_t STDCALL
+PUBLIC_API uint32_t
 mysqlx_column_get_flags(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
@@ -1514,7 +1508,7 @@ mysqlx_column_get_flags(mysqlx_result_t *res, uint32_t pos);
  *
  * @return the number of columns
 */
-uint32_t STDCALL
+PUBLIC_API uint32_t
 mysqlx_column_get_count(mysqlx_result_t *res);
 
 /*! @brief MYSQLX API
@@ -1526,7 +1520,7 @@ mysqlx_column_get_count(mysqlx_result_t *res);
  *
  * @return character string containing the column name
 */
-const char * STDCALL
+PUBLIC_API const char *
 mysqlx_column_get_name(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
@@ -1538,7 +1532,7 @@ mysqlx_column_get_name(mysqlx_result_t *res, uint32_t pos);
  *
  * @return character string containing the column original name
 */
-const char * STDCALL
+PUBLIC_API const char *
 mysqlx_column_get_original_name(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
@@ -1550,7 +1544,7 @@ mysqlx_column_get_original_name(mysqlx_result_t *res, uint32_t pos);
  *
  * @return character string containing the column table name
 */
-const char * STDCALL
+PUBLIC_API const char *
 mysqlx_column_get_table(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
@@ -1562,7 +1556,7 @@ mysqlx_column_get_table(mysqlx_result_t *res, uint32_t pos);
  *
  * @return character string containing the column original table
 */
-const char * STDCALL
+PUBLIC_API const char *
 mysqlx_column_get_original_table(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
@@ -1574,7 +1568,7 @@ mysqlx_column_get_original_table(mysqlx_result_t *res, uint32_t pos);
  *
  * @return character string containing the column schema
 */
-const char * STDCALL
+PUBLIC_API const char *
 mysqlx_column_get_schema(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
@@ -1586,7 +1580,7 @@ mysqlx_column_get_schema(mysqlx_result_t *res, uint32_t pos);
  *
  * @return character string containing the column name
 */
-const char * STDCALL
+PUBLIC_API const char *
 mysqlx_column_get_catalog(mysqlx_result_t *res, uint32_t pos);
 
 /*! @brief MYSQLX API
@@ -1604,7 +1598,7 @@ mysqlx_column_get_catalog(mysqlx_result_t *res, uint32_t pos);
  * @return RESULT_OK - on success; RESULT_NULL when the value is NULL;
  *         RESULT_ERR - on error
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_get_bytes(mysqlx_row_t* row, uint32_t col,
                  uint64_t offset, void *buf, size_t *buf_len);
 
@@ -1624,7 +1618,7 @@ mysqlx_get_bytes(mysqlx_row_t* row, uint32_t col,
  * @return RESULT_OK - on success; RESULT_NULL when the value is NULL;
  *         RESULT_ERR - on error
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_get_uint(mysqlx_row_t* row, uint32_t col, uint64_t* val);
 
 /*! @brief MYSQLX API
@@ -1643,7 +1637,7 @@ mysqlx_get_uint(mysqlx_row_t* row, uint32_t col, uint64_t* val);
  * @return RESULT_OK - on success; RESULT_NULL when the value is NULL;
  *         RESULT_ERR - on error
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_get_sint(mysqlx_row_t* row, uint32_t col, int64_t* val);
 
 /*! @brief MYSQLX API
@@ -1662,7 +1656,7 @@ mysqlx_get_sint(mysqlx_row_t* row, uint32_t col, int64_t* val);
  * @return RESULT_OK - on success; RESULT_NULL when the value is NULL;
  *         RESULT_ERR - on error
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_get_float(mysqlx_row_t* row, uint32_t col, float* val);
 
 /*! @brief MYSQLX API
@@ -1681,7 +1675,7 @@ mysqlx_get_float(mysqlx_row_t* row, uint32_t col, float* val);
  * @return RESULT_OK - on success; RESULT_NULL when the value is NULL;
  *         RESULT_ERR - on error
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_get_double(mysqlx_row_t* row, uint32_t col, double *val);
 
 /*! @brief MYSQLX API
@@ -1694,7 +1688,7 @@ mysqlx_get_double(mysqlx_row_t* row, uint32_t col, double *val);
  * @note make sure this function is called if the result handler is going to be
  *       re-used
 */
-void STDCALL mysqlx_result_free(mysqlx_result_t *res);
+PUBLIC_API void mysqlx_result_free(mysqlx_result_t *res);
 
 /*! @brief MYSQLX API
  *
@@ -1707,7 +1701,7 @@ void STDCALL mysqlx_result_free(mysqlx_result_t *res);
  *
  * @return the error handle or NULL if there is no errors.
 */
-mysqlx_error_t * STDCALL
+PUBLIC_API mysqlx_error_t *
 mysqlx_error(void *obj);
 
 /*! @brief MYSQLX API
@@ -1721,7 +1715,7 @@ mysqlx_error(void *obj);
  *
  * @return the character string or NULL if there is no errors.
 */
-const char * STDCALL mysqlx_error_message(void *obj);
+PUBLIC_API const char * mysqlx_error_message(void *obj);
 
 /*! @brief MYSQLX API
  *
@@ -1734,7 +1728,7 @@ const char * STDCALL mysqlx_error_message(void *obj);
  *
  * @return the error number or 0 if no error
 */
-unsigned int STDCALL mysqlx_error_num(void *obj);
+PUBLIC_API unsigned int mysqlx_error_num(void *obj);
 
 /*! @brief MYSQLX API
  * @details Free the statement handler explicitly, otherwise it will be done automatically
@@ -1749,7 +1743,7 @@ unsigned int STDCALL mysqlx_error_num(void *obj);
  *   implement book-keeping to be able to free the lower-level objects
  *   by freeing the higher-level ones
 */
-void STDCALL mysqlx_free(mysqlx_stmt_t *stmt);
+PUBLIC_API void mysqlx_free(mysqlx_stmt_t *stmt);
 
 /*! @brief MYSQLX API
  *
@@ -1768,7 +1762,7 @@ void STDCALL mysqlx_free(mysqlx_stmt_t *stmt);
  *
  * @note mysqlx_execute() is not needed to execute the query
  */
-mysqlx_result_t * STDCALL mysqlx_sql(mysqlx_session_t *sess,
+PUBLIC_API mysqlx_result_t * mysqlx_sql(mysqlx_session_t *sess,
                                         const char *query,
                                         size_t query_len);
 
@@ -1804,7 +1798,7 @@ mysqlx_result_t * STDCALL mysqlx_sql(mysqlx_session_t *sess,
  * @note mysqlx_execute() is not needed to execute the query
  */
 
-mysqlx_result_t * STDCALL mysqlx_sql_param(mysqlx_session_t *sess,
+PUBLIC_API mysqlx_result_t * mysqlx_sql_param(mysqlx_session_t *sess,
                                         const char *query,
                                         size_t query_len, ...);
 
@@ -1822,7 +1816,7 @@ mysqlx_result_t * STDCALL mysqlx_sql_param(mysqlx_session_t *sess,
  *
  * @note mysqlx_execute() is not needed to execute the query
 */
-mysqlx_result_t * STDCALL
+PUBLIC_API mysqlx_result_t *
 mysqlx_table_select(mysqlx_table_t *table, const char *criteria);
 
 /*! @brief MYSQLX API
@@ -1852,7 +1846,7 @@ mysqlx_table_select(mysqlx_table_t *table, const char *criteria);
  *
  * @note mysqlx_execute() is not needed to execute the query
 */
-mysqlx_result_t * STDCALL
+PUBLIC_API mysqlx_result_t *
 mysqlx_table_select_limit(mysqlx_table_t *table, const char *criteria,
                                uint64_t row_count, uint64_t offset, ...);
 
@@ -1878,7 +1872,7 @@ mysqlx_table_select_limit(mysqlx_table_t *table, const char *criteria,
  *
  * @note mysqlx_execute() is not needed to execute the query
 */
-mysqlx_result_t * STDCALL
+PUBLIC_API mysqlx_result_t *
 mysqlx_table_insert(mysqlx_table_t *table, ...);
 
 /*! @brief MYSQLX API
@@ -1904,7 +1898,7 @@ mysqlx_table_insert(mysqlx_table_t *table, ...);
  *
  * @note mysqlx_execute() is not needed to execute the query
 */
-mysqlx_result_t * STDCALL
+PUBLIC_API mysqlx_result_t *
 mysqlx_table_update(mysqlx_table_t *table,
                         const char *criteria,
                         ...);
@@ -1922,7 +1916,7 @@ mysqlx_table_update(mysqlx_table_t *table,
  *
  * @note mysqlx_execute() is not needed to execute the query
 */
-mysqlx_result_t * STDCALL
+PUBLIC_API mysqlx_result_t *
 mysqlx_table_delete(mysqlx_table_t *table, const char *criteria);
 
 /*! @brief MYSQLX API
@@ -1939,7 +1933,7 @@ mysqlx_table_delete(mysqlx_table_t *table, const char *criteria);
  *
  * @note mysqlx_execute() is not needed to execute the query
 */
-mysqlx_result_t * STDCALL
+PUBLIC_API mysqlx_result_t *
 mysqlx_collection_find(mysqlx_collection_t *collection, const char *criteria);
 
 /*! @brief MYSQLX API
@@ -1960,7 +1954,7 @@ mysqlx_collection_find(mysqlx_collection_t *collection, const char *criteria);
  *
  * @note mysqlx_execute() is not needed to execute the query
 */
-mysqlx_result_t * STDCALL
+PUBLIC_API mysqlx_result_t *
 mysqlx_collection_add(mysqlx_collection_t *collection, ...);
 
 /*! @brief MYSQLX API
@@ -1990,7 +1984,7 @@ mysqlx_collection_add(mysqlx_collection_t *collection, ...);
  *
  * @note mysqlx_execute() is not needed to execute the query
  */
-mysqlx_result_t * STDCALL
+PUBLIC_API mysqlx_result_t *
 mysqlx_collection_modify_set(mysqlx_collection_t *collection,
                              const char *criteria, ...);
 
@@ -2008,7 +2002,7 @@ mysqlx_collection_modify_set(mysqlx_collection_t *collection,
  *
  * @note mysqlx_execute() is not needed to execute the query
  */
-mysqlx_result_t * STDCALL
+PUBLIC_API mysqlx_result_t *
 mysqlx_collection_modify_unset(mysqlx_collection_t *collection,
                                const char *criteria, ...);
 
@@ -2025,7 +2019,7 @@ mysqlx_collection_modify_unset(mysqlx_collection_t *collection,
  *
  * @note mysqlx_execute() is not needed to execute the query
  */
-mysqlx_result_t * STDCALL
+PUBLIC_API mysqlx_result_t *
 mysqlx_collection_remove(mysqlx_collection_t *collection, const char*criteria);
 
 /*! @brief MYSQLX API
@@ -2046,7 +2040,7 @@ mysqlx_collection_remove(mysqlx_collection_t *collection, const char*criteria);
  *       the functins such as mysqlx_store_result() and mysqlx_row_fetch_one()
  *       could be used.
 */
-mysqlx_result_t * STDCALL
+PUBLIC_API mysqlx_result_t *
 mysqlx_get_schemas(mysqlx_session_t *sess, const char *schema_pattern);
 
 /*! @brief MYSQLX API
@@ -2074,7 +2068,7 @@ mysqlx_get_schemas(mysqlx_session_t *sess, const char *schema_pattern);
  * @note this function does not return table names that represent collections.
  *       use mysqlx_get_collections() function for getting collections.
 */
-mysqlx_result_t * STDCALL
+PUBLIC_API mysqlx_result_t *
 mysqlx_get_tables(mysqlx_schema_t *schema,
                   const char *table_pattern,
                   int get_views);
@@ -2097,7 +2091,7 @@ mysqlx_get_tables(mysqlx_schema_t *schema,
  *       the functins such as mysqlx_store_result() and mysqlx_row_fetch_one()
  *       could be used.
 */
-mysqlx_result_t * STDCALL
+PUBLIC_API mysqlx_result_t *
 mysqlx_get_collections(mysqlx_schema_t *schema,
                   const char *col_pattern);
 
@@ -2110,7 +2104,7 @@ mysqlx_get_collections(mysqlx_schema_t *schema,
  *
  *  @return the number of warnings returned in the result structure
 */
-unsigned int STDCALL
+PUBLIC_API unsigned int
 mysqlx_result_warning_count(mysqlx_result_t *res);
 
 /*! @brief MYSQLX API
@@ -2123,7 +2117,7 @@ mysqlx_result_warning_count(mysqlx_result_t *res);
  *  @return the mysqlx_error_t structure containing info about a warning or
  *          NULL if there is no more warnings left to return.
 */
-mysqlx_error_t * STDCALL
+PUBLIC_API mysqlx_error_t *
 mysqlx_result_next_warning(mysqlx_result_t *res);
 
 
@@ -2139,7 +2133,7 @@ mysqlx_result_next_warning(mysqlx_result_t *res);
  *  @note with multi-row inserts the function returns the value generated
  *        for the first row
 */
-uint64_t STDCALL
+PUBLIC_API uint64_t
 mysqlx_get_auto_increment_value(mysqlx_result_t *res);
 
 /*! @brief MYSQLX API
@@ -2155,7 +2149,7 @@ mysqlx_get_auto_increment_value(mysqlx_result_t *res);
  *       it is committed or rolled back even if this statement operation
  *       was created before mysqlx_transaction_begin() call
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_transaction_begin(mysqlx_session_t *sess);
 
 /*! @brief MYSQLX API
@@ -2171,7 +2165,7 @@ mysqlx_transaction_begin(mysqlx_session_t *sess);
  *       it is committed or rolled back even if this statement operation
  *       was created before mysqlx_transaction_begin() call
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_transaction_commit(mysqlx_session_t *sess);
 
 /*! @brief MYSQLX API
@@ -2187,7 +2181,7 @@ mysqlx_transaction_commit(mysqlx_session_t *sess);
  *       it is committed or rolled back even if this statement operation
  *       was created before mysqlx_transaction_begin() call
 */
-int STDCALL
+PUBLIC_API int
 mysqlx_transaction_rollback(mysqlx_session_t *sess);
 
 /*! @brief MYSQLX API
@@ -2207,10 +2201,10 @@ mysqlx_transaction_rollback(mysqlx_session_t *sess);
  * @note The UUID result string is valid as long as the result handle is valid.
  *       Starting a new operation will invalidate it.
 */
-const char * STDCALL
+PUBLIC_API const char *
 mysqlx_fetch_doc_id(mysqlx_result_t *result);
 
-int STDCALL
+PUBLIC_API int
 mysqlx_session_valid(mysqlx_session_t *sess);
 /* brief MYSQLX API
  *
@@ -2222,7 +2216,7 @@ mysqlx_session_valid(mysqlx_session_t *sess);
  *       mysqlx_session_options_new() must be eventually freed by
  *       mysqlx_free_options() to prevent memory leaks
  */
-mysqlx_session_options_t * STDCALL
+PUBLIC_API mysqlx_session_options_t *
 mysqlx_session_options_new();
 
 /* brief MYSQLX API
@@ -2232,7 +2226,7 @@ mysqlx_session_options_new();
  * @param opt pointer to a mysqlx_session_options_t structure
  *            that has to be freed
  */
-void STDCALL
+PUBLIC_API void
 mysqlx_free_options(mysqlx_session_options_t *opt);
 
 /* brief MYSQLX API
@@ -2248,7 +2242,7 @@ mysqlx_free_options(mysqlx_session_options_t *opt);
  *         is set otherwise (use mysqlx_error() to get the error
  *         information)
  */
-int STDCALL
+PUBLIC_API int
 mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type, ...);
 
 /* brief MYSQLX API
@@ -2264,7 +2258,7 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
  *         is set otherwise (use mysqlx_error() to get the error
  *         information)
  */
-int STDCALL
+PUBLIC_API int
 mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
                           ...);
 
@@ -2280,7 +2274,7 @@ mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
  * @return mysqlx_schema_t structure containing the schema context or NULL
  *         if an error occurred or the schema does not exist on the server
  */
-mysqlx_schema_t * STDCALL
+PUBLIC_API mysqlx_schema_t *
 mysqlx_get_schema(mysqlx_session_t *sess, const char *schema_name,
                   unsigned int check);
 
@@ -2296,7 +2290,7 @@ mysqlx_get_schema(mysqlx_session_t *sess, const char *schema_name,
  * @return mysqlx_collection_t structure containing the collection context or NULL
  *         if an error occurred or the collection does not exist in the schema
  */
-mysqlx_collection_t * STDCALL
+PUBLIC_API mysqlx_collection_t *
 mysqlx_get_collection(mysqlx_schema_t *schema, const char *col_name,
                       unsigned int check);
 
@@ -2313,7 +2307,7 @@ mysqlx_get_collection(mysqlx_schema_t *schema, const char *col_name,
  * @return mysqlx_table_t structure containing the collection context or NULL
  *         if an error occurred or the table does not exist in the schema
  */
-mysqlx_table_t * STDCALL
+PUBLIC_API mysqlx_table_t *
 mysqlx_get_table(mysqlx_schema_t *schema, const char *tab_name,
                       unsigned int check);
 
