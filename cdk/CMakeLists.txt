@@ -168,7 +168,10 @@ INCLUDE(protobuf)
 # Add SSL
 #
 
+if(NOT DEFINED WITH_SSL)
 SET(WITH_SSL "bundled" CACHE STRING "")
+endif()
+message("WITH_SSL: ${WITH_SSL}")
 
 IF(WITH_SSL)
   IF(WITH_SSL STREQUAL "bundled")

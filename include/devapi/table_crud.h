@@ -181,7 +181,7 @@ protected:
     internal implementation object.
   */
 
-  INTERNAL void prepare(Table&);
+  void prepare(Table&);
 
   void add_columns()
   {}
@@ -472,7 +472,7 @@ DLL_WARNINGS_POP
     return static_cast<Impl*>(m_impl.get());
   }
 
-  INTERNAL void prepare(Table &table);
+  void prepare(Table &table);
 
   void add_proj(const string& projection)
   {
@@ -600,7 +600,7 @@ class PUBLIC_API TableUpdate
     return static_cast<Impl*>(m_impl.get());
   }
 
-  INTERNAL void prepare(Table&);
+  void prepare(Table&);
 
 public:
 
@@ -699,7 +699,7 @@ class PUBLIC_API TableRemove
     return static_cast<Impl*>(m_impl.get());
   }
 
-  INTERNAL void prepare(Table &);
+  void prepare(Table &);
 
 public:
 
