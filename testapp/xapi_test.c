@@ -147,7 +147,7 @@ int main(int argc, const char* argv[])
   RESULT_CHECK(res, table);
 
   printf("\n\nReading Rows:");
-  while (row = mysqlx_row_fetch_one(res))
+  while ((row = mysqlx_row_fetch_one(res)))
   {
     int64_t v_sint2 = 0;
     uint64_t v_uint2 = 0;
