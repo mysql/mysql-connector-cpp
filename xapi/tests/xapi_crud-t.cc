@@ -1932,3 +1932,79 @@ TEST_F(xapi_bugs, collection_null_test)
     EXPECT_TRUE(strstr(json_string, "null") != NULL); // it is unset
   }
 }
+
+TEST_F(xapi_bugs, collection_id_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  mysqlx_result_t *res;
+  mysqlx_stmt_t *stmt;
+  mysqlx_schema_t *schema;
+  mysqlx_collection_t *collection;
+
+  const char * json_string = NULL;
+  size_t json_len = 0;
+  int i = 0;
+  const char *id;
+  char id_buf[3][128];
+
+
+  AUTHENTICATE();
+
+  mysqlx_schema_create(get_session(), "cc_crud_test");
+
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_crud_test", 1)) != NULL);
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, "collection_id"));
+  EXPECT_TRUE((collection = mysqlx_get_collection(schema, "collection_id", 1)) != NULL);
+
+  RESULT_CHECK(stmt = mysqlx_collection_add_new(collection));
+
+  // empty document
+  EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, "{}"));
+
+  // Normal document with auto-generated _id
+  EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, "{\"a_key\" : 100}"));
+
+  // Document with _id specified by user
+  EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, "{\"a_key\" : 200, \"_id\" : \"111222333\"}"));
+
+  // Document with invalid _id specified by user, expect error
+  EXPECT_EQ(RESULT_ERROR, mysqlx_set_add_document(stmt, "{\"a_key\" : 300, \"_id\" : \"000000000000000000000000000000000011122223333\"}"));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  while ((id = mysqlx_fetch_doc_id(res)) != NULL)
+  {
+    strcpy(id_buf[i], id);
+    ++i;
+  }
+
+  RESULT_CHECK(stmt = mysqlx_collection_find_new(collection));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_order_by(stmt, "a_key", SORT_ORDER_ASC, PARAM_END));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  i = 0;
+  while ((json_string = mysqlx_json_fetch_one(res, &json_len)) != NULL)
+  {
+    if (json_string)
+      printf("\n[json: %s]", json_string);
+
+    EXPECT_TRUE(strstr(json_string, id_buf[i]) != NULL);
+
+    switch (i)
+    {
+      case 0: // just _id in the JSON
+        EXPECT_TRUE(strstr(json_string, "a_key") == NULL);
+      break;
+      case 1: // { "a_key" : 100}
+        EXPECT_TRUE(strstr(json_string, "\"a_key\": 100") != NULL);
+        break;
+      case 2: // { "a_key" : 200, "_id" : "111222333"}
+        EXPECT_TRUE(strstr(json_string, "\"a_key\": 200") != NULL);
+        break;
+      default: // no more documents in the result
+        FAIL();
+    }
+
+    ++i;
+  }
+}

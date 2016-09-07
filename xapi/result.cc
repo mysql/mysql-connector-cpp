@@ -364,7 +364,7 @@ mysqlx_doc_t *mysqlx_result_t::read_doc()
     Row_processor row_proc(&row);
     if (m_cursor->get_row(row_proc))
     {
-      m_doc_set.push_back(new mysqlx_doc_t(row));
+      m_doc_set.push_back(new mysqlx_doc_t(row.get_col_data(0)));
       return m_doc_set[0];
     }
     else if(m_reply.entry_count())

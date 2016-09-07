@@ -733,7 +733,16 @@ int mysqlx_stmt_t::add_document(const char *json_doc)
     because in the future this function can support multiple arguments
   */
   m_doc_source.add_new_doc();
-  m_doc_source.add_doc_value(json_doc);
+  try
+  {
+    m_doc_source.add_doc_value(json_doc);
+  }
+  catch (...)
+  {
+    // Something went wrong when parsing the JSON, remove the new doc
+    m_doc_source.remove_last_row();
+    throw;
+  }
 
   return res;
 }
