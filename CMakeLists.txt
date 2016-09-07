@@ -452,6 +452,17 @@ IF (WITH_TESTS)
   # Unit tests declared with ADD_NG_TEST() (see cdk/cmake/testing.cmake)
   ADD_TEST_TARGET()
 
+  #
+  # !!!Warning!!! FIXME
+  # This is temporary solution to a problem hit when linking our test driver
+  # with dynamic version of DLL. Ignoring duplicate runtime symbols is potentially
+  # dangerous. This should be replaced by some real solution.
+  #
+
+  if(MSVC)
+    set_target_properties(run_unit_tests PROPERTIES LINK_FLAGS /FORCE:MULTIPLE)
+  endif()
+
   # Test for public headers declared with ADD_HEADERS()
   # (see cdk/cmake/headers.cmake)
   ADD_HEADERS_TEST()
