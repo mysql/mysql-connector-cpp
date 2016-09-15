@@ -533,7 +533,8 @@ public:
       CRUD handler containing the results and/or error
 
   */
-  mysqlx_stmt_t *sql_query(const char *query, uint32_t length);
+  mysqlx_stmt_t *sql_query(const char *query, uint32_t length,
+                           bool enable_sql_x_session = false);
 
   /*
     Create a new CRUD operation (SELECT, INSERT, UPDATE, DELETE)

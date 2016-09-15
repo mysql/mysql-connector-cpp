@@ -142,11 +142,9 @@ cdk::bytes mysqlx_row_t::get_col_data(cdk::col_count_t pos) {
   return m_row_data[pos]->get_data();
 }
 
-
-mysqlx_doc_t::mysqlx_doc_struct(mysqlx_row_t &row) : m_crud(row.get_result().get_crud()),
-                                            m_bytes(row.get_col_data(0)),
-                                            m_json_doc(m_bytes)
-  { }
+mysqlx_doc_t::mysqlx_doc_struct(cdk::bytes data) : m_bytes(data),
+m_json_doc(m_bytes)
+{ }
 
 void Value_item::process_any(cdk::Any::Processor &prc) const
 {
@@ -189,17 +187,37 @@ void Row_item::process(cdk::Value_processor &prc) const
 void Row_item::generate_uuid()
 {
   uuid_type uuid;
-  ::generate_uuid(uuid);
-  char buf[sizeof(uuid_type)*2 + 1];
-  const char digits[17] = {"0123456789ABCDEF"};
 
-  for (size_t i = 0; i < sizeof(uuid); ++i)
+  /*
+    Create a local copy of a document structure just to get _id
+    if it was provided by a user inside JSON
+  */
+  mysqlx_doc_t doc(m_str.data());
+
+  if (doc.key_exists("_id"))
   {
-    buf[i*2] = digits[((unsigned char)uuid[i]) & 0x0F];
-    buf[i*2 + 1] = digits[((unsigned char)uuid[i] >> 4) ];
+    std::string str_id = doc.get_string("_id");
+    if (str_id.length() > sizeof(uuid_type)* 2)
+      throw Mysqlx_exception("Specified UUID is too long");
+    m_uuid = str_id;
   }
-  buf[sizeof(uuid_type)*2] = 0; // put a string termination
-  m_uuid = buf;
+  else
+  {
+    if (!doc.count())
+      m_empty_doc = true; // do not add "," before _id
+
+    ::generate_uuid(uuid);
+    char buf[sizeof(uuid_type)* 2 + 1];
+    const char digits[17] = { "0123456789ABCDEF" };
+
+    for (size_t i = 0; i < sizeof(uuid); ++i)
+    {
+      buf[i * 2] = digits[((unsigned char)uuid[i]) & 0x0F];
+      buf[i * 2 + 1] = digits[((unsigned char)uuid[i] >> 4)];
+    }
+    buf[sizeof(uuid_type)* 2] = 0; // put a string termination
+    m_uuid = buf;
+  }
 }
 
 // Process method for table projections
@@ -279,7 +297,10 @@ void Doc_source::process(Processor &prc) const
     std::string s = it->get_string();
     s.erase(s.rfind('}'));
     std::stringstream sstream;
-    sstream << ", \"_id\": \"" << it->get_uuid() << "\"}";
+    if (!it->is_empty_doc())
+      sstream << ", ";
+
+    sstream << "\"_id\": \"" << it->get_uuid() << "\"}";
     s.append(sstream.str());
     cdk::bytes b = s;
     cdk::safe_prc(prc)->scalar()->val()->value(cdk::TYPE_DOCUMENT,

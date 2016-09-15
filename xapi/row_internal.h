@@ -256,15 +256,17 @@ private:
         throw Mysqlx_exception("Key does not exist!");
       return m_map.at(key);
     }
+
+    size_t count()
+    { return m_map.size(); }
   };
 
-  mysqlx_stmt_t &m_crud;
   cdk::bytes m_bytes;
   JSON_doc m_json_doc;
 
 public:
 
-  mysqlx_doc_struct(mysqlx_row_t &row);
+  mysqlx_doc_struct(cdk::bytes data);
 
   uint64_t get_uint(const cdk::string key)
   { return m_json_doc.get_val(key).get_uint(); }
@@ -290,6 +292,8 @@ public:
   bool key_exists(const cdk::string key)
   { return m_json_doc.key_exists(key); }
 
+  size_t count()
+  { return m_json_doc.count(); }
 
 } mysqlx_doc_t;
 
@@ -441,19 +445,22 @@ public:
 class Row_item : public Value_item
 {
   std::string m_uuid;
+  bool m_empty_doc;
 
 public:
 
   // Constructor template for other types
-  template <typename T> Row_item(T val) : Value_item(val) {}
+  template <typename T> Row_item(T val) : Value_item(val), m_empty_doc(false) {}
 
   // Default constructor for NULL values
-  Row_item() : Value_item() {}
+  Row_item() : Value_item(), m_empty_doc(false) {}
 
   void process(cdk::Value_processor &prc) const;
 
   void generate_uuid();
   std::string get_uuid() const { return m_uuid; };
+
+  bool is_empty_doc() const { return m_empty_doc; }
 };
 
 class Source_base
@@ -476,6 +483,12 @@ public:
   void add_new_doc()
   {
     add_new_row();
+  }
+
+  void remove_last_row()
+  {
+    if (m_rows.size())
+      m_rows.erase(m_rows.begin() + m_rows.size() - 1);
   }
 
   // Clear the list

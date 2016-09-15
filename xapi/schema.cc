@@ -34,8 +34,9 @@ mysqlx_schema_struct::mysqlx_schema_struct(mysqlx_session_t &session, cdk::strin
 
 bool mysqlx_schema_struct::exists()
 {
+  // This SQL query can be enabled for X session
   mysqlx_stmt_t *stmt = m_session.sql_query("SHOW SCHEMAS LIKE ?",
-                                            MYSQLX_NULL_TERMINATED);
+                                            MYSQLX_NULL_TERMINATED, true);
   stmt->sql_bind(m_name);
   mysqlx_result_t *res = stmt->exec();
   return (res->store_result() > 0);
@@ -43,6 +44,8 @@ bool mysqlx_schema_struct::exists()
 
 mysqlx_collection_t & mysqlx_schema_struct::get_collection(const char *name, bool check)
 {
+  if (!name || !(*name))
+    throw Mysqlx_exception(MYSQLX_ERROR_MISSING_COLLECTION_NAME_MSG);
   cdk::string col_name = name;
   Collection_map::iterator it = m_collection_map.find(col_name);
   // Return existing collection if it was requested before
@@ -56,6 +59,8 @@ mysqlx_collection_t & mysqlx_schema_struct::get_collection(const char *name, boo
 
 mysqlx_table_t & mysqlx_schema_struct::get_table(const char *name, bool check)
 {
+  if (!name || !(*name))
+    throw Mysqlx_exception(MYSQLX_ERROR_MISSING_TABLE_NAME_MSG);
   cdk::string tab_name = name;
   Table_map::iterator it = m_table_map.find(tab_name);
   // Return existing table if it was requested before

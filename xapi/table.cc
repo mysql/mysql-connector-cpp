@@ -66,6 +66,8 @@ mysqlx_stmt_t *mysqlx_table_struct::stmt_op(mysqlx_op_t op_type)
   if (m_stmt)
     delete m_stmt;
 
+  m_error.reset();
+
   m_stmt = m_schema.get_session().stmt_op(m_schema.get_name(),
                                           m_name, op_type, false);
   if (!m_stmt)
