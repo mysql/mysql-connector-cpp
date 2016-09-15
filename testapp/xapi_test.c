@@ -29,7 +29,6 @@
 int main(int argc, const char* argv[])
 {
   mysqlx_session_t  *sess;
-  mysqlx_error_t    *error = NULL;
   mysqlx_stmt_t     *crud;
   mysqlx_result_t   *res;
   mysqlx_row_t      *row;
@@ -161,11 +160,11 @@ int main(int argc, const char* argv[])
 
     IS_OK(mysqlx_get_sint(row, 0, &v_sint2), crud);
     col_name = mysqlx_column_get_name(res, 0);
-    printf(format_64, col_name, v_sint2);
+    printf(format_64, col_name, (long long int)v_sint2);
 
     IS_OK(mysqlx_get_uint(row, 1, &v_uint2), crud);
     col_name = mysqlx_column_get_name(res, 1);
-    printf(format_64, col_name, v_uint2);
+    printf(format_64, col_name, (long long int)v_uint2);
 
     IS_OK(mysqlx_get_float(row, 2, &v_float2), crud);
     col_name = mysqlx_column_get_name(res, 2);
@@ -182,4 +181,5 @@ int main(int argc, const char* argv[])
 
   mysqlx_session_close(sess);
   printf("\nSession closed");
+  return 0;
 }

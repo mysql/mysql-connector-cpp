@@ -478,11 +478,11 @@ TEST_F(xapi, transaction_test)
   EXPECT_TRUE((table = mysqlx_get_table(schema, "transact_tab", 1)) != NULL);
 
   EXPECT_EQ(RESULT_OK, mysqlx_transaction_begin(get_session()));
-  SESS_CHECK( res = mysqlx_table_insert(table, "a", PARAM_SINT(200), PARAM_END));
+  SESS_CHECK(res = mysqlx_table_insert(table, "a", PARAM_SINT(200), PARAM_END));
   EXPECT_EQ(RESULT_OK, mysqlx_transaction_commit(get_session()));
 
   // Check how the row was inserted after committing the transaction
-  SESS_CHECK( res = mysqlx_table_select(table, "a > 0"));
+  SESS_CHECK(res = mysqlx_table_select(table, "a > 0"));
 
   while ((row = mysqlx_row_fetch_one(res)) != NULL)
   {
@@ -496,7 +496,7 @@ TEST_F(xapi, transaction_test)
   EXPECT_EQ(RESULT_OK, mysqlx_transaction_rollback(get_session()));
 
   // Check how the row was not deleted after rolling back the transaction
-  SESS_CHECK( res = mysqlx_table_select(table, "a > 0"));
+  SESS_CHECK(res = mysqlx_table_select(table, "a > 0"));
 
   while ((row = mysqlx_row_fetch_one(res)) != NULL)
   {

@@ -75,6 +75,17 @@
     if (sess) { delete sess; sess = NULL; } \
   }
 
+#define PARAM_NULL_EMPTY_CHECK(PARAM, HANDLE, ERR_MSG, ERR) if (!PARAM || !(*PARAM)) \
+  { \
+    HANDLE->set_diagnostic(ERR_MSG, 0); \
+    return ERR; \
+  }
+
+#define OUT_BUF_CHECK(PARAM, HANDLE, ERR_MSG, ERR) if (!PARAM) \
+  { \
+  HANDLE->set_diagnostic(ERR_MSG, 0); \
+  return ERR; \
+  }
 
 static mysqlx_session_t *
 _get_session(const char *host, int port, const char *user,
@@ -90,12 +101,16 @@ _get_session(const char *host, int port, const char *user,
     {
       std::string pwd(password ? password : "");
       std::string db(database ? database : "");
-      // Temporarily set empty string for the default database
-      sess = new mysqlx_session_t(host, port, user, password ? &pwd : NULL,
+      
+      // TODO: the default user has to be determined in a more flexible way
+      sess = new mysqlx_session_t(host ? host : "localhost", port,
+                                  user ? user : "root", password ? &pwd : NULL,
                                 database ? &db : NULL , is_node_sess);
     }
     else
+    {
       sess = new mysqlx_session_t(conn_str, is_node_sess);
+    }
 
     if (!sess->is_valid())
     {
@@ -376,9 +391,7 @@ mysqlx_collection_find_new(mysqlx_collection_t *collection)
 int STDCALL mysqlx_set_where(mysqlx_stmt_t *stmt, const char *where_expr)
 {
   SAFE_EXCEPTION_BEGIN(stmt, RESULT_ERROR)
-
   return stmt->set_where(where_expr);
-
   SAFE_EXCEPTION_END(stmt, RESULT_ERROR)
 }
 
@@ -387,9 +400,7 @@ mysqlx_set_limit_and_offset(mysqlx_stmt_t *stmt, uint64_t row_count,
                             uint64_t offset)
 {
   SAFE_EXCEPTION_BEGIN(stmt, RESULT_ERROR)
-
   return stmt->set_limit(row_count, offset);
-
   SAFE_EXCEPTION_END(stmt, RESULT_ERROR)
 }
 
@@ -620,27 +631,21 @@ int STDCALL STDCALL mysqlx_set_modify_array_delete(mysqlx_stmt_t *stmt, ...)
 mysqlx_row_t * STDCALL mysqlx_row_fetch_one(mysqlx_result_t *res)
 {
   SAFE_EXCEPTION_BEGIN(res, NULL)
-
   return res->read_row();
-
   SAFE_EXCEPTION_END(res, NULL)
 }
 
 mysqlx_doc_t * STDCALL mysqlx_doc_fetch_one(mysqlx_result_t *res)
 {
   SAFE_EXCEPTION_BEGIN(res, NULL)
-
   return res->read_doc();
-
   SAFE_EXCEPTION_END(res, NULL)
 }
 
 const char * STDCALL mysqlx_json_fetch_one(mysqlx_result_t *res, size_t *length)
 {
   SAFE_EXCEPTION_BEGIN(res, NULL)
-
   return res->read_json(length);
-
   SAFE_EXCEPTION_END(res, NULL)
 }
 
@@ -648,18 +653,10 @@ int STDCALL
 mysqlx_doc_get_uint(mysqlx_doc_t *doc, const char *key, uint64_t *out)
 {
   SAFE_EXCEPTION_BEGIN(doc, RESULT_ERROR)
-
-  try
-  {
-    *out = doc->get_uint(key);
-  }
-  catch(Mysqlx_exception &ex)
-  {
-    doc->set_diagnostic(ex);
-    return RESULT_ERROR;
-  }
+  PARAM_NULL_EMPTY_CHECK(key, doc, MYSQLX_ERROR_MISSING_KEY_NAME_MSG, RESULT_ERROR)
+  OUT_BUF_CHECK(out, doc, MYSQLX_ERROR_OUTPUT_BUFFER_NULL, RESULT_ERROR)
+  *out = doc->get_uint(key);
   return RESULT_OK;
-
   SAFE_EXCEPTION_END(doc, RESULT_ERROR)
 }
 
@@ -667,18 +664,10 @@ int STDCALL
 mysqlx_doc_get_sint(mysqlx_doc_t *doc, const char *key, int64_t *out)
 {
   SAFE_EXCEPTION_BEGIN(doc, RESULT_ERROR)
-
-  try
-  {
-    *out = doc->get_sint(key);
-  }
-  catch(Mysqlx_exception &ex)
-  {
-    doc->set_diagnostic(ex);
-    return RESULT_ERROR;
-  }
+  PARAM_NULL_EMPTY_CHECK(key, doc, MYSQLX_ERROR_MISSING_KEY_NAME_MSG, RESULT_ERROR)
+  OUT_BUF_CHECK(out, doc, MYSQLX_ERROR_OUTPUT_BUFFER_NULL, RESULT_ERROR)
+  *out = doc->get_sint(key);
   return RESULT_OK;
-
   SAFE_EXCEPTION_END(doc, RESULT_ERROR)
 }
 
@@ -686,18 +675,10 @@ int STDCALL
 mysqlx_doc_get_float(mysqlx_doc_t *doc, const char *key, float *out)
 {
   SAFE_EXCEPTION_BEGIN(doc, RESULT_ERROR)
-
-  try
-  {
-    *out = doc->get_float(key);
-  }
-  catch(Mysqlx_exception &ex)
-  {
-    doc->set_diagnostic(ex);
-    return RESULT_ERROR;
-  }
+  PARAM_NULL_EMPTY_CHECK(key, doc, MYSQLX_ERROR_MISSING_KEY_NAME_MSG, RESULT_ERROR)
+  OUT_BUF_CHECK(out, doc, MYSQLX_ERROR_OUTPUT_BUFFER_NULL, RESULT_ERROR)
+  *out = doc->get_float(key);
   return RESULT_OK;
-
   SAFE_EXCEPTION_END(doc, RESULT_ERROR)
 }
 
@@ -705,18 +686,10 @@ int STDCALL
 mysqlx_doc_get_double(mysqlx_doc_t *doc, const char *key, double *out)
 {
   SAFE_EXCEPTION_BEGIN(doc, RESULT_ERROR)
-
-  try
-  {
-    *out = doc->get_double(key);
-  }
-  catch(Mysqlx_exception &ex)
-  {
-    doc->set_diagnostic(ex);
-    return RESULT_ERROR;
-  }
+  PARAM_NULL_EMPTY_CHECK(key, doc, MYSQLX_ERROR_MISSING_KEY_NAME_MSG, RESULT_ERROR)
+  OUT_BUF_CHECK(out, doc, MYSQLX_ERROR_OUTPUT_BUFFER_NULL, RESULT_ERROR)
+  *out = doc->get_double(key);
   return RESULT_OK;
-
   SAFE_EXCEPTION_END(doc, RESULT_ERROR)
 }
 
@@ -725,53 +698,48 @@ _doc_get_bytes(mysqlx_doc_t* doc, const char *key, uint64_t offset,
                void *buf, size_t *buf_len, mysqlx_data_type_t type)
 {
   SAFE_EXCEPTION_BEGIN(doc, RESULT_ERROR)
+  PARAM_NULL_EMPTY_CHECK(buf_len, doc, MYSQLX_ERROR_OUTPUT_BUFFER_ZERO, RESULT_ERROR)
+  PARAM_NULL_EMPTY_CHECK(key, doc, MYSQLX_ERROR_MISSING_KEY_NAME_MSG, RESULT_ERROR)
+  OUT_BUF_CHECK(buf, doc, MYSQLX_ERROR_OUTPUT_BUFFER_NULL, RESULT_ERROR)
 
-  try
+  switch (type)
   {
-    switch (type)
+    case MYSQLX_TYPE_BYTES:
     {
-      case MYSQLX_TYPE_BYTES:
+      cdk::bytes b = doc->get_bytes(key);
+
+      if (offset >= b.size())
       {
-        cdk::bytes b = doc->get_bytes(key);
-
-        if (offset >= b.size())
-        {
-          // Report 0 bytes written in the buffer and do nothing else
-          *buf_len = 0;
-          return RESULT_OK;
-        }
-
-        if (b.size() == 0)
-          return RESULT_NULL;
-
-        if (b.size() - offset < *buf_len)
-          *buf_len = b.size() - (size_t)offset;
-        memcpy(buf, b.begin() + offset, *buf_len);
+        // Report 0 bytes written in the buffer and do nothing else
+        *buf_len = 0;
+        return RESULT_OK;
       }
-      break;
 
-      case MYSQLX_TYPE_STRING:
-      {
-        std::string str = doc->get_string(key);
-        char *cbuf = (char *)buf;
+      if (b.size() == 0)
+        return RESULT_NULL;
 
-        if (str.length() - offset + 1 < *buf_len)
-          *buf_len = str.length() - (size_t)offset + 1;
-
-        memcpy(cbuf, str.data() + offset, *buf_len);
-        cbuf[*buf_len - 1] = '\0';
-      }
-      break;
-
-      default:
-        doc->set_diagnostic("Data cannot be converted!", 0);
-        return RESULT_ERROR;
+      if (b.size() - offset < *buf_len)
+        *buf_len = b.size() - (size_t)offset;
+      memcpy(buf, b.begin() + offset, *buf_len);
     }
-  }
-  catch(Mysqlx_exception &ex)
-  {
-    doc->set_diagnostic(ex);
-    return RESULT_ERROR;
+    break;
+
+    case MYSQLX_TYPE_STRING:
+    {
+      std::string str = doc->get_string(key);
+      char *cbuf = (char *)buf;
+
+      if (str.length() - offset + 1 < *buf_len)
+        *buf_len = str.length() - (size_t)offset + 1;
+
+      memcpy(cbuf, str.data() + offset, *buf_len);
+      cbuf[*buf_len - 1] = '\0';
+    }
+    break;
+
+    default:
+      doc->set_diagnostic("Data cannot be converted!", 0);
+      return RESULT_ERROR;
   }
   return RESULT_OK;
 
@@ -796,13 +764,17 @@ mysqlx_doc_get_str(mysqlx_doc_t* doc, const char *key, uint64_t offset,
 
 bool STDCALL mysqlx_doc_key_exists(mysqlx_doc_t *doc, const char *key)
 {
+  SAFE_EXCEPTION_BEGIN(doc, false)
+  PARAM_NULL_EMPTY_CHECK(key, doc, MYSQLX_ERROR_MISSING_KEY_NAME_MSG, false)
   return doc->key_exists(key);
+  SAFE_EXCEPTION_END(doc, false)
 }
 
 uint16_t STDCALL mysqlx_doc_get_type(mysqlx_doc_t *doc, const char *key)
 {
   SAFE_EXCEPTION_BEGIN(doc, MYSQLX_TYPE_UNDEFINED)
-    return doc->get_type(key);
+  PARAM_NULL_EMPTY_CHECK(key, doc, MYSQLX_ERROR_MISSING_KEY_NAME_MSG, RESULT_ERROR)
+  return doc->get_type(key);
   SAFE_EXCEPTION_END(doc, MYSQLX_TYPE_UNDEFINED)
 }
 
@@ -810,7 +782,10 @@ int STDCALL
 mysqlx_store_result(mysqlx_result_t *result, size_t *num)
 {
   SAFE_EXCEPTION_BEGIN(result, RESULT_ERROR)
-  *num = result->store_result();
+  size_t row_num = result->store_result();
+  if (num)
+    *num = row_num;
+
   if (mysqlx_error(&result->get_crud()))
     return RESULT_ERROR;
 
@@ -820,7 +795,7 @@ mysqlx_store_result(mysqlx_result_t *result, size_t *num)
 
 #define CHECK_COLUMN_RANGE(COL, ROW) if (COL >= ROW->row_size()) \
 { \
-  row->set_diagnostic(MYSQLX_ERROR_INDEX_OUT_OF_RANGE_MSG, \
+  ROW->set_diagnostic(MYSQLX_ERROR_INDEX_OUT_OF_RANGE_MSG, \
                       MYSQLX_ERROR_INDEX_OUT_OF_RANGE); \
   return RESULT_ERROR; \
 }
@@ -829,6 +804,8 @@ int STDCALL mysqlx_get_bytes(mysqlx_row_t* row, uint32_t col, uint64_t offset,
                              void *buf, size_t *buf_len)
 {
   SAFE_EXCEPTION_BEGIN(row, RESULT_ERROR)
+  PARAM_NULL_EMPTY_CHECK(buf_len, row, MYSQLX_ERROR_OUTPUT_BUFFER_ZERO, RESULT_ERROR)
+  OUT_BUF_CHECK(buf, row, MYSQLX_ERROR_OUTPUT_BUFFER_NULL, RESULT_ERROR)
 
   CHECK_COLUMN_RANGE(col, row)
   cdk::bytes b = row->get_col_data(col);
@@ -854,6 +831,7 @@ int STDCALL mysqlx_get_bytes(mysqlx_row_t* row, uint32_t col, uint64_t offset,
 int STDCALL mysqlx_get_uint(mysqlx_row_t* row, uint32_t col, uint64_t *val)
 {
   SAFE_EXCEPTION_BEGIN(row, RESULT_ERROR)
+  OUT_BUF_CHECK(val, row, MYSQLX_ERROR_OUTPUT_BUFFER_NULL, RESULT_ERROR)
 
   uint64_t v;
 
@@ -872,7 +850,7 @@ int STDCALL mysqlx_get_uint(mysqlx_row_t* row, uint32_t col, uint64_t *val)
 int STDCALL mysqlx_get_sint(mysqlx_row_t* row, uint32_t col, int64_t *val)
 {
   SAFE_EXCEPTION_BEGIN(row, RESULT_ERROR)
-
+  OUT_BUF_CHECK(val, row, MYSQLX_ERROR_OUTPUT_BUFFER_NULL, RESULT_ERROR)
   CHECK_COLUMN_RANGE(col, row)
   if (row->get_col_data(col).size() == 0)
     return RESULT_NULL;
@@ -887,7 +865,7 @@ int STDCALL mysqlx_get_sint(mysqlx_row_t* row, uint32_t col, int64_t *val)
 int STDCALL mysqlx_get_float(mysqlx_row_t* row, uint32_t col, float *val)
 {
   SAFE_EXCEPTION_BEGIN(row, RESULT_ERROR)
-
+  OUT_BUF_CHECK(val, row, MYSQLX_ERROR_OUTPUT_BUFFER_NULL, RESULT_ERROR)
   CHECK_COLUMN_RANGE(col, row)
   if (row->get_col_data(col).size() == 0)
     return RESULT_NULL;
@@ -902,7 +880,7 @@ int STDCALL mysqlx_get_float(mysqlx_row_t* row, uint32_t col, float *val)
 int STDCALL mysqlx_get_double(mysqlx_row_t* row, uint32_t col, double *val)
 {
   SAFE_EXCEPTION_BEGIN(row, RESULT_ERROR)
-
+  OUT_BUF_CHECK(val, row, MYSQLX_ERROR_OUTPUT_BUFFER_NULL, RESULT_ERROR)
   CHECK_COLUMN_RANGE(col, row)
     if (row->get_col_data(col).size() == 0)
       return RESULT_NULL;
@@ -1161,6 +1139,7 @@ int STDCALL
 mysqlx_schema_drop(mysqlx_session_t *sess, const char *schema)
 {
   SAFE_EXCEPTION_BEGIN(sess, RESULT_ERROR)
+  PARAM_NULL_EMPTY_CHECK(schema, sess, MYSQLX_ERROR_MISSING_SCHEMA_NAME_MSG, RESULT_ERROR)
   sess->drop_object(schema, "", mysqlx_session_t::SCHEMA);
   return RESULT_OK;
   SAFE_EXCEPTION_END(sess, RESULT_ERROR)
@@ -1170,8 +1149,9 @@ int STDCALL
 mysqlx_table_drop(mysqlx_schema_t *schema, const char *table)
 {
   SAFE_EXCEPTION_BEGIN(schema, RESULT_ERROR)
+  PARAM_NULL_EMPTY_CHECK(table, schema, MYSQLX_ERROR_MISSING_TABLE_NAME_MSG, RESULT_ERROR)
   schema->get_session().drop_object(schema->get_name(), table,
-                                    mysqlx_session_t::TABLE);
+                                  mysqlx_session_t::TABLE);
   return RESULT_OK;
   SAFE_EXCEPTION_END(schema, RESULT_ERROR)
 }
@@ -1180,6 +1160,7 @@ int STDCALL
 mysqlx_view_drop(mysqlx_schema_t *schema, const char *view)
 {
   SAFE_EXCEPTION_BEGIN(schema, RESULT_ERROR)
+  PARAM_NULL_EMPTY_CHECK(view, schema, MYSQLX_ERROR_MISSING_VIEW_NAME_MSG, RESULT_ERROR)
   schema->get_session().drop_object(schema->get_name(), view,
                                     mysqlx_session_t::VIEW);
   return RESULT_OK;
@@ -1190,6 +1171,7 @@ int STDCALL
 mysqlx_collection_create(mysqlx_schema_t *schema, const char *collection)
 {
   SAFE_EXCEPTION_BEGIN(schema, RESULT_ERROR)
+  PARAM_NULL_EMPTY_CHECK(collection, schema, MYSQLX_ERROR_MISSING_COLLECTION_NAME_MSG, RESULT_ERROR)
   schema->get_session().admin_collection("create_collection",
                                          schema->get_name().data(),
                                          collection);
@@ -1201,6 +1183,7 @@ int STDCALL
 mysqlx_collection_drop(mysqlx_schema_t *schema, const char *collection)
 {
   SAFE_EXCEPTION_BEGIN(schema, RESULT_ERROR)
+  PARAM_NULL_EMPTY_CHECK(collection, schema, MYSQLX_ERROR_MISSING_COLLECTION_NAME_MSG, RESULT_ERROR)
   schema->get_session().drop_object(schema->get_name(), collection, mysqlx_session_t::COLLECTION);
   return RESULT_OK;
   SAFE_EXCEPTION_END(schema, RESULT_ERROR)
@@ -1559,15 +1542,24 @@ mysqlx_get_collections(mysqlx_schema_t *schema,
 }
 
 mysqlx_result_t * STDCALL
-  mysqlx_get_schemas(mysqlx_session_t *sess, const char *schema_pattern)
+mysqlx_get_schemas(mysqlx_session_t *sess, const char *schema_pattern)
 {
   SAFE_EXCEPTION_BEGIN(sess, NULL)
+  mysqlx_stmt_t *stmt;
+  /* This type of SQL is enabled for X session */
+  if ((stmt = sess->sql_query("SHOW SCHEMAS LIKE ?",
+       MYSQLX_NULL_TERMINATED, true)) == NULL)
+    return NULL;
+  
+  if (mysqlx_stmt_bind(stmt, PARAM_STRING(schema_pattern ? schema_pattern : "%"),
+                       PARAM_END) == RESULT_ERROR)
+    SET_ERROR_FROM_STMT(sess, stmt, NULL);
 
-  return mysqlx_sql_param(sess, "SHOW SCHEMAS LIKE ?",
-                               MYSQLX_NULL_TERMINATED,
-                               PARAM_STRING(schema_pattern ? schema_pattern : "%"),
-                               PARAM_END);
+  mysqlx_result_t *res = mysqlx_execute(stmt);
+  if (res == NULL)
+    SET_ERROR_FROM_STMT(sess, stmt, NULL);
 
+  return res;
   SAFE_EXCEPTION_END(sess, NULL)
 }
 
@@ -1705,7 +1697,7 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
 #define CHAR_OUTPUT_BUF(V) V = va_arg(args, char*); \
 if (V == NULL) \
 { \
-   opt->set_diagnostic("Host name cannot be NULL", 0); \
+   opt->set_diagnostic(MYSQLX_ERROR_OUTPUT_BUFFER_NULL, 0); \
    rc = RESULT_ERROR; \
    break; \
 }
