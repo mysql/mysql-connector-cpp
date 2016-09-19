@@ -26,6 +26,51 @@
 #include <string.h>
 #include "test.h"
 
+TEST_F(xapi, bit_neg_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  mysqlx_stmt_t *stmt;
+  mysqlx_result_t *res;
+  mysqlx_row_t *row;
+  mysqlx_schema_t *schema;
+  mysqlx_table_t *table;
+
+  uint64_t v_uint_neg = 0x00000000FFFFFFFF;
+
+
+  int i = 0;
+
+  const char *queries2[] = {
+    "DROP TABLE IF EXISTS cc_crud_test.bit_neg_test",
+    "CREATE TABLE cc_crud_test.bit_neg_test (a BIGINT UNSIGNED)",
+    "INSERT INTO cc_crud_test.bit_neg_test (a) VALUES (0xFFFFFFFF00000000)",
+  };
+
+  AUTHENTICATE();
+
+  for (i = 0; i < 3; i++)
+  {
+    exec_sql(queries2[i]);
+  }
+
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_crud_test", 1)) != NULL);
+  EXPECT_TRUE((table = mysqlx_get_table(schema, "bit_neg_test", 1)) != NULL);
+  RESULT_CHECK(stmt = mysqlx_table_select_new(table));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_items(stmt, "~a", PARAM_END));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    uint64_t v_uint2 = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_uint(row, 0, &v_uint2));
+    EXPECT_EQ(v_uint_neg, v_uint2);
+
+  }
+
+}
+
+
 TEST_F(xapi, store_result_select)
 {
   SKIP_IF_NO_XPLUGIN
@@ -215,6 +260,7 @@ TEST_F(xapi, warnings_test)
   authenticate();
 
   exec_sql("CREATE TABLE cc_api_test.warn_tab (a TINYINT NOT NULL, b CHAR(4))");
+  //exec_sql("CREATE TABLE cc_api_test.warn_tab2 (a bigint,b int unsigned not NULL,c char(4),d decimal(2,1))");
   exec_sql("SET sql_mode=''"); // We want warnings, not errors
 
   EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_api_test", 1)) != NULL);
@@ -236,6 +282,18 @@ TEST_F(xapi, warnings_test)
     ++warn_count;
   }
   EXPECT_EQ(3, warn_count);
+
+/*  EXPECT_TRUE((table2 = mysqlx_get_table(schema, "warn_tab2", 1)) != NULL);
+  EXPECT_TRUE((res = mysqlx_table_insert(table2, "a", PARAM_SINT(1), "b", PARAM_UINT(10),
+                            "c", PARAM_STRING("a"), "d", PARAM_NULL(), PARAM_END)) != NULL);
+  EXPECT_TRUE((res = mysqlx_sql_param(get_session(),
+               "SELECT (`c` / ?),(`a` / 0),(1 / `b`),(`a` / ?) FROM " \
+               "`cc_api_test`.`warn_tab2` ORDER BY (`c` / ?)",
+               MYSQLX_NULL_TERMINATED, PARAM_SINT(0), PARAM_STRING("x"),
+               PARAM_SINT(0), PARAM_END)) != NULL);
+  printf("\nError: %s", mysqlx_error_message(mysqlx_result_next_warning(res)));
+  printf("\nmysqlx_result_warning_count %d", mysqlx_result_warning_count(res));
+  */
 }
 
 

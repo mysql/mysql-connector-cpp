@@ -1107,6 +1107,28 @@ Expression* Expr_parser_base::parse_shift(Processor *prc)
 
 Expression* Expr_parser_base::parse_bit(Processor *prc)
 {
+  if (cur_token_type_is(Token::NEG))
+  {
+    get_token();
+    smart_ptr<Stored_expr> stored;
+
+    if (!prc)
+      prc = stored.reset(new Stored_any());
+
+    Safe_prc<Processor::Scalar_prc> sprc(prc->scalar());
+    List_prc *argsp = NULL;
+    argsp = sprc->op(operator_name("~").c_str());
+    if (argsp)
+    {
+      argsp->list_begin();
+      parse(ATOMIC, argsp->list_el());
+      argsp->list_end();
+      return stored.release();
+    }
+
+    return parse_bit(prc);
+  }
+
   TokSet ops;
   ops.insert(Token::BITAND);
   ops.insert(Token::BITOR);
