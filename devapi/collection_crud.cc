@@ -550,7 +550,7 @@ class Op_collection_modify
 
   void process(Update_spec::Processor &prc) const override
   {
-    Doc_field_parser doc_field(m_update_it->m_field);
+    Doc_field_parser doc_field((mysqlx::string)m_update_it->m_field);
 
     switch (m_update_it->m_op)
     {

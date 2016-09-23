@@ -1127,6 +1127,8 @@ SqlStatement& NodeSession::sql(const string &query)
 // ---------------------------------------------------------------------
 
 
+#if 0
+
 string::string(const std::string &other)
   : std::wstring(cdk::string(other))
 {}
@@ -1141,6 +1143,20 @@ string::operator std::string() const
 {
   return std::string(cdk::string(*this));
 }
+
+#endif
+
+
+std::string string::Impl::to_utf8(const string &other)
+{
+  return cdk::string(other);
+}
+
+void string::Impl::from_utf8(string &s, const std::string &other)
+{
+  s = cdk::string(other);
+}
+
 
 /*
 string::operator const cdk::foundation::string&() const

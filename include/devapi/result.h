@@ -222,7 +222,10 @@ private:
 
   Level    m_level;
   uint16_t m_code;
+
+  DLL_WARNINGS_PUSH
   string   m_msg;
+  DLL_WARNINGS_POP
 
   Warning(Level level, uint16_t code, const string &msg)
     : m_level(level), m_code(code), m_msg(msg)
@@ -272,8 +275,13 @@ namespace internal {
 
   class XSession_base;
 
+  DLL_WARNINGS_PUSH
+
   class PUBLIC_API BaseResult : nocopy
   {
+
+  DLL_WARNINGS_PUSH
+
     class INTERNAL Impl;
     Impl  *m_impl = NULL;
     bool m_owns_impl = false;

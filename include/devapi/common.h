@@ -93,10 +93,15 @@ struct List_init
   Currently only utf-8 encoding is supported.
 */
 
-DLL_WARNINGS_PUSH
-
-class PUBLIC_API string : public std::wstring
+class string : public std::wstring
 {
+
+  struct Impl
+  {
+    PUBLIC_API static std::string to_utf8(const string&);
+    PUBLIC_API static void from_utf8(string&, const std::string&);
+  };
+
 public:
 
   string() {}
@@ -117,15 +122,27 @@ public:
 
   // TODO: make utf8 conversions explicit
 
-  string(const char*);
-  string(const std::string&);
+  string(const char *other)
+  {
+    if (!other)
+      return;
+    std::string utf8(other);
+    Impl::from_utf8(*this, utf8);
+  }
 
-  //  operator cdk::foundation::string&();
-  operator std::string() const;  // conversion to utf-8
-  //  operator const cdk::foundation::string&() const;
+  string(const std::string &other)
+  {
+    Impl::from_utf8(*this, other);
+  }
+
+  // conversion to utf-8
+
+  operator std::string() const
+  {
+    return Impl::to_utf8(*this);
+  }
+
 };
-
-DLL_WARNINGS_POP
 
 
 inline
@@ -161,7 +178,7 @@ typedef unsigned long row_count_t;
     bytes buf = std::get_temporary_buffer<byte>(size);
 */
 
-class PUBLIC_API bytes : public std::pair<byte*, size_t>
+class bytes : public std::pair<byte*, size_t>
 {
 
 public:
@@ -200,7 +217,7 @@ public:
 
 namespace internal {
 
-  class PUBLIC_API nocopy
+  class nocopy
   {
   public:
     nocopy(const nocopy&) = delete;

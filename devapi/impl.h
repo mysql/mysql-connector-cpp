@@ -204,7 +204,7 @@ public:
         for (Field fld : doc)
         {
           Value_expr value(doc[fld], m_is_expr, m_parser_mode);
-          value.process_if(dprc->key_val(fld));
+          value.process_if(dprc->key_val((string)fld));
         }
         dprc->doc_end();
       }

@@ -57,19 +57,45 @@ class DocResult;
   TODO: _fld suffix
 */
 
-class PUBLIC_API Field : public string
+class PUBLIC_API Field
 {
+  DLL_WARNINGS_PUSH
+    string m_fld;
+  DLL_WARNINGS_POP
+
 public:
 
-  Field(const string &s) : string(s)
+  Field(const string &s) : m_fld(s)
   {}
 
   // TODO: is it auto generated?
-  Field(string &&s) : string(std::move(s))
+  Field(string &&s) : m_fld(std::move(s))
   {}
 
-  Field(const char *s) : string(s)
+  Field(const char *s) : m_fld(s)
   {}
+
+  operator const string&() const { return m_fld; }
+
+  bool operator <(const Field &other) const
+  {
+    return m_fld < other.m_fld;
+  }
+
+  bool operator >(const Field &other) const
+  {
+    return m_fld > other.m_fld;
+  }
+
+  bool operator ==(const Field &other) const
+  {
+    return m_fld == other.m_fld;
+  }
+
+  bool operator !=(const Field &other) const
+  {
+    return m_fld != other.m_fld;
+  }
 
 };
 
@@ -407,11 +433,11 @@ protected:
 
   typedef std::vector<Value> Array;
 
-  bytes  m_raw;
-  string m_str;
   DbDoc  m_doc;
 
   DLL_WARNINGS_PUSH
+  bytes  m_raw;
+  string m_str;
   std::shared_ptr<Array>  m_arr;
   DLL_WARNINGS_POP
 

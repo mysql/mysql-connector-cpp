@@ -77,7 +77,10 @@ class PUBLIC_API DatabaseObject
 protected:
 
   internal::XSession_base *m_sess;
+
+  DLL_WARNINGS_PUSH
   string m_name;
+  DLL_WARNINGS_POP
 
   DatabaseObject(internal::XSession_base& sess, const string& name = string())
     : m_sess(&sess), m_name(name)
@@ -499,8 +502,13 @@ namespace internal {
     @todo Add all `XSession` methods defined by DevAPI.
   */
 
+  DLL_WARNINGS_PUSH
+
   class PUBLIC_API XSession_base : nocopy
   {
+
+  DLL_WARNINGS_POP
+
   protected:
 
     class INTERNAL Impl;
