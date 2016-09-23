@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <climits>
 #include "test.h"
 
 
@@ -584,4 +585,52 @@ TEST_F(xapi, doc_id_test)
     EXPECT_TRUE(strstr(json_string, id_buf[i]) != NULL);
     ++i;
   }
+}
+
+TEST_F(xapi, myc_344_sql_error_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  mysqlx_result_t *res;
+  mysqlx_schema_t *schema;
+  mysqlx_table_t *table;
+  mysqlx_row_t *row;
+  const char *err_msg;
+  int64_t v1 = LLONG_MIN;
+  int64_t v2 = LLONG_MAX;
+  int64_t v = 0;
+  int num = 0;
+
+  authenticate();
+
+  mysqlx_schema_create(get_session(), "cc_api_test");
+  schema = mysqlx_get_schema(get_session(), "cc_api_test", 1);
+  mysqlx_table_drop(schema, "myc_344");
+  exec_sql("CREATE TABLE cc_api_test.myc_344(b bigint)");
+
+  table = mysqlx_get_table(schema, "myc_344", 1);
+
+  res = mysqlx_table_insert(table, "b", PARAM_SINT(v1), PARAM_END);
+  EXPECT_TRUE(res != NULL);
+  res = mysqlx_table_insert(table, "b", PARAM_SINT(v2), PARAM_END);
+  EXPECT_TRUE(res != NULL);
+
+  res = mysqlx_sql(get_session(), "SELECT b+1000 from cc_api_test.myc_344", MYSQLX_NULL_TERMINATED);
+  EXPECT_TRUE(mysqlx_error_message(res) == NULL);
+  
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    switch (num)
+    {
+      case 0:
+        EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &v));
+        EXPECT_EQ(v1 + 1000, v);
+        break;
+      default:
+        FAIL(); // No more rows expected
+    }
+    ++num;
+  }
+  EXPECT_TRUE((err_msg = mysqlx_error_message(res)) != NULL);
+  printf("\nExpected error: %s\n", err_msg);
 }
