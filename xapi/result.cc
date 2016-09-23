@@ -513,6 +513,11 @@ uint64_t mysqlx_result_t::get_auto_increment_value()
 
 uint32_t mysqlx_result_t::get_warning_count()
 {
+  /*
+    Warnings are at the end of the resultset.
+    Getting them requires finishing all pending reads.
+  */
+  m_reply.wait();
   return m_reply.entry_count(cdk::foundation::api::Severity::WARNING);
 }
 
