@@ -576,6 +576,23 @@ const Expr_Test exprs[] =
   { parser::Parser_mode::DOCUMENT, L"name LIKE :name AND age > :age" },
   { parser::Parser_mode::TABLE   , L"`date`->$.year"},
   { parser::Parser_mode::DOCUMENT, L"count(*)" },
+  { parser::Parser_mode::TABLE   , L"~x"},
+  { parser::Parser_mode::TABLE   , L"a^22"},
+  { parser::Parser_mode::TABLE   , L"a^~22"},
+  { parser::Parser_mode::TABLE   , L" a >cast(11 as signed Int)"},
+  { parser::Parser_mode::TABLE   , L"c > cast(14.01 as decimal(3,2))"},
+  { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(X'65'))"},
+  { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(0x65))"},
+  { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(X'65' USING utf8))"},
+//  { parser::Parser_mode::TABLE   , L"TRIM(BOTH 'x' FROM 'xxxbarxxx')"},
+//  { parser::Parser_mode::TABLE   , L"TRIM(LEADING 'x' FROM 'xxxbarxxx')"},
+//  { parser::Parser_mode::TABLE   , L"TRIM(TRAILING 'xyz' FROM 'barxxyz')"},
+  { parser::Parser_mode::TABLE   , L"'abc' NOT LIKE 'ABC1'"},
+//  { parser::Parser_mode::TABLE   , L"'a' RLIKE '^[a-d]'"},
+  { parser::Parser_mode::TABLE   , L"'a' REGEXP '^[a-d]'"},
+//  { parser::Parser_mode::TABLE   , L"POSITION('bar' IN 'foobarbar')"},
+//  { parser::Parser_mode::TABLE   , L"'Heoko' SOUNDS LIKE 'h1aso'"}
+
 };
 
 
@@ -913,8 +930,8 @@ std::ostream& operator<<(std::ostream &out, URI_parts &data)
     cout << " user: " << data.user << endl;
   if (data.pwd)
     cout << "  pwd: " << data.pwd << endl;
-    cout << " host: " << data.host << endl;
-    cout << " port: " << data.port << endl;
+  cout << " host: " << data.host << endl;
+  cout << " port: " << data.port << endl;
   if (data.path)
     cout << " path: " << data.path << endl;
   if (data.has_query)

@@ -545,6 +545,8 @@ class Scalar_builder_base
 
   using Base::m_msg;
 
+  typedef api::Scalar_processor::Octets_content_type Octets_content_type;
+
 protected:
 
   typedef Mysqlx::Datatypes::Scalar Scalar;
@@ -571,7 +573,7 @@ protected:
   void num(float val);
   void num(double val);
   void yesno(bool val);
-  void octets(bytes val);
+  void octets(bytes val, Octets_content_type type);
 };
 
 
@@ -764,11 +766,16 @@ void Scalar_builder_base<MSG>::yesno(bool val)
   get_scalar(Scalar::V_BOOL).set_v_bool(val);
 }
 
+
+
 template <class MSG>
 inline
-void Scalar_builder_base<MSG>::octets(bytes val)
+void Scalar_builder_base<MSG>::octets(bytes val, Octets_content_type type)
 {
-  get_scalar(Scalar::V_OCTETS).mutable_v_octets()->set_value(val.begin(), val.size());
+  ::Mysqlx::Datatypes::Scalar_Octets *octets =
+      get_scalar(Scalar::V_OCTETS).mutable_v_octets();
+  octets->set_value(val.begin(), val.size());
+  octets->set_content_type(type);
 }
 
 

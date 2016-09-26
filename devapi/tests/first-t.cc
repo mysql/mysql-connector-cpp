@@ -444,3 +444,105 @@ TEST_F(First, warnings_multi_rset)
     std::cout << warn << std::endl;
   }
 }
+
+TEST_F(First, parser_xplugin)
+{
+
+  SKIP_IF_NO_XPLUGIN;
+
+
+  // Initialize table;
+  sql("DROP TABLE IF EXISTS test.t");
+  sql("CREATE TABLE test.t(c0 INT, c1 TEXT)");
+
+  NodeSession &sess = get_sess();
+
+  sess.createSchema("test", true);
+
+  Schema sch = sess.getSchema("test", true);
+
+  Table tbl = sch.getTable("t", true);
+
+  // Add data
+  tbl.insert("c0", "c1").values(1, "Foo").execute();
+
+  {
+    RowResult res = tbl.select("~c0").execute();
+
+    std::cout << static_cast<uint64_t>(res.fetchOne()[0]) << std::endl;
+  }
+
+
+  {
+    RowResult res = tbl.select("2^~c0").execute();
+
+    EXPECT_EQ(2^~1, static_cast<uint64_t>(res.fetchOne()[0]) );
+  }
+
+  {
+    RowResult res = tbl.select("~c0").execute();
+    EXPECT_EQ(~1, static_cast<uint64_t>(res.fetchOne()[0]) );
+  }
+
+  {
+    RowResult res = tbl.select("c0").where("c0 < cast(11 as signed Integer)").execute();
+
+    EXPECT_EQ(1, static_cast<uint64_t>(res.fetchOne()[0]));
+  }
+
+  {
+    RowResult res = tbl.select("c0").where(L"c0 < cast(14.01 as decimal(3, 2))").execute();
+
+    EXPECT_EQ(1, static_cast<uint64_t>(res.fetchOne()[0]));
+  }
+
+  {
+    RowResult res = tbl.select("X'65'").execute();
+
+    EXPECT_EQ(0x65, static_cast<uint64_t>(res.fetchOne()[0]));
+  }
+
+  //TODO: ADD this test when possible on xplugin
+
+//  {
+//    RowResult res = tbl.select("CHARSET(CHAR(X'65'))").execute();
+
+//    EXPECT_EQ(1, static_cast<uint64_t>(res.fetchOne()[0]));
+//  }
+
+  {
+    RowResult res = tbl.select("0x65").where(L"c0 < cast(14.01 as decimal(3, 2))").execute();
+
+    EXPECT_EQ(0x65, static_cast<uint64_t>(res.fetchOne()[0]));
+  }
+
+  //TODO: ADD this test when possible on xplugin
+//  { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(0x65))"},
+//  { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(X'65' USING utf8))"},
+//  { parser::Parser_mode::TABLE   , L"TRIM(BOTH 'x' FROM 'xxxbarxxx')"},
+//  { parser::Parser_mode::TABLE   , L"TRIM(LEADING 'x' FROM 'xxxbarxxx')"},
+//  { parser::Parser_mode::TABLE   , L"TRIM(TRAILING 'xyz' FROM 'barxxyz')"},
+
+  {
+    RowResult res = tbl.select("c1").where(L"c1 NOT LIKE 'ABC1'").execute();
+
+    EXPECT_EQ(string("Foo"), static_cast<string>(res.fetchOne()[0]));
+  }
+
+  //TODO: ADD this test when possible on xplugin
+//  { parser::Parser_mode::TABLE   , L"'a' RLIKE '^[a-d]'"},
+
+  {
+    RowResult res = tbl.select("c1").where(L"c1 REGEXP '^[a-d]'").execute();
+
+    EXPECT_TRUE(res.fetchOne().isNull());
+
+//    EXPECT_EQ(string("Foo"), static_cast<string>(res.fetchOne()[0]));
+  }
+
+  //TODO: ADD this test when possible on xplugin
+//  { parser::Parser_mode::TABLE   , L"POSITION('bar' IN 'foobarbar')"},
+//  { parser::Parser_mode::TABLE   , L"'Heoko' SOUNDS LIKE 'h1aso'"}
+
+
+}

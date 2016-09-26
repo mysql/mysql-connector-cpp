@@ -26,6 +26,8 @@
 #define CDK_MYSQLX_CONVERTERS_H
 
 #include <mysql/cdk/converters.h>
+#include <mysql/cdk/protocol/mysqlx_expr.h>
+#include <mysql/cdk/foundation/codec.h>
 
 namespace cdk {
 namespace mysqlx {
@@ -73,7 +75,7 @@ struct Scalar_prc_converter
     m_proc->str(utf8);
   }
 
-  virtual void value(Type_info, const Format_info&, bytes data)
+  virtual void value(Type_info type, const Format_info &fi, bytes data)
   {
     /*
       TODO: Eventually we should Look at type/format info and do
@@ -85,7 +87,60 @@ struct Scalar_prc_converter
       form use the same encoding that is used by protocol and thus
       we can simply pass the raw bytes without any modifications.
     */
-    m_proc->octets(data);
+    switch (type)
+    {
+    case cdk::TYPE_INTEGER:
+      {
+        cdk::Codec<cdk::TYPE_INTEGER> codec(fi);
+
+        int64_t val;
+        codec.from_bytes(data, val);
+
+        m_proc->num(val);
+      }
+      break;
+    case cdk::TYPE_FLOAT:
+      {
+        cdk::Codec<cdk::TYPE_FLOAT> codec(fi);
+
+        double val;
+        codec.from_bytes(data, val);
+
+        m_proc->num(val);
+      }
+      break;
+    case cdk::TYPE_STRING:
+      {
+        cdk::Codec<cdk::TYPE_STRING> codec(fi);
+
+        string val;
+        codec.from_bytes(data, val);
+
+        m_proc->str(bytes(val));
+      }
+      break;
+    case cdk::TYPE_DATETIME:
+      {
+        //TODO: TYPE_DATETIME
+      }
+      break;
+    case cdk::TYPE_BYTES:
+      m_proc->octets(data,
+                     cdk::protocol::mysqlx::api::Scalar_processor::CT_PLAIN);
+      break;
+    case cdk::TYPE_DOCUMENT:
+      m_proc->octets(data,
+                     cdk::protocol::mysqlx::api::Scalar_processor::CT_JSON);
+      break;
+    case cdk::TYPE_GEOMETRY:
+      m_proc->octets(data, cdk::protocol::mysqlx::api::Scalar_processor::CT_GEOMETRY);
+      break;
+    case cdk::TYPE_XML:
+      m_proc->octets(data, cdk::protocol::mysqlx::api::Scalar_processor::CT_XML);
+      break;
+    }
+
+
   }
 
 };

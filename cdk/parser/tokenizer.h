@@ -55,6 +55,7 @@ namespace parser {
     X(FALSE_) \
     X(IN_ ) \
     X(LIKE) \
+    X(RLIKE) \
     X(INTERVAL) \
     X(REGEXP) \
     X(ESCAPE) \
@@ -97,6 +98,7 @@ namespace parser {
     X(DOUBLESTAR) \
     X(MOD) \
     X(AS) \
+    X(USING) \
     X(ASC) \
     X(DESC) \
     X(CAST) \
@@ -117,6 +119,7 @@ namespace parser {
     X(UNSIGNED) \
     X(INTEGER) /* 'integer' keyword */ \
     X(LINTEGER) /* integer number */ \
+    X(LHEX) /* hexadecimal number*/\
     X(DOLLAR) \
     X(JSON) \
     X(COLON) \
@@ -202,6 +205,7 @@ namespace parser {
 
     Token::TokenType parse_number(size_t& i);
     bool parse_float_expo(size_t& i);
+    bool parse_hex(size_t& i);
 
   public:
 

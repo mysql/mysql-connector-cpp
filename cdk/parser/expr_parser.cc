@@ -35,6 +35,8 @@ PUSH_BOOST_WARNINGS
 POP_BOOST_WARNINGS
 POP_SYS_WARNINGS
 
+#include <sstream>
+
 // TODO: Complete the parser
 // TODO: Better parser errors
 
@@ -189,6 +191,7 @@ void Expr_parser_base::parse_cast(Scalar_prc *prc)
 }
 
 
+
 /**
    castType ::=
         SIGNED INTEGER?
@@ -275,7 +278,7 @@ std::string Expr_parser_base::cast_data_type_dimension(bool double_dimension)
   if (double_dimension && cur_token_type_is(Token::COMMA))
   {
     consume_token(Token::COMMA);
-    result += ", " + consume_token(Token::LINTEGER);
+    result += "," + consume_token(Token::LINTEGER);
   }
   result += ")";
   consume_token(Token::RPAREN);
@@ -812,11 +815,17 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
       }
 
     case Token::BANG:
+    get_token();
+    argsp = sprc->op(operator_name("!").c_str());
+    break;
     case Token::NOT:
+    get_token();
+    argsp = sprc->op(operator_name("not").c_str());
+    break;
     case Token::NEG:
-      get_token();
-      argsp = sprc->op(operator_name("not").c_str());
-      break;
+    get_token();
+    argsp = sprc->op(operator_name("~").c_str());
+    break;
 
     default:
       break;  // will continue with literal parsing
@@ -867,6 +876,25 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
       else
       {
         uint64_t val = boost::lexical_cast<uint64_t>(get_token().get_text());
+        sprc->val()->num(val);
+      }
+      return stored.release();
+    }
+    RETHROW_BOOST_LEXICAL;
+  case Token::LHEX:
+    try {
+      std::stringstream ss;
+      ss << get_token().get_text();
+      if (neg)
+      {
+        int64_t val;
+        ss >> std::hex >> val;
+        sprc->val()->num(-val);
+      }
+      else
+      {
+        uint64_t val;
+        ss >> std::hex >> val;
         sprc->val()->num(val);
       }
       return stored.release();

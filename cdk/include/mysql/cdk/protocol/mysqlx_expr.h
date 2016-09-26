@@ -137,7 +137,16 @@ public:
   virtual void num(float) =0;
   virtual void num(double) =0;
   virtual void yesno(bool) =0;
-  virtual void octets(bytes) =0;
+
+  // source: ``Mysqlx.Resultset.ColumnMetadata`` for list of known values
+  enum Octets_content_type
+  {
+    CT_PLAIN = 0x0000,       //   default value; general use of octets
+    CT_GEOMETRY = 0x0001,    //   BYTES  0x0001 GEOMETRY (WKB encoding)
+    CT_JSON = 0x0002,        //   BYTES  0x0002 JSON (text encoding)
+    CT_XML = 0x0003          //   BYTES  0x0003 XML (text encoding)
+  };
+  virtual void octets(bytes, Octets_content_type) =0;
 };
 
 
@@ -282,6 +291,8 @@ struct Safe_prc<protocol::mysqlx::api::Scalar_processor>
 
   using Base::m_prc;
 
+  typedef Processor::Octets_content_type Octets_content_type;
+
   void null() { return m_prc ? m_prc->null() : (void)NULL; }
 
   void str(bytes val)
@@ -305,8 +316,8 @@ struct Safe_prc<protocol::mysqlx::api::Scalar_processor>
   void yesno(bool val)
   { return m_prc ? m_prc->yesno(val) : (void)NULL; }
 
-  void octets(bytes data)
-  { return m_prc ? m_prc->octets(data) : (void)NULL; }
+  void octets(bytes data, Octets_content_type type)
+  { return m_prc ? m_prc->octets(data, type) : (void)NULL; }
 };
 
 

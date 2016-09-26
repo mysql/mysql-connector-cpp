@@ -213,8 +213,8 @@ if(WITH_TESTS)
     extra/process_launcher/process_launcher.cc
     extra/common/exception.cc)
   target_include_directories(process_launcher PRIVATE
-    ${CMAKE_SOURCE_DIR}/extra/process_launcher/
-    ${CMAKE_SOURCE_DIR}/extra/common)
+    ${PROJECT_SOURCE_DIR}/extra/process_launcher/
+    ${PROJECT_SOURCE_DIR}/extra/common)
 
   # quiet compile warnings outside of our code
   if (MSVC)

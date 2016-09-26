@@ -547,6 +547,8 @@ protected:
   std::string cast_data_type_dimension(bool double_dimension = false);
   std::string opt_binary();
 
+  void parse_char(Scalar_prc*);
+
   void parse_doc(Processor::Doc_prc*);
   void parse_arr(Processor::List_prc*);
 
@@ -1149,7 +1151,6 @@ struct Stored_scalar
   }
 
 };
-
 
 // --------------------------------------------------------------------------
 
