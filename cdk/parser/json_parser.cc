@@ -107,8 +107,19 @@ bool JSON_scalar_parser::do_parse(It &first, const It &last, Processor *vp)
     {
       if(vp)
       {
-        int64_t val = boost::lexical_cast<int64_t>(first->get_text());
-        vp->num(neg ? -val : val);
+        uint64_t val = boost::lexical_cast<uint64_t>(first->get_text());
+        if (val > (uint64_t)std::numeric_limits<int64_t>::max())
+        {
+          if (neg)
+            throw Error("The value is too large for a signed type");
+          // Unsigned type is only returned for large values
+          vp->num(val);
+        }
+        else
+        {
+          // All values MOD(val) < LLONG_MAX are signed
+          vp->num(neg ? -(int64_t)val : (int64_t)val);
+        }
       }
       ++first;
       return true;
