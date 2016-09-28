@@ -171,6 +171,11 @@ if(BUILD_STATIC)
   add_definitions(-DCONCPP_BUILD_STATIC)
 else()
   message("Building shared connector library")
+
+  if(WIN32 AND STATIC_MSVCRT)
+    message(SEND_ERROR "Shared library should not use static runtime.")
+  endif()
+
   set(LIB_TYPE SHARED)
   add_definitions(-DCONCPP_BUILD_SHARED)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -451,17 +456,6 @@ endif()
 IF (WITH_TESTS)
   # Unit tests declared with ADD_NG_TEST() (see cdk/cmake/testing.cmake)
   ADD_TEST_TARGET()
-
-  #
-  # !!!Warning!!! FIXME
-  # This is temporary solution to a problem hit when linking our test driver
-  # with dynamic version of DLL. Ignoring duplicate runtime symbols is potentially
-  # dangerous. This should be replaced by some real solution.
-  #
-
-  if(MSVC)
-    set_target_properties(run_unit_tests PROPERTIES LINK_FLAGS /FORCE:MULTIPLE)
-  endif()
 
   # Test for public headers declared with ADD_HEADERS()
   # (see cdk/cmake/headers.cmake)
