@@ -149,7 +149,7 @@ struct Scalar_checker
   // in documents obtained from parsing JSON strings, only scalar
   // values should be present, no expressions.
 
-  void octets(bytes) { FAIL(); }
+  void octets(bytes, Octets_content_type) { FAIL(); }
 };
 
 

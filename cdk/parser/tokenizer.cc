@@ -324,7 +324,7 @@ bool Tokenizer::parse_hex(size_t& i)
 {
   std::string val;
   bool has_value = false;
-  int start = i;
+  size_t start = i;
   if((_input[i] == 'X' || _input[i] == 'x') && next_char_is(i, '\''))
   {
     i+=2;

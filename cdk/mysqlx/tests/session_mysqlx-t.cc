@@ -55,7 +55,7 @@ public:
     bytes data2((byte*)buffer, sz);
     codec.to_bytes(val, data2);
     int rc = memcmp(data.begin(), data2.begin(), sz);
-    delete buffer;
+    delete[] buffer;
     if (rc != 0)
     {
       throw "Diff data generated!";
