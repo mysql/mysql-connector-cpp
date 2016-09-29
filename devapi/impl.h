@@ -518,7 +518,7 @@ struct internal::BaseResult::Access
      underlying CDK session. This produces a cdk::Reply object which
      is used for further processing. Sending the CRUD operation is
      performed by method `send_command` which should be overwriten by
-     derived class. Derived class has access to underlying CDK session
+     derived class. Derived class has access to the underlying CDK session
      with method `get_cdk_session()`.
 
   2. After getting cdk::Reply object implementation waits for it to
@@ -541,7 +541,12 @@ class Op_base
 protected:
 
   internal::XSession_base   *m_sess;
-  cdk::Reply *m_reply = NULL;
+
+  /*
+    Note: using cdk::scoped_ptr to be able to trnasfer ownership
+    to a different object.
+  */
+  cdk::scoped_ptr<cdk::Reply> m_reply;
 
   row_count_t m_limit = 0;
   bool m_has_limit = false;
@@ -562,6 +567,8 @@ protected:
     : m_sess(&tbl.getSession())
   {}
 
+  virtual ~Op_base()
+  {}
 
   cdk::Session& get_cdk_session()
   {
@@ -571,6 +578,21 @@ protected:
 
   virtual cdk::Reply* send_command() = 0;
 
+  /*
+    Given cdk reply object for the statement, return BaseResult object
+    that handles that reply. The reply pointer can be NULL in case no
+    reply has been generated for the statement (TODO: explain in what
+    scenario reply can be NULL).
+
+    The returned BaseResult object should take ownership of the cdk reply
+    object passed here (if any).
+  */
+
+  virtual internal::BaseResult mk_result(cdk::Reply *reply)
+  {
+    return reply ? internal::BaseResult::Access::mk(m_sess, reply)
+      : internal::BaseResult::Access::mk_empty();
+  }
 
   // Limit and offset
 
@@ -620,7 +642,7 @@ protected:
     if (m_inited)
       return;
     m_inited = true;
-    m_reply = send_command();
+    m_reply.reset(send_command());
   }
 
   bool is_completed()
@@ -629,7 +651,7 @@ protected:
       return true;
 
     init();
-    m_completed = (NULL == m_reply) || m_reply->is_completed();
+    m_completed = (!m_reply) || m_reply->is_completed();
     return m_completed;
   }
 
@@ -654,17 +676,17 @@ protected:
     return get_result();
   }
 
-  virtual internal::BaseResult get_result()
+  internal::BaseResult get_result()
   {
     if (!is_completed())
       THROW("Attempt to get result of incomplete operation");
 
-    // Note: BaseResult takes ownership of the cdk::Reply object.
+    /*
+      Note: result created by mk_result() takes ownership of the cdk::Reply
+      object.
+    */
 
-    cdk::Reply *reply = m_reply;
-    m_reply = NULL;
-    return reply ? internal::BaseResult::Access::mk(m_sess, reply)
-                 : internal::BaseResult::Access::mk_empty();
+    return mk_result(m_reply.release());
   }
 
 

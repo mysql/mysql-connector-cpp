@@ -55,6 +55,7 @@ class XSession_base;
 struct Executable_impl
 {
   virtual BaseResult execute() = 0;
+  virtual ~Executable_impl() {}
 };
 
 }  // internal

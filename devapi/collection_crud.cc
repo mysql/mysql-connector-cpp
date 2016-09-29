@@ -133,9 +133,9 @@ class Op_collection_add
   }
 
 
-  internal::BaseResult get_result() override
+  internal::BaseResult mk_result(cdk::Reply *reply) override
   {
-    return Result::Access::mk(m_sess, m_reply, m_id_list);
+    return Result::Access::mk(m_sess, reply, m_id_list);
   }
 
 
@@ -339,15 +339,14 @@ class Op_collection_remove
 
   cdk::Reply* send_command()
   {
-    m_reply =
-        new cdk::Reply(get_cdk_session().coll_remove(
-                              m_coll,
-                              get_where(),
-                              get_order_by(),
-                              get_limit(),
-                              get_params()
-                      ));
-    return m_reply;
+    return
+      new cdk::Reply(get_cdk_session().coll_remove(
+                            m_coll,
+                            get_where(),
+                            get_order_by(),
+                            get_limit(),
+                            get_params()
+                    ));
   }
 
   friend mysqlx::CollectionRemove;
@@ -405,18 +404,17 @@ class Op_collection_find
 
   cdk::Reply* send_command()
   {
-    m_reply =
-        new cdk::Reply(get_cdk_session().coll_find(
-                            m_coll,
-                            get_where(),
-                            get_doc_proj(),
-                            get_order_by(),
-                            nullptr,  // group_by
-                            nullptr,  // having
-                            get_limit(),
-                            get_params()
-                      ));
-    return m_reply;
+    return
+      new cdk::Reply(get_cdk_session().coll_find(
+                          m_coll,
+                          get_where(),
+                          get_doc_proj(),
+                          get_order_by(),
+                          nullptr,  // group_by
+                          nullptr,  // having
+                          get_limit(),
+                          get_params()
+                    ));
   }
 
   friend mysqlx::CollectionFind;
@@ -509,7 +507,7 @@ class Op_collection_modify
     if (m_update.empty())
       return NULL;
 
-    m_reply =
+    return
       new cdk::Reply(get_cdk_session().coll_update(
                        m_coll,
                        get_where(),
@@ -518,7 +516,6 @@ class Op_collection_modify
                        get_limit(),
                        get_params()
                      ));
-    return m_reply;
   }
 
   void add_operation(Field_Op::Operation op,

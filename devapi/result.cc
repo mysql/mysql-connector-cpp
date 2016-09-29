@@ -1273,6 +1273,10 @@ internal::BaseResult::~BaseResult()
   try {
     if (m_sess)
       m_sess->deregister_result(this);
+  }
+  catch (...) {}
+
+  try {
     if (m_owns_impl)
       delete m_impl;
   }
@@ -1282,6 +1286,9 @@ internal::BaseResult::~BaseResult()
 
 void mysqlx::internal::BaseResult::init(mysqlx::internal::BaseResult &&init_)
 {
+  if (m_impl && m_owns_impl)
+    delete m_impl;
+
   m_pos = 0;
   m_impl = init_.m_impl;
   if (!init_.m_owns_impl)
