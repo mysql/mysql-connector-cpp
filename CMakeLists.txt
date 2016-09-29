@@ -183,8 +183,12 @@ else()
   # Note: setting target property CXX_VISIBILITY did not work for
   # object libraries that we use to build the connector.
 
-  if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    add_compile_options(-fvisibility=hidden)
+  if(CMAKE_COMPILER_IS_GNUCXX)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      add_compile_options(-fvisibility-ms-compat)
+    elseif()
+      add_compile_options(-fvisibility=hidden)
+    endif()
   endif()
 
 endif()
