@@ -324,12 +324,12 @@ bool Tokenizer::parse_hex(size_t& i)
 {
   std::string val;
   bool has_value = false;
-  size_t start = i;
+
   if((_input[i] == 'X' || _input[i] == 'x') && next_char_is(i, '\''))
   {
     i+=2;
 
-    start = i;
+    size_t start = i;
 
     for (; i < _input.size();++i)
     {
@@ -347,7 +347,7 @@ bool Tokenizer::parse_hex(size_t& i)
   {
     i+=2;
 
-    int start = i;
+    size_t start = i;
 
     for (; i < _input.size() && std::isalnum(_input[i]);++i)
     {}
