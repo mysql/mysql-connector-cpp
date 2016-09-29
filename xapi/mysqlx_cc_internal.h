@@ -305,7 +305,7 @@ class Order_by : public cdk::Order_by
 
 
     // Get sort direction for the current instance
-    const Sort_direction::value direction() const { return m_sort_direction; }
+    Sort_direction::value direction() const { return m_sort_direction; }
   };
 
   typedef std::vector<Order_by_item> Order_item_list;

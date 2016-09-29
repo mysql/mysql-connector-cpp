@@ -261,13 +261,12 @@ ADD_SUBDIRECTORY(include)
 INCLUDE_DIRECTORIES(include)
 
 #
-# Set higher warning level on Windows to catch non-portable
-# code.
+# Set higher warning level for the main connector code.
 #
 
 foreach(LANG C CXX)
 
-IF(WIN32)
+if(WIN32)
 
   # 4127 = conditional expression is constant (needed for do {...} while(false))
   # 4512 = assignment operator could not be generated
@@ -279,7 +278,12 @@ IF(WIN32)
 
   set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /W4 /wd4512 /wd4127")
 
-ENDIF()
+else()
+
+  set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} -Wextra")
+  set(TEST_COMPILE_FLAGS "-Wno-sign-compare")
+
+endif()
 
 endforeach(LANG)
 
