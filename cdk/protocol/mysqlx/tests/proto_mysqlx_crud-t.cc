@@ -377,7 +377,7 @@ public:
     out_ind() << val <<endl;
   }
 
-  virtual void octets(bytes val)
+  virtual void octets(bytes val, Octets_content_type)
   {
     out_ind() <<"\"" <<std::string(val.begin(), val.end()) <<"\"" <<endl;
   }
@@ -787,7 +787,7 @@ TEST_F(Protocol_mysqlx_xplugin, crud_projections)
       prc.list_begin();
 
       Processor::Element_prc *ep;
-        
+
       ep = prc.list_el();
       if (ep)
       {
