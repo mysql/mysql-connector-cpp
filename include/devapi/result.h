@@ -313,7 +313,9 @@ namespace internal {
     }
 
 
-    virtual void deregister_notify(){}
+    virtual void deregister_cleanup() {}
+
+    void deregister_notify();
 
   public:
 
@@ -792,7 +794,7 @@ class PUBLIC_API RowResult
     m_cache = false;
   }
 
-  void deregister_notify() override
+  void deregister_cleanup() override
   {
     //cache elements
     count();

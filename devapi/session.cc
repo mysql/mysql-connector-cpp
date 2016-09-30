@@ -280,11 +280,12 @@ void internal::XSession_base::rollback()
 void internal::XSession_base::close()
 {
   try {
+
+    // Results should cache their data before deleting the implementation.
+    register_result(NULL);
+
     if (m_master_session)
     {
-      // Results should cache their data before deleting the implementation.
-      register_result(NULL);
-
       //Notify NodeSession nodes that master is being removed.
       for (auto node : m_impl->m_nodes)
       {

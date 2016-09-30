@@ -1066,6 +1066,20 @@ class internal::BaseResult::Impl
     delete m_reply;
   }
 
+  /*
+    Discard the CDK reply object owned by the implementation. This
+    is called when the corresponding session is about to be closed
+    and the reply object will be no longer valid.
+  */
+
+  void discard_reply()
+  {
+    if (!m_reply)
+      return;
+
+    delete m_reply;
+    m_reply = NULL;
+  }
 
   /*
     Read next row from the cursor. Returns NULL if there are no
@@ -1271,7 +1285,7 @@ internal::BaseResult::BaseResult(XSession_base *sess,
 internal::BaseResult::~BaseResult()
 {
   try {
-    if (m_sess)
+    if (m_sess && m_sess->m_impl)
       m_sess->deregister_result(this);
   }
   catch (...) {}
@@ -1319,6 +1333,30 @@ internal::BaseResult::get_impl() const
     return *m_impl;
   }
   CATCH_AND_WRAP
+}
+
+
+/*
+  This method is called when the result object is deregistered from
+  the session (so that it is no longer the active result of that
+  session).
+
+  We do cleanups here to make the result object independent from the
+  session. Derived classes should cache pending results so that they
+  can be accessed without the session.
+*/
+
+void internal::BaseResult::deregister_notify()
+{
+  assert(m_impl);
+
+  // Let derived object do its own cleanup
+  deregister_cleanup();
+
+  // Discard CDK reply object which is about to be invalidated.
+  m_impl->discard_reply();
+
+  m_sess = NULL;
 }
 
 
