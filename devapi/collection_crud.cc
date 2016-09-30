@@ -188,12 +188,43 @@ class Op_collection_add
   {
     m_id= val;
   }
-  void null() override { assert(false); }
-  void num(int64_t) override { assert(false); }
-  void num(uint64_t) override { assert(false); }
-  void num(float) override { assert(false); }
-  void num(double) override { assert(false); }
-  void yesno(bool) override { assert(false); }
+
+  void null() override
+  {
+    using mysqlx::throw_error;
+    THROW("Document id can not be null");
+  }
+
+  void num(int64_t) override
+  {
+    using mysqlx::throw_error;
+    THROW("Document id must be a string");
+  }
+
+  void num(uint64_t) override
+  {
+    using mysqlx::throw_error;
+    THROW("Document id must be a string");
+  }
+
+  void num(float) override
+  {
+    using mysqlx::throw_error;
+    THROW("Document id must be a string");
+  }
+
+  void num(double) override
+  {
+    using mysqlx::throw_error;
+    THROW("Document id must be a string");
+  }
+
+  void yesno(bool) override
+  {
+    using mysqlx::throw_error;
+    THROW("Document id must be a string");
+  }
+
 
   friend mysqlx::CollectionAdd;
 };

@@ -554,6 +554,10 @@ TEST_F(xapi, doc_id_test)
   size_t json_len = 0;
 
   authenticate(NULL, NULL, "cc_api_test");
+
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_drop(get_session(), "cc_api_test"));
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_create(get_session(), "cc_api_test"));
+
   EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_api_test", 1)) != NULL);
   EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, "doc_id_test"));
 
@@ -585,7 +589,22 @@ TEST_F(xapi, doc_id_test)
     EXPECT_TRUE(strstr(json_string, id_buf[i]) != NULL);
     ++i;
   }
+
+  /*
+    Test that non-string document id triggers expected error.
+  */
+
+  res = mysqlx_collection_add(collection, "{\"_id\": 127}", NULL);
+  EXPECT_EQ(NULL, res);
+  printf("\nExpected error: %s", mysqlx_error_message(collection));
+
+  res = mysqlx_collection_add(collection, "{\"_id\": 12.7}", NULL);
+  EXPECT_EQ(NULL, res);
+  printf("\nExpected error: %s", mysqlx_error_message(collection));
+
+  CRUD_CHECK(mysqlx_collection_add(collection, "{\"_id\": \"127\"}", NULL), collection);
 }
+
 
 TEST_F(xapi, myc_344_sql_error_test)
 {
@@ -617,7 +636,7 @@ TEST_F(xapi, myc_344_sql_error_test)
 
   res = mysqlx_sql(get_session(), "SELECT b+1000 from cc_api_test.myc_344", MYSQLX_NULL_TERMINATED);
   EXPECT_TRUE(mysqlx_error_message(res) == NULL);
-  
+
   while ((row = mysqlx_row_fetch_one(res)) != NULL)
   {
     switch (num)

@@ -196,6 +196,9 @@ void Row_item::generate_uuid()
 
   if (doc.key_exists("_id"))
   {
+    if (MYSQLX_TYPE_STRING != doc.get_type("_id"))
+      throw Mysqlx_exception("Document id must be a string");
+
     std::string str_id = doc.get_string("_id");
     if (str_id.length() > sizeof(uuid_type)* 2)
       throw Mysqlx_exception("Specified UUID is too long");

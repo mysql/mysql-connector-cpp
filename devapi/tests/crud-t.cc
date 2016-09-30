@@ -1820,3 +1820,22 @@ TEST_F(Crud, add_empty)
   EXPECT_THROW(add = coll.add(static_cast<char*>(NULL)).execute(),
                mysqlx::Error);
 }
+
+
+TEST_F(Crud, doc_id)
+{
+
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("c1", true);
+
+  EXPECT_THROW(coll.add("{\"_id\": 127 }").execute(), Error);
+  EXPECT_THROW(coll.add("{\"_id\": 12.7 }").execute(), Error);
+}
