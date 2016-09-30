@@ -100,7 +100,8 @@ mysqlx_result_t::mysqlx_result_struct(mysqlx_stmt_t &parent, cdk::Reply &reply) 
                                   m_row_proc(NULL),
                                   m_crud(parent),
                                   m_store_result(false),
-                                  m_filter_mask(0)
+                                  m_filter_mask(0),
+                                  m_current_id_index(0)
 {
   init_result(true);
 }
@@ -546,7 +547,7 @@ mysqlx_error_t * mysqlx_result_t::get_next_warning()
     if (m_warning_iter->next())
       m_current_warning.reset(new mysqlx_error_t(m_warning_iter->entry().get_error(), true));
     else
-      m_current_warning.release();
+      m_current_warning.reset(NULL);
 
     return m_current_warning.get();
   }
