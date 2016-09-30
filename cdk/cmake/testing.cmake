@@ -152,10 +152,11 @@ IF(WITH_TESTS)
 
   target_include_directories(${TEST} PRIVATE ${test_includes})
 
+  target_compile_options(${TEST} PRIVATE ${TEST_COMPILE_FLAGS})
+
   if (MSVC)
 
     target_compile_options(${TEST} PRIVATE
-      ${TEST_COMPILE_FLAGS}
       /W3
       /wd4244
       /wd4267
@@ -174,7 +175,6 @@ IF(WITH_TESTS)
   elseif((CMAKE_SYSTEM_NAME MATCHES "SunOS") OR CMAKE_COMPILER_IS_GNUCXX)
 
     target_compile_options(${TEST} PRIVATE
-      ${TEST_COMPILE_FLAGS}
       -Wno-unused-but-set-variable
       -Wno-maybe-uninitialized
       -Wno-unused-value
