@@ -1342,13 +1342,17 @@ internal::BaseResult::getWarnings()
 
 uint64_t Result::getAffectedItemsCount() const
 {
-  return get_impl().get_affected_rows();
+  try {
+    return get_impl().get_affected_rows();
+  } CATCH_AND_WRAP
 }
 
 
 uint64_t Result::getAutoIncrementValue() const
 {
-  return get_impl().get_auto_increment();
+  try {
+    return get_impl().get_auto_increment();
+  } CATCH_AND_WRAP
 }
 
 
