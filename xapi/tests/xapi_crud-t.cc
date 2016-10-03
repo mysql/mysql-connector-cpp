@@ -2175,7 +2175,7 @@ TEST_F(xapi_bugs, collection_id_test)
 {
   SKIP_IF_NO_XPLUGIN
 
-  mysqlx_result_t *res;
+    mysqlx_result_t *res;
   mysqlx_stmt_t *stmt;
   mysqlx_schema_t *schema;
   mysqlx_collection_t *collection;
@@ -2230,19 +2230,53 @@ TEST_F(xapi_bugs, collection_id_test)
 
     switch (i)
     {
-      case 0: // just _id in the JSON
-        EXPECT_TRUE(strstr(json_string, "a_key") == NULL);
+    case 0: // just _id in the JSON
+      EXPECT_TRUE(strstr(json_string, "a_key") == NULL);
       break;
-      case 1: // { "a_key" : 100}
-        EXPECT_TRUE(strstr(json_string, "\"a_key\": 100") != NULL);
-        break;
-      case 2: // { "a_key" : 200, "_id" : "111222333"}
-        EXPECT_TRUE(strstr(json_string, "\"a_key\": 200") != NULL);
-        break;
-      default: // no more documents in the result
-        FAIL();
+    case 1: // { "a_key" : 100}
+      EXPECT_TRUE(strstr(json_string, "\"a_key\": 100") != NULL);
+      break;
+    case 2: // { "a_key" : 200, "_id" : "111222333"}
+      EXPECT_TRUE(strstr(json_string, "\"a_key\": 200") != NULL);
+      break;
+    default: // no more documents in the result
+      FAIL();
     }
 
     ++i;
   }
+}
+
+TEST_F(xapi_bugs, myc_352_stored_proc_err)
+{
+  SKIP_IF_NO_XPLUGIN
+
+    mysqlx_result_t *res;
+  const char *schema_name = "cc_crud_test";
+  const char *errmsg = NULL;
+
+  AUTHENTICATE();
+
+  mysqlx_schema_drop(get_session(), schema_name);
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_create(get_session(), schema_name));
+
+  res = mysqlx_sql(get_session(),
+    "CREATE PROCEDURE cc_crud_test.myc_352(d INT)" \
+    " BEGIN" \
+    "   select 1, 2, 3;" \
+    " IF d = 0 THEN " \
+    " BEGIN " \
+    " select point(1, 0) / point(1, 2); " \
+    " END; " \
+    " END IF; " \
+    " select 'abc', 1.0; " \
+    " END", MYSQLX_NULL_TERMINATED);
+
+  res = mysqlx_sql(get_session(), "CALL cc_crud_test.myc_352(0)",
+    MYSQLX_NULL_TERMINATED);
+
+  EXPECT_EQ(RESULT_OK, mysqlx_store_result(res, NULL));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_next_result(res));
+  EXPECT_TRUE((errmsg = mysqlx_error_message(res)) != NULL);
+  printf("\nExpected error: %s\n", errmsg);
 }
