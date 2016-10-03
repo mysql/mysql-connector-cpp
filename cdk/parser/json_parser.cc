@@ -35,6 +35,13 @@ PUSH_BOOST_WARNINGS
 POP_BOOST_WARNINGS
 POP_SYS_WARNINGS
 
+/*
+  The maximum absolute value that 64-bit signed integer can have.
+  For most platforms it is the minimum negative LLONG_MIN.
+  The absolute value for it cannot be obtained because
+  ABS(LLONG_MAX) < ABS(LLONG_MIN). Therefore, we define a constant.
+*/
+#define INTEGER_ABS_MAX 9223372036854775808UL
 
 using namespace parser;
 using cdk::string;
@@ -108,7 +115,7 @@ bool JSON_scalar_parser::do_parse(It &first, const It &last, Processor *vp)
       if(vp)
       {
         uint64_t val = boost::lexical_cast<uint64_t>(first->get_text());
-        if (val > (uint64_t)std::numeric_limits<int64_t>::max())
+        if (val > INTEGER_ABS_MAX)
         {
           if (neg)
             throw Error("The value is too large for a signed type");
@@ -117,7 +124,10 @@ bool JSON_scalar_parser::do_parse(It &first, const It &last, Processor *vp)
         }
         else
         {
-          // All values MOD(val) < LLONG_MAX are signed
+          // Absolute values of 9223372036854775808UL can only be negative
+          if (!neg && val == INTEGER_ABS_MAX)
+            throw Error("The value is too large for a signed type");
+          // All values ABS(val) < 9223372036854775808UL are treated as signed
           vp->num(neg ? -(int64_t)val : (int64_t)val);
         }
       }
