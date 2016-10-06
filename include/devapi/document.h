@@ -272,6 +272,7 @@ public:
   ///@{
 
   Value();  ///< Constructs Null value.
+  Value(std::nullptr_t); ///< Constructs Null value.
   Value(const string&);
   Value(string&&);
   Value(const char *str) : Value(string(str)) {}
@@ -282,9 +283,17 @@ public:
   Value(float);
   Value(double);
   Value(bool);
+  Value(const DbDoc& doc);
+
+  /*
+    Note: These overloads are needed to disambiguate constructor
+    resolution.
+  */
+
   Value(int x) : Value((int64_t)x) {}
   Value(unsigned x) : Value((uint64_t)x) {}
-  Value(const DbDoc& doc);
+  Value(long x) : Value((int64_t)x) {}
+  Value(unsigned long x) : Value((uint64_t)x) {}
 
   Value(const std::initializer_list<Value> &list)
     : m_type(ARRAY)
@@ -449,6 +458,8 @@ public:
   friend Access;
 };
 
+static const Value nullvalue;
+
 
 namespace internal {
 
@@ -538,6 +549,9 @@ const Value& DbDoc::operator[](const wchar_t *name) const
 inline Value::Value() : m_type(VNULL)
 {}
 
+inline Value::Value(std::nullptr_t) : m_type(VNULL)
+{}
+
 inline Value::Value(int64_t val) : m_type(INT64)
 {
   m_val._int64_v = val;
@@ -547,7 +561,6 @@ inline Value::Value(uint64_t val) : m_type(UINT64)
 {
   m_val._uint64_v = val;
 }
-
 
 inline Value::operator int() const
 {
