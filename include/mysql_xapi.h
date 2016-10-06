@@ -22,13 +22,54 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-/** 
-  @file mysqlx_cc.h
-  Main header for MySQL Connector/C++ X API.
+/**
+  @defgroup xapi XAPI Functions
 
-  This header should be included by C and C++ code which uses the X API
-  of MySQL Connector/C++
+  XAPI functions and types. See @ref xapi_ref for introduction.
+
+  @{
+  @defgroup xapi_sess     Session operations
+  @ingroup xapi
+
+  @defgroup xapi_coll     Statements operating on document collections
+  @ingroup xapi
+
+  @defgroup xapi_tbl      Statements operating on tables
+  @ingroup xapi
+
+  @defgroup xapi_sql      SQL execution
+  @ingroup xapi
+
+  @defgroup xapi_ddl      DDL statements
+  @ingroup xapi
+
+  @note To create a table or a view, use reqular SQL statement.
+
+  @defgroup xapi_stmt     Statement execution
+  @ingroup xapi
+
+  @defgroup xapi_res      Result processing
+  @ingroup xapi
+
+  @defgroup xapi_md  Meta data access
+  @ingroup xapi_res
+
+  @defgroup xapi_diag     Diganostics
+  @ingroup xapi
+  @}
 */
+
+
+/**
+  @file
+  The main header for MySQL Connector/C++ XAPI.
+
+  This header should be included by C and C++ code which uses the XAPI
+  implemented by MySQL Connector/C++
+
+  @ingroup xapi
+*/
+
 
 #ifndef MYSQL_XAPI_H
 #define MYSQL_XAPI_H
@@ -40,6 +81,11 @@ extern "C" {
 #include "mysql_common.h"
 #include <stdlib.h>
 #include <stdint.h>
+
+/**
+  @addtogroup xapi
+  @{
+*/
 
 /*
   On Windows, dependency on the sockets library can be handled using
@@ -62,21 +108,33 @@ extern "C" {
 typedef char object_id[16];
 typedef object_id* MYSQLX_GUID;
 
-/**
-  @brief MYSQLX API
-  @details Macro definition to indicate a function/operation successful end
-*/
+/** Return value indicating function/operation success. */
+
 #define RESULT_OK 0
 
 /**
-  @brief MYSQLX API
-  @details Macro definition to indicate a function/operation end with an error
-           or mysqlx_error() should be called to get more details
+  Return value flag indicating end of data items (documents or
+  rows) in a reply. This is used by functions which iterate over
+  reply data.
 */
+
 #define RESULT_NULL 16
+
+/**
+  Return value flag indicating that operation generated
+  information diagnostic entries.
+*/
+
 #define RESULT_INFO 32
+
+/**  Return value flag indicating that operation generated warnings. */
+
 #define RESULT_WARNING 64
+
+/**  Return value flag indicating function/operation error. */
+
 #define RESULT_ERROR   128
+
 
 #define MYSQLX_MAX_ERROR_LEN 255
 #define MYSQLX_NULL_TERMINATED 0xFFFFFFFF
@@ -90,11 +148,13 @@ typedef object_id* MYSQLX_GUID;
 /*
   Error codes
 */
+
 #define MYSQLX_ERROR_INDEX_OUT_OF_RANGE 1
 
 /*
   Error messages
 */
+
 #define MYSQLX_ERROR_INDEX_OUT_OF_RANGE_MSG "Index is out of range"
 #define MYSQLX_ERROR_MISSING_SCHEMA_NAME_MSG "Missing schema name"
 #define MYSQLX_ERROR_MISSING_TABLE_NAME_MSG "Missing table name"
@@ -105,93 +165,108 @@ typedef object_id* MYSQLX_GUID;
 #define MYSQLX_ERROR_OUTPUT_BUFFER_ZERO "The output buffer cannot have zero length"
 
 /* Opaque structures*/
+
 /**
-  @brief MYSQLX API
-  @details structure for obtaining the error information from the session
-           and statement operations (see mysqlx_error())
+  Type of error handles.
+
+  Error handles give access to diagnostic information from the session
+  and statement operations.
+
+  @see mysqlx_error()
 */
 
 typedef struct mysqlx_error_struct mysqlx_error_t;
 
 
 /**
-  @brief MYSQLX API
-  @details structure containing the session context after the session is
-           established (see mysqlx_get_session())
+  Type of session handles.
+
+  @see mysqlx_get_session()
 */
 
 typedef struct mysqlx_session_struct mysqlx_session_t;
 
 
 /**
-  @brief MYSQLX API
-  @details structure containing the connection options for the session before
-           the connection is established (see mysqlx_get_session_from_options())
+  Type of handles for session configuration data.
+
+  Session can be created using  previously prepared session configuration
+  data. New configuration data is allocated by `mysqlx_session_options_new()`
+  and can be manipulated using related functions.
+
+  @see mysqlx_get_session_from_options(), mysqlx_session_options_new(),
+  mysqlx_session_option_set().
 */
 
 typedef struct mysqlx_session_options_struct mysqlx_session_options_t;
 
 
 /**
-  @brief MYSQLX API
-  @details structure containing the schema context
-           (see mysqlx_get_schema())
+  Type of database schema handles.
+
+  @see mysqlx_get_schema()
 */
 
 typedef struct mysqlx_schema_struct mysqlx_schema_t;
 
 
 /**
-  @brief MYSQLX API
-  @details structure containing the collection context
-           (see mysqlx_get_collection())
+  Type of collection handles.
+
+  @see mysqlx_get_collection()
 */
 
 typedef struct mysqlx_collection_struct mysqlx_collection_t;
 
 
 /**
-  @brief MYSQLX API
-  @details structure containing the table context
-           (see mysqlx_get_table())
+  Type of table handles.
+
+  @see mysqlx_get_table()
 */
 typedef struct mysqlx_table_struct mysqlx_table_t;
 
 
 /**
-  @brief MYSQLX API
-  @details structure containing the context of the statement operation. See
-           mysqlx_sql_new(), mysqlx_table_select_new(), mysqlx_table_insert_new(),
-           mysqlx_table_update_new(), mysqlx_table_delete_new(),
-           mysqlx_collection_find_new(), mysqlx_collection_modify_new(),
-           mysqlx_collection_add_new(), mysqlx_collection_remove_new()
+  Type of statement handles.
+
+  Some XAPI functions create statements without executing them. These
+  functions return a statement handle which can be used to define statement
+  properties and then execute it.
+
+  @see mysqlx_sql_new(), mysqlx_table_select_new(), mysqlx_table_insert_new(),
+  mysqlx_table_update_new(), mysqlx_table_delete_new(),
+  mysqlx_collection_find_new(), mysqlx_collection_modify_new(),
+  mysqlx_collection_add_new(), mysqlx_collection_remove_new()
 */
 
 typedef struct mysqlx_stmt_struct mysqlx_stmt_t;
 
 
 /**
-  @brief MYSQLX API
-  @details structure representing a row from a table resultset
-           (see mysqlx_row_fetch_one())
+  Type of row handles.
+
+  @see mysqlx_row_fetch_one()
 */
 
 typedef struct mysqlx_row_struct mysqlx_row_t;
 
 
 /**
-  @brief MYSQLX API
-  @details Structure representing the result context along with the buffered
-           rows/documents (see mysqlx_execute(), mysqlx_store_result(),
-           mysqlx_row_fetch_one(), mysqlx_json_fetch_one(), mysqlx_next_result())
+  Type of result handles.
+
+  Functions which produce results return a result handle which is
+  then used to examine the result.
+
+  @see mysqlx_execute(), mysqlx_store_result(), mysqlx_row_fetch_one(),
+       mysqlx_json_fetch_one(), mysqlx_next_result())
 */
 
 typedef struct mysqlx_result_struct mysqlx_result_t;
 
 
 /**
-* \enum mysqlx_data_type_t
-* The data type identifiers used in MYSQLX API
+  The data type identifiers used in MYSQLX API
 */
 
 typedef enum mysqlx_data_type_enum
@@ -235,8 +310,7 @@ typedef enum mysqlx_data_type_enum
 
 
 /**
-  \enum mysqlx_sort_direction_t
-  Enumerating sort directions in sorting operations such as ORDER BY
+  Sort directions in sorting operations such as ORDER BY
 */
 
 typedef enum mysqlx_sort_direction_enum
@@ -247,9 +321,8 @@ typedef enum mysqlx_sort_direction_enum
 
 
 /**
-* \enum mysqlx_opt_type_t
-* Enumerating session options for using in mysqlx_session_option_get()
-* and mysqlx_session_option_set() functions
+  Session options for using in mysqlx_session_option_get()
+  and mysqlx_session_option_set() functions
 */
 
 typedef enum mysqlx_opt_type_enum
@@ -263,15 +336,13 @@ typedef enum mysqlx_opt_type_enum
 
 
 /**
-  @brief MYSQLX API
-
-  @details Establish a session using string options provided as function parameters
+  Create a new session.
 
   @param host       server host address
   @param port       port number
   @param user       user name
   @param password   password
-  @param password   default database name
+  @param database   default database name
   @param[out] out_error if error happens during connect the error message
                     is returned through this parameter
   @param[out] err_code if error happens during connect the error code
@@ -284,6 +355,8 @@ typedef enum mysqlx_opt_type_enum
   @note The mysqlx_session_t pointer returned by the function must be
         properly closed using mysqlx_session_close()
   @note This type of session does not support executing plain SQL queries
+
+  @ingroup xapi_sess
 */
 
 PUBLIC_API mysqlx_session_t *
@@ -293,10 +366,10 @@ mysqlx_get_session(const char *host, int port, const char *user,
 
 
 /**
-  @brief MYSQLX API
+  Create a session using connection string or URL.
 
-  @details Establish a session using connection string
-           as "user:pass@host:port
+  Connection sting has the form `"user:pass\@host:port"`, valid URL
+  is like a connection string with `msqlx:` protocol prefix.
 
   @param conn_string character connection string
   @param[out] out_error if error happens during connect the error message
@@ -311,6 +384,8 @@ mysqlx_get_session(const char *host, int port, const char *user,
   @note The mysqlx_session_t pointer returned by the function must be
         properly closed using mysqlx_session_close()
   @note This type of session does not support executing plain SQL queries
+
+  @ingroup xapi_sess
 */
 
 PUBLIC_API mysqlx_session_t *
@@ -319,12 +394,9 @@ mysqlx_get_session_from_url(const char *conn_string,
 
 
 /**
-  @brief MYSQLX API
+  Create a session using session configuration data.
 
-  @details Establish a session using mysqlx_session_options_t structure
-
-  @param opt pointer to mysqlx_session_options_t structure containing
-             the connection parameters
+  @param opt `mysqlx_session_options_t` handle to session configuration data
   @param[out] out_error if error happens during connect the error message
                         is returned through this parameter
   @param[out] err_code if error happens during connect the error code
@@ -337,6 +409,8 @@ mysqlx_get_session_from_url(const char *conn_string,
   @note The mysqlx_session_t pointer returned by the function must be
         properly closed using mysqlx_session_close()
   @note This type of session does not support executing plain SQL queries
+
+  @ingroup xapi_sess
 */
 
 PUBLIC_API mysqlx_session_t *
@@ -345,11 +419,9 @@ mysqlx_get_session_from_options(mysqlx_session_options_t *opt,
 
 
 /**
-  @brief MYSQLX API
+  Create a node session.
 
-  @details Establish a node session using string options provided as
-            function parameters. A node session connects only to one
-            mysqld node at a time
+  A node session connects only to one mysqld node at a time.
 
   @param host       server host address
   @param port       port number
@@ -368,6 +440,8 @@ mysqlx_get_session_from_options(mysqlx_session_options_t *opt,
   @note The mysqlx_session_t pointer returned by the function must be
         properly closed using mysqlx_session_close()
   @note This type of session supports executing plain SQL queries
+
+  @ingroup xapi_sess
 */
 
 PUBLIC_API mysqlx_session_t *
@@ -377,11 +451,12 @@ mysqlx_get_node_session(const char *host, int port, const char *user,
 
 
 /**
-  @brief MYSQLX API
+  Create a node session using connection string or URL.
 
-  @details Establish a node session using connection string
-           as "user:pass@host:port. A node session connects only to one
-           mysqld node at a time.
+  Connection sting has the form `"user:pass\@host:port"`, valid URL
+  is like a connection string with `msqlx:` protocol prefix.
+
+  A node session connects only to one mysqld node at a time.
 
   @param conn_string character connection string
   @param[out] out_error if error happens during connect the error message
@@ -396,6 +471,8 @@ mysqlx_get_node_session(const char *host, int port, const char *user,
   @note The mysqlx_session_t pointer returned by the function must be
         properly closed using mysqlx_session_close()
   @note This type of session supports executing plain SQL queries
+
+  @ingroup xapi_sess
 */
 
 PUBLIC_API mysqlx_session_t *
@@ -404,9 +481,7 @@ mysqlx_get_node_session_from_url(const char *conn_string,
 
 
 /**
-  @brief MYSQLX API
-
-  @details Establish a node session using mysqlx_session_options_t structure
+  Create a node session using mysqlx_session_options_t structure
 
   @param opt pointer to mysqlx_session_options_t structure containing
              the connection parameters
@@ -422,6 +497,8 @@ mysqlx_get_node_session_from_url(const char *conn_string,
   @note The mysqlx_session_t pointer returned by the function must be
         properly closed using mysqlx_session_close()
   @note This type of session supports executing plain SQL queries
+
+  @ingroup xapi_sess
 */
 
 PUBLIC_API mysqlx_session_t *
@@ -431,39 +508,41 @@ mysqlx_get_node_session_from_options(mysqlx_session_options_t *opt,
 
 
 /**
-  @brief MYSQLX API
+  Close the session.
 
-  @details Closing the session. This function must be called by the user
-           to prevent memory leaks.
+  This function must be called by the user to prevent memory leaks.
+  Closing session frees all related resources, including those
+  allocated by statements and results belonging to the session.
 
    @param session Pointer to mysqlx_session_t handler to close
+
+   @ingroup xapi_sess
 */
 
 PUBLIC_API void mysqlx_session_close(mysqlx_session_t *session);
 
 
 /**
-  @brief MYSQLX API
+  Check the session validity.
 
-  @details check the session validity
-
-  @param session Pointer to mysqlx_session_t handle to check
+  @param sess Pointer to mysqlx_session_t handle to check
 
   @return 1 - if the session is valid, 0 - if the session is not valid
 
   @note the function checks only the internal session status without sending
         anything to the server.
+
+  @ingroup xapi_sess
 */
 
 PUBLIC_API int mysqlx_session_valid(mysqlx_session_t *sess);
 
 
 /**
-  @brief MYSQLX API
+  Create a statement which executes a plain SQL query.
 
-  @details Create a statement handle for a plain SQL query.
-  The query supports parameters and placeholders that can be
-  added later using mysqlx_stmt_bind() function
+  The query can contain `?` placeholders whose values can be
+  specified later using mysqlx_stmt_bind() function
 
   @param sess session handler
   @param query SQL query
@@ -477,6 +556,8 @@ PUBLIC_API int mysqlx_session_valid(mysqlx_session_t *sess);
 
   @note To actually execute the SQL query the returned statement has to be
         given to mysqlx_execute()
+
+  @ingroup xapi_sql
 */
 
 PUBLIC_API mysqlx_stmt_t *
@@ -485,9 +566,7 @@ mysqlx_sql_new(mysqlx_session_t *sess, const char *query,
 
 
 /**
-  @brief MYSQLX API
-
-  @details Start new table SELECT operation without actually executing it.
+  Create a statement which perfroms a table SELECT operation.
 
   @param table table handle
 
@@ -497,8 +576,10 @@ mysqlx_sql_new(mysqlx_session_t *sess, const char *query,
           It is very unlikely for this function to end with the error
           because it does not do any parsing, parameters checking etc.
 
-  @note To actually execute the SQL query the returned Statement has to be
+  @note To actually execute the statement, the returned handle has to be
         given to mysqlx_execute()
+
+  @ingroup xapi_tbl
 */
 
 PUBLIC_API mysqlx_stmt_t *
@@ -506,10 +587,13 @@ mysqlx_table_select_new(mysqlx_table_t *table);
 
 
 /**
-  @brief MYSQLX API
-  @details Setting projections (items to select or find) defined as column
-            names, values, constants or expressions.
-            operation. See mysqlx_set_where()
+  Specify a query projection.
+
+  @todo Can this be used with collection_find? Fix the description below
+
+  Setting projections (items to select or find) defined as column
+  names, values, constants or expressions.
+  operation. See mysqlx_set_where()
 
    @param stmt pointer to statement structure for which the projections are set
    @param  ... - variable parameters list consisting of character strings
@@ -522,64 +606,72 @@ mysqlx_table_select_new(mysqlx_table_t *table);
    @note This function can be only called for the table SELECT or collection
          FIND operations (see mysqlx_table_select_new() and
          mysqlsx_collection_find_new())
- */
+
+  @ingroup xapi_stmt
+*/
 
 PUBLIC_API int mysqlx_set_items(mysqlx_stmt_t *stmt, ...);
 
 
 /**
-  @brief MYSQLX API
-  @details a macro defining a function for setting projections for SELECT
-           operation. See mysqlx_set_items()
- */
+  A macro defining a function for setting projections for SELECT operation.
+
+  @see mysqlx_set_items()
+  @ingroup xapi_stmt
+*/
 
 #define mysqlx_set_select_items mysqlx_set_items
 
 
 /**
-  @brief MYSQLX API
-  @details a macro defining a function for setting WHERE for SELECT
-           operation. See mysqlx_set_where()
- */
+  A macro defining a function for setting WHERE for SELECT operation.
+
+  @see mysqlx_set_where()
+  @ingroup xapi_stmt
+*/
 
 #define mysqlx_set_select_where mysqlx_set_where
 
 
 /**
-  @brief MYSQLX API
-  @details a macro defining a function for setting ORDER BY for SELECT
-           operation. See mysqlx_set_order_by()
- */
+  A macro defining a function for setting ORDER BY for SELECT
+  operation.
+
+  @see mysqlx_set_order_by()
+  @ingroup xapi_stmt
+*/
 
 #define mysqlx_set_select_order_by mysqlx_set_order_by
 
 
-/* brief MYSQLX API
-  @details a macro defining a function for setting HAVING for SELECT
-           operation. See mysqlx_set_having()
- 
+/*
+  A macro defining a function for setting HAVING for SELECT operation.
+
+  @see mysqlx_set_having()
+  @ingroup xapi_stmt
 
 #define mysqlx_set_select_having mysqlx_set_having
 */
 
 
 /**
-  @brief MYSQLX API
-  @details a macro defining a function for setting LIMIT for SELECT
-           operation. See mysqlx_set_limit_and_offset()
- */
+  A macro defining a function for setting LIMIT for SELECT operation.
+
+  @see mysqlx_set_limit_and_offset()
+  @ingroup xapi_stmt
+*/
 
 #define mysqlx_set_select_limit_and_offset mysqlx_set_limit_and_offset
 
 
 /**
-  @brief MYSQLX API
+  Specify selection criteria for a statement.
 
-  @details Limit given statement operation to rows/documents that satisfy
-           given WHERE clause:
-             - for select/find operations limit the returned rows/documents,
-             - for update/modify/delete/remove operations limit
-               the rows/documents affected by the operations.
+  Limit given statement operation to rows/documents that satisfy
+  given WHERE clause:
+    - for select/find operations limit the returned rows/documents,
+    - for update/modify/delete/remove operations limit
+      the rows/documents affected by the operations.
 
   Operations supported by this function:
     SELECT, FIND, UPDATE, MODIFY, DELETE, REMOVE
@@ -597,15 +689,16 @@ PUBLIC_API int mysqlx_set_items(mysqlx_stmt_t *stmt, ...);
         mysqlx_set_select_where() macros that map the
         corresponding mysqlx_set_where() function.
         This way the unsupported operations will not be used.
+
+  @ingroup xapi_stmt
 */
 
 PUBLIC_API int mysqlx_set_where(mysqlx_stmt_t *stmt, const char *where_expr);
 
 
 /**
-  @brief MYSQLX API
+  Specify ordering for a statement.
 
-  @details Set ORDER BY clause for statement operation
   Operations supported by this function:
   SELECT, FIND, UPDATE, MODIFY, DELETE, REMOVE
   Calling it for INSERT or ADD will result in an error
@@ -631,15 +724,17 @@ PUBLIC_API int mysqlx_set_where(mysqlx_stmt_t *stmt, const char *where_expr);
         mysqlx_set_select_order_by() macros that map the
         corresponding mysqlx_set_order_by() function.
         This way the unsupported operations will not be used.
+
+  @ingroup xapi_stmt
 */
 
 PUBLIC_API int mysqlx_set_order_by(mysqlx_stmt_t *stmt, ...);
 
 
 /**
-  @brief MYSQLX API
+  Set limit and offset information for a statement.
 
-  @details Set LIMIT and OFFSET for statement operations which work on ranges of rows/documents:
+  Set LIMIT and OFFSET for statement operations which work on ranges of rows/documents:
     - for slect/find operations limit the number of returned rows/documents,
     - for update/delete limit the number of documents affected by the operation.
 
@@ -663,6 +758,8 @@ PUBLIC_API int mysqlx_set_order_by(mysqlx_stmt_t *stmt, ...);
         This way the unsupported operations will not be used.
 
   @note Each call to this function replaces previously set LIMIT
+
+  @ingroup xapi_stmt
 */
 
 PUBLIC_API int
@@ -671,10 +768,8 @@ mysqlx_set_limit_and_offset(mysqlx_stmt_t *stmt, uint64_t row_count,
 
 
 /**
-  @brief MYSQLX API
+  Create a statement executing a table INSERT operation.
 
-  @details Start new table INSERT operation without actually executing it.
-                             for this parameter.
   @param table table handle
 
   @return
@@ -686,6 +781,8 @@ mysqlx_set_limit_and_offset(mysqlx_stmt_t *stmt, uint64_t row_count,
 
   @note To actually execute the SQL query the returned Statement has to be
         given to mysqlx_execute()
+
+  @ingroup xapi_tbl
 */
 
 PUBLIC_API mysqlx_stmt_t *
@@ -693,12 +790,12 @@ mysqlx_table_insert_new(mysqlx_table_t *table);
 
 
 /**
-  @brief MYSQLX API
+  Specify column names for an INSERT statement.
 
-  @details The function provides the column names for the statement INSERT.
-   User code must ensure that the column values are correct
-   because the names are not validated until receiving the query on
-   the server side after executing mysqlx_execute().
+  The function provides the column names for the statement INSERT.
+  User code must ensure that the column values are correct
+  because the names are not validated until receiving the query on
+  the server side after executing mysqlx_execute().
 
   @param stmt pointer to the statement handle
   @param   ...  - variable parameters list consisting of column names
@@ -708,6 +805,8 @@ mysqlx_table_insert_new(mysqlx_table_t *table);
         which defines the column names and their types
   @note Each new call clears the list of column for a given statement
         if it was set earlier
+
+  @ingroup xapi_stmt
 */
 
 PUBLIC_API int
@@ -715,15 +814,15 @@ mysqlx_set_insert_columns(mysqlx_stmt_t *stmt, ...);
 
 
 /**
-  @brief MYSQLX API
+  Specify a row to be added by an INSERT statement.
 
-  @details The function provides the row data for the statement INSERT.
-   User code must ensure that the number of values and the order they are specified
-   in the parameters is the same as the number of columns and their order in
-   mysqlx_set_insert_columns(), which defines the column names for INSERT.
-   However, mysqlx_set_insert_columns() can be skipped. In this case the number
-   of columns and their order must correspond to the same in the table being
-   inserted.
+  The function provides the row data for the statement INSERT.
+  User code must ensure that the number of values and the order they are specified
+  in the parameters is the same as the number of columns and their order in
+  mysqlx_set_insert_columns(), which defines the column names for INSERT.
+  However, mysqlx_set_insert_columns() can be skipped. In this case the number
+  of columns and their order must correspond to the same in the table being
+  inserted.
 
   @param stmt pointer to the statement handle
   @param   ...  - variable parameters list consisting of (type, value) pairs
@@ -738,6 +837,8 @@ mysqlx_set_insert_columns(mysqlx_stmt_t *stmt, ...);
         which defines the column names and their types
   @note Each new call provides the row values for the new row, which
         can be used for multi-row inserts
+
+  @ingroup xapi_stmt
 */
 
 PUBLIC_API int
@@ -745,9 +846,7 @@ mysqlx_set_insert_row(mysqlx_stmt_t *stmt, ...);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Start new table UPDATE operation without actually executing it.
+  Create a statement executing a table UPDATE operation.
 
   @param table table name
 
@@ -759,6 +858,8 @@ mysqlx_set_insert_row(mysqlx_stmt_t *stmt, ...);
 
   @note To actually execute the SQL query the returned STMT has to be
         given to mysqlx_execute()
+
+  @ingroup xapi_tbl
 */
 
 PUBLIC_API mysqlx_stmt_t *
@@ -766,9 +867,7 @@ mysqlx_table_update_new(mysqlx_table_t *table);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Set values for the columns in the UPDATE statement.
+  Set values for the columns in the UPDATE statement.
 
   @param stmt - pointer to statement structure
   @param  ... - variable parameters list consisting of triplets
@@ -790,34 +889,40 @@ mysqlx_table_update_new(mysqlx_table_t *table);
   @note All fields and their corresponding expressions must be set in one call
         otherwise the next call to this function will reset all parameters to
         their new values.
+
+  @ingroup xapi_stmt
 */
 
 PUBLIC_API int mysqlx_set_update_values(mysqlx_stmt_t *stmt, ...);
 
 
 /**
-  @brief MYSQLX API
-  @details a macro defining a function for setting WHERE clause for UPDATE
-            operation. See mysqlx_set_where()
- */
+  A macro defining a function for setting WHERE clause for UPDATE operation.
+
+  @see mysqlx_set_where()
+  @ingroup xapi_stmt
+*/
 
 #define mysqlx_set_update_where mysqlx_set_where
 
 
 /**
-  @brief MYSQLX API
-  @details a macro defining a function for setting LIMIT for UPDATE
-            operation. See mysqlx_set_limit_and_offset()
- */
+  A macro defining a function for setting LIMIT for UPDATE operation.
+
+  @see mysqlx_set_limit_and_offset()
+  @ingroup xapi_stmt
+*/
 
 #define mysqlx_set_update_limit(STMT, LIM) mysqlx_set_limit_and_offset(STMT, LIM, 0)
 
 
 /**
-  @brief MYSQLX API
-  @details a macro defining a function for setting ORDER BY clause for UPDATE
-            operation. See mysqlx_set_oder_by()
- */
+  A macro defining a function for setting ORDER BY clause for UPDATE
+  operation.
+
+  @see mysqlx_set_oder_by()
+  @ingroup xapi_stmt
+*/
 
 #define mysqlx_set_update_order_by mysqlx_set_order_by
 
@@ -825,9 +930,7 @@ PUBLIC_API int mysqlx_set_update_values(mysqlx_stmt_t *stmt, ...);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Start new table DELETE operation without actually executing it.
+  Create a statement executing a table DELETE operation.
 
   @param table table handle
 
@@ -839,6 +942,8 @@ PUBLIC_API int mysqlx_set_update_values(mysqlx_stmt_t *stmt, ...);
 
   @note To actually execute the SQL query the returned STMT has to be
         given to mysqlx_execute()
+
+  @ingroup xapi_tbl
 */
 
 PUBLIC_API mysqlx_stmt_t *
@@ -846,36 +951,39 @@ mysqlx_table_delete_new(mysqlx_table_t *table);
 
 
 /**
-  @brief MYSQLX API
-  @details a macro defining a function for setting WHERE clause for DELETE
-            operation. See mysqlx_set_where()
- */
+  A macro defining a function for setting WHERE clause for DELETE operation.
+
+  @see mysqlx_set_where()
+  @ingroup xapi_stmt
+*/
 
 #define mysqlx_set_delete_where mysqlx_set_where
 
 /**
-  @brief MYSQLX API
-  @details a macro defining a function for setting LIMIT for DELETE
-            operation. See mysqlx_set_limit_and_offset()
- */
+  A macro defining a function for setting LIMIT for DELETE operation.
+
+  @see mysqlx_set_limit_and_offset()
+  @ingroup xapi_stmt
+*/
 
 #define mysqlx_set_delete_limit(STMT, LIM) mysqlx_set_limit_and_offset(STMT, LIM, 0)
 
 /**
-  @brief MYSQLX API
-  @details a macro defining a function for setting ORDER BY for DELETE
-            operation. See mysqlx_set_order_by()
- */
+  A macro defining a function for setting ORDER BY for DELETE operation.
+
+  @see mysqlx_set_order_by()
+  @ingroup xapi_stmt
+*/
 
 #define mysqlx_set_delete_order_by mysqlx_set_order_by
 
 
 /**
-  @brief MYSQLX API
+  Execute a statement
 
-  @details Execute a statement created by mysqlx_table_select_new(),
-           mysqlx_table_insert_new(), mysqlx_table_update_new(),
-           mysqlx_table_delete_new(), mysqlx_sql_new(), etc.
+  Executes statement created by mysqlx_table_select_new(),
+  mysqlx_table_insert_new(), mysqlx_table_update_new(),
+  mysqlx_table_delete_new(), mysqlx_sql_new(), etc.
 
   @param stmt pointer to statement structure
 
@@ -887,6 +995,8 @@ mysqlx_table_delete_new(mysqlx_table_t *table);
            a RESULT hanlde and free all resources used by it earlier with
            mysqlx_result_free() call.
            On error NULL is returned. The error is set for statement handler.
+
+  @ingroup xapi_stmt
 */
 
 PUBLIC_API mysqlx_result_t *
@@ -894,13 +1004,13 @@ mysqlx_execute(mysqlx_stmt_t *stmt);
 
 
 /**
-  @brief MYSQLX_API
+  Store result data in an internal buffer
 
-  @details Rows/documents contained in a result must be fetched in a timely fashion.
-           Failing to do that can result in an error and lost access to the
-           remaining part of the result. This function can store complete result
-           in memory so it can be accessed at any time, as long as mysqlx_result_t
-           handle is valid.
+  Rows/documents contained in a result must be fetched in a timely fashion.
+  Failing to do that can result in an error and lost access to the
+  remaining part of the result. This function can store complete result
+  in memory so it can be accessed at any time, as long as mysqlx_result_t
+  handle is valid.
 
   @param result result handler used for obtaining and buffering the result
   @param[out] num number of records buffered
@@ -910,6 +1020,8 @@ mysqlx_execute(mysqlx_stmt_t *stmt);
 
   @note Even in case of an error some rows/documents might be buffered if they
         were retrieved before the error occurred.
+
+  @ingroup xapi_res
 */
 
 PUBLIC_API int
@@ -917,9 +1029,7 @@ mysqlx_store_result(mysqlx_result_t *result, size_t *num);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Create a schema
+  Create a schema
 
   @param sess session handler
   @param schema the name of the schema to be created
@@ -927,6 +1037,8 @@ mysqlx_store_result(mysqlx_result_t *result, size_t *num);
   @return RESULT_OK - on success; RESULT_ERR - on error
           The error handle can be obtained from the session
           using mysqlx_error() function
+
+  @ingroup xapi_ddl
 */
 
 PUBLIC_API int
@@ -934,9 +1046,7 @@ mysqlx_schema_create(mysqlx_session_t *sess, const char *schema);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Drop a schema
+  Drop a schema
 
   @param sess session handler
   @param schema the name of the schema to be dropped
@@ -944,6 +1054,8 @@ mysqlx_schema_create(mysqlx_session_t *sess, const char *schema);
   @return RESULT_OK - on success; RESULT_ERR - on error
           The error handle can be obtained from the session
           using mysqlx_error() function
+
+  @ingroup xapi_ddl
 */
 
 PUBLIC_API int
@@ -951,9 +1063,7 @@ mysqlx_schema_drop(mysqlx_session_t *sess, const char *schema);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Drop a table
+  Drop a table
 
   @param schema schema handle
   @param table the name of the table to drop
@@ -961,6 +1071,8 @@ mysqlx_schema_drop(mysqlx_session_t *sess, const char *schema);
   @return RESULT_OK - on success; RESULT_ERR - on error
           The error handle can be obtained from the session
           using mysqlx_error() function
+
+  @ingroup xapi_ddl
 */
 
 PUBLIC_API int
@@ -968,9 +1080,7 @@ mysqlx_table_drop(mysqlx_schema_t *schema, const char *table);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Drop a view
+  Drop a view
 
   @param schema schema handle
   @param view the name of the view to drop
@@ -978,6 +1088,8 @@ mysqlx_table_drop(mysqlx_schema_t *schema, const char *table);
   @return RESULT_OK - on success; RESULT_ERR - on error
           The error handle can be obtained from the session
           using mysqlx_error() function
+
+  @ingroup xapi_ddl
 */
 
 PUBLIC_API int
@@ -985,9 +1097,7 @@ mysqlx_view_drop(mysqlx_schema_t *schema, const char *view);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Create a new collection in a specified schema
+  Create a new collection in a specified schema
 
   @param schema schema handle
   @param collection collection name to create
@@ -995,6 +1105,8 @@ mysqlx_view_drop(mysqlx_schema_t *schema, const char *view);
   @return RESULT_OK - on success; RESULT_ERR - on error
           The error handle can be obtained from the session
           using mysqlx_error() function
+
+  @ingroup xapi_ddl
 */
 
 PUBLIC_API int
@@ -1002,9 +1114,7 @@ mysqlx_collection_create(mysqlx_schema_t *schema, const char *collection);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Drop an existing collection in a specified schema
+  Drop an existing collection in a specified schema
 
   @param schema schema handle
   @param collection collection name to drop
@@ -1012,6 +1122,8 @@ mysqlx_collection_create(mysqlx_schema_t *schema, const char *collection);
   @return RESULT_OK - on success; RESULT_ERR - on error
           The error handle can be obtained from the session
           using mysqlx_error() function
+
+  @ingroup xapi_ddl
 */
 
 PUBLIC_API int
@@ -1019,9 +1131,7 @@ mysqlx_collection_drop(mysqlx_schema_t *schema, const char *collection);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Create a new STMT operation for adding a new collection
+  Create a statement which adds documents to a collection
 
   @param collection collection handle
 
@@ -1033,6 +1143,8 @@ mysqlx_collection_drop(mysqlx_schema_t *schema, const char *collection);
 
   @note To actually execute the operation the returned STMT has to be
         given to mysqlx_execute()
+
+  @ingroup xapi_coll
 */
 
 PUBLIC_API mysqlx_stmt_t *
@@ -1040,12 +1152,12 @@ mysqlx_collection_add_new(mysqlx_collection_t *collection);
 
 
 /**
-  @brief MYSQLX API
+  Specify a document to be added to a collection.
 
-  @details The function provides the document data for the statement ADD as
-           JSON document like "{ key_1: value_1, ..., key_N: value_N }"
-           User code must ensure the validity of the document because it is
-           not checked until receiving the query on the server side.
+  The function provides the document data for the statement ADD as
+  a JSON string like "{ key_1: value_1, ..., key_N: value_N }"
+  User code must ensure the validity of the document because it is
+  not checked until receiving the query on the server side.
 
   @param stmt pointer to the statement handle
   @param json_doc - the character string describing JSON document to add
@@ -1055,6 +1167,8 @@ mysqlx_collection_add_new(mysqlx_collection_t *collection);
         which creates a new statement operation
   @note Each new call provides the values for the new document, which
         can be used for multi-document add operations
+
+  @ingroup xapi_stmt
 */
 
 PUBLIC_API int
@@ -1062,9 +1176,7 @@ mysqlx_set_add_document(mysqlx_stmt_t *stmt, const char *json_doc);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Find a document in a collection
+  Create a statement which finds documents in a collection
 
   @param collection collection handle
 
@@ -1076,6 +1188,8 @@ mysqlx_set_add_document(mysqlx_stmt_t *stmt, const char *json_doc);
 
   @note To actually execute the operation the returned STMT has to be
         given to mysqlx_execute()
+
+  @ingroup xapi_coll
 */
 
 PUBLIC_API mysqlx_stmt_t *
@@ -1083,10 +1197,12 @@ mysqlx_collection_find_new(mysqlx_collection_t *collection);
 
 
 /**
-  @brief MYSQLX API
-  @details Setting projections (items to select or find) defined as column
-           names, values, constants or expressions.
-           operation. See mysqlx_set_where()
+  Specify a projection for a find query.
+
+  The projection, if present, speifies document that is computed from
+  each one found in the collection and returned in the reply.
+
+  @see mysqlx_set_where()
 
    @param stmt pointer to statement structure for which the projections are set
    @param proj projection specification describing JSON document projections as
@@ -1096,45 +1212,53 @@ mysqlx_collection_find_new(mysqlx_collection_t *collection);
 
    @note This function can be only called for the collection
          FIND operations (see mysqlsx_collection_find_new())
- */
+
+  @ingroup xapi_stmt
+*/
 
 PUBLIC_API int mysqlx_set_find_projection(mysqlx_stmt_t *stmt, const char *proj);
 
 
 /**
-  @brief MYSQLX API
-  @details a macro defining a function for setting criteria for FIND
-            operation. See mysqlx_set_where()
- */
+  A macro defining a function for setting criteria for FIND operation.
+
+  @see mysqlx_set_where()
+
+  @ingroup xapi_stmt
+*/
 
 #define mysqlx_set_find_criteria mysqlx_set_where
 
 
 /**
-  @brief MYSQLX API
-  @details a macro defining a function for setting LIMIT for DELETE
-            operation. See mysqlx_set_limit_and_offset()
- */
+  A macro defining a function for setting LIMIT for DELETE operation.
+
+  @see mysqlx_set_limit_and_offset()
+  @ingroup xapi_stmt
+*/
 
 #define mysqlx_set_find_limit_and_offset(STMT, LIM, OFFS) mysqlx_set_limit_and_offset(STMT, LIM, OFFS)
 
 
 /**
-  @brief MYSQLX API
-  @details a macro defining a function for setting ORDER BY for SELECT
-            operation. See mysqlx_set_order_by()
- */
+  A macro defining a function for setting ORDER BY for SELECT operation.
+
+  @see mysqlx_set_order_by()
+  @ingroup xapi_stmt
+*/
 
 #define mysqlx_set_find_order_by mysqlx_set_order_by
 
 
 /**
-  @brief MYSQLX API
+  Bind values for parametrized statments.
 
-  @details for binding values for parametrized queries.
-           User code must ensure that the number of values in bind is the same
-           as the number of parameters in the query because this is not checked
-           until receiving the query on the server side.
+  This function binds values of either `?` placeholders in an SQL statement
+  or of named parameters that can be used in other statements.
+
+  User code must ensure that the number of values in bind is the same
+  as the number of parameters in the query because this is not checked
+  until receiving the query on the server side.
 
   @param stmt pointer to the statement handle
   @param   ... variable parameters list, which has different structure for SQL
@@ -1166,15 +1290,15 @@ PUBLIC_API int mysqlx_set_find_projection(mysqlx_stmt_t *stmt, const char *proj)
 
   @note Each new call resets the binds set by the previous call to
         mysqlx_stmt_bind()
+
+  @ingroup xapi_stmt
 */
 
 PUBLIC_API int mysqlx_stmt_bind(mysqlx_stmt_t *stmt, ...);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Create a Collection MODIFY operation
+  Create a statement which modifies documents in a collection.
 
   @param collection collection handle
 
@@ -1186,6 +1310,8 @@ PUBLIC_API int mysqlx_stmt_bind(mysqlx_stmt_t *stmt, ...);
 
   @note To actually execute the MODIFY query the returned Statement has to be
         given to mysqlx_execute()
+
+  @ingroup xapi_coll
 */
 
 PUBLIC_API mysqlx_stmt_t *
@@ -1193,8 +1319,7 @@ mysqlx_collection_modify_new(mysqlx_collection_t *collection);
 
 
 /**
-  @brief MYSQLX API
-  @details Set fields in a document to the designated JSON values.
+  Set fields in a document to given values.
 
   @param stmt pointer to statement initated for Collectin MODIFY operation
   @ ... list of parameters that come as triplets
@@ -1211,6 +1336,8 @@ mysqlx_collection_modify_new(mysqlx_collection_t *collection);
         instead of MYSQLX_TYPE_XXXX, val.
 
   @return RESULT_OK - on success; RESULT_ERR - on error
+
+  @ingroup xapi_stmt
 */
 
 PUBLIC_API int
@@ -1218,8 +1345,7 @@ mysqlx_set_modify_set(mysqlx_stmt_t *stmt, ...);
 
 
 /**
-  @brief MYSQLX API
-  @details Unset fields in a document
+  Unset fields in a document
 
   @param stmt pointer to statement initated for Collectin MODIFY operation
   @param ... list of the documents fields paths that should be unset. Each
@@ -1227,6 +1353,8 @@ mysqlx_set_modify_set(mysqlx_stmt_t *stmt, ...);
         The list is terminated by PARAM_END.
 
   @return RESULT_OK - on success; RESULT_ERR - on error
+
+  @ingroup xapi_stmt
 */
 
 PUBLIC_API int
@@ -1234,8 +1362,7 @@ mysqlx_set_modify_unset(mysqlx_stmt_t *stmt, ...);
 
 
 /**
-  @brief MYSQLX API
-  @details Insert elements into an array in a document
+  Insert elements into array fields in a document
 
   @param stmt pointer to statement initated for Collectin MODIFY operation
   @param ... list of parameters that come as triplets
@@ -1249,6 +1376,8 @@ mysqlx_set_modify_unset(mysqlx_stmt_t *stmt, ...);
         instead of MYSQLX_TYPE_XXXX, val.
 
   @return RESULT_OK - on success; RESULT_ERR - on error
+
+  @ingroup xapi_stmt
 */
 
 PUBLIC_API int
@@ -1256,8 +1385,7 @@ mysqlx_set_modify_array_insert(mysqlx_stmt_t *stmt, ...);
 
 
 /**
-  @brief MYSQLX API
-  @details Append to an array in a document
+  Append to array fields in a document
 
   @param stmt pointer to statement initated for Collectin MODIFY operation
   @param ... list of parameters that come as triplets
@@ -1268,6 +1396,8 @@ mysqlx_set_modify_array_insert(mysqlx_stmt_t *stmt, ...);
         instead of MYSQLX_TYPE_XXXX, val.
 
   @return RESULT_OK - on success; RESULT_ERR - on error
+
+  @ingroup xapi_stmt
 */
 
 PUBLIC_API int
@@ -1275,31 +1405,32 @@ mysqlx_set_modify_array_append(mysqlx_stmt_t *stmt, ...);
 
 
 /**
-  @brief MYSQLX API
-  @details Delete element in an array in a document
+  Delete elements from array fields in a document
 
   @param stmt pointer to statement initated for Collectin MODIFY operation
   @param ... list of array elements paths that should be deleted from their arrays
         The list is terminated by PARAM_END.
 
    @return RESULT_OK - on success; RESULT_ERR - on error
+
+   @ingroup xapi_stmt
 */
 
 PUBLIC_API int mysqlx_set_modify_array_delete(mysqlx_stmt_t *stmt, ...);
 
 
 /**
-  @brief MYSQLX API
-  @details a macro defining a function for setting WHERE for MODIFY
-           operation. See mysqlx_set_where()
+  A macro defining a function for setting WHERE for MODIFY operation.
+
+  @see mysqlx_set_where()
+  @ingroup xapi_stmt
 */
 
 #define mysqlx_set_modify_criteria mysqlx_set_where
 
 
 /**
-  @brief MYSQLX API
-  @details Remove a document from a collection
+  Create a statement which removes documents from a collection.
 
   @param collection collection handle
 
@@ -1311,6 +1442,8 @@ PUBLIC_API int mysqlx_set_modify_array_delete(mysqlx_stmt_t *stmt, ...);
 
   @note To actually execute the REMOVE query the returned STMT has to be
         given to mysqlx_execute()
+
+  @ingroup xapi_coll
 */
 
 PUBLIC_API mysqlx_stmt_t *
@@ -1318,28 +1451,31 @@ mysqlx_collection_remove_new(mysqlx_collection_t *collection);
 
 
 /**
-  @brief MYSQLX API
-  @details a macro defining a function for setting WHERE for REMOVE
-            operation. See mysqlx_set_where()
- */
+  A macro defining a function for setting WHERE for REMOVE operation.
+
+  @see mysqlx_set_where()
+  @ingroup xapi_stmt
+*/
 
 #define mysqlx_set_remove_criteria mysqlx_set_where
 
 
 /**
-  @brief MYSQLX API
-  @details a macro defining a function for setting ORDER BY for REMOVE
-            operation. See mysqlx_set_order_by()
- */
+  A macro defining a function for setting ORDER BY for REMOVE operation.
+
+  @see mysqlx_set_order_by()
+  @ingroup xapi_stmt
+*/
 
 #define mysqlx_set_remove_order_by mysqlx_set_order_by
 
 
 /**
-  @brief MYSQLX API
-  @details a macro defining a function for setting LIMIT for REMOVE
-            operation. See mysqlx_set_limit_and_offset()
- */
+  A macro defining a function for setting LIMIT for REMOVE operation.
+
+  @see mysqlx_set_limit_and_offset()
+  @ingroup xapi_stmt
+*/
 
 #define mysqlx_set_remove_limit_and_offset mysqlx_set_limit_and_offset
 
@@ -1347,8 +1483,9 @@ mysqlx_collection_remove_new(mysqlx_collection_t *collection);
 
 
 /**
-  @brief MYSQLX API
-  @details Fetch one row from the result and advance to the next row
+  Fetch one row from the result
+
+  The result is advanced to the next row (if any).
 
   @param res pointer to the result structure
 
@@ -1357,14 +1494,15 @@ mysqlx_collection_remove_new(mysqlx_collection_t *collection);
           mysqlx_error() or mysqlx_error_message().
 
   @note The previously fetched row and its data will become invalid.
+
+  @ingroup xapi_res
 */
 
 PUBLIC_API mysqlx_row_t * mysqlx_row_fetch_one(mysqlx_result_t *res);
 
 
 /**
-  @brief MYSQLX API
-  @details Fetch one JSON document as a character string
+  Fetch one document as a JSON string
 
   @param res pointer to the result structure
   @param[out] out_length the total number of bytes in the json string
@@ -1375,51 +1513,57 @@ PUBLIC_API mysqlx_row_t * mysqlx_row_fetch_one(mysqlx_result_t *res);
   @return pointer to character JSON string or NULL if no more JSON's left.
           No need to free this data as it is tied and freed with the result
           handle.
+
+  @ingroup xapi_res
 */
 
 PUBLIC_API const char * mysqlx_json_fetch_one(mysqlx_result_t *res, size_t *out_length);
 
 
 /**
-  @brief MYSQLX_API
+  Proceed to the next result set in the reply.
 
-  @details This function is used to process replies containing multiple result sets.
-           Each time it is called the function reads the next result set.
+  This function is used to process replies containing multiple result sets.
+  After successfull call to this function, given result handle will be moved
+  to access the next result set from the reply.
 
-  @param result result handle containing the statement execute results
+  @param res result handle containing the statement execute results
 
   @return RESULT_OK - on success; RESULT_NULL when there is no more results;
           RESULT_ERR - on error
+
+  @ingroup xapi_res
 */
 
 PUBLIC_API int mysqlx_next_result(mysqlx_result_t *res);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get number of rows affected by the last operation
+  Get number of rows affected by a statement.
 
   @param res pointer to the result structure returned by mysqlx_execute()
 
   @return 64-bit unsigned int number containing the number of affected rows
+
+  @ingroup xapi_res
 */
 
 PUBLIC_API uint64_t
 mysqlx_get_affected_count(mysqlx_result_t *res);
 
+
 // Metadata
 
 /**
-  @brief MYSQLX API
-
-  @details Get column type identifier
+  Get column type identifier.
 
   @param res pointer to the result structure returned by mysqlx_execute()
   @param pos zero-based column number
 
   @return 16-bit unsigned int number with the column type identifier
-  (see mysqlx_data_type_t enum)
+  (see `mysqlx_data_type_t` enum)
+
+  @ingroup xapi_md
 */
 
 PUBLIC_API uint16_t
@@ -1427,14 +1571,14 @@ mysqlx_column_get_type(mysqlx_result_t *res, uint32_t pos);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get column collation number
+  Get column collation number.
 
   @param res pointer to the result structure returned by mysqlx_execute()
   @param pos zero-based column number
 
   @return 16-bit unsigned int number with the column collation number
+
+  @ingroup xapi_md
 */
 
 PUBLIC_API uint16_t
@@ -1442,14 +1586,14 @@ mysqlx_column_get_collation(mysqlx_result_t *res, uint32_t pos);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get column length
+  Get column length.
 
   @param res pointer to the result structure returned by mysqlx_execute()
   @param pos zero-based column number
 
   @return 32-bit unsigned int number indicating the maximum data length
+
+  @ingroup xapi_md
 */
 
 PUBLIC_API uint32_t
@@ -1457,14 +1601,14 @@ mysqlx_column_get_length(mysqlx_result_t *res, uint32_t pos);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get column precision
+  Get column precision.
 
   @param res pointer to the result structure returned by mysqlx_execute()
   @param pos zero-based column number
 
   @return 16-bit unsigned int number of digits after the decimal point
+
+  @ingroup xapi_md
 */
 
 PUBLIC_API uint16_t
@@ -1472,14 +1616,16 @@ mysqlx_column_get_precision(mysqlx_result_t *res, uint32_t pos);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get column flags
+  Get column flags.
 
   @param res pointer to the result structure returned by mysqlx_execute()
   @param pos zero-based column number
 
   @return 32-bit unsigned int number containing column flags
+
+  @todo Document which flags can be reported
+
+  @ingroup xapi_md
 */
 
 PUBLIC_API uint32_t
@@ -1487,13 +1633,13 @@ mysqlx_column_get_flags(mysqlx_result_t *res, uint32_t pos);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get the number of columns in the result
+  Get the number of columns in the result.
 
   @param res pointer to the result structure returned by mysqlx_execute()
 
   @return the number of columns
+
+  @ingroup xapi_md
 */
 
 PUBLIC_API uint32_t
@@ -1501,14 +1647,14 @@ mysqlx_column_get_count(mysqlx_result_t *res);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get column name
+  Get column name.
 
   @param res pointer to the result structure returned by mysqlx_execute()
   @param pos zero-based column number
 
   @return character string containing the column name
+
+  @ingroup xapi_md
 */
 
 PUBLIC_API const char *
@@ -1516,14 +1662,14 @@ mysqlx_column_get_name(mysqlx_result_t *res, uint32_t pos);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get column original name
+  Get column original name.
 
   @param res pointer to the result structure returned by mysqlx_execute()
   @param pos zero-based column number
 
   @return character string containing the column original name
+
+  @ingroup xapi_md
 */
 
 PUBLIC_API const char *
@@ -1531,14 +1677,14 @@ mysqlx_column_get_original_name(mysqlx_result_t *res, uint32_t pos);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get column table
+  Get column table.
 
   @param res pointer to the result structure returned by mysqlx_execute()
   @param pos zero-based column number
 
   @return character string containing the column table name
+
+  @ingroup xapi_md
 */
 
 PUBLIC_API const char *
@@ -1546,14 +1692,14 @@ mysqlx_column_get_table(mysqlx_result_t *res, uint32_t pos);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get column original table
+  Get column original table.
 
   @param res pointer to the result structure returned by mysqlx_execute()
   @param pos zero-based column number
 
   @return character string containing the column original table
+
+  @ingroup xapi_md
 */
 
 PUBLIC_API const char *
@@ -1561,14 +1707,14 @@ mysqlx_column_get_original_table(mysqlx_result_t *res, uint32_t pos);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get column schema
+  Get column schema.
 
   @param res pointer to the result structure returned by mysqlx_execute()
   @param pos zero-based column number
 
   @return character string containing the column schema
+
+  @ingroup xapi_md
 */
 
 PUBLIC_API const char *
@@ -1576,14 +1722,14 @@ mysqlx_column_get_schema(mysqlx_result_t *res, uint32_t pos);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get column name
+  Get column name.
 
   @param res pointer to the result structure returned by mysqlx_execute()
   @param pos zero-based column number
 
   @return character string containing the column name
+
+  @ingroup xapi_md
 */
 
 PUBLIC_API const char *
@@ -1591,9 +1737,7 @@ mysqlx_column_get_catalog(mysqlx_result_t *res, uint32_t pos);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Write resulting bytes into a pre-allocated buffer
+  Read bytes stored in a row into a pre-allocated buffer
 
   @param row pointer to the row structure returned by mysqlx_row_fetch_one()
              to get bytes from
@@ -1605,6 +1749,8 @@ mysqlx_column_get_catalog(mysqlx_result_t *res, uint32_t pos);
 
   @return RESULT_OK - on success; RESULT_NULL when the value is NULL;
           RESULT_ERR - on error
+
+  @ingroup xapi_res
 */
 
 PUBLIC_API int
@@ -1613,12 +1759,11 @@ mysqlx_get_bytes(mysqlx_row_t* row, uint32_t col,
 
 
 /**
-  @brief MYSQLX API
+  Get a 64-bit unsigned int number from a row.
 
-  @details Get a 64-bit unsigned int number. It is important to pay attention
-           to the signed/unsigned type of the column. Attemptining to call this
-           function for a column with the signed integer type will result
-           in wrong data being retrieved
+  It is important to pay attention to the signed/unsigned type of the column.
+  Attemptining to call this function for a column with the signed integer
+  type will result in wrong data being retrieved
 
   @param row pointer to the row structure returned by mysqlx_row_fetch_one()
              to get bytes from
@@ -1628,6 +1773,8 @@ mysqlx_get_bytes(mysqlx_row_t* row, uint32_t col,
 
   @return RESULT_OK - on success; RESULT_NULL when the value is NULL;
           RESULT_ERR - on error
+
+  @ingroup xapi_res
 */
 
 PUBLIC_API int
@@ -1635,12 +1782,11 @@ mysqlx_get_uint(mysqlx_row_t* row, uint32_t col, uint64_t* val);
 
 
 /**
-  @brief MYSQLX API
+  Get a 64-bit signed int number from a row.
 
-  @details Get a 64-bit signed int number. It is important to pay attention
-           to the signed/unsigned type of the column. Attemptining to call this
-           function for a column with the unsigned integer type will result
-           in wrong data being retrieved
+  It is important to pay attention to the signed/unsigned type of the column.
+  Attemptining to call this function for a column with the unsigned integer
+  type will result in wrong data being retrieved
 
   @param row pointer to the row structure returned by mysqlx_row_fetch_one()
              to get bytes from
@@ -1650,6 +1796,8 @@ mysqlx_get_uint(mysqlx_row_t* row, uint32_t col, uint64_t* val);
 
   @return RESULT_OK - on success; RESULT_NULL when the value is NULL;
           RESULT_ERR - on error
+
+  @ingroup xapi_res
 */
 
 PUBLIC_API int
@@ -1657,12 +1805,11 @@ mysqlx_get_sint(mysqlx_row_t* row, uint32_t col, int64_t* val);
 
 
 /**
-  @brief MYSQLX API
+  Get a float number from a row.
 
-  @details Get a float number. It is important to pay attention
-           to the type of the column. Attemptining to call this
-           function for a column with the type different from float will result
-           in wrong data being retrieved
+  It is important to pay attention to the type of the column. Attemptining
+  to call this function for a column with the type different from float will
+  result in wrong data being retrieved
 
   @param row pointer to the row structure returned by mysqlx_row_fetch_one()
              to get bytes from
@@ -1672,6 +1819,8 @@ mysqlx_get_sint(mysqlx_row_t* row, uint32_t col, int64_t* val);
 
   @return RESULT_OK - on success; RESULT_NULL when the value is NULL;
           RESULT_ERR - on error
+
+  @ingroup xapi_res
 */
 
 PUBLIC_API int
@@ -1679,12 +1828,11 @@ mysqlx_get_float(mysqlx_row_t* row, uint32_t col, float* val);
 
 
 /**
-  @brief MYSQLX API
+  Get a double number from a row.
 
-  @details Get a double number. It is important to pay attention
-           to the type of the column. Attemptining to call this
-           function for a column with the type different from double will result
-           in wrong data being retrieved
+  It is important to pay attention to the type of the column. Attemptining
+  to call this function for a column with the type different from double
+  will result in wrong data being retrieved
 
   @param row pointer to the row structure returned by mysqlx_row_fetch_one()
              to get bytes from
@@ -1694,6 +1842,8 @@ mysqlx_get_float(mysqlx_row_t* row, uint32_t col, float* val);
 
   @return RESULT_OK - on success; RESULT_NULL when the value is NULL;
           RESULT_ERR - on error
+
+  @ingroup xapi_res
 */
 
 PUBLIC_API int
@@ -1701,24 +1851,24 @@ mysqlx_get_double(mysqlx_row_t* row, uint32_t col, double *val);
 
 
 /**
-  @brief MYSQLX API
+  Free the result explicitly.
 
-  @details Free the result explicitly, otherwise it will be done automatically
-  when statement handler is destroyed.
+  @note Results are also freed automatically when statement handler
+  is freed.
 
   @param res the result handler, which should be freed
 
   @note make sure this function is called if the result handler is going to be
         re-used
+
+  @ingroup xapi_res
 */
 
 PUBLIC_API void mysqlx_result_free(mysqlx_result_t *res);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get the last error from the object
+  Get the last error from the object.
 
   @param obj the object handle to extract the error information from.
              Supported types are mysqlx_session_t, mysqlx_session_options_t,
@@ -1726,15 +1876,15 @@ PUBLIC_API void mysqlx_result_free(mysqlx_result_t *res);
              mysqlx_stmt_t, mysqlx_result_t, mysqlx_row_t, mysqlx_error_t
 
   @return the error handle or NULL if there is no errors.
+
+  @ingroup xapi_diag
 */
 
 PUBLIC_API mysqlx_error_t * mysqlx_error(void *obj);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get the error message from the object
+  Get the error message from the object.
 
   @param obj the object handle to extract the error information from.
              Supported types are mysqlx_session_t, mysqlx_session_options_t,
@@ -1742,15 +1892,15 @@ PUBLIC_API mysqlx_error_t * mysqlx_error(void *obj);
              mysqlx_stmt_t, mysqlx_result_t, mysqlx_row_t, mysqlx_error_t
 
   @return the character string or NULL if there is no errors.
+
+  @ingroup xapi_diag
 */
 
 PUBLIC_API const char * mysqlx_error_message(void *obj);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get the error message from the object
+  Get the error number from the object.
 
   @param obj the object handle to extract the error information from.
              Supported types are mysqlx_session_t, mysqlx_session_options_t,
@@ -1758,34 +1908,36 @@ PUBLIC_API const char * mysqlx_error_message(void *obj);
              mysqlx_stmt_t, mysqlx_result_t, mysqlx_row_t, mysqlx_error_t
 
   @return the error number or 0 if no error
+
+  @ingroup xapi_diag
 */
 
 PUBLIC_API unsigned int mysqlx_error_num(void *obj);
 
 
 /**
-  @brief MYSQLX API
+  Free the statement handle explicitly.
 
-  @details Free the statement handle explicitly, otherwise it will be done
-           automatically when statement the session is closed.
+  @note Statement handles are also freed automatically when
+  statement's session is closed.
 
   @param stmt the statement handler, which should be freed
 
   @note make sure this function is called if the statement handle
         variable is going to be re-used
+
+  @ingroup xapi_stmt
 */
 
 PUBLIC_API void mysqlx_free(mysqlx_stmt_t *stmt);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Execute a plain SQL query.
+  Execute a plain SQL query.
 
   @param sess session handle
   @param query SQL query
-  @param length length of the query. For NULL-terminated query strings
+  @param query_len length of the query. For NULL-terminated query strings
                 MYSQLX_NULL_TERMINATED can be specified instead of the
                 actual length
 
@@ -1794,6 +1946,8 @@ PUBLIC_API void mysqlx_free(mysqlx_stmt_t *stmt);
           can be obtained using mysqlx_error() function
 
   @note mysqlx_execute() is not needed to execute the query
+
+  @ingroup xapi_sql
 */
 
 PUBLIC_API mysqlx_result_t * mysqlx_sql(mysqlx_session_t *sess,
@@ -1802,13 +1956,11 @@ PUBLIC_API mysqlx_result_t * mysqlx_sql(mysqlx_session_t *sess,
 
 
 /**
-  @brief MYSQLX API
-
-  @details Execute a plain SQL query with parameters
+  Execute a plain SQL query with parameters.
 
   @param sess session handle
   @param query SQL query
-  @param length length of the query. For NULL-terminated query strings
+  @param query_len length of the query. For NULL-terminated query strings
                 MYSQLX_NULL_TERMINATED can be specified instead of the
                 actual length
   @param   ...  - variable parameters list consisting of (type, value) pairs
@@ -1832,6 +1984,8 @@ PUBLIC_API mysqlx_result_t * mysqlx_sql(mysqlx_session_t *sess,
           can be obtained using mysqlx_error() function
 
   @note mysqlx_execute() is not needed to execute the query
+
+  @ingroup xapi_sql
 */
 
 PUBLIC_API mysqlx_result_t * mysqlx_sql_param(mysqlx_session_t *sess,
@@ -1840,10 +1994,9 @@ PUBLIC_API mysqlx_result_t * mysqlx_sql_param(mysqlx_session_t *sess,
 
 
 /**
-  @brief MYSQLX API
+  Execute a table SELECT statement with a WHERE clause.
 
-  @details Execute a table SELECT statement operation with a WHERE clause.
-           All columns will be selected.
+  All columns will be selected.
 
   @param table table handle
   @param criteria a WHERE clause for SELECT
@@ -1853,6 +2006,8 @@ PUBLIC_API mysqlx_result_t * mysqlx_sql_param(mysqlx_session_t *sess,
           can be obtained using mysqlx_error() function
 
   @note mysqlx_execute() is not needed to execute the query
+
+  @ingroup xapi_tbl
 */
 
 PUBLIC_API mysqlx_result_t *
@@ -1860,10 +2015,8 @@ mysqlx_table_select(mysqlx_table_t *table, const char *criteria);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Start and execute a table SELECT statement operation with a WHERE,
-           ORDER BY and LIMIT clauses
+  Execute a table SELECT statement with a WHERE,
+  ORDER BY and LIMIT clauses
 
   @param table table handle
   @param criteria a WHERE clause for SELECT
@@ -1886,6 +2039,8 @@ mysqlx_table_select(mysqlx_table_t *table, const char *criteria);
           can be obtained using mysqlx_error() function
 
   @note mysqlx_execute() is not needed to execute the query
+
+  @ingroup xapi_tbl
 */
 
 PUBLIC_API mysqlx_result_t *
@@ -1894,9 +2049,7 @@ mysqlx_table_select_limit(mysqlx_table_t *table, const char *criteria,
 
 
 /**
-  @brief MYSQLX API
-
-  @details Start and execute a table INSERT operation one row at a time
+  Execute a table INSERT statement with one row.
 
   @param table table handle
   @param ... list of column-value specifications consisting of
@@ -1915,6 +2068,8 @@ mysqlx_table_select_limit(mysqlx_table_t *table, const char *criteria,
           can be obtained using mysqlx_error() function
 
   @note mysqlx_execute() is not needed to execute the query
+
+  @ingroup xapi_tbl
 */
 
 PUBLIC_API mysqlx_result_t *
@@ -1922,12 +2077,10 @@ mysqlx_table_insert(mysqlx_table_t *table, ...);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Start and execute a table UPDATE operation
+  Execute a table UPDATE statement.
 
   @param table table handle
-  @param criterie the WHERE clause for UPDATE
+  @param criteria the WHERE clause for UPDATE
   @param ... list of column-value specifications consisting of
              <column_name, value_type, value> triplets. The list
              should be terminated using PARAM_END.
@@ -1944,6 +2097,8 @@ mysqlx_table_insert(mysqlx_table_t *table, ...);
           can be obtained using mysqlx_error() function
 
   @note mysqlx_execute() is not needed to execute the query
+
+  @ingroup xapi_tbl
 */
 
 PUBLIC_API mysqlx_result_t *
@@ -1953,9 +2108,7 @@ mysqlx_table_update(mysqlx_table_t *table,
 
 
 /**
-  @brief MYSQLX API
-
-  @details Execute a table DELETE statement operation with a WHERE clause
+  Execute a table DELETE statement with a WHERE clause.
 
   @param table table handle
   @param criteria a WHERE clause for DELETE
@@ -1965,6 +2118,8 @@ mysqlx_table_update(mysqlx_table_t *table,
           can be obtained using mysqlx_error() function
 
   @note mysqlx_execute() is not needed to execute the query
+
+  @ingroup xapi_tbl
 */
 
 PUBLIC_API mysqlx_result_t *
@@ -1972,19 +2127,20 @@ mysqlx_table_delete(mysqlx_table_t *table, const char *criteria);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Execute a collection FIND statement operation with a specific find
-           criteria.
+  Execute a collection FIND statement with a specific find
+  criteria.
 
   @param collection collection handle
-  @param criteria criteria for finding documents
+  @param criteria criteria for finding documents; if this parameter is
+                  NULL then all documents are returned
 
   @return Result handle containing the results of FIND.
           NULL is returned only in case of an error. The error details
           can be obtained using mysqlx_error() function
 
   @note mysqlx_execute() is not needed to execute the query
+
+  @ingroup xapi_coll
 */
 
 PUBLIC_API mysqlx_result_t *
@@ -1992,11 +2148,10 @@ mysqlx_collection_find(mysqlx_collection_t *collection, const char *criteria);
 
 
 /**
-  @brief MYSQLX API
+  Add a set of new documents to a collection.
 
-  @details Execute adding a set of new documents into a collection.
-           The document is defined by a JSON string like
-           "{ key_1: value_1, ..., key_N: value_N }"
+  Each document is defined by a JSON string like
+  "{ key_1: value_1, ..., key_N: value_N }"
 
   @param collection collection handle
   @param ... list of parameters containing the character JSON strings
@@ -2009,6 +2164,8 @@ mysqlx_collection_find(mysqlx_collection_t *collection, const char *criteria);
           can be obtained using mysqlx_error() function
 
   @note mysqlx_execute() is not needed to execute the query
+
+  @ingroup xapi_coll
 */
 
 PUBLIC_API mysqlx_result_t *
@@ -2016,8 +2173,7 @@ mysqlx_collection_add(mysqlx_collection_t *collection, ...);
 
 
 /**
-  @brief MYSQLX API
-  @details Set JSON values in a document using collection MODIFY operation.
+  Modify documents in the collection.
 
   @param collection collection handle
   @param criteria criteria for modifying documents
@@ -2042,6 +2198,8 @@ mysqlx_collection_add(mysqlx_collection_t *collection, ...);
           can be obtained using mysqlx_error() function
 
   @note mysqlx_execute() is not needed to execute the query
+
+  @ingroup xapi_coll
 */
 
 PUBLIC_API mysqlx_result_t *
@@ -2050,8 +2208,7 @@ mysqlx_collection_modify_set(mysqlx_collection_t *collection,
 
 
 /**
-  @brief MYSQLX API
-  @details Unset a field in a document using MODIFY operation
+  Unset fields in documents from the collection.
 
   @param collection collection handle
   @param criteria criteria for modifying documents
@@ -2063,6 +2220,8 @@ mysqlx_collection_modify_set(mysqlx_collection_t *collection,
           can be obtained using mysqlx_error() function
 
   @note mysqlx_execute() is not needed to execute the query
+
+  @ingroup xapi_coll
 */
 
 PUBLIC_API mysqlx_result_t *
@@ -2071,18 +2230,22 @@ mysqlx_collection_modify_unset(mysqlx_collection_t *collection,
 
 
 /**
-  @brief MYSQLX API
-  @details Remove a document from a collection that satisfies a given
-           criteria
+  Remove documents from a collection.
+
+  Optionally a criteria which selects documents to be removed can be
+  specifed.
 
   @param collection collection handle
-  @param criteria criteria for removing documents
+  @param criteria criteria for removing documents; if this parameter
+                  is NULL, all documents are removed
 
   @return Result handle containing the result of the operation
           NULL is returned only in case of an error. The error details
           can be obtained using mysqlx_error() function
 
   @note mysqlx_execute() is not needed to execute the query
+
+  @ingroup xapi_coll
 */
 
 PUBLIC_API mysqlx_result_t *
@@ -2090,9 +2253,7 @@ mysqlx_collection_remove(mysqlx_collection_t *collection, const char*criteria);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get a list of schemas
+  Get a list of schemas.
 
   @param sess pointer to the current session handle
   @param schema_pattern schema name pattern to search.
@@ -2107,6 +2268,8 @@ mysqlx_collection_remove(mysqlx_collection_t *collection, const char*criteria);
   @note the list of schema names is returned as a set of rows. Therefore,
         the functins such as mysqlx_store_result() and mysqlx_row_fetch_one()
         could be used.
+
+  @ingroup xapi_sess
 */
 
 PUBLIC_API mysqlx_result_t *
@@ -2114,9 +2277,7 @@ mysqlx_get_schemas(mysqlx_session_t *sess, const char *schema_pattern);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get a list of tables and views
+  Get a list of tables and views in a schema.
 
   @param schema schema handle
   @param table_pattern table name pattern to search.
@@ -2138,6 +2299,8 @@ mysqlx_get_schemas(mysqlx_session_t *sess, const char *schema_pattern);
 
   @note this function does not return table names that represent collections.
         use mysqlx_get_collections() function for getting collections.
+
+  @ingroup xapi_sess
 */
 
 PUBLIC_API mysqlx_result_t *
@@ -2147,9 +2310,7 @@ mysqlx_get_tables(mysqlx_schema_t *schema,
 
 
 /**
-  @brief MYSQLX API
-
-  @details Get a list of collections
+  Get a list of collections in a schema.
 
   @param schema handle
   @param col_pattern collection name pattern to search.
@@ -2164,6 +2325,8 @@ mysqlx_get_tables(mysqlx_schema_t *schema,
   @note the list of table/view names is returned as a set of rows. Therefore,
         the functins such as mysqlx_store_result() and mysqlx_row_fetch_one()
         could be used.
+
+  @ingroup xapi_sess
 */
 
 PUBLIC_API mysqlx_result_t *
@@ -2172,28 +2335,28 @@ mysqlx_get_collections(mysqlx_schema_t *schema,
 
 
 /**
-  @brief MYSQLX API
+  Get the number of warnings generated by a statement.
 
-  @details Get the number of warnings generated by an operation
+  @param res Pointer to mysqlx_result_t handle to get warnings from
 
-   @param res Pointer to mysqlx_result_t handle to get warnings from
-
-   @return the number of warnings returned in the result structure
+  @return the number of warnings returned in the result structure
+  @ingroup xapi_diag
 */
 
 PUBLIC_API unsigned int mysqlx_result_warning_count(mysqlx_result_t *res);
 
 
 /**
-  @brief MYSQLX API
+  Get the next warning from the result.
 
-  @details Get the next warning from the result. The warning pointer returned
-            by a previous call is invalidated.
+  The warning pointer returned by a previous call is invalidated.
 
-   @param res Pointer to mysqlx_result_t handle to get warnings from
+  @param res Pointer to mysqlx_result_t handle to get warnings from
 
-   @return the mysqlx_error_t structure containing info about a warning or
-           NULL if there is no more warnings left to return.
+  @return the mysqlx_error_t structure containing info about a warning or
+          NULL if there is no more warnings left to return.
+
+  @ingroup xapi_diag
 */
 
 PUBLIC_API mysqlx_error_t *
@@ -2201,17 +2364,17 @@ mysqlx_result_next_warning(mysqlx_result_t *res);
 
 
 /**
-  @brief MYSQLX API
+  Get the value generated by the last insert in the table
+  with auto_increment primary key.
 
-  @details Get the value generated by the last insert in the table
-            with auto_increment primary key
+  @param res Pointer to mysqlx_result_t handle to get the auto increment
 
-   @param res Pointer to mysqlx_result_t handle to get the auto increment
+  @return the auto incremented value
 
-   @return the auto incremented value
+  @note with multi-row inserts the function returns the value generated
+        for the first row
 
-   @note with multi-row inserts the function returns the value generated
-         for the first row
+  @ingroup xapi_res
 */
 
 PUBLIC_API uint64_t
@@ -2219,9 +2382,7 @@ mysqlx_get_auto_increment_value(mysqlx_result_t *res);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Begin a transaction for the session
+  Begin a transaction for the session.
 
   @param sess Pointer to mysqlx_session_t structure
 
@@ -2231,6 +2392,8 @@ mysqlx_get_auto_increment_value(mysqlx_result_t *res);
         it is actually executed after the transaction began, but before
         it is committed or rolled back even if this statement operation
         was created before mysqlx_transaction_begin() call
+
+  @ingroup xapi_sess
 */
 
 PUBLIC_API int
@@ -2238,9 +2401,7 @@ mysqlx_transaction_begin(mysqlx_session_t *sess);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Commit a transaction for the session
+  Commit a transaction for the session.
 
   @param sess Pointer to mysqlx_session_t structure
 
@@ -2250,6 +2411,8 @@ mysqlx_transaction_begin(mysqlx_session_t *sess);
         it is actually executed after the transaction began, but before
         it is committed or rolled back even if this statement operation
         was created before mysqlx_transaction_begin() call
+
+  @ingroup xapi_sess
 */
 
 PUBLIC_API int
@@ -2257,9 +2420,7 @@ mysqlx_transaction_commit(mysqlx_session_t *sess);
 
 
 /**
-  @brief MYSQLX API
-
-  @details Rollback a transaction for the session
+  Rollback a transaction for the session.
 
   @param sess Pointer to mysqlx_session_t structure
 
@@ -2269,6 +2430,8 @@ mysqlx_transaction_commit(mysqlx_session_t *sess);
         it is actually executed after the transaction began, but before
         it is committed or rolled back even if this statement operation
         was created before mysqlx_transaction_begin() call
+
+  @ingroup xapi_sess
 */
 
 PUBLIC_API int
@@ -2276,12 +2439,10 @@ mysqlx_transaction_rollback(mysqlx_session_t *sess);
 
 
 /**
-  @brief MYSQLX API
+  Get UUIDs for the documents added to the collection.
 
-  @details Get UUIDs for the documents added to the collection
-           by the last ADD operation. The function can be used for
-           the multi-document inserts. In this case each new generated
-           UUID is returned by a new call to mysqlx_fetch_doc_id().
+  The function can be used for the multi-document inserts. In this case each
+  new generated UUID is returned by a new call to `mysqlx_fetch_doc_id()`.
 
   @param result Pointer to mysqlx_result_t structure returned after
          executing the ADD operation
@@ -2292,41 +2453,43 @@ mysqlx_transaction_rollback(mysqlx_session_t *sess);
 
   @note The UUID result string is valid as long as the result handle is valid.
         Starting a new operation will invalidate it.
+
+  @ingroup xapi_res
 */
 
 PUBLIC_API const char *
 mysqlx_fetch_doc_id(mysqlx_result_t *result);
 
-/* brief MYSQLX API
+/**
+  Allocate a new session configuration data object.
 
-  @details Allocate a mysqlx_session_options_t structure
+  @return handle to the newly allocated configuration data
 
-  @return pointer to a newly allocated mysqlx_session_options_t structure
+  @note The allocated object must be eventually freed by
+        `mysqlx_free_options()` to prevent memory leaks
 
-  @note The mysqlx_session_options_t structure allocated by
-        mysqlx_session_options_new() must be eventually freed by
-        mysqlx_free_options() to prevent memory leaks
+  @ingroup xapi_sess
 */
 
 PUBLIC_API mysqlx_session_options_t * mysqlx_session_options_new();
 
 
-/* brief MYSQLX API
+/**
+  Free a sesion configuration data object.
 
-  @details Free a mysqlx_session_options_t structure
-
-  @param opt pointer to a mysqlx_session_options_t structure
+  @param opt handle to sessin configuartion data object
              that has to be freed
+
+  @ingroup xapi_sess
 */
 
 PUBLIC_API void mysqlx_free_options(mysqlx_session_options_t *opt);
 
 
-/* brief MYSQLX API
+/**
+  Set session configuration options.
 
-  @details Set a value into a mysqlx_session_options_t structure
-
-  @param opt   mysqlx_session_options_t structure
+  @param opt   mysqlx_session_options_t handle
   @param type  option type to set (see mysqlx_opt_type_t enum)
   @param ...   option value/values to set (the function can set more
                than one value)
@@ -2334,24 +2497,27 @@ PUBLIC_API void mysqlx_free_options(mysqlx_session_options_t *opt);
   @return RESULT_OK if option was sucessfully set; RESULT_ERROR
           is set otherwise (use mysqlx_error() to get the error
           information)
+
+  @ingroup xapi_sess
 */
 
 PUBLIC_API int
 mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type, ...);
 
 
-/* brief MYSQLX API
+/**
+  Read session configuration options.
 
-  @details Get a value from a mysqlx_session_options_t structure
-
-  @param opt   mysqlx_session_options_t structure
+  @param opt   mysqlx_session_options_t handle
   @param type  option type to get (see mysqlx_opt_type_t enum)
-  @param ...[out] pointer to a buffer where to return the requested
-                  value
+  @param[out] ...  pointer to a buffer where to return the requested
+                   value
 
   @return RESULT_OK if option was sucessfully read; RESULT_ERROR
           is set otherwise (use mysqlx_error() to get the error
           information)
+
+  @ingroup xapi_sess
 */
 
 PUBLIC_API int
@@ -2359,17 +2525,18 @@ mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
                           ...);
 
 
-/* brief MYSQLX API
-
-  @details Get a schema object and check if it esixts on the server
+/**
+  Get a schema object and optionally check if it esixts on the server.
 
   @param sess  the session handle mysqlx_session_t
   @param schema_name name of the schema
   @param check flag to verify if the schema with the given name
          exists on the server (1 - check, 0 - do not check)
 
-  @return mysqlx_schema_t structure containing the schema context or NULL
+  @return mysqlx_schema_t handle to the schema object or NULL
           if an error occurred or the schema does not exist on the server
+
+  @ingroup xapi_sess
 */
 
 PUBLIC_API mysqlx_schema_t *
@@ -2377,17 +2544,18 @@ mysqlx_get_schema(mysqlx_session_t *sess, const char *schema_name,
                   unsigned int check);
 
 
-/* brief MYSQLX API
-
-  @details Get a collection object and check if it esixts in the schema
+/**
+  Get a collection object and optionally check if it esixts in the schema
 
   @param schema the schema handle mysqlx_schema_t
   @param col_name name of the collection
   @param check flag to verify if the collection with the given name
          exists in the schema (1 - check, 0 - do not check)
 
-  @return mysqlx_collection_t structure containing the collection context or NULL
+  @return mysqlx_collection_t handle to the collection or NULL
           if an error occurred or the collection does not exist in the schema
+
+  @ingroup xapi_coll
 */
 
 PUBLIC_API mysqlx_collection_t *
@@ -2395,17 +2563,18 @@ mysqlx_get_collection(mysqlx_schema_t *schema, const char *col_name,
                       unsigned int check);
 
 
-/* brief MYSQLX API
-
-  @details Get a table object and check if it esixts in the schema
+/**
+  Get a table object and optionally check if it esixts in the schema
 
   @param schema the schema handle mysqlx_schema_t
   @param tab_name name of the table
   @param check flag to verify if the table with the given name
          exists in the schema (1 - check, 0 - do not check)
 
-  @return mysqlx_table_t structure containing the collection context or NULL
+  @return mysqlx_table_t handle to the table or NULL
           if an error occurred or the table does not exist in the schema
+
+  @ingroup xapi_tbl
 */
 
 PUBLIC_API mysqlx_table_t *
@@ -2415,5 +2584,7 @@ mysqlx_get_table(mysqlx_schema_t *schema, const char *tab_name,
 #ifdef	__cplusplus
 }
 #endif
+
+/**@}*/
 
 #endif /* __MYSQLX_H__*/

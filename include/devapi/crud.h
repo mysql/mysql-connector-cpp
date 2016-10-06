@@ -127,6 +127,8 @@ struct Limit_impl : public Statement_impl
 };
 
 
+/// TODO
+
 template <class Res>
 class Offset
   : public Statement<Res>
@@ -180,6 +182,8 @@ struct LimitRet<Res,false>
   typedef Statement<Res> type;
 };
 
+
+/// TODO
 
 template <class Res, bool with_offset>
 class Limit

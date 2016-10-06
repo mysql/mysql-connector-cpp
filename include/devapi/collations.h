@@ -38,11 +38,14 @@ namespace mysqlx {
 
 /**
   This macro defines a list of known MySQL character set names. For each
-  character set name CS listed here, there is CharacterSet::CS constant
-  in the CharacterSet::Id enumeration.
+  character set name CS listed here, there is `CharacterSet::CS` constant
+  in the CharacterSet enumeration. For example constant `CharacterSet::latin1`
+  is the id of the "latin1" character set.
+
+  @ingroup devapi_res
 */
 
-#define CS_LIST(X)  \
+#define CS_LIST(X) \
   X(big5)  \
   X(dec8)  \
   X(cp850)  \
@@ -92,9 +95,9 @@ namespace mysqlx {
 #endif
 
 
-/**
+/*
   Enumeration of known character sets. For each character set CS listed
-  in CS_LIST() macro, there is CharacterSet:CS constant in this
+  in CS_LIST() macro, there is CharacterSet::CS constant in this
   enumeration.
 */
 
@@ -107,6 +110,12 @@ enum class CharacterSet : unsigned short
 
 
 #define CS_NAME_SWITCH(CS)  case CharacterSet::CS: return #CS;
+
+/**
+  Returns name of a character set given by its id.
+
+  @ingroup devapi_res
+*/
 
 inline
 const char* characterSetName(CharacterSet id)
@@ -122,6 +131,14 @@ const char* characterSetName(CharacterSet id)
 
 /**
   Structure that provies information about character set collation.
+
+  For each known collation COLL over character set CS, there is static object
+  `Collation<CS>::%COLL` of type `CollationInfo` which describes
+  collation COLL. For example `Collatin<CharacterSet::latin1>::%swedish_ci` is
+  an `CollationInfo` object which describes the `swedish_ci` collation over
+  `latin1` character set.
+
+  @ingroup devapi_res
 */
 
 struct PUBLIC_API CollationInfo
@@ -176,12 +193,6 @@ public:
 };
 
 
-/**
-  For each known collation COLL over character set CS, structure Collation<CS>
-  contains static constat named COLL of type CollationInfo which describes
-  given collation. For example Collatin<CharacterSet::latin1>::swedish_ci.
-*/
-
 template <CharacterSet CS> struct Collation;
 
 
@@ -192,6 +203,12 @@ template <CharacterSet CS> struct Collation;
   CS. ID is the MySQL id number for the collation. CASE is one of ci, cs or bin
   and indicates whether it is case insesitive, sensitive or binary collation,
   respectively.
+*/
+
+/**
+  @macro
+  Macro defining known collations for a given character set.
+  @{
 */
 
 #define COLLATIONS_big5(X)  \
@@ -497,6 +514,8 @@ template <CharacterSet CS> struct Collation;
   X(gb18030,248,chinese,ci)  \
   X(gb18030,249,bin,bin)  \
   X(gb18030,250,unicode_520,ci)  \
+
+/**@}*/
 
 
 /*

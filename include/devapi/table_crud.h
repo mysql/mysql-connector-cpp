@@ -151,6 +151,8 @@ namespace internal {
   the same number of values. The column count should match
   the one in insert(c1,...) call. For insert() without column
   list, it should be ?
+
+  @ingroup devapi_op
 */
 
 class PUBLIC_API TableInsert
@@ -315,13 +317,19 @@ public:
     CATCH_AND_WRAP
   }
 
+  ///@cond IGNORED
   struct INTERNAL Access;
   friend Access;
   friend internal::TableInsertBase;
+  ///@endcond
 };
 
 
 namespace internal {
+
+  /**
+    Base class which defines method that crate table insert operations.
+  */
 
   class PUBLIC_API TableInsertBase : public virtual TableOpBase
   {
@@ -454,6 +462,8 @@ namespace internal {
   For each row the operation can return all fields from the
   row or a set of values defined by projection expressions
   specified when operation was created.
+
+  @ingroup devapi_op
 */
 
 DLL_WARNINGS_PUSH
@@ -534,11 +544,17 @@ DIAGNOSTIC_POP
     return *this;
   }
 
+  ///@cond IGNORED
   friend internal::TableSelectBase;
+  ///@endcond
 };
 
 
 namespace internal {
+
+  /**
+    Base class which defines methods that crate table queries.
+  */
 
   class PUBLIC_API TableSelectBase : public virtual TableOpBase
   {
@@ -585,6 +601,8 @@ namespace internal {
   Apart from clauses defined by `TableSort`, this class defines
   .set() clause for specifying new field values and .where()
   clause for narrowing set of rows to be modified.
+
+  @ingroup devapi_op
 */
 
 class PUBLIC_API TableUpdate
@@ -634,11 +652,17 @@ DIAGNOSTIC_POP
     return *this;
   }
 
+  ///@cond IGNORED
   friend internal::TableUpdateBase;
+  ///@endcond
 };
 
 
 namespace internal {
+
+  /**
+    Base class which defines methods that crate table update operations.
+  */
 
   class PUBLIC_API TableUpdateBase : public virtual TableOpBase
   {
@@ -683,6 +707,8 @@ namespace internal {
 
   Apart from clauses defined by `TableSort` this class defines
   .where() clause which selects rows to be removed.
+
+  @ingroup devapi_op
 */
 
 
@@ -727,11 +753,17 @@ DIAGNOSTIC_POP
     return *this;
   }
 
+  ///@cond IGNORED
   friend internal::TableRemoveBase;
+  ///@endcond
 };
 
 
 namespace internal {
+
+  /**
+    Base class which defines methods that crate table remove operations.
+  */
 
   class PUBLIC_API TableRemoveBase : public virtual TableOpBase
   {

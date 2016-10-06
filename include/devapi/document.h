@@ -55,6 +55,8 @@ class DocResult;
   Field object/values represent fields in a document.
 
   TODO: _fld suffix
+
+  @ingroup devapi_res
 */
 
 class PUBLIC_API Field
@@ -110,6 +112,8 @@ public:
 
   @note Internal document implementation is shared among DbDoc instances
   and thus using DbDoc objects should be cheap.
+
+  @ingroup devapi_res
 */
 
 class PUBLIC_API DbDoc
@@ -239,6 +243,8 @@ public:
   in Value object, the original value can be destroyed without invalidating
   the copy. The only exception is RAW Value, which does not store the
   bytes it describes - it only stores pointers describing a region of memory.
+
+  @ingroup devapi_res
 */
 
 class PUBLIC_API Value : public internal::Printable
@@ -565,7 +571,7 @@ public:
 };
 
 
-/*
+/**
   Function which indicates that a given string should be treated
   as expression.
 
@@ -581,8 +587,7 @@ public:
 
   will return true/false, depending on the value of the expression.
 
-  TODO: Add this to doxygen docs somehow (without exposing internal
-  namespace).
+  @ingroup devapi
 */
 
 template <typename V>

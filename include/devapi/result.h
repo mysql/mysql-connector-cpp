@@ -212,6 +212,12 @@ namespace internal {
 } // internal
 
 
+/**
+  A warning that can be reported when executing queries or statements.
+
+  @ingroup devapi
+*/
+
 class PUBLIC_API Warning : public internal::Printable
 {
 public:
@@ -274,6 +280,10 @@ void Warning::print(std::ostream &out) const
 namespace internal {
 
   class XSession_base;
+
+  /**
+    Base for result classes.
+  */
 
   DLL_WARNINGS_PUSH
 
@@ -367,6 +377,8 @@ namespace internal {
 
   public:
 
+    ///@cond IGNORED
+
     friend mysqlx::internal::XSession_base;
     friend mysqlx::Result;
     friend mysqlx::RowResult;
@@ -376,6 +388,8 @@ namespace internal {
 
     struct INTERNAL Access;
     friend Access;
+
+    ///@endcond
   };
 
 }
@@ -397,6 +411,8 @@ namespace internal {
 
   @todo Implement other methods for getting information about
   the result specified by DevAPI.
+
+  @ingroup devapi_res
 */
 
 class PUBLIC_API Result : public internal::BaseResult
@@ -461,11 +477,14 @@ private:
 // --------------------------
 
 /**
-List of types defined by DevAPI. For each type TTT in this list
-there is corresponding enumeration value Type::TTT.
+  List of types defined by DevAPI. For each type TTT in this list
+  there is corresponding enumeration value `Type::TTT`. For example
+  constant `Type::INT` represents the "INT" type.
 
-Note: The class name declared for each type is ignored for now
-- it is meant for future extensions.
+  @note The class name declared for each type is ignored for now
+  -- it is meant for future extensions.
+
+  @ingroup devapi_res
 */
 
 #define TYPE_LIST(X) \
@@ -500,6 +519,12 @@ enum class Type : unsigned short
 
 #define TYPE_NAME(T,X) case Type::T: return #T;
 
+/**
+  Return name of a given type.
+
+  @ingroup devapi_res
+*/
+
 inline
 const char* typeName(Type t)
 {
@@ -519,7 +544,9 @@ std::ostream& operator<<(std::ostream &out, Type t)
 
 
 /**
-Class providing meta-data for a single result column.
+  Class providing meta-data for a single result column.
+
+  @ingroup devapi_res
 */
 
 class PUBLIC_API Column : public internal::Printable
@@ -586,6 +613,8 @@ class RowResult;
 
   @sa `Value` class.
   @todo Support for iterating over row fields with range-for loop.
+
+  @ingroup devapi_res
 */
 
 class PUBLIC_API Row
@@ -702,6 +731,8 @@ public:
 
 /**
   %Result of an operation that returns rows.
+
+  @ingroup devapi_res
 */
 
 
@@ -956,6 +987,8 @@ private:
   result if there is any.
 
   @todo implement `nextResult()` and other methods specified by DevAPI.
+
+  @ingroup devapi_res
 */
 
 class PUBLIC_API SqlResult : public RowResult
@@ -1010,6 +1043,8 @@ private:
 
 /**
   %Result of an operation that returns documents.
+
+  @ingroup devapi_res
 */
 
 class PUBLIC_API DocResult // : public internal::BaseResult

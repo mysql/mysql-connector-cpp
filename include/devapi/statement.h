@@ -203,11 +203,11 @@ public:
 #if 0
 
   /*
-  Currently protocol supports binding only to scalar values,
-  not arrays or documents.
+    Currently protocol supports binding only to scalar values,
+    not arrays or documents.
 
-  TODO: Add this overload when binding to arrays is supported
-  in the protocol.
+    TODO: Add this overload when binding to arrays is supported
+    in the protocol.
   */
 
   template <typename Iterator>
@@ -252,6 +252,8 @@ struct SqlStatement_impl : public Executable_impl
 
   SqlStatement's method `execute` returns result of type
   `SqlResult`.
+
+  @ingroup devapi_op
 */
 
 DLL_WARNINGS_PUSH

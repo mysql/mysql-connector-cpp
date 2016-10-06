@@ -197,7 +197,7 @@ namespace internal {
   };
 
 
-  /*
+  /**
     Class which defines various variants of `add()` method.
 
     This class defines `add()` methods that append new documents to the
@@ -274,11 +274,11 @@ namespace internal {
     /**
       Add all documents within given container.
 
-      Any container type for which std::begin()/std::end() are defined
+      Any container type for which `std::begin()`/`std::end()` are defined
       should work.
 
-      Note: we use enable_if to remove ambiguity between this overload
-      and the one which adds a single document: add(doc). Thus this
+      Note: we use `enable_if<>` to remove ambiguity between this overload
+      and the one which adds a single document: `add(doc)`. Thus this
       overload is enabled only if type Container is not a document type.
     */
 
@@ -332,6 +332,7 @@ namespace internal {
     virtual void add_json(const string&) = 0;
   };
 
+  /// TODO
   class CollectionAddBase;
 
 }  // internal
@@ -344,6 +345,8 @@ namespace internal {
   call `do_add()` to append documents to the list one by one. This
   method, in turn, passes these documents to the internal
   implementation object.
+
+  @ingroup devapi_op
 */
 
 DLL_WARNINGS_PUSH
@@ -396,13 +399,16 @@ private:
     get_impl()->add_json(buf.str());
   }
 
+  ///@cond IGNORED
   friend internal::CollectionAddBase;
   friend internal::CollectionAddInterface<CollectionAdd>;
   friend internal::CollectionAddInterface<CollectionAdd&>;
+  ///@endcond
 };
 
 
 namespace internal {
+
 
   class PUBLIC_API CollectionAddBase
     : public CollectionAddInterface<mysqlx::CollectionAdd>
@@ -421,7 +427,7 @@ namespace internal {
 
 namespace internal {
 
-  /*
+  /**
     Base class defining various forms of CRUD .sort() clause.
 
     Note: the actual job of adding sort specification to the underlying
@@ -497,6 +503,12 @@ namespace internal {
 */
 
 
+/**
+  Class representing operation which removes documents from a collection.
+
+  @ingroup devapi_op
+*/
+
 class PUBLIC_API CollectionRemove
   : public internal::CollectionSort<Result,false>
 {
@@ -535,6 +547,10 @@ DIAGNOSTIC_POP
 
 
 namespace internal {
+
+  /**
+    Base class defining methods which create remove statements.
+  */
 
   class PUBLIC_API CollectionRemoveBase
     : public virtual CollectionOpBase
@@ -586,6 +602,8 @@ namespace internal {
   Apart from all the methods inherited from `CollectionSort` it defines
   .fields() clauses which optionally specify final transformation of
   the returned documents.
+
+  @ingroup devapi_op
 */
 
 DLL_WARNINGS_PUSH
@@ -692,6 +710,10 @@ public:
 
 namespace internal {
 
+  /**
+    Base class defining methods which create document queries.
+  */
+
   class PUBLIC_API CollectionFindBase
     : public virtual CollectionOpBase
   {
@@ -770,6 +792,8 @@ namespace internal {
    Apart from all the methods inherited from `CollectionSort` it defines
    various clauses which specify modifications to be performed on each
    document.
+
+   @ingroup devapi_op
 */
 
 class PUBLIC_API CollectionModify
@@ -857,11 +881,17 @@ DIAGNOSTIC_POP
     CATCH_AND_WRAP
   }
 
+  ///@cond IGNORED
   friend internal::CollectionModifyBase;
+  ///@endcond
 };
 
 
 namespace internal {
+
+  /**
+    Base class defining methods which create document modifying operations.
+  */
 
   class PUBLIC_API CollectionModifyBase
     : public virtual CollectionOpBase

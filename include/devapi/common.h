@@ -25,6 +25,7 @@
 #ifndef MYSQLX_COMMON_H
 #define MYSQLX_COMMON_H
 
+
 #include "../mysql_common.h"
 #include <string>
 #include <stdexcept>
@@ -91,6 +92,8 @@ struct List_init
   used by MySQL.
 
   Currently only utf-8 encoding is supported.
+
+  @ingroup devapi_aux
 */
 
 class string : public std::wstring
@@ -176,6 +179,8 @@ typedef unsigned long row_count_t;
   std::get_temporary_buffer(), as follows:
 
     bytes buf = std::get_temporary_buffer<byte>(size);
+
+  @ingroup devapi_aux
 */
 
 class bytes : public std::pair<byte*, size_t>
@@ -297,9 +302,15 @@ public:
 
 using std::out_of_range;
 
-/*
+/**
+  Base class for connector errors.
+
+  @internal
   TODO: Derive from std::system_error and introduce proper
   error codes.
+  @endinternal
+
+  @ingroup devapi
 */
 
 DLL_WARNINGS_PUSH
