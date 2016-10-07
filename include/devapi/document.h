@@ -285,16 +285,6 @@ public:
   Value(bool);
   Value(const DbDoc& doc);
 
-  /*
-    Note: These overloads are needed to disambiguate constructor
-    resolution.
-  */
-
-  Value(int x) : Value((int64_t)x) {}
-  Value(unsigned x) : Value((uint64_t)x) {}
-  Value(long x) : Value((int64_t)x) {}
-  Value(unsigned long x) : Value((uint64_t)x) {}
-
   Value(const std::initializer_list<Value> &list)
     : m_type(ARRAY)
   {
@@ -309,6 +299,65 @@ public:
   }
 
   ///@}
+
+  /*
+    Note: These templates are needed to disambiguate constructor resolution
+    for integer types.
+  */
+
+  Value(const Value&) = default;
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+
+  Value(Value&&) = default;
+
+#else
+
+  Value(Value &&other)
+  {
+    *this = std::move(other);
+  }
+
+#endif
+
+  template <
+    typename T,
+    typename std::enable_if<std::is_signed<T>::value>::type* = nullptr
+  >
+  Value(T x)
+    : Value(static_cast<int64_t>(x))
+  {}
+
+  template <
+    typename T,
+    typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr
+  >
+  Value(T x)
+    : Value(static_cast<uint64_t>(x))
+  {}
+
+  /*
+    Assignment operator is implemented using constructors.
+  */
+
+  Value& operator=(const Value&) = default;
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+
+ Value& operator=(Value&&) = default;
+
+#else
+
+  Value& operator=(Value&&);
+
+#endif
+
+  template<typename T>
+  Value& operator=(T x)
+  {
+    *this = Value(x);
+    return *this;
+  }
 
 private:
 
@@ -459,6 +508,29 @@ public:
 };
 
 static const Value nullvalue;
+
+
+#if defined(_MSC_VER) && _MSC_VER < 1900
+
+inline
+Value& Value::operator=(Value &&other)
+{
+  m_type = other.m_type;
+  m_val =  other.m_val;
+
+  switch (m_type)
+  {
+  case STRING: m_str = std::move(other.m_str); break;
+  case DOCUMENT: m_doc = std::move(other.m_doc); break;
+  case RAW: m_raw = std::move(other.m_raw); break;
+  case ARRAY: m_arr = std::move(other.m_arr); break;
+  default: break;
+  }
+
+  return *this;
+}
+
+#endif
 
 
 namespace internal {
