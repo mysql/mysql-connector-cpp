@@ -1,3 +1,27 @@
+/*
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ *
+ * The MySQL Connector/C++ is licensed under the terms of the GPLv2
+ * <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+ * MySQL Connectors. There are special exceptions to the terms and
+ * conditions of the GPLv2 as it is applied to this software, see the
+ * FLOSS License Exception
+ * <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+ */
+
 #include <stdio.h>
 #include <mysql_xapi.h>
 
@@ -29,7 +53,6 @@
 int main(int argc, const char* argv[])
 {
   mysqlx_session_t  *sess;
-  mysqlx_error_t    *error = NULL;
   mysqlx_stmt_t     *crud;
   mysqlx_result_t   *res;
   mysqlx_row_t      *row;
@@ -147,7 +170,7 @@ int main(int argc, const char* argv[])
   RESULT_CHECK(res, table);
 
   printf("\n\nReading Rows:");
-  while (row = mysqlx_row_fetch_one(res))
+  while ((row = mysqlx_row_fetch_one(res)))
   {
     int64_t v_sint2 = 0;
     uint64_t v_uint2 = 0;
@@ -161,11 +184,11 @@ int main(int argc, const char* argv[])
 
     IS_OK(mysqlx_get_sint(row, 0, &v_sint2), crud);
     col_name = mysqlx_column_get_name(res, 0);
-    printf(format_64, col_name, v_sint2);
+    printf(format_64, col_name, (long long int)v_sint2);
 
     IS_OK(mysqlx_get_uint(row, 1, &v_uint2), crud);
     col_name = mysqlx_column_get_name(res, 1);
-    printf(format_64, col_name, v_uint2);
+    printf(format_64, col_name, (long long int)v_uint2);
 
     IS_OK(mysqlx_get_float(row, 2, &v_float2), crud);
     col_name = mysqlx_column_get_name(res, 2);
@@ -182,4 +205,5 @@ int main(int argc, const char* argv[])
 
   mysqlx_session_close(sess);
   printf("\nSession closed");
+  return 0;
 }

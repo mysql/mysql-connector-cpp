@@ -13,6 +13,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
+remove_definitions(-DCONCPP_BUILD_STATIC)
+remove_definitions(-DCONCPP_BUILD_SHARED)
+if(BUILD_STATIC)
+  add_definitions(-DSTATIC_CONCPP)
+endif()
 
 ADD_NG_TEST(xapi-t xapi_crud-t.cc xapi-t.cc)
 

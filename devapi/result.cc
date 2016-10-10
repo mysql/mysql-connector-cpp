@@ -1066,6 +1066,20 @@ class internal::BaseResult::Impl
     delete m_reply;
   }
 
+  /*
+    Discard the CDK reply object owned by the implementation. This
+    is called when the corresponding session is about to be closed
+    and the reply object will be no longer valid.
+  */
+
+  void discard_reply()
+  {
+    if (!m_reply)
+      return;
+
+    delete m_reply;
+    m_reply = NULL;
+  }
 
   /*
     Read next row from the cursor. Returns NULL if there are no
@@ -1093,10 +1107,12 @@ class internal::BaseResult::Impl
   {
     if (!m_reply)
       THROW("Attempt to get warning count for empty result");
+    const_cast<Impl*>(this)->load_warnings();
     return m_reply->entry_count(cdk::api::Severity::WARNING);
   }
 
   std::vector<Warning> m_warnings;
+  bool m_all_warnings = false;
 
   Warning get_warning(unsigned pos) const
   {
@@ -1174,8 +1190,33 @@ struct Warning::Access
 
 void Result::Impl::load_warnings()
 {
-  if (!m_warnings.empty())
+  assert(m_reply);
+
+  /*
+    Flag m_all_warnings tells if all warnings for this result have
+    been collected in m_warnings. If this is the case then there is
+    nothing to do.
+
+    Otherwise we copy currently available warnings to m_warnings and
+    check if complete reply has been processed (m_reply->has_results()
+    returns false). In that case we can set m_all_warnings to true,
+    because we know that no more warnings will be reported. Otherwise
+    the flag remains false and we will re-load warnings on a next call.
+    This way newly reported warnings (if any) will land in m_warnings
+    list.
+
+    Note: A better handling of warnings would be with asynchronous
+    notifications about new warnings which would be appended to m_warnings
+    list. But this is not yet implemented in CDK.
+  */
+
+  if (m_all_warnings)
     return;
+
+  if (!m_reply->has_results())
+    m_all_warnings = true;
+
+  m_warnings.clear();
 
   auto &it = m_reply->get_entries(cdk::api::Severity::WARNING);
 
@@ -1244,8 +1285,12 @@ internal::BaseResult::BaseResult(XSession_base *sess,
 internal::BaseResult::~BaseResult()
 {
   try {
-    if (m_sess)
+    if (m_sess && m_sess->m_impl)
       m_sess->deregister_result(this);
+  }
+  catch (...) {}
+
+  try {
     if (m_owns_impl)
       delete m_impl;
   }
@@ -1255,6 +1300,9 @@ internal::BaseResult::~BaseResult()
 
 void mysqlx::internal::BaseResult::init(mysqlx::internal::BaseResult &&init_)
 {
+  if (m_impl && m_owns_impl)
+    delete m_impl;
+
   m_pos = 0;
   m_impl = init_.m_impl;
   if (!init_.m_owns_impl)
@@ -1288,6 +1336,30 @@ internal::BaseResult::get_impl() const
 }
 
 
+/*
+  This method is called when the result object is deregistered from
+  the session (so that it is no longer the active result of that
+  session).
+
+  We do cleanups here to make the result object independent from the
+  session. Derived classes should cache pending results so that they
+  can be accessed without the session.
+*/
+
+void internal::BaseResult::deregister_notify()
+{
+  assert(m_impl);
+
+  // Let derived object do its own cleanup
+  deregister_cleanup();
+
+  // Discard CDK reply object which is about to be invalidated.
+  m_impl->discard_reply();
+
+  m_sess = NULL;
+}
+
+
 unsigned
 internal::BaseResult::getWarningCount() const
 {
@@ -1300,6 +1372,12 @@ Warning internal::BaseResult::getWarning(unsigned pos)
   return get_impl().get_warning(pos);
 }
 
+internal::List_initializer<internal::BaseResult>
+internal::BaseResult::getWarnings()
+{
+  get_impl().load_warnings();
+  return List_initializer<BaseResult>(*this);
+};
 
 /*
   Result
@@ -1309,13 +1387,17 @@ Warning internal::BaseResult::getWarning(unsigned pos)
 
 uint64_t Result::getAffectedItemsCount() const
 {
-  return get_impl().get_affected_rows();
+  try {
+    return get_impl().get_affected_rows();
+  } CATCH_AND_WRAP
 }
 
 
 uint64_t Result::getAutoIncrementValue() const
 {
-  return get_impl().get_auto_increment();
+  try {
+    return get_impl().get_auto_increment();
+  } CATCH_AND_WRAP
 }
 
 

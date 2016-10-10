@@ -24,7 +24,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <climits>
 #include "test.h"
+
 
 TEST_F(xapi, store_result_select)
 {
@@ -208,13 +210,14 @@ TEST_F(xapi, warnings_test)
   mysqlx_result_t *res;
   mysqlx_error_t *warn;
   mysqlx_schema_t *schema;
-  mysqlx_table_t *table;
+  mysqlx_table_t *table, *table2;
 
   int warn_count = 0;
 
   authenticate();
 
   exec_sql("CREATE TABLE cc_api_test.warn_tab (a TINYINT NOT NULL, b CHAR(4))");
+  exec_sql("CREATE TABLE cc_api_test.warn_tab2 (a bigint,b int unsigned not NULL,c char(4),d decimal(2,1))");
   exec_sql("SET sql_mode=''"); // We want warnings, not errors
 
   EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_api_test", 1)) != NULL);
@@ -236,6 +239,33 @@ TEST_F(xapi, warnings_test)
     ++warn_count;
   }
   EXPECT_EQ(3, warn_count);
+
+  mysqlx_session_close(get_session());
+
+  authenticate();
+
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_api_test", 1)) != NULL);
+  EXPECT_TRUE((table2 = mysqlx_get_table(schema, "warn_tab2", 1)) != NULL);
+  EXPECT_TRUE((res = mysqlx_table_insert(table2, "a", PARAM_SINT(1), "b", PARAM_UINT(10),
+                            "c", PARAM_STRING("a"), "d", PARAM_NULL(), PARAM_END)) != NULL);
+  EXPECT_TRUE((res = mysqlx_sql_param(get_session(),
+               "SELECT (`c` / ?),(`a` / 0),(1 / `b`),(`a` / ?) FROM " \
+               "`cc_api_test`.`warn_tab2` ORDER BY (`c` / ?)",
+               MYSQLX_NULL_TERMINATED, PARAM_SINT(0), PARAM_STRING("x"),
+               PARAM_SINT(0), PARAM_END)) != NULL);
+
+  /* All rows have to be read before getting warnings */
+  mysqlx_store_result(res, NULL);
+
+  EXPECT_EQ(7, mysqlx_result_warning_count(res));
+  warn_count = 0;
+  while ((warn = mysqlx_result_next_warning(res)) != NULL)
+  {
+    printf("\nWarning: %d %s", mysqlx_error_num(warn), mysqlx_error_message(warn));
+    ++warn_count;
+  }
+  EXPECT_EQ(7, warn_count);
+
 }
 
 
@@ -524,6 +554,10 @@ TEST_F(xapi, doc_id_test)
   size_t json_len = 0;
 
   authenticate(NULL, NULL, "cc_api_test");
+
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_drop(get_session(), "cc_api_test"));
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_create(get_session(), "cc_api_test"));
+
   EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_api_test", 1)) != NULL);
   EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, "doc_id_test"));
 
@@ -555,4 +589,67 @@ TEST_F(xapi, doc_id_test)
     EXPECT_TRUE(strstr(json_string, id_buf[i]) != NULL);
     ++i;
   }
+
+  /*
+    Test that non-string document id triggers expected error.
+  */
+
+  res = mysqlx_collection_add(collection, "{\"_id\": 127}", NULL);
+  EXPECT_EQ(NULL, res);
+  printf("\nExpected error: %s", mysqlx_error_message(collection));
+
+  res = mysqlx_collection_add(collection, "{\"_id\": 12.7}", NULL);
+  EXPECT_EQ(NULL, res);
+  printf("\nExpected error: %s", mysqlx_error_message(collection));
+
+  CRUD_CHECK(mysqlx_collection_add(collection, "{\"_id\": \"127\"}", NULL), collection);
+}
+
+
+TEST_F(xapi, myc_344_sql_error_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  mysqlx_result_t *res;
+  mysqlx_schema_t *schema;
+  mysqlx_table_t *table;
+  mysqlx_row_t *row;
+  const char *err_msg;
+  int64_t v1 = LLONG_MIN;
+  int64_t v2 = LLONG_MAX;
+  int64_t v = 0;
+  int num = 0;
+
+  authenticate();
+
+  mysqlx_schema_create(get_session(), "cc_api_test");
+  schema = mysqlx_get_schema(get_session(), "cc_api_test", 1);
+  mysqlx_table_drop(schema, "myc_344");
+  exec_sql("CREATE TABLE cc_api_test.myc_344(b bigint)");
+
+  table = mysqlx_get_table(schema, "myc_344", 1);
+
+  res = mysqlx_table_insert(table, "b", PARAM_SINT(v1), PARAM_END);
+  EXPECT_TRUE(res != NULL);
+  res = mysqlx_table_insert(table, "b", PARAM_SINT(v2), PARAM_END);
+  EXPECT_TRUE(res != NULL);
+
+  res = mysqlx_sql(get_session(), "SELECT b+1000 from cc_api_test.myc_344", MYSQLX_NULL_TERMINATED);
+  EXPECT_TRUE(mysqlx_error_message(res) == NULL);
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    switch (num)
+    {
+      case 0:
+        EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &v));
+        EXPECT_EQ(v1 + 1000, v);
+        break;
+      default:
+        FAIL(); // No more rows expected
+    }
+    ++num;
+  }
+  EXPECT_TRUE((err_msg = mysqlx_error_message(res)) != NULL);
+  printf("\nExpected error: %s\n", err_msg);
 }

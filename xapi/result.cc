@@ -100,7 +100,8 @@ mysqlx_result_t::mysqlx_result_struct(mysqlx_stmt_t &parent, cdk::Reply &reply) 
                                   m_row_proc(NULL),
                                   m_crud(parent),
                                   m_store_result(false),
-                                  m_filter_mask(0)
+                                  m_filter_mask(0),
+                                  m_current_id_index(0)
 {
   init_result(true);
 }
@@ -110,7 +111,8 @@ bool mysqlx_result_t::init_result(bool wait)
   if (wait)
     m_reply.wait();
 
-  m_warning_iter = NULL;
+  m_current_warning_index = 0;
+  m_current_error_index = 0;
 
   if (m_reply.has_results())
   {
@@ -513,6 +515,11 @@ uint64_t mysqlx_result_t::get_auto_increment_value()
 
 uint32_t mysqlx_result_t::get_warning_count()
 {
+  /*
+    Warnings are at the end of the resultset.
+    Getting them requires finishing all pending reads.
+  */
+  m_reply.wait();
   return m_reply.entry_count(cdk::foundation::api::Severity::WARNING);
 }
 
@@ -531,19 +538,53 @@ const char * mysqlx_result_t::get_next_doc_id()
   return m_doc_id_list[m_current_id_index - 1].data();
 }
 
+mysqlx_error_t * mysqlx_result_t::get_error()
+{
+  mysqlx_error_t *err = Mysqlx_diag::get_error();
+  
+  if (err)
+    return err; // return the error if there is any
+
+  // Otherwise the error might be pending
+  m_reply.wait();
+  if (m_reply.entry_count() > m_current_error_index)
+  {
+    cdk::foundation::Diagnostic_iterator *m_iter;
+    uint32_t num = 0;
+    m_iter = &(m_reply.get_entries(cdk::foundation::api::Severity::ERROR));
+
+    while (m_iter->next())
+    {
+      if (++num > m_current_error_index)
+      {
+        m_current_error_index = num;
+        m_current_error.reset(new mysqlx_error_t(m_iter->entry().get_error(), true));
+        return m_current_error.get();
+      }
+    }
+  }
+
+  return NULL;
+}
+
 
 mysqlx_error_t * mysqlx_result_t::get_next_warning()
 {
-  if (get_warning_count())
+  if (get_warning_count() > m_current_warning_index)
   {
-    if (m_warning_iter == NULL)
-      m_warning_iter = &(m_reply.get_entries(cdk::foundation::api::Severity::WARNING));
-    if (m_warning_iter->next())
-      m_current_warning.reset(new mysqlx_error_t(m_warning_iter->entry().get_error(), true));
-    else
-      m_current_warning.release();
+    cdk::foundation::Diagnostic_iterator *m_iter;
+    uint32_t num = 0;
+    m_iter = &(m_reply.get_entries(cdk::foundation::api::Severity::WARNING));
 
-    return m_current_warning.get();
+    while (m_iter->next())
+    {
+      if (++num > m_current_warning_index)
+      {
+        m_current_warning_index = num;
+        m_current_warning.reset(new mysqlx_error_t(m_iter->entry().get_error(), true));
+        return m_current_warning.get();
+      }
+    }
   }
 
   return NULL;

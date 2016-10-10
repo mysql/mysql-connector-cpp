@@ -129,7 +129,7 @@ namespace internal {
     is performed.
   */
 
-  class CollectionOpBase
+  class PUBLIC_API CollectionOpBase
   {
   protected:
 
@@ -346,10 +346,15 @@ namespace internal {
   implementation object.
 */
 
-class CollectionAdd
+DLL_WARNINGS_PUSH
+
+class PUBLIC_API CollectionAdd
   : public virtual Executable<Result>
   , public internal::CollectionAddInterface<CollectionAdd&>
 {
+
+DLL_WARNINGS_POP
+
 public:
 
   /**
@@ -399,7 +404,7 @@ private:
 
 namespace internal {
 
-  class CollectionAddBase
+  class PUBLIC_API CollectionAddBase
     : public CollectionAddInterface<mysqlx::CollectionAdd>
     , public virtual CollectionOpBase
   {
@@ -492,7 +497,7 @@ namespace internal {
 */
 
 
-class CollectionRemove
+class PUBLIC_API CollectionRemove
   : public internal::CollectionSort<Result,false>
 {
 public:
@@ -531,7 +536,7 @@ DIAGNOSTIC_POP
 
 namespace internal {
 
-  class CollectionRemoveBase
+  class PUBLIC_API CollectionRemoveBase
     : public virtual CollectionOpBase
   {
 
@@ -583,9 +588,14 @@ namespace internal {
   the returned documents.
 */
 
-class CollectionFind
+DLL_WARNINGS_PUSH
+
+class PUBLIC_API CollectionFind
   : public internal::CollectionSort<DocResult, true>
 {
+
+DLL_WARNINGS_POP
+
 protected:
 
   typedef internal::Proj_impl Impl;
@@ -675,14 +685,14 @@ public:
     return fields(rest...);
   }
 
-  struct Access;
+  struct INTERNAL Access;
   friend Access;
 };
 
 
 namespace internal {
 
-  class CollectionFindBase
+  class PUBLIC_API CollectionFindBase
     : public virtual CollectionOpBase
   {
   public:
@@ -762,7 +772,7 @@ namespace internal {
    document.
 */
 
-class CollectionModify
+class PUBLIC_API CollectionModify
   : public internal::CollectionSort<Result,false>
 {
 private:
@@ -853,7 +863,7 @@ DIAGNOSTIC_POP
 
 namespace internal {
 
-  class CollectionModifyBase
+  class PUBLIC_API CollectionModifyBase
     : public virtual CollectionOpBase
   {
   public:

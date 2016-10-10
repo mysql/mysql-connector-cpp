@@ -694,6 +694,208 @@ TEST_F(xapi, null_test)
 }
 
 
+
+TEST_F(xapi, param_safety_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  mysqlx_stmt_t *stmt;
+  mysqlx_result_t *res;
+  mysqlx_row_t *row;
+  mysqlx_schema_t *schema;
+  mysqlx_table_t *table;
+  mysqlx_collection_t *collection;
+  mysqlx_session_t *session;
+  mysqlx_session_options_t *opt;
+  int i = 0;
+  char buf[255];
+
+  const char *init_queries[4] = {
+    "DROP DATABASE IF EXISTS cc_crud_test",
+    "CREATE DATABASE cc_crud_test",
+    "CREATE TABLE cc_crud_test.crud_test (a int)",
+    "INSERT INTO cc_crud_test.crud_test (a) VALUES (1) "
+  };
+
+  AUTHENTICATE();
+
+  for (i = 0; i < 4; i++)
+  {
+    exec_sql(init_queries[i]);
+  }
+
+  /* Schema creating */
+  EXPECT_EQ(RESULT_ERROR, mysqlx_schema_create(NULL, "new_schema"));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_schema_create(get_session(), NULL));
+  printf("\nExpected error: %s", mysqlx_error_message(get_session()));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_schema_create(get_session(), ""));
+  printf("\nExpected error: %s", mysqlx_error_message(get_session()));
+
+  /* Schema dropping */
+  EXPECT_EQ(RESULT_ERROR, mysqlx_schema_drop(NULL, "new_schema"));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_schema_drop(get_session(), NULL));
+  printf("\nExpected error: %s", mysqlx_error_message(get_session()));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_schema_drop(get_session(), ""));
+  printf("\nExpected error: %s", mysqlx_error_message(get_session()));
+
+  /* Schema getting */
+  EXPECT_TRUE(mysqlx_get_schema(NULL, "cc_crud_test", 1) == NULL);
+  EXPECT_TRUE(mysqlx_get_schema(get_session(), NULL, 1) == NULL);
+  printf("\nExpected error: %s", mysqlx_error_message(get_session()));
+  EXPECT_TRUE(mysqlx_get_schema(get_session(), "", 1) == NULL);
+  printf("\nExpected error: %s", mysqlx_error_message(get_session()));
+  EXPECT_TRUE(mysqlx_get_schema(get_session(), "nonexisting_schema", 1) == NULL);
+  printf("\nExpected error: %s", mysqlx_error_message(get_session()));
+
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_crud_test", 1)) != NULL);
+
+  /* Table getting */
+  EXPECT_TRUE(mysqlx_get_table(NULL, "crud_test", 1) == NULL);
+  EXPECT_TRUE(mysqlx_get_table(schema, NULL, 1) == NULL);
+  printf("\nExpected error: %s", mysqlx_error_message(schema));
+  EXPECT_TRUE(mysqlx_get_table(schema, "", 1) == NULL);
+  printf("\nExpected error: %s", mysqlx_error_message(schema));
+  EXPECT_TRUE(mysqlx_get_table(schema, "nonexisting_table", 1) == NULL);
+  printf("\nExpected error: %s", mysqlx_error_message(schema));
+
+  /* Table dropping */
+  EXPECT_EQ(RESULT_ERROR, mysqlx_table_drop(NULL, "crud_test"));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_table_drop(schema, NULL));
+  printf("\nExpected error: %s", mysqlx_error_message(schema));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_table_drop(schema, ""));
+  printf("\nExpected error: %s", mysqlx_error_message(schema));
+
+  EXPECT_TRUE((table = mysqlx_get_table(schema, "crud_test", 1)) != NULL);
+
+  /* Collection creating */
+  EXPECT_EQ(RESULT_ERROR, mysqlx_collection_create(NULL, "collection_test"));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_collection_create(schema, NULL));
+  printf("\nExpected error: %s", mysqlx_error_message(schema));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_collection_create(schema, ""));
+  printf("\nExpected error: %s", mysqlx_error_message(schema));
+
+  /* Collection dropping */
+  EXPECT_EQ(RESULT_ERROR, mysqlx_collection_drop(NULL, "collection_test"));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_collection_drop(schema, NULL));
+  printf("\nExpected error: %s", mysqlx_error_message(schema));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_collection_drop(schema, ""));
+  printf("\nExpected error: %s", mysqlx_error_message(schema));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, "collection_test"));
+
+  /* View dropping */
+  EXPECT_EQ(RESULT_ERROR, mysqlx_view_drop(NULL, "crud_view"));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_view_drop(schema, NULL));
+  printf("\nExpected error: %s", mysqlx_error_message(schema));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_view_drop(schema, ""));
+  printf("\nExpected error: %s", mysqlx_error_message(schema));
+
+  EXPECT_TRUE((collection = mysqlx_get_collection(schema, "collection_test", 1)) != NULL);
+
+  /* Collection FIND, ADD, MODIFY and REMOVE one-call ops */
+  EXPECT_TRUE((res = mysqlx_collection_find(NULL, NULL)) == NULL);
+  EXPECT_TRUE((res = mysqlx_collection_find(collection, NULL)) != NULL);
+  EXPECT_TRUE((res = mysqlx_collection_add(NULL, PARAM_END)) == NULL);
+  EXPECT_TRUE((res = mysqlx_collection_add(collection, PARAM_END)) == NULL);
+  printf("\nExpected error: %s", mysqlx_error_message(collection));
+  EXPECT_TRUE((res = mysqlx_collection_modify_set(collection, NULL, PARAM_END)) == NULL);
+  printf("\nExpected error: %s", mysqlx_error_message(collection));
+  EXPECT_TRUE((res = mysqlx_collection_modify_unset(collection, NULL, PARAM_END)) == NULL);
+  printf("\nExpected error: %s", mysqlx_error_message(collection));
+  EXPECT_TRUE((res = mysqlx_collection_remove(collection, NULL)) != NULL);
+
+  /* Table INSERT */
+  EXPECT_TRUE((res = mysqlx_table_insert(NULL, PARAM_END)) == NULL);
+  EXPECT_TRUE((res = mysqlx_table_insert(table, PARAM_END)) == NULL);
+  printf("\nExpected error: %s", mysqlx_error_message(table));
+
+  /* Table DELETE */
+  EXPECT_TRUE((res = mysqlx_table_delete(NULL, NULL)) == NULL);
+  RESULT_CHECK(res = mysqlx_table_delete(table, NULL));
+
+  /* Table UPDATE */
+  EXPECT_TRUE((res = mysqlx_table_update(NULL, NULL, PARAM_END)) == NULL);
+  EXPECT_TRUE((res = mysqlx_table_update(table, NULL, PARAM_END)) == NULL);
+  printf("\nExpected error: %s", mysqlx_error_message(table));
+
+  /* Insert sample data in the table */
+  RESULT_CHECK(res = mysqlx_table_insert(table, "a", PARAM_SINT(10), PARAM_END));
+
+  /* Table SELECT */
+  EXPECT_TRUE((res = mysqlx_table_select(NULL, NULL)) == NULL);
+  EXPECT_TRUE((row = mysqlx_row_fetch_one(NULL)) == NULL);
+
+  RESULT_CHECK(res = mysqlx_table_select(table, NULL));
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    EXPECT_EQ(RESULT_ERROR, mysqlx_get_sint(row, 0, NULL));
+    printf("\nExpected error: %s", mysqlx_error_message(row));
+    EXPECT_EQ(RESULT_ERROR, mysqlx_get_uint(row, 0, NULL));
+    printf("\nExpected error: %s", mysqlx_error_message(row));
+    EXPECT_EQ(RESULT_ERROR, mysqlx_get_float(row, 0, NULL));
+    printf("\nExpected error: %s", mysqlx_error_message(row));
+    EXPECT_EQ(RESULT_ERROR, mysqlx_get_double(row, 0, NULL));
+    printf("\nExpected error: %s", mysqlx_error_message(row));
+    EXPECT_EQ(RESULT_ERROR, mysqlx_get_bytes(row, 0, 0, NULL, NULL));
+    printf("\nExpected error: %s", mysqlx_error_message(row));
+  }
+
+  char out_err[MYSQLX_MAX_ERROR_LEN] = {0};
+  /* We don't know for sure if it will connect, but it should not crash*/
+  session = mysqlx_get_session(NULL, 0, NULL, NULL, NULL, out_err, NULL);
+  mysqlx_session_close(session);
+  session = mysqlx_get_node_session(NULL, 0, NULL, NULL, NULL, out_err, NULL);
+  mysqlx_session_close(session);
+  session = mysqlx_get_session_from_url(NULL, out_err, NULL);
+  mysqlx_session_close(session);
+  session = mysqlx_get_node_session_from_url(NULL, out_err, NULL);
+  mysqlx_session_close(session);
+  session = mysqlx_get_session_from_options(NULL, out_err, NULL);
+  mysqlx_session_close(session);
+  session = mysqlx_get_node_session_from_options(NULL, out_err, NULL);
+  mysqlx_session_close(session);
+
+  stmt = mysqlx_collection_add_new(collection);
+  EXPECT_EQ(RESULT_ERROR, mysqlx_set_add_document(stmt, NULL));
+  printf("\nExpected error: %s", mysqlx_error_message(stmt));
+  EXPECT_TRUE( mysqlx_execute(stmt) == NULL);
+  printf("\nExpected error: %s", mysqlx_error_message(stmt));
+
+  stmt = mysqlx_collection_find_new(collection);
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_projection(stmt, NULL));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_criteria(stmt, NULL));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_order_by(stmt, PARAM_END));
+  RESULT_CHECK(res = mysqlx_execute(stmt));
+  EXPECT_EQ(RESULT_OK, mysqlx_store_result(res, NULL));
+
+  stmt = mysqlx_table_insert_new(table);
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(stmt, NULL));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_UINT(120), PARAM_END));
+  RESULT_CHECK(res = mysqlx_execute(stmt));
+
+  stmt = mysqlx_table_update_new(table);
+  EXPECT_EQ(RESULT_OK, mysqlx_set_update_values(stmt, PARAM_END));
+  EXPECT_TRUE(mysqlx_execute(stmt) == NULL);
+  printf("\nExpected error: %s", mysqlx_error_message(stmt));
+
+  opt = mysqlx_session_options_new();
+  EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_get(opt, MYSQLX_OPT_HOST, NULL));
+  printf("\nExpected error: %s", mysqlx_error_message(opt));
+  buf[0] = 0;
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_HOST, buf));
+  EXPECT_EQ(0, buf[0]);
+
+  EXPECT_TRUE(mysqlx_sql(get_session(), NULL, MYSQLX_NULL_TERMINATED) == NULL);
+  printf("\nExpected error: %s", mysqlx_error_message(get_session()));
+
+  stmt = mysqlx_sql_new(get_session(), "SHOW DATABASES LIKE ?", MYSQLX_NULL_TERMINATED);
+  EXPECT_EQ(RESULT_ERROR, mysqlx_stmt_bind(stmt, PARAM_END));
+  printf("\nExpected error: %s", mysqlx_error_message(stmt));
+  EXPECT_TRUE(mysqlx_execute(stmt) == NULL);
+}
+
+
 TEST_F(xapi, long_data_test)
 {
   SKIP_IF_NO_XPLUGIN
@@ -1808,6 +2010,42 @@ TEST_F(xapi_bugs, list_functions)
 }
 
 
+TEST_F(xapi_bugs, schemas_list_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  mysqlx_result_t *res;
+  mysqlx_row_t *row;
+  char buf[256];
+  size_t buflen;
+  int col_num = 0;
+  int i = 0;
+
+  // Connect as a node session to use SQL
+  AUTHENTICATE();
+  for (i = 0; i < 2; i++)
+  {
+    exec_sql(queries[i]);
+  }
+  mysqlx_session_close(get_session());
+
+  // Connect as X session now
+  authenticate(NULL, NULL, NULL, 1);
+  if (!get_session())
+    FAIL();
+
+  SESS_CHECK(res = mysqlx_get_schemas(get_session(), "cc_crud_te%"));
+  col_num = mysqlx_column_get_count(res);
+  EXPECT_EQ(col_num, 1);
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, buf, &buflen));
+    EXPECT_STREQ("cc_crud_test", buf);
+  }
+}
+
 TEST_F(xapi_bugs, one_call_collection_test)
 {
   SKIP_IF_NO_XPLUGIN
@@ -1937,7 +2175,7 @@ TEST_F(xapi_bugs, collection_id_test)
 {
   SKIP_IF_NO_XPLUGIN
 
-  mysqlx_result_t *res;
+    mysqlx_result_t *res;
   mysqlx_stmt_t *stmt;
   mysqlx_schema_t *schema;
   mysqlx_collection_t *collection;
@@ -1992,19 +2230,53 @@ TEST_F(xapi_bugs, collection_id_test)
 
     switch (i)
     {
-      case 0: // just _id in the JSON
-        EXPECT_TRUE(strstr(json_string, "a_key") == NULL);
+    case 0: // just _id in the JSON
+      EXPECT_TRUE(strstr(json_string, "a_key") == NULL);
       break;
-      case 1: // { "a_key" : 100}
-        EXPECT_TRUE(strstr(json_string, "\"a_key\": 100") != NULL);
-        break;
-      case 2: // { "a_key" : 200, "_id" : "111222333"}
-        EXPECT_TRUE(strstr(json_string, "\"a_key\": 200") != NULL);
-        break;
-      default: // no more documents in the result
-        FAIL();
+    case 1: // { "a_key" : 100}
+      EXPECT_TRUE(strstr(json_string, "\"a_key\": 100") != NULL);
+      break;
+    case 2: // { "a_key" : 200, "_id" : "111222333"}
+      EXPECT_TRUE(strstr(json_string, "\"a_key\": 200") != NULL);
+      break;
+    default: // no more documents in the result
+      FAIL();
     }
 
     ++i;
   }
+}
+
+TEST_F(xapi_bugs, myc_352_stored_proc_err)
+{
+  SKIP_IF_NO_XPLUGIN
+
+    mysqlx_result_t *res;
+  const char *schema_name = "cc_crud_test";
+  const char *errmsg = NULL;
+
+  AUTHENTICATE();
+
+  mysqlx_schema_drop(get_session(), schema_name);
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_create(get_session(), schema_name));
+
+  res = mysqlx_sql(get_session(),
+    "CREATE PROCEDURE cc_crud_test.myc_352(d INT)" \
+    " BEGIN" \
+    "   select 1, 2, 3;" \
+    " IF d = 0 THEN " \
+    " BEGIN " \
+    " select point(1, 0) / point(1, 2); " \
+    " END; " \
+    " END IF; " \
+    " select 'abc', 1.0; " \
+    " END", MYSQLX_NULL_TERMINATED);
+
+  res = mysqlx_sql(get_session(), "CALL cc_crud_test.myc_352(0)",
+    MYSQLX_NULL_TERMINATED);
+
+  EXPECT_EQ(RESULT_OK, mysqlx_store_result(res, NULL));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_next_result(res));
+  EXPECT_TRUE((errmsg = mysqlx_error_message(res)) != NULL);
+  printf("\nExpected error: %s\n", errmsg);
 }

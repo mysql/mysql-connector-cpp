@@ -25,7 +25,7 @@
 #ifndef MYSQLX_COMMON_H
 #define MYSQLX_COMMON_H
 
-
+#include "../mysql_common.h"
 #include <string>
 #include <stdexcept>
 #include <ostream>
@@ -95,6 +95,13 @@ struct List_init
 
 class string : public std::wstring
 {
+
+  struct Impl
+  {
+    PUBLIC_API static std::string to_utf8(const string&);
+    PUBLIC_API static void from_utf8(string&, const std::string&);
+  };
+
 public:
 
   string() {}
@@ -115,12 +122,26 @@ public:
 
   // TODO: make utf8 conversions explicit
 
-  string(const char*);
-  string(const std::string&);
+  string(const char *other)
+  {
+    if (!other)
+      return;
+    std::string utf8(other);
+    Impl::from_utf8(*this, utf8);
+  }
 
-  //  operator cdk::foundation::string&();
-  operator std::string() const;  // conversion to utf-8
-  //  operator const cdk::foundation::string&() const;
+  string(const std::string &other)
+  {
+    Impl::from_utf8(*this, other);
+  }
+
+  // conversion to utf-8
+
+  operator std::string() const
+  {
+    return Impl::to_utf8(*this);
+  }
+
 };
 
 
@@ -206,7 +227,7 @@ namespace internal {
   };
 
 
-  class Printable
+  class PUBLIC_API Printable
   {
     virtual void print(std::ostream&) const = 0;
     friend std::ostream& operator<<(std::ostream&, const Printable&);
@@ -237,7 +258,7 @@ namespace internal {
   TODO: Windows GUID type
 */
 
-class GUID : public internal::Printable
+class PUBLIC_API GUID : public internal::Printable
 {
   char m_data[32];
 
@@ -248,7 +269,7 @@ class GUID : public internal::Printable
       m_data[i]= data[i];
   }
 
-  void set(const std::string &data) { set(data.c_str()); }
+  INTERNAL void set(const std::string &data) { set(data.c_str()); }
 
 public:
 
@@ -281,14 +302,20 @@ using std::out_of_range;
   error codes.
 */
 
-class Error : public std::runtime_error
+DLL_WARNINGS_PUSH
+
+class PUBLIC_API Error : public std::runtime_error
 {
+
+DLL_WARNINGS_POP
+
 public:
 
   Error(const char *msg)
     : std::runtime_error(msg)
   {}
 };
+
 
 inline
 std::ostream& operator<<(std::ostream &out, const Error &e)
@@ -312,67 +339,6 @@ void throw_error(const char *msg)
 {
   throw ::mysqlx::Error(msg);
 }
-
-/*
-  Note: we add throw statement to the definition of THROW() so that compiler won't
-  complain if it is used in contexts where, e.g., a value should be returned from
-  a function.
-*/
-
-#undef THROW
-
-#ifdef THROW_AS_ASSERT
-
-#define THROW(MSG)  do { assert(false && (MSG)); throw (MSG); } while(false)
-
-#else
-
-#define THROW(MSG) do { throw_error(MSG); throw (MSG); } while(false)
-
-#endif
-
-
-/*
-  Macros used to disable warnings for fragments of code.
-*/
-
-#undef PRAGMA
-#undef DISABLE_WARNING
-#undef DIAGNOSTIC_PUSH
-#undef DIAGNOSTIC_POP
-
-
-#if defined __GNUC__ || defined __clang__
-
-#define PRAGMA(X) _Pragma(#X)
-#define DISABLE_WARNING(W) PRAGMA(GCC diagnostic ignored #W)
-
-#if defined __clang__ || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
-#define DIAGNOSTIC_PUSH PRAGMA(GCC diagnostic push)
-#define DIAGNOSTIC_POP  PRAGMA(GCC diagnostic pop)
-#else
-#define DIAGNOSTIC_PUSH
-#define DIAGNOSTIC_POP
-#endif
-
-#elif defined _MSC_VER
-
-
-#define PRAGMA(X) __pragma(X)
-#define DISABLE_WARNING(W) PRAGMA(warning (disable:W))
-
-#define DIAGNOSTIC_PUSH  PRAGMA(warning (push))
-#define DIAGNOSTIC_POP   PRAGMA(warning (pop))
-
-#else
-
-#define PRAGMA(X)
-#define DISABLE_WARNING(W)
-
-#define DIAGNOSTIC_PUSH
-#define DIAGNOSTIC_POP
-
-#endif
 
 
 }  // mysqlx

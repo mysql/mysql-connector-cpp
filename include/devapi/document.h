@@ -57,19 +57,45 @@ class DocResult;
   TODO: _fld suffix
 */
 
-class Field : public string
+class PUBLIC_API Field
 {
+  DLL_WARNINGS_PUSH
+    string m_fld;
+  DLL_WARNINGS_POP
+
 public:
 
-  Field(const string &s) : string(s)
+  Field(const string &s) : m_fld(s)
   {}
 
   // TODO: is it auto generated?
-  Field(string &&s) : string(std::move(s))
+  Field(string &&s) : m_fld(std::move(s))
   {}
 
-  Field(const char *s) : string(s)
+  Field(const char *s) : m_fld(s)
   {}
+
+  operator const string&() const { return m_fld; }
+
+  bool operator <(const Field &other) const
+  {
+    return m_fld < other.m_fld;
+  }
+
+  bool operator >(const Field &other) const
+  {
+    return m_fld > other.m_fld;
+  }
+
+  bool operator ==(const Field &other) const
+  {
+    return m_fld == other.m_fld;
+  }
+
+  bool operator !=(const Field &other) const
+  {
+    return m_fld != other.m_fld;
+  }
 
 };
 
@@ -86,14 +112,18 @@ public:
   and thus using DbDoc objects should be cheap.
 */
 
-class DbDoc
+class PUBLIC_API DbDoc
   : public internal::Printable
 {
-  class Impl;
+  class INTERNAL Impl;
+
+DLL_WARNINGS_PUSH
 
   std::shared_ptr<Impl> m_impl;
 
-  DbDoc(const std::shared_ptr<Impl>&);
+DLL_WARNINGS_POP
+
+  INTERNAL DbDoc(const std::shared_ptr<Impl>&);
 
 public:
 
@@ -169,9 +199,11 @@ public:
 };
 
 
-class DbDoc::Iterator
+class PUBLIC_API DbDoc::Iterator
 {
+  DLL_WARNINGS_PUSH
   std::shared_ptr<DbDoc::Impl> m_impl;
+  DLL_WARNINGS_POP
   bool         m_end;
 
 public:
@@ -209,7 +241,7 @@ public:
   bytes it describes - it only stores pointers describing a region of memory.
 */
 
-class Value : public internal::Printable
+class PUBLIC_API Value : public internal::Printable
 {
 public:
 
@@ -240,6 +272,7 @@ public:
   ///@{
 
   Value();  ///< Constructs Null value.
+  Value(std::nullptr_t); ///< Constructs Null value.
   Value(const string&);
   Value(string&&);
   Value(const char *str) : Value(string(str)) {}
@@ -250,8 +283,6 @@ public:
   Value(float);
   Value(double);
   Value(bool);
-  Value(int x) : Value((int64_t)x) {}
-  Value(unsigned x) : Value((uint64_t)x) {}
   Value(const DbDoc& doc);
 
   Value(const std::initializer_list<Value> &list)
@@ -268,6 +299,65 @@ public:
   }
 
   ///@}
+
+  /*
+    Note: These templates are needed to disambiguate constructor resolution
+    for integer types.
+  */
+
+  Value(const Value&) = default;
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+
+  Value(Value&&) = default;
+
+#else
+
+  Value(Value &&other)
+  {
+    *this = std::move(other);
+  }
+
+#endif
+
+  template <
+    typename T,
+    typename std::enable_if<std::is_signed<T>::value>::type* = nullptr
+  >
+  Value(T x)
+    : Value(static_cast<int64_t>(x))
+  {}
+
+  template <
+    typename T,
+    typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr
+  >
+  Value(T x)
+    : Value(static_cast<uint64_t>(x))
+  {}
+
+  /*
+    Assignment operator is implemented using constructors.
+  */
+
+  Value& operator=(const Value&) = default;
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+
+ Value& operator=(Value&&) = default;
+
+#else
+
+  Value& operator=(Value&&);
+
+#endif
+
+  template<typename T>
+  Value& operator=(T x)
+  {
+    *this = Value(x);
+    return *this;
+  }
 
 private:
 
@@ -401,18 +491,46 @@ protected:
 
   typedef std::vector<Value> Array;
 
+  DbDoc  m_doc;
+
+  DLL_WARNINGS_PUSH
   bytes  m_raw;
   string m_str;
-  DbDoc  m_doc;
   std::shared_ptr<Array>  m_arr;
+  DLL_WARNINGS_POP
 
 public:
 
   friend DbDoc;
 
-  struct Access;
+  struct INTERNAL Access;
   friend Access;
 };
+
+static const Value nullvalue;
+
+
+#if defined(_MSC_VER) && _MSC_VER < 1900
+
+inline
+Value& Value::operator=(Value &&other)
+{
+  m_type = other.m_type;
+  m_val =  other.m_val;
+
+  switch (m_type)
+  {
+  case STRING: m_str = std::move(other.m_str); break;
+  case DOCUMENT: m_doc = std::move(other.m_doc); break;
+  case RAW: m_raw = std::move(other.m_raw); break;
+  case ARRAY: m_arr = std::move(other.m_arr); break;
+  default: break;
+  }
+
+  return *this;
+}
+
+#endif
 
 
 namespace internal {
@@ -503,6 +621,9 @@ const Value& DbDoc::operator[](const wchar_t *name) const
 inline Value::Value() : m_type(VNULL)
 {}
 
+inline Value::Value(std::nullptr_t) : m_type(VNULL)
+{}
+
 inline Value::Value(int64_t val) : m_type(INT64)
 {
   m_val._int64_v = val;
@@ -512,7 +633,6 @@ inline Value::Value(uint64_t val) : m_type(UINT64)
 {
   m_val._uint64_v = val;
 }
-
 
 inline Value::operator int() const
 {

@@ -33,7 +33,14 @@ if(NOT WITH_CONCPP)
   )
 endif()
 
-OPTION(STATIC_MSVCRT "Use static MSVC runtime library" OFF)
+option(BUILD_STATIC "Link statically with the connector library" OFF)
+
+if(BUILD_STATIC)
+  message("Linking statically")
+  add_definitions(-DSTATIC_CONCPP)
+endif()
+
+option(STATIC_MSVCRT "Use static MSVC runtime library" OFF)
 
 if(STATIC_MSVCRT)
   message("Using static runtime library.")
@@ -49,15 +56,18 @@ else()
   message("Generating 32bit code")
 endif()
 
+if(WIN32)
+  if(MSVC12)
+   set(VS "vs12")
+  elseif(MSVC14)
+   set(VS "vs14")
+  endif()
+endif()
+
 
 #
 # Find MySQL Connector/C++ 2.0 at specified location.
 #
-
-set(libconcpp_name mysqlcppconn2-static)
-if(STATIC_MSVCRT)
-  set(libconcpp_name "${libconcpp_name}-mt")
-endif()
 
 set(CONCPLS_INCLUDES "${WITH_CONCPP}/include")
 
@@ -68,36 +78,44 @@ if(NOT EXISTS "${CONCPLS_INCLUDES}/mysql_devapi.h")
   )
 endif()
 
+
+set(libconcpp_name mysqlcppconn2)
+if(BUILD_STATIC)
+  set(libconcpp_name "${libconcpp_name}-static")
+  if(WIN32 AND STATIC_MSVCRT)
+    set(libconcpp_name "${libconcpp_name}-mt")
+  endif()
+endif()
+
+
 if(IS64BIT)
   set(LIB_PATH "${WITH_CONCPP}/lib64")
 else()
   set(LIB_PATH "${WITH_CONCPP}/lib")
 endif()
 
-if(WIN32)
-  if(MSVC12)
-   set(LIB_PATH "${LIB_PATH}/vs12")
-  elseif(MSVC14)
-   set(LIB_PATH "${LIB_PATH}/vs14")
-  endif()
+set(LIB_PATH_STATIC "${LIB_PATH}")
+if(VS)
+   set(LIB_PATH_STATIC "${LIB_PATH_STATIC}/${VS}")
 endif()
 
-message("Looking for the connector library ${libconcpp_name} here: ${LIB_PATH}")
+
+message("Looking for the connector library ${libconcpp_name} here: ${LIB_PATH_STATIC}")
 
 find_library(CONCPP_LIB NAMES ${libconcpp_name}
-  PATHS "${LIB_PATH}"
+  PATHS "${LIB_PATH_STATIC}"
   NO_DEFAULT_PATH
 )
 
 find_library(CONCPP_LIB_DEBUG NAMES ${libconcpp_name}
-  PATHS "${LIB_PATH}/debug"
+  PATHS "${LIB_PATH_STATIC}/debug"
   NO_DEFAULT_PATH
 )
 
 if(NOT CONCPP_LIB AND NOT CONCPP_LIB_DEBUG)
   message(FATAL_ERROR
     "Could not find MySQL Connector/C++ 2.0 library ${libconcpp_name} at specified"
-    " location: ${LIB_PATH}"
+    " location: ${LIB_PATH_STATIC}"
   )
 endif()
 
@@ -121,6 +139,59 @@ if(CONCPP_LIB_DEBUG)
     list(APPEND CONCPP_LIBS general "${CONCPP_LIB_DEBUG}")
   endif()
 endif()
+
+
+#
+# Copy shared library to a pre-defined location where also the executable
+# will be built. This is necessary for Windows to find the DLL when running
+# the executable.
+#
+
+file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/run)
+file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/run/debug)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY run)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE run)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG run/debug)
+
+if(NOT BUILD_STATIC)
+
+  set(libconcpp_name_shared mysqlcppconn2)
+  if(VS)
+    set(libconcpp_name_shared "${libconcpp_name_shared}-${VS}")
+  endif()
+
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_SHARED_LIBRARY_SUFFIX})
+
+  find_library(CONCPP_LIB_SHARED NAMES ${libconcpp_name_shared}
+    PATHS "${LIB_PATH}"
+    NO_DEFAULT_PATH
+  )
+
+  find_library(CONCPP_LIB_SHARED_DEBUG NAMES ${libconcpp_name_shared}
+    PATHS "${LIB_PATH}/debug"
+    NO_DEFAULT_PATH
+  )
+
+  if(NOT CONCPP_LIB_SHARED AND NOT CONCPP_LIB_SHARED_DEBUG)
+    message(FATAL_ERROR
+      "Could not find MySQL Connector/C++ 2.0 shared library ${libconcpp_name_shared} at specified"
+      " location: ${LIB_PATH}"
+    )
+  endif()
+
+
+  if(CONCPP_LIB_SHARED)
+    message("Copying shared library: ${CONCPP_LIB_SHARED}")
+    file(COPY "${CONCPP_LIB_SHARED}" DESTINATION ${PROJECT_BINARY_DIR}/run)
+  endif()
+
+  if(CONCPP_LIB_SHARED_DEBUG)
+    message("Copying debug shared library: ${CONCPP_LIB_SHARED_DEBUG}")
+    file(COPY "${CONCPP_LIB_SHARED_DEBUG}" DESTINATION ${PROJECT_BINARY_DIR}/run/debug)
+  endif()
+
+endif(NOT BUILD_STATIC)
 
 #
 # Connector/C++ requires pthread library on Unix.
@@ -148,9 +219,9 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 #
-# On Windows, if MySQL Connector/C++ was built with the static runtime
-# then we must do the same here. Option STATIC_MSVCRT selects the static
-# runtime.
+# On Windows, in case of static linking, if MySQL Connector/C++ was built
+# with the static runtime then we must do the same here. Option STATIC_MSVCRT
+# selects the static runtime.
 #
 
 IF(WIN32)
@@ -181,6 +252,7 @@ ENDIF()
 INCLUDE_DIRECTORIES(${CONCPLS_INCLUDES})
 
 ADD_EXECUTABLE(devapi_test devapi_test.cc)
+
 TARGET_LINK_LIBRARIES(devapi_test ${CONCPP_LIBS})
 
 # To use DevAPI we must enable C++11

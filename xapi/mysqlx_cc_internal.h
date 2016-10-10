@@ -130,11 +130,13 @@ private:
   std::vector<mysqlx_row_t*> m_row_set;
   std::vector<mysqlx_doc_t*> m_doc_set;
   cdk::scoped_ptr<mysqlx_error_t> m_current_warning;
+  cdk::scoped_ptr<mysqlx_error_t> m_current_error;
 
   // We need column names in UTF8
   std::vector<Column_info> m_col_info;
   uint32_t m_filter_mask;
-  cdk::foundation::Diagnostic_iterator *m_warning_iter;
+  uint32_t m_current_warning_index;
+  uint32_t m_current_error_index;
 
   std::vector<std::string> m_doc_id_list;
   uint64_t m_current_id_index;
@@ -186,6 +188,8 @@ public:
   uint32_t get_warning_count();
 
   mysqlx_error_t *get_next_warning();
+
+  virtual mysqlx_error_t *get_error();
 
   /*
     Read the next row from the result set and advance the cursor position
@@ -305,7 +309,7 @@ class Order_by : public cdk::Order_by
 
 
     // Get sort direction for the current instance
-    const Sort_direction::value direction() const { return m_sort_direction; }
+    Sort_direction::value direction() const { return m_sort_direction; }
   };
 
   typedef std::vector<Order_by_item> Order_item_list;
@@ -533,7 +537,8 @@ public:
       CRUD handler containing the results and/or error
 
   */
-  mysqlx_stmt_t *sql_query(const char *query, uint32_t length);
+  mysqlx_stmt_t *sql_query(const char *query, uint32_t length,
+                           bool enable_sql_x_session = false);
 
   /*
     Create a new CRUD operation (SELECT, INSERT, UPDATE, DELETE)

@@ -132,6 +132,7 @@ Tokenizer::Maps::Maps()
   operator_names["<"] = "<";
   operator_names["<="] = "<=";
   operator_names["&"] = "&";
+  operator_names["^"] = "^";
   operator_names["|"] = "|";
   operator_names["<<"] = "<<";
   operator_names[">>"] = ">>";
@@ -311,6 +312,64 @@ bool Tokenizer::parse_float_expo(size_t& i)
   return true;
 }
 
+/*
+  Check if we have a Hexadecimal literal:
+
+  X'12ab'
+  x'12ab'
+  ox12ab
+*/
+
+bool Tokenizer::parse_hex(size_t& i)
+{
+  std::string val;
+  bool has_value = false;
+
+  if((_input[i] == 'X' || _input[i] == 'x') && next_char_is(i, '\''))
+  {
+    i+=2;
+
+    size_t start = i;
+
+    for (; i < _input.size();++i)
+    {
+      if (_input[i] == '\'')
+      {
+        // We don't want the 'either (so the -2)
+        val.assign(_input, start, i-2);
+
+        has_value = true;
+        break;
+      }
+    }
+  }
+  else if (_input[i] == '0' && (next_char_is(i, 'x') || next_char_is(i, 'X')))
+  {
+    i+=2;
+
+    size_t start = i;
+
+    for (; i < _input.size() && std::isalnum(_input[i]);++i)
+    {}
+
+   --i;
+
+    val.assign(_input, start, i-1);
+
+    has_value = true;
+
+  }
+
+  if (has_value)
+  {
+    _tokens.push_back(Token(Token::LHEX, val));
+
+    return true;
+  }
+
+  return false;
+}
+
 void Tokenizer::get_tokens()
 {
   for (size_t i = 0; i < _input.size(); ++i)
@@ -325,6 +384,9 @@ void Tokenizer::get_tokens()
       // do nothing
       continue;
     }
+
+    if ( parse_hex(i))
+      continue;
 
     Token::TokenType tt = Token::T_NULL;
     size_t j=i;
@@ -391,6 +453,10 @@ void Tokenizer::get_tokens()
       else if (c == '|')
       {
         _tokens.push_back(Token(Token::BITOR, std::string(1, c)));
+      }
+      else if (c == '^')
+      {
+        _tokens.push_back(Token(Token::BITXOR, std::string(1, c)));
       }
       else if (c == '(')
       {

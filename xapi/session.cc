@@ -42,12 +42,15 @@ mysqlx_session_t::mysqlx_session_struct(mysqlx_session_options_t *opt, bool is_n
 {}
 
 
-mysqlx_stmt_t * mysqlx_session_t::sql_query(const char *query, uint32_t length)
+mysqlx_stmt_t * mysqlx_session_t::sql_query(const char *query, uint32_t length,
+                                            bool enable_sql_x_session)
 {
-  if (!m_is_node_sess)
+  if (!query || !(*query))
+    throw Mysqlx_exception("Query is empty");
+
+  if (!m_is_node_sess && !enable_sql_x_session)
     throw Mysqlx_exception(Mysqlx_exception::MYSQLX_EXCEPTION_INTERNAL, 0,
                           "Executing SQL is not supported for this session type.");
-  // This will be removed after adding multiple CRUD's per session
   if (m_stmt)
     delete m_stmt;
 
@@ -141,6 +144,9 @@ void mysqlx_session_t::admin_collection(const char *cmd,
 
 void mysqlx_session_t::create_schema(const char *schema)
 {
+  if (!schema || !(*schema))
+    throw Mysqlx_exception(MYSQLX_ERROR_MISSING_SCHEMA_NAME_MSG);
+
   std::stringstream sstr;
   sstr << "CREATE SCHEMA IF NOT EXISTS `" << schema << "`";
 
@@ -153,6 +159,8 @@ void mysqlx_session_t::create_schema(const char *schema)
 
 mysqlx_schema_t & mysqlx_session_t::get_schema(const char *name, bool check)
 {
+  if (!name || !(*name))
+    throw Mysqlx_exception(MYSQLX_ERROR_MISSING_SCHEMA_NAME_MSG);
   cdk::string schema_name = name;
   Schema_map::iterator it = m_schema_map.find(schema_name);
   // Return existing schema if it was requested before

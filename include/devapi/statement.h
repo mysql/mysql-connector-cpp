@@ -39,10 +39,10 @@ namespace mysqlx {
 
 using std::ostream;
 
-class XSession_base;
-
 
 namespace internal {
+
+class XSession_base;
 
 /*
   Abstract interface to be implemented by internal implementaion
@@ -55,6 +55,7 @@ namespace internal {
 struct Executable_impl
 {
   virtual BaseResult execute() = 0;
+  virtual ~Executable_impl() {}
 };
 
 }  // internal
@@ -253,9 +254,14 @@ struct SqlStatement_impl : public Executable_impl
   `SqlResult`.
 */
 
-class SqlStatement
+DLL_WARNINGS_PUSH
+
+class PUBLIC_API SqlStatement
   : public virtual Executable<SqlResult>
 {
+
+DLL_WARNINGS_POP
+
 protected:
 
   typedef internal::SqlStatement_impl Impl;
@@ -271,7 +277,7 @@ protected:
     return static_cast<Impl*>(m_impl.get());
   }
 
-  void reset(XSession_base&, const string&);
+  INTERNAL void reset(internal::XSession_base&, const string&);
 
 public:
 

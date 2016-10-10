@@ -184,6 +184,20 @@ TEST_F(Types, numeric)
     EXPECT_NO_THROW(v4 = val);
     EXPECT_TRUE(v4);
   }
+
+  {
+    Value val(nullptr);
+
+    EXPECT_TRUE(val.isNull());
+
+    val = mysqlx::nullvalue;
+
+    EXPECT_TRUE(val.isNull());
+
+    val = 0;
+
+    EXPECT_FALSE(val.isNull());
+  }
 }
 
 
@@ -296,12 +310,52 @@ TEST_F(Types, basic)
   cout << "value: " << row[0] << endl;
   EXPECT_FALSE(row[0]);
 
+  cout << "Testing null value" << endl;
+
+  types.update().set("c0", nullvalue).set("c1", nullptr).execute();
+  res = types.select("c0","c1").execute();
+  row = res.fetchOne();
+
+  EXPECT_TRUE(row);
+  EXPECT_TRUE(row[0].isNull());
+  EXPECT_TRUE(row[1].isNull());
+
   cout << "Done!" << endl;
 }
 
 
 TEST_F(Types, integer)
 {
+  // Note: this part of the test does not require a running server
+
+  {
+    Value v1(-7);
+    EXPECT_EQ(Value::INT64, v1.getType());
+    EXPECT_EQ(-7, (int64_t)v1);
+
+    Value v2(-7L);
+    EXPECT_EQ(Value::INT64, v1.getType());
+    EXPECT_EQ(-7, (int64_t)v1);
+
+    Value v3(-7LL);
+    EXPECT_EQ(Value::INT64, v1.getType());
+    EXPECT_EQ(-7, (int64_t)v1);
+  }
+
+  {
+    Value v1(7U);
+    EXPECT_EQ(Value::UINT64, v1.getType());
+    EXPECT_EQ(7, (uint64_t)v1);
+
+    Value v2(7UL);
+    EXPECT_EQ(Value::UINT64, v1.getType());
+    EXPECT_EQ(7, (uint64_t)v1);
+
+    Value v3(7ULL);
+    EXPECT_EQ(Value::UINT64, v1.getType());
+    EXPECT_EQ(7, (uint64_t)v1);
+  }
+
   SKIP_IF_NO_XPLUGIN;
 
   cout << "Preparing test.int_types..." << endl;
@@ -728,6 +782,7 @@ TEST_F(Types, geometry)
     EXPECT_EQ(Type::STRING, res.getColumn(0).getType());
   }
 }
+
 
 TEST_F(Types, int64_conversion)
 {

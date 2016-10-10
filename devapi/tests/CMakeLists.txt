@@ -20,6 +20,23 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+#
+# Undefine macros which indicate building of the connector library
+# (as opposed to using it from test code). This is used by public headers.
+#
+
+remove_definitions(-DCONCPP_BUILD_STATIC)
+remove_definitions(-DCONCPP_BUILD_SHARED)
+
+#
+# If linking with connector statically, define macro that indicates this
+# to the public headers.
+#
+
+if(BUILD_STATIC)
+  add_definitions(-DSTATIC_CONCPP)
+endif()
+
 ADD_NG_TEST(devapi-t
   first-t.cc crud-t.cc types-t.cc batch-t.cc ddl-t.cc session-t.cc
 )

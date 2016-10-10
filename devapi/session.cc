@@ -43,7 +43,7 @@ struct Endpoint
 };
 
 
-struct XSession_base::Options
+struct internal::XSession_base::Options
   : public cdk::ds::Options
 {
   Options(const string &usr, const std::string *pwd,
@@ -92,7 +92,7 @@ namespace endpoint {
 
 
 
-class XSession_base::Impl
+class internal::XSession_base::Impl
 {
   cdk::ds::TCPIP   m_ds;
   cdk::Session     m_sess;
@@ -117,7 +117,7 @@ class XSession_base::Impl
 
 
 struct URI_parser
-  : public XSession_base::Access::Options
+  : public internal::XSession_base::Access::Options
   , public endpoint::TCPIP
   , public parser::URI_processor
 {
@@ -160,7 +160,7 @@ struct URI_parser
 };
 
 
-XSession_base::XSession_base(const std::string &url)
+internal::XSession_base::XSession_base(const std::string &url)
 {
   URI_parser parser(url);
 
@@ -173,10 +173,10 @@ XSession_base::XSession_base(const std::string &url)
   CATCH_AND_WRAP
 }
 
-XSession_base::XSession_base(const std::string &host, unsigned port,
-                   const string  &user,
-                   const char    *pwd,
-                   const string  &db)
+internal::XSession_base::XSession_base(
+  const std::string &host, unsigned port,
+  const string  &user, const char    *pwd,
+  const string  &db)
 {
   try {
     std::string pwd_str;
@@ -198,14 +198,14 @@ XSession_base::XSession_base(const std::string &host, unsigned port,
   CATCH_AND_WRAP
 }
 
-XSession_base::XSession_base(XSession_base* master)
+internal::XSession_base::XSession_base(XSession_base* master)
 {
   m_impl = master->m_impl;
   m_impl->m_nodes.insert(this);
   m_master_session = false;
 }
 
-XSession_base::~XSession_base()
+internal::XSession_base::~XSession_base()
 {
   try {
     if (m_impl)
@@ -215,7 +215,7 @@ XSession_base::~XSession_base()
 }
 
 
-void XSession_base::register_result(internal::BaseResult *result)
+void internal::XSession_base::register_result(internal::BaseResult *result)
 {
   if (!m_impl)
     throw Error("Session closed");
@@ -226,7 +226,7 @@ void XSession_base::register_result(internal::BaseResult *result)
   m_impl->m_current_result = result;
 }
 
-void XSession_base::deregister_result(internal::BaseResult *result)
+void internal::XSession_base::deregister_result(internal::BaseResult *result)
 {
   if (!m_impl)
     throw Error("Session closed");
@@ -236,7 +236,7 @@ void XSession_base::deregister_result(internal::BaseResult *result)
 }
 
 
-cdk::Session& XSession_base::get_cdk_session()
+cdk::Session& internal::XSession_base::get_cdk_session()
 {
   if (!m_impl)
     throw Error("Session closed");
@@ -250,7 +250,7 @@ cdk::Session& XSession_base::get_cdk_session()
   Transactions.
 */
 
-void XSession_base::startTransaction()
+void internal::XSession_base::startTransaction()
 {
   try {
     get_cdk_session().begin();
@@ -259,7 +259,7 @@ void XSession_base::startTransaction()
 }
 
 
-void XSession_base::commit()
+void internal::XSession_base::commit()
 {
   try {
     get_cdk_session().commit();
@@ -268,7 +268,7 @@ void XSession_base::commit()
 }
 
 
-void XSession_base::rollback()
+void internal::XSession_base::rollback()
 {
   try {
     get_cdk_session().rollback();
@@ -277,14 +277,15 @@ void XSession_base::rollback()
 }
 
 
-void XSession_base::close()
+void internal::XSession_base::close()
 {
   try {
+
+    // Results should cache their data before deleting the implementation.
+    register_result(NULL);
+
     if (m_master_session)
     {
-      // Results should cache their data before deleting the implementation.
-      register_result(NULL);
-
       //Notify NodeSession nodes that master is being removed.
       for (auto node : m_impl->m_nodes)
       {
@@ -662,7 +663,7 @@ struct Obj_row_count
 // ---------------------------------------------------------------------
 
 
-Schema XSession_base::createSchema(const string &name, bool reuse)
+Schema internal::XSession_base::createSchema(const string &name, bool reuse)
 {
   try {
     std::stringstream query;
@@ -701,7 +702,7 @@ void check_reply_skip_error_throw(cdk::Reply&& r, int skip_server_error)
 }
 
 
-void XSession_base::dropSchema(const string &name)
+void internal::XSession_base::dropSchema(const string &name)
 {
   try{
     std::stringstream qry;
@@ -718,7 +719,7 @@ void XSession_base::dropSchema(const string &name)
   TODO: better implementation: check if drop_collection can drop views also
 */
 
-void XSession_base::dropTable(const mysqlx::string& schema, const string& table)
+void internal::XSession_base::dropTable(const mysqlx::string& schema, const string& table)
 {
   try{
     Args args(schema, table);
@@ -730,7 +731,7 @@ void XSession_base::dropTable(const mysqlx::string& schema, const string& table)
 }
 
 
-void XSession_base::dropCollection(const mysqlx::string& schema,
+void internal::XSession_base::dropCollection(const mysqlx::string& schema,
                               const mysqlx::string& collection)
 {
   try{
@@ -742,7 +743,7 @@ void XSession_base::dropCollection(const mysqlx::string& schema,
   CATCH_AND_WRAP
 }
 
-Schema XSession_base::getDefaultSchema()
+Schema internal::XSession_base::getDefaultSchema()
 {
   if (m_impl->m_default_db.empty())
     throw Error("No default schema set for the session");
@@ -750,7 +751,7 @@ Schema XSession_base::getDefaultSchema()
 }
 
 
-Schema XSession_base::getSchema(const string &name, bool check)
+Schema internal::XSession_base::getSchema(const string &name, bool check)
 {
   try {
 
@@ -769,7 +770,7 @@ Schema XSession_base::getSchema(const string &name, bool check)
 }
 
 
-internal::List_init<Schema> XSession_base::getSchemas()
+internal::List_init<Schema> internal::XSession_base::getSchemas()
 {
   try {
 
@@ -1023,7 +1024,7 @@ struct Op_sql : public Op_base<internal::SqlStatement_impl>
 
   typedef std::list<Value> param_list_t;
 
-  Op_sql(XSession_base &sess, const string &query)
+  Op_sql(internal::XSession_base &sess, const string &query)
     : Op_base(sess), m_query(query)
   {}
 
@@ -1104,7 +1105,7 @@ struct Op_sql : public Op_base<internal::SqlStatement_impl>
 };
 
 
-void SqlStatement::reset(mysqlx::XSession_base &sess, const string &query)
+void SqlStatement::reset(internal::XSession_base &sess, const string &query)
 {
   m_impl.reset(new Op_sql(sess, query));
 }
@@ -1127,6 +1128,8 @@ SqlStatement& NodeSession::sql(const string &query)
 // ---------------------------------------------------------------------
 
 
+#if 0
+
 string::string(const std::string &other)
   : std::wstring(cdk::string(other))
 {}
@@ -1141,6 +1144,20 @@ string::operator std::string() const
 {
   return std::string(cdk::string(*this));
 }
+
+#endif
+
+
+std::string string::Impl::to_utf8(const string &other)
+{
+  return cdk::string(other);
+}
+
+void string::Impl::from_utf8(string &s, const std::string &other)
+{
+  s = cdk::string(other);
+}
+
 
 /*
 string::operator const cdk::foundation::string&() const

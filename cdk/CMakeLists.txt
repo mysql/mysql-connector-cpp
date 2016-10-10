@@ -168,7 +168,10 @@ INCLUDE(protobuf)
 # Add SSL
 #
 
+if(NOT DEFINED WITH_SSL)
 SET(WITH_SSL "bundled" CACHE STRING "")
+endif()
+message("WITH_SSL: ${WITH_SSL}")
 
 IF(WITH_SSL)
   IF(WITH_SSL STREQUAL "bundled")
@@ -210,8 +213,8 @@ if(WITH_TESTS)
     extra/process_launcher/process_launcher.cc
     extra/common/exception.cc)
   target_include_directories(process_launcher PRIVATE
-    ${CMAKE_SOURCE_DIR}/extra/process_launcher/
-    ${CMAKE_SOURCE_DIR}/extra/common)
+    ${PROJECT_SOURCE_DIR}/extra/process_launcher/
+    ${PROJECT_SOURCE_DIR}/extra/common)
 
   # quiet compile warnings outside of our code
   if (MSVC)

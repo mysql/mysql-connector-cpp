@@ -50,7 +50,8 @@ include(version.cmake)
 
 # Base name for the connector libraries.
 
-set(LIB_NAME_BASE "mysqlcppconn2")
+#set(LIB_NAME_BASE "mysqlcppconn2")
+set(LIB_NAME_BASE "mysqlcppconn${CONCPP_VERSION_MAJOR}")
 
 #
 # Set up cmake module search patch
@@ -100,9 +101,9 @@ endif()
 # Configure static runtime library on Windows if requested
 #
 
-OPTION(STATIC_MSVCRT "Use static MSVC runtime library" OFF)
+option(STATIC_MSVCRT "Use static MSVC runtime library" OFF)
 
-IF(WIN32 AND STATIC_MSVCRT)
+if(WIN32 AND STATIC_MSVCRT)
 
 message("Using static runtime library")
 
@@ -114,7 +115,7 @@ foreach(LANG C CXX)
   set(CMAKE_${LANG}_FLAGS_DEBUG "${CMAKE_${LANG}_FLAGS_DEBUG} /MTd")
 endforeach(LANG)
 
-ENDIF()
+endif()
 
 #
 # Enable MSVC Debug Format Information
@@ -162,7 +163,49 @@ endif()
 # =================================
 #
 
+option(BUILD_STATIC "Build static version of connector library" OFF)
+
+if(BUILD_STATIC)
+  message("Building static connector library")
+  set(LIB_TYPE STATIC)
+  add_definitions(-DCONCPP_BUILD_STATIC)
+else()
+  message("Building shared connector library")
+
+  if(WIN32 AND STATIC_MSVCRT)
+    message(SEND_ERROR "Shared library should not use static runtime.")
+  endif()
+
+  set(LIB_TYPE SHARED)
+  add_definitions(-DCONCPP_BUILD_SHARED)
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+  # Note: setting target property CXX_VISIBILITY did not work for
+  # object libraries that we use to build the connector.
+
+  if(CMAKE_COMPILER_IS_GNUCXX)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      add_compile_options(-fvisibility-ms-compat)
+    elseif()
+      add_compile_options(-fvisibility=hidden)
+    endif()
+  endif()
+
+endif()
+
 OPTION(WITH_TESTS "Build project's unit tests" 0)
+
+#
+# Note: if building static connector on windows, the type of
+# runtime library used by tests must match that used by the connector
+# (which is statically linked with tests). This must also match the
+# runtime type used by gtest library (which we also link statically to).
+#
+
+if(WITH_TESTS AND BUILD_STATIC)
+  set(STATIC_TESTS_MSVCRT ${STATIC_MSVCRT})
+endif()
+
 
 OPTION(THROW_AS_ASSERT
   "Turn THROW() statements in the code into asserts for easier debugging"
@@ -198,6 +241,8 @@ SETUP_BOOST()
 
 SET(WITH_CDK_DOC 0)
 OPTION(WITH_CDK_TESTS "cdk tests" OFF)
+set(WITH_SSL OFF)
+set(WITH_PIC ${CMAKE_POSITION_INDEPENDENT_CODE})
 ADD_SUBDIRECTORY(cdk)
 INCLUDE_DIRECTORIES(${CDK_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(cdk/parser)
@@ -220,13 +265,12 @@ ADD_SUBDIRECTORY(include)
 INCLUDE_DIRECTORIES(include)
 
 #
-# Set higher warning level on Windows to catch non-portable
-# code.
+# Set higher warning level for the main connector code.
 #
 
 foreach(LANG C CXX)
 
-IF(WIN32)
+if(WIN32)
 
   # 4127 = conditional expression is constant (needed for do {...} while(false))
   # 4512 = assignment operator could not be generated
@@ -238,7 +282,12 @@ IF(WIN32)
 
   set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /W4 /wd4512 /wd4127")
 
-ENDIF()
+else()
+
+  set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} -Wextra")
+  set(TEST_COMPILE_FLAGS "-Wno-sign-compare")
+
+endif()
 
 endforeach(LANG)
 
@@ -256,21 +305,10 @@ ADD_SUBDIRECTORY(devapi)
 #  Target which builds the final connector library
 #  ===============================================
 #
-#  TODO: debug/non-debug variant
-#  TODO: interface options for libconcpp target
-#  TODO: restrict exported symbols
-#
-
-# Pick output library name
-
-set(LIB_NAME_STATIC "${LIB_NAME_BASE}-static")
-if(WIN32 AND STATIC_MSVCRT)
-  set(LIB_NAME_STATIC "${LIB_NAME_STATIC}-mt")
-endif()
 
 # Generate the main connector library.
 
-add_library_ex(libconcpp STATIC
+add_library_ex(libconcpp ${LIB_TYPE}
     ${WITH_UUID}/src/uuid_gen.cc
     OBJECTS devapi xapi
     LIBS    cdk
@@ -287,13 +325,85 @@ if(MSVC)
 endif()
 
 
-set_property(TARGET libconcpp PROPERTY OUTPUT_NAME ${LIB_NAME_STATIC})
-message("Static library name: ${LIB_NAME_STATIC}")
+#
+# Pick output library name
+# ------------------------
+#
+# The library name base is mysqlcppconnX where X is the major version
+# of Connector/C++ product.
+#
+# Static library has -static suffix added to the base name.
+#
+# On Windows we distinguish the MSVC version used to build the library
+# (as this determines the runtime version). The shared libraries use
+# -vsNN suffix, the import library does not have the suffix but is installed
+# to a vsNN/ subfolder of the library install location (see install layout
+# below). For static libraries, we add -mt suffix if it is linked with
+# static runtime.
+#
+
+set(VS)
+if(WIN32)
+  if(MSVC12)
+    set(VS "vs12")
+  elseif(MSVC14)
+    set(VS "vs14")
+  endif()
+endif()
+
+if(BUILD_STATIC)
+
+  set(LIB_NAME "${LIB_NAME_BASE}-static")
+  if(WIN32 AND STATIC_MSVCRT)
+    set(LIB_NAME "${LIB_NAME}-mt")
+  endif()
+
+else()
+
+  set(LIB_NAME "${LIB_NAME_BASE}")
+  if(VS)
+    set(LIB_NAME "${LIB_NAME}-${VS}")
+  endif()
+
+endif()
 
 
+set_property(TARGET libconcpp PROPERTY OUTPUT_NAME ${LIB_NAME})
+message("Connector library name: ${LIB_NAME}")
+
+if(NOT BUILD_STATIC)
+  set_property(TARGET libconcpp PROPERTY ARCHIVE_OUTPUT_NAME ${LIB_NAME_BASE})
+endif()
+
+set_target_properties(libconcpp PROPERTIES
+  VERSION "${API_VERSION}"
+  SOVERSION "${API_VERSION_MAJOR}"
+)
+
+#
 # Pick install location for the main library
+# ------------------------------------------
+#
+# On Windows the install layout is as follows, where NN is the MSVC version
+# used to build the connector:
+#
+#  {lib,lib64}/mysqlcppconnX-vsNN.dll              <-- shared library
+#  {lib,lib64}/vsNN/mysqlcppconnX-static.lib       <-- static with /MD
+#  {lib,lib64}/vsNN/mysqlcppconnX-static-mt.lib    <-- static with /MT
+#  {lib,lib64}/vsNN/mysqlcppconnX.lib              <-- import library for DLL
+#
+# On Linux it is as follows, where A.B is the API version number
+#
+#  {lib,lib64}/libmysqlcppconnX.so.A.B             <-- shared library
+#  {lib,lib64}/libmysqlcppconnX.so.A               <-- soname link
+#  {lib,lib64}/libmysqlcppconnX.so                 <-- development link
+#  {lib,lib64}/libmysqlcppconnX-static.a           <-- static library
+#
+# Additionally, if connector is built in debug mode, the libraries are installed
+# in debug/ subfolder of {lib,lib64}/ or {lib,lib64}/vsNN/.
+#
 
-option(LIB_DIR    "Library subdirectory")
+set(LIB_DIR "" CACHE PATH "Library install location (relative to install root)")
 
 if(NOT LIB_DIR)
   if(IS64BIT)
@@ -303,26 +413,26 @@ if(NOT LIB_DIR)
   endif()
 endif()
 
-if(WIN32)
-  if(MSVC12)
-    set(LIB_DIR "${LIB_DIR}/vs12")
-  elseif(MSVC14)
-    set(LIB_DIR "${LIB_DIR}/vs14")
-  endif()
-endif()
-
-set(LIB_DIR_DEBUG "${LIB_DIR}/debug")
-
 message("Connector library will be installed at: ${LIB_DIR}")
 
-INSTALL(TARGETS libconcpp
+set(LIB_DIR_STATIC "${LIB_DIR}")
+if(VS)
+  set(LIB_DIR_STATIC "${LIB_DIR_STATIC}/${VS}")
+endif()
+
+
+install(TARGETS libconcpp
   CONFIGURATIONS Release RelWithDebInfo
-  DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION "${LIB_DIR_STATIC}"
+  RUNTIME DESTINATION "${LIB_DIR}"
+  LIBRARY DESTINATION "${LIB_DIR}"
 )
 
-INSTALL(TARGETS libconcpp
+install(TARGETS libconcpp
   CONFIGURATIONS Debug
-  DESTINATION ${LIB_DIR_DEBUG}
+  ARCHIVE DESTINATION "${LIB_DIR_STATIC}/debug"
+  RUNTIME DESTINATION "${LIB_DIR}/debug"
+  LIBRARY DESTINATION "${LIB_DIR}/debug"
 )
 
 
@@ -332,14 +442,24 @@ INSTALL(TARGETS libconcpp
 #
 
 #
-# Enable C++11 for code that can use DevAPI
+# Enable C++11 for test code that can use DevAPI
 #
 
-if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
   # Use C++11 also for CHECK_CXX_SOURCE_COMPILES()
   set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
 endif()
+
+remove_definitions(-DCONCPP_BUILD_STATIC)
+remove_definitions(-DCONCPP_BUILD_SHARED)
+
+if(BUILD_STATIC)
+  add_definitions(-DSTATIC_CONCPP)
+endif()
+
+# Auto-generated test targets
+
 
 IF (WITH_TESTS)
   # Unit tests declared with ADD_NG_TEST() (see cdk/cmake/testing.cmake)
@@ -361,6 +481,9 @@ SET_INTERFACE_OPTIONS(try devapi)
 
 #
 # Show dynamic library dependencies for try program.
+#
+# TODO: Use a cmake module for that
+# TODO: Do it also for the shared library
 #
 
 find_program(LDD ldd)
@@ -407,6 +530,7 @@ add_custom_target(link_test
   COMMAND ${CMAKE_COMMAND}
     -G "${CMAKE_GENERATOR}"
     -D WITH_CONCPP=${PROJECT_BINARY_DIR}/install
+    -D BUILD_STATIC=${BUILD_STATIC}
     -D STATIC_MSVCRT=${STATIC_MSVCRT}
     ${PROJECT_SOURCE_DIR}/testapp
   COMMAND ${CMAKE_COMMAND} --build . --config $<CONFIGURATION>  --clean-first
@@ -419,6 +543,7 @@ add_test(NAME Link_test
   COMMAND ${CMAKE_COMMAND} --build . --target link_test --config $<CONFIGURATION>
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
+
 
 #
 # Packaging specifications

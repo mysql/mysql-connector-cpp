@@ -20,9 +20,15 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+
+set(API_VERSION_MAJOR 1)
+set(API_VERSION_MINOR 0)
+set(API_VERSION "${API_VERSION_MAJOR}.${API_VERSION_MINOR}")
+
+
 set(CONCPP_VERSION_MAJOR  2)
 set(CONCPP_VERSION_MINOR  0)
-set(CONCPP_VERSION_MICRO  2)
+set(CONCPP_VERSION_MICRO  3)
 # Level is "-alpha", "-beta", empty if GA
 set(CONCPP_VERSION_LEVEL  "")
 

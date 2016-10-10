@@ -72,7 +72,11 @@ public:
   option_t is_valid() { return m_session->is_valid(); }
   option_t check_valid() { return m_session->check_valid(); }
 
-  void close() { return m_session->close(); }
+  void close() {
+    if (m_trans)
+      rollback();
+    return m_session->close();
+  }
 
   /*
     Transactions

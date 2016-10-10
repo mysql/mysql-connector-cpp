@@ -338,6 +338,10 @@ int mysqlx_stmt_t::add_projections(va_list args)
   {
     m_proj_list->add_value(item);
   }
+
+  if (!m_proj_list->count())
+    m_proj_list.release();
+
   return RESULT_OK;
 }
 
@@ -728,6 +732,8 @@ int mysqlx_stmt_t::add_document(const char *json_doc)
     return RESULT_ERROR;
   }
 
+  if (!json_doc || !(*json_doc))
+    throw Mysqlx_exception("Missing JSON data");
   /*
     This is done as a two-stage process add_new_doc()/add_doc_key_value()
     because in the future this function can support multiple arguments
