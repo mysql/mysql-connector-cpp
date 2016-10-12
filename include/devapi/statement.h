@@ -189,6 +189,11 @@ public:
     CATCH_AND_WRAP
   }
 
+  /**
+    Bind parameters to values given by a map from parameter
+    names to their values.
+  */
+
   template <class Map>
   Executable<Res>& bind(const Map &args)
   {

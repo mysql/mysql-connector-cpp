@@ -271,7 +271,7 @@ public:
   }
 
   /**
-    Add row consisting of specified values to the list of
+    Add single row consisting of specified values to the list of
     rows to be inserted.
   */
 
@@ -287,6 +287,10 @@ public:
     CATCH_AND_WRAP
   }
 
+  /**
+    Add specified rows.
+  */
+
   template<typename... Types>
   TableInsert& rows(const Row &first, Types... rest)
   {
@@ -297,6 +301,10 @@ public:
     CATCH_AND_WRAP
   }
 
+  /**
+    Add rows from a container such as vector or list.
+  */
+
   template<typename Container>
   TableInsert& rows(const Container &cont)
   {
@@ -306,6 +314,10 @@ public:
     }
     CATCH_AND_WRAP
   }
+
+  /**
+    Add rows from a range given by two iterators.
+  */
 
   template<typename It>
   TableInsert& rows(const It &begin, const It &end)
@@ -336,13 +348,13 @@ namespace internal {
   public:
 
     /**
-      Insert into a full table without restricting the colums.
+      Return operation which inserts rows into the full table without restricting
+      the colums.
 
-      Each row passed to the following .values() call must have
-      the same number of values as the number of columns of the
-      table. However, this check is done only after sending the insert
-      command to the server. If value count does not match table column
-      count server reports error.
+      Each row added by the operation must have the same number of values as
+      the number of columns of the table. However, this check is done only
+      after sending the insert command to the server. If value count does not
+      match table column count server reports error.
     */
 
     TableInsert insert()
@@ -351,11 +363,13 @@ namespace internal {
     }
 
 
-    /*
-      Insert into a full table restricting the colums.
+    /**
+      Return operation which iserts row into the table restricting the colums.
 
-      Each row passed to the following .values() call must have
-      the same number of values as the columns specified by insert().
+      Each row added by the operation must have the same number of values
+      as the columns specified here. However, this check is done only
+      after sending the insert command to the server. If value count does not
+      match table column count server reports error.
     */
 
     template <class... T>
@@ -374,7 +388,7 @@ namespace internal {
 
 namespace internal {
 
-  /*
+  /**
     Class defining table CRUD .orderBy() clause.
   */
 
@@ -409,6 +423,13 @@ namespace internal {
       return *this;
     }
 
+    /**
+      Specify ordering of rows in the operation.
+
+      This form accepts a vector, list or other container with strings, each
+      string defining sorting direction and the value to sort on.
+    */
+
     template <typename Ord>
     TableSort& orderBy(Ord ord)
     {
@@ -418,6 +439,13 @@ namespace internal {
       }
       return *this;
     }
+
+    /**
+      Specify ordering of rows in the operation.
+
+      Arguments are one or more strings, each defining sorting direction and the
+      value to sort on.
+    */
 
     template <typename Ord, typename...Type>
     TableSort& orderBy(Ord ord, const Type...rest)
@@ -538,6 +566,12 @@ DIAGNOSTIC_PUSH
 
 DIAGNOSTIC_POP
 
+  /**
+    Specify row selection criteria.
+
+    The criteria is specified as a string containing Boolean expression.
+  */
+
   TableSort& where(const string& expr)
   {
     get_impl()->add_where(expr);
@@ -559,6 +593,13 @@ namespace internal {
   class PUBLIC_API TableSelectBase : public virtual TableOpBase
   {
   public:
+
+    /**
+      Select rows from table.
+
+      Optional list of expressions defines projection with transforms
+      rows found by this operation.
+    */
 
     template<typename ...PROJ>
     TableSelect select(const PROJ&...proj)
@@ -640,11 +681,22 @@ DIAGNOSTIC_PUSH
 
 DIAGNOSTIC_POP
 
+  /**
+    Set given field in a row to the given value.
+
+    The value can be either a direct literal or an expression given
+    by `expr(<string>)`, evaluated in the server.
+  */
+
   TableUpdate& set(const string& field, internal::ExprValue val)
   {
     get_impl()->add_set(field, std::move(val));
     return *this;
   }
+
+  /**
+    Specify selection criteria for rows that should be updated.
+  */
 
   TableSort& where(const string& expr)
   {
@@ -667,6 +719,10 @@ namespace internal {
   class PUBLIC_API TableUpdateBase : public virtual TableOpBase
   {
   public:
+
+    /**
+      Return operation which updates rows in the table.
+    */
 
     TableUpdate update()
     {
@@ -713,7 +769,7 @@ namespace internal {
 
 
 class PUBLIC_API TableRemove
-: public internal::TableSort<Result, false>
+  : public internal::TableSort<Result, false>
 {
 
   typedef internal::TableRemove_impl Impl;
@@ -747,6 +803,10 @@ DIAGNOSTIC_PUSH
 
 DIAGNOSTIC_POP
 
+  /**
+    Specify selection criteria for rows to be removed.
+  */
+
   TableSort& where(const string &expr)
   {
     get_impl()->add_where(expr);
@@ -768,6 +828,10 @@ namespace internal {
   class PUBLIC_API TableRemoveBase : public virtual TableOpBase
   {
   public:
+
+    /**
+      Return operation which removes rows from the table.
+    */
 
     TableRemove remove()
     {

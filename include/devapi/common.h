@@ -257,7 +257,7 @@ namespace internal {
 }  // internal
 
 
-/**
+/*
   Global unique identifiers for documents.
 
   TODO: Windows GUID type

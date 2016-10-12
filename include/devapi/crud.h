@@ -127,7 +127,9 @@ struct Limit_impl : public Statement_impl
 };
 
 
-/// TODO
+/**
+  Base class defining operation's offset() clasue.
+*/
 
 template <class Res>
 class Offset
@@ -151,6 +153,11 @@ protected:
   }
 
 public:
+
+  /**
+    Skip the given number of items (rows or documents) before starting
+    to perform the operation.
+  */
 
   Statement<Res>& offset(unsigned rows)
   {
@@ -183,7 +190,11 @@ struct LimitRet<Res,false>
 };
 
 
-/// TODO
+/**
+  Base class defining operation's limit() clause.
+*/
+
+// TODO: Doxygen does not see the base class
 
 template <class Res, bool with_offset>
 class Limit
@@ -206,9 +217,13 @@ protected:
 
 public:
 
-  typename LimitRet<Res, with_offset>::type& limit(unsigned rows)
+  /**
+    %Limit the operation to the given number of items (rows or documents).
+  */
+
+  typename LimitRet<Res, with_offset>::type& limit(unsigned items)
   {
-    get_impl()->set_limit(rows);
+    get_impl()->set_limit(items);
     return *this;
   }
 };

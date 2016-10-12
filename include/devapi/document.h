@@ -51,8 +51,8 @@ class DocResult;
 // Field class
 // ===========
 
-/**
-  Field object/values represent fields in a document.
+/*
+  %Field object/values represent fields in a document.
 
   TODO: _fld suffix
 
@@ -225,7 +225,7 @@ public:
 // ===========
 
 /**
-  Value object can store value of scalar type, string, array or document.
+  %Value object can store value of scalar type, string, array or document.
 
   Implicit conversions to and from corresponding C++ types are defined.
   If conversion to wrong type is attempted, an error is thrown. If Value

@@ -334,9 +334,16 @@ namespace internal {
     BaseResult(BaseResult &&other) { init(std::move(other)); }
     virtual ~BaseResult();
 
+    /// Get number of warnings stored in the result.
 
     unsigned getWarningCount() const;
+
+    /// Get list of warnings stored in the result.
+
     internal::List_initializer<BaseResult> getWarnings();
+
+    /// Get warning at given, 0-based position.
+
     Warning getWarning(unsigned);
 
     iterator begin()
@@ -511,6 +518,8 @@ private:
 #undef TYPE_ENUM
 #define TYPE_ENUM(T,X) T,
 
+/// Type enumeration
+
 enum class Type : unsigned short
 {
   TYPE_LIST(TYPE_ENUM)
@@ -553,30 +562,35 @@ class PUBLIC_API Column : public internal::Printable
 {
 public:
 
-  string getSchemaName()  const;
-  string getTableName()   const;
-  string getTableLabel()  const;
-  string getColumnName()  const;
-  string getColumnLabel() const;
+  string getSchemaName()  const;  ///< TODO
+  string getTableName()   const;  ///< TODO
+  string getTableLabel()  const;  ///< TODO
+  string getColumnName()  const;  ///< TODO
+  string getColumnLabel() const;  ///< TODO
 
-  Type getType()   const;
+  Type getType()   const;  ///< TODO
 
-  unsigned long getLength() const;
-  unsigned short getFractionalDigits() const;
-  bool isNumberSigned() const;
+  unsigned long getLength() const;  ///< TODO
+  unsigned short getFractionalDigits() const;  ///< TODO
+  bool isNumberSigned() const;  ///< TODO
 
-  CharacterSet getCharacterSet() const;
+  CharacterSet getCharacterSet() const;  ///< TODO
+
+  /// TODO
   std::string getCharacterSetName() const
   {
     return characterSetName(getCharacterSet());
   }
 
-  const CollationInfo& getCollation() const;
+  const CollationInfo& getCollation() const;  ///< TODO
+
+  /// TODO
   std::string getCollationName() const
   {
     return getCollation().getName();
   }
 
+  /// TODO
   bool isPadded() const;
 
 private:
@@ -732,9 +746,11 @@ public:
 /**
   %Result of an operation that returns rows.
 
+  @note It is possible to iterate over rows in the result using
+  range loop: `for (Row r : result) ...`
+
   @ingroup devapi_res
 */
-
 
 class PUBLIC_API RowResult
     : public internal::BaseResult
@@ -927,8 +943,8 @@ public:
   uint64_t count();
 
 
-  /**
-   Iterate over Rows.
+  /*
+   Iterate over rows (range-for support).
 
    Rows that have been fetched using iterator will not be available when
    calling fetchOne() or fetchAll()
@@ -1044,10 +1060,14 @@ private:
 /**
   %Result of an operation that returns documents.
 
+  @note It is possible to iterate over documents in the result using
+  range loop: `for (DbDoc d : result) ...`
+
   @ingroup devapi_res
 */
 
-class PUBLIC_API DocResult // : public internal::BaseResult
+class PUBLIC_API DocResult
+  : public internal::BaseResult
 {
   class Impl;
   Impl *m_doc_impl = NULL;
@@ -1085,8 +1105,6 @@ public:
     calling fetchAll()
    */
 
-public:
-
   internal::List_initializer<DocResult> fetchAll()
   {
     return internal::List_initializer<DocResult>(*this);
@@ -1098,8 +1116,8 @@ public:
 
   uint64_t count();
 
-  /**
-   Iterate over Documents.
+  /*
+   Iterate over documents (range-for support).
 
    Documents that have been fetched using iterator will not be available when
    calling fetchOne() or fetchAll()

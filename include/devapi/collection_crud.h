@@ -466,6 +466,13 @@ namespace internal {
       return *this;
     }
 
+    /**
+      Specify ordering of documents in the operation.
+
+      This form accepts a vector, list or other container with strings, each
+      string defining sorting direction and the value to sort on.
+    */
+
     template <typename Ord>
     Limit<Res, limit_with_offset>& sort(Ord ord)
     {
@@ -475,6 +482,13 @@ namespace internal {
       }
       return *this;
     }
+
+    /**
+      Specify ordering of documents in the operation.
+
+      Arguments are one or more strings, each defining sorting direction and the
+      value to sort on.
+    */
 
     template <typename Ord, typename...Type>
     Limit<Res, limit_with_offset>& sort(Ord ord, const Type...rest)
@@ -559,7 +573,7 @@ namespace internal {
   public:
 
     /**
-      Remove all documents from the collection.
+      Return operation which removes all documents from the collection.
     */
 
     virtual CollectionRemove remove()
@@ -568,7 +582,7 @@ namespace internal {
     }
 
     /**
-      Remove documents satisfying given expression.
+      Return operation which removes documents satisfying given expression.
     */
 
     virtual CollectionRemove remove(const string &cond)
@@ -653,6 +667,13 @@ DIAGNOSTIC_POP
 
 public:
 
+  /**
+    Specify projection for documents found in the collection.
+
+    The projection should be an expression given by `expr(<string>)`
+    which evaluates to a document. Each document found will be transformed by
+    evaluating the expression an the result will be returned by the operation.
+  */
 
   CollectionSort& fields(internal::ExprValue proj)
   {
@@ -675,6 +696,18 @@ public:
     return *this;
   }
 
+  /**
+    Specify projection for documents found in the collection.
+
+    In this form the projection is given as list of strings of the form
+    `"<expression> AS <path>"`. Each expression is evaluated and `<path>`
+    specifies where to put the value of the expression in the resulting
+    document.
+
+    The strings which define the projection are passed as a vector, list
+    or other container with strings.
+  */
+
   template <typename Ord>
   CollectionSort& fields(const Ord& ord)
   {
@@ -684,6 +717,15 @@ public:
     }
     return *this;
   }
+
+  /**
+    Specify projection for documents found in the collection.
+
+    In this form the projection is given as list of strings of the form
+    `"<expression> AS <path>"`. Each expression is evaluated and `<path>`
+    specifies where to put the value of the expression in the resulting
+    document.
+  */
 
   /*
     Note: If e is an expression (of type ExprValue) then only
@@ -720,7 +762,7 @@ namespace internal {
   public:
 
     /**
-      Return all the documents in the collection.
+      Return operation which fetches all the documents in the collection.
     */
 
     CollectionFind find()
@@ -729,7 +771,7 @@ namespace internal {
     }
 
     /**
-      Find documents that satisfy given expression.
+      Return opertion which finds documents that satisfy given expression.
     */
 
     CollectionFind find(const string &cond)
@@ -836,6 +878,13 @@ DIAGNOSTIC_PUSH
 
 DIAGNOSTIC_POP
 
+  /**
+    Set a given field in a docuemnt to the given value.
+
+    Field is given by a document path. The value can be either a direct literal
+    or an expression given by `expr(<string>)`, evaluated in the server.
+  */
+
   CollectionModify& set(const Field &field, internal::ExprValue &&val)
   {
     try {
@@ -844,6 +893,12 @@ DIAGNOSTIC_POP
     }
     CATCH_AND_WRAP
   }
+
+  /**
+    Unset a given field in a document.
+
+    The field is given by a document path.
+  */
 
   CollectionModify& unset(const Field &field)
   {
@@ -854,6 +909,13 @@ DIAGNOSTIC_POP
     CATCH_AND_WRAP
   }
 
+  /**
+    Insert value into an array field of a document.
+
+    The `field` parameter should be a document path pointing at a location
+    inside an array field. The given value is inserted at this position.
+  */
+
   CollectionModify& arrayInsert(const Field &field, internal::ExprValue &&val)
   {
     try {
@@ -863,6 +925,14 @@ DIAGNOSTIC_POP
     CATCH_AND_WRAP
   }
 
+  /**
+    Append value to an array field of a document.
+
+    The `field` parameter should be a document path pointing at an array
+    field inside the document. The given value is appended at the end of the
+    array.
+  */
+
   CollectionModify& arrayAppend(const Field &field, internal::ExprValue &&val)
   {
     try {
@@ -871,6 +941,14 @@ DIAGNOSTIC_POP
     }
     CATCH_AND_WRAP
   }
+
+  /**
+    Delete element from an array field of a document.
+
+    The `field` parameter should be a document path pointing at a location
+    inside an array field. The element at indicated location is removed from
+    the array.
+  */
 
   CollectionModify& arrayDelete(const Field &field)
   {
@@ -899,7 +977,7 @@ namespace internal {
   public:
 
     /**
-      Modify all documents.
+      Return operation which modifies all documents in the collection.
     */
 
     CollectionModify modify()
@@ -911,7 +989,7 @@ namespace internal {
     }
 
     /**
-      Modify documents that satisfy given expression.
+      Return operation which modifies documents that satisfy given expression.
     */
 
     CollectionModify modify(const string &expr)

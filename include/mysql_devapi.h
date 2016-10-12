@@ -97,7 +97,7 @@ namespace internal {
 }
 
 
-/*
+/**
   Represents a database object
 
   Inherited by Schema, Table and Collection. Can't be used alone.
@@ -218,16 +218,7 @@ public:
   Schema(internal::XSession_base&);
 
 
-  /**
-     Get schema object
-  */
-
   const Schema& getSchema() const override { return *this; }
-
-
-  /**
-     Check if database object exists
-  */
 
   bool existsInDatabase() const override;
 
@@ -381,15 +372,7 @@ public:
   }
 
 
-  /**
-     Get schema object
-  */
-
   const Schema& getSchema() const override { return m_schema; }
-
-  /**
-     Check if database object exists
-  */
 
   bool existsInDatabase() const override;
 
@@ -501,16 +484,7 @@ public:
   bool isView();
 
 
-  /**
-     Get schema object
-  */
-
   const Schema& getSchema() const override { return m_schema; }
-
-
-  /**
-     Check if Table exists
-  */
 
   bool existsInDatabase() const override;
 
