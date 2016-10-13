@@ -575,7 +575,7 @@ public:
   Function which indicates that a given string should be treated
   as expression.
 
-  If `s` is a string value, then in contexts wehre values are
+  If `s` is a string value, then in contexts where values are
   expected, `expr(s)` will treat `s` as a DevAPI expression. For
   example statement
 

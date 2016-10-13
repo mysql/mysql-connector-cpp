@@ -148,7 +148,7 @@ public:
   implementation object of some type Impl. It is assumed that Impl
   has the following methods:
 
-   void iterator_start() - puts iterator in "before begin" positon;
+   void iterator_start() - puts iterator in "before begin" position;
    bool iterator_next() - moves iterator to next position, returns
                           false if it was not possible;
    Value_type iterator_get() - gets current value.
@@ -299,7 +299,8 @@ namespace internal {
     XSession_base *m_sess = NULL;
 
     INTERNAL BaseResult(XSession_base *sess, cdk::Reply*);
-    INTERNAL BaseResult(XSession_base *sess, cdk::Reply*, const std::vector<GUID>&);
+    INTERNAL BaseResult(XSession_base *sess, cdk::Reply*,
+                        const std::vector<GUID>&);
 
   protected:
 
@@ -541,7 +542,7 @@ const char* typeName(Type t)
   {
     TYPE_LIST(TYPE_NAME)
   default:
-    THROW("Unkonwn type");
+    THROW("Unknown type");
   }
 }
 
@@ -867,7 +868,7 @@ public:
 
     1. A temporary prvalue of type RowResult is created by type-conversion
        of the Result prvalue coll...execute(). Constructor RowResult(Result&&)
-       is calld to do the conversion.
+       is called to do the conversion.
 
     2. Now res is direct-initialized
        (http://en.cppreference.com/w/cpp/language/direct_initialization)
@@ -891,7 +892,7 @@ public:
     return *this;
   }
 
-  /// Retrun number of fields in each row.
+  /// Return number of fields in each row.
 
   col_count_t getColumnCount() const;
 

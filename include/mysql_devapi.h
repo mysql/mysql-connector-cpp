@@ -234,7 +234,7 @@ public:
 
   /**
     Return `Collection` object representing named collection in
-    the shcema. If `check_exists` is true and named collection
+    the schema. If `check_exists` is true and named collection
     does not exist, an error will be thrown. Otherwise, if named
     collection does not exists, the returned object will refer
     to non-existent collection.
@@ -248,11 +248,9 @@ public:
   Collection getCollection(const string&, bool check_exists= false);
 
   /**
-    Return `Table` object representing table or view in
-    the shcema. If `check_exists` is true and table
-    does not exist, an error will be thrown.
-    Otherwise, if table does not exists,
-    the returned object will refer
+    Return `Table` object representing table or view in the schema.
+    If `check_exists` is true and table does not exist, an error will be thrown.
+    Otherwise, if table does not exists, the returned object will refer
     to non-existent table.
 
     @note Checking existence of the table involves
@@ -265,7 +263,7 @@ public:
 
   /**
     Return list of `Collection` object representing collections in
-    the shcema.
+    the schema.
   */
 
   internal::List_init<Collection> getCollections();
@@ -278,13 +276,13 @@ public:
 
   /**
     Return list of `Table` object representing tables and views in
-    the shcema.
+    the schema.
   */
 
   internal::List_init<Table> getTables();
 
   /**
-    Return list of tables and views in the shcema.
+    Return list of tables and views in the schema.
   */
 
   internal::List_init<string> getTableNames();
@@ -670,7 +668,7 @@ namespace internal {
     /**
       Commit opened transaction, if any.
 
-      Does nothing if no transaction was opened. After commiting the
+      Does nothing if no transaction was opened. After committing the
       transaction is closed.
     */
 
@@ -689,7 +687,7 @@ namespace internal {
     /**
       Closes current session.
 
-      After a session is closed, any call to other method will thow Error.
+      After a session is closed, any call to other method will throw Error.
     */
 
     void close();
@@ -715,7 +713,6 @@ namespace internal {
 
 
 /**
-
   Represents a session which gives access to data stored
   in the data store.
 

@@ -141,7 +141,7 @@ namespace internal {
     CollectionOpBase(const CollectionOpBase&) = default;
 
     /*
-      This constructor is here only to alow defining
+      This constructor is here only to allow defining
       CollectionXXXBase classes without a need to explicitly
       invoke CollectionOpBase constructor. But in the end,
       only the constructor called from the Collection class
@@ -201,7 +201,7 @@ namespace internal {
     Class which defines various variants of `add()` method.
 
     This class defines `add()` methods that append new documents to the
-    list of documents that shuld be inserted by a CollectionAdd operation.
+    list of documents that should be inserted by a CollectionAdd operation.
     Documents can be specified as JSON strings or DbDoc instances. Several
     documents can be added in a single call to `add()`.
 
@@ -216,7 +216,7 @@ namespace internal {
   class CollectionAddInterface
   {
     /*
-      This method must be overriden by derived class to return an
+      This method must be overridden by derived class to return an
       empty add operation.
     */
 
@@ -648,7 +648,7 @@ public:
   CollectionFind(Collection &coll);
 
   /**
-    Create opeartion which returns all documents from a collection
+    Create operation which returns all documents from a collection
     which satisfy given criteria.
   */
 
@@ -771,7 +771,7 @@ namespace internal {
     }
 
     /**
-      Return opertion which finds documents that satisfy given expression.
+      Return operation which finds documents that satisfy given expression.
     */
 
     CollectionFind find(const string &cond)
@@ -806,7 +806,7 @@ namespace internal {
   /*
     Interface to be implemented by internal implementations of
     CRUD modify operation. Methods `add_operation` are used to
-    pass to the implementaiton object the moifications requested
+    pass to the implementation object the modifications requested
     by the user.
   */
 
@@ -879,7 +879,7 @@ DIAGNOSTIC_PUSH
 DIAGNOSTIC_POP
 
   /**
-    Set a given field in a docuemnt to the given value.
+    Set a given field in a document to the given value.
 
     Field is given by a document path. The value can be either a direct literal
     or an expression given by `expr(<string>)`, evaluated in the server.

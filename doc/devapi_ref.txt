@@ -1,69 +1,72 @@
 Connector/C++ 2.0 X DevAPI Reference {#devapi_ref}
 ====================================
 
-Connector/C++ 2.0 implements the X DevAPI, as described in the [X DevAPI User Guide]
-(http://dev.mysql.com/doc/x-devapi-userguide/en/index.html). The X DevAPI allows one
-to work with MySQL Servers implementing a document store via the X Plugin. One can
-also execute plain SQL queries using this API.
+Connector/C++ 2.0 implements the X DevAPI, as described in
+the [X DevAPI User Guide]
+(http://dev.mysql.com/doc/x-devapi-userguide/en/index.html).
+The X DevAPI allows one to work with MySQL Servers implementing a document store
+via the X Plugin. One can also execute plain SQL queries using this API.
 
 To get started, check out some of the main X DevAPI classes:
 
 - To access data first create an @link mysqlx::XSession `XSession`@endlink or
-  @link mysqlx::NodeSession `NodeSession`@endlink object.
-  The `NodeSession` object gives access to a single MySQL node and allows executing
-  arbitrary SQL queries on that node, while `XSession` object can work with data
+  a @link mysqlx::NodeSession `NodeSession`@endlink object. A `NodeSession`
+  object gives access to a single MySQL node and allows executing arbitrary
+  SQL queries on that node, while an `XSession` object can work with data
   distributed over several MySQL nodes (see [X DevAPI User Guide]
   (http://dev.mysql.com/doc/x-devapi-userguide/en/xsession-vs-node-session.html)
   for introduction to these concepts).
 
 - To manipulate data stored in a document collection or a table, create
-  @link mysqlx::Collection `Collection`@endlink or @link mysqlx::Table `Table`@endlink
-  object using methods `getCollection()` or `getTable()` of
+  a @link mysqlx::Collection `Collection`@endlink or a @link mysqlx::Table
+  `Table`@endlink object using methods `getCollection()` or `getTable()` of
   a @link mysqlx::Schema `Schema`@endlink object obtained from the session.
 
 - Queries and other statements are created using methods of the `Collection`
   or `Table` class, such as `find()`. They are executed with method `execute()`.
 
-- Results of a query are examined using @link mysqlx::DocResult `DocResult`@endlink
-  or @link mysqlx::RowResult `RowResult`@endlink instances returned by method
-  `execute()`. Method `fetchOne()` fetches next item (document or row) from
-  the result until there are no more items left. Method `fetchAll()` can fetch all
-  items at once and store them in an STL container.
+- Results of a query are examined using @link mysqlx::DocResult
+ `DocResult`@endlink or @link mysqlx::RowResult `RowResult`@endlink instances
+  returned from `execute()` method. Method `fetchOne()` fetches the next item
+  (a document or a row) from the result until there are no more items left.
+  Method `fetchAll()` can fetch all items at once and store them in an STL
+  container.
 
 - Documents and rows from query results are represented by @link mysqlx::DbDoc
   `DbDoc`@endlink and @link mysqlx::Row `Row`@endlink instances, respectively.
 
 A more complete example of code that access MySQL Document Store using
-the X DevAPI is presented below. See also the [list of X DevAPI classes] (@ref devapi).
+the X DevAPI is presented below. See also the [list of X DevAPI classes]
+(@ref devapi).
 
 
 ### Sample code which uses Connector/C++ with X DevAPI ###
 
-The following Connector/C++ application connects to MySQL Server with
-X Plugin, creates a document collection, adds a few documents to it,
-queries the collection and displays the result. The sample code can be found
-in file `testapp/devapi_test.cc` in the source distribution of Connector/C++ 2.0.
+The following Connector/C++ application connects to a MySQL Server with
+X Plugin, creates a document collection, adds a few documents to it, queries
+the collection and displays the result. The sample code can be found in file
+`testapp/devapi_test.cc` in the source distribution of Connector/C++ 2.0.
 See @ref usage for instructions on how to build the sample code.
 
 @dontinclude devapi_test.cc
 
-Code which uses X DevAPI should include the `mysql_devapi.h` header. The
-API is declared within the `mysqlx` namespace:
+Code which uses X DevAPI should include the `mysql_devapi.h` header. The API
+is declared within the `mysqlx` namespace:
 
 @skip #include <mysql_devapi.h>
 @until using namespace
 
-To create an @link mysqlx::XSession `XSession` @endlink object, specify DNS name of
-the MySQL Server, the port on which the plugin listens (default port is 33060)
-and the user credentials:
+To create an @link mysqlx::XSession `XSession` @endlink object, specify DNS name
+of a MySQL Server, the port on which the plugin listens (default port is 33060)
+and user credentials:
 
 @skipline main
 @until XSession
 
 Another way of specifying session parameters is by means of a `mysqlx` URL like
-`"mysqlx://mike:s3cr3t!@localhost:13009"`.
-Once created, the session is ready to be used. If the session can not
-be established, the `XSession` constructor throws an error.
+`"mysqlx://mike:s3cr3t!@localhost:13009"`. Once created, the session is ready
+to be used. If the session can not be established, the `XSession` constructor
+throws an error.
 
 To manipulate documents in a collection, create a @link mysqlx::Collection
 `Collection`@endlink object, first asking session for that collection's
@@ -75,10 +78,10 @@ To manipulate documents in a collection, create a @link mysqlx::Collection
 The `true` parameter to @link mysqlx::Schema::createCollection
 `createCollection()`@endlink method specifies that collection should be re-used
 if it already exists. Without this parameter an attempt to create an already
-existing collection produces an error. It is also possible to create `Collection`
-object directly, without creating the `Schema` instance:
+existing collection produces an error. It is also possible to create
+a `Collection` object directly, without creating the `Schema` instance:
 ~~~~~~~~
-    Collection coll = sess.getSchema("test").getCollection("c1",true)
+Collection coll = sess.getSchema("test").getCollection("c1",true)
 ~~~~~~~~
 
 Before adding documents to the collection, all the existing documents are
@@ -87,15 +90,14 @@ removed first:
 @skipline remove()
 
 The @link mysqlx::Collection::remove `Collection::remove()`@endlink method can
-also accept an expression argument which selects
-documents to be removed. Note that the `remove()` method returns
-an operation that must be explicitly executed to take effect.
-When executed, operation returns a result (ignored here; the results are
-used later).
+also accept an expression argument which selects documents to be removed. Note
+that the `remove()` method returns an operation that must be explicitly executed
+to take effect. When executed, operation returns a result (ignored here; the
+results are used later).
 
 To insert documents use the @link mysqlx::Collection::add
-`Collection::add()`@endlink method. Documents are described by JSON strings using
-the same syntax as MySQL Server. Note that double quotes are required
+`Collection::add()`@endlink method. Documents are described by JSON strings
+using the same syntax as MySQL Server. Note that double quotes are required
 around field names and they must be escaped inside C strings:
 
 @skipline {
@@ -105,18 +107,17 @@ around field names and they must be escaped inside C strings:
 @until cout
 @until }
 
-Result of the `add()` operation is stored in the `add` variable to
-be able to read identifiers of the documents that were added.
-These identifiers are generated by the connector, unless added document
-contains `"_id"` field which specifies its identifier.
-Note how internal code block is used to delete the result when it is no
-longer needed.
+Result of the `add()` operation is stored in the `add` variable to be able
+to read identifiers of the documents that were added. These identifiers are
+generated by the connector, unless an added document contains an `"_id"` field
+which specifies its identifier. Note how internal code block is used to delete
+the result when it is no longer needed.
 
 @note It is possible to chain several `add()` calls as follows:
-`coll.add(doc1).add(doc2)...add(docN).execute()`. It is also possible
-to pass several documents to a single `add()` call:
-`coll.add(doc1, ..., docN).execute()`. Another option is to pass
-to `Collection::add()` an STL container with several documents.
+  `coll.add(doc1).add(doc2)...add(docN).execute()`. It is also possible to pass
+  several documents to a single `add()` call:
+  `coll.add(doc1, ..., docN).execute()`. Another option is to pass
+  to `Collection::add()` an STL container with several documents.
 
 To query documents of a collection use the @link mysqlx::Collection::find
 `Collection::find()`@endlink method:
@@ -125,33 +126,33 @@ To query documents of a collection use the @link mysqlx::Collection::find
 
 The result of the `find()` operation is stored in a variable of type
 @link mysqlx::DocResult `DocResult`@endlink which gives access to the returned
-sequence of documents that satisfy the selection criteria. These documents can be
-fetched one by one using the @link mysqlx::DocResult::fetchOne
-`DocResult::fetchOne()`@endlink method, until it returns a null document
-that signals end of the sequence:
+documents that satisfy the selection criteria. These documents can be fetched
+one by one using the @link mysqlx::DocResult::fetchOne
+`DocResult::fetchOne()`@endlink method, until it returns a null document that
+signals end of the sequence:
 
 @skipline fetchOne()
 @until cout
 
-Given a @link mysqlx::DbDoc `DbDoc`@endlink object it is possible to iterate over
-its fields as follows:
+Given a @link mysqlx::DbDoc `DbDoc`@endlink object it is possible to iterate
+over its fields as follows:
 
 @skipline for
 @until }
 
-Note how the @link mysqlx::DbDoc::operator[] `operator[]`@endlink is used to access
-values of document fields:
+Note how the @link mysqlx::DbDoc::operator[] `operator[]`@endlink is used
+to access values of document fields:
 
 @skipline name
 @until cout
 
-The value of a field is automatically converted to a corresponding
-C++ type. If the C++ type does not match the type of the field value,
-conversion error is thrown.
+The value of a field is automatically converted to a corresponding C++ type.
+If the C++ type does not match the type of the field value, conversion error
+is thrown.
 
 Fields which are sub-documents can be converted to the `DbDoc` type. The
 following code demonstrates how to process a `"date"` field which is
-a subdocument. Note how methods @link mysqlx::DbDoc::hasField
+a sub-document. Note how methods @link mysqlx::DbDoc::hasField
 `DbDoc::hasField()`@endlink and @link mysqlx::DbDoc::fieldType
 `DbDoc::fieldType()`@endlink are used to examine existence and type of a field
 within a document.
@@ -160,16 +161,16 @@ within a document.
 @until }
 @until }
 
-In case of arrays, currently no conversion to C++ types is defined.
-However, individual elements of an array value can be accessed
-using `operator[]` or they can be iterated using range for loop.
+In case of arrays, currently no conversion to C++ types is defined. However,
+individual elements of an array value can be accessed using `operator[]` or
+they can be iterated using range for loop.
 
 @skipline if
 @until }
 @until }
 
-Any errors thrown by Connector/C++ derive from the `mysqlx::Error` type
-and can be processed as follows:
+Any errors thrown by Connector/C++ derive from the `mysqlx::Error` type and can
+be processed as follows:
 
 @skipline catch
 @until }
