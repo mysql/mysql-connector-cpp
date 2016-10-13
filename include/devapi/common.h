@@ -53,7 +53,7 @@ namespace internal {
 
 /*
   List_initializer class is used to initialize user std::vector, std::list or
-  own list imlpementations, as long as initialized by iterators of defined type
+  own list implementations, as long as initialized by iterators of defined type
 */
 
 template <typename T>
@@ -66,7 +66,7 @@ struct List_init
      : m_data(std::move(list.begin()), std::move(list.end()))
    {}
 
-   //Special case for forward_list usnig move contructor
+   //Special case for forward_list using move constructor
    List_init(std::forward_list<T>&& list)
      : m_data(std::move(list))
    {}

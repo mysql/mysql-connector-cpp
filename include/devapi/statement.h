@@ -45,7 +45,7 @@ namespace internal {
 class XSession_base;
 
 /*
-  Abstract interface to be implemented by internal implementaion
+  Abstract interface to be implemented by internal implementation
   of an executable object.
 
   The execute() method returns a BaseStatement object which can be
@@ -61,7 +61,7 @@ struct Executable_impl
 }  // internal
 
 /**
-  Represents an operatiothat can be executed.
+  Represents an operation that can be executed.
 
   Creating an operation does not involve any communication
   with the server. Only when `execute()` method is called
@@ -250,7 +250,7 @@ struct SqlStatement_impl : public Executable_impl
 
 
 /**
-  Represents an operation which exececutes SQL statement.
+  Represents an operation which executes an SQL statement.
 
   Before executing the statement, values of "?" placeholders
   that appear in it can be specified using `bind()` method.

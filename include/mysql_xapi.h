@@ -273,7 +273,7 @@ typedef enum mysqlx_data_type_enum
 {
   MYSQLX_TYPE_UNDEFINED = 0,
 
-  /* Coulmn types as defined in protobuf (mysqlx_resultset.proto)*/
+  /* Column types as defined in protobuf (mysqlx_resultset.proto)*/
   MYSQLX_TYPE_SINT     = 1, /**< 64-bit signed integer number type*/
   MYSQLX_TYPE_UINT  = 2,    /**< 64-bit unsigned integer number type*/
   MYSQLX_TYPE_DOUBLE   = 5, /**< Floating point double number type*/
@@ -378,7 +378,7 @@ mysqlx_get_session(const char *host, int port, const char *user,
   Create a session using connection string or URL.
 
   Connection sting has the form `"user:pass\@host:port"`, valid URL
-  is like a connection string with `msqlx://` prefix.
+  is like a connection string with a `mysqlx://` prefix.
 
   @param conn_string character connection string
   @param[out] out_error if error happens during connect the error message
@@ -463,7 +463,7 @@ mysqlx_get_node_session(const char *host, int port, const char *user,
   Create a node session using connection string or URL.
 
   Connection sting has the form `"user:pass\@host:port"`, valid URL
-  is like a connection string with `msqlx://` prefix.
+  is like a connection string with `mysqlx://` prefix.
 
   A node session connects only to one mysqld node at a time.
 
@@ -572,7 +572,7 @@ mysqlx_get_schemas(mysqlx_session_t *sess, const char *schema_pattern);
 
 
 /**
-  Get a schema object and optionally check if it esixts on the server.
+  Get a schema object and optionally check if it exists on the server.
 
   @param sess  session handle
   @param schema_name name of the schema
@@ -629,7 +629,7 @@ mysqlx_get_tables(mysqlx_schema_t *schema,
 
 
 /**
-  Get a table object and optionally check if it esixts in the schema
+  Get a table object and optionally check if it exists in the schema
 
   @param schema schema handle
   @param tab_name name of the table
@@ -678,7 +678,7 @@ mysqlx_get_collections(mysqlx_schema_t *schema,
 
 
 /**
-  Get a collection object and optionally check if it esixts in the schema
+  Get a collection object and optionally check if it exists in the schema
 
   @param schema schema handle
   @param col_name name of the collection
@@ -771,7 +771,7 @@ PUBLIC_API mysqlx_session_options_t * mysqlx_session_options_new();
 
 
 /**
-  Free a sesion configuration data object.
+  Free a session configuration data object.
 
   @param opt handle to sessin configuartion data object
              that has to be freed
@@ -792,7 +792,7 @@ PUBLIC_API void mysqlx_free_options(mysqlx_session_options_t *opt);
 
   TODO: Point to documentation explaining what data each option expects
 
-  @return `RESULT_OK` if option was sucessfully set; `RESULT_ERROR`
+  @return `RESULT_OK` if option was successfully set; `RESULT_ERROR`
           is set otherwise (use `mysqlx_error()` to get the error
           information)
 
@@ -811,10 +811,10 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
   @param[out] ...  pointer to a buffer where to return the requested
                    value
 
-  TODO: Point to documentation explaining what data is returend for
+  TODO: Point to documentation explaining what data is returned for
   each option.
 
-  @return `RESULT_OK` if option was sucessfully read; `RESULT_ERROR`
+  @return `RESULT_OK` if option was successfully read; `RESULT_ERROR`
           is set otherwise (use `mysqlx_error()` to get the error
           information)
 
@@ -862,11 +862,9 @@ PUBLIC_API mysqlx_result_t * mysqlx_sql(mysqlx_session_t *sess,
                 `MYSQLX_NULL_TERMINATED` can be specified instead of the
                 actual length
   @param   ...  variable parameters list consisting of (type, value) pairs
-          terminated by `PARAM_END`:
-
-           type_id1, value1, type_id2, value2, ..., type_id_n, value_n, PARAM_END
-
-           (`PARAM_END` marks the end of parameters list).
+          terminated by `PARAM_END`: type_id1, value1, type_id2, value2, ...,
+          type_id_n, value_n, `PARAM_END` (`PARAM_END` marks the end of
+          the parameters list).
 
            type_id is the numeric identifier, which helps to determine the type
            of the value provided as the next parameter. The user code must
@@ -1319,7 +1317,7 @@ mysqlx_set_modify_array_insert(mysqlx_stmt_t *stmt, ...);
 
   @param stmt handle to MODIFY statement
   @param ... list of parameters that come as triplets
-        <field_path, value_type, value>. Each tripliet specifies an array
+        <field_path, value_type, value>. Each triplet specifies an array
         field in a document, given by field_path, and a value that should
         be appended to that array. The value_type is the type identifier
         for the data type of value (see `mysqlx_data_type_t` enum).
@@ -1399,12 +1397,9 @@ mysqlx_table_select(mysqlx_table_t *table, const char *criteria);
   @param row_count a number of rows to return (LIMIT clause)
   @param offset number of rows to skip (an offset for the LIMIT clause)
   @param  ... sorting specification - variable parameters list consisting of
-          (expression, direction) pairs terminated by `PARAM_END`:
-
-          expr_1, direction_1, ..., expr_n, direction_n, PARAM_END
-
-          (`PARAM_END` marks the end of parameters list)
-          Each expression computes value used to sort
+          (expression, direction) pairs terminated by `PARAM_END`: expr_1,
+          direction_1, ..., expr_n, direction_n, `PARAM_END`.
+          Each expression computes a value used to sort
           the rows/documents in ascending or descending order,
           as determined by direction constant
           (TODO: list the direction enum names).
@@ -1508,7 +1503,7 @@ mysqlx_table_update(mysqlx_table_t *table,
 */
 
 /**
-  Create a statement which perfroms a table SELECT operation.
+  Create a statement which performs a table SELECT operation.
 
   @param table table handle
 
@@ -1632,7 +1627,7 @@ mysqlx_set_insert_columns(mysqlx_stmt_t *stmt, ...);
 
   The function provides the row data for an INSERT statement.
   User code must ensure that the number of values and their order matches
-  the list of columns specified for the operation. If colum names were not
+  the list of columns specified for the operation. If column names were not
   explicitly specified, the values must match the columns of the table.
 
   @param stmt statement handle
@@ -1737,8 +1732,7 @@ mysqlx_table_update_new(mysqlx_table_t *table);
           <column_name, value_type, value_or_expression>
           representing column names, value types and values as
           expressions. The list is terminated by `PARAM_END`:
-          column_1, type_1, val_1, ..., column_n, type_n, val_n, `PARAM_END`
-          (`PARAM_END` marks the end of parameters list)
+          column_1, type_1, val_1, ..., column_n, type_n, val_n, `PARAM_END`.
           The value type is defined in `mysqlx_data_type_t` enum.
           If the value is to be computed on the server side the type
           has to be set to `MYSQLX_TYPE_EXPR`. The value (expression)
@@ -1810,7 +1804,7 @@ PUBLIC_API int mysqlx_set_update_values(mysqlx_stmt_t *stmt, ...);
            handle is freed (when session is closed or explicitly with
            `mysqlx_free()`) or until another call to `mysqlx_execute()`
            on the same statement handle is made. It is also possible to close
-           a result hanlde and free all resources used by it earlier with
+           a result handle and free all resources used by it earlier with
            `mysqlx_result_free()` call.
            On error NULL is returned. The statement is set to an error state and
            errors can be examined using the statement handle.
@@ -1823,7 +1817,7 @@ mysqlx_execute(mysqlx_stmt_t *stmt);
 
 
 /**
-  Bind values for parametrized statments.
+  Bind values for parametrized statements.
 
   This function binds values of either `?` placeholders in an SQL statement
   or of named parameters that can be used in other statements.
@@ -1838,20 +1832,14 @@ mysqlx_execute(mysqlx_stmt_t *stmt);
            named parameters.
 
            For SQL statements it is consisting of (type, value) pairs
-           terminated by `PARAM_END`:
-
-           type_id1, value1, type_id2, value2, ..., type_id_n, value_n, PARAM_END
-
-           (`PARAM_END` marks the end of parameters list).
+           terminated by `PARAM_END`: type_id1, value1, type_id2, value2, ...,
+           type_id_n, value_n, `PARAM_END`.
 
            For SELECT, INSERT, UPDATE, DELETE, FIND, ADD, MODIFY and REMOVE
            statements, the parameters come as triplets (param_name, type,
-           value).
-
-           name1, type_id1, value1, name2, type_id2, value2, ...,
-           namen, type_id_n, value_n, PARAM_END
-
-           (`PARAM_END` marks the end of parameters list).
+           value): name1, type_id1, value1, name2, type_id2, value2, ...,
+           name_n, type_id_n, value_n, `PARAM_END` (`PARAM_END` marks the end
+           of the parameters list).
 
            type_id is the numeric identifier, which helps to determine the type
            of the value provided as the next parameter. The user code must
@@ -1886,8 +1874,8 @@ PUBLIC_API int mysqlx_stmt_bind(mysqlx_stmt_t *stmt, ...);
 
    @param stmt handle to the statement for which the projection is set
    @param  ... variable parameters list consisting of character strings
-          containg expressions: proj_1, ..., proj_n, PARAM_END
-          (PARAM_END marks the end of projectin's item list)
+          containing expressions: proj_1, ..., proj_n, PARAM_END
+          (PARAM_END marks the end of projection's item list)
 
    @return `RESULT_OK` - on success; `RESULT_ERR` - on error
 
@@ -1909,9 +1897,8 @@ PUBLIC_API int mysqlx_set_items(mysqlx_stmt_t *stmt, ...);
     - for update/modify/delete/remove operations limit
       the rows/documents affected by the operations.
 
-  Statmenents supported by this function:
-    SELECT, FIND, UPDATE, MODIFY, DELETE, REMOVE
-  Calling it for INSERT or ADD will result in an error
+  Statements supported by this function: SELECT, FIND, UPDATE, MODIFY, DELETE,
+  REMOVE. Calling it for INSERT or ADD will result in an error
 
   @param stmt statement handle
   @param where_expr character string containing Boolean expression
@@ -1940,11 +1927,10 @@ PUBLIC_API int mysqlx_set_where(mysqlx_stmt_t *stmt, const char *where_expr);
   Calling it for INSERT or ADD will result in an error
 
   @param stmt statement handle
-  @param  ... variable parameters list consisting of (expression, direction) pairs
-          terminated by `PARAM_END`:
-          expr_1, direction_1, ..., expr_n, direction_n, PARAM_END
-          (`PARAM_END` marks the end of parameters list)
-          Each expression computes value used to sort
+  @param  ... variable parameters list consisting of (expression, direction)
+          pairs terminated by `PARAM_END`: expr_1, direction_1, ..., expr_n,
+          direction_n, `PARAM_END`.
+          Each expression computes a value used to sort
           the rows/documents in ascending or descending order,
           as determined by direction constant
           (list the direction enum names).
@@ -1970,9 +1956,10 @@ PUBLIC_API int mysqlx_set_order_by(mysqlx_stmt_t *stmt, ...);
 /**
   Set limit and offset information for a statement.
 
-  Set LIMIT and OFFSET for statement operations which work on ranges of rows/documents:
-    - for slect/find operations limit the number of returned rows/documents,
-    - for update/delete limit the number of documents affected by the operation.
+  Set LIMIT and OFFSET for statement operations which work on ranges of
+      rows/documents: for select/find operations limit the number of returned
+      rows/documents, for update/delete limit the number of documents affected
+      by the operation.
 
   Operations supported by this function:
     SELECT, FIND - use both LIMIT and OFFSET
@@ -2047,7 +2034,7 @@ PUBLIC_API mysqlx_row_t * mysqlx_row_fetch_one(mysqlx_result_t *res);
 
   @param res result handle
 
-  @param[out] out_length the total number of bytes in the json string;
+  @param[out] out_length the total number of bytes in the JSON string;
               can be NULL, in that case nothing is returned through
               this parameter and user must ensure the data is correctly
               interpreted
@@ -2066,7 +2053,7 @@ PUBLIC_API const char * mysqlx_json_fetch_one(mysqlx_result_t *res, size_t *out_
   Proceed to the next result set in the reply.
 
   This function is used to process replies containing multiple result sets.
-  After successfull call to this function, given result handle will be moved
+  After a successful call to this function, given result handle will be moved
   to access the next result set from the reply.
 
   @note Any data from the previous result set that has not yet been fetched
@@ -2133,7 +2120,7 @@ mysqlx_store_result(mysqlx_result_t *result, size_t *num);
 
   The function can be used for the multi-document inserts. In this case each
   call to `mysqlx_fetch_doc_id()` returns identifier of the next document,
-  unitl NULL is returned.
+  until NULL is returned.
 
   @param result handle to a result of a statement which adds documents to
          a collection
@@ -2196,7 +2183,7 @@ mysqlx_get_bytes(mysqlx_row_t* row, uint32_t col,
   Get an unsigned integer number from a row.
 
   It is important to pay attention to the signed/unsigned type of the column.
-  Attemptining to call this function for a column whose type is different from
+  Attempting to call this function for a column whose type is different from
   `MYSQLX_TYPE_UINT` will result in wrong data being retrieved.
 
   @param row row handle
@@ -2218,7 +2205,7 @@ mysqlx_get_uint(mysqlx_row_t* row, uint32_t col, uint64_t* val);
   Get a signed integer number from a row.
 
   It is important to pay attention to the signed/unsigned type of the column.
-  Attemptining to call this function for a column whose type is different from
+  Attempting to call this function for a column whose type is different from
   `MYSQLX_TYPE_SINT` will result in wrong data being retrieved.
 
   @param row row handle
@@ -2240,7 +2227,7 @@ mysqlx_get_sint(mysqlx_row_t* row, uint32_t col, int64_t* val);
   Get a float number from a row.
 
   It is important to pay attention to the type of the column.
-  Attemptining to call this function for a column whose type is different from
+  Attempting to call this function for a column whose type is different from
   `MYSQLX_TYPE_FLOAT` will result in wrong data being retrieved.
 
   @param row row handle
@@ -2262,7 +2249,7 @@ mysqlx_get_float(mysqlx_row_t* row, uint32_t col, float* val);
   Get a double number from a row.
 
   It is important to pay attention to the type of the column.
-  Attemptining to call this function for a column whose type is different from
+  Attempting to call this function for a column whose type is different from
   `MYSQLX_TYPE_DOUBLE` will result in wrong data being retrieved.
 
   @param row row handle
@@ -2664,7 +2651,7 @@ PUBLIC_API unsigned int mysqlx_result_warning_count(mysqlx_result_t *res);
 /**
   Get the next warning from the result.
 
-  This function returns a handle to a warning which can be examinated using
+  This function returns a handle to a warning which can be examined using
   the same functions used for errors: `mysqlx_error_num()` and
   `mysqlx_error_message()`.
 

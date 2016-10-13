@@ -87,7 +87,7 @@ namespace internal {
     {}
 
     /*
-      This constructor is here only to alow defining
+      This constructor is here only to allow defining
       TableXXXBase classes without a need to explicitly
       invoke TableOpBase constructor. But in the end,
       only the constructor called from the Table class
@@ -103,7 +103,7 @@ namespace internal {
 
 }  // internal
 
-// ----------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 namespace internal {
 
@@ -133,7 +133,7 @@ namespace internal {
 
     /*
       Request another row to be inserted by the operation. Method
-      should return empty Row istance to be filled with field data.
+      should return empty Row instance to be filled with field data.
     */
     virtual Row& new_row() = 0;
   };
@@ -144,7 +144,7 @@ namespace internal {
 /**
   Operation which inserts rows into a table.
 
-  This class defines the .values() and .rows() cluses which
+  This class defines the .values() and .rows() clauses which
   specify rows to be inserted.
 
   @todo Check that every row passed to .values() call has
@@ -348,8 +348,8 @@ namespace internal {
   public:
 
     /**
-      Return operation which inserts rows into the full table without restricting
-      the colums.
+      Return operation which inserts rows into the full table without
+      restricting the columns.
 
       Each row added by the operation must have the same number of values as
       the number of columns of the table. However, this check is done only
@@ -364,7 +364,7 @@ namespace internal {
 
 
     /**
-      Return operation which iserts row into the table restricting the colums.
+      Return operation which inserts row into the table restricting the columns.
 
       Each row added by the operation must have the same number of values
       as the columns specified here. However, this check is done only
@@ -384,7 +384,7 @@ namespace internal {
 }  // internal
 
 
-// ----------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 namespace internal {
 
@@ -443,8 +443,8 @@ namespace internal {
     /**
       Specify ordering of rows in the operation.
 
-      Arguments are one or more strings, each defining sorting direction and the
-      value to sort on.
+      Arguments are one or more strings, each defining sorting direction and
+      the value to sort on.
     */
 
     template <typename Ord, typename...Type>
@@ -459,7 +459,7 @@ namespace internal {
 }  // internal
 
 
-// ----------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 namespace internal {
 
@@ -613,7 +613,7 @@ namespace internal {
 }  // internal
 
 
-// ----------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 
 namespace internal {
@@ -735,7 +735,7 @@ namespace internal {
 }  // internal
 
 
-// ----------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 
 namespace internal {
