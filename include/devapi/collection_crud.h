@@ -141,7 +141,7 @@ namespace internal {
     CollectionOpBase(const CollectionOpBase&) = default;
 
     /*
-      This constructor is here only to alow defining
+      This constructor is here only to allow defining
       CollectionXXXBase classes without a need to explicitly
       invoke CollectionOpBase constructor. But in the end,
       only the constructor called from the Collection class
@@ -197,11 +197,11 @@ namespace internal {
   };
 
 
-  /*
+  /**
     Class which defines various variants of `add()` method.
 
     This class defines `add()` methods that append new documents to the
-    list of documents that shuld be inserted by a CollectionAdd operation.
+    list of documents that should be inserted by a CollectionAdd operation.
     Documents can be specified as JSON strings or DbDoc instances. Several
     documents can be added in a single call to `add()`.
 
@@ -216,7 +216,7 @@ namespace internal {
   class CollectionAddInterface
   {
     /*
-      This method must be overriden by derived class to return an
+      This method must be overridden by derived class to return an
       empty add operation.
     */
 
@@ -274,11 +274,11 @@ namespace internal {
     /**
       Add all documents within given container.
 
-      Any container type for which std::begin()/std::end() are defined
+      Any container type for which `std::begin()`/`std::end()` are defined
       should work.
 
-      Note: we use enable_if to remove ambiguity between this overload
-      and the one which adds a single document: add(doc). Thus this
+      Note: we use `enable_if<>` to remove ambiguity between this overload
+      and the one which adds a single document: `add(doc)`. Thus this
       overload is enabled only if type Container is not a document type.
     */
 
@@ -332,6 +332,7 @@ namespace internal {
     virtual void add_json(const string&) = 0;
   };
 
+  /// TODO
   class CollectionAddBase;
 
 }  // internal
@@ -344,6 +345,8 @@ namespace internal {
   call `do_add()` to append documents to the list one by one. This
   method, in turn, passes these documents to the internal
   implementation object.
+
+  @ingroup devapi_op
 */
 
 DLL_WARNINGS_PUSH
@@ -396,13 +399,16 @@ private:
     get_impl()->add_json(buf.str());
   }
 
+  ///@cond IGNORED
   friend internal::CollectionAddBase;
   friend internal::CollectionAddInterface<CollectionAdd>;
   friend internal::CollectionAddInterface<CollectionAdd&>;
+  ///@endcond
 };
 
 
 namespace internal {
+
 
   class PUBLIC_API CollectionAddBase
     : public CollectionAddInterface<mysqlx::CollectionAdd>
@@ -421,7 +427,7 @@ namespace internal {
 
 namespace internal {
 
-  /*
+  /**
     Base class defining various forms of CRUD .sort() clause.
 
     Note: the actual job of adding sort specification to the underlying
@@ -460,6 +466,13 @@ namespace internal {
       return *this;
     }
 
+    /**
+      Specify ordering of documents in the operation.
+
+      This form accepts a vector, list or other container with strings, each
+      string defining sorting direction and the value to sort on.
+    */
+
     template <typename Ord>
     Limit<Res, limit_with_offset>& sort(Ord ord)
     {
@@ -469,6 +482,13 @@ namespace internal {
       }
       return *this;
     }
+
+    /**
+      Specify ordering of documents in the operation.
+
+      Arguments are one or more strings, each defining sorting direction and the
+      value to sort on.
+    */
 
     template <typename Ord, typename...Type>
     Limit<Res, limit_with_offset>& sort(Ord ord, const Type...rest)
@@ -496,6 +516,12 @@ namespace internal {
   derived from CollectionSort<>.
 */
 
+
+/**
+  Class representing operation which removes documents from a collection.
+
+  @ingroup devapi_op
+*/
 
 class PUBLIC_API CollectionRemove
   : public internal::CollectionSort<Result,false>
@@ -536,6 +562,10 @@ DIAGNOSTIC_POP
 
 namespace internal {
 
+  /**
+    Base class defining methods which create remove statements.
+  */
+
   class PUBLIC_API CollectionRemoveBase
     : public virtual CollectionOpBase
   {
@@ -543,7 +573,7 @@ namespace internal {
   public:
 
     /**
-      Remove all documents from the collection.
+      Return operation which removes all documents from the collection.
     */
 
     virtual CollectionRemove remove()
@@ -552,7 +582,7 @@ namespace internal {
     }
 
     /**
-      Remove documents satisfying given expression.
+      Return operation which removes documents satisfying given expression.
     */
 
     virtual CollectionRemove remove(const string &cond)
@@ -586,6 +616,8 @@ namespace internal {
   Apart from all the methods inherited from `CollectionSort` it defines
   .fields() clauses which optionally specify final transformation of
   the returned documents.
+
+  @ingroup devapi_op
 */
 
 DLL_WARNINGS_PUSH
@@ -616,7 +648,7 @@ public:
   CollectionFind(Collection &coll);
 
   /**
-    Create opeartion which returns all documents from a collection
+    Create operation which returns all documents from a collection
     which satisfy given criteria.
   */
 
@@ -635,6 +667,13 @@ DIAGNOSTIC_POP
 
 public:
 
+  /**
+    Specify projection for documents found in the collection.
+
+    The projection should be an expression given by `expr(<string>)`
+    which evaluates to a document. Each document found will be transformed by
+    evaluating the expression an the result will be returned by the operation.
+  */
 
   CollectionSort& fields(internal::ExprValue proj)
   {
@@ -657,6 +696,18 @@ public:
     return *this;
   }
 
+  /**
+    Specify projection for documents found in the collection.
+
+    In this form the projection is given as list of strings of the form
+    `"<expression> AS <path>"`. Each expression is evaluated and `<path>`
+    specifies where to put the value of the expression in the resulting
+    document.
+
+    The strings which define the projection are passed as a vector, list
+    or other container with strings.
+  */
+
   template <typename Ord>
   CollectionSort& fields(const Ord& ord)
   {
@@ -666,6 +717,15 @@ public:
     }
     return *this;
   }
+
+  /**
+    Specify projection for documents found in the collection.
+
+    In this form the projection is given as list of strings of the form
+    `"<expression> AS <path>"`. Each expression is evaluated and `<path>`
+    specifies where to put the value of the expression in the resulting
+    document.
+  */
 
   /*
     Note: If e is an expression (of type ExprValue) then only
@@ -692,13 +752,17 @@ public:
 
 namespace internal {
 
+  /**
+    Base class defining methods which create document queries.
+  */
+
   class PUBLIC_API CollectionFindBase
     : public virtual CollectionOpBase
   {
   public:
 
     /**
-      Return all the documents in the collection.
+      Return operation which fetches all the documents in the collection.
     */
 
     CollectionFind find()
@@ -707,7 +771,7 @@ namespace internal {
     }
 
     /**
-      Find documents that satisfy given expression.
+      Return operation which finds documents that satisfy given expression.
     */
 
     CollectionFind find(const string &cond)
@@ -742,7 +806,7 @@ namespace internal {
   /*
     Interface to be implemented by internal implementations of
     CRUD modify operation. Methods `add_operation` are used to
-    pass to the implementaiton object the moifications requested
+    pass to the implementation object the modifications requested
     by the user.
   */
 
@@ -770,6 +834,8 @@ namespace internal {
    Apart from all the methods inherited from `CollectionSort` it defines
    various clauses which specify modifications to be performed on each
    document.
+
+   @ingroup devapi_op
 */
 
 class PUBLIC_API CollectionModify
@@ -812,6 +878,13 @@ DIAGNOSTIC_PUSH
 
 DIAGNOSTIC_POP
 
+  /**
+    Set a given field in a document to the given value.
+
+    Field is given by a document path. The value can be either a direct literal
+    or an expression given by `expr(<string>)`, evaluated in the server.
+  */
+
   CollectionModify& set(const Field &field, internal::ExprValue &&val)
   {
     try {
@@ -820,6 +893,12 @@ DIAGNOSTIC_POP
     }
     CATCH_AND_WRAP
   }
+
+  /**
+    Unset a given field in a document.
+
+    The field is given by a document path.
+  */
 
   CollectionModify& unset(const Field &field)
   {
@@ -830,6 +909,13 @@ DIAGNOSTIC_POP
     CATCH_AND_WRAP
   }
 
+  /**
+    Insert value into an array field of a document.
+
+    The `field` parameter should be a document path pointing at a location
+    inside an array field. The given value is inserted at this position.
+  */
+
   CollectionModify& arrayInsert(const Field &field, internal::ExprValue &&val)
   {
     try {
@@ -838,6 +924,14 @@ DIAGNOSTIC_POP
     }
     CATCH_AND_WRAP
   }
+
+  /**
+    Append value to an array field of a document.
+
+    The `field` parameter should be a document path pointing at an array
+    field inside the document. The given value is appended at the end of the
+    array.
+  */
 
   CollectionModify& arrayAppend(const Field &field, internal::ExprValue &&val)
   {
@@ -848,6 +942,14 @@ DIAGNOSTIC_POP
     CATCH_AND_WRAP
   }
 
+  /**
+    Delete element from an array field of a document.
+
+    The `field` parameter should be a document path pointing at a location
+    inside an array field. The element at indicated location is removed from
+    the array.
+  */
+
   CollectionModify& arrayDelete(const Field &field)
   {
     try {
@@ -857,11 +959,17 @@ DIAGNOSTIC_POP
     CATCH_AND_WRAP
   }
 
+  ///@cond IGNORED
   friend internal::CollectionModifyBase;
+  ///@endcond
 };
 
 
 namespace internal {
+
+  /**
+    Base class defining methods which create document modifying operations.
+  */
 
   class PUBLIC_API CollectionModifyBase
     : public virtual CollectionOpBase
@@ -869,7 +977,7 @@ namespace internal {
   public:
 
     /**
-      Modify all documents.
+      Return operation which modifies all documents in the collection.
     */
 
     CollectionModify modify()
@@ -881,7 +989,7 @@ namespace internal {
     }
 
     /**
-      Modify documents that satisfy given expression.
+      Return operation which modifies documents that satisfy given expression.
     */
 
     CollectionModify modify(const string &expr)

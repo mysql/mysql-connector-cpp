@@ -148,7 +148,7 @@ public:
   implementation object of some type Impl. It is assumed that Impl
   has the following methods:
 
-   void iterator_start() - puts iterator in "before begin" positon;
+   void iterator_start() - puts iterator in "before begin" position;
    bool iterator_next() - moves iterator to next position, returns
                           false if it was not possible;
    Value_type iterator_get() - gets current value.
@@ -211,6 +211,12 @@ namespace internal {
 
 } // internal
 
+
+/**
+  A warning that can be reported when executing queries or statements.
+
+  @ingroup devapi
+*/
 
 class PUBLIC_API Warning : public internal::Printable
 {
@@ -275,6 +281,10 @@ namespace internal {
 
   class XSession_base;
 
+  /**
+    Base for result classes.
+  */
+
   DLL_WARNINGS_PUSH
 
   class PUBLIC_API BaseResult : nocopy
@@ -289,7 +299,8 @@ namespace internal {
     XSession_base *m_sess = NULL;
 
     INTERNAL BaseResult(XSession_base *sess, cdk::Reply*);
-    INTERNAL BaseResult(XSession_base *sess, cdk::Reply*, const std::vector<GUID>&);
+    INTERNAL BaseResult(XSession_base *sess, cdk::Reply*,
+                        const std::vector<GUID>&);
 
   protected:
 
@@ -324,9 +335,16 @@ namespace internal {
     BaseResult(BaseResult &&other) { init(std::move(other)); }
     virtual ~BaseResult();
 
+    /// Get number of warnings stored in the result.
 
     unsigned getWarningCount() const;
+
+    /// Get list of warnings stored in the result.
+
     internal::List_initializer<BaseResult> getWarnings();
+
+    /// Get warning at given, 0-based position.
+
     Warning getWarning(unsigned);
 
     iterator begin()
@@ -367,6 +385,8 @@ namespace internal {
 
   public:
 
+    ///@cond IGNORED
+
     friend mysqlx::internal::XSession_base;
     friend mysqlx::Result;
     friend mysqlx::RowResult;
@@ -376,6 +396,8 @@ namespace internal {
 
     struct INTERNAL Access;
     friend Access;
+
+    ///@endcond
   };
 
 }
@@ -397,6 +419,8 @@ namespace internal {
 
   @todo Implement other methods for getting information about
   the result specified by DevAPI.
+
+  @ingroup devapi_res
 */
 
 class PUBLIC_API Result : public internal::BaseResult
@@ -461,11 +485,14 @@ private:
 // --------------------------
 
 /**
-List of types defined by DevAPI. For each type TTT in this list
-there is corresponding enumeration value Type::TTT.
+  List of types defined by DevAPI. For each type TTT in this list
+  there is corresponding enumeration value `Type::TTT`. For example
+  constant `Type::INT` represents the "INT" type.
 
-Note: The class name declared for each type is ignored for now
-- it is meant for future extensions.
+  @note The class name declared for each type is ignored for now
+  -- it is meant for future extensions.
+
+  @ingroup devapi_res
 */
 
 #define TYPE_LIST(X) \
@@ -492,6 +519,8 @@ Note: The class name declared for each type is ignored for now
 #undef TYPE_ENUM
 #define TYPE_ENUM(T,X) T,
 
+/// Type enumeration
+
 enum class Type : unsigned short
 {
   TYPE_LIST(TYPE_ENUM)
@@ -500,6 +529,12 @@ enum class Type : unsigned short
 
 #define TYPE_NAME(T,X) case Type::T: return #T;
 
+/**
+  Return name of a given type.
+
+  @ingroup devapi_res
+*/
+
 inline
 const char* typeName(Type t)
 {
@@ -507,7 +542,7 @@ const char* typeName(Type t)
   {
     TYPE_LIST(TYPE_NAME)
   default:
-    THROW("Unkonwn type");
+    THROW("Unknown type");
   }
 }
 
@@ -519,37 +554,44 @@ std::ostream& operator<<(std::ostream &out, Type t)
 
 
 /**
-Class providing meta-data for a single result column.
+  Class providing meta-data for a single result column.
+
+  @ingroup devapi_res
 */
 
 class PUBLIC_API Column : public internal::Printable
 {
 public:
 
-  string getSchemaName()  const;
-  string getTableName()   const;
-  string getTableLabel()  const;
-  string getColumnName()  const;
-  string getColumnLabel() const;
+  string getSchemaName()  const;  ///< TODO
+  string getTableName()   const;  ///< TODO
+  string getTableLabel()  const;  ///< TODO
+  string getColumnName()  const;  ///< TODO
+  string getColumnLabel() const;  ///< TODO
 
-  Type getType()   const;
+  Type getType()   const;  ///< TODO
 
-  unsigned long getLength() const;
-  unsigned short getFractionalDigits() const;
-  bool isNumberSigned() const;
+  unsigned long getLength() const;  ///< TODO
+  unsigned short getFractionalDigits() const;  ///< TODO
+  bool isNumberSigned() const;  ///< TODO
 
-  CharacterSet getCharacterSet() const;
+  CharacterSet getCharacterSet() const;  ///< TODO
+
+  /// TODO
   std::string getCharacterSetName() const
   {
     return characterSetName(getCharacterSet());
   }
 
-  const CollationInfo& getCollation() const;
+  const CollationInfo& getCollation() const;  ///< TODO
+
+  /// TODO
   std::string getCollationName() const
   {
     return getCollation().getName();
   }
 
+  /// TODO
   bool isPadded() const;
 
 private:
@@ -586,6 +628,8 @@ class RowResult;
 
   @sa `Value` class.
   @todo Support for iterating over row fields with range-for loop.
+
+  @ingroup devapi_res
 */
 
 class PUBLIC_API Row
@@ -702,8 +746,12 @@ public:
 
 /**
   %Result of an operation that returns rows.
-*/
 
+  @note It is possible to iterate over rows in the result using
+  range loop: `for (Row r : result) ...`
+
+  @ingroup devapi_res
+*/
 
 class PUBLIC_API RowResult
     : public internal::BaseResult
@@ -820,7 +868,7 @@ public:
 
     1. A temporary prvalue of type RowResult is created by type-conversion
        of the Result prvalue coll...execute(). Constructor RowResult(Result&&)
-       is calld to do the conversion.
+       is called to do the conversion.
 
     2. Now res is direct-initialized
        (http://en.cppreference.com/w/cpp/language/direct_initialization)
@@ -844,7 +892,7 @@ public:
     return *this;
   }
 
-  /// Retrun number of fields in each row.
+  /// Return number of fields in each row.
 
   col_count_t getColumnCount() const;
 
@@ -896,8 +944,8 @@ public:
   uint64_t count();
 
 
-  /**
-   Iterate over Rows.
+  /*
+   Iterate over rows (range-for support).
 
    Rows that have been fetched using iterator will not be available when
    calling fetchOne() or fetchAll()
@@ -956,6 +1004,8 @@ private:
   result if there is any.
 
   @todo implement `nextResult()` and other methods specified by DevAPI.
+
+  @ingroup devapi_res
 */
 
 class PUBLIC_API SqlResult : public RowResult
@@ -1010,9 +1060,15 @@ private:
 
 /**
   %Result of an operation that returns documents.
+
+  @note It is possible to iterate over documents in the result using
+  range loop: `for (DbDoc d : result) ...`
+
+  @ingroup devapi_res
 */
 
-class PUBLIC_API DocResult // : public internal::BaseResult
+class PUBLIC_API DocResult
+  : public internal::BaseResult
 {
   class Impl;
   Impl *m_doc_impl = NULL;
@@ -1050,8 +1106,6 @@ public:
     calling fetchAll()
    */
 
-public:
-
   internal::List_initializer<DocResult> fetchAll()
   {
     return internal::List_initializer<DocResult>(*this);
@@ -1063,8 +1117,8 @@ public:
 
   uint64_t count();
 
-  /**
-   Iterate over Documents.
+  /*
+   Iterate over documents (range-for support).
 
    Documents that have been fetched using iterator will not be available when
    calling fetchOne() or fetchAll()

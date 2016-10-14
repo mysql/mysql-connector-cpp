@@ -74,11 +74,13 @@ MESSAGE("Building C/C++ documentation")
 
 set(OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 configure_file(doxygen.cfg.in doxygen.cfg @ONLY)
+configure_file(DoxygenLayout.xml.in DoxygenLayout.xml @ONLY)
 
 set(OUTPUT_DIRECTORY "$(OUTPUT_DIRECTORY)")
 configure_file(doxygen.cfg.in ${CMAKE_CURRENT_SOURCE_DIR}/doxygen.cfg @ONLY)
+configure_file(DoxygenLayout.xml.in ${CMAKE_CURRENT_SOURCE_DIR}/DoxygenLayout.xml @ONLY)
 
-FILE(GLOB_RECURSE sources *.txt)
+FILE(GLOB sources *.txt)
 LIST(APPEND sources doxygen.cfg.in)
 
 

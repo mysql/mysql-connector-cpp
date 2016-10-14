@@ -45,7 +45,7 @@ namespace internal {
 class XSession_base;
 
 /*
-  Abstract interface to be implemented by internal implementaion
+  Abstract interface to be implemented by internal implementation
   of an executable object.
 
   The execute() method returns a BaseStatement object which can be
@@ -61,7 +61,7 @@ struct Executable_impl
 }  // internal
 
 /**
-  Represents an operatiothat can be executed.
+  Represents an operation that can be executed.
 
   Creating an operation does not involve any communication
   with the server. Only when `execute()` method is called
@@ -189,6 +189,11 @@ public:
     CATCH_AND_WRAP
   }
 
+  /**
+    Bind parameters to values given by a map from parameter
+    names to their values.
+  */
+
   template <class Map>
   Executable<Res>& bind(const Map &args)
   {
@@ -203,11 +208,11 @@ public:
 #if 0
 
   /*
-  Currently protocol supports binding only to scalar values,
-  not arrays or documents.
+    Currently protocol supports binding only to scalar values,
+    not arrays or documents.
 
-  TODO: Add this overload when binding to arrays is supported
-  in the protocol.
+    TODO: Add this overload when binding to arrays is supported
+    in the protocol.
   */
 
   template <typename Iterator>
@@ -245,13 +250,15 @@ struct SqlStatement_impl : public Executable_impl
 
 
 /**
-  Represents an operation which exececutes SQL statement.
+  Represents an operation which executes an SQL statement.
 
   Before executing the statement, values of "?" placeholders
   that appear in it can be specified using `bind()` method.
 
   SqlStatement's method `execute` returns result of type
   `SqlResult`.
+
+  @ingroup devapi_op
 */
 
 DLL_WARNINGS_PUSH

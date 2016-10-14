@@ -32,7 +32,7 @@
 
 /*
   Different CRUD operation classes derive from `Executable` which defines
-  the `execute()` method that executes given operation. Derived classess
+  the `execute()` method that executes given operation. Derived classes
   define additional methods that can modify the operation before it gets
   executed.
 
@@ -61,16 +61,16 @@
     x.limit()  - returns Offset<RowResult>
     x.limit().offset() - returns Statement<RowResult>
     x.execute()  - returns RowResult (Limit<RowResult,true> inherits
-                   from Statemenent<RowResult> which inherits from
+                   from Statement<RowResult> which inherits from
                    Executable<RowResult>)
 
   We have 2 variants of Limit<> class, to distinguish the case where
   .offset() can follow .limit() from the case where only .limit() clause
   is allowed.
 
-  The remaining grammar rules concering operations specific to collections
+  The remaining grammar rules concerning operations specific to collections
   and tables can be found in collection_crud.h and table_crud.h,
-  resepectively.
+  respectively.
 
   Each class eventually derives from Executable which holds the internal
   implementation object which should implement the implementation
@@ -95,13 +95,13 @@
   operation objects nor can it be copied. For that reason CRUD operations
   do not have copy semantics. Assignment `a = b` moves internal
   implementation from operation `b` to operation `a`. Using `b` after
-  such assignent throws errors.
+  such assignment throws errors.
 
   Since internal implementation object is managed by the Executable<R>
   class at the bottom of the inheritance hierarchy, this Executable<R>
   class is a virtual base class. This ensures that there is only one copy
   of Executable<R> in any object of derived class. It also means that
-  constructors of derived classes initialize the virtual base calss
+  constructors of derived classes initialize the virtual base class
   directly and not through intermediate base class constructors.
   For example, see constructor of `CollectionFind`.
 */
@@ -127,6 +127,10 @@ struct Limit_impl : public Statement_impl
 };
 
 
+/**
+  Base class defining operation's offset() clause.
+*/
+
 template <class Res>
 class Offset
   : public Statement<Res>
@@ -150,6 +154,11 @@ protected:
 
 public:
 
+  /**
+    Skip the given number of items (rows or documents) before starting
+    to perform the operation.
+  */
+
   Statement<Res>& offset(unsigned rows)
   {
     get_impl()->set_offset(rows);
@@ -162,7 +171,7 @@ public:
   The base class of Limit<R,F> is Offset<R> if F is true or
   Statement<R> if F is false. But otherwise definition of Limit<R,F>
   is the same in both cases. To use common template definition the
-  base calss of Limit<R,F> (which is also the return type of `limit`
+  base class of Limit<R,F> (which is also the return type of `limit`
   method) is defined by LimitRet<R,F>::type.
 */
 
@@ -180,6 +189,12 @@ struct LimitRet<Res,false>
   typedef Statement<Res> type;
 };
 
+
+/**
+  Base class defining operation's limit() clause.
+*/
+
+// TODO: Doxygen does not see the base class
 
 template <class Res, bool with_offset>
 class Limit
@@ -202,9 +217,13 @@ protected:
 
 public:
 
-  typename LimitRet<Res, with_offset>::type& limit(unsigned rows)
+  /**
+    %Limit the operation to the given number of items (rows or documents).
+  */
+
+  typename LimitRet<Res, with_offset>::type& limit(unsigned items)
   {
-    get_impl()->set_limit(rows);
+    get_impl()->set_limit(items);
     return *this;
   }
 };

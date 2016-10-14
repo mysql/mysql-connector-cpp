@@ -87,7 +87,7 @@ namespace internal {
     {}
 
     /*
-      This constructor is here only to alow defining
+      This constructor is here only to allow defining
       TableXXXBase classes without a need to explicitly
       invoke TableOpBase constructor. But in the end,
       only the constructor called from the Table class
@@ -103,7 +103,7 @@ namespace internal {
 
 }  // internal
 
-// ----------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 namespace internal {
 
@@ -133,7 +133,7 @@ namespace internal {
 
     /*
       Request another row to be inserted by the operation. Method
-      should return empty Row istance to be filled with field data.
+      should return empty Row instance to be filled with field data.
     */
     virtual Row& new_row() = 0;
   };
@@ -144,13 +144,15 @@ namespace internal {
 /**
   Operation which inserts rows into a table.
 
-  This class defines the .values() and .rows() cluses which
+  This class defines the .values() and .rows() clauses which
   specify rows to be inserted.
 
   @todo Check that every row passed to .values() call has
   the same number of values. The column count should match
   the one in insert(c1,...) call. For insert() without column
   list, it should be ?
+
+  @ingroup devapi_op
 */
 
 class PUBLIC_API TableInsert
@@ -269,7 +271,7 @@ public:
   }
 
   /**
-    Add row consisting of specified values to the list of
+    Add single row consisting of specified values to the list of
     rows to be inserted.
   */
 
@@ -285,6 +287,10 @@ public:
     CATCH_AND_WRAP
   }
 
+  /**
+    Add specified rows.
+  */
+
   template<typename... Types>
   TableInsert& rows(const Row &first, Types... rest)
   {
@@ -294,6 +300,10 @@ public:
     }
     CATCH_AND_WRAP
   }
+
+  /**
+    Add rows from a container such as vector or list.
+  */
 
   template<typename Container>
   TableInsert& rows(const Container &cont)
@@ -305,6 +315,10 @@ public:
     CATCH_AND_WRAP
   }
 
+  /**
+    Add rows from a range given by two iterators.
+  */
+
   template<typename It>
   TableInsert& rows(const It &begin, const It &end)
   {
@@ -315,26 +329,32 @@ public:
     CATCH_AND_WRAP
   }
 
+  ///@cond IGNORED
   struct INTERNAL Access;
   friend Access;
   friend internal::TableInsertBase;
+  ///@endcond
 };
 
 
 namespace internal {
+
+  /**
+    Base class which defines method that crate table insert operations.
+  */
 
   class PUBLIC_API TableInsertBase : public virtual TableOpBase
   {
   public:
 
     /**
-      Insert into a full table without restricting the colums.
+      Return operation which inserts rows into the full table without
+      restricting the columns.
 
-      Each row passed to the following .values() call must have
-      the same number of values as the number of columns of the
-      table. However, this check is done only after sending the insert
-      command to the server. If value count does not match table column
-      count server reports error.
+      Each row added by the operation must have the same number of values as
+      the number of columns of the table. However, this check is done only
+      after sending the insert command to the server. If value count does not
+      match table column count server reports error.
     */
 
     TableInsert insert()
@@ -343,11 +363,13 @@ namespace internal {
     }
 
 
-    /*
-      Insert into a full table restricting the colums.
+    /**
+      Return operation which inserts row into the table restricting the columns.
 
-      Each row passed to the following .values() call must have
-      the same number of values as the columns specified by insert().
+      Each row added by the operation must have the same number of values
+      as the columns specified here. However, this check is done only
+      after sending the insert command to the server. If value count does not
+      match table column count server reports error.
     */
 
     template <class... T>
@@ -362,11 +384,11 @@ namespace internal {
 }  // internal
 
 
-// ----------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 namespace internal {
 
-  /*
+  /**
     Class defining table CRUD .orderBy() clause.
   */
 
@@ -401,6 +423,13 @@ namespace internal {
       return *this;
     }
 
+    /**
+      Specify ordering of rows in the operation.
+
+      This form accepts a vector, list or other container with strings, each
+      string defining sorting direction and the value to sort on.
+    */
+
     template <typename Ord>
     TableSort& orderBy(Ord ord)
     {
@@ -410,6 +439,13 @@ namespace internal {
       }
       return *this;
     }
+
+    /**
+      Specify ordering of rows in the operation.
+
+      Arguments are one or more strings, each defining sorting direction and
+      the value to sort on.
+    */
 
     template <typename Ord, typename...Type>
     TableSort& orderBy(Ord ord, const Type...rest)
@@ -423,7 +459,7 @@ namespace internal {
 }  // internal
 
 
-// ----------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 namespace internal {
 
@@ -454,6 +490,8 @@ namespace internal {
   For each row the operation can return all fields from the
   row or a set of values defined by projection expressions
   specified when operation was created.
+
+  @ingroup devapi_op
 */
 
 DLL_WARNINGS_PUSH
@@ -528,21 +566,40 @@ DIAGNOSTIC_PUSH
 
 DIAGNOSTIC_POP
 
+  /**
+    Specify row selection criteria.
+
+    The criteria is specified as a string containing Boolean expression.
+  */
+
   TableSort& where(const string& expr)
   {
     get_impl()->add_where(expr);
     return *this;
   }
 
+  ///@cond IGNORED
   friend internal::TableSelectBase;
+  ///@endcond
 };
 
 
 namespace internal {
 
+  /**
+    Base class which defines methods that crate table queries.
+  */
+
   class PUBLIC_API TableSelectBase : public virtual TableOpBase
   {
   public:
+
+    /**
+      Select rows from table.
+
+      Optional list of expressions defines projection with transforms
+      rows found by this operation.
+    */
 
     template<typename ...PROJ>
     TableSelect select(const PROJ&...proj)
@@ -556,7 +613,7 @@ namespace internal {
 }  // internal
 
 
-// ----------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 
 namespace internal {
@@ -585,6 +642,8 @@ namespace internal {
   Apart from clauses defined by `TableSort`, this class defines
   .set() clause for specifying new field values and .where()
   clause for narrowing set of rows to be modified.
+
+  @ingroup devapi_op
 */
 
 class PUBLIC_API TableUpdate
@@ -622,11 +681,22 @@ DIAGNOSTIC_PUSH
 
 DIAGNOSTIC_POP
 
+  /**
+    Set given field in a row to the given value.
+
+    The value can be either a direct literal or an expression given
+    by `expr(<string>)`, evaluated in the server.
+  */
+
   TableUpdate& set(const string& field, internal::ExprValue val)
   {
     get_impl()->add_set(field, std::move(val));
     return *this;
   }
+
+  /**
+    Specify selection criteria for rows that should be updated.
+  */
 
   TableSort& where(const string& expr)
   {
@@ -634,15 +704,25 @@ DIAGNOSTIC_POP
     return *this;
   }
 
+  ///@cond IGNORED
   friend internal::TableUpdateBase;
+  ///@endcond
 };
 
 
 namespace internal {
 
+  /**
+    Base class which defines methods that crate table update operations.
+  */
+
   class PUBLIC_API TableUpdateBase : public virtual TableOpBase
   {
   public:
+
+    /**
+      Return operation which updates rows in the table.
+    */
 
     TableUpdate update()
     {
@@ -655,7 +735,7 @@ namespace internal {
 }  // internal
 
 
-// ----------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 
 namespace internal {
@@ -683,11 +763,13 @@ namespace internal {
 
   Apart from clauses defined by `TableSort` this class defines
   .where() clause which selects rows to be removed.
+
+  @ingroup devapi_op
 */
 
 
 class PUBLIC_API TableRemove
-: public internal::TableSort<Result, false>
+  : public internal::TableSort<Result, false>
 {
 
   typedef internal::TableRemove_impl Impl;
@@ -721,21 +803,35 @@ DIAGNOSTIC_PUSH
 
 DIAGNOSTIC_POP
 
+  /**
+    Specify selection criteria for rows to be removed.
+  */
+
   TableSort& where(const string &expr)
   {
     get_impl()->add_where(expr);
     return *this;
   }
 
+  ///@cond IGNORED
   friend internal::TableRemoveBase;
+  ///@endcond
 };
 
 
 namespace internal {
 
+  /**
+    Base class which defines methods that crate table remove operations.
+  */
+
   class PUBLIC_API TableRemoveBase : public virtual TableOpBase
   {
   public:
+
+    /**
+      Return operation which removes rows from the table.
+    */
 
     TableRemove remove()
     {

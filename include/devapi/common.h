@@ -25,6 +25,7 @@
 #ifndef MYSQLX_COMMON_H
 #define MYSQLX_COMMON_H
 
+
 #include "../mysql_common.h"
 #include <string>
 #include <stdexcept>
@@ -52,7 +53,7 @@ namespace internal {
 
 /*
   List_initializer class is used to initialize user std::vector, std::list or
-  own list imlpementations, as long as initialized by iterators of defined type
+  own list implementations, as long as initialized by iterators of defined type
 */
 
 template <typename T>
@@ -65,7 +66,7 @@ struct List_init
      : m_data(std::move(list.begin()), std::move(list.end()))
    {}
 
-   //Special case for forward_list usnig move contructor
+   //Special case for forward_list using move constructor
    List_init(std::forward_list<T>&& list)
      : m_data(std::move(list))
    {}
@@ -91,6 +92,8 @@ struct List_init
   used by MySQL.
 
   Currently only utf-8 encoding is supported.
+
+  @ingroup devapi_aux
 */
 
 class string : public std::wstring
@@ -176,6 +179,8 @@ typedef unsigned long row_count_t;
   std::get_temporary_buffer(), as follows:
 
     bytes buf = std::get_temporary_buffer<byte>(size);
+
+  @ingroup devapi_aux
 */
 
 class bytes : public std::pair<byte*, size_t>
@@ -252,7 +257,7 @@ namespace internal {
 }  // internal
 
 
-/**
+/*
   Global unique identifiers for documents.
 
   TODO: Windows GUID type
@@ -297,9 +302,15 @@ public:
 
 using std::out_of_range;
 
-/*
+/**
+  Base class for connector errors.
+
+  @internal
   TODO: Derive from std::system_error and introduce proper
   error codes.
+  @endinternal
+
+  @ingroup devapi
 */
 
 DLL_WARNINGS_PUSH

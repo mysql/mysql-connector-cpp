@@ -30,13 +30,44 @@
 #endif
 
 /**
-  @file
-  Main Connector/C++ header.
+  @defgroup devapi  X DevAPI Classes
 
-  This header should be included by code that wants to use Connector/C++.
-  It defines classes that form public API implemented by the connector.
+  X DevAPI Classes and types. See @ref devapi_ref for introduction.
+
+  @defgroup devapi_op     Database operations
+  @ingroup devapi
+
+  Classes representing yet-to-be-executed database operations.
+
+  Such operations are created by various methods of @link mysqlx::Collection
+  `Collection`@endlink or @link mysqlx::Table `Table`@endlink classes. Database
+  operation classes define methods that specify additional operation
+  characteristics before it gets executed with `execute()` method. The latter
+  returns a @link mysqlx::Result `Result`@endlink, @link mysqlx::DocResult
+  `DocResult`@endlink or @link mysqlx::RowResult `RowResult`@endlink object,
+  depending on the type of operation.
+
+  @defgroup devapi_res    Classes for result processing
+  @ingroup devapi
+
+  Classes used to examine results of a statement and documents or
+  rows contained in a result.
+
+  @defgroup devapi_aux    Auxiliary types
+  @ingroup devapi
+*/
+
+
+/**
+  @file
+  The main header for MySQL Connector/C++ DevAPI.
+
+  This header should be included by C++ code which uses the DevAPI implemented
+  by MySQL Connector/C++.
 
   @sa result.h, document.h
+
+  @ingroup devapi
 */
 
 #include "devapi/common.h"
@@ -64,6 +95,7 @@ class Table;
 namespace internal {
   class XSession_base;
 }
+
 
 /**
   Represents a database object
@@ -158,6 +190,8 @@ public:
   it actually exists in the database. Operation that is executed
   on the server and involves such non-existent schema will throw
   an error at execution time.
+
+  @ingroup devapi
 */
 
 class PUBLIC_API Schema
@@ -184,16 +218,7 @@ public:
   Schema(internal::XSession_base&);
 
 
-  /**
-     Get schema object
-  */
-
   const Schema& getSchema() const override { return *this; }
-
-
-  /**
-     Check if database object exists
-  */
 
   bool existsInDatabase() const override;
 
@@ -209,7 +234,7 @@ public:
 
   /**
     Return `Collection` object representing named collection in
-    the shcema. If `check_exists` is true and named collection
+    the schema. If `check_exists` is true and named collection
     does not exist, an error will be thrown. Otherwise, if named
     collection does not exists, the returned object will refer
     to non-existent collection.
@@ -223,11 +248,9 @@ public:
   Collection getCollection(const string&, bool check_exists= false);
 
   /**
-    Return `Table` object representing table or view in
-    the shcema. If `check_exists` is true and table
-    does not exist, an error will be thrown.
-    Otherwise, if table does not exists,
-    the returned object will refer
+    Return `Table` object representing table or view in the schema.
+    If `check_exists` is true and table does not exist, an error will be thrown.
+    Otherwise, if table does not exists, the returned object will refer
     to non-existent table.
 
     @note Checking existence of the table involves
@@ -240,7 +263,7 @@ public:
 
   /**
     Return list of `Collection` object representing collections in
-    the shcema.
+    the schema.
   */
 
   internal::List_init<Collection> getCollections();
@@ -253,13 +276,13 @@ public:
 
   /**
     Return list of `Table` object representing tables and views in
-    the shcema.
+    the schema.
   */
 
   internal::List_init<Table> getTables();
 
   /**
-    Return list of tables and views in the shcema.
+    Return list of tables and views in the schema.
   */
 
   internal::List_init<string> getTableNames();
@@ -301,6 +324,8 @@ public:
   Documents can be added and removed using @link add `add()`@endlink
   and `remove()` method, respectively. Method `find()`
   is used to query documents that satisfy given criteria.
+
+  @ingroup devapi
 
   @todo `update()` method.
   @todo Support for parameterized collection operations.
@@ -345,15 +370,7 @@ public:
   }
 
 
-  /**
-     Get schema object
-  */
-
   const Schema& getSchema() const override { return m_schema; }
-
-  /**
-     Check if database object exists
-  */
 
   bool existsInDatabase() const override;
 
@@ -395,6 +412,7 @@ public:
   Rows can be added to a table using `insert()` method followed
   by `values()` calls, which prepare insert operation.
 
+  @ingroup devapi
   @todo Other CRUD operations on a table.
 */
 
@@ -464,16 +482,7 @@ public:
   bool isView();
 
 
-  /**
-     Get schema object
-  */
-
   const Schema& getSchema() const override { return m_schema; }
-
-
-  /**
-     Check if Table exists
-  */
 
   bool existsInDatabase() const override;
 
@@ -487,22 +496,10 @@ public:
 
 namespace internal {
 
-  /**
-    Represents a session which gives access to data stored
-    in the data store.
-
-    When creating new session a host name, TCP/IP port,
-    user name and password are specified. Once created,
-    session is ready to be used. Session destructor closes
-    session and cleans up after it.
-
-    If it is not possible to create a valid session for some
-    reason, errors are thrown from session constructor.
-
-    @todo Add all `XSession` methods defined by DevAPI.
-  */
-
   DLL_WARNINGS_PUSH
+
+
+  /// Common base of session classes.
 
   class PUBLIC_API XSession_base : nocopy
   {
@@ -537,7 +534,6 @@ namespace internal {
   public:
 
     /**
-      @constructor
       Create session specified by mysqlx connection string.
 
       Connection string can be either an utf8 encoded single-byte
@@ -672,7 +668,7 @@ namespace internal {
     /**
       Commit opened transaction, if any.
 
-      Does nothing if no transaction was opened. After commiting the
+      Does nothing if no transaction was opened. After committing the
       transaction is closed.
     */
 
@@ -691,7 +687,7 @@ namespace internal {
     /**
       Closes current session.
 
-      After a session is closed, any call to other method will thow Error.
+      After a session is closed, any call to other method will throw Error.
     */
 
     void close();
@@ -708,14 +704,29 @@ namespace internal {
     friend Result;
     friend RowResult;
 
-    //template <typename A>
-    //friend class mysqlx::Op_base;
-
+    ///@cond IGNORE
     friend internal::BaseResult;
+    ///@endcond
   };
 
 }  // internal
 
+
+/**
+  Represents a session which gives access to data stored
+  in the data store.
+
+  When creating new session a host name, TCP/IP port,
+  user name and password are specified. Once created,
+  session is ready to be used. Session destructor closes
+  session and cleans up after it.
+
+  If it is not possible to create a valid session for some
+  reason, errors are thrown from session constructor.
+
+  @ingroup devapi
+  @todo Add all `XSession` methods defined by DevAPI.
+*/
 
 class PUBLIC_API XSession
     : public internal::XSession_base
@@ -810,6 +821,8 @@ public:
 
   In addition to `XSession` functionality, `NodeSession`
   allows for execution of arbitrary SQL queries.
+
+  @ingroup devapi
 */
 
 class PUBLIC_API NodeSession
