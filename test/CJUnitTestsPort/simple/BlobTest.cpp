@@ -47,28 +47,28 @@ const String BlobTest::TEST_BLOB_FILE_PREFIX("cmj-testblob");
  */
 void BlobTest::setUp()
 {
-	static int counter= 0;
-	// Just to make 2nd run(setString) to use smaller file(and be faster)
-	++counter;
+  static int counter= 0;
+  // Just to make 2nd run(setString) to use smaller file(and be faster)
+  ++counter;
 
-	super::setUp();
+  super::setUp();
 
-	realFrameworkTiming=TestsListener::doTiming();
+  realFrameworkTiming=TestsListener::doTiming();
 
-	testBlobFile.reset(new FileUtils::ccppFile(TEST_BLOB_FILE_PREFIX + ".dat"));
+  testBlobFile.reset(new FileUtils::ccppFile(TEST_BLOB_FILE_PREFIX + ".dat"));
 
-	int requiredSize=16 * 1024 * 1024/counter - (counter - 1)*128;
+  int requiredSize=4 * 1024 * 1024/counter - (counter - 1)*128;
 
-	if (!versionMeetsMinimum(4, 0))
-	{
-		requiredSize=8 * 1024 * 1024;
-	}
+  if (!versionMeetsMinimum(5, 6, 5))
+  {
+    requiredSize=1 * 1024 * 1024;
+  }
 
-	Timer::startTimer("BlobTest::testByteStreamInsert", "Blob File Creation", __FILE__, __LINE__);
-	createBlobFile(requiredSize);
-	TestsListener::messagesLog() << "Blob File Creation" << Timer::translate2seconds(Timer::stopTimer("BlobTest::testByteStreamInsert", "Blob File Creation")) << std::endl;
+  Timer::startTimer("BlobTest::testByteStreamInsert", "Blob File Creation", __FILE__, __LINE__);
+  createBlobFile(requiredSize);
+  TestsListener::messagesLog() << "Blob File Creation" << Timer::translate2seconds(Timer::stopTimer("BlobTest::testByteStreamInsert", "Blob File Creation")) << std::endl;
 
-	createTestTable();
+  createTestTable();
 }
 
 /**
@@ -105,11 +105,11 @@ void BlobTest::tearDown()
   }
 
   /**
-	 * Tests inserting blob data as a stream
-	 *
-	 * @throws Exception
-	 *             if an error occurs
-	 */
+   * Tests inserting blob data as a stream
+   *
+   * @throws Exception
+   *             if an error occurs
+   */
   void BlobTest::testBlobInsert( Connection & c, bool asString )
   {
     TIMER_START( "Populating blob table" );
