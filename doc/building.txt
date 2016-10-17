@@ -85,7 +85,7 @@ location.
 
 Before building test programs, Connector/C++ must be installed first. To install
 Connector/C++ to the default location (which could be set during the build
-configuration using `CMAKE_INSTALL_PREFIX` option ), execute the following
+configuration using `CMAKE_INSTALL_PREFIX` option), execute the following
 command in the build location:
 
 ~~~~~~~
