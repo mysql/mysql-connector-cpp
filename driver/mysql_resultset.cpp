@@ -893,18 +893,22 @@ MySQL_ResultSet::next()
             afterLast();
         } else if (row_position < num_rows + 1) {
             row = result->fetch_row();
-            boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
-            if (!proxy_p) {
-                throw sql::InvalidInstanceException("Connection has been closed");
-            }
 
-            if (row == NULL && (proxy_p->errNo() == 2013 ||
-                                proxy_p->errNo() == 2000)) {
+
+            if (row == NULL)
+            {
+              boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+              if (!proxy_p) {
+                  throw sql::InvalidInstanceException("Connection has been closed");
+              }
+              if (proxy_p->errNo() == 2013 || proxy_p->errNo() == 2000)
+              {
                 CPP_ERR_FMT("Error fetching next row %d:(%s) %s",
                             proxy_p->errNo(), proxy_p->sqlstate().c_str(),
                             proxy_p->error().c_str());
                 sql::SQLException e(proxy_p->error(), proxy_p->sqlstate(), proxy_p->errNo());
                 throw e;
+              }
             }
             ++row_position;
             ret = (row != NULL);
@@ -913,18 +917,20 @@ MySQL_ResultSet::next()
         // reset last_queried_column
         last_queried_column = -1;
         row = result->fetch_row();
-        boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
-        if (!proxy_p) {
-            throw sql::InvalidInstanceException("Connection has been closed");
-        }
-
-        if (row == NULL && (proxy_p->errNo() == 2013 ||
-                            proxy_p->errNo() == 2000)) {
+        if (row == NULL)
+        {
+          boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+          if (!proxy_p) {
+              throw sql::InvalidInstanceException("Connection has been closed");
+          }
+          if (proxy_p->errNo() == 2013 || proxy_p->errNo() == 2000)
+          {
             CPP_ERR_FMT("Error fetching next row %d:(%s) %s",
                         proxy_p->errNo(), proxy_p->sqlstate().c_str(),
                         proxy_p->error().c_str());
             sql::SQLException e(proxy_p->error(), proxy_p->sqlstate(), proxy_p->errNo());
             throw e;
+          }
         }
         if ((ret = (row != NULL))) {
             ++row_position;
