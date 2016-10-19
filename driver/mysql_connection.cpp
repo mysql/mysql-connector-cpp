@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -230,19 +230,24 @@ static const String2IntMap booleanOptions[]=
   {
     {"OPT_REPORT_DATA_TRUNCATION",  MYSQL_REPORT_DATA_TRUNCATION, false},
     {"OPT_ENABLE_CLEARTEXT_PLUGIN", MYSQL_ENABLE_CLEARTEXT_PLUGIN, false},
-    {"sslVerify",                   MYSQL_OPT_SSL_VERIFY_SERVER_CERT, false},
+    {"sslVerify",                   MYSQL_OPT_SSL_VERIFY_SERVER_CERT, false}, // Deprecated
     {"OPT_CAN_HANDLE_EXPIRED_PASSWORDS", MYSQL_OPT_CAN_HANDLE_EXPIRED_PASSWORDS, true},
     {"OPT_CONNECT_ATTR_RESET",      MYSQL_OPT_CONNECT_ATTR_RESET, true},
     {"OPT_RECONNECT",               MYSQL_OPT_RECONNECT, true},
-    {"sslEnforce",                  MYSQL_OPT_SSL_ENFORCE, false}
+    {"sslEnforce",                  MYSQL_OPT_SSL_ENFORCE, false} // Deprecated
+
   };
 /* Array for mapping of integer connection options to mysql_options call */
 static const String2IntMap intOptions[]=
   {
-    {"OPT_CONNECT_TIMEOUT", MYSQL_OPT_CONNECT_TIMEOUT, false},
-    {"OPT_READ_TIMEOUT",    MYSQL_OPT_READ_TIMEOUT, false},
-    {"OPT_WRITE_TIMEOUT",   MYSQL_OPT_WRITE_TIMEOUT, false},
-    {"OPT_LOCAL_INFILE",    MYSQL_OPT_LOCAL_INFILE, false}
+    {"OPT_CONNECT_TIMEOUT",     MYSQL_OPT_CONNECT_TIMEOUT, false},
+    {"OPT_READ_TIMEOUT",        MYSQL_OPT_READ_TIMEOUT, false},
+    {"OPT_WRITE_TIMEOUT",       MYSQL_OPT_WRITE_TIMEOUT, false},
+    {"OPT_LOCAL_INFILE",        MYSQL_OPT_LOCAL_INFILE, false},
+    {"OPT_MAX_ALLOWED_PACKET",  MYSQL_OPT_MAX_ALLOWED_PACKET, false},
+    {"OPT_NET_BUFFER_LENGTH",   MYSQL_OPT_NET_BUFFER_LENGTH, false},
+    {"OPT_SSL_MODE",            MYSQL_OPT_SSL_MODE    , false},
+
   };
 /* Array for mapping of string connection options to mysql_options call */
 static const String2IntMap stringOptions[]=
@@ -262,7 +267,8 @@ static const String2IntMap stringOptions[]=
     {"OPT_CONNECT_ATTR_DELETE",  MYSQL_OPT_CONNECT_ATTR_DELETE, false},
     {"readDefaultGroup", MYSQL_READ_DEFAULT_GROUP, false},
     {"readDefaultFile",  MYSQL_READ_DEFAULT_FILE, false},
-    {"OPT_CHARSET_NAME", MYSQL_SET_CHARSET_NAME, true}
+    {"OPT_CHARSET_NAME", MYSQL_SET_CHARSET_NAME, true},
+    {"OPT_TLS_VERSION",  MYSQL_OPT_TLS_VERSION, false},
   };
 
 template<class T>

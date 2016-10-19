@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -66,16 +66,18 @@ public:
 #ifndef MYSQLCLIENT_STATIC_BINDING
     TEST_CASE(loadSameLibraryTwice);
 #endif
-	TEST_CASE(enableClearTextAuth);
-	TEST_CASE(connectAttrAdd);
-	TEST_CASE(connectAttrReset);
-	TEST_CASE(connectCharsetDir);
-	TEST_CASE(connectSSLEnforce);
-	TEST_CASE(setAuthDir);
-	TEST_CASE(setDefaultAuth);
-	TEST_CASE(localInfile);
-	TEST_CASE(isValid);
-	TEST_CASE(reconnect);
+  TEST_CASE(enableClearTextAuth);
+  TEST_CASE(connectAttrAdd);
+  TEST_CASE(connectAttrReset);
+  TEST_CASE(connectCharsetDir);
+  TEST_CASE(connectSSLEnforce);
+  TEST_CASE(setAuthDir);
+  TEST_CASE(setDefaultAuth);
+  TEST_CASE(localInfile);
+  TEST_CASE(isValid);
+  TEST_CASE(reconnect);
+  TEST_CASE(ssl_mode);
+  TEST_CASE(tls_version);
   }
 
   /**
@@ -232,6 +234,20 @@ public:
    *
    */
   void reconnect();
+
+  /*
+   * Test of MySQL_Connection::ssl_mode()
+   *
+   */
+  void ssl_mode();
+
+  /*
+   * Test of MySQL_Connection::tls_version()
+   *
+   */
+  void tls_version();
+
+
 };
 
 

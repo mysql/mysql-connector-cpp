@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -2953,6 +2953,116 @@ void connection::reconnect()
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
+}
+
+void connection::ssl_mode()
+{
+  logMsg("connection::ssl_mode - OPT_SSL_MODE");
+
+  sql::ConnectOptionsMap connection_properties;
+
+  connection_properties["hostName"]=url;
+  connection_properties["userName"]=user;
+  connection_properties["password"]=passwd;
+
+  connection_properties["OPT_SSL_MODE"] = sql::SSL_MODE_DISABLED;
+
+  created_objects.clear();
+  con.reset(driver->connect(connection_properties));
+
+  con->setSchema(db);
+  stmt.reset(con->createStatement());
+  res.reset(stmt->executeQuery("SHOW SESSION STATUS LIKE 'Ssl_version'"));
+
+  res->next();
+
+  ASSERT_EQUALS(0, static_cast<int>(res->getString(2).length()));
+
+  connection_properties["OPT_SSL_MODE"] = sql::SSL_MODE_REQUIRED;
+
+  created_objects.clear();
+  con.reset(driver->connect(connection_properties));
+
+  con->setSchema(db);
+  stmt.reset(con->createStatement());
+  res.reset(stmt->executeQuery("SHOW SESSION STATUS LIKE 'Ssl_version'"));
+
+  res->next();
+
+  ASSERT_GT(0, static_cast<int>(res->getString(2).length()));
+
+}
+
+void connection::tls_version()
+{
+  logMsg("connection::tls_version - OPT_TLS_VERSION");
+
+  sql::ConnectOptionsMap connection_properties;
+
+  connection_properties["hostName"]=url;
+  connection_properties["userName"]=user;
+  connection_properties["password"]=passwd;
+
+  connection_properties["OPT_SSL_MODE"] = sql::SSL_MODE_DISABLED;
+
+  created_objects.clear();
+  con.reset(driver->connect(connection_properties));
+
+  con->setSchema(db);
+  stmt.reset(con->createStatement());
+  res.reset(stmt->executeQuery("SHOW GLOBAL VARIABLES LIKE 'tls_version'"));
+
+  res->next();
+
+  std::string tls_versions = res->getString(2);
+
+  connection_properties["OPT_SSL_MODE"] = sql::SSL_MODE_REQUIRED;
+
+  if (tls_versions.find("TLSv1") != std::string::npos)
+  {
+    connection_properties["OPT_TLS_VERSION"] = sql::SQLString("TLSv1");
+
+    created_objects.clear();
+    con.reset(driver->connect(connection_properties));
+
+    stmt.reset(con->createStatement());
+    res.reset(stmt->executeQuery("SHOW SESSION STATUS LIKE 'Ssl_version'"));
+
+    res->next();
+
+    ASSERT_EQUALS("TLSv1", res->getString(2));
+  }
+
+  if (tls_versions.find("TLSv1.1") != std::string::npos)
+  {
+    connection_properties["OPT_TLS_VERSION"] = sql::SQLString("TLSv1,TLSv1.1");
+
+    created_objects.clear();
+    con.reset(driver->connect(connection_properties));
+
+    stmt.reset(con->createStatement());
+    res.reset(stmt->executeQuery("SHOW SESSION STATUS LIKE 'Ssl_version'"));
+
+    res->next();
+
+    ASSERT_EQUALS("TLSv1.1", res->getString(2));
+  }
+
+  if (tls_versions.find("TLSv1.2") != std::string::npos)
+  {
+    connection_properties["OPT_TLS_VERSION"] = sql::SQLString("TLSv1,TLSv1.1,TLSv1.2");
+
+    created_objects.clear();
+    con.reset(driver->connect(connection_properties));
+
+    stmt.reset(con->createStatement());
+    res.reset(stmt->executeQuery("SHOW SESSION STATUS LIKE 'Ssl_version'"));
+
+    res->next();
+
+    ASSERT_EQUALS("TLSv1.2", res->getString(2));
+  }
+
 }
 
 
