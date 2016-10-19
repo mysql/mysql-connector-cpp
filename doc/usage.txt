@@ -6,11 +6,11 @@ If used as a shared library, the library must be installed on the target
 machine in order for the application to run. The shared library name is:
 
 - `libmysqlcppconn2.so` on Unix platforms (the soname is
-  `libmysqlcppconn2.so.1`),
+  `libmysqlcppconn2.so.1`)
 - `libmysqlcppconn2.dylib` on the OSX platform (the soname is
-  `libmysqlcppconn2.1.dylib`).
+  `libmysqlcppconn2.1.dylib`)
 - `mysqlcppconn2-vsXX.dll` on Windows platforms (see
-   [Windows Notes](@ref usage_win) for explanation of `-vsXX` suffixes),
+   [Windows Notes](@ref usage_win) for explanation of `-vsXX` suffixes)
 
 The static library name is:
 
@@ -217,14 +217,14 @@ There are separate 32-bit and 64-bit packages, each keeping libraries in
 `lib/` and `lib64/` folder, respectively. The library folder contains two
 versions of the shared library:
 
-- `mysqlcppconn2-vs12.dll` - built with MSVC 2013, compiler version 18.00,
-- `mysqlcppconn2-vs14.dll` - built with MSVC 2015, compiler version 19.00.
+- `mysqlcppconn2-vs12.dll` - built with MSVC 2013, compiler version 18.00
+- `mysqlcppconn2-vs14.dll` - built with MSVC 2015, compiler version 19.00
 
 The corresponding import libraries are in `vs12/` or `vs14/` subfolder
 of the library folder:
 
-- `vs12/mysqlcppconn2.lib` - import library for `mysqlcppconn2-vs12.dll`,
-- `vs14/mysqlcppconn2.lib` - import library for `mysqlcppconn2-vs14.dll`.
+- `vs12/mysqlcppconn2.lib` - import library for `mysqlcppconn2-vs12.dll`
+- `vs14/mysqlcppconn2.lib` - import library for `mysqlcppconn2-vs14.dll`
 
 A project which uses the shared connector library must be configured to link
 with the import library `mysqlcppconn2.lib`. The library path should be

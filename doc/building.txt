@@ -51,7 +51,7 @@ $ cmake --build . --config CCC
 ~~~~~~~
 
 where `CCC` is the build configuration to use, such as `Release` or `Debug`.
-It is also possible to omit `--config CCC` option in which case the default
+It is also possible to omit the `--config CCC` option in which case the default
 `Debug` configuration will be used.
 
 @note
@@ -62,10 +62,10 @@ It is also possible to omit `--config CCC` option in which case the default
 After a successful build, the build location should contain
 the Connector/C++ shared library:
 
-- `libmysqlcppconn2.so.1.0` on Unix,
-- `libmysqlcppconn2.1.0.dylib` on OS X,
+- `libmysqlcppconn2.so.1.0` on Unix
+- `libmysqlcppconn2.1.0.dylib` on OS X
 - `CCC/mysqlcppconn2-vsXX.dll` on Windows, where `-vs12` or `-vs14` prefix
-  depends on the MSVC version used to build the connector.
+  depends on the MSVC version used to build the connector
 
 On Unix and OS X also appropriate symbolic links are created. On Windows the
 import library for the DLL is created at `CCC/mysqlcppconn2.lib` (the `CCC/`
@@ -73,8 +73,8 @@ subdirectory is named the same as the build configuration used).
 
 In the case of a static library build, the output library names are:
 
-- `libmysqlcppconn2-static.a` on Unix and OS X,
-- `CCC/mysqlcppconn2-static.lib` on Windows.
+- `libmysqlcppconn2-static.a` on Unix and OS X
+- `CCC/mysqlcppconn2-static.lib` on Windows
 
 
 ### Testing
@@ -95,7 +95,7 @@ $ cmake --build . --target install --config CCC
 @note
   It is possible to change the `CMAKE_INSTALL_PREFIX` setting before doing
   the installation. To change it, issue the following command before building
-  `install` target:
+  the `install` target:
   ~~~~~~~
   $ cmake -DCMAKE_INSTALL_PREFIX=<new location> .
   ~~~~~~~
@@ -113,8 +113,8 @@ subdirectory of the build location.
 
 @note
   On Windows, if the connector was built with the static runtime by specifying
-  `-DSTATC_MSVCRT=yes` configuration option (see below), the same option must
-  be added to the build configuration of test programs.
+  the `-DSTATC_MSVCRT=yes` configuration option (see below), the same option
+  must be added to the build configuration of test programs.
 
 @note
   The 32/64-bit Windows `cmake` generator (`"Visual Studio 12 2013 Win64"` vs
@@ -206,9 +206,8 @@ Connector/C++ uses C++11 language and for that reason it is not possible
 to build it with Microsoft Visual Studio 2010 or earlier.
 
 On Windows one can request that Connector/C++ uses the static runtime library
-(The `/MT*` compiler option) by setting:
-
-- `-DSTATIC_MSVCRT=yes`
+(The `/MT*` compiler option) by setting the cmake option
+`-DSTATIC_MSVCRT=yes`
 
 This might be necessary if code which uses Connector/C++ also uses the static
 runtime.
@@ -218,12 +217,12 @@ Selecting a cmake generator such as `"Visual Studio 12 2013 Win64"` vs
 the connector is built. An application which uses Connector/C++ must
 be built for the same platform as the connector.
 
-Note that application which is built using 'Debug', 'Release' or other MSVC
-build configuration needs to link against Connector/C++ library built
-with the same configuration (as determined by the cmake option `--config=CCC`
-described above). Linker leaves library built using configuration `CCC` in
-a `CCC/` subfolder of the build location. Thus, when building an application
-that uses the connector library, one has to point linker at the location
+An application built using 'Debug', 'Release' or other MSVC build configuration
+needs to link against a Connector/C++ library built with the same configuration
+(as determined by the `--config=CCC` cmake option described above). The linker
+places the library built using the `CCC` configuration in a `CCC/`
+subdirectory of the build location. Thus, when building an application
+that uses the connector library, one has to point the linker at the location
 containing a compatible build of the connector.
 
 OS X Notes
@@ -238,8 +237,8 @@ To define the deployment target, set the environment variable
 of Connector/C++ are built with `MACOSX_DEPLOYMENT_TARGET` set to `10.9`.
 
 Building Connector/C++ with `gcc` or its `libstdc++` runtime has not been
-tested and there is no support in the build system for using an alternative C++
-runtime library.
+tested and there is no support in the build system for using an alternative
+C++ runtime library.
 
 
 <!--
