@@ -29,33 +29,24 @@
 
   @{
   @defgroup xapi_sess     Session operations
-  @ingroup xapi
 
   @defgroup xapi_coll     Statements operating on document collections
-  @ingroup xapi
 
   @defgroup xapi_tbl      Statements operating on tables
-  @ingroup xapi
 
   @defgroup xapi_sql      SQL execution
-  @ingroup xapi
 
   @defgroup xapi_ddl      DDL statements
-  @ingroup xapi
 
   @note To create a table or a view, use reqular SQL statement.
 
   @defgroup xapi_stmt     Statement execution
-  @ingroup xapi
 
   @defgroup xapi_res      Result processing
-  @ingroup xapi
 
   @defgroup xapi_md  Meta data access
-  @ingroup xapi_res
 
   @defgroup xapi_diag     Diganostics
-  @ingroup xapi
   @}
 */
 
