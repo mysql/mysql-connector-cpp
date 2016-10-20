@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/C++ is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -24,7 +24,7 @@
 
 SET(CONNECTOR_MAJOR "1")
 SET(CONNECTOR_MINOR "1")
-SET(CONNECTOR_PATCH "7")
+SET(CONNECTOR_PATCH "8")
 SET(CONNECTOR_LEVEL "")     # "-alpha", "-beta", empty if GA
 SET(CONNECTOR_QUALITY "GA")
 

@@ -22,6 +22,11 @@
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+GA 1.1.8 -
+- Add connect options MYSQL_OPT_MAX_ALLOWED_PACKET, MYSQL_OPT_NET_BUFFER_LENGTH,
+  MYSQL_OPT_TLS_VERSION and MYSQL_OPT_SSL_MODE
+- Fix Visual Studio 2015 build.
+
 GA  1.1.7 -
 - Add JSON support
 - Allow building without server flags (Bug#21391025)
