@@ -495,9 +495,20 @@ elseif(MYSQL_CONFIG_EXECUTABLE)
                         "\"${MYSQL_CONFIG_EXECUTABLE}\"")
   endif()
 
-  if(NOT EXISTS "${MYSQL_INCLUDE_DIR}/mysql.h")
+  set(_found_mysql_h)
+  foreach(_incdir ${MYSQL_INCLUDE_DIR})
+    if(NOT EXISTS "${_incdir}")
+      message(FATAL_ERROR "Could not find the directory \"${_incdir}\" "
+                          "from running \"${MYSQL_CONFIG_EXECUTABLE}\"")
+    endif()
+    if(EXISTS "${_incdir}/mysql.h")
+      set(_found_mysql_h 1)
+    endif()
+  endforeach()
+
+  if(NOT _found_mysql_h)
     message(FATAL_ERROR "Could not find \"mysql.h\" in \"${MYSQL_INCLUDE_DIR}\" "
-                        "found from running \"${MYSQL_CONFIG_EXECUTABLE}\"")
+                        "from running \"${MYSQL_CONFIG_EXECUTABLE}\"")
   endif()
 
 else()
@@ -583,10 +594,12 @@ elseif(MYSQL_CONFIG_EXECUTABLE)
                         "\"${MYSQL_CONFIG_EXECUTABLE}\"")
   endif()
 
-  if(NOT EXISTS "${MYSQL_LIB_DIR}")
-    message(FATAL_ERROR "Could not find the directory \"${MYSQL_LIB_DIR}\" "
-                        "found from running \"${MYSQL_CONFIG_EXECUTABLE}\"")
-  endif()
+  foreach(_libdir ${MYSQL_LIB_DIR})
+    if(NOT EXISTS "${_libdir}")
+      message(FATAL_ERROR "Could not find the directory \"${_libdir}\" "
+                          "from running \"${MYSQL_CONFIG_EXECUTABLE}\"")
+    endif()
+  endforeach()
 
   # We have the assumed MYSQL_LIB_DIR. The output from "mysql_config"
   # might not be correct for static libraries, so we might need to
