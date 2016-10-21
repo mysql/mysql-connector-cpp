@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -28,6 +28,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "../framework/start_options.h"
 #include "../framework/test_tapOutputter.h"
 #include "../framework/test_filter.h"
+#include "tests_config.h"
 #include <stdlib.h>
 
 int main(int argc, char** argv)
@@ -40,10 +41,10 @@ int main(int argc, char** argv)
 
   Properties defaultStringValues;
 
-  defaultStringValues.insert(Properties::value_type("dbUrl", "tcp://127.0.0.1:3306"));
-  defaultStringValues.insert(Properties::value_type("dbUser", "root"));
-  defaultStringValues.insert(Properties::value_type("dbPasswd", "root"));
-  defaultStringValues.insert(Properties::value_type("dbSchema", "test"));
+  defaultStringValues.insert(Properties::value_type("dbUrl"   ,TEST_DEFAULT_HOST   ));
+  defaultStringValues.insert(Properties::value_type("dbUser"  ,TEST_DEFAULT_LOGIN ));
+  defaultStringValues.insert(Properties::value_type("dbPasswd",TEST_DEFAULT_PASSWD));
+  defaultStringValues.insert(Properties::value_type("dbSchema",TEST_DEFAULT_DB    ));
 
   std::map<String, bool> defaultBoolValues;
 

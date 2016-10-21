@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -29,27 +29,23 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "BaseTestFixture.h"
 #include "../common/stringutils.h"
+#include "tests_config.h"
 
 namespace testsuite
 {
-static const String defaultHost=    _T("127.0.0.1");
-static const String defaultPort=    _T("3306");
-static const String defaultDb=      _T("test");
-static const String defaultLogin=   _T("root");
-static const String defaultPasswd=  _T("root");
+
+static const String defaultHost=    _T(TEST_DEFAULT_HOST);
+static const String defaultDb=      _T(TEST_DEFAULT_DB);
+static const String defaultLogin=   _T(TEST_DEFAULT_LOGIN);
+static const String defaultPasswd=  _T(TEST_DEFAULT_PASSWD);
 
 int TestFixtureCommon::instanceCount=1;
 
 Properties TestFixtureCommon::sqlProps;
 
-static const char * possiblePropertiesLocations[]={".."
-  , "test/CJUnitTestsPort"
-  , NULL //last should be NULL
-};
-
-int TestFixtureCommon::propsLoaded=resources::LoadProperties("sql.properties"
+int TestFixtureCommon::propsLoaded=resources::LoadProperties(SQL_PROPERTIES_FILE
                                                              , sqlProps
-                                                             , possiblePropertiesLocations);
+                                                             , NULL);
 
 Driver * TestFixtureCommon::driver=NULL;
 
@@ -739,7 +735,7 @@ void BaseTestFixture::setUp()
     } else
     {*/
     String tmp( "Connected to " );
-	  DatabaseMetaData meta(this->conn->getMetaData());
+    DatabaseMetaData meta(this->conn->getMetaData());
     tmp.append( meta->getDatabaseProductName() );
     tmp.append( " / " );
     tmp.append( meta->getDatabaseProductVersion() );

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/C++ is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -21,6 +21,22 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 #
+
+
+#Use Options to configure default test server params
+
+SET(TEST_DEFAULT_HOST   "tcp://localhost:3306"  CACHE STRING "Defines Unit Tests default server" )
+SET(TEST_DEFAULT_DB     "test"                  CACHE STRING "Defines Unit Tests default Database" )
+SET(TEST_DEFAULT_LOGIN  "root"                  CACHE STRING "Defines Unit Tests default login user" )
+SET(TEST_DEFAULT_PASSWD "root"                  CACHE STRING "Defines Unit Tests default login user password" )
+
+# sql.properties file for CJUnitTestsPort tests
+set(SQL_PROPERTIES_FILE "${CMAKE_CURRENT_SOURCE_DIR}/CJUnitTestsPort/sql.properties")
+
+configure_file(tests_config.h.in
+               ${CMAKE_BINARY_DIR}/tests_config.h)
+
+INCLUDE_DIRECTORIES("${CMAKE_BINARY_DIR}")
 
 IF(WIN32)
   IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
