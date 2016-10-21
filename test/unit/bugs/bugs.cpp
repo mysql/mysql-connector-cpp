@@ -268,7 +268,7 @@ void bugs::expired_pwd()
   logMsg("bugs::expired_pwd");
 
   //TODO: Enable it after fixing
-  SKIP("Removed untill fixed")
+  SKIP("Removed untill fixed");
 
   if (getMySQLVersion(con) < 56006)
   {
