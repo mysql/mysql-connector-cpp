@@ -30,8 +30,6 @@ SET(TEST_DEFAULT_DB     "test"                  CACHE STRING "Defines Unit Tests
 SET(TEST_DEFAULT_LOGIN  "root"                  CACHE STRING "Defines Unit Tests default login user" )
 SET(TEST_DEFAULT_PASSWD "root"                  CACHE STRING "Defines Unit Tests default login user password" )
 
-# sql.properties file for CJUnitTestsPort tests
-set(SQL_PROPERTIES_FILE "${CMAKE_CURRENT_SOURCE_DIR}/CJUnitTestsPort/sql.properties")
 
 configure_file(tests_config.h.in
                ${CMAKE_BINARY_DIR}/tests_config.h)

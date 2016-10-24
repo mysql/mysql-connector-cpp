@@ -30,7 +30,4 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define TEST_DEFAULT_LOGIN  "${TEST_DEFAULT_LOGIN}"
 #define TEST_DEFAULT_PASSWD "${TEST_DEFAULT_PASSWD}"
 
-#define SQL_PROPERTIES_FILE "${SQL_PROPERTIES_FILE}"
-
-
 #endif //_TESTS_CONFIG_IN_

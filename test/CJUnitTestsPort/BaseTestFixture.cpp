@@ -43,9 +43,14 @@ int TestFixtureCommon::instanceCount=1;
 
 Properties TestFixtureCommon::sqlProps;
 
-int TestFixtureCommon::propsLoaded=resources::LoadProperties(SQL_PROPERTIES_FILE
-                                                             , sqlProps
-                                                             , NULL);
+static const char * possiblePropertiesLocations[]={".."
+                                                   , "test/CJUnitTestsPort"
+                                                   , NULL //last should be NULL
+};
+
+int TestFixtureCommon::propsLoaded=resources::LoadProperties("sql.properties",
+                                                             sqlProps,
+                                                             possiblePropertiesLocations);
 
 Driver * TestFixtureCommon::driver=NULL;
 
