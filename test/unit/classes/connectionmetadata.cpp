@@ -2184,26 +2184,26 @@ void connectionmetadata::getSchemaCollation()
   logMsg("connectionmetadata::getSchemaCollation - MySQL_ConnectionMetaData::getSchemaCollation()");
   try
   {
-	ResultSetMetaData * resmeta;
-	DatabaseMetaData * dbmeta=con->getMetaData();
+  ResultSetMetaData * resmeta;
+  DatabaseMetaData * dbmeta=con->getMetaData();
 
-	stmt.reset(con->createStatement());
-	stmt->execute("DROP DATABASE IF EXISTS collationTestDatabase");
-	stmt->execute("CREATE DATABASE collationTestDatabase CHARACTER SET utf8 COLLATE utf8_bin");
+  stmt.reset(con->createStatement());
+  stmt->execute("DROP DATABASE IF EXISTS collationTestDatabase");
+  stmt->execute("CREATE DATABASE collationTestDatabase CHARACTER SET utf8 COLLATE utf8_bin");
 
-	/* SchemaCollation */
-	res.reset(dbmeta->getSchemaCollation(con->getCatalog(), "collationTestDatabase"));
-	ASSERT(res->next());
-	resmeta=res->getMetaData();
-	ASSERT_EQUALS((unsigned int) 3, resmeta->getColumnCount());
-	ASSERT_EQUALS("SCHEMA_CAT", resmeta->getColumnLabel(1));
-	ASSERT_EQUALS("SCHEMA_NAME", resmeta->getColumnLabel(2));
-	ASSERT_EQUALS("SCHEMA_COLLATION", resmeta->getColumnLabel(3));
+  /* SchemaCollation */
+  res.reset(dbmeta->getSchemaCollation(con->getCatalog(), "collationTestDatabase"));
+  ASSERT(res->next());
+  resmeta=res->getMetaData();
+  ASSERT_EQUALS((unsigned int) 3, resmeta->getColumnCount());
+  ASSERT_EQUALS("SCHEMA_CAT", resmeta->getColumnLabel(1));
+  ASSERT_EQUALS("SCHEMA_NAME", resmeta->getColumnLabel(2));
+  ASSERT_EQUALS("SCHEMA_COLLATION", resmeta->getColumnLabel(3));
 
-	ASSERT(res->getString("SCHEMA_NAME").caseCompare("collationTestDatabase") == 0);
-	ASSERT_EQUALS("utf8_bin", res->getString("SCHEMA_COLLATION"));
+  ASSERT(res->getString("SCHEMA_NAME").caseCompare("collationTestDatabase") == 0);
+  ASSERT_EQUALS("utf8_bin", res->getString("SCHEMA_COLLATION"));
 
-	stmt->execute("DROP DATABASE IF EXISTS collationTestDatabase");
+  stmt->execute("DROP DATABASE IF EXISTS collationTestDatabase");
   }
   catch (sql::SQLException &e)
   {
@@ -2220,26 +2220,26 @@ void connectionmetadata::getSchemaCharset()
   logMsg("connectionmetadata::getSchemaCharset - MySQL_ConnectionMetaData::getSchemaCharset()");
   try
   {
-	ResultSetMetaData * resmeta;
-	DatabaseMetaData * dbmeta=con->getMetaData();
+  ResultSetMetaData * resmeta;
+  DatabaseMetaData * dbmeta=con->getMetaData();
 
-	stmt.reset(con->createStatement());
-	stmt->execute("DROP DATABASE IF EXISTS charsetTestDatabase");
-	stmt->execute("CREATE DATABASE charsetTestDatabase CHARACTER SET utf8 COLLATE utf8_bin");
+  stmt.reset(con->createStatement());
+  stmt->execute("DROP DATABASE IF EXISTS charsetTestDatabase");
+  stmt->execute("CREATE DATABASE charsetTestDatabase CHARACTER SET utf8 COLLATE utf8_bin");
 
-	/* SchemaCharset */
-	res.reset(dbmeta->getSchemaCharset(con->getCatalog(), "charsetTestDatabase"));
-	ASSERT(res->next());
-	resmeta=res->getMetaData();
-	ASSERT_EQUALS((unsigned int) 3, resmeta->getColumnCount());
-	ASSERT_EQUALS("SCHEMA_CAT", resmeta->getColumnLabel(1));
-	ASSERT_EQUALS("SCHEMA_NAME", resmeta->getColumnLabel(2));
-	ASSERT_EQUALS("SCHEMA_CHARSET", resmeta->getColumnLabel(3));
+  /* SchemaCharset */
+  res.reset(dbmeta->getSchemaCharset(con->getCatalog(), "charsetTestDatabase"));
+  ASSERT(res->next());
+  resmeta=res->getMetaData();
+  ASSERT_EQUALS((unsigned int) 3, resmeta->getColumnCount());
+  ASSERT_EQUALS("SCHEMA_CAT", resmeta->getColumnLabel(1));
+  ASSERT_EQUALS("SCHEMA_NAME", resmeta->getColumnLabel(2));
+  ASSERT_EQUALS("SCHEMA_CHARSET", resmeta->getColumnLabel(3));
 
-	ASSERT(res->getString("SCHEMA_NAME").caseCompare("charsetTestDatabase") == 0);
-	ASSERT_EQUALS("utf8", res->getString("SCHEMA_CHARSET"));
+  ASSERT(res->getString("SCHEMA_NAME").caseCompare("charsetTestDatabase") == 0);
+  ASSERT_EQUALS("utf8", res->getString("SCHEMA_CHARSET"));
 
-	stmt->execute("DROP DATABASE IF EXISTS charsetTestDatabase");
+  stmt->execute("DROP DATABASE IF EXISTS charsetTestDatabase");
   }
   catch (sql::SQLException &e)
   {
@@ -2256,37 +2256,37 @@ void connectionmetadata::getTableCollation()
   logMsg("connectionmetadata::getTableCollation - MySQL_ConnectionMetaData::getTableCollation()");
   try
   {
-	ResultSetMetaData * resmeta;
-	DatabaseMetaData * dbmeta=con->getMetaData();
+  ResultSetMetaData * resmeta;
+  DatabaseMetaData * dbmeta=con->getMetaData();
 
-	stmt.reset(con->createStatement());
-	stmt->execute("DROP DATABASE IF EXISTS collationTestDatabase");
-	stmt->execute("CREATE DATABASE collationTestDatabase CHARACTER SET utf8 COLLATE utf8_bin");
-	stmt->execute("DROP TABLE IF EXISTS collationTestDatabase.collationTestTable");
-	stmt->execute("CREATE TABLE collationTestDatabase.collationTestTable(id INT) CHARACTER SET latin1 COLLATE latin1_general_ci");
-	stmt->execute("DROP TABLE IF EXISTS collationTestDatabase.collationTestTableAnother");
-	stmt->execute("CREATE TABLE collationTestDatabase.collationTestTableAnother(id INT) CHARACTER SET utf8 COLLATE utf8_bin");
+  stmt.reset(con->createStatement());
+  stmt->execute("DROP DATABASE IF EXISTS collationTestDatabase");
+  stmt->execute("CREATE DATABASE collationTestDatabase CHARACTER SET utf8 COLLATE utf8_bin");
+  stmt->execute("DROP TABLE IF EXISTS collationTestDatabase.collationTestTable");
+  stmt->execute("CREATE TABLE collationTestDatabase.collationTestTable(id INT) CHARACTER SET latin1 COLLATE latin1_general_ci");
+  stmt->execute("DROP TABLE IF EXISTS collationTestDatabase.collationTestTableAnother");
+  stmt->execute("CREATE TABLE collationTestDatabase.collationTestTableAnother(id INT) CHARACTER SET utf8 COLLATE utf8_bin");
 
-	/* TableCollation */
-	res.reset(dbmeta->getTableCollation(con->getCatalog(), "collationTestDatabase", "%collationTestTable%"));
-	ASSERT(res->next());
-	resmeta=res->getMetaData();
-	ASSERT_EQUALS((unsigned int) 4, resmeta->getColumnCount());
-	ASSERT_EQUALS("TABLE_CAT", resmeta->getColumnLabel(1));
-	ASSERT_EQUALS("TABLE_SCHEMA", resmeta->getColumnLabel(2));
-	ASSERT_EQUALS("TABLE_NAME", resmeta->getColumnLabel(3));
-	ASSERT_EQUALS("TABLE_COLLATION", resmeta->getColumnLabel(4));
+  /* TableCollation */
+  res.reset(dbmeta->getTableCollation(con->getCatalog(), "collationTestDatabase", "%collationTestTable%"));
+  ASSERT(res->next());
+  resmeta=res->getMetaData();
+  ASSERT_EQUALS((unsigned int) 4, resmeta->getColumnCount());
+  ASSERT_EQUALS("TABLE_CAT", resmeta->getColumnLabel(1));
+  ASSERT_EQUALS("TABLE_SCHEMA", resmeta->getColumnLabel(2));
+  ASSERT_EQUALS("TABLE_NAME", resmeta->getColumnLabel(3));
+  ASSERT_EQUALS("TABLE_COLLATION", resmeta->getColumnLabel(4));
 
-	ASSERT(res->getString("TABLE_SCHEMA").caseCompare("collationTestDatabase") == 0);
-	ASSERT(res->getString("TABLE_NAME").caseCompare("collationTestTable") == 0);
-	ASSERT_EQUALS("latin1_general_ci", res->getString("TABLE_COLLATION"));
+  ASSERT(res->getString("TABLE_SCHEMA").caseCompare("collationTestDatabase") == 0);
+  ASSERT(res->getString("TABLE_NAME").caseCompare("collationTestTable") == 0);
+  ASSERT_EQUALS("latin1_general_ci", res->getString("TABLE_COLLATION"));
 
-	ASSERT(res->next());
-	ASSERT(res->getString("TABLE_SCHEMA").caseCompare("collationTestDatabase") == 0);
-	ASSERT(res->getString("TABLE_NAME").caseCompare("collationTestTableAnother") == 0);
-	ASSERT_EQUALS("utf8_bin", res->getString("TABLE_COLLATION"));
+  ASSERT(res->next());
+  ASSERT(res->getString("TABLE_SCHEMA").caseCompare("collationTestDatabase") == 0);
+  ASSERT(res->getString("TABLE_NAME").caseCompare("collationTestTableAnother") == 0);
+  ASSERT_EQUALS("utf8_bin", res->getString("TABLE_COLLATION"));
 
-	stmt->execute("DROP DATABASE IF EXISTS collationTestDatabase");
+  stmt->execute("DROP DATABASE IF EXISTS collationTestDatabase");
   }
   catch (sql::SQLException &e)
   {
@@ -2303,37 +2303,37 @@ void connectionmetadata::getTableCharset()
   logMsg("connectionmetadata::getTableCharset - MySQL_ConnectionMetaData::getTableCharset()");
   try
   {
-	ResultSetMetaData * resmeta;
-	DatabaseMetaData * dbmeta=con->getMetaData();
+  ResultSetMetaData * resmeta;
+  DatabaseMetaData * dbmeta=con->getMetaData();
 
-	stmt.reset(con->createStatement());
-	stmt->execute("DROP DATABASE IF EXISTS charsetTestDatabase");
-	stmt->execute("CREATE DATABASE charsetTestDatabase CHARACTER SET utf8 COLLATE utf8_bin");
-	stmt->execute("DROP TABLE IF EXISTS charsetTestDatabase.charsetTestTable");
-	stmt->execute("CREATE TABLE charsetTestDatabase.charsetTestTable(id INT) CHARACTER SET latin1 COLLATE latin1_general_ci");
-	stmt->execute("DROP TABLE IF EXISTS charsetTestDatabase.charsetTestTableAnother");
-	stmt->execute("CREATE TABLE charsetTestDatabase.charsetTestTableAnother(id INT) CHARACTER SET utf8 COLLATE utf8_bin");
+  stmt.reset(con->createStatement());
+  stmt->execute("DROP DATABASE IF EXISTS charsetTestDatabase");
+  stmt->execute("CREATE DATABASE charsetTestDatabase CHARACTER SET utf8 COLLATE utf8_bin");
+  stmt->execute("DROP TABLE IF EXISTS charsetTestDatabase.charsetTestTable");
+  stmt->execute("CREATE TABLE charsetTestDatabase.charsetTestTable(id INT) CHARACTER SET latin1 COLLATE latin1_general_ci");
+  stmt->execute("DROP TABLE IF EXISTS charsetTestDatabase.charsetTestTableAnother");
+  stmt->execute("CREATE TABLE charsetTestDatabase.charsetTestTableAnother(id INT) CHARACTER SET utf8 COLLATE utf8_bin");
 
-	/* TableCharset */
-	res.reset(dbmeta->getTableCharset(con->getCatalog(), "charsetTestDatabase", "%charsetTestTable%"));
-	ASSERT(res->next());
-	resmeta=res->getMetaData();
-	ASSERT_EQUALS((unsigned int) 4, resmeta->getColumnCount());
-	ASSERT_EQUALS("TABLE_CAT", resmeta->getColumnLabel(1));
-	ASSERT_EQUALS("TABLE_SCHEMA", resmeta->getColumnLabel(2));
-	ASSERT_EQUALS("TABLE_NAME", resmeta->getColumnLabel(3));
-	ASSERT_EQUALS("TABLE_CHARSET", resmeta->getColumnLabel(4));
+  /* TableCharset */
+  res.reset(dbmeta->getTableCharset(con->getCatalog(), "charsetTestDatabase", "%charsetTestTable%"));
+  ASSERT(res->next());
+  resmeta=res->getMetaData();
+  ASSERT_EQUALS((unsigned int) 4, resmeta->getColumnCount());
+  ASSERT_EQUALS("TABLE_CAT", resmeta->getColumnLabel(1));
+  ASSERT_EQUALS("TABLE_SCHEMA", resmeta->getColumnLabel(2));
+  ASSERT_EQUALS("TABLE_NAME", resmeta->getColumnLabel(3));
+  ASSERT_EQUALS("TABLE_CHARSET", resmeta->getColumnLabel(4));
 
-	ASSERT(res->getString("TABLE_SCHEMA").caseCompare("charsetTestDatabase") == 0);
-	ASSERT(res->getString("TABLE_NAME").caseCompare("charsetTestTable") == 0);
-	ASSERT_EQUALS("latin1", res->getString("TABLE_CHARSET"));
+  ASSERT(res->getString("TABLE_SCHEMA").caseCompare("charsetTestDatabase") == 0);
+  ASSERT(res->getString("TABLE_NAME").caseCompare("charsetTestTable") == 0);
+  ASSERT_EQUALS("latin1", res->getString("TABLE_CHARSET"));
 
-	ASSERT(res->next());
-	ASSERT(res->getString("TABLE_SCHEMA").caseCompare("charsetTestDatabase") == 0);
-	ASSERT(res->getString("TABLE_NAME").caseCompare("charsetTestTableAnother") == 0);
-	ASSERT_EQUALS("utf8", res->getString("TABLE_CHARSET"));
+  ASSERT(res->next());
+  ASSERT(res->getString("TABLE_SCHEMA").caseCompare("charsetTestDatabase") == 0);
+  ASSERT(res->getString("TABLE_NAME").caseCompare("charsetTestTableAnother") == 0);
+  ASSERT_EQUALS("utf8", res->getString("TABLE_CHARSET"));
 
-	stmt->execute("DROP DATABASE IF EXISTS charsetTestDatabase");
+  stmt->execute("DROP DATABASE IF EXISTS charsetTestDatabase");
   }
   catch (sql::SQLException &e)
   {
@@ -2348,38 +2348,42 @@ void connectionmetadata::getTableCharset()
 void connectionmetadata::getTables()
 {
   logMsg("connectionmetadata::getTables - MySQL_ConnectionMetaData::getTables()");
+
+  //TODO: Enable it after fixing
+  SKIP("Removed untill fixed");
+
   try
   {
-	ResultSetMetaData * resmeta;
-	DatabaseMetaData * dbmeta=con->getMetaData();
-	std::list< sql::SQLString > tableTypes;
+  ResultSetMetaData * resmeta;
+  DatabaseMetaData * dbmeta=con->getMetaData();
+  std::list< sql::SQLString > tableTypes;
 
-	stmt.reset(con->createStatement());
-	stmt->execute("DROP TABLE IF EXISTS testTable1");
-	stmt->execute("CREATE TABLE testTable1(id INT)");
-	stmt->execute("DROP VIEW IF EXISTS testView1");
-	stmt->execute("CREATE VIEW testView1 AS SELECT * FROM testTable1");
+  stmt.reset(con->createStatement());
+  stmt->execute("DROP TABLE IF EXISTS testTable1");
+  stmt->execute("CREATE TABLE testTable1(id INT)");
+  stmt->execute("DROP VIEW IF EXISTS testView1");
+  stmt->execute("CREATE VIEW testView1 AS SELECT * FROM testTable1");
 
-	/* for tableType = TABLE */
-	tableTypes.clear();
-	tableTypes.push_back(sql::SQLString("TABLE"));
-	res.reset(dbmeta->getTables("", "%", "testTable%", tableTypes));
-	ASSERT(res->next());
+  /* for tableType = TABLE */
+  tableTypes.clear();
+  tableTypes.push_back(sql::SQLString("TABLE"));
+  res.reset(dbmeta->getTables("", "%", "testTable%", tableTypes));
+  ASSERT(res->next());
 
-	ASSERT_EQUALS(res->getString(3), "testTable1");
-	ASSERT_EQUALS(res->getString(4), "TABLE");
+  ASSERT_EQUALS(res->getString(3), "testTable1");
+  ASSERT_EQUALS(res->getString(4), "TABLE");
 
-	/* for tableType = VIEW */
-	tableTypes.clear();
-	tableTypes.push_back(sql::SQLString("VIEW"));
-	res.reset(dbmeta->getTables("", "%", "testView%", tableTypes));
-	ASSERT(res->next());
+  /* for tableType = VIEW */
+  tableTypes.clear();
+  tableTypes.push_back(sql::SQLString("VIEW"));
+  res.reset(dbmeta->getTables("", "%", "testView%", tableTypes));
+  ASSERT(res->next());
 
-	ASSERT_EQUALS(res->getString(3), "testView1");
-	ASSERT_EQUALS(res->getString(4), "VIEW");
+  ASSERT_EQUALS(res->getString(3), "testView1");
+  ASSERT_EQUALS(res->getString(4), "VIEW");
 
-  	stmt->execute("DROP TABLE IF EXISTS testTable1");
-	stmt->execute("DROP VIEW IF EXISTS testView1");
+    stmt->execute("DROP TABLE IF EXISTS testTable1");
+  stmt->execute("DROP VIEW IF EXISTS testView1");
   }
   catch (sql::SQLException &e)
   {

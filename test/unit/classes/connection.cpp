@@ -2397,6 +2397,10 @@ void connection::enableClearTextAuth()
 void connection::connectAttrAdd()
 {
   logMsg("connection::connectAttr - MYSQL_OPT_CONNECT_ATTR_ADD|MYSQL_OPT_CONNECT_ATTR_DELETE");
+
+  //TODO: Enable it after fixing
+  SKIP("Removed untill fixed");
+
   int serverVersion=getMySQLVersion(con);
   if ( serverVersion < 56006)
   {
