@@ -51,13 +51,13 @@ namespace mysql
 
 /* {{{ MySQL_ResultSetMetaData::MySQL_ResultSetMetaData -I- */
 MySQL_ResultSetMetaData::MySQL_ResultSetMetaData(boost::shared_ptr< NativeAPI::NativeResultsetWrapper > res, boost::shared_ptr< MySQL_DebugLogger > & l)
-	: result(res), logger(l)
+  : result(res), logger(l)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::MySQL_ResultSetMetaData");
-	boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result_p = result.lock();
-	if (result_p) {
-		num_fields = result_p->num_fields();
-	}
+  CPP_ENTER("MySQL_ResultSetMetaData::MySQL_ResultSetMetaData");
+  boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result_p = result.lock();
+  if (result_p) {
+    num_fields = result_p->num_fields();
+  }
 }
 /* }}} */
 
@@ -65,7 +65,7 @@ MySQL_ResultSetMetaData::MySQL_ResultSetMetaData(boost::shared_ptr< NativeAPI::N
 /* {{{ MySQL_ResultSetMetaData::~MySQL_ResultSetMetaData -I- */
 MySQL_ResultSetMetaData::~MySQL_ResultSetMetaData()
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::~MySQL_ResultSetMetaData");
+  CPP_ENTER("MySQL_ResultSetMetaData::~MySQL_ResultSetMetaData");
 }
 /* }}} */
 
@@ -74,9 +74,9 @@ MySQL_ResultSetMetaData::~MySQL_ResultSetMetaData()
 void
 MySQL_ResultSetMetaData::checkColumnIndex(unsigned int columnIndex) const
 {
-	if (columnIndex == 0 || columnIndex > num_fields) {
-		throw sql::InvalidArgumentException("Invalid value for columnIndex");
-	}
+  if (columnIndex == 0 || columnIndex > num_fields) {
+    throw sql::InvalidArgumentException("Invalid value for columnIndex");
+  }
 }
 /* }}} */
 
@@ -85,11 +85,11 @@ MySQL_ResultSetMetaData::checkColumnIndex(unsigned int columnIndex) const
 void
 MySQL_ResultSetMetaData::checkValid() const
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::checkValid");
-	boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result_p = result.lock();
-	if (!result_p) {
-		throw sql::InvalidArgumentException("ResultSet is not valid anymore");
-	}
+  CPP_ENTER("MySQL_ResultSetMetaData::checkValid");
+  boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result_p = result.lock();
+  if (!result_p) {
+    throw sql::InvalidArgumentException("ResultSet is not valid anymore");
+  }
 }
 /* }}} */
 
@@ -98,10 +98,10 @@ MySQL_ResultSetMetaData::checkValid() const
 SQLString
 MySQL_ResultSetMetaData::getCatalogName(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::getCatalogName");
-	checkValid();
-	checkColumnIndex(columnIndex);
-	return "";
+  CPP_ENTER("MySQL_ResultSetMetaData::getCatalogName");
+  checkValid();
+  checkColumnIndex(columnIndex);
+  return getFieldMeta(columnIndex)->catalog;
 }
 /* }}} */
 
@@ -110,9 +110,9 @@ MySQL_ResultSetMetaData::getCatalogName(unsigned int columnIndex)
 unsigned int
 MySQL_ResultSetMetaData::getColumnCount()
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::getColumnCount");
-	checkValid();
-	return num_fields;
+  CPP_ENTER("MySQL_ResultSetMetaData::getColumnCount");
+  checkValid();
+  return num_fields;
 }
 /* }}} */
 
@@ -121,20 +121,20 @@ MySQL_ResultSetMetaData::getColumnCount()
 unsigned int
 MySQL_ResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::getColumnDisplaySize");
-	checkValid();
-	checkColumnIndex(columnIndex);
-	const MYSQL_FIELD * const field = getFieldMeta(columnIndex);
-	const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
-	if (!cs) {
-		std::ostringstream msg("Server sent unknown charsetnr (");
-		msg << field->charsetnr << ") . Please report";
-		throw SQLException(msg.str());
-	}
-	int ret = field->length / cs->char_maxlen;
+  CPP_ENTER("MySQL_ResultSetMetaData::getColumnDisplaySize");
+  checkValid();
+  checkColumnIndex(columnIndex);
+  const MYSQL_FIELD * const field = getFieldMeta(columnIndex);
+  const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
+  if (!cs) {
+    std::ostringstream msg("Server sent unknown charsetnr (");
+    msg << field->charsetnr << ") . Please report";
+    throw SQLException(msg.str());
+  }
+  int ret = field->length / cs->char_maxlen;
 
-	CPP_INFO_FMT("column=%u name=%s display_size=%d", columnIndex, getFieldMeta(columnIndex)->name, ret);
-	return ret;
+  CPP_INFO_FMT("column=%u name=%s display_size=%d", columnIndex, getFieldMeta(columnIndex)->name, ret);
+  return ret;
 }
 /* }}} */
 
@@ -143,11 +143,11 @@ MySQL_ResultSetMetaData::getColumnDisplaySize(unsigned int columnIndex)
 SQLString
 MySQL_ResultSetMetaData::getColumnLabel(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::getColumnLabel");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::getColumnLabel");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	return getFieldMeta(columnIndex)->name;
+  return getFieldMeta(columnIndex)->name;
 }
 /* }}} */
 
@@ -156,11 +156,11 @@ MySQL_ResultSetMetaData::getColumnLabel(unsigned int columnIndex)
 SQLString
 MySQL_ResultSetMetaData::getColumnName(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::getColumnName");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::getColumnName");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	return getFieldMeta(columnIndex)->org_name;
+  return getFieldMeta(columnIndex)->org_name;
 }
 /* }}} */
 
@@ -169,11 +169,11 @@ MySQL_ResultSetMetaData::getColumnName(unsigned int columnIndex)
 int
 MySQL_ResultSetMetaData::getColumnType(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::getColumnType");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::getColumnType");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	return sql::mysql::util::mysql_type_to_datatype(getFieldMeta(columnIndex));
+  return sql::mysql::util::mysql_type_to_datatype(getFieldMeta(columnIndex));
 }
 /* }}} */
 
@@ -182,11 +182,11 @@ MySQL_ResultSetMetaData::getColumnType(unsigned int columnIndex)
 SQLString
 MySQL_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::getColumnTypeName");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::getColumnTypeName");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	return sql::mysql::util::mysql_type_to_string(getFieldMeta(columnIndex), this->logger);
+  return sql::mysql::util::mysql_type_to_string(getFieldMeta(columnIndex), this->logger);
 }
 /* }}} */
 
@@ -195,18 +195,18 @@ MySQL_ResultSetMetaData::getColumnTypeName(unsigned int columnIndex)
 SQLString
 MySQL_ResultSetMetaData::getColumnCharset(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::getColumnCharset");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::getColumnCharset");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	const MYSQL_FIELD * const field = getFieldMeta(columnIndex);
-	const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
-	if (!cs) {
-		std::ostringstream msg;
-		msg << "Server sent unknown charsetnr (" << field->charsetnr << ") . Please report";
-		throw SQLException(msg.str());
-	}
-	return cs->name;
+  const MYSQL_FIELD * const field = getFieldMeta(columnIndex);
+  const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
+  if (!cs) {
+    std::ostringstream msg;
+    msg << "Server sent unknown charsetnr (" << field->charsetnr << ") . Please report";
+    throw SQLException(msg.str());
+  }
+  return cs->name;
 }
 /* }}} */
 
@@ -215,18 +215,18 @@ MySQL_ResultSetMetaData::getColumnCharset(unsigned int columnIndex)
 SQLString
 MySQL_ResultSetMetaData::getColumnCollation(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::getColumnCollation");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::getColumnCollation");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	const MYSQL_FIELD * const field = getFieldMeta(columnIndex);
-	const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
-	if (!cs) {
-		std::ostringstream msg;
-		msg << "Server sent unknown charsetnr (" << field->charsetnr << ") . Please report";
-		throw SQLException(msg.str());
-	}
-	return cs->collation;
+  const MYSQL_FIELD * const field = getFieldMeta(columnIndex);
+  const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
+  if (!cs) {
+    std::ostringstream msg;
+    msg << "Server sent unknown charsetnr (" << field->charsetnr << ") . Please report";
+    throw SQLException(msg.str());
+  }
+  return cs->collation;
 }
 /* }}} */
 
@@ -235,8 +235,8 @@ MySQL_ResultSetMetaData::getColumnCollation(unsigned int columnIndex)
 MYSQL_FIELD *
 MySQL_ResultSetMetaData::getFieldMeta(unsigned int columnIndex) const
 {
-	boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result_p = result.lock();
-	return result_p->fetch_field_direct(columnIndex - 1);
+  boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result_p = result.lock();
+  return result_p->fetch_field_direct(columnIndex - 1);
 }
 /* }}} */
 
@@ -246,13 +246,13 @@ MySQL_ResultSetMetaData::getFieldMeta(unsigned int columnIndex) const
 unsigned int
 MySQL_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::getPrecision");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::getPrecision");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	unsigned int ret = getFieldMeta(columnIndex)->max_length - getScale(columnIndex);
-	CPP_INFO_FMT("column=%u precision=%d", columnIndex, ret);
-	return ret;
+  unsigned int ret = getFieldMeta(columnIndex)->max_length - getScale(columnIndex);
+  CPP_INFO_FMT("column=%u precision=%d", columnIndex, ret);
+  return ret;
 }
 /* }}} */
 
@@ -261,13 +261,13 @@ MySQL_ResultSetMetaData::getPrecision(unsigned int columnIndex)
 unsigned int
 MySQL_ResultSetMetaData::getScale(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::getScale");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::getScale");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	unsigned int ret = getFieldMeta(columnIndex)->decimals;
-	CPP_INFO_FMT("column=%u scale=%d", columnIndex, ret);
-	return ret;
+  unsigned int ret = getFieldMeta(columnIndex)->decimals;
+  CPP_INFO_FMT("column=%u scale=%d", columnIndex, ret);
+  return ret;
 }
 /* }}} */
 
@@ -276,12 +276,12 @@ MySQL_ResultSetMetaData::getScale(unsigned int columnIndex)
 SQLString
 MySQL_ResultSetMetaData::getSchemaName(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::getSchemaName");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::getSchemaName");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	const char * const db = getFieldMeta(columnIndex)->db;
-	return db ? db : "";
+  const char * const db = getFieldMeta(columnIndex)->db;
+  return db ? db : "";
 }
 /* }}} */
 
@@ -290,11 +290,11 @@ MySQL_ResultSetMetaData::getSchemaName(unsigned int columnIndex)
 SQLString
 MySQL_ResultSetMetaData::getTableName(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::getTableName");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::getTableName");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	return getFieldMeta(columnIndex)->org_table;
+  return getFieldMeta(columnIndex)->org_table;
 }
 /* }}} */
 
@@ -303,11 +303,11 @@ MySQL_ResultSetMetaData::getTableName(unsigned int columnIndex)
 bool
 MySQL_ResultSetMetaData::isAutoIncrement(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::isAutoIncrement");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::isAutoIncrement");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	return (getFieldMeta(columnIndex)->flags & AUTO_INCREMENT_FLAG ) != 0;
+  return (getFieldMeta(columnIndex)->flags & AUTO_INCREMENT_FLAG ) != 0;
 }
 /* }}} */
 
@@ -316,21 +316,21 @@ MySQL_ResultSetMetaData::isAutoIncrement(unsigned int columnIndex)
 bool
 MySQL_ResultSetMetaData::isCaseSensitive(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::isCaseSensitive");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::isCaseSensitive");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	const MYSQL_FIELD * const field = getFieldMeta(columnIndex);
-	if (field->flags & NUM_FLAG || field->type == MYSQL_TYPE_NEWDECIMAL || field->type == MYSQL_TYPE_DECIMAL) {
-		return false;
-	}
-	const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
-	if (!cs) {
-		std::ostringstream msg;
-		msg << "Server sent unknown charsetnr (" << field->charsetnr << ") . Please report";
-		throw SQLException(msg.str());
-	}
-	return NULL == strstr(cs->collation, "_ci");
+  const MYSQL_FIELD * const field = getFieldMeta(columnIndex);
+  if (field->flags & NUM_FLAG || field->type == MYSQL_TYPE_NEWDECIMAL || field->type == MYSQL_TYPE_DECIMAL) {
+    return false;
+  }
+  const sql::mysql::util::OUR_CHARSET * const cs = sql::mysql::util::find_charset(field->charsetnr);
+  if (!cs) {
+    std::ostringstream msg;
+    msg << "Server sent unknown charsetnr (" << field->charsetnr << ") . Please report";
+    throw SQLException(msg.str());
+  }
+  return NULL == strstr(cs->collation, "_ci");
 }
 /* }}} */
 
@@ -339,11 +339,11 @@ MySQL_ResultSetMetaData::isCaseSensitive(unsigned int columnIndex)
 bool
 MySQL_ResultSetMetaData::isCurrency(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::isCurrency");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::isCurrency");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	return false;
+  return false;
 }
 /* }}} */
 
@@ -352,11 +352,11 @@ MySQL_ResultSetMetaData::isCurrency(unsigned int columnIndex)
 bool
 MySQL_ResultSetMetaData::isDefinitelyWritable(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::isDefinitelyWritable");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::isDefinitelyWritable");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	return isWritable(columnIndex);
+  return isWritable(columnIndex);
 }
 /* }}} */
 
@@ -365,11 +365,11 @@ MySQL_ResultSetMetaData::isDefinitelyWritable(unsigned int columnIndex)
 int
 MySQL_ResultSetMetaData::isNullable(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::isNullable");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::isNullable");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	return getFieldMeta(columnIndex)->flags & NOT_NULL_FLAG? columnNoNulls:columnNullable;
+  return getFieldMeta(columnIndex)->flags & NOT_NULL_FLAG? columnNoNulls:columnNullable;
 }
 /* }}} */
 
@@ -378,11 +378,11 @@ MySQL_ResultSetMetaData::isNullable(unsigned int columnIndex)
 bool
 MySQL_ResultSetMetaData::isNumeric(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::isNumeric");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::isNumeric");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	return (getFieldMeta(columnIndex)->flags & NUM_FLAG) != 0;
+  return (getFieldMeta(columnIndex)->flags & NUM_FLAG) != 0;
 }
 /* }}} */
 
@@ -391,12 +391,12 @@ MySQL_ResultSetMetaData::isNumeric(unsigned int columnIndex)
 bool
 MySQL_ResultSetMetaData::isReadOnly(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::isReadOnly");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::isReadOnly");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	const char * const db = getFieldMeta(columnIndex)->db;
-	return !(db && strlen(db));
+  const char * const db = getFieldMeta(columnIndex)->db;
+  return !(db && strlen(db));
 }
 /* }}} */
 
@@ -405,11 +405,11 @@ MySQL_ResultSetMetaData::isReadOnly(unsigned int columnIndex)
 bool
 MySQL_ResultSetMetaData::isSearchable(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::isSearchable");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::isSearchable");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	return true;
+  return true;
 }
 /* }}} */
 
@@ -418,14 +418,14 @@ MySQL_ResultSetMetaData::isSearchable(unsigned int columnIndex)
 bool
 MySQL_ResultSetMetaData::isSigned(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::isSigned");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::isSigned");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	if (getFieldMeta(columnIndex)->type == FIELD_TYPE_YEAR) {
-		return false;
-	}
-	return !(getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG);
+  if (getFieldMeta(columnIndex)->type == FIELD_TYPE_YEAR) {
+    return false;
+  }
+  return !(getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG);
 }
 /* }}} */
 
@@ -434,11 +434,11 @@ MySQL_ResultSetMetaData::isSigned(unsigned int columnIndex)
 bool
 MySQL_ResultSetMetaData::isWritable(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::isWritable");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::isWritable");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	return !isReadOnly(columnIndex);
+  return !isReadOnly(columnIndex);
 }
 /* }}} */
 
@@ -447,11 +447,11 @@ MySQL_ResultSetMetaData::isWritable(unsigned int columnIndex)
 bool
 MySQL_ResultSetMetaData::isZerofill(unsigned int columnIndex)
 {
-	CPP_ENTER("MySQL_ResultSetMetaData::isZerofill");
-	checkValid();
-	checkColumnIndex(columnIndex);
+  CPP_ENTER("MySQL_ResultSetMetaData::isZerofill");
+  checkValid();
+  checkColumnIndex(columnIndex);
 
-	return (getFieldMeta(columnIndex)->flags & ZEROFILL_FLAG) != 0;
+  return (getFieldMeta(columnIndex)->flags & ZEROFILL_FLAG) != 0;
 }
 /* }}} */
 
