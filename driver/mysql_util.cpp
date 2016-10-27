@@ -431,8 +431,10 @@ mysql_type_to_datatype(const MYSQL_FIELD * const field)
       return sql::DataType::SET;
     case MYSQL_TYPE_GEOMETRY:
       return sql::DataType::GEOMETRY;
+#if LIBMYSQL_VERSION_ID > 50700
     case MYSQL_TYPE_JSON:
       return sql::DataType::JSON;
+#endif //LIBMYSQL_VERSION_ID > 50700
     default:
       return sql::DataType::UNKNOWN;
   }
@@ -645,8 +647,10 @@ mysql_type_to_string(const MYSQL_FIELD * const field, boost::shared_ptr< sql::my
       return "SET";
     case MYSQL_TYPE_GEOMETRY:
       return "GEOMETRY";
+#if LIBMYSQL_VERSION_ID > 50700
     case MYSQL_TYPE_JSON:
       return "JSON";
+#endif //LIBMYSQL_VERSION_ID > 50700
     default:
       return "UNKNOWN";
   }
