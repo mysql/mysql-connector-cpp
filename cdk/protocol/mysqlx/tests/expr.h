@@ -50,17 +50,11 @@ namespace expr {
 
 using std::min;
 
- //using namespace ::std;
-//using namespace cdk::foundation;
 using namespace cdk::protocol::mysqlx;
 
 namespace api {
   using namespace cdk::protocol::mysqlx::api;
-}  // papi
-
-//typedef cdk::byte byte;
-//typedef cdk::string string;
-//typedef foundation::Number_codec<Endianess::NATIVE> Number_codec;
+}  // api
 
 
 class Scalar_base : public api::Scalar
@@ -136,6 +130,7 @@ protected:
   const B* clone() const
   { return new E(*(E*)this); }
 };
+
 
 class Param_String : public Expr_class<Param_String, Any_base>
 {

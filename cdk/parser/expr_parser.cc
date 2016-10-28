@@ -143,8 +143,7 @@ Expression::Processor* ignore_if(Expression::Processor *prc)
 
 bool Expr_parser_base::do_parse(It &first, const It &last, Processor *prc)
 {
-  Token_op_base::m_first = &first;
-  Token_op_base::m_last = last;
+  Token_op_base::set_tokens(first, last);
 
   /*
     if prc is NULL, ignore the parsed expression instead of storing it
@@ -372,33 +371,50 @@ Expr_parser_base::parse_function_call(const cdk::api::Table_ref &func, Scalar_pr
   is rewritten as:
 
   columnIdent ::= schemaQualifiedIdent columnIdent1
-  columnIdent1 ::= ('.' ident)? ('->' ( columnIdentDocPath | "'" columnIdentDocPath "'" ))?
+  columnIdent1 ::= ('.' ident)? ('->' ( columnIdentDocPath
+                                | "'" columnIdentDocPath "'" ))?
 
   columnIdentDocPath ::= documentField // but require DOLLAR prefix
 */
 
-void Expr_parser_base::parse_schema_ident()
+/*
+  Parse a schema-qualified identifier and store it as table/schema
+  name of m_col_ref member. Schema name is optional.
+
+  If types is not NULL then types of the consumed tokens are stored in this
+  array.
+*/
+
+void Expr_parser_base::parse_schema_ident(Token::TokenType (*types)[2])
 {
+  if (types)
+  {
+    (*types)[0] = peek_token().get_type();
+    // Reset the other entry in case we are not looking at more tokens.
+    (*types)[1] = Token::TokenType(0);
+  }
   const cdk::string &name = get_ident();
+
+  m_col_ref.m_table_ref.set(name);
 
   if (cur_token_type_is(Token::DOT))
   {
     consume_token(Token::DOT);
+    if (types)
+      (*types)[1] = peek_token().get_type();
     m_col_ref.m_table_ref.set(get_ident(), name);
   }
-  else
-    m_col_ref.m_table_ref.set(name);
 }
 
 
-void Expr_parser_base::parse_column_ident()
+void Expr_parser_base::parse_column_ident(Path_prc *prc)
 {
   parse_schema_ident();
-  parse_column_ident1();
+  parse_column_ident1(prc);
 }
 
 
-void Expr_parser_base::parse_column_ident1()
+void Expr_parser_base::parse_column_ident1(Path_prc *prc)
 {
   if (cur_token_type_is(Token::DOT))
   {
@@ -417,9 +433,6 @@ void Expr_parser_base::parse_column_ident1()
       m_col_ref.set(m_col_ref.table()->name());
   }
 
-  // Clear Document path
-  m_path.clear();
-
   if (cur_token_type_is(Token::ARROW))
   {
     consume_token(Token::ARROW);
@@ -432,14 +445,13 @@ void Expr_parser_base::parse_column_ident1()
       It last  = toks.end();
       Expr_parser_base path_parser(first, last, m_parser_mode);
       // TODO: Translate parse errors
-      path_parser.parse_document_field(true);
+      path_parser.parse_document_field(prc, true);
       if (first != last)
         throw Error("Invalid quotted path component");
-      m_path = path_parser.m_path;
     }
     else
     {
-      parse_document_field();
+      parse_document_field(prc, true);
     }
   }
 
@@ -450,62 +462,76 @@ void Expr_parser_base::parse_column_ident1()
 
 
 /**
-   documentField ::= ID documentPath? | DOLLAR documentPath
-*/
+  The original grammar was:
 
-void Doc_path_parser_base::parse_document_field()
-{
-  //Clear Doc_path obj
-  m_path.clear();
-
-  if (cur_token_type_is(Token::DOLLAR))
-  {
-    consume_token(Token::DOLLAR);
-
-  } else if (!cur_token_type_is(Token::DOT) &&
-             !cur_token_type_is(Token::LSQBRACKET) &&
-             !cur_token_type_is(Token::DOUBLESTAR))
-  {
-  /*
-     Special case, starting with MEMBER
-
-     On this case, we check if documentPath starts with DOT, LSQBRACKET or
-     DOUBLESTAR. If not, it is parsed as ID
-   */
-
-    parse_docpath_member();
-  }
-
-  parse_document_path(false);
-}
-
-/**
    documentField ::= ID documentPath? | DOLLAR documentPath
 
-   If prefix is true, only second form starting with DOLLAR prefix is
+  Which makes "*", "**.foo" or "*.foo" not valid field specifications
+  while "$[3]" is a valid specification.
+
+  We modify the grammar so that "$[..]" is not valid while "*.." or "**.."
+  are valid:
+
+    documentField ::=
+      | DOLLAR documentPathLeadingDot
+      | documentPath
+
+  The grammar of documentPath was adjusted so that the first
+  path item can not be an array item ("[n]" or "[*]") and we can request
+  a leading DOT before member items (see parse_document_path()).
+
+   If prefix is true, only the first form starting with DOLLAR prefix is
    accepted.
 */
 
-void Expr_parser_base::parse_document_field(bool prefix)
+void Expr_parser_base::parse_document_field(Path_prc *prc, bool prefix)
 {
-  if (cur_token_type_is(Token::ID) && !prefix)
-  {
-    return parse_document_path(consume_token(Token::ID));
-  }
-
   if (cur_token_type_is(Token::DOLLAR))
   {
     consume_token(Token::DOLLAR);
-    return parse_document_path();
+    if (!parse_document_path(prc, true))  // require DOT before members
+      throw_error("Document path expected");
+    return;
   }
 
+  if (prefix)
+    throw_error("Expected DOLLAR to start a document path");
 
-
-  throw Error(
-    (boost::format("Expr parser: Expected token type IDENT or DOLLAR in JSON path"
-                   " at token pos %d") % get_token_pos()).str());
+  if (!parse_document_path(prc, false))
+    throw_error("Document path expected");
 }
 
+
+/*
+  Parse a document field path with a given initial member segment.
+*/
+
+void Expr_parser_base::parse_document_field(const string &first, Path_prc *prc)
+{
+  Safe_prc<Path_prc> sprc = prc;
+
+  sprc->list_begin();
+  sprc->list_el()->member(first);
+  parse_document_path1(prc);
+  sprc->list_end();
+}
+
+/*
+  Parse a document field path with given 2 initial member segment.
+*/
+
+void Expr_parser_base::parse_document_field(const string &first,
+                                            const string &second,
+                                            Path_prc *prc)
+{
+  Safe_prc<Path_prc> sprc = prc;
+
+  sprc->list_begin();
+  sprc->list_el()->member(first);
+  sprc->list_el()->member(second);
+  parse_document_path1(prc);
+  sprc->list_end();
+}
 
 /**
   Original Grammar:
@@ -526,92 +552,247 @@ void Expr_parser_base::parse_document_field(bool prefix)
         ID
       | STRING1
 
-  This grammar has been re-written to equivalent one
+  This grammar has few flaws:
 
-   documentPath ::= documentPathItem+
+  1. It allows a document path to start with array location, which is not
+     correct - array locations should be possible only after a path to some
+     array member.
+
+  2. It always requires a DOT befre a member element, but in some contexts
+     we want a document path like "foo.bar.baz" to start without a dot.
+
+  To deal with this the grammar has been changed and require_dot parameter
+  has been added. Modified grammar:
+
+   documentPath ::= documentPathFirstItem documentPathItem*
+
+   documentPathFirstItem ::=
+    | DOT? documentPathMember
+    | DOUBLESTAR
 
    documentPathItem ::=
-     | DOUBLESTAR
-     | LSQBRACKET documentPathArrayLoc RSQBRACKET
-     | DOT MUL
-     | DOT documentPathMember
-
-   documentPathArrayLoc ::=
-     | MUL
-     | INT
+    | DOT documentPathMember
+    | DOUBLESTAR
+    | documentPathArray
 
    documentPathMember ::=
-       ID
-     | STRING1
+    | MUL
+    | ID
+    | STRING1
 
-   A check that DOUBLESTAR is not last element of a path is done separately.
+   docuemntPathArray ::= LSQBRACKET documentPathArrayLoc RSQBRACKET
 
- */
+   documentPathArrayLoc ::=
+    | MUL
+    | INT
 
-void Doc_path_parser_base::parse_document_path(bool clear)
+  Parameter require_dot tells if the initial dot is required or not.
+
+  A check that DOUBLESTAR is not last element of a path is done separately.
+
+  Returns true if a valid document path was parsed and reported, false if the
+  current token did not start a valid document path.
+
+  Note: If false is returned then nothing is reported to the processor (not
+  even an empty list).
+*/
+
+bool Expr_parser_base::parse_document_path(Path_prc *prc, bool require_dot)
 {
-  if (clear)
-    m_path.clear();
+  /*
+    Below we call methods like parse_docpath_member() which expect a document
+    path element processor. Our path processor prc is a list processor. So,
+    before we report the first path element we must call prc->list_begin() and
+    prc->list_el(). The problem is that when calling parse_docpath_member()
+    we might not know yet if there is any path to report or not -- only inside
+    parse_docpath_member() it will become evident.
 
-  while (true)
+    The Path_el_reporter wrapper around path processor solves this problem by
+    deffering the initial list_begin() call and the list_el() calls to the
+    moment when a path element is reported. If no path elements are reported
+    then list_begin() or list_el() will not be called. Similar, call to
+    list_end() will be forwarded to the wrapped processor only if list_begin()
+    was called before.
+  */
+
+  struct Path_el_reporter
+    : public Path_prc
+    , public Path_prc::Element_prc
+  {
+    Safe_prc<Path_prc> m_prc;
+    bool m_started;
+
+    void list_begin()
+    {
+      if (!m_started)
+        m_prc->list_begin();
+      m_started = true;
+    }
+
+    void list_end()
+    {
+      if (m_started)
+        m_prc->list_end();
+    }
+
+    Element_prc* list_el()
+    {
+      return this;
+    }
+
+    // Element_prc
+
+    void member(const string &name)
+    {
+      list_begin();
+      m_prc->list_el()->member(name);
+    }
+
+    void any_member()
+    {
+      list_begin();
+      m_prc->list_el()->any_member();
+    }
+
+    void index(index_t ind)
+    {
+      list_begin();
+      m_prc->list_el()->index(ind);
+    }
+
+    void any_index()
+    {
+      list_begin();
+      m_prc->list_el()->any_index();
+    }
+
+    void any_path()
+    {
+      list_begin();
+      m_prc->list_el()->any_path();
+    }
+
+    Path_el_reporter(Path_prc *prc)
+      : m_prc(prc), m_started(false)
+    {}
+  }
+  el_reporter(prc);
+
+  // documentPathFirstItem
+
+  bool double_star = false;
+
+  if (cur_token_type_is(Token::DOUBLESTAR))
+  {
+    consume_token(Token::DOUBLESTAR);
+    double_star = true;
+    el_reporter.any_path();
+  }
+  else
   {
     if (cur_token_type_is(Token::DOT))
     {
       consume_token(Token::DOT);
-      if (cur_token_type_is(Token::MUL))
-      {
-        consume_token(Token::MUL);
-        m_path.add(Doc_path::MEMBER_ASTERISK);
-      }
-      else
-      {
-        parse_docpath_member();
-      }
+      if (!parse_docpath_member(&el_reporter))
+        unexpected_token(peek_token(), "Document path");
     }
-    else if (cur_token_type_is(Token::LSQBRACKET))
+    else if (require_dot)
     {
-      consume_token(Token::LSQBRACKET);
-      parse_docpath_array_loc();
-      consume_token(Token::RSQBRACKET);
-    }
-    else if (cur_token_type_is(Token::DOUBLESTAR))
-    {
-      consume_token(Token::DOUBLESTAR);
-      m_path.add(Doc_path::DOUBLE_ASTERISK);
+      return false;
     }
     else
     {
-      break;
+      if (!parse_docpath_member(&el_reporter))
+        return false;
     }
   }
-  unsigned int size = m_path.length();
-  if (size > 0 && (m_path.get_type(size - 1) == Doc_path::DOUBLE_ASTERISK))
+
+  // the rest of the path
+
+  bool ret = parse_document_path1(&el_reporter);
+
+  if (!ret && double_star)
+    throw_error("Document path ending in '**'");
+
+  el_reporter.list_end();
+
+  return true;
+}
+
+
+/*
+  Parse a reminder of a document path after the first item, that is, a possibly
+  empty sequence of documentPathItem strings.
+
+  The items are reported to the given Path_prc without calling list_begin() or
+  list_end() (which is assumed to be done by the caller).
+
+  Returns true if at least one path item component was parsed.
+*/
+
+bool Expr_parser_base::parse_document_path1(Path_prc *prc)
+{
+  Safe_prc<Path_prc> sprc = prc;
+
+  /*
+    These Booleans are used to detect if we are at the beginning of the path
+    and if there was a "**" component at the end of it.
+  */
+
+  bool double_star;
+  bool last_double_star = false;
+  bool has_item = false;
+
+  for (double_star = false; true;
+       last_double_star =double_star,
+       double_star =false,
+       has_item = true)
   {
-    throw Error((boost::format("Expr parser: JSON path may not end in '**' at %d") % get_token_pos()).str());
+    if (!tokens_available())
+      break;
+
+    const Token &t = peek_token();
+
+    switch (t.get_type())
+    {
+    case Token::DOT:
+      consume_token(Token::DOT);
+      if (!parse_docpath_member(sprc->list_el()))
+        unexpected_token(peek_token(),
+                         "when looking for a document path element");
+      continue;
+
+    case Token::DOUBLESTAR:
+      consume_token(Token::DOUBLESTAR);
+      sprc->list_el()->any_path();
+      double_star = true;
+      continue;
+
+    case Token::LSQBRACKET:
+      consume_token(Token::LSQBRACKET);
+      parse_docpath_array_loc(sprc->list_el());
+      consume_token(Token::RSQBRACKET);
+      continue;
+
+    default:
+      break;
+    }
+
+    break;
   }
-}
 
-void Doc_path_parser_base::parse_document_path(const cdk::string &first)
-{
-  m_path.clear();
-  m_path.add(Doc_path::MEMBER, first);
-  parse_document_path(false);
-}
+  if (last_double_star)
+    throw_error("Document path ending in '**'");
 
-void Doc_path_parser_base::parse_document_path(const cdk::string &first,
-                                           const cdk::string &second)
-{
-  m_path.clear();
-  m_path.add(Doc_path::MEMBER, first);
-  m_path.add(Doc_path::MEMBER, second);
-  parse_document_path(false);
+  return has_item;
 }
 
 
 /**
     documentPathMember ::=
-        ID
-    |   STRING1
+      | MUL
+      | ID
+      | STRING1
 
     TODO: Does STRING1 differ from plain STRING in any way?
 
@@ -619,27 +800,37 @@ void Doc_path_parser_base::parse_document_path(const cdk::string &first,
    are otherwise treated by tokenizer as reserved, are treated as normal identifiers.
 */
 
-void Doc_path_parser_base::parse_docpath_member()
+bool Expr_parser_base::parse_docpath_member(Path_prc::Element_prc *prc)
 {
-  const Token &t = get_token();
+  const Token &t = peek_token();
 
   switch (t.get_type())
   {
+  case Token::MUL:
+    if (prc)
+      prc->any_member();
+    break;
+
   case Token::ID:
   case Token::LSTRING:
-
-    m_path.add(Doc_path::MEMBER, t.get_text());
+    if (prc)
+      prc->member(t.get_text());
     break;
 
   default:
 
     if (t.is_reserved_word())
-      m_path.add(Doc_path::MEMBER, t.get_text());
-    else
-      throw Error(
-        (boost::format("Expr parser: Expected token type IDENT or LSTRING in JSON path"
-                       " at token pos %d") % get_token_pos()).str());
+    {
+      if (prc)
+        prc->member(t.get_text());
+      break;
+    }
+
+    return false;
   }
+
+  get_token();  // consume the token
+  return true;
 }
 
 
@@ -648,18 +839,20 @@ void Doc_path_parser_base::parse_docpath_member()
        MUL
      | INT
  */
-void Doc_path_parser_base::parse_docpath_array_loc()
+void Expr_parser_base::parse_docpath_array_loc(Path_prc::Element_prc *prc)
 {
   if (cur_token_type_is(Token::MUL))
   {
     consume_token(Token::MUL);
-    m_path.add(Doc_path::ARRAY_INDEX_ASTERISK);
+    if (prc)
+      prc->any_index();
   }
   else if (cur_token_type_is(Token::LINTEGER))
   {
     const std::string& value = consume_token(Token::LINTEGER);
     uint32_t v = boost::lexical_cast<uint32_t>(value.c_str(), value.size());
-    m_path.add(Doc_path::ARRAY_INDEX, v);
+    if (prc)
+      prc->index(v);
   }
   else
   {
@@ -673,6 +866,70 @@ void Doc_path_parser_base::parse_docpath_array_loc()
 
 
 // -------------------------------------------------------------------------
+
+
+bool column_ref_from_path(cdk::Doc_path &path, parser::Column_ref &column)
+{
+  struct Path_prc
+    : public cdk::Doc_path::Processor
+    , public cdk::Doc_path::Processor::Element_prc
+  {
+    unsigned m_len;
+    parser::Column_ref &m_col;
+    bool m_ret;
+
+    Element_prc* list_el()
+    {
+      return this;
+    }
+
+    void member(const string &name)
+    {
+      switch (m_len++)
+      {
+      case 0: m_col.set(name); break;
+      case 1: m_col.set(name, m_col.name()); break;
+      case 2:
+        assert(m_col.table());
+        m_col.m_table_ref.set(m_col.name(), m_col.table()->name());
+        m_col.set_name(name);
+        break;
+      default:
+        // Too many path elements
+        m_ret = false;
+      }
+    }
+
+    void index(uint32_t)
+    {
+      m_ret = false;
+    }
+
+    void any_member()
+    {
+      m_ret = false;
+    }
+
+    void any_index()
+    {
+      m_ret = false;
+    }
+
+    void any_path()
+    {
+      m_ret = false;
+    }
+
+    Path_prc(parser::Column_ref &col)
+      : m_len(0), m_col(col), m_ret(true)
+    {}
+  }
+  prc(column);
+
+  path.process(prc);
+
+  return prc.m_ret;
+}
 
 
 /**
@@ -720,25 +977,25 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
 
   switch (type)
   {
-  // jsonDOC
+    // jsonDOC
 
   case Token::LCURLY:
     return parse(DOC, prc);
 
-  // array
+    // array
 
   case Token::LSQBRACKET:
     return parse(ARR, prc);
 
-  // groupedExpr
+    // groupedExpr
 
   case Token::LPAREN:
-    {
-      consume_token(Token::LPAREN);
-      Expression *res = parse(FULL,prc);
-      consume_token(Token::RPAREN);
-      return res;
-    }
+  {
+    consume_token(Token::LPAREN);
+    Expression *res = parse(FULL, prc);
+    consume_token(Token::RPAREN);
+    return res;
+  }
 
   default: break;
   }
@@ -764,28 +1021,28 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
   switch (type)
   {
 
-  // placeholder
+    // placeholder
 
   case Token::COLON:
     consume_token(Token::COLON);
     safe_prc(prc)->scalar()->param(consume_token(Token::ID));
     return stored.release();
 
-  // castOp
+    // castOp
 
   case Token::CAST:
     parse_cast(prc->scalar());
     return stored.release();
 
-  // nullary "*"
+    // nullary "*"
 
   case Token::MUL:
-    {
-      consume_token(Token::MUL);
-      safe_prc(prc)->scalar()->op("*");
-      // NOTE: arguments processor is ignored as there are no arguments
-      return stored.release();
-    }
+  {
+    consume_token(Token::MUL);
+    safe_prc(prc)->scalar()->op("*");
+    // NOTE: arguments processor is ignored as there are no arguments
+    return stored.release();
+  }
 
   default: break;
   }
@@ -799,36 +1056,36 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
 
   switch (type)
   {
-    case Token::PLUS:
-    case Token::MINUS:
-      {
-        const Token &t = get_token();
-        type = peek_token().get_type();
-        if (Token::LNUM == type || Token::LINTEGER == type) {
-          // treat as numeric literal with possibly negated value
-          neg = (Token::MINUS == t.get_type());
-          break;
-        }
-        // otherwise report as unary operator
-        argsp = sprc->op(operator_name(t.get_text()).c_str());
-        break;
-      }
+  case Token::PLUS:
+  case Token::MINUS:
+  {
+    const Token &t = get_token();
+    type = peek_token().get_type();
+    if (Token::LNUM == type || Token::LINTEGER == type) {
+      // treat as numeric literal with possibly negated value
+      neg = (Token::MINUS == t.get_type());
+      break;
+    }
+    // otherwise report as unary operator
+    argsp = sprc->op(operator_name(t.get_text()).c_str());
+    break;
+  }
 
-    case Token::BANG:
+  case Token::BANG:
     get_token();
     argsp = sprc->op(operator_name("!").c_str());
     break;
-    case Token::NOT:
+  case Token::NOT:
     get_token();
     argsp = sprc->op(operator_name("not").c_str());
     break;
-    case Token::NEG:
+  case Token::NEG:
     get_token();
     argsp = sprc->op(operator_name("~").c_str());
     break;
 
-    default:
-      break;  // will continue with literal parsing
+  default:
+    break;  // will continue with literal parsing
   }
 
   // Report the single argument of the unary operator
@@ -845,20 +1102,20 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
 
   switch (peek_token().get_type())
   {
-    case Token::LSTRING:
-      if (m_strings_as_blobs)
-        sprc->val()->value(cdk::TYPE_BYTES, Format_info(),
-                           cdk::bytes(get_token().get_text()));
-      else
-        sprc->val()->str(get_token().get_text());
-      return stored.release();
+  case Token::LSTRING:
+    if (m_strings_as_blobs)
+      sprc->val()->value(cdk::TYPE_BYTES, Format_info(),
+        cdk::bytes(get_token().get_text()));
+    else
+      sprc->val()->str(get_token().get_text());
+    return stored.release();
 
-    case Token::T_NULL:
-      sprc->val()->null();
-      get_token();
-      return stored.release();
+  case Token::T_NULL:
+    sprc->val()->null();
+    get_token();
+    return stored.release();
 
-    case Token::LNUM:
+  case Token::LNUM:
     try {
       double val = boost::lexical_cast<double>(get_token().get_text());
       sprc->val()->num(neg ? -val : val);
@@ -866,7 +1123,7 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
     }
     RETHROW_BOOST_LEXICAL;
 
-    case Token::LINTEGER:
+  case Token::LINTEGER:
     try {
       if (neg)
       {
@@ -901,13 +1158,13 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
     }
     RETHROW_BOOST_LEXICAL;
 
-    case Token::TRUE_:
-    case Token::FALSE_:
-      sprc->val()->yesno(get_token().get_type() == Token::TRUE_);
-      return stored.release();
+  case Token::TRUE_:
+  case Token::FALSE_:
+    sprc->val()->yesno(get_token().get_type() == Token::TRUE_);
+    return stored.release();
 
-    default:
-     // will continue with functionCall | columnIdent | documentField parsing
+  default:
+    // will continue with functionCall | columnIdent | documentField parsing
     break;
 
   }
@@ -916,113 +1173,116 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
   /*
     functionCall | columnIdent | documentField
 
-    In this case the first token can be either ID, QUOTED_ID or DOLLAR:
+    It is not possible to tell which of these 3 alternatives we have by
+    looking at the current token. Either functionCall or columnIdent or
+    documentField can start with something which looks like a schema-qualified
+    name: "A" or "A.B".
 
-    functionCall  ::= schemaQualifiedIdent ...
-    columIdent    ::= shcemaQualifiedIdent ...
-    documentField ::= ID .... | DOLLAR ...
+    For that reason we start with a call to parse_schema_indent() which would
+    parse such a schema-qualified name and store it as table/schema name of
+    m_col_ref member.
 
-    schemaQualifiedIdent ::= ident ...
-    ident         ::= ID | QUOTED_ID
-
-    ID can start either of the three types of atomic expression, DOLLAR
-    can only start documentField, QUOTED_ID can start either functinCall
-    or columnIdent.
+    After this we try to parse a function call and if it fails we try
+    columnIndent or documentField, depending on the parsing mode.
   */
 
+  Token::TokenType types[2];
+  bool schema_ident = false;
 
-  const Token& t = peek_token();
+  m_col_ref.clear();
 
-  if (t.get_type() == Token::ID ||
-      t.get_type() == Token::QUOTED_ID ||
-      t.is_reserved_word())
+  /*
+    Try to parse schema-qualified identifier, storing the types of the tokens
+    that have been consumed. If parsing fails, we ignore the error because
+    in this case we will try a document path below.
+
+    Note: it is important that parse_schema_ident() stores correct tokens
+    in m_col_ref even if it fails in the end.
+  */
+
+  try {
+    parse_schema_ident(&types);
+    schema_ident = true;
+  }
+  catch (const cdk::Error&)
+  {}
+
+  /*
+    If parse_schema_ident() succeeded, and we have the result in
+    m_col_ref.table(), we see if it is not a beginning of a function call.
+    If parse_function_call() succeeds then we are done.
+  */
+
+  if (schema_ident)
   {
-    /*
-        Parse schemaQualifiedIdent - the result will be stored
-        in m_col_ref.table()
-      */
-
-    parse_schema_ident();
     assert(m_col_ref.table());
-
-    /*
-        First check if this is a function call. If yes, the call will
-        be reported to the processor and there is nothing more to do.
-      */
 
     if (parse_function_call(*m_col_ref.table(), sprc))
       return stored.release();
-
-    /*
-        Otherwise, if we are in TABLE mode, identifier we parsed so far
-        should be a beginning of columnIdent. We complete parsing it, report
-        it to the processor and then we are done.
-      */
-
-    if (Parser_mode::TABLE == m_parser_mode)
-    {
-      parse_column_ident1();
-      sprc->ref(m_col_ref, m_path.is_empty() ? NULL : &m_path);
-      return stored.release();
-    }
-
-    /*
-        Otherwise we are in DOCUMENT mode. In this case the document field
-        should not start with a quotted identifier (documentField rule only
-        allows ID, not QUOTED_ID).
-      */
-
-    if (Token::QUOTED_ID == type)
-      unexpected_token(get_token(), "atomic expr");
-
-    /*
-        We re-interpret schemaQualifiedIdent parsed above as a beginning of a
-        document field expression:
-
-        - if it is of the form A.B, where A is schema name and B is table name,
-          then A becomes main document field name and B becomes the first
-          element in the document path;
-
-        - if it is a single identifier A (table name) then it becomes the
-          main field name.
-
-        The rest of the document path is parsed within parse_document_path()
-        method.
-      */
-
-    if (m_col_ref.table()->schema())
-      parse_document_path(m_col_ref.table()->schema()->name(),
-                          m_col_ref.table()->name());
-    else
-      parse_document_path(m_col_ref.table()->name());
-
-    /*
-        Note: the parsed document path will be reported to the processor below
-        (after switch() statement).
-      */
   }
-  else if (type == Token::DOLLAR)
+
+  /*
+    Otherwise we must have either a document path (in DOCUMENT mode) or
+    a column identifier, possibly followed by a path (in TABLE mode).
+  */
+
+  cdk::Doc_path_storage path;
+
+  if (Parser_mode::TABLE == m_parser_mode)
   {
     /*
-      DOLLAR starts documentField, which is valid only in DOCUMENT mode.
+      If we are in the TABLE mode, and parse_schema_ident() failed above, then
+      we do not have a valid column identifier which is an error.
     */
 
-    if (Parser_mode::DOCUMENT != m_parser_mode)
-      unexpected_token(get_token(), "atomic expr");
+    if (!schema_ident)
+      unexpected_token(peek_token(), "when looking for a column identifier");
 
-    parse_document_field();
+    /*
+      Otherwise we complete parsing the column identifier and report it to
+      the processor.
+    */
+
+    parse_column_ident1(&path);
+    sprc->ref(m_col_ref, path.is_empty() ? NULL : &path);
+    return stored.release();
+  }
+
+  /*
+    Here we know that we are in DOCUMENT mode and we are expecting a document
+    path. If parse_schema_ident() called above consumed some tokens, we check
+    if they were not quotted identifiers. Such identifiers are allowed when
+    reffering to tables or columns but are invalid in a document path.
+  */
+
+  if (Token::QUOTED_ID == types[0] || Token::QUOTED_ID == types[1])
+    throw_error("invalid document path");
+
+  /*
+    Now we treat the identifiers "A.B" parsed by parse_schema_ident() and
+    stored as table/schema name in m_col_ref (if any), as an initail segment
+    of a document filed reference and complete parsing the whole document
+    field.
+  */
+
+  if (m_col_ref.table() && m_col_ref.table()->schema())
+  {
+    parse_document_field(
+      m_col_ref.table()->schema()->name(),
+      m_col_ref.table()->name(),
+      &path
+    );
+  }
+  else if (m_col_ref.table())
+  {
+    parse_document_field(m_col_ref.table()->name(), &path);
   }
   else
   {
-
-    /*
-      If we see any other token, then we throw exception, since it is unexpected
-    */
-    unexpected_token(t,"atomic expr");
-
+    parse_document_field(&path);
   }
 
-  sprc->ref(m_path);
+  sprc->ref(path);
 
   return stored.release();
 }
@@ -1481,10 +1741,10 @@ void Order_parser::process(Processor& prc) const
   It last  = m_tokenizer.end();
 
   /*
-     *    note: passing m_toks.end() directly as constructor argument results
-     *    in "incompatible iterators" exception when comparing iterators (at
-     *    least on win, vs2010). problem with passing temporary object?
-     */
+    note: passing m_toks.end() directly as constructor argument results
+    in "incompatible iterators" exception when comparing iterators (at
+    least on win, vs2010). problem with passing temporary object?
+  */
 
   Stored_any store_expr;
 
@@ -1530,10 +1790,10 @@ void Projection_parser::process(Projection_processor& prc) const
   It last  = m_tokenizer.end();
 
   /*
-     *    note: passing m_toks.end() directly as constructor argument results
-     *    in "incompatible iterators" exception when comparing iterators (at
-     *    least on win, vs2010). problem with passing temporary object?
-     */
+    note: passing m_toks.end() directly as constructor argument results
+    in "incompatible iterators" exception when comparing iterators (at
+    least on win, vs2010). problem with passing temporary object?
+  */
 
   Expr_parser_base parser(first, last, m_mode);
   parser.process_if(prc.expr());
@@ -1573,10 +1833,10 @@ void Projection_parser::process(Document_processor& prc) const
   It last  = m_tokenizer.end();
 
   /*
-     *    note: passing m_toks.end() directly as constructor argument results
-     *    in "incompatible iterators" exception when comparing iterators (at
-     *    least on win, vs2010). problem with passing temporary object?
-     */
+    note: passing m_toks.end() directly as constructor argument results
+    in "incompatible iterators" exception when comparing iterators (at
+    least on win, vs2010). problem with passing temporary object?
+  */
 
   Stored_any store_expr;
 

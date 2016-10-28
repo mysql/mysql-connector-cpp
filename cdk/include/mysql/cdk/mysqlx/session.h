@@ -28,7 +28,6 @@
 #include <mysql/cdk/data_source.h>
 #include <mysql/cdk/codec.h>
 #include "common.h"
-#include <mysql/cdk/api/query.h>
 
 PUSH_SYS_WARNINGS
 #include <deque>
@@ -316,24 +315,19 @@ typedef std::map<col_count_t, Col_metadata>  Mdata_storage;
 
 // ---------------------------------------------------------
 
+/*
+  Note: other Session implementations might need to translate genric
+  cdk types to something that is specific to the implementation.
+*/
 
 using cdk::Row_source;
 using cdk::Projection;
+using cdk::Limit;
+using cdk::Order_by;
+using cdk::Sort_direction;
+using cdk::Param_source;
 
 typedef Session Reply_init;
-
-/*
-  TODO: Make these generic cdk interfaces (defined in cdk/common.h)
-  that are used by cdk::mysqlx as is (so, the other way around).
-
-  Note: other Session implementations might need to translate genric
-  cdk interfaces to something that is specific to the implementation.
-*/
-
-typedef cdk::api::Doc_base<Value_processor>  Param_source;
-typedef cdk::api::Limit<row_count_t> Limit;
-typedef cdk::api::Order_by<Expression> Order_by;
-typedef cdk::api::Sort_direction Sort_direction;
 
 class Reply;
 class Cursor;
@@ -489,6 +483,7 @@ public:
                           const Order_by *order_by = NULL,
                           const Limit* = NULL,
                           const Param_source * = NULL);
+
   Reply_init &table_delete(const Table_ref&,
                            const Expression *expr = NULL,
                            const Order_by *order_by = NULL,

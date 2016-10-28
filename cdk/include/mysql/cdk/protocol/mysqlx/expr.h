@@ -54,39 +54,21 @@
 
 */
 
-#include "../foundation.h"
-#include "../api/expression.h"
-#include "../api/document.h"
-
-namespace cdk {
-namespace protocol {
-namespace mysqlx {
-
-// These are temporary type declarations
-// TODO: remove when the types are defined
-
-typedef uint32_t stmt_id_t;
-typedef uint32_t cursor_id_t;
-typedef uint64_t row_count_t;
-typedef uint32_t col_count_t;
-// Note: protocol uses 64bit numbers for collation ids
-typedef uint64_t charset_id_t;
-typedef uint64_t insert_id_t;
-
-typedef int64_t  sint64_t;
-using   ::uint64_t;
-
-}}}
+#include "../../foundation.h"
+#include "../../api/expression.h"
+#include "../../api/document.h"
+#include "traits.h"
 
 
 namespace cdk {
 namespace protocol {
 namespace mysqlx {
-namespace api {
 
 using cdk::foundation::byte;
 using cdk::foundation::bytes;
 using cdk::foundation::string;
+
+namespace api {
 
 
 /*
@@ -247,7 +229,6 @@ public:
 class Doc_path
 {
 public:
-
 
   enum Type {
     MEMBER = 1,

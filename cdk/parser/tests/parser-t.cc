@@ -373,6 +373,62 @@ public:
 
   };
 
+  struct Path_printer
+    : public cdk::api::Doc_path::Processor
+    , cdk::api::Doc_path_processor
+  {
+    ostream &m_out;
+    bool     m_first;
+
+    Path_printer(ostream &out)
+      : m_out(out), m_first(true)
+    {}
+
+    void list_begin()
+    {
+      m_first = true;
+    }
+
+    Element_prc* list_el()
+    {
+      return this;
+    }
+
+    void member(const string &name)
+    {
+      if (!m_first)
+        m_out << ".";
+      m_first = false;
+      m_out << name;
+    }
+
+    void any_member()
+    {
+      if (!m_first)
+        m_out << ".";
+      m_first = false;
+      m_out << "*";
+    }
+
+    void index(index_t pos)
+    {
+      m_first = false;
+      m_out << "[" << pos << "]";
+    }
+
+    void any_index()
+    {
+      m_first = false;
+      m_out << "[*]";
+    }
+
+    void any_path()
+    {
+      m_first = false;
+      m_out << "**";
+    }
+  };
+
   struct Scalar_printer
     : public Scalar_prc
     , public Scalar_prc::Args_prc
@@ -383,10 +439,12 @@ public:
     cdk::string m_op_name;
 
     Val_printer   m_val_printer;
+    Path_printer  m_path_printer;
 
     Scalar_printer(Expr_printer &parent)
       : m_parent(parent), m_pb(parent.m_pb)
       , m_val_printer(parent.m_pb)
+      , m_path_printer(parent.m_pb.m_out)
     {}
 
     // Table_ref
@@ -444,32 +502,8 @@ public:
 
     virtual void ref(const cdk::Doc_path &path)
     {
-      ostream &out = m_pb.out_ind();
-      for (unsigned i=0; i < path.length(); ++i)
-      {
-        if (i > 0)
-          out << ".";
-        switch(path.get_type(i))
-        {
-          case Doc_path::MEMBER:
-            out << *path.get_name(i);
-          break;
-          case Doc_path::MEMBER_ASTERISK:
-            out << "*";
-            break;
-          case Doc_path::ARRAY_INDEX:
-            out << "[" << *path.get_index(i) << "]";
-          break;
-          case Doc_path::ARRAY_INDEX_ASTERISK:
-            out << "[*]";
-          break;
-          case Doc_path::DOUBLE_ASTERISK:
-            out << "**";
-          break;
-        }
-      }
-
-      out << endl;
+      path.process(m_path_printer);
+      m_pb.m_out << endl;
     }
 
     virtual void ref(const cdk::api::Column_ref &col, const cdk::Doc_path *path)
@@ -486,20 +520,8 @@ public:
 
       if (path)
       {
-        out <<"->$";
-        for (unsigned i= 0;
-             i < path->length();
-             ++i)
-        {
-          switch (path->get_type(i))
-          {
-            case Doc_path::MEMBER: out <<"." << *path->get_name(i); break;
-            case Doc_path::MEMBER_ASTERISK: out << ".*"; break;
-            case Doc_path::ARRAY_INDEX: out << "["<< *path->get_index(i) <<"]"; break;
-            case Doc_path::ARRAY_INDEX_ASTERISK: out << "[*]"; break;
-            case Doc_path::DOUBLE_ASTERISK: out << "**"; break;
-          }
-        }
+        out <<"->$.";
+        path->process(m_path_printer);
       }
 
       out <<endl;
@@ -583,7 +605,7 @@ const Expr_Test exprs[] =
   { parser::Parser_mode::TABLE   , L"c > cast(14.01 as decimal(3,2))"},
   { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(X'65'))"},
   { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(0x65))"},
-  { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(X'65' USING utf8))"},
+//  { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(X'65' USING utf8))"},
 //  { parser::Parser_mode::TABLE   , L"TRIM(BOTH 'x' FROM 'xxxbarxxx')"},
 //  { parser::Parser_mode::TABLE   , L"TRIM(LEADING 'x' FROM 'xxxbarxxx')"},
 //  { parser::Parser_mode::TABLE   , L"TRIM(TRAILING 'xyz' FROM 'barxxyz')"},
@@ -599,7 +621,6 @@ const Expr_Test exprs[] =
 TEST(Parser, expr)
 {
   Expr_printer printer(cout, 0);
-
 
   for (unsigned i=0; i < sizeof(exprs)/sizeof(Expr_Test); i++)
   {
@@ -808,34 +829,77 @@ TEST(Parser, projection_expr)
 TEST(Parser, doc_path)
 {
   {
-    Doc_field_parser doc_path("$**.date[*]");
-    EXPECT_EQ(3, doc_path.length());
-    EXPECT_EQ(cdk::Doc_path::DOUBLE_ASTERISK, doc_path.get_type(0));
-    EXPECT_EQ(cdk::Doc_path::MEMBER, doc_path.get_type(1));
-    EXPECT_EQ(cdk::string(L"date"), *doc_path.get_name(1));
-    EXPECT_EQ(cdk::Doc_path::ARRAY_INDEX_ASTERISK, doc_path.get_type(2));
+    cdk::string test = L"$**.date[*]";
+
+    cout << "parsing path: " << test << endl;
+
+    cdk::Doc_path_storage path;
+    Doc_field_parser doc_path(test);
+    doc_path.process(path);
+
+    EXPECT_EQ(3, path.length());
+    EXPECT_EQ(path.DOUBLE_ASTERISK, path.get_el(0).m_type);
+    EXPECT_EQ(path.MEMBER, path.get_el(1).m_type);
+    EXPECT_EQ(cdk::string(L"date"), path.get_el(1).m_name);
+    EXPECT_EQ(path.ARRAY_INDEX_ASTERISK, path.get_el(2).m_type);
   }
 
   {
-    Doc_field_parser doc_path("**.date[*]");
-    EXPECT_EQ(3, doc_path.length());
-    EXPECT_EQ(cdk::Doc_path::DOUBLE_ASTERISK, doc_path.get_type(0));
-    EXPECT_EQ(cdk::Doc_path::MEMBER, doc_path.get_type(1));
-    EXPECT_EQ(cdk::string(L"date"), *doc_path.get_name(1));
-    EXPECT_EQ(cdk::Doc_path::ARRAY_INDEX_ASTERISK, doc_path.get_type(2));
+    cdk::string test = L"**.date[*]";
+
+    cout << "parsing path: " << test << endl;
+
+    cdk::Doc_path_storage path;
+    Doc_field_parser doc_path(test);
+    doc_path.process(path);
+
+    EXPECT_EQ(3, path.length());
+    EXPECT_EQ(path.DOUBLE_ASTERISK, path.get_el(0).m_type);
+    EXPECT_EQ(path.MEMBER, path.get_el(1).m_type);
+    EXPECT_EQ(cdk::string(L"date"), path.get_el(1).m_name);
+    EXPECT_EQ(path.ARRAY_INDEX_ASTERISK, path.get_el(2).m_type);
   }
+
   {
-    Doc_field_parser doc_path("date.date[*]");
-    EXPECT_EQ(3, doc_path.length());
-    EXPECT_EQ(cdk::Doc_path::MEMBER, doc_path.get_type(0));
-    EXPECT_EQ(cdk::string(L"date"), *doc_path.get_name(0));
-    EXPECT_EQ(cdk::Doc_path::MEMBER, doc_path.get_type(1));
-    EXPECT_EQ(cdk::string(L"date"), *doc_path.get_name(1));
-    EXPECT_EQ(cdk::Doc_path::ARRAY_INDEX_ASTERISK, doc_path.get_type(2));
+    cdk::string test = L"$.date.date[*]";
+
+    cout << "parsing path: " << test << endl;
+
+    cdk::Doc_path_storage path;
+    Doc_field_parser doc_path(test);
+    doc_path.process(path);
+
+    EXPECT_EQ(3, path.length());
+    EXPECT_EQ(path.MEMBER, path.get_el(0).m_type);
+    EXPECT_EQ(cdk::string(L"date"), path.get_el(0).m_name);
+    EXPECT_EQ(path.MEMBER, path.get_el(1).m_type);
+    EXPECT_EQ(cdk::string(L"date"), path.get_el(1).m_name);
+    EXPECT_EQ(path.ARRAY_INDEX_ASTERISK, path.get_el(2).m_type);
   }
+
+  cout << endl << "== Negative tests ==" << endl << endl;
+
+  wchar_t* negative[] =
   {
-    EXPECT_THROW(Doc_field_parser doc_path("date.date[*].**"), cdk::Error);
+    L"date.date[*].**",
+    L"date.date[*]**",
+    L"[*].foo",
+    L"[1][2]",
+    L"$foo",
+    NULL
+  };
+
+  for (unsigned pos = 0; NULL != negative[pos]; ++pos)
+  {
+    cdk::string test = negative[pos];
+    cout << "parsing path: " << test << endl;
+
+    cdk::Doc_path_storage path;
+    Doc_field_parser doc_path(test);
+
+    EXPECT_THROW(doc_path.process(path), cdk::Error);
   }
+
 }
 
 

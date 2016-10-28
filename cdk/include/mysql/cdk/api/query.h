@@ -28,6 +28,7 @@
 #define CDK_API_QUERY_H
 
 #include "expression.h"
+#include "document.h"
 #include "../foundation/types.h"
 
 namespace cdk {
@@ -119,43 +120,6 @@ class Projection
 {};
 
 
-
-/*
-  Document path specification is a list of items, each to be processed
-  with Doc_path_processor to describe one element of the path.
-*/
-
-class Doc_path_processor
-{
-public:
-
-  typedef cdk::api::string  string;
-  typedef uint32_t          index_t;
-
-  // Path element is name of document field.
-
-  virtual void member(const string &name) =0;
-
-  // Path element "*".
-
-  virtual void any_member() =0;
-
-  // Path element is at given position within an array.
-
-  virtual void index(index_t) =0;
-
-  // Path element "[*]".
-
-  virtual void any_index() =0;
-
-  // Path element "**".
-
-  virtual void any_path() =0;
-};
-
-typedef Expr_list< Expr_base<Doc_path_processor> > Doc_path;
-
-
 /*
   Columns specification specifies table columns into which
   table insert operation should insert values. It is a list
@@ -190,41 +154,6 @@ typedef Expr_list< Expr_base<Column_processor> > Columns;
 
 
 namespace cdk {
-
-template<>
-struct Safe_prc<api::Doc_path_processor>
-  : Safe_prc_base<api::Doc_path_processor>
-{
-  typedef Safe_prc_base<api::Doc_path_processor> Base;
-  using Base::Processor;
-  typedef Processor::string  string;
-  typedef Processor::index_t index_t;
-
-  Safe_prc(Processor *prc) : Base(prc)
-  {}
-
-  Safe_prc(Processor &prc) : Base(&prc)
-  {}
-
-  using Base::m_prc;
-
-  void member(const string &name)
-  { return m_prc ? m_prc->member(name) : (void)NULL; }
-
-  void any_member()
-  { return m_prc ? m_prc->any_member() : (void)NULL; }
-
-  void index(index_t ind)
-  { return m_prc ? m_prc->index(ind) : (void)NULL; }
-
-  void any_index()
-  { return m_prc ? m_prc->any_index() : (void)NULL; }
-
-  void any_path()
-  { return m_prc ? m_prc->any_path() : (void)NULL; }
-};
-
-
 
 template<>
 struct Safe_prc<api::Column_processor>

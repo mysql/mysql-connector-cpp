@@ -28,6 +28,11 @@
 #include <mysql/cdk/api/expression.h>
 #include "tokenizer.h"
 
+PUSH_BOOST_WARNINGS
+#include <boost/format.hpp>
+POP_BOOST_WARNINGS
+
+
 #ifdef _WIN32
 
  /*
@@ -52,6 +57,104 @@ namespace parser {
 
 typedef Tokenizer::iterator  It;
 using cdk::throw_error;
+
+
+/*
+  Class that implements token navigation and usage methods
+*/
+
+class Token_op_base
+{
+
+protected:
+
+  typedef std::set<Token::TokenType> TokSet;
+
+  It  *m_first;
+  It  m_last;
+
+  const std::string& consume_token(Token::TokenType type)
+  {
+    if (!cur_token_type_is(type))
+      unexpected_token(peek_token(), (boost::format("while looking for token %s")
+                                      % Token::get_name(type)).str().c_str());
+    return get_token().get_text();
+  }
+
+  const Token& peek_token()
+  {
+    if (!tokens_available())
+      throw Error("unexpected end of string");
+    return **m_first;
+  }
+
+  bool  cur_token_type_is(Token::TokenType type)
+  {
+    return tokens_available() && peek_token().get_type() == type;
+  }
+
+  bool  is_token_type_within_set(TokSet types)
+  {
+    return tokens_available()
+           && types.find(peek_token().get_type()) != types.end();
+  }
+
+  unsigned  get_token_pos() const
+  {
+    // TODO
+    return 0;
+  }
+
+  It& cur_pos()
+  {
+    assert(m_first);
+    return *m_first;
+  }
+
+  const It& cur_pos() const
+  {
+    return const_cast<Token_op_base*>(this)->cur_pos();
+  }
+
+  const It& end_pos() const
+  {
+    return m_last;
+  }
+
+  bool  tokens_available() const
+  {
+    return m_first && cur_pos() != end_pos();
+  }
+
+  const Token& get_token()
+  {
+    if (!tokens_available())
+      throw Error("unexpected end of string");
+    const Token &t = peek_token();
+    ++(*m_first);
+    return t;
+  }
+
+  std::string operator_name(const std::string &name)
+  {
+    return Tokenizer::map.operator_names.at(name);
+  }
+
+  void unexpected_token(const Token&, const char *ctx);
+
+public:
+
+  Token_op_base()
+    : m_first(NULL)
+  {}
+
+  void set_tokens(It &first, const It &last)
+  {
+    m_first = &first;
+    m_last = last;
+  }
+};
+
 
 /*
   Base class for parsers which parse tokens and present result as
@@ -94,12 +197,15 @@ using cdk::throw_error;
 template <class PRC>
 class Expr_parser
   : public cdk::api::Expr_base<PRC>
+  , protected Token_op_base
 {
 public:
 
   Expr_parser(It &first, const It &last)
-    : m_first(first), m_last(last), m_consumed(false)
-  {}
+    : m_consumed(false)
+  {
+    set_tokens(first, last);
+  }
 
   void process(PRC &prc) const
   {
@@ -131,7 +237,7 @@ public:
     if (m_consumed)
       THROW("Expr_praser: second pass");
 
-    if (!do_parse(m_first, m_last, &prc))
+    if (!do_parse(cur_pos(), end_pos(), &prc))
       return false;
     m_consumed = true;
     return true;
@@ -153,7 +259,7 @@ public:
   {
     if (m_consumed)
       return;
-    do_consume(m_first, m_last);
+    do_consume(cur_pos(), end_pos());
     m_consumed = true;
   }
 
@@ -171,10 +277,6 @@ public:
     return true;
   }
 
-private:
-
-  It      &m_first;
-  const It  m_last;
 
 protected:
 

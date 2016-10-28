@@ -37,12 +37,17 @@
 #include "../foundation.h"
 #include "../foundation/opaque_impl.h"
 #include "../api/query.h"
-#include "mysqlx_expr.h"
+#include "mysqlx/traits.h"
+#include "mysqlx/expr.h"
 
 
 namespace cdk {
 namespace protocol {
 namespace mysqlx {
+
+using cdk::foundation::byte;
+using cdk::foundation::bytes;
+using cdk::foundation::string;
 
 /*
   Enumerations which define message type codes used by the protocol.
@@ -607,6 +612,7 @@ Protocol_server::Protocol_server(C &conn)
       static_cast<Protocol::Stream*>(new Protocol::Stream::Impl<C>(conn)))
 {}
 
+
 /*
   Callback interfaces to be implemented by message processor objects
   ==================================================================
@@ -663,8 +669,9 @@ class Processor_base
 {
 public:
 
-  typedef foundation::byte   byte;
-  typedef foundation::string string;
+  typedef protocol::mysqlx::byte        byte;
+  typedef protocol::mysqlx::string      string;
+  typedef protocol::mysqlx::msg_type_t  msg_type_t;
 
   /*
     Called when message header is received. The type of the message stored
@@ -766,6 +773,8 @@ class Error_processor : public Processor_base
 {
 public:
 
+  typedef protocol::mysqlx::sql_state_t sql_state_t;
+
   virtual void error(unsigned int /*code*/, short int /*severity*/,
                      sql_state_t /*sql_state*/, const string &/*msg*/)
   {}
@@ -804,6 +813,10 @@ public:
 class Row_processor : public Error_processor
 {
 public:
+
+  typedef protocol::mysqlx::row_count_t row_count_t;
+  typedef protocol::mysqlx::col_count_t col_count_t;
+
   virtual bool row_begin(row_count_t /*row*/) { return true; }
   virtual void row_end(row_count_t /*row*/) {}
 
@@ -827,6 +840,9 @@ public:
 class Mdata_processor : public Error_processor
 {
 public:
+
+  typedef protocol::mysqlx::col_count_t   col_count_t;
+  typedef protocol::mysqlx::charset_id_t  charset_id_t;
 
   virtual void col_count(col_count_t) {}
   virtual void col_type(col_count_t /*pos*/, unsigned short /*type*/) {}
@@ -875,6 +891,10 @@ public:
 class SessionState_processor
 {
 public:
+
+  typedef protocol::mysqlx::row_count_t row_count_t;
+  typedef protocol::mysqlx::insert_id_t insert_id_t;
+
   enum row_stats_t { ROWS_AFFECTED, ROWS_FOUND, ROWS_MATCHED };
   enum trx_event_t { COMMIT, ROLLBACK };
 
@@ -914,7 +934,10 @@ class Update_processor
 {
 public:
 
-  typedef api::Expression::Processor Expr_prc;
+  typedef protocol::mysqlx::string        string;
+  typedef protocol::mysqlx::api::Db_obj   Db_obj;
+  typedef protocol::mysqlx::api::Doc_path Doc_path;
+  typedef protocol::mysqlx::api::Expression::Processor Expr_prc;
 
   virtual void target_name(const string&) = 0;
   virtual void target_table(const api::Db_obj&) = 0;

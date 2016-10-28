@@ -31,6 +31,9 @@
 namespace cdk {
 namespace api {
 
+using foundation::string;
+
+
 /*
   Expressions
   ===========
