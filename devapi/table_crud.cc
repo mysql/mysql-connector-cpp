@@ -216,8 +216,8 @@ class Op_table_select
                           get_where(),
                           get_tbl_proj(),
                           get_order_by(),
-                          nullptr,
-                          nullptr,
+                          get_group_by(),
+                          get_having(),
                           get_limit(),
                           get_params()
                        ));

@@ -501,6 +501,104 @@ namespace internal {
 
 }  // internal
 
+// ----------------------------------------------------------------------
+
+namespace internal {
+
+  /**
+    Class defining .having() clause.
+  */
+
+  class CollectionHaving
+      : public internal::CollectionSort<DocResult, true>
+  {
+
+    typedef internal::Having_impl Impl;
+    typedef internal::CollectionSort<DocResult, true> CollectionSort;
+
+    Impl* get_impl()
+    {
+      check_if_valid();
+      return static_cast<Impl*>(m_impl.get());
+    }
+
+  public:
+
+    /**
+      Specify having filter in the operation.
+
+      Arguments are a string defining filter to be used.
+    */
+
+    CollectionSort& having(const string& having_spec)
+    {
+      get_impl()->set_having(having_spec);
+      return *this;
+    }
+  };
+}
+
+// ----------------------------------------------------------------------
+
+namespace internal {
+
+  /**
+    Class defining .groupBy() clause.
+  */
+
+  class CollectionGroupBy
+      : public internal::CollectionHaving
+  {
+
+    typedef internal::Group_by_impl Impl;
+    typedef internal::CollectionHaving CollectionHaving;
+
+    Impl* get_impl()
+    {
+      check_if_valid();
+      return static_cast<Impl*>(m_impl.get());
+    }
+
+
+  public:
+
+    /**
+      Specify groupBy fields in the operation.
+
+      Arguments are a one or more strings defining fields to group.
+    */
+
+    template <typename GroupBy,
+              typename std::enable_if<std::is_convertible<GroupBy, string>::value>::type* = nullptr
+              >
+    CollectionHaving& groupBy(GroupBy group_by_spec)
+    {
+      get_impl()->add_group_by(group_by_spec);
+      return *this;
+    }
+
+    template <typename GroupBy,
+              typename std::enable_if<!std::is_convertible<GroupBy, string>::value>::type* = nullptr
+              >
+    CollectionHaving& groupBy(GroupBy group_by_spec)
+    {
+      for (auto el : group_by_spec)
+      {
+        get_impl()->add_group_by(el);
+      }
+      return *this;
+    }
+
+    template<typename GroupBy, typename...T>
+    CollectionHaving& groupBy(GroupBy group_by_spec,
+                              T...rest)
+    {
+      groupBy(group_by_spec);
+      return groupBy(rest...);
+    }
+  };
+}
+
 
 // ----------------------------------------------------------------------
 
@@ -623,7 +721,7 @@ namespace internal {
 DLL_WARNINGS_PUSH
 
 class PUBLIC_API CollectionFind
-  : public internal::CollectionSort<DocResult, true>
+  : public internal::CollectionGroupBy
 {
 
 DLL_WARNINGS_POP
@@ -631,7 +729,7 @@ DLL_WARNINGS_POP
 protected:
 
   typedef internal::Proj_impl Impl;
-  typedef internal::CollectionSort<DocResult, true>  CollectionSort;
+  typedef internal::CollectionGroupBy  CollectionGroupBy;
 
   Impl* get_impl()
   {
@@ -675,7 +773,7 @@ public:
     evaluating the expression an the result will be returned by the operation.
   */
 
-  CollectionSort& fields(internal::ExprValue proj)
+  CollectionGroupBy& fields(internal::ExprValue proj)
   {
     if (!proj.isExpression())
       throw_error("Invalid projection");
@@ -684,13 +782,13 @@ public:
   }
 
 
-  CollectionSort& fields(const string& ord)
+  CollectionGroupBy& fields(const string& ord)
   {
     get_impl()->add_proj(ord);
     return *this;
   }
 
-  CollectionSort& fields(const char* ord)
+  CollectionGroupBy& fields(const char* ord)
   {
     get_impl()->add_proj(ord);
     return *this;
@@ -709,7 +807,7 @@ public:
   */
 
   template <typename Ord>
-  CollectionSort& fields(const Ord& ord)
+  CollectionGroupBy& fields(const Ord& ord)
   {
     for (auto el : ord)
     {
@@ -739,7 +837,7 @@ public:
       !std::is_same<Proj, internal::ExprValue>::value
     >::type
   >
-  CollectionSort& fields(const Proj& ord, const Type&...rest)
+  CollectionGroupBy& fields(const Proj& ord, const Type&...rest)
   {
     fields(ord);
     return fields(rest...);

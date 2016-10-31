@@ -439,8 +439,8 @@ class Op_collection_find
                           get_where(),
                           get_doc_proj(),
                           get_order_by(),
-                          nullptr,  // group_by
-                          nullptr,  // having
+                          get_group_by(),  // group_by
+                          get_having(),  // having
                           get_limit(),
                           get_params()
                     ));

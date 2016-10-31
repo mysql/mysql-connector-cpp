@@ -463,6 +463,121 @@ namespace internal {
 
 namespace internal {
 
+  /**
+    Class defining table CRUD .having() clause.
+  */
+
+  class TableHaving
+    : public TableSort<RowResult, true>
+  {
+  protected:
+
+    typedef internal::Having_impl Impl;
+
+    using TableSort<RowResult, true>::check_if_valid;
+    using TableSort<RowResult, true>::m_impl;
+
+    typedef TableSort<RowResult, true> TableSort;
+
+    Impl* get_impl()
+    {
+      check_if_valid();
+      return static_cast<Impl*>(m_impl.get());
+    }
+
+  public:
+
+    /**
+      Specify having filter in the operation.
+
+      Arguments are a string defining filter to be used.
+    */
+
+    TableSort& having(const string& having_spec)
+    {
+      get_impl()->set_having(having_spec);
+      return *this;
+    }
+
+  };
+
+}  // internal
+
+
+// ----------------------------------------------------------------------
+
+namespace internal {
+
+  /**
+    Class defining .groupBy() clause.
+  */
+
+  class TableGroupBy
+      : public internal::TableHaving
+  {
+
+  protected:
+
+    typedef internal::Group_by_impl Impl;
+
+    using TableHaving::check_if_valid;
+    using TableHaving::m_impl;
+
+    typedef internal::TableHaving TableHaving;
+
+    Impl* get_impl()
+    {
+      check_if_valid();
+      return static_cast<Impl*>(m_impl.get());
+    }
+
+
+  public:
+
+    /**
+      Specify groupBy fields in the operation.
+
+      Arguments are a one or more strings defining fields to group.
+    */
+
+    template <typename GroupBy,
+              typename std::enable_if<std::is_convertible<GroupBy, string>::value>::type* = nullptr
+              >
+    TableHaving& groupBy(GroupBy group_by_spec)
+    {
+      get_impl()->add_group_by(group_by_spec);
+      return *this;
+    }
+
+    template <typename GroupBy,
+              typename std::enable_if<!std::is_convertible<GroupBy, string>::value>::type* = nullptr
+              >
+    TableHaving& groupBy(GroupBy group_by_spec)
+    {
+      for (auto el : group_by_spec)
+      {
+        get_impl()->add_group_by(el);
+      }
+      return *this;
+    }
+
+    template<typename GroupBy, typename...T>
+    TableHaving& groupBy(GroupBy group_by_spec,
+                              T...rest)
+    {
+      groupBy(group_by_spec);
+      return groupBy(rest...);
+    }
+
+
+  };
+}
+
+
+// ---------------------------------------------------------------------------
+
+namespace internal {
+
   class TableSelectBase;
 
   /*
@@ -497,12 +612,15 @@ namespace internal {
 DLL_WARNINGS_PUSH
 
 class PUBLIC_API TableSelect
-  : public internal::TableSort<RowResult, true>
+  : public internal::TableGroupBy
 {
 
 DLL_WARNINGS_POP
 
   typedef internal::TableSelect_impl Impl;
+
+  using TableGroupBy::check_if_valid;
+  using TableGroupBy::m_impl;
 
   Impl* get_impl()
   {

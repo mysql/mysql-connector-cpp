@@ -793,8 +793,119 @@ private:
 
 
 /*
+  This template adds handling of having specification on top of
+  Op_sort.
+
+  It implements the `set_having` method required by implementations of
+  CRUD operations that support having expression. The Expression is stored
+  internally and transformed to the form expected by CDK:
+  method `get_having` return pointer to cdk::Expression (as expected
+  for table/collection having definition) or NULL if no having specification
+  is given.
+
+  Template parameters are the implementation interface class being
+  implemented and parser mode for parsing expressions in order
+  specifications.
+*/
+
+template <class Impl, parser::Parser_mode::value PM>
+class Op_having
+  : public Op_sort<Impl, PM>
+  , public cdk::Expression
+{
+  cdk::string m_having;
+
+  void set_having(const mysqlx::string &having)
+  {
+    m_having = having;
+  }
+
+protected:
+
+  template <typename T>
+  Op_having(T &x) : Op_sort<Impl,PM>(x)
+  {}
+
+public:
+
+  cdk::Expression* get_having()
+  {
+    return m_having.empty() ? nullptr : this;
+  }
+
+private:
+
+  // cdk::Expression processor
+
+  void process(cdk::Expression::  Processor& prc) const
+  {
+    parser::Expression_parser expr_parser(PM, m_having);
+    expr_parser.process(prc);
+  }
+};
+
+
+/*
+  This template adds handling of groupBy specification on top of
+  Op_having.
+
+  It implements the `add_group_by` method required by implementations of
+  CRUD operations that support groupBy expressions. The Expressions are stored
+  internally and transformed to the form expected by CDK:
+  method `get_group_by` return pointer to cdk::Expr_list (as expected
+  for table/collection groupBy definition) or NULL if no groupBy specification
+  is given.
+
+  Template parameters are the implementation interface class being
+  implemented and parser mode for parsing expressions in order
+  specifications.
+*/
+
+template <class Impl, parser::Parser_mode::value PM>
+class Op_group_by
+  : public Op_having<Impl, PM>
+  , public cdk::Expr_list
+{
+  std::vector<cdk::string> m_group_by;
+
+  void add_group_by(const mysqlx::string &group_by)
+  {
+    m_group_by.push_back(group_by);
+  }
+
+protected:
+
+  template <typename T>
+  Op_group_by(T &x) : Op_having<Impl,PM>(x)
+  {}
+
+public:
+
+  cdk::Expr_list* get_group_by()
+  {
+    return m_group_by.empty() ? nullptr : this;
+  }
+
+private:
+
+  void process(cdk::Expr_list::Processor& prc) const
+  {
+    prc.list_begin();
+
+    for (cdk::string el : m_group_by)
+    {
+      parser::Expression_parser expr_parser(PM, el);
+      expr_parser.process_if(prc.list_el());
+    }
+
+    prc.list_end();
+  }
+};
+
+
+/*
   This template adds handling of projection specifications on top
-  of Op_order.
+  of Op_group_by.
 
   It implements the `add_proj` method required by implementations of
   CRUD operations that support projection. Projection specifications
@@ -811,7 +922,7 @@ private:
 
 template <class Impl, parser::Parser_mode::value PM>
 class Op_projection
-    : public Op_sort<Impl, PM>
+    : public Op_group_by<Impl, PM>
     , public cdk::Projection
     , public cdk::Expression::Document
 {
@@ -822,7 +933,7 @@ class Op_projection
 protected:
 
   template <class X>
-  Op_projection(X &init) : Op_sort<Impl,PM>(init)
+  Op_projection(X &init) : Op_group_by<Impl,PM>(init)
   {}
 
 public:

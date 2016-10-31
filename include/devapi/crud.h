@@ -242,8 +242,17 @@ struct Sort_impl : public Limit_impl
   virtual void add_sort(const string&) = 0;
 };
 
+struct Having_impl : public Sort_impl
+{
+  virtual void set_having(const string&) = 0;
+};
 
-struct Proj_impl : public Sort_impl
+struct Group_by_impl : public Having_impl
+{
+  virtual void add_group_by(const string&) = 0;
+};
+
+struct Proj_impl : public Group_by_impl
 {
   virtual void add_proj(const string&) = 0;
   virtual void set_proj(const string&) = 0;

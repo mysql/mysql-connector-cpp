@@ -25,6 +25,7 @@
 #include <test.h>
 #include <iostream>
 #include <list>
+#include <algorithm>
 
 using std::cout;
 using std::endl;
@@ -1838,4 +1839,112 @@ TEST_F(Crud, doc_id)
 
   EXPECT_THROW(coll.add("{\"_id\": 127 }").execute(), Error);
   EXPECT_THROW(coll.add("{\"_id\": 12.7 }").execute(), Error);
+}
+
+TEST_F(Crud, group_by_having)
+{
+
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Preparing table..." << endl;
+
+  XSession sess(this);
+
+  sess.dropCollection("test", "coll");
+
+  Collection coll = sess.createSchema("test", true)
+                        .createCollection("coll", true);
+
+  Table tbl = sess.createSchema("test", true).getCollectionAsTable("coll", true);
+
+  coll.remove().execute();
+
+  std::vector<string> names = {"Foo", "Baz", "Bar"};
+
+  int i=0;
+
+  for (auto name : names)
+  {
+    std::stringstream json;
+    json <<"{ \"_id\":\""<< i << "\", \"user\":\"" << name << "\", \"age\":" << 20+i << "}";
+    coll.add(json.str()).execute();
+    ++i;
+  }
+
+  // Function to check order of operation
+  auto check_order = [&names] (DocResult &coll_res, RowResult &tbl_res)
+  {
+    DbDoc coll_row = coll_res.fetchOne();
+    Row tbl_row = tbl_res.fetchOne();
+
+    for (auto name = names.begin();
+         coll_row && tbl_row && name != names.end();
+         coll_row = coll_res.fetchOne(),
+         tbl_row = tbl_res.fetchOne(),
+         ++name)
+    {
+      EXPECT_EQ(*name, static_cast<string>(coll_row["user"]));
+      EXPECT_EQ(*name, static_cast<string>(tbl_row[0]));
+    }
+
+    EXPECT_TRUE(coll_row.isNull());
+    EXPECT_TRUE(tbl_row.isNull());
+  };
+
+  auto coll_res = coll.find().fields("user AS user", "age as age").execute();
+  auto tbl_res = tbl.select("doc->$.user as user","doc->$.age as age").execute();
+
+  check_order(coll_res, tbl_res);
+
+  cout << "Check with groupBy" << endl;
+  std::sort(names.begin(), names.end());
+
+  std::vector<string> fields = {"user"};
+  coll_res = coll.find()
+             .fields("user AS user", "age as age")
+             .groupBy(fields, "age")
+             .execute();
+
+  cout << "and on table" << endl;
+  tbl_res = tbl.select("doc->$.user as user", "doc->$.age as age")
+               .groupBy(fields,"age")
+               .execute();
+
+
+  check_order(coll_res, tbl_res);
+
+
+  cout << "Having usage will remove last element of previous groupBy." << endl;
+  names.pop_back();
+
+  coll_res = coll.find()
+             .fields("user AS user", "age as age")
+             .groupBy(fields,"age")
+             .having(L"age > 20")
+             .execute();
+
+  //and on table
+  tbl_res = tbl.select("doc->$.user as user", "doc->$.age as age")
+            .groupBy(fields, "age")
+            .having(L"age > 20")
+            .execute();
+
+  check_order(coll_res, tbl_res);
+
+  cout << "Same test but passing std::string to groupBy" << endl;
+
+  coll_res = coll.find()
+             .fields("user AS user", "age as age")
+             .groupBy(fields, std::string("age"))
+             .having(std::string("age > 20"))
+             .execute();
+
+  cout << "and on table" << endl;
+  tbl_res = tbl.select("doc->$.user as user", "doc->$.age as age")
+            .groupBy(fields, std::string("age"))
+            .having(std::string("age > 20"))
+            .execute();
+
+  check_order(coll_res, tbl_res);
+
 }
