@@ -1948,3 +1948,4 @@ TEST_F(Crud, group_by_having)
   check_order(coll_res, tbl_res);
 
 }
+
