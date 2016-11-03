@@ -324,7 +324,8 @@ typedef enum mysqlx_opt_type_enum
   MYSQLX_OPT_PORT = 2,
   MYSQLX_OPT_USER = 3,
   MYSQLX_OPT_PWD = 4,
-  MYSQLX_OPT_DB = 5
+  MYSQLX_OPT_DB = 5,
+  MYSQLX_OPT_SSL_ENABLE = 6
 }
 mysqlx_opt_type_t;
 
@@ -355,6 +356,7 @@ mysqlx_opt_type_t;
   @note The session returned by the function must be properly closed using
         `mysqlx_session_close()`.
   @note This type of session does not support executing plain SQL queries.
+  @note This function always establishes connection with SSL enabled
 
   @ingroup xapi_sess
 */
@@ -368,7 +370,7 @@ mysqlx_get_session(const char *host, int port, const char *user,
 /**
   Create a session using connection string or URL.
 
-  Connection sting has the form `"user:pass\@host:port"`, valid URL
+  Connection sting has the form `"user:pass\@host:port/?option"`, valid URL
   is like a connection string with a `mysqlx://` prefix.
 
   @param conn_string character connection string
@@ -440,6 +442,7 @@ mysqlx_get_session_from_options(mysqlx_session_options_t *opt,
   @note The session returned by the function must be properly closed using
         `mysqlx_session_close()`.
   @note This type of session supports executing plain SQL queries
+  @note This function always establishes connection with SSL enabled
 
   @ingroup xapi_sess
 */

@@ -1684,6 +1684,10 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
         char_data = "";
       opt->set_database(char_data);
     break;
+    case MYSQLX_OPT_SSL_ENABLE:
+      uint_data = va_arg(args, unsigned int);
+      opt->set_tls(uint_data > 0);
+      break;
     default:
       opt->set_diagnostic("Invalid option value", 0);
       rc = RESULT_ERROR;

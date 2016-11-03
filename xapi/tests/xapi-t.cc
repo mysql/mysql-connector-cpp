@@ -319,6 +319,7 @@ TEST_F(xapi, conn_string_test)
   char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
   char conn_str[1024];
   int conn_err_code = 0;
+  bool ssl_enable = false;
   const char *xplugin_port = getenv("XPLUGIN_PORT");
   const char *xplugin_usr = getenv("XPLUGIN_USER");
   const char *xplugin_pwd = getenv("XPLUGIN_PASSWORD");
@@ -342,6 +343,8 @@ TEST_F(xapi, conn_string_test)
   else
     sprintf(conn_str, "%s@%s:%d", xplugin_usr, xplugin_host, port);
 
+DO_CONNECT:
+
   local_sess = mysqlx_get_node_session_from_url(conn_str, conn_error, &conn_err_code);
 
   if (!local_sess)
@@ -362,6 +365,15 @@ TEST_F(xapi, conn_string_test)
     EXPECT_STREQ("foo", data);
     cout << "ROW DATA: " << data << " " << endl;
   }
+
+  mysqlx_session_close(local_sess);
+
+  if (!ssl_enable)
+  {
+    ssl_enable = true;
+    strcat(conn_str, "/?ssl-enable");
+    goto DO_CONNECT;
+  }
 }
 
 
@@ -371,6 +383,7 @@ TEST_F(xapi, conn_options_test)
 
   unsigned int port = 0;
   unsigned int port2 = 0;
+  unsigned int ssl_enable = 0;
   char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
   int conn_err_code = 0;
   const char *xplugin_port = getenv("XPLUGIN_PORT");
@@ -411,6 +424,8 @@ TEST_F(xapi, conn_options_test)
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_PORT, &port2));
   EXPECT_EQ(true, port == port2);
 
+DO_CONNECT:
+
   local_sess = mysqlx_get_node_session_from_options(opt, conn_error, &conn_err_code);
 
   if (!local_sess)
@@ -432,6 +447,15 @@ TEST_F(xapi, conn_options_test)
     EXPECT_STREQ("foo", data);
     cout << "ROW DATA: " << data << " " << endl;
   }
+
+  mysqlx_session_close(local_sess);
+  if (!ssl_enable)
+  {
+    ssl_enable = 1;
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SSL_ENABLE, ssl_enable));
+    goto DO_CONNECT;
+  }
+
   mysqlx_free_options(opt);
 }
 

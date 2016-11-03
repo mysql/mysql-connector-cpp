@@ -373,13 +373,15 @@ public:
 
   mysqlx_session_options_struct(const std::string host, unsigned short port,
                            const std::string usr, const std::string *pwd,
-                           const std::string *db) :
+                           const std::string *db, bool ssl_enable = true) :
                            cdk::ds::Options(usr, pwd),
                            m_host(host), m_port(port ? port : DEFAULT_MYSQLX_PORT),
                             m_tcp(NULL)
   {
     if (db)
       set_database(*db);
+
+    set_tls(ssl_enable);
   }
 
   mysqlx_session_options_struct(const std::string &conn_str) : m_tcp(NULL)
@@ -420,6 +422,14 @@ public:
   // Implementing URI_Processor interface
   void path(const std::string &path)
   { set_database(path); }
+
+  void key_val(const std::string& key)
+  {
+    if (key.compare("ssl-enable") == 0)
+    {
+      set_tls(true);
+    }
+  }
 
   std::string get_host() { return m_host; }
   unsigned int get_port() { return m_port; }
