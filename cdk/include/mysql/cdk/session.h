@@ -29,14 +29,9 @@
 #include "api/transaction.h"
 #include "data_source.h"
 #include "reply.h"
-#include "mysqlx.h"
+#include "common.h"
 
 namespace cdk {
-
-using cdk::mysqlx::Param_source;
-using cdk::mysqlx::Limit;
-using cdk::mysqlx::Order_by;
-
 
 
 /*

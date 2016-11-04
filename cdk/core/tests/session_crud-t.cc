@@ -795,10 +795,16 @@ public:
 
 private:
 
-  unsigned length() const { return m_path.size(); }
-  Type get_type(unsigned pos) const { return MEMBER; }
-  const string* get_name(unsigned pos) const { return &m_path.at(pos); }
-  const uint32_t* get_index(unsigned) const { return NULL; }
+  void process(Processor &prc) const
+  {
+    prc.list_begin();
+
+    for (size_t pos = 0; pos < m_path.size(); ++pos)
+      safe_prc(prc)->list_el()->member(m_path[pos]);
+
+    prc.list_end();
+  }
+
 };
 
 

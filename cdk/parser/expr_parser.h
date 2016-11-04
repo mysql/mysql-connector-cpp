@@ -28,9 +28,6 @@
 #include <mysql/cdk/common.h>
 #include "parser.h"
 
-PUSH_BOOST_WARNINGS
-#include <boost/format.hpp>
-POP_BOOST_WARNINGS
 PUSH_SYS_WARNINGS
 #include <vector>
 #include <map>
@@ -54,42 +51,44 @@ using cdk::Expression;
   paths within the parser.
 */
 
-struct Column_ref : public cdk::api::Column_ref
+struct Table_ref : public cdk::api::Table_ref
 {
-
-  struct Table_ref : public cdk::api::Table_ref
+  struct : public cdk::api::Schema_ref
   {
-    struct : public cdk::api::Schema_ref
-    {
-      cdk::string m_name;
-
-      virtual const cdk::string name() const { return m_name; }
-
-    } m_schema_ref;
-
     cdk::string m_name;
 
     virtual const cdk::string name() const { return m_name; }
 
-    virtual const cdk::api::Schema_ref* schema() const
-    { return m_schema_ref.m_name.empty() ? NULL : &m_schema_ref; }
+  } m_schema_ref;
 
-    void set(const cdk::string &name)
-    { m_name = name; }
+  cdk::string m_name;
 
-    void set(const cdk::string &name, const cdk::string &schema)
-    {
-      m_name = name;
-      m_schema_ref.m_name = schema;
-    }
+  virtual const cdk::string name() const { return m_name; }
 
-    void clear()
-    {
-      m_name.clear();
-      m_schema_ref.m_name.clear();
-    }
+  virtual const cdk::api::Schema_ref* schema() const
+  { return m_schema_ref.m_name.empty() ? NULL : &m_schema_ref; }
 
-  } m_table_ref;
+  void set(const cdk::string &name)
+  { m_name = name; }
+
+  void set(const cdk::string &name, const cdk::string &schema)
+  {
+    m_name = name;
+    m_schema_ref.m_name = schema;
+  }
+
+  void clear()
+  {
+    m_name.clear();
+    m_schema_ref.m_name.clear();
+  }
+
+};
+
+
+struct Column_ref : public cdk::api::Column_ref
+{
+  Table_ref m_table_ref;
 
 
   cdk::string m_col_name;
@@ -146,119 +145,10 @@ struct Column_ref : public cdk::api::Column_ref
 };
 
 
-struct Doc_path : public cdk::Doc_path
-{
-  // Doc_path
-
-  struct Doc_path_data
-  {
-    Doc_path_data(Type doc_type)
-    : m_doc_type(doc_type)
-    {}
-
-    Doc_path_data(Type doc_type, const cdk::string& name)
-      : m_doc_type(doc_type)
-      , m_name(name)
-    {}
-
-    Doc_path_data(Type doc_type, uint32_t index)
-      : m_doc_type(doc_type)
-      , m_index(index)
-    {}
-
-    Type m_doc_type;
-    cdk::string m_name;
-    uint32_t m_index;
-  };
-
-  std::vector<Doc_path_data> m_doc_path;
-
-  virtual ~Doc_path() {}
-
-  unsigned length() const
-  {
-    size_t cnt = m_doc_path.size();
-    assert(cnt <= std::numeric_limits<unsigned>::max());
-    return (unsigned)cnt;
-  }
-
-  Type get_type(unsigned pos) const { return m_doc_path[pos].m_doc_type; }
-
-  const uint32_t* get_index(unsigned pos) const
-  {
-    switch (m_doc_path[pos].m_doc_type)
-    {
-      case ARRAY_INDEX:
-        return &m_doc_path[pos].m_index;
-      default:
-      return NULL;
-    }
-  }
-
-  const cdk::string* get_name(unsigned pos) const
-  {
-    switch (m_doc_path[pos].m_doc_type)
-    {
-      case MEMBER:
-      case MEMBER_ASTERISK:
-          return &m_doc_path[pos].m_name;
-      default:
-        return NULL;
-    }
-  }
-
-
-  void add(Type type, const cdk::string &name)
-  {
-    m_doc_path.push_back(Doc_path_data(type, name));
-  }
-
-  void add(Type type, uint32_t index)
-  {
-    m_doc_path.push_back(Doc_path_data(type, index));
-  }
-
-  void add(Type type)
-  {
-    m_doc_path.push_back(Doc_path_data(type));
-  }
-
-
-  Doc_path& operator=(const cdk::Doc_path &other)
-  {
-    for (unsigned pos=0; pos < other.length(); ++pos)
-    {
-      switch (other.get_type(pos))
-      {
-      case MEMBER:
-        add(MEMBER, *other.get_name(pos));
-        break;
-      case ARRAY_INDEX:
-        add(ARRAY_INDEX, *other.get_index(pos));
-        break;
-      default:
-        add(other.get_type(pos));
-        break;
-      }
-    }
-    return *this;
-  }
-
-  void clear()
-  {
-    m_doc_path.clear();
-  }
-
-  bool is_empty() const
-  {
-    return m_doc_path.empty();
-  }
-};
-
-
 /*
   Trivial Format_info class that is used to report opaque blob values.
 */
+
 struct Format_info : public cdk::Format_info
 {
   bool for_type(cdk::Type_info ti) const { return cdk::TYPE_BYTES == ti; }
@@ -272,171 +162,6 @@ struct Format_info : public cdk::Format_info
 
 // ------------------------------------------------------------------------------
 
-/*
-   Class that implements token navigation and usage methods
- */
-
-class Token_op_base
-{
-
-protected:
-
-  typedef std::set<Token::TokenType> TokSet;
-
-  It  *m_first;
-  It  m_last;
-
-  const std::string& consume_token(Token::TokenType type)
-  {
-    if (!cur_token_type_is(type))
-      unexpected_token(peek_token(), (boost::format("while looking for token %s")
-                                      % Token::get_name(type)).str().c_str());
-    return get_token().get_text();
-  }
-
-  const Token& peek_token()
-  {
-    if (!tokens_available())
-      throw Error("unexpected end of string");
-    return **m_first;
-  }
-
-  bool  cur_token_type_is(Token::TokenType type)
-  {
-    return tokens_available() && peek_token().get_type() == type;
-  }
-
-  bool  is_token_type_within_set(TokSet types)
-  {
-    return tokens_available()
-           && types.find(peek_token().get_type()) != types.end();
-  }
-
-  unsigned  get_token_pos() const
-  {
-    // TODO
-    return 0;
-  }
-
-  It& cur_pos() const
-  {
-    return *m_first;
-  }
-
-  const It& end_pos() const
-  {
-    return m_last;
-  }
-
-  bool  tokens_available() const
-  {
-    return cur_pos() != end_pos();
-  }
-
-  const Token& get_token()
-  {
-    if (!tokens_available())
-      throw Error("unexpected end of string");
-    const Token &t = peek_token();
-    ++(*m_first);
-    return t;
-  }
-
-  std::string operator_name(const std::string &name)
-  {
-    return Tokenizer::map.operator_names.at(name);
-  }
-
-  void unexpected_token(const Token&, const char *ctx);
-
-public:
-  Token_op_base(It &first, const It &last)
-    : m_first(&first), m_last(last)
-  {}
-};
-
-/*
-   Class implementing Document Path parsing methods.
- */
-
-
-class Doc_path_parser_base
-    : public Token_op_base
-
-{
-protected:
-
-  void parse_document_path(bool clear = true);
-  void parse_document_path(const cdk::string&);
-  void parse_document_path(const cdk::string&, const cdk::string&);
-
-  void parse_docpath_member();
-  void parse_docpath_array_loc();
-
-public:
-
-  Doc_path_parser_base(It &first, const It &last)
-    : Token_op_base(first, last)
-  {}
-
-  Doc_path   m_path;
-
-  /*
-     Used to parse documentPath only strings, not as part of an expression.
-   */
-  void parse_document_field();
-
-};
-
-/*
-   This class parses Document path using Doc_path_parser_base methods and
-   act as a cdk::Doc_path object
-
-   Used to parse documentPath only fields, not expressions.
- */
-
-
-class Doc_field_parser
-    : public cdk::Doc_path
-{
-  Tokenizer m_tokenizer;
-  cdk::scoped_ptr<Doc_path_parser_base> m_parser;
-
-
-public:
-
-  Doc_field_parser(const cdk::string &doc_path)
-    : m_tokenizer(doc_path)
-  {
-    m_tokenizer.get_tokens();
-
-    It begin = m_tokenizer.begin();
-    const It end = m_tokenizer.end();
-    m_parser.reset(new Doc_path_parser_base(begin, end));
-
-    m_parser->parse_document_field();
-  }
-
-  unsigned length() const
-  {
-    return m_parser->m_path.length();
-  }
-
-  Type     get_type(unsigned pos) const
-  {
-    return m_parser->m_path.get_type(pos);
-  }
-  const cdk::string* get_name(unsigned pos) const
-  {
-    return m_parser->m_path.get_name(pos);
-  }
-
-  const uint32_t* get_index(unsigned pos) const
-  {
-    return m_parser->m_path.get_index(pos);
-  }
-
-};
 
 /*
   Main parser class containing parsing logic. An instance acts
@@ -456,14 +181,14 @@ struct Parser_mode
 
 
 class Expr_parser_base
-    : Doc_path_parser_base
-    , public Expr_parser<Expression::Processor>
+    : public Expr_parser<Expression::Processor>
 {
 
 public:
 
   typedef Expression::Processor Processor;
   typedef Expression::Scalar::Processor Scalar_prc;
+  typedef cdk::api::Doc_path::Processor Path_prc;
 
   static Expression::Processor *get_base_prc(Processor *prc)
   { return prc; }
@@ -485,8 +210,7 @@ protected:
   Expr_parser_base(It &first, const It &last,
                    Parser_mode::value parser_mode,
                    bool strings_as_blobs = false)
-    : Doc_path_parser_base(first, last)
-    , Expr_parser<Expression::Processor>(first, last)
+    : Expr_parser<Expression::Processor>(first, last)
     , m_parser_mode(parser_mode)
     , m_strings_as_blobs(strings_as_blobs)
   {
@@ -495,7 +219,6 @@ protected:
 
 
   bool do_parse(It &first, const It &last, Processor *prc);
-
 
 
   enum Start { FULL, ATOMIC, MUL, ADD, SHIFT, BIT, COMP, ILRI, AND, OR,
@@ -535,12 +258,19 @@ protected:
   void parse_argslist(Expression::List::Processor*,
                       bool strings_as_blobs = false);
 
-  void parse_schema_ident();
-  void parse_column_ident();
-  void parse_column_ident1();
+  void parse_schema_ident(Token::TokenType (*types)[2] = NULL);
+  void parse_column_ident(Path_prc*);
+  void parse_column_ident1(Path_prc*);
   const std::string &get_ident();
 
-  void parse_document_field(bool prefix = false);
+  void parse_document_field(Path_prc*, bool prefix = false);
+  void parse_document_field(const cdk::string&, Path_prc*);
+  void parse_document_field(const cdk::string&, const cdk::string&, Path_prc*);
+
+  bool parse_document_path(Path_prc*, bool require_dot=false);
+  bool parse_document_path1(Path_prc*);
+  bool parse_docpath_member(Path_prc::Element_prc*);
+  void parse_docpath_array_loc(Path_prc::Element_prc*);
 
   void parse_cast(Scalar_prc*);
   cdk::string parse_cast_type();
@@ -552,23 +282,15 @@ protected:
   void parse_doc(Processor::Doc_prc*);
   void parse_arr(Processor::List_prc*);
 
-
-
 private:
 
   Column_ref m_col_ref;
-
-
-  // Access to the underlying sequence of tokens.
-
-//  It  *m_first;
-//  It  m_last;
-
 
   friend class Expression_parser;
   friend class Order_parser;
   friend class Projection_parser;
   friend class Table_field_parser;
+  friend class Doc_field_parser;
 };
 
 
@@ -706,47 +428,78 @@ public:
 
 class Table_field_parser
     : public cdk::api::Column_ref
+    , public cdk::Doc_path
 {
-  Tokenizer m_tokenizer;
-  cdk::scoped_ptr<Expr_parser_base> m_table_field;
+  parser::Column_ref    m_col;
+  cdk::Doc_path_storage m_path;
 
 public:
 
   Table_field_parser(const cdk::string &table_field)
-    : m_tokenizer(table_field)
   {
-    m_tokenizer.get_tokens();
+    Tokenizer toks(table_field);
+    toks.get_tokens();
 
-    It begin = m_tokenizer.begin();
-    const It end = m_tokenizer.end();
+    It begin = toks.begin();
+    const It end = toks.end();
 
-    m_table_field.reset(new Expr_parser_base(begin,
-                                             end,
-                                             Parser_mode::TABLE));
-
-    m_table_field->parse_column_ident();
-
+    Expr_parser_base parser(begin, end, Parser_mode::TABLE);
+    parser.parse_column_ident(&m_path);
+    m_col = parser.m_col_ref;
   }
 
   const cdk::string name() const
   {
-    return m_table_field->m_col_ref.name();
+    return m_col.name();
   }
 
   const cdk::api::Table_ref *table() const
   {
-    return m_table_field->m_col_ref.table();
+    return m_col.table();
   }
 
-  const Doc_path *path() const
+  bool has_path() const
   {
-    return m_table_field->m_path.length() == 0 ?
-          NULL :
-          &(m_table_field->m_path);
+    return !m_path.is_empty();
+  }
+
+  void process(Processor &prc) const
+  {
+    m_path.process(prc);
   }
 
 };
 
+
+/*
+  This class acts as cdk::Doc_path object taking path data from a string
+  containing document field specification (documentField grammar)
+*/
+
+class Doc_field_parser
+    : public cdk::Doc_path
+{
+  Tokenizer m_tokenizer;
+  cdk::scoped_ptr<Expr_parser_base> m_parser;
+  It m_it;
+
+public:
+
+  Doc_field_parser(const cdk::string &doc_path)
+    : m_tokenizer(doc_path)
+  {
+    m_tokenizer.get_tokens();
+
+    m_it = m_tokenizer.begin();
+    const It end = m_tokenizer.end();
+    m_parser.reset(new Expr_parser_base(m_it, end, Parser_mode::DOCUMENT));
+  }
+
+  void process(Processor &prc) const
+  {
+    const_cast<Expr_parser_base*>(m_parser.get())->parse_document_field(&prc);
+  }
+};
 
 // ------------------------------------------------------------------------------
 
@@ -907,7 +660,7 @@ struct Stored_scalar
   // Storage for the values
 
   parser::Column_ref  m_col_ref;
-  parser::Doc_path    m_doc_path;
+  cdk::Doc_path_storage m_doc_path;
   std::string m_op_name;
   cdk::string m_str;
 
@@ -1075,13 +828,13 @@ struct Stored_scalar
     m_type = COL_REF;
     m_col_ref   = col;
     if (path)
-      m_doc_path  = *path;
+      path->process(m_doc_path);
   }
 
   void ref(const Doc_path &path)
   {
     m_type = PATH;
-    m_doc_path = path;
+    path.process(m_doc_path);
   }
 
   void param(const string &name)

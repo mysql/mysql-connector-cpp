@@ -26,6 +26,7 @@
 #define CDK_MYSQLX_DELAYED_OP_H
 
 #include <mysql/cdk/common.h>
+#include <mysql/cdk/protocol/mysqlx.h>
 #include <memory>
 #include "converters.h"
 
@@ -671,8 +672,7 @@ public:
 
   virtual void remove(const Doc_path *path)
   {
-    if (path)
-      m_proc->target_path(*path);
+    report_path(path);
 
     m_proc->update_op(protocol::mysqlx::update_op::ITEM_REMOVE);
   }
@@ -685,9 +685,7 @@ public:
   {
     Prc_to::Expr_prc  *prc;
 
-    if (path)
-      m_proc->target_path(*path);
-
+    report_path(path);
 
     if (flags & Update_processor::NO_INSERT)
       prc = m_proc->update_op(protocol::mysqlx::update_op::ITEM_REPLACE);
@@ -700,7 +698,6 @@ public:
         prc = m_proc->update_op(path ? protocol::mysqlx::update_op::ITEM_SET
                                      : protocol::mysqlx::update_op::SET);
 
-
     if (!prc)
       return NULL;
 
@@ -711,8 +708,7 @@ public:
 
   Expr_prc* array_insert(const Doc_path *path)
   {
-    if (path)
-      m_proc->target_path(*path);
+    report_path(path);
 
     Prc_to::Expr_prc *prc
       = m_proc->update_op(protocol::mysqlx::update_op::ARRAY_INSERT);
@@ -726,8 +722,7 @@ public:
 
   Expr_prc* array_append(const Doc_path *path)
   {
-    if (path)
-      m_proc->target_path(*path);
+    report_path(path);
 
     Prc_to::Expr_prc *prc
       = m_proc->update_op(protocol::mysqlx::update_op::ARRAY_APPEND);
@@ -739,6 +734,16 @@ public:
     return &m_conv;
   }
 
+  void report_path(const Doc_path *path)
+  {
+    if (path)
+    {
+      Doc_path_storage dp;
+      path->process(dp);
+      if (!dp.is_empty())
+        m_proc->target_path(dp);
+    }
+  }
 };
 
 

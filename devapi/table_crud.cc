@@ -34,8 +34,7 @@
 #include "impl.h"
 
 using namespace mysqlx;
-using cdk::string;
-using namespace parser;
+using parser::Parser_mode;
 
 
 // --------------------------------------------------------------------
@@ -327,7 +326,10 @@ class Op_table_update
     prc.column(*this);
 
     Value_expr val_prc(m_set_it->second, parser::Parser_mode::TABLE);
-    val_prc.process_if(prc.set(m_table_field->path()));
+
+    val_prc.process_if(
+      prc.set(m_table_field->has_path() ? m_table_field.get() : NULL)
+    );
   }
 
 

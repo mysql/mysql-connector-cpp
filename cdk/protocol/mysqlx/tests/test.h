@@ -71,8 +71,11 @@ using namespace ::std;
 using namespace cdk::foundation;
 using namespace cdk::protocol::mysqlx;
 
-typedef cdk::byte byte;
-typedef cdk::string string;
+// Disambiguate these types
+
+using cdk::protocol::mysqlx::charset_id_t;
+using cdk::protocol::mysqlx::row_count_t;
+
 typedef foundation::Number_codec<Endianess::NATIVE> Number_codec;
 
 /*
@@ -220,6 +223,13 @@ public:
   void execute_ok() { cout <<"Statement executed OK" <<endl; }
   void stmt_close_ok() { cout <<"Statement closed" <<endl; }
   void cursor_close_ok() { cout <<"Cursor closed" <<endl; }
+
+  /*
+    TODO: Affected rows and last insert id are now reported
+    through notices. Refactor m_rows_check_num test accordingly.
+  */
+
+#if 0
   void rows_affected(row_count_t rows)
   {
     if (m_rows_check_num >= 0)
@@ -228,6 +238,7 @@ public:
     cout <<"Rows affected: " <<rows <<endl;
   }
   void last_insert_id(row_count_t id) { cout <<"Last insert id: " <<id <<endl; }
+#endif
 
   void error(unsigned int code, short int severity, sql_state_t state,
             const cdk::string &msg)

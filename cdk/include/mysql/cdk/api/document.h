@@ -31,6 +31,7 @@
 namespace cdk {
 namespace api {
 
+
 /**
   Documents over processor PRC
   ============================
@@ -165,11 +166,176 @@ public:
 };
 
 
+/*
+  Document path specification is a list of items, each to be processed
+  with Doc_path_processor to describe one element of the path.
+*/
+
+class Doc_path_processor
+{
+public:
+
+  typedef cdk::api::string  string;
+  typedef uint32_t          index_t;
+
+  // Path element is name of document field.
+
+  virtual void member(const string &name) =0;
+
+  // Path element "*".
+
+  virtual void any_member() =0;
+
+  // Path element is at given position within an array.
+
+  virtual void index(index_t) =0;
+
+  // Path element "[*]".
+
+  virtual void any_index() =0;
+
+  // Path element "**".
+
+  virtual void any_path() =0;
+};
+
+typedef Expr_list< Expr_base<Doc_path_processor> > Doc_path;
+
+
 }}  // cdk::api
 
 
 namespace cdk {
 
+class Doc_path_storage
+  : public api::Doc_path
+  , public api::Doc_path::Processor
+  , api::Doc_path_processor
+{
+public:
+
+  enum Type {
+    MEMBER,
+    MEMBER_ASTERISK,
+    ARRAY_INDEX,
+    ARRAY_INDEX_ASTERISK,
+    DOUBLE_ASTERISK
+  };
+
+protected:
+
+  struct Path_el
+  {
+    Type      m_type;
+    string    m_name;
+    uint32_t  m_idx;
+  };
+
+  std::vector<Path_el> m_path;
+
+public:
+
+  // Access to path data
+
+  size_t length() const
+  {
+    return m_path.size();
+  }
+
+  bool is_empty() const
+  {
+    return 0 == length();
+  }
+
+  const Path_el& get_el(size_t pos) const
+  {
+    return m_path.at(pos);
+  }
+
+  void clear()
+  {
+    m_path.clear();
+  }
+
+  // Doc_path
+
+  void process(Processor &prc) const
+  {
+    prc.list_begin();
+
+    for (size_t pos = 0; pos < m_path.size(); ++pos)
+    {
+      api::Doc_path_processor *eprc = prc.list_el();
+      if (eprc)
+      {
+        const Path_el &el = m_path[pos];
+        switch (el.m_type)
+        {
+        case MEMBER:                eprc->member(el.m_name);  break;
+        case MEMBER_ASTERISK:       eprc->any_member();       break;
+        case ARRAY_INDEX:           eprc->index(el.m_idx);    break;
+        case ARRAY_INDEX_ASTERISK:  eprc->any_index();        break;
+        case DOUBLE_ASTERISK:       eprc->any_path();         break;
+        }
+      }
+    }
+
+    prc.list_end();
+  }
+
+
+  // List_processor
+
+  Path_el *m_el;
+
+  Element_prc* list_el()
+  {
+    m_path.push_back(Path_el());
+    m_el = &m_path.back();
+    return this;
+  }
+
+private:
+
+  // Doc_path_processor
+
+  void member(const string &name)
+  {
+    assert(m_el);
+    m_el->m_type = MEMBER;
+    m_el->m_name = name;
+  }
+
+  void any_member()
+  {
+    assert(m_el);
+    m_el->m_type = MEMBER_ASTERISK;
+  }
+
+  void index(index_t pos)
+  {
+    assert(m_el);
+    m_el->m_type = ARRAY_INDEX;
+    m_el->m_idx = pos;
+  }
+
+  void any_index()
+  {
+    assert(m_el);
+    m_el->m_type = ARRAY_INDEX_ASTERISK;
+  }
+
+  void any_path()
+  {
+    assert(m_el);
+    m_el->m_type = DOUBLE_ASTERISK;
+  }
+};
+
+} // cdk
+
+
+namespace cdk {
 
 template <class PRC>
 struct Safe_prc< cdk::api::Any_processor<PRC> >
@@ -229,6 +395,40 @@ struct Safe_prc< cdk::api::Doc_processor<PRC> >
   Safe_prc<Any_prc> key_val(const string &key)
   { return m_prc ? m_prc->key_val(key) : NULL; }
 
+};
+
+
+template<>
+struct Safe_prc<api::Doc_path_processor>
+  : Safe_prc_base<api::Doc_path_processor>
+{
+  typedef Safe_prc_base<api::Doc_path_processor> Base;
+  using Base::Processor;
+  typedef Processor::string  string;
+  typedef Processor::index_t index_t;
+
+  Safe_prc(Processor *prc) : Base(prc)
+  {}
+
+  Safe_prc(Processor &prc) : Base(&prc)
+  {}
+
+  using Base::m_prc;
+
+  void member(const string &name)
+  { return m_prc ? m_prc->member(name) : (void)NULL; }
+
+  void any_member()
+  { return m_prc ? m_prc->any_member() : (void)NULL; }
+
+  void index(index_t ind)
+  { return m_prc ? m_prc->index(ind) : (void)NULL; }
+
+  void any_index()
+  { return m_prc ? m_prc->any_index() : (void)NULL; }
+
+  void any_path()
+  { return m_prc ? m_prc->any_path() : (void)NULL; }
 };
 
 }

@@ -29,13 +29,10 @@
 #include "api/obj_ref.h"
 #include "api/expression.h"
 #include "api/document.h"
-#include "protocol/mysqlx.h"
+#include "api/query.h"
+
 
 namespace cdk {
-
-using protocol::mysqlx::row_count_t;
-using protocol::mysqlx::col_count_t;
-using protocol::mysqlx::charset_id_t;
 
 
 /*
@@ -153,6 +150,14 @@ public:
   virtual length_t decimals() const =0;
 };
 
+/*
+  Note: These types are compatible with the X protocol.
+*/
+
+typedef uint64_t row_count_t;
+typedef uint32_t col_count_t;
+typedef uint64_t charset_id_t;
+
 
 struct Traits
 {
@@ -164,6 +169,7 @@ struct Traits
   typedef const cdk::Format_info& Format_info;
   typedef const cdk::Column_info& Column_info;
 };
+
 
 
 typedef api::Meta_data<Traits> Meta_data;
@@ -284,7 +290,7 @@ class Expr_processor;
 typedef api::Any<Expr_processor>    Expression;
 typedef api::Expr_list<Expression>  Expr_list;
 
-using cdk::protocol::mysqlx::api::Doc_path;
+using api::Doc_path;
 
 class Expr_processor
 {
@@ -314,8 +320,11 @@ public:
   virtual Args_prc*   op(const char*) =0;
   virtual Args_prc*   call(const Object_ref&) =0;
 
+  // TODO: consider changing ref() so that they return doc path processor
+
   virtual void ref(const Column_ref&, const Doc_path*) =0;
   virtual void ref(const Doc_path&) =0;
+
   virtual void param(const string&) =0;
   virtual void param(uint16_t) =0;
   virtual void var(const string&) =0;
@@ -500,6 +509,17 @@ class Doc_source
   : public Expression
   , public foundation::Iterator
 {};
+
+
+/*
+  Classes for describing statement parameters
+  ===========================================
+*/
+
+typedef cdk::api::Limit<row_count_t>         Limit;
+typedef cdk::api::Order_by<Expression>       Order_by;
+typedef cdk::api::Sort_direction             Sort_direction;
+typedef cdk::api::Doc_base<Value_processor>  Param_source;
 
 
 /*

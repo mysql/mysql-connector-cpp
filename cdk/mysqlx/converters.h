@@ -26,8 +26,9 @@
 #define CDK_MYSQLX_CONVERTERS_H
 
 #include <mysql/cdk/converters.h>
-#include <mysql/cdk/protocol/mysqlx_expr.h>
+#include <mysql/cdk/protocol/mysqlx/expr.h>
 #include <mysql/cdk/foundation/codec.h>
+
 
 namespace cdk {
 namespace mysqlx {
@@ -160,6 +161,53 @@ typedef Expr_conv_base<
 // -------------------------------------------------------------------------
 
 
+struct Doc_path_storage
+  : public cdk::Doc_path_storage
+  , public protocol::mysqlx::api::Doc_path
+{
+  typedef protocol::mysqlx::api::Doc_path Proto_path;
+  typedef cdk::Doc_path_storage           Storage;
+
+  // Proto_path interface
+
+  unsigned length() const
+  {
+    size_t len = cdk::Doc_path_storage::length();
+    assert(len <= std::numeric_limits<unsigned>::max());
+    return (unsigned)len;
+  }
+
+  Proto_path::Type get_type(unsigned pos) const
+  {
+    switch (get_el(pos).m_type)
+    {
+    case Storage::MEMBER:               return Proto_path::MEMBER;
+    case Storage::MEMBER_ASTERISK:      return Proto_path::MEMBER_ASTERISK;
+    case Storage::ARRAY_INDEX:          return Proto_path::ARRAY_INDEX;
+    case Storage::ARRAY_INDEX_ASTERISK: return Proto_path::ARRAY_INDEX_ASTERISK;
+    case Storage::DOUBLE_ASTERISK:      return Proto_path::DOUBLE_ASTERISK;
+    }
+
+    // Quiet compile warning.
+    assert(false);
+    return Proto_path::Type(0);
+  }
+
+  const cdk::string* get_name(unsigned pos) const
+  {
+    const Path_el &el = get_el(pos);
+    return Storage::MEMBER == el.m_type ? &el.m_name : NULL;
+  }
+
+  const uint32_t* get_index(unsigned pos) const
+  {
+    const Path_el &el = get_el(pos);
+    return Storage::ARRAY_INDEX == el.m_type ? &el.m_idx : NULL;
+  }
+
+};
+
+
 struct Expr_prc_converter_base;
 
 typedef Any_prc_converter<Expr_prc_converter_base>  Expr_prc_converter;
@@ -204,7 +252,14 @@ struct Expr_prc_converter_base
   Args_prc* call(const api::Object_ref&);
 
   void ref(const api::Column_ref&, const Doc_path*);
-  void ref(const Doc_path &path) { m_proc->id(path); }
+
+  void ref(const Doc_path &path)
+  {
+    Doc_path_storage dp;
+    path.process(dp);
+    m_proc->id(dp);
+  }
+
   void param(const string &name) { m_proc->placeholder(name); }
   void param(uint16_t pos)       { m_proc->placeholder(pos); }
   void var(const string &name) { m_proc->var(name); }
@@ -302,7 +357,11 @@ Expr_prc_converter_base::ref(const api::Column_ref &col, const Doc_path *path)
     set_db_obj(*col.table());
   const protocol::mysqlx::api::Db_obj *table= (col.table() ? this : NULL);
   if (NULL != path)
-    m_proc->id(col.name(), table, *path);
+  {
+    Doc_path_storage dp;
+    path->process(dp);
+    m_proc->id(col.name(), table, dp);
+  }
   else
     m_proc->id(col.name(), table);
 }

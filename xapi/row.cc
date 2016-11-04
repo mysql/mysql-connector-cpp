@@ -352,10 +352,11 @@ void Update_spec::process(Processor &prc) const
 {
   const Update_item *it = get_cur_item();
   parser::Table_field_parser field(it->m_field);
+  cdk::Doc_path *path = field.has_path() ? &field : NULL;
   prc.column(field);
   if (it->is_expr())
   {
-    cdk::Update_processor::Expr_prc *eprc = prc.set(field.path());
+    cdk::Update_processor::Expr_prc *eprc = prc.set(path);
     // Cannot use process_if() method because of specialized process() methods
     if (eprc)
       it->process(*eprc);
@@ -363,7 +364,7 @@ void Update_spec::process(Processor &prc) const
   else
   {
     cdk::Expr_processor::Value_prc *vprc =
-      cdk::safe_prc(prc)->set(field.path())->scalar()->val();
+      cdk::safe_prc(prc)->set(path)->scalar()->val();
     // Cannot use process_if() method because of specialized process() methods
     if (vprc)
       it->process_val(*vprc);

@@ -25,7 +25,7 @@
 #ifndef PROTOCOL_MYSQLX_BUILDERS_H
 #define PROTOCOL_MYSQLX_BUILDERS_H
 
-#include <mysql/cdk/protocol/mysqlx_expr.h>
+#include <mysql/cdk/protocol/mysqlx/expr.h>
 
 PUSH_BOOST_WARNINGS
 #include <boost/format.hpp>
