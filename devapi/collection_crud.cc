@@ -34,8 +34,6 @@
 #include "impl.h"
 
 using namespace mysqlx;
-using cdk::string;
-using namespace parser;
 
 
 // --------------------------------------------------------------------
@@ -149,7 +147,7 @@ class Op_collection_add
     return true;
   }
 
-  void process(Expression::Processor &ep) const override;
+  void process(cdk::Expression::Processor &ep) const override;
 
 
   // JSON::Processor
@@ -297,7 +295,7 @@ class Insert_id
     into account.
 */
 
-void Op_collection_add::process(Expression::Processor &ep) const
+void Op_collection_add::process(cdk::Expression::Processor &ep) const
 {
   assert(m_pos > 0);  // this method should be called after calling next()
 
@@ -578,7 +576,7 @@ class Op_collection_modify
 
   void process(Update_spec::Processor &prc) const override
   {
-    Doc_field_parser doc_field((mysqlx::string)m_update_it->m_field);
+    parser::Doc_field_parser doc_field((mysqlx::string)m_update_it->m_field);
 
     switch (m_update_it->m_op)
     {
