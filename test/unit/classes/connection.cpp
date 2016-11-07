@@ -2976,6 +2976,16 @@ void connection::ssl_mode()
 
   con->setSchema(db);
   stmt.reset(con->createStatement());
+
+  res.reset(stmt->executeQuery("SHOW GLOBAL VARIABLES LIKE 'tls_version'"));
+
+  res->next();
+
+  std::string tls_versions = res->getString(2);
+
+  if (tls_versions.empty())
+    SKIP("Server doesn't support SSL connections");
+
   res.reset(stmt->executeQuery("SHOW SESSION STATUS LIKE 'Ssl_version'"));
 
   res->next();
