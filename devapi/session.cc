@@ -118,7 +118,7 @@ class internal::XSession_base::Impl
 
 struct URI_parser
   : public internal::XSession_base::Access::Options
-  , public endpoint::TCPIP
+  , private endpoint::TCPIP
   , public parser::URI_processor
 {
   URI_parser(const std::string &uri)
@@ -132,68 +132,105 @@ struct URI_parser
     return *this;
   }
 
-  void user(const std::string &usr)
+  void user(const std::string &usr) override
   {
     m_usr = usr;
   }
 
-  void password(const std::string &pwd)
+  void password(const std::string &pwd) override
   {
     m_pwd = pwd;
     m_has_pwd = true;
   }
 
-  void host(const std::string &host)
+  void host(const std::string &host) override
   {
     m_host = host;
   }
 
-  void port(unsigned short port)
+  void port(unsigned short port) override
   {
     m_port = port;
   }
 
-  virtual void path(const std::string &db)
+  virtual void path(const std::string &db) override
   {
     set_database(db);
   }
+
+  void key_val(const std::string &key) override
+  {
+    if (key == "ssl-enable")
+      m_use_tls = true;
+  }
+
 };
 
 
-internal::XSession_base::XSession_base(const std::string &url)
-{
-  URI_parser parser(url);
-
-  try {
-    m_impl = new Impl(
-      static_cast<endpoint::TCPIP&>(parser.get_endpoint()),
-      static_cast<XSession_base::Options&>(parser)
-   );
-  }
-  CATCH_AND_WRAP
-}
-
-internal::XSession_base::XSession_base(
-  const std::string &host, unsigned port,
-  const string  &user, const char    *pwd,
-  const string  &db)
+internal::XSession_base::XSession_base(SessionSettings settings)
 {
   try {
-    std::string pwd_str;
 
-    if (pwd)
-      pwd_str = pwd;
+    if (settings.has_option(SessionSettings::URI))
+    {
+      URI_parser parser(
+            settings[SessionSettings::URI].get<string>()
+          );
 
-    if (port > 65535U)
-      throw_error("Port value out of range");
+      m_impl = new Impl(
+        static_cast<endpoint::TCPIP&>(parser.get_endpoint()),
+        static_cast<XSession_base::Options&>(parser));
+    }
+    else
+    {
+      std::string host = "localhost";
+      if (settings.has_option(SessionSettings::HOST))
+        host = settings[SessionSettings::HOST].get<string>();
 
-    endpoint::TCPIP ep(host, (uint16_t)port);
-    Options opt(user, pwd ? &pwd_str : NULL);
+      unsigned port = DEFAULT_MYSQLX_PORT;
 
-    if (!db.empty())
-      opt.set_database(db);
+      if (settings.has_option(SessionSettings::PORT))
+        port = settings[SessionSettings::PORT];
 
-    m_impl = new Impl(ep, opt);
+      if (port > 65535U)
+        throw_error("Port value out of range");
+
+
+      std::string pwd_str;
+      bool has_pwd = false;
+
+      if (settings.has_option(SessionSettings::PWD) &&
+          settings[SessionSettings::PWD].isNull() == false)
+      {
+        has_pwd = true;
+        pwd_str = settings[SessionSettings::PWD].get<string>();
+      }
+
+      endpoint::TCPIP ep( host, (uint16_t)port);
+
+      string user;
+
+      if (settings.has_option(SessionSettings::USER))
+      {
+        user = settings[SessionSettings::USER];
+      }
+      else
+      {
+        throw Error("User not defined!");
+      }
+
+      Options opt(user, has_pwd ? &pwd_str : NULL);
+
+      if (settings.has_option(SessionSettings::DB))
+        opt.set_database(
+              settings[SessionSettings::DB].get<string>()
+            );
+
+      if (settings.has_option(SessionSettings::SSL_ENABLE))
+        opt.set_tls(settings[SessionSettings::SSL_ENABLE].get<bool>());
+
+      m_impl = new Impl(ep, opt);
+    }
   }
   CATCH_AND_WRAP
 }
@@ -311,7 +348,7 @@ void internal::XSession_base::close()
 
 NodeSession XSession::bindToDefaultShard()
 {
-  return this;
+  return static_cast<XSession_base*>(this);
 }
 
 // ---------------------------------------------------------------------

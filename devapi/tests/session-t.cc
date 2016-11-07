@@ -350,3 +350,83 @@ TEST_F(Sess, bind_node_session)
 
   cout << "Done!" << endl;
 }
+
+TEST_F(Sess, ssl_session)
+{
+
+  SKIP_IF_NO_XPLUGIN;
+
+  {
+    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+                          SessionSettings::USER,get_user(),
+                          SessionSettings::PWD, get_password() ? get_password() : NULL ,
+                          SessionSettings::SSL_ENABLE, true);
+
+    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
+
+    auto row = res.fetchOne();
+    cout << row[0] << ":" << row[1] << endl;
+
+    string cipher = row[1];
+
+    EXPECT_FALSE(cipher.empty());
+  }
+
+  {
+    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+                          SessionSettings::USER, get_user(),
+                          SessionSettings::PWD, get_password() ? get_password() : nullptr ,
+                          SessionSettings::SSL_ENABLE, false);
+
+    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
+
+    auto row = res.fetchOne();
+    cout << row[0] << ":" << row[1] << endl;
+
+    string cipher = row[1];
+
+    EXPECT_TRUE(cipher.empty());
+  }
+
+  //Using URI
+
+  std::stringstream uri;
+
+  uri << "mysqlx://" << get_user();
+
+  if (get_password())
+    uri << ":"<< *get_password();
+
+  uri << "@" << "localhost:" << get_port();
+
+  //URI without ssl_enable
+  {
+    mysqlx::XSession sess(uri.str());
+
+    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
+
+    auto row = res.fetchOne();
+    cout << row[0] << ":" << row[1] << endl;
+
+    string cipher = row[1];
+
+    EXPECT_TRUE(cipher.empty());
+  }
+
+
+  //Enable SSL
+  uri << "/?ssl-enable";
+  {
+    mysqlx::XSession sess(uri.str());
+
+    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
+
+    auto row = res.fetchOne();
+    cout << row[0] << ":" << row[1] << endl;
+
+    string cipher = row[1];
+
+    EXPECT_FALSE(cipher.empty());
+  }
+
+}

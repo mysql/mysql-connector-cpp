@@ -398,6 +398,9 @@ public:
   operator const bytes&() const;
   operator DbDoc() const;
 
+  template<typename T>
+  T get() { return static_cast<T>(*this); }
+
   //@}
 
 

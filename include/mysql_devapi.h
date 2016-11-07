@@ -494,6 +494,240 @@ public:
 };
 
 
+/**
+  Represents session options to be passed at XSession/NodeSession object
+  creation.
+
+  SessionSettings can be constructed using uri, common connect options (host,
+  port, user, password, database) or using pairs of SessionSettings::Options -
+  Value objects.
+
+  @ingroup devapi
+*/
+
+class SessionSettings
+{
+public:
+  enum Options
+  {
+    URI,
+    HOST,
+    PORT,
+    USER,
+    PWD,
+    DB,
+    SSL_ENABLE
+  };
+
+
+
+  SessionSettings(){}
+
+  SessionSettings(SessionSettings &settings)
+    : m_options(settings.m_options)
+  {}
+
+  SessionSettings(SessionSettings &&settings)
+    : m_options(std::move(settings.m_options))
+  {}
+
+
+  SessionSettings(const string &uri)
+  {
+    add(URI, uri);
+  }
+
+
+  /**
+    Create session explicitly specifying session parameters.
+  */
+
+  SessionSettings(const std::string &host, unsigned port,
+                  const string  &user,
+                  const char *pwd = NULL,
+                  const string &db = string())
+  {
+    add(HOST, host,
+        PORT, port,
+        USER, user,
+        DB, db);
+
+    if (pwd)
+      add(PWD, pwd);
+
+    //SSL enabled by default
+    add(SSL_ENABLE, true);
+  }
+
+  SessionSettings(const std::string &host, unsigned port,
+                  const string  &user,
+                  const std::string &pwd,
+                  const string &db = string())
+    : SessionSettings(host, port, user, pwd.c_str(), db)
+  {}
+
+      /**
+        Create session using the default port
+      */
+
+  SessionSettings(const std::string &host,
+                  const string  &user,
+                  const char    *pwd = NULL,
+                  const string  &db = string())
+    : SessionSettings(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
+  {}
+
+  SessionSettings(const std::string &host,
+                  const string  &user,
+                  const std::string &pwd,
+                  const string  &db = string())
+    : SessionSettings(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
+  {}
+
+      /**
+        Create session on localhost.
+      */
+
+  SessionSettings(unsigned port,
+                  const string  &user,
+                  const char    *pwd = NULL,
+                  const string  &db = string())
+    : SessionSettings("localhost", port, user, pwd, db)
+  {}
+
+  SessionSettings(unsigned port,
+                  const string  &user,
+                  const std::string &pwd,
+                  const string  &db = string())
+    : SessionSettings("localhost", port, user, pwd.c_str(), db)
+  {}
+
+  /*
+    Templates below are here to take care of the optional password
+    parameter of type const char* (which can be either 3-rd or 4-th in
+    the parameter list). Without these templates passing
+    NULL as password does not work, because NULL is defined as 0
+    which has type int.
+  */
+
+  template <
+    typename    HOST,
+    typename    PORT,
+    typename    USER,
+    typename... T,
+    typename std::enable_if<
+      std::is_constructible<SessionSettings, HOST, PORT, USER, const char*, T...>::value
+    >::type* = nullptr
+  >
+  SessionSettings(HOST h, PORT p, USER u ,long pwd, T... args)
+    : SessionSettings(h, p, u, (const char*)pwd, args...)
+  {}
+
+  template <
+    typename    HOST,
+    typename    PORT,
+    typename    USER,
+    typename... T,
+    typename std::enable_if<
+      std::is_constructible<SessionSettings, HOST, PORT, USER, const char*, T...>::value
+    >::type* = nullptr
+  >
+  SessionSettings(HOST h, PORT p, USER u ,void* pwd, T... args)
+    : SessionSettings(h, p, u, (const char*)pwd, args...)
+  {}
+
+
+  template <
+    typename    PORT,
+    typename    USER,
+    typename... T,
+    typename std::enable_if<
+      std::is_constructible<SessionSettings, PORT, USER, const char*, T...>::value
+    >::type* = nullptr
+  >
+  SessionSettings(PORT p, USER u ,long pwd, T... args)
+    : SessionSettings(p, u, (const char*)pwd, args...)
+  {}
+
+
+  template <
+    typename    PORT,
+    typename    USER,
+    typename... T,
+    typename std::enable_if<
+      std::is_constructible<SessionSettings, PORT, USER, const char*, T...>::value
+    >::type* = nullptr
+  >
+  SessionSettings(PORT p, USER u ,void* pwd, T... args)
+    : SessionSettings(p, u, (const char*)pwd, args...)
+  {}
+
+
+  /**
+    Passing option - value pairs
+  */
+
+  template <typename V,typename...R>
+  SessionSettings(Options opt, V val, R&...rest)
+  {
+    add(opt, val, rest...);
+  }
+
+  /**
+     SessionSetting operator and methods
+   */
+
+  Value& operator[](Options opt)
+  {
+    return m_options[opt];
+  }
+
+  void clear()
+  {
+    m_options.clear();
+  }
+
+  void erase(Options opt)
+  {
+    m_options.erase(opt);
+  }
+
+  bool has_option(Options opt)
+  {
+    return m_options.find(opt) != m_options.end();
+  }
+
+
+private:
+
+  std::map<Options,Value> m_options;
+
+  template<typename V,
+           typename std::enable_if<!std::is_constructible<string,V>::value,
+                                   V>::type* = nullptr>
+  void add(Options opt, V v)
+  {
+    m_options[opt] = v;
+  }
+
+  template<typename V,
+           typename std::enable_if<std::is_constructible<string,V>::value,
+                                   V>::type* = nullptr>
+  void add(Options opt, V v)
+  {
+    m_options[opt] = string(v);
+  }
+
+  template <typename V, typename...R>
+  void add(Options opt, V v, R...rest)
+  {
+    add(opt,v);
+    add(rest...);
+  }
+
+};
+
+
 namespace internal {
 
   DLL_WARNINGS_PUSH
@@ -519,8 +753,6 @@ namespace internal {
 
     struct Options;
 
-    //XSession_base(const Options&);
-
     /*
       This constructor constructs a child session of a parent session.
     */
@@ -541,68 +773,13 @@ namespace internal {
       parsing).
     */
 
-    XSession_base(const std::string &url);
+    XSession_base(SessionSettings settings);
 
-    XSession_base(const char *url)
-      : XSession_base(std::string(url))
+    template<typename...T>
+    XSession_base(T...options)
+      : XSession_base(SessionSettings(options...))
     {}
 
-    XSession_base(const string &url)
-      : XSession_base(std::string(url))
-    {}
-
-
-    /**
-      Create session explicitly specifying session parameters.
-    */
-
-    XSession_base(const std::string &host, unsigned port,
-      const string  &user,
-      const char *pwd = NULL,
-      const string &db = string());
-
-    XSession_base(const std::string &host, unsigned port,
-      const string  &user,
-      const std::string &pwd,
-      const string &db = string())
-      : XSession_base(host, port, user, pwd.c_str(), db)
-    {}
-
-    /**
-      Create session using the default port
-    */
-
-    XSession_base(const std::string &host,
-      const string  &user,
-      const char    *pwd = NULL,
-      const string  &db = string())
-      : XSession_base(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
-    {}
-
-    XSession_base(const std::string &host,
-      const string  &user,
-      const std::string &pwd,
-      const string  &db = string())
-      : XSession_base(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
-    {}
-
-    /**
-      Create session on localhost.
-    */
-
-    XSession_base(unsigned port,
-      const string  &user,
-      const char    *pwd = NULL,
-      const string  &db = string())
-      : XSession_base("localhost", port, user, pwd, db)
-    {}
-
-    XSession_base(unsigned port,
-      const string  &user,
-      const std::string &pwd,
-      const string  &db = string())
-      : XSession_base("localhost", port, user, pwd.c_str(), db)
-    {}
 
     virtual ~XSession_base();
 
@@ -732,79 +909,11 @@ class PUBLIC_API XSession
     : public internal::XSession_base
 {
 
-protected:
-
-  //XSession(const Options &opt)
-  //  : XSession_base(opt)
-  //{}
-
 public:
 
-  XSession(const std::string &url)
-    : XSession_base(url)
-  {}
-
-  XSession(const char *url)
-    : XSession_base(std::string(url))
-  {}
-
-  XSession(const string &url)
-    : XSession_base(std::string(url))
-  {}
-
-
-  /**
-    Create session explicitly specifying session parameters.
-  */
-
-  XSession(const std::string &host, unsigned port,
-           const string  &user,
-           const char *pwd = NULL,
-           const string &db = string())
-    : XSession_base(host, port, user, pwd, db)
-  {}
-
-  XSession(const std::string &host, unsigned port,
-           const string  &user,
-           const std::string &pwd,
-           const string &db = string())
-    : XSession_base(host, port, user, pwd.c_str(), db)
-  {}
-
-  /**
-    Create session using the default port
-  */
-
-  XSession(const std::string &host,
-           const string  &user,
-           const char    *pwd = NULL,
-           const string  &db = string())
-    : XSession_base(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
-  {}
-
-  XSession(const std::string &host,
-           const string  &user,
-           const std::string &pwd,
-           const string  &db = string())
-    : XSession_base(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
-  {}
-
-  /**
-    Create session on localhost.
-  */
-
-  XSession(unsigned port,
-           const string  &user,
-           const char    *pwd = NULL,
-           const string  &db = string())
-    : XSession_base("localhost", port, user, pwd, db)
-  {}
-
-  XSession(unsigned port,
-           const string  &user,
-           const std::string &pwd,
-           const string  &db = string())
-    : XSession_base("localhost", port, user, pwd.c_str(), db)
+  template<typename ...S>
+  XSession(S...settings)
+    : XSession_base(settings...)
   {}
 
 
@@ -832,7 +941,7 @@ public:
 
 
   NodeSession(NodeSession &&other)
-    : XSession_base(&other)
+    : XSession_base(static_cast<XSession_base*>(&other))
   {}
 
   /**
@@ -840,48 +949,11 @@ public:
     as XSession constructors.
   */
 
-  template <
-    typename... T,
-    typename = typename std::enable_if<
-      std::is_constructible<XSession_base, T...>::value
-    >::type
-  >
+  template<typename...T>
   NodeSession(T... args)
     : XSession_base(args...)
   {}
 
-  /*
-    Templates below are here to take care of the optional password
-    parameter of type const char* (which can be either 2-nd or 3-rd in
-    the parameter list). Without these templates passing
-    NULL as password does not work, because NULL is defined as 0
-    which has type int.
-  */
-
-  template <
-    typename    A,
-    typename    B,
-    typename... T,
-    typename = typename std::enable_if<
-      std::is_constructible<XSession_base, A, B, const char*, T...>::value
-    >::type
-  >
-  NodeSession(A a, B b, void* p, T... args)
-    : XSession_base(a, b, (const char*)p, args...)
-  {}
-
-  template <
-    typename    A,
-    typename    B,
-    typename    C,
-    typename... T,
-    typename = typename std::enable_if<
-    std::is_constructible<XSession_base, A, B, C, const char*, T...>::value
-    >::type
-  >
-    NodeSession(A a, B b, C c, void* p, T... args)
-    : XSession_base(a, b, c, (const char*)p, args...)
-  {}
 
 
   /**
