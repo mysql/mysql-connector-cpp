@@ -51,153 +51,150 @@ class NativeStatementWrapper;
 class MySQL_Prepared_ResultSet : public sql::ResultSet
 {
 private:
-	MYSQL_ROW row;
+  boost::shared_ptr< NativeAPI::NativeStatementWrapper > proxy;
 
-	boost::shared_ptr< NativeAPI::NativeStatementWrapper > proxy;
+  mutable uint32_t last_queried_column;  // this is updated by calls to getInt(int), getString(int), etc...
 
-	mutable uint32_t last_queried_column;  // this is updated by calls to getInt(int), getString(int), etc...
+  unsigned int num_fields;
+  uint64_t num_rows;
+  uint64_t row_position;
 
-	unsigned int num_fields;
-	uint64_t num_rows;
-	uint64_t row_position;
+  typedef std::map< sql::SQLString, unsigned int > FieldNameIndexMap;
 
-	typedef std::map< sql::SQLString, unsigned int > FieldNameIndexMap;
+  FieldNameIndexMap field_name_to_index_map;
 
-	FieldNameIndexMap field_name_to_index_map;
-	bool was_null;
+  const MySQL_Prepared_Statement * parent;
 
-	const MySQL_Prepared_Statement * parent;
+  bool is_valid;
 
-	bool is_valid;
+  boost::shared_ptr< MySQL_DebugLogger > logger;
 
-	boost::shared_ptr< MySQL_DebugLogger > logger;
+  boost::scoped_ptr< MySQL_PreparedResultSetMetaData > rs_meta;
 
-	boost::scoped_ptr< MySQL_PreparedResultSetMetaData > rs_meta;
+  boost::shared_ptr< MySQL_ResultBind > result_bind;
 
-	boost::shared_ptr< MySQL_ResultBind > result_bind;
-
-	sql::ResultSet::enum_type resultset_type;
+  sql::ResultSet::enum_type resultset_type;
 
 protected:
-	void checkValid() const;
-	void checkScrollable() const;
-	bool isScrollable() const;
-	void closeIntern();
-	bool isBeforeFirstOrAfterLast() const;
-	void seek();
+  void checkValid() const;
+  void checkScrollable() const;
+  bool isScrollable() const;
+  void closeIntern();
+  bool isBeforeFirstOrAfterLast() const;
+  void seek();
 
-	int64_t getInt64_intern(const uint32_t columnIndex, bool cutTooBig) const;
-	uint64_t getUInt64_intern(const uint32_t columnIndex, bool cutTooBig) const;
+  int64_t getInt64_intern(const uint32_t columnIndex, bool cutTooBig) const;
+  uint64_t getUInt64_intern(const uint32_t columnIndex, bool cutTooBig) const;
 
 public:
-	MySQL_Prepared_ResultSet(boost::shared_ptr< NativeAPI::NativeStatementWrapper > & s,
-		boost::shared_ptr< MySQL_ResultBind > & r_bind, sql::ResultSet::enum_type rset_type,
-		MySQL_Prepared_Statement * par, boost::shared_ptr< MySQL_DebugLogger > &l);
+  MySQL_Prepared_ResultSet(boost::shared_ptr< NativeAPI::NativeStatementWrapper > & s,
+    boost::shared_ptr< MySQL_ResultBind > & r_bind, sql::ResultSet::enum_type rset_type,
+    MySQL_Prepared_Statement * par, boost::shared_ptr< MySQL_DebugLogger > &l);
 
-	virtual ~MySQL_Prepared_ResultSet();
+  virtual ~MySQL_Prepared_ResultSet();
 
-	bool absolute(int row);
+  bool absolute(int row);
 
-	void afterLast();
+  void afterLast();
 
-	void beforeFirst();
+  void beforeFirst();
 
-	void cancelRowUpdates();
+  void cancelRowUpdates();
 
-	void clearWarnings();
+  void clearWarnings();
 
-	void close();
+  void close();
 
-	uint32_t findColumn(const sql::SQLString& columnLabel) const;
+  uint32_t findColumn(const sql::SQLString& columnLabel) const;
 
-	bool first();
+  bool first();
 
-	std::istream * getBlob(uint32_t columnIndex) const;
-	std::istream * getBlob(const sql::SQLString& columnLabel) const;
+  std::istream * getBlob(uint32_t columnIndex) const;
+  std::istream * getBlob(const sql::SQLString& columnLabel) const;
 
-	bool getBoolean(uint32_t columnIndex) const;
-	bool getBoolean(const sql::SQLString& columnLabel) const;
+  bool getBoolean(uint32_t columnIndex) const;
+  bool getBoolean(const sql::SQLString& columnLabel) const;
 
-	int getConcurrency();
+  int getConcurrency();
 
-	SQLString getCursorName();
+  SQLString getCursorName();
 
-	long double getDouble(uint32_t columnIndex) const;
-	long double getDouble(const sql::SQLString& columnLabel) const;
+  long double getDouble(uint32_t columnIndex) const;
+  long double getDouble(const sql::SQLString& columnLabel) const;
 
-	int getFetchDirection();
-	size_t getFetchSize();
-	int getHoldability();
+  int getFetchDirection();
+  size_t getFetchSize();
+  int getHoldability();
 
-	int32_t getInt(uint32_t columnIndex) const;
-	int32_t getInt(const sql::SQLString& columnLabel) const;
+  int32_t getInt(uint32_t columnIndex) const;
+  int32_t getInt(const sql::SQLString& columnLabel) const;
 
-	uint32_t getUInt(uint32_t columnIndex) const;
-	uint32_t getUInt(const sql::SQLString& columnLabel) const;
+  uint32_t getUInt(uint32_t columnIndex) const;
+  uint32_t getUInt(const sql::SQLString& columnLabel) const;
 
-	int64_t getInt64(uint32_t columnIndex) const;
-	int64_t getInt64(const sql::SQLString& columnLabel) const;
+  int64_t getInt64(uint32_t columnIndex) const;
+  int64_t getInt64(const sql::SQLString& columnLabel) const;
 
-	uint64_t getUInt64(uint32_t columnIndex) const;
-	uint64_t getUInt64(const sql::SQLString& columnLabel) const;
+  uint64_t getUInt64(uint32_t columnIndex) const;
+  uint64_t getUInt64(const sql::SQLString& columnLabel) const;
 
-	sql::ResultSetMetaData * getMetaData() const;
+  sql::ResultSetMetaData * getMetaData() const;
 
-	size_t getRow() const;
+  size_t getRow() const;
 
-	sql::RowID * getRowId(uint32_t columnIndex);
-	sql::RowID * getRowId(const sql::SQLString & columnLabel);
+  sql::RowID * getRowId(uint32_t columnIndex);
+  sql::RowID * getRowId(const sql::SQLString & columnLabel);
 
-	const sql::Statement * getStatement() const;
+  const sql::Statement * getStatement() const;
 
-	SQLString getString(uint32_t columnIndex) const;
-	SQLString getString(const sql::SQLString& columnLabel) const;
+  SQLString getString(uint32_t columnIndex) const;
+  SQLString getString(const sql::SQLString& columnLabel) const;
 
-	sql::ResultSet::enum_type getType() const;
+  sql::ResultSet::enum_type getType() const;
 
-	void getWarnings();
+  void getWarnings();
 
-	bool isAfterLast() const;
+  bool isAfterLast() const;
 
-	bool isBeforeFirst() const;
+  bool isBeforeFirst() const;
 
-	bool isClosed() const;
+  bool isClosed() const;
 
-	void insertRow();
+  void insertRow();
 
-	bool isFirst() const;
+  bool isFirst() const;
 
-	bool isLast() const;
+  bool isLast() const;
 
-	bool isNull(uint32_t columnIndex) const;
+  bool isNull(uint32_t columnIndex) const;
 
-	bool isNull(const sql::SQLString& columnLabel) const;
+  bool isNull(const sql::SQLString& columnLabel) const;
 
-	bool last();
+  bool last();
 
-	void moveToCurrentRow();
+  void moveToCurrentRow();
 
-	void moveToInsertRow();
+  void moveToInsertRow();
 
-	bool next();
+  bool next();
 
-	bool previous();
+  bool previous();
 
-	void refreshRow();
+  void refreshRow();
 
-	bool relative(int rows);
+  bool relative(int rows);
 
-	bool rowDeleted();
+  bool rowDeleted();
 
-	bool rowInserted();
+  bool rowInserted();
 
-	bool rowUpdated();
+  bool rowUpdated();
 
-	size_t rowsCount() const;
+  size_t rowsCount() const;
 
-	void setFetchSize(size_t rows);
+  void setFetchSize(size_t rows);
 
-	bool wasNull() const;
+  bool wasNull() const;
 };
 
 } /* namespace mysql*/

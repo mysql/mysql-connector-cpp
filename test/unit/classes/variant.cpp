@@ -46,21 +46,21 @@ void variant::getValue()
   /* Test for integer variant values */
   try
   {
-	int val= 1234;
-	connection_properties["first"]= val;
-	ASSERT_EQUALS(*(connection_properties["first"].get< int >()), 1234);
+  int val= 1234;
+  connection_properties["first"]= val;
+  ASSERT_EQUALS(*(connection_properties["first"].get< int >()), 1234);
 
-	val= 4567;
-	connection_properties["second"]= val;
+  val= 4567;
+  connection_properties["second"]= val;
 
-	ASSERT_EQUALS(*(connection_properties["first"].get< int >()), 1234);
-	ASSERT_EQUALS(*(connection_properties["second"].get< int >()), 4567);
+  ASSERT_EQUALS(*(connection_properties["first"].get< int >()), 1234);
+  ASSERT_EQUALS(*(connection_properties["second"].get< int >()), 4567);
   }
   catch (sql::SQLException &e)
   {
-	logErr(e.what());
-	logErr("SQLState: " + std::string(e.getSQLState()));
-	fail(e.what(), __FILE__, __LINE__);
+  logErr(e.what());
+  logErr("SQLState: " + std::string(e.getSQLState()));
+  fail(e.what(), __FILE__, __LINE__);
   }
 
   connection_properties.erase("first");
@@ -69,21 +69,21 @@ void variant::getValue()
   /* Test for bool variant values */
   try
   {
-	bool val= 1;
-	connection_properties["first"]= val;
-	ASSERT_EQUALS((bool)*(connection_properties["first"].get< bool >()), (bool)1);
+  bool val= 1;
+  connection_properties["first"]= val;
+  ASSERT_EQUALS((bool)*(connection_properties["first"].get< bool >()), (bool)1);
 
-	val= 0;
-	connection_properties["second"]= val;
+  val= 0;
+  connection_properties["second"]= val;
 
-	ASSERT_EQUALS((bool)*(connection_properties["first"].get< bool >()), (bool)1);
-	ASSERT_EQUALS((bool)*(connection_properties["second"].get< bool >()), (bool)0);
+  ASSERT_EQUALS((bool)*(connection_properties["first"].get< bool >()), (bool)1);
+  ASSERT_EQUALS((bool)*(connection_properties["second"].get< bool >()), (bool)0);
   }
   catch (sql::SQLException &e)
   {
-	logErr(e.what());
-	logErr("SQLState: " + std::string(e.getSQLState()));
-	fail(e.what(), __FILE__, __LINE__);
+  logErr(e.what());
+  logErr("SQLState: " + std::string(e.getSQLState()));
+  fail(e.what(), __FILE__, __LINE__);
   }
 
   connection_properties.erase("first");
@@ -92,21 +92,21 @@ void variant::getValue()
   /* Test for std::string variant values */
   try
   {
-	std::string val= "value1";
-	connection_properties["first"]= val;
-	ASSERT_EQUALS(*(connection_properties["first"].get< std::string >()), "value1");
+  std::string val= "value1";
+  connection_properties["first"]= val;
+  ASSERT_EQUALS(*(connection_properties["first"].get< std::string >()), "value1");
 
-	val= "another_val";
-	connection_properties["second"]= val;
+  val= "another_val";
+  connection_properties["second"]= val;
 
-	ASSERT_EQUALS(*(connection_properties["first"].get< std::string >()), "value1");
-	ASSERT_EQUALS(*(connection_properties["second"].get< std::string >()), "another_val");
+  ASSERT_EQUALS(*(connection_properties["first"].get< std::string >()), "value1");
+  ASSERT_EQUALS(*(connection_properties["second"].get< std::string >()), "another_val");
   }
   catch (sql::SQLException &e)
   {
-	logErr(e.what());
-	logErr("SQLState: " + std::string(e.getSQLState()));
-	fail(e.what(), __FILE__, __LINE__);
+  logErr(e.what());
+  logErr("SQLState: " + std::string(e.getSQLState()));
+  fail(e.what(), __FILE__, __LINE__);
   }
 
   connection_properties.erase("first");
@@ -115,21 +115,21 @@ void variant::getValue()
   /* Test for sql::SQLString variant values */
   try
   {
-	sql::SQLString val= "value1";
-	connection_properties["first"]= val;
-	ASSERT_EQUALS(*(connection_properties["first"].get< sql::SQLString >()), "value1");
+  sql::SQLString val= "value1";
+  connection_properties["first"]= val;
+  ASSERT_EQUALS(*(connection_properties["first"].get< sql::SQLString >()), "value1");
 
-	val= "another_val";
-	connection_properties["second"]= val;
+  val= "another_val";
+  connection_properties["second"]= val;
 
-	ASSERT_EQUALS(*(connection_properties["first"].get< sql::SQLString >()), "value1");
-	ASSERT_EQUALS(*(connection_properties["second"].get< sql::SQLString >()), "another_val");
+  ASSERT_EQUALS(*(connection_properties["first"].get< sql::SQLString >()), "value1");
+  ASSERT_EQUALS(*(connection_properties["second"].get< sql::SQLString >()), "another_val");
   }
   catch (sql::SQLException &e)
   {
-	logErr(e.what());
-	logErr("SQLState: " + std::string(e.getSQLState()));
-	fail(e.what(), __FILE__, __LINE__);
+  logErr(e.what());
+  logErr("SQLState: " + std::string(e.getSQLState()));
+  fail(e.what(), __FILE__, __LINE__);
   }
 
   connection_properties.erase("first");
@@ -138,33 +138,33 @@ void variant::getValue()
   /* Test for std::map< std::string, std::string > variant values */
   try
   {
-	std::string value1 ("value1");
-	std::string value2 ("value2");
-	std::map< std::string, std::string > connectAttrMap;
+  std::string value1 ("value1");
+  std::string value2 ("value2");
+  std::map< std::string, std::string > connectAttrMap;
 
-	connectAttrMap["key1"] = value1;
-	connectAttrMap["key2"] = value2;
-	connection_properties["first"]= connectAttrMap;
+  connectAttrMap["key1"] = value1;
+  connectAttrMap["key2"] = value2;
+  connection_properties["first"]= connectAttrMap;
 
-	ASSERT_EQUALS("value1", (*(connection_properties["first"].get< std::map < std::string, std::string > >()))["key1"]);
-	ASSERT_EQUALS("value2", (*(connection_properties["first"].get< std::map < std::string, std::string > >()))["key2"]);
+  ASSERT_EQUALS("value1", (*(connection_properties["first"].get< std::map < std::string, std::string > >()))["key1"]);
+  ASSERT_EQUALS("value2", (*(connection_properties["first"].get< std::map < std::string, std::string > >()))["key2"]);
 
-	value1 = "value3";
-	value2 = "value4";
-	connectAttrMap["key1"] = value1;
-	connectAttrMap["key2"] = value2;
-	connection_properties["second"]= connectAttrMap;
+  value1 = "value3";
+  value2 = "value4";
+  connectAttrMap["key1"] = value1;
+  connectAttrMap["key2"] = value2;
+  connection_properties["second"]= connectAttrMap;
 
-	ASSERT_EQUALS("value1", (*(connection_properties["first"].get< std::map < std::string, std::string > >()))["key1"]);
-	ASSERT_EQUALS("value2", (*(connection_properties["first"].get< std::map < std::string, std::string > >()))["key2"]);
-	ASSERT_EQUALS("value3", (*(connection_properties["second"].get< std::map < std::string, std::string > >()))["key1"]);
-	ASSERT_EQUALS("value4", (*(connection_properties["second"].get< std::map < std::string, std::string > >()))["key2"]);
+  ASSERT_EQUALS("value1", (*(connection_properties["first"].get< std::map < std::string, std::string > >()))["key1"]);
+  ASSERT_EQUALS("value2", (*(connection_properties["first"].get< std::map < std::string, std::string > >()))["key2"]);
+  ASSERT_EQUALS("value3", (*(connection_properties["second"].get< std::map < std::string, std::string > >()))["key1"]);
+  ASSERT_EQUALS("value4", (*(connection_properties["second"].get< std::map < std::string, std::string > >()))["key2"]);
   }
   catch (sql::SQLException &e)
   {
-	logErr(e.what());
-	logErr("SQLState: " + std::string(e.getSQLState()));
-	fail(e.what(), __FILE__, __LINE__);
+  logErr(e.what());
+  logErr("SQLState: " + std::string(e.getSQLState()));
+  fail(e.what(), __FILE__, __LINE__);
   }
 
   connection_properties.erase("first");
@@ -173,33 +173,33 @@ void variant::getValue()
   /* Test for std::map< sql::SQLString, sql::SQLString > variant values */
   try
   {
-	sql::SQLString value1 ("value1");
-	sql::SQLString value2 ("value2");
-	std::map< sql::SQLString, sql::SQLString > connectAttrMap;
+  sql::SQLString value1 ("value1");
+  sql::SQLString value2 ("value2");
+  std::map< sql::SQLString, sql::SQLString > connectAttrMap;
 
-	connectAttrMap["key1"] = value1;
-	connectAttrMap["key2"] = value2;
-	connection_properties["first"]= connectAttrMap;
+  connectAttrMap["key1"] = value1;
+  connectAttrMap["key2"] = value2;
+  connection_properties["first"]= connectAttrMap;
 
-	ASSERT_EQUALS("value1", (*(connection_properties["first"].get< std::map < sql::SQLString, sql::SQLString > >()))["key1"]);
-	ASSERT_EQUALS("value2", (*(connection_properties["first"].get< std::map < sql::SQLString, sql::SQLString > >()))["key2"]);
+  ASSERT_EQUALS("value1", (*(connection_properties["first"].get< std::map < sql::SQLString, sql::SQLString > >()))["key1"]);
+  ASSERT_EQUALS("value2", (*(connection_properties["first"].get< std::map < sql::SQLString, sql::SQLString > >()))["key2"]);
 
-	value1 = "value3";
-	value2 = "value4";
-	connectAttrMap["key1"] = value1;
-	connectAttrMap["key2"] = value2;
-	connection_properties["second"]= connectAttrMap;
+  value1 = "value3";
+  value2 = "value4";
+  connectAttrMap["key1"] = value1;
+  connectAttrMap["key2"] = value2;
+  connection_properties["second"]= connectAttrMap;
 
-	ASSERT_EQUALS("value1", (*(connection_properties["first"].get< std::map < sql::SQLString, sql::SQLString > >()))["key1"]);
-	ASSERT_EQUALS("value2", (*(connection_properties["first"].get< std::map < sql::SQLString, sql::SQLString > >()))["key2"]);
-	ASSERT_EQUALS("value3", (*(connection_properties["second"].get< std::map < sql::SQLString, sql::SQLString > >()))["key1"]);
-	ASSERT_EQUALS("value4", (*(connection_properties["second"].get< std::map < sql::SQLString, sql::SQLString > >()))["key2"]);
+  ASSERT_EQUALS("value1", (*(connection_properties["first"].get< std::map < sql::SQLString, sql::SQLString > >()))["key1"]);
+  ASSERT_EQUALS("value2", (*(connection_properties["first"].get< std::map < sql::SQLString, sql::SQLString > >()))["key2"]);
+  ASSERT_EQUALS("value3", (*(connection_properties["second"].get< std::map < sql::SQLString, sql::SQLString > >()))["key1"]);
+  ASSERT_EQUALS("value4", (*(connection_properties["second"].get< std::map < sql::SQLString, sql::SQLString > >()))["key2"]);
   }
   catch (sql::SQLException &e)
   {
-	logErr(e.what());
-	logErr("SQLState: " + std::string(e.getSQLState()));
-	fail(e.what(), __FILE__, __LINE__);
+  logErr(e.what());
+  logErr("SQLState: " + std::string(e.getSQLState()));
+  fail(e.what(), __FILE__, __LINE__);
   }
   connection_properties.erase("first");
   connection_properties.erase("second");
@@ -216,80 +216,80 @@ void variant::getUsingWrongStringType()
   /* Set std::string value and get sql::SQLString value */
   try
   {
-	std::string val= "value1";
-	connection_properties["first"]= val;
-	ASSERT_EQUALS(*(connection_properties["first"].get< sql::SQLString >()), "value1");
+  std::string val= "value1";
+  connection_properties["first"]= val;
+  ASSERT_EQUALS(*(connection_properties["first"].get< sql::SQLString >()), "value1");
   }
   catch (sql::SQLException &e)
   {
-	logErr(e.what());
-	logErr("SQLState: " + std::string(e.getSQLState()));
-	fail(e.what(), __FILE__, __LINE__);
+  logErr(e.what());
+  logErr("SQLState: " + std::string(e.getSQLState()));
+  fail(e.what(), __FILE__, __LINE__);
   }
   connection_properties.erase("first");
 
   /* Set sql::SQLString value and get using std::string value */
   try
   {
-	sql::SQLString val= "value1";
-	connection_properties["first"]= val;
-	ASSERT_EQUALS(*(connection_properties["first"].get< std::string >()), "value1");
+  sql::SQLString val= "value1";
+  connection_properties["first"]= val;
+  ASSERT_EQUALS(*(connection_properties["first"].get< std::string >()), "value1");
   }
   catch (sql::SQLException &e)
   {
-	logErr(e.what());
-	logErr("SQLState: " + std::string(e.getSQLState()));
-	fail(e.what(), __FILE__, __LINE__);
+  logErr(e.what());
+  logErr("SQLState: " + std::string(e.getSQLState()));
+  fail(e.what(), __FILE__, __LINE__);
   }
   connection_properties.erase("first");
 
   /*
-	Set std::map< std::string, std::string > value
-	and get std::map < sql::SQLString, sql::SQLString > value
+  Set std::map< std::string, std::string > value
+  and get std::map < sql::SQLString, sql::SQLString > value
   */
   try
   {
-	std::string value1 ("value1");
-	std::string value2 ("value2");
-	std::map< std::string, std::string > connectAttrMap;
+  std::string value1 ("value1");
+  std::string value2 ("value2");
+  std::map< std::string, std::string > connectAttrMap;
 
-	connectAttrMap["key1"] = value1;
-	connectAttrMap["key2"] = value2;
-	connection_properties["first"]= connectAttrMap;
+  connectAttrMap["key1"] = value1;
+  connectAttrMap["key2"] = value2;
+  connection_properties["first"]= connectAttrMap;
 
-	ASSERT_EQUALS("value1", (*(connection_properties["first"].get< std::map < sql::SQLString, sql::SQLString > >()))["key1"]);
-	ASSERT_EQUALS("value2", (*(connection_properties["first"].get< std::map < sql::SQLString, sql::SQLString > >()))["key2"]);
+  ASSERT_EQUALS("value1", (*(connection_properties["first"].get< std::map < sql::SQLString, sql::SQLString > >()))["key1"]);
+  ASSERT_EQUALS("value2", (*(connection_properties["first"].get< std::map < sql::SQLString, sql::SQLString > >()))["key2"]);
   }
   catch (sql::SQLException &e)
   {
-	logErr(e.what());
-	logErr("SQLState: " + std::string(e.getSQLState()));
-	fail(e.what(), __FILE__, __LINE__);
+  logErr(e.what());
+  logErr("SQLState: " + std::string(e.getSQLState()));
+  fail(e.what(), __FILE__, __LINE__);
   }
   connection_properties.erase("first");
 
   /*
-	Set std::map < sql::SQLString, sql::SQLString > value
-	and get std::map< std::string, std::string > value
+  Set std::map < sql::SQLString, sql::SQLString > value
+  and get std::map< std::string, std::string > value
   */
   try
   {
-	sql::SQLString value1 ("value1");
-	sql::SQLString value2 ("value2");
-	std::map< sql::SQLString, sql::SQLString > connectAttrMap;
+  sql::SQLString value1 ("value1");
+  sql::SQLString value2 ("value2");
+  std::map< sql::SQLString, sql::SQLString > connectAttrMap;
 
-	connectAttrMap["key1"] = value1;
-	connectAttrMap["key2"] = value2;
-	connection_properties["first"]= connectAttrMap;
+  connectAttrMap["key1"] = value1;
+  connectAttrMap["key2"] = value2;
+  connection_properties["first"]= connectAttrMap;
 
-	ASSERT_EQUALS("value1", (*(connection_properties["first"].get< std::map < std::string, std::string > >()))["key1"]);
-	ASSERT_EQUALS("value2", (*(connection_properties["first"].get< std::map < std::string, std::string > >()))["key2"]);
+  ASSERT_EQUALS("value1", (*(connection_properties["first"].get< std::map < std::string, std::string > >()))["key1"]);
+  ASSERT_EQUALS("value2", (*(connection_properties["first"].get< std::map < std::string, std::string > >()))["key2"]);
   }
   catch (sql::SQLException &e)
   {
-	logErr(e.what());
-	logErr("SQLState: " + std::string(e.getSQLState()));
-	fail(e.what(), __FILE__, __LINE__);
+  logErr(e.what());
+  logErr("SQLState: " + std::string(e.getSQLState()));
+  fail(e.what(), __FILE__, __LINE__);
   }
   connection_properties.erase("first");
 
@@ -303,25 +303,26 @@ void variant::getUsingWrongDatatype()
 
   try
   {
-	try
-	{
-	  std::string user ("mysql_user");
-	  connection_properties["user"]= user;
+  try
+  {
+    std::string user ("mysql_user");
+    connection_properties["user"]= user;
 
-	  const int *val= connection_properties["user"].get< int >();
+    const int *val= connection_properties["user"].get< int >();
+    val = NULL;
 
-	  FAIL("No exception II");
-	}
-	catch (sql::InvalidArgumentException)
-	{
-	/* expected */
-	}
+    FAIL("No exception II");
+  }
+  catch (sql::InvalidArgumentException)
+  {
+  /* expected */
+  }
   }
   catch (sql::SQLException &e)
   {
-	logErr(e.what());
-	logErr("SQLState: " + std::string(e.getSQLState()));
-	fail(e.what(), __FILE__, __LINE__);
+  logErr(e.what());
+  logErr("SQLState: " + std::string(e.getSQLState()));
+  fail(e.what(), __FILE__, __LINE__);
   }
 
 }

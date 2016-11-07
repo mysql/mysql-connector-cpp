@@ -1107,14 +1107,16 @@ void DatabaseMetaDataTest::testGetDefaultTransactionIsolation()
       && (nRetval != sql::TRANSACTION_READ_COMMITTED)
       && (nRetval != sql::TRANSACTION_REPEATABLE_READ)
       && (nRetval != sql::TRANSACTION_SERIALIZABLE)) {
-    logErr(
-           "getDefaultTransactionIsolation returns an invalid value"
-           + nRetval);
+      std::stringstream msg;
+      msg << "getDefaultTransactionIsolation returns an invalid value "
+          << nRetval;
+    logErr(msg.str());
     FAIL("Call to getDefaultTransactionIsolation is Failed!");
   } else {
-    logMsg(
-           "getDefaultTransactionIsolation returns a valid Isolation level"
-           + nRetval);
+    std::stringstream msg;
+    msg << "getDefaultTransactionIsolation returns a valid Isolation level "
+        << nRetval;
+    logMsg(msg.str());
   }
 
 
@@ -1149,8 +1151,10 @@ void DatabaseMetaDataTest::testGetDriverMajorVersion()
   logMsg("Calling getDriverMajorVersion on DatabaseMetaData");
   int drMajorVersion=dbmd->getDriverMajorVersion();
   if (drMajorVersion >= 0) {
-    logMsg("getDriverMajorVersion method returns: "
-           + drMajorVersion);
+    std::stringstream msg;
+    msg << "getDriverMajorVersion method returns: "
+        << drMajorVersion;
+    logMsg(msg.str());
   } else {
     logMsg(" getDriverMajorVersion method returns a negative value");
   }
@@ -1185,12 +1189,15 @@ void DatabaseMetaDataTest::testGetDriverMinorVersion()
   logMsg("Calling getDriverMinorVersion on DatabaseMetaData");
   int drMinorVersion=dbmd->getDriverMinorVersion();
   if (drMinorVersion >= 0) {
-    logMsg(" getDriverMinorVersion method returns: "
-           + drMinorVersion);
+    std::stringstream msg;
+    msg << " getDriverMinorVersion method returns: "
+        << drMinorVersion;
+    logMsg(msg.str());
   } else {
-    logMsg(
-           " getDriverMinorVersion method returns a negative value: "
-           + drMinorVersion);
+    std::stringstream msg;
+    msg << " getDriverMinorVersion method returns a negative value: "
+        << drMinorVersion;
+    logMsg(msg.str());
   }
 }
 

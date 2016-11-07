@@ -624,15 +624,7 @@ void connectionmetadata::getDriverVersions()
     DatabaseMetaData * dbmeta=con->getMetaData();
     ASSERT_GT(0, dbmeta->getDriverMajorVersion());
     ASSERT_LT(2, dbmeta->getDriverMajorVersion());
-
-    if (dbmeta->getDriverMinorVersion() < 0)
-      FAIL("getDriverMinorVersion() returns negative value.");
-
     ASSERT_LT(100, dbmeta->getDriverMinorVersion());
-
-    if (dbmeta->getDriverPatchVersion() < 0)
-      FAIL("getDriverPatchVersion() returns negative value.");
-
     ASSERT_LT(100, dbmeta->getDriverPatchVersion());
 
     ASSERT_EQUALS("MySQL Connector/C++", dbmeta->getDriverName());
@@ -2354,7 +2346,6 @@ void connectionmetadata::getTables()
 
   try
   {
-  ResultSetMetaData * resmeta;
   DatabaseMetaData * dbmeta=con->getMetaData();
   std::list< sql::SQLString > tableTypes;
 

@@ -91,7 +91,7 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
             MySQL_Prepared_Statement * par,
             boost::shared_ptr< MySQL_DebugLogger > & l
         )
-    : row(NULL), proxy(s), last_queried_column(std::numeric_limits<uint32_t>::max()), row_position(0), parent(par),
+    : proxy(s), last_queried_column(std::numeric_limits<uint32_t>::max()), row_position(0), parent(par),
      is_valid(true), logger(l), result_bind(r_bind), resultset_type(rset_type)
 {
     CPP_ENTER("MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet");
