@@ -3028,13 +3028,27 @@ void connection::tls_version()
 
   res->next();
 
-  std::string tls_versions = res->getString(2);
+  std::string tls_available = res->getString(2);
+
+  std::vector<std::string> tls_versions;
+
+  size_t begin_pos = 0;
+
+  for ( size_t end_pos = tls_available.find_first_of(',',begin_pos);
+       begin_pos != std::string::npos || end_pos != std::string::npos;
+       begin_pos = end_pos == std::string::npos ? end_pos : end_pos+1,
+       end_pos = tls_available.find_first_of(',',begin_pos))
+  {
+    tls_versions.push_back(tls_available.substr(begin_pos, end_pos));
+  }
 
   connection_properties["OPT_SSL_MODE"] = sql::SSL_MODE_REQUIRED;
 
-  if (tls_versions.find("TLSv1") != std::string::npos)
+  for (std::vector<std::string>::const_iterator version = tls_versions.begin();
+       version != tls_versions.end();
+       ++version)
   {
-    connection_properties["OPT_TLS_VERSION"] = sql::SQLString("TLSv1");
+    connection_properties["OPT_TLS_VERSION"] = sql::SQLString(*version);
 
     created_objects.clear();
     con.reset(driver->connect(connection_properties));
@@ -3044,37 +3058,7 @@ void connection::tls_version()
 
     res->next();
 
-    ASSERT_EQUALS("TLSv1", res->getString(2));
-  }
-
-  if (tls_versions.find("TLSv1.1") != std::string::npos)
-  {
-    connection_properties["OPT_TLS_VERSION"] = sql::SQLString("TLSv1,TLSv1.1");
-
-    created_objects.clear();
-    con.reset(driver->connect(connection_properties));
-
-    stmt.reset(con->createStatement());
-    res.reset(stmt->executeQuery("SHOW SESSION STATUS LIKE 'Ssl_version'"));
-
-    res->next();
-
-    ASSERT_EQUALS("TLSv1.1", res->getString(2));
-  }
-
-  if (tls_versions.find("TLSv1.2") != std::string::npos)
-  {
-    connection_properties["OPT_TLS_VERSION"] = sql::SQLString("TLSv1,TLSv1.1,TLSv1.2");
-
-    created_objects.clear();
-    con.reset(driver->connect(connection_properties));
-
-    stmt.reset(con->createStatement());
-    res.reset(stmt->executeQuery("SHOW SESSION STATUS LIKE 'Ssl_version'"));
-
-    res->next();
-
-    ASSERT_EQUALS("TLSv1.2", res->getString(2));
+    ASSERT_EQUALS(*version, res->getString(2));
   }
 
 }
