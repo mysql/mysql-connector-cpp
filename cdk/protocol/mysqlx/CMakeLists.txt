@@ -96,6 +96,7 @@ SET(target_proto_mysqlx ${cdk_target_prefix}proto_mysqlx
 ADD_LIBRARY(${target_proto_mysqlx} OBJECT
             protocol.cc session.cc rset.cc stmt.cc crud.cc
             ${PB_SRCS})
+ADD_COVERAGE(${target_proto_mysqlx})
 
 source_group(protobuf FILES ${PB_SRCS})
 

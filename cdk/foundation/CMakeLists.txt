@@ -64,7 +64,7 @@ SET(target_foundation ${cdk_target_prefix}foundation
     CACHE INTERNAL "CDK foundation target")
 
 ADD_LIBRARY(${target_foundation} OBJECT ${sources})
-#ADD_BOOST(${target_foundation})
+ADD_COVERAGE(${target_foundation})
 
 IF(WITH_SSL STREQUAL "bundled")
   lib_interface_link_libraries(${target_foundation} yassl)

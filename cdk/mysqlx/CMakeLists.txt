@@ -21,8 +21,6 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 
-cmake_minimum_required(VERSION 2.8)
-
 SET(target_mysqlx ${cdk_target_prefix}mysqlx CACHE INTERNAL "CDK mysqlx target")
 
 #
@@ -36,6 +34,7 @@ if(WIN32)
 endif()
 
 ADD_LIBRARY(${target_mysqlx} OBJECT session.cc result.cc auth_mysql41.cc)
+ADD_COVERAGE(${target_mysqlx})
 #TARGET_LINK_LIBRARIES(${target_mysqlx} ${target_proto_mysqlx})
 
 

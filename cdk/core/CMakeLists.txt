@@ -48,6 +48,8 @@ add_library_ex(cdk STATIC session.cc codec.cc
     ${cdk_libs}
 )
 
+add_coverage(cdk)
+
 #MESSAGE("cdk depends on: ${target_mysqlx} ${target_parser}")
 
 EXPORT(TARGETS cdk

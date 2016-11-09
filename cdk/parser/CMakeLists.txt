@@ -32,3 +32,5 @@ add_library(${target_parser} OBJECT
   json_parser.cc
   expr_parser.cc
   uri_parser.cc)
+
+add_coverage(${target_parser})
