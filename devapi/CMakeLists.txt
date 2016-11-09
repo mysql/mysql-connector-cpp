@@ -45,6 +45,8 @@ ADD_LIBRARY(devapi OBJECT
   table_crud.cc
 )
 
+ADD_COVERAGE(devapi)
+
 lib_interface_link_libraries(devapi cdk)
 
 if(CMAKE_COMPILER_IS_GNUCXX)

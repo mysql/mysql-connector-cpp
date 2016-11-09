@@ -83,6 +83,11 @@ if(WITH_PIC)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
+#
+# Gcov support (Linux only).
+#
+
+include(gcov)
 
 #
 # Disable 64-bit warnings until we have dealt with them

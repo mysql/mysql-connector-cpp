@@ -48,7 +48,7 @@ SET(_libmysqlx_cc_src
 )
 
 ADD_LIBRARY(xapi OBJECT ${_libmysqlx_cc_src})
-
+ADD_COVERAGE(xapi)
 
 ADD_SUBDIRECTORY(tests)
 

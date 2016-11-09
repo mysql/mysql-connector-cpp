@@ -21,8 +21,8 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.11)
-CMAKE_POLICY(VERSION 2.8.11)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
+CMAKE_POLICY(VERSION 2.8.12)
 cmake_policy(SET CMP0022 NEW)
 
 #
@@ -150,6 +150,12 @@ if(WIN32 AND NOT UNREACHABLE_CODE_WARNINGS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4297")
 endif()
 
+#
+# Gcov support (Linux only)
+#
+
+include(gcov)
+#message("WITH_COVERAGE: ${WITH_COVERAGE}")
 
 #message("flags: ${CMAKE_C_FLAGS}")
 #message("c++ flags: ${CMAKE_CXX_FLAGS}")

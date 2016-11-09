@@ -54,6 +54,7 @@ IF(NOT DEFINED WITH_COVERAGE)
   OPTION(WITH_COVERAGE "Enable coverage support for gcc" OFF)
 ENDIF()
 
+
 #
 # Note: On Windows the runtime type must match the one used by gtest.
 #
@@ -71,19 +72,6 @@ IF(WITH_TESTS)
   ENDIF()
 ENDIF()
 
-
-MACRO(ADD_GCOV target)
-IF (WITH_TESTS)
-  IF(WITH_COVERAGE)
-    MESSAGE(STATUS "Enabling coverage support for gcc")
-
-    SET_TARGET_PROPERTIES(${target} PROPERTIES COMPILE_FLAGS "-g -O0 -Wall -W -Wshadow -Wunused-variable -Wunused-parameter -Wunused-function -Wunused -Wno-system-headers -Wno-deprecated -Woverloaded-virtual -Wwrite-strings -fprofile-arcs -ftest-coverage ")
-    SET_TARGET_PROPERTIES(${target} PROPERTIES LINK_FLAGS "-fprofile-arcs -ftest-coverage")
-
-  ENDIF(WITH_COVERAGE)
-ENDIF (WITH_TESTS)
-
-ENDMACRO(ADD_GCOV)
 
 MACRO(SETUP_TESTING)
 IF(WITH_TESTS)
@@ -273,7 +261,6 @@ IF(WITH_TESTS)
   )
 
   TARGET_LINK_LIBRARIES(${target_run_unit_tests} gtest)
-  ADD_GCOV(${target_run_unit_tests})
   #ADD_BOOST(${target_run_unit_tests})
 
   #
