@@ -60,6 +60,7 @@ void mysqlx_stmt_t::init_data_model()
       m_parser_mode = parser::Parser_mode::TABLE;
       break;
   }
+  m_group_by_list.set_parser_mode(m_parser_mode);
 }
 
 void mysqlx_stmt_t::init_crud()
@@ -477,8 +478,8 @@ mysqlx_result_t *mysqlx_stmt_t::exec()
                                   m_where.get(),
                                   m_proj_list.get(),
                                   m_order_by.get(),
-                                  NULL, // Group by
-                                  NULL, // Having
+                                  m_group_by_list.get_list(),
+                                  m_having.get(),
                                   m_limit.get(),
                                   m_param_source.count() ? &m_param_source : NULL);
       break;
@@ -517,8 +518,8 @@ mysqlx_result_t *mysqlx_stmt_t::exec()
                                m_where.get(),
                                m_proj_list.get(),
                                m_order_by.get(),
-                               NULL, // Group by
-                               NULL, // Having
+                               m_group_by_list.get_list(),
+                               m_having.get(),
                                m_limit.get(),
                                m_param_source.count() ? &m_param_source : NULL);
       break;
@@ -582,7 +583,32 @@ mysqlx_result_t *mysqlx_stmt_t::exec()
 }
 
 /*
-  Set WHERE for CRUD operation
+  Set member to a CDK expression which results from parsing given string val
+*/
+int mysqlx_stmt_t::set_expression(cdk::scoped_ptr<cdk::Expression> &member,
+                                  const char *val)
+{
+  if (!val || !val[0])
+    return RESULT_OK;
+
+  int res = RESULT_OK;
+  try
+  {
+    member.reset(new Expression_parser(m_parser_mode, val));
+    if (!member.get())
+      res = RESULT_ERROR;
+  }
+  catch (...)
+  {
+    res = RESULT_ERROR;
+    // TODO: Get exception details
+  }
+  return res;
+}
+
+
+/*
+  Set WHERE for statement operation
   PARAMETERS:
     where_expr - character string containing WHERE clause,
                  which will be parsed as required
@@ -595,22 +621,28 @@ mysqlx_result_t *mysqlx_stmt_t::exec()
 */
 int mysqlx_stmt_t::set_where(const char *where_expr)
 {
-  if (!where_expr || !where_expr[0])
-    return RESULT_OK;
+  if (m_op_type == OP_ADD || m_op_type == OP_INSERT)
+    throw Mysqlx_exception(MYSQLX_ERROR_OP_NOT_SUPPORTED);
+  return set_expression(m_where, where_expr);
+}
 
-  int res = RESULT_OK;
-  try
-  {
-    m_where.reset(new Expression_parser(m_parser_mode, where_expr));
-    if (!m_where.get())
-      res = RESULT_ERROR;
-  }
-  catch(...)
-  {
-    res = RESULT_ERROR;
-    // TODO: Get exception details
-  }
-  return res;
+/*
+  Set HAVING for statement operation
+  PARAMETERS:
+    having_expr - character string containing HAVING clause,
+                  which will be parsed as required
+
+  RETURN:
+    RESULT_OK - on success
+    RESULT_ERROR - on error
+
+  NOTE: each call to this function replaces previously set HAVING
+*/
+int mysqlx_stmt_t::set_having(const char *having_expr)
+{
+  if (m_op_type != OP_SELECT && m_op_type != OP_FIND)
+    throw Mysqlx_exception(MYSQLX_ERROR_OP_NOT_SUPPORTED);
+  return set_expression(m_having, having_expr);
 }
 
 /*
@@ -627,6 +659,9 @@ int mysqlx_stmt_t::set_where(const char *where_expr)
 */
 int mysqlx_stmt_t::set_limit(row_count_t row_count, row_count_t offset)
 {
+  if (m_op_type == OP_ADD || m_op_type == OP_INSERT)
+    throw Mysqlx_exception(MYSQLX_ERROR_OP_NOT_SUPPORTED);
+
   int res = RESULT_OK;
   try
   {
@@ -728,7 +763,7 @@ int mysqlx_stmt_t::add_document(const char *json_doc)
   int res = RESULT_OK;
   if (m_op_type != OP_ADD)
   {
-    m_error.set("Wrong operation type. Only ADD is supported.", 0);
+    set_diagnostic("Wrong operation type. Only ADD is supported.", 0);
     return RESULT_ERROR;
   }
 
@@ -763,4 +798,34 @@ int mysqlx_stmt_t::add_multiple_documents(va_list args)
     rc = add_document(json_doc);
   }
   return rc;
+}
+
+int mysqlx_stmt_t::add_group_by(va_list args)
+{
+  m_group_by_list.clear();
+  if (m_op_type != OP_SELECT && m_op_type != OP_FIND)
+  {
+    set_diagnostic(MYSQLX_ERROR_OP_NOT_SUPPORTED, 0);
+    return RESULT_ERROR;
+  }
+
+  const char *group_by;
+  while ((group_by = va_arg(args, char*)) != NULL)
+  {
+    m_group_by_list.add_group_by(group_by);
+  }
+  return RESULT_OK;
+}
+
+void Group_by_list::process(cdk::Expr_list::Processor& prc) const
+{
+  prc.list_begin();
+
+  for (group_by_list_type::const_iterator it = m_group_by_list.begin();
+    it != m_group_by_list.end(); ++it)
+  {
+    parser::Expression_parser expr_parser(m_parser_mode, *it);
+    expr_parser.process_if(prc.list_el());
+  }
+  prc.list_end();
 }

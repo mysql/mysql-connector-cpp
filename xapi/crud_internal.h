@@ -34,17 +34,35 @@ class Order_by;
 class Param_list;
 class Row_source;
 
+class Group_by_list : public cdk::Expr_list
+{
+  typedef std::vector<cdk::string> group_by_list_type;
+  group_by_list_type m_group_by_list;
+  parser::Parser_mode::value m_parser_mode;
+
+public:
+
+  Group_by_list() {}
+
+  void set_parser_mode(parser::Parser_mode::value mode) { m_parser_mode = mode; }
+  void add_group_by(const char *expr) { m_group_by_list.push_back(cdk::string(expr)); }
+  void clear() { m_group_by_list.clear(); }
+  void process(cdk::Expr_list::Processor& prc) const;
+  cdk::Expr_list *get_list() { return m_group_by_list.size() ? this : NULL; }
+};
+
 typedef struct mysqlx_stmt_struct : public cdk::foundation::nocopy, Mysqlx_diag
 {
 private:
   mysqlx_session_t &m_session;
-  cdk::scoped_ptr<mysqlx_result_t> m_result; // TODO: multiple results
+  cdk::scoped_ptr<mysqlx_result_t> m_result;
   Db_obj_ref m_db_obj_ref;
   cdk::protocol::mysqlx::Data_model m_data_model;
   parser::Parser_mode::value m_parser_mode;
   mysqlx_op_t m_op_type;
   cdk::Reply m_reply;
   cdk::scoped_ptr<cdk::Expression> m_where;
+  cdk::scoped_ptr<cdk::Expression> m_having;
   cdk::scoped_ptr<Limit> m_limit;
   cdk::scoped_ptr<Order_by> m_order_by;
   cdk::scoped_ptr<Projection_list> m_proj_list;
@@ -56,6 +74,9 @@ private:
   Update_spec m_update_spec;
   Modify_spec m_modify_spec;
   cdk::string m_query;
+  Group_by_list m_group_by_list;
+
+  int set_expression(cdk::scoped_ptr<cdk::Expression> &member, const char *val);
 
 public:
   mysqlx_stmt_struct(mysqlx_session_t *session, const char *query, uint32_t length) :
@@ -132,33 +153,9 @@ public:
   mysqlx_op_t op_type() { return m_op_type; }
   mysqlx_session_t &get_session() { return m_session; }
 
-  /*
-    Set WHERE for CRUD operation
-    PARAMETERS:
-      where_expr - character string containing WHERE clause,
-                   which will be parsed as required
-
-    RETURN:
-      RESULT_OK - on success
-      RESULT_ERR - on error
-
-    NOTE: each call to this function replaces previously set WHERE
-  */
   int set_where(const char *where_expr);
-
-  /*
-    Set LIMIT for CRUD operation
-    PARAMETERS:
-      row_count - the number of result rows to return
-      offset - the number of rows to skip before starting counting
-
-    RETURN:
-      RESULT_OK - on success
-      RESULT_ERR - on error
-
-    NOTE: each call to this function replaces previously set LIMIT
-  */
   int set_limit(row_count_t row_count, row_count_t offset);
+  int set_having(const char *having_expr);
 
   int add_order_by(va_list args);
   int add_row(bool get_columns, va_list args);
@@ -168,6 +165,7 @@ public:
   int add_projections(va_list args);
   int add_table_update_values(va_list args);
   int add_coll_modify_values(va_list args, mysqlx_modify_op op);
+  int add_group_by(va_list args);
 
   // Clear the list of ORDER BY items
   void clear_order_by();
@@ -175,4 +173,5 @@ public:
   // Return the session validity state
   bool session_valid();
 
+  friend Group_by_list;
 } mysqlx_stmt_t;

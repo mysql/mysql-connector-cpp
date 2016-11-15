@@ -43,6 +43,136 @@
   };
 
 
+TEST_F(xapi, test_having_group_by)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  mysqlx_result_t *res;
+  mysqlx_schema_t *schema;
+  mysqlx_table_t *table;
+  mysqlx_stmt_t *stmt;
+  mysqlx_row_t *row;
+  mysqlx_collection_t *collection;
+  const char *errmsg = NULL;
+  int row_num = 1;
+  const char *json_string = NULL;
+  size_t json_len = 0;
+
+  AUTHENTICATE();
+
+  mysqlx_schema_drop(get_session(), "cc_crud_test");
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_create(get_session(), "cc_crud_test"));
+
+  res = mysqlx_sql(get_session(), "CREATE TABLE cc_crud_test.group_test" \
+                                  "(id int primary key," \
+                                  "user_name varchar(32))",
+                                  MYSQLX_NULL_TERMINATED);
+  EXPECT_TRUE(res !=  NULL);
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_crud_test", 1)) != NULL);
+  EXPECT_TRUE((table = mysqlx_get_table(schema, "group_test", 1)) != NULL);
+
+  stmt = mysqlx_table_insert_new(table);
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(stmt, "id", "user_name", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_UINT(1), PARAM_STRING("John"), PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_UINT(2), PARAM_STRING("Mary"), PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_UINT(3), PARAM_STRING("Alan"), PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_UINT(4), PARAM_STRING("Anna"), PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_UINT(5), PARAM_STRING("Peter"), PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_UINT(6), PARAM_STRING("Anna"), PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_UINT(7), PARAM_STRING("Peter"), PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_UINT(8), PARAM_STRING("Anna"), PARAM_END));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  stmt = mysqlx_table_select_new(table);
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_items(stmt, "COUNT(*) AS cnt", "user_name", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_group_by(stmt, "user_name", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_having(stmt, "COUNT(*) > 1"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_order_by(stmt, "user_name", SORT_ORDER_ASC, PARAM_END));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  /*
+    This is the expected result
+    +-----+-----------+
+    | cnt | user_name |
+    +-----+-----------+
+    |   3 | Anna      |
+    |   2 | Peter     |
+    +-----+-----------+
+  */
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t cnt = 0;
+    char buf[256];
+    size_t buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &cnt));
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, buf, &buflen));
+
+    printf("\n Row # %d: ", row_num);
+    printf("[ %d ] [ %s ]", (int)cnt, buf);
+
+    switch (row_num)
+    {
+      case 1:
+        EXPECT_EQ(cnt, 3);
+        EXPECT_EQ(buflen, 5);
+        EXPECT_STREQ(buf, "Anna");
+      break;
+      case 2:
+        EXPECT_EQ(cnt, 2);
+        EXPECT_EQ(buflen, 6);
+        EXPECT_STREQ(buf, "Peter");
+        break;
+      default:
+        FAIL();
+    }
+    ++row_num;
+  }
+
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, "coll_group"));
+  EXPECT_TRUE((collection = mysqlx_get_collection(schema, "coll_group", 1)) != NULL);
+  stmt = mysqlx_collection_add_new(collection);
+  EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, "{\"num\": 1, \"user_name\" : \"John\"}"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, "{\"num\": 2, \"user_name\" : \"Mary\"}"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, "{\"num\": 3, \"user_name\" : \"Alan\"}"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, "{\"num\": 4, \"user_name\" : \"Anna\"}"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, "{\"num\": 5, \"user_name\" : \"Peter\"}"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, "{\"num\": 6, \"user_name\" : \"Anna\"}"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, "{\"num\": 7, \"user_name\" : \"Peter\"}"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, "{\"num\": 8, \"user_name\" : \"Anna\"}"));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  stmt = mysqlx_collection_find_new(collection);
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_projection(stmt, "{cnt: COUNT(*), user_name: user_name}"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_group_by(stmt, "user_name", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_having(stmt, "cnt > 1"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_order_by(stmt, "user_name", SORT_ORDER_ASC, PARAM_END));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  row_num = 1;
+  /*
+    This is the expected result:
+    {"cnt": 3, "user_name": "Anna"}
+    {"cnt": 2, "user_name": "Peter"}
+  */
+  while ((json_string = mysqlx_json_fetch_one(res, &json_len)) != NULL)
+  {
+    if (json_string)
+      printf("\n[json: %s]", json_string);
+    switch (row_num)
+    {
+      case 1:
+        EXPECT_STREQ("{\"cnt\": 3, \"user_name\": \"Anna\"}", json_string);
+        break;
+      case 2:
+        EXPECT_STREQ("{\"cnt\": 2, \"user_name\": \"Peter\"}", json_string);
+        break;
+      default:FAIL();
+    }
+    ++row_num;
+  }
+}
+
 TEST_F(xapi, schema)
 {
   SKIP_IF_NO_XPLUGIN
@@ -2251,7 +2381,7 @@ TEST_F(xapi_bugs, myc_352_stored_proc_err)
 {
   SKIP_IF_NO_XPLUGIN
 
-    mysqlx_result_t *res;
+  mysqlx_result_t *res;
   const char *schema_name = "cc_crud_test";
   const char *errmsg = NULL;
 

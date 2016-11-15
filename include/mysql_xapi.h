@@ -154,6 +154,7 @@ typedef object_id* MYSQLX_GUID;
 #define MYSQLX_ERROR_MISSING_KEY_NAME_MSG "Missing key name"
 #define MYSQLX_ERROR_OUTPUT_BUFFER_NULL "The output buffer cannot be NULL"
 #define MYSQLX_ERROR_OUTPUT_BUFFER_ZERO "The output buffer cannot have zero length"
+#define MYSQLX_ERROR_OP_NOT_SUPPORTED "The operation is not supported by the function"
 
 /* Opaque structures*/
 
@@ -1099,6 +1100,26 @@ PUBLIC_API int mysqlx_set_find_projection(mysqlx_stmt_t *stmt, const char *proj)
 #define mysqlx_set_find_criteria mysqlx_set_where
 
 
+/*
+A macro defining a function for setting HAVING for FIND operation.
+
+@see mysqlx_set_having()
+@ingroup xapi_tbl
+*/
+
+#define mysqlx_set_find_having mysqlx_set_having
+
+
+/**
+A macro defining a function for setting GROUP BY for FIND operation.
+
+@see mysqlx_set_group_by()
+@ingroup xapi_tbl
+*/
+
+#define mysqlx_set_find_group_by mysqlx_set_group_by
+
+
 /**
   A macro defining a function for setting LIMIT for DELETE operation.
 
@@ -1555,9 +1576,19 @@ mysqlx_table_select_new(mysqlx_table_t *table);
 
   @see mysqlx_set_having()
   @ingroup xapi_tbl
+*/
 
 #define mysqlx_set_select_having mysqlx_set_having
+
+
+/**
+A macro defining a function for setting GROUP BY for SELECT operation.
+
+@see mysqlx_set_group_by()
+@ingroup xapi_tbl
 */
+
+#define mysqlx_set_select_group_by mysqlx_set_group_by
 
 
 /**
@@ -1912,6 +1943,65 @@ PUBLIC_API int mysqlx_set_items(mysqlx_stmt_t *stmt, ...);
 
 PUBLIC_API int mysqlx_set_where(mysqlx_stmt_t *stmt, const char *where_expr);
 
+
+/**
+  Specify filter conditions for a group of rows/documents or aggregates
+  such as GROUP BY
+
+  Restrict the statement to rows/documents that satisfy
+  given selection criteria:
+    - for select/find operations limit the returned rows/documents,
+
+  Statements supported by this function: SELECT, FIND.
+  Calling it for UPDATE, MODIFY, DELETE, REMOVE, INSERT or ADD
+  will result in an error
+
+  @param stmt statement handle
+  @param having_expr character string containing Boolean expression
+                     like in SQL HAVING clause
+
+  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+
+  @note this function can be be used directly, but for the convenience
+        the code can use the specialized macros for a specific operation.
+        For SELECT operation the user code should use
+        `mysqlx_set_select_having()` macros that map the
+        corresponding `mysqlx_set_having()` function.
+        This way the unsupported operations will not be used.
+
+  @ingroup xapi_stmt
+*/
+
+PUBLIC_API int mysqlx_set_having(mysqlx_stmt_t *stmt, const char *having_expr);
+
+
+/**
+  Specify one or more columns/values to group the result in conjunction
+  with the aggregate functions.
+
+  Statements supported by this function: SELECT, FIND.
+  Calling it for UPDATE, MODIFY, DELETE, REMOVE, INSERT or ADD
+  will result in an error
+
+  @param stmt statement handle
+  @param  ... variable parameters list consisting of character strings
+  containing expressions specifying grouping:
+  expr_1, ..., expr_n, PARAM_END
+  (PARAM_END marks the end of projection's item list)
+
+  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+
+  @note this function can be be used directly, but for the convenience
+        the code can use the specialized macros for a specific operation.
+        For SELECT operation the user code should use
+        `mysqlx_set_select_group_by()` macros that map the
+        corresponding `mysqlx_set_group_by()` function.
+        This way the unsupported operations will not be used.
+
+  @ingroup xapi_stmt
+*/
+
+PUBLIC_API int mysqlx_set_group_by(mysqlx_stmt_t *stmt, ...);
 
 /**
   Specify ordering for a statement.

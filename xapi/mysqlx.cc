@@ -395,6 +395,25 @@ int STDCALL mysqlx_set_where(mysqlx_stmt_t *stmt, const char *where_expr)
   SAFE_EXCEPTION_END(stmt, RESULT_ERROR)
 }
 
+int STDCALL mysqlx_set_having(mysqlx_stmt_t *stmt, const char *having_expr)
+{
+  SAFE_EXCEPTION_BEGIN(stmt, RESULT_ERROR)
+  return stmt->set_having(having_expr);
+  SAFE_EXCEPTION_END(stmt, RESULT_ERROR)
+}
+
+int STDCALL mysqlx_set_group_by(mysqlx_stmt_t *stmt, ...)
+{
+  SAFE_EXCEPTION_BEGIN(stmt, RESULT_ERROR)
+  va_list args;
+  int res = RESULT_OK;
+  va_start(args, stmt);
+  res = stmt->add_group_by(args);
+  va_end(args);
+  return res;
+  SAFE_EXCEPTION_END(stmt, RESULT_ERROR)
+}
+ 
 int STDCALL
 mysqlx_set_limit_and_offset(mysqlx_stmt_t *stmt, uint64_t row_count,
                             uint64_t offset)
