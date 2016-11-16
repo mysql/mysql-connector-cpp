@@ -2410,3 +2410,33 @@ TEST_F(xapi_bugs, myc_352_stored_proc_err)
   EXPECT_TRUE((errmsg = mysqlx_error_message(res)) != NULL);
   printf("\nExpected error: %s\n", errmsg);
 }
+
+
+TEST_F(xapi, more_data_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  mysqlx_result_t *res;
+  mysqlx_row_t *row;
+  char data_buf[1200];
+  size_t buf_len = 1200;
+
+  // A piece of data 3K
+  const char *query = "SELECT BINARY REPEAT('z', 3000) as longdata";
+
+  AUTHENTICATE();
+
+  res = mysqlx_sql(get_session(), query, strlen(query));
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    EXPECT_EQ(RESULT_MORE_DATA, mysqlx_get_bytes(row, 0, 0, data_buf, &buf_len));
+    EXPECT_EQ(1200, buf_len);
+
+    EXPECT_EQ(RESULT_MORE_DATA, mysqlx_get_bytes(row, 0, 1200, data_buf, &buf_len));
+    EXPECT_EQ(1200, buf_len);
+
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 2400, data_buf, &buf_len));
+    EXPECT_EQ(601, buf_len);
+  }
+}

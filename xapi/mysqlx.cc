@@ -828,6 +828,7 @@ int STDCALL mysqlx_get_bytes(mysqlx_row_t* row, uint32_t col, uint64_t offset,
 
   CHECK_COLUMN_RANGE(col, row)
   cdk::bytes b = row->get_col_data(col);
+  int rc = RESULT_OK;
 
   if (b.size() == 0)
     return RESULT_NULL;
@@ -841,8 +842,11 @@ int STDCALL mysqlx_get_bytes(mysqlx_row_t* row, uint32_t col, uint64_t offset,
 
   if (b.size() - offset < *buf_len)
     *buf_len = b.size() - (size_t)offset;
+  else
+    rc = RESULT_MORE_DATA;
+
   memcpy(buf, b.begin() + offset, *buf_len);
-  return RESULT_OK;
+  return rc;
 
   SAFE_EXCEPTION_END(row, RESULT_ERROR)
 }

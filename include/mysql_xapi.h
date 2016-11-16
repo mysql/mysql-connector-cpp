@@ -104,6 +104,14 @@ typedef object_id* MYSQLX_GUID;
 #define RESULT_OK 0
 
 /**
+  Return value flag indicating that the last reading operation
+  did not finish reading to the end and there is still more data
+  to be fetched by functions suchs as mysqlx_get_bytes()
+*/
+
+#define RESULT_MORE_DATA 8
+
+/**
   Return value flag indicating end of data items (documents or
   rows) in a query result. This is used by functions which iterate
   over result data.
@@ -2253,7 +2261,9 @@ mysqlx_get_auto_increment_value(mysqlx_result_t *res);
                   buffer [OUT]
 
   @return `RESULT_OK` - on success; `RESULT_NULL` when the value in the
-          requested column is NULL; `RESULT_ERR` - on error
+          requested column is NULL; `RESULT_MORE_DATA` if not all data was
+          fetched after the last call to the function;
+          `RESULT_ERR` - on error
 
   @ingroup xapi_res
 */
