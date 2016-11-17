@@ -173,5 +173,5 @@ public:
   // Return the session validity state
   bool session_valid();
 
-  friend Group_by_list;
+  friend class Group_by_list;
 } mysqlx_stmt_t;
