@@ -155,8 +155,9 @@
 #else
 
 #define PUSH_PB_WARNINGS DIAGNOSTIC_PUSH \
-     DISABLE_WARNING(-Wshadow) \
-     DISABLE_WARNING(-Wunused-parameter)
+    DISABLE_WARNING(-Wshadow) \
+    DISABLE_WARNING(-Wunused-parameter) \
+    DISABLE_WARNING(-Wdeprecated-declarations) \
 
 #endif
 

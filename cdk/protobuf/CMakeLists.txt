@@ -100,6 +100,16 @@ IF(UNIX)
   list(APPEND warnings_list "-Wno-return-type")
   list(APPEND warnings_list "-Wno-unused-function")
 
+  if(APPLE)
+
+    # Our version of protobuf uses many constructs (mainly atomic ops)
+    # which were depracated in OSX 10.12.
+    # TODO: Upgrade bundled protobuf
+
+    list(APPEND warnings_list -Wno-deprecated-declarations)
+
+  endif()
+
   IF(CMAKE_COMPILER_IS_GNUCXX)
     list(APPEND warnings_list "-Wno-unused-local-typedefs")
     list(APPEND warnings_list "-Wno-maybe-uninitialized")
