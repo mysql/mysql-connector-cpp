@@ -48,8 +48,6 @@ if(MSVC)
   target_compile_options(expr_test PRIVATE /W3)
 endif()
 
-ADD_GCOV(expr_test)
-
 #
 # Add unit test that runs expr_test using runtests.py script
 #

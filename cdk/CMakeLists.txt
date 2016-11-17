@@ -365,6 +365,6 @@ ENDIF()
 IF(cdk_stand_alone)
   ADD_EXECUTABLE(try try.cc)
   TARGET_LINK_LIBRARIES(try cdk)
-  ADD_GCOV(try)
+  #ADD_COVERAGE(try)
 ENDIF()
 
