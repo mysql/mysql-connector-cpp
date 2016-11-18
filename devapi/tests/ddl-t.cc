@@ -109,10 +109,6 @@ TEST_F(Ddl, create_drop)
 
     EXPECT_THROW(schema.getTable("tb1", true), mysqlx::Error);
     EXPECT_THROW(schema.getTable("tb2", true), mysqlx::Error);
-    // xplugin is not reporting view because view uses deleted table.
-    // checking this with xplugin team
-    EXPECT_THROW(schema.getTable("view1", true), mysqlx::Error);
-
   }
 
   //Collection tests
