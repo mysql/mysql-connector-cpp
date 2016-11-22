@@ -3032,7 +3032,7 @@ void connection::tls_version()
 
   std::string tls_available = res->getString(2);
 
-  con->isValid();
+  std::cout << "TLS VERSIONS: " <<tls_available << std::endl;
 
   std::vector<std::string> tls_versions;
 
@@ -3048,6 +3048,21 @@ void connection::tls_version()
 
   connection_properties["OPT_SSL_MODE"] = sql::SSL_MODE_REQUIRED;
 
+  // Using wrong TLS version... should fail to connect
+  connection_properties["OPT_TLS_VERSION"] = sql::SQLString("TLSv999");
+
+  created_objects.clear();
+  try
+  {
+    con.reset(driver->connect(connection_properties));
+    FAIL("Wrong TLS version used and still can connect!");
+  }
+  catch (sql::SQLException &e)
+  {
+    //Should FAIL to connect
+  }
+
+
   for (std::vector<std::string>::const_iterator version = tls_versions.begin();
        version != tls_versions.end();
        ++version)
@@ -3055,21 +3070,22 @@ void connection::tls_version()
     connection_properties["OPT_TLS_VERSION"] = sql::SQLString(*version);
 
     created_objects.clear();
-    con.reset(driver->connect(connection_properties));
-
+    try
+    {
+      con.reset(driver->connect(connection_properties));
+    }
+    catch (sql::SQLException &e)
+    {
+      //Server exports TLS_VERSION even if no certs installed...
+      //So skipping anyway if error on connect
+      std::cout << "SKIP "<< *version << ": " << e.what() << std::endl;
+      continue;
+    }
 
     stmt.reset(con->createStatement());
     res.reset(stmt->executeQuery("SHOW SESSION STATUS LIKE 'Ssl_version'"));
 
     res->next();
-
-    //Workaround for failed UT on GPL
-    if (res->getString(2).length() == 0)
-    {
-      std::cout << "Skipping " << *version << std::endl;
-      continue;
-    }
-
 
     ASSERT_EQUALS(*version, res->getString(2));
   }

@@ -442,7 +442,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
 #define PROCESS_CONN_OPTION(option_type, options_map) process_connection_option< option_type >(it, options_map, sizeof(options_map)/sizeof(String2IntMap), proxy)
 
-  for (it = properties.begin(); it != properties.end(); ++it) {
+    for (it = properties.begin(); it != properties.end(); ++it) {
     if (!it->first.compare("userName")) {
       try {
         p_s = (it->second).get< sql::SQLString >();
@@ -761,6 +761,19 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
     }
 
   } /* End of cycle on connection options map */
+
+
+  /*
+    Workaround for libmysqlclient... if OPT_TLS_VERSION is used, it overwrites
+    OPT_SSL_MODE... setting it again.
+  */
+
+  it = properties.find("OPT_SSL_MODE");
+
+  if (it != properties.end())
+  {
+     PROCESS_CONN_OPTION(int, intOptions);
+  }
 
 #undef PROCESS_CONNSTR_OPTION
 
