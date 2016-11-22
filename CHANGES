@@ -26,6 +26,8 @@ GA 1.1.8 -
 - Add connect options MYSQL_OPT_MAX_ALLOWED_PACKET, MYSQL_OPT_NET_BUFFER_LENGTH,
   MYSQL_OPT_TLS_VERSION and MYSQL_OPT_SSL_MODE
 - Fix Visual Studio 2015 build.
+- Fix segmentation fault when inserting a large string (Bug#81213)
+- Fix Compilation Failure with PRE-5.7 C API (Bug#80539)
 
 GA  1.1.7 -
 - Add JSON support
