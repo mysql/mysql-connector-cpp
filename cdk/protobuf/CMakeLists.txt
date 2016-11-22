@@ -106,7 +106,7 @@ IF(UNIX)
     # which were depracated in OSX 10.12.
     # TODO: Upgrade bundled protobuf
 
-    list(APPEND warnings_list -Wdeprecated-declarations)
+    list(APPEND warnings_list -Wno-deprecated-declarations)
 
   endif()
 

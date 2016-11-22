@@ -138,6 +138,14 @@ protected:
   ==========
 */
 
+/*
+  Note: These types are compatible with the X protocol.
+*/
+
+typedef uint64_t row_count_t;
+typedef uint32_t col_count_t;
+typedef uint64_t collation_id_t;
+
 
 class Column_info
     : public api::Column_ref
@@ -148,15 +156,8 @@ public:
 
   virtual length_t length() const =0;
   virtual length_t decimals() const =0;
+  virtual collation_id_t collation() const = 0;
 };
-
-/*
-  Note: These types are compatible with the X protocol.
-*/
-
-typedef uint64_t row_count_t;
-typedef uint32_t col_count_t;
-typedef uint64_t charset_id_t;
 
 
 struct Traits

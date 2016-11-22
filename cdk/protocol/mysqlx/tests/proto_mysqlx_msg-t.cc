@@ -105,7 +105,7 @@ struct Scalar_checker
     EXPECT_EQ(std::string(val.begin(), val.end()), m_msg.v_string().value());
   }
 
-  void str(charset_id_t, bytes val)
+  void str(collation_id_t, bytes val)
   {
     // TODO: check that cs is utf8
     str(val);

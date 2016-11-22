@@ -66,7 +66,7 @@ using protocol::mysqlx::Protocol;
 using protocol::mysqlx::sql_state_t;
 using protocol::mysqlx::row_count_t;
 using protocol::mysqlx::col_count_t;
-using protocol::mysqlx::charset_id_t;
+using protocol::mysqlx::collation_id_t;
 using protocol::mysqlx::insert_id_t;
 
 typedef api::Async_op<void>   Async_op;

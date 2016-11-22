@@ -108,12 +108,12 @@ class Scalar_processor
 {
 public:
 
-  typedef protocol::mysqlx::charset_id_t charset_id_t;
+  typedef protocol::mysqlx::collation_id_t collation_id_t;
 
   virtual void null() =0;
 
   virtual void str(bytes) =0;
-  virtual void str(charset_id_t, bytes) =0;
+  virtual void str(collation_id_t, bytes) =0;
   virtual void num(int64_t) =0;
   virtual void num(uint64_t) =0;
   virtual void num(float) =0;
@@ -262,7 +262,7 @@ struct Safe_prc<protocol::mysqlx::api::Scalar_processor>
   typedef Safe_prc_base<protocol::mysqlx::api::Scalar_processor>  Base;
   using Base::Processor;
 
-  typedef Processor::charset_id_t charset_id_t;
+  typedef Processor::collation_id_t collation_id_t;
 
   Safe_prc(Processor *prc) : Base(prc)
   {}
@@ -279,7 +279,7 @@ struct Safe_prc<protocol::mysqlx::api::Scalar_processor>
   void str(bytes val)
   { return m_prc ? m_prc->str(val) : (void)NULL; }
 
-  void str(charset_id_t cs, bytes val)
+  void str(collation_id_t cs, bytes val)
   { return m_prc ? m_prc->str(cs, val) : (void)NULL; }
 
   void num(int64_t val)

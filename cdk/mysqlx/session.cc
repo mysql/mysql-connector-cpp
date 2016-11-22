@@ -627,7 +627,7 @@ void Session::col_schema(col_count_t pos,
 }
 
 
-void Session::col_charset(col_count_t pos, charset_id_t cs)
+void Session::col_collation(col_count_t pos, collation_id_t cs)
 {
   if (m_discard)
     return;

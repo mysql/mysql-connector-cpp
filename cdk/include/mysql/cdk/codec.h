@@ -26,7 +26,7 @@
 #define CDK_CODEC_H
 
 #include "common.h"
-
+#include "charsets.h"
 
 namespace cdk {
 
@@ -141,28 +141,53 @@ public:
 };
 
 
+/*
+  String encoding formats (charsets)
+  ----------------------------------
+*/
+
+/*
+  Constants for the known character set encodings. There is constant
+  Charset::CS for each charset CS listed in CDK_CD_LIST() macro (see
+  charsets.h).
+*/
+
+struct Charset
+{
+
+#undef  CS_ENUM
+#undef  CS
+#define CS_ENUM(CS) CS,
+
+  enum value
+  {
+    CDK_CS_LIST(CS_ENUM)
+  };
+};
+
+
 template<>
-class Format<TYPE_STRING> : public Format_base
+class  Format<TYPE_STRING> : public Format_base
 {
 public:
 
   Format(const Format_info &fi)
     : Format_base(TYPE_STRING, fi)
-    , m_cs(0), m_width(0), m_kind(STRING)
+    , m_cs(Charset::value(0)), m_width(0), m_kind(STRING)
   {
     fi.get_info(*this);
   }
 
-  charset_id_t charset() const { return m_cs; }
+  Charset::value charset() const { return m_cs; }
   uint64_t pad_width() const { return m_width; }
   bool     is_enum() const { return m_kind == ENUM; }
   bool     is_set()  const { return m_kind == SET; }
 
 protected:
 
-  // MySQL collation id that determines character encoding.
+  // Character set encoding.
 
-  charset_id_t m_cs;
+  Charset::value m_cs;
 
   /**
     If not zero and actual string is shorter than m_width
@@ -251,7 +276,20 @@ class Codec<TYPE_STRING>
 {
 public:
 
-  Codec(const Format_info &fi) : Codec_base<TYPE_STRING>(fi) {}
+  Codec(const Format_info &fi) : Codec_base<TYPE_STRING>(fi)
+  {
+    /*
+      FIXME: Currently we ignore character set information and try to
+      decode string data as if it was utf8. But this fails miserably if
+      string data is in another multibyte encoding or if non-ascii characters
+      are used. However, we do not throw error yet as this would break all
+      our unit tests (and render CDK almost unusable, given that MySQL default
+      charset is latin1).
+
+      if (Charset::utf8 != m_fmt.charset())
+          throw_error("Non utf-8 character encodings are not supported yet");
+    */
+  }
 
   /**
     Return number of bytes required to encode given string (including

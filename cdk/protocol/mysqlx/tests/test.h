@@ -73,7 +73,7 @@ using namespace cdk::protocol::mysqlx;
 
 // Disambiguate these types
 
-using cdk::protocol::mysqlx::charset_id_t;
+using cdk::protocol::mysqlx::collation_id_t;
 using cdk::protocol::mysqlx::row_count_t;
 
 typedef foundation::Number_codec<Endianess::NATIVE> Number_codec;
@@ -301,7 +301,7 @@ public:
          <<endl;
   }
 
-  virtual void col_charset(col_count_t pos, charset_id_t cs)
+  virtual void col_charset(col_count_t pos, collation_id_t cs)
   { cout <<"Column #" <<pos <<" charset: " <<cs <<endl; }
 
   virtual void col_decimals(col_count_t pos, unsigned short decimals)

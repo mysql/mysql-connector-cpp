@@ -601,7 +601,7 @@ void Rcv_result_base::process_msg_with(Mysqlx::Resultset::ColumnMetaData &col_md
         col_mdata.has_catalog() ? col_mdata.catalog() : "");
 
     if (col_mdata.has_collation())
-      mdata_proc.col_charset(ccount, col_mdata.collation());
+      mdata_proc.col_collation(ccount, col_mdata.collation());
 
     if (col_mdata.has_length())
       mdata_proc.col_length(ccount, col_mdata.length());
