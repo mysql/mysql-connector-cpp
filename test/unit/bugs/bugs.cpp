@@ -1040,5 +1040,19 @@ void bugs::bug22292073()
   ASSERT_EQUALS(31.0, res->getDouble(1));
 }
 
+void bugs::bug23212333()
+{
+  stmt->executeUpdate("drop table if exists bug23212333");
+  stmt->executeUpdate("create table bug23212333(id longtext)");
+
+  pstmt.reset(con->prepareStatement("insert into test.bug23212333 VALUES(?)"));
+
+  std::string buffer;
+  buffer.append(256*1024+1,'A');
+
+  pstmt->setString(1, buffer);
+  pstmt->execute();
+}
+
 } /* namespace regression */
 } /* namespace testsuite */

@@ -930,8 +930,9 @@ MySQL_Prepared_Statement::setString(unsigned int parameterIndex, const sql::SQLS
     throw InvalidArgumentException("MySQL_Prepared_Statement::setString: invalid 'parameterIndex'");
   }
   if (value.length() > 256*1024) {
-    MySQL_ParamBind::Blob_t dummy(const_cast<sql::SQLString*>(&value));
-    return param_bind->setBlob(--parameterIndex, dummy, false);
+    sql::SQLString* pvalue = new sql::SQLString(value);
+    MySQL_ParamBind::Blob_t dummy(pvalue);
+    return param_bind->setBlob(--parameterIndex, dummy, true);
   }
 
   --parameterIndex; /* DBC counts from 1 */
