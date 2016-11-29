@@ -65,6 +65,15 @@ ENDIF(WIN32)
 
 #-----------------
 # CPPFLAGS, CXXFLAGS and LDFLAGS from the environment
+
+SET(FreeBSD11Up False)
+if (${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD" AND
+    ${CMAKE_SYSTEM_VERSION} GREATER "10")
+  SET(FreeBSD11Up True)
+endif()
+
+# c++11 enabled by default only for FreeBSD 11 and up
+OPTION(CMAKE_ENABLE_C++11 "Build Connector using c++11" ${FreeBSD11Up})
 IF(CMAKE_ENABLE_C++11)
   INCLUDE(CheckCXXCompilerFlag)
   CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
