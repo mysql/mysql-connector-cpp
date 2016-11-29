@@ -46,10 +46,10 @@ public:
     return *m_ds;
   }
 
-  ds::Options& get_opts()
+  ds::TCPIP::Options& get_opts()
   {
     // TODO: make it configurable through env. variables
-    static ds::Options opts("root", NULL);
+    static ds::TCPIP::Options opts("root", NULL);
     opts.set_database("test");
     return opts;
   }

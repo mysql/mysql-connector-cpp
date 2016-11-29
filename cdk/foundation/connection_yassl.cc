@@ -34,14 +34,19 @@ POP_SYS_WARNINGS
 #include "connection_tcpip_base.h"
 
 
+static void throw_yassl_error_msg(const char* msg)
+{
+  throw cdk::foundation::Error(cdk::foundation::cdkerrc::tls_error,
+                               std::string("yaSSL: ") + msg);
+}
+
 static void throw_yassl_error()
 {
   char buffer[512];
 
   yaSSL::ERR_error_string_n(yaSSL::ERR_get_error(), buffer, sizeof(buffer));
 
-  throw cdk::foundation::Error(cdk::foundation::cdkerrc::tls_error,
-                               std::string("yaSSL: ") + buffer);
+  throw_yassl_error_msg(buffer);
 }
 
 
@@ -54,10 +59,12 @@ class connection_TLS_impl
   : public ::cdk::foundation::connection::TCPIP_base::Impl
 {
 public:
-  connection_TLS_impl(cdk::foundation::connection::TCPIP_base* tcpip)
+  connection_TLS_impl(cdk::foundation::connection::TCPIP_base* tcpip,
+                      cdk::foundation::connection::TLS::Options options)
     : m_tcpip(tcpip)
     , m_tls(NULL)
     , m_tls_ctx(NULL)
+    , m_options(options)
   {}
 
   ~connection_TLS_impl()
@@ -79,6 +86,7 @@ public:
   cdk::foundation::connection::TCPIP_base* m_tcpip;
   yaSSL::SSL* m_tls;
   yaSSL::SSL_CTX* m_tls_ctx;
+  cdk::foundation::connection::TLS::Options m_options;
 };
 
 
@@ -96,6 +104,7 @@ void connection_TLS_impl::do_connect()
   try
   {
     yaSSL::SSL_METHOD* method = yaSSL::TLSv1_client_method();
+
     if (!method)
       throw_yassl_error();
 
@@ -103,8 +112,34 @@ void connection_TLS_impl::do_connect()
     if (!m_tls_ctx)
       throw_yassl_error();
 
-    // TODO: Server certificate verification.
-    SSL_CTX_set_verify(m_tls_ctx, yaSSL::SSL_VERIFY_NONE, 0);
+    if (!m_options.get_ca().empty() ||
+        !m_options.get_ca_path().empty())
+    {
+      SSL_CTX_set_verify(m_tls_ctx, yaSSL::SSL_VERIFY_PEER , NULL);
+
+      int errNr = SSL_CTX_load_verify_locations(
+                    m_tls_ctx,
+                    m_options.get_ca().c_str(),
+                    m_options.get_ca_path().empty()
+                    ? NULL : m_options.get_ca_path().c_str());
+
+      switch(errNr)
+      {
+        case yaSSL::SSL_BAD_FILE:
+          throw_yassl_error_msg("error opening ca file");
+        case yaSSL::SSL_BAD_PATH:
+          throw_yassl_error_msg("bad ca_path");
+        case yaSSL::SSL_BAD_STAT:
+          throw_yassl_error_msg("bad file permissions inside ca_path");
+        default:
+          break;
+      }
+
+    }
+    else
+    {
+      SSL_CTX_set_verify(m_tls_ctx, yaSSL::SSL_VERIFY_NONE, 0);
+    }
 
     m_tls = yaSSL::SSL_new(m_tls_ctx);
     if (!m_tls)
@@ -116,8 +151,9 @@ void connection_TLS_impl::do_connect()
 
     yaSSL::SSL_set_fd(m_tls, static_cast<yaSSL::YASSL_SOCKET_T>(fd));
 
-    if (yaSSL::SSL_connect(m_tls) != yaSSL::SSL_SUCCESS)
+    if(yaSSL::SSL_connect(m_tls) != yaSSL::SSL_SUCCESS)
       throw_yassl_error();
+
   }
   catch (...)
   {
@@ -148,8 +184,9 @@ namespace foundation {
 namespace connection {
 
 
-TLS::TLS(TCPIP_base* tcpip)
-  : opaque_impl<TLS>(NULL, tcpip)
+TLS::TLS(TCPIP_base* tcpip,
+         const TLS::Options &options)
+  : opaque_impl<TLS>(NULL, tcpip, options)
 {}
 
 

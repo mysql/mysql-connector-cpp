@@ -73,7 +73,7 @@ TEST_F(Session_core, basic)
   {
 
     ds::TCPIP ds("localhost", m_port);
-    ds::Options options("root");
+    ds::TCPIP::Options options("root");
     cdk::Session s1(ds, options);
 
 
@@ -108,7 +108,7 @@ TEST_F(Session_core, default_schema)
   {
 
     ds::TCPIP ds("localhost", m_port);
-    ds::Options options("root");
+    ds::TCPIP::Options options("root");
     options.set_database("test");
 
     cdk::Session s(ds, options);
@@ -946,3 +946,109 @@ TEST_F(Session_core, docs)
 
 #endif
 
+
+TEST_F(Session_core, tls_options)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  struct row_processor_variable
+      : cdk::Row_processor
+  {
+    row_processor_variable(std::string &variable)
+      : m_variable(variable)
+    {}
+
+    virtual bool row_begin(row_count_t pos)
+    {
+      return true;
+    }
+
+    virtual void row_end(row_count_t pos) {}
+
+    virtual size_t field_begin(col_count_t pos, size_t data_len)
+    {
+      return data_len;
+    }
+
+    virtual void field_end(col_count_t pos) {}
+
+    virtual void field_null(col_count_t pos) {}
+
+    virtual size_t field_data(col_count_t pos, bytes data)
+    {
+      if (pos == 1)
+        m_variable.assign(data.begin(), data.end()-1);
+
+      return data.size();
+    }
+
+    virtual void end_of_data() {}
+
+    std::string& m_variable;
+
+  };
+
+  try
+  {
+
+    ds::TCPIP ds("localhost", m_port);
+    ds::TCPIP::Options options("root");
+    connection::TLS::Options tls_options;
+
+    std::string ssl_ca;
+    std::string datadir;
+
+    {
+
+      options.set_tls(true);
+      cdk::Session s_tmp(ds, options);
+
+      Reply ssl_var(s_tmp.sql("show global variables like 'ssl_ca';"));
+
+      if (ssl_var.has_results())
+      {
+        Cursor cur(ssl_var);
+
+        row_processor_variable m_row_ca(ssl_ca);
+
+        cur.get_row(m_row_ca);
+      }
+
+      // CA path is same as data dir
+      Reply ssl_var_path(s_tmp.sql("show global variables like 'datadir';"));
+      if (ssl_var_path.has_results())
+      {
+        Cursor cur(ssl_var_path);
+
+        row_processor_variable m_row_ca_path(datadir);
+
+        cur.get_row(m_row_ca_path);
+
+      }
+    }
+
+    tls_options.set_ca(datadir+ssl_ca);
+
+    options.set_tls(tls_options);
+
+    cdk::Session s1(ds, options);
+
+
+    if (!s1.is_valid())
+      FAIL() << "Invalid Session created";
+
+    ssl_ca.erase(ssl_ca.size()-1);
+
+    tls_options.set_ca(ssl_ca);
+
+    options.set_tls(tls_options);
+
+    EXPECT_THROW(cdk::Session s1(ds, options), Error);
+
+  }
+  catch (Error &e)
+  {
+    FAIL() << "Connection error: " << e << endl;
+  }
+
+}

@@ -37,28 +37,29 @@ namespace ds {
  * Generic session options which are valid for any data source.
  */
 
+
 class Options
 {
 public:
 
   Options()
-    : m_usr(L"root"), m_has_pwd(false), m_has_db(false), m_use_tls(false)
+    : m_usr(L"root"), m_has_pwd(false), m_has_db(false)
   {
   }
 
   Options(const Options &other)
     : m_usr(other.m_usr)
     , m_has_pwd(other.m_has_pwd), m_pwd(other.m_pwd)
-    , m_has_db(false), m_use_tls(other.m_use_tls)
+    , m_has_db(false)
   {
   }
 
   Options(const string &usr, const std::string *pwd =NULL)
-    : m_usr(usr), m_has_pwd(false), m_has_db(false), m_use_tls(false)
+    : m_usr(usr), m_has_pwd(false), m_has_db(false)
   {
     if (pwd)
     {
-      m_has_pwd= true;
+      m_has_pwd = true;
       m_pwd= *pwd;
     }
   }
@@ -69,8 +70,6 @@ public:
   virtual const std::string* password() const
   { return m_has_pwd ? &m_pwd : NULL; }
 
-  virtual bool use_tls() const { return m_use_tls; }
-  void set_tls(bool use_tls) { m_use_tls = use_tls; }
 
   virtual const string* database() const
   {
@@ -90,8 +89,8 @@ protected:
   std::string m_pwd;
 
   bool    m_has_db;
-  bool    m_use_tls;
   string  m_db;
+
 };
 
 
@@ -110,7 +109,8 @@ protected:
 
 public:
 
-  typedef ds::Options Options;
+  class Options;
+
 
   TCPIP(const std::string &_host="localhost", unsigned short _port =33060)
   : m_port(_port), m_host(_host)
@@ -123,6 +123,34 @@ public:
 
   virtual unsigned short port() const { return m_port; }
   virtual const std::string& host() const { return m_host; }
+};
+
+
+class TCPIP::Options : public ds::Options
+{
+public:
+
+  Options()
+  {}
+
+  Options(const string &usr, const std::string *pwd =NULL)
+    : ds::Options(usr, pwd)
+    , m_tls_options(true)
+  {}
+
+
+  void set_tls(const cdk::connection::TLS::Options& options)
+  {
+    m_tls_options = options;
+  }
+
+  const cdk::connection::TLS::Options& get_tls() const
+  {
+    return m_tls_options;
+  }
+
+private:
+  cdk::connection::TLS::Options m_tls_options;
 };
 
 } // mysqlx

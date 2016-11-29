@@ -26,6 +26,7 @@
 #define CDK_FOUNDATION_CONNECTION_YASSL_H
 
 #include "connection_tcpip.h"
+#include "stream.h"
 #include "error.h"
 
 
@@ -39,7 +40,12 @@ class TLS
   , opaque_impl<TLS>
 {
 public:
-  TLS(TCPIP_base* tcpip);
+
+  class Options;
+
+  TLS(TCPIP_base* tcpip,
+      const Options& Opts);
+
 
   class Read_op;
   class Read_some_op;
@@ -48,6 +54,34 @@ public:
 
 private:
   TCPIP_base::Impl& get_base_impl();
+};
+
+
+class TLS::Options
+{
+public:
+
+  Options(bool use_tls = true)
+    : m_use_tls(use_tls)
+  {}
+
+  bool use_tls() const { return m_use_tls; }
+
+  void set_key(const string &key) { m_key = key; }
+  const std::string &get_key() const { return m_key; }
+
+  void set_ca(const string &ca) { m_ca = ca; }
+  void set_ca_path(const string &ca_path) { m_ca_path = ca_path; }
+
+  const std::string &get_ca() const { return m_ca; }
+  const std::string &get_ca_path() const { return m_ca_path; }
+
+protected:
+
+  bool m_use_tls;
+  std::string m_key;
+  std::string m_ca;
+  std::string m_ca_path;
 };
 
 
