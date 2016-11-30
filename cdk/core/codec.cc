@@ -60,36 +60,49 @@ size_t cdk::Codec<TYPE_BYTES>::to_bytes(const std::string &str, bytes raw)
   return len;
 }
 
-size_t Codec<TYPE_STRING>::measure(const string &)
+size_t Codec<TYPE_STRING>::measure(const string &str)
 {
-  //TODO: CS
-  return 0;
+  // add 1 for the trailing 0x00 byte
+  return 1 + get_codec().measure(str);
 }
 
 
 size_t Codec<TYPE_STRING>::from_bytes(bytes raw, string &str)
 {
-  //TODO: CS
-  //TODO: detect utf8 encoding
   //TODO: padding
-  foundation::Codec<foundation::Type::STRING> utf8;
 
   // using string object, no need to have NULL char terminator
   // remove NULL char terminator if present
-  return utf8.from_bytes(bytes(raw.begin(),
-                               ( raw.size() > 0 && *(raw.end()-1) == '\0') ?
-                                 raw.end()-1 :
-                                 raw.end()),
-                         str);
+  return get_codec().from_bytes(bytes(raw.begin(),
+                                ( raw.size() > 0 && *(raw.end()-1) == '\0') ?
+                                  raw.end()-1 :
+                                  raw.end()),
+                           str);
 }
 
 
 size_t Codec<TYPE_STRING>::to_bytes(const string& str,bytes raw)
 {
-  //TODO: CS
-  //TODO: detect utf8 encoding
-  foundation::Codec<foundation::Type::STRING> utf8;
-  return utf8.to_bytes(str, raw);
+  // FIXME: should we add the trailing 0x00 byte here, or is it done by
+  // foundation codecs?
+  return get_codec().to_bytes(str, raw);
+}
+
+
+foundation::api::String_codec* Format<TYPE_STRING>::codec() const
+{
+  /*
+    TODO: This implementation uses ASCII codec for all non utf8 strings,
+    which works only for simple strings. Correctly handle all MySQL
+    character encodings.
+  */
+
+  static foundation::String_codec<foundation::codecvt_utf8>  utf8;
+  static foundation::String_codec<foundation::codecvt_ascii> ascii;
+
+  return Charset::utf8 == charset() ?
+      (foundation::api::String_codec*)&utf8
+    : (foundation::api::String_codec*)&ascii;
 }
 
 

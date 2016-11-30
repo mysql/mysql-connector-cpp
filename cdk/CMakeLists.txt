@@ -113,12 +113,6 @@ if(DISABLE_WARNINGS)
 
 endif()
 
-#message("flags: ${CMAKE_C_FLAGS}")
-#message("c++ flags: ${CMAKE_CXX_FLAGS}")
-#foreach(TYPE DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
-#  message("${TYPE} flags: ${CMAKE_C_FLAGS_${TYPE}}")
-#  message("c++ ${TYPE} flags: ${CMAKE_CXX_FLAGS_${TYPE}}")
-#endforeach()
 
 #
 # Infrastructure for defining code configuration settings
@@ -243,6 +237,26 @@ endif()
 
 
 #
+# Deal with broken optimization in gcc 4.8.
+#
+# We observed very strange behaviour of exceptions when compiling
+# fully optimized code wtih gcc 4.8. Downgrade optimization to -O1
+# in this case. To get trully optimized code use gcc 4.9+ or clang.
+#
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.9")
+  foreach(LANG C CXX)
+  foreach(TYPE RELEASE RELWITHDEBINFO)
+    string(REPLACE "-O3" "-O1" CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}}")
+    string(REPLACE "-O2" "-O1" CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}}")
+  endforeach(TYPE)
+  endforeach(LANG)
+endif()
+endif()
+
+
+#
 # Set higher warning level on Windows to catch non-portable
 # code.
 #
@@ -306,6 +320,13 @@ ELSE()
 ENDIF()
 
 endforeach(LANG)
+
+#message("flags: ${CMAKE_C_FLAGS}")
+#message("c++ flags: ${CMAKE_CXX_FLAGS}")
+#foreach(TYPE DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
+#  message("${TYPE} flags: ${CMAKE_C_FLAGS_${TYPE}}")
+#  message("c++ ${TYPE} flags: ${CMAKE_CXX_FLAGS_${TYPE}}")
+#endforeach()
 
 
 #

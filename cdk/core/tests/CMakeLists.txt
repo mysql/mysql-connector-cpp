@@ -24,6 +24,6 @@ IF (WITH_TESTS)
 
 ADD_DEFINITIONS(-DDEFAULT_PORT=33060)
 
-ADD_NG_TEST(cdk-t session-t.cc session_crud-t.cc)
+ADD_NG_TEST(cdk-t session-t.cc session_crud-t.cc result-t.cc)
 
 ENDIF()

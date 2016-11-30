@@ -183,6 +183,8 @@ public:
   bool     is_enum() const { return m_kind == ENUM; }
   bool     is_set()  const { return m_kind == SET; }
 
+  foundation::api::String_codec *codec() const;
+
 protected:
 
   // Character set encoding.
@@ -274,9 +276,20 @@ class Codec<TYPE_STRING>
   : public foundation::api::String_codec
   , Codec_base<TYPE_STRING>
 {
+//  foundation::api::String_codec *m_codec;
+
+  foundation::api::String_codec& get_codec()
+  {
+    foundation::api::String_codec *codec = m_fmt.codec();
+    if (!codec)
+      throw_error("undefined string conversion");
+    return *codec;
+  }
+
 public:
 
-  Codec(const Format_info &fi) : Codec_base<TYPE_STRING>(fi)
+  Codec(const Format_info &fi)
+    : Codec_base<TYPE_STRING>(fi)
   {
     /*
       FIXME: Currently we ignore character set information and try to
