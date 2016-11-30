@@ -394,8 +394,8 @@ TEST_F(Sess, ssl_session)
 
   uri << "mysqlx://" << get_user();
 
-  if (get_password())
-    uri << ":"<< *get_password();
+  if (get_password() && *get_password())
+    uri << ":"<< get_password();
 
   uri << "@" << "localhost:" << get_port();
 
