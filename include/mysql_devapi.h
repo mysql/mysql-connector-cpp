@@ -505,7 +505,7 @@ public:
   @ingroup devapi
 */
 
-class SessionSettings
+class PUBLIC_API SessionSettings
 {
 public:
   enum Options
@@ -911,9 +911,14 @@ class PUBLIC_API XSession
 
 public:
 
-  template<typename ...S>
-  XSession(S...settings)
-    : XSession_base(settings...)
+  XSession(SessionSettings settings)
+    : XSession_base(settings)
+  {}
+
+
+  template<typename...T>
+  XSession(T...options)
+    : XSession_base(SessionSettings(options...))
   {}
 
 
@@ -949,9 +954,14 @@ public:
     as XSession constructors.
   */
 
+  NodeSession(SessionSettings settings)
+    : XSession_base(settings)
+  {}
+
+
   template<typename...T>
-  NodeSession(T... args)
-    : XSession_base(args...)
+  NodeSession(T...options)
+    : XSession_base(SessionSettings(options...))
   {}
 
 
