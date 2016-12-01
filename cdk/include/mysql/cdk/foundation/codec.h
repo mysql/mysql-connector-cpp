@@ -90,7 +90,7 @@ class codecvt_utf8 : public std::codecvt<char_t, char, std::mbstate_t>
 
 public:
 
-  size_t measure(const string& str) const
+  size_t measure(const string&) const
   {
     THROW("codecvt_utf8: measure() not yet implemented");
   }
