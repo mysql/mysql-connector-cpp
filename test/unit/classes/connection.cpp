@@ -2998,8 +2998,15 @@ void connection::ssl_mode()
 
   connection_properties["OPT_SSL_MODE"] = sql::SSL_MODE_REQUIRED;
 
-  created_objects.clear();
-  con.reset(driver->connect(connection_properties));
+  try
+  {
+    created_objects.clear();
+    con.reset(driver->connect(connection_properties));
+  }
+  catch (std::exception&)
+  {
+    SKIP("Server doesn't support SSL connections");
+  }
 
   con->setSchema(db);
   stmt.reset(con->createStatement());
@@ -3021,7 +3028,6 @@ void connection::ssl_mode()
 
   created_objects.clear();
   con.reset(driver->connect(connection_properties));
-
 
   connection_properties["OPT_SSL_MODE"] = sql::SSL_MODE_DISABLED;
 
