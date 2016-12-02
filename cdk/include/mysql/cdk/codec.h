@@ -276,7 +276,6 @@ class Codec<TYPE_STRING>
   : public foundation::api::String_codec
   , Codec_base<TYPE_STRING>
 {
-//  foundation::api::String_codec *m_codec;
 
   foundation::api::String_codec& get_codec()
   {
@@ -290,24 +289,9 @@ public:
 
   Codec(const Format_info &fi)
     : Codec_base<TYPE_STRING>(fi)
-  {
-    /*
-      FIXME: Currently we ignore character set information and try to
-      decode string data as if it was utf8. But this fails miserably if
-      string data is in another multibyte encoding or if non-ascii characters
-      are used. However, we do not throw error yet as this would break all
-      our unit tests (and render CDK almost unusable, given that MySQL default
-      charset is latin1).
+  {}
 
-      if (Charset::utf8 != m_fmt.charset())
-          throw_error("Non utf-8 character encodings are not supported yet");
-    */
-  }
-
-  /**
-    Return number of bytes required to encode given string (including
-    the trailing 0x00
-  */
+  /// Return number of bytes required to encode given string.
   size_t measure(const string&);
 
   size_t from_bytes(bytes raw, string& str);

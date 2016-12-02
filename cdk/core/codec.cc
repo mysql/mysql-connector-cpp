@@ -62,8 +62,7 @@ size_t cdk::Codec<TYPE_BYTES>::to_bytes(const std::string &str, bytes raw)
 
 size_t Codec<TYPE_STRING>::measure(const string &str)
 {
-  // add 1 for the trailing 0x00 byte
-  return 1 + get_codec().measure(str);
+  return get_codec().measure(str);
 }
 
 
@@ -71,8 +70,12 @@ size_t Codec<TYPE_STRING>::from_bytes(bytes raw, string &str)
 {
   //TODO: padding
 
-  // using string object, no need to have NULL char terminator
-  // remove NULL char terminator if present
+  /*
+    Note: xprotocol adds 0x00 byte at the end of bytes encoding
+    a string to distinguisht the empty string from the null value.
+    When decoding, we strip the extra 0x00 byte at the end, if present.
+  */
+
   return get_codec().from_bytes(bytes(raw.begin(),
                                 ( raw.size() > 0 && *(raw.end()-1) == '\0') ?
                                   raw.end()-1 :
@@ -81,10 +84,8 @@ size_t Codec<TYPE_STRING>::from_bytes(bytes raw, string &str)
 }
 
 
-size_t Codec<TYPE_STRING>::to_bytes(const string& str,bytes raw)
+size_t Codec<TYPE_STRING>::to_bytes(const string& str, bytes raw)
 {
-  // FIXME: should we add the trailing 0x00 byte here, or is it done by
-  // foundation codecs?
   return get_codec().to_bytes(str, raw);
 }
 

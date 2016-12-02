@@ -130,6 +130,13 @@ public:
 inline
 cdk::Charset::value get_collation_cs(collation_id_t id)
 {
+  /*
+    If collation id is 0, that is, there is no collation info in server
+    reply, we assume utf8.
+  */
+
+  if (0 == id)
+    return cdk::Charset::utf8;
 
 #undef  CS
 #define COLL_TO_CS(CS) COLLATIONS_##CS(COLL_TO_CS_CASE) return cdk::Charset::CS;
