@@ -763,18 +763,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   } /* End of cycle on connection options map */
 
 
-  /*
-    Workaround for libmysqlclient... if OPT_TLS_VERSION is used, it overwrites
-    OPT_SSL_MODE... setting it again.
-  */
-
-  it = properties.find("OPT_SSL_MODE");
-
-  if (it != properties.end())
-  {
-     PROCESS_CONN_OPTION(int, intOptions);
-  }
-
 #undef PROCESS_CONNSTR_OPTION
 
   /* libmysql shouldn't think it is too smart */
@@ -812,8 +800,21 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
   if (ssl_used) {
     /* According to the docs, always returns 0 */
-    proxy->ssl_set(sslKey.c_str(), sslCert.c_str(), sslCA.c_str(), sslCAPath.c_str(), sslCipher.c_str());
+    proxy->ssl_set(sslKey, sslCert, sslCA, sslCAPath, sslCipher.c_str());
   }
+
+  /*
+    Workaround for libmysqlclient... if OPT_TLS_VERSION or ssl_set is used,
+    it overwrites OPT_SSL_MODE... setting it again.
+  */
+
+  it = properties.find("OPT_SSL_MODE");
+
+  if (it != properties.end())
+  {
+     PROCESS_CONN_OPTION(int, intOptions);
+  }
+
   CPP_INFO_FMT("hostName=%s", uri.Host().c_str());
   CPP_INFO_FMT("user=%s", userName.c_str());
   CPP_INFO_FMT("port=%d", uri.Port());

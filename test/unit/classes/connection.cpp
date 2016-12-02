@@ -2986,7 +2986,9 @@ void connection::ssl_mode()
   std::cout << "TLS VERSIONS: " <<tls_versions << std::endl;
 
   if (tls_versions.empty())
+  {
     SKIP("Server doesn't support SSL connections");
+  }
 
   res.reset(stmt->executeQuery("SHOW SESSION STATUS LIKE 'Ssl_version'"));
 
@@ -3006,6 +3008,36 @@ void connection::ssl_mode()
   res->next();
 
   ASSERT_GT(0, static_cast<int>(res->getString(2).length()));
+
+  stmt->execute("Drop user if exists ssluser");
+  stmt->execute("CREATE USER 'ssluser' IDENTIFIED BY 'sslpass' require SSL");
+  stmt->execute("GRANT all on test.* to 'ssluser'");
+
+  connection_properties["hostName"]=url;
+  connection_properties["userName"]="ssluser";
+  connection_properties["password"]="sslpass";
+
+  connection_properties["OPT_SSL_MODE"] = sql::SSL_MODE_REQUIRED;
+
+  created_objects.clear();
+  con.reset(driver->connect(connection_properties));
+
+
+  connection_properties["OPT_SSL_MODE"] = sql::SSL_MODE_DISABLED;
+
+  //only to trigger setssl which changes SSL_MODE
+  connection_properties["sslCA"] = "invalid_path";
+
+  created_objects.clear();
+
+  try
+  {
+    con.reset(driver->connect(connection_properties));
+    FAIL("User requires SSL");
+  } catch (std::exception &e)
+  {
+    std::cout << e.what() << std::endl;
+  }
 
 }
 
