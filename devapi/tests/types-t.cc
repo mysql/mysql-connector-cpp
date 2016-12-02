@@ -398,27 +398,17 @@ TEST_F(Types, string)
   sql(
     "CREATE TABLE test.types("
     "  c0 VARCHAR(10) COLLATE latin2_general_ci,"
-    "  c1 VARCHAR(32) COLLATE utf8_swedish_ci"
+    "  c1 VARCHAR(32) COLLATE utf8_swedish_ci,"
+    "  c2 VARCHAR(32) CHARACTER SET latin2"
     ")"
   );
 
   Table types = getSchema("test").getTable("types");
 
-  /*
-    FIXME: For table columns using non utf8 encoding, any non-ascii
-    characters are returned by xplugin using the column encoding. This
-    causes errors when reading data because we asssume xplugin
-    sends strings using utf8 encoding. Check X protocol specs.
-
-    When this is fixed, the first string should use some non-ascii
-    characters that can be represented in latin2 (str0 can be made
-    the same as str1).
-  */
-
   string str0(L"Foobar");
   string str1(L"Mog\u0119 je\u015B\u0107 szk\u0142o");
 
-  types.insert().values(str0, str1).execute();
+  types.insert().values(str0, str1, str1).execute();
 
   cout << "Table prepared, querying it..." << endl;
 
@@ -449,10 +439,28 @@ TEST_F(Types, string)
   EXPECT_EQ(CharacterSet::utf8, c1.getCharacterSet());
   EXPECT_EQ(Collation<CharacterSet::utf8>::swedish_ci, c1.getCollation());
 
+  Column c2 = res.getColumn(2);
+  EXPECT_EQ(Type::STRING, c2.getType());
+  cout << "column #2 length: " << c2.getLength() << endl;
+  cout << "column #2 charset: " << c2.getCharacterSetName() << endl;
+  cout << "column #2 collation: " << c2.getCollationName() << endl;
+
+  EXPECT_EQ(CharacterSet::latin2, c2.getCharacterSet());
+
   Row row = res.fetchOne();
 
   EXPECT_EQ(str0, (string)row[0]);
   EXPECT_EQ(str1, (string)row[1]);
+
+  /*
+    FIXME: the third colum contains non-utf8 string which uses non-ascii
+    characters. Currently we do not handle such strings and an error is
+    thrown on an attempt of converting it to a C++ string.
+
+    Replace with EXPECT_EQ() once we handle all MySQL charsets.
+  */
+
+  EXPECT_THROW((string)row[2], Error);
 }
 
 

@@ -386,6 +386,7 @@ public:
 
   unsigned long m_length;
   unsigned short m_decimals;
+  cdk::collation_id_t m_collation;
 
   template <typename T>
   Impl(const T &init) : Format_info(init)
@@ -405,6 +406,7 @@ public:
         m_schema_name = ci.table()->schema()->name();
     }
 
+    m_collation = ci.collation();
     m_length = ci.length();
     assert(ci.decimals() < std::numeric_limits<short unsigned>::max());
     m_decimals = static_cast<short unsigned>(ci.decimals());
@@ -604,11 +606,11 @@ bool Column::isPadded() const
 #define COLL_SWITCH(CS,ID,COLL,CASE) \
   case ID: return Collation<CharacterSet::CS>::COLL_CONST_NAME(COLL,CASE);
 
-const CollationInfo& collation_from_charset_id(cdk::charset_id_t id)
+const CollationInfo& collation_from_id(cdk::collation_id_t id)
 {
   switch (id)
   {
-    CS_LIST(CS_SWITCH)
+    CDK_CS_LIST(CS_SWITCH)
   default:
     THROW("Unknown collation id");
   }
@@ -630,8 +632,7 @@ const CollationInfo& Column::getCollation() const
 
     case cdk::TYPE_STRING:
     {
-      const Format_descr<cdk::TYPE_STRING> &fd = m_impl->get<cdk::TYPE_STRING>();
-      return collation_from_charset_id(fd.m_format.charset());
+      return collation_from_id(m_impl->m_collation);
     }
 
     case cdk::TYPE_INTEGER:
@@ -646,6 +647,8 @@ const CollationInfo& Column::getCollation() const
 
 CharacterSet Column::getCharacterSet() const
 {
+  // TODO: Better use cdk encoding format information
+  //const Format_descr<cdk::TYPE_STRING> &fd = m_impl->get<cdk::TYPE_STRING>();
   return getCollation().getCharacterSet();
 }
 
@@ -687,7 +690,7 @@ Collation<CharacterSet::CS>::COLL_CONST_NAME(COLL,CASE) = \
 #define COLL_NAME_ci(CS,COLL)  #CS "_" #COLL "_ci"
 #define COLL_NAME_cs(CS,COLL)  #CS "_" #COLL "_cs"
 
-CS_LIST(COLL_DEFS)
+CDK_CS_LIST(COLL_DEFS)
 
 
 /*
@@ -785,15 +788,25 @@ const Row::Impl& Row::get_impl() const
 
 col_count_t Row::colCount() const
 {
-  const Impl &impl = get_impl();
-  col_count_t cnt = (impl.m_mdata ? impl.m_mdata->col_count() : 0);
-  return impl.m_col_count > cnt ? impl.m_col_count : cnt;
+  try {
+    const Impl &impl = get_impl();
+    col_count_t cnt = (impl.m_mdata ? impl.m_mdata->col_count() : 0);
+    return impl.m_col_count > cnt ? impl.m_col_count : cnt;
+  }
+  CATCH_AND_WRAP
 }
 
 
 bytes Row::getBytes(col_count_t pos) const
 {
-  return get_impl().get_bytes(pos);
+  try {
+    return get_impl().get_bytes(pos);
+  }
+  catch (const std::out_of_range&)
+  {
+    throw;
+  }
+  CATCH_AND_WRAP
 }
 
 
@@ -828,68 +841,77 @@ Value& Row::get(mysqlx::col_count_t pos)
   */
 
   try {
-    // will throw out_of_range exception if column at `pos` is NULL
-    bytes data = getBytes(pos);
 
-    switch (impl.m_mdata->get_type(pos))
-    {
-    case cdk::TYPE_STRING:    return impl.get<cdk::TYPE_STRING>(pos);
-    case cdk::TYPE_INTEGER:   return impl.get<cdk::TYPE_INTEGER>(pos);
-    case cdk::TYPE_FLOAT:     return impl.get<cdk::TYPE_FLOAT>(pos);
-    case cdk::TYPE_DOCUMENT:  return impl.get<cdk::TYPE_DOCUMENT>(pos);
+    try {
+      // will throw out_of_range exception if column at `pos` is NULL
+      bytes data = getBytes(pos);
 
-      /*
-        TODO: Other "natural" conversions
-        TODO: User-defined conversions (also to user-defined types)
-      */
+      switch (impl.m_mdata->get_type(pos))
+      {
+      case cdk::TYPE_STRING:    return impl.get<cdk::TYPE_STRING>(pos);
+      case cdk::TYPE_INTEGER:   return impl.get<cdk::TYPE_INTEGER>(pos);
+      case cdk::TYPE_FLOAT:     return impl.get<cdk::TYPE_FLOAT>(pos);
+      case cdk::TYPE_DOCUMENT:  return impl.get<cdk::TYPE_DOCUMENT>(pos);
 
-    case cdk::TYPE_BYTES:
+        /*
+          TODO: Other "natural" conversions
+          TODO: User-defined conversions (also to user-defined types)
+        */
 
-      /*
-        Note: in case of raw bytes, we trim the extra 0x00 byte added
-        at the end by the protocol (to handle NULL values).
-      */
+      case cdk::TYPE_BYTES:
 
-      return set(pos, bytes(data.begin(), data.end() - 1));
+        /*
+          Note: in case of raw bytes, we trim the extra 0x00 byte added
+          at the end by the protocol (to handle NULL values).
+        */
 
-    default:
+        return set(pos, bytes(data.begin(), data.end() - 1));
 
-      /*
-        For all types for which we do not have a natural conversion
-        to C++ type, we return raw bytes representing the value as
-        returned by protocol.
-      */
+      default:
 
-      return set(pos, data);
+        /*
+          For all types for which we do not have a natural conversion
+          to C++ type, we return raw bytes representing the value as
+          returned by protocol.
+        */
+
+        return set(pos, data);
+      }
     }
+    catch (std::out_of_range&)
+    {
+      // set to NULL
+      return set(pos, Value());
+    }
+
   }
-  catch (std::out_of_range&)
-  {
-    // set to NULL
-    return set(pos, Value());
-  }
+  CATCH_AND_WRAP
 }
 
 
 Value& Row::set(col_count_t pos, const Value &val)
 {
-  if (!m_impl)
-    m_impl = std::make_shared<Impl>();
+  try {
+    if (!m_impl)
+      m_impl = std::make_shared<Impl>();
 
-  Impl &impl = get_impl();
+    Impl &impl = get_impl();
 
-  impl.m_vals.emplace(pos, val);
+    impl.m_vals.emplace(pos, val);
 
-  if (pos + 1 > impl.m_col_count)
-    impl.m_col_count = pos + 1;
+    if (pos + 1 > impl.m_col_count)
+      impl.m_col_count = pos + 1;
 
-  return impl.m_vals.at(pos);
+    return impl.m_vals.at(pos);
+  }
+  CATCH_AND_WRAP
 }
 
 
 void Row::clear()
 {
-  m_impl.reset();
+  try { m_impl.reset(); }
+  CATCH_AND_WRAP
 }
 
 
@@ -906,14 +928,22 @@ template<>
 const Value
 Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_STRING> &fd) const
 {
+  /*
+    String encoding has artificial 0x00 byte appended at the end to
+    distinguish the empty string from the null value. We skip
+    the trailing 0x00 byte to get just the raw bytes that encode the string.
+  */
+
+  cdk::bytes raw(data.begin(), data.end() - 1);
+
   // If this string value is in fact a SET, then return it as raw bytes.
 
   if (fd.m_format.is_set())
-    return Value(bytes(data.begin(), data.end()));
+    return Value(bytes(raw.begin(), raw.end()));
 
   auto &codec = fd.m_codec;
   cdk::string str;
-  codec.from_bytes(data, str);
+  codec.from_bytes(raw, str);
   return Value(std::move(str));
 }
 

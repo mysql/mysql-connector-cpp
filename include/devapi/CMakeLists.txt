@@ -22,7 +22,7 @@
 
 SET(headers common.h result.h statement.h document.h
             crud.h collection_crud.h table_crud.h
-            collations.h)
+            collations.h mysql_charsets.h mysql_collations.h)
 
 ADD_HEADERS(${headers})
 ADD_HEADER_CHECKS()
