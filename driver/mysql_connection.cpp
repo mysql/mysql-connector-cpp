@@ -765,11 +765,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
 #undef PROCESS_CONNSTR_OPTION
 
-  /* libmysql shouldn't think it is too smart */
-  if (tcpProtocol(uri) && !uri.Host().compare(util::LOCALHOST)) {
-    uri.setHost("127.0.0.1");
-  }
-
 // Throwing in case of wrong protocol
 #ifdef _WIN32
   if (uri.Protocol() == NativeAPI::PROTOCOL_SOCKET) {
