@@ -34,6 +34,23 @@ using namespace mysqlx;
 class Crud : public mysqlx::test::Xplugin
 {
 public:
+
+  void SetUp()
+  {
+    Xplugin::SetUp();
+
+    /*
+      Clear sql_mode to work around problems with how
+      xplugin handles group_by queries (the "only_full_group_by"
+      mode which is enabled by default).
+    */
+    try {
+      get_sess().sql("set sql_mode=''").execute();
+    }
+    catch (...)
+    {}
+  }
+
   void add_data(Collection &coll);
 };
 

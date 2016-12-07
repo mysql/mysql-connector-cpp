@@ -348,7 +348,7 @@ public:
     out_ind() <<"\"" <<std::string(val.begin(), val.end()) <<"\"" <<endl;
   }
 
-  virtual void str(charset_id_t /*charset*/, bytes val)
+  virtual void str(collation_id_t /*charset*/, bytes val)
   {
     out_ind() <<"\"" <<std::string(val.begin(), val.end()) <<"\"" <<endl;
   }

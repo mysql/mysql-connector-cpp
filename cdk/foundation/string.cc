@@ -30,46 +30,6 @@ namespace cdk {
 namespace foundation {
 
 
-size_t Codec<Type::STRING>::to_bytes(const string &in, bytes out)
-{
-  codecvt_utf8::state_type state;
-  const char_t *in_next;
-  char *out_next;
-
-  std::codecvt_base::result res=
-    m_codec.out(state, &in[0], &in[in.length()], in_next,
-                      (char*)out.begin(), (char*)out.end(), out_next);
-
-  if (std::codecvt_base::ok != res)
-    THROW("conversion error");  // TODO: report errors
-
-  assert((byte*)out_next >= out.begin());
-  return static_cast<size_t>((byte*)out_next - out.begin());
-}
-
-
-size_t Codec<Type::STRING>::from_bytes(bytes in, string &out)
-{
-  codecvt_utf8::state_type state;
-  const char *in_next;
-  char_t     *out_next;
-
-  out.resize(in.size()+1);
-  std::codecvt_base::result res=
-    m_codec.in(state, (char*)in.begin(), (char*)in.end(), in_next,
-                      &out[0], &out[in.size()], out_next);
-
-  if (std::codecvt_base::ok != res)
-    THROW("conversion error");  // TODO: report errors
-
-  assert(out_next >= &out[0]);
-  out.resize(static_cast<size_t>(out_next - &out[0]));
-
-  assert((byte*)in_next >= in.begin());
-  return static_cast<size_t>((byte*)in_next - in.begin());
-}
-
-
 string& string::set_utf8(const std::string &str)
 {
   Codec<Type::STRING> codec;
@@ -182,3 +142,72 @@ codecvt_utf8::do_in(state_type& state,
 #endif
 
 
+namespace cdk {
+namespace foundation {
+
+codecvt_ascii::result
+codecvt_ascii::do_out(state_type& state,
+                     const intern_type* from,
+                     const intern_type* from_end,
+                     const intern_type*& from_next,
+                     extern_type* to,
+                     extern_type* to_end,
+                     extern_type*& to_next ) const
+{
+  from_next = from;
+  to_next = to;
+
+  while (from_next < from_end)
+  {
+    int c = m_ctype.narrow(*from_next, -1);
+
+    if (-1 == c)
+      return error;
+
+    *to_next = (extern_type)c;
+    to_next++;
+    from_next++;
+  }
+
+  return ok;
+}
+
+
+codecvt_ascii::result
+codecvt_ascii::do_in(state_type& state,
+                    const extern_type* from,
+                    const extern_type* from_end,
+                    const extern_type*& from_next,
+                    intern_type* to,
+                    intern_type* to_end,
+                    intern_type*& to_next ) const
+{
+  from_next = from;
+  to_next = to;
+
+  while (from_next < from_end)
+  {
+    unsigned char c = (unsigned char)*from_next;
+
+    /*
+      Note: In absence of character encoding information, only ASCII
+      characters can be reliably converted to wide chars by
+      ctype<wchar_t>::widen() method.
+    */
+    if (c > 128)
+      return error;
+
+    intern_type wc = m_ctype.widen(*from_next);
+
+    if (-1 == wc)
+      return error;
+
+    *to_next = wc;
+    to_next++;
+    from_next++;
+  }
+
+  return ok;
+}
+
+}} // cdk::foundation

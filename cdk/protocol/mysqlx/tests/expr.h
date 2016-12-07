@@ -135,12 +135,12 @@ protected:
 class Param_String : public Expr_class<Param_String, Any_base>
 {
   std::string  m_val;
-  charset_id_t m_cs;
+  collation_id_t m_cs;
   bool         m_has_cs;
 
 public:
 
-  Param_String(charset_id_t cs, const std::string &val)
+  Param_String(collation_id_t cs, const std::string &val)
     : m_val(val), m_cs(cs), m_has_cs(true)
   {}
 
@@ -267,12 +267,12 @@ List::List(const List &rhs)
 class String : public Expr_class<String>
 {
   std::string  m_val;
-  charset_id_t m_cs;
+  collation_id_t m_cs;
   bool         m_has_cs;
 
 public:
 
-  String(charset_id_t cs, const std::string &val)
+  String(collation_id_t cs, const std::string &val)
     : m_val(val), m_cs(cs), m_has_cs(true)
   {}
 

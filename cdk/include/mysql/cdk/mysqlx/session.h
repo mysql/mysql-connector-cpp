@@ -27,6 +27,8 @@
 
 #include <mysql/cdk/data_source.h>
 #include <mysql/cdk/codec.h>
+#include <mysql/cdk/protocol/mysqlx/collations.h>
+
 #include "common.h"
 
 PUSH_SYS_WARNINGS
@@ -66,7 +68,7 @@ struct cdk::Format<cdk::TYPE_STRING>::Access
 {
   typedef cdk::Format<cdk::TYPE_STRING> Format;
   static void set_width(Format &o, uint64_t width) { o.m_width= width; }
-  static void set_cs(Format &o, cdk::charset_id_t cs) { o.m_cs= cs; }
+  static void set_cs(Format &o, Charset::value cs) { o.m_cs= cs; }
   static void set_kind_set(Format &o) { o.m_kind= Format::SET; }
   static void set_kind_enum(Format &o) { o.m_kind= Format::ENUM; }
 };
@@ -120,6 +122,34 @@ public:
 };
 
 
+/*
+  Determine charset from collation id reported by the protocol. The mapping
+  is given by COLLATIONS_XXX() lists in collations.h.
+*/
+
+inline
+cdk::Charset::value get_collation_cs(collation_id_t id)
+{
+  /*
+    If collation id is 0, that is, there is no collation info in server
+    reply, we assume utf8.
+  */
+
+  if (0 == id)
+    return cdk::Charset::utf8;
+
+#undef  CS
+#define COLL_TO_CS(CS) COLLATIONS_##CS(COLL_TO_CS_CASE) return cdk::Charset::CS;
+#define COLL_TO_CS_CASE(CS,ID,COLL,CC)  case ID:
+
+  switch (id)
+  {
+    CDK_CS_LIST(COLL_TO_CS)
+  default:
+    THROW("Unkonwn collation id");
+  }
+}
+
 
 class Col_metadata
   : public Obj_ref<cdk::Column_info>
@@ -131,7 +161,7 @@ class Col_metadata
   int          m_content_type;
   length_t     m_length;
   unsigned int m_decimals;
-  charset_id_t m_cs;
+  collation_id_t m_cs;
   uint32_t     m_flags;
 
   class : public Obj_ref<cdk::api::Table_ref>
@@ -160,7 +190,10 @@ class Col_metadata
     return m_has_table ? &m_table : NULL;
   }
 
-  // Encoding format information
+  /*
+    Format_info interface
+    ---------------------
+  */
 
   bool for_type(Type_info type) const
   {
@@ -194,6 +227,11 @@ class Col_metadata
     }
   }
 
+  /*
+    Methods get_info() update a Type_info object to describe the
+    encoding format used by this column data.
+  */
+
   void get_info(Format<TYPE_INTEGER>& fmt) const
   {
     switch (m_type)
@@ -226,13 +264,13 @@ class Col_metadata
 
   void get_info(Format<TYPE_STRING>& fmt) const
   {
-    /*
-    Note: Types ENUM and SET are generally treated as
-    strings, but we set a 'kind' flag in the format description
-    to be able to distinguish them from plain strings.
-    */
+    Format<TYPE_STRING>::Access::set_cs(fmt, get_collation_cs(m_cs));
 
-    Format<TYPE_STRING>::Access::set_cs(fmt, m_cs);
+    /*
+      Note: Types ENUM and SET are generally treated as
+      strings, but we set a 'kind' flag in the format description
+      to be able to distinguish them from plain strings.
+    */
 
     switch (m_type)
     {
@@ -305,6 +343,7 @@ public:
 
   length_t length() const { return m_length; }
   length_t decimals() const { return m_decimals; }
+  collation_id_t collation() const { return m_cs; }
 
   friend class Session;
   friend class Cursor;
@@ -569,7 +608,7 @@ private:
                  const string &table, const string &original);
   void col_schema(col_count_t pos,
                   const string &schema, const string &catalog);
-  void col_charset(col_count_t pos, charset_id_t cs);
+  void col_collation(col_count_t pos, collation_id_t cs);
   void col_length(col_count_t pos, uint32_t length);
   void col_decimals(col_count_t pos, unsigned short decimals);
   void col_flags(col_count_t, uint32_t);

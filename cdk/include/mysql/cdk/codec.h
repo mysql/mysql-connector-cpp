@@ -26,7 +26,7 @@
 #define CDK_CODEC_H
 
 #include "common.h"
-
+#include "charsets.h"
 
 namespace cdk {
 
@@ -141,28 +141,55 @@ public:
 };
 
 
+/*
+  String encoding formats (charsets)
+  ----------------------------------
+*/
+
+/*
+  Constants for the known character set encodings. There is constant
+  Charset::CS for each charset CS listed in CDK_CD_LIST() macro (see
+  charsets.h).
+*/
+
+struct Charset
+{
+
+#undef  CS_ENUM
+#undef  CS
+#define CS_ENUM(CS) CS,
+
+  enum value
+  {
+    CDK_CS_LIST(CS_ENUM)
+  };
+};
+
+
 template<>
-class Format<TYPE_STRING> : public Format_base
+class  Format<TYPE_STRING> : public Format_base
 {
 public:
 
   Format(const Format_info &fi)
     : Format_base(TYPE_STRING, fi)
-    , m_cs(0), m_width(0), m_kind(STRING)
+    , m_cs(Charset::value(0)), m_width(0), m_kind(STRING)
   {
     fi.get_info(*this);
   }
 
-  charset_id_t charset() const { return m_cs; }
+  Charset::value charset() const { return m_cs; }
   uint64_t pad_width() const { return m_width; }
   bool     is_enum() const { return m_kind == ENUM; }
   bool     is_set()  const { return m_kind == SET; }
 
+  foundation::api::String_codec *codec() const;
+
 protected:
 
-  // MySQL collation id that determines character encoding.
+  // Character set encoding.
 
-  charset_id_t m_cs;
+  Charset::value m_cs;
 
   /**
     If not zero and actual string is shorter than m_width
@@ -249,14 +276,22 @@ class Codec<TYPE_STRING>
   : public foundation::api::String_codec
   , Codec_base<TYPE_STRING>
 {
+
+  foundation::api::String_codec& get_codec()
+  {
+    foundation::api::String_codec *codec = m_fmt.codec();
+    if (!codec)
+      throw_error("undefined string conversion");
+    return *codec;
+  }
+
 public:
 
-  Codec(const Format_info &fi) : Codec_base<TYPE_STRING>(fi) {}
+  Codec(const Format_info &fi)
+    : Codec_base<TYPE_STRING>(fi)
+  {}
 
-  /**
-    Return number of bytes required to encode given string (including
-    the trailing 0x00
-  */
+  /// Return number of bytes required to encode given string.
   size_t measure(const string&);
 
   size_t from_bytes(bytes raw, string& str);

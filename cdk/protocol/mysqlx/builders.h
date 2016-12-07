@@ -567,7 +567,7 @@ protected:
 
   void null();
   void str(bytes val);
-  void str(charset_id_t cs, bytes val);
+  void str(collation_id_t cs, bytes val);
   void num(int64_t val);
   void num(uint64_t val);
   void num(float val);
@@ -724,7 +724,7 @@ void Scalar_builder_base<MSG>::str(bytes val)
 
 template <class MSG>
 inline
-void Scalar_builder_base<MSG>::str(charset_id_t cs, bytes val)
+void Scalar_builder_base<MSG>::str(collation_id_t cs, bytes val)
 {
   String &str= get_string();
   str.set_collation(cs);

@@ -841,8 +841,8 @@ class Mdata_processor : public Error_processor
 {
 public:
 
-  typedef protocol::mysqlx::col_count_t   col_count_t;
-  typedef protocol::mysqlx::charset_id_t  charset_id_t;
+  typedef protocol::mysqlx::col_count_t     col_count_t;
+  typedef protocol::mysqlx::collation_id_t  collation_id_t;
 
   virtual void col_count(col_count_t) {}
   virtual void col_type(col_count_t /*pos*/, unsigned short /*type*/) {}
@@ -852,7 +852,7 @@ public:
                          const string &/*table*/, const string &/*original*/) {}
   virtual void col_schema(col_count_t /*pos*/,
                           const string &/*schema*/, const string &/*catalog*/) {}
-  virtual void col_charset(col_count_t /*pos*/, charset_id_t /*cs*/) {}
+  virtual void col_collation(col_count_t /*pos*/, collation_id_t /*cs*/) {}
   virtual void col_length(col_count_t /*pos*/, uint32_t /*length*/) {}
   virtual void col_decimals(col_count_t /*pos*/, unsigned short /*decimals*/) {}
   virtual void col_content_type(col_count_t /*pos*/, unsigned short /*type*/) {}

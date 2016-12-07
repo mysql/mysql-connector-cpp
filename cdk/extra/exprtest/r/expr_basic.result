@@ -71,6 +71,7 @@ operator {
       type: V_OCTETS
       v_octets {
         value: "a"
+        content_type: 0
       }
     }
   }
@@ -80,6 +81,7 @@ operator {
       type: V_OCTETS
       v_octets {
         value: "b"
+        content_type: 0
       }
     }
   }
@@ -89,6 +91,7 @@ operator {
       type: V_OCTETS
       v_octets {
         value: "c"
+        content_type: 0
       }
     }
   }
