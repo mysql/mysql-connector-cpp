@@ -74,9 +74,11 @@ namespace cdk {
   namespace connection {
 
     using foundation::connection::TCPIP;
+    using foundation::connection::TLS;
     using foundation::connection::Error_eos;
     using foundation::connection::Error_no_connection;
     using foundation::connection::Error_timeout;
+
   }
 
 } // cdk

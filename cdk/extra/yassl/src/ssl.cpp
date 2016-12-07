@@ -112,7 +112,7 @@ int read_file(SSL_CTX* ctx, const char* file, int format, CertType type)
                                     ctx->GetUserData());
                 byte key[AES_256_KEY_SZ];  // max sizes
                 byte iv[AES_IV_SZ];
-                
+
                 // use file's salt for key derivation, but not real iv
                 TaoCrypt::Source source(info.iv, info.ivSz);
                 TaoCrypt::HexDecoder dec(source);
@@ -137,7 +137,7 @@ int read_file(SSL_CTX* ctx, const char* file, int format, CertType type)
                     return SSL_BAD_FILE;
                 }
                 cipher->set_decryptKey(key, info.iv);
-                mySTL::auto_ptr<x509> newx(NEW_YS x509(x->get_length()));   
+                mySTL::auto_ptr<x509> newx(NEW_YS x509(x->get_length()));
                 cipher->decrypt(newx->use_buffer(), x->get_buffer(),
                                 x->get_length());
                 ysDelete(x);
@@ -278,7 +278,7 @@ int SSL_connect(SSL* ssl)
         ssl->SetError(no_error);
 
     if (ssl->GetError() == YasslError(SSL_ERROR_WANT_WRITE)) {
-    
+
         ssl->SetError(no_error);
         ssl->SendWriteBuffered();
         if (!ssl->GetError())
@@ -301,7 +301,7 @@ int SSL_connect(SSL* ssl)
         while (ssl->getStates().getClient() < neededState) {
             if (ssl->GetError()) break;
             processReply(*ssl);
-            // if resumption failed, reset needed state 
+            // if resumption failed, reset needed state
             if (neededState == serverFinishedComplete)
                 if (!ssl->getSecurity().get_resuming())
                     neededState = serverHelloDoneComplete;
@@ -342,7 +342,7 @@ int SSL_connect(SSL* ssl)
         if (ssl->GetError()) {
             GetErrors().Add(ssl->GetError());
             return SSL_FATAL_ERROR;
-        }   
+        }
         return SSL_SUCCESS;
 
     default :
@@ -370,7 +370,7 @@ int SSL_accept(SSL* ssl)
         ssl->SetError(no_error);
 
     if (ssl->GetError() == YasslError(SSL_ERROR_WANT_WRITE)) {
-    
+
         ssl->SetError(no_error);
         ssl->SendWriteBuffered();
         if (!ssl->GetError())
@@ -400,7 +400,7 @@ int SSL_accept(SSL* ssl)
             sendServerHelloDone(*ssl);
             ssl->flushBuffer();
         }
-      
+
         if (!ssl->GetError())
             ssl->useStates().UseAccept() = SERVER_HELLO_DONE;
 
@@ -555,8 +555,8 @@ void SSL_flush_sessions(SSL_CTX *ctx, long /* tm */)
 
 
 const char* SSL_get_cipher_name(SSL* ssl)
-{ 
-    return SSL_get_cipher(ssl); 
+{
+    return SSL_get_cipher(ssl);
 }
 
 
@@ -750,7 +750,7 @@ X509_NAME* X509_get_subject_name(X509* x)
 }
 
 
-void SSL_load_error_strings()   // compatibility only 
+void SSL_load_error_strings()   // compatibility only
 {}
 
 
@@ -875,7 +875,7 @@ int SSL_CTX_load_verify_locations(SSL_CTX* ctx, const char* file,
                 closedir(dir);
                 return SSL_BAD_STAT;
             }
-     
+
             if (S_ISREG(buf.st_mode))
                 ret = read_file(ctx, name, SSL_FILETYPE_PEM, CA);
         }
@@ -1055,7 +1055,7 @@ void DH_free(DH* dh)
 }
 
 
-// convert positive big-endian num of length sz into retVal, which may need to 
+// convert positive big-endian num of length sz into retVal, which may need to
 // be created
 BIGNUM* BN_bin2bn(const unsigned char* num, int sz, BIGNUM* retVal)
 {
@@ -1527,7 +1527,7 @@ int SSL_pending(SSL* ssl)
     // Just in case there's pending data that hasn't been processed yet...
     char c;
     SSL_peek(ssl, &c, 1);
-    
+
     return ssl->bufferedData();
 }
 
@@ -1566,7 +1566,7 @@ unsigned long err_helper(bool peek = false)
         return CERTFICATE_ERROR;
         break;
     default :
-        return 0;
+        return ysError;
     }
 
     return 0;  // shut up compiler
@@ -1785,7 +1785,7 @@ unsigned long ERR_get_error()
 #else
       snprintf(buf, len, "%s %2d %02d:%02d:%02d %d GMT",
 #endif
-               month_names[t.tm_mon], t.tm_mday, t.tm_hour, t.tm_min, 
+               month_names[t.tm_mon], t.tm_mday, t.tm_hour, t.tm_min,
                t.tm_sec, t.tm_year + 1900);
       return buf;
     }

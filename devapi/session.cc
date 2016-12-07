@@ -44,11 +44,11 @@ struct Endpoint
 
 
 struct internal::XSession_base::Options
-  : public cdk::ds::Options
+  : public cdk::ds::TCPIP::Options
 {
   Options(const string &usr, const std::string *pwd,
           string schema = string())
-    : cdk::ds::Options(usr, pwd)
+    : cdk::ds::TCPIP::Options(usr, pwd)
   {
     if (!schema.empty())
       set_database(schema);
@@ -107,7 +107,7 @@ class internal::XSession_base::Impl
     , m_sess(m_ds, opt)
   {
     if (opt.database())
-    m_default_db = *opt.database();
+      m_default_db = *opt.database();
     if (!m_sess.is_valid())
       m_sess.get_error().rethrow();
   }
@@ -123,6 +123,8 @@ struct URI_parser
 {
   URI_parser(const std::string &uri)
   {
+    // TLS OFF by default on URI
+    set_tls(false);
     parser::parse_conn_str(uri, *this);
   }
 
@@ -161,7 +163,7 @@ struct URI_parser
   void key_val(const std::string &key) override
   {
     if (key == "ssl-enable")
-      m_use_tls = true;
+      set_tls(true);
   }
 
 };

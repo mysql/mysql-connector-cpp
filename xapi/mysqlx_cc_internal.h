@@ -297,7 +297,7 @@ class Order_by : public cdk::Order_by
 
     Order_by_item(const char *expr, Sort_direction::value sort_direction,
                   parser::Parser_mode::value mode) :
-		    m_mode(mode), m_expr(expr),
+        m_mode(mode), m_expr(expr),
         m_sort_direction(sort_direction)
     {}
 
@@ -358,7 +358,7 @@ public:
 
 typedef struct mysqlx_session_options_struct : public Mysqlx_diag,
                                                public parser::URI_processor,
-                                               public cdk::ds::Options
+                                               public cdk::ds::TCPIP::Options
 {
 private:
   std::string m_host;
@@ -374,9 +374,9 @@ public:
   mysqlx_session_options_struct(const std::string host, unsigned short port,
                            const std::string usr, const std::string *pwd,
                            const std::string *db, bool ssl_enable = true) :
-                           cdk::ds::Options(usr, pwd),
+                           cdk::ds::TCPIP::Options(usr, pwd),
                            m_host(host), m_port(port ? port : DEFAULT_MYSQLX_PORT),
-                            m_tcp(NULL)
+                           m_tcp(NULL)
   {
     if (db)
       set_database(*db);

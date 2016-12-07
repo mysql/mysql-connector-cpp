@@ -58,7 +58,8 @@ public:
 
   /// Create session to a data store represented by `ds` object.
 
-  Session(ds::TCPIP &ds, const ds::Options &options = ds::Options());
+  Session(ds::TCPIP &ds,
+          const ds::TCPIP::Options &options = ds::TCPIP::Options());
 
   ~Session();
 

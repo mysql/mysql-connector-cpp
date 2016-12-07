@@ -30,7 +30,7 @@
 namespace cdk {
 
 
-Session::Session(ds::TCPIP &ds, const ds::Options &options)
+Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
   : m_session(NULL)
   , m_connection(NULL)
   , m_trans(false)
@@ -49,11 +49,12 @@ Session::Session(ds::TCPIP &ds, const ds::Options &options)
     rethrow_error();
   }
 
+
+  if (options.get_tls().use_tls())
+  {
 #ifdef WITH_SSL
   using foundation::connection::TLS;
 
-  if (options.use_tls())
-  {
     // Negotiate TLS capabilities.
     cdk::protocol::mysqlx::Protocol proto(*connection);
 
@@ -79,16 +80,18 @@ Session::Session(ds::TCPIP &ds, const ds::Options &options)
     } prc;
 
     proto.rcv_Reply(prc).wait();
-    
+
     //
-    TLS* tls = new TLS(connection);
+    TLS* tls = new TLS(connection, options.get_tls());
 
     tls->connect();
     m_connection = tls;
     m_session = new mysqlx::Session(*tls, options);
+#else // WITH_SSL
+    throw Error("Connector doesn't support SSL connections");
+#endif
   }
   else
-#endif // WITH_SSL
   {
     m_connection = connection;
     m_session = new mysqlx::Session(*connection, options);
