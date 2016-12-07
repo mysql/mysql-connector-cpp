@@ -53,7 +53,6 @@ TEST_F(xapi, test_having_group_by)
   mysqlx_stmt_t *stmt;
   mysqlx_row_t *row;
   mysqlx_collection_t *collection;
-  const char *errmsg = NULL;
   int row_num = 1;
   const char *json_string = NULL;
   size_t json_len = 0;

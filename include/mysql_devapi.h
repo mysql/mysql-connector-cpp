@@ -619,8 +619,8 @@ public:
       std::is_constructible<SessionSettings, HOST, PORT, USER, const char*, T...>::value
     >::type* = nullptr
   >
-  SessionSettings(HOST h, PORT p, USER u ,long pwd, T... args)
-    : SessionSettings(h, p, u, (const char*)pwd, args...)
+  SessionSettings(HOST h, PORT p, USER u ,long , T... args)
+    : SessionSettings(h, p, u, nullptr, args...)
   {}
 
   template <
@@ -645,8 +645,8 @@ public:
       std::is_constructible<SessionSettings, PORT, USER, const char*, T...>::value
     >::type* = nullptr
   >
-  SessionSettings(PORT p, USER u ,long pwd, T... args)
-    : SessionSettings(p, u, (const char*)pwd, args...)
+  SessionSettings(PORT p, USER u ,long , T... args)
+    : SessionSettings(p, u, nullptr, args...)
   {}
 
 
