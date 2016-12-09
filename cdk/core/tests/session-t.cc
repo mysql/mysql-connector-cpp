@@ -947,6 +947,8 @@ TEST_F(Session_core, docs)
 #endif
 
 
+#ifdef WITH_SSL
+
 TEST_F(Session_core, tls_options)
 {
   SKIP_IF_NO_XPLUGIN;
@@ -993,7 +995,7 @@ TEST_F(Session_core, tls_options)
 
     ds::TCPIP ds("localhost", m_port);
     ds::TCPIP::Options options("root");
-    connection::TLS::Options tls_options;
+    connection::TLS::Options tls_options(true);
 
     std::string ssl_ca;
     std::string datadir;
@@ -1012,6 +1014,8 @@ TEST_F(Session_core, tls_options)
         row_processor_variable m_row_ca(ssl_ca);
 
         cur.get_row(m_row_ca);
+
+        cout << "Server CA: " << ssl_ca << endl;
       }
 
       // CA path is same as data dir
@@ -1024,10 +1028,13 @@ TEST_F(Session_core, tls_options)
 
         cur.get_row(m_row_ca_path);
 
+        cout << "Server data dir: " << datadir << endl;
       }
     }
 
-    tls_options.set_ca(datadir+ssl_ca);
+    cout << "Setting CA to: " << ssl_ca << endl;
+
+    tls_options.set_ca(ssl_ca);
 
     options.set_tls(tls_options);
 
@@ -1038,6 +1045,8 @@ TEST_F(Session_core, tls_options)
       FAIL() << "Invalid Session created";
 
     ssl_ca.erase(ssl_ca.size()-1);
+
+    cout << "Setting CA to: " << ssl_ca << endl;
 
     tls_options.set_ca(ssl_ca);
 
@@ -1052,3 +1061,5 @@ TEST_F(Session_core, tls_options)
   }
 
 }
+
+#endif

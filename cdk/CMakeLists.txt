@@ -168,7 +168,7 @@ INCLUDE(protobuf)
 #
 
 if(NOT DEFINED WITH_SSL)
-SET(WITH_SSL "bundled" CACHE STRING "")
+SET(WITH_SSL "bundled" CACHE STRING "TODO: Document me!")
 endif()
 
 message("WITH_SSL: ${WITH_SSL}")
@@ -177,6 +177,11 @@ IF(WITH_SSL)
   IF(WITH_SSL STREQUAL "bundled")
     ADD_DEFINITIONS(-DWITH_SSL_YASSL)
     ADD_SUBDIRECTORY(extra/yassl)
+  ELSE()
+    MESSAGE(WARNING "WITH_SSL option set to unrecognized value '${WITH_SSL}'"
+                  " - will be ignored. Currently the only value allowed is"
+                  " 'bundled', which uses the bundled YaSSL library to implement"
+                  " TLS connections.")
   ENDIF()
   ADD_DEFINITIONS(-DWITH_SSL)
 ENDIF()

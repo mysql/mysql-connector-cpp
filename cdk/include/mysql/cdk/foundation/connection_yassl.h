@@ -61,7 +61,7 @@ class TLS::Options
 {
 public:
 
-  Options(bool use_tls = true)
+  Options(bool use_tls = false)
     : m_use_tls(use_tls)
   {}
 

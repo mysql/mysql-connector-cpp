@@ -373,15 +373,30 @@ public:
 
   mysqlx_session_options_struct(const std::string host, unsigned short port,
                            const std::string usr, const std::string *pwd,
-                           const std::string *db, bool ssl_enable = true) :
-                           cdk::ds::TCPIP::Options(usr, pwd),
-                           m_host(host), m_port(port ? port : DEFAULT_MYSQLX_PORT),
-                           m_tcp(NULL)
+                           const std::string *db,
+                           bool ssl_enable =
+#ifdef WITH_SSL
+                            true
+#else
+                            false
+#endif
+  ) :
+    cdk::ds::TCPIP::Options(usr, pwd),
+    m_host(host), m_port(port ? port : DEFAULT_MYSQLX_PORT),
+    m_tcp(NULL)
   {
     if (db)
       set_database(*db);
 
+#ifdef WITH_SSL
     set_tls(ssl_enable);
+#else
+    if (ssl_enable)
+      set_diagnostic(
+        "Can not create TLS session - this connector is built"
+        " without TLS support.", 0
+      );
+#endif
   }
 
   mysqlx_session_options_struct(const std::string &conn_str) : m_tcp(NULL)
@@ -427,7 +442,14 @@ public:
   {
     if (key.compare("ssl-enable") == 0)
     {
+#ifdef WITH_SSL
       set_tls(true);
+#else
+      set_diagnostic(
+        "Can not create TLS session - this connector is built"
+        " without TLS support.", 0
+      );
+#endif
     }
   }
 

@@ -50,9 +50,9 @@ Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
   }
 
 
+#ifdef WITH_SSL
   if (options.get_tls().use_tls())
   {
-#ifdef WITH_SSL
   using foundation::connection::TLS;
 
     // Negotiate TLS capabilities.
@@ -81,17 +81,14 @@ Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
 
     proto.rcv_Reply(prc).wait();
 
-    //
     TLS* tls = new TLS(connection, options.get_tls());
 
     tls->connect();
     m_connection = tls;
     m_session = new mysqlx::Session(*tls, options);
-#else // WITH_SSL
-    throw Error("Connector doesn't support SSL connections");
-#endif
   }
   else
+#endif
   {
     m_connection = connection;
     m_session = new mysqlx::Session(*connection, options);

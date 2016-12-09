@@ -135,9 +135,9 @@ public:
 
   Options(const string &usr, const std::string *pwd =NULL)
     : ds::Options(usr, pwd)
-    , m_tls_options(true)
   {}
 
+#ifdef WITH_SSL
 
   void set_tls(const cdk::connection::TLS::Options& options)
   {
@@ -149,8 +149,14 @@ public:
     return m_tls_options;
   }
 
+#endif
+
 private:
+
+#ifdef WITH_SSL
   cdk::connection::TLS::Options m_tls_options;
+#endif
+
 };
 
 } // mysqlx

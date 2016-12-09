@@ -52,9 +52,17 @@ struct internal::XSession_base::Options
   {
     if (!schema.empty())
       set_database(schema);
+#ifdef WITH_SSL
+    set_tls(true);
+#endif
   }
 
-  Options() = default;
+  Options()
+  {
+#ifdef WITH_SSL
+    set_tls(true);
+#endif
+  }
 
 };
 
@@ -123,8 +131,10 @@ struct URI_parser
 {
   URI_parser(const std::string &uri)
   {
+#ifdef WITH_SSL
     // TLS OFF by default on URI
     set_tls(false);
+#endif
     parser::parse_conn_str(uri, *this);
   }
 
@@ -163,7 +173,14 @@ struct URI_parser
   void key_val(const std::string &key) override
   {
     if (key == "ssl-enable")
+#ifdef WITH_SSL
       set_tls(true);
+#else
+      throw_error(
+        "Can not create TLS session - this connector is built"
+        " without TLS support."
+      );
+#endif
   }
 
 };
@@ -229,7 +246,14 @@ internal::XSession_base::XSession_base(SessionSettings settings)
             );
 
       if (settings.has_option(SessionSettings::SSL_ENABLE))
+#ifdef WITH_SSL
         opt.set_tls(settings[SessionSettings::SSL_ENABLE].get<bool>());
+#else
+        throw_error(
+          "Can not create TLS session - this connector is built"
+          " without TLS support."
+        );
+#endif
 
       m_impl = new Impl(ep, opt);
     }
