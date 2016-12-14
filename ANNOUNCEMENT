@@ -11,7 +11,7 @@ Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
 Dear MySQL Users,
 
 A new GA (general availability) version of MySQL Connector/C++ has
-been made available: MySQL Connector/C++ 1.1.7 GA. The MySQL
+been made available: MySQL Connector/C++ 1.1.8 GA. The MySQL
 Connector/C++ provides a C++ API for connecting client applications to
 the MySQL Server 5.5 or newer.
 
