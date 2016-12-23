@@ -85,7 +85,7 @@ extern "C" {
 
 #ifdef _WIN32
  #pragma comment(lib, "ws2_32")
- #endif
+#endif
 
 // FIXME
 #define STDCALL
@@ -2761,7 +2761,6 @@ PUBLIC_API unsigned int mysqlx_result_warning_count(mysqlx_result_t *res);
 
 PUBLIC_API mysqlx_error_t *
 mysqlx_result_next_warning(mysqlx_result_t *res);
-
 
 #ifdef	__cplusplus
 }

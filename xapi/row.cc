@@ -28,19 +28,14 @@
 #include "../cdk/extra/uuid/include/uuid_gen.h"
 #include "mysqlx_cc_internal.h"
 
-static struct UUID_initializer {
-
-  UUID_initializer()
+/* This is done only once per library */
+static struct Uuid_seed_initializer
+{
+  Uuid_seed_initializer()
   {
-    init_uuid((unsigned long)time(NULL));
+    uuid::set_seed_from_time_pid();
   }
-
-  ~UUID_initializer()
-  {
-    end_uuid();
-  }
-
-} uuid_initializer;
+} uuid_seed_initializer;
 
 
 /*
@@ -186,7 +181,7 @@ void Row_item::process(cdk::Value_processor &prc) const
 
 void Row_item::generate_uuid()
 {
-  uuid_type uuid;
+  uuid::uuid_type uuid;
 
   /*
     Create a local copy of a document structure just to get _id
@@ -200,7 +195,7 @@ void Row_item::generate_uuid()
       throw Mysqlx_exception("Document id must be a string");
 
     std::string str_id = doc.get_string("_id");
-    if (str_id.length() > sizeof(uuid_type)* 2)
+    if (str_id.length() > sizeof(uuid::uuid_type)* 2)
       throw Mysqlx_exception("Specified UUID is too long");
     m_uuid = str_id;
   }
@@ -209,8 +204,8 @@ void Row_item::generate_uuid()
     if (!doc.count())
       m_empty_doc = true; // do not add "," before _id
 
-    ::generate_uuid(uuid);
-    char buf[sizeof(uuid_type)* 2 + 1];
+    uuid::generate_uuid(uuid);
+    char buf[sizeof(uuid::uuid_type)* 2 + 1];
     const char digits[17] = { "0123456789ABCDEF" };
 
     for (size_t i = 0; i < sizeof(uuid); ++i)
@@ -218,7 +213,7 @@ void Row_item::generate_uuid()
       buf[i * 2] = digits[((unsigned char)uuid[i]) & 0x0F];
       buf[i * 2 + 1] = digits[((unsigned char)uuid[i] >> 4)];
     }
-    buf[sizeof(uuid_type)* 2] = 0; // put a string termination
+    buf[sizeof(uuid::uuid_type)* 2] = 0; // put a string termination
     m_uuid = buf;
   }
 }

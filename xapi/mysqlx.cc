@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
+#include <stdexcept>
 
 #define SAFE_EXCEPTION_BEGIN(HANDLE, ERR) try { \
   if (HANDLE == NULL) return ERR;
@@ -40,6 +41,11 @@
   catch(const Mysqlx_exception &mysqlx_ex) \
   { \
     HANDLE->set_diagnostic(mysqlx_ex); \
+    return ERR; \
+  } \
+  catch (const std::logic_error &logicerr) \
+  { \
+    HANDLE->set_diagnostic(logicerr.what(), 0); \
     return ERR; \
   } \
   catch(...) \

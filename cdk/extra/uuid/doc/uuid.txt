@@ -1,25 +1,3 @@
-# Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
-#
-# The MySQL Connector/C++ is licensed under the terms of the GPLv2
-# <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
-# MySQL Connectors. There are special exceptions to the terms and
-# conditions of the GPLv2 as it is applied to this software, see the
-# FLOSS License Exception
-# <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published
-# by the Free Software Foundation; version 2 of the License.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-# for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
-
 .. uuid_doc documentation master file, created by
    sphinx-quickstart on Fri Feb  6 18:39:23 2015.
    You can adapt this file completely to your liking, but it should at least
@@ -44,37 +22,36 @@ UUID has the following structure:
 
  .. uml::
 
-    object TIME_LOW
-    object TIME_MID
+    object NODE
+    object CLOCK_SEQ
     object TIME_HI_VER
-    object PROCESS_ID
-    object HW_MAC_ADDR
+    object TIME_MID
+    object TIME_LOW
 
-    TIME_LOW : 32-bit
-    TIME_MID : 16-bit
+    NODE : 48-bit
+    CLOCK_SEQ : 16-bit
     TIME_HI_VER : 16-bit
-    PROCESS_ID : 16-bit
-    HW_MAC_ADDR : 48-bit
+    TIME_MID : 16-bit
+    TIME_LOW : 32-bit
 
 
-    TIME_LOW -down-> TIME_MID
-    TIME_MID -down-> TIME_HI_VER
-    TIME_HI_VER -down-> PROCESS_ID
-    PROCESS_ID -down-> HW_MAC_ADDR
+    NODE -down-> CLOCK_SEQ
+    CLOCK_SEQ -down-> TIME_HI_VER
+    TIME_HI_VER -down-> TIME_MID
+    TIME_MID -down-> TIME_LOW
 
-    note right of TIME_LOW
-      <b>represents the lower 32 bits of system timestamp
-      in order not to generate the same value the lower bits
-      can be "borrowed" from the future when two UUIDs generate
-      within the clock granularity
-
-      this protects against generating similar values within
-      the same process
+    note right of NODE
+      <b>6 bytes randomly generated using a user-provided seed.
+      The same node values are used within a process.
+      Changing the random generator seed causes generating of
+      new node.
     end note
 
-    note right of TIME_MID
-      <b>represents the medium 16 bits of system timestamp
-      this component changes when TIME_LOW reaches its maximum
+    note right of CLOCK_SEQ
+      <b>randomly generated 16-bit value also containing the
+      UUID variant. This value changes on setting a new seed
+      for the generator or if two time values within the same
+      process have same time values.
     end note
 
     note right of TIME_HI_VER
@@ -85,23 +62,19 @@ UUID has the following structure:
       <b>timestamp >> 48 | UUID_VERSION   
     end note
 
-    note right of PROCESS_ID
-      <b>represents the lower 16 bits of the current Process ID
-      to make sure the duplicate values would not be generated if
-      two independent processes running on the same host
-      getting UUID at the same time
+    note right of TIME_MID
+      <b>represents the medium 16 bits of system timestamp
+      this component changes when TIME_LOW reaches its maximum
     end note
 
-    note right of HW_MAC_ADDR
-      <b>6 bytes from Hardware MAC address of the network adapter
-      this component eliminates the possibility of duplication on
-      two or more UUIDs generated on separate hosts at the same
-      moment of time
+    note right of TIME_LOW
+      <b>represents the lower 32 bits of system timestamp
+      in order not to generate the same value the lower bits
+      can be "borrowed" from the future when two UUIDs generate
+      within the clock granularity
 
-      If MAC address could not be obtained this value is generated
-      randomly depending on time, the number of bytes sent,
-      Query ID (number), query performance frequency and
-      query performance offset
+      this protects against generating similar values within
+      the same process
     end note
 
 How to use UUID generator
@@ -114,6 +87,8 @@ To start using the ``UUID`` generator the client code has to use the header:
 
   #include <uuid_gen.h>
 
+The classes and declarations for the ``UUID`` generator are inside ``uuid`` name space.
+
 The header file contains the definitions for ``uuid_type`` as:
 
 .. code-block:: c
@@ -122,47 +97,45 @@ The header file contains the definitions for ``uuid_type`` as:
   typedef unsigned char uuid_type[UUID_LENGTH_BIN];
 
 
-UUID functions
---------------
+UUID structures
+---------------
 
 .. |vspace| raw:: latex
 
    \vspace{5mm}
 
-* ``init_uuid(unsigned long seed)`` - initialization function, which should
-  be called only once before using the generator. The parameter `unsigned long seed` is
-  used to generate the 6-byte `Hardware MAC address` if it could not be obtained.
-  The seed can be a random value, system time, the query number, number of sent bytes, etc.
+* ``Uuid`` - a static structure with automatically called constructor and destructor
+  initializing/freeing mutexes etc. The user code is not supposed to create instances of
+  this structure.
 
 |vspace|  
+
+* ``Uuid::set_seed(uint16_t seed)`` - Setting the seed for the UUID generator.
+  The seed has to be set before generator can be used. Otherwise it throws
+  an exception.
   
-* ``generate_uuid(uuid_type& uuid)`` - generator returning the result into `uuid` parameter.
+* ``Uuid::set_seed_from_time_pid()`` - Converience function for setting the seed
+   for the UUID generator using the current machine time and the process id.
+  
+* ``Uuid::generate_uuid(uuid_type& uuid)`` - generator returning the result into `uuid` parameter.
   Could be called many times, sequentially or concurrently from different threads.
-  Requires `init_uuid()` function to be called before the first use of `generate_uuid`. 
 
-|vspace|  
-  
-* ``end_uuid()`` - should be called when the application exists or when UUID generator is
-  not needed. Destroys the mutexes used for synchronizing in concurrent threads.
 
 Usage example
 -------------
 
 .. code-block:: c
 
-  /* Initialize the UUID generator and create mutexes */
-  unsigned long seed = <get a random value, time, nuber of sent bytes etc>;
-  init_uuid(seed);
+#include "uuid_gen.h"
   ...
+  uuid::uuid_type uuid;
   /* 
     Use the generator.
     The result formatted and converted to text could look as:
-     bf17975b-4e44-d011-4c6b00268312fb20
+     4c6b00268312fb20-4e44-d011-bf17975b
   */
-  generate_uuid(uuid);
-  ...
-  /* Destroy mutexes */
-  end_uuid();
+  uuid::set_seed(set_seed((uint16_t)(time(0) ^ process_id));
+  uuid::generate_uuid(uuid);
 
 
 Contents:
