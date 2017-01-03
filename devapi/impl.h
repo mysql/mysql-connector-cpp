@@ -38,6 +38,8 @@
 #include <stack>
 #include <list>
 
+#include "../global.h"
+
 
 namespace mysqlx {
 

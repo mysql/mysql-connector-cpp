@@ -25,17 +25,7 @@
 #include <mysql_xapi.h>
 #include <iostream>
 #include <iomanip>
-#include "../cdk/extra/uuid/include/uuid_gen.h"
 #include "mysqlx_cc_internal.h"
-
-/* This is done only once per library */
-static struct Uuid_seed_initializer
-{
-  Uuid_seed_initializer()
-  {
-    uuid::set_seed_from_time_pid();
-  }
-} uuid_seed_initializer;
 
 
 /*
@@ -204,7 +194,7 @@ void Row_item::generate_uuid()
     if (!doc.count())
       m_empty_doc = true; // do not add "," before _id
 
-    uuid::generate_uuid(uuid);
+    mysqlx::generate_uuid(uuid);
     char buf[sizeof(uuid::uuid_type)* 2 + 1];
     const char digits[17] = { "0123456789ABCDEF" };
 

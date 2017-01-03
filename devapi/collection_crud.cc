@@ -38,18 +38,10 @@ using namespace uuid;
 
 // --------------------------------------------------------------------
 
-static struct Uuid_seed_initializer
-{
-  Uuid_seed_initializer()
-  {
-    uuid::set_seed_from_time_pid();
-  }
-} uuid_seed_initializer;
-
 void mysqlx::GUID::generate()
 {
   uuid::uuid_type uuid;
-  uuid::generate_uuid(uuid);
+  mysqlx::generate_uuid(uuid);
   boost::format fmt("%02X");
 
   for (unsigned i = 0; i < sizeof(uuid) && 2 * i < sizeof(m_data); ++i)

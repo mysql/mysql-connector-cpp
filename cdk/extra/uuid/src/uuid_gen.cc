@@ -179,6 +179,50 @@ void init_uuid()
 
 }
 
+
+void deinit_uuid()
+{
+  pthread_mutex_destroy(&LOCK_uuid_generator);
+}
+
+
+/*
+  Instance of this class holds the global UUID generator mutex until
+  it gets destroyed. An exception-safe way of executing a block of code while
+  holding the mutex is like follows:
+
+    {
+      Uuid_guard guard;
+      // code executed under the guard of the global mutex
+    }
+*/
+
+struct Uuid_guard
+{
+  struct Initializer
+  {
+    Initializer() { init_uuid(); }
+    ~Initializer() { deinit_uuid(); }
+  };
+
+  Uuid_guard()
+  {
+    /*
+      This static initializer instance gets constructed only once.
+      It ensures that uuid module is properly initialized before
+      using the mutex.
+    */
+    static Initializer init;
+    pthread_mutex_lock(&LOCK_uuid_generator);
+  }
+
+  ~Uuid_guard()
+  {
+    pthread_mutex_unlock(&LOCK_uuid_generator);
+  }
+};
+
+
 /*
   Structure of UUID produced by the generator.
   It already has its components reversed, but we will
@@ -212,6 +256,7 @@ void generate_node()
   time_seq_global = rand_fibonacci();
 }
 
+
 namespace uuid
 {
 
@@ -222,7 +267,7 @@ void generate_uuid(uuid_type &uuid)
 
   uuid_internal_st uuid_internal;
 
-  pthread_mutex_lock(&LOCK_uuid_generator);
+  Uuid_guard guard;
 
   unsigned long long tv = my_getsystime() + UUID_TIME_OFFSET + nanoseq;
 
@@ -290,39 +335,21 @@ void generate_uuid(uuid_type &uuid)
 
   memcpy(uuid_internal.node, node_global, sizeof(node_global));
   memcpy(uuid, &uuid_internal, sizeof(uuid_internal));
-  pthread_mutex_unlock(&LOCK_uuid_generator);
 }
+
 
 void set_seed(uint16_t seed)
 {
-  pthread_mutex_lock(&LOCK_uuid_generator);
+  Uuid_guard guard;
   uuid_seed ^= seed;
   generate_node();
-  pthread_mutex_unlock(&LOCK_uuid_generator);
 }
+
 
 void set_seed_from_time_pid()
 {
-  if (!uuid_seed)
-    set_seed((uint16_t)(time(0) ^ get_proc_id()));
+  set_seed((uint16_t)(time(0) ^ get_proc_id()));
 }
-
-/*
-  The struct automaticaly initializes and disposes of mutexes etc.
-*/
-static struct Uuid_initializer
-{
-  Uuid_initializer()
-  {
-    init_uuid();
-  }
-
-  ~Uuid_initializer()
-  {
-    pthread_mutex_destroy(&LOCK_uuid_generator);
-  }
-
-}Uuid_initializer_inst;
 
 
 }
