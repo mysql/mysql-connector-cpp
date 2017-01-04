@@ -131,10 +131,12 @@ class TCPIP::Options : public ds::Options
 public:
 
   Options()
+    : m_tls_options(false)
   {}
 
   Options(const string &usr, const std::string *pwd =NULL)
     : ds::Options(usr, pwd)
+    , m_tls_options(false)
   {}
 
 #ifdef WITH_SSL

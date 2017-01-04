@@ -61,7 +61,17 @@ class TLS::Options
 {
 public:
 
-  Options(bool use_tls = false)
+  /*
+    Note: Normally m_use_tls should be always true: using TLS options object
+    implies an intent to have TLS connection. A TLS::Options object with
+    m_use_tls set to false is only used to disable TLS connection inside
+    TCPIP::Options object. The TCPIP::Options object holds an instance
+    of TLS::Options. Calling TCPIP::Options::set_tls(false) will alter this
+    internal TLS::Options instance so that m_use_tls is false and then the
+    TCPIP::Options object knows that TLS should not be used for the connection.
+  */
+
+  Options(bool use_tls = true)
     : m_use_tls(use_tls)
   {}
 

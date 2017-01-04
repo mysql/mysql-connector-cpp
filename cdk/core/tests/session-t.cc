@@ -995,7 +995,7 @@ TEST_F(Session_core, tls_options)
 
     ds::TCPIP ds("localhost", m_port);
     ds::TCPIP::Options options("root");
-    connection::TLS::Options tls_options(true);
+    connection::TLS::Options tls_options;
 
     std::string ssl_ca;
     std::string datadir;
