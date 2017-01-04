@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/C++ is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -36,21 +36,27 @@
 #
 
 set(CONFIG_VARS "" CACHE INTERNAL "configuration settings" FORCE)
+set(CONFIG_VARS_VAL "" CACHE INTERNAL "configuration settings" FORCE)
 
-macro(ADD_CONFIG var)
-  #message("- adding configuration setting: ${var}")
-  list(APPEND CONFIG_VARS ${var})
-  list(REMOVE_DUPLICATES CONFIG_VARS)
-  set(CONFIG_VARS ${CONFIG_VARS} CACHE INERNAL "configuration settings" FORCE)
+function(ADD_CONFIG var)
+  #message("- adding configuration setting: ${var} (${ARGN})")
 
-  # set variable to the value if given
+  if(DEFINED ARGV1)
 
-  if(ARGN)
-    set(${var} ${ARGN})
-    list(GET ${var} 0 ${var})
+    set(${var} ${ARGV1})
+    list(APPEND CONFIG_VARS_VAL ${var})
+    list(REMOVE_DUPLICATES CONFIG_VARS_VAL)
+    set(CONFIG_VARS_VAL ${CONFIG_VARS_VAL} CACHE INERNAL "configuration settings" FORCE)
+
+  else()
+
+    list(APPEND CONFIG_VARS ${var})
+    list(REMOVE_DUPLICATES CONFIG_VARS)
+    set(CONFIG_VARS ${CONFIG_VARS} CACHE INERNAL "configuration settings" FORCE)
+
   endif()
 
-endmacro(ADD_CONFIG)
+endfunction(ADD_CONFIG)
 
 #
 # Call this macro to write a configuration header containing defines
@@ -71,6 +77,13 @@ macro(WRITE_CONFIG_HEADER path)
     else()
       set(DEFINE "/* #undef ${var} */")
     endif()
+    #message("writing to config.h: ${DEFINE}")
+    set(GENERATED_CONFIG_DEFS "${GENERATED_CONFIG_DEFS}\n${DEFINE}")
+  endforeach()
+
+  foreach(var ${CONFIG_VARS_VAL})
+    set(DEFINE "#define ${var} ${${var}}")
+    #message("writing to config.h: ${DEFINE}")
     set(GENERATED_CONFIG_DEFS "${GENERATED_CONFIG_DEFS}\n${DEFINE}")
   endforeach()
 

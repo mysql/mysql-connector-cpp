@@ -35,15 +35,6 @@
 
 #include <limits>         // for std::numeric_limits
 
-/*
-  TODO: This is probably the only dependency of CDK public headers
-  on Boost. Remove it...
-  NOTE: <boost/shared_ptr.h> is used in types.h
-*/
-PUSH_BOOST_WARNINGS
-#include <boost/predef.h> // to detect endianess
-POP_BOOST_WARNINGS
-
 
 namespace cdk {
 namespace foundation {
@@ -247,25 +238,15 @@ class Codec<Type::STRING> : public String_codec<codecvt_utf8>
 
 
 
-#undef BIG_ENDIAN
-
-#if BOOST_ENDIAN_BIG_BYTE
-#define BIG_ENDIAN 1
-#endif
-
-#if BOOST_ENDIAN_LITTLE_BYTE
-#define BIG_ENDIAN 0
-#endif
-
-#ifndef BIG_ENDIAN
-#error Endianess could not be determined!
-#endif
-
-
 /*
   Number codecs
   =============
 */
+
+#ifndef CDK_BIG_ENDIAN
+#error Unknown endianess!
+#endif
+
 
 struct Endianess
 {
@@ -273,7 +254,7 @@ struct Endianess
     BIG,
     LITTLE,
     NATIVE =
-#if BIG_ENDIAN
+#if CDK_BIG_ENDIAN
       BIG
 #else
       LITTLE
@@ -448,7 +429,7 @@ public:
 
 template<>
 class Number_codec<
-#if BIG_ENDIAN
+#if CDK_BIG_ENDIAN
   Endianess::LITTLE
 #else
   Endianess::BIG

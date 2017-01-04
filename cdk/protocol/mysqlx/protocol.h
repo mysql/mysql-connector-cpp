@@ -69,11 +69,11 @@ typedef unsigned short int  msg_type_t;
 #elif defined(HAVE_BYTEORDER_H)
   #include <sys/byteorder.h>
   #define bswap32(X) BSWAP_32(X)
-#elif BIG_ENDIAN
+#elif CDK_BIG_ENDIAN
   #error No byte-swap function available on big-endian platform.
 #endif
 
-#if BIG_ENDIAN
+#if CDK_BIG_ENDIAN
 #define NTOHSIZE(S) do { (S) = bswap32(S); } while(0)
 #define HTONSIZE(S) do { (S) = bswap32(S); } while(0)
 #else

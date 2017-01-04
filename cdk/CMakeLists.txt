@@ -54,6 +54,28 @@ LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(libutils)
 
 #
+# Infrastructure for defining code configuration settings
+# (the ADD_CONFIG() macro for declaring contents of config.h).
+#
+
+INCLUDE(config)
+
+
+#
+# Detect endianess
+#
+
+if(NOT DEFINED CDK_BIG_ENDIAN)
+
+  INCLUDE(TestBigEndian)
+  TEST_BIG_ENDIAN(CDK_BIG_ENDIAN)
+
+endif()
+
+message(STATUS "BIG_ENDIAN: ${BIG_ENDIAN}")
+add_config(CDK_BIG_ENDIAN ${CDK_BIG_ENDIAN})
+
+#
 # Configure static runtime library on Windows if requested
 #
 
@@ -74,7 +96,7 @@ endforeach(LANG)
 ENDIF()
 
 #
-# Postion independent code support.
+# Position independent code support.
 #
 
 option(WITH_PIC "Generate position independet code (PIC)" OFF)
@@ -113,13 +135,6 @@ if(DISABLE_WARNINGS)
 
 endif()
 
-
-#
-# Infrastructure for defining code configuration settings
-# (the ADD_CONFIG() macro for declaring contents of config.h).
-#
-
-INCLUDE(config)
 
 #
 # We want CDK code to compile both under C++ and C++11 compiler.
@@ -176,6 +191,9 @@ message("WITH_SSL: ${WITH_SSL}")
 IF(WITH_SSL)
   IF(WITH_SSL STREQUAL "bundled")
     ADD_DEFINITIONS(-DWITH_SSL_YASSL)
+    if(CDK_BIG_ENDIAN)
+      ADD_DEFINITIONS(-DWORDS_BIGENDIAN)
+    endif()
     ADD_SUBDIRECTORY(extra/yassl)
   ELSE()
     MESSAGE(WARNING "WITH_SSL option set to unrecognized value '${WITH_SSL}'"
