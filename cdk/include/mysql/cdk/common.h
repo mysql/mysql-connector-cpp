@@ -523,6 +523,13 @@ typedef cdk::api::Sort_direction             Sort_direction;
 typedef cdk::api::Doc_base<Value_processor>  Param_source;
 
 
+using   cdk::api::View_security;
+using   cdk::api::View_algorithm;
+using   cdk::api::View_check;
+
+typedef cdk::api::View_options               View_options;
+typedef cdk::api::View_spec<View_options>    View_spec;
+
 /*
   Classes for describing update operations
   ========================================

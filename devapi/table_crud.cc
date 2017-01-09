@@ -213,6 +213,7 @@ class Op_table_select
     return
         new cdk::Reply(get_cdk_session().table_select(
                           m_table,
+                          NULL,           // view spec
                           get_where(),
                           get_tbl_proj(),
                           get_order_by(),

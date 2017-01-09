@@ -76,7 +76,10 @@ enum ClientMessages_Type {
   ClientMessages_Type_CRUD_UPDATE = 19,
   ClientMessages_Type_CRUD_DELETE = 20,
   ClientMessages_Type_EXPECT_OPEN = 24,
-  ClientMessages_Type_EXPECT_CLOSE = 25
+  ClientMessages_Type_EXPECT_CLOSE = 25,
+  ClientMessages_Type_CRUD_CREATE_VIEW = 30,
+  ClientMessages_Type_CRUD_MODIFY_VIEW = 31,
+  ClientMessages_Type_CRUD_DROP_VIEW = 32
 };
 
 enum ServerMessages_Type {
@@ -147,6 +150,9 @@ enum ServerMessages_Type {
                ExpectOpen, EXPECT_OPEN) \
     MSG_CLIENT(X, Mysqlx::Crud::Delete, \
                ExpectClose, EXPECT_CLOSE) \
+    MSG_CLIENT(X, Mysqlx::Crud::CreateView, CreateView, CRUD_CREATE_VIEW) \
+    MSG_CLIENT(X, Mysqlx::Crud::ModifyView, ModifyView, CRUD_MODIFY_VIEW) \
+    MSG_CLIENT(X, Mysqlx::Crud::DropView, DropView, CRUD_DROP_VIEW) \
 \
     MSG_SERVER(X, Mysqlx::Ok, \
                Ok, OK) \
@@ -408,9 +414,46 @@ typedef cdk::api::Sort_direction Sort_direction;
 typedef cdk::api::Projection<Expression> Projection;
 typedef cdk::api::Columns Columns;
 
+typedef cdk::api::View_options  View_options;
+
 }  // api namespace
 
 
+/*
+  Interfaces which specify parameters for Find and other CRUD operations,
+  such as Delete or Update, which can work on limited set of rwos/documents.
+
+  Interface Select_spec specifies parameter common to all CRUD operations
+  which limit set of rows/documents. Interface Find_spec specifies additional
+  parameters of the Find operation.
+*/
+
+struct Select_spec
+{
+public:
+
+  typedef api::Db_obj     Db_obj;
+  typedef api::Expression Expression;
+  typedef api::Order_by   Order_by;
+  typedef api::Limit      Limit;
+
+  virtual const Db_obj&     obj() const = 0;
+  virtual const Expression* select() const = 0;
+  virtual const Order_by*   order() const = 0;
+  virtual const Limit*      limit() const = 0;
+};
+
+struct Find_spec : public Select_spec
+{
+public:
+
+  typedef api::Projection  Projection;
+  typedef api::Expr_list   Expr_list;
+
+  virtual const Projection* project() const = 0;
+  virtual const Expr_list*  group_by() const = 0;
+  virtual const Expression* having() const = 0;
+};
 
 
 /*
@@ -437,43 +480,122 @@ public:
   Op& snd_AuthenticateContinue(bytes data);
   Op& snd_Close();
 
-  Op& snd_StmtExecute(const char *ns, const string &stmt, api::Any_list *args);
 
-//  Op& snd_PrepareStmt(stmt_id_t id, const string &stmt);
-//  Op& snd_PreparedStmtExecute(stmt_id_t id, cursor_id_t cid);
-//  Op& snd_CursorClose(cursor_id_t cid);
-//  Op& snd_PreparedStmtClose(stmt_id_t id);
+  /**
+    Send protocol command which executes a statement.
 
-//  Op& snd_CursorFetchRows(cursor_id_t cid, row_count_t limit);
-//  Op& snd_CursorFetchRows(cursor_id_t cid);
+    Which statements are understood by the server are defined by the
+    X Protocol. Currently we use "sql" namespace to execute plain SQL
+    statements and commands in "admin" namespace for other operations
+    and queries.
 
-//  Op& snd_CursorFetchMetadata(cursor_id_t cid);
+    @param ns   namespace used to interpret the statement
+    @param stmt the statement to be eecuted
+    @param args optional parameters of the statement
+  */
 
-  Op& snd_Find(Data_model,
-               api::Db_obj&,
-               api::Expression* = NULL,   // select
-               api::Projection* = NULL,   // project
-               api::Order_by* = NULL,     // order
-               api::Expr_list* = NULL,    // group_by
-               api::Expression* = NULL,   // having
-               api::Limit* = NULL,        // limit
-               api::Args_map * = NULL);
+  Op& snd_StmtExecute(const char *ns, const string &stmt,
+                      const api::Any_list *args);
 
-  Op& snd_Insert(Data_model, api::Db_obj&,
-                 const api::Columns*,
-                 Row_source&,
-                 api::Args_map *args = NULL);
-  Op& snd_Update(Data_model, api::Db_obj&,
-                 api::Expression*,
-                 Update_spec &,
-                 api::Order_by* = NULL,
-                 api::Limit* = NULL,
-                 api::Args_map * = NULL);
-  Op& snd_Delete(Data_model, api::Db_obj&,
-                 api::Expression* = NULL,
-                 api::Order_by* = NULL,
-                 api::Limit* = NULL,
-                 api::Args_map * = NULL);
+
+  /**
+    Send CRUD Find command.
+
+    This command returns rows from a table or documents from a collection.
+    Selected data can be transformed using a projection before sending to
+    the client.
+
+    @param dm   determines whether this command fetches rows or documents
+
+    @param spec  specifies source of the data, criteria selecting
+      rows/documents to be returned, optional projection and other parameters
+      of the commnad (@see Find_spec)
+
+    @param args  if expressions used in the specification use named parameters,
+      this argument map provides values of these parameters
+  */
+
+  Op& snd_Find(Data_model dm, const Find_spec &spec,
+               const api::Args_map *args = NULL);
+
+  /**
+    Send CRUD Insert command.
+
+    This command inserts rows into a table or documents into a collection
+
+    @param dm   determines whether this command inserts rows or documents
+
+    @param obj  target table or collection
+
+    @param columns  optional specification determining which columns of the
+      target table should be updated with provided data.
+
+    @param data   Object defining rows/documents to be inserted. It is a
+      sequence of tuples of expressions; each tuple in the sequence defines
+      values of fields in a single row to be inserted (when inserting documents,
+      there should be just one filed with the document).
+
+    @param args  defines values of named parameters, if any are used in the
+      expressions of the row source object
+  */
+
+  Op& snd_Insert(Data_model dm, api::Db_obj &obj,
+                 const api::Columns *columns,
+                 Row_source &data,
+                 const api::Args_map *args = NULL);
+
+  /**
+    Send CRUD Update command.
+
+    This command updates existing rows in a table or documents in a collection.
+    In can work on a subset of rows or document defined by a select criteria.
+
+    @param dm   determines whether this command updates rows or documents
+
+    @param select  defines target table or collection whose data should be
+      modified and a subset of rows/documents that is affected by the command
+
+    @param update  a specification of what modifications should be applied to
+      each row/document
+
+    @param args  defines values of named parameters, if any are used in the
+      selection criteria or update specification.
+  */
+
+  Op& snd_Update(Data_model dm,
+                 const Select_spec &select,
+                 Update_spec &update,
+                 const api::Args_map *args = NULL);
+
+  /**
+    Send CRUD Delete command.
+
+    This command removes all or selected rows/documents from a table or
+    collection.
+
+    @param dm   determines whether this command removes rows or documents
+
+    @param select  defines target table or collection whose data should be
+      modified and a subset of rows/documents to be deleted
+
+    @param args  defines values of named parameters, if any are used in the
+      selection criteria
+  */
+
+  Op& snd_Delete(Data_model dm, const Select_spec &select,
+                 const api::Args_map *args = NULL);
+
+
+  Op& snd_CreateView(Data_model dm, const api::Db_obj &obj,
+                     const Find_spec &query, const api::Columns *columns,
+                     api::View_options* = NULL,
+                     const api::Args_map *args = NULL);
+  Op& snd_ModifyView(Data_model dm, const api::Db_obj &obj,
+                     const Find_spec &query, const api::Columns *columns,
+                     api::View_options* = NULL,
+                     const api::Args_map *args = NULL);
+  Op& snd_DropView(const api::Db_obj &obj, bool if_exists);
+
 
   Op& rcv_AuthenticateReply(Auth_processor &);
   Op& rcv_Reply(Reply_processor &);
@@ -837,7 +959,7 @@ public:
   virtual void done(bool /*eod*/, bool /*more*/) {}
 };
 
-class Mdata_processor : public Error_processor
+class Mdata_processor : public Reply_processor
 {
 public:
 
@@ -998,6 +1120,16 @@ public:
   Db_obj(string name, string schema) : m_name(name), m_schema(schema),
                                                 m_schema_set(true) {}
 
+  Db_obj(const api::Db_obj &other)
+    : m_name(other.get_name())
+    , m_schema_set(false)
+  {
+    if (!other.get_schema())
+      return;
+    m_schema = *other.get_schema();
+    m_schema_set = true;
+  }
+
   virtual ~Db_obj() {}
 
   virtual const string& get_name() const { return m_name; };
@@ -1052,6 +1184,9 @@ private:
   const row_count_t m_row_count, m_offset;
   bool m_offset_set;
 public:
+
+  Limit() : m_row_count(0), m_offset(0), m_offset_set(false)
+  {}
 
   Limit(row_count_t row_count) : m_row_count(row_count), m_offset(0), m_offset_set(false) {}
 

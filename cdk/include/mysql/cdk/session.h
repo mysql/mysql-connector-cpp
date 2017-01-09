@@ -265,6 +265,7 @@ public:
   */
 
   Reply_init coll_find(const api::Object_ref &coll,
+                       const View_spec *view = NULL,
                        const Expression *expr = NULL,
                        const Expression::Document *proj = NULL,
                        const Order_by *order_by = NULL,
@@ -273,7 +274,7 @@ public:
                        const Limit *lim = NULL,
                        const Param_source *param = NULL)
   {
-    return m_session->coll_find(coll, expr, proj, order_by,
+    return m_session->coll_find(coll, view, expr, proj, order_by,
                                 group_by, having, lim, param);
   }
 
@@ -316,6 +317,7 @@ public:
   */
 
   Reply_init table_select(const api::Table_ref &tab,
+                          const View_spec *view = NULL,
                           const Expression *expr = NULL,
                           const Projection *proj = NULL,
                           const Order_by *order_by = NULL,
@@ -324,7 +326,7 @@ public:
                           const Limit* lim = NULL,
                           const Param_source *param = NULL)
   {
-    return m_session->table_select(tab, expr, proj, order_by,
+    return m_session->table_select(tab, view, expr, proj, order_by,
                                    group_by, having, lim, param);
   }
 
@@ -382,6 +384,16 @@ public:
   {
     return m_session->table_update(tab, expr, us, order_by, lim, param);
   }
+
+
+  // Views
+  // -----
+
+  Reply_init view_drop(const api::Table_ref &view, bool check_existence = false)
+  {
+    return m_session->view_drop(view, check_existence);
+  }
+
 
   // Async_op interface
 

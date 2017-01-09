@@ -174,6 +174,78 @@ protected:
 };
 
 
+/*
+  Class implementing protocol Find_spec interface, as required by
+  Protocol methods which send CRUD commands.
+*/
+
+class Find
+  : public protocol::mysqlx::Find_spec
+{
+  protocol::mysqlx::Db_obj m_obj;
+  const Expression *m_expr;
+  const Projection *m_proj;
+  cdk::test::proto::Limit  m_lim;
+  bool   m_has_lim;
+
+public:
+
+  Find(const Db_obj &obj,
+    const Expression *criteria, row_count_t limit, row_count_t skip = 0)
+    : m_obj(obj)
+    , m_expr(criteria), m_proj(NULL)
+    , m_lim(limit, skip), m_has_lim(true)
+  {}
+
+  Find(const Db_obj &obj,
+       const Expression *criteria = NULL,
+       const Projection *proj = NULL)
+    : m_obj(obj)
+    , m_expr(criteria)
+    , m_proj(proj)
+    , m_has_lim(false)
+  {}
+
+private:
+
+  const Db_obj& obj() const
+  {
+    return m_obj;
+  }
+
+  const Expression* select() const
+  {
+    return m_expr;
+  }
+
+  const Order_by* order() const
+  {
+    return NULL;
+  }
+
+  const Limit* limit() const
+  {
+    return m_has_lim ? &m_lim : NULL;
+  }
+
+  const Projection* project() const
+  {
+    return m_proj;
+  }
+
+  const Expr_list*  group_by() const
+  {
+    return NULL;
+  }
+
+  const Expression* having() const
+  {
+    return NULL;
+  }
+
+};
+
+
 TEST_F(Protocol_mysqlx_xplugin, crud_basic)
 {
   SKIP_IF_NO_XPLUGIN;
@@ -189,15 +261,10 @@ TEST_F(Protocol_mysqlx_xplugin, crud_basic)
   Protocol &proto= get_proto();
 
   Db_obj db_obj("crud_basic", "crud_test_db");
-  Limit lim1(1, 1);
+  Find   find1(db_obj, NULL, 1, 1);
+
   cout <<"Find" <<endl;
-  proto.snd_Find(TABLE, db_obj,
-                 NULL,          // select
-                 NULL,          // projection
-                 NULL,          // order
-                 NULL,          // group_by
-                 NULL,          // having
-                 &lim1).wait();
+  proto.snd_Find(TABLE, find1).wait();
 
   cout <<"Metadata" <<endl;
   Mdata_handler mdh;
@@ -228,15 +295,9 @@ TEST_F(Protocol_mysqlx_xplugin, crud_basic)
   sh.set_rows_check_num(1);        // Expect 1 row to be inserted
   proto.rcv_StmtReply(sh).wait();  // Expect Insert OK;
 
-  Limit lim2(1, 2);
+  Find find2(db_obj, NULL, 1, 2);
   cout <<"Checking inserted rows. Find." <<endl;
-  proto.snd_Find(TABLE, db_obj,
-                 NULL,          // select
-                 NULL,          // projection
-                 NULL,          // order
-                 NULL,          // group_by
-                 NULL,          // having
-                 &lim2).wait();
+  proto.snd_Find(TABLE, find2).wait();
 
   cout <<"Metadata" <<endl;
   proto.rcv_MetaData(mdh).wait();
@@ -260,9 +321,9 @@ TEST_F(Protocol_mysqlx_xplugin, crud_basic)
   upd.set_name("id");
   upd.set_value(8);
 
-  Limit lim3(1);
+  Find find3(db_obj, NULL, 1);
 
-  proto.snd_Update(TABLE, db_obj, NULL, upd, NULL, &lim3 ).wait();
+  proto.snd_Update(TABLE, find3, upd).wait();
 
   proto.rcv_MetaData(mdh).wait();
 
@@ -270,7 +331,8 @@ TEST_F(Protocol_mysqlx_xplugin, crud_basic)
   proto.rcv_StmtReply(sh).wait();  // Expect Update OK;
 
   cout <<"Checking updated rows. Find." <<endl;
-  proto.snd_Find(TABLE, db_obj).wait();
+
+  proto.snd_Find(TABLE, Find(db_obj)).wait();
 
   cout <<"Metadata" <<endl;
   proto.rcv_MetaData(mdh).wait();
@@ -285,7 +347,7 @@ TEST_F(Protocol_mysqlx_xplugin, crud_basic)
   proto.rcv_StmtReply(sh).wait();  // Expect OK
 
   cout <<"Delete" <<endl;
-  proto.snd_Delete(TABLE, db_obj).wait();
+  proto.snd_Delete(TABLE, Find(db_obj)).wait();
 
   proto.rcv_MetaData(mdh).wait();
 
@@ -581,7 +643,7 @@ TEST_F(Protocol_mysqlx_xplugin, crud_expr_query)
   and_op.add_arg(greater);
   and_op.add_arg(less);
 
-  proto.snd_Find(TABLE, db_obj, &and_op).wait();
+  proto.snd_Find(TABLE, Find(db_obj, &and_op)).wait();
 
   cout <<"Metadata" <<endl;
   Mdata_handler mdh;
@@ -605,8 +667,10 @@ TEST_F(Protocol_mysqlx_xplugin, crud_expr_query)
   op_equal.add_arg(Field("id"));
   op_equal.add_arg(Number((uint64_t)2));
 
+  Find find1(db_obj, &op_equal);
+
   cout <<"Delete" <<endl;
-  proto.snd_Delete(TABLE, db_obj, &op_equal).wait();
+  proto.snd_Delete(TABLE, find1).wait();
 
   proto.rcv_MetaData(mdh).wait();
 
@@ -617,7 +681,7 @@ TEST_F(Protocol_mysqlx_xplugin, crud_expr_query)
   sh.set_rows_check_num(-1);      // Reset row check counter
 
   // now try again with the same criteria, the result should be empty
-  proto.snd_Find(TABLE, db_obj, &op_equal).wait();
+  proto.snd_Find(TABLE, find1).wait();
 
   cout <<"Metadata" <<endl;
   proto.rcv_MetaData(mdh).wait();
@@ -678,18 +742,13 @@ TEST_F(Protocol_mysqlx_xplugin, crud_expr_args)
   and_op.add_arg(greater);
   and_op.add_arg(less);
 
+  Find find1(db_obj, &and_op);
+
   Args_map params;
   params.add("Param0", Param_Number((int64_t)1));
   params.add("Param1", Param_Number((int64_t)3));
 
-  proto.snd_Find(TABLE, db_obj,
-                 &and_op,       // select
-                 NULL,          // projection
-                 NULL,          // order
-                 NULL,          // group_by
-                 NULL,          // having
-                 NULL,          // limit
-                 &params).wait();
+  proto.snd_Find(TABLE, find1, &params).wait();
 
   cout <<"Metadata" <<endl;
   Mdata_handler mdh;
@@ -710,21 +769,14 @@ TEST_F(Protocol_mysqlx_xplugin, crud_expr_args)
   upd.set_name("id");
   upd.set_value(8);
 
-  proto.snd_Update(TABLE, db_obj, &and_op, upd, NULL, NULL, &params).wait();
+  proto.snd_Update(TABLE, find1, upd, &params).wait();
 
   proto.rcv_MetaData(mdh).wait();
 
   sh.set_rows_check_num(1);        // Expect 1 row to be updated
   proto.rcv_StmtReply(sh).wait();  // Expect Update OK;
 
-  proto.snd_Find(TABLE, db_obj,
-                 &and_op,       // select
-                 NULL,          // projection
-                 NULL,          // order
-                 NULL,          // group_by
-                 NULL,          // having
-                 NULL,          // limit
-                 &params).wait();
+  proto.snd_Find(TABLE, find1, &params).wait();
 
   cout <<"Metadata" <<endl;
   proto.rcv_MetaData(mdh).wait();
@@ -739,14 +791,14 @@ TEST_F(Protocol_mysqlx_xplugin, crud_expr_args)
 
   proto.rcv_StmtReply(sh).wait();  // Expect Update OK;
 
-  proto.snd_Delete(TABLE, db_obj, &and_op, NULL, NULL, &params).wait();
+  proto.snd_Delete(TABLE, find1, &params).wait();
 
   proto.rcv_MetaData(mdh).wait();
 
   sh.set_rows_check_num(1);        // Expect 1 row to be deleted
   proto.rcv_StmtReply(sh).wait();  // Expect Update OK;
 
-  proto.snd_Find(TABLE, db_obj).wait();
+  proto.snd_Find(TABLE, Find(db_obj)).wait();
 
   cout <<"Metadata" <<endl;
   proto.rcv_MetaData(mdh).wait();
@@ -808,8 +860,9 @@ TEST_F(Protocol_mysqlx_xplugin, crud_projections)
   }
   projection;
 
+  Find find1(db_obj, NULL, &projection);
 
-  proto.snd_Find(TABLE, db_obj, NULL, &projection, NULL, NULL, NULL).wait();
+  proto.snd_Find(TABLE, find1).wait();
 
   cout <<"Metadata" <<endl;
   Mdata_handler mdh;

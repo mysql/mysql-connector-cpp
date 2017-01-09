@@ -163,9 +163,23 @@ public:
     : m_expr(&expr)
   {}
 
+  Expr_conv_base(const Expr_from *expr)
+    : m_expr(expr)
+  {}
+
   void reset(const Expr_from &expr)
   {
     m_expr = &expr;
+  }
+
+  bool is_valid() const
+  {
+    return NULL != m_expr;
+  }
+
+  const TO* get() const
+  {
+    return m_expr ? this : NULL;
   }
 
   void process(Prc_to &proc) const

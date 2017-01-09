@@ -846,7 +846,7 @@ CRUD_TEST_BEGIN(find)
 
     Expr criteria(criteria_str);
 
-    Reply find(sess.coll_find(coll, &criteria, NULL));
+    Reply find(sess.coll_find(coll, NULL, &criteria, NULL));
     Cursor c(find);
 
     set_meta_data(c);
@@ -869,7 +869,7 @@ CRUD_TEST_BEGIN(find)
 
     Expr criteria(criteria_str);
 
-    Reply find(sess.coll_find(coll, &criteria, NULL));
+    Reply find(sess.coll_find(coll, NULL, &criteria, NULL));
     Cursor c(find);
 
     set_meta_data(c);
@@ -1054,7 +1054,7 @@ CRUD_TEST_BEGIN(update)
 
     // Show data after update.
 
-    Reply find(sess.coll_find(coll, &which));
+    Reply find(sess.coll_find(coll, NULL, &which));
     Cursor c(find);
     set_meta_data(c);
     c.get_rows(*this);
@@ -1088,7 +1088,7 @@ CRUD_TEST_BEGIN(update)
 
     // Show data after update.
 
-    Reply find(sess.coll_find(coll, &which));
+    Reply find(sess.coll_find(coll, NULL, &which));
     Cursor c(find);
     set_meta_data(c);
     c.get_rows(*this);
@@ -1173,7 +1173,7 @@ CRUD_TEST_BEGIN(parameters)
     param_values;
 
     {
-      Reply find(sess.coll_find(coll, &expr, NULL, NULL, NULL, NULL, NULL, &param_values));
+      Reply find(sess.coll_find(coll, NULL, &expr, NULL, NULL, NULL, NULL, NULL, &param_values));
       Cursor c(find);
 
       set_meta_data(c);
@@ -1205,7 +1205,7 @@ CRUD_TEST_BEGIN(parameters)
     }
 
     {
-      Reply find(sess.coll_find(coll, &expr, NULL, NULL, NULL, NULL, NULL, &param_values));
+      Reply find(sess.coll_find(coll, NULL, &expr, NULL, NULL, NULL, NULL, NULL, &param_values));
       Cursor c(find);
 
       set_meta_data(c);
@@ -1226,7 +1226,7 @@ CRUD_TEST_BEGIN(parameters)
     }
 
     {
-      Reply find(sess.coll_find(coll, &expr, NULL, NULL, NULL, NULL, NULL, &param_values));
+      Reply find(sess.coll_find(coll, NULL, &expr, NULL, NULL, NULL, NULL, NULL, &param_values));
       Cursor c(find);
 
       set_meta_data(c);
@@ -1287,6 +1287,7 @@ CRUD_TEST_BEGIN(projections)
 
     Reply find(
       sess.coll_find(coll,
+                     NULL,        // view spec
                      NULL,        // where
                      &projection,
                      NULL,        // sort
@@ -1360,7 +1361,7 @@ CRUD_TEST_BEGIN(projections)
     }
     projection;
 
-    Reply find(sess.table_select(coll, &criteria, &projection));
+    Reply find(sess.table_select(coll, NULL, &criteria, &projection));
     Cursor c(find);
 
     set_meta_data(c);
@@ -1447,7 +1448,7 @@ CRUD_TEST_BEGIN(insert)
 
   {
     TExpr  cond("id IS NULL AND extra IS NULL");
-    Reply check(sess.table_select(tbl, &cond));
+    Reply check(sess.table_select(tbl, NULL, &cond));
     Cursor c(check);
     set_meta_data(c);
     c.get_rows(*this);
@@ -1540,6 +1541,7 @@ CRUD_TEST_BEGIN(group_by)
 
     Reply find(
       sess.coll_find(coll,
+                     NULL, // view spec
                      NULL, // where
                      &projection,
                      NULL, // sort
@@ -1604,6 +1606,7 @@ CRUD_TEST_BEGIN(group_by)
 
     Reply find(
       sess.table_select(tbl,
+                        NULL, // view spec
                         NULL, // where
                         &projection,
                         NULL, // sort
@@ -1622,6 +1625,204 @@ CRUD_TEST_BEGIN(group_by)
 
     EXPECT_LE(1, row_count);
   }
+
+  cout <<"Done!" <<endl;
+}
+CRUD_TEST_END
+
+
+CRUD_TEST_BEGIN(views)
+{
+  Session sess(this);
+
+  if (!sess.is_valid())
+    FAIL() << "Invalid Session created";
+
+  cout << "Session established" << endl;
+
+  struct View_spec : cdk::View_spec
+  {
+    Table_ref v;
+    String_list  *columns;
+    cdk::View_spec::Options *opts;
+
+    View_spec()
+      : v("view", "test")
+      , columns(NULL)
+      , opts(NULL)
+    {}
+
+    void process(Processor &prc) const
+    {
+      prc.name(v, false);
+      if (columns)
+        columns->process_if(prc.columns());
+      if (opts)
+        opts->process_if(prc.options());
+    }
+  }
+  view;
+
+  cout << "Creating collection view..." << endl;
+
+  // Drop the view first, if it already exists.
+
+  {
+    Reply drop(sess.view_drop(view.v));
+    drop.wait();
+    if (0 < drop.entry_count())
+      drop.get_error().rethrow();
+  }
+
+  {
+    struct : public View_spec::Options
+    {
+      void process(Processor &prc) const
+      {
+        prc.security(View_security::DEFINER);
+        prc.check(View_check::LOCAL);
+      }
+    }
+    view_opts;
+
+    view.opts = &view_opts;
+
+    struct : public Expression::Document
+    {
+      void process(Processor &prc) const
+      {
+        Path name_path("name");
+        Path age_path("age");
+        Expr double_age("2*age");
+        Safe_prc<Processor> sprc(prc);
+
+        prc.doc_begin();
+
+        sprc->key_val("name_proj")->scalar()->ref(name_path);
+        double_age.process_if(sprc->key_val("age_proj"));
+        sprc->key_val("extra.orig_age")->scalar()->ref(age_path);
+        sprc->key_val("extra.val")->scalar()->val()->str("bar");
+
+        prc.doc_end();
+      }
+    }
+    projection;
+
+    Expr cond("name LIKE 'ba%'");
+
+    Reply create(sess.coll_find(coll, &view, &cond, &projection));
+    create.wait();
+    if (0 < create.entry_count())
+      create.get_error().rethrow();
+  }
+
+  cout << "View created, querying it..." << endl;
+
+  {
+    Reply select(sess.coll_find(view.v));
+    select.wait();
+
+    cout << "Got reply..." << endl;
+
+    Cursor c(select);
+
+    set_meta_data(c);
+    c.get_rows(*this);
+    c.wait();
+  }
+
+
+  cout << "Creating table view..." << endl;
+
+  // Drop the view first.
+
+  {
+    Reply drop(sess.view_drop(view.v, false));
+    drop.wait();
+    if (0 < drop.entry_count())
+      drop.get_error().rethrow();
+  }
+
+  {
+    struct : public View_spec::Options
+    {
+      void process(Processor &prc) const
+      {
+        prc.security(View_security::INVOKER);
+        prc.algorithm(View_algorithm::UNDEFINED);
+      }
+    }
+    view_opts;
+
+    view.opts = &view_opts;
+
+    struct : public Projection
+    {
+      void process(Processor &prc) const
+      {
+        Processor::Element_prc *ep;
+
+        prc.list_begin();
+
+        if ((ep = prc.list_el()))
+        {
+          TExpr proj(L"name");
+          proj.process_if(ep->expr());
+          // no alias
+        }
+
+        if ((ep = prc.list_el()))
+        {
+          TExpr proj(L"2 * age");
+          proj.process_if(ep->expr());
+          ep->alias(L"double age");
+        }
+
+        prc.list_end();
+      }
+    }
+    projection;
+
+    struct : public cdk::String_list
+    {
+      void process(Processor &prc) const
+      {
+        prc.list_begin();
+        safe_prc(prc)->list_el()->val("view_name");
+        safe_prc(prc)->list_el()->val("view_age");
+        prc.list_end();
+      }
+    }
+    columns;
+
+    view.columns = &columns;
+
+    TExpr cond("name LIKE 'ba%'");
+
+    Reply create(sess.table_select(tbl, &view, &cond, &projection));
+    create.wait();
+    if (0 < create.entry_count())
+      create.get_error().rethrow();
+  }
+
+  cout << "View created, querying it..." << endl;
+
+  {
+    Reply select(sess.table_select(view.v));
+    select.wait();
+
+    cout << "Got reply..." << endl;
+
+    Cursor c(select);
+
+    EXPECT_EQ(L"view_name", c.col_info(0).name());
+    EXPECT_EQ(L"view_age", c.col_info(1).name());
+
+    set_meta_data(c);
+    c.get_rows(*this);
+    c.wait();
+  }
+
 
   cout <<"Done!" <<endl;
 }

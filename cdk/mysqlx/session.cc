@@ -334,10 +334,12 @@ void Session::rollback()
 }
 
 
-Reply_init& Session::coll_add(const Table_ref &coll, Doc_source &docs, const Param_source *param)
+Reply_init& Session::coll_add(const Table_ref &coll,
+                              Doc_source &docs,
+                              const Param_source *param)
 {
   return set_command(
-    new SndInsertDocs(m_protocol, coll.schema()->name(), coll.name(), docs, param)
+    new SndInsertDocs(m_protocol, coll, docs, param)
   );
 }
 
@@ -348,12 +350,14 @@ Reply_init& Session::coll_remove(const Table_ref &coll,
                                  const Param_source *param)
 {
   return set_command(
-    new SndDelete(m_protocol, protocol::mysqlx::DOCUMENT,
-                  coll.schema()->name(), coll.name(), expr,order_by, lim, param)
+    new SndDelete<protocol::mysqlx::DOCUMENT>(
+          m_protocol, coll, expr,order_by, lim, param
+        )
   );
 }
 
 Reply_init& Session::coll_find(const Table_ref &coll,
+                               const View_spec *view,
                                const Expression *expr,
                                const Expression::Document *proj,
                                const Order_by *order_by,
@@ -362,11 +366,16 @@ Reply_init& Session::coll_find(const Table_ref &coll,
                                const Limit *lim,
                                const Param_source *param)
 {
-  return set_command(
-    new SndFind<protocol::mysqlx::DOCUMENT>(m_protocol,
-                coll.schema()->name(), coll.name(), expr,
-                proj, order_by, group_by, having, lim, param)
-  );
+  SndFind<protocol::mysqlx::DOCUMENT> *find
+    = new SndFind<protocol::mysqlx::DOCUMENT>(
+            m_protocol, coll, expr, proj, order_by,
+            group_by, having, lim, param
+          );
+
+  if (view)
+    return set_command(new SndViewCrud<protocol::mysqlx::DOCUMENT>(*view, find));
+
+  return set_command(find);
 }
 
 Reply_init& Session::coll_update(const api::Table_ref &coll,
@@ -377,14 +386,9 @@ Reply_init& Session::coll_update(const api::Table_ref &coll,
                                  const Param_source *param)
 {
   return set_command(
-    new SndUpdate<protocol::mysqlx::DOCUMENT>(m_protocol,
-                                              coll.schema()->name(),
-                                              coll.name(),
-                                              expr,
-                                              us,
-                                              order_by,
-                                              lim,
-                                              param)
+    new SndUpdate<protocol::mysqlx::DOCUMENT>(
+          m_protocol, coll, expr, us, order_by, lim, param
+        )
   );
 }
 
@@ -392,7 +396,7 @@ Reply_init& Session::table_insert(const Table_ref &coll, Row_source &rows,
                                   const api::Columns *cols, const Param_source *param)
 {
   return set_command(
-    new SndInsertRows(m_protocol, coll.schema()->name(), coll.name(), rows, cols, param)
+    new SndInsertRows(m_protocol, coll, rows, cols, param)
   );
 }
 
@@ -403,13 +407,14 @@ Reply_init& Session::table_delete(const Table_ref &coll,
                                   const Param_source *param)
 {
   return set_command(
-    new SndDelete(m_protocol, protocol::mysqlx::TABLE,
-                  coll.schema()->name(), coll.name(),
-                  expr, order_by, lim, param)
+    new SndDelete<protocol::mysqlx::TABLE>(
+          m_protocol, coll, expr, order_by, lim, param
+        )
   );
 }
 
 Reply_init& Session::table_select(const Table_ref &coll,
+                                  const View_spec *view,
                                   const Expression *expr,
                                   const Projection *proj,
                                   const Order_by *order_by,
@@ -418,11 +423,16 @@ Reply_init& Session::table_select(const Table_ref &coll,
                                   const Limit *lim,
                                   const Param_source *param)
 {
-  return set_command(
-    new SndFind<protocol::mysqlx::TABLE>(m_protocol,
-                coll.schema()->name(), coll.name(), expr, proj,
-                order_by, group_by, having, lim, param)
-  );
+  SndFind<protocol::mysqlx::TABLE> *find
+    = new SndFind<protocol::mysqlx::TABLE>(
+            m_protocol, coll, expr, proj, order_by,
+            group_by, having, lim, param
+          );
+
+  if (view)
+    return set_command(new SndViewCrud<protocol::mysqlx::TABLE>(*view, find));
+
+  return set_command(find);
 }
 
 Reply_init& Session::table_update(const api::Table_ref &coll,
@@ -433,16 +443,20 @@ Reply_init& Session::table_update(const api::Table_ref &coll,
                                   const Param_source *param)
 {
   return set_command(
-    new SndUpdate<protocol::mysqlx::TABLE>(m_protocol,
-                                           coll.schema()->name(),
-                                           coll.name(),
-                                           expr,
-                                           us,
-                                           order_by,
-                                           lim,
-                                           param)
+    new SndUpdate<protocol::mysqlx::TABLE>(
+          m_protocol, coll, expr, us, order_by, lim, param
+        )
   );
 }
+
+
+Reply_init& Session::view_drop(const api::Table_ref &view, bool check_existence)
+{
+  return set_command(
+    new SndDropView(m_protocol, view, check_existence)
+  );
+}
+
 
 
 Reply_init &Session::set_command(Proto_op *cmd)
@@ -549,6 +563,10 @@ void Session::add_diagnostics(Severity::value level, unsigned code,
     m_da.add_entry(level, new Server_error(code, sql_state, msg));
   }
 }
+
+
+void Session::ok(string)
+{}
 
 
 void Session::col_count(col_count_t nr_cols)
@@ -714,7 +732,7 @@ void Session::send_cmd()
 }
 
 
-void Session::start_reading_row_set()
+void Session::start_reading_result()
 {
   m_col_metadata.reset(new Mdata_storage());
   m_executed = false;

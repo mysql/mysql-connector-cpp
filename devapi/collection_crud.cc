@@ -436,11 +436,12 @@ class Op_collection_find
     return
       new cdk::Reply(get_cdk_session().coll_find(
                           m_coll,
+                          NULL,           // view spec
                           get_where(),
                           get_doc_proj(),
                           get_order_by(),
-                          get_group_by(),  // group_by
-                          get_having(),  // having
+                          get_group_by(),
+                          get_having(),
                           get_limit(),
                           get_params()
                     ));

@@ -72,7 +72,7 @@ struct Arr_msg_traits<Mysqlx::Sql::StmtExecute>
 
 Protocol::Op& Protocol::snd_StmtExecute(const char *ns,
                                         const string &stmt,
-                                        api::Any_list *args)
+                                        const api::Any_list *args)
 {
   Mysqlx::Sql::StmtExecute stmt_exec;
 

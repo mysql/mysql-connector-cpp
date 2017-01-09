@@ -55,7 +55,7 @@ namespace mysqlx {
   Helper function template to set a db object for a given message of MSG class
 */
 
-template <class MSG> void set_db_obj(api::Db_obj &db_obj, MSG &msg)
+template <class MSG> void set_db_obj(const api::Db_obj &db_obj, MSG &msg)
 {
   Mysqlx::Crud::Collection *proto_collect = msg.mutable_collection();
 
@@ -82,7 +82,7 @@ template <class MSG> void set_data_model(Data_model dm, MSG &msg)
   Helper function template to set `limit` field inside message of type MSG.
 */
 
-template <class MSG> void set_limit(api::Limit &lim, MSG &msg)
+template <class MSG> void set_limit(const api::Limit &lim, MSG &msg)
 {
 
   Mysqlx::Crud::Limit *proto_lim = msg.mutable_limit();
@@ -100,8 +100,8 @@ template <class MSG> void set_limit(api::Limit &lim, MSG &msg)
   MSG.
 */
 
-template <class MSG> void set_criteria(api::Expression &api_expr, MSG &msg,
-                                       Args_conv &conv /*= NULL*/)
+template <class MSG> void set_criteria(const api::Expression &api_expr,
+                                       MSG &msg, Args_conv &conv)
 {
   Mysqlx::Expr::Expr *pb_expr = msg.mutable_criteria();
 
@@ -109,6 +109,26 @@ template <class MSG> void set_criteria(api::Expression &api_expr, MSG &msg,
   api_expr.process(eb);
 }
 
+
+/*
+  Helper function template to set selection parameters given by a
+  `Select_spec` object.
+*/
+
+template <class MSG>
+void set_select(const Select_spec &sel, MSG &msg, Args_conv &conv)
+{
+  set_db_obj(sel.obj(), msg);
+
+  if (sel.select())
+    set_criteria(*sel.select(), msg, conv);
+
+  if (sel.order())
+    set_order_by(*sel.order(), msg, conv);
+
+  if (sel.limit())
+    set_limit(*sel.limit(), msg);
+}
 
 // -------------------------------------------------------------------------
 
@@ -219,7 +239,7 @@ struct Ord_msg_traits
   is stored in a repeated `order` field within the message.
 */
 
-template <class MSG> void set_order_by(api::Order_by &order_by,
+template <class MSG> void set_order_by(const api::Order_by &order_by,
                                        MSG &msg,
                                        Args_conv &conv)
 {
@@ -390,7 +410,7 @@ void set_doc_path(Mysqlx::Expr::ColumnIdentifier *p_col_id,
 
 
 /*
-  Storing Group_by information inside Find protocol command. 
+  Storing Group_by information inside Find protocol command.
   This command has a repeated `grouping` field of type
   Mysqlx::Expr::Expr. Below we fill it using a builder created
   from Array_builer<> template. Such builder process list of
@@ -412,59 +432,49 @@ struct Group_by_traits
 };
 
 
-Protocol::Op&
-Protocol::snd_Find(
-    Data_model dm,
-    api::Db_obj &db_obj,
-    api::Expression *api_expr,
-    api::Projection *proj,
-    api::Order_by   *order,
-    api::Expr_list  *group_by,
-    api::Expression *having,
-    api::Limit *lim,
-    api::Args_map *args)
+void set_find(Mysqlx::Crud::Find &msg,
+              Data_model dm, const Find_spec &fs, const api::Args_map *args)
 {
-  Mysqlx::Crud::Find find;
-
   Placeholder_conv_imp conv;
 
-  set_db_obj(db_obj, find);
-  set_data_model(dm, find);
+  set_data_model(dm, msg);
 
   if (args)
-    set_args(*args, find, conv);
+    set_args(*args, msg, conv);
 
-  if (api_expr)
-    set_criteria(*api_expr, find, conv);
+  set_select(fs, msg, conv);
 
-  if (lim)
-    set_limit(*lim, find);
-
-  if (order)
-    set_order_by(*order, find, conv);
-
-  if (proj)
+  if (fs.project())
   {
-    Array_builder<Projection_builder, Mysqlx::Crud::Find, Proj_msg_traits> 
+    Array_builder<Projection_builder, Mysqlx::Crud::Find, Proj_msg_traits>
                  proj_builder;
-    proj_builder.reset(find, &conv);
-    proj->process(proj_builder);
+    proj_builder.reset(msg, &conv);
+    fs.project()->process(proj_builder);
   }
 
-  if (group_by)
+  if (fs.group_by())
   {
     Array_builder<Expr_builder, Mysqlx::Crud::Find, Group_by_traits>
       group_by_builder;
-    group_by_builder.reset(find, &conv);
-    group_by->process(group_by_builder);
+    group_by_builder.reset(msg, &conv);
+    fs.group_by()->process(group_by_builder);
   }
 
-  if (having)
+  if (fs.having())
   {
     Expr_builder expr_builder;
-    expr_builder.reset(*find.mutable_grouping_criteria());
-    having->process(expr_builder);
+    expr_builder.reset(*msg.mutable_grouping_criteria());
+    fs.having()->process(expr_builder);
   }
+}
+
+
+Protocol::Op&
+Protocol::snd_Find(Data_model dm, const Find_spec &fs, const api::Args_map *args)
+{
+  Mysqlx::Crud::Find find;
+
+  set_find(find, dm, fs, args);
 
   return get_impl().snd_start(find, msg_type::cli_CrudFind);
 }
@@ -531,7 +541,7 @@ Protocol::snd_Insert(
     api::Db_obj &db_obj,
     const api::Columns *columns,
     Row_source &rs,
-    api::Args_map *args)
+    const api::Args_map *args)
 {
   Mysqlx::Crud::Insert insert;
 
@@ -637,30 +647,19 @@ public:
 
 Protocol::Op& Protocol::snd_Update(
     Data_model dm,
-    api::Db_obj &db_obj,
-    api::Expression *api_expr,
+    const Select_spec &sel,
     Update_spec &us,
-    api::Order_by *order,
-    api::Limit *lim,
-    api::Args_map *args)
+    const api::Args_map *args)
 {
   Mysqlx::Crud::Update update;
   Placeholder_conv_imp conv;
 
-  set_db_obj(db_obj, update);
   set_data_model(dm, update);
 
   if (args)
     set_args(*args, update, conv);
 
-  if (api_expr)
-    set_criteria(*api_expr, update, conv);
-
-  if (order)
-    set_order_by(*order, update, conv);
-
-  if (lim)
-    set_limit(*lim, update);
+  set_select(sel, update, conv);
 
   while (us.next())
   {
@@ -676,34 +675,181 @@ Protocol::Op& Protocol::snd_Update(
 
 
 Protocol::Op&
-Protocol::snd_Delete(
-    Data_model dm,
-    api::Db_obj &db_obj,
-    api::Expression *api_expr,
-    api::Order_by *order_by,
-    api::Limit *lim,
-    api::Args_map *args)
+Protocol::snd_Delete(Data_model dm, const Select_spec &sel, const api::Args_map *args)
 {
   Mysqlx::Crud::Delete del;
   Placeholder_conv_imp conv;
 
-  set_db_obj(db_obj, del);
   set_data_model(dm, del);
 
   if (args)
     set_args(*args, del, conv);
 
-  if (api_expr)
-    set_criteria(*api_expr, del, conv);
-
-  if (lim)
-    set_limit(*lim, del);
-
-  if (order_by)
-    set_order_by(*order_by, del, conv);
+  set_select(sel, del, conv);
 
   return get_impl().snd_start(del, msg_type::cli_CrudDelete);
 }
 
+
+// -------------------------------------------------------------------------
+
+
+template <class MSG>
+void set_view_columns(MSG &msg, const api::Columns &cols)
+{
+  struct
+    : public api::Columns::Processor
+    , api::Columns::Processor::Element_prc
+  {
+    MSG *m_msg;
+
+    // List processor
+
+    void list_begin() {}
+    void list_end() {}
+
+    Element_prc* list_el()
+    {
+      return this;
+    }
+
+    // Column_processor
+
+    void name(const string &col)
+    {
+      m_msg->add_column(col);
+    }
+
+    virtual void alias(const string&)
+    {
+      THROW(
+        "Unexpected column alias specification when processing view columns"
+      );
+    }
+
+    virtual Path_prc* path()
+    {
+      THROW(
+        "Unexpected path specification when processing view columns"
+      );
+    }
+  }
+  prc;
+
+  prc.m_msg = &msg;
+  cols.process(prc);
+}
+
+
+template <class MSG>
+void set_view_options(MSG &msg, api::View_options &opts)
+{
+  struct : public api::View_options::Processor
+  {
+    MSG *m_msg;
+
+    void security(View_security_t security)
+    {
+      switch (security)
+      {
+      case cdk::api::View_security::DEFINER:
+        m_msg->set_security(Mysqlx::Crud::DEFINER);
+        break;
+      case cdk::api::View_security::INVOKER:
+        m_msg->set_security(Mysqlx::Crud::INVOKER);
+        break;
+      }
+    }
+
+    void algorithm(View_algorithm_t alg)
+    {
+      switch (alg)
+      {
+      case cdk::api::View_algorithm::UNDEFINED:
+        m_msg->set_algorithm(Mysqlx::Crud::UNDEFINED);
+        break;
+      case cdk::api::View_algorithm::MERGE:
+        m_msg->set_algorithm(Mysqlx::Crud::MERGE);
+        break;
+      case cdk::api::View_algorithm::TEMPTABLE:
+        m_msg->set_algorithm(Mysqlx::Crud::TEMPTABLE);
+        break;
+      }
+    }
+
+    void check(View_check_t check)
+    {
+      switch (check)
+      {
+      case cdk::api::View_check::LOCAL:
+        m_msg->set_check(Mysqlx::Crud::LOCAL);
+        break;
+      case cdk::api::View_check::CASCADED:
+        m_msg->set_check(Mysqlx::Crud::CASCADED);
+        break;
+      }
+    }
+  }
+  prc;
+
+  prc.m_msg = &msg;
+  opts.process(prc);
+}
+
+
+Protocol::Op&
+Protocol::snd_CreateView(
+  Data_model dm, const api::Db_obj &obj,
+  const Find_spec &query, const api::Columns *cols,
+  api::View_options *opts,
+  const api::Args_map *args
+)
+{
+  Mysqlx::Crud::CreateView view;
+
+  set_db_obj(obj, view);
+
+  if (cols)
+    set_view_columns(view, *cols);
+
+  if (opts)
+    set_view_options(view, *opts);
+
+  set_find(*view.mutable_stmt(), dm, query, args);
+  return get_impl().snd_start(view, msg_type::cli_CreateView);
+}
+
+
+Protocol::Op&
+Protocol::snd_ModifyView(
+  Data_model dm, const api::Db_obj &obj,
+  const Find_spec &query, const api::Columns *cols,
+  api::View_options *opts,
+  const api::Args_map *args
+)
+{
+  Mysqlx::Crud::ModifyView  modify;
+
+  set_db_obj(obj, modify);
+
+  if (cols)
+    set_view_columns(modify, *cols);
+
+  if (opts)
+    set_view_options(modify, *opts);
+
+  set_find(*modify.mutable_stmt(), dm, query, args);
+
+  return get_impl().snd_start(modify, msg_type::cli_ModifyView);
+}
+
+
+Protocol::Op& Protocol::snd_DropView(const api::Db_obj &obj, bool check_exists)
+{
+  Mysqlx::Crud::DropView  drop;
+  set_db_obj(obj, drop);
+  drop.set_if_exists(!check_exists);
+  return get_impl().snd_start(drop, msg_type::cli_DropView);
+}
 
 }}}  // cdk::protocol::mysqlx

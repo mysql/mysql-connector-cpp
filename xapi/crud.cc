@@ -475,6 +475,7 @@ mysqlx_result_t *mysqlx_stmt_t::exec()
   {
     case OP_SELECT:
       m_reply = sess.table_select(m_db_obj_ref,
+                                  NULL,               // view spec
                                   m_where.get(),
                                   m_proj_list.get(),
                                   m_order_by.get(),
@@ -515,6 +516,7 @@ mysqlx_result_t *mysqlx_stmt_t::exec()
       break;
     case OP_FIND:
       m_reply = sess.coll_find(m_db_obj_ref,
+                               NULL,                // view spec
                                m_where.get(),
                                m_proj_list.get(),
                                m_order_by.get(),
