@@ -161,6 +161,7 @@ TEST_F(Sess, default_schema)
     mysqlx::NodeSession s(m_port, m_user, m_password, "test");
 
     EXPECT_EQ(string("test"), s.getDefaultSchema().getName());
+    EXPECT_EQ(string("test"), s.getDefaultSchemaName());
     SqlResult res = s.sql(L"SELECT DATABASE()").execute();
     string db = res.fetchOne()[0];
     EXPECT_EQ(string("test"), db);
@@ -176,6 +177,7 @@ TEST_F(Sess, default_schema)
     mysqlx::NodeSession s(url);
 
     EXPECT_EQ(string("test"), s.getDefaultSchema().getName());
+    EXPECT_EQ(string("test"), s.getDefaultSchemaName());
     SqlResult res = s.sql(L"SELECT DATABASE()").execute();
     string db = res.fetchOne()[0];
     EXPECT_EQ(string("test"), db);

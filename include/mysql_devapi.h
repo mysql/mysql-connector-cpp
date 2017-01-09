@@ -804,6 +804,8 @@ namespace internal {
 
     Schema getDefaultSchema();
 
+    string getDefaultSchemaName();
+
     /**
       Get list of schema objects in a given session.
     */
