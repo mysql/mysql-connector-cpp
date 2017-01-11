@@ -71,7 +71,8 @@ public:
   void close() {
     if (m_trans)
       rollback();
-    return m_session->close();
+    m_session->close();
+    m_connection->close();
   }
 
   /*
