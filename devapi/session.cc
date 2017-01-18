@@ -1151,12 +1151,18 @@ struct Op_sql : public Op_base<internal::SqlStatement_impl>
   }
   m_params;
 
-  void add_param(Value val)
+  void add_param(Value val) override
   {
     m_params.m_values.emplace_back(std::move(val));
   }
 
-  cdk::Reply* send_command()
+  Executable_impl* clone() const override
+  {
+    return new Op_sql(*this);
+  }
+
+
+  cdk::Reply* send_command() override
   {
     return new cdk::Reply(
       get_cdk_session().sql(

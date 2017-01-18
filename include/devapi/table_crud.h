@@ -579,6 +579,7 @@ namespace internal {
 namespace internal {
 
   class TableSelectBase;
+  class Op_ViewCreateAlter;
 
   /*
     Interface to be implemented by internal implementations
@@ -679,8 +680,8 @@ DIAGNOSTIC_PUSH
     add_proj(proj...);
   }
 
-  TableSelect(TableSelect &other) : Executable<RowResult>(other) {}
-  TableSelect(TableSelect &&other) : TableSelect(other) {}
+  TableSelect(const TableSelect &other) : Executable<RowResult>(other) {}
+  TableSelect(TableSelect &&other) : Executable<RowResult>(std::move(other)) {}
 
 DIAGNOSTIC_POP
 
@@ -698,6 +699,7 @@ DIAGNOSTIC_POP
 
   ///@cond IGNORED
   friend internal::TableSelectBase;
+  friend internal::Op_ViewCreateAlter;
   ///@endcond
 };
 

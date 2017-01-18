@@ -430,3 +430,175 @@ TEST_F(Sess, ssl_session)
   }
 
 }
+
+TEST_F(Sess, view)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  XSession s(this);
+
+  const string schema_name = "schemaView";
+  const string tbl_name = "tblView";
+  const string view_name = "view1";
+  const string view_name2 = "view2";
+
+  Schema sch = s.createSchema(schema_name,true);
+
+  s.dropTable(schema_name, tbl_name);
+
+  sch.dropView(view_name).ifExists().execute();
+
+  std::stringstream qry;
+
+  qry << "CREATE TABLE `"<< schema_name <<
+         "`.`" << tbl_name <<"` (name VARCHAR(20) ,age INT);";
+
+  get_sess().sql(qry.str()).execute();
+
+  Table tbl = sch.getTable(tbl_name, true);
+
+  tbl.insert("name", "age")
+      .values("Foo", 20)
+      .values("Bar", 30)
+      .values("Baz", 40)
+      .execute();
+
+  std::cout << "Create View" << std::endl;
+
+  sch.createView(view_name, false)
+      .security(mysqlx::SQLSecurity::DEFINER)
+      .definer("root")
+      .definedAs(tbl.select("name as view_name", "2016-age as view_birth"))
+      .withCheckOption(mysqlx::CheckOption::LOCAL)
+      .execute();
+
+  std::cout << "Check View" << std::endl;
+
+  {
+    Table view = sch.getTable(view_name);
+
+    RowResult res = view.select().execute();
+
+    EXPECT_EQ(string("view_name"), res.getColumn(0).getColumnName());
+    EXPECT_EQ(string("view_birth"), res.getColumn(1).getColumnName());
+
+    for(auto row : res)
+    {
+      if (row.get(0).get<string>() == string("Foo"))
+        EXPECT_EQ(1996, row.get(1).get<int>());
+      else if (row.get(0).get<string>() == string("Bar"))
+        EXPECT_EQ(1986, row.get(1).get<int>());
+      else if (row.get(0).get<string>() == string("Baz"))
+        EXPECT_EQ(1976, row.get(1).get<int>());
+    }
+  }
+
+  std::cout << "Expects error, since view is already created" << std::endl;
+
+  EXPECT_THROW(
+        sch.createView(view_name, false)
+        .security(mysqlx::SQLSecurity::DEFINER)
+        .definedAs(tbl.select("name as view_name", "2016-age as view_birth"))
+        .withCheckOption(mysqlx::CheckOption::LOCAL)
+        .execute()
+        , mysqlx::Error
+        );
+
+  TableSelect tbl_select=
+      tbl.select("name", "2*age", "1 as one", "2 as two");
+
+  std::vector<string> columns_list = {"view_name", "view_double_age"};
+
+  std::cout << "Different number of columns... Error expected" << std::endl;
+
+  EXPECT_THROW(
+  sch.alterView(view_name)
+     .columns(columns_list, "one")
+     .security(mysqlx::SQLSecurity::DEFINER)
+     .definer("root")
+     .definedAs(tbl_select)
+     .withCheckOption(mysqlx::CheckOption::LOCAL)
+     .execute()
+        , mysqlx::Error);
+
+  auto view_exec = sch.alterView(view_name)
+                   .columns(columns_list, "one", string("two"))
+                   .security(mysqlx::SQLSecurity::DEFINER)
+                   .definer("root")
+                   .definedAs(tbl_select)
+                   .withCheckOption(mysqlx::CheckOption::LOCAL);
+
+  TableSelect tbl_select_2 = tbl_select;
+
+  std::cout << "Shouldn't update the alterView" << std::endl;
+
+  tbl_select.limit(1);
+
+  tbl_select_2.limit(2);
+
+  //Execute copy of ViewAlter obj
+  auto view_exec2 = view_exec;
+
+  view_exec2.execute();
+
+  std::cout << "Execute previously create TableSelect" << std::endl;
+
+  EXPECT_EQ(1, tbl_select.execute().count());
+
+  std::cout << "Execute previously create TableSelect" << std::endl;
+
+  EXPECT_EQ(2, tbl_select_2.execute().count());
+
+  std::cout << "Cannot alter View that is not created" << std::endl;
+
+  EXPECT_THROW( sch.alterView(view_name2)
+                .columns("view_name", "fake")
+                .security(mysqlx::SQLSecurity::DEFINER)
+                .definer("root")
+                .definedAs(tbl_select)
+                .withCheckOption(mysqlx::CheckOption::LOCAL)
+                .execute()
+                , mysqlx::Error);
+
+  std::cout << "Check View after alterView" << std::endl;
+
+  {
+    Table view = sch.getTable(view_name);
+
+    RowResult res = view.select().execute();
+
+    std::vector<Column> columns_metadata = res.getColumns();
+
+    EXPECT_EQ(string("view_name"), res.getColumn(0).getColumnName());
+    EXPECT_EQ(string("view_double_age"), res.getColumn(1).getColumnName());
+    EXPECT_EQ(string("one"), res.getColumn(2).getColumnName());
+    EXPECT_EQ(string("two"), res.getColumn(3).getColumnName());
+
+    //EXPECT 3 rows, since the changed tableSelect shouldn't affect the view
+    EXPECT_EQ(3, res.count());
+
+    for(auto row : res)
+    {
+      if (row.get(0).get<string>() == string("Foo"))
+        EXPECT_EQ(40, row.get(1).get<int>());
+      if (row.get(0).get<string>() == string("Bar"))
+        EXPECT_EQ(60, row.get(1).get<int>());
+      if (row.get(0).get<string>() == string("Baz"))
+        EXPECT_EQ(80, row.get(1).get<int>());
+    }
+
+  }
+
+  std::cout << "Drop view" << std::endl;
+
+  sch.dropView(view_name).execute();
+
+  std::cout << "Drop view doesn't throw error because using ifExists" << std::endl;
+
+  sch.dropView(view_name).ifExists().execute();
+
+  std::cout << "Without ifExists, will throw Error if no such View." << std::endl;
+
+  EXPECT_THROW(sch.dropView(view_name).execute(), mysqlx::Error);
+
+}

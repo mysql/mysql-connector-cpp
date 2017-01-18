@@ -110,6 +110,11 @@ class Op_collection_add
     , m_pos(0)
   {}
 
+  Executable_impl* clone() const override
+  {
+    return new Op_collection_add(*this);
+  }
+
 
   void add_json(const mysqlx::string &json) override
   {
@@ -365,8 +370,13 @@ class Op_collection_remove
     add_where(expr);
   }
 
+  Executable_impl* clone() const override
+  {
+    return new Op_collection_remove(*this);
+  }
 
-  cdk::Reply* send_command()
+
+  cdk::Reply* send_command() override
   {
     return
       new cdk::Reply(get_cdk_session().coll_remove(
@@ -430,8 +440,12 @@ class Op_collection_find
     add_where(expr);
   }
 
+  Executable_impl* clone() const override
+  {
+    return new Op_collection_find(*this);
+  }
 
-  cdk::Reply* send_command()
+  cdk::Reply* send_command() override
   {
     return
       new cdk::Reply(get_cdk_session().coll_find(
@@ -528,6 +542,11 @@ class Op_collection_modify
     , m_coll(coll)
   {
     add_where(expr);
+  }
+
+  Executable_impl* clone() const override
+  {
+    return new Op_collection_modify(*this);
   }
 
   cdk::Reply* send_command() override

@@ -55,10 +55,15 @@ class XSession_base;
 struct Executable_impl
 {
   virtual BaseResult execute() = 0;
+
+  virtual Executable_impl *clone() const = 0;
+
   virtual ~Executable_impl() {}
 };
 
 }  // internal
+
+
 
 /**
   Represents an operation that can be executed.
@@ -78,7 +83,7 @@ protected:
 
   typedef internal::Executable_impl Impl;
 
-  std::unique_ptr<Impl> m_impl;
+  std::shared_ptr<Impl> m_impl;
 
   Executable() = default;
   Executable(Impl *impl)
@@ -94,12 +99,14 @@ protected:
 
 public:
 
-  Executable(Executable &other) : Executable(std::move(other))
+  Executable(const Executable &other)
+    : m_impl(other.m_impl->clone())
   {}
 
   Executable(Executable &&other)
-    : m_impl(std::move(other.m_impl))
+    : m_impl(other.m_impl)
   {}
+
 
   /// Execute given operation and wait for its result.
 
@@ -172,10 +179,10 @@ protected:
 public:
 
   Statement(Statement &other)
-    : Executable<Res>(std::move(other))
+    : Executable<Res>(other)
   {}
 
-  Statement(Statement &&other) : Statement(other) {}
+  Statement(Statement &&other) : Executable<Res>(std::move(other)) {}
 
 
   /// Bind parameter with given name to the given value.

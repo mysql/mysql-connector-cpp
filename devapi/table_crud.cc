@@ -83,6 +83,17 @@ public:
     , m_table(tbl)
   {}
 
+  Op_table_insert(const Op_table_insert &other)
+    : Op_sort(other)
+    , m_table(other.m_table)
+    , m_rows(other.m_rows)
+    , m_cols(other.m_cols)
+  {}
+
+  Executable_impl* clone() const override
+  {
+    return new Op_table_insert(*this);
+  }
 
   void add_column(const mysqlx::string &column) override
   {
@@ -207,13 +218,14 @@ class Op_table_select
   //typedef cdk::string string;
 
   Table_ref m_table;
+  const cdk::View_spec *m_view = nullptr;
 
   cdk::Reply* send_command() override
   {
     return
         new cdk::Reply(get_cdk_session().table_select(
                           m_table,
-                          NULL,           // view spec
+                          m_view,           // view spec
                           get_where(),
                           get_tbl_proj(),
                           get_order_by(),
@@ -224,6 +236,16 @@ class Op_table_select
                        ));
   }
 
+  void set_view(const cdk::View_spec *view)
+  {
+    m_view = view;
+  }
+
+
+  Executable_impl* clone() const override
+  {
+    return new Op_table_select(*this);
+  }
 
 public:
 
@@ -232,7 +254,10 @@ public:
     , m_table(table)
   {}
 
+
+
   friend mysqlx::TableSelect;
+  friend mysqlx::internal::Op_ViewCreateAlter;
 };
 
 
@@ -279,6 +304,11 @@ class Op_table_update
   std::unique_ptr<parser::Table_field_parser> m_table_field;
   SetValues m_set_values;
   SetValues::const_iterator m_set_it;
+
+  Executable_impl* clone() const override
+  {
+    return new Op_table_update(*this);
+  }
 
   void add_set(const mysqlx::string &field, internal::ExprValue &&val) override
   {
@@ -346,11 +376,18 @@ class Op_table_update
     return m_table_field->table();
   }
 
+
 public:
 
   Op_table_update(Table &table)
     : Op_select(table)
     , m_table(table)
+  {}
+
+  Op_table_update(const Op_table_update &other)
+    : Op_select(other)
+    , m_table(other.m_table)
+    , m_set_values(other.m_set_values)
   {}
 
 
@@ -392,6 +429,12 @@ class Op_table_remove
 
   Table_ref m_table;
 
+  Executable_impl* clone() const override
+  {
+    return new Op_table_remove(*this);
+  }
+
+
   cdk::Reply* send_command() override
   {
     return
@@ -412,6 +455,7 @@ public:
   {}
 
 
+
   friend mysqlx::TableRemove;
 };
 
@@ -420,3 +464,246 @@ void TableRemove::prepare(Table &table)
 {
   m_impl.reset(new Op_table_remove(table));
 }
+
+
+// --------------------------------------------------------------------
+
+/*
+  ViewCreateAlter
+  ===============
+*/
+
+namespace mysqlx{
+namespace internal {
+
+class Op_ViewCreateAlter
+  : public Op_base<mysqlx::internal::View_impl>
+  , cdk::View_spec
+  , Table_ref
+{
+public:
+  typedef cdk::View_spec::op_type op_type;
+
+private:
+
+  op_type m_op_type;
+  CheckOption m_check_option;
+  std::unique_ptr<TableSelect> m_table_select;
+  SQLSecurity m_security;
+  Algorithm m_algorythm;
+  std::vector<mysqlx::string> m_columns;
+  mysqlx::string m_user;
+
+  Executable_impl* clone() const override
+  {
+    return new Op_ViewCreateAlter(*this);
+  }
+
+  Op_ViewCreateAlter(const Op_ViewCreateAlter& other)
+    : Op_base(other)
+    , Table_ref(other)
+    , m_op_type      (other.m_op_type     )
+    , m_check_option (other.m_check_option)
+    , m_security     (other.m_security    )
+    , m_algorythm    (other.m_algorythm   )
+    , m_columns      (other.m_columns     )
+    , m_user         (other.m_user        )
+  {
+    if (other.m_table_select.get() != NULL)
+    {
+      m_table_select.reset(new TableSelect(*other.m_table_select.get()));
+      static_cast<Op_table_select*>(m_table_select->get_impl())->set_view(this);
+    }
+  }
+
+public:
+
+  Op_ViewCreateAlter(Schema &sch, const mysqlx::string &name, op_type replace)
+    : Op_base< mysqlx::internal::View_impl >(sch.getSession())
+    ,  Table_ref(sch.getName(), name)
+    , m_op_type(replace)
+  {}
+
+  void with_check_option(CheckOption option) override
+  {
+    m_check_option = option;
+  }
+
+  void defined_as(TableSelect &&select) override
+  {
+    m_table_select.reset(new TableSelect(std::move(select)));
+    static_cast<Op_table_select*>(m_table_select->get_impl())->set_view(this);
+  }
+
+  void definer(const mysqlx::string &user) override
+  {
+    m_user = user;
+  }
+
+  void security(SQLSecurity security) override
+  {
+    m_security = security;
+  }
+
+  void algorithm(Algorithm algorythm) override
+  {
+    m_algorythm = algorythm;
+  }
+
+  void add_columns(const mysqlx::string &name) override
+  {
+    m_columns.push_back(name);
+  }
+
+  cdk::Reply* send_command() override
+  {
+    if (m_table_select.get() == NULL)
+      throw_error("Unexpected empty TableSelect");
+
+    cdk::Reply *ret =
+      static_cast<Op_table_select*>(m_table_select->get_impl())->send_command();
+
+    return ret;
+
+  }
+
+  /*
+     cdk::View_spec Processor
+  */
+
+  void process( cdk::View_spec::Processor &prc) const override
+  {
+    prc.name(*this, m_op_type);
+
+    if (m_columns.size() != 0)
+    {
+      auto list_columns = prc.columns();
+      if (list_columns)
+      {
+        list_columns->list_begin();
+        for (auto column : m_columns)
+        {
+          list_columns->list_el()->val(column);
+        }
+        list_columns->list_end();
+      }
+    }
+
+    auto options = prc.options();
+
+    if (options)
+    {
+
+      switch (m_algorythm)
+      {
+        case Algorithm::MERGE:
+          options->algorithm(cdk::api::View_algorithm::MERGE);
+          break;
+        case Algorithm::TEMPTABLE:
+          options->algorithm(cdk::api::View_algorithm::TEMPTABLE);
+          break;
+        case Algorithm::UNDEFINED:
+          options->algorithm(cdk::api::View_algorithm::UNDEFINED);
+          break;
+      }
+
+      switch(m_check_option)
+      {
+        case CheckOption::CASCADED:
+          options->check(cdk::api::View_check::CASCADED);
+        case CheckOption::LOCAL:
+          options->check(cdk::api::View_check::LOCAL);
+      }
+
+      switch(m_security)
+      {
+        case SQLSecurity::DEFINER:
+          options->security(cdk::api::View_security::DEFINER);
+          break;
+        case SQLSecurity::INVOKER:
+          options->security(cdk::api::View_security::INVOKER);
+      }
+    }
+
+  }
+};
+
+}} // namespace mysqlx::internal
+
+namespace mysqlx {
+
+ViewCreate::ViewCreate(Schema &sch, const string &name, bool replace)
+{
+  m_impl.reset(
+        new internal::Op_ViewCreateAlter(sch,
+                                         name,
+                                         replace ?
+                                           internal::Op_ViewCreateAlter::op_type::REPLACE :
+                                           internal::Op_ViewCreateAlter::op_type::CREATE )
+        );
+}
+
+
+
+ViewAlter::ViewAlter(Schema &sch, const string &name)
+{
+  m_impl.reset(
+        new internal::Op_ViewCreateAlter(sch,
+                                         name,
+                                         internal::Op_ViewCreateAlter::op_type::UPDATE)
+        );
+}
+
+} // namespace mysqlx
+
+
+
+/*
+   ViewDrop
+   ========
+*/
+
+namespace mysqlx {
+namespace internal{
+
+class Op_ViewDrop
+    : public Op_base<ViewDrop_impl>
+    ,  public Table_ref
+{
+  bool m_checkExistence = true;
+
+public:
+
+  Op_ViewDrop(Schema &sch, const string &name)
+    : Op_base<ViewDrop_impl>(sch.getSession())
+    , Table_ref(sch.getName(), name)
+  {}
+
+  void if_exists() override
+  {
+    m_checkExistence = false;
+  }
+
+  Executable_impl* clone() const override
+  {
+    return new Op_ViewDrop(*this);
+  }
+
+  cdk::Reply* send_command() override
+  {
+    return new cdk::Reply(get_cdk_session().view_drop(*this,m_checkExistence));
+  }
+};
+
+} // namespace internal
+
+ViewDrop::ViewDrop(Schema &sch, const string &name)
+{
+  m_impl.reset(new internal::Op_ViewDrop(sch, name));
+}
+
+} // namespace mysqlx
+
+
+
+// ---------------------------------------------------------------------

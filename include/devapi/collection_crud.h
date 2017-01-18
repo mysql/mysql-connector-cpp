@@ -367,7 +367,7 @@ public:
   CollectionAdd(Collection &coll);
 
   CollectionAdd(CollectionAdd &other) : Executable(other) {}
-  CollectionAdd(CollectionAdd &&other) : CollectionAdd(other) {}
+  CollectionAdd(CollectionAdd &&other) : Executable(std::move(other)) {}
 
 private:
 
