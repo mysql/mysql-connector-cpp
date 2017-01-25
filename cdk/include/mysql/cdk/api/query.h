@@ -201,6 +201,7 @@ public:
   typedef View_algorithm::value View_algorithm_t;
   typedef View_check::value     View_check_t;
 
+  virtual void definer(const string&) = 0;
   virtual void security(View_security_t) = 0;
   virtual void algorithm(View_algorithm_t) = 0;
   virtual void check(View_check_t) = 0;

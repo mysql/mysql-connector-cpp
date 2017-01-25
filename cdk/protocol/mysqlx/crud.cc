@@ -748,6 +748,11 @@ void set_view_options(MSG &msg, api::View_options &opts)
   {
     MSG *m_msg;
 
+    void definer(const string &user)
+    {
+      m_msg->set_definer(user);
+    }
+
     void security(View_security_t security)
     {
       switch (security)
