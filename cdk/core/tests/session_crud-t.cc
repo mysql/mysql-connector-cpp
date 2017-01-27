@@ -1654,7 +1654,7 @@ CRUD_TEST_BEGIN(views)
 
     void process(Processor &prc) const
     {
-      prc.name(v, false);
+      prc.name(v);
       if (columns)
         columns->process_if(prc.columns());
       if (opts)

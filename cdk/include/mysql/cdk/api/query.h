@@ -146,8 +146,9 @@ public:
 
   typedef OPTS  Options;
   typedef String_list::Processor  List_processor;
+  enum op_type { CREATE, UPDATE, REPLACE };
 
-  virtual void name(const Table_ref&, bool update = false) = 0;
+  virtual void name(const Table_ref&, op_type type = CREATE) = 0;
   virtual typename Options::Processor* options() = 0;
   virtual List_processor* columns()
   { return NULL; }
@@ -160,6 +161,7 @@ class View_spec : public Expr_base< View_processor<OPTS> >
 public:
 
   typedef OPTS Options;
+  typedef typename View_processor<OPTS>::op_type  op_type;
 };
 
 

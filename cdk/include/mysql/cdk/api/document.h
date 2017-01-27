@@ -25,7 +25,6 @@
 #ifndef CDK_API_DOCUMENT_H
 #define CDK_API_DOCUMENT_H
 
-#include "../foundation.h"
 #include "expression.h"
 
 namespace cdk {

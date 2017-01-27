@@ -588,6 +588,7 @@ public:
 
   Op& snd_CreateView(Data_model dm, const api::Db_obj &obj,
                      const Find_spec &query, const api::Columns *columns,
+                     bool replace = false,
                      api::View_options* = NULL,
                      const api::Args_map *args = NULL);
   Op& snd_ModifyView(Data_model dm, const api::Db_obj &obj,

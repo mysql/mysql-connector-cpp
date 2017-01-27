@@ -655,7 +655,7 @@ class SndViewCrud
 {
   const View_spec *m_view;
   SndFind<DM> *m_find;
-  bool   m_update;
+  View_spec::op_type  m_type;
   bool   m_has_cols;
   bool   m_has_opts;
 
@@ -684,7 +684,7 @@ class SndViewCrud
     {
       String_list::Processor *m_prc;
 
-      void name(const Table_ref&, bool) {}
+      void name(const Table_ref&, op_type) {}
 
       Options::Processor* options()
       {
@@ -724,7 +724,8 @@ class SndViewCrud
     {
       Options::Processor *m_prc;
 
-      void name(const Table_ref&, bool) {}
+      void name(const Table_ref&, op_type)
+      {}
 
       Options::Processor* options()
       {
@@ -751,19 +752,28 @@ class SndViewCrud
 
   Proto_op* start()
   {
-    if (m_update)
+    switch (m_type)
+    {
+    case CREATE:
+    case REPLACE:
+      return &m_protocol.snd_CreateView(DM, *this, *m_find,
+                                        get_cols(), REPLACE == m_type,
+                                        get_opts());
+
+    case UPDATE:
       return &m_protocol.snd_ModifyView(DM, *this, *m_find,
                                         get_cols(), get_opts());
-    else
-      return &m_protocol.snd_CreateView(DM, *this, *m_find,
-                                        get_cols(), get_opts());
+    default:
+      assert(false);
+      return NULL;  // quiet compile warnings
+    }
   }
 
 public:
 
   SndViewCrud(const View_spec &view, SndFind<DM> *find = NULL)
     : Crud_op_base(find->m_protocol)
-    , m_view(&view), m_find(find), m_update(false)
+    , m_view(&view), m_find(find), m_type(CREATE)
     , m_has_cols(false), m_has_opts(false)
   {
     /*
@@ -784,10 +794,10 @@ private:
 
   // View_spec::Processor
 
-  void name(const Table_ref &view, bool update = false)
+  void name(const Table_ref &view, View_spec::op_type type)
   {
     Crud_op_base::set(view);
-    m_update = update;
+    m_type = type;
   }
 
   List_processor* columns()

@@ -806,6 +806,7 @@ Protocol::Op&
 Protocol::snd_CreateView(
   Data_model dm, const api::Db_obj &obj,
   const Find_spec &query, const api::Columns *cols,
+  bool replace,
   api::View_options *opts,
   const api::Args_map *args
 )
@@ -813,6 +814,7 @@ Protocol::snd_CreateView(
   Mysqlx::Crud::CreateView view;
 
   set_db_obj(obj, view);
+  view.set_replace_existing(replace);
 
   if (cols)
     set_view_columns(view, *cols);
