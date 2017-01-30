@@ -1716,17 +1716,29 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
         char_data = "";
       opt->set_database(char_data);
     break;
-    case MYSQLX_OPT_SSL_ENABLE:
 #ifdef WITH_SSL
+    case MYSQLX_OPT_SSL_ENABLE:
       uint_data = va_arg(args, unsigned int);
       opt->set_tls(uint_data > 0);
+    break;
+    case MYSQLX_OPT_SSL_CA:
+      char_data = va_arg(args, char*);
+      opt->set_ssl_ca(char_data);
+    break;
+    case MYSQLX_OPT_SSL_CA_PATH:
+      char_data = va_arg(args, char*);
+      opt->set_ssl_ca_path(char_data);
+    break;
 #else
+    case MYSQLX_OPT_SSL_ENABLE:
+    case MYSQLX_OPT_SSL_CA:
+    case MYSQLX_OPT_SSL_CA_PATH:
       opt->set_diagnostic(
       "Can not create TLS session - this connector is built"
       " without TLS support.", 0
     );
+    break;
 #endif
-      break;
     default:
       opt->set_diagnostic("Invalid option value", 0);
       rc = RESULT_ERROR;
@@ -1737,7 +1749,7 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
   SAFE_EXCEPTION_END(opt, RESULT_ERROR)
 }
 
-#define CHAR_OUTPUT_BUF(V) V = va_arg(args, char*); \
+#define CHECK_OUTPUT_BUF(V, T) V = va_arg(args, T); \
 if (V == NULL) \
 { \
    opt->set_diagnostic(MYSQLX_ERROR_OUTPUT_BUFFER_NULL, 0); \
@@ -1759,25 +1771,48 @@ mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
   switch(type)
   {
     case MYSQLX_OPT_HOST:
-      CHAR_OUTPUT_BUF(char_data)
+      CHECK_OUTPUT_BUF(char_data, char*)
       strcpy(char_data, opt->get_host().data());
     break;
     case MYSQLX_OPT_PORT:
-      uint_data = va_arg(args, unsigned int*);
+      CHECK_OUTPUT_BUF(uint_data, unsigned int*)
       *uint_data = opt->get_port();
     break;
     case MYSQLX_OPT_USER:
-      CHAR_OUTPUT_BUF(char_data)
+      CHECK_OUTPUT_BUF(char_data, char*)
       strcpy(char_data, opt->get_user().data());
     break;
     case MYSQLX_OPT_PWD:
-      CHAR_OUTPUT_BUF(char_data)
+      CHECK_OUTPUT_BUF(char_data, char*)
       strcpy(char_data, opt->get_password().data());
     break;
     case MYSQLX_OPT_DB:
-      CHAR_OUTPUT_BUF(char_data)
+      CHECK_OUTPUT_BUF(char_data, char*)
       strcpy(char_data, opt->get_db().data());
     break;
+#ifdef WITH_SSL
+    case MYSQLX_OPT_SSL_ENABLE:
+      CHECK_OUTPUT_BUF(uint_data, unsigned int*)
+      *uint_data = opt->get_tls().use_tls() ? 1 : 0;
+    break;
+    case MYSQLX_OPT_SSL_CA:
+      CHECK_OUTPUT_BUF(char_data, char*)
+      strcpy(char_data, opt->get_tls().get_ca().data());
+    break;
+    case MYSQLX_OPT_SSL_CA_PATH:
+      CHECK_OUTPUT_BUF(char_data, char*)
+      strcpy(char_data, opt->get_tls().get_ca_path().data());
+    break;
+#else
+    case MYSQLX_OPT_SSL_ENABLE:
+    case MYSQLX_OPT_SSL_CA:
+    case MYSQLX_OPT_SSL_CA_PATH:
+      opt->set_diagnostic(
+      "Can not create TLS session - this connector is built"
+      " without TLS support.", 0
+    );
+    break;
+#endif
     default:
       opt->set_diagnostic("Invalid option value", 0);
       rc = RESULT_ERROR;
