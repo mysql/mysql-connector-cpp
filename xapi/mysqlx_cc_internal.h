@@ -366,6 +366,7 @@ private:
   /* The pointer is used because TCPIP options
      can only be set in the constructor */
   cdk::ds::TCPIP *m_tcp;
+  cdk::connection::TLS::Options m_tls_options;
 
 public:
   mysqlx_session_options_struct() : m_tcp(NULL)
@@ -388,9 +389,10 @@ public:
     if (db)
       set_database(*db);
 
-#ifdef WITH_SSL
+    // This call must be made at all times because SSL is enabled by default
     set_tls(ssl_enable);
-#else
+
+#ifndef WITH_SSL
     if (ssl_enable)
       set_diagnostic(
         "Can not create TLS session - this connector is built"
@@ -401,6 +403,7 @@ public:
 
   mysqlx_session_options_struct(const std::string &conn_str) : m_tcp(NULL)
   {
+    set_tls(false);
     parser::parse_conn_str(conn_str, *this);
   }
 
@@ -434,30 +437,88 @@ public:
     m_port = port;
   }
 
-  // Implementing URI_Processor interface
-  void path(const std::string &path)
-  { set_database(path); }
-
-  void key_val(const std::string& key)
-  {
-    if (key.compare("ssl-enable") == 0)
-    {
-#ifdef WITH_SSL
-      set_tls(true);
-#else
-      set_diagnostic(
-        "Can not create TLS session - this connector is built"
-        " without TLS support.", 0
-      );
-#endif
-    }
-  }
-
   std::string get_host() { return m_host; }
   unsigned int get_port() { return m_port; }
   std::string get_user() { return m_usr; }
   std::string get_password() { return m_pwd; }
   std::string get_db() { return m_db; }
+
+  void set_use_tls(bool tls)
+  {
+    if (tls)
+      set_tls(m_tls_options);
+    else
+      set_tls(false);
+  }
+
+  void set_ssl_ca(const string &ca)
+  {
+    m_tls_options.set_ca(ca);
+    set_tls(m_tls_options);
+  }
+
+  void set_ssl_ca_path(const string &ca_path)
+  {
+    m_tls_options.set_ca_path(ca_path);
+    set_tls(m_tls_options);
+  }
+
+  void set_ssl_key(const string &key)
+  {
+    m_tls_options.set_key(key);
+    set_tls(m_tls_options);
+  }
+
+  // Implementing URI_Processor interface
+  void path(const std::string &path)
+  {
+    set_database(path);
+  }
+
+  void key_val(const std::string& key)
+  {
+    if (key.find("ssl-", 0) == 0)
+    {
+#ifdef WITH_SSL
+      if (key.compare("ssl-enable") == 0)
+      {
+        set_tls(true);
+      }
+#else
+      set_diagnostic(
+        "Can not create TLS session - this connector is built"
+        " without TLS support.", 0
+        );
+#endif
+    }
+  }
+
+  void key_val(const std::string& key, const std::string& val)
+  {
+    if (key.find("ssl-", 0) == 0)
+    {
+  #ifdef WITH_SSL
+      if (key.compare("ssl-ca") == 0)
+      {
+        set_ssl_ca(val);
+      }
+      else if (key.compare("ssl-ca-path") == 0)
+      {
+        set_ssl_ca_path(val);
+      }
+      else if (key.compare("ssl-key") == 0)
+      {
+        set_ssl_key(val);
+      }
+#else
+      set_diagnostic(
+        "Can not create TLS session - this connector is built"
+        " without TLS support.", 0
+      );
+  #endif
+    }
+  }
+
 
   ~mysqlx_session_options_struct()
   {

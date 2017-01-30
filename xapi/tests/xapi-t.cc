@@ -27,7 +27,6 @@
 #include <climits>
 #include "test.h"
 
-
 TEST_F(xapi, store_result_select)
 {
   SKIP_IF_NO_XPLUGIN
@@ -317,7 +316,7 @@ TEST_F(xapi, conn_string_test)
 
   unsigned short port = 0;
   char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
-  char conn_str[1024];
+  char conn_str[4096];
   int conn_err_code = 0;
   bool ssl_enable = false;
   const char *xplugin_port = getenv("XPLUGIN_PORT");
@@ -326,8 +325,8 @@ TEST_F(xapi, conn_string_test)
   const char *xplugin_host = getenv("XPLUGIN_HOST");
 
   mysqlx_session_t *local_sess;
-  mysqlx_stmt_t *stmt;
   mysqlx_result_t *res;
+  mysqlx_stmt_t *stmt;
   mysqlx_row_t *row;
 
   if (xplugin_port)
@@ -354,16 +353,19 @@ DO_CONNECT:
   }
   cout << "Connected to xplugin..." << endl;
 
-  RESULT_CHECK(stmt = mysqlx_sql_new(local_sess, "SELECT 'foo'", MYSQLX_NULL_TERMINATED));
+  RESULT_CHECK(stmt = mysqlx_sql_new(local_sess, "SHOW STATUS LIKE 'mysqlx_ssl_cipher'", MYSQLX_NULL_TERMINATED));
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
-  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  if ((row = mysqlx_row_fetch_one(res)) != NULL)
   {
-    char data[32];
+    char data[128] = { 0 };
     size_t data_len = sizeof(data);
-    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, data, &data_len));
-    EXPECT_STREQ("foo", data);
-    cout << "ROW DATA: " << data << " " << endl;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, data, &data_len));
+    if (ssl_enable)
+    {
+      cout << "SSL Cipher: " << data << endl;
+      EXPECT_TRUE(data_len > 1);
+    }
   }
 
   mysqlx_session_close(local_sess);
@@ -372,6 +374,33 @@ DO_CONNECT:
   {
     ssl_enable = true;
     strcat(conn_str, "/?ssl-enable");
+    authenticate();
+
+    res = mysqlx_sql(get_session(), "select @@ssl_ca, @@ssl_capath, @@datadir", MYSQLX_NULL_TERMINATED);
+    if ((row = mysqlx_row_fetch_one(res)) != NULL)
+    {
+      char ca_buf[1024] = { 0 }, capath_buf[1024] = { 0 };
+      size_t ca_len = sizeof(ca_buf), capath_len = sizeof(capath_buf);
+      int rc = mysqlx_get_bytes(row, 0, 0, ca_buf, &ca_len);
+      if (rc != RESULT_OK && ca_len < 2)
+        return;
+
+      strcat(conn_str, "&ssl-ca=");
+      rc = mysqlx_get_bytes(row, 1, 0, capath_buf, &capath_len);
+      if (rc != RESULT_OK || capath_len < 2)
+      {
+        capath_len = sizeof(capath_buf);
+        rc = mysqlx_get_bytes(row, 2, 0, capath_buf, &capath_len);
+        if (rc != RESULT_OK && capath_len < 2)
+          return; // Could not collect enough data about certificates
+
+        strcat(conn_str, capath_buf);
+      }
+      strcat(conn_str, ca_buf);
+      strcat(conn_str, "&ssl-ca-path=");
+      strcat(conn_str, capath_buf);
+    }
+
     goto DO_CONNECT;
   }
 }
@@ -390,6 +419,7 @@ TEST_F(xapi, conn_options_test)
   const char *xplugin_usr = getenv("XPLUGIN_USER");
   const char *xplugin_pwd = getenv("XPLUGIN_PASSWORD");
   const char *xplugin_host = getenv("XPLUGIN_HOST");
+  bool ssl_ca_detected = false;
 
   char buf[1024];
 
@@ -436,23 +466,71 @@ DO_CONNECT:
   }
   cout << "Connected to xplugin..." << endl;
 
-  RESULT_CHECK(stmt = mysqlx_sql_new(local_sess, "SELECT 'foo'", MYSQLX_NULL_TERMINATED));
+  RESULT_CHECK(stmt = mysqlx_sql_new(local_sess, "SHOW STATUS LIKE 'mysqlx_ssl_cipher'", MYSQLX_NULL_TERMINATED));
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
-  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  if ((row = mysqlx_row_fetch_one(res)) != NULL)
   {
-    char data[32];
+    char data[128] = { 0 };
     size_t data_len = sizeof(data);
-    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, data, &data_len));
-    EXPECT_STREQ("foo", data);
-    cout << "ROW DATA: " << data << " " << endl;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, data, &data_len));
+    if (ssl_ca_detected)
+    {
+      cout << "SSL Cipher: " << data << endl;
+      EXPECT_TRUE(data_len > 0);
+    }
   }
 
   mysqlx_session_close(local_sess);
+
   if (!ssl_enable)
   {
-    ssl_enable = 1;
+    ssl_enable = true;
+    authenticate();
     EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SSL_ENABLE, ssl_enable));
+
+    res = mysqlx_sql(get_session(), "select @@ssl_ca, @@ssl_capath, @@datadir", MYSQLX_NULL_TERMINATED);
+    if ((row = mysqlx_row_fetch_one(res)) != NULL)
+    {
+      char ca_buf[1024] = { 0 }, capath_buf[1024] = { 0 }, combined_buf[1024] = { 0 };
+      char buf_check[1024] = { 0 };
+      size_t ca_len = sizeof(ca_buf), capath_len = sizeof(capath_buf);
+      int rc = mysqlx_get_bytes(row, 0, 0, ca_buf, &ca_len);
+      if (rc != RESULT_OK && ca_len < 2)
+      {
+        mysqlx_free_options(opt);
+        return;
+      }
+
+      rc = mysqlx_get_bytes(row, 1, 0, capath_buf, &capath_len);
+      if (rc != RESULT_OK || capath_len < 2)
+      {
+        capath_len = sizeof(capath_buf);
+        rc = mysqlx_get_bytes(row, 2, 0, capath_buf, &capath_len);
+        if (rc != RESULT_OK && capath_len < 2)
+        {
+          mysqlx_free_options(opt);
+          return;
+        }
+
+        strcat(combined_buf, capath_buf);
+        strcat(combined_buf, ca_buf);
+        EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SSL_CA, combined_buf));
+        EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_SSL_CA, buf_check));
+        EXPECT_STREQ(combined_buf, buf_check);
+      }
+      else
+      {
+        EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SSL_CA, ca_buf));
+        EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_SSL_CA, buf_check));
+        EXPECT_STREQ(ca_buf, buf_check);
+      }
+
+      EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SSL_CA_PATH, capath_buf));
+      EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_SSL_CA_PATH, buf_check));
+      EXPECT_STREQ(capath_buf, buf_check);
+    }
+
     goto DO_CONNECT;
   }
 

@@ -334,7 +334,9 @@ typedef enum mysqlx_opt_type_enum
   MYSQLX_OPT_USER = 3,
   MYSQLX_OPT_PWD = 4,
   MYSQLX_OPT_DB = 5,
-  MYSQLX_OPT_SSL_ENABLE = 6
+  MYSQLX_OPT_SSL_ENABLE = 6,
+  MYSQLX_OPT_SSL_CA = 7,
+  MYSQLX_OPT_SSL_CA_PATH = 8
 }
 mysqlx_opt_type_t;
 
