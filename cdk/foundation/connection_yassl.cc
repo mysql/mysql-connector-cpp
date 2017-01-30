@@ -34,6 +34,15 @@ POP_SYS_WARNINGS
 #include "connection_tcpip_base.h"
 
 
+static const char* tls_ciphers_list="DHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:"
+                                    "AES128-RMD:DES-CBC3-RMD:DHE-RSA-AES256-RMD:"
+                                    "DHE-RSA-AES128-RMD:DHE-RSA-DES-CBC3-RMD:"
+                                    "AES256-SHA:RC4-SHA:RC4-MD5:DES-CBC3-SHA:"
+                                    "DES-CBC-SHA:EDH-RSA-DES-CBC3-SHA:"
+                                    "EDH-RSA-DES-CBC-SHA:AES128-SHA:AES256-RMD:";
+static const char* tls_cipher_blocked= "!aNULL:!eNULL:!EXPORT:!LOW:!MD5:!DES:!RC2:!RC4:!PSK:!SSLv3:";
+
+
 static void throw_yassl_error_msg(const char* msg)
 {
   throw cdk::foundation::Error(cdk::foundation::cdkerrc::tls_error,
@@ -103,7 +112,7 @@ void connection_TLS_impl::do_connect()
 
   try
   {
-    yaSSL::SSL_METHOD* method = yaSSL::TLSv1_client_method();
+    yaSSL::SSL_METHOD* method = yaSSL::TLSv1_1_client_method();
 
     if (!method)
       throw_yassl_error();
@@ -111,6 +120,13 @@ void connection_TLS_impl::do_connect()
     m_tls_ctx = SSL_CTX_new(method);
     if (!m_tls_ctx)
       throw_yassl_error();
+
+
+    std::string cipher_list;
+    cipher_list.append(tls_cipher_blocked);
+    cipher_list.append(tls_ciphers_list);
+
+    SSL_CTX_set_cipher_list(m_tls_ctx, cipher_list.c_str());
 
     if (!m_options.get_ca().empty() ||
         !m_options.get_ca_path().empty())
