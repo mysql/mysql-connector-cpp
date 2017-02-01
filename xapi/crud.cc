@@ -58,9 +58,30 @@ void mysqlx_stmt_t::init_data_model()
     default:
       m_data_model = cdk::protocol::mysqlx::DEFAULT;
       m_parser_mode = parser::Parser_mode::TABLE;
-      break;
+    break;
   }
   m_group_by_list.set_parser_mode(m_parser_mode);
+}
+
+void mysqlx_stmt_t::copy_parent_data(mysqlx_stmt_struct *parent)
+{
+  if (parent->m_where.get())
+    m_where.reset(new Expression_parser(*static_cast<parser::Expression_parser*>(parent->m_where.get())));
+
+  if (parent->m_having.get())
+    m_having.reset(new Expression_parser(*static_cast<parser::Expression_parser*>(parent->m_having.get())));
+
+  if (parent->m_limit.get())
+    m_limit.reset(new Limit(*parent->m_limit.get()));
+
+  if (parent->m_order_by.get())
+    m_order_by.reset(new Order_by(*parent->m_order_by.get()));
+
+  if (parent->m_proj_list.get())
+    m_proj_list.reset(new Projection_list(*parent->m_proj_list.get()));
+
+    m_param_source = parent->m_param_source;
+    m_group_by_list = parent->m_group_by_list;
 }
 
 void mysqlx_stmt_t::init_crud()
@@ -484,6 +505,19 @@ mysqlx_result_t *mysqlx_stmt_t::exec()
                                   m_limit.get(),
                                   m_param_source.count() ? &m_param_source : NULL);
       break;
+    case OP_VIEW_CREATE:
+    case OP_VIEW_UPDATE:
+    case OP_VIEW_REPLACE:
+      m_reply = sess.table_select(m_db_obj_ref,
+                                  &m_view_spec,
+                                  m_where.get(),
+                                  m_proj_list.get(),
+                                  m_order_by.get(),
+                                  m_group_by_list.get_list(),
+                                  m_having.get(),
+                                  m_limit.get(),
+                                  m_param_source.count() ? &m_param_source : NULL);
+      break;
     case OP_INSERT:
       {
         if (!m_row_source.row_count())
@@ -748,6 +782,88 @@ void mysqlx_stmt_t::acquire_diag(cdk::foundation::api::Severity::value val)
 void mysqlx_stmt_t::clear_order_by()
 {
   if(m_order_by.get()) m_order_by->clear();
+}
+
+bool mysqlx_stmt_t::is_view_op()
+{
+  return (m_op_type == OP_VIEW_CREATE || m_op_type == OP_VIEW_UPDATE ||
+          m_op_type == OP_VIEW_REPLACE);
+}
+
+void mysqlx_stmt_t::set_view_algorithm(int algorithm)
+{
+  if (!is_view_op())
+    throw Mysqlx_exception(MYSQLX_ERROR_VIEW_TYPE_MSG);
+
+  m_view_spec.set_algorithm(algorithm);
+}
+
+void mysqlx_stmt_t::set_view_security(int security)
+{
+  if (!is_view_op())
+    throw Mysqlx_exception(MYSQLX_ERROR_VIEW_TYPE_MSG);
+
+  m_view_spec.set_security(security);
+}
+
+void mysqlx_stmt_t::set_view_check_option(int option)
+{
+  if (!is_view_op())
+    throw Mysqlx_exception(MYSQLX_ERROR_VIEW_TYPE_MSG);
+
+  m_view_spec.set_check(option);
+}
+
+void mysqlx_stmt_t::set_view_definer(const char* user)
+{
+  if (!is_view_op())
+    throw Mysqlx_exception(MYSQLX_ERROR_VIEW_TYPE_MSG);
+
+  m_view_spec.set_definer(user);
+}
+
+void mysqlx_stmt_t::set_view_columns(va_list args)
+{
+  if (!is_view_op())
+    throw Mysqlx_exception(MYSQLX_ERROR_VIEW_TYPE_MSG);
+
+  m_view_spec.set_columns(args);
+}
+
+void mysqlx_stmt_t::set_view_properties(va_list args)
+{
+  int64_t view_option = 0;
+  if (!is_view_op())
+    throw Mysqlx_exception(MYSQLX_ERROR_VIEW_TYPE_MSG);
+
+  /*
+    The list of arguments is ending after the list of columns,
+    so the function must stop getting more arguments
+  */
+  while (view_option != VIEW_OPTION_COLUMNS &&
+         (view_option = (int64_t)va_arg(args, void*)) != 0)
+  {
+    switch (view_option)
+    {
+      case VIEW_OPTION_ALGORITHM:
+        set_view_algorithm(va_arg(args, int));
+      break;
+      case VIEW_OPTION_SECURITY:
+        set_view_security(va_arg(args, int));
+      break;
+      case VIEW_OPTION_CHECK_OPTION:
+        set_view_check_option(va_arg(args, int));
+      break;
+      case VIEW_OPTION_DEFINER:
+        set_view_definer(va_arg(args, const char*));
+      break;
+      case VIEW_OPTION_COLUMNS:
+        set_view_columns(args);
+      break;
+      default:
+        throw Mysqlx_exception("Wrong VIEW property");
+    }
+  }
 }
 
 mysqlx_stmt_t::~mysqlx_stmt_struct()

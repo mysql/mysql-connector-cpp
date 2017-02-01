@@ -28,6 +28,429 @@
 #include "test.h"
 
 
+TEST_F(xapi, view_ddl_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  mysqlx_result_t *res;
+  mysqlx_row_t *row;
+  mysqlx_schema_t *schema;
+  mysqlx_table_t *table, *view, *view2;
+  mysqlx_stmt_t *stmt, *vstmt;
+  bool view2_read = false;
+
+  uint32_t col_num = 0, row_num = 0, i = 0;
+
+  authenticate();
+  mysqlx_schema_drop(get_session(), "view_ddl");
+  mysqlx_schema_create(get_session(), "view_ddl");
+
+  schema = mysqlx_get_schema(get_session(), "view_ddl", 1);
+  exec_sql("CREATE TABLE view_ddl.tab1(a INT, b VARCHAR(32))");
+  EXPECT_TRUE((table = mysqlx_get_table(schema, "tab1", 1)) != NULL);
+
+  RESULT_CHECK(stmt = mysqlx_table_insert_new(table));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(stmt, "a", "b", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_SINT(100), PARAM_STRING("mysql"), PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_SINT(200), PARAM_STRING("test"), PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_SINT(300), PARAM_STRING("view"), PARAM_END));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  RESULT_CHECK(stmt = mysqlx_table_select_new(table));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_items(stmt, "a", "a*5 AS a5", "800 as a800", "CONCAT(b, ' tab') as conview", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_where(stmt, "a > 100"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_order_by(stmt, PARAM_SORT_DESC("a"), PARAM_END));
+
+  // We do not have to execute the SELECT statement
+  RESULT_CHECK(vstmt = mysqlx_view_create_new(schema, "view1", stmt));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_algorithm(vstmt, VIEW_ALGORITHM_MERGE));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_security(vstmt, VIEW_SECURITY_INVOKER));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_check_option(vstmt, VIEW_CHECK_OPTION_CASCADED));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_definer(vstmt, "root"));
+
+  // Change parent SELECT STMT, it is not supposed to affect the VIEW STMT in any way
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_items(stmt, "b", PARAM_END));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_columns(vstmt, "viewcol1", "viewcol2", "viewcol3", "viewcol4", PARAM_END));
+  CRUD_CHECK(res = mysqlx_execute(vstmt), vstmt);
+
+  EXPECT_TRUE((view = mysqlx_get_table(schema, "view1", 0)) != NULL);
+  RESULT_CHECK(res = mysqlx_table_select(view, NULL));
+
+  col_num = mysqlx_column_get_count(res);
+  EXPECT_EQ(col_num, 4);
+
+  for (i = 0; i < col_num; ++i)
+  {
+    char name_val[32] = { 0 };
+    const char *cname = mysqlx_column_get_name(res, i);
+    sprintf(name_val, "viewcol%d", i+1);
+    EXPECT_STREQ(name_val, cname);
+  }
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t a, a5, a800;
+    char buf[128] = { 0 };
+
+    size_t buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &a));
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 1, &a5));
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 2, &a800));
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 3, 0, buf, &buflen));
+
+    cout << "Row #" << row_num << ": [" << a << " " << a5 << " " << a800
+      << " '" << buf << "']" << endl;
+
+    switch (row_num)
+    {
+    case 0:
+      EXPECT_EQ(300, a);
+      EXPECT_EQ(1500, a5);
+      EXPECT_EQ(800, a800);
+      EXPECT_STREQ(buf, "view tab");
+      break;
+    case 1:
+      EXPECT_EQ(200, a);
+      EXPECT_EQ(1000, a5);
+      EXPECT_EQ(800, a800);
+      EXPECT_STREQ(buf, "test tab");
+      break;
+    default:
+      FAIL() << "Wrong number of rows is fetched";
+    }
+
+    ++row_num;
+  }
+
+  RESULT_CHECK(res = mysqlx_sql(get_session(), "SHOW CREATE VIEW `view_ddl`.`view1`",
+                                MYSQLX_NULL_TERMINATED));
+  EXPECT_TRUE((row = mysqlx_row_fetch_one(res)) != NULL);
+  {
+    char vbuf[4096] = { 0 };
+    size_t vbuflen = sizeof(vbuf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, vbuf, &vbuflen));
+    EXPECT_TRUE(strstr(vbuf, "ALGORITHM=MERGE") != NULL );
+    EXPECT_TRUE(strstr(vbuf, "SQL SECURITY INVOKER") != NULL);
+    EXPECT_TRUE(strstr(vbuf, "WITH CASCADED CHECK OPTION") != NULL);
+    EXPECT_TRUE(strstr(vbuf, "`root`@") != NULL);
+  }
+
+  /* Check how CREATE VIEW works on existing view, error expected */
+  RESULT_CHECK(vstmt = mysqlx_view_create_new(schema, "view1", stmt));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_columns(vstmt, "rviewcol1", "rviewcol2", "rviewcol3", "rviewcol4", PARAM_END));
+  EXPECT_TRUE(mysqlx_execute(vstmt) == NULL);
+  printf("Expected error: %s\n", mysqlx_error_message(vstmt));
+
+  RESULT_CHECK(stmt = mysqlx_table_select_new(table));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_items(stmt, "a", "a*10 AS a10", "8000 as a8000", "CONCAT(b, ' mod') as conview", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_where(stmt, "a > 200"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_order_by(stmt, PARAM_SORT_DESC("a"), PARAM_END));
+
+  /* Check how REPLACE VIEW works on existing view */
+  RESULT_CHECK(vstmt = mysqlx_view_replace_new(schema, "view1", stmt));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_algorithm(vstmt, VIEW_ALGORITHM_TEMPTABLE));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_security(vstmt, VIEW_SECURITY_DEFINER));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_columns(vstmt, "rviewcol1", "rviewcol2", "rviewcol3", "rviewcol4", PARAM_END));
+  CRUD_CHECK(res = mysqlx_execute(vstmt), vstmt);
+
+  /* Check how REPLACE VIEW works on non-existing view */
+  RESULT_CHECK(vstmt = mysqlx_view_replace_new(schema, "view2", stmt));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_algorithm(vstmt, VIEW_ALGORITHM_TEMPTABLE));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_security(vstmt, VIEW_SECURITY_DEFINER));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_columns(vstmt, "rviewcol1", "rviewcol2", "rviewcol3", "rviewcol4", PARAM_END));
+  CRUD_CHECK(res = mysqlx_execute(vstmt), vstmt);
+
+  RESULT_CHECK(res = mysqlx_table_select(view, NULL));
+
+REPEAT_VIEW_CHECK:
+  row_num = 0;
+  col_num = mysqlx_column_get_count(res);
+  EXPECT_EQ(col_num, 4);
+
+  for (i = 0; i < col_num; ++i)
+  {
+    char name_val[32] = { 0 };
+    const char *cname = mysqlx_column_get_name(res, i);
+    sprintf(name_val, "rviewcol%d", i + 1);
+    EXPECT_STREQ(name_val, cname);
+  }
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t a, a10, a8000;
+    char buf[128] = { 0 };
+
+    size_t buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &a));
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 1, &a10));
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 2, &a8000));
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 3, 0, buf, &buflen));
+
+    cout << endl << "Row #" << row_num << ": [" << a << " " << a10 << " " << a8000
+      << " '" << buf << "']";
+
+    switch (row_num)
+    {
+      case 0:
+        EXPECT_EQ(300, a);
+        EXPECT_EQ(3000, a10);
+        EXPECT_EQ(8000, a8000);
+        EXPECT_STREQ(buf, "view mod");
+      break;
+      default:
+        FAIL() << "Wrong number of rows is fetched";
+    }
+    ++row_num;
+  }
+
+  if (!view2_read)
+  {
+    view2_read = true;
+    EXPECT_TRUE((view2 = mysqlx_get_table(schema, "view2", 0)) != NULL);
+    RESULT_CHECK(res = mysqlx_table_select(view2, NULL));
+    goto REPEAT_VIEW_CHECK; // Same results for a new view
+  }
+
+  /* Check how MODIFY VIEW works on non-existing view, error expected */
+  RESULT_CHECK(vstmt = mysqlx_view_modify_new(schema, "view3", stmt));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_algorithm(vstmt, VIEW_ALGORITHM_TEMPTABLE));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_security(vstmt, VIEW_SECURITY_DEFINER));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_columns(vstmt, "rviewcol1", "rviewcol2", "rviewcol3", "rviewcol4", PARAM_END));
+  EXPECT_TRUE(mysqlx_execute(vstmt) == NULL);
+  printf("\nExpected error: %s\n", mysqlx_error_message(vstmt));
+
+  /* Check how MODIFY VIEW works on existing view */
+  RESULT_CHECK(vstmt = mysqlx_view_modify_new(schema, "view2", stmt));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_algorithm(vstmt, VIEW_ALGORITHM_TEMPTABLE));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_security(vstmt, VIEW_SECURITY_DEFINER));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_columns(vstmt, "modcol1", "modcol2", "modcol3", "modcol4", PARAM_END));
+  CRUD_CHECK(res = mysqlx_execute(vstmt), vstmt);
+
+  RESULT_CHECK(res = mysqlx_table_select(view2, NULL));
+  col_num = mysqlx_column_get_count(res);
+  EXPECT_EQ(col_num, 4);
+
+  for (i = 0; i < col_num; ++i)
+  {
+    char name_val[32] = { 0 };
+    const char *cname = mysqlx_column_get_name(res, i);
+    sprintf(name_val, "modcol%d", i + 1);
+    EXPECT_STREQ(name_val, cname);
+  }
+
+}
+
+TEST_F(xapi, view_ddl_one_call_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  mysqlx_result_t *res;
+  mysqlx_row_t *row;
+  mysqlx_schema_t *schema;
+  mysqlx_table_t *table, *view, *view2;
+  mysqlx_stmt_t *stmt;
+  bool view2_read = false;
+
+  uint32_t col_num = 0, row_num = 0, i = 0;
+
+  authenticate();
+  mysqlx_schema_drop(get_session(), "view_ddl");
+  mysqlx_schema_create(get_session(), "view_ddl");
+
+  schema = mysqlx_get_schema(get_session(), "view_ddl", 1);
+  exec_sql("CREATE TABLE view_ddl.tab1(a INT, b VARCHAR(32))");
+  EXPECT_TRUE((table = mysqlx_get_table(schema, "tab1", 1)) != NULL);
+
+  RESULT_CHECK(stmt = mysqlx_table_insert_new(table));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(stmt, "a", "b", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_SINT(100), PARAM_STRING("mysql"), PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_SINT(200), PARAM_STRING("test"), PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_SINT(300), PARAM_STRING("view"), PARAM_END));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  RESULT_CHECK(stmt = mysqlx_table_select_new(table));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_items(stmt, "a", "a*5 AS a5", "800 as a800", "CONCAT(b, ' tab') as conview", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_where(stmt, "a > 100"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_order_by(stmt, PARAM_SORT_DESC("a"), PARAM_END));
+
+  // We do not have to execute the SELECT statement
+  CRUD_CHECK(res = mysqlx_view_create(schema, "view1", stmt,
+                                      VIEW_ALGORITHM(VIEW_ALGORITHM_MERGE),
+                                      VIEW_SECURITY(VIEW_SECURITY_INVOKER),
+                                      VIEW_CHECK_OPTION(VIEW_CHECK_OPTION_CASCADED),
+                                      VIEW_DEFINER("root"),
+                                      VIEW_COLUMNS("viewcol1", "viewcol2", "viewcol3", "viewcol4"),
+                                      PARAM_END), schema);
+
+  EXPECT_TRUE((view = mysqlx_get_table(schema, "view1", 0)) != NULL);
+  RESULT_CHECK(res = mysqlx_table_select(view, NULL));
+
+  col_num = mysqlx_column_get_count(res);
+  EXPECT_EQ(col_num, 4);
+
+  for (i = 0; i < col_num; ++i)
+  {
+    char name_val[32] = { 0 };
+    const char *cname = mysqlx_column_get_name(res, i);
+    sprintf(name_val, "viewcol%d", i + 1);
+    EXPECT_STREQ(name_val, cname);
+  }
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t a, a5, a800;
+    char buf[128] = { 0 };
+
+    size_t buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &a));
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 1, &a5));
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 2, &a800));
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 3, 0, buf, &buflen));
+
+    cout << "Row #" << row_num << ": [" << a << " " << a5 << " " << a800
+      << " '" << buf << "']" << endl;
+
+    switch (row_num)
+    {
+    case 0:
+      EXPECT_EQ(300, a);
+      EXPECT_EQ(1500, a5);
+      EXPECT_EQ(800, a800);
+      EXPECT_STREQ(buf, "view tab");
+      break;
+    case 1:
+      EXPECT_EQ(200, a);
+      EXPECT_EQ(1000, a5);
+      EXPECT_EQ(800, a800);
+      EXPECT_STREQ(buf, "test tab");
+      break;
+    default:
+      FAIL() << "Wrong number of rows is fetched";
+    }
+
+    ++row_num;
+  }
+
+  RESULT_CHECK(res = mysqlx_sql(get_session(), "SHOW CREATE VIEW `view_ddl`.`view1`",
+    MYSQLX_NULL_TERMINATED));
+  EXPECT_TRUE((row = mysqlx_row_fetch_one(res)) != NULL);
+  {
+    char vbuf[4096] = { 0 };
+    size_t vbuflen = sizeof(vbuf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, vbuf, &vbuflen));
+    EXPECT_TRUE(strstr(vbuf, "ALGORITHM=MERGE") != NULL);
+    EXPECT_TRUE(strstr(vbuf, "SQL SECURITY INVOKER") != NULL);
+    EXPECT_TRUE(strstr(vbuf, "WITH CASCADED CHECK OPTION") != NULL);
+    EXPECT_TRUE(strstr(vbuf, "`root`@") != NULL);
+  }
+
+  /* Check how CREATE VIEW works on existing view, error expected */
+  EXPECT_TRUE(mysqlx_view_create(schema, "view1", stmt,
+                                 VIEW_COLUMNS("viewcol1", "viewcol2", "viewcol3", "viewcol4"),
+                                 PARAM_END) == NULL);
+  printf("Expected error: %s\n", mysqlx_error_message(schema));
+
+  RESULT_CHECK(stmt = mysqlx_table_select_new(table));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_items(stmt, "a", "a*10 AS a10", "8000 as a8000", "CONCAT(b, ' mod') as conview", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_where(stmt, "a > 200"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_order_by(stmt, PARAM_SORT_DESC("a"), PARAM_END));
+
+  /* Check how REPLACE VIEW works on existing view */
+  CRUD_CHECK(res = mysqlx_view_replace(schema, "view1", stmt,
+                                       VIEW_ALGORITHM(VIEW_ALGORITHM_TEMPTABLE),
+                                       VIEW_SECURITY(VIEW_SECURITY_DEFINER),
+                                       VIEW_COLUMNS("rviewcol1", "rviewcol2", "rviewcol3", "rviewcol4"),
+                                       PARAM_END), schema);
+
+  /* Check how REPLACE VIEW works on non-existing view */
+  CRUD_CHECK(res = mysqlx_view_replace(schema, "view2", stmt,
+                                       VIEW_ALGORITHM(VIEW_ALGORITHM_TEMPTABLE),
+                                       VIEW_SECURITY(VIEW_SECURITY_DEFINER),
+                                       VIEW_COLUMNS("rviewcol1", "rviewcol2", "rviewcol3", "rviewcol4"),
+                                       PARAM_END), schema);
+
+  RESULT_CHECK(res = mysqlx_table_select(view, NULL));
+
+REPEAT_VIEW_CHECK:
+  row_num = 0;
+  col_num = mysqlx_column_get_count(res);
+  EXPECT_EQ(col_num, 4);
+
+  for (i = 0; i < col_num; ++i)
+  {
+    char name_val[32] = { 0 };
+    const char *cname = mysqlx_column_get_name(res, i);
+    sprintf(name_val, "rviewcol%d", i + 1);
+    EXPECT_STREQ(name_val, cname);
+  }
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t a, a10, a8000;
+    char buf[128] = { 0 };
+
+    size_t buflen = sizeof(buf);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &a));
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 1, &a10));
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 2, &a8000));
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 3, 0, buf, &buflen));
+
+    cout << endl << "Row #" << row_num << ": [" << a << " " << a10 << " " << a8000
+      << " '" << buf << "']";
+
+    switch (row_num)
+    {
+    case 0:
+      EXPECT_EQ(300, a);
+      EXPECT_EQ(3000, a10);
+      EXPECT_EQ(8000, a8000);
+      EXPECT_STREQ(buf, "view mod");
+      break;
+    default:
+      FAIL() << "Wrong number of rows is fetched";
+    }
+    ++row_num;
+  }
+
+  if (!view2_read)
+  {
+    view2_read = true;
+    EXPECT_TRUE((view2 = mysqlx_get_table(schema, "view2", 0)) != NULL);
+    RESULT_CHECK(res = mysqlx_table_select(view2, NULL));
+    goto REPEAT_VIEW_CHECK; // Same results for a new view
+  }
+
+  /* Check how MODIFY VIEW works on non-existing view, error expected */
+  EXPECT_TRUE((res = mysqlx_view_modify(schema, "view3", stmt,
+                                      VIEW_ALGORITHM(VIEW_ALGORITHM_TEMPTABLE),
+                                      VIEW_SECURITY(VIEW_SECURITY_DEFINER),
+                                      VIEW_COLUMNS("rviewcol1", "rviewcol2", "rviewcol3", "rviewcol4"),
+                                      PARAM_END)) == NULL);
+  printf("\nExpected error: %s\n", mysqlx_error_message(schema));
+
+  /* Check how MODIFY VIEW works on existing view */
+  CRUD_CHECK(res = mysqlx_view_modify(schema, "view2", stmt,
+                                      VIEW_ALGORITHM(VIEW_ALGORITHM_TEMPTABLE),
+                                      VIEW_SECURITY(VIEW_SECURITY_DEFINER),
+                                      VIEW_COLUMNS("modcol1", "modcol2", "modcol3", "modcol4"),
+                                      PARAM_END), schema);
+
+  RESULT_CHECK(res = mysqlx_table_select(view2, NULL));
+  col_num = mysqlx_column_get_count(res);
+  EXPECT_EQ(col_num, 4);
+
+  for (i = 0; i < col_num; ++i)
+  {
+    char name_val[32] = { 0 };
+    const char *cname = mysqlx_column_get_name(res, i);
+    sprintf(name_val, "modcol%d", i + 1);
+    EXPECT_STREQ(name_val, cname);
+  }
+
+}
+
+
 TEST_F(xapi, store_result_select)
 {
   SKIP_IF_NO_XPLUGIN
@@ -677,3 +1100,4 @@ TEST_F(xapi, myc_344_sql_error_test)
   EXPECT_TRUE((err_msg = mysqlx_error_message(res)) != NULL);
   printf("\nExpected error: %s\n", err_msg);
 }
+

@@ -51,7 +51,7 @@ public:
   cdk::Expr_list *get_list() { return m_group_by_list.size() ? this : NULL; }
 };
 
-typedef struct mysqlx_stmt_struct : public cdk::foundation::nocopy, Mysqlx_diag
+typedef struct mysqlx_stmt_struct : public Mysqlx_diag
 {
 private:
   mysqlx_session_t &m_session;
@@ -75,6 +75,7 @@ private:
   Modify_spec m_modify_spec;
   cdk::string m_query;
   Group_by_list m_group_by_list;
+  View_spec m_view_spec;
 
   int set_expression(cdk::scoped_ptr<cdk::Expression> &member, const char *val);
 
@@ -88,11 +89,22 @@ public:
   }
 
   mysqlx_stmt_struct(mysqlx_session_t *session, const cdk::string &schema, const cdk::string &name,
-                mysqlx_op_t op_type) : m_session(*session),
-                                     m_db_obj_ref(schema, name),
-                                     m_op_type(op_type)
+                     mysqlx_op_t op_type) : m_session(*session),
+                     m_db_obj_ref(schema, name),
+                     m_op_type(op_type)
   {
     init_data_model();
+  }
+
+  mysqlx_stmt_struct(mysqlx_session_t *session, const cdk::string &schema, const cdk::string &name,
+                     mysqlx_op_t op_type, mysqlx_stmt_struct *parent) : m_session(*session),
+                     m_db_obj_ref(parent->get_ref()),
+                     m_op_type(op_type),
+                     m_view_spec(schema, name, op_type)
+  {
+    init_data_model();
+    if (parent)
+      copy_parent_data(parent);
   }
 
   /*
@@ -106,6 +118,8 @@ public:
     m_result.reset(res);
     return m_result.get() != NULL;
   }
+
+  void copy_parent_data(mysqlx_stmt_struct *parent);
 
   mysqlx_result_t *get_result() { return m_result.get(); }
 
@@ -152,6 +166,7 @@ public:
   */
   mysqlx_op_t op_type() { return m_op_type; }
   mysqlx_session_t &get_session() { return m_session; }
+  const Db_obj_ref &get_ref() { return m_db_obj_ref; }
 
   int set_where(const char *where_expr);
   int set_limit(row_count_t row_count, row_count_t offset);
@@ -172,6 +187,14 @@ public:
 
   // Return the session validity state
   bool session_valid();
+  bool is_view_op();
+
+  void set_view_algorithm(int algorithm);
+  void set_view_security(int security);
+  void set_view_check_option(int option);
+  void set_view_definer(const char* user);
+  void set_view_columns(va_list args);
+  void set_view_properties(va_list args);
 
   friend class Group_by_list;
 } mysqlx_stmt_t;

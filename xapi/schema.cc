@@ -78,12 +78,13 @@ mysqlx_schema_struct::~mysqlx_schema_struct()
     delete m_stmt;
 }
 
-mysqlx_stmt_t *mysqlx_schema_struct::stmt_op(const cdk::string obj_name, mysqlx_op_t op_type)
+mysqlx_stmt_t *mysqlx_schema_struct::stmt_op(const cdk::string obj_name, mysqlx_op_t op_type,
+                                             mysqlx_stmt_t *parent)
 {
   if (m_stmt)
     delete m_stmt;
 
-  m_stmt = m_session.stmt_op(m_name, obj_name, op_type, false);
+  m_stmt = m_session.stmt_op(m_name, obj_name, op_type, false, parent);
   if (!m_stmt)
     throw Mysqlx_exception("Error creating schema operation");
   return m_stmt;
