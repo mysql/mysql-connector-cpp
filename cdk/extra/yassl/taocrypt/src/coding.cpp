@@ -37,7 +37,7 @@ const byte hexEncode[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 
 const byte hexDecode[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
                            bad, bad, bad, bad, bad, bad, bad,
-                           10, 11, 12, 13, 14, 15 
+                           10, 11, 12, 13, 14, 15
                          };  // A starts at 0x41 not 0x3A
 
 
@@ -135,7 +135,7 @@ void Base64Encoder::Encode()
 
     word32 i = 0;
     word32 j = 0;
-    
+
     while (bytes > 2) {
         byte b1 = plain_.next();
         byte b2 = plain_.next();
@@ -174,10 +174,10 @@ void Base64Encoder::Encode()
         encoded_[i++] = base64Encode[e2];
         encoded_[i++] = (twoBytes) ? base64Encode[e3] : pad;
         encoded_[i++] = pad;
-    } 
+    }
 
     encoded_[i++] = '\n';
-    
+
     if (i == outSz)
         plain_.reset(encoded_);
 }
@@ -187,7 +187,7 @@ void Base64Encoder::Encode()
 void Base64Decoder::Decode()
 {
     word32 bytes = coded_.size();
-    word32 plainSz = bytes - ((bytes + (pemLineSz - 1)) / pemLineSz); 
+    word32 plainSz = bytes - ((bytes + (pemLineSz - 1)) / pemLineSz);
     const  byte maxIdx = (byte)sizeof(base64Decode) + 0x2B - 1;
     plainSz = ((plainSz * 3) / 4) + 3;
     decoded_.New(plainSz);
@@ -237,7 +237,7 @@ void Base64Decoder::Decode()
             decoded_[i++] = b3;
         else
             break;
-        
+
         bytes -= 4;
         if ((++j % 16) == 0) {
             byte endLine = coded_.next();
@@ -251,7 +251,7 @@ void Base64Decoder::Decode()
                 bytes--;
             }
             if (endLine != '\n') {
-                coded_.SetError(PEM_E); 
+                coded_.SetError(PEM_E);
                 return;
             }
         }

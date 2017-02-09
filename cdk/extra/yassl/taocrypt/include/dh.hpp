@@ -40,7 +40,7 @@ public:
     explicit DH(Source&);
 
     DH(const DH& that) : p_(that.p_), g_(that.g_) {}
-    DH& operator=(const DH& that) 
+    DH& operator=(const DH& that)
     {
         DH tmp(that);
         Swap(tmp);
@@ -77,7 +77,7 @@ private:
     Integer g_;
 
     void GeneratePrivate(RandomNumberGenerator&, byte*);
-    void GeneratePublic(const byte*, byte*);    
+    void GeneratePublic(const byte*, byte*);
 };
 
 

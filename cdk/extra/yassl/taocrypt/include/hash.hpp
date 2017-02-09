@@ -56,7 +56,7 @@ public:
 
     word32  GetBitCountLo() const { return  loLen_ << 3; }
     word32  GetBitCountHi() const { return (loLen_ >> (8*sizeof(loLen_) - 3)) +
-                                           (hiLen_ << 3); } 
+                                           (hiLen_ << 3); }
     enum { MaxDigestSz = 8, MaxBufferSz = 64 };
 protected:
     typedef word32 HashLengthType;
@@ -87,7 +87,7 @@ public:
 
     word32  GetBitCountLo() const { return  loLen_ << 3; }
     word32  GetBitCountHi() const { return (loLen_ >> (8*sizeof(loLen_) - 3)) +
-                                           (hiLen_ << 3); } 
+                                           (hiLen_ << 3); }
     enum { MaxDigestSz = 8, MaxBufferSz = 128 };
 protected:
     typedef word32 HashLengthType;

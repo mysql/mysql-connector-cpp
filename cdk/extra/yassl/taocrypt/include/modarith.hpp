@@ -45,8 +45,8 @@ public:
         modulus(ma.modulus), result((word)0, modulus.reg_.size()) {}
 
     const Integer& GetModulus() const {return modulus;}
-    void SetModulus(const Integer &newModulus) 
-    {   
+    void SetModulus(const Integer &newModulus)
+    {
         modulus = newModulus;
         result.reg_.resize(modulus.reg_.size());
     }

@@ -44,7 +44,7 @@ void buildClientHello(SSL& ssl, ClientHello& hello)
         memcpy(hello.session_id_, ssl.getSecurity().get_resume().GetID(),
                ID_LEN);
     }
-    else 
+    else
         hello.id_len_ = 0;
     hello.suite_len_ = ssl.getSecurity().get_parms().suites_size_;
     memcpy(hello.cipher_suites_, ssl.getSecurity().get_parms().suites_,
@@ -87,7 +87,7 @@ void buildServerHello(SSL& ssl, ServerHello& hello)
 // add handshake from buffer into md5 and sha hashes, use handshake header
 void hashHandShake(SSL& ssl, const input_buffer& input, uint sz)
 {
-    const opaque* buffer = input.get_buffer() + input.get_current() - 
+    const opaque* buffer = input.get_buffer() + input.get_current() -
                            HANDSHAKE_HEADER;
     sz += HANDSHAKE_HEADER;
     ssl.useHashes().use_MD5().update(buffer, sz);
@@ -99,7 +99,7 @@ void hashHandShake(SSL& ssl, const input_buffer& input, uint sz)
 namespace {
 
 // Write a plaintext record to buffer
-void buildOutput(output_buffer& buffer, const RecordLayerHeader& rlHdr, 
+void buildOutput(output_buffer& buffer, const RecordLayerHeader& rlHdr,
                  const Message& msg)
 {
     buffer.allocate(RECORD_HEADER + rlHdr.length_);
@@ -108,7 +108,7 @@ void buildOutput(output_buffer& buffer, const RecordLayerHeader& rlHdr,
 
 
 // Write a plaintext record to buffer
-void buildOutput(output_buffer& buffer, const RecordLayerHeader& rlHdr, 
+void buildOutput(output_buffer& buffer, const RecordLayerHeader& rlHdr,
                  const HandShakeHeader& hsHdr, const HandShakeBase& shake)
 {
     buffer.allocate(RECORD_HEADER + rlHdr.length_);
@@ -170,7 +170,7 @@ void buildMD5(SSL& ssl, Finished& fin, const opaque* sender)
     opaque md5_inner[SIZEOF_SENDER + SECRET_LEN + PAD_MD5];
     opaque md5_outer[SECRET_LEN + PAD_MD5 + MD5_LEN];
 
-    const opaque* master_secret = 
+    const opaque* master_secret =
         ssl.getSecurity().get_connection().master_secret_;
 
     // make md5 inner
@@ -194,12 +194,12 @@ void buildMD5(SSL& ssl, Finished& fin, const opaque* sender)
 // calculate SHA hash for finished
 void buildSHA(SSL& ssl, Finished& fin, const opaque* sender)
 {
-    
+
     opaque sha_result[SHA_LEN];
     opaque sha_inner[SIZEOF_SENDER + SECRET_LEN + PAD_SHA];
     opaque sha_outer[SECRET_LEN + PAD_SHA + SHA_LEN];
 
-    const opaque* master_secret = 
+    const opaque* master_secret =
         ssl.getSecurity().get_connection().master_secret_;
 
      // make sha inner
@@ -309,7 +309,7 @@ void cipherFinished(SSL& ssl, Finished& fin, output_buffer& output)
     uint ivSz = iv.get_size();
     output.allocate(sz);
     output << rlHeader << iv << hsHeader << fin;
-    
+
     hashHandShake(ssl, output, ssl.isTLSv1_1() ? true : false);
     opaque digest[SHA_LEN];                  // max size
     if (ssl.isTLS())
@@ -335,7 +335,7 @@ void cipherFinished(SSL& ssl, Finished& fin, output_buffer& output)
 void buildMessage(SSL& ssl, output_buffer& output, const Message& msg)
 {
     uint digestSz = ssl.getCrypto().get_digest().get_digestSize();
-    uint sz  = RECORD_HEADER + msg.get_length() + digestSz;                
+    uint sz  = RECORD_HEADER + msg.get_length() + digestSz;
     uint pad = 0;
     uint blockSz = ssl.getCrypto().get_cipher().get_blockSize();
 
@@ -358,11 +358,11 @@ void buildMessage(SSL& ssl, output_buffer& output, const Message& msg)
         ssl.getCrypto().get_random().Fill(iv.get_buffer(), blockSz);
         iv.add_size(blockSz);
     }
-    
+
     uint ivSz = iv.get_size();
     output.allocate(sz);
     output << rlHeader << iv << msg;
-    
+
     opaque digest[SHA_LEN];                  // max size
     if (ssl.isTLS())
         TLS_hmac(ssl, digest, output.get_buffer() + RECORD_HEADER + ivSz,
@@ -397,7 +397,7 @@ void buildAlert(SSL& ssl, output_buffer& output, const Alert& alert)
 
 
 // build TLS finished message
-void buildFinishedTLS(SSL& ssl, Finished& fin, const opaque* sender) 
+void buildFinishedTLS(SSL& ssl, Finished& fin, const opaque* sender)
 {
     opaque handshake_hash[FINISHED_SZ];
 
@@ -410,9 +410,9 @@ void buildFinishedTLS(SSL& ssl, Finished& fin, const opaque* sender)
     else
         side = tls_server;
 
-    PRF(fin.set_md5(), TLS_FINISHED_SZ, 
-        ssl.getSecurity().get_connection().master_secret_, SECRET_LEN, 
-        side, FINISHED_LABEL_SZ, 
+    PRF(fin.set_md5(), TLS_FINISHED_SZ,
+        ssl.getSecurity().get_connection().master_secret_, SECRET_LEN,
+        side, FINISHED_LABEL_SZ,
         handshake_hash, FINISHED_SZ);
 
     fin.set_length(TLS_FINISHED_SZ);  // shorter length for TLS
@@ -441,7 +441,7 @@ void p_hash(output_buffer& result, const output_buffer& secret,
     uint lastTime = times - 1;
 
     for (uint i = 0; i < times; i++) {
-        hmac->update(previous, len);  
+        hmac->update(previous, len);
         hmac->get_digest(current, seed.get_buffer(), seed.get_size());
 
         if (lastLen && (i == lastTime))
@@ -459,7 +459,7 @@ void p_hash(output_buffer& result, const output_buffer& secret,
 void get_xor(byte *digest, uint digLen, output_buffer& md5,
              output_buffer& sha)
 {
-    for (uint i = 0; i < digLen; i++) 
+    for (uint i = 0; i < digLen; i++)
         digest[i] = md5[AUTO] ^ sha[AUTO];
 }
 
@@ -471,7 +471,7 @@ void buildMD5_CertVerify(SSL& ssl, byte* digest)
     opaque md5_inner[SECRET_LEN + PAD_MD5];
     opaque md5_outer[SECRET_LEN + PAD_MD5 + MD5_LEN];
 
-    const opaque* master_secret = 
+    const opaque* master_secret =
         ssl.getSecurity().get_connection().master_secret_;
 
     // make md5 inner
@@ -497,7 +497,7 @@ void buildSHA_CertVerify(SSL& ssl, byte* digest)
     opaque sha_inner[SECRET_LEN + PAD_SHA];
     opaque sha_outer[SECRET_LEN + PAD_SHA + SHA_LEN];
 
-    const opaque* master_secret = 
+    const opaque* master_secret =
         ssl.getSecurity().get_connection().master_secret_;
 
      // make sha inner
@@ -572,7 +572,7 @@ void ProcessOldClientHello(input_buffer& input, SSL& ssl)
     }
 
     int j = 0;
-    for (uint16 i = 0; i < ch.suite_len_; i += 3) {    
+    for (uint16 i = 0; i < ch.suite_len_; i += 3) {
         byte first = input[AUTO];
         if (first)  // sslv2 type
             input.read(len, SUITE_LEN); // skip
@@ -589,13 +589,13 @@ void ProcessOldClientHello(input_buffer& input, SSL& ssl)
     if (randomLen < RAN_LEN)
         memset(ch.random_, 0, RAN_LEN - randomLen);
     input.read(&ch.random_[RAN_LEN - randomLen], randomLen);
- 
+
     ch.Process(input, ssl);
 }
 
 
 // Build a finished message, see 7.6.9
-void buildFinished(SSL& ssl, Finished& fin, const opaque* sender) 
+void buildFinished(SSL& ssl, Finished& fin, const opaque* sender)
 {
     // store current states, building requires get_digest which resets state
     MD5 md5(ssl.getHashes().get_MD5());
@@ -623,7 +623,7 @@ void hmac(SSL& ssl, byte* digest, const byte* buffer, uint sz,
 {
     Digest& mac = ssl.useCrypto().use_digest();
     opaque inner[SHA_LEN + PAD_MD5 + SEQ_SZ + SIZEOF_ENUM + LENGTH_SZ];
-    opaque outer[SHA_LEN + PAD_MD5 + SHA_LEN]; 
+    opaque outer[SHA_LEN + PAD_MD5 + SHA_LEN];
     opaque result[SHA_LEN];                              // max possible sizes
     uint digestSz = mac.get_digestSize();              // actual sizes
     uint padSz    = mac.get_padSize();
@@ -676,11 +676,11 @@ void TLS_hmac(SSL& ssl, byte* digest, const byte* buffer, uint sz,
         hmac.reset(NEW_YS HMAC_RMD(ssl.get_macSecret(verify), RMD_LEN));
     else
         hmac.reset(NEW_YS HMAC_MD5(ssl.get_macSecret(verify), MD5_LEN));
-    
+
     hmac->update(seq, SEQ_SZ);                                       // seq_num
     inner[0] = content;                                              // type
-    inner[SIZEOF_ENUM] = ssl.getSecurity().get_connection().version_.major_;  
-    inner[SIZEOF_ENUM + SIZEOF_ENUM] = 
+    inner[SIZEOF_ENUM] = ssl.getSecurity().get_connection().version_.major_;
+    inner[SIZEOF_ENUM + SIZEOF_ENUM] =
         ssl.getSecurity().get_connection().version_.minor_;          // version
     memcpy(&inner[SIZEOF_ENUM + VERSION_SZ], length, LENGTH_SZ);     // length
     hmac->update(inner, sizeof(inner));
@@ -760,14 +760,16 @@ int DoProcessReply(SSL& ssl)
     if (read == static_cast<uint>(-1)) {
         ssl.SetError(receive_error);
         return 0;
-    }
+    } else if (read == 0)
+        return 1;
+
     buffer.add_size(read);
     uint offset = 0;
     const MessageFactory& mf = ssl.getFactory().getMessage();
 
     // old style sslv2 client hello?
     if (ssl.getSecurity().get_parms().entity_ == server_end &&
-                  ssl.getStates().getServer() == clientNull) 
+                  ssl.getStates().getServer() == clientNull)
         if (buffer.peek() != handshake) {
             ProcessOldClientHello(buffer, ssl);
             if (ssl.GetError())
@@ -814,7 +816,7 @@ int DoProcessReply(SSL& ssl)
                 if (ssl.GetError())
                     return 0;
             }
-                
+
             mySTL::auto_ptr<Message> msg(mf.CreateObject(hdr.type_));
             if (!msg.get()) {
                 ssl.SetError(factory_error);
@@ -835,7 +837,7 @@ int DoProcessReply(SSL& ssl)
 void processReply(SSL& ssl)
 {
     if (ssl.GetError()) return;
-  
+
     if (DoProcessReply(ssl)) {
         // didn't complete process
         if (!ssl.getSocket().IsNonBlocking()) {
@@ -934,7 +936,7 @@ void sendChangeCipher(SSL& ssl, BufferOutput buffer)
     buildHeader(ssl, rlHeader, ccs);
     mySTL::auto_ptr<output_buffer> out(NEW_YS output_buffer);
     buildOutput(*out.get(), rlHeader, ccs);
-   
+
     if (buffer == buffered)
         ssl.addBuffer(out.release());
     else
@@ -961,7 +963,7 @@ void sendFinished(SSL& ssl, ConnectionEnd side, BufferOutput buffer)
             GetSessions().add(ssl);  // store session
         if (side == client_end)
             buildFinished(ssl, ssl.useHashes().use_verify(), server); // server
-    }   
+    }
     ssl.useSecurity().use_connection().CleanMaster();
 
     if (buffer == buffered)
@@ -1063,7 +1065,7 @@ int receiveData(SSL& ssl, Data& data, bool peek)
         ssl.SetError(YasslError(SSL_ERROR_WANT_READ));
         return SSL_WOULD_BLOCK;
     }
-    return data.get_length(); 
+    return data.get_length();
 }
 
 
@@ -1168,6 +1170,8 @@ void sendCertificateVerify(SSL& ssl, BufferOutput buffer)
 
     CertificateVerify  verify;
     verify.Build(ssl);
+    if (ssl.GetError()) return;
+
     RecordLayerHeader  rlHeader;
     HandShakeHeader    hsHeader;
     mySTL::auto_ptr<output_buffer> out(NEW_YS output_buffer);

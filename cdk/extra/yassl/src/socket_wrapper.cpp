@@ -17,8 +17,8 @@
 */
 
 
-/* The socket wrapper source implements a Socket class that hides the 
- * differences between Berkely style sockets and Windows sockets, allowing 
+/* The socket wrapper source implements a Socket class that hides the
+ * differences between Berkely style sockets and Windows sockets, allowing
  * transparent TCP access.
  */
 
@@ -75,7 +75,7 @@ extern "C" long system_send(void *ptr, const void *buf, size_t count)
 namespace yaSSL {
 
 
-Socket::Socket(socket_t s) 
+Socket::Socket(socket_t s)
     : socket_(s), wouldBlock_(false), nonBlocking_(false),
       ptr_(&socket_), send_func_(system_send), recv_func_(system_recv)
 {}
@@ -159,10 +159,10 @@ uint Socket::send(const byte* buf, unsigned int sz, unsigned int& written)
     while (pos != end) {
         int sent = send_func_(ptr_, pos, static_cast<int>(end - pos));
         if (sent == -1) {
-            if (get_lastError() == SOCKET_EWOULDBLOCK || 
+            if (get_lastError() == SOCKET_EWOULDBLOCK ||
                 get_lastError() == SOCKET_EAGAIN) {
                 wouldBlock_  = true; // would have blocked this time only
-                nonBlocking_ = true; // nonblocking, win32 only way to tell 
+                nonBlocking_ = true; // nonblocking, win32 only way to tell
                 return 0;
             }
             return static_cast<uint>(-1);
@@ -183,7 +183,7 @@ uint Socket::receive(byte* buf, unsigned int sz)
 
     // idea to seperate error from would block by arnetheduck@gmail.com
     if (recvd == -1) {
-        if (get_lastError() == SOCKET_EWOULDBLOCK || 
+        if (get_lastError() == SOCKET_EWOULDBLOCK ||
             get_lastError() == SOCKET_EAGAIN) {
             wouldBlock_  = true; // would have blocked this time only
             nonBlocking_ = true; // socket nonblocking, win32 only way to tell

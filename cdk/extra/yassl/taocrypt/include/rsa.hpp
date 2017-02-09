@@ -38,11 +38,11 @@ public:
     explicit PK_Lengths(const Integer& i) : image_(i) {}
 
     word32 PaddedBlockBitLength()  const {return image_.BitCount() - 1;}
-    word32 PaddedBlockByteLength() const 
+    word32 PaddedBlockByteLength() const
                 {return BitsToBytes(PaddedBlockBitLength());}
 
     word32 FixedCiphertextLength()   const {return image_.ByteCount();}
-    word32 FixedMaxPlaintextLength() const 
+    word32 FixedMaxPlaintextLength() const
                 {return SaturatingSubtract(PaddedBlockBitLength() / 8, 10U); }
 };
 
@@ -101,7 +101,7 @@ public:
     explicit RSA_PrivateKey(Source&);
 
     void Initialize(const Integer& n,  const Integer& e, const Integer& d,
-                    const Integer& p,  const Integer& q, const Integer& dp, 
+                    const Integer& p,  const Integer& q, const Integer& dp,
                     const Integer& dq, const Integer& u)
         {n_ = n; e_ = e; d_ = d; p_ = p; q_ = q; dp_ = dp; dq_ = dq; u_ = u;}
     void Initialize(Source&);
@@ -113,7 +113,7 @@ public:
     const Integer& GetPrivateExponent() const {return d_;}
     const Integer& GetModPrime1PrivateExponent() const {return dp_;}
     const Integer& GetModPrime2PrivateExponent() const {return dq_;}
-    const Integer& GetMultiplicativeInverseOfPrime2ModPrime1() const 
+    const Integer& GetMultiplicativeInverseOfPrime2ModPrime1() const
                    {return u_;}
 
     void SetPrime1(const Integer& p) {p_ = p;}
@@ -140,7 +140,7 @@ public:
 // block type 1 padding
 class RSA_BlockType1  {
 public:
-    void   Pad(const byte*, word32, byte*, word32, 
+    void   Pad(const byte*, word32, byte*, word32,
                RandomNumberGenerator&) const;
     word32 UnPad(const byte*, word32, byte*) const;
 };
@@ -199,7 +199,7 @@ word32 RSA_Decryptor<Pad>::Decrypt(const byte* cipher, word32 sz, byte* plain,
 
     if (sz != lengths.FixedCiphertextLength())
         return 0;
-       
+
     ByteBlock paddedBlock(lengths.PaddedBlockByteLength());
     Integer x = key_.CalculateInverse(rng, Integer(cipher,
                                       lengths.FixedCiphertextLength()).Ref());

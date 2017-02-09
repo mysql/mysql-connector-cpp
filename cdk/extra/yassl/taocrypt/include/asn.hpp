@@ -16,7 +16,7 @@
    MA  02110-1301  USA.
 */
 
-/* asn.hpp provides ASN1 BER, PublicKey, and x509v3 decoding 
+/* asn.hpp provides ASN1 BER, PublicKey, and x509v3 decoding
 */
 
 
@@ -109,7 +109,7 @@ enum Constants
     MIN_DATE_SZ   = 13,
     MAX_DATE_SZ   = 16,
     MAX_ALGO_SZ   = 16,
-    MAX_LENGTH_SZ =  5,    
+    MAX_LENGTH_SZ =  5,
     MAX_SEQ_SZ    =  5,    // enum(seq|con) + length(4)
     MAX_ALGO_SIZE =  9,
     MAX_DIGEST_SZ = 69,    // SHA512 + enum(Bit or Octet) + length(4)
@@ -269,7 +269,7 @@ enum KeyType  { DSAk = 515, RSAk = 645 };     // sums of algo OID
 // an x509v Certificate BER Decoder
 class CertDecoder : public BER_Decoder {
 public:
-    enum DateType { BEFORE, AFTER };   
+    enum DateType { BEFORE, AFTER };
     enum NameType { ISSUER, SUBJECT };
     enum CertType { CA, USER };
 
@@ -286,7 +286,10 @@ public:
     byte             GetBeforeDateType() const { return beforeDateType_; }
     const char*      GetAfterDate()  const { return afterDate_; }
     byte             GetAfterDateType() const { return afterDateType_; }
-
+    int              GetSubjectCnStart()  const { return subCnPos_; }
+    int              GetIssuerCnStart()   const { return issCnPos_; }
+    int              GetSubjectCnLength() const { return subCnLen_; }
+    int              GetIssuerCnLength()  const { return issCnLen_; }
     void DecodeToKey();
 private:
     PublicKey key_;
@@ -295,6 +298,10 @@ private:
     word32    sigLength_;               // length of signature
     word32    signatureOID_;            // sum of algorithm object id
     word32    keyOID_;                  // sum of key algo  object id
+    int       subCnPos_;                // subject common name start, -1 is none
+    int       subCnLen_;                // length of above
+    int       issCnPos_;                // issuer common name start, -1 is none
+    int       issCnLen_;                // length of above
     byte      subjectHash_[SHA_SIZE];   // hash of all Names
     byte      issuerHash_[SHA_SIZE];    // hash of all Names
     byte*     signature_;

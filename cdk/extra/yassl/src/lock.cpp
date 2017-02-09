@@ -28,7 +28,7 @@ namespace yaSSL {
 
 #ifdef MULTI_THREADED
     #ifdef _WIN32
-        
+
         Mutex::Mutex()
         {
             InitializeCriticalSection(&cs_);
@@ -40,20 +40,20 @@ namespace yaSSL {
             DeleteCriticalSection(&cs_);
         }
 
-            
+
         Mutex::Lock::Lock(Mutex& lm) : mutex_(lm)
         {
-            EnterCriticalSection(&mutex_.cs_); 
+            EnterCriticalSection(&mutex_.cs_);
         }
 
 
         Mutex::Lock::~Lock()
         {
-            LeaveCriticalSection(&mutex_.cs_); 
+            LeaveCriticalSection(&mutex_.cs_);
         }
-            
+
     #else  // _WIN32
-        
+
         Mutex::Mutex()
         {
             pthread_mutex_init(&mutex_, 0);
@@ -68,15 +68,15 @@ namespace yaSSL {
 
         Mutex::Lock::Lock(Mutex& lm) : mutex_(lm)
         {
-            pthread_mutex_lock(&mutex_.mutex_); 
+            pthread_mutex_lock(&mutex_.mutex_);
         }
 
 
         Mutex::Lock::~Lock()
         {
-            pthread_mutex_unlock(&mutex_.mutex_); 
+            pthread_mutex_unlock(&mutex_.mutex_);
         }
-         
+
 
     #endif // _WIN32
 #endif // MULTI_THREADED

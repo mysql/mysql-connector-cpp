@@ -43,7 +43,7 @@ public:
     void Initialize(Source&);
     void Initialize(const Integer& p, const Integer& q, const Integer& g,
                     const Integer& y);
-    
+
     const Integer& GetModulus() const;
     const Integer& GetSubGroupOrder() const;
     const Integer& GetSubGroupGenerator() const;
@@ -55,7 +55,7 @@ public:
     void SetPublicPart(const Integer&);
 
     word32 SignatureLength() const;
- 
+
     DSA_PublicKey(const DSA_PublicKey&);
     DSA_PublicKey& operator=(const DSA_PublicKey&);
 
@@ -73,7 +73,7 @@ public:
     void Initialize(Source&);
     void Initialize(const Integer& p, const Integer& q, const Integer& g,
                     const Integer& y, const Integer& x);
-    
+
     const Integer& GetPrivatePart() const;
 
     void SetPrivatePart(const Integer&);

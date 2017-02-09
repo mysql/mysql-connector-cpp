@@ -142,8 +142,8 @@ void SHA384::Init()
 
 
 SHA::SHA(const SHA& that) : HASHwithTransform(DIGEST_SIZE / sizeof(word32),
-                                              BLOCK_SIZE) 
-{ 
+                                              BLOCK_SIZE)
+{
     buffLen_ = that.buffLen_;
     loLen_   = that.loLen_;
     hiLen_   = that.hiLen_;
@@ -154,8 +154,8 @@ SHA::SHA(const SHA& that) : HASHwithTransform(DIGEST_SIZE / sizeof(word32),
 
 
 SHA256::SHA256(const SHA256& that) : HASHwithTransform(DIGEST_SIZE /
-                                       sizeof(word32), BLOCK_SIZE) 
-{ 
+                                       sizeof(word32), BLOCK_SIZE)
+{
     buffLen_ = that.buffLen_;
     loLen_   = that.loLen_;
     hiLen_   = that.hiLen_;
@@ -166,8 +166,8 @@ SHA256::SHA256(const SHA256& that) : HASHwithTransform(DIGEST_SIZE /
 
 
 SHA224::SHA224(const SHA224& that) : HASHwithTransform(SHA256::DIGEST_SIZE /
-                                       sizeof(word32), BLOCK_SIZE) 
-{ 
+                                       sizeof(word32), BLOCK_SIZE)
+{
     buffLen_ = that.buffLen_;
     loLen_   = that.loLen_;
     hiLen_   = that.hiLen_;
@@ -177,11 +177,11 @@ SHA224::SHA224(const SHA224& that) : HASHwithTransform(SHA256::DIGEST_SIZE /
 }
 
 
-#ifdef WORD64_AVAILABLE 
+#ifdef WORD64_AVAILABLE
 
 SHA512::SHA512(const SHA512& that) : HASH64withTransform(DIGEST_SIZE /
-                                       sizeof(word64), BLOCK_SIZE) 
-{ 
+                                       sizeof(word64), BLOCK_SIZE)
+{
     buffLen_ = that.buffLen_;
     loLen_   = that.loLen_;
     hiLen_   = that.hiLen_;
@@ -192,8 +192,8 @@ SHA512::SHA512(const SHA512& that) : HASH64withTransform(DIGEST_SIZE /
 
 
 SHA384::SHA384(const SHA384& that) : HASH64withTransform(SHA512::DIGEST_SIZE /
-                                       sizeof(word64), BLOCK_SIZE) 
-{ 
+                                       sizeof(word64), BLOCK_SIZE)
+{
     buffLen_ = that.buffLen_;
     loLen_   = that.loLen_;
     hiLen_   = that.hiLen_;
@@ -326,7 +326,7 @@ void SHA::Update(const byte* data, word32 len)
     byte* local = reinterpret_cast<byte*>(buffer_);
 
     // remove buffered data if possible
-    if (buffLen_)  {   
+    if (buffLen_)  {
         word32 add = min(len, BLOCK_SIZE - buffLen_);
         memcpy(&local[buffLen_], data, add);
 
@@ -368,14 +368,14 @@ void SHA::Transform()
 {
     word32 W[BLOCK_SIZE / sizeof(word32)];
 
-    // Copy context->state[] to working vars 
+    // Copy context->state[] to working vars
     word32 a = digest_[0];
     word32 b = digest_[1];
     word32 c = digest_[2];
     word32 d = digest_[3];
     word32 e = digest_[4];
 
-    // 4 rounds of 20 operations each. Loop unrolled. 
+    // 4 rounds of 20 operations each. Loop unrolled.
     R0(a,b,c,d,e, 0); R0(e,a,b,c,d, 1); R0(d,e,a,b,c, 2); R0(c,d,e,a,b, 3);
     R0(b,c,d,e,a, 4); R0(a,b,c,d,e, 5); R0(e,a,b,c,d, 6); R0(d,e,a,b,c, 7);
     R0(c,d,e,a,b, 8); R0(b,c,d,e,a, 9); R0(a,b,c,d,e,10); R0(e,a,b,c,d,11);
@@ -429,7 +429,7 @@ void SHA::Transform()
 #define h(i) T[(7-i)&7]
 
 #define R(i) h(i)+=S1(e(i))+Ch(e(i),f(i),g(i))+K[i+j]+(j?blk2(i):blk0(i));\
-	d(i)+=h(i);h(i)+=S0(a(i))+Maj(a(i),b(i),c(i))
+  d(i)+=h(i);h(i)+=S0(a(i))+Maj(a(i),b(i),c(i))
 
 // for SHA256
 #define S0(x) (rotrFixed(x,2)^rotrFixed(x,13)^rotrFixed(x,22))
@@ -439,22 +439,22 @@ void SHA::Transform()
 
 
 static const word32 K256[64] = {
-	0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
-	0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-	0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
-	0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-	0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc,
-	0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-	0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
-	0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-	0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
-	0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-	0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3,
-	0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-	0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
-	0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-	0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
-	0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+  0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
+  0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+  0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
+  0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+  0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc,
+  0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+  0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
+  0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+  0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
+  0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+  0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3,
+  0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+  0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
+  0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+  0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
+  0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 };
 
 
@@ -514,46 +514,46 @@ void SHA224::Transform()
 #ifdef WORD64_AVAILABLE
 
 static const word64 K512[80] = {
-	W64LIT(0x428a2f98d728ae22), W64LIT(0x7137449123ef65cd),
-	W64LIT(0xb5c0fbcfec4d3b2f), W64LIT(0xe9b5dba58189dbbc),
-	W64LIT(0x3956c25bf348b538), W64LIT(0x59f111f1b605d019),
-	W64LIT(0x923f82a4af194f9b), W64LIT(0xab1c5ed5da6d8118),
-	W64LIT(0xd807aa98a3030242), W64LIT(0x12835b0145706fbe),
-	W64LIT(0x243185be4ee4b28c), W64LIT(0x550c7dc3d5ffb4e2),
-	W64LIT(0x72be5d74f27b896f), W64LIT(0x80deb1fe3b1696b1),
-	W64LIT(0x9bdc06a725c71235), W64LIT(0xc19bf174cf692694),
-	W64LIT(0xe49b69c19ef14ad2), W64LIT(0xefbe4786384f25e3),
-	W64LIT(0x0fc19dc68b8cd5b5), W64LIT(0x240ca1cc77ac9c65),
-	W64LIT(0x2de92c6f592b0275), W64LIT(0x4a7484aa6ea6e483),
-	W64LIT(0x5cb0a9dcbd41fbd4), W64LIT(0x76f988da831153b5),
-	W64LIT(0x983e5152ee66dfab), W64LIT(0xa831c66d2db43210),
-	W64LIT(0xb00327c898fb213f), W64LIT(0xbf597fc7beef0ee4),
-	W64LIT(0xc6e00bf33da88fc2), W64LIT(0xd5a79147930aa725),
-	W64LIT(0x06ca6351e003826f), W64LIT(0x142929670a0e6e70),
-	W64LIT(0x27b70a8546d22ffc), W64LIT(0x2e1b21385c26c926),
-	W64LIT(0x4d2c6dfc5ac42aed), W64LIT(0x53380d139d95b3df),
-	W64LIT(0x650a73548baf63de), W64LIT(0x766a0abb3c77b2a8),
-	W64LIT(0x81c2c92e47edaee6), W64LIT(0x92722c851482353b),
-	W64LIT(0xa2bfe8a14cf10364), W64LIT(0xa81a664bbc423001),
-	W64LIT(0xc24b8b70d0f89791), W64LIT(0xc76c51a30654be30),
-	W64LIT(0xd192e819d6ef5218), W64LIT(0xd69906245565a910),
-	W64LIT(0xf40e35855771202a), W64LIT(0x106aa07032bbd1b8),
-	W64LIT(0x19a4c116b8d2d0c8), W64LIT(0x1e376c085141ab53),
-	W64LIT(0x2748774cdf8eeb99), W64LIT(0x34b0bcb5e19b48a8),
-	W64LIT(0x391c0cb3c5c95a63), W64LIT(0x4ed8aa4ae3418acb),
-	W64LIT(0x5b9cca4f7763e373), W64LIT(0x682e6ff3d6b2b8a3),
-	W64LIT(0x748f82ee5defb2fc), W64LIT(0x78a5636f43172f60),
-	W64LIT(0x84c87814a1f0ab72), W64LIT(0x8cc702081a6439ec),
-	W64LIT(0x90befffa23631e28), W64LIT(0xa4506cebde82bde9),
-	W64LIT(0xbef9a3f7b2c67915), W64LIT(0xc67178f2e372532b),
-	W64LIT(0xca273eceea26619c), W64LIT(0xd186b8c721c0c207),
-	W64LIT(0xeada7dd6cde0eb1e), W64LIT(0xf57d4f7fee6ed178),
-	W64LIT(0x06f067aa72176fba), W64LIT(0x0a637dc5a2c898a6),
-	W64LIT(0x113f9804bef90dae), W64LIT(0x1b710b35131c471b),
-	W64LIT(0x28db77f523047d84), W64LIT(0x32caab7b40c72493),
-	W64LIT(0x3c9ebe0a15c9bebc), W64LIT(0x431d67c49c100d4c),
-	W64LIT(0x4cc5d4becb3e42b6), W64LIT(0x597f299cfc657e2a),
-	W64LIT(0x5fcb6fab3ad6faec), W64LIT(0x6c44198c4a475817)
+  W64LIT(0x428a2f98d728ae22), W64LIT(0x7137449123ef65cd),
+  W64LIT(0xb5c0fbcfec4d3b2f), W64LIT(0xe9b5dba58189dbbc),
+  W64LIT(0x3956c25bf348b538), W64LIT(0x59f111f1b605d019),
+  W64LIT(0x923f82a4af194f9b), W64LIT(0xab1c5ed5da6d8118),
+  W64LIT(0xd807aa98a3030242), W64LIT(0x12835b0145706fbe),
+  W64LIT(0x243185be4ee4b28c), W64LIT(0x550c7dc3d5ffb4e2),
+  W64LIT(0x72be5d74f27b896f), W64LIT(0x80deb1fe3b1696b1),
+  W64LIT(0x9bdc06a725c71235), W64LIT(0xc19bf174cf692694),
+  W64LIT(0xe49b69c19ef14ad2), W64LIT(0xefbe4786384f25e3),
+  W64LIT(0x0fc19dc68b8cd5b5), W64LIT(0x240ca1cc77ac9c65),
+  W64LIT(0x2de92c6f592b0275), W64LIT(0x4a7484aa6ea6e483),
+  W64LIT(0x5cb0a9dcbd41fbd4), W64LIT(0x76f988da831153b5),
+  W64LIT(0x983e5152ee66dfab), W64LIT(0xa831c66d2db43210),
+  W64LIT(0xb00327c898fb213f), W64LIT(0xbf597fc7beef0ee4),
+  W64LIT(0xc6e00bf33da88fc2), W64LIT(0xd5a79147930aa725),
+  W64LIT(0x06ca6351e003826f), W64LIT(0x142929670a0e6e70),
+  W64LIT(0x27b70a8546d22ffc), W64LIT(0x2e1b21385c26c926),
+  W64LIT(0x4d2c6dfc5ac42aed), W64LIT(0x53380d139d95b3df),
+  W64LIT(0x650a73548baf63de), W64LIT(0x766a0abb3c77b2a8),
+  W64LIT(0x81c2c92e47edaee6), W64LIT(0x92722c851482353b),
+  W64LIT(0xa2bfe8a14cf10364), W64LIT(0xa81a664bbc423001),
+  W64LIT(0xc24b8b70d0f89791), W64LIT(0xc76c51a30654be30),
+  W64LIT(0xd192e819d6ef5218), W64LIT(0xd69906245565a910),
+  W64LIT(0xf40e35855771202a), W64LIT(0x106aa07032bbd1b8),
+  W64LIT(0x19a4c116b8d2d0c8), W64LIT(0x1e376c085141ab53),
+  W64LIT(0x2748774cdf8eeb99), W64LIT(0x34b0bcb5e19b48a8),
+  W64LIT(0x391c0cb3c5c95a63), W64LIT(0x4ed8aa4ae3418acb),
+  W64LIT(0x5b9cca4f7763e373), W64LIT(0x682e6ff3d6b2b8a3),
+  W64LIT(0x748f82ee5defb2fc), W64LIT(0x78a5636f43172f60),
+  W64LIT(0x84c87814a1f0ab72), W64LIT(0x8cc702081a6439ec),
+  W64LIT(0x90befffa23631e28), W64LIT(0xa4506cebde82bde9),
+  W64LIT(0xbef9a3f7b2c67915), W64LIT(0xc67178f2e372532b),
+  W64LIT(0xca273eceea26619c), W64LIT(0xd186b8c721c0c207),
+  W64LIT(0xeada7dd6cde0eb1e), W64LIT(0xf57d4f7fee6ed178),
+  W64LIT(0x06f067aa72176fba), W64LIT(0x0a637dc5a2c898a6),
+  W64LIT(0x113f9804bef90dae), W64LIT(0x1b710b35131c471b),
+  W64LIT(0x28db77f523047d84), W64LIT(0x32caab7b40c72493),
+  W64LIT(0x3c9ebe0a15c9bebc), W64LIT(0x431d67c49c100d4c),
+  W64LIT(0x4cc5d4becb3e42b6), W64LIT(0x597f299cfc657e2a),
+  W64LIT(0x5fcb6fab3ad6faec), W64LIT(0x6c44198c4a475817)
 };
 
 
@@ -582,7 +582,7 @@ static void Transform512(word64* digest_, word64* buffer_)
         R(12); R(13); R(14); R(15);
     }
 
-    // Add the working vars back into digest 
+    // Add the working vars back into digest
 
     digest_[0] += a(0);
     digest_[1] += b(0);
@@ -779,8 +779,8 @@ void SHA::AsmTransform(const byte* data, word32 times)
     #define EPILOG()  \
         "pop ebp;" \
         "pop ebx;" \
-       	"emms;" \
-       	".att_syntax;" \
+        "emms;" \
+        ".att_syntax;" \
             : \
             : "c" (this), "D" (data), "a" (times) \
             : "%esi", "%edx", "memory", "cc" \
@@ -808,7 +808,7 @@ void SHA::AsmTransform(const byte* data, word32 times)
         AS2(    mov   esp, ebp                  )   \
         AS1(    pop   ebp                       )   \
         AS1(    emms   )                            \
-        AS1(    ret 8  )   
+        AS1(    ret 8  )
 #endif
 
     PROLOG()
@@ -829,7 +829,7 @@ void SHA::AsmTransform(const byte* data, word32 times)
 #ifdef _MSC_VER
     AS1( loopStart: )  // loopStart
 #else
-    AS1( 0: )          // loopStart for some gas (need numeric for jump back 
+    AS1( 0: )          // loopStart for some gas (need numeric for jump back
 #endif
 
     // byte reverse 16 words of input, 4 at a time, put on stack for W[]
@@ -1007,12 +1007,12 @@ void SHA::AsmTransform(const byte* data, word32 times)
 
     // setup next round
     AS2(    movd  ebp, mm2              )   // times
- 
+
     AS2(    mov   edi, DWORD PTR [esp + 64] )   // data
-    
+
     AS2(    add   edi, 64               )   // next round of data
     AS2(    mov   [esp + 64], edi       )   // restore
-    
+
     AS1(    dec   ebp                   )
     AS2(    movd  mm2, ebp              )
 #ifdef _MSC_VER
@@ -1021,7 +1021,7 @@ void SHA::AsmTransform(const byte* data, word32 times)
     AS1(    jnz   0b )         // loopStart
 #endif
 
-    // inline adjust 
+    // inline adjust
     AS2(    add   esp, 68               )   // fix room on stack
 
     EPILOG()

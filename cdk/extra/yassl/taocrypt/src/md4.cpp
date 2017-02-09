@@ -29,7 +29,7 @@
 
 
 namespace STL = STL_NAMESPACE;
-   
+
 
 namespace TaoCrypt {
 
@@ -47,8 +47,8 @@ void MD4::Init()
 
 
 MD4::MD4(const MD4& that) : HASHwithTransform(DIGEST_SIZE / sizeof(word32),
-                                              BLOCK_SIZE) 
-{ 
+                                              BLOCK_SIZE)
+{
     buffLen_ = that.buffLen_;
     loLen_  =  that.loLen_;
     hiLen_  =  that.hiLen_;
@@ -108,7 +108,7 @@ void MD4::Transform()
     function(C,D,A,B,14,11);
     function(B,C,D,A,15,19);
 
-#undef function	  
+#undef function
 #define function(a,b,c,d,k,s) a=rotlFixed(a+G(b,c,d)+buffer_[k]+0x5a827999,s);
     function(A,B,C,D, 0, 3);
     function(D,A,B,C, 4, 5);
@@ -127,7 +127,7 @@ void MD4::Transform()
     function(C,D,A,B,11, 9);
     function(B,C,D,A,15,13);
 
-#undef function	 
+#undef function
 #define function(a,b,c,d,k,s) a=rotlFixed(a+H(b,c,d)+buffer_[k]+0x6ed9eba1,s);
     function(A,B,C,D, 0, 3);
     function(D,A,B,C, 8, 9);

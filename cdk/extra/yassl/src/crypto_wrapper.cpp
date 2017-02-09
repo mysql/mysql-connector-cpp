@@ -58,7 +58,7 @@ MD5::MD5() : pimpl_(NEW_YS MD5Impl) {}
 MD5::~MD5() { ysDelete(pimpl_); }
 
 
-MD5::MD5(const MD5& that) : Digest(), pimpl_(NEW_YS 
+MD5::MD5(const MD5& that) : Digest(), pimpl_(NEW_YS
                                              MD5Impl(that.pimpl_->md5_)) {}
 
 
@@ -223,8 +223,8 @@ struct HMAC_MD5::HMAC_MD5Impl {
 };
 
 
-HMAC_MD5::HMAC_MD5(const byte* secret, unsigned int len) 
-    : pimpl_(NEW_YS HMAC_MD5Impl) 
+HMAC_MD5::HMAC_MD5(const byte* secret, unsigned int len)
+    : pimpl_(NEW_YS HMAC_MD5Impl)
 {
     pimpl_->mac_.SetKey(secret, len);
 }
@@ -273,8 +273,8 @@ struct HMAC_SHA::HMAC_SHAImpl {
 };
 
 
-HMAC_SHA::HMAC_SHA(const byte* secret, unsigned int len) 
-    : pimpl_(NEW_YS HMAC_SHAImpl) 
+HMAC_SHA::HMAC_SHA(const byte* secret, unsigned int len)
+    : pimpl_(NEW_YS HMAC_SHAImpl)
 {
     pimpl_->mac_.SetKey(secret, len);
 }
@@ -324,8 +324,8 @@ struct HMAC_RMD::HMAC_RMDImpl {
 };
 
 
-HMAC_RMD::HMAC_RMD(const byte* secret, unsigned int len) 
-    : pimpl_(NEW_YS HMAC_RMDImpl) 
+HMAC_RMD::HMAC_RMD(const byte* secret, unsigned int len)
+    : pimpl_(NEW_YS HMAC_RMDImpl)
 {
     pimpl_->mac_.SetKey(secret, len);
 }
@@ -536,7 +536,7 @@ RandomPool::~RandomPool() { ysDelete(pimpl_); }
 
 int RandomPool::GetError() const
 {
-    return pimpl_->RNG_.GetError(); 
+    return pimpl_->RNG_.GetError();
 }
 
 void RandomPool::Fill(opaque* dst, uint sz) const
@@ -573,10 +573,10 @@ void DSS::DSSImpl::SetPrivate(const byte* key, unsigned int sz)
 
 
 // Set public or private key
-DSS::DSS(const byte* key, unsigned int sz, bool publicKey) 
+DSS::DSS(const byte* key, unsigned int sz, bool publicKey)
     : pimpl_(NEW_YS DSSImpl)
 {
-    if (publicKey) 
+    if (publicKey)
         pimpl_->SetPublic(key, sz);
     else
         pimpl_->SetPrivate(key, sz);
@@ -644,10 +644,10 @@ void RSA::RSAImpl::SetPrivate(const byte* key, unsigned int sz)
 
 
 // Set public or private key
-RSA::RSA(const byte* key, unsigned int sz, bool publicKey) 
+RSA::RSA(const byte* key, unsigned int sz, bool publicKey)
     : pimpl_(NEW_YS RSAImpl)
 {
-    if (publicKey) 
+    if (publicKey)
         pimpl_->SetPublic(key, sz);
     else
         pimpl_->SetPrivate(key, sz);
@@ -695,7 +695,7 @@ bool RSA::verify(const byte* message, unsigned int sz, const byte* sig,
 void RSA::encrypt(byte* cipher, const byte* plain, unsigned int sz,
                   const RandomPool& random)
 {
-  
+
     TaoCrypt::RSAES_Encryptor enc(pimpl_->publicKey_);
     enc.Encrypt(plain, sz, cipher, random.pimpl_->RNG_);
 }
@@ -723,7 +723,7 @@ Integer::~Integer() { ysDelete(pimpl_); }
 
 
 
-Integer::Integer(const Integer& other) : pimpl_(NEW_YS 
+Integer::Integer(const Integer& other) : pimpl_(NEW_YS
                                                IntegerImpl(other.pimpl_->int_))
 {}
 
@@ -748,18 +748,19 @@ struct DiffieHellman::DHImpl {
     byte* publicKey_;
     byte* privateKey_;
     byte* agreedKey_;
+    uint  pubKeyLength_;
 
     DHImpl(TaoCrypt::RandomNumberGenerator& r) : ranPool_(r), publicKey_(0),
-                                               privateKey_(0), agreedKey_(0) {}
-    ~DHImpl() 
-    {   
-        ysArrayDelete(agreedKey_); 
-        ysArrayDelete(privateKey_); 
+                              privateKey_(0), agreedKey_(0), pubKeyLength_(0) {}
+    ~DHImpl()
+    {
+        ysArrayDelete(agreedKey_);
+        ysArrayDelete(privateKey_);
         ysArrayDelete(publicKey_);
     }
 
     DHImpl(const DHImpl& that) : dh_(that.dh_), ranPool_(that.ranPool_),
-                                 publicKey_(0), privateKey_(0), agreedKey_(0)
+                  publicKey_(0), privateKey_(0), agreedKey_(0), pubKeyLength_(0)
     {
         uint length = dh_.GetByteLength();
         AllocKeys(length, length, length);
@@ -807,7 +808,7 @@ DiffieHellman::DiffieHellman(const byte* p, unsigned int pSz, const byte* g,
     using TaoCrypt::Integer;
 
     pimpl_->dh_.Initialize(Integer(p, pSz).Ref(), Integer(g, gSz).Ref());
-    pimpl_->publicKey_ = NEW_YS opaque[pubSz];
+    pimpl_->publicKey_ = NEW_YS opaque[pimpl_->pubKeyLength_ = pubSz];
     memcpy(pimpl_->publicKey_, pub, pubSz);
 }
 
@@ -832,9 +833,9 @@ DiffieHellman::~DiffieHellman() { ysDelete(pimpl_); }
 
 
 // Client side and view, use server that for p and g
-DiffieHellman::DiffieHellman(const DiffieHellman& that) 
+DiffieHellman::DiffieHellman(const DiffieHellman& that)
     : pimpl_(NEW_YS DHImpl(*that.pimpl_))
-{   
+{
     pimpl_->dh_.GenerateKeyPair(pimpl_->ranPool_, pimpl_->privateKey_,
                                                   pimpl_->publicKey_);
 }
@@ -851,7 +852,7 @@ DiffieHellman& DiffieHellman::operator=(const DiffieHellman& that)
 
 void DiffieHellman::makeAgreement(const byte* other, unsigned int otherSz)
 {
-    pimpl_->dh_.Agree(pimpl_->agreedKey_, pimpl_->privateKey_, other, otherSz); 
+    pimpl_->dh_.Agree(pimpl_->agreedKey_, pimpl_->privateKey_, other, otherSz);
 }
 
 
@@ -866,6 +867,10 @@ const byte* DiffieHellman::get_agreedKey() const
     return pimpl_->agreedKey_;
 }
 
+uint DiffieHellman::get_publicKeyLength() const
+{
+    return pimpl_->pubKeyLength_;
+}
 
 const byte* DiffieHellman::get_publicKey() const
 {
@@ -954,7 +959,7 @@ x509* PemToDer(FILE* file, CertType type, EncryptedInfo* info)
             if (fgets(line,sizeof(line), file)) // get blank line
               begin = ftell(file);
         }
-          
+
     }
 
     while(fgets(line, sizeof(line), file))
@@ -973,7 +978,7 @@ x509* PemToDer(FILE* file, CertType type, EncryptedInfo* info)
     size_t bytes = fread(tmp.get_buffer(), end - begin, 1, file);
     if (bytes != 1)
         return 0;
-    
+
     Source der(tmp.get_buffer(), end - begin);
     Base64Decoder b64Dec(der);
 

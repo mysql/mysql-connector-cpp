@@ -60,7 +60,7 @@ namespace TaoCrypt {
      (T_[(u)]) += tem2+(tem0 ^ tem1);           \
      (X_[(a)]) = (T_[(u)]);                     \
      (n) = tem3 ^ (T_[(u)]) ;                   \
-}       
+}
 
 /*one step of HC-128, update Q and generate 32 bits keystream*/
 #define step_Q(u,v,a,b,c,d,n){                  \
@@ -72,18 +72,18 @@ namespace TaoCrypt {
      (T_[(u)]) += tem2 + (tem0 ^ tem1);         \
      (Y_[(a)]) = (T_[(u)]);                     \
      (n) = tem3 ^ (T_[(u)]) ;                   \
-}   
+}
 
 
 /*16 steps of HC-128, generate 512 bits keystream*/
-void HC128::GenerateKeystream(word32* keystream)  
+void HC128::GenerateKeystream(word32* keystream)
 {
    word32 cc,dd;
    cc = counter1024_ & 0x1ff;
    dd = (cc+16)&0x1ff;
 
-   if (counter1024_ < 512)	
-   {   		
+   if (counter1024_ < 512)
+   {
       counter1024_ = (counter1024_ + 16) & 0x3ff;
       step_P(cc+0, cc+1, 0, 6, 13,4, keystream[0]);
       step_P(cc+1, cc+2, 1, 7, 14,5, keystream[1]);
@@ -102,9 +102,9 @@ void HC128::GenerateKeystream(word32* keystream)
       step_P(cc+14,cc+15,14,4, 11,2, keystream[14]);
       step_P(cc+15,dd+0, 15,5, 12,3, keystream[15]);
    }
-   else				    
+   else
    {
-	  counter1024_ = (counter1024_ + 16) & 0x3ff;
+    counter1024_ = (counter1024_ + 16) & 0x3ff;
       step_Q(512+cc+0, 512+cc+1, 0, 6, 13,4, keystream[0]);
       step_Q(512+cc+1, 512+cc+2, 1, 7, 14,5, keystream[1]);
       step_Q(512+cc+2, 512+cc+3, 2, 8, 15,6, keystream[2]);
@@ -138,7 +138,7 @@ void HC128::GenerateKeystream(word32* keystream)
      h1((X_[(d)]),tem3);                            \
      (T_[(u)]) = ((T_[(u)]) + tem2+(tem0^tem1)) ^ tem3;     \
      (X_[(a)]) = (T_[(u)]);                         \
-}  
+}
 
 /*update table Q*/
 #define update_Q(u,v,a,b,c,d){                      \
@@ -149,7 +149,7 @@ void HC128::GenerateKeystream(word32* keystream)
      h2((Y_[(d)]),tem3);                            \
      (T_[(u)]) = ((T_[(u)]) + tem2+(tem0^tem1)) ^ tem3;     \
      (Y_[(a)]) = (T_[(u)]);                         \
-}     
+}
 
 /*16 steps of HC-128, without generating keystream, */
 /*but use the outputs to update P and Q*/
@@ -159,8 +159,8 @@ void HC128::SetupUpdate()  /*each time 16 steps*/
    cc = counter1024_ & 0x1ff;
    dd = (cc+16)&0x1ff;
 
-   if (counter1024_ < 512)	
-   {   		
+   if (counter1024_ < 512)
+   {
       counter1024_ = (counter1024_ + 16) & 0x3ff;
       update_P(cc+0, cc+1, 0, 6, 13, 4);
       update_P(cc+1, cc+2, 1, 7, 14, 5);
@@ -177,9 +177,9 @@ void HC128::SetupUpdate()  /*each time 16 steps*/
       update_P(cc+12,cc+13,12,2, 9,  0);
       update_P(cc+13,cc+14,13,3, 10, 1);
       update_P(cc+14,cc+15,14,4, 11, 2);
-      update_P(cc+15,dd+0, 15,5, 12, 3);   
+      update_P(cc+15,dd+0, 15,5, 12, 3);
    }
-   else				    
+   else
    {
       counter1024_ = (counter1024_ + 16) & 0x3ff;
       update_Q(512+cc+0, 512+cc+1, 0, 6, 13, 4);
@@ -197,8 +197,8 @@ void HC128::SetupUpdate()  /*each time 16 steps*/
       update_Q(512+cc+12,512+cc+13,12,2, 9,  0);
       update_Q(512+cc+13,512+cc+14,13,3, 10, 1);
       update_Q(512+cc+14,512+cc+15,14,4, 11, 2);
-      update_Q(512+cc+15,512+dd+0, 15,5, 12, 3); 
-   }       
+      update_Q(512+cc+15,512+dd+0, 15,5, 12, 3);
+   }
 }
 
 
@@ -220,46 +220,46 @@ void HC128::SetupUpdate()  /*each time 16 steps*/
 
 
 void HC128::SetIV(const byte* iv)
-{ 
+{
     word32 i;
-	
-	for (i = 0; i < (128 >> 5); i++)
+
+  for (i = 0; i < (128 >> 5); i++)
         iv_[i] = LITTLE32(((word32*)iv)[i]);
-	
+
     for (; i < 8; i++) iv_[i] = iv_[i-4];
-  
-    /* expand the key and IV into the table T */ 
-    /* (expand the key and IV into the table P and Q) */ 
-	
-	for (i = 0; i < 8;  i++)   T_[i] = key_[i];
-	for (i = 8; i < 16; i++)   T_[i] = iv_[i-8];
 
-    for (i = 16; i < (256+16); i++) 
-		T_[i] = f2(T_[i-2]) + T_[i-7] + f1(T_[i-15]) + T_[i-16]+i;
-    
-	for (i = 0; i < 16;  i++)  T_[i] = T_[256+i];
+    /* expand the key and IV into the table T */
+    /* (expand the key and IV into the table P and Q) */
 
-	for (i = 16; i < 1024; i++) 
-		T_[i] = f2(T_[i-2]) + T_[i-7] + f1(T_[i-15]) + T_[i-16]+256+i;
-    
+  for (i = 0; i < 8;  i++)   T_[i] = key_[i];
+  for (i = 8; i < 16; i++)   T_[i] = iv_[i-8];
+
+    for (i = 16; i < (256+16); i++)
+    T_[i] = f2(T_[i-2]) + T_[i-7] + f1(T_[i-15]) + T_[i-16]+i;
+
+  for (i = 0; i < 16;  i++)  T_[i] = T_[256+i];
+
+  for (i = 16; i < 1024; i++)
+    T_[i] = f2(T_[i-2]) + T_[i-7] + f1(T_[i-15]) + T_[i-16]+256+i;
+
     /* initialize counter1024, X and Y */
-	counter1024_ = 0;
-	for (i = 0; i < 16; i++) X_[i] = T_[512-16+i];
+  counter1024_ = 0;
+  for (i = 0; i < 16; i++) X_[i] = T_[512-16+i];
     for (i = 0; i < 16; i++) Y_[i] = T_[512+512-16+i];
-    
+
     /* run the cipher 1024 steps before generating the output */
-	for (i = 0; i < 64; i++)  SetupUpdate();  
+  for (i = 0; i < 64; i++)  SetupUpdate();
 }
 
 
 void HC128::SetKey(const byte* key, const byte* iv)
-{ 
-  word32 i;  
+{
+  word32 i;
 
-  /* Key size in bits 128 */ 
+  /* Key size in bits 128 */
   for (i = 0; i < (128 >> 5); i++)
       key_[i] = LITTLE32(((word32*)key)[i]);
- 
+
   for ( ; i < 8 ; i++) key_[i] = key_[i-4];
 
   SetIV(iv);
@@ -273,25 +273,25 @@ void HC128::Process(byte* output, const byte* input, word32 msglen)
 
   for ( ; msglen >= 64; msglen -= 64, input += 64, output += 64)
   {
-	  GenerateKeystream(keystream);
+    GenerateKeystream(keystream);
 
       /* unroll loop */
-	  ((word32*)output)[0]  = ((word32*)input)[0]  ^ LITTLE32(keystream[0]);
-	  ((word32*)output)[1]  = ((word32*)input)[1]  ^ LITTLE32(keystream[1]);
-	  ((word32*)output)[2]  = ((word32*)input)[2]  ^ LITTLE32(keystream[2]);
-	  ((word32*)output)[3]  = ((word32*)input)[3]  ^ LITTLE32(keystream[3]);
-	  ((word32*)output)[4]  = ((word32*)input)[4]  ^ LITTLE32(keystream[4]);
-	  ((word32*)output)[5]  = ((word32*)input)[5]  ^ LITTLE32(keystream[5]);
-	  ((word32*)output)[6]  = ((word32*)input)[6]  ^ LITTLE32(keystream[6]);
-	  ((word32*)output)[7]  = ((word32*)input)[7]  ^ LITTLE32(keystream[7]);
-	  ((word32*)output)[8]  = ((word32*)input)[8]  ^ LITTLE32(keystream[8]);
-	  ((word32*)output)[9]  = ((word32*)input)[9]  ^ LITTLE32(keystream[9]);
-	  ((word32*)output)[10] = ((word32*)input)[10] ^ LITTLE32(keystream[10]);
-	  ((word32*)output)[11] = ((word32*)input)[11] ^ LITTLE32(keystream[11]);
-	  ((word32*)output)[12] = ((word32*)input)[12] ^ LITTLE32(keystream[12]);
-	  ((word32*)output)[13] = ((word32*)input)[13] ^ LITTLE32(keystream[13]);
-	  ((word32*)output)[14] = ((word32*)input)[14] ^ LITTLE32(keystream[14]);
-	  ((word32*)output)[15] = ((word32*)input)[15] ^ LITTLE32(keystream[15]);
+    ((word32*)output)[0]  = ((word32*)input)[0]  ^ LITTLE32(keystream[0]);
+    ((word32*)output)[1]  = ((word32*)input)[1]  ^ LITTLE32(keystream[1]);
+    ((word32*)output)[2]  = ((word32*)input)[2]  ^ LITTLE32(keystream[2]);
+    ((word32*)output)[3]  = ((word32*)input)[3]  ^ LITTLE32(keystream[3]);
+    ((word32*)output)[4]  = ((word32*)input)[4]  ^ LITTLE32(keystream[4]);
+    ((word32*)output)[5]  = ((word32*)input)[5]  ^ LITTLE32(keystream[5]);
+    ((word32*)output)[6]  = ((word32*)input)[6]  ^ LITTLE32(keystream[6]);
+    ((word32*)output)[7]  = ((word32*)input)[7]  ^ LITTLE32(keystream[7]);
+    ((word32*)output)[8]  = ((word32*)input)[8]  ^ LITTLE32(keystream[8]);
+    ((word32*)output)[9]  = ((word32*)input)[9]  ^ LITTLE32(keystream[9]);
+    ((word32*)output)[10] = ((word32*)input)[10] ^ LITTLE32(keystream[10]);
+    ((word32*)output)[11] = ((word32*)input)[11] ^ LITTLE32(keystream[11]);
+    ((word32*)output)[12] = ((word32*)input)[12] ^ LITTLE32(keystream[12]);
+    ((word32*)output)[13] = ((word32*)input)[13] ^ LITTLE32(keystream[13]);
+    ((word32*)output)[14] = ((word32*)input)[14] ^ LITTLE32(keystream[14]);
+    ((word32*)output)[15] = ((word32*)input)[15] ^ LITTLE32(keystream[15]);
   }
 
   if (msglen > 0)
@@ -302,13 +302,13 @@ void HC128::Process(byte* output, const byte* input, word32 msglen)
       {
           word32 wordsLeft = msglen / sizeof(word32);
           if (msglen % sizeof(word32)) wordsLeft++;
-          
+
           ByteReverse(keystream, keystream, wordsLeft * sizeof(word32));
       }
 #endif
 
       for (i = 0; i < msglen; i++)
-	      output[i] = input[i] ^ ((byte*)keystream)[i];
+        output[i] = input[i] ^ ((byte*)keystream)[i];
   }
 
 }

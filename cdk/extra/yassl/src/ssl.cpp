@@ -161,7 +161,7 @@ int read_file(SSL_CTX* ctx, const char* file, int format, CertType type)
             TaoCrypt::DSA_PrivateKey dsaKey;
             dsaKey.Initialize(dsaSource);
 
-            if (rsaSource.GetError().What()) {
+            if (dsaSource.GetError().What()) {
                 // neither worked
                 ret = SSL_FAILURE;
             }
@@ -598,8 +598,14 @@ const char* SSL_get_version(SSL* ssl)
 {
     static const char* version3 =  "SSLv3";
     static const char* version31 = "TLSv1";
+    static const char* version32 = "TLSv1.1";
 
-    return ssl->isTLS() ? version31 : version3;
+    if (ssl->isTLSv1_1())
+      return version32;
+    else if(ssl->isTLS())
+      return version31;
+    else
+      return version3;
 }
 
 const char* SSLeay_version(int)
@@ -639,7 +645,9 @@ X509* X509_Copy(X509 *x)
 
     X509 *newX509 = NEW_YS X509(issuer->GetName(), issuer->GetLength(),
         subject->GetName(), subject->GetLength(),
-        before, after);
+        before, after,
+        issuer->GetCnPosition(), issuer->GetCnLength(),
+        subject->GetCnPosition(), subject->GetCnLength());
 
     return newX509;
 }
@@ -707,7 +715,10 @@ X509* PEM_read_X509(FILE *fp, X509 *x,
   afterDate.length = strlen((char *) afterDate.data) + 1;
 
   X509 *thisX509 = NEW_YS X509(cert.GetIssuer(), iSz, cert.GetCommonName(),
-                               sSz, &beforeDate, &afterDate);
+                               sSz, &beforeDate, &afterDate,
+                               cert.GetIssuerCnStart(), cert.GetIssuerCnLength(),
+                               cert.GetSubjectCnStart(), cert.GetSubjectCnLength());
+
 
   ysDelete(ptr);
   return thisX509;
@@ -827,7 +838,6 @@ int SSL_CTX_load_verify_locations(SSL_CTX* ctx, const char* file,
                                   const char* path)
 {
     int       ret = SSL_FAILURE;
-    const int HALF_PATH = 128;
 
     if (file) ret = read_file(ctx, file, SSL_FILETYPE_PEM, CA);
 
@@ -838,40 +848,67 @@ int SSL_CTX_load_verify_locations(SSL_CTX* ctx, const char* file,
         WIN32_FIND_DATA FindFileData;
         HANDLE hFind;
 
-        char name[MAX_PATH + 1];  // directory specification
-        strncpy(name, path, MAX_PATH - 3);
-        strncat(name, "\\*", 3);
+        const int DELIMITER_SZ      = 2;
+        const int DELIMITER_STAR_SZ = 3;
+        int pathSz = (int)strlen(path);
+        int nameSz = pathSz + DELIMITER_STAR_SZ + 1; // plus 1 for terminator
+        char* name = NEW_YS char[nameSz];  // directory specification
+        memset(name, 0, nameSz);
+        strncpy(name, path, nameSz - DELIMITER_STAR_SZ - 1);
+        strncat(name, "\\*", DELIMITER_STAR_SZ);
 
         hFind = FindFirstFile(name, &FindFileData);
-        if (hFind == INVALID_HANDLE_VALUE) return SSL_BAD_PATH;
+        if (hFind == INVALID_HANDLE_VALUE) {
+            ysArrayDelete(name);
+            return SSL_BAD_PATH;
+        }
 
         do {
-            if (FindFileData.dwFileAttributes != FILE_ATTRIBUTE_DIRECTORY) {
-                strncpy(name, path, MAX_PATH - 2 - HALF_PATH);
-                strncat(name, "\\", 2);
-                strncat(name, FindFileData.cFileName, HALF_PATH);
+            if (!(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+                int curSz = (int)strlen(FindFileData.cFileName);
+                if (pathSz + curSz + DELIMITER_SZ + 1 > nameSz) {
+                    ysArrayDelete(name);
+                    // plus 1 for terminator
+                    nameSz = pathSz + curSz + DELIMITER_SZ + 1;
+                    name = NEW_YS char[nameSz];
+                }
+                memset(name, 0, nameSz);
+                strncpy(name, path, nameSz - curSz - DELIMITER_SZ - 1);
+                strncat(name, "\\", DELIMITER_SZ);
+                strncat(name, FindFileData.cFileName,
+                                            nameSz - pathSz - DELIMITER_SZ - 1);
                 ret = read_file(ctx, name, SSL_FILETYPE_PEM, CA);
             }
         } while (ret == SSL_SUCCESS && FindNextFile(hFind, &FindFileData));
 
+        ysArrayDelete(name);
         FindClose(hFind);
 
 #else   // _WIN32
-
-        const int MAX_PATH = 260;
-
         DIR* dir = opendir(path);
         if (!dir) return SSL_BAD_PATH;
 
         struct dirent* entry;
         struct stat    buf;
-        char           name[MAX_PATH + 1];
+        const int DELIMITER_SZ = 1;
+        int pathSz = (int)strlen(path);
+        int nameSz = pathSz + DELIMITER_SZ + 1; //plus 1 for null terminator
+        char* name = NEW_YS char[nameSz];  // directory specification
 
         while (ret == SSL_SUCCESS && (entry = readdir(dir))) {
-            strncpy(name, path, MAX_PATH - 1 - HALF_PATH);
-            strncat(name, "/", 1);
-            strncat(name, entry->d_name, HALF_PATH);
+            int curSz = (int)strlen(entry->d_name);
+            if (pathSz + curSz + DELIMITER_SZ + 1 > nameSz) {
+                ysArrayDelete(name);
+                nameSz = pathSz + DELIMITER_SZ + curSz + 1;
+                name = NEW_YS char[nameSz];
+            }
+            memset(name, 0, nameSz);
+            strncpy(name, path, nameSz - curSz - 1);
+            strncat(name, "/",  DELIMITER_SZ);
+            strncat(name, entry->d_name, nameSz - pathSz - DELIMITER_SZ - 1);
+
             if (stat(name, &buf) < 0) {
+                ysArrayDelete(name);
                 closedir(dir);
                 return SSL_BAD_STAT;
             }
@@ -880,6 +917,7 @@ int SSL_CTX_load_verify_locations(SSL_CTX* ctx, const char* file,
                 ret = read_file(ctx, name, SSL_FILETYPE_PEM, CA);
         }
 
+        ysArrayDelete(name);
         closedir(dir);
 
 #endif
@@ -1015,9 +1053,43 @@ int SSL_get_verify_depth(SSL* ssl)
 }
 
 
-long SSL_CTX_set_options(SSL_CTX*, long)
+long SSL_CTX_set_options(SSL_CTX* ctx, long options)
 {
-    // TDOD:
+    ProtocolVersion pv= ctx->getMethod()->getVersion();
+    bool multi_proto= ctx->getMethod()->multipleProtocol();
+    unsigned long ssl_ctx_mask= SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1;
+
+    do
+    {
+      if (options == 0)
+       break;
+      // only TLSv1.1
+      if ((options & ssl_ctx_mask) == ssl_ctx_mask)
+      {
+        pv.minor_= 2;
+        multi_proto= false;
+        break;
+      }
+      // only TLSv1
+      ssl_ctx_mask= SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1_1;
+      if((options & ssl_ctx_mask) == ssl_ctx_mask)
+      {
+        pv.minor_= 1;
+        multi_proto= false;
+        break;
+      }
+      // TLSv1.1 and TLSv1
+      ssl_ctx_mask= SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
+      if((options & ssl_ctx_mask) == ssl_ctx_mask)
+      {
+        pv.minor_= 2;
+        multi_proto= true;
+        break;
+      }
+    }while(0);
+
+    SSL_METHOD *meth= NEW_YS SSL_METHOD(ctx->getMethod()->getSide(), ProtocolVersion(3,pv.minor_), multi_proto);
+    ctx->SetMethod(meth);
     return SSL_SUCCESS;
 }
 
@@ -1404,16 +1476,14 @@ int ASN1_STRING_type(ASN1_STRING *x)
 int X509_NAME_get_index_by_NID(X509_NAME* name,int nid, int lastpos)
 {
     int idx = -1;  // not found
-    const char* start = &name->GetName()[lastpos + 1];
+    int cnPos = -1;
 
     switch (nid) {
     case NID_commonName:
-        const char* found = strstr(start, "/CN=");
-        if (found) {
-            found += 4;  // advance to str
-            idx = found - start + lastpos + 1;
-        }
-        break;
+         cnPos = name->GetCnPosition();
+         if (lastpos < cnPos)
+           idx = cnPos;
+         break;
     }
 
     return idx;
@@ -1566,7 +1636,7 @@ unsigned long err_helper(bool peek = false)
         return CERTFICATE_ERROR;
         break;
     default :
-        return ysError;
+        return 0;
     }
 
     return 0;  // shut up compiler

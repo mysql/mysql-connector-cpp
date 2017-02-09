@@ -37,14 +37,14 @@
 namespace yaSSL {
 
 
-x509::x509(uint sz) : length_(sz), buffer_(NEW_YS opaque[sz]) 
+x509::x509(uint sz) : length_(sz), buffer_(NEW_YS opaque[sz])
 {
 }
 
 
-x509::~x509() 
-{ 
-    ysArrayDelete(buffer_); 
+x509::~x509()
+{
+    ysArrayDelete(buffer_);
 }
 
 
@@ -71,20 +71,20 @@ x509& x509::operator=(const x509& that)
 
 
 uint x509::get_length() const
-{ 
-    return length_; 
+{
+    return length_;
 }
 
 
 const opaque* x509::get_buffer() const
-{ 
-    return buffer_; 
+{
+    return buffer_;
 }
 
 
 opaque* x509::use_buffer()
-{ 
-    return buffer_; 
+{
+    return buffer_;
 }
 
 
@@ -173,7 +173,7 @@ void CertManager::setVerifyCallback(VerifyCallback vc)
 
 
 void CertManager::AddPeerCert(x509* x)
-{ 
+{
     peerList_.push_back(x);  // take ownership
 }
 
@@ -203,13 +203,13 @@ int CertManager::CopyCaCert(const x509* x)
 
 
 const x509* CertManager::get_cert() const
-{ 
+{
     return list_.front();
 }
 
 
 const opaque* CertManager::get_peerKey() const
-{ 
+{
     return peerPublicKey_.get_buffer();
 }
 
@@ -239,19 +239,19 @@ SignatureAlgorithm CertManager::get_keyType() const
 
 
 uint CertManager::get_peerKeyLength() const
-{ 
+{
     return peerPublicKey_.get_size();
 }
 
 
 const opaque* CertManager::get_privateKey() const
-{ 
+{
     return privateKey_.get_buffer();
 }
 
 
 uint CertManager::get_privateKeyLength() const
-{ 
+{
     return privateKey_.get_size();
 }
 
@@ -304,7 +304,10 @@ int CertManager::Validate()
         afterDate.type= cert.GetAfterDateType();
         afterDate.length= strlen((char *) afterDate.data) + 1;
         peerX509_ = NEW_YS X509(cert.GetIssuer(), iSz, cert.GetCommonName(),
-                                sSz, &beforeDate, &afterDate);
+                                sSz, &beforeDate, &afterDate,
+                                cert.GetIssuerCnStart(), cert.GetIssuerCnLength(),
+                                cert.GetSubjectCnStart(), cert.GetSubjectCnLength()
+                                );
 
         if (err == TaoCrypt::SIG_OTHER_E && verifyCallback_) {
             X509_STORE_CTX store;
@@ -350,7 +353,9 @@ int CertManager::SetPrivateKey(const x509& key)
         afterDate.type= cd.GetAfterDateType();
         afterDate.length= strlen((char *) afterDate.data) + 1;
         selfX509_ = NEW_YS X509(cd.GetIssuer(), iSz, cd.GetCommonName(),
-                                sSz, &beforeDate, &afterDate);
+                                sSz, &beforeDate, &afterDate,
+                                cd.GetIssuerCnStart(), cd.GetIssuerCnLength(),
+                                cd.GetSubjectCnStart(), cd.GetSubjectCnLength());
     }
     return 0;
 }
@@ -367,7 +372,9 @@ void CertManager::setPeerX509(X509* x)
     ASN1_STRING* after  = x->GetAfter();
 
     peerX509_ = NEW_YS X509(issuer->GetName(), issuer->GetLength(),
-        subject->GetName(), subject->GetLength(), before, after);
+        subject->GetName(), subject->GetLength(), before, after,
+        issuer->GetCnPosition(), issuer->GetCnLength(),
+        subject->GetCnPosition(), subject->GetCnLength());
 }
 
 

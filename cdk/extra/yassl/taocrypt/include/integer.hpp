@@ -47,7 +47,7 @@
 
 #ifdef TAOCRYPT_X86ASM_AVAILABLE
     #if defined(__GNUC__) && (__GNUC__ >= 4)
-        // GCC 4 or greater optimizes too much inline on recursive for bigint, 
+        // GCC 4 or greater optimizes too much inline on recursive for bigint,
         // -O3 just as fast without asm here anyway
         #undef TAOCRYPT_X86ASM_AVAILABLE
     #endif
@@ -118,6 +118,10 @@ namespace TaoCrypt {
 #endif
 
 
+
+#ifdef _WIN32
+    #undef max // avoid name clash
+#endif
 // general MAX
 template<typename T> inline
 const T& max(const T& a, const T& b)
@@ -147,7 +151,7 @@ public:
                 Signedness s = UNSIGNED);
 
         ~Integer() {}
-      
+
         static const Integer& Zero();
         static const Integer& One();
 
@@ -190,7 +194,7 @@ public:
         Integer&  operator+=(const Integer& t);
         Integer&  operator-=(const Integer& t);
         Integer&  operator*=(const Integer& t)	{ return *this = Times(t); }
-        Integer&  operator/=(const Integer& t)	
+        Integer&  operator/=(const Integer& t)
                         { return *this = DividedBy(t);}
         Integer&  operator%=(const Integer& t)	{ return *this = Modulo(t); }
         Integer&  operator/=(word t)  { return *this = DividedBy(t); }
@@ -198,7 +202,7 @@ public:
         Integer&  operator<<=(unsigned int);
         Integer&  operator>>=(unsigned int);
 
-     
+
         void Randomize(RandomNumberGenerator &rng, unsigned int bitcount);
         void Randomize(RandomNumberGenerator &rng, const Integer &min,
                        const Integer &max);
@@ -206,7 +210,7 @@ public:
         void SetBit(unsigned int n, bool value = 1);
         void SetByte(unsigned int n, byte value);
 
-        void Negate();		
+        void Negate();
         void SetPositive() { sign_ = POSITIVE; }
         void SetNegative() { if (!!(*this)) sign_ = NEGATIVE; }
         void Swap(Integer& a);
@@ -216,9 +220,9 @@ public:
         Integer     operator-() const;
         Integer&    operator++();
         Integer&    operator--();
-        Integer     operator++(int) 
+        Integer     operator++(int)
             { Integer temp = *this; ++*this; return temp; }
-        Integer     operator--(int) 
+        Integer     operator--(int)
             { Integer temp = *this; --*this; return temp; }
 
         int Compare(const Integer& a) const;
@@ -277,28 +281,28 @@ private:
     Sign             sign_;
 };
 
-inline bool operator==(const Integer& a, const Integer& b) 
+inline bool operator==(const Integer& a, const Integer& b)
                         {return a.Compare(b)==0;}
-inline bool operator!=(const Integer& a, const Integer& b) 
+inline bool operator!=(const Integer& a, const Integer& b)
                         {return a.Compare(b)!=0;}
-inline bool operator> (const Integer& a, const Integer& b) 
+inline bool operator> (const Integer& a, const Integer& b)
                         {return a.Compare(b)> 0;}
-inline bool operator>=(const Integer& a, const Integer& b) 
+inline bool operator>=(const Integer& a, const Integer& b)
                         {return a.Compare(b)>=0;}
-inline bool operator< (const Integer& a, const Integer& b) 
+inline bool operator< (const Integer& a, const Integer& b)
                         {return a.Compare(b)< 0;}
-inline bool operator<=(const Integer& a, const Integer& b) 
+inline bool operator<=(const Integer& a, const Integer& b)
                         {return a.Compare(b)<=0;}
 
-inline Integer operator+(const Integer &a, const Integer &b) 
+inline Integer operator+(const Integer &a, const Integer &b)
                         {return a.Plus(b);}
-inline Integer operator-(const Integer &a, const Integer &b) 
+inline Integer operator-(const Integer &a, const Integer &b)
                         {return a.Minus(b);}
-inline Integer operator*(const Integer &a, const Integer &b) 
+inline Integer operator*(const Integer &a, const Integer &b)
                         {return a.Times(b);}
-inline Integer operator/(const Integer &a, const Integer &b) 
+inline Integer operator/(const Integer &a, const Integer &b)
                         {return a.DividedBy(b);}
-inline Integer operator%(const Integer &a, const Integer &b) 
+inline Integer operator%(const Integer &a, const Integer &b)
                         {return a.Modulo(b);}
 inline Integer operator/(const Integer &a, word b) {return a.DividedBy(b);}
 inline word    operator%(const Integer &a, word b) {return a.Modulo(b);}

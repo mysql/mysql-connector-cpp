@@ -17,7 +17,7 @@
 */
 
 
-/*  The crypto wrapper header is used to define policies for the cipher 
+/*  The crypto wrapper header is used to define policies for the cipher
  *  components used by SSL.  There are 3 policies to consider:
  *
  *  1) MAC, the Message Authentication Code used for each Message
@@ -174,7 +174,7 @@ private:
 };
 
 
-// BulkCipher policy should implement encrypt, decrypt, get block size, 
+// BulkCipher policy should implement encrypt, decrypt, get block size,
 // and set keys for encrypt and decrypt
 struct BulkCipher : public virtual_base {
     virtual void   encrypt(byte*, const byte*, unsigned int) = 0;
@@ -318,7 +318,7 @@ struct Auth : public virtual_base {
 // For use with NULL Authentication schemes
 struct NO_Auth : public Auth {
     void   sign(byte*, const byte*, unsigned int, const RandomPool&) {}
-    bool   verify(const byte*, unsigned int, const byte*, unsigned int) 
+    bool   verify(const byte*, unsigned int, const byte*, unsigned int)
                     { return true; }
 };
 
@@ -372,11 +372,12 @@ public:
     DiffieHellman(const Integer&, const Integer&, const RandomPool&);
     ~DiffieHellman();
 
-    DiffieHellman(const DiffieHellman&);  
+    DiffieHellman(const DiffieHellman&);
     DiffieHellman& operator=(const DiffieHellman&);
 
     uint        get_agreedKeyLength() const;
     const byte* get_agreedKey()       const;
+    uint        get_publicKeyLength() const;
     const byte* get_publicKey()       const;
     void        makeAgreement(const byte*, unsigned int);
 

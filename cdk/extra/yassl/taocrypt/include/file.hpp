@@ -40,13 +40,13 @@ public:
     Source(const byte* b, word32 sz) : buffer_(b, sz), current_(0) {}
 
     word32 remaining()         { if (GetError().What()) return 0;
-                                 else return buffer_.size() - current_; } 
+                                 else return buffer_.size() - current_; }
     word32 size() const        { return buffer_.size(); }
     void   grow(word32 sz)     { buffer_.CleanGrow(sz); }
 
     bool IsLeft(word32 sz) { if (remaining() >= sz) return true;
                              else { SetError(CONTENT_E); return false; } }
-   
+
     const byte*  get_buffer()  const { return buffer_.get_buffer(); }
     const byte*  get_current() const { return &buffer_[current_]; }
     word32       get_index()   const { return current_; }
@@ -82,7 +82,7 @@ public:
         return *this;
     }
 
-    void Swap(Source& other) 
+    void Swap(Source& other)
     {
         buffer_.Swap(other.buffer_);
         STL::swap(current_, other.current_);
@@ -97,11 +97,11 @@ class FileSource {
 public:
     FileSource(const char* fname, Source& source);
     ~FileSource();
-   
+
     word32   size(bool use_current = false);
 private:
     word32   get(Source&);
-    word32   size_left();                     
+    word32   size_left();
 
     FileSource(const FileSource&);            // hide
     FileSource& operator=(const FileSource&); // hide

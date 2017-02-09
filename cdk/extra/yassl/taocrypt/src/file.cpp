@@ -107,7 +107,7 @@ void FileSink::put(Source& source)
 // swap with other and reset to beginning
 void Source::reset(ByteBlock& otherBlock)
 {
-    buffer_.Swap(otherBlock);   
+    buffer_.Swap(otherBlock);
     current_ = 0;
 }
 
