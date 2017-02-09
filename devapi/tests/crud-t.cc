@@ -848,6 +848,13 @@ TEST_F(Crud, table)
 
   std::vector<string> cols = {"_id"};
 
+  //Inserting empty list
+
+  //Bug #25515964
+  //Adding empty list shouldn't do anything
+  std::list<Row> rList;
+  tbl.insert(cols, "age", string("name")).rows(rList).rows(rList).execute();
+
   //Using containers (vectors, const char* and string)
 
   auto insert = tbl.insert(cols, "age", string("name"));

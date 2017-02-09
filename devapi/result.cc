@@ -1345,10 +1345,14 @@ void mysqlx::internal::BaseResult::init(mysqlx::internal::BaseResult &&init_)
 
   m_sess = init_.m_sess;
 
-  // first deregister init result, since it registered itself on ctor
-  // otherwise it would trigger cache, and we are moving Result object
-  m_sess->deregister_result(&init_);
-  m_sess->register_result(this);
+  //On empty results, m_sess is NULL, so don't do anything with it!
+  if (m_sess)
+  {
+    // first deregister init result, since it registered itself on ctor
+    // otherwise it would trigger cache, and we are moving Result object
+    m_sess->deregister_result(&init_);
+    m_sess->register_result(this);
+  }
 
 }
 
