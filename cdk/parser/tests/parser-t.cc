@@ -1114,8 +1114,16 @@ TEST(Parser, uri)
       URI_parts(none, none, "host", 0, none, false)
     },
     {
+      "[::1]",
+      URI_parts(none, none, "::1", 0, none, false)
+    },
+    {
       "host:123",
       URI_parts(none, none, "host", 123, none, false)
+    },
+    {
+      "[::1]:123",
+      URI_parts(none, none, "::1", 123, none, false)
     },
     {
       "host:0",
@@ -1126,12 +1134,20 @@ TEST(Parser, uri)
       URI_parts(none , none, "host", 0, "path", false)
     },
     {
+      "[::1]/path",
+      URI_parts(none , none, "::1", 0, "path", false)
+    },
+    {
       "host/",
       URI_parts(none , none, "host", 0, "", false)
     },
     {
       "user@host/path",
       URI_parts("user" , none, "host", 0, "path", false)
+    },
+    {
+      "user@[::1]/path",
+      URI_parts("user" , none, "::1", 0, "path", false)
     },
     {
       "user%40host%2Fpath",
@@ -1146,8 +1162,16 @@ TEST(Parser, uri)
       URI_parts("user" , "pwd", "host", 0, none, false)
     },
     {
+      "user:pwd@[::1]",
+      URI_parts("user" , "pwd", "::1", 0, none, false)
+    },
+    {
       "user:pwd@host:123",
       URI_parts("user" , "pwd", "host", 123, none, false)
+    },
+    {
+      "user:pwd@[::1]:123",
+      URI_parts("user" , "pwd", "::1", 123, none, false)
     },
     {
       "user:pwd@host:123/",
@@ -1156,6 +1180,10 @@ TEST(Parser, uri)
     {
       "user:pwd@host:123/foo?key=val",
       URI_parts("user" , "pwd", "host", 123, "foo", true)
+    },
+    {
+      "user:pwd@[::1]:123/foo?key=val",
+      URI_parts("user" , "pwd", "::1", 123, "foo", true)
     },
     {
       "user:pwd@host:123?key=val",
@@ -1277,7 +1305,9 @@ TEST(Parser, uri)
     "host/db?query#foo",
     "host/db?a=[a,b,c&b",
     "host/db?a=[a,b,c]foo=bar",
-    "host/db?a=[a,b=foo"
+    "host/db?a=[a,b=foo",
+    "[::1]:port:123",
+    "[::1"
     //"host/db?l=[a,b&c]" TODO: should this fail?
     // TODO: allowed chars in host/path component
   };

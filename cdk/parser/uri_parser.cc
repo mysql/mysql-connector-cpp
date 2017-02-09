@@ -263,6 +263,13 @@ struct URI_parser::TokSet
     m_bits.set(tt2);
   }
 
+  TokSet(token_type tt1, token_type tt2, token_type tt3)
+  {
+    m_bits.set(tt1);
+    m_bits.set(tt2);
+    m_bits.set(tt3);
+  }
+
   bool has_token(token_type tt) const
   {
     return m_bits.test(tt);
@@ -294,11 +301,20 @@ void URI_parser::process(Processor &prc) const
   bool        rescan = false;
   bool        has_port = false;
 
-  self->consume_until(host, TokSet(T_AT, T_COLON));
-
-  if (self->consume_token(T_COLON))
+  if (self->next_token_is(T_SQOPEN))
   {
     /*
+      IPv6 adress found! Will be parsed on rescan
+    */
+    rescan = true;
+  }
+  else
+  {
+    self->consume_until(host, TokSet(T_AT, T_COLON ));
+
+    if (self->consume_token(T_COLON))
+    {
+      /*
       We have seen  "<???>:" and it still can be user followed
       by a password or host followed by a port.
 
@@ -306,9 +322,9 @@ void URI_parser::process(Processor &prc) const
       part, whichever comes first.
     */
 
-    self->consume_until(port, T_AT);
+      self->consume_until(port, T_AT);
 
-    /*
+      /*
       If we see @ now, then it means we were looking at user
       credentials so far (and they are stored in host and port,
       respectively). We report them and request re-scanning host/port
@@ -319,25 +335,26 @@ void URI_parser::process(Processor &prc) const
       the corresponding variables.
     */
 
-    if (self->consume_token(T_AT))
-    {
-      // <user>:<pwd>@...
-      prc.user(host);
-      prc.password(port);
-      rescan = true;
+      if (self->consume_token(T_AT))
+      {
+        // <user>:<pwd>@...
+        prc.user(host);
+        prc.password(port);
+        rescan = true;
+      }
+      else
+        has_port = true;
     }
-    else
-      has_port = true;
-  }
-  else if (self->consume_token(T_AT))
-  {
-    /*
+    else if (self->consume_token(T_AT))
+    {
+      /*
       No ':' seen but we see '@'. It means user without password and
       user is stored in host variable. We report it an request
       re-scanning of host/port info.
     */
-    prc.user(host);
-    rescan = true;
+      prc.user(host);
+      rescan = true;
+    }
   }
 
   /*
@@ -350,7 +367,21 @@ void URI_parser::process(Processor &prc) const
   {
     host.clear();
     port.clear();
-    self->consume_until(host, T_COLON);
+
+    if (self->consume_token(T_SQOPEN))
+    {
+      /*
+        IPv6 address
+      */
+      host.clear();
+      self->consume_until(host, T_SQCLOSE);
+      if (!self->consume_token(T_SQCLOSE))
+        throw Error(this, L"Missing ']' while parsing IPv6 address");
+    }
+    else
+    {
+      self->consume_until(host, T_COLON );
+    }
 
     if (self->consume_token(T_COLON))
     {
