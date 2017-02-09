@@ -193,8 +193,8 @@ struct WindowSlider
         if (windowSize == 0)
         {
             unsigned int expLen = exp.BitCount();
-            windowSize = expLen <= 17 ? 1 : (expLen <= 24 ? 2 : 
-                (expLen <= 70 ? 3 : (expLen <= 197 ? 4 : (expLen <= 539 ? 5 : 
+            windowSize = expLen <= 17 ? 1 : (expLen <= 24 ? 2 :
+                (expLen <= 70 ? 3 : (expLen <= 197 ? 4 : (expLen <= 539 ? 5 :
                 (expLen <= 1434 ? 6 : 7)))));
         }
         windowModulus <<= windowSize;
@@ -259,7 +259,7 @@ void AbstractGroup::SimultaneousMultiply(Integer *results, const Integer &base,
         notDone = false;
         for (i=0; i<expCount; i++)
         {
-            if (!exponents[i].finished && expBitPosition == 
+            if (!exponents[i].finished && expBitPosition ==
                  exponents[i].windowBegin)
             {
                 Element &bucket = buckets[i][exponents[i].expWindow/2];

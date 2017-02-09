@@ -48,8 +48,8 @@ void MD5::Init()
 
 
 MD5::MD5(const MD5& that) : HASHwithTransform(DIGEST_SIZE / sizeof(word32),
-                                              BLOCK_SIZE) 
-{ 
+                                              BLOCK_SIZE)
+{
     buffLen_ = that.buffLen_;
     loLen_  =  that.loLen_;
     hiLen_  =  that.hiLen_;
@@ -91,7 +91,7 @@ void MD5::Update(const byte* data, word32 len)
     byte* local = reinterpret_cast<byte*>(buffer_);
 
     // remove buffered data if possible
-    if (buffLen_)  {   
+    if (buffLen_)  {
         word32 add = min(len, BLOCK_SIZE - buffLen_);
         memcpy(&local[buffLen_], data, add);
 
@@ -174,7 +174,7 @@ void MD5::Update(const byte* data, word32 len)
 
     // esi already set up, after using set for next round
     // ebp already set up, set up using next round index
-    
+
 #define MD5STEP1(w, x, y, z, index, data, s)    \
     AS2(    xor   esi, z                    )   \
     AS2(    and   esi, x                    )   \
@@ -223,7 +223,7 @@ void MD5::Update(const byte* data, word32 len)
 
 
 #ifdef _MSC_VER
-    __declspec(naked) 
+    __declspec(naked)
 #else
     __attribute__ ((noinline))
 #endif
@@ -242,8 +242,8 @@ void MD5::AsmTransform(const byte* data, word32 times)
     #define EPILOG()  \
         "pop ebp;" \
         "pop ebx;" \
-       	"emms;" \
-       	".att_syntax;" \
+        "emms;" \
+        ".att_syntax;" \
             : \
             : "c" (this), "D" (data), "a" (times) \
             : "%esi", "%edx", "memory", "cc" \
@@ -272,7 +272,7 @@ void MD5::AsmTransform(const byte* data, word32 times)
         AS1(    pop   ebp                       )   \
         AS1(    emms                            )   \
         AS1(    ret  8                          )
-        
+
 #endif
 
 
@@ -288,16 +288,16 @@ void MD5::AsmTransform(const byte* data, word32 times)
 
     AS2(    movd  mm2, eax              )   // store times_
     AS2(    movd  mm1, esi              )   // store digest_
-    
+
     AS2(    mov   eax, [esi]            )   // a
     AS2(    mov   ebx, [esi +  4]       )   // b
     AS2(    mov   ecx, [esi +  8]       )   // c
     AS2(    mov   edx, [esi + 12]       )   // d
-  
+
 #ifdef _MSC_VER
     AS1( loopStart: )  // loopStart
 #else
-    AS1( 0: )          // loopStart for some gas (need numeric for jump back 
+    AS1( 0: )          // loopStart for some gas (need numeric for jump back
 #endif
 
     // set up
@@ -375,7 +375,7 @@ void MD5::AsmTransform(const byte* data, word32 times)
     MD5STEP4(  edx, eax, ebx, ecx, 2,   0xbd3af235, 10)
     MD5STEP4(  ecx, edx, eax, ebx, 9,   0x2ad7d2bb, 15)
     MD5STEP4(  ebx, ecx, edx, eax, 9,   0xeb86d391, 21)
-    
+
     AS2(    movd  esi, mm1              )   // digest_
 
     AS2(    add   [esi],      eax       )   // write out
@@ -417,7 +417,7 @@ void MD5::Transform()
 #define MD5STEP(f, w, x, y, z, data, s) \
     w = rotlFixed(w + f(x, y, z) + data, s) + x
 
-    // Copy context->state[] to working vars 
+    // Copy context->state[] to working vars
     word32 a = digest_[0];
     word32 b = digest_[1];
     word32 c = digest_[2];
@@ -490,7 +490,7 @@ void MD5::Transform()
     MD5STEP(F4, d, a, b, c, buffer_[11] + 0xbd3af235, 10);
     MD5STEP(F4, c, d, a, b, buffer_[2]  + 0x2ad7d2bb, 15);
     MD5STEP(F4, b, c, d, a, buffer_[9]  + 0xeb86d391, 21);
-    
+
     // Add the working vars back into digest state[]
     digest_[0] += a;
     digest_[1] += b;

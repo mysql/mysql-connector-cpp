@@ -61,7 +61,7 @@ Integer RSA_PrivateKey::CalculateInverse(RandomNumberGenerator& rng,
 
     Integer y = ModularRoot(re, dq_, dp_, q_, p_, u_);
     y = modn.Divide(y, r);				    // unblind
-       
+
     return y;
 }
 
@@ -97,7 +97,7 @@ void RSA_BlockType2::Pad(const byte *input, word32 inputLen, byte *pkcsBlock,
     rng.GenerateBlock(&pkcsBlock[1], padLen);
     for (word32 i = 1; i < padLen; i++)
         if (pkcsBlock[i] == 0) pkcsBlock[i] = 0x01;
-    
+
     pkcsBlock[pkcsBlockLen-inputLen-1] = 0;     // separator
     memcpy(pkcsBlock+pkcsBlockLen-inputLen, input, inputLen);
 }
@@ -200,12 +200,12 @@ word32 RSA_BlockType1::UnPad(const byte* pkcsBlock, word32 pkcsBlockLen,
 word32 SSL_Decrypt(const RSA_PublicKey& key, const byte* sig, byte* plain)
 {
     PK_Lengths lengths(key.GetModulus());
-   
+
     ByteBlock paddedBlock(BitsToBytes(lengths.PaddedBlockBitLength()));
     Integer x = key.ApplyFunction(Integer(sig,
                                           lengths.FixedCiphertextLength()));
     if (x.ByteCount() > paddedBlock.size())
-        x = Integer::Zero();	
+        x = Integer::Zero();
     x.Encode(paddedBlock.get_buffer(), paddedBlock.size());
     return RSA_BlockType1().UnPad(paddedBlock.get_buffer(),
                                   lengths.PaddedBlockBitLength(), plain);

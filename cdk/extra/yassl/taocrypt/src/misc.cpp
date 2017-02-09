@@ -185,7 +185,7 @@ bool HaveCpuId()
         {
             mov eax, 0
             cpuid
-        }            
+        }
     }
     __except (1)
     {

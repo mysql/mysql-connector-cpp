@@ -49,8 +49,8 @@ void RIPEMD160::Init()
 
 
 RIPEMD160::RIPEMD160(const RIPEMD160& that)
-    : HASHwithTransform(DIGEST_SIZE / sizeof(word32), BLOCK_SIZE) 
-{ 
+    : HASHwithTransform(DIGEST_SIZE / sizeof(word32), BLOCK_SIZE)
+{
     buffLen_ = that.buffLen_;
     loLen_   = that.loLen_;
     hiLen_   = that.hiLen_;
@@ -93,7 +93,7 @@ void RIPEMD160::Update(const byte* data, word32 len)
     byte* local = reinterpret_cast<byte*>(buffer_);
 
     // remove buffered data if possible
-    if (buffLen_)  {   
+    if (buffLen_)  {
         word32 add = min(len, BLOCK_SIZE - buffLen_);
         memcpy(&local[buffLen_], data, add);
 
@@ -131,7 +131,7 @@ void RIPEMD160::Update(const byte* data, word32 len)
 
 
 // for all
-#define F(x, y, z)    (x ^ y ^ z) 
+#define F(x, y, z)    (x ^ y ^ z)
 #define G(x, y, z)    (z ^ (x & (y^z)))
 #define H(x, y, z)    (z ^ (x | ~y))
 #define I(x, y, z)    (y ^ (z & (x^y)))
@@ -266,7 +266,7 @@ void RIPEMD160::Transform()
     Subround(J, b2, c2, d2, e2, a2, buffer_[ 3], 12, k5);
     Subround(J, a2, b2, c2, d2, e2, buffer_[12],  6, k5);
 
-    Subround(I, e2, a2, b2, c2, d2, buffer_[ 6],  9, k6); 
+    Subround(I, e2, a2, b2, c2, d2, buffer_[ 6],  9, k6);
     Subround(I, d2, e2, a2, b2, c2, buffer_[11], 13, k6);
     Subround(I, c2, d2, e2, a2, b2, buffer_[ 3], 15, k6);
     Subround(I, b2, c2, d2, e2, a2, buffer_[ 7],  7, k6);
@@ -362,7 +362,7 @@ void RIPEMD160::Transform()
     AS2(    and   esi, x                )   \
     AS2(    xor   esi, z                )
 
-    
+
     // H(z ^ (x | ~y))
     // place in esi
 #define ASMH(x, y, z) \
@@ -391,7 +391,7 @@ void RIPEMD160::Transform()
 
 
 // for 160 and 320
-// #define ASMSubround(f, a, b, c, d, e, i, s, k) 
+// #define ASMSubround(f, a, b, c, d, e, i, s, k)
 //    a += f(b, c, d) + data[i] + k;
 //    a = rotlFixed((word32)a, s) + e;
 //    c = rotlFixed((word32)c, 10U)
@@ -506,7 +506,7 @@ void RIPEMD160::Transform()
 
 
 #ifdef _MSC_VER
-    __declspec(naked) 
+    __declspec(naked)
 #else
     __attribute__ ((noinline))
 #endif
@@ -525,8 +525,8 @@ void RIPEMD160::AsmTransform(const byte* data, word32 times)
     #define EPILOG()  \
         "pop ebp;" \
         "pop ebx;" \
-       	"emms;" \
-       	".att_syntax;" \
+        "emms;" \
+        ".att_syntax;" \
             : \
             : "c" (this), "D" (data), "d" (times) \
             : "%esi", "%eax", "memory", "cc" \
@@ -555,7 +555,7 @@ void RIPEMD160::AsmTransform(const byte* data, word32 times)
         AS1(    pop   ebp                       )   \
         AS1(    emms                            )   \
         AS1(    ret   8                         )
-        
+
 #endif
 
     PROLOG()
@@ -568,11 +568,11 @@ void RIPEMD160::AsmTransform(const byte* data, word32 times)
 
     AS2(    sub   esp, 24               )   // make room for tmp a1 - e1
     AS2(    movd  mm1, esi              )   // store digest_
-    
+
 #ifdef _MSC_VER
     AS1( loopStart: )  // loopStart
 #else
-    AS1( 0: )          // loopStart for some gas (need numeric for jump back 
+    AS1( 0: )          // loopStart for some gas (need numeric for jump back
 #endif
 
     AS2(    movd  mm2, edx              )   // store times_
@@ -583,7 +583,7 @@ void RIPEMD160::AsmTransform(const byte* data, word32 times)
     AS2(    mov   edx, [esi + 12]       )   // d1
     AS2(    mov   ebp, [esi + 16]       )   // e1
 
-    // setup 
+    // setup
     AS2(    mov   esi, ecx      )
 
     ASMSubroundF( eax, ebx, ecx, edx, ebp,  0, 11)
@@ -713,7 +713,7 @@ void RIPEMD160::AsmTransform(const byte* data, word32 times)
     // setup
     AS2(    mov   esi, ebx      )
 
-    ASMSubroundI( ebp, eax, ebx, ecx, edx,  6,  9, k6) 
+    ASMSubroundI( ebp, eax, ebx, ecx, edx,  6,  9, k6)
     ASMSubroundI( edx, ebp, eax, ebx, ecx, 11, 13, k6)
     ASMSubroundI( ecx, edx, ebp, eax, ebx,  3, 15, k6)
     ASMSubroundI( ebx, ecx, edx, ebp, eax,  7,  7, k6)
@@ -831,7 +831,7 @@ void RIPEMD160::AsmTransform(const byte* data, word32 times)
     AS1(    jnz   0b )         // loopStart
 #endif
 
-    // inline adjust 
+    // inline adjust
     AS2(    add   esp, 24               )   // fix room on stack
 
     EPILOG()

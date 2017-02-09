@@ -105,21 +105,21 @@ void CleanUp();
     #define NEW_TC new
 
     class virtual_base {};
-   
- 
+
+
 #endif // YASSL_PURE_C
 
 
 #if defined(_MSC_VER) || defined(__BCPLUSPLUS__)
-	#define INTEL_INTRINSICS
-	#define FAST_ROTATE
+  #define INTEL_INTRINSICS
+  #define FAST_ROTATE
 #elif defined(__MWERKS__) && TARGET_CPU_PPC
-	#define PPC_INTRINSICS
-	#define FAST_ROTATE
+  #define PPC_INTRINSICS
+  #define FAST_ROTATE
 #elif defined(__GNUC__) && defined(__i386__)
         // GCC does peephole optimizations which should result in using rotate
         // instructions
-	#define FAST_ROTATE
+  #define FAST_ROTATE
 #endif
 
 
@@ -163,7 +163,7 @@ void CleanUp();
 
 // Turn on ia32 ASM for Ciphers and Message Digests
 // Seperate define since these are more complex, use member offsets
-// and user may want to turn off while leaving Big Integer optos on 
+// and user may want to turn off while leaving Big Integer optos on
 #if defined(TAOCRYPT_X86ASM_AVAILABLE) && !defined(DISABLE_TAO_ASM)
     #define TAO_ASM
 #endif
@@ -271,7 +271,7 @@ void CleanUp();
 template <bool b>
 struct CompileAssert
 {
-	static char dummy[2*b-1];
+  static char dummy[2*b-1];
 };
 
 #define TAOCRYPT_COMPILE_ASSERT(assertion) \
@@ -440,7 +440,7 @@ template<> inline word32 rotrFixed(word32 x, word32 y)
 
 #ifdef min
 #undef min
-#endif 
+#endif
 
 
 template <class T>
@@ -472,14 +472,14 @@ inline word32 ByteReverse(word32 value)
 inline word64 ByteReverse(word64 value)
 {
 #ifdef TAOCRYPT_SLOW_WORD64
-	return (word64(ByteReverse(word32(value))) << 32) | 
+  return (word64(ByteReverse(word32(value))) << 32) |
                    ByteReverse(word32(value>>32));
 #else
-	value = ((value & W64LIT(0xFF00FF00FF00FF00)) >> 8) |
+  value = ((value & W64LIT(0xFF00FF00FF00FF00)) >> 8) |
             ((value & W64LIT(0x00FF00FF00FF00FF)) << 8);
-	value = ((value & W64LIT(0xFFFF0000FFFF0000)) >> 16) |
+  value = ((value & W64LIT(0xFFFF0000FFFF0000)) >> 16) |
             ((value & W64LIT(0x0000FFFF0000FFFF)) << 16);
-	return rotlFixed(value, 32U);
+  return rotlFixed(value, 32U);
 #endif
 }
 
@@ -512,7 +512,7 @@ inline T ByteReverseIf(T value, ByteOrder order)
 template <typename T>
 inline void ByteReverseIf(T* out, const T* in, word32 bc, ByteOrder order)
 {
-    if (!HostByteOrderIs(order)) 
+    if (!HostByteOrderIs(order))
         ByteReverse(out, in, bc);
     else if (out != in)
         memcpy(out, in, bc);
@@ -520,7 +520,7 @@ inline void ByteReverseIf(T* out, const T* in, word32 bc, ByteOrder order)
 
 
 
-// do Asm Reverse is host is Little and x86asm 
+// do Asm Reverse is host is Little and x86asm
 #ifdef LITTLE_ENDIAN_ORDER
     #ifdef TAOCRYPT_X86ASM_AVAILABLE
         #define LittleReverse AsmReverse
@@ -532,7 +532,7 @@ inline void ByteReverseIf(T* out, const T* in, word32 bc, ByteOrder order)
 #endif
 
 
-// do Asm Reverse is host is Big and x86asm 
+// do Asm Reverse is host is Big and x86asm
 #ifdef BIG_ENDIAN_ORDER
     #ifdef TAOCRYPT_X86ASM_AVAILABLE
         #define BigReverse AsmReverse
@@ -551,14 +551,14 @@ inline void ByteReverseIf(T* out, const T* in, word32 bc, ByteOrder order)
     inline word32 AsmReverse(word32 wd)
     {
     #ifdef __GNUC__
-        __asm__ 
+        __asm__
         (
             "bswap %1"
             : "=r"(wd)
             : "0"(wd)
         );
     #else
-        __asm 
+        __asm
         {
             mov   eax, wd
             bswap eax
@@ -568,7 +568,7 @@ inline void ByteReverseIf(T* out, const T* in, word32 bc, ByteOrder order)
         return wd;
     }
 
-#endif 
+#endif
 
 
 template <class T>
@@ -699,7 +699,7 @@ inline void PutWord(bool assumeAligned, ByteOrder order, byte* block, T value,
     if (assumeAligned)
     {
         if (xorBlock)
-            *reinterpret_cast<T *>(block) = ByteReverseIf(value, order) 
+            *reinterpret_cast<T *>(block) = ByteReverseIf(value, order)
                 ^ *reinterpret_cast<const T *>(xorBlock);
         else
             *reinterpret_cast<T *>(block) = ByteReverseIf(value, order);
@@ -759,7 +759,7 @@ struct BlockGetAndPut
 {
     // function needed because of C++ grammatical ambiguity between
     // expression-statements and declarations
-    static inline GetBlock<T, B, A> Get(const void *block) 
+    static inline GetBlock<T, B, A> Get(const void *block)
         {return GetBlock<T, B, A>(block);}
     typedef PutBlock<T, B, A> Put;
 };

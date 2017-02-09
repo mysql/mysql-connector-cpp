@@ -257,14 +257,14 @@ void BasicDES::SetKey(const byte* key, word32 /*length*/, CipherDir dir)
             | ((word32)ks[5] << 8)
             | ((word32)ks[7]);
     }
-    
+
     // reverse key schedule order
     if (dir == DECRYPTION)
         for (i = 0; i < 16; i += 2) {
             STL::swap(k_[i],   k_[32 - 2 - i]);
             STL::swap(k_[i+1], k_[32 - 1 - i]);
         }
-   
+
 }
 
 static inline void IPERM(word32& left, word32& right)
@@ -411,14 +411,14 @@ void DES_EDE3::Process(byte* out, const byte* in, word32 sz)
 
     word32 blocks = sz / DES_BLOCK_SIZE;
 
-    if (mode_ == CBC)    
+    if (mode_ == CBC)
         if (dir_ == ENCRYPTION)
             while (blocks--) {
                 r_[0] ^= *(word32*)in;
                 r_[1] ^= *(word32*)(in + 4);
 
                 AsmProcess((byte*)r_, (byte*)r_, (void*)Spbox);
-                
+
                 memcpy(out, r_, DES_BLOCK_SIZE);
 
                 in  += DES_BLOCK_SIZE;
@@ -427,7 +427,7 @@ void DES_EDE3::Process(byte* out, const byte* in, word32 sz)
         else
             while (blocks--) {
                 AsmProcess(in, out, (void*)Spbox);
-               
+
                 *(word32*)out       ^= r_[0];
                 *(word32*)(out + 4) ^= r_[1];
 
@@ -439,7 +439,7 @@ void DES_EDE3::Process(byte* out, const byte* in, word32 sz)
     else
         while (blocks--) {
             AsmProcess(in, out, (void*)Spbox);
-           
+
             out += DES_BLOCK_SIZE;
             in  += DES_BLOCK_SIZE;
         }
@@ -641,7 +641,7 @@ void DES_EDE3::ProcessAndXorBlock(const byte* in, const byte* xOr,
 
 
 #ifdef _MSC_VER
-    __declspec(naked) 
+    __declspec(naked)
 #else
     __attribute__ ((noinline))
 #endif
@@ -663,8 +663,8 @@ void DES_EDE3::AsmProcess(const byte* in, byte* out, void* box) const
     #define EPILOG()  \
         "pop ebp;" \
         "pop ebx;" \
-       	"emms;" \
-       	".att_syntax;" \
+        "emms;" \
+        ".att_syntax;" \
             :  \
             : "d" (this), "S" (in), "a" (box), "c" (out) \
             : "%edi", "memory", "cc" \
@@ -724,7 +724,7 @@ void DES_EDE3::AsmProcess(const byte* in, byte* out, void* box) const
     DesRound() // 7
     DesRound() // 8
 
-    // swap left and right 
+    // swap left and right
     AS2(    xchg  eax, ebx                      )
 
     DesRound() // 1
@@ -765,7 +765,7 @@ void DES_EDE3::AsmProcess(const byte* in, byte* out, void* box) const
 
     AS2(    mov   DWORD PTR [esi],     ebx      )   // right first
     AS2(    mov   DWORD PTR [esi + 4], eax      )
-    
+
 
     EPILOG()
 }

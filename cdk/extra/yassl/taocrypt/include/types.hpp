@@ -22,6 +22,9 @@
 #ifndef TAO_CRYPT_TYPES_HPP
 #define TAO_CRYPT_TYPES_HPP
 
+#ifdef HAVE_CONFIG_H
+    #include "config.h"
+#endif
 
 namespace TaoCrypt {
 
@@ -48,7 +51,7 @@ typedef unsigned int   word32;
     #define WORD64_AVAILABLE
     typedef unsigned long word64;
     #define W64LIT(x) x##LL
-#elif SIZEOF_LONG_LONG == 8
+#elif SIZEOF_LONG_LONG == 8 
     #define WORD64_AVAILABLE
     #define WORD64_IS_DISTINCT_TYPE
     typedef unsigned long long word64;
@@ -63,10 +66,10 @@ typedef unsigned int   word32;
     #endif
 #endif
 
-
+    
 #if defined(HAVE_64_MULTIPLY) && (defined(__ia64__) \
     || defined(_ARCH_PPC64) || defined(__mips64)  || defined(__x86_64__) \
-    || defined(_M_X64) || defined(_M_IA64))
+    || defined(_M_X64) || defined(_M_IA64)) 
 // These platforms have 64-bit CPU registers. Unfortunately most C++ compilers
 // don't allow any way to access the 64-bit by 64-bit multiply instruction
 // without using assembly, so in order to use word64 as word, the assembly

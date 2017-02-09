@@ -89,7 +89,7 @@ void Rabbit::NextState(RabbitCtx which)
     ctx->c[6] = U32V(ctx->c[6] + 0x4D34D34D + (ctx->c[5] < c_old[5]));
     ctx->c[7] = U32V(ctx->c[7] + 0xD34D34D3 + (ctx->c[6] < c_old[6]));
     ctx->carry = (ctx->c[7] < c_old[7]);
-   
+
     /* Calculate the g-values */
     for (i=0;i<8;i++)
         g[i] = RABBIT_g_func(U32V(ctx->x[i] + ctx->c[i]));
@@ -111,7 +111,7 @@ void Rabbit::SetIV(const byte* iv)
 {
     /* Temporary variables */
     word32 i0, i1, i2, i3, i;
-      
+
     /* Generate four subvectors */
     i0 = LITTLE32(*(word32*)(iv+0));
     i2 = LITTLE32(*(word32*)(iv+4));
@@ -189,7 +189,7 @@ void Rabbit::SetKey(const byte* key, const byte* iv)
     }
     workCtx_.carry = masterCtx_.carry;
 
-    if (iv) SetIV(iv);    
+    if (iv) SetIV(iv);
 }
 
 
@@ -238,11 +238,11 @@ void Rabbit::Process(byte* output, const byte* input, word32 msglen)
         /* Generate 16 bytes of pseudo-random data */
         tmp[0] = LITTLE32(workCtx_.x[0] ^
                   (workCtx_.x[5]>>16) ^ U32V(workCtx_.x[3]<<16));
-        tmp[1] = LITTLE32(workCtx_.x[2] ^ 
+        tmp[1] = LITTLE32(workCtx_.x[2] ^
                   (workCtx_.x[7]>>16) ^ U32V(workCtx_.x[5]<<16));
-        tmp[2] = LITTLE32(workCtx_.x[4] ^ 
+        tmp[2] = LITTLE32(workCtx_.x[4] ^
                   (workCtx_.x[1]>>16) ^ U32V(workCtx_.x[7]<<16));
-        tmp[3] = LITTLE32(workCtx_.x[6] ^ 
+        tmp[3] = LITTLE32(workCtx_.x[6] ^
                   (workCtx_.x[3]>>16) ^ U32V(workCtx_.x[1]<<16));
 
         /* Encrypt/decrypt the data */

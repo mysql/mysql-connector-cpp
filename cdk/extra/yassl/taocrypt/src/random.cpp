@@ -107,7 +107,7 @@ OS_Seed::OS_Seed()
 }
 
 
-OS_Seed::~OS_Seed() 
+OS_Seed::~OS_Seed()
 {
     close(fd_);
 }

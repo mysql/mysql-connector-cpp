@@ -27,7 +27,7 @@
 #endif
 
 #if defined(_M_X64) || defined(_M_IA64)
-    #include <intrin.h> 
+    #include <intrin.h>
 #pragma intrinsic(_umul128)
 #endif
 
@@ -359,7 +359,7 @@ S DivideThreeWordsByTwo(S* A, S B0, S B1, D* dummy_VC6_WorkAround = 0)
     D p = D::Multiply(B0, Q);
     D u = (D) A[0] - p.GetLowHalf();
     A[0] = u.GetLowHalf();
-    u = (D) A[1] - p.GetHighHalf() - u.GetHighHalfAsBorrow() - 
+    u = (D) A[1] - p.GetHighHalf() - u.GetHighHalfAsBorrow() -
             D::Multiply(B1, Q);
     A[1] = u.GetLowHalf();
     A[2] += u.GetHighHalf();
@@ -389,7 +389,7 @@ inline D DivideFourWordsByTwo(S *T, const D &Al, const D &Ah, const D &B)
     {
         S Q[2];
         T[0] = Al.GetLowHalf();
-        T[1] = Al.GetHighHalf(); 
+        T[1] = Al.GetHighHalf();
         T[2] = Ah.GetLowHalf();
         T[3] = Ah.GetHighHalf();
         Q[1] = DivideThreeWordsByTwo<S, D>(T+1, B.GetLowHalf(),
@@ -1083,7 +1083,7 @@ static PMul s_pMul4, s_pMul8, s_pMul8B;
 static void SetPentiumFunctionPointers()
 {
     if (!IsPentium())
-    {   
+    {
         s_pAdd = &Portable::Add;
         s_pSub = &Portable::Subtract;
     }
@@ -1099,7 +1099,7 @@ static void SetPentiumFunctionPointers()
     }
 
 #ifdef SSE2_INTRINSICS_AVAILABLE
-    if (!IsPentium()) 
+    if (!IsPentium())
     {
         s_pMul4 = &Portable::Multiply4;
         s_pMul8 = &Portable::Multiply8;
@@ -1406,7 +1406,7 @@ TAOCRYPT_NAKED word P4Optimized::Subtract(word *C, const word *A,
 #define MulStartup \
     AS2(xor ebp, ebp) \
     AS2(xor edi, edi) \
-    AS2(xor ebx, ebx) 
+    AS2(xor ebx, ebx)
 
 #define MulShiftCarry \
     AS2(mov ebp, edx) \
@@ -2160,7 +2160,7 @@ void RecursiveMultiply(word *R, word *T, const word *A, const word *B,
 }
 
 
-void RecursiveSquare(word *R, word *T, const word *A, unsigned int N)                     
+void RecursiveSquare(word *R, word *T, const word *A, unsigned int N)
 {
     if (LowLevel::SquareRecursionLimit() >= 4 && N==4)
         LowLevel::Square4(R, A);
@@ -2581,7 +2581,7 @@ void Integer::Decode(Source& source)
         source.prev();
 
     if (source.IsLeft(length) == false) return;
- 
+
     unsigned int words = (length + WORD_SIZE - 1) / WORD_SIZE;
     words = RoundupSize(words);
     if (words > reg_.size()) reg_.CleanNew(words);
@@ -2596,7 +2596,7 @@ void Integer::Decode(Source& source)
 void Integer::Decode(const byte* input, unsigned int inputLen, Signedness s)
 {
     unsigned int idx(0);
-    byte b = 0; 
+    byte b = 0;
     if (inputLen>0)
         b = input[idx];   // peek
     sign_  = ((s==SIGNED) && (b & 0x80)) ? NEGATIVE : POSITIVE;
@@ -3174,7 +3174,7 @@ static inline void AtomicDivide(word *Q, const word *A, const word *B)
 #ifndef NDEBUG
     if (B[0] || B[1])
     {
-        // multiply quotient and divisor and add remainder, make sure it 
+        // multiply quotient and divisor and add remainder, make sure it
         // equals dividend
         word P[4];
         Portable::Multiply2(P, Q, B);
@@ -3558,7 +3558,7 @@ const Integer& ModularArithmetic::Half(const Integer &a) const
 
 const Integer& ModularArithmetic::Add(const Integer &a, const Integer &b) const
 {
-    if (a.reg_.size()==modulus.reg_.size() && 
+    if (a.reg_.size()==modulus.reg_.size() &&
         b.reg_.size()==modulus.reg_.size())
     {
         if (TaoCrypt::Add(result.reg_.begin(), a.reg_.begin(), b.reg_.begin(),
@@ -3582,7 +3582,7 @@ const Integer& ModularArithmetic::Add(const Integer &a, const Integer &b) const
 
 Integer& ModularArithmetic::Accumulate(Integer &a, const Integer &b) const
 {
-    if (a.reg_.size()==modulus.reg_.size() && 
+    if (a.reg_.size()==modulus.reg_.size() &&
         b.reg_.size()==modulus.reg_.size())
     {
         if (TaoCrypt::Add(a.reg_.get_buffer(), a.reg_.get_buffer(),
@@ -3607,7 +3607,7 @@ Integer& ModularArithmetic::Accumulate(Integer &a, const Integer &b) const
 const Integer& ModularArithmetic::Subtract(const Integer &a,
                                            const Integer &b) const
 {
-    if (a.reg_.size()==modulus.reg_.size() && 
+    if (a.reg_.size()==modulus.reg_.size() &&
         b.reg_.size()==modulus.reg_.size())
     {
         if (TaoCrypt::Subtract(result.reg_.begin(), a.reg_.begin(),
@@ -3627,7 +3627,7 @@ const Integer& ModularArithmetic::Subtract(const Integer &a,
 
 Integer& ModularArithmetic::Reduce(Integer &a, const Integer &b) const
 {
-    if (a.reg_.size()==modulus.reg_.size() && 
+    if (a.reg_.size()==modulus.reg_.size() &&
         b.reg_.size()==modulus.reg_.size())
     {
         if (TaoCrypt::Subtract(a.reg_.get_buffer(), a.reg_.get_buffer(),

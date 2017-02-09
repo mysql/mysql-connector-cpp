@@ -2,7 +2,7 @@
 
 yaSSL takes a different approach to certificate verification than OpenSSL does.
 The default policy for the client is to verify the server, this means that if
-you don't load CAs to verify the server you'll get a connect error, unable to 
+you don't load CAs to verify the server you'll get a connect error, unable to
 verify.  It you want to mimic OpenSSL behavior of not verifying the server and
 reducing security you can do this by calling:
 
@@ -11,6 +11,66 @@ SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, 0);
 before calling SSL_new();
 
 *** end Note ***
+
+yaSSL Release notes, version 2.4.2 (9/22/2016)
+    This release of yaSSL fixes a medium security vulnerability. A fix for
+    potential AES side channel leaks is included that a local user monitoring
+    the same CPU core cache could exploit.  VM users, hyper-threading users,
+    and users where potential attackers have access to the CPU cache will need
+    to update if they utilize AES.
+
+    DSA padding fixes for unusual sizes is included as well.  Users with DSA
+    certficiates should update.
+
+yaSSL Release notes, version 2.4.0 (5/20/2016)
+    This release of yaSSL fixes the OpenSSL compatibility function
+    SSL_CTX_load_verify_locations() when using the path directory to allow
+    unlimited path sizes.  Minor Windows build fixes are included.
+    No high level security fixes in this version but we always recommend
+    updating.
+
+
+yaSSL Release notes, version 2.3.9b (2/03/2016)
+    This release of yaSSL fixes the OpenSSL compatibility function
+    X509_NAME_get_index_by_NID() to use the actual index of the common name
+    instead of searching on the format prefix.  Thanks for the report from
+    yashwant.sahu@oracle.com  .  Anyone using this function should update.
+
+yaSSL Release notes, version 2.3.9 (12/01/2015)
+    This release of yaSSL fixes two client side Diffie-Hellman problems.
+    yaSSL was only handling the cases of zero or one leading zeros for the key
+    agreement instead of potentially any number.  This caused about 1 in 50,000
+    connections to fail when using DHE cipher suites.  The second problem was
+    the case where a server would send a public value shorter than the prime
+    value, causing about 1 in 128 client connections to fail, and also
+    caused the yaSSL client to read off the end of memory.  All client side
+    DHE cipher suite users should update.
+    Thanks to Adam Langely (agl@imperialviolet.org) for the detailed report!
+
+yaSSL Release notes, version 2.3.8 (9/17/2015)
+    This release of yaSSL fixes a high security vulnerability.  All users
+    SHOULD update.  If using yaSSL for TLS on the server side with private
+    RSA keys allowing ephemeral key exchange you MUST update and regenerate
+    the RSA private keys.  This report is detailed in:
+    https://people.redhat.com/~fweimer/rsa-crt-leaks.pdf
+    yaSSL now detects RSA signature faults and returns an error.
+
+yaSSL Patch notes, version 2.3.7e (6/26/2015)
+    This release of yaSSL includes a fix for Date less than comparison.
+    Previously yaSSL would return true on less than comparisons if the Dates
+    were equal. Reported by Oracle. No security problem, but if a cert was
+    generated right now, a server started using it in the same second, and a
+    client tried to verify it in the same second it would report not yet valid.
+
+yaSSL Patch notes, version 2.3.7d (6/22/2015)
+    This release of yaSSL includes a fix for input_buffer set_current with
+    index 0.  SSL_peek() at front of waiting data could trigger.  Robert
+    Golebiowski of Oracle identified and suggested a fix, thanks!
+
+yaSSL Patch notes, version 2.3.7c (6/12/2015)
+    This release of yaSSL does certificate DATE comparisons to the second
+    instead of to the minute, helpful when using freshly generated certs.
+    Though keep in mind that time sync differences could still show up.
 
 yaSSL Patch notes, version 2.3.7b (3/18/2015)
     This release of yaSSL fixes a potential crash with corrupted private keys.
@@ -24,7 +84,7 @@ yaSSL Release notes, version 2.3.6 (11/25/2014)
 
     This release of yaSSL fixes some valgrind warnings/errors including
     uninitialized reads and off by one index errors induced from fuzzing
-    the handshake.  These were reported by Oracle. 
+    the handshake.  These were reported by Oracle.
 
 yaSSL Release notes, version 2.3.5 (9/29/2014)
 
@@ -113,7 +173,7 @@ See libcurl build instructions below under 1.3.0 and note in 1.5.8.
 
     This release of yaSSL contains bug fixes, the removal of assert() s and
     a security patch for a buffer overflow possibility in certificate name
-    processing. 
+    processing.
 
 See normal  build instructions below under 1.0.6.
 See libcurl build instructions below under 1.3.0 and note in 1.5.8.
@@ -141,7 +201,7 @@ See libcurl build instructions below under 1.3.0 and note in 1.5.8.
 *****************yaSSL Release notes, version 1.9.2 (9/24/08)
 
     This release of yaSSL contains bug fixes and improved certificate verify
-    callback support. 
+    callback support.
 
 See normal  build instructions below under 1.0.6.
 See libcurl build instructions below under 1.3.0 and note in 1.5.8.
@@ -149,7 +209,7 @@ See libcurl build instructions below under 1.3.0 and note in 1.5.8.
 
 *****************yaSSL Release notes, version 1.8.8 (5/7/08)
 
-    This release of yaSSL contains bug fixes, and better socket handling. 
+    This release of yaSSL contains bug fixes, and better socket handling.
 
 See normal  build instructions below under 1.0.6.
 See libcurl build instructions below under 1.3.0 and note in 1.5.8.
@@ -159,7 +219,7 @@ See libcurl build instructions below under 1.3.0 and note in 1.5.8.
 
     This release of yaSSL contains bug fixes, and fixes security problems
     associated with using SSL 2.0 client hellos and improper input handling.
-    Please upgrade to this version if you are using a previous one. 
+    Please upgrade to this version if you are using a previous one.
 
 See normal  build instructions below under 1.0.6.
 See libcurl build instructions below under 1.3.0 and note in 1.5.8.
@@ -168,7 +228,7 @@ See libcurl build instructions below under 1.3.0 and note in 1.5.8.
 *****************yaSSL Release notes, version 1.7.5 (10/15/07)
 
     This release of yaSSL contains bug fixes, adds MSVC 2005 project support,
-    GCC 4.2 support, IPV6 support and test, and new test certificates. 
+    GCC 4.2 support, IPV6 support and test, and new test certificates.
 
 See normal  build instructions below under 1.0.6.
 See libcurl build instructions below under 1.3.0 and note in 1.5.8.
@@ -177,7 +237,7 @@ See libcurl build instructions below under 1.3.0 and note in 1.5.8.
 *****************yaSSL Release notes, version 1.7.2 (8/20/07)
 
     This release of yaSSL contains bug fixes and adds initial OpenVPN support.
-    Just configure at this point and beginning of build. 
+    Just configure at this point and beginning of build.
 
 See normal  build instructions below under 1.0.6.
 See libcurl build instructions below under 1.3.0 and note in 1.5.8.
@@ -208,8 +268,8 @@ See libcurl build instructions below under 1.3.0 and note in 1.5.8.
 
 
     Since yaSSL now supports zlib, as does libcurl, the libcurl build test can
-    fail if yaSSL is built with zlib support since the zlib library isn't 
-    passed.  You can do two things to fix this: 
+    fail if yaSSL is built with zlib support since the zlib library isn't
+    passed.  You can do two things to fix this:
 
         1) build yaSSL w/o zlib --without-zlib
         2) or add flags to curl configure LDFLAGS="-lm -lz"
@@ -223,7 +283,7 @@ See libcurl build instructions below under 1.3.0 and note in 1.5.8.
 
         SSL_METHOD *TLSv1_1_server_method(void);
         SSL_METHOD *TLSv1_1_client_method(void);
-    
+
     or the SSLv23 versions (even though yaSSL doesn't support SSL 2.0 the v23
     means to pick the highest of SSL 3.0, TLS 1.0, or TLS 1.1).
 
@@ -260,7 +320,7 @@ See libcurl build instructions below under 1.3.0.
         2) follow the instructions in zlib from projects/visualc6/README.txt
            for how to add the zlib project into the yaSSL workspace noting that
            you'll need to add configuration support for "Win32 Debug" and
-           "Win32 Release" in note 3 under "To use:". 
+           "Win32 Release" in note 3 under "To use:".
         3) define HAVE_LIBZ when building yaSSL
 
 
@@ -272,7 +332,7 @@ See libcurl build instructions below under 1.3.0.
 
 
     This release of yaSSL contains bug fixes, portability enhancements,
-    nonblocking connect and accept, better OpenSSL error mapping, and 
+    nonblocking connect and accept, better OpenSSL error mapping, and
     certificate caching for session resumption.
 
 See normal  build instructions below under 1.0.6.
@@ -283,7 +343,7 @@ See libcurl build instructions below under 1.3.0.
 
 
     This release of yaSSL contains bug fixes, portability enhancements,
-    and libcurl 7.15.4 support (any newer versions may not build). 
+    and libcurl 7.15.4 support (any newer versions may not build).
 
 See normal  build instructions below under 1.0.6.
 See libcurl build instructions below under 1.3.0.
@@ -325,12 +385,12 @@ See normal build instructions below under 1.0.6.
 
 --To build for libcurl on Win32:
 
-    Simply add the yaSSL project as a dependency to libcurl, add 
+    Simply add the yaSSL project as a dependency to libcurl, add
     yaSSL-Home\include and yaSSL-Home\include\openssl to the include list, and
     define USE_SSLEAY and USE_OPENSSL
 
     please email todd@yassl.com if you have any questions.
-    
+
 
 *******************yaSSL Release notes, version 1.2.2 (03/27/06)
 
@@ -523,8 +583,8 @@ Please see build instructions in release notes 0.3.0.
 ******************yaSSL Release notes, version 0.4.0
 
 This release of yaSSL contains minor bug fixes, an optional memory tracker,
-an echo client and server with input/output redirection for load testing, 
-and initial session caching support. 
+an echo client and server with input/output redirection for load testing,
+and initial session caching support.
 
 
 Please see build instructions in release notes 0.3.0.
@@ -572,7 +632,7 @@ See the notes at the bottom of this page for build instructions.
 *******************yaSSL Release notes, version 0.2.0
 
 This release of yaSSL contains minor bug fixes and initial alternate crypto
-functionality. 
+functionality.
 
 *** Complete Build ***
 
@@ -588,7 +648,7 @@ gzip -cd yassl-update-0.2.0.tar.gz | tar xvf -
 
 to update the previous release.
 
-Then issue the make command on linux or rebuild the yaSSL project on Windows. 
+Then issue the make command on linux or rebuild the yaSSL project on Windows.
 
 *******************yaSSL Release notes, version 0.1.0
 
@@ -648,7 +708,7 @@ Building yassl on linux:
 
 use the ./buildall script to build everything.
 
-buildall will configure and build CML, CryptoPP, and yassl.  Testing was 
+buildall will configure and build CML, CryptoPP, and yassl.  Testing was
 preformed with gcc version 3.3.2 on kernel 2.4.22.
 
 

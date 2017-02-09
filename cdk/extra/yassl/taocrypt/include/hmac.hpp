@@ -34,11 +34,11 @@ class HMAC {
 public:
     enum { IPAD = 0x36, OPAD = 0x5C };
 
-    HMAC() : ipad_(reinterpret_cast<byte*>(&ip_)), 
+    HMAC() : ipad_(reinterpret_cast<byte*>(&ip_)),
              opad_(reinterpret_cast<byte*>(&op_)),
-             innerHash_(reinterpret_cast<byte*>(&innerH_)) 
-    { 
-        Init(); 
+             innerHash_(reinterpret_cast<byte*>(&innerH_))
+    {
+        Init();
     }
     void Update(const byte*, word32);
     void Final(byte*);

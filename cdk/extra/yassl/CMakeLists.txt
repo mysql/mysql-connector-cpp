@@ -17,10 +17,9 @@ INCLUDE(install_macros)
 INCLUDE(msvc)
 
 INCLUDE_DIRECTORIES(
- ${CMAKE_BINARY_DIR}/include
- ${CMAKE_CURRENT_SOURCE_DIR}/include
- ${CMAKE_CURRENT_SOURCE_DIR}/taocrypt/include
- ${CMAKE_CURRENT_SOURCE_DIR}/taocrypt/mySTL)
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/taocrypt/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/taocrypt/mySTL)
 
 ADD_DEFINITIONS(${SSL_DEFINES})
 
@@ -49,8 +48,8 @@ CHECK_TYPE_SIZE("long long" SIZEOF_LONG_LONG)
 ADD_DEFINITIONS(-DSIZEOF_LONG=${SIZEOF_LONG} -DSIZEOF_LONG_LONG=${SIZEOF_LONG_LONG})
 
 SET(YASSL_SOURCES  src/buffer.cpp src/cert_wrapper.cpp src/crypto_wrapper.cpp src/handshake.cpp src/lock.cpp
-				src/log.cpp src/socket_wrapper.cpp src/ssl.cpp src/timer.cpp src/yassl_error.cpp
-				src/yassl_imp.cpp src/yassl_int.cpp)
+        src/log.cpp src/socket_wrapper.cpp src/ssl.cpp src/timer.cpp src/yassl_error.cpp
+        src/yassl_imp.cpp src/yassl_int.cpp)
 
 ADD_LIBRARY(yassl STATIC ${YASSL_SOURCES})
 #RESTRICT_SYMBOL_EXPORTS(yassl)

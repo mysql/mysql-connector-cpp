@@ -82,7 +82,7 @@ void ARC4::Process(byte* out, const byte* in, word32 length)
     if (isMMX) {
         AsmProcess(out, in, length);
         return;
-    } 
+    }
 #endif
 
     byte *const s = state_;
@@ -124,8 +124,8 @@ void ARC4::AsmProcess(byte* out, const byte* in, word32 length)
     #define EPILOG()  \
         "pop ebp;" \
         "pop ebx;" \
-       	"emms;" \
-       	".att_syntax;" \
+        "emms;" \
+        ".att_syntax;" \
             : \
             : "c" (this), "D" (out), "S" (in), "a" (length) \
             : "%edx", "memory", "cc" \
@@ -155,12 +155,12 @@ void ARC4::AsmProcess(byte* out, const byte* in, word32 length)
         AS1(    pop   ebp                       )   \
         AS1(    emms                            )   \
         AS1(    ret 12                          )
-        
+
 #endif
 
     PROLOG()
 
-    AS2(    sub    esp, 4                   )   // make room 
+    AS2(    sub    esp, 4                   )   // make room
 
     AS2(    cmp    ebp, 0                   )
     AS1(    jz     nothing                  )
@@ -179,7 +179,7 @@ void ARC4::AsmProcess(byte* out, const byte* in, word32 length)
 #ifdef _MSC_VER
     AS1( loopStart: )  // loopStart
 #else
-    AS1( 0: )          // loopStart for some gas (need numeric for jump back 
+    AS1( 0: )          // loopStart for some gas (need numeric for jump back
 #endif
 
     // y = (y+a) & 0xff;
@@ -202,7 +202,7 @@ void ARC4::AsmProcess(byte* out, const byte* in, word32 length)
     //return s[(a+b) & 0xff];
     AS2(    add    eax, ebx                     )
     AS2(    and    eax, 255                     )
-    
+
     AS2(    movzx  ebx, BYTE PTR [ebp + eax]    )
 
     // a = s[x];   for next round
@@ -231,7 +231,7 @@ void ARC4::AsmProcess(byte* out, const byte* in, word32 length)
 
 AS1( nothing:                           )
 
-    // inline adjust 
+    // inline adjust
     AS2(    add   esp, 4               )   // fix room on stack
 
     EPILOG()

@@ -35,8 +35,8 @@ namespace yaSSL {
 
 
 /* may bring back in future
-Error::Error(const char* s, YasslError e, Library l) 
-    : mySTL::runtime_error(s), error_(e), lib_(l) 
+Error::Error(const char* s, YasslError e, Library l)
+    : mySTL::runtime_error(s), error_(e), lib_(l)
 {
 }
 
@@ -59,66 +59,66 @@ void SetErrorString(YasslError error, char* buffer)
 {
     using namespace TaoCrypt;
     const int max = MAX_ERROR_SZ;  // shorthand
-    int localError = error;        // errors from a few enums 
+    int localError = error;        // errors from a few enums
 
     switch (localError) {
 
         // yaSSL proper errors
     case range_error :
         strncpy(buffer, "buffer index error, out of range", max);
-        break; 
+        break;
 
     case realloc_error :
         strncpy(buffer, "trying to realloc a fixed buffer", max);
-        break; 
+        break;
 
-    case factory_error : 
+    case factory_error :
         strncpy(buffer, "unknown factory create request", max);
-        break; 
+        break;
 
     case unknown_cipher :
         strncpy(buffer, "trying to use an unknown cipher", max);
-        break; 
+        break;
 
-    case prefix_error : 
+    case prefix_error :
         strncpy(buffer, "bad master secret derivation, prefix too big", max);
-        break; 
+        break;
 
-    case record_layer : 
+    case record_layer :
         strncpy(buffer, "record layer not ready yet", max);
-        break; 
-        
+        break;
+
     case handshake_layer :
         strncpy(buffer, "handshake layer not ready yet", max);
-        break; 
+        break;
 
     case out_of_order :
         strncpy(buffer, "handshake message received in wrong order", max);
-        break; 
+        break;
 
-    case bad_input : 
+    case bad_input :
         strncpy(buffer, "bad cipher suite input", max);
-        break; 
+        break;
 
     case match_error :
         strncpy(buffer, "unable to match a supported cipher suite", max);
-        break; 
+        break;
 
-    case no_key_file : 
+    case no_key_file :
         strncpy(buffer, "the server needs a private key file", max);
-        break; 
+        break;
 
     case verify_error :
         strncpy(buffer, "unable to verify peer checksum", max);
-        break; 
+        break;
 
     case send_error :
         strncpy(buffer, "socket layer send error", max);
-        break; 
+        break;
 
     case receive_error :
         strncpy(buffer, "socket layer receive error", max);
-        break; 
+        break;
 
     case certificate_error :
         strncpy(buffer, "unable to proccess cerificate", max);
@@ -146,6 +146,10 @@ void SetErrorString(YasslError error, char* buffer)
 
     case sanityCipher_error :
         strncpy(buffer, "sanity check on cipher text size error", max);
+        break;
+
+    case rsaSignFault_error:
+        strncpy(buffer, "rsa signature fault error", max);
         break;
 
         // openssl errors

@@ -37,7 +37,7 @@ namespace yaSSL {
     {
         static bool          init(false);
         static LARGE_INTEGER freq;
-    
+
         if (!init) {
             QueryPerformanceFrequency(&freq);
             init = true;
@@ -62,7 +62,7 @@ namespace yaSSL {
         struct timeval tv;
         gettimeofday(&tv, 0);
 
-        return static_cast<double>(tv.tv_sec) 
+        return static_cast<double>(tv.tv_sec)
              + static_cast<double>(tv.tv_usec) / 1000000;
     }
 
@@ -72,7 +72,7 @@ namespace yaSSL {
         struct timeval tv;
         gettimeofday(&tv, 0);
 
-        return tv.tv_sec; 
+        return tv.tv_sec;
     }
 
 

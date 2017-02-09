@@ -125,7 +125,7 @@ public:
 template<typename T, class A = AllocatorWithCleanup<T> >
 class Block {
 public:
-    explicit Block(word32 s = 0) : sz_(s), buffer_(allocator_.allocate(sz_)) 
+    explicit Block(word32 s = 0) : sz_(s), buffer_(allocator_.allocate(sz_))
                     { CleanNew(sz_); }
 
     Block(const T* buff, word32 s) : sz_(s), buffer_(allocator_.allocate(sz_))

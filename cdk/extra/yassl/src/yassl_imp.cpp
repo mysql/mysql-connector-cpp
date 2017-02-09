@@ -47,8 +47,8 @@ bool isTLS(ProtocolVersion pv)
 void hashHandShake(SSL&, const input_buffer&, uint);
 
 
-ProtocolVersion::ProtocolVersion(uint8 maj, uint8 min) 
-    : major_(maj), minor_(min) 
+ProtocolVersion::ProtocolVersion(uint8 maj, uint8 min)
+    : major_(maj), minor_(min)
 {}
 
 
@@ -109,15 +109,12 @@ void ClientDiffieHellmanPublic::build(SSL& ssl)
     uint keyLength = dhClient.get_agreedKeyLength(); // pub and agree same
 
     alloc(keyLength, true);
-    dhClient.makeAgreement(dhServer.get_publicKey(), keyLength);
+    dhClient.makeAgreement(dhServer.get_publicKey(),
+                           dhServer.get_publicKeyLength());
     c16toa(keyLength, Yc_);
     memcpy(Yc_ + KEY_OFFSET, dhClient.get_publicKey(), keyLength);
 
-    // because of encoding first byte might be zero, don't use it for preMaster
-    if (*dhClient.get_agreedKey() == 0) 
-        ssl.set_preMaster(dhClient.get_agreedKey() + 1, keyLength - 1);
-    else
-        ssl.set_preMaster(dhClient.get_agreedKey(), keyLength);
+    ssl.set_preMaster(dhClient.get_agreedKey(), keyLength);
 }
 
 
@@ -134,7 +131,7 @@ void DH_Server::build(SSL& ssl)
     short sigSz = 0;
     mySTL::auto_ptr<Auth> auth;
     const CertManager& cert = ssl.getCrypto().get_certManager();
-    
+
     if (ssl.getSecurity().get_parms().sig_algo_ == rsa_sa_algo) {
         if (cert.get_keyType() != rsa_sa_algo) {
             ssl.SetError(privateKey_error);
@@ -152,7 +149,7 @@ void DH_Server::build(SSL& ssl)
                    cert.get_privateKeyLength(), false));
         sigSz += DSS_ENCODED_EXTRA;
     }
-    
+
     sigSz += auth->get_signatureLength();
     if (!sigSz) {
         ssl.SetError(privateKey_error);
@@ -196,9 +193,16 @@ void DH_Server::build(SSL& ssl)
     sha.update(tmp.get_buffer(), tmp.get_size());
     sha.get_digest(&hash[MD5_LEN]);
 
-    if (ssl.getSecurity().get_parms().sig_algo_ == rsa_sa_algo)
+    if (ssl.getSecurity().get_parms().sig_algo_ == rsa_sa_algo) {
         auth->sign(signature_, hash, sizeof(hash),
                    ssl.getCrypto().get_random());
+        // check for rsa signautre fault
+        if (!auth->verify(hash, sizeof(hash), signature_,
+                                              auth->get_signatureLength())) {
+            ssl.SetError(rsaSignFault_error);
+            return;
+        }
+    }
     else {
         auth->sign(signature_, &hash[MD5_LEN], SHA_LEN,
                    ssl.getCrypto().get_random());
@@ -243,7 +247,7 @@ void EncryptedPreMasterSecret::read(SSL& ssl, input_buffer& input)
 
     opaque preMasterSecret[SECRET_LEN];
     memset(preMasterSecret, 0, sizeof(preMasterSecret));
-    rsa.decrypt(preMasterSecret, secret_, length_, 
+    rsa.decrypt(preMasterSecret, secret_, length_,
                 ssl.getCrypto().get_random());
 
     ProtocolVersion pv = ssl.getSecurity().get_connection().chVersion_;
@@ -312,13 +316,9 @@ void ClientDiffieHellmanPublic::read(SSL& ssl, input_buffer& input)
         ssl.SetError(bad_input);
         return;
     }
-    dh.makeAgreement(Yc_, keyLength); 
+    dh.makeAgreement(Yc_, keyLength);
 
-    // because of encoding, first byte might be 0, don't use for preMaster 
-    if (*dh.get_agreedKey() == 0) 
-        ssl.set_preMaster(dh.get_agreedKey() + 1, dh.get_agreedKeyLength() - 1);
-    else
-        ssl.set_preMaster(dh.get_agreedKey(), dh.get_agreedKeyLength());
+    ssl.set_preMaster(dh.get_agreedKey(), dh.get_agreedKeyLength());
     ssl.makeMasterSecret();
 }
 
@@ -346,9 +346,9 @@ opaque* ClientDiffieHellmanPublic::get_clientKey() const
 }
 
 
-void ClientDiffieHellmanPublic::alloc(int sz, bool offset) 
+void ClientDiffieHellmanPublic::alloc(int sz, bool offset)
 {
-    length_ = sz + (offset ? KEY_OFFSET : 0); 
+    length_ = sz + (offset ? KEY_OFFSET : 0);
     Yc_ = NEW_YS opaque[length_];
 }
 
@@ -444,7 +444,7 @@ void DH_Server::read(SSL& ssl, input_buffer& input)
     sha.get_digest(&hash[MD5_LEN]);
 
     const CertManager& cert = ssl.getCrypto().get_certManager();
-    
+
     if (ssl.getSecurity().get_parms().sig_algo_ == rsa_sa_algo) {
         RSA rsa(cert.get_peerKey(), cert.get_peerKeyLength());
         if (!rsa.verify(hash, sizeof(hash), signature_, length))
@@ -453,7 +453,7 @@ void DH_Server::read(SSL& ssl, input_buffer& input)
     else {
         byte decodedSig[DSS_SIG_SZ];
         length = TaoCrypt::DecodeDSA_Signature(decodedSig, signature_, length);
-        
+
         DSS dss(cert.get_peerKey(), cert.get_peerKeyLength());
         if (!dss.verify(&hash[MD5_LEN], SHA_LEN, decodedSig, length))
             ssl.SetError(verify_error);
@@ -492,7 +492,7 @@ opaque* DH_Server::get_serverKey() const
 
 
 // set available suites
-Parameters::Parameters(ConnectionEnd ce, const Ciphers& ciphers, 
+Parameters::Parameters(ConnectionEnd ce, const Ciphers& ciphers,
                        ProtocolVersion pv, bool haveDH) : entity_(ce)
 {
     pending_ = true;	// suite not set yet
@@ -505,7 +505,7 @@ Parameters::Parameters(ConnectionEnd ce, const Ciphers& ciphers,
         memcpy(suites_, ciphers.suites_, ciphers.suiteSz_);
         SetCipherNames();
     }
-    else 
+    else
         SetSuites(pv, ce == server_end && removeDH_);  // defaults
 
 }
@@ -576,7 +576,7 @@ void Parameters::SetSuites(ProtocolVersion pv, bool removeDH, bool removeRSA,
 
     if (!removeRSA) {
         suites_[i++] = 0x00;
-        suites_[i++] = SSL_RSA_WITH_RC4_128_SHA;  
+        suites_[i++] = SSL_RSA_WITH_RC4_128_SHA;
         suites_[i++] = 0x00;
         suites_[i++] = SSL_RSA_WITH_RC4_128_MD5;
 
@@ -647,7 +647,7 @@ output_buffer& operator<<(output_buffer& output, const RecordLayerHeader& hdr)
     output[AUTO] = hdr.type_;
     output[AUTO] = hdr.version_.major_;
     output[AUTO] = hdr.version_.minor_;
-    
+
     // length
     byte tmp[2];
     c16toa(hdr.length_, tmp);
@@ -679,7 +679,7 @@ input_buffer& operator>>(input_buffer& input, HandShakeHeader& hs)
     hs.length_[0] = input[AUTO];
     hs.length_[1] = input[AUTO];
     hs.length_[2] = input[AUTO];
-    
+
     return input;
 }
 
@@ -789,14 +789,14 @@ input_buffer& HandShakeBase::set(input_buffer& in)
     return in;
 }
 
- 
+
 output_buffer& HandShakeBase::get(output_buffer& out) const
 {
     return out;
 }
 
 
-void HandShakeBase::Process(input_buffer&, SSL&) 
+void HandShakeBase::Process(input_buffer&, SSL&)
 {}
 
 
@@ -826,7 +826,7 @@ HandShakeType HelloRequest::get_type() const
 input_buffer& operator>>(input_buffer& input, ChangeCipherSpec& cs)
 {
     cs.type_ = CipherChoice(input[AUTO]);
-    return input; 
+    return input;
 }
 
 // output operator for CipherSpec
@@ -837,7 +837,7 @@ output_buffer& operator<<(output_buffer& output, const ChangeCipherSpec& cs)
 }
 
 
-ChangeCipherSpec::ChangeCipherSpec() 
+ChangeCipherSpec::ChangeCipherSpec()
     : type_(change_cipher_spec_choice)
 {}
 
@@ -924,7 +924,7 @@ input_buffer& operator>>(input_buffer& input, Alert& a)
 {
     a.level_ = AlertLevel(input[AUTO]);
     a.description_ = AlertDescription(input[AUTO]);
- 
+
     return input;
 }
 
@@ -969,7 +969,7 @@ void Alert::Process(input_buffer& input, SSL& ssl)
                 ivExtra = ssl.getCrypto().get_cipher().get_blockSize();
             int padSz = ssl.getSecurity().get_parms().encrypt_size_ - ivExtra -
                         aSz - digestSz;
-            for (int i = 0; i < padSz; i++) 
+            for (int i = 0; i < padSz; i++)
                 fill = input[AUTO];
         }
 
@@ -1052,7 +1052,7 @@ output_buffer& operator<<(output_buffer& output, const Data& data)
 }
 
 
-// check all bytes for equality 
+// check all bytes for equality
 static int constant_compare(const byte* a, const byte* b, int len)
 {
     int good = 0;
@@ -1095,7 +1095,7 @@ static int pad_check(const byte* input, byte pad, int len)
 // get number of compression rounds
 static inline int get_rounds(int pLen, int padLen, int t)
 {
-    int  roundL1 = 1;  // round ups 
+    int  roundL1 = 1;  // round ups
     int  roundL2 = 1;
 
     int L1 = COMPRESS_CONSTANT + pLen - t;
@@ -1126,7 +1126,7 @@ static inline void compress_rounds(SSL& ssl, int rounds, const byte* dummy)
         Digest* digest = NULL;
 
         MACAlgorithm ma = ssl.getSecurity().get_parms().mac_algorithm_;
-        if (ma == sha) 
+        if (ma == sha)
             digest = NEW_YS SHA;
         else if (ma == md5)
             digest = NEW_YS MD5;
@@ -1138,7 +1138,7 @@ static inline void compress_rounds(SSL& ssl, int rounds, const byte* dummy)
         for (int i = 0; i < rounds; i++)
             digest->update(dummy, COMPRESS_LOWER);
 
-        ysDelete(digest);    
+        ysDelete(digest);
     }
 }
 
@@ -1217,16 +1217,16 @@ void Data::Process(input_buffer& input, SSL& ssl)
             }
         }
         else {   // SSLv3, some don't do this padding right
-            int sz3 = msgSz - digestSz - pad - 1; 
+            int sz3 = msgSz - digestSz - pad - 1;
             hmac(ssl, verify, rawData, sz3, application_data, true);
             if (constant_compare(verify, rawData + sz3, digestSz) != 0) {
                 ssl.SetError(verify_error);
                 return;
             }
-        } 
+        }
     }
     else {  // stream
-        int streamSz = msgSz - digestSz; 
+        int streamSz = msgSz - digestSz;
         if (ssl.isTLS())
             TLS_hmac(ssl, verify, rawData, streamSz, application_data, true);
         else
@@ -1286,7 +1286,7 @@ output_buffer& operator<<(output_buffer& output, const HandShakeBase& hs)
 }
 
 
-Certificate::Certificate(const x509* cert) : cert_(cert) 
+Certificate::Certificate(const x509* cert) : cert_(cert)
 {
     if (cert)
       set_length(cert_->get_length() + 2 * CERT_HEADER); // list and cert size
@@ -1339,7 +1339,7 @@ void Certificate::Process(input_buffer& input, SSL& ssl)
     }
 
     CertManager& cm = ssl.useCrypto().use_certManager();
-  
+
     uint32 list_sz;
     byte   tmp[3];
 
@@ -1356,7 +1356,7 @@ void Certificate::Process(input_buffer& input, SSL& ssl)
         ssl.SetError(YasslError(bad_input));
         return;
     }
-    
+
     while (list_sz) {
         // cert size
         uint32 cert_sz;
@@ -1369,7 +1369,7 @@ void Certificate::Process(input_buffer& input, SSL& ssl)
         tmp[1] = input[AUTO];
         tmp[2] = input[AUTO];
         c24to32(tmp, cert_sz);
-        
+
         if (cert_sz > (uint)MAX_RECORD_SIZE || input.get_remaining() < cert_sz){
             ssl.SetError(YasslError(bad_input));
             return;
@@ -1496,27 +1496,27 @@ opaque* ServerKeyBase::get_serverKey() const
 
 // input operator for ServerHello
 input_buffer& operator>>(input_buffer& input, ServerHello& hello)
-{ 
+{
     // Protocol
     hello.server_version_.major_ = input[AUTO];
     hello.server_version_.minor_ = input[AUTO];
-   
+
     // Random
     input.read(hello.random_, RAN_LEN);
-    
+
     // Session
     hello.id_len_ = input[AUTO];
     if (hello.id_len_ > ID_LEN) {
-        input.set_error(); 
+        input.set_error();
         return input;
     }
     if (hello.id_len_)
         input.read(hello.session_id_, hello.id_len_);
- 
+
     // Suites
     hello.cipher_suite_[0] = input[AUTO];
     hello.cipher_suite_[1] = input[AUTO];
-   
+
     // Compression
     hello.compression_method_ = CompressionMethod(input[AUTO]);
 
@@ -1711,7 +1711,7 @@ input_buffer& operator>>(input_buffer& input, ClientHello& hello)
     // Session
     hello.id_len_ = input[AUTO];
     if (hello.id_len_) input.read(hello.session_id_, ID_LEN);
-    
+
     // Suites
     byte   tmp[2];
     uint16 len;
@@ -1746,7 +1746,7 @@ input_buffer& operator>>(input_buffer& input, ClientHello& hello)
 
 // output operaotr for Client Hello
 output_buffer& operator<<(output_buffer& output, const ClientHello& hello)
-{ 
+{
     // Protocol
     output[AUTO] = hello.client_version_.major_;
     output[AUTO] = hello.client_version_.minor_;
@@ -1764,7 +1764,7 @@ output_buffer& operator<<(output_buffer& output, const ClientHello& hello)
     output[AUTO] = tmp[0];
     output[AUTO] = tmp[1];
     output.write(hello.cipher_suites_, hello.suite_len_);
-  
+
     // Compression
     output[AUTO] = hello.comp_len_;
     output[AUTO] = hello.compression_methods_;
@@ -1792,18 +1792,18 @@ void ClientHello::Process(input_buffer& input, SSL& ssl)
         if (ssl.isTLS() && client_version_.minor_ < 1) {
             // downgrade to SSLv3
             ssl.useSecurity().use_connection().TurnOffTLS();
-            
+
             ProtocolVersion pv = ssl.getSecurity().get_connection().version_;
             bool removeDH  = ssl.getSecurity().get_parms().removeDH_;
             bool removeRSA = false;
             bool removeDSA = false;
-            
+
             const CertManager& cm = ssl.getCrypto().get_certManager();
             if (cm.get_keyType() == rsa_sa_algo)
                 removeDSA = true;
             else
                 removeRSA = true;
-            
+
             // reset w/ SSL suites
             ssl.useSecurity().use_parms().SetSuites(pv, removeDH, removeRSA,
                                                     removeDSA);
@@ -1945,9 +1945,9 @@ ServerKeyExchange::~ServerKeyExchange()
 }
 
 
-void ServerKeyExchange::build(SSL& ssl) 
-{ 
-    server_key_->build(ssl); 
+void ServerKeyExchange::build(SSL& ssl)
+{
+    server_key_->build(ssl);
     set_length(server_key_->get_length());
 }
 
@@ -1982,7 +1982,7 @@ HandShakeType ServerKeyExchange::get_type() const
 }
 
 
-// CertificateRequest 
+// CertificateRequest
 CertificateRequest::CertificateRequest()
     : typeTotal_(0)
 {
@@ -2008,7 +2008,7 @@ void CertificateRequest::Build()
 
     uint16 authCount = 0;
     uint16 authSz = 0;
-  
+
     for (int j = 0; j < authCount; j++) {
         int sz = REQUEST_HEADER + MIN_DIS_SIZE;
         DistinguishedName dn;
@@ -2017,7 +2017,7 @@ void CertificateRequest::Build()
         opaque tmp[REQUEST_HEADER];
         c16toa(MIN_DIS_SIZE, tmp);
         memcpy(dn, tmp, sizeof(tmp));
-  
+
         // fill w/ junk for now
         memcpy(dn, tmp, MIN_DIS_SIZE);
         authSz += sz;
@@ -2063,7 +2063,7 @@ input_buffer& operator>>(input_buffer& input, CertificateRequest& request)
         tmp[0] = input[AUTO];
         tmp[1] = input[AUTO];
         ato16(tmp, dnSz);
-       
+
         input.set_current(input.get_current() + dnSz);
 
         sz -= dnSz + REQUEST_HEADER;
@@ -2128,7 +2128,7 @@ HandShakeType CertificateRequest::get_type() const
 }
 
 
-// CertificateVerify 
+// CertificateVerify
 CertificateVerify::CertificateVerify() : signature_(0)
 {}
 
@@ -2159,6 +2159,12 @@ void CertificateVerify::Build(SSL& ssl)
         memcpy(sig.get(), len, VERIFY_HEADER);
         rsa.sign(sig.get() + VERIFY_HEADER, hashes_.md5_, sizeof(Hashes),
                  ssl.getCrypto().get_random());
+        // check for rsa signautre fault
+        if (!rsa.verify(hashes_.md5_, sizeof(Hashes), sig.get() + VERIFY_HEADER,
+                                                      rsa.get_cipherLength())) {
+            ssl.SetError(rsaSignFault_error);
+            return;
+        }
     }
     else {  // DSA
         DSS dss(cert.get_privateKey(), cert.get_privateKeyLength(), false);
@@ -2246,7 +2252,7 @@ void CertificateVerify::Process(input_buffer& input, SSL& ssl)
     else { // DSA
         byte decodedSig[DSS_SIG_SZ];
         TaoCrypt::DecodeDSA_Signature(decodedSig, signature_, get_length());
-        
+
         DSS dss(cert.get_peerKey(), cert.get_peerKeyLength());
         if (!dss.verify(hashVerify.sha_, SHA_LEN, decodedSig, get_length()))
             ssl.SetError(verify_error);
@@ -2307,9 +2313,9 @@ ClientKeyExchange::~ClientKeyExchange()
 }
 
 
-void ClientKeyExchange::build(SSL& ssl) 
-{ 
-    client_key_->build(ssl); 
+void ClientKeyExchange::build(SSL& ssl)
+{
+    client_key_->build(ssl);
     set_length(client_key_->get_length());
 }
 
@@ -2348,7 +2354,7 @@ input_buffer& operator>>(input_buffer& input, Finished&)
 {
     /*  do in process */
 
-    return input; 
+    return input;
 }
 
 // output operator for Finished
@@ -2375,7 +2381,7 @@ void Finished::Process(input_buffer& input, SSL& ssl)
     // verify hashes
     const  Finished& verify = ssl.getHashes().get_verify();
     uint finishedSz = ssl.isTLS() ? TLS_FINISHED_SZ : FINISHED_SZ;
-    
+
     input.read(hashes_.md5_, finishedSz);
     if (input.get_error()) {
         ssl.SetError(bad_input);
@@ -2415,7 +2421,7 @@ void Finished::Process(input_buffer& input, SSL& ssl)
     opaque fill;
     int    padSz = ssl.getSecurity().get_parms().encrypt_size_ - ivExtra -
                      HANDSHAKE_HEADER - finishedSz - digestSz;
-    for (int i = 0; i < padSz; i++) 
+    for (int i = 0; i < padSz; i++)
         fill = input[AUTO];
     if (input.get_error()) {
         ssl.SetError(bad_input);
@@ -2499,14 +2505,14 @@ Connection::Connection(ProtocolVersion v, RandomPool& ran)
 }
 
 
-Connection::~Connection() 
-{ 
+Connection::~Connection()
+{
     CleanMaster(); CleanPreMaster(); ysArrayDelete(pre_master_secret_);
 }
 
 
-void Connection::AllocPreSecret(uint sz) 
-{ 
+void Connection::AllocPreSecret(uint sz)
+{
     pre_master_secret_ = NEW_YS opaque[pre_secret_len_ = sz];
 }
 
@@ -2561,7 +2567,7 @@ HandShakeBase* CreateClientHello()        { return NEW_YS ClientHello; }
 HandShakeBase* CreateServerHello()        { return NEW_YS ServerHello; }
 HandShakeBase* CreateCertificate()        { return NEW_YS Certificate; }
 HandShakeBase* CreateServerKeyExchange()  { return NEW_YS ServerKeyExchange;}
-HandShakeBase* CreateCertificateRequest() { return NEW_YS 
+HandShakeBase* CreateCertificateRequest() { return NEW_YS
                                                     CertificateRequest; }
 HandShakeBase* CreateServerHelloDone()    { return NEW_YS ServerHelloDone; }
 HandShakeBase* CreateCertificateVerify()  { return NEW_YS CertificateVerify;}
@@ -2574,9 +2580,9 @@ ServerKeyBase* CreateDHServerKEA()        { return NEW_YS DH_Server; }
 ServerKeyBase* CreateFortezzaServerKEA()  { return NEW_YS Fortezza_Server; }
 
 // Create functions for client key exchange factory
-ClientKeyBase* CreateRSAClient()      { return NEW_YS 
+ClientKeyBase* CreateRSAClient()      { return NEW_YS
                                                 EncryptedPreMasterSecret; }
-ClientKeyBase* CreateDHClient()       { return NEW_YS 
+ClientKeyBase* CreateDHClient()       { return NEW_YS
                                                 ClientDiffieHellmanPublic; }
 ClientKeyBase* CreateFortezzaClient() { return NEW_YS FortezzaKeys; }
 

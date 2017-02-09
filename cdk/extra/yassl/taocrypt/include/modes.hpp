@@ -38,11 +38,11 @@ class BlockCipher {
 public:
     BlockCipher() : cipher_(DIR, MODE) {}
 
-    void Process(byte* c, const byte* p, word32 sz) 
+    void Process(byte* c, const byte* p, word32 sz)
             { cipher_.Process(c, p, sz); }
-    void SetKey(const byte* k, word32 sz)   
+    void SetKey(const byte* k, word32 sz)
             { cipher_.SetKey(k, sz, DIR); }
-    void SetKey(const byte* k, word32 sz, const byte* iv)   
+    void SetKey(const byte* k, word32 sz, const byte* iv)
             { cipher_.SetKey(k, sz, DIR); cipher_.SetIV(iv); }
 private:
     T cipher_;
@@ -57,7 +57,7 @@ class Mode_BASE : public virtual_base {
 public:
     enum { MaxBlockSz = 16 };
 
-    explicit Mode_BASE(int sz, CipherDir dir, Mode mode) 
+    explicit Mode_BASE(int sz, CipherDir dir, Mode mode)
         : blockSz_(sz), reg_(reinterpret_cast<byte*>(r_)),
           tmp_(reinterpret_cast<byte*>(t_)), dir_(dir), mode_(mode)
     {}

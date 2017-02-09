@@ -48,10 +48,10 @@ protected:
 };
 
 
-// DES 
+// DES
 class DES : public Mode_BASE, public BasicDES {
 public:
-    DES(CipherDir DIR, Mode MODE) 
+    DES(CipherDir DIR, Mode MODE)
         : Mode_BASE(DES_BLOCK_SIZE, DIR, MODE) {}
 
 private:
@@ -65,7 +65,7 @@ private:
 // DES_EDE2
 class DES_EDE2 : public Mode_BASE {
 public:
-    DES_EDE2(CipherDir DIR, Mode MODE) 
+    DES_EDE2(CipherDir DIR, Mode MODE)
         : Mode_BASE(DES_BLOCK_SIZE, DIR, MODE) {}
 
     void SetKey(const byte*, word32, CipherDir dir);

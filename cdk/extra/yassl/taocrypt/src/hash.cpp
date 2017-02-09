@@ -92,9 +92,9 @@ void HASHwithTransform::Final(byte* hash)
         buffLen_ = 0;
     }
     memset(&local[buffLen_], 0, padSz - buffLen_);
-   
+
     ByteReverseIf(local, local, blockSz, order);
-    
+
     memcpy(&local[padSz],   order ? &preHiLen : &preLoLen, sizeof(preLoLen));
     memcpy(&local[padSz+4], order ? &preLoLen : &preHiLen, sizeof(preLoLen));
 
@@ -172,9 +172,9 @@ void HASH64withTransform::Final(byte* hash)
         buffLen_ = 0;
     }
     memset(&local[buffLen_], 0, padSz - buffLen_);
-   
+
     ByteReverseIf(buffer_, buffer_, padSz, order);
-    
+
     buffer_[blockSz / sizeof(word64) - 2] = order ? preHiLen : preLoLen;
     buffer_[blockSz / sizeof(word64) - 1] = order ? preLoLen : preHiLen;
 
