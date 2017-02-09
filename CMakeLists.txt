@@ -150,6 +150,12 @@ if(WIN32 AND NOT UNREACHABLE_CODE_WARNINGS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4297")
 endif()
 
+
+if(WIN32)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+endif()
+
+
 #
 # Gcov support (Linux only)
 #

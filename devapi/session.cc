@@ -813,6 +813,11 @@ Schema internal::XSession_base::getDefaultSchema()
   return Schema(*this, m_impl->m_default_db);
 }
 
+string internal::XSession_base::getDefaultSchemaName()
+{
+  return m_impl->m_default_db;
+}
+
 
 Schema internal::XSession_base::getSchema(const string &name, bool check)
 {

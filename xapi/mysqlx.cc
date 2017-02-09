@@ -101,7 +101,7 @@ _get_session(const char *host, int port, const char *user,
     {
       std::string pwd(password ? password : "");
       std::string db(database ? database : "");
-      
+
       // TODO: the default user has to be determined in a more flexible way
       sess = new mysqlx_session_t(host ? host : "localhost", port,
                                   user ? user : "root", password ? &pwd : NULL,
@@ -413,7 +413,7 @@ int STDCALL mysqlx_set_group_by(mysqlx_stmt_t *stmt, ...)
   return res;
   SAFE_EXCEPTION_END(stmt, RESULT_ERROR)
 }
- 
+
 int STDCALL
 mysqlx_set_limit_and_offset(mysqlx_stmt_t *stmt, uint64_t row_count,
                             uint64_t offset)
@@ -1146,7 +1146,16 @@ void STDCALL mysqlx_result_free(mysqlx_result_t *res)
 */
 void STDCALL mysqlx_session_close(mysqlx_session_t *sess)
 {
-  if (sess) delete sess;
+  if (sess)
+  {
+    try {
+      delete sess;
+    }
+    catch (...)
+    {
+      // Ignore errors that might happen during session destruction.
+    }
+  }
 }
 
 int STDCALL
@@ -1573,7 +1582,7 @@ mysqlx_get_schemas(mysqlx_session_t *sess, const char *schema_pattern)
   if ((stmt = sess->sql_query("SHOW SCHEMAS LIKE ?",
        MYSQLX_NULL_TERMINATED, true)) == NULL)
     return NULL;
-  
+
   if (mysqlx_stmt_bind(stmt, PARAM_STRING(schema_pattern ? schema_pattern : "%"),
                        PARAM_END) == RESULT_ERROR)
     SET_ERROR_FROM_STMT(sess, stmt, NULL);

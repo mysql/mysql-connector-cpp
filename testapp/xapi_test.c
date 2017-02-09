@@ -91,14 +91,14 @@ int main(int argc, const char* argv[])
   /* Drop test table if exists */
 
   res = mysqlx_sql(sess,
-                   "DROP TABLE IF EXISTS cc_crud_test.crud_placeholder_test",
+                   "DROP TABLE IF EXISTS test.crud_placeholder_test",
                    MYSQLX_NULL_TERMINATED);
   RESULT_CHECK(res, sess);
 
   /* Create a test table */
 
   res = mysqlx_sql(sess,
-                   "CREATE TABLE cc_crud_test.crud_placeholder_test " \
+                   "CREATE TABLE test.crud_placeholder_test " \
                    "(sint BIGINT, uint BIGINT UNSIGNED, flv FLOAT," \
                    "dbv DOUBLE, strv VARCHAR(255))",
                    MYSQLX_NULL_TERMINATED);
@@ -108,7 +108,7 @@ int main(int argc, const char* argv[])
   /* Do insert as a plain SQL with parameters */
 
   crud = mysqlx_sql_new(sess,
-                        "INSERT INTO cc_crud_test.crud_placeholder_test " \
+                        "INSERT INTO test.crud_placeholder_test " \
                         "(sint, uint, flv, dbv, strv) VALUES (?,?,?,?,?)",
                         MYSQLX_NULL_TERMINATED);
   CRUD_CHECK(crud, sess);
@@ -132,7 +132,7 @@ int main(int argc, const char* argv[])
     Query table using CRUD operations.
   */
 
-  db = mysqlx_get_schema(sess, "cc_crud_test", 1);
+  db = mysqlx_get_schema(sess, "test", 1);
   RESULT_CHECK(db, sess);
 
   table = mysqlx_get_table(db, "crud_placeholder_test", 1);
