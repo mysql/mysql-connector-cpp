@@ -431,6 +431,72 @@ TEST_F(Sess, ssl_session)
     EXPECT_FALSE(cipher.empty());
   }
 
+
+  //using wrong ssl-ca and ssl-ca-path as SessionSettings
+  {
+    EXPECT_THROW(
+    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+                          SessionSettings::USER,get_user(),
+                          SessionSettings::PWD, get_password() ? get_password() : NULL ,
+                          SessionSettings::SSL_ENABLE, true,
+                          SessionSettings::SSL_CA, "unknown")
+          , mysqlx::Error);
+
+
+  }
+
+  //using wrong ssl-ca and ssl-ca-path on URI
+  {
+    std::stringstream bad_uri;
+    bad_uri << uri.str() << "&ssl-ca=" << "unknown.file" << "&ssl-ca-path=" << "unknown.path";
+
+    EXPECT_THROW(mysqlx::XSession sess(bad_uri.str()), mysqlx::Error);
+  }
+
+  string ssl_ca;
+  string datadir;
+
+  {
+    mysqlx::XSession sess(uri.str());
+
+    SqlResult res = sess.bindToDefaultShard()
+                    .sql("show global variables like 'ssl_ca'")
+                    .execute();
+
+    ssl_ca = res.fetchOne().get(1);
+
+    res = sess.bindToDefaultShard()
+          .sql("show global variables like 'datadir'")
+          .execute();
+
+    datadir = res.fetchOne().get(1);
+
+  }
+
+  std::cout << "ssl-ca:" << ssl_ca
+             << " datadir:" << datadir
+             << std::endl;
+
+  if (ssl_ca.find('\\') == string::npos && ssl_ca.find('/') == string::npos)
+  { //not full path
+    ssl_ca = datadir + ssl_ca;
+  }
+
+  uri << "&ssl-ca=" << ssl_ca;
+
+  {
+    mysqlx::XSession sess(uri.str());
+
+    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
+
+    auto row = res.fetchOne();
+    cout << row[0] << ":" << row[1] << endl;
+
+    string cipher = row[1];
+
+    EXPECT_FALSE(cipher.empty());
+  }
+
 }
 
 TEST_F(Sess, ipv6)

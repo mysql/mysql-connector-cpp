@@ -75,6 +75,7 @@ public:
     : m_use_tls(use_tls)
   {}
 
+  void set_use_tls(bool use_tls) { m_use_tls = use_tls; }
   bool use_tls() const { return m_use_tls; }
 
   void set_key(const string &key) { m_key = key; }

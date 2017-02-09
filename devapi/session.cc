@@ -129,13 +129,18 @@ struct URI_parser
   , private endpoint::TCPIP
   , public parser::URI_processor
 {
+
+#ifdef WITH_SSL
+  // tls off by default on URI connection
+  cdk::connection::TLS::Options m_tls_opt = false;
+#endif
+
   URI_parser(const std::string &uri)
   {
-#ifdef WITH_SSL
-    // TLS OFF by default on URI
-    set_tls(false);
-#endif
     parser::parse_conn_str(uri, *this);
+#ifdef WITH_SSL
+    set_tls(m_tls_opt);
+#endif
   }
 
 
@@ -173,14 +178,36 @@ struct URI_parser
   void key_val(const std::string &key) override
   {
     if (key == "ssl-enable")
+    {
 #ifdef WITH_SSL
-      set_tls(true);
+      m_tls_opt.set_use_tls(true);
 #else
       throw_error(
-        "Can not create TLS session - this connector is built"
-        " without TLS support."
-      );
+            "Can not create TLS session - this connector is built"
+            " without TLS support."
+            );
 #endif
+    }
+  }
+
+  void key_val(const std::string &key, const std::string &val) override
+  {
+    if (key == "ssl-ca")
+    {
+#ifdef WITH_SSL
+      m_tls_opt.set_ca(val);
+#else
+      throw_error(
+          "Can not create TLS session - this connector is built"
+          " without TLS support."
+          );
+#endif
+    } else
+    {
+      std::stringstream err;
+      err << "Unexpected key " << key << "=" << val << " on URI";
+      throw_error(err.str().c_str());
+    }
   }
 
 };
@@ -197,8 +224,8 @@ internal::XSession_base::XSession_base(SessionSettings settings)
           );
 
       m_impl = new Impl(
-        static_cast<endpoint::TCPIP&>(parser.get_endpoint()),
-        static_cast<XSession_base::Options&>(parser));
+                 static_cast<endpoint::TCPIP&>(parser.get_endpoint()),
+                 static_cast<XSession_base::Options&>(parser));
     }
     else
     {
@@ -246,16 +273,25 @@ internal::XSession_base::XSession_base(SessionSettings settings)
             );
 
       if (settings.has_option(SessionSettings::SSL_ENABLE))
+      {
 #ifdef WITH_SSL
-        opt.set_tls(settings[SessionSettings::SSL_ENABLE].get<bool>());
+        cdk::connection::TLS::Options opt_ssl(settings[SessionSettings::SSL_ENABLE]);
+
+
+        if (settings.has_option(SessionSettings::SSL_CA))
+          opt_ssl.set_ca(settings[SessionSettings::SSL_ENABLE].get<string>());
+
+        opt.set_tls(opt_ssl);
 #else
         throw_error(
-          "Can not create TLS session - this connector is built"
-          " without TLS support."
-        );
+              "Can not create TLS session - this connector is built"
+              " without TLS support."
+              );
 #endif
+      }
 
       m_impl = new Impl(ep, opt);
+
     }
   }
   CATCH_AND_WRAP

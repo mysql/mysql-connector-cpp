@@ -516,7 +516,8 @@ public:
     USER,
     PWD,
     DB,
-    SSL_ENABLE
+    SSL_ENABLE,
+    SSL_CA
   };
 
 

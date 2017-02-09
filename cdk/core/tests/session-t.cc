@@ -1032,6 +1032,11 @@ TEST_F(Session_core, tls_options)
       }
     }
 
+    if (ssl_ca.find('\\') == string::npos && ssl_ca.find('/') == string::npos)
+    { //not full path
+      ssl_ca = datadir + ssl_ca;
+    }
+
     cout << "Setting CA to: " << ssl_ca << endl;
 
     tls_options.set_ca(ssl_ca);
