@@ -1,8 +1,8 @@
 ## col: foo->'$.bar'
 ERROR
-Expression_parser: could not parse string as expression (not all tokens consumed)
+After seeing ' foo', looking at '->'$.b...': Unexpected characters after expression (cdk:8)
 
 ## all: foo+
 ERROR
-unexpected end of string
+After seeing ' foo+', with no more characters in the string: Expected an expression (cdk:8)
 

@@ -31,12 +31,528 @@
 PUSH_SYS_WARNINGS
 #include <vector>
 #include <map>
+#include <locale>
 POP_SYS_WARNINGS
 
 
 /*
   Parsing strings containing expressions as used by DevAPI.
 */
+
+
+/*
+  List of reserved words used in DevAPI expressions.
+
+  The list is given by KEYWORD_LIST() macro where each X(KKK,SSS) entry
+  describes a keyword SSS with name KKK. Below enum value Keyword::KKK is
+  defined for each keyword declared here.
+*/
+
+#undef IN
+
+#define KEYWORD_LIST(X) \
+    X(NOT, "not") \
+    X(AND, "and") \
+    X(OR, "or") \
+    X(XOR, "xor") \
+    X(IS, "is") \
+    X(BETWEEN, "between") \
+    X(L_TRUE, "true") \
+    X(L_FALSE, "false") \
+    X(L_NULL, "null") \
+    X(LIKE, "like") \
+    X(RLIKE, "rlike") \
+    X(INTERVAL, "interval") \
+    X(REGEXP, "regexp") \
+    X(ESCAPE, "escape") \
+    X(HEX, "hex") \
+    X(BIN, "bin") \
+    X(MOD, "mod") \
+    X(AS, "as") \
+    X(USING, "using") \
+    X(ASC, "asc") \
+    X(DESC, "desc") \
+    X(CAST, "cast") \
+    X(CHARACTER, "character") \
+    X(SET, "set") \
+    X(CHARSET, "charset") \
+    X(ASCII, "ascii") \
+    X(UNICODE, "unicode") \
+    X(BYTE, "byte") \
+    X(BINARY, "binary") \
+    X(CHAR, "char") \
+    X(NCHAR, "nchar") \
+    X(DATE, "date") \
+    X(DATETIME, "datetime") \
+    X(TIME, "time") \
+    X(DECIMAL, "decimal") \
+    X(SIGNED, "signed") \
+    X(UNSIGNED, "unsigned") \
+    X(INTEGER, "integer") \
+    X(INT, "int") \
+    X(JSON, "json") \
+    X(IN, "in") \
+    X(SOUNDS, "sounds") \
+    X(LEADING, "leading") \
+    X(TRAILING, "trailing") \
+    X(BOTH, "both") \
+    X(FROM, "from") \
+    UNITS_LIST(X)
+
+#define UNITS_LIST(X) \
+    X(MICROSECOND, "microsecond") \
+    X(SECOND, "second") \
+    X(MINUTE, "minute") \
+    X(HOUR, "hour") \
+    X(DAY, "day") \
+    X(WEEK, "week") \
+    X(MONTH, "month") \
+    X(QUARTER, "quarter") \
+    X(YEAR, "year") \
+
+
+/*
+  List of operators that can appear in X DevAPI expressions.
+
+  Each entry X(OOO,SSS,TTT,KKK) declares operator with name OOO, which is
+  reported to CDK as string SSS. TTT is a list of tokens that map to this
+  operator (usually just one token). KKK is a list of keywords that map to
+  the token. Below an enum constant Op::OOO is defined for each operator
+  declared here.
+
+  TODO: Find good reference for operator names recognized by xprotocol
+*/
+
+#define OPERATOR_LIST(X) \
+  UNARY_OP(X) \
+  BINARY_OP(X)
+
+#define UNARY_OP(X) \
+  X(STAR, "*", {Token::STAR}, {}) \
+  X(PLUS, "+", {Token::PLUS}, {}) \
+  X(MINUS, "-", {Token::MINUS}, {}) \
+  X(NEG, "!", {Token::BANG}, {})  \
+  X(BITNEG, "~", {Token::TILDE}, {})  \
+  X(NOT, "not", {}, {Keyword::NOT}) \
+
+#define BINARY_OP(X) \
+  X(ADD, "+", {Token::PLUS}, {})  \
+  X(SUB, "-", {Token::MINUS}, {})  \
+  X(MUL, "*", {Token::STAR}, {})  \
+  X(DIV, "/", {Token::SLASH}, {})  \
+  X(MOD, "%", {Token::PERCENT}, {Keyword::MOD})  \
+  X(OR, "||", {Token::BAR2}, {Keyword::OR})  \
+  X(AND, "&&", {Token::AMPERSTAND2}, {Keyword::AND})  \
+  X(BITOR, "|", {Token::BAR}, {})  \
+  X(BITAND, "&", {Token::AMPERSTAND}, {})  \
+  X(BITXOR, "^", {Token::HAT}, {})  \
+  X(LSHIFT, "<<", {Token::LSHIFT}, {})  \
+  X(RSHIFT, ">>", {Token::RSHIFT}, {})  \
+  X(EQ, "==", ({Token::EQ, Token::EQ2}), {})  \
+  X(NE, "!=", {Token::NE}, {})  \
+  X(GT, ">", {Token::GT}, {})  \
+  X(GE, ">=", {Token::GE}, {})  \
+  X(LT, "<", {Token::LT}, {})  \
+  X(LE, "<=", {Token::LE}, {}) \
+  X(IS, "is", {}, {Keyword::IS}) \
+  X(IN, "in", {}, {Keyword::IN}) \
+  X(LIKE, "like", {}, {Keyword::LIKE}) \
+  X(RLIKE, "rlike", {}, {Keyword::RLIKE}) \
+  X(BETWEEN, "between", {}, {Keyword::BETWEEN}) \
+  X(REGEXP, "regexp", {}, {Keyword::REGEXP}) \
+  X(CAST, "cast", {}, {Keyword::CAST}) \
+  X(SOUNDS_LIKE, "sounds like", {}, {Keyword::SOUNDS})
+
+
+
+namespace parser {
+
+using cdk::string;
+
+
+/*
+  Class which manages reserved words.
+
+  For a given token, it can recognize if it is a reserved word and return
+  the enum value identifying this keyword.
+*/
+
+class Keyword
+{
+public:
+
+  /*
+    For each reserved word with name NNN from RESERVED_LIST(),
+    declare enum constant Keyword::NNN.
+  */
+
+#define kw_enum(A,B)  A,
+
+  enum Type {
+    NONE,
+    KEYWORD_LIST(kw_enum)
+  };
+
+  typedef std::set<Type> Set;
+
+  /*
+    Check if given token is a keyword, and if yes, return enum constant of
+    this keyowrd. If the token is not a keyword it returns NONE.
+  */
+
+  static Type get(const Token &tok);
+
+  // Return canonical name of a keyword.
+
+  static const char* name(Type kk)
+  {
+
+#define kw_name(A,B)  case Keyword::A: return #A;
+
+    switch (kk)
+    {
+      KEYWORD_LIST(kw_name)
+    default: return NULL;
+    }
+  }
+
+  /*
+    Case insensitive string comparison function which is used to match
+    keywords.
+  */
+
+  static bool equal(const string &a, const string &b)
+  {
+    static kw_cmp  cmp;
+
+    return (!cmp(a, b) && !cmp(b, a));
+  }
+
+private:
+
+  struct kw_cmp
+  {
+    struct char_cmp
+    {
+      bool operator()(cdk::char_t, cdk::char_t) const;
+    };
+
+    bool operator()(const string &a, const string &b) const
+    {
+      static char_cmp cmp;
+      return std::lexicographical_compare(
+        a.begin(), a.end(),
+        b.begin(), b.end(), cmp
+      );
+    }
+  };
+
+  /*
+    Map which maps words to keyword ids. Case insensitive comparison is
+    used to locate words in this map.
+  */
+
+  typedef std::map<string, Type, kw_cmp> map_t;
+
+  static map_t kw_map;
+
+  /*
+    Default ctor builds the keyword map based on keyword declarartions given
+    by KEYWORD_LIST() macro.
+  */
+
+  Keyword()
+  {
+
+#define kw_add(A,B)  kw_map[B] = A;
+
+    KEYWORD_LIST(kw_add);
+  }
+
+  // This initializer instance makes sure that the keyowrd map is built.
+
+  static Keyword init;
+};
+
+
+inline
+Keyword::Type Keyword::get(const Token &t)
+{
+  // Only WORD tokens can be keyword.
+
+  if (Token::WORD != t.get_type())
+    return NONE;
+
+  // Locate WORD in the keyword map.
+
+  auto x = kw_map.find(t.get_text());
+
+  return (x == kw_map.end() ? NONE : x->second);
+}
+
+
+inline
+bool operator==(Keyword::Type type, const Token &tok)
+{
+  return type == Keyword::get(tok);
+}
+
+
+inline
+bool Keyword::kw_cmp::char_cmp::operator()(cdk::char_t a, cdk::char_t b) const
+{
+  /*
+    Since we operate on wide characters, "C" locale's ctype facet is used
+    to make lowercase conversion. "C" locale is sufficent because we care about
+    correct results only for ASCII characters (only these characters are used
+    in keywords).
+  */
+
+  static std::locale c_loc("C");
+  static const std::ctype<wchar_t> &ctf
+    = std::use_facet<std::ctype<wchar_t>>(c_loc);
+
+  return ctf.tolower(a) < ctf.tolower(b);
+}
+
+
+// --------------------------------------------------------------------------
+
+/*
+  Class managing operators that can appear in X DevAPI expressions.
+
+  This class can recognize if given token names a valid operator. Note that
+  the same token can name a unary and a binary operator.
+*/
+
+class Op
+{
+public:
+
+  /*
+    Define enum constant for each operator declared by UNARY/BINARY_OP()
+    macros.
+  */
+
+#define op_enum(A,B,T,K)  A,
+
+  enum Type {
+    NONE,
+    UNARY_OP(op_enum)
+    BINARY_START,
+    BINARY_OP(op_enum)
+  };
+
+  typedef std::set<Type> Set;
+
+  /*
+    Check if given token names a unary operator and if yes return this operator
+    id. If the token is not a unary operator returns NONE.
+  */
+
+  static Type get_unary(const Token &tok);
+
+  /*
+    Check if given token names a binary operator and if yes return this operator
+    id. If the token is not a binary operator returns NONE.
+  */
+
+  static Type get_binary(const Token &tok);
+
+  static const char* name(Type tt)
+  {
+
+#define op_name(A,B,T,K)  case Op::A: return B;
+
+    switch (tt)
+    {
+      OPERATOR_LIST(op_name)
+    case NONE:
+    case BINARY_START:
+    default:
+      return NULL;
+    }
+  }
+
+private:
+
+  /*
+    Maps used to recognize operators.
+
+    Operator can be a keyword or other token. For each kind of operator (unary
+    or binary) we have two maps. One map maps keyword ids to operators. The
+    other map maps other token types to operators. These maps are filled based
+    on the information given by UNARY/BINARY_OP() macros that declare
+    operators.
+  */
+
+  typedef std::map<Token::Type, Type>   tok_map_t;
+  typedef std::map<Keyword::Type, Type> kw_map_t;
+
+  static tok_map_t  unary_tok_map;
+  static kw_map_t   unary_kw_map;
+
+  static tok_map_t  binary_tok_map;
+  static kw_map_t   binary_kw_map;
+
+  Op()
+  {
+
+#define op_add(X, A,B,T,K) \
+  for(Token::Type tt : Token::Set T) \
+    X##_tok_map[tt] = Op::A; \
+  for(Keyword::Type kk : Keyword::Set K) \
+    X##_kw_map[kk] = Op::A;
+
+#define op_add_unary(A,B,T,K)   op_add(unary,A,B,T,K)
+#define op_add_binary(A,B,T,K)  op_add(binary,A,B,T,K)
+
+    UNARY_OP(op_add_unary)
+    BINARY_OP(op_add_binary)
+  }
+
+  static Op init;
+};
+
+
+inline
+Op::Type Op::get_unary(const Token &tok)
+{
+  // First check the token map.
+
+  auto find = unary_tok_map.find(tok.get_type());
+  if (find != unary_tok_map.end())
+    return find->second;
+
+  // If operator not found, try keyword map.
+
+  Keyword::Type kw = Keyword::get(tok);
+  if (Keyword::NONE == kw)
+    return NONE;
+  auto find1 = unary_kw_map.find(kw);
+  return find1 == unary_kw_map.end() ? NONE : find1->second;
+}
+
+
+inline
+Op::Type Op::get_binary(const Token &tok)
+{
+  auto find = binary_tok_map.find(tok.get_type());
+  if (find != binary_tok_map.end())
+    return find->second;
+  Keyword::Type kw = Keyword::get(tok);
+  if (Keyword::NONE == kw)
+    return NONE;
+  auto find1 = binary_kw_map.find(kw);
+  return find1 == binary_kw_map.end() ? NONE : find1->second;
+}
+
+
+inline
+bool operator==(Op::Type tt, const Token &tok)
+{
+  if (tt > Op::BINARY_START)
+    return tt == Op::get_binary(tok);
+  else
+    return tt == Op::get_unary(tok);
+}
+
+
+// --------------------------------------------------------------------------
+
+/*
+  Specialization of Token_base which adds methods that recognize keywords,
+  operators and sets of these.
+*/
+
+class Expr_token_base
+  : public Token_base
+{
+public:
+
+  const Token* consume_token(Keyword::Type kk)
+  {
+    if (!cur_token_type_is(kk))
+      return NULL;
+    return consume_token();
+  }
+
+  const Token* consume_token(const Keyword::Set &kws)
+  {
+    if (!cur_token_type_in(kws))
+      return NULL;
+    return consume_token();
+  }
+
+  const Token* consume_token(Op::Type op)
+  {
+    if (!cur_token_type_is(op))
+      return NULL;
+    return consume_token();
+  }
+
+  const Token* consume_token(const Op::Set &ops)
+  {
+    if (!cur_token_type_in(ops))
+      return NULL;
+    return consume_token();
+  }
+
+  using Token_base::consume_token;
+
+  const Token& consume_token_throw(Keyword::Type kk, const string &msg)
+  {
+    const Token *t = consume_token(kk);
+    if (!t)
+      parse_error(msg);
+    return *t;
+  }
+
+  using Token_base::consume_token_throw;
+
+  bool cur_token_type_is(Keyword::Type kk)
+  {
+    const Token *t = peek_token();
+    return (NULL != t) && (kk == *t);
+  }
+
+  bool cur_token_type_is(Op::Type op)
+  {
+    const Token *t = peek_token();
+    return (NULL != t) && (op == *t);
+  }
+
+  using Token_base::cur_token_type_is;
+
+
+  bool cur_token_type_in(const Keyword::Set &kws)
+  {
+    const Token *t = peek_token();
+    if (!t)
+      return false;
+    return kws.find(Keyword::get(*t)) != kws.end();
+  }
+
+  bool cur_token_type_in(const Op::Set &ops)
+  {
+    const Token *t = peek_token();
+    if (!t)
+      return false;
+    Op::Type op = Op::get_binary(*t);
+    if (ops.find(op) != ops.end())
+      return true;
+    return ops.find(Op::get_unary(*t)) != ops.end();
+  }
+
+  using Token_base::cur_token_type_in;
+
+  friend class Expression_parser;
+};
+
+
+}  // parser
+
+
 
 namespace parser {
 
@@ -162,7 +678,6 @@ struct Format_info : public cdk::Format_info
 
 // ------------------------------------------------------------------------------
 
-
 /*
   Main parser class containing parsing logic. An instance acts
   as Expression, that is, parsed expression can be visited
@@ -181,7 +696,7 @@ struct Parser_mode
 
 
 class Expr_parser_base
-    : public Expr_parser<Expression::Processor>
+    : public Expr_parser<Expression::Processor, Expr_token_base>
 {
 
 public:
@@ -210,7 +725,7 @@ protected:
   Expr_parser_base(It &first, const It &last,
                    Parser_mode::value parser_mode,
                    bool strings_as_blobs = false)
-    : Expr_parser<Expression::Processor>(first, last)
+    : Expr_parser<Expression::Processor, Expr_token_base>(first, last)
     , m_parser_mode(parser_mode)
     , m_strings_as_blobs(strings_as_blobs)
   {
@@ -218,7 +733,7 @@ protected:
   }
 
 
-  bool do_parse(It &first, const It &last, Processor *prc);
+  bool do_parse(Processor *prc);
 
 
   enum Start { FULL, ATOMIC, MUL, ADD, SHIFT, BIT, COMP, ILRI, AND, OR,
@@ -251,33 +766,34 @@ protected:
 
   // Additional helper parsing methods.
 
-  Expression* left_assoc_binary_op(TokSet, Start, Start, Processor*);
+  Expression* left_assoc_binary_op(const Op::Set&, Start, Start, Processor*);
 
-  void parse_function_call(Scalar_prc*);
   bool parse_function_call(const cdk::api::Table_ref&, Scalar_prc*);
   void parse_argslist(Expression::List::Processor*,
                       bool strings_as_blobs = false);
+  void parse_special_args(
+    const cdk::api::Table_ref&,
+    Expression::List::Processor*
+  );
 
-  void parse_schema_ident(Token::TokenType (*types)[2] = NULL);
+  bool parse_schema_ident(Token::Type (*types)[2] = NULL);
   void parse_column_ident(Path_prc*);
   void parse_column_ident1(Path_prc*);
-  const std::string &get_ident();
+  bool get_ident(string&);
 
   void parse_document_field(Path_prc*, bool prefix = false);
-  void parse_document_field(const cdk::string&, Path_prc*);
-  void parse_document_field(const cdk::string&, const cdk::string&, Path_prc*);
+  void parse_document_field(const string&, Path_prc*);
+  void parse_document_field(const string&, const string&, Path_prc*);
 
   bool parse_document_path(Path_prc*, bool require_dot=false);
   bool parse_document_path1(Path_prc*);
-  bool parse_docpath_member(Path_prc::Element_prc*);
-  void parse_docpath_array_loc(Path_prc::Element_prc*);
+  bool parse_docpath_member(Path_prc*);
+  bool parse_docpath_member_dot(Path_prc*);
+  bool parse_docpath_array(Path_prc*);
 
-  void parse_cast(Scalar_prc*);
-  cdk::string parse_cast_type();
+  bool parse_cast(Scalar_prc*);
+  std::string parse_cast_type();
   std::string cast_data_type_dimension(bool double_dimension = false);
-  std::string opt_binary();
-
-  void parse_char(Scalar_prc*);
 
   void parse_doc(Processor::Doc_prc*);
   void parse_arr(Processor::List_prc*);
@@ -308,18 +824,17 @@ public:
 
   Expression_parser(Parser_mode::value parser_mode, const cdk::string &expr)
     : m_tokenizer(expr), m_mode(parser_mode)
-  {
-    m_tokenizer.get_tokens();
-  }
+  {}
 
 
   void process(Processor &prc) const
   {
-    if (!const_cast<Expression_parser*>(this)->m_tokenizer.tokens_available())
-      cdk::throw_error("Expression_parser: empty string");
 
     It first = m_tokenizer.begin();
     It last  = m_tokenizer.end();
+
+    if (m_tokenizer.empty())
+      throw Expr_token_base::Error(first, L"Expected an expression");
 
     /*
       note: passing m_toks.end() directly as constructor argument results
@@ -331,8 +846,10 @@ public:
     parser.process(prc);
 
     if (first != last)
-      cdk::throw_error("Expression_parser: could not parse string as expression"
-                       " (not all tokens consumed)");
+      throw Expr_token_base::Error(
+              first,
+              L"Unexpected characters after expression"
+            );
   }
 
 };
@@ -354,6 +871,7 @@ public:
 
 class Order_parser
     : public cdk::api::Order_expr<Expression>
+    , Token_base
 {
   Tokenizer m_tokenizer;
   Parser_mode::value m_mode;
@@ -361,12 +879,15 @@ class Order_parser
 public:
 
   Order_parser(Parser_mode::value parser_mode, const cdk::string &expr)
-  : m_tokenizer(expr), m_mode(parser_mode)
-  {
-    m_tokenizer.get_tokens();
-  }
+    : m_tokenizer(expr), m_mode(parser_mode)
+  {}
 
-  void process(Processor &prc) const;
+  void parse(Processor &prc);
+
+  void process(Processor &prc) const
+  {
+    const_cast<Order_parser*>(this)->parse(prc);
+  }
 
 };
 
@@ -394,30 +915,41 @@ public:
  */
 
 class Projection_parser
-    : public cdk::api::Projection_expr<Expression>
-    , public cdk::Expression::Document
+  : public cdk::api::Projection_expr<Expression>
+  , public cdk::Expression::Document
+  , Expr_token_base
 {
   typedef cdk::api::Projection_expr<Expression>::Processor Projection_processor;
   typedef cdk::Expression::Document::Processor Document_processor;
   Tokenizer m_tokenizer;
   Parser_mode::value m_mode;
+  It m_it;
 
 public:
 
   Projection_parser(Parser_mode::value parser_mode)
-  : m_tokenizer(std::string()), m_mode(parser_mode)
+    : m_tokenizer(std::string()), m_mode(parser_mode)
   {}
 
   Projection_parser(Parser_mode::value parser_mode, const cdk::string &expr)
-  : m_tokenizer(expr), m_mode(parser_mode)
+    : m_tokenizer(expr), m_mode(parser_mode)
   {
-    m_tokenizer.get_tokens();
+    m_it = m_tokenizer.begin();
+    set_tokens(m_it, m_tokenizer.end());
   }
 
+  void parse_tbl_mode(Projection_processor &prc);
+  void parse_doc_mode(Document_processor &prc);
 
-  void process(Projection_processor &prc) const;
+  void process(Projection_processor &prc) const
+  {
+    const_cast<Projection_parser*>(this)->parse_tbl_mode(prc);
+  }
 
-  void process(Document_processor &prc) const;
+  void process(Document_processor &prc) const
+  {
+    const_cast<Projection_parser*>(this)->parse_doc_mode(prc);
+  }
 
 };
 
@@ -438,7 +970,6 @@ public:
   Table_field_parser(const cdk::string &table_field)
   {
     Tokenizer toks(table_field);
-    toks.get_tokens();
 
     It begin = toks.begin();
     const It end = toks.end();
@@ -488,8 +1019,6 @@ public:
   Doc_field_parser(const cdk::string &doc_path)
     : m_tokenizer(doc_path)
   {
-    m_tokenizer.get_tokens();
-
     m_it = m_tokenizer.begin();
     const It end = m_tokenizer.end();
     m_parser.reset(new Expr_parser_base(m_it, end, Parser_mode::DOCUMENT));
@@ -500,6 +1029,7 @@ public:
     const_cast<Expr_parser_base*>(m_parser.get())->parse_document_field(&prc);
   }
 };
+
 
 // ------------------------------------------------------------------------------
 
@@ -1071,7 +1601,9 @@ Expression* Expr_parser_base::parse(Start start, Processor *prc)
       return stored.release();
     }
 
-  default: throw Error((boost::format("Expr parser: Invalid start state %d") % int(start)).str());
+  default:
+    assert(false && "Invalid parser state");
+    return NULL;
   }
 }
 

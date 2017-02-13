@@ -200,6 +200,15 @@ const wchar_t *docs[] =
 };
 
 
+#define EXPECT_ERROR(Code) \
+try { \
+  Code; FAIL() << "Expected an error"; \
+} catch (const cdk::Error &e) \
+{ \
+  cout << "Expected error: " << e << endl; \
+} \
+
+
 TEST(Parser, json)
 {
   JSON_printer printer(cout, 0);
@@ -216,24 +225,19 @@ TEST(Parser, json)
 
   {
     JSON_parser parser("");
-    EXPECT_THROW(parser.process(printer),cdk::Error);
-    cout <<"Expected error when parsing empty sting" <<endl;
+    EXPECT_ERROR(parser.process(printer));
   }
 
   {
     const char *json = "invalid";
     JSON_parser parser(json);
-    EXPECT_THROW(parser.process(printer),cdk::Error);
-    cout <<"Expected error when parsing invalid sting: " << json
-         <<endl;
+    EXPECT_ERROR(parser.process(printer));
   }
 
   {
     const char *json = "{ foo: 123, invalid }";
     JSON_parser parser(json);
-    EXPECT_THROW(parser.process(printer),cdk::Error);
-    cout <<"Expected error when parsing invalid sting: " << json
-         <<endl;
+    EXPECT_ERROR(parser.process(printer));
   }
 
   // numeric tests
@@ -605,16 +609,24 @@ const Expr_Test exprs[] =
   { parser::Parser_mode::TABLE   , L"c > cast(14.01 as decimal(3,2))"},
   { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(X'65'))"},
   { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(0x65))"},
-//  { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(X'65' USING utf8))"},
-//  { parser::Parser_mode::TABLE   , L"TRIM(BOTH 'x' FROM 'xxxbarxxx')"},
-//  { parser::Parser_mode::TABLE   , L"TRIM(LEADING 'x' FROM 'xxxbarxxx')"},
-//  { parser::Parser_mode::TABLE   , L"TRIM(TRAILING 'xyz' FROM 'barxxyz')"},
   { parser::Parser_mode::TABLE   , L"'abc' NOT LIKE 'ABC1'"},
-//  { parser::Parser_mode::TABLE   , L"'a' RLIKE '^[a-d]'"},
   { parser::Parser_mode::TABLE   , L"'a' REGEXP '^[a-d]'"},
-//  { parser::Parser_mode::TABLE   , L"POSITION('bar' IN 'foobarbar')"},
-//  { parser::Parser_mode::TABLE   , L"'Heoko' SOUNDS LIKE 'h1aso'"}
+  { parser::Parser_mode::TABLE   , L"'a' NOT RLIKE '^[a-d]'"},
+  { parser::Parser_mode::TABLE   , L"POSITION('bar' IN 'foobarbar')"},
+  { parser::Parser_mode::TABLE   , L"TRIM('barxxyz')"},
+};
 
+const Expr_Test negative_exprs[] =
+{
+  { parser::Parser_mode::TABLE   , L"-23452345243563467456745674567456745674567"},
+  { parser::Parser_mode::TABLE   , L""},
+  { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(X'65' USING utf8))"},
+  { parser::Parser_mode::TABLE   , L"TRIM(BOTH 'x' FROM 'xxxbarxxx')"},
+  { parser::Parser_mode::TABLE   , L"TRIM(LEADING 'x' FROM 'xxxbarxxx')"},
+  { parser::Parser_mode::TABLE   , L"TRIM(TRAILING 'xyz' FROM 'barxxyz')"},
+  { parser::Parser_mode::TABLE   , L"TRIM('xyz' FROM 'barxxyz')"},
+  { parser::Parser_mode::TABLE   , L"'Heoko' SOUNDS LIKE 'h1aso'"},
+  { parser::Parser_mode::TABLE   , L"foo+"},
 };
 
 
@@ -624,30 +636,30 @@ TEST(Parser, expr)
 
   for (unsigned i=0; i < sizeof(exprs)/sizeof(Expr_Test); i++)
   {
+    const Expr_Test &test = exprs[i];
     cout <<endl <<"== expr#" <<i <<" ==" <<endl<<endl;
-    cout << (exprs[i].mode == parser::Parser_mode::DOCUMENT ? "DOCUMENT" : "TABLE") << endl;
-    cdk::string expr(exprs[i].txt);
+    cout << (test.mode == parser::Parser_mode::DOCUMENT ? "DOCUMENT" : "TABLE") << endl;
+    cdk::string expr(test.txt);
     cout <<"expr string: " <<expr <<endl;
     cout <<"----" <<endl;
-    Expression_parser parser(exprs[i].mode, expr);
+    Expression_parser parser(test.mode, expr);
     parser.process(printer);
   }
 
-  // negative tests
+  cout << endl << "=== NEGATIVE TESTS ===" << endl;
 
+  for (unsigned i=0; i < sizeof(negative_exprs)/sizeof(Expr_Test); i++)
   {
-    const char *expr = "-23452345243563467456745674567456745674567";
-    Expression_parser parser(parser::Parser_mode::DOCUMENT, expr);
-    EXPECT_THROW(parser.process(printer), cdk::Error);
-    cout << "Expected error when parsing string: " << expr << endl;
+    const Expr_Test &test = negative_exprs[i];
+    cout <<endl <<"== expr#" <<i <<" ==" <<endl<<endl;
+    cout << (test.mode == parser::Parser_mode::DOCUMENT ? "DOCUMENT" : "TABLE") << endl;
+    cdk::string expr(test.txt);
+    cout <<"expecting error when parsing string: " <<expr <<endl;
+    cout <<"----" <<endl;
+    Expression_parser parser(test.mode, expr);
+    EXPECT_ERROR(parser.process(printer));
   }
 
-  {
-    const char *expr = "";
-    Expression_parser parser(parser::Parser_mode::DOCUMENT, expr);
-    EXPECT_THROW(parser.process(printer), cdk::Error);
-    cout << "Expected error when parsing empty string: " << expr << endl;
-  }
 }
 
 
@@ -715,15 +727,15 @@ TEST(Parser, order_expr)
   {
     const char *expr = "age ASC DESC";
     Order_parser parser(parser::Parser_mode::DOCUMENT, expr);
-    EXPECT_THROW(parser.process(printer), cdk::Error);
-    cout << "Expected error when parsing string: " << expr << endl;
+    cout << "Expecting error when parsing string: " << expr << endl;
+    EXPECT_ERROR(parser.process(printer));
   }
 
   {
     const char *expr = "age ASC year";
     Order_parser parser(parser::Parser_mode::DOCUMENT, expr);
-    EXPECT_THROW(parser.process(printer), cdk::Error);
-    cout << "Expected error when parsing string: " << expr << endl;
+    cout << "Expecting error when parsing string: " << expr << endl;
+    EXPECT_ERROR(parser.process(printer));
   }
 
 }
@@ -819,8 +831,8 @@ TEST(Parser, projection_expr)
   {
     const char *expr = "age";
     Projection_parser parser(parser::Parser_mode::DOCUMENT, expr);
-    EXPECT_THROW(parser.process(printeDocument), cdk::Error);
-    cout << "Expected error when parsing string: " << expr << endl;
+    cout << "Expecting error when parsing string: " << expr << endl;
+    EXPECT_ERROR(parser.process(printeDocument));
   }
 
 }
@@ -897,7 +909,7 @@ TEST(Parser, doc_path)
     cdk::Doc_path_storage path;
     Doc_field_parser doc_path(test);
 
-    EXPECT_THROW(doc_path.process(path), cdk::Error);
+    EXPECT_ERROR(doc_path.process(path));
   }
 
 }
@@ -1114,16 +1126,8 @@ TEST(Parser, uri)
       URI_parts(none, none, "host", 0, none, false)
     },
     {
-      "[::1]",
-      URI_parts(none, none, "::1", 0, none, false)
-    },
-    {
       "host:123",
       URI_parts(none, none, "host", 123, none, false)
-    },
-    {
-      "[::1]:123",
-      URI_parts(none, none, "::1", 123, none, false)
     },
     {
       "host:0",
@@ -1134,20 +1138,12 @@ TEST(Parser, uri)
       URI_parts(none , none, "host", 0, "path", false)
     },
     {
-      "[::1]/path",
-      URI_parts(none , none, "::1", 0, "path", false)
-    },
-    {
       "host/",
       URI_parts(none , none, "host", 0, "", false)
     },
     {
       "user@host/path",
       URI_parts("user" , none, "host", 0, "path", false)
-    },
-    {
-      "user@[::1]/path",
-      URI_parts("user" , none, "::1", 0, "path", false)
     },
     {
       "user%40host%2Fpath",
@@ -1162,16 +1158,8 @@ TEST(Parser, uri)
       URI_parts("user" , "pwd", "host", 0, none, false)
     },
     {
-      "user:pwd@[::1]",
-      URI_parts("user" , "pwd", "::1", 0, none, false)
-    },
-    {
       "user:pwd@host:123",
       URI_parts("user" , "pwd", "host", 123, none, false)
-    },
-    {
-      "user:pwd@[::1]:123",
-      URI_parts("user" , "pwd", "::1", 123, none, false)
     },
     {
       "user:pwd@host:123/",
@@ -1180,10 +1168,6 @@ TEST(Parser, uri)
     {
       "user:pwd@host:123/foo?key=val",
       URI_parts("user" , "pwd", "host", 123, "foo", true)
-    },
-    {
-      "user:pwd@[::1]:123/foo?key=val",
-      URI_parts("user" , "pwd", "::1", 123, "foo", true)
     },
     {
       "user:pwd@host:123?key=val",
@@ -1305,9 +1289,7 @@ TEST(Parser, uri)
     "host/db?query#foo",
     "host/db?a=[a,b,c&b",
     "host/db?a=[a,b,c]foo=bar",
-    "host/db?a=[a,b=foo",
-    "[::1]:port:123",
-    "[::1"
+    "host/db?a=[a,b=foo"
     //"host/db?l=[a,b&c]" TODO: should this fail?
     // TODO: allowed chars in host/path component
   };

@@ -51,119 +51,6 @@ void parser::parse_conn_str(const std::string &uri, URI_processor &up)
 
 // ---------------------------------------------------------------
 
-/*
-  URI parser error descriptions have one of these forms:
-
-  "After seeing '...AAA', looking at 'BBB...': MSG"
-  "After seeing '...AAA', with no more characters in the string: MSG"
-  "While looking at 'BBB...': MSG"
-  "While looking at empty string: MSG"
-
-  where MSG is the message passed to error constructor.
-*/
-
-void URI_parser::Error::do_describe1(std::ostream &out) const
-{
-  bool seen_part = false;
-
-  if (m_seen[0] || m_seen[1])
-  {
-    seen_part = true;
-    out << "After seeing '";
-    if (!m_seen[0])
-      out << "..." << m_seen + 1;
-    else
-      out << m_seen;
-    out << "'";
-  }
-
-  if (m_ahead[0])
-  {
-    if (seen_part)
-      out << ", looking at '";
-    else
-      out << "While looking at '";
-
-    if (1 == m_ahead[sizeof(m_ahead) - 1])
-      out << m_ahead << "...";
-    else
-      out << m_ahead;
-    out << "'";
-  }
-  else
-  {
-    if (seen_part)
-      out << ", with no more characters in the string";
-    else
-      out << "While looking at empty string";
-  }
-
-  if (!m_msg.empty())
-    out << ": " << m_msg;
-}
-
-
-/*
-  Construct error instance copying fragments of the parsed string
-  to the internal buffers to be used in the error description.
-
-  Note: MSVC generates warning for std::string::copy() method
-  used below because it is considered unsafe.
-*/
-
-DIAGNOSTIC_PUSH
-#if _MSC_VER
-DISABLE_WARNING(4996)
-#endif
-
-URI_parser::Error::Error(const URI_parser *p, const cdk::string &descr)
-  : Error_class(NULL, cdk::cdkerrc::parse_error), m_msg(descr)
-{
-  m_pos = p->m_pos;
-  memset(m_seen, 0, sizeof(m_seen));
-  memset(m_ahead, 0, sizeof(m_ahead));
-
-  if (!p->m_uri.empty())
-  {
-    /*
-      Calculate how much to copy into m_seen, 1 byte is left for
-      null terminator.
-    */
-
-    size_t howmuch;
-
-    if (m_pos  > sizeof(m_seen)-1)
-      howmuch = sizeof(m_seen)-1;
-    else
-      howmuch = m_pos;
-
-    p->m_uri.copy(m_seen, howmuch, m_pos-howmuch);
-
-    /*
-      If initial fragment is longer than size of m_seen, then
-      we set first byte to 0 to indicate that '...' prefix should
-      be added.
-    */
-
-    if (m_pos > sizeof(m_seen)-1)
-      m_seen[0] = 0;
-
-    /*
-      Similar, if remainder of the URI string does not fit in
-      m_ahead, then the last byte is set to 1 to indicate that
-      '...' should be added at the end. Note: Second last byte
-      is used as null terminator.
-    */
-
-    p->m_uri.copy(m_ahead, sizeof(m_ahead) - 2, m_pos);
-
-    if (p->m_uri.length() > m_pos + sizeof(m_ahead) - 2)
-      m_ahead[sizeof(m_ahead) - 1] = 1;
-  }
-}
-
-DIAGNOSTIC_POP
-
 
 /*
   Specialized error message with description:
@@ -176,7 +63,7 @@ DIAGNOSTIC_POP
 */
 
 struct Unexpected_error
-  : public cdk::Error_class<Unexpected_error, URI_parser::Error>
+  : public cdk::Error_class< ::Unexpected_error, URI_parser::Error >
 {
   std::string m_expected;
   cdk::string m_msg;
@@ -214,6 +101,16 @@ struct Unexpected_error
   }
 };
 
+
+void URI_parser::unexpected(const std::string &what, const cdk::string &msg) const
+{
+  throw Unexpected_error(this, what, msg);
+}
+
+void URI_parser::unexpected(char what, const cdk::string &msg) const
+{
+  throw Unexpected_error(this, what, msg);
+}
 
 // ---------------------------------------------------------------
 
@@ -263,13 +160,6 @@ struct URI_parser::TokSet
     m_bits.set(tt2);
   }
 
-  TokSet(token_type tt1, token_type tt2, token_type tt3)
-  {
-    m_bits.set(tt1);
-    m_bits.set(tt2);
-    m_bits.set(tt3);
-  }
-
   bool has_token(token_type tt) const
   {
     return m_bits.test(tt);
@@ -301,20 +191,11 @@ void URI_parser::process(Processor &prc) const
   bool        rescan = false;
   bool        has_port = false;
 
-  if (self->next_token_is(T_SQOPEN))
+  self->consume_until(host, TokSet(T_AT, T_COLON));
+
+  if (self->consume_token(T_COLON))
   {
     /*
-      IPv6 adress found! Will be parsed on rescan
-    */
-    rescan = true;
-  }
-  else
-  {
-    self->consume_until(host, TokSet(T_AT, T_COLON ));
-
-    if (self->consume_token(T_COLON))
-    {
-      /*
       We have seen  "<???>:" and it still can be user followed
       by a password or host followed by a port.
 
@@ -322,9 +203,9 @@ void URI_parser::process(Processor &prc) const
       part, whichever comes first.
     */
 
-      self->consume_until(port, T_AT);
+    self->consume_until(port, T_AT);
 
-      /*
+    /*
       If we see @ now, then it means we were looking at user
       credentials so far (and they are stored in host and port,
       respectively). We report them and request re-scanning host/port
@@ -335,26 +216,25 @@ void URI_parser::process(Processor &prc) const
       the corresponding variables.
     */
 
-      if (self->consume_token(T_AT))
-      {
-        // <user>:<pwd>@...
-        prc.user(host);
-        prc.password(port);
-        rescan = true;
-      }
-      else
-        has_port = true;
-    }
-    else if (self->consume_token(T_AT))
+    if (self->consume_token(T_AT))
     {
-      /*
+      // <user>:<pwd>@...
+      prc.user(host);
+      prc.password(port);
+      rescan = true;
+    }
+    else
+      has_port = true;
+  }
+  else if (self->consume_token(T_AT))
+  {
+    /*
       No ':' seen but we see '@'. It means user without password and
       user is stored in host variable. We report it an request
       re-scanning of host/port info.
     */
-      prc.user(host);
-      rescan = true;
-    }
+    prc.user(host);
+    rescan = true;
   }
 
   /*
@@ -367,21 +247,7 @@ void URI_parser::process(Processor &prc) const
   {
     host.clear();
     port.clear();
-
-    if (self->consume_token(T_SQOPEN))
-    {
-      /*
-        IPv6 address
-      */
-      host.clear();
-      self->consume_until(host, T_SQCLOSE);
-      if (!self->consume_token(T_SQCLOSE))
-        throw Error(this, L"Missing ']' while parsing IPv6 address");
-    }
-    else
-    {
-      self->consume_until(host, T_COLON );
-    }
+    self->consume_until(host, T_COLON);
 
     if (self->consume_token(T_COLON))
     {
@@ -392,7 +258,7 @@ void URI_parser::process(Processor &prc) const
 
 
   if (has_more_tokens())
-    throw Error(this, L"Unexpected characters after authority part");
+    parse_error(L"Unexpected characters after authority part");
 
   // report host and port
 
@@ -401,7 +267,7 @@ void URI_parser::process(Processor &prc) const
   if (has_port)
   {
     if (port.empty())
-      throw Error(this, L"Expected port number");
+      parse_error(L"Expected port number");
 
     const char *beg = port.c_str();
     char *end = NULL;
@@ -414,10 +280,10 @@ void URI_parser::process(Processor &prc) const
     */
 
     if (val == 0 && end == beg)
-      throw Error(this, L"Expected port number");
+      parse_error(L"Expected port number");
 
     if (val > 65535 || val < 0)
-      throw Error(this, L"Invalid port value");
+      parse_error(L"Invalid port value");
 
     prc.port(static_cast<unsigned short>(val));
   }
@@ -439,10 +305,10 @@ void URI_parser::process(Processor &prc) const
     self->consume_until(path, T_SLASH);
 
     if (next_token_is(T_SLASH))
-      throw Error(this,( m_has_scheme ?
+      parse_error( m_has_scheme ?
         L"Mysqlx URI can contain only single path component"
         : L"Mysqlx connection string can contain only single path component"
-      ));
+      );
 
     prc.path(path);
 
@@ -459,21 +325,21 @@ void URI_parser::process(Processor &prc) const
       anything else then it is wrong syntax.
     */
     if (has_more_tokens())
-      throw Unexpected_error(this, '&');
+      unexpected('&');
 
     self->next_part();
   }
 
   if (FRAGMENT == m_part)
   {
-    throw Error(this,( m_has_scheme ?
+    parse_error( m_has_scheme ?
       L"Mysqlx URI can not contain fragment specification"
       : L"Unexpected characters at the end"
-    ));
+    );
   }
 
   if (END != m_part)
-    throw Error(this, L"Unexpected characters at the end");
+    parse_error(L"Unexpected characters at the end");
 }
 
 
@@ -488,8 +354,8 @@ void URI_parser::process(Processor &prc) const
 void URI_parser::process_query(Processor &prc) const
 {
   URI_parser *self = const_cast<URI_parser*>(this);
-  string key;
-  string val;
+  std::string key;
+  std::string val;
 
   if (!has_more_tokens())
     return;
@@ -541,15 +407,15 @@ void URI_parser::process_query(Processor &prc) const
   reporting this list as value of given key.
 */
 
-void URI_parser::process_list(const string &key, Processor &prc) const
+void URI_parser::process_list(const std::string &key, Processor &prc) const
 {
   URI_parser *self = const_cast<URI_parser*>(this);
 
   if (!self->consume_token(T_SQOPEN))
     return;
 
-  std::list<string> list;
-  string val;
+  std::list<std::string> list;
+  std::string val;
 
   do {
     val.clear();
@@ -563,7 +429,7 @@ void URI_parser::process_list(const string &key, Processor &prc) const
     std::ostringstream msg;
     msg << "Missing ']' while parsing list value of query key '"
         << key <<"'" << std::ends;
-    throw Error(this, msg.str());
+    parse_error(msg.str());
   }
 
   prc.key_val(key, list);
@@ -637,7 +503,7 @@ bool URI_parser::check_scheme(bool force)
   {
     m_has_scheme = true;
     if (m_uri.substr(0, m_pos) != "mysqlx")
-      throw Error(this, "Expected URI scheme 'mysqlx'");
+      parse_error(L"Expected URI scheme 'mysqlx'");
 
     // move to the first token after '://'
     m_pos_next = m_pos + 3;
@@ -650,11 +516,11 @@ bool URI_parser::check_scheme(bool force)
     if (m_uri.substr(0, 6) == "mysqlx")
     {
       m_pos = 6;
-      throw Unexpected_error(this, "://");
+      unexpected("://");
     }
 
     if (force)
-      throw Error(this, "URI scheme expected");
+      parse_error(L"URI scheme expected");
   }
 
   get_token(false);
@@ -782,12 +648,12 @@ bool URI_parser::get_token(bool in_part)
 
     // TODO: more efficient implementation.
 
-    string hex = m_uri.substr(m_pos_next + 1, 2);
+    std::string hex = m_uri.substr(m_pos_next + 1, 2);
     hex.push_back('\0');
     char *end = NULL;
     c = strtol(hex.data(), &end, 16);
     if (end != hex.data() + 2 || c < 0 || c > 256)
-      throw Error(this, L"Invalid pct-encoded character");
+      parse_error(L"Invalid pct-encoded character");
 
     m_tok = Token((char)c, true);
     m_pos_next += 3;
@@ -826,7 +692,7 @@ bool URI_parser::has_more_tokens() const
 URI_parser::Token URI_parser::consume_token()
 {
   if (END == m_part)
-    throw Error(this, L"Expected more characters");
+    parse_error(L"Expected more characters");
   Token cur_tok(m_tok);
   get_token(false);
   return cur_tok;

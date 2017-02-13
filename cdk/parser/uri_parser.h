@@ -225,49 +225,36 @@ private:
 
   void next_part();
   part_t check_next_part() const;
+
+  void parse_error(const cdk::string&) const;
+  void unexpected(const std::string&, const cdk::string &msg = cdk::string()) const;
+  void unexpected(char, const cdk::string &msg = cdk::string()) const;
 };
 
 
 /*
   Base class for URI parser errors.
-
-  Error instance stores fragments of the parsed strings around current
-  parser positions. They are used when composing error description.
 */
 
 class URI_parser::Error
-  : public cdk::Error_class<URI_parser::Error>
+  : public parser::Error_base<std::string>
 {
 protected:
 
-  size_t m_pos;       // Current parser position.
-  char   m_seen[64];  // Characters seen before current position.
-  char   m_ahead[8];  // Few characters ahead of the current position.
-  cdk::string m_msg;
-
-  Error(const URI_parser *p, const cdk::string &descr = cdk::string());
-
-  virtual void do_describe1(std::ostream&) const;
-
-  void do_describe(std::ostream &out) const
+  Error(const URI_parser *p, const cdk::string &descr = cdk::string())
+  : Error_base<std::string>(p->m_uri, p->m_pos, descr)
   {
-    do_describe1(out);
-    out << " (" << m_code << ")";
-  }
-
-public:
-
-  virtual ~Error() throw ()
-  {}
-
-  size_t get_pos() const
-  {
-    return m_pos;
   }
 
   friend class URI_parser;
 };
 
+
+inline
+void URI_parser::parse_error(const cdk::string &msg) const
+{
+  throw Error(this, msg);
+}
 
 }  // parser
 
