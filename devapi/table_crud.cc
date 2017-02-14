@@ -611,8 +611,10 @@ public:
       {
         case CheckOption::CASCADED:
           options->check(cdk::api::View_check::CASCADED);
+          break;
         case CheckOption::LOCAL:
           options->check(cdk::api::View_check::LOCAL);
+          break;
       }
 
       switch(m_security)
@@ -622,6 +624,7 @@ public:
           break;
         case SQLSecurity::INVOKER:
           options->security(cdk::api::View_security::INVOKER);
+          break;
       }
     }
 
