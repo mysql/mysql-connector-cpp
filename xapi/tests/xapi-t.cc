@@ -525,10 +525,6 @@ DO_CONNECT:
         EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_SSL_CA, buf_check));
         EXPECT_STREQ(ca_buf, buf_check);
       }
-
-      EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SSL_CA_PATH, capath_buf));
-      EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_SSL_CA_PATH, buf_check));
-      EXPECT_STREQ(capath_buf, buf_check);
     }
 
     goto DO_CONNECT;
