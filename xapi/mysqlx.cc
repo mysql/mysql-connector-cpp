@@ -1725,10 +1725,6 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
       char_data = va_arg(args, char*);
       opt->set_ssl_ca(char_data);
     break;
-    case MYSQLX_OPT_SSL_CA_PATH:
-      char_data = va_arg(args, char*);
-      opt->set_ssl_ca_path(char_data);
-    break;
 #else
     case MYSQLX_OPT_SSL_ENABLE:
     case MYSQLX_OPT_SSL_CA:
@@ -1798,10 +1794,6 @@ mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
     case MYSQLX_OPT_SSL_CA:
       CHECK_OUTPUT_BUF(char_data, char*)
       strcpy(char_data, opt->get_tls().get_ca().data());
-    break;
-    case MYSQLX_OPT_SSL_CA_PATH:
-      CHECK_OUTPUT_BUF(char_data, char*)
-      strcpy(char_data, opt->get_tls().get_ca_path().data());
     break;
 #else
     case MYSQLX_OPT_SSL_ENABLE:

@@ -502,14 +502,6 @@ public:
       {
         set_ssl_ca(val);
       }
-      else if (key.compare("ssl-ca-path") == 0)
-      {
-        set_ssl_ca_path(val);
-      }
-      else if (key.compare("ssl-key") == 0)
-      {
-        set_ssl_key(val);
-      }
 #else
       set_diagnostic(
         "Can not create TLS session - this connector is built"
