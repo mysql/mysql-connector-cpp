@@ -195,6 +195,7 @@ struct URI_parser
     if (key == "ssl-ca")
     {
 #ifdef WITH_SSL
+      m_tls_opt.set_use_tls(true);
       m_tls_opt.set_ca(val);
 #else
       throw_error(

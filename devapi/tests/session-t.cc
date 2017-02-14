@@ -358,20 +358,29 @@ TEST_F(Sess, ssl_session)
 
   SKIP_IF_NO_XPLUGIN;
 
+  //Test if ssl is enabled using cipher
+  auto check_ssl_impl = [](mysqlx::XSession &sess, bool enable, int line)
   {
-    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
-                          SessionSettings::USER,get_user(),
-                          SessionSettings::PWD, get_password() ? get_password() : NULL ,
-                          SessionSettings::SSL_ENABLE, true);
-
     SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
 
     auto row = res.fetchOne();
-    cout << row[0] << ":" << row[1] << endl;
+    cout << "Line "<< line << ": " << row[0] << ":" << row[1] << endl;
 
     string cipher = row[1];
 
-    EXPECT_FALSE(cipher.empty());
+    EXPECT_EQ(enable, !cipher.empty());
+  };
+
+#define check_ssl(x,y) check_ssl_impl(x, y, __LINE__)
+
+
+  {
+    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+                          SessionSettings::USER,get_user(),
+                          SessionSettings::PWD, get_password() ? get_password() : nullptr ,
+                          SessionSettings::SSL_ENABLE, true);
+
+    check_ssl(sess, true);
   }
 
   {
@@ -380,14 +389,7 @@ TEST_F(Sess, ssl_session)
                           SessionSettings::PWD, get_password() ? get_password() : nullptr ,
                           SessionSettings::SSL_ENABLE, false);
 
-    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
-
-    auto row = res.fetchOne();
-    cout << row[0] << ":" << row[1] << endl;
-
-    string cipher = row[1];
-
-    EXPECT_TRUE(cipher.empty());
+    check_ssl(sess, false);
   }
 
   //Using URI
@@ -404,31 +406,17 @@ TEST_F(Sess, ssl_session)
   //URI without ssl_enable
   {
     mysqlx::XSession sess(uri.str());
-
-    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
-
-    auto row = res.fetchOne();
-    cout << row[0] << ":" << row[1] << endl;
-
-    string cipher = row[1];
-
-    EXPECT_TRUE(cipher.empty());
+    check_ssl(sess, false);
   }
 
 
-  //Enable SSL
-  uri << "/?ssl-enable";
   {
-    mysqlx::XSession sess(uri.str());
+    std::stringstream uri_ssl;
+    //Enable SSL
+    uri_ssl << uri.str() << "/?ssl-enable";
 
-    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
-
-    auto row = res.fetchOne();
-    cout << row[0] << ":" << row[1] << endl;
-
-    string cipher = row[1];
-
-    EXPECT_FALSE(cipher.empty());
+    mysqlx::XSession sess(uri_ssl.str());
+    check_ssl(sess, true);
   }
 
 
@@ -437,7 +425,7 @@ TEST_F(Sess, ssl_session)
     EXPECT_THROW(
     mysqlx::XSession sess(SessionSettings::PORT, get_port(),
                           SessionSettings::USER,get_user(),
-                          SessionSettings::PWD, get_password() ? get_password() : NULL ,
+                          SessionSettings::PWD, get_password() ? get_password() : nullptr ,
                           SessionSettings::SSL_ENABLE, true,
                           SessionSettings::SSL_CA, "unknown")
           , mysqlx::Error);
@@ -448,7 +436,7 @@ TEST_F(Sess, ssl_session)
   //using wrong ssl-ca and ssl-ca-path on URI
   {
     std::stringstream bad_uri;
-    bad_uri << uri.str() << "&ssl-ca=" << "unknown.file" << "&ssl-ca-path=" << "unknown.path";
+    bad_uri << uri.str() << "/?ssl-ca=" << "unknown.file";
 
     EXPECT_THROW(mysqlx::XSession sess(bad_uri.str()), mysqlx::Error);
   }
@@ -482,19 +470,46 @@ TEST_F(Sess, ssl_session)
     ssl_ca = datadir + ssl_ca;
   }
 
-  uri << "&ssl-ca=" << ssl_ca;
+  uri << "/?ssl-ca=" << ssl_ca;
 
   {
     mysqlx::XSession sess(uri.str());
+    check_ssl(sess, true);
+  }
 
-    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
+  //using ssl-enable and ssl-ca as SessionSettings
+  {
+    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+                          SessionSettings::USER,get_user(),
+                          SessionSettings::PWD, get_password() ? get_password() : nullptr ,
+                          SessionSettings::SSL_ENABLE, true,
+                          SessionSettings::SSL_CA, ssl_ca);
 
-    auto row = res.fetchOne();
-    cout << row[0] << ":" << row[1] << endl;
+    check_ssl(sess, true);
 
-    string cipher = row[1];
+  }
 
-    EXPECT_FALSE(cipher.empty());
+  //using ssl-ca as SessionSettings
+  {
+    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+                          SessionSettings::USER,get_user(),
+                          SessionSettings::PWD, get_password() ? get_password() : nullptr ,
+                          SessionSettings::SSL_CA, ssl_ca);
+
+    check_ssl(sess, true);
+
+  }
+
+  //using ssl-ca but ssl-enable = false on SessionSettings
+  {
+    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+                          SessionSettings::USER,get_user(),
+                          SessionSettings::PWD, get_password() ? get_password() : nullptr ,
+                          SessionSettings::SSL_ENABLE, false,
+                          SessionSettings::SSL_CA, ssl_ca);
+
+    check_ssl(sess, false);
+
   }
 
   //using ssl-enable and ssl-ca as SessionSettings
