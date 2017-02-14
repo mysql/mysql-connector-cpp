@@ -272,14 +272,21 @@ internal::XSession_base::XSession_base(SessionSettings settings)
               settings[SessionSettings::DB].get<string>()
             );
 
-      if (settings.has_option(SessionSettings::SSL_ENABLE))
+      if (settings.has_option(SessionSettings::SSL_ENABLE) ||
+          settings.has_option(SessionSettings::SSL_CA))
       {
 #ifdef WITH_SSL
-        cdk::connection::TLS::Options opt_ssl(settings[SessionSettings::SSL_ENABLE]);
+
+        //ssl_enable by default, unless SSL_ENABLE = false
+        bool ssl_enable = true;
+        if (settings.has_option(SessionSettings::SSL_ENABLE))
+          ssl_enable = settings[SessionSettings::SSL_ENABLE];
+
+        cdk::connection::TLS::Options opt_ssl(ssl_enable);
 
 
         if (settings.has_option(SessionSettings::SSL_CA))
-          opt_ssl.set_ca(settings[SessionSettings::SSL_ENABLE].get<string>());
+          opt_ssl.set_ca(settings[SessionSettings::SSL_CA].get<string>());
 
         opt.set_tls(opt_ssl);
 #else

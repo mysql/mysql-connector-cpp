@@ -432,7 +432,7 @@ TEST_F(Sess, ssl_session)
   }
 
 
-  //using wrong ssl-ca and ssl-ca-path as SessionSettings
+  //using wrong ssl-ca as SessionSettings
   {
     EXPECT_THROW(
     mysqlx::XSession sess(SessionSettings::PORT, get_port(),
@@ -495,6 +495,62 @@ TEST_F(Sess, ssl_session)
     string cipher = row[1];
 
     EXPECT_FALSE(cipher.empty());
+  }
+
+  //using ssl-enable and ssl-ca as SessionSettings
+  {
+    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+                          SessionSettings::USER,get_user(),
+                          SessionSettings::PWD, get_password() ? get_password() : NULL ,
+                          SessionSettings::SSL_ENABLE, true,
+                          SessionSettings::SSL_CA, ssl_ca);
+
+    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
+
+    auto row = res.fetchOne();
+    cout << row[0] << ":" << row[1] << endl;
+
+    string cipher = row[1];
+
+    EXPECT_FALSE(cipher.empty());
+
+  }
+
+  //using ssl-ca as SessionSettings
+  {
+    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+                          SessionSettings::USER,get_user(),
+                          SessionSettings::PWD, get_password() ? get_password() : NULL ,
+                          SessionSettings::SSL_CA, ssl_ca);
+
+    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
+
+    auto row = res.fetchOne();
+    cout << row[0] << ":" << row[1] << endl;
+
+    string cipher = row[1];
+
+    EXPECT_FALSE(cipher.empty());
+
+  }
+
+  //using ssl-ca but ssl-enable = false on SessionSettings
+  {
+    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+                          SessionSettings::USER,get_user(),
+                          SessionSettings::PWD, get_password() ? get_password() : NULL ,
+                          SessionSettings::SSL_ENABLE, false,
+                          SessionSettings::SSL_CA, ssl_ca);
+
+    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
+
+    auto row = res.fetchOne();
+    cout << row[0] << ":" << row[1] << endl;
+
+    string cipher = row[1];
+
+    EXPECT_TRUE(cipher.empty());
+
   }
 
 }
