@@ -589,6 +589,40 @@ TEST_F(Sess, view)
 
   }
 
+  std::cout << "Create view with select bind" << std::endl;
+
+  {
+    TableSelect sel = tbl.select();
+    sel.where("age = :age").bind("age", 40);
+
+    sch.dropView(view_name).execute();
+
+    sch.createView(view_name).definedAs(sel).execute();
+
+    Table view = sch.getTable(view_name);
+
+    RowResult res = view.select().execute();
+
+    EXPECT_EQ(1, res.count());
+
+    Row row = res.fetchOne();
+
+    EXPECT_EQ(40, row.get(1).get<int>());
+
+    sel.bind("age", 30);
+
+    sch.alterView(view_name).definedAs(sel).execute();
+
+    res = view.select().execute();
+
+    EXPECT_EQ(1, res.count());
+
+    row = res.fetchOne();
+
+    EXPECT_EQ(30, row.get(1).get<int>());
+
+  }
+
   std::cout << "Drop view" << std::endl;
 
   sch.dropView(view_name).execute();

@@ -623,9 +623,14 @@ protected:
 
   // Parameters
 
-  void add_param(const mysqlx::string &name, Value val)
+  void add_param(const mysqlx::string &name, Value &&val)
   {
-    m_map.emplace(name, std::move(val));
+    auto el = m_map.emplace(name, std::move(val));
+    //substitute if exists
+    if (!el.second)
+    {
+      el.first->second = std::move(val);
+    }
   }
 
   void clear_params()

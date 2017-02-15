@@ -136,7 +136,7 @@ namespace internal {
 
   struct Statement_impl : public Executable_impl
 {
-  virtual void add_param(const string&, Value) = 0;
+  virtual void add_param(const string&, Value&&) = 0;
 };
 
 }  // internal
@@ -190,7 +190,7 @@ public:
   Statement& bind(const string &parameter, Value val)
   {
     try {
-      get_impl()->add_param(parameter, val);
+      get_impl()->add_param(parameter, std::move(val));
       return *this;
     }
     CATCH_AND_WRAP

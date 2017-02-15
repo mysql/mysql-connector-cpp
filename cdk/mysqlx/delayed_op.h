@@ -749,6 +749,12 @@ class SndViewCrud
     return m_has_opts ? this : NULL;
   }
 
+  const protocol::mysqlx::api::Args_map*
+  get_args()
+  {
+    return m_find->m_param_conv.get();
+  }
+
 
   Proto_op* start()
   {
@@ -758,11 +764,12 @@ class SndViewCrud
     case REPLACE:
       return &m_protocol.snd_CreateView(DM, *this, *m_find,
                                         get_cols(), REPLACE == m_type,
-                                        get_opts());
+                                        get_opts(), get_args());
 
     case UPDATE:
       return &m_protocol.snd_ModifyView(DM, *this, *m_find,
-                                        get_cols(), get_opts());
+                                        get_cols(), get_opts(),
+                                        m_find->m_param_conv.get());
     default:
       assert(false);
       return NULL;  // quiet compile warnings
