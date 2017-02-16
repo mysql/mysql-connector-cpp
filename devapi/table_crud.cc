@@ -594,6 +594,8 @@ public:
     if (options)
     {
 
+      options->definer(m_user);
+
       switch (m_algorythm)
       {
         case Algorithm::MERGE:

@@ -467,7 +467,7 @@ TEST_F(Sess, view)
 
   sch.createView(view_name, false)
       .security(mysqlx::SQLSecurity::DEFINER)
-      .definer("root")
+      .definer("root@localhost")
       .definedAs(tbl.select("name as view_name", "2016-age as view_birth"))
       .withCheckOption(mysqlx::CheckOption::LOCAL)
       .execute();
@@ -515,7 +515,7 @@ TEST_F(Sess, view)
   sch.alterView(view_name)
      .columns(columns_list, "one")
      .security(mysqlx::SQLSecurity::DEFINER)
-     .definer("root")
+     .definer("root@localhost")
      .definedAs(tbl_select)
      .withCheckOption(mysqlx::CheckOption::LOCAL)
      .execute()
@@ -524,7 +524,7 @@ TEST_F(Sess, view)
   auto view_exec = sch.alterView(view_name)
                    .columns(columns_list, "one", string("two"))
                    .security(mysqlx::SQLSecurity::DEFINER)
-                   .definer("root")
+                   .definer("root@localhost")
                    .definedAs(tbl_select)
                    .withCheckOption(mysqlx::CheckOption::LOCAL);
 
@@ -554,7 +554,7 @@ TEST_F(Sess, view)
   EXPECT_THROW( sch.alterView(view_name2)
                 .columns("view_name", "fake")
                 .security(mysqlx::SQLSecurity::DEFINER)
-                .definer("root")
+                .definer("root@localhost")
                 .definedAs(tbl_select)
                 .withCheckOption(mysqlx::CheckOption::LOCAL)
                 .execute()
@@ -620,6 +620,35 @@ TEST_F(Sess, view)
     row = res.fetchOne();
 
     EXPECT_EQ(30, row.get(1).get<int>());
+
+ }
+
+ {
+    sch.dropView(view_name).execute();
+
+    sch.createView(view_name)
+        .algorithm(Algorithm::MERGE)
+        .security(SQLSecurity::INVOKER)
+        .definer("unknownUser")
+        .definedAs(tbl.select())
+        .withCheckOption(mysqlx::CheckOption::CASCADED)
+        .execute();
+
+    std::stringstream qry;
+
+    qry << "show create view " << schema_name << "." << view_name;
+
+    SqlResult result = sql(qry.str());
+
+    Row r = result.fetchOne();
+    std::string data = (string)r[1];
+
+    cout << r[0] << ": " << data << endl;
+
+    EXPECT_TRUE(data.find("MERGE")       != std::string::npos);
+    EXPECT_TRUE(data.find("INVOKER")     != std::string::npos);
+    EXPECT_TRUE(data.find("unknownUser") != std::string::npos);
+    EXPECT_TRUE(data.find("CASCADED")    != std::string::npos);
 
   }
 
