@@ -59,7 +59,7 @@ class SqlResult;
 class DbDoc;
 class DocResult;
 
-template <class Res> class Executable;
+template <class Res, class Op> class Executable;
 
 
 /*
@@ -472,7 +472,8 @@ private:
     init(std::move(other));
   }
 
-  friend Executable<Result>;
+  template <class Res, class Op>
+  friend class Executable;
 };
 
 
@@ -988,7 +989,8 @@ private:
     return m_cur_row;
   }
 
-  friend Executable<RowResult>;
+  template <class Res, class Op>
+  friend class Executable;
   friend SqlResult;
   friend DocResult;
   friend iterator;
@@ -1050,7 +1052,8 @@ private:
     : RowResult(std::move(init_))
   {}
 
-  friend Executable<SqlResult>;
+  template <class Res, class Op>
+  friend class Executable;
 };
 
 
@@ -1158,7 +1161,8 @@ private:
 
   friend Impl;
   friend DbDoc;
-  friend Executable<DocResult>;
+  template <class Res,class Op>
+  friend class Executable;
   friend iterator;
 };
 

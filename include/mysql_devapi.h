@@ -205,10 +205,15 @@ struct View_impl
   virtual void with_check_option(CheckOption) = 0;
 };
 
-class PUBLIC_API View_check_opt
-: public Executable<Result>
+
+template <class Op>
+class ViewCheckOpt
+: public Executable<Result,Op>
 {
 protected:
+
+  using Executable<Result, Op>::check_if_valid;
+  using Executable<Result, Op>::m_impl;
 
   View_impl* get_impl()
   {
@@ -221,16 +226,20 @@ public:
   /**
     Set constraints on the View.
   */
-  Executable<Result> withCheckOption(CheckOption option)
+  Executable<Result,Op> withCheckOption(CheckOption option)
   {
     get_impl()->with_check_option(option);
     return std::move(*this);
   }
 };
 
-class PUBLIC_API View_defined_as
-: protected View_check_opt
+template <class Op>
+class ViewDefinedAs
+: protected ViewCheckOpt<Op>
 {
+protected:
+
+  using ViewCheckOpt<Op>::get_impl;
 
 public:
 
@@ -238,13 +247,13 @@ public:
      Define the table select statement to generate the View.
   */
 
-  View_check_opt definedAs(TableSelect&& table)
+  ViewCheckOpt<Op> definedAs(TableSelect&& table)
   {
     get_impl()->defined_as(std::move(table));
     return std::move(*this);
   }
 
-  View_check_opt definedAs(const TableSelect& table)
+  ViewCheckOpt<Op> definedAs(const TableSelect& table)
   {
     TableSelect table_tmp(table);
     get_impl()->defined_as(std::move(table_tmp));
@@ -252,41 +261,53 @@ public:
   }
 };
 
-class PUBLIC_API View_definer
-: public View_defined_as
+template <class Op>
+class ViewDefiner
+: public ViewDefinedAs<Op>
 {
+protected:
+
+  using ViewDefinedAs<Op>::get_impl;
 
 public:
 
   /**
     Define the View’s definer.
   */
- View_defined_as definer(const string &user)
+ ViewDefinedAs<Op> definer(const string &user)
  {
   get_impl()->definer(user);
   return std::move(*this);
  }
 };
 
-class PUBLIC_API View_security
-  : public View_definer
+template <class Op>
+class ViewSecurity
+  : public ViewDefiner<Op>
 {
+protected:
+
+  using ViewDefiner<Op>::get_impl;
 
 public:
 
   /**
      Define the View’s security scheme.
   */
-  View_definer security(SQLSecurity sec)
+  ViewDefiner<Op> security(SQLSecurity sec)
   {
     get_impl()->security(sec);
     return std::move(*this);
   }
 };
 
-class PUBLIC_API View_algorithm
-  : public View_security
+template <class Op>
+class ViewAlgorithm
+  : public ViewSecurity<Op>
 {
+protected:
+
+  using ViewSecurity<Op>::get_impl;
 
 public:
 
@@ -294,7 +315,7 @@ public:
     define the View’s algorithm.
   */
 
-  View_security algorithm(Algorithm alg)
+  ViewSecurity<Op> algorithm(Algorithm alg)
   {
     get_impl()->algorithm(alg);
     return std::move(*this);
@@ -306,9 +327,13 @@ public:
 /*
   Base blass for Create/Alter View
 */
-class PUBLIC_API View_base
-  : public View_algorithm
+template <class Op>
+class View_base
+  : public ViewAlgorithm<Op>
 {
+protected:
+
+  using ViewAlgorithm<Op>::get_impl;
 
   void add_columns(const char *name)
   {
@@ -343,21 +368,19 @@ public:
    */
 
   template<typename...T>
-  View_algorithm columns(const T&...names)
+  ViewAlgorithm<Op> columns(const T&...names)
   {
     add_columns(names...);
     return std::move(*this);
   }
 
   /// @cond IGNORED
-  friend class Schema;
+  friend Schema;
   friend ViewCreate;
   friend ViewAlter;
   /// @endcond
 
 };
-
-
 
 
 } // namespace internal
@@ -367,13 +390,13 @@ public:
 */
 
 class PUBLIC_API ViewCreate
-  : public internal::View_base
+  : public internal::View_base<ViewCreate>
 {
 
   ViewCreate(Schema &sch, const string& name, bool replace);
 
   /// @cond IGNORED
-  friend class Schema;
+  friend Schema;
   /// @endcond
 
 };
@@ -384,13 +407,13 @@ class PUBLIC_API ViewCreate
 */
 
 class PUBLIC_API ViewAlter
-  : public internal::View_base
+  : public internal::View_base<ViewAlter>
 {
 
   ViewAlter(Schema &sch, const string& name);
 
   /// @cond IGNORED
-  friend class Schema;
+  friend Schema;
   /// @endcond
 
 };
@@ -405,13 +428,18 @@ namespace internal {
 struct ViewDrop_impl
   : public Executable_impl
 {
-
   virtual void if_exists() = 0;
 };
 
+
+template <class Op>
 class ViewDropIfExists
-    : public Executable<Result>
+    : public Executable<Result,Op>
 {
+protected:
+
+  using Executable<Result, Op>::check_if_valid;
+  using Executable<Result, Op>::m_impl;
 
   ViewDrop_impl* get_impl()
   {
@@ -421,7 +449,7 @@ class ViewDropIfExists
 
 public:
 
-  Executable<Result> ifExists()
+  Executable<Result,Op> ifExists()
   {
     get_impl()->if_exists();
     return std::move(*this);
@@ -435,13 +463,13 @@ public:
 */
 
 class PUBLIC_API ViewDrop
-  : public internal::ViewDropIfExists
+  : public internal::ViewDropIfExists<ViewDrop>
 {
 
   ViewDrop(Schema &sch, const string& name);
 
   /// @cond IGNORED
-  friend class Schema;
+  friend Schema;
   /// @endcond
 
 };
