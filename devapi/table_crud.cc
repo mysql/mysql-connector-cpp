@@ -30,6 +30,7 @@
 #include <forward_list>
 #include <boost/format.hpp>
 #include <list>
+#include <bitset>
 
 #include "impl.h"
 
@@ -487,12 +488,16 @@ public:
 private:
 
   op_type m_op_type;
-  CheckOption m_check_option;
   std::unique_ptr<TableSelect> m_table_select;
-  SQLSecurity m_security;
-  Algorithm m_algorythm;
-  std::vector<mysqlx::string> m_columns;
-  mysqlx::string m_user;
+  std::vector<mysqlx::string>  m_columns;
+
+  CheckOption    m_check_option;
+  SQLSecurity    m_security;
+  Algorithm      m_algorithm;
+  mysqlx::string m_definer;
+
+  enum view_option { CHECK, SECURITY, ALGORITHM, DEFINER, LAST};
+  std::bitset<LAST>  m_opts_mask;
 
   Executable_impl* clone() const override
   {
@@ -503,11 +508,11 @@ private:
     : Op_base(other)
     , Table_ref(other)
     , m_op_type      (other.m_op_type     )
+    , m_columns      (other.m_columns     )
     , m_check_option (other.m_check_option)
     , m_security     (other.m_security    )
-    , m_algorythm    (other.m_algorythm   )
-    , m_columns      (other.m_columns     )
-    , m_user         (other.m_user        )
+    , m_algorithm    (other.m_algorithm   )
+    , m_definer      (other.m_definer     )
   {
     if (other.m_table_select.get() != NULL)
     {
@@ -527,6 +532,7 @@ public:
   void with_check_option(CheckOption option) override
   {
     m_check_option = option;
+    m_opts_mask.set(CHECK);
   }
 
   void defined_as(TableSelect &&select) override
@@ -537,17 +543,20 @@ public:
 
   void definer(const mysqlx::string &user) override
   {
-    m_user = user;
+    m_definer = user;
+    m_opts_mask.set(DEFINER);
   }
 
   void security(SQLSecurity security) override
   {
     m_security = security;
+    m_opts_mask.set(SECURITY);
   }
 
   void algorithm(Algorithm algorythm) override
   {
-    m_algorythm = algorythm;
+    m_algorithm = algorythm;
+    m_opts_mask.set(ALGORITHM);
   }
 
   void add_columns(const mysqlx::string &name) override
@@ -594,40 +603,44 @@ public:
     if (options)
     {
 
-      options->definer(m_user);
+      if (m_opts_mask.test(DEFINER))
+        options->definer(m_definer);
 
-      switch (m_algorythm)
-      {
-        case Algorithm::MERGE:
-          options->algorithm(cdk::api::View_algorithm::MERGE);
-          break;
-        case Algorithm::TEMPTABLE:
-          options->algorithm(cdk::api::View_algorithm::TEMPTABLE);
-          break;
-        case Algorithm::UNDEFINED:
-          options->algorithm(cdk::api::View_algorithm::UNDEFINED);
-          break;
-      }
+      if (m_opts_mask.test(ALGORITHM))
+        switch (m_algorithm)
+        {
+          case Algorithm::MERGE:
+            options->algorithm(cdk::api::View_algorithm::MERGE);
+            break;
+          case Algorithm::TEMPTABLE:
+            options->algorithm(cdk::api::View_algorithm::TEMPTABLE);
+            break;
+          case Algorithm::UNDEFINED:
+            options->algorithm(cdk::api::View_algorithm::UNDEFINED);
+            break;
+        };
 
-      switch(m_check_option)
-      {
-        case CheckOption::CASCADED:
-          options->check(cdk::api::View_check::CASCADED);
-          break;
-        case CheckOption::LOCAL:
-          options->check(cdk::api::View_check::LOCAL);
-          break;
-      }
+      if (m_opts_mask.test(CHECK))
+        switch(m_check_option)
+        {
+          case CheckOption::CASCADED:
+            options->check(cdk::api::View_check::CASCADED);
+            break;
+          case CheckOption::LOCAL:
+            options->check(cdk::api::View_check::LOCAL);
+            break;
+        };
 
-      switch(m_security)
-      {
-        case SQLSecurity::DEFINER:
-          options->security(cdk::api::View_security::DEFINER);
-          break;
-        case SQLSecurity::INVOKER:
-          options->security(cdk::api::View_security::INVOKER);
-          break;
-      }
+      if (m_opts_mask.test(SECURITY))
+        switch(m_security)
+        {
+          case SQLSecurity::DEFINER:
+            options->security(cdk::api::View_security::DEFINER);
+            break;
+          case SQLSecurity::INVOKER:
+            options->security(cdk::api::View_security::INVOKER);
+            break;
+        };
     }
 
   }
