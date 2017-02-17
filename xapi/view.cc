@@ -99,8 +99,15 @@ void View_spec::set_check(int val)
 
 void View_spec::set_definer(const char* val)
 {
-  m_opts.m_definer_set = true;
-  m_opts.m_definer = val;
+  if (val)
+  {
+    m_opts.m_definer_set = true;
+    m_opts.m_definer = val;
+  }
+  else
+  { // If definer = NULL, we will not report it
+    m_opts.m_definer_set = false;
+  }
 }
 
 void View_spec::set_columns(va_list args)

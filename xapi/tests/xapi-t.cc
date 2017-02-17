@@ -66,6 +66,7 @@ TEST_F(xapi, view_ddl_test)
   EXPECT_EQ(RESULT_OK, mysqlx_set_view_algorithm(vstmt, VIEW_ALGORITHM_MERGE));
   EXPECT_EQ(RESULT_OK, mysqlx_set_view_security(vstmt, VIEW_SECURITY_INVOKER));
   EXPECT_EQ(RESULT_OK, mysqlx_set_view_check_option(vstmt, VIEW_CHECK_OPTION_CASCADED));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_view_definer(vstmt, NULL));
   EXPECT_EQ(RESULT_OK, mysqlx_set_view_definer(vstmt, "root"));
 
   // Change parent SELECT STMT, it is not supposed to affect the VIEW STMT in any way
