@@ -513,6 +513,7 @@ private:
     , m_security     (other.m_security    )
     , m_algorithm    (other.m_algorithm   )
     , m_definer      (other.m_definer     )
+    , m_opts_mask    (other.m_opts_mask   )
   {
     if (other.m_table_select.get() != NULL)
     {
