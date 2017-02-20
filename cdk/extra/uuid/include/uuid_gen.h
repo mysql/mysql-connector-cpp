@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -15,14 +15,27 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
-#ifndef UUID_GEN_INCLUDED
-#define UUID_GEN_INCLUDED
+#ifndef _UUID_GEN_H_
+#define _UUID_GEN_H_
+
+#include <stdint.h>
 
 #define UUID_LENGTH_BIN 16
+
+namespace uuid {
+
 typedef unsigned char uuid_type[UUID_LENGTH_BIN];
 
-void init_uuid(unsigned long);
-void end_uuid();
+/* The seed must be set before using the generator. */
+void set_seed(uint16_t seed);
+
+/* Convenience function, which sets the seed using the time and
+   process id */
+void set_seed_from_time_pid();
+
+/* UUID generator */
 void generate_uuid(uuid_type &uuid);
+
+} // namespace uuid
 
 #endif

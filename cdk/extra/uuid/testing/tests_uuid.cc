@@ -32,6 +32,7 @@
 */
 
 using namespace std;
+using namespace uuid;
 
 std::ostream& operator<<(std::ostream &out, unsigned char u)
 {
@@ -44,11 +45,11 @@ std::ostream& operator<<(std::ostream &out, unsigned char u)
 
 std::ostream& operator<<(std::ostream &out, const unsigned char id[16])
 {
-  out << id[0] << id[1] << id[2] << id[3];
-  out <<"-" << id[4] << id[5];
+  out << id[0] << id[1] << id[2] << id[3] << id[4] << id[5];
   out <<"-" << id[6] << id[7];
   out <<"-" << id[8] << id[9];
-  out << id[10] << id[11] << id[12] << id[13] << id[14] << id[15];
+  out <<"-" << id[10] << id[11];
+  out << id[12] << id[13] << id[14] << id[15];
 
   return out;
 }
@@ -56,24 +57,16 @@ std::ostream& operator<<(std::ostream &out, const unsigned char id[16])
 
 int main(int argc, char **argv)
 {
-  init_uuid(365873);
+  std::cout << "UUID Generator:" << std::endl;
 
-  std::cout << "UUID Generator:" << std::endl << "----------------------" << std::endl;
-
-  int iter_number= 100;
-
-  if (argc > 1)
-    iter_number = std::atoi(argv[1]);
-  else
-    std::cout << "Optional number of iterations can be specified in the command line" << std::endl;
-
-  std::cout << "Number of iterations: " << iter_number << std::endl << std::endl;
+  int iter_number= 20;
 
   int i = 0;
   uuid_type uuid;
 
   while(i < iter_number)
   {
+    set_seed_from_time_pid();
     generate_uuid(uuid);
     std::cout << "UUID_" << std::setw(4) << std::setfill('0') << ++i << " " << uuid << std::endl;
 #ifdef _WIN32
@@ -83,7 +76,4 @@ int main(int argc, char **argv)
 #endif
   }
   std::cout << "DONE!" << std::endl;
-
-  end_uuid();
-  return 0;
 }

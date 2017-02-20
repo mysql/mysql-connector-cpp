@@ -34,33 +34,17 @@
 #include "impl.h"
 
 using namespace mysqlx;
-
+using namespace uuid;
 
 // --------------------------------------------------------------------
 
-
-static struct UUID_initializer {
-
-  UUID_initializer()
-  {
-    init_uuid((unsigned long)time(NULL));
-  }
-
-  ~UUID_initializer()
-  {
-    end_uuid();
-  }
-
-} uuid_initializer;
-
-
 void mysqlx::GUID::generate()
 {
-  uuid_type uuid;
-  generate_uuid(uuid);
+  uuid::uuid_type uuid;
+  mysqlx::generate_uuid(uuid);
   boost::format fmt("%02X");
 
-  for (unsigned i = 0; i < sizeof(uuid) && 2*i < sizeof(m_data); ++i)
+  for (unsigned i = 0; i < sizeof(uuid) && 2 * i < sizeof(m_data); ++i)
   {
     memcpy(m_data + 2 * i, (fmt % (unsigned)uuid[i]).str().data(), 2);
   }

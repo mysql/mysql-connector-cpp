@@ -33,11 +33,13 @@
 #include <expr_parser.h>
 #include <uri_parser.h>
 #include <mysql/cdk/converters.h>
+#include "../global.h"
 #include "def_internal.h"
 #include "ref_internal.h"
 #include "error_internal.h"
 #include "row_internal.h"
 #include "crud_internal.h"
+
 
 #define SKIP_ERROR_COLL_EXISTS 1051
 
