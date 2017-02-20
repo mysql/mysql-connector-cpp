@@ -110,7 +110,7 @@ protected:
       }
   */
 
-  enum { MDATA, ROWS, CLOSE, DONE } m_result_state, m_next_state;
+  enum { START, MDATA, ROWS, CLOSE, DONE } m_result_state, m_next_state;
   row_count_t m_rcount;
   col_count_t m_ccount;
 
@@ -164,7 +164,7 @@ public:
 
 Rcv_result_base::Rcv_result_base(Protocol_impl &proto)
   : Op_rcv(proto)
-  , m_result_state(MDATA)
+  , m_result_state(START)
   , m_rcount(0)
   , m_ccount(0)
 {
@@ -181,7 +181,7 @@ Rcv_result_base::Rcv_result_base(Protocol_impl &proto)
 
 void Rcv_result_base::resume(Mdata_processor &prc)
 {
-  if (MDATA != m_result_state)
+  if (START != m_result_state && MDATA != m_result_state)
     throw_error("Rcv_result: incorrect resume: attempt to read meta-data"); //TODO: Improve error report
   m_ccount = 0;
   m_completed = false;
@@ -295,6 +295,18 @@ Op_rcv::Next_msg Rcv_result_base::do_next_msg(msg_type_t type)
   switch (m_result_state)
   {
 
+  case START:
+
+    if (msg_type::Ok == type)
+    {
+      m_next_state = DONE;
+      m_completed = true;
+      return EXPECTED;
+    }
+
+    m_next_state = MDATA;
+    // fall through to MDATA case
+
   case MDATA:
 
     /*
@@ -318,6 +330,7 @@ Op_rcv::Next_msg Rcv_result_base::do_next_msg(msg_type_t type)
 
     switch (type)
     {
+
     case msg_type::ColumnMetaData: return EXPECTED;
 
     /*
@@ -625,6 +638,13 @@ void Rcv_result_base::process_msg_with(Mysqlx::Resultset::ColumnMetaData &col_md
       mdata_proc.col_flags(ccount, col_mdata.flags());
 }
 
+template<>
+void Rcv_result_base::process_msg_with(Mysqlx::Ok &ok,
+                                       Mdata_processor &prc)
+{
+  prc.ok(ok.msg());
+}
+
 
 template<>
 void Rcv_result_base::process_msg_with(Mysqlx::Sql::StmtExecuteOk &ok,
@@ -656,6 +676,7 @@ void Rcv_result::do_process_msg(msg_type_t type, Message &msg)
 
   switch (m_result_state)
   {
+  case START:
   case MDATA:
     Dispatcher::process_msg_with(type, msg, *static_cast<Mdata_processor*>(m_prc));
     break;

@@ -25,6 +25,7 @@
 #ifndef CDK_API_EXPRESSION_H
 #define CDK_API_EXPRESSION_H
 
+#include "../foundation.h"
 #include <stddef.h> // for NULL
 #include <stdint.h>
 

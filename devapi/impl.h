@@ -538,7 +538,6 @@ class Op_base
   : public Impl
   , public cdk::Limit
   , public cdk::Param_source
-  , internal::nocopy
 {
 protected:
 
@@ -567,6 +566,14 @@ protected:
   {}
   Op_base(Table &tbl)
     : m_sess(&tbl.getSession())
+  {}
+  Op_base(const Op_base& other)
+    : m_sess       (other.m_sess      )
+    , m_limit      (other.m_limit     )
+    , m_has_limit  (other.m_has_limit )
+    , m_offset     (other.m_offset    )
+    , m_has_offset (other.m_has_offset)
+    , m_map        (other.m_map       )
   {}
 
   virtual ~Op_base()
@@ -618,9 +625,14 @@ protected:
 
   // Parameters
 
-  void add_param(const mysqlx::string &name, Value val)
+  void add_param(const mysqlx::string &name, Value &&val)
   {
-    m_map.emplace(name, std::move(val));
+    auto el = m_map.emplace(name, std::move(val));
+    //substitute if exists
+    if (!el.second)
+    {
+      el.first->second = std::move(val);
+    }
   }
 
   void clear_params()
@@ -762,9 +774,14 @@ class Op_sort
 
 protected:
 
-  template <typename T>
-  Op_sort(T &x) : Op_base<Impl>(x)
+  template <class X,
+            typename std::enable_if<
+              std::is_convertible<X*, DatabaseObject*>::value
+              >::type* = nullptr
+            >
+  Op_sort(X &x) : Op_base<Impl>(x)
   {}
+
 
 public:
 
@@ -824,8 +841,12 @@ class Op_having
 
 protected:
 
-  template <typename T>
-  Op_having(T &x) : Op_sort<Impl,PM>(x)
+  template <class X,
+            typename std::enable_if<
+              std::is_convertible<X*, DatabaseObject*>::value
+              >::type* = nullptr
+            >
+  Op_having(X &x) : Op_sort<Impl,PM>(x)
   {}
 
 public:
@@ -877,8 +898,12 @@ class Op_group_by
 
 protected:
 
-  template <typename T>
-  Op_group_by(T &x) : Op_having<Impl,PM>(x)
+  template <class X,
+            typename std::enable_if<
+              std::is_convertible<X*, DatabaseObject*>::value
+              >::type* = nullptr
+            >
+  Op_group_by(X &x) : Op_having<Impl,PM>(x)
   {}
 
 public:
@@ -934,7 +959,12 @@ class Op_projection
 
 protected:
 
-  template <class X>
+
+  template <class X,
+            typename std::enable_if<
+              std::is_convertible<X*, DatabaseObject*>::value
+              >::type* = nullptr
+            >
   Op_projection(X &init) : Op_group_by<Impl,PM>(init)
   {}
 
@@ -1054,17 +1084,32 @@ class Op_select : public Base
 {
 protected:
 
+  mysqlx::string m_where_expr;
   std::unique_ptr<parser::Expression_parser> m_expr;
 
-  template <class X>
+  template <class X,
+            typename std::enable_if<
+              std::is_convertible<X*, DatabaseObject*>::value
+              >::type* = nullptr
+            >
   Op_select(X &init) : Base(init)
   {}
+
+  Op_select(const Op_select &other)
+    : Base(other)
+    , m_where_expr(other.m_where_expr)
+  {
+    if (!m_where_expr.empty())
+      m_expr.reset(new parser::Expression_parser(PM, m_where_expr));
+  }
 
 public:
 
   void add_where(const mysqlx::string &expr)
   {
-    m_expr.reset(new parser::Expression_parser(PM, expr));
+    m_where_expr = expr;
+    if (!m_where_expr.empty())
+      m_expr.reset(new parser::Expression_parser(PM, m_where_expr));
   }
 
   cdk::Expression* get_where() const

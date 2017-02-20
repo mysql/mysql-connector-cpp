@@ -156,7 +156,7 @@ namespace internal {
 */
 
 class PUBLIC_API TableInsert
-  : public Executable<Result>
+  : public Executable<Result,TableInsert>
 {
   typedef internal::TableInsert_impl Impl;
 
@@ -261,6 +261,14 @@ public:
 
   TableInsert(TableInsert &&other) : TableInsert(other) {}
 
+  /*
+    TODO: Implement copy semantics for this and other crud operations.
+    Note that the ctor TableInsert(TableInsert &other) implements move
+    semantics, because m_row pointer is moved from one instance to the
+    other.
+
+    TODO: Add ctor from the base Executable<> class.
+  */
 
   /// Add given row to the list of rows to be inserted.
 
@@ -392,16 +400,16 @@ namespace internal {
     Class defining table CRUD .orderBy() clause.
   */
 
-  template <class Res, bool limit_with_offset>
+  template <class Res, class Op, bool limit_with_offset>
   class TableSort
-    : public Limit<Res, limit_with_offset>
+    : public Limit<Res, Op, limit_with_offset>
   {
   protected:
 
     typedef internal::Sort_impl Impl;
 
-    using Limit<Res, limit_with_offset>::check_if_valid;
-    using Limit<Res, limit_with_offset>::m_impl;
+    using Limit<Res, Op, limit_with_offset>::check_if_valid;
+    using Limit<Res, Op, limit_with_offset>::m_impl;
 
     Impl* get_impl()
     {
@@ -467,17 +475,18 @@ namespace internal {
     Class defining table CRUD .having() clause.
   */
 
+  template <class Op>
   class TableHaving
-    : public TableSort<RowResult, true>
+    : public TableSort<RowResult, Op, true>
   {
   protected:
 
     typedef internal::Having_impl Impl;
 
-    using TableSort<RowResult, true>::check_if_valid;
-    using TableSort<RowResult, true>::m_impl;
+    using TableSort<RowResult, Op, true>::check_if_valid;
+    using TableSort<RowResult, Op, true>::m_impl;
 
-    typedef TableSort<RowResult, true> TableSort;
+//    typedef TableSort<RowResult, Op, true> TableSort;
 
     Impl* get_impl()
     {
@@ -493,7 +502,7 @@ namespace internal {
       Arguments are a string defining filter to be used.
     */
 
-    TableSort& having(const string& having_spec)
+    TableSort<RowResult, Op, true>& having(const string& having_spec)
     {
       get_impl()->set_having(having_spec);
       return *this;
@@ -512,18 +521,19 @@ namespace internal {
     Class defining .groupBy() clause.
   */
 
+  template <class Op>
   class TableGroupBy
-      : public internal::TableHaving
+      : public internal::TableHaving<Op>
   {
 
   protected:
 
     typedef internal::Group_by_impl Impl;
 
-    using TableHaving::check_if_valid;
-    using TableHaving::m_impl;
+    using TableHaving<Op>::check_if_valid;
+    using TableHaving<Op>::m_impl;
 
-    typedef internal::TableHaving TableHaving;
+    typedef internal::TableHaving<Op> TableHaving;
 
     Impl* get_impl()
     {
@@ -579,6 +589,7 @@ namespace internal {
 namespace internal {
 
   class TableSelectBase;
+  class Op_ViewCreateAlter;
 
   /*
     Interface to be implemented by internal implementations
@@ -612,15 +623,15 @@ namespace internal {
 DLL_WARNINGS_PUSH
 
 class PUBLIC_API TableSelect
-  : public internal::TableGroupBy
+  : public internal::TableGroupBy<TableSelect>
 {
 
 DLL_WARNINGS_POP
 
   typedef internal::TableSelect_impl Impl;
 
-  using TableGroupBy::check_if_valid;
-  using TableGroupBy::m_impl;
+  using TableGroupBy<TableSelect>::check_if_valid;
+  using TableGroupBy<TableSelect>::m_impl;
 
   Impl* get_impl()
   {
@@ -679,8 +690,13 @@ DIAGNOSTIC_PUSH
     add_proj(proj...);
   }
 
-  TableSelect(TableSelect &other) : Executable<RowResult>(other) {}
-  TableSelect(TableSelect &&other) : TableSelect(other) {}
+  TableSelect(const Executable<RowResult,TableSelect> &other)
+    : Executable<RowResult,TableSelect>(other)
+  {}
+
+  TableSelect(Executable<RowResult,TableSelect> &&other)
+    : Executable<RowResult,TableSelect>(std::move(other))
+  {}
 
 DIAGNOSTIC_POP
 
@@ -698,6 +714,7 @@ DIAGNOSTIC_POP
 
   ///@cond IGNORED
   friend internal::TableSelectBase;
+  friend internal::Op_ViewCreateAlter;
   ///@endcond
 };
 
@@ -765,11 +782,11 @@ namespace internal {
 */
 
 class PUBLIC_API TableUpdate
-: public internal::TableSort<Result, false>
+: public internal::TableSort<Result, TableUpdate, false>
 {
 
   typedef internal::TableUpdate_impl Impl;
-  typedef internal::TableSort<Result, false>  TableSort;
+  typedef internal::TableSort<Result, TableUpdate, false>  TableSort;
 
   Impl* get_impl()
   {
@@ -794,7 +811,7 @@ DIAGNOSTIC_PUSH
 
   // TODO: ctor with where condition?
 
-  TableUpdate(TableUpdate &other) : Executable<Result>(other) {}
+  TableUpdate(TableUpdate &other) : Executable<Result,TableUpdate>(other) {}
   TableUpdate(TableUpdate &&other) : TableUpdate(other) {}
 
 DIAGNOSTIC_POP
@@ -887,11 +904,11 @@ namespace internal {
 
 
 class PUBLIC_API TableRemove
-  : public internal::TableSort<Result, false>
+  : public internal::TableSort<Result, TableRemove, false>
 {
 
   typedef internal::TableRemove_impl Impl;
-  typedef internal::TableSort<Result, false>  TableSort;
+  typedef internal::TableSort<Result, TableRemove, false>  TableSort;
 
   Impl* get_impl()
   {
@@ -916,7 +933,7 @@ DIAGNOSTIC_PUSH
 
   // TODO: ctor with where condition?
 
-  TableRemove(TableRemove &other) : Executable<Result>(other) {}
+  TableRemove(TableRemove &other) : Executable<Result,TableRemove>(other) {}
   TableRemove(TableRemove &&other) : TableRemove(other) {}
 
 DIAGNOSTIC_POP

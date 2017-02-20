@@ -157,9 +157,13 @@ typedef object_id* MYSQLX_GUID;
 #define MYSQLX_ERROR_INDEX_OUT_OF_RANGE_MSG "Index is out of range"
 #define MYSQLX_ERROR_MISSING_SCHEMA_NAME_MSG "Missing schema name"
 #define MYSQLX_ERROR_MISSING_TABLE_NAME_MSG "Missing table name"
+#define MYSQLX_ERROR_MISSING_VIEW_NAME_MSG "Missing view name"
 #define MYSQLX_ERROR_MISSING_COLLECTION_NAME_MSG "Missing collection name"
 #define MYSQLX_ERROR_MISSING_VIEW_NAME_MSG "Missing view name"
 #define MYSQLX_ERROR_MISSING_KEY_NAME_MSG "Missing key name"
+#define MYSQLX_ERROR_HANDLE_NULL_MSG "Handle cannot be NULL"
+#define MYSQLX_ERROR_VIEW_INVALID_STMT_TYPE "Invalid statement type for View. Only SELECT type is supported"
+#define MYSQLX_ERROR_VIEW_TYPE_MSG "Statement must be of VIEW type"
 #define MYSQLX_ERROR_OUTPUT_BUFFER_NULL "The output buffer cannot be NULL"
 #define MYSQLX_ERROR_OUTPUT_BUFFER_ZERO "The output buffer cannot have zero length"
 #define MYSQLX_ERROR_OP_NOT_SUPPORTED "The operation is not supported by the function"
@@ -320,6 +324,9 @@ typedef enum mysqlx_sort_direction_enum
 } mysqlx_sort_direction_t;
 
 
+#define PARAM_SORT_ASC(A) A, SORT_ORDER_ASC
+#define PARAM_SORT_DESC(A) A, SORT_ORDER_DESC
+
 /**
   Session options for use with `mysqlx_session_option_get()`
   and `mysqlx_session_option_set()` functions.
@@ -339,6 +346,42 @@ typedef enum mysqlx_opt_type_enum
 }
 mysqlx_opt_type_t;
 
+
+/**
+  Constants for defining the View algorithm using
+  mysqlx_set_view_algorithm() function.
+*/
+
+typedef enum mysqlx_view_algorithm_enum
+{
+  VIEW_ALGORITHM_UNDEFINED = 0,
+  VIEW_ALGORITHM_MERGE = 1,
+  VIEW_ALGORITHM_TEMPTABLE = 2
+}mysqlx_view_algorithm_t;
+
+
+/**
+  Constants for defining the View security using
+  mysqlx_set_view_security() function.
+*/
+
+typedef enum mysqlx_view_security_enum
+{
+  VIEW_SECURITY_DEFINER = 1,
+  VIEW_SECURITY_INVOKER = 2
+}mysqlx_view_security_t;
+
+
+/**
+  Constants for defining the View check options
+  mysqlx_set_view_security() function.
+*/
+
+typedef enum mysqlx_view_check_option_enum
+{
+  VIEW_CHECK_OPTION_CASCADED = 1,
+  VIEW_CHECK_OPTION_LOCAL = 2
+}mysqlx_view_check_option_t;
 
 /*
   ====================================================================
@@ -2762,6 +2805,57 @@ PUBLIC_API unsigned int mysqlx_result_warning_count(mysqlx_result_t *res);
 
 PUBLIC_API mysqlx_error_t *
 mysqlx_result_next_warning(mysqlx_result_t *res);
+
+#define VIEW_OPTION_ALGORITHM     100
+#define VIEW_OPTION_SECURITY      101
+#define VIEW_OPTION_CHECK_OPTION  102
+#define VIEW_OPTION_DEFINER       103
+#define VIEW_OPTION_COLUMNS       104
+
+#define VIEW_ALGORITHM(A)    (void*)VIEW_OPTION_ALGORITHM, A
+#define VIEW_SECURITY(S)     (void*)VIEW_OPTION_SECURITY, S
+#define VIEW_CHECK_OPTION(C) (void*)VIEW_OPTION_CHECK_OPTION, C
+#define VIEW_DEFINER(D)      (void*)VIEW_OPTION_DEFINER, D
+#define VIEW_COLUMNS(...)    (void*)VIEW_OPTION_COLUMNS, __VA_ARGS__
+
+PUBLIC_API mysqlx_stmt_t *
+mysqlx_view_create_new(mysqlx_schema_t *schema, const char *name,
+                       mysqlx_stmt_t *select_stmt);
+
+PUBLIC_API mysqlx_result_t *
+mysqlx_view_create(mysqlx_schema_t *schema, const char *name,
+                   mysqlx_stmt_t *select_stmt, ...);
+
+PUBLIC_API mysqlx_stmt_t *
+mysqlx_view_modify_new(mysqlx_schema_t *schema, const char *name,
+                       mysqlx_stmt_t *select_stmt);
+
+PUBLIC_API mysqlx_result_t *
+mysqlx_view_modify(mysqlx_schema_t *schema, const char *name,
+                   mysqlx_stmt_t *select_stmt, ...);
+
+PUBLIC_API mysqlx_stmt_t *
+mysqlx_view_replace_new(mysqlx_schema_t *schema, const char *name,
+                        mysqlx_stmt_t *select_stmt);
+
+PUBLIC_API mysqlx_result_t *
+mysqlx_view_replace(mysqlx_schema_t *schema, const char *name,
+                    mysqlx_stmt_t *select_stmt, ...);
+
+PUBLIC_API int
+mysqlx_set_view_algorithm(mysqlx_stmt_t *view_stmt, int algorithm);
+
+PUBLIC_API int
+mysqlx_set_view_security(mysqlx_stmt_t *view_stmt, int security);
+
+PUBLIC_API int
+mysqlx_set_view_check_option(mysqlx_stmt_t *view_stmt, int option);
+
+PUBLIC_API int
+mysqlx_set_view_definer(mysqlx_stmt_t *view_stmt, const char *user);
+
+PUBLIC_API int
+mysqlx_set_view_columns(mysqlx_stmt_t *view_stmt, ...);
 
 #ifdef	__cplusplus
 }

@@ -67,7 +67,8 @@ mysqlx_stmt_t * mysqlx_session_t::sql_query(const char *query, uint32_t length,
   collection or a table
 */
 mysqlx_stmt_t * mysqlx_session_t::stmt_op(const cdk::string schema, const cdk::string obj_name,
-                                      mysqlx_op_t op_type, bool session_crud)
+                                      mysqlx_op_t op_type, bool session_crud,
+                                      mysqlx_stmt_t *parent)
 {
   mysqlx_stmt_t *stmt;
 
@@ -82,7 +83,13 @@ mysqlx_stmt_t * mysqlx_session_t::stmt_op(const cdk::string schema, const cdk::s
     throw Mysqlx_exception("The default schema is not specified");
   }
 
-  stmt = new mysqlx_stmt_t(this, schema.length() ? schema : *m_sess_opt.database(), obj_name, op_type);
+  if (parent)
+    stmt = new mysqlx_stmt_t(this, schema.length() ? schema : *m_sess_opt.database(),
+                             obj_name, op_type, parent);
+  else
+    stmt = new mysqlx_stmt_t(this, schema.length() ? schema : *m_sess_opt.database(),
+                             obj_name, op_type);
+
   if (session_crud)
     m_stmt = stmt;
   return stmt;

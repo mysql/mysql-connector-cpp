@@ -131,9 +131,9 @@ struct Limit_impl : public Statement_impl
   Base class defining operation's offset() clause.
 */
 
-template <class Res>
+template <class Res, class Op>
 class Offset
-  : public Statement<Res>
+  : public Statement<Res, Op>
 {
 protected:
 
@@ -143,8 +143,8 @@ protected:
 
   Offset() = default;
 
-  using Statement<Res>::check_if_valid;
-  using Statement<Res>::m_impl;
+  using Statement<Res,Op>::check_if_valid;
+  using Statement<Res,Op>::m_impl;
 
   Impl* get_impl()
   {
@@ -159,7 +159,7 @@ public:
     to perform the operation.
   */
 
-  Statement<Res>& offset(unsigned rows)
+  Statement<Res,Op>& offset(unsigned rows)
   {
     get_impl()->set_offset(rows);
     return *this;
@@ -175,18 +175,18 @@ public:
   method) is defined by LimitRet<R,F>::type.
 */
 
-template <class Res, bool with_offset> struct LimitRet;
+template <class Res, class Op, bool with_offset> struct LimitRet;
 
-template <class Res>
-struct LimitRet<Res,true>
+template <class Res, class Op>
+struct LimitRet<Res, Op, true>
 {
-  typedef Offset<Res> type;
+  typedef Offset<Res,Op> type;
 };
 
-template <class Res>
-struct LimitRet<Res,false>
+template <class Res, class Op>
+struct LimitRet<Res, Op, false>
 {
-  typedef Statement<Res> type;
+  typedef Statement<Res,Op> type;
 };
 
 
@@ -196,9 +196,9 @@ struct LimitRet<Res,false>
 
 // TODO: Doxygen does not see the base class
 
-template <class Res, bool with_offset>
+template <class Res, class Op, bool with_offset>
 class Limit
-  : public LimitRet<Res, with_offset>::type
+  : public LimitRet<Res, Op, with_offset>::type
 {
 protected:
 
@@ -206,8 +206,8 @@ protected:
 
   Limit() = default;
 
-  using LimitRet<Res, with_offset>::type::check_if_valid;
-  using LimitRet<Res, with_offset>::type::m_impl;
+  using LimitRet<Res, Op, with_offset>::type::check_if_valid;
+  using LimitRet<Res, Op, with_offset>::type::m_impl;
 
   Impl* get_impl()
   {
@@ -221,7 +221,7 @@ public:
     %Limit the operation to the given number of items (rows or documents).
   */
 
-  typename LimitRet<Res, with_offset>::type& limit(unsigned items)
+  typename LimitRet<Res, Op, with_offset>::type& limit(unsigned items)
   {
     get_impl()->set_limit(items);
     return *this;

@@ -528,7 +528,6 @@ protected:
   {
     switch (type)
     {
-      // TODO: Notice
     case msg_type::Error: return EXPECTED;
     case msg_type::Notice: return EXPECTED;
     default: return do_next_msg(type);

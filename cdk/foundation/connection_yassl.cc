@@ -26,7 +26,6 @@
 PUSH_SYS_WARNINGS
 #include "../extra/yassl/include/openssl/ssl.h"
 POP_SYS_WARNINGS
-#include <mysql/cdk/protocol/mysqlx.h>
 #include <mysql/cdk/foundation/error.h>
 #include <mysql/cdk/foundation/connection_yassl.h>
 #include <mysql/cdk/foundation/opaque_impl.i>

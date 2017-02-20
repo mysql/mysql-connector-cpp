@@ -41,7 +41,12 @@ typedef enum mysqlx_op_enum
 */
   OP_SQL = 9,
 
-  OP_ADMIN_LIST = 10
+/*
+  View operation codes
+*/
+  OP_VIEW_CREATE = 10, OP_VIEW_UPDATE = 11, OP_VIEW_REPLACE = 12,
+
+  OP_ADMIN_LIST = 13
 } mysqlx_op_t;
 
 typedef enum mysqlx_modify_op_enum

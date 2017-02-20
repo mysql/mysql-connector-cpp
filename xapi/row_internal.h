@@ -559,7 +559,7 @@ public:
   }
 };
 
-class Column_source : public cdk::api::Columns
+class Column_source : public cdk::api::Columns, public cdk::String_list
 {
   typedef std::vector<cdk::string> Column_list;
   Column_list m_columns;
@@ -572,6 +572,7 @@ class Column_source : public cdk::api::Columns
   size_t count() { return m_columns.size(); }
 
   void process(cdk::api::Columns::Processor& prc) const;
+  void process(cdk::String_list::Processor& prc) const;
 };
 
 class Modify_spec;

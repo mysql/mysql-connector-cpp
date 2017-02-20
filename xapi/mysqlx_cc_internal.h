@@ -38,6 +38,7 @@
 #include "ref_internal.h"
 #include "error_internal.h"
 #include "row_internal.h"
+#include "view_internal.h"
 #include "crud_internal.h"
 
 
@@ -544,7 +545,8 @@ public:
   mysqlx_session_t &get_session() { return m_session; }
   mysqlx_collection_t & get_collection(const char *name, bool check);
   mysqlx_table_t & get_table(const char *name, bool check);
-  mysqlx_stmt_t *stmt_op(const cdk::string obj_name, mysqlx_op_t op_type);
+  mysqlx_stmt_t *stmt_op(const cdk::string obj_name, mysqlx_op_t op_type,
+                         mysqlx_stmt_t *parent = NULL);
 
   ~mysqlx_schema_struct();
 } mysqlx_schema_t;
@@ -634,13 +636,19 @@ public:
       obj_name - table/collection name for the operation
       op_type - operation type. The allowed values are:
                 OP_SELECT, OP_INSERT, OP_UPDATE, OP_DELETE
+      delete_crud - flag indicates if created statement is on session level
+                or above. Determining ownership of the object
+                (either caller or the session) is a side aspect of this.
+      parent - parent statement. Some statement types such as VIEW need to get
+               the context of parent SELECT or FIND statements.
     RETURN:
       CRUD handler containing the results and/or error
 
     TODO: error must be set if op_type goes out of the allowed range
   */
   mysqlx_stmt_t *stmt_op(const cdk::string schema, const cdk::string obj_name,
-                       mysqlx_op_t op_type, bool delete_crud = true);
+                       mysqlx_op_t op_type, bool delete_crud = true,
+                       mysqlx_stmt_t *parent = NULL);
 
   /*
     Delete the CRUD object and reset the pointer

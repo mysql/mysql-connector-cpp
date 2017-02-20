@@ -55,10 +55,15 @@ class XSession_base;
 struct Executable_impl
 {
   virtual BaseResult execute() = 0;
+
+  virtual Executable_impl *clone() const = 0;
+
   virtual ~Executable_impl() {}
 };
 
 }  // internal
+
+
 
 /**
   Represents an operation that can be executed.
@@ -71,14 +76,14 @@ struct Executable_impl
   is returned by `execute()` method.
 */
 
-template <class Res>
+template <class Res, class Op>
 class Executable
 {
 protected:
 
   typedef internal::Executable_impl Impl;
 
-  std::unique_ptr<Impl> m_impl;
+  std::shared_ptr<Impl> m_impl;
 
   Executable() = default;
   Executable(Impl *impl)
@@ -94,12 +99,15 @@ protected:
 
 public:
 
-  Executable(Executable &other) : Executable(std::move(other))
+  Executable(const Executable &other)
+    : m_impl(other.m_impl->clone())
   {}
 
   Executable(Executable &&other)
-    : m_impl(std::move(other.m_impl))
+    : m_impl(other.m_impl)
   {}
+
+  virtual ~Executable() {}
 
   /// Execute given operation and wait for its result.
 
@@ -127,9 +135,9 @@ namespace internal {
   bound to named parameters to the implementation.
 */
 
-  struct Statement_impl : public Executable_impl
+struct Statement_impl : public Executable_impl
 {
-  virtual void add_param(const string&, Value) = 0;
+  virtual void add_param(const string&, Value&&) = 0;
 };
 
 }  // internal
@@ -147,9 +155,9 @@ namespace internal {
   is returned by `execute()` method.
 */
 
-template <class Res>
+template <class Res, class Op>
 class Statement
-  : public virtual Executable<Res>
+  : public virtual Executable<Res, Op>
 {
 protected:
 
@@ -157,11 +165,11 @@ protected:
 
   Statement() = default;
   Statement(Impl *impl)
-    : Executable<Res>(impl)
+    : Executable<Res,Op>(impl)
   {}
 
-  using Executable<Res>::check_if_valid;
-  using Executable<Res>::m_impl;
+  using Executable<Res,Op>::check_if_valid;
+  using Executable<Res,Op>::m_impl;
 
   Impl* get_impl()
   {
@@ -172,10 +180,10 @@ protected:
 public:
 
   Statement(Statement &other)
-    : Executable<Res>(std::move(other))
+    : Executable<Res,Op>(other)
   {}
 
-  Statement(Statement &&other) : Statement(other) {}
+  Statement(Statement &&other) : Executable<Res,Op>(std::move(other)) {}
 
 
   /// Bind parameter with given name to the given value.
@@ -183,7 +191,7 @@ public:
   Statement& bind(const string &parameter, Value val)
   {
     try {
-      get_impl()->add_param(parameter, val);
+      get_impl()->add_param(parameter, std::move(val));
       return *this;
     }
     CATCH_AND_WRAP
@@ -195,7 +203,7 @@ public:
   */
 
   template <class Map>
-  Executable<Res>& bind(const Map &args)
+  Executable<Res,Op>& bind(const Map &args)
   {
     check_if_valid();
     for (const auto &keyval : args)
@@ -241,6 +249,7 @@ namespace internal {
   not named but positional.
 */
 
+
 struct SqlStatement_impl : public Executable_impl
 {
   virtual void add_param(Value) = 0;
@@ -264,7 +273,7 @@ struct SqlStatement_impl : public Executable_impl
 DLL_WARNINGS_PUSH
 
 class PUBLIC_API SqlStatement
-  : public virtual Executable<SqlResult>
+  : public virtual Executable<SqlResult,SqlStatement>
 {
 
 DLL_WARNINGS_POP
@@ -275,8 +284,8 @@ protected:
 
   SqlStatement() = default;
 
-  using Executable<SqlResult>::check_if_valid;
-  using Executable<SqlResult>::m_impl;
+  using Executable<SqlResult,SqlStatement>::check_if_valid;
+  using Executable<SqlResult,SqlStatement>::m_impl;
 
   Impl* get_impl()
   {
@@ -289,7 +298,7 @@ protected:
 public:
 
   SqlStatement(SqlStatement &other)
-    : Executable<SqlResult>(std::move(other))
+    : Executable<SqlResult,SqlStatement>(std::move(other))
   {}
 
   SqlStatement& bind(Value val)

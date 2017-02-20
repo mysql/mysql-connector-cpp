@@ -30,6 +30,8 @@
 #include <memory>
 #include "converters.h"
 
+#include <list>
+
 
 namespace cdk {
 namespace mysqlx {
@@ -110,6 +112,42 @@ protected:
 };
 
 
+class Crud_op_base
+  : public Proto_delayed_op
+  , public protocol::mysqlx::api::Db_obj
+{
+protected:
+
+  string m_name;
+  string m_schema;
+  bool  m_has_schema;
+
+  Crud_op_base(Protocol &proto)
+    : Proto_delayed_op(proto)
+    , m_has_schema(false)
+  {}
+
+  Crud_op_base(Protocol &proto, const api::Object_ref &obj)
+    : Proto_delayed_op(proto)
+  {
+    set(obj);
+  }
+
+  void set(const api::Object_ref &obj)
+  {
+    m_name = obj.name();
+    m_has_schema = (NULL != obj.schema());
+    if (m_has_schema)
+      m_schema = obj.schema()->name();
+  }
+
+    // Db_obj
+
+  const string& get_name() const { return m_name; }
+  const string* get_schema() const { return m_has_schema ? &m_schema : NULL; }
+
+};
+
 // -------------------------------------------------------------------------
 
 
@@ -144,14 +182,11 @@ public:
 
 
 class SndInsertDocs
-    : public Proto_delayed_op
+    : public Crud_op_base
     , public protocol::mysqlx::Row_source
-    , public protocol::mysqlx::api::Db_obj
 {
 protected:
 
-  const string m_schema;
-  const string m_table;
   cdk::Doc_source &m_docs;
   const Param_source *m_param;
 
@@ -171,12 +206,10 @@ protected:
 
 public:
 
-  SndInsertDocs(Protocol& protocol,
-                const string &schema, const string &table,
+  SndInsertDocs(Protocol& protocol, const api::Table_ref &coll,
                 cdk::Doc_source &docs,
                 const Param_source *param)
-    : Proto_delayed_op(protocol)
-    , m_schema(schema), m_table(table)
+    : Crud_op_base(protocol, coll)
     , m_docs(docs)
     , m_param(param)
   {}
@@ -202,10 +235,6 @@ private:
     return m_docs.next();
   }
 
-  // Db_obj
-
-  const string& get_name() const { return m_table; }
-  const string* get_schema() const { return &m_schema; }
 };
 
 
@@ -213,14 +242,11 @@ private:
 
 
 class SndInsertRows
-  : public Proto_delayed_op
+  : public Crud_op_base
   , public protocol::mysqlx::Row_source
-  , public protocol::mysqlx::api::Db_obj
 {
 protected:
 
-  const string m_schema;
-  const string m_table;
   Expr_converter  m_conv;
   cdk::Row_source &m_rows;
   const api::Columns *m_cols;
@@ -245,12 +271,11 @@ public:
   // TODO: Life-time of rows instance...
 
   SndInsertRows(Protocol& protocol,
-                const string &schema, const string &table,
+                const api::Table_ref &coll,
                 cdk::Row_source &rows,
                 const api::Columns *cols,
                 const Param_source *param)
-    : Proto_delayed_op(protocol)
-    , m_schema(schema), m_table(table)
+    : Crud_op_base(protocol, coll)
     , m_rows(rows), m_cols(cols), m_param(param)
   {}
 
@@ -270,10 +295,6 @@ private:
     return m_rows.next();
   }
 
-  // Db_obj
-
-  const string& get_name() const { return m_table; }
-  const string* get_schema() const { return &m_schema; }
 };
 
 
@@ -322,74 +343,98 @@ typedef Expr_conv_base<
 
 // -------------------------------------------------------------------------
 
+/*
+  Helper base class which implements protocol's Select_spec
+  (or Find_spec) interface. This is used by CRUD operations
+  which involve selecting a subset of rows/documents in the
+  table/colleciton.
 
-class SndDelete
-    : public Proto_delayed_op
-    , public Expression
-    , public protocol::mysqlx::api::Db_obj
+  A CRUD operation class which derives from this Select_op_base
+  can be used as selection criteria specification as required
+  by protocol object methods.
+
+  Note: This class uses converters to convert selection
+  parameters from generic cdk types to types required by
+  the protocol layer.
+*/
+
+template <class IF = protocol::mysqlx::Select_spec>
+class Select_op_base
+  : public Crud_op_base
+  , public IF
 {
 protected:
 
-  const string m_schema;
-  const string m_table;
-  const Expression *m_expr;
-  const Limit *m_limit;
-  const cdk::mysqlx::Order_by *m_order_by;
-  const Param_source *m_param;
+  Expr_converter     m_expr_conv;
+  Param_converter    m_param_conv;
+  Order_by_converter m_ord_conv;
+  const Limit       *m_limit;
 
-  const cdk::protocol::mysqlx::Data_model m_data_model;
+
+  Select_op_base(
+    Protocol &protocol,
+    const api::Object_ref &obj,
+    const cdk::Expression *expr,
+    const cdk::Order_by *order_by,
+    const cdk::Limit *lim = NULL,
+    const cdk::Param_source *param = NULL
+  )
+    : Crud_op_base(protocol, obj)
+    , m_expr_conv(expr), m_param_conv(param), m_ord_conv(order_by)
+    , m_limit(lim)
+  {}
+
+
+  virtual ~Select_op_base()
+  {}
+
+
+  // Select_spec
+
+  const protocol::mysqlx::api::Db_obj& obj() const { return *this; }
+
+  const protocol::mysqlx::api::Expression* select() const
+  {
+    return m_expr_conv.get();
+  }
+
+  const protocol::mysqlx::api::Order_by* order() const
+  {
+    return m_ord_conv.get();
+  }
+
+  const protocol::mysqlx::api::Limit* limit() const
+  {
+    return m_limit;
+  }
+
+};
+
+
+// -------------------------------------------------------------------------
+
+
+template <protocol::mysqlx::Data_model DM>
+class SndDelete
+    : public Select_op_base<>
+{
+protected:
 
   Proto_op* start()
   {
-    Expr_converter conv;
-    Param_converter param_conv;
-    Order_by_converter ord_conv;
-
-    if (m_order_by)
-      ord_conv.reset(*m_order_by);
-
-    if (m_expr)
-      conv.reset(*m_expr);
-
-    if (m_param)
-      param_conv.reset(*m_param);
-
-    return &m_protocol.snd_Delete(m_data_model,
-                                  *this,
-                                  (m_expr ? &conv : NULL),
-                                  (m_order_by ? &ord_conv : NULL),
-                                  (cdk::protocol::mysqlx::api::Limit*)m_limit,
-                                  (m_param ? &param_conv : NULL));
+    return &m_protocol.snd_Delete(DM, *this, m_param_conv.get());
   }
 
 public:
 
-  SndDelete(Protocol& protocol, cdk::protocol::mysqlx::Data_model data_model,
-            const string &schema, const string &table,
-            const Expression *expr,
-            const Order_by *order_by,
-            const Limit *lim = NULL,
-            const Param_source *param = NULL)
-    : Proto_delayed_op(protocol)
-    , m_schema(schema), m_table(table)
-    , m_expr(expr), m_limit(lim)
-    , m_order_by(order_by), m_param(param)
-    , m_data_model(data_model)
+  SndDelete(Protocol& protocol, const api::Object_ref &obj,
+            const cdk::Expression *expr,
+            const cdk::Order_by *order_by,
+            const cdk::Limit *lim = NULL,
+            const cdk::Param_source *param = NULL)
+    : Select_op_base(protocol, obj, expr, order_by, lim, param)
   {}
 
-private:
-
-  // Expression
-
-  void process(Expression::Processor &ep) const
-  {
-    m_expr->process(ep);
-  }
-
-  // Db_obj
-
-  const string& get_name() const { return m_table; }
-  const string* get_schema() const { return &m_schema; }
 };
 
 
@@ -507,91 +552,306 @@ struct Find_traits<protocol::mysqlx::TABLE>
 };
 
 
+template <protocol::mysqlx::Data_model DM> class SndViewCrud;
+
+
 template <protocol::mysqlx::Data_model DM>
 class SndFind
-    : public Proto_delayed_op
-    , public protocol::mysqlx::api::Db_obj
+    : public Select_op_base<protocol::mysqlx::Find_spec>
 {
 protected:
 
   typedef typename Find_traits<DM>::Projection Projection;
   typedef typename Find_traits<DM>::Projection_converter Projection_converter;
 
-  const string m_schema;
-  const string m_table;
-  const Expression *m_expr;
-  const Limit *m_limit;
-  const cdk::mysqlx::Order_by *m_order_by;
-  const Expr_list  *m_group_by;
-  const Expression *m_having;
-  const Param_source *m_param;
-  const Projection   *m_proj;
+  Projection_converter m_proj_conv;
+  Expr_list_converter  m_group_by_conv;
+  Expr_converter       m_having_conv;
 
   Proto_op* start()
   {
-    Expr_converter  expr_conv;
-    Param_converter param_conv;
-    Order_by_converter ord_conv;
-    Projection_converter proj_conv;
-    Expr_converter  having_conv;
-    Expr_list_converter group_by_conv;
-
-    if (m_expr)
-      expr_conv.reset(*m_expr);
-
-    if (m_param)
-      param_conv.reset(*m_param);
-
-    if (m_order_by)
-      ord_conv.reset(*m_order_by);
-
-    if (m_group_by)
-      group_by_conv.reset(*m_group_by);
-
-    if (m_having)
-      having_conv.reset(*m_having);
-
-    if (m_proj)
-      proj_conv.reset(*m_proj);
-
-    return &m_protocol.snd_Find(DM, *this,
-                                (m_expr ? &expr_conv : NULL),
-                                (m_proj ? &proj_conv : NULL),
-                                (m_order_by ? &ord_conv : NULL),
-                                (m_group_by ? &group_by_conv : NULL),
-                                (m_having ? &having_conv : NULL),
-                                (cdk::protocol::mysqlx::api::Limit*)m_limit,
-                                (m_param ? &param_conv : NULL));
+    return &m_protocol.snd_Find(DM, *this, m_param_conv.get());
   }
 
 public:
 
-  SndFind(Protocol& protocol,
-          const string &schema, const string &table,
-          const Expression *expr = NULL,
-          const Projection *proj = NULL,
-          const cdk::mysqlx::Order_by *order_by = NULL,
-          const Expr_list *group_by = NULL,
-          const Expression *having = NULL,
-          const Limit *lim = NULL,
-          const Param_source *param = NULL)
-    : Proto_delayed_op(protocol)
-    , m_schema(schema), m_table(table)
-    , m_expr(expr), m_limit(lim), m_order_by(order_by)
-    , m_group_by(group_by), m_having(having)
-    , m_param(param), m_proj(proj)
+  SndFind(
+    Protocol& protocol, const api::Table_ref &coll,
+    const cdk::Expression *expr = NULL,
+    const Projection      *proj = NULL,
+    const cdk::Order_by   *order_by = NULL,
+    const cdk::Expr_list  *group_by = NULL,
+    const cdk::Expression *having = NULL,
+    const cdk::Limit *lim = NULL,
+    const cdk::Param_source *param = NULL
+  )
+    : Select_op_base(protocol, coll, expr, order_by, lim, param)
+    , m_proj_conv(proj)
+    , m_group_by_conv(group_by), m_having_conv(having)
   {}
 
 private:
 
-  // Db_obj
+  const protocol::mysqlx::api::Projection* project() const
+  {
+    return m_proj_conv.get();
+  }
 
-  const string& get_name() const { return m_table; }
-  const string* get_schema() const { return &m_schema; }
+  const protocol::mysqlx::api::Expr_list*  group_by() const
+  {
+    return m_group_by_conv.get();
+  }
+
+  const protocol::mysqlx::api::Expression* having() const
+  {
+    return m_having_conv.get();
+  }
+
+  friend class SndViewCrud<DM>;
 };
 
 
 // -------------------------------------------------------------------------
+
+/*
+  Conversion from string processor used to process a list of view column names
+  to callbacks expected by protocol's column info processor.
+  Basically, each string in a list is reported as column name. Other column
+  specification parameters, such as alias, are not reported.
+*/
+
+struct String_to_col_prc_converter
+  : public Converter<
+    String_to_col_prc_converter,
+    cdk::api::String_processor,
+    cdk::protocol::mysqlx::api::Columns::Processor::Element_prc
+  >
+{
+  void val(const string &col)
+  {
+    m_proc->name(col);
+  }
+
+  virtual ~String_to_col_prc_converter()
+  {}
+};
+
+typedef List_prc_converter<String_to_col_prc_converter> Columns_prc_converter;
+
+
+/*
+  Delayed operation which sends view create or update request. These request
+  can include a find message. Whether update or create request should be sent
+  is determined by the view specification passed when creating this delayed
+  operation.
+*/
+
+template <protocol::mysqlx::Data_model DM>
+class SndViewCrud
+  : public Crud_op_base
+  , public View_spec::Processor
+  , public cdk::protocol::mysqlx::api::Columns
+  , public protocol::mysqlx::api::View_options
+{
+  const View_spec *m_view;
+  SndFind<DM> *m_find;
+  View_spec::op_type  m_type;
+  bool   m_has_cols;
+  bool   m_has_opts;
+
+  // Columns
+
+  void process(cdk::protocol::mysqlx::api::Columns::Processor &prc) const
+  {
+    assert(m_view);
+
+    /*
+      Column names are reported to the protocol layer as column specification
+      (as used by snd_Insert() for example). We use processor converter to convert
+      string list processor callbacks to these of Columns specification
+      processor.
+    */
+
+    Columns_prc_converter conv;
+    conv.reset(prc);
+
+    /*
+      Process view specification extracting columns information and passing
+      it to the converter.
+    */
+
+    struct : public cdk::View_spec::Processor
+    {
+      String_list::Processor *m_prc;
+
+      void name(const Table_ref&, op_type) {}
+
+      Options::Processor* options()
+      {
+        return NULL;
+      }
+
+      List_processor* columns()
+      {
+        return m_prc;
+      }
+
+    }
+    vprc;
+
+    vprc.m_prc = &conv;
+    m_view->process(vprc);
+  }
+
+  protocol::mysqlx::api::Columns*
+  get_cols()
+  {
+    return m_has_cols ? this : NULL;
+  }
+
+  // View_options
+
+  void process(protocol::mysqlx::api::View_options::Processor &prc) const
+  {
+    assert(m_view);
+
+    /*
+      Process view specification extracting options information and passing
+      it to the processor.
+    */
+
+    struct Opts : public cdk::View_spec::Processor
+    {
+      Options::Processor *m_prc;
+
+      void name(const Table_ref&, op_type)
+      {}
+
+      Options::Processor* options()
+      {
+        return m_prc;
+      }
+
+      List_processor* columns()
+      {
+        return NULL;
+      }
+    }
+    vprc;
+
+    vprc.m_prc = &prc;
+    m_view->process(vprc);
+  }
+
+  protocol::mysqlx::api::View_options*
+  get_opts()
+  {
+    return m_has_opts ? this : NULL;
+  }
+
+  const protocol::mysqlx::api::Args_map*
+  get_args()
+  {
+    return m_find->m_param_conv.get();
+  }
+
+
+  Proto_op* start()
+  {
+    switch (m_type)
+    {
+    case CREATE:
+    case REPLACE:
+      return &m_protocol.snd_CreateView(DM, *this, *m_find,
+                                        get_cols(), REPLACE == m_type,
+                                        get_opts(), get_args());
+
+    case UPDATE:
+      return &m_protocol.snd_ModifyView(DM, *this, *m_find,
+                                        get_cols(), get_opts(),
+                                        m_find->m_param_conv.get());
+    default:
+      assert(false);
+      return NULL;  // quiet compile warnings
+    }
+  }
+
+public:
+
+  SndViewCrud(const View_spec &view, SndFind<DM> *find = NULL)
+    : Crud_op_base(find->m_protocol)
+    , m_view(&view), m_find(find), m_type(CREATE)
+    , m_has_cols(false), m_has_opts(false)
+  {
+    /*
+      Process view specification to extract view name and information which
+      type of view operation should be sent (m_update member). This also
+      determines whether columns and options information is present in the
+      specification.
+    */
+    view.process(*this);
+  }
+
+  ~SndViewCrud()
+  {
+    delete m_find;
+  }
+
+private:
+
+  // View_spec::Processor
+
+  void name(const Table_ref &view, View_spec::op_type type)
+  {
+    Crud_op_base::set(view);
+    m_type = type;
+  }
+
+  List_processor* columns()
+  {
+    m_has_cols = true;
+    /*
+      Note: we do not process columns here, it is done above when this
+      object acts as protocol Columns specification.
+    */
+    return NULL;
+  }
+
+  Options::Processor* options()
+  {
+    m_has_opts = true;
+    return NULL;
+  }
+
+};
+
+
+class SndDropView
+  : public Crud_op_base
+{
+  bool m_check_exists;
+
+  Proto_op* start()
+  {
+    return &m_protocol.snd_DropView(*this, m_check_exists);
+  }
+
+public:
+
+  SndDropView(
+    Protocol &protocol,
+    const api::Object_ref &view,
+    bool check_exists
+  )
+    : Crud_op_base(protocol, view)
+    , m_check_exists(check_exists)
+  {}
+
+};
+
+
+// -------------------------------------------------------------------------
+
 
 /*
    Update_converter
@@ -773,66 +1033,30 @@ public:
 
 template <protocol::mysqlx::Data_model DM>
 class SndUpdate
-    : public Proto_delayed_op
-    , public protocol::mysqlx::api::Db_obj
+    : public Select_op_base<>
 {
 protected:
 
-  const string m_schema;
-  const string m_table;
-  const Expression *m_expr;
-  const Update_spec &m_us;
-  const cdk::mysqlx::Order_by *m_order_by;
-  const Limit *m_limit;
-  const Param_source *m_param;
+  Update_converter    m_upd_conv;
 
   Proto_op* start()
   {
-    Expr_converter conv;
-    Param_converter param_conv;
-    Order_by_converter ord_conv;
-
-    if (m_expr)
-      conv.reset(*m_expr);
-
-    if (m_param)
-      param_conv.reset(*m_param);
-
-    if (m_order_by)
-      ord_conv.reset(*m_order_by);
-
-    Update_converter u_conv(DM, m_us);
-
-    return &m_protocol.snd_Update(DM,
-                                  *this,
-                                  (m_expr ? &conv : NULL),
-                                  u_conv,
-                                  (m_order_by ? &ord_conv : NULL),
-                                  const_cast<Limit*>(m_limit),
-                                  (m_param ? &param_conv : NULL));
+    return &m_protocol.snd_Update(DM, *this, m_upd_conv, m_param_conv.get());
   }
 
 public:
 
   SndUpdate(Protocol& protocol,
-            const string &schema, const string &table,
-            const Expression *expr,
-            const Update_spec &us,
-            const Order_by *order_by,
-            const Limit *lim = NULL,
-            const Param_source *param = NULL)
-    : Proto_delayed_op(protocol)
-    , m_schema(schema), m_table(table)
-    , m_expr(expr), m_us(us), m_order_by(order_by), m_limit(lim), m_param(param)
+            const api::Table_ref &table,
+            const cdk::Expression *expr,
+            const cdk::Update_spec &us,
+            const cdk::Order_by *order_by,
+            const cdk::Limit *lim = NULL,
+            const cdk::Param_source *param = NULL)
+    : Select_op_base(protocol, table, expr, order_by, lim, param)
+    , m_upd_conv(DM, us)
   {}
 
-private:
-
-
-  // Db_obj
-
-  const string& get_name() const { return m_table; }
-  const string* get_schema() const { return &m_schema; }
 };
 
 

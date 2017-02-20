@@ -102,6 +102,8 @@ class Cursor;
 template <class Base>
 class Obj_ref : public Base
 {
+protected:
+
   string m_name;
   string m_name_original;
   bool   m_has_name_original;
@@ -110,6 +112,12 @@ public:
 
   Obj_ref()
     : m_has_name_original(false)
+  {}
+
+  Obj_ref(const cdk::api::Ref_base &ref)
+    : m_name(ref.name())
+    , m_name_original(ref.orig_name())
+    , m_has_name_original(true)
   {}
 
   const string name() const { return m_name; }
@@ -365,6 +373,7 @@ using cdk::Limit;
 using cdk::Order_by;
 using cdk::Sort_direction;
 using cdk::Param_source;
+using cdk::View_spec;
 
 typedef Session Reply_init;
 
@@ -377,7 +386,6 @@ class Session
     : public api::Diagnostics
     , public Async_op
     , private protocol::mysqlx::Auth_processor
-    , private protocol::mysqlx::Reply_processor
     , private protocol::mysqlx::Mdata_processor
     , private protocol::mysqlx::Stmt_processor
     , private protocol::mysqlx::SessionState_processor
@@ -509,6 +517,7 @@ public:
                           const Limit *lim = NULL,
                           const Param_source *param = NULL);
   Reply_init &coll_find(const Table_ref&,
+                        const View_spec *view = NULL,
                         const Expression *expr = NULL,
                         const Expression::Document *proj = NULL,
                         const Order_by *order_by = NULL,
@@ -529,6 +538,7 @@ public:
                            const Limit *lim = NULL,
                            const Param_source *param = NULL);
   Reply_init &table_select(const Table_ref&,
+                           const View_spec *view = NULL,
                            const Expression *expr = NULL,
                            const Projection *proj = NULL,
                            const Order_by *order_by = NULL,
@@ -546,6 +556,8 @@ public:
                            const Order_by *order_by = NULL,
                            const Limit *lim = NULL,
                            const Param_source *param = NULL);
+
+  Reply_init &view_drop(const api::Table_ref&, bool check_existence = false);
 
 
   /*
@@ -599,6 +611,7 @@ private:
      Mdata_processor (cdk::protocol::mysqlx::Mdata_processor)
   */
 
+  void ok(string);
   void col_count(col_count_t nr_cols);
   void col_type(col_count_t pos, unsigned short type);
   void col_content_type(col_count_t pos, unsigned short type);
@@ -637,7 +650,7 @@ private:
   */
 
   void send_cmd();
-  void start_reading_row_set();
+  void start_reading_result();
   Proto_op* start_reading_row_data(protocol::mysqlx::Row_processor &prc);
   void start_reading_stmt_reply();
   void start_authentication(const char* mechanism,bytes data,bytes response);

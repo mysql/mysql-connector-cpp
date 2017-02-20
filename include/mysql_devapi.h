@@ -162,6 +162,320 @@ public:
 
 
 /**
+  View creation and alter classes
+ */
+
+enum class CheckOption
+{
+  CASCADED,
+  LOCAL
+};
+
+enum class Algorithm
+{
+  UNDEFINED,
+  MERGE,
+  TEMPTABLE
+};
+
+enum class SQLSecurity
+{
+  DEFINER,
+  INVOKER
+};
+
+
+class ViewCreate;
+class ViewAlter;
+
+namespace internal {
+
+/*
+   Create/Alter View classes
+*/
+
+struct View_impl
+  : public Executable_impl
+{
+  virtual void add_columns(const string&) = 0;
+  virtual void algorithm(Algorithm) = 0;
+  virtual void security(SQLSecurity) = 0;
+  virtual void definer(const string&) = 0;
+  virtual void defined_as(TableSelect&&) = 0;
+  virtual void with_check_option(CheckOption) = 0;
+};
+
+
+template <class Op>
+class ViewCheckOpt
+: public Executable<Result,Op>
+{
+protected:
+
+  using Executable<Result, Op>::check_if_valid;
+  using Executable<Result, Op>::m_impl;
+
+  View_impl* get_impl()
+  {
+    check_if_valid();
+    return static_cast<View_impl*>(m_impl.get());
+  }
+
+public:
+
+  /**
+    Set constraints on the View.
+  */
+  Executable<Result,Op> withCheckOption(CheckOption option)
+  {
+    get_impl()->with_check_option(option);
+    return std::move(*this);
+  }
+};
+
+template <class Op>
+class ViewDefinedAs
+: protected ViewCheckOpt<Op>
+{
+protected:
+
+  using ViewCheckOpt<Op>::get_impl;
+
+public:
+
+  /**
+     Define the table select statement to generate the View.
+  */
+
+  ViewCheckOpt<Op> definedAs(TableSelect&& table)
+  {
+    get_impl()->defined_as(std::move(table));
+    return std::move(*this);
+  }
+
+  ViewCheckOpt<Op> definedAs(const TableSelect& table)
+  {
+    TableSelect table_tmp(table);
+    get_impl()->defined_as(std::move(table_tmp));
+    return std::move(*this);
+  }
+};
+
+template <class Op>
+class ViewDefiner
+: public ViewDefinedAs<Op>
+{
+protected:
+
+  using ViewDefinedAs<Op>::get_impl;
+
+public:
+
+  /**
+    Define the View’s definer.
+  */
+ ViewDefinedAs<Op> definer(const string &user)
+ {
+  get_impl()->definer(user);
+  return std::move(*this);
+ }
+};
+
+template <class Op>
+class ViewSecurity
+  : public ViewDefiner<Op>
+{
+protected:
+
+  using ViewDefiner<Op>::get_impl;
+
+public:
+
+  /**
+     Define the View’s security scheme.
+  */
+  ViewDefiner<Op> security(SQLSecurity sec)
+  {
+    get_impl()->security(sec);
+    return std::move(*this);
+  }
+};
+
+template <class Op>
+class ViewAlgorithm
+  : public ViewSecurity<Op>
+{
+protected:
+
+  using ViewSecurity<Op>::get_impl;
+
+public:
+
+  /**
+    define the View’s algorithm.
+  */
+
+  ViewSecurity<Op> algorithm(Algorithm alg)
+  {
+    get_impl()->algorithm(alg);
+    return std::move(*this);
+  }
+
+};
+
+
+/*
+  Base blass for Create/Alter View
+*/
+template <class Op>
+class View_base
+  : public ViewAlgorithm<Op>
+{
+protected:
+
+  using ViewAlgorithm<Op>::get_impl;
+
+  void add_columns(const char *name)
+  {
+    get_impl()->add_columns(name);
+  }
+
+  void add_columns(const string &name)
+  {
+    get_impl()->add_columns(name);
+  }
+
+  template <typename C>
+  void add_columns(const C& col)
+  {
+    for (auto el : col)
+    {
+      get_impl()->add_columns(el);
+    }
+  }
+
+  template <typename C, typename...R>
+  void add_columns(const C &name,const R&...rest)
+  {
+    add_columns(name);
+    add_columns(rest...);
+  }
+
+public:
+
+  /**
+    Define the column names of the created/altered View.
+   */
+
+  template<typename...T>
+  ViewAlgorithm<Op> columns(const T&...names)
+  {
+    add_columns(names...);
+    return std::move(*this);
+  }
+
+  /// @cond IGNORED
+  friend Schema;
+  friend ViewCreate;
+  friend ViewAlter;
+  /// @endcond
+
+};
+
+
+} // namespace internal
+
+/**
+   The ViewCreate class represents the creation of a view
+*/
+
+class PUBLIC_API ViewCreate
+  : public internal::View_base<ViewCreate>
+{
+
+  ViewCreate(Schema &sch, const string& name, bool replace);
+
+  /// @cond IGNORED
+  friend Schema;
+  /// @endcond
+
+};
+
+
+/**
+   The ViewCreate class represents the creation of a view
+*/
+
+class PUBLIC_API ViewAlter
+  : public internal::View_base<ViewAlter>
+{
+
+  ViewAlter(Schema &sch, const string& name);
+
+  /// @cond IGNORED
+  friend Schema;
+  /// @endcond
+
+};
+
+
+namespace internal {
+
+/*
+   View drop classes
+*/
+
+struct ViewDrop_impl
+  : public Executable_impl
+{
+  virtual void if_exists() = 0;
+};
+
+
+template <class Op>
+class ViewDropIfExists
+    : public Executable<Result,Op>
+{
+protected:
+
+  using Executable<Result, Op>::check_if_valid;
+  using Executable<Result, Op>::m_impl;
+
+  ViewDrop_impl* get_impl()
+  {
+    check_if_valid();
+    return static_cast<ViewDrop_impl*>(m_impl.get());
+  }
+
+public:
+
+  Executable<Result,Op> ifExists()
+  {
+    get_impl()->if_exists();
+    return std::move(*this);
+  }
+};
+
+} // namespace internal
+
+/**
+   The ViewDrop class represents the drop of a view
+*/
+
+class PUBLIC_API ViewDrop
+  : public internal::ViewDropIfExists<ViewDrop>
+{
+
+  ViewDrop(Schema &sch, const string& name);
+
+  /// @cond IGNORED
+  friend Schema;
+  /// @endcond
+
+};
+
+
+/**
   Represents a database schema.
 
   A `Schema` instance  can be obtained from `XSession::getSchema()`
@@ -296,6 +610,31 @@ public:
     `Table` instance.
   */
   Table getCollectionAsTable(const string&, bool check_exists = true);
+
+  /**
+    Create new View in the schema.
+
+    If replace is true, the view should exist, otherwise Error is thrown.
+  */
+  ViewCreate createView(const mysqlx::string& view_name, bool replace = false)
+  {
+    return ViewCreate(*this, view_name, replace);
+  }
+
+  /**
+    Change created View in the schema.
+  */
+  ViewAlter alterView(const mysqlx::string& view_name)
+  {
+    return ViewAlter(*this, view_name);
+  }
+
+
+  ViewDrop dropView(const mysqlx::string& view_name)
+  {
+    return ViewDrop(*this, view_name);
+  }
+
 
   friend Collection;
 };

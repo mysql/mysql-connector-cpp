@@ -63,7 +63,7 @@ void Reply::init(Reply_init &init)
   init.register_reply(this);
 
   m_session->send_cmd();
-  m_session->start_reading_row_set();
+  m_session->start_reading_result();
 }
 
 
@@ -563,7 +563,9 @@ void Cursor::done(bool eod, bool more)
 
   if (more)
   {
-    m_session.start_reading_row_set();
+    // TODO: Normally start_reading_result() accepts OK message from
+    // server, but here it should not.
+    m_session.start_reading_result();
   }
   else if (eod)
   {

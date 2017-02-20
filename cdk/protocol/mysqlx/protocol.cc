@@ -191,7 +191,7 @@ Protocol::Op& Protocol_impl::snd_start(Message &msg, msg_type_t msg_type)
   using std::endl;
 
   cerr << endl;
-  cerr << ">>>> Seding message >>>>" << endl;
+  cerr << ">>>> Sending message >>>>" << endl;
   cerr << "of type " << msg_type << ": "
       << msg_type_name(CLIENT, msg_type) << endl;
   cerr << msg.DebugString();

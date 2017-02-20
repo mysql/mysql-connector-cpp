@@ -1973,3 +1973,84 @@ TEST_F(Crud, group_by_having)
 
 }
 
+TEST_F(Crud, copy_semantics)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("c1", true);
+
+  add_data(coll);
+
+
+  cout << "Fetching documents..." << endl;
+
+  CollectionFind find = coll.find("name like :name and age < :age");
+  find.bind("name", "ba%");
+  find.bind("age", 3);
+
+  CollectionFind find2 = find;
+
+  DocResult docs = find2.execute();
+
+  DbDoc doc = docs.fetchOne();
+
+  unsigned i = 0;
+  for (; doc; ++i, doc = docs.fetchOne())
+  {
+    cout << "doc#" << i << ": " << doc << endl;
+
+    for (Field fld : doc)
+    {
+      cout << " field `" << fld << "`: " << doc[fld] << endl;
+    }
+
+    string name = doc["name"];
+    cout << " name: " << name << endl;
+
+    EXPECT_EQ(string("bar"), (string)doc["name"]);
+
+    cout << "  age: " << doc["age"] << endl;
+
+    EXPECT_EQ(2, (int)doc["age"]);
+
+    cout << endl;
+  }
+
+  EXPECT_EQ(1, i);
+
+  std::map<string, Value> args;
+
+  args["name"] = "ba%";
+  args["age"] = 3;
+
+  CollectionRemove remove(coll, "name like :name and age < :age");
+
+  remove.bind(args);
+
+  CollectionRemove remove2 = remove;
+
+  remove2.execute();
+
+  {
+    CollectionFind f(coll, "name like :name and age < :age");
+
+    CollectionFind find2 = f;
+
+    find2.bind(args);
+
+    docs = find2.execute();
+
+    doc = docs.fetchOne();
+    EXPECT_FALSE((bool)doc);
+  }
+
+
+  cout << "Done!" << endl;
+}

@@ -27,6 +27,7 @@
 #ifndef CDK_API_QUERY_H
 #define CDK_API_QUERY_H
 
+#include "obj_ref.h"
 #include "expression.h"
 #include "document.h"
 #include "../foundation/types.h"
@@ -35,6 +36,15 @@ namespace cdk {
 namespace api {
 
 using foundation::string;
+
+class String_processor
+{
+public:
+  virtual void val(const string&) = 0;
+};
+
+typedef Expr_list< Expr_base<String_processor> >  String_list;
+
 
 /*
   Classes for representing different parts of a query such as
@@ -96,7 +106,7 @@ class Order_by
 
 /*
   Projection specification is a list of items. Each item is an expression over
-  Projection_processor which reports an expression and optional alias.
+  Projection_processor which reports a projection expression and optional alias.
 */
 
 template <class EXPR>
@@ -118,6 +128,88 @@ template <class EXPR>
 class Projection
   : public Expr_list< Projection_expr<EXPR> >
 {};
+
+
+/*
+  View specifications.
+
+  A view specification can be passed to a session method, such as table_find(),
+  which sends CRUD query. When view specification is given for a query, then
+  this query is saved as a new view, or it replaces the query of an existing
+  view.
+*/
+
+template <class OPTS>
+class View_processor
+{
+public:
+
+  typedef OPTS  Options;
+  typedef String_list::Processor  List_processor;
+  enum op_type { CREATE, UPDATE, REPLACE };
+
+  virtual void name(const Table_ref&, op_type type = CREATE) = 0;
+  virtual typename Options::Processor* options() = 0;
+  virtual List_processor* columns()
+  { return NULL; }
+};
+
+
+template <class OPTS>
+class View_spec : public Expr_base< View_processor<OPTS> >
+{
+public:
+
+  typedef OPTS Options;
+  typedef typename View_processor<OPTS>::op_type  op_type;
+};
+
+
+/*
+  Standard view options: these are aligned with view options defined by
+  DevAPI.
+*/
+
+struct View_security
+{
+  enum value {
+    DEFINER, INVOKER
+  };
+};
+
+struct View_algorithm
+{
+  enum value {
+    UNDEFINED,
+    MERGE,
+    TEMPTABLE
+  };
+};
+
+struct View_check
+{
+  enum value {
+    LOCAL,
+    CASCADED
+  };
+};
+
+
+class View_opt_prc
+{
+public:
+
+  typedef View_security::value  View_security_t;
+  typedef View_algorithm::value View_algorithm_t;
+  typedef View_check::value     View_check_t;
+
+  virtual void definer(const string&) = 0;
+  virtual void security(View_security_t) = 0;
+  virtual void algorithm(View_algorithm_t) = 0;
+  virtual void check(View_check_t) = 0;
+};
+
+typedef Expr_base<View_opt_prc>  View_options;
 
 
 /*
@@ -154,6 +246,30 @@ typedef Expr_list< Expr_base<Column_processor> > Columns;
 
 
 namespace cdk {
+
+using api::String_list;
+
+template<>
+struct Safe_prc<api::String_processor>
+  : Safe_prc_base<api::String_processor>
+{
+  typedef Safe_prc_base<api::String_processor> Base;
+  using Base::Processor;
+
+  Safe_prc(Processor *prc) : Base(prc)
+  {}
+
+  Safe_prc(Processor &prc) : Base(&prc)
+  {}
+
+  using Base::m_prc;
+
+  void val(const string &val)
+  {
+    return m_prc ? m_prc->val(val) : (void)NULL;
+  }
+};
+
 
 template<>
 struct Safe_prc<api::Column_processor>

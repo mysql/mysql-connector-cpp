@@ -87,6 +87,12 @@
     return ERR; \
   }
 
+#define PARAM_NULL_CHECK(PARAM, HANDLE, ERR_MSG, ERR) if (!PARAM) \
+  { \
+  HANDLE->set_diagnostic(ERR_MSG, 0); \
+  return ERR; \
+  }
+
 #define OUT_BUF_CHECK(PARAM, HANDLE, ERR_MSG, ERR) if (!PARAM) \
   { \
   HANDLE->set_diagnostic(ERR_MSG, 0); \
@@ -1878,6 +1884,152 @@ unsigned int STDCALL mysqlx_error_num(void *obj)
 
   return 0;
 }
+
+#define STMT_SELECT_FIND_CHECK(SCHEMA, STMT, RET) if (STMT->op_type() != OP_SELECT) { \
+          SCHEMA->set_diagnostic(MYSQLX_ERROR_VIEW_INVALID_STMT_TYPE, 0); \
+          return RET; \
+        }
+
+mysqlx_stmt_t *
+_mysqlx_view_new(mysqlx_schema_t *schema, const char *name,
+                 mysqlx_stmt_t *select_stmt, mysqlx_op_t op_type)
+{
+  SAFE_EXCEPTION_BEGIN(schema, NULL)
+  PARAM_NULL_EMPTY_CHECK(name, schema, MYSQLX_ERROR_MISSING_VIEW_NAME_MSG, NULL)
+  PARAM_NULL_CHECK(select_stmt, schema, MYSQLX_ERROR_HANDLE_NULL_MSG, NULL)
+  STMT_SELECT_FIND_CHECK(schema, select_stmt, NULL)
+  mysqlx_stmt_t *stmt = schema->stmt_op(name, op_type, select_stmt);
+  return stmt;
+  SAFE_EXCEPTION_END(schema, NULL)
+}
+
+
+mysqlx_stmt_t *
+mysqlx_view_create_new(mysqlx_schema_t *schema, const char *name,
+                       mysqlx_stmt_t *select_stmt)
+{
+  return _mysqlx_view_new(schema, name, select_stmt, OP_VIEW_CREATE);
+}
+
+
+mysqlx_stmt_t *
+mysqlx_view_modify_new(mysqlx_schema_t *schema, const char *name,
+                       mysqlx_stmt_t *select_stmt)
+{
+  return _mysqlx_view_new(schema, name, select_stmt, OP_VIEW_UPDATE);
+}
+
+
+mysqlx_stmt_t *
+mysqlx_view_replace_new(mysqlx_schema_t *schema, const char *name,
+                        mysqlx_stmt_t *select_stmt)
+{
+  return _mysqlx_view_new(schema, name, select_stmt, OP_VIEW_REPLACE);
+}
+
+
+PUBLIC_API mysqlx_result_t *
+_mysqlx_view(mysqlx_schema_t *schema, const char *name,
+             mysqlx_stmt_t *select_stmt,
+             mysqlx_op_t op_type, va_list args)
+{
+  SAFE_EXCEPTION_BEGIN(schema, NULL)
+  mysqlx_stmt_t *stmt;
+
+  if ((stmt =_mysqlx_view_new(schema, name, select_stmt,
+                              op_type)) == NULL)
+    return NULL;
+
+  stmt->set_view_properties(args);
+
+  mysqlx_result_t *res = mysqlx_execute(stmt);
+  if (res == NULL)
+    SET_ERROR_FROM_STMT(schema, stmt, NULL);
+
+  return res;
+  SAFE_EXCEPTION_END(schema, NULL)
+}
+
+PUBLIC_API mysqlx_result_t *
+mysqlx_view_create(mysqlx_schema_t *schema, const char *name,
+                   mysqlx_stmt_t *select_stmt, ...)
+{
+  va_list args;
+  va_start(args, select_stmt);
+  mysqlx_result_t *res = _mysqlx_view(schema, name, select_stmt,
+                                      OP_VIEW_CREATE, args);
+  va_end(args);
+  return res;
+}
+
+PUBLIC_API mysqlx_result_t *
+mysqlx_view_replace(mysqlx_schema_t *schema, const char *name,
+                    mysqlx_stmt_t *select_stmt, ...)
+{
+  va_list args;
+  va_start(args, select_stmt);
+  mysqlx_result_t *res = _mysqlx_view(schema, name, select_stmt,
+                                      OP_VIEW_REPLACE, args);
+  va_end(args);
+  return res;
+}
+
+PUBLIC_API mysqlx_result_t *
+mysqlx_view_modify(mysqlx_schema_t *schema, const char *name,
+                   mysqlx_stmt_t *select_stmt, ...)
+{
+  va_list args;
+  va_start(args, select_stmt);
+  mysqlx_result_t *res = _mysqlx_view(schema, name, select_stmt,
+                                      OP_VIEW_UPDATE, args);
+  va_end(args);
+  return res;
+}
+
+int mysqlx_set_view_algorithm(mysqlx_stmt_t *view_stmt, int algorithm)
+{
+  SAFE_EXCEPTION_BEGIN(view_stmt, RESULT_ERROR)
+  view_stmt->set_view_algorithm(algorithm);
+  return RESULT_OK;
+  SAFE_EXCEPTION_END(view_stmt, RESULT_ERROR)
+}
+
+int mysqlx_set_view_security(mysqlx_stmt_t *view_stmt, int security)
+{
+  SAFE_EXCEPTION_BEGIN(view_stmt, RESULT_ERROR)
+  view_stmt->set_view_security(security);
+  return RESULT_OK;
+  SAFE_EXCEPTION_END(view_stmt, RESULT_ERROR)
+}
+
+int mysqlx_set_view_check_option(mysqlx_stmt_t *view_stmt, int option)
+{
+  SAFE_EXCEPTION_BEGIN(view_stmt, RESULT_ERROR)
+  view_stmt->set_view_check_option(option);
+  return RESULT_OK;
+  SAFE_EXCEPTION_END(view_stmt, RESULT_ERROR)
+}
+
+int mysqlx_set_view_definer(mysqlx_stmt_t *view_stmt, const char* user)
+{
+  SAFE_EXCEPTION_BEGIN(view_stmt, RESULT_ERROR)
+  view_stmt->set_view_definer(user);
+  return RESULT_OK;
+  SAFE_EXCEPTION_END(view_stmt, RESULT_ERROR)
+}
+
+int mysqlx_set_view_columns(mysqlx_stmt_t *view_stmt, ...)
+{
+  SAFE_EXCEPTION_BEGIN(view_stmt, RESULT_ERROR)
+  va_list args;
+  va_start(args, view_stmt);
+  view_stmt->set_view_columns(args);
+  va_end(args);
+  return RESULT_OK;
+  SAFE_EXCEPTION_END(view_stmt, RESULT_ERROR)
+}
+
+
 
 #ifdef _WIN32
 BOOL WINAPI DllMain(

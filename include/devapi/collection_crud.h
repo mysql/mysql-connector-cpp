@@ -352,7 +352,7 @@ namespace internal {
 DLL_WARNINGS_PUSH
 
 class PUBLIC_API CollectionAdd
-  : public virtual Executable<Result>
+  : public virtual Executable<Result, CollectionAdd>
   , public internal::CollectionAddInterface<CollectionAdd&>
 {
 
@@ -367,7 +367,7 @@ public:
   CollectionAdd(Collection &coll);
 
   CollectionAdd(CollectionAdd &other) : Executable(other) {}
-  CollectionAdd(CollectionAdd &&other) : CollectionAdd(other) {}
+  CollectionAdd(CollectionAdd &&other) : Executable(std::move(other)) {}
 
 private:
 
@@ -435,16 +435,16 @@ namespace internal {
     interface.
   */
 
-  template <class Res, bool limit_with_offset>
+  template <class Res, class Op, bool limit_with_offset>
   class CollectionSort
-    : public Limit<Res, limit_with_offset>
+    : public Limit<Res, Op, limit_with_offset>
   {
   protected:
 
     typedef internal::Sort_impl Impl;
 
-    using Limit<Res, limit_with_offset>::check_if_valid;
-    using Limit<Res, limit_with_offset>::m_impl;
+    using Limit<Res, Op, limit_with_offset>::check_if_valid;
+    using Limit<Res, Op, limit_with_offset>::m_impl;
 
     Impl* get_impl()
     {
@@ -454,13 +454,13 @@ namespace internal {
 
   public:
 
-    Limit<Res, limit_with_offset>& sort(const string& ord_spec)
+    Limit<Res, Op, limit_with_offset>& sort(const string& ord_spec)
     {
       get_impl()->add_sort(ord_spec);
       return *this;
     }
 
-    Limit<Res, limit_with_offset>& sort(const char* ord_spec)
+    Limit<Res, Op, limit_with_offset>& sort(const char* ord_spec)
     {
       get_impl()->add_sort(ord_spec);
       return *this;
@@ -474,7 +474,7 @@ namespace internal {
     */
 
     template <typename Ord>
-    Limit<Res, limit_with_offset>& sort(Ord ord)
+    Limit<Res, Op, limit_with_offset>& sort(Ord ord)
     {
       for (auto el : ord)
       {
@@ -491,7 +491,7 @@ namespace internal {
     */
 
     template <typename Ord, typename...Type>
-    Limit<Res, limit_with_offset>& sort(Ord ord, const Type...rest)
+    Limit<Res, Op, limit_with_offset>& sort(Ord ord, const Type...rest)
     {
       get_impl()->add_sort(ord);
       return sort(rest...);
@@ -509,12 +509,18 @@ namespace internal {
     Class defining .having() clause.
   */
 
+  template <class Op>
   class CollectionHaving
-      : public internal::CollectionSort<DocResult, true>
+      : public internal::CollectionSort<DocResult, Op, true>
   {
 
     typedef internal::Having_impl Impl;
-    typedef internal::CollectionSort<DocResult, true> CollectionSort;
+    typedef internal::CollectionSort<DocResult, Op, true> CollectionSort;
+
+  protected:
+
+    using internal::CollectionSort<DocResult, Op, true>::check_if_valid;
+    using internal::CollectionSort<DocResult, Op, true>::m_impl;
 
     Impl* get_impl()
     {
@@ -546,12 +552,18 @@ namespace internal {
     Class defining .groupBy() clause.
   */
 
+  template <class Op>
   class CollectionGroupBy
-      : public internal::CollectionHaving
+      : public internal::CollectionHaving<Op>
   {
 
     typedef internal::Group_by_impl Impl;
-    typedef internal::CollectionHaving CollectionHaving;
+    typedef internal::CollectionHaving<Op> CollectionHaving;
+
+  protected:
+
+    using internal::CollectionHaving<Op>::check_if_valid;
+    using internal::CollectionHaving<Op>::m_impl;
 
     Impl* get_impl()
     {
@@ -622,7 +634,7 @@ namespace internal {
 */
 
 class PUBLIC_API CollectionRemove
-  : public internal::CollectionSort<Result,false>
+  : public internal::CollectionSort<Result, CollectionRemove,false>
 {
 public:
 
@@ -721,7 +733,7 @@ namespace internal {
 DLL_WARNINGS_PUSH
 
 class PUBLIC_API CollectionFind
-  : public internal::CollectionGroupBy
+  : public internal::CollectionGroupBy<CollectionFind>
 {
 
 DLL_WARNINGS_POP
@@ -729,7 +741,10 @@ DLL_WARNINGS_POP
 protected:
 
   typedef internal::Proj_impl Impl;
-  typedef internal::CollectionGroupBy  CollectionGroupBy;
+  typedef internal::CollectionGroupBy<CollectionFind>  CollectionGroupBy;
+
+  using internal::CollectionGroupBy<CollectionFind>::get_impl;
+  using internal::CollectionGroupBy<CollectionFind>::m_impl;
 
   Impl* get_impl()
   {
@@ -758,7 +773,7 @@ DIAGNOSTIC_PUSH
     DISABLE_WARNING(4100)
 #endif
 
-  CollectionFind(CollectionFind &other) : Executable<DocResult>(other) {}
+  CollectionFind(CollectionFind &other) : Executable<DocResult,CollectionFind>(other) {}
   CollectionFind(CollectionFind &&other) : CollectionFind(other) {}
 
 DIAGNOSTIC_POP
@@ -908,6 +923,7 @@ namespace internal {
     by the user.
   */
 
+
   struct CollectionModify_impl : public Sort_impl
   {
     enum Operation
@@ -937,7 +953,7 @@ namespace internal {
 */
 
 class PUBLIC_API CollectionModify
-  : public internal::CollectionSort<Result,false>
+  : public internal::CollectionSort<Result, CollectionModify,false>
 {
 private:
 
@@ -971,7 +987,7 @@ DIAGNOSTIC_PUSH
     DISABLE_WARNING(4100)
 #endif
 
-  CollectionModify(CollectionModify &other) : Executable<Result>(other) {}
+  CollectionModify(CollectionModify &other) : Executable<Result,CollectionModify>(other) {}
   CollectionModify(CollectionModify &&other) : CollectionModify(other) {}
 
 DIAGNOSTIC_POP

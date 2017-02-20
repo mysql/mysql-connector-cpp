@@ -424,6 +424,16 @@ message FetchDone {
 //   BYTES   0x0001 rightpad
 //   ======= ====== ===========
 //
+//   ====== ================
+//   value  description
+//   ====== ================
+//   0x0010 NOT_NULL
+//   0x0020 PRIMARY_KEY
+//   0x0040 UNIQUE_KEY
+//   0x0080 MULTIPLE_KEY
+//   0x0100 AUTO_INCREMENT
+//   ====== ================
+//
 //   default: 0
 // :param content_type:
 //   a hint about the higher-level encoding of a BYTES field
@@ -487,7 +497,8 @@ message ColumnMetaData {
 //   Row in a Resultset
 //
 //   a row is represented as a list of fields encoded as byte blobs.
-//   Value of each field is encoded as sequence of bytes using encoding appropriate for the
+//   Blob of size 0 represents the NULL value. Otherwise, if it contains at least
+//   one byte, it encodes a non-null value of the field using encoding appropriate for the
 //   type of the value given by ``ColumnMetadata``, as specified
 //   in the :protobuf:msg:`Mysqlx.Resultset::ColumnMetaData` description.
 //

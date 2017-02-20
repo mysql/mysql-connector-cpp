@@ -313,6 +313,17 @@ void Column_source::process(cdk::api::Columns::Processor& prc) const
   prc.list_end();
 }
 
+void Column_source::process(cdk::String_list::Processor& prc) const
+{
+  prc.list_begin();
+  for (Column_list::const_iterator it = m_columns.begin();
+       it != m_columns.end(); ++it)
+  {
+    cdk::safe_prc(prc)->list_el()->val(*it);
+  }
+  prc.list_end();
+}
+
 
 cdk::string Update_item::get_expr() const
 {
