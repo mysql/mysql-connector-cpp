@@ -741,7 +741,7 @@ TEST_F(xapi, conn_string_test)
 
   unsigned short port = 0;
   char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
-  char conn_str[1024];
+  char conn_str[4096];
   int conn_err_code = 0;
   bool ssl_enable = false;
   const char *xplugin_port = getenv("XPLUGIN_PORT");
@@ -750,8 +750,8 @@ TEST_F(xapi, conn_string_test)
   const char *xplugin_host = getenv("XPLUGIN_HOST");
 
   mysqlx_session_t *local_sess;
-  mysqlx_result_t *res;
   mysqlx_stmt_t *stmt;
+  mysqlx_result_t *res;
   mysqlx_row_t *row;
 
   if (xplugin_port)
@@ -778,19 +778,16 @@ DO_CONNECT:
   }
   cout << "Connected to xplugin..." << endl;
 
-  RESULT_CHECK(stmt = mysqlx_sql_new(local_sess, "SHOW STATUS LIKE 'mysqlx_ssl_cipher'", MYSQLX_NULL_TERMINATED));
+  RESULT_CHECK(stmt = mysqlx_sql_new(local_sess, "SELECT 'foo'", MYSQLX_NULL_TERMINATED));
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
-  if ((row = mysqlx_row_fetch_one(res)) != NULL)
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
   {
-    char data[128] = { 0 };
+    char data[32];
     size_t data_len = sizeof(data);
-    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, data, &data_len));
-    if (ssl_enable)
-    {
-      cout << "SSL Cipher: " << data << endl;
-      EXPECT_TRUE(data_len > 1);
-    }
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, data, &data_len));
+    EXPECT_STREQ("foo", data);
+    cout << "ROW DATA: " << data << " " << endl;
   }
 
   mysqlx_session_close(local_sess);
