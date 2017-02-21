@@ -361,11 +361,6 @@ TEST_F(Sess, ssl_session)
   //Test if ssl is enabled using cipher
   auto check_ssl_impl = [](mysqlx::XSession &sess, bool enable, int line)
   {
-    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
-                          SessionSettings::USER,get_user(),
-                          SessionSettings::PWD, get_password() ? get_password() : NULL ,
-                          SessionSettings::SSL_ENABLE, true);
-
     SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
 
     auto row = res.fetchOne();
@@ -528,13 +523,5 @@ TEST_F(Sess, ssl_session)
     check_ssl(sess, true);
 
   }
-
-
-  //Enable SSL
-  uri << "/?ssl-enable";
-  {
-    mysqlx::XSession sess(uri.str());
-
-    check_ssl(sess, true);  }
 
 }
