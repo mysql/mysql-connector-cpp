@@ -578,4 +578,14 @@ TEST_F(Sess, ipv6)
 
     EXPECT_FALSE(cipher.empty());
   }
+
+
+  sql("DROP USER IF EXISTS uipv6_1");
+  sql("CREATE USER 'uipv6_1'@'%' identified by 'passwordipv6'");
+
+
+  std::stringstream uri_ipv6_pass;
+  uri_ipv6_pass << "uipv6_1:passwordipv6@[::1]:" << get_port();
+  mysqlx::XSession sess(uri_ipv6_pass.str());
+
 }
