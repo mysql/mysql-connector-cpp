@@ -162,26 +162,37 @@ public:
 
 
 /**
-  View creation and alter classes
- */
+  Check options for an updatable view.
+  @see https://dev.mysql.com/doc/refman/5.7/en/view-check-option.html
+*/
 
 enum class CheckOption
 {
-  CASCADED,
-  LOCAL
+  CASCADED, //!< cascaded
+  LOCAL     //!< local
 };
+
+/**
+  Algorithms used to process views.
+  @see https://dev.mysql.com/doc/refman/5.7/en/view-algorithms.html
+*/
 
 enum class Algorithm
 {
-  UNDEFINED,
-  MERGE,
-  TEMPTABLE
+  UNDEFINED,  //!< undefined
+  MERGE,      //!< merge
+  TEMPTABLE   //!< temptable
 };
+
+/**
+  View security settings.
+  @see https://dev.mysql.com/doc/refman/5.7/en/stored-programs-security.html
+*/
 
 enum class SQLSecurity
 {
-  DEFINER,
-  INVOKER
+  DEFINER,  //!< definer
+  INVOKER   //!< invoker
 };
 
 
@@ -224,8 +235,12 @@ protected:
 public:
 
   /**
-    Set constraints on the View.
+    Specify checks that are done upon insertion of rows into an updatable
+    view.
+
+    @see https://dev.mysql.com/doc/refman/5.7/en/view-check-option.html
   */
+
   Executable<Result,Op> withCheckOption(CheckOption option)
   {
     get_impl()->with_check_option(option);
@@ -233,9 +248,10 @@ public:
   }
 };
 
+
 template <class Op>
 class ViewDefinedAs
-: protected ViewCheckOpt<Op>
+: public ViewCheckOpt<Op>
 {
 protected:
 
@@ -243,15 +259,22 @@ protected:
 
 public:
 
-  /**
-     Define the table select statement to generate the View.
-  */
-
+  ///@{
+  // TODO: How to copy documentation here?
   ViewCheckOpt<Op> definedAs(TableSelect&& table)
   {
     get_impl()->defined_as(std::move(table));
     return std::move(*this);
   }
+
+  /**
+     Specify table select operation for which the view is created.
+
+     @note In situations where select statement is modified after
+     passing it to definedAs() method, later changes do not afffect
+     view definition which uses the state of the statement at the time
+     of definedAs() call.
+  */
 
   ViewCheckOpt<Op> definedAs(const TableSelect& table)
   {
@@ -259,7 +282,10 @@ public:
     get_impl()->defined_as(std::move(table_tmp));
     return std::move(*this);
   }
+
+  ///@}
 };
+
 
 template <class Op>
 class ViewDefiner
@@ -272,7 +298,12 @@ protected:
 public:
 
   /**
-    Define the View’s definer.
+    Specify definer of a view.
+
+    The definer is used to determine access rights for the view. It is specified
+    as a valid MySQL account name of the form "user@host".
+
+    @see https://dev.mysql.com/doc/refman/5.7/en/stored-programs-security.html
   */
  ViewDefinedAs<Op> definer(const string &user)
  {
@@ -280,6 +311,7 @@ public:
   return std::move(*this);
  }
 };
+
 
 template <class Op>
 class ViewSecurity
@@ -292,14 +324,18 @@ protected:
 public:
 
   /**
-     Define the View’s security scheme.
+    Specify security characteristisc of a view.
+
+    @see https://dev.mysql.com/doc/refman/5.7/en/stored-programs-security.html
   */
+
   ViewDefiner<Op> security(SQLSecurity sec)
   {
     get_impl()->security(sec);
     return std::move(*this);
   }
 };
+
 
 template <class Op>
 class ViewAlgorithm
@@ -312,7 +348,9 @@ protected:
 public:
 
   /**
-    define the View’s algorithm.
+    Specify algorithm used to process the view.
+
+    @see https://dev.mysql.com/doc/refman/5.7/en/view-algorithms.html
   */
 
   ViewSecurity<Op> algorithm(Algorithm alg)
@@ -365,7 +403,7 @@ public:
 
   /**
     Define the column names of the created/altered View.
-   */
+  */
 
   template<typename...T>
   ViewAlgorithm<Op> columns(const T&...names)
@@ -386,7 +424,12 @@ public:
 } // namespace internal
 
 /**
-   The ViewCreate class represents the creation of a view
+  Represents an operation which creates a view.
+
+  The query for which the view is created must be specified with
+  `definedAs()` method. Other methods can specify different view creation
+  options. When operation is fully specified, it can be executed with
+  a call to `execute()`.
 */
 
 class PUBLIC_API ViewCreate
@@ -403,7 +446,11 @@ class PUBLIC_API ViewCreate
 
 
 /**
-   The ViewCreate class represents the creation of a view
+  Represents an operation which modifies an existing view.
+
+  ViewAlter operation must specify new query for the view with
+  `definedAs()` method (it is not possible to change other characteristics
+  of a view without changing its query).
 */
 
 class PUBLIC_API ViewAlter
@@ -421,11 +468,8 @@ class PUBLIC_API ViewAlter
 
 namespace internal {
 
-/*
-   View drop classes
-*/
 
-struct ViewDrop_impl
+  struct ViewDrop_impl
   : public Executable_impl
 {
   virtual void if_exists() = 0;
@@ -449,6 +493,11 @@ protected:
 
 public:
 
+  /**
+    Modify drop view operation so that it checks existence of the view
+    before dropping it.
+  */
+
   Executable<Result,Op> ifExists()
   {
     get_impl()->if_exists();
@@ -458,8 +507,9 @@ public:
 
 } // namespace internal
 
+
 /**
-   The ViewDrop class represents the drop of a view
+  Represents an operation which drops a view.
 */
 
 class PUBLIC_API ViewDrop
