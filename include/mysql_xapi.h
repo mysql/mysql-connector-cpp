@@ -337,7 +337,8 @@ typedef enum mysqlx_sort_direction_enum
 typedef enum mysqlx_opt_type_enum
 {
   MYSQLX_OPT_HOST = 1,        /**< host name or IP address */
-  MYSQLX_OPT_PORT = 2,        /**< X Plugin port to connect to */
+  /** DNS name of the host, IPv4 address or IPv6 address */
+  MYSQLX_OPT_PORT = 2,
   MYSQLX_OPT_USER = 3,        /**< user name */
   MYSQLX_OPT_PWD = 4,         /**< password */
   MYSQLX_OPT_DB = 5,          /**< default database */
@@ -397,7 +398,7 @@ typedef enum mysqlx_view_check_option_enum
 /**
   Create a new session.
 
-  @param host       server host address
+  @param host       server host DNS name, IPv4 address or IPv6 address
   @param port       port number
   @param user       user name
   @param password   password
@@ -429,8 +430,11 @@ mysqlx_get_session(const char *host, int port, const char *user,
   Create a session using connection string or URL.
 
   Connection sting has the form `"user:pass\@host:port/?option&option"`,
-  valid URL is like a connection string with a `mysqlx://` prefix. Possible
-  connection options are:
+  valid URL is like a connection string with a `mysqlx://` prefix. Host is
+  specified as either DNS name, IPv4 address of the form "nn.nn.nn.nn" or
+  IPv6 address of the form "[nn:nn:nn:...]".
+
+  Possible connection options are:
 
   - `ssl-enable` : use TLS connection
   - `ssl-ca=`<path> : path to a PEM file specifying trusted root certificates
@@ -489,7 +493,7 @@ mysqlx_get_session_from_options(mysqlx_session_options_t *opt,
 
   A node session connects only to one mysqld node at a time.
 
-  @param host       server host address
+  @param host       server host DNS name, IPv4 address or IPv6 address
   @param port       port number
   @param user       user name
   @param password   password
@@ -520,8 +524,8 @@ mysqlx_get_node_session(const char *host, int port, const char *user,
 /**
   Create a node session using connection string or URL.
 
-  Connection sting has the form `"user:pass\@host:port"`, valid URL
-  is like a connection string with `mysqlx://` prefix.
+  See `mysqlx_get_session_from_url()` for information on connection string
+  format.
 
   A node session connects only to one mysqld node at a time.
 
@@ -539,6 +543,8 @@ mysqlx_get_node_session(const char *host, int port, const char *user,
     `mysqlx_session_close()`.
 
   @note This type of session supports executing plain SQL queries
+
+  @see `mysqlx_get_session_from_url()`
 
   @ingroup xapi_sess
 */

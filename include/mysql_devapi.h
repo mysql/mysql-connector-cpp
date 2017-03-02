@@ -926,7 +926,8 @@ public:
   enum Options
   {
     URI,          //!< connection URI or string
-    HOST,         //!< host name or IP address
+    //! DNS name of the host, IPv4 address or IPv6 address
+    HOST,
     PORT,         //!< X Plugin port to connect to
     USER,         //!< user name
     PWD,          //!< password
@@ -952,8 +953,11 @@ public:
     Create a session using connection string or URL.
 
     Connection sting has the form `"user:pass\@host:port/?option&option"`,
-    valid URL is like a connection string with a `mysqlx://` prefix. Possible
-    connection options are:
+    valid URL is like a connection string with a `mysqlx://` prefix. Host is
+    specified as either DNS name, IPv4 address of the form "nn.nn.nn.nn" or
+    IPv6 address of the form "[nn:nn:nn:...]".
+
+    Possible connection options are:
 
     - `ssl-enable` : use TLS connection
     - `ssl-ca=`<path> : path to a PEM file specifying trusted root certificates
