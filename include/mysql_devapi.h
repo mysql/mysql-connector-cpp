@@ -960,7 +960,7 @@ public:
     Possible connection options are:
 
     - `ssl-enable` : use TLS connection
-    - `ssl-ca=`<path> : path to a PEM file specifying trusted root certificates
+    - `ssl-ca=`path : path to a PEM file specifying trusted root certificates
 
     Specifying `ssl-ca` option implies `ssl-enable`.
   */
@@ -1254,7 +1254,15 @@ namespace internal {
 
     Schema getSchema(const string&, bool check_existence = false);
 
+    /**
+      Get the default schema specified when session was created.
+    */
+
     Schema getDefaultSchema();
+
+    /**
+      Get the name of the default schema specified when session was created.
+    */
 
     string getDefaultSchemaName();
 
