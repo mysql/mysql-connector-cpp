@@ -106,7 +106,7 @@ typedef object_id* MYSQLX_GUID;
 /**
   Return value flag indicating that the last reading operation
   did not finish reading to the end and there is still more data
-  to be fetched by functions suchs as mysqlx_get_bytes()
+  to be fetched by functions such as mysqlx_get_bytes()
 */
 
 #define RESULT_MORE_DATA 8
@@ -331,17 +331,18 @@ typedef enum mysqlx_sort_direction_enum
   Session options for use with `mysqlx_session_option_get()`
   and `mysqlx_session_option_set()` functions.
 
-  TODO: Document the options and what data they expect
+  @note Specifying `MYSQLX_OPT_SSL_CA` option implies `MYSQLX_OPT_SSL_ENABLE`.
 */
 
 typedef enum mysqlx_opt_type_enum
 {
-  MYSQLX_OPT_HOST = 1,
-  MYSQLX_OPT_PORT = 2,
-  MYSQLX_OPT_USER = 3,
-  MYSQLX_OPT_PWD = 4,
-  MYSQLX_OPT_DB = 5,
-  MYSQLX_OPT_SSL_ENABLE = 6,
+  MYSQLX_OPT_HOST = 1,        /**< host name or IP address */
+  MYSQLX_OPT_PORT = 2,        /**< X Plugin port to connect to */
+  MYSQLX_OPT_USER = 3,        /**< user name */
+  MYSQLX_OPT_PWD = 4,         /**< password */
+  MYSQLX_OPT_DB = 5,          /**< default database */
+  MYSQLX_OPT_SSL_ENABLE = 6,  /**< use TLS connection */
+  /** path to a PEM file specifying trusted root certificates */
   MYSQLX_OPT_SSL_CA = 7,
 }
 mysqlx_opt_type_t;
@@ -427,13 +428,19 @@ mysqlx_get_session(const char *host, int port, const char *user,
 /**
   Create a session using connection string or URL.
 
-  Connection sting has the form `"user:pass\@host:port/?option"`, valid URL
-  is like a connection string with a `mysqlx://` prefix.
+  Connection sting has the form `"user:pass\@host:port/?option&option"`,
+  valid URL is like a connection string with a `mysqlx://` prefix. Possible
+  connection options are:
 
-  @param conn_string character connection string
+  - `ssl-enable` : use TLS connection
+  - `ssl-ca=`<path> : path to a PEM file specifying trusted root certificates
+
+  Specifying `ssl-ca` option implies `ssl-enable`.
+
+  @param conn_string    connection string
   @param[out] out_error if error happens during connect the error message
                         is returned through this parameter
-  @param[out] err_code if error happens during connect the error code
+  @param[out] err_code  if error happens during connect the error code
                         is returned through this parameter
 
   @return session handle if session could be created, otherwise NULL
@@ -2895,7 +2902,7 @@ mysqlx_result_next_warning(mysqlx_result_t *res);
   The order of parameters in the list is not fixed, but if
   `VIEW_COLUMNS()` (`VIEW_OPTION_COLUMNS`) is used it must be the
   last parameter before terminating the list with `PARAM_END`. See documentation
-  of the convenience macros for more details on possible vuew definition
+  of the convenience macros for more details on possible view definition
   options
 
 
@@ -2911,7 +2918,7 @@ mysqlx_view_create(mysqlx_schema_t *schema, const char *name,
 
 
 /**
-  Return a new statement which careates a view
+  Return a new statement which creates a view
 
   Creates a statement which will be used for creating a new view
   in a given schema based on a previously defined select statement. Before

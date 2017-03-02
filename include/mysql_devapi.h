@@ -271,7 +271,7 @@ public:
      Specify table select operation for which the view is created.
 
      @note In situations where select statement is modified after
-     passing it to definedAs() method, later changes do not afffect
+     passing it to definedAs() method, later changes do not affect
      view definition which uses the state of the statement at the time
      of definedAs() call.
   */
@@ -324,7 +324,7 @@ protected:
 public:
 
   /**
-    Specify security characteristisc of a view.
+    Specify security characteristics of a view.
 
     @see https://dev.mysql.com/doc/refman/5.7/en/stored-programs-security.html
   */
@@ -363,8 +363,9 @@ public:
 
 
 /*
-  Base blass for Create/Alter View
+  Base class for Create/Alter View
 */
+
 template <class Op>
 class View_base
   : public ViewAlgorithm<Op>
@@ -887,9 +888,27 @@ public:
   Represents session options to be passed at XSession/NodeSession object
   creation.
 
-  SessionSettings can be constructed using uri, common connect options (host,
-  port, user, password, database) or using pairs of SessionSettings::Options -
-  Value objects.
+  SessionSettings can be constructed using URL string, common connect options
+  (host, port, user, password, database) or with a list
+  of `SessionSettings::Options` constants followed by option value (unless
+  given option has no value, like `SSL_ENABLE`).
+
+  Examples:
+  ~~~~~~
+
+    SessionSettings from_url("mysqlx://user:pwd@host:port/db?ssl-enable");
+
+    SessionSettings from_options("host", port, "user", "pwd", "db");
+
+    SessionSettings from_option_list(
+      SessionSettings::USER, "user",
+      SessionSettings::PWD,  "pwd",
+      SessionSettings::HOST, "host",
+      SessionSettings::PORT, port,
+      SessionSettings::DB,   "db",
+      SessionSettings::SSL_ENABLE
+    );
+  ~~~~~~
 
   @ingroup devapi
 */
@@ -897,16 +916,23 @@ public:
 class PUBLIC_API SessionSettings
 {
 public:
+
+  /**
+    Session creation options
+
+    @note Specifying `SSL_CA` option implies `SSL_ENABLE`.
+  */
+
   enum Options
   {
-    URI,
-    HOST,
-    PORT,
-    USER,
-    PWD,
-    DB,
-    SSL_ENABLE,
-    SSL_CA
+    URI,          //!< connection URI or string
+    HOST,         //!< host name or IP address
+    PORT,         //!< X Plugin port to connect to
+    USER,         //!< user name
+    PWD,          //!< password
+    DB,           //!< default database
+    SSL_ENABLE,   //!< use TLS connection
+    SSL_CA        //!< path to a PEM file specifying trusted root certificates
   };
 
 
@@ -922,6 +948,19 @@ public:
   {}
 
 
+  /**
+    Create a session using connection string or URL.
+
+    Connection sting has the form `"user:pass\@host:port/?option&option"`,
+    valid URL is like a connection string with a `mysqlx://` prefix. Possible
+    connection options are:
+
+    - `ssl-enable` : use TLS connection
+    - `ssl-ca=`<path> : path to a PEM file specifying trusted root certificates
+
+    Specifying `ssl-ca` option implies `ssl-enable`.
+  */
+
   SessionSettings(const string &uri)
   {
     add(URI, uri);
@@ -930,6 +969,9 @@ public:
 
   /**
     Create session explicitly specifying session parameters.
+
+    @note Session settings constructed this way request an SSL connection
+    by default.
   */
 
   SessionSettings(const std::string &host, unsigned port,
@@ -956,9 +998,12 @@ public:
     : SessionSettings(host, port, user, pwd.c_str(), db)
   {}
 
-      /**
-        Create session using the default port
-      */
+  /**
+    Create session using the default port
+
+    @note Session settings constructed this way request an SSL connection
+    by default.
+  */
 
   SessionSettings(const std::string &host,
                   const string  &user,
@@ -974,9 +1019,12 @@ public:
     : SessionSettings(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
   {}
 
-      /**
-        Create session on localhost.
-      */
+  /**
+    Create session on localhost.
+
+    @note Session settings constructed this way request an SSL connection
+    by default.
+  */
 
   SessionSettings(unsigned port,
                   const string  &user,
@@ -1054,7 +1102,25 @@ public:
 
 
   /**
-    Passing option - value pairs
+    Create session using a list of session options.
+
+    The list of options consist of `SessionSettings::Options` constant
+    identifying the option to set, followed by option value (unless
+    not required, as in the case of `SSL_ENABLE`).
+
+    Example:
+    ~~~~~~
+      SessionSettings from_option_list(
+        SessionSettings::USER, "user",
+        SessionSettings::PWD,  "pwd",
+        SessionSettings::HOST, "host",
+        SessionSettings::PORT, port,
+        SessionSettings::DB,   "db",
+        SessionSettings::SSL_ENABLE
+      );
+    ~~~~~~
+
+    @see `SessionSettings::Options`.
   */
 
   template <typename V,typename...R>
@@ -1154,14 +1220,6 @@ namespace internal {
     void session_closed() { if (!m_master_session) m_impl = NULL; }
 
   public:
-
-    /**
-      Create session specified by mysqlx connection string.
-
-      Connection string can be either an utf8 encoded single-byte
-      string or a wide string (which is converted to utf8 before
-      parsing).
-    */
 
     XSession_base(SessionSettings settings);
 
@@ -1303,10 +1361,41 @@ class PUBLIC_API XSession
 
 public:
 
+  /**
+    Create session specified by `SessionSettings` object.
+  */
+
   XSession(SessionSettings settings)
     : XSession_base(settings)
   {}
 
+
+  /**
+    Create session using given session settings.
+
+    This constructor forwards arguments to a `SessionSettings` constructor.
+    Thus all forms of specifying session options are also directly available
+    in `XSession` constructor.
+
+    Examples:
+    ~~~~~~
+
+      XSession from_uri("mysqlx://user:pwd@host:port/db?ssl-enable");
+
+      XSession from_options("host", port, "user", "pwd", "db");
+
+      XSession from_option_list(
+        SessionSettings::USER, "user",
+        SessionSettings::PWD,  "pwd",
+        SessionSettings::HOST, "host",
+        SessionSettings::PORT, port,
+        SessionSettings::DB,   "db",
+        SessionSettings::SSL_ENABLE
+      );
+    ~~~~~~
+
+    @see `SessionSettings`
+  */
 
   template<typename...T>
   XSession(T...options)
