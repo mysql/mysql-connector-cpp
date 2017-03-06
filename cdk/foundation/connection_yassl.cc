@@ -68,8 +68,10 @@ class connection_TLS_impl
 {
 public:
   connection_TLS_impl(cdk::foundation::connection::TCPIP_base* tcpip,
+                      const std::string &hostname,
                       cdk::foundation::connection::TLS::Options options)
     : m_tcpip(tcpip)
+    , m_hostname(hostname)
     , m_tls(NULL)
     , m_tls_ctx(NULL)
     , m_options(options)
@@ -91,7 +93,10 @@ public:
 
   void do_connect();
 
+  void verify_server_cert();
+
   cdk::foundation::connection::TCPIP_base* m_tcpip;
+  std::string m_hostname;
   yaSSL::SSL* m_tls;
   yaSSL::SSL_CTX* m_tls_ctx;
   cdk::foundation::connection::TLS::Options m_options;
@@ -127,8 +132,10 @@ void connection_TLS_impl::do_connect()
 
     SSL_CTX_set_cipher_list(m_tls_ctx, cipher_list.c_str());
 
-    if (!m_options.get_ca().empty() ||
-        !m_options.get_ca_path().empty())
+    if (m_options.ssl_mode()
+        >=
+        cdk::foundation::connection::TLS::Options::SSL_MODE::VERIFY_CA
+        )
     {
       SSL_CTX_set_verify(m_tls_ctx, yaSSL::SSL_VERIFY_PEER , NULL);
 
@@ -169,6 +176,12 @@ void connection_TLS_impl::do_connect()
     if(yaSSL::SSL_connect(m_tls) != yaSSL::SSL_SUCCESS)
       throw_yassl_error();
 
+    if (m_options.ssl_mode()
+        ==
+        cdk::foundation::connection::TLS::Options::SSL_MODE::VERIFY_IDENTITY
+        )
+      verify_server_cert();
+
   }
   catch (...)
   {
@@ -189,6 +202,85 @@ void connection_TLS_impl::do_connect()
   }
 }
 
+void connection_TLS_impl::verify_server_cert()
+{
+  yaSSL::X509 *server_cert= NULL;
+  char *cn= NULL;
+  int cn_loc= -1;
+  yaSSL::ASN1_STRING *cn_asn1= NULL;
+  yaSSL::X509_NAME_ENTRY *cn_entry= NULL;
+  yaSSL::X509_NAME *subject= NULL;
+  int ret_validation= 1;
+
+  if (m_hostname.empty())
+  {
+    throw_yassl_error_msg("No server hostname supplied");
+  }
+
+  if (!(server_cert= SSL_get_peer_certificate(m_tls)))
+  {
+    throw_yassl_error_msg("Could not get server certificate");
+  }
+
+  if (yaSSL::X509_V_OK != SSL_get_verify_result(m_tls))
+  {
+    throw_yassl_error_msg("Failed to verify the server certificate");
+  }
+  /*
+    We already know that the certificate exchanged was valid; the SSL library
+    handled that. Now we need to verify that the contents of the certificate
+    are what we expect.
+  */
+
+  /*
+   Some notes for future development
+   We should check host name in alternative name first and then if needed check in common name.
+   Currently yssl doesn't support alternative name.
+   openssl 1.0.2 support X509_check_host method for host name validation, we may need to start using
+   X509_check_host in the future.
+  */
+
+  subject= X509_get_subject_name((yaSSL::X509 *) server_cert);
+  // Find the CN location in the subject
+  cn_loc= X509_NAME_get_index_by_NID(subject, NID_commonName, -1);
+  if (cn_loc < 0)
+  {
+    throw_yassl_error_msg("Failed to get CN location in the certificate subject");
+  }
+
+  // Get the CN entry for given location
+  cn_entry= X509_NAME_get_entry(subject, cn_loc);
+  if (cn_entry == NULL)
+  {
+    throw_yassl_error_msg("Failed to get CN entry using CN location");
+  }
+
+  // Get CN from common name entry
+  cn_asn1 = X509_NAME_ENTRY_get_data(cn_entry);
+  if (cn_asn1 == NULL)
+  {
+    throw_yassl_error_msg("Failed to get CN from CN entry");
+  }
+
+  cn= (char *) ASN1_STRING_data(cn_asn1);
+
+  // There should not be any NULL embedded in the CN
+  if ((size_t)ASN1_STRING_length(cn_asn1) != strlen(cn))
+  {
+    throw_yassl_error_msg("NULL embedded in the certificate CN");
+  }
+
+
+  if (m_hostname != cn)
+  {
+    throw_yassl_error_msg("SSL certificate validation failure");
+  }
+
+
+  if (server_cert != NULL)
+    X509_free (server_cert);
+}
+
 
 IMPL_TYPE(cdk::foundation::connection::TLS, connection_TLS_impl);
 IMPL_PLAIN(cdk::foundation::connection::TLS);
@@ -200,8 +292,9 @@ namespace connection {
 
 
 TLS::TLS(TCPIP_base* tcpip,
+         const std::string &host,
          const TLS::Options &options)
-  : opaque_impl<TLS>(NULL, tcpip, options)
+  : opaque_impl<TLS>(NULL, tcpip, host, options)
 {}
 
 

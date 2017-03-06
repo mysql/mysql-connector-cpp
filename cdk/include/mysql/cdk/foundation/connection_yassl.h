@@ -44,6 +44,7 @@ public:
   class Options;
 
   TLS(TCPIP_base* tcpip,
+      const std::string &host,
       const Options& Opts);
 
 
@@ -71,12 +72,21 @@ public:
     TCPIP::Options object knows that TLS should not be used for the connection.
   */
 
-  Options(bool use_tls = true)
-    : m_use_tls(use_tls)
+  enum class SSL_MODE
+  {
+    DISABLED,
+    PREFERRED,
+    REQUIRED,
+    VERIFY_CA,
+    VERIFY_IDENTITY
+  };
+
+  Options(SSL_MODE ssl_mode = SSL_MODE::PREFERRED)
+    : m_ssl_mode(ssl_mode)
   {}
 
-  void set_use_tls(bool use_tls) { m_use_tls = use_tls; }
-  bool use_tls() const { return m_use_tls; }
+  void set_ssl_mode(SSL_MODE ssl_mode) { m_ssl_mode = ssl_mode; }
+  SSL_MODE ssl_mode() const { return m_ssl_mode; }
 
   void set_key(const string &key) { m_key = key; }
   const std::string &get_key() const { return m_key; }
@@ -89,10 +99,11 @@ public:
 
 protected:
 
-  bool m_use_tls;
+  SSL_MODE m_ssl_mode;
   std::string m_key;
   std::string m_ca;
   std::string m_ca_path;
+  std::string m_hostname;
 };
 
 

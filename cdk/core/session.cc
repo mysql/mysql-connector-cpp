@@ -51,7 +51,8 @@ Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
 
 
 #ifdef WITH_SSL
-  if (options.get_tls().use_tls())
+  if (options.get_tls().ssl_mode() >
+      cdk::connection::TLS::Options::SSL_MODE::DISABLED)
   {
   using foundation::connection::TLS;
 
@@ -81,7 +82,7 @@ Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
 
     proto.rcv_Reply(prc).wait();
 
-    TLS* tls = new TLS(connection, options.get_tls());
+    TLS* tls = new TLS(connection, ds.host(), options.get_tls());
 
     tls->connect();
     m_connection = tls;

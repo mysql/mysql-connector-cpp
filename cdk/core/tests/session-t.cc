@@ -1002,7 +1002,6 @@ TEST_F(Session_core, tls_options)
 
     {
 
-      options.set_tls(true);
       cdk::Session s_tmp(ds, options);
 
       Reply ssl_var(s_tmp.sql("show global variables like 'ssl_ca';"));
