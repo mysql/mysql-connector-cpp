@@ -49,6 +49,7 @@ Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
     rethrow_error();
   }
 
+  bool tls = false;
 
 #ifdef WITH_SSL
   if (options.get_tls().ssl_mode() >
@@ -80,16 +81,36 @@ Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
       }
     } prc;
 
-    proto.rcv_Reply(prc).wait();
 
-    TLS* tls = new TLS(connection, ds.host(), options.get_tls());
+    tls = true;
 
-    tls->connect();
-    m_connection = tls;
-    m_session = new mysqlx::Session(*tls, options);
+    try {
+      proto.rcv_Reply(prc).wait();
+    }
+    // Server doesn't allow TLS connection
+    catch(const Error &e)
+    {
+      if (options.get_tls().ssl_mode() !=
+          cdk::connection::TLS::Options::SSL_MODE::PREFERRED)
+        rethrow_error();
+
+      tls = false;
+    }
+
+    if (tls)
+    {
+      TLS* tls = new TLS(connection, ds.host(), options.get_tls());
+
+      tls->connect();
+      m_connection = tls;
+
+      m_session = new mysqlx::Session(*tls, options);
+    }
+
   }
-  else
+
 #endif
+  if (!tls)
   {
     m_connection = connection;
     m_session = new mysqlx::Session(*connection, options);

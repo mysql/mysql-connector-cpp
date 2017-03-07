@@ -210,7 +210,6 @@ void connection_TLS_impl::verify_server_cert()
   yaSSL::ASN1_STRING *cn_asn1= NULL;
   yaSSL::X509_NAME_ENTRY *cn_entry= NULL;
   yaSSL::X509_NAME *subject= NULL;
-  int ret_validation= 1;
 
   if (m_hostname.empty())
   {
