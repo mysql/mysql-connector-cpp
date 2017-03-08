@@ -378,8 +378,8 @@ TEST_F(Sess, ssl_session)
   {
     mysqlx::XSession sess(SessionSettings::PORT, get_port(),
                           SessionSettings::USER,get_user(),
-                          SessionSettings::PWD, get_password() ? get_password() : nullptr ,
-                          SessionSettings::SSL_ENABLE, true);
+                          SessionSettings::PWD, get_password() ? get_password() : nullptr
+                          );
 
     check_ssl(sess, true);
   }
@@ -387,8 +387,9 @@ TEST_F(Sess, ssl_session)
   {
     mysqlx::XSession sess(SessionSettings::PORT, get_port(),
                           SessionSettings::USER, get_user(),
-                          SessionSettings::PWD, get_password() ? get_password() : nullptr ,
-                          SessionSettings::SSL_ENABLE, false);
+                          SessionSettings::PWD, get_password() ? get_password() : nullptr,
+                          SessionSettings::SSL_MODE, SessionSettings::SSLMode::DISABLED
+                          );
 
     check_ssl(sess, false);
   }
@@ -406,7 +407,9 @@ TEST_F(Sess, ssl_session)
 
   //URI without ssl_enable
   {
-    mysqlx::XSession sess(uri.str());
+    std::stringstream ssl_off;
+    ssl_off << uri.str() << "/?ssl-mode=disabled";
+    mysqlx::XSession sess(ssl_off.str());
     check_ssl(sess, false);
   }
 
@@ -414,7 +417,7 @@ TEST_F(Sess, ssl_session)
   {
     std::stringstream uri_ssl;
     //Enable SSL
-    uri_ssl << uri.str() << "/?ssl-enable";
+    uri_ssl << uri.str() << "/?ssl-mode=required";
 
     mysqlx::XSession sess(uri_ssl.str());
     check_ssl(sess, true);
@@ -427,7 +430,7 @@ TEST_F(Sess, ssl_session)
     mysqlx::XSession sess(SessionSettings::PORT, get_port(),
                           SessionSettings::USER,get_user(),
                           SessionSettings::PWD, get_password() ? get_password() : nullptr ,
-                          SessionSettings::SSL_ENABLE, true,
+                          SessionSettings::SSL_MODE, SessionSettings::SSLMode::VERIFY_CA,
                           SessionSettings::SSL_CA, "unknown")
           , mysqlx::Error);
 
@@ -437,7 +440,7 @@ TEST_F(Sess, ssl_session)
   //using wrong ssl-ca and ssl-ca-path on URI
   {
     std::stringstream bad_uri;
-    bad_uri << uri.str() << "/?ssl-ca=" << "unknown.file";
+    bad_uri << uri.str() << "/?ssl-mode=verify_ca&ssl-ca=" << "unknown.file";
 
     EXPECT_THROW(mysqlx::XSession sess(bad_uri.str()), mysqlx::Error);
   }
@@ -483,7 +486,7 @@ TEST_F(Sess, ssl_session)
     mysqlx::XSession sess(SessionSettings::PORT, get_port(),
                           SessionSettings::USER,get_user(),
                           SessionSettings::PWD, get_password() ? get_password() : nullptr ,
-                          SessionSettings::SSL_ENABLE, true,
+                          SessionSettings::SSL_MODE, SessionSettings::SSLMode::VERIFY_CA,
                           SessionSettings::SSL_CA, ssl_ca);
 
     check_ssl(sess, true);
@@ -506,7 +509,7 @@ TEST_F(Sess, ssl_session)
     mysqlx::XSession sess(SessionSettings::PORT, get_port(),
                           SessionSettings::USER,get_user(),
                           SessionSettings::PWD, get_password() ? get_password() : nullptr ,
-                          SessionSettings::SSL_ENABLE, false,
+                          SessionSettings::SSL_MODE, SessionSettings::SSLMode::DISABLED,
                           SessionSettings::SSL_CA, ssl_ca);
 
     check_ssl(sess, false);
@@ -518,7 +521,7 @@ TEST_F(Sess, ssl_session)
     mysqlx::XSession sess(SessionSettings::PORT, get_port(),
                           SessionSettings::USER,get_user(),
                           SessionSettings::PWD, get_password() ? get_password() : NULL ,
-                          SessionSettings::SSL_ENABLE, true,
+                          SessionSettings::SSL_MODE, SessionSettings::SSLMode::VERIFY_IDENTITY,
                           SessionSettings::SSL_CA, ssl_ca);
 
     check_ssl(sess, true);
@@ -537,8 +540,9 @@ TEST_F(Sess, ipv6)
     mysqlx::XSession sess(SessionSettings::HOST, "::1",
                           SessionSettings::PORT, get_port(),
                           SessionSettings::USER, get_user(),
-                          SessionSettings::PWD, get_password() ? get_password() : nullptr ,
-                          SessionSettings::SSL_ENABLE, false);
+                          SessionSettings::PWD, get_password() ? get_password() : nullptr
+//                          SessionSettings::SSL_ENABLE, false
+                          );
   }
 
   //Using URI

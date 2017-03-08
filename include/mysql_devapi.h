@@ -855,11 +855,23 @@ public:
     USER,
     PWD,
     DB,
-    SSL_ENABLE,
+    SSL_MODE,
     SSL_CA
   };
 
+#define SSL_MODE_TYPES(x)\
+  x(DISABLED)\
+  x(PREFERRED)\
+  x(REQUIRED)\
+  x(VERIFY_CA)\
+  x(VERIFY_IDENTITY)
 
+#define SSL_ENUM(x) x,
+
+  enum class SSLMode
+  {
+    SSL_MODE_TYPES(SSL_ENUM)
+  };
 
   SessionSettings(){}
 
@@ -895,8 +907,6 @@ public:
     if (pwd)
       add(PWD, pwd);
 
-    //SSL enabled by default
-    add(SSL_ENABLE, true);
   }
 
   SessionSettings(const std::string &host, unsigned port,
@@ -1056,6 +1066,13 @@ private:
   void add(Options opt, V v)
   {
     m_options[opt] = string(v);
+  }
+
+  void add(Options opt, SessionSettings::SSLMode v)
+  {
+    if (opt != SSL_MODE)
+      throw Error("SessionSettings::SSLMode can only be used on SSL_MODE setting.");
+    add(opt,static_cast<int>(v));
   }
 
   template <typename V, typename...R>

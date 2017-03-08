@@ -52,17 +52,10 @@ struct internal::XSession_base::Options
   {
     if (!schema.empty())
       set_database(schema);
-#ifdef WITH_SSL
-    set_tls(true);
-#endif
   }
 
   Options()
-  {
-#ifdef WITH_SSL
-    set_tls(true);
-#endif
-  }
+  {}
 
 };
 
@@ -123,6 +116,47 @@ class internal::XSession_base::Impl
   friend XSession_base;
 };
 
+#ifdef WITH_SSL
+
+#define map_ssl(x) { #x, SessionSettings::SSLMode::x },
+
+static std::map<string,SessionSettings::SSLMode> ssl_modes = { SSL_MODE_TYPES(map_ssl) };
+
+
+void set_ssl_mode(cdk::connection::TLS::Options &tls_opt,
+                  SessionSettings::SSLMode mode)
+{
+  switch (mode)
+  {
+  case SessionSettings::SSLMode::DISABLED:
+    tls_opt.set_ssl_mode(
+          cdk::connection::TLS::Options::SSL_MODE::DISABLED
+          );
+    break;
+  case SessionSettings::SSLMode::PREFERRED:
+    tls_opt.set_ssl_mode(
+          cdk::connection::TLS::Options::SSL_MODE::PREFERRED
+          );
+    break;
+  case SessionSettings::SSLMode::REQUIRED:
+    tls_opt.set_ssl_mode(
+          cdk::connection::TLS::Options::SSL_MODE::REQUIRED
+          );
+    break;
+  case SessionSettings::SSLMode::VERIFY_CA:
+    tls_opt.set_ssl_mode(
+          cdk::connection::TLS::Options::SSL_MODE::VERIFY_CA
+          );
+    break;
+  case SessionSettings::SSLMode::VERIFY_IDENTITY:
+    tls_opt.set_ssl_mode(
+          cdk::connection::TLS::Options::SSL_MODE::VERIFY_IDENTITY
+          );
+    break;
+  }
+}
+
+#endif //WITH_SSL
 
 struct URI_parser
   : public internal::XSession_base::Access::Options
@@ -131,8 +165,7 @@ struct URI_parser
 {
 
 #ifdef WITH_SSL
-  // tls off by default on URI connection
-  cdk::connection::TLS::Options m_tls_opt = false;
+  cdk::connection::TLS::Options m_tls_opt;
 #endif
 
   URI_parser(const std::string &uri)
@@ -175,27 +208,28 @@ struct URI_parser
     set_database(db);
   }
 
-  void key_val(const std::string &key) override
+  void key_val(const std::string &key, const std::string &val) override
   {
-    if (key == "ssl-enable")
+    if (key == "ssl-mode")
     {
 #ifdef WITH_SSL
-      m_tls_opt.set_use_tls(true);
+
+      std::string mode;
+      mode.resize(val.size());
+      std::transform(val.begin(), val.end(), mode.begin(), ::toupper);
+
+      set_ssl_mode(m_tls_opt, ssl_modes[mode]);
+
 #else
       throw_error(
             "Can not create TLS session - this connector is built"
             " without TLS support."
             );
 #endif
-    }
-  }
-
-  void key_val(const std::string &key, const std::string &val) override
-  {
-    if (key == "ssl-ca")
+    } else if (key == "ssl-ca")
     {
 #ifdef WITH_SSL
-      m_tls_opt.set_use_tls(true);
+
       m_tls_opt.set_ca(val);
 #else
       throw_error(
@@ -273,21 +307,29 @@ internal::XSession_base::XSession_base(SessionSettings settings)
               settings[SessionSettings::DB].get<string>()
             );
 
-      if (settings.has_option(SessionSettings::SSL_ENABLE) ||
+
+      if (settings.has_option(SessionSettings::SSL_MODE) ||
           settings.has_option(SessionSettings::SSL_CA))
       {
 #ifdef WITH_SSL
 
-        //ssl_enable by default, unless SSL_ENABLE = false
-        bool ssl_enable = true;
-        if (settings.has_option(SessionSettings::SSL_ENABLE))
-          ssl_enable = settings[SessionSettings::SSL_ENABLE];
+        cdk::connection::TLS::Options opt_ssl;
 
-        cdk::connection::TLS::Options opt_ssl(ssl_enable);
 
 
         if (settings.has_option(SessionSettings::SSL_CA))
           opt_ssl.set_ca(settings[SessionSettings::SSL_CA].get<string>());
+
+
+        // Last option, since above option will enable SSL_MODE, and this should
+        // overset the previous SSL_MODE
+        if (settings.has_option(SessionSettings::SSL_MODE))
+        {
+          set_ssl_mode(opt_ssl,
+                       static_cast<SessionSettings::SSLMode>(
+                         (int)settings[SessionSettings::SSL_MODE])
+              );
+        }
 
         opt.set_tls(opt_ssl);
 #else
