@@ -60,7 +60,7 @@ public:
 
 
   /*
-     Called before and after processing one filed within a row. The pos
+     Called before and after processing one field within a row. The pos
      parameter indicates 0-based position of the field within the row.
      Method field_begin() returns the amount of space available for storing
      field data - following field_data() calls should respect this limit.
