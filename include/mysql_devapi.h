@@ -163,7 +163,7 @@ public:
 
 /**
   Check options for an updatable view.
-  @see https://dev.mysql.com/doc/refman/5.7/en/view-check-option.html
+  @see https://dev.mysql.com/doc/refman/en/view-check-option.html
 */
 
 enum class CheckOption
@@ -174,7 +174,7 @@ enum class CheckOption
 
 /**
   Algorithms used to process views.
-  @see https://dev.mysql.com/doc/refman/5.7/en/view-algorithms.html
+  @see https://dev.mysql.com/doc/refman/en/view-algorithms.html
 */
 
 enum class Algorithm
@@ -186,7 +186,7 @@ enum class Algorithm
 
 /**
   View security settings.
-  @see https://dev.mysql.com/doc/refman/5.7/en/stored-programs-security.html
+  @see https://dev.mysql.com/doc/refman/en/stored-programs-security.html
 */
 
 enum class SQLSecurity
@@ -238,7 +238,7 @@ public:
     Specify checks that are done upon insertion of rows into an updatable
     view.
 
-    @see https://dev.mysql.com/doc/refman/5.7/en/view-check-option.html
+    @see https://dev.mysql.com/doc/refman/en/view-check-option.html
   */
 
   Executable<Result,Op> withCheckOption(CheckOption option)
@@ -303,7 +303,7 @@ public:
     The definer is used to determine access rights for the view. It is specified
     as a valid MySQL account name of the form "user@host".
 
-    @see https://dev.mysql.com/doc/refman/5.7/en/stored-programs-security.html
+    @see https://dev.mysql.com/doc/refman/en/stored-programs-security.html
   */
  ViewDefinedAs<Op> definer(const string &user)
  {
@@ -326,7 +326,7 @@ public:
   /**
     Specify security characteristics of a view.
 
-    @see https://dev.mysql.com/doc/refman/5.7/en/stored-programs-security.html
+    @see https://dev.mysql.com/doc/refman/en/stored-programs-security.html
   */
 
   ViewDefiner<Op> security(SQLSecurity sec)
@@ -350,7 +350,7 @@ public:
   /**
     Specify algorithm used to process the view.
 
-    @see https://dev.mysql.com/doc/refman/5.7/en/view-algorithms.html
+    @see https://dev.mysql.com/doc/refman/en/view-algorithms.html
   */
 
   ViewSecurity<Op> algorithm(Algorithm alg)
