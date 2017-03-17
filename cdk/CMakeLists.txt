@@ -75,6 +75,33 @@ endif()
 message(STATUS "BIG_ENDIAN: ${BIG_ENDIAN}")
 add_config(CDK_BIG_ENDIAN ${CDK_BIG_ENDIAN})
 
+
+#
+# Add SSL
+#
+
+if(NOT DEFINED WITH_SSL)
+SET(WITH_SSL "bundled" CACHE STRING "TODO: Document me!")
+endif()
+
+message("WITH_SSL: ${WITH_SSL}")
+
+IF(WITH_SSL)
+  IF(WITH_SSL STREQUAL "bundled")
+    ADD_DEFINITIONS(-DWITH_SSL_YASSL)
+    if(CDK_BIG_ENDIAN)
+      ADD_DEFINITIONS(-DWORDS_BIGENDIAN)
+    endif()
+    ADD_SUBDIRECTORY(extra/yassl)
+  ELSE()
+    MESSAGE(WARNING "WITH_SSL option set to unrecognized value '${WITH_SSL}'"
+                  " - will be ignored. Currently the only value allowed is"
+                  " 'bundled', which uses the bundled YaSSL library to implement"
+                  " TLS connections.")
+  ENDIF()
+  ADD_DEFINITIONS(-DWITH_SSL)
+ENDIF()
+
 #
 # Configure static runtime library on Windows if requested
 #
@@ -137,6 +164,17 @@ endif()
 
 
 #
+# Enable C++11
+#
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  # Use C++11 also for CHECK_CXX_SOURCE_COMPILES()
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
+endif()
+
+
+#
 # We want CDK code to compile both under C++ and C++11 compiler.
 # In case of C++11 build we can use certain generic C++11 features
 # that are detected here.
@@ -171,38 +209,20 @@ INCLUDE(boost)
 SETUP_BOOST()
 
 
+
+
+
+
+
+
+
+
 #
 # Add Protobuf (bundled)
 #
 
 INCLUDE(protobuf)
 
-
-#
-# Add SSL
-#
-
-if(NOT DEFINED WITH_SSL)
-SET(WITH_SSL "bundled" CACHE STRING "TODO: Document me!")
-endif()
-
-message("WITH_SSL: ${WITH_SSL}")
-
-IF(WITH_SSL)
-  IF(WITH_SSL STREQUAL "bundled")
-    ADD_DEFINITIONS(-DWITH_SSL_YASSL)
-    if(CDK_BIG_ENDIAN)
-      ADD_DEFINITIONS(-DWORDS_BIGENDIAN)
-    endif()
-    ADD_SUBDIRECTORY(extra/yassl)
-  ELSE()
-    MESSAGE(WARNING "WITH_SSL option set to unrecognized value '${WITH_SSL}'"
-                  " - will be ignored. Currently the only value allowed is"
-                  " 'bundled', which uses the bundled YaSSL library to implement"
-                  " TLS connections.")
-  ENDIF()
-  ADD_DEFINITIONS(-DWITH_SSL)
-ENDIF()
 
 #
 # Clean exports file
