@@ -762,12 +762,21 @@ TEST_F(xapi, conn_string_test)
   xplugin_pwd = (xplugin_pwd && strlen(xplugin_pwd) ? xplugin_pwd : NULL);
   xplugin_host = (xplugin_host && strlen(xplugin_host) ? xplugin_host : "127.0.0.1");
 
+DO_CONNECT:
+
   if (xplugin_pwd)
     sprintf(conn_str, "%s:%s@%s:%d", xplugin_usr, xplugin_pwd, xplugin_host, port);
   else
     sprintf(conn_str, "%s@%s:%d", xplugin_usr, xplugin_host, port);
 
-DO_CONNECT:
+  if (!ssl_enable)
+  {
+    strcat(conn_str, "/?ssl-mode=disabled");
+  }
+  else
+  {
+    strcat(conn_str, "/?ssl-mode=required");
+  }
 
   local_sess = mysqlx_get_node_session_from_url(conn_str, conn_error, &conn_err_code);
 
@@ -791,6 +800,11 @@ DO_CONNECT:
       cout << "SSL Cipher: " << data << endl;
       EXPECT_TRUE(data_len > 1);
     }
+    else
+    {
+      // Empty string, not NULL and therefore the length is 1 for \0 byte
+      EXPECT_TRUE(data_len < 2);
+    }
   }
 
   mysqlx_session_close(local_sess);
@@ -798,7 +812,6 @@ DO_CONNECT:
   if (!ssl_enable)
   {
     ssl_enable = true;
-    strcat(conn_str, "/?ssl-enable");
     authenticate();
 
     res = mysqlx_sql(get_session(), "select @@ssl_ca, @@ssl_capath, @@datadir", MYSQLX_NULL_TERMINATED);
@@ -881,6 +894,11 @@ TEST_F(xapi, conn_options_test)
 
 DO_CONNECT:
 
+  if (!ssl_enable)
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SSL_MODE, SSL_MODE_DISABLED));
+  else
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SSL_MODE, SSL_MODE_REQUIRED));
+
   local_sess = mysqlx_get_node_session_from_options(opt, conn_error, &conn_err_code);
 
   if (!local_sess)
@@ -899,10 +917,14 @@ DO_CONNECT:
     char data[128] = { 0 };
     size_t data_len = sizeof(data);
     EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, data, &data_len));
-    if (ssl_ca_detected)
+    if (ssl_enable)
     {
       cout << "SSL Cipher: " << data << endl;
-      EXPECT_TRUE(data_len > 0);
+      EXPECT_TRUE(data_len > 1);
+    }
+    else
+    {
+      EXPECT_TRUE(data_len < 2);
     }
   }
 
@@ -912,7 +934,6 @@ DO_CONNECT:
   {
     ssl_enable = true;
     authenticate();
-    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SSL_ENABLE, ssl_enable));
 
     res = mysqlx_sql(get_session(), "select @@ssl_ca, @@ssl_capath, @@datadir", MYSQLX_NULL_TERMINATED);
     if ((row = mysqlx_row_fetch_one(res)) != NULL)

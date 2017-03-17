@@ -167,6 +167,8 @@ typedef object_id* MYSQLX_GUID;
 #define MYSQLX_ERROR_OUTPUT_BUFFER_NULL "The output buffer cannot be NULL"
 #define MYSQLX_ERROR_OUTPUT_BUFFER_ZERO "The output buffer cannot have zero length"
 #define MYSQLX_ERROR_OP_NOT_SUPPORTED "The operation is not supported by the function"
+#define MYSQLX_ERROR_WRONG_SSL_MODE "Wrong value for SSL Mode"
+#define MYSQLX_ERROR_NO_TLS_SUPPORT "Can not create TLS session - this connector is built without TLS support"
 
 /* Opaque structures*/
 
@@ -341,11 +343,21 @@ typedef enum mysqlx_opt_type_enum
   MYSQLX_OPT_USER = 3,
   MYSQLX_OPT_PWD = 4,
   MYSQLX_OPT_DB = 5,
-  MYSQLX_OPT_SSL_ENABLE = 6,
+  MYSQLX_OPT_SSL_MODE = 6,
   MYSQLX_OPT_SSL_CA = 7,
 }
 mysqlx_opt_type_t;
 
+
+typedef enum mysqlx_ssl_mode_enum
+{
+  SSL_MODE_DISABLED = 0,
+  SSL_MODE_PREFERRED = 1,
+  SSL_MODE_REQUIRED = 2,
+  SSL_MODE_VERIFY_CA = 3,
+  SSL_MODE_VERIFY_IDENTITY = 4
+}
+mysqlx_ssl_mode_t;
 
 /**
   Constants for defining the View algorithm using

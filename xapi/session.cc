@@ -24,6 +24,8 @@
 
 #include <mysql_xapi.h>
 #include "mysqlx_cc_internal.h"
+#include <algorithm>
+#include <string>
 
 mysqlx_session_t::mysqlx_session_struct(const std::string host, unsigned int port, const string usr,
                   const std::string *pwd, const std::string *db, bool is_node_sess)
@@ -250,4 +252,141 @@ mysqlx_session_t::~mysqlx_session_struct()
   {
     // Do not do anything
   }
+}
+
+mysqlx_session_options_struct::mysqlx_session_options_struct(
+                              const std::string host, unsigned short port,
+                              const std::string usr, const std::string *pwd,
+                              const std::string *db,
+                              unsigned int ssl_mode) :
+  cdk::ds::TCPIP::Options(usr, pwd),
+  m_host(host), m_port(port ? port : DEFAULT_MYSQLX_PORT),
+  m_tcp(NULL)
+{
+  if (db)
+    set_database(*db);
+
+  set_ssl_mode(ssl_mode);
+
+#ifndef WITH_SSL
+  if (ssl_mode > SSL_MODE_DISABLED)
+    set_diagnostic(MYSQLX_ERROR_NO_TLS_SUPPORT, 0);
+#endif
+}
+
+void mysqlx_session_options_t::set_ssl_mode(unsigned int ssl_mode)
+{
+  m_tls_options.set_ssl_mode(uint_to_ssl_mode(ssl_mode));
+  set_tls(m_tls_options);
+}
+
+unsigned int mysqlx_session_options_t::get_ssl_mode()
+{
+  return ssl_mode_to_uint(m_tls_options.ssl_mode());
+}
+
+cdk::ds::TCPIP &mysqlx_session_options_t::get_tcpip()
+{
+  if (!m_tcp)
+    m_tcp = new cdk::ds::TCPIP(m_host, m_port);
+  return *m_tcp;
+}
+
+
+cdk::connection::TLS::Options::SSL_MODE mysqlx_session_options_t::uint_to_ssl_mode(unsigned int mode)
+{
+  switch (mode)
+  {
+    case SSL_MODE_DISABLED:
+      return cdk::connection::TLS::Options::SSL_MODE::DISABLED;
+    case SSL_MODE_PREFERRED:
+      return cdk::connection::TLS::Options::SSL_MODE::PREFERRED;
+    case SSL_MODE_REQUIRED:
+      return cdk::connection::TLS::Options::SSL_MODE::REQUIRED;
+    case SSL_MODE_VERIFY_CA:
+      return cdk::connection::TLS::Options::SSL_MODE::VERIFY_CA;
+    case SSL_MODE_VERIFY_IDENTITY:
+      return cdk::connection::TLS::Options::SSL_MODE::VERIFY_IDENTITY;
+    default:
+      throw Mysqlx_exception(MYSQLX_ERROR_WRONG_SSL_MODE);
+  }
+}
+
+unsigned int mysqlx_session_options_t::ssl_mode_to_uint(cdk::connection::TLS::Options::SSL_MODE mode)
+{
+  switch (mode)
+  {
+    case cdk::connection::TLS::Options::SSL_MODE::DISABLED:
+      return SSL_MODE_DISABLED;
+    case cdk::connection::TLS::Options::SSL_MODE::PREFERRED:
+      return SSL_MODE_PREFERRED;
+    case cdk::connection::TLS::Options::SSL_MODE::REQUIRED:
+      return SSL_MODE_REQUIRED;
+    case cdk::connection::TLS::Options::SSL_MODE::VERIFY_CA:
+      return SSL_MODE_VERIFY_CA;
+    case cdk::connection::TLS::Options::SSL_MODE::VERIFY_IDENTITY:
+      return SSL_MODE_VERIFY_IDENTITY;
+    default:
+      throw Mysqlx_exception(MYSQLX_ERROR_WRONG_SSL_MODE);
+  }
+}
+
+void mysqlx_session_options_t::key_val(const std::string&)
+{
+  // So far there is no supported options as "?key"
+  set_diagnostic("Wrong connection option", 0);
+}
+
+void mysqlx_session_options_t::key_val(const std::string& key, const std::string& val)
+{
+  if (key.find("ssl-", 0) == 0)
+  {
+#ifdef WITH_SSL
+    if (key == "ssl-ca")
+    {
+      set_ssl_ca(val);
+    }
+    else if (key  == "ssl-mode")
+    {
+      std::string lc_val;
+      lc_val.resize(val.size());
+      std::transform(val.begin(), val.end(), lc_val.begin(), ::tolower);
+
+      if (lc_val == "disabled")
+      {
+        m_tls_options.set_ssl_mode(cdk::connection::TLS::Options::SSL_MODE::DISABLED);
+      }
+      else if (lc_val == "preferred")
+      {
+        m_tls_options.set_ssl_mode(cdk::connection::TLS::Options::SSL_MODE::PREFERRED);
+      }
+      else if (lc_val == "required")
+      {
+        m_tls_options.set_ssl_mode(cdk::connection::TLS::Options::SSL_MODE::REQUIRED);
+      }
+      else if (lc_val == "verify_ca")
+      {
+        m_tls_options.set_ssl_mode(cdk::connection::TLS::Options::SSL_MODE::VERIFY_CA);
+      }
+      else if (lc_val == "verify_identity")
+      {
+        m_tls_options.set_ssl_mode(cdk::connection::TLS::Options::SSL_MODE::VERIFY_IDENTITY);
+      }
+      else
+      {
+        throw Mysqlx_exception(MYSQLX_ERROR_WRONG_SSL_MODE);
+      }
+    }
+    set_tls(m_tls_options);
+#else
+    set_diagnostic(MYSQLX_ERROR_NO_TLS_SUPPORT, 0);
+#endif
+  }
+}
+
+
+mysqlx_session_options_t::~mysqlx_session_options_struct()
+{
+  if (m_tcp)
+    delete m_tcp;
 }

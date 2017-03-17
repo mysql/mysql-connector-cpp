@@ -371,51 +371,42 @@ private:
   cdk::ds::TCPIP *m_tcp;
   cdk::connection::TLS::Options m_tls_options;
 
+  cdk::connection::TLS::Options::SSL_MODE uint_to_ssl_mode(unsigned int mode);
+  unsigned int ssl_mode_to_uint(cdk::connection::TLS::Options::SSL_MODE mode);
+
+
 public:
   mysqlx_session_options_struct() : m_tcp(NULL)
-  {}
+  {
+#ifdef WITH_SSL
+    set_ssl_mode(SSL_MODE_PREFERRED);
+#else
+    set_ssl_mode(SSL_MODE_DISABLED);
+#endif
+  }
 
   mysqlx_session_options_struct(const std::string host, unsigned short port,
                            const std::string usr, const std::string *pwd,
                            const std::string *db,
-                           bool ssl_enable =
+                           unsigned int ssl_mode =
 #ifdef WITH_SSL
-                            true
+                           SSL_MODE_PREFERRED
 #else
-                            false
+                           SSL_MODE_DISABLED
 #endif
-  ) :
-    cdk::ds::TCPIP::Options(usr, pwd),
-    m_host(host), m_port(port ? port : DEFAULT_MYSQLX_PORT),
-    m_tcp(NULL)
-  {
-    if (db)
-      set_database(*db);
-
-    // This call must be made at all times because SSL is enabled by default
-    set_tls(ssl_enable);
-
-#ifndef WITH_SSL
-    if (ssl_enable)
-      set_diagnostic(
-        "Can not create TLS session - this connector is built"
-        " without TLS support.", 0
-      );
-#endif
-  }
+  );
 
   mysqlx_session_options_struct(const std::string &conn_str) : m_tcp(NULL)
   {
-    set_tls(false);
+#ifdef WITH_SSL
+    set_ssl_mode(SSL_MODE_PREFERRED);
+#else
+    set_ssl_mode(SSL_MODE_DISABLED);
+#endif
     parser::parse_conn_str(conn_str, *this);
   }
 
-  cdk::ds::TCPIP &get_tcpip()
-  {
-    if (!m_tcp)
-      m_tcp = new cdk::ds::TCPIP(m_host, m_port);
-    return *m_tcp;
-  }
+  cdk::ds::TCPIP &get_tcpip();
 
   // Implementing URI_Processor interface
   void user(const std::string &usr)
@@ -430,15 +421,11 @@ public:
 
   // Implementing URI_Processor interface
   void host(const std::string &host)
-  {
-    m_host = host;
-  }
+  { m_host = host; }
 
   // Implementing URI_Processor interface
   void port(unsigned short port)
-  {
-    m_port = port;
-  }
+  { m_port = port; }
 
   std::string get_host() { return m_host; }
   unsigned int get_port() { return m_port; }
@@ -446,80 +433,22 @@ public:
   std::string get_password() { return m_pwd; }
   std::string get_db() { return m_db; }
 
-  void set_use_tls(bool tls)
-  {
-    if (tls)
-      set_tls(m_tls_options);
-    else
-      set_tls(false);
-  }
-
   void set_ssl_ca(const string &ca)
   {
     m_tls_options.set_ca(ca);
     set_tls(m_tls_options);
   }
 
-  void set_ssl_ca_path(const string &ca_path)
-  {
-    m_tls_options.set_ca_path(ca_path);
-    set_tls(m_tls_options);
-  }
-
-  void set_ssl_key(const string &key)
-  {
-    m_tls_options.set_key(key);
-    set_tls(m_tls_options);
-  }
+  void set_ssl_mode(unsigned int ssl_mode);
+  unsigned int get_ssl_mode();
 
   // Implementing URI_Processor interface
   void path(const std::string &path)
-  {
-    set_database(path);
-  }
+  { set_database(path); }
 
-  void key_val(const std::string& key)
-  {
-    if (key.find("ssl-", 0) == 0)
-    {
-#ifdef WITH_SSL
-      if (key.compare("ssl-enable") == 0)
-      {
-        set_tls(true);
-      }
-#else
-      set_diagnostic(
-        "Can not create TLS session - this connector is built"
-        " without TLS support.", 0
-        );
-#endif
-    }
-  }
-
-  void key_val(const std::string& key, const std::string& val)
-  {
-    if (key.find("ssl-", 0) == 0)
-    {
-  #ifdef WITH_SSL
-      if (key.compare("ssl-ca") == 0)
-      {
-        set_ssl_ca(val);
-      }
-#else
-      set_diagnostic(
-        "Can not create TLS session - this connector is built"
-        " without TLS support.", 0
-      );
-  #endif
-    }
-  }
-
-
-  ~mysqlx_session_options_struct()
-  {
-    if (m_tcp)
-      delete m_tcp;
-  }
+  void key_val(const std::string& key);
+  void key_val(const std::string& key, const std::string& val);
+  ~mysqlx_session_options_struct();
 
 } mysqlx_session_options_t;
 
