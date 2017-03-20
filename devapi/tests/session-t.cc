@@ -405,7 +405,7 @@ TEST_F(Sess, ssl_session)
 
   uri << "@" << "localhost:" << get_port();
 
-  //URI without ssl_enable
+  //URI using ssl-mode=disabled
   {
     std::stringstream ssl_off;
     ssl_off << uri.str() << "/?ssl-mode=disabled";
@@ -518,13 +518,24 @@ TEST_F(Sess, ssl_session)
 
   //using ssl-enable and ssl-ca as SessionSettings
   {
-    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
-                          SessionSettings::USER,get_user(),
-                          SessionSettings::PWD, get_password() ? get_password() : NULL ,
-                          SessionSettings::SSL_MODE, SessionSettings::SSLMode::VERIFY_IDENTITY,
-                          SessionSettings::SSL_CA, ssl_ca);
 
-    check_ssl(sess, true);
+    try {
+      mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+                            SessionSettings::USER,get_user(),
+                            SessionSettings::PWD, get_password() ? get_password() : NULL ,
+                            SessionSettings::SSL_MODE, SessionSettings::SSLMode::VERIFY_IDENTITY,
+                            SessionSettings::SSL_CA, ssl_ca);
+
+      // If server cert CN=localhost, verification will succeed, and ssl is
+      // enabled
+      check_ssl(sess, true);
+    }
+    catch (Error &e)
+    {
+      // If server cert CN!=localhost, it will fail with this error
+      EXPECT_EQ(string("CDK Error: yaSSL: SSL certificate validation failure"),
+                string(e.what()));
+    }
 
   }
 
@@ -540,8 +551,8 @@ TEST_F(Sess, ipv6)
     mysqlx::XSession sess(SessionSettings::HOST, "::1",
                           SessionSettings::PORT, get_port(),
                           SessionSettings::USER, get_user(),
-                          SessionSettings::PWD, get_password() ? get_password() : nullptr
-//                          SessionSettings::SSL_ENABLE, false
+                          SessionSettings::PWD, get_password() ? get_password() : nullptr,
+                          SessionSettings::SSL_MODE,SessionSettings::SSLMode::DISABLED
                           );
   }
 
@@ -556,22 +567,7 @@ TEST_F(Sess, ipv6)
 
   uri << "@" << "[::1]:" << get_port();
 
-  //URI without ssl_enable
-  {
-    mysqlx::XSession sess(uri.str());
-
-    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
-
-    auto row = res.fetchOne();
-    cout << row[0] << ":" << row[1] << endl;
-
-    string cipher = row[1];
-
-    EXPECT_TRUE(cipher.empty());
-  }
-
-  //Enable SSL
-  uri << "/?ssl-enable";
+  //URI without ssl_mode
   {
     mysqlx::XSession sess(uri.str());
 
@@ -583,5 +579,20 @@ TEST_F(Sess, ipv6)
     string cipher = row[1];
 
     EXPECT_FALSE(cipher.empty());
+  }
+
+  //Disable SSL_MODE
+  uri << "/?ssl-mode=DISABLED";
+  {
+    mysqlx::XSession sess(uri.str());
+
+    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
+
+    auto row = res.fetchOne();
+    cout << row[0] << ":" << row[1] << endl;
+
+    string cipher = row[1];
+
+    EXPECT_TRUE(cipher.empty());
   }
 }
