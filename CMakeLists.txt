@@ -319,7 +319,7 @@ endif()
 endforeach(LANG)
 
 #
-# Enable C++11
+# Enable C++11 for test, XAPI and DevAPI code
 #
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -327,6 +327,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # Use C++11 also for CHECK_CXX_SOURCE_COMPILES()
   set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
 endif()
+
 
 #
 # Connector/C++ components
@@ -476,7 +477,6 @@ install(TARGETS libconcpp
 # Tests
 # =====
 #
-
 
 
 remove_definitions(-DCONCPP_BUILD_STATIC)

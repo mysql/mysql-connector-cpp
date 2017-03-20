@@ -1326,7 +1326,7 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
   /*
     Now we treat the identifiers "A.B" parsed by parse_schema_ident() and
     stored as table/schema name in m_col_ref (if any), as an initail segment
-    of a document filed reference and complete parsing the whole document
+    of a document field reference and complete parsing the whole document
     field.
   */
 

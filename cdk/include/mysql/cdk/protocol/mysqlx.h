@@ -533,7 +533,7 @@ public:
     @param data   Object defining rows/documents to be inserted. It is a
       sequence of tuples of expressions; each tuple in the sequence defines
       values of fields in a single row to be inserted (when inserting documents,
-      there should be just one filed with the document).
+      there should be just one field with the document).
 
     @param args  defines values of named parameters, if any are used in the
       expressions of the row source object
