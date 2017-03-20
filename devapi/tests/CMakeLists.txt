@@ -39,4 +39,5 @@ endif()
 
 ADD_NG_TEST(devapi-t
   first-t.cc crud-t.cc types-t.cc batch-t.cc ddl-t.cc session-t.cc
+  bugs-t.cc
 )

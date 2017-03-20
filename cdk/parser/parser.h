@@ -171,7 +171,7 @@ inline
 void Token_base::unsupported(const string &what) const
 {
   string msg(what);
-  msg.append(L" not supprted yet");
+  msg.append(L" not supported yet");
   parse_error(msg);
 }
 

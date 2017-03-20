@@ -157,7 +157,7 @@ POP_SYS_WARNINGS
   X(IS, "is", {}, {Keyword::IS}) \
   X(IN, "in", {}, {Keyword::IN}) \
   X(LIKE, "like", {}, {Keyword::LIKE}) \
-  X(RLIKE, "rlike", {}, {Keyword::RLIKE}) \
+  X(RLIKE, "regexp", {}, {Keyword::RLIKE}) \
   X(BETWEEN, "between", {}, {Keyword::BETWEEN}) \
   X(REGEXP, "regexp", {}, {Keyword::REGEXP}) \
   X(CAST, "cast", {}, {Keyword::CAST}) \
