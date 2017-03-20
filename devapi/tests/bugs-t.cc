@@ -65,8 +65,6 @@ TEST_F(Bugs, bug25505482)
 
   Table t = get_sess().getSchema("test").getTable("bug25505482");
 
-  t.select().where(good[2]).execute();
-
   cout << "== testing supported expressions ==" << endl << endl;
 
   for (const char *expr : good)
