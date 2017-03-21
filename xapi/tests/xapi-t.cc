@@ -857,7 +857,6 @@ TEST_F(xapi, conn_options_test)
   const char *xplugin_usr = getenv("XPLUGIN_USER");
   const char *xplugin_pwd = getenv("XPLUGIN_PASSWORD");
   const char *xplugin_host = getenv("XPLUGIN_HOST");
-  bool ssl_ca_detected = false;
 
   char buf[1024];
 
