@@ -823,6 +823,13 @@ DO_CONNECT:
       if (rc != RESULT_OK && ca_len < 2)
         return;
 
+      if (xplugin_pwd)
+        sprintf(conn_str, "%s:%s@%s:%d", xplugin_usr, xplugin_pwd, xplugin_host, port);
+      else
+        sprintf(conn_str, "%s@%s:%d", xplugin_usr, xplugin_host, port);
+
+      strcat(conn_str, "/?ssl-mode=verify_identity");
+
       strcat(conn_str, "&ssl-ca=");
       rc = mysqlx_get_bytes(row, 1, 0, capath_buf, &capath_len);
       if (rc != RESULT_OK || capath_len < 2)
@@ -838,6 +845,15 @@ DO_CONNECT:
       strcat(conn_str, "&ssl-ca-path=");
       strcat(conn_str, capath_buf);
     }
+
+    local_sess = mysqlx_get_node_session_from_url(conn_str, conn_error, &conn_err_code);
+
+    if (!local_sess)
+    {
+      EXPECT_EQ(string("CDK Error: yaSSL: SSL certificate validation failure"),
+                conn_error);
+    }
+
 
     goto DO_CONNECT;
   }

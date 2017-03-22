@@ -29,20 +29,29 @@
 
 mysqlx_session_t::mysqlx_session_struct(const std::string host, unsigned int port, const string usr,
                   const std::string *pwd, const std::string *db, bool is_node_sess)
-                  : m_sess_opt(host, port, usr, pwd, db), m_session(m_sess_opt.get_tcpip(), m_sess_opt),
+                  : m_sess_opt(host, port, usr, pwd, db),
+                    m_session(m_sess_opt.get_tcpip(), m_sess_opt),
                     m_stmt(NULL), m_is_node_sess(is_node_sess)
-{ }
+ {}
 
 mysqlx_session_t::mysqlx_session_struct(const std::string &conn_str, bool is_node_sess)
-  : m_sess_opt(conn_str), m_session(m_sess_opt.get_tcpip(), m_sess_opt),
+  : m_sess_opt(conn_str),
+    m_session(m_sess_opt.get_tcpip(), m_sess_opt),
     m_stmt(NULL), m_is_node_sess(is_node_sess)
 {}
 
 mysqlx_session_t::mysqlx_session_struct(mysqlx_session_options_t *opt, bool is_node_sess)
-  : m_sess_opt(*opt), m_session(m_sess_opt.get_tcpip(), m_sess_opt),
+  : m_sess_opt(*opt),
+    m_session(m_sess_opt.get_tcpip(), m_sess_opt),
     m_stmt(NULL), m_is_node_sess(is_node_sess)
 {}
 
+
+bool mysqlx_session_t::cert_validation(
+    const std::string &cn)
+{
+  return m_sess_opt.get_tcpip().host() == cn;
+}
 
 mysqlx_stmt_t * mysqlx_session_t::sql_query(const char *query, uint32_t length,
                                             bool enable_sql_x_session)

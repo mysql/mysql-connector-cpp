@@ -103,7 +103,8 @@ class internal::XSession_base::Impl
 
   internal::BaseResult *m_current_result = NULL;
 
-  Impl(endpoint::TCPIP &ep, XSession_base::Options &opt)
+  Impl(endpoint::TCPIP &ep,
+       XSession_base::Options &opt)
     : m_ds(ep.host(), ep.port())
     , m_sess(m_ds, opt)
   {
@@ -122,6 +123,33 @@ class internal::XSession_base::Impl
 
 static std::map<string,SessionSettings::SSLMode> ssl_modes = { SSL_MODE_TYPES(map_ssl) };
 
+class TLS_Options_verify_cn: public cdk::connection::TLS::Options
+{
+  std::string m_common_name;
+
+public:
+  TLS_Options_verify_cn()
+  {
+    // Set verify_cn function
+    std::function<bool(const std::string&)> f_cert_val =
+        std::bind(&TLS_Options_verify_cn::verify,
+                  this,
+                  std::placeholders::_1);
+
+    set_verify_cn(f_cert_val);
+  }
+
+  bool verify(const std::string& cn)
+  {
+    return m_common_name == cn;
+  }
+
+  void set_common_name(const std::string &cn)
+  {
+    m_common_name = cn;
+  }
+
+};
 
 void set_ssl_mode(cdk::connection::TLS::Options &tls_opt,
                   SessionSettings::SSLMode mode)
@@ -165,13 +193,14 @@ struct URI_parser
 {
 
 #ifdef WITH_SSL
-  cdk::connection::TLS::Options m_tls_opt;
+  TLS_Options_verify_cn m_tls_opt;
 #endif
 
   URI_parser(const std::string &uri)
   {
     parser::parse_conn_str(uri, *this);
 #ifdef WITH_SSL
+    m_tls_opt.set_common_name(m_host);
     set_tls(m_tls_opt);
 #endif
   }
@@ -258,9 +287,8 @@ internal::XSession_base::XSession_base(SessionSettings settings)
             settings[SessionSettings::URI].get<string>()
           );
 
-      m_impl = new Impl(
-                 static_cast<endpoint::TCPIP&>(parser.get_endpoint()),
-                 static_cast<XSession_base::Options&>(parser));
+      m_impl = new Impl(static_cast<endpoint::TCPIP&>(parser.get_endpoint()),
+                        static_cast<XSession_base::Options&>(parser));
     }
     else
     {
@@ -313,7 +341,9 @@ internal::XSession_base::XSession_base(SessionSettings settings)
       {
 #ifdef WITH_SSL
 
-        cdk::connection::TLS::Options opt_ssl;
+        TLS_Options_verify_cn opt_ssl;
+
+        opt_ssl.set_common_name(host);
 
 
 
@@ -340,7 +370,8 @@ internal::XSession_base::XSession_base(SessionSettings settings)
 #endif
       }
 
-      m_impl = new Impl(ep, opt);
+      m_impl = new Impl(ep,
+                        opt);
 
     }
   }

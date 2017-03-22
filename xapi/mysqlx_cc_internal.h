@@ -358,6 +358,34 @@ public:
   Sort_direction::value get_direction(uint32_t pos) const {return m_list[pos].direction(); }
 };
 
+struct tls_options_verify_cn: public cdk::connection::TLS::Options
+{
+  std::string m_common_name;
+
+public:
+  tls_options_verify_cn()
+  {
+    // Set verify_cn function
+    std::function<bool(const std::string&)> f_cert_val =
+        std::bind(&tls_options_verify_cn::verify,
+                  this,
+                  std::placeholders::_1);
+
+    set_verify_cn(f_cert_val);
+  }
+
+  bool verify(const std::string& cn)
+  {
+    return m_common_name == cn;
+  }
+
+  void set_common_name(const std::string &cn)
+  {
+    m_common_name = cn;
+  }
+
+};
+
 
 typedef struct mysqlx_session_options_struct : public Mysqlx_diag,
                                                public parser::URI_processor,
@@ -369,7 +397,7 @@ private:
   /* The pointer is used because TCPIP options
      can only be set in the constructor */
   cdk::ds::TCPIP *m_tcp;
-  cdk::connection::TLS::Options m_tls_options;
+  tls_options_verify_cn m_tls_options;
 
   cdk::connection::TLS::Options::SSL_MODE uint_to_ssl_mode(unsigned int mode);
   unsigned int ssl_mode_to_uint(cdk::connection::TLS::Options::SSL_MODE mode);
@@ -404,6 +432,9 @@ public:
     set_ssl_mode(SSL_MODE_DISABLED);
 #endif
     parser::parse_conn_str(conn_str, *this);
+
+    //need to call set_ssl_mode so that host is set/updated
+    set_ssl_mode(static_cast<unsigned int>(m_tls_options.ssl_mode()));
   }
 
   cdk::ds::TCPIP &get_tcpip();
@@ -544,6 +575,8 @@ public:
   const cdk::Error* get_cdk_error();
 
   cdk::Session &get_session() { return m_session; }
+
+  bool cert_validation(const std::string &cn);
 
   /*
     Execute a plain SQL query (supports parameters and placeholders)

@@ -29,8 +29,38 @@
 
 namespace cdk {
 
+#ifdef WITH_SSL
+struct TLS_processor : cdk::protocol::mysqlx::Reply_processor
+{
+  TLS_processor(cdk::connection::TLS::Options::SSL_MODE ssl_mode)
+    : m_ssl_mode(ssl_mode)
+  {}
 
-Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
+  cdk::connection::TLS::Options::SSL_MODE m_ssl_mode;
+  bool m_tls = true;
+
+  void error(unsigned int code, short int severity,
+    cdk::protocol::mysqlx::sql_state_t sql_state, const string &msg)
+  {
+    sql_state_t expected_state("HY000");
+
+    if (code == 5001 &&
+        severity == 2 &&
+        expected_state == sql_state &&
+        m_ssl_mode == cdk::connection::TLS::Options::SSL_MODE::PREFERRED)
+    {
+      m_tls = false;
+    }
+    else
+    {
+      throw Error(static_cast<int>(code), msg);
+    }
+  }
+};
+#endif // WITH_SSL
+
+Session::Session(ds::TCPIP &ds,
+                 const ds::TCPIP::Options &options)
   : m_session(NULL)
   , m_connection(NULL)
   , m_trans(false)
@@ -49,7 +79,7 @@ Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
     rethrow_error();
   }
 
-  bool tls = false;
+
 
 #ifdef WITH_SSL
   if (options.get_tls().ssl_mode() >
@@ -72,48 +102,33 @@ Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
 
     proto.snd_CapabilitiesSet(tls_caps).wait();
 
-    struct : cdk::protocol::mysqlx::Reply_processor
+
+
+    TLS_processor tls_prc(options.get_tls().ssl_mode());
+
+
+    proto.rcv_Reply(tls_prc).wait();
+
+    if (tls_prc.m_tls)
     {
-      void error(unsigned int code, short int /*severity*/,
-        cdk::protocol::mysqlx::sql_state_t /*sql_state*/, const string &msg)
-      {
-        throw Error(static_cast<int>(code), msg);
-      }
-    } prc;
+      TLS* tls = new TLS(connection,
+                         options.get_tls());
 
+      tls->connect();
+      m_connection = tls;
 
-    tls = true;
-
-    try {
-      proto.rcv_Reply(prc).wait();
-    }
-    // Server doesn't allow TLS connection
-    catch(const Error&)
-    {
-      if (options.get_tls().ssl_mode() !=
-          cdk::connection::TLS::Options::SSL_MODE::PREFERRED)
-        rethrow_error();
-
-      tls = false;
+      m_session = new mysqlx::Session(*tls, options);
     }
 
   }
 
-  if (tls)
-  {
-    connection::TLS *tls_conn
-      = new connection::TLS(connection, ds.host(), options.get_tls());
-    tls_conn->connect();
-    m_connection = tls_conn;
-    m_session = new mysqlx::Session(*tls_conn, options);
-  }
-  else
 #endif
+
+  if (m_connection == NULL)
   {
     m_connection = connection;
     m_session = new mysqlx::Session(*connection, options);
   }
-
 }
 
 
