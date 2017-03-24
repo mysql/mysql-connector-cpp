@@ -696,6 +696,15 @@ protected:
       THROW("Attempt to get result of incomplete operation");
 
     /*
+      Server reply to the command is now passed to the result instance.
+      We reset m_inited and m_completed flag so that upon next execution the
+      command will be sent to the server again and a new reply will be created.
+    */
+
+    m_inited = false;
+    m_completed = false;
+
+    /*
       Note: result created by mk_result() takes ownership of the cdk::Reply
       object.
     */
@@ -711,8 +720,9 @@ protected:
     // Deregister current Result, before creating a new one
     internal::XSession_base::Access::register_result(*m_sess, NULL);
 
-    if (m_completed)
-      THROW("Can not execute operation for the second time");
+    // Can not execute operation that is already completed.
+    assert(!m_completed);
+
     return wait();
   }
 
