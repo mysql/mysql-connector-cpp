@@ -53,7 +53,6 @@ string::operator std::string() const
 }}  // cdk::foundation
 
 
-
 #ifndef HAVE_CODECVT_UTF8
 
 /*
@@ -65,9 +64,9 @@ string::operator std::string() const
   implemented. See: http://en.cppreference.com/w/cpp/locale/codecvt
 */
 
-PUSH_BOOST_WARNINGS
+//PUSH_BOOST_WARNINGS
 #include <boost/locale/utf.hpp>
-POP_BOOST_WARNINGS
+//POP_BOOST_WARNINGS
 
 namespace cdk {
 namespace foundation {

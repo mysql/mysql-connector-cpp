@@ -32,6 +32,7 @@ PUSH_SYS_WARNINGS
 #include <vector>
 #include <map>
 #include <locale>
+#include <algorithm>  // for_each()
 POP_SYS_WARNINGS
 
 

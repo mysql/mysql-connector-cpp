@@ -28,6 +28,9 @@
 #include "common.h"
 #include "cdk_time.h"
 
+// TODO: Replace with std::variant<> when available.
+#include "variant.h"
+
 PUSH_SYS_WARNINGS
 #include <stdint.h>
 #include <string.h>
@@ -35,11 +38,6 @@ PUSH_SYS_WARNINGS
 #include <memory>
 POP_SYS_WARNINGS
 
-#if !defined(HAVE_SHARED_PTR)
- PUSH_BOOST_WARNINGS
- #include <boost/smart_ptr.hpp>
- POP_BOOST_WARNINGS
-#endif
 
 namespace cdk {
 namespace foundation {
@@ -211,11 +209,6 @@ protected:
   We define our own scoped_ptr<> which differs from boost::scoped_ptr<>
   by having extra release() method (see below). Otherwise see
   http://www.boost.org/doc/libs/1_39_0/libs/smart_ptr/scoped_ptr.htm.
-
-  If std::shared_ptr<> is available we prefer it to boost::shared_ptr<>
-  because the latter is implemented using deprecated std::auto_ptr<>
-  and we want this code to compile under C++11 compiler without
-  warnings.
 */
 
 
@@ -290,15 +283,7 @@ private:
 };
 
 
-#ifdef HAVE_SHARED_PTR
-
 using ::std::shared_ptr;
-
-#else
-
-using ::boost::shared_ptr;
-
-#endif
 
 
 }} // cdk::foundation

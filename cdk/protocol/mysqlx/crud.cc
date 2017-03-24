@@ -30,7 +30,6 @@
 
 #include "protocol.h"
 #include "builders.h"
-#include <boost/format.hpp>
 
 PUSH_PB_WARNINGS
 #include "protobuf/mysqlx_sql.pb.h"
@@ -300,8 +299,9 @@ public:
   {
     map<string, unsigned>::const_iterator it = m_map.find(name);
     if (it == m_map.end())
-      throw Generic_error((boost::format("Placeholder %s was not defined on args.")
-                           % name).str());
+      throw_error("Placeholder converter: Placeholder was not defined on args");
+      //throw Generic_error((boost::format("Placeholder %s was not defined on args.")
+      //                     % name).str());
 
     return it->second;
   }
@@ -310,8 +310,9 @@ public:
   {
     map<string, unsigned>::const_iterator it = m_map.find(name);
     if (it != m_map.end())
-      throw Generic_error((boost::format("Redifined placeholder %s.")
-                           % name).str());
+      throw_error("Placeholder converter: Redefined placeholder");
+      //throw Generic_error((boost::format("Redifined placeholder %s.")
+      //                     % name).str());
     assert(m_map.size() < std::numeric_limits<unsigned>::max());
     unsigned pos = static_cast<unsigned>(m_map.size());
     m_map[name] = pos;

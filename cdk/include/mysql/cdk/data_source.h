@@ -138,9 +138,9 @@ public:
 
   Options(const string &usr, const std::string *pwd =NULL)
     : ds::Options(usr, pwd)
-  #ifdef WITH_SSL
-    ,m_tls_options(false)
-  #endif
+#ifdef WITH_SSL
+    , m_tls_options(false)
+#endif
   {}
 
 #ifdef WITH_SSL

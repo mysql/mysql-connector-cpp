@@ -28,10 +28,6 @@
 #include <mysql/cdk/api/expression.h>
 #include "tokenizer.h"
 
-PUSH_BOOST_WARNINGS
-#include <boost/format.hpp>
-POP_BOOST_WARNINGS
-
 
 #ifdef _WIN32
 

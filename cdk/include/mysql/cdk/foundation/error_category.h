@@ -25,39 +25,39 @@
 #ifndef CDK_FOUNDATION_ERROR_CATEGORY_H
 #define CDK_FOUNDATION_ERROR_CATEGORY_H
 
-#include "types.h"
+#include "common.h"
+
+#include <system_error>
+
 
 namespace cdk {
 namespace foundation {
 
+
 class error_condition;
+using std::error_category;
+const error_category& generic_error_category();
 
-/*
-  Class defining a named category of error codes. Such category defines
-  descriptions for error codes in the category as well as mapping to
-  platform-independent error conditions.
-*/
 
-class error_category : nocopy
+class error_category_base : public std::error_category
 {
+protected:
+
+  virtual bool do_equivalent(int code, const error_condition &ec) const = 0;
+  virtual error_condition do_default_error_condition(int code) const = 0;
+
 public:
-  virtual const char* name() const =0;
-  virtual std::string message(int) const =0;
-  virtual error_condition default_error_condition(int) const =0;
-  virtual bool  equivalent(int, const error_condition&) const =0;
 
-  virtual bool operator==(const error_category &ec) const
+  std::error_condition default_error_condition(int code) const NOEXCEPT;
+
+  bool equivalent(int code, const std::error_condition &ec) const NOEXCEPT;
+
+  bool  equivalent(const std::error_code &ec, int code) const NOEXCEPT
   {
-    // assumes singleton instances of each category
-    return this == &ec;
+    return ec.value() == code &&  ec.category() == generic_error_category();
   }
 
-  virtual bool operator !=(const error_category &ec) const
-  {
-    return !(*this == ec);
-  }
 };
-
 
 
 /*
@@ -134,14 +134,14 @@ const error_category& posix_error_category();
 
 #define CDK_ERROR_CATEGORY(EC,NS) \
   CDK_ERROR_CODES(EC,NS);                                                 \
-  struct error_category_##EC : public cdk::foundation::error_category     \
+  struct error_category_##EC : public cdk::foundation::error_category_base  \
   {                                                                       \
     error_category_##EC() {}                                              \
     const char* name() const throw() { return "cdk-" #EC; }               \
     std::string message(int code) const                                   \
     { CDK_ERROR_SWITCH(NS, EC, code); }                                   \
-    cdk::foundation::error_condition default_error_condition(int) const;  \
-    bool  equivalent(int, const cdk::foundation::error_condition&) const; \
+    cdk::foundation::error_condition do_default_error_condition(int) const;  \
+    bool  do_equivalent(int, const cdk::foundation::error_condition&) const; \
   };                                                                      \
   inline const cdk::foundation::error_category& EC##_error_category()     \
   { static const error_category_##EC instance;                            \

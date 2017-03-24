@@ -82,6 +82,7 @@ if(WITH_HEADER_CHECKS)
   file(RELATIVE_PATH headers_check_base_dir ${CMAKE_CURRENT_SOURCE_DIR} ${hdr_base_dir})
   set(headers_check_base_dir "${CMAKE_CURRENT_BINARY_DIR}/${headers_check_base_dir}/check"
       CACHE INTERNAL "locations of headers check project")
+  file(REMOVE_RECURSE ${headers_check_base_dir})
   FILE(MAKE_DIRECTORY ${headers_check_base_dir})
   CONFIGURE_FILE(${headers_dir}/check.cmake.in
                  ${headers_check_base_dir}/CMakeLists.txt @ONLY)
@@ -361,10 +362,13 @@ if(WITH_HEADER_CHECKS)
     SOURCE_GROUP(${group_name} FILES ${headers_${group}})
   ENDFOREACH(group)
 
+
+
   #
   # Add the Header target which builds the sanity check project. All public headers are
   # listed as sources of this target (which gives easy access to them in GUI systems).
   #
+
   ADD_CUSTOM_TARGET(Headers
     COMMAND ${CMAKE_COMMAND} --build . --clean-first
     WORKING_DIRECTORY ${headers_check_base_dir}

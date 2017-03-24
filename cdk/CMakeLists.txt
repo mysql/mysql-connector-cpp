@@ -61,15 +61,6 @@ include(libutils)
 INCLUDE(config)
 
 #
-# Enable C++11
-#
-
-if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-endif()
-
-
-#
 # Detect endianess
 #
 
@@ -80,35 +71,17 @@ if(NOT DEFINED CDK_BIG_ENDIAN)
 
 endif()
 
-message(STATUS "BIG_ENDIAN: ${BIG_ENDIAN}")
+#message(STATUS "BIG_ENDIAN: ${CDK_BIG_ENDIAN}")
 add_config(CDK_BIG_ENDIAN ${CDK_BIG_ENDIAN})
 
 
 #
-# Add SSL
+# Make sure WIN32 is defined on Windows
 #
 
-if(NOT DEFINED WITH_SSL)
-SET(WITH_SSL "bundled" CACHE STRING "TODO: Document me!")
+if(WIN32)
+  add_definitions(-DWIN32)
 endif()
-
-message("WITH_SSL: ${WITH_SSL}")
-
-IF(WITH_SSL)
-  IF(WITH_SSL STREQUAL "bundled")
-    ADD_DEFINITIONS(-DWITH_SSL_YASSL)
-    if(CDK_BIG_ENDIAN)
-      ADD_DEFINITIONS(-DWORDS_BIGENDIAN)
-    endif()
-    ADD_SUBDIRECTORY(extra/yassl)
-  ELSE()
-    MESSAGE(WARNING "WITH_SSL option set to unrecognized value '${WITH_SSL}'"
-                  " - will be ignored. Currently the only value allowed is"
-                  " 'bundled', which uses the bundled YaSSL library to implement"
-                  " TLS connections.")
-  ENDIF()
-  ADD_DEFINITIONS(-DWITH_SSL)
-ENDIF()
 
 #
 # Configure static runtime library on Windows if requested
@@ -172,6 +145,33 @@ endif()
 
 
 #
+# Add SSL
+#
+
+if(NOT DEFINED WITH_SSL)
+SET(WITH_SSL "bundled" CACHE STRING "TODO: Document me!")
+endif()
+
+message("WITH_SSL: ${WITH_SSL}")
+
+IF(WITH_SSL)
+  IF(WITH_SSL STREQUAL "bundled")
+    ADD_DEFINITIONS(-DWITH_SSL_YASSL)
+    if(CDK_BIG_ENDIAN)
+      ADD_DEFINITIONS(-DWORDS_BIGENDIAN)
+    endif()
+    ADD_SUBDIRECTORY(extra/yassl)
+  ELSE()
+    MESSAGE(WARNING "WITH_SSL option set to unrecognized value '${WITH_SSL}'"
+                  " - will be ignored. Currently the only value allowed is"
+                  " 'bundled', which uses the bundled YaSSL library to implement"
+                  " TLS connections.")
+  ENDIF()
+  ADD_DEFINITIONS(-DWITH_SSL)
+ENDIF()
+
+
+#
 # Enable C++11
 #
 
@@ -181,19 +181,9 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
 endif()
 
-
-#
-# We want CDK code to compile both under C++ and C++11 compiler.
-# In case of C++11 build we can use certain generic C++11 features
-# that are detected here.
-#
-
-INCLUDE(CheckCXXSourceCompiles)
-CHECK_CXX_SOURCE_COMPILES(
-  "void test(int&&) {}; int main() { return 0; }"
-  HAVE_MOVE_SEMANTICS
-)
+set(HAVE_MOVE_SEMANTICS 1)
 ADD_CONFIG(HAVE_MOVE_SEMANTICS)
+
 
 #
 # Handling of THROW() statements.
@@ -207,22 +197,6 @@ mark_as_advanced(THROW_AS_ASSERT)
 if(THROW_AS_ASSERT)
 add_definitions(-DTHROW_AS_ASSERT)
 endif()
-
-
-#
-# Add Boost
-#
-
-INCLUDE(boost)
-SETUP_BOOST()
-
-
-
-
-
-
-
-
 
 
 #
@@ -255,6 +229,7 @@ set(configuration_header "${PROJECT_BINARY_DIR}/include/mysql/cdk/config.h")
 #
 # Testing framework
 #
+
 INCLUDE(testing)
 SETUP_TESTING()
 
@@ -373,13 +348,14 @@ ENDIF()
 
 endforeach(LANG)
 
-#message("flags: ${CMAKE_C_FLAGS}")
-#message("c++ flags: ${CMAKE_CXX_FLAGS}")
-#foreach(TYPE DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
-#  message("${TYPE} flags: ${CMAKE_C_FLAGS_${TYPE}}")
-#  message("c++ ${TYPE} flags: ${CMAKE_CXX_FLAGS_${TYPE}}")
-#endforeach()
-
+if(0)
+  message("flags: ${CMAKE_C_FLAGS}")
+  message("c++ flags: ${CMAKE_CXX_FLAGS}")
+  foreach(TYPE DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
+    message("${TYPE} flags: ${CMAKE_C_FLAGS_${TYPE}}")
+    message("c++ ${TYPE} flags: ${CMAKE_CXX_FLAGS_${TYPE}}")
+  endforeach()
+endif()
 
 #
 # Parser library

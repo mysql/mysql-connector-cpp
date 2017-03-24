@@ -22,6 +22,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
+#include <mysql/cdk/foundation.h>
 #include <mysql/cdk/mysqlx.h>
 #include <mysql/cdk/protocol/mysqlx.h>
 
@@ -36,16 +37,16 @@ namespace cdk {
 namespace mysqlx {
 
 
-class error_category_server : public error_category
+class error_category_server : public foundation::error_category_base
 {
 public:
 
   error_category_server() {}
 
-  virtual const char* name() const { return "server"; }
-  virtual std::string message(int) const { return "Server Error"; }
-  virtual error_condition default_error_condition(int) const;
-  virtual bool  equivalent(int, const error_condition&) const;
+  virtual const char* name() const NOEXCEPT { return "server"; }
+  virtual std::string message(int) const NOEXCEPT { return "Server Error"; }
+  virtual error_condition do_default_error_condition(int) const;
+  virtual bool  do_equivalent(int, const error_condition&) const;
 
 };
 
@@ -62,7 +63,7 @@ error_code server_error(int code)
 
 
 error_condition
-error_category_server::default_error_condition(int errc) const
+error_category_server::do_default_error_condition(int errc) const
 {
   switch (errc)
   {
@@ -75,7 +76,7 @@ error_category_server::default_error_condition(int errc) const
   }
 }
 
-bool error_category_server::equivalent(int code,
+bool error_category_server::do_equivalent(int code,
                                        const error_condition &ec) const
 {
   try
@@ -84,8 +85,8 @@ bool error_category_server::equivalent(int code,
   }
   catch (...)
   {
+    return false;
   }
-  return false;
 }
 
 

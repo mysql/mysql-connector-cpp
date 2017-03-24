@@ -33,6 +33,8 @@
 
 */
 
+#include "common.h"
+#include "types.h"
 #include "error_category.h"
 #include "std_error_conditions.h"
 
@@ -97,47 +99,24 @@ struct cdkerrc {
   assigned to some error category.
 */
 
-
-class error_code
+class error_code : public std::error_code
 {
-protected:
-  int m_code;
-  const error_category &m_cat;
-
 public:
 
   error_code(int code, const error_category &cat)
-    : m_code(code), m_cat(cat)
+    : std::error_code(code, cat)
   {}
 
   explicit error_code(int code)
-    : m_code(code), m_cat(generic_error_category())
+    : std::error_code(code, generic_error_category())
   {}
 
-  int value() const { return m_code; }
-  const error_category& category() const { return m_cat; }
-  operator bool() const { return 0 == m_code; }
-  std::string message() const
-  { return m_cat.message(m_code); }
-
-  bool operator== (const error_code &ec) const
-  {
-    return m_cat == ec.m_cat && m_code == ec.m_code;
-  }
-
-  bool operator== (const error_condition &ec) const
-  {
-    return m_cat.equivalent(m_code, ec);
-  }
+  error_code(const std::error_code &other)
+    : std::error_code(other)
+  {}
 
   bool operator== (errc::code) const;
   bool operator== (cdkerrc::code) const;
-
-  template <typename T>
-  bool operator!= (T other) const
-  {
-    return !(*this == other);
-  }
 };
 
 
@@ -167,41 +146,53 @@ std::ostream& operator<<(std::ostream &out, const error_code &ec)
   it is meant to be platform independent.
 */
 
-class error_condition : public error_code
+
+class error_condition : public std::error_condition
 {
+protected:
+
+
 public:
 
   error_condition(cdkerrc::code code)
-    : error_code(code, generic_error_category())
+    : std::error_condition(code, generic_error_category())
   {}
   error_condition(errc::code code)
-    : error_code(code, std_error_category())
+    : std::error_condition(code, std_error_category())
   {}
   error_condition(int code)
-    : error_code(code, std_error_category())
+    : std::error_condition(code, std_error_category())
   {}
+
   error_condition(int code, const error_category &cat)
-    : error_code(code, cat)
+    : std::error_condition(code, cat)
   {}
 
-  bool operator== (const error_condition &ec) const
-  {
-    return m_cat == ec.m_cat && m_code == ec.m_code;
-  }
-  bool operator!= (const error_condition &ec) const
-  {
-    return !(*this == ec);
-  }
+  error_condition(const std::error_condition &ec)
+    : std::error_condition(ec)
+  {}
 
-  bool operator== (const error_code &ec) const
+  operator error_code()
   {
-    return ec == *this;
-  }
-  bool operator!= (const error_code &ec) const
-  {
-    return !(*this == ec);
+    return error_code(value(), category());
   }
 };
+
+
+inline
+std::error_condition
+error_category_base::default_error_condition(int code) const NOEXCEPT
+{
+  return do_default_error_condition(code);
+}
+
+inline
+bool
+error_category_base::equivalent(int code, const std::error_condition &ec)
+const NOEXCEPT
+{
+  return do_equivalent(code, ec);
+}
 
 
 }}  // cdk::foundation
@@ -245,13 +236,12 @@ void throw_system_error(const string &prefix);
   - Defines detailed error description via describe() method
 */
 
-class Error : public std::runtime_error
+
+class Error : public std::system_error
 {
   static const string m_default_prefix;
 
 protected:
-
-  const error_code m_code;
 
   // String used to materialize error description (for what())
   // Note: non-ascii descriptions use UTF-8 encoding
@@ -262,22 +252,30 @@ public:
 
   // If copied error has materialized description, we need to copy it here
   Error(const Error &e)
-    :std::runtime_error("")
-    , m_code(e.m_code)
+    : std::system_error(e.code())
     , m_what(e.m_what ? new std::string(*e.m_what) : NULL)
     , m_what_prefix(m_default_prefix)
   {}
 
+
+  Error(const std::system_error &e)
+    : std::system_error(e)
+    , m_what(NULL)
+    , m_what_prefix(m_default_prefix)
+  {
+    const char *what = e.what();
+    if (what)
+      m_what = new std::string(what);
+  }
+
   Error(int _code)
-    : std::runtime_error("")
-    , m_code(_code)
+    : std::system_error(_code, generic_error_category())
     , m_what(NULL)
     , m_what_prefix(m_default_prefix)
   {}
 
-  Error(const error_code &ec)
-    : std::runtime_error("")
-    , m_code(ec)
+  Error(const std::error_code &ec)
+    : std::system_error(ec)
     , m_what(NULL)
     , m_what_prefix(m_default_prefix)
   {
@@ -289,8 +287,7 @@ public:
 
   template <typename S>
   Error(const error_code &ec, const S &descr)
-    : std::runtime_error("")
-    , m_code(ec)
+    : std::system_error(ec)
     , m_what_prefix(m_default_prefix)
   {
     m_what = new std::string(m_what_prefix);
@@ -299,8 +296,7 @@ public:
 
   template <typename S>
   Error(int _code, const S &descr)
-    : std::runtime_error("")
-    , m_code(_code)
+    : std::system_error(_code, generic_error_category())
     , m_what_prefix(m_default_prefix)
   {
     m_what = new std::string(m_what_prefix);
@@ -313,13 +309,19 @@ public:
     delete m_what;
   }
 
+
+  error_code code() const
+  {
+    return std::system_error::code();
+  }
+
+
   bool operator== (const error_condition &ec) const
-  { return m_code == ec; }
+  { return code() == ec; }
 
   bool operator!= (const error_condition &ec) const
   { return !(*this == ec); }
 
-  const error_code& code() const { return m_code; }
 
   virtual void describe(std::ostream&) const;
 
@@ -350,6 +352,7 @@ private:
 };
 
 
+
 inline
 void Error::describe(std::ostream &out) const
 {
@@ -365,8 +368,8 @@ void Error::describe(std::ostream &out) const
 inline
 void Error::do_describe(std::ostream &out) const
 {
-  out <<m_code.message();
-  out <<" (" <<m_code <<")";
+  out << code().message();
+  out <<" (" << code() <<")";
 }
 
 

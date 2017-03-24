@@ -199,12 +199,12 @@ namespace parser {
         out << ": " << m_msg;
     }
 
-    using Base::m_code;
+    using Base::code;
 
     void do_describe(std::ostream &out) const
     {
       do_describe1(out);
-      out << " (" << m_code << ")";
+      out << " (" << code() << ")";
     }
 
   public:

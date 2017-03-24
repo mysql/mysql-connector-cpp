@@ -36,9 +36,6 @@
 #include <map>
 #include <sstream>
 
-PUSH_BOOST_WARNINGS
-#include <boost/lexical_cast.hpp>
-POP_BOOST_WARNINGS
 
 using ::std::cout;
 using ::std::endl;

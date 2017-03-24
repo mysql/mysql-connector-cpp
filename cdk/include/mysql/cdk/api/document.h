@@ -133,7 +133,7 @@ class Doc_processor
 {
 public:
 
-  typedef cdk::foundation::string  string;
+  typedef cdk::api::string  string;
   typedef Any_processor<PRC>       Any_prc;
 
   /// This is called before any key_val() or key_doc() callback.

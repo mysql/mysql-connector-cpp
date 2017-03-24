@@ -36,10 +36,6 @@ SETUP_HEADERS(${CMAKE_CURRENT_SOURCE_DIR}/mysql)
 # For generated header
 #
 HEADER_CHECKS_INCLUDE(${CMAKE_CURRENT_BINARY_DIR})
-#
-# TODO: Remove dependency on Boost headers
-#
-HEADER_CHECKS_INCLUDE(${Boost_INCLUDE_DIR})
 
 ADD_HEADERS_DIR(mysql)
 
