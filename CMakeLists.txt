@@ -74,6 +74,17 @@ include(libutils)
 #
 
 #
+# Enable C++11
+#
+
+if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  # Use C++11 also for CHECK_CXX_SOURCE_COMPILES()
+  #set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
+endif()
+
+
+#
 # Tell cmake to not use compiler specific extensions
 #
 
@@ -240,13 +251,6 @@ if(NOT EXISTS "${WITH_UUID}/src/CMakeLists.txt")
   message(FATAL_ERROR "Could not find UUID generator sources at: ${WITH_UUID}")
 endif()
 
-#
-# Add Boost
-#
-
-ADD_DEFINITIONS(-DBOOST_NO_AUTO_PTR=1)
-INCLUDE(boost)
-SETUP_BOOST()
 
 #
 # CDK

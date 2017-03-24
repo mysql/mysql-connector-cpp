@@ -24,7 +24,6 @@
 #  DevAPI Implementation
 #
 
-
 include_directories("${WITH_UUID}/include")
 
 ADD_LIBRARY(devapi OBJECT
