@@ -589,3 +589,21 @@ TEST_F(Sess, ipv6)
     EXPECT_FALSE(cipher.empty());
   }
 }
+
+
+TEST_F(Sess, bugs)
+{
+
+  {
+    SessionSettings sess_settings("localhost_not_found", 13009, "rafal", (char*)NULL);
+
+    EXPECT_THROW(mysqlx::XSession(sess_settings), mysqlx::Error);
+  }
+
+  {
+    SessionSettings sess_settings("localhost_not_found", 13009, "rafal", NULL);
+
+    EXPECT_THROW(mysqlx::XSession(sess_settings), mysqlx::Error);
+  }
+
+}
