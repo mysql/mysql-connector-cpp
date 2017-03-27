@@ -20,6 +20,7 @@
 #include "auth_mysql41.h"
 #include <stdint.h>
 #include <stdexcept>
+#include <string.h>  // memset
 
 // Avoid warnings from protobuf
 #if defined __GNUC__
@@ -29,7 +30,7 @@
 #pragma warning (push)
 #endif
 
-#include <boost/uuid/sha1.hpp>
+#include <taocrypt/include/sha.hpp>
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -37,10 +38,12 @@
 #pragma warning (pop)
 #endif
 
+using TaoCrypt::byte;
 
 #define PVERSION41_CHAR '*'
 #define SCRAMBLE_LENGTH 20
 #define SHA1_HASH_SIZE 20
+
 
 static void my_crypt(uint8_t *to, const uint8_t *s1, const uint8_t *s2, size_t len)
 {
@@ -51,52 +54,38 @@ static void my_crypt(uint8_t *to, const uint8_t *s1, const uint8_t *s2, size_t l
 }
 
 
-static void get_sha1_hash(boost::uuids::detail::sha1 &sha1, uint8_t *hash)
-{
-  unsigned int digest[5];
-  sha1.get_digest(digest);
-  for (int i = 0; i < 5; i++)
-  {
-    hash[i*4 + 3] = digest[i] & 0xff;
-    hash[i*4 + 2] = (digest[i] >> 8) & 0xff;
-    hash[i*4 + 1] = (digest[i] >> 16) & 0xff;
-    hash[i*4 + 0] = (uint8_t)((digest[i] >> 24) & 0xff);  // (uint8_t) is there to keep -Wconversion happy.  For some reason it only warns about >> 24 and leaves previous 3 alone (because result includes the sign bit?)
-  }
-}
-
-
 static std::string scramble(const std::string &scramble_data, const std::string &password)
 {
-  boost::uuids::detail::sha1 sha1;
+  TaoCrypt::SHA   sha1;
+  typedef TaoCrypt::word32  length_t;
 
   if (scramble_data.length() != SCRAMBLE_LENGTH)
     throw std::invalid_argument("Password scramble data is invalid");
 
-  uint8_t hash_stage1[SHA1_HASH_SIZE];
-  uint8_t hash_stage2[SHA1_HASH_SIZE];
-  std::string result(SCRAMBLE_LENGTH, '\0');
+  byte hash_stage1[SHA1_HASH_SIZE];
+  byte hash_stage2[SHA1_HASH_SIZE];
+  byte result_buf[SHA1_HASH_SIZE+1];
 
-  result.at(SCRAMBLE_LENGTH - 1) = '\0';
+  memset(result_buf, 0, sizeof(result_buf));
 
   /* Two stage SHA1 hash of the pwd */
   /* Stage 1: hash pwd */
-  sha1.process_bytes(password.data(), password.length());
-  get_sha1_hash(sha1, hash_stage1);
+  sha1.Update((byte*)password.data(), (length_t)password.length());
+  sha1.Final(hash_stage1);
 
   /* Stage 2 : hash first stage's output. */
-  sha1.reset();
-  sha1.process_bytes(hash_stage1, SHA1_HASH_SIZE);
-  get_sha1_hash(sha1, hash_stage2);
+  sha1.Update(hash_stage1, SHA1_HASH_SIZE);
+  sha1.Final(hash_stage2);
 
   /* create crypt string as sha1(message, hash_stage2) */;
-  sha1.reset();
-  sha1.process_bytes(scramble_data.data(), scramble_data.length());
-  sha1.process_bytes(hash_stage2, SHA1_HASH_SIZE);
-  get_sha1_hash(sha1, (uint8_t*)&result[0]);
+  sha1.Update((byte*)scramble_data.data(), (length_t)scramble_data.length());
+  sha1.Update(hash_stage2, SHA1_HASH_SIZE);
+  sha1.Final(result_buf);
+  result_buf[SHA1_HASH_SIZE] = '\0';
 
-  my_crypt((uint8_t*)&result[0], (const uint8_t*)&result[0], hash_stage1, SCRAMBLE_LENGTH);
+  my_crypt(result_buf, result_buf, hash_stage1, SCRAMBLE_LENGTH);
 
-  return result;
+  return std::string((char*)result_buf, SCRAMBLE_LENGTH);
 }
 
 

@@ -162,26 +162,37 @@ public:
 
 
 /**
-  View creation and alter classes
- */
+  Check options for an updatable view.
+  @see https://dev.mysql.com/doc/refman/en/view-check-option.html
+*/
 
 enum class CheckOption
 {
-  CASCADED,
-  LOCAL
+  CASCADED, //!< cascaded
+  LOCAL     //!< local
 };
+
+/**
+  Algorithms used to process views.
+  @see https://dev.mysql.com/doc/refman/en/view-algorithms.html
+*/
 
 enum class Algorithm
 {
-  UNDEFINED,
-  MERGE,
-  TEMPTABLE
+  UNDEFINED,  //!< undefined
+  MERGE,      //!< merge
+  TEMPTABLE   //!< temptable
 };
+
+/**
+  View security settings.
+  @see https://dev.mysql.com/doc/refman/en/stored-programs-security.html
+*/
 
 enum class SQLSecurity
 {
-  DEFINER,
-  INVOKER
+  DEFINER,  //!< definer
+  INVOKER   //!< invoker
 };
 
 
@@ -224,8 +235,12 @@ protected:
 public:
 
   /**
-    Set constraints on the View.
+    Specify checks that are done upon insertion of rows into an updatable
+    view.
+
+    @see https://dev.mysql.com/doc/refman/en/view-check-option.html
   */
+
   Executable<Result,Op> withCheckOption(CheckOption option)
   {
     get_impl()->with_check_option(option);
@@ -233,9 +248,10 @@ public:
   }
 };
 
+
 template <class Op>
 class ViewDefinedAs
-: protected ViewCheckOpt<Op>
+: public ViewCheckOpt<Op>
 {
 protected:
 
@@ -243,15 +259,22 @@ protected:
 
 public:
 
-  /**
-     Define the table select statement to generate the View.
-  */
-
+  ///@{
+  // TODO: How to copy documentation here?
   ViewCheckOpt<Op> definedAs(TableSelect&& table)
   {
     get_impl()->defined_as(std::move(table));
     return std::move(*this);
   }
+
+  /**
+     Specify table select operation for which the view is created.
+
+     @note In situations where select statement is modified after
+     passing it to definedAs() method, later changes do not affect
+     view definition which uses the state of the statement at the time
+     of definedAs() call.
+  */
 
   ViewCheckOpt<Op> definedAs(const TableSelect& table)
   {
@@ -259,7 +282,10 @@ public:
     get_impl()->defined_as(std::move(table_tmp));
     return std::move(*this);
   }
+
+  ///@}
 };
+
 
 template <class Op>
 class ViewDefiner
@@ -272,7 +298,12 @@ protected:
 public:
 
   /**
-    Define the View’s definer.
+    Specify definer of a view.
+
+    The definer is used to determine access rights for the view. It is specified
+    as a valid MySQL account name of the form "user@host".
+
+    @see https://dev.mysql.com/doc/refman/en/stored-programs-security.html
   */
  ViewDefinedAs<Op> definer(const string &user)
  {
@@ -280,6 +311,7 @@ public:
   return std::move(*this);
  }
 };
+
 
 template <class Op>
 class ViewSecurity
@@ -292,14 +324,18 @@ protected:
 public:
 
   /**
-     Define the View’s security scheme.
+    Specify security characteristics of a view.
+
+    @see https://dev.mysql.com/doc/refman/en/stored-programs-security.html
   */
+
   ViewDefiner<Op> security(SQLSecurity sec)
   {
     get_impl()->security(sec);
     return std::move(*this);
   }
 };
+
 
 template <class Op>
 class ViewAlgorithm
@@ -312,7 +348,9 @@ protected:
 public:
 
   /**
-    define the View’s algorithm.
+    Specify algorithm used to process the view.
+
+    @see https://dev.mysql.com/doc/refman/en/view-algorithms.html
   */
 
   ViewSecurity<Op> algorithm(Algorithm alg)
@@ -325,8 +363,9 @@ public:
 
 
 /*
-  Base blass for Create/Alter View
+  Base class for Create/Alter View
 */
+
 template <class Op>
 class View_base
   : public ViewAlgorithm<Op>
@@ -365,7 +404,7 @@ public:
 
   /**
     Define the column names of the created/altered View.
-   */
+  */
 
   template<typename...T>
   ViewAlgorithm<Op> columns(const T&...names)
@@ -386,7 +425,12 @@ public:
 } // namespace internal
 
 /**
-   The ViewCreate class represents the creation of a view
+  Represents an operation which creates a view.
+
+  The query for which the view is created must be specified with
+  `definedAs()` method. Other methods can specify different view creation
+  options. When operation is fully specified, it can be executed with
+  a call to `execute()`.
 */
 
 class PUBLIC_API ViewCreate
@@ -403,7 +447,11 @@ class PUBLIC_API ViewCreate
 
 
 /**
-   The ViewCreate class represents the creation of a view
+  Represents an operation which modifies an existing view.
+
+  ViewAlter operation must specify new query for the view with
+  `definedAs()` method (it is not possible to change other characteristics
+  of a view without changing its query).
 */
 
 class PUBLIC_API ViewAlter
@@ -421,11 +469,8 @@ class PUBLIC_API ViewAlter
 
 namespace internal {
 
-/*
-   View drop classes
-*/
 
-struct ViewDrop_impl
+  struct ViewDrop_impl
   : public Executable_impl
 {
   virtual void if_exists() = 0;
@@ -449,6 +494,11 @@ protected:
 
 public:
 
+  /**
+    Modify drop view operation so that it checks existence of the view
+    before dropping it.
+  */
+
   Executable<Result,Op> ifExists()
   {
     get_impl()->if_exists();
@@ -458,8 +508,9 @@ public:
 
 } // namespace internal
 
+
 /**
-   The ViewDrop class represents the drop of a view
+  Represents an operation which drops a view.
 */
 
 class PUBLIC_API ViewDrop
@@ -837,9 +888,27 @@ public:
   Represents session options to be passed at XSession/NodeSession object
   creation.
 
-  SessionSettings can be constructed using uri, common connect options (host,
-  port, user, password, database) or using pairs of SessionSettings::Options -
-  Value objects.
+  SessionSettings can be constructed using URL string, common connect options
+  (host, port, user, password, database) or with a list
+  of `SessionSettings::Options` constants followed by option value (unless
+  given option has no value, like `SSL_ENABLE`).
+
+  Examples:
+  ~~~~~~
+
+    SessionSettings from_url("mysqlx://user:pwd@host:port/db?ssl-enable");
+
+    SessionSettings from_options("host", port, "user", "pwd", "db");
+
+    SessionSettings from_option_list(
+      SessionSettings::USER, "user",
+      SessionSettings::PWD,  "pwd",
+      SessionSettings::HOST, "host",
+      SessionSettings::PORT, port,
+      SessionSettings::DB,   "db",
+      SessionSettings::SSL_ENABLE
+    );
+  ~~~~~~
 
   @ingroup devapi
 */
@@ -847,16 +916,24 @@ public:
 class PUBLIC_API SessionSettings
 {
 public:
+
+  /**
+    Session creation options
+
+    @note Specifying `SSL_CA` option implies `SSL_ENABLE`.
+  */
+
   enum Options
   {
-    URI,
+    URI,          //!< connection URI or string
+    //! DNS name of the host, IPv4 address or IPv6 address
     HOST,
-    PORT,
-    USER,
-    PWD,
-    DB,
+    PORT,         //!< X Plugin port to connect to
+    USER,         //!< user name
+    PWD,          //!< password
+    DB,           //!< default database
     SSL_MODE,
-    SSL_CA
+    SSL_CA        //!< path to a PEM file specifying trusted root certificates
   };
 
 #define SSL_MODE_TYPES(x)\
@@ -884,6 +961,22 @@ public:
   {}
 
 
+  /**
+    Create a session using connection string or URL.
+
+    Connection sting has the form `"user:pass\@host:port/?option&option"`,
+    valid URL is like a connection string with a `mysqlx://` prefix. Host is
+    specified as either DNS name, IPv4 address of the form "nn.nn.nn.nn" or
+    IPv6 address of the form "[nn:nn:nn:...]".
+
+    Possible connection options are:
+
+    - `ssl-enable` : use TLS connection
+    - `ssl-ca=`path : path to a PEM file specifying trusted root certificates
+
+    Specifying `ssl-ca` option implies `ssl-enable`.
+  */
+
   SessionSettings(const string &uri)
   {
     add(URI, uri);
@@ -892,6 +985,9 @@ public:
 
   /**
     Create session explicitly specifying session parameters.
+
+    @note Session settings constructed this way request an SSL connection
+    by default.
   */
 
   SessionSettings(const std::string &host, unsigned port,
@@ -916,9 +1012,12 @@ public:
     : SessionSettings(host, port, user, pwd.c_str(), db)
   {}
 
-      /**
-        Create session using the default port
-      */
+  /**
+    Create session using the default port
+
+    @note Session settings constructed this way request an SSL connection
+    by default.
+  */
 
   SessionSettings(const std::string &host,
                   const string  &user,
@@ -934,9 +1033,12 @@ public:
     : SessionSettings(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
   {}
 
-      /**
-        Create session on localhost.
-      */
+  /**
+    Create session on localhost.
+
+    @note Session settings constructed this way request an SSL connection
+    by default.
+  */
 
   SessionSettings(unsigned port,
                   const string  &user,
@@ -1014,7 +1116,25 @@ public:
 
 
   /**
-    Passing option - value pairs
+    Create session using a list of session options.
+
+    The list of options consist of `SessionSettings::Options` constant
+    identifying the option to set, followed by option value (unless
+    not required, as in the case of `SSL_ENABLE`).
+
+    Example:
+    ~~~~~~
+      SessionSettings from_option_list(
+        SessionSettings::USER, "user",
+        SessionSettings::PWD,  "pwd",
+        SessionSettings::HOST, "host",
+        SessionSettings::PORT, port,
+        SessionSettings::DB,   "db",
+        SessionSettings::SSL_ENABLE
+      );
+    ~~~~~~
+
+    @see `SessionSettings::Options`.
   */
 
   template <typename V,typename...R>
@@ -1122,14 +1242,6 @@ namespace internal {
 
   public:
 
-    /**
-      Create session specified by mysqlx connection string.
-
-      Connection string can be either an utf8 encoded single-byte
-      string or a wide string (which is converted to utf8 before
-      parsing).
-    */
-
     XSession_base(SessionSettings settings);
 
     template<typename...T>
@@ -1159,7 +1271,15 @@ namespace internal {
 
     Schema getSchema(const string&, bool check_existence = false);
 
+    /**
+      Get the default schema specified when session was created.
+    */
+
     Schema getDefaultSchema();
+
+    /**
+      Get the name of the default schema specified when session was created.
+    */
 
     string getDefaultSchemaName();
 
@@ -1270,10 +1390,41 @@ class PUBLIC_API XSession
 
 public:
 
+  /**
+    Create session specified by `SessionSettings` object.
+  */
+
   XSession(SessionSettings settings)
     : XSession_base(settings)
   {}
 
+
+  /**
+    Create session using given session settings.
+
+    This constructor forwards arguments to a `SessionSettings` constructor.
+    Thus all forms of specifying session options are also directly available
+    in `XSession` constructor.
+
+    Examples:
+    ~~~~~~
+
+      XSession from_uri("mysqlx://user:pwd@host:port/db?ssl-enable");
+
+      XSession from_options("host", port, "user", "pwd", "db");
+
+      XSession from_option_list(
+        SessionSettings::USER, "user",
+        SessionSettings::PWD,  "pwd",
+        SessionSettings::HOST, "host",
+        SessionSettings::PORT, port,
+        SessionSettings::DB,   "db",
+        SessionSettings::SSL_ENABLE
+      );
+    ~~~~~~
+
+    @see `SessionSettings`
+  */
 
   template<typename...T>
   XSession(T...options)

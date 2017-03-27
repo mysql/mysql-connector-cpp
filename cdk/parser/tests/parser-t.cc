@@ -200,6 +200,15 @@ const wchar_t *docs[] =
 };
 
 
+#define EXPECT_ERROR(Code) \
+try { \
+  Code; FAIL() << "Expected an error"; \
+} catch (const cdk::Error &e) \
+{ \
+  cout << "Expected error: " << e << endl; \
+} \
+
+
 TEST(Parser, json)
 {
   JSON_printer printer(cout, 0);
@@ -216,24 +225,19 @@ TEST(Parser, json)
 
   {
     JSON_parser parser("");
-    EXPECT_THROW(parser.process(printer),cdk::Error);
-    cout <<"Expected error when parsing empty sting" <<endl;
+    EXPECT_ERROR(parser.process(printer));
   }
 
   {
     const char *json = "invalid";
     JSON_parser parser(json);
-    EXPECT_THROW(parser.process(printer),cdk::Error);
-    cout <<"Expected error when parsing invalid sting: " << json
-         <<endl;
+    EXPECT_ERROR(parser.process(printer));
   }
 
   {
     const char *json = "{ foo: 123, invalid }";
     JSON_parser parser(json);
-    EXPECT_THROW(parser.process(printer),cdk::Error);
-    cout <<"Expected error when parsing invalid sting: " << json
-         <<endl;
+    EXPECT_ERROR(parser.process(printer));
   }
 
   // numeric tests
@@ -605,16 +609,24 @@ const Expr_Test exprs[] =
   { parser::Parser_mode::TABLE   , L"c > cast(14.01 as decimal(3,2))"},
   { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(X'65'))"},
   { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(0x65))"},
-//  { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(X'65' USING utf8))"},
-//  { parser::Parser_mode::TABLE   , L"TRIM(BOTH 'x' FROM 'xxxbarxxx')"},
-//  { parser::Parser_mode::TABLE   , L"TRIM(LEADING 'x' FROM 'xxxbarxxx')"},
-//  { parser::Parser_mode::TABLE   , L"TRIM(TRAILING 'xyz' FROM 'barxxyz')"},
   { parser::Parser_mode::TABLE   , L"'abc' NOT LIKE 'ABC1'"},
-//  { parser::Parser_mode::TABLE   , L"'a' RLIKE '^[a-d]'"},
   { parser::Parser_mode::TABLE   , L"'a' REGEXP '^[a-d]'"},
-//  { parser::Parser_mode::TABLE   , L"POSITION('bar' IN 'foobarbar')"},
-//  { parser::Parser_mode::TABLE   , L"'Heoko' SOUNDS LIKE 'h1aso'"}
+  { parser::Parser_mode::TABLE   , L"'a' NOT RLIKE '^[a-d]'"},
+  { parser::Parser_mode::TABLE   , L"POSITION('bar' IN 'foobarbar')"},
+  { parser::Parser_mode::TABLE   , L"TRIM('barxxyz')"},
+};
 
+const Expr_Test negative_exprs[] =
+{
+  { parser::Parser_mode::TABLE   , L"-23452345243563467456745674567456745674567"},
+  { parser::Parser_mode::TABLE   , L""},
+  { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(X'65' USING utf8))"},
+  { parser::Parser_mode::TABLE   , L"TRIM(BOTH 'x' FROM 'xxxbarxxx')"},
+  { parser::Parser_mode::TABLE   , L"TRIM(LEADING 'x' FROM 'xxxbarxxx')"},
+  { parser::Parser_mode::TABLE   , L"TRIM(TRAILING 'xyz' FROM 'barxxyz')"},
+  { parser::Parser_mode::TABLE   , L"TRIM('xyz' FROM 'barxxyz')"},
+  { parser::Parser_mode::TABLE   , L"'Heoko' SOUNDS LIKE 'h1aso'"},
+  { parser::Parser_mode::TABLE   , L"foo+"},
 };
 
 
@@ -624,30 +636,30 @@ TEST(Parser, expr)
 
   for (unsigned i=0; i < sizeof(exprs)/sizeof(Expr_Test); i++)
   {
+    const Expr_Test &test = exprs[i];
     cout <<endl <<"== expr#" <<i <<" ==" <<endl<<endl;
-    cout << (exprs[i].mode == parser::Parser_mode::DOCUMENT ? "DOCUMENT" : "TABLE") << endl;
-    cdk::string expr(exprs[i].txt);
+    cout << (test.mode == parser::Parser_mode::DOCUMENT ? "DOCUMENT" : "TABLE") << endl;
+    cdk::string expr(test.txt);
     cout <<"expr string: " <<expr <<endl;
     cout <<"----" <<endl;
-    Expression_parser parser(exprs[i].mode, expr);
+    Expression_parser parser(test.mode, expr);
     parser.process(printer);
   }
 
-  // negative tests
+  cout << endl << "=== NEGATIVE TESTS ===" << endl;
 
+  for (unsigned i=0; i < sizeof(negative_exprs)/sizeof(Expr_Test); i++)
   {
-    const char *expr = "-23452345243563467456745674567456745674567";
-    Expression_parser parser(parser::Parser_mode::DOCUMENT, expr);
-    EXPECT_THROW(parser.process(printer), cdk::Error);
-    cout << "Expected error when parsing string: " << expr << endl;
+    const Expr_Test &test = negative_exprs[i];
+    cout <<endl <<"== expr#" <<i <<" ==" <<endl<<endl;
+    cout << (test.mode == parser::Parser_mode::DOCUMENT ? "DOCUMENT" : "TABLE") << endl;
+    cdk::string expr(test.txt);
+    cout <<"expecting error when parsing string: " <<expr <<endl;
+    cout <<"----" <<endl;
+    Expression_parser parser(test.mode, expr);
+    EXPECT_ERROR(parser.process(printer));
   }
 
-  {
-    const char *expr = "";
-    Expression_parser parser(parser::Parser_mode::DOCUMENT, expr);
-    EXPECT_THROW(parser.process(printer), cdk::Error);
-    cout << "Expected error when parsing empty string: " << expr << endl;
-  }
 }
 
 
@@ -715,15 +727,15 @@ TEST(Parser, order_expr)
   {
     const char *expr = "age ASC DESC";
     Order_parser parser(parser::Parser_mode::DOCUMENT, expr);
-    EXPECT_THROW(parser.process(printer), cdk::Error);
-    cout << "Expected error when parsing string: " << expr << endl;
+    cout << "Expecting error when parsing string: " << expr << endl;
+    EXPECT_ERROR(parser.process(printer));
   }
 
   {
     const char *expr = "age ASC year";
     Order_parser parser(parser::Parser_mode::DOCUMENT, expr);
-    EXPECT_THROW(parser.process(printer), cdk::Error);
-    cout << "Expected error when parsing string: " << expr << endl;
+    cout << "Expecting error when parsing string: " << expr << endl;
+    EXPECT_ERROR(parser.process(printer));
   }
 
 }
@@ -819,8 +831,8 @@ TEST(Parser, projection_expr)
   {
     const char *expr = "age";
     Projection_parser parser(parser::Parser_mode::DOCUMENT, expr);
-    EXPECT_THROW(parser.process(printeDocument), cdk::Error);
-    cout << "Expected error when parsing string: " << expr << endl;
+    cout << "Expecting error when parsing string: " << expr << endl;
+    EXPECT_ERROR(parser.process(printeDocument));
   }
 
 }
@@ -897,7 +909,7 @@ TEST(Parser, doc_path)
     cdk::Doc_path_storage path;
     Doc_field_parser doc_path(test);
 
-    EXPECT_THROW(doc_path.process(path), cdk::Error);
+    EXPECT_ERROR(doc_path.process(path));
   }
 
 }

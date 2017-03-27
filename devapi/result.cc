@@ -32,8 +32,8 @@
 #include <iomanip>
 #include <cctype>
 
-#include <boost/variant.hpp>
-
+// TODO: Use std::variant when available
+using cdk::foundation::variant;
 
 /*
   Implementation of Result and Row interfaces.
@@ -224,7 +224,8 @@ struct Format_descr<cdk::TYPE_XML>
   the appropriate Format_descr<T> value.
 */
 
-typedef boost::variant <
+
+typedef variant <
   Format_descr<cdk::TYPE_STRING>,
   Format_descr<cdk::TYPE_INTEGER>,
   Format_descr<cdk::TYPE_FLOAT>,
@@ -257,7 +258,9 @@ struct Format_info
       Note: we cast away constness here, because using a codec can
       modify it, and thus the Format_descr<T> must be mutable.
     */
-    return const_cast<Format_descr<T>&>(boost::get<Format_descr<T>>(*this));
+    return const_cast<Format_descr<T>&>(
+            Format_info_base::get<Format_descr<T>>()
+           );
   }
 
 };

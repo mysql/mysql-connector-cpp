@@ -28,10 +28,6 @@
 #include <mysql/cdk/api/expression.h>
 #include "tokenizer.h"
 
-PUSH_BOOST_WARNINGS
-#include <boost/format.hpp>
-POP_BOOST_WARNINGS
-
 
 #ifdef _WIN32
 
@@ -56,6 +52,7 @@ DISABLE_WARNING(4061)
 namespace parser {
 
 typedef Tokenizer::iterator  It;
+using cdk::string;
 using cdk::throw_error;
 
 
@@ -63,47 +60,56 @@ using cdk::throw_error;
   Class that implements token navigation and usage methods
 */
 
-class Token_op_base
+class Token_base
 {
-
 protected:
-
-  typedef std::set<Token::TokenType> TokSet;
 
   It  *m_first;
   It  m_last;
 
-  const std::string& consume_token(Token::TokenType type)
+  const Token* consume_token()
+  {
+    const Token *t = peek_token();
+    if (!t)
+      return NULL;
+    ++(*m_first);
+    return t;
+  }
+
+  const Token* consume_token(Token::Type type)
   {
     if (!cur_token_type_is(type))
-      unexpected_token(peek_token(), (boost::format("while looking for token %s")
-                                      % Token::get_name(type)).str().c_str());
-    return get_token().get_text();
+      return NULL;
+    return consume_token();
   }
 
-  const Token& peek_token()
+  const Token& consume_token_throw(Token::Type type, const string &msg)
+  {
+    const Token *t = consume_token(type);
+    if (!t)
+      parse_error(msg);
+    return *t;
+  }
+
+
+  const Token* peek_token()
   {
     if (!tokens_available())
-      throw Error("unexpected end of string");
-    return **m_first;
+      return NULL;
+    return &(**m_first);
   }
 
-  bool  cur_token_type_is(Token::TokenType type)
+  bool  cur_token_type_is(Token::Type type)
   {
-    return tokens_available() && peek_token().get_type() == type;
+    return tokens_available() && peek_token()->get_type() == type;
   }
 
-  bool  is_token_type_within_set(TokSet types)
+  bool  cur_token_type_in(Token::Set types)
   {
     return tokens_available()
-           && types.find(peek_token().get_type()) != types.end();
+           && types.find(peek_token()->get_type()) != types.end();
   }
 
-  unsigned  get_token_pos() const
-  {
-    // TODO
-    return 0;
-  }
 
   It& cur_pos()
   {
@@ -113,7 +119,7 @@ protected:
 
   const It& cur_pos() const
   {
-    return const_cast<Token_op_base*>(this)->cur_pos();
+    return const_cast<Token_base*>(this)->cur_pos();
   }
 
   const It& end_pos() const
@@ -126,27 +132,22 @@ protected:
     return m_first && cur_pos() != end_pos();
   }
 
-  const Token& get_token()
-  {
-    if (!tokens_available())
-      throw Error("unexpected end of string");
-    const Token &t = peek_token();
-    ++(*m_first);
-    return t;
-  }
 
-  std::string operator_name(const std::string &name)
-  {
-    return Tokenizer::map.operator_names.at(name);
-  }
+  typedef Tokenizer::Error  Error;
 
-  void unexpected_token(const Token&, const char *ctx);
+  void parse_error(const string&) const;
+  void unsupported(const string&) const;
 
 public:
 
-  Token_op_base()
+  Token_base()
     : m_first(NULL)
   {}
+
+  Token_base(It &first, const It &last)
+  {
+    set_tokens(first, last);
+  }
 
   void set_tokens(It &first, const It &last)
   {
@@ -154,6 +155,21 @@ public:
     m_last = last;
   }
 };
+
+
+inline
+void Token_base::parse_error(const string  &msg) const
+{
+  throw Error(*m_first, msg);
+}
+
+inline
+void Token_base::unsupported(const string &what) const
+{
+  string msg(what);
+  msg.append(L" not supported yet");
+  parse_error(msg);
+}
 
 
 /*
@@ -194,11 +210,24 @@ public:
   do_parse() with NULL processor pointer.
 */
 
-template <class PRC>
+template <class PRC, class Tokens = Token_base>
 class Expr_parser
   : public cdk::api::Expr_base<PRC>
-  , protected Token_op_base
+  , protected Tokens
 {
+protected:
+
+  using Tokens::set_tokens;
+  using Tokens::cur_pos;
+  using Tokens::end_pos;
+  using Tokens::tokens_available;
+  using Tokens::cur_token_type_is;
+  using Tokens::cur_token_type_in;
+  using Tokens::consume_token;
+  using Tokens::parse_error;
+  using Tokens::unsupported;
+  using typename Tokens::Error;
+
 public:
 
   Expr_parser(It &first, const It &last)
@@ -210,7 +239,7 @@ public:
   void process(PRC &prc) const
   {
     if (!const_cast<Expr_parser*>(this)->parse(prc))
-      cdk::throw_error("Expr_parser: failed to parse");
+      parse_error(L"Failed to parse the string");
   }
 
   /*
@@ -237,7 +266,7 @@ public:
     if (m_consumed)
       THROW("Expr_praser: second pass");
 
-    if (!do_parse(cur_pos(), end_pos(), &prc))
+    if (!do_parse(&prc))
       return false;
     m_consumed = true;
     return true;
@@ -259,7 +288,7 @@ public:
   {
     if (m_consumed)
       return;
-    do_consume(cur_pos(), end_pos());
+    do_consume();
     m_consumed = true;
   }
 
@@ -290,7 +319,7 @@ protected:
     information how first iterator should be updated.
   */
 
-  virtual bool do_parse(It &first, const It &last, PRC *prc) =0;
+  virtual bool do_parse(PRC *prc) =0;
 
   /*
     Internal method that implements consume() method. By default it
@@ -298,10 +327,10 @@ protected:
     to provide more efficient implementation.
   */
 
-  virtual void do_consume(It &first, const It &last)
+  virtual void do_consume()
   {
-    if (!do_parse(first, last, NULL))
-      THROW("Expr_parser: parsing did not consume tokens");
+    if (!do_parse(NULL))
+      throw Error(cur_pos(), L"Failed to parse the string");
   }
 };
 
@@ -331,35 +360,47 @@ struct List_parser
 {
   typedef typename Base::Processor  PRC;
   typedef List_processor<PRC>       LPRC;
-  Token::TokenType      m_list_sep;
+  typedef Expr_parser<LPRC>         Parser_base;
+
+  using Parser_base::set_tokens;
+  using Parser_base::cur_pos;
+  using Parser_base::end_pos;
+  using Parser_base::tokens_available;
+  using Parser_base::cur_token_type_is;
+  using Parser_base::cur_token_type_in;
+  using Parser_base::consume_token;
+  using Parser_base::parse_error;
+  using Parser_base::unsupported;
 
 
-  List_parser(It &first, const It &last, Token::TokenType sep = Token::COMMA)
+  Token::Type      m_list_sep;
+
+
+  List_parser(It &first, const It &last, Token::Type sep = Token::COMMA)
     : Expr_parser<LPRC>(first, last), m_list_sep(sep)
   {}
 
 
-  bool do_parse(It& first, It const& last, LPRC *prc)
+  bool do_parse(LPRC *prc)
   {
     bool first_element = true;
 
     do {
 
-      Base el_parser(first, last);
+      Base el_parser(cur_pos(), end_pos());
 
       if (!el_parser.process_if(prc ? prc->list_el() : NULL))
       {
         if (first_element)
           return false;
         else
-          throw Error("Expected next list element");
+          parse_error(L"Expected next list element");
       }
 
-      if (m_list_sep != first->get_type())
+      if (!consume_token(m_list_sep))
         break;
 
       first_element = false;
-      ++first;
     }
     while (true);
 
@@ -421,27 +462,38 @@ struct Any_parser
   typedef typename Any<SPRC>::Document::Processor DPRC;
   typedef typename Any<SPRC>::List::Processor     LPRC;
 
+  typedef Expr_parser< Any_processor<SPRC> >  Parser_base;
+
+  using Parser_base::cur_pos;
+  using Parser_base::end_pos;
+  using Parser_base::tokens_available;
+  using Parser_base::cur_token_type_is;
+  using Parser_base::cur_token_type_in;
+  using Parser_base::consume_token;
+  using Parser_base::parse_error;
+  using Parser_base::unsupported;
+
 
   Any_parser(It &first, const It &last)
     : Expr_parser<APRC>(first, last)
   {}
 
 
-  bool do_parse(It &first, const It &last, APRC *prc)
+  bool do_parse(APRC *prc)
   {
-    if (Token::LCURLY == first->get_type())
+    if (cur_token_type_is(Token::LCURLY))
     {
-      Doc_parser doc(first, last);
+      Doc_parser doc(cur_pos(), end_pos());
       doc.process_if(prc ? prc->doc() : NULL);
     }
-    else if (Token::LSQBRACKET == first->get_type())
+    else if (cur_token_type_is(Token::LSQBRACKET))
     {
-      Arr_parser arr(first, last);
+      Arr_parser arr(cur_pos(), end_pos());
       arr.process_if(prc ? prc->arr() : NULL);
     }
     else
     {
-      Base val(first, last);
+      Base val(cur_pos(), end_pos());
       return val.process_if(prc ? Base::get_base_prc(prc) : NULL);
     }
 
@@ -452,30 +504,38 @@ struct Any_parser
 
   struct Arr_parser : public Expr_parser<LPRC>
   {
+    typedef Expr_parser<LPRC>  Parser_base;
+
+    using Parser_base::cur_pos;
+    using Parser_base::end_pos;
+    using Parser_base::tokens_available;
+    using Parser_base::cur_token_type_is;
+    using Parser_base::cur_token_type_in;
+    using Parser_base::consume_token;
+    using Parser_base::parse_error;
+
     Arr_parser(It &first, const It &last)
       : Expr_parser<LPRC>(first, last)
     {}
 
-    bool do_parse(It &first, const It &last, LPRC *prc)
+    bool do_parse(LPRC *prc)
     {
-      if (Token::LSQBRACKET != first->get_type())
+      if (!consume_token(Token::LSQBRACKET))
         return false;
-      ++first;
 
       if (prc)
         prc->list_begin();
 
-      if (Token::RSQBRACKET != first->get_type())
+      if (!cur_token_type_is(Token::RSQBRACKET))
       {
-        List_parser<Any_parser> list(first, last);
+        List_parser<Any_parser> list(cur_pos(), end_pos());
         bool ok = list.process_if(prc);
         if (!ok)
-          throw Error("Array parser: expected array element");
+          parse_error(L"Expected array element");
       }
 
-      if (Token::RSQBRACKET != first->get_type())
-        throw Error("Array parser: expected closing ']'");
-      ++first;
+      if (!consume_token(Token::RSQBRACKET))
+        parse_error(L"Expected ']' to close array");
 
       if (prc)
         prc->list_end();
@@ -491,6 +551,17 @@ struct Any_parser
     : public Expr_parser<DPRC>
     , cdk::foundation::nocopy
   {
+    typedef Expr_parser<DPRC>  Parser_base;
+
+    using Parser_base::cur_pos;
+    using Parser_base::end_pos;
+    using Parser_base::tokens_available;
+    using Parser_base::cur_token_type_is;
+    using Parser_base::cur_token_type_in;
+    using Parser_base::consume_token;
+    using Parser_base::parse_error;
+
+
     Doc_parser(It &first, const It &last)
       : Expr_parser<DPRC>(first, last)
     {}
@@ -531,28 +602,26 @@ struct Any_parser
     };
 
 
-    bool do_parse(It &first, const It &last, DPRC *prc)
+    bool do_parse(DPRC *prc)
     {
-      if (Token::LCURLY != first->get_type())
+      if (!consume_token(Token::LCURLY))
         return false;
-      ++first;
 
       if (prc)
         prc->doc_begin();
 
-      if (Token::RCURLY != first->get_type())
+      if (!cur_token_type_is(Token::RCURLY))
       {
-        List_parser<KV_parser> kv_list(first, last);
+        List_parser<KV_parser> kv_list(cur_pos(), end_pos());
 
         LPrc kv_prc(prc);
         bool ok = kv_list.parse(kv_prc);
         if (!ok)
-          throw Error("Document parser: expected key-value pair");
+          parse_error(L"Expected a key-value pair in a document");
       }
 
-      if (Token::RCURLY != first->get_type())
-        throw Error("Document parser: Expected closing '}'");
-      ++first;
+      if (!consume_token(Token::RCURLY))
+        parse_error(L"Expected '}' closing a document");
 
       if (prc)
         prc->doc_end();
@@ -567,30 +636,39 @@ struct Any_parser
     struct KV_parser
       : public Expr_parser<DPRC>
     {
+      typedef Expr_parser<DPRC>  Parser_base;
+
+      using Parser_base::cur_pos;
+      using Parser_base::end_pos;
+      using Parser_base::tokens_available;
+      using Parser_base::cur_token_type_is;
+      using Parser_base::cur_token_type_in;
+      using Parser_base::consume_token;
+      using Parser_base::parse_error;
+
+
       cdk::string m_key;
 
       KV_parser(It &first, const It &last)
         : Expr_parser<DPRC>(first, last)
       {}
 
-      bool do_parse(It &first, const It &last, DPRC *prc)
+      bool do_parse(DPRC *prc)
       {
-        // Note: official JSON specs do not allow plain ID as key name
+        // Note: official JSON specs do not allow plain WORD as key name
 
-        if (   Token::ID != first->get_type()
-            && Token::LSTRING != first->get_type())
+        if (!cur_token_type_in({ Token::QQSTRING, Token::QSTRING, Token::WORD }))
           return false;
 
-        m_key = first->get_text();
-        ++first;
-        if (Token::COLON != first->get_type())
-          throw Error("Document parser: Expected ':' after key name");
-        ++first;
+        m_key = consume_token()->get_text();
 
-        Any_parser val_parser(first, last);
+        if (!consume_token(Token::COLON))
+          parse_error(L"Expected ':' after key name in a document");
+
+        Any_parser val_parser(cur_pos(), end_pos());
         bool ok = val_parser.process_if(prc ? prc->key_val(m_key) : NULL);
         if (!ok)
-          throw Error("Document parser: expected value for a key");
+          parse_error(L"Expected key value after ':' in a document");
 
         return true;
       }

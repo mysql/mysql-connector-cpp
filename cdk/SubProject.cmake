@@ -66,17 +66,14 @@ SET(CDK_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include;${PROJECT_BINARY_DIR}/include
 MESSAGE("CDK include path: ${CDK_INCLUDE_DIR}")
 
 #
-# Note: CDK public headers depend on Boost ones.
+# Note: Currently no extra setup is needed for CDK
 #
 
 MACRO(CDK_SETUP)
-  INCLUDE_DIRECTORIES(${CDK_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
-  #MESSAGE("Adding CDK include path: ${CDK_INCLUDE_DIR}")
 ENDMACRO(CDK_SETUP)
 
 MACRO(ADD_CDK target)
-  TARGET_INCLUDE_DIRECTORIES(${target}
-    PRIVATE ${CDK_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
+  TARGET_INCLUDE_DIRECTORIES(${target} PRIVATE ${CDK_INCLUDE_DIR})
   TARGET_LINK_LIBRARIES(${target} cdk)
   MESSAGE("Configured target ${target} for using CDK")
 ENDMACRO(ADD_CDK)

@@ -17,14 +17,14 @@
 #include "process_launcher.h"
 #include "exception.h"
 
-#include <boost/format.hpp>
 #include <string>
+#include <sstream>
 
 
 #ifdef WIN32
-#  include <windows.h> 
+#  include <windows.h>
 #  include <tchar.h>
-#  include <stdio.h> 
+#  include <stdio.h>
 #else
 #  include <stdio.h>
 #  include <unistd.h>
@@ -161,7 +161,7 @@ void Process_launcher::close()
       WaitForSingleObject(pi.hProcess, INFINITE);
     }
   }
-  else 
+  else
   {
     report_error(NULL);
   }
@@ -214,7 +214,7 @@ int Process_launcher::read(char *buf, size_t count)
     else
       report_error(NULL);
   }
-  
+
   return dwBytesRead;
 }
 
@@ -225,7 +225,7 @@ int Process_launcher::write_one_char(int c)
   BOOL bSuccess = FALSE;
   DWORD dwBytesWritten;
 
-  bSuccess = WriteFile(child_in_wr, buf, 1, &dwBytesWritten, NULL);  
+  bSuccess = WriteFile(child_in_wr, buf, 1, &dwBytesWritten, NULL);
   if (!bSuccess)
   {
     if (GetLastError() != ERROR_NO_DATA)  // otherwise child process just died.
@@ -267,7 +267,7 @@ void Process_launcher::report_error(const char *msg)
   {
     throw Exception::runtime_error(msg);
   }
-  else 
+  else
   {
     FormatMessage(
       FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -278,12 +278,11 @@ void Process_launcher::report_error(const char *msg)
       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
       (LPTSTR)&lpMsgBuf,
       0, NULL);
-    std::string msgerr = "SystemError: ";
-    msgerr += lpMsgBuf;
-    msgerr += "with error code %d.";
-    boost::format fmt(msgerr);
-    fmt % dwCode;
-    throw Exception::runtime_error(fmt.str());
+    std::ostringstream msgerr;
+    msgerr << "SystemError: ";
+    msgerr << lpMsgBuf;
+    msgerr << " with error code " << dwCode << ".";
+    throw Exception::runtime_error(msgerr.str());
   }
 }
 
@@ -320,7 +319,7 @@ void Process_launcher::start()
   if(childpid == -1)
   {
     report_error(NULL);
-  } 
+  }
 
   if(childpid == 0)
   {
@@ -330,12 +329,12 @@ void Process_launcher::start()
 
     ::close(fd_out[0]);
     ::close(fd_in[1]);
-    while( dup2(fd_out[1], STDOUT_FILENO) == -1 ) 
+    while( dup2(fd_out[1], STDOUT_FILENO) == -1 )
     {
       if(errno == EINTR) continue;
       else report_error(NULL);
     }
-      
+
     if(redirect_stderr)
     {
       while( dup2(fd_out[1], STDERR_FILENO) == -1 )
@@ -354,11 +353,11 @@ void Process_launcher::start()
     fcntl(fd_in[0], F_SETFD, FD_CLOEXEC);
 
     execvp(cmd_line, (char * const *)args);
-    // if exec returns, there is an error. 
-    // TODO: Use explain_execvp if available   
+    // if exec returns, there is an error.
+    // TODO: Use explain_execvp if available
     exit(errno);
   }
-  else 
+  else
   {
 //    int status;
 
@@ -463,13 +462,13 @@ void Process_launcher::report_error(const char *msg)
   if(msg == NULL)
   {
     strerror_r(errno, sys_err, sizeof(sys_err));
-    std::string s = sys_err;
-    s += "with errno %d.";
-    boost::format fmt(s);
-    fmt % errnum;
-    throw Exception::runtime_error(fmt.str());
+    std::ostringstream msgerr;
+    msgerr << "SystemError: ";
+    msgerr << sys_err;
+    msgerr << " with error code " << errnum << ".";
+    throw Exception::runtime_error(msgerr.str());
   }
-  else 
+  else
   {
     throw Exception::runtime_error(msg);
   }
@@ -506,7 +505,7 @@ int Process_launcher::wait()
         report_error(NULL);
       }
     }
-  } 
+  }
   while(ret == -1);
 
   return exitstatus;

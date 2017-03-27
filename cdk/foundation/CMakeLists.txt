@@ -20,13 +20,15 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-SETUP_BOOST()
 
 #
-# Detect std::shared_ptr<>
+# Detect required std features.
 #
+
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
 
 INCLUDE(CheckCXXSourceCompiles)
+
 CHECK_CXX_SOURCE_COMPILES(
   "#include <memory>
    void test(std::shared_ptr<int>) {};
@@ -35,6 +37,49 @@ CHECK_CXX_SOURCE_COMPILES(
 )
 #message("HAVE_SHARED_PTR: ${HAVE_SHARED_PTR}")
 ADD_CONFIG(HAVE_SHARED_PTR)
+
+if (NOT HAVE_SHARED_PTR)
+  message(FATAL_ERROR "Type std::shared_ptr required by CDK is not available")
+endif()
+
+
+CHECK_CXX_SOURCE_COMPILES(
+  "#include <system_error>
+   void test(std::system_error) {};
+   int main() { return 0; }"
+  HAVE_SYSTEM_ERROR
+)
+#message("HAVE_SYSTEM_ERROR: ${HAVE_SYSTEM_ERROR}")
+ADD_CONFIG(HAVE_SYSTEM_ERROR)
+
+if (NOT HAVE_SYSTEM_ERROR)
+  message(FATAL_ERROR "Type std::system_error required by CDK is not available")
+endif()
+
+
+CHECK_CXX_SOURCE_COMPILES(
+  "#include <codecvt>
+   void test(std::codecvt_utf8<wchar_t>) {};
+   int main() { return 0; }"
+  HAVE_CODECVT_UTF8
+)
+#message("HAVE_CODECVT_UTF8: ${HAVE_CODECVT_UTF8}")
+ADD_CONFIG(HAVE_CODECVT_UTF8)
+
+#
+# Note: If codecvt_utf8 is not avaliable we use codecvt of the "en_US.utf8"
+# locale hoping that it will cover reasonable range of unicode chars. This seems
+# to be the case for the GNU standard C++ library implementation but it is not
+# clear if it holds also for other implementations (for example, this is not
+# true for MSVC on Windows). Thus, if not using GNU then we insist on having
+# codecvt_utf8.
+#
+
+if (NOT HAVE_CODECVT_UTF8) #AND NOT CMAKE_COMPILER_IS_GNUCXX)
+  message("Type std::codecvt_utf8 not available on this platform, using boost/locale as a fallback.")
+  include(boost)
+  setup_boost()
+endif()
 
 
 ADD_SUBDIRECTORY(tests)
@@ -46,19 +91,6 @@ IF(WITH_SSL STREQUAL "bundled")
   SET(sources ${sources} connection_yassl.cc)
 ENDIF()
 
-#if linking free build, use boost_code because of boost_system implementation
-IF(NOT BOOST_SYSTEM_LIBS)
-
-  LIST(APPEND sources boost_code.cc)
-
-  # Disable any optimization for the boost_code.cc source - otherwise
-  # the code gets optimized out and linker can not find required symbols.
-
-  IF(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    SET_PROPERTY(SOURCE boost_code.cc PROPERTY COMPILE_FLAGS -O0)
-  ENDIF()
-
-ENDIF(NOT BOOST_SYSTEM_LIBS)
 
 SET(target_foundation ${cdk_target_prefix}foundation
     CACHE INTERNAL "CDK foundation target")

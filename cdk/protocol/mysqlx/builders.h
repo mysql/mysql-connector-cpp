@@ -27,9 +27,6 @@
 
 #include <mysql/cdk/protocol/mysqlx/expr.h>
 
-PUSH_BOOST_WARNINGS
-#include <boost/format.hpp>
-POP_BOOST_WARNINGS
 
 namespace cdk {
 namespace protocol {
@@ -913,10 +910,13 @@ inline
 void Expr_builder_base::placeholder(const string &name)
 {
   if (!m_args_conv)
+    throw_error("Expr builder: Calling placeholder without an Args_conv!");
+  /*
     throw_error(
           (boost::format("Calling placeholder(%s) without an Args_conv!")
            % name
            ).str());
+  */
   placeholder(m_args_conv->conv_placeholder(name));
 }
 

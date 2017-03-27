@@ -24,7 +24,7 @@
 
 #include <test.h>
 #include <iostream>
-#include <boost/format.hpp>
+
 
 using std::cout;
 using std::endl;
@@ -71,8 +71,16 @@ TEST_F(Sess, databaseObj)
 
   //Test Table Obj
 
-  get_sess().sql((boost::format("CREATE TABLE `%s`.`%s` (name VARCHAR(20) ,age INT);")
-                  %schema_name %tbl_name).str()).execute();
+  {
+    std::stringstream create_table;
+
+    create_table << "CREATE TABLE"
+      << "`" << schema_name << "`"
+      << ".`" << tbl_name << "`"
+      << "(name VARCHAR(20) ,age INT)" << std::ends;
+
+    get_sess().sql(create_table.str()).execute();
+  }
 
   Table tbl = schema.getTable(tbl_name);
 

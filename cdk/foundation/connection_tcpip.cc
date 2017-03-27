@@ -26,11 +26,6 @@
 #include <mysql/cdk/foundation/opaque_impl.i>
 #include <mysql/cdk/foundation/error.h>
 
-PUSH_BOOST_WARNINGS
-#include <boost/bind.hpp>
-#include <boost/lexical_cast.hpp>
-POP_BOOST_WARNINGS
-
 #include "connection_tcpip_base.h"
 
 using namespace ::cdk::foundation;
@@ -65,7 +60,7 @@ void connection_TCPIP_impl::do_connect()
   if (is_open())
     return;
 
-  m_sock = detail::connect(m_host.c_str(), m_port);
+  m_sock = connection::detail::connect(m_host.c_str(), m_port);
 }
 
 
@@ -356,7 +351,8 @@ DIAGNOSTIC_PUSH
   DISABLE_WARNING(4702)
 #endif // _MSC_VER
 
-cdk::foundation::error_condition error_category_io::default_error_condition(int errc) const
+cdk::foundation::error_condition
+error_category_io::do_default_error_condition(int errc) const
 {
   switch (errc)
   {
@@ -368,8 +364,9 @@ cdk::foundation::error_condition error_category_io::default_error_condition(int 
     return errc::timed_out;
   case io_errc::NO_CONNECTION:
     return errc::not_connected;
+  default:
+    throw_error("Error code is out of range");
   }
-  throw_error("Error code is out of range");
   // use return statement to suppress compiler warning
   return errc::no_error;
 }
@@ -377,7 +374,8 @@ cdk::foundation::error_condition error_category_io::default_error_condition(int 
 DIAGNOSTIC_POP
 
 
-bool  error_category_io::equivalent(int code, const cdk::foundation::error_condition &ec) const
+bool
+error_category_io::do_equivalent(int code, const cdk::foundation::error_condition &ec) const
 {
   try
   {
@@ -385,8 +383,8 @@ bool  error_category_io::equivalent(int code, const cdk::foundation::error_condi
   }
   catch (...)
   {
+    return false;
   }
-  return false;
 }
 
 

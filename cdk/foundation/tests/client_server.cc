@@ -96,17 +96,16 @@ catch(std::exception &e)
 }
 
 
-
-
-using namespace ::boost::asio;
-using namespace ::boost::asio::ip;
-
-ip::address localhost(ip::address_v4::loopback());
-tcp::endpoint endp(localhost, PORT);
-
+#if 0
 
 TEST(Foundation_socket, DISABLED_server)
 {
+  using namespace ::boost::asio;
+  using namespace ::boost::asio::ip;
+
+  ip::address localhost(ip::address_v4::loopback());
+  tcp::endpoint endp(localhost, PORT);
+
   io_service io;
 
   tcp::acceptor accept(io, endp);
@@ -131,3 +130,4 @@ TEST(Foundation_socket, DISABLED_server)
   cout <<"Done!" <<endl;
 }
 
+#endif

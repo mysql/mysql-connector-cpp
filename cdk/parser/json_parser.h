@@ -31,6 +31,32 @@
 namespace parser {
 
 using cdk::JSON;
+class JSON_parser;
+
+/*
+  Specialization of Token_base, which can clasify base tokens as JSON tokens.
+*/
+
+class JSON_token_base
+  : public Token_base
+{
+protected:
+
+  using Token_base::Error;
+
+public:
+
+  enum Token_type {
+    OTHER,
+    STRING, NUMBER, INTEGER,
+    PLUS, MINUS, T_NULL, T_TRUE, T_FALSE,
+  };
+
+  static Token_type get_jtype(const Token&);
+
+  friend JSON_parser;
+};
+
 
 
 /*
@@ -41,12 +67,12 @@ using cdk::JSON;
 
 
 class JSON_scalar_parser
-  : public Expr_parser<cdk::JSON_processor>
+  : public Expr_parser<cdk::JSON_processor, JSON_token_base>
 {
 public:
 
   JSON_scalar_parser(It &first, const It &last)
-    : Expr_parser<cdk::JSON_processor>(first, last)
+    : Expr_parser<cdk::JSON_processor, JSON_token_base>(first, last)
   {}
 
   static Processor *get_base_prc(JSON::Processor::Any_prc *prc)
@@ -54,8 +80,7 @@ public:
 
 private:
 
-  bool do_parse(It&, const It&, Processor*);
-
+  bool do_parse(Processor*);
 };
 
 
@@ -69,17 +94,15 @@ public:
 
   JSON_parser(const cdk::string &json)
     : m_toks(json)
-  {
-    m_toks.get_tokens();
-  }
+  {}
 
   void process(Processor &prc) const
   {
-    if (!const_cast<JSON_parser*>(this)->m_toks.tokens_available())
-      cdk::throw_error("JSON_parser: empty string");
-
     It first = m_toks.begin();
     It last  = m_toks.end();
+
+    if (m_toks.empty())
+      throw JSON_token_base::Error(first, L"Expectiong JSON document string");
 
     /*
       Note: passing m_toks.end() directly as constructor argument results
@@ -89,7 +112,10 @@ public:
 
     Doc_parser<JSON_scalar_parser> parser(first, last);
     if (!parser.parse(prc) || first != last)
-      cdk::throw_error("JSON_parser: could not parse string as JSON document");
+      throw JSON_token_base::Error(
+              first,
+              L"Unexpected characters after parsing JSON string"
+            );
   }
 
 };

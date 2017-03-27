@@ -29,11 +29,6 @@ PUSH_SYS_WARNINGS
 #include <stdlib.h>
 POP_SYS_WARNINGS
 
-PUSH_SYS_WARNINGS
-PUSH_BOOST_WARNINGS
-#include <boost/lexical_cast.hpp>
-POP_BOOST_WARNINGS
-POP_SYS_WARNINGS
 
 /*
   The maximum absolute value that 64-bit signed integer can have.
@@ -56,39 +51,79 @@ void json_parse(const string &json, Processor &dp)
 }
 
 
-bool JSON_scalar_parser::do_parse(It &first, const It &last, Processor *vp)
+
+//  Clasify a token as a JSON token.
+
+JSON_token_base::Token_type JSON_token_base::get_jtype(const Token &tok)
 {
-  if (first == last)
+  switch (tok.get_type())
+  {
+  case Token::PLUS:
+    return JSON_token_base::PLUS;
+  case Token::MINUS:
+    return JSON_token_base::MINUS;
+  case Token::NUMBER:
+    return JSON_token_base::NUMBER;
+  case Token::INTEGER:
+    return JSON_token_base::INTEGER;
+
+  // TODO: According to JSON specs only double-quote strings are allowed?
+  case Token::QQSTRING:
+  case Token::QSTRING:
+    return JSON_token_base::STRING;
+
+  case Token::WORD:
+    {
+      // TODO: Are these JSON literals case sensitivie?
+      const string &id = tok.get_text();
+      if (id == L"null") return JSON_token_base::T_NULL;
+      if (id == L"true") return JSON_token_base::T_TRUE;
+      if (id == L"false") return JSON_token_base::T_FALSE;
+    }
+
+  default:
+    return JSON_token_base::OTHER;
+  }
+}
+
+
+
+bool JSON_scalar_parser::do_parse(Processor *vp)
+{
+  if (!tokens_available())
     return false;
 
   bool neg = false;
 
-  switch (first->get_type())
+  Token tok = *consume_token();
+  Token_type tt = get_jtype(tok);
+
+  switch (tt)
   {
-  case Token::T_NULL:
+  case STRING:
+    if(vp)
+      vp->str(tok.get_text());
+    return true;
+
+  case MINUS:
+  case PLUS:
+    neg = (MINUS == tt);
+    if (!tokens_available())
+      parse_error(L"Expected number after +/- sign");
+    tok = *consume_token();
+    tt = get_jtype(tok);
+    break;
+
+  case T_NULL:
     if (vp)
       vp->null();
-    ++first;
     return true;
 
-  case Token::LSTRING:
-    if(vp)
-      vp->str(first->get_text());
-    ++first;
+  case T_TRUE:
+  case T_FALSE:
+    if (vp)
+      vp->yesno(T_TRUE == tt);
     return true;
-
-  case Token::TRUE_:
-  case Token::FALSE_:
-    if(vp)
-      vp->yesno(Token::TRUE_ == first->get_type());
-    ++first;
-    return true;
-
-  case Token::MINUS:
-  case Token::PLUS:
-    neg = (Token::MINUS == first->get_type());
-    ++first;
-    break;
 
   default:
     // if none of the above, then it should be a number
@@ -97,28 +132,31 @@ bool JSON_scalar_parser::do_parse(It &first, const It &last, Processor *vp)
 
   // Numeric value
 
-  switch (first->get_type())
+  switch (tt)
   {
-  case Token::LNUM:
+  case NUMBER:
     {
       if(vp)
       {
-        double val = boost::lexical_cast<double>(first->get_text());
+        double val = strtod(tok.get_text());
         vp->num(neg ? -val : val);
       }
-      ++first;
       return true;
     }
 
-  case Token::LINTEGER:
-    {
+  case INTEGER:
+    try {
+
       if(vp)
       {
-        uint64_t val = boost::lexical_cast<uint64_t>(first->get_text());
+        // TODO: Is this logic right? Should we report only negative values
+        // as signed integers?
+
+        uint64_t val = strtoui(tok.get_text());
         if (val > INTEGER_ABS_MAX)
         {
           if (neg)
-            throw Error("The value is too large for a signed type");
+            parse_error(L"Numeric value is too large for a signed type");
           // Unsigned type is only returned for large values
           vp->num(val);
         }
@@ -126,16 +164,22 @@ bool JSON_scalar_parser::do_parse(It &first, const It &last, Processor *vp)
         {
           // Absolute values of 9223372036854775808UL can only be negative
           if (!neg && val == INTEGER_ABS_MAX)
-            throw Error("The value is too large for a signed type");
+            parse_error(L"Numeric value is too large for a signed type");
           // All values ABS(val) < 9223372036854775808UL are treated as signed
           vp->num(neg ? -(int64_t)val : (int64_t)val);
         }
       }
-      ++first;
+
       return true;
     }
+    catch (const Numeric_conversion_error &e)
+    {
+      parse_error(e.msg());
+    }
 
-  default: throw Error("Can not parse key value");
+  default:
+    parse_error(L"Invalid JSON value");
+    return false; // quiet compile warnings
   }
 }
 

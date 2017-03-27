@@ -261,7 +261,6 @@ IF(WITH_TESTS)
   )
 
   TARGET_LINK_LIBRARIES(${target_run_unit_tests} gtest)
-  #ADD_BOOST(${target_run_unit_tests})
 
   #
   # Be more lame with warnings when compiling tests

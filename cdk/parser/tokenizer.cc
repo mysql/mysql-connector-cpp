@@ -22,7 +22,6 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-#include "tokenizer.h"
 #include <mysql/cdk/common.h>
 
 PUSH_SYS_WARNINGS
@@ -32,198 +31,87 @@ PUSH_SYS_WARNINGS
 #include <cctype>
 #include <cstring>
 #include <cstdlib>
-
-#ifndef WIN32
-#include <strings.h>
-#  define _stricmp strcasecmp
-#endif
 POP_SYS_WARNINGS
 
-
-PUSH_SYS_WARNINGS
-PUSH_BOOST_WARNINGS
-#include <boost/format.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string/case_conv.hpp>
-POP_BOOST_WARNINGS
-POP_SYS_WARNINGS
+#include "tokenizer.h"
 
 
 using namespace parser;
-using cdk::foundation::Error;
 
-struct Tokenizer::Maps Tokenizer::map;
 
-Tokenizer::Maps::Maps()
-{
-  add_reserved_word("and", Token::AND);
-  add_reserved_word("or", Token::OR);
-  add_reserved_word("xor", Token::XOR);
-  add_reserved_word("is", Token::IS);
-  add_reserved_word("not", Token::NOT);
-  add_reserved_word("like", Token::LIKE);
-  add_reserved_word("in", Token::IN_);
-  add_reserved_word("regexp", Token::REGEXP);
-  add_reserved_word("between", Token::BETWEEN);
-  add_reserved_word("interval", Token::INTERVAL);
-  add_reserved_word("escape", Token::ESCAPE);
-  add_reserved_word("div", Token::DIV);
-  add_reserved_word("hex", Token::HEX);
-  add_reserved_word("bin", Token::BIN);
-  add_reserved_word("true", Token::TRUE_);
-  add_reserved_word("false", Token::FALSE_);
-  add_reserved_word("null", Token::T_NULL);
-  add_reserved_word("second", Token::SECOND);
-  add_reserved_word("minute", Token::MINUTE);
-  add_reserved_word("hour", Token::HOUR);
-  add_reserved_word("day", Token::DAY);
-  add_reserved_word("week", Token::WEEK);
-  add_reserved_word("month", Token::MONTH);
-  add_reserved_word("quarter", Token::QUARTER);
-  add_reserved_word("year", Token::YEAR);
-  add_reserved_word("microsecond", Token::MICROSECOND);
-  add_reserved_word("as", Token::AS);
-  add_reserved_word("asc", Token::ASC);
-  add_reserved_word("desc", Token::DESC);
-  add_reserved_word("cast", Token::CAST);
-  add_reserved_word("character", Token::CHARACTER);
-  add_reserved_word("set", Token::SET);
-  add_reserved_word("charset", Token::CHARSET);
-  add_reserved_word("ascii", Token::ASCII);
-  add_reserved_word("unicode", Token::UNICODE);
-  add_reserved_word("byte", Token::BYTE);
-  add_reserved_word("binary", Token::BINARY);
-  add_reserved_word("char", Token::CHAR);
-  add_reserved_word("nchar", Token::NCHAR);
-  add_reserved_word("date", Token::DATE);
-  add_reserved_word("datetime", Token::DATETIME);
-  add_reserved_word("time", Token::TIME);
-  add_reserved_word("decimal", Token::DECIMAL);
-  add_reserved_word("signed", Token::SIGNED);
-  add_reserved_word("unsigned", Token::UNSIGNED);
-  add_reserved_word("integer", Token::INTEGER);
-  add_reserved_word("int", Token::INTEGER);
-  add_reserved_word("json", Token::JSON);
+namespace {
 
-  interval_units.insert(Token::MICROSECOND);
-  interval_units.insert(Token::SECOND);
-  interval_units.insert(Token::MINUTE);
-  interval_units.insert(Token::HOUR);
-  interval_units.insert(Token::DAY);
-  interval_units.insert(Token::WEEK);
-  interval_units.insert(Token::MONTH);
-  interval_units.insert(Token::QUARTER);
-  interval_units.insert(Token::YEAR);
+  std::locale c_loc("C");
+  const std::ctype<char_t> &ctf = std::use_facet<std::ctype<char_t>>(c_loc);
 
-  operator_names["="] = "==";
-  operator_names["and"] = "&&";
-  operator_names["or"] = "||";
-  operator_names["not"] = "not";
-  operator_names["xor"] = "xor";
-  operator_names["is"] = "is";
-  operator_names["regexp"] = "regexp";
-  operator_names["between"] = "between";
-  operator_names["in"] = "in";
-  operator_names["like"] = "like";
-  operator_names["!="] = "!=";
-  operator_names["<>"] = "!=";
-  operator_names[">"] = ">";
-  operator_names[">="] = ">=";
-  operator_names["<"] = "<";
-  operator_names["<="] = "<=";
-  operator_names["&"] = "&";
-  operator_names["^"] = "^";
-  operator_names["|"] = "|";
-  operator_names["<<"] = "<<";
-  operator_names[">>"] = ">>";
-  operator_names["+"] = "+";
-  operator_names["-"] = "-";
-  operator_names["*"] = "*";
-  operator_names["/"] = "/";
-  operator_names["~"] = "~";
-  operator_names["%"] = "%";
-
-  unary_operator_names["+"] = "sign_plus";
-  unary_operator_names["-"] = "sign_minus";
-  unary_operator_names["~"] = "~";
-  unary_operator_names["not"] = "not";
 }
 
 
-Token::Token(Token::TokenType type, const std::string& text) : _type(type), _text(text)
+bool Tokenizer::cur_char_is_space() const
 {
+  return ctf.is(ctf.space, cur_char());
 }
 
-const std::string& Token::get_text() const
+bool Tokenizer::cur_char_is_word() const
 {
-  return _text;
+  if (cur_char_is(L'_'))
+    return true;
+  return ctf.is(ctf.alnum, cur_char());
 }
 
-Token::TokenType Token::get_type() const
-{
-  return _type;
-}
 
-struct Tokenizer::Maps map;
-
-bool Token::is_reserved_word() const
+void Tokenizer::get_tokens()
 {
-  return map.reserved_word_types.end() != map.reserved_word_types.find(_type);
-}
+  while (chars_available())
+  {
+    if (0 == cur_char())
+      return;
 
-Tokenizer::Tokenizer(const std::string& input) : _input(input)
-{
-  _pos = 0;
-}
+    while (chars_available() && cur_char_is_space())
+      consume_char();
 
-bool Tokenizer::next_char_is(tokens_t::size_type i, int tok)
-{
-  return (i + 1) < _input.size() && _input[i + 1] == tok;
-}
+    if (!chars_available())
+      return;
 
-void Tokenizer::assert_cur_token(Token::TokenType type)
-{
-  assert_tok_position();
-  Token::TokenType tok_type = _tokens.at(_pos).get_type();
-  if (tok_type != type)
-    throw Error((boost::format("Expected token type %s at pos %d but found type %s.")
-                % Token::get_name(type) % _pos % Token::get_name(tok_type)).str());
-}
+    if (parse_string())
+      continue;
 
-bool Tokenizer::cur_token_type_is(Token::TokenType type)
-{
-  return pos_token_type_is(_pos, type);
-}
+    if (parse_hex())
+      continue;
 
-bool Tokenizer::next_token_type(Token::TokenType type)
-{
-  return pos_token_type_is(_pos + 1, type);
-}
+    if (parse_number())
+      continue;
 
-bool Tokenizer::pos_token_type_is(tokens_t::size_type pos, Token::TokenType type)
-{
-  return (pos < _tokens.size()) && (_tokens[pos].get_type() == type);
-}
+    // check symbol tokens
 
-const std::string& Tokenizer::consume_token(Token::TokenType type)
-{
-  assert_cur_token(type);
-  const std::string& v = _tokens[_pos++].get_text();
-  return v;
-}
+    set_token_start();
 
-const Token& Tokenizer::peek_token()
-{
-  assert_tok_position();
-  Token& t = _tokens[_pos];
-  return t;
-}
+#define  symbol_check(T,X) \
+    if (consume_chars(L##X)) \
+    { \
+      add_token(Token::T, L##X); \
+      continue; \
+    } \
 
-void Tokenizer::unget_token()
-{
-  if (_pos == 0)
-    throw Error("Attempt to get back a token when already at first token (position 0).");
-  --_pos;
+    SYMBOL_LIST2(symbol_check)
+
+#define  symbol_check1(T,X) \
+    if (c == (L##X)[0]) { consume_char(); add_token(Token::T,L##X); continue; }
+
+    char_t c = cur_char();
+    SYMBOL_LIST1(symbol_check1)
+
+    /*
+      Note: it is important to parse word last as some words can qualify as
+      other tokens.
+    */
+
+    if (parse_word())
+      continue;
+
+    token_error(L"Could not recognize next token");
+
+  } // while
 }
 
 
@@ -252,433 +140,348 @@ void Tokenizer::unget_token()
     FLOAT ::= DIGIT* '.' DIGIT+ ('E' ('+'|'-')? DIGIT+)? | DIGIT+ 'E' ('+'|'-')? DIGIT+
 */
 
-Token::TokenType Tokenizer::parse_number(size_t& i)
+bool Tokenizer::parse_digits(string *out)
 {
-  if (i >= _input.size())
-    return Token::T_NULL;
+  bool has_digits = false;
 
-  // Check that first characters start a numeric literal.
-
-  bool first_digit = (0 != std::isdigit(_input[i]));
-  bool floating_point = _input[i] == '.'
-                     && i+1 < _input.size()
-                     && std::isdigit(_input[i+1]);
-
-  if (!first_digit && !floating_point)
-    return Token::T_NULL;
-
-  // Parse the literal
-
-  bool is_float = false;
-
-  while (i < _input.size() && std::isdigit(_input[i]))
-    ++i;
-
-  if (i < _input.size() && _input[i] == '.')
+  while (chars_available() && cur_char_in(L"0123456789"))
   {
-    is_float = true;
-    ++i;
+    has_digits = true;
 
-    // must have at least one digit after '.'
-
-    if (i >= _input.size() || !std::isdigit(_input[i]))
-      throw Error((boost::format("Tokenizer: Missing fractional part for floating point at char %d") % i).str());
-
-    while (i < _input.size() && std::isdigit(_input[i]))
-      ++i;
+    if (out)
+      out->push_back(consume_char());
+    else
+      consume_char();
   }
 
-  is_float = parse_float_expo(i) || is_float;
-  return is_float ? Token::LNUM : Token::LINTEGER;
+  return has_digits;
 }
 
-bool Tokenizer::parse_float_expo(size_t& i)
+bool Tokenizer::parse_number()
 {
-  if (i >= _input.size() || std::toupper(_input[i]) != 'E')
+  bool is_float = false;
+  bool exponent = false;
+
+  set_token_start();
+
+  /*
+    Note: '.' starts NUMBER token only if followed by a digit.
+    Otherwise it is a single DOT token.
+  */
+
+  if (cur_char_is(L'.') && !next_char_in(L"0123456789"))
     return false;
 
-  ++i;
+  // Parse leading digits, if any
 
-  char c = _input[i];
-  if (i < _input.size() && ((c == '-') || (c == '+')))
-      ++i;
+  if (!parse_digits() && !cur_char_is(L'.'))
+  {
+    return false;
+  }
 
-  if (i >= _input.size() || !std::isdigit(_input[i]))
-    throw Error((boost::format("Tokenizer: Missing exponential value for floating point at char %d") % i).str());
+  // Handle decimal point, if any
 
-  while (i < _input.size() && std::isdigit(_input[i]))
-    i++;
+  if (consume_char(L'.'))
+  {
+    is_float = true;
+    if (!parse_digits())
+      token_error(L"No digits after decimal point");
+  }
 
+  // See if we have exponent (but it is not parsed yet)
+
+  if (consume_char(L"Ee"))
+  {
+    is_float = true;
+    exponent = true;
+  }
+
+  /*
+    If nothing indicates a floating number, we have already
+    parsed the digits of an integer number and we can report
+    it now.
+  */
+
+  if (!is_float)
+  {
+    add_token(Token::INTEGER);
+    return true;
+  }
+
+  // Parse exponent if present.
+
+  if (exponent)
+  {
+    consume_char(L"+-");
+
+    if (!parse_digits())
+      token_error(L"No digits in the exponent");
+  }
+
+  // Report floating number.
+
+  add_token(Token::NUMBER);
   return true;
 }
+
 
 /*
   Check if we have a Hexadecimal literal:
 
   X'12ab'
   x'12ab'
-  ox12ab
+  0x12ab
 */
 
-bool Tokenizer::parse_hex(size_t& i)
+
+bool Tokenizer::parse_hex()
 {
-  std::string val;
-  bool has_value = false;
+  string val;
 
-  if((_input[i] == 'X' || _input[i] == 'x') && next_char_is(i, '\''))
+  if (!chars_available())
+    return false;
+
+  switch (cur_char())
   {
-    i+=2;
 
-    size_t start = i;
-
-    for (; i < _input.size();++i)
-    {
-      if (_input[i] == '\'')
-      {
-        // We don't want the 'either (so the -2)
-        val.assign(_input, start, i-2);
-
-        has_value = true;
-        break;
-      }
-    }
-  }
-  else if (_input[i] == '0' && (next_char_is(i, 'x') || next_char_is(i, 'X')))
+  case L'X': case L'x':
   {
-    i+=2;
+    if (!next_char_is(L'\''))
+      return false;
 
-    size_t start = i;
+    consume_char();
+    consume_char();
 
-    for (; i < _input.size() && std::isalnum(_input[i]);++i)
-    {}
+    if (!parse_hex_digits(val))
+      token_error(L"Unexpected character inside hex literal");
 
-   --i;
+    if (!consume_char(L'\''))
+      token_error(L"Unexpected character inside hex literal");
 
-    val.assign(_input, start, i-1);
-
-    has_value = true;
-
+    break;
   }
 
-  if (has_value)
+  case L'0':
   {
-    _tokens.push_back(Token(Token::LHEX, val));
+    if (!next_char_in(L"Xx"))
+      return false;
 
+    consume_char();
+    consume_char();
+
+    if (!parse_hex_digits(val))
+      token_error(L"No hex digits found after 0x");
+
+    break;
+  }
+
+  default:
+    return false;
+  }
+
+  add_token(Token::HEX, val);
+  return true;
+}
+
+bool Tokenizer::parse_hex_digits(string &digits)
+{
+  bool ret = cur_char_in(L"0123456789ABCDEFabcdef");
+  while (cur_char_in(L"0123456789ABCDEFabcdef"))
+    digits.push_back(consume_char());
+  return ret;
+}
+
+
+/*
+  See if next token is:
+
+  WORD  - plain word
+  QWORD - word quotted in back-ticks
+*/
+
+bool Tokenizer::parse_word()
+{
+  if (!chars_available())
+    return false;
+
+  set_token_start();
+
+  if (cur_char_is(L'`'))
+  {
+    string word;
+    parse_quotted_string(L'`', &word);
+    add_token(Token::QWORD, word);
     return true;
   }
 
-  return false;
-}
+  bool has_word = false;
 
-void Tokenizer::get_tokens()
-{
-  for (size_t i = 0; i < _input.size(); ++i)
+  while (chars_available() && cur_char_is_word())
   {
-    char c = _input[i];
-
-    if (0 == c)
-      return;
-
-    if (std::isspace(c))
-    {
-      // do nothing
-      continue;
-    }
-
-    if ( parse_hex(i))
-      continue;
-
-    Token::TokenType tt = Token::T_NULL;
-    size_t j=i;
-    if (Token::T_NULL != (tt = parse_number(j)))
-    {
-      _tokens.push_back(Token(tt, std::string(_input, i, j-i)));
-      i = j-1;
-      continue;
-    }
-
-    if (!std::isalpha(c) && c != '_')
-    {
-      // # non-identifier, e.g. operator or quoted literal
-      if (c == '?')
-      {
-        _tokens.push_back(Token(Token::PLACEHOLDER, std::string(1, c)));
-      }
-      else if (c == '+')
-      {
-        _tokens.push_back(Token(Token::PLUS, std::string(1, c)));
-      }
-      else if (c == '-')
-      {
-        if (next_char_is(i, '>'))
-        {
-          ++i;
-          _tokens.push_back(Token(Token::ARROW, "->"));
-        }
-        else
-        _tokens.push_back(Token(Token::MINUS, std::string(1, c)));
-      }
-      else if (c == '*')
-      {
-        if (next_char_is(i, '*'))
-        {
-          ++i;
-          _tokens.push_back(Token(Token::DOUBLESTAR, std::string("**")));
-        }
-        else
-        {
-          _tokens.push_back(Token(Token::MUL, std::string(1, c)));
-        }
-      }
-      else if (c == '/')
-      {
-        _tokens.push_back(Token(Token::DIV, std::string(1, c)));
-      }
-      else if (c == '$')
-      {
-        _tokens.push_back(Token(Token::DOLLAR, std::string(1, c)));
-      }
-      else if (c == '%')
-      {
-        _tokens.push_back(Token(Token::MOD, std::string(1, c)));
-      }
-      else if (c == '=')
-      {
-        _tokens.push_back(Token(Token::EQ, std::string(1, c)));
-      }
-      else if (c == '&')
-      {
-        _tokens.push_back(Token(Token::BITAND, std::string(1, c)));
-      }
-      else if (c == '|')
-      {
-        _tokens.push_back(Token(Token::BITOR, std::string(1, c)));
-      }
-      else if (c == '^')
-      {
-        _tokens.push_back(Token(Token::BITXOR, std::string(1, c)));
-      }
-      else if (c == '(')
-      {
-        _tokens.push_back(Token(Token::LPAREN, std::string(1, c)));
-      }
-      else if (c == ')')
-      {
-        _tokens.push_back(Token(Token::RPAREN, std::string(1, c)));
-      }
-      else if (c == '[')
-      {
-        _tokens.push_back(Token(Token::LSQBRACKET, std::string(1, c)));
-      }
-      else if (c == ']')
-      {
-        _tokens.push_back(Token(Token::RSQBRACKET, std::string(1, c)));
-      }
-      else if (c == '{')
-      {
-        _tokens.push_back(Token(Token::LCURLY, std::string(1, c)));
-      }
-      else if (c == '}')
-      {
-        _tokens.push_back(Token(Token::RCURLY, std::string(1, c)));
-      }
-      else if (c == '~')
-      {
-        _tokens.push_back(Token(Token::NEG, std::string(1, c)));
-      }
-      else if (c == ',')
-      {
-        _tokens.push_back(Token(Token::COMMA, std::string(1, c)));
-      }
-      else if (c == ':')
-      {
-        _tokens.push_back(Token(Token::COLON, std::string(1, c)));
-      }
-//      else if (c == ';')
-//      {
-//        _tokens.push_back(Token(Token::SEMICOLON, std::string(1, c)));
-//      }
-      else if (c == '!')
-      {
-        if (next_char_is(i, '='))
-        {
-          ++i;
-          _tokens.push_back(Token(Token::NE, std::string("!=")));
-        }
-        else
-        {
-          _tokens.push_back(Token(Token::BANG, std::string(1, c)));
-        }
-      }
-      else if (c == '<')
-      {
-        if (next_char_is(i, '<'))
-        {
-          ++i;
-          _tokens.push_back(Token(Token::LSHIFT, std::string("<<")));
-        }
-        else if (next_char_is(i, '='))
-        {
-          ++i;
-          _tokens.push_back(Token(Token::LE, std::string("<=")));
-        }
-        else
-        {
-          _tokens.push_back(Token(Token::LT, std::string("<")));
-        }
-      }
-      else if (c == '>')
-      {
-        if (next_char_is(i, '>'))
-        {
-          ++i;
-          _tokens.push_back(Token(Token::RSHIFT, std::string(">>")));
-        }
-        else if (next_char_is(i, '='))
-        {
-          ++i;
-          _tokens.push_back(Token(Token::GE, std::string(">=")));
-        }
-        else
-        {
-          _tokens.push_back(Token(Token::GT, std::string(1, c)));
-        }
-      }
-      else if (c == '.')
-      {
-        if ((i + 1) < _input.size() && std::isdigit(_input[i + 1]))
-        {
-          size_t start = i;
-          ++i;
-          // floating grammar is
-          // float -> '.' (int | (int expo[sign] int))
-          // nint->digit +
-          // expo -> 'E' | 'e'
-          // sign -> '-' | '+'
-          parse_float_expo(i);
-          _tokens.push_back(Token(Token::LNUM, std::string(_input, start, i - start)));
-
-          if (i < _input.size())
-            --i;
-        }
-        else
-        {
-          _tokens.push_back(Token(Token::DOT, std::string(1, c)));
-        }
-      }
-      else if (c == '"' || c == '\'' || c == '`')
-      {
-        char quote_char = c;
-        std::string val;
-        size_t start = ++i;
-
-        while (i < _input.size())
-        {
-          c = _input[i];
-          if ((c == quote_char) && ((i + 1) < _input.size()) && (_input[i + 1] != quote_char))
-          {
-            // break if we have a quote char that's not double
-            break;
-          }
-          else if ((c == quote_char) || (c == '\\'  && quote_char != '`'))
-          {
-            // && quote_char != '`'
-            // this quote char has to be doubled
-            if ((i + 1) >= _input.size())
-              break;
-            val.append(1, _input[++i]);
-          }
-          else
-            val.append(1, c);
-          ++i;
-        }
-        if ((i >= _input.size()) && (_input[i] != quote_char))
-        {
-          throw Error((boost::format("Unterminated quoted string starting at %d") % start).str());
-        }
-        if (quote_char == '`')
-        {
-          _tokens.push_back(Token(Token::QUOTED_ID, val));
-        }
-        else
-        {
-          _tokens.push_back(Token(Token::LSTRING, val));
-        }
-      }
-      else
-      {
-        throw Error((boost::format("Unknown character at %d") % i).str());
-      }
-    }
-    else
-    {
-      size_t start = i;
-      while (i < _input.size() && (std::isalnum(_input[i]) || _input[i] == '_'))
-        ++i;
-      std::string val(_input, start, i - start);
-      Maps::reserved_words_t::const_iterator it = map.reserved_words.find(val);
-      if (it != map.reserved_words.end())
-      {
-        _tokens.push_back(Token(it->second, val));
-      }
-      else
-      {
-        _tokens.push_back(Token(Token::ID, val));
-      }
-      --i;
-    }
+    consume_char();
+    has_word = true;
   }
+
+  if (!has_word)
+    return false;
+
+  add_token(Token::WORD);
+  return true;
 }
 
-void Tokenizer::inc_pos_token()
+
+/*
+  See if next token is:
+
+  QSTRING  - a string in single quotes
+  QQSTRING - a string in double quotes
+*/
+
+bool Tokenizer::parse_string()
 {
-  ++_pos;
+  set_token_start();
+  string val;
+  char_t quote = cur_char();
+
+  if (!(L'\"' == quote || L'\'' == quote))
+    return false;
+
+  if (!parse_quotted_string(quote, &val))
+    return false;
+
+  add_token(L'\"' == quote ? Token::QQSTRING : Token::QSTRING, val);
+  return true;
 }
 
-int Tokenizer::get_token_pos()
+
+bool Tokenizer::parse_quotted_string(char_t qchar, string *val)
 {
-  assert(_pos < (size_t)std::numeric_limits<int>::max());
-  return (int)_pos;
+  if (!consume_char(qchar))
+    return false;
+
+  // Store first few characters for use in error message.
+
+  static const size_t start_len = 8;
+  char_t start[start_len] = { qchar };
+  size_t pos = 1;
+
+  while (chars_available())
+  {
+    // if we do not have escaped char, look at the end of the string
+
+    if (!consume_char(L'\\'))
+    {
+      // if qute char is repeated, then it does not terminate string
+      if (consume_char(qchar) && !cur_char_is(qchar))
+        return true;
+    }
+
+    char_t c = consume_char();
+
+    if (val)
+      val->push_back(c);
+
+    if (pos < start_len)
+      start[pos++] = c;
+  }
+
+  if (pos < start_len)
+    start[pos] = '\0';
+  start[start_len - 1] = '\0';
+
+  token_error(
+    string(L"Unterminated quoted string starting with ")
+    + string(start) + string(L"...")
+  );
+
+  return false;  // quiet compile warnings
 }
 
-const Token& Tokenizer::consume_any_token()
+
+// Constructing token sequence
+
+
+size_t Tokenizer::set_token_start()
 {
-  assert_tok_position();
-  Token& tok = _tokens[_pos];
-  ++_pos;
-  return tok;
+  _tok_pos = _in_pos;
+  return _tok_pos;
 }
 
-void Tokenizer::assert_tok_position()
+void Tokenizer::add_token(Token::Type tt)
 {
-  if (_pos >= _tokens.size())
-    throw Error((boost::format("Expected at pos %d but no tokens left.") % _pos).str());
+  assert(_in_pos > _tok_pos);
+  add_token(tt, _input.substr(_tok_pos, _in_pos - _tok_pos));
+  _tok_pos = _in_pos;
 }
 
-bool Tokenizer::tokens_available()
+void Tokenizer::add_token(Token::Type tt, const string &val)
 {
-  return _pos < _tokens.size();
+  _tokens.emplace_back(tt, val, _tok_pos, _in_pos);
 }
 
-bool Tokenizer::is_interval_units_type()
+
+// Access underlying sequence of characters
+
+
+bool Tokenizer::chars_available() const
 {
-  assert_tok_position();
-  Token::TokenType type = _tokens[_pos].get_type();
-  return map.interval_units.find(type) != map.interval_units.end();
+  return _in_pos < _input.size();
 }
 
-bool Tokenizer::is_type_within_set(const std::set<Token::TokenType>& types)
+char_t   Tokenizer::cur_char() const
 {
-  assert_tok_position();
-  Token::TokenType type = _tokens[_pos].get_type();
-  return types.find(type) != types.end();
+  if (!chars_available())
+    token_error(L"More characters expected");
+  return _input.at(_in_pos);
 }
 
-bool Tokenizer::Cmp_icase::operator()(const std::string& lhs, const std::string& rhs) const
+size_t Tokenizer::get_char_pos() const
 {
-  const char *c_lhs = lhs.c_str();
-  const char *c_rhs = rhs.c_str();
-
-  return _stricmp(c_lhs, c_rhs) < 0;
+  return _in_pos;
 }
 
+
+bool Tokenizer::next_char_is(char_t c, size_t off) const
+{
+  return _in_pos + off < _input.size() && _input[_in_pos + off] == c;
+}
+
+bool Tokenizer::next_char_in(const char_t *set, size_t off) const
+{
+  if (_in_pos + off >= _input.size())
+    return false;
+  char_t c = _input[_in_pos + off];
+
+  return (0 != c) && (NULL != std::wcschr(set, c));
+}
+
+
+char_t Tokenizer::consume_char()
+{
+  char_t c = cur_char();
+  _in_pos++;
+  return c;
+}
+
+bool Tokenizer::consume_char(char_t c)
+{
+  if (!cur_char_is(c))
+    return false;
+  consume_char();
+  return true;
+}
+
+char_t Tokenizer::consume_char(const char_t *set)
+{
+  if (!cur_char_in(set))
+    return '\0';
+  return consume_char();
+}
+
+bool Tokenizer::consume_chars(const char_t *str)
+{
+  if (_in_pos != _input.find(str, _in_pos))
+    return false;
+  _in_pos += wcslen(str);
+  return true;
+}

@@ -239,8 +239,8 @@ mysqlx_get_node_session_from_url(const char *conn_string,
   RETURN:
     statement handler containing the results and/or error
     NULL is not supposed to be returned even in case of error.
-    It is very unlikely for this function to end with the error
-    because it does not do any parsing, parameters checking etc.
+    It is very unlikely for this function to end with an error
+    because it does not do any parsing, parameter checking etc.
 */
 mysqlx_stmt_t * STDCALL
 mysqlx_sql_new(mysqlx_session_t *sess, const char *query,

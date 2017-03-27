@@ -28,7 +28,6 @@
 #include <time.h>
 #include <sstream>
 #include <forward_list>
-#include <boost/format.hpp>
 #include <list>
 #include <bitset>
 

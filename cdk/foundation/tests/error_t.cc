@@ -209,12 +209,14 @@ TEST(Errors, system)
 CDK_ERROR_CATEGORY(test, test_errc)
 
 
-cdk::foundation::error_condition error_category_test::default_error_condition(int) const
+cdk::foundation::error_condition
+error_category_test::do_default_error_condition(int) const
 {
   throw "not implemented";
 }
 
-bool error_category_test::equivalent(int code, const cdk::foundation::error_condition &ec) const
+bool
+error_category_test::do_equivalent(int code, const cdk::foundation::error_condition &ec) const
 {
   if (generic_error_category() != ec.category())
     return false;
@@ -239,18 +241,22 @@ TEST(Errors, category)
 
   try {
     throw_error(test_error(test_errc::FIRST));
+    FAIL() << "First error not thrown!";
   }
   catch (const Error &e)
   {
+    cout << "First error: " << e << endl;
     EXPECT_EQ(e, cdk::foundation::cdkerrc::generic_error);
     EXPECT_NE(e, cdk::foundation::cdkerrc::standard_exception);
   }
 
   try {
     throw_error(test_error(test_errc::SECOND));
+    FAIL() << "Second error not thrown!";
   }
   catch (const Error &e)
   {
+    cout << "Second error: " << e << endl;
     EXPECT_NE(e, cdk::foundation::cdkerrc::generic_error);
   }
 

@@ -53,11 +53,11 @@ namespace detail {
   Used for handling Winsock errors.
 */
 
-class error_category_winsock : public error_category
+class error_category_winsock : public error_category_base
 {
   error_category_winsock() {}
 
-  const char* name() const { return "winsock"; }
+  const char* name() const NOEXCEPT { return "winsock"; }
   std::string message(int) const;
 
 DIAGNOSTIC_PUSH
@@ -66,7 +66,7 @@ DIAGNOSTIC_PUSH
   DISABLE_WARNING(4702)
 #endif // _MSC_VER
 
-  error_condition default_error_condition(int code) const
+  error_condition do_default_error_condition(int code) const
   {
     switch (code)
     {
@@ -109,7 +109,7 @@ DIAGNOSTIC_PUSH
 
 DIAGNOSTIC_POP
 
-  bool equivalent(int code, const error_condition &ec) const
+  bool do_equivalent(int code, const error_condition &ec) const
   {
     try
     {
@@ -179,11 +179,11 @@ const int SOCKET_ERROR = -1;
   <http://pubs.opengroup.org/onlinepubs/009695399/functions/getaddrinfo.html>)
 */
 
-class error_category_resolve : public error_category
+class error_category_resolve : public error_category_base
 {
   error_category_resolve() {}
 
-  const char* name() const { return "resolve"; }
+  const char* name() const NOEXCEPT { return "resolve"; }
   std::string message(int code) const;
 
 DIAGNOSTIC_PUSH
@@ -192,7 +192,7 @@ DIAGNOSTIC_PUSH
   DISABLE_WARNING(4702)
 #endif // _MSC_VER
 
-  error_condition default_error_condition(int code) const
+  error_condition do_default_error_condition(int code) const
   {
     switch (code)
     {
@@ -231,7 +231,7 @@ DIAGNOSTIC_PUSH
 
 DIAGNOSTIC_POP
 
-  bool equivalent(int code, const error_condition &ec) const
+  bool do_equivalent(int code, const error_condition &ec) const
   {
     try
     {
@@ -290,7 +290,14 @@ static void check_socket_error(Socket socket)
 #ifdef _WIN32
     throw_error(error, winsock_error_category());
 #else
-    throw_error(error, system_error_category());
+
+    // Note: this is not very clear in POSIX docs, but the error code returned by
+    // getsockopt(.. SO_ERROR ..) should be interpreted like errno value.
+    // For example IBM docs for SO_ERROR specify:
+    // "Return any pending errors in the socket. The value returned corresponds
+    //  to the standard error codes defined in <errno.h>"
+
+    throw_error(error, posix_error_category());
 #endif
 }
 

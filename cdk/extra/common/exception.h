@@ -24,8 +24,6 @@
 #include <string>
 #include <stdexcept>
 
-#include <boost/shared_ptr.hpp>
-#include <boost/function.hpp>
 
 #ifndef BOOST_NOEXCEPT_OR_NOTHROW
 # define BOOST_NOEXCEPT_OR_NOTHROW throw()

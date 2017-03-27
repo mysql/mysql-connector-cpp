@@ -88,7 +88,7 @@ Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
       proto.rcv_Reply(prc).wait();
     }
     // Server doesn't allow TLS connection
-    catch(const Error &e)
+    catch(const Error&)
     {
       if (options.get_tls().ssl_mode() !=
           cdk::connection::TLS::Options::SSL_MODE::PREFERRED)
@@ -97,24 +97,23 @@ Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
       tls = false;
     }
 
-    if (tls)
-    {
-      TLS* tls = new TLS(connection, ds.host(), options.get_tls());
-
-      tls->connect();
-      m_connection = tls;
-
-      m_session = new mysqlx::Session(*tls, options);
-    }
-
   }
 
+  if (tls)
+  {
+    connection::TLS *tls_conn
+      = new connection::TLS(connection, ds.host(), options.get_tls());
+    tls_conn->connect();
+    m_connection = tls_conn;
+    m_session = new mysqlx::Session(*tls_conn, options);
+  }
+  else
 #endif
-  if (!tls)
   {
     m_connection = connection;
     m_session = new mysqlx::Session(*connection, options);
   }
+
 }
 
 

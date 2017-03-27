@@ -335,7 +335,6 @@ Value Value::Access::mk_from_json(const std::string &json)
   // Create parser for the JSON string.
 
   parser::Tokenizer toks(json);
-  toks.get_tokens();
   auto first = toks.begin();
   Parser parser(first, toks.end());
 

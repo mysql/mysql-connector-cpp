@@ -26,9 +26,7 @@
 #include <uuid_gen.h>
 
 #include <time.h>
-#include <sstream>
 #include <forward_list>
-#include <boost/format.hpp>
 #include <list>
 
 #include "impl.h"
@@ -38,15 +36,17 @@ using namespace uuid;
 
 // --------------------------------------------------------------------
 
+
 void mysqlx::GUID::generate()
 {
-  uuid::uuid_type uuid;
-  mysqlx::generate_uuid(uuid);
-  boost::format fmt("%02X");
+  static const char *hex_digit = "0123456789ABCDEF";
+  uuid_type uuid;
+  generate_uuid(uuid);
 
-  for (unsigned i = 0; i < sizeof(uuid) && 2 * i < sizeof(m_data); ++i)
+  for (unsigned i = 0; i < sizeof(uuid) && 2*i < sizeof(m_data); ++i)
   {
-    memcpy(m_data + 2 * i, (fmt % (unsigned)uuid[i]).str().data(), 2);
+    m_data[2*i] = hex_digit[uuid[i] >> 4];
+    m_data[2 * i + 1] = hex_digit[uuid[i] % 16];
   }
 }
 

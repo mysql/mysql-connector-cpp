@@ -34,25 +34,21 @@
 #endif
 
 #include <limits>         // for std::numeric_limits
+#include <string.h>       // for memset
 
 
 namespace cdk {
 namespace foundation {
 
-/*
-  Note: the third codecvt template parameter (conversion state type)
-  probably has to be std::mbstate_t if derived codecs should work with
-  C++ I/O streams (via imbue() method).
-*/
-
 
 #ifdef HAVE_CODECVT_UTF8
+
 
 class codecvt_utf8 : public std::codecvt_utf8<char_t>
 {
 public:
 
-  size_t measure(const string& str) const
+  size_t measure(const string&) const
   {
     THROW("codecvt_utf8: measure() not yet implemented");
   }
@@ -146,6 +142,7 @@ struct Type
 template <Type::value T>
 class Codec;
 
+
 /*
   String codecs
   =============
@@ -194,6 +191,14 @@ public:
     const char *in_next;
     char_t     *out_next;
 
+    if (0 == in.size())
+    {
+      out.clear();
+      return 0;
+    }
+
+    memset(&state, 0, sizeof(state));
+
     out.resize(in.size()+1);
     std::codecvt_base::result res=
       m_codec.in(state, (char*)in.begin(), (char*)in.end(), in_next,
@@ -215,6 +220,11 @@ public:
     typename VT::state_type state;
     const char_t *in_next;
     char *out_next;
+
+    if (0 == in.size())
+      return 0;
+
+    memset(&state, 0, sizeof(state));
 
     std::codecvt_base::result res=
       m_codec.out(state, &in[0], &in[in.length()], in_next,
@@ -577,7 +587,7 @@ const
 {
   out <<"Number_codec: Conversion of " <<8*m_int_size <<"-bit integer requires "
       <<m_int_size <<" bytes but " <<m_buf_size <<" are available "
-      <<"(" <<m_code <<")";
+      <<"(" << code() <<")";
 }
 
 

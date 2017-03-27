@@ -29,16 +29,8 @@ PUSH_SYS_WARNINGS
 #include <stdlib.h>
 POP_SYS_WARNINGS
 
-PUSH_SYS_WARNINGS
-PUSH_BOOST_WARNINGS
-#include <boost/lexical_cast.hpp>
-POP_BOOST_WARNINGS
-POP_SYS_WARNINGS
-
-#include <sstream>
 
 // TODO: Complete the parser
-// TODO: Better parser errors
 
 
 using namespace parser;
@@ -51,18 +43,19 @@ using cdk::Safe_prc;
 using cdk::safe_prc;
 
 
-#define RETHROW_BOOST_LEXICAL \
-catch(boost::bad_lexical_cast &e)\
-{\
-  throw Error(e.what());\
-}
+/*
+  Set up keyword and operator maps.
+*/
+
+Keyword::map_t  Keyword::kw_map;
+Keyword         Keyword::init;
+
+Op::tok_map_t   Op::unary_tok_map, Op::binary_tok_map;
+Op::kw_map_t    Op::unary_kw_map, Op::binary_kw_map;
+Op              Op::init;
 
 
-void Token_op_base::unexpected_token(const Token &t, const char *ctx)
-{
-  throw Error((boost::format("Expr parser: Unexpected token %s when expecting %s at %d")
-               % t.get_name() % ctx % get_token_pos()).str());
-}
+// -------------------------------------------------------------------------
 
 
 /*
@@ -141,10 +134,8 @@ Expression::Processor* ignore_if(Expression::Processor *prc)
 }
 
 
-bool Expr_parser_base::do_parse(It &first, const It &last, Processor *prc)
+bool Expr_parser_base::do_parse(Processor *prc)
 {
-  Token_op_base::set_tokens(first, last);
-
   /*
     if prc is NULL, ignore the parsed expression instead of storing it
     which would be the case if we pass NULL to parse().
@@ -155,6 +146,7 @@ bool Expr_parser_base::do_parse(It &first, const It &last, Processor *prc)
   return true;
 }
 
+
 // -------------------------------------------------------------------------
 
 
@@ -162,13 +154,14 @@ bool Expr_parser_base::do_parse(It &first, const It &last, Processor *prc)
    castOp ::= CAST LPAREN expr AS castType RPAREN
  */
 
-void Expr_parser_base::parse_cast(Scalar_prc *prc)
+bool Expr_parser_base::parse_cast(Scalar_prc *prc)
 {
-  consume_token(Token::CAST);
+  if (!consume_token(Op::CAST))
+    return false;
 
-  Safe_prc<List_prc> ap = safe_prc(prc)->op("cast");
+  Safe_prc<List_prc> ap = safe_prc(prc)->op(Op::name(Op::CAST));
 
-  consume_token(Token::LPAREN);
+  consume_token_throw(Token::LPAREN, L"Expected '(' after CAST");
 
   ap->list_begin();
 
@@ -176,7 +169,8 @@ void Expr_parser_base::parse_cast(Scalar_prc *prc)
 
   delete parse(FULL, ignore_if(ap->list_el()));
 
-  consume_token(Token::AS);
+  consume_token_throw(Keyword::AS,
+    L"Expected AS after expression inside CAST operator");
 
   // 2nd arg, cast_data_type
 
@@ -186,7 +180,10 @@ void Expr_parser_base::parse_cast(Scalar_prc *prc)
 
   ap->list_end();
 
-  consume_token(Token::RPAREN);
+  consume_token_throw(Token::RPAREN,
+    L"Expected ')' closing CAST operator call");
+
+  return true;
 }
 
 
@@ -206,53 +203,45 @@ void Expr_parser_base::parse_cast(Scalar_prc *prc)
    lengthSpec ::= LPAREN INT RPAREN
  */
 
-cdk::string Expr_parser_base::parse_cast_type()
+std::string Expr_parser_base::parse_cast_type()
 {
   std::string type_str;
 
-  const Token& token = peek_token();
-  Token::TokenType type = token.get_type();
+  const Token* token = consume_token();
 
-  if ((type == Token::BINARY) || (type == Token::CHAR))
+  if (!token)
+    parse_error(L"Expected cast type");
+
+  Keyword::Type type = Keyword::get(*token);
+  type_str = Keyword::name(type);
+
+  switch (type)
   {
-    type_str += consume_token(type);
+
+  case Keyword::BINARY:
+  case Keyword::CHAR:
+  case Keyword::DECIMAL:
     if (cur_token_type_is(Token::LPAREN))
-      type_str += cast_data_type_dimension();
-  }
-  else if (type == Token::DECIMAL)
-  {
-    type_str += consume_token(type);
-    if (cur_token_type_is(Token::LPAREN))
-      type_str += cast_data_type_dimension(true);
-  }
-  else if ((type == Token::DATE) || (type == Token::DATETIME) || (type == Token::TIME))
-  {
-    type_str += consume_token(type);
-  }
-  else if (type == Token::SIGNED)
-  {
-    type_str += consume_token(type);
-    if (cur_token_type_is(Token::INTEGER))
-      type_str += " " + consume_token(Token::INTEGER);
-  }
-  else if (type == Token::UNSIGNED)
-  {
-    type_str += consume_token(type);
-    if (cur_token_type_is(Token::INTEGER))
-      type_str += " " + consume_token(Token::INTEGER);
-  }
-  else if (type == Token::INTEGER)
-  {
-    type_str += consume_token(type);
-  }
-  else if (type == Token::JSON)
-  {
-    type_str += consume_token(type);
-  }
-  else
-  {
-    throw Error((boost::format("Expr parser: Unknown token type = %s when expecting cast type at %d")
-                 % token.get_name() % get_token_pos()).str());
+      type_str += cast_data_type_dimension(Keyword::DECIMAL == type);
+    break;
+
+  case Keyword::SIGNED:
+  case Keyword::UNSIGNED:
+    consume_token(Keyword::Set{ Keyword::INTEGER, Keyword::INT });
+    type_str += " ";
+    type_str += Keyword::name(Keyword::INTEGER);
+    break;
+
+  case Keyword::DATE:
+  case Keyword::DATETIME:
+  case Keyword::TIME:
+  case Keyword::INTEGER:
+  case Keyword::JSON:
+    break;
+
+  default:
+    parse_error(L"Expected cast type");
+
   }
 
   return type_str;
@@ -270,17 +259,25 @@ cdk::string Expr_parser_base::parse_cast_type()
 
 std::string Expr_parser_base::cast_data_type_dimension(bool double_dimension)
 {
-  if (!cur_token_type_is(Token::LPAREN))
-    return "";
-  consume_token(Token::LPAREN);
-  std::string result = "(" + consume_token(Token::LINTEGER);
-  if (double_dimension && cur_token_type_is(Token::COMMA))
+  consume_token_throw(Token::LPAREN, L"Expected type dimension specification");
+  std::string result("(");
+  result += consume_token_throw(
+              Token::INTEGER,
+              L"Expected integer type dimension"
+            ).get_text();
+  if (double_dimension && consume_token(Token::COMMA))
   {
-    consume_token(Token::COMMA);
-    result += "," + consume_token(Token::LINTEGER);
+    result += ",";
+    result += consume_token_throw(
+                Token::INTEGER,
+                L"Expected second type dimension after ','"
+              ).get_text();
   }
   result += ")";
-  consume_token(Token::RPAREN);
+  consume_token_throw(
+    Token::RPAREN,
+    L"Expected ')' closing type dimension specification"
+  );
   return result;
 }
 
@@ -293,40 +290,18 @@ std::string Expr_parser_base::cast_data_type_dimension(bool double_dimension)
    | QUOTED_ID
  */
 
-const std::string &Expr_parser_base::get_ident()
+bool Expr_parser_base::get_ident(string &id)
 {
-  if (cur_token_type_is(Token::ID))
-  {
-    return consume_token(Token::ID);
-  }
-  else if (cur_token_type_is(Token::QUOTED_ID))
-  {
-    return consume_token(Token::QUOTED_ID);
-  }
-  else if (peek_token().is_reserved_word())
-  {
-    return get_token().get_text();
-  }
-  else
-  {
-    throw Error((boost::format("Expr parser: Expected token type ID or QUOTED_ID"
-                               " in JSON path at token pos %d")
-                               % get_token_pos()).str());
-  }
-}
+  if (!tokens_available())
+    return false;
 
-/**
-  // [schema.]ident (currently only used for optionally qualified function calls)
-  schemaQualifiedIdent ::= (ident '.')? ident
+  if (Token_base::cur_token_type_in({ Token::WORD, Token::QWORD }))
+  {
+    id = consume_token()->get_text();
+    return true;
+  }
 
-
-   functionCall ::= schemaQualifiedIdent LPAREN argsList? RPAREN
- */
-
-void Expr_parser_base::parse_function_call(Scalar_prc *prc)
-{
-  parse_schema_ident();
-  parse_function_call(*m_col_ref.table(), prc);
+  return false;
 }
 
 
@@ -334,31 +309,96 @@ void Expr_parser_base::parse_function_call(Scalar_prc *prc)
   Assuming that a schema-qualified identifier was just parsed, attempt to
   parse a function call if next token starts argument list.
   Returns false if this is not the case.
+
+  functionCall ::= schemaQualifiedIdent LPAREN argsList? RPAREN
 */
 
 bool
 Expr_parser_base::parse_function_call(const cdk::api::Table_ref &func, Scalar_prc *prc)
 {
-  if (!cur_token_type_is(Token::LPAREN))
+  if (!consume_token(Token::LPAREN))
     return false;
 
-  List_prc *aprc = safe_prc(prc)->call(func);
+  List_prc *aprc = NULL;
+  bool     qualified = (NULL != func.schema());
+  bool     parse_position = false;
 
-  consume_token(Token::LPAREN);
+  // Report position(.. IN ..) as locate(...,...)
+
+  if (! qualified && Keyword::equal(func.name(), L"position"))
+  {
+    Table_ref locate;
+    locate.set(L"locate");
+    aprc = safe_prc(prc)->call(locate);
+    parse_position = true;
+  }
+  else
+    aprc = safe_prc(prc)->call(func);
 
   if (aprc)
     aprc->list_begin();
 
   if (!cur_token_type_is(Token::RPAREN))
-    parse_argslist(aprc);
+  {
+    if (
+      !qualified && Keyword::equal(func.name(), L"trim")
+      && cur_token_type_in({
+           Keyword::BOTH, Keyword::LEADING, Keyword::TRAILING
+         })
+    )
+      unsupported(L"LEADING, TRAILING or BOTH clause inside function TRIM()");
+
+    parse(parse_position ? COMP : FULL, aprc ? aprc->list_el() : NULL);
+
+    if (consume_token(Token::COMMA))
+      parse_argslist(aprc);
+    else
+      parse_special_args(func, aprc);
+  }
 
   if (aprc)
     aprc->list_end();
 
-  consume_token(Token::RPAREN);
+  consume_token_throw(
+    Token::RPAREN,
+    L"Expected ')' to close function argument list"
+  );
 
   return true;
 }
+
+
+void
+Expr_parser_base::parse_special_args(
+  const cdk::api::Table_ref &func,
+  Expression::List::Processor *aprc
+)
+{
+  if (func.schema())
+    return;
+
+  if (Keyword::equal(func.name(), L"char"))
+  {
+    if (cur_token_type_is(Keyword::USING))
+      unsupported(L"USING clause inside function CHAR()");
+    return;
+  }
+
+  if (Keyword::equal(func.name(), L"trim"))
+  {
+    if (cur_token_type_is(Keyword::FROM))
+      unsupported(L"FROM clause inside function TRIM()");
+  }
+
+  if (Keyword::equal(func.name(), L"position"))
+  {
+    if (!consume_token(Keyword::IN))
+      parse_error("Expected IN inside POSITION(... IN ...)");
+    parse(FULL, aprc ? aprc->list_el() : NULL);
+    return;
+  }
+}
+
 
 
 /*
@@ -385,25 +425,44 @@ Expr_parser_base::parse_function_call(const cdk::api::Table_ref &func, Scalar_pr
   array.
 */
 
-void Expr_parser_base::parse_schema_ident(Token::TokenType (*types)[2])
+bool Expr_parser_base::parse_schema_ident(Token::Type (*types)[2])
 {
   if (types)
   {
-    (*types)[0] = peek_token().get_type();
-    // Reset the other entry in case we are not looking at more tokens.
-    (*types)[1] = Token::TokenType(0);
+    (*types)[0] = Token::Type(0);
+    (*types)[1] = Token::Type(0);
   }
-  const cdk::string &name = get_ident();
+
+  if (!tokens_available())
+    return false;
+
+  if (types)
+    (*types)[0] = peek_token()->get_type();
+
+  string name;
+
+  if (!get_ident(name))
+    return false;
 
   m_col_ref.m_table_ref.set(name);
 
-  if (cur_token_type_is(Token::DOT))
+  if (consume_token(Token::DOT))
   {
-    consume_token(Token::DOT);
+    if (!tokens_available())
+      return false;
+
     if (types)
-      (*types)[1] = peek_token().get_type();
-    m_col_ref.m_table_ref.set(get_ident(), name);
+      (*types)[1] = peek_token()->get_type();
+
+    string name1;
+
+    if (!get_ident(name1))
+      return false;
+
+    m_col_ref.m_table_ref.set(name1, name);
   }
+
+  return true;
 }
 
 
@@ -416,11 +475,14 @@ void Expr_parser_base::parse_column_ident(Path_prc *prc)
 
 void Expr_parser_base::parse_column_ident1(Path_prc *prc)
 {
-  if (cur_token_type_is(Token::DOT))
+  if (consume_token(Token::DOT))
   {
-    consume_token(Token::DOT);
+    string name;
+
+    if (!get_ident(name))
+      parse_error(L"Expected identifier after '.'");
     // Note: the table part was initialized in parse_schema_ident()
-    m_col_ref.set_name(get_ident());
+    m_col_ref.set_name(name);
   }
   else
   {
@@ -433,21 +495,19 @@ void Expr_parser_base::parse_column_ident1(Path_prc *prc)
       m_col_ref.set(m_col_ref.table()->name());
   }
 
-  if (cur_token_type_is(Token::ARROW))
+  if (consume_token(Token::ARROW))
   {
-    consume_token(Token::ARROW);
 
-    if (cur_token_type_is(Token::LSTRING))
+    if (Token_base::cur_token_type_in({ Token::QSTRING, Token::QQSTRING }))
     {
-      Tokenizer toks(consume_token(Token::LSTRING));
-      toks.get_tokens();
+      Tokenizer toks(consume_token()->get_text());
       It first = toks.begin();
       It last  = toks.end();
       Expr_parser_base path_parser(first, last, m_parser_mode);
       // TODO: Translate parse errors
       path_parser.parse_document_field(prc, true);
       if (first != last)
-        throw Error("Invalid quotted path component");
+        parse_error(L"Unexpected characters in a quotted path component");
     }
     else
     {
@@ -486,19 +546,18 @@ void Expr_parser_base::parse_column_ident1(Path_prc *prc)
 
 void Expr_parser_base::parse_document_field(Path_prc *prc, bool prefix)
 {
-  if (cur_token_type_is(Token::DOLLAR))
+  if (consume_token(Token::DOLLAR))
   {
-    consume_token(Token::DOLLAR);
     if (!parse_document_path(prc, true))  // require DOT before members
-      throw_error("Document path expected");
+      parse_error(L"Expected '.' to start a path after '$'");
     return;
   }
 
   if (prefix)
-    throw_error("Expected DOLLAR to start a document path");
+    parse_error(L"Expected '$' to start a document path");
 
   if (!parse_document_path(prc, false))
-    throw_error("Document path expected");
+    parse_error(L"Expected a document path");
 }
 
 
@@ -682,37 +741,31 @@ bool Expr_parser_base::parse_document_path(Path_prc *prc, bool require_dot)
 
   bool double_star = false;
 
-  if (cur_token_type_is(Token::DOUBLESTAR))
+  if (consume_token(Token::DOUBLESTAR))
   {
-    consume_token(Token::DOUBLESTAR);
     double_star = true;
     el_reporter.any_path();
   }
+  else if (parse_docpath_member_dot(&el_reporter))
+  {
+    // continue below
+  }
+  else if (require_dot)
+  {
+    return false;
+  }
   else
   {
-    if (cur_token_type_is(Token::DOT))
-    {
-      consume_token(Token::DOT);
-      if (!parse_docpath_member(&el_reporter))
-        unexpected_token(peek_token(), "Document path");
-    }
-    else if (require_dot)
-    {
+    if (!parse_docpath_member(&el_reporter))
       return false;
-    }
-    else
-    {
-      if (!parse_docpath_member(&el_reporter))
-        return false;
-    }
   }
 
-  // the rest of the path
+  // the rest of the path (if any)
 
   bool ret = parse_document_path1(&el_reporter);
 
   if (!ret && double_star)
-    throw_error("Document path ending in '**'");
+    parse_error(L"Document path ending in '**'");
 
   el_reporter.list_end();
 
@@ -744,45 +797,31 @@ bool Expr_parser_base::parse_document_path1(Path_prc *prc)
   bool has_item = false;
 
   for (double_star = false; true;
-       last_double_star =double_star,
+       last_double_star = double_star,
        double_star =false,
        has_item = true)
   {
-    if (!tokens_available())
+    if (!cur_token_type_in({ Token::DOUBLESTAR, Token::DOT, Token::LSQBRACKET }))
       break;
 
-    const Token &t = peek_token();
-
-    switch (t.get_type())
+    if (consume_token(Token::DOUBLESTAR))
     {
-    case Token::DOT:
-      consume_token(Token::DOT);
-      if (!parse_docpath_member(sprc->list_el()))
-        unexpected_token(peek_token(),
-                         "when looking for a document path element");
-      continue;
-
-    case Token::DOUBLESTAR:
-      consume_token(Token::DOUBLESTAR);
       sprc->list_el()->any_path();
       double_star = true;
       continue;
+    }
 
-    case Token::LSQBRACKET:
-      consume_token(Token::LSQBRACKET);
-      parse_docpath_array_loc(sprc->list_el());
-      consume_token(Token::RSQBRACKET);
+    if (parse_docpath_member_dot(sprc))
       continue;
 
-    default:
-      break;
-    }
+    if (parse_docpath_array(sprc))
+      continue;
 
     break;
   }
 
   if (last_double_star)
-    throw_error("Document path ending in '**'");
+    parse_error(L"Document path ending in '**'");
 
   return has_item;
 }
@@ -795,73 +834,88 @@ bool Expr_parser_base::parse_document_path1(Path_prc *prc)
       | STRING1
 
     TODO: Does STRING1 differ from plain STRING in any way?
-
-   Note: In the context of parsing documentPath, words such as "year", which
-   are otherwise treated by tokenizer as reserved, are treated as normal identifiers.
 */
 
-bool Expr_parser_base::parse_docpath_member(Path_prc::Element_prc *prc)
+bool Expr_parser_base::parse_docpath_member(Path_prc *prc)
 {
-  const Token &t = peek_token();
+  const Token *t = peek_token();
 
-  switch (t.get_type())
+  if (!t)
+    return false;
+
+  switch (t->get_type())
   {
-  case Token::MUL:
-    if (prc)
-      prc->any_member();
+  case Token::STAR:
+    safe_prc(prc)->list_el()->any_member();
     break;
 
-  case Token::ID:
-  case Token::LSTRING:
-    if (prc)
-      prc->member(t.get_text());
+  case Token::WORD:
+  case Token::QQSTRING:
+  case Token::QSTRING:
+    safe_prc(prc)->list_el()->member(t->get_text());
     break;
 
   default:
-
-    if (t.is_reserved_word())
-    {
-      if (prc)
-        prc->member(t.get_text());
-      break;
-    }
-
     return false;
   }
 
-  get_token();  // consume the token
+  consume_token();
   return true;
 }
 
+bool Expr_parser_base::parse_docpath_member_dot(Path_prc *prc)
+{
+  if (!consume_token(Token::DOT))
+    return false;
+  if (!parse_docpath_member(prc))
+    parse_error(L"Expected member name or '*' after '.' in a document path");
+  return true;
+}
 
 /**
+   docuemntPathArray ::= LSQBRACKET documentPathArrayLoc RSQBRACKET
+
    documentPathArrayLoc ::=
-       MUL
-     | INT
+    | MUL
+    | INT
  */
-void Expr_parser_base::parse_docpath_array_loc(Path_prc::Element_prc *prc)
+
+bool Expr_parser_base::parse_docpath_array(Path_prc *prc)
 {
-  if (cur_token_type_is(Token::MUL))
+  if (!consume_token(Token::LSQBRACKET))
+    return false;
+
+  if (consume_token(Token::STAR))
   {
-    consume_token(Token::MUL);
-    if (prc)
-      prc->any_index();
-  }
-  else if (cur_token_type_is(Token::LINTEGER))
-  {
-    const std::string& value = consume_token(Token::LINTEGER);
-    uint32_t v = boost::lexical_cast<uint32_t>(value.c_str(), value.size());
-    if (prc)
-      prc->index(v);
+    safe_prc(prc)->list_el()->any_index();
   }
   else
   {
-    throw Error(
-          (boost::format(
-             "Expr parser: Exception token type MUL or LINTEGER"
-             " in JSON path array index at token pos %d")
-             % get_token_pos()).str());
+    if (!cur_token_type_is(Token::INTEGER))
+      parse_error(L"Expected '*' or integer index after '[' in a document path");
+
+    uint64_t v;
+
+    try {
+      v = strtoui(consume_token()->get_text());
+    }
+    catch (const Numeric_conversion_error &e)
+    {
+      parse_error(e.msg());
+      throw;  // quiet compile warnings
+    }
+
+    if (v > std::numeric_limits<Path_prc::Element_prc::index_t>::max())
+      parse_error(L"Array index too large");
+
+    safe_prc(prc)->list_el()->index(Path_prc::Element_prc::index_t(v));
   }
+
+  consume_token_throw(
+    Token::RSQBRACKET,
+    L"Expected ']' to close a document path array component"
+  );
+  return true;
 }
 
 
@@ -973,7 +1027,10 @@ bool column_ref_from_path(cdk::Doc_path &path, parser::Column_ref &column)
 
 Expression* Expr_parser_base::parse_atomic(Processor *prc)
 {
-  Token::TokenType type = peek_token().get_type();
+  if (!tokens_available())
+    parse_error(L"Expected an expression");
+
+  Token::Type type = peek_token()->get_type();
 
   switch (type)
   {
@@ -991,9 +1048,12 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
 
   case Token::LPAREN:
   {
-    consume_token(Token::LPAREN);
+    consume_token();
     Expression *res = parse(FULL, prc);
-    consume_token(Token::RPAREN);
+    consume_token_throw(
+      Token::RPAREN,
+      L"Expected ')' to close parenthesized sub-expression"
+    );
     return res;
   }
 
@@ -1015,73 +1075,66 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
   if (!prc)
     prc = stored.reset(new Stored_any());
 
+  Safe_prc<Processor::Scalar_prc> sprc(prc->scalar());
 
-  // CAST, parameters, nullary operators
+  // parameters, nullary operators, CAST
 
-  switch (type)
+  if (consume_token(Token::COLON))
   {
-
-    // placeholder
-
-  case Token::COLON:
-    consume_token(Token::COLON);
-    safe_prc(prc)->scalar()->param(consume_token(Token::ID));
+    sprc->param(consume_token_throw(
+      Token::WORD,
+      L"Expected parameter name after ':'"
+    ).get_text());
     return stored.release();
+  }
 
-    // castOp
-
-  case Token::CAST:
-    parse_cast(prc->scalar());
-    return stored.release();
-
-    // nullary "*"
-
-  case Token::MUL:
+  if (consume_token(Op::STAR))
   {
-    consume_token(Token::MUL);
-    safe_prc(prc)->scalar()->op("*");
+    sprc->op(Op::name(Op::STAR));
     // NOTE: arguments processor is ignored as there are no arguments
     return stored.release();
   }
 
-  default: break;
+  if (parse_cast(sprc))
+  {
+    return stored.release();
   }
-
-  Safe_prc<Processor::Scalar_prc> sprc(prc->scalar());
 
   // Unary operator.
 
   List_prc *argsp = NULL;
   bool     neg = false;
 
-  switch (type)
+  Op::Type  op = Op::get_unary(*peek_token());
+
+  switch (op)
   {
-  case Token::PLUS:
-  case Token::MINUS:
+  case Op::PLUS:
+  case Op::MINUS:
   {
-    const Token &t = get_token();
-    type = peek_token().get_type();
-    if (Token::LNUM == type || Token::LINTEGER == type) {
+    consume_token();
+    if (Token_base::cur_token_type_in({ Token::NUMBER, Token::INTEGER }))
+    {
       // treat as numeric literal with possibly negated value
-      neg = (Token::MINUS == t.get_type());
+      neg = (Op::MINUS == op);
       break;
     }
     // otherwise report as unary operator
-    argsp = sprc->op(operator_name(t.get_text()).c_str());
+    argsp = sprc->op(Op::name(op));
     break;
   }
 
-  case Token::BANG:
-    get_token();
-    argsp = sprc->op(operator_name("!").c_str());
+  case Op::NEG:
+    consume_token();
+    argsp = sprc->op(Op::name(Op::NEG));
     break;
-  case Token::NOT:
-    get_token();
-    argsp = sprc->op(operator_name("not").c_str());
+  case Op::NOT:
+    consume_token();
+    argsp = sprc->op(Op::name(Op::NOT));
     break;
-  case Token::NEG:
-    get_token();
-    argsp = sprc->op(operator_name("~").c_str());
+  case Op::BITNEG:
+    consume_token();
+    argsp = sprc->op(Op::name(Op::BITNEG));
     break;
 
   default:
@@ -1098,76 +1151,93 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
     return stored.release();
   }
 
+  assert(tokens_available());
+
+
   // Literal value
 
-  switch (peek_token().get_type())
+  Keyword::Type kw = Keyword::get(*peek_token());
+
+  switch (kw)
   {
-  case Token::LSTRING:
-    if (m_strings_as_blobs)
-      sprc->val()->value(cdk::TYPE_BYTES, Format_info(),
-        cdk::bytes(get_token().get_text()));
-    else
-      sprc->val()->str(get_token().get_text());
-    return stored.release();
 
-  case Token::T_NULL:
+  case Keyword::L_NULL:
     sprc->val()->null();
-    get_token();
+    consume_token();
     return stored.release();
 
-  case Token::LNUM:
-    try {
-      double val = boost::lexical_cast<double>(get_token().get_text());
-      sprc->val()->num(neg ? -val : val);
-      return stored.release();
-    }
-    RETHROW_BOOST_LEXICAL;
-
-  case Token::LINTEGER:
-    try {
-      if (neg)
-      {
-        int64_t val = boost::lexical_cast<int64_t>(get_token().get_text());
-        sprc->val()->num(-val);
-      }
-      else
-      {
-        uint64_t val = boost::lexical_cast<uint64_t>(get_token().get_text());
-        sprc->val()->num(val);
-      }
-      return stored.release();
-    }
-    RETHROW_BOOST_LEXICAL;
-  case Token::LHEX:
-    try {
-      std::stringstream ss;
-      ss << get_token().get_text();
-      if (neg)
-      {
-        int64_t val;
-        ss >> std::hex >> val;
-        sprc->val()->num(-val);
-      }
-      else
-      {
-        uint64_t val;
-        ss >> std::hex >> val;
-        sprc->val()->num(val);
-      }
-      return stored.release();
-    }
-    RETHROW_BOOST_LEXICAL;
-
-  case Token::TRUE_:
-  case Token::FALSE_:
-    sprc->val()->yesno(get_token().get_type() == Token::TRUE_);
+  case Keyword::L_TRUE:
+  case Keyword::L_FALSE:
+    sprc->val()->yesno(Keyword::L_TRUE == kw);
+    consume_token();
     return stored.release();
 
   default:
-    // will continue with functionCall | columnIdent | documentField parsing
+    // continue looking for other literals
     break;
+  }
+
+
+  try {
+
+    switch (peek_token()->get_type())
+    {
+    case Token::QQSTRING:
+    case Token::QSTRING:
+      if (m_strings_as_blobs)
+      {
+        // NOTE: if string is reported as blob, it gets converted to utf8
+        sprc->val()->value(cdk::TYPE_BYTES, Format_info(),
+          cdk::bytes(consume_token()->get_text()));
+      }
+      else
+        sprc->val()->str(consume_token()->get_text());
+      return stored.release();
+
+    case Token::NUMBER:
+      {
+        double val = strtod(consume_token()->get_text());
+        sprc->val()->num(neg ? -val : val);
+        return stored.release();
+      }
+
+    case Token::INTEGER:
+      if (neg)
+      {
+        int64_t val = strtoi(consume_token()->get_text());
+        sprc->val()->num(-val);
+      }
+      else
+      {
+        uint64_t val = strtoui(consume_token()->get_text());
+        sprc->val()->num(val);
+      }
+      return stored.release();
+
+    case Token::HEX:
+      if (neg)
+      {
+        int64_t val = strtoi(consume_token()->get_text(), 16);
+        sprc->val()->num(-val);
+      }
+      else
+      {
+        uint64_t val = strtoui(consume_token()->get_text(), 16);
+        sprc->val()->num(val);
+      }
+      return stored.release();
+
+    default:
+      // will continue with functionCall | columnIdent | documentField parsing
+      break;
+    }
 
   }
+  catch (const Numeric_conversion_error &e)
+  {
+    parse_error(e.msg());
+  }
+
 
 
   /*
@@ -1186,26 +1256,21 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
     columnIndent or documentField, depending on the parsing mode.
   */
 
-  Token::TokenType types[2];
+  Token::Type types[2];
   bool schema_ident = false;
 
   m_col_ref.clear();
 
   /*
     Try to parse schema-qualified identifier, storing the types of the tokens
-    that have been consumed. If parsing fails, we ignore the error because
-    in this case we will try a document path below.
+    that have been consumed - this information is needed in case parsing
+    schema identifier fails.
 
-    Note: it is important that parse_schema_ident() stores correct tokens
+    Note: it is important that parse_schema_ident() stores consumed tokens
     in m_col_ref even if it fails in the end.
   */
 
-  try {
-    parse_schema_ident(&types);
-    schema_ident = true;
-  }
-  catch (const cdk::Error&)
-  {}
+  schema_ident = parse_schema_ident(&types);
 
   /*
     If parse_schema_ident() succeeded, and we have the result in
@@ -1236,7 +1301,7 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
     */
 
     if (!schema_ident)
-      unexpected_token(peek_token(), "when looking for a column identifier");
+      parse_error("Expected atomic expression");
 
     /*
       Otherwise we complete parsing the column identifier and report it to
@@ -1255,13 +1320,13 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
     reffering to tables or columns but are invalid in a document path.
   */
 
-  if (Token::QUOTED_ID == types[0] || Token::QUOTED_ID == types[1])
-    throw_error("invalid document path");
+  if (Token::QWORD == types[0] || Token::QWORD == types[1])
+    parse_error("Expected atomic expression");
 
   /*
     Now we treat the identifiers "A.B" parsed by parse_schema_ident() and
     stored as table/schema name in m_col_ref (if any), as an initail segment
-    of a document filed reference and complete parsing the whole document
+    of a document field reference and complete parsing the whole document
     field.
   */
 
@@ -1292,7 +1357,8 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
 
 
 Expression*
-Expr_parser_base::left_assoc_binary_op(TokSet op, Start lhs, Start rhs,
+Expr_parser_base::left_assoc_binary_op(const Op::Set &ops,
+                                       Start lhs, Start rhs,
                                        Processor *prc)
 {
   /*
@@ -1315,7 +1381,9 @@ Expr_parser_base::left_assoc_binary_op(TokSet op, Start lhs, Start rhs,
 
   smart_ptr<Expression> stored_lhs(parse(lhs, NULL));
 
-  if (!tokens_available() || !is_token_type_within_set(op))
+  const Token *t = consume_token(ops);
+
+  if (!t)
   {
     /*
       There is no RHS, so LHS is the whole expression.
@@ -1330,8 +1398,7 @@ Expr_parser_base::left_assoc_binary_op(TokSet op, Start lhs, Start rhs,
     return NULL;
   }
 
-  // consume the operator token and store its name
-  const std::string op_name(operator_name(get_token().get_text()));
+  Op::Type op = Op::get_binary(*t);
 
   /*
     If storing operator call expression (prc is NULL), use specialized
@@ -1346,7 +1413,7 @@ Expr_parser_base::left_assoc_binary_op(TokSet op, Start lhs, Start rhs,
 
   // pass lhs and rhs as operator arguments
 
-  List_prc *aprc = safe_prc(prc)->scalar()->op(op_name.c_str());
+  List_prc *aprc = safe_prc(prc)->scalar()->op(Op::name(op));
 
   if (aprc)
   {
@@ -1369,35 +1436,34 @@ Expr_parser_base::left_assoc_binary_op(TokSet op, Start lhs, Start rhs,
 
 Expression* Expr_parser_base::parse_mul(Processor *prc)
 {
-  TokSet ops;
-  ops.insert(Token::MUL);
-  ops.insert(Token::DIV);
-  ops.insert(Token::MOD);
+  Op::Set ops;
+  ops.insert(Op::MUL);
+  ops.insert(Op::DIV);
+  ops.insert(Op::MOD);
   return left_assoc_binary_op(ops, ATOMIC, MUL, prc);
 }
 
 
 Expression* Expr_parser_base::parse_add(Processor *prc)
 {
-  TokSet ops;
-  ops.insert(Token::PLUS);
-  ops.insert(Token::MINUS);
+  Op::Set ops;
+  ops.insert(Op::ADD);
+  ops.insert(Op::SUB);
   return left_assoc_binary_op(ops, MUL, ADD, prc);
 }
 
 Expression* Expr_parser_base::parse_shift(Processor *prc)
 {
-  TokSet ops;
-  ops.insert(Token::LSHIFT);
-  ops.insert(Token::RSHIFT);
+  Op::Set ops;
+  ops.insert(Op::LSHIFT);
+  ops.insert(Op::RSHIFT);
   return left_assoc_binary_op(ops, ADD, SHIFT, prc);
 }
 
 Expression* Expr_parser_base::parse_bit(Processor *prc)
 {
-  if (cur_token_type_is(Token::NEG))
+  if (consume_token(Op::BITNEG))
   {
-    get_token();
     smart_ptr<Stored_expr> stored;
 
     if (!prc)
@@ -1405,7 +1471,7 @@ Expression* Expr_parser_base::parse_bit(Processor *prc)
 
     Safe_prc<Processor::Scalar_prc> sprc(prc->scalar());
     List_prc *argsp = NULL;
-    argsp = sprc->op(operator_name("~").c_str());
+    argsp = sprc->op(Op::name(Op::BITNEG));
     if (argsp)
     {
       argsp->list_begin();
@@ -1417,37 +1483,33 @@ Expression* Expr_parser_base::parse_bit(Processor *prc)
     return parse_bit(prc);
   }
 
-  TokSet ops;
-  ops.insert(Token::BITAND);
-  ops.insert(Token::BITOR);
-  ops.insert(Token::BITXOR);
+  Op::Set ops;
+  ops.insert(Op::BITAND);
+  ops.insert(Op::BITOR);
+  ops.insert(Op::BITXOR);
   return left_assoc_binary_op(ops, SHIFT, BIT, prc);
 }
 
 Expression* Expr_parser_base::parse_comp(Processor *prc)
 {
-  TokSet ops;
-  ops.insert(Token::GE);
-  ops.insert(Token::GT);
-  ops.insert(Token::LE);
-  ops.insert(Token::LT);
-  ops.insert(Token::EQ);
-  ops.insert(Token::NE);
+  Op::Set ops;
+  ops.insert(Op::GE);
+  ops.insert(Op::GT);
+  ops.insert(Op::LE);
+  ops.insert(Op::LT);
+  ops.insert(Op::EQ);
+  ops.insert(Op::NE);
   return left_assoc_binary_op(ops, BIT, COMP, prc);
 }
 
 Expression* Expr_parser_base::parse_and(Processor *prc)
 {
-  TokSet ops;
-  ops.insert(Token::AND);
-  return left_assoc_binary_op(ops, ILRI, AND, prc);
+  return left_assoc_binary_op({ Op::AND }, ILRI, AND, prc);
 }
 
 Expression* Expr_parser_base::parse_or(Processor *prc)
 {
-  TokSet ops;
-  ops.insert(Token::OR);
-  return left_assoc_binary_op(ops, AND, OR, prc);
+  return left_assoc_binary_op({ Op::OR }, AND, OR, prc);
 }
 
 
@@ -1461,6 +1523,7 @@ Expression* Expr_parser_base::parse_or(Processor *prc)
         |   compExpr NOT? IN LPAREN argsList? RPAREN
             // TODO: param to ESCAPE should be better defined
         |   compExpr NOT? LIKE compExpr (ESCAPE compExpr)?
+        |   compExpr NOT? RLIKE compExpr (ESCAPE compExpr)?
         |   compExpr NOT? BETWEEN compExpr AND compExpr
         |   compExpr NOT? REGEXP compExpr
         |   compExpr
@@ -1481,21 +1544,35 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
 
   smart_ptr<Expression> first(parse(COMP, NULL));
 
+  // Record negation, if present.
+
+  bool neg = (NULL != consume_token(Op::NOT));
+
   /*
-    Check next token after the first expression. If it is not an expected
-    one, then the ilri phrase consists of the first expression only.
+    Look for the main operator.
   */
 
-  TokSet next;
-  next.insert(Token::NOT);
-  next.insert(Token::IS);
-  next.insert(Token::IN_);
-  next.insert(Token::LIKE);
-  next.insert(Token::BETWEEN);
-  next.insert(Token::REGEXP);
+  Op::Set next;
+  next.insert(Op::IS);
+  next.insert(Op::IN);
+  next.insert(Op::LIKE);
+  next.insert(Op::RLIKE);
+  next.insert(Op::BETWEEN);
+  next.insert(Op::REGEXP);
+  next.insert(Op::SOUNDS_LIKE);
 
-  if (!tokens_available() || !is_token_type_within_set(next))
+  const Token *t = consume_token(next);
+
+  /*
+    If we don't see any of the operators and there was no negation
+    then we report the first expression as complete ilriExpr.
+  */
+
+  if (!t)
   {
+    if (neg)
+      parse_error(L"Expected IN, (R)LIKE, BETWEEN or REGEXP after NOT");
+
     // If prc is NULL return already stored expression.
 
     if (!prc)
@@ -1507,28 +1584,28 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
     return NULL;
   }
 
-  // Get the operator and see if we have negation
+  // Handle IS NOT case.
 
-  bool neg = false;
+  if (neg && Op::IS == *t)
+    parse_error(L"Operator NOT before IS, should be IS NOT");
 
-  if ( cur_token_type_is(Token::NOT) )
-  {
+  if (Op::IS == *t && consume_token(Op::NOT))
     neg = true;
-    consume_token(Token::NOT);
-  }
 
-  const Token &t = get_token();
-  std::string op_name = operator_name(t.get_text());
+  // We have an ilri expression with operator and 2 arguments.
 
-  if (neg && Token::IS == t.get_type())
-     throw Error("Expr parser: Unexpected token NOT before token IS");
+  Op::Type op = Op::get_binary(*t);
 
-  if (Token::IS == t.get_type() && Token::NOT == peek_token().get_type())
+  // Detect unsupported operators before handling parmaeters
+
+  switch (op)
   {
-    neg = true;
-    consume_token(Token::NOT);
-  }
+  case Op::SOUNDS_LIKE:
+    if (cur_token_type_is(Keyword::LIKE))
+      unsupported(L"Operator SOUNDS LIKE");
 
+  default: break;
+  }
 
   /*
     If prc is NULL and we are supposed to store parsed epression, use
@@ -1554,7 +1631,7 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
       will remain pointing at the original processor.
     */
 
-    not_arg_prc = safe_prc(prc)->scalar()->op(operator_name("not").c_str());
+    not_arg_prc = safe_prc(prc)->scalar()->op(Op::name(Op::NOT));
     if (not_arg_prc)
       not_arg_prc->list_begin();
     prc = safe_prc(not_arg_prc)->list_el();
@@ -1562,7 +1639,7 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
 
   // report the main operator
 
-  Safe_prc<List_prc> aprc = safe_prc(prc)->scalar()->op(op_name.c_str());
+  Safe_prc<List_prc> aprc = safe_prc(prc)->scalar()->op(Op::name(op));
   aprc->list_begin();
 
   // 1st argument
@@ -1571,55 +1648,72 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
 
   // other arguments
 
-  switch (t.get_type())
+  switch (op)
   {
-    case Token::IS:
+    case Op::IS:
     {
-      switch(peek_token().get_type())
+      t = consume_token();
+
+      if (t)
       {
-        case Token::TRUE_:  aprc->list_el()->scalar()->val()->yesno(true); break;
-        case Token::FALSE_: aprc->list_el()->scalar()->val()->yesno(true); break;
-        case Token::T_NULL: aprc->list_el()->scalar()->val()->null(); break;
+        switch (Keyword::get(*t))
+        {
+        case Keyword::L_TRUE:  aprc->list_el()->scalar()->val()->yesno(true); break;
+        case Keyword::L_FALSE: aprc->list_el()->scalar()->val()->yesno(true); break;
+        case Keyword::L_NULL: aprc->list_el()->scalar()->val()->null(); break;
         default:
-          throw Error("Expr parser: Unexpected token after IS [NOT]");
+          t = NULL; // this indicates error
+        }
       }
 
-      get_token();
+      if (!t)
+        parse_error("expected TRUE, FALSE or NULL after IS");
+
       break;
     }
 
-    case Token::IN_:
+    case Op::IN:
     {
-      consume_token(Token::LPAREN);
+      consume_token_throw(
+        Token::LPAREN,
+        L"Expected '(' after IN"
+      );
 
       // Note: true flag means that strings will be reported as blobs.
       parse_argslist(aprc, true);
 
-      consume_token(Token::RPAREN);
+      consume_token_throw(
+        Token::RPAREN,
+        L"Expected ')' to close IN(... expression"
+      );
 
       break;
     }
 
-    case Token::LIKE:
+    case Op::LIKE:
+    case Op::RLIKE:
     {
       parse(COMP, aprc->list_el());
 
-      if (cur_token_type_is(Token::ESCAPE))
+      if (cur_token_type_is(Keyword::ESCAPE))
       {
         //TODO: Check ESCAPE
-        THROW("ESCAPE clause for LIKE operator not supported yet");
+        unsupported("ESCAPE clause for (R)LIKE operator");
       }
 
       break;
     }
 
-    case Token::REGEXP:
+    case Op::REGEXP:
       parse(COMP, aprc->list_el());
       break;
 
-    case Token::BETWEEN:
+    case Op::BETWEEN:
       parse(COMP, aprc->list_el());
-      consume_token(Token::AND);
+      consume_token_throw(
+        Keyword::AND,
+        L"Expected AND in BETWEEN ... expression"
+      );
       parse(COMP, aprc->list_el());
       break;
 
@@ -1732,105 +1826,84 @@ void Expr_parser_base::parse_doc(Processor::Doc_prc *prc)
 }
 
 
-void Order_parser::process(Processor& prc) const
+void Order_parser::parse(Processor& prc)
 {
-  if (!const_cast<Order_parser*>(this)->m_tokenizer.tokens_available())
-    cdk::throw_error("Expression_parser: empty string");
+  It it = m_tokenizer.begin();
+  set_tokens(it, m_tokenizer.end());
 
-  It first = m_tokenizer.begin();
-  It last  = m_tokenizer.end();
-
-  /*
-    note: passing m_toks.end() directly as constructor argument results
-    in "incompatible iterators" exception when comparing iterators (at
-    least on win, vs2010). problem with passing temporary object?
-  */
+  if (!tokens_available())
+    parse_error("Expected sorting order specification");
 
   Stored_any store_expr;
 
-  Expr_parser_base parser(first, last, m_mode);
+  Expr_parser_base parser(cur_pos(), end_pos(), m_mode);
   parser.process(store_expr);
 
   cdk::api::Sort_direction::value dir = cdk::api::Sort_direction::ASC;
 
   // get ASC/DESC token if available
-  if (first != last)
+  if (tokens_available())
   {
-    switch(first->get_type())
+    switch(Keyword::get(*peek_token()))
     {
-      case Token::ASC:
-        ++first;
+      case Keyword::ASC:
+        consume_token();
         dir = cdk::api::Sort_direction::ASC;
         break;
-      case Token::DESC:
-        ++first;
+      case Keyword::DESC:
+        consume_token();
         dir = cdk::api::Sort_direction::DESC;
         break;
       default:
-        throw Error(
-          (boost::format("Order parser: Expected token type ASC or DESC at token  %s") % first->get_text()).str());
+        parse_error("Expected sorting direction ASC or DESC");
     }
   }
 
-  if (first != last)
-    cdk::throw_error("Expression_parser: could not parse string as expression"
-    " (not all tokens consumed)");
+  if (tokens_available())
+    parse_error("Unexpected characters after sorting order specification");
 
   store_expr.process_if(prc.sort_key(dir));
 
 }
 
 
-void Projection_parser::process(Projection_processor& prc) const
+void Projection_parser::parse_tbl_mode(Projection_processor& prc)
 {
-  if (!const_cast<Projection_parser*>(this)->m_tokenizer.tokens_available())
-    cdk::throw_error("Expression_parser: empty string");
+  It it = m_tokenizer.begin();
+  set_tokens(it, m_tokenizer.end());
 
-  It first = m_tokenizer.begin();
-  It last  = m_tokenizer.end();
+  if (!tokens_available())
+    parse_error("Expected projection specification");
 
-  /*
-    note: passing m_toks.end() directly as constructor argument results
-    in "incompatible iterators" exception when comparing iterators (at
-    least on win, vs2010). problem with passing temporary object?
-  */
-
-  Expr_parser_base parser(first, last, m_mode);
+  Expr_parser_base parser(cur_pos(), end_pos(), m_mode);
   parser.process_if(prc.expr());
 
-
   // get AS token if available
-  if (first != last)
+  if (tokens_available())
   {
-    if (first->get_type() != Token::AS)
-      cdk::throw_error((boost::format("Projections parser: Unexpected token %s when expecting AS")
-                     % first->get_name()).str());
+    if (!consume_token(Keyword::AS))
+      parse_error("Invalid characters in projection specification,"
+                  " only AS <name> allowed after the projection expression");
 
-    ++first;
+    if (!Token_base::cur_token_type_in({ Token::WORD, Token::QWORD }))
+      parse_error("Expected identifier after AS");
 
-    if (first->get_type() != Token::ID &&
-        first->get_type() != Token::QUOTED_ID)
-      cdk::throw_error((boost::format("Projections parser: Unexpected token %s when expecting ID")
-                     % first->get_name()).str());
-
-    prc.alias(first->get_text());
-
-    ++first;
+    prc.alias(consume_token()->get_text());
   }
 
 
-  if (first != last)
-    cdk::throw_error("Expression_parser: could not parse string as expression"
-    " (not all tokens consumed)");
+  if (tokens_available())
+    parse_error("Unexpected characters after projection specification");
 }
 
-void Projection_parser::process(Document_processor& prc) const
-{
-  if (!const_cast<Projection_parser*>(this)->m_tokenizer.tokens_available())
-    cdk::throw_error("Expression_parser: empty string");
 
-  It first = m_tokenizer.begin();
-  It last  = m_tokenizer.end();
+void Projection_parser::parse_doc_mode(Document_processor& prc)
+{
+  It it = m_tokenizer.begin();
+  set_tokens(it, m_tokenizer.end());
+
+  if (!tokens_available())
+    parse_error("Expected projection specification");
 
   /*
     note: passing m_toks.end() directly as constructor argument results
@@ -1840,35 +1913,21 @@ void Projection_parser::process(Document_processor& prc) const
 
   Stored_any store_expr;
 
-  Expr_parser_base parser(first, last, m_mode);
+  Expr_parser_base parser(cur_pos(), end_pos(), m_mode);
   parser.process(store_expr);
 
 
   // AS is mandatory on Collections
-  if (first == last)
-    cdk::throw_error("Projections parser: Unexpected end of string when"
-                     "expecting token 'AS'");
+  if (!consume_token(Keyword::AS))
+    parse_error(L"Expected AS in projection specification");
 
+  if (!Token_base::cur_token_type_in({Token::WORD,Token::QWORD}))
+    parse_error(L"Expected identifier after AS");
 
-  if (first->get_type() != Token::AS)
-    cdk::throw_error((boost::format("Projections parser: Unexpected token %s when expecting AS")
-                      % first->get_name()).str());
+  const string &id = consume_token()->get_text();
 
-  ++first;
+  if (tokens_available())
+    parse_error(L"Invalid characters after projection specification");
 
-  if (first == last)
-    cdk::throw_error("Projections parser: Expected token <name>");
-
-  if (first->get_type() != Token::ID &&
-      first->get_type() != Token::QUOTED_ID &&
-      !first->is_reserved_word())
-    cdk::throw_error((boost::format("Projections parser: Unexpected token %s when expecting ID")
-                      % first->get_name()).str());
-
-  if (first+1 != last)
-    cdk::throw_error("Expression_parser: could not parse string as expression"
-                     " (not all tokens consumed)");
-
-  store_expr.process_if(prc.key_val(first->get_text()));
-
+  store_expr.process_if(prc.key_val(id));
 }

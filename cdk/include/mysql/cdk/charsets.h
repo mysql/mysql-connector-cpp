@@ -25,7 +25,7 @@
 /*
   Lists of character sets known to CDK string codec (see codec.h).
   This is generally kept in sync with character sets known to the MySQL Server.
-  See: http://dev.mysql.com/doc/refman/5.7/en/charset-charsets.html
+  See: http://dev.mysql.com/doc/refman/en/charset-charsets.html
 
   Note: currently the codec can only convert utf8 strings.
 */

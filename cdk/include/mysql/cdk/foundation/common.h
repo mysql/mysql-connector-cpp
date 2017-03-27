@@ -22,27 +22,8 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-#ifndef SDK_FOUNDATION_COMMON_H
-#define SDK_FOUNDATION_COMMON_H
-
-
-/*
-  Disable deprecated elements of Boost.System.
-*/
-
-#ifndef BOOST_SYSTEM_NO_DEPRECATED
-#define BOOST_SYSTEM_NO_DEPRECATED
-#endif
-
-
-/*
-  Enable header-only Boost implementation.
-*/
-
-#ifndef BOOST_ERROR_CODE_HEADER_ONLY
-#define BOOST_ERROR_CODE_HEADER_ONLY
-#endif
-
+#ifndef CDK_FOUNDATION_COMMON_H
+#define CDK_FOUNDATION_COMMON_H
 
 /*
   Macros used to disable warnings for fragments of code.
@@ -96,7 +77,8 @@
 #define PUSH_SYS_WARNINGS \
   PRAGMA(warning (push,2)) \
   DISABLE_WARNING(4350) \
-  DISABLE_WARNING(4738)
+  DISABLE_WARNING(4738) \
+  DISABLE_WARNING(4548)
 
 #else
 
@@ -105,40 +87,6 @@
 #endif
 
 #define POP_SYS_WARNINGS  DIAGNOSTIC_POP
-
-
-/*
-  Macros to disable compile warnings triggered by Boost headers. One
-  should put PUSH_BOOST_WARNINGS/POP_BOOST_WARNINGS around Boost header
-  includes.
-
-  Note: Clang recognizes GCC directives.
-*/
-
-#if defined _MSC_VER
-
-#define PUSH_BOOST_WARNINGS PRAGMA(warning(push,1)) DISABLE_WARNING(4350)
-
-#else
-
-/*
-  Boost uses std::auto_ptr<> which generates deprecated warnings when
-  compiled with C++11 compiler.
-*/
-
-#define DISABLE_BOOST_WARNINGS \
-  DISABLE_WARNING(-Wunknown-pragmas) \
-  DISABLE_WARNING(-Wpragmas) \
-  DISABLE_WARNING(-Wdeprecated-declarations) \
-  DISABLE_WARNING(-Wunused-variable) \
-  DISABLE_WARNING(-Wunused-local-typedef) \
-  DISABLE_WARNING(-Wunused-local-typedefs)
-
-#define PUSH_BOOST_WARNINGS DIAGNOSTIC_PUSH DISABLE_BOOST_WARNINGS
-
-#endif
-
-#define POP_BOOST_WARNINGS  DIAGNOSTIC_POP
 
 
 // Avoid warnings from Protobuf includes
@@ -194,11 +142,20 @@ PUSH_SYS_WARNINGS
 
 #endif
 
+
+#if defined(_MSC_VER) && _MSC_VER < 1900
+  #define NOEXCEPT
+#else
+  #define NOEXCEPT noexcept
+#endif
+
+
 #include <mysql/cdk/config.h>
 
 #include <cstddef>
 #include <assert.h>
 #include <limits>
+#include <utility>
 
 POP_SYS_WARNINGS
 
