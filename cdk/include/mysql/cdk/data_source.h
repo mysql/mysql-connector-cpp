@@ -27,6 +27,7 @@
 
 #include <mysql/cdk/foundation.h>
 
+
 namespace cdk {
 
 // Data source
@@ -188,8 +189,35 @@ public:
 
 //TCPIP defaults to mysqlx::TCPIP
 namespace ds {
+
   typedef mysqlx::TCPIP TCPIP;
   typedef mysql::TCPIP TCPIP_old;
+
+  class Multi_source
+  {
+  public:
+
+    template <class DS>
+    void add(const DS &ds, const typename DS::Options &opt,
+             unsigned short prio);
+
+  private:
+
+    /*
+      Call visitor(ds,opts) for each data source ds with options
+      opts in the list. Do it in decreasing priority order, choosing
+      random data source from several data sources with the same priority.
+      If visitor(...) call returns true, stop the process.
+    */
+
+    template <class Visitor>
+    void visit(Visitor &visitor);
+
+  public:
+
+    struct Access;
+    friend Access;
+  };
 }
 
 
