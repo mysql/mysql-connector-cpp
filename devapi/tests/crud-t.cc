@@ -2054,3 +2054,65 @@ TEST_F(Crud, copy_semantics)
 
   cout << "Done!" << endl;
 }
+
+TEST_F(Crud, multi_statment_exec)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  XSession sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("c1", true);
+
+  add_data(coll);
+
+  auto find = coll.find("age = :age");
+
+  auto test = [] (DocResult& res, int age)
+  {
+     DbDoc doc = res.fetchOne();
+     EXPECT_EQ(age, static_cast<int>(doc["age"]));
+
+     doc = res.fetchOne();
+
+     EXPECT_TRUE(!doc);
+  };
+
+  find.bind("age", 2);
+
+  auto res_2 = find.execute();
+
+  auto res_3 = find.bind("age", 3).execute();
+
+  test(res_3, 3);
+
+  {
+    auto res = find.bind("age", 2).execute();
+
+    test(res, 2);
+  }
+
+  {
+    auto res = find.bind("age", 3).execute();
+
+    test(res, 3);
+  }
+
+  test(res_2, 2);
+
+  auto remove = coll.remove("age = :age");
+
+  auto remove1 = remove.bind("age",3);
+
+
+  auto remove2 = remove.bind("age",2);
+
+  remove2.execute();
+
+  remove1.execute();
+
+}

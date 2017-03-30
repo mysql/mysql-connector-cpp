@@ -1075,19 +1075,6 @@ public:
     : SessionSettings(h, p, u, nullptr, args...)
   {}
 
-  template <
-    typename    HOST,
-    typename    PORT,
-    typename    USER,
-    typename... T,
-    typename std::enable_if<
-      std::is_constructible<SessionSettings, HOST, PORT, USER, const char*, T...>::value
-    >::type* = nullptr
-  >
-  SessionSettings(HOST h, PORT p, USER u ,void* pwd, T... args)
-    : SessionSettings(h, p, u, (const char*)pwd, args...)
-  {}
-
 
   template <
     typename    PORT,
@@ -1099,19 +1086,6 @@ public:
   >
   SessionSettings(PORT p, USER u ,long , T... args)
     : SessionSettings(p, u, nullptr, args...)
-  {}
-
-
-  template <
-    typename    PORT,
-    typename    USER,
-    typename... T,
-    typename std::enable_if<
-      std::is_constructible<SessionSettings, PORT, USER, const char*, T...>::value
-    >::type* = nullptr
-  >
-  SessionSettings(PORT p, USER u ,void* pwd, T... args)
-    : SessionSettings(p, u, (const char*)pwd, args...)
   {}
 
 
