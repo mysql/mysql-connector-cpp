@@ -332,15 +332,13 @@ typedef enum mysqlx_sort_direction_enum
 /**
   Session options for use with `mysqlx_session_option_get()`
   and `mysqlx_session_option_set()` functions.
-
-  @note Specifying `MYSQLX_OPT_SSL_CA` option implies `MYSQLX_OPT_SSL_ENABLE`.
 */
 
 typedef enum mysqlx_opt_type_enum
 {
-  MYSQLX_OPT_HOST = 1,        /**< host name or IP address */
-  /** DNS name of the host, IPv4 address or IPv6 address */
-  MYSQLX_OPT_PORT = 2,
+  MYSQLX_OPT_HOST = 1,        /**< host name or IP address, DNS name of the host,
+                                   IPv4 address or IPv6 address */
+  MYSQLX_OPT_PORT = 2,        /**< port */
   MYSQLX_OPT_USER = 3,        /**< user name */
   MYSQLX_OPT_PWD = 4,         /**< password */
   MYSQLX_OPT_DB = 5,          /**< default database */
@@ -351,13 +349,31 @@ typedef enum mysqlx_opt_type_enum
 mysqlx_opt_type_t;
 
 
+/**
+  Session SSL mode values for use with `mysqlx_session_option_get()`
+  and `mysqlx_session_option_set()` functions setting or getting
+  MYSQLX_OPT_SSL_MODE option.
+*/
+
 typedef enum mysqlx_ssl_mode_enum
 {
-  SSL_MODE_DISABLED = 0,
-  SSL_MODE_PREFERRED = 1,
-  SSL_MODE_REQUIRED = 2,
-  SSL_MODE_VERIFY_CA = 3,
-  SSL_MODE_VERIFY_IDENTITY = 4
+  SSL_MODE_DISABLED = 0,       /**< Establish an unencrypted connection. */
+  SSL_MODE_PREFERRED = 1,      /**< Establish a secure connection or fall
+                                    back to an unencrypted one if server does
+                                    not support encrypted connections */ 
+  SSL_MODE_REQUIRED = 2,       /**< Establish a secure connection if the server
+                                    supports secure connections. The connection
+                                    attempt fails if a secure connection cannot
+                                    be established.  */
+  SSL_MODE_VERIFY_CA = 3,      /**< Like SSL_MODE_REQUIRED, but additionally
+                                    verify the server TLS certificate against
+                                    the configured Certificate Authority (CA)
+                                    certificates. The connection attempt fails
+                                    if no valid matching CA certificates are
+                                    found. */
+  SSL_MODE_VERIFY_IDENTITY = 4 /**< Like VERIFY_CA, but additionally verify
+                                    that the server certificate matches the host
+                                    to which the connection is attempted.*/
 }
 mysqlx_ssl_mode_t;
 
