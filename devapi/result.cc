@@ -1564,6 +1564,22 @@ bool mysqlx::SqlResult::nextResult()
   CATCH_AND_WRAP
 }
 
+uint64_t mysqlx::SqlResult::getAffectedRowsCount()
+{
+  try {
+    return get_impl().get_affected_rows();
+  }
+  CATCH_AND_WRAP
+}
+
+uint64_t mysqlx::SqlResult::getAutoIncrementValue()
+{
+  try {
+    return get_impl().get_auto_increment();
+  }
+  CATCH_AND_WRAP
+}
+
 
 /*
   DocResult
