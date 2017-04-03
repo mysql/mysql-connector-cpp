@@ -222,7 +222,7 @@ class PUBLIC_API Warning : public internal::Printable
 {
 public:
 
-  enum Level { ERROR, WARNING, INFO };
+  enum Level { LEVEL_ERROR, LEVEL_WARNING, LEVEL_INFO };
 
 private:
 
@@ -265,9 +265,9 @@ void Warning::print(std::ostream &out) const
 {
   switch (getLevel())
   {
-  case ERROR: out << "Error"; break;
-  case WARNING: out << "Warning"; break;
-  case INFO: out << "Info"; break;
+  case LEVEL_ERROR: out << "Error"; break;
+  case LEVEL_WARNING: out << "Warning"; break;
+  case LEVEL_INFO: out << "Info"; break;
   }
 
   if (getCode())
