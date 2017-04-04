@@ -42,9 +42,16 @@ TEST_F(Sess, databaseObj)
 
   cout << "DatabaseObject implementation..." << endl;
 
-  const string schema_name = "schemaObj";
-  const string coll_name = "collObj";
-  const string tbl_name = "tblObj";
+  /*
+    Mixed case in schema name does not work on MacOS due to server-side
+    bug#25769683.
+
+    TODO: Change it back to mixed case when the bug is fixed.
+  */
+
+  const string schema_name = "schemaobj"; // "schemaObj";
+  const string coll_name = "collobj";     // "collObj";
+  const string tbl_name = "tblobj";       // "tblObj";
 
   try {
     get_sess().dropSchema(schema_name);
