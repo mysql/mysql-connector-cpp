@@ -24,6 +24,7 @@
 
 
 #include <mysql/cdk/codec.h>
+#include <sstream>
 #include "../parser/json_parser.h"
 
 PUSH_SYS_WARNINGS
@@ -352,11 +353,80 @@ size_t Codec<TYPE_INTEGER>::to_bytes(uint64_t val, bytes buf)
   return internal_to_bytes(val, buf);
 }
 
+std::string Codec<TYPE_FLOAT>::internal_decimal_to_string(bytes buf)
+{
+  if (buf.size() < 2)
+    THROW("Invalid DECIMAL buffer");
+  byte scale_digits = *buf.begin();
+  byte sign_byte = *(buf.end() - 1);
+  int last_digit = -1;
+  bool is_negative;
+
+  /*
+    Last 4 bits of DECIMAL should always be 1100 (0xC) for positive
+    or 1101 (0xD) for negative value
+  */
+  if ((sign_byte & 0x0C) == 0x0C)
+  {
+    /* A digit must be retrieved from the first 4 bits of the sign byte */
+    last_digit = (int)(sign_byte >> 4);
+    is_negative = (sign_byte & 0x0D) == 0x0D;
+  }
+  else if ((sign_byte & 0xC0) == 0xC0)
+  {
+    /* No digit in the sign byte */
+    is_negative = (sign_byte & 0xD0) == 0xD0;
+  }
+  else
+    THROW("Invalid DECIMAL buffer");
+
+  int total_digits = ((int)buf.size() - 2) * 2 + (last_digit + 1 ? 1 : 0);
+  if (total_digits <= scale_digits)
+    THROW("Invalid DECIMAL buffer");
+
+  std::stringstream sstream;
+
+  if (is_negative)
+    sstream << "-";
+
+  int pos = 0;
+  for (byte *b = buf.begin() + 1; b < buf.end() - 1; ++b)
+  {
+    do
+    {
+      if (total_digits - scale_digits == pos)
+        /* Getting the locale decimal point */
+        sstream << std::use_facet< std::numpunct<char> >(sstream.getloc()).decimal_point();;
+
+      if (pos % 2)
+        sstream << (int)(*b & 0x0F);
+      else
+        sstream << (int)(*b >> 4);
+      ++pos;
+    } while (pos % 2);
+  }
+
+  if (last_digit + 1)
+    sstream << last_digit;
+
+  return sstream.str();
+}
+
 
 size_t Codec<TYPE_FLOAT>::from_bytes(bytes buf, float &val)
 {
   if (m_fmt.type() == cdk::Format<cdk::TYPE_FLOAT>::DECIMAL)
-    THROW("Codec<TYPE_FOAT>: DECIMAL format not supported yet");
+  {
+    std::string s = internal_decimal_to_string(buf);
+    const char *data = s.c_str();
+    char *str_end;
+    float f = strtof(data, &str_end);
+
+    if (*str_end != '\0' || f == std::numeric_limits<float>::infinity())
+      THROW("Codec<TYPE_FLOAT>: conversion overflow");
+    val = f;
+    return buf.size();
+  }
 
   if (m_fmt.type() == cdk::Format<cdk::TYPE_FLOAT>::DOUBLE)
     throw Error(cdkerrc::conversion_error,
@@ -368,7 +438,7 @@ size_t Codec<TYPE_FLOAT>::from_bytes(bytes buf, float &val)
 
   if (sz < buf.size())
     throw Error(cdkerrc::conversion_error,
-                "Codec<TYPE_FLOAT>: convertion overflow");
+                "Codec<TYPE_FLOAT>: conversion overflow");
 
   val = google::protobuf::internal::WireFormatLite::DecodeFloat(val_tmp);
   return sz;
@@ -378,7 +448,18 @@ size_t Codec<TYPE_FLOAT>::from_bytes(bytes buf, float &val)
 size_t Codec<TYPE_FLOAT>::from_bytes(bytes buf, double &val)
 {
   if (m_fmt.type() == cdk::Format<cdk::TYPE_FLOAT>::DECIMAL)
-    THROW("Codec<TYPE_FOAT>: DECIMAL format not supported yet");
+  {
+    std::string s = internal_decimal_to_string(buf);
+    const char *data = s.c_str();
+    char *str_end;
+    double d = strtod(data, &str_end);
+
+    /* No need to check for value overflow from DECIMAL to double */
+    if (*str_end != '\0')
+      THROW("Codec<TYPE_FLOAT>: conversion overflow");
+    val = d;
+    return buf.size();
+  }
 
   size_t sz;
 
@@ -395,7 +476,7 @@ size_t Codec<TYPE_FLOAT>::from_bytes(bytes buf, double &val)
 
   if (sz < buf.size())
     throw Error(cdkerrc::conversion_error,
-                "Codec<TYPE_FLOAT>: convertion overflow");
+                "Codec<TYPE_FLOAT>: conversion overflow");
 
   val = google::protobuf::internal::WireFormatLite::DecodeDouble(val_tmp);
   return sz;
