@@ -46,7 +46,7 @@ namespace mysql
 
 class MySQL_DebugLogger;
 
-class MyVal
+class CPPCONN_PUBLIC_FUNC MyVal
 {
 	union {
 		sql::SQLString * str;

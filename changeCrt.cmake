@@ -41,6 +41,8 @@ MACRO(CHANGE_CRT _switch2use)
           STRING(REGEX REPLACE "/M${switch2change}" "/M${switch2use}" ${flags} "${${flags}}")
         ENDIF(${flags} MATCHES "/M${switch2change}")
 
+        MESSAGE(STATUS, "CHANGE_CRT ${flags} ${${flags}}")
+
       ENDFOREACH(flags)
   ENDIF(WIN32)
 

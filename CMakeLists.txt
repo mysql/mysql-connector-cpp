@@ -89,12 +89,37 @@ IF(CMAKE_ENABLE_C++11)
   ENDIF(COMPILER_SUPPORTS_CXX11)
 ENDIF(CMAKE_ENABLE_C++11)
 
-#-----------------
-# Changing CRT from dynamic to static (Windows Only)
-IF(WIN32)
-  INCLUDE(${CMAKE_SOURCE_DIR}/changeCrt.cmake)
-  CHANGE_CRT("/MT")
-ENDIF(WIN32)
+
+#
+# Configure static runtime library on Windows if requested
+#
+
+option(STATIC_MSVCRT "Use static MSVC runtime library" OFF)
+
+if(WIN32)
+  IF(STATIC_MSVCRT)
+
+    message("Using static runtime library")
+
+    foreach(LANG C CXX)
+      set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /MT")
+      foreach(TYPE RELEASE RELWITHDEBINFO MINSIZEREL)
+        set(CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}} /MT")
+      endforeach()
+      set(CMAKE_${LANG}_FLAGS_DEBUG "${CMAKE_${LANG}_FLAGS_DEBUG} /MTd")
+    endforeach(LANG)
+ ELSE(STATIC_MSVCRT)
+    foreach(LANG C CXX)
+      set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /MD")
+      foreach(TYPE RELEASE RELWITHDEBINFO MINSIZEREL)
+        set(CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}} /MD")
+      endforeach()
+      set(CMAKE_${LANG}_FLAGS_DEBUG "${CMAKE_${LANG}_FLAGS_DEBUG} /MDd")
+    endforeach(LANG)
+ ENDIF(STATIC_MSVCRT)
+
+endif()
+
 
 #-----------------
 # ICU
