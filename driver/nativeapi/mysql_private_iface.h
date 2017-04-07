@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2017, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -48,6 +48,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define snprintf _snprintf
 #endif
 
+#if ( defined(_WIN32) || defined(_WIN64) ) && (_MSC_VER >= 1900)
+#define HAVE_STRUCT_TIMESPEC
+#endif
 
 #if !defined(_WIN32) && !defined(_WIN64)
 extern "C"
