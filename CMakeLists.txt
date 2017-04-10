@@ -94,21 +94,32 @@ ENDIF(CMAKE_ENABLE_C++11)
 # Configure static runtime library on Windows if requested
 #
 
-option(STATIC_MSVCRT "Use static MSVC runtime library" ON)
+option(STATIC_MSVCRT "Use static MSVC runtime library" OFF)
 
-if(WIN32 AND STATIC_MSVCRT)
+if(WIN32)
+  IF(STATIC_MSVCRT)
 
-message("Using static runtime library")
+    message("Using static runtime library")
 
-foreach(LANG C CXX)
-  set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /MT")
-  foreach(TYPE RELEASE RELWITHDEBINFO MINSIZEREL)
-    set(CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}} /MT")
-  endforeach()
-  set(CMAKE_${LANG}_FLAGS_DEBUG "${CMAKE_${LANG}_FLAGS_DEBUG} /MTd")
-endforeach(LANG)
+    foreach(LANG C CXX)
+      set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /MT")
+      foreach(TYPE RELEASE RELWITHDEBINFO MINSIZEREL)
+        set(CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}} /MT")
+      endforeach()
+      set(CMAKE_${LANG}_FLAGS_DEBUG "${CMAKE_${LANG}_FLAGS_DEBUG} /MTd")
+    endforeach(LANG)
+ ELSE(STATIC_MSVCRT)
+    foreach(LANG C CXX)
+      set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /MD")
+      foreach(TYPE RELEASE RELWITHDEBINFO MINSIZEREL)
+        set(CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}} /MD")
+      endforeach()
+      set(CMAKE_${LANG}_FLAGS_DEBUG "${CMAKE_${LANG}_FLAGS_DEBUG} /MDd")
+    endforeach(LANG)
+ ENDIF(STATIC_MSVCRT)
 
 endif()
+
 
 #-----------------
 # ICU
