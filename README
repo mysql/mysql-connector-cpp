@@ -7,7 +7,7 @@ copy of the software is released under the version 2 of
 the GNU General Public License. MySQL Connector/C++ is
 brought to you by Oracle.
 
-Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2017, Oracle and/or its affiliates. All rights reserved.
 
 License information can be found in the COPYING file.
 
@@ -38,3 +38,13 @@ Oracle elects to use only the General Public License version 2
 license versions is made available with the language indicating
 that GPLv2 or any later version may be used, or where a choice
 of which version of the GPL is applied is otherwise unspecified.
+
+For further information about Connector/C++ see the on-line 
+documentation at 
+<https://dev.mysql.com/doc/connector-cpp/en/>. 
+
+For the new features/bugfix history, see release notes at 
+<https://dev.mysql.com/doc/relnotes/connector-cpp/en/news-1-1.html>. 
+
+For installation instructions see the relevant sections in the on-line 
+documentation. 
