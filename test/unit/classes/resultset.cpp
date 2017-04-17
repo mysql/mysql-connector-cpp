@@ -280,7 +280,12 @@ void resultset::getTypes()
       }
       res->first();
 
-      ASSERT_EQUALS(res->getDouble("id"), res->getDouble(1));
+      try
+      {
+        ASSERT_EQUALS(res->getDouble("id"), res->getDouble(1));
+      }catch (sql::NumericConversionException&)
+      {}
+
       try
       {
         res->getDouble(0);
@@ -545,15 +550,20 @@ void resultset::getTypes()
       }
       // ASSERT_EQUALS(pres->getString("id"), res->getString("id"));
 
-      if (!fuzzyEquals(pres->getDouble("id"), res->getDouble("id"), 0.001))
+      try
       {
-        msg.str("");
-        msg << "... \t\tWARNING - getDouble(), PS: '" << pres->getDouble("id") << "'";
-        msg << ", Statement: '" << res->getDouble("id") << "'";
-        msg << ", Difference: '" << (pres->getDouble("id") - res->getDouble("id")) << "'";
-        logMsg(msg.str());
-        got_warning=true;
+        if (!fuzzyEquals(pres->getDouble("id"), res->getDouble("id"), 0.001))
+        {
+          msg.str("");
+          msg << "... \t\tWARNING - getDouble(), PS: '" << pres->getDouble("id") << "'";
+          msg << ", Statement: '" << res->getDouble("id") << "'";
+          msg << ", Difference: '" << (pres->getDouble("id") - res->getDouble("id")) << "'";
+          logMsg(msg.str());
+          got_warning=true;
+        }
       }
+      catch (sql::NumericConversionException&)
+      {}
       //ASSERT_EQUALS(pres->getDouble("id"), res->getDouble("id"));
 
       if (pres->getInt("id") != res->getInt("id"))

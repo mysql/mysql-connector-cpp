@@ -24,6 +24,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 #include "bugs.h"
+#include <locale>
 #include <sstream>
 #include <limits>
 #include "driver/mysql_error.h"
@@ -1052,6 +1053,30 @@ void bugs::bug23212333()
 
   pstmt->setString(1, buffer);
   pstmt->execute();
+}
+
+void bugs::bug17227390()
+{
+   std::locale::global(std::locale("fr_CA.UTF-8"));
+
+   for (int i=0; i < 2; ++i)
+   {
+     if (i == 0)
+     {
+       pstmt.reset( con->prepareStatement("select 1.001 as number;") );
+       res.reset( pstmt->executeQuery() );
+     }
+     else
+     {
+       res.reset(stmt->executeQuery("select 1.001 as number;"));
+     }
+
+     res->next();
+
+     ASSERT_EQUALS(1.001L, res->getDouble(1));
+     ASSERT_EQUALS(1.001L, res->getDouble("number"));
+
+   }
 }
 
 } /* namespace regression */
