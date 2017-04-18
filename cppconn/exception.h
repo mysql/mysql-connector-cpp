@@ -145,11 +145,6 @@ protected:
 	const std::string option;
 };
 
-struct CPPCONN_PUBLIC_FUNC NumericConversionException : public SQLException
-{
-        NumericConversionException(const NumericConversionException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
-        NumericConversionException(const std::string& reason) : SQLException(reason, "", 0) {}
-};
 
 } /* namespace sql */
 

@@ -32,7 +32,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <cppconn/sqlstring.h>
 #include <cppconn/exception.h>
 #include <boost/shared_ptr.hpp>
-#include <sstream>
 
 
 #ifndef UL64
@@ -155,73 +154,7 @@ long double strtold(const char *nptr, char **endptr);
   character is always '.').
 */
 
-template<
-  typename Num_t
->
-inline
-Num_t strtonum(const std::string &str, int radix = 10)
-{
-  typedef std::istreambuf_iterator<char> iter_t;
-  static std::locale c_locale("C");
-  static const std::num_get<char> &cvt
-    = std::use_facet<std::num_get<char> >(c_locale);
-
-  std::istringstream inp(str);
-  Num_t val;
-
-  inp.imbue(c_locale);
-
-  switch (radix) {
-  case 10: inp.setf(std::ios_base::dec, std::ios_base::basefield); break;
-  case 16: inp.setf(std::ios_base::hex, std::ios_base::basefield); break;
-  case  8: inp.setf(std::ios_base::oct, std::ios_base::basefield); break;
-  default:
-    inp.setf(std::ios_base::fmtflags(0), std::ios_base::basefield);
-    break;
-  }
-
-  /*
-    Note: We could use istream::operator>>() to do conversion, but then
-    there are problems with detecting conversion errors on some platforms
-    (OSX). For that reason we instead use a number conversion facet directly.
-    This gives direct access to the error information.
-  */
-
-  iter_t beg(inp), end;
-  std::ios::iostate err = std::ios_base::goodbit;
-
-  iter_t last = cvt.get(beg, end, inp, err, val);
-
-  class NumericConversion
-  {
-    std::string m_inp;
-
-  public:
-    NumericConversion(const std::string &inp)
-      : m_inp(inp)
-    {}
-
-    std::string msg()
-    {
-      std::string msg("Not all characters consumed when converting string '");
-      msg.append(m_inp);
-      msg.append("' to a number");
-      return msg;
-    }
-
-
-  };
-
-  if (std::ios_base::goodbit != err && std::ios_base::eofbit != err)
-  {
-    throw NumericConversionException(NumericConversion(str).msg());
-  }
-
-  if (last != end)
-    throw NumericConversionException(NumericConversion(str).msg());
-
-  return val;
-}
+long double strtonum(const std::string &str, int radix = 10);
 
 typedef struct st_our_charset
 {

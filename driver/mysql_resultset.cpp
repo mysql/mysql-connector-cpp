@@ -368,7 +368,7 @@ MySQL_ResultSet::getDouble(const uint32_t columnIndex) const
     if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT) {
         return static_cast<long double>(getInt64(columnIndex));
     }
-    return sql::mysql::util::strtonum<long double>(row[columnIndex - 1]);
+    return sql::mysql::util::strtonum(row[columnIndex - 1]);
 }
 /* }}} */
 

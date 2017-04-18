@@ -106,7 +106,7 @@ MyVal::getDouble()
 {
 	switch (val_type) {
 		case typeString:
-      return sql::mysql::util::strtonum<long double>(val.str->c_str());
+      return sql::mysql::util::strtonum(val.str->c_str());
 		case typePtr:
 			return .0;
 		case typeDouble:

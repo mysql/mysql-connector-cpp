@@ -449,7 +449,7 @@ MySQL_Prepared_ResultSet::getDouble(const uint32_t columnIndex) const
         case sql::DataType::JSON:
         {
             CPP_INFO("It's a string");
-            long double ret = sql::mysql::util::strtonum<long double>(getString(columnIndex).c_str());
+            long double ret = sql::mysql::util::strtonum(getString(columnIndex).c_str());
             CPP_INFO_FMT("value=%10.10f", ret);
             return ret;
         }
