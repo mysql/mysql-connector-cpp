@@ -1692,6 +1692,9 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
 
   const char *char_data = NULL;
 
+  std::string host;
+  unsigned short port = 0;
+
   va_list args;
   va_start(args, type);
   switch(type)
@@ -1704,11 +1707,10 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
         rc = RESULT_ERROR;
       }
       else
-        opt->host(char_data);
+        host = char_data;
     break;
     case MYSQLX_OPT_PORT:
-      uint_data = va_arg(args, unsigned int);
-      opt->port(uint_data);
+      port = static_cast<unsigned short>(va_arg(args, unsigned int));
     break;
     case MYSQLX_OPT_USER:
       char_data = va_arg(args, char*);
@@ -1748,6 +1750,14 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
       rc = RESULT_ERROR;
   }
   va_end(args);
+
+  if (host.length() != 0)
+  {
+    if (port != 0)
+      opt->host(0, host, port);
+    else
+      opt->host(0, host);
+  }
 
   return rc;
   SAFE_EXCEPTION_END(opt, RESULT_ERROR)

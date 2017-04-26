@@ -413,19 +413,27 @@ public:
   { m_usr = usr; }
 
   // Implementing URI_Processor interface
-  void password(const std::string &pwd)
+  void password(const std::string &pwd) override
   {
     m_pwd = pwd;
     m_has_pwd = true;
   }
 
   // Implementing URI_Processor interface
-  void host(const std::string &host)
-  { m_host = host; }
+  void host(unsigned short priority,
+            const std::string &host,
+            unsigned short port) override
+  {
+      m_host = host;
+      m_port = port;
+  }
 
   // Implementing URI_Processor interface
-  void port(unsigned short port)
-  { m_port = port; }
+  void host(unsigned short priority,
+            const std::string &host) override
+  {
+      m_host = host;
+  }
 
   std::string get_host() { return m_host; }
   unsigned int get_port() { return m_port; }

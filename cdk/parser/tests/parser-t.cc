@@ -891,7 +891,7 @@ TEST(Parser, doc_path)
 
   cout << endl << "== Negative tests ==" << endl << endl;
 
-  wchar_t* negative[] =
+  const wchar_t* negative[] =
   {
     L"date.date[*].**",
     L"date.date[*]**",
@@ -957,6 +957,91 @@ static const string_opt none;
   Helper structure to hold result of URI parsing.
 */
 
+struct Host
+{
+  typedef std::string string;
+
+  Host(unsigned short _priority, const string& _name, unsigned short _port)
+    : priority(_priority), port(_port), name(_name)
+  {}
+
+  Host(const string& _name, unsigned short _port)
+    : priority(0), port(_port), name(_name)
+  {}
+
+  Host(unsigned short _priority,const string& _name)
+    : priority(_priority), port(0), name(_name)
+  {}
+
+  Host(const string& _name)
+    : priority(0), port(0), name(_name)
+  {}
+
+  bool operator == ( const Host other) const
+  {
+    return priority == other.priority &&
+           port     == other.port     &&
+           name     == other.name     &&
+           type     == other.type;
+  }
+
+  unsigned short  priority;
+  unsigned short      port;
+  string     name;
+
+  enum {ADDRESS, SOCKET, PIPE} type = ADDRESS;
+};
+
+struct Pipe : public Host
+{
+  Pipe(unsigned short priority, const std::string &pipe)
+    : Host(priority, pipe)
+  {
+    type = PIPE;
+  }
+
+  Pipe(const std::string &pipe)
+    : Host(pipe)
+  {
+    type = PIPE;
+  }
+};
+
+struct Unix_socket : public Host
+{
+  Unix_socket(unsigned short priority, const std::string &socket)
+    : Host(priority, socket)
+  {
+    type = SOCKET;
+  }
+
+  Unix_socket(const std::string &socket)
+    : Host(socket)
+  {
+    type = SOCKET;
+  }
+};
+
+struct Query
+{
+  Query(const std::string &_key)
+    : key(_key)
+  {}
+
+  Query(const std::string &_key, const std::string &_val)
+  : key(_key), val(_val)
+  {}
+
+  bool operator == ( const Query other) const
+  {
+    return key == other.key &&
+           val == other.val;
+  }
+
+  std::string key;
+  std::string val;
+};
+
 struct URI_parts
 {
   typedef std::string string;
@@ -964,39 +1049,59 @@ struct URI_parts
 
   query_t query;
 
-  URI_parts() : port(0), has_query(false)
+  URI_parts()
   {}
 
-  URI_parts(
-    const string_opt &_user,
-    const string_opt &_pwd,
-    const string &_host,
-    short _port,
-    const string_opt &_path,
-    bool _has_query)
-    : user(_user)
-    , pwd(_pwd)
-    , host(_host)
-    , port(_port)
-    , path(_path)
-    , has_query(_has_query)
-  {}
+  template<typename...Options>
+  URI_parts(Options...opt)
+  {
+    add(opt...);
+  }
+
+
+  template<typename Option, typename...Rest>
+  void add(Option &opt, Rest...r)
+  {
+    set(opt);
+    add(r...);
+  }
+
+  template<typename Options>
+  void add(Options opt)
+  {
+    set(opt);
+  }
+
+  void set(const std::string &_path)
+  {
+    path = _path;
+  }
+
+  void set(Host &host)
+  {
+    hosts.push_back(host);
+  }
+
+  void set(Query &qry)
+  {
+    query[qry.key] = qry.val;
+  }
+
+
+  std::vector<Host> hosts;
 
   string_opt user;
   string_opt pwd;
-  string     host;
-  short      port;
   string_opt path;
-  bool       has_query;
+
 
   bool operator==(const URI_parts &other) const
   {
     return user == other.user
       && pwd == other.pwd
-      && host == other.host
-      && port == other.port
+      && hosts == other.hosts
       && path == other.path
-      && has_query == other.has_query;
+      && query == other.query;
   }
 };
 
@@ -1006,11 +1111,27 @@ std::ostream& operator<<(std::ostream &out, URI_parts &data)
     cout << " user: " << data.user << endl;
   if (data.pwd)
     cout << "  pwd: " << data.pwd << endl;
-  cout << " host: " << data.host << endl;
-  cout << " port: " << data.port << endl;
+  cout << " [" << endl;
+  for ( auto el : data.hosts)
+  {
+    switch (el.type)
+    {
+    case Host::ADDRESS:
+        cout << " host: " << el.name << endl;
+        cout << " port: " << el.port << endl;
+        break;
+      case Host::PIPE:
+        cout << " pipe: " << el.name << endl;
+        break;
+      case Host::SOCKET:
+        cout << " socket: " << el.name << endl;
+        break;
+    }
+  }
+  cout << " ]" << endl;
   if (data.path)
     cout << " path: " << data.path << endl;
-  if (data.has_query)
+  if (data.query.size() != 0)
   {
     cout << "query:" << endl;
     for (URI_parts::query_t::const_iterator it = data.query.begin()
@@ -1029,10 +1150,9 @@ std::ostream& operator<<(std::ostream &out, URI_parts &data)
 #define EXPECT_EQ_URI(A,B) \
   EXPECT_EQ((A).user,(B).user);  \
   EXPECT_EQ((A).pwd,(B).pwd);    \
-  EXPECT_EQ((A).host,(B).host);  \
-  EXPECT_EQ((A).port,(B).port);  \
+  EXPECT_EQ((A).hosts,(B).hosts);  \
   EXPECT_EQ((A).path,(B).path);  \
-  EXPECT_EQ((A).has_query,(B).has_query)
+  EXPECT_EQ((A).query,(B).query); \
 
 
 /*
@@ -1047,46 +1167,55 @@ struct URI_prc : parser::URI_processor
   URI_prc(URI_parts &data) : m_data(&data)
   {}
 
-  void user(const std::string &val)
+  void user(const std::string &val) override
   {
     m_data->user = val;
   }
 
-  void password(const std::string &val)
+  void password(const std::string &val) override
   {
     m_data->pwd = val;
   }
 
-  void host(const std::string &val)
+  void host(unsigned short priority, const std::string &host) override
   {
-    m_data->host = val;
+    m_data->hosts.push_back(Host(priority, host));
   }
 
-  void port(unsigned short val)
+  void host(unsigned short priority,
+            const std::string &host,
+            unsigned short port) override
   {
-    m_data->port = val;
+    m_data->hosts.push_back(Host(priority, host, port));
   }
 
-  void path(const std::string &val)
+  void socket(unsigned short priority, const std::string &socket_path) override
+  {
+    m_data->hosts.push_back(Unix_socket(priority, socket_path));
+  }
+
+  void pipe(unsigned short priority, const std::string &pipe) override
+  {
+    m_data->hosts.push_back(Pipe(priority, pipe));
+  }
+
+  void path(const std::string &val) override
   {
     m_data->path = val;
   }
 
-  void key_val(const std::string &key)
+  void key_val(const std::string &key) override
   {
-    m_data->has_query = true;
     m_data->query[key] = string_opt();
   }
 
-  void key_val(const std::string &key, const std::string &val)
+  void key_val(const std::string &key, const std::string &val) override
   {
-    m_data->has_query = true;
     m_data->query[key] = val;
   }
 
-  void key_val(const std::string &key, const std::list<std::string> &val)
+  void key_val(const std::string &key, const std::list<std::string> &val) override
   {
-    m_data->has_query = true;
     std::string list("['");
     bool start = true;
 
@@ -1120,113 +1249,172 @@ TEST(Parser, uri)
     std::string  uri;
     URI_parts    data;
   }
-  test_uri[] = {
+  test_uri[] =
+  {
     {
       "host",
-      URI_parts(none, none, "host", 0, none, false)
+      URI_parts(Host("host"))
     },
     {
       "[::1]",
-      URI_parts(none, none, "::1", 0, none, false)
+      URI_parts(Host("::1"))
     },
     {
       "host:123",
-      URI_parts(none, none, "host", 123, none, false)
+      URI_parts(Host("host", 123))
     },
     {
       "[::1]:123",
-      URI_parts(none, none, "::1", 123, none, false)
+      URI_parts(Host("::1", 123))
     },
     {
       "host:0",
-      URI_parts(none,none, "host", 0, none , false)
+      URI_parts(Host("host", 0))
     },
     {
       "host/path",
-      URI_parts(none , none, "host", 0, "path", false)
+      URI_parts(Host("host", 0), "path")
     },
     {
       "[::1]/path",
-      URI_parts(none , none, "::1", 0, "path", false)
+      URI_parts(Host("::1", 0), "path")
     },
     {
       "host/",
-      URI_parts(none , none, "host", 0, "", false)
+      URI_parts(Host("host", 0), "")
     },
     {
-      "user@host/path",
-      URI_parts("user" , none, "host", 0, "path", false)
+      "host:123/",
+      URI_parts(Host("host", 123), "")
     },
     {
-      "user@[::1]/path",
-      URI_parts("user" , none, "::1", 0, "path", false)
+      "host:123/foo?key=val",
+      URI_parts(Host("host", 123), "foo", Query("key", "val"))
     },
     {
-      "user%40host%2Fpath",
-      URI_parts(none , none, "user@host/path", 0, none, false)
+      "[::1]:123/foo?key=val",
+      URI_parts(Host("::1", 123), "foo", Query("key", "val"))
     },
     {
-      "user:@host/path",
-      URI_parts("user" , "", "host", 0, "path", false)
+      "host:123?key=val",
+      URI_parts(Host("host", 123), Query("key", "val"))
     },
     {
-      "user:pwd@host",
-      URI_parts("user" , "pwd", "host", 0, none, false)
+      "host:123/?key=val",
+      URI_parts(Host("host", 123), "", Query("key", "val"))
+    },
+    // host list
+    {
+      "[ 127.0.0.1]",
+      URI_parts(Host("127.0.0.1"))
     },
     {
-      "user:pwd@[::1]",
-      URI_parts("user" , "pwd", "::1", 0, none, false)
+      "[[::1]]",
+      URI_parts(Host("::1"))
     },
     {
-      "user:pwd@host:123",
-      URI_parts("user" , "pwd", "host", 123, none, false)
+      "[host1]",
+      URI_parts(Host("host1"))
     },
     {
-      "user:pwd@[::1]:123",
-      URI_parts("user" , "pwd", "::1", 123, none, false)
+      "[ 127.0.0.1, host, [::1] ]",
+      URI_parts(Host("127.0.0.1"), Host("host"), Host("::1"))
     },
     {
-      "user:pwd@host:123/",
-      URI_parts("user" , "pwd", "host", 123, "", false)
+      "[ 127.0.0.1, 127.0.0.2 ]/?key1=val1&key2=val2",
+      URI_parts(Host("127.0.0.1"), Host("127.0.0.2"),
+                Query("key1", "val1"), Query("key2", "val2"))
     },
     {
-      "user:pwd@host:123/foo?key=val",
-      URI_parts("user" , "pwd", "host", 123, "foo", true)
+      "[ host1, host2]",
+      URI_parts(Host("host1"), Host("host2"))
     },
     {
-      "user:pwd@[::1]:123/foo?key=val",
-      URI_parts("user" , "pwd", "::1", 123, "foo", true)
+      "[ server.example.com, 192.0.2.11:33060, [2001:db8:85a3:8d3:1319:8a2e:370:7348]:1 ]/database",
+      URI_parts(Host("server.example.com"), Host("192.0.2.11",33060),
+                Host("2001:db8:85a3:8d3:1319:8a2e:370:7348",1 ), "database")
     },
     {
-      "user:pwd@host:123?key=val",
-      URI_parts("user" , "pwd", "host", 123, none, true)
+      "[ (Address=127.0.0.1, Priority=2), (Address=example.com, Priority=100) ]/database",
+      URI_parts(Host(2, "127.0.0.1"), Host(100, "example.com"), "database")
     },
     {
-      "user:pwd@host:123/?key=val",
-      URI_parts("user" , "pwd", "host", 123, none, true)
+      "\\\\.\\named_pipe.socket",
+      URI_parts(Pipe("\\\\.\\named_pipe.socket"))
     },
+    {
+      "\\\\.\\named%20pipe.socket/database",
+      URI_parts(Pipe("\\\\.\\named pipe.socket"), "database")
+    },
+    {
+      "(\\\\.\\named:/?#2[1]@pipe.socket)/database",
+      URI_parts(Pipe("\\\\.\\named:/?#2[1]@pipe.socket"), "database")
+    },
+    {
+      "(/mysql:/?#2[1]@socket)/database",
+      URI_parts(Unix_socket("/mysql:/?#2[1]@socket"), "database")
+    },
+    {
+      ".mysql.sock",
+      URI_parts(Unix_socket(".mysql.sock"))
+    },
+    {
+      ".mysql.sock/database?qry=val&qry2=2017",
+      URI_parts(Unix_socket(".mysql.sock"), "database",
+                Query("qry", "val"),Query("qry2", "2017"))
+    }
   };
 
   //unsigned pos = 3;
   for (unsigned pos = 0; pos < sizeof(test_uri) / sizeof(URI_test); ++pos)
   {
-    std::string uri = test_uri[pos].uri;
-    cout <<endl << "== parsing conn string#" <<pos << ": " << uri << endl;
+    std::string original_uri = test_uri[pos].uri;
 
-    for (unsigned i = 0; i < 2; ++i)
+
+    for (int i = 0 ; i < 4; ++i)
     {
-      if (i > 0)
-        uri = string("mysqlx://") + uri;
+      std::string uri;
+      switch (i)
+      {
+        case 0:
+          uri = original_uri;
+          test_uri[pos].data.user = none;
+          test_uri[pos].data.pwd = none;
+          break;
+        case 1:
+          uri = string("user@") + original_uri;
+          test_uri[pos].data.user = "user";
+          test_uri[pos].data.pwd = none;
+          break;
+        case 2:
+          uri = string("user:@") + original_uri;
+          test_uri[pos].data.user = "user";
+          test_uri[pos].data.pwd = "";
+          break;
+        case 3:
+          uri = string("user:pwd@") + original_uri;
+          test_uri[pos].data.user = "user";
+          test_uri[pos].data.pwd = "pwd";
+          break;
+      }
 
-      URI_parser pp(uri, i>0);
+      for (unsigned j = 0; j < 2; ++j)
+      {
+        if (j > 0)
+          uri = string("mysqlx://") + uri;
 
-      URI_parts data;
-      URI_prc  up(data);
+        cout <<endl << "== parsing conn string#" <<pos << ": " << uri << endl;
 
-      pp.process(up);
-      cout << data;
-      EXPECT_EQ_URI(data, test_uri[pos].data);
-      cout << "--" << endl;
+        URI_parser pp(uri, j>0);
+
+        URI_parts data;
+        URI_prc  up(data);
+
+        pp.process(up);
+        cout << data;
+        EXPECT_EQ_URI(data, test_uri[pos].data);
+        cout << "--" << endl;
+      }
     }
   }
 
@@ -1351,5 +1539,10 @@ TEST(Parser, uri)
       }
     }
   }
+
+}
+
+TEST(Parser, uri_failover)
+{
 
 }

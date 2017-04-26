@@ -30,6 +30,7 @@
 
 PUSH_SYS_WARNINGS
 #include <list>
+#include <stack>
 POP_SYS_WARNINGS
 
 
@@ -55,8 +56,20 @@ public:
 
   virtual void user(const std::string&) {}
   virtual void password(const std::string&) {}
-  virtual void host(const std::string&) {}
-  virtual void port(unsigned short) {}
+  virtual void host(unsigned short /*priority*/,
+                    const std::string &/*host*/)
+  {}
+  virtual void host(unsigned short /*priority*/,
+                    const std::string &/*host*/,
+                    unsigned short /*port*/)
+  {}
+  // Report Unix socket path.
+  virtual void socket(unsigned short /*priority*/,
+                      const std::string &/*socket_path*/)
+  {}
+  // Report Win pipe path, including "\\.\" prefix.
+  virtual void pipe(unsigned short /*priority*/, const std::string &/*pipe*/)
+  {}
   virtual void path(const std::string&) {}
 
   /*
@@ -121,11 +134,11 @@ private:
   */
   struct Token
   {
-    Token() : m_char(0), m_pct(false)
+    Token() : m_char(0)
     {}
 
-    Token(char c, bool pct =false)
-      : m_char(c), m_pct(pct)
+    Token(char c)
+      : m_char(c)
     {}
 
     short get_type() const;
@@ -138,7 +151,6 @@ private:
   private:
 
     char  m_char;
-    bool  m_pct;
 
     friend class Error;
   };
@@ -166,13 +178,12 @@ private:
                  if there are no more tokens then m_pos_next = m_pos,
                  otherwise m_pos_next > m_pos.
 
-    m_part - indicates which part of the URI is parsed now.
   */
 
-  Token       m_tok;
-  size_t      m_pos;
-  size_t      m_pos_next;
-  part_t      m_part;
+  std::stack<Token>  m_tok;
+  std::stack<size_t> m_pos;
+  std::stack<size_t> m_pos_next;
+
 
 
 public:
@@ -186,7 +197,11 @@ public:
 
   URI_parser(const std::string &uri, bool force_uri=false)
     : m_uri(uri), m_force_uri(force_uri)
-  {}
+  {
+    m_tok.push(Token('\0'));
+    m_pos.push(0);
+    m_pos_next.push(0);
+  }
 
   /*
     Method 'process' parses the string passed to constructor and reports
@@ -203,33 +218,81 @@ public:
     process(*prc);
   }
 
-private:
+
+
+
+
+  private:
+
+  enum class Address_type { NONE, IP, SOCKET, PIPE};
 
   struct TokSet;
+
+  void process_userinfo(Processor &prc) const;
+  Address_type process_adress(std::string &address, std::string &port);
+  unsigned short convert_val(const std::string &port) const;
+  bool process_ip_address(std::string &host, std::string &port);
+  bool process_socket_prefix(std::string &socket);
+  bool process_pct_socket(std::string &socket);
+  bool process_unencoded_socket(std::string &socket);
+  bool process_socket(std::string &socket);
+  bool process_pipe_prefix(std::string &pipe);
+  bool process_pct_pipe(std::string &pipe);
+  bool process_unencoded_pipe(std::string &pipe);
+  bool process_pipe(std::string &pipe);
+  bool process_unencoded_file(std::string &file);
+  bool process_file(std::string &file);
+
+  bool process_value(TokSet, std::string &value);
+  bool process_tokens(TokSet, std::string &value);
+  bool process_pct_encoded_value(std::string &encoded);
+  TokSet unreserved() const;
+  TokSet sub_delims() const;
+  TokSet sub_delims_qry() const;
+  TokSet gen_delims() const;
+  bool report_address(Processor &prc,
+                      Address_type type,
+                      unsigned short priority,
+                      const std::string &host,
+                      const std::string &port) const;
+  bool process_adress_list(Processor &prc) const;
+  bool process_adress_priority(Processor &prc) const;
+  void process_path(Processor &prc) const;
+
+
 
   bool check_scheme(bool);
   void process_query(Processor &prc) const;
   void process_list(const std::string&, Processor &prc) const;
 
-  bool get_token(bool in_part=true);
+  bool get_token();
   Token consume_token();
   bool consume_token(short tt);
+  template <typename C>
+  bool consume_word_base(const std::string &word, C compare);
+  bool consume_word(const std::string &word);
+  bool consume_word_ci(const std::string& word);
 
   void consume_until(std::string&, const TokSet&);
+  void consume_while(std::string&, const TokSet&);
   void consume_all(std::string&);
+  void trim_spaces();
   bool has_more_tokens() const;
   bool at_end() const;
 
   bool next_token_is(short) const;
   bool next_token_in(const TokSet&) const;
 
-  void next_part();
-  part_t check_next_part() const;
+  void push();
+  void pop();
 
   void parse_error(const cdk::string&) const;
   void unexpected(const std::string&, const cdk::string &msg = cdk::string()) const;
   void unexpected(char, const cdk::string &msg = cdk::string()) const;
-};
+
+  struct Guard;
+
+  };
 
 
 /*
@@ -242,7 +305,7 @@ class URI_parser::Error
 protected:
 
   Error(const URI_parser *p, const cdk::string &descr = cdk::string())
-  : Error_base<std::string>(p->m_uri, p->m_pos, descr)
+  : Error_base<std::string>(p->m_uri, p->m_pos.top(), descr)
   {
   }
 

@@ -193,14 +193,20 @@ struct URI_parser
     m_has_pwd = true;
   }
 
-  void host(const std::string &host) override
+  void host(unsigned short priority,
+            const std::string &host,
+            unsigned short port) override
   {
+    //TODO: Change to list of hosts/ports
     m_host = host;
+    m_port = port;
   }
 
-  void port(unsigned short port) override
+  void host(unsigned short priority,
+            const std::string &host) override
   {
-    m_port = port;
+    //TODO: Change to list of hosts
+    m_host = host;
   }
 
   virtual void path(const std::string &db) override
