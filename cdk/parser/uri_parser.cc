@@ -494,12 +494,13 @@ URI_parser::TokSet URI_parser::sub_delims() const
 
 /*
   Just like sub-delims, but without COMMA and EQUAL, wich are used on queries
+  and added SLASH
 */
 
 URI_parser::TokSet URI_parser::sub_delims_qry() const
 {
-  return TokSet( T_EXCLAMATION, T_DOLLAR, T_QUOTE, T_POPEN,
-                                T_PCLOSE, T_ASTERISK, T_PLUS, T_SEMICOLON);
+  return TokSet( T_EXCLAMATION, T_DOLLAR, T_QUOTE, T_SLASH, T_POPEN, T_PCLOSE,
+                 T_ASTERISK, T_PLUS, T_SEMICOLON);
 }
 
 /*
