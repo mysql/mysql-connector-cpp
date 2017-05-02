@@ -61,6 +61,7 @@ struct Session_builder
   */
 
   bool operator() (const ds::TCPIP &ds, const ds::TCPIP::Options &options);
+  bool operator() (const ds::TCPIP_old &ds, const ds::TCPIP_old::Options &options);
 };
 
 
@@ -158,6 +159,15 @@ Session_builder::operator() (
   return true;
 }
 
+bool
+Session_builder::operator() (
+  const ds::TCPIP_old &ds,
+  const ds::TCPIP_old::Options &options
+)
+{
+  throw Error(cdkerrc::generic_error, "Not supported");
+  return false;
+}
 
 Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
   : m_session(NULL)
@@ -181,6 +191,9 @@ struct ds::Multi_source::Access
 };
 
 Session::Session(ds::Multi_source &ds)
+  : m_session(NULL)
+  , m_connection(NULL)
+  , m_trans(false)
 {
   Session_builder sb;
 

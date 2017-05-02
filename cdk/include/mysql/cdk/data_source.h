@@ -26,6 +26,7 @@
 #define CDK_DATA_SOURCE_H
 
 #include <mysql/cdk/foundation.h>
+#include <functional>
 
 
 namespace cdk {
@@ -51,7 +52,7 @@ public:
   Options(const Options &other)
     : m_usr(other.m_usr)
     , m_has_pwd(other.m_has_pwd), m_pwd(other.m_pwd)
-    , m_has_db(false)
+    , m_has_db(other.m_has_db), m_db(other.m_db)
   {
   }
 
@@ -193,15 +194,84 @@ namespace ds {
   typedef mysqlx::TCPIP TCPIP;
   typedef mysql::TCPIP TCPIP_old;
 
+  template <typename DS_t, typename DS_opt>
+  struct DS_pair : public std::pair<DS_t, DS_opt>
+  {
+    DS_pair(DS_t &ds, DS_opt &opt) : std::pair<DS_t, DS_opt>(ds, opt)
+    {}
+  };
+
   class Multi_source
   {
-  public:
-
-    template <class DS>
-    void add(const DS &ds, const typename DS::Options &opt,
-             unsigned short prio);
 
   private:
+
+    typedef cdk::foundation::variant <DS_pair<cdk::ds::TCPIP, cdk::ds::TCPIP::Options>,
+                                      DS_pair<cdk::ds::TCPIP_old, cdk::ds::TCPIP_old::Options>> DS_variant;
+
+    bool m_is_prioritized;
+
+    typedef std::multimap<unsigned short, DS_variant, std::greater<unsigned short>> DS_list;
+    DS_list m_ds_list;
+
+  public:
+
+    const unsigned short priority_range = 100;
+
+    Multi_source() : m_is_prioritized(false)
+    {
+      std::srand((unsigned int)time(NULL));
+    }
+
+    template <class DS_t, class DS_opt>
+    void add(const DS_t &ds, const DS_opt &opt,
+             unsigned short prio)
+    {
+      if (m_ds_list.size() == 0)
+      {
+        m_is_prioritized = (prio > 0);
+      }
+      else
+      {
+        if (m_is_prioritized && prio == 0)
+          throw Error(cdkerrc::generic_error,
+          "Adding un-prioritized items to prioritized list is not allowed");
+
+        if (!m_is_prioritized && prio > 0)
+          throw Error(cdkerrc::generic_error,
+          "Adding prioritized items to un-prioritized list is not allowed");
+      }
+
+      /*
+        The internal placement of priorities will be as this:
+        0   - no priority if the user gave priority larger than priority_range
+        n+1 - shifting to the range of 1..priority_range+1
+      */
+      DS_pair<DS_t, DS_opt> pair(const_cast<DS_t&>(ds),
+                               const_cast<DS_opt&>(opt));
+      m_ds_list.emplace(prio > priority_range ? priority_range : prio, pair);
+    }
+
+    private:
+
+    template <typename Visitor>
+    struct Variant_visitor
+    {
+      Visitor *vis;
+      bool stop_processing;
+
+      Variant_visitor() : stop_processing(false)
+      { }
+
+      template <class DS_t, class DS_opt>
+      void operator () (const DS_pair<DS_t, DS_opt> &ds_pair)
+      {
+        stop_processing = (bool)(*vis)(ds_pair.first, ds_pair.second);
+      }
+    };
+
+
+    public:
 
     /*
       Call visitor(ds,opts) for each data source ds with options
@@ -209,11 +279,80 @@ namespace ds {
       random data source from several data sources with the same priority.
       If visitor(...) call returns true, stop the process.
     */
-
     template <class Visitor>
-    void visit(Visitor &visitor);
+    void visit(Visitor &visitor)
+    {
+      bool stop_processing = false;
 
-  public:
+      for (auto it = m_ds_list.begin(); it != m_ds_list.end(); ++it)
+      {
+        DS_variant *item = NULL;
+
+        if (m_is_prioritized)
+        {
+          // Get the range of items with the same priority
+          auto same_prio = m_ds_list.equal_range(it->first);
+          size_t number = (size_t)std::distance(same_prio.first, same_prio.second);
+
+          if (number > 1)
+          {
+            // Randomly pick from the range
+            size_t adv = std::rand() % number;
+            std::advance(same_prio.first, adv);
+            item = &same_prio.first->second;
+
+            // Advance the main iterator to the next priority
+            it = same_prio.second;
+          }
+          else
+          {
+            item = &it->second;
+          }
+        } // if (m_is_prioritized)
+        else
+        {
+          // Just get the next item from the list if no priority is given
+          item = &it->second;
+        }
+
+        try
+        {
+          // Give values to the visitor
+          Variant_visitor<Visitor> variant_visitor;
+          variant_visitor.vis = &visitor;
+          /*
+            Cannot use lambda because auto type for lambdas is only
+            supported in C++14
+          */
+          item->visit(variant_visitor);
+          stop_processing = variant_visitor.stop_processing;
+
+          /* Exit if visit reported true or if we advanced to the end of the list */
+          if (stop_processing || it == m_ds_list.end())
+            break;
+        }
+        catch (Error &err)
+        {
+          error_code code = err.code();
+          if (code == cdkerrc::auth_failure ||
+              code == cdkerrc::protobuf_error ||
+              code == cdkerrc::tls_error )
+          {
+            rethrow_error();
+          }
+        }
+      } // for
+
+      if (!stop_processing)
+        throw Error(cdkerrc::generic_error,
+        "Session could not be established using any of given data sources");
+    }
+
+    void clear()
+    {
+      m_ds_list.clear();
+      m_is_prioritized = false;
+    }
 
     struct Access;
     friend Access;
