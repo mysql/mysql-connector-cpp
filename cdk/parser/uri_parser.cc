@@ -551,16 +551,14 @@ unsigned short URI_parser::convert_val(const std::string &port) const
 */
 bool URI_parser::process_ip_address(std::string &host, std::string &port)
 {
-  bool error = false;
-
-  push();
+  Guard guard(this);
 
   if (consume_token(T_SQOPEN))
   {
     // IPv6
     consume_while(host, TokSet(T_DIGIT, T_CHAR, T_COLON));
     if (!consume_token(T_SQCLOSE))
-      error = true;
+      return false;
   }
   else
   {
@@ -572,17 +570,12 @@ bool URI_parser::process_ip_address(std::string &host, std::string &port)
     consume_while(port, T_DIGIT);
 
     if (port.empty())
-      error = true;
+      return false;
   }
 
-  if (error)
-  {
-    pop();
-    host.clear();
-    port.clear();
-  }
+  guard.release();
 
-  return !error;
+  return true;
 }
 
 
