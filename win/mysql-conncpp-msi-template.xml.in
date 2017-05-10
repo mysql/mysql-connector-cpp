@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-   Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
+   Copyright (c) 2009, 2017, Oracle and/or its affiliates. All rights reserved.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -54,8 +54,6 @@ already installed." />
                   <File Id="file0031" Name="README.TXT" LongName="README.txt" Source="..\README" />
                   <File Id="file0032" Name="@LIC_SHORT_NAME@" LongName="@LIC_NAME@" Source="@LICENSE_FILE@" />
                   <File Id="file0033" Name="LIC_3RDP.TXT" LongName="Licenses_for_Third-Party_Components.txt" Source="..\Licenses_for_Third-Party_Components.txt" />
-                  <File Id="file0034" Name="INSTALL.TXT" LongName="INSTALL.txt" Source="..\INSTALL" />
-                  <File Id="file0035" Name="ANNOUNCE.TXT" LongName="ANNOUNCEMENT.txt" Source="..\ANNOUNCEMENT" />
                 </Component>
 
               <!-- *****************************************************************************************
