@@ -210,15 +210,16 @@ namespace ds {
                                       DS_pair<cdk::ds::TCPIP_old, cdk::ds::TCPIP_old::Options>> DS_variant;
 
     bool m_is_prioritized;
+    unsigned short m_counter;
 
     typedef std::multimap<unsigned short, DS_variant, std::greater<unsigned short>> DS_list;
     DS_list m_ds_list;
 
   public:
 
-    const unsigned short priority_range = 100;
+    const unsigned short priority_range = 101;
 
-    Multi_source() : m_is_prioritized(false)
+    Multi_source() : m_is_prioritized(false), m_counter(65535)
     {
       std::srand((unsigned int)time(NULL));
     }
@@ -244,12 +245,23 @@ namespace ds {
 
       /*
         The internal placement of priorities will be as this:
-        0   - no priority if the user gave priority larger than priority_range
-        n+1 - shifting to the range of 1..priority_range+1
+        if list is a no-priority one the map has to retain the order of
+        elements at the time of the placement. Therefore, it will count-down
+        from max(unsigned short)
       */
       DS_pair<DS_t, DS_opt> pair(const_cast<DS_t&>(ds),
                                const_cast<DS_opt&>(opt));
-      m_ds_list.emplace(prio > priority_range ? priority_range : prio, pair);
+      if (m_is_prioritized)
+        m_ds_list.emplace(prio > priority_range ? priority_range : prio, pair);
+      else
+      {
+        /*
+          When list is not prioritized the map should keep the order of elements.
+          This is achieved by decrementing the counter every time a new element
+          goes into the list.
+        */
+        m_ds_list.emplace(m_counter--, pair);
+      }
     }
 
     private:
@@ -352,6 +364,11 @@ namespace ds {
     {
       m_ds_list.clear();
       m_is_prioritized = false;
+    }
+
+    size_t size()
+    {
+      return m_ds_list.size();
     }
 
     struct Access;
