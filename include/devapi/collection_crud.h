@@ -113,7 +113,7 @@ class Session;
 
 namespace mysqlx {
 
-class XSession;
+class Session;
 class Collection;
 
 

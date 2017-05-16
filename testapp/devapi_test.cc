@@ -47,7 +47,7 @@ try {
   cout << "Creating session on localhost, port " << port
        << " ..." << endl;
 
-  XSession sess("localhost", port, user, pwd);
+  Session sess("localhost", port, user, pwd);
 
   cout <<"Session accepted, creating collection..." <<endl;
 

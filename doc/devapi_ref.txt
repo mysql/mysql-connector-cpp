@@ -9,14 +9,6 @@ via the X Plugin. One can also execute plain SQL queries using this API.
 
 To get started, check out some of the main X DevAPI classes:
 
-- To access data first create an @link mysqlx::XSession `XSession`@endlink or
-  a @link mysqlx::NodeSession `NodeSession`@endlink object. A `NodeSession`
-  object gives access to a single MySQL node and allows executing arbitrary
-  SQL queries on that node, while an `XSession` object can work with data
-  distributed over several MySQL nodes (see [X DevAPI User Guide]
-  (http://dev.mysql.com/doc/x-devapi-userguide/en/xsession-vs-node-session.html)
-  for introduction to these concepts).
-
 - To manipulate data stored in a document collection or a table, create
   a @link mysqlx::Collection `Collection`@endlink or a @link mysqlx::Table
   `Table`@endlink object using methods `getCollection()` or `getTable()` of
@@ -56,16 +48,16 @@ is declared within the `mysqlx` namespace:
 @skip #include <mysql_devapi.h>
 @until using namespace
 
-To create an @link mysqlx::XSession `XSession` @endlink object, specify DNS name
+To create an @link mysqlx::Session `Session` @endlink object, specify DNS name
 of a MySQL Server, the port on which the plugin listens (default port is 33060)
 and user credentials:
 
 @skipline main
-@until XSession
+@until Session
 
 Another way of specifying session parameters is by means of a `mysqlx` URL like
 `"mysqlx://mike:s3cr3t!@localhost:13009"`. Once created, the session is ready
-to be used. If the session can not be established, the `XSession` constructor
+to be used. If the session can not be established, the `Session` constructor
 throws an error.
 
 To manipulate documents in a collection, create a @link mysqlx::Collection

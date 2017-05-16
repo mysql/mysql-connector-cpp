@@ -129,7 +129,7 @@ TEST_F(Sess, url)
   {
     cout << "Creating session: " << url << endl;
 
-    NodeSession sess(url);
+    mysqlx::Session sess(url);
     SqlResult res = sess.sql("SELECT @@version").execute();
     cout << "Talking to MySQL Server: " << res.fetchOne()[0] << endl;
   }
@@ -138,7 +138,7 @@ TEST_F(Sess, url)
     url = std::string("mysqlx://") + url;
     cout << "Creating session: " << url << endl;
 
-    NodeSession sess(url);
+    mysqlx::Session sess(url);
     SqlResult res = sess.sql("SELECT @@version").execute();
     cout << "Talking to MySQL Server: " << res.fetchOne()[0] << endl;
   }
@@ -152,7 +152,7 @@ TEST_F(Sess, url)
     cout << "Creating session: " << wurl << endl;
 
     try {
-      NodeSession sess(wurl);
+      mysqlx::Session sess(wurl);
       SqlResult res = sess.sql("SELECT @@version").execute();
       cout << "Talking to MySQL Server: " << res.fetchOne()[0] << endl;
     }
@@ -173,7 +173,7 @@ TEST_F(Sess, default_schema)
   EXPECT_THROW(get_sess().getDefaultSchema(),Error);
 
   {
-    mysqlx::NodeSession s(m_port, m_user, m_password, "test");
+    mysqlx::Session s(m_port, m_user, m_password, "test");
 
     EXPECT_EQ(string("test"), s.getDefaultSchema().getName());
     EXPECT_EQ(string("test"), s.getDefaultSchemaName());
@@ -189,7 +189,7 @@ TEST_F(Sess, default_schema)
       url = url + ":" + std::to_string(m_port);
     url = url + "/test";
 
-    mysqlx::NodeSession s(url);
+    mysqlx::Session s(url);
 
     EXPECT_EQ(string("test"), s.getDefaultSchema().getName());
     EXPECT_EQ(string("test"), s.getDefaultSchemaName());
@@ -243,7 +243,7 @@ TEST_F(Sess, trx)
   */
 
   {
-    XSession sess(this);
+    Session sess(this);
     Collection coll = sess.getSchema("test").getCollection("c");
 
     sess.startTransaction();
@@ -282,102 +282,15 @@ TEST_F(Sess, trx)
 }
 
 
-TEST_F(Sess, bind_node_session)
-{
-  SKIP_IF_NO_XPLUGIN;
-
-   XSession *sess = new XSession(this);
-
-   sess->dropSchema("node_session");
-   Schema sch = sess->createSchema("node_session");
-
-   // Create Collection with data
-   sch.createCollection("coll1")
-       .add("{\"name\":\"foo\"}")
-       .add("{\"name\":\"bar\"}")
-       .add("{\"name\":\"baz\"}").execute();
-
-   {
-     // Get first NodeSession
-     NodeSession node= sess->bindToDefaultShard();
-
-     // Execute query to be checked later
-     SqlResult res = node.sql("select * from node_session.coll1").execute();
-
-     // Closing NodeSession
-     // Only affects this session, no changes on other nodes or master XSession
-     node.close();
-
-     // Expect throw Error() because session is closed
-     EXPECT_THROW(node.sql("select * from node_session.coll1")
-                  .execute(),
-                  mysqlx::Error);
-
-     {
-       // Get second NodeSession
-       NodeSession node2= sess->bindToDefaultShard();
-
-       // Execute query but doesn't retrieve results right away
-       SqlResult res2 = node2.sql("select * from node_session.coll1").execute();
-
-       //Close Session so other NodeSession obj are closed.
-       sess->close();
-
-       // Expect throw Error() because session is closed
-       EXPECT_THROW(node2.sql("select * from node_session.coll1")
-                                .execute(),
-                    mysqlx::Error);
-
-
-       // Delete Xsession, so other NodeSession obj are closed.
-       delete sess;
-
-       // Expect throw Error() because session is closed
-       EXPECT_THROW(node2.sql("select * from node_session.coll1")
-                                .execute(),
-                    mysqlx::Error);
-
-       // Results are available, because where cached when destructing XSession
-       EXPECT_EQ(3U, res2.count());
-
-
-       int i = 0;
-       for (auto row : res2)
-       {
-         std::cout << "Row " << i << ": "
-                    << static_cast<string>(row[1]) << std::endl;
-         ++i;
-       }
-
-       EXPECT_EQ(3U, i);
-     }
-
-     //Same here
-     EXPECT_EQ(3U, res.count());
-
-     unsigned i = 0;
-     for (auto row : res)
-     {
-       std::cout << "Row " << i << ": " << static_cast<string>(row[1]) << std::endl;
-       ++i;
-     }
-
-     EXPECT_EQ(3U, i);
-   }
-
-  cout << "Done!" << endl;
-}
-
-
 TEST_F(Sess, ssl_session)
 {
 
   SKIP_IF_NO_XPLUGIN;
 
   //Test if ssl is enabled using cipher
-  auto check_ssl_impl = [](mysqlx::XSession &sess, bool enable, int line)
+  auto check_ssl_impl = [](mysqlx::Session &sess, bool enable, int line)
   {
-    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
+    SqlResult res =  sess.sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
 
     auto row = res.fetchOne();
     cout << "Line "<< line << ": " << row[0] << ":" << row[1] << endl;
@@ -391,7 +304,7 @@ TEST_F(Sess, ssl_session)
 
 
   {
-    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+    mysqlx::Session sess(SessionSettings::PORT, get_port(),
                           SessionSettings::USER,get_user(),
                           SessionSettings::PWD, get_password() ? get_password() : nullptr ,
                           SessionSettings::SSL_ENABLE, true);
@@ -400,7 +313,7 @@ TEST_F(Sess, ssl_session)
   }
 
   {
-    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+    mysqlx::Session sess(SessionSettings::PORT, get_port(),
                           SessionSettings::USER, get_user(),
                           SessionSettings::PWD, get_password() ? get_password() : nullptr ,
                           SessionSettings::SSL_ENABLE, false);
@@ -421,7 +334,7 @@ TEST_F(Sess, ssl_session)
 
   //URI without ssl_enable
   {
-    mysqlx::XSession sess(uri.str());
+    mysqlx::Session sess(uri.str());
     check_ssl(sess, false);
   }
 
@@ -431,7 +344,7 @@ TEST_F(Sess, ssl_session)
     //Enable SSL
     uri_ssl << uri.str() << "/?ssl-enable";
 
-    mysqlx::XSession sess(uri_ssl.str());
+    mysqlx::Session sess(uri_ssl.str());
     check_ssl(sess, true);
   }
 
@@ -439,7 +352,7 @@ TEST_F(Sess, ssl_session)
   //using wrong ssl-ca as SessionSettings
   {
     EXPECT_THROW(
-    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+    mysqlx::Session sess(SessionSettings::PORT, get_port(),
                           SessionSettings::USER,get_user(),
                           SessionSettings::PWD, get_password() ? get_password() : nullptr ,
                           SessionSettings::SSL_ENABLE, true,
@@ -454,23 +367,21 @@ TEST_F(Sess, ssl_session)
     std::stringstream bad_uri;
     bad_uri << uri.str() << "/?ssl-ca=" << "unknown.file";
 
-    EXPECT_THROW(mysqlx::XSession sess(bad_uri.str()), mysqlx::Error);
+    EXPECT_THROW(mysqlx::Session sess(bad_uri.str()), mysqlx::Error);
   }
 
   string ssl_ca;
   string datadir;
 
   {
-    mysqlx::XSession sess(uri.str());
+    mysqlx::Session sess(uri.str());
 
-    SqlResult res = sess.bindToDefaultShard()
-                    .sql("show global variables like 'ssl_ca'")
+    SqlResult res = sess.sql("show global variables like 'ssl_ca'")
                     .execute();
 
     ssl_ca = res.fetchOne().get(1);
 
-    res = sess.bindToDefaultShard()
-          .sql("show global variables like 'datadir'")
+    res = sess.sql("show global variables like 'datadir'")
           .execute();
 
     datadir = res.fetchOne().get(1);
@@ -489,13 +400,13 @@ TEST_F(Sess, ssl_session)
   uri << "/?ssl-ca=" << ssl_ca;
 
   {
-    mysqlx::XSession sess(uri.str());
+    mysqlx::Session sess(uri.str());
     check_ssl(sess, true);
   }
 
   //using ssl-enable and ssl-ca as SessionSettings
   {
-    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+    mysqlx::Session sess(SessionSettings::PORT, get_port(),
                           SessionSettings::USER,get_user(),
                           SessionSettings::PWD, get_password() ? get_password() : nullptr ,
                           SessionSettings::SSL_ENABLE, true,
@@ -507,7 +418,7 @@ TEST_F(Sess, ssl_session)
 
   //using ssl-ca as SessionSettings
   {
-    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+    mysqlx::Session sess(SessionSettings::PORT, get_port(),
                           SessionSettings::USER,get_user(),
                           SessionSettings::PWD, get_password() ? get_password() : nullptr ,
                           SessionSettings::SSL_CA, ssl_ca);
@@ -518,7 +429,7 @@ TEST_F(Sess, ssl_session)
 
   //using ssl-ca but ssl-enable = false on SessionSettings
   {
-    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+    mysqlx::Session sess(SessionSettings::PORT, get_port(),
                           SessionSettings::USER,get_user(),
                           SessionSettings::PWD, get_password() ? get_password() : nullptr ,
                           SessionSettings::SSL_ENABLE, false,
@@ -530,7 +441,7 @@ TEST_F(Sess, ssl_session)
 
   //using ssl-enable and ssl-ca as SessionSettings
   {
-    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+    mysqlx::Session sess(SessionSettings::PORT, get_port(),
                           SessionSettings::USER,get_user(),
                           SessionSettings::PWD, get_password() ? get_password() : NULL ,
                           SessionSettings::SSL_ENABLE, true,
@@ -549,7 +460,7 @@ TEST_F(Sess, ipv6)
   SKIP_IF_NO_XPLUGIN;
 
   {
-    mysqlx::XSession sess(SessionSettings::HOST, "::1",
+    mysqlx::Session sess(SessionSettings::HOST, "::1",
                           SessionSettings::PORT, get_port(),
                           SessionSettings::USER, get_user(),
                           SessionSettings::PWD, get_password() ? get_password() : nullptr ,
@@ -569,9 +480,9 @@ TEST_F(Sess, ipv6)
 
   //URI without ssl_enable
   {
-    mysqlx::XSession sess(uri.str());
+    mysqlx::Session sess(uri.str());
 
-    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
+    SqlResult res =  sess.sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
 
     auto row = res.fetchOne();
     cout << row[0] << ":" << row[1] << endl;
@@ -584,9 +495,9 @@ TEST_F(Sess, ipv6)
   //Enable SSL
   uri << "/?ssl-enable";
   {
-    mysqlx::XSession sess(uri.str());
+    mysqlx::Session sess(uri.str());
 
-    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
+    SqlResult res =  sess.sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
 
     auto row = res.fetchOne();
     cout << row[0] << ":" << row[1] << endl;
@@ -604,13 +515,13 @@ TEST_F(Sess, bugs)
   {
     SessionSettings sess_settings("localhost_not_found", 13009, "rafal", (char*)NULL);
 
-    EXPECT_THROW(mysqlx::XSession(sess_settings), mysqlx::Error);
+    EXPECT_THROW(mysqlx::Session(sess_settings), mysqlx::Error);
   }
 
   {
     SessionSettings sess_settings("localhost_not_found", 13009, "rafal", NULL);
 
-    EXPECT_THROW(mysqlx::XSession(sess_settings), mysqlx::Error);
+    EXPECT_THROW(mysqlx::Session(sess_settings), mysqlx::Error);
   }
 
 }

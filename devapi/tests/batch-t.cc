@@ -65,7 +65,7 @@ TEST_F(Batch, crud)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 

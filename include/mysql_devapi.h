@@ -87,14 +87,10 @@ class Session;
 
 namespace mysqlx {
 
-class XSession;
+class Session;
 class Schema;
 class Collection;
 class Table;
-
-namespace internal {
-  class XSession_base;
-}
 
 
 /**
@@ -108,13 +104,13 @@ class PUBLIC_API DatabaseObject
 
 protected:
 
-  internal::XSession_base *m_sess;
+  Session *m_sess;
 
   DLL_WARNINGS_PUSH
   string m_name;
   DLL_WARNINGS_POP
 
-  DatabaseObject(internal::XSession_base& sess, const string& name = string())
+  DatabaseObject(Session& sess, const string& name = string())
     : m_sess(&sess), m_name(name)
   {}
 
@@ -135,7 +131,7 @@ public:
     Get Session object
   */
 
-  internal::XSession_base& getSession() { return *m_sess; }
+  Session& getSession() { return *m_sess; }
 
 
   /**
@@ -529,11 +525,11 @@ class PUBLIC_API ViewDrop
 /**
   Represents a database schema.
 
-  A `Schema` instance  can be obtained from `XSession::getSchema()`
+  A `Schema` instance  can be obtained from `Session::getSchema()`
   method:
 
   ~~~~~~
-  XSession session;
+  Session session;
   Schema   mySchema;
 
   mySchema= session.getSchema("My Schema");
@@ -542,7 +538,7 @@ class PUBLIC_API ViewDrop
   or it can be directly constructed as follows:
 
   ~~~~~~
-  XSession   session;
+  Session   session;
   Schema     mySchema(session, "My Schema");
   ~~~~~~
 
@@ -569,7 +565,7 @@ public:
      Construct named schema object.
   */
 
-  Schema(internal::XSession_base &sess, const string &name)
+  Schema(Session &sess, const string &name)
     : DatabaseObject(sess, name)
   {}
 
@@ -580,7 +576,7 @@ public:
     @todo Clarify what "default schema" is.
   */
 
-  Schema(internal::XSession_base&);
+  Schema(Session&);
 
 
   const Schema& getSchema() const override { return *this; }
@@ -885,7 +881,7 @@ public:
 
 
 /**
-  Represents session options to be passed at XSession/NodeSession object
+  Represents session options to be passed at Session object
   creation.
 
   SessionSettings can be constructed using URL string, common connect options
@@ -1162,292 +1158,216 @@ private:
 };
 
 
-namespace internal {
-
-  DLL_WARNINGS_PUSH
+DLL_WARNINGS_PUSH
 
 
-  /// Common base of session classes.
+/**
+    Represents a session which gives access to data stored
+    in the data store.
 
-  class PUBLIC_API XSession_base : nocopy
-  {
+    When creating new session a host name, TCP/IP port,
+    user name and password are specified. Once created,
+    session is ready to be used. Session destructor closes
+    session and cleans up after it.
+
+    If it is not possible to create a valid session for some
+    reason, errors are thrown from session constructor.
+
+    @ingroup devapi
+    @todo Add all `Session` methods defined by DevAPI.
+  */
+
+class PUBLIC_API Session : internal::nocopy
+{
 
   DLL_WARNINGS_POP
 
-  protected:
+protected:
 
-    class INTERNAL Impl;
-    Impl  *m_impl;
-    bool m_master_session = true;
+  class INTERNAL Impl;
+  Impl  *m_impl;
+  bool m_master_session = true;
+  SqlStatement m_stmt;
 
-    INTERNAL void register_result(internal::BaseResult *result);
-    INTERNAL void deregister_result(internal::BaseResult *result);
+  INTERNAL void register_result(internal::BaseResult *result);
+  INTERNAL void deregister_result(internal::BaseResult *result);
 
-    INTERNAL cdk::Session& get_cdk_session();
+  INTERNAL cdk::Session& get_cdk_session();
 
-    struct Options;
-
-    /*
-      This constructor constructs a child session of a parent session.
-    */
-    INTERNAL XSession_base(XSession_base*);
-
-    /*
-      This notification is sent from parent session when it is closed.
-    */
-    void session_closed() { if (!m_master_session) m_impl = NULL; }
-
-  public:
-
-    XSession_base(SessionSettings settings);
-
-    template<typename...T>
-    XSession_base(T...options)
-      : XSession_base(SessionSettings(options...))
-    {}
-
-
-    virtual ~XSession_base();
-
-    /**
-      Get named schema object in a given session.
-
-      The object does not have to exist in the database.
-      Errors will be thrown if one tries to use non-existing
-      schema.
-    */
-
-    Schema createSchema(const string &name, bool reuse = false);
-
-    /**
-      Get named schema object in a given session.
-
-      Errors will be thrown if one tries to use non-existing
-      schema with check_existence = true.
-    */
-
-    Schema getSchema(const string&, bool check_existence = false);
-
-    /**
-      Get the default schema specified when session was created.
-    */
-
-    Schema getDefaultSchema();
-
-    /**
-      Get the name of the default schema specified when session was created.
-    */
-
-    string getDefaultSchemaName();
-
-    /**
-      Get list of schema objects in a given session.
-    */
-
-    internal::List_init<Schema> getSchemas();
-
-    /**
-      Drop the schema.
-
-      Errors will be thrown if schema doesn't exist,
-    */
-
-    void   dropSchema(const string &name);
-
-    /**
-      Drop a table from a schema.
-
-      Errors will be thrown if table doesn't exist,
-    */
-
-    void   dropTable(const string& schema, const string& table);
-
-    /**
-      Drop a collection from a schema.
-
-      Errors will be thrown if collection doesn't exist,
-    */
-
-    void   dropCollection(const string& schema, const string& collection);
-
-    /**
-      Start a new transaction.
-
-      Throws error if previously opened transaction is not closed.
-    */
-
-    void startTransaction();
-
-    /**
-      Commit opened transaction, if any.
-
-      Does nothing if no transaction was opened. After committing the
-      transaction is closed.
-    */
-
-    void commit();
-
-    /**
-      Rollback opened transaction, if any.
-
-      Does nothing if no transaction was opened. Transaction which was
-      rolled back is closed. To start a new transaction a call to
-      `startTransaction()` is needed.
-    */
-
-    void rollback();
-
-    /**
-      Closes current session.
-
-      After a session is closed, any call to other method will throw Error.
-    */
-
-    void close();
-
-
-  public:
-
-    struct INTERNAL Access;
-    friend Access;
-
-    friend Schema;
-    friend Collection;
-    friend Table;
-    friend Result;
-    friend RowResult;
-
-    ///@cond IGNORE
-    friend internal::BaseResult;
-    ///@endcond
-  };
-
-}  // internal
-
-
-/**
-  Represents a session which gives access to data stored
-  in the data store.
-
-  When creating new session a host name, TCP/IP port,
-  user name and password are specified. Once created,
-  session is ready to be used. Session destructor closes
-  session and cleans up after it.
-
-  If it is not possible to create a valid session for some
-  reason, errors are thrown from session constructor.
-
-  @ingroup devapi
-  @todo Add all `XSession` methods defined by DevAPI.
-*/
-
-class PUBLIC_API XSession
-    : public internal::XSession_base
-{
-
-public:
-
-  /**
-    Create session specified by `SessionSettings` object.
-  */
-
-  XSession(SessionSettings settings)
-    : XSession_base(settings)
-  {}
-
-
-  /**
-    Create session using given session settings.
-
-    This constructor forwards arguments to a `SessionSettings` constructor.
-    Thus all forms of specifying session options are also directly available
-    in `XSession` constructor.
-
-    Examples:
-    ~~~~~~
-
-      XSession from_uri("mysqlx://user:pwd@host:port/db?ssl-enable");
-
-      XSession from_options("host", port, "user", "pwd", "db");
-
-      XSession from_option_list(
-        SessionSettings::USER, "user",
-        SessionSettings::PWD,  "pwd",
-        SessionSettings::HOST, "host",
-        SessionSettings::PORT, port,
-        SessionSettings::DB,   "db",
-        SessionSettings::SSL_ENABLE
-      );
-    ~~~~~~
-
-    @see `SessionSettings`
-  */
-
-  template<typename...T>
-  XSession(T...options)
-    : XSession_base(SessionSettings(options...))
-  {}
-
+  struct Options;
 
   /*
-    Get NodeSession to default shard
-  */
+      This constructor constructs a child session of a parent session.
+      */
+  INTERNAL Session(Session*);
 
-  NodeSession bindToDefaultShard();
-};
+  /*
+        This notification is sent from parent session when it is closed.
+      */
+  void session_closed() { if (!m_master_session) m_impl = NULL; }
 
-
-/**
-  A session which offers SQL query execution.
-
-  In addition to `XSession` functionality, `NodeSession`
-  allows for execution of arbitrary SQL queries.
-
-  @ingroup devapi
-*/
-
-class PUBLIC_API NodeSession
-  : public internal::XSession_base
-{
 public:
 
 
-  NodeSession(NodeSession &&other)
-    : XSession_base(static_cast<XSession_base*>(&other))
-  {}
+  /**
+      Create session specified by `SessionSettings` object.
+    */
+
+  Session(SessionSettings settings);
+
 
   /**
-    NodeSession constructors accept the same parameters
-    as XSession constructors.
-  */
+        Create session using given session settings.
 
-  NodeSession(SessionSettings settings)
-    : XSession_base(settings)
-  {}
+        This constructor forwards arguments to a `SessionSettings` constructor.
+        Thus all forms of specifying session options are also directly available
+        in `Session` constructor.
 
+        Examples:
+        ~~~~~~
+
+          Session from_uri("mysqlx://user:pwd@host:port/db?ssl-enable");
+
+          Session from_options("host", port, "user", "pwd", "db");
+
+          Session from_option_list(
+            SessionSettings::USER, "user",
+            SessionSettings::PWD,  "pwd",
+            SessionSettings::HOST, "host",
+            SessionSettings::PORT, port,
+            SessionSettings::DB,   "db",
+            SessionSettings::SSL_ENABLE
+          );
+        ~~~~~~
+
+        @see `SessionSettings`
+      */
 
   template<typename...T>
-  NodeSession(T...options)
-    : XSession_base(SessionSettings(options...))
+  Session(T...options)
+    : Session(SessionSettings(options...))
   {}
 
 
+  virtual ~Session();
 
   /**
-    Operation that runs arbitrary SQL query on the node.
-  */
+        Get named schema object in a given session.
+
+        The object does not have to exist in the database.
+        Errors will be thrown if one tries to use non-existing
+        schema.
+      */
+
+  Schema createSchema(const string &name, bool reuse = false);
+
+  /**
+        Get named schema object in a given session.
+
+        Errors will be thrown if one tries to use non-existing
+        schema with check_existence = true.
+      */
+
+  Schema getSchema(const string&, bool check_existence = false);
+
+  /**
+        Get the default schema specified when session was created.
+      */
+
+  Schema getDefaultSchema();
+
+  /**
+        Get the name of the default schema specified when session was created.
+      */
+
+  string getDefaultSchemaName();
+
+  /**
+        Get list of schema objects in a given session.
+      */
+
+  internal::List_init<Schema> getSchemas();
+
+  /**
+        Drop the schema.
+
+        Errors will be thrown if schema doesn't exist,
+      */
+
+  void   dropSchema(const string &name);
+
+  /**
+        Drop a table from a schema.
+
+        Errors will be thrown if table doesn't exist,
+      */
+
+  void   dropTable(const string& schema, const string& table);
+
+  /**
+        Drop a collection from a schema.
+
+        Errors will be thrown if collection doesn't exist,
+      */
+
+  void   dropCollection(const string& schema, const string& collection);
+
+  /**
+        Operation that runs arbitrary SQL query.
+      */
 
   SqlStatement& sql(const string &query);
 
-private:
+  /**
+        Start a new transaction.
 
-  NodeSession(XSession_base* parent)
-    : XSession_base(parent)
-  {}
+        Throws error if previously opened transaction is not closed.
+      */
 
-  SqlStatement m_stmt;
+  void startTransaction();
 
-  friend XSession;
+  /**
+        Commit opened transaction, if any.
+
+        Does nothing if no transaction was opened. After committing the
+        transaction is closed.
+      */
+
+  void commit();
+
+  /**
+        Rollback opened transaction, if any.
+
+        Does nothing if no transaction was opened. Transaction which was
+        rolled back is closed. To start a new transaction a call to
+        `startTransaction()` is needed.
+      */
+
+  void rollback();
+
+  /**
+        Closes current session.
+
+        After a session is closed, any call to other method will throw Error.
+      */
+
+  void close();
+
+
+public:
+
+  struct INTERNAL Access;
+  friend Access;
+
+  friend Schema;
+  friend Collection;
+  friend Table;
+  friend Result;
+  friend RowResult;
+
+  ///@cond IGNORE
+  friend internal::BaseResult;
+  ///@endcond
 };
 
 

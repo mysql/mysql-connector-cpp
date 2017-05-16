@@ -70,7 +70,7 @@ TEST_F(Crud, basic)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -344,7 +344,7 @@ TEST_F(Crud, bind)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -503,7 +503,7 @@ TEST_F(Crud, modify)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -648,7 +648,7 @@ TEST_F(Crud, order_limit)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -734,7 +734,7 @@ TEST_F(Crud, projections)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -803,7 +803,7 @@ TEST_F(Crud, existence_checks)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -828,7 +828,7 @@ TEST_F(Crud, table)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -1028,7 +1028,7 @@ TEST_F(Crud, table_order_limit)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -1109,7 +1109,7 @@ TEST_F(Crud, table_projections)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -1162,7 +1162,7 @@ TEST_F(Crud, move)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   Schema sch = sess.getSchema("test");
   Collection coll = sch.createCollection("coll",true);
@@ -1294,7 +1294,7 @@ TEST_F(Crud, doc_path)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
   sess.dropCollection("test", "coll");
 
   Schema sch = sess.getSchema("test");
@@ -1331,7 +1331,7 @@ TEST_F(Crud, row_error)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating table..." << endl;
 
@@ -1393,7 +1393,7 @@ TEST_F(Crud, coll_as_table)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -1465,7 +1465,7 @@ TEST_F(Crud, get_ids)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -1511,7 +1511,7 @@ TEST_F(Crud, count)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -1552,7 +1552,7 @@ TEST_F(Crud, buffered)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -1652,7 +1652,7 @@ TEST_F(Crud, iterators)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -1746,7 +1746,7 @@ TEST_F(Crud, diagnostic)
 
   cout << "Preparing table..." << endl;
 
-  NodeSession &sess = get_sess();
+  mysqlx::Session &sess = get_sess();
 
   sess.sql("DROP TABLE IF EXISTS test.t").execute();
   sess.sql("CREATE TABLE test.t (a TINYINT NOT NULL, b CHAR(4))").execute();
@@ -1789,7 +1789,7 @@ TEST_F(Crud, cached_results)
 
   cout << "Preparing table..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   Collection coll = sess.createSchema("test", true)
                         .createCollection("test", true);
@@ -1827,7 +1827,7 @@ TEST_F(Crud, add_empty)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -1854,7 +1854,7 @@ TEST_F(Crud, doc_id)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -1872,7 +1872,7 @@ TEST_F(Crud, group_by_having)
 
   cout << "Preparing table..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   sess.dropCollection("test", "coll");
 
@@ -1979,7 +1979,7 @@ TEST_F(Crud, copy_semantics)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -2061,7 +2061,7 @@ TEST_F(Crud, multi_statment_exec)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 

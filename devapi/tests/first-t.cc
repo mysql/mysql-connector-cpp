@@ -386,8 +386,7 @@ struct S_ctor_test
 
 TEST_F(First, api_session)
 {
-  S_ctor_test<mysqlx::XSession>::test();
-  S_ctor_test<mysqlx::NodeSession>::test();
+  S_ctor_test<mysqlx::Session>::test();
 }
 
 
@@ -396,7 +395,7 @@ TEST_F(First, warnings_multi_rset)
 
   SKIP_IF_NO_XPLUGIN;
 
-  NodeSession &sess = get_sess();
+  mysqlx::Session &sess = get_sess();
 
   sess.createSchema("test", true);
 
@@ -455,7 +454,7 @@ TEST_F(First, parser_xplugin)
   sql("DROP TABLE IF EXISTS test.t");
   sql("CREATE TABLE test.t(c0 INT, c1 TEXT)");
 
-  NodeSession &sess = get_sess();
+  mysqlx::Session &sess = get_sess();
 
   sess.createSchema("test", true);
 

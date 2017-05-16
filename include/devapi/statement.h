@@ -42,7 +42,7 @@ using std::ostream;
 
 namespace internal {
 
-class XSession_base;
+class Session;
 
 /*
   Abstract interface to be implemented by internal implementation
@@ -293,7 +293,7 @@ protected:
     return static_cast<Impl*>(m_impl.get());
   }
 
-  INTERNAL void reset(internal::XSession_base&, const string&);
+  INTERNAL void reset(Session&, const string&);
 
 public:
 
@@ -330,7 +330,7 @@ public:
 
   struct Access;
   friend Access;
-  friend NodeSession;
+  friend Session;
 };
 
 }  // mysqlx
