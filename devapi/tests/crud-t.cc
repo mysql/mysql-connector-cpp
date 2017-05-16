@@ -1295,9 +1295,9 @@ TEST_F(Crud, doc_path)
   cout << "Creating session..." << endl;
 
   XSession sess(this);
-  sess.dropCollection("test", "coll");
 
   Schema sch = sess.getSchema("test");
+  sch.dropCollection("coll");
   Collection coll = sch.createCollection("coll",false);
 
   coll.add( "{\"date\": {\"monthName\":\"December\", \"days\":[1,2,3]}}").execute();
@@ -1873,8 +1873,6 @@ TEST_F(Crud, group_by_having)
   cout << "Preparing table..." << endl;
 
   XSession sess(this);
-
-  sess.dropCollection("test", "coll");
 
   Collection coll = sess.createSchema("test", true)
                         .createCollection("coll", true);

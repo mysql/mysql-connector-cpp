@@ -99,16 +99,31 @@ TEST_F(Ddl, create_drop)
 
     //Drop Tables/Views
 
-    std::list<string> names_list = schema.getTableNames();
+    /*
+      Note: currently passing view to dropTable() does nothing. Changing this
+      requires changes in xplugin. Similar with passing table to dropView().
+    */
+    //EXPECT_THROW(schema.dropTable("view1"), mysqlx::Error);
+    EXPECT_NO_THROW(schema.dropTable("view1"));
+    EXPECT_NO_THROW(schema.getTable("view1", true));
 
-    for (auto name : names_list)
+    EXPECT_NO_THROW(schema.dropView("tb1"));
+    EXPECT_NO_THROW(schema.getTable("tb1", true));
+
+    std::list<Table> table_list = schema.getTables();
+
+    for (auto t : table_list)
     {
       //View is not dropped, but still no error thrown
-      get_sess().dropTable(schema.getName(), name);
+      if (t.isView())
+        schema.dropView(t.getName());
+      else
+        schema.dropTable(t.getName());
     }
 
     EXPECT_THROW(schema.getTable("tb1", true), mysqlx::Error);
     EXPECT_THROW(schema.getTable("tb2", true), mysqlx::Error);
+    EXPECT_THROW(schema.getTable("view1", true), mysqlx::Error);
   }
 
   //Collection tests
@@ -135,16 +150,24 @@ TEST_F(Ddl, create_drop)
 
     // Drop Collections
 
+    /*
+      Note: currently passing collection to dropView() does nothing. Changing this
+      requires changes in xplugin.
+    */
+
+    EXPECT_NO_THROW(schema.dropView("collection_1"));
+    EXPECT_NO_THROW(schema.getCollection("collection_1", true));
+
     std::list<string> list_coll_name = schema.getCollectionNames();
     for (auto name : list_coll_name)
     {
-      get_sess().dropCollection(schema.getName(), name);
+      schema.dropCollection(name);
     }
 
     //Doesn't throw even if don't exist
     for (auto name : list_coll_name)
     {
-      get_sess().dropCollection(schema.getName(), name);
+      schema.dropCollection(name);
     }
 
     //Test Drop Collection

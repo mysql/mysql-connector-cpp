@@ -822,33 +822,42 @@ void internal::XSession_base::dropSchema(const string &name)
 }
 
 
-/*
-  TODO: better implementation: check if drop_collection can drop views also
-*/
-
-void internal::XSession_base::dropTable(const mysqlx::string& schema, const string& table)
+void Schema::dropTable(const string& table)
 {
   try{
-    Args args(schema, table);
+    Args args(m_name, table);
     // Doesn't throw if table doesn't exit (server error 1051)
-    check_reply_skip_error_throw(get_cdk_session().admin("drop_collection", args),
+    check_reply_skip_error_throw(m_sess->get_cdk_session().admin("drop_collection", args),
                                  1051);
   }
   CATCH_AND_WRAP
 }
 
 
-void internal::XSession_base::dropCollection(const mysqlx::string& schema,
-                              const mysqlx::string& collection)
+void Schema::dropCollection(const mysqlx::string& collection)
 {
   try{
-    Args args(schema, collection);
+    Args args(m_name, collection);
     // Doesn't throw if collection doesn't exit (server error 1051)
-    check_reply_skip_error_throw(get_cdk_session().admin("drop_collection", args),
+    check_reply_skip_error_throw(m_sess->get_cdk_session().admin("drop_collection", args),
                                  1051);
   }
   CATCH_AND_WRAP
 }
+
+
+void Schema::dropView(const mysqlx::string& name)
+{
+  Table_ref view(getName(),name);
+
+  try {
+    // Note: false means that we do not check for existence of dropped view.
+    cdk::Reply r(m_sess->get_cdk_session().view_drop(view, false));
+    r.wait();
+  }
+  CATCH_AND_WRAP
+}
+
 
 Schema internal::XSession_base::getDefaultSchema()
 {

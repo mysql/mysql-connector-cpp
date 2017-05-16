@@ -467,65 +467,6 @@ class PUBLIC_API ViewAlter
 };
 
 
-namespace internal {
-
-
-  struct ViewDrop_impl
-  : public Executable_impl
-{
-  virtual void if_exists() = 0;
-};
-
-
-template <class Op>
-class ViewDropIfExists
-    : public Executable<Result,Op>
-{
-protected:
-
-  using Executable<Result, Op>::check_if_valid;
-  using Executable<Result, Op>::m_impl;
-
-  ViewDrop_impl* get_impl()
-  {
-    check_if_valid();
-    return static_cast<ViewDrop_impl*>(m_impl.get());
-  }
-
-public:
-
-  /**
-    Modify drop view operation so that it checks existence of the view
-    before dropping it.
-  */
-
-  Executable<Result,Op> ifExists()
-  {
-    get_impl()->if_exists();
-    return std::move(*this);
-  }
-};
-
-} // namespace internal
-
-
-/**
-  Represents an operation which drops a view.
-*/
-
-class PUBLIC_API ViewDrop
-  : public internal::ViewDropIfExists<ViewDrop>
-{
-
-  ViewDrop(Schema &sch, const string& name);
-
-  /// @cond IGNORED
-  friend Schema;
-  /// @endcond
-
-};
-
-
 /**
   Represents a database schema.
 
@@ -681,10 +622,42 @@ public:
   }
 
 
-  ViewDrop dropView(const mysqlx::string& view_name)
-  {
-    return ViewDrop(*this, view_name);
-  }
+  /**
+    Drop given collection from the schema.
+
+    This method will silently succeed if given collection does not exist.
+
+    @note If table name is passed to the method, it will behave like
+    dropTable().
+  */
+
+  void dropCollection(const mysqlx::string& name);
+
+  /**
+    Drop given table from the schema.
+
+    This method will silently succeed if given table does not exist. If given
+    table is a view (isView() returns true) then it will not be dropped (and no
+    error is reported) - use dropView() instead.
+
+    @note If collection name is passed to the method, it will behave like
+    dropCollection().
+  */
+
+  void dropTable(const mysqlx::string& name);
+
+  /**
+    Drop given view from the schema.
+
+    This method will silently succeed if given view does not exist. If non-view
+    table is passed as argument, it will not be dropped (and no error is
+    reported) - use dropTable() instead.
+
+    @note If collection name is passed to the method, the request will be
+    silently ignored.
+  */
+
+  void dropView(const mysqlx::string& name);
 
 
   friend Collection;
@@ -1254,21 +1227,6 @@ namespace internal {
 
     void   dropSchema(const string &name);
 
-    /**
-      Drop a table from a schema.
-
-      Errors will be thrown if table doesn't exist,
-    */
-
-    void   dropTable(const string& schema, const string& table);
-
-    /**
-      Drop a collection from a schema.
-
-      Errors will be thrown if collection doesn't exist,
-    */
-
-    void   dropCollection(const string& schema, const string& collection);
 
     /**
       Start a new transaction.
