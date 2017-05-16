@@ -69,6 +69,11 @@ protected:
   const char *m_status;
   mysqlx_session_t *m_sess;
 
+  const char *m_xplugin_usr;
+  const char *m_xplugin_pwd;
+  const char *m_xplugin_host;
+  unsigned short m_xplugin_port;
+
   xapi() : m_port(0), m_status(NULL), m_sess(NULL)
   {
     const char *xplugin_port = getenv("XPLUGIN_PORT");
@@ -79,8 +84,17 @@ protected:
     }
 
     m_port = atoi(xplugin_port);
+    m_xplugin_port = m_port;
     if (!m_port)
       m_status = "invalid port number in XPLUGIN_PORT";
+
+    m_xplugin_usr = getenv("XPLUGIN_USER");
+    m_xplugin_pwd = getenv("XPLUGIN_PASSWORD");
+    m_xplugin_host = getenv("XPLUGIN_HOST");
+
+    m_xplugin_usr = (m_xplugin_usr && strlen(m_xplugin_usr) ? m_xplugin_usr : "root");
+    m_xplugin_pwd = (m_xplugin_pwd && strlen(m_xplugin_pwd) ? m_xplugin_pwd : NULL);
+    m_xplugin_host = (m_xplugin_host && strlen(m_xplugin_host) ? m_xplugin_host : "127.0.0.1");
   }
 
   virtual void SetUp()
@@ -117,9 +131,9 @@ protected:
     char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
     int conn_err_code = 0;
 
-    const char *xplugin_usr = usr ? usr : getenv("XPLUGIN_USER");
-    const char *xplugin_pwd = pwd ? pwd : getenv("XPLUGIN_PASSWORD");
-    const char *xplugin_host = getenv("XPLUGIN_HOST");
+    const char *xplugin_usr = usr ? usr : m_xplugin_usr;
+    const char *xplugin_pwd = pwd ? pwd : m_xplugin_pwd;
+    const char *xplugin_host = m_xplugin_host;
 
     xplugin_usr = (xplugin_usr && strlen(xplugin_usr) ? xplugin_usr : "root");
     xplugin_pwd = (xplugin_pwd && strlen(xplugin_pwd) ? xplugin_pwd : NULL);

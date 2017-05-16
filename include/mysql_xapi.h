@@ -161,6 +161,8 @@ typedef object_id* MYSQLX_GUID;
 #define MYSQLX_ERROR_MISSING_COLLECTION_NAME_MSG "Missing collection name"
 #define MYSQLX_ERROR_MISSING_VIEW_NAME_MSG "Missing view name"
 #define MYSQLX_ERROR_MISSING_KEY_NAME_MSG "Missing key name"
+#define MYSQLX_ERROR_MISSING_HOST_NAME "Missing host name"
+#define MYSQLX_ERROR_MISSING_CONN_INFO "Missing connecting information"
 #define MYSQLX_ERROR_HANDLE_NULL_MSG "Handle cannot be NULL"
 #define MYSQLX_ERROR_VIEW_INVALID_STMT_TYPE "Invalid statement type for View. Only SELECT type is supported"
 #define MYSQLX_ERROR_VIEW_TYPE_MSG "Statement must be of VIEW type"
@@ -169,6 +171,8 @@ typedef object_id* MYSQLX_GUID;
 #define MYSQLX_ERROR_OP_NOT_SUPPORTED "The operation is not supported by the function"
 #define MYSQLX_ERROR_WRONG_SSL_MODE "Wrong value for SSL Mode"
 #define MYSQLX_ERROR_NO_TLS_SUPPORT "Can not create TLS session - this connector is built without TLS support"
+#define MYSQLX_ERROR_MIX_PRIORITY "Mixing hosts with and without priority is not allowed"
+
 
 /* Opaque structures*/
 
@@ -347,9 +351,18 @@ typedef enum mysqlx_opt_type_enum
   MYSQLX_OPT_SSL_MODE = 6,
   /** path to a PEM file specifying trusted root certificates */
   MYSQLX_OPT_SSL_CA = 7,
+  MYSQLX_OPT_PRIORITY = 8
 }
 mysqlx_opt_type_t;
 
+#define OPT_HOST(A)     MYSQLX_OPT_HOST, A
+#define OPT_PORT(A)     MYSQLX_OPT_PORT, (unsigned int)A
+#define OPT_USER(A)     MYSQLX_OPT_USER, A
+#define OPT_PWD(A)      MYSQLX_OPT_PWD, A
+#define OPT_DB(A)       MYSQLX_OPT_DB, A
+#define OPT_SSL_MODE(A) MYSQLX_OPT_SSL_MODE, A
+#define OPT_SSL_CA(A)   MYSQLX_OPT_SSL_CA, A
+#define OPT_PRIORITY(A) MYSQLX_OPT_PRIORITY, (unsigned int)A
 
 typedef enum mysqlx_ssl_mode_enum
 {
@@ -862,11 +875,21 @@ PUBLIC_API void mysqlx_free_options(mysqlx_session_options_t *opt);
   Set session configuration options.
 
   @param opt   handle to session configuration data object
-  @param type  option type to set (see `mysqlx_opt_type_t` enum)
-  @param ...   option value/values to set, as appropriate for the given
-               option type (the function can set more than one value)
+  @param   ...  variable parameters list consisting of (type, value) pairs
+          terminated by `PARAM_END`: type_id1, value1, type_id2, value2, ...,
+          type_id_n, value_n, `PARAM_END` (`PARAM_END` marks the end of
+          the parameters list).
 
-  TODO: Point to documentation explaining what data each option expects
+           type_id is the numeric identifier, which helps to determine the type
+           of the value provided as the next parameter. The user code must
+           ensure that type_id corresponds to the actual value type. Otherwise,
+           the value along with and all sequential types and values are most
+           likely to be corrupted.
+           Allowed types are listed in `mysqlx_opt_type_t` enum.
+           The XAPI defines the convenience macros that help to specify
+           the types and values: See `OPT_HOST()`, `OPT_PORT()`, `OPT_USER()`,
+           `OPT_PWD()`, `OPT_DB()`, `OPT_SSL_MODE()`, `OPT_SSL_CA()`,
+           `OPT_PRIORITY()`.
 
   @return `RESULT_OK` if option was successfully set; `RESULT_ERROR`
           is set otherwise (use `mysqlx_error()` to get the error
@@ -876,7 +899,7 @@ PUBLIC_API void mysqlx_free_options(mysqlx_session_options_t *opt);
 */
 
 PUBLIC_API int
-mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type, ...);
+mysqlx_session_option_set(mysqlx_session_options_t *opt, ...);
 
 
 /**
@@ -894,13 +917,16 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
           is set otherwise (use `mysqlx_error()` to get the error
           information)
 
+  @note For failover configurations with multiple hosts this function
+        will return only the last added host name. Same is true for the port
+        or the priority associated with this host name.
+
   @ingroup xapi_sess
 */
 
 PUBLIC_API int
 mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
                           ...);
-
 
 /*
   ====================================================================

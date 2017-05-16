@@ -193,7 +193,7 @@ struct URI_parser
     m_has_pwd = true;
   }
 
-  void host(unsigned short priority,
+  void host(unsigned short,
             const std::string &host,
             unsigned short port) override
   {
@@ -202,7 +202,7 @@ struct URI_parser
     m_port = port;
   }
 
-  void host(unsigned short priority,
+  void host(unsigned short,
             const std::string &host) override
   {
     //TODO: Change to list of hosts
