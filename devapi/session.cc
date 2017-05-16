@@ -168,7 +168,7 @@ struct URI_parser
     m_has_pwd = true;
   }
 
-  void host(unsigned short,
+  void host(unsigned short priority,
             const std::string &host,
             unsigned short port) override
   {
@@ -176,7 +176,7 @@ struct URI_parser
     m_hosts.emplace(priority, endpoint);
   }
 
-  void host(unsigned short,
+  void host(unsigned short priority,
             const std::string &host) override
   {
     cdk::ds::TCPIP endpoint(host);
