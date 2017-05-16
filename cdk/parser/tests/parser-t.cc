@@ -1336,7 +1336,7 @@ TEST(Parser, uri)
     },
     {
       "[ (Address=127.0.0.1, Priority=2), (Address=example.com, Priority=100) ]/database",
-      URI_parts(Host(2, "127.0.0.1"), Host(100, "example.com"), "database")
+      URI_parts(Host(3, "127.0.0.1"), Host(101, "example.com"), "database")
     },
     {
       "\\\\.\\named_pipe.socket",
@@ -1362,6 +1362,11 @@ TEST(Parser, uri)
       ".mysql.sock/database?qry=val&qry2=2017",
       URI_parts(Unix_socket(".mysql.sock"), "database",
                 Query("qry", "val"),Query("qry2", "2017"))
+    },
+    {
+      ".mysql.sock/database?qry=val&qry2=c:\\teste\\cert.ca",
+      URI_parts(Unix_socket(".mysql.sock"), "database",
+                Query("qry", "val"),Query("qry2", "c:\\teste\\cert.ca"))
     }
   };
 

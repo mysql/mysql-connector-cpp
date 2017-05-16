@@ -499,8 +499,8 @@ URI_parser::TokSet URI_parser::sub_delims() const
 
 URI_parser::TokSet URI_parser::sub_delims_qry() const
 {
-  return TokSet( T_EXCLAMATION, T_DOLLAR, T_QUOTE, T_SLASH, T_POPEN, T_PCLOSE,
-                 T_ASTERISK, T_PLUS, T_SEMICOLON);
+  return TokSet( T_EXCLAMATION, T_DOLLAR, T_QUOTE, T_SLASH, T_BSLASH, T_POPEN,
+                 T_PCLOSE, T_COLON, T_ASTERISK, T_PLUS, T_SEMICOLON);
 }
 
 /*
