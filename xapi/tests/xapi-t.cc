@@ -760,11 +760,11 @@ DO_CONNECT:
 
   if (!ssl_enable)
   {
-    strcat(conn_str, "/?ssl-mode=disabled");
+    strcat(conn_str, "/?sSL-MoDe=diSAblEd");
   }
   else
   {
-    strcat(conn_str, "/?ssl-mode=required");
+    strcat(conn_str, "/?Ssl-mOdE=rEQuiREd");
   }
 
   local_sess = mysqlx_get_node_session_from_url(conn_str, conn_error, &conn_err_code);
@@ -812,7 +812,7 @@ DO_CONNECT:
       if (rc != RESULT_OK && ca_len < 2)
         return;
 
-      strcat(conn_str, "&ssl-ca=");
+      strcat(conn_str, "&Ssl-cA=");
       rc = mysqlx_get_bytes(row, 1, 0, capath_buf, &capath_len);
       if (rc != RESULT_OK || capath_len < 2)
       {
@@ -824,12 +824,19 @@ DO_CONNECT:
         strcat(conn_str, capath_buf);
       }
       strcat(conn_str, ca_buf);
-      strcat(conn_str, "&ssl-ca-path=");
-      strcat(conn_str, capath_buf);
     }
 
     goto DO_CONNECT;
   }
+  strcat(conn_str, "&ssl-nonexistent=true");
+  local_sess = mysqlx_get_node_session_from_url(conn_str, conn_error, &conn_err_code);
+
+  if (local_sess)
+  {
+    mysqlx_session_close(local_sess);
+    FAIL() << "Connection should not be established" << endl;
+  }
+  cout << "Expected error: " << conn_error << endl;
 }
 
 
@@ -1003,7 +1010,7 @@ TEST_F(xapi, failover_test_url)
   if (local_sess)
   {
     mysqlx_session_close(local_sess);
-    FAIL() << "The connections should not be established!";
+    FAIL() << "Wrong option was not handled correctly";
   }
   else
   {

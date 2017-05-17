@@ -548,14 +548,18 @@ void mysqlx_session_options_struct::key_val(const std::string&)
 
 void mysqlx_session_options_struct::key_val(const std::string& key, const std::string& val)
 {
-  if (key.find("ssl-", 0) == 0)
+  std::string lc_key=key;
+  lc_key.resize(key.size());
+  std::transform(key.begin(), key.end(), lc_key.begin(), ::tolower);
+
+  if (lc_key.find("ssl-", 0) == 0)
   {
 #ifdef WITH_SSL
-    if (key == "ssl-ca")
+    if (lc_key == "ssl-ca")
     {
       set_ssl_ca(val);
     }
-    else if (key  == "ssl-mode")
+    else if (lc_key  == "ssl-mode")
     {
       std::string lc_val;
       lc_val.resize(val.size());
@@ -583,8 +587,16 @@ void mysqlx_session_options_struct::key_val(const std::string& key, const std::s
       }
       else
       {
-        throw Mysqlx_exception(MYSQLX_ERROR_WRONG_SSL_MODE);
+        std::stringstream err;
+        err << "Unexpected key " << key << "=" << val << " in URI";
+        throw Mysqlx_exception(err.str().c_str());
       }
+    }
+    else
+    {
+      std::stringstream err;
+      err << "Wrong option " << key << " in URI";
+      throw Mysqlx_exception(err.str().c_str());
     }
     m_tcp_opts.set_tls(m_tls_options);
 #else
