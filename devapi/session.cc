@@ -824,13 +824,12 @@ void internal::XSession_base::dropSchema(const string &name)
 
 void Schema::dropTable(const string& table)
 {
-  try{
-    Args args(m_name, table);
-    // Doesn't throw if table doesn't exit (server error 1051)
-    check_reply_skip_error_throw(m_sess->get_cdk_session().admin("drop_collection", args),
-                                 1051);
-  }
-  CATCH_AND_WRAP
+  /*
+    Note: We simply forward to dropCollection() because xplugin does not
+    have a dedicated command for dropping tables and it does not distinguish
+    tables from collections.
+  */
+  dropCollection(table);
 }
 
 

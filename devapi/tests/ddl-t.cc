@@ -155,8 +155,8 @@ TEST_F(Ddl, create_drop)
       requires changes in xplugin.
     */
 
-    EXPECT_NO_THROW(schema.dropView("collection_1"));
-    EXPECT_NO_THROW(schema.getCollection("collection_1", true));
+    EXPECT_NO_THROW(schema.dropView(collection_name_1));
+    EXPECT_NO_THROW(schema.getCollection(collection_name_1, true));
 
     std::list<string> list_coll_name = schema.getCollectionNames();
     for (auto name : list_coll_name)
