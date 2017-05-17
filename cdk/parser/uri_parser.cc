@@ -499,8 +499,8 @@ URI_parser::TokSet URI_parser::sub_delims() const
 
 URI_parser::TokSet URI_parser::sub_delims_qry() const
 {
-  return TokSet( T_EXCLAMATION, T_DOLLAR, T_QUOTE, T_SLASH, T_POPEN, T_PCLOSE,
-                 T_ASTERISK, T_PLUS, T_SEMICOLON);
+  return TokSet( T_EXCLAMATION, T_DOLLAR, T_QUOTE, T_SLASH, T_BSLASH, T_POPEN,
+                 T_PCLOSE, T_COLON, T_ASTERISK, T_PLUS, T_SEMICOLON);
 }
 
 /*
@@ -551,16 +551,14 @@ unsigned short URI_parser::convert_val(const std::string &port) const
 */
 bool URI_parser::process_ip_address(std::string &host, std::string &port)
 {
-  bool error = false;
-
-  push();
+  Guard guard(this);
 
   if (consume_token(T_SQOPEN))
   {
     // IPv6
     consume_while(host, TokSet(T_DIGIT, T_CHAR, T_COLON));
     if (!consume_token(T_SQCLOSE))
-      error = true;
+      return false;
   }
   else
   {
@@ -572,17 +570,12 @@ bool URI_parser::process_ip_address(std::string &host, std::string &port)
     consume_while(port, T_DIGIT);
 
     if (port.empty())
-      error = true;
+      return false;
   }
 
-  if (error)
-  {
-    pop();
-    host.clear();
-    port.clear();
-  }
+  guard.release();
 
-  return !error;
+  return true;
 }
 
 
@@ -698,7 +691,7 @@ bool URI_parser::process_adress_priority(Processor &prc) const
         if (prio_str.length() == 0)
           parse_error(L"Expected priority=value");
 
-        report_address(prc, type,self->convert_val(prio_str), host, port);
+        report_address(prc, type, 1+self->convert_val(prio_str), host, port);
 
       }
       else

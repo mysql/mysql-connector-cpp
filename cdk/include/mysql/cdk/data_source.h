@@ -225,6 +225,13 @@ namespace ds {
     }
 
     template <class DS_t, class DS_opt>
+    Multi_source(const DS_t &ds, const DS_opt &opt, unsigned short prio)
+      : Multi_source()
+    {
+      add(ds, opt, prio);
+    }
+
+    template <class DS_t, class DS_opt>
     void add(const DS_t &ds, const DS_opt &opt,
              unsigned short prio)
     {

@@ -60,52 +60,18 @@ struct internal::XSession_base::Options
 };
 
 
-namespace endpoint {
-
-  struct TCPIP
-    : public Endpoint
-  {
-    Type type() const { return Endpoint::TCPIP; }
-    virtual std::string host()
-    {
-      return m_host;
-    }
-
-    virtual uint16_t    port()
-    {
-      return m_port;
-    }
-
-    TCPIP(const std::string &host, uint16_t port)
-      : m_host(host), m_port(port)
-    {}
-
-  protected:
-
-    TCPIP() : m_port(DEFAULT_MYSQLX_PORT)
-    {}
-
-    std::string m_host;
-    uint16_t    m_port;
-  };
-
-} // endpoint
-
-
-
 class internal::XSession_base::Impl
 {
-  cdk::ds::TCPIP   m_ds;
-  cdk::Session     m_sess;
-  cdk::string      m_default_db;
+  cdk::ds::Multi_source m_ms;
+  cdk::Session          m_sess;
+  cdk::string           m_default_db;
 
   std::set<XSession_base*> m_nodes;
 
   internal::BaseResult *m_current_result = NULL;
 
-  Impl(endpoint::TCPIP &ep, XSession_base::Options &opt)
-    : m_ds(ep.host(), ep.port())
-    , m_sess(m_ds, opt)
+  Impl(cdk::ds::Multi_source &ms, XSession_base::Options &opt)
+    : m_sess(ms)
   {
     if (opt.database())
       m_default_db = *opt.database();
@@ -160,9 +126,12 @@ void set_ssl_mode(cdk::connection::TLS::Options &tls_opt,
 
 struct URI_parser
   : public internal::XSession_base::Access::Options
-  , private endpoint::TCPIP
   , public parser::URI_processor
 {
+
+  cdk::ds::Multi_source m_source;
+
+  std::multimap<unsigned short, cdk::ds::TCPIP> m_hosts;
 
 #ifdef WITH_SSL
   cdk::connection::TLS::Options m_tls_opt;
@@ -177,9 +146,15 @@ struct URI_parser
   }
 
 
-  Endpoint& get_endpoint()
+  cdk::ds::Multi_source& get_data_source()
   {
-    return *this;
+    m_source.clear();
+    for (auto el : m_hosts)
+    {
+      cdk::ds::TCPIP::Options opts(*this);
+      m_source.add(el.second, opts, el.first);
+    }
+    return m_source;
   }
 
   void user(const std::string &usr) override
@@ -193,20 +168,19 @@ struct URI_parser
     m_has_pwd = true;
   }
 
-  void host(unsigned short,
+  void host(unsigned short priority,
             const std::string &host,
             unsigned short port) override
   {
-    //TODO: Change to list of hosts/ports
-    m_host = host;
-    m_port = port;
+    cdk::ds::TCPIP endpoint(host, port);
+    m_hosts.emplace(priority, endpoint);
   }
 
-  void host(unsigned short,
+  void host(unsigned short priority,
             const std::string &host) override
   {
-    //TODO: Change to list of hosts
-    m_host = host;
+    cdk::ds::TCPIP endpoint(host);
+    m_hosts.emplace(priority, endpoint);
   }
 
   virtual void path(const std::string &db) override
@@ -265,45 +239,32 @@ internal::XSession_base::XSession_base(SessionSettings settings)
     if (settings.has_option(SessionSettings::URI))
     {
       URI_parser parser(
-            settings[SessionSettings::URI].get<string>()
+            settings.find(SessionSettings::URI).get<string>()
           );
 
-      m_impl = new Impl(
-                 static_cast<endpoint::TCPIP&>(parser.get_endpoint()),
-                 static_cast<XSession_base::Options&>(parser));
+      m_impl = new Impl(parser.get_data_source(),
+                        static_cast<XSession_base::Options&>(parser));
     }
     else
     {
-      std::string host = "localhost";
-      if (settings.has_option(SessionSettings::HOST))
-        host = settings[SessionSettings::HOST].get<string>();
-
-      unsigned port = DEFAULT_MYSQLX_PORT;
-
-      if (settings.has_option(SessionSettings::PORT))
-        port = settings[SessionSettings::PORT];
-
-      if (port > 65535U)
-        throw_error("Port value out of range");
-
 
       std::string pwd_str;
       bool has_pwd = false;
 
       if (settings.has_option(SessionSettings::PWD) &&
-          settings[SessionSettings::PWD].isNull() == false)
+          settings.find(SessionSettings::PWD).isNull() == false)
       {
         has_pwd = true;
-        pwd_str = settings[SessionSettings::PWD].get<string>();
+        pwd_str = settings.find(SessionSettings::PWD).get<string>();
       }
 
-      endpoint::TCPIP ep( host, (uint16_t)port);
+
 
       string user;
 
       if (settings.has_option(SessionSettings::USER))
       {
-        user = settings[SessionSettings::USER];
+        user = settings.find(SessionSettings::USER);
       }
       else
       {
@@ -314,7 +275,7 @@ internal::XSession_base::XSession_base(SessionSettings settings)
 
       if (settings.has_option(SessionSettings::DB))
         opt.set_database(
-              settings[SessionSettings::DB].get<string>()
+              settings.find(SessionSettings::DB).get<string>()
             );
 
 
@@ -328,7 +289,7 @@ internal::XSession_base::XSession_base(SessionSettings settings)
 
 
         if (settings.has_option(SessionSettings::SSL_CA))
-          opt_ssl.set_ca(settings[SessionSettings::SSL_CA].get<string>());
+          opt_ssl.set_ca(settings.find(SessionSettings::SSL_CA).get<string>());
 
 
         // Last option, since above option will enable SSL_MODE, and this should
@@ -337,7 +298,7 @@ internal::XSession_base::XSession_base(SessionSettings settings)
         {
           set_ssl_mode(opt_ssl,
                        static_cast<SessionSettings::SSLMode>(
-                         (int)settings[SessionSettings::SSL_MODE])
+                         (int)settings.find(SessionSettings::SSL_MODE))
               );
         }
 
@@ -350,7 +311,108 @@ internal::XSession_base::XSession_base(SessionSettings settings)
 #endif
       }
 
-      m_impl = new Impl(ep, opt);
+
+      cdk::ds::Multi_source source;
+
+      std::string host = "localhost";
+      unsigned port = DEFAULT_MYSQLX_PORT;
+      unsigned priority = 0;
+
+      auto it = settings.begin();
+
+      bool initialized = false;
+      bool add = false;
+
+      //HOST can be skipped only on single host scenarios
+      bool singlehost = false;
+
+      /*
+        Check for PORT and PRIORITY settings and if present,
+        store values in port and priority variables.
+      */
+
+      auto port_prio = [&it, &settings, &port, &priority]()
+      {
+        if (it != settings.end() && it->first ==SessionSettings::PORT)
+        {
+          port = it->second;
+          if (port > 65535U)
+            throw_error("Port value out of range");
+          ++it;
+        }
+
+        if (it != settings.end() && it->first == SessionSettings::PRIORITY)
+        {
+          priority = 1 + static_cast<unsigned>(it->second);
+          if (priority > 65535U)
+            throw_error("Priority value out of range");
+        }
+        else
+        {
+          --it;
+        }
+      };
+
+      do
+      {
+
+        if (it != settings.end() && it->first ==SessionSettings::HOST)
+        {
+          if (singlehost)
+            throw Error("On multiple hosts, HOST option can't be skipped.");
+
+          add = true;
+          port = DEFAULT_MYSQLX_PORT;
+          priority = 0;
+
+          host = it->second.get<string>();
+
+          if (host.empty())
+            throw Error("Empty host.");
+
+          ++it;
+
+          port_prio();
+
+        }
+        else if (it->first ==SessionSettings::PORT)
+        {
+          if (!initialized)
+          {
+            add = true;
+            singlehost = true;
+            port_prio();
+          }
+          else
+          {
+            throw Error("Incorrect settings order! Passed Port without previously passing HOST");
+          }
+
+        }
+        else if (it->first ==SessionSettings::PRIORITY)
+        {
+          throw Error("Incorrect settings order! Passed Priority without previously passing HOST");
+        }
+
+        ++it;
+
+        if (add || (it == settings.end() && !initialized))
+        {
+          source.add(cdk::ds::TCPIP( host, static_cast<unsigned short>(port)),
+                     static_cast<cdk::ds::TCPIP::Options>(opt),
+                     static_cast<unsigned short>(priority));
+
+          initialized = true;
+
+          if (it == settings.end())
+            break;
+
+          add = false;
+        }
+
+      } while (it != settings.end());
+
+      m_impl = new Impl(source, opt);
 
     }
   }

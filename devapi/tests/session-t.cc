@@ -610,6 +610,156 @@ TEST_F(Sess, ipv6)
   }
 }
 
+TEST_F(Sess, failover)
+{
+
+  {
+    XSession s(this);
+
+    s.createSchema("test", true);
+  }
+
+  //URI multiple hosts tests
+  {
+    std::stringstream uri;
+
+    uri << "mysqlx://" << get_user();
+
+    if (get_password())
+      uri << ":" << get_password();
+
+    uri << "@["
+           "localhost6,"
+           "127.0.1.250:33060,"
+           "[::2]:1,";
+    uri << "127.0.0.1";
+    if (get_port() != 0)
+      uri << ":" <<get_port();
+
+    uri << "]/test";
+
+    mysqlx::XSession s(uri.str());
+
+    EXPECT_EQ(string("test"),s.getDefaultSchema().getName());
+  }
+
+  //URI multiple hosts tests with priority
+  {
+    std::stringstream uri;
+
+    uri << "mysqlx://" << get_user();
+
+    if (get_password())
+      uri << ":" << get_password();
+
+    uri << "@["
+           "(address=localhost6, priority=99) ,"
+           "(address=127.0.1.250:33060, priority=99),"
+           "(address=[::2]:1, priority=1),";
+    uri << "(address=127.0.0.1";
+    if (get_port() != 0)
+      uri << ":" <<get_port();
+    uri << ", priority=100)";
+
+    uri << "]/test";
+
+    mysqlx::XSession s(uri.str());
+
+    EXPECT_EQ(string("test"),s.getDefaultSchema().getName());
+  }
+
+  {
+    mysqlx::XSession s(SessionSettings::USER, get_user(),
+                       SessionSettings::PWD, get_password() ? get_password() : nullptr,
+                       SessionSettings::HOST, "server.example.com",
+                       SessionSettings::PRIORITY, 1,
+                       SessionSettings::HOST, "192.0.2.11",
+                       SessionSettings::PORT, 33060,
+                       SessionSettings::PRIORITY, 99,
+                       SessionSettings::HOST, "[2001:db8:85a3:8d3:1319:8a2e:370:7348]",
+                       SessionSettings::PORT, 1,
+                       SessionSettings::PRIORITY, 2,
+                       SessionSettings::HOST, "::1",
+                       SessionSettings::PORT, get_port(),
+                       SessionSettings::PRIORITY, 100,
+                       SessionSettings::DB, "test");
+
+    EXPECT_EQ(string("test"),s.getDefaultSchema().getName());
+  }
+
+  //SessionSettings::set() tests
+  {
+    SessionSettings settings(SessionSettings::USER, get_user(),
+                             SessionSettings::PWD, get_password() ?
+                               get_password() :
+                               nullptr);
+
+    EXPECT_THROW(settings.set(SessionSettings::PORT, get_port()), Error);
+
+    EXPECT_THROW(settings.set(SessionSettings::PRIORITY, 1), Error);
+
+    EXPECT_THROW(settings.set(SessionSettings::HOST, "server.example.com",
+                              SessionSettings::USER, get_user(),
+                              SessionSettings::PORT, 1,
+                              SessionSettings::PRIORITY, 1), Error);
+
+    settings.erase(SessionSettings::HOST);
+
+    settings.set(SessionSettings::HOST, "server.example.com",
+                 SessionSettings::PRIORITY, 1,
+                 SessionSettings::USER, get_user(),
+                 SessionSettings::PWD, get_password() ?
+                   get_password() :
+                   nullptr,
+                 SessionSettings::HOST, "192.0.2.11",
+                 SessionSettings::PORT, 33060,
+                 SessionSettings::PRIORITY, 98,
+                 SessionSettings::HOST, "[2001:db8:85a3:8d3:1319:8a2e:370:7348]",
+                 SessionSettings::PRIORITY, 2,
+                 SessionSettings::HOST, "::1",
+                 SessionSettings::PORT, get_port(),
+                 SessionSettings::PRIORITY, 99,
+                 SessionSettings::DB, "test"
+                 );
+
+
+    mysqlx::XSession s(settings);
+
+    EXPECT_EQ(string("test"),s.getDefaultSchema().getName());
+  }
+
+  //SessionSettings::set() tests without Port and Priority
+  {
+    SessionSettings settings(SessionSettings::USER, get_user(),
+                             SessionSettings::PWD, get_password() ?
+                               get_password() :
+                               nullptr);
+
+    settings.set(SessionSettings::HOST, "192.0.2.11",
+                 SessionSettings::DB, "test"
+                 );
+
+
+    EXPECT_THROW(mysqlx::XSession s(settings), Error);
+  }
+
+  //Multiple host with 1st host defined only by port
+  {
+    SessionSettings settings(SessionSettings::USER, get_user(),
+                             SessionSettings::PWD, get_password() ?
+                               get_password() :
+                               nullptr,
+                             SessionSettings::PORT, 13009);
+
+    settings.set(SessionSettings::HOST, "192.0.2.11",
+                 SessionSettings::PORT, 33060);
+
+    EXPECT_THROW(mysqlx::XSession s(settings), Error);
+  }
+
+
+}
+
 
 TEST_F(Sess, bugs)
 {
