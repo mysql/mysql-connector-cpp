@@ -207,7 +207,7 @@ TEST_F(Sess, trx)
   SKIP_IF_NO_XPLUGIN;
 
   Collection coll = get_sess().getSchema("test").createCollection("c", true);
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   try {
     coll.getSession().startTransaction();

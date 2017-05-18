@@ -734,15 +734,6 @@ namespace internal {
   public:
 
     /**
-      Return operation which removes all documents from the collection.
-    */
-
-    virtual CollectionRemove remove()
-    {
-      return CollectionRemove(*m_coll);
-    }
-
-    /**
       Return operation which removes documents satisfying given expression.
     */
 
@@ -1019,10 +1010,6 @@ private:
 
 public:
 
-  /// Create modify operation for all documents in a collection.
-
-  CollectionModify(Collection &coll);
-
   /// Create operation which modifies selected documents in a collection.
 
   CollectionModify(Collection &base, const string &expr);
@@ -1140,18 +1127,6 @@ namespace internal {
     : public virtual CollectionOpBase
   {
   public:
-
-    /**
-      Return operation which modifies all documents in the collection.
-    */
-
-    CollectionModify modify()
-    {
-      try {
-        return CollectionModify(*m_coll);
-      }
-      CATCH_AND_WRAP;
-    }
 
     /**
       Return operation which modifies documents that satisfy given expression.

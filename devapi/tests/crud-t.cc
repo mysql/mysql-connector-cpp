@@ -78,7 +78,7 @@ TEST_F(Crud, basic)
   Schema sch = sess.getSchema("test");
   Collection coll = sch.createCollection("c1", true);
 
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   {
     RowResult res = sql("select count(*) from test.c1");
@@ -193,7 +193,7 @@ TEST_F(Crud, life_time)
 
   {
     Collection coll = getSchema("test").createCollection("life_time", true);
-    coll.remove().execute();
+    coll.remove("true").execute();
     coll.add("{ \"name\": \"bar\", \"age\": 2 }").execute();
   }
 
@@ -244,7 +244,10 @@ TEST_F(Crud, add_doc_negative)
 
   Collection coll = getSchema("test").createCollection("c1", true);
 
-  coll.remove().execute();
+  coll.remove("true").execute();
+
+  EXPECT_THROW(coll.remove("").execute(), mysqlx::Error);
+  EXPECT_THROW(coll.modify("").set("age",1).execute(), mysqlx::Error);
 
   EXPECT_THROW(coll.add("").execute(), mysqlx::Error);
   EXPECT_THROW(coll.add("invaliddata").execute(), mysqlx::Error);
@@ -258,7 +261,7 @@ TEST_F(Crud, arrays)
 
   Collection coll = getSchema("test").createCollection("c1", true);
 
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   coll.add("{ \"arr\": [ 1, 2, \"foo\", [ 3, { \"bar\" : 123 } ] ] }")
       .execute();
@@ -300,7 +303,7 @@ TEST_F(Crud, arrays)
 
 void Crud::add_data(Collection &coll)
 {
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   {
     RowResult res = sql("select count(*) from test.c1");
@@ -684,7 +687,7 @@ TEST_F(Crud, order_limit)
 
   // Modify the first line (ordered by age) incrementing 1 to the age.
 
-  coll.modify()
+  coll.modify("true")
       .set("age",expr("age+1"))
       .sort("age ASC")
       .limit(1)
@@ -716,7 +719,7 @@ TEST_F(Crud, order_limit)
 
   // Remove the two lines
 
-  coll.remove().sort("age ASC", "name DESC")
+  coll.remove("true").sort("age ASC", "name DESC")
                .limit(2)
                .execute();
 
@@ -1303,8 +1306,8 @@ TEST_F(Crud, doc_path)
 
   coll.add( "{\"date\": {\"monthName\":\"December\", \"days\":[1,2,3]}}").execute();
 
-  coll.modify().set("date.monthName", "February" ).execute();
-  coll.modify().set("$.date.days[0]", 4 ).execute();
+  coll.modify("true").set("date.monthName", "February" ).execute();
+  coll.modify("true").set("$.date.days[0]", 4 ).execute();
 
   DocResult docs = coll.find().execute();
 
@@ -1313,12 +1316,12 @@ TEST_F(Crud, doc_path)
   EXPECT_EQ(string("February"), static_cast<string>(doc["date"]["monthName"]));
   EXPECT_EQ(4, static_cast<int>(doc["date"]["days"][0]));
 
-  coll.modify().arrayDelete("date.days[0]").execute();
+  coll.modify("true").arrayDelete("date.days[0]").execute();
   docs = coll.find().execute();
   doc = docs.fetchOne();
   EXPECT_EQ(2, static_cast<int>(doc["date"]["days"][0]));
 
-  coll.modify().unset("date.days").execute();
+  coll.modify("true").unset("date.days").execute();
   docs = coll.find().execute();
   doc = docs.fetchOne();
   EXPECT_THROW(static_cast<int>(doc["date"]["days"][0]), Error);
@@ -1402,7 +1405,7 @@ TEST_F(Crud, coll_as_table)
   Collection coll = sch.createCollection("coll", true);
 
   // Clean up
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   // Add Doc to collection
   DbDoc doc("{ \"name\": \"foo\", \"age\": 1 }");
@@ -1474,7 +1477,7 @@ TEST_F(Crud, get_ids)
   Collection coll = sch.createCollection("coll", true);
 
   // Clean up
-  coll.remove().execute();
+  coll.remove("true").execute();
 
 
   // Add Doc to collection
@@ -1487,7 +1490,7 @@ TEST_F(Crud, get_ids)
 
   EXPECT_EQ(string("ABCDEFGHIJKLMNOPQRTSUVWXYZ012345"), string(res.getDocumentId()));
 
-  res = coll.remove().execute();
+  res = coll.remove("true").execute();
 
   // This functions can only be used on add() operations
   EXPECT_THROW(res.getDocumentId(), Error);
@@ -1520,7 +1523,7 @@ TEST_F(Crud, count)
   Collection coll = sch.createCollection("coll", true);
 
   //Remove all rows
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   {
     CollectionAdd add(coll);
@@ -1538,7 +1541,7 @@ TEST_F(Crud, count)
 
   EXPECT_EQ(1000, coll.count());
 
-  coll.remove().limit(500).execute();
+  coll.remove("true").limit(500).execute();
 
   Table tbl = sch.getCollectionAsTable("coll");
 
@@ -1560,7 +1563,7 @@ TEST_F(Crud, buffered)
   Schema sch = sess.getSchema("test");
   Collection coll = sch.createCollection("coll", true);
 
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   for (int j = 0; j < 10; ++j)
   {
@@ -1660,7 +1663,7 @@ TEST_F(Crud, iterators)
   Schema sch = sess.getSchema("test");
   Collection coll = sch.createCollection("coll", true);
 
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   {
     CollectionAdd add(coll);
@@ -1795,7 +1798,7 @@ TEST_F(Crud, cached_results)
   Collection coll = sess.createSchema("test", true)
                         .createCollection("test", true);
 
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   coll.add("{\"user\":\"Foo\"}").execute();
   coll.add("{\"user\":\"Bar\"}").execute();
@@ -1835,7 +1838,7 @@ TEST_F(Crud, add_empty)
   Schema sch = sess.getSchema("test");
   Collection coll = sch.createCollection("c1", true);
 
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   //Check bug when Result was created uninitialized
   Result add;
@@ -1882,7 +1885,7 @@ TEST_F(Crud, group_by_having)
 
   Table tbl = sess.createSchema("test", true).getCollectionAsTable("coll", true);
 
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   std::vector<string> names = { "Foo", "Baz", "Bar" };
 

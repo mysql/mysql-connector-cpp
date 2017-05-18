@@ -1118,8 +1118,7 @@ public:
   void add_where(const mysqlx::string &expr)
   {
     m_where_expr = expr;
-    if (!m_where_expr.empty())
-      m_expr.reset(new parser::Expression_parser(PM, m_where_expr));
+    m_expr.reset(new parser::Expression_parser(PM, m_where_expr));
   }
 
   cdk::Expression* get_where() const

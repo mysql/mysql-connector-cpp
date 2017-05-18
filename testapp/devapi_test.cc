@@ -56,7 +56,7 @@ try {
 
   cout <<"Inserting documents..." <<endl;
 
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   {
     Result add;

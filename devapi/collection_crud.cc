@@ -625,12 +625,6 @@ class Op_collection_modify
 };
 
 
-CollectionModify::CollectionModify(Collection &coll)
-try
-  : Executable(new Op_collection_modify(coll))
-{}
-CATCH_AND_WRAP
-
 CollectionModify::CollectionModify(Collection &coll, const mysqlx::string &expr)
 try
   : Executable(new Op_collection_modify(coll, expr))
