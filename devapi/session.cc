@@ -838,8 +838,10 @@ void Schema::dropCollection(const mysqlx::string& collection)
   try{
     Args args(m_name, collection);
     // Doesn't throw if collection doesn't exit (server error 1051)
-    check_reply_skip_error_throw(m_sess->get_cdk_session().admin("drop_collection", args),
-                                 1051);
+    check_reply_skip_error_throw(
+      m_sess->get_cdk_session().admin("drop_collection", args),
+      1051
+    );
   }
   CATCH_AND_WRAP
 }
@@ -850,9 +852,16 @@ void Schema::dropView(const mysqlx::string& name)
   Table_ref view(getName(),name);
 
   try {
-    // Note: false means that we do not check for existence of dropped view.
-    cdk::Reply r(m_sess->get_cdk_session().view_drop(view, false));
-    r.wait();
+    /*
+      Note: false argument to view_drop() means that we do not check for
+      the existence of the view being dropped.
+      We do not throw error 1347 (object is not a view) treating it the same
+      as the case when the view does not exist.
+    */
+    check_reply_skip_error_throw(
+      m_sess->get_cdk_session().view_drop(view, false),
+      1347
+    );
   }
   CATCH_AND_WRAP
 }
