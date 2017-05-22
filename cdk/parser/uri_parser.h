@@ -31,6 +31,9 @@
 PUSH_SYS_WARNINGS
 #include <list>
 #include <stack>
+#include <bitset>
+#include <iomanip>
+#include <functional>
 POP_SYS_WARNINGS
 
 
@@ -48,7 +51,7 @@ public:
   /*
     Callbacks for the main components of the URI:
 
-    mysqlx://<user>:<password>@<host>:<port>/<path>
+    mysqlx://<user>:<password>@<host>:<port>/<schema>
 
     If an optional component is not present, the corresponding callback
     is not called.
@@ -56,6 +59,14 @@ public:
 
   virtual void user(const std::string&) {}
   virtual void password(const std::string&) {}
+  virtual void schema(const std::string&) {}
+
+  /*
+    Callbacks host(), socket() and pipe() can be called several times to
+    report multiple targets listed in a connection string. They report
+    priority 1+x if user specified priority x, or 0 if no priority was pecified.
+  */
+
   virtual void host(unsigned short /*priority*/,
                     const std::string &/*host*/)
   {}
@@ -63,14 +74,16 @@ public:
                     const std::string &/*host*/,
                     unsigned short /*port*/)
   {}
+
   // Report Unix socket path.
   virtual void socket(unsigned short /*priority*/,
                       const std::string &/*socket_path*/)
   {}
+
   // Report Win pipe path, including "\\.\" prefix.
   virtual void pipe(unsigned short /*priority*/, const std::string &/*pipe*/)
   {}
-  virtual void path(const std::string&) {}
+
 
   /*
     Callbacks for reporting the query component, which is a sequence
@@ -106,24 +119,12 @@ void parse_conn_str(const std::string &str, URI_processor &prc);
   prefix.
 */
 
-  class URI_parser
+class URI_parser
   : public cdk::api::Expr_base<URI_processor>
 {
 public:
 
   class Error;
-
-  /*
-    Constants representing top-level parts of an URI:
-
-    mysqlx://........../.....?......#........
-    ^^^^^^   ^^^^^^^^^^ ^^^^^ ^^^^^^ ^^^^^^^^
-    SCHEME   AUTHORITY  PATH  QUERY  FRAGMENT
-  */
-
-  enum part_t {
-    SCHEME, AUTHORITY, PATH, QUERY, FRAGMENT, END
-  };
 
 private:
 
@@ -132,13 +133,14 @@ private:
     If m_pct is true then this character was read in the %XX form (and then
     it is never treated as a special URI charcater.
   */
+
   struct Token
   {
-    Token() : m_char(0)
+    Token() : m_char(0), m_pct(false)
     {}
 
-    Token(char c)
-      : m_char(c)
+    Token(char c, bool pct =false)
+      : m_char(c), m_pct(pct)
     {}
 
     short get_type() const;
@@ -148,9 +150,15 @@ private:
       return m_char;
     }
 
+    bool pct_encoded() const
+    {
+      return m_pct;
+    }
+
   private:
 
     char  m_char;
+    bool  m_pct;
 
     friend class Error;
   };
@@ -177,20 +185,45 @@ private:
     m_pos_next - position of the next token following the current one;
                  if there are no more tokens then m_pos_next = m_pos,
                  otherwise m_pos_next > m_pos.
-
   */
 
-  std::stack<Token>  m_tok;
-  std::stack<size_t> m_pos;
-  std::stack<size_t> m_pos_next;
+  struct State
+  {
+    Token  m_tok;
+    size_t m_pos = 0;
+    size_t m_pos_next = 0;
 
+    State(const Token &tok, size_t pos, size_t next)
+      : m_tok(tok), m_pos(pos), m_pos_next(next)
+    {}
+  };
 
+  // We use stack to be able to easily save and restore state.
+
+  std::stack<State> m_state;
+
+  size_t get_pos() const
+  {
+    return m_state.empty() ? 0 : m_state.top().m_pos;
+  }
+
+  void push()
+  {
+    assert(!m_state.empty());
+    m_state.push(m_state.top());
+  }
+
+  void pop()
+  {
+    assert(!m_state.empty());
+    m_state.pop();
+  }
 
 public:
 
   /*
     Create parser for a given string. If 'force_uri' parameter is true,
-    then the string is expecte to be a full URI with the schema part
+    then the string is expected to be a full URI with the schema part
     (errors are reported if schema is missing). Otherwise 'uri' is treated
     as a connection string with optional scheme prefix.
   */
@@ -198,9 +231,8 @@ public:
   URI_parser(const std::string &uri, bool force_uri=false)
     : m_uri(uri), m_force_uri(force_uri)
   {
-    m_tok.push(Token('\0'));
-    m_pos.push(0);
-    m_pos_next.push(0);
+    // make sure state is not empty (safety)
+    m_state.emplace(Token(), 0, 0);
   }
 
   /*
@@ -209,7 +241,10 @@ public:
     if parsing was not possible. These errors are derived from URI_parser::Error.
   */
 
-  void process(Processor &prc) const;
+  void process(Processor &prc) const
+  {
+    const_cast<URI_parser*>(this)->parse(prc);
+  }
 
   void process_if(Processor *prc) const
   {
@@ -219,80 +254,79 @@ public:
   }
 
 
-
-
-
-  private:
-
-  enum class Address_type { NONE, IP, SOCKET, PIPE};
+private:
 
   struct TokSet;
 
-  void process_userinfo(Processor &prc) const;
-  Address_type process_adress(std::string &address, std::string &port);
-  unsigned short convert_val(const std::string &port) const;
-  bool process_ip_address(std::string &host, std::string &port);
-  bool process_socket_prefix(std::string &socket);
-  bool process_pct_socket(std::string &socket);
-  bool process_unencoded_socket(std::string &socket);
-  bool process_socket(std::string &socket);
-  bool process_pipe_prefix(std::string &pipe);
-  bool process_pct_pipe(std::string &pipe);
-  bool process_unencoded_pipe(std::string &pipe);
-  bool process_pipe(std::string &pipe);
-  bool process_unencoded_file(std::string &file);
-  bool process_file(std::string &file);
+  // Character classes used in the grammar.
 
-  bool process_value(TokSet, std::string &value);
-  bool process_tokens(TokSet, std::string &value);
-  bool process_pct_encoded_value(std::string &encoded);
-  TokSet unreserved() const;
-  TokSet sub_delims() const;
-  TokSet sub_delims_qry() const;
-  TokSet gen_delims() const;
+  static const TokSet unreserved;
+  static const TokSet gen_delims;
+  static const TokSet host_chars;
+  static const TokSet user_chars;
+  static const TokSet db_chars;
+
+  void parse(Processor &prc);
+
+  // Methods corresponding to grammar rules.
+
+  void parse_connection(Processor &prc);
+  bool parse_userinfo(Processor &prc);
+  void parse_path(Processor &prc);
+  void parse_query(Processor &prc);
+  void parse_val_list(const std::string&, Processor &prc);
+
+  typedef std::bitset<2> Addr_opts;
+  static constexpr size_t ADDR_IP = 0;
+  static constexpr size_t ADDR_OTHER = 1;
+
+  void parse_list_entry(Processor &prc);
+  Addr_opts parse_host(std::string &address, std::string &port);
+  bool parse_ip_address(std::string &host, std::string &port);
+  void parse_balanced(std::string &chars, bool include_parens = false);
+
+  // Helper methods.
+
+  unsigned short convert_val(const std::string &port) const;
   bool report_address(Processor &prc,
-                      Address_type type,
+                      Addr_opts opts,
                       unsigned short priority,
                       const std::string &host,
                       const std::string &port) const;
-  bool process_adress_list(Processor &prc) const;
-  bool process_adress_priority(Processor &prc) const;
-  void process_path(Processor &prc) const;
-
-
 
   bool check_scheme(bool);
-  void process_query(Processor &prc) const;
-  void process_list(const std::string&, Processor &prc) const;
 
-  bool get_token();
+  // Methods for processing tokens.
+
   Token consume_token();
   bool consume_token(short tt);
-  template <typename C>
-  bool consume_word_base(const std::string &word, C compare);
+  bool consume_word_base(const std::string &word,
+                         std::function<bool(char,char)> compare);
   bool consume_word(const std::string &word);
   bool consume_word_ci(const std::string& word);
 
   void consume_until(std::string&, const TokSet&);
   void consume_while(std::string&, const TokSet&);
   void consume_all(std::string&);
-  void trim_spaces();
   bool has_more_tokens() const;
   bool at_end() const;
 
   bool next_token_is(short) const;
   bool next_token_in(const TokSet&) const;
 
-  void push();
-  void pop();
+  bool get_token();
+
+  // Error reporting methods.
 
   void parse_error(const cdk::string&) const;
+  void invalid_char(char) const;
   void unexpected(const std::string&, const cdk::string &msg = cdk::string()) const;
   void unexpected(char, const cdk::string &msg = cdk::string()) const;
 
   struct Guard;
 
-  };
+  friend Error;
+};
 
 
 /*
@@ -305,11 +339,11 @@ class URI_parser::Error
 protected:
 
   Error(const URI_parser *p, const cdk::string &descr = cdk::string())
-  : Error_base<std::string>(p->m_uri, p->m_pos.top(), descr)
+  : Error_base<std::string>(p->m_uri, p->get_pos(), descr)
   {
   }
 
-  friend class URI_parser;
+  friend URI_parser;
 };
 
 

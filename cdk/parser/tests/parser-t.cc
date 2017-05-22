@@ -1199,7 +1199,7 @@ struct URI_prc : parser::URI_processor
     m_data->hosts.push_back(Pipe(priority, pipe));
   }
 
-  void path(const std::string &val) override
+  void schema(const std::string &val) override
   {
     m_data->path = val;
   }
@@ -1272,6 +1272,10 @@ TEST(Parser, uri)
       URI_parts(Host("host", 0))
     },
     {
+      "host:",  // default port
+      URI_parts(Host("host", 0))
+    },
+    {
       "host/path",
       URI_parts(Host("host", 0), "path")
     },
@@ -1281,11 +1285,15 @@ TEST(Parser, uri)
     },
     {
       "host/",
-      URI_parts(Host("host", 0), "")
+      URI_parts(Host("host", 0),"")
     },
     {
       "host:123/",
       URI_parts(Host("host", 123), "")
+    },
+    {
+      "host:/db",
+      URI_parts(Host("host", 0), "db")
     },
     {
       "host:123/foo?key=val",
@@ -1305,7 +1313,7 @@ TEST(Parser, uri)
     },
     // host list
     {
-      "[ 127.0.0.1]",
+      "[127.0.0.1]",
       URI_parts(Host("127.0.0.1"))
     },
     {
@@ -1317,26 +1325,26 @@ TEST(Parser, uri)
       URI_parts(Host("host1"))
     },
     {
-      "[ 127.0.0.1, host, [::1] ]",
+      "[127.0.0.1,host,[::1]]",
       URI_parts(Host("127.0.0.1"), Host("host"), Host("::1"))
     },
     {
-      "[ 127.0.0.1, 127.0.0.2 ]/?key1=val1&key2=val2",
+      "[127.0.0.1,127.0.0.2]/?key1=val1&key2=val2",
       URI_parts(Host("127.0.0.1"), Host("127.0.0.2"),
                 Query("key1", "val1"), Query("key2", "val2"))
     },
     {
-      "[ host1, host2]",
+      "[host1,host2]",
       URI_parts(Host("host1"), Host("host2"))
     },
     {
-      "[ server.example.com, 192.0.2.11:33060, [2001:db8:85a3:8d3:1319:8a2e:370:7348]:1 ]/database",
+      "[server.example.com,192.0.2.11:33060,[2001:db8:85a3:8d3:1319:8a2e:370:7348]:1]/database",
       URI_parts(Host("server.example.com"), Host("192.0.2.11",33060),
                 Host("2001:db8:85a3:8d3:1319:8a2e:370:7348",1 ), "database")
     },
     {
-      "[ (Address=127.0.0.1, Priority=2), (Address=example.com, Priority=100) ]/database",
-      URI_parts(Host(3, "127.0.0.1"), Host(101, "example.com"), "database")
+      "[(Address=127.0.0.1,Priority=2),(Address=example.com,Priority=100)]/database",
+      URI_parts(Host(2, "127.0.0.1"), Host(100, "example.com"), "database")
     },
     {
       "\\\\.\\named_pipe.socket",
@@ -1347,12 +1355,12 @@ TEST(Parser, uri)
       URI_parts(Pipe("\\\\.\\named pipe.socket"), "database")
     },
     {
-      "(\\\\.\\named:/?#2[1]@pipe.socket)/database",
+      "(\\\\.\\named:/?%232[1]@pipe.socket)/database",
       URI_parts(Pipe("\\\\.\\named:/?#2[1]@pipe.socket"), "database")
     },
     {
-      "(/mysql:/?#2[1]@socket)/database",
-      URI_parts(Unix_socket("/mysql:/?#2[1]@socket"), "database")
+      "(/mysql:/?%23(2[1)]@socket)/database",
+      URI_parts(Unix_socket("/mysql:/?#(2[1)]@socket"), "database")
     },
     {
       ".mysql.sock",
@@ -1362,15 +1370,10 @@ TEST(Parser, uri)
       ".mysql.sock/database?qry=val&qry2=2017",
       URI_parts(Unix_socket(".mysql.sock"), "database",
                 Query("qry", "val"),Query("qry2", "2017"))
-    },
-    {
-      ".mysql.sock/database?qry=val&qry2=c:\\teste\\cert.ca",
-      URI_parts(Unix_socket(".mysql.sock"), "database",
-                Query("qry", "val"),Query("qry2", "c:\\teste\\cert.ca"))
     }
   };
 
-  //unsigned pos = 3;
+  //unsigned pos = 23;
   for (unsigned pos = 0; pos < sizeof(test_uri) / sizeof(URI_test); ++pos)
   {
     std::string original_uri = test_uri[pos].uri;
@@ -1422,7 +1425,6 @@ TEST(Parser, uri)
       }
     }
   }
-
 
   cout << endl << "---- test queries ----" << endl;
 
@@ -1498,13 +1500,11 @@ TEST(Parser, uri)
   {
     "host#",
     "host:foo",
-    "host:",
     "host:1234567",
     "host:-127",
     "user@host#",
     "user:pwd@host#",
     "user:pwd@host:foo",
-    "user:pwd@host:/db",
     "host/db#foo",
     "host/db/foo",
     "host/db?query#foo",
@@ -1512,7 +1512,8 @@ TEST(Parser, uri)
     "host/db?a=[a,b,c]foo=bar",
     "host/db?a=[a,b=foo",
     "[::1]:port:123",
-    "[::1"
+    "[::1",
+    "<foo.example.com:123/db>"
     //"host/db?l=[a,b&c]" TODO: should this fail?
     // TODO: allowed chars in host/path component
   };
@@ -1547,7 +1548,3 @@ TEST(Parser, uri)
 
 }
 
-TEST(Parser, uri_failover)
-{
-
-}
