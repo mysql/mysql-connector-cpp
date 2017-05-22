@@ -691,7 +691,11 @@ bool URI_parser::process_adress_priority(Processor &prc) const
         if (prio_str.length() == 0)
           parse_error(L"Expected priority=value");
 
-        report_address(prc, type, 1+self->convert_val(prio_str), host, port);
+        report_address(prc,
+                       type,
+                       static_cast<unsigned short>(1+self->convert_val(prio_str)),
+                       host,
+                       port);
 
       }
       else
