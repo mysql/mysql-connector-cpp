@@ -423,7 +423,7 @@ TEST_F(Sess, ssl_session)
   //URI using ssl-mode=disabled
   {
     std::stringstream ssl_off;
-    ssl_off << uri.str() << "/?ssl-mode=disabled";
+    ssl_off << uri.str() << "/?sSl-mODe=DIsabled";
     mysqlx::XSession sess(ssl_off.str());
     check_ssl(sess, false);
   }
@@ -432,12 +432,17 @@ TEST_F(Sess, ssl_session)
   {
     std::stringstream uri_ssl;
     //Enable SSL
-    uri_ssl << uri.str() << "/?ssl-mode=required";
+    uri_ssl << uri.str() << "/?SSl-Mode=RequireD";
 
     mysqlx::XSession sess(uri_ssl.str());
     check_ssl(sess, true);
   }
 
+  {
+    std::stringstream uri_wrong;
+    uri_wrong << uri.str() << "/?ssl-nonexisting=true";
+    EXPECT_THROW(mysqlx::XSession sess(uri_wrong.str()), mysqlx::Error);
+  }
 
   //using wrong ssl-ca as SessionSettings
   {
@@ -455,7 +460,7 @@ TEST_F(Sess, ssl_session)
   //using wrong ssl-ca and ssl-ca-path on URI
   {
     std::stringstream bad_uri;
-    bad_uri << uri.str() << "/?ssl-mode=verify_ca&ssl-ca=" << "unknown.file";
+    bad_uri << uri.str() << "/?Ssl-modE=VErify_Ca&sSl-Ca=" << "unknown.file";
 
     EXPECT_THROW(mysqlx::XSession sess(bad_uri.str()), mysqlx::Error);
   }
@@ -597,7 +602,7 @@ TEST_F(Sess, ipv6)
   }
 
   //Disable SSL_MODE
-  uri << "/?ssl-mode=DISABLED";
+  uri << "/?Ssl-Mode=DisabLED";
   {
     mysqlx::XSession sess(uri.str());
 

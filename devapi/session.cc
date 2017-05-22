@@ -239,7 +239,11 @@ struct URI_parser
 
   void key_val(const std::string &key, const std::string &val) override
   {
-    if (key == "ssl-mode")
+    std::string lc_key = key;
+    lc_key.resize(key.size());
+    std::transform(key.begin(), key.end(), lc_key.begin(), ::tolower);
+
+    if (lc_key == "ssl-mode")
     {
 #ifdef WITH_SSL
 
@@ -255,7 +259,7 @@ struct URI_parser
             " without TLS support."
             );
 #endif
-    } else if (key == "ssl-ca")
+    } else if (lc_key == "ssl-ca")
     {
 #ifdef WITH_SSL
 

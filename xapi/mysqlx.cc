@@ -69,6 +69,20 @@
       *err_code = e.code().value(); \
     if (sess) { delete sess; sess = NULL; } \
   } \
+ catch(const Mysqlx_exception &e) \
+  { \
+    if (out_error) \
+    { \
+      size_t msg_len = e.message().length();\
+      size_t cpy_len = msg_len >= MYSQLX_MAX_ERROR_LEN - 1 ? \
+                       MYSQLX_MAX_ERROR_LEN - 1 : msg_len; \
+       memcpy(out_error, e.message().data(), cpy_len); \
+       out_error[cpy_len] = '\0'; \
+    } \
+    if (err_code) \
+      *err_code = e.code(); \
+    if (sess) { delete sess; sess = NULL; } \
+  } \
   catch(...) \
   { \
     if (out_error) \
