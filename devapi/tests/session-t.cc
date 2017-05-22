@@ -617,6 +617,7 @@ TEST_F(Sess, ipv6)
   }
 }
 
+
 TEST_F(Sess, failover)
 {
 
@@ -626,7 +627,21 @@ TEST_F(Sess, failover)
     s.createSchema("test", true);
   }
 
-  //URI multiple hosts tests
+  cout << "Host with and without priority" << endl;
+
+  {
+    std::stringstream uri;
+
+    uri << "[(address=localhost:" << get_port() <<",priority=0)";
+    uri << ",127.0.0.1:" << get_port();
+    uri << "]";
+    EXPECT_THROW(
+      mysqlx::XSession s(uri.str())
+      , Error
+    );
+  }
+
+  cout << "URI multiple hosts tests" << endl;
   {
     std::stringstream uri;
 
@@ -650,7 +665,8 @@ TEST_F(Sess, failover)
     EXPECT_EQ(string("test"),s.getDefaultSchema().getName());
   }
 
-  //URI multiple hosts tests with priority
+  cout << "URI multiple hosts tests with priority" << endl;
+
   {
     std::stringstream uri;
 
@@ -675,6 +691,8 @@ TEST_F(Sess, failover)
     EXPECT_EQ(string("test"),s.getDefaultSchema().getName());
   }
 
+  cout << "Using session settings" << endl;
+
   {
     mysqlx::XSession s(SessionSettings::USER, get_user(),
                        SessionSettings::PWD, get_password() ? get_password() : nullptr,
@@ -694,7 +712,8 @@ TEST_F(Sess, failover)
     EXPECT_EQ(string("test"),s.getDefaultSchema().getName());
   }
 
-  //SessionSettings::set() tests
+  cout << "SessionSettings::set() tests" << endl;
+
   {
     SessionSettings settings(SessionSettings::USER, get_user(),
                              SessionSettings::PWD, get_password() ?
@@ -735,7 +754,8 @@ TEST_F(Sess, failover)
     EXPECT_EQ(string("test"),s.getDefaultSchema().getName());
   }
 
-  //SessionSettings::set() tests without Port and Priority
+  cout << "SessionSettings::set() tests without Port and Priority" << endl;
+
   {
     SessionSettings settings(SessionSettings::USER, get_user(),
                              SessionSettings::PWD, get_password() ?
@@ -750,7 +770,8 @@ TEST_F(Sess, failover)
     EXPECT_THROW(mysqlx::XSession s(settings), Error);
   }
 
-  //Multiple host with 1st host defined only by port
+  cout << "Multiple host with 1st host defined only by port" << endl;
+
   {
     SessionSettings settings(SessionSettings::USER, get_user(),
                              SessionSettings::PWD, get_password() ?
@@ -763,7 +784,6 @@ TEST_F(Sess, failover)
 
     EXPECT_THROW(mysqlx::XSession s(settings), Error);
   }
-
 
 }
 

@@ -520,7 +520,7 @@ void URI_parser::parse_list_entry(Processor &prc)
       if (!consume_token(T_PCLOSE))
         parse_error(L"Expected ')' to close a host-priority pair");
 
-      report_address(prc, opts, convert_val(prio_str), host, port);
+      report_address(prc, opts, 1U + convert_val(prio_str), host, port);
       guard.release();
       return;
     }
