@@ -660,13 +660,13 @@ TEST_F(Sess, failover)
       uri << ":" << get_password();
 
     uri << "@["
-           "(address=localhost6, priority=99) ,"
-           "(address=127.0.1.250:33060, priority=99),"
-           "(address=[::2]:1, priority=1),";
+           "(address=localhost6,priority=99),"
+           "(address=127.0.1.250:33060,priority=99),"
+           "(address=[::2]:1,priority=1),";
     uri << "(address=127.0.0.1";
     if (get_port() != 0)
       uri << ":" <<get_port();
-    uri << ", priority=100)";
+    uri << ",priority=100)";
 
     uri << "]/test";
 

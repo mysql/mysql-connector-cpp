@@ -216,7 +216,7 @@ void connection_TLS_impl::verify_server_cert()
     throw_yassl_error_msg("No server hostname supplied");
   }
 
-  if (!(server_cert= SSL_get_peer_certificate(m_tls)))
+  if (NULL == (server_cert= SSL_get_peer_certificate(m_tls)))
   {
     throw_yassl_error_msg("Could not get server certificate");
   }

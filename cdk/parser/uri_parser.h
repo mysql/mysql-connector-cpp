@@ -277,8 +277,8 @@ private:
   void parse_val_list(const std::string&, Processor &prc);
 
   typedef std::bitset<2> Addr_opts;
-  static constexpr size_t ADDR_IP = 0;
-  static constexpr size_t ADDR_OTHER = 1;
+  static const size_t ADDR_IP = 0;
+  static const size_t ADDR_OTHER = 1;
 
   void parse_list_entry(Processor &prc);
   Addr_opts parse_host(std::string &address, std::string &port);

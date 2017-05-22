@@ -272,8 +272,8 @@ mysqlx_session_options_struct::mysqlx_session_options_struct(
                               const std::string usr, const std::string *pwd,
                               const std::string *db,
                               unsigned int ssl_mode) :
-                              m_tcp_opts(usr, pwd),
-                              m_source_state(source_state::non_priority)
+                              m_source_state(source_state::non_priority),
+                              m_tcp_opts(usr, pwd)
 {
   if (db)
     set_database(*db);

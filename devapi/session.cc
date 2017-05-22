@@ -84,9 +84,14 @@ class internal::XSession_base::Impl
 
 #ifdef WITH_SSL
 
-#define map_ssl(x) { #x, SessionSettings::SSLMode::x },
+SessionSettings::SSLMode  get_ssl_mode(const std::string &name)
+{
+  #define map_ssl(x) { #x, SessionSettings::SSLMode::x },
+  static std::map<std::string,SessionSettings::SSLMode>
+    ssl_modes{ SSL_MODE_TYPES(map_ssl) };
 
-static std::map<string,SessionSettings::SSLMode> ssl_modes = { SSL_MODE_TYPES(map_ssl) };
+  return ssl_modes[name];
+}
 
 
 void set_ssl_mode(cdk::connection::TLS::Options &tls_opt,
@@ -183,7 +188,7 @@ struct URI_parser
     m_hosts.emplace(priority, endpoint);
   }
 
-  virtual void path(const std::string &db) override
+  virtual void schema(const std::string &db) override
   {
     set_database(db);
   }
@@ -202,7 +207,7 @@ struct URI_parser
       mode.resize(val.size());
       std::transform(val.begin(), val.end(), mode.begin(), ::toupper);
 
-      set_ssl_mode(m_tls_opt, ssl_modes[mode]);
+      set_ssl_mode(m_tls_opt, get_ssl_mode(mode));
 
 #else
       throw_error(

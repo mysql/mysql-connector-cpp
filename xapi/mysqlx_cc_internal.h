@@ -487,7 +487,7 @@ public:
   unsigned int get_ssl_mode();
 
   // Implementing URI_Processor interface
-  void path(const std::string &path) override
+  void schema(const std::string &path) override
   { m_tcp_opts.set_database(path); }
 
   void key_val(const std::string& key) override;

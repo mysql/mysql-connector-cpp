@@ -963,17 +963,17 @@ TEST_F(xapi, failover_test_url)
 
   if (m_xplugin_pwd)
   {
-    sprintf(conn_str, "%s:%s@[(address=%s:%d, priority=100),"\
-                      "(address=%s:%d, priority=90)," \
-                      "(address=%s:%d, priority=80)]/%s",
+    sprintf(conn_str, "%s:%s@[(address=%s:%d,priority=100),"\
+                      "(address=%s:%d,priority=90)," \
+                      "(address=%s:%d,priority=80)]/%s",
                       m_xplugin_usr, m_xplugin_pwd,
                       m_xplugin_host, m_xplugin_port + 1,
                       m_xplugin_host, m_xplugin_port + 2,
                       m_xplugin_host, m_xplugin_port, db_name );
 
-    sprintf(conn_str2, "%s:%s@[(address=%s:%d, priority=100),"\
+    sprintf(conn_str2, "%s:%s@[(address=%s:%d,priority=100),"\
                        "address=%s:%d," \
-                       "(address=%s:%d, priority=80)]/%s",
+                       "(address=%s:%d,priority=80)]/%s",
                        m_xplugin_usr, m_xplugin_pwd,
                        m_xplugin_host, m_xplugin_port + 1,
                        m_xplugin_host, m_xplugin_port + 2,
@@ -981,17 +981,17 @@ TEST_F(xapi, failover_test_url)
   }
   else
   {
-    sprintf(conn_str, "%s@[(address=%s:%d, priority=100),"\
-                      "(address=%s:%d, priority=90)," \
-                      "(address=%s:%d, priority=80)]/%s",
+    sprintf(conn_str, "%s@[(address=%s:%d,priority=100),"\
+                      "(address=%s:%d,priority=90)," \
+                      "(address=%s:%d,priority=80)]/%s",
                       m_xplugin_usr,
                       m_xplugin_host, m_xplugin_port + 1,
                       m_xplugin_host, m_xplugin_port + 2,
                       m_xplugin_host, m_xplugin_port, db_name );
 
-    sprintf(conn_str2, "%s@[(address=%s:%d, priority=100),"\
+    sprintf(conn_str2, "%s@[(address=%s:%d,priority=100),"\
                        "address=%s:%d," \
-                       "(address=%s:%d, priority=80)]/%s",
+                       "(address=%s:%d,priority=80)]/%s",
                        m_xplugin_usr,
                        m_xplugin_host, m_xplugin_port + 1,
                        m_xplugin_host, m_xplugin_port + 2,
