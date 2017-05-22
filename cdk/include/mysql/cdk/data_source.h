@@ -26,7 +26,12 @@
 #define CDK_DATA_SOURCE_H
 
 #include <mysql/cdk/foundation.h>
+
+PUSH_SYS_WARNINGS
 #include <functional>
+#include <algorithm>
+#include <set>
+POP_SYS_WARNINGS
 
 
 namespace cdk {
@@ -288,71 +293,65 @@ namespace ds {
     /*
       Call visitor(ds,opts) for each data source ds with options
       opts in the list. Do it in decreasing priority order, choosing
-      random data source from several data sources with the same priority.
+      randomly among data sources with the same priority.
       If visitor(...) call returns true, stop the process.
     */
+
     template <class Visitor>
     void visit(Visitor &visitor)
     {
       bool stop_processing = false;
+      std::set<DS_variant*> same_prio;
 
-      for (auto it = m_ds_list.begin(); it != m_ds_list.end(); ++it)
+      for (auto it = m_ds_list.begin(); !stop_processing;)
       {
         DS_variant *item = NULL;
 
         if (m_is_prioritized)
         {
-          // Get the range of items with the same priority
-          auto same_prio = m_ds_list.equal_range(it->first);
-          size_t number = (size_t)std::distance(same_prio.first, same_prio.second);
-
-          if (number > 1)
+          if (same_prio.empty())
           {
-            // Randomly pick from the range
-            size_t adv = std::rand() % number;
-            std::advance(same_prio.first, adv);
-            item = &same_prio.first->second;
+            if (it == m_ds_list.end())
+              break;
 
-            // Advance the main iterator to the next priority
-            it = same_prio.second;
+            //  Get items with the same priority and store them in same_prio set
+
+            auto same_range = m_ds_list.equal_range(it->first);
+            it = same_range.second;
+
+            for (auto it1 = same_range.first; it1 != same_range.second; ++it1)
+              same_prio.insert(&(it1->second));
           }
-          else
-          {
-            item = &it->second;
-          }
+
+          auto el = same_prio.begin();
+
+          if (same_prio.size() > 1)
+            std::advance(el, std::rand() % same_prio.size());
+
+          item = *el;
+          same_prio.erase(el);
+
         } // if (m_is_prioritized)
         else
         {
+          if (it == m_ds_list.end())
+            break;
+
           // Just get the next item from the list if no priority is given
-          item = &it->second;
+          item = &(it->second);
+          ++it;
         }
 
-        try
-        {
-          // Give values to the visitor
-          Variant_visitor<Visitor> variant_visitor;
-          variant_visitor.vis = &visitor;
-          /*
+        // Give values to the visitor
+        Variant_visitor<Visitor> variant_visitor;
+        variant_visitor.vis = &visitor;
+        /*
             Cannot use lambda because auto type for lambdas is only
             supported in C++14
-          */
-          item->visit(variant_visitor);
-          stop_processing = variant_visitor.stop_processing;
+        */
+        item->visit(variant_visitor);
+        stop_processing = variant_visitor.stop_processing;
 
-          /* Exit if visit reported true or if we advanced to the end of the list */
-          if (stop_processing || it == m_ds_list.end())
-            break;
-        }
-        catch (Error &err)
-        {
-          error_code code = err.code();
-          if (code == cdkerrc::auth_failure ||
-              code == cdkerrc::protobuf_error ||
-              code == cdkerrc::tls_error )
-          {
-            rethrow_error();
-          }
-        }
       } // for
 
       if (!stop_processing)

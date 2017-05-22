@@ -79,10 +79,15 @@ Session_builder::operator() (
   {
     connection->connect();
   }
-  catch (...)
+  catch (const Error &err)
   {
     delete connection;
-    if (m_throw_errors)
+    error_code code = err.code();
+
+    if (m_throw_errors
+        || code == cdkerrc::auth_failure
+        || code == cdkerrc::protobuf_error
+        || code == cdkerrc::tls_error )
       rethrow_error();
     else
       return false;  // continue to next host if available
@@ -169,6 +174,7 @@ Session_builder::operator() (
   return false;
 }
 
+
 Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
   : m_session(NULL)
   , m_connection(NULL)
@@ -189,6 +195,7 @@ struct ds::Multi_source::Access
   static void visit(Multi_source &ds, Visitor &visitor)
   { ds.visit(visitor); }
 };
+
 
 Session::Session(ds::Multi_source &ds)
   : m_session(NULL)
