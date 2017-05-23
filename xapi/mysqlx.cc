@@ -69,6 +69,20 @@
       *err_code = e.code().value(); \
     if (sess) { delete sess; sess = NULL; } \
   } \
+ catch(const Mysqlx_exception &e) \
+  { \
+    if (out_error) \
+    { \
+      size_t msg_len = e.message().length();\
+      size_t cpy_len = msg_len >= MYSQLX_MAX_ERROR_LEN - 1 ? \
+                       MYSQLX_MAX_ERROR_LEN - 1 : msg_len; \
+       memcpy(out_error, e.message().data(), cpy_len); \
+       out_error[cpy_len] = '\0'; \
+    } \
+    if (err_code) \
+      *err_code = e.code(); \
+    if (sess) { delete sess; sess = NULL; } \
+  } \
   catch(...) \
   { \
     if (out_error) \
@@ -1729,22 +1743,18 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
       opt->set_database(char_data);
     break;
 #ifdef WITH_SSL
-    case MYSQLX_OPT_SSL_ENABLE:
-      uint_data = va_arg(args, unsigned int);
-      opt->set_tls(uint_data > 0);
-    break;
     case MYSQLX_OPT_SSL_CA:
       char_data = va_arg(args, char*);
       opt->set_ssl_ca(char_data);
     break;
+    case MYSQLX_OPT_SSL_MODE:
+      uint_data = va_arg(args, unsigned int);
+      opt->set_ssl_mode(uint_data);
+    break;
 #else
-    case MYSQLX_OPT_SSL_ENABLE:
+    case MYSQLX_OPT_SSL_MODE:
     case MYSQLX_OPT_SSL_CA:
-    case MYSQLX_OPT_SSL_CA_PATH:
-      opt->set_diagnostic(
-      "Can not create TLS session - this connector is built"
-      " without TLS support.", 0
-    );
+      opt->set_diagnostic(MYSQLX_ERROR_NO_TLS_SUPPORT, 0);
     break;
 #endif
     default:
@@ -1799,22 +1809,18 @@ mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
       strcpy(char_data, opt->get_db().data());
     break;
 #ifdef WITH_SSL
-    case MYSQLX_OPT_SSL_ENABLE:
-      CHECK_OUTPUT_BUF(uint_data, unsigned int*)
-      *uint_data = opt->get_tls().use_tls() ? 1 : 0;
-    break;
     case MYSQLX_OPT_SSL_CA:
       CHECK_OUTPUT_BUF(char_data, char*)
       strcpy(char_data, opt->get_tls().get_ca().data());
     break;
+    case MYSQLX_OPT_SSL_MODE:
+      CHECK_OUTPUT_BUF(uint_data, unsigned int*)
+      *uint_data = opt->get_ssl_mode();
+    break;
 #else
-    case MYSQLX_OPT_SSL_ENABLE:
+    case MYSQLX_OPT_SSL_MODE:
     case MYSQLX_OPT_SSL_CA:
-    case MYSQLX_OPT_SSL_CA_PATH:
-      opt->set_diagnostic(
-      "Can not create TLS session - this connector is built"
-      " without TLS support.", 0
-    );
+      opt->set_diagnostic(MYSQLX_ERROR_NO_TLS_SUPPORT, 0);
     break;
 #endif
     default:

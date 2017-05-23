@@ -69,7 +69,7 @@ class Connection
   , public Output_stream
 {
 public:
-  virtual ~Connection() {};
+  virtual ~Connection() {}
   virtual void connect() =0;
   virtual void close() =0;
   virtual bool is_closed() const =0;

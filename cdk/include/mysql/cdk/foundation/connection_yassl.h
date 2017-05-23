@@ -29,6 +29,7 @@
 #include "stream.h"
 #include "error.h"
 
+#include <functional>
 
 namespace cdk {
 namespace foundation {
@@ -71,12 +72,21 @@ public:
     TCPIP::Options object knows that TLS should not be used for the connection.
   */
 
-  Options(bool use_tls = true)
-    : m_use_tls(use_tls)
+  enum class SSL_MODE
+  {
+    DISABLED,
+    PREFERRED,
+    REQUIRED,
+    VERIFY_CA,
+    VERIFY_IDENTITY
+  };
+
+  Options(SSL_MODE ssl_mode = SSL_MODE::PREFERRED)
+    : m_ssl_mode(ssl_mode)
   {}
 
-  void set_use_tls(bool use_tls) { m_use_tls = use_tls; }
-  bool use_tls() const { return m_use_tls; }
+  void set_ssl_mode(SSL_MODE ssl_mode) { m_ssl_mode = ssl_mode; }
+  SSL_MODE ssl_mode() const { return m_ssl_mode; }
 
   void set_key(const string &key) { m_key = key; }
   const std::string &get_key() const { return m_key; }
@@ -87,12 +97,25 @@ public:
   const std::string &get_ca() const { return m_ca; }
   const std::string &get_ca_path() const { return m_ca_path; }
 
+  void set_verify_cn(const std::function<bool(const std::string&)> &pred)
+  {
+      m_verify_cn = pred;
+  }
+
+  bool verify_cn(const string& cn) const
+  {
+      return m_verify_cn(cn);
+  }
+
 protected:
 
-  bool m_use_tls;
+  SSL_MODE m_ssl_mode;
   std::string m_key;
   std::string m_ca;
   std::string m_ca_path;
+  std::string m_hostname;
+  std::function<bool(const std::string&)> m_verify_cn;
+
 };
 
 

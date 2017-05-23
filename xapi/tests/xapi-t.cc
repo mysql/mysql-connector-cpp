@@ -762,12 +762,21 @@ TEST_F(xapi, conn_string_test)
   xplugin_pwd = (xplugin_pwd && strlen(xplugin_pwd) ? xplugin_pwd : NULL);
   xplugin_host = (xplugin_host && strlen(xplugin_host) ? xplugin_host : "127.0.0.1");
 
+DO_CONNECT:
+
   if (xplugin_pwd)
     sprintf(conn_str, "%s:%s@%s:%d", xplugin_usr, xplugin_pwd, xplugin_host, port);
   else
     sprintf(conn_str, "%s@%s:%d", xplugin_usr, xplugin_host, port);
 
-DO_CONNECT:
+  if (!ssl_enable)
+  {
+    strcat(conn_str, "/?sSL-MoDe=diSAblEd");
+  }
+  else
+  {
+    strcat(conn_str, "/?Ssl-mOdE=rEQuiREd");
+  }
 
   local_sess = mysqlx_get_node_session_from_url(conn_str, conn_error, &conn_err_code);
 
@@ -791,6 +800,11 @@ DO_CONNECT:
       cout << "SSL Cipher: " << data << endl;
       EXPECT_TRUE(data_len > 1);
     }
+    else
+    {
+      // Empty string, not NULL and therefore the length is 1 for \0 byte
+      EXPECT_TRUE(data_len < 2);
+    }
   }
 
   mysqlx_session_close(local_sess);
@@ -798,7 +812,6 @@ DO_CONNECT:
   if (!ssl_enable)
   {
     ssl_enable = true;
-    strcat(conn_str, "/?ssl-enable");
     authenticate();
 
     res = mysqlx_sql(get_session(), "select @@ssl_ca, @@ssl_capath, @@datadir", MYSQLX_NULL_TERMINATED);
@@ -810,7 +823,7 @@ DO_CONNECT:
       if (rc != RESULT_OK && ca_len < 2)
         return;
 
-      strcat(conn_str, "&ssl-ca=");
+      strcat(conn_str, "&Ssl-cA=");
       rc = mysqlx_get_bytes(row, 1, 0, capath_buf, &capath_len);
       if (rc != RESULT_OK || capath_len < 2)
       {
@@ -822,12 +835,28 @@ DO_CONNECT:
         strcat(conn_str, capath_buf);
       }
       strcat(conn_str, ca_buf);
-      strcat(conn_str, "&ssl-ca-path=");
-      strcat(conn_str, capath_buf);
     }
+
+    local_sess = mysqlx_get_node_session_from_url(conn_str, conn_error, &conn_err_code);
+
+    if (!local_sess)
+    {
+      EXPECT_EQ(string("CDK Error: yaSSL: SSL certificate validation failure"),
+                conn_error);
+    }
+
 
     goto DO_CONNECT;
   }
+  strcat(conn_str, "&ssl-nonexistent=true");
+  local_sess = mysqlx_get_node_session_from_url(conn_str, conn_error, &conn_err_code);
+
+  if (local_sess)
+  {
+    mysqlx_session_close(local_sess);
+    FAIL() << "Connection should not be established" << endl;
+  }
+  cout << "Expected error: " << conn_error << endl;
 }
 
 
@@ -844,7 +873,6 @@ TEST_F(xapi, conn_options_test)
   const char *xplugin_usr = getenv("XPLUGIN_USER");
   const char *xplugin_pwd = getenv("XPLUGIN_PASSWORD");
   const char *xplugin_host = getenv("XPLUGIN_HOST");
-  bool ssl_ca_detected = false;
 
   char buf[1024];
 
@@ -881,6 +909,11 @@ TEST_F(xapi, conn_options_test)
 
 DO_CONNECT:
 
+  if (!ssl_enable)
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SSL_MODE, SSL_MODE_DISABLED));
+  else
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SSL_MODE, SSL_MODE_REQUIRED));
+
   local_sess = mysqlx_get_node_session_from_options(opt, conn_error, &conn_err_code);
 
   if (!local_sess)
@@ -899,10 +932,14 @@ DO_CONNECT:
     char data[128] = { 0 };
     size_t data_len = sizeof(data);
     EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, data, &data_len));
-    if (ssl_ca_detected)
+    if (ssl_enable)
     {
       cout << "SSL Cipher: " << data << endl;
-      EXPECT_TRUE(data_len > 0);
+      EXPECT_TRUE(data_len > 1);
+    }
+    else
+    {
+      EXPECT_TRUE(data_len < 2);
     }
   }
 
@@ -912,7 +949,6 @@ DO_CONNECT:
   {
     ssl_enable = true;
     authenticate();
-    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SSL_ENABLE, ssl_enable));
 
     res = mysqlx_sql(get_session(), "select @@ssl_ca, @@ssl_capath, @@datadir", MYSQLX_NULL_TERMINATED);
     if ((row = mysqlx_row_fetch_one(res)) != NULL)
