@@ -102,7 +102,7 @@ public:
       m_verify_cn = pred;
   }
 
-  bool verify_cn(const string& cn) const
+  bool verify_cn(const std::string& cn) const
   {
       return m_verify_cn(cn);
   }

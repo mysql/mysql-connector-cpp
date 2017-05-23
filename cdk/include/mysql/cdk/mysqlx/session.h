@@ -444,6 +444,8 @@ protected:
 
 public:
 
+  cdk::api::Connection* get_connection();
+
   template <class C>
   Session(C &conn, const ds::Options &options)
     : m_protocol(conn)

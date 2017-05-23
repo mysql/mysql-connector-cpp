@@ -62,6 +62,8 @@ public:
   Session(ds::TCPIP &ds,
           const ds::TCPIP::Options &options = ds::TCPIP::Options());
 
+  Session(ds::Multi_source&);
+
   ~Session();
 
   // Core Session operations.

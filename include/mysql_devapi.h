@@ -890,13 +890,12 @@ public:
 
   SessionSettings can be constructed using URL string, common connect options
   (host, port, user, password, database) or with a list
-  of `SessionSettings::Options` constants followed by option value (unless
-  given option has no value, like `SSL_ENABLE`).
+  of `SessionSettings::Options` constants followed by option value.
 
   Examples:
   ~~~~~~
 
-    SessionSettings from_url("mysqlx://user:pwd@host:port/db?ssl-enable");
+    SessionSettings from_url("mysqlx://user:pwd@host:port/db?ssl-mode=required");
 
     SessionSettings from_options("host", port, "user", "pwd", "db");
 
@@ -906,7 +905,7 @@ public:
       SessionSettings::HOST, "host",
       SessionSettings::PORT, port,
       SessionSettings::DB,   "db",
-      SessionSettings::SSL_ENABLE
+      SessionSettings::SSL_MODE, SessionSettings::SSLMode::REQUIRED
     );
   ~~~~~~
 
@@ -917,34 +916,60 @@ class PUBLIC_API SessionSettings
 {
 public:
 
+
+#define SETTINGS_OPTIONS(x)                                                      \
+  x(URI)          /*!< connection URI or string */                               \
+  /*! DNS name of the host, IPv4 address or IPv6 address */                      \
+  x(HOST)                                                                        \
+  x(PORT)          /*!< X Plugin port to connect to */                           \
+  x(PRIORITY)      /*!< define priority on a multiple host connection */         \
+  x(USER)          /*!< user name */                                             \
+  x(PWD)           /*!< password */                                              \
+  x(DB)            /*!< default database */                                      \
+  x(SSL_MODE)      /*!< define `SSLMode` option to be used */                    \
+  x(SSL_CA)        /*!< path to a PEM file specifying trusted root certificates*/\
+
+  #define OPTIONS_ENUM(x) x,
+
+#define map_options(x) { SessionSettings::Options::x ,#x },
+
+
+
   /**
     Session creation options
 
-    @note Specifying `SSL_CA` option implies `SSL_ENABLE`.
+    @note `PRIORITY` should be defined after a HOST (PORT) definition
   */
 
   enum Options
   {
-    URI,          //!< connection URI or string
-    //! DNS name of the host, IPv4 address or IPv6 address
-    HOST,
-    PORT,         //!< X Plugin port to connect to
-    USER,         //!< user name
-    PWD,          //!< password
-    DB,           //!< default database
-    SSL_MODE,
-    SSL_CA        //!< path to a PEM file specifying trusted root certificates
+    SETTINGS_OPTIONS(OPTIONS_ENUM)
   };
 
+
 #define SSL_MODE_TYPES(x)\
-  x(DISABLED)\
-  x(PREFERRED)\
-  x(REQUIRED)\
-  x(VERIFY_CA)\
-  x(VERIFY_IDENTITY)
+  x(DISABLED)        /*!< Establish an unencrypted connection.  */ \
+  x(PREFERRED)       /*!< Establish a secure (encrypted) connection if the server
+                          supports secure connections. Fall back to an
+                          unencrypted connection otherwise. This is the default
+                          if @ref SSL_MODE is not specified. */ \
+  x(REQUIRED)        /*!< Establish a secure connection if the server supports
+                          secure connections. The connection attempt fails if a
+                          secure connection cannot be established.*/ \
+  x(VERIFY_CA)       /*!< Like `REQUIRED`, but additionally verify the server
+                          TLS certificate against the configured Certificate
+                          Authority (CA) certificates (defined by @ref SSL_CA
+                          Option). The connection attempt fails if no valid
+                          matching CA certificates are found.*/ \
+  x(VERIFY_IDENTITY) /*!< Like `VERIFY_CA`, but additionally verify that the
+                          server certificate matches the host to which the
+                          connection is attempted.*/\
 
 #define SSL_ENUM(x) x,
 
+  /**
+     Modes to be used by @ref SSL_MODE option
+   */
   enum class SSLMode
   {
     SSL_MODE_TYPES(SSL_ENUM)
@@ -971,10 +996,8 @@ public:
 
     Possible connection options are:
 
-    - `ssl-enable` : use TLS connection
+    - `ssl-mode` : define @ref SSLMode option to be used
     - `ssl-ca=`path : path to a PEM file specifying trusted root certificates
-
-    Specifying `ssl-ca` option implies `ssl-enable`.
   */
 
   SessionSettings(const string &uri)
@@ -1075,19 +1098,6 @@ public:
     : SessionSettings(h, p, u, nullptr, args...)
   {}
 
-  template <
-    typename    HOST,
-    typename    PORT,
-    typename    USER,
-    typename... T,
-    typename std::enable_if<
-      std::is_constructible<SessionSettings, HOST, PORT, USER, const char*, T...>::value
-    >::type* = nullptr
-  >
-  SessionSettings(HOST h, PORT p, USER u ,void* pwd, T... args)
-    : SessionSettings(h, p, u, (const char*)pwd, args...)
-  {}
-
 
   template <
     typename    PORT,
@@ -1102,25 +1112,11 @@ public:
   {}
 
 
-  template <
-    typename    PORT,
-    typename    USER,
-    typename... T,
-    typename std::enable_if<
-      std::is_constructible<SessionSettings, PORT, USER, const char*, T...>::value
-    >::type* = nullptr
-  >
-  SessionSettings(PORT p, USER u ,void* pwd, T... args)
-    : SessionSettings(p, u, (const char*)pwd, args...)
-  {}
-
-
   /**
     Create session using a list of session options.
 
     The list of options consist of `SessionSettings::Options` constant
-    identifying the option to set, followed by option value (unless
-    not required, as in the case of `SSL_ENABLE`).
+    identifying the option to set, followed by option value.
 
     Example:
     ~~~~~~
@@ -1130,7 +1126,7 @@ public:
         SessionSettings::HOST, "host",
         SessionSettings::PORT, port,
         SessionSettings::DB,   "db",
-        SessionSettings::SSL_ENABLE
+        SessionSettings::SSL_MODE, SessionSettings::SSLMode::REQUIRED
       );
     ~~~~~~
 
@@ -1138,60 +1134,193 @@ public:
   */
 
   template <typename V,typename...R>
-  SessionSettings(Options opt, V val, R&...rest)
+  SessionSettings(Options opt, V val, R...rest)
   {
     add(opt, val, rest...);
   }
 
-  /**
+
+  /*
      SessionSetting operator and methods
    */
 
-  Value& operator[](Options opt)
+  typedef std::vector<std::pair<Options,Value>>::iterator iterator;
+
+  /**
+     Returns an iterator pointing to the first element of the SessionSettings.
+   */
+  iterator begin()
   {
-    return m_options[opt];
+    return m_options.begin();
   }
+
+  /**
+     Returns an iterator pointing to the last element of the SessionSettings.
+   */
+  iterator end()
+  {
+    return m_options.end();
+  }
+
+
+  /**
+    Finds element of specified @p opt and returns its Value.
+    Will throw Error if not found.
+  */
+  Value& find(Options opt)
+  {
+    auto it = m_options.begin();
+    for (;
+         it != m_options.end();
+         ++it)
+    {
+      if (it->first == opt)
+        break;
+    }
+
+
+    if (it == m_options.end())
+    {
+      /**
+         @cond HIDDEN_SYMBOLS
+    */
+      static std::map<SessionSettings::Options, string> options_name =
+      { SETTINGS_OPTIONS(map_options) };
+      /**
+       @endcond
+     */
+
+      std::stringstream error;
+      error << "SessionSettings option " << options_name[opt] << " not found";
+      throw Error(error.str().c_str());
+    }
+
+    return it->second;
+  }
+
+
+  /**
+    Set @ref Options and correspondent @ref Value.
+
+    When using @ref HOST, @ref PORT and @ref PRIORITY, all have to be defined on
+    same set call.
+   */
+  template <typename V>
+  void set(Options opt, V v)
+  {
+    if (opt == Options::PORT)
+    {
+      throw Error("Defining PORT without first defining HOST.");
+    } else if (opt == Options::PRIORITY)
+    {
+      throw Error("Defining PRIORITY without first defining HOST.");
+    }
+    add(opt, v);
+  }
+
+  template <typename V, typename...R>
+  void set(Options opt, V v, R...rest)
+  {
+    if (opt == Options::HOST)
+    {
+      do_add_host(Value(v), rest...);
+    }
+    else
+    {
+      set(opt,v);
+      set(rest...);
+    }
+  }
+
+
+  /**
+    Clears all stored entries
+  */
 
   void clear()
   {
     m_options.clear();
   }
 
+  /**
+    Remove all entries with correspondent @p opt.
+  */
   void erase(Options opt)
   {
-    m_options.erase(opt);
+    auto it = m_options.begin();
+
+    while(it != m_options.end())
+    {
+      if(it->first == opt)
+      {
+        it = m_options.erase(it);
+      }
+      else
+      {
+        ++it;
+      }
+    }
   }
+
+
+  /**
+    Check if @p opt was defined.
+  */
 
   bool has_option(Options opt)
   {
-    return m_options.find(opt) != m_options.end();
+    for(auto el : m_options)
+    {
+      if (el.first == opt)
+        return true;
+    }
+    return false;
   }
 
 
 private:
 
-  std::map<Options,Value> m_options;
+  std::vector<std::pair<Options,Value>> m_options;
 
-  template<typename V,
-           typename std::enable_if<!std::is_constructible<string,V>::value,
-                                   V>::type* = nullptr>
-  void add(Options opt, V v)
+
+  void do_add(Options opt, Value v)
   {
-    m_options[opt] = v;
+    //Only HOST and PORT can have multiple values, the others, are unique
+    if (opt == HOST || opt == PORT || opt == PRIORITY)
+    {
+      m_options.emplace_back(std::make_pair(opt, v));
+    }
+    else
+    {
+      auto it = m_options.begin();
+      for(; it != m_options.end(); ++it)
+      {
+        if (it->first == opt)
+        {
+          it->second = v;
+          break;
+        }
+      }
+
+      if (it == m_options.end())
+      {
+        m_options.emplace_back(std::make_pair(opt, v));
+      }
+    }
   }
 
-  template<typename V,
-           typename std::enable_if<std::is_constructible<string,V>::value,
-                                   V>::type* = nullptr>
+  void set() {}
+
+  template<typename V>
   void add(Options opt, V v)
   {
-    m_options[opt] = string(v);
+    do_add(opt, Value(v));
   }
 
   void add(Options opt, SessionSettings::SSLMode v)
   {
     if (opt != SSL_MODE)
-      throw Error("SessionSettings::SSLMode can only be used on SSL_MODE setting.");
+      throw Error("SessionSettings::SSLMode value can only be used on SSL_MODE setting.");
     add(opt,static_cast<int>(v));
   }
 
@@ -1200,6 +1329,69 @@ private:
   {
     add(opt,v);
     add(rest...);
+  }
+
+
+  /*
+    Called passing as HOST value as first element to test the rest of the
+    HOST/PORT/PRIORITY chain
+  */
+
+  void do_add_host(Value host)
+  {
+    add(Options::HOST, host);
+  }
+
+  void do_add_host(Value host, Value port)
+  {
+    add(Options::HOST, host);
+    add(Options::PORT, port);
+  }
+
+  void do_add_host(Value host, Value port, Value priority)
+  {
+    add(Options::HOST, host);
+    add(Options::PORT, port);
+    add(Options::PRIORITY, priority);
+  }
+
+  template <typename V, typename...R>
+  void do_add_host(Value host, Options &opt, V v, R...rest)
+  {
+    if (opt == Options::PORT)
+    {
+      //we could still have priority
+      do_add_host(host, Value(v), rest...);
+      return;
+    }
+    else if (opt == Options::PRIORITY)
+    {
+      do_add_host(host, Value(DEFAULT_MYSQLX_PORT), Value(v));
+      set(rest...);
+      return;
+    }
+    else
+    {
+      do_add_host(host);
+    }
+
+    set(opt, v, rest...);
+
+  }
+
+
+
+  template <typename...R>
+  void do_add_host(Value host, Value port, Options opt, Value v, R...rest)
+  {
+    if (opt == Options::PRIORITY)
+    {
+      do_add_host(host, port, v);
+      set (rest...);
+      return;
+    }
+    do_add_host(host, port);
+    set (opt, v, rest...);
   }
 
 };
@@ -1409,7 +1601,7 @@ public:
     Examples:
     ~~~~~~
 
-      XSession from_uri("mysqlx://user:pwd@host:port/db?ssl-enable");
+      XSession from_uri("mysqlx://user:pwd@host:port/db?ssl-mode=required");
 
       XSession from_options("host", port, "user", "pwd", "db");
 

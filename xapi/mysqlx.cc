@@ -1698,72 +1698,16 @@ mysqlx_free_options(mysqlx_session_options_t *opt)
 }
 
 int STDCALL
-mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type, ...)
+mysqlx_session_option_set(mysqlx_session_options_t *opt, ...)
 {
   SAFE_EXCEPTION_BEGIN(opt, RESULT_ERROR)
-  int rc = RESULT_OK;
-  unsigned int uint_data = 0;
-
-  const char *char_data = NULL;
 
   va_list args;
-  va_start(args, type);
-  switch(type)
-  {
-    case MYSQLX_OPT_HOST:
-      char_data = va_arg(args, char*);
-      if (char_data == NULL)
-      {
-        opt->set_diagnostic("Host name cannot be NULL", 0);
-        rc = RESULT_ERROR;
-      }
-      else
-        opt->host(char_data);
-    break;
-    case MYSQLX_OPT_PORT:
-      uint_data = va_arg(args, unsigned int);
-      opt->port(uint_data);
-    break;
-    case MYSQLX_OPT_USER:
-      char_data = va_arg(args, char*);
-      if (char_data == NULL)
-        char_data = "";
-      opt->user(char_data);
-    break;
-    case MYSQLX_OPT_PWD:
-      char_data = va_arg(args, char*);
-      if (char_data == NULL)
-        char_data = "";
-      opt->password(char_data);
-    break;
-    case MYSQLX_OPT_DB:
-      char_data = va_arg(args, char*);
-      if (char_data == NULL)
-        char_data = "";
-      opt->set_database(char_data);
-    break;
-#ifdef WITH_SSL
-    case MYSQLX_OPT_SSL_CA:
-      char_data = va_arg(args, char*);
-      opt->set_ssl_ca(char_data);
-    break;
-    case MYSQLX_OPT_SSL_MODE:
-      uint_data = va_arg(args, unsigned int);
-      opt->set_ssl_mode(uint_data);
-    break;
-#else
-    case MYSQLX_OPT_SSL_MODE:
-    case MYSQLX_OPT_SSL_CA:
-      opt->set_diagnostic(MYSQLX_ERROR_NO_TLS_SUPPORT, 0);
-    break;
-#endif
-    default:
-      opt->set_diagnostic("Invalid option value", 0);
-      rc = RESULT_ERROR;
-  }
+  va_start(args, opt);
+  opt->set_multiple_options(args);
   va_end(args);
 
-  return rc;
+  return RESULT_OK;
   SAFE_EXCEPTION_END(opt, RESULT_ERROR)
 }
 
@@ -1775,6 +1719,10 @@ if (V == NULL) \
    break; \
 }
 
+/*
+  TODO: This function needs to be able to return information about hosts and
+        corresponding parameters in the muliple host configurations.
+*/
 int STDCALL
 mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type, ...)
 {
@@ -1796,22 +1744,37 @@ mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
       CHECK_OUTPUT_BUF(uint_data, unsigned int*)
       *uint_data = opt->get_port();
     break;
+    case MYSQLX_OPT_PRIORITY:
+      CHECK_OUTPUT_BUF(uint_data, unsigned int*)
+      *uint_data = opt->get_priority();
+    break;
     case MYSQLX_OPT_USER:
       CHECK_OUTPUT_BUF(char_data, char*)
       strcpy(char_data, opt->get_user().data());
     break;
     case MYSQLX_OPT_PWD:
-      CHECK_OUTPUT_BUF(char_data, char*)
-      strcpy(char_data, opt->get_password().data());
+      {
+        CHECK_OUTPUT_BUF(char_data, char*)
+        const std::string *s = opt->get_password();
+        if (s)
+          strcpy(char_data, s->data());
+      }
     break;
     case MYSQLX_OPT_DB:
-      CHECK_OUTPUT_BUF(char_data, char*)
-      strcpy(char_data, opt->get_db().data());
+      {
+        CHECK_OUTPUT_BUF(char_data, char*)
+        const cdk::string *cs = opt->get_db();
+        if (cs)
+        {
+          std::string sstr = *cs;
+          strcpy(char_data, sstr.data());
+        }
+      }
     break;
 #ifdef WITH_SSL
     case MYSQLX_OPT_SSL_CA:
       CHECK_OUTPUT_BUF(char_data, char*)
-      strcpy(char_data, opt->get_tls().get_ca().data());
+      strcpy(char_data, opt->get_tcpip_options().get_tls().get_ca().data());
     break;
     case MYSQLX_OPT_SSL_MODE:
       CHECK_OUTPUT_BUF(uint_data, unsigned int*)

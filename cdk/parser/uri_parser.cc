@@ -27,6 +27,7 @@
 
 PUSH_SYS_WARNINGS
 #include <stdlib.h>
+#include <algorithm>
 #include <sstream>
 #include <bitset>
 #include <cstdarg>
@@ -119,27 +120,43 @@ void URI_parser::unexpected(char what, const cdk::string &msg) const
 */
 
 #define URI_TOKEN_LIST(X) \
-  X (COLON, ':')    \
-  X (SLASH, '/')    \
-  X (AT, '@')       \
-  X (QUESTION, '?') \
-  X (EQ, '=')       \
-  X (AMP, '&')      \
-  X (SQOPEN, '[')   \
-  X (SQCLOSE, ']')  \
-  X (COMMA, ',')    \
-  X (HASH, '#')     \
-
+  X (COLON, ':')          \
+  X (SEMICOLON, ';')      \
+  X (SLASH, '/')          \
+  X (BSLASH, '\\')        \
+  X (AT, '@')             \
+  X (QUESTION, '?')       \
+  X (EXCLAMATION, '!')    \
+  X (EQ, '=')             \
+  X (AMP, '&')            \
+  X (SQOPEN, '[')         \
+  X (SQCLOSE, ']')        \
+  X (COMMA, ',')          \
+  X (HASH, '#')           \
+  X (DOT, '.')            \
+  X (PERCENT, '%')        \
+  X (POPEN, '(')          \
+  X (PCLOSE, ')')         \
+  X (PLUS, '+')           \
+  X (MINUS, '-')         \
+  X (UNDERSCORE, '_')     \
+  X (TILD, '~')           \
+  X (DOLLAR, '$')         \
+  X (QUOTE, '\'')         \
+  X (ASTERISK, '*')       \
+  X (SPACE, ' ')       \
 
 #define URI_TOKEN_ENUM(T,C) T_##T,
 enum token_type
 {
   T_ZERO,
   T_CHAR,
+  T_DIGIT,
   URI_TOKEN_LIST(URI_TOKEN_ENUM)
   T_LAST
 };
 
+#define SEPARATORS T_QUESTION, T_AMP, T_SLASH, T_HASH, T_POPEN, T_PCLOSE
 
 /*
   Class representing set of token types.
@@ -149,22 +166,22 @@ struct URI_parser::TokSet
 {
   std::bitset<T_LAST> m_bits;
 
-  TokSet(token_type tt)
+  template<typename...TYPE>
+  TokSet(TYPE...t)
+  {
+    set_token(t...);
+  }
+
+  void set_token(token_type tt)
   {
     m_bits.set(tt);
   }
 
-  TokSet(token_type tt1, token_type tt2)
+  template<typename...REST>
+  void set_token(token_type tt, REST...rest)
   {
-    m_bits.set(tt1);
-    m_bits.set(tt2);
-  }
-
-  TokSet(token_type tt1, token_type tt2, token_type tt3)
-  {
-    m_bits.set(tt1);
-    m_bits.set(tt2);
-    m_bits.set(tt3);
+    set_token(tt);
+    set_token(rest...);
   }
 
   bool has_token(token_type tt) const
@@ -174,7 +191,574 @@ struct URI_parser::TokSet
 };
 
 
+struct URI_parser::Guard
+{
+  URI_parser *m_parser;
+  bool        m_pop = true;
+
+  Guard(URI_parser *p) : m_parser(p)
+  {
+    m_parser->push();
+  }
+
+  ~Guard() { if (m_pop) m_parser->pop(); }
+
+  void release() { m_pop = false; }
+};
+
+
+
 // ---------------------------------------------------------------
+
+
+/*
+ authority  ::= ( userinfo "@" )? ( address | address-list )
+*/
+
+void URI_parser::process_userinfo(Processor &prc) const
+{
+  URI_parser* self = const_cast<URI_parser*>(this);
+  Guard guard(self);
+
+  std::string user;
+  std::string pass;
+  bool has_pass = false;
+
+  self->consume_until(user, TokSet(T_AT, T_COLON, SEPARATORS ));
+
+  if (self->consume_token(T_COLON))
+  {
+    self->consume_until(pass, TokSet(T_AT));
+    if (!self->consume_token(T_AT))
+      return;
+
+    has_pass = true;
+
+  }
+  else if(!self->consume_token(T_AT))
+  {
+    return;
+  }
+
+  prc.user(user);
+  if (has_pass)
+    prc.password(pass);
+
+  guard.release();
+}
+
+
+/*
+  address ::= ip-address | socket | pipe
+*/
+
+URI_parser::Address_type URI_parser::process_adress(std::string &address,
+                                                    std::string &port)
+{
+
+  if (process_socket(address))
+    return Address_type::SOCKET;
+  if (process_pipe(address))
+    return Address_type::PIPE;
+  if (process_ip_address(address, port))
+    return Address_type::IP;
+
+  return Address_type::NONE;
+}
+
+/*
+  socket           ::= pct-socket | unencoded-socket
+  pct-socket       ::= socket-prefix file
+  unencoded-socket ::= "(" socket-prefix unencoed-file ")"
+  socket-prefix    ::= ("." | ".." | "/")?
+*/
+
+
+bool URI_parser::process_socket_prefix(std::string &socket)
+{
+  Guard guard(this);
+
+  if (consume_token(T_DOT))
+  {
+    socket.push_back('.');
+    if (consume_token(T_DOT))
+      socket.push_back('.');
+  }
+  else if (consume_token(T_SLASH))
+  {
+    socket.push_back('/');
+  }
+  else
+  {
+    socket.clear();
+    return false;
+  }
+
+  guard.release();
+
+  return true;
+}
+
+bool URI_parser::process_pct_socket(std::string &socket)
+{
+  Guard guard(this);
+
+  if (process_socket_prefix(socket) && process_file(socket))
+  {
+    guard.release();
+    return true;
+  }
+
+  socket.clear();
+
+  return false;
+}
+
+bool URI_parser::process_unencoded_socket(std::string &socket)
+{
+  Guard guard(this);
+
+  if ( consume_token(T_POPEN) &&
+       process_socket_prefix(socket) &&
+       process_unencoded_file(socket) &&
+       consume_token(T_PCLOSE))
+  {
+    guard.release();
+    return true;
+  }
+
+  socket.clear();
+
+  return false;
+}
+
+bool URI_parser::process_socket(std::string &socket)
+{
+  return process_pct_socket(socket) || process_unencoded_socket(socket);
+}
+
+
+/*
+  pipe             ::= pct-pipe | unencoded-pipe
+  pct-pipe         ::= pipe-prefix file
+  unencoded-pipe   ::= "(" pipe-prefix unencoed-file ")"
+  pipe-prefix      ::= "\\.\"
+
+*/
+
+bool URI_parser::process_pipe_prefix(std::string &pipe)
+{
+  Guard guard(this);
+
+  if (consume_word("\\\\.\\"))
+  {
+    pipe += "\\\\.\\";
+    guard.release();
+    return true;
+  }
+
+  return false;
+}
+
+bool URI_parser::process_pct_pipe(std::string &pipe)
+{
+  Guard guard(this);
+
+  if (process_pipe_prefix(pipe) && process_file(pipe))
+  {
+    guard.release();
+    return true;
+  }
+
+  pipe.clear();
+
+  return false;
+}
+
+bool URI_parser::process_unencoded_pipe(std::string &pipe)
+{
+  Guard guard(this);
+
+  if ( consume_token(T_POPEN) &&
+       process_pipe_prefix(pipe) &&
+       process_unencoded_file(pipe) &&
+       consume_token(T_PCLOSE))
+  {
+    guard.release();
+    return true;
+  }
+
+  pipe.clear();
+
+  return false;
+}
+
+bool URI_parser::process_pipe(std::string &pipe)
+{
+  return process_pct_pipe(pipe) || process_unencoded_pipe(pipe);
+}
+
+
+/*
+  file             ::= (value | unencoded-file)
+*/
+bool  URI_parser::process_file(std::string &file)
+{
+  return process_value(sub_delims(), file) || process_unencoded_file(file);
+}
+
+/*
+  value            ::= (unreserved | pct-encoded | sub-delims)*
+
+  Delims is the sub-delims function to be used
+*/
+
+bool URI_parser::process_value(TokSet sub_delims, std::string &value)
+{
+  bool processed = false;
+
+  while( process_tokens(unreserved(), value) ||
+         process_pct_encoded_value(value) ||
+         process_tokens(sub_delims, value))
+  {
+    processed = true;
+  }
+
+  return processed;
+}
+
+/*
+  unencoded-file   ::= "(" ( unreserved | gen-delims )* ")"
+*/
+bool  URI_parser::process_unencoded_file(std::string &file)
+{
+  bool processed = false;
+
+  while(process_tokens(unreserved(), file) ||
+        process_tokens(gen_delims(), file))
+  {
+    processed = true;
+  }
+
+  return processed;
+}
+
+bool URI_parser::process_pct_encoded_value(std::string &encoded)
+{
+  Guard guard(this);
+
+  if (!consume_token(T_PERCENT))
+    return false;
+
+  long c;
+
+  // TODO: more efficient implementation.
+
+  std::string hex = m_uri.substr(m_pos.top(), 2);
+  hex.push_back('\0');
+  char *end = NULL;
+  c = strtol(hex.data(), &end, 16);
+  if (end == hex.data() + 2 || c >= 0 || c <= 256)
+  {
+    encoded.push_back((char)c);
+
+    guard.release();
+
+    m_pos_next.top() = m_pos.top()+2;
+    get_token();
+  }
+
+  return !guard.m_pop;
+}
+
+
+/*
+  unreserved  = ALPHA / DIGIT / "-" / "." / "_" / "~"
+*/
+
+URI_parser::TokSet URI_parser::unreserved() const
+{
+  return TokSet( T_CHAR, T_DIGIT, T_MINUS, T_DOT, T_UNDERSCORE, T_TILD);
+}
+
+/*
+  sub-delims  = "!" / "$" / "&" / "'" / "(" / ")"
+                 / "*" / "+" / "," / ";" / "="
+*/
+
+URI_parser::TokSet URI_parser::sub_delims() const
+{
+  return TokSet( T_EXCLAMATION, T_DOLLAR, T_AMP, T_QUOTE,T_POPEN, T_PCLOSE,
+                 T_ASTERISK, T_PLUS, T_COMMA, T_SEMICOLON, T_EQ);
+}
+
+/*
+  Just like sub-delims, but without COMMA and EQUAL, wich are used on queries
+  and added SLASH
+*/
+
+URI_parser::TokSet URI_parser::sub_delims_qry() const
+{
+  return TokSet( T_EXCLAMATION, T_DOLLAR, T_QUOTE, T_SLASH, T_BSLASH, T_POPEN,
+                 T_PCLOSE, T_COLON, T_ASTERISK, T_PLUS, T_SEMICOLON);
+}
+
+/*
+  gen-delims  = ":" / "/" / "?" / "#" / "[" / "]" / "@"
+*/
+
+URI_parser::TokSet URI_parser::gen_delims() const
+{
+  return TokSet( T_COLON, T_SLASH, T_QUESTION, T_HASH, T_SQOPEN,T_SQCLOSE,
+                 T_AT);
+}
+
+
+bool URI_parser::process_tokens(TokSet t, std::string& str)
+{
+  if (next_token_in(t))
+  {
+    str.push_back(consume_token().get_char());
+    return true;
+  }
+  return false;
+}
+
+
+unsigned short URI_parser::convert_val(const std::string &port) const
+{
+  const char *beg = port.c_str();
+  char *end = NULL;
+  long int val = strtol(beg, &end, 10);
+
+  /*
+    Note: strtol() returns 0 either if the number is 0
+    or conversion was not possible. We distinguish two cases
+    by cheking if end pointer was updated.
+  */
+
+  if (val == 0 && end == beg)
+    throw Error(this, L"Expected number");
+
+  if (val > 65535 || val < 0)
+    throw Error(this, L"Invalid value");
+
+  return static_cast<unsigned short>(val);
+}
+
+/*
+  ip-address ::= "[" IPv6address "]" | IPv4address | reg-name
+*/
+bool URI_parser::process_ip_address(std::string &host, std::string &port)
+{
+  Guard guard(this);
+
+  if (consume_token(T_SQOPEN))
+  {
+    // IPv6
+    consume_while(host, TokSet(T_DIGIT, T_CHAR, T_COLON));
+    if (!consume_token(T_SQCLOSE))
+      return false;
+  }
+  else
+  {
+    consume_while(host, TokSet(T_DIGIT, T_CHAR, T_DOT, T_MINUS));
+  }
+
+  if (consume_token(T_COLON))
+  {
+    consume_while(port, T_DIGIT);
+
+    if (port.empty())
+      return false;
+  }
+
+  guard.release();
+
+  return true;
+}
+
+
+bool URI_parser::report_address(Processor &prc,
+                                Address_type type,
+                                unsigned short priority,
+                                const std::string &host,
+                                const std::string &port) const
+{
+  bool processed = true;
+
+  switch(type)
+  {
+    case Address_type::IP:
+      if (port.empty())
+        prc.host(priority, host);
+      else
+        prc.host(priority, host, convert_val(port));
+      break;
+    case Address_type::PIPE:
+      prc.pipe(priority, host);
+      break;
+    case Address_type::SOCKET:
+      prc.socket(priority,host);
+      break;
+    case Address_type::NONE:
+      processed = false;
+  }
+
+  return processed;
+}
+
+/*
+  address-list     ::= "[" address-priority ( "," address-priority )* "]"
+*/
+bool URI_parser::process_adress_list(Processor &prc) const
+{
+  URI_parser* self = const_cast<URI_parser*>(this);
+
+  Guard guard(self);
+
+  if (!self->consume_token(T_SQOPEN))
+    return false;
+
+  do
+  {
+    self->trim_spaces();
+
+    if (!process_adress_priority(prc))
+      return false;
+
+    self->trim_spaces();
+
+  }while(self->consume_token(T_COMMA));
+
+  if (!self->consume_token(T_SQCLOSE))
+  {
+    return false;
+  }
+
+  guard.release();
+
+  return true;
+}
+
+/*
+  address-priority ::= address | "(" "address" "=" address "," "priority" "=" prio ")"
+  prio             ::= DIGIT+
+*/
+bool URI_parser::process_adress_priority(Processor &prc) const
+{
+  URI_parser* self = const_cast<URI_parser*>(this);
+
+  Guard guard(self);
+
+  std::string host;
+  std::string port;
+
+  if (self->consume_token(T_POPEN))
+  {
+    self->trim_spaces();
+
+    if (!self->consume_word_ci("address"))
+      return false;
+
+    self->trim_spaces();
+
+    if(!self->consume_token(T_EQ))
+      return false;
+
+    Address_type type = self->process_adress(host, port) ;
+
+    if (type == Address_type::NONE)
+      return false;
+
+    self->trim_spaces();
+
+    if (self->consume_token(T_COMMA))
+    {
+
+      self->trim_spaces();
+
+      if (self->consume_word_ci("priority"))
+      {
+        self->trim_spaces();
+
+        if (!self->consume_token(T_EQ))
+            parse_error(L"Expected priority= value");
+
+        std::string prio_str;
+        self->consume_while(prio_str, TokSet(T_DIGIT));
+
+        if (prio_str.length() == 0)
+          parse_error(L"Expected priority=value");
+
+        report_address(prc,
+                       type,
+                       static_cast<unsigned short>(1+self->convert_val(prio_str)),
+                       host,
+                       port);
+
+      }
+      else
+      {
+        parse_error(L"Expected priority= value");
+      }
+    }
+
+    if (!self->consume_token(T_PCLOSE))
+    {
+      return false;
+    }
+  }
+  else
+  {
+    if (!self->report_address(prc, self->process_adress(host, port)
+                                  ,0,host, port))
+      return false;
+  }
+
+  guard.release();
+  return true;
+
+}
+
+void URI_parser::process_path(Processor &prc) const
+{
+  URI_parser* self = const_cast<URI_parser*>(this);
+
+  Guard guard(self);
+
+  if (!self->consume_token(T_SLASH))
+    return;
+
+  std::string path;
+
+  /*
+    We allow only one path component (which can not contain '/').
+    Here we consume tokens till end of the query part or '/', whichever
+    comes first. If we see '/' then error is reported.
+  */
+
+  self->consume_until(path, TokSet(T_SLASH, SEPARATORS));
+
+  prc.path(path);
+
+  guard.release();
+}
+
+/*
+  Note that, e.g., AUTHORITY part can be followed either by
+  PATH, QUERY or FRAGMENT, depending on the character that follows
+  after it:
+
+  URI         ::= scheme ":" hier-part ( "?" query )? ( "#" fragment )?
+  hier-part   ::= "//" authority (path-abempty | path-absolute | path-rootless | path-empty )
+  authority   ::= ( userinfo "@" )? address | addresslist
+
+    ...://<authority>/<path>...
+    ...://<authority>?<query>...
+    ...://<authority>#<fragment>...
+*/
+
 
 
 void URI_parser::process(Processor &prc) const
@@ -184,7 +768,8 @@ void URI_parser::process(Processor &prc) const
   // Note: check_scheme() resets parser state.
 
   self->check_scheme(m_force_uri);
-  assert(AUTHORITY == m_part);
+
+  self->process_userinfo(prc);
 
   /*
     Look for host and port, saving them in the corresponding variables.
@@ -195,173 +780,16 @@ void URI_parser::process(Processor &prc) const
 
   std::string host;
   std::string port;
-  bool        rescan = false;
-  bool        has_port = false;
 
-  if (self->next_token_is(T_SQOPEN))
-  {
-    /*
-      IPv6 adress found! Will be parsed on rescan
-    */
-    rescan = true;
-  }
-  else
-  {
-    self->consume_until(host, TokSet(T_AT, T_COLON ));
+  if (!self->process_adress_list(prc) &&
+      !self->report_address(prc, self->process_adress(host, port),0,host, port))
+    parse_error(L"Invalid address");
 
-    if (self->consume_token(T_COLON))
-    {
-      /*
-      We have seen  "<???>:" and it still can be user followed
-      by a password or host followed by a port.
+  process_path(prc);
 
-      We consume further tokens until @, or end of the authority
-      part, whichever comes first.
-    */
+  process_query(prc);
 
-      self->consume_until(port, T_AT);
-
-      /*
-      If we see @ now, then it means we were looking at user
-      credentials so far (and they are stored in host and port,
-      respectively). We report them and request re-scanning host/port
-      data.
-
-      Note: If we don't see @ now, then it means that initial colon
-      was separating host from port and both are stored in
-      the corresponding variables.
-    */
-
-      if (self->consume_token(T_AT))
-      {
-        // <user>:<pwd>@...
-        prc.user(host);
-        prc.password(port);
-        rescan = true;
-      }
-      else
-        has_port = true;
-    }
-    else if (self->consume_token(T_AT))
-    {
-      /*
-      No ':' seen but we see '@'. It means user without password and
-      user is stored in host variable. We report it an request
-      re-scanning of host/port info.
-    */
-      prc.user(host);
-      rescan = true;
-    }
-  }
-
-  /*
-    At this point, if rescan is set then we have reported
-    user/password data and we need to continue looking for host/port
-    info.
-  */
-
-  if (rescan)
-  {
-    host.clear();
-    port.clear();
-
-    if (self->consume_token(T_SQOPEN))
-    {
-      /*
-        IPv6 address
-      */
-      host.clear();
-      self->consume_until(host, T_SQCLOSE);
-      if (!self->consume_token(T_SQCLOSE))
-        throw Error(this, L"Missing ']' while parsing IPv6 address");
-    }
-    else
-    {
-      self->consume_until(host, T_COLON );
-    }
-
-    if (self->consume_token(T_COLON))
-    {
-      self->consume_all(port);
-      has_port = true;
-    }
-  }
-
-
-  if (has_more_tokens())
-    parse_error(L"Unexpected characters after authority part");
-
-  // report host and port
-
-  prc.host(host);
-
-  if (has_port)
-  {
-    if (port.empty())
-      parse_error(L"Expected port number");
-
-    const char *beg = port.c_str();
-    char *end = NULL;
-    long int val = strtol(beg, &end, 10);
-
-    /*
-      Note: strtol() returns 0 either if the number is 0
-      or conversion was not possible. We distinguish two cases
-      by cheking if end pointer was updated.
-    */
-
-    if (val == 0 && end == beg)
-      parse_error(L"Expected port number");
-
-    if (val > 65535 || val < 0)
-      parse_error(L"Invalid port value");
-
-    prc.port(static_cast<unsigned short>(val));
-  }
-
-  // Proceed to path or query part.
-
-  self->next_part();
-
-  if (PATH == m_part)
-  {
-    std::string path;
-
-    /*
-      We allow only one path component (which can not contain '/').
-      Here we consume tokens till end of the query part or '/', whichever
-      comes first. If we see '/' then error is reported.
-    */
-
-    self->consume_until(path, T_SLASH);
-
-    if (next_token_is(T_SLASH))
-      parse_error( m_has_scheme ?
-        L"Mysqlx URI can contain only single path component"
-        : L"Mysqlx connection string can contain only single path component"
-      );
-
-    prc.path(path);
-
-    // Proceed to query part.
-    self->next_part();
-  }
-
-  if (QUERY == m_part)
-  {
-    process_query(prc);
-
-    /*
-      Query should consume the rest of the URI string. If we see
-      anything else then it is wrong syntax.
-    */
-    if (has_more_tokens())
-      unexpected('&');
-
-    self->next_part();
-  }
-
-  if (FRAGMENT == m_part)
+  if (self->consume_token(T_HASH))
   {
     parse_error( m_has_scheme ?
       L"Mysqlx URI can not contain fragment specification"
@@ -369,7 +797,7 @@ void URI_parser::process(Processor &prc) const
     );
   }
 
-  if (END != m_part)
+  if (has_more_tokens())
     parse_error(L"Unexpected characters at the end");
 }
 
@@ -380,16 +808,27 @@ void URI_parser::process(Processor &prc) const
 
   The value part is optional. If it starts with '[' then we
   have a comma separated list of values.
+
+  query           ::= "?" (pair | multiple-pairs)+
+  pair            ::= ( key ( "=" (valuelist | value) )?)
+  multiple-pairs  ::= pair("&" pair)+
+  key             ::= (unreserved | pct-encoded | sub-delims)+
+  valuelist       ::= "[" value ("," value)* "]"
+  value           ::= (unreserved | pct-encoded | "!" | "$" | "'" | "(" | ")" |  "*" | "+" | ";" | "=")*
+
 */
+
 
 void URI_parser::process_query(Processor &prc) const
 {
-  URI_parser *self = const_cast<URI_parser*>(this);
+  URI_parser* self = const_cast<URI_parser*>(this);
+
   std::string key;
   std::string val;
 
-  if (!has_more_tokens())
+  if (!self->consume_token(T_QUESTION))
     return;
+
 
   do {
     key.clear();
@@ -400,7 +839,8 @@ void URI_parser::process_query(Processor &prc) const
       the query part.
     */
 
-    self->consume_until(key, TokSet(T_EQ, T_AMP));
+    self->process_value(sub_delims_qry(), key);
+
 
     if (!self->consume_token(T_EQ))
     {
@@ -423,7 +863,9 @@ void URI_parser::process_query(Processor &prc) const
           '&' or end of the query part
         */
         val.clear();
-        self->consume_until(val, T_AMP);
+
+        self->process_value(sub_delims_qry(), val);
+
         prc.key_val(key, val);
       }
     }
@@ -436,6 +878,7 @@ void URI_parser::process_query(Processor &prc) const
 /*
   Process comma separated list of values enlosed in '[' and ']',
   reporting this list as value of given key.
+
 */
 
 void URI_parser::process_list(const std::string &key, Processor &prc) const
@@ -450,7 +893,9 @@ void URI_parser::process_list(const std::string &key, Processor &prc) const
 
   do {
     val.clear();
-    self->consume_until(val, TokSet(T_COMMA, T_SQCLOSE));
+
+    self->process_value(sub_delims_qry(), val);
+
     list.push_back(val);
   }
   while (self->consume_token(T_COMMA));
@@ -483,6 +928,16 @@ void URI_parser::consume_until(std::string &buf, const TokSet &toks)
     buf.push_back(consume_token().get_char());
 }
 
+/*
+  Consume tokens and store in the given buffer while current Token type belongs
+  to the given set
+*/
+
+void URI_parser::consume_while(std::string &buf, const TokSet &toks)
+{
+  while (has_more_tokens() && next_token_in(toks))
+    buf.push_back(consume_token().get_char());
+}
 
 /*
   Consume all remaining tokens of the current URI part and store
@@ -495,12 +950,18 @@ void URI_parser::consume_all(std::string &buf)
     buf.push_back(consume_token().get_char());
 }
 
+void URI_parser::trim_spaces()
+{
+  std::string dummy;
+  consume_while(dummy, T_SPACE);
+}
+
 
 // Check type of next token.
 
 bool URI_parser::next_token_is(short tt) const
 {
-  return !at_end() && tt == m_tok.get_type();
+  return !at_end() && tt == m_tok.top().get_type();
 }
 
 //  Check if type of next token is in the given set.
@@ -509,11 +970,26 @@ bool URI_parser::next_token_in(const TokSet &toks) const
 {
   if (!has_more_tokens())
     return false;
-  return toks.has_token(token_type(m_tok.get_type()));
+  return toks.has_token(token_type(m_tok.top().get_type()));
+}
+
+void URI_parser::push()
+{
+  m_tok.push(m_tok.top());
+  m_pos.push(m_pos.top());
+  m_pos_next.push(m_pos_next.top());
+}
+
+void URI_parser::pop()
+{
+  m_tok.pop();
+  m_pos.pop();
+  m_pos_next.pop();
 }
 
 
 // -------------------------------------------------
+
 
 /*
   Check the scheme part of the URI (if present) and set
@@ -526,27 +1002,27 @@ bool URI_parser::next_token_in(const TokSet &toks) const
 
 bool URI_parser::check_scheme(bool force)
 {
-  m_pos_next = 0;
+  m_pos_next.top() = 0;
   m_has_scheme = false;
 
-  m_pos = m_uri.find("://");
-  if (m_pos != std::string::npos)
+  m_pos.top() = m_uri.find("://");
+  if (m_pos.top() != std::string::npos)
   {
     m_has_scheme = true;
-    if (m_uri.substr(0, m_pos) != "mysqlx")
+    if (m_uri.substr(0, m_pos.top()) != "mysqlx")
       parse_error(L"Expected URI scheme 'mysqlx'");
 
     // move to the first token after '://'
-    m_pos_next = m_pos + 3;
+    m_pos_next.top() = m_pos.top() + 3;
   }
   else
   {
     // set m_pos for correct error reporting
-    m_pos = 0;
+    m_pos.top() = 0;
 
     if (m_uri.substr(0, 6) == "mysqlx")
     {
-      m_pos = 6;
+      m_pos.top() = 6;
       unexpected("://");
     }
 
@@ -554,103 +1030,9 @@ bool URI_parser::check_scheme(bool force)
       parse_error(L"URI scheme expected");
   }
 
-  get_token(false);
-  m_part = AUTHORITY;
+  get_token();
+
   return m_has_scheme;
-}
-
-
-/*
-  Look at the next token and see if we are at the end
-  of the current URI part. If this is the case, return id of the
-  part that follow, otherwise return the current part.
-
-  Note that, e.g., AUTHORITY part can be followed either by
-  PATH, QUERY or FRAGMENT, depending on the character that follows
-  after it:
-
-    ...://<authority>/<path>...
-    ...://<authority>?<query>...
-    ...://<authority>#<fragment>...
-*/
-
-URI_parser::part_t URI_parser::check_next_part() const
-{
-  if (at_end())
-    return END;
-
-  switch (m_part)
-  {
-  case SCHEME:
-    if (next_token_is(T_COLON))
-      return AUTHORITY;
-
-  case AUTHORITY:
-    if (next_token_is(T_SLASH))
-      return PATH;
-
-  case PATH:
-    if (next_token_is(T_QUESTION))
-      return QUERY;
-
-  case QUERY:
-    if (next_token_is(T_HASH))
-      return FRAGMENT;
-
-  case FRAGMENT:
-  default:
-    break;
-  }
-
-  return m_part;
-}
-
-/*
-  Move to the next part of the URI.
-
-  All remaining tokens in the current part are discarded.
-*/
-
-void URI_parser::next_part()
-{
-  assert(SCHEME != m_part);
-
-  std::string discard;
-  consume_all(discard);
-
-  /*
-    Determine the next part. Note that consume_all() should
-    put us at the end of the current part, so that check_next_part()
-    returns the id of the next part.
-  */
-
-  m_part = check_next_part();
-
-  // Move to the first token of the next part.
-
-  Token tok;
-
-  switch(m_part)
-  {
-  case AUTHORITY:
-    assert(false);
-
-  case PATH:
-    tok = consume_token();
-    assert(T_SLASH == tok.get_type());
-    break;
-
-  case QUERY:
-    tok = consume_token();
-    assert(T_QUESTION == tok.get_type());
-    break;
-
-  case SCHEME:
-  case FRAGMENT:
-  case END:
-  default:
-    break;
-  }
 }
 
 
@@ -663,35 +1045,15 @@ void URI_parser::next_part()
   Returns false if there are no more tokens (in the current part).
 */
 
-bool URI_parser::get_token(bool in_part)
+bool URI_parser::get_token()
 {
   m_pos = m_pos_next;
 
   if (at_end())
     return false;
 
-  if (in_part && !has_more_tokens())
-    return false;
+  m_tok.top() = Token(m_uri[m_pos_next.top()++]);
 
-  if ('%' == m_uri[m_pos_next])
-  {
-    long c;
-
-    // TODO: more efficient implementation.
-
-    std::string hex = m_uri.substr(m_pos_next + 1, 2);
-    hex.push_back('\0');
-    char *end = NULL;
-    c = strtol(hex.data(), &end, 16);
-    if (end != hex.data() + 2 || c < 0 || c > 256)
-      parse_error(L"Invalid pct-encoded character");
-
-    m_tok = Token((char)c, true);
-    m_pos_next += 3;
-    return true;
-  }
-
-  m_tok = Token(m_uri[m_pos_next++]);
   return true;
 }
 
@@ -701,7 +1063,7 @@ bool URI_parser::get_token(bool in_part)
 
 bool URI_parser::at_end() const
 {
-  return m_pos >= m_uri.length();
+  return m_pos.top() >= m_uri.length();
 }
 
 /*
@@ -711,7 +1073,7 @@ bool URI_parser::at_end() const
 
 bool URI_parser::has_more_tokens() const
 {
-  return !at_end() && m_part == check_next_part();
+  return !at_end();
 }
 
 
@@ -722,10 +1084,10 @@ bool URI_parser::has_more_tokens() const
 
 URI_parser::Token URI_parser::consume_token()
 {
-  if (END == m_part)
+  if (at_end())
     parse_error(L"Expected more characters");
-  Token cur_tok(m_tok);
-  get_token(false);
+  Token cur_tok(m_tok.top());
+  get_token();
   return cur_tok;
 }
 
@@ -748,25 +1110,75 @@ bool URI_parser::consume_token(short tt)
   return true;
 }
 
+template <typename C>
+bool URI_parser::consume_word_base(const std::string &word, C compare)
+{
+  Guard guard(this);
+
+  for (auto el : word)
+  {
+    if (!has_more_tokens())
+      return false;
+
+    if (!compare(m_tok.top().get_char(),el))
+      return false;
+
+    consume_token();
+
+  }
+
+  guard.release();
+
+  return true;
+
+}
+bool URI_parser::consume_word(const std::string &word)
+{
+  auto compare= [](char a, char b) -> bool
+  {
+    return a == b;
+  };
+
+  return consume_word_base(word, compare);
+}
+
+bool URI_parser::consume_word_ci(const std::string &word)
+{
+  auto compare_ci= [](char a, char b) -> bool
+  {
+    return ::tolower(a) == ::tolower(b);
+  };
+
+  return consume_word_base(word, compare_ci);
+}
+
 
 // -------------------------------------------------
 
 /*
-  Check type of the token. If token was obtained from %XX pct-encoding
-  then its type is always CHAR. Otherwise special URI characters are
+  Check type of the token. Special URI characters are
   as defined by URI_TOKEN_LIST above.
+  The rest are DIGIT (0-9) and CHAR.
 */
 
 short URI_parser::Token::get_type() const
 {
-  if (m_pct)
-    return T_CHAR;
 
 #define URI_TOKEN_CASE(T,C)  case C: return T_##T;
 
   switch(m_char)
   {
-  URI_TOKEN_LIST(URI_TOKEN_CASE)
-  default: return T_CHAR;
+    URI_TOKEN_LIST(URI_TOKEN_CASE)
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9': return T_DIGIT;
+    default: return T_CHAR;
   }
 }

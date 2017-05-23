@@ -1067,3 +1067,260 @@ TEST_F(Session_core, tls_options)
 }
 
 #endif
+
+TEST_F(Session_core, failover_add)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  try
+  {
+    unsigned short highest_priority = 100;
+    ds::TCPIP ds("localhost", m_port);
+    ds::TCPIP::Options options("root");
+    ds::Multi_source ms;
+
+    ms.add(ds, options, highest_priority);
+    try
+    {
+      /* Try adding non-prioritized item to a prioritized list */
+      ms.add(ds, options, 0);
+      FAIL() << "Mixing data sources with and without priority";
+    }
+    catch (cdk::Error &err)
+    {
+      if (err.code() == cdk::cdkerrc::generic_error)
+        cout << "Expected error: " << err << endl;
+      else
+        FAIL() << "Unexpected error: " << err;
+    }
+
+    ms.clear();
+
+    ms.add(ds, options, 0);
+    try
+    {
+      /* Try adding prioritized item to a non-prioritized list */
+      ms.add(ds, options, highest_priority);
+      FAIL() << "Mixing data sources with and without priority";
+    }
+    catch (cdk::Error &err)
+    {
+      if (err.code() == cdk::cdkerrc::generic_error)
+        cout << "Expected error: " << err << endl;
+      else
+        FAIL() << "Unexpected error: " << err;
+    }
+  }
+  catch (Error &e)
+  {
+    FAIL() << "CDK error: " << e << endl;
+  }
+
+}
+
+
+TEST_F(Session_core, failover_error)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  try
+  {
+    unsigned short highest_priority = 100;
+    ds::TCPIP ds("localhost", m_port);
+    ds::TCPIP::Options options("root");
+
+    ds::TCPIP ds_error("localhost", m_port + 1);
+    std::string bad_pwd = "bad_password";
+    ds::TCPIP::Options options_error("non_existing_user", &bad_pwd);
+
+    ds::Multi_source ms;
+
+    ms.add(ds_error, options, highest_priority);
+    ms.add(ds_error, options, highest_priority);
+    ms.add(ds_error, options, highest_priority - 1);
+    ms.add(ds_error, options, highest_priority - 1);
+
+    /*
+    Testing how Multi_source walks thrhough all added
+    data sources without being able to connect.
+    The exception must be thrown when the end of the list
+    is reached
+    */
+    try
+    {
+      cdk::Session s(ms);
+      FAIL() << "Exception is expected";
+    }
+    catch (cdk::Error &err)
+    {
+      if (err.code() == cdk::cdkerrc::generic_error)
+        cout << "Expected error: " << err << endl;
+      else
+        FAIL() << "Unexpected error: " << err;
+    }
+
+    ms.clear();
+    /* This will not connect, but no critical error */
+    ms.add(ds_error, options, highest_priority);
+
+    /* This will give the auth error */
+    ms.add(ds, options_error, highest_priority - 1);
+
+    /* This is able to connect, but should never be reached */
+    ms.add(ds, options, highest_priority - 2);
+
+    /*
+    Testing how Multi_source encounters authentication
+    error. No more connecting attempts should be made.
+    The last correct data source must not be tried.
+    */
+    cdk::Session s(ms);
+    if (s.is_valid())
+      FAIL() << "Session is supposed to be invalid";
+    else
+    {
+      cout << "Expected error: " << s.get_error() << endl;
+    }
+  }
+  catch (Error &e)
+  {
+    FAIL() << "CDK error: " << e << endl;
+  }
+
+}
+
+
+TEST_F(Session_core, failover)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  try
+  {
+
+    Session sess(this);
+
+    {
+      Reply r(sess.sql("CREATE SCHEMA IF NOT EXISTS failover_test_1"));
+      r.wait();
+      if (r.entry_count()) FAIL() << "Error creating schema";
+    }
+
+    {
+      Reply r(sess.sql("CREATE SCHEMA IF NOT EXISTS failover_test_2"));
+      r.wait();
+      if (r.entry_count()) FAIL() << "Error creating schema";
+    }
+
+    {
+      Reply r(sess.sql("CREATE SCHEMA IF NOT EXISTS failover_test_3"));
+      r.wait();
+      if (r.entry_count()) FAIL() << "Error creating schema";
+    }
+
+    unsigned short highest_priority = 100;
+    ds::TCPIP ds_correct("localhost", m_port);
+    ds::TCPIP ds_error("localhost", m_port + 1);
+
+    ds::TCPIP::Options options("root");
+    options.set_database("test");
+
+    ds::TCPIP::Options options_db1("root");
+    options_db1.set_database("failover_test_1");
+
+    ds::TCPIP::Options options_db2("root");
+    options_db2.set_database("failover_test_2");
+
+    ds::TCPIP::Options options_db3("root");
+    options_db3.set_database("failover_test_3");
+
+    ds::Multi_source ms;
+    /* Add a failing source, just for fun */
+    ms.add(ds_error, options, highest_priority);
+
+    /* Add sources with different databases to test random pick */
+    ms.add(ds_correct, options, highest_priority - 1);
+    ms.add(ds_correct, options_db1, highest_priority - 1);
+    ms.add(ds_correct, options_db2, highest_priority - 1);
+    ms.add(ds_correct, options_db3, highest_priority - 1);
+
+    struct : cdk::Row_processor
+    {
+      // Row_processor callbacks
+
+      std::string m_db_name;
+
+      virtual bool row_begin(row_count_t row)
+      {
+        return true;
+      }
+      virtual void row_end(row_count_t row)
+      {}
+
+      virtual void field_null(col_count_t pos)
+      {}
+
+      virtual size_t field_begin(col_count_t pos, size_t)
+      {
+        return  SIZE_MAX;
+      }
+
+      size_t field_data(col_count_t pos, bytes data)
+      {
+        EXPECT_EQ(0, pos);
+
+        // We expect string with current schema name
+
+        cdk::foundation::Codec<cdk::foundation::Type::STRING> codec;
+        cdk::string db;
+
+        // Trim trailing \0
+        bytes d1(data.begin(), data.end() - 1);
+        codec.from_bytes(d1, db);
+
+        cout << "current schema: " << db << endl;
+        m_db_name = db;
+
+        return 0;
+      }
+
+      virtual void field_end(col_count_t)
+      {}
+
+      virtual void end_of_data()
+      {}
+
+      std::string get_db_name() { return m_db_name; }
+    }
+    prc;
+
+    std::string cur_db = "";
+    int different_source = -1;
+
+    for (int i = 0; i < 10; ++i)
+    {
+      cdk::Session s(ms);
+      Reply r(s.sql("SELECT DATABASE()"));
+      r.wait();
+      Cursor c(r);
+      c.get_rows(prc);
+      c.wait();
+
+      if (cur_db.compare(prc.get_db_name()))
+        ++different_source;
+      cur_db = prc.get_db_name();
+    }
+
+    /*
+      If database was not changed at least 3 times in 10 connects
+      something is surely not right
+    */
+    if (different_source < 3)
+      FAIL() << "Failed to connect to a random data source";
+
+  }
+  catch (Error &e)
+  {
+    FAIL() << "CDK error: " << e << endl;
+  }
+
+}

@@ -27,7 +27,6 @@
 #include <climits>
 #include "test.h"
 
-
 TEST_F(xapi, view_ddl_test)
 {
   SKIP_IF_NO_XPLUGIN
@@ -744,30 +743,20 @@ TEST_F(xapi, conn_string_test)
   char conn_str[4096];
   int conn_err_code = 0;
   bool ssl_enable = false;
-  const char *xplugin_port = getenv("XPLUGIN_PORT");
-  const char *xplugin_usr = getenv("XPLUGIN_USER");
-  const char *xplugin_pwd = getenv("XPLUGIN_PASSWORD");
-  const char *xplugin_host = getenv("XPLUGIN_HOST");
 
   mysqlx_session_t *local_sess;
   mysqlx_stmt_t *stmt;
   mysqlx_result_t *res;
   mysqlx_row_t *row;
 
-  if (xplugin_port)
-    port= atoi(xplugin_port);
-
-
-  xplugin_usr = (xplugin_usr && strlen(xplugin_usr) ? xplugin_usr : "root");
-  xplugin_pwd = (xplugin_pwd && strlen(xplugin_pwd) ? xplugin_pwd : NULL);
-  xplugin_host = (xplugin_host && strlen(xplugin_host) ? xplugin_host : "127.0.0.1");
-
 DO_CONNECT:
 
-  if (xplugin_pwd)
-    sprintf(conn_str, "%s:%s@%s:%d", xplugin_usr, xplugin_pwd, xplugin_host, port);
+  if (m_xplugin_pwd)
+    sprintf(conn_str, "%s:%s@%s:%d", m_xplugin_usr, m_xplugin_pwd,
+                                     m_xplugin_host, m_xplugin_port);
   else
-    sprintf(conn_str, "%s@%s:%d", xplugin_usr, xplugin_host, port);
+    sprintf(conn_str, "%s@%s:%d", m_xplugin_usr, m_xplugin_host,
+                                  m_xplugin_port);
 
   if (!ssl_enable)
   {
@@ -860,19 +849,217 @@ DO_CONNECT:
 }
 
 
+TEST_F(xapi, failover_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
+  int conn_err_code = 0;
+  unsigned int max_prio = 100;
+  unsigned int prio = 0;
+  const char *db_name = "failover_db";
+
+  char buf[1024];
+
+  mysqlx_session_t *local_sess;
+  mysqlx_session_options_t *opt = mysqlx_session_options_new();
+  mysqlx_session_options_t *opt2 = mysqlx_session_options_new();
+  mysqlx_stmt_t *stmt;
+  mysqlx_result_t *res;
+  mysqlx_row_t *row;
+
+  authenticate();
+  mysqlx_schema_create(get_session(), db_name);
+
+  /* Checking when errors should be returned */
+
+  // No priority, should be ok
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt2,
+                       OPT_HOST(m_xplugin_host),
+                       OPT_PORT(m_xplugin_port + 2),
+                       PARAM_END));
+
+  EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_get(opt2, MYSQLX_OPT_PRIORITY, &prio));
+  cout << "Expected error: " << mysqlx_error_message(opt2) << endl;
+
+  // Error expected: trying to add a priority to unprioritized list
+  EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(opt2,
+                          OPT_PRIORITY(max_prio - 1),
+                          OPT_HOST(m_xplugin_host),
+                          OPT_PORT(m_xplugin_port + 2),
+                          PARAM_END));
+  cout << "Expected error: " << mysqlx_error_message(opt2) << endl;
+
+  /* Starting to build the prioritized list */
+
+  // Wrong port, should not connect
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                       OPT_PRIORITY(max_prio - 1),
+                       OPT_HOST(m_xplugin_host),
+                       OPT_PORT(m_xplugin_port + 1),
+                       PARAM_END));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_PRIORITY, &prio));
+  EXPECT_EQ(max_prio - 1, prio);
+
+  // Wrong port, should not connect
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                       OPT_PRIORITY(max_prio - 2),
+                       OPT_HOST(m_xplugin_host),
+                       OPT_PORT(m_xplugin_port + 2),
+                       PARAM_END));
+
+  // Port is given, but no host, should fail
+  EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(opt,
+                          OPT_PRIORITY(max_prio - 2),
+                          OPT_PORT(m_xplugin_port + 2),
+                          PARAM_END));
+  cout << "Expected error: " << mysqlx_error_message(opt) << endl;
+
+  // No priority, should fail
+  EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(opt,
+                          OPT_HOST(m_xplugin_host),
+                          OPT_PORT(m_xplugin_port + 2),
+                          PARAM_END));
+  cout << "Expected error: " << mysqlx_error_message(opt) << endl;
+
+  // All is correct, should connect
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                       OPT_PRIORITY(max_prio - 3),
+                       OPT_HOST(m_xplugin_host),
+                       OPT_PORT(m_xplugin_port),
+                       OPT_USER(m_xplugin_usr),
+                       OPT_PWD(m_xplugin_pwd),
+                       OPT_DB(db_name),
+                       PARAM_END));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_HOST, buf));
+  EXPECT_STRCASEEQ(m_xplugin_host, buf);
+
+  local_sess = mysqlx_get_node_session_from_options(opt, conn_error, &conn_err_code);
+  if (!local_sess)
+  {
+    mysqlx_free_options(opt);
+    FAIL() << "Could not connect to xplugin. " << m_xplugin_port << std::endl << conn_error <<
+      " ERROR CODE: " << conn_err_code;
+  }
+  cout << "Connected to xplugin..." << endl;
+
+  RESULT_CHECK(stmt = mysqlx_sql_new(local_sess, "SELECT DATABASE()", MYSQLX_NULL_TERMINATED));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  if ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    char data[128] = { 0 };
+    size_t data_len = sizeof(data);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, data, &data_len));
+    EXPECT_STRCASEEQ(db_name, data);
+  }
+
+  mysqlx_session_close(local_sess);
+  mysqlx_free_options(opt);
+}
+
+TEST_F(xapi, failover_test_url)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
+  int conn_err_code = 0;
+  const char *db_name = "failover_db";
+  char conn_str[4096];
+  char conn_str2[4096];
+
+  if (m_xplugin_pwd)
+  {
+    sprintf(conn_str, "%s:%s@[(address=%s:%d, priority=100),"\
+                      "(address=%s:%d, priority=90)," \
+                      "(address=%s:%d, priority=80)]/%s",
+                      m_xplugin_usr, m_xplugin_pwd,
+                      m_xplugin_host, m_xplugin_port + 1,
+                      m_xplugin_host, m_xplugin_port + 2,
+                      m_xplugin_host, m_xplugin_port, db_name );
+
+    sprintf(conn_str2, "%s:%s@[(address=%s:%d, priority=100),"\
+                       "address=%s:%d," \
+                       "(address=%s:%d, priority=80)]/%s",
+                       m_xplugin_usr, m_xplugin_pwd,
+                       m_xplugin_host, m_xplugin_port + 1,
+                       m_xplugin_host, m_xplugin_port + 2,
+                       m_xplugin_host, m_xplugin_port, db_name);
+  }
+  else
+  {
+    sprintf(conn_str, "%s@[(address=%s:%d, priority=100),"\
+                      "(address=%s:%d, priority=90)," \
+                      "(address=%s:%d, priority=80)]/%s",
+                      m_xplugin_usr,
+                      m_xplugin_host, m_xplugin_port + 1,
+                      m_xplugin_host, m_xplugin_port + 2,
+                      m_xplugin_host, m_xplugin_port, db_name );
+
+    sprintf(conn_str2, "%s@[(address=%s:%d, priority=100),"\
+                       "address=%s:%d," \
+                       "(address=%s:%d, priority=80)]/%s",
+                       m_xplugin_usr,
+                       m_xplugin_host, m_xplugin_port + 1,
+                       m_xplugin_host, m_xplugin_port + 2,
+                       m_xplugin_host, m_xplugin_port, db_name);
+  }
+
+  mysqlx_session_t *local_sess;
+  mysqlx_stmt_t *stmt;
+  mysqlx_result_t *res;
+  mysqlx_row_t *row;
+
+  authenticate();
+  mysqlx_schema_create(get_session(), db_name);
+
+  local_sess = mysqlx_get_node_session_from_url(conn_str2, conn_error, &conn_err_code);
+  if (local_sess)
+  {
+    mysqlx_session_close(local_sess);
+    FAIL() << "Wrong option was not handled correctly";
+  }
+  else
+  {
+    cout << "Expected connection error: " << conn_error << endl;
+  }
+
+
+  local_sess = mysqlx_get_node_session_from_url(conn_str, conn_error, &conn_err_code);
+  if (!local_sess)
+  {
+    FAIL() << "Could not connect to xplugin. " << m_xplugin_port << std::endl << conn_error <<
+      " ERROR CODE: " << conn_err_code;
+  }
+  cout << "Connected to xplugin..." << endl;
+
+  RESULT_CHECK(stmt = mysqlx_sql_new(local_sess, "SELECT DATABASE()", MYSQLX_NULL_TERMINATED));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  if ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    char data[128] = { 0 };
+    size_t data_len = sizeof(data);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, data, &data_len));
+    EXPECT_STRCASEEQ(db_name, data);
+  }
+
+  mysqlx_session_close(local_sess);
+}
+
+
+
+
 TEST_F(xapi, conn_options_test)
 {
   SKIP_IF_NO_XPLUGIN
 
-  unsigned int port = 0;
   unsigned int port2 = 0;
   unsigned int ssl_enable = 0;
   char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
   int conn_err_code = 0;
-  const char *xplugin_port = getenv("XPLUGIN_PORT");
-  const char *xplugin_usr = getenv("XPLUGIN_USER");
-  const char *xplugin_pwd = getenv("XPLUGIN_PASSWORD");
-  const char *xplugin_host = getenv("XPLUGIN_HOST");
 
   char buf[1024];
 
@@ -882,44 +1069,34 @@ TEST_F(xapi, conn_options_test)
   mysqlx_result_t *res;
   mysqlx_row_t *row;
 
-  if (xplugin_port)
-    port= atoi(xplugin_port);
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                      OPT_HOST(m_xplugin_host), OPT_PORT(m_xplugin_port),
+                      OPT_USER(m_xplugin_usr), OPT_PWD(m_xplugin_pwd),
+                      PARAM_END));
 
-
-  xplugin_usr = (xplugin_usr && strlen(xplugin_usr) ? xplugin_usr : "root");
-  xplugin_pwd = (xplugin_pwd && strlen(xplugin_pwd) ? xplugin_pwd : "");
-  xplugin_host = (xplugin_host && strlen(xplugin_host) ? xplugin_host : "127.0.0.1");
-
-  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_HOST, xplugin_host));
-  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_USER, xplugin_usr));
-  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_PWD, xplugin_pwd));
-  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_PORT, port));
-
-  EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(opt, (mysqlx_opt_type_t)127, port));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(opt, (mysqlx_opt_type_t)127, port2, PARAM_END));
   cout << "Expected error: " << mysqlx_error_message(mysqlx_error(opt)) << std::endl;
 
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_HOST, buf));
-  EXPECT_STREQ(xplugin_host, buf);
+  EXPECT_STREQ(m_xplugin_host, buf);
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_USER, buf));
-  EXPECT_STREQ(xplugin_usr, buf);
-  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_PWD, buf));
-  EXPECT_STREQ(xplugin_pwd, buf);
+  EXPECT_STREQ(m_xplugin_usr, buf);
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_PORT, &port2));
-  EXPECT_EQ(true, port == port2);
+  EXPECT_EQ(true, m_xplugin_port == port2);
 
 DO_CONNECT:
 
   if (!ssl_enable)
-    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SSL_MODE, SSL_MODE_DISABLED));
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, OPT_SSL_MODE(SSL_MODE_DISABLED), PARAM_END));
   else
-    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SSL_MODE, SSL_MODE_REQUIRED));
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, OPT_SSL_MODE(SSL_MODE_REQUIRED), PARAM_END));
 
   local_sess = mysqlx_get_node_session_from_options(opt, conn_error, &conn_err_code);
 
   if (!local_sess)
   {
     mysqlx_free_options(opt);
-    FAIL() << "Could not connect to xplugin. " << port << std::endl << conn_error <<
+    FAIL() << "Could not connect to xplugin. " << m_xplugin_port << std::endl << conn_error <<
             " ERROR CODE: " << conn_err_code;
   }
   cout << "Connected to xplugin..." << endl;
@@ -976,13 +1153,13 @@ DO_CONNECT:
 
         strcat(combined_buf, capath_buf);
         strcat(combined_buf, ca_buf);
-        EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SSL_CA, combined_buf));
+        EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, OPT_SSL_CA(combined_buf), PARAM_END));
         EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_SSL_CA, buf_check));
         EXPECT_STREQ(combined_buf, buf_check);
       }
       else
       {
-        EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SSL_CA, ca_buf));
+        EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, OPT_SSL_CA(ca_buf), PARAM_END));
         EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_SSL_CA, buf_check));
         EXPECT_STREQ(ca_buf, buf_check);
       }

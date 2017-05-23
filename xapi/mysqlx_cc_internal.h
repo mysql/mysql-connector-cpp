@@ -388,30 +388,81 @@ public:
 
 
 typedef struct mysqlx_session_options_struct : public Mysqlx_diag,
-                                               public parser::URI_processor,
-                                               public cdk::ds::TCPIP::Options
+                                               public parser::URI_processor
 {
 private:
-  std::string m_host;
-  unsigned short m_port;
-  /* The pointer is used because TCPIP options
-     can only be set in the constructor */
-  cdk::ds::TCPIP *m_tcp;
+
   tls_options_verify_cn m_tls_options;
+
+  /*
+    This struct extends cdk::ds::TCPIP to allow setting
+    host and port at any time
+  */
+
+  struct TCPIP_t : public cdk::ds::TCPIP
+  {
+    TCPIP_t() : cdk::ds::TCPIP() {}
+
+    TCPIP_t(const std::string &_host, unsigned short _port) :
+      cdk::ds::TCPIP(_host, _port) {}
+
+    template <typename S>
+    void set_host(const S host) { m_host = host; }
+
+    void set_port(unsigned short port) { m_port = port; }
+  };
+
+  struct TCPIP_Options_t : public cdk::ds::TCPIP::Options
+  {
+    TCPIP_Options_t() : cdk::ds::TCPIP::Options() {}
+
+    TCPIP_Options_t(const string &usr, const std::string *pwd = NULL) :
+      cdk::ds::TCPIP::Options(usr, pwd) {}
+
+    template <typename S>
+    void set_user(const S usr) { m_usr = usr; }
+
+    void set_pwd(const char *pwd)
+    {
+      if (pwd)
+      { m_has_pwd = true; m_pwd = std::string(pwd); }
+      else
+        m_has_pwd = false;
+    }
+
+    void set_pwd(const std::string *pwd)
+    {
+      if (pwd)
+      { m_has_pwd = true; m_pwd = *pwd; }
+      else
+        m_has_pwd = false;
+    }
+
+  };
+
+  typedef std::pair<unsigned short, TCPIP_t> Prio_host_pair;
+  typedef std::vector<Prio_host_pair> Host_list;
+
+  enum source_state
+  { unknown, priority, non_priority }
+  m_source_state;
+
+  TCPIP_Options_t m_tcp_opts;
+  /* Compiler errors if declare the instance */
+  cdk::ds::Multi_source m_ms;
+  Host_list m_host_list;
 
   cdk::connection::TLS::Options::SSL_MODE uint_to_ssl_mode(unsigned int mode);
   unsigned int ssl_mode_to_uint(cdk::connection::TLS::Options::SSL_MODE mode);
 
 
 public:
-  mysqlx_session_options_struct() : m_tcp(NULL)
-  {
-#ifdef WITH_SSL
-    set_ssl_mode(SSL_MODE_PREFERRED);
-#else
-    set_ssl_mode(SSL_MODE_DISABLED);
-#endif
-  }
+  mysqlx_session_options_struct();
+
+  /* Move constructor should be disabled */
+  mysqlx_session_options_struct(mysqlx_session_options_struct &&) = delete;
+
+  mysqlx_session_options_struct(const mysqlx_session_options_struct &opt);
 
   mysqlx_session_options_struct(const std::string host, unsigned short port,
                            const std::string usr, const std::string *pwd,
@@ -424,61 +475,54 @@ public:
 #endif
   );
 
-  mysqlx_session_options_struct(const std::string &conn_str) : m_tcp(NULL)
-  {
-#ifdef WITH_SSL
-    set_ssl_mode(SSL_MODE_PREFERRED);
-#else
-    set_ssl_mode(SSL_MODE_DISABLED);
-#endif
-    parser::parse_conn_str(conn_str, *this);
+  mysqlx_session_options_struct(const std::string &conn_str);
 
-    //need to call set_ssl_mode so that host is set/updated
-    set_ssl_mode(static_cast<unsigned int>(m_tls_options.ssl_mode()));
-  }
-
-  cdk::ds::TCPIP &get_tcpip();
 
   // Implementing URI_Processor interface
-  void user(const std::string &usr)
-  { m_usr = usr; }
+  void user(const std::string &usr) override
+  { m_tcp_opts.set_user(usr); }
 
   // Implementing URI_Processor interface
-  void password(const std::string &pwd)
-  {
-    m_pwd = pwd;
-    m_has_pwd = true;
-  }
+  void password(const std::string &pwd) override
+  { m_tcp_opts.set_pwd(&pwd); }
 
   // Implementing URI_Processor interface
-  void host(const std::string &host)
-  { m_host = host; }
-
+  void host(unsigned short priority, const std::string &host,
+            unsigned short port) override;
   // Implementing URI_Processor interface
-  void port(unsigned short port)
-  { m_port = port; }
+  void host(unsigned short priority, const std::string &host_name) override;
 
-  std::string get_host() { return m_host; }
-  unsigned int get_port() { return m_port; }
-  std::string get_user() { return m_usr; }
-  std::string get_password() { return m_pwd; }
-  std::string get_db() { return m_db; }
+  // Make sure an option is set for a single data source
+  void set_multiple_options(va_list args);
+
+  void set_database(const cdk::string &db) { return m_tcp_opts.set_database(db); }
+
+  cdk::ds::TCPIP::Options &get_tcpip_options();
+  cdk::ds::Multi_source &get_multi_source();
+
+  const cdk::string* database() { return m_tcp_opts.database(); }
+  const std::string get_host();
+  unsigned int get_port();
+  unsigned int get_priority();
+  const std::string get_user();
+  const std::string* get_password();
+  const cdk::string* get_db();
 
   void set_ssl_ca(const string &ca)
   {
     m_tls_options.set_ca(ca);
-    set_tls(m_tls_options);
+    m_tcp_opts.set_tls(m_tls_options);
   }
 
   void set_ssl_mode(unsigned int ssl_mode);
   unsigned int get_ssl_mode();
 
   // Implementing URI_Processor interface
-  void path(const std::string &path)
-  { set_database(path); }
+  void path(const std::string &path) override
+  { m_tcp_opts.set_database(path); }
 
-  void key_val(const std::string& key);
-  void key_val(const std::string& key, const std::string& val);
+  void key_val(const std::string& key) override;
+  void key_val(const std::string& key, const std::string& val) override;
   ~mysqlx_session_options_struct();
 
 } mysqlx_session_options_t;
