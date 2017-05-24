@@ -540,7 +540,21 @@ TEST_F(Sess, ssl_session)
   {
 
     try {
-      mysqlx::XSession sess(SessionSettings::PORT, get_port(),
+      mysqlx::XSession sess(SessionSettings::HOST, "127.0.0.1",
+                            SessionSettings::PORT, get_port(),
+                            SessionSettings::PRIORITY, 1,
+                            SessionSettings::HOST, "localhost",
+                            SessionSettings::PORT, get_port(),
+                            SessionSettings::PRIORITY, 100,
+                            SessionSettings::HOST, "localhost4",
+                            SessionSettings::PORT, get_port(),
+                            SessionSettings::PRIORITY, 1,
+                            SessionSettings::HOST, "::1",
+                            SessionSettings::PORT, get_port(),
+                            SessionSettings::PRIORITY, 1,
+                            SessionSettings::HOST, "localhost6",
+                            SessionSettings::PORT, get_port(),
+                            SessionSettings::PRIORITY, 1,
                             SessionSettings::USER,get_user(),
                             SessionSettings::PWD, get_password() ? get_password() : NULL ,
                             SessionSettings::SSL_MODE, SessionSettings::SSLMode::VERIFY_IDENTITY,
@@ -557,6 +571,20 @@ TEST_F(Sess, ssl_session)
                 string(e.what()));
     }
 
+  }
+
+  //Errors
+  {
+    //Defined twice
+    EXPECT_THROW(SessionSettings(SessionSettings::SSL_MODE,
+                                 SessionSettings::SSLMode::DISABLED,
+                                 SessionSettings::SSL_MODE,
+                                 SessionSettings::SSLMode::DISABLED),
+                 Error);
+
+    EXPECT_THROW(SessionSettings(SessionSettings::SSL_CA, "dummy",
+                                 SessionSettings::SSL_CA, "dummy"),
+                 Error);
   }
 
 }
@@ -714,10 +742,6 @@ TEST_F(Sess, failover)
 
     settings.set(SessionSettings::HOST, "server.example.com",
                  SessionSettings::PRIORITY, 1,
-                 SessionSettings::USER, get_user(),
-                 SessionSettings::PWD, get_password() ?
-                   get_password() :
-                   nullptr,
                  SessionSettings::HOST, "192.0.2.11",
                  SessionSettings::PORT, 33060,
                  SessionSettings::PRIORITY, 98,

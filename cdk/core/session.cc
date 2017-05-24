@@ -70,7 +70,8 @@ struct TLS_processor : cdk::protocol::mysqlx::Reply_processor
 struct Session_builder
 {
   cdk::api::Connection *m_conn = NULL;
-  mysqlx::Session   *m_sess = NULL;
+  mysqlx::Session      *m_sess = NULL;
+  const mysqlx::string *m_database = NULL;
   bool m_throw_errors = false;
 
   Session_builder(bool throw_errors = false)
@@ -188,6 +189,8 @@ Session_builder::operator() (
     m_sess = new mysqlx::Session(*connection, options);
   }
 
+  m_database = options.database();
+
   return true;
 }
 
@@ -232,6 +235,7 @@ Session::Session(ds::Multi_source &ds)
   ds::Multi_source::Access::visit(ds, sb);
 
   m_session = sb.m_sess;
+  m_database = sb.m_database;
   m_connection = sb.m_conn;
 }
 

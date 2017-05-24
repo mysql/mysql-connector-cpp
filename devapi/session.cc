@@ -35,6 +35,9 @@
 
 using namespace ::mysqlx;
 
+const std::map<SessionSettings::Options, string> SessionSettings::m_options_name =
+{ SETTINGS_OPTIONS(map_options) };
+
 struct Endpoint
 {
   enum Type { TCPIP };
@@ -70,11 +73,11 @@ class internal::XSession_base::Impl
 
   internal::BaseResult *m_current_result = NULL;
 
-  Impl(cdk::ds::Multi_source &ms, XSession_base::Options &opt)
+  Impl(cdk::ds::Multi_source &ms)
     : m_sess(ms)
   {
-    if (opt.database())
-      m_default_db = *opt.database();
+    if (m_sess.get_default_schema())
+      m_default_db = *m_sess.get_default_schema();
     if (!m_sess.is_valid())
       m_sess.get_error().rethrow();
   }
@@ -88,33 +91,6 @@ class internal::XSession_base::Impl
 
 static std::map<string,SessionSettings::SSLMode> ssl_modes = { SSL_MODE_TYPES(map_ssl) };
 
-class TLS_Options_verify_cn: public cdk::connection::TLS::Options
-{
-  std::string m_common_name;
-
-public:
-  TLS_Options_verify_cn()
-  {
-    // Set verify_cn function
-    std::function<bool(const std::string&)> f_cert_val =
-        std::bind(&TLS_Options_verify_cn::verify,
-                  this,
-                  std::placeholders::_1);
-
-    set_verify_cn(f_cert_val);
-  }
-
-  bool verify(const std::string& cn)
-  {
-    return m_common_name == cn;
-  }
-
-  void set_common_name(const std::string &cn)
-  {
-    m_common_name = cn;
-  }
-
-};
 
 void set_ssl_mode(cdk::connection::TLS::Options &tls_opt,
                   SessionSettings::SSLMode mode)
@@ -151,17 +127,47 @@ void set_ssl_mode(cdk::connection::TLS::Options &tls_opt,
 
 #endif //WITH_SSL
 
+struct Host_sources : public cdk::ds::Multi_source
+{
+
+  inline void add(const cdk::ds::TCPIP &ds,
+                  cdk::ds::TCPIP::Options options,
+                  unsigned short prio)
+  {
+#ifdef WITH_SSL
+
+    std::string host = ds.host();
+
+    cdk::connection::TLS::Options tls = options.get_tls();
+
+    tls.set_verify_cn(
+          [host](const std::string& cn)-> bool{
+      return cn == host;
+    });
+
+    options.set_tls(tls);
+
+#endif
+
+    cdk::ds::Multi_source::add(ds, options, prio);
+  }
+
+};
+
+
+
 struct URI_parser
   : public internal::XSession_base::Access::Options
   , public parser::URI_processor
 {
 
-  cdk::ds::Multi_source m_source;
+  Host_sources m_source;
+
 
   std::multimap<unsigned short, cdk::ds::TCPIP> m_hosts;
 
 #ifdef WITH_SSL
-  TLS_Options_verify_cn m_tls_opt;
+  cdk::connection::TLS::Options m_tls_opt;
 #endif
 
   URI_parser(const std::string &uri)
@@ -178,8 +184,7 @@ struct URI_parser
     m_source.clear();
     for (auto el : m_hosts)
     {
-      cdk::ds::TCPIP::Options opts(*this);
-      m_source.add(el.second, opts, el.first);
+      m_source.add(el.second, *this, el.first);
     }
     return m_source;
   }
@@ -269,8 +274,7 @@ internal::XSession_base::XSession_base(SessionSettings settings)
             settings.find(SessionSettings::URI).get<string>()
           );
 
-      m_impl = new Impl(parser.get_data_source(),
-                        static_cast<XSession_base::Options&>(parser));
+      m_impl = new Impl(parser.get_data_source());
     }
     else
     {
@@ -279,7 +283,7 @@ internal::XSession_base::XSession_base(SessionSettings settings)
       bool has_pwd = false;
 
 #ifdef WITH_SSL
-        TLS_Options_verify_cn opt_ssl;
+        cdk::connection::TLS::Options opt_ssl;
 #endif // WITH_SSL
 
       if (settings.has_option(SessionSettings::PWD) &&
@@ -302,7 +306,7 @@ internal::XSession_base::XSession_base(SessionSettings settings)
         throw Error("User not defined!");
       }
 
-      Options opt(user, has_pwd ? &pwd_str : NULL);
+      cdk::ds::TCPIP::Options opt(user, has_pwd ? &pwd_str : NULL);
 
       if (settings.has_option(SessionSettings::DB))
         opt.set_database(
@@ -339,7 +343,7 @@ internal::XSession_base::XSession_base(SessionSettings settings)
       }
 
 
-      cdk::ds::Multi_source source;
+      Host_sources source;
 
       std::string host = "localhost";
       unsigned port = DEFAULT_MYSQLX_PORT;
@@ -439,7 +443,7 @@ internal::XSession_base::XSession_base(SessionSettings settings)
 
       } while (it != settings.end());
 
-      m_impl = new Impl(source, opt);
+      m_impl = new Impl(source);
 
     }
   }

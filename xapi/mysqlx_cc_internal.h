@@ -358,30 +358,28 @@ public:
   Sort_direction::value get_direction(uint32_t pos) const {return m_list[pos].direction(); }
 };
 
-struct tls_options_verify_cn: public cdk::connection::TLS::Options
+
+struct Host_sources : public cdk::ds::Multi_source
 {
-  std::string m_common_name;
 
-public:
-  tls_options_verify_cn()
+  inline void add(cdk::ds::TCPIP ds,
+                  cdk::ds::TCPIP::Options options,
+                  unsigned short prio)
   {
-    // Set verify_cn function
-    std::function<bool(const std::string&)> f_cert_val =
-        std::bind(&tls_options_verify_cn::verify,
-                  this,
-                  std::placeholders::_1);
+#ifdef WITH_SSL
+    std::string host = ds.host();
 
-    set_verify_cn(f_cert_val);
-  }
+    cdk::connection::TLS::Options tls = options.get_tls();
 
-  bool verify(const std::string& cn)
-  {
-    return m_common_name == cn;
-  }
+    tls.set_verify_cn(
+          [host](const std::string& cn)-> bool{
+      return cn == host;
+    });
 
-  void set_common_name(const std::string &cn)
-  {
-    m_common_name = cn;
+    options.set_tls(tls);
+#endif
+
+    cdk::ds::Multi_source::add(ds, options, prio);
   }
 
 };
@@ -392,7 +390,7 @@ typedef struct mysqlx_session_options_struct : public Mysqlx_diag,
 {
 private:
 
-  tls_options_verify_cn m_tls_options;
+  cdk::connection::TLS::Options m_tls_options;
 
   /*
     This struct extends cdk::ds::TCPIP to allow setting
@@ -449,7 +447,7 @@ private:
 
   TCPIP_Options_t m_tcp_opts;
   /* Compiler errors if declare the instance */
-  cdk::ds::Multi_source m_ms;
+  Host_sources m_ms;
   Host_list m_host_list;
 
   cdk::connection::TLS::Options::SSL_MODE uint_to_ssl_mode(unsigned int mode);

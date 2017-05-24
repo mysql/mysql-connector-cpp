@@ -77,6 +77,7 @@
 #include "devapi/collection_crud.h"
 #include "devapi/table_crud.h"
 
+#include <bitset>
 
 namespace cdk {
 
@@ -944,6 +945,7 @@ public:
   enum Options
   {
     SETTINGS_OPTIONS(OPTIONS_ENUM)
+    LAST
   };
 
 
@@ -979,10 +981,12 @@ public:
 
   SessionSettings(SessionSettings &settings)
     : m_options(settings.m_options)
+    , m_option_used(settings.m_option_used)
   {}
 
   SessionSettings(SessionSettings &&settings)
     : m_options(std::move(settings.m_options))
+    , m_option_used(std::move(settings.m_option_used))
   {}
 
 
@@ -1169,6 +1173,12 @@ public:
   */
   Value& find(Options opt)
   {
+    if (!has_option(opt))
+    {
+      std::stringstream error;
+      error << "SessionSettings option " << m_options_name.at(opt) << " not found";
+      throw Error(error.str().c_str());
+    }
     auto it = m_options.begin();
     for (;
          it != m_options.end();
@@ -1176,23 +1186,6 @@ public:
     {
       if (it->first == opt)
         break;
-    }
-
-
-    if (it == m_options.end())
-    {
-      /**
-         @cond HIDDEN_SYMBOLS
-    */
-      static std::map<SessionSettings::Options, string> options_name =
-      { SETTINGS_OPTIONS(map_options) };
-      /**
-       @endcond
-     */
-
-      std::stringstream error;
-      error << "SessionSettings option " << options_name[opt] << " not found";
-      throw Error(error.str().c_str());
     }
 
     return it->second;
@@ -1240,6 +1233,7 @@ public:
   void clear()
   {
     m_options.clear();
+    m_option_used.reset();
   }
 
   /**
@@ -1260,6 +1254,7 @@ public:
         ++it;
       }
     }
+    m_option_used.reset(opt);
   }
 
 
@@ -1269,26 +1264,31 @@ public:
 
   bool has_option(Options opt)
   {
-    for(auto el : m_options)
-    {
-      if (el.first == opt)
-        return true;
-    }
-    return false;
+    return m_option_used.test(opt);
   }
 
 
 private:
 
   std::vector<std::pair<Options,Value>> m_options;
+  std::bitset<Options::LAST> m_option_used;
+  static const std::map<SessionSettings::Options, string> m_options_name;
 
 
-  void do_add(Options opt, Value v)
+  void do_add(Options opt, Value &&v)
   {
     //Only HOST and PORT can have multiple values, the others, are unique
     if (opt == HOST || opt == PORT || opt == PRIORITY)
     {
-      m_options.emplace_back(std::make_pair(opt, v));
+      m_options.emplace_back(std::make_pair(opt, std::move(v)));
+    }
+    else if (has_option(opt))
+    {
+      std::stringstream error;
+      error << "SessionSettings option "
+            << m_options_name.at(opt) << " defined twice";
+
+      throw Error(error.str().c_str());
     }
     else
     {
@@ -1297,19 +1297,25 @@ private:
       {
         if (it->first == opt)
         {
-          it->second = v;
+          it->second = std::move(v);
           break;
         }
       }
 
       if (it == m_options.end())
       {
-        m_options.emplace_back(std::make_pair(opt, v));
+        m_options.emplace_back(opt, std::move(v));
       }
     }
+    m_option_used.set(opt);
   }
 
   void set() {}
+
+  void add(Options opt, Value &&v)
+  {
+    do_add(opt, std::move(v));
+  }
 
   template<typename V>
   void add(Options opt, V v)
@@ -1337,42 +1343,42 @@ private:
     HOST/PORT/PRIORITY chain
   */
 
-  void do_add_host(Value host)
+  void do_add_host(Value &&host)
   {
-    add(Options::HOST, host);
+    add(Options::HOST, std::move(host));
   }
 
-  void do_add_host(Value host, Value port)
+  void do_add_host(Value &&host, Value &&port)
   {
-    add(Options::HOST, host);
-    add(Options::PORT, port);
+    add(Options::HOST, std::move(host));
+    add(Options::PORT, std::move(port));
   }
 
-  void do_add_host(Value host, Value port, Value priority)
+  void do_add_host(Value &&host, Value &&port, Value &&priority)
   {
-    add(Options::HOST, host);
-    add(Options::PORT, port);
-    add(Options::PRIORITY, priority);
+    add(Options::HOST, std::move(host));
+    add(Options::PORT, std::move(port));
+    add(Options::PRIORITY, std::move(priority));
   }
 
   template <typename V, typename...R>
-  void do_add_host(Value host, Options &opt, V v, R...rest)
+  void do_add_host(Value &&host, Options &opt, V v, R...rest)
   {
     if (opt == Options::PORT)
     {
       //we could still have priority
-      do_add_host(host, Value(v), rest...);
+      do_add_host(std::move(host), Value(v), rest...);
       return;
     }
     else if (opt == Options::PRIORITY)
     {
-      do_add_host(host, Value(DEFAULT_MYSQLX_PORT), Value(v));
+      do_add_host(std::move(host), Value(DEFAULT_MYSQLX_PORT), Value(v));
       set(rest...);
       return;
     }
     else
     {
-      do_add_host(host);
+      do_add_host(std::move(host));
     }
 
     set(opt, v, rest...);
@@ -1382,15 +1388,15 @@ private:
 
 
   template <typename...R>
-  void do_add_host(Value host, Value port, Options opt, Value v, R...rest)
+  void do_add_host(Value &&host, Value &&port, Options opt, Value &&v, R...rest)
   {
     if (opt == Options::PRIORITY)
     {
-      do_add_host(host, port, v);
+      do_add_host(std::move(host), std::move(port), std::move(v));
       set (rest...);
       return;
     }
-    do_add_host(host, port);
+    do_add_host(std::move(host), std::move(port));
     set (opt, v, rest...);
   }
 
