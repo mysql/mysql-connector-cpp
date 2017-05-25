@@ -274,8 +274,8 @@ mysqlx_session_options_struct::mysqlx_session_options_struct(
                               const std::string usr, const std::string *pwd,
                               const std::string *db,
                               unsigned int ssl_mode) :
-                              m_tcp_opts(usr, pwd),
-                              m_source_state(source_state::non_priority)
+                              m_source_state(source_state::non_priority),
+                              m_tcp_opts(usr, pwd)
 {
   if (db)
     set_database(*db);
@@ -292,9 +292,9 @@ mysqlx_session_options_struct::mysqlx_session_options_struct(
 
 
 mysqlx_session_options_struct::mysqlx_session_options_struct(const mysqlx_session_options_struct &opt) :
-                               m_source_state(opt.m_source_state),
-                               m_tcp_opts(opt.m_tcp_opts),
-                               m_host_list(opt.m_host_list)
+  m_source_state(opt.m_source_state),
+  m_tcp_opts(opt.m_tcp_opts),
+  m_host_list(opt.m_host_list)
 {}
 
 
@@ -339,6 +339,16 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
     {
       unsigned int uint_data = 0;
       const char *char_data = NULL;
+
+      if (type != MYSQLX_OPT_HOST &&
+          type != MYSQLX_OPT_PORT &&
+          type != MYSQLX_OPT_PRIORITY &&
+          m_options_used.test(type))
+      {
+        throw Mysqlx_exception(MYSQLX_ERROR_DUPLICATED_OPTION);
+      }
+
+      m_options_used.set(type);
 
       switch (type)
       {

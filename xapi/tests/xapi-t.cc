@@ -1064,10 +1064,16 @@ TEST_F(xapi, conn_options_test)
   char buf[1024];
 
   mysqlx_session_t *local_sess;
-  mysqlx_session_options_t *opt = mysqlx_session_options_new();
+  mysqlx_session_options_t *opt = NULL;
   mysqlx_stmt_t *stmt;
   mysqlx_result_t *res;
   mysqlx_row_t *row;
+
+  DO_CONNECT:
+
+  mysqlx_free_options(opt);
+
+  opt = mysqlx_session_options_new();
 
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
                       OPT_HOST(m_xplugin_host), OPT_PORT(m_xplugin_port),
@@ -1084,7 +1090,7 @@ TEST_F(xapi, conn_options_test)
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_PORT, &port2));
   EXPECT_EQ(true, m_xplugin_port == port2);
 
-DO_CONNECT:
+
 
   if (!ssl_enable)
     EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, OPT_SSL_MODE(SSL_MODE_DISABLED), PARAM_END));
@@ -1388,4 +1394,34 @@ TEST_F(xapi, myc_344_sql_error_test)
   }
   EXPECT_TRUE((err_msg = mysqlx_error_message(res)) != NULL);
   printf("\nExpected error: %s\n", err_msg);
+}
+
+TEST_F(xapi, mycpp_344_multi_options_error_test)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  mysqlx_session_options_t *opt = mysqlx_session_options_new();
+
+  EXPECT_EQ(RESULT_OK,
+            mysqlx_session_option_set(opt,
+                                      OPT_USER(m_xplugin_usr),
+                                      OPT_SSL_MODE(SSL_MODE_DISABLED),
+                                      OPT_SSL_CA("unknow") ,
+                                      PARAM_END));
+
+  EXPECT_EQ(RESULT_ERROR,
+            mysqlx_session_option_set(opt,
+                                      OPT_USER(m_xplugin_usr),
+                                      PARAM_END));
+
+  EXPECT_EQ(RESULT_ERROR,
+            mysqlx_session_option_set(opt,
+                                      OPT_SSL_MODE(SSL_MODE_DISABLED),
+                                      PARAM_END));
+
+  EXPECT_EQ(RESULT_ERROR,
+            mysqlx_session_option_set(opt,
+                                      OPT_SSL_CA("unknow") ,
+                                      PARAM_END));
+
 }

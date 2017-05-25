@@ -172,6 +172,7 @@ typedef object_id* MYSQLX_GUID;
 #define MYSQLX_ERROR_WRONG_SSL_MODE "Wrong value for SSL Mode"
 #define MYSQLX_ERROR_NO_TLS_SUPPORT "Can not create TLS session - this connector is built without TLS support"
 #define MYSQLX_ERROR_MIX_PRIORITY "Mixing hosts with and without priority is not allowed"
+#define MYSQLX_ERROR_DUPLICATED_OPTION "Option already defined"
 
 
 /* Opaque structures*/
@@ -349,7 +350,8 @@ typedef enum mysqlx_opt_type_enum
   MYSQLX_OPT_SSL_MODE = 6,
   /** path to a PEM file specifying trusted root certificates */
   MYSQLX_OPT_SSL_CA = 7,
-  MYSQLX_OPT_PRIORITY = 8
+  MYSQLX_OPT_PRIORITY = 8,
+  LAST
 }
 mysqlx_opt_type_t;
 
