@@ -33,6 +33,7 @@ PUSH_SYS_WARNINGS
 #include <limits>
 #ifndef _WIN32
 #include <arpa/inet.h>
+#include <signal.h>
 #endif
 POP_SYS_WARNINGS
 
@@ -345,6 +346,11 @@ void initialize_socket_system()
   yaSSL::OpenSSL_add_all_algorithms();
   yaSSL::SSL_load_error_strings();
 #endif // WITH_SSL_YASSL
+
+#ifndef WIN32
+  //ignore SIGPIPE signal when sending data with connection closed by server
+  signal(SIGPIPE, SIG_IGN);
+#endif
 }
 
 
