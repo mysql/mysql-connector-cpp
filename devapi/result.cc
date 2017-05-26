@@ -1346,6 +1346,13 @@ void mysqlx::internal::BaseResult::init(mysqlx::internal::BaseResult &&init_)
     init_.m_owns_impl = false;
   }
 
+  //When BaseResult is changing from one session to another,
+  //deregister itself from previous session
+  if (m_sess && m_sess != init_.m_sess)
+  {
+    m_sess->deregister_result(this);
+  }
+
   m_sess = init_.m_sess;
 
   //On empty results, m_sess is NULL, so don't do anything with it!

@@ -803,4 +803,31 @@ TEST_F(Sess, bugs)
     EXPECT_THROW(mysqlx::XSession(sess_settings), mysqlx::Error);
   }
 
+  {
+    // Using same Result on different sessions
+
+    SessionSettings settings(SessionSettings::PORT, get_port(),
+                             SessionSettings::USER,get_user(),
+                             SessionSettings::PWD, get_password() ?
+                               get_password() :
+                               nullptr
+                               );
+
+    NodeSession sess(settings);
+
+    cout << "Connection 1 passed" << endl;
+    RowResult res = sess.sql("show status like 'mysqlx_ssl_cipher'").execute();
+    Row row = res.fetchOne();
+    cout << row[0] << " : " << row[1] << endl;
+    string Val = row[1];
+
+    NodeSession sess2(settings);
+    cout << "Connection 2 passed" << endl;
+    res = sess2.sql("show status like 'mysqlx_ssl_cipher'").execute();
+    row = res.fetchOne();
+    cout << row[0] << " : " << row[1] << endl;
+    Val = row[1];
+
+  }
+
 }
