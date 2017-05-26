@@ -393,6 +393,8 @@ private:
 
   cdk::connection::TLS::Options m_tls_options;
 
+  std::bitset<LAST> m_options_used;
+
   /*
     This struct extends cdk::ds::TCPIP to allow setting
     host and port at any time
@@ -450,7 +452,6 @@ private:
   /* Compiler errors if declare the instance */
   Host_sources m_ms;
   Host_list m_host_list;
-  std::bitset<LAST> m_options_used;
 
   cdk::connection::TLS::Options::SSL_MODE uint_to_ssl_mode(unsigned int mode);
   unsigned int ssl_mode_to_uint(cdk::connection::TLS::Options::SSL_MODE mode);

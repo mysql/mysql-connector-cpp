@@ -585,6 +585,52 @@ TEST_F(Sess, ssl_session)
     EXPECT_THROW(SessionSettings(SessionSettings::SSL_CA, "dummy",
                                  SessionSettings::SSL_CA, "dummy"),
                  Error);
+
+    SessionSettings sess(SessionSettings::SSL_MODE,
+                         SessionSettings::SSLMode::DISABLED,
+                         SessionSettings::SSL_CA, "dummy");
+
+    sess.set(SessionSettings::HOST, "localhost");
+    EXPECT_THROW(sess.set(SessionSettings::PORT, 13000), Error);
+    EXPECT_THROW(sess.set(SessionSettings::PRIORITY, 1), Error);
+    EXPECT_THROW(sess.set(SessionSettings::HOST, "localhost",
+                          SessionSettings::PORT, 13000,
+                          SessionSettings::PRIORITY, 1,
+                          SessionSettings::PORT, 13000,
+                          SessionSettings::PORT, 13000,
+                          SessionSettings::PRIORITY, 1), Error);
+
+
+    sess.set(SessionSettings::SSL_MODE,
+             SessionSettings::SSLMode::VERIFY_IDENTITY);
+
+    EXPECT_THROW(sess.set(SessionSettings::SSL_MODE,
+                          SessionSettings::SSLMode::VERIFY_IDENTITY,
+                          SessionSettings::SSL_MODE,
+                          SessionSettings::SSLMode::VERIFY_IDENTITY),
+                 Error);
+  }
+
+  {
+    //Defined twice
+    try {
+      mysqlx::XSession("localhost?ssl-mode=disabled&ssl-mode=verify_ca");
+      FAIL() << "No error thrown";
+    }
+    catch (Error &e)
+    {
+      EXPECT_EQ(string("Option ssl-mode defined twice"),string(e.what()));
+    }
+
+    try {
+      mysqlx::XSession("localhost?ssl-ca=unknown&ssl-ca=hereItIs");
+      FAIL() << "No error thrown";
+    }
+    catch (Error &e)
+    {
+      EXPECT_EQ(string("Option ssl-ca defined twice"),string(e.what()));
+    }
+
   }
 
 }

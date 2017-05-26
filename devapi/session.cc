@@ -163,8 +163,8 @@ struct URI_parser
 
   Host_sources m_source;
 
-
   std::multimap<unsigned short, cdk::ds::TCPIP> m_hosts;
+  std::bitset<SessionSettings::LAST> m_options_used;
 
 #ifdef WITH_SSL
   cdk::connection::TLS::Options m_tls_opt;
@@ -230,6 +230,13 @@ struct URI_parser
     {
 #ifdef WITH_SSL
 
+      if (m_options_used.test(SessionSettings::SSL_MODE))
+      {
+        throw Error("Option ssl-mode defined twice");
+      }
+
+      m_options_used.set(SessionSettings::SSL_MODE);
+
       std::string mode;
       mode.resize(val.size());
       std::transform(val.begin(), val.end(), mode.begin(), ::toupper);
@@ -245,6 +252,13 @@ struct URI_parser
     } else if (lc_key == "ssl-ca")
     {
 #ifdef WITH_SSL
+
+      if (m_options_used.test(SessionSettings::SSL_CA))
+      {
+        throw Error("Option ssl-ca defined twice");
+      }
+
+      m_options_used.set(SessionSettings::SSL_CA);
 
       m_tls_opt.set_ca(val);
 #else

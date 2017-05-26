@@ -1396,32 +1396,73 @@ TEST_F(xapi, myc_344_sql_error_test)
   printf("\nExpected error: %s\n", err_msg);
 }
 
-TEST_F(xapi, mycpp_344_multi_options_error_test)
+TEST_F(xapi, mycpp_346_multi_options_error_test)
 {
   SKIP_IF_NO_XPLUGIN
 
-  mysqlx_session_options_t *opt = mysqlx_session_options_new();
+  //Using options
+  {
+    mysqlx_session_options_t *opt = mysqlx_session_options_new();
 
-  EXPECT_EQ(RESULT_OK,
-            mysqlx_session_option_set(opt,
-                                      OPT_USER(m_xplugin_usr),
-                                      OPT_SSL_MODE(SSL_MODE_DISABLED),
-                                      OPT_SSL_CA("unknow") ,
-                                      PARAM_END));
+    EXPECT_EQ(RESULT_OK,
+              mysqlx_session_option_set(opt,
+                                        OPT_USER(m_xplugin_usr),
+                                        OPT_SSL_MODE(SSL_MODE_DISABLED),
+                                        OPT_SSL_CA("unknow") ,
+                                        PARAM_END));
 
-  EXPECT_EQ(RESULT_ERROR,
-            mysqlx_session_option_set(opt,
-                                      OPT_USER(m_xplugin_usr),
-                                      PARAM_END));
+    EXPECT_EQ(RESULT_ERROR,
+              mysqlx_session_option_set(opt,
+                                        OPT_USER(m_xplugin_usr),
+                                        PARAM_END));
 
-  EXPECT_EQ(RESULT_ERROR,
-            mysqlx_session_option_set(opt,
-                                      OPT_SSL_MODE(SSL_MODE_DISABLED),
-                                      PARAM_END));
+    EXPECT_EQ(RESULT_ERROR,
+              mysqlx_session_option_set(opt,
+                                        OPT_SSL_MODE(SSL_MODE_DISABLED),
+                                        PARAM_END));
 
-  EXPECT_EQ(RESULT_ERROR,
-            mysqlx_session_option_set(opt,
-                                      OPT_SSL_CA("unknow") ,
-                                      PARAM_END));
+    EXPECT_EQ(RESULT_ERROR,
+              mysqlx_session_option_set(opt,
+                                        OPT_SSL_CA("unknow") ,
+                                        PARAM_END));
+
+  }
+
+  //Using URI
+  {
+    std::stringstream uri;
+    uri << m_xplugin_usr ;
+
+    if (m_xplugin_pwd)
+      uri << ":" << m_xplugin_pwd;
+
+    uri  << "@" << m_xplugin_host << ":" <<m_xplugin_port;
+
+
+    char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
+    int conn_err_code = 0;
+
+    {
+      std::stringstream uri_test;
+      uri_test << uri.str();
+      uri_test << "?ssl-mode=disabled&ssl-mode=verify_ca";
+      EXPECT_EQ(NULL,
+                mysqlx_get_node_session_from_url(uri_test.str().c_str(), conn_error, &conn_err_code));
+
+      EXPECT_EQ(string("Option ssl-mode defined twice"), string(conn_error));
+    }
+
+    {
+      std::stringstream uri_test;
+      uri_test << uri.str();
+      uri_test << "?ssl-ca=some&ssl-ca=dontKnow";
+
+      EXPECT_EQ(NULL,
+                mysqlx_get_node_session_from_url(uri_test.str().c_str(), conn_error, &conn_err_code));
+
+      EXPECT_EQ(string("Option ssl-ca defined twice"), string(conn_error));
+    }
+  }
+
 
 }

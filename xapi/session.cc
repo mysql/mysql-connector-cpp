@@ -569,10 +569,24 @@ void mysqlx_session_options_struct::key_val(const std::string& key, const std::s
 #ifdef WITH_SSL
     if (lc_key == "ssl-ca")
     {
+      if (m_options_used.test(MYSQLX_OPT_SSL_CA))
+      {
+        throw Mysqlx_exception("Option ssl-ca defined twice");
+      }
+
+      m_options_used.set(MYSQLX_OPT_SSL_CA);
+
       set_ssl_ca(val);
     }
     else if (lc_key  == "ssl-mode")
     {
+      if (m_options_used.test(MYSQLX_OPT_SSL_MODE))
+      {
+        throw Mysqlx_exception("Option ssl-mode defined twice");
+      }
+
+      m_options_used.set(MYSQLX_OPT_SSL_MODE);
+
       std::string lc_val;
       lc_val.resize(val.size());
       std::transform(val.begin(), val.end(), lc_val.begin(), ::tolower);
