@@ -319,7 +319,7 @@ LibmysqlStaticProxy::options(MYSQL * mysql, enum mysql_option option, const void
 int
 LibmysqlStaticProxy::get_option(MYSQL * mysql, enum mysql_option option, const void *arg)
 {
-#if MYSQL_VERSION_ID >= 50703
+#if MYSQL_VERSION_ID >= 50703 && !defined(MARIADB_BASE_VERSION)
 	if (::mysql_get_option(mysql, option, arg)) {
 		throw sql::InvalidArgumentException("Unsupported option provided to mysql_get_option()");
 	} else {
