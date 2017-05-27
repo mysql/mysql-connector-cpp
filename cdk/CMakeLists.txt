@@ -315,8 +315,7 @@ IF(WIN32)
   #
 
   set(CMAKE_${LANG}_FLAGS
-    "${CMAKE_${LANG}_FLAGS} /Wall /wd4512 /wd4127 /wd4100
-     /wd4820 /wd4571 /wd4710 /wd4514 /wd4625 /wd4626 /wd4464 /wd4711"
+    "${CMAKE_${LANG}_FLAGS} /Wall /wd4512 /wd4127 /wd4100 /wd4820 /wd4571 /wd4710 /wd4514 /wd4625 /wd4626 /wd4464 /wd4711"
   )
 
   # Note: We disable warnings related to C++11 language because we want this
