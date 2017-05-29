@@ -1257,12 +1257,12 @@ void Result::Impl::load_warnings()
   {
     auto &entry = it.entry();
     uint16_t code = 0;
-    Warning::Level level = Warning::INFO;
+    Warning::Level level = Warning::LEVEL_INFO;
 
     switch (entry.severity())
     {
-    case cdk::api::Severity::ERROR: level = Warning::ERROR; break;
-    case cdk::api::Severity::WARNING: level = Warning::WARNING; break;
+    case cdk::api::Severity::ERROR: level = Warning::LEVEL_ERROR; break;
+    case cdk::api::Severity::WARNING: level = Warning::LEVEL_WARNING; break;
     default: break;
     }
 
@@ -1567,6 +1567,22 @@ bool mysqlx::SqlResult::nextResult()
       return true;
     };
     return false;
+  }
+  CATCH_AND_WRAP
+}
+
+uint64_t mysqlx::SqlResult::getAffectedRowsCount()
+{
+  try {
+    return get_impl().get_affected_rows();
+  }
+  CATCH_AND_WRAP
+}
+
+uint64_t mysqlx::SqlResult::getAutoIncrementValue()
+{
+  try {
+    return get_impl().get_auto_increment();
   }
   CATCH_AND_WRAP
 }
