@@ -649,12 +649,9 @@ public:
   /**
     Drop given view from the schema.
 
-    This method will silently succeed if given view does not exist. If non-view
-    table is passed as argument, it will not be dropped (and no error is
-    reported) - use dropTable() instead.
-
-    @note If collection name is passed to the method, the request will be
-    silently ignored.
+    This method will silently succeed if given view does not exist. This is
+    also the case when a name of non-view object, such as table or collection
+    was given (as a view with the given name does not exist).
   */
 
   void dropView(const mysqlx::string& name);
