@@ -1140,7 +1140,6 @@ public:
   template <typename V,typename...R>
   SessionSettings(Options opt, V val, R...rest)
   {
-    std::bitset<LAST> m_call_used;
     do_set(true, opt, val, rest...);
   }
 
