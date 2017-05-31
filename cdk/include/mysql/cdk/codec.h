@@ -358,6 +358,8 @@ class Codec<TYPE_FLOAT>
 
   foundation::Codec<foundation::Type::NUMBER> m_cvt;
 
+  std::string internal_decimal_to_string(bytes buf);
+
 public:
 
   Codec(const Format_info &fi) : Codec_base<TYPE_FLOAT>(fi) {}

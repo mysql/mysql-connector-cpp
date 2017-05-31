@@ -42,7 +42,6 @@
        "{\"_id\": \"C8B27676E8A1D1E12C250850273BD114\", \"a_key\": 5, \"b_key\": \"so long world\", \"c_key\": 88.888}"
   };
 
-
 TEST_F(xapi, test_having_group_by)
 {
   SKIP_IF_NO_XPLUGIN
@@ -2438,4 +2437,80 @@ TEST_F(xapi, more_data_test)
     EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 2400, data_buf, &buf_len));
     EXPECT_EQ(601, buf_len);
   }
+}
+
+
+TEST_F(xapi, test_decimal_type)
+{
+  SKIP_IF_NO_XPLUGIN
+
+    mysqlx_result_t *res;
+  mysqlx_schema_t *schema;
+  mysqlx_table_t *table;
+  mysqlx_row_t *row;
+  int row_num = 1;
+
+  AUTHENTICATE();
+
+  mysqlx_schema_drop(get_session(), "xapi_dec_test");
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_create(get_session(), "xapi_dec_test"));
+  res = mysqlx_sql(get_session(), "CREATE TABLE xapi_dec_test.dec_test" \
+                   "(id int primary key, dcol DECIMAL(30, 10), dcol2 DECIMAL(65, 1))",
+                   MYSQLX_NULL_TERMINATED);
+  EXPECT_TRUE(res != NULL);
+  res = mysqlx_sql(get_session(), "INSERT INTO xapi_dec_test.dec_test" \
+                   "(id, dcol, dcol2) VALUES (1, -786.9876543219, 0),"\
+                   "(2, 10.000001234, 0),"\
+                   "(3, 999999999999999.5555, 0),"\
+                   "(4, -1.1, 0),"\
+                   "(5, 0, 9876543210987654321000000000000000000000000000000000000000000000.1)",
+                   MYSQLX_NULL_TERMINATED);
+  EXPECT_TRUE(res != NULL);
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "xapi_dec_test", 1)) != NULL);
+  EXPECT_TRUE((table = mysqlx_get_table(schema, "dec_test", 1)) != NULL);
+
+  res = mysqlx_table_select(table, NULL);
+  EXPECT_TRUE(res != NULL);
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    float f = 0, f2 = 0;
+    double d = 0, d2 = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_float(row, 1, &f));
+    EXPECT_EQ(RESULT_OK, mysqlx_get_double(row, 1, &d));
+
+    if (row_num < 5)
+      EXPECT_EQ(RESULT_OK, mysqlx_get_float(row, 2, &f2));
+    else
+      EXPECT_EQ(RESULT_ERROR, mysqlx_get_float(row, 2, &f2));
+
+    EXPECT_EQ(RESULT_OK, mysqlx_get_double(row, 2, &d2));
+    switch (row_num)
+    {
+    case 1:
+      EXPECT_TRUE(f == -786.9876543219F);
+      EXPECT_TRUE(d > -786.987654322L && d < -786.987654321L);
+      break;
+    case 2:
+      EXPECT_TRUE(f == 10.000001234F);
+      EXPECT_TRUE(d > 10.000001230L && d < 10.000001240L);
+      break;
+    case 3:
+      EXPECT_TRUE(f == 999999999999999.5F);
+      EXPECT_TRUE(d > 999999999999999.4L && d < 999999999999999.6L);
+      break;
+    case 4:
+      EXPECT_TRUE(f == -1.1F);
+      EXPECT_TRUE(d > -1.11L && d < -1.09);
+      break;
+    case 5:
+      // Work around non-exact values
+      EXPECT_TRUE(d2 > 9.87654321098765E+64 && d2 < 9.87654321098766E+64);
+      break;
+    default:
+      FAIL();
+    }
+    ++row_num;
+  }
+
+  mysqlx_schema_drop(get_session(), "xapi_dec_test");
 }

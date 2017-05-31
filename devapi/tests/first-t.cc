@@ -546,3 +546,58 @@ TEST_F(First, parser_xplugin)
 
 
 }
+
+TEST_F(First, sqlresult)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+
+  // Initialize table;
+  sql("DROP TABLE IF EXISTS test.t");
+  sql("CREATE TABLE test.t(id INT NOT NULL AUTO_INCREMENT,\
+                           c1 TEXT,\
+                           PRIMARY KEY (id))");
+
+
+  {
+    SqlResult res =  get_sess().sql(L"INSERT INTO test.t(c1) \
+                                    VALUES (?),\
+                                    (?),\
+                                    (?)")
+                                    .bind(L"foo")
+                                    .bind(L"bar")
+                                    .bind(L"baz")
+                                    .execute();
+
+    EXPECT_EQ(3, res.getAffectedRowsCount());
+    EXPECT_EQ(1, res.getAutoIncrementValue());
+  }
+
+  {
+    SqlResult res =  get_sess().sql(L"INSERT INTO test.t(c1) \
+                                    VALUES (?),\
+                                    (?),\
+                                    (?)")
+                                    .bind(L"foo")
+                                    .bind(L"bar")
+                                    .bind(L"baz")
+                                    .execute();
+
+    EXPECT_EQ(3, res.getAffectedRowsCount());
+    EXPECT_EQ(4, res.getAutoIncrementValue());
+  }
+
+  {
+    SqlResult res =  get_sess().sql(L"SELECT * from test.t")
+                     .execute();
+
+    EXPECT_THROW(res.getAffectedRowsCount(), mysqlx::Error);
+    EXPECT_THROW(res.getAutoIncrementValue(), mysqlx::Error);
+
+    while (res.nextResult());
+
+    EXPECT_EQ(0, res.getAffectedRowsCount());
+    EXPECT_EQ(0, res.getAutoIncrementValue());
+  }
+
+}

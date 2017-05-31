@@ -24,11 +24,11 @@
 cmake_minimum_required(VERSION 2.8)
 PROJECT(MySQL_CONCPP_TEST)
 
-set(WITH_CONCPP $ENV{WITH_CONCPP} CACHE PATH "MySQL Connector/C++ 2.0 install location")
+set(WITH_CONCPP $ENV{WITH_CONCPP} CACHE PATH "MySQL Connector/C++ 8.0 install location")
 
 if(NOT WITH_CONCPP)
   message(FATAL_ERROR
-    "This project requires MySQL Connector/C++ 2.0, please specify install location"
+    "This project requires MySQL Connector/C++ 8.0, please specify install location"
     " using WITH_CONCPP setting"
   )
 endif()
@@ -66,20 +66,20 @@ endif()
 
 
 #
-# Find MySQL Connector/C++ 2.0 at specified location.
+# Find MySQL Connector/C++ 8.0 at specified location.
 #
 
 set(CONCPLS_INCLUDES "${WITH_CONCPP}/include")
 
 if(NOT EXISTS "${CONCPLS_INCLUDES}/mysql_devapi.h")
   message(FATAL_ERROR
-    "Could not find MySQL Connector/C++ 2.0 headers at specified"
+    "Could not find MySQL Connector/C++ 8.0 headers at specified"
     " location: ${WITH_CONCPP}/include"
   )
 endif()
 
 
-set(libconcpp_name mysqlcppconn2)
+set(libconcpp_name mysqlcppconn8)
 if(BUILD_STATIC)
   set(libconcpp_name "${libconcpp_name}-static")
   if(WIN32 AND STATIC_MSVCRT)
@@ -114,14 +114,14 @@ find_library(CONCPP_LIB_DEBUG NAMES ${libconcpp_name}
 
 if(NOT CONCPP_LIB AND NOT CONCPP_LIB_DEBUG)
   message(FATAL_ERROR
-    "Could not find MySQL Connector/C++ 2.0 library ${libconcpp_name} at specified"
+    "Could not find MySQL Connector/C++ 8.0 library ${libconcpp_name} at specified"
     " location: ${LIB_PATH_STATIC}"
   )
 endif()
 
 
 if(CONCPP_LIB)
-  message("Using Connector/C++ 2.0 library: ${CONCPP_LIB}")
+  message("Using Connector/C++ 8.0 library: ${CONCPP_LIB}")
   if(CONCPP_LIB_DEBUG)
     list(APPEND CONCPP_LIBS optimized "${CONCPP_LIB}")
   else()
@@ -156,7 +156,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG run/debug)
 
 if(NOT BUILD_STATIC)
 
-  set(libconcpp_name_shared mysqlcppconn2)
+  set(libconcpp_name_shared mysqlcppconn8)
   if(VS)
     set(libconcpp_name_shared "${libconcpp_name_shared}-${VS}")
   endif()
@@ -175,7 +175,7 @@ if(NOT BUILD_STATIC)
 
   if(NOT CONCPP_LIB_SHARED AND NOT CONCPP_LIB_SHARED_DEBUG)
     message(FATAL_ERROR
-      "Could not find MySQL Connector/C++ 2.0 shared library ${libconcpp_name_shared} at specified"
+      "Could not find MySQL Connector/C++ 8.0 shared library ${libconcpp_name_shared} at specified"
       " location: ${LIB_PATH}"
     )
   endif()
