@@ -283,19 +283,20 @@ struct Host_sources : public cdk::ds::Multi_source
 };
 
 
+using TLS_Options = cdk::connection::TLS::Options;
+
 
 struct URI_parser
   : public internal::XSession_base::Access::Options
   , public parser::URI_processor
 {
-
   Host_sources m_source;
 
   std::multimap<unsigned short, cdk::ds::TCPIP> m_hosts;
   std::bitset<SessionSettings::LAST> m_options_used;
 
 #ifdef WITH_SSL
-  cdk::connection::TLS::Options m_tls_opt;
+  TLS_Options m_tls_opt = TLS_Options::SSL_MODE::REQUIRED;
 #endif
 
   URI_parser(const std::string &uri)
@@ -424,7 +425,7 @@ internal::XSession_base::XSession_base(SessionSettings settings)
       bool has_pwd = false;
 
 #ifdef WITH_SSL
-        cdk::connection::TLS::Options opt_ssl;
+      TLS_Options opt_ssl = TLS_Options::SSL_MODE::REQUIRED;
 #endif // WITH_SSL
 
       if (settings.has_option(SessionSettings::PWD) &&
@@ -492,8 +493,6 @@ internal::XSession_base::XSession_base(SessionSettings settings)
 
           set_ssl_mode(opt_ssl, m);
         }
-
-        opt.set_tls(opt_ssl);
 #else
         throw_error(
               "Can not create TLS session - this connector is built"
@@ -502,6 +501,9 @@ internal::XSession_base::XSession_base(SessionSettings settings)
 #endif
       }
 
+#ifdef WITH_SSL
+      opt.set_tls(opt_ssl);
+#endif
 
       Host_sources source;
 
