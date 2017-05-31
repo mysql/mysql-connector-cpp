@@ -35,16 +35,6 @@
 
 using namespace ::mysqlx;
 
-const std::map<SessionSettings::Options, string> SessionSettings::m_options_name =
-{ SETTINGS_OPTIONS(map_options) };
-
-struct Endpoint
-{
-  enum Type { TCPIP };
-
-  virtual Type type() const = 0;
-};
-
 
 struct internal::XSession_base::Options
   : public cdk::ds::TCPIP::Options
@@ -85,11 +75,154 @@ class internal::XSession_base::Impl
   friend XSession_base;
 };
 
+
+std::string SessionSettings::get_option_name(Options opt)
+{
+#define case_options(x) case SessionSettings::Options::x: return #x;
+
+  switch(opt)
+  {
+    SETTINGS_OPTIONS(case_options)
+    default:
+    {
+      std::ostringstream buf;
+      buf << "<UKNOWN (" << unsigned(opt) << ")>" << std::ends;
+      return buf.str();
+    }
+  };
+}
+
+
+
+std::string get_mode_name(SessionSettings::SSLMode m)
+{
+#define case_mode(x) case SessionSettings::SSLMode::x: return #x;
+
+  switch(m)
+  {
+    SSL_MODE_TYPES(case_mode)
+    default:
+    {
+      std::ostringstream buf;
+      buf << "<UKNOWN (" << unsigned(m) << ")>" << std::ends;
+      return buf.str();
+    }
+  };
+}
+
+
+Value& SessionSettings::find(Options opt)
+{
+  for (auto &key_val : m_options)
+  {
+    if (key_val.first == opt)
+      return key_val.second;
+  }
+
+  std::stringstream error;
+  error << "SessionSettings option " << get_option_name(opt) << " not found";
+  throw Error(error.str().c_str());
+}
+
+
+void SessionSettings::do_add(Options opt, Value &&v)
+{
+  // Sanity checks on option values.
+
+  switch (opt)
+  {
+  case PORT:
+    if (v.get<unsigned>() > 65535U)
+      throw_error("Port value out of range");
+    break;
+
+  case SSL_MODE:
+    if (has_option(SSL_CA))
+    {
+      SSLMode m = SSLMode(v.get<unsigned>());
+      switch (m)
+      {
+      case SSLMode::VERIFY_CA:
+      case SSLMode::VERIFY_IDENTITY:
+        break;
+
+      default:
+        {
+          std::string msg = "SSL mode ";
+          msg += get_mode_name(m);
+          msg += " is not compatible with ssl-ca setting";
+          throw_error(msg.c_str());
+        }
+      }
+    }
+    break;
+
+  case SSL_CA:
+    if (has_option(SSL_MODE))
+    {
+      SSLMode m = SSLMode(find(SSL_MODE).get<unsigned>());
+      switch (m)
+      {
+      case SSLMode::VERIFY_CA:
+      case SSLMode::VERIFY_IDENTITY:
+        break;
+
+      default:
+        {
+          std::string msg = "Setting ssl-ca is not compatible with SSL mode ";
+          msg += get_mode_name(m);
+          throw_error(msg.c_str());
+        }
+      }
+    }
+    break;
+
+  default:
+    break;
+  }
+
+  /*
+    Store option value, checking for duplicates etc.
+
+    Note: Only HOST and PORT can have multiple values, the others, are unique
+  */
+
+  if (opt == HOST || opt == PORT || opt == PRIORITY)
+  {
+    m_options.emplace_back(opt, std::move(v));
+  }
+  else
+  {
+    auto it = m_options.begin();
+    for(; it != m_options.end(); ++it)
+    {
+      if (it->first == opt)
+      {
+        it->second = std::move(v);
+        break;
+      }
+    }
+
+    if (it == m_options.end())
+    {
+      m_options.emplace_back(opt, std::move(v));
+    }
+  }
+  m_option_used.set(opt);
+}
+
+
 #ifdef WITH_SSL
 
+SessionSettings::SSLMode get_mode(const string &name)
+{
 #define map_ssl(x) { #x, SessionSettings::SSLMode::x },
 
-static std::map<string,SessionSettings::SSLMode> ssl_modes = { SSL_MODE_TYPES(map_ssl) };
+  static std::map<string,SessionSettings::SSLMode> ssl_modes
+    = { SSL_MODE_TYPES(map_ssl) };
+
+  return ssl_modes.at(name);
+}
 
 
 void set_ssl_mode(cdk::connection::TLS::Options &tls_opt,
@@ -100,11 +233,6 @@ void set_ssl_mode(cdk::connection::TLS::Options &tls_opt,
   case SessionSettings::SSLMode::DISABLED:
     tls_opt.set_ssl_mode(
           cdk::connection::TLS::Options::SSL_MODE::DISABLED
-          );
-    break;
-  case SessionSettings::SSLMode::PREFERRED:
-    tls_opt.set_ssl_mode(
-          cdk::connection::TLS::Options::SSL_MODE::PREFERRED
           );
     break;
   case SessionSettings::SSLMode::REQUIRED:
@@ -241,7 +369,7 @@ struct URI_parser
       mode.resize(val.size());
       std::transform(val.begin(), val.end(), mode.begin(), ::toupper);
 
-      set_ssl_mode(m_tls_opt, ssl_modes[mode]);
+      set_ssl_mode(m_tls_opt, get_mode(mode));
 
 #else
       throw_error(
@@ -292,7 +420,6 @@ internal::XSession_base::XSession_base(SessionSettings settings)
     }
     else
     {
-
       std::string pwd_str;
       bool has_pwd = false;
 
@@ -334,17 +461,36 @@ internal::XSession_base::XSession_base(SessionSettings settings)
 #ifdef WITH_SSL
 
         if (settings.has_option(SessionSettings::SSL_CA))
+        {
           opt_ssl.set_ca(settings.find(SessionSettings::SSL_CA).get<string>());
+          if (!settings.has_option(SessionSettings::SSL_MODE))
+            set_ssl_mode(opt_ssl, SessionSettings::SSLMode::VERIFY_CA);
+        }
 
-
-        // Last option, since above option will enable SSL_MODE, and this should
-        // overset the previous SSL_MODE
         if (settings.has_option(SessionSettings::SSL_MODE))
         {
-          set_ssl_mode(opt_ssl,
-                       static_cast<SessionSettings::SSLMode>(
-                         (int)settings.find(SessionSettings::SSL_MODE))
-              );
+          SessionSettings::SSLMode m
+            = SessionSettings::SSLMode(settings.find(SessionSettings::SSL_MODE)
+                                       .get<unsigned>());
+
+          switch (m)
+          {
+          case SessionSettings::SSLMode::VERIFY_CA:
+          case SessionSettings::SSLMode::VERIFY_IDENTITY:
+
+            if (!settings.has_option(SessionSettings::SSL_CA))
+            {
+              std::string msg = "SSL mode ";
+              msg += get_mode_name(m);
+              msg += " requires ssl-ca setting";
+              throw_error(msg.c_str());
+            }
+
+          default:
+            break;
+          }
+
+          set_ssl_mode(opt_ssl, m);
         }
 
         opt.set_tls(opt_ssl);
@@ -464,12 +610,14 @@ internal::XSession_base::XSession_base(SessionSettings settings)
   CATCH_AND_WRAP
 }
 
+
 internal::XSession_base::XSession_base(XSession_base* master)
 {
   m_impl = master->m_impl;
   m_impl->m_nodes.insert(this);
   m_master_session = false;
 }
+
 
 internal::XSession_base::~XSession_base()
 {

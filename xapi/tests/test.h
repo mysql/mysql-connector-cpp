@@ -72,19 +72,18 @@ protected:
   const char *m_xplugin_usr;
   const char *m_xplugin_pwd;
   const char *m_xplugin_host;
-  unsigned short m_xplugin_port;
+  const char *m_xplugin_port;
 
   xapi() : m_port(0), m_status(NULL), m_sess(NULL)
   {
-    const char *xplugin_port = getenv("XPLUGIN_PORT");
-    if (!xplugin_port)
+    m_xplugin_port = getenv("XPLUGIN_PORT");
+    if (!m_xplugin_port)
     {
       m_status = "XPLUGIN_PORT not set";
       return;
     }
 
-    m_port = atoi(xplugin_port);
-    m_xplugin_port = m_port;
+    m_port = atoi(m_xplugin_port);
     if (!m_port)
       m_status = "invalid port number in XPLUGIN_PORT";
 
@@ -97,15 +96,45 @@ protected:
     m_xplugin_host = (m_xplugin_host && strlen(m_xplugin_host) ? m_xplugin_host : "127.0.0.1");
   }
 
+
   virtual void SetUp()
   {}
 
-  void exec_sql(const char *query)
+  virtual void TearDown()
+  {
+    cout << endl;
+    if (m_sess)
+      mysqlx_session_close(m_sess);
+  }
+
+
+  mysqlx_result_t* exec_sql(const char *query)
+  {
+    return exec_sql(get_session(), query);
+  }
+
+  mysqlx_result_t* exec_sql(mysqlx_session_t *sess, const char *query)
   {
     mysqlx_result_t *res = NULL;
     mysqlx_stmt_t *stmt = NULL;
-    RESULT_CHECK(stmt = mysqlx_sql_new(get_session(), query, strlen(query)));
-    CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+    stmt = mysqlx_sql_new(sess, query, strlen(query));
+    if (!stmt)
+    {
+      cout << "Could not create statement for SQL query: " << query << endl;
+      cout << mysqlx_error_message(sess) << endl;
+      return NULL;
+    }
+
+    res = mysqlx_execute(stmt);
+
+    if (!res)
+    {
+      cout << "Error when executing SQL: " << query << endl;
+      cout << mysqlx_error_message(stmt) << endl;
+      return NULL;
+    }
+
+    return res;
   }
 
   void exec_sql_error(const char *query)
@@ -135,10 +164,6 @@ protected:
     const char *xplugin_pwd = pwd ? pwd : m_xplugin_pwd;
     const char *xplugin_host = m_xplugin_host;
 
-    xplugin_usr = (xplugin_usr && strlen(xplugin_usr) ? xplugin_usr : "root");
-    xplugin_pwd = (xplugin_pwd && strlen(xplugin_pwd) ? xplugin_pwd : NULL);
-    xplugin_host = (xplugin_host && strlen(xplugin_host) ? xplugin_host : "127.0.0.1");
-
     if (create_x_sess)
       m_sess = mysqlx_get_session(xplugin_host, m_port, xplugin_usr, xplugin_pwd, db,
                                   conn_error, &conn_err_code);
@@ -154,11 +179,57 @@ protected:
     cout << "Connected to xplugin..." << endl;
   }
 
-  virtual void TearDown()
+
+  std::string get_ca_file()
   {
-    cout << endl;
-    if (m_sess)
-      mysqlx_session_close(m_sess);
+    char buf[1024];
+
+    mysqlx_result_t *res = exec_sql(
+      "select if("
+      "@@ssl_ca REGEXP '^([^:]+:)?[/\\\\\\\\]'"
+      ", @@ssl_ca"
+      ", concat(ifnull(@@ssl_capath,@@datadir), @@ssl_ca))"
+    );
+
+    if (!res)
+      return std::string();
+
+    mysqlx_row_t *row = mysqlx_row_fetch_one(res);
+
+    if (!row)
+      return std::string();
+
+    size_t buf_len = sizeof(buf);
+    if (RESULT_OK != mysqlx_get_bytes(row, 0, 0, buf, &buf_len))
+      return std::string();
+
+    if (buf_len < 2)
+      return std::string();
+
+    // Note: buf_len includes terminating '\0'
+    return std::string(buf, buf + buf_len - 1);
+  }
+
+
+  std::string get_ssl_cipher(mysqlx_session_t *sess)
+  {
+    mysqlx_result_t *res = exec_sql(sess, "SHOW STATUS LIKE 'mysqlx_ssl_cipher'");
+
+    if (!res)
+      throw "Failed to query mysqlx_ssl_cipher status variable from server";
+
+    mysqlx_row_t *row = mysqlx_row_fetch_one(res);
+
+    if (!row)
+      throw "Failed to get value of mysqlx_ssl_cipher status variable";
+
+    char data[128] = { 0 };
+    size_t data_len = sizeof(data);
+    if (RESULT_OK !=  mysqlx_get_bytes(row, 1, 0, data, &data_len))
+      throw "Failed to get value of mysqlx_ssl_cipher status variable";
+
+    return (data_len > 1 ? std::string(data, data + data_len - 1)
+                         : std::string() );
   }
 
 

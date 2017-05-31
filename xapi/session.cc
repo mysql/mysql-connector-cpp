@@ -27,26 +27,32 @@
 #include <algorithm>
 #include <string>
 
-mysqlx_session_t::mysqlx_session_struct(const std::string host,
-                                        unsigned int port, const string usr,
-                                        const std::string *pwd,
-                                        const std::string *db, bool is_node_sess)
-                                        : m_sess_opt(host, port, usr, pwd, db),
-                                          m_session(m_sess_opt.get_multi_source()),
-                                          m_stmt(NULL), m_is_node_sess(is_node_sess)
+
+mysqlx_session_struct::mysqlx_session_struct(
+  const mysqlx_session_options_t &opt, bool is_node_sess
+)
+  : m_session(opt.get_multi_source()),
+    m_stmt(NULL), m_is_node_sess(is_node_sess)
+{
+  const string *db = opt.get_db();
+  if (db)
+    m_default_db = *db;
+}
+
+mysqlx_session_struct::mysqlx_session_struct(
+  const std::string &host, unsigned short port,
+  const string &usr, const std::string *pwd,
+  const std::string *db, bool is_node_sess
+)
+  : mysqlx_session_struct({host, port, usr, pwd, db}, is_node_sess)
 {}
 
-mysqlx_session_t::mysqlx_session_struct(const std::string &conn_str, bool is_node_sess)
-  : m_sess_opt(conn_str),
-    m_session(m_sess_opt.get_multi_source()),
-    m_stmt(NULL), m_is_node_sess(is_node_sess)
+mysqlx_session_struct::mysqlx_session_struct(
+  const std::string &conn_str, bool is_node_sess
+)
+  : mysqlx_session_struct(mysqlx_session_options_t(conn_str), is_node_sess)
 {}
 
-mysqlx_session_t::mysqlx_session_struct(mysqlx_session_options_t *opt, bool is_node_sess)
-  : m_sess_opt(*opt),
-    m_session(m_sess_opt.get_multi_source()),
-    m_stmt(NULL), m_is_node_sess(is_node_sess)
-{}
 
 
 mysqlx_stmt_t * mysqlx_session_t::sql_query(const char *query, uint32_t length,
@@ -83,7 +89,7 @@ mysqlx_stmt_t * mysqlx_session_t::stmt_op(const cdk::string schema, const cdk::s
   if (session_crud && m_stmt)
     delete m_stmt;
 
-  if (!schema.length() && !m_sess_opt.database())
+  if (!schema.length() && m_default_db.empty())
   {
     if (session_crud)
       m_stmt = NULL;
@@ -91,10 +97,10 @@ mysqlx_stmt_t * mysqlx_session_t::stmt_op(const cdk::string schema, const cdk::s
   }
 
   if (parent)
-    stmt = new mysqlx_stmt_t(this, schema.length() ? schema : *m_sess_opt.database(),
+    stmt = new mysqlx_stmt_t(this, schema.length() ? schema : m_default_db,
                              obj_name, op_type, parent);
   else
-    stmt = new mysqlx_stmt_t(this, schema.length() ? schema : *m_sess_opt.database(),
+    stmt = new mysqlx_stmt_t(this, schema.length() ? schema : m_default_db,
                              obj_name, op_type);
 
   if (session_crud)
@@ -139,12 +145,12 @@ void mysqlx_session_t::admin_collection(const char *cmd,
                                      cdk::string schema,
                                      cdk::string coll_name)
 {
-  if (!schema.length() && !m_sess_opt.database())
+  if (!schema.length() && m_default_db.empty())
   {
     throw Mysqlx_exception("The default schema is not specified");
   }
 
-  Db_obj_ref tab_ref(schema.length() ? schema : *m_sess_opt.database(), coll_name);
+  Db_obj_ref tab_ref(schema.length() ? schema : m_default_db, coll_name);
   cdk::Reply reply;
   reply = m_session.admin(cmd, tab_ref);
   reply.wait();
@@ -259,60 +265,230 @@ mysqlx_session_t::~mysqlx_session_struct()
   }
 }
 
-mysqlx_session_options_struct::mysqlx_session_options_struct() :
-                               m_source_state(source_state::unknown)
+
+using cdk::foundation::connection::TLS;
+
+
+TLS::Options::SSL_MODE uint_to_ssl_mode(unsigned int mode)
 {
-#ifdef WITH_SSL
-  set_ssl_mode(SSL_MODE_PREFERRED);
-#else
-  set_ssl_mode(SSL_MODE_DISABLED);
-#endif
+  switch (mode)
+  {
+    case SSL_MODE_DISABLED:
+      return TLS::Options::SSL_MODE::DISABLED;
+    case SSL_MODE_REQUIRED:
+      return TLS::Options::SSL_MODE::REQUIRED;
+    case SSL_MODE_VERIFY_CA:
+      return TLS::Options::SSL_MODE::VERIFY_CA;
+    case SSL_MODE_VERIFY_IDENTITY:
+      return TLS::Options::SSL_MODE::VERIFY_IDENTITY;
+    default:
+      assert(false);
+      // Quiet compile warnings
+      return TLS::Options::SSL_MODE::DISABLED;
+  }
 }
+
+unsigned int ssl_mode_to_uint(TLS::Options::SSL_MODE mode)
+{
+  switch (mode)
+  {
+    case TLS::Options::SSL_MODE::DISABLED:
+      return SSL_MODE_DISABLED;
+    case TLS::Options::SSL_MODE::REQUIRED:
+      return SSL_MODE_REQUIRED;
+    case TLS::Options::SSL_MODE::VERIFY_CA:
+      return SSL_MODE_VERIFY_CA;
+    case TLS::Options::SSL_MODE::VERIFY_IDENTITY:
+      return SSL_MODE_VERIFY_IDENTITY;
+    default:
+      assert(false);
+      // Quiet compile warnings
+      return 0;
+  }
+}
+
+
+const char* opt_name(mysqlx_opt_type_t opt)
+{
+  switch (opt)
+  {
+  case MYSQLX_OPT_HOST: return "hoar";
+  case MYSQLX_OPT_PORT: return "port";
+  case MYSQLX_OPT_USER: return "user";
+  case MYSQLX_OPT_PWD: return "pwd";
+  case MYSQLX_OPT_DB: return "db";
+  case MYSQLX_OPT_SSL_MODE: return "ssl-mode";
+  case MYSQLX_OPT_SSL_CA: return "ssl-ca";
+  case MYSQLX_OPT_PRIORITY: return "priority";
+  default: return "<unknown>";
+  }
+}
+
+const char* ssl_mode_name(mysqlx_ssl_mode_t m)
+{
+  switch (m)
+  {
+  case SSL_MODE_DISABLED: return "DISABLED";
+  case SSL_MODE_REQUIRED: return "REQUIRED";
+  case SSL_MODE_VERIFY_CA: return "VERIFY_CA";
+  case SSL_MODE_VERIFY_IDENTITY: return "VERIFY_IDENTITY";
+  default: return "<unknown>";
+  }
+}
+
+
+struct Error_bad_option : public Mysqlx_exception
+{
+  Error_bad_option()
+    : Mysqlx_exception("Unrecognized connection option")
+  {}
+
+  Error_bad_option(const std::string &opt) : Error_bad_option()
+  {
+    m_message += ": " + opt;
+  }
+
+  Error_bad_option(unsigned int opt) : Error_bad_option()
+  {
+    std::ostringstream buf;
+    buf << opt;
+    m_message += " (" + buf.str() + ")";
+  }
+};
+
+struct Error_dup_option : public Mysqlx_exception
+{
+  Error_dup_option(mysqlx_opt_type_t opt)
+  {
+    m_message = "Option ";
+    m_message += opt_name(opt);
+    m_message += " defined twice";
+  }
+};
+
+struct Error_bad_mode : public Mysqlx_exception
+{
+  Error_bad_mode(const std::string &m)
+  {
+    m_message = "Unrecognized ssl-mode: " + m;
+  }
+};
+
+struct Error_ca_mode : public Mysqlx_exception
+{
+  Error_ca_mode()
+    : Mysqlx_exception("The ssl-ca option is not compatible with ssl-mode")
+  {}
+
+  Error_ca_mode(mysqlx_ssl_mode_t m) : Error_ca_mode()
+  {
+    m_message += " ";
+    m_message += ssl_mode_name(m);
+  }
+
+  Error_ca_mode(TLS::Options::SSL_MODE m)
+    : Error_ca_mode(mysqlx_ssl_mode_t(ssl_mode_to_uint(m)))
+  {}
+};
+
+
+void  mysqlx_session_options_struct::check_option(mysqlx_opt_type_t opt)
+{
+  switch (opt)
+  {
+  case MYSQLX_OPT_HOST:
+  case MYSQLX_OPT_PORT:
+  case MYSQLX_OPT_PRIORITY:
+    return;
+
+  default:
+    if (!(opt < mysqlx_opt_type_t::LAST))
+      throw Error_bad_option(opt);
+    if (m_options_used.test(opt))
+      throw Error_dup_option(opt);
+    m_options_used.set(opt);
+  }
+};
+
+
 
 mysqlx_session_options_struct::mysqlx_session_options_struct(
                               const std::string host, unsigned short port,
                               const std::string usr, const std::string *pwd,
                               const std::string *db,
-                              unsigned int ssl_mode) :
-                              m_source_state(source_state::non_priority),
-                              m_tcp_opts(usr, pwd)
+                              unsigned int ssl_mode)
+  : mysqlx_session_options_struct(source_state::non_priority)
 {
+  this->host(0, host, (port ? port : DEFAULT_MYSQLX_PORT));
+  this->user(usr);
+
+  if (pwd)
+    this->password(*pwd);
+
   if (db)
     set_database(*db);
 
-  set_ssl_mode(ssl_mode);
+  set_ssl_mode(mysqlx_ssl_mode_t(ssl_mode));
 
 #ifndef WITH_SSL
-  if (ssl_mode > SSL_MODE_DISABLED)
+  if (ssl_mode != SSL_MODE_DISABLED)
     set_diagnostic(MYSQLX_ERROR_NO_TLS_SUPPORT, 0);
 #endif
-  TCPIP_t tcp(host, port);
-  m_host_list.emplace_back(0, tcp);
+
+  m_explicit_mode = false;
 }
 
 
-mysqlx_session_options_struct::mysqlx_session_options_struct(const mysqlx_session_options_struct &opt) :
-  m_source_state(opt.m_source_state),
-  m_tcp_opts(opt.m_tcp_opts),
-  m_host_list(opt.m_host_list)
-{}
-
-
-mysqlx_session_options_struct::mysqlx_session_options_struct(const std::string &conn_str) :
-                               m_source_state(source_state::unknown)
+void mysqlx_session_options_t::set_ssl_ca(const string &ca)
 {
-#ifdef WITH_SSL
-    set_ssl_mode(SSL_MODE_PREFERRED);
-#else
-    set_ssl_mode(SSL_MODE_DISABLED);
-#endif
-    parser::parse_conn_str(conn_str, *this);
-}
 
-void mysqlx_session_options_struct::set_ssl_mode(unsigned int ssl_mode)
-{
-  m_tls_options.set_ssl_mode(uint_to_ssl_mode(ssl_mode));
+  if (m_explicit_mode)
+  {
+    switch (auto m = m_tls_options.ssl_mode())
+    {
+    case TLS::Options::SSL_MODE::DISABLED:
+    case TLS::Options::SSL_MODE::REQUIRED:
+      throw Error_ca_mode(m);
+
+    case TLS::Options::SSL_MODE::PREFERRED:
+      assert(false);
+
+    case TLS::Options::SSL_MODE::VERIFY_CA:
+    case TLS::Options::SSL_MODE::VERIFY_IDENTITY:
+      break;
+    }
+  }
+  else
+  {
+    m_tls_options.set_ssl_mode(TLS::Options::SSL_MODE::VERIFY_CA);
+  }
+
+  m_tls_options.set_ca(ca);
   m_tcp_opts.set_tls(m_tls_options);
+}
+
+
+void mysqlx_session_options_struct::set_ssl_mode(mysqlx_ssl_mode_t ssl_mode)
+{
+  auto m = uint_to_ssl_mode(ssl_mode);
+
+  if (!m_tls_options.get_ca().empty())
+  {
+    switch (ssl_mode)
+    {
+    case SSL_MODE_DISABLED:
+    case SSL_MODE_REQUIRED:
+      throw Error_ca_mode(ssl_mode);
+
+    case SSL_MODE_VERIFY_CA:
+    case SSL_MODE_VERIFY_IDENTITY:
+      break;
+    }
+  }
+
+  m_tls_options.set_ssl_mode(m);
+  m_tcp_opts.set_tls(m_tls_options);
+  m_explicit_mode = true;
 }
 
 unsigned int mysqlx_session_options_struct::get_ssl_mode()
@@ -320,10 +496,6 @@ unsigned int mysqlx_session_options_struct::get_ssl_mode()
   return ssl_mode_to_uint(m_tls_options.ssl_mode());
 }
 
-cdk::ds::TCPIP::Options &mysqlx_session_options_struct::get_tcpip_options()
-{
-  return m_tcp_opts;
-}
 
 void mysqlx_session_options_struct::set_multiple_options(va_list args)
 {
@@ -332,6 +504,7 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
   TCPIP_t ds;
   bool host_is_set = false;
   bool port_is_set = false;
+  m_options_used.reset();
 
   // The type is promoted to int when passing into va_list
   while( (type = (mysqlx_opt_type_t)(va_arg(args, int))) > 0 )
@@ -340,15 +513,7 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
       unsigned int uint_data = 0;
       const char *char_data = NULL;
 
-      if (type != MYSQLX_OPT_HOST &&
-          type != MYSQLX_OPT_PORT &&
-          type != MYSQLX_OPT_PRIORITY &&
-          m_options_used.test(type))
-      {
-        throw Mysqlx_exception(MYSQLX_ERROR_DUPLICATED_OPTION);
-      }
-
-      m_options_used.set(type);
+      check_option(type);
 
       switch (type)
       {
@@ -394,7 +559,7 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
           break;
         case MYSQLX_OPT_SSL_MODE:
           uint_data = va_arg(args, unsigned int);
-          set_ssl_mode(uint_data);
+          set_ssl_mode(mysqlx_ssl_mode_t(uint_data));
           break;
 #else
         case MYSQLX_OPT_SSL_MODE:
@@ -426,60 +591,26 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
   }
 }
 
-cdk::ds::Multi_source &mysqlx_session_options_struct::get_multi_source()
+cdk::ds::Multi_source&
+mysqlx_session_options_struct::get_multi_source() const
 {
   if (m_source_state == source_state::unknown)
     throw Mysqlx_exception(MYSQLX_ERROR_MISSING_CONN_INFO);
 
-  m_ms.clear();
+  auto *self = const_cast<mysqlx_session_options_struct*>(this);
 
-  for (Host_list::iterator it = m_host_list.begin();
+  self->m_ms.clear();
+
+  for (Host_list::const_iterator it = m_host_list.begin();
         it != m_host_list.end(); ++it)
   {
-    m_ms.add(static_cast<cdk::ds::TCPIP>(it->second),
+    self->m_ms.add(static_cast<cdk::ds::TCPIP>(it->second),
               static_cast<cdk::ds::TCPIP::Options>(m_tcp_opts),
               it->first); // prio
   }
-  return m_ms;
+  return self->m_ms;
 }
 
-cdk::connection::TLS::Options::SSL_MODE mysqlx_session_options_struct::uint_to_ssl_mode(unsigned int mode)
-{
-  switch (mode)
-  {
-    case SSL_MODE_DISABLED:
-      return cdk::connection::TLS::Options::SSL_MODE::DISABLED;
-    case SSL_MODE_PREFERRED:
-      return cdk::connection::TLS::Options::SSL_MODE::PREFERRED;
-    case SSL_MODE_REQUIRED:
-      return cdk::connection::TLS::Options::SSL_MODE::REQUIRED;
-    case SSL_MODE_VERIFY_CA:
-      return cdk::connection::TLS::Options::SSL_MODE::VERIFY_CA;
-    case SSL_MODE_VERIFY_IDENTITY:
-      return cdk::connection::TLS::Options::SSL_MODE::VERIFY_IDENTITY;
-    default:
-      throw Mysqlx_exception(MYSQLX_ERROR_WRONG_SSL_MODE);
-  }
-}
-
-unsigned int mysqlx_session_options_struct::ssl_mode_to_uint(cdk::connection::TLS::Options::SSL_MODE mode)
-{
-  switch (mode)
-  {
-    case cdk::connection::TLS::Options::SSL_MODE::DISABLED:
-      return SSL_MODE_DISABLED;
-    case cdk::connection::TLS::Options::SSL_MODE::PREFERRED:
-      return SSL_MODE_PREFERRED;
-    case cdk::connection::TLS::Options::SSL_MODE::REQUIRED:
-      return SSL_MODE_REQUIRED;
-    case cdk::connection::TLS::Options::SSL_MODE::VERIFY_CA:
-      return SSL_MODE_VERIFY_CA;
-    case cdk::connection::TLS::Options::SSL_MODE::VERIFY_IDENTITY:
-      return SSL_MODE_VERIFY_IDENTITY;
-    default:
-      throw Mysqlx_exception(MYSQLX_ERROR_WRONG_SSL_MODE);
-  }
-}
 
 const std::string mysqlx_session_options_struct::get_host()
 {
@@ -516,7 +647,7 @@ const std::string* mysqlx_session_options_struct::get_password()
   return m_tcp_opts.password();
 }
 
-const cdk::string* mysqlx_session_options_struct::get_db()
+const cdk::string* mysqlx_session_options_struct::get_db() const
 {
   return m_tcp_opts.database();
 }
@@ -552,10 +683,10 @@ void mysqlx_session_options_struct::host(unsigned short priority,
 }
 
 
-void mysqlx_session_options_struct::key_val(const std::string&)
+void mysqlx_session_options_struct::key_val(const std::string &key)
 {
   // So far there is no supported options as "?key"
-  set_diagnostic("Wrong connection option", 0);
+  throw Error_bad_option(key);
 }
 
 void mysqlx_session_options_struct::key_val(const std::string& key, const std::string& val)
@@ -569,60 +700,36 @@ void mysqlx_session_options_struct::key_val(const std::string& key, const std::s
 #ifdef WITH_SSL
     if (lc_key == "ssl-ca")
     {
-      if (m_options_used.test(MYSQLX_OPT_SSL_CA))
-      {
-        throw Mysqlx_exception("Option ssl-ca defined twice");
-      }
-
-      m_options_used.set(MYSQLX_OPT_SSL_CA);
-
+      check_option(MYSQLX_OPT_SSL_CA);
       set_ssl_ca(val);
     }
     else if (lc_key  == "ssl-mode")
     {
-      if (m_options_used.test(MYSQLX_OPT_SSL_MODE))
-      {
-        throw Mysqlx_exception("Option ssl-mode defined twice");
-      }
+      check_option(MYSQLX_OPT_SSL_MODE);
 
-      m_options_used.set(MYSQLX_OPT_SSL_MODE);
+      static std::map<std::string, mysqlx_ssl_mode_enum> mode_map =
+      {
+        { "disabled", SSL_MODE_DISABLED },
+        { "required", SSL_MODE_REQUIRED },
+        { "verify_ca", SSL_MODE_VERIFY_CA },
+        { "verify_identity", SSL_MODE_VERIFY_IDENTITY },
+      };
 
       std::string lc_val;
       lc_val.resize(val.size());
       std::transform(val.begin(), val.end(), lc_val.begin(), ::tolower);
 
-      if (lc_val == "disabled")
-      {
-        m_tls_options.set_ssl_mode(cdk::connection::TLS::Options::SSL_MODE::DISABLED);
+      try {
+        set_ssl_mode(mode_map.at(lc_val));
       }
-      else if (lc_val == "preferred")
+      catch (const std::out_of_range&)
       {
-        m_tls_options.set_ssl_mode(cdk::connection::TLS::Options::SSL_MODE::PREFERRED);
-      }
-      else if (lc_val == "required")
-      {
-        m_tls_options.set_ssl_mode(cdk::connection::TLS::Options::SSL_MODE::REQUIRED);
-      }
-      else if (lc_val == "verify_ca")
-      {
-        m_tls_options.set_ssl_mode(cdk::connection::TLS::Options::SSL_MODE::VERIFY_CA);
-      }
-      else if (lc_val == "verify_identity")
-      {
-        m_tls_options.set_ssl_mode(cdk::connection::TLS::Options::SSL_MODE::VERIFY_IDENTITY);
-      }
-      else
-      {
-        std::stringstream err;
-        err << "Unexpected key " << key << "=" << val << " in URI";
-        throw Mysqlx_exception(err.str().c_str());
+        throw Error_bad_mode(val);
       }
     }
     else
     {
-      std::stringstream err;
-      err << "Wrong option " << key << " in URI";
-      throw Mysqlx_exception(err.str().c_str());
+      throw Error_bad_option(key);
     }
 
     m_tcp_opts.set_tls(m_tls_options);

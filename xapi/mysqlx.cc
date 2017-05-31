@@ -164,7 +164,7 @@ _get_session_opt(mysqlx_session_options_t *opt,
       throw cdk::Error(0, "Session options structure not initialized");
     }
 
-    sess = new mysqlx_session_t(opt, is_node_sess);
+    sess = new mysqlx_session_t(*opt, is_node_sess);
 
     if (!sess->is_valid())
     {

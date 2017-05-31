@@ -337,6 +337,11 @@ typedef enum mysqlx_sort_direction_enum
 /**
   Session options for use with `mysqlx_session_option_get()`
   and `mysqlx_session_option_set()` functions.
+
+  @note Specifying `MYSQLX_OPT_SSL_CA` option requires `MYSQLX_OPT_SSL_MODE`
+  value of `SSL_MODE_VERIFY_CA` or `SSL_MODE_VERIFY_IDENTITY`.
+  If `MYSQLX_OPT_SSL_MODE` is not explicitly given then setting
+  `MYSQLX_OPT_SSL_CA` implies `SSL_MODE_VERIFY_CA`.
 */
 
 typedef enum mysqlx_opt_type_enum
@@ -373,9 +378,6 @@ mysqlx_opt_type_t;
 typedef enum mysqlx_ssl_mode_enum
 {
   SSL_MODE_DISABLED = 0,       /**< Establish an unencrypted connection. */
-  SSL_MODE_PREFERRED = 1,      /**< Establish a secure connection or fall
-                                    back to an unencrypted one if server does
-                                    not support encrypted connections */ 
   SSL_MODE_REQUIRED = 2,       /**< Establish a secure connection if the server
                                     supports secure connections. The connection
                                     attempt fails if a secure connection cannot

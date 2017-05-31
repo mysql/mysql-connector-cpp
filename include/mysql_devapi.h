@@ -932,14 +932,14 @@ public:
 
   #define OPTIONS_ENUM(x) x,
 
-#define map_options(x) { SessionSettings::Options::x ,#x },
-
-
-
   /**
     Session creation options
 
     @note `PRIORITY` should be defined after a HOST (PORT) definition
+
+    @note Specifying `SSL_CA` option requires `SSL_MODE` value of `VERIFY_CA`
+    or `VERIFY_IDENTITY`. If `SSL_MODE` is not explicitly given then
+    setting `SSL_CA` implies `VERIFY_CA`.
   */
 
   enum Options
@@ -951,13 +951,10 @@ public:
 
 #define SSL_MODE_TYPES(x)\
   x(DISABLED)        /*!< Establish an unencrypted connection.  */ \
-  x(PREFERRED)       /*!< Establish a secure (encrypted) connection if the server
-                          supports secure connections. Fall back to an
-                          unencrypted connection otherwise. This is the default
-                          if @ref SSL_MODE is not specified. */ \
   x(REQUIRED)        /*!< Establish a secure connection if the server supports
                           secure connections. The connection attempt fails if a
-                          secure connection cannot be established.*/ \
+                          secure connection cannot be established. This is the
+                          default if @ref SSL_MODE is not specified. */ \
   x(VERIFY_CA)       /*!< Like `REQUIRED`, but additionally verify the server
                           TLS certificate against the configured Certificate
                           Authority (CA) certificates (defined by @ref SSL_CA
@@ -1171,25 +1168,7 @@ public:
     Finds element of specified @p opt and returns its Value.
     Will throw Error if not found.
   */
-  Value& find(Options opt)
-  {
-    if (!has_option(opt))
-    {
-      std::stringstream error;
-      error << "SessionSettings option " << m_options_name.at(opt) << " not found";
-      throw Error(error.str().c_str());
-    }
-    auto it = m_options.begin();
-    for (;
-         it != m_options.end();
-         ++it)
-    {
-      if (it->first == opt)
-        break;
-    }
-
-    return it->second;
-  }
+  Value& find(Options opt);
 
 
   /**
@@ -1198,6 +1177,7 @@ public:
     When using @ref HOST, @ref PORT and @ref PRIORITY, all have to be defined on
     same set call.
    */
+
   template<typename V,typename...R>
   void set(Options opt, V v, R...rest)
   {
@@ -1219,6 +1199,7 @@ public:
   /**
     Remove all entries with correspondent @p opt.
   */
+
   void erase(Options opt)
   {
     auto it = m_options.begin();
@@ -1253,144 +1234,153 @@ private:
   std::vector<std::pair<Options,Value>> m_options;
   std::bitset<Options::LAST> m_option_used;
   std::bitset<Options::LAST> m_call_used;
-  static const std::map<SessionSettings::Options, string> m_options_name;
+
+  static std::string get_option_name(Options opt);
+
+  void do_add(Options opt, Value &&v);
 
 
-  void do_add(Options opt, Value &&v)
+  /*
+    Store option value in Value object (with basic run-time type checks)
+    TODO: More precise type checking using per-option types.
+  */
+
+  static Value opt_val(Options opt, Value &&val)
   {
-    //Only HOST and PORT can have multiple values, the others, are unique
-    if (opt == HOST || opt == PORT || opt == PRIORITY)
-    {
-      m_options.emplace_back(std::make_pair(opt, std::move(v)));
-    }
-    else
-    {
-      auto it = m_options.begin();
-      for(; it != m_options.end(); ++it)
-      {
-        if (it->first == opt)
-        {
-          it->second = std::move(v);
-          break;
-        }
-      }
+    if (opt == SSL_MODE)
+      throw Error("SSL_MODE setting requires SessionSettings::SSLMode value.");
+    return val;
+  }
 
-      if (it == m_options.end())
-      {
-        m_options.emplace_back(opt, std::move(v));
-      }
-    }
-    m_option_used.set(opt);
+  /*
+    For types which are not convertible to Value, but can be converted to string
+    go through string conversion.
+  */
+
+  template <
+    typename V,
+    typename std::enable_if<std::is_convertible<V,string>::value>::type*
+    = nullptr
+  >
+  static Value opt_val(Options opt, V &&val)
+  {
+    if (opt == SSL_MODE)
+      throw Error("SSL_MODE setting requires SessionSettings::SSLMode value.");
+    return string(val);
+  }
+
+  static Value opt_val(Options opt, SSLMode m)
+  {
+    if (opt != SSL_MODE)
+      throw Error("SessionSettings::SSLMode value can only be used on SSL_MODE setting.");
+    return unsigned(m);
   }
 
 
   /*
-    Called passing as HOST value as first element to test the rest of the
-    HOST/PORT/PRIORITY chain
+    Set several settings at once, with consistency checks.
+
+    It is checked that the same setting is not set multiple times (unless it is
+    setting like HOST, for which it is allowed). If host_optional is false,
+    then PORT/PRIORITY setting must be preceeded by a HOST setting.
   */
 
-  //Helper struct to construct Value from SSLMode
-  struct Value_sslmode : public Value
+  void do_set(bool) {}
+
+  template <typename V, typename...R>
+  void do_set(bool host_optional, Options opt, V v, R...rest)
   {
-    template<typename V>
-    Value_sslmode(V v)
-      : Value(v)
-    {}
+    switch (opt)
+    {
+    case HOST:
+      return do_add_host(opt_val(HOST, v), rest...);
 
-    Value_sslmode(Value &&v)
-      : Value(std::move(v))
-    {}
+    case PORT:
+      if (host_optional)
+        return do_add_host("localhost", opt_val(PORT, v), rest...);
+      else
+        throw Error("Defining PORT without first defining HOST.");
 
-    Value_sslmode(SessionSettings::SSLMode mode)
-      : Value(static_cast<int>(mode))
-    {}
+    case PRIORITY:
+      if (host_optional)
+      {
+        do_add_host(
+          "localhost", opt_val(PORT, DEFAULT_MYSQLX_PORT), opt_val(PRIORITY, v)
+        );
+        do_set(false, rest...);
+        return;
+      }
+      else
+        throw Error("Defining PRIORITY without first defining HOST.");
 
-  };
+    default:
 
-  void do_add_host(Value_sslmode &&host)
+      if (m_call_used.test(opt))
+      {
+        std::stringstream error;
+        error << "SessionSettings option "
+              << get_option_name(opt) << " defined twice";
+
+        throw Error(error.str().c_str());
+      }
+
+      m_call_used.set(opt);
+
+      do_add(opt, opt_val(opt,v));
+      do_set(host_optional, rest...);
+    }
+  }
+
+
+  /*
+    Add HOST setting checking valid order of options after it
+    (PORT/PRIORITY).
+  */
+
+  void do_add_host(Value &&host)
   {
     do_add(Options::HOST, std::move(host));
   }
 
-  void do_add_host(Value_sslmode &&host, Value_sslmode &&port)
+  void do_add_host(Value &&host, Value &&port)
   {
     do_add(Options::HOST, std::move(host));
     do_add(Options::PORT, std::move(port));
   }
 
-  void do_add_host(Value_sslmode &&host, Value_sslmode &&port, Value_sslmode &&priority)
+  void do_add_host(Value &&host, Value &&port, Value &&priority)
   {
     do_add(Options::HOST, std::move(host));
     do_add(Options::PORT, std::move(port));
     do_add(Options::PRIORITY, std::move(priority));
   }
 
-
   template <typename V, typename...R>
-  void do_add_host(Value_sslmode &&host, Options opt, V v)
-  {
-    if (opt == Options::PORT)
-    {
-      do_add_host(std::move(host), Value_sslmode(v));
-      return;
-    }
-    else if (opt == Options::PRIORITY)
-    {
-      do_add_host(std::move(host), Value_sslmode(DEFAULT_MYSQLX_PORT), Value_sslmode(v));
-      return;
-    }
-    else
-    {
-      do_add_host(std::move(host));
-    }
-
-    do_set(false, opt, v);
-
-  }
-
-  template <typename V, typename...R>
-  void do_add_host(Value_sslmode &&host, Options opt, V v, R...rest)
+  void do_add_host(Value &&host, Options opt, V v, R...rest)
   {
     if (opt == Options::PORT)
     {
       //we could still have priority
-      do_add_host(std::move(host), Value_sslmode(v), rest...);
+      do_add_host(std::move(host), opt_val(PORT,v), rest...);
       return;
     }
     else if (opt == Options::PRIORITY)
     {
-      do_add_host(std::move(host), Value_sslmode(DEFAULT_MYSQLX_PORT), Value_sslmode(v));
+      do_add_host(std::move(host), DEFAULT_MYSQLX_PORT, opt_val(PRIORITY,v));
       do_set(false, rest...);
       return;
     }
-    else
-    {
-      do_add_host(std::move(host));
-    }
 
+    do_add_host(std::move(host));
     do_set(false, opt, v, rest...);
-
-  }
-
-
-  template <typename V>
-  void do_add_host(Value_sslmode &&host, Value_sslmode &&port, Options opt, V v)
-  {
-    if (opt == Options::PRIORITY)
-    {
-      do_add_host(std::move(host), std::move(port), Value_sslmode(v));
-      return;
-    }
-    do_add_host(std::move(host), std::move(port));
-    do_set(false, opt, v);
   }
 
   template <typename V, typename...R>
-  void do_add_host(Value_sslmode &&host, Value_sslmode &&port, Options opt, V v, R...rest)
+  void do_add_host(Value &&host, Value &&port, Options opt, V v, R...rest)
   {
     if (opt == Options::PRIORITY)
     {
-      do_add_host(std::move(host), std::move(port), Value_sslmode(v));
+      do_add_host(std::move(host), std::move(port), opt_val(PRIORITY, v));
       do_set(false, rest...);
       return;
     }
@@ -1398,57 +1388,6 @@ private:
     do_set(false, opt, v, rest...);
   }
 
-  void do_set(bool) {}
-
-  template <typename V>
-  void do_set(bool host_optional, Options opt, V v)
-  {
-    if (opt == Options::PORT && !host_optional)
-    {
-      throw Error("Defining PORT without first defining HOST.");
-    } else if (opt == Options::PRIORITY && !host_optional)
-    {
-      throw Error("Defining PRIORITY without first defining HOST.");
-    }
-
-    if (m_call_used.test(opt))
-    {
-      std::stringstream error;
-      error << "SessionSettings option "
-            << m_options_name.at(opt) << " defined twice";
-
-      throw Error(error.str().c_str());
-    }
-
-    m_call_used.set(opt);
-
-    do_add(opt, Value_sslmode(v));
-  }
-
-  template <typename V, typename...R>
-  void do_set(bool host_optional, Options opt, V v, R...rest)
-  {
-    if (opt == Options::HOST)
-    {
-      do_add_host(Value_sslmode(v), rest...);
-    }
-    else  if (opt == Options::PORT && host_optional)
-    {
-      do_add_host(Value_sslmode("localhost"), Value_sslmode(v), rest...);
-    }
-    else  if (opt == Options::PRIORITY && host_optional)
-    {
-      do_add_host(Value_sslmode("localhost"),
-                  Value_sslmode(DEFAULT_MYSQLX_PORT),
-                  Value_sslmode(v));
-      do_set(host_optional, rest...);
-    }
-    else
-    {
-      do_set(host_optional, opt,v);
-      do_set(host_optional, rest...);
-    }
-  }
 
 };
 
@@ -1667,7 +1606,7 @@ public:
         SessionSettings::HOST, "host",
         SessionSettings::PORT, port,
         SessionSettings::DB,   "db",
-        SessionSettings::SSL_ENABLE
+        SessionSettings::SSL_MODE, SessionSettings::SSLMode::REQUIRED
       );
     ~~~~~~
 
