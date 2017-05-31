@@ -138,6 +138,7 @@
 
 #define COLLATIONS_utf8(X) \
   X(utf8,33,general,ci)  \
+  X(utf8,76,tolower,ci)  \
   X(utf8,83,bin,bin)  \
   X(utf8,192,unicode,ci)  \
   X(utf8,193,icelandic,ci)  \
@@ -221,32 +222,76 @@
   X(latin7,79,bin,bin)  \
 
 #define COLLATIONS_utf8mb4(X) \
-  X(utf8mb4,45,general,ci)  \
-  X(utf8mb4,46,bin,bin)  \
-  X(utf8mb4,224,unicode,ci)  \
-  X(utf8mb4,225,icelandic,ci)  \
-  X(utf8mb4,226,latvian,ci)  \
-  X(utf8mb4,227,romanian,ci)  \
-  X(utf8mb4,228,slovenian,ci)  \
-  X(utf8mb4,229,polish,ci)  \
-  X(utf8mb4,230,estonian,ci)  \
-  X(utf8mb4,231,spanish,ci)  \
-  X(utf8mb4,232,swedish,ci)  \
-  X(utf8mb4,233,turkish,ci)  \
-  X(utf8mb4,234,czech,ci)  \
-  X(utf8mb4,235,danish,ci)  \
-  X(utf8mb4,236,lithuanian,ci)  \
-  X(utf8mb4,237,slovak,ci)  \
-  X(utf8mb4,238,spanish2,ci)  \
-  X(utf8mb4,239,roman,ci)  \
-  X(utf8mb4,240,persian,ci)  \
-  X(utf8mb4,241,esperanto,ci)  \
-  X(utf8mb4,242,hungarian,ci)  \
-  X(utf8mb4,243,sinhala,ci)  \
-  X(utf8mb4,244,german2,ci)  \
-  X(utf8mb4,245,croatian,ci)  \
-  X(utf8mb4,246,unicode_520,ci)  \
-  X(utf8mb4,247,vietnamese,ci)  \
+  X(utf8mb4,255,uca0900_ai,ci) \
+  X(utf8mb4,278,uca0900_as,cs) \
+  X(utf8mb4,46,utf8mb4,bin) \
+  X(utf8mb4,245,croatian,ci) \
+  X(utf8mb4,266,cs_0900_ai,ci) \
+  X(utf8mb4,289,cs_0900_as,cs) \
+  X(utf8mb4,234,czech,ci) \
+  X(utf8mb4,235,danish,ci) \
+  X(utf8mb4,267,da_0900_ai,ci) \
+  X(utf8mb4,290,da_0900_as,cs) \
+  X(utf8mb4,256,de_pb_0900_ai,ci) \
+  X(utf8mb4,279,de_pb_0900_as,cs) \
+  X(utf8mb4,273,eo_0900_ai,ci) \
+  X(utf8mb4,296,eo_0900_as,cs) \
+  X(utf8mb4,241,esperanto,ci) \
+  X(utf8mb4,230,estonian,ci) \
+  X(utf8mb4,263,es_0900_ai,ci) \
+  X(utf8mb4,286,es_0900_as,cs) \
+  X(utf8mb4,270,es_trad_0900_ai,ci) \
+  X(utf8mb4,293,es_trad_0900_as,cs) \
+  X(utf8mb4,262,et_0900_ai,ci) \
+  X(utf8mb4,285,et_0900_as,cs) \
+  X(utf8mb4,45,general,ci) \
+  X(utf8mb4,244,german2,ci) \
+  X(utf8mb4,275,hr_0900_ai,ci) \
+  X(utf8mb4,298,hr_0900_as,cs) \
+  X(utf8mb4,242,hungarian,ci) \
+  X(utf8mb4,274,hu_0900_ai,ci) \
+  X(utf8mb4,297,hu_0900_as,cs) \
+  X(utf8mb4,225,icelandic,ci) \
+  X(utf8mb4,257,is_0900_ai,ci) \
+  X(utf8mb4,280,is_0900_as,cs) \
+  X(utf8mb4,303,ja_0900_as,cs) \
+  X(utf8mb4,226,latvian,ci) \
+  X(utf8mb4,271,la_0900_ai,ci) \
+  X(utf8mb4,294,la_0900_as,cs) \
+  X(utf8mb4,236,lithuanian,ci) \
+  X(utf8mb4,268,lt_0900_ai,ci) \
+  X(utf8mb4,291,lt_0900_as,cs) \
+  X(utf8mb4,258,lv_0900_ai,ci) \
+  X(utf8mb4,281,lv_0900_as,cs) \
+  X(utf8mb4,240,persian,ci) \
+  X(utf8mb4,261,pl_0900_ai,ci) \
+  X(utf8mb4,284,pl_0900_as,cs) \
+  X(utf8mb4,229,polish,ci) \
+  X(utf8mb4,227,romanian,ci) \
+  X(utf8mb4,239,roman,ci) \
+  X(utf8mb4,259,ro_0900_ai,ci) \
+  X(utf8mb4,282,ro_0900_as,cs) \
+  X(utf8mb4,243,sinhala,ci) \
+  X(utf8mb4,269,sk_0900_ai,ci) \
+  X(utf8mb4,292,sk_0900_as,cs) \
+  X(utf8mb4,237,slovak,ci) \
+  X(utf8mb4,228,slovenian,ci) \
+  X(utf8mb4,260,sl_0900_ai,ci) \
+  X(utf8mb4,283,sl_0900_as,cs) \
+  X(utf8mb4,238,spanish2,ci) \
+  X(utf8mb4,231,spanish,ci) \
+  X(utf8mb4,264,sv_0900_ai,ci) \
+  X(utf8mb4,287,sv_0900_as,cs) \
+  X(utf8mb4,232,swedish,ci) \
+  X(utf8mb4,265,tr_0900_ai,ci) \
+  X(utf8mb4,288,tr_0900_as,cs) \
+  X(utf8mb4,233,turkish,ci) \
+  X(utf8mb4,246,unicode_520,ci) \
+  X(utf8mb4,224,unicode,ci) \
+  X(utf8mb4,247,vietnamese,ci) \
+  X(utf8mb4,277,vi_0900_ai,ci) \
+  X(utf8mb4,300,vi_0900_as,cs) \
+
 
 #define COLLATIONS_cp1251(X) \
   X(cp1251,14,bulgarian,ci)  \
