@@ -334,37 +334,21 @@ namespace ds {
           item = &it->second;
         }
 
-        try
-        {
-          // Give values to the visitor
-          Variant_visitor<Visitor> variant_visitor;
-          variant_visitor.vis = &visitor;
-          /*
-            Cannot use lambda because auto type for lambdas is only
-            supported in C++14
-          */
-          item->visit(variant_visitor);
-          stop_processing = variant_visitor.stop_processing;
+        // Give values to the visitor
+        Variant_visitor<Visitor> variant_visitor;
+        variant_visitor.vis = &visitor;
+        /*
+          Cannot use lambda because auto type for lambdas is only
+          supported in C++14
+        */
+        item->visit(variant_visitor);
+        stop_processing = variant_visitor.stop_processing;
 
-          /* Exit if visit reported true or if we advanced to the end of the list */
-          if (stop_processing || it == m_ds_list.end())
-            break;
-        }
-        catch (Error &err)
-        {
-          error_code code = err.code();
-          if (code == cdkerrc::auth_failure ||
-              code == cdkerrc::protobuf_error ||
-              code == cdkerrc::tls_error )
-          {
-            rethrow_error();
-          }
-        }
+        /* Exit if visit reported true or if we advanced to the end of the list */
+        if (stop_processing || it == m_ds_list.end())
+          break;
+
       } // for
-
-      if (!stop_processing)
-        throw Error(cdkerrc::generic_error,
-        "Session could not be established using any of given data sources");
     }
 
     void clear()

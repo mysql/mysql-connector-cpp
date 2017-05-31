@@ -73,6 +73,8 @@ struct Session_builder
   mysqlx::Session      *m_sess = NULL;
   const mysqlx::string *m_database = NULL;
   bool m_throw_errors = false;
+  scoped_ptr<Error>     m_error;
+  unsigned              m_attempts = 0;
 
   Session_builder(bool throw_errors = false)
     : m_throw_errors(throw_errors)
@@ -107,6 +109,8 @@ Session_builder::operator() (
   using foundation::connection::TCPIP;
   using foundation::connection::TCPIP_base;
 
+  m_attempts++;
+
   TCPIP* connection = new TCPIP(ds.host(), ds.port());
   try
   {
@@ -115,10 +119,26 @@ Session_builder::operator() (
   catch (...)
   {
     delete connection;
-    if (m_throw_errors)
+
+    // Use rethrow_error() to wrap arbitrary exception in cdk::Error.
+
+    try {
       rethrow_error();
-    else
-      return false;  // continue to next host if available
+    }
+    catch (Error &err)
+    {
+      error_code code = err.code();
+
+      if (m_throw_errors ||
+          code == cdkerrc::auth_failure ||
+          code == cdkerrc::protobuf_error ||
+          code == cdkerrc::tls_error )
+         throw;
+
+      m_error.reset(err.clone());
+    }
+
+    return false;  // continue to next host if available
   }
 
   bool tls = false;
@@ -213,6 +233,8 @@ Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
 
   sb(ds, options);
 
+  assert(sb.m_sess);
+
   m_session = sb.m_sess;
   m_connection = sb.m_conn;
 }
@@ -233,6 +255,18 @@ Session::Session(ds::Multi_source &ds)
   Session_builder sb;
 
   ds::Multi_source::Access::visit(ds, sb);
+
+  if (!sb.m_sess)
+  {
+    if (1 == sb.m_attempts && sb.m_error)
+      sb.m_error->rethrow();
+    else
+      throw_error(
+        1 == sb.m_attempts ?
+        "Could not connect to the given data source" :
+        "Could not connect ot any of the given data sources"
+      );
+  }
 
   m_session = sb.m_sess;
   m_database = sb.m_database;
