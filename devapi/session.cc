@@ -221,7 +221,16 @@ SessionSettings::SSLMode get_mode(const string &name)
   static std::map<string,SessionSettings::SSLMode> ssl_modes
     = { SSL_MODE_TYPES(map_ssl) };
 
-  return ssl_modes.at(name);
+  try {
+    return ssl_modes.at(name);
+  }
+  catch (const std::out_of_range&)
+  {
+    std::string msg = "Invalid ssl-mode value: " + std::string(name);
+    throw_error(msg.c_str());
+    // Quiet compiler warnings
+    return SessionSettings::SSLMode::DISABLED;
+  }
 }
 
 

@@ -629,6 +629,7 @@ TEST_F(Sess, ssl_session)
     }
     catch (Error &e)
     {
+      cout << "Expected error: " << e << endl;
       EXPECT_EQ(string("Option ssl-mode defined twice"),string(e.what()));
     }
 
@@ -638,9 +639,20 @@ TEST_F(Sess, ssl_session)
     }
     catch (Error &e)
     {
+      cout << "Expected error: " << e << endl;
       EXPECT_EQ(string("Option ssl-ca defined twice"),string(e.what()));
     }
 
+    try {
+      mysqlx::XSession("localhost?ssl-mode=Whatever");
+      FAIL() << "No error thrown";
+    }
+    catch (Error &e)
+    {
+      cout << "Expected error: " << e << endl;
+      EXPECT_NE(std::string::npos,
+        std::string(e.what()).find("Invalid ssl-mode"));
+    }
   }
 
 }
