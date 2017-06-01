@@ -875,29 +875,34 @@ TEST_F(xapi, failover_test)
 
   // Error expected: trying to add a priority to unprioritized list
   EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(opt2,
-                          OPT_PRIORITY(max_prio - 1),
                           OPT_HOST(m_xplugin_host),
+                          OPT_PRIORITY(max_prio - 1),
                           OPT_PORT(m_xplugin_port + 2),
                           PARAM_END));
   cout << "Expected error: " << mysqlx_error_message(opt2) << endl;
 
   /* Starting to build the prioritized list */
 
-  // Wrong port, should not connect
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                       OPT_HOST(m_xplugin_host),
+                       OPT_PORT(m_xplugin_port + 1), // Wrong port
                        OPT_PRIORITY(max_prio - 1),
                        OPT_HOST(m_xplugin_host),
-                       OPT_PORT(m_xplugin_port + 1),
-                       PARAM_END));
-
-  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_PRIORITY, &prio));
-  EXPECT_EQ(max_prio - 1, prio);
-
-  // Wrong port, should not connect
-  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                       OPT_PORT(m_xplugin_port + 2), // Wrong port
                        OPT_PRIORITY(max_prio - 2),
                        OPT_HOST(m_xplugin_host),
-                       OPT_PORT(m_xplugin_port + 2),
+                       OPT_PORT(m_xplugin_port),     // Correct port
+                       OPT_PRIORITY(max_prio - 3),
+                       OPT_USER(m_xplugin_usr),
+                       OPT_PWD(m_xplugin_pwd),
+                       OPT_DB(db_name),
+                       PARAM_END));
+
+  // Port is given before host, should fail
+  EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(opt,
+                       OPT_PORT(m_xplugin_port),
+                       OPT_HOST(m_xplugin_host),
+                       OPT_PRIORITY(max_prio - 1),
                        PARAM_END));
 
   // Port is given, but no host, should fail
@@ -913,16 +918,6 @@ TEST_F(xapi, failover_test)
                           OPT_PORT(m_xplugin_port + 2),
                           PARAM_END));
   cout << "Expected error: " << mysqlx_error_message(opt) << endl;
-
-  // All is correct, should connect
-  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
-                       OPT_PRIORITY(max_prio - 3),
-                       OPT_HOST(m_xplugin_host),
-                       OPT_PORT(m_xplugin_port),
-                       OPT_USER(m_xplugin_usr),
-                       OPT_PWD(m_xplugin_pwd),
-                       OPT_DB(db_name),
-                       PARAM_END));
 
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_HOST, buf));
   EXPECT_STRCASEEQ(m_xplugin_host, buf);

@@ -323,6 +323,11 @@ cdk::ds::TCPIP::Options &mysqlx_session_options_struct::get_tcpip_options()
   return m_tcp_opts;
 }
 
+#define PRIO_CHECK if ((priority > 0 && m_source_state == source_state::non_priority) || \
+(priority == 0 && host_is_set &&  m_source_state == source_state::priority)) \
+  throw Mysqlx_exception(MYSQLX_ERROR_MIX_PRIORITY)
+
+
 void mysqlx_session_options_struct::set_multiple_options(va_list args)
 {
   mysqlx_opt_type_t type;
@@ -341,11 +346,20 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
       switch (type)
       {
         case MYSQLX_OPT_HOST:
+          if (host_is_set)
+          {
+            PRIO_CHECK;
+            m_host_list.emplace_back(priority, ds);
+            ds = TCPIP_t();
+            priority = 0;
+          }
+          else if (port_is_set)
+            throw Mysqlx_exception("Port must not be specified before host");
+
           char_data = va_arg(args, char*);
           if (char_data == NULL)
-          {
             throw Mysqlx_exception(MYSQLX_ERROR_MISSING_HOST_NAME);
-          }
+
           ds.set_host(char_data);
           host_is_set = true;
           break;
@@ -355,8 +369,15 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
           port_is_set = true;
           break;
         case MYSQLX_OPT_PRIORITY:
+          if (m_source_state == source_state::non_priority)
+            throw Mysqlx_exception(MYSQLX_ERROR_MIX_PRIORITY);
+
+          if (!host_is_set)
+            throw Mysqlx_exception(MYSQLX_ERROR_MISSING_HOST_NAME);
+
           uint_data = (va_arg(args, unsigned int));
           priority = (unsigned short)uint_data + 1;
+          m_source_state = source_state::priority;
           break;
         case MYSQLX_OPT_USER:
           char_data = va_arg(args, char*);
@@ -396,16 +417,10 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
     }
   }
 
-  if ((priority > 0 && m_source_state == source_state::non_priority) ||
-      (priority == 0 && host_is_set &&  m_source_state == source_state::priority))
-  {
-    throw Mysqlx_exception(MYSQLX_ERROR_MIX_PRIORITY);
-  }
+  PRIO_CHECK;
 
-  m_source_state = (priority > 0) ? source_state::priority : source_state::non_priority;
-
-  if ((port_is_set || priority > 0) && !host_is_set)
-    throw Mysqlx_exception(MYSQLX_ERROR_MISSING_HOST_NAME);
+  if (priority == 0)
+    m_source_state = source_state::non_priority;
 
   if (host_is_set)
   {
