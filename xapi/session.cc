@@ -419,7 +419,7 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
 
   PRIO_CHECK;
 
-  if (priority == 0)
+  if (host_is_set && priority == 0)
     m_source_state = source_state::non_priority;
 
   if (host_is_set)

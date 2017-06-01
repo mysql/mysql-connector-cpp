@@ -881,6 +881,13 @@ TEST_F(xapi, failover_test)
                           PARAM_END));
   cout << "Expected error: " << mysqlx_error_message(opt2) << endl;
 
+  /* Set user/pass/db before setting list */
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                                                 OPT_USER(m_xplugin_usr),
+                                                 OPT_PWD(m_xplugin_pwd),
+                                                 OPT_DB(db_name),
+                                                 PARAM_END));
+
   /* Starting to build the prioritized list */
 
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
@@ -893,9 +900,6 @@ TEST_F(xapi, failover_test)
                        OPT_HOST(m_xplugin_host),
                        OPT_PORT(m_xplugin_port),     // Correct port
                        OPT_PRIORITY(max_prio - 3),
-                       OPT_USER(m_xplugin_usr),
-                       OPT_PWD(m_xplugin_pwd),
-                       OPT_DB(db_name),
                        PARAM_END));
 
   // Port is given before host, should fail
@@ -1054,6 +1058,7 @@ TEST_F(xapi, conn_options_test)
   mysqlx_stmt_t *stmt;
   mysqlx_result_t *res;
   mysqlx_row_t *row;
+
 
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
                       OPT_HOST(m_xplugin_host), OPT_PORT(m_xplugin_port),
