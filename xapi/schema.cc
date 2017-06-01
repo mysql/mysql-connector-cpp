@@ -36,7 +36,7 @@ bool mysqlx_schema_struct::exists()
 {
   // This SQL query can be enabled for X session
   mysqlx_stmt_t *stmt = m_session.sql_query("SHOW SCHEMAS LIKE ?",
-                                            MYSQLX_NULL_TERMINATED, true);
+                                            MYSQLX_NULL_TERMINATED);
   stmt->sql_bind(m_name);
   mysqlx_result_t *res = stmt->exec();
   return (res->store_result() > 0);

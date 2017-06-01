@@ -109,7 +109,7 @@ protected:
   }
 
   void authenticate(const char *usr = NULL, const char *pwd = NULL,
-                    const char *db = NULL, int create_x_sess = 0)
+                    const char *db = NULL)
   {
     if (m_status)
       FAIL() << m_status;
@@ -125,12 +125,8 @@ protected:
     xplugin_pwd = (xplugin_pwd && strlen(xplugin_pwd) ? xplugin_pwd : NULL);
     xplugin_host = (xplugin_host && strlen(xplugin_host) ? xplugin_host : "127.0.0.1");
 
-    if (create_x_sess)
-      m_sess = mysqlx_get_session(xplugin_host, m_port, xplugin_usr, xplugin_pwd, db,
-                                  conn_error, &conn_err_code);
-    else
-      m_sess = mysqlx_get_node_session(xplugin_host, m_port, xplugin_usr, xplugin_pwd, db,
-                                       conn_error, &conn_err_code);
+    m_sess = mysqlx_get_session(xplugin_host, m_port, xplugin_usr, xplugin_pwd, db,
+                                conn_error, &conn_err_code);
 
     if (!m_sess)
     {

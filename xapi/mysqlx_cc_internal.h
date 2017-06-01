@@ -594,7 +594,6 @@ private:
   mysqlx_session_options_t m_sess_opt;
   cdk::Session m_session;
   mysqlx_stmt_t *m_stmt;
-  bool m_is_node_sess;
 
   typedef std::map<cdk::string, mysqlx_schema_t> Schema_map;
   Schema_map m_schema_map;
@@ -604,11 +603,11 @@ public:
   enum Object_type { SCHEMA, TABLE, COLLECTION, VIEW };
 
   mysqlx_session_struct(const std::string host, unsigned int port, const string usr,
-                   const std::string *pwd, const std::string *db, bool is_node_sess);
+                   const std::string *pwd, const std::string *db);
 
-  mysqlx_session_struct(const std::string &conn_str, bool is_node_sess);
+  mysqlx_session_struct(const std::string &conn_str);
 
-  mysqlx_session_struct(mysqlx_session_options_t *opt, bool is_node_sess);
+  mysqlx_session_struct(mysqlx_session_options_t *opt);
 
   bool is_valid() { return m_session.is_valid() == cdk::option_t::YES; }
 
@@ -626,8 +625,7 @@ public:
       CRUD handler containing the results and/or error
 
   */
-  mysqlx_stmt_t *sql_query(const char *query, uint32_t length,
-                           bool enable_sql_x_session = false);
+  mysqlx_stmt_t *sql_query(const char *query, uint32_t length);
 
   /*
     Create a new CRUD operation (SELECT, INSERT, UPDATE, DELETE)

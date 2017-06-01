@@ -414,7 +414,6 @@ typedef enum mysqlx_view_check_option_enum
 
   @note The session returned by the function must be properly closed using
         `mysqlx_session_close()`.
-  @note This type of session does not support executing plain SQL queries.
   @note This function always establishes connection with SSL enabled
 
   @ingroup xapi_sess
@@ -453,7 +452,6 @@ mysqlx_get_session(const char *host, int port, const char *user,
 
   @note The session returned by the function must be properly closed using
         `mysqlx_session_close()`.
-  @note This type of session does not support executing plain SQL queries.
 
   @ingroup xapi_sess
 */
@@ -478,7 +476,6 @@ mysqlx_get_session_from_url(const char *conn_string,
 
   @note The session returned by the function must be properly closed using
         `mysqlx_session_close()`.
-  @note This type of session does not support executing plain SQL queries.
 
   @ingroup xapi_sess
 */
@@ -487,99 +484,6 @@ PUBLIC_API mysqlx_session_t *
 mysqlx_get_session_from_options(mysqlx_session_options_t *opt,
                        char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
 
-
-/**
-  Create a node session.
-
-  A node session connects only to one mysqld node at a time.
-
-  @param host       server host DNS name, IPv4 address or IPv6 address
-  @param port       port number
-  @param user       user name
-  @param password   password
-  @param database   default database name
-  @param[out] out_error if error happens during connect the error message
-                    is returned through this parameter
-  @param[out] err_code if error happens during connect the error code
-                    is returned through this parameter
-
-  @return session handle if session could be created, otherwise NULL
-  is returned and the error information is returned through the out_error
-  and err_code output parameters.
-
-  @note The session returned by the function must be properly closed using
-        `mysqlx_session_close()`.
-  @note This type of session supports executing plain SQL queries
-  @note This function always establishes connection with SSL enabled
-
-  @ingroup xapi_sess
-*/
-
-PUBLIC_API mysqlx_session_t *
-mysqlx_get_node_session(const char *host, int port, const char *user,
-                     const char *password, const char *database,
-                     char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
-
-
-/**
-  Create a node session using connection string or URL.
-
-  See `mysqlx_get_session_from_url()` for information on connection string
-  format.
-
-  A node session connects only to one mysqld node at a time.
-
-  @param conn_string character connection string
-  @param[out] out_error if error happens during connect the error message
-                        is returned through this parameter
-  @param[out] err_code if error happens during connect the error code
-                        is returned through this parameter
-
-  @return session handle if session could be created, otherwise NULL
-    is returned and the error information is returned through the out_error
-    and err_code output parameters.
-
-  @note The session returned by the function must be properly closed using
-    `mysqlx_session_close()`.
-
-  @note This type of session supports executing plain SQL queries
-
-  @see `mysqlx_get_session_from_url()`
-
-  @ingroup xapi_sess
-*/
-
-PUBLIC_API mysqlx_session_t *
-mysqlx_get_node_session_from_url(const char *conn_string,
-                     char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
-
-
-/**
-  Create a node session using mysqlx_session_options_t structure
-
-  @param opt pointer to mysqlx_session_options_t structure containing
-             the connection parameters
-  @param[out] out_error if error happens during connect the error message
-                    is returned through this parameter
-  @param[out] err_code if error happens during connect the error code
-                    is returned through this parameter
-
-  @return session handle if session could be created, otherwise NULL
-    is returned and the error information is returned through the out_error
-    and err_code output parameters.
-
-  @note The session returned by the function must be properly closed using
-    `mysqlx_session_close()`.
-
-  @note This type of session supports executing plain SQL queries
-
-  @ingroup xapi_sess
-*/
-
-PUBLIC_API mysqlx_session_t *
-mysqlx_get_node_session_from_options(mysqlx_session_options_t *opt,
-                            char out_error[MYSQLX_MAX_ERROR_LEN],
-                            int *err_code);
 
 
 /**

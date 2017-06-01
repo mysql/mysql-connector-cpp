@@ -769,7 +769,7 @@ TEST_F(xapi, conn_string_test)
 
 DO_CONNECT:
 
-  local_sess = mysqlx_get_node_session_from_url(conn_str, conn_error, &conn_err_code);
+  local_sess = mysqlx_get_session_from_url(conn_str, conn_error, &conn_err_code);
 
   if (!local_sess)
   {
@@ -881,7 +881,7 @@ TEST_F(xapi, conn_options_test)
 
 DO_CONNECT:
 
-  local_sess = mysqlx_get_node_session_from_options(opt, conn_error, &conn_err_code);
+  local_sess = mysqlx_get_session_from_options(opt, conn_error, &conn_err_code);
 
   if (!local_sess)
   {

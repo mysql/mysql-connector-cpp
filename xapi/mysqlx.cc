@@ -102,8 +102,7 @@
 static mysqlx_session_t *
 _get_session(const char *host, int port, const char *user,
              const char *password, const char *database, const char *conn_str,
-             char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code,
-             bool is_node_sess)
+             char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
 {
   mysqlx_session_t *sess = NULL;
   try
@@ -117,11 +116,11 @@ _get_session(const char *host, int port, const char *user,
       // TODO: the default user has to be determined in a more flexible way
       sess = new mysqlx_session_t(host ? host : "localhost", port,
                                   user ? user : "root", password ? &pwd : NULL,
-                                database ? &db : NULL , is_node_sess);
+                                database ? &db : NULL);
     }
     else
     {
-      sess = new mysqlx_session_t(conn_str, is_node_sess);
+      sess = new mysqlx_session_t(conn_str);
     }
 
     if (!sess->is_valid())
@@ -138,8 +137,7 @@ _get_session(const char *host, int port, const char *user,
 
 static mysqlx_session_t *
 _get_session_opt(mysqlx_session_options_t *opt,
-             char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code,
-             bool is_node_sess)
+             char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
 {
   mysqlx_session_t *sess = NULL;
   try
@@ -150,7 +148,7 @@ _get_session_opt(mysqlx_session_options_t *opt,
       throw cdk::Error(0, "Session options structure not initialized");
     }
 
-    sess = new mysqlx_session_t(opt, is_node_sess);
+    sess = new mysqlx_session_t(opt);
 
     if (!sess->is_valid())
     {
@@ -172,7 +170,7 @@ mysqlx_get_session(const char *host, int port, const char *user,
                char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
 {
   return _get_session(host, port, user, password, database,
-                      NULL, out_error, err_code, false);
+                      NULL, out_error, err_code);
 }
 
 /*
@@ -183,7 +181,7 @@ mysqlx_get_session_from_url(const char *conn_string,
                    char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
 {
   return _get_session(NULL, 0, NULL, NULL, NULL,
-                      conn_string, out_error, err_code, false);
+                      conn_string, out_error, err_code);
 }
 
 /*
@@ -193,41 +191,9 @@ mysqlx_session_t * STDCALL
 mysqlx_get_session_from_options(mysqlx_session_options_t *opt,
                    char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
 {
-  return _get_session_opt(opt, out_error, err_code, false);
+  return _get_session_opt(opt, out_error, err_code);
 }
 
-/*
-  Establish the node session using the options structure
-*/
-mysqlx_session_t * STDCALL
-mysqlx_get_node_session_from_options(mysqlx_session_options_t *opt,
-                   char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
-{
-  return _get_session_opt(opt, out_error, err_code, true);
-}
-
-/*
-  Establish the node session using string options provided as function parameters
-*/
-mysqlx_session_t * STDCALL
-mysqlx_get_node_session(const char *host, int port, const char *user,
-               const char *password, const char *database,
-               char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
-{
-  return _get_session(host, port, user, password, database,
-                      NULL, out_error, err_code, true);
-}
-
-/*
-  Establish the node session using connection string
-*/
-mysqlx_session_t * STDCALL
-mysqlx_get_node_session_from_url(const char *conn_string,
-               char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
-{
-  return _get_session(NULL, 0, NULL, NULL, NULL,
-                      conn_string, out_error, err_code, true);
-}
 
 /*
   Execute a plain SQL query (supports parameters and placeholders)
@@ -1592,7 +1558,7 @@ mysqlx_get_schemas(mysqlx_session_t *sess, const char *schema_pattern)
   mysqlx_stmt_t *stmt;
   /* This type of SQL is enabled for X session */
   if ((stmt = sess->sql_query("SHOW SCHEMAS LIKE ?",
-       MYSQLX_NULL_TERMINATED, true)) == NULL)
+       MYSQLX_NULL_TERMINATED)) == NULL)
     return NULL;
 
   if (mysqlx_stmt_bind(stmt, PARAM_STRING(schema_pattern ? schema_pattern : "%"),
