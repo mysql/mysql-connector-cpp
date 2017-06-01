@@ -33,6 +33,8 @@
 #include "impl.h"
 
 
+const unsigned max_priority = 100;
+
 using namespace ::mysqlx;
 
 struct Endpoint
@@ -177,6 +179,9 @@ struct URI_parser
             const std::string &host,
             unsigned short port) override
   {
+    if (priority > (max_priority+1))
+      throw_error("Priority should be a value between 0 and 100");
+
     cdk::ds::TCPIP endpoint(host, port);
     m_hosts.emplace(priority, endpoint);
   }
@@ -184,6 +189,9 @@ struct URI_parser
   void host(unsigned short priority,
             const std::string &host) override
   {
+    if (priority > (max_priority+1))
+      throw_error("Priority should be a value between 0 and 100");
+
     cdk::ds::TCPIP endpoint(host);
     m_hosts.emplace(priority, endpoint);
   }
@@ -348,7 +356,13 @@ internal::XSession_base::XSession_base(SessionSettings settings)
 
         if (it != settings.end() && it->first == SessionSettings::PRIORITY)
         {
-          priority = 1 + static_cast<unsigned>(it->second);
+          priority = static_cast<unsigned>(it->second);
+
+          if (priority > max_priority)
+            throw_error("Priority should be a value between 0 and 100");
+
+          ++priority;
+
           if (priority > 65535U)
             throw_error("Priority value out of range");
         }

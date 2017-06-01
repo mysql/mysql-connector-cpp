@@ -923,6 +923,31 @@ TEST_F(xapi, failover_test)
                           PARAM_END));
   cout << "Expected error: " << mysqlx_error_message(opt) << endl;
 
+  // Priority > 100, should fail
+  EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(opt,
+                          OPT_HOST(m_xplugin_host),
+                          OPT_PORT(m_xplugin_port + 2),
+                          OPT_PRIORITY(101),
+                          PARAM_END));
+  cout << "Expected error: " << mysqlx_error_message(opt) << endl;
+
+
+  std::stringstream conn;
+  conn << m_xplugin_usr;
+  if (m_xplugin_pwd)
+    conn << ":" <<m_xplugin_pwd;
+  conn << "@[(address=" << m_xplugin_host<< ":" << m_xplugin_port << ",priority=101)]";
+
+  local_sess = mysqlx_get_node_session_from_url(conn.str().c_str(),
+                                                conn_error, &conn_err_code);
+
+  if (local_sess)
+  {
+    FAIL() << "Should give error priority>100";
+  }
+
+  cout << "Expected error: " << conn_error << endl;
+
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_HOST, buf));
   EXPECT_STRCASEEQ(m_xplugin_host, buf);
 

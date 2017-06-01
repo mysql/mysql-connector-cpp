@@ -172,6 +172,7 @@ typedef object_id* MYSQLX_GUID;
 #define MYSQLX_ERROR_WRONG_SSL_MODE "Wrong value for SSL Mode"
 #define MYSQLX_ERROR_NO_TLS_SUPPORT "Can not create TLS session - this connector is built without TLS support"
 #define MYSQLX_ERROR_MIX_PRIORITY "Mixing hosts with and without priority is not allowed"
+#define MYSQLX_ERROR_MAX_PRIORITY "Priority should be a value between 0 and 100"
 
 
 /* Opaque structures*/

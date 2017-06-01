@@ -27,6 +27,8 @@
 #include <algorithm>
 #include <string>
 
+const unsigned max_priority = 100;
+
 mysqlx_session_t::mysqlx_session_struct(const std::string host,
                                         unsigned int port, const string usr,
                                         const std::string *pwd,
@@ -376,6 +378,9 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
             throw Mysqlx_exception(MYSQLX_ERROR_MISSING_HOST_NAME);
 
           uint_data = (va_arg(args, unsigned int));
+          if (uint_data > max_priority)
+            throw Mysqlx_exception(MYSQLX_ERROR_MAX_PRIORITY);
+
           priority = (unsigned short)uint_data + 1;
           m_source_state = source_state::priority;
           break;
@@ -524,11 +529,13 @@ const cdk::string* mysqlx_session_options_struct::get_db()
   return m_tcp_opts.database();
 }
 
-#define PRIORITY_CHECK if ((priority > 0 && m_source_state == source_state::non_priority) || \
+#define PRIORITY_CHECK if (priority > (max_priority+1)) \
+                         throw Mysqlx_exception(MYSQLX_ERROR_MAX_PRIORITY);\
+                       if ((priority > 0 && m_source_state == source_state::non_priority) || \
                            (priority == 0 && m_source_state == source_state::priority)) \
  throw Mysqlx_exception(MYSQLX_ERROR_MIX_PRIORITY); \
 else \
- m_source_state = (priority > 0) ? source_state::priority : source_state::non_priority
+ m_source_state = (priority > 0) ? source_state::priority : source_state::non_priority\
 
 
 // Implementing URI_Processor interface

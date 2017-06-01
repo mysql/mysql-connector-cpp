@@ -222,8 +222,6 @@ namespace ds {
 
   public:
 
-    const unsigned short priority_range = 101;
-
     Multi_source() : m_is_prioritized(false), m_counter(65535)
     {
       std::srand((unsigned int)time(NULL));
@@ -257,7 +255,7 @@ namespace ds {
       DS_pair<DS_t, DS_opt> pair(const_cast<DS_t&>(ds),
                                const_cast<DS_opt&>(opt));
       if (m_is_prioritized)
-        m_ds_list.emplace(prio > priority_range ? priority_range : prio, pair);
+        m_ds_list.emplace(prio, pair);
       else
       {
         /*

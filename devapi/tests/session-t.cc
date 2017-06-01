@@ -707,6 +707,9 @@ TEST_F(Sess, failover)
                        SessionSettings::HOST, "::1",
                        SessionSettings::PORT, get_port(),
                        SessionSettings::PRIORITY, 100,
+                       SessionSettings::HOST, "localhost",
+                       SessionSettings::PORT, get_port(),
+                       SessionSettings::PRIORITY, 100,
                        SessionSettings::DB, "test");
 
     EXPECT_EQ(string("test"),s.getDefaultSchema().getName());
@@ -743,6 +746,9 @@ TEST_F(Sess, failover)
                  SessionSettings::HOST, "[2001:db8:85a3:8d3:1319:8a2e:370:7348]",
                  SessionSettings::PRIORITY, 2,
                  SessionSettings::HOST, "::1",
+                 SessionSettings::PORT, get_port(),
+                 SessionSettings::PRIORITY, 99,
+                 SessionSettings::HOST, "localhost",
                  SessionSettings::PORT, get_port(),
                  SessionSettings::PRIORITY, 99,
                  SessionSettings::DB, "test"
@@ -784,6 +790,29 @@ TEST_F(Sess, failover)
 
     EXPECT_THROW(mysqlx::XSession s(settings), Error);
   }
+
+  cout << "Priority > 100" << endl;
+
+  {
+    EXPECT_THROW(
+          mysqlx::XSession(SessionSettings::USER, get_user(),
+                           SessionSettings::PWD, get_password() ?
+                             get_password() :
+                             nullptr,
+                           SessionSettings::HOST, "localhost",
+                           SessionSettings::PORT, get_port(),
+                           SessionSettings::PRIORITY, 101),
+          Error);
+
+
+    std::stringstream uri;
+
+    uri << "[(address=localhost:" << get_port() <<",priority=101)]";
+
+    EXPECT_THROW(mysqlx::XSession s(uri.str()) , Error);
+  }
+
+
 
 }
 
