@@ -97,10 +97,9 @@ TEST_F(Bugs, bug26130226_crash_update)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  mysqlx::Session &sess = get_sess();
-  sess.dropSchema("crash_update");
-  sess.createSchema("crash_update");
-  Schema sch = sess.getSchema("crash_update");
+  get_sess().dropSchema("crash_update");
+  get_sess().createSchema("crash_update");
+  Schema sch = get_sess().getSchema("crash_update");
   Collection coll = sch.createCollection("c1", true);
 
   coll.add("{ \"name\": \"abc\", \"age\": 1 , \"misc\": 1.2}").execute();
