@@ -579,7 +579,8 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
     throw Mysqlx_exception(MYSQLX_ERROR_MIX_PRIORITY);
   }
 
-  m_source_state = (priority > 0) ? source_state::priority : source_state::non_priority;
+  if (host_is_set)
+    m_source_state = (priority > 0) ? source_state::priority : source_state::non_priority;
 
   if ((port_is_set || priority > 0) && !host_is_set)
     throw Mysqlx_exception(MYSQLX_ERROR_MISSING_HOST_NAME);
