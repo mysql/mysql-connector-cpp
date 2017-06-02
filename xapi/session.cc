@@ -291,10 +291,11 @@ mysqlx_session_options_struct::mysqlx_session_options_struct(
 }
 
 
-mysqlx_session_options_struct::mysqlx_session_options_struct(const mysqlx_session_options_struct &opt) :
-                               m_source_state(opt.m_source_state),
-                               m_tcp_opts(opt.m_tcp_opts),
-                               m_host_list(opt.m_host_list)
+mysqlx_session_options_struct::mysqlx_session_options_struct(const mysqlx_session_options_struct &opt)
+  : Mysqlx_diag(opt),
+    m_source_state(opt.m_source_state),
+    m_tcp_opts(opt.m_tcp_opts),
+    m_host_list(opt.m_host_list)
 {}
 
 
@@ -436,6 +437,11 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
 
 cdk::ds::Multi_source &mysqlx_session_options_struct::get_multi_source()
 {
+  if (mysqlx_error_t *err = get_error())
+    throw Mysqlx_exception(
+      Mysqlx_exception::MYSQLX_EXCEPTION_INTERNAL,
+      err->error_num(), err->message());
+
   if (m_source_state == source_state::unknown)
     throw Mysqlx_exception(MYSQLX_ERROR_MISSING_CONN_INFO);
 
