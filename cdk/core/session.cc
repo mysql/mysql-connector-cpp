@@ -144,6 +144,12 @@ Session_builder::operator() (
   bool tls = false;
 
 #ifdef WITH_SSL
+
+  if (!options.get_tls().get_ca().empty() &&
+      options.get_tls().ssl_mode() < cdk::connection::TLS::Options::SSL_MODE::VERIFY_CA)
+    throw Error(cdkerrc::generic_error,
+                "ssl-ca set and ssl-mode different then VERIFY_CA or VERIFY_IDENTITY");
+
   if (options.get_tls().ssl_mode() >
       cdk::connection::TLS::Options::SSL_MODE::DISABLED)
   {

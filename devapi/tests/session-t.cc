@@ -486,11 +486,6 @@ TEST_F(Sess, ssl_session)
 
   uri << "/?ssl-ca=" << ssl_ca;
 
-  {
-    mysqlx::XSession sess(uri.str());
-    check_ssl(sess, true);
-  }
-
   // using ssl-mode and ssl-ca as SessionSettings
 
   {
@@ -507,6 +502,14 @@ TEST_F(Sess, ssl_session)
   // ssl-mode DISABLED and REQUIRED is not compatible with ssl-ca
 
   {
+    string bad_uri;
+
+    bad_uri = uri.str() + "&ssl-mode=DISABLED";
+    EXPECT_THROW(mysqlx::XSession sess(bad_uri) , mysqlx::Error);
+
+    bad_uri = uri.str() + "&ssl-mode=REQUIRED";
+    EXPECT_THROW(mysqlx::XSession sess(bad_uri) , mysqlx::Error);
+
     EXPECT_THROW(
     mysqlx::XSession sess(SessionSettings::PORT, get_port(),
                           SessionSettings::USER, get_user(),
@@ -855,7 +858,7 @@ TEST_F(Sess, failover)
                              SessionSettings::PWD, get_password() ?
                                get_password() :
                                nullptr,
-                             SessionSettings::PORT, 13009);
+                             SessionSettings::PORT, 1);
 
     settings.set(SessionSettings::HOST, "192.0.2.11",
                  SessionSettings::PORT, 33060);
