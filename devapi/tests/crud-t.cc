@@ -26,6 +26,7 @@
 #include <iostream>
 #include <list>
 #include <algorithm>
+#include <set>
 
 using std::cout;
 using std::endl;
@@ -1883,7 +1884,7 @@ TEST_F(Crud, group_by_having)
 
   coll.remove().execute();
 
-  std::vector<string> names = {"Foo", "Baz", "Bar"};
+  std::vector<string> names = { "Foo", "Baz", "Bar" };
 
   int i=0;
 
@@ -1895,33 +1896,37 @@ TEST_F(Crud, group_by_having)
     ++i;
   }
 
-  // Function to check order of operation
-  auto check_order = [&names] (DocResult &coll_res, RowResult &tbl_res)
+  // Move "Foo" (with age 20) to the end.
+
+  std::sort(names.begin(), names.end());
+
+  // Function to check results of operation
+  auto check_results = [&names] (DocResult &coll_res, RowResult &tbl_res)
   {
+    std::set<string> cset{ names.begin(), names.end() };
+    std::set<string> tset{ names.begin(), names.end() };
+
     DbDoc coll_row = coll_res.fetchOne();
     Row tbl_row = tbl_res.fetchOne();
 
-    for (auto name = names.begin();
-         coll_row && tbl_row && name != names.end();
+    for (; coll_row && tbl_row ;
          coll_row = coll_res.fetchOne(),
-         tbl_row = tbl_res.fetchOne(),
-         ++name)
+         tbl_row = tbl_res.fetchOne())
     {
-      EXPECT_EQ(*name, static_cast<string>(coll_row["user"]));
-      EXPECT_EQ(*name, static_cast<string>(tbl_row[0]));
+      EXPECT_EQ(1,cset.erase(coll_row["user"]));
+      EXPECT_EQ(1,tset.erase(tbl_row[0]));
     }
 
-    EXPECT_TRUE(coll_row.isNull());
-    EXPECT_TRUE(tbl_row.isNull());
+    EXPECT_TRUE(cset.empty());
+    EXPECT_TRUE(tset.empty());
   };
 
   auto coll_res = coll.find().fields("user AS user", "age as age").execute();
   auto tbl_res = tbl.select("doc->$.user as user","doc->$.age as age").execute();
 
-  check_order(coll_res, tbl_res);
+  check_results(coll_res, tbl_res);
 
   cout << "Check with groupBy" << endl;
-  std::sort(names.begin(), names.end());
 
   std::vector<string> fields = {"user"};
   coll_res = coll.find()
@@ -1935,10 +1940,10 @@ TEST_F(Crud, group_by_having)
                .execute();
 
 
-  check_order(coll_res, tbl_res);
+  check_results(coll_res, tbl_res);
 
 
-  cout << "Having usage will remove last element of previous groupBy." << endl;
+  cout << "Having usage will remove last name for the list." << endl;
   names.pop_back();
 
   coll_res = coll.find()
@@ -1953,7 +1958,7 @@ TEST_F(Crud, group_by_having)
             .having(L"age > 20")
             .execute();
 
-  check_order(coll_res, tbl_res);
+  check_results(coll_res, tbl_res);
 
   cout << "Same test but passing std::string to groupBy" << endl;
 
@@ -1967,9 +1972,10 @@ TEST_F(Crud, group_by_having)
   tbl_res = tbl.select("doc->$.user as user", "doc->$.age as age")
             .groupBy(fields, std::string("age"))
             .having(std::string("age > 20"))
+            .orderBy("user")
             .execute();
 
-  check_order(coll_res, tbl_res);
+  check_results(coll_res, tbl_res);
 
 }
 

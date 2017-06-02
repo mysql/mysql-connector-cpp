@@ -167,6 +167,8 @@ typedef object_id* MYSQLX_GUID;
 #define MYSQLX_ERROR_OUTPUT_BUFFER_NULL "The output buffer cannot be NULL"
 #define MYSQLX_ERROR_OUTPUT_BUFFER_ZERO "The output buffer cannot have zero length"
 #define MYSQLX_ERROR_OP_NOT_SUPPORTED "The operation is not supported by the function"
+#define MYSQLX_ERROR_WRONG_SSL_MODE "Wrong value for SSL Mode"
+#define MYSQLX_ERROR_NO_TLS_SUPPORT "Can not create TLS session - this connector is built without TLS support"
 
 /* Opaque structures*/
 
@@ -330,24 +332,50 @@ typedef enum mysqlx_sort_direction_enum
 /**
   Session options for use with `mysqlx_session_option_get()`
   and `mysqlx_session_option_set()` functions.
-
-  @note Specifying `MYSQLX_OPT_SSL_CA` option implies `MYSQLX_OPT_SSL_ENABLE`.
 */
 
 typedef enum mysqlx_opt_type_enum
 {
-  MYSQLX_OPT_HOST = 1,        /**< host name or IP address */
-  /** DNS name of the host, IPv4 address or IPv6 address */
-  MYSQLX_OPT_PORT = 2,
+  MYSQLX_OPT_HOST = 1,        /**< host name or IP address, DNS name of the host,
+                                   IPv4 address or IPv6 address */
+  MYSQLX_OPT_PORT = 2,        /**< port */
   MYSQLX_OPT_USER = 3,        /**< user name */
   MYSQLX_OPT_PWD = 4,         /**< password */
   MYSQLX_OPT_DB = 5,          /**< default database */
-  MYSQLX_OPT_SSL_ENABLE = 6,  /**< use TLS connection */
+  MYSQLX_OPT_SSL_MODE = 6,
   /** path to a PEM file specifying trusted root certificates */
   MYSQLX_OPT_SSL_CA = 7,
 }
 mysqlx_opt_type_t;
 
+
+/**
+  Session SSL mode values for use with `mysqlx_session_option_get()`
+  and `mysqlx_session_option_set()` functions setting or getting
+  MYSQLX_OPT_SSL_MODE option.
+*/
+
+typedef enum mysqlx_ssl_mode_enum
+{
+  SSL_MODE_DISABLED = 0,       /**< Establish an unencrypted connection. */
+  SSL_MODE_PREFERRED = 1,      /**< Establish a secure connection or fall
+                                    back to an unencrypted one if server does
+                                    not support encrypted connections */ 
+  SSL_MODE_REQUIRED = 2,       /**< Establish a secure connection if the server
+                                    supports secure connections. The connection
+                                    attempt fails if a secure connection cannot
+                                    be established.  */
+  SSL_MODE_VERIFY_CA = 3,      /**< Like SSL_MODE_REQUIRED, but additionally
+                                    verify the server TLS certificate against
+                                    the configured Certificate Authority (CA)
+                                    certificates. The connection attempt fails
+                                    if no valid matching CA certificates are
+                                    found. */
+  SSL_MODE_VERIFY_IDENTITY = 4 /**< Like VERIFY_CA, but additionally verify
+                                    that the server certificate matches the host
+                                    to which the connection is attempted.*/
+}
+mysqlx_ssl_mode_t;
 
 /**
   Constants for defining the View algorithm using

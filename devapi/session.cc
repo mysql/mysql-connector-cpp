@@ -52,17 +52,10 @@ struct Session::Options
   {
     if (!schema.empty())
       set_database(schema);
-#ifdef WITH_SSL
-    set_tls(true);
-#endif
   }
 
   Options()
-  {
-#ifdef WITH_SSL
-    set_tls(true);
-#endif
-  }
+  {}
 
 };
 
@@ -123,6 +116,74 @@ class Session::Impl
   friend Session;
 };
 
+#ifdef WITH_SSL
+
+#define map_ssl(x) { #x, SessionSettings::SSLMode::x },
+
+static std::map<string,SessionSettings::SSLMode> ssl_modes = { SSL_MODE_TYPES(map_ssl) };
+
+class TLS_Options_verify_cn: public cdk::connection::TLS::Options
+{
+  std::string m_common_name;
+
+public:
+  TLS_Options_verify_cn()
+  {
+    // Set verify_cn function
+    std::function<bool(const std::string&)> f_cert_val =
+        std::bind(&TLS_Options_verify_cn::verify,
+                  this,
+                  std::placeholders::_1);
+
+    set_verify_cn(f_cert_val);
+  }
+
+  bool verify(const std::string& cn)
+  {
+    return m_common_name == cn;
+  }
+
+  void set_common_name(const std::string &cn)
+  {
+    m_common_name = cn;
+  }
+
+};
+
+void set_ssl_mode(cdk::connection::TLS::Options &tls_opt,
+                  SessionSettings::SSLMode mode)
+{
+  switch (mode)
+  {
+  case SessionSettings::SSLMode::DISABLED:
+    tls_opt.set_ssl_mode(
+          cdk::connection::TLS::Options::SSL_MODE::DISABLED
+          );
+    break;
+  case SessionSettings::SSLMode::PREFERRED:
+    tls_opt.set_ssl_mode(
+          cdk::connection::TLS::Options::SSL_MODE::PREFERRED
+          );
+    break;
+  case SessionSettings::SSLMode::REQUIRED:
+    tls_opt.set_ssl_mode(
+          cdk::connection::TLS::Options::SSL_MODE::REQUIRED
+          );
+    break;
+  case SessionSettings::SSLMode::VERIFY_CA:
+    tls_opt.set_ssl_mode(
+          cdk::connection::TLS::Options::SSL_MODE::VERIFY_CA
+          );
+    break;
+  case SessionSettings::SSLMode::VERIFY_IDENTITY:
+    tls_opt.set_ssl_mode(
+          cdk::connection::TLS::Options::SSL_MODE::VERIFY_IDENTITY
+          );
+    break;
+  }
+}
+
+#endif //WITH_SSL
 
 struct URI_parser
   : public Session::Access::Options
@@ -131,14 +192,14 @@ struct URI_parser
 {
 
 #ifdef WITH_SSL
-  // tls off by default on URI connection
-  cdk::connection::TLS::Options m_tls_opt = false;
+  TLS_Options_verify_cn m_tls_opt;
 #endif
 
   URI_parser(const std::string &uri)
   {
     parser::parse_conn_str(uri, *this);
 #ifdef WITH_SSL
+    m_tls_opt.set_common_name(m_host);
     set_tls(m_tls_opt);
 #endif
   }
@@ -175,27 +236,32 @@ struct URI_parser
     set_database(db);
   }
 
-  void key_val(const std::string &key) override
+  void key_val(const std::string &key, const std::string &val) override
   {
-    if (key == "ssl-enable")
+    std::string lc_key = key;
+    lc_key.resize(key.size());
+    std::transform(key.begin(), key.end(), lc_key.begin(), ::tolower);
+
+    if (lc_key == "ssl-mode")
     {
 #ifdef WITH_SSL
-      m_tls_opt.set_use_tls(true);
+
+      std::string mode;
+      mode.resize(val.size());
+      std::transform(val.begin(), val.end(), mode.begin(), ::toupper);
+
+      set_ssl_mode(m_tls_opt, ssl_modes[mode]);
+
 #else
       throw_error(
             "Can not create TLS session - this connector is built"
             " without TLS support."
             );
 #endif
-    }
-  }
-
-  void key_val(const std::string &key, const std::string &val) override
-  {
-    if (key == "ssl-ca")
+    } else if (lc_key == "ssl-ca")
     {
 #ifdef WITH_SSL
-      m_tls_opt.set_use_tls(true);
+
       m_tls_opt.set_ca(val);
 #else
       throw_error(
@@ -273,21 +339,31 @@ Session::Session(SessionSettings settings)
               settings[SessionSettings::DB].get<string>()
             );
 
-      if (settings.has_option(SessionSettings::SSL_ENABLE) ||
+
+      if (settings.has_option(SessionSettings::SSL_MODE) ||
           settings.has_option(SessionSettings::SSL_CA))
       {
 #ifdef WITH_SSL
 
-        //ssl_enable by default, unless SSL_ENABLE = false
-        bool ssl_enable = true;
-        if (settings.has_option(SessionSettings::SSL_ENABLE))
-          ssl_enable = settings[SessionSettings::SSL_ENABLE];
+        TLS_Options_verify_cn opt_ssl;
 
-        cdk::connection::TLS::Options opt_ssl(ssl_enable);
+        opt_ssl.set_common_name(host);
+
 
 
         if (settings.has_option(SessionSettings::SSL_CA))
           opt_ssl.set_ca(settings[SessionSettings::SSL_CA].get<string>());
+
+
+        // Last option, since above option will enable SSL_MODE, and this should
+        // overset the previous SSL_MODE
+        if (settings.has_option(SessionSettings::SSL_MODE))
+        {
+          set_ssl_mode(opt_ssl,
+                       static_cast<SessionSettings::SSLMode>(
+                         (int)settings[SessionSettings::SSL_MODE])
+              );
+        }
 
         opt.set_tls(opt_ssl);
 #else
@@ -298,7 +374,8 @@ Session::Session(SessionSettings settings)
 #endif
       }
 
-      m_impl = new Impl(ep, opt);
+      m_impl = new Impl(ep,
+                        opt);
 
     }
   }
