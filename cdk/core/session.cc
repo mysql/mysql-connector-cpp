@@ -150,6 +150,11 @@ Session_builder::operator() (
     throw Error(cdkerrc::generic_error,
                 "ssl-ca set and ssl-mode different then VERIFY_CA or VERIFY_IDENTITY");
 
+  if (options.get_tls().ssl_mode() >= cdk::connection::TLS::Options::SSL_MODE::VERIFY_CA &&
+      options.get_tls().get_ca().empty())
+    throw Error(cdkerrc::generic_error,
+                "Missing ssl-ca option to verify CA");
+
   if (options.get_tls().ssl_mode() >
       cdk::connection::TLS::Options::SSL_MODE::DISABLED)
   {

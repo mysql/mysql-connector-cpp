@@ -444,6 +444,35 @@ TEST_F(Sess, ssl_session)
     EXPECT_THROW(mysqlx::XSession sess(uri_wrong.str()), mysqlx::Error);
   }
 
+  // SSL-MODE VERIFY without SSL-CA
+  {
+    try {
+      mysqlx::XSession(SessionSettings::PORT, get_port(),
+                       SessionSettings::USER,get_user(),
+                       SessionSettings::PWD, get_password() ? get_password() : nullptr ,
+                       SessionSettings::SSL_MODE, SessionSettings::SSLMode::VERIFY_CA);
+      FAIL() << "Should throw error";
+    } catch (Error &e) {
+      std::cout << "Expected: " << e << std::endl;
+    }
+
+    std::stringstream uri_no_sslca;
+    uri_no_sslca << uri.str() << "?ssl-mode=verify_ca";
+
+   try{
+      std::cout <<  uri_no_sslca.str() << std::endl;
+
+      mysqlx::XSession(uri_no_sslca.str());
+      FAIL() << "Should throw error";
+    } catch (Error &e) {
+                std::cout << "Expected: " << e << std::endl;
+    }
+
+  }
+
+
+
+
   //using wrong ssl-ca as SessionSettings
   {
     EXPECT_THROW(
