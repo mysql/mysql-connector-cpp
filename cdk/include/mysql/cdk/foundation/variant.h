@@ -129,6 +129,15 @@ protected:
     return Base::get(ptr);
   }
 
+  template <class Visitor>
+  void visit(Visitor& vis)
+  {
+    if (m_owns)
+      vis(*reinterpret_cast<const First*>(&m_storage));
+    else
+      Base::visit(vis);
+  }
+
   void destroy()
   {
     if (m_owns)
@@ -153,6 +162,12 @@ protected:
   variant_base(variant_base &&) = delete;
 
   void destroy() {}
+
+  template <class Visitor>
+  void visit(Visitor&)
+  {
+    assert(false);
+  }
 };
 
 }  // detail
@@ -179,6 +194,12 @@ public:
   ~variant()
   {
     Base::destroy();
+  }
+
+  template <class Visitor>
+  void visit(Visitor& vis)
+  {
+    Base::visit(vis);
   }
 
   template <typename T>

@@ -1012,7 +1012,7 @@ TEST_F(xapi, param_safety_test)
   printf("\nExpected error: %s", mysqlx_error_message(opt));
   buf[0] = 0;
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_HOST, buf));
-  EXPECT_EQ(0, buf[0]);
+  EXPECT_STRCASEEQ("localhost", buf);
 
   EXPECT_TRUE(mysqlx_sql(get_session(), NULL, MYSQLX_NULL_TERMINATED) == NULL);
   printf("\nExpected error: %s", mysqlx_error_message(get_session()));

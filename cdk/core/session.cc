@@ -29,6 +29,7 @@
 
 namespace cdk {
 
+
 #ifdef WITH_SSL
 struct TLS_processor : cdk::protocol::mysqlx::Reply_processor
 {
@@ -59,14 +60,56 @@ struct TLS_processor : cdk::protocol::mysqlx::Reply_processor
 };
 #endif // WITH_SSL
 
-Session::Session(ds::TCPIP &ds,
-                 const ds::TCPIP::Options &options)
-  : m_session(NULL)
-  , m_connection(NULL)
-  , m_trans(false)
+
+/*
+  A calss that creates a session from given data source.
+
+  Instances of this calss are callable objects which can be used as visitors
+  for ds::MultiSource implementing in this case the failover logic.
+*/
+struct Session_builder
+{
+  cdk::api::Connection *m_conn = NULL;
+  mysqlx::Session      *m_sess = NULL;
+  const mysqlx::string *m_database = NULL;
+  bool m_throw_errors = false;
+  scoped_ptr<Error>     m_error;
+  unsigned              m_attempts = 0;
+
+  Session_builder(bool throw_errors = false)
+    : m_throw_errors(throw_errors)
+  {}
+
+  /*
+    Construct a session for a given data source, if possible.
+
+    1. If session could be constructed returns true. In this case m_sess points
+       at the newly created session and m_conn points at the connection object
+       used for that session. Someone must take ownership of these objects.
+
+    2. If a network error was detected while creating session, either throws
+       error if m_throw_errors is true or returns false. In the latter case,
+       if used as a visitor over list of data sources, it will be called again
+       to try another data source.
+
+    3. If a bail-out error was detected, throws that error.
+  */
+
+  bool operator() (const ds::TCPIP &ds, const ds::TCPIP::Options &options);
+  bool operator() (const ds::TCPIP_old &ds, const ds::TCPIP_old::Options &options);
+};
+
+
+bool
+Session_builder::operator() (
+  const ds::TCPIP &ds,
+  const ds::TCPIP::Options &options
+)
 {
   using foundation::connection::TCPIP;
   using foundation::connection::TCPIP_base;
+
+  m_attempts++;
 
   TCPIP* connection = new TCPIP(ds.host(), ds.port());
   try
@@ -76,16 +119,46 @@ Session::Session(ds::TCPIP &ds,
   catch (...)
   {
     delete connection;
-    rethrow_error();
+
+    // Use rethrow_error() to wrap arbitrary exception in cdk::Error.
+
+    try {
+      rethrow_error();
+    }
+    catch (Error &err)
+    {
+      error_code code = err.code();
+
+      if (m_throw_errors ||
+          code == cdkerrc::auth_failure ||
+          code == cdkerrc::protobuf_error ||
+          code == cdkerrc::tls_error )
+         throw;
+
+      m_error.reset(err.clone());
+    }
+
+    return false;  // continue to next host if available
   }
 
-
+  bool tls = false;
 
 #ifdef WITH_SSL
+
+  if (!options.get_tls().get_ca().empty() &&
+      options.get_tls().ssl_mode() < cdk::connection::TLS::Options::SSL_MODE::VERIFY_CA)
+    throw Error(cdkerrc::generic_error,
+                "ssl-ca set and ssl-mode different than VERIFY_CA or VERIFY_IDENTITY");
+
+  if (options.get_tls().ssl_mode() >= cdk::connection::TLS::Options::SSL_MODE::VERIFY_CA &&
+      options.get_tls().get_ca().empty())
+    throw Error(cdkerrc::generic_error,
+                "Missing ssl-ca option to verify CA");
+
   if (options.get_tls().ssl_mode() >
       cdk::connection::TLS::Options::SSL_MODE::DISABLED)
   {
-  using foundation::connection::TLS;
+    using foundation::connection::TLS;
 
     // Negotiate TLS capabilities.
     cdk::protocol::mysqlx::Protocol proto(*connection);
@@ -102,33 +175,113 @@ Session::Session(ds::TCPIP &ds,
 
     proto.snd_CapabilitiesSet(tls_caps).wait();
 
-
-
-    TLS_processor tls_prc(options.get_tls().ssl_mode());
-
-
-    proto.rcv_Reply(tls_prc).wait();
-
-    if (tls_prc.m_tls)
+    struct : cdk::protocol::mysqlx::Reply_processor
     {
-      TLS* tls = new TLS(connection,
-                         options.get_tls());
+      void error(unsigned int code, short int /*severity*/,
+        cdk::protocol::mysqlx::sql_state_t /*sql_state*/, const string &msg)
+      {
+        throw Error(static_cast<int>(code), msg);
+      }
+    } prc;
 
-      tls->connect();
-      m_connection = tls;
 
-      m_session = new mysqlx::Session(*tls, options);
+    tls = true;
+
+    try {
+      proto.rcv_Reply(prc).wait();
+    }
+    // Server doesn't allow TLS connection
+    catch(const Error&)
+    {
+      if (options.get_tls().ssl_mode() !=
+          cdk::connection::TLS::Options::SSL_MODE::PREFERRED)
+        rethrow_error();
+
+      tls = false;
     }
 
   }
 
-#endif
-
-  if (m_connection == NULL)
+  if (tls)
   {
-    m_connection = connection;
-    m_session = new mysqlx::Session(*connection, options);
+    connection::TLS *tls_conn
+      = new connection::TLS(connection, options.get_tls());
+
+    // TODO: attempt failover if TLS-layer reports network error?
+    tls_conn->connect();
+
+    m_conn = tls_conn;
+    m_sess = new mysqlx::Session(*tls_conn, options);
   }
+  else
+#endif
+  {
+    m_conn = connection;
+    m_sess = new mysqlx::Session(*connection, options);
+  }
+
+  m_database = options.database();
+
+  return true;
+}
+
+bool
+Session_builder::operator() (
+  const ds::TCPIP_old &ds,
+  const ds::TCPIP_old::Options &options
+)
+{
+  throw Error(cdkerrc::generic_error, "Not supported");
+  return false;
+}
+
+Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
+  : m_session(NULL)
+  , m_connection(NULL)
+  , m_trans(false)
+{
+  Session_builder sb(true);  // throw errors if detected
+
+  sb(ds, options);
+
+  assert(sb.m_sess);
+
+  m_session = sb.m_sess;
+  m_connection = sb.m_conn;
+}
+
+
+struct ds::Multi_source::Access
+{
+  template <class Visitor>
+  static void visit(Multi_source &ds, Visitor &visitor)
+  { ds.visit(visitor); }
+};
+
+Session::Session(ds::Multi_source &ds)
+  : m_session(NULL)
+  , m_connection(NULL)
+  , m_trans(false)
+{
+  Session_builder sb;
+
+  ds::Multi_source::Access::visit(ds, sb);
+
+  if (!sb.m_sess)
+  {
+    if (1 == sb.m_attempts && sb.m_error)
+      sb.m_error->rethrow();
+    else
+      throw_error(
+        1 == sb.m_attempts ?
+        "Could not connect to the given data source" :
+        "Could not connect ot any of the given data sources"
+      );
+  }
+
+  m_session = sb.m_sess;
+  m_database = sb.m_database;
+  m_connection = sb.m_conn;
 }
 
 

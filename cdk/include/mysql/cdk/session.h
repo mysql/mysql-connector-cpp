@@ -47,9 +47,10 @@ class Session
 {
 
 protected:
-  mysqlx::Session *m_session;
-  api::Connection *m_connection;
-  bool             m_trans;
+  mysqlx::Session      *m_session;
+  const mysqlx::string *m_database;
+  api::Connection      *m_connection;
+  bool                  m_trans;
 
   typedef Reply::Initializer Reply_init;
 
@@ -61,6 +62,8 @@ public:
 
   Session(ds::TCPIP &ds,
           const ds::TCPIP::Options &options = ds::TCPIP::Options());
+
+  Session(ds::Multi_source&);
 
   ~Session();
 
@@ -402,6 +405,15 @@ public:
 public:
 
   bool is_completed() const { return m_session->is_completed(); }
+
+  /*
+    Reports default schema
+    returns NULL if not defined
+  */
+  const mysqlx::string *get_default_schema()
+  {
+    return m_database;
+  }
 
   /*
     Note: This does not work correctly yet, because xplugin is not

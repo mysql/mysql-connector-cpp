@@ -30,21 +30,25 @@ public:
     MYSQLX_EXCEPTION_INTERNAL, MYSQLX_EXCEPTION_EXTERNAL
   };
 
-  Mysqlx_exception(Mysqlx_exception_type t, uint32_t code, std::string message) :
-    m_type(t), m_code(code), m_message(message)
+  Mysqlx_exception(Mysqlx_exception_type t, uint32_t code, std::string message)
+    : m_type(t), m_code(code), m_message(message)
   {}
 
-  Mysqlx_exception(std::string message) :
-    m_type(MYSQLX_EXCEPTION_INTERNAL), m_code(0), m_message(message)
+  Mysqlx_exception(std::string message)
+    : m_message(message)
   {}
 
   std::string message() const { return m_message; }
   Mysqlx_exception_type type() const { return m_type; }
   uint32_t code() const { return m_code; }
 
-private:
-  Mysqlx_exception_type m_type;
-  uint32_t m_code;
+protected:
+
+  Mysqlx_exception()
+  {}
+
+  Mysqlx_exception_type m_type = MYSQLX_EXCEPTION_INTERNAL;
+  uint32_t m_code = 0;
   std::string m_message;
 };
 

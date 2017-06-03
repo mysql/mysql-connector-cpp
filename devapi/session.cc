@@ -35,13 +35,6 @@
 
 using namespace ::mysqlx;
 
-struct Endpoint
-{
-  enum Type { TCPIP };
-
-  virtual Type type() const = 0;
-};
-
 
 struct Session::Options
   : public cdk::ds::TCPIP::Options
@@ -60,55 +53,21 @@ struct Session::Options
 };
 
 
-namespace endpoint {
-
-  struct TCPIP
-    : public Endpoint
-  {
-    Type type() const { return Endpoint::TCPIP; }
-    virtual std::string host()
-    {
-      return m_host;
-    }
-
-    virtual uint16_t    port()
-    {
-      return m_port;
-    }
-
-    TCPIP(const std::string &host, uint16_t port)
-      : m_host(host), m_port(port)
-    {}
-
-  protected:
-
-    TCPIP() : m_port(DEFAULT_MYSQLX_PORT)
-    {}
-
-    std::string m_host;
-    uint16_t    m_port;
-  };
-
-} // endpoint
-
-
-
 class Session::Impl
 {
-  cdk::ds::TCPIP   m_ds;
-  cdk::Session     m_sess;
-  cdk::string      m_default_db;
+  cdk::ds::Multi_source m_ms;
+  cdk::Session          m_sess;
+  cdk::string           m_default_db;
 
-  std::set<Session*> m_nodes;
+  std::set<Session*>    m_nodes;
 
   internal::BaseResult *m_current_result = NULL;
 
-  Impl(endpoint::TCPIP &ep, Session::Options &opt)
-    : m_ds(ep.host(), ep.port())
-    , m_sess(m_ds, opt)
+  Impl(cdk::ds::Multi_source &ms)
+    : m_sess(ms)
   {
-    if (opt.database())
-      m_default_db = *opt.database();
+    if (m_sess.get_default_schema())
+      m_default_db = *m_sess.get_default_schema();
     if (!m_sess.is_valid())
       m_sess.get_error().rethrow();
   }
@@ -116,39 +75,164 @@ class Session::Impl
   friend Session;
 };
 
+
+std::string SessionSettings::get_option_name(Options opt)
+{
+#define case_options(x) case SessionSettings::Options::x: return #x;
+
+  switch(opt)
+  {
+    SETTINGS_OPTIONS(case_options)
+    default:
+    {
+      std::ostringstream buf;
+      buf << "<UKNOWN (" << unsigned(opt) << ")>" << std::ends;
+      return buf.str();
+    }
+  };
+}
+
+
+
+std::string get_mode_name(SessionSettings::SSLMode m)
+{
+#define case_mode(x) case SessionSettings::SSLMode::x: return #x;
+
+  switch(m)
+  {
+    SSL_MODE_TYPES(case_mode)
+    default:
+    {
+      std::ostringstream buf;
+      buf << "<UKNOWN (" << unsigned(m) << ")>" << std::ends;
+      return buf.str();
+    }
+  };
+}
+
+
+Value& SessionSettings::find(Options opt)
+{
+  for (auto &key_val : m_options)
+  {
+    if (key_val.first == opt)
+      return key_val.second;
+  }
+
+  std::stringstream error;
+  error << "SessionSettings option " << get_option_name(opt) << " not found";
+  throw Error(error.str().c_str());
+}
+
+
+void SessionSettings::do_add(Options opt, Value &&v)
+{
+  // Sanity checks on option values.
+
+  switch (opt)
+  {
+  case PORT:
+    if (v.get<unsigned>() > 65535U)
+      throw_error("Port value out of range");
+    break;
+
+  case SSL_MODE:
+    if (has_option(SSL_CA))
+    {
+      SSLMode m = SSLMode(v.get<unsigned>());
+      switch (m)
+      {
+      case SSLMode::VERIFY_CA:
+      case SSLMode::VERIFY_IDENTITY:
+        break;
+
+      default:
+        {
+          std::string msg = "SSL mode ";
+          msg += get_mode_name(m);
+          msg += " is not compatible with ssl-ca setting";
+          throw_error(msg.c_str());
+        }
+      }
+    }
+    break;
+
+  case SSL_CA:
+    if (has_option(SSL_MODE))
+    {
+      SSLMode m = SSLMode(find(SSL_MODE).get<unsigned>());
+      switch (m)
+      {
+      case SSLMode::VERIFY_CA:
+      case SSLMode::VERIFY_IDENTITY:
+        break;
+
+      default:
+        {
+          std::string msg = "Setting ssl-ca is not compatible with SSL mode ";
+          msg += get_mode_name(m);
+          throw_error(msg.c_str());
+        }
+      }
+    }
+    break;
+
+  default:
+    break;
+  }
+
+  /*
+    Store option value, checking for duplicates etc.
+
+    Note: Only HOST and PORT can have multiple values, the others, are unique
+  */
+
+  if (opt == HOST || opt == PORT || opt == PRIORITY)
+  {
+    m_options.emplace_back(opt, std::move(v));
+  }
+  else
+  {
+    auto it = m_options.begin();
+    for(; it != m_options.end(); ++it)
+    {
+      if (it->first == opt)
+      {
+        it->second = std::move(v);
+        break;
+      }
+    }
+
+    if (it == m_options.end())
+    {
+      m_options.emplace_back(opt, std::move(v));
+    }
+  }
+  m_option_used.set(opt);
+}
+
+
 #ifdef WITH_SSL
 
+SessionSettings::SSLMode get_mode(const string &name)
+{
 #define map_ssl(x) { #x, SessionSettings::SSLMode::x },
 
-static std::map<string,SessionSettings::SSLMode> ssl_modes = { SSL_MODE_TYPES(map_ssl) };
+  static std::map<string,SessionSettings::SSLMode> ssl_modes
+    = { SSL_MODE_TYPES(map_ssl) };
 
-class TLS_Options_verify_cn: public cdk::connection::TLS::Options
-{
-  std::string m_common_name;
-
-public:
-  TLS_Options_verify_cn()
-  {
-    // Set verify_cn function
-    std::function<bool(const std::string&)> f_cert_val =
-        std::bind(&TLS_Options_verify_cn::verify,
-                  this,
-                  std::placeholders::_1);
-
-    set_verify_cn(f_cert_val);
+  try {
+    return ssl_modes.at(name);
   }
-
-  bool verify(const std::string& cn)
+  catch (const std::out_of_range&)
   {
-    return m_common_name == cn;
+    std::string msg = "Invalid ssl-mode value: " + std::string(name);
+    throw_error(msg.c_str());
+    // Quiet compiler warnings
+    return SessionSettings::SSLMode::DISABLED;
   }
+}
 
-  void set_common_name(const std::string &cn)
-  {
-    m_common_name = cn;
-  }
-
-};
 
 void set_ssl_mode(cdk::connection::TLS::Options &tls_opt,
                   SessionSettings::SSLMode mode)
@@ -158,11 +242,6 @@ void set_ssl_mode(cdk::connection::TLS::Options &tls_opt,
   case SessionSettings::SSLMode::DISABLED:
     tls_opt.set_ssl_mode(
           cdk::connection::TLS::Options::SSL_MODE::DISABLED
-          );
-    break;
-  case SessionSettings::SSLMode::PREFERRED:
-    tls_opt.set_ssl_mode(
-          cdk::connection::TLS::Options::SSL_MODE::PREFERRED
           );
     break;
   case SessionSettings::SSLMode::REQUIRED:
@@ -185,29 +264,67 @@ void set_ssl_mode(cdk::connection::TLS::Options &tls_opt,
 
 #endif //WITH_SSL
 
-struct URI_parser
-  : public Session::Access::Options
-  , private endpoint::TCPIP
-  , public parser::URI_processor
+struct Host_sources : public cdk::ds::Multi_source
 {
 
+  inline void add(const cdk::ds::TCPIP &ds,
+                  cdk::ds::TCPIP::Options options,
+                  unsigned short prio)
+  {
 #ifdef WITH_SSL
-  TLS_Options_verify_cn m_tls_opt;
+
+    std::string host = ds.host();
+
+    cdk::connection::TLS::Options tls = options.get_tls();
+
+    tls.set_verify_cn(
+          [host](const std::string& cn)-> bool{
+      return cn == host;
+    });
+
+    options.set_tls(tls);
+
+#endif
+
+    cdk::ds::Multi_source::add(ds, options, prio);
+  }
+
+};
+
+
+using TLS_Options = cdk::connection::TLS::Options;
+
+
+struct URI_parser
+  : public Session::Access::Options
+  , public parser::URI_processor
+{
+  Host_sources m_source;
+
+  std::multimap<unsigned short, cdk::ds::TCPIP> m_hosts;
+  std::bitset<SessionSettings::LAST> m_options_used;
+
+#ifdef WITH_SSL
+  TLS_Options m_tls_opt;
 #endif
 
   URI_parser(const std::string &uri)
   {
     parser::parse_conn_str(uri, *this);
 #ifdef WITH_SSL
-    m_tls_opt.set_common_name(m_host);
     set_tls(m_tls_opt);
 #endif
   }
 
 
-  Endpoint& get_endpoint()
+  cdk::ds::Multi_source& get_data_source()
   {
-    return *this;
+    m_source.clear();
+    for (auto el : m_hosts)
+    {
+      m_source.add(el.second, *this, el.first);
+    }
+    return m_source;
   }
 
   void user(const std::string &usr) override
@@ -221,14 +338,19 @@ struct URI_parser
     m_has_pwd = true;
   }
 
-  void host(const std::string &host) override
+  void host(unsigned short priority,
+            const std::string &host,
+            unsigned short port) override
   {
-    m_host = host;
+    cdk::ds::TCPIP endpoint(host, port);
+    m_hosts.emplace(priority, endpoint);
   }
 
-  void port(unsigned short port) override
+  void host(unsigned short priority,
+            const std::string &host) override
   {
-    m_port = port;
+    cdk::ds::TCPIP endpoint(host);
+    m_hosts.emplace(priority, endpoint);
   }
 
   virtual void path(const std::string &db) override
@@ -246,11 +368,18 @@ struct URI_parser
     {
 #ifdef WITH_SSL
 
+      if (m_options_used.test(SessionSettings::SSL_MODE))
+      {
+        throw Error("Option ssl-mode defined twice");
+      }
+
+      m_options_used.set(SessionSettings::SSL_MODE);
+
       std::string mode;
       mode.resize(val.size());
       std::transform(val.begin(), val.end(), mode.begin(), ::toupper);
 
-      set_ssl_mode(m_tls_opt, ssl_modes[mode]);
+      set_ssl_mode(m_tls_opt, get_mode(mode));
 
 #else
       throw_error(
@@ -261,6 +390,13 @@ struct URI_parser
     } else if (lc_key == "ssl-ca")
     {
 #ifdef WITH_SSL
+
+      if (m_options_used.test(SessionSettings::SSL_CA))
+      {
+        throw Error("Option ssl-ca defined twice");
+      }
+
+      m_options_used.set(SessionSettings::SSL_CA);
 
       m_tls_opt.set_ca(val);
 #else
@@ -287,56 +423,45 @@ Session::Session(SessionSettings settings)
     if (settings.has_option(SessionSettings::URI))
     {
       URI_parser parser(
-            settings[SessionSettings::URI].get<string>()
+            settings.find(SessionSettings::URI).get<string>()
           );
 
-      m_impl = new Impl(
-                 static_cast<endpoint::TCPIP&>(parser.get_endpoint()),
-                 static_cast<Session::Options&>(parser));
+      m_impl = new Impl(parser.get_data_source());
     }
     else
     {
-      std::string host = "localhost";
-      if (settings.has_option(SessionSettings::HOST))
-        host = settings[SessionSettings::HOST].get<string>();
-
-      unsigned port = DEFAULT_MYSQLX_PORT;
-
-      if (settings.has_option(SessionSettings::PORT))
-        port = settings[SessionSettings::PORT];
-
-      if (port > 65535U)
-        throw_error("Port value out of range");
-
-
       std::string pwd_str;
       bool has_pwd = false;
 
+#ifdef WITH_SSL
+      TLS_Options opt_ssl = TLS_Options::SSL_MODE::REQUIRED;
+#endif // WITH_SSL
+
       if (settings.has_option(SessionSettings::PWD) &&
-          settings[SessionSettings::PWD].isNull() == false)
+          settings.find(SessionSettings::PWD).isNull() == false)
       {
         has_pwd = true;
-        pwd_str = settings[SessionSettings::PWD].get<string>();
+        pwd_str = settings.find(SessionSettings::PWD).get<string>();
       }
 
-      endpoint::TCPIP ep( host, (uint16_t)port);
+
 
       string user;
 
       if (settings.has_option(SessionSettings::USER))
       {
-        user = settings[SessionSettings::USER];
+        user = settings.find(SessionSettings::USER);
       }
       else
       {
         throw Error("User not defined!");
       }
 
-      Options opt(user, has_pwd ? &pwd_str : NULL);
+      cdk::ds::TCPIP::Options opt(user, has_pwd ? &pwd_str : NULL);
 
       if (settings.has_option(SessionSettings::DB))
         opt.set_database(
-              settings[SessionSettings::DB].get<string>()
+              settings.find(SessionSettings::DB).get<string>()
             );
 
 
@@ -345,27 +470,38 @@ Session::Session(SessionSettings settings)
       {
 #ifdef WITH_SSL
 
-        TLS_Options_verify_cn opt_ssl;
-
-        opt_ssl.set_common_name(host);
-
-
-
         if (settings.has_option(SessionSettings::SSL_CA))
-          opt_ssl.set_ca(settings[SessionSettings::SSL_CA].get<string>());
-
-
-        // Last option, since above option will enable SSL_MODE, and this should
-        // overset the previous SSL_MODE
-        if (settings.has_option(SessionSettings::SSL_MODE))
         {
-          set_ssl_mode(opt_ssl,
-                       static_cast<SessionSettings::SSLMode>(
-                         (int)settings[SessionSettings::SSL_MODE])
-              );
+          opt_ssl.set_ca(settings.find(SessionSettings::SSL_CA).get<string>());
+          if (!settings.has_option(SessionSettings::SSL_MODE))
+            set_ssl_mode(opt_ssl, SessionSettings::SSLMode::VERIFY_CA);
         }
 
-        opt.set_tls(opt_ssl);
+        if (settings.has_option(SessionSettings::SSL_MODE))
+        {
+          SessionSettings::SSLMode m
+            = SessionSettings::SSLMode(settings.find(SessionSettings::SSL_MODE)
+                                       .get<unsigned>());
+
+          switch (m)
+          {
+          case SessionSettings::SSLMode::VERIFY_CA:
+          case SessionSettings::SSLMode::VERIFY_IDENTITY:
+
+            if (!settings.has_option(SessionSettings::SSL_CA))
+            {
+              std::string msg = "SSL mode ";
+              msg += get_mode_name(m);
+              msg += " requires ssl-ca setting";
+              throw_error(msg.c_str());
+            }
+
+          default:
+            break;
+          }
+
+          set_ssl_mode(opt_ssl, m);
+        }
 #else
         throw_error(
               "Can not create TLS session - this connector is built"
@@ -374,8 +510,111 @@ Session::Session(SessionSettings settings)
 #endif
       }
 
-      m_impl = new Impl(ep,
-                        opt);
+#ifdef WITH_SSL
+      opt.set_tls(opt_ssl);
+#endif
+
+      Host_sources source;
+
+      std::string host = "localhost";
+      unsigned port = DEFAULT_MYSQLX_PORT;
+      unsigned priority = 0;
+
+      auto it = settings.begin();
+
+      bool initialized = false;
+      bool add = false;
+
+      //HOST can be skipped only on single host scenarios
+      bool singlehost = false;
+
+      /*
+        Check for PORT and PRIORITY settings and if present,
+        store values in port and priority variables.
+      */
+
+      auto port_prio = [&it, &settings, &port, &priority]()
+      {
+        if (it != settings.end() && it->first ==SessionSettings::PORT)
+        {
+          port = it->second;
+          if (port > 65535U)
+            throw_error("Port value out of range");
+          ++it;
+        }
+
+        if (it != settings.end() && it->first == SessionSettings::PRIORITY)
+        {
+          priority = 1 + static_cast<unsigned>(it->second);
+          if (priority > 65535U)
+            throw_error("Priority value out of range");
+        }
+        else
+        {
+          --it;
+        }
+      };
+
+      do
+      {
+
+        if (it != settings.end() && it->first ==SessionSettings::HOST)
+        {
+          if (singlehost)
+            throw Error("On multiple hosts, HOST option can't be skipped.");
+
+          add = true;
+          port = DEFAULT_MYSQLX_PORT;
+          priority = 0;
+
+          host = it->second.get<string>();
+
+          if (host.empty())
+            throw Error("Empty host.");
+
+          ++it;
+
+          port_prio();
+
+        }
+        else if (it->first ==SessionSettings::PORT)
+        {
+          if (!initialized)
+          {
+            add = true;
+            singlehost = true;
+            port_prio();
+          }
+          else
+          {
+            throw Error("Incorrect settings order! Passed Port without previously passing HOST");
+          }
+
+        }
+        else if (it->first ==SessionSettings::PRIORITY)
+        {
+          throw Error("Incorrect settings order! Passed Priority without previously passing HOST");
+        }
+
+        ++it;
+
+        if (add || (it == settings.end() && !initialized))
+        {
+          source.add(cdk::ds::TCPIP( host, static_cast<unsigned short>(port)),
+                     static_cast<cdk::ds::TCPIP::Options>(opt),
+                     static_cast<unsigned short>(priority));
+
+          initialized = true;
+
+          if (it == settings.end())
+            break;
+
+          add = false;
+        }
+
+      } while (it != settings.end());
+
+      m_impl = new Impl(source);
 
     }
   }
@@ -470,7 +709,7 @@ void Session::close()
 
     if (m_master_session)
     {
-      //Notify Session nodes that master is being removed.
+      //Notify NodeSession nodes that master is being removed.
       for (auto node : m_impl->m_nodes)
       {
         node->session_closed();
@@ -482,7 +721,7 @@ void Session::close()
     }
     else if (m_impl)
     {
-      // Remove this Session from nodes list
+      // Remove this NodeSession from nodes list
       m_impl->m_nodes.erase(this);
     }
 
