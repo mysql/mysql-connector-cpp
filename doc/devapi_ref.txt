@@ -9,6 +9,8 @@ via the X Plugin. One can also execute plain SQL queries using this API.
 
 To get started, check out some of the main X DevAPI classes:
 
+- To access data first create a @link mysqlx::Session `Session`@endlink object.
+
 - To manipulate data stored in a document collection or a table, create
   a @link mysqlx::Collection `Collection`@endlink or a @link mysqlx::Table
   `Table`@endlink object using methods `getCollection()` or `getTable()` of
@@ -55,10 +57,10 @@ and user credentials:
 @skipline main
 @until Session
 
-Another way of specifying session parameters is by means of a `mysqlx` URL like
-`"mysqlx://mike:s3cr3t!@localhost:13009"`. Once created, the session is ready
-to be used. If the session can not be established, the `Session` constructor
-throws an error.
+Another way of specifying session parameters is by means of a `mysqlx`
+connection string like `"mysqlx://mike:s3cr3t!@localhost:13009"`. Once created,
+the session is ready to be used. If the session can not be established,
+the `Session` constructor throws an error.
 
 To manipulate documents in a collection, create a @link mysqlx::Collection
 `Collection`@endlink object, first asking session for that collection's
@@ -77,15 +79,14 @@ Collection coll = sess.getSchema("test").getCollection("c1",true)
 ~~~~~~~~
 
 Before adding documents to the collection, all the existing documents are
-removed first:
+removed first using the @link mysqlx::Collection::remove `Collection::remove()`@endlink
+method (expression "true" selects all documents in the collection):
 
-@skipline remove()
+@skipline remove("true")
 
-The @link mysqlx::Collection::remove `Collection::remove()`@endlink method can
-also accept an expression argument which selects documents to be removed. Note
-that the `remove()` method returns an operation that must be explicitly executed
-to take effect. When executed, operation returns a result (ignored here; the
-results are used later).
+Note that the `remove()` method returns an operation that must
+be explicitly executed to take effect. When executed, operation returns
+a result (ignored here; the results are used later).
 
 To insert documents use the @link mysqlx::Collection::add
 `Collection::add()`@endlink method. Documents are described by JSON strings

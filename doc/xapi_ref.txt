@@ -11,11 +11,7 @@ To get started, check out some of the main XAPI functions:
 
 - To access data first create a session using one of @link mysqlx_get_session
   `mysqlx_get_session_xxx()`@endlink functions. These functions return a pointer
-  to an opaque session handle of type `mysqlx_session_t`. To execute SQL queries
-  one needs to create a so called "node session" with
-  @link mysqlx_get_node_session `mysqlx_get_node_session_xxx()`@endlink
-  functions. See the [X DevAPI Reference] (@ref devapi_ref) for discussion about
-  differences between regular and node sessions.
+  to an opaque session handle of type `mysqlx_session_t`.
 
 - To work with documents in a collection or rows in a table, create a
   handle to the collection or the table using the `mysqlx_get_collection()` or
@@ -32,11 +28,9 @@ To get started, check out some of the main XAPI functions:
   parameters must be defined using `mysqlx_stmt_bind()` before statement
   is executed.
 
-- To execute SQL, use the function `mysqlx_sql()` which requires a handle to
-  a node session.
-
-- SQL queries can contain `?` placeholders whose values need to be specified
-  either with `mysqlx_stmt_bind()`, prior to query execution, or directly in the
+- To execute SQL, use the function `mysqlx_sql()`. SQL queries can contain `?`
+  placeholders whose values need to be specified either with
+  `mysqlx_stmt_bind()`, prior to query execution, or directly in the
   function `mysqlx_sql_param()` which executes such a query.
 
 - Executing a statement produces a result handle of type `mysqlx_result_t`. It
@@ -116,18 +110,18 @@ check for statement errors, result errors and general errors:
 @until _WIN32
 
 Start with creating a session handle using one of the
-@link mysqlx_get_node_session_from_url `mysqlx_get_node_session_xxx()`@endlink
-functions. We create a node session to be able to execute SQL queries. Session
-parameters are given using `mysqlx` URL. Default URL specifies session on
-the local host as user `root`.
+@link mysqlx_get_session_from_url `mysqlx_get_session_xxx()`@endlink
+functions. Session parameters are specified within `mysqlx` connection string.
+In this case connection string specifies a session on the local host as user
+`root`. Alternative connection string can be given as command line argument.
 
-If session could not be established, `mysqlx_get_node_session_from_url()`
+If session could not be established, `mysqlx_get_session_from_url()`
 returns NULL handle while error message and code are stored in provided buffers.
 
 @skipline *url =
 @skipline conn_error
 @until conn_err_code
-@skipline get_node_session
+@skipline get_session
 @until }
 
 Once created, the session is ready to be used. If the session cannot be
@@ -138,8 +132,8 @@ After executing a query, we check its status with the `RESULT_CHECK()` macro
 (which checks if returned result handle is not NULL).
 
 @note If a query is a null-terminated string the query length parameter can
-      be `MYSQLX_NULL_TERMINATED`, which directs the function to determine the
-      query string length using its own means.
+      be `MYSQLX_NULL_TERMINATED`, in which case query length is determined
+      by the function.
 
 @skipline mysqlx_sql
 @until RESULT_CHECK

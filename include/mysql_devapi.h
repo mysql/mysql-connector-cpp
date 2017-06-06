@@ -906,6 +906,9 @@ public:
     );
   ~~~~~~
 
+  Some settings, such as @ref HOST, can be specified several times to build
+  a list of hosts to be used by connection fail-over logic.
+
   @ingroup devapi
 */
 
@@ -984,10 +987,10 @@ public:
 
 
   /**
-    Create a session using connection string or URL.
+    Get settings from a connection string or URI.
 
     Connection sting has the form `"user:pass\@host:port/?option&option"`,
-    valid URL is like a connection string with a `mysqlx://` prefix. Host is
+    valid URI is like a connection string with a `mysqlx://` prefix. Host is
     specified as either DNS name, IPv4 address of the form "nn.nn.nn.nn" or
     IPv6 address of the form "[nn:nn:nn:...]".
 
@@ -1004,7 +1007,7 @@ public:
 
 
   /**
-    Create session explicitly specifying session parameters.
+    Explicitly specify basic connection settings.
 
     @note Session settings constructed this way request an SSL connection
     by default.
@@ -1033,7 +1036,7 @@ public:
   {}
 
   /**
-    Create session using the default port
+    Basic settings with the default port
 
     @note Session settings constructed this way request an SSL connection
     by default.
@@ -1054,7 +1057,7 @@ public:
   {}
 
   /**
-    Create session on localhost.
+    Basic settings for a session on the localhost.
 
     @note Session settings constructed this way request an SSL connection
     by default.
@@ -1110,7 +1113,7 @@ public:
 
 
   /**
-    Create session using a list of session options.
+    Specify settings as a list of session options.
 
     The list of options consist of `SessionSettings::Options` constant
     identifying the option to set, followed by option value.
@@ -1168,10 +1171,10 @@ public:
 
 
   /**
-    Set @ref Options and correspondent @ref Value.
+    Set list of @ref Options to given values.
 
-    When using @ref HOST, @ref PORT and @ref PRIORITY, all have to be defined on
-    same set call.
+    When using @ref HOST, @ref PORT and @ref PRIORITY, all have to be defined
+    in the same set() call.
    */
 
   template<typename V,typename...R>
@@ -1183,7 +1186,7 @@ public:
 
 
   /**
-    Clears all stored entries
+    Clears all settings specified so far.
   */
 
   void clear()
@@ -1193,7 +1196,10 @@ public:
   }
 
   /**
-    Remove all entries with correspondent @p opt.
+    Remove all settings for the given option @p opt.
+
+    @note For option such as @ref HOST, which can repeat several times in
+    the settings, all occurences are erased.
   */
 
   void erase(Options opt)
@@ -1216,7 +1222,7 @@ public:
 
 
   /**
-    Check if @p opt was defined.
+    Check if option @p opt was defined.
   */
 
   bool has_option(Options opt)
@@ -1393,6 +1399,13 @@ private:
 
     If it is not possible to create a valid session for some
     reason, errors are thrown from session constructor.
+
+    It is possible to specify several hosts when creating a session. In that
+    case failed connection to one of the hosts will trigger fail-over attempt
+    to connect to a different host in the list. Only if none of the hosts could
+    be contacted, session creation will fail. It is also possible to specify
+    priorities for the hosts in the list which determine the order in which
+    hosts are tried (see @ref SessionSettings::PRIORITY).
 
     @ingroup devapi
     @todo Add all `Session` methods defined by DevAPI.
