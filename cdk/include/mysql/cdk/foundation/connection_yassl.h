@@ -29,6 +29,7 @@
 #include "stream.h"
 #include "error.h"
 
+#include <functional>
 
 namespace cdk {
 namespace foundation {
@@ -44,7 +45,6 @@ public:
   class Options;
 
   TLS(TCPIP_base* tcpip,
-      const std::string &host,
       const Options& Opts);
 
 
@@ -97,6 +97,16 @@ public:
   const std::string &get_ca() const { return m_ca; }
   const std::string &get_ca_path() const { return m_ca_path; }
 
+  void set_verify_cn(const std::function<bool(const std::string&)> &pred)
+  {
+      m_verify_cn = pred;
+  }
+
+  bool verify_cn(const std::string& cn) const
+  {
+      return m_verify_cn(cn);
+  }
+
 protected:
 
   SSL_MODE m_ssl_mode;
@@ -104,6 +114,8 @@ protected:
   std::string m_ca;
   std::string m_ca_path;
   std::string m_hostname;
+  std::function<bool(const std::string&)> m_verify_cn;
+
 };
 
 

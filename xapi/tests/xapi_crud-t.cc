@@ -973,15 +973,15 @@ TEST_F(xapi, param_safety_test)
   /* We don't know for sure if it will connect, but it should not crash*/
   session = mysqlx_get_session(NULL, 0, NULL, NULL, NULL, out_err, NULL);
   mysqlx_session_close(session);
-  session = mysqlx_get_node_session(NULL, 0, NULL, NULL, NULL, out_err, NULL);
+  session = mysqlx_get_session(NULL, 0, NULL, NULL, NULL, out_err, NULL);
   mysqlx_session_close(session);
   session = mysqlx_get_session_from_url(NULL, out_err, NULL);
   mysqlx_session_close(session);
-  session = mysqlx_get_node_session_from_url(NULL, out_err, NULL);
+  session = mysqlx_get_session_from_url(NULL, out_err, NULL);
   mysqlx_session_close(session);
   session = mysqlx_get_session_from_options(NULL, out_err, NULL);
   mysqlx_session_close(session);
-  session = mysqlx_get_node_session_from_options(NULL, out_err, NULL);
+  session = mysqlx_get_session_from_options(NULL, out_err, NULL);
   mysqlx_session_close(session);
 
   stmt = mysqlx_collection_add_new(collection);
@@ -2157,8 +2157,7 @@ TEST_F(xapi_bugs, schemas_list_test)
   }
   mysqlx_session_close(get_session());
 
-  // Connect as X session now
-  authenticate(NULL, NULL, NULL, 1);
+  authenticate(NULL, NULL, NULL);
   if (!get_session())
     FAIL();
 

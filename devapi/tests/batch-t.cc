@@ -65,14 +65,14 @@ TEST_F(Batch, crud)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
   Schema sch = sess.getSchema("test");
   Collection coll = sch.createCollection("c1", true);
 
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   {
     RowResult res = sql("select count(*) from test.c1");
@@ -151,7 +151,7 @@ TEST_F(Batch, crud)
   // Perform several modifications in single modify operation.
 
   {
-    CollectionModify modify(coll);
+    CollectionModify modify(coll, "true");
 
     modify.set("age", expr("2*age"));
     modify.unset("date");
@@ -195,19 +195,19 @@ TEST_F(Batch, multi_add)
 
   cout << endl << "1. Adding documents from a container" << endl;
 
-  coll.remove().execute();
+  coll.remove("true").execute();
   coll.add(docs).execute();
   EXPECT_EQ(5, show_docs(coll));
 
   cout << endl << "2. Add range of documents from 1 to 3" << endl;
 
-  coll.remove().execute();
+  coll.remove("true").execute();
   coll.add(docs.begin(), docs.begin() + 3).execute();
   EXPECT_EQ(3, show_docs(coll));
 
   cout << endl << "3. Mixed inserts" << endl;
 
-  coll.remove().execute();
+  coll.remove("true").execute();
   coll.add(docs)
     .add(docs[0])
     .add(docs.begin(), docs.begin() + 3)
@@ -218,7 +218,7 @@ TEST_F(Batch, multi_add)
   cout << endl << "4. Add documents in a loop" << endl;
 
   {
-    coll.remove().execute();
+    coll.remove("true").execute();
     CollectionAdd add_op(coll);
     for (const string &json : docs)
     {
@@ -261,7 +261,7 @@ TEST_F(Batch, multi_add)
     }
   };
 
-  coll.remove().execute();
+  coll.remove("true").execute();
   coll.add(It(5), It()).execute();
   EXPECT_EQ(5, show_docs(coll));
 

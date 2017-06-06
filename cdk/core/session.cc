@@ -29,17 +29,24 @@
 
 namespace cdk {
 
+
 /*
-  A calss that creates a session from given data source.
+  A class that creates a session from given data source.
 
   Instances of this calss are callable objects which can be used as visitors
-  for ds::MultiSource implementing in this case the failover logic.
+  for ds::Multi_source implementing in this case the failover logic.
 */
 struct Session_builder
 {
+  using TLS   = cdk::connection::TLS;
+  using TCPIP = cdk::connection::TCPIP;
+
   cdk::api::Connection *m_conn = NULL;
-  mysqlx::Session   *m_sess = NULL;
+  mysqlx::Session      *m_sess = NULL;
+  const mysqlx::string *m_database = NULL;
   bool m_throw_errors = false;
+  scoped_ptr<Error>     m_error;
+  unsigned              m_attempts = 0;
 
   Session_builder(bool throw_errors = false)
     : m_throw_errors(throw_errors)
@@ -62,6 +69,10 @@ struct Session_builder
 
   bool operator() (const ds::TCPIP &ds, const ds::TCPIP::Options &options);
   bool operator() (const ds::TCPIP_old &ds, const ds::TCPIP_old::Options &options);
+
+#ifdef WITH_SSL
+  TLS* tls_connect(TCPIP &conn, const TLS::Options &opt);
+#endif
 };
 
 
@@ -69,88 +80,48 @@ bool
 Session_builder::operator() (
   const ds::TCPIP &ds,
   const ds::TCPIP::Options &options
-)
+  )
 {
   using foundation::connection::TCPIP;
   using foundation::connection::TCPIP_base;
 
+  m_attempts++;
+
   TCPIP* connection = new TCPIP(ds.host(), ds.port());
+
   try
   {
     connection->connect();
   }
-  catch (const Error &err)
+  catch (...)
   {
     delete connection;
-    error_code code = err.code();
 
-    if (m_throw_errors
-        || code == cdkerrc::auth_failure
-        || code == cdkerrc::protobuf_error
-        || code == cdkerrc::tls_error )
-      rethrow_error();
-    else
-      return false;  // continue to next host if available
-  }
-
-  bool tls = false;
-
-#ifdef WITH_SSL
-  if (options.get_tls().ssl_mode() >
-      cdk::connection::TLS::Options::SSL_MODE::DISABLED)
-  {
-    using foundation::connection::TLS;
-
-    // Negotiate TLS capabilities.
-    cdk::protocol::mysqlx::Protocol proto(*connection);
-
-    struct : cdk::protocol::mysqlx::api::Any::Document
-    {
-      void process(Processor &prc) const
-      {
-        prc.doc_begin();
-        cdk::safe_prc(prc)->key_val("tls")->scalar()->yesno(true);
-        prc.doc_end();
-      }
-    } tls_caps;
-
-    proto.snd_CapabilitiesSet(tls_caps).wait();
-
-    struct : cdk::protocol::mysqlx::Reply_processor
-    {
-      void error(unsigned int code, short int /*severity*/,
-        cdk::protocol::mysqlx::sql_state_t /*sql_state*/, const string &msg)
-      {
-        throw Error(static_cast<int>(code), msg);
-      }
-    } prc;
-
-
-    tls = true;
+    // Use rethrow_error() to wrap arbitrary exception in cdk::Error.
 
     try {
-      proto.rcv_Reply(prc).wait();
+      rethrow_error();
     }
-    // Server doesn't allow TLS connection
-    catch(const Error&)
+    catch (Error &err)
     {
-      if (options.get_tls().ssl_mode() !=
-          cdk::connection::TLS::Options::SSL_MODE::PREFERRED)
-        rethrow_error();
+      error_code code = err.code();
 
-      tls = false;
+      if (m_throw_errors ||
+        code == cdkerrc::auth_failure ||
+        code == cdkerrc::protobuf_error ||
+        code == cdkerrc::tls_error)
+        throw;
+
+      m_error.reset(err.clone());
     }
 
+    return false;  // continue to next host if available
   }
 
-  if (tls)
+#ifdef WITH_SSL
+  TLS *tls_conn = tls_connect(*connection, options.get_tls());
+  if (tls_conn)
   {
-    connection::TLS *tls_conn
-      = new connection::TLS(connection, ds.host(), options.get_tls());
-
-    // TODO: attempt failover if TLS-layer reports network error?
-    tls_conn->connect();
-
     m_conn = tls_conn;
     m_sess = new mysqlx::Session(*tls_conn, options);
   }
@@ -161,8 +132,11 @@ Session_builder::operator() (
     m_sess = new mysqlx::Session(*connection, options);
   }
 
+  m_database = options.database();
+
   return true;
 }
+
 
 bool
 Session_builder::operator() (
@@ -175,6 +149,84 @@ Session_builder::operator() (
 }
 
 
+#ifdef WITH_SSL
+
+Session_builder::TLS*
+Session_builder::tls_connect(TCPIP &connection, const TLS::Options &options)
+{
+  if (!options.get_ca().empty() &&
+      options.ssl_mode() < TLS::Options::SSL_MODE::VERIFY_CA)
+    throw Error(cdkerrc::generic_error,
+                "ssl-ca set and ssl-mode different than VERIFY_CA or VERIFY_IDENTITY");
+
+  if (options.ssl_mode() >= TLS::Options::SSL_MODE::VERIFY_CA &&
+      options.get_ca().empty())
+    throw Error(cdkerrc::generic_error,
+                "Missing ssl-ca option to verify CA");
+
+  if (options.ssl_mode() == TLS::Options::SSL_MODE::DISABLED)
+    return NULL;
+
+  // Negotiate TLS capabilities.
+
+  cdk::protocol::mysqlx::Protocol proto(connection);
+
+  struct : cdk::protocol::mysqlx::api::Any::Document
+  {
+    void process(Processor &prc) const
+    {
+      prc.doc_begin();
+      cdk::safe_prc(prc)->key_val("tls")->scalar()->yesno(true);
+      prc.doc_end();
+    }
+  } tls_caps;
+
+  proto.snd_CapabilitiesSet(tls_caps).wait();
+
+  struct : cdk::protocol::mysqlx::Reply_processor
+  {
+    bool m_tls;
+    bool m_fallback;  // fallback to plain connection if TLS not available?
+
+    void error(unsigned int code, short int severity,
+      cdk::protocol::mysqlx::sql_state_t sql_state, const string &msg)
+    {
+      sql_state_t expected_state("HY000");
+
+      if (code == 5001 &&
+          severity == 2 &&
+          expected_state == sql_state && m_fallback)
+      {
+        m_tls = false;
+      }
+      else
+      {
+        throw Error(static_cast<int>(code), msg);
+      }
+    }
+  } prc;
+
+  prc.m_tls = true;
+  prc.m_fallback = (TLS::Options::SSL_MODE::PREFERRED == options.ssl_mode());
+
+  proto.rcv_Reply(prc).wait();
+
+  if (!prc.m_tls)
+    return NULL;
+
+  // Capabilites OK, create TLS connection now.
+
+  TLS *tls_conn = new TLS(&connection, options);
+
+  // TODO: attempt failover if TLS-layer reports network error?
+  tls_conn->connect();
+
+  return tls_conn;
+}
+
+#endif
+
+
 Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
   : m_session(NULL)
   , m_connection(NULL)
@@ -183,6 +235,8 @@ Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
   Session_builder sb(true);  // throw errors if detected
 
   sb(ds, options);
+
+  assert(sb.m_sess);
 
   m_session = sb.m_sess;
   m_connection = sb.m_conn;
@@ -206,7 +260,20 @@ Session::Session(ds::Multi_source &ds)
 
   ds::Multi_source::Access::visit(ds, sb);
 
+  if (!sb.m_sess)
+  {
+    if (1 == sb.m_attempts && sb.m_error)
+      sb.m_error->rethrow();
+    else
+      throw_error(
+        1 == sb.m_attempts ?
+        "Could not connect to the given data source" :
+        "Could not connect ot any of the given data sources"
+      );
+  }
+
   m_session = sb.m_sess;
+  m_database = sb.m_database;
   m_connection = sb.m_conn;
 }
 

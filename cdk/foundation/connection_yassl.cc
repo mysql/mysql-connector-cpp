@@ -68,10 +68,8 @@ class connection_TLS_impl
 {
 public:
   connection_TLS_impl(cdk::foundation::connection::TCPIP_base* tcpip,
-                      const std::string &hostname,
                       cdk::foundation::connection::TLS::Options options)
     : m_tcpip(tcpip)
-    , m_hostname(hostname)
     , m_tls(NULL)
     , m_tls_ctx(NULL)
     , m_options(options)
@@ -96,7 +94,6 @@ public:
   void verify_server_cert();
 
   cdk::foundation::connection::TCPIP_base* m_tcpip;
-  std::string m_hostname;
   yaSSL::SSL* m_tls;
   yaSSL::SSL_CTX* m_tls_ctx;
   cdk::foundation::connection::TLS::Options m_options;
@@ -202,21 +199,64 @@ void connection_TLS_impl::do_connect()
   }
 }
 
+
+/*
+  Class used to safely delete allocated X509 cert.
+  This way, no need to test cert on each possible return/throw.
+*/
+class safe_cert
+{
+  yaSSL::X509* m_cert;
+
+public:
+  safe_cert(yaSSL::X509 *cert = NULL)
+    : m_cert(cert)
+  {}
+
+  ~safe_cert()
+  {
+    if (m_cert)
+      yaSSL::X509_free(m_cert);
+  }
+
+  operator bool()
+  {
+    return m_cert != NULL;
+  }
+
+  safe_cert& operator = (yaSSL::X509 *cert)
+  {
+    m_cert = cert;
+    return *this;
+  }
+
+  safe_cert& operator = (safe_cert& cert)
+  {
+    m_cert = cert.m_cert;
+    cert.m_cert = NULL;
+    return *this;
+  }
+
+  operator yaSSL::X509 *() const
+  {
+    return m_cert;
+  }
+};
+
+
 void connection_TLS_impl::verify_server_cert()
 {
-  yaSSL::X509 *server_cert= NULL;
+  safe_cert server_cert;
   char *cn= NULL;
   int cn_loc= -1;
   yaSSL::ASN1_STRING *cn_asn1= NULL;
   yaSSL::X509_NAME_ENTRY *cn_entry= NULL;
   yaSSL::X509_NAME *subject= NULL;
 
-  if (m_hostname.empty())
-  {
-    throw_yassl_error_msg("No server hostname supplied");
-  }
 
-  if (NULL == (server_cert= SSL_get_peer_certificate(m_tls)))
+  server_cert = SSL_get_peer_certificate(m_tls);
+
+  if (!server_cert)
   {
     throw_yassl_error_msg("Could not get server certificate");
   }
@@ -270,14 +310,11 @@ void connection_TLS_impl::verify_server_cert()
   }
 
 
-  if (m_hostname != cn)
+  if (!m_options.verify_cn(cn))
   {
     throw_yassl_error_msg("SSL certificate validation failure");
   }
 
-
-  if (server_cert != NULL)
-    X509_free (server_cert);
 }
 
 
@@ -291,9 +328,8 @@ namespace connection {
 
 
 TLS::TLS(TCPIP_base* tcpip,
-         const std::string &host,
          const TLS::Options &options)
-  : opaque_impl<TLS>(NULL, tcpip, host, options)
+  : opaque_impl<TLS>(NULL, tcpip, options)
 {}
 
 

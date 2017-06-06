@@ -45,7 +45,7 @@ namespace mysqlx {
     {
     public:
 
-      class XSession;
+      class Session;
 
     protected:
       // Per-test-case set-up.
@@ -65,7 +65,7 @@ namespace mysqlx {
       }
 
       const char *m_status;
-      NodeSession *m_sess;
+      mysqlx::Session *m_sess;
       unsigned short m_port;
       const char *m_user;
       const char *m_password;
@@ -95,7 +95,7 @@ namespace mysqlx {
         m_password = getenv("XPLUGIN_PASSWORD");
 
         try {
-          m_sess = new NodeSession(m_port, m_user, m_password);
+          m_sess = new mysqlx::Session(m_port, m_user, m_password);
         }
         catch (const Error &e)
         {
@@ -120,7 +120,7 @@ namespace mysqlx {
         return get_sess().sql(query).execute();
       }
 
-      NodeSession& get_sess() const
+      mysqlx::Session& get_sess() const
       {
         // TODO: better error.
         if (!m_sess)
@@ -149,12 +149,12 @@ namespace mysqlx {
       }
     };
 
-    class Xplugin::XSession : public mysqlx::XSession
+    class Xplugin::Session : public mysqlx::Session
     {
     public:
 
-      XSession(const Xplugin *test)
-      : mysqlx::XSession(test->get_port(), test->get_user(), test->get_password())
+      Session(const Xplugin *test)
+      : mysqlx::Session(test->get_port(), test->get_user(), test->get_password())
       {}
     };
 

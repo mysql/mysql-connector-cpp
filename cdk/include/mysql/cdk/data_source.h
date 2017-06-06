@@ -344,17 +344,17 @@ namespace ds {
         Variant_visitor<Visitor> variant_visitor;
         variant_visitor.vis = &visitor;
         /*
-            Cannot use lambda because auto type for lambdas is only
-            supported in C++14
+          Cannot use lambda because auto type for lambdas is only
+          supported in C++14
         */
         item->visit(variant_visitor);
         stop_processing = variant_visitor.stop_processing;
 
-      } // for
+        /* Exit if visit reported true or if we advanced to the end of the list */
+        if (stop_processing || it == m_ds_list.end())
+          break;
 
-      if (!stop_processing)
-        throw Error(cdkerrc::generic_error,
-        "Session could not be established using any of given data sources");
+      } // for
     }
 
     void clear()

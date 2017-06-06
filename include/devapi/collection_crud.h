@@ -103,6 +103,9 @@
 
 #include <utility>
 #include <sstream>
+#include <iterator>
+#include <type_traits>
+
 
 namespace cdk {
 
@@ -113,7 +116,7 @@ class Session;
 
 namespace mysqlx {
 
-class XSession;
+class Session;
 class Collection;
 
 
@@ -197,6 +200,35 @@ namespace internal {
   };
 
 
+  /*
+    Type trait which checks if std::begin()/end() work on objects of given
+    class C so that it can be used as a range to iterate over.
+
+    TODO: Make it work also with user-defined begin()/end() functions.
+  */
+
+  template <class C>
+  class is_range
+  {
+    /*
+      Note: This overload will be taken into account only if std::begin(X) and
+      std::end(X) expressions are valid.
+    */
+    template <class X>
+    static std::true_type
+    test(decltype(std::begin(*((X*)nullptr)))*,
+         decltype(std::end(*((X*)nullptr)))*);
+
+    template <class X>
+    static std::false_type test(...);
+
+  public:
+
+    static const bool value
+    = std::is_same<std::true_type, decltype(test<C>(nullptr, nullptr))>::value;
+  };
+
+
   /**
     Class which defines various variants of `add()` method.
 
@@ -254,14 +286,14 @@ namespace internal {
       iterators should return a document object of one of accepted types
       (as given by the is_doc_type<> trait).
 
-      Note: We use enable_if to remove ambiguity between this overload
-      and the one which adds 2 documents: add(doc1,doc2). Thus this
-      overload is enabled only if type It is not a document type.
+      Note: We check if It is an iterator type to remove ambiguity between
+      this overload and the one which adds 2 documents: add(doc1,doc2).
     */
 
     template <
       typename It,
-      typename = enable_if_t<!is_doc_type<It>::value>
+      typename = enable_if_t<!is_doc_type<It>::value>,
+      typename = enable_if_t<!is_range<It>::value>
     >
     AddOp add(const It &begin, const It &end)
     {
@@ -286,7 +318,8 @@ namespace internal {
 
     template <
       class Container,
-      typename = enable_if_t<!is_doc_type<Container>::value>
+      typename = enable_if_t<!is_doc_type<Container>::value>,
+      typename = enable_if_t<is_range<Container>::value>
     >
     AddOp add(const Container &c)
     {
@@ -296,7 +329,7 @@ namespace internal {
         return add;
       }
       CATCH_AND_WRAP
-  }
+    }
 
     /**
       Add document(s) to a collection.
@@ -402,11 +435,6 @@ private:
     return *this;
   }
 
-  void do_add(const string &json)
-  {
-    get_impl()->add_json(json);
-  }
-
   void do_add(const DbDoc &doc)
   {
     // TODO: Do it better when we support sending structured
@@ -415,6 +443,11 @@ private:
     std::ostringstream buf;
     buf << doc;
     get_impl()->add_json(buf.str());
+  }
+
+  void do_add(const string &json)
+  {
+    get_impl()->add_json(json);
   }
 
   ///@cond IGNORED
@@ -701,15 +734,6 @@ namespace internal {
   public:
 
     /**
-      Return operation which removes all documents from the collection.
-    */
-
-    virtual CollectionRemove remove()
-    {
-      return CollectionRemove(*m_coll);
-    }
-
-    /**
       Return operation which removes documents satisfying given expression.
     */
 
@@ -986,10 +1010,6 @@ private:
 
 public:
 
-  /// Create modify operation for all documents in a collection.
-
-  CollectionModify(Collection &coll);
-
   /// Create operation which modifies selected documents in a collection.
 
   CollectionModify(Collection &base, const string &expr);
@@ -1107,18 +1127,6 @@ namespace internal {
     : public virtual CollectionOpBase
   {
   public:
-
-    /**
-      Return operation which modifies all documents in the collection.
-    */
-
-    CollectionModify modify()
-    {
-      try {
-        return CollectionModify(*m_coll);
-      }
-      CATCH_AND_WRAP;
-    }
 
     /**
       Return operation which modifies documents that satisfy given expression.

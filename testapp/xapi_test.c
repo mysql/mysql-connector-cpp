@@ -75,11 +75,9 @@ int main(int argc, const char* argv[])
 
   /*
     Connect and create session.
-
-    We use node session to be able to execute SQL queries.
   */
 
-  sess = mysqlx_get_node_session_from_url(url, conn_error, &conn_err_code);
+  sess = mysqlx_get_session_from_url(url, conn_error, &conn_err_code);
   if (!sess)
   {
     printf("\nError! %s. Error Code: %d", conn_error, conn_err_code);

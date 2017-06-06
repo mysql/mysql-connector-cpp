@@ -1289,7 +1289,7 @@ void Result::Impl::load_warnings()
 */
 
 
-internal::BaseResult::BaseResult(XSession_base *sess,
+internal::BaseResult::BaseResult(mysqlx::Session *sess,
                                  cdk::Reply *r)
 {
   try {
@@ -1301,7 +1301,7 @@ internal::BaseResult::BaseResult(XSession_base *sess,
   CATCH_AND_WRAP
 }
 
-internal::BaseResult::BaseResult(XSession_base *sess,
+internal::BaseResult::BaseResult(mysqlx::Session *sess,
                                  cdk::Reply *r,
                                  const std::vector<GUID> &guids)
 {

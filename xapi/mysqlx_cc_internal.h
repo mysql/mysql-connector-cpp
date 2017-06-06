@@ -29,6 +29,7 @@
 #include <sstream>
 #include <stdint.h>
 #include <mysql/cdk.h>
+#include <bitset>
 #include <cstdarg>
 #include <expr_parser.h>
 #include <uri_parser.h>
@@ -359,15 +360,47 @@ public:
 };
 
 
-typedef struct mysqlx_session_options_struct : public Mysqlx_diag,
-                                               public parser::URI_processor
+struct Host_sources : public cdk::ds::Multi_source
+{
+
+  inline void add(cdk::ds::TCPIP ds,
+                  cdk::ds::TCPIP::Options options,
+                  unsigned short prio)
+  {
+#ifdef WITH_SSL
+    std::string host = ds.host();
+
+    cdk::connection::TLS::Options tls = options.get_tls();
+
+    tls.set_verify_cn(
+          [host](const std::string& cn)-> bool{
+      return cn == host;
+    });
+
+    options.set_tls(tls);
+#endif
+
+    cdk::ds::Multi_source::add(ds, options, prio);
+  }
+
+};
+
+
+typedef struct mysqlx_session_options_struct
+  : public Mysqlx_diag
+  , public parser::URI_processor
 {
 private:
+
+  using TLS_options = cdk::connection::TLS::Options;
+
+  std::bitset<LAST> m_options_used;
 
   /*
     This struct extends cdk::ds::TCPIP to allow setting
     host and port at any time
   */
+
   struct TCPIP_t : public cdk::ds::TCPIP
   {
     TCPIP_t() : cdk::ds::TCPIP() {}
@@ -414,38 +447,52 @@ private:
 
   enum source_state
   { unknown, priority, non_priority }
-  m_source_state;
+  m_source_state = unknown;
 
   TCPIP_Options_t m_tcp_opts;
-  cdk::connection::TLS::Options m_tls_options;
-  /* Compiler errors if declare the instance */
-  cdk::ds::Multi_source m_ms;
-  Host_list m_host_list;
+  TLS_options m_tls_options;
 
-  cdk::connection::TLS::Options::SSL_MODE uint_to_ssl_mode(unsigned int mode);
-  unsigned int ssl_mode_to_uint(cdk::connection::TLS::Options::SSL_MODE mode);
+  Host_sources m_ms;
+  Host_list    m_host_list;
 
+  bool         m_explicit_mode = false;
+
+  void check_option(mysqlx_opt_type_t);
 
 public:
-  mysqlx_session_options_struct();
 
   /* Move constructor should be disabled */
   mysqlx_session_options_struct(mysqlx_session_options_struct &&) = delete;
 
-  mysqlx_session_options_struct(const mysqlx_session_options_struct &opt);
+  mysqlx_session_options_struct(source_state state = source_state::unknown)
+      : m_source_state(state)
+    {
+  #ifdef WITH_SSL
+      set_ssl_mode(SSL_MODE_REQUIRED);
+  #else
+      set_ssl_mode(SSL_MODE_DISABLED);
+  #endif
+
+      m_explicit_mode = false;
+    }
 
   mysqlx_session_options_struct(const std::string host, unsigned short port,
                            const std::string usr, const std::string *pwd,
                            const std::string *db,
                            unsigned int ssl_mode =
 #ifdef WITH_SSL
-                           SSL_MODE_PREFERRED
+                           SSL_MODE_REQUIRED
 #else
                            SSL_MODE_DISABLED
 #endif
   );
 
-  mysqlx_session_options_struct(const std::string &conn_str);
+  mysqlx_session_options_struct(const std::string &conn_str)
+    : mysqlx_session_options_struct()
+  {
+    parser::parse_conn_str(conn_str, *this);
+  }
+
 
   // Implementing URI_Processor interface
   void user(const std::string &usr) override
@@ -458,6 +505,7 @@ public:
   // Implementing URI_Processor interface
   void host(unsigned short priority, const std::string &host,
             unsigned short port) override;
+
   // Implementing URI_Processor interface
   void host(unsigned short priority, const std::string &host_name) override;
 
@@ -466,8 +514,8 @@ public:
 
   void set_database(const cdk::string &db) { return m_tcp_opts.set_database(db); }
 
-  cdk::ds::TCPIP::Options &get_tcpip_options();
-  cdk::ds::Multi_source &get_multi_source();
+  cdk::ds::TCPIP::Options &get_tcpip_options() { return m_tcp_opts; }
+  cdk::ds::Multi_source &get_multi_source() const;
 
   const cdk::string* database() { return m_tcp_opts.database(); }
   const std::string get_host();
@@ -475,15 +523,10 @@ public:
   unsigned int get_priority();
   const std::string get_user();
   const std::string* get_password();
-  const cdk::string* get_db();
+  const cdk::string* get_db() const;
 
-  void set_ssl_ca(const string &ca)
-  {
-    m_tls_options.set_ca(ca);
-    m_tcp_opts.set_tls(m_tls_options);
-  }
-
-  void set_ssl_mode(unsigned int ssl_mode);
+  void set_ssl_ca(const string &ca);
+  void set_ssl_mode(mysqlx_ssl_mode_enum ssl_mode);
   unsigned int get_ssl_mode();
 
   // Implementing URI_Processor interface
@@ -564,10 +607,9 @@ typedef struct mysqlx_session_struct : public Mysqlx_diag
 {
 private:
 
-  mysqlx_session_options_t m_sess_opt;
   cdk::Session m_session;
+  string       m_default_db;
   mysqlx_stmt_t *m_stmt;
-  bool m_is_node_sess;
 
   typedef std::map<cdk::string, mysqlx_schema_t> Schema_map;
   Schema_map m_schema_map;
@@ -576,18 +618,22 @@ public:
 
   enum Object_type { SCHEMA, TABLE, COLLECTION, VIEW };
 
-  mysqlx_session_struct(const std::string host, unsigned int port, const string usr,
-                   const std::string *pwd, const std::string *db, bool is_node_sess);
+  mysqlx_session_struct(
+    const std::string &host, unsigned short port,
+    const string &usr, const std::string *pwd,
+    const std::string *db
+  );
 
-  mysqlx_session_struct(const std::string &conn_str, bool is_node_sess);
-
-  mysqlx_session_struct(mysqlx_session_options_t *opt, bool is_node_sess);
+  mysqlx_session_struct(const std::string &conn_str);
+  mysqlx_session_struct(const mysqlx_session_options_t &opt);
 
   bool is_valid() { return m_session.is_valid() == cdk::option_t::YES; }
 
   const cdk::Error* get_cdk_error();
 
   cdk::Session &get_session() { return m_session; }
+
+  bool cert_validation(const std::string &cn);
 
   /*
     Execute a plain SQL query (supports parameters and placeholders)
@@ -599,8 +645,7 @@ public:
       CRUD handler containing the results and/or error
 
   */
-  mysqlx_stmt_t *sql_query(const char *query, uint32_t length,
-                           bool enable_sql_x_session = false);
+  mysqlx_stmt_t *sql_query(const char *query, uint32_t length);
 
   /*
     Create a new CRUD operation (SELECT, INSERT, UPDATE, DELETE)

@@ -49,7 +49,7 @@ namespace mysqlx {
 
 using std::ostream;
 
-class NodeSession;
+class Session;
 class Schema;
 class Collection;
 class Result;
@@ -279,7 +279,6 @@ void Warning::print(std::ostream &out) const
 
 namespace internal {
 
-  class XSession_base;
 
   /**
     Base for result classes.
@@ -296,10 +295,10 @@ namespace internal {
     Impl  *m_impl = NULL;
     bool m_owns_impl = false;
     row_count_t  m_pos = 0;
-    XSession_base *m_sess = NULL;
+    Session *m_sess = NULL;
 
-    INTERNAL BaseResult(XSession_base *sess, cdk::Reply*);
-    INTERNAL BaseResult(XSession_base *sess, cdk::Reply*,
+    INTERNAL BaseResult(Session *sess, cdk::Reply*);
+    INTERNAL BaseResult(Session *sess, cdk::Reply*,
                         const std::vector<GUID>&);
 
   protected:
@@ -387,7 +386,7 @@ namespace internal {
 
     ///@cond IGNORED
 
-    friend mysqlx::internal::XSession_base;
+    friend mysqlx::Session;
     friend mysqlx::Result;
     friend mysqlx::RowResult;
     friend mysqlx::SqlResult;

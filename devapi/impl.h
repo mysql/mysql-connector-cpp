@@ -444,16 +444,16 @@ class DocResult::Impl
 // --------------------------------------------------------------------
 
 
-struct internal::XSession_base::Access
+struct Session::Access
 {
-  typedef XSession_base::Options  Options;
+  typedef Session::Options  Options;
 
-  static cdk::Session& get_cdk_session(XSession_base &sess)
+  static cdk::Session& get_cdk_session(Session &sess)
   {
     return sess.get_cdk_session();
   }
 
-  static void register_result(XSession_base &sess, BaseResult *res)
+  static void register_result(Session &sess, internal::BaseResult *res)
   {
     sess.register_result(res);
   }
@@ -465,13 +465,13 @@ struct internal::BaseResult::Access
   static BaseResult mk_empty() { return BaseResult(); }
 
   template <typename A>
-  static BaseResult mk(XSession_base *sess, A a)
+  static BaseResult mk(mysqlx::Session *sess, A a)
   {
     return BaseResult(sess, a);
   }
 
   template <typename A, typename B>
-  static BaseResult mk(XSession_base *sess, A a, B b)
+  static BaseResult mk(mysqlx::Session *sess, A a, B b)
   {
     return BaseResult(sess, a, b);
   }
@@ -541,7 +541,7 @@ class Op_base
 {
 protected:
 
-  internal::XSession_base   *m_sess;
+  Session *m_sess;
 
   /*
     Note: using cdk::scoped_ptr to be able to trnasfer ownership
@@ -558,7 +558,7 @@ protected:
   param_map_t m_map;
 
 
-  Op_base(internal::XSession_base &sess)
+  Op_base(Session &sess)
     : m_sess(&sess)
   {}
   Op_base(Collection &coll)
@@ -582,7 +582,7 @@ protected:
   cdk::Session& get_cdk_session()
   {
     assert(m_sess);
-    return internal::XSession_base::Access::get_cdk_session(*m_sess);
+    return Session::Access::get_cdk_session(*m_sess);
   }
 
   virtual cdk::Reply* send_command() = 0;
@@ -718,7 +718,7 @@ protected:
   internal::BaseResult execute()
   {
     // Deregister current Result, before creating a new one
-    internal::XSession_base::Access::register_result(*m_sess, NULL);
+    Session::Access::register_result(*m_sess, NULL);
 
     // Can not execute operation that is already completed.
     assert(!m_completed);
@@ -1118,8 +1118,7 @@ public:
   void add_where(const mysqlx::string &expr)
   {
     m_where_expr = expr;
-    if (!m_where_expr.empty())
-      m_expr.reset(new parser::Expression_parser(PM, m_where_expr));
+    m_expr.reset(new parser::Expression_parser(PM, m_where_expr));
   }
 
   cdk::Expression* get_where() const
