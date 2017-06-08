@@ -40,6 +40,7 @@ struct Session_builder
 {
   using TLS   = cdk::connection::TLS;
   using TCPIP = cdk::connection::TCPIP;
+  using Socket_base = foundation::connection::Socket_base;
 
   cdk::api::Connection *m_conn = NULL;
   mysqlx::Session      *m_sess = NULL;
@@ -67,27 +68,26 @@ struct Session_builder
     3. If a bail-out error was detected, throws that error.
   */
 
+  Socket_base* connect(Socket_base*);
+
   bool operator() (const ds::TCPIP &ds, const ds::TCPIP::Options &options);
+#ifndef WIN32
+  bool operator() (const ds::Unix_socket&ds, const ds::Unix_socket::Options &options);
+#endif
   bool operator() (const ds::TCPIP_old &ds, const ds::TCPIP_old::Options &options);
 
 #ifdef WITH_SSL
-  TLS* tls_connect(TCPIP &conn, const TLS::Options &opt);
+  TLS* tls_connect(Socket_base &conn, const TLS::Options &opt);
 #endif
 };
 
 
-bool
-Session_builder::operator() (
-  const ds::TCPIP &ds,
-  const ds::TCPIP::Options &options
-  )
+Session_builder::Socket_base*
+Session_builder::connect(Session_builder::Socket_base* connection)
 {
-  using foundation::connection::TCPIP;
-  using foundation::connection::TCPIP_base;
-
   m_attempts++;
 
-  TCPIP* connection = new TCPIP(ds.host(), ds.port());
+  assert(connection);
 
   try
   {
@@ -115,8 +115,25 @@ Session_builder::operator() (
       m_error.reset(err.clone());
     }
 
-    return false;  // continue to next host if available
+    return NULL;
   }
+  return connection;
+}
+
+
+bool
+Session_builder::operator() (
+  const ds::TCPIP &ds,
+  const ds::TCPIP::Options &options
+  )
+{
+  using foundation::connection::TCPIP;
+  using foundation::connection::Socket_base;
+
+  Socket_base* connection = connect(new TCPIP(ds.host(), ds.port()));
+
+  if (!connection)
+    return false;  // continue to next host if available
 
 #ifdef WITH_SSL
   TLS *tls_conn = tls_connect(*connection, options.get_tls());
@@ -137,6 +154,31 @@ Session_builder::operator() (
   return true;
 }
 
+#ifndef WIN32
+bool
+Session_builder::operator() (
+  const ds::Unix_socket &ds,
+  const ds::Unix_socket::Options &options
+  )
+{
+  using foundation::connection::Unix_socket;
+  using foundation::connection::Socket_base;
+
+  Socket_base* connection = connect(new Unix_socket(ds.path()));
+
+  if (!connection)
+    return false;  // continue to next host if available
+
+  m_conn = connection;
+  m_sess = new mysqlx::Session(*connection, options);
+
+  m_database = options.database();
+
+  return true;
+}
+
+#endif //#ifndef WIN32
+
 
 bool
 Session_builder::operator() (
@@ -152,7 +194,7 @@ Session_builder::operator() (
 #ifdef WITH_SSL
 
 Session_builder::TLS*
-Session_builder::tls_connect(TCPIP &connection, const TLS::Options &options)
+Session_builder::tls_connect(Socket_base &connection, const TLS::Options &options)
 {
   if (!options.get_ca().empty() &&
       options.ssl_mode() < TLS::Options::SSL_MODE::VERIFY_CA)
@@ -276,6 +318,24 @@ Session::Session(ds::Multi_source &ds)
   m_database = sb.m_database;
   m_connection = sb.m_conn;
 }
+
+
+#ifndef WIN32
+Session::Session(ds::Unix_socket &ds, const ds::Unix_socket::Options &options)
+  : m_session(NULL)
+  , m_connection(NULL)
+  , m_trans(false)
+{
+  Session_builder sb(true);  // throw errors if detected
+
+  sb(ds, options);
+
+  assert(sb.m_sess);
+
+  m_session = sb.m_sess;
+  m_connection = sb.m_conn;
+}
+#endif //#ifndef WIN32
 
 
 Session::~Session()
