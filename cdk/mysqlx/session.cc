@@ -116,7 +116,7 @@ class AuthPlain
 
   public:
 
-  AuthPlain( const ds::Options &options )
+  AuthPlain( const Session::Options &options )
   {
     std::string user(options.user());  // convert to utf8 before sending
 
@@ -163,7 +163,7 @@ protected:
   std::string m_cont_data;
 
 public:
-  AuthMysql41(const ds::Options &options)
+  AuthMysql41(const Session::Options &options)
     : m_user(options.user())
   {
     if (options.password())
@@ -197,18 +197,66 @@ private:
 
 };
 
+class AuthExternal
+  : public SessionAuthInterface
+{
+
+  std::string m_data;
+
+public:
+
+  AuthExternal(const Session::Options &options)
+  {
+    if (options.database())
+      m_data.append(*options.database());
+  }
+
+  const char* auth_method() { return "EXTERNAL"; }
+
+  virtual bytes auth_data()
+  {
+    return bytes((byte*)m_data.c_str(), m_data.size());
+  }
+
+  virtual bytes auth_response()
+  {
+    return bytes((byte*)NULL, (byte*)NULL);
+  }
+
+  virtual bytes auth_continue(bytes)
+  {
+    THROW("Unexpected auth continuation");
+  }
+};
 
 /*
    Class Session
 */
 
 
-void Session::authenticate( const ds::Options &options)
+void Session::authenticate( const Session::Options &options)
 {
 
   delete m_auth_interface;
   m_auth_interface = NULL;
-  m_auth_interface = new AuthMysql41(options);
+
+  using cdk::ds::mysqlx::Protocol_options;
+
+  switch (options.auth_method())
+  {
+    case Protocol_options::MYSQL41:
+      m_auth_interface = new AuthMysql41(options);
+    break;
+    case Protocol_options::PLAIN:
+      m_auth_interface = new AuthPlain(options);
+    break;
+    case Protocol_options::EXTERNAL:
+      m_auth_interface = new AuthExternal(options);
+    break;
+    default:
+      THROW("Unknown authentication method");
+  }
+
 
   start_authentication(m_auth_interface->auth_method(),
                        m_auth_interface->auth_data(),

@@ -440,14 +440,14 @@ protected:
   bool m_has_results;
   bool m_discard;
 
-  void authenticate(const ds::Options &options);
-
 public:
 
   cdk::api::Connection* get_connection();
 
+  typedef ds::Options<ds::mysqlx::Protocol_options> Options;
+
   template <class C>
-  Session(C &conn, const ds::Options &options)
+  Session(C &conn, const Options &options)
     : m_protocol(conn)
     , m_isvalid(false)
     , m_current_reply(NULL)
@@ -592,7 +592,7 @@ private:
   Reply_init &set_command(Proto_op *cmd);
 
   // Authentication (cdk::protocol::mysqlx::Auth_processor)
-
+  void authenticate(const Options &options);
   void auth_ok(bytes data);
   void auth_continue(bytes data);
   void auth_fail(bytes data);

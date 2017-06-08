@@ -44,8 +44,8 @@ namespace ds {
  * Generic session options which are valid for any data source.
  */
 
-
-class Options
+template <class Base>
+class Options : public Base
 {
 public:
 
@@ -105,7 +105,7 @@ namespace mysqlx {
 
 /*
  * A TCPIP data source represents a MySQL server accessible via TCP/IP
- * connection.
+ * connection using the X Protocol.
  */
 
 class TCPIP
@@ -133,22 +133,52 @@ public:
 };
 
 
-class TCPIP::Options : public ds::Options
+class Protocol_options
+{
+
+  public:
+
+  enum auth_method_t {
+    PLAIN,
+    MYSQL41,
+    EXTERNAL
+  };
+
+  virtual auth_method_t auth_method() const = 0;
+
+};
+
+
+class TCPIP::Options
+  : public ds::Options<Protocol_options>
 {
 public:
 
   Options()
-  {}
+  {
+    m_auth_method = auth_method_t::MYSQL41;
+  }
 
   Options(const string &usr, const std::string *pwd =NULL)
-    : ds::Options(usr, pwd)
-  {}
+    : ds::Options<Protocol_options>(usr, pwd)
+  {
+    /*
+      We don't know if the connection will be over SSL.
+      Guessing unencrypted connection and MYSQL41 auth.
+    */
+    m_auth_method = auth_method_t::MYSQL41;
+  }
 
 #ifdef WITH_SSL
 
   void set_tls(const cdk::connection::TLS::Options& options)
   {
     m_tls_options = options;
+    // Use PLAIN auth for SSL connections
+    if (options.ssl_mode() == cdk::connection::TLS::Options::SSL_MODE::DISABLED)
+      m_auth_method = auth_method_t::MYSQL41;
+    else
+      m_auth_method = auth_method_t::PLAIN;
   }
 
   const cdk::connection::TLS::Options& get_tls() const
@@ -158,11 +188,23 @@ public:
 
 #endif
 
+  void set_auth_method(auth_method_t auth_method)
+  {
+    m_auth_method = auth_method;
+  }
+
 private:
 
 #ifdef WITH_SSL
   cdk::connection::TLS::Options m_tls_options;
 #endif
+  auth_method_t m_auth_method;
+
+
+  auth_method_t auth_method() const
+  {
+    return m_auth_method;
+  }
 
 };
 
@@ -171,9 +213,11 @@ private:
 namespace mysql {
 
 /*
- * Future Session with MYSQL
+ * Future Session with MYSQL over legacy protocol.
  */
 
+class Protocol_options
+{};
 
 class TCPIP : public cdk::ds::mysqlx::TCPIP
 {
@@ -185,7 +229,7 @@ public:
 
   virtual ~TCPIP() {}
 
-  typedef ds::Options Options;
+  typedef ds::Options<Protocol_options> Options;
 };
 
 } //mysql
