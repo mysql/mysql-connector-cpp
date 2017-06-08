@@ -518,6 +518,8 @@ SET_INTERFACE_OPTIONS(try devapi)
 # TODO: Do it also for the shared library
 #
 
+if(NOT WIN32)
+
 find_program(LDD ldd)
 if(NOT LDD)
   find_program(LDD otool)
@@ -531,6 +533,8 @@ if(LDD)
     COMMAND ${LDD} ${LDD_OPTS} $<TARGET_FILE:try>
     COMMENT "Checking dynamic library dependencies:"
   )
+endif()
+
 endif()
 
 #
