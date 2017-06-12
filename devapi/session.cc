@@ -1553,11 +1553,12 @@ void SqlStatement::reset(mysqlx::Session &sess, const string &query)
 }
 
 
-SqlStatement& Session::sql(const string &query)
+SqlStatement Session::sql(const string &query)
 {
   try {
-    m_stmt.reset(*this, query);
-    return m_stmt;
+    SqlStatement sql;
+    sql.reset(*this, query);
+    return sql;
   }
   CATCH_AND_WRAP
 }

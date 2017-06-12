@@ -1421,7 +1421,6 @@ protected:
   class INTERNAL Impl;
   Impl  *m_impl;
   bool m_master_session = true;
-  SqlStatement m_stmt;
 
   INTERNAL void register_result(internal::BaseResult *result);
   INTERNAL void deregister_result(internal::BaseResult *result);
@@ -1550,7 +1549,7 @@ public:
         Operation that runs arbitrary SQL query.
       */
 
-  SqlStatement& sql(const string &query);
+  SqlStatement sql(const string &query);
 
   /**
         Start a new transaction.

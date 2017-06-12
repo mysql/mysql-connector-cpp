@@ -867,4 +867,14 @@ TEST_F(Sess, bugs)
 
   }
 
+  try
+  {
+    Session sess(this);
+    Session xsess(this);
+    sess.sql("drop database database_doesnt_exist").execute();
+
+  }
+  catch(...)
+  {}
+
 }
