@@ -1,4 +1,4 @@
-MySQL Connector/C++ 2.0
+MySQL Connector/C++ 8.0
 
 This is a release of MySQL Connector/C++, Oracle's
 dual-license C++ API for connecting client applications

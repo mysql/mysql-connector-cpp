@@ -2,7 +2,7 @@ MySQL Connector/C++ Documentation  {#mainpage}
 =================================
 
 MySQL Connector/C++ is a library for applications written in C or C++ that want
-to communicate with MySQL database servers. Version 2.0 of Connector/C++
+to communicate with MySQL database servers. Version 8.0 of Connector/C++
 implements new APIs which, on top of traditional SQL, give access
 to MySQL implementing a document store. For code written in C++ this is the new
 [X DevAPI] (@ref devapi), which is the common MySQL API to access
@@ -18,7 +18,7 @@ More information:
 - [Building Connector/C++] (@ref building)
 
 @note
-Code that uses Connector/C++ 2.0 can communicate only with MySQL Server version
+Code that uses Connector/C++ 8.0 can communicate only with MySQL Server version
 5.7 with X Plugin loaded into it.
 
 <!--

@@ -1,4 +1,4 @@
-Connector/C++ 2.0 XAPI Reference {#xapi_ref}
+Connector/C++ 8.0 XAPI Reference {#xapi_ref}
 ================================
 
 Connector/C++ implements a plain C interface, called XAPI, which offers
@@ -93,7 +93,7 @@ as plain SQL with parameters and table INSERT statements. Next, the code reads
 the table rows and displays the result.
 
 The sample code can be found in file `testapp/xapi_test.cc` in the source
-distribution of Connector/C++ 2.0. See @ref usage for instructions on how
+distribution of Connector/C++ 8.0. See @ref usage for instructions on how
 to build the sample code.
 
 @dontinclude xapi_test.c
