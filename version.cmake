@@ -30,7 +30,7 @@ set(CONCPP_VERSION_MAJOR  8)
 set(CONCPP_VERSION_MINOR  0)
 set(CONCPP_VERSION_MICRO  5)
 # Level is "-alpha", "-beta", empty if GA
-set(CONCPP_VERSION_LEVEL  "")
+set(CONCPP_VERSION_LEVEL  "-dmr")
 
 # **** IMPORTANT ****
 #
