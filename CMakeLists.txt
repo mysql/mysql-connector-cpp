@@ -591,11 +591,11 @@ if(NOT CMAKE_INSTALL_PREFIX)
     else()
       set(install_prefix "C:/Program Files (x86)")
     endif()
-    set(CMAKE_INSTALL_PREFIX "${install_prefix}/MySQL/MySQL Connector C++ 2.0")
+    set(CMAKE_INSTALL_PREFIX "${install_prefix}/MySQL/MySQL Connector C++ 8.0")
 
   else()
 
-    set(CMAKE_INSTALL_PREFIX "/usr/local/mysql/connector-c++-2.0")
+    set(CMAKE_INSTALL_PREFIX "/usr/local/mysql/connector-c++-8.0")
 
   endif()
 
