@@ -127,10 +127,12 @@ Socket_base::Impl& TCPIP::get_base_impl()
   return get_impl();
 }
 
+#ifndef _WIN32
 Socket_base::Impl& Unix_socket::get_base_impl()
 {
   return get_impl();
 }
+#endif
 
 
 void Socket_base::IO_op::do_cancel()

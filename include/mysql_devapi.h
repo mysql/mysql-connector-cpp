@@ -916,6 +916,11 @@ class PUBLIC_API SessionSettings
 {
 public:
 
+#ifndef _WIN32
+#define ADD_SOCKET(x) x(SOCKET)        /*!< path to unix domain socket*/
+#else
+#define ADD_SOCKET(x)
+#endif //_WIN32
 
 #define SETTINGS_OPTIONS(x)                                                      \
   x(URI)          /*!< connection URI or string */                               \
@@ -928,6 +933,8 @@ public:
   x(DB)            /*!< default database */                                      \
   x(SSL_MODE)      /*!< define `SSLMode` option to be used */                    \
   x(SSL_CA)        /*!< path to a PEM file specifying trusted root certificates*/\
+  ADD_SOCKET(x)
+
 
   #define OPTIONS_ENUM(x) x,
 

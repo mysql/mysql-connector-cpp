@@ -631,6 +631,7 @@ TEST_F(Sess, ipv6)
 
 TEST_F(Sess, failover)
 {
+  SKIP_IF_NO_XPLUGIN;
 
   {
     Session s(this);
@@ -820,9 +821,50 @@ TEST_F(Sess, failover)
     EXPECT_THROW(mysqlx::Session s(uri.str()) , Error);
   }
 
+}
 
+#ifndef _WIN32
+TEST_F(Sess, unix_socket)
+{
+  SKIP_IF_NO_SOCKET;
+
+  mysqlx::Session(SessionSettings::SOCKET, get_socket(),
+                  SessionSettings::USER, get_user(),
+                  SessionSettings::PWD, get_password());
+
+  std::stringstream uri;
+
+  uri << "mysqlx://" << get_user();
+
+  if (get_password())
+    uri << ":" << get_password();
+
+  uri << "@["
+         "(address=(" << get_socket() << "),priority=99),";
+  uri << "(address=127.0.0.1";
+  if (get_port() != 0)
+    uri << ":" <<get_port();
+  uri << ",priority=100)";
+
+  uri << "]/test";
+
+
+  for (int i = 0; i < 10; ++i)
+  {
+    mysqlx::Session(uri.str());
+  }
+
+  SessionSettings settings(SessionSettings::SOCKET, get_socket(),
+                           SessionSettings::USER, get_user(),
+                           SessionSettings::PWD, get_password(),
+                           SessionSettings::HOST, "localhost");
+
+  EXPECT_EQ(settings.find(SessionSettings::SOCKET).get<string>(), string(get_socket()));
+
+  EXPECT_EQ(settings.find(SessionSettings::HOST).get<string>(), string("localhost"));
 
 }
+#endif //_WIN32
 
 
 TEST_F(Sess, bugs)

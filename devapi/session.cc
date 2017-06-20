@@ -290,6 +290,16 @@ struct Host_sources : public cdk::ds::Multi_source
     cdk::ds::Multi_source::add(ds, options, prio);
   }
 
+#ifndef _WIN32
+  inline void add(const cdk::ds::Unix_socket &ds,
+                  cdk::ds::Unix_socket::Options options,
+                  unsigned short prio)
+  {
+
+    cdk::ds::Multi_source::add(ds, options, prio);
+  }
+#endif
+
 };
 
 
@@ -302,7 +312,14 @@ struct URI_parser
 {
   Host_sources m_source;
 
-  std::multimap<unsigned short, cdk::ds::TCPIP> m_hosts;
+  typedef
+  cdk::foundation::variant<cdk::ds::TCPIP
+#ifndef _WIN32
+  , cdk::ds::Unix_socket
+#endif //_WIN32
+  >  Ds_variant;
+
+  std::multimap<unsigned short, Ds_variant> m_sources;
   std::bitset<SessionSettings::LAST> m_options_used;
 
 #ifdef WITH_SSL
@@ -317,13 +334,57 @@ struct URI_parser
 #endif
   }
 
+  struct Add_list
+  {
+    Host_sources &m_list;
+    cdk::ds::TCPIP::Options m_tcp_opt;
+#ifndef _WIN32
+    cdk::ds::Unix_socket::Options m_socket_opt;
+#endif
+    unsigned short priority = 0;
+
+    Add_list(Host_sources &list
+             ,const cdk::ds::TCPIP::Options& tcp_opt
+         #ifndef _WIN32
+             ,const cdk::ds::Unix_socket::Options& socket_opt
+         #endif
+             )
+      : m_list(list)
+      , m_tcp_opt(tcp_opt)
+  #ifndef _WIN32
+      , m_socket_opt(socket_opt)
+  #endif
+    {}
+
+    void operator() (const cdk::ds::TCPIP &ds_tcp)
+    {
+      m_list.add(ds_tcp, m_tcp_opt, priority);
+    }
+
+  #ifndef _WIN32
+    void operator() (const cdk::ds::Unix_socket &ds_socket)
+    {
+      m_list.add(ds_socket, m_socket_opt, priority);
+    }
+  #endif //_WIN32
+
+  };
 
   cdk::ds::Multi_source& get_data_source()
   {
     m_source.clear();
-    for (auto el : m_hosts)
+    Add_list add_list(m_source
+                      ,*this
+#ifndef _WIN32
+                      ,*this
+#endif
+                      );
+    for (auto el = m_sources.begin();
+         el != m_sources.end();
+         ++el)
     {
-      m_source.add(el.second, *this, el.first);
+      add_list.priority = el->first;
+      el->second.visit(add_list);
     }
     return m_source;
   }
@@ -347,7 +408,7 @@ struct URI_parser
       throw_error("Priority should be a value between 0 and 100");
 
     cdk::ds::TCPIP endpoint(host, port);
-    m_hosts.emplace(priority, endpoint);
+    m_sources.emplace(priority, endpoint);
   }
 
   void host(unsigned short priority,
@@ -356,9 +417,21 @@ struct URI_parser
     if (priority > (max_priority+1))
       throw_error("Priority should be a value between 0 and 100");
 
-    cdk::ds::TCPIP endpoint(host);
-    m_hosts.emplace(priority, endpoint);
+    m_sources.emplace(priority, cdk::ds::TCPIP(host));
   }
+
+#ifndef _WIN32
+  // Report Unix socket path.
+  virtual void socket(unsigned short priority,
+                      const std::string &socket_path) override
+  {
+    if (priority > (max_priority+1))
+      throw_error("Priority should be a value between 0 and 100");
+
+    m_sources.emplace(priority, cdk::ds::Unix_socket(socket_path));
+
+  }
+#endif //_WIN32
 
   virtual void schema(const std::string &db) override
   {
@@ -454,6 +527,7 @@ Session::Session(SessionSettings settings)
 
 
       string user;
+      string database;
 
       if (settings.has_option(SessionSettings::USER))
       {
@@ -464,12 +538,9 @@ Session::Session(SessionSettings settings)
         throw Error("User not defined!");
       }
 
-      cdk::ds::TCPIP::Options opt(user, has_pwd ? &pwd_str : NULL);
-
       if (settings.has_option(SessionSettings::DB))
-        opt.set_database(
-              settings.find(SessionSettings::DB).get<string>()
-            );
+        database = settings.find(SessionSettings::DB).get<string>();
+
 
 
       if (settings.has_option(SessionSettings::SSL_MODE) ||
@@ -517,13 +588,12 @@ Session::Session(SessionSettings settings)
 #endif
       }
 
-#ifdef WITH_SSL
-      opt.set_tls(opt_ssl);
-#endif
+
 
       Host_sources source;
 
       std::string host = "localhost";
+      std::string socket;
       unsigned port = DEFAULT_MYSQLX_PORT;
       unsigned priority = 0;
 
@@ -540,9 +610,11 @@ Session::Session(SessionSettings settings)
         store values in port and priority variables.
       */
 
-      auto port_prio = [&it, &settings, &port, &priority]()
+      auto port_prio = [&it, &settings, &port, &priority](bool with_port)
       {
-        if (it != settings.end() && it->first ==SessionSettings::PORT)
+        if (with_port &&
+            it != settings.end() &&
+            it->first ==SessionSettings::PORT)
         {
           port = it->second;
           if (port > 65535U)
@@ -570,7 +642,23 @@ Session::Session(SessionSettings settings)
 
       do
       {
+#ifndef _WIN32
+        if (it != settings.end() && it->first ==SessionSettings::SOCKET)
+        {
+          if (singlehost)
+            throw Error("On multiple hosts, HOST option can't be skipped.");
 
+          add = true;
+          priority = 0;
+
+          socket = it->second.get<string>();
+
+          ++it;
+
+          port_prio(false);
+
+        }else
+#endif //_WIN32
         if (it != settings.end() && it->first ==SessionSettings::HOST)
         {
           if (singlehost)
@@ -587,7 +675,7 @@ Session::Session(SessionSettings settings)
 
           ++it;
 
-          port_prio();
+          port_prio(true);
 
         }
         else if (it->first ==SessionSettings::PORT)
@@ -596,7 +684,7 @@ Session::Session(SessionSettings settings)
           {
             add = true;
             singlehost = true;
-            port_prio();
+            port_prio(true);
           }
           else
           {
@@ -613,9 +701,32 @@ Session::Session(SessionSettings settings)
 
         if (add || (it == settings.end() && !initialized))
         {
-          source.add(cdk::ds::TCPIP( host, static_cast<unsigned short>(port)),
-                     static_cast<cdk::ds::TCPIP::Options>(opt),
-                     static_cast<unsigned short>(priority));
+          if (socket.empty())
+          {
+            cdk::ds::TCPIP::Options opt(user, has_pwd ? &pwd_str : NULL );
+#ifdef WITH_SSL
+            opt.set_tls(opt_ssl);
+#endif
+            opt.set_database(database);
+
+            source.add(cdk::ds::TCPIP( host, static_cast<unsigned short>(port)),
+                       opt,
+                       static_cast<unsigned short>(priority));
+          }
+#ifndef _WIN32
+          else
+          {
+            cdk::ds::Unix_socket::Options opt(user, has_pwd ? &pwd_str : NULL );
+
+            opt.set_database(database);
+
+            source.add(cdk::ds::Unix_socket( socket),
+                       opt,
+                       static_cast<unsigned short>(priority));
+
+            socket.clear();
+          }
+#endif //_WIN32
 
           initialized = true;
 
