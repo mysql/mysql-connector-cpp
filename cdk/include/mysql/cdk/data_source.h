@@ -240,6 +240,10 @@ public:
   Options()
   {}
 
+  Options(const ds::Options<Protocol_options>& opt)
+    : ds::Options<Protocol_options>(opt)
+  {}
+
   Options(const string &usr, const std::string *pwd =NULL)
     : ds::Options<Protocol_options>(usr, pwd)
   {}
