@@ -520,6 +520,7 @@ public:
   const cdk::string* database() { return m_tcp_opts.database(); }
   const std::string get_host();
   unsigned int get_port();
+  unsigned int get_auth_method();
   unsigned int get_priority();
   const std::string get_user();
   const std::string* get_password();

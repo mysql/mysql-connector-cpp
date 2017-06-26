@@ -174,6 +174,7 @@ typedef object_id* MYSQLX_GUID;
 #define MYSQLX_ERROR_MIX_PRIORITY "Mixing hosts with and without priority is not allowed"
 #define MYSQLX_ERROR_DUPLICATED_OPTION "Option already defined"
 #define MYSQLX_ERROR_MAX_PRIORITY "Priority should be a value between 0 and 100"
+#define MYSQLX_ERROR_AUTH_METHOD "Unknown authentication method"
 
 
 /* Opaque structures*/
@@ -356,7 +357,8 @@ typedef enum mysqlx_opt_type_enum
   MYSQLX_OPT_SSL_MODE = 6,
   /** path to a PEM file specifying trusted root certificates */
   MYSQLX_OPT_SSL_CA = 7,
-  MYSQLX_OPT_PRIORITY = 8,
+  MYSQLX_OPT_PRIORITY = 8,    /**< Host priority for failover configurations */
+  MYSQLX_OPT_AUTH = 9,        /**< Authentication method */
   LAST
 }
 mysqlx_opt_type_t;
@@ -369,6 +371,7 @@ mysqlx_opt_type_t;
 #define OPT_SSL_MODE(A) MYSQLX_OPT_SSL_MODE, (A)
 #define OPT_SSL_CA(A)   MYSQLX_OPT_SSL_CA, (A)
 #define OPT_PRIORITY(A) MYSQLX_OPT_PRIORITY, (unsigned int)(A)
+#define OPT_AUTH(A)     MYSQLX_OPT_AUTH, (unsigned int)(A)
 
 /**
   Session SSL mode values for use with `mysqlx_session_option_get()`
@@ -394,6 +397,25 @@ typedef enum mysqlx_ssl_mode_enum
                                     to which the connection is attempted.*/
 }
 mysqlx_ssl_mode_t;
+
+/**
+  Authentication method values for use with `mysqlx_session_option_get()`
+  and `mysqlx_session_option_set()` functions setting or getting
+  MYSQLX_OPT_AUTH option.
+*/
+
+typedef enum mysqlx_auth_method_enum
+{
+  MYSQLX_AUTH_PLAIN = 0,       /**< Plain text authentication method.
+                                    By default used in SSL connections. */
+  MYSQLX_AUTH_MYSQL41 = 1,     /**< Authention method where the password is
+                                    stored in MySQL 4.1 style. By default
+                                    used in unencrypted connections. */
+  MYSQLX_AUTH_EXTERNAL = 2     /**< External authentication handled by other
+                                    means than the standard MySQL server auth */
+}
+mysqlx_auth_method_t;
+
 
 /**
   Constants for defining the View algorithm using

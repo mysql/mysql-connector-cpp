@@ -308,7 +308,7 @@ const char* opt_name(mysqlx_opt_type_t opt)
 {
   switch (opt)
   {
-  case MYSQLX_OPT_HOST: return "hoar";
+  case MYSQLX_OPT_HOST: return "host";
   case MYSQLX_OPT_PORT: return "port";
   case MYSQLX_OPT_USER: return "user";
   case MYSQLX_OPT_PWD: return "pwd";
@@ -493,6 +493,21 @@ unsigned int mysqlx_session_options_struct::get_ssl_mode()
 (priority == 0 && host_is_set &&  m_source_state == source_state::priority)) \
   throw Mysqlx_exception(MYSQLX_ERROR_MIX_PRIORITY)
 
+cdk::ds::mysqlx::Protocol_options::auth_method_t uint_to_auth_method(unsigned int m)
+{
+  switch (m)
+  {
+    case MYSQLX_AUTH_PLAIN:
+      return cdk::ds::mysqlx::Protocol_options::PLAIN;
+    case MYSQLX_AUTH_MYSQL41:
+      return cdk::ds::mysqlx::Protocol_options::MYSQL41;
+    case MYSQLX_AUTH_EXTERNAL:
+      return cdk::ds::mysqlx::Protocol_options::EXTERNAL;
+    default:
+      throw Mysqlx_exception(MYSQLX_ERROR_AUTH_METHOD);
+  }
+  return cdk::ds::mysqlx::Protocol_options::PLAIN;
+}
 
 void mysqlx_session_options_struct::set_multiple_options(va_list args)
 {
@@ -566,6 +581,10 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
           if (char_data == NULL)
             char_data = "";
           m_tcp_opts.set_database(char_data);
+          break;
+        case MYSQLX_OPT_AUTH:
+          uint_data = va_arg(args, unsigned int);
+          m_tcp_opts.set_auth_method(uint_to_auth_method(uint_data));
           break;
 
 #ifdef WITH_SSL
@@ -644,6 +663,22 @@ unsigned int mysqlx_session_options_struct::get_priority()
 
   unsigned short prio = m_host_list[m_host_list.size() - 1].first;
   return prio ? prio - 1 : 0;
+}
+
+unsigned int mysqlx_session_options_struct::get_auth_method()
+{
+  switch (m_tcp_opts.auth_method())
+  {
+  case cdk::ds::mysqlx::Protocol_options::PLAIN:
+    return MYSQLX_AUTH_PLAIN;
+  case cdk::ds::mysqlx::Protocol_options::MYSQL41:
+    return MYSQLX_AUTH_MYSQL41;
+  case cdk::ds::mysqlx::Protocol_options::EXTERNAL:
+    return MYSQLX_AUTH_EXTERNAL;
+  default:
+    throw Mysqlx_exception(MYSQLX_ERROR_AUTH_METHOD);
+  }
+  return MYSQLX_AUTH_PLAIN;
 }
 
 unsigned int mysqlx_session_options_struct::get_port()
@@ -731,7 +766,7 @@ void mysqlx_session_options_struct::key_val(const std::string& key, const std::s
         { "disabled", SSL_MODE_DISABLED },
         { "required", SSL_MODE_REQUIRED },
         { "verify_ca", SSL_MODE_VERIFY_CA },
-        { "verify_identity", SSL_MODE_VERIFY_IDENTITY },
+        { "verify_identity", SSL_MODE_VERIFY_IDENTITY }
       };
 
       std::string lc_val;
@@ -755,6 +790,31 @@ void mysqlx_session_options_struct::key_val(const std::string& key, const std::s
 #else
     set_diagnostic(MYSQLX_ERROR_NO_TLS_SUPPORT, 0);
 #endif
+  }
+  else if (lc_key == "auth")
+  {
+    static std::map<std::string,
+                    cdk::ds::mysqlx::Protocol_options::auth_method_t>
+                    auth_map =
+    {
+      { "plain", cdk::ds::mysqlx::Protocol_options::PLAIN },
+      { "mysql41", cdk::ds::mysqlx::Protocol_options::MYSQL41 },
+      { "external", cdk::ds::mysqlx::Protocol_options::EXTERNAL }
+    };
+
+    std::string lc_val;
+    lc_val.resize(val.size());
+    std::transform(val.begin(), val.end(), lc_val.begin(), ::tolower);
+    try
+    {
+      m_tcp_opts.set_auth_method(auth_map.at(lc_val));
+    }
+    catch (const std::out_of_range&)
+    {
+      throw Mysqlx_exception(
+        std::string(MYSQLX_ERROR_AUTH_METHOD).
+                    append(" ").append(lc_key));
+    }
   }
 }
 

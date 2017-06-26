@@ -1712,6 +1712,10 @@ mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
       CHECK_OUTPUT_BUF(uint_data, unsigned int*)
       *uint_data = opt->get_port();
     break;
+    case MYSQLX_OPT_AUTH:
+      CHECK_OUTPUT_BUF(uint_data, unsigned int*)
+      *uint_data = opt->get_auth_method();
+    break;
     case MYSQLX_OPT_PRIORITY:
       CHECK_OUTPUT_BUF(uint_data, unsigned int*)
       *uint_data = opt->get_priority();

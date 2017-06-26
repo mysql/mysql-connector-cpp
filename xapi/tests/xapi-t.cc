@@ -1153,6 +1153,179 @@ TEST_F(xapi, failover_test_url)
 }
 
 
+TEST_F(xapi, auth_method)
+{
+  char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
+  int conn_err_code = 0;
+  mysqlx_session_t *local_sess = NULL;
+  mysqlx_session_options_t *opt = mysqlx_session_options_new();
+  unsigned int auth_method = 0;
+
+  authenticate();
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                       OPT_HOST(m_xplugin_host), OPT_PORT(m_port),
+                       OPT_USER(m_xplugin_usr), OPT_PWD(m_xplugin_pwd),
+                       PARAM_END));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                       OPT_SSL_MODE(SSL_MODE_DISABLED),
+                       OPT_AUTH(MYSQLX_AUTH_PLAIN),
+                       PARAM_END));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_AUTH,
+                                                 &auth_method));
+  EXPECT_EQ(MYSQLX_AUTH_PLAIN, auth_method);
+
+  local_sess = mysqlx_get_session_from_options(opt, conn_error, &conn_err_code);
+  if (local_sess)
+  {
+    mysqlx_session_close(local_sess);
+    FAIL() << "Session should not be established";
+  }
+  else
+    cout << "Expected error: " << conn_error << endl;
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                       OPT_SSL_MODE(SSL_MODE_REQUIRED),
+                       OPT_AUTH(MYSQLX_AUTH_PLAIN),
+                       PARAM_END));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_AUTH,
+                                                 &auth_method));
+  EXPECT_EQ(MYSQLX_AUTH_PLAIN, auth_method);
+  local_sess = mysqlx_get_session_from_options(opt, conn_error, &conn_err_code);
+  if (!local_sess)
+    FAIL() << "Failed to establish session";
+  mysqlx_session_close(local_sess);
+  local_sess = NULL;
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                       OPT_SSL_MODE(SSL_MODE_DISABLED),
+                       OPT_AUTH(MYSQLX_AUTH_MYSQL41),
+                       PARAM_END));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_AUTH,
+                                                 &auth_method));
+  EXPECT_EQ(MYSQLX_AUTH_MYSQL41, auth_method);
+  local_sess = mysqlx_get_session_from_options(opt, conn_error, &conn_err_code);
+  if (!local_sess)
+    FAIL() << "Failed to establish session";
+
+  mysqlx_session_close(local_sess);
+  local_sess = NULL;
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                       OPT_SSL_MODE(SSL_MODE_REQUIRED),
+                       OPT_AUTH(MYSQLX_AUTH_MYSQL41),
+                       PARAM_END));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_AUTH,
+                                                 &auth_method));
+  EXPECT_EQ(MYSQLX_AUTH_MYSQL41, auth_method);
+  local_sess = mysqlx_get_session_from_options(opt, conn_error, &conn_err_code);
+  if (!local_sess)
+    FAIL() << "Failed to establish session";
+
+  mysqlx_session_close(local_sess);
+  local_sess = NULL;
+
+  mysqlx_free_options(opt);
+
+  std::stringstream conn;
+  conn << m_xplugin_usr;
+  if (m_xplugin_pwd)
+    conn << ":" << m_xplugin_pwd;
+  conn << "@" << m_xplugin_host << ":" << m_xplugin_port;
+
+  std::string connstr = conn.str().data();
+  local_sess = mysqlx_get_session_from_url(connstr.append("?ssl-mode=disabled&auth=plain").data(),
+                                           conn_error, &conn_err_code);
+  if (local_sess)
+  {
+    mysqlx_session_close(local_sess);
+    FAIL() << "Session should not be established";
+  }
+  else
+    cout << "Expected error: " << conn_error << endl;
+
+  connstr = conn.str().data();
+  local_sess = mysqlx_get_session_from_url(connstr.append("?ssl-mode=disabled&auth=mysql41").data(),
+                                           conn_error, &conn_err_code);
+  if (!local_sess)
+    FAIL() << "Session could not be established";
+
+  connstr = conn.str().data();
+  local_sess = mysqlx_get_session_from_url(connstr.append("?ssl-mode=required&auth=plain").data(),
+                                           conn_error, &conn_err_code);
+  if (!local_sess)
+    FAIL() << "Session could not be established";
+
+  connstr = conn.str().data();
+  local_sess = mysqlx_get_session_from_url(connstr.append("?ssl-mode=required&auth=mysql41").data(),
+                                           conn_error, &conn_err_code);
+  if (!local_sess)
+    FAIL() << "Session could not be established";
+}
+
+
+TEST_F(xapi, auth_method_external)
+{
+  char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
+  int conn_err_code = 0;
+  mysqlx_session_t *local_sess = NULL;
+  mysqlx_session_options_t *opt = mysqlx_session_options_new();
+  unsigned int auth_method = 0;
+
+  authenticate();
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                       OPT_HOST(m_xplugin_host), OPT_PORT(m_port),
+                       OPT_USER(m_xplugin_usr), OPT_PWD(m_xplugin_pwd),
+                       PARAM_END));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                       OPT_SSL_MODE(SSL_MODE_REQUIRED),
+                       OPT_AUTH(MYSQLX_AUTH_EXTERNAL),
+                       PARAM_END));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_AUTH,
+                                                 &auth_method));
+  EXPECT_EQ(MYSQLX_AUTH_EXTERNAL, auth_method);
+
+  local_sess = mysqlx_get_session_from_options(opt, conn_error, &conn_err_code);
+  if (local_sess)
+  {
+    mysqlx_session_close(local_sess);
+    FAIL() << "Session should not be established";
+  }
+  else
+    cout << "Expected error: " << conn_error << endl;
+
+  mysqlx_session_close(local_sess);
+  local_sess = NULL;
+
+  mysqlx_free_options(opt);
+
+  std::stringstream conn;
+  conn << m_xplugin_usr;
+  if (m_xplugin_pwd)
+    conn << ":" << m_xplugin_pwd;
+  conn << "@" << m_xplugin_host << ":" << m_xplugin_port;
+
+  std::string connstr = conn.str().data();
+  local_sess = mysqlx_get_session_from_url(connstr.append("?ssl-mode=required&auth=external").data(),
+                                           conn_error, &conn_err_code);
+  if (local_sess)
+  {
+    mysqlx_session_close(local_sess);
+    FAIL() << "Session should not be established";
+  }
+  else
+    cout << "Expected error: " << conn_error << endl;
+}
+
+
 TEST_F(xapi, conn_options_test)
 {
   SKIP_IF_NO_XPLUGIN

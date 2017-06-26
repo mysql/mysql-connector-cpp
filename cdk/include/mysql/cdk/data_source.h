@@ -152,21 +152,30 @@ class Protocol_options
 class TCPIP::Options
   : public ds::Options<Protocol_options>
 {
+private:
+
+#ifdef WITH_SSL
+  cdk::connection::TLS::Options m_tls_options;
+#endif
+  bool m_auth_method_set;
+  auth_method_t m_auth_method;
+
 public:
 
-  Options()
+  Options() : m_auth_method_set(false),
+              m_auth_method(auth_method_t::MYSQL41)
   {
-    m_auth_method = auth_method_t::MYSQL41;
   }
 
   Options(const string &usr, const std::string *pwd =NULL)
-    : ds::Options<Protocol_options>(usr, pwd)
+    : ds::Options<Protocol_options>(usr, pwd),
+      m_auth_method_set(false),
+      m_auth_method(auth_method_t::MYSQL41)
   {
     /*
       We don't know if the connection will be over SSL.
       Guessing unencrypted connection and MYSQL41 auth.
     */
-    m_auth_method = auth_method_t::MYSQL41;
   }
 
 #ifdef WITH_SSL
@@ -174,11 +183,19 @@ public:
   void set_tls(const cdk::connection::TLS::Options& options)
   {
     m_tls_options = options;
-    // Use PLAIN auth for SSL connections
-    if (options.ssl_mode() == cdk::connection::TLS::Options::SSL_MODE::DISABLED)
-      m_auth_method = auth_method_t::MYSQL41;
-    else
-      m_auth_method = auth_method_t::PLAIN;
+
+    /*
+      The authentication method should not be changed
+      if the user code set it specifically
+    */
+    if (!m_auth_method_set)
+    {
+      // Use PLAIN auth for SSL connections
+      if (options.ssl_mode() == cdk::connection::TLS::Options::SSL_MODE::DISABLED)
+        m_auth_method = auth_method_t::MYSQL41;
+      else
+        m_auth_method = auth_method_t::PLAIN;
+    }
   }
 
   const cdk::connection::TLS::Options& get_tls() const
@@ -191,15 +208,8 @@ public:
   void set_auth_method(auth_method_t auth_method)
   {
     m_auth_method = auth_method;
+    m_auth_method_set = true;
   }
-
-private:
-
-#ifdef WITH_SSL
-  cdk::connection::TLS::Options m_tls_options;
-#endif
-  auth_method_t m_auth_method;
-
 
   auth_method_t auth_method() const
   {
