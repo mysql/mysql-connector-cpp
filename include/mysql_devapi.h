@@ -928,6 +928,7 @@ public:
   x(DB)            /*!< default database */                                      \
   x(SSL_MODE)      /*!< define `SSLMode` option to be used */                    \
   x(SSL_CA)        /*!< path to a PEM file specifying trusted root certificates*/\
+  x(AUTH)          /*!< authentication method, PLAIN, MYSQL41, etc.*/            \
 
   #define OPTIONS_ENUM(x) x,
 
@@ -971,6 +972,29 @@ public:
   enum class SSLMode
   {
     SSL_MODE_TYPES(SSL_ENUM)
+  };
+
+
+#define AUTH_METHODS(x)\
+  x(PLAIN)        /*!< Plain text authentication method. The password is
+                       sent as a clear text. This method is used by
+                       default in encrypted connections. */ \
+  x(MYSQL41)      /*!< Authentication method supported by MySQL 4.1 and newer.
+                       The password is hashed before being sent to the server.
+                       This method is used by default in unencrypted
+                       connections */ \
+  x(EXTERNAL)     /*!< External authentication when the server establishes
+                       the user authenticity by other means such as SSL/x509
+                       certificates. Currently not supported by X Plugin */ \
+
+#define AUTH_ENUM(x) x,
+
+  /**
+     Modes to be used by @ref SSL_MODE option
+   */
+  enum class AuthMethod
+  {
+    AUTH_METHODS(AUTH_ENUM)
   };
 
   SessionSettings(){}
@@ -1277,6 +1301,14 @@ private:
       throw Error("SessionSettings::SSLMode value can only be used on SSL_MODE setting.");
     return unsigned(m);
   }
+
+  static Value opt_val(Options opt, AuthMethod m)
+  {
+    if (opt != AUTH)
+      throw Error("SessionSettings::AuthMethod value can only be used on AUTH setting.");
+    return unsigned(m);
+  }
+
 
   void do_set(bool) {}
 

@@ -265,6 +265,25 @@ void set_ssl_mode(cdk::connection::TLS::Options &tls_opt,
 
 #endif //WITH_SSL
 
+cdk::ds::mysqlx::Protocol_options::auth_method_t get_auth_method(const std::string &name)
+{
+#define map_auth(x) { #x, cdk::ds::mysqlx::Protocol_options::x },
+  static std::map<std::string, cdk::ds::mysqlx::Protocol_options::auth_method_t>
+    auth_methods{ AUTH_METHODS(map_auth) };
+
+  try {
+    return auth_methods.at(name);
+  }
+  catch (const std::out_of_range&)
+  {
+    std::string msg = "Invalid auth value: " + std::string(name);
+    throw_error(msg.c_str());
+    // Quiet compiler warnings
+    return cdk::ds::mysqlx::Protocol_options::MYSQL41;
+  }
+}
+
+
 struct Host_sources : public cdk::ds::Multi_source
 {
 
@@ -412,6 +431,13 @@ struct URI_parser
           " without TLS support."
           );
 #endif
+    } else if (lc_key == "auth")
+    {
+      std::string auth;
+      auth.resize(val.size());
+      std::transform(val.begin(), val.end(), auth.begin(), ::toupper);
+
+      set_auth_method(get_auth_method(auth));
     } else
     {
       std::stringstream err;
@@ -520,6 +546,30 @@ Session::Session(SessionSettings settings)
 #ifdef WITH_SSL
       opt.set_tls(opt_ssl);
 #endif
+
+      /*
+        Setting Authentication method after SSL options
+        to override the defaults if necessary
+      */
+      if (settings.has_option(SessionSettings::AUTH))
+      {
+        SessionSettings::AuthMethod am =
+          SessionSettings::AuthMethod(
+            settings.find(SessionSettings::AUTH).get<unsigned>());
+
+        switch(am)
+        {
+        case SessionSettings::AuthMethod::PLAIN:
+          opt.set_auth_method(cdk::ds::mysqlx::Protocol_options::PLAIN);
+        break;
+        case SessionSettings::AuthMethod::MYSQL41:
+          opt.set_auth_method(cdk::ds::mysqlx::Protocol_options::MYSQL41);
+        break;
+        case SessionSettings::AuthMethod::EXTERNAL:
+          opt.set_auth_method(cdk::ds::mysqlx::Protocol_options::EXTERNAL);
+        break;
+        }
+      }
 
       Host_sources source;
 
