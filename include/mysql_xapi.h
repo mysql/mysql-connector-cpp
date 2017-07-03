@@ -357,12 +357,18 @@ typedef enum mysqlx_opt_type_enum
   /** path to a PEM file specifying trusted root certificates */
   MYSQLX_OPT_SSL_CA = 7,
   MYSQLX_OPT_PRIORITY = 8,
+#ifndef _WIN32
+  MYSQLX_OPT_SOCKET = 9,
+#endif
   LAST
 }
 mysqlx_opt_type_t;
 
 #define OPT_HOST(A)     MYSQLX_OPT_HOST, (A)
 #define OPT_PORT(A)     MYSQLX_OPT_PORT, (unsigned int)(A)
+#ifndef _WIN32
+#define OPT_SOCKET(A)   MYSQLX_OPT_SOCKET, (A)
+#endif //_WIN32
 #define OPT_USER(A)     MYSQLX_OPT_USER, (A)
 #define OPT_PWD(A)      MYSQLX_OPT_PWD, (A)
 #define OPT_DB(A)       MYSQLX_OPT_DB, (A)

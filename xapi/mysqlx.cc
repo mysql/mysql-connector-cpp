@@ -1712,6 +1712,12 @@ mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
       CHECK_OUTPUT_BUF(uint_data, unsigned int*)
       *uint_data = opt->get_port();
     break;
+#ifndef _WIN32
+    case MYSQLX_OPT_SOCKET:
+      CHECK_OUTPUT_BUF(char_data, char*)
+      strcpy(char_data, opt->get_socket().data());
+    break;
+#endif
     case MYSQLX_OPT_PRIORITY:
       CHECK_OUTPUT_BUF(uint_data, unsigned int*)
       *uint_data = opt->get_priority();
