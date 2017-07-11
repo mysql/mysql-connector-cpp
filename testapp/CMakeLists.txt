@@ -66,7 +66,7 @@ endif()
 
 
 #
-# Find MySQL Connector/C++ 8.0 at specified location.
+# Find MySQL Connector/C++ at specified location.
 #
 
 set(CONCPLS_INCLUDES "${WITH_CONCPP}/include")
@@ -246,7 +246,7 @@ ENDIF()
 
 
 #
-# Test program that uses MySQL Connector/C++ 2.0.
+# Test program that uses MySQL Connector/C++.
 #
 
 INCLUDE_DIRECTORIES(${CONCPLS_INCLUDES})

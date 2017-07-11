@@ -46,6 +46,9 @@ DOCUMENTATION LOCATION
 You can find the documentation on the MySQL website at
 <http://dev.mysql.com/doc/dev/connector-cpp/>
 
+For the new features/bugfix history, see release notes at
+<https://dev.mysql.com/doc/relnotes/connector-cpp/en/news-8-0-5.html>.
+Note that the initial releases used major version 2.0.
 
 CONTACT
 =======
