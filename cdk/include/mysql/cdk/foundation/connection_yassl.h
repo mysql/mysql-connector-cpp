@@ -37,14 +37,14 @@ namespace connection {
 
 
 class TLS
-  : public TCPIP_base
+  : public Socket_base
   , opaque_impl<TLS>
 {
 public:
 
   class Options;
 
-  TLS(TCPIP_base* tcpip,
+  TLS(Socket_base* tcpip,
       const Options& Opts);
 
 
@@ -54,7 +54,7 @@ public:
   class Write_some_op;
 
 private:
-  TCPIP_base::Impl& get_base_impl();
+  Socket_base::Impl& get_base_impl();
 };
 
 
@@ -119,7 +119,7 @@ protected:
 };
 
 
-class TLS::Read_op : public TCPIP_base::IO_op
+class TLS::Read_op : public Socket_base::IO_op
 {
 public:
   Read_op(TLS &conn, const buffers &bufs, time_t deadline = 0);
@@ -136,7 +136,7 @@ private:
 };
 
 
-class TLS::Read_some_op : public TCPIP_base::IO_op
+class TLS::Read_some_op : public Socket_base::IO_op
 {
 public:
   Read_some_op(TLS &conn, const buffers &bufs, time_t deadline = 0);
@@ -151,7 +151,7 @@ private:
 };
 
 
-class TLS::Write_op : public TCPIP_base::IO_op
+class TLS::Write_op : public Socket_base::IO_op
 {
 public:
   Write_op(TLS &conn, const buffers &bufs, time_t deadline = 0);
@@ -168,7 +168,7 @@ private:
 };
 
 
-class TLS::Write_some_op : public TCPIP_base::IO_op
+class TLS::Write_some_op : public Socket_base::IO_op
 {
 public:
   Write_some_op(TLS &conn, const buffers &bufs, time_t deadline = 0);

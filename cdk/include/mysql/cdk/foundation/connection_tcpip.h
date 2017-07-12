@@ -93,13 +93,17 @@ public:
 };
 
 
-class TCPIP_base
-  : public Connection_class<TCPIP_base>
+class Socket_base
+  : public Connection_class<Socket_base>
 {
 public:
 
   class Impl;
   class IO_op;
+  class Read_op;
+  class Read_some_op;
+  class Write_op;
+  class Write_some_op;
 
   // Connection interface
 
@@ -124,7 +128,7 @@ protected:
   virtual Impl& get_base_impl() =0;
   const Impl& get_base_impl() const
   {
-    return const_cast<TCPIP_base*>(this)->get_base_impl();
+    return const_cast<Socket_base*>(this)->get_base_impl();
   }
 
   friend class IO_op;
@@ -134,30 +138,44 @@ protected:
 
 
 class TCPIP
-  : public TCPIP_base
+  : public Socket_base
   , opaque_impl<TCPIP>
 {
 public:
-  class Read_op;
-  class Read_some_op;
-  class Write_op;
-  class Write_some_op;
 
   TCPIP(const std::string& host, unsigned short port);
 
 private:
 
-  TCPIP_base::Impl& get_base_impl();
+  Socket_base::Impl& get_base_impl();
 };
 
 
-class TCPIP_base::IO_op : public Base::IO_op
+#ifndef _WIN32
+class Unix_socket
+  : public Socket_base
+  , opaque_impl<Unix_socket>
+{
+public:
+
+  Unix_socket(const std::string& path);
+
+private:
+
+  Socket_base::Impl& get_base_impl();
+};
+#endif //_WIN32
+
+
+// Socket_base
+
+class Socket_base::IO_op : public Base::IO_op
 {
 protected:
 
-  typedef TCPIP_base::Impl Impl;
+  typedef Socket_base::Impl Impl;
 
-  IO_op(TCPIP_base &str, const buffers &bufs, time_t deadline =0)
+  IO_op(Socket_base &str, const buffers &bufs, time_t deadline =0)
     :  Base::IO_op(str, bufs, deadline)
   {}
 
@@ -173,10 +191,10 @@ protected:
 };
 
 
-class TCPIP::Read_op : public IO_op
+class Socket_base::Read_op : public IO_op
 {
 public:
-  Read_op(TCPIP &conn, const buffers &bufs, time_t deadline = 0);
+  Read_op(Socket_base &conn, const buffers &bufs, time_t deadline = 0);
 
   virtual bool do_cont();
   virtual void do_wait();
@@ -187,10 +205,10 @@ private:
 };
 
 
-class TCPIP::Read_some_op : public IO_op
+class Socket_base::Read_some_op : public IO_op
 {
 public:
-  Read_some_op(TCPIP &conn, const buffers &bufs, time_t deadline = 0);
+  Read_some_op(Socket_base &conn, const buffers &bufs, time_t deadline = 0);
 
   virtual bool do_cont();
   virtual void do_wait();
@@ -200,10 +218,10 @@ private:
 };
 
 
-class TCPIP::Write_op : public IO_op
+class Socket_base::Write_op : public IO_op
 {
 public:
-  Write_op(TCPIP &conn, const buffers &bufs, time_t deadline = 0);
+  Write_op(Socket_base &conn, const buffers &bufs, time_t deadline = 0);
 
   virtual bool do_cont();
   virtual void do_wait();
@@ -214,10 +232,10 @@ private:
 };
 
 
-class TCPIP::Write_some_op : public IO_op
+class Socket_base::Write_some_op : public IO_op
 {
 public:
-  Write_some_op(TCPIP &conn, const buffers &bufs, time_t deadline = 0);
+  Write_some_op(Socket_base &conn, const buffers &bufs, time_t deadline = 0);
 
   virtual bool do_cont();
   virtual void do_wait();

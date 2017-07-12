@@ -1243,6 +1243,23 @@ TEST_F(Session_core, failover)
     ms.add(ds_correct, options_db2, highest_priority - 1);
     ms.add(ds_correct, options_db3, highest_priority - 1);
 
+#ifndef _WIN32
+    ds::Unix_socket ds_correct_unix("/tmp/varxpl/tmp/mysqlx.1.sock");
+    ds::Unix_socket::Options options_unix_db1("root");
+    options_db1.set_database("failover_test_unix_1");
+
+    ds::Unix_socket::Options options_unix_db2("root");
+    options_db2.set_database("failover_test_unix_2");
+
+    ds::Unix_socket::Options options_unix_db3("root");
+    options_db3.set_database("failover_test_unix_3");
+
+    ms.add(ds_correct_unix, options_unix_db1, highest_priority - 1);
+    ms.add(ds_correct_unix, options_unix_db2, highest_priority - 1);
+    ms.add(ds_correct_unix, options_unix_db3, highest_priority - 1);
+
+#endif
+
     struct : cdk::Row_processor
     {
       // Row_processor callbacks
@@ -1324,3 +1341,116 @@ TEST_F(Session_core, failover)
   }
 
 }
+
+
+TEST_F(Session_core, auth_method)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  try
+  {
+
+    Session sess(this);
+    {
+      Reply r(sess.sql("CREATE SCHEMA IF NOT EXISTS auth_test_db"));
+      r.wait();
+      if (r.entry_count()) FAIL() << "Error creating schema";
+    }
+
+    using cdk::ds::mysqlx::Protocol_options;
+    ds::TCPIP ds(m_host, m_port);
+    ds::TCPIP::Options options("root");
+    options.set_database("auth_test_db");
+
+    struct : cdk::Row_processor
+    {
+      std::string m_db_name;
+      // Row_processor callbacks
+      virtual bool row_begin(row_count_t row) { return true; }
+      virtual void row_end(row_count_t row) {}
+      virtual void field_null(col_count_t pos) {}
+      virtual size_t field_begin(col_count_t pos, size_t) { return  SIZE_MAX; }
+
+      size_t field_data(col_count_t pos, bytes data)
+      {
+        EXPECT_EQ(0, pos);
+        cdk::foundation::Codec<cdk::foundation::Type::STRING> codec;
+        cdk::string db;
+        // Trim trailing \0
+        bytes d1(data.begin(), data.end() - 1);
+        codec.from_bytes(d1, db);
+        cout << "current schema: " << db << endl;
+        m_db_name = db;
+        return 0;
+      }
+
+      virtual void field_end(col_count_t) {}
+      virtual void end_of_data() {}
+      std::string get_db_name() { return m_db_name; }
+    }
+    prc;
+
+    for (int i = 0; i < 2; ++i)
+    {
+      switch (i)
+      {
+      case 0:
+        options.set_auth_method(Protocol_options::MYSQL41);
+        break;
+      case 1:
+        options.set_auth_method(Protocol_options::PLAIN);
+        break;
+      }
+      cdk::Session s(ds, options);
+      if (!s.is_valid())
+        FAIL() << "Session is not valid";
+
+      Reply r(s.sql("SELECT DATABASE()"));
+      r.wait();
+      Cursor c(r);
+      c.get_rows(prc);
+      c.wait();
+
+      if (prc.m_db_name.compare("auth_test_db"))
+        FAIL() << "Unexpected database name";
+    }
+
+  }
+  catch (Error &e)
+  {
+    FAIL() << "CDK error: " << e << endl;
+  }
+
+}
+
+TEST_F(Session_core, external_auth)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  try
+  {
+
+    Session sess(this);
+    {
+      Reply r(sess.sql("CREATE SCHEMA IF NOT EXISTS auth_test_db"));
+      r.wait();
+      if (r.entry_count()) FAIL() << "Error creating schema";
+    }
+
+    using cdk::ds::mysqlx::Protocol_options;
+    ds::TCPIP ds(m_host, m_port);
+    ds::TCPIP::Options options("root");
+    options.set_database("auth_test_db");
+    options.set_auth_method(Protocol_options::EXTERNAL);
+
+    cdk::Session s(ds, options);
+    if (s.is_valid())
+      FAIL() << "Session is not supposed to be valid";
+  }
+  catch (Error &e)
+  {
+    FAIL() << "CDK error: " << e << endl;
+  }
+
+}
+

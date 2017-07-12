@@ -36,7 +36,7 @@ namespace foundation {
 namespace connection {
 
 
-class TCPIP_base::Impl
+class Socket_base::Impl
 {
   class Socket_system_initializer
   {

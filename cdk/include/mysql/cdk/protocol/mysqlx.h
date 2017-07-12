@@ -146,9 +146,9 @@ enum ServerMessages_Type {
                CrudUpdate, CRUD_UPDATE) \
     MSG_CLIENT(X, Mysqlx::Crud::Delete, \
                CrudDelete, CRUD_DELETE) \
-    MSG_CLIENT(X, Mysqlx::Crud::Delete, \
+    MSG_CLIENT(X, Mysqlx::Expect::Open, \
                ExpectOpen, EXPECT_OPEN) \
-    MSG_CLIENT(X, Mysqlx::Crud::Delete, \
+    MSG_CLIENT(X, Mysqlx::Expect::Close, \
                ExpectClose, EXPECT_CLOSE) \
     MSG_CLIENT(X, Mysqlx::Crud::CreateView, CreateView, CRUD_CREATE_VIEW) \
     MSG_CLIENT(X, Mysqlx::Crud::ModifyView, ModifyView, CRUD_MODIFY_VIEW) \
@@ -416,6 +416,23 @@ typedef cdk::api::Columns Columns;
 
 typedef cdk::api::View_options  View_options;
 
+
+struct Expectation_processor
+{
+  virtual void set(uint32_t key) = 0;
+  virtual void set(uint32_t key, bytes) = 0;
+  virtual void unset(uint32_t key) = 0;
+};
+
+#undef NO_ERROR
+
+struct Expectations:
+  cdk::api::Expr_list< cdk::api::Expr_base<Expectation_processor> >
+{
+  /* Only these two options are defined in mysqlx_expect.proto */
+  enum { NO_ERROR = 1, FIELD_EXISTS = 2 };
+};
+
 }  // api namespace
 
 
@@ -597,6 +614,8 @@ public:
                      const api::Args_map *args = NULL);
   Op& snd_DropView(const api::Db_obj &obj, bool if_exists);
 
+  Op& snd_Expect_Open(api::Expectations &exp, bool reset = false);
+  Op& snd_Expect_Close();
 
   Op& rcv_AuthenticateReply(Auth_processor &);
   Op& rcv_Reply(Reply_processor &);
