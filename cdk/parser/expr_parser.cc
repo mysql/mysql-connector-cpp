@@ -524,7 +524,7 @@ void Expr_parser_base::parse_column_ident1(Path_prc *prc)
 /**
   The original grammar was:
 
-   documentField ::= ID documentPath? | DOLLAR documentPath
+   documentField ::=  fieldId [documentPath] | "$" [ documentPath ]
 
   Which makes "*", "**.foo" or "*.foo" not valid field specifications
   while "$[3]" is a valid specification.
@@ -533,7 +533,7 @@ void Expr_parser_base::parse_column_ident1(Path_prc *prc)
   are valid:
 
     documentField ::=
-      | DOLLAR documentPathLeadingDot
+      | DOLLAR documentPathLeadingDot?
       | documentPath
 
   The grammar of documentPath was adjusted so that the first
@@ -548,8 +548,11 @@ void Expr_parser_base::parse_document_field(Path_prc *prc, bool prefix)
 {
   if (consume_token(Token::DOLLAR))
   {
-    if (!parse_document_path(prc, true))  // require DOT before members
-      parse_error(L"Expected '.' to start a path after '$'");
+    if (!parse_document_path(prc, true))
+    {
+      // The "$" path which denotes the whole document.
+      prc->whole_document();
+    }
     return;
   }
 
@@ -678,6 +681,9 @@ bool Expr_parser_base::parse_document_path(Path_prc *prc, bool require_dot)
     : public Path_prc
     , public Path_prc::Element_prc
   {
+    using Element_prc::string;
+    using Element_prc::index_t;
+
     Safe_prc<Path_prc> m_prc;
     bool m_started;
 
@@ -729,6 +735,11 @@ bool Expr_parser_base::parse_document_path(Path_prc *prc, bool require_dot)
     {
       list_begin();
       m_prc->list_el()->any_path();
+    }
+
+    void whole_document()
+    {
+      m_prc->whole_document();
     }
 
     Path_el_reporter(Path_prc *prc)
@@ -937,7 +948,7 @@ bool column_ref_from_path(cdk::Doc_path &path, parser::Column_ref &column)
       return this;
     }
 
-    void member(const string &name)
+    void member(const Element_prc::string &name)
     {
       switch (m_len++)
       {
@@ -970,6 +981,11 @@ bool column_ref_from_path(cdk::Doc_path &path, parser::Column_ref &column)
     }
 
     void any_path()
+    {
+      m_ret = false;
+    }
+
+    void whole_document()
     {
       m_ret = false;
     }
@@ -1361,21 +1377,6 @@ Expr_parser_base::left_assoc_binary_op(const Op::Set &ops,
                                        Start lhs, Start rhs,
                                        Processor *prc)
 {
-  /*
-    An optimization under assumption that array or document can never be
-    an argument of binary operator.
-
-    If we see '{' or '[' then we do not expect the binary operator later
-    (the whole expression consists of the LHS only). Thus, there is no need
-    to store LHS for later reporting.
-  */
-
-  if (cur_token_type_is(Token::LCURLY))
-    return parse(DOC, prc);
-
-  if (cur_token_type_is(Token::LSQBRACKET))
-    return parse(ARR, prc);
-
 
   // Store LHS of the expression
 
@@ -1521,25 +1522,18 @@ Expression* Expr_parser_base::parse_or(Processor *prc)
     ilriExpr ::=
             compExpr IS NOT? (NULL|TRUE|FALSE)
         |   compExpr NOT? IN LPAREN argsList? RPAREN
+        |   compExpr NOT? "IN" compExpr
             // TODO: param to ESCAPE should be better defined
         |   compExpr NOT? LIKE compExpr (ESCAPE compExpr)?
         |   compExpr NOT? RLIKE compExpr (ESCAPE compExpr)?
         |   compExpr NOT? BETWEEN compExpr AND compExpr
         |   compExpr NOT? REGEXP compExpr
+
         |   compExpr
  */
 
 Expression* Expr_parser_base::parse_ilri(Processor *prc)
 {
-  // Array/doc optimization like in left_assoc_binary_op().
-
-  if (cur_token_type_is(Token::LCURLY))
-    return parse(DOC, prc);
-
-  if (cur_token_type_is(Token::LSQBRACKET))
-    return parse(ARR, prc);
-
-
   // Store the first expression.
 
   smart_ptr<Expression> first(parse(COMP, NULL));
@@ -1603,6 +1597,41 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
   case Op::SOUNDS_LIKE:
     if (cur_token_type_is(Keyword::LIKE))
       unsupported(L"Operator SOUNDS LIKE");
+    break;
+  case Op::IS:
+    if (neg)
+      op = Op::IS_NOT;
+    break;
+  case Op::IN:
+    if (!cur_token_type_is(Token::LPAREN))
+    {
+      if (neg)
+        op =Op::NOT_CONT_IN;
+      else
+        op = Op::CONT_IN;
+    }
+    else
+    {
+      if (neg)
+        op =Op::NOT_IN;
+    }
+    break;
+  case Op::LIKE:
+    if (neg)
+      op = Op::NOT_LIKE;
+    break;
+  case Op::RLIKE:
+    if (neg)
+      op = Op::NOT_RLIKE;
+    break;
+  case Op::BETWEEN:
+    if (neg)
+      op = Op::NOT_BETWEEN;
+    break;
+  case Op::REGEXP:
+    if (neg)
+      op = Op::NOT_REGEXP;
+    break;
 
   default: break;
   }
@@ -1618,23 +1647,7 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
 
   if (!prc)
   {
-    // Note: Stored_ilri handles wrapping in "not" operator if needed.
-    prc = stored.reset(new Stored_ilri(first.release(), neg));
-  }
-  else if (neg)
-  {
-    /*
-      In case of negation, the main operator is wrapped in unary "not" operator.
-      We report "not" operator with 1 argument and replace prc with the processor
-      of this single argument. This way the code below will report the main
-      expression as the argument of the "not" operator. Without negation prc
-      will remain pointing at the original processor.
-    */
-
-    not_arg_prc = safe_prc(prc)->scalar()->op(Op::name(Op::NOT));
-    if (not_arg_prc)
-      not_arg_prc->list_begin();
-    prc = safe_prc(not_arg_prc)->list_el();
+    prc = stored.reset(new Stored_ilri(first.release()));
   }
 
   // report the main operator
@@ -1651,6 +1664,7 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
   switch (op)
   {
     case Op::IS:
+    case Op::IS_NOT:
     {
       t = consume_token();
 
@@ -1673,25 +1687,32 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
     }
 
     case Op::IN:
+    case Op::CONT_IN:
+    case Op::NOT_IN:
+    case Op::NOT_CONT_IN:
     {
-      consume_token_throw(
-        Token::LPAREN,
-        L"Expected '(' after IN"
-      );
+      if (consume_token(Token::LPAREN))
+      {
+        // Note: true flag means that strings will be reported as blobs.
+        parse_argslist(aprc, true);
 
-      // Note: true flag means that strings will be reported as blobs.
-      parse_argslist(aprc, true);
-
-      consume_token_throw(
-        Token::RPAREN,
-        L"Expected ')' to close IN(... expression"
-      );
+        consume_token_throw(
+              Token::RPAREN,
+              L"Expected ')' to close IN(... expression"
+              );
+      }
+      else
+      {
+        parse(COMP, aprc->list_el());
+      }
 
       break;
     }
 
     case Op::LIKE:
+    case Op::NOT_LIKE:
     case Op::RLIKE:
+    case Op::NOT_RLIKE:
     {
       parse(COMP, aprc->list_el());
 
@@ -1705,10 +1726,12 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
     }
 
     case Op::REGEXP:
+    case Op::NOT_REGEXP:
       parse(COMP, aprc->list_el());
       break;
 
     case Op::BETWEEN:
+    case Op::NOT_BETWEEN:
       parse(COMP, aprc->list_el());
       consume_token_throw(
         Keyword::AND,

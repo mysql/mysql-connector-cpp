@@ -235,10 +235,13 @@ public:
     MEMBER_ASTERISK = 2,
     ARRAY_INDEX = 3,
     ARRAY_INDEX_ASTERISK = 4,
-    DOUBLE_ASTERISK = 5
+    DOUBLE_ASTERISK = 5,
   };
 
   virtual ~Doc_path() {}
+
+  // The "$" path which denotes the whole document.
+  virtual bool is_whole_document() const = 0;
 
   virtual unsigned length() const =0;
   virtual Type     get_type(unsigned pos) const =0;

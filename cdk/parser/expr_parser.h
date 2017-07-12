@@ -156,11 +156,19 @@ POP_SYS_WARNINGS
   X(LT, "<", {Token::LT}, {})  \
   X(LE, "<=", {Token::LE}, {}) \
   X(IS, "is", {}, {Keyword::IS}) \
+  X(IS_NOT, "is_not", {}, {}) \
   X(IN, "in", {}, {Keyword::IN}) \
+  X(NOT_IN, "not_in", {}, {}) \
+  X(CONT_IN, "cont_in", {}, {}) \
+  X(NOT_CONT_IN, "not_cont_in", {}, {}) \
   X(LIKE, "like", {}, {Keyword::LIKE}) \
+  X(NOT_LIKE, "not_like", {}, {}) \
   X(RLIKE, "regexp", {}, {Keyword::RLIKE}) \
+  X(NOT_RLIKE, "not_regexp", {}, {}) \
   X(BETWEEN, "between", {}, {Keyword::BETWEEN}) \
+  X(NOT_BETWEEN, "not_between", {}, {}) \
   X(REGEXP, "regexp", {}, {Keyword::REGEXP}) \
+  X(NOT_REGEXP, "not_regexp", {}, {}) \
   X(CAST, "cast", {}, {Keyword::CAST}) \
   X(SOUNDS_LIKE, "sounds like", {}, {Keyword::SOUNDS})
 
@@ -1028,6 +1036,9 @@ public:
   void process(Processor &prc) const
   {
     const_cast<Expr_parser_base*>(m_parser.get())->parse_document_field(&prc);
+
+    if (m_parser->tokens_available())
+      m_parser->parse_error(L"Unexpected characters at the end");
   }
 };
 
@@ -1526,10 +1537,8 @@ struct Stored_ilri
   using Stored_expr::process;
   using Stored_scalar::process;
 
-  bool m_neg;
-
-  Stored_ilri(Expression *first, bool neg)
-    : Stored_scalar(first), m_neg(neg)
+  Stored_ilri(Expression *first)
+    : Stored_scalar(first)
   {}
 
   void process(Expression::Processor &prc) const
@@ -1539,20 +1548,8 @@ struct Stored_ilri
     if (!sprc)
       return;
 
-    if (!m_neg)
-    {
-      Stored_scalar::process(*sprc);
-      return;
-    }
-
-    // wrap in negation
-
-    List_prc *argsp = sprc->op("not");
-    if (!argsp)
-      return;
-    argsp->list_begin();
-    Stored_scalar::process_if(safe_prc(argsp)->list_el()->scalar());
-    argsp->list_end();
+    Stored_scalar::process(*sprc);
+    return;
   }
 
   // Store reported ILRI expression.

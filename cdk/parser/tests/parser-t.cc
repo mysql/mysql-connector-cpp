@@ -379,8 +379,11 @@ public:
 
   struct Path_printer
     : public cdk::api::Doc_path::Processor
-    , cdk::api::Doc_path_processor
+    , cdk::api::Doc_path_element_processor
   {
+    using Element_prc::string;
+    using Element_prc::index_t;
+
     ostream &m_out;
     bool     m_first;
 
@@ -430,6 +433,11 @@ public:
     {
       m_first = false;
       m_out << "**";
+    }
+
+    void whole_document()
+    {
+      m_first = false;
     }
   };
 
@@ -614,6 +622,24 @@ const Expr_Test exprs[] =
   { parser::Parser_mode::TABLE   , L"'a' NOT RLIKE '^[a-d]'"},
   { parser::Parser_mode::TABLE   , L"POSITION('bar' IN 'foobarbar')"},
   { parser::Parser_mode::TABLE   , L"TRIM('barxxyz')"},
+  { parser::Parser_mode::DOCUMENT, L"1 IN field.array"},
+  { parser::Parser_mode::DOCUMENT, L"1 NOT IN field.array"},
+  { parser::Parser_mode::DOCUMENT, L"field IN [1,2,3]"},
+  { parser::Parser_mode::DOCUMENT, L"field NOT IN [1,2,3, NULL]"},
+  { parser::Parser_mode::DOCUMENT, L"{\"a\":1, \"b\":null } IN $"},
+  { parser::Parser_mode::DOCUMENT, L"{\"a\":1} NOT IN $"},
+  { parser::Parser_mode::DOCUMENT, L"$.field1 IN $.field2"},
+  { parser::Parser_mode::DOCUMENT, L"$.field1 NOT IN $.field2"},
+  { parser::Parser_mode::DOCUMENT, L"a IN (b)"},
+  { parser::Parser_mode::TABLE   , L"cast(column as json) IN doc->'$.field.array'"},
+  { parser::Parser_mode::TABLE   , L"cast(column as json) NOT IN doc->'$.field.array'"},
+  { parser::Parser_mode::TABLE   , L"column->'$.field' IN [1,2,3]"},
+  { parser::Parser_mode::TABLE   , L"column->'$.field' NOT IN [1,2,3]"},
+  { parser::Parser_mode::TABLE   , L"{\"a\":1} IN doc->'$'"},
+  { parser::Parser_mode::TABLE   , L"{\"a\":1} NOT IN doc->'$'"},
+  { parser::Parser_mode::TABLE   , L"tab1.doc->'$.field1' IN tab2.doc->'$.field2'"},
+  { parser::Parser_mode::TABLE   , L"tab1.doc->'$.field1' NOT IN tab2.doc->'$.field2'"},
+
 };
 
 const Expr_Test negative_exprs[] =
@@ -1344,7 +1370,7 @@ TEST(Parser, uri)
     },
     {
       "[(Address=127.0.0.1,Priority=2),(Address=example.com,Priority=100)]/database",
-      URI_parts(Host(2, "127.0.0.1"), Host(100, "example.com"), "database")
+      URI_parts(Host(3, "127.0.0.1"), Host(101, "example.com"), "database")
     },
     {
       "\\\\.\\named_pipe.socket",
