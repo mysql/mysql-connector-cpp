@@ -2125,3 +2125,49 @@ TEST_F(Crud, multi_statment_exec)
   remove1.execute();
 
 }
+
+TEST_F(Crud, expr_in_expr)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  Session sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("c1", true);
+
+  add_data(coll);
+
+  auto res = coll.find("{\"name\":\"baz\"} in $").execute();
+
+  EXPECT_EQ( string("baz") , (string)res.fetchOne()["name"]);
+
+  EXPECT_TRUE(res.fetchOne().isNull());
+
+  res = coll.find("'bar' in $.name").execute();
+
+  EXPECT_EQ( string("bar") , (string)res.fetchOne()["name"]);
+
+  EXPECT_TRUE(res.fetchOne().isNull());
+
+  res = coll.find("{ \"day\": 20, \"month\": \"Apr\" } in $.birth").execute();
+
+  EXPECT_EQ( string("baz") , (string)res.fetchOne()["name"]);
+
+  EXPECT_TRUE(res.fetchOne().isNull());
+
+  res = coll.find("JSON_TYPE($.food) = 'ARRAY' AND 'Milk' IN $.food ").execute();
+
+  EXPECT_EQ( string("bar") , (string)res.fetchOne()["name"]);
+
+  EXPECT_TRUE(res.fetchOne().isNull());
+
+  auto tbl = sch.getTable("c1");
+
+  auto tbl_res = tbl.select("JSON_EXTRACT(doc,'$.name') as name").where("{\"name\":\"baz\"} in doc->$").execute();
+  EXPECT_EQ( string("baz") , (string)tbl_res.fetchOne()[0]);
+
+}
