@@ -72,8 +72,13 @@ void Value::print(ostream &out) const
 
 
 DbDoc::DbDoc(const std::string &json)
-  : m_impl(std::make_shared<Impl::JSONDoc>(json))
-{}
+{
+  try {
+    m_impl = std::make_shared<Impl::JSONDoc>(json);
+  }
+  CATCH_AND_WRAP
+}
+
 
 DbDoc::DbDoc(const std::shared_ptr<Impl> &impl)
   : m_impl(impl)
@@ -93,7 +98,15 @@ const Value& DbDoc::operator[](const Field &fld) const
   try {
     return m_impl->get(fld);
   }
-  CATCH_AND_WRAP
+  catch (const std::out_of_range&)
+  {
+    throw;
+  }
+  catch (...)
+  {
+    try { throw; }
+    CATCH_AND_WRAP
+  }
 }
 
 void DbDoc::print(std::ostream &out) const
@@ -421,22 +434,28 @@ Value Value::Access::mk_from_json(const std::string &json)
 
 DbDoc::Iterator DbDoc::begin()
 {
-  Iterator it;
-  m_impl->reset();
-  it.m_impl = m_impl;
-  it.m_end = false;
-  return std::move(it);
+  try {
+    Iterator it;
+    m_impl->reset();
+    it.m_impl = m_impl;
+    it.m_end = false;
+    return std::move(it);
+  }
+  CATCH_AND_WRAP
 }
 
 DbDoc::Iterator DbDoc::end()
 {
-  /*
-    Iterator that points one-past-the-end-of-sequence has no
-    real representation - we simply set m_end flag in it.
-  */
-  Iterator it;
-  it.m_end = true;
-  return std::move(it);
+  try {
+    /*
+      Iterator that points one-past-the-end-of-sequence has no
+      real representation - we simply set m_end flag in it.
+    */
+    Iterator it;
+    it.m_end = true;
+    return std::move(it);
+  }
+  CATCH_AND_WRAP
 }
 
 
@@ -444,35 +463,46 @@ const Field& DbDoc::Iterator::operator*()
 {
   if (m_end)
     THROW("dereferencing past-the-end iterator");
-  return m_impl->get_current_fld();
+
+  try {
+    return m_impl->get_current_fld();
+  }
+  CATCH_AND_WRAP
 }
 
 DbDoc::Iterator& DbDoc::Iterator::operator++()
 {
-  // only non-end iterator can be incremented.
-  if (!m_end)
-    m_impl->next();
-  return *this;
+  try {
+    // only non-end iterator can be incremented.
+    if (!m_end)
+      m_impl->next();
+    return *this;
+  }
+  CATCH_AND_WRAP
 }
 
 bool DbDoc::Iterator::operator==(const Iterator &other) const
 {
-  /*
-    if this is end iterator, other is equal if it is also end
-    iterator or it is at the end of sequence. And vice-versa.
-  */
+  try {
 
-  if (m_end)
-    return other.m_end || other.m_impl->at_end();
+    /*
+      if this is end iterator, other is equal if it is also end
+      iterator or it is at the end of sequence. And vice-versa.
+    */
 
-  if (other.m_end)
-    return m_end || m_impl->at_end();
+    if (m_end)
+      return other.m_end || other.m_impl->at_end();
 
-  /*
-    Otherwise two iterators are equal if they use the same
-    document implementation (but such two iterators should not
-    be used at the same time).
-  */
+    if (other.m_end)
+      return m_end || m_impl->at_end();
 
-  return m_impl == other.m_impl;
+    /*
+      Otherwise two iterators are equal if they use the same
+      document implementation (but such two iterators should not
+      be used at the same time).
+    */
+
+    return m_impl == other.m_impl;
+  }
+  CATCH_AND_WRAP
 }
