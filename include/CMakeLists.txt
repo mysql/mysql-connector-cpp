@@ -43,6 +43,8 @@ SETUP_HEADERS(${CMAKE_CURRENT_SOURCE_DIR})
 
 SET(headers mysql_common.h mysql_xapi.h mysql_devapi.h)
 
+check_headers(${headers})
+
 ADD_HEADERS_DIR(devapi)
 ADD_HEADERS(${headers})
 ADD_HEADER_CHECKS()
