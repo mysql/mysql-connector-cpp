@@ -204,15 +204,14 @@ else()
   add_definitions(-DCONCPP_BUILD_SHARED)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+  # Hide all symbols that are not explicitly exported.
   # Note: setting target property CXX_VISIBILITY did not work for
   # object libraries that we use to build the connector.
 
-  if(CMAKE_COMPILER_IS_GNUCXX)
-    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-      add_compile_options(-fvisibility-ms-compat)
-    elseif()
-      add_compile_options(-fvisibility=hidden)
-    endif()
+  if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-fvisibility-ms-compat)
+  elseif(CMAKE_COMPILER_IS_GNUCXX)
+    add_compile_options(-fvisibility=hidden)
   endif()
 
 endif()
