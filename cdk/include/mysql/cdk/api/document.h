@@ -259,7 +259,7 @@ public:
 
   bool is_empty() const
   {
-    return 0 == length();
+    return m_whole_document ? false : 0 == length();
   }
 
   bool is_whole_document() const

@@ -1152,7 +1152,7 @@ struct Stored_doc
   : public Expression::Document
   , public Expression::Document::Processor
 {
-  typedef std::map<cdk::string, Stored_expr*> Ptr_map;
+  typedef std::map<cdk::string, scoped_ptr<Stored_expr> > Ptr_map;
   Ptr_map m_keyval_map;
 
   // Doc expression (report stored doc)
@@ -1183,7 +1183,7 @@ struct Stored_doc
   Any_prc* key_val(const cdk::string &key)
   {
     Stored_expr *s = new Stored_any();
-    m_keyval_map[key] = s;
+    m_keyval_map[key].reset(s);
     return s;
   }
 };
