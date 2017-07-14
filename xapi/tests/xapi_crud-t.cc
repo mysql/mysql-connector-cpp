@@ -2514,7 +2514,7 @@ TEST_F(xapi, test_decimal_type)
   mysqlx_schema_drop(get_session(), "xapi_dec_test");
 }
 
-TEST_F(xapi, expr_in_expt)
+TEST_F(xapi, expr_in_expr)
 {
   SKIP_IF_NO_XPLUGIN
 
@@ -2530,6 +2530,32 @@ TEST_F(xapi, expr_in_expt)
   size_t buflen;
 
   AUTHENTICATE();
+
+  mysqlx_result_t *res_version = exec_sql("SHOW VARIABLES LIKE 'version'");
+  row = mysqlx_row_fetch_one(res_version);
+  buflen = sizeof(buf);
+  mysqlx_get_bytes(row, 1, 0, buf, &buflen );
+
+  std::stringstream version;
+  version << buf;
+
+  cout << "MySQL Version " << version.str() << endl;
+
+  int upper_version, minor_version, release_version;
+  char sep;
+  version >> upper_version;
+  version >> sep;
+  version >> minor_version;
+  version >> sep;
+  version >> release_version;
+
+  if ( upper_version < 8 ||
+       (upper_version == 8 && minor_version == 0 && release_version < 2))
+  {
+    cout << "SKIPPED! Server "<< version.str() <<  " doesn't support cont_in" << endl;
+    return;
+  }
+
 
   mysqlx_schema_drop(get_session(), "expr_in_expt");
 
@@ -2576,6 +2602,7 @@ TEST_F(xapi, expr_in_expt)
   EXPECT_EQ(RESULT_OK, mysqlx_set_select_where(stmt, "{\"name\":\"baz\"} in doc->$"));
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
   EXPECT_TRUE((row = mysqlx_row_fetch_one(res)) != NULL);
+  buflen = sizeof(buf);
   EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, buf, &buflen));
   EXPECT_EQ(string(buf), string("\"baz\""));
   EXPECT_EQ(NULL, row = mysqlx_row_fetch_one(res));
