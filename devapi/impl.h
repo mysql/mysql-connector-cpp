@@ -640,6 +640,12 @@ protected:
     }
   }
 
+  /*
+    Note: This is a method to implement positional '?' parmaeters which are not
+    used by CRUD operations (they use named parmaeters insted). The method
+    should not be called in this context and we use assertion to verify this.
+  */
+
   void add_param(Value)
   {
     assert(false);

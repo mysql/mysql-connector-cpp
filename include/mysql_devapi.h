@@ -96,7 +96,7 @@ namespace mysqlx {
 /**
   Represents a database schema.
 
-  A `Schema` instance  can be obtained from `Session::getSchema()`
+  A `Schema` instance can be obtained from `Session::getSchema()`
   method:
 
   ~~~~~~
@@ -171,7 +171,7 @@ public:
     Return `Collection` object representing named collection in
     the schema. If `check_exists` is true and named collection
     does not exist, an error will be thrown. Otherwise, if named
-    collection does not exists, the returned object will refer
+    collection does not exist, the returned object will refer
     to non-existent collection.
 
     @note Checking existence of the collection involves
