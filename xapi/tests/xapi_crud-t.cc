@@ -2531,31 +2531,7 @@ TEST_F(xapi, expr_in_expr)
 
   AUTHENTICATE();
 
-  mysqlx_result_t *res_version = exec_sql("SHOW VARIABLES LIKE 'version'");
-  row = mysqlx_row_fetch_one(res_version);
-  buflen = sizeof(buf);
-  mysqlx_get_bytes(row, 1, 0, buf, &buflen );
-
-  std::stringstream version;
-  version << buf;
-
-  cout << "MySQL Version " << version.str() << endl;
-
-  int upper_version, minor_version, release_version;
-  char sep;
-  version >> upper_version;
-  version >> sep;
-  version >> minor_version;
-  version >> sep;
-  version >> release_version;
-
-  if ( upper_version < 8 ||
-       (upper_version == 8 && minor_version == 0 && release_version < 2))
-  {
-    cout << "SKIPPED! Server "<< version.str() <<  " doesn't support cont_in" << endl;
-    return;
-  }
-
+  SKIP_IF_SERVER_VERSION_LESS(8,0,2);
 
   mysqlx_schema_drop(get_session(), "expr_in_expt");
 

@@ -228,6 +228,42 @@ protected:
                          : std::string() );
   }
 
+  bool is_server_version_less(int test_upper_version ,int test_lower_version, int test_release_version)
+  {
+    mysqlx_row_t* row;
+    char buf[256];
+    size_t buflen;
+
+    mysqlx_result_t *res_version = exec_sql("SHOW VARIABLES LIKE 'version'");
+    row = mysqlx_row_fetch_one(res_version);
+    buflen = sizeof(buf);
+    mysqlx_get_bytes(row, 1, 0, buf, &buflen );
+
+    std::stringstream version;
+    version << buf;
+
+    cout << "MySQL Version " << version.str() << endl;
+
+    int upper_version, minor_version, release_version;
+    char sep;
+    version >> upper_version;
+    version >> sep;
+    version >> minor_version;
+    version >> sep;
+    version >> release_version;
+
+    if ( (upper_version < test_upper_version) ||
+         (upper_version == test_upper_version &&
+          minor_version << test_lower_version) ||
+         (upper_version == test_upper_version &&
+          minor_version == test_lower_version &&
+          release_version < test_release_version))
+    {
+      return true;
+    }
+    return false;
+  }
+
 
 public:
   mysqlx_session_t *get_session() { return m_sess; }
@@ -238,6 +274,14 @@ public:
 #define SKIP_IF_NO_XPLUGIN  \
   if (m_status) { std::cerr <<"SKIPPED: " <<m_status <<std::endl; return; }
 
+#define SKIP_IF_SERVER_VERSION_LESS(x,y,z)\
+  if (is_server_version_less(x, y, z)) \
+  {\
+    std::cerr <<"SKIPPED: " << \
+    "Server version not supported (" \
+    << x << "." << y <<"." << ")" << z <<std::endl; \
+    return; \
+  }
 
 class xapi_bugs : public xapi
 {};

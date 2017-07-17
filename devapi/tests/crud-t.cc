@@ -2130,27 +2130,7 @@ TEST_F(Crud, expr_in_expr)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  SqlResult res_version= sql("SHOW VARIABLES LIKE 'version'");
-
-  std::stringstream version;
-  version << res_version.fetchOne()[1].get<string>();
-
-  int upper_version, minor_version, release_version;
-  char sep;
-  version >> upper_version;
-  version >> sep;
-  version >> minor_version;
-  version >> sep;
-  version >> release_version;
-
-  cout << "MySQL Version " << version.str() << endl;
-
-  if ( upper_version < 8 ||
-       (upper_version == 8 && minor_version == 0 && release_version < 2))
-  {
-    cout << "SKIPPED! Server "<< version.str() <<  " doesn't support cont_in" << endl;
-    return;
-  }
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 2);
 
   cout << "Creating session..." << endl;
 
