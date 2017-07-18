@@ -242,7 +242,6 @@ TEST_F(Protocol_mysqlx_xplugin, row_fetch_interrupt)
   cout <<"Done" <<endl;
 }
 
-#if 0
 class Expect_test : public cdk::protocol::mysqlx::api::Expectations
 {
   void process(Processor &prc) const
@@ -274,7 +273,7 @@ TEST_F(Protocol_mysqlx_xplugin, expectation)
     void error(unsigned int code, short int severity,
                cdk::protocol::mysqlx::sql_state_t sql_state, const string &msg)
     {
-      throw Error(static_cast<int>(code), msg);
+      cout << "Error: " << msg << endl;
     }
 
     void ok(string s)
@@ -294,29 +293,24 @@ TEST_F(Protocol_mysqlx_xplugin, expectation)
   proto.rcv_StmtReply(sh).wait();
 
   proto.snd_StmtExecute("sql", "ERROR SQL", NULL).wait();
-  EXPECT_THROW(proto.rcv_Reply(prc).wait(), Error);
+  EXPECT_THROW(proto.rcv_MetaData(mdh).wait(), Error);
 
   // Valid statement will fail because of expectation error
   proto.snd_StmtExecute("sql", "SELECT 2", NULL).wait();
-  EXPECT_THROW(proto.rcv_Reply(prc).wait(), Error);
+  EXPECT_THROW(proto.rcv_MetaData(mdh).wait(), Error);
 
   proto.snd_Expect_Close().wait();
   cout << "Expect_Close is sent" << endl;
-  try
-  {
-    // This might throw and migh not
-    proto.rcv_Reply(prc).wait();
-  }
-  catch (Error &)
-  { }
+  // This will report the failed expectation error, but it is expected
+  proto.rcv_Reply(prc).wait();
 
   // Valid statement should succeed after expectation is closed
   proto.snd_StmtExecute("sql", "SELECT 3", NULL).wait();
   proto.rcv_MetaData(mdh).wait();
   proto.rcv_Rows(rh).wait();
+  proto.rcv_StmtReply(sh).wait();
 
 }
-#endif
 
 }}  // cdk::test
 
