@@ -150,7 +150,7 @@ POP_SYS_WARNINGS
   X(LSHIFT, "<<", {Token::LSHIFT}, {})  \
   X(RSHIFT, ">>", {Token::RSHIFT}, {})  \
   X(EQ, "==", ({Token::EQ, Token::EQ2}), {})  \
-  X(NE, "!=", {Token::NE}, {})  \
+  X(NE, "!=", ({Token::NE, Token::DF}), {})  \
   X(GT, ">", {Token::GT}, {})  \
   X(GE, ">=", {Token::GE}, {})  \
   X(LT, "<", {Token::LT}, {})  \

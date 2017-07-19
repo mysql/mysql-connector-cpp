@@ -495,7 +495,7 @@ void Expr_parser_base::parse_column_ident1(Path_prc *prc)
       m_col_ref.set(m_col_ref.table()->name());
   }
 
-  if (consume_token(Token::ARROW))
+  if (consume_token(Token::ARROW) || consume_token(Token::ARROW2))
   {
 
     if (Token_base::cur_token_type_in({ Token::QSTRING, Token::QQSTRING }))
@@ -856,9 +856,9 @@ bool Expr_parser_base::parse_docpath_member(Path_prc *prc)
 
   switch (t->get_type())
   {
-  case Token::STAR:
-    safe_prc(prc)->list_el()->any_member();
-    break;
+    case Token::STAR:
+      safe_prc(prc)->list_el()->any_member();
+      break;
 
   case Token::WORD:
   case Token::QQSTRING:
@@ -1360,7 +1360,7 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
   }
   else
   {
-    parse_document_field(&path);
+    parse_document_field(&path, true);
   }
 
   sprc->ref(path);
