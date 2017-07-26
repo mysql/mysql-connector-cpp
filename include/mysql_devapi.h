@@ -400,6 +400,38 @@ public:
     CATCH_AND_WRAP;
   }
 
+  /**
+    Returns Document with the giver id.
+    Returns empty document if not found.
+  */
+
+  DbDoc getOne(const string &id)
+  {
+    return find("_id = :id").bind("id", id).execute().fetchOne();
+  }
+
+  /**
+    Removes the document with the given id.
+   */
+
+  Result removeOne(const string &id)
+  {
+    return remove("_id = :id").bind("id", id).execute();
+  }
+
+  /**
+    Returns an operation which, when executed, replaces document with given id
+    in the collection with new document doc. Parameter doc can be either DbDoc
+    object, or JSON string, or expr(docexpr) where docexpr is like JSON string
+    but field values are expressions. It is possible to bind values of named
+    parameters with .bind() before executing the statement.
+  */
+
+  CollectionReplace replaceOne(string id, internal::ExprValue &&document)
+  {
+      return CollectionReplace(*this, id, std::move(document));
+  }
+
 };
 
 

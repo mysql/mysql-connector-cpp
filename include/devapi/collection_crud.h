@@ -393,6 +393,7 @@ protected:
 */
 
 class CollectionModify;
+class CollectionReplace;
 
 namespace internal {
 
@@ -402,6 +403,14 @@ struct Collection_modify_cmd
 
 struct Collection_modify_base
   : public Sort< Limit< Bind_parameters< Collection_modify_cmd > > >
+{};
+
+struct Collection_replace_cmd
+  : public Executable<Result, CollectionReplace>
+{};
+
+struct Collection_replace_base
+    : public Bind_parameters< Collection_replace_cmd >
 {};
 
 }  // internal namespace
@@ -527,6 +536,45 @@ protected:
 
 };
 
+
+/**
+  Operation which replaces a document, using the id by a new one
+
+  @ingroup devapi_op
+*/
+
+class PUBLIC_API CollectionReplace
+  : public internal::Collection_replace_base
+{
+
+public:
+
+  /**
+    Create operation which replaces document with specified _id in a collection.
+  */
+  CollectionReplace(Collection &base,
+                    const string &id,
+                    internal::ExprValue &&val);
+
+  CollectionReplace(const internal::Collection_replace_cmd &other)
+  {
+    internal::Collection_replace_cmd::operator=(other);
+  }
+
+  CollectionReplace(internal::Collection_replace_cmd &&other)
+  {
+    internal::Collection_replace_cmd::operator=(std::move(other));
+  }
+
+protected:
+
+  using Impl = internal::Collection_modify_impl;
+
+  Impl* get_impl()
+  {
+    return static_cast<Impl*>(internal::Collection_replace_base::get_impl());
+  }
+};
 
 }  // mysqlx namespace
 

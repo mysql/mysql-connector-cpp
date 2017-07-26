@@ -2204,3 +2204,59 @@ TEST_F(Crud, expr_in_expr)
   EXPECT_EQ( string("baz") , (string)tbl_res.fetchOne()[0]);
 
 }
+
+TEST_F(Crud, single_document)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating session..." << endl;
+
+  Session sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  sess.dropCollection("test", "c1");
+  Collection coll = sch.createCollection("c1", true);
+
+  coll.add("{\"_id\":\"id1\", \"name\":\"foo\" }" )
+      .add("{\"_id\":\"id2\", \"name\":\"bar\" }" )
+      .add("{\"_id\":\"id3\", \"name\":\"baz\" }" )
+      .execute();
+
+  EXPECT_EQ(string("foo"), coll.getOne("id1")["name"].get<string>());
+  EXPECT_EQ(string("bar"), coll.getOne("id2")["name"].get<string>());
+  EXPECT_TRUE(coll.getOne("idZ").isNull());
+
+  EXPECT_EQ(1, coll.removeOne("id1").getAffectedItemsCount());
+  EXPECT_EQ(0, coll.removeOne("id1").getAffectedItemsCount());
+
+  EXPECT_TRUE(coll.getOne("id1").isNull());
+
+  // Replace existing document
+  CollectionReplace replace = coll.replaceOne("id3", expr("{\"name\": :name }"))
+                              .bind("name", "qux");
+  EXPECT_EQ(1, replace.execute().getAffectedItemsCount()
+            );
+  EXPECT_EQ(string("qux"), coll.getOne("id3")["name"].get<string>());
+
+  // Ignore _id field on document and replace existing docment
+  // Document passed as string
+  replace = coll.replaceOne("id3", "{\"_id\": \"id4\", \"name\": \"baz\" }");
+  EXPECT_EQ(1, replace.execute().getAffectedItemsCount());
+  EXPECT_EQ(string("baz"), coll.getOne("id3")["name"].get<string>());
+  EXPECT_EQ(string("id3"), coll.getOne("id3")["_id"].get<string>());
+
+  // should not affect none
+  replace = coll.replaceOne("id4", expr("{\"_id\":\"id4\", \"name\": :name }"));
+  EXPECT_EQ(0, replace.bind("name", "baz").execute().getAffectedItemsCount());
+
+  // Using DbDoc
+  DbDoc doc("{\"_id\":\"id4\", \"name\": \"quux\" }");
+
+  replace = coll.replaceOne("id3", doc);
+  EXPECT_EQ(1,  replace.execute().getAffectedItemsCount());
+  EXPECT_EQ(string("quux"), coll.getOne("id3")["name"].get<string>());
+}
+
+

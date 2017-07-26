@@ -545,6 +545,14 @@ class Op_collection_modify
     add_where(expr);
   }
 
+  Op_collection_modify(const Op_collection_modify &other)
+    : Op_select(other)
+    , m_coll(other.m_coll)
+    , m_update(other.m_update)
+  {
+    m_update_it = m_update.end();
+  }
+
   Executable_impl* clone() const override
   {
     return new Op_collection_modify(*this);
@@ -639,6 +647,7 @@ class Op_collection_modify
   }
 
   friend mysqlx::CollectionModify;
+  friend mysqlx::CollectionReplace;
 };
 
 
@@ -649,6 +658,31 @@ CollectionModify::CollectionModify(
   try
   {
     reset(new Op_collection_modify(coll, expr));
+  }
+  CATCH_AND_WRAP
+}
+
+CollectionReplace::CollectionReplace(Collection &coll, const mysqlx::string &id
+, mysqlx::internal::ExprValue &&val)
+{
+  try
+  {
+    reset(new Op_collection_modify(coll, "_id = :id"));
+
+    if (val.isExpression() || val.getType() != Value::STRING)
+    {
+      get_impl()->add_operation(Op_collection_modify::SET,
+                                "$",
+                                std::move(val));
+    }
+    else
+    {
+      get_impl()->add_operation(Op_collection_modify::SET,
+                                "$",
+                                internal::expr(std::move(val)));
+    }
+
+    get_impl()->add_param("id", id);
   }
   CATCH_AND_WRAP
 }

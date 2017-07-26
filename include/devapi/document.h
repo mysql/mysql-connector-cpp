@@ -405,7 +405,7 @@ public:
   operator DbDoc() const;
 
   template<typename T>
-  T get() { return static_cast<T>(*this); }
+  T get() const { return static_cast<T>(*this); }
 
   //@}
 
@@ -605,7 +605,7 @@ internal::ExprValue expr(V s)
 {
   internal::ExprValue val(s);
   val.m_is_expr = true;
-  return std::move(val);
+  return val;
 }
 
 }  // internal
