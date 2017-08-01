@@ -321,6 +321,16 @@ internal::XSession_base::~XSession_base()
   catch(...){}
 }
 
+void internal::XSession_base::prepare_for_command()
+{
+  /*
+    We need to notify current result, so that he can cache/drop data and then
+    we are ready to issue other command.
+  */
+
+  register_result(NULL);
+
+}
 
 void internal::XSession_base::register_result(internal::BaseResult *result)
 {
@@ -812,11 +822,11 @@ void check_reply_skip_error_throw(cdk::Reply&& r, int skip_server_error)
 void internal::XSession_base::dropSchema(const string &name)
 {
   try{
+    prepare_for_command();
     std::stringstream qry;
     qry << "Drop Schema `" << name << "`";
     //skip server error 1008 = schema doesn't exist
-    check_reply_skip_error_throw(get_cdk_session().sql(qry.str()),
-                                 1008);
+    check_reply_skip_error_throw(get_cdk_session().sql(qry.str()), 1008);
   }
   CATCH_AND_WRAP
 }
@@ -836,12 +846,13 @@ void Schema::dropTable(const string& table)
 void Schema::dropCollection(const mysqlx::string& collection)
 {
   try{
+    m_sess->prepare_for_command();
     Args args(m_name, collection);
     // Doesn't throw if collection doesn't exit (server error 1051)
     check_reply_skip_error_throw(
-      m_sess->get_cdk_session().admin("drop_collection", args),
-      1051
-    );
+          m_sess->get_cdk_session().admin("drop_collection", args),
+          1051
+          );
   }
   CATCH_AND_WRAP
 }
@@ -852,6 +863,7 @@ void Schema::dropView(const mysqlx::string& name)
   Table_ref view(getName(),name);
 
   try {
+    m_sess->prepare_for_command();
     /*
       Note: false argument to view_drop() means that we do not check for
       the existence of the view being dropped.
@@ -859,8 +871,8 @@ void Schema::dropView(const mysqlx::string& name)
       as the case when the view does not exist.
     */
     check_reply_skip_error_throw(
-      m_sess->get_cdk_session().view_drop(view, false),
-      1347
+          m_sess->get_cdk_session().view_drop(view, false),
+          1347
     );
   }
   CATCH_AND_WRAP

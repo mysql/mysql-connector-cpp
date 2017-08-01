@@ -1153,6 +1153,8 @@ namespace internal {
     INTERNAL void register_result(internal::BaseResult *result);
     INTERNAL void deregister_result(internal::BaseResult *result);
 
+    INTERNAL void prepare_for_command();
+
     INTERNAL cdk::Session& get_cdk_session();
 
     struct Options;

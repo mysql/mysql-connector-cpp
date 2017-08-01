@@ -457,6 +457,11 @@ struct internal::XSession_base::Access
   {
     sess.register_result(res);
   }
+
+  static void prepare_for_command(XSession_base &sess)
+  {
+    sess.prepare_for_command();
+  }
 };
 
 
