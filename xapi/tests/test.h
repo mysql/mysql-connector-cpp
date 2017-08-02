@@ -157,6 +157,9 @@ public:
 #define SKIP_IF_NO_XPLUGIN  \
   if (m_status) { std::cerr <<"SKIPPED: " <<m_status <<std::endl; return; }
 
+// TODO: remove this when prepare is ok again
+#define SKIP_TEST(A) std::cerr << "SKIPPED: " << A << std::endl; return;
+
 
 class xapi_bugs : public xapi
 {};

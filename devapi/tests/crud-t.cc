@@ -1871,6 +1871,9 @@ TEST_F(Crud, group_by_having)
 
   SKIP_IF_NO_XPLUGIN;
 
+  //TODO: REMOVE THIS AND PUT VERSION CHECK
+  SKIP_TEST("GroupBy not working on current xplugin");
+
   cout << "Preparing table..." << endl;
 
   XSession sess(this);
