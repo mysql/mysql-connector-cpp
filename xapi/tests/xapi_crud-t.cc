@@ -42,6 +42,7 @@
        "{\"_id\": \"C8B27676E8A1D1E12C250850273BD114\", \"a_key\": 5, \"b_key\": \"so long world\", \"c_key\": 88.888}"
   };
 
+
 TEST_F(xapi, test_having_group_by)
 {
   SKIP_IF_NO_XPLUGIN
@@ -57,6 +58,8 @@ TEST_F(xapi, test_having_group_by)
   size_t json_len = 0;
 
   AUTHENTICATE();
+  //TODO: Remove this when  Bug #86754 is fixed
+  SKIP_IF_SERVER_VERSION_LESS(5, 7, 19);
 
   mysqlx_schema_drop(get_session(), "cc_crud_test");
   EXPECT_EQ(RESULT_OK, mysqlx_schema_create(get_session(), "cc_crud_test"));
@@ -143,7 +146,7 @@ TEST_F(xapi, test_having_group_by)
   stmt = mysqlx_collection_find_new(collection);
   EXPECT_EQ(RESULT_OK, mysqlx_set_find_projection(stmt, "{cnt: COUNT(*), user_name: user_name}"));
   EXPECT_EQ(RESULT_OK, mysqlx_set_find_group_by(stmt, "user_name", PARAM_END));
-  EXPECT_EQ(RESULT_OK, mysqlx_set_find_having(stmt, "cnt > 1"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_having(stmt, "cnt>1"));
   EXPECT_EQ(RESULT_OK, mysqlx_set_find_order_by(stmt, "user_name", SORT_ORDER_ASC, PARAM_END));
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 

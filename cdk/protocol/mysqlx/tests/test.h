@@ -122,6 +122,13 @@ protected:
       cdk::throw_error("no protocol instance");
     return *m_proto;
   }
+
+  public:
+
+  bool is_server_version_less(int test_upper_version,
+                              int test_lower_version,
+                              int test_release_version);
+
 };
 
 
@@ -445,6 +452,58 @@ void Protocol_mysqlx_xplugin::do_query(const string &query)
 }
 
 
+/*
+  Check if the server version is less than required
+*/
+inline
+bool Protocol_mysqlx_xplugin::is_server_version_less(int test_upper_version,
+                                                     int test_lower_version,
+                                                     int test_release_version)
+{
+  Protocol &proto= get_proto();
+  proto.snd_StmtExecute("sql", "SELECT VERSION()", NULL).wait();
+
+  Mdata_handler mdh;
+  proto.rcv_MetaData(mdh).wait();
+
+  class Row_handler_data : public Row_handler
+  {
+    public:
+    char *get_data() { return (char*)buf; }
+    size_t get_size() { return pos; }
+  };
+
+  Row_handler_data rhd;
+  proto.rcv_Rows(rhd).wait();
+
+  Stmt_handler sh;
+  proto.rcv_StmtReply(sh).wait();
+
+  std::stringstream version;
+  version << std::string(rhd.get_data(), rhd.get_size());
+
+  int upper_version, minor_version, release_version;
+  char sep;
+  version >> upper_version;
+  version >> sep;
+  version >> minor_version;
+  version >> sep;
+  version >> release_version;
+
+  if ((upper_version < test_upper_version) ||
+    (upper_version == test_upper_version &&
+     minor_version << test_lower_version) ||
+     (upper_version == test_upper_version &&
+      minor_version == test_lower_version &&
+      release_version < test_release_version))
+  {
+    return true;
+  }
+  return false;
+
+}
+
+
 #ifdef TODO
 
 /*
@@ -602,6 +661,15 @@ public:
   Next_msg next_msg(msg_type_t)
   { return EXPECTED; }
 };
+
+#define SKIP_IF_SERVER_VERSION_LESS(x,y,z)\
+  if (Protocol_mysqlx_xplugin::is_server_version_less(x, y, z)) \
+  {\
+    std::cerr <<"SKIPPED: " << \
+    "Server version not supported (" \
+    << x << "." << y <<"." << ")" << z <<std::endl; \
+    return; \
+  }
 
 
 }}  // cdk::test
