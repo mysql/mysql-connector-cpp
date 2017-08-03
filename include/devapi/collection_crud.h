@@ -900,6 +900,18 @@ public:
     return fields(rest...);
   }
 
+  CollectionGroupBy& lockShared()
+  {
+    get_impl()->set_locking(internal::Lock_mode::SHARED);
+    return *this;
+  }
+
+  CollectionGroupBy& lockExclusive()
+  {
+    get_impl()->set_locking(internal::Lock_mode::EXCLUSIVE);
+    return *this;
+  }
+
   struct INTERNAL Access;
   friend Access;
 };

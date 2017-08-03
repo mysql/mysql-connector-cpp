@@ -232,7 +232,8 @@ class Op_table_select
                           get_group_by(),
                           get_having(),
                           get_limit(),
-                          get_params()
+                          get_params(),
+                          get_locking()
                        ));
   }
 

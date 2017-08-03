@@ -503,7 +503,8 @@ mysqlx_result_t *mysqlx_stmt_t::exec()
                                   m_group_by_list.get_list(),
                                   m_having.get(),
                                   m_limit.get(),
-                                  m_param_source.count() ? &m_param_source : NULL);
+                                  m_param_source.count() ? &m_param_source : NULL,
+                                  m_row_locking);
       break;
     case OP_VIEW_CREATE:
     case OP_VIEW_UPDATE:
@@ -557,7 +558,8 @@ mysqlx_result_t *mysqlx_stmt_t::exec()
                                m_group_by_list.get_list(),
                                m_having.get(),
                                m_limit.get(),
-                               m_param_source.count() ? &m_param_source : NULL);
+                               m_param_source.count() ? &m_param_source : NULL,
+                               m_row_locking);
       break;
     case OP_ADD:
       if (!m_doc_source.count())
@@ -863,6 +865,32 @@ void mysqlx_stmt_t::set_view_properties(va_list args)
       default:
         throw Mysqlx_exception("Wrong VIEW property");
     }
+  }
+}
+
+void mysqlx_stmt_t::set_row_locking(mysqlx_row_locking_t row_locking)
+{
+  switch (m_op_type)
+  {
+    case OP_SELECT:
+    case OP_FIND:
+      switch (row_locking)
+      {
+        case LOCK_NONE:
+          m_row_locking = cdk::Lock_mode_value::NONE;
+          break;
+        case LOCK_SHARED:
+          m_row_locking = cdk::Lock_mode_value::SHARED;
+          break;
+        case LOCK_EXCLUSIVE:
+          m_row_locking = cdk::Lock_mode_value::EXCLUSIVE;
+          break;
+        default:
+          throw Mysqlx_exception(MYSQLX_ERROR_WRONG_LOCKING_MODE);
+      }
+      break;
+    default:
+      throw Mysqlx_exception(MYSQLX_ERROR_ROW_LOCKING);
   }
 }
 

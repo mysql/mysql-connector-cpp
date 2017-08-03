@@ -127,6 +127,10 @@ public:
 
 namespace internal {
 
+struct Lock_mode
+{
+  enum value { NONE, SHARED, EXCLUSIVE };
+};
 /*
   Interface to be implemented by internal implementation
   of statement object.
@@ -138,6 +142,8 @@ namespace internal {
 struct Statement_impl : public Executable_impl
 {
   virtual void add_param(const string&, Value&&) = 0;
+
+  virtual void set_locking(Lock_mode::value) = 0;
 };
 
 }  // internal
@@ -184,6 +190,18 @@ public:
   {}
 
   Statement(Statement &&other) : Executable<Res,Op>(std::move(other)) {}
+
+  Executable<Res, Op> &lockShared()
+  {
+    get_impl()->set_locking(internal::Lock_mode::SHARED);
+    return *this;
+  }
+
+  Executable<Res, Op> &lockExclusive()
+  {
+    get_impl()->set_locking(internal::Lock_mode::EXCLUSIVE);
+    return *this;
+  }
 
 
   /// Bind parameter with given name to the given value.

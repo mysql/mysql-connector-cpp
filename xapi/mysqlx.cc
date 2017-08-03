@@ -415,6 +415,14 @@ mysqlx_set_limit_and_offset(mysqlx_stmt_t *stmt, uint64_t row_count,
   SAFE_EXCEPTION_END(stmt, RESULT_ERROR)
 }
 
+int mysqlx_set_row_locking(mysqlx_stmt_t *stmt, int locking)
+{
+  SAFE_EXCEPTION_BEGIN(stmt, RESULT_ERROR)
+  stmt->set_row_locking((mysqlx_row_locking_t)locking);
+  return RESULT_OK;
+  SAFE_EXCEPTION_END(stmt, RESULT_ERROR)
+}
+
 /*
   Set ORDER BY clause for statement operation
   Operations supported by this function:

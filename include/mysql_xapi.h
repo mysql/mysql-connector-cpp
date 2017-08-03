@@ -174,6 +174,8 @@ typedef object_id* MYSQLX_GUID;
 #define MYSQLX_ERROR_MIX_PRIORITY "Mixing hosts with and without priority is not allowed"
 #define MYSQLX_ERROR_DUPLICATED_OPTION "Option already defined"
 #define MYSQLX_ERROR_MAX_PRIORITY "Priority should be a value between 0 and 100"
+#define MYSQLX_ERROR_ROW_LOCKING "Row locking is supported only for SELECT and FIND"
+#define MYSQLX_ERROR_WRONG_LOCKING_MODE "Wrong value for the row locking mode"
 
 
 /* Opaque structures*/
@@ -434,6 +436,18 @@ typedef enum mysqlx_view_check_option_enum
   VIEW_CHECK_OPTION_LOCAL = 2       /**< Local view check option */
 } mysqlx_view_check_option_t;
 
+
+/**
+  Constants for defining the row locking options for
+  mysqlx_set_row_locking() function.
+  @see https://dev.mysql.com/doc/refman/5.7/en/innodb-locking-reads.html
+*/
+typedef enum mysqlx_row_locking_enum
+{
+  LOCK_NONE = 0,
+  LOCK_SHARED = 1,
+  LOCK_EXCLUSIVE = 2
+} mysqlx_row_locking_t;
 
 /*
   ====================================================================
@@ -1183,6 +1197,17 @@ A macro defining a function for setting GROUP BY for FIND operation.
 
 
 /**
+  A macro defining a function for setting row locking mode
+  for FIND operation.
+
+  @see mysqlx_set_row_locking()
+  @ingroup xapi_coll
+*/
+
+#define mysqlx_set_find_row_locking mysqlx_set_row_locking
+
+
+/**
   Create a statement which adds documents to a collection
 
   @param collection collection handle
@@ -1641,6 +1666,17 @@ A macro defining a function for setting GROUP BY for SELECT operation.
 */
 
 #define mysqlx_set_select_limit_and_offset mysqlx_set_limit_and_offset
+
+
+/**
+  A macro defining a function for setting row locking mode
+  for SELECT operation.
+
+  @see mysqlx_set_row_locking()
+  @ingroup xapi_coll
+*/
+
+#define mysqlx_set_select_row_locking mysqlx_set_row_locking
 
 
 /**
@@ -2115,6 +2151,53 @@ PUBLIC_API int
 mysqlx_set_limit_and_offset(mysqlx_stmt_t *stmt, uint64_t row_count,
                             uint64_t offset);
 
+/*
+  Set row locking mode for a statement.
+
+  Set row locking mode for statement operations working on ranges of
+  rows/documents.
+
+  Operations supported by this function:
+    SELECT, FIND
+
+  Calling it for INSERT, UPDATE, DELETE, ADD, MODIFY and REMOVE
+  will result in an error.
+
+  @param stmt statement handle
+  @param locking the integer mode identifier (see `mysqlx_row_locking_t`).
+         Possible values:
+           ROW_LOCK_NONE - no row locking is set
+
+           ROW_LOCK_SHARED - Sets a shared mode lock on any rows that
+              are read. Other sessions can read the rows,
+              but cannot modify them until your transaction
+              commits. If any of these rows were changed by
+              another transaction that has not yet committed,
+              your query waits until that transaction ends
+              and then uses the latest values.
+
+           ROW_LOCK_EXCLUSIVE - For index records the search encounters,
+              locks the rows and any associated index entries, the same
+              as if you issued an UPDATE statement for those rows. Other
+              transactions are blocked from updating those rows,
+              from doing locking in ROW_LOCK_SHARED, or from reading
+              the data in certain transaction isolation levels.
+
+  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+
+  @note this function can be be used directly, but for the convenience
+        the code can use the specialized macros for a specific operation.
+        For SELECT operation the user code should use
+        `mysqlx_set_select_row_locking()` macros that map the
+        corresponding `mysqlx_set_row_locking()` function.
+        This way the unsupported operations will not be used.
+
+  @note Each call to this function replaces previously set locking mode
+
+  @ingroup xapi_stmt
+*/
+PUBLIC_API int
+mysqlx_set_row_locking(mysqlx_stmt_t *stmt, int locking);
 
 /**
   Free the statement handle explicitly.

@@ -42,6 +42,62 @@
        "{\"_id\": \"C8B27676E8A1D1E12C250850273BD114\", \"a_key\": 5, \"b_key\": \"so long world\", \"c_key\": 88.888}"
   };
 
+TEST_F(xapi, test_row_locking)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  mysqlx_result_t *res;
+  mysqlx_schema_t *schema;
+  mysqlx_table_t *table;
+  mysqlx_stmt_t *stmt;
+  mysqlx_row_t *row;
+
+  AUTHENTICATE();
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 3);
+
+  mysqlx_schema_drop(get_session(), "cc_crud_test");
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_create(get_session(), "cc_crud_test"));
+
+  res = mysqlx_sql(get_session(), "CREATE TABLE cc_crud_test.row_locking" \
+                   "(id int primary key)", MYSQLX_NULL_TERMINATED);
+  EXPECT_TRUE(res != NULL);
+  res = mysqlx_sql(get_session(), "INSERT INTO cc_crud_test.row_locking" \
+                   "(id) VALUES (1),(2),(3)", MYSQLX_NULL_TERMINATED);
+  EXPECT_TRUE(res != NULL);
+
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_crud_test", 1)) != NULL);
+  EXPECT_TRUE((table = mysqlx_get_table(schema, "row_locking", 1)) != NULL);
+
+  EXPECT_EQ(RESULT_OK, mysqlx_transaction_begin(get_session()));
+  stmt = mysqlx_table_select_new(table);
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_row_locking(stmt, LOCK_EXCLUSIVE));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  printf("\nRows data:");
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t id = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &id));
+    printf ("\n%d", (int)id);
+  }
+
+  res = mysqlx_sql(get_session(), "select trx_rows_locked " \
+                   "from information_schema.innodb_trx " \
+                   "where trx_mysql_thread_id = connection_id()",
+                   MYSQLX_NULL_TERMINATED);
+  EXPECT_TRUE(res != NULL);
+  printf("\nLooking for locked rows:");
+  int64_t rownum = 0;
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &rownum));
+    printf(" %d", (int)rownum);
+  }
+  EXPECT_EQ(4, rownum);
+  EXPECT_EQ(RESULT_OK, mysqlx_transaction_commit(get_session()));
+  mysqlx_schema_drop(get_session(), "cc_crud_test");
+}
+
 
 TEST_F(xapi, test_having_group_by)
 {
