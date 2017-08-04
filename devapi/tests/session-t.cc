@@ -863,6 +863,9 @@ TEST_F(Sess, unix_socket)
 
   EXPECT_EQ(settings.find(SessionSettings::HOST).get<string>(), string("localhost"));
 
+  EXPECT_THROW(mysqlx::Session(SessionSettings::SOCKET, "c:\\mtsqlx.socket")
+               ,Error);
+
 }
 #endif //_WIN32
 
