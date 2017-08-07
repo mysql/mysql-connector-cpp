@@ -855,9 +855,11 @@ TEST_F(Sess, unix_socket)
   }
 
   SessionSettings settings(SessionSettings::SOCKET, get_socket(),
+                           SessionSettings::PRIORITY, 100,
                            SessionSettings::USER, get_user(),
                            SessionSettings::PWD, get_password(),
-                           SessionSettings::HOST, "localhost");
+                           SessionSettings::HOST, "localhost",
+                           SessionSettings::PRIORITY, 1);
 
   EXPECT_EQ(settings.find(SessionSettings::SOCKET).get<string>(), string(get_socket()));
 

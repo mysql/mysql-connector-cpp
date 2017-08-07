@@ -1292,6 +1292,10 @@ private:
   {
     switch (opt)
     {
+#ifndef WIN32
+    case SOCKET:
+      return do_add_socket(opt_val(SOCKET, v), rest...);
+#endif
     case HOST:
       return do_add_host(opt_val(HOST, v), rest...);
 
@@ -1387,6 +1391,37 @@ private:
     do_add_host(std::move(host), std::move(port));
     do_set(false, opt, v, rest...);
   }
+
+#ifndef WIN32
+  /*
+    Add SOCKET setting checking if PRIORITY is available.
+  */
+  void do_add_socket(Value &&socket)
+  {
+    do_add(Options::SOCKET, std::move(socket));
+  }
+
+  void do_add_socket(Value &&socket, Value &&priority)
+  {
+    do_add(Options::SOCKET, std::move(socket));
+    do_add(Options::PRIORITY, std::move(priority));
+  }
+
+  template <typename V, typename...R>
+  void do_add_socket(Value &&socket, Options opt, V v, R...rest)
+  {
+    if (opt == PRIORITY)
+    {
+      do_add_socket(std::move(socket), opt_val(opt,v));
+      do_set(false, rest...);
+    }
+    else
+    {
+      do_add_socket(std::move(socket));
+      do_set(false, opt, v, rest...);
+    }
+  }
+#endif
 
 
 };
