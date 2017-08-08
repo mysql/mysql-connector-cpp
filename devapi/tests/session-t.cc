@@ -868,6 +868,21 @@ TEST_F(Sess, unix_socket)
   EXPECT_THROW(mysqlx::Session(SessionSettings::SOCKET, "c:\\mtsqlx.socket")
                ,Error);
 
+  // SSL is not supported and should throw error if forced
+  EXPECT_THROW(mysqlx::Session(SessionSettings::SOCKET, get_socket(),
+                               SessionSettings::USER, get_user(),
+                               SessionSettings::PWD, get_password(),
+                               SessionSettings::SSL_MODE, SessionSettings::SSLMode::REQUIRED)
+               ,Error);
+
+  // but ignore then when not having host
+  mysqlx::Session(SessionSettings::SOCKET, get_socket(),
+                               SessionSettings::USER, get_user(),
+                               SessionSettings::PWD, get_password(),
+                               SessionSettings::SSL_MODE, SessionSettings::SSLMode::REQUIRED,
+                               SessionSettings::HOST, "localhost",
+                               SessionSettings::PORT, get_port());
+
 }
 #endif //_WIN32
 

@@ -189,7 +189,11 @@ void SessionSettings::do_add(Options opt, Value &&v)
     Note: Only HOST and PORT can have multiple values, the others, are unique
   */
 
-  if (opt == HOST || opt == PORT || opt == PRIORITY)
+  if (opt == HOST || opt == PORT || opt == PRIORITY
+#ifndef _WIN32
+      || opt == SOCKET
+#endif
+      )
   {
     m_options.emplace_back(opt, std::move(v));
   }
@@ -512,6 +516,7 @@ Session::Session(SessionSettings settings)
     {
       std::string pwd_str;
       bool has_pwd = false;
+      bool has_ssl = false;
 
 #ifdef WITH_SSL
       TLS_Options opt_ssl = TLS_Options::SSL_MODE::REQUIRED;
@@ -546,6 +551,7 @@ Session::Session(SessionSettings settings)
       if (settings.has_option(SessionSettings::SSL_MODE) ||
           settings.has_option(SessionSettings::SSL_CA))
       {
+        has_ssl = true;
 #ifdef WITH_SSL
 
         if (settings.has_option(SessionSettings::SSL_CA))
@@ -604,6 +610,7 @@ Session::Session(SessionSettings settings)
 
       //HOST can be skipped only on single host scenarios
       bool singlehost = false;
+      bool socket_only = true;
 
       /*
         Check for PORT and PRIORITY settings and if present,
@@ -703,6 +710,8 @@ Session::Session(SessionSettings settings)
         {
           if (socket.empty())
           {
+            socket_only = false;
+
             cdk::ds::TCPIP::Options opt(user, has_pwd ? &pwd_str : NULL );
 #ifdef WITH_SSL
             opt.set_tls(opt_ssl);
@@ -737,6 +746,9 @@ Session::Session(SessionSettings settings)
         }
 
       } while (it != settings.end());
+
+      if (socket_only && has_ssl)
+        throw Error("TLS connections over Unix domain socket are not supported");
 
       m_impl = new Impl(source);
 
