@@ -1873,6 +1873,8 @@ TEST_F(Crud, group_by_having)
 {
 
   SKIP_IF_NO_XPLUGIN;
+  //TODO: Remove this when  Bug #86754 is fixed
+  SKIP_IF_SERVER_VERSION_LESS(5, 7, 19);
 
   cout << "Preparing table..." << endl;
 

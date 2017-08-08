@@ -412,7 +412,8 @@ typedef enum mysqlx_auth_method_enum
                                     stored in MySQL 4.1 style. By default
                                     used in unencrypted connections. */
   MYSQLX_AUTH_EXTERNAL = 2     /**< External authentication handled by other
-                                    means than the standard MySQL server auth */
+                                    means than the standard MySQL server auth.
+                                    Currently not supported by X Plugin */
 }
 mysqlx_auth_method_t;
 

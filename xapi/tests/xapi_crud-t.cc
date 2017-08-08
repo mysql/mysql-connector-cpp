@@ -57,6 +57,8 @@ TEST_F(xapi, test_having_group_by)
   size_t json_len = 0;
 
   AUTHENTICATE();
+  //TODO: Remove this when  Bug #86754 is fixed
+  SKIP_IF_SERVER_VERSION_LESS(5, 7, 19);
 
   mysqlx_schema_drop(get_session(), "cc_crud_test");
   EXPECT_EQ(RESULT_OK, mysqlx_schema_create(get_session(), "cc_crud_test"));
