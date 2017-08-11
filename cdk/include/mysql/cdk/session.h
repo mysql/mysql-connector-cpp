@@ -282,10 +282,12 @@ public:
                        const Expr_list *group_by = NULL,
                        const Expression *having = NULL,
                        const Limit *lim = NULL,
-                       const Param_source *param = NULL)
+                       const Param_source *param = NULL,
+                       const Lock_mode_value lock_mode = Lock_mode_value::NONE
+                       )
   {
     return m_session->coll_find(coll, view, expr, proj, order_by,
-                                group_by, having, lim, param);
+                                group_by, having, lim, param, lock_mode);
   }
 
   /**
@@ -334,10 +336,11 @@ public:
                           const Expr_list *group_by = NULL,
                           const Expression *having = NULL,
                           const Limit* lim = NULL,
-                          const Param_source *param = NULL)
+                          const Param_source *param = NULL,
+                          const Lock_mode_value lock_mode = Lock_mode_value::NONE)
   {
     return m_session->table_select(tab, view, expr, proj, order_by,
-                                   group_by, having, lim, param);
+                                   group_by, having, lim, param, lock_mode);
   }
 
   /**

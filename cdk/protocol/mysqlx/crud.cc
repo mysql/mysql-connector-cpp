@@ -432,7 +432,6 @@ struct Group_by_traits
   }
 };
 
-
 void set_find(Mysqlx::Crud::Find &msg,
               Data_model dm, const Find_spec &fs, const api::Args_map *args)
 {
@@ -467,6 +466,20 @@ void set_find(Mysqlx::Crud::Find &msg,
     expr_builder.reset(*msg.mutable_grouping_criteria());
     fs.having()->process(expr_builder);
   }
+
+  switch (fs.locking())
+  {
+    case api::Lock_mode_value::EXCLUSIVE:
+      msg.set_locking(Mysqlx::Crud::Find_RowLock_EXCLUSIVE_LOCK);
+    break;
+    case api::Lock_mode_value::SHARED:
+      msg.set_locking(Mysqlx::Crud::Find_RowLock_SHARED_LOCK);
+    break;
+    case api::Lock_mode_value::NONE:
+    default: // do nothing
+    break;
+  }
+
 }
 
 

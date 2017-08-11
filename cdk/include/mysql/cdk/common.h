@@ -521,7 +521,7 @@ typedef cdk::api::Limit<row_count_t>         Limit;
 typedef cdk::api::Order_by<Expression>       Order_by;
 typedef cdk::api::Sort_direction             Sort_direction;
 typedef cdk::api::Doc_base<Value_processor>  Param_source;
-
+typedef cdk::api::Lock_mode::value           Lock_mode_value;
 
 using   cdk::api::View_security;
 using   cdk::api::View_algorithm;

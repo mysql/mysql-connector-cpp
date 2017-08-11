@@ -36,6 +36,76 @@ POP_SYS_WARNINGS
 namespace cdk {
 namespace mysqlx {
 
+/*
+  A structure to check if xplugin we are connecting supports a
+  specific field
+*/
+struct Proto_field_checker : public cdk::protocol::mysqlx::api::Expectations
+{
+  cdk::bytes m_data;
+  cdk::protocol::mysqlx::Protocol &m_proto;
+
+  Proto_field_checker(cdk::protocol::mysqlx::Protocol &proto) :
+    m_proto(proto)
+  {}
+
+  struct Check_reply_prc : cdk::protocol::mysqlx::Reply_processor
+  {
+    unsigned int m_code = 0;
+
+    void error(unsigned int code, short int,
+                cdk::protocol::mysqlx::sql_state_t, const string &)
+    {
+      m_code = code;
+    }
+
+    void ok(string)
+    {
+      m_code = 0;
+    }
+  };
+
+  void process(Processor &prc) const
+  {
+    prc.list_begin();
+    prc.list_el()->set(FIELD_EXISTS, m_data);
+    prc.list_end();
+  }
+
+  /*
+    This method sets the expectation and returns
+    the field flag if it is supported, otherwise 0 is returned.
+  */
+  uint64_t is_supported(Protocol_fields::value v)
+  {
+    switch (v)
+    {
+      case Protocol_fields::ROW_LOCKING:
+        // Find(17) locking(12)
+        m_data = bytes("17.12");
+        break;
+      default:
+        return 0;
+    }
+    m_proto.snd_Expect_Open(*this, false).wait();
+
+    Check_reply_prc prc;
+    m_proto.rcv_Reply(prc).wait();
+    uint64_t ret = prc.m_code == 0 ? (uint64_t)v : 0;
+
+    if (prc.m_code == 0 || prc.m_code == 5168)
+    {
+      /*
+        The expectation block needs to be closed if no error
+        or expectation failed error (5168)
+      */
+      m_proto.snd_Expect_Close().wait();
+      m_proto.rcv_Reply(prc).wait();
+    }
+    return ret;
+  }
+};
+
 
 class error_category_server : public foundation::error_category_base
 {
@@ -290,8 +360,20 @@ Session::~Session()
 option_t Session::is_valid()
 {
   wait();
-
   return m_isvalid;
+}
+
+
+void Session::check_protocol_fields()
+{
+  if (m_proto_fields == UINT64_MAX)
+  {
+    wait();
+    Proto_field_checker field_checker(m_protocol);
+    m_proto_fields = 0;
+    /* More fields checks will be added here */
+    m_proto_fields |= field_checker.is_supported(Protocol_fields::ROW_LOCKING);
+  }
 }
 
 
@@ -413,12 +495,17 @@ Reply_init& Session::coll_find(const Table_ref &coll,
                                const Expr_list *group_by,
                                const Expression *having,
                                const Limit *lim,
-                               const Param_source *param)
+                               const Param_source *param,
+                               const Lock_mode_value lock_mode)
 {
+  if (lock_mode != Lock_mode_value::NONE &&
+      !(m_proto_fields & Protocol_fields::ROW_LOCKING))
+    throw_error("Row locking is not supported by this version of the server");
+
   SndFind<protocol::mysqlx::DOCUMENT> *find
     = new SndFind<protocol::mysqlx::DOCUMENT>(
             m_protocol, coll, expr, proj, order_by,
-            group_by, having, lim, param
+            group_by, having, lim, param, lock_mode
           );
 
   if (view)
@@ -470,12 +557,17 @@ Reply_init& Session::table_select(const Table_ref &coll,
                                   const Expr_list *group_by,
                                   const Expression *having,
                                   const Limit *lim,
-                                  const Param_source *param)
+                                  const Param_source *param,
+                                  const Lock_mode_value lock_mode)
 {
+  if (lock_mode != Lock_mode_value::NONE &&
+      !(m_proto_fields & Protocol_fields::ROW_LOCKING))
+    throw_error("Row locking is not supported by this version of the server");
+
   SndFind<protocol::mysqlx::TABLE> *find
     = new SndFind<protocol::mysqlx::TABLE>(
             m_protocol, coll, expr, proj, order_by,
-            group_by, having, lim, param
+            group_by, having, lim, param, lock_mode
           );
 
   if (view)

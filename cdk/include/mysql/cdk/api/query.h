@@ -129,6 +129,11 @@ class Projection
   : public Expr_list< Projection_expr<EXPR> >
 {};
 
+struct Lock_mode
+{
+  enum value { NONE, SHARED, EXCLUSIVE };
+};
+
 
 /*
   View specifications.
