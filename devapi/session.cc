@@ -325,6 +325,7 @@ struct URI_parser
 
   std::multimap<unsigned short, Ds_variant> m_sources;
   std::bitset<SessionSettings::LAST> m_options_used;
+  bool m_has_ssl = false;
 
 #ifdef WITH_SSL
   TLS_Options m_tls_opt;
@@ -346,6 +347,7 @@ struct URI_parser
     cdk::ds::Unix_socket::Options m_socket_opt;
 #endif
     unsigned short priority = 0;
+    bool socket_only = true;
 
     Add_list(Host_sources &list
              ,const cdk::ds::TCPIP::Options& tcp_opt
@@ -363,6 +365,7 @@ struct URI_parser
     void operator() (const cdk::ds::TCPIP &ds_tcp)
     {
       m_list.add(ds_tcp, m_tcp_opt, priority);
+      socket_only = false;
     }
 
   #ifndef _WIN32
@@ -390,6 +393,10 @@ struct URI_parser
       add_list.priority = el->first;
       el->second.visit(add_list);
     }
+#ifndef _WIN32
+      if (add_list.socket_only && m_has_ssl)
+        throw Error("TLS connections over Unix domain socket are not supported");
+#endif
     return m_source;
   }
 
@@ -450,8 +457,8 @@ struct URI_parser
 
     if (lc_key == "ssl-mode")
     {
+      m_has_ssl = true;
 #ifdef WITH_SSL
-
       if (m_options_used.test(SessionSettings::SSL_MODE))
       {
         throw Error("Option ssl-mode defined twice");
@@ -473,6 +480,7 @@ struct URI_parser
 #endif
     } else if (lc_key == "ssl-ca")
     {
+      m_has_ssl = true;
 #ifdef WITH_SSL
 
       if (m_options_used.test(SessionSettings::SSL_CA))

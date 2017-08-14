@@ -883,6 +883,22 @@ TEST_F(Sess, unix_socket)
                                SessionSettings::HOST, "localhost",
                                SessionSettings::PORT, get_port());
 
+
+  uri << "?ssl-mode=REQUIRED";
+
+  EXPECT_NO_THROW(mysqlx::Session(uri.str()));
+
+  std::stringstream bad_uri;
+
+  bad_uri << "mysqlx://" << get_user();
+
+  if (get_password())
+    bad_uri << ":" << get_password();
+
+  bad_uri << "@(" << get_socket() << ")/test?ssl-mode=REQUIRED";
+
+  EXPECT_THROW(mysqlx::Session(bad_uri.str()), Error);
+
 }
 #endif //_WIN32
 
