@@ -427,9 +427,10 @@ public:
     parameters with .bind() before executing the statement.
   */
 
-  CollectionReplace replaceOne(string id, internal::ExprValue &&document)
+  bool replaceOne(string id, internal::ExprValue &&document)
   {
-      return CollectionReplace(*this, id, std::move(document));
+      return
+          internal::CollectionReplace(*this, id, std::move(document)).execute().getAffectedItemsCount() == 1;
   }
 
 };

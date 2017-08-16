@@ -232,14 +232,6 @@ TEST_F(First, api)
     CollectionModify modify2 = x;
   }
 
-  {
-    CollectionReplace replace = c.replaceOne("...", "...");
-    replace = replace.bind("...", 0);
-    auto x = replace.bind("...", 0);
-    CollectionReplace replace1 = replace;
-    CollectionReplace replace2 = x;
-  }
-
   // Test copy semantics for table operations
 
   {

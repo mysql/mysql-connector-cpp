@@ -647,7 +647,7 @@ class Op_collection_modify
   }
 
   friend mysqlx::CollectionModify;
-  friend mysqlx::CollectionReplace;
+  friend mysqlx::internal::CollectionReplace;
 };
 
 
@@ -662,8 +662,9 @@ CollectionModify::CollectionModify(
   CATCH_AND_WRAP
 }
 
-CollectionReplace::CollectionReplace(Collection &coll, const mysqlx::string &id
-, mysqlx::internal::ExprValue &&val)
+internal::CollectionReplace::CollectionReplace(Collection &coll,
+                                               const mysqlx::string &id,
+                                               mysqlx::internal::ExprValue &&val)
 {
   try
   {
@@ -686,3 +687,4 @@ CollectionReplace::CollectionReplace(Collection &coll, const mysqlx::string &id
   }
   CATCH_AND_WRAP
 }
+
