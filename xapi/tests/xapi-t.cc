@@ -830,14 +830,13 @@ DO_CONNECT:
 
   cout << "CA file: " << conn_str_ca << endl;
 
-  conn_str_ca = conn_str_basic + "/?Ssl-cA=" + conn_str_ca;
-
   /* If ssl-ca set ssl-mode can not be DISABLED or REQUIRED*/
 
   for (unsigned i = 0; i < 2; ++i)
   {
-    std::string conn_str = conn_str_ca;
-    conn_str += (i > 0 ? "&ssl-mode=REQUIRED" : "&ssl-mode=DISABLED");
+    std::string conn_str = conn_str_basic;
+    conn_str += (i > 0 ? "/?ssl-mode=REQUIRED" : "/?ssl-mode=DISABLED");
+    conn_str += "&Ssl-cA=" + conn_str_ca;
 
     local_sess = mysqlx_get_session_from_url(
       conn_str.c_str(),
@@ -854,7 +853,9 @@ DO_CONNECT:
   /* Same thing with VERIFY_CA should work */
 
   {
-    std::string conn_str = conn_str_ca + "&ssl-mode=VERIFY_CA";
+    std::string conn_str = conn_str_basic
+                         + "/?ssl-mode=VERIFY_CA&ssl-ca="
+                         + conn_str_ca;
 
     local_sess = mysqlx_get_session_from_url(
       conn_str.c_str(),
@@ -873,7 +874,7 @@ DO_CONNECT:
   */
 
   {
-    std::string conn_str = conn_str_basic + "?ssl-ca=wrong_ca.pem";
+    std::string conn_str = conn_str_basic + "?ssl-mode=VERIFY_CA&ssl-ca=wrong_ca.pem";
 
     local_sess = mysqlx_get_session_from_url(
       conn_str.c_str(),
@@ -1263,30 +1264,15 @@ DO_CONNECT:
     {
       mysqlx_session_options_t *opt2 = mysqlx_session_options_new();
 
-      EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt2,
+      EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(opt2,
         OPT_SSL_CA(ca.c_str()), PARAM_END
       ));
-
       /*
-        If ssl-ca is set without setting ssl-mode, the latter defaults
-        to VERIFY_CA.
+        If ssl-ca is set without setting ssl-mode, the error
+        should be returned
       */
-
-      unsigned int cur_ssl_mode = SSL_MODE_DISABLED;
-      EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt2,
-        MYSQLX_OPT_SSL_MODE, &cur_ssl_mode
-      ));
-      EXPECT_EQ(SSL_MODE_VERIFY_CA, cur_ssl_mode);
-
-      for (unsigned i = 0; i < 2; ++i)
-      {
-        EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(opt2,
-          OPT_SSL_MODE(i > 0 ? SSL_MODE_DISABLED : SSL_MODE_REQUIRED),
-          PARAM_END
-        ));
-        cout << "Expected error: "
-          << mysqlx_error_message(mysqlx_error(opt2)) << std::endl;
-      }
+      cout << "Expected error: "
+        << mysqlx_error_message(mysqlx_error(opt2)) << std::endl;
 
       mysqlx_free_options(opt2);
     }
@@ -1299,8 +1285,7 @@ DO_CONNECT:
 
   {
     /*
-      Check that setting SSL_CA also sets SSL_MODE to VERIFY_CA. Since we set
-      SSL_CA to wrong file, the connection should fail.
+      Since we set SSL_CA to wrong file, the connection should fail.
     */
 
     mysqlx_session_options_t *opt1 = mysqlx_session_options_new();
@@ -1310,6 +1295,7 @@ DO_CONNECT:
       OPT_USER(m_xplugin_usr),
       OPT_PWD(m_xplugin_pwd),
       OPT_PORT(m_port),
+      OPT_SSL_MODE(SSL_MODE_VERIFY_CA),
       OPT_SSL_CA("wrong_ca.pem"),
       PARAM_END
     ));

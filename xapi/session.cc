@@ -452,7 +452,9 @@ void mysqlx_session_options_t::set_ssl_ca(const string &ca)
   }
   else
   {
-    m_tls_options.set_ssl_mode(TLS::Options::SSL_MODE::VERIFY_CA);
+    // When SSL CA is set the SSL MODE should already be set
+    throw Mysqlx_exception("ssl-mode should be VERIFY_CA or VERIFY_IDENTITY "\
+                           "before setting ssl-ca");
   }
 
   m_tls_options.set_ca(ca);
