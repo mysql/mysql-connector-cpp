@@ -361,7 +361,20 @@ public:
 
   Type getType()   const;  ///< TODO
 
-  unsigned long getLength() const;  ///< TODO
+/**
+  Get column length
+
+  @return the maximum length of data in the column in bytes
+  as reported by server.
+
+  @note because the column length is returned as byte length
+        it could be confusing with the multi-byte charsets.
+        For instance with UTF8MB4 the length of VARCHAR(100)
+        column is returned as 400 because each character is
+        4 bytes long.       
+*/
+
+  unsigned long getLength() const;
   unsigned short getFractionalDigits() const;  ///< TODO
   bool isNumberSigned() const;  ///< TODO
 
