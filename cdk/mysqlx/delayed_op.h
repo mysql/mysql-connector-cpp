@@ -189,6 +189,7 @@ protected:
 
   cdk::Doc_source &m_docs;
   const Param_source *m_param;
+  bool m_upsert;
 
   Proto_op* start()
   {
@@ -201,17 +202,20 @@ protected:
                                   *this,
                                   NULL,
                                   *this,
-                                  &param_conv);
+                                  &param_conv,
+                                  m_upsert);
   }
 
 public:
 
   SndInsertDocs(Protocol& protocol, const api::Table_ref &coll,
                 cdk::Doc_source &docs,
-                const Param_source *param)
+                const Param_source *param,
+                bool upsert = false)
     : Crud_op_base(protocol, coll)
     , m_docs(docs)
     , m_param(param)
+    , m_upsert(upsert)
   {}
 
 private:

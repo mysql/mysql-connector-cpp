@@ -61,9 +61,87 @@ public:
     Session(Core_test *fixture)
       : cdk::Session(fixture->get_ds(), fixture->get_opts())
     {}
+
+    bool is_server_version_less(int test_upper_version,
+                                int test_lower_version,
+                                int test_release_version)
+    {
+      Reply reply(sql("SELECT VERSION()"));
+      reply.wait();
+      Cursor cursor(reply);
+
+      struct : cdk::Row_processor
+      {
+        cdk::string version;
+
+        virtual bool row_begin(row_count_t row)
+        { return true; }
+
+        virtual void row_end(row_count_t row)
+        {}
+
+        virtual void field_null(col_count_t pos)
+        {}
+
+        virtual size_t field_begin(col_count_t pos, size_t)
+        { return  SIZE_MAX; }
+
+        size_t field_data(col_count_t pos, bytes data)
+        {
+          cdk::foundation::Codec<cdk::foundation::Type::STRING> codec;
+          // Trim trailing \0
+          bytes d1(data.begin(), data.end() - 1);
+          codec.from_bytes(d1, version);
+          return 0;
+        }
+
+        virtual void field_end(col_count_t /*pos*/)
+        {}
+
+        virtual void end_of_data()
+        {}
+      }
+      prc;
+
+      cursor.get_rows(prc);
+      cursor.wait();
+
+      std::stringstream version;
+      version << std::string(prc.version);
+
+      int upper_version, minor_version, release_version;
+      char sep;
+      version >> upper_version;
+      version >> sep;
+      version >> minor_version;
+      version >> sep;
+      version >> release_version;
+
+      if ((upper_version < test_upper_version) ||
+        (upper_version == test_upper_version &&
+         minor_version << test_lower_version) ||
+         (upper_version == test_upper_version &&
+          minor_version == test_lower_version &&
+          release_version < test_release_version))
+      {
+        return true;
+      }
+      return false;
+    }
+
   };
 
 };
+
+#define SKIP_IF_SERVER_VERSION_LESS(CDK_SESS, x,y,z)\
+  if (CDK_SESS.is_server_version_less(x, y, z)) \
+  {\
+    std::cerr <<"SKIPPED: " << \
+    "Server version not supported (" \
+    << x << "." << y <<"." << ")" << z <<std::endl; \
+    return; \
+  }
+
 
 template <class X>
 struct Helper

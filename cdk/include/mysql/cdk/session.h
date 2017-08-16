@@ -225,15 +225,26 @@ public:
     Documents to be inserted are given by a Doc_source object which is
     a sequence of expressions, each expression describing a single document.
     Note that a document can be represented as a JSON blob or as a structured
-    document expression.
+    document expression. In the latter case this expression can contain named
+    parameters -- the values for these parameters are given by the `param`
+    argument describing a key-value dictionary.
+
+    If `upsert` flag is set and a document being added has the same id as
+    a document already present in the collection, the existing document is
+    replaced by the new one. Otherwise, if `upsert` flag is false (the default)
+    an error is reported if a document being added conflicts with an exisiting
+    document in the collection.
 
     Note: Server requires that inserted documents contain "_id" field with
     unique document id.
   */
 
-  Reply_init coll_add(const api::Object_ref &coll, Doc_source &docs, const Param_source *param)
+  Reply_init coll_add(const api::Object_ref &coll,
+                      Doc_source &docs,
+                      const Param_source *param,
+                      bool upsert = false)
   {
-    return m_session->coll_add(coll, docs, param);
+    return m_session->coll_add(coll, docs, param, upsert);
   }
 
   /**

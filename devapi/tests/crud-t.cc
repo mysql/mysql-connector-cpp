@@ -2209,6 +2209,8 @@ TEST_F(Crud, single_document)
 {
   SKIP_IF_NO_XPLUGIN;
 
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 2);
+
   cout << "Creating session..." << endl;
 
   Session sess(this);

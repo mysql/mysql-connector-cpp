@@ -807,7 +807,6 @@ private:
 
 // =====================================================================
 
-
 CRUD_TEST_BEGIN(find)
 {
   Session sess(this);
@@ -1822,5 +1821,38 @@ CRUD_TEST_BEGIN(views)
 
 
   cout <<"Done!" <<endl;
+}
+CRUD_TEST_END
+
+
+CRUD_TEST_BEGIN(upsert)
+{
+  Session sess(this);
+  SKIP_IF_SERVER_VERSION_LESS(sess, 8, 0, 3)
+
+  Doc_list doc_list;
+  doc_list.add(1, "coo", 10);
+  doc_list.add(2, "roo", 20);
+  doc_list.add(3, "moo", 30);
+
+  Reply r = sess.coll_add(coll, doc_list, &doc_list.params());
+  r.wait();
+
+  Doc_list upsert_list;
+  upsert_list.add(1, "zoo", 40);
+  r = sess.coll_add(coll, upsert_list,
+                   &upsert_list.params(), true);
+  r.wait();
+  EXPECT_EQ(0, r.entry_count());
+
+  Doc_list no_upsert_list;
+  no_upsert_list.add(1, "noo", 50);
+  r = sess.coll_add(coll, no_upsert_list,
+                    &no_upsert_list.params(), false);
+  r.wait();
+  EXPECT_EQ(1, r.entry_count());
+
+  cout << "Done!" << endl;
+
 }
 CRUD_TEST_END
