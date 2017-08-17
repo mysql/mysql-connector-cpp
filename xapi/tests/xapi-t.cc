@@ -1632,6 +1632,45 @@ TEST_F(xapi, unix_socket)
 
   mysqlx_free_options(opt);
 
+
+  uri << "?ssl-mode=REQUIRED";
+
+  local_sess = mysqlx_get_session_from_url(uri.str().c_str(),
+                                           conn_error,
+                                           &conn_err_code);
+  if (local_sess)
+  {
+    mysqlx_session_close(local_sess);
+    FAIL() << "ssl-mode used on unix domain socket";
+  }
+
+  std::cout << "Expected connection error: " << conn_err_code << std::endl;
+
+  opt = mysqlx_session_options_new();
+
+  EXPECT_EQ(RESULT_OK,
+            mysqlx_session_option_set(opt,
+                                      OPT_SOCKET(m_xplugin_socket),
+                                      OPT_USER(m_xplugin_usr),
+                                      OPT_PWD(m_xplugin_pwd),
+                                      OPT_SSL_MODE(SSL_MODE_REQUIRED),
+                                      PARAM_END
+                                      )
+            );
+
+  local_sess = mysqlx_get_session_from_options(opt, conn_error, &conn_err_code);
+
+  mysqlx_free_options(opt);
+
+  if (local_sess)
+  {
+    mysqlx_session_close(local_sess);
+    FAIL() << "ssl-mode used on unix domain socket";
+  }
+
+  std::cout << "Expected connection error: " << conn_err_code << std::endl;
+
+
   std::cout << "Done" << std::endl;
 }
 #endif //_WIN32

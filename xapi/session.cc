@@ -536,7 +536,6 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
 
           ds = TCPIP_t(char_data);
           selected_type = TCPIP_type;
-
           break;
         case MYSQLX_OPT_PORT:
           uint_data = (va_arg(args, unsigned int));
@@ -601,10 +600,12 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
         case MYSQLX_OPT_SSL_CA:
           char_data = va_arg(args, char*);
           set_ssl_ca(char_data);
+          m_has_ssl = true;
           break;
         case MYSQLX_OPT_SSL_MODE:
           uint_data = va_arg(args, unsigned int);
           set_ssl_mode(mysqlx_ssl_mode_t(uint_data));
+          m_has_ssl = true;
           break;
 #else
         case MYSQLX_OPT_SSL_MODE:
@@ -653,6 +654,7 @@ mysqlx_session_options_struct::get_multi_source() const
 #endif //_WIN32
 
     unsigned short m_priority;
+    bool m_socket_only = true;
 
     Sources_add(Host_sources& sources
                 ,cdk::ds::TCPIP::Options &tcp_opt
@@ -670,6 +672,7 @@ mysqlx_session_options_struct::get_multi_source() const
     void operator()(const cdk::ds::mysqlx::TCPIP& to_add)
     {
       m_sources.add(to_add, m_tcp_opt, m_priority);
+      m_socket_only = false;
     }
 
 #ifndef _WIN32
@@ -711,6 +714,10 @@ mysqlx_session_options_struct::get_multi_source() const
     it->second.visit(sources);
 
   }
+#ifndef _WIN32
+  if (sources.m_socket_only && m_has_ssl)
+    throw Mysqlx_exception("TLS connections over Unix domain socket are not supported");
+#endif
   return self->m_ms;
 }
 
@@ -825,6 +832,7 @@ void mysqlx_session_options_struct::key_val(const std::string& key, const std::s
 
   if (lc_key.find("ssl-", 0) == 0)
   {
+    m_has_ssl = true;
 #ifdef WITH_SSL
     if (lc_key == "ssl-ca")
     {

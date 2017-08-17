@@ -404,6 +404,8 @@ private:
 
   std::bitset<LAST> m_options_used;
 
+  bool m_has_ssl = false;
+
   /*
     This struct extends cdk::ds::TCPIP to allow setting
     host and port at any time
@@ -469,6 +471,7 @@ private:
   {
     Host_list &m_list;
     unsigned short priority = 0;
+    bool socket_only = true;
     Host_list::const_iterator &m_last_tcpip;
 #ifndef _WIN32
     Host_list::const_iterator &m_last_socket;
@@ -490,7 +493,8 @@ private:
 
     void operator() (const TCPIP_t &ds_tcp)
     {
-       m_last_tcpip = m_list.emplace(priority, ds_tcp);
+      m_last_tcpip = m_list.emplace(priority, ds_tcp);
+      socket_only = false;
     }
 
 #ifndef _WIN32
