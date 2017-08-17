@@ -420,17 +420,34 @@ public:
   }
 
   /**
-    Returns an operation which, when executed, replaces document with given id
-    in the collection with new document doc. Parameter doc can be either DbDoc
-    object, or JSON string, or expr(docexpr) where docexpr is like JSON string
-    but field values are expressions. It is possible to bind values of named
-    parameters with .bind() before executing the statement.
+    Replaces the document identified by id if it exists and returns true.
+    Otherwise false is returned. Parameter document can be either DbDoc object,
+    or JSON string, or expr(docexpr) where docexpr is like JSON
+    string but field values are expressions.
+    It is not possible to bind values of named parameters with .bind()
+    because the statement gets executed upon calling of this function.
   */
 
   bool replaceOne(string id, internal::ExprValue &&document)
   {
       return
           internal::CollectionReplace(*this, id, std::move(document)).execute().getAffectedItemsCount() == 1;
+  }
+
+  /**
+    Adds a new document and returns true if a document identified
+    by id does not exist. Otherwise an existing document is
+    replaced and false is returned.
+    Parameter document can be either DbDoc object,
+    or JSON string, or expr(docexpr) where docexpr is like JSON
+    string but field values are expressions.
+    It is not possible to bind values of named parameters with .bind()
+    because the statement gets executed upon calling of this function.
+  */
+
+  bool addOrReplace(string id, internal::ExprValue &&document)
+  {
+      return internal::CollectionReplace(*this, id, std::move(document), true).execute().getAffectedItemsCount() == 1;
   }
 
 };

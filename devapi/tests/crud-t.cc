@@ -2209,7 +2209,7 @@ TEST_F(Crud, single_document)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  SKIP_IF_SERVER_VERSION_LESS(8, 0, 2);
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 3);
 
   cout << "Creating session..." << endl;
 
@@ -2241,7 +2241,7 @@ TEST_F(Crud, single_document)
 
   // Ignore _id field on document and replace existing docment
   // Document passed as string
-  EXPECT_EQ(1, coll.replaceOne("id3", "{\"_id\": \"id4\", \"name\": \"baz\" }"));
+  EXPECT_TRUE(coll.replaceOne("id3", "{\"_id\": \"id4\", \"name\": \"baz\" }"));
   EXPECT_EQ(string("baz"), coll.getOne("id3")["name"].get<string>());
   EXPECT_EQ(string("id3"), coll.getOne("id3")["_id"].get<string>());
 
@@ -2255,4 +2255,33 @@ TEST_F(Crud, single_document)
   EXPECT_EQ(string("quux"), coll.getOne("id3")["name"].get<string>());
 }
 
+TEST_F(Crud, add_or_replace)
+{
+  SKIP_IF_NO_XPLUGIN;
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 3)
+
+  cout << "Creating session..." << endl;
+
+  Session sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  sess.dropCollection("test", "c1");
+  Collection coll = sch.createCollection("c1", true);
+
+  coll.add("{\"_id\":\"id1\", \"name\":\"foo\" }")
+    .add("{\"_id\":\"id2\", \"name\":\"bar\" }")
+    .add("{\"_id\":\"id3\", \"name\":\"baz\" }")
+    .execute();
+
+  EXPECT_TRUE(coll.addOrReplace("id4", "{\"name\":\"zaz\"}"));
+  // Check that the document was added
+  EXPECT_EQ(string("zaz"), coll.getOne("id4")["name"].get<string>());
+
+  EXPECT_FALSE(coll.addOrReplace("id4", "{\"name\":\"zzz\"}"));
+  // Check that the document was replaced
+  EXPECT_EQ(string("zzz"), coll.getOne("id4")["name"].get<string>());
+
+}
 

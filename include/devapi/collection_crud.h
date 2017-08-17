@@ -429,7 +429,8 @@ public:
   */
   CollectionReplace(Collection &base,
                     const string &id,
-                    internal::ExprValue &&val);
+                    internal::ExprValue &&val,
+                    bool upsert = false);
 
   CollectionReplace(const internal::Collection_replace_cmd &other)
   {
