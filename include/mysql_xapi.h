@@ -444,9 +444,9 @@ typedef enum mysqlx_view_check_option_enum
 */
 typedef enum mysqlx_row_locking_enum
 {
-  LOCK_NONE = 0,
-  LOCK_SHARED = 1,
-  LOCK_EXCLUSIVE = 2
+  LOCK_NONE = 0,       /**< No locking */
+  LOCK_SHARED = 1,     /**< Locking in Shared mode */
+  LOCK_EXCLUSIVE = 2   /**< Locking in Exclusive mode */
 } mysqlx_row_locking_t;
 
 /*
@@ -2151,7 +2151,7 @@ PUBLIC_API int
 mysqlx_set_limit_and_offset(mysqlx_stmt_t *stmt, uint64_t row_count,
                             uint64_t offset);
 
-/*
+/**
   Set row locking mode for a statement.
 
   Set row locking mode for statement operations working on ranges of
@@ -2166,9 +2166,10 @@ mysqlx_set_limit_and_offset(mysqlx_stmt_t *stmt, uint64_t row_count,
   @param stmt statement handle
   @param locking the integer mode identifier (see `mysqlx_row_locking_t`).
          Possible values:
-           ROW_LOCK_NONE - no row locking is set
 
-           ROW_LOCK_SHARED - Sets a shared mode lock on any rows that
+           LOCK_NONE - Sets no row locking
+
+           LOCK_SHARED - Sets a shared mode lock on any rows that
               are read. Other sessions can read the rows,
               but cannot modify them until your transaction
               commits. If any of these rows were changed by
@@ -2176,11 +2177,11 @@ mysqlx_set_limit_and_offset(mysqlx_stmt_t *stmt, uint64_t row_count,
               your query waits until that transaction ends
               and then uses the latest values.
 
-           ROW_LOCK_EXCLUSIVE - For index records the search encounters,
+           LOCK_EXCLUSIVE - For index records the search encounters,
               locks the rows and any associated index entries, the same
               as if you issued an UPDATE statement for those rows. Other
               transactions are blocked from updating those rows,
-              from doing locking in ROW_LOCK_SHARED, or from reading
+              from doing locking in LOCK_SHARED, or from reading
               the data in certain transaction isolation levels.
 
   @return `RESULT_OK` - on success; `RESULT_ERR` - on error

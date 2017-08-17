@@ -191,12 +191,24 @@ public:
 
   Statement(Statement &&other) : Executable<Res,Op>(std::move(other)) {}
 
+  /**
+    Set a shared mode lock on any rows/documents that are read.
+
+    Other sessions can read, but not modify locked rows/documents.
+  */
   Executable<Res, Op> &lockShared()
   {
     get_impl()->set_locking(internal::Lock_mode::SHARED);
     return *this;
   }
 
+  /**
+    Set an exclusive mode lock on any rows/documents that are read.
+
+    Other sessions are blocked from modifying, locking, or reading the data
+    in certain transaction isolation levels. The lock is released
+    when the transaction is committed or rolled back.
+  */
   Executable<Res, Op> &lockExclusive()
   {
     get_impl()->set_locking(internal::Lock_mode::EXCLUSIVE);

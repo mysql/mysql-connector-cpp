@@ -900,12 +900,24 @@ public:
     return fields(rest...);
   }
 
+  /**
+    Set a shared mode lock on any rows/documents that are read.
+
+    Other sessions can read, but not modify locked rows/documents.
+  */
   CollectionGroupBy& lockShared()
   {
     get_impl()->set_locking(internal::Lock_mode::SHARED);
     return *this;
   }
 
+  /**
+    Set an exclusive mode lock on any rows/documents that are read.
+
+    Other sessions are blocked from modifying, locking, or reading the data
+    in certain transaction isolation levels. The lock is released
+    when the transaction is committed or rolled back.
+  */
   CollectionGroupBy& lockExclusive()
   {
     get_impl()->set_locking(internal::Lock_mode::EXCLUSIVE);
