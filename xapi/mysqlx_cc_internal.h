@@ -461,9 +461,6 @@ private:
 
 public:
 
-  /* Move constructor should be disabled */
-  mysqlx_session_options_struct(mysqlx_session_options_struct &&) = delete;
-
   mysqlx_session_options_struct(source_state state = source_state::unknown)
       : m_source_state(state)
     {

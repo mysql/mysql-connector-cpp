@@ -1044,7 +1044,6 @@ TEST_F(xapi, failover_test)
 
 }
 
-
 TEST_F(xapi, failover_test_url)
 {
   SKIP_IF_NO_XPLUGIN
@@ -1312,6 +1311,68 @@ DO_CONNECT:
     cout << "Expected error: " << conn_error << endl;
     mysqlx_free_options(opt1);
   }
+}
+
+TEST_F(xapi, conn_options_atomic)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  unsigned int port = 0, ssl_mode = SSL_MODE_DISABLED;
+
+  char buf[1024];
+
+  const char *test_host1 = "host1";
+  const char *test_db1 =   "db1";
+  const char *test_user1 = "user1";
+  const char *test_pwd1 =  "pwd1";
+  unsigned short test_port1 = 1;
+
+  const char *test_host2 = "host2";
+  const char *test_db2 = "db2";
+  const char *test_user2 = "user2";
+  const char *test_pwd2 = "pwd2";
+  unsigned short test_port2 = 1;
+
+  mysqlx_session_options_t *opt = mysqlx_session_options_new();
+
+  // Setting options Call 1
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                       OPT_HOST(test_host1),
+                       OPT_PORT(test_port1),
+                       OPT_USER(test_user1),
+                       OPT_PWD(test_pwd1),
+                       OPT_DB(test_db1),
+                       OPT_SSL_MODE(SSL_MODE_REQUIRED),
+                       PARAM_END));
+
+  // Setting options Call 2
+  EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(opt,
+                       OPT_HOST(test_host2),
+                       OPT_PORT(test_port2),
+                       OPT_USER(test_user2),
+                       OPT_PWD(test_pwd2),
+                       OPT_DB(test_db2),
+                       OPT_SSL_MODE(SSL_MODE_DISABLED),
+                       OPT_SSL_CA("ca.pem"),
+                       PARAM_END));
+
+  //  Call 2 failed, but opt settings are supposed to be from Call 1
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_HOST, buf));
+  EXPECT_STREQ(test_host1, buf);
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_PORT, &port));
+  EXPECT_EQ(true, test_port1 == port);
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_USER, buf));
+  EXPECT_STREQ(test_user1, buf);
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_PWD, buf));
+  EXPECT_STREQ(test_pwd1, buf);
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_DB, buf));
+  EXPECT_STREQ(test_db1, buf);
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_SSL_MODE, &ssl_mode));
+  EXPECT_EQ(true, SSL_MODE_REQUIRED == ssl_mode);
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_SSL_CA, buf));
+  EXPECT_STREQ("", buf);
+
+  mysqlx_free_options(opt);
 }
 
 

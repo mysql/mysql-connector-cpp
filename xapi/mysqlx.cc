@@ -1672,7 +1672,20 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, ...)
   SAFE_EXCEPTION_BEGIN(opt, RESULT_ERROR)
   va_list args;
   va_start(args, opt);
-  opt->set_multiple_options(args);
+  // Save the options before the call
+  mysqlx_session_options_t save_opt;
+  save_opt = *opt;
+  try
+  {
+    opt->set_multiple_options(args);
+  }
+  catch(...)
+  {
+    // Restore the options state as was before the call
+    *opt = save_opt;
+    va_end(args);
+    throw;
+  }
   va_end(args);
 
   return RESULT_OK;

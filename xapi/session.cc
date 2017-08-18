@@ -33,7 +33,7 @@ const unsigned max_priority = 100;
 mysqlx_session_struct::mysqlx_session_struct(
   const mysqlx_session_options_t &opt
 )
-  : m_session(opt.get_multi_source()),
+  : m_session(mysqlx_session_options_t(opt).get_multi_source()),
     m_stmt(NULL)
 {
   const string *db = opt.get_db();
