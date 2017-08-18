@@ -421,7 +421,7 @@ public:
 
   /**
     Replaces the document identified by id if it exists and returns true.
-    Otherwise false is returned. Parameter document can be either DbDoc object,
+    Otherwise returns false. Parameter document can be either DbDoc object,
     or JSON string, or expr(docexpr) where docexpr is like JSON
     string but field values are expressions.
     It is not possible to bind values of named parameters with .bind()
@@ -435,14 +435,14 @@ public:
   }
 
   /**
-    Adds a new document and returns true if a document identified
-    by id does not exist. Otherwise an existing document is
-    replaced and false is returned.
+    Adds a new document identified by id if it does not exist and 
+    returns true. Otherwise replaces the existing document
+    with that id and returns false.
     Parameter document can be either DbDoc object,
     or JSON string, or expr(docexpr) where docexpr is like JSON
     string but field values are expressions.
     It is not possible to bind values of named parameters with .bind()
-    because the statement gets executed upon calling of this function.
+    because the statement is executed upon calling of this function.
   */
 
   bool addOrReplace(string id, internal::ExprValue &&document)
