@@ -2572,3 +2572,21 @@ TEST_F(xapi, test_decimal_type)
 
   mysqlx_schema_drop(get_session(), "xapi_dec_test");
 }
+
+TEST_F(xapi_bugs, session_invalid_password_deadlock)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
+  int conn_err_code;
+
+  auto sess = mysqlx_get_session(m_xplugin_host,
+                              m_port,
+                              m_xplugin_usr,
+                              "bal_xplugin_pwd",
+                              NULL,
+                              conn_error,
+                              &conn_err_code);
+
+  EXPECT_EQ(NULL, sess);
+}
