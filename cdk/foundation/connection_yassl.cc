@@ -378,6 +378,9 @@ bool TLS::Read_op::common_read()
 
   int result = yaSSL::SSL_read(impl.m_tls, data, buffer_size);
 
+  if (result == -1)
+    throw IO_error(yaSSL::SSL_get_error(impl.m_tls,0));
+
   if (result > 0)
   {
     m_currentBufferOffset += result;
