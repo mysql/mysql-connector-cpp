@@ -444,9 +444,9 @@ typedef enum mysqlx_view_check_option_enum
 */
 typedef enum mysqlx_row_locking_enum
 {
-  LOCK_NONE = 0,       /**< No locking */
-  LOCK_SHARED = 1,     /**< Locking in Shared mode */
-  LOCK_EXCLUSIVE = 2   /**< Locking in Exclusive mode */
+  ROW_LOCK_NONE = 0,       /**< No locking */
+  ROW_LOCK_SHARED = 1,     /**< Locking in Shared mode */
+  ROW_LOCK_EXCLUSIVE = 2   /**< Locking in Exclusive mode */
 } mysqlx_row_locking_t;
 
 /*

@@ -876,13 +876,13 @@ void mysqlx_stmt_t::set_row_locking(mysqlx_row_locking_t row_locking)
     case OP_FIND:
       switch (row_locking)
       {
-        case LOCK_NONE:
+        case ROW_LOCK_NONE:
           m_row_locking = cdk::Lock_mode_value::NONE;
           break;
-        case LOCK_SHARED:
+        case ROW_LOCK_SHARED:
           m_row_locking = cdk::Lock_mode_value::SHARED;
           break;
-        case LOCK_EXCLUSIVE:
+        case ROW_LOCK_EXCLUSIVE:
           m_row_locking = cdk::Lock_mode_value::EXCLUSIVE;
           break;
         default:

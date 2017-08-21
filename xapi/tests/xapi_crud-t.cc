@@ -70,7 +70,7 @@ TEST_F(xapi, test_row_locking)
 
   EXPECT_EQ(RESULT_OK, mysqlx_transaction_begin(get_session()));
   stmt = mysqlx_table_select_new(table);
-  EXPECT_EQ(RESULT_OK, mysqlx_set_select_row_locking(stmt, LOCK_EXCLUSIVE));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_row_locking(stmt, ROW_LOCK_EXCLUSIVE));
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
   printf("\nRows data:");
