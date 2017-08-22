@@ -20,10 +20,13 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-SET(headers common.h result.h statement.h document.h
-            crud.h collection_crud.h table_crud.h
+SET(headers common.h error.h row.h result.h executable.h document.h settings.h
+            crud.h collection_crud.h table_crud.h view_ddl.h
             collations.h mysql_charsets.h mysql_collations.h)
 
+check_headers(${headers})
+
+ADD_HEADERS_DIR(detail)
 ADD_HEADERS(${headers})
 ADD_HEADER_CHECKS()
 INSTALL(FILES ${headers} DESTINATION include/devapi)

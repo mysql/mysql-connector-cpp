@@ -1243,6 +1243,23 @@ TEST_F(Session_core, failover)
     ms.add(ds_correct, options_db2, highest_priority - 1);
     ms.add(ds_correct, options_db3, highest_priority - 1);
 
+#ifndef _WIN32
+    ds::Unix_socket ds_correct_unix("/tmp/varxpl/tmp/mysqlx.1.sock");
+    ds::Unix_socket::Options options_unix_db1("root");
+    options_db1.set_database("failover_test_unix_1");
+
+    ds::Unix_socket::Options options_unix_db2("root");
+    options_db2.set_database("failover_test_unix_2");
+
+    ds::Unix_socket::Options options_unix_db3("root");
+    options_db3.set_database("failover_test_unix_3");
+
+    ms.add(ds_correct_unix, options_unix_db1, highest_priority - 1);
+    ms.add(ds_correct_unix, options_unix_db2, highest_priority - 1);
+    ms.add(ds_correct_unix, options_unix_db3, highest_priority - 1);
+
+#endif
+
     struct : cdk::Row_processor
     {
       // Row_processor callbacks

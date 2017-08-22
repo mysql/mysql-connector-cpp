@@ -204,15 +204,14 @@ else()
   add_definitions(-DCONCPP_BUILD_SHARED)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+  # Hide all symbols that are not explicitly exported.
   # Note: setting target property CXX_VISIBILITY did not work for
   # object libraries that we use to build the connector.
 
-  if(CMAKE_COMPILER_IS_GNUCXX)
-    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-      add_compile_options(-fvisibility-ms-compat)
-    elseif()
-      add_compile_options(-fvisibility=hidden)
-    endif()
+  if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-fvisibility-ms-compat)
+  elseif(CMAKE_COMPILER_IS_GNUCXX)
+    add_compile_options(-fvisibility=hidden)
   endif()
 
 endif()
@@ -518,6 +517,8 @@ SET_INTERFACE_OPTIONS(try devapi)
 # TODO: Do it also for the shared library
 #
 
+if(NOT WIN32)
+
 find_program(LDD ldd)
 if(NOT LDD)
   find_program(LDD otool)
@@ -531,6 +532,8 @@ if(LDD)
     COMMAND ${LDD} ${LDD_OPTS} $<TARGET_FILE:try>
     COMMENT "Checking dynamic library dependencies:"
   )
+endif()
+
 endif()
 
 #
@@ -591,11 +594,11 @@ if(NOT CMAKE_INSTALL_PREFIX)
     else()
       set(install_prefix "C:/Program Files (x86)")
     endif()
-    set(CMAKE_INSTALL_PREFIX "${install_prefix}/MySQL/MySQL Connector C++ 2.0")
+    set(CMAKE_INSTALL_PREFIX "${install_prefix}/MySQL/MySQL Connector C++ ${CONCPP_PACKAGE_BASE_VERSION}")
 
   else()
 
-    set(CMAKE_INSTALL_PREFIX "/usr/local/mysql/connector-c++-2.0")
+    set(CMAKE_INSTALL_PREFIX "/usr/local/mysql/connector-c++-${CONCPP_PACKAGE_BASE_VERSION}")
 
   endif()
 

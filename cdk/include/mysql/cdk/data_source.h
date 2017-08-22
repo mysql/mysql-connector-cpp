@@ -218,6 +218,64 @@ public:
 
 };
 
+
+#ifndef _WIN32
+class Unix_socket
+{
+protected:
+  std::string m_path;
+
+public:
+
+  class Options;
+
+
+  Unix_socket(const std::string &path)
+    : m_path(path)
+  {
+    if (path.empty() || 0 == path.length())
+      throw_error("invalid empty socket path");
+  }
+
+  virtual ~Unix_socket() {}
+
+  virtual const std::string& path() const { return m_path; }
+};
+
+class Unix_socket::Options : public ds::Options<Protocol_options>
+{
+
+public:
+
+  Options()
+  {}
+
+  Options(const ds::Options<Protocol_options>& opt)
+    : ds::Options<Protocol_options>(opt)
+  {}
+
+  Options(const string &usr, const std::string *pwd =NULL)
+    : ds::Options<Protocol_options>(usr, pwd)
+  {}
+
+  void set_auth_method(auth_method_t auth_method)
+  {
+    m_auth_method = auth_method;
+  }
+
+private:
+  auth_method_t m_auth_method = auth_method_t::PLAIN;
+
+  auth_method_t auth_method() const
+  {
+    return m_auth_method;
+  }
+
+
+
+};
+#endif //_WIN32
+
 } // mysqlx
 
 namespace mysql {
@@ -251,6 +309,9 @@ public:
 namespace ds {
 
   typedef mysqlx::TCPIP TCPIP;
+#ifndef _WIN32
+  typedef mysqlx::Unix_socket Unix_socket;
+#endif //_WIN32
   typedef mysql::TCPIP TCPIP_old;
 
   template <typename DS_t, typename DS_opt>
@@ -266,6 +327,9 @@ namespace ds {
   private:
 
     typedef cdk::foundation::variant <DS_pair<cdk::ds::TCPIP, cdk::ds::TCPIP::Options>,
+#ifndef _WIN32
+                                      DS_pair<cdk::ds::Unix_socket, cdk::ds::Unix_socket::Options>,
+#endif //_WIN32
                                       DS_pair<cdk::ds::TCPIP_old, cdk::ds::TCPIP_old::Options>> DS_variant;
 
     bool m_is_prioritized;

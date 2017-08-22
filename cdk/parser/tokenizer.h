@@ -67,11 +67,13 @@ POP_SYS_WARNINGS
 
 #define SYMBOL_LIST2(X) \
     X(NE, "!=") \
+    X(DF, "<>") \
     X(GE, ">=") \
     X(LE, "<=") \
     X(LSHIFT, "<<") \
     X(RSHIFT, ">>") \
     X(DOUBLESTAR, "**") \
+    X(ARROW2, "->>") \
     X(ARROW, "->") \
     X(AMPERSTAND2, "&&") \
     X(BAR2, "||") \

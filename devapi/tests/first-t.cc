@@ -24,6 +24,7 @@
 
 #include <test.h>
 #include <iostream>
+#include <array>
 
 
 using std::cout;
@@ -60,7 +61,7 @@ TEST_F(First, sql)
     .bind(L"bar")
     .execute();
 
-  int args[] = { 7, 30 };
+  std::array<int,2> args = { 7, 30 };
 
   RowResult res = get_sess().sql(L"SELECT *,? FROM test.t WHERE c0 > ?")
                             .bind(args)
@@ -183,6 +184,94 @@ TEST_F(First, api)
     DocResult res;
     EXPECT_THROW(res.fetchOne(),Error);
     res = c.find().execute();
+  }
+
+  // Test copy semantics for collection operations.
+
+  {
+    CollectionFind find = c.find().fields("a");
+    find = c.find().fields("a");
+    find = c.find().groupBy("...");
+    find = c.find().groupBy("...").having("...");
+    auto x = find.sort("...");
+    find = c.find().groupBy("...").having("...").sort("...");
+    find = c.find().sort("...").limit(0);
+    find = c.find().sort("...").limit(0).offset(0);
+    find = c.find().bind("...",0);
+    CollectionFind find1 = find;
+    find1 = x;
+    CollectionFind find2 = x;
+  }
+
+  {
+    CollectionAdd add = c.add("...");
+    add = c.add("...").add("...");
+    auto x = add.add("...");
+    CollectionAdd add1 = add;
+    add1 = x;
+    CollectionAdd add2 = x;
+  }
+
+  {
+    CollectionRemove rm = c.remove("...");
+    rm = c.remove("...");
+    auto x = c.remove("...").sort("...");
+    rm = c.remove("...").sort("...").limit(0);
+    rm = c.remove("...").bind("...", 0);
+    CollectionRemove rm1 = rm;
+    rm1 = x;
+    CollectionRemove rm2 = x;
+  }
+
+  {
+    CollectionModify modify = c.modify("...").set("..", 0);
+    modify = modify.arrayAppend("...", 0);
+    auto x = modify.bind("...", 0);
+    modify = x.bind("...", 0);
+    CollectionModify modify1 = modify;
+    CollectionModify modify2 = x;
+  }
+
+  // Test copy semantics for table operations
+
+  {
+    TableInsert ins = t.insert("a");
+    ins = t.insert("a");
+    ins = ins.values(1);
+    auto x = ins.values(2);
+    ins = x;
+    TableInsert ins1 = ins;
+    TableInsert ins2 = x;
+  }
+
+  {
+    TableSelect sel = t.select("a").where("...");
+    sel = t.select("a");
+    sel = sel.orderBy("...").limit(1);
+    auto x = sel.offset(2);
+    sel = x;
+    TableSelect sel1 = sel;
+    TableSelect sel2 = x;
+  }
+
+  {
+    TableUpdate upd = t.update();
+    upd = t.update().where("...");
+    upd = upd.orderBy("...").limit(0);
+    auto x = upd.bind("...", 0);
+    upd = x;
+    TableUpdate upd1 = upd;
+    TableUpdate upd2 = x;
+  }
+
+  {
+    TableRemove rm = t.remove().where("...");
+    rm = t.remove();
+    rm = rm.orderBy("...").limit(0);
+    auto x = rm.bind("...", 0);
+    rm = x;
+    TableRemove rm1 = rm;
+    TableRemove rm2 = x;
   }
 }
 

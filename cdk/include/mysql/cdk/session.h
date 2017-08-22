@@ -65,6 +65,11 @@ public:
 
   Session(ds::Multi_source&);
 
+#ifndef _WIN32
+  Session(ds::Unix_socket &ds,
+          const ds::Unix_socket::Options &options = ds::Unix_socket::Options());
+#endif //_WIN32
+
   ~Session();
 
   // Core Session operations.

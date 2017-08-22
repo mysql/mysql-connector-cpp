@@ -64,10 +64,10 @@ static void throw_yassl_error()
 
 
 class connection_TLS_impl
-  : public ::cdk::foundation::connection::TCPIP_base::Impl
+  : public ::cdk::foundation::connection::Socket_base::Impl
 {
 public:
-  connection_TLS_impl(cdk::foundation::connection::TCPIP_base* tcpip,
+  connection_TLS_impl(cdk::foundation::connection::Socket_base* tcpip,
                       cdk::foundation::connection::TLS::Options options)
     : m_tcpip(tcpip)
     , m_tls(NULL)
@@ -93,7 +93,7 @@ public:
 
   void verify_server_cert();
 
-  cdk::foundation::connection::TCPIP_base* m_tcpip;
+  cdk::foundation::connection::Socket_base* m_tcpip;
   yaSSL::SSL* m_tls;
   yaSSL::SSL_CTX* m_tls_ctx;
   cdk::foundation::connection::TLS::Options m_options;
@@ -327,13 +327,13 @@ namespace foundation {
 namespace connection {
 
 
-TLS::TLS(TCPIP_base* tcpip,
+TLS::TLS(Socket_base* tcpip,
          const TLS::Options &options)
   : opaque_impl<TLS>(NULL, tcpip, options)
 {}
 
 
-TCPIP_base::Impl& TLS::get_base_impl()
+Socket_base::Impl& TLS::get_base_impl()
 {
   return get_impl();
 }

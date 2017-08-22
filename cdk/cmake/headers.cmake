@@ -60,6 +60,29 @@ SET(headers_dir "${headers_dir}/headers")
 
 
 #
+# Check if given list of headers includes all headers that can be found in
+# the current directory.
+#
+
+function(check_headers)
+
+  file(GLOB all_headers RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.h")
+
+  foreach(header IN LISTS ARGV)
+    #message("- checking header: ${header}\n")
+    list(REMOVE_ITEM all_headers ${header})
+  endforeach()
+
+  list(LENGTH all_headers remains)
+
+  if(remains GREATER 0)
+    message(WARNING "Extra headers found in ${CMAKE_CURRENT_SOURCE_DIR}: ${all_headers}")
+  endif()
+
+endfunction()
+
+
+#
 # Set-up header declarations with given folder as a base location for all
 # public headers.
 #

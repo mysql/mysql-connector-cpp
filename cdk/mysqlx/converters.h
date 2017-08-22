@@ -170,6 +170,11 @@ struct Doc_path_storage
 
   // Proto_path interface
 
+  bool is_whole_document() const
+  {
+    return cdk::Doc_path_storage::is_whole_document();
+  }
+
   unsigned length() const
   {
     size_t len = cdk::Doc_path_storage::length();

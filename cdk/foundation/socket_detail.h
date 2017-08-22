@@ -148,6 +148,22 @@ void uninitialize_socket_system();
 
 Socket socket(bool nonblocking, addrinfo* hints = 0);
 
+#ifndef _WIN32
+/**
+  Create a Unix domain socket.
+
+  Creates a new blocking or non-blocking Unix domain socket.
+
+  @param[in] nonblocking
+    If `true`, creates a non-blocking socket. Otherwise, a blocking socket is
+    created.
+
+  @throw cdk::foundation::Error
+    Socket creation failed.
+*/
+
+Socket unix_socket(bool nonblocking);
+#endif //_WIN32
 
 /**
   Close a socket.
@@ -226,6 +242,27 @@ addrinfo* addrinfo_from_string(const char* host_name, unsigned short port);
 */
 
 Socket connect(const char *host, unsigned short port);
+
+#ifndef _WIN32
+/**
+  Create and connect socket.
+
+  Creates and connects a socket to a Unix domain socket.
+
+  @param[in] path
+    Destination socket path.
+
+  @return
+    Connected socket.
+
+  @throw cdk::foundation::Error
+    Connection failed.
+
+  @note
+    This function always blocks.
+*/
+Socket connect(const char *path);
+#endif //_WIN32
 
 
 /**
