@@ -301,7 +301,10 @@ public:
   Value(Iterator begin_, Iterator end_)
     : m_type(ARRAY)
   {
-    m_arr = std::make_shared<Array>(begin_, end_);
+    try {
+      m_arr = std::make_shared<Array>(begin_, end_);
+    }
+    CATCH_AND_WRAP
   }
 
   ///@}
@@ -361,8 +364,11 @@ public:
   template<typename T>
   Value& operator=(T x)
   {
-    *this = Value(x);
-    return *this;
+    try {
+      *this = Value(x);
+      return *this;
+    }
+    CATCH_AND_WRAP
   }
 
 private:
@@ -744,8 +750,7 @@ inline Value::Value(bool val) : m_type(BOOL)
 inline Value::Value(const DbDoc &doc)
   : m_type(DOCUMENT)
   , m_doc(doc)
-{
-}
+{}
 
 
 inline
@@ -803,30 +808,21 @@ Value::operator DbDoc() const
 inline
 bool Value::hasField(const Field &fld) const
 {
-  try {
-    check_type(DOCUMENT);
-    return m_doc.hasField(fld);
-  }
-  CATCH_AND_WRAP
+  check_type(DOCUMENT);
+  return m_doc.hasField(fld);
 }
 
 inline
 const Value& Value::operator[](const Field &fld) const
 {
-  try {
-    check_type(DOCUMENT);
-    return m_doc[fld];
-  }
-  CATCH_AND_WRAP
+  check_type(DOCUMENT);
+  return m_doc[fld];
 }
 
 inline
 int DbDoc::fieldType(const Field &fld) const
 {
-  try {
-    return (*this)[fld].getType();
-  }
-  CATCH_AND_WRAP
+  return (*this)[fld].getType();
 }
 
 // Array access
@@ -867,11 +863,8 @@ Value::const_iterator Value::end() const
 inline
 const Value& Value::operator[](unsigned pos) const
 {
-  try {
-    check_type(ARRAY);
-    return m_arr->at(pos);
-  }
-  CATCH_AND_WRAP
+  check_type(ARRAY);
+  return m_arr->at(pos);
 }
 
 inline

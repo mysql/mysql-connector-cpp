@@ -33,7 +33,9 @@
 
 #include "common.h"
 #include "document.h"
+#include "row.h"
 #include "collations.h"
+#include "detail/result.h"
 
 #include <memory>
 
@@ -49,7 +51,7 @@ namespace mysqlx {
 
 using std::ostream;
 
-class NodeSession;
+class Session;
 class Schema;
 class Collection;
 class Result;
@@ -62,337 +64,105 @@ class DocResult;
 template <class Res, class Op> class Executable;
 
 
-/*
-  Iterator class for RowResult and DocResult
-*/
-
 namespace internal {
 
-  class BaseResult;
+  struct Session_detail;
+  class Result_base;
 
-/*
-  List_initializer object can be used to initialize a container of
-  arbitrary type U with list of items taken from source object.
-
-  It is assumed that the source object type Source defines iterator
-  type and that std::begin/end() return iterators to the beginning
-  and end of the sequence. The container type U is assumed to have
-  a constructor from begin/end iterator.
-
-  List_iterator defines begin/end() methods, so it is possible to
-  iterate over the sequence without storing it in any container.
-*/
-
-template <typename Source>
-class List_initializer
-{
-protected:
-
-  Source &m_src;
-
-  List_initializer(Source &src)
-    : m_src(src)
-  {}
+} // internal
 
 
-public:
-
-  typedef typename Source::iterator iterator;
+namespace internal {
 
   /*
-    Narrow the set of types for which this template is instantiated
-    to avoid ambiguous conversion errors. It is important to disallow
-    conversion to std::initializer_list<> because this conversion path
-    is considered when assigning to STL containers.
-  */
-
-  template <
-    typename U
-    , typename
-      = typename std::is_constructible<
-          U, const iterator&, const iterator&
-        >::type
-    , typename
-      = typename std::enable_if<
-          !std::is_same<
-            U,
-            std::initializer_list<typename U::value_type>
-          >::value
-        >::type
-  >
-  operator U()
-  {
-    return U(std::begin(m_src), std::end(m_src));
-  }
-
-  iterator begin()
-  {
-    return std::begin(m_src);
-  }
-
-  iterator end() const
-  {
-    return std::end(m_src);
-  }
-
-  friend RowResult;
-  friend DocResult;
-  friend BaseResult;
-};
-
-
-/*
-  Iterator template.
-
-  It defines an STL input iterator which is implemented using an
-  implementation object of some type Impl. It is assumed that Impl
-  has the following methods:
-
-   void iterator_start() - puts iterator in "before begin" position;
-   bool iterator_next() - moves iterator to next position, returns
-                          false if it was not possible;
-   Value_type iterator_get() - gets current value.
-*/
-
-template<typename Value_type, typename Impl>
-struct iterator
-  : std::iterator < std::input_iterator_tag, Value_type>
-{
-  Impl *m_impl = NULL;
-  bool m_at_end = false;
-
-  iterator(Impl& impl)
-    : m_impl(&impl)
-  {
-    m_impl->iterator_start();
-    m_at_end = !m_impl->iterator_next();
-  }
-
-  iterator()
-    : m_at_end(true)
-  {}
-
-  bool operator !=(const iterator &other) const
-  {
-    /*
-      Compares only if both iterators are at the end
-      of the sequence.
-    */
-    return !(m_at_end && other.m_at_end);
-  }
-
-  iterator<Value_type, Impl>& operator++()
-  {
-    if (m_impl && !m_at_end)
-      m_at_end = !m_impl->iterator_next();
-    return *this;
-  }
-
-  Value_type operator*() const
-  {
-    if (!m_impl || m_at_end)
-      THROW("Attempt to dereference null iterator");
-    return m_impl->iterator_get();
-  }
-
-};
-
-
-} // internal
-
-
-/*
-  @todo Add diagnostics information (warnings)
-*/
-
-namespace internal {
-
-  class BaseResult;
-
-} // internal
-
-
-/**
-  A warning that can be reported when executing queries or statements.
-
-  @ingroup devapi
-*/
-
-class PUBLIC_API Warning : public internal::Printable
-{
-public:
-
-  enum Level { LEVEL_ERROR, LEVEL_WARNING, LEVEL_INFO };
-
-private:
-
-  Level    m_level;
-  uint16_t m_code;
-
-  DLL_WARNINGS_PUSH
-  string   m_msg;
-  DLL_WARNINGS_POP
-
-  Warning(Level level, uint16_t code, const string &msg)
-    : m_level(level), m_code(code), m_msg(msg)
-  {}
-
-  void print(std::ostream&) const;
-
-public:
-
-  Level getLevel() const
-  {
-    return m_level;
-  }
-
-  uint16_t getCode() const
-  {
-    return m_code;
-  }
-
-  const string& getMessage() const
-  {
-    return m_msg;
-  }
-
-  struct Access;
-  friend Access;
-};
-
-inline
-void Warning::print(std::ostream &out) const
-{
-  switch (getLevel())
-  {
-  case LEVEL_ERROR: out << "Error"; break;
-  case LEVEL_WARNING: out << "Warning"; break;
-  case LEVEL_INFO: out << "Info"; break;
-  }
-
-  if (getCode())
-    out << " " << getCode();
-
-  out << ": " << getMessage();
-}
-
-
-namespace internal {
-
-  class XSession_base;
-
-  /**
     Base for result classes.
   */
 
   DLL_WARNINGS_PUSH
 
-  class PUBLIC_API BaseResult : nocopy
+  class PUBLIC_API Result_base
+    : public virtual Result_detail
   {
 
   DLL_WARNINGS_PUSH
 
-    class INTERNAL Impl;
-    Impl  *m_impl = NULL;
-    bool m_owns_impl = false;
-    row_count_t  m_pos = 0;
-    XSession_base *m_sess = NULL;
-
-    INTERNAL BaseResult(XSession_base *sess, cdk::Reply*);
-    INTERNAL BaseResult(XSession_base *sess, cdk::Reply*,
-                        const std::vector<GUID>&);
-
-  protected:
-
-    BaseResult()
-    {}
-
-    BaseResult& operator=(BaseResult &&other)
-    {
-      init(std::move(other));
-      return *this;
-    }
-
-    void init(BaseResult&&);
-
-    INTERNAL const Impl& get_impl() const;
-    Impl& get_impl()
-    {
-      return const_cast<Impl&>(
-        const_cast<const BaseResult*>(this)->get_impl()
-      );
-    }
-
-
-    virtual void deregister_cleanup() {}
-
-    void deregister_notify();
-
   public:
 
-    typedef internal::iterator<Warning, BaseResult> iterator;
+    Result_base(Result_base &&other)
+    {
+      try {
+        init(std::move(other));
+      }
+      CATCH_AND_WRAP
+    }
 
-    BaseResult(BaseResult &&other) { init(std::move(other)); }
-    virtual ~BaseResult();
+    virtual ~Result_base() {}
 
     /// Get number of warnings stored in the result.
 
-    unsigned getWarningCount() const;
+    unsigned getWarningCount() const
+    {
+      try {
+        return get_warning_count();
+      }
+      CATCH_AND_WRAP
+    }
 
     /// Get list of warnings stored in the result.
 
-    internal::List_initializer<BaseResult> getWarnings();
+    WarningList getWarnings()
+    {
+      try {
+        return get_warnings();
+      }
+      CATCH_AND_WRAP
+    }
 
     /// Get warning at given, 0-based position.
 
-    Warning getWarning(unsigned);
-
-    iterator begin()
+    Warning getWarning(unsigned pos)
     {
-      return iterator(*this);
+      try {
+        return get_warning(pos);
+      }
+      CATCH_AND_WRAP
     }
 
-    iterator end()
+    // TODO: expose this in the API?
+    //using WarningsIterator = Result_detail::iterator;
+
+  protected:
+
+    Result_base()
+    {}
+
+    void init(Result_base &&other)
     {
-      return iterator();
+      Result_detail::init(std::move(other));
     }
 
   private:
 
-    // warning iterator implementation
+    INTERNAL Result_base(Session *sess, cdk::Reply *r)
+      : Result_detail(sess, r)
+    {}
 
-    unsigned m_wpos;
-    bool   m_at_begin;
-
-    void iterator_start()
-    {
-      m_wpos = 0;
-      m_at_begin = true;
-    }
-
-    bool iterator_next()
-    {
-      if (!m_at_begin)
-        m_wpos++;
-      m_at_begin = false;
-      return m_wpos < getWarningCount();
-    }
-
-    Warning iterator_get()
-    {
-      return getWarning(m_wpos);
-    }
+    INTERNAL Result_base(
+      Session *sess, cdk::Reply *r,
+      const std::vector<GUID> &guids
+    )
+      : Result_detail(sess, r, guids)
+    {}
 
   public:
 
     ///@cond IGNORED
 
-    friend mysqlx::internal::XSession_base;
+    friend mysqlx::internal::Session_detail;
     friend mysqlx::Result;
     friend mysqlx::RowResult;
     friend mysqlx::SqlResult;
     friend mysqlx::DocResult;
-    friend iterator;
 
     struct INTERNAL Access;
     friend Access;
@@ -400,7 +170,8 @@ namespace internal {
     ///@endcond
   };
 
-}
+}  // internal namespace
+
 
 /**
   Represents result of an operation that does not return data.
@@ -423,15 +194,17 @@ namespace internal {
   @ingroup devapi_res
 */
 
-class PUBLIC_API Result : public internal::BaseResult
+class PUBLIC_API Result : public internal::Result_base
 {
+  using DocIdList = internal::List_init<GUID>;
+
 public:
 
   Result() = default;
 
   Result(Result &&other)
   {
-    *this = std::move(other);
+    init(std::move(other));
   }
 
   Result& operator=(Result &&other)
@@ -463,13 +236,18 @@ public:
     Return list of ids of documents added to a collection on a chain add() call.
   */
 
-  internal::List_init<GUID> getDocumentIds() const;
+  DocIdList getDocumentIds() const;
 
 private:
 
-  Result(BaseResult &&other)
+  Result(Result_base &&other)
   {
     init(std::move(other));
+  }
+
+  void init(Result_base &&other)
+  {
+    Result_base::init(std::move(other));
   }
 
   template <class Res, class Op>
@@ -486,7 +264,7 @@ private:
 // --------------------------
 
 /**
-  List of types defined by DevAPI. For each type TTT in this list
+  List of types for `Type` enumeration. For each type TTT in this list
   there is corresponding enumeration value `Type::TTT`. For example
   constant `Type::INT` represents the "INT" type.
 
@@ -520,7 +298,12 @@ private:
 #undef TYPE_ENUM
 #define TYPE_ENUM(T,X) T,
 
-/// Type enumeration
+
+/**
+  Types that can be reported in result meta-data.
+
+  @ingroup devapi_res
+*/
 
 enum class Type : unsigned short
 {
@@ -560,9 +343,15 @@ std::ostream& operator<<(std::ostream &out, Type t)
   @ingroup devapi_res
 */
 
-class PUBLIC_API Column : public internal::Printable
+class PUBLIC_API Column
+  : public internal::Printable
+  , internal::Column_detail
 {
 public:
+
+  Column(Column_detail &&other)
+    : Column_detail(std::move(other))
+  {}
 
   string getSchemaName()  const;  ///< TODO
   string getTableName()   const;  ///< TODO
@@ -597,151 +386,13 @@ public:
 
 private:
 
-  class INTERNAL Impl;
-  DLL_WARNINGS_PUSH
-  std::shared_ptr<Impl> m_impl;
-  DLL_WARNINGS_POP
   virtual void print(std::ostream&) const;
 
 public:
 
-  friend Impl;
-
+  friend RowResult;
   struct INTERNAL Access;
   friend Access;
-};
-
-
-class RowResult;
-
-/**
-  Represents a single row from a result that contains rows.
-
-  Such a row consists of a number of fields, each storing single
-  value. The number of fields and types of values stored in each
-  field are described by `RowResult` instance that produced this
-  row.
-
-  Values of fields can be accessed with `get()` method or using
-  `row[pos]` expression. Fields are identified by 0-based position.
-  It is also possible to get raw bytes representing value of a
-  given field with `getBytes()` method.
-
-  @sa `Value` class.
-  @todo Support for iterating over row fields with range-for loop.
-
-  @ingroup devapi_res
-*/
-
-class PUBLIC_API Row
-{
-  class INTERNAL Impl;
-  DLL_WARNINGS_PUSH
-  std::shared_ptr<Impl>  m_impl;
-  DLL_WARNINGS_POP
-
-  Impl& get_impl()
-  { return const_cast<Impl&>(const_cast<const Row*>(this)->get_impl()); }
-  INTERNAL const Impl& get_impl() const;
-
-  Row(std::shared_ptr<Impl> &&impl) : m_impl(std::move(impl))
-  {}
-
-  void set_values(col_count_t pos, const Value &val)
-  {
-    set(pos, val);
-  }
-
-  template<typename... Types>
-  void set_values(col_count_t pos, const Value &val, Types... rest)
-  {
-    set(pos, val);
-    set_values(pos + 1, rest...);
-  }
-
-public:
-
-  Row() {}
-
-  template<typename... Types>
-  Row(const Value &val, Types... vals)
-  {
-    set_values(0, val, vals...);
-  }
-
-  virtual ~Row() {}
-
-  col_count_t colCount() const;
-
-
-  /**
-    Get raw bytes representing value of row field at position `pos`.
-
-    @returns null bytes range if given field is NULL.
-    @throws out_of_range if given row was not fetched from server.
-  */
-
-  bytes getBytes(col_count_t pos) const;
-
-
-  /**
-    Get reference to row field at position `pos`.
-
-    @throws out_of_range if given field does not exist in the row.
-  */
-
-  Value& get(col_count_t pos);
-
-
-  /**
-    Set value of row field at position `pos`.
-
-    Creates new field if it does not exist.
-
-    @returns Reference to the field that was set.
-  */
-
-  Value& set(col_count_t pos, const Value&);
-
-  /**
-    Get const reference to row field at position `pos`.
-
-    This is const version of method `get()`.
-
-    @throws out_of_range if given field does not exist in the row.
-  */
-
-  const Value& operator[](col_count_t pos) const
-  {
-    return const_cast<Row*>(this)->get(pos);
-  }
-
-
-  /**
-    Get modifiable reference to row field at position `pos`.
-
-    The field is created if it does not exist. In this case
-    the initial value of the field is NULL.
-  */
-
-  Value& operator[](col_count_t pos)
-  {
-    try {
-      return get(pos);
-    }
-    catch (const out_of_range&)
-    {
-      return set(pos, Value());
-    }
-  }
-
-  /// Check if this row contains fields or is null.
-  bool isNull() const { return NULL == m_impl; }
-  operator bool() const { return !isNull(); }
-
-  void clear();
-
-  friend RowResult;
 };
 
 
@@ -755,141 +406,26 @@ public:
 */
 
 class PUBLIC_API RowResult
-    : public internal::BaseResult
+    : public internal::Result_base
+    , internal::Row_result_detail
 {
-  // Column meta-data access
-
-  struct Columns_src
-  {
-    const RowResult &m_res;
-
-    Columns_src(const RowResult &res)
-      : m_res(res)
-    {}
-
-    typedef internal::iterator<Column, Columns_src> iterator;
-
-    iterator begin()
-    {
-      return iterator(*this);
-    }
-
-    iterator end()
-    {
-      return iterator();
-    }
-
-    // iterator implementation
-
-    col_count_t m_pos;
-    bool m_at_begin;
-
-    void iterator_start()
-    {
-      m_pos = 0;
-      m_at_begin = true;
-    }
-
-    bool iterator_next()
-    {
-      if (!m_at_begin)
-        m_pos++;
-      m_at_begin = false;
-      return m_pos < m_res.getColumnCount();
-    }
-
-    Column iterator_get()
-    {
-      return m_res.getColumn(m_pos);
-    }
-  };
-
-  struct Columns
-    : public internal::List_initializer<Columns_src>
-  {
-    Columns_src m_src;
-
-    Columns(const RowResult &res)
-      : List_initializer(m_src)
-      , m_src(res)
-    {}
-
-    /*
-      Note: Without this empty destructor code crashes on
-      Solaris but works fine on all other platforms. The
-      crash is like if the m_src object gets destroyed too
-      early.
-    */
-
-    ~Columns()
-    {}
-
-    Column operator[](col_count_t pos) const
-    {
-      return m_src.m_res.getColumn(pos);
-    }
-  };
-
-  DLL_WARNINGS_PUSH
-  std::forward_list<Row> m_row_cache;
-  DLL_WARNINGS_POP
-  uint64_t m_row_cache_size = 0;
-  bool m_cache = false;
-
-  void clear_cache()
-  {
-    m_row_cache.clear();
-    m_row_cache_size = 0;
-    m_cache = false;
-  }
-
-  void deregister_cleanup() override
-  {
-    //cache elements
-    count();
-  }
+  using RowList = internal::List_initializer<RowResult>;
 
 public:
-
-  typedef internal::iterator<Row, RowResult> iterator;
 
   RowResult()
   {}
 
+  RowResult(RowResult &&other)
+  {
+    init(std::move(other));
+  }
+
   virtual ~RowResult() {}
 
-  /*
-    Note: Even though we have RowResult(BaseResult&&) constructor below,
-    we still need move-ctor for such copy-initialization to work:
-
-      RowResult res= coll...execute();
-
-    This copy-initialization works as follows
-    (see http://en.cppreference.com/w/cpp/language/copy_initialization):
-
-    1. A temporary prvalue of type RowResult is created by type-conversion
-       of the Result prvalue coll...execute(). Constructor RowResult(Result&&)
-       is called to do the conversion.
-
-    2. Now res is direct-initialized
-       (http://en.cppreference.com/w/cpp/language/direct_initialization)
-       from the prvalue produced in step 1.
-
-    Since RowResult has disabled copy constructor, a move constructor is
-    required for direct-initialization in step 2. Even though move-constructor
-    is actually not called (because of copy-elision), it must be declared
-    in the RowResult class. We also define it for the case that copy-elision
-    was not applied.
-  */
-
-  RowResult(RowResult &&other)
-    : BaseResult(std::move(static_cast<BaseResult&>(other)))
-  {}
-
-  RowResult& operator=(RowResult &&init_)
+  RowResult& operator=(RowResult &&other)
   {
-    BaseResult::operator=(std::move(init_));
-    clear_cache();
+    init(std::move(other));
     return *this;
   }
 
@@ -899,7 +435,7 @@ public:
 
   /// Return Column instance describing given result column.
 
-  const Column& getColumn(col_count_t pos) const;
+  Column getColumn(col_count_t pos) const;
 
   /**
     Return meta-data for all result columns. The returned data
@@ -921,29 +457,31 @@ public:
     If there are no more rows in this result, returns NULL.
   */
 
-  Row fetchOne();
+  Row fetchOne()
+  {
+    return get_row();
+  }
+
+  using iterator = Row_result_detail::iterator;
 
   /**
     Return all remaining rows
 
-    Rows that have been fetched using fetchOne() will not be available when
-    calling fetchAll()
+    %Result of this method can be stored in an STL container such as
+    `std::list<Row>`. Rows that have been fetched using fetchOne() will not
+    be available when calling fetchAll()
    */
 
-
-public:
-
-  internal::List_initializer<RowResult> fetchAll()
+  RowList fetchAll()
   {
     return internal::List_initializer<RowResult>(*this);
   }
 
   /**
      Returns number of rows available on RowResult to be fetched
-   */
+  */
 
   uint64_t count();
-
 
   /*
    Iterate over rows (range-for support).
@@ -952,48 +490,29 @@ public:
    calling fetchOne() or fetchAll()
   */
 
-  iterator begin()
-  {
-    return iterator(*this);
-  }
-
-  iterator end() const
-  {
-    return iterator();
-  }
-
-protected:
-
-  void check_result() const;
+  using Row_result_detail::begin;
+  using Row_result_detail::end;
 
 private:
 
-  RowResult(BaseResult &&init_)
-    : BaseResult(std::move(init_))
-  {}
-
-  // iterator implementation
-
-  Row m_cur_row;
-
-  void iterator_start() {}
-
-  bool iterator_next()
+  RowResult(Result_base &&other)
   {
-    m_cur_row = fetchOne();
-    return !m_cur_row.isNull();
+    init(std::move(other));
   }
 
-  Row iterator_get()
+
+  void init(Result_base &&other)
   {
-    return m_cur_row;
+    Result_base::init(std::move(other));
+    // note: no additional initialization of Row_result_detail
   }
+
+public:
 
   template <class Res, class Op>
   friend class Executable;
   friend SqlResult;
   friend DocResult;
-  friend iterator;
 };
 
 
@@ -1015,13 +534,13 @@ class PUBLIC_API SqlResult : public RowResult
 public:
 
   SqlResult(SqlResult &&other)
-    : RowResult(std::move(static_cast<RowResult&>(other)))
-  {}
-
-
-  SqlResult& operator=(SqlResult &&init_)
   {
-    RowResult::operator=(std::move(init_));
+    init(std::move(other));
+  }
+
+  SqlResult& operator=(SqlResult &&other)
+  {
+    init(std::move(other));
     return *this;
   }
 
@@ -1059,9 +578,20 @@ public:
 
 private:
 
-  SqlResult(BaseResult &&init_)
-    : RowResult(std::move(init_))
-  {}
+  SqlResult(Result_base &&other)
+  {
+    init(std::move(other));
+  }
+
+  void init(Result_base &&other)
+  {
+    RowResult::init(std::move(other));
+  }
+
+  void init(SqlResult &&other)
+  {
+    RowResult::init(std::move(other));
+  }
 
   template <class Res, class Op>
   friend class Executable;
@@ -1082,28 +612,28 @@ private:
 */
 
 class PUBLIC_API DocResult
-  : public internal::BaseResult
+  : public internal::Result_base
+  , internal::Doc_result_detail
 {
-  class Impl;
-  Impl *m_doc_impl = NULL;
-
-  void check_result() const;
+  using DocList = internal::List_initializer<DocResult>;
 
 public:
-
-  typedef internal::iterator<DbDoc, DocResult> iterator;
 
   DocResult()
   {}
 
   DocResult(DocResult &&other)
   {
-    *this = std::move(other);
+    init(std::move(other));
   }
 
-  virtual ~DocResult();
-
-  void operator=(DocResult &&other);
+  void operator=(DocResult &&other)
+  {
+    try {
+    init(std::move(other));
+    }
+    CATCH_AND_WRAP
+  }
 
   /**
     Return current document and move to the next one in the sequence.
@@ -1111,16 +641,20 @@ public:
     If there are no more documents in this result returns null document.
   */
 
-  DbDoc fetchOne();
+  DbDoc fetchOne()
+  {
+    return get_doc();
+  }
 
   /**
     Return all remaining documents.
 
-    Documents that have been fetched using fetchOne() will not be available when
-    calling fetchAll()
+    %Result of this method can be stored in an STL container such as
+    `std::list<DbDoc>`. Documents that have been fetched using fetchOne() will
+    not be available when calling fetchAll()
    */
 
-  internal::List_initializer<DocResult> fetchAll()
+  DocList fetchAll()
   {
     return internal::List_initializer<DocResult>(*this);
   }
@@ -1129,7 +663,10 @@ public:
      Returns number of documents available on DocResult to be fetched.
    */
 
-  uint64_t count();
+  uint64_t count()
+  {
+    return Doc_result_detail::count();
+  }
 
   /*
    Iterate over documents (range-for support).
@@ -1138,43 +675,26 @@ public:
    calling fetchOne() or fetchAll()
   */
 
-  iterator begin()
-  {
-    return iterator(*this);
-  }
+  using iterator = Doc_result_detail::iterator;
 
-  iterator end() const
-  {
-    return iterator();
-  }
-
+  using Doc_result_detail::begin;
+  using Doc_result_detail::end;
 
 private:
 
-  DocResult(internal::BaseResult&&);
-
-  // iterator implementation
-
-  DbDoc m_cur_doc;
-
-  void iterator_start() {}
-
-  bool iterator_next()
+  DocResult(Result_base &&other)
   {
-    m_cur_doc = fetchOne();
-    return !m_cur_doc.isNull();
+    init(std::move(other));
   }
 
-  DbDoc iterator_get()
+  void init(Result_base &&other)
   {
-    return m_cur_doc;
+    Result_base::init(std::move(other));
   }
 
-  friend Impl;
   friend DbDoc;
   template <class Res,class Op>
   friend class Executable;
-  friend iterator;
 };
 
 

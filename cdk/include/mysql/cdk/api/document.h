@@ -170,7 +170,7 @@ public:
   with Doc_path_processor to describe one element of the path.
 */
 
-class Doc_path_processor
+class Doc_path_element_processor
 {
 public:
 
@@ -198,7 +198,20 @@ public:
   virtual void any_path() =0;
 };
 
-typedef Expr_list< Expr_base<Doc_path_processor> > Doc_path;
+
+class Doc_path_processor
+  : public List_processor< Doc_path_element_processor >
+{
+public:
+
+  typedef Element_prc::string  string;
+  typedef Element_prc::index_t index_t;
+
+  // The "$" path which denotes the whole document.
+  virtual void whole_document() = 0;
+};
+
+typedef Expr_base<Doc_path_processor>  Doc_path;
 
 
 }}  // cdk::api
@@ -209,7 +222,7 @@ namespace cdk {
 class Doc_path_storage
   : public api::Doc_path
   , public api::Doc_path::Processor
-  , api::Doc_path_processor
+  , api::Doc_path_element_processor
 {
 public:
 
@@ -220,6 +233,9 @@ public:
     ARRAY_INDEX_ASTERISK,
     DOUBLE_ASTERISK
   };
+
+  using api::Doc_path_element_processor::string;
+  using api::Doc_path_element_processor::index_t;
 
 protected:
 
@@ -243,7 +259,12 @@ public:
 
   bool is_empty() const
   {
-    return 0 == length();
+    return m_whole_document ? false : 0 == length();
+  }
+
+  bool is_whole_document() const
+  {
+    return m_whole_document;
   }
 
   const Path_el& get_el(size_t pos) const
@@ -260,11 +281,17 @@ public:
 
   void process(Processor &prc) const
   {
+    if (m_whole_document)
+    {
+      prc.whole_document();
+      return;
+    }
+
     prc.list_begin();
 
     for (size_t pos = 0; pos < m_path.size(); ++pos)
     {
-      api::Doc_path_processor *eprc = prc.list_el();
+      api::Doc_path_element_processor *eprc = prc.list_el();
       if (eprc)
       {
         const Path_el &el = m_path[pos];
@@ -285,10 +312,12 @@ public:
 
   // List_processor
 
-  Path_el *m_el;
+  bool  m_whole_document = false;
+  Path_el *m_el = NULL;
 
   Element_prc* list_el()
   {
+    assert(!m_whole_document);
     m_path.push_back(Path_el());
     m_el = &m_path.back();
     return this;
@@ -297,6 +326,11 @@ public:
 private:
 
   // Doc_path_processor
+
+  void whole_document()
+  {
+    m_whole_document = true;
+  }
 
   void member(const string &name)
   {
@@ -398,10 +432,10 @@ struct Safe_prc< cdk::api::Doc_processor<PRC> >
 
 
 template<>
-struct Safe_prc<api::Doc_path_processor>
-  : Safe_prc_base<api::Doc_path_processor>
+struct Safe_prc<api::Doc_path_element_processor>
+  : Safe_prc_base<api::Doc_path_element_processor>
 {
-  typedef Safe_prc_base<api::Doc_path_processor> Base;
+  typedef Safe_prc_base<api::Doc_path_element_processor> Base;
   using Base::Processor;
   typedef Processor::string  string;
   typedef Processor::index_t index_t;
@@ -428,6 +462,42 @@ struct Safe_prc<api::Doc_path_processor>
 
   void any_path()
   { return m_prc ? m_prc->any_path() : (void)NULL; }
+};
+
+template<>
+struct Safe_prc<api::Doc_path_processor>
+  : Safe_prc_base<api::Doc_path_processor>
+{
+
+  typedef Safe_prc_base<api::Doc_path_processor> Base;
+  using Base::Processor;
+  typedef Processor::string  string;
+  typedef Processor::index_t index_t;
+
+  Safe_prc(Processor *prc) : Base(prc)
+  {}
+
+  Safe_prc(Processor &prc) : Base(&prc)
+  {}
+
+  void list_begin()
+  {
+    if (m_prc)
+      m_prc->list_begin();
+  }
+
+  void list_end()
+  {
+    if (m_prc)
+      m_prc->list_end();
+  }
+
+  api::Doc_path_processor::Element_prc* list_el()
+  { return m_prc ? m_prc->list_el() : NULL; }
+
+  void whole_document()
+  { return m_prc ? m_prc->whole_document() : (void)NULL; }
+
 };
 
 }

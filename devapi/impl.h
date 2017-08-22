@@ -39,6 +39,7 @@
 #include <list>
 
 #include "../global.h"
+#include "result_impl.h"
 
 
 namespace mysqlx {
@@ -402,83 +403,73 @@ public:
 };
 
 
-/*
-  DocResult implementation over RowResult.
+// --------------------------------------------------------------------
 
-  This implementation takes rows from RowResult and builds a document
-  using JSON data in the row.
+/*
+  Internal implementation for Session objects.
 */
 
-
-class DocResult::Impl
-  : RowResult
+struct internal::Session_detail::Impl
 {
+  using Result_impl = internal::Result_detail::Impl;
 
-  Row  m_row;
+  cdk::ds::Multi_source m_ms;
+  cdk::Session          m_sess;
+  cdk::string           m_default_db;
 
-  Impl(RowResult &&init)
-    : RowResult(std::move(init))
-  {}
+  Result_impl *m_current_result = nullptr;
 
-  DbDoc get_next_doc()
+  Impl(cdk::ds::Multi_source &ms)
+    : m_sess(ms)
   {
-    m_row = fetchOne();
-
-    if (!m_row)
-      return DbDoc();
-
-    // @todo Avoid copying of document string.
-    bytes data = m_row.getBytes(0);
-    return DbDoc(std::string(data.begin(),data.end()-1));
+    if (m_sess.get_default_schema())
+      m_default_db = *m_sess.get_default_schema();
+    if (!m_sess.is_valid())
+      m_sess.get_error().rethrow();
   }
 
-  uint64_t count_docs()
+  virtual ~Impl()
   {
-    return count();
+    /*
+      Deregister current result. This sends notification to the result
+      and gives it a chance to cache its data before session is gone.
+    */
+    register_result(nullptr);
   }
 
-  friend DocResult;
+  void register_result(Result_impl *result);
+  void deregister_result(Result_impl *result);
 };
 
 
-// --------------------------------------------------------------------
-
-
-struct internal::XSession_base::Access
+struct Session::Access
 {
-  typedef XSession_base::Options  Options;
-
-  static cdk::Session& get_cdk_session(XSession_base &sess)
+  static cdk::Session& get_cdk_session(Session &sess)
   {
     return sess.get_cdk_session();
   }
 
-  static void register_result(XSession_base &sess, BaseResult *res)
+  static void prepare_for_cmd(Session &sess)
   {
-    sess.register_result(res);
-  }
-
-  static void prepare_for_command(XSession_base &sess)
-  {
-    sess.prepare_for_command();
+    sess.prepare_for_cmd();
   }
 };
 
 
-struct internal::BaseResult::Access
+struct internal::Result_base::Access
 {
-  static BaseResult mk_empty() { return BaseResult(); }
+  static Result_base mk_empty() { return Result_base(); }
 
   template <typename A>
-  static BaseResult mk(XSession_base *sess, A a)
+  static Result_base mk(mysqlx::Session *sess, A a)
   {
-    return BaseResult(sess, a);
+    return Result_base(sess, a);
   }
 
   template <typename A, typename B>
-  static BaseResult mk(XSession_base *sess, A a, B b)
+  static Result_base mk(mysqlx::Session *sess, A a, B b)
   {
-    return BaseResult(sess, a, b);
+    return Result_base(sess, a, b);
   }
 };
 
@@ -529,7 +520,7 @@ struct internal::BaseResult::Access
      with method `get_cdk_session()`.
 
   2. After getting cdk::Reply object implementation waits for it to
-     receive server reply and then returns BaseResult instance created
+     receive server reply and then returns Result_base instance created
      from the cdk::Reply object.
 
   The Op_base template is parametrized by the implementation interface
@@ -546,7 +537,7 @@ class Op_base
 {
 protected:
 
-  internal::XSession_base   *m_sess;
+  Session *m_sess;
 
   /*
     Note: using cdk::scoped_ptr to be able to trnasfer ownership
@@ -563,7 +554,7 @@ protected:
   param_map_t m_map;
 
 
-  Op_base(internal::XSession_base &sess)
+  Op_base(Session &sess)
     : m_sess(&sess)
   {}
   Op_base(Collection &coll)
@@ -587,26 +578,35 @@ protected:
   cdk::Session& get_cdk_session()
   {
     assert(m_sess);
-    return internal::XSession_base::Access::get_cdk_session(*m_sess);
+    return Session::Access::get_cdk_session(*m_sess);
   }
+
+  /*
+    TODO: Currently send_command() allocates new cdk::Reply object on heap
+    and then passes it to result object which takes ownership. Avoid dynamic
+    allocation: return cdk reply initializer instead and use it to initialize
+    an instance of cdk::Reply inside result object (in its implementation
+    actually). This way only result implementation has to be allocated on heap.
+  */
 
   virtual cdk::Reply* send_command() = 0;
 
   /*
-    Given cdk reply object for the statement, return BaseResult object
+    Given cdk reply object for the statement, return Result_base object
     that handles that reply. The reply pointer can be NULL in case no
     reply has been generated for the statement (TODO: explain in what
     scenario reply can be NULL).
 
-    The returned BaseResult object should take ownership of the cdk reply
+    The returned Result_base object should take ownership of the cdk reply
     object passed here (if any).
   */
 
-  virtual internal::BaseResult mk_result(cdk::Reply *reply)
+  virtual internal::Result_base mk_result(cdk::Reply *reply)
   {
-    return reply ? internal::BaseResult::Access::mk(m_sess, reply)
-      : internal::BaseResult::Access::mk_empty();
+    return reply ? internal::Result_base::Access::mk(m_sess, reply)
+      : internal::Result_base::Access::mk_empty();
   }
+
 
   // Limit and offset
 
@@ -640,6 +640,17 @@ protected:
     }
   }
 
+  /*
+    Note: This is a method to implement positional '?' parmaeters which are not
+    used by CRUD operations (they use named parmaeters insted). The method
+    should not be called in this context and we use assertion to verify this.
+  */
+
+  void add_param(Value)
+  {
+    assert(false);
+  }
+
   void clear_params()
   {
     m_map.clear();
@@ -656,11 +667,26 @@ protected:
   bool m_inited = false;
   bool m_completed = false;
 
+  /*
+    Initialize statement execution (if not already done) by sending command
+    to the server. This initializes m_reply to point to a cdk::Reply object
+    that waits for the server reply.
+  */
+
   void init()
   {
     if (m_inited)
       return;
     m_inited = true;
+
+    assert(m_sess);
+
+    /*
+      Prepare session for sending a new command. This gives session a chance
+      to do necessary cleanups, such as consuming pending reply to a previous
+      command.
+    */
+    Session::Access::prepare_for_cmd(*m_sess);
     m_reply.reset(send_command());
   }
 
@@ -674,16 +700,29 @@ protected:
     return m_completed;
   }
 
+  /*
+    Drive statement execution operation. First call init() to initialize it
+    if it was not done before. Then wait for the reply object to become ready.
+  */
+
   void cont()
   {
     if (m_completed)
       return;
     init();
     if (m_reply)
+    {
       m_reply->cont();
+      if (0 < m_reply->entry_count())
+        m_reply->get_error().rethrow();
+    }
   }
 
-  internal::BaseResult wait()
+  /*
+    Drive statement execution unitl server reply is available.
+  */
+
+  internal::Result_base wait()
   {
     init();
     if (m_reply)
@@ -695,7 +734,11 @@ protected:
     return get_result();
   }
 
-  internal::BaseResult get_result()
+  /*
+    Get the result of completed statement execution operation.
+  */
+
+  internal::Result_base get_result()
   {
     if (!is_completed())
       THROW("Attempt to get result of incomplete operation");
@@ -720,11 +763,8 @@ protected:
 
   // Synchronous execution
 
-  internal::BaseResult execute()
+  internal::Result_base execute()
   {
-    // Deregister current Result, before creating a new one
-    internal::XSession_base::Access::register_result(*m_sess, NULL);
-
     // Can not execute operation that is already completed.
     assert(!m_completed);
 
@@ -791,7 +831,7 @@ protected:
 
   template <class X,
             typename std::enable_if<
-              std::is_convertible<X*, DatabaseObject*>::value
+              std::is_convertible<X*, internal::Db_object*>::value
               >::type* = nullptr
             >
   Op_sort(X &x) : Op_base<Impl>(x)
@@ -858,7 +898,7 @@ protected:
 
   template <class X,
             typename std::enable_if<
-              std::is_convertible<X*, DatabaseObject*>::value
+              std::is_convertible<X*, internal::Db_object*>::value
               >::type* = nullptr
             >
   Op_having(X &x) : Op_sort<Impl,PM>(x)
@@ -915,7 +955,7 @@ protected:
 
   template <class X,
             typename std::enable_if<
-              std::is_convertible<X*, DatabaseObject*>::value
+              std::is_convertible<X*, internal::Db_object*>::value
               >::type* = nullptr
             >
   Op_group_by(X &x) : Op_having<Impl,PM>(x)
@@ -977,7 +1017,7 @@ protected:
 
   template <class X,
             typename std::enable_if<
-              std::is_convertible<X*, DatabaseObject*>::value
+              std::is_convertible<X*, internal::Db_object*>::value
               >::type* = nullptr
             >
   Op_projection(X &init) : Op_group_by<Impl,PM>(init)
@@ -1104,7 +1144,7 @@ protected:
 
   template <class X,
             typename std::enable_if<
-              std::is_convertible<X*, DatabaseObject*>::value
+              std::is_convertible<X*, internal::Db_object*>::value
               >::type* = nullptr
             >
   Op_select(X &init) : Base(init)
@@ -1123,8 +1163,7 @@ public:
   void add_where(const mysqlx::string &expr)
   {
     m_where_expr = expr;
-    if (!m_where_expr.empty())
-      m_expr.reset(new parser::Expression_parser(PM, m_where_expr));
+    m_expr.reset(new parser::Expression_parser(PM, m_where_expr));
   }
 
   cdk::Expression* get_where() const

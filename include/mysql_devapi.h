@@ -70,411 +70,37 @@
   @ingroup devapi
 */
 
+/*
+  X DevAPI public classes are declared in this and other headers included from
+  devapi/ folder. The main public API classes, such as Session below, contain
+  declarations of public interface methods. Any obscure details of the public
+  API, which must be defined in the public header, are factored out
+  to Session_detail class from which the main Session class inherits.
+  Among other things, Session_detail declares the implementation class for
+  Session. This implementation class is opaque and its details are not defined
+  in the public headers - only in the implementation part. Definitions of
+  XXX_detail classes can be found in devapi/detail/ sub-folder.
+*/
+
 #include "devapi/common.h"
 #include "devapi/result.h"
-#include "devapi/statement.h"
-#include "devapi/crud.h"
 #include "devapi/collection_crud.h"
 #include "devapi/table_crud.h"
-
-
-namespace cdk {
-
-class Session;
-
-}  // cdk
+#include "devapi/view_ddl.h"
+#include "devapi/settings.h"
+#include "devapi/detail/session.h"
 
 
 namespace mysqlx {
 
-class XSession;
-class Schema;
-class Collection;
-class Table;
-
-namespace internal {
-  class XSession_base;
-}
-
-
-/**
-  Represents a database object
-
-  Inherited by Schema, Table and Collection. Can't be used alone.
-*/
-
-class PUBLIC_API DatabaseObject
-{
-
-protected:
-
-  internal::XSession_base *m_sess;
-
-  DLL_WARNINGS_PUSH
-  string m_name;
-  DLL_WARNINGS_POP
-
-  DatabaseObject(internal::XSession_base& sess, const string& name = string())
-    : m_sess(&sess), m_name(name)
-  {}
-
-  virtual ~DatabaseObject()
-  {}
-
-public:
-
-
-  /**
-     Get database object name
-  */
-
-  const string& getName() const { return m_name; }
-
-
-  /**
-    Get Session object
-  */
-
-  internal::XSession_base& getSession() { return *m_sess; }
-
-
-  /**
-     Get schema object
-  */
-
-  virtual const Schema& getSchema() const = 0;
-
-
-  /**
-     Check if database object exists
-
-     Every check will contact server.
-  */
-
-  virtual bool existsInDatabase() const = 0;
-
-
-  friend Schema;
-  friend Table;
-  friend Collection;
-
-};
-
-
-/**
-  Check options for an updatable view.
-  @see https://dev.mysql.com/doc/refman/en/view-check-option.html
-*/
-
-enum class CheckOption
-{
-  CASCADED, //!< cascaded
-  LOCAL     //!< local
-};
-
-/**
-  Algorithms used to process views.
-  @see https://dev.mysql.com/doc/refman/en/view-algorithms.html
-*/
-
-enum class Algorithm
-{
-  UNDEFINED,  //!< undefined
-  MERGE,      //!< merge
-  TEMPTABLE   //!< temptable
-};
-
-/**
-  View security settings.
-  @see https://dev.mysql.com/doc/refman/en/stored-programs-security.html
-*/
-
-enum class SQLSecurity
-{
-  DEFINER,  //!< definer
-  INVOKER   //!< invoker
-};
-
-
-class ViewCreate;
-class ViewAlter;
-
-namespace internal {
-
-/*
-   Create/Alter View classes
-*/
-
-struct View_impl
-  : public Executable_impl
-{
-  virtual void add_columns(const string&) = 0;
-  virtual void algorithm(Algorithm) = 0;
-  virtual void security(SQLSecurity) = 0;
-  virtual void definer(const string&) = 0;
-  virtual void defined_as(TableSelect&&) = 0;
-  virtual void with_check_option(CheckOption) = 0;
-};
-
-
-template <class Op>
-class ViewCheckOpt
-: public Executable<Result,Op>
-{
-protected:
-
-  using Executable<Result, Op>::check_if_valid;
-  using Executable<Result, Op>::m_impl;
-
-  View_impl* get_impl()
-  {
-    check_if_valid();
-    return static_cast<View_impl*>(m_impl.get());
-  }
-
-public:
-
-  /**
-    Specify checks that are done upon insertion of rows into an updatable
-    view.
-
-    @see https://dev.mysql.com/doc/refman/en/view-check-option.html
-  */
-
-  Executable<Result,Op> withCheckOption(CheckOption option)
-  {
-    get_impl()->with_check_option(option);
-    return std::move(*this);
-  }
-};
-
-
-template <class Op>
-class ViewDefinedAs
-: public ViewCheckOpt<Op>
-{
-protected:
-
-  using ViewCheckOpt<Op>::get_impl;
-
-public:
-
-  ///@{
-  // TODO: How to copy documentation here?
-  ViewCheckOpt<Op> definedAs(TableSelect&& table)
-  {
-    get_impl()->defined_as(std::move(table));
-    return std::move(*this);
-  }
-
-  /**
-     Specify table select operation for which the view is created.
-
-     @note In situations where select statement is modified after
-     passing it to definedAs() method, later changes do not affect
-     view definition which uses the state of the statement at the time
-     of definedAs() call.
-  */
-
-  ViewCheckOpt<Op> definedAs(const TableSelect& table)
-  {
-    TableSelect table_tmp(table);
-    get_impl()->defined_as(std::move(table_tmp));
-    return std::move(*this);
-  }
-
-  ///@}
-};
-
-
-template <class Op>
-class ViewDefiner
-: public ViewDefinedAs<Op>
-{
-protected:
-
-  using ViewDefinedAs<Op>::get_impl;
-
-public:
-
-  /**
-    Specify definer of a view.
-
-    The definer is used to determine access rights for the view. It is specified
-    as a valid MySQL account name of the form "user@host".
-
-    @see https://dev.mysql.com/doc/refman/en/stored-programs-security.html
-  */
- ViewDefinedAs<Op> definer(const string &user)
- {
-  get_impl()->definer(user);
-  return std::move(*this);
- }
-};
-
-
-template <class Op>
-class ViewSecurity
-  : public ViewDefiner<Op>
-{
-protected:
-
-  using ViewDefiner<Op>::get_impl;
-
-public:
-
-  /**
-    Specify security characteristics of a view.
-
-    @see https://dev.mysql.com/doc/refman/en/stored-programs-security.html
-  */
-
-  ViewDefiner<Op> security(SQLSecurity sec)
-  {
-    get_impl()->security(sec);
-    return std::move(*this);
-  }
-};
-
-
-template <class Op>
-class ViewAlgorithm
-  : public ViewSecurity<Op>
-{
-protected:
-
-  using ViewSecurity<Op>::get_impl;
-
-public:
-
-  /**
-    Specify algorithm used to process the view.
-
-    @see https://dev.mysql.com/doc/refman/en/view-algorithms.html
-  */
-
-  ViewSecurity<Op> algorithm(Algorithm alg)
-  {
-    get_impl()->algorithm(alg);
-    return std::move(*this);
-  }
-
-};
-
-
-/*
-  Base class for Create/Alter View
-*/
-
-template <class Op>
-class View_base
-  : public ViewAlgorithm<Op>
-{
-protected:
-
-  using ViewAlgorithm<Op>::get_impl;
-
-  void add_columns(const char *name)
-  {
-    get_impl()->add_columns(name);
-  }
-
-  void add_columns(const string &name)
-  {
-    get_impl()->add_columns(name);
-  }
-
-  template <typename C>
-  void add_columns(const C& col)
-  {
-    for (auto el : col)
-    {
-      get_impl()->add_columns(el);
-    }
-  }
-
-  template <typename C, typename...R>
-  void add_columns(const C &name,const R&...rest)
-  {
-    add_columns(name);
-    add_columns(rest...);
-  }
-
-public:
-
-  /**
-    Define the column names of the created/altered View.
-  */
-
-  template<typename...T>
-  ViewAlgorithm<Op> columns(const T&...names)
-  {
-    add_columns(names...);
-    return std::move(*this);
-  }
-
-  /// @cond IGNORED
-  friend Schema;
-  friend ViewCreate;
-  friend ViewAlter;
-  /// @endcond
-
-};
-
-
-} // namespace internal
-
-/**
-  Represents an operation which creates a view.
-
-  The query for which the view is created must be specified with
-  `definedAs()` method. Other methods can specify different view creation
-  options. When operation is fully specified, it can be executed with
-  a call to `execute()`.
-*/
-
-class PUBLIC_API ViewCreate
-  : public internal::View_base<ViewCreate>
-{
-
-  ViewCreate(Schema &sch, const string& name, bool replace);
-
-  /// @cond IGNORED
-  friend Schema;
-  /// @endcond
-
-};
-
-
-/**
-  Represents an operation which modifies an existing view.
-
-  ViewAlter operation must specify new query for the view with
-  `definedAs()` method (it is not possible to change other characteristics
-  of a view without changing its query).
-*/
-
-class PUBLIC_API ViewAlter
-  : public internal::View_base<ViewAlter>
-{
-
-  ViewAlter(Schema &sch, const string& name);
-
-  /// @cond IGNORED
-  friend Schema;
-  /// @endcond
-
-};
-
-
 /**
   Represents a database schema.
 
-  A `Schema` instance  can be obtained from `XSession::getSchema()`
+  A `Schema` instance can be obtained from `Session::getSchema()`
   method:
 
   ~~~~~~
-  XSession session;
+  Session session;
   Schema   mySchema;
 
   mySchema= session.getSchema("My Schema");
@@ -483,7 +109,7 @@ class PUBLIC_API ViewAlter
   or it can be directly constructed as follows:
 
   ~~~~~~
-  XSession   session;
+  Session   session;
   Schema     mySchema(session, "My Schema");
   ~~~~~~
 
@@ -501,8 +127,11 @@ class PUBLIC_API ViewAlter
 */
 
 class PUBLIC_API Schema
-  : public DatabaseObject
+  : public internal::Db_object
 {
+  using CollectionList = internal::List_init<Collection>;
+  using TableList      = internal::List_init<Table>;
+  using StringList     = internal::List_init<string>;
 
 public:
 
@@ -510,8 +139,8 @@ public:
      Construct named schema object.
   */
 
-  Schema(internal::XSession_base &sess, const string &name)
-    : DatabaseObject(sess, name)
+  Schema(Session &sess, const string &name)
+    : internal::Db_object(sess, name)
   {}
 
   /**
@@ -521,7 +150,7 @@ public:
     @todo Clarify what "default schema" is.
   */
 
-  Schema(internal::XSession_base&);
+  Schema(Session&);
 
 
   const Schema& getSchema() const override { return *this; }
@@ -542,7 +171,7 @@ public:
     Return `Collection` object representing named collection in
     the schema. If `check_exists` is true and named collection
     does not exist, an error will be thrown. Otherwise, if named
-    collection does not exists, the returned object will refer
+    collection does not exist, the returned object will refer
     to non-existent collection.
 
     @note Checking existence of the collection involves
@@ -572,26 +201,26 @@ public:
     the schema.
   */
 
-  internal::List_init<Collection> getCollections();
+  CollectionList getCollections();
 
   /**
     Return list of names of collections in the schema.
   */
 
-  internal::List_init<string> getCollectionNames();
+  StringList getCollectionNames();
 
   /**
     Return list of `Table` object representing tables and views in
     the schema.
   */
 
-  internal::List_init<Table> getTables();
+  TableList getTables();
 
   /**
     Return list of tables and views in the schema.
   */
 
-  internal::List_init<string> getTableNames();
+  StringList getTableNames();
 
   /**
     Return Collection as a Table object.
@@ -693,52 +322,109 @@ public:
 */
 
 class PUBLIC_API Collection
-  : public DatabaseObject
-  , public internal::CollectionAddBase
-  , public internal::CollectionRemoveBase
-  , public internal::CollectionFindBase
-  , public internal::CollectionModifyBase
+  : public internal::Db_object
 {
   Schema m_schema;
 
 public:
 
-  Collection(const Collection &other)
-    : CollectionOpBase(*this)
-    , DatabaseObject(*other.m_schema.m_sess, other.m_name)
-    , m_schema(other.m_schema)
-  {}
-
-  Collection(Collection&& other)
-    : CollectionOpBase(*this)
-    , DatabaseObject(*other.m_sess, std::move(other.m_name))
-    , m_schema(std::move(other.m_schema))
-  {}
-
   Collection(const Schema &sch, const string &name)
-    : CollectionOpBase(*this)
-    , DatabaseObject(*sch.m_sess, name)
+    : internal::Db_object(*sch.m_sess, name)
     , m_schema(sch)
   {}
 
 
-  Collection& operator=(const Collection &other)
-  {
-    DatabaseObject::operator=(other);
-    m_schema = other.m_schema;
-    return *this;
-  }
-
+  /**
+    Get schema of the collection.
+  */
 
   const Schema& getSchema() const override { return m_schema; }
+
+  /**
+    Check if this collection existis in the database.
+
+    @note This check involves communication with the server.
+  */
 
   bool existsInDatabase() const override;
 
 
   /**
-    Get number of documents
+    Get number of documents in the collection.
   */
   uint64_t count();
+
+  /*
+    CRUD operations on a collection
+    -------------------------------
+  */
+
+  /**
+    Return operation which fetches all the documents in the collection.
+  */
+
+  CollectionFind find()
+  {
+    try {
+      return CollectionFind(*this);
+    }
+    CATCH_AND_WRAP;
+  }
+
+  /**
+    Return operation which finds documents that satisfy given expression.
+  */
+
+  CollectionFind find(const string &cond)
+  {
+    try {
+      return CollectionFind(*this, cond);
+    }
+    CATCH_AND_WRAP;
+  }
+
+  /**
+    Return operation which adds documents to the collection. Documents can be
+    specified as JSON strings or `DbDoc` instances. One or more documents can
+    be specified in single `add()` call. Further documents  can be
+    added with more `add()` calls. Method `add()` also accepts a container with
+    documents or a range of documents given by two iterators.
+  */
+
+  template <typename... Types>
+  CollectionAdd add(Types... args)
+  {
+    try {
+
+      CollectionAdd add(*this);
+      return add.add(args...);
+    }
+    CATCH_AND_WRAP;
+  }
+
+  /**
+    Return operation which removes documents satisfying given expression.
+  */
+
+  CollectionRemove remove(const string &cond)
+  {
+    try {
+      return CollectionRemove(*this, cond);
+    }
+    CATCH_AND_WRAP;
+  }
+
+  /**
+    Return operation which modifies documents that satisfy given expression.
+  */
+
+  CollectionModify modify(const string &expr)
+  {
+    try {
+      return CollectionModify(*this, expr);
+    }
+    CATCH_AND_WRAP;
+  }
 
 };
 
@@ -747,7 +433,6 @@ public:
   Table object
   ============
 */
-
 
 /**
   Represents a table in a schema.
@@ -777,11 +462,7 @@ public:
 */
 
 class PUBLIC_API Table
-    : public DatabaseObject
-    , public internal::TableInsertBase
-    , public internal::TableSelectBase
-    , public internal::TableUpdateBase
-    , public internal::TableRemoveBase
+    : public internal::Db_object
 {
   Schema m_schema;
   enum { YES, NO, UNDEFINED} m_isview = UNDEFINED;
@@ -799,25 +480,8 @@ public:
     DISABLE_WARNING(4100)
   #endif
 
-  Table(const Table& other)
-    : internal::TableOpBase(*this)
-    , DatabaseObject(*other.m_sess, other.m_name)
-    , m_schema(other.m_schema)
-  {
-    m_isview = other.m_isview;
-  }
-
-  Table(Table&& other)
-    : internal::TableOpBase(*this)
-    , DatabaseObject(*other.m_sess, std::move(other.m_name))
-    , m_schema(std::move(other.m_schema))
-  {
-    m_isview = other.m_isview;
-  }
-
   Table(const Schema &sch, const string &name)
-    : internal::TableOpBase(*this)
-    , DatabaseObject(*sch.m_sess, name)
+    : internal::Db_object(*sch.m_sess, name)
     , m_schema(sch)
   {}
 
@@ -830,17 +494,7 @@ public:
   DIAGNOSTIC_POP
 
 
-  Table& operator=(const Table &other)
-  {
-    DatabaseObject::operator=(other);
-    m_schema = other.m_schema;
-    m_isview = other.m_isview;
-    return *this;
-  }
-
-
   bool isView();
-
 
   const Schema& getSchema() const override { return m_schema; }
 
@@ -851,466 +505,142 @@ public:
   */
   uint64_t count();
 
-};
-
-
-/**
-  Represents session options to be passed at XSession/NodeSession object
-  creation.
-
-  SessionSettings can be constructed using URL string, common connect options
-  (host, port, user, password, database) or with a list
-  of `SessionSettings::Options` constants followed by option value (unless
-  given option has no value, like `SSL_ENABLE`).
-
-  Examples:
-  ~~~~~~
-
-    SessionSettings from_url("mysqlx://user:pwd@host:port/db?ssl-enable");
-
-    SessionSettings from_options("host", port, "user", "pwd", "db");
-
-    SessionSettings from_option_list(
-      SessionSettings::USER, "user",
-      SessionSettings::PWD,  "pwd",
-      SessionSettings::HOST, "host",
-      SessionSettings::PORT, port,
-      SessionSettings::DB,   "db",
-      SessionSettings::SSL_ENABLE
-    );
-  ~~~~~~
-
-  @ingroup devapi
-*/
-
-class PUBLIC_API SessionSettings
-{
-public:
-
-  /**
-    Session creation options
-
-    @note Specifying `SSL_CA` option implies `SSL_ENABLE`.
-  */
-
-  enum Options
-  {
-    URI,          //!< connection URI or string
-    //! DNS name of the host, IPv4 address or IPv6 address
-    HOST,
-    PORT,         //!< X Plugin port to connect to
-    USER,         //!< user name
-    PWD,          //!< password
-    DB,           //!< default database
-    SSL_ENABLE,   //!< use TLS connection
-    SSL_CA        //!< path to a PEM file specifying trusted root certificates
-  };
-
-
-
-  SessionSettings(){}
-
-  SessionSettings(SessionSettings &settings)
-    : m_options(settings.m_options)
-  {}
-
-  SessionSettings(SessionSettings &&settings)
-    : m_options(std::move(settings.m_options))
-  {}
-
-
-  /**
-    Create a session using connection string or URL.
-
-    Connection sting has the form `"user:pass\@host:port/?option&option"`,
-    valid URL is like a connection string with a `mysqlx://` prefix. Host is
-    specified as either DNS name, IPv4 address of the form "nn.nn.nn.nn" or
-    IPv6 address of the form "[nn:nn:nn:...]".
-
-    Possible connection options are:
-
-    - `ssl-enable` : use TLS connection
-    - `ssl-ca=`path : path to a PEM file specifying trusted root certificates
-
-    Specifying `ssl-ca` option implies `ssl-enable`.
-  */
-
-  SessionSettings(const string &uri)
-  {
-    add(URI, uri);
-  }
-
-
-  /**
-    Create session explicitly specifying session parameters.
-
-    @note Session settings constructed this way request an SSL connection
-    by default.
-  */
-
-  SessionSettings(const std::string &host, unsigned port,
-                  const string  &user,
-                  const char *pwd = NULL,
-                  const string &db = string())
-  {
-    add(HOST, host,
-        PORT, port,
-        USER, user,
-        DB, db);
-
-    if (pwd)
-      add(PWD, pwd);
-
-    //SSL enabled by default
-    add(SSL_ENABLE, true);
-  }
-
-  SessionSettings(const std::string &host, unsigned port,
-                  const string  &user,
-                  const std::string &pwd,
-                  const string &db = string())
-    : SessionSettings(host, port, user, pwd.c_str(), db)
-  {}
-
-  /**
-    Create session using the default port
-
-    @note Session settings constructed this way request an SSL connection
-    by default.
-  */
-
-  SessionSettings(const std::string &host,
-                  const string  &user,
-                  const char    *pwd = NULL,
-                  const string  &db = string())
-    : SessionSettings(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
-  {}
-
-  SessionSettings(const std::string &host,
-                  const string  &user,
-                  const std::string &pwd,
-                  const string  &db = string())
-    : SessionSettings(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
-  {}
-
-  /**
-    Create session on localhost.
-
-    @note Session settings constructed this way request an SSL connection
-    by default.
-  */
-
-  SessionSettings(unsigned port,
-                  const string  &user,
-                  const char    *pwd = NULL,
-                  const string  &db = string())
-    : SessionSettings("localhost", port, user, pwd, db)
-  {}
-
-  SessionSettings(unsigned port,
-                  const string  &user,
-                  const std::string &pwd,
-                  const string  &db = string())
-    : SessionSettings("localhost", port, user, pwd.c_str(), db)
-  {}
-
   /*
-    Templates below are here to take care of the optional password
-    parameter of type const char* (which can be either 3-rd or 4-th in
-    the parameter list). Without these templates passing
-    NULL as password does not work, because NULL is defined as 0
-    which has type int.
+    CRUD operations
+    ---------------
   */
-
-  template <
-    typename    HOST,
-    typename    PORT,
-    typename    USER,
-    typename... T,
-    typename std::enable_if<
-      std::is_constructible<SessionSettings, HOST, PORT, USER, const char*, T...>::value
-    >::type* = nullptr
-  >
-  SessionSettings(HOST h, PORT p, USER u ,long , T... args)
-    : SessionSettings(h, p, u, nullptr, args...)
-  {}
-
-
-  template <
-    typename    PORT,
-    typename    USER,
-    typename... T,
-    typename std::enable_if<
-      std::is_constructible<SessionSettings, PORT, USER, const char*, T...>::value
-    >::type* = nullptr
-  >
-  SessionSettings(PORT p, USER u ,long , T... args)
-    : SessionSettings(p, u, nullptr, args...)
-  {}
-
 
   /**
-    Create session using a list of session options.
+    Return operation which inserts rows into the full table without
+    restricting the columns.
 
-    The list of options consist of `SessionSettings::Options` constant
-    identifying the option to set, followed by option value (unless
-    not required, as in the case of `SSL_ENABLE`).
-
-    Example:
-    ~~~~~~
-      SessionSettings from_option_list(
-        SessionSettings::USER, "user",
-        SessionSettings::PWD,  "pwd",
-        SessionSettings::HOST, "host",
-        SessionSettings::PORT, port,
-        SessionSettings::DB,   "db",
-        SessionSettings::SSL_ENABLE
-      );
-    ~~~~~~
-
-    @see `SessionSettings::Options`.
+    Each row added by the operation must have the same number of values as
+    the number of columns of the table. However, this check is done only
+    after sending the insert command to the server. If value count does not
+    match table column count server reports error.
   */
 
-  template <typename V,typename...R>
-  SessionSettings(Options opt, V val, R&...rest)
+  TableInsert insert()
   {
-    add(opt, val, rest...);
+    try {
+      return TableInsert(*this);
+    }
+    CATCH_AND_WRAP;
   }
 
   /**
-     SessionSetting operator and methods
-   */
+    Return operation which inserts row into the table restricting the columns.
 
-  Value& operator[](Options opt)
+    Each row added by the operation must have the same number of values
+    as the columns specified here. However, this check is done only
+    after sending the insert command to the server. If value count does not
+    match table column count server reports error.
+  */
+
+  template <class... T>
+  TableInsert insert(const T&... t)
   {
-    return m_options[opt];
+    try {
+      return TableInsert(*this, t...);
+    }
+    CATCH_AND_WRAP;
   }
 
-  void clear()
+  /**
+    Select rows from table.
+
+    Optional list of expressions defines projection with transforms
+    rows found by this operation.
+  */
+
+  template<typename ...PROJ>
+  TableSelect select(const PROJ&...proj)
   {
-    m_options.clear();
+    try {
+      return TableSelect(*this, proj...);
+    }
+    CATCH_AND_WRAP;
   }
 
-  void erase(Options opt)
+  /**
+    Return operation which removes rows from the table.
+  */
+
+  TableRemove remove()
   {
-    m_options.erase(opt);
+    try {
+      return TableRemove(*this);
+    }
+    CATCH_AND_WRAP;
   }
 
-  bool has_option(Options opt)
+  /**
+    Return operation which updates rows in the table.
+  */
+
+  TableUpdate update()
   {
-    return m_options.find(opt) != m_options.end();
-  }
-
-
-private:
-
-  std::map<Options,Value> m_options;
-
-  template<typename V,
-           typename std::enable_if<!std::is_constructible<string,V>::value,
-                                   V>::type* = nullptr>
-  void add(Options opt, V v)
-  {
-    m_options[opt] = v;
-  }
-
-  template<typename V,
-           typename std::enable_if<std::is_constructible<string,V>::value,
-                                   V>::type* = nullptr>
-  void add(Options opt, V v)
-  {
-    m_options[opt] = string(v);
-  }
-
-  template <typename V, typename...R>
-  void add(Options opt, V v, R...rest)
-  {
-    add(opt,v);
-    add(rest...);
+    try {
+      return TableUpdate(*this);
+    }
+    CATCH_AND_WRAP;
   }
 
 };
 
 
-namespace internal {
-
-  DLL_WARNINGS_PUSH
+using SqlStatement = internal::SQL_statement;
 
 
-  /// Common base of session classes.
-
-  class PUBLIC_API XSession_base : nocopy
-  {
-
-  DLL_WARNINGS_POP
-
-  protected:
-
-    class INTERNAL Impl;
-    Impl  *m_impl;
-    bool m_master_session = true;
-
-    INTERNAL void register_result(internal::BaseResult *result);
-    INTERNAL void deregister_result(internal::BaseResult *result);
-
-    INTERNAL void prepare_for_command();
-
-    INTERNAL cdk::Session& get_cdk_session();
-
-    struct Options;
-
-    /*
-      This constructor constructs a child session of a parent session.
-    */
-    INTERNAL XSession_base(XSession_base*);
-
-    /*
-      This notification is sent from parent session when it is closed.
-    */
-    void session_closed() { if (!m_master_session) m_impl = NULL; }
-
-  public:
-
-    XSession_base(SessionSettings settings);
-
-    template<typename...T>
-    XSession_base(T...options)
-      : XSession_base(SessionSettings(options...))
-    {}
-
-
-    virtual ~XSession_base();
-
-    /**
-      Get named schema object in a given session.
-
-      The object does not have to exist in the database.
-      Errors will be thrown if one tries to use non-existing
-      schema.
-    */
-
-    Schema createSchema(const string &name, bool reuse = false);
-
-    /**
-      Get named schema object in a given session.
-
-      Errors will be thrown if one tries to use non-existing
-      schema with check_existence = true.
-    */
-
-    Schema getSchema(const string&, bool check_existence = false);
-
-    /**
-      Get the default schema specified when session was created.
-    */
-
-    Schema getDefaultSchema();
-
-    /**
-      Get the name of the default schema specified when session was created.
-    */
-
-    string getDefaultSchemaName();
-
-    /**
-      Get list of schema objects in a given session.
-    */
-
-    internal::List_init<Schema> getSchemas();
-
-    /**
-      Drop the schema.
-
-      Errors will be thrown if schema doesn't exist,
-    */
-
-    void   dropSchema(const string &name);
-
-
-    /**
-      Start a new transaction.
-
-      Throws error if previously opened transaction is not closed.
-    */
-
-    void startTransaction();
-
-    /**
-      Commit opened transaction, if any.
-
-      Does nothing if no transaction was opened. After committing the
-      transaction is closed.
-    */
-
-    void commit();
-
-    /**
-      Rollback opened transaction, if any.
-
-      Does nothing if no transaction was opened. Transaction which was
-      rolled back is closed. To start a new transaction a call to
-      `startTransaction()` is needed.
-    */
-
-    void rollback();
-
-    /**
-      Closes current session.
-
-      After a session is closed, any call to other method will throw Error.
-    */
-
-    void close();
-
-
-  public:
-
-    struct INTERNAL Access;
-    friend Access;
-
-    friend Schema;
-    friend Collection;
-    friend Table;
-    friend Result;
-    friend RowResult;
-
-    ///@cond IGNORE
-    friend internal::BaseResult;
-    ///@endcond
-  };
-
-}  // internal
-
+DLL_WARNINGS_PUSH
 
 /**
   Represents a session which gives access to data stored
   in the data store.
 
-  When creating new session a host name, TCP/IP port,
-  user name and password are specified. Once created,
-  session is ready to be used. Session destructor closes
-  session and cleans up after it.
+  Session can be created from connection string, given `SessionSettings` object
+  or a host name, TCP/IP port, user name and password can be specified directly.
+  Once created, session is ready to be used. Session destructor closes session
+  and cleans up after it.
 
-  If it is not possible to create a valid session for some
-  reason, errors are thrown from session constructor.
+  If it is not possible to create a valid session for some reason, errors
+  are thrown from session constructor.
+
+  It is possible to specify several hosts when creating a session. In that
+  case failed connection to one of the hosts will trigger fail-over attempt
+  to connect to a different host in the list. Only if none of the hosts could
+  be contacted, session creation will fail. It is also possible to specify
+  priorities for the hosts in the list which determine the order in which
+  hosts are tried (see `SessionOption::PRIORITY`).
 
   @ingroup devapi
-  @todo Add all `XSession` methods defined by DevAPI.
 */
 
-class PUBLIC_API XSession
-    : public internal::XSession_base
+class PUBLIC_API Session
+  : internal::nocopy
+  , internal::Session_detail
 {
 
+  DLL_WARNINGS_POP
+
+  using SchemaList = internal::List_init<Schema>;
+
+protected:
+
+  /*
+    This constructor constructs a child session of a parent session.
+  */
+
+  INTERNAL Session(Session*);
+
 public:
+
 
   /**
     Create session specified by `SessionSettings` object.
   */
 
-  XSession(SessionSettings settings)
-    : XSession_base(settings)
-  {}
+  Session(SessionSettings settings);
 
 
   /**
@@ -1318,22 +648,23 @@ public:
 
     This constructor forwards arguments to a `SessionSettings` constructor.
     Thus all forms of specifying session options are also directly available
-    in `XSession` constructor.
+    in `Session` constructor.
 
     Examples:
     ~~~~~~
 
-      XSession from_uri("mysqlx://user:pwd@host:port/db?ssl-enable");
+      Session from_uri("mysqlx://user:pwd@host:port/db?ssl-mode=disabled");
 
-      XSession from_options("host", port, "user", "pwd", "db");
 
-      XSession from_option_list(
-        SessionSettings::USER, "user",
-        SessionSettings::PWD,  "pwd",
-        SessionSettings::HOST, "host",
-        SessionSettings::PORT, port,
-        SessionSettings::DB,   "db",
-        SessionSettings::SSL_ENABLE
+      Session from_options("host", port, "user", "pwd", "db");
+
+      Session from_option_list(
+        SessionOption::USER, "user",
+        SessionOption::PWD,  "pwd",
+        SessionOption::HOST, "host",
+        SessionOption::PORT, port,
+        SessionOption::DB,   "db",
+        SessionOption::SSL_MODE, SSLMode::DISABLED
       );
     ~~~~~~
 
@@ -1341,70 +672,125 @@ public:
   */
 
   template<typename...T>
-  XSession(T...options)
-    : XSession_base(SessionSettings(options...))
+  Session(T...options)
+    : Session(SessionSettings(options...))
   {}
 
 
-  /*
-    Get NodeSession to default shard
+  /**
+    Get named schema object in a given session.
+
+    The object does not have to exist in the database.
+    Errors will be thrown if one tries to use non-existing
+    schema.
   */
 
-  NodeSession bindToDefaultShard();
-};
+  Schema createSchema(const string &name, bool reuse = false);
+
+  /**
+    Get named schema object in a given session.
+
+    Errors will be thrown if one tries to use non-existing
+    schema with check_existence = true.
+  */
+
+  Schema getSchema(const string&, bool check_existence = false);
+
+  /**
+    Get the default schema specified when session was created.
+  */
+
+  Schema getDefaultSchema();
+
+  /**
+    Get the name of the default schema specified when session was created.
+  */
+
+  string getDefaultSchemaName();
+
+  /**
+    Get list of schema objects in a given session.
+  */
+
+  SchemaList getSchemas();
+
+  /**
+    Drop the schema.
+
+    Errors will be thrown if schema doesn't exist,
+  */
+
+  void   dropSchema(const string &name);
 
 
-/**
-  A session which offers SQL query execution.
+  /**
+    Operation that runs arbitrary SQL query.
+  */
 
-  In addition to `XSession` functionality, `NodeSession`
-  allows for execution of arbitrary SQL queries.
+  SqlStatement sql(const string &query)
+  {
+    try {
+      return SqlStatement(this, query);
+    }
+    CATCH_AND_WRAP
+  }
 
-  @ingroup devapi
-*/
+  /**
+    Start a new transaction.
 
-class PUBLIC_API NodeSession
-  : public internal::XSession_base
-{
+    Throws error if previously opened transaction is not closed.
+  */
+
+  void startTransaction();
+
+  /**
+    Commit opened transaction, if any.
+
+    Does nothing if no transaction was opened. After committing the
+    transaction is closed.
+  */
+
+  void commit();
+
+  /**
+    Rollback opened transaction, if any.
+
+    Does nothing if no transaction was opened. Transaction which was
+    rolled back is closed. To start a new transaction a call to
+    `startTransaction()` is needed.
+  */
+
+  void rollback();
+
+  /**
+    Closes current session.
+
+    After a session is closed, any call to other method will throw Error.
+  */
+
+  void close()
+  {
+    try {
+      Session_detail::close();
+    }
+    CATCH_AND_WRAP
+  }
+
+
 public:
 
+  struct INTERNAL Access;
+  friend Access;
 
-  NodeSession(NodeSession &&other)
-    : XSession_base(static_cast<XSession_base*>(&other))
-  {}
+  friend Schema;
+  friend Collection;
+  friend Table;
+  friend Result;
+  friend RowResult;
 
-  /**
-    NodeSession constructors accept the same parameters
-    as XSession constructors.
-  */
-
-  NodeSession(SessionSettings settings)
-    : XSession_base(settings)
-  {}
-
-
-  template<typename...T>
-  NodeSession(T...options)
-    : XSession_base(SessionSettings(options...))
-  {}
-
-
-
-  /**
-    Operation that runs arbitrary SQL query on the node.
-  */
-
-  SqlStatement& sql(const string &query);
-
-private:
-
-  NodeSession(XSession_base* parent)
-    : XSession_base(parent)
-  {}
-
-  SqlStatement m_stmt;
-
-  friend XSession;
+  ///@cond IGNORE
+  friend internal::Result_detail;
+  ///@endcond
 };
 
 

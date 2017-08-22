@@ -1,7 +1,7 @@
-Connector/C++ 2.0 X DevAPI Reference {#devapi_ref}
+Connector/C++ 8.0 X DevAPI Reference {#devapi_ref}
 ====================================
 
-Connector/C++ 2.0 implements the X DevAPI, as described in
+Connector/C++ 8.0 implements the X DevAPI, as described in
 the [X DevAPI User Guide]
 (http://dev.mysql.com/doc/x-devapi-userguide/en/index.html).
 The X DevAPI allows one to work with MySQL Servers implementing a document store
@@ -9,13 +9,7 @@ via the X Plugin. One can also execute plain SQL queries using this API.
 
 To get started, check out some of the main X DevAPI classes:
 
-- To access data first create an @link mysqlx::XSession `XSession`@endlink or
-  a @link mysqlx::NodeSession `NodeSession`@endlink object. A `NodeSession`
-  object gives access to a single MySQL node and allows executing arbitrary
-  SQL queries on that node, while an `XSession` object can work with data
-  distributed over several MySQL nodes (see [X DevAPI User Guide]
-  (http://dev.mysql.com/doc/x-devapi-userguide/en/xsession-vs-node-session.html)
-  for introduction to these concepts).
+- To access data first create a @link mysqlx::Session `Session`@endlink object.
 
 - To manipulate data stored in a document collection or a table, create
   a @link mysqlx::Collection `Collection`@endlink or a @link mysqlx::Table
@@ -45,7 +39,7 @@ the X DevAPI is presented below. See also the [list of X DevAPI classes]
 The following Connector/C++ application connects to a MySQL Server with
 X Plugin, creates a document collection, adds a few documents to it, queries
 the collection and displays the result. The sample code can be found in file
-`testapp/devapi_test.cc` in the source distribution of Connector/C++ 2.0.
+`testapp/devapi_test.cc` in the source distribution of Connector/C++ 8.0.
 See @ref usage for instructions on how to build the sample code.
 
 @dontinclude devapi_test.cc
@@ -56,17 +50,17 @@ is declared within the `mysqlx` namespace:
 @skip #include <mysql_devapi.h>
 @until using namespace
 
-To create an @link mysqlx::XSession `XSession` @endlink object, specify DNS name
+To create an @link mysqlx::Session `Session` @endlink object, specify DNS name
 of a MySQL Server, the port on which the plugin listens (default port is 33060)
 and user credentials:
 
 @skipline main
-@until XSession
+@until Session
 
-Another way of specifying session parameters is by means of a `mysqlx` URL like
-`"mysqlx://mike:s3cr3t!@localhost:13009"`. Once created, the session is ready
-to be used. If the session can not be established, the `XSession` constructor
-throws an error.
+Another way of specifying session parameters is by means of a `mysqlx`
+connection string like `"mysqlx://mike:s3cr3t!@localhost:13009"`. Once created,
+the session is ready to be used. If the session can not be established,
+the `Session` constructor throws an error.
 
 To manipulate documents in a collection, create a @link mysqlx::Collection
 `Collection`@endlink object, first asking session for that collection's
@@ -85,15 +79,14 @@ Collection coll = sess.getSchema("test").getCollection("c1",true)
 ~~~~~~~~
 
 Before adding documents to the collection, all the existing documents are
-removed first:
+removed first using the @link mysqlx::Collection::remove `Collection::remove()`@endlink
+method (expression "true" selects all documents in the collection):
 
-@skipline remove()
+@skipline remove("true")
 
-The @link mysqlx::Collection::remove `Collection::remove()`@endlink method can
-also accept an expression argument which selects documents to be removed. Note
-that the `remove()` method returns an operation that must be explicitly executed
-to take effect. When executed, operation returns a result (ignored here; the
-results are used later).
+Note that the `remove()` method returns an operation that must
+be explicitly executed to take effect. When executed, operation returns
+a result (ignored here; the results are used later).
 
 To insert documents use the @link mysqlx::Collection::add
 `Collection::add()`@endlink method. Documents are described by JSON strings

@@ -69,6 +69,20 @@
       *err_code = e.code().value(); \
     if (sess) { delete sess; sess = NULL; } \
   } \
+ catch(const Mysqlx_exception &e) \
+  { \
+    if (out_error) \
+    { \
+      size_t msg_len = e.message().length();\
+      size_t cpy_len = msg_len >= MYSQLX_MAX_ERROR_LEN - 1 ? \
+                       MYSQLX_MAX_ERROR_LEN - 1 : msg_len; \
+       memcpy(out_error, e.message().data(), cpy_len); \
+       out_error[cpy_len] = '\0'; \
+    } \
+    if (err_code) \
+      *err_code = e.code(); \
+    if (sess) { delete sess; sess = NULL; } \
+  } \
   catch(...) \
   { \
     if (out_error) \
@@ -100,10 +114,9 @@
   }
 
 static mysqlx_session_t *
-_get_session(const char *host, int port, const char *user,
+_get_session(const char *host, unsigned short port, const char *user,
              const char *password, const char *database, const char *conn_str,
-             char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code,
-             bool is_node_sess)
+             char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
 {
   mysqlx_session_t *sess = NULL;
   try
@@ -117,11 +130,11 @@ _get_session(const char *host, int port, const char *user,
       // TODO: the default user has to be determined in a more flexible way
       sess = new mysqlx_session_t(host ? host : "localhost", port,
                                   user ? user : "root", password ? &pwd : NULL,
-                                database ? &db : NULL , is_node_sess);
+                                database ? &db : NULL);
     }
     else
     {
-      sess = new mysqlx_session_t(conn_str, is_node_sess);
+      sess = new mysqlx_session_t(conn_str);
     }
 
     if (!sess->is_valid())
@@ -138,8 +151,7 @@ _get_session(const char *host, int port, const char *user,
 
 static mysqlx_session_t *
 _get_session_opt(mysqlx_session_options_t *opt,
-             char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code,
-             bool is_node_sess)
+             char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
 {
   mysqlx_session_t *sess = NULL;
   try
@@ -150,7 +162,7 @@ _get_session_opt(mysqlx_session_options_t *opt,
       throw cdk::Error(0, "Session options structure not initialized");
     }
 
-    sess = new mysqlx_session_t(opt, is_node_sess);
+    sess = new mysqlx_session_t(*opt);
 
     if (!sess->is_valid())
     {
@@ -172,7 +184,7 @@ mysqlx_get_session(const char *host, int port, const char *user,
                char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
 {
   return _get_session(host, port, user, password, database,
-                      NULL, out_error, err_code, false);
+                      NULL, out_error, err_code);
 }
 
 /*
@@ -183,7 +195,7 @@ mysqlx_get_session_from_url(const char *conn_string,
                    char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
 {
   return _get_session(NULL, 0, NULL, NULL, NULL,
-                      conn_string, out_error, err_code, false);
+                      conn_string, out_error, err_code);
 }
 
 /*
@@ -193,41 +205,9 @@ mysqlx_session_t * STDCALL
 mysqlx_get_session_from_options(mysqlx_session_options_t *opt,
                    char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
 {
-  return _get_session_opt(opt, out_error, err_code, false);
+  return _get_session_opt(opt, out_error, err_code);
 }
 
-/*
-  Establish the node session using the options structure
-*/
-mysqlx_session_t * STDCALL
-mysqlx_get_node_session_from_options(mysqlx_session_options_t *opt,
-                   char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
-{
-  return _get_session_opt(opt, out_error, err_code, true);
-}
-
-/*
-  Establish the node session using string options provided as function parameters
-*/
-mysqlx_session_t * STDCALL
-mysqlx_get_node_session(const char *host, int port, const char *user,
-               const char *password, const char *database,
-               char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
-{
-  return _get_session(host, port, user, password, database,
-                      NULL, out_error, err_code, true);
-}
-
-/*
-  Establish the node session using connection string
-*/
-mysqlx_session_t * STDCALL
-mysqlx_get_node_session_from_url(const char *conn_string,
-               char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
-{
-  return _get_session(NULL, 0, NULL, NULL, NULL,
-                      conn_string, out_error, err_code, true);
-}
 
 /*
   Execute a plain SQL query (supports parameters and placeholders)
@@ -1592,7 +1572,7 @@ mysqlx_get_schemas(mysqlx_session_t *sess, const char *schema_pattern)
   mysqlx_stmt_t *stmt;
   /* This type of SQL is enabled for X session */
   if ((stmt = sess->sql_query("SHOW SCHEMAS LIKE ?",
-       MYSQLX_NULL_TERMINATED, true)) == NULL)
+       MYSQLX_NULL_TERMINATED)) == NULL)
     return NULL;
 
   if (mysqlx_stmt_bind(stmt, PARAM_STRING(schema_pattern ? schema_pattern : "%"),
@@ -1684,76 +1664,18 @@ mysqlx_free_options(mysqlx_session_options_t *opt)
 }
 
 int STDCALL
-mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type, ...)
+mysqlx_session_option_set(mysqlx_session_options_t *opt, ...)
 {
+  // Clear diagnostic information
+  opt->clear();
+
   SAFE_EXCEPTION_BEGIN(opt, RESULT_ERROR)
-  int rc = RESULT_OK;
-  unsigned int uint_data = 0;
-
-  const char *char_data = NULL;
-
   va_list args;
-  va_start(args, type);
-  switch(type)
-  {
-    case MYSQLX_OPT_HOST:
-      char_data = va_arg(args, char*);
-      if (char_data == NULL)
-      {
-        opt->set_diagnostic("Host name cannot be NULL", 0);
-        rc = RESULT_ERROR;
-      }
-      else
-        opt->host(char_data);
-    break;
-    case MYSQLX_OPT_PORT:
-      uint_data = va_arg(args, unsigned int);
-      opt->port(uint_data);
-    break;
-    case MYSQLX_OPT_USER:
-      char_data = va_arg(args, char*);
-      if (char_data == NULL)
-        char_data = "";
-      opt->user(char_data);
-    break;
-    case MYSQLX_OPT_PWD:
-      char_data = va_arg(args, char*);
-      if (char_data == NULL)
-        char_data = "";
-      opt->password(char_data);
-    break;
-    case MYSQLX_OPT_DB:
-      char_data = va_arg(args, char*);
-      if (char_data == NULL)
-        char_data = "";
-      opt->set_database(char_data);
-    break;
-#ifdef WITH_SSL
-    case MYSQLX_OPT_SSL_ENABLE:
-      uint_data = va_arg(args, unsigned int);
-      opt->set_tls(uint_data > 0);
-    break;
-    case MYSQLX_OPT_SSL_CA:
-      char_data = va_arg(args, char*);
-      opt->set_ssl_ca(char_data);
-    break;
-#else
-    case MYSQLX_OPT_SSL_ENABLE:
-    case MYSQLX_OPT_SSL_CA:
-    case MYSQLX_OPT_SSL_CA_PATH:
-      opt->set_diagnostic(
-      "Can not create TLS session - this connector is built"
-      " without TLS support.", 0
-    );
-    break;
-#endif
-    default:
-      opt->set_diagnostic("Invalid option value", 0);
-      rc = RESULT_ERROR;
-  }
+  va_start(args, opt);
+  opt->set_multiple_options(args);
   va_end(args);
 
-  return rc;
+  return RESULT_OK;
   SAFE_EXCEPTION_END(opt, RESULT_ERROR)
 }
 
@@ -1765,6 +1687,10 @@ if (V == NULL) \
    break; \
 }
 
+/*
+  TODO: This function needs to be able to return information about hosts and
+        corresponding parameters in the muliple host configurations.
+*/
 int STDCALL
 mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type, ...)
 {
@@ -1786,35 +1712,46 @@ mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
       CHECK_OUTPUT_BUF(uint_data, unsigned int*)
       *uint_data = opt->get_port();
     break;
+    case MYSQLX_OPT_PRIORITY:
+      CHECK_OUTPUT_BUF(uint_data, unsigned int*)
+      *uint_data = opt->get_priority();
+    break;
     case MYSQLX_OPT_USER:
       CHECK_OUTPUT_BUF(char_data, char*)
       strcpy(char_data, opt->get_user().data());
     break;
     case MYSQLX_OPT_PWD:
-      CHECK_OUTPUT_BUF(char_data, char*)
-      strcpy(char_data, opt->get_password().data());
+      {
+        CHECK_OUTPUT_BUF(char_data, char*)
+        const std::string *s = opt->get_password();
+        if (s)
+          strcpy(char_data, s->data());
+      }
     break;
     case MYSQLX_OPT_DB:
-      CHECK_OUTPUT_BUF(char_data, char*)
-      strcpy(char_data, opt->get_db().data());
+      {
+        CHECK_OUTPUT_BUF(char_data, char*)
+        const cdk::string *cs = opt->get_db();
+        if (cs)
+        {
+          std::string sstr = *cs;
+          strcpy(char_data, sstr.data());
+        }
+      }
     break;
 #ifdef WITH_SSL
-    case MYSQLX_OPT_SSL_ENABLE:
-      CHECK_OUTPUT_BUF(uint_data, unsigned int*)
-      *uint_data = opt->get_tls().use_tls() ? 1 : 0;
-    break;
     case MYSQLX_OPT_SSL_CA:
       CHECK_OUTPUT_BUF(char_data, char*)
-      strcpy(char_data, opt->get_tls().get_ca().data());
+      strcpy(char_data, opt->get_tcpip_options().get_tls().get_ca().data());
+    break;
+    case MYSQLX_OPT_SSL_MODE:
+      CHECK_OUTPUT_BUF(uint_data, unsigned int*)
+      *uint_data = opt->get_ssl_mode();
     break;
 #else
-    case MYSQLX_OPT_SSL_ENABLE:
+    case MYSQLX_OPT_SSL_MODE:
     case MYSQLX_OPT_SSL_CA:
-    case MYSQLX_OPT_SSL_CA_PATH:
-      opt->set_diagnostic(
-      "Can not create TLS session - this connector is built"
-      " without TLS support.", 0
-    );
+      opt->set_diagnostic(MYSQLX_ERROR_NO_TLS_SUPPORT, 0);
     break;
 #endif
     default:

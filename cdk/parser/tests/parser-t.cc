@@ -379,8 +379,11 @@ public:
 
   struct Path_printer
     : public cdk::api::Doc_path::Processor
-    , cdk::api::Doc_path_processor
+    , cdk::api::Doc_path_element_processor
   {
+    using Element_prc::string;
+    using Element_prc::index_t;
+
     ostream &m_out;
     bool     m_first;
 
@@ -430,6 +433,11 @@ public:
     {
       m_first = false;
       m_out << "**";
+    }
+
+    void whole_document()
+    {
+      m_first = false;
     }
   };
 
@@ -614,6 +622,132 @@ const Expr_Test exprs[] =
   { parser::Parser_mode::TABLE   , L"'a' NOT RLIKE '^[a-d]'"},
   { parser::Parser_mode::TABLE   , L"POSITION('bar' IN 'foobarbar')"},
   { parser::Parser_mode::TABLE   , L"TRIM('barxxyz')"},
+  { parser::Parser_mode::DOCUMENT, L"1 IN field.array"},
+  { parser::Parser_mode::DOCUMENT, L"1 NOT IN field.array"},
+  { parser::Parser_mode::DOCUMENT, L"field IN [1,2,3]"},
+  { parser::Parser_mode::DOCUMENT, L"field NOT IN [1,2,3, NULL]"},
+  { parser::Parser_mode::DOCUMENT, L"{\"a\":1, \"b\":null } IN $"},
+  { parser::Parser_mode::DOCUMENT, L"{\"a\":1} NOT IN $"},
+  { parser::Parser_mode::DOCUMENT, L"$.field1 IN $.field2"},
+  { parser::Parser_mode::DOCUMENT, L"$.field1 NOT IN $.field2"},
+  { parser::Parser_mode::DOCUMENT, L"a IN (b)"},
+  { parser::Parser_mode::TABLE   , L"cast(column as json) IN doc->'$.field.array'"},
+  { parser::Parser_mode::TABLE   , L"cast(column as json) NOT IN doc->'$.field.array'"},
+  { parser::Parser_mode::TABLE   , L"column->'$.field' IN [1,2,3]"},
+  { parser::Parser_mode::TABLE   , L"column->'$.field' NOT IN [1,2,3]"},
+  { parser::Parser_mode::TABLE   , L"{\"a\":1} IN doc->'$'"},
+  { parser::Parser_mode::TABLE   , L"{\"a\":1} NOT IN doc->'$'"},
+  { parser::Parser_mode::TABLE   , L"tab1.doc->'$.field1' IN tab2.doc->'$.field2'"},
+  { parser::Parser_mode::TABLE   , L"tab1.doc->'$.field1' NOT IN tab2.doc->'$.field2'"},
+
+  //Tests from devcocs:
+  //http://devdocs.no.oracle.com/mysqlx/latest/devapi-docs/refguide2/DataTypes/expression.html#expr
+
+  { parser::Parser_mode::DOCUMENT, L"(1 in (1,2,3)) = TRUE"},
+  { parser::Parser_mode::DOCUMENT, L"(1 not in (1,2,3)) = FALSE"},
+  { parser::Parser_mode::DOCUMENT, L"{\"foo\" : \"bar\", \"baz\": [1,2,[3],{}, TRUE, true, false, False, null, NULL, Null]}"},
+  { parser::Parser_mode::DOCUMENT, L"\"foo'bar\""},
+  { parser::Parser_mode::DOCUMENT, L"\"foo''bar\""},
+  { parser::Parser_mode::DOCUMENT, L"\"foo\\\"bar\""},
+  { parser::Parser_mode::DOCUMENT, L"\"foo\"\"bar\""},
+  { parser::Parser_mode::DOCUMENT, L"'foo\"bar'"},
+  { parser::Parser_mode::DOCUMENT, L"'foo\"\"bar'"},
+  { parser::Parser_mode::DOCUMENT, L"'foo\\'bar'"},
+  { parser::Parser_mode::DOCUMENT, L"'foo''bar'"},
+  { parser::Parser_mode::DOCUMENT, L"''''"},
+  { parser::Parser_mode::DOCUMENT, L"\"\"\"\""},
+  { parser::Parser_mode::DOCUMENT, L"\"\""},
+  { parser::Parser_mode::DOCUMENT, L"''"},
+  { parser::Parser_mode::DOCUMENT, L"'\\\\'"},
+  { parser::Parser_mode::DOCUMENT, L"\"\\\\\""},
+// discarded from grammar
+//  { parser::Parser_mode::DOCUMENT, L"[<foo.bar>]"},
+//  { parser::Parser_mode::DOCUMENT, L"[<\"foo\">]"},
+//  { parser::Parser_mode::DOCUMENT, L"{<foo, bar>}"},
+//  { parser::Parser_mode::DOCUMENT, L"[<{\"foo\":bar}>]"},
+
+  // Following items were not included in original EBNF, but are valid
+  { parser::Parser_mode::DOCUMENT, L"1 <> 2"},
+  { parser::Parser_mode::DOCUMENT, L"4 % 2"},
+  { parser::Parser_mode::DOCUMENT, L"[]"},
+  { parser::Parser_mode::DOCUMENT, L"{}"},
+
+    // Document Only
+  { parser::Parser_mode::DOCUMENT, L"1 in [1,2,3]"},
+  { parser::Parser_mode::DOCUMENT, L"[1] in [[1],[2],[3]]"},
+  { parser::Parser_mode::DOCUMENT, L"foo = bar.baz"},
+  { parser::Parser_mode::DOCUMENT, L"foo**.bar"},
+  { parser::Parser_mode::DOCUMENT, L"foo[*].bar"},
+  { parser::Parser_mode::DOCUMENT, L"_**._"},
+  { parser::Parser_mode::DOCUMENT, L"_**[*]._"},
+  { parser::Parser_mode::DOCUMENT, L"_**[*]._**._"},
+  { parser::Parser_mode::DOCUMENT, L"$.foo.bar[*]"},
+  { parser::Parser_mode::DOCUMENT, L"$ = {\"a\":1}"},
+  { parser::Parser_mode::DOCUMENT, L"$.\" \".bar"},
+  { parser::Parser_mode::DOCUMENT, L"$.a[0].b[0]"},
+  { parser::Parser_mode::DOCUMENT, L"$.a[0][0]"},
+  { parser::Parser_mode::DOCUMENT, L"$.a[*][*]"},
+  { parser::Parser_mode::DOCUMENT, L"$.a[*].z"},
+  { parser::Parser_mode::DOCUMENT, L"$.\"foo bar\".\"baz**\" = $"},
+  { parser::Parser_mode::DOCUMENT, L"$.foo**.bar"},
+  { parser::Parser_mode::DOCUMENT, L"$.\"foo bar\"**.baz"},
+  { parser::Parser_mode::DOCUMENT, L"$.\"foo\"**.\"bar\""},
+  { parser::Parser_mode::DOCUMENT, L"$.\"foo.\"**.\"bar\""},
+  { parser::Parser_mode::DOCUMENT, L"$.\"foo.\"**.\".bar\""},
+  { parser::Parser_mode::DOCUMENT, L"$.\"\""},
+  { parser::Parser_mode::DOCUMENT, L"$**.bar"},
+  { parser::Parser_mode::DOCUMENT, L"$**[0]"},
+  { parser::Parser_mode::DOCUMENT, L"$**.bar"},
+  { parser::Parser_mode::DOCUMENT, L"$**.foo"},
+  { parser::Parser_mode::DOCUMENT, L"$.a**.bar"},
+  { parser::Parser_mode::DOCUMENT, L"$.a**[0]"},
+  { parser::Parser_mode::DOCUMENT, L"$.a**[*]"},
+  { parser::Parser_mode::DOCUMENT, L"$.a**.bar"},
+  { parser::Parser_mode::DOCUMENT, L"$.a**.foo"},
+
+  //Relational
+  //http://devdocs.no.oracle.com/mysqlx/latest/devapi-docs/refguide2/DataTypes/expression.html#id8
+
+  { parser::Parser_mode::TABLE, L"1 in (1,2,3)"},
+  { parser::Parser_mode::TABLE, L"{\"foo\" : \"bar\", \"baz\": [1,2,[3],{}, TRUE, true, false, False, null, NULL, Null]}"},
+//  { parser::Parser_mode::TABLE, L"[<doc->'$.foo'>]"},
+//  { parser::Parser_mode::TABLE, L"[<\"foo\">]"},
+//  { parser::Parser_mode::TABLE, L"{<key, value>}"},
+//  { parser::Parser_mode::TABLE, L"{<\"x\", value>}"},
+//  { parser::Parser_mode::TABLE, L"[<{key:value}>]"},
+
+  // Following items were not included in original EBNF, but is MySQL syntax
+  { parser::Parser_mode::TABLE, L"1 <> 2"},
+  { parser::Parser_mode::TABLE, L"4 % 2"},
+  { parser::Parser_mode::TABLE, L"doc->>'$.foo'"},
+
+  { parser::Parser_mode::TABLE, L"[]"},
+  { parser::Parser_mode::TABLE, L"{}"},
+
+  // Relational Only
+  { parser::Parser_mode::TABLE, L"doc->'$.foo.bar[*]'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.\" \".bar'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.a[0].b[0]'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.a[0][0]'"},
+  { parser::Parser_mode::TABLE, L"`x`->'$.a[*][*]'"},
+  { parser::Parser_mode::TABLE, L"`''`->'$.a[*].z'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.\"foo bar\".\"baz**\"'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.foo**.bar'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.\"foo bar\"**.baz'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.\"foo\"**.\"bar\"'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.\"foo.\"**.\"bar\"'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.\"foo.\"**.\".bar\"'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.\"\"'"},
+  { parser::Parser_mode::TABLE, L"doc->'$**.bar'"},
+  { parser::Parser_mode::TABLE, L"doc->'$**[0]'"},
+  { parser::Parser_mode::TABLE, L"doc->'$**.bar'"},
+  { parser::Parser_mode::TABLE, L"doc->'$**.foo'"},
+  { parser::Parser_mode::TABLE, L"foo.doc->'$.a**.bar'"},
+  { parser::Parser_mode::TABLE, L"foo.bar.doc->'$.a**[0]'"},
+  { parser::Parser_mode::TABLE, L"`foo`.doc->'$.a**[*]'"},
+  { parser::Parser_mode::TABLE, L"`foo.bar`.doc->'$.a**.bar'"},
+  { parser::Parser_mode::TABLE, L"`->`.doc->'$.a**.foo'"}
+
 };
 
 const Expr_Test negative_exprs[] =
@@ -627,6 +761,85 @@ const Expr_Test negative_exprs[] =
   { parser::Parser_mode::TABLE   , L"TRIM('xyz' FROM 'barxxyz')"},
   { parser::Parser_mode::TABLE   , L"'Heoko' SOUNDS LIKE 'h1aso'"},
   { parser::Parser_mode::TABLE   , L"foo+"},
+
+  //Tests from devcocs:
+  //http://devdocs.no.oracle.com/mysqlx/latest/devapi-docs/refguide2/DataTypes/expression.html#invalid
+
+  { parser::Parser_mode::DOCUMENT, L"$."                 },
+  { parser::Parser_mode::DOCUMENT, L".doc"               },
+  { parser::Parser_mode::DOCUMENT, L"**"                 },
+  { parser::Parser_mode::DOCUMENT, L"**foo"              },
+  { parser::Parser_mode::DOCUMENT, L"_**"                },
+  { parser::Parser_mode::DOCUMENT, L"_**[*]_**._"        },
+  { parser::Parser_mode::DOCUMENT, L"_**[*]._.**._"      },
+  { parser::Parser_mode::DOCUMENT, L"_**[*]_.**._"       },
+  { parser::Parser_mode::DOCUMENT, L"$.foo**"            },
+  { parser::Parser_mode::DOCUMENT, L"$.foo.**.bar"       },
+//  { parser::Parser_mode::DOCUMENT, L"$.foo.*.bar"        },
+  { parser::Parser_mode::DOCUMENT, L"$.foo[**]"          },
+  { parser::Parser_mode::DOCUMENT, L"$**"                },
+  { parser::Parser_mode::DOCUMENT, L"$.**"               },
+  { parser::Parser_mode::DOCUMENT, L"$.**bar"            },
+  { parser::Parser_mode::DOCUMENT, L"$.**\".bar\""       },
+  { parser::Parser_mode::DOCUMENT, L"$.**.bar"           },
+  { parser::Parser_mode::DOCUMENT, L"$.foo..bar"         },
+//  { parser::Parser_mode::DOCUMENT, L"foo[*].\"bar\""     },
+  { parser::Parser_mode::DOCUMENT, L"\"foo\".bar"        },
+  { parser::Parser_mode::DOCUMENT, L"$**.bar()"          },
+  { parser::Parser_mode::DOCUMENT, L"[<foo, bar>]"       },
+  { parser::Parser_mode::DOCUMENT, L"[<\"foo\", 1>]"     },
+  { parser::Parser_mode::DOCUMENT, L"{<foobar>}"         },
+
+  // Invalid that was wrongly included in parser (not MySQL syntax)
+//  { parser::Parser_mode::DOCUMENT, L"1 == 1"             },
+
+ // Relational Only
+  { parser::Parser_mode::DOCUMENT, L"doc->'$.foo'"           },
+  { parser::Parser_mode::DOCUMENT, L"foo.bar->'$.foo'"       },
+
+  //http://devdocs.no.oracle.com/mysqlx/latest/devapi-docs/refguide2/DataTypes/expression.html#id9
+
+  { parser::Parser_mode::TABLE, L"doc->'foo**.bar'"           },
+  { parser::Parser_mode::TABLE, L"doc->'foo[*].bar'"          },
+  { parser::Parser_mode::TABLE, L"doc->'_**._'"               },
+  { parser::Parser_mode::TABLE, L"doc->'_**[*]._'"            },
+  { parser::Parser_mode::TABLE, L"doc->_**[*]._**._'"         },
+  { parser::Parser_mode::TABLE, L"[<doc->'$.foo', bar>]"      },
+  { parser::Parser_mode::TABLE, L"[<\"foo\", 1>]"             },
+  { parser::Parser_mode::TABLE, L"{<doc->'$.foobar'>}"        },
+
+  // Document Only
+//  { parser::Parser_mode::TABLE, L"1 in [1,2,3]"               },
+//  { parser::Parser_mode::TABLE, L"[1] in [[1],[2],[3]]"       },
+//  { parser::Parser_mode::TABLE, L"foo = bar.baz"              },
+  { parser::Parser_mode::TABLE, L"foo**.bar"                  },
+  { parser::Parser_mode::TABLE, L"foo[*].bar"                 },
+  { parser::Parser_mode::TABLE, L"_**._"                      },
+  { parser::Parser_mode::TABLE, L"_**[*]._"                   },
+  { parser::Parser_mode::TABLE, L"_**[*]._**._"               },
+  { parser::Parser_mode::TABLE, L"$.foo.bar[*]"               },
+  { parser::Parser_mode::TABLE, L"$ = {\"a\":1}"              },
+  { parser::Parser_mode::TABLE, L"$.\" \".bar"                },
+  { parser::Parser_mode::TABLE, L"$.a[0].b[0]"                },
+  { parser::Parser_mode::TABLE, L"$.a[0][0]"                  },
+  { parser::Parser_mode::TABLE, L"$.a[*][*]"                  },
+  { parser::Parser_mode::TABLE, L"$.a[*].z"                   },
+  { parser::Parser_mode::TABLE, L"$.\"foo bar\".\"baz**\" = $"},
+  { parser::Parser_mode::TABLE, L"$.foo**.bar"                },
+  { parser::Parser_mode::TABLE, L"$.\"foo bar\"**.baz"        },
+  { parser::Parser_mode::TABLE, L"$.\"foo\"**.\"bar\""        },
+  { parser::Parser_mode::TABLE, L"$.\"foo.\"**.\"bar\""       },
+  { parser::Parser_mode::TABLE, L"$.\"foo.\"**.\".bar\""      },
+  { parser::Parser_mode::TABLE, L"$.\"\""                     },
+  { parser::Parser_mode::TABLE, L"$**.bar"                    },
+  { parser::Parser_mode::TABLE, L"$**[0]"                     },
+  { parser::Parser_mode::TABLE, L"$**.bar"                    },
+  { parser::Parser_mode::TABLE, L"$**.foo"                    },
+  { parser::Parser_mode::TABLE, L"$.a**.bar"                  },
+  { parser::Parser_mode::TABLE, L"$.a**[0]"                   },
+  { parser::Parser_mode::TABLE, L"$.a**[*]"                   },
+  { parser::Parser_mode::TABLE, L"$.a**.bar"                  },
+  { parser::Parser_mode::TABLE, L"$.a**.foo"                  }
 };
 
 
@@ -656,8 +869,7 @@ TEST(Parser, expr)
     cdk::string expr(test.txt);
     cout <<"expecting error when parsing string: " <<expr <<endl;
     cout <<"----" <<endl;
-    Expression_parser parser(test.mode, expr);
-    EXPECT_ERROR(parser.process(printer));
+    EXPECT_ERROR(Expression_parser(test.mode, expr).process(printer));
   }
 
 }
@@ -891,7 +1103,7 @@ TEST(Parser, doc_path)
 
   cout << endl << "== Negative tests ==" << endl << endl;
 
-  wchar_t* negative[] =
+  const wchar_t* negative[] =
   {
     L"date.date[*].**",
     L"date.date[*]**",
@@ -957,6 +1169,91 @@ static const string_opt none;
   Helper structure to hold result of URI parsing.
 */
 
+struct Host
+{
+  typedef std::string string;
+
+  Host(unsigned short _priority, const string& _name, unsigned short _port)
+    : priority(_priority), port(_port), name(_name)
+  {}
+
+  Host(const string& _name, unsigned short _port)
+    : priority(0), port(_port), name(_name)
+  {}
+
+  Host(unsigned short _priority,const string& _name)
+    : priority(_priority), port(0), name(_name)
+  {}
+
+  Host(const string& _name)
+    : priority(0), port(0), name(_name)
+  {}
+
+  bool operator == ( const Host other) const
+  {
+    return priority == other.priority &&
+           port     == other.port     &&
+           name     == other.name     &&
+           type     == other.type;
+  }
+
+  unsigned short  priority;
+  unsigned short      port;
+  string     name;
+
+  enum {ADDRESS, SOCKET, PIPE} type = ADDRESS;
+};
+
+struct Pipe : public Host
+{
+  Pipe(unsigned short priority, const std::string &pipe)
+    : Host(priority, pipe)
+  {
+    type = PIPE;
+  }
+
+  Pipe(const std::string &pipe)
+    : Host(pipe)
+  {
+    type = PIPE;
+  }
+};
+
+struct Unix_socket : public Host
+{
+  Unix_socket(unsigned short priority, const std::string &socket)
+    : Host(priority, socket)
+  {
+    type = SOCKET;
+  }
+
+  Unix_socket(const std::string &socket)
+    : Host(socket)
+  {
+    type = SOCKET;
+  }
+};
+
+struct Query
+{
+  Query(const std::string &_key)
+    : key(_key)
+  {}
+
+  Query(const std::string &_key, const std::string &_val)
+  : key(_key), val(_val)
+  {}
+
+  bool operator == ( const Query other) const
+  {
+    return key == other.key &&
+           val == other.val;
+  }
+
+  std::string key;
+  std::string val;
+};
+
 struct URI_parts
 {
   typedef std::string string;
@@ -964,39 +1261,59 @@ struct URI_parts
 
   query_t query;
 
-  URI_parts() : port(0), has_query(false)
+  URI_parts()
   {}
 
-  URI_parts(
-    const string_opt &_user,
-    const string_opt &_pwd,
-    const string &_host,
-    short _port,
-    const string_opt &_path,
-    bool _has_query)
-    : user(_user)
-    , pwd(_pwd)
-    , host(_host)
-    , port(_port)
-    , path(_path)
-    , has_query(_has_query)
-  {}
+  template<typename...Options>
+  URI_parts(Options...opt)
+  {
+    add(opt...);
+  }
+
+
+  template<typename Option, typename...Rest>
+  void add(Option &opt, Rest...r)
+  {
+    set(opt);
+    add(r...);
+  }
+
+  template<typename Options>
+  void add(Options opt)
+  {
+    set(opt);
+  }
+
+  void set(const std::string &_path)
+  {
+    path = _path;
+  }
+
+  void set(Host &host)
+  {
+    hosts.push_back(host);
+  }
+
+  void set(Query &qry)
+  {
+    query[qry.key] = qry.val;
+  }
+
+
+  std::vector<Host> hosts;
 
   string_opt user;
   string_opt pwd;
-  string     host;
-  short      port;
   string_opt path;
-  bool       has_query;
+
 
   bool operator==(const URI_parts &other) const
   {
     return user == other.user
       && pwd == other.pwd
-      && host == other.host
-      && port == other.port
+      && hosts == other.hosts
       && path == other.path
-      && has_query == other.has_query;
+      && query == other.query;
   }
 };
 
@@ -1006,11 +1323,27 @@ std::ostream& operator<<(std::ostream &out, URI_parts &data)
     cout << " user: " << data.user << endl;
   if (data.pwd)
     cout << "  pwd: " << data.pwd << endl;
-  cout << " host: " << data.host << endl;
-  cout << " port: " << data.port << endl;
+  cout << " [" << endl;
+  for ( auto el : data.hosts)
+  {
+    switch (el.type)
+    {
+    case Host::ADDRESS:
+        cout << " host: " << el.name << endl;
+        cout << " port: " << el.port << endl;
+        break;
+      case Host::PIPE:
+        cout << " pipe: " << el.name << endl;
+        break;
+      case Host::SOCKET:
+        cout << " socket: " << el.name << endl;
+        break;
+    }
+  }
+  cout << " ]" << endl;
   if (data.path)
     cout << " path: " << data.path << endl;
-  if (data.has_query)
+  if (data.query.size() != 0)
   {
     cout << "query:" << endl;
     for (URI_parts::query_t::const_iterator it = data.query.begin()
@@ -1029,10 +1362,9 @@ std::ostream& operator<<(std::ostream &out, URI_parts &data)
 #define EXPECT_EQ_URI(A,B) \
   EXPECT_EQ((A).user,(B).user);  \
   EXPECT_EQ((A).pwd,(B).pwd);    \
-  EXPECT_EQ((A).host,(B).host);  \
-  EXPECT_EQ((A).port,(B).port);  \
+  EXPECT_EQ((A).hosts,(B).hosts);  \
   EXPECT_EQ((A).path,(B).path);  \
-  EXPECT_EQ((A).has_query,(B).has_query)
+  EXPECT_EQ((A).query,(B).query); \
 
 
 /*
@@ -1047,46 +1379,55 @@ struct URI_prc : parser::URI_processor
   URI_prc(URI_parts &data) : m_data(&data)
   {}
 
-  void user(const std::string &val)
+  void user(const std::string &val) override
   {
     m_data->user = val;
   }
 
-  void password(const std::string &val)
+  void password(const std::string &val) override
   {
     m_data->pwd = val;
   }
 
-  void host(const std::string &val)
+  void host(unsigned short priority, const std::string &host) override
   {
-    m_data->host = val;
+    m_data->hosts.push_back(Host(priority, host));
   }
 
-  void port(unsigned short val)
+  void host(unsigned short priority,
+            const std::string &host,
+            unsigned short port) override
   {
-    m_data->port = val;
+    m_data->hosts.push_back(Host(priority, host, port));
   }
 
-  void path(const std::string &val)
+  void socket(unsigned short priority, const std::string &socket_path) override
+  {
+    m_data->hosts.push_back(Unix_socket(priority, socket_path));
+  }
+
+  void pipe(unsigned short priority, const std::string &pipe) override
+  {
+    m_data->hosts.push_back(Pipe(priority, pipe));
+  }
+
+  void schema(const std::string &val) override
   {
     m_data->path = val;
   }
 
-  void key_val(const std::string &key)
+  void key_val(const std::string &key) override
   {
-    m_data->has_query = true;
     m_data->query[key] = string_opt();
   }
 
-  void key_val(const std::string &key, const std::string &val)
+  void key_val(const std::string &key, const std::string &val) override
   {
-    m_data->has_query = true;
     m_data->query[key] = val;
   }
 
-  void key_val(const std::string &key, const std::list<std::string> &val)
+  void key_val(const std::string &key, const std::list<std::string> &val) override
   {
-    m_data->has_query = true;
     std::string list("['");
     bool start = true;
 
@@ -1120,116 +1461,182 @@ TEST(Parser, uri)
     std::string  uri;
     URI_parts    data;
   }
-  test_uri[] = {
+  test_uri[] =
+  {
     {
       "host",
-      URI_parts(none, none, "host", 0, none, false)
+      URI_parts(Host("host"))
     },
     {
       "[::1]",
-      URI_parts(none, none, "::1", 0, none, false)
+      URI_parts(Host("::1"))
     },
     {
       "host:123",
-      URI_parts(none, none, "host", 123, none, false)
+      URI_parts(Host("host", 123))
     },
     {
       "[::1]:123",
-      URI_parts(none, none, "::1", 123, none, false)
+      URI_parts(Host("::1", 123))
     },
     {
       "host:0",
-      URI_parts(none,none, "host", 0, none , false)
+      URI_parts(Host("host", 0))
+    },
+    {
+      "host:",  // default port
+      URI_parts(Host("host", 0))
     },
     {
       "host/path",
-      URI_parts(none , none, "host", 0, "path", false)
+      URI_parts(Host("host", 0), "path")
     },
     {
       "[::1]/path",
-      URI_parts(none , none, "::1", 0, "path", false)
+      URI_parts(Host("::1", 0), "path")
     },
     {
       "host/",
-      URI_parts(none , none, "host", 0, "", false)
+      URI_parts(Host("host", 0),"")
     },
     {
-      "user@host/path",
-      URI_parts("user" , none, "host", 0, "path", false)
+      "host:123/",
+      URI_parts(Host("host", 123), "")
     },
     {
-      "user@[::1]/path",
-      URI_parts("user" , none, "::1", 0, "path", false)
+      "host:/db",
+      URI_parts(Host("host", 0), "db")
     },
     {
-      "user%40host%2Fpath",
-      URI_parts(none , none, "user@host/path", 0, none, false)
+      "host:123/foo?key=val",
+      URI_parts(Host("host", 123), "foo", Query("key", "val"))
     },
     {
-      "user:@host/path",
-      URI_parts("user" , "", "host", 0, "path", false)
+      "[::1]:123/foo?key=val",
+      URI_parts(Host("::1", 123), "foo", Query("key", "val"))
     },
     {
-      "user:pwd@host",
-      URI_parts("user" , "pwd", "host", 0, none, false)
+      "host:123?key=val",
+      URI_parts(Host("host", 123), Query("key", "val"))
     },
     {
-      "user:pwd@[::1]",
-      URI_parts("user" , "pwd", "::1", 0, none, false)
+      "host:123/?key=val",
+      URI_parts(Host("host", 123), "", Query("key", "val"))
+    },
+    // host list
+    {
+      "[127.0.0.1]",
+      URI_parts(Host("127.0.0.1"))
     },
     {
-      "user:pwd@host:123",
-      URI_parts("user" , "pwd", "host", 123, none, false)
+      "[[::1]]",
+      URI_parts(Host("::1"))
     },
     {
-      "user:pwd@[::1]:123",
-      URI_parts("user" , "pwd", "::1", 123, none, false)
+      "[host1]",
+      URI_parts(Host("host1"))
     },
     {
-      "user:pwd@host:123/",
-      URI_parts("user" , "pwd", "host", 123, "", false)
+      "[127.0.0.1,host,[::1]]",
+      URI_parts(Host("127.0.0.1"), Host("host"), Host("::1"))
     },
     {
-      "user:pwd@host:123/foo?key=val",
-      URI_parts("user" , "pwd", "host", 123, "foo", true)
+      "[127.0.0.1,127.0.0.2]/?key1=val1&key2=val2",
+      URI_parts(Host("127.0.0.1"), Host("127.0.0.2"),
+                Query("key1", "val1"), Query("key2", "val2"))
     },
     {
-      "user:pwd@[::1]:123/foo?key=val",
-      URI_parts("user" , "pwd", "::1", 123, "foo", true)
+      "[host1,host2]",
+      URI_parts(Host("host1"), Host("host2"))
     },
     {
-      "user:pwd@host:123?key=val",
-      URI_parts("user" , "pwd", "host", 123, none, true)
+      "[server.example.com,192.0.2.11:33060,[2001:db8:85a3:8d3:1319:8a2e:370:7348]:1]/database",
+      URI_parts(Host("server.example.com"), Host("192.0.2.11",33060),
+                Host("2001:db8:85a3:8d3:1319:8a2e:370:7348",1 ), "database")
     },
     {
-      "user:pwd@host:123/?key=val",
-      URI_parts("user" , "pwd", "host", 123, none, true)
+      "[(Address=127.0.0.1,Priority=2),(Address=example.com,Priority=100)]/database",
+      URI_parts(Host(3, "127.0.0.1"), Host(101, "example.com"), "database")
     },
+    {
+      "\\\\.\\named_pipe.socket",
+      URI_parts(Pipe("\\\\.\\named_pipe.socket"))
+    },
+    {
+      "\\\\.\\named%20pipe.socket/database",
+      URI_parts(Pipe("\\\\.\\named pipe.socket"), "database")
+    },
+    {
+      "(\\\\.\\named:/?%232[1]@pipe.socket)/database",
+      URI_parts(Pipe("\\\\.\\named:/?#2[1]@pipe.socket"), "database")
+    },
+    {
+      "(/mysql:/?%23(2[1)]@socket)/database",
+      URI_parts(Unix_socket("/mysql:/?#(2[1)]@socket"), "database")
+    },
+    {
+      ".mysql.sock",
+      URI_parts(Unix_socket(".mysql.sock"))
+    },
+    {
+      ".mysql.sock/database?qry=val&qry2=2017",
+      URI_parts(Unix_socket(".mysql.sock"), "database",
+                Query("qry", "val"),Query("qry2", "2017"))
+    }
   };
 
-  //unsigned pos = 3;
+  //unsigned pos = 23;
   for (unsigned pos = 0; pos < sizeof(test_uri) / sizeof(URI_test); ++pos)
   {
-    std::string uri = test_uri[pos].uri;
-    cout <<endl << "== parsing conn string#" <<pos << ": " << uri << endl;
+    std::string original_uri = test_uri[pos].uri;
 
-    for (unsigned i = 0; i < 2; ++i)
+
+    for (int i = 0 ; i < 4; ++i)
     {
-      if (i > 0)
-        uri = string("mysqlx://") + uri;
+      std::string uri;
+      switch (i)
+      {
+        case 0:
+          uri = original_uri;
+          test_uri[pos].data.user = none;
+          test_uri[pos].data.pwd = none;
+          break;
+        case 1:
+          uri = string("user@") + original_uri;
+          test_uri[pos].data.user = "user";
+          test_uri[pos].data.pwd = none;
+          break;
+        case 2:
+          uri = string("user:@") + original_uri;
+          test_uri[pos].data.user = "user";
+          test_uri[pos].data.pwd = "";
+          break;
+        case 3:
+          uri = string("user:pwd@") + original_uri;
+          test_uri[pos].data.user = "user";
+          test_uri[pos].data.pwd = "pwd";
+          break;
+      }
 
-      URI_parser pp(uri, i>0);
+      for (unsigned j = 0; j < 2; ++j)
+      {
+        if (j > 0)
+          uri = string("mysqlx://") + uri;
 
-      URI_parts data;
-      URI_prc  up(data);
+        cout <<endl << "== parsing conn string#" <<pos << ": " << uri << endl;
 
-      pp.process(up);
-      cout << data;
-      EXPECT_EQ_URI(data, test_uri[pos].data);
-      cout << "--" << endl;
+        URI_parser pp(uri, j>0);
+
+        URI_parts data;
+        URI_prc  up(data);
+
+        pp.process(up);
+        cout << data;
+        EXPECT_EQ_URI(data, test_uri[pos].data);
+        cout << "--" << endl;
+      }
     }
   }
-
 
   cout << endl << "---- test queries ----" << endl;
 
@@ -1305,13 +1712,11 @@ TEST(Parser, uri)
   {
     "host#",
     "host:foo",
-    "host:",
     "host:1234567",
     "host:-127",
     "user@host#",
     "user:pwd@host#",
     "user:pwd@host:foo",
-    "user:pwd@host:/db",
     "host/db#foo",
     "host/db/foo",
     "host/db?query#foo",
@@ -1319,7 +1724,8 @@ TEST(Parser, uri)
     "host/db?a=[a,b,c]foo=bar",
     "host/db?a=[a,b=foo",
     "[::1]:port:123",
-    "[::1"
+    "[::1",
+    "<foo.example.com:123/db>"
     //"host/db?l=[a,b&c]" TODO: should this fail?
     // TODO: allowed chars in host/path component
   };
@@ -1353,3 +1759,4 @@ TEST(Parser, uri)
   }
 
 }
+

@@ -71,7 +71,7 @@ void Socket::Connection::do_wait()
 
 bool Socket::Connection::is_completed() const
 {
-  return TCPIP_base::get_base_impl().is_open();
+  return Socket_base::get_base_impl().is_open();
 }
 
 

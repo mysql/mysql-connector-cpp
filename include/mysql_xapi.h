@@ -161,12 +161,20 @@ typedef object_id* MYSQLX_GUID;
 #define MYSQLX_ERROR_MISSING_COLLECTION_NAME_MSG "Missing collection name"
 #define MYSQLX_ERROR_MISSING_VIEW_NAME_MSG "Missing view name"
 #define MYSQLX_ERROR_MISSING_KEY_NAME_MSG "Missing key name"
+#define MYSQLX_ERROR_MISSING_HOST_NAME "Missing host name"
+#define MYSQLX_ERROR_MISSING_CONN_INFO "Missing connecting information"
 #define MYSQLX_ERROR_HANDLE_NULL_MSG "Handle cannot be NULL"
 #define MYSQLX_ERROR_VIEW_INVALID_STMT_TYPE "Invalid statement type for View. Only SELECT type is supported"
 #define MYSQLX_ERROR_VIEW_TYPE_MSG "Statement must be of VIEW type"
 #define MYSQLX_ERROR_OUTPUT_BUFFER_NULL "The output buffer cannot be NULL"
 #define MYSQLX_ERROR_OUTPUT_BUFFER_ZERO "The output buffer cannot have zero length"
 #define MYSQLX_ERROR_OP_NOT_SUPPORTED "The operation is not supported by the function"
+#define MYSQLX_ERROR_WRONG_SSL_MODE "Wrong value for SSL Mode"
+#define MYSQLX_ERROR_NO_TLS_SUPPORT "Can not create TLS session - this connector is built without TLS support"
+#define MYSQLX_ERROR_MIX_PRIORITY "Mixing hosts with and without priority is not allowed"
+#define MYSQLX_ERROR_DUPLICATED_OPTION "Option already defined"
+#define MYSQLX_ERROR_MAX_PRIORITY "Priority should be a value between 0 and 100"
+
 
 /* Opaque structures*/
 
@@ -331,23 +339,61 @@ typedef enum mysqlx_sort_direction_enum
   Session options for use with `mysqlx_session_option_get()`
   and `mysqlx_session_option_set()` functions.
 
-  @note Specifying `MYSQLX_OPT_SSL_CA` option implies `MYSQLX_OPT_SSL_ENABLE`.
+  @note Specifying `MYSQLX_OPT_SSL_CA` option requires `MYSQLX_OPT_SSL_MODE`
+  value of `SSL_MODE_VERIFY_CA` or `SSL_MODE_VERIFY_IDENTITY`.
+  If `MYSQLX_OPT_SSL_MODE` is not explicitly given then setting
+  `MYSQLX_OPT_SSL_CA` implies `SSL_MODE_VERIFY_CA`.
 */
 
 typedef enum mysqlx_opt_type_enum
 {
-  MYSQLX_OPT_HOST = 1,        /**< host name or IP address */
-  /** DNS name of the host, IPv4 address or IPv6 address */
-  MYSQLX_OPT_PORT = 2,
+  MYSQLX_OPT_HOST = 1,        /**< host name or IP address, DNS name of the host,
+                                   IPv4 address or IPv6 address */
+  MYSQLX_OPT_PORT = 2,        /**< port */
   MYSQLX_OPT_USER = 3,        /**< user name */
   MYSQLX_OPT_PWD = 4,         /**< password */
   MYSQLX_OPT_DB = 5,          /**< default database */
-  MYSQLX_OPT_SSL_ENABLE = 6,  /**< use TLS connection */
+  MYSQLX_OPT_SSL_MODE = 6,
   /** path to a PEM file specifying trusted root certificates */
   MYSQLX_OPT_SSL_CA = 7,
+  MYSQLX_OPT_PRIORITY = 8,
+  LAST
 }
 mysqlx_opt_type_t;
 
+#define OPT_HOST(A)     MYSQLX_OPT_HOST, (A)
+#define OPT_PORT(A)     MYSQLX_OPT_PORT, (unsigned int)(A)
+#define OPT_USER(A)     MYSQLX_OPT_USER, (A)
+#define OPT_PWD(A)      MYSQLX_OPT_PWD, (A)
+#define OPT_DB(A)       MYSQLX_OPT_DB, (A)
+#define OPT_SSL_MODE(A) MYSQLX_OPT_SSL_MODE, (A)
+#define OPT_SSL_CA(A)   MYSQLX_OPT_SSL_CA, (A)
+#define OPT_PRIORITY(A) MYSQLX_OPT_PRIORITY, (unsigned int)(A)
+
+/**
+  Session SSL mode values for use with `mysqlx_session_option_get()`
+  and `mysqlx_session_option_set()` functions setting or getting
+  MYSQLX_OPT_SSL_MODE option.
+*/
+
+typedef enum mysqlx_ssl_mode_enum
+{
+  SSL_MODE_DISABLED = 0,       /**< Establish an unencrypted connection. */
+  SSL_MODE_REQUIRED = 2,       /**< Establish a secure connection if the server
+                                    supports secure connections. The connection
+                                    attempt fails if a secure connection cannot
+                                    be established.  */
+  SSL_MODE_VERIFY_CA = 3,      /**< Like SSL_MODE_REQUIRED, but additionally
+                                    verify the server TLS certificate against
+                                    the configured Certificate Authority (CA)
+                                    certificates. The connection attempt fails
+                                    if no valid matching CA certificates are
+                                    found. */
+  SSL_MODE_VERIFY_IDENTITY = 4 /**< Like VERIFY_CA, but additionally verify
+                                    that the server certificate matches the host
+                                    to which the connection is attempted.*/
+}
+mysqlx_ssl_mode_t;
 
 /**
   Constants for defining the View algorithm using
@@ -414,7 +460,6 @@ typedef enum mysqlx_view_check_option_enum
 
   @note The session returned by the function must be properly closed using
         `mysqlx_session_close()`.
-  @note This type of session does not support executing plain SQL queries.
   @note This function always establishes connection with SSL enabled
 
   @ingroup xapi_sess
@@ -453,7 +498,6 @@ mysqlx_get_session(const char *host, int port, const char *user,
 
   @note The session returned by the function must be properly closed using
         `mysqlx_session_close()`.
-  @note This type of session does not support executing plain SQL queries.
 
   @ingroup xapi_sess
 */
@@ -478,7 +522,6 @@ mysqlx_get_session_from_url(const char *conn_string,
 
   @note The session returned by the function must be properly closed using
         `mysqlx_session_close()`.
-  @note This type of session does not support executing plain SQL queries.
 
   @ingroup xapi_sess
 */
@@ -487,99 +530,6 @@ PUBLIC_API mysqlx_session_t *
 mysqlx_get_session_from_options(mysqlx_session_options_t *opt,
                        char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
 
-
-/**
-  Create a node session.
-
-  A node session connects only to one mysqld node at a time.
-
-  @param host       server host DNS name, IPv4 address or IPv6 address
-  @param port       port number
-  @param user       user name
-  @param password   password
-  @param database   default database name
-  @param[out] out_error if error happens during connect the error message
-                    is returned through this parameter
-  @param[out] err_code if error happens during connect the error code
-                    is returned through this parameter
-
-  @return session handle if session could be created, otherwise NULL
-  is returned and the error information is returned through the out_error
-  and err_code output parameters.
-
-  @note The session returned by the function must be properly closed using
-        `mysqlx_session_close()`.
-  @note This type of session supports executing plain SQL queries
-  @note This function always establishes connection with SSL enabled
-
-  @ingroup xapi_sess
-*/
-
-PUBLIC_API mysqlx_session_t *
-mysqlx_get_node_session(const char *host, int port, const char *user,
-                     const char *password, const char *database,
-                     char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
-
-
-/**
-  Create a node session using connection string or URL.
-
-  See `mysqlx_get_session_from_url()` for information on connection string
-  format.
-
-  A node session connects only to one mysqld node at a time.
-
-  @param conn_string character connection string
-  @param[out] out_error if error happens during connect the error message
-                        is returned through this parameter
-  @param[out] err_code if error happens during connect the error code
-                        is returned through this parameter
-
-  @return session handle if session could be created, otherwise NULL
-    is returned and the error information is returned through the out_error
-    and err_code output parameters.
-
-  @note The session returned by the function must be properly closed using
-    `mysqlx_session_close()`.
-
-  @note This type of session supports executing plain SQL queries
-
-  @see `mysqlx_get_session_from_url()`
-
-  @ingroup xapi_sess
-*/
-
-PUBLIC_API mysqlx_session_t *
-mysqlx_get_node_session_from_url(const char *conn_string,
-                     char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
-
-
-/**
-  Create a node session using mysqlx_session_options_t structure
-
-  @param opt pointer to mysqlx_session_options_t structure containing
-             the connection parameters
-  @param[out] out_error if error happens during connect the error message
-                    is returned through this parameter
-  @param[out] err_code if error happens during connect the error code
-                    is returned through this parameter
-
-  @return session handle if session could be created, otherwise NULL
-    is returned and the error information is returned through the out_error
-    and err_code output parameters.
-
-  @note The session returned by the function must be properly closed using
-    `mysqlx_session_close()`.
-
-  @note This type of session supports executing plain SQL queries
-
-  @ingroup xapi_sess
-*/
-
-PUBLIC_API mysqlx_session_t *
-mysqlx_get_node_session_from_options(mysqlx_session_options_t *opt,
-                            char out_error[MYSQLX_MAX_ERROR_LEN],
-                            int *err_code);
 
 
 /**
@@ -850,11 +800,21 @@ PUBLIC_API void mysqlx_free_options(mysqlx_session_options_t *opt);
   Set session configuration options.
 
   @param opt   handle to session configuration data object
-  @param type  option type to set (see `mysqlx_opt_type_t` enum)
-  @param ...   option value/values to set, as appropriate for the given
-               option type (the function can set more than one value)
+  @param   ...  variable parameters list consisting of (type, value) pairs
+          terminated by `PARAM_END`: type_id1, value1, type_id2, value2, ...,
+          type_id_n, value_n, `PARAM_END` (`PARAM_END` marks the end of
+          the parameters list).
 
-  TODO: Point to documentation explaining what data each option expects
+           type_id is the numeric identifier, which helps to determine the type
+           of the value provided as the next parameter. The user code must
+           ensure that type_id corresponds to the actual value type. Otherwise,
+           the value along with and all sequential types and values are most
+           likely to be corrupted.
+           Allowed types are listed in `mysqlx_opt_type_t` enum.
+           The XAPI defines the convenience macros that help to specify
+           the types and values: See `OPT_HOST()`, `OPT_PORT()`, `OPT_USER()`,
+           `OPT_PWD()`, `OPT_DB()`, `OPT_SSL_MODE()`, `OPT_SSL_CA()`,
+           `OPT_PRIORITY()`.
 
   @return `RESULT_OK` if option was successfully set; `RESULT_ERROR`
           is set otherwise (use `mysqlx_error()` to get the error
@@ -864,7 +824,7 @@ PUBLIC_API void mysqlx_free_options(mysqlx_session_options_t *opt);
 */
 
 PUBLIC_API int
-mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type, ...);
+mysqlx_session_option_set(mysqlx_session_options_t *opt, ...);
 
 
 /**
@@ -882,13 +842,16 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
           is set otherwise (use `mysqlx_error()` to get the error
           information)
 
+  @note For failover configurations with multiple hosts this function
+        will return only the last added host name. Same is true for the port
+        or the priority associated with this host name.
+
   @ingroup xapi_sess
 */
 
 PUBLIC_API int
 mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
                           ...);
-
 
 /*
   ====================================================================

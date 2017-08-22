@@ -32,8 +32,6 @@
 #include <iomanip>
 #include <cctype>
 
-// TODO: Use std::variant when available
-using cdk::foundation::variant;
 
 /*
   Implementation of Result and Row interfaces.
@@ -52,293 +50,6 @@ public:
 
   static bytes mk(const cdk::bytes &data)
   { return bytes(data.begin(), data.end()); }
-};
-
-
-/*
-  Convenience wrapper around std container that is used
-  to store incoming raw bytes sequence.
-*/
-
-class Buffer
-{
-  std::vector<byte> m_impl;
-
-public:
-
-  void append(bytes data)
-  {
-    m_impl.insert(m_impl.end(), data.begin(), data.end());
-  }
-
-  size_t size() const { return m_impl.size(); }
-
-  cdk::bytes data() const
-  {
-    return cdk::bytes((byte*)m_impl.data(), m_impl.size());
-  }
-};
-
-
-/*
-  Handling column meta-data information
-  =====================================
-
-  Meta-data for result columns is provided by CDK cursor object which implements
-  cdk::Meta_data interface. This information is read from cursor
-  in BaseResult::Impl::init() method and is stored in m_mdata member of type
-  Meta_data.
-
-  Meta_data class contains a map from column positions to instances of Column
-  class. Each Column instance can store meta-data information for a single
-  column. The Column instances are created in the Meta_data constructor which
-  reads meta-data information from cdk::Meta_data interface and adds Column
-  objects using add() methods.
-
-  The CDK meta-data for a single column consists of:
-
-  - CDK type constant (cdk::Type_info)
-  - encoding format information (cdk::Format_info)
-  - additional column information (cdk::Column_info)
-
-  The first two items describe the type and encoding of the values that appear
-  in the result in the corresponding column. Additional column information
-  is mainly the column name etc.
-
-  Classes Format_descr<TTT> and Format_info are used to store type and encoding
-  format information for each column. For CDK type TTT, class Format_descr<TTT>
-  stores encoding format descriptor (instance of cdk::Format<TTT> class) and
-  encoder/decoder for the values (instance of cdk::Codec<TTT> class)
-  (Note: for some types TTT there is no codec or no format descriptor). Class
-  Format_info is a variant class that can store Format_descr<TTT> values
-  for different TTT.
-
-  Class Column::Impl extends Format_info with additional storage for
-  the cdk::Column_info data (column name etc). Class Column uses information
-  stored in Column::Impl to implement the DevAPI Column interface.
-
-  Using meta-data to decode result values
-  ---------------------------------------
-
-  Meta-data information stored in m_mdata member of RowResult::Impl class
-  is used to interpret raw bytes returned by CDK in the reply to a query.
-  This interpretation is done by Row::Impl class whose instance is created,
-  for example, in RowResult::fetchOne() passing the metad-data information
-  to Row::Impl constructor. This meta-data is used in Row::get() method, which
-  first checks the type of the value and then uses get<TTT>() method which
-  calls appropriate convert() method after extracting encoding format
-  information from the meta-data.
-
-  Presenting meta-data via DevAPI Column interface
-  ------------------------------------------------
-
-  This is done by the Column class, using column meta-data stored in
-  the Column::Impl instance. The type and encoding format information must
-  be translated to types defined by DevAPI. This translation happens
-  in Column::getType() method. For example, a CDK column of type FLOAT can
-  be reported as DevAPI type FLOAT, DOUBLE or DECIMAL, depending on the
-  encoding format that was reported by CDK. Additional encoding information
-  is exposed via other DevAPI Column methods such as isNumberSigned().
-  The information from cdk::Column_info interface is extracted and stored
-  in Column::Impl class by store_info() method. Then it is exposed by relevant
-  DevAPI Column methods.
-*/
-
-
-template <cdk::Type_info T>
-struct Format_descr
-{
-  cdk::Format<T> m_format;
-  cdk::Codec<T>  m_codec;
-
-  Format_descr(const cdk::Format_info &fi)
-    : m_format(fi), m_codec(fi)
-  {}
-};
-
-template <>
-struct Format_descr<cdk::TYPE_DOCUMENT>
-{
-  cdk::Format<cdk::TYPE_DOCUMENT> m_format;
-  cdk::Codec<cdk::TYPE_DOCUMENT>  m_codec;
-
-  Format_descr(const cdk::Format_info &fi)
-    : m_format(fi)
-  {}
-};
-
-
-/*
-  Phony Format_descr<> structure used for raw bytes and values
-  of types which we do not process in any way (but present as
-  raw bytes).
-*/
-
-template <>
-struct Format_descr<cdk::TYPE_BYTES>
-{};
-
-/*
-  Note: we do not decode temporal values yet, thus there is
-  no codec in Format_descr class.
-*/
-
-template<>
-struct Format_descr<cdk::TYPE_DATETIME>
-{
-  cdk::Format<cdk::TYPE_DATETIME> m_format;
-
-  Format_descr(const cdk::Format_info &fi)
-    : m_format(fi)
-  {}
-};
-
-
-/*
-  Note: For GEOMETRY and XML types we do not decode the values.
-  Also, CDK does not provide any encoding format information -
-  GEOMETRY uses some unspecified MySQL intenral representation
-  format and XML format is well known.
-*/
-
-template<>
-struct Format_descr<cdk::TYPE_GEOMETRY>
-{
-  Format_descr(const cdk::Format_info &)
-  {}
-};
-
-template<>
-struct Format_descr<cdk::TYPE_XML>
-{
-  Format_descr(const cdk::Format_info &)
-  {}
-};
-
-
-/*
-  Structure Format_info holds information about the type
-  of a column (m_type) and about its encoding format in
-  Format_descr<T> structure. Since C++ type of Format_descr<T>
-  is different for each T, a boost::variant is used to store
-  the appropriate Format_descr<T> value.
-*/
-
-
-typedef variant <
-  Format_descr<cdk::TYPE_STRING>,
-  Format_descr<cdk::TYPE_INTEGER>,
-  Format_descr<cdk::TYPE_FLOAT>,
-  Format_descr<cdk::TYPE_DOCUMENT>,
-  Format_descr<cdk::TYPE_BYTES>,
-  Format_descr<cdk::TYPE_DATETIME>,
-  Format_descr<cdk::TYPE_GEOMETRY>,
-  Format_descr<cdk::TYPE_XML>
-> Format_info_base;
-
-struct Format_info
-  : public Format_info_base
-{
-  cdk::Type_info m_type;
-
-  template <cdk::Type_info T>
-  Format_info(const Format_descr<T> &fd)
-    : Format_info_base(fd), m_type(T)
-  {}
-
-  Format_info(cdk::Type_info type)
-    : Format_info_base(Format_descr<cdk::TYPE_BYTES>())
-    , m_type(type)
-  {}
-
-  template <cdk::Type_info T>
-  Format_descr<T>& get() const
-  {
-    /*
-      Note: we cast away constness here, because using a codec can
-      modify it, and thus the Format_descr<T> must be mutable.
-    */
-    return const_cast<Format_descr<T>&>(
-            Format_info_base::get<Format_descr<T>>()
-           );
-  }
-
-};
-
-
-/*
-  Helper class to construct Column instances and access
-  non-public members.
-*/
-
-struct Column::Access
-{
-  static const Format_info& get_format(const Column&);
-
-  template <cdk::Type_info T>
-  static Column mk(const cdk::Column_info&, const Format_descr<T>&);
-
-  static Column mk_raw(const cdk::Column_info&, cdk::Type_info);
-};
-
-
-/*
-  Meta_data holds type and format information for all columns in
-  a result. An instance is filled given information provided by
-  cdk::Meta_data interface.
-*/
-
-struct Meta_data
-  : private std::map<cdk::col_count_t, Column>
-{
-  Meta_data(cdk::Meta_data&);
-
-  col_count_t col_count() const { return m_col_count;  }
-
-  const Format_info& get_format(cdk::col_count_t pos) const
-  {
-    return Column::Access::get_format(get_column(pos));
-  }
-
-  cdk::Type_info get_type(cdk::col_count_t pos) const
-  {
-    return get_format(pos).m_type;
-  }
-
-  const Column& get_column(cdk::col_count_t pos) const
-  {
-    return at(pos);
-  }
-
-private:
-
-  cdk::col_count_t  m_col_count;
-
-
-  /*
-    Add to this Meta_data instance information about column
-    at position `pos`. The type and format information is given
-    by cdk::Format_info object, aaditional column meta-data by
-    cdk::Column_info object.
-  */
-  template<cdk::Type_info T>
-  void add(cdk::col_count_t pos,
-           const cdk::Column_info &ci, const cdk::Format_info &fi)
-  {
-    emplace(pos, Column::Access::mk<T>(ci, fi));
-  }
-
-
-  /*
-    Add raw column information (whose values are presented as
-    raw bytes).
-  */
-
-  void add_raw(cdk::col_count_t pos,
-               const cdk::Column_info &ci, cdk::Type_info type)
-  {
-    emplace(pos, Column::Access::mk_raw(ci, type));
-  }
 };
 
 
@@ -377,69 +88,6 @@ Meta_data::Meta_data(cdk::Meta_data &md)
   Column implementation.
 */
 
-class Column::Impl : public Format_info
-{
-public:
-
-  string m_name;
-  string m_label;
-  string m_table_name;
-  string m_table_label;
-  string m_schema_name;
-
-  unsigned long m_length;
-  unsigned short m_decimals;
-  cdk::collation_id_t m_collation;
-
-  template <typename T>
-  Impl(const T &init) : Format_info(init)
-  {}
-
-  void store_info(const cdk::Column_info &ci)
-  {
-    m_name = ci.orig_name();
-    m_label = ci.name();
-
-    if (ci.table())
-    {
-      m_table_name = ci.table()->orig_name();
-      m_table_label = ci.table()->name();
-
-      if (ci.table()->schema())
-        m_schema_name = ci.table()->schema()->name();
-    }
-
-    m_collation = ci.collation();
-    m_length = ci.length();
-    assert(ci.decimals() < std::numeric_limits<short unsigned>::max());
-    m_decimals = static_cast<short unsigned>(ci.decimals());
-  }
-
-};
-
-
-template <cdk::Type_info T>
-Column Column::Access::mk(const cdk::Column_info &ci, const Format_descr<T> &fd)
-{
-  Column col;
-  col.m_impl = std::make_shared<Column::Impl>(fd);
-  col.m_impl->store_info(ci);
-  return std::move(col);
-}
-
-Column Column::Access::mk_raw(const cdk::Column_info &ci, cdk::Type_info type)
-{
-  Column col;
-  col.m_impl = std::make_shared<Column::Impl>(type);
-  col.m_impl->store_info(ci);
-  return std::move(col);
-}
-
-const Format_info& Column::Access::get_format(const Column &c)
-{
-  return *c.m_impl.get();
-}
-
 
 void Column::print(std::ostream &out) const
 {
@@ -450,11 +98,6 @@ void Column::print(std::ostream &out) const
     out << "`" << table_name << "`.";
   out << "`" << getColumnLabel() <<"`";
 }
-
-
-/*
-  Implementation of DevAPI Column interface.
-*/
 
 
 string Column::getSchemaName()  const
@@ -701,28 +344,32 @@ CDK_CS_LIST(COLL_DEFS)
   ====================
 */
 
+
 /*
-  Data structure used to hold raw row data. It holds a Buffer with
-  raw bytes for each non-null field of a row.
+  Implementation of Row class
+  ---------------------------
 */
 
-typedef std::map<col_count_t, Buffer> Row_data;
+// Convert raw bytes to Value using given encoding format description.
+
+template<cdk::Type_info T>
+static const Value convert(cdk::bytes, Format_descr<T>&);
 
 
 /*
-  Implementation for single Row instance. It holds a copy of row
+  Implementation for a single Row instance. It holds a copy of row
   raw data and a shared pointer to row set meta-data.
 
   Using meta-data information, it can decode raw bytes of each
   field into appropriate Value.
 */
 
-class Row::Impl
+class internal::Row_detail::Impl
 {
 public:
 
   Impl() {}
-  Impl(const Row_data&, std::shared_ptr<Meta_data>&);
+  Impl(const Row_data&, const std::shared_ptr<Meta_data>&);
 
 private:
 
@@ -762,13 +409,8 @@ private:
   }
 
 
-  // Convert raw bytes to Value using given encoding format description.
-
-  template<cdk::Type_info T>
-  const Value convert(cdk::bytes, Format_descr<T>&) const;
-
-
   friend Row;
+  friend Row_detail;
   friend RowResult;
   friend SqlResult;
 };
@@ -776,16 +418,25 @@ private:
 
 // Note: row data is copied
 
-Row::Impl::Impl(const Row_data &data, std::shared_ptr<Meta_data> &mdata)
+internal::Row_detail::Impl::Impl(
+  const Row_data &data,
+  const std::shared_ptr<Meta_data> &mdata
+)
   : m_data(data), m_mdata(mdata)
 {}
 
 
-const Row::Impl& Row::get_impl() const
+internal::Row_detail::Impl& internal::Row_detail::get_impl()
 {
   if (!m_impl)
     THROW("Attempt to use null Row instance");
   return *m_impl;
+}
+
+void internal::Row_detail::ensure_impl()
+{
+  if (!m_impl)
+    m_impl = std::make_shared<Impl>();
 }
 
 
@@ -807,43 +458,48 @@ bytes Row::getBytes(col_count_t pos) const
   }
   catch (const std::out_of_range&)
   {
+    /*
+      Note: we want to throw out_of_range error as is, without wrapping
+      it in mysqlx::Error
+    */
     throw;
   }
-  CATCH_AND_WRAP
+  catch (...)
+  {
+    try { throw; }
+    CATCH_AND_WRAP
+  }
 }
 
 
 Value& Row::get(mysqlx::col_count_t pos)
 {
-  if (!m_impl)
-    throw out_of_range("Accesing field of a null Row instance");
-
-  Impl &impl = get_impl();
-
-  /*
-    First see if field value is already stored in
-    m_vals array.
-  */
-
   try {
-    return impl.m_vals.at(pos);
-  }
-  catch (const std::out_of_range&)
-  {
+
+    Impl &impl = get_impl();
+
     /*
-      If we have data from server (meta-data is set) then we convert
-      it into the value below - otherwise we throw out_of_range error.
+      First see if field value is already stored in
+      m_vals array.
     */
-    if (!impl.m_mdata)
-      throw;
-  }
 
-  /*
-    We have data from server - convert it into a value and store
-    in m_vals.
-  */
+    try {
+      return impl.m_vals.at(pos);
+    }
+    catch (const std::out_of_range&)
+    {
+      /*
+        If we have data from server (meta-data is set) then we convert
+        it into the value below - otherwise we throw out_of_range error.
+      */
+      if (!impl.m_mdata)
+        throw;
+    }
 
-  try {
+    /*
+      We have data from server - convert it into a value and store
+      in m_vals.
+    */
 
     try {
       // will throw out_of_range exception if column at `pos` is NULL
@@ -888,26 +544,29 @@ Value& Row::get(mysqlx::col_count_t pos)
     }
 
   }
-  CATCH_AND_WRAP
+  catch (const std::out_of_range&)
+  {
+    throw;
+  }
+  catch (...)
+  {
+    try { throw; }
+    CATCH_AND_WRAP
+  }
 }
 
 
-Value& Row::set(col_count_t pos, const Value &val)
+void internal::Row_detail::process_one(
+  std::pair<Impl*,col_count_t> *data, const Value &val
+)
 {
-  try {
-    if (!m_impl)
-      m_impl = std::make_shared<Impl>();
+  Impl *impl = data->first;
+  col_count_t pos = (data->second)++;
 
-    Impl &impl = get_impl();
+  impl->m_vals.emplace(pos, val);
 
-    impl.m_vals.emplace(pos, val);
-
-    if (pos + 1 > impl.m_col_count)
-      impl.m_col_count = pos + 1;
-
-    return impl.m_vals.at(pos);
-  }
-  CATCH_AND_WRAP
+  if (pos + 1 > impl->m_col_count)
+    impl->m_col_count = pos + 1;
 }
 
 
@@ -920,16 +579,13 @@ void Row::clear()
 
 /*
   Conversions of raw value representation to Value objects.
-
-  Note: gcc complains if templates are not specialized in the same namespace
-  in which they were declared.
 */
-
-namespace mysqlx {
 
 template<>
 const Value
-Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_STRING> &fd) const
+convert(
+  cdk::bytes data,
+  Format_descr<cdk::TYPE_STRING> &fd)
 {
   /*
     String encoding has artificial 0x00 byte appended at the end to
@@ -950,9 +606,12 @@ Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_STRING> &fd) const
   return Value(std::move(str));
 }
 
+
 template<>
 const Value
-Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_INTEGER> &fd) const
+convert(
+  cdk::bytes data,
+  Format_descr<cdk::TYPE_INTEGER> &fd)
 {
   auto &codec = fd.m_codec;
   auto &fmt = fd.m_format;
@@ -971,9 +630,12 @@ Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_INTEGER> &fd) const
   }
 }
 
+
 template<>
 const Value
-Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_FLOAT> &fd) const
+convert(
+  cdk::bytes data,
+  Format_descr<cdk::TYPE_FLOAT> &fd)
 {
   auto &fmt = fd.m_format;
 
@@ -996,9 +658,12 @@ Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_FLOAT> &fd) const
   return bytes(data.begin(), data.end());
 }
 
+
 template<>
 const Value
-Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_DOCUMENT>&) const
+convert(
+  cdk::bytes data,
+  Format_descr<cdk::TYPE_DOCUMENT>&)
 {
   /*
     Note: this assumes that document is represented as json string
@@ -1024,161 +689,88 @@ Row::Impl::convert(cdk::bytes data, Format_descr<cdk::TYPE_DOCUMENT>&) const
 }
 
 
-}
-
-
 /*
   Result implementation
   =====================
 */
 
-class internal::BaseResult::Impl
-  : public cdk::Row_processor
+
+void internal::Result_detail::Impl::init()
 {
-  cdk::Reply  *m_reply = NULL;
-  cdk::Cursor *m_cursor = NULL;
-  Row_data     m_row;
-  std::shared_ptr<Meta_data>  m_mdata;
-  std::vector<GUID>           m_guid;
-  bool                        m_cursor_closed = false;
-
-  Impl(cdk::Reply *r)
-    : m_reply(r)
-  {
-    init();
-  }
-
-  Impl(cdk::Reply *r, const std::vector<GUID> &guids)
-    : m_reply(r), m_guid(guids)
-  {
-    init();
-  }
-
-  void init()
-  {
-    if (!m_reply)
-      return;
-
-    m_reply->wait();
-
-    if (m_reply->entry_count() > 0)
-      return;
-
-    if (m_reply->has_results())
-    {
-      delete m_cursor;
-      m_cursor_closed = false;
-      m_cursor = new cdk::Cursor(*m_reply);
-      m_cursor->wait();
-      // copy meta-data information from cursor
-      m_mdata = std::make_shared<Meta_data>(*m_cursor);
-    }
-  }
-
-  bool next_result()
-  {
-    /*
-      Note: closing cursor discards previous rset. Only then
-      we can move to the next rset (if any).
-    */
-
-    if (m_cursor)
-      m_cursor->close();
-
-    if (!m_reply || !m_reply->has_results())
-      return false;
-
-    init();
-    return true;
-  }
-
-  virtual ~Impl()
-  {
-    // Note: Cursor must be deleted before reply.
-    delete m_cursor;
-    delete m_reply;
-  }
-
   /*
-    Discard the CDK reply object owned by the implementation. This
-    is called when the corresponding session is about to be closed
-    and the reply object will be no longer valid.
+    Note: This method is called also when moving to a next rset in a multi-result
+    reply. In that case we delete the cursor first to discard any pending data
+    from the previous rset.
   */
 
-  void discard_reply()
-  {
-    if (!m_reply)
-      return;
-
-    delete m_reply;
-    m_reply = NULL;
-  }
+  delete m_cursor;
+  m_cursor = nullptr;
 
   /*
-    Read next row from the cursor. Returns NULL if there are no
-    more rows. Throws exeption if this result has no data.
+    Registering this result with session will de-register currently registered
+    result (if any) and give it a chance to cache pending data.
   */
 
-  const Row_data *get_row();
+  assert(m_sess);
+  m_sess->register_result(this);
 
+  clear_cache();
 
-  cdk::row_count_t get_affected_rows() const
+  if (!m_reply)
+    return;
+
+  m_reply->wait();
+
+  if (m_reply->entry_count() > 0)
+    return;
+
+  if (m_reply->has_results())
   {
-    if (!m_reply)
-      THROW("Attempt to get affected rows count on empty result");
-    return m_reply->affected_rows();
+    m_cursor_closed = false;
+    m_cursor = new cdk::Cursor(*m_reply);
+    m_cursor->wait();
+    // copy meta-data information from cursor
+    m_mdata = std::make_shared<Meta_data>(*m_cursor);
   }
-
-  cdk::row_count_t get_auto_increment() const
-  {
-    if (!m_reply)
-      THROW("Attempt to get auto increment value on empty result");
-    return m_reply->last_insert_id();
-  }
-
-  unsigned get_warning_count() const
-  {
-    if (!m_reply)
-      THROW("Attempt to get warning count for empty result");
-    const_cast<Impl*>(this)->load_warnings();
-    return m_reply->entry_count(cdk::api::Severity::WARNING);
-  }
-
-  std::vector<Warning> m_warnings;
-  bool m_all_warnings = false;
-
-  Warning get_warning(unsigned pos) const
-  {
-    return m_warnings.at(pos);
-  }
-
-  void load_warnings();
+}
 
 
-  // Row_processor
-
-  bool row_begin(row_count_t)
-  {
-    m_row.clear();
-    return true;
-  }
-  void row_end(row_count_t) {}
-
-  size_t field_begin(col_count_t pos, size_t);
-  void   field_end(col_count_t) {}
-  void   field_null(col_count_t) {}
-  size_t field_data(col_count_t pos, bytes);
-  void   end_of_data() {}
-
-  friend internal::BaseResult;
-  friend mysqlx::Result;
-  friend mysqlx::RowResult;
-  friend mysqlx::SqlResult;
-};
-
-
-const Row_data* Result::Impl::get_row()
+internal::Result_detail::Impl::~Impl()
 {
+  try {
+    if (m_sess)
+      m_sess->deregister_result(this);
+  }
+  catch (...)
+  {}
+
+  // Note: Cursor must be deleted before reply.
+  delete m_cursor;
+  delete m_reply;
+}
+
+
+void internal::Result_detail::Impl::deregister()
+{
+  // cache remaining rows
+  // TODO: handle multi rsets...
+  count();
+}
+
+
+const Row_data* internal::Result_detail::Impl::get_row()
+{
+  if (m_cache)
+  {
+    if (m_row_cache_size == 0)
+      return nullptr;
+
+    m_row = m_row_cache.front();
+    m_row_cache.pop_front();
+    m_row_cache_size--;
+    return &m_row;
+  }
+
   if (!m_cursor)
     THROW("Attempt to read row from empty result");
 
@@ -1191,6 +783,10 @@ const Row_data* Result::Impl::get_row()
   if (m_cursor->get_row(*this))
     return &m_row;
 
+  /*
+    Cleanup after reading all rows. Note
+  */
+
   m_cursor->close();
   m_cursor_closed = true;
 
@@ -1198,14 +794,37 @@ const Row_data* Result::Impl::get_row()
 }
 
 
-size_t Result::Impl::field_begin(col_count_t pos, size_t size)
+auto internal::Result_detail::Impl::count() -> row_count_t
+{
+  // If cursor is NULL then this is result without any data
+
+  if (!m_cursor)
+    return 0;
+
+  if (!m_cache)
+  {
+    auto it = m_row_cache.before_begin();
+
+    for(const Row_data *row = get_row(); row != nullptr; row = get_row())
+    {
+      ++m_row_cache_size;
+      it = m_row_cache.insert_after(it, *row);
+    }
+  }
+
+  m_cache = true;
+  return m_row_cache_size;
+}
+
+
+size_t internal::Result_detail::Impl::field_begin(col_count_t pos, size_t size)
 {
   m_row.insert(std::pair<col_count_t, Buffer>(pos, Buffer()));
   // FIX
   return size;
 }
 
-size_t Result::Impl::field_data(col_count_t pos, bytes data)
+size_t internal::Result_detail::Impl::field_data(col_count_t pos, bytes data)
 {
   m_row[(unsigned)pos].append(mysqlx::bytes::Access::mk(data));
   // FIX
@@ -1221,7 +840,8 @@ struct Warning::Access
   }
 };
 
-void Result::Impl::load_warnings()
+
+void internal::Result_detail::Impl::load_warnings()
 {
   assert(m_reply);
 
@@ -1284,45 +904,37 @@ void Result::Impl::load_warnings()
 
 
 /*
-  BaseResult
-  ==========
+  Result_detail
+  =============
 */
 
 
-internal::BaseResult::BaseResult(XSession_base *sess,
-                                 cdk::Reply *r)
+internal::Result_detail::Result_detail(
+  mysqlx::Session *sess,
+  cdk::Reply *r)
 {
-  try {
-    m_owns_impl = true;
-    m_impl= new Impl(r);
-    m_sess = sess;
-    m_sess->register_result(this);
-  }
-  CATCH_AND_WRAP
+  assert(sess);
+  assert(sess->m_impl);
+
+  m_owns_impl = true;
+  m_impl= new Impl(sess->m_impl, r);
 }
 
-internal::BaseResult::BaseResult(XSession_base *sess,
-                                 cdk::Reply *r,
-                                 const std::vector<GUID> &guids)
+internal::Result_detail::Result_detail(
+  mysqlx::Session *sess,
+  cdk::Reply *r,
+  const std::vector<GUID> &guids)
 {
-  try {
-    m_owns_impl = true;
-    m_impl= new Impl(r,guids);
-    m_sess = sess;
-    m_sess->register_result(this);
-  }
-  CATCH_AND_WRAP
+  assert(sess);
+  assert(sess->m_impl);
+
+  m_owns_impl = true;
+  m_impl= new Impl(sess->m_impl, r, guids);
 }
 
 
-internal::BaseResult::~BaseResult()
+internal::Result_detail::~Result_detail()
 {
-  try {
-    if (m_sess && m_sess->m_impl)
-      m_sess->deregister_result(this);
-  }
-  catch (...) {}
-
   try {
     if (m_owns_impl)
       delete m_impl;
@@ -1331,13 +943,13 @@ internal::BaseResult::~BaseResult()
 }
 
 
-void mysqlx::internal::BaseResult::init(mysqlx::internal::BaseResult &&init_)
+void mysqlx::internal::Result_detail::init(mysqlx::internal::Result_detail &&init_)
 {
   if (m_impl && m_owns_impl)
     delete m_impl;
 
-  m_pos = 0;
   m_impl = init_.m_impl;
+
   if (!init_.m_owns_impl)
     m_owns_impl = false;
   else
@@ -1345,76 +957,65 @@ void mysqlx::internal::BaseResult::init(mysqlx::internal::BaseResult &&init_)
     m_owns_impl = true;
     init_.m_owns_impl = false;
   }
-
-  m_sess = init_.m_sess;
-
-  //On empty results, m_sess is NULL, so don't do anything with it!
-  if (m_sess)
-  {
-    // first deregister init result, since it registered itself on ctor
-    // otherwise it would trigger cache, and we are moving Result object
-    m_sess->deregister_result(&init_);
-    m_sess->register_result(this);
-  }
-
 }
 
 
-const internal::BaseResult::Impl&
-internal::BaseResult::get_impl() const
+auto internal::Result_detail::get_impl() -> Impl&
 {
-  try {
-    if (!m_impl)
-      // TODO: Better error
-      throw Error("Attempt to use null result instance");
-    return *m_impl;
-  }
-  CATCH_AND_WRAP
+  if (!m_impl)
+    THROW("Invalid result set");
+  return *m_impl;
 }
 
 
-/*
-  This method is called when the result object is deregistered from
-  the session (so that it is no longer the active result of that
-  session).
-
-  We do cleanups here to make the result object independent from the
-  session. Derived classes should cache pending results so that they
-  can be accessed without the session.
-*/
-
-void internal::BaseResult::deregister_notify()
+void internal::Result_detail::check_result() const
 {
-  assert(m_impl);
+  if (!get_impl().m_cursor)
+    THROW("No result set");
+}
 
-  // Let derived object do its own cleanup
-  deregister_cleanup();
 
-  // Discard CDK reply object which is about to be invalidated.
-  m_impl->discard_reply();
+void internal::Result_detail::iterator_start()
+{
+  m_wpos = 0;
+  m_at_begin = true;
+}
 
-  m_sess = NULL;
+bool internal::Result_detail::iterator_next()
+{
+  if (!m_at_begin)
+    m_wpos++;
+  m_at_begin = false;
+  return m_wpos < get_impl().get_warning_count();
+}
+
+Warning internal::Result_detail::iterator_get()
+{
+  return get_impl().get_warning(m_wpos);
 }
 
 
 unsigned
-internal::BaseResult::getWarningCount() const
+internal::Result_detail::get_warning_count() const
 {
   return get_impl().get_warning_count();
 }
 
-Warning internal::BaseResult::getWarning(unsigned pos)
+Warning internal::Result_detail::get_warning(unsigned pos)
 {
   get_impl().load_warnings();
   return get_impl().get_warning(pos);
 }
 
-internal::List_initializer<internal::BaseResult>
-internal::BaseResult::getWarnings()
+
+internal::List_initializer<internal::Result_detail>
+internal::Result_detail::get_warnings()
 {
   get_impl().load_warnings();
-  return List_initializer<BaseResult>(*this);
+  return List_initializer<Result_detail>(*this);
 };
+
+
 
 /*
   Result
@@ -1464,105 +1065,91 @@ internal::List_init<GUID> Result::getDocumentIds() const
   =========
 */
 
-Row RowResult::fetchOne()
+
+void internal::Row_result_detail::Columns_src::iterator_start()
 {
-  if (m_cache)
-  {
-    if (m_row_cache_size == 0)
-      return Row();
-
-    Row r = std::move(m_row_cache.front());
-    m_row_cache.pop_front();
-    m_row_cache_size--;
-    return r;
-  }
-  try {
-    Impl &impl = get_impl();
-    const Row_data *row = impl.get_row();
-
-    if (!row)
-      return Row();
-
-    return Row(std::make_shared<Row::Impl>(*row, impl.m_mdata));
-  }
-  CATCH_AND_WRAP
+  m_pos = 0;
+  m_at_begin = true;
 }
 
-uint64_t RowResult::count()
+bool internal::Row_result_detail::Columns_src::iterator_next()
 {
-  if (!m_cache)
-    try {
+  if (!m_at_begin)
+    m_pos++;
+  m_at_begin = false;
+  return m_pos < m_res_impl.get_col_count();
+}
 
-    m_cache = true;
-    Impl &impl = get_impl();
-
-    auto it = m_row_cache.before_begin();
-
-    for(const Row_data *row = impl.get_row();
-        row != nullptr;
-        row = impl.get_row())
-    {
-      ++m_row_cache_size;
-      it = m_row_cache.insert_after(it,
-                                    Row(std::make_shared<Row::Impl>(*row,
-                                                                    impl.m_mdata)
-                                        )
-                                    );
-    }
-  }
-  CATCH_AND_WRAP
-
-  return m_row_cache_size;
+auto internal::Row_result_detail::Columns_src::iterator_get()
+-> Column_detail
+{
+  return m_res_impl.get_column(m_pos);
 }
 
 
-void RowResult::check_result() const
+auto internal::Row_result_detail::Columns::operator[](col_count_t pos) const
+-> Column_detail
 {
-  if (!get_impl().m_cursor)
-    THROW("No result set");
+  return m_src.m_res_impl.get_column(pos);
+}
+
+
+Row internal::Row_result_detail::get_row()
+{
+  Impl &impl = get_impl();
+
+  const Row_data *row = impl.get_row();
+
+  if (!row)
+    return Row();
+
+  return internal::Row_detail(
+    std::make_shared<internal::Row_detail::Impl>(*row, impl.m_mdata)
+  );
 }
 
 
 col_count_t RowResult::getColumnCount() const
 {
-  try {
-    check_result();
-    return m_impl->m_cursor->col_count();
-  }
-  CATCH_AND_WRAP
+  return get_impl().get_col_count();
 }
 
 
-const Column& RowResult::getColumn(col_count_t pos) const
+auto RowResult::getColumn(col_count_t pos) const
+-> Column
+{
+  return internal::Column_detail(get_impl().get_column(pos));
+}
+
+
+uint64_t RowResult::count()
+{
+  return get_impl().count();
+}
+
+/*
+  SqlResult
+  =========
+*/
+
+
+bool SqlResult::hasData() const
 {
   try {
-    check_result();
-    return m_impl->m_mdata->get_column(pos);
+    return get_impl().has_data();
   }
   CATCH_AND_WRAP
 }
 
 
-bool mysqlx::SqlResult::hasData() const
+bool SqlResult::nextResult()
 {
   try {
-    return NULL != get_impl().m_cursor;
+    return get_impl().next_result();
   }
   CATCH_AND_WRAP
 }
 
-bool mysqlx::SqlResult::nextResult()
-{
-  try {
-    if (get_impl().next_result())
-    {
-      clear_cache();
-      return true;
-    };
-    return false;
-  }
-  CATCH_AND_WRAP
-}
 
 uint64_t mysqlx::SqlResult::getAffectedRowsCount()
 {
@@ -1571,6 +1158,7 @@ uint64_t mysqlx::SqlResult::getAffectedRowsCount()
   }
   CATCH_AND_WRAP
 }
+
 
 uint64_t mysqlx::SqlResult::getAutoIncrementValue()
 {
@@ -1586,49 +1174,22 @@ uint64_t mysqlx::SqlResult::getAutoIncrementValue()
   =========
 */
 
-DocResult::DocResult(internal::BaseResult &&other)
+
+DbDoc internal::Doc_result_detail::get_doc()
 {
-  m_doc_impl = new Impl(RowResult(std::move(other)));
+  const Row_data *row = get_impl().get_row();
+
+  if (!row)
+    return DbDoc();
+
+  // @todo Avoid copying of document string.
+  cdk::foundation::bytes data = row->at(0).data();
+  return DbDoc(std::string(data.begin(),data.end()-1));
 }
 
 
-void DocResult::operator=(DocResult &&other)
+uint64_t internal::Doc_result_detail::count()
 {
-  try {
-    delete m_doc_impl;
-    m_doc_impl = other.m_doc_impl;
-    other.m_doc_impl = NULL;
-  }
-  CATCH_AND_WRAP
-}
-
-
-DocResult::~DocResult()
-{
-  delete m_doc_impl;
-}
-
-
-void DocResult::check_result() const
-{
-  if (!m_doc_impl)
-    // TODO: Better error
-    throw Error("Attempt to use null result instance");
-  m_doc_impl->check_result();
-}
-
-
-DbDoc DocResult::fetchOne()
-{
-  try {
-    check_result();
-    return m_doc_impl->get_next_doc();
-  }
-  CATCH_AND_WRAP
-}
-
-uint64_t DocResult::count()
-{
-  return m_doc_impl->count_docs();
+  return get_impl().count();
 }
 

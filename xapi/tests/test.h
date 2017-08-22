@@ -69,29 +69,72 @@ protected:
   const char *m_status;
   mysqlx_session_t *m_sess;
 
+  const char *m_xplugin_usr;
+  const char *m_xplugin_pwd;
+  const char *m_xplugin_host;
+  const char *m_xplugin_port;
+
   xapi() : m_port(0), m_status(NULL), m_sess(NULL)
   {
-    const char *xplugin_port = getenv("XPLUGIN_PORT");
-    if (!xplugin_port)
+    m_xplugin_port = getenv("XPLUGIN_PORT");
+    if (!m_xplugin_port)
     {
       m_status = "XPLUGIN_PORT not set";
       return;
     }
 
-    m_port = atoi(xplugin_port);
+    m_port = atoi(m_xplugin_port);
     if (!m_port)
       m_status = "invalid port number in XPLUGIN_PORT";
+
+    m_xplugin_usr = getenv("XPLUGIN_USER");
+    m_xplugin_pwd = getenv("XPLUGIN_PASSWORD");
+    m_xplugin_host = getenv("XPLUGIN_HOST");
+
+    m_xplugin_usr = (m_xplugin_usr && strlen(m_xplugin_usr) ? m_xplugin_usr : "root");
+    m_xplugin_pwd = (m_xplugin_pwd && strlen(m_xplugin_pwd) ? m_xplugin_pwd : NULL);
+    m_xplugin_host = (m_xplugin_host && strlen(m_xplugin_host) ? m_xplugin_host : "127.0.0.1");
   }
+
 
   virtual void SetUp()
   {}
 
-  void exec_sql(const char *query)
+  virtual void TearDown()
+  {
+    cout << endl;
+    if (m_sess)
+      mysqlx_session_close(m_sess);
+  }
+
+
+  mysqlx_result_t* exec_sql(const char *query)
+  {
+    return exec_sql(get_session(), query);
+  }
+
+  mysqlx_result_t* exec_sql(mysqlx_session_t *sess, const char *query)
   {
     mysqlx_result_t *res = NULL;
     mysqlx_stmt_t *stmt = NULL;
-    RESULT_CHECK(stmt = mysqlx_sql_new(get_session(), query, strlen(query)));
-    CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+    stmt = mysqlx_sql_new(sess, query, strlen(query));
+    if (!stmt)
+    {
+      cout << "Could not create statement for SQL query: " << query << endl;
+      cout << mysqlx_error_message(sess) << endl;
+      return NULL;
+    }
+
+    res = mysqlx_execute(stmt);
+
+    if (!res)
+    {
+      cout << "Error when executing SQL: " << query << endl;
+      cout << mysqlx_error_message(stmt) << endl;
+      return NULL;
+    }
+
+    return res;
   }
 
   void exec_sql_error(const char *query)
@@ -109,7 +152,7 @@ protected:
   }
 
   void authenticate(const char *usr = NULL, const char *pwd = NULL,
-                    const char *db = NULL, int create_x_sess = 0)
+                    const char *db = NULL)
   {
     if (m_status)
       FAIL() << m_status;
@@ -117,20 +160,12 @@ protected:
     char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
     int conn_err_code = 0;
 
-    const char *xplugin_usr = usr ? usr : getenv("XPLUGIN_USER");
-    const char *xplugin_pwd = pwd ? pwd : getenv("XPLUGIN_PASSWORD");
-    const char *xplugin_host = getenv("XPLUGIN_HOST");
+    const char *xplugin_usr = usr ? usr : m_xplugin_usr;
+    const char *xplugin_pwd = pwd ? pwd : m_xplugin_pwd;
+    const char *xplugin_host = m_xplugin_host;
 
-    xplugin_usr = (xplugin_usr && strlen(xplugin_usr) ? xplugin_usr : "root");
-    xplugin_pwd = (xplugin_pwd && strlen(xplugin_pwd) ? xplugin_pwd : NULL);
-    xplugin_host = (xplugin_host && strlen(xplugin_host) ? xplugin_host : "127.0.0.1");
-
-    if (create_x_sess)
-      m_sess = mysqlx_get_session(xplugin_host, m_port, xplugin_usr, xplugin_pwd, db,
-                                  conn_error, &conn_err_code);
-    else
-      m_sess = mysqlx_get_node_session(xplugin_host, m_port, xplugin_usr, xplugin_pwd, db,
-                                       conn_error, &conn_err_code);
+    m_sess = mysqlx_get_session(xplugin_host, m_port, xplugin_usr, xplugin_pwd, db,
+                                conn_error, &conn_err_code);
 
     if (!m_sess)
     {
@@ -140,11 +175,93 @@ protected:
     cout << "Connected to xplugin..." << endl;
   }
 
-  virtual void TearDown()
+
+  std::string get_ca_file()
   {
-    cout << endl;
-    if (m_sess)
-      mysqlx_session_close(m_sess);
+    char buf[1024];
+
+    mysqlx_result_t *res = exec_sql(
+      "select if("
+      "@@ssl_ca REGEXP '^([^:]+:)?[/\\\\\\\\]'"
+      ", @@ssl_ca"
+      ", concat(ifnull(@@ssl_capath,@@datadir), @@ssl_ca))"
+    );
+
+    if (!res)
+      return std::string();
+
+    mysqlx_row_t *row = mysqlx_row_fetch_one(res);
+
+    if (!row)
+      return std::string();
+
+    size_t buf_len = sizeof(buf);
+    if (RESULT_OK != mysqlx_get_bytes(row, 0, 0, buf, &buf_len))
+      return std::string();
+
+    if (buf_len < 2)
+      return std::string();
+
+    // Note: buf_len includes terminating '\0'
+    return std::string(buf, buf + buf_len - 1);
+  }
+
+
+  std::string get_ssl_cipher(mysqlx_session_t *sess)
+  {
+    mysqlx_result_t *res = exec_sql(sess, "SHOW STATUS LIKE 'mysqlx_ssl_cipher'");
+
+    if (!res)
+      throw "Failed to query mysqlx_ssl_cipher status variable from server";
+
+    mysqlx_row_t *row = mysqlx_row_fetch_one(res);
+
+    if (!row)
+      throw "Failed to get value of mysqlx_ssl_cipher status variable";
+
+    char data[128] = { 0 };
+    size_t data_len = sizeof(data);
+    if (RESULT_OK !=  mysqlx_get_bytes(row, 1, 0, data, &data_len))
+      throw "Failed to get value of mysqlx_ssl_cipher status variable";
+
+    return (data_len > 1 ? std::string(data, data + data_len - 1)
+                         : std::string() );
+  }
+
+  bool is_server_version_less(int test_upper_version ,int test_lower_version, int test_release_version)
+  {
+    mysqlx_row_t* row;
+    char buf[256];
+    size_t buflen;
+
+    mysqlx_result_t *res_version = exec_sql("SHOW VARIABLES LIKE 'version'");
+    row = mysqlx_row_fetch_one(res_version);
+    buflen = sizeof(buf);
+    mysqlx_get_bytes(row, 1, 0, buf, &buflen );
+
+    std::stringstream version;
+    version << buf;
+
+    cout << "MySQL Version " << version.str() << endl;
+
+    int upper_version, minor_version, release_version;
+    char sep;
+    version >> upper_version;
+    version >> sep;
+    version >> minor_version;
+    version >> sep;
+    version >> release_version;
+
+    if ( (upper_version < test_upper_version) ||
+         (upper_version == test_upper_version &&
+          minor_version << test_lower_version) ||
+         (upper_version == test_upper_version &&
+          minor_version == test_lower_version &&
+          release_version < test_release_version))
+    {
+      return true;
+    }
+    return false;
   }
 
 
@@ -158,8 +275,17 @@ public:
   if (m_status) { std::cerr <<"SKIPPED: " <<m_status <<std::endl; return; }
 
 // TODO: remove this when prepare is ok again
-#define SKIP_TEST(A) std::cerr << "SKIPPED: " << A << std::endl; return;
+#define SKIP_TEST(A) \
+  do { std::cerr << "SKIPPED: " << A << std::endl; return; } while (0)
 
+#define SKIP_IF_SERVER_VERSION_LESS(x,y,z)\
+  if (is_server_version_less(x, y, z)) \
+  {\
+    std::cerr <<"SKIPPED: " << \
+    "Server version not supported (" \
+    << x << "." << y <<"." << ")" << z <<std::endl; \
+    return; \
+  }
 
 class xapi_bugs : public xapi
 {};

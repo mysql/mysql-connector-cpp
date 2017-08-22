@@ -27,6 +27,8 @@
 #include <list>
 #include <algorithm>
 #include <set>
+#include <deque>
+
 
 using std::cout;
 using std::endl;
@@ -71,14 +73,14 @@ TEST_F(Crud, basic)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
   Schema sch = sess.getSchema("test");
   Collection coll = sch.createCollection("c1", true);
 
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   {
     RowResult res = sql("select count(*) from test.c1");
@@ -193,7 +195,7 @@ TEST_F(Crud, life_time)
 
   {
     Collection coll = getSchema("test").createCollection("life_time", true);
-    coll.remove().execute();
+    coll.remove("true").execute();
     coll.add("{ \"name\": \"bar\", \"age\": 2 }").execute();
   }
 
@@ -244,7 +246,10 @@ TEST_F(Crud, add_doc_negative)
 
   Collection coll = getSchema("test").createCollection("c1", true);
 
-  coll.remove().execute();
+  coll.remove("true").execute();
+
+  EXPECT_THROW(coll.remove("").execute(), mysqlx::Error);
+  EXPECT_THROW(coll.modify("").set("age",1).execute(), mysqlx::Error);
 
   EXPECT_THROW(coll.add("").execute(), mysqlx::Error);
   EXPECT_THROW(coll.add("invaliddata").execute(), mysqlx::Error);
@@ -258,7 +263,7 @@ TEST_F(Crud, arrays)
 
   Collection coll = getSchema("test").createCollection("c1", true);
 
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   coll.add("{ \"arr\": [ 1, 2, \"foo\", [ 3, { \"bar\" : 123 } ] ] }")
       .execute();
@@ -300,7 +305,7 @@ TEST_F(Crud, arrays)
 
 void Crud::add_data(Collection &coll)
 {
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   {
     RowResult res = sql("select count(*) from test.c1");
@@ -345,7 +350,7 @@ TEST_F(Crud, bind)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -504,7 +509,7 @@ TEST_F(Crud, modify)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -635,7 +640,7 @@ TEST_F(Crud, modify)
 
     doc = docs.fetchOne();
 
-    EXPECT_THROW(doc["food"], Error);
+    EXPECT_THROW(doc["food"], std::out_of_range);
 
     cout << endl;
   }
@@ -649,7 +654,7 @@ TEST_F(Crud, order_limit)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -684,7 +689,7 @@ TEST_F(Crud, order_limit)
 
   // Modify the first line (ordered by age) incrementing 1 to the age.
 
-  coll.modify()
+  coll.modify("true")
       .set("age",expr("age+1"))
       .sort("age ASC")
       .limit(1)
@@ -716,7 +721,7 @@ TEST_F(Crud, order_limit)
 
   // Remove the two lines
 
-  coll.remove().sort("age ASC", "name DESC")
+  coll.remove("true").sort("age ASC", "name DESC")
                .limit(2)
                .execute();
 
@@ -735,7 +740,7 @@ TEST_F(Crud, projections)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -744,39 +749,67 @@ TEST_F(Crud, projections)
 
   add_data(coll);
 
-  for (unsigned round = 0; round < 2; ++round)
+  for (unsigned round = 0; round < 4; ++round)
   {
     cout << "== round " << round << " ==" << endl;
 
     DocResult docs;
 
+    std::map<std::string, std::string> proj = {
+      { "age", "age" },
+      { "birthYear", "2016-age" },
+      { "Age1", "age" },
+      { "Age2", "age" }
+    };
+
+    std::deque<string> fields;
+
+    for (auto pair : proj)
+      fields.push_back(pair.second + " AS " + pair.first);
+
     switch (round)
     {
     case 0:
     {
-      std::vector<string> fields;
-      fields.push_back("age AS Age1");
-      fields.push_back("age AS Age2");
-
-      docs = coll.find()
-        .fields("age AS age", "2016-age AS birthYear", fields)
-        .execute();
+      docs = coll.find().fields(fields[0], fields[1], fields[2], fields[3])
+                 .execute();
 
       break;
     }
 
     case 1:
     {
-      docs =  coll.find()
-                  .fields(expr(
-                    "{"
-                    "  \"age\": age,"
-                    "  \"birthYear\": 2016-age,"
-                    "  \"Age1\": age,"
-                    "  \"Age2\": age"
-                    "}"
-                   ))
-                  .execute();
+      docs = coll.find().fields(fields).execute();
+      break;
+    }
+
+    case 2:
+    {
+      fields.push_front("first");
+      fields.push_back("last");
+
+      docs = coll.find().fields(fields.begin() + 1, fields.begin() + 5)
+                 .execute();
+      break;
+    }
+
+    case 3:
+    {
+      std::string proj_str;
+
+      for (auto pair : proj)
+      {
+        if (proj_str.empty())
+          proj_str = "{";
+        else
+          proj_str += ", ";
+
+        proj_str += "\"" + pair.first + "\": " + pair.second;
+      }
+
+      proj_str += "}";
+
+      docs = coll.find().fields(expr(proj_str)).execute();
       break;
     }
     }
@@ -804,7 +837,7 @@ TEST_F(Crud, existence_checks)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -829,7 +862,7 @@ TEST_F(Crud, table)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -847,18 +880,18 @@ TEST_F(Crud, table)
 
   //Insert values on table
 
-  std::vector<string> cols = {"_id"};
+  std::vector<string> cols = {"_id", "age", "name" };
 
   //Inserting empty list
 
   //Bug #25515964
   //Adding empty list shouldn't do anything
   std::list<Row> rList;
-  tbl.insert(cols, "age", string("name")).rows(rList).rows(rList).execute();
+  tbl.insert("_id", "age", string("name")).rows(rList).rows(rList).execute();
 
   //Using containers (vectors, const char* and string)
 
-  auto insert = tbl.insert(cols, "age", string("name"));
+  auto insert = tbl.insert(cols);
   insert.values("ID#1", 10, "Foo");
   insert.values("ID#2", 5 , "Bar" );
   insert.values("ID#3", 3 , "Baz");
@@ -1029,7 +1062,7 @@ TEST_F(Crud, table_order_limit)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -1047,9 +1080,9 @@ TEST_F(Crud, table_order_limit)
 
   //Insert values on table
 
-  std::vector<string> cols = {"_id"};
+  std::vector<string> cols = {"_id", "age", "name" };
   //Using containers (vectors, const char* and string)
-  auto insert = tbl.insert(cols, "age", string("name"));
+  auto insert = tbl.insert(cols);
   insert.values("ID#1", 10, "Foo");
   insert.values("ID#2", 5 , "Bar" );
   insert.values("ID#3", 3 , "Baz");
@@ -1110,7 +1143,7 @@ TEST_F(Crud, table_projections)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -1128,9 +1161,7 @@ TEST_F(Crud, table_projections)
 
   //Insert values on table
 
-  std::vector<string> cols = {"_id"};
-  //Using containers (vectors, const char* and string)
-  auto insert = tbl.insert(cols, "age", string("name"));
+  auto insert = tbl.insert("_id", "age", string("name"));
   insert.values("ID#1", 10, "Foo");
   insert.values("ID#2", 5 , "Bar" );
   insert.values("ID#3", 3 , "Baz");
@@ -1139,8 +1170,9 @@ TEST_F(Crud, table_projections)
   std::vector<string> fields;
   fields.push_back("age");
   fields.push_back("2016-age AS birth_year");
+  fields.push_back("age AS dummy");
 
-  RowResult result = tbl.select(fields, "age AS dummy")
+  RowResult result = tbl.select(fields)
                      .orderBy("age ASC")
                      .execute();
 
@@ -1163,7 +1195,7 @@ TEST_F(Crud, move)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   Schema sch = sess.getSchema("test");
   Collection coll = sch.createCollection("coll",true);
@@ -1295,7 +1327,7 @@ TEST_F(Crud, doc_path)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   Schema sch = sess.getSchema("test");
   sch.dropCollection("coll");
@@ -1303,8 +1335,8 @@ TEST_F(Crud, doc_path)
 
   coll.add( "{\"date\": {\"monthName\":\"December\", \"days\":[1,2,3]}}").execute();
 
-  coll.modify().set("date.monthName", "February" ).execute();
-  coll.modify().set("$.date.days[0]", 4 ).execute();
+  coll.modify("true").set("date.monthName", "February" ).execute();
+  coll.modify("true").set("$.date.days[0]", 4 ).execute();
 
   DocResult docs = coll.find().execute();
 
@@ -1313,15 +1345,15 @@ TEST_F(Crud, doc_path)
   EXPECT_EQ(string("February"), static_cast<string>(doc["date"]["monthName"]));
   EXPECT_EQ(4, static_cast<int>(doc["date"]["days"][0]));
 
-  coll.modify().arrayDelete("date.days[0]").execute();
+  coll.modify("true").arrayDelete("date.days[0]").execute();
   docs = coll.find().execute();
   doc = docs.fetchOne();
   EXPECT_EQ(2, static_cast<int>(doc["date"]["days"][0]));
 
-  coll.modify().unset("date.days").execute();
+  coll.modify("true").unset("date.days").execute();
   docs = coll.find().execute();
   doc = docs.fetchOne();
-  EXPECT_THROW(static_cast<int>(doc["date"]["days"][0]), Error);
+  EXPECT_THROW(static_cast<int>(doc["date"]["days"][0]), std::out_of_range);
 
 }
 
@@ -1332,7 +1364,7 @@ TEST_F(Crud, row_error)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating table..." << endl;
 
@@ -1394,7 +1426,7 @@ TEST_F(Crud, coll_as_table)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -1402,7 +1434,7 @@ TEST_F(Crud, coll_as_table)
   Collection coll = sch.createCollection("coll", true);
 
   // Clean up
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   // Add Doc to collection
   DbDoc doc("{ \"name\": \"foo\", \"age\": 1 }");
@@ -1466,7 +1498,7 @@ TEST_F(Crud, get_ids)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -1474,7 +1506,7 @@ TEST_F(Crud, get_ids)
   Collection coll = sch.createCollection("coll", true);
 
   // Clean up
-  coll.remove().execute();
+  coll.remove("true").execute();
 
 
   // Add Doc to collection
@@ -1487,7 +1519,7 @@ TEST_F(Crud, get_ids)
 
   EXPECT_EQ(string("ABCDEFGHIJKLMNOPQRTSUVWXYZ012345"), string(res.getDocumentId()));
 
-  res = coll.remove().execute();
+  res = coll.remove("true").execute();
 
   // This functions can only be used on add() operations
   EXPECT_THROW(res.getDocumentId(), Error);
@@ -1512,7 +1544,7 @@ TEST_F(Crud, count)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -1520,7 +1552,7 @@ TEST_F(Crud, count)
   Collection coll = sch.createCollection("coll", true);
 
   //Remove all rows
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   {
     CollectionAdd add(coll);
@@ -1538,7 +1570,7 @@ TEST_F(Crud, count)
 
   EXPECT_EQ(1000, coll.count());
 
-  coll.remove().limit(500).execute();
+  coll.remove("true").limit(500).execute();
 
   Table tbl = sch.getCollectionAsTable("coll");
 
@@ -1553,14 +1585,14 @@ TEST_F(Crud, buffered)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
   Schema sch = sess.getSchema("test");
   Collection coll = sch.createCollection("coll", true);
 
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   for (int j = 0; j < 10; ++j)
   {
@@ -1653,14 +1685,14 @@ TEST_F(Crud, iterators)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
   Schema sch = sess.getSchema("test");
   Collection coll = sch.createCollection("coll", true);
 
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   {
     CollectionAdd add(coll);
@@ -1747,7 +1779,7 @@ TEST_F(Crud, diagnostic)
 
   cout << "Preparing table..." << endl;
 
-  NodeSession &sess = get_sess();
+  mysqlx::Session &sess = get_sess();
 
   sess.sql("DROP TABLE IF EXISTS test.t").execute();
   sess.sql("CREATE TABLE test.t (a TINYINT NOT NULL, b CHAR(4))").execute();
@@ -1790,12 +1822,12 @@ TEST_F(Crud, cached_results)
 
   cout << "Preparing table..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   Collection coll = sess.createSchema("test", true)
                         .createCollection("test", true);
 
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   coll.add("{\"user\":\"Foo\"}").execute();
   coll.add("{\"user\":\"Bar\"}").execute();
@@ -1828,14 +1860,14 @@ TEST_F(Crud, add_empty)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
   Schema sch = sess.getSchema("test");
   Collection coll = sch.createCollection("c1", true);
 
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   //Check bug when Result was created uninitialized
   Result add;
@@ -1855,7 +1887,7 @@ TEST_F(Crud, doc_id)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -1871,19 +1903,18 @@ TEST_F(Crud, group_by_having)
 
   SKIP_IF_NO_XPLUGIN;
 
-  //TODO: REMOVE THIS AND PUT VERSION CHECK
-  SKIP_TEST("GroupBy not working on current xplugin");
+  //TODO: Remove this when  Bug #86754 is fixed
+  SKIP_IF_SERVER_VERSION_LESS(5,7,19);
 
   cout << "Preparing table..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
-  Collection coll = sess.createSchema("test", true)
-                        .createCollection("coll", true);
+  Schema test = sess.createSchema("test", true);
+  Collection coll = test.createCollection("coll", true);
+  Table tbl = test.getCollectionAsTable("coll", true);
 
-  Table tbl = sess.createSchema("test", true).getCollectionAsTable("coll", true);
-
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   std::vector<string> names = { "Foo", "Baz", "Bar" };
 
@@ -1929,15 +1960,15 @@ TEST_F(Crud, group_by_having)
 
   cout << "Check with groupBy" << endl;
 
-  std::vector<string> fields = {"user"};
+  std::vector<string> fields = {"user", "age" };
   coll_res = coll.find()
              .fields("user AS user", "age as age")
-             .groupBy(fields, "age")
+             .groupBy(fields)
              .execute();
 
   cout << "and on table" << endl;
   tbl_res = tbl.select("doc->$.user as user", "doc->$.age as age")
-               .groupBy(fields,"age")
+               .groupBy("user", "age")
                .execute();
 
 
@@ -1949,13 +1980,13 @@ TEST_F(Crud, group_by_having)
 
   coll_res = coll.find()
              .fields("user AS user", "age as age")
-             .groupBy(fields,"age")
+             .groupBy("user", "age")
              .having(L"age > 20")
              .execute();
 
   //and on table
   tbl_res = tbl.select("doc->$.user as user", "doc->$.age as age")
-            .groupBy(fields, "age")
+            .groupBy(fields)
             .having(L"age > 20")
             .execute();
 
@@ -1965,13 +1996,13 @@ TEST_F(Crud, group_by_having)
 
   coll_res = coll.find()
              .fields("user AS user", "age as age")
-             .groupBy(fields, std::string("age"))
+             .groupBy(std::string("user"), std::string("age"))
              .having(std::string("age > 20"))
              .execute();
 
   cout << "and on table" << endl;
   tbl_res = tbl.select("doc->$.user as user", "doc->$.age as age")
-            .groupBy(fields, std::string("age"))
+            .groupBy(fields)
             .having(std::string("age > 20"))
             .orderBy("user")
             .execute();
@@ -1986,7 +2017,7 @@ TEST_F(Crud, copy_semantics)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -2068,7 +2099,7 @@ TEST_F(Crud, multi_statment_exec)
 
   cout << "Creating session..." << endl;
 
-  XSession sess(this);
+  Session sess(this);
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -2121,5 +2152,53 @@ TEST_F(Crud, multi_statment_exec)
   remove2.execute();
 
   remove1.execute();
+
+}
+
+TEST_F(Crud, expr_in_expr)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 2);
+
+  cout << "Creating session..." << endl;
+
+  Session sess(this);
+
+  cout << "Session accepted, creating collection..." << endl;
+
+  Schema sch = sess.getSchema("test");
+  Collection coll = sch.createCollection("c1", true);
+
+  add_data(coll);
+
+  auto res = coll.find("{\"name\":\"baz\"} in $").execute();
+
+  EXPECT_EQ( string("baz") , (string)res.fetchOne()["name"]);
+
+  EXPECT_TRUE(res.fetchOne().isNull());
+
+  res = coll.find("'bar' in $.name").execute();
+
+  EXPECT_EQ( string("bar") , (string)res.fetchOne()["name"]);
+
+  EXPECT_TRUE(res.fetchOne().isNull());
+
+  res = coll.find("{ \"day\": 20, \"month\": \"Apr\" } in $.birth").execute();
+
+  EXPECT_EQ( string("baz") , (string)res.fetchOne()["name"]);
+
+  EXPECT_TRUE(res.fetchOne().isNull());
+
+  res = coll.find("JSON_TYPE($.food) = 'ARRAY' AND 'Milk' IN $.food ").execute();
+
+  EXPECT_EQ( string("bar") , (string)res.fetchOne()["name"]);
+
+  EXPECT_TRUE(res.fetchOne().isNull());
+
+  auto tbl = sch.getTable("c1");
+
+  auto tbl_res = tbl.select("JSON_EXTRACT(doc,'$.name') as name").where("{\"name\":\"baz\"} in doc->$").execute();
+  EXPECT_EQ( string("baz") , (string)tbl_res.fetchOne()[0]);
 
 }

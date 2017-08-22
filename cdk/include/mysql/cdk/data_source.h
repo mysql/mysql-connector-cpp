@@ -27,6 +27,13 @@
 
 #include <mysql/cdk/foundation.h>
 
+PUSH_SYS_WARNINGS
+#include <functional>
+#include <algorithm>
+#include <set>
+POP_SYS_WARNINGS
+
+
 namespace cdk {
 
 // Data source
@@ -37,8 +44,8 @@ namespace ds {
  * Generic session options which are valid for any data source.
  */
 
-
-class Options
+template <class Base>
+class Options : public Base
 {
 public:
 
@@ -50,7 +57,7 @@ public:
   Options(const Options &other)
     : m_usr(other.m_usr)
     , m_has_pwd(other.m_has_pwd), m_pwd(other.m_pwd)
-    , m_has_db(false)
+    , m_has_db(other.m_has_db), m_db(other.m_db)
   {
   }
 
@@ -98,7 +105,7 @@ namespace mysqlx {
 
 /*
  * A TCPIP data source represents a MySQL server accessible via TCP/IP
- * connection.
+ * connection using the X Protocol.
  */
 
 class TCPIP
@@ -126,28 +133,52 @@ public:
 };
 
 
-class TCPIP::Options : public ds::Options
+class Protocol_options
+{
+
+  public:
+
+  enum auth_method_t {
+    PLAIN,
+    MYSQL41,
+    EXTERNAL
+  };
+
+  virtual auth_method_t auth_method() const = 0;
+
+};
+
+
+class TCPIP::Options
+  : public ds::Options<Protocol_options>
 {
 public:
 
   Options()
-#ifdef WITH_SSL
-    : m_tls_options(false)
-#endif
-  {}
+  {
+    m_auth_method = auth_method_t::MYSQL41;
+  }
 
   Options(const string &usr, const std::string *pwd =NULL)
-    : ds::Options(usr, pwd)
-#ifdef WITH_SSL
-    , m_tls_options(false)
-#endif
-  {}
+    : ds::Options<Protocol_options>(usr, pwd)
+  {
+    /*
+      We don't know if the connection will be over SSL.
+      Guessing unencrypted connection and MYSQL41 auth.
+    */
+    m_auth_method = auth_method_t::MYSQL41;
+  }
 
 #ifdef WITH_SSL
 
   void set_tls(const cdk::connection::TLS::Options& options)
   {
     m_tls_options = options;
+    // Use PLAIN auth for SSL connections
+    if (options.ssl_mode() == cdk::connection::TLS::Options::SSL_MODE::DISABLED)
+      m_auth_method = auth_method_t::MYSQL41;
+    else
+      m_auth_method = auth_method_t::PLAIN;
   }
 
   const cdk::connection::TLS::Options& get_tls() const
@@ -157,22 +188,94 @@ public:
 
 #endif
 
+  void set_auth_method(auth_method_t auth_method)
+  {
+    m_auth_method = auth_method;
+  }
+
 private:
 
 #ifdef WITH_SSL
   cdk::connection::TLS::Options m_tls_options;
 #endif
+  auth_method_t m_auth_method;
+
+
+  auth_method_t auth_method() const
+  {
+    return m_auth_method;
+  }
 
 };
+
+
+#ifndef _WIN32
+class Unix_socket
+{
+protected:
+  std::string m_path;
+
+public:
+
+  class Options;
+
+
+  Unix_socket(const std::string &path)
+    : m_path(path)
+  {
+    if (path.empty() || 0 == path.length())
+      throw_error("invalid empty socket path");
+  }
+
+  virtual ~Unix_socket() {}
+
+  virtual const std::string& path() const { return m_path; }
+};
+
+class Unix_socket::Options : public ds::Options<Protocol_options>
+{
+
+public:
+
+  Options()
+  {}
+
+  Options(const ds::Options<Protocol_options>& opt)
+    : ds::Options<Protocol_options>(opt)
+  {}
+
+  Options(const string &usr, const std::string *pwd =NULL)
+    : ds::Options<Protocol_options>(usr, pwd)
+  {}
+
+  void set_auth_method(auth_method_t auth_method)
+  {
+    m_auth_method = auth_method;
+  }
+
+private:
+  auth_method_t m_auth_method = auth_method_t::PLAIN;
+
+  auth_method_t auth_method() const
+  {
+    return m_auth_method;
+  }
+
+
+
+};
+#endif //_WIN32
 
 } // mysqlx
 
 namespace mysql {
 
 /*
- * Future Session with MYSQL
+ * Future Session with MYSQL over legacy protocol.
  */
 
+class Protocol_options
+{};
 
 class TCPIP : public cdk::ds::mysqlx::TCPIP
 {
@@ -184,7 +287,7 @@ public:
 
   virtual ~TCPIP() {}
 
-  typedef ds::Options Options;
+  typedef ds::Options<Protocol_options> Options;
 };
 
 } //mysql
@@ -194,8 +297,188 @@ public:
 
 //TCPIP defaults to mysqlx::TCPIP
 namespace ds {
+
   typedef mysqlx::TCPIP TCPIP;
+#ifndef _WIN32
+  typedef mysqlx::Unix_socket Unix_socket;
+#endif //_WIN32
   typedef mysql::TCPIP TCPIP_old;
+
+  template <typename DS_t, typename DS_opt>
+  struct DS_pair : public std::pair<DS_t, DS_opt>
+  {
+    DS_pair(DS_t &ds, DS_opt &opt) : std::pair<DS_t, DS_opt>(ds, opt)
+    {}
+  };
+
+  class Multi_source
+  {
+
+  private:
+
+    typedef cdk::foundation::variant <DS_pair<cdk::ds::TCPIP, cdk::ds::TCPIP::Options>,
+#ifndef _WIN32
+                                      DS_pair<cdk::ds::Unix_socket, cdk::ds::Unix_socket::Options>,
+#endif //_WIN32
+                                      DS_pair<cdk::ds::TCPIP_old, cdk::ds::TCPIP_old::Options>> DS_variant;
+
+    bool m_is_prioritized;
+    unsigned short m_counter;
+
+    typedef std::multimap<unsigned short, DS_variant, std::greater<unsigned short>> DS_list;
+    DS_list m_ds_list;
+
+  public:
+
+    Multi_source() : m_is_prioritized(false), m_counter(65535)
+    {
+      std::srand((unsigned int)time(NULL));
+    }
+
+    template <class DS_t, class DS_opt>
+    void add(const DS_t &ds, const DS_opt &opt,
+             unsigned short prio)
+    {
+      if (m_ds_list.size() == 0)
+      {
+        m_is_prioritized = (prio > 0);
+      }
+      else
+      {
+        if (m_is_prioritized && prio == 0)
+          throw Error(cdkerrc::generic_error,
+          "Adding un-prioritized items to prioritized list is not allowed");
+
+        if (!m_is_prioritized && prio > 0)
+          throw Error(cdkerrc::generic_error,
+          "Adding prioritized items to un-prioritized list is not allowed");
+      }
+
+      /*
+        The internal placement of priorities will be as this:
+        if list is a no-priority one the map has to retain the order of
+        elements at the time of the placement. Therefore, it will count-down
+        from max(unsigned short)
+      */
+      DS_pair<DS_t, DS_opt> pair(const_cast<DS_t&>(ds),
+                               const_cast<DS_opt&>(opt));
+      if (m_is_prioritized)
+        m_ds_list.emplace(prio, pair);
+      else
+      {
+        /*
+          When list is not prioritized the map should keep the order of elements.
+          This is achieved by decrementing the counter every time a new element
+          goes into the list.
+        */
+        m_ds_list.emplace(m_counter--, pair);
+      }
+    }
+
+    private:
+
+    template <typename Visitor>
+    struct Variant_visitor
+    {
+      Visitor *vis;
+      bool stop_processing;
+
+      Variant_visitor() : stop_processing(false)
+      { }
+
+      template <class DS_t, class DS_opt>
+      void operator () (const DS_pair<DS_t, DS_opt> &ds_pair)
+      {
+        stop_processing = (bool)(*vis)(ds_pair.first, ds_pair.second);
+      }
+    };
+
+
+    public:
+
+    /*
+      Call visitor(ds,opts) for each data source ds with options
+      opts in the list. Do it in decreasing priority order, choosing
+      randomly among data sources with the same priority.
+      If visitor(...) call returns true, stop the process.
+    */
+
+    template <class Visitor>
+    void visit(Visitor &visitor)
+    {
+      bool stop_processing = false;
+      std::set<DS_variant*> same_prio;
+
+      for (auto it = m_ds_list.begin(); !stop_processing;)
+      {
+        DS_variant *item = NULL;
+
+        if (m_is_prioritized)
+        {
+          if (same_prio.empty())
+          {
+            if (it == m_ds_list.end())
+              break;
+
+            //  Get items with the same priority and store them in same_prio set
+
+            auto same_range = m_ds_list.equal_range(it->first);
+            it = same_range.second;
+
+            for (auto it1 = same_range.first; it1 != same_range.second; ++it1)
+              same_prio.insert(&(it1->second));
+          }
+
+          auto el = same_prio.begin();
+
+          if (same_prio.size() > 1)
+            std::advance(el, std::rand() % same_prio.size());
+
+          item = *el;
+          same_prio.erase(el);
+
+        } // if (m_is_prioritized)
+        else
+        {
+          if (it == m_ds_list.end())
+            break;
+
+          // Just get the next item from the list if no priority is given
+          item = &(it->second);
+          ++it;
+        }
+
+        // Give values to the visitor
+        Variant_visitor<Visitor> variant_visitor;
+        variant_visitor.vis = &visitor;
+        /*
+          Cannot use lambda because auto type for lambdas is only
+          supported in C++14
+        */
+        item->visit(variant_visitor);
+        stop_processing = variant_visitor.stop_processing;
+
+        /* Exit if visit reported true or if we advanced to the end of the list */
+        if (stop_processing || it == m_ds_list.end())
+          break;
+
+      } // for
+    }
+
+    void clear()
+    {
+      m_ds_list.clear();
+      m_is_prioritized = false;
+    }
+
+    size_t size()
+    {
+      return m_ds_list.size();
+    }
+
+    struct Access;
+    friend Access;
+  };
 }
 
 

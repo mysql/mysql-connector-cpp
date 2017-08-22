@@ -64,7 +64,7 @@ TEST_F(Sess, databaseObj)
 
   EXPECT_TRUE(schema.existsInDatabase());
   EXPECT_EQ(schema_name ,schema.getName());
-  EXPECT_FALSE(schema.getSession().getSchema("NOT_FOUND").existsInDatabase());
+  // EXPECT_FALSE(schema.getSession().getSchema("NOT_FOUND").existsInDatabase());
 
   //Test Collection Obj
 
@@ -129,7 +129,7 @@ TEST_F(Sess, url)
   {
     cout << "Creating session: " << url << endl;
 
-    NodeSession sess(url);
+    mysqlx::Session sess(url);
     SqlResult res = sess.sql("SELECT @@version").execute();
     cout << "Talking to MySQL Server: " << res.fetchOne()[0] << endl;
   }
@@ -138,7 +138,7 @@ TEST_F(Sess, url)
     url = std::string("mysqlx://") + url;
     cout << "Creating session: " << url << endl;
 
-    NodeSession sess(url);
+    mysqlx::Session sess(url);
     SqlResult res = sess.sql("SELECT @@version").execute();
     cout << "Talking to MySQL Server: " << res.fetchOne()[0] << endl;
   }
@@ -152,7 +152,7 @@ TEST_F(Sess, url)
     cout << "Creating session: " << wurl << endl;
 
     try {
-      NodeSession sess(wurl);
+      mysqlx::Session sess(wurl);
       SqlResult res = sess.sql("SELECT @@version").execute();
       cout << "Talking to MySQL Server: " << res.fetchOne()[0] << endl;
     }
@@ -173,7 +173,7 @@ TEST_F(Sess, default_schema)
   EXPECT_THROW(get_sess().getDefaultSchema(),Error);
 
   {
-    mysqlx::NodeSession s(m_port, m_user, m_password, "test");
+    mysqlx::Session s(m_port, m_user, m_password, "test");
 
     EXPECT_EQ(string("test"), s.getDefaultSchema().getName());
     EXPECT_EQ(string("test"), s.getDefaultSchemaName());
@@ -189,7 +189,7 @@ TEST_F(Sess, default_schema)
       url = url + ":" + std::to_string(m_port);
     url = url + "/test";
 
-    mysqlx::NodeSession s(url);
+    mysqlx::Session s(url);
 
     EXPECT_EQ(string("test"), s.getDefaultSchema().getName());
     EXPECT_EQ(string("test"), s.getDefaultSchemaName());
@@ -207,7 +207,7 @@ TEST_F(Sess, trx)
   SKIP_IF_NO_XPLUGIN;
 
   Collection coll = get_sess().getSchema("test").createCollection("c", true);
-  coll.remove().execute();
+  coll.remove("true").execute();
 
   try {
     coll.getSession().startTransaction();
@@ -243,7 +243,7 @@ TEST_F(Sess, trx)
   */
 
   {
-    XSession sess(this);
+    Session sess(this);
     Collection coll = sess.getSchema("test").getCollection("c");
 
     sess.startTransaction();
@@ -282,102 +282,15 @@ TEST_F(Sess, trx)
 }
 
 
-TEST_F(Sess, bind_node_session)
-{
-  SKIP_IF_NO_XPLUGIN;
-
-   XSession *sess = new XSession(this);
-
-   sess->dropSchema("node_session");
-   Schema sch = sess->createSchema("node_session");
-
-   // Create Collection with data
-   sch.createCollection("coll1")
-       .add("{\"name\":\"foo\"}")
-       .add("{\"name\":\"bar\"}")
-       .add("{\"name\":\"baz\"}").execute();
-
-   {
-     // Get first NodeSession
-     NodeSession node= sess->bindToDefaultShard();
-
-     // Execute query to be checked later
-     SqlResult res = node.sql("select * from node_session.coll1").execute();
-
-     // Closing NodeSession
-     // Only affects this session, no changes on other nodes or master XSession
-     node.close();
-
-     // Expect throw Error() because session is closed
-     EXPECT_THROW(node.sql("select * from node_session.coll1")
-                  .execute(),
-                  mysqlx::Error);
-
-     {
-       // Get second NodeSession
-       NodeSession node2= sess->bindToDefaultShard();
-
-       // Execute query but doesn't retrieve results right away
-       SqlResult res2 = node2.sql("select * from node_session.coll1").execute();
-
-       //Close Session so other NodeSession obj are closed.
-       sess->close();
-
-       // Expect throw Error() because session is closed
-       EXPECT_THROW(node2.sql("select * from node_session.coll1")
-                                .execute(),
-                    mysqlx::Error);
-
-
-       // Delete Xsession, so other NodeSession obj are closed.
-       delete sess;
-
-       // Expect throw Error() because session is closed
-       EXPECT_THROW(node2.sql("select * from node_session.coll1")
-                                .execute(),
-                    mysqlx::Error);
-
-       // Results are available, because where cached when destructing XSession
-       EXPECT_EQ(3U, res2.count());
-
-
-       int i = 0;
-       for (auto row : res2)
-       {
-         std::cout << "Row " << i << ": "
-                    << static_cast<string>(row[1]) << std::endl;
-         ++i;
-       }
-
-       EXPECT_EQ(3U, i);
-     }
-
-     //Same here
-     EXPECT_EQ(3U, res.count());
-
-     unsigned i = 0;
-     for (auto row : res)
-     {
-       std::cout << "Row " << i << ": " << static_cast<string>(row[1]) << std::endl;
-       ++i;
-     }
-
-     EXPECT_EQ(3U, i);
-   }
-
-  cout << "Done!" << endl;
-}
-
-
 TEST_F(Sess, ssl_session)
 {
 
   SKIP_IF_NO_XPLUGIN;
 
   //Test if ssl is enabled using cipher
-  auto check_ssl_impl = [](mysqlx::XSession &sess, bool enable, int line)
+  auto check_ssl_impl = [](mysqlx::Session &sess, bool enable, int line)
   {
-    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
+    SqlResult res =  sess.sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
 
     auto row = res.fetchOne();
     cout << "Line "<< line << ": " << row[0] << ":" << row[1] << endl;
@@ -391,19 +304,20 @@ TEST_F(Sess, ssl_session)
 
 
   {
-    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
-                          SessionSettings::USER,get_user(),
-                          SessionSettings::PWD, get_password() ? get_password() : nullptr ,
-                          SessionSettings::SSL_ENABLE, true);
+    mysqlx::Session sess(SessionOption::PORT, get_port(),
+                         SessionOption::USER,get_user(),
+                         SessionOption::PWD, get_password() ? get_password() : nullptr
+                          );
 
     check_ssl(sess, true);
   }
 
   {
-    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
-                          SessionSettings::USER, get_user(),
-                          SessionSettings::PWD, get_password() ? get_password() : nullptr ,
-                          SessionSettings::SSL_ENABLE, false);
+    mysqlx::Session sess(SessionOption::PORT, get_port(),
+                         SessionOption::USER, get_user(),
+                         SessionOption::PWD, get_password() ? get_password() : nullptr,
+                         SessionOption::SSL_MODE, SSLMode::DISABLED
+                          );
 
     check_ssl(sess, false);
   }
@@ -419,9 +333,11 @@ TEST_F(Sess, ssl_session)
 
   uri << "@" << "localhost:" << get_port();
 
-  //URI without ssl_enable
+  //URI using ssl-mode=disabled
   {
-    mysqlx::XSession sess(uri.str());
+    std::stringstream ssl_off;
+    ssl_off << uri.str() << "/?sSl-mODe=DIsabled";
+    mysqlx::Session sess(ssl_off.str());
     check_ssl(sess, false);
   }
 
@@ -429,21 +345,26 @@ TEST_F(Sess, ssl_session)
   {
     std::stringstream uri_ssl;
     //Enable SSL
-    uri_ssl << uri.str() << "/?ssl-enable";
+    uri_ssl << uri.str() << "/?SSl-Mode=RequireD";
 
-    mysqlx::XSession sess(uri_ssl.str());
+    mysqlx::Session sess(uri_ssl.str());
     check_ssl(sess, true);
   }
 
+  {
+    std::stringstream uri_wrong;
+    uri_wrong << uri.str() << "/?ssl-nonexisting=true";
+    EXPECT_THROW(mysqlx::Session sess(uri_wrong.str()), mysqlx::Error);
+  }
 
   //using wrong ssl-ca as SessionSettings
   {
     EXPECT_THROW(
-    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
-                          SessionSettings::USER,get_user(),
-                          SessionSettings::PWD, get_password() ? get_password() : nullptr ,
-                          SessionSettings::SSL_ENABLE, true,
-                          SessionSettings::SSL_CA, "unknown")
+    mysqlx::Session sess(SessionOption::PORT, get_port(),
+                         SessionOption::USER,get_user(),
+                         SessionOption::PWD, get_password() ? get_password() : nullptr ,
+                         SessionOption::SSL_MODE, SSLMode::VERIFY_CA,
+                         SessionOption::SSL_CA, "unknown")
           , mysqlx::Error);
 
 
@@ -452,92 +373,195 @@ TEST_F(Sess, ssl_session)
   //using wrong ssl-ca and ssl-ca-path on URI
   {
     std::stringstream bad_uri;
-    bad_uri << uri.str() << "/?ssl-ca=" << "unknown.file";
+    bad_uri << uri.str() << "/?Ssl-modE=VErify_Ca&sSl-Ca=" << "unknown.file";
 
-    EXPECT_THROW(mysqlx::XSession sess(bad_uri.str()), mysqlx::Error);
+    EXPECT_THROW(mysqlx::Session sess(bad_uri.str()), mysqlx::Error);
   }
 
   string ssl_ca;
   string datadir;
 
   {
-    mysqlx::XSession sess(uri.str());
+    mysqlx::Session sess(uri.str());
 
-    SqlResult res = sess.bindToDefaultShard()
-                    .sql("show global variables like 'ssl_ca'")
-                    .execute();
+    SqlResult res = sess.sql(
+                      "select if("
+                      "@@ssl_ca REGEXP '^([^:]+:)?[/\\\\\\\\]'"
+                      ", @@ssl_ca"
+                      ", concat(ifnull(@@ssl_capath,@@datadir), @@ssl_ca))"
+                      ).execute();
 
-    ssl_ca = res.fetchOne().get(1);
-
-    res = sess.bindToDefaultShard()
-          .sql("show global variables like 'datadir'")
-          .execute();
-
-    datadir = res.fetchOne().get(1);
-
+    ssl_ca = res.fetchOne().get(0);
   }
 
-  std::cout << "ssl-ca:" << ssl_ca
-             << " datadir:" << datadir
-             << std::endl;
-
-  if (ssl_ca.find('\\') == string::npos && ssl_ca.find('/') == string::npos)
-  { //not full path
-    ssl_ca = datadir + ssl_ca;
-  }
+  std::cout << "ssl-ca:" << ssl_ca << std::endl;
 
   uri << "/?ssl-ca=" << ssl_ca;
 
-  {
-    mysqlx::XSession sess(uri.str());
-    check_ssl(sess, true);
-  }
+  // using ssl-mode and ssl-ca as SessionSettings
 
-  //using ssl-enable and ssl-ca as SessionSettings
   {
-    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
-                          SessionSettings::USER,get_user(),
-                          SessionSettings::PWD, get_password() ? get_password() : nullptr ,
-                          SessionSettings::SSL_ENABLE, true,
-                          SessionSettings::SSL_CA, ssl_ca);
+    mysqlx::Session sess(SessionOption::PORT, get_port(),
+                         SessionOption::USER,get_user(),
+                         SessionOption::PWD, get_password() ? get_password() : nullptr ,
+                         SessionOption::SSL_MODE, SSLMode::VERIFY_CA,
+                         SessionOption::SSL_CA, ssl_ca);
 
     check_ssl(sess, true);
 
   }
 
   //using ssl-ca as SessionSettings
+
   {
-    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
-                          SessionSettings::USER,get_user(),
-                          SessionSettings::PWD, get_password() ? get_password() : nullptr ,
-                          SessionSettings::SSL_CA, ssl_ca);
+    string bad_uri;
 
-    check_ssl(sess, true);
+    bad_uri = uri.str() + "&ssl-mode=DISABLED";
+    EXPECT_THROW(mysqlx::Session sess(bad_uri) , mysqlx::Error);
 
+    bad_uri = uri.str() + "&ssl-mode=REQUIRED";
+    EXPECT_THROW(mysqlx::Session sess(bad_uri) , mysqlx::Error);
+
+    EXPECT_THROW(
+    mysqlx::Session sess(SessionOption::PORT, get_port(),
+                         SessionOption::USER, get_user(),
+                         SessionOption::PWD, get_password() ? get_password() : nullptr,
+                         SessionOption::SSL_MODE, SSLMode::DISABLED,
+                         SessionOption::SSL_CA, ssl_ca)
+                    , mysqlx::Error);
+
+    EXPECT_THROW(
+    mysqlx::Session sess2(SessionOption::PORT, get_port(),
+                          SessionOption::USER, get_user(),
+                          SessionOption::PWD, get_password() ? get_password() : nullptr,
+                          SessionOption::SSL_MODE, SSLMode::REQUIRED,
+                          SessionOption::SSL_CA, ssl_ca)
+                    , mysqlx::Error);
   }
 
   //using ssl-ca but ssl-enable = false on SessionSettings
+
   {
-    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
-                          SessionSettings::USER,get_user(),
-                          SessionSettings::PWD, get_password() ? get_password() : nullptr ,
-                          SessionSettings::SSL_ENABLE, false,
-                          SessionSettings::SSL_CA, ssl_ca);
+    /*
+      Becaue we do not give valid CA setting, session creation should fail
+      when verifying server certificate.
+    */
 
-    check_ssl(sess, false);
-
+    EXPECT_THROW(
+      mysqlx::Session sess(
+        SessionOption::PORT, get_port(),
+        SessionOption::USER, get_user(),
+        SessionOption::PWD, get_password() ? get_password() : nullptr,
+        SessionOption::SSL_CA, "wrong_ca.pem"
+      )
+    , Error);
   }
 
   //using ssl-enable and ssl-ca as SessionSettings
+
   {
-    mysqlx::XSession sess(SessionSettings::PORT, get_port(),
-                          SessionSettings::USER,get_user(),
-                          SessionSettings::PWD, get_password() ? get_password() : NULL ,
-                          SessionSettings::SSL_ENABLE, true,
-                          SessionSettings::SSL_CA, ssl_ca);
 
-    check_ssl(sess, true);
+    try {
+      mysqlx::Session sess(SessionOption::HOST, "127.0.0.1",
+                           SessionOption::PORT, get_port(),
+                           SessionOption::PRIORITY, 1,
+                           SessionOption::HOST, "localhost",
+                           SessionOption::PORT, get_port(),
+                           SessionOption::PRIORITY, 100,
+                           SessionOption::HOST, "localhost4",
+                           SessionOption::PORT, get_port(),
+                           SessionOption::PRIORITY, 1,
+                           SessionOption::HOST, "::1",
+                           SessionOption::PORT, get_port(),
+                           SessionOption::PRIORITY, 1,
+                           SessionOption::HOST, "localhost6",
+                           SessionOption::PORT, get_port(),
+                           SessionOption::PRIORITY, 1,
+                           SessionOption::USER,get_user(),
+                           SessionOption::PWD, get_password() ? get_password() : NULL ,
+                           SessionOption::SSL_MODE, SSLMode::VERIFY_IDENTITY,
+                           SessionOption::SSL_CA, ssl_ca);
 
+      // If server cert CN=localhost, verification will succeed, and ssl is
+      // enabled
+      check_ssl(sess, true);
+    }
+    catch (Error &e)
+    {
+      // If server cert CN!=localhost, it will fail with this error
+      EXPECT_EQ(string("CDK Error: yaSSL: SSL certificate validation failure"),
+                string(e.what()));
+    }
+
+  }
+
+  //Errors
+  {
+    //Defined twice
+    EXPECT_THROW(SessionSettings(SessionOption::SSL_MODE, SSLMode::DISABLED,
+                                 SessionOption::SSL_MODE, SSLMode::DISABLED),
+                 Error);
+
+    EXPECT_THROW(SessionSettings(SessionOption::SSL_CA, "dummy",
+                                 SessionOption::SSL_CA, "dummy"),
+                 Error);
+
+    EXPECT_THROW(SessionSettings(SessionOption::SSL_MODE, SSLMode::DISABLED,
+                                 SessionOption::SSL_CA, "dummy"),
+                Error);
+
+    SessionSettings sess(SessionOption::SSL_CA, "dummy");
+    sess.set(SessionOption::HOST, "localhost");
+
+    EXPECT_THROW(sess.set(SessionOption::PORT, 13000), Error);
+    EXPECT_THROW(sess.set(SessionOption::PRIORITY, 1), Error);
+    EXPECT_THROW(sess.set(SessionOption::HOST, "localhost",
+                          SessionOption::PORT, 13000,
+                          SessionOption::PRIORITY, 1,
+                          SessionOption::PORT, 13000,
+                          SessionOption::PORT, 13000,
+                          SessionOption::PRIORITY, 1), Error);
+
+
+    sess.set(SessionOption::SSL_MODE, SSLMode::VERIFY_IDENTITY);
+
+    EXPECT_THROW(sess.set(SessionOption::SSL_MODE, SSLMode::VERIFY_IDENTITY,
+                          SessionOption::SSL_MODE, SSLMode::VERIFY_IDENTITY),
+                 Error);
+  }
+
+  {
+    //Defined twice
+    try {
+      mysqlx::Session("localhost?ssl-mode=disabled&ssl-mode=verify_ca");
+      FAIL() << "No error thrown";
+    }
+    catch (Error &e)
+    {
+      cout << "Expected error: " << e << endl;
+      EXPECT_EQ(string("Option ssl-mode defined twice"),string(e.what()));
+    }
+
+    try {
+      mysqlx::Session("localhost?ssl-ca=unknown&ssl-ca=hereItIs");
+      FAIL() << "No error thrown";
+    }
+    catch (Error &e)
+    {
+      cout << "Expected error: " << e << endl;
+      EXPECT_EQ(string("Option ssl-ca defined twice"),string(e.what()));
+    }
+
+    try {
+      mysqlx::Session("localhost?ssl-mode=Whatever");
+      FAIL() << "No error thrown";
+    }
+    catch (Error &e)
+    {
+      cout << "Expected error: " << e << endl;
+      EXPECT_NE(std::string::npos,
+        std::string(e.what()).find("Invalid ssl-mode"));
+    }
   }
 
 }
@@ -549,11 +573,12 @@ TEST_F(Sess, ipv6)
   SKIP_IF_NO_XPLUGIN;
 
   {
-    mysqlx::XSession sess(SessionSettings::HOST, "::1",
-                          SessionSettings::PORT, get_port(),
-                          SessionSettings::USER, get_user(),
-                          SessionSettings::PWD, get_password() ? get_password() : nullptr ,
-                          SessionSettings::SSL_ENABLE, false);
+    mysqlx::Session sess(SessionOption::HOST, "::1",
+                          SessionOption::PORT, get_port(),
+                          SessionOption::USER, get_user(),
+                          SessionOption::PWD, get_password() ? get_password() : nullptr,
+                          SessionOption::SSL_MODE, SSLMode::DISABLED
+                          );
   }
 
   //Using URI
@@ -567,26 +592,11 @@ TEST_F(Sess, ipv6)
 
   uri << "@" << "[::1]:" << get_port();
 
-  //URI without ssl_enable
+  //URI without ssl_mode
   {
-    mysqlx::XSession sess(uri.str());
+    mysqlx::Session sess(uri.str());
 
-    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
-
-    auto row = res.fetchOne();
-    cout << row[0] << ":" << row[1] << endl;
-
-    string cipher = row[1];
-
-    EXPECT_TRUE(cipher.empty());
-  }
-
-  //Enable SSL
-  uri << "/?ssl-enable";
-  {
-    mysqlx::XSession sess(uri.str());
-
-    SqlResult res =  sess.bindToDefaultShard().sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
+    SqlResult res =  sess.sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
 
     auto row = res.fetchOne();
     cout << row[0] << ":" << row[1] << endl;
@@ -595,6 +605,217 @@ TEST_F(Sess, ipv6)
 
     EXPECT_FALSE(cipher.empty());
   }
+
+  //Disable SSL_MODE
+  uri << "/?Ssl-Mode=DisabLED";
+  {
+    mysqlx::Session sess(uri.str());
+
+    SqlResult res =  sess.sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
+
+    auto row = res.fetchOne();
+    cout << row[0] << ":" << row[1] << endl;
+
+    string cipher = row[1];
+
+    EXPECT_TRUE(cipher.empty());
+  }
+}
+
+
+TEST_F(Sess, failover)
+{
+
+  {
+    Session s(this);
+
+    s.createSchema("test", true);
+  }
+
+  cout << "Host with and without priority" << endl;
+
+  {
+    std::stringstream uri;
+
+    uri << "[(address=localhost:" << get_port() <<",priority=0)";
+    uri << ",127.0.0.1:" << get_port();
+    uri << "]";
+    EXPECT_THROW(
+      mysqlx::Session s(uri.str())
+      , Error
+    );
+  }
+
+  cout << "URI multiple hosts tests" << endl;
+  {
+    std::stringstream uri;
+
+    uri << "mysqlx://" << get_user();
+
+    if (get_password())
+      uri << ":" << get_password();
+
+    uri << "@["
+           "localhost6,"
+           "127.0.1.250:33060,"
+           "[::2]:1,";
+    uri << "127.0.0.1";
+    if (get_port() != 0)
+      uri << ":" <<get_port();
+
+    uri << "]/test";
+
+    mysqlx::Session s(uri.str());
+
+    EXPECT_EQ(string("test"),s.getDefaultSchema().getName());
+  }
+
+  cout << "URI multiple hosts tests with priority" << endl;
+
+  {
+    std::stringstream uri;
+
+    uri << "mysqlx://" << get_user();
+
+    if (get_password())
+      uri << ":" << get_password();
+
+    uri << "@["
+           "(address=localhost6,priority=99),"
+           "(address=127.0.1.250:33060,priority=99),"
+           "(address=[::2]:1,priority=1),";
+    uri << "(address=127.0.0.1";
+    if (get_port() != 0)
+      uri << ":" <<get_port();
+    uri << ",priority=100)";
+
+    uri << "]/test";
+
+    mysqlx::Session s(uri.str());
+
+    EXPECT_EQ(string("test"),s.getDefaultSchema().getName());
+  }
+
+  cout << "Using session settings" << endl;
+
+  {
+    mysqlx::Session s(SessionOption::USER, get_user(),
+                      SessionOption::PWD, get_password() ? get_password() : nullptr,
+                      SessionOption::HOST, "server.example.com",
+                      SessionOption::PRIORITY, 1,
+                      SessionOption::HOST, "192.0.2.11",
+                      SessionOption::PORT, 33060,
+                      SessionOption::PRIORITY, 99,
+                      SessionOption::HOST, "[2001:db8:85a3:8d3:1319:8a2e:370:7348]",
+                      SessionOption::PORT, 1,
+                      SessionOption::PRIORITY, 2,
+                      SessionOption::HOST, "::1",
+                      SessionOption::PORT, get_port(),
+                      SessionOption::PRIORITY, 100,
+                      SessionOption::HOST, "localhost",
+                      SessionOption::PORT, get_port(),
+                      SessionOption::PRIORITY, 100,
+                      SessionOption::DB, "test");
+
+    EXPECT_EQ(string("test"),s.getDefaultSchema().getName());
+  }
+
+  cout << "SessionOption::set() tests" << endl;
+
+  {
+    SessionSettings settings(SessionOption::USER, get_user(),
+                             SessionOption::PWD, get_password() ?
+                               get_password() :
+                               nullptr);
+
+    EXPECT_THROW(
+      settings.set(SessionOption::DB, "test", SessionOption::PORT, get_port()),
+      Error);
+
+    EXPECT_THROW(settings.set(SessionOption::PRIORITY, 1), Error);
+
+    EXPECT_THROW(settings.set(SessionOption::HOST, "server.example.com",
+                              SessionOption::USER, get_user(),
+                              SessionOption::PORT, 1,
+                              SessionOption::PRIORITY, 1), Error);
+
+    settings.erase(SessionOption::HOST);
+
+    settings.set(SessionOption::HOST, "server.example.com",
+                 SessionOption::PRIORITY, 1,
+                 SessionOption::HOST, "192.0.2.11",
+                 SessionOption::PORT, 33060,
+                 SessionOption::PRIORITY, 98,
+                 SessionOption::HOST, "[2001:db8:85a3:8d3:1319:8a2e:370:7348]",
+                 SessionOption::PRIORITY, 2,
+                 SessionOption::HOST, "::1",
+                 SessionOption::PORT, get_port(),
+                 SessionOption::PRIORITY, 99,
+                 SessionOption::HOST, "localhost",
+                 SessionOption::PORT, get_port(),
+                 SessionOption::PRIORITY, 99
+                 );
+
+
+    mysqlx::Session s(settings);
+
+    EXPECT_EQ(string("test"),s.getDefaultSchema().getName());
+  }
+
+  cout << "SessionOption::set() tests without Port and Priority" << endl;
+
+  {
+    SessionSettings settings(SessionOption::USER, get_user(),
+                             SessionOption::PWD, get_password() ?
+                               get_password() :
+                               nullptr);
+
+    settings.set(SessionOption::HOST, "192.0.2.11",
+                 SessionOption::DB, "test"
+                 );
+
+
+    EXPECT_THROW(mysqlx::Session s(settings), Error);
+  }
+
+  cout << "Multiple host with 1st host defined only by port" << endl;
+
+  {
+    SessionSettings settings(SessionOption::USER, get_user(),
+                             SessionOption::PWD, get_password() ?
+                               get_password() :
+                               nullptr,
+                             SessionOption::PORT, 1);
+
+    settings.set(SessionOption::HOST, "192.0.2.11",
+                 SessionOption::PORT, 33060);
+
+    EXPECT_THROW(mysqlx::Session s(settings), Error);
+  }
+
+  cout << "Priority > 100" << endl;
+
+  {
+    EXPECT_THROW(
+          mysqlx::Session(SessionOption::USER, get_user(),
+                           SessionOption::PWD, get_password() ?
+                             get_password() :
+                             nullptr,
+                           SessionOption::HOST, "localhost",
+                           SessionOption::PORT, get_port(),
+                           SessionOption::PRIORITY, 101),
+          Error);
+
+
+    std::stringstream uri;
+
+    uri << "[(address=localhost:" << get_port() <<",priority=101)]";
+
+    EXPECT_THROW(mysqlx::Session s(uri.str()) , Error);
+  }
+
+
+
 }
 
 
@@ -603,14 +824,49 @@ TEST_F(Sess, bugs)
 
   {
     SessionSettings sess_settings("localhost_not_found", 13009, "rafal", (char*)NULL);
-
-    EXPECT_THROW(mysqlx::XSession(sess_settings), mysqlx::Error);
+    EXPECT_THROW(mysqlx::Session sess(sess_settings), mysqlx::Error);
   }
 
   {
     SessionSettings sess_settings("localhost_not_found", 13009, "rafal", NULL);
-
-    EXPECT_THROW(mysqlx::XSession(sess_settings), mysqlx::Error);
+    EXPECT_THROW(mysqlx::Session sess(sess_settings), mysqlx::Error);
   }
+
+  {
+    // Using same Result on different sessions
+
+    SessionSettings settings(SessionOption::PORT, get_port(),
+                             SessionOption::USER,get_user(),
+                             SessionOption::PWD, get_password() ?
+                               get_password() :
+                               nullptr
+                               );
+
+    mysqlx::Session sess(settings);
+
+    cout << "Connection 1 passed" << endl;
+    RowResult res = sess.sql("show status like 'mysqlx_ssl_cipher'").execute();
+    Row row = res.fetchOne();
+    cout << row[0] << " : " << row[1] << endl;
+    string Val = row[1];
+
+    mysqlx::Session sess2(settings);
+    cout << "Connection 2 passed" << endl;
+    res = sess2.sql("show status like 'mysqlx_ssl_cipher'").execute();
+    row = res.fetchOne();
+    cout << row[0] << " : " << row[1] << endl;
+    Val = row[1];
+
+  }
+
+  try
+  {
+    Session sess(this);
+    Session xsess(this);
+    sess.sql("drop database database_doesnt_exist").execute();
+
+  }
+  catch(...)
+  {}
 
 }

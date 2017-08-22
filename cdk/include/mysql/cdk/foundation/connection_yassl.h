@@ -29,6 +29,7 @@
 #include "stream.h"
 #include "error.h"
 
+#include <functional>
 
 namespace cdk {
 namespace foundation {
@@ -36,14 +37,14 @@ namespace connection {
 
 
 class TLS
-  : public TCPIP_base
+  : public Socket_base
   , opaque_impl<TLS>
 {
 public:
 
   class Options;
 
-  TLS(TCPIP_base* tcpip,
+  TLS(Socket_base* tcpip,
       const Options& Opts);
 
 
@@ -53,7 +54,7 @@ public:
   class Write_some_op;
 
 private:
-  TCPIP_base::Impl& get_base_impl();
+  Socket_base::Impl& get_base_impl();
 };
 
 
@@ -71,12 +72,21 @@ public:
     TCPIP::Options object knows that TLS should not be used for the connection.
   */
 
-  Options(bool use_tls = true)
-    : m_use_tls(use_tls)
+  enum class SSL_MODE
+  {
+    DISABLED,
+    PREFERRED,
+    REQUIRED,
+    VERIFY_CA,
+    VERIFY_IDENTITY
+  };
+
+  Options(SSL_MODE ssl_mode = SSL_MODE::PREFERRED)
+    : m_ssl_mode(ssl_mode)
   {}
 
-  void set_use_tls(bool use_tls) { m_use_tls = use_tls; }
-  bool use_tls() const { return m_use_tls; }
+  void set_ssl_mode(SSL_MODE ssl_mode) { m_ssl_mode = ssl_mode; }
+  SSL_MODE ssl_mode() const { return m_ssl_mode; }
 
   void set_key(const string &key) { m_key = key; }
   const std::string &get_key() const { return m_key; }
@@ -87,16 +97,29 @@ public:
   const std::string &get_ca() const { return m_ca; }
   const std::string &get_ca_path() const { return m_ca_path; }
 
+  void set_verify_cn(const std::function<bool(const std::string&)> &pred)
+  {
+      m_verify_cn = pred;
+  }
+
+  bool verify_cn(const std::string& cn) const
+  {
+      return m_verify_cn(cn);
+  }
+
 protected:
 
-  bool m_use_tls;
+  SSL_MODE m_ssl_mode;
   std::string m_key;
   std::string m_ca;
   std::string m_ca_path;
+  std::string m_hostname;
+  std::function<bool(const std::string&)> m_verify_cn;
+
 };
 
 
-class TLS::Read_op : public TCPIP_base::IO_op
+class TLS::Read_op : public Socket_base::IO_op
 {
 public:
   Read_op(TLS &conn, const buffers &bufs, time_t deadline = 0);
@@ -113,7 +136,7 @@ private:
 };
 
 
-class TLS::Read_some_op : public TCPIP_base::IO_op
+class TLS::Read_some_op : public Socket_base::IO_op
 {
 public:
   Read_some_op(TLS &conn, const buffers &bufs, time_t deadline = 0);
@@ -128,7 +151,7 @@ private:
 };
 
 
-class TLS::Write_op : public TCPIP_base::IO_op
+class TLS::Write_op : public Socket_base::IO_op
 {
 public:
   Write_op(TLS &conn, const buffers &bufs, time_t deadline = 0);
@@ -145,7 +168,7 @@ private:
 };
 
 
-class TLS::Write_some_op : public TCPIP_base::IO_op
+class TLS::Write_some_op : public Socket_base::IO_op
 {
 public:
   Write_some_op(TLS &conn, const buffers &bufs, time_t deadline = 0);

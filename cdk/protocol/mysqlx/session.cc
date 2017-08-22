@@ -113,6 +113,60 @@ Protocol::Op& Protocol::snd_AuthenticateContinue(bytes data)
   return get_impl().snd_start(auth_cont, msg_type::cli_AuthenticateContinue);
 }
 
+struct Expectation_builder : api::Expectations::Processor, api::Expectation_processor
+{
+  Mysqlx::Expect::Open *m_msg;
+
+  Expectation_builder(Mysqlx::Expect::Open *msg) : m_msg(msg)
+  {}
+
+  void set(uint32_t key)
+  {
+    Mysqlx::Expect::Open_Condition *cond = m_msg->add_cond();
+    cond->set_op(Mysqlx::Expect::Open_Condition_ConditionOperation_EXPECT_OP_SET);
+    cond->set_condition_key(key);
+  }
+
+  void set(uint32_t key, bytes data)
+  {
+    Mysqlx::Expect::Open_Condition *cond = m_msg->add_cond();
+    cond->set_op(Mysqlx::Expect::Open_Condition_ConditionOperation_EXPECT_OP_SET);
+    cond->set_condition_key(key);
+    cond->set_condition_value(data.begin(), data.size());
+  }
+
+  void unset(uint32_t key)
+  {
+    Mysqlx::Expect::Open_Condition *cond = m_msg->add_cond();
+    cond->set_op(Mysqlx::Expect::Open_Condition_ConditionOperation_EXPECT_OP_UNSET);
+    cond->set_condition_key(key);
+  }
+
+  Element_prc *list_el()
+  {
+    return this;
+  }
+
+};
+
+
+Protocol::Op& Protocol::snd_Expect_Open(api::Expectations &exp, bool reset)
+{
+  Mysqlx::Expect::Open ex_open;
+  Expectation_builder builder(&ex_open);
+  exp.process(builder);
+  ex_open.set_op(reset ? Mysqlx::Expect::Open_CtxOperation_EXPECT_CTX_EMPTY :
+                         Mysqlx::Expect::Open_CtxOperation_EXPECT_CTX_COPY_PREV);
+  return get_impl().snd_start(ex_open, msg_type::cli_ExpectOpen);
+}
+
+
+Protocol::Op& Protocol::snd_Expect_Close()
+{
+  Mysqlx::Expect::Close ex_close;
+  return get_impl().snd_start(ex_close, msg_type::cli_ExpectClose);
+}
+
 
 class Rcv_auth_base : public Op_rcv
 {

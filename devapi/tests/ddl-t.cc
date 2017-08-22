@@ -75,7 +75,9 @@ TEST_F(Ddl, create_drop)
 
     sql(L"CREATE TABLE schema_to_drop_1.tb1 (`name` varchar(20), `age` int)");
     sql(L"CREATE TABLE schema_to_drop_1.tb2 (`name` varchar(20), `age` int)");
-    sql(L"CREATE VIEW schema_to_drop_1.view1 as select * from schema_to_drop_1.tb1");
+
+    schema.createView("view1").columns("name","age")
+          .definedAs(schema.getTable("tb1").select()).execute();
 
 
     std::list<Table> tables_list = schema.getTables();

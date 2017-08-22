@@ -35,6 +35,7 @@
 
 PUSH_SYS_WARNINGS
 #include <type_traits> // std::aligned_storage
+#include <typeinfo>
 POP_SYS_WARNINGS
 
 /*
@@ -99,27 +100,99 @@ protected:
   variant_base() : m_owns(false)
   {}
 
-  variant_base(const First &val) : m_owns(true)
+  variant_base(const First &val)
+    : m_owns(true)
   {
     new (&m_storage) First(val);
   }
 
-  variant_base(First &&val) : m_owns(true)
+  variant_base(First &&val)
+    : m_owns(true)
   {
     new (&m_storage) First(std::move(val));
   }
 
-  template <typename T>
-  variant_base(const T &val) : Base(val), m_owns(false)
+  template<typename T>
+  variant_base(T &&val)
+    : Base(std::move(val))
+    , m_owns(false)
   {}
 
-  template <typename T>
-  variant_base(T &&val) : Base(std::move(val)), m_owns(false)
+  template<typename T>
+  variant_base(const T &val)
+    : Base(val)
+    , m_owns(false)
   {}
+
+
+  // Copy/move semantics
+
+  variant_base(const variant_base &other)
+    : Base(other)
+  {
+    if (!other.m_owns)
+      return;
+    *reinterpret_cast<First*>(&m_storage)
+      = *other.get((First*)nullptr);
+  }
+
+  variant_base(variant_base &&other)
+    : Base(std::move(other))
+  {
+    if (!other.m_owns)
+      return;
+    *reinterpret_cast<First*>(&m_storage)
+      = std::move(*other.get((First*)nullptr));
+  }
+
+  void set(const First &val)
+  {
+    m_owns = true;
+    new (&m_storage) First(val);
+  }
+
+  void set(First &&val)
+  {
+    m_owns = true;
+    new (&m_storage) First(std::move(val));
+  }
+
+  template <
+    typename T,
+    typename std::enable_if<
+      !std::is_same<
+        typename std::remove_reference<T>::type,
+        typename std::remove_reference<First>::type
+      >::value
+    >::type * = nullptr
+  >
+  void set(const T &val)
+  {
+    m_owns = false;
+    Base::set(val);
+  }
+
+  template <
+    typename T,
+    typename std::enable_if<
+      !std::is_same<
+        typename std::remove_reference<T>::type,
+        typename std::remove_reference<First>::type
+      >::value
+    >::type * = nullptr
+  >
+  void set(T &&val)
+  {
+    m_owns = false;
+    Base::set(std::move(val));
+  }
 
 
   const First* get(const First*) const
   {
+    if (!m_owns)
+      throw std::bad_cast();
+
     return reinterpret_cast<const First*>(&m_storage);
   }
 
@@ -129,13 +202,33 @@ protected:
     return Base::get(ptr);
   }
 
+  template <class Visitor>
+  void visit(Visitor& vis) const
+  {
+    if (m_owns)
+      vis(*reinterpret_cast<const First*>(&m_storage));
+    else
+      Base::visit(vis);
+  }
+
   void destroy()
   {
     if (m_owns)
+    {
       reinterpret_cast<First*>(&m_storage)->~First();
+      m_owns = false;
+    }
     else
       Base::destroy();
   }
+
+  operator bool()
+  {
+    if (m_owns)
+      return true;
+    return Base::operator bool();
+  }
+
 };
 
 
@@ -149,10 +242,28 @@ protected:
   storage_t m_storage;
 
   variant_base() {}
-  variant_base(const variant_base&) = delete;
-  variant_base(variant_base &&) = delete;
+
+  variant_base(const variant_base&) {}
+  variant_base(variant_base &&) {}
 
   void destroy() {}
+
+  operator bool()
+  {
+    return false;
+  }
+
+  template <class Visitor>
+  void visit(Visitor&) const
+  {
+    assert(false);
+  }
+
+  template<typename T>
+  void set(T &&)
+  {
+    assert(false);
+  }
 };
 
 }  // detail
@@ -168,17 +279,54 @@ class variant
 
 public:
 
-  template <typename T>
-  variant(T&& val) : Base(std::move(val))
+  variant() {}
+
+  variant(const variant &other)
+    : Base(static_cast<const Base&>(other))
+  {}
+
+  variant(variant &&other)
+    : Base(std::move(static_cast<Base&&>(other)))
   {}
 
   template <typename T>
-  variant(const T& val) : Base(val)
+  variant(const T &val)
+    : Base(val)
   {}
+
+  template <typename T>
+  variant(T &&val)
+    : Base(std::move(val))
+  {}
+
+  template <typename T>
+  variant& operator=(T&& val)
+  {
+    Base::set(std::move(val));
+    return *this;
+  }
+
+  template <typename T>
+  variant& operator=(const T& val)
+  {
+    Base::set(val);
+    return *this;
+  }
 
   ~variant()
   {
     Base::destroy();
+  }
+
+  operator bool()
+  {
+    return Base::operator bool();
+  }
+
+  template <class Visitor>
+  void visit(Visitor& vis) const
+  {
+    Base::visit(vis);
   }
 
   template <typename T>

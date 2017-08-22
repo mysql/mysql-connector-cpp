@@ -61,6 +61,9 @@ TEST_F(xapi, test_having_group_by)
 
   AUTHENTICATE();
 
+  //TODO: Remove this when  Bug #86754 is fixed
+  SKIP_IF_SERVER_VERSION_LESS(5,7,19);
+
   mysqlx_schema_drop(get_session(), "cc_crud_test");
   EXPECT_EQ(RESULT_OK, mysqlx_schema_create(get_session(), "cc_crud_test"));
 
@@ -976,15 +979,15 @@ TEST_F(xapi, param_safety_test)
   /* We don't know for sure if it will connect, but it should not crash*/
   session = mysqlx_get_session(NULL, 0, NULL, NULL, NULL, out_err, NULL);
   mysqlx_session_close(session);
-  session = mysqlx_get_node_session(NULL, 0, NULL, NULL, NULL, out_err, NULL);
+  session = mysqlx_get_session(NULL, 0, NULL, NULL, NULL, out_err, NULL);
   mysqlx_session_close(session);
   session = mysqlx_get_session_from_url(NULL, out_err, NULL);
   mysqlx_session_close(session);
-  session = mysqlx_get_node_session_from_url(NULL, out_err, NULL);
+  session = mysqlx_get_session_from_url(NULL, out_err, NULL);
   mysqlx_session_close(session);
   session = mysqlx_get_session_from_options(NULL, out_err, NULL);
   mysqlx_session_close(session);
-  session = mysqlx_get_node_session_from_options(NULL, out_err, NULL);
+  session = mysqlx_get_session_from_options(NULL, out_err, NULL);
   mysqlx_session_close(session);
 
   stmt = mysqlx_collection_add_new(collection);
@@ -1015,7 +1018,7 @@ TEST_F(xapi, param_safety_test)
   printf("\nExpected error: %s", mysqlx_error_message(opt));
   buf[0] = 0;
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_HOST, buf));
-  EXPECT_EQ(0, buf[0]);
+  EXPECT_STRCASEEQ("localhost", buf);
 
   EXPECT_TRUE(mysqlx_sql(get_session(), NULL, MYSQLX_NULL_TERMINATED) == NULL);
   printf("\nExpected error: %s", mysqlx_error_message(get_session()));
@@ -2160,8 +2163,7 @@ TEST_F(xapi_bugs, schemas_list_test)
   }
   mysqlx_session_close(get_session());
 
-  // Connect as X session now
-  authenticate(NULL, NULL, NULL, 1);
+  authenticate(NULL, NULL, NULL);
   if (!get_session())
     FAIL();
 
@@ -2516,4 +2518,75 @@ TEST_F(xapi, test_decimal_type)
   }
 
   mysqlx_schema_drop(get_session(), "xapi_dec_test");
+}
+
+TEST_F(xapi, expr_in_expr)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  mysqlx_result_t *res;
+  mysqlx_schema_t *schema;
+  mysqlx_collection_t *collection;
+  mysqlx_table_t *table;
+  mysqlx_stmt_t *stmt;
+  mysqlx_row_t* row;
+  const char* json_string;
+  size_t json_length;
+  char buf[256];
+  size_t buflen;
+
+  AUTHENTICATE();
+
+  SKIP_IF_SERVER_VERSION_LESS(8,0,2);
+
+  mysqlx_schema_drop(get_session(), "expr_in_expt");
+
+  mysqlx_schema_create(get_session(), "expr_in_expt");
+
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "expr_in_expt", 1)) != NULL);
+
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, "c1"));
+
+  EXPECT_TRUE((collection = mysqlx_get_collection(schema, "c1", 1)) != NULL);
+
+  const char *foo   = "{ \"name\": \"foo\", \"age\": 1 }";
+  const char *baz   = "{ \"name\": \"baz\", \"age\": 3, \"birth\": { \"day\": 20, \"month\": \"Apr\" } }";
+  const char *bar   = "{ \"name\": \"bar\", \"age\": 2, \"food\": [\"Milk\", \"Soup\"] }";
+  const char *foo_7 = "{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }";
+  const char *buz   = "{ \"name\": \"buz\", \"age\": 17 }";
+
+  SESS_CHECK(res = mysqlx_collection_add(collection,foo, baz, bar, foo_7, buz, PARAM_END));
+
+  SESS_CHECK(res = mysqlx_collection_find(collection,"{\"name\":\"baz\"} in $"));
+  json_string = mysqlx_json_fetch_one(res, &json_length);
+  EXPECT_TRUE(strstr(json_string, "\"name\": \"baz\"") != NULL);
+  EXPECT_EQ(NULL, row = mysqlx_row_fetch_one(res));
+
+  SESS_CHECK(res = mysqlx_collection_find(collection,"'bar' in $.name"));
+  json_string = mysqlx_json_fetch_one(res, &json_length);
+  EXPECT_TRUE(strstr(json_string, "\"name\": \"bar\"") != NULL);
+  EXPECT_EQ(NULL, row = mysqlx_row_fetch_one(res));
+
+  SESS_CHECK(res = mysqlx_collection_find(collection,"{ \"day\": 20, \"month\": \"Apr\" } in $.birth"));
+  json_string = mysqlx_json_fetch_one(res, &json_length);
+  EXPECT_TRUE(strstr(json_string, "\"name\": \"baz\"") != NULL);
+  EXPECT_EQ(NULL, row = mysqlx_row_fetch_one(res));
+
+  SESS_CHECK(res = mysqlx_collection_find(collection,"JSON_TYPE($.food) = 'ARRAY' AND 'Milk' IN $.food "));
+  json_string = mysqlx_json_fetch_one(res, &json_length);
+  EXPECT_TRUE(strstr(json_string, "\"name\": \"bar\"") != NULL);
+  EXPECT_EQ(NULL, row = mysqlx_row_fetch_one(res));
+
+  //using tables
+  EXPECT_TRUE((table = mysqlx_get_table(schema, "c1", false)) != NULL);
+  stmt = mysqlx_table_select_new(table);
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_items(stmt, "JSON_EXTRACT(doc,'$.name') as name", PARAM_END));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_where(stmt, "{\"name\":\"baz\"} in doc->$"));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+  EXPECT_TRUE((row = mysqlx_row_fetch_one(res)) != NULL);
+  buflen = sizeof(buf);
+  EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, buf, &buflen));
+  EXPECT_EQ(string(buf), string("\"baz\""));
+  EXPECT_EQ(NULL, row = mysqlx_row_fetch_one(res));
+
 }

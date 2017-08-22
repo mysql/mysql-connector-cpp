@@ -124,7 +124,7 @@ TEST_F(Session_mysqlx, basic)
   try
   {
 
-    cdk::ds::Options options;
+    cdk::ds::TCPIP::Options options;
     cdk::mysqlx::Session s1(get_conn(), options);
 
 
@@ -162,7 +162,7 @@ TEST_F(Session_mysqlx, error_on_connect)
   try {
 
     cdk::ds::TCPIP ds("localhost", m_port+1);
-    cdk::ds::Options options;
+    cdk::ds::TCPIP::Options options;
     cdk::connection::TCPIP conn(ds.host(), ds.port());
     conn.connect();
     cdk::mysqlx::Session s1(conn, options);
@@ -193,7 +193,7 @@ TEST_F(Session_mysqlx, auth_error)
     cdk::string user = L"bad_user";
     std::string passwd = "bad_password";
 
-    cdk::ds::Options options(user,&passwd);
+    cdk::ds::TCPIP::Options options(user,&passwd);
     cdk::mysqlx::Session s1(get_conn(), options);
 
     if (s1.is_valid())
@@ -225,7 +225,7 @@ TEST_F(Session_mysqlx,sql_basic)
 
 
 
-    cdk::ds::Options options;
+    cdk::ds::TCPIP::Options options;
     cdk::mysqlx::Session s(get_conn(), options);
 
 
@@ -668,7 +668,7 @@ TEST_F(Session_mysqlx,sql_type_conv)
   try {
     SKIP_IF_NO_XPLUGIN;
 
-    cdk::ds::Options options;
+    cdk::ds::TCPIP::Options options;
     cdk::mysqlx::Session s(get_conn(), options);
 
     {

@@ -33,6 +33,8 @@ PUSH_SYS_WARNINGS
 #include <limits>
 #ifndef _WIN32
 #include <arpa/inet.h>
+#include <signal.h>
+#include <sys/un.h>
 #endif
 POP_SYS_WARNINGS
 
@@ -345,6 +347,11 @@ void initialize_socket_system()
   yaSSL::OpenSSL_add_all_algorithms();
   yaSSL::SSL_load_error_strings();
 #endif // WITH_SSL_YASSL
+
+#ifndef WIN32
+  //ignore SIGPIPE signal when sending data with connection closed by server
+  signal(SIGPIPE, SIG_IGN);
+#endif
 }
 
 
@@ -389,6 +396,38 @@ Socket socket(bool nonblocking, addrinfo* hints)
 
   return socket;
 }
+
+#ifndef _WIN32
+Socket unix_socket(bool nonblocking)
+{
+  Socket socket = NULL_SOCKET;
+
+  socket = ::socket(AF_UNIX, SOCK_STREAM, 0);
+
+  if (socket != NULL_SOCKET)
+  {
+    int reuse_addr = 1;
+    if (::setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse_addr, sizeof(reuse_addr)) != 0)
+      throw_socket_error();
+
+    try
+    {
+      set_nonblocking(socket, nonblocking);
+    }
+    catch (...)
+    {
+      close(socket);
+      throw;
+    }
+  }
+  else
+  {
+    throw_socket_error();
+  }
+
+  return socket;
+}
+#endif //_WIN32
 
 
 void close(Socket socket)
@@ -566,6 +605,55 @@ Socket connect(const char *host_name, unsigned short port)
 }
 
 DIAGNOSTIC_POP
+
+#ifndef _WIN32
+Socket connect(const char *path)
+{
+  Socket socket = NULL_SOCKET;
+
+
+  // Connect to host.
+  int connect_result = SOCKET_ERROR;
+  struct sockaddr_un addr;
+
+  memset(&addr, 0, sizeof(addr));
+  addr.sun_family = AF_UNIX;
+  strncpy(addr.sun_path, path, sizeof(addr.sun_path)-1);
+
+  try
+  {
+    socket = detail::unix_socket(true);
+    connect_result = ::connect(socket,
+                               (struct sockaddr*)(&addr),
+                               sizeof(addr));
+
+    if (connect_result != 0)
+    {
+      if (connect_result == SOCKET_ERROR && errno == EINPROGRESS)
+      {
+        int select_result = select_one(socket, SELECT_MODE_WRITE, true);
+
+        if (select_result < 0)
+          throw_socket_error();
+        else
+          check_socket_error(socket);
+
+        connect_result = 0;
+      }
+      else
+      {
+        throw_socket_error();
+      }
+    }
+  }
+  catch (...)
+  {
+    close(socket);
+  }
+  return socket;
+}
+#endif //_WIN32
+
 
 Socket listen_and_accept(unsigned short port)
 {
