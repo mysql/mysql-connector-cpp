@@ -1,4 +1,4 @@
-Building Connector/C++ 2.0  {#building}
+Building Connector/C++ 8.0  {#building}
 ==========================
 
 Prerequisites
@@ -33,8 +33,8 @@ To specify the installation location (see below), use the option:
 - `-DCMAKE_INSTALL_PREFIX=<Install location>`
 
 If not specified, the install location defaults to
-`/usr/local/mysql/connector-c++-2.0`
-(`<User home>/MySQL/"MySQL Connector C++ 2.0"` on Windows).
+`/usr/local/mysql/connector-c++-8.0`
+(`<User home>/MySQL/"MySQL Connector C++ 8.0"` on Windows).
 
 By default a shared library is built. To build a static library, use the option:
 

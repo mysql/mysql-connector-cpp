@@ -38,82 +38,8 @@ const unsigned max_priority = 100;
 using namespace ::mysqlx;
 
 
-struct Session::Options
-  : public cdk::ds::TCPIP::Options
-{
-  Options(const string &usr, const std::string *pwd,
-          string schema = string())
-    : cdk::ds::TCPIP::Options(usr, pwd)
-  {
-    if (!schema.empty())
-      set_database(schema);
-  }
-
-  Options()
-  {}
-
-};
-
-
-class Session::Impl
-{
-  cdk::ds::Multi_source m_ms;
-  cdk::Session          m_sess;
-  cdk::string           m_default_db;
-
-  std::set<Session*>    m_nodes;
-
-  internal::BaseResult *m_current_result = NULL;
-
-  Impl(cdk::ds::Multi_source &ms)
-    : m_sess(ms)
-  {
-    if (m_sess.get_default_schema())
-      m_default_db = *m_sess.get_default_schema();
-    if (!m_sess.is_valid())
-      m_sess.get_error().rethrow();
-  }
-
-  friend Session;
-};
-
-
-std::string SessionSettings::get_option_name(Options opt)
-{
-#define case_options(x) case SessionSettings::Options::x: return #x;
-
-  switch(opt)
-  {
-    SETTINGS_OPTIONS(case_options)
-    default:
-    {
-      std::ostringstream buf;
-      buf << "<UKNOWN (" << unsigned(opt) << ")>" << std::ends;
-      return buf.str();
-    }
-  };
-}
-
-
-
-std::string get_mode_name(SessionSettings::SSLMode m)
-{
-#define case_mode(x) case SessionSettings::SSLMode::x: return #x;
-
-  switch(m)
-  {
-    SSL_MODE_TYPES(case_mode)
-    default:
-    {
-      std::ostringstream buf;
-      buf << "<UKNOWN (" << unsigned(m) << ")>" << std::ends;
-      return buf.str();
-    }
-  };
-}
-
-
-Value& SessionSettings::find(Options opt)
+template<>
+Value& internal::Settings_detail<internal::Settings_traits>::find(SessionOption opt)
 {
   for (auto &key_val : m_options)
   {
@@ -122,24 +48,25 @@ Value& SessionSettings::find(Options opt)
   }
 
   std::stringstream error;
-  error << "SessionSettings option " << get_option_name(opt) << " not found";
+  error << "SessionSettings option " << SessionOptionName(opt) << " not found";
   throw Error(error.str().c_str());
 }
 
 
-void SessionSettings::do_add(Options opt, Value &&v)
+template<>
+void internal::Settings_detail<internal::Settings_traits>::do_add(SessionOption opt, Value &&v)
 {
   // Sanity checks on option values.
 
   switch (opt)
   {
-  case PORT:
+  case SessionOption::PORT:
     if (v.get<unsigned>() > 65535U)
       throw_error("Port value out of range");
     break;
 
-  case SSL_MODE:
-    if (has_option(SSL_CA))
+  case SessionOption::SSL_MODE:
+    if (m_option_used.test(size_t(SessionOption::SSL_CA)))
     {
       SSLMode m = SSLMode(v.get<unsigned>());
       switch (m)
@@ -149,20 +76,20 @@ void SessionSettings::do_add(Options opt, Value &&v)
         break;
 
       default:
-        {
-          std::string msg = "SSL mode ";
-          msg += get_mode_name(m);
-          msg += " is not compatible with ssl-ca setting";
-          throw_error(msg.c_str());
-        }
+      {
+        std::string msg = "SSL mode ";
+        msg += SSLModeName(m);
+        msg += " is not compatible with ssl-ca setting";
+        throw_error(msg.c_str());
+      }
       }
     }
     break;
 
-  case SSL_CA:
-    if (has_option(SSL_MODE))
+  case SessionOption::SSL_CA:
+    if (m_option_used.test(size_t(SessionOption::SSL_MODE)))
     {
-      SSLMode m = SSLMode(find(SSL_MODE).get<unsigned>());
+      SSLMode m = SSLMode(find(SessionOption::SSL_MODE).get<unsigned>());
       switch (m)
       {
       case SSLMode::VERIFY_CA:
@@ -170,11 +97,11 @@ void SessionSettings::do_add(Options opt, Value &&v)
         break;
 
       default:
-        {
-          std::string msg = "Setting ssl-ca is not compatible with SSL mode ";
-          msg += get_mode_name(m);
-          throw_error(msg.c_str());
-        }
+      {
+        std::string msg = "Setting ssl-ca is not compatible with SSL mode ";
+        msg += SSLModeName(m);
+        throw_error(msg.c_str());
+      }
       }
     }
     break;
@@ -186,12 +113,15 @@ void SessionSettings::do_add(Options opt, Value &&v)
   /*
     Store option value, checking for duplicates etc.
 
-    Note: Only HOST and PORT can have multiple values, the others, are unique
+    Note: Only HOST and PRIORITY and host connection options
+    can repeat, the others are unique.
   */
 
-  if (opt == HOST || opt == PORT || opt == PRIORITY
+  if (opt == SessionOption::HOST
+      || opt == SessionOption::PORT
+      || opt == SessionOption::PRIORITY
 #ifndef _WIN32
-      || opt == SOCKET
+      || opt == SessionOption::SOCKET
 #endif
       )
   {
@@ -200,7 +130,7 @@ void SessionSettings::do_add(Options opt, Value &&v)
   else
   {
     auto it = m_options.begin();
-    for(; it != m_options.end(); ++it)
+    for (; it != m_options.end(); ++it)
     {
       if (it->first == opt)
       {
@@ -214,16 +144,16 @@ void SessionSettings::do_add(Options opt, Value &&v)
       m_options.emplace_back(opt, std::move(v));
     }
   }
-  m_option_used.set(opt);
+  m_option_used.set(size_t(opt));
 }
 
 
 #ifdef WITH_SSL
 
-SessionSettings::SSLMode  get_ssl_mode(const std::string &name)
+SSLMode  get_ssl_mode(const std::string &name)
 {
-  #define map_ssl(x) { #x, SessionSettings::SSLMode::x },
-  static std::map<std::string,SessionSettings::SSLMode>
+  #define map_ssl(x) { #x, SSLMode::x },
+  static std::map<std::string, SSLMode>
     ssl_modes{ SSL_MODE_TYPES(map_ssl) };
 
   try {
@@ -234,32 +164,32 @@ SessionSettings::SSLMode  get_ssl_mode(const std::string &name)
     std::string msg = "Invalid ssl-mode value: " + std::string(name);
     throw_error(msg.c_str());
     // Quiet compiler warnings
-    return SessionSettings::SSLMode::DISABLED;
+    return SSLMode::DISABLED;
   }
 }
 
 
 void set_ssl_mode(cdk::connection::TLS::Options &tls_opt,
-                  SessionSettings::SSLMode mode)
+                  SSLMode mode)
 {
   switch (mode)
   {
-  case SessionSettings::SSLMode::DISABLED:
+  case SSLMode::DISABLED:
     tls_opt.set_ssl_mode(
           cdk::connection::TLS::Options::SSL_MODE::DISABLED
           );
     break;
-  case SessionSettings::SSLMode::REQUIRED:
+  case SSLMode::REQUIRED:
     tls_opt.set_ssl_mode(
           cdk::connection::TLS::Options::SSL_MODE::REQUIRED
           );
     break;
-  case SessionSettings::SSLMode::VERIFY_CA:
+  case SSLMode::VERIFY_CA:
     tls_opt.set_ssl_mode(
           cdk::connection::TLS::Options::SSL_MODE::VERIFY_CA
           );
     break;
-  case SessionSettings::SSLMode::VERIFY_IDENTITY:
+  case SSLMode::VERIFY_IDENTITY:
     tls_opt.set_ssl_mode(
           cdk::connection::TLS::Options::SSL_MODE::VERIFY_IDENTITY
           );
@@ -268,6 +198,7 @@ void set_ssl_mode(cdk::connection::TLS::Options &tls_opt,
 }
 
 #endif //WITH_SSL
+
 
 struct Host_sources : public cdk::ds::Multi_source
 {
@@ -311,7 +242,7 @@ using TLS_Options = cdk::connection::TLS::Options;
 
 
 struct URI_parser
-  : public Session::Access::Options
+  : public cdk::ds::TCPIP::Options
   , public parser::URI_processor
 {
   Host_sources m_source;
@@ -324,7 +255,7 @@ struct URI_parser
   >  Ds_variant;
 
   std::multimap<unsigned short, Ds_variant> m_sources;
-  std::bitset<SessionSettings::LAST> m_options_used;
+  std::bitset<size_t(SessionOption::LAST)>  m_options_used;
   bool m_has_ssl = false;
 
 #ifdef WITH_SSL
@@ -459,12 +390,12 @@ struct URI_parser
     {
       m_has_ssl = true;
 #ifdef WITH_SSL
-      if (m_options_used.test(SessionSettings::SSL_MODE))
+      if (m_options_used.test(size_t(SessionOption::SSL_MODE)))
       {
         throw Error("Option ssl-mode defined twice");
       }
 
-      m_options_used.set(SessionSettings::SSL_MODE);
+      m_options_used.set(size_t(SessionOption::SSL_MODE));
 
       std::string mode;
       mode.resize(val.size());
@@ -483,12 +414,12 @@ struct URI_parser
       m_has_ssl = true;
 #ifdef WITH_SSL
 
-      if (m_options_used.test(SessionSettings::SSL_CA))
+      if (m_options_used.test(size_t(SessionOption::SSL_CA)))
       {
         throw Error("Option ssl-ca defined twice");
       }
 
-      m_options_used.set(SessionSettings::SSL_CA);
+      m_options_used.set(size_t(SessionOption::SSL_CA));
 
       m_tls_opt.set_ca(val);
 #else
@@ -508,17 +439,23 @@ struct URI_parser
 };
 
 
+/*
+  Session implementation
+  ======================
+*/
+
+
 Session::Session(SessionSettings settings)
 {
   try {
 
-    if (settings.has_option(SessionSettings::URI))
+    if (settings.has_option(SessionOption::URI))
     {
       URI_parser parser(
-            settings.find(SessionSettings::URI).get<string>()
+            settings.find(SessionOption::URI).get<string>()
           );
 
-      m_impl = new Impl(parser.get_data_source());
+      m_impl = std::make_shared<Impl>(parser.get_data_source());
     }
     else
     {
@@ -530,11 +467,11 @@ Session::Session(SessionSettings settings)
       TLS_Options opt_ssl = TLS_Options::SSL_MODE::REQUIRED;
 #endif // WITH_SSL
 
-      if (settings.has_option(SessionSettings::PWD) &&
-          settings.find(SessionSettings::PWD).isNull() == false)
+      if (settings.has_option(SessionOption::PWD) &&
+          settings.find(SessionOption::PWD).isNull() == false)
       {
         has_pwd = true;
-        pwd_str = settings.find(SessionSettings::PWD).get<string>();
+        pwd_str = settings.find(SessionOption::PWD).get<string>();
       }
 
 
@@ -542,48 +479,47 @@ Session::Session(SessionSettings settings)
       string user;
       string database;
 
-      if (settings.has_option(SessionSettings::USER))
+      if (settings.has_option(SessionOption::USER))
       {
-        user = settings.find(SessionSettings::USER);
+        user = settings.find(SessionOption::USER);
       }
       else
       {
         throw Error("User not defined!");
       }
 
-      if (settings.has_option(SessionSettings::DB))
-        database = settings.find(SessionSettings::DB).get<string>();
+      if (settings.has_option(SessionOption::DB))
+        database = settings.find(SessionOption::DB).get<string>();
 
 
 
-      if (settings.has_option(SessionSettings::SSL_MODE) ||
-          settings.has_option(SessionSettings::SSL_CA))
+      if (settings.has_option(SessionOption::SSL_MODE) ||
+          settings.has_option(SessionOption::SSL_CA))
       {
         has_ssl = true;
 #ifdef WITH_SSL
 
-        if (settings.has_option(SessionSettings::SSL_CA))
+        if (settings.has_option(SessionOption::SSL_CA))
         {
-          opt_ssl.set_ca(settings.find(SessionSettings::SSL_CA).get<string>());
-          if (!settings.has_option(SessionSettings::SSL_MODE))
-            set_ssl_mode(opt_ssl, SessionSettings::SSLMode::VERIFY_CA);
+          opt_ssl.set_ca(settings.find(SessionOption::SSL_CA).get<string>());
+          if (!settings.has_option(SessionOption::SSL_MODE))
+            set_ssl_mode(opt_ssl, SSLMode::VERIFY_CA);
         }
 
-        if (settings.has_option(SessionSettings::SSL_MODE))
+        if (settings.has_option(SessionOption::SSL_MODE))
         {
-          SessionSettings::SSLMode m
-            = SessionSettings::SSLMode(settings.find(SessionSettings::SSL_MODE)
-                                       .get<unsigned>());
+          SSLMode m
+            = SSLMode(settings.find(SessionOption::SSL_MODE).get<unsigned>());
 
           switch (m)
           {
-          case SessionSettings::SSLMode::VERIFY_CA:
-          case SessionSettings::SSLMode::VERIFY_IDENTITY:
+          case SSLMode::VERIFY_CA:
+          case SSLMode::VERIFY_IDENTITY:
 
-            if (!settings.has_option(SessionSettings::SSL_CA))
+            if (!settings.has_option(SessionOption::SSL_CA))
             {
               std::string msg = "SSL mode ";
-              msg += get_mode_name(m);
+              msg += internal::Settings_traits::get_mode_name(m);
               msg += " requires ssl-ca setting";
               throw_error(msg.c_str());
             }
@@ -629,7 +565,7 @@ Session::Session(SessionSettings settings)
       {
         if (with_port &&
             it != settings.end() &&
-            it->first ==SessionSettings::PORT)
+            it->first ==SessionOption::PORT)
         {
           port = it->second;
           if (port > 65535U)
@@ -637,7 +573,7 @@ Session::Session(SessionSettings settings)
           ++it;
         }
 
-        if (it != settings.end() && it->first == SessionSettings::PRIORITY)
+        if (it != settings.end() && it->first == SessionOption::PRIORITY)
         {
           priority = static_cast<unsigned>(it->second);
 
@@ -658,7 +594,7 @@ Session::Session(SessionSettings settings)
       do
       {
 #ifndef _WIN32
-        if (it != settings.end() && it->first ==SessionSettings::SOCKET)
+        if (it != settings.end() && it->first ==SessionOption::SOCKET)
         {
           if (singlehost)
             throw Error("On multiple hosts, HOST option can't be skipped.");
@@ -674,7 +610,8 @@ Session::Session(SessionSettings settings)
 
         }else
 #endif //_WIN32
-        if (it != settings.end() && it->first ==SessionSettings::HOST)
+
+        if (it != settings.end() && it->first ==SessionOption::HOST)
         {
           if (singlehost)
             throw Error("On multiple hosts, HOST option can't be skipped.");
@@ -693,7 +630,7 @@ Session::Session(SessionSettings settings)
           port_prio(true);
 
         }
-        else if (it->first ==SessionSettings::PORT)
+        else if (it->first ==SessionOption::PORT)
         {
           if (!initialized)
           {
@@ -707,7 +644,7 @@ Session::Session(SessionSettings settings)
           }
 
         }
-        else if (it->first ==SessionSettings::PRIORITY)
+        else if (it->first ==SessionOption::PRIORITY)
         {
           throw Error("Incorrect settings order! Passed Priority without previously passing HOST");
         }
@@ -758,7 +695,7 @@ Session::Session(SessionSettings settings)
       if (socket_only && has_ssl)
         throw Error("TLS connections over Unix domain socket are not supported");
 
-      m_impl = new Impl(source);
+      m_impl = std::make_shared<Impl>(source);
 
     }
   }
@@ -767,49 +704,65 @@ Session::Session(SessionSettings settings)
 
 Session::Session(Session* master)
 {
+  assert(master);
   m_impl = master->m_impl;
-  m_impl->m_nodes.insert(this);
-  m_master_session = false;
+  master->add_child(this);
 }
 
-Session::~Session()
+
+void internal::Session_detail::Impl::register_result(Result_impl *result)
 {
-  try {
-    if (m_impl)
-      close();
-  }
-  catch(...){}
+  if (m_current_result && m_current_result != result)
+    m_current_result->deregister();
+
+  m_current_result = result;
 }
 
-
-void Session::register_result(internal::BaseResult *result)
+void internal::Session_detail::Impl::deregister_result(Result_impl *result)
 {
-  if (!m_impl)
-    throw Error("Session closed");
-
-  if (m_impl->m_current_result)
-    m_impl->m_current_result->deregister_notify();
-
-  m_impl->m_current_result = result;
-}
-
-void Session::deregister_result(internal::BaseResult *result)
-{
-  if (!m_impl)
-    throw Error("Session closed");
-
-  if (m_impl->m_current_result == result)
-    m_impl->m_current_result = NULL;
+  if (m_current_result == result)
+    m_current_result = NULL;
 }
 
 
-cdk::Session& Session::get_cdk_session()
+cdk::Session& internal::Session_detail::get_cdk_session()
 {
   if (!m_impl)
     throw Error("Session closed");
 
   return m_impl->m_sess;
 }
+
+
+void internal::Session_detail::prepare_for_cmd()
+{
+  assert(m_impl);
+  m_impl->register_result(nullptr);
+}
+
+
+void internal::Session_detail::close()
+{
+  if (m_parent_session)
+  {
+    m_parent_session->remove_child(this);
+  }
+  else
+  {
+    // This is master session, notify child session that it is being
+    // closed.
+
+    for (auto sess : m_child_sessions)
+    {
+      sess->parent_close_notify();
+    }
+
+    get_cdk_session().rollback();
+  }
+
+  m_impl.reset();
+}
+
 
 
 // ---------------------------------------------------------------------
@@ -843,37 +796,6 @@ void Session::rollback()
   CATCH_AND_WRAP
 }
 
-
-void Session::close()
-{
-  try {
-
-    // Results should cache their data before deleting the implementation.
-    register_result(NULL);
-
-    if (m_master_session)
-    {
-      //Notify NodeSession nodes that master is being removed.
-      for (auto node : m_impl->m_nodes)
-      {
-        node->session_closed();
-      }
-
-      get_cdk_session().rollback();
-
-      delete m_impl;
-    }
-    else if (m_impl)
-    {
-      // Remove this NodeSession from nodes list
-      m_impl->m_nodes.erase(this);
-    }
-
-    m_impl = NULL;
-
-  }
-  CATCH_AND_WRAP
-}
 
 
 // ---------------------------------------------------------------------
@@ -1465,45 +1387,53 @@ internal::List_init<string> Schema::getCollectionNames()
 
 internal::List_init<Table> Schema::getTables()
 {
-  std::forward_list<Table> list;
-  std::forward_list<Table>::iterator list_it = list.before_begin();
+  try {
+    std::forward_list<Table> list;
+    std::forward_list<Table>::iterator list_it = list.before_begin();
 
-  auto tables_list = List_query<TABLE>(m_sess->get_cdk_session()
-                                       , m_name).execute();
+    auto tables_list = List_query<TABLE>(m_sess->get_cdk_session()
+                                         , m_name).execute();
 
-  for (auto& prop : tables_list)
-  {
-    list_it = list.emplace_after(list_it,
-                                 Table(*this, prop.first, prop.second));
+    for (auto& prop : tables_list)
+    {
+      list_it = list.emplace_after(list_it,
+                                   Table(*this, prop.first, prop.second));
+    }
+
+    return std::move(list);
   }
-
-  return std::move(list);
+  CATCH_AND_WRAP
 }
 
 internal::List_init<string> Schema::getTableNames()
 {
-  std::forward_list<string> list;
-  std::forward_list<string>::iterator list_it = list.before_begin();
-  auto tables_list = List_query<TABLE>(m_sess->get_cdk_session()
-                                       , m_name).execute();
+  try {
+    std::forward_list<string> list;
+    std::forward_list<string>::iterator list_it = list.before_begin();
+    auto tables_list = List_query<TABLE>(m_sess->get_cdk_session()
+                                         , m_name).execute();
 
-  for (auto& el : tables_list)
-  {
-    list.emplace_after(list_it, std::move(el.first));
+    for (auto& el : tables_list)
+    {
+      list.emplace_after(list_it, std::move(el.first));
+    }
+
+    return std::move(list);
   }
-
-  return std::move(list);
-
+  CATCH_AND_WRAP
 }
 
 
 Table Schema::getCollectionAsTable(const string& name, bool check_exists)
 {
+  try {
   //Check if collection exists
   if (check_exists)
     getCollection(name, true);
 
   return Table(*this, name);
+  }
+  CATCH_AND_WRAP
 }
 
 
@@ -1529,10 +1459,14 @@ bool Collection::existsInDatabase() const
 
 uint64_t Collection::count()
 {
-  std::stringstream qry;
-  qry << "select count(*) from " << m_schema.getName() << "." << m_name;
+  try {
 
-  return Obj_row_count(m_sess->get_cdk_session(),qry.str()).execute();
+    std::stringstream qry;
+    qry << "select count(*) from " << m_schema.getName() << "." << m_name;
+
+    return Obj_row_count(m_sess->get_cdk_session(),qry.str()).execute();
+  }
+  CATCH_AND_WRAP
 }
 
 
@@ -1543,12 +1477,16 @@ uint64_t Collection::count()
 
 bool Table::isView()
 {
-  if (UNDEFINED == m_isview)
-  {
-    m_isview = m_schema.getTable(m_name, true).isView() ? YES : NO;
-  }
+  try {
 
-  return m_isview == YES ? true : false;
+    if (UNDEFINED == m_isview)
+    {
+      m_isview = m_schema.getTable(m_name, true).isView() ? YES : NO;
+    }
+
+    return m_isview == YES ? true : false;
+  }
+  CATCH_AND_WRAP
 }
 
 bool Table::existsInDatabase() const
@@ -1572,10 +1510,14 @@ bool Table::existsInDatabase() const
 
 uint64_t Table::count()
 {
-  std::stringstream qry;
-  qry << "select count(*) from " << m_schema.getName() << "." << m_name;
+  try {
 
-  return Obj_row_count(m_sess->get_cdk_session(),qry.str()).execute();
+    std::stringstream qry;
+    qry << "select count(*) from " << m_schema.getName() << "." << m_name;
+
+    return Obj_row_count(m_sess->get_cdk_session(),qry.str()).execute();
+  }
+  CATCH_AND_WRAP
 }
 
 
@@ -1585,7 +1527,7 @@ uint64_t Table::count()
 */
 
 
-struct Op_sql : public Op_base<internal::SqlStatement_impl>
+struct Op_sql : public Op_base<internal::Bind_impl>
 {
   string m_query;
 
@@ -1660,6 +1602,11 @@ struct Op_sql : public Op_base<internal::SqlStatement_impl>
     m_params.m_values.emplace_back(std::move(val));
   }
 
+  void add_param(const mysqlx::string&, Value&&) override
+  {
+    assert(false);
+  }
+
   Executable_impl* clone() const override
   {
     return new Op_sql(*this);
@@ -1678,24 +1625,13 @@ struct Op_sql : public Op_base<internal::SqlStatement_impl>
 };
 
 
-void SqlStatement::reset(mysqlx::Session &sess, const string &query)
-{
-  m_impl.reset(new Op_sql(sess, query));
-}
-
-
-SqlStatement& Session::sql(const string &query)
+internal::SQL_statement::SQL_statement(mysqlx::Session *sess, const string &query)
 {
   try {
-    m_stmt.reset(*this, query);
-    return m_stmt;
+    reset(new Op_sql(*sess, query));
   }
   CATCH_AND_WRAP
 }
-
-
-
-
 
 
 // ---------------------------------------------------------------------

@@ -1,7 +1,7 @@
-Connector/C++ 2.0 X DevAPI Reference {#devapi_ref}
+Connector/C++ 8.0 X DevAPI Reference {#devapi_ref}
 ====================================
 
-Connector/C++ 2.0 implements the X DevAPI, as described in
+Connector/C++ 8.0 implements the X DevAPI, as described in
 the [X DevAPI User Guide]
 (http://dev.mysql.com/doc/x-devapi-userguide/en/index.html).
 The X DevAPI allows one to work with MySQL Servers implementing a document store
@@ -39,7 +39,7 @@ the X DevAPI is presented below. See also the [list of X DevAPI classes]
 The following Connector/C++ application connects to a MySQL Server with
 X Plugin, creates a document collection, adds a few documents to it, queries
 the collection and displays the result. The sample code can be found in file
-`testapp/devapi_test.cc` in the source distribution of Connector/C++ 2.0.
+`testapp/devapi_test.cc` in the source distribution of Connector/C++ 8.0.
 See @ref usage for instructions on how to build the sample code.
 
 @dontinclude devapi_test.cc

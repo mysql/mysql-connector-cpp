@@ -156,6 +156,35 @@ namespace mysqlx {
       {
         return NULL == m_status;
       }
+
+      bool is_server_version_less(int test_upper_version,
+                                  int test_lower_version,
+                                  int test_release_version)
+      {
+        SqlResult res_version= sql("SHOW VARIABLES LIKE 'version'");
+
+        std::stringstream version;
+        version << res_version.fetchOne()[1].get<string>();
+
+        int upper_version, minor_version, release_version;
+        char sep;
+        version >> upper_version;
+        version >> sep;
+        version >> minor_version;
+        version >> sep;
+        version >> release_version;
+
+        if ( (upper_version < test_upper_version) ||
+             (upper_version == test_upper_version &&
+              minor_version << test_lower_version) ||
+             (upper_version == test_upper_version &&
+              minor_version == test_lower_version &&
+              release_version < test_release_version))
+        {
+          return true;
+        }
+        return false;
+      }
     };
 
     class Xplugin::Session : public mysqlx::Session
@@ -175,6 +204,15 @@ namespace mysqlx {
 
 #define SKIP_IF_NO_SOCKET  \
   if (!get_socket()) { std::cerr <<"SKIPPED: No unix socket" <<std::endl; return; }
+
+#define SKIP_IF_SERVER_VERSION_LESS(x,y,z)\
+  if (is_server_version_less(x, y, z)) \
+  {\
+    std::cerr <<"SKIPPED: " << \
+    "Server version not supported (" \
+    << x << "." << y <<"." << ")" << z <<std::endl; \
+    return; \
+  }
 
 // TODO: remove this when prepare is ok again
 #define SKIP_TEST(A) std::cerr << "SKIPPED: " << A << std::endl; return;

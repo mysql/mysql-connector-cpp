@@ -179,4 +179,40 @@
 #endif
 
 
+/*
+  A dirty trick to help Doxygen to process 'enum class' declarations, which
+  are not fully supported. Thus we replace them by plain 'enum' when processing
+  sources by Doxygen.
+*/
+
+#ifdef DOXYGEN
+#define enum_class enum
+#else
+#define enum_class enum class
+#endif
+
+
+/*
+  Macro to put at the end of other macros that define lists of items. This is
+  another dirty trick for Doxygen to hide from it a documentation of the last
+  item in the list. Otherwise, in a situation like this:
+
+    #define ITEM_LIST(X) \
+      X(item1) \
+      ...
+      X(itemN) /##< Doc for last item #/
+
+  Doxegen treats the documentation of the last item as documentation for
+  the whole ITEM_LIST() macro. This does not happen if END_LIST is added at
+  the end:
+
+    #define ITEM_LIST(X) \
+      X(item1) \
+      ...
+      X(itemN) /##< Doc for last item #/ \
+      END_LIST
+*/
+
+#define END_LIST
+
 #endif

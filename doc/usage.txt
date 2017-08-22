@@ -1,7 +1,7 @@
-Using Connector/C++ 2.0  {#usage}
+Using Connector/C++ 8.0  {#usage}
 =======================
 
-Connector/C++ 2.0 can be used as either a static or a shared library.
+Connector/C++ 8.0 can be used as either a static or a shared library.
 If used as a shared library, the library must be installed on the target
 machine in order for the application to run. The shared library name is:
 
@@ -17,7 +17,7 @@ The static library name is:
 - `libmysqlcppconn2-static.a` on OSX and Unix platforms.
 - `mysqlcppconn2-static.lib` on Windows platforms,
 
-In what follows we assume that Connector/C++ 2.0 is installed to the location
+In what follows we assume that Connector/C++ 8.0 is installed to the location
 given by `$MYSQL_CONCPP_DIR`.
 
 
@@ -210,7 +210,7 @@ of Connector/C++ for Windows includes several variants of the library built
 with different parameters.
 
 @note Only release mode builds are supported by the current binary
-distribution of Connector/C++ 2.0. Debug variants of the connector
+distribution of Connector/C++ 8.0. Debug variants of the connector
 libraries, if required, must be built from sources.
 
 There are separate 32-bit and 64-bit packages, each keeping libraries in

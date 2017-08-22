@@ -36,121 +36,44 @@
   define additional methods that can modify the operation before it gets
   executed.
 
-  The hierarchy of classes reflects the grammar that defines the fluent
-  CRUD API. The grammar can be described by the following diagram.
+  The hierarchy of classes reflects the grammar that defines the order in which
+  fluent API calls can be done. It is built using templates, such as Offset<>
+  below, which add one API call on top of base class which defines remaining
+  API calls that can be called later. For example, type
 
-    Executable<R> -> R : execute()
+     Limit< Offset< Executable<...> > >
 
-    Statement<R> = Executable<R>
-    Statement<R> -> Statement<R> : bind()
+  will represent operation for which first .limit() can be called, followed by
+  .offset() and then finally .execute(). See classes like
+  Collection_find_base in collection_crud.h for more examples.
 
-    Offset<R> = Statement<R>
-    Offset<R> -> Statement<R> : offset()
-
-    Limit<R,F> = Statement<R>
-    Limit<R,false> -> Statement<R> : limit()
-    Limit<R,true>  -> Offset<R>    : limit()
-
-  In this diagram notation X -> Y : foo() means that class X defines
-  public method foo() with return type Y (roughly). Notation X = Y means
-  that X inherits public methods from Y. R is the type of the result
-  produced by given CRUD operation.
-
-  Thus, for example, if x is of type Limit<RowResult,true> then:
-
-    x.limit()  - returns Offset<RowResult>
-    x.limit().offset() - returns Statement<RowResult>
-    x.execute()  - returns RowResult (Limit<RowResult,true> inherits
-                   from Statement<RowResult> which inherits from
-                   Executable<RowResult>)
-
-  We have 2 variants of Limit<> class, to distinguish the case where
-  .offset() can follow .limit() from the case where only .limit() clause
-  is allowed.
-
-  The remaining grammar rules concerning operations specific to collections
-  and tables can be found in collection_crud.h and table_crud.h,
-  respectively.
-
-  Each class eventually derives from Executable which holds the internal
-  implementation object which should implement the implementation
-  interface defined for given operation. The abstract interfaces to be
-  implemented by internal implementation objects are given by hierarchy
-  of XXX_impl classes based on Executable_impl. The public methods that
-  manipulate given CRUD operation are defined in terms of methods from
-  the implementation interface.
-
-  The internal implementation object is created and passed to the
-  constructor of the CRUD operation object which takes ownership of
-  the implementation (and deletes it upon destruction). Public methods
-  of the CRUD operation objects call methods of the internal
-  implementation object which holds the definition and parameters of the
-  operation to be performed. Eventually the `execute()` method is
-  forwarded to the internal implementation object which executes the
-  operation. Each CRUD operation base class has method `get_impl` which
-  returns pointer to the internal implementation object casted to
-  appropriate type.
-
-  An internal implementation object can not be shared between two CRUD
-  operation objects nor can it be copied. For that reason CRUD operations
-  do not have copy semantics. Assignment `a = b` moves internal
-  implementation from operation `b` to operation `a`. Using `b` after
-  such assignment throws errors.
-
-  Since internal implementation object is managed by the Executable<R>
-  class at the bottom of the inheritance hierarchy, this Executable<R>
-  class is a virtual base class. This ensures that there is only one copy
-  of Executable<R> in any object of derived class. It also means that
-  constructors of derived classes initialize the virtual base class
-  directly and not through intermediate base class constructors.
-  For example, see constructor of `CollectionFind`.
+  Each template assumes that its base class defines method 'get_impl()' which
+  returns a pointer to the internal implementation object. It also assumes that
+  this implementation is of appropriate type and can be casted to
+  the appropriate implementation type. For example Limit<> template assumes
+  that the implementation type can be casted to Limit_impl type. See
+  detail/crud.h for definition of the hierarchy of implementation classes.
 */
 
 
 #include "common.h"
-#include "statement.h"
+#include "executable.h"
+#include "detail/crud.h"
 
 #include <map>
 
 namespace mysqlx {
 namespace internal {
 
-/*
-  Interface to be implemented by internal implementations of
-  CRUD operations which support .limit() or .offset() clauses.
-*/
-
-struct Limit_impl : public Statement_impl
-{
-  virtual void set_offset(unsigned) = 0;
-  virtual void set_limit(unsigned) = 0;
-};
-
-
 /**
-  Base class defining operation's offset() clause.
+  Template for defining fluent api for CRUD operations.
 */
 
-template <class Res, class Op>
+template <class Base>
 class Offset
-  : public Statement<Res, Op>
+  : public Base
 {
-protected:
-
-  typedef Limit_impl Impl;
-
-  // Make default constructor protected.
-
-  Offset() = default;
-
-  using Statement<Res,Op>::check_if_valid;
-  using Statement<Res,Op>::m_impl;
-
-  Impl* get_impl()
-  {
-    check_if_valid();
-    return static_cast<Impl*>(m_impl.get());
-  }
+  using Operation = Base;
 
 public:
 
@@ -159,61 +82,33 @@ public:
     to perform the operation.
   */
 
-  Statement<Res,Op>& offset(unsigned rows)
+  Operation& offset(unsigned rows)
   {
-    get_impl()->set_offset(rows);
-    return *this;
+    try {
+      get_impl()->set_offset(rows);
+      return *this;
+    }
+    CATCH_AND_WRAP
   }
-};
 
-
-/*
-  The base class of Limit<R,F> is Offset<R> if F is true or
-  Statement<R> if F is false. But otherwise definition of Limit<R,F>
-  is the same in both cases. To use common template definition the
-  base class of Limit<R,F> (which is also the return type of `limit`
-  method) is defined by LimitRet<R,F>::type.
-*/
-
-template <class Res, class Op, bool with_offset> struct LimitRet;
-
-template <class Res, class Op>
-struct LimitRet<Res, Op, true>
-{
-  typedef Offset<Res,Op> type;
-};
-
-template <class Res, class Op>
-struct LimitRet<Res, Op, false>
-{
-  typedef Statement<Res,Op> type;
-};
-
-
-/**
-  Base class defining operation's limit() clause.
-*/
-
-// TODO: Doxygen does not see the base class
-
-template <class Res, class Op, bool with_offset>
-class Limit
-  : public LimitRet<Res, Op, with_offset>::type
-{
 protected:
 
-  typedef Limit_impl Impl;
-
-  Limit() = default;
-
-  using LimitRet<Res, Op, with_offset>::type::check_if_valid;
-  using LimitRet<Res, Op, with_offset>::type::m_impl;
+  using Impl = Limit_impl;
 
   Impl* get_impl()
   {
-    check_if_valid();
-    return static_cast<Impl*>(m_impl.get());
+    return static_cast<Impl*>(Base::get_impl());
   }
+};
+
+
+/// @copydoc Offset
+
+template <class Base>
+class Limit
+  : public Base
+{
+  using Operation = Base;
 
 public:
 
@@ -221,41 +116,270 @@ public:
     %Limit the operation to the given number of items (rows or documents).
   */
 
-  typename LimitRet<Res, Op, with_offset>::type& limit(unsigned items)
+  Operation& limit(unsigned items)
   {
-    get_impl()->set_limit(items);
-    return *this;
+    try {
+      get_impl()->set_limit(items);
+      return *this;
+    }
+    CATCH_AND_WRAP
+  }
+
+protected:
+
+  using Impl = Limit_impl;
+
+  Impl* get_impl()
+  {
+    return static_cast<Impl*>(Base::get_impl());
   }
 };
 
 
-/*
-  Interfaces to be implemented by internal implementations of
-  CRUD operations which support sorting and projection specifications.
-  These specifications are passed to the implementation as sequences
-  of strings via multiple calls to `add_sort` or `add_proj` methods.
-  Implementation must parse these strings to get the specification.
-*/
+/// @copydoc Offset
 
-struct Sort_impl : public Limit_impl
+template <class Base>
+class Sort
+  : public Base
+  , Sort_detail
 {
-  virtual void add_sort(const string&) = 0;
+  using Operation = Base;
+
+public:
+
+  /**
+    Specify ordering of documents in a query results.
+
+    Arguments are one or more strings of the form `"<expr> <dir>"` where
+    `<expr>` gives the value to sort on and `<dir>` is a sorting direction
+    `ASC` or `DESC`.
+  */
+
+  template <typename...Type>
+  Operation& sort(Type... spec)
+  {
+    try {
+      add_sort(get_impl(), spec...);
+      return *this;
+    }
+    CATCH_AND_WRAP
+  }
+
+protected:
+
+  using Impl = Sort_impl;
+
+  Impl* get_impl()
+  {
+    return static_cast<Impl*>(Base::get_impl());
+  }
 };
 
-struct Having_impl : public Sort_impl
+
+/// @copydoc Offset
+
+template <class Base>
+class Order_by
+  : public Base
+  , Sort_detail
 {
-  virtual void set_having(const string&) = 0;
+  using Operation = Base;
+
+public:
+
+  /**
+    Specify ordering of rows in a query results.
+
+    Arguments are one or more strings of the form `"<expr> <dir>"` where
+    `<expr>` gives the value to sort on and `<dir>` is a sorting direction
+    `ASC` or `DESC`.
+  */
+
+  template <typename...Type>
+  Operation& orderBy(Type... spec)
+  {
+    try {
+      add_sort(get_impl(), spec...);
+      return *this;
+    }
+    CATCH_AND_WRAP
+  }
+
+protected:
+
+  using Impl = Sort_impl;
+
+  Impl* get_impl()
+  {
+    return static_cast<Impl*>(Base::get_impl());
+  }
 };
 
-struct Group_by_impl : public Having_impl
+
+/// @copydoc Offset
+
+template <class Base>
+class Having
+  : public Base
 {
-  virtual void add_group_by(const string&) = 0;
+  using Operation = Base;
+
+public:
+
+  /**
+    Specify filter over grouped results of a query.
+
+    The argument is a Boolean expression which can use aggregation functions.
+  */
+
+  Operation& having(const string& having_spec)
+  {
+    try {
+      get_impl()->set_having(having_spec);
+      return *this;
+    }
+    CATCH_AND_WRAP
+  }
+
+protected:
+
+  using Impl = Having_impl;
+
+  Impl* get_impl()
+  {
+    return static_cast<Impl*>(Base::get_impl());
+  }
 };
 
-struct Proj_impl : public Group_by_impl
+
+/// @copydoc Offset
+
+template <class Base>
+class Group_by
+  : public Base
+  , Group_by_detail
 {
-  virtual void add_proj(const string&) = 0;
-  virtual void set_proj(const string&) = 0;
+  using Operation = Base;
+
+public:
+
+  /**
+    Specify grouping of items in a query result.
+
+    Arguments are a one or more expressions. Documents/rows for which
+    expressions evaluate to the same value are grouped together.
+  */
+
+  template <typename... Expr>
+  Operation& groupBy(Expr... group_by_spec)
+  {
+    try {
+      do_group_by(get_impl(), group_by_spec...);
+      return *this;
+    }
+    CATCH_AND_WRAP
+  }
+
+protected:
+
+  using Impl = Group_by_impl;
+
+  Impl* get_impl()
+  {
+    return static_cast<Impl*>(Base::get_impl());
+  }
+};
+
+
+/// @copydoc Offset
+
+template <class Base>
+class Bind_placeholders
+  : public Base
+  , Bind_detail
+{
+  using BindOperation = Bind_placeholders;
+
+public:
+
+  /**
+    Specify values for '?' placeholders in a query.
+
+    One or more values can be specified in a single call to bind(). A query
+    can be executed only if values for all placeholders have been specified.
+  */
+
+  template <typename... Types>
+  BindOperation& bind(Types... vals)
+  {
+    try {
+      add_params(get_impl(), vals...);
+      return *this;
+    }
+    CATCH_AND_WRAP
+  }
+
+protected:
+
+  using Impl = Bind_impl;
+
+  Impl* get_impl()
+  {
+    return static_cast<Impl*>(Base::get_impl());
+  }
+};
+
+
+/// @copydoc Offset
+
+template <class Base>
+class Bind_parameters
+  : public Base
+{
+  using BindOperation = Bind_parameters;
+  using Operation = Base;
+
+public:
+
+  /**
+    Bind parameter with given name to the given value.
+
+    A statement or query can be executed only if all named parameters used by
+    it are bound to values.
+  */
+
+  BindOperation& bind(const string &parameter, Value val)
+  {
+    try {
+      get_impl()->add_param(parameter, std::move(val));
+      return *this;
+    }
+    CATCH_AND_WRAP
+  }
+
+  /**
+    Bind parameters to values given by a map from parameter
+    names to their values.
+  */
+
+  template <class Map>
+  Operation& bind(const Map &args)
+  {
+    for (const auto &keyval : args)
+    {
+      bind(keyval.first, keyval.second);
+    }
+    return *this;
+  }
+
+protected:
+
+  using Impl = Bind_impl;
+
+  Impl* get_impl()
+  {
+    return static_cast<Impl*>(Base::get_impl());
+  }
 };
 
 

@@ -1,4 +1,4 @@
-MySQL Connector/C++ 2.0
+MySQL Connector/C++ 8.0
 
 This is a release of MySQL Connector/C++, Oracle's
 dual-license C++ API for connecting client applications
@@ -46,6 +46,9 @@ DOCUMENTATION LOCATION
 You can find the documentation on the MySQL website at
 <http://dev.mysql.com/doc/dev/connector-cpp/>
 
+For the new features/bugfix history, see release notes at
+<https://dev.mysql.com/doc/relnotes/connector-cpp/en/news-8-0-5.html>.
+Note that the initial releases used major version 2.0.
 
 CONTACT
 =======

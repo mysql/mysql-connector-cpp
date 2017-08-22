@@ -242,5 +242,81 @@ TEST_F(Protocol_mysqlx_xplugin, row_fetch_interrupt)
   cout <<"Done" <<endl;
 }
 
+#if 0
+class Expect_test : public cdk::protocol::mysqlx::api::Expectations
+{
+  void process(Processor &prc) const
+  {
+    prc.list_begin();
+    prc.list_el()->set(NO_ERROR);
+    prc.list_end();
+  }
+};
+
+// Enable the test when xplugin is fixed
+TEST_F(Protocol_mysqlx_xplugin, expectation)
+{
+  SKIP_IF_NO_XPLUGIN;
+  authenticate();
+
+  Protocol &proto = get_proto();
+  Expect_test expect;
+
+  //Reply
+  Row_handler rh;
+  Mdata_handler mdh;
+
+  proto.snd_Expect_Open(expect, false).wait();
+  cout << "Expect_Open is sent" << endl;
+
+  struct Expect_prc : cdk::protocol::mysqlx::Reply_processor
+  {
+    void error(unsigned int code, short int severity,
+               cdk::protocol::mysqlx::sql_state_t sql_state, const string &msg)
+    {
+      throw Error(static_cast<int>(code), msg);
+    }
+
+    void ok(string s)
+    {
+      cout << "OK received. Message: " <<
+        (s.empty() ? "(EMPTY)" : s) << endl;
+    }
+  } prc;
+
+  proto.rcv_Reply(prc).wait();
+
+  proto.snd_StmtExecute("sql", "SELECT 1", NULL).wait();
+  proto.rcv_MetaData(mdh).wait();
+  proto.rcv_Rows(rh).wait();
+
+  Stmt_handler sh;
+  proto.rcv_StmtReply(sh).wait();
+
+  proto.snd_StmtExecute("sql", "ERROR SQL", NULL).wait();
+  EXPECT_THROW(proto.rcv_Reply(prc).wait(), Error);
+
+  // Valid statement will fail because of expectation error
+  proto.snd_StmtExecute("sql", "SELECT 2", NULL).wait();
+  EXPECT_THROW(proto.rcv_Reply(prc).wait(), Error);
+
+  proto.snd_Expect_Close().wait();
+  cout << "Expect_Close is sent" << endl;
+  try
+  {
+    // This might throw and migh not
+    proto.rcv_Reply(prc).wait();
+  }
+  catch (Error &)
+  { }
+
+  // Valid statement should succeed after expectation is closed
+  proto.snd_StmtExecute("sql", "SELECT 3", NULL).wait();
+  proto.rcv_MetaData(mdh).wait();
+  proto.rcv_Rows(rh).wait();
+
+}
+#endif
+
 }}  // cdk::test
 

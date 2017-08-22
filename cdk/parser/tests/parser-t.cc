@@ -379,8 +379,11 @@ public:
 
   struct Path_printer
     : public cdk::api::Doc_path::Processor
-    , cdk::api::Doc_path_processor
+    , cdk::api::Doc_path_element_processor
   {
+    using Element_prc::string;
+    using Element_prc::index_t;
+
     ostream &m_out;
     bool     m_first;
 
@@ -430,6 +433,11 @@ public:
     {
       m_first = false;
       m_out << "**";
+    }
+
+    void whole_document()
+    {
+      m_first = false;
     }
   };
 
@@ -614,6 +622,132 @@ const Expr_Test exprs[] =
   { parser::Parser_mode::TABLE   , L"'a' NOT RLIKE '^[a-d]'"},
   { parser::Parser_mode::TABLE   , L"POSITION('bar' IN 'foobarbar')"},
   { parser::Parser_mode::TABLE   , L"TRIM('barxxyz')"},
+  { parser::Parser_mode::DOCUMENT, L"1 IN field.array"},
+  { parser::Parser_mode::DOCUMENT, L"1 NOT IN field.array"},
+  { parser::Parser_mode::DOCUMENT, L"field IN [1,2,3]"},
+  { parser::Parser_mode::DOCUMENT, L"field NOT IN [1,2,3, NULL]"},
+  { parser::Parser_mode::DOCUMENT, L"{\"a\":1, \"b\":null } IN $"},
+  { parser::Parser_mode::DOCUMENT, L"{\"a\":1} NOT IN $"},
+  { parser::Parser_mode::DOCUMENT, L"$.field1 IN $.field2"},
+  { parser::Parser_mode::DOCUMENT, L"$.field1 NOT IN $.field2"},
+  { parser::Parser_mode::DOCUMENT, L"a IN (b)"},
+  { parser::Parser_mode::TABLE   , L"cast(column as json) IN doc->'$.field.array'"},
+  { parser::Parser_mode::TABLE   , L"cast(column as json) NOT IN doc->'$.field.array'"},
+  { parser::Parser_mode::TABLE   , L"column->'$.field' IN [1,2,3]"},
+  { parser::Parser_mode::TABLE   , L"column->'$.field' NOT IN [1,2,3]"},
+  { parser::Parser_mode::TABLE   , L"{\"a\":1} IN doc->'$'"},
+  { parser::Parser_mode::TABLE   , L"{\"a\":1} NOT IN doc->'$'"},
+  { parser::Parser_mode::TABLE   , L"tab1.doc->'$.field1' IN tab2.doc->'$.field2'"},
+  { parser::Parser_mode::TABLE   , L"tab1.doc->'$.field1' NOT IN tab2.doc->'$.field2'"},
+
+  //Tests from devcocs:
+  //http://devdocs.no.oracle.com/mysqlx/latest/devapi-docs/refguide2/DataTypes/expression.html#expr
+
+  { parser::Parser_mode::DOCUMENT, L"(1 in (1,2,3)) = TRUE"},
+  { parser::Parser_mode::DOCUMENT, L"(1 not in (1,2,3)) = FALSE"},
+  { parser::Parser_mode::DOCUMENT, L"{\"foo\" : \"bar\", \"baz\": [1,2,[3],{}, TRUE, true, false, False, null, NULL, Null]}"},
+  { parser::Parser_mode::DOCUMENT, L"\"foo'bar\""},
+  { parser::Parser_mode::DOCUMENT, L"\"foo''bar\""},
+  { parser::Parser_mode::DOCUMENT, L"\"foo\\\"bar\""},
+  { parser::Parser_mode::DOCUMENT, L"\"foo\"\"bar\""},
+  { parser::Parser_mode::DOCUMENT, L"'foo\"bar'"},
+  { parser::Parser_mode::DOCUMENT, L"'foo\"\"bar'"},
+  { parser::Parser_mode::DOCUMENT, L"'foo\\'bar'"},
+  { parser::Parser_mode::DOCUMENT, L"'foo''bar'"},
+  { parser::Parser_mode::DOCUMENT, L"''''"},
+  { parser::Parser_mode::DOCUMENT, L"\"\"\"\""},
+  { parser::Parser_mode::DOCUMENT, L"\"\""},
+  { parser::Parser_mode::DOCUMENT, L"''"},
+  { parser::Parser_mode::DOCUMENT, L"'\\\\'"},
+  { parser::Parser_mode::DOCUMENT, L"\"\\\\\""},
+// discarded from grammar
+//  { parser::Parser_mode::DOCUMENT, L"[<foo.bar>]"},
+//  { parser::Parser_mode::DOCUMENT, L"[<\"foo\">]"},
+//  { parser::Parser_mode::DOCUMENT, L"{<foo, bar>}"},
+//  { parser::Parser_mode::DOCUMENT, L"[<{\"foo\":bar}>]"},
+
+  // Following items were not included in original EBNF, but are valid
+  { parser::Parser_mode::DOCUMENT, L"1 <> 2"},
+  { parser::Parser_mode::DOCUMENT, L"4 % 2"},
+  { parser::Parser_mode::DOCUMENT, L"[]"},
+  { parser::Parser_mode::DOCUMENT, L"{}"},
+
+    // Document Only
+  { parser::Parser_mode::DOCUMENT, L"1 in [1,2,3]"},
+  { parser::Parser_mode::DOCUMENT, L"[1] in [[1],[2],[3]]"},
+  { parser::Parser_mode::DOCUMENT, L"foo = bar.baz"},
+  { parser::Parser_mode::DOCUMENT, L"foo**.bar"},
+  { parser::Parser_mode::DOCUMENT, L"foo[*].bar"},
+  { parser::Parser_mode::DOCUMENT, L"_**._"},
+  { parser::Parser_mode::DOCUMENT, L"_**[*]._"},
+  { parser::Parser_mode::DOCUMENT, L"_**[*]._**._"},
+  { parser::Parser_mode::DOCUMENT, L"$.foo.bar[*]"},
+  { parser::Parser_mode::DOCUMENT, L"$ = {\"a\":1}"},
+  { parser::Parser_mode::DOCUMENT, L"$.\" \".bar"},
+  { parser::Parser_mode::DOCUMENT, L"$.a[0].b[0]"},
+  { parser::Parser_mode::DOCUMENT, L"$.a[0][0]"},
+  { parser::Parser_mode::DOCUMENT, L"$.a[*][*]"},
+  { parser::Parser_mode::DOCUMENT, L"$.a[*].z"},
+  { parser::Parser_mode::DOCUMENT, L"$.\"foo bar\".\"baz**\" = $"},
+  { parser::Parser_mode::DOCUMENT, L"$.foo**.bar"},
+  { parser::Parser_mode::DOCUMENT, L"$.\"foo bar\"**.baz"},
+  { parser::Parser_mode::DOCUMENT, L"$.\"foo\"**.\"bar\""},
+  { parser::Parser_mode::DOCUMENT, L"$.\"foo.\"**.\"bar\""},
+  { parser::Parser_mode::DOCUMENT, L"$.\"foo.\"**.\".bar\""},
+  { parser::Parser_mode::DOCUMENT, L"$.\"\""},
+  { parser::Parser_mode::DOCUMENT, L"$**.bar"},
+  { parser::Parser_mode::DOCUMENT, L"$**[0]"},
+  { parser::Parser_mode::DOCUMENT, L"$**.bar"},
+  { parser::Parser_mode::DOCUMENT, L"$**.foo"},
+  { parser::Parser_mode::DOCUMENT, L"$.a**.bar"},
+  { parser::Parser_mode::DOCUMENT, L"$.a**[0]"},
+  { parser::Parser_mode::DOCUMENT, L"$.a**[*]"},
+  { parser::Parser_mode::DOCUMENT, L"$.a**.bar"},
+  { parser::Parser_mode::DOCUMENT, L"$.a**.foo"},
+
+  //Relational
+  //http://devdocs.no.oracle.com/mysqlx/latest/devapi-docs/refguide2/DataTypes/expression.html#id8
+
+  { parser::Parser_mode::TABLE, L"1 in (1,2,3)"},
+  { parser::Parser_mode::TABLE, L"{\"foo\" : \"bar\", \"baz\": [1,2,[3],{}, TRUE, true, false, False, null, NULL, Null]}"},
+//  { parser::Parser_mode::TABLE, L"[<doc->'$.foo'>]"},
+//  { parser::Parser_mode::TABLE, L"[<\"foo\">]"},
+//  { parser::Parser_mode::TABLE, L"{<key, value>}"},
+//  { parser::Parser_mode::TABLE, L"{<\"x\", value>}"},
+//  { parser::Parser_mode::TABLE, L"[<{key:value}>]"},
+
+  // Following items were not included in original EBNF, but is MySQL syntax
+  { parser::Parser_mode::TABLE, L"1 <> 2"},
+  { parser::Parser_mode::TABLE, L"4 % 2"},
+  { parser::Parser_mode::TABLE, L"doc->>'$.foo'"},
+
+  { parser::Parser_mode::TABLE, L"[]"},
+  { parser::Parser_mode::TABLE, L"{}"},
+
+  // Relational Only
+  { parser::Parser_mode::TABLE, L"doc->'$.foo.bar[*]'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.\" \".bar'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.a[0].b[0]'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.a[0][0]'"},
+  { parser::Parser_mode::TABLE, L"`x`->'$.a[*][*]'"},
+  { parser::Parser_mode::TABLE, L"`''`->'$.a[*].z'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.\"foo bar\".\"baz**\"'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.foo**.bar'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.\"foo bar\"**.baz'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.\"foo\"**.\"bar\"'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.\"foo.\"**.\"bar\"'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.\"foo.\"**.\".bar\"'"},
+  { parser::Parser_mode::TABLE, L"doc->'$.\"\"'"},
+  { parser::Parser_mode::TABLE, L"doc->'$**.bar'"},
+  { parser::Parser_mode::TABLE, L"doc->'$**[0]'"},
+  { parser::Parser_mode::TABLE, L"doc->'$**.bar'"},
+  { parser::Parser_mode::TABLE, L"doc->'$**.foo'"},
+  { parser::Parser_mode::TABLE, L"foo.doc->'$.a**.bar'"},
+  { parser::Parser_mode::TABLE, L"foo.bar.doc->'$.a**[0]'"},
+  { parser::Parser_mode::TABLE, L"`foo`.doc->'$.a**[*]'"},
+  { parser::Parser_mode::TABLE, L"`foo.bar`.doc->'$.a**.bar'"},
+  { parser::Parser_mode::TABLE, L"`->`.doc->'$.a**.foo'"}
+
 };
 
 const Expr_Test negative_exprs[] =
@@ -627,6 +761,85 @@ const Expr_Test negative_exprs[] =
   { parser::Parser_mode::TABLE   , L"TRIM('xyz' FROM 'barxxyz')"},
   { parser::Parser_mode::TABLE   , L"'Heoko' SOUNDS LIKE 'h1aso'"},
   { parser::Parser_mode::TABLE   , L"foo+"},
+
+  //Tests from devcocs:
+  //http://devdocs.no.oracle.com/mysqlx/latest/devapi-docs/refguide2/DataTypes/expression.html#invalid
+
+  { parser::Parser_mode::DOCUMENT, L"$."                 },
+  { parser::Parser_mode::DOCUMENT, L".doc"               },
+  { parser::Parser_mode::DOCUMENT, L"**"                 },
+  { parser::Parser_mode::DOCUMENT, L"**foo"              },
+  { parser::Parser_mode::DOCUMENT, L"_**"                },
+  { parser::Parser_mode::DOCUMENT, L"_**[*]_**._"        },
+  { parser::Parser_mode::DOCUMENT, L"_**[*]._.**._"      },
+  { parser::Parser_mode::DOCUMENT, L"_**[*]_.**._"       },
+  { parser::Parser_mode::DOCUMENT, L"$.foo**"            },
+  { parser::Parser_mode::DOCUMENT, L"$.foo.**.bar"       },
+//  { parser::Parser_mode::DOCUMENT, L"$.foo.*.bar"        },
+  { parser::Parser_mode::DOCUMENT, L"$.foo[**]"          },
+  { parser::Parser_mode::DOCUMENT, L"$**"                },
+  { parser::Parser_mode::DOCUMENT, L"$.**"               },
+  { parser::Parser_mode::DOCUMENT, L"$.**bar"            },
+  { parser::Parser_mode::DOCUMENT, L"$.**\".bar\""       },
+  { parser::Parser_mode::DOCUMENT, L"$.**.bar"           },
+  { parser::Parser_mode::DOCUMENT, L"$.foo..bar"         },
+//  { parser::Parser_mode::DOCUMENT, L"foo[*].\"bar\""     },
+  { parser::Parser_mode::DOCUMENT, L"\"foo\".bar"        },
+  { parser::Parser_mode::DOCUMENT, L"$**.bar()"          },
+  { parser::Parser_mode::DOCUMENT, L"[<foo, bar>]"       },
+  { parser::Parser_mode::DOCUMENT, L"[<\"foo\", 1>]"     },
+  { parser::Parser_mode::DOCUMENT, L"{<foobar>}"         },
+
+  // Invalid that was wrongly included in parser (not MySQL syntax)
+//  { parser::Parser_mode::DOCUMENT, L"1 == 1"             },
+
+ // Relational Only
+  { parser::Parser_mode::DOCUMENT, L"doc->'$.foo'"           },
+  { parser::Parser_mode::DOCUMENT, L"foo.bar->'$.foo'"       },
+
+  //http://devdocs.no.oracle.com/mysqlx/latest/devapi-docs/refguide2/DataTypes/expression.html#id9
+
+  { parser::Parser_mode::TABLE, L"doc->'foo**.bar'"           },
+  { parser::Parser_mode::TABLE, L"doc->'foo[*].bar'"          },
+  { parser::Parser_mode::TABLE, L"doc->'_**._'"               },
+  { parser::Parser_mode::TABLE, L"doc->'_**[*]._'"            },
+  { parser::Parser_mode::TABLE, L"doc->_**[*]._**._'"         },
+  { parser::Parser_mode::TABLE, L"[<doc->'$.foo', bar>]"      },
+  { parser::Parser_mode::TABLE, L"[<\"foo\", 1>]"             },
+  { parser::Parser_mode::TABLE, L"{<doc->'$.foobar'>}"        },
+
+  // Document Only
+//  { parser::Parser_mode::TABLE, L"1 in [1,2,3]"               },
+//  { parser::Parser_mode::TABLE, L"[1] in [[1],[2],[3]]"       },
+//  { parser::Parser_mode::TABLE, L"foo = bar.baz"              },
+  { parser::Parser_mode::TABLE, L"foo**.bar"                  },
+  { parser::Parser_mode::TABLE, L"foo[*].bar"                 },
+  { parser::Parser_mode::TABLE, L"_**._"                      },
+  { parser::Parser_mode::TABLE, L"_**[*]._"                   },
+  { parser::Parser_mode::TABLE, L"_**[*]._**._"               },
+  { parser::Parser_mode::TABLE, L"$.foo.bar[*]"               },
+  { parser::Parser_mode::TABLE, L"$ = {\"a\":1}"              },
+  { parser::Parser_mode::TABLE, L"$.\" \".bar"                },
+  { parser::Parser_mode::TABLE, L"$.a[0].b[0]"                },
+  { parser::Parser_mode::TABLE, L"$.a[0][0]"                  },
+  { parser::Parser_mode::TABLE, L"$.a[*][*]"                  },
+  { parser::Parser_mode::TABLE, L"$.a[*].z"                   },
+  { parser::Parser_mode::TABLE, L"$.\"foo bar\".\"baz**\" = $"},
+  { parser::Parser_mode::TABLE, L"$.foo**.bar"                },
+  { parser::Parser_mode::TABLE, L"$.\"foo bar\"**.baz"        },
+  { parser::Parser_mode::TABLE, L"$.\"foo\"**.\"bar\""        },
+  { parser::Parser_mode::TABLE, L"$.\"foo.\"**.\"bar\""       },
+  { parser::Parser_mode::TABLE, L"$.\"foo.\"**.\".bar\""      },
+  { parser::Parser_mode::TABLE, L"$.\"\""                     },
+  { parser::Parser_mode::TABLE, L"$**.bar"                    },
+  { parser::Parser_mode::TABLE, L"$**[0]"                     },
+  { parser::Parser_mode::TABLE, L"$**.bar"                    },
+  { parser::Parser_mode::TABLE, L"$**.foo"                    },
+  { parser::Parser_mode::TABLE, L"$.a**.bar"                  },
+  { parser::Parser_mode::TABLE, L"$.a**[0]"                   },
+  { parser::Parser_mode::TABLE, L"$.a**[*]"                   },
+  { parser::Parser_mode::TABLE, L"$.a**.bar"                  },
+  { parser::Parser_mode::TABLE, L"$.a**.foo"                  }
 };
 
 
@@ -656,8 +869,7 @@ TEST(Parser, expr)
     cdk::string expr(test.txt);
     cout <<"expecting error when parsing string: " <<expr <<endl;
     cout <<"----" <<endl;
-    Expression_parser parser(test.mode, expr);
-    EXPECT_ERROR(parser.process(printer));
+    EXPECT_ERROR(Expression_parser(test.mode, expr).process(printer));
   }
 
 }
@@ -1344,7 +1556,7 @@ TEST(Parser, uri)
     },
     {
       "[(Address=127.0.0.1,Priority=2),(Address=example.com,Priority=100)]/database",
-      URI_parts(Host(2, "127.0.0.1"), Host(100, "example.com"), "database")
+      URI_parts(Host(3, "127.0.0.1"), Host(101, "example.com"), "database")
     },
     {
       "\\\\.\\named_pipe.socket",
