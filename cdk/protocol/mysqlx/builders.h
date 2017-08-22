@@ -853,12 +853,29 @@ inline
 void Expr_builder_base::id(const api::Doc_path &doc)
 {
   m_msg->set_type(Expr::IDENT);
-  Mysqlx::Expr::ColumnIdentifier *p_col_id = m_msg->mutable_identifier();
+
+  Mysqlx::Expr::ColumnIdentifier *p_col_id = NULL;
+
+  if (doc.is_whole_document())
+  {
+    // The path "$" is represented as a member without name
+    if (!p_col_id)
+      p_col_id = m_msg->mutable_identifier();
+
+    Mysqlx::Expr::DocumentPathItem *dpi = p_col_id->add_document_path();
+    dpi->set_type(Mysqlx::Expr::DocumentPathItem::MEMBER);
+    return;
+  }
+
 
   for (unsigned pos = 0; pos < doc.length(); ++pos)
   {
+    if (!p_col_id)
+      p_col_id = m_msg->mutable_identifier();
+
     Mysqlx::Expr::DocumentPathItem *dpi = p_col_id->add_document_path();
     dpi->set_type(static_cast<Mysqlx::Expr::DocumentPathItem_Type>(doc.get_type(pos)));
+
 
     switch (doc.get_type(pos))
     {

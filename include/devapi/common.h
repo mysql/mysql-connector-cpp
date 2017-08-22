@@ -222,7 +222,7 @@ public:
 
 namespace internal {
 
-  class nocopy
+  class PUBLIC_API nocopy
   {
   public:
     nocopy(const nocopy&) = delete;
@@ -248,7 +248,7 @@ namespace internal {
 
   /*
     Defined here because std::enable_if_t is not defined on all platforms on
-    which we build (clang is missing one).
+    which we build (clang is missing one). Note: it is C++14 feature.
   */
 
   template<bool Cond, typename T = void>
@@ -350,6 +350,178 @@ void throw_error(const char *msg)
 {
   throw ::mysqlx::Error(msg);
 }
+
+
+namespace internal {
+
+  /*
+    Type trait which checks if std::begin()/end() work on objects of given
+    class C, so that it can be used as a range to iterate over.
+
+    TODO: Make it work also with user-defined begin()/end() functions.
+    TODO: Make it work with plain C arrays. For example:
+
+       int vals[] = { 1, 2, 3 }
+       process_args(data, vals)
+  */
+
+  template <class C>
+  class is_range
+  {
+    /*
+      Note: This overload will be taken into account only if std::begin(X) and
+      std::end(X) expressions are valid.
+    */
+    template <class X>
+    static std::true_type test(decltype(std::begin(*((X*)nullptr)))*,
+                               decltype(std::end(*((X*)nullptr)))*);
+
+    template <class X>
+    static std::false_type test(...);
+
+  public:
+
+    static const bool value
+      = std::is_same<
+          std::true_type, decltype(test<C>(nullptr, nullptr))
+        >::value;
+  };
+
+
+  /*
+    Class template to be used for uniform processing of variable argument lists
+    in public API methods. This template handles the cases where arguments
+    are specified directly as a list:
+
+      method(arg1, arg2, ..., argN)
+
+    or they are taken from a container such as std::list:
+
+      method(container)
+
+    or they are taken from a range of items described by two iterators:
+
+      method(begin, end)
+
+    A class B that is using this template to define a varargs method 'foo'
+    should define it as follows:
+
+      template <typename... T>
+      X foo(T... args)
+      {
+        Args_processor<B>::process_args(m_impl, args...);
+        return ...;
+      }
+
+    Process_args() is a static method of Args_processor<> and therefore
+    additional context data is passed to it as the first argument. By default
+    this context is a pointer to internal implementation object, as defined
+    by the base class B. The process_args() methods does all the necessary
+    processing of the variable argument list, passing the resulting items
+    one-by-one to B::process_one() method. Base class B must define this
+    static method, which takes the context and one data item as arguments.
+    B::process_one() method can have overloads that handle different types
+    of data items.
+
+    See devapi/detail/crud.h for usage examples.
+  */
+
+  template <class Base, class D = typename Base::Impl*>
+  class Args_processor
+  {
+  public:
+
+    /*
+      Check if item of type T can be passed to Base::process_one()
+    */
+
+    template <typename T>
+    class can_process
+    {
+      template <typename X>
+      static std::true_type
+      test(decltype(Base::process_one(*(D*)nullptr,*(X*)nullptr))*);
+
+      template <typename X>
+      static std::false_type test(...);
+
+    public:
+
+      static const bool value
+        = std::is_same<std::true_type, decltype(test<T>(nullptr))>::value;
+    };
+
+  public:
+
+    /*
+      Process items from a container.
+    */
+
+    template <
+      typename C,
+      typename = enable_if_t<is_range<C>::value>,
+      typename = enable_if_t<!can_process<C>::value>
+    >
+      static void process_args(D data, C container)
+    {
+      for (auto el : container)
+      {
+        Base::process_one(data, el);
+      }
+    }
+
+    /*
+      If process_args(data, a, b) is called and a,b are of the same type It
+      which can not be passed to Base::process_one() then we assume that a and
+      b are iterators that describe a range of elements to process.
+    */
+
+    template <
+      typename It,
+      typename = enable_if_t<!can_process<It>::value>
+    >
+      static void process_args(D data, const It &begin, const It &end)
+    {
+      for (It it = begin; it != end; ++it)
+      {
+        Base::process_one(data, *it);
+      }
+    }
+
+    /*
+      Process elements given as a varargs list.
+    */
+
+    template <
+      typename T,
+      typename... R,
+      typename = enable_if_t<can_process<T>::value>
+    >
+      static void process_args(D data, T first, R... rest)
+    {
+      process_args1(data, first, rest...);
+    }
+
+  private:
+
+    template <
+      typename T,
+      typename... R,
+      typename = enable_if_t<can_process<T>::value>
+    >
+      static void process_args1(D data, T first, R... rest)
+    {
+      Base::process_one(data, first);
+      process_args1(data, rest...);
+    }
+
+    static void process_args1(D)
+    {}
+
+  };
+
+}  // internal namespace
+
 
 
 }  // mysqlx

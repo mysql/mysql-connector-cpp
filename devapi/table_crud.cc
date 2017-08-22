@@ -58,7 +58,7 @@ using parser::Parser_mode;
 
 class Op_table_insert
     : public Op_sort<
-        internal::TableInsert_impl,
+        internal::Table_insert_impl,
         Parser_mode::TABLE
       >
     , public cdk::Row_source
@@ -98,12 +98,6 @@ public:
   void add_column(const mysqlx::string &column) override
   {
     m_col_end = m_cols.emplace_after(m_col_end, column);
-  }
-
-  Row& new_row() override
-  {
-    m_row_end = m_rows.emplace_after(m_row_end);
-    return *m_row_end;
   }
 
   void add_row(const Row &row) override
@@ -167,11 +161,11 @@ private:
 
   void process(cdk::Expr_list::Processor &ep) const override;
 
-  friend mysqlx::TableInsert;
+  friend TableInsert;
 };
 
 
-void TableInsert::prepare(Table &table)
+TableInsert::TableInsert(Table &table)
 {
   m_impl.reset(new Op_table_insert(table));
 }
@@ -209,7 +203,7 @@ void Op_table_insert::process(cdk::Expr_list::Processor &lp) const
 class Op_table_select
   : public Op_select<
       Op_projection<
-        internal::TableSelect_impl,
+        internal::Table_select_impl,
         parser::Parser_mode::TABLE
       >,
       parser::Parser_mode::TABLE
@@ -257,14 +251,17 @@ public:
 
 
 
-  friend mysqlx::TableSelect;
-  friend mysqlx::internal::Op_ViewCreateAlter;
+  friend TableSelect;
+  friend internal::Op_view_create_alter;
 };
 
 
-void TableSelect::prepare(Table &table)
+TableSelect::TableSelect(Table &table)
 {
-  m_impl.reset(new Op_table_select(table));
+  try {
+    m_impl.reset(new Op_table_select(table));
+  }
+  CATCH_AND_WRAP
 }
 
 
@@ -279,7 +276,7 @@ void TableSelect::prepare(Table &table)
   Internal implementation for table CRUD select operation.
 
   This implementation is built from Op_select<> and Op_projection<>
-  templates and it implements the `add_set` method of TableUpdate_impl
+  templates and it implements the `add_set` method of Table_update_impl
   implemantation interface. Update requests are stored in m_set_values
   member and presented to CDK via cdk::Update_spec interface.
 
@@ -290,7 +287,7 @@ void TableSelect::prepare(Table &table)
 class Op_table_update
     : public Op_select<
         Op_projection<
-          internal::TableUpdate_impl,
+          internal::Table_update_impl,
           parser::Parser_mode::TABLE
         >,
         parser::Parser_mode::TABLE
@@ -392,11 +389,11 @@ public:
   {}
 
 
-  friend mysqlx::TableUpdate;
+  friend TableUpdate;
 };
 
 
-void TableUpdate::prepare(Table &table)
+TableUpdate::TableUpdate(Table &table)
 {
   m_impl.reset(new Op_table_update(table));
 }
@@ -420,7 +417,7 @@ void TableUpdate::prepare(Table &table)
 class Op_table_remove
     : public Op_select<
         Op_sort<
-          internal::TableRemove_impl,
+          internal::Table_remove_impl,
           parser::Parser_mode::TABLE
         >,
         parser::Parser_mode::TABLE
@@ -457,11 +454,11 @@ public:
 
 
 
-  friend mysqlx::TableRemove;
+  friend TableRemove;
 };
 
 
-void TableRemove::prepare(Table &table)
+TableRemove::TableRemove(Table &table)
 {
   m_impl.reset(new Op_table_remove(table));
 }
@@ -477,7 +474,7 @@ void TableRemove::prepare(Table &table)
 namespace mysqlx{
 namespace internal {
 
-class Op_ViewCreateAlter
+class Op_view_create_alter
   : public Op_base<mysqlx::internal::View_impl>
   , cdk::View_spec
   , Table_ref
@@ -501,10 +498,10 @@ private:
 
   Executable_impl* clone() const override
   {
-    return new Op_ViewCreateAlter(*this);
+    return new Op_view_create_alter(*this);
   }
 
-  Op_ViewCreateAlter(const Op_ViewCreateAlter& other)
+  Op_view_create_alter(const Op_view_create_alter& other)
     : Op_base(other)
     , Table_ref(other)
     , m_op_type      (other.m_op_type     )
@@ -524,15 +521,18 @@ private:
 
 public:
 
-  Op_ViewCreateAlter(Schema &sch, const mysqlx::string &name, op_type replace)
+  Op_view_create_alter(Schema &sch, const mysqlx::string &name, op_type replace)
     : Op_base< mysqlx::internal::View_impl >(sch.getSession())
     ,  Table_ref(sch.getName(), name)
     , m_op_type(replace)
   {}
 
-  void with_check_option(CheckOption option) override
+
+  // View_impl
+
+  void with_check_option(unsigned option) override
   {
-    m_check_option = option;
+    m_check_option = CheckOption(option);
     m_opts_mask.set(CHECK);
   }
 
@@ -548,15 +548,15 @@ public:
     m_opts_mask.set(DEFINER);
   }
 
-  void security(SQLSecurity security) override
+  void security(unsigned security) override
   {
-    m_security = security;
+    m_security = SQLSecurity(security);
     m_opts_mask.set(SECURITY);
   }
 
-  void algorithm(Algorithm algorythm) override
+  void algorithm(unsigned algorithm) override
   {
-    m_algorithm = algorythm;
+    m_algorithm = Algorithm(algorithm);
     m_opts_mask.set(ALGORITHM);
   }
 
@@ -647,34 +647,33 @@ public:
   }
 };
 
-}} // namespace mysqlx::internal
+}  // internal namespace
 
-namespace mysqlx {
 
 ViewCreate::ViewCreate(Schema &sch, const string &name, bool replace)
 {
   m_impl.reset(
-        new internal::Op_ViewCreateAlter(sch,
-                                         name,
-                                         replace ?
-                                           internal::Op_ViewCreateAlter::op_type::REPLACE :
-                                           internal::Op_ViewCreateAlter::op_type::CREATE )
-        );
+    new internal::Op_view_create_alter(
+      sch, name,
+      replace ?
+        internal::Op_view_create_alter::op_type::REPLACE :
+        internal::Op_view_create_alter::op_type::CREATE
+    )
+  );
 }
-
 
 
 ViewAlter::ViewAlter(Schema &sch, const string &name)
 {
   m_impl.reset(
-        new internal::Op_ViewCreateAlter(sch,
-                                         name,
-                                         internal::Op_ViewCreateAlter::op_type::UPDATE)
-        );
+    new internal::Op_view_create_alter(
+      sch, name,
+      internal::Op_view_create_alter::op_type::UPDATE
+    )
+  );
 }
 
 } // namespace mysqlx
-
 
 
 /*
@@ -686,7 +685,7 @@ namespace mysqlx {
 namespace internal{
 
 class Op_ViewDrop
-    : public Op_base<ViewDrop_impl>
+    : public Op_base<View_drop_impl>
     ,  public Table_ref
 {
   bool m_checkExistence = true;
@@ -694,7 +693,7 @@ class Op_ViewDrop
 public:
 
   Op_ViewDrop(Schema &sch, const string &name)
-    : Op_base<ViewDrop_impl>(sch.getSession())
+    : Op_base<View_drop_impl>(sch.getSession())
     , Table_ref(sch.getName(), name)
   {}
 
@@ -715,6 +714,7 @@ public:
 };
 
 } // namespace internal
+
 
 ViewDrop::ViewDrop(Schema &sch, const string &name)
 {

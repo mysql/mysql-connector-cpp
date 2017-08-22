@@ -170,7 +170,7 @@ TEST_F(Batch, crud)
     {
       cout << " -doc#" << pos <<": " << doc << endl;
       EXPECT_NO_THROW(doc["food"]);
-      EXPECT_THROW(doc["date"], Error);
+      EXPECT_THROW(doc["date"], std::out_of_range);
     }
     EXPECT_EQ(5, pos);
   }

@@ -71,7 +71,7 @@ void mysqlx::GUID::generate()
 */
 
 class Op_collection_add
-  : public Op_base< internal::CollectionAdd_impl >
+  : public Op_base< internal::Collection_add_impl>
   , public cdk::Doc_source
   , public cdk::JSON::Processor
   , public cdk::JSON::Processor::Any_prc
@@ -120,7 +120,7 @@ class Op_collection_add
   }
 
 
-  internal::BaseResult mk_result(cdk::Reply *reply) override
+  internal::Result_base mk_result(cdk::Reply *reply) override
   {
     return Result::Access::mk(m_sess, reply, m_id_list);
   }
@@ -218,10 +218,13 @@ class Op_collection_add
 
 
 CollectionAdd::CollectionAdd(Collection &coll)
-try
-  : Executable(new Op_collection_add(coll))
-{}
-CATCH_AND_WRAP
+{
+  try
+  {
+    reset(new Op_collection_add(coll));
+  }
+  CATCH_AND_WRAP
+}
 
 
 /*
@@ -377,17 +380,24 @@ class Op_collection_remove
 
 
 CollectionRemove::CollectionRemove(Collection &coll)
-try
-  : Executable(new Op_collection_remove(coll))
-{}
-CATCH_AND_WRAP
+{
+  try
+  {
+    reset(new Op_collection_remove(coll));
+  }
+  CATCH_AND_WRAP
+}
 
-CollectionRemove::CollectionRemove(Collection &coll, const mysqlx::string &expr)
-try
-  : Executable(new Op_collection_remove(coll, expr))
-{}
-CATCH_AND_WRAP
-
+CollectionRemove::CollectionRemove(
+  Collection &coll, const mysqlx::string &expr
+)
+{
+  try
+  {
+    reset(new Op_collection_remove(coll, expr));
+  }
+  CATCH_AND_WRAP
+}
 
 // --------------------------------------------------------------------
 
@@ -451,17 +461,24 @@ class Op_collection_find
 
 
 CollectionFind::CollectionFind(Collection &coll)
-try
-  : Executable(new Op_collection_find(coll))
-{}
-CATCH_AND_WRAP
+{
+  try
+  {
+    reset(new Op_collection_find(coll));
+  }
+  CATCH_AND_WRAP
+}
 
-CollectionFind::CollectionFind(Collection &coll, const mysqlx::string &expr)
-try
-  : Executable(new Op_collection_find(coll, expr))
-{}
-CATCH_AND_WRAP
-
+CollectionFind::CollectionFind(
+  Collection &coll, const mysqlx::string &expr
+)
+{
+  try
+  {
+    reset(new Op_collection_find(coll, expr));
+  }
+  CATCH_AND_WRAP
+}
 
 // --------------------------------------------------------------------
 
@@ -482,14 +499,14 @@ CATCH_AND_WRAP
 class Op_collection_modify
     : public Op_select<
         Op_sort<
-          internal::CollectionModify_impl,
+          internal::Collection_modify_impl,
           parser::Parser_mode::DOCUMENT
         >,
         parser::Parser_mode::DOCUMENT
       >
     , public cdk::Update_spec
 {
-  typedef internal::CollectionModify_impl Impl;
+  using Impl = internal::Collection_modify_impl;
 
   Table_ref m_coll;
 
@@ -626,8 +643,13 @@ class Op_collection_modify
 };
 
 
-CollectionModify::CollectionModify(Collection &coll, const mysqlx::string &expr)
-try
-  : Executable(new Op_collection_modify(coll, expr))
-{}
-CATCH_AND_WRAP
+CollectionModify::CollectionModify(
+  Collection &coll, const mysqlx::string &expr
+)
+{
+  try
+  {
+    reset(new Op_collection_modify(coll, expr));
+  }
+  CATCH_AND_WRAP
+}
