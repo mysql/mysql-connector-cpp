@@ -1056,43 +1056,62 @@ void check_reply_skip_error_throw(cdk::Reply&& r, int skip_server_error)
 void Session::dropSchema(const string &name)
 {
   try{
+    prepare_for_cmd();
     std::stringstream qry;
     qry << "Drop Schema `" << name << "`";
     //skip server error 1008 = schema doesn't exist
-    check_reply_skip_error_throw(get_cdk_session().sql(qry.str()),
-                                 1008);
+    check_reply_skip_error_throw(get_cdk_session().sql(qry.str()), 1008);
   }
   CATCH_AND_WRAP
 }
 
 
-/*
-  TODO: better implementation: check if drop_collection can drop views also
-*/
-
-void Session::dropTable(const mysqlx::string& schema, const string& table)
+void Schema::dropTable(const string& table)
 {
-  try{
-    Args args(schema, table);
-    // Doesn't throw if table doesn't exit (server error 1051)
-    check_reply_skip_error_throw(get_cdk_session().admin("drop_collection", args),
-                                 1051);
-  }
-  CATCH_AND_WRAP
+  /*
+    Note: We simply forward to dropCollection() because xplugin does not
+    have a dedicated command for dropping tables and it does not distinguish
+    tables from collections.
+  */
+  dropCollection(table);
 }
 
 
-void Session::dropCollection(const mysqlx::string& schema,
-                              const mysqlx::string& collection)
+void Schema::dropCollection(const mysqlx::string& collection)
 {
   try{
-    Args args(schema, collection);
+    m_sess->prepare_for_cmd();
+    Args args(m_name, collection);
     // Doesn't throw if collection doesn't exit (server error 1051)
-    check_reply_skip_error_throw(get_cdk_session().admin("drop_collection", args),
-                                 1051);
+    check_reply_skip_error_throw(
+          m_sess->get_cdk_session().admin("drop_collection", args),
+          1051
+          );
   }
   CATCH_AND_WRAP
 }
+
+
+void Schema::dropView(const mysqlx::string& name)
+{
+  Table_ref view(getName(),name);
+
+  try {
+    m_sess->prepare_for_cmd();
+    /*
+      Note: false argument to view_drop() means that we do not check for
+      the existence of the view being dropped.
+      We do not throw error 1347 (object is not a view) treating it the same
+      as the case when the view does not exist.
+    */
+    check_reply_skip_error_throw(
+          m_sess->get_cdk_session().view_drop(view, false),
+          1347
+    );
+  }
+  CATCH_AND_WRAP
+}
+
 
 Schema Session::getDefaultSchema()
 {

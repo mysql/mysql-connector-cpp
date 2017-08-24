@@ -102,7 +102,10 @@ TEST_F(xapi, test_row_locking)
 
 TEST_F(xapi, test_having_group_by)
 {
-  SKIP_IF_NO_XPLUGIN
+  SKIP_IF_NO_XPLUGIN;
+
+ //TODO: REMOVE THIS AND PUT VERSION CHECK
+ SKIP_TEST("GroupBy not working on current xplugin");
 
   mysqlx_result_t *res;
   mysqlx_schema_t *schema;

@@ -1330,9 +1330,9 @@ TEST_F(Crud, doc_path)
   cout << "Creating session..." << endl;
 
   Session sess(this);
-  sess.dropCollection("test", "coll");
 
   Schema sch = sess.getSchema("test");
+  sch.dropCollection("coll");
   Collection coll = sch.createCollection("coll",false);
 
   coll.add( "{\"date\": {\"monthName\":\"December\", \"days\":[1,2,3]}}").execute();
@@ -1915,8 +1915,6 @@ TEST_F(Crud, group_by_having)
   Session sess(this);
 
   Schema test = sess.createSchema("test", true);
-  sess.dropCollection("test", "coll");
-
   Collection coll = test.createCollection("coll", true);
   Table tbl = test.getCollectionAsTable("coll", true);
 
@@ -2301,7 +2299,6 @@ TEST_F(Crud, single_document)
   cout << "Session accepted, creating collection..." << endl;
 
   Schema sch = sess.getSchema("test");
-  sess.dropCollection("test", "c1");
   Collection coll = sch.createCollection("c1", true);
 
   coll.add("{\"_id\":\"id1\", \"name\":\"foo\" }" )
@@ -2350,7 +2347,6 @@ TEST_F(Crud, add_or_replace)
   cout << "Session accepted, creating collection..." << endl;
 
   Schema sch = sess.getSchema("test");
-  sess.dropCollection("test", "c1");
   Collection coll = sch.createCollection("c1", true);
 
   coll.add("{\"_id\":\"id1\", \"name\":\"foo\" }")

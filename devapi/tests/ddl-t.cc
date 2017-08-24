@@ -101,16 +101,31 @@ TEST_F(Ddl, create_drop)
 
     //Drop Tables/Views
 
-    std::list<string> names_list = schema.getTableNames();
+    /*
+      Note: currently passing view to dropTable() does nothing. Changing this
+      requires changes in xplugin. Similar with passing table to dropView().
+    */
+    //EXPECT_THROW(schema.dropTable("view1"), mysqlx::Error);
+    EXPECT_NO_THROW(schema.dropTable("view1"));
+    EXPECT_NO_THROW(schema.getTable("view1", true));
 
-    for (auto name : names_list)
+    EXPECT_NO_THROW(schema.dropView("tb1"));
+    EXPECT_NO_THROW(schema.getTable("tb1", true));
+
+    std::list<Table> table_list = schema.getTables();
+
+    for (auto t : table_list)
     {
       //View is not dropped, but still no error thrown
-      get_sess().dropTable(schema.getName(), name);
+      if (t.isView())
+        schema.dropView(t.getName());
+      else
+        schema.dropTable(t.getName());
     }
 
     EXPECT_THROW(schema.getTable("tb1", true), mysqlx::Error);
     EXPECT_THROW(schema.getTable("tb2", true), mysqlx::Error);
+    EXPECT_THROW(schema.getTable("view1", true), mysqlx::Error);
   }
 
   //Collection tests
@@ -137,16 +152,24 @@ TEST_F(Ddl, create_drop)
 
     // Drop Collections
 
+    /*
+      Note: currently passing collection to dropView() does nothing. Changing this
+      requires changes in xplugin.
+    */
+
+    EXPECT_NO_THROW(schema.dropView(collection_name_1));
+    EXPECT_NO_THROW(schema.getCollection(collection_name_1, true));
+
     std::list<string> list_coll_name = schema.getCollectionNames();
     for (auto name : list_coll_name)
     {
-      get_sess().dropCollection(schema.getName(), name);
+      schema.dropCollection(name);
     }
 
     //Doesn't throw even if don't exist
     for (auto name : list_coll_name)
     {
-      get_sess().dropCollection(schema.getName(), name);
+      schema.dropCollection(name);
     }
 
     //Test Drop Collection
@@ -182,4 +205,43 @@ TEST_F(Ddl, create_drop)
 
 
   cout << "Done!" << endl;
+}
+
+TEST_F(Ddl, bugs)
+{
+
+  SKIP_IF_NO_XPLUGIN;
+
+  {
+    /*
+      Having Result before dropView() triggered error, because cursor was closed
+      without informing Result, so that Result coud cache and then close Cursor
+      and Reply
+    */
+
+    get_sess().dropSchema("bugs");
+    get_sess().createSchema("bugs", false);
+
+    Schema schema = get_sess().getSchema("bugs");
+    sql(
+          "CREATE TABLE bugs.bugs_table("
+          "c0 JSON,"
+          "c1 INT"
+          ")");
+
+    Table tbl = schema.getTable("bugs_table");
+
+    schema.createView("newView").algorithm(Algorithm::TEMPTABLE)
+        .security(SQLSecurity ::INVOKER).definedAs(tbl.select()).execute();
+
+    RowResult result = get_sess().sql("show create view bugs.newView").execute();
+    Row r = result.fetchOne();
+
+    schema.dropView("newView");
+
+    schema.createView("newView").algorithm(Algorithm::TEMPTABLE)
+        .security(SQLSecurity ::INVOKER).definedAs(tbl.select()).execute();
+
+    r = result.fetchOne();
+  }
 }

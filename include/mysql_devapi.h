@@ -250,14 +250,40 @@ public:
     return ViewAlter(*this, view_name);
   }
 
+
   /**
-    Drop view with given name.
+    Drop given collection from the schema.
+
+    This method will silently succeed if given collection does not exist.
+
+    @note If table name is passed to the method, it will behave like
+    dropTable().
   */
 
-  ViewDrop dropView(const mysqlx::string& view_name)
-  {
-    return ViewDrop(*this, view_name);
-  }
+  void dropCollection(const mysqlx::string& name);
+
+  /**
+    Drop given table from the schema.
+
+    This method will silently succeed if given table does not exist. If given
+    table is a view (isView() returns true) then it will not be dropped (and no
+    error is reported) - use dropView() instead.
+
+    @note If collection name is passed to the method, it will behave like
+    dropCollection().
+  */
+
+  void dropTable(const mysqlx::string& name);
+
+  /**
+    Drop given view from the schema.
+
+    This method will silently succeed if given view does not exist. This is
+    also the case when a name of non-view object, such as table or collection
+    was given (as a view with the given name does not exist).
+  */
+
+  void dropView(const mysqlx::string& name);
 
 
   friend Collection;
@@ -679,6 +705,7 @@ public:
 
       Session from_uri("mysqlx://user:pwd@host:port/db?ssl-mode=disabled");
 
+
       Session from_options("host", port, "user", "pwd", "db");
 
       Session from_option_list(
@@ -745,21 +772,6 @@ public:
 
   void   dropSchema(const string &name);
 
-  /**
-    Drop a table from a schema.
-
-    Errors will be thrown if table doesn't exist,
-  */
-
-  void   dropTable(const string& schema, const string& table);
-
-  /**
-    Drop a collection from a schema.
-
-    Errors will be thrown if collection doesn't exist,
-  */
-
-  void   dropCollection(const string& schema, const string& collection);
 
   /**
     Operation that runs arbitrary SQL query.

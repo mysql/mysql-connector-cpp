@@ -468,13 +468,18 @@ bool Expr_parser_base::parse_schema_ident(Token::Type (*types)[2])
 
 void Expr_parser_base::parse_column_ident(Path_prc *prc)
 {
-  parse_schema_ident();
+  if (!parse_schema_ident())
+    parse_error(L"Expected a column identifier");
   parse_column_ident1(prc);
 }
 
 
 void Expr_parser_base::parse_column_ident1(Path_prc *prc)
 {
+  /*
+    Note: at this point we assume that an (possibly schema qualified) identifier
+    has been already seen and is stored in m_col_ref.table()
+  */
   if (consume_token(Token::DOT))
   {
     string name;
@@ -488,11 +493,13 @@ void Expr_parser_base::parse_column_ident1(Path_prc *prc)
   {
     // Re-interpret table name parsed by parse_schema_ident() as a
     // column name of the form [<table>.]<column>
+    auto table = m_col_ref.table();
+    assert(table);
 
-    if (m_col_ref.table()->schema())
-      m_col_ref.set(m_col_ref.table()->name(), m_col_ref.table()->schema()->name());
+    if (table->schema())
+      m_col_ref.set(table->name(), table->schema()->name());
     else
-      m_col_ref.set(m_col_ref.table()->name());
+      m_col_ref.set(table->name());
   }
 
   if (consume_token(Token::ARROW) || consume_token(Token::ARROW2))
