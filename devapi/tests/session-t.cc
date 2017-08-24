@@ -281,6 +281,117 @@ TEST_F(Sess, trx)
   cout << "Done!" << endl;
 }
 
+TEST_F(Sess, auth_method)
+{
+
+  SKIP_IF_NO_XPLUGIN;
+
+  auto check_user = [](mysqlx::Session &sess)
+  {
+    SqlResult res = sess.sql("SELECT CURRENT_USER()").execute();
+    auto row = res.fetchOne();
+    string str = row[0];
+    cout << "User: " << str << endl;
+  };
+
+  {
+    mysqlx::Session sess(SessionOption::PORT, get_port(),
+                         SessionOption::USER, get_user(),
+                         SessionOption::PWD, get_password() ? get_password() : nullptr,
+                         SessionOption::SSL_MODE, SSLMode::DISABLED,
+                         SessionOption::AUTH, AuthMethod::MYSQL41
+    );
+    check_user(sess);
+  }
+
+  {
+    // This will throw because of plain auth without SSL
+    EXPECT_THROW(mysqlx::Session sess(SessionOption::PORT, get_port(),
+                         SessionOption::USER, get_user(),
+                         SessionOption::PWD, get_password() ? get_password() : nullptr,
+                         SessionOption::SSL_MODE, SSLMode::DISABLED,
+                         SessionOption::AUTH, AuthMethod::PLAIN),
+                 Error);
+  }
+
+  {
+    mysqlx::Session sess(SessionOption::PORT, get_port(),
+                         SessionOption::USER, get_user(),
+                         SessionOption::PWD, get_password() ? get_password() : nullptr,
+                         SessionOption::SSL_MODE, SSLMode::REQUIRED,
+                         SessionOption::AUTH, AuthMethod::PLAIN
+    );
+    check_user(sess);
+  }
+
+  {
+    mysqlx::Session sess(SessionOption::PORT, get_port(),
+                         SessionOption::USER, get_user(),
+                         SessionOption::PWD, get_password() ? get_password() : nullptr,
+                         SessionOption::SSL_MODE, SSLMode::REQUIRED,
+                         SessionOption::AUTH, AuthMethod::MYSQL41
+    );
+    check_user(sess);
+  }
+
+  std::stringstream uri;
+  uri << "mysqlx://" << get_user();
+  if (get_password() && *get_password())
+    uri << ":" << get_password();
+  uri << "@" << "localhost:" << get_port();
+
+  {
+    std::stringstream str;
+    str << uri.str() << "/?ssl-mode=disabled&auth=mysql41";
+    mysqlx::Session sess(str.str());
+    check_user(sess);
+  }
+
+  {
+    std::stringstream str;
+    str << uri.str() << "/?ssl-mode=disabled&auth=plain";
+    EXPECT_THROW(mysqlx::Session sess(str.str()), Error);
+  }
+
+  {
+    std::stringstream str;
+    str << uri.str() << "/?ssl-mode=required&auth=plain";
+    mysqlx::Session sess(str.str());
+    check_user(sess);
+  }
+
+  {
+    std::stringstream str;
+    str << uri.str() << "/?ssl-mode=required&auth=mysql41";
+    mysqlx::Session sess(str.str());
+    check_user(sess);
+  }
+}
+
+TEST_F(Sess, auth_external)
+{
+
+  SKIP_IF_NO_XPLUGIN;
+
+  // This will throw because of EXTERNAL is not supported
+  EXPECT_THROW(mysqlx::Session sess(SessionOption::PORT, get_port(),
+                                    SessionOption::USER, get_user(),
+                                    SessionOption::PWD, get_password() ? get_password() : nullptr,
+                                    SessionOption::SSL_MODE, SSLMode::DISABLED,
+                                    SessionOption::AUTH, AuthMethod::PLAIN),
+               Error);
+
+  std::stringstream uri;
+  uri << "mysqlx://" << get_user();
+  if (get_password() && *get_password())
+    uri << ":" << get_password();
+  uri << "@" << "localhost:" << get_port();
+
+    uri << "/?ssl-mode=required&auth=external";
+    EXPECT_THROW(mysqlx::Session sess(uri.str()),
+                 Error);
+}
+
 
 TEST_F(Sess, ssl_session)
 {

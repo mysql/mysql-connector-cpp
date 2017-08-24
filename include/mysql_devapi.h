@@ -555,6 +555,7 @@ public:
   */
   uint64_t count();
 
+
   /*
     CRUD operations
     ---------------

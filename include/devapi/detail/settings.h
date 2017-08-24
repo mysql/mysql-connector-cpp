@@ -19,8 +19,9 @@ namespace internal {
 template <typename Traits>
 class Settings_detail
 {
-  using Options = typename Traits::Options;
-  using SSLMode = typename Traits::SSLMode;
+  using Options    = typename Traits::Options;
+  using SSLMode    = typename Traits::SSLMode;
+  using AuthMethod = typename Traits::AuthMethod;
 
 protected:
 
@@ -34,6 +35,20 @@ protected:
   void do_add(Options opt, Value &&v);
   Value& find(Options opt);
 
+  /*
+    Declare options that require specific type of value (mostly enumerations).
+    For such options we do not accept setting them to arbitrary values. Instead
+    an overload of opt_val() with appropriate type will be used to set value
+    of the option.
+  */
+
+#define OPT_VAL_TYPE(X) \
+  X(SSL_MODE,SSLMode) \
+  X(AUTH,AuthMethod)
+
+#define CHECK_OPT(Opt,Type) \
+  if (opt == Options::Opt) \
+    throw Error(#Opt "setting requires value of type " #Type);
 
   /*
     Store option value in Value object (with basic run-time type checks)
@@ -42,8 +57,7 @@ protected:
 
   static Value opt_val(Options opt, Value &&val)
   {
-    if (opt == Options::SSL_MODE)
-      throw Error("SSL_MODE setting requires SessionSettings::SSLMode value.");
+    OPT_VAL_TYPE(CHECK_OPT)
     return val;
   }
 
@@ -59,8 +73,7 @@ protected:
   >
   static Value opt_val(Options opt, V &&val)
   {
-    if (opt == Options::SSL_MODE)
-      throw Error("SSL_MODE setting requires SessionSettings::SSLMode value.");
+    OPT_VAL_TYPE(CHECK_OPT)
     return string(val);
   }
 
@@ -70,6 +83,15 @@ protected:
       throw Error("SessionSettings::SSLMode value can only be used on SSL_MODE setting.");
     return unsigned(m);
   }
+
+  static Value opt_val(Options opt, AuthMethod m)
+  {
+    if (opt != Options::AUTH)
+      throw Error("SessionSettings::AuthMethod value can only be used on AUTH setting.");
+    return unsigned(m);
+  }
+
+
 
   /*
     TODO: Document it

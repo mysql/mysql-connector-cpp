@@ -104,8 +104,8 @@ TEST_F(xapi, test_having_group_by)
 {
   SKIP_IF_NO_XPLUGIN;
 
- //TODO: REMOVE THIS AND PUT VERSION CHECK
- SKIP_TEST("GroupBy not working on current xplugin");
+  //TODO: Remove this when  Bug #86754 is fixed
+  SKIP_IF_SERVER_VERSION_LESS(5, 7, 19);
 
   mysqlx_result_t *res;
   mysqlx_schema_t *schema;

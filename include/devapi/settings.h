@@ -51,6 +51,7 @@ namespace mysqlx {
   x(DB)            /*!< default database */                                      \
   x(SSL_MODE)      /*!< define `SSLMode` option to be used */                    \
   x(SSL_CA)        /*!< path to a PEM file specifying trusted root certificates*/\
+  x(AUTH)          /*!< authentication method, PLAIN, MYSQL41, etc.*/            \
   END_LIST
 
 #define OPTIONS_ENUM(x) x,
@@ -138,6 +139,49 @@ std::string SSLModeName(SSLMode m)
 }
 
 
+#define AUTH_METHODS(x)\
+  x(PLAIN)        /*!< Plain text authentication method. The password is
+                       sent as a clear text. This method is used by
+                       default in encrypted connections. */ \
+  x(MYSQL41)      /*!< Authentication method supported by MySQL 4.1 and newer.
+                       The password is hashed before being sent to the server.
+                       This method is used by default in unencrypted
+                       connections */ \
+  x(EXTERNAL)     /*!< External authentication when the server establishes
+                       the user authenticity by other means such as SSL/x509
+                       certificates. Currently not supported by X Plugin */ \
+
+#define AUTH_ENUM(x) x,
+
+/**
+  Modes to be used by @ref AUTH option
+*/
+
+enum class AuthMethod
+{
+  AUTH_METHODS(AUTH_ENUM)
+};
+
+
+inline
+std::string AuthMethodName(AuthMethod m)
+{
+#define AUTH_NAME(x) case AuthMethod::x: return #x;
+
+  switch(m)
+  {
+    AUTH_METHODS(AUTH_NAME)
+    default:
+    {
+      std::ostringstream buf;
+      buf << "<UKNOWN (" << unsigned(m) << ")>" << std::ends;
+      return buf.str();
+    }
+  };
+}
+
+
+
 namespace internal {
 
 /*
@@ -147,8 +191,9 @@ namespace internal {
 
 struct Settings_traits
 {
-  using Options = mysqlx::SessionOption;
-  using SSLMode = mysqlx::SSLMode;
+  using Options    = mysqlx::SessionOption;
+  using SSLMode    = mysqlx::SSLMode;
+  using AuthMethod = mysqlx::AuthMethod;
 
   static std::string get_mode_name(SSLMode mode)
   {
@@ -158,6 +203,11 @@ struct Settings_traits
   static std::string get_option_name(Options opt)
   {
     return SessionOptionName(opt);
+  }
+
+  static std::string get_aouth_name(AuthMethod m)
+  {
+    return AuthMethodName(m);
   }
 };
 
