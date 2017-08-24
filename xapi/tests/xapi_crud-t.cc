@@ -42,6 +42,63 @@
        "{\"_id\": \"C8B27676E8A1D1E12C250850273BD114\", \"a_key\": 5, \"b_key\": \"so long world\", \"c_key\": 88.888}"
   };
 
+TEST_F(xapi, test_row_locking)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  mysqlx_result_t *res;
+  mysqlx_schema_t *schema;
+  mysqlx_table_t *table;
+  mysqlx_stmt_t *stmt;
+  mysqlx_row_t *row;
+
+  AUTHENTICATE();
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 3);
+
+  mysqlx_schema_drop(get_session(), "cc_crud_test");
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_create(get_session(), "cc_crud_test"));
+
+  res = mysqlx_sql(get_session(), "CREATE TABLE cc_crud_test.row_locking" \
+                   "(id int primary key)", MYSQLX_NULL_TERMINATED);
+  EXPECT_TRUE(res != NULL);
+  res = mysqlx_sql(get_session(), "INSERT INTO cc_crud_test.row_locking" \
+                   "(id) VALUES (1),(2),(3)", MYSQLX_NULL_TERMINATED);
+  EXPECT_TRUE(res != NULL);
+
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_crud_test", 1)) != NULL);
+  EXPECT_TRUE((table = mysqlx_get_table(schema, "row_locking", 1)) != NULL);
+
+  EXPECT_EQ(RESULT_OK, mysqlx_transaction_begin(get_session()));
+  stmt = mysqlx_table_select_new(table);
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_row_locking(stmt, ROW_LOCK_EXCLUSIVE));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  printf("\nRows data:");
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    int64_t id = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &id));
+    printf ("\n%d", (int)id);
+  }
+
+  res = mysqlx_sql(get_session(), "select trx_rows_locked " \
+                   "from information_schema.innodb_trx " \
+                   "where trx_mysql_thread_id = connection_id()",
+                   MYSQLX_NULL_TERMINATED);
+  EXPECT_TRUE(res != NULL);
+  printf("\nLooking for locked rows:");
+  int64_t rownum = 0;
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &rownum));
+    printf(" %d", (int)rownum);
+  }
+  EXPECT_EQ(4, rownum);
+  EXPECT_EQ(RESULT_OK, mysqlx_transaction_commit(get_session()));
+  mysqlx_schema_drop(get_session(), "cc_crud_test");
+}
+
+
 TEST_F(xapi, test_having_group_by)
 {
   SKIP_IF_NO_XPLUGIN
@@ -57,6 +114,8 @@ TEST_F(xapi, test_having_group_by)
   size_t json_len = 0;
 
   AUTHENTICATE();
+  //TODO: Remove this when  Bug #86754 is fixed
+  SKIP_IF_SERVER_VERSION_LESS(5, 7, 19);
 
   //TODO: Remove this when  Bug #86754 is fixed
   SKIP_IF_SERVER_VERSION_LESS(5,7,19);
@@ -146,7 +205,7 @@ TEST_F(xapi, test_having_group_by)
   stmt = mysqlx_collection_find_new(collection);
   EXPECT_EQ(RESULT_OK, mysqlx_set_find_projection(stmt, "{cnt: COUNT(*), user_name: user_name}"));
   EXPECT_EQ(RESULT_OK, mysqlx_set_find_group_by(stmt, "user_name", PARAM_END));
-  EXPECT_EQ(RESULT_OK, mysqlx_set_find_having(stmt, "cnt > 1"));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_find_having(stmt, "cnt>1"));
   EXPECT_EQ(RESULT_OK, mysqlx_set_find_order_by(stmt, "user_name", SORT_ORDER_ASC, PARAM_END));
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
@@ -2517,6 +2576,7 @@ TEST_F(xapi, test_decimal_type)
   mysqlx_schema_drop(get_session(), "xapi_dec_test");
 }
 
+
 TEST_F(xapi, expr_in_expr)
 {
   SKIP_IF_NO_XPLUGIN
@@ -2587,3 +2647,23 @@ TEST_F(xapi, expr_in_expr)
   EXPECT_EQ(NULL, row = mysqlx_row_fetch_one(res));
 
 }
+
+
+TEST_F(xapi_bugs, session_invalid_password_deadlock)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
+  int conn_err_code;
+
+  auto sess = mysqlx_get_session(m_xplugin_host,
+                              m_port,
+                              m_xplugin_usr,
+                              "bal_xplugin_pwd",
+                              NULL,
+                              conn_error,
+                              &conn_err_code);
+
+  EXPECT_EQ(NULL, sess);
+}
+

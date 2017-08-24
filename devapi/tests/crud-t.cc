@@ -28,7 +28,8 @@
 #include <algorithm>
 #include <set>
 #include <deque>
-
+#include <chrono>
+#include <thread>
 
 using std::cout;
 using std::endl;
@@ -66,6 +67,7 @@ void output_id_list(Result& res)
   }
 
 }
+
 
 TEST_F(Crud, basic)
 {
@@ -1902,6 +1904,8 @@ TEST_F(Crud, group_by_having)
 {
 
   SKIP_IF_NO_XPLUGIN;
+  //TODO: Remove this when  Bug #86754 is fixed
+  SKIP_IF_SERVER_VERSION_LESS(5, 7, 19);
 
   //TODO: Remove this when  Bug #86754 is fixed
   SKIP_IF_SERVER_VERSION_LESS(5,7,19);
@@ -2203,4 +2207,83 @@ TEST_F(Crud, expr_in_expr)
   auto tbl_res = tbl.select("JSON_EXTRACT(doc,'$.name') as name").where("{\"name\":\"baz\"} in doc->$").execute();
   EXPECT_EQ( string("baz") , (string)tbl_res.fetchOne()[0]);
 
+}
+
+
+TEST_F(Crud, row_locking)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  Session sess(this);
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 3)
+
+  string db_name = "row_locking";
+  string tab_name = "row_lock_tab";
+  string coll_name = "row_lock_coll";
+
+  try
+  {
+    sess.dropSchema(db_name);
+  }
+  catch(...) {}
+
+  sess.createSchema(db_name);
+
+  std::stringstream strs;
+  strs << "CREATE TABLE " << db_name << "." << tab_name
+       << "(id int primary key)";
+
+  sql(strs.str());
+
+  Schema sch = sess.getSchema(db_name);
+  Table tbl = sch.getTable(tab_name);
+
+  tbl.insert()
+    .values(1)
+    .values(2)
+    .values(3).execute();
+
+  sess.startTransaction();
+  RowResult res = tbl.select().lockExclusive().execute();
+  for (Row r; (r = res.fetchOne());)
+    cout << r[0] << endl;
+
+  auto lock_check = sess.getSchema("information_schema")
+            .getTable("innodb_trx")
+            .select("trx_rows_locked")
+            .where("trx_mysql_thread_id=connection_id()");
+
+
+  /* Some number of rows has to be locked */
+  EXPECT_TRUE((int)lock_check.execute().fetchOne()[0] > 0);
+  sess.commit();
+
+  /* Wait to for the row locking status to populate */
+  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+  /* No rows here */
+  EXPECT_TRUE(lock_check.execute().fetchOne().isNull());
+
+  sch.createCollection(coll_name);
+  Collection coll = sch.getCollection(coll_name);
+  coll.add("{ \"num\": 1 }")
+      .add("{ \"num\": 2 }")
+      .add("{ \"num\": 3 }")
+      .execute();
+
+  sess.startTransaction();
+  DocResult dres = coll.find().lockExclusive().execute();
+
+  for (DbDoc d; (d = dres.fetchOne());)
+    cout << d["num"] << endl;
+
+  /* Some number of rows has to be locked */
+  EXPECT_TRUE((int)lock_check.execute().fetchOne()[0] > 0);
+  sess.commit();
+
+  /* Wait to for the row locking status to populate */
+  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+  /* No rows here */
+  EXPECT_TRUE(lock_check.execute().fetchOne().isNull());
+
+  sess.dropSchema(db_name);
 }

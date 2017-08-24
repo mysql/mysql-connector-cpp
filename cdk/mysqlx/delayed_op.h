@@ -567,6 +567,7 @@ protected:
   Projection_converter m_proj_conv;
   Expr_list_converter  m_group_by_conv;
   Expr_converter       m_having_conv;
+  Lock_mode_value      m_lock_mode;
 
   Proto_op* start()
   {
@@ -583,11 +584,13 @@ public:
     const cdk::Expr_list  *group_by = NULL,
     const cdk::Expression *having = NULL,
     const cdk::Limit *lim = NULL,
-    const cdk::Param_source *param = NULL
+    const cdk::Param_source *param = NULL,
+    const Lock_mode_value locking = Lock_mode_value::NONE
   )
     : Select_op_base(protocol, coll, expr, order_by, lim, param)
     , m_proj_conv(proj)
     , m_group_by_conv(group_by), m_having_conv(having)
+    , m_lock_mode(locking)
   {}
 
 private:
@@ -605,6 +608,11 @@ private:
   const protocol::mysqlx::api::Expression* having() const
   {
     return m_having_conv.get();
+  }
+
+  Lock_mode_value locking() const
+  {
+    return m_lock_mode;
   }
 
   friend class SndViewCrud<DM>;

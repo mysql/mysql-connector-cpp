@@ -213,7 +213,7 @@ namespace internal {
 
   struct Table_select_base
     : public Group_by < Having < Order_by < Limit < Offset< Bind_parameters<
-              Table_select_cmd
+              Set_lock< Table_select_cmd >
              > > > > > >
   {};
 

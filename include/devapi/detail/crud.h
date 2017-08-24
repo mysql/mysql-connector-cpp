@@ -50,11 +50,17 @@ namespace internal {
   rows/documents, which is common for different CRUD operations.
 */
 
+struct Lock_mode
+{
+  enum value { NONE, SHARED, EXCLUSIVE };
+};
+
 
 struct Bind_impl : public Executable_impl
 {
   virtual void add_param(const string&, Value&&) = 0;
   virtual void add_param(Value) = 0;
+  virtual void set_locking(Lock_mode::value) = 0;
 };
 
 

@@ -318,7 +318,6 @@ struct notice_scope
 };
 
 
-
 /*
   A class to store SQL state values.
 */
@@ -413,6 +412,7 @@ typedef cdk::api::Order_by<Expression> Order_by;
 typedef cdk::api::Sort_direction Sort_direction;
 typedef cdk::api::Projection<Expression> Projection;
 typedef cdk::api::Columns Columns;
+typedef cdk::api::Lock_mode::value Lock_mode_value;
 
 typedef cdk::api::View_options  View_options;
 
@@ -431,6 +431,16 @@ struct Expectations:
 {
   /* Only these two options are defined in mysqlx_expect.proto */
   enum { NO_ERROR = 1, FIELD_EXISTS = 2 };
+};
+
+
+struct Protocol_fields
+{
+  /*
+    Enum values will be used as binary flags,
+    so they must be as 2^N
+  */
+  enum value { ROW_LOCKING = 1 /*, NEXT = 2, NEXT_NEXT = 4*/ };
 };
 
 }  // api namespace
@@ -466,10 +476,12 @@ public:
 
   typedef api::Projection  Projection;
   typedef api::Expr_list   Expr_list;
+  typedef api::Lock_mode_value Lock_mode_value;
 
   virtual const Projection* project() const = 0;
   virtual const Expr_list*  group_by() const = 0;
   virtual const Expression* having() const = 0;
+  virtual Lock_mode_value locking() const = 0;
 };
 
 

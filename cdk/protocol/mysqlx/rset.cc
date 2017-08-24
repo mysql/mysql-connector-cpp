@@ -110,11 +110,17 @@ protected:
       }
   */
 
-  enum { START, MDATA, ROWS, CLOSE, DONE } m_result_state, m_next_state;
+  enum result_state_t
+  { START, MDATA, ROWS, CLOSE, DONE };
+
+  result_state_t m_result_state =START, m_next_state;
   row_count_t m_rcount;
   col_count_t m_ccount;
 
-  bool is_done() const { return DONE == m_result_state; }
+  bool is_done() const
+  {
+    return DONE == m_result_state;
+  }
 
   /*
     These functions determine how to process each incoming message and

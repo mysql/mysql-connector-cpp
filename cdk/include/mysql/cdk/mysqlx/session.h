@@ -382,6 +382,8 @@ class Cursor;
 class SessionAuthInterface;
 
 
+typedef protocol::mysqlx::api::Protocol_fields Protocol_fields;
+
 class Session
     : public api::Diagnostics
     , public Async_op
@@ -414,6 +416,7 @@ protected:
   unsigned long m_id;
   bool m_expired;
   string m_cur_schema;
+  uint64_t m_proto_fields = UINT64_MAX;
 
   struct
   {
@@ -464,6 +467,7 @@ public:
   {
     m_stmt_stats.clear();
     authenticate(options);
+    check_protocol_fields();
   }
 
   virtual ~Session();
@@ -477,6 +481,13 @@ public:
 
   option_t is_valid();
   option_t check_valid();
+
+  /*
+    Check that xplugin is supporting certain new fields in the protocol
+    such as row locking, etc. The function sets binary flags in
+    m_proto_fields member variable
+  */
+  void check_protocol_fields();
 
   /*
     Clear diagnostic information that accumulated for the session.
@@ -526,7 +537,8 @@ public:
                         const Expr_list *group_by = NULL,
                         const Expression *having = NULL,
                         const Limit *lim = NULL,
-                        const Param_source *param = NULL);
+                        const Param_source *param = NULL,
+                        const Lock_mode_value lock_mode = Lock_mode_value::NONE);
   Reply_init &coll_update(const api::Table_ref&,
                           const Expression*,
                           const Update_spec&,
@@ -547,7 +559,8 @@ public:
                            const Expr_list *group_by = NULL,
                            const Expression *having = NULL,
                            const Limit *lim = NULL,
-                           const Param_source *param = NULL);
+                           const Param_source *param = NULL,
+                           const Lock_mode_value lock_mode = Lock_mode_value::NONE);
   Reply_init &table_insert(const Table_ref&,
                            Row_source&,
                            const api::Columns *cols,

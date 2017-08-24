@@ -300,7 +300,7 @@ struct Collection_find_cmd
 
 struct Collection_find_base
  : public Group_by< Having< Sort< Limit< Offset< Bind_parameters<
-            Collection_find_cmd
+            Set_lock< Collection_find_cmd >
           > > > > > >
 {};
 
@@ -373,7 +373,7 @@ public:
     CATCH_AND_WRAP
   }
 
-protected:
+ protected:
 
   using Impl = internal::Proj_impl;
 

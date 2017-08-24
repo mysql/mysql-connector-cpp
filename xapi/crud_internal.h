@@ -76,6 +76,7 @@ private:
   cdk::string m_query;
   Group_by_list m_group_by_list;
   View_spec m_view_spec;
+  cdk::Lock_mode_value m_row_locking = cdk::Lock_mode_value::NONE;
 
   int set_expression(cdk::scoped_ptr<cdk::Expression> &member, const char *val);
 
@@ -195,6 +196,7 @@ public:
   void set_view_definer(const char* user);
   void set_view_columns(va_list args);
   void set_view_properties(va_list args);
+  void set_row_locking(mysqlx_row_locking_t row_locking);
 
   friend class Group_by_list;
 } mysqlx_stmt_t;

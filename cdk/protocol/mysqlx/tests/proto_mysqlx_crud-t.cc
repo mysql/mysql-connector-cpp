@@ -190,6 +190,8 @@ class Find
 
 public:
 
+  Lock_mode_value m_lock_mode = Lock_mode_value::NONE;
+
   Find(const Db_obj &obj,
     const Expression *criteria, row_count_t limit, row_count_t skip = 0)
     : m_obj(obj)
@@ -243,6 +245,10 @@ private:
     return NULL;
   }
 
+  const Lock_mode_value locking() const
+  {
+    return m_lock_mode;
+  }
 };
 
 
@@ -879,6 +885,67 @@ TEST_F(Protocol_mysqlx_xplugin, crud_projections)
   proto.rcv_StmtReply(sh).wait();  // Expect Update OK;
 
 }
+
+TEST_F(Protocol_mysqlx_xplugin, row_locking)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  authenticate();
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 3)
+
+  do_query(L"DROP DATABASE IF EXISTS crud_test_db");
+  do_query(L"CREATE DATABASE crud_test_db");
+  do_query(L"USE crud_test_db");
+  do_query(L"DROP TABLE IF EXISTS row_locking");
+  do_query(L"CREATE TABLE row_locking(id int primary key)");
+  do_query(L"INSERT INTO row_locking(id) VALUES (1),(2),(3)");
+
+  do_query(L"BEGIN");
+
+  Protocol &proto = get_proto();
+
+  Db_obj db_obj("row_locking", "crud_test_db");
+  Find   find1(db_obj, NULL, 10, 0);
+  find1.m_lock_mode = Lock_mode_value::EXCLUSIVE;
+
+  cout << "Find" << endl;
+  proto.snd_Find(TABLE, find1).wait();
+
+  cout << "Metadata" << endl;
+  Mdata_handler mdh;
+  proto.rcv_MetaData(mdh).wait();
+
+  cout << "Fetch rows" << endl;
+  Row_handler_crud rhc;
+
+  rhc.row_ids.push_back(1);
+  rhc.row_ids.push_back(2);
+  rhc.row_ids.push_back(3);
+
+  proto.rcv_Rows(rhc).wait();
+
+  Stmt_handler sh;
+  proto.rcv_StmtReply(sh).wait(); // Expect OK
+
+  proto.snd_StmtExecute("sql",
+    L"select IF(trx_rows_locked > 0, 1, 0) rows_locked from information_schema.innodb_trx " \
+    "where trx_mysql_thread_id = connection_id()", NULL).wait();
+
+  cout << "Metadata for locked rows number" << endl;
+  proto.rcv_MetaData(mdh).wait();
+
+  cout << "Fetch number of locked rows" << endl;
+
+  // The number of rows locked will be the number of rows in the table + 1
+  rhc.row_ids.clear();
+  rhc.row_ids.push_back(1);
+  proto.rcv_Rows(rhc).wait();
+  proto.rcv_StmtReply(sh).wait(); // Expect OK
+
+  do_query(L"COMMIT");
+  do_query(L"DROP TABLE IF EXISTS row_locking");
+}
+
 
 }}}  // cdk::test::proto
 

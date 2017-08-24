@@ -29,7 +29,6 @@
 
 namespace cdk {
 
-
 /*
   A class that creates a session from given data source.
 
@@ -150,7 +149,6 @@ Session_builder::operator() (
   }
 
   m_database = options.database();
-
   return true;
 }
 

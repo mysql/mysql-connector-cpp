@@ -549,6 +549,7 @@ protected:
   bool m_has_limit = false;
   row_count_t m_offset = 0;
   bool m_has_offset = false;
+  internal::Lock_mode::value m_locking = internal::Lock_mode::NONE;
 
   typedef std::map<string, Value> param_map_t;
   param_map_t m_map;
@@ -627,6 +628,29 @@ protected:
     return m_has_limit || m_has_offset ? this : nullptr;
   }
 
+  // Locking
+
+  void set_locking(internal::Lock_mode::value locking)
+  {
+    m_locking = locking;
+  }
+
+  cdk::Lock_mode_value get_locking()
+  {
+    switch (m_locking)
+    {
+      case internal::Lock_mode::SHARED:
+        return cdk::Lock_mode_value::SHARED;
+      break;
+      case internal::Lock_mode::EXCLUSIVE:
+        return cdk::Lock_mode_value::EXCLUSIVE;
+      break;
+      case internal::Lock_mode::NONE:
+        return cdk::Lock_mode_value::NONE;
+      break;
+    }
+    return cdk::Lock_mode_value::NONE;
+  }
 
   // Parameters
 
