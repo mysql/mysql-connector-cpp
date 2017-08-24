@@ -440,7 +440,7 @@ struct Protocol_fields
     Enum values will be used as binary flags,
     so they must be as 2^N
   */
-  enum value { ROW_LOCKING = 1 /*, NEXT = 2, NEXT_NEXT = 4*/ };
+  enum value { ROW_LOCKING = 1 , UPSERT = 2 };
 };
 
 }  // api namespace
@@ -566,12 +566,19 @@ public:
 
     @param args  defines values of named parameters, if any are used in the
       expressions of the row source object
+
+    @param upsert  Can be set true only in the document mode -- in that case
+      an upsert variant of the Insert command is sent. If inserted document has
+      the same id as an existing document in the collection, the upsert variant
+      replaces the document in the collection with the new one. Without upsert
+      flag such situation leads to error.
   */
 
   Op& snd_Insert(Data_model dm, api::Db_obj &obj,
                  const api::Columns *columns,
                  Row_source &data,
-                 const api::Args_map *args = NULL);
+                 const api::Args_map *args = NULL,
+                 bool upsert = false);
 
   /**
     Send CRUD Update command.

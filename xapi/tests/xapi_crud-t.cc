@@ -42,6 +42,7 @@
        "{\"_id\": \"C8B27676E8A1D1E12C250850273BD114\", \"a_key\": 5, \"b_key\": \"so long world\", \"c_key\": 88.888}"
   };
 
+
 TEST_F(xapi, test_row_locking)
 {
   SKIP_IF_NO_XPLUGIN

@@ -84,6 +84,10 @@ struct Proto_field_checker : public cdk::protocol::mysqlx::api::Expectations
         // Find(17) locking(12)
         m_data = bytes("17.12");
         break;
+      case Protocol_fields::UPSERT:
+        // Insert(18) upsert(6)
+        m_data = bytes("18.6");
+        break;
       default:
         return 0;
     }
@@ -373,6 +377,7 @@ void Session::check_protocol_fields()
     m_proto_fields = 0;
     /* More fields checks will be added here */
     m_proto_fields |= field_checker.is_supported(Protocol_fields::ROW_LOCKING);
+    m_proto_fields |= field_checker.is_supported(Protocol_fields::UPSERT);
   }
 }
 
@@ -467,10 +472,11 @@ void Session::rollback()
 
 Reply_init& Session::coll_add(const Table_ref &coll,
                               Doc_source &docs,
-                              const Param_source *param)
+                              const Param_source *param,
+                              bool upsert)
 {
   return set_command(
-    new SndInsertDocs(m_protocol, coll, docs, param)
+    new SndInsertDocs(m_protocol, coll, docs, param, upsert)
   );
 }
 

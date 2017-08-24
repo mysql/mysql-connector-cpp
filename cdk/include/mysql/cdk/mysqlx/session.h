@@ -522,7 +522,8 @@ public:
 
   Reply_init &coll_add(const Table_ref&,
                        Doc_source&,
-                       const Param_source *param = NULL);
+                       const Param_source *param = NULL,
+                       bool upsert = false);
 
   Reply_init &coll_remove(const Table_ref&,
                           const Expression *expr = NULL,

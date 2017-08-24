@@ -400,6 +400,56 @@ public:
     CATCH_AND_WRAP;
   }
 
+  /**
+    Returns Document with the giver id.
+    Returns empty document if not found.
+  */
+
+  DbDoc getOne(const string &id)
+  {
+    return find("_id = :id").bind("id", id).execute().fetchOne();
+  }
+
+  /**
+    Removes the document with the given id.
+   */
+
+  Result removeOne(const string &id)
+  {
+    return remove("_id = :id").bind("id", id).execute();
+  }
+
+  /**
+    Replaces the document identified by id if it exists and returns true.
+    Otherwise returns false. Parameter document can be either DbDoc object,
+    or JSON string, or expr(docexpr) where docexpr is like JSON
+    string but field values are expressions.
+    It is not possible to bind values of named parameters with .bind()
+    because the statement gets executed upon calling of this function.
+  */
+
+  bool replaceOne(string id, internal::ExprValue &&document)
+  {
+      return
+          internal::CollectionReplace(*this, id, std::move(document)).execute().getAffectedItemsCount() == 1;
+  }
+
+  /**
+    Adds a new document identified by id if it does not exist and 
+    returns true. Otherwise replaces the existing document
+    with that id and returns false.
+    Parameter document can be either DbDoc object,
+    or JSON string, or expr(docexpr) where docexpr is like JSON
+    string but field values are expressions.
+    It is not possible to bind values of named parameters with .bind()
+    because the statement is executed upon calling of this function.
+  */
+
+  bool addOrReplace(string id, internal::ExprValue &&document)
+  {
+      return internal::CollectionReplace(*this, id, std::move(document), true).execute().getAffectedItemsCount() == 1;
+  }
+
 };
 
 

@@ -85,13 +85,15 @@ class Op_collection_add
   std::vector<mysqlx::GUID> m_id_list;
   bool  m_generated_id;
   unsigned m_pos;
+  bool m_upsert = false;
 
 
-  Op_collection_add(Collection &coll)
+  Op_collection_add(Collection &coll, bool upsert = false)
     : Op_base(coll)
     , m_coll(coll)
     , m_generated_id(true)
     , m_pos(0)
+    , m_upsert(upsert)
   {}
 
   Executable_impl* clone() const override
@@ -116,7 +118,8 @@ class Op_collection_add
     // Issue coll_add statement where documents are described by list
     // of expressions defined by this instance.
 
-    return new cdk::Reply(get_cdk_session().coll_add(m_coll, *this, NULL));
+    return new cdk::Reply(get_cdk_session()
+                          .coll_add(m_coll, *this, NULL, m_upsert));
   }
 
 
@@ -214,6 +217,7 @@ class Op_collection_add
 
 
   friend mysqlx::CollectionAdd;
+  friend mysqlx::internal::CollectionReplace;
 };
 
 
@@ -546,6 +550,14 @@ class Op_collection_modify
     add_where(expr);
   }
 
+  Op_collection_modify(const Op_collection_modify &other)
+    : Op_select(other)
+    , m_coll(other.m_coll)
+    , m_update(other.m_update)
+  {
+    m_update_it = m_update.end();
+  }
+
   Executable_impl* clone() const override
   {
     return new Op_collection_modify(*this);
@@ -640,6 +652,7 @@ class Op_collection_modify
   }
 
   friend mysqlx::CollectionModify;
+  friend mysqlx::internal::CollectionReplace;
 };
 
 
@@ -653,3 +666,50 @@ CollectionModify::CollectionModify(
   }
   CATCH_AND_WRAP
 }
+
+internal::CollectionReplace::CollectionReplace(Collection &coll,
+                                               const mysqlx::string &id,
+                                               mysqlx::internal::ExprValue &&val,
+                                               bool upsert)
+{
+  try
+  {
+    if (upsert)
+    {
+      Op_collection_add *add_impl = new Op_collection_add(coll, upsert);
+      reset(add_impl);
+      string str = val;
+      str.erase(str.rfind('}'));
+
+      std::stringstream sstream;
+      // If ':' is present in the string the document is not empty
+      if (str.find(':'))
+        sstream << ", ";
+      // It is safe to append the _id at the end
+      sstream << "\"_id\": \"" << id << "\"}";
+      str.append((string)sstream.str());
+      add_impl->add_json(str);
+    }
+    else
+    {
+      reset(new Op_collection_modify(coll, "_id = :id"));
+
+      if (val.isExpression() || val.getType() != Value::STRING)
+      {
+        get_impl()->add_operation(Op_collection_modify::SET,
+                                  "$",
+                                  std::move(val));
+      }
+      else
+      {
+        get_impl()->add_operation(Op_collection_modify::SET,
+                                  "$",
+                                  internal::expr(std::move(val)));
+      }
+
+      get_impl()->add_param("id", id);
+    }
+  }
+  CATCH_AND_WRAP
+}
+

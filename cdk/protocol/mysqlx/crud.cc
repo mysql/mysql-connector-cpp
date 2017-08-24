@@ -555,7 +555,8 @@ Protocol::snd_Insert(
     api::Db_obj &db_obj,
     const api::Columns *columns,
     Row_source &rs,
-    const api::Args_map *args)
+    const api::Args_map *args,
+    bool upsert)
 {
   Mysqlx::Crud::Insert insert;
 
@@ -583,6 +584,8 @@ Protocol::snd_Insert(
     row_builder.reset(*msg, &conv);
     rs.process(row_builder);
   }
+
+  insert.set_upsert(upsert);
 
   return get_impl().snd_start(insert, msg_type::cli_CrudInsert);
 }
