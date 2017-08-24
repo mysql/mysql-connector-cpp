@@ -67,7 +67,8 @@ struct Session_builder
     3. If a bail-out error was detected, throws that error.
   */
 
-  Socket_base* connect(Socket_base*);
+  template <class Conn>
+  Conn* connect(Conn*);
 
   bool operator() (const ds::TCPIP &ds, const ds::TCPIP::Options &options);
 #ifndef WIN32
@@ -81,8 +82,8 @@ struct Session_builder
 };
 
 
-Session_builder::Socket_base*
-Session_builder::connect(Session_builder::Socket_base* connection)
+template <class Conn>
+Conn* Session_builder::connect(Conn* connection)
 {
   m_attempts++;
 
@@ -129,7 +130,7 @@ Session_builder::operator() (
   using foundation::connection::TCPIP;
   using foundation::connection::Socket_base;
 
-  Socket_base* connection = connect(new TCPIP(ds.host(), ds.port()));
+  TCPIP* connection = connect(new TCPIP(ds.host(), ds.port()));
 
   if (!connection)
     return false;  // continue to next host if available
@@ -162,7 +163,7 @@ Session_builder::operator() (
   using foundation::connection::Unix_socket;
   using foundation::connection::Socket_base;
 
-  Socket_base* connection = connect(new Unix_socket(ds.path()));
+  Unix_socket* connection = connect(new Unix_socket(ds.path()));
 
   if (!connection)
     return false;  // continue to next host if available

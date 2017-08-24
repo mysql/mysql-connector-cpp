@@ -649,6 +649,7 @@ Socket connect(const char *path)
   catch (...)
   {
     close(socket);
+    rethrow_error();
   }
   return socket;
 }

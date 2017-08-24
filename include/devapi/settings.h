@@ -40,6 +40,12 @@ namespace mysqlx {
   TODO: Cross-references to session options inside Doxygen docs do not work.
 */
 
+#ifndef _WIN32
+#define ADD_SOCKET(x) x(SOCKET) /*!< path to unix domain socket*/
+#else
+#define ADD_SOCKET(x)
+#endif //_WIN32
+
 #define SETTINGS_OPTIONS(x)                                                      \
   x(URI)          /*!< connection URI or string */                               \
   /*! DNS name of the host, IPv4 address or IPv6 address */                      \
@@ -52,6 +58,7 @@ namespace mysqlx {
   x(SSL_MODE)      /*!< define `SSLMode` option to be used */                    \
   x(SSL_CA)        /*!< path to a PEM file specifying trusted root certificates*/\
   x(AUTH)          /*!< authentication method, PLAIN, MYSQL41, etc.*/            \
+  ADD_SOCKET(x) \
   END_LIST
 
 #define OPTIONS_ENUM(x) x,

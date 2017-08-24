@@ -139,6 +139,7 @@ class Protocol_options
   public:
 
   enum auth_method_t {
+    DEFAULT,
     PLAIN,
     MYSQL41,
     EXTERNAL
@@ -149,72 +150,70 @@ class Protocol_options
 };
 
 
-class TCPIP::Options
+class Options
   : public ds::Options<Protocol_options>
 {
-private:
+protected:
 
-#ifdef WITH_SSL
-  cdk::connection::TLS::Options m_tls_options;
-#endif
-  bool m_auth_method_set;
-  auth_method_t m_auth_method;
+  auth_method_t m_auth_method = DEFAULT;
 
 public:
 
-  Options() : m_auth_method_set(false),
-              m_auth_method(auth_method_t::MYSQL41)
-  {
-  }
+  Options()
+  {}
 
   Options(const string &usr, const std::string *pwd =NULL)
-    : ds::Options<Protocol_options>(usr, pwd),
-      m_auth_method_set(false),
-      m_auth_method(auth_method_t::MYSQL41)
-  {
-    /*
-      We don't know if the connection will be over SSL.
-      Guessing unencrypted connection and MYSQL41 auth.
-    */
-  }
-
-#ifdef WITH_SSL
-
-  void set_tls(const cdk::connection::TLS::Options& options)
-  {
-    m_tls_options = options;
-
-    /*
-      The authentication method should not be changed
-      if the user code set it specifically
-    */
-    if (!m_auth_method_set)
-    {
-      // Use PLAIN auth for SSL connections
-      if (options.ssl_mode() == cdk::connection::TLS::Options::SSL_MODE::DISABLED)
-        m_auth_method = auth_method_t::MYSQL41;
-      else
-        m_auth_method = auth_method_t::PLAIN;
-    }
-  }
-
-  const cdk::connection::TLS::Options& get_tls() const
-  {
-    return m_tls_options;
-  }
-
-#endif
+    : ds::Options<Protocol_options>(usr, pwd)
+  {}
 
   void set_auth_method(auth_method_t auth_method)
   {
     m_auth_method = auth_method;
-    m_auth_method_set = true;
   }
 
   auth_method_t auth_method() const
   {
     return m_auth_method;
   }
+
+};
+
+
+class TCPIP::Options
+  : public ds::mysqlx::Options
+{
+public:
+
+  typedef cdk::connection::TLS::Options  TLS_options;
+
+private:
+
+#ifdef WITH_SSL
+  cdk::connection::TLS::Options m_tls_options;
+#endif
+
+public:
+
+  Options()
+  {}
+
+  Options(const string &usr, const std::string *pwd =NULL)
+    : ds::mysqlx::Options(usr, pwd)
+  {}
+
+#ifdef WITH_SSL
+
+  void set_tls(const TLS_options& options)
+  {
+    m_tls_options = options;
+  }
+
+  const TLS_options& get_tls() const
+  {
+    return m_tls_options;
+  }
+
+#endif
 
 };
 
@@ -227,8 +226,7 @@ protected:
 
 public:
 
-  class Options;
-
+  using Options = ds::mysqlx::Options;
 
   Unix_socket(const std::string &path)
     : m_path(path)
@@ -241,42 +239,10 @@ public:
 
   virtual const std::string& path() const { return m_path; }
 };
-
-class Unix_socket::Options : public ds::Options<Protocol_options>
-{
-
-public:
-
-  Options()
-  {}
-
-  Options(const ds::Options<Protocol_options>& opt)
-    : ds::Options<Protocol_options>(opt)
-  {}
-
-  Options(const string &usr, const std::string *pwd =NULL)
-    : ds::Options<Protocol_options>(usr, pwd)
-  {}
-
-  void set_auth_method(auth_method_t auth_method)
-  {
-    m_auth_method = auth_method;
-  }
-
-private:
-  auth_method_t m_auth_method = auth_method_t::PLAIN;
-
-  auth_method_t auth_method() const
-  {
-    return m_auth_method;
-  }
-
-
-
-};
 #endif //_WIN32
 
 } // mysqlx
+
 
 namespace mysql {
 

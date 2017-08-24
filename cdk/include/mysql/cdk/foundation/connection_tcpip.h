@@ -145,6 +145,11 @@ public:
 
   TCPIP(const std::string& host, unsigned short port);
 
+  bool is_secure() const
+  {
+    return false;
+  }
+
 private:
 
   Socket_base::Impl& get_base_impl();
@@ -159,6 +164,11 @@ class Unix_socket
 public:
 
   Unix_socket(const std::string& path);
+
+  bool is_secure() const
+  {
+    return true;
+  }
 
 private:
 

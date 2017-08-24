@@ -491,8 +491,8 @@ unsigned int mysqlx_session_options_struct::get_ssl_mode()
 }
 
 
-#define PRIO_CHECK if ((priority > 0 && m_source_state == source_state::non_priority) || \
-(priority == 0 && host_is_set &&  m_source_state == source_state::priority)) \
+#define PRIO_CHECK if ((add_list.priority > 0 && m_source_state == source_state::non_priority) || \
+(add_list.priority == 0 && ds &&  m_source_state == source_state::priority)) \
   throw Mysqlx_exception(MYSQLX_ERROR_MIX_PRIORITY)
 
 cdk::ds::mysqlx::Protocol_options::auth_method_t uint_to_auth_method(unsigned int m)
@@ -514,11 +514,17 @@ cdk::ds::mysqlx::Protocol_options::auth_method_t uint_to_auth_method(unsigned in
 void mysqlx_session_options_struct::set_multiple_options(va_list args)
 {
   mysqlx_opt_type_t type;
-  unsigned short priority = 0;
-  TCPIP_t ds;
-  bool host_is_set = false;
-  bool port_is_set = false;
+  enum {TCPIP_type, UNIX_type} selected_type = TCPIP_type;
+  Ds_variant ds;
   m_options_used.reset();
+
+
+
+#ifndef _WIN32
+  Add_list add_list(m_host_list, m_last_tcpip, m_last_socket);
+#else
+  Add_list add_list(m_host_list, m_last_tcpip);
+#endif
 
   // The type is promoted to int when passing into va_list
   while( (type = (mysqlx_opt_type_t)(va_arg(args, int))) > 0 )
@@ -532,40 +538,62 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
       switch (type)
       {
         case MYSQLX_OPT_HOST:
-          if (host_is_set)
+          if (ds)
           {
             PRIO_CHECK;
-            m_host_list.emplace_back(priority, ds);
-            ds = TCPIP_t();
-            priority = 0;
+
+            ds.visit(add_list);
+
+            add_list.priority = 0;
           }
-          else if (port_is_set)
-            throw Mysqlx_exception("Port must not be specified before host");
 
           char_data = va_arg(args, char*);
           if (char_data == NULL)
             throw Mysqlx_exception(MYSQLX_ERROR_MISSING_HOST_NAME);
 
-          ds.set_host(char_data);
-          host_is_set = true;
+          ds = TCPIP_t(char_data);
+          selected_type = TCPIP_type;
           break;
         case MYSQLX_OPT_PORT:
           uint_data = (va_arg(args, unsigned int));
-          ds.set_port(static_cast<unsigned short>(uint_data));
-          port_is_set = true;
+          if (!ds)
+            throw Mysqlx_exception(MYSQLX_ERROR_MISSING_HOST_NAME);
+
+          if (selected_type != TCPIP_type)
+            throw Mysqlx_exception(MYSQLX_ERROR_MISSING_HOST_NAME);
+
+          const_cast<TCPIP_t&>(ds.get<TCPIP_t>()).set_port(static_cast<unsigned short>(uint_data));
+
           break;
+#ifndef _WIN32
+        case MYSQLX_OPT_SOCKET:
+        {
+          if (ds)
+          {
+            PRIO_CHECK;
+            ds.visit(add_list);
+
+            add_list.priority = 0;
+          }
+          char_data = va_arg(args, char*);
+
+          ds = cdk::ds::Unix_socket(char_data);
+          selected_type = UNIX_type;
+        }
+          break;
+#endif //_WIN32
         case MYSQLX_OPT_PRIORITY:
           if (m_source_state == source_state::non_priority)
             throw Mysqlx_exception(MYSQLX_ERROR_MIX_PRIORITY);
 
-          if (!host_is_set)
+          if (!ds)
             throw Mysqlx_exception(MYSQLX_ERROR_MISSING_HOST_NAME);
 
           uint_data = (va_arg(args, unsigned int));
           if (uint_data > max_priority)
             throw Mysqlx_exception(MYSQLX_ERROR_MAX_PRIORITY);
 
-          priority = (unsigned short)uint_data + 1;
+          add_list.priority = (unsigned short)uint_data + 1;
           m_source_state = source_state::priority;
           break;
         case MYSQLX_OPT_USER:
@@ -593,10 +621,12 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
         case MYSQLX_OPT_SSL_CA:
           char_data = va_arg(args, char*);
           set_ssl_ca(char_data);
+          m_has_ssl = true;
           break;
         case MYSQLX_OPT_SSL_MODE:
           uint_data = va_arg(args, unsigned int);
           set_ssl_mode(mysqlx_ssl_mode_t(uint_data));
+          m_has_ssl = true;
           break;
 #else
         case MYSQLX_OPT_SSL_MODE:
@@ -611,16 +641,12 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
   }
 
   PRIO_CHECK;
-  if (host_is_set)
-    m_source_state = (priority > 0) ? source_state::priority : source_state::non_priority;
 
-  if ((port_is_set || priority > 0) && !host_is_set)
-    throw Mysqlx_exception(MYSQLX_ERROR_MISSING_HOST_NAME);
-
-  if (host_is_set)
+  if (ds)
   {
+    m_source_state = (add_list.priority > 0) ? source_state::priority : source_state::non_priority;
     // Host list is updated only if a new host is specified
-    m_host_list.emplace_back(priority, ds);
+    ds.visit(add_list);
   }
 }
 
@@ -639,31 +665,108 @@ mysqlx_session_options_struct::get_multi_source() const
 
   self->m_ms.clear();
 
-  for (Host_list::const_iterator it = m_host_list.begin();
-        it != m_host_list.end(); ++it)
+
+  struct Sources_add
   {
-    self->m_ms.add(static_cast<cdk::ds::TCPIP>(it->second),
-              static_cast<cdk::ds::TCPIP::Options>(m_tcp_opts),
-              it->first); // prio
+    Host_sources& m_sources;
+    cdk::ds::TCPIP::Options &m_tcp_opt;
+#ifndef _WIN32
+    cdk::ds::Unix_socket::Options &m_unix_opt;
+#endif //_WIN32
+
+    unsigned short m_priority;
+    bool m_socket_only = true;
+
+    Sources_add(Host_sources& sources
+                ,cdk::ds::TCPIP::Options &tcp_opt
+            #ifndef _WIN32
+                ,cdk::ds::Unix_socket::Options &unix_opt
+            #endif //_WIN32
+                )
+      : m_sources(sources)
+      , m_tcp_opt(tcp_opt)
+  #ifndef _WIN32
+      , m_unix_opt(unix_opt)
+  #endif //_WIN32
+    {}
+
+    void operator()(const cdk::ds::mysqlx::TCPIP& to_add)
+    {
+      m_sources.add(to_add, m_tcp_opt, m_priority);
+      m_socket_only = false;
+    }
+
+#ifndef _WIN32
+    void operator()(const cdk::ds::mysqlx::Unix_socket& to_add)
+    {
+      m_sources.add(to_add,
+                    m_unix_opt, m_priority);
+    }
+#endif //_WIN32
+
+    void set_priority(unsigned short priority)
+    {
+      m_priority = priority;
+    }
+
+  };
+
+#ifndef _WIN32
+  cdk::ds::Unix_socket::Options socket_opts( m_tcp_opts.user(),
+                                           m_tcp_opts.password());
+
+  if (m_tcp_opts.database())
+    socket_opts.set_database(*m_tcp_opts.database());
+#endif //_WIN32
+
+  Sources_add sources(self->m_ms
+                      , self->m_tcp_opts
+                    #ifndef _WIN32
+                      , socket_opts
+                    #endif //_WIN32
+                      );
+
+  for (Host_list::iterator it = self->m_host_list.begin();
+        it != self->m_host_list.end(); ++it)
+  {
+
+    sources.set_priority(it->first);
+
+    it->second.visit(sources);
+
   }
+#ifndef _WIN32
+  if (sources.m_socket_only && m_has_ssl)
+    throw Mysqlx_exception("TLS connections over Unix domain socket are not supported");
+#endif
   return self->m_ms;
 }
 
 
 const std::string mysqlx_session_options_struct::get_host()
 {
-  if (m_host_list.size() == 0)
-    return TCPIP_t().host(); // return the default host name
+  if (m_last_tcpip != m_host_list.end())
+    return m_last_tcpip->second.get<TCPIP_t>().host();
 
-  return m_host_list[m_host_list.size()-1].second.host();
+  return TCPIP_t().host(); // return the default host name
 }
+
+#ifndef _WIN32
+const std::string mysqlx_session_options_struct::get_socket()
+{
+  if (m_last_socket == m_host_list.end())
+    throw Mysqlx_exception("No socket defined");
+
+  return m_last_socket->second.get<cdk::ds::Unix_socket>().path();
+}
+#endif
 
 unsigned int mysqlx_session_options_struct::get_priority()
 {
-  if (m_source_state != source_state::priority || m_host_list.size() == 0)
+  if (m_source_state != source_state::priority || m_last_tcpip == m_host_list.end())
     throw Mysqlx_exception("Priority is not available");
 
-  unsigned short prio = m_host_list[m_host_list.size() - 1].first;
+  unsigned short prio = m_last_tcpip->first;
   return prio ? prio - 1 : 0;
 }
 
@@ -685,10 +788,10 @@ unsigned int mysqlx_session_options_struct::get_auth_method()
 
 unsigned int mysqlx_session_options_struct::get_port()
 {
-  if (m_host_list.size() == 0)
+  if (m_last_tcpip == m_host_list.end())
     throw Mysqlx_exception(MYSQLX_ERROR_MISSING_CONN_INFO);
 
-  return m_host_list.back().second.port();
+  return m_last_tcpip->second.get<TCPIP_t>().port();
 }
 
 const std::string mysqlx_session_options_struct::get_user()
@@ -724,19 +827,32 @@ void mysqlx_session_options_struct::host(unsigned short priority,
   if (!port)
     throw Mysqlx_exception("Wrong value for port");
 
-  m_host_list.emplace_back(priority, TCPIP_t(host, port));
+  m_last_tcpip = m_host_list.emplace(priority, TCPIP_t(host, port));
 }
 
 // Implementing URI_Processor interface
 void mysqlx_session_options_struct::host(unsigned short priority,
-          const std::string &host_name)
+          const std::string &host)
 {
   PRIORITY_CHECK;
 
-  TCPIP_t tcp;
-  tcp.set_host(host_name);
-  m_host_list.emplace_back(priority, tcp);
+  m_last_tcpip = m_host_list.emplace(priority, TCPIP_t(host));
+
 }
+
+#ifndef _WIN32
+void mysqlx_session_options_struct::socket(unsigned short priority,
+                                           const std::string &path)
+{
+  PRIORITY_CHECK;
+
+  m_last_socket =
+      m_host_list.emplace(priority, cdk::ds::Unix_socket(path));
+
+}
+#endif
+
+
 
 
 void mysqlx_session_options_struct::key_val(const std::string &key)
@@ -753,6 +869,7 @@ void mysqlx_session_options_struct::key_val(const std::string& key, const std::s
 
   if (lc_key.find("ssl-", 0) == 0)
   {
+    m_has_ssl = true;
 #ifdef WITH_SSL
     if (lc_key == "ssl-ca")
     {

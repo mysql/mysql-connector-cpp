@@ -1004,16 +1004,24 @@ TEST_F(xapi, failover_test)
       PARAM_END));
 
     EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
-      OPT_HOST(m_xplugin_host),
+      OPT_HOST("wrong_port+1"),
       OPT_PORT(m_port + 1), // Wrong port
       OPT_PRIORITY(max_prio - 1),
-      OPT_HOST(m_xplugin_host),
+      OPT_HOST("wrong_port+2"),
       OPT_PORT(m_port + 2), // Wrong port
       OPT_PRIORITY(max_prio - 2),
       OPT_HOST(m_xplugin_host),
       OPT_PORT(m_port),     // Correct port
       OPT_PRIORITY(max_prio - 3),
       PARAM_END));
+
+#ifndef _WIN32
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+      OPT_SOCKET("/no/socket.sock"),     // invalid socket
+      OPT_PRIORITY(max_prio - 3),
+      PARAM_END));
+#endif
+
 
     EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_HOST, buf));
     EXPECT_STRCASEEQ(m_xplugin_host, buf);
@@ -1766,3 +1774,123 @@ TEST_F(xapi, myc_344_sql_error_test)
   EXPECT_TRUE((err_msg = mysqlx_error_message(res)) != NULL);
   printf("\nExpected error: %s\n", err_msg);
 }
+
+#ifndef _WIN32
+TEST_F(xapi, unix_socket)
+{
+  SKIP_IF_NO_UNIX_SOCKET;
+
+  char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
+  int conn_err_code = 0;
+
+  std::stringstream uri;
+  uri << "mysqlx://" << m_xplugin_usr;
+  if (m_xplugin_pwd)
+    uri << ":" << m_xplugin_pwd;
+
+  uri << "@(" << m_xplugin_socket << ")";
+
+  auto local_sess = mysqlx_get_session_from_url(uri.str().c_str(),
+                                                conn_error,
+                                                &conn_err_code);
+
+  if (!local_sess)
+  {
+    FAIL() << "Cant connect to socket: " << m_xplugin_socket;
+  }
+
+  mysqlx_session_close(local_sess);
+
+  auto opt = mysqlx_session_options_new();
+
+  EXPECT_EQ(RESULT_OK,
+            mysqlx_session_option_set(opt,
+                                      OPT_SOCKET(m_xplugin_socket),
+                                      OPT_USER(m_xplugin_usr),
+                                      OPT_PWD(m_xplugin_pwd),
+                                      PARAM_END
+                                      )
+            );
+
+  local_sess = mysqlx_get_session_from_options(opt, conn_error, &conn_err_code);
+
+  if (!local_sess)
+  {
+    FAIL() << "Error connecting to "<< m_xplugin_socket << " : " << conn_error;
+  }
+
+  //Mixing UNIX Socket with port should give error
+  {
+    auto opt2 = mysqlx_session_options_new();
+
+    EXPECT_EQ(RESULT_ERROR,
+              mysqlx_session_option_set(opt2,
+                                        OPT_SOCKET(m_xplugin_socket),
+                                        OPT_PORT(13000),
+                                        PARAM_END
+                                        )
+              );
+
+    mysqlx_free_options(opt2);
+  }
+
+  EXPECT_EQ(RESULT_OK,
+            mysqlx_session_option_set(opt,
+                                      OPT_HOST(m_xplugin_host),
+
+                                      PARAM_END
+                                      )
+            );
+
+  char buf[1024];
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_HOST, buf));
+  EXPECT_STRCASEEQ(m_xplugin_host, buf);
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_SOCKET, buf));
+  EXPECT_STRCASEEQ(m_xplugin_socket, buf);
+
+  mysqlx_free_options(opt);
+
+
+  uri << "?ssl-mode=REQUIRED";
+
+  local_sess = mysqlx_get_session_from_url(uri.str().c_str(),
+                                           conn_error,
+                                           &conn_err_code);
+  if (local_sess)
+  {
+    mysqlx_session_close(local_sess);
+    FAIL() << "ssl-mode used on unix domain socket";
+  }
+
+  std::cout << "Expected connection error: " << conn_err_code << std::endl;
+
+  opt = mysqlx_session_options_new();
+
+  EXPECT_EQ(RESULT_OK,
+            mysqlx_session_option_set(opt,
+                                      OPT_SOCKET(m_xplugin_socket),
+                                      OPT_USER(m_xplugin_usr),
+                                      OPT_PWD(m_xplugin_pwd),
+                                      OPT_SSL_MODE(SSL_MODE_REQUIRED),
+                                      PARAM_END
+                                      )
+            );
+
+  local_sess = mysqlx_get_session_from_options(opt, conn_error, &conn_err_code);
+
+  mysqlx_free_options(opt);
+
+  if (local_sess)
+  {
+    mysqlx_session_close(local_sess);
+    FAIL() << "ssl-mode used on unix domain socket";
+  }
+
+  std::cout << "Expected connection error: " << conn_err_code << std::endl;
+
+
+  std::cout << "Done" << std::endl;
+}
+#endif //_WIN32

@@ -113,12 +113,17 @@ void internal::Settings_detail<internal::Settings_traits>::do_add(SessionOption 
   /*
     Store option value, checking for duplicates etc.
 
-    Note: Only HOST and PORT can have multiple values, the others, are unique
+    Note: Only HOST and PRIORITY and host connection options
+    can repeat, the others are unique.
   */
 
   if (opt == SessionOption::HOST
       || opt == SessionOption::PORT
-      || opt == SessionOption::PRIORITY)
+      || opt == SessionOption::PRIORITY
+#ifndef _WIN32
+      || opt == SessionOption::SOCKET
+#endif
+      )
   {
     m_options.emplace_back(opt, std::move(v));
   }
@@ -239,6 +244,16 @@ struct Host_sources : public cdk::ds::Multi_source
     cdk::ds::Multi_source::add(ds, options, prio);
   }
 
+#ifndef _WIN32
+  inline void add(const cdk::ds::Unix_socket &ds,
+                  cdk::ds::Unix_socket::Options options,
+                  unsigned short prio)
+  {
+
+    cdk::ds::Multi_source::add(ds, options, prio);
+  }
+#endif
+
 };
 
 
@@ -251,8 +266,16 @@ struct URI_parser
 {
   Host_sources m_source;
 
-  std::multimap<unsigned short, cdk::ds::TCPIP> m_hosts;
-  std::bitset<size_t(SessionOption::LAST)> m_options_used;
+  typedef
+  cdk::foundation::variant<cdk::ds::TCPIP
+#ifndef _WIN32
+  , cdk::ds::Unix_socket
+#endif //_WIN32
+  >  Ds_variant;
+
+  std::multimap<unsigned short, Ds_variant> m_sources;
+  std::bitset<size_t(SessionOption::LAST)>  m_options_used;
+  bool m_has_ssl = false;
 
 #ifdef WITH_SSL
   TLS_Options m_tls_opt;
@@ -266,14 +289,64 @@ struct URI_parser
 #endif
   }
 
+  struct Add_list
+  {
+    Host_sources &m_list;
+    cdk::ds::TCPIP::Options m_tcp_opt;
+#ifndef _WIN32
+    cdk::ds::Unix_socket::Options m_socket_opt;
+#endif
+    unsigned short priority = 0;
+    bool socket_only = true;
+
+    Add_list(Host_sources &list
+             ,const cdk::ds::TCPIP::Options& tcp_opt
+         #ifndef _WIN32
+             ,const cdk::ds::Unix_socket::Options& socket_opt
+         #endif
+             )
+      : m_list(list)
+      , m_tcp_opt(tcp_opt)
+  #ifndef _WIN32
+      , m_socket_opt(socket_opt)
+  #endif
+    {}
+
+    void operator() (const cdk::ds::TCPIP &ds_tcp)
+    {
+      m_list.add(ds_tcp, m_tcp_opt, priority);
+      socket_only = false;
+    }
+
+  #ifndef _WIN32
+    void operator() (const cdk::ds::Unix_socket &ds_socket)
+    {
+      m_list.add(ds_socket, m_socket_opt, priority);
+    }
+  #endif //_WIN32
+
+  };
 
   cdk::ds::Multi_source& get_data_source()
   {
     m_source.clear();
-    for (auto el : m_hosts)
+    Add_list add_list(m_source
+                      ,*this
+#ifndef _WIN32
+                      ,*this
+#endif
+                      );
+    for (auto el = m_sources.begin();
+         el != m_sources.end();
+         ++el)
     {
-      m_source.add(el.second, *this, el.first);
+      add_list.priority = el->first;
+      el->second.visit(add_list);
     }
+#ifndef _WIN32
+      if (add_list.socket_only && m_has_ssl)
+        throw Error("TLS connections over Unix domain socket are not supported");
+#endif
     return m_source;
   }
 
@@ -296,7 +369,7 @@ struct URI_parser
       throw_error("Priority should be a value between 0 and 100");
 
     cdk::ds::TCPIP endpoint(host, port);
-    m_hosts.emplace(priority, endpoint);
+    m_sources.emplace(priority, endpoint);
   }
 
   void host(unsigned short priority,
@@ -305,9 +378,21 @@ struct URI_parser
     if (priority > (max_priority+1))
       throw_error("Priority should be a value between 0 and 100");
 
-    cdk::ds::TCPIP endpoint(host);
-    m_hosts.emplace(priority, endpoint);
+    m_sources.emplace(priority, cdk::ds::TCPIP(host));
   }
+
+#ifndef _WIN32
+  // Report Unix socket path.
+  virtual void socket(unsigned short priority,
+                      const std::string &socket_path) override
+  {
+    if (priority > (max_priority+1))
+      throw_error("Priority should be a value between 0 and 100");
+
+    m_sources.emplace(priority, cdk::ds::Unix_socket(socket_path));
+
+  }
+#endif //_WIN32
 
   virtual void schema(const std::string &db) override
   {
@@ -322,8 +407,8 @@ struct URI_parser
 
     if (lc_key == "ssl-mode")
     {
+      m_has_ssl = true;
 #ifdef WITH_SSL
-
       if (m_options_used.test(size_t(SessionOption::SSL_MODE)))
       {
         throw Error("Option ssl-mode defined twice");
@@ -345,6 +430,7 @@ struct URI_parser
 #endif
     } else if (lc_key == "ssl-ca")
     {
+      m_has_ssl = true;
 #ifdef WITH_SSL
 
       if (m_options_used.test(size_t(SessionOption::SSL_CA)))
@@ -389,6 +475,11 @@ Session::Session(SessionSettings settings)
 {
   try {
 
+    /*
+      If URI option is specified, get settings from the connetion string.
+      TODO: Allow further modifying of URI settings by individual options.
+    */
+
     if (settings.has_option(SessionOption::URI))
     {
       URI_parser parser(
@@ -396,225 +487,304 @@ Session::Session(SessionSettings settings)
           );
 
       m_impl = std::make_shared<Impl>(parser.get_data_source());
+      return;
+    }
+
+    /*
+      Parse common options that apply to all hosts in a multi-host setting.
+    */
+
+    std::string pwd_str;
+    bool has_pwd = false;
+    bool has_ssl = false;
+
+#ifdef WITH_SSL
+    TLS_Options opt_ssl = TLS_Options::SSL_MODE::REQUIRED;
+#endif // WITH_SSL
+
+    if (settings.has_option(SessionOption::PWD) &&
+        settings.find(SessionOption::PWD).isNull() == false)
+    {
+      has_pwd = true;
+      pwd_str = settings.find(SessionOption::PWD).get<string>();
+    }
+
+    string user;
+    string database;
+    bool   has_db = false;
+
+    if (settings.has_option(SessionOption::USER))
+    {
+      user = settings.find(SessionOption::USER);
     }
     else
     {
-      std::string pwd_str;
-      bool has_pwd = false;
+      throw Error("User not defined!");
+    }
 
-#ifdef WITH_SSL
-      TLS_Options opt_ssl = TLS_Options::SSL_MODE::REQUIRED;
-#endif // WITH_SSL
+    if (settings.has_option(SessionOption::DB))
+    {
+      has_db = true;
+      database = settings.find(SessionOption::DB).get<string>();
+    }
 
-      if (settings.has_option(SessionOption::PWD) &&
-          settings.find(SessionOption::PWD).isNull() == false)
+    AuthMethod auth_method;
+    bool       has_auth = settings.has_option(SessionOption::AUTH);
+
+    if (has_auth)
+    {
+      auth_method =
+        AuthMethod(settings.find(SessionOption::AUTH).get<unsigned>());
+    }
+
+
+    /*
+      Set common cdk session options based what was found above.
+    */
+
+    auto set_common_options
+      = [&has_db, &database,&has_auth,&auth_method]
+        (cdk::ds::mysqlx::Options &opt, bool secure)
+    {
+      if (has_db)
+        opt.set_database(database);
+
+      if (has_auth)
       {
-        has_pwd = true;
-        pwd_str = settings.find(SessionOption::PWD).get<string>();
-      }
-
-
-
-      string user;
-
-      if (settings.has_option(SessionOption::USER))
-      {
-        user = settings.find(SessionOption::USER);
+        switch(auth_method)
+        {
+        case AuthMethod::PLAIN:
+          opt.set_auth_method(cdk::ds::mysqlx::Options::PLAIN);
+        break;
+        case AuthMethod::MYSQL41:
+          opt.set_auth_method(cdk::ds::mysqlx::Options::MYSQL41);
+        break;
+        case AuthMethod::EXTERNAL:
+          opt.set_auth_method(cdk::ds::mysqlx::Options::EXTERNAL);
+        break;
+        }
       }
       else
       {
-        throw Error("User not defined!");
+        opt.set_auth_method(secure ? cdk::ds::mysqlx::Options::PLAIN
+                                   : cdk::ds::mysqlx::Options::MYSQL41);
       }
 
-      cdk::ds::TCPIP::Options opt(user, has_pwd ? &pwd_str : NULL);
-
-      if (settings.has_option(SessionOption::DB))
-        opt.set_database(
-              settings.find(SessionOption::DB).get<string>()
-            );
+    };
 
 
-      if (settings.has_option(SessionOption::SSL_MODE) ||
-          settings.has_option(SessionOption::SSL_CA))
-      {
+    if (settings.has_option(SessionOption::SSL_MODE) ||
+        settings.has_option(SessionOption::SSL_CA))
+    {
+      has_ssl = true;
 #ifdef WITH_SSL
 
-        if (settings.has_option(SessionOption::SSL_CA))
-        {
-          opt_ssl.set_ca(settings.find(SessionOption::SSL_CA).get<string>());
-          if (!settings.has_option(SessionOption::SSL_MODE))
-            set_ssl_mode(opt_ssl, SSLMode::VERIFY_CA);
-        }
+      if (settings.has_option(SessionOption::SSL_CA))
+      {
+        opt_ssl.set_ca(settings.find(SessionOption::SSL_CA).get<string>());
+        if (!settings.has_option(SessionOption::SSL_MODE))
+          set_ssl_mode(opt_ssl, SSLMode::VERIFY_CA);
+      }
 
-        if (settings.has_option(SessionOption::SSL_MODE))
-        {
-          SSLMode m
-            = SSLMode(settings.find(SessionOption::SSL_MODE).get<unsigned>());
+      if (settings.has_option(SessionOption::SSL_MODE))
+      {
+        SSLMode m
+          = SSLMode(settings.find(SessionOption::SSL_MODE).get<unsigned>());
 
-          switch (m)
+        switch (m)
+        {
+        case SSLMode::VERIFY_CA:
+        case SSLMode::VERIFY_IDENTITY:
+
+          if (!settings.has_option(SessionOption::SSL_CA))
           {
-          case SSLMode::VERIFY_CA:
-          case SSLMode::VERIFY_IDENTITY:
-
-            if (!settings.has_option(SessionOption::SSL_CA))
-            {
-              std::string msg = "SSL mode ";
-              msg += internal::Settings_traits::get_mode_name(m);
-              msg += " requires ssl-ca setting";
-              throw_error(msg.c_str());
-            }
-
-          default:
-            break;
+            std::string msg = "SSL mode ";
+            msg += internal::Settings_traits::get_mode_name(m);
+            msg += " requires ssl-ca setting";
+            throw_error(msg.c_str());
           }
 
-          set_ssl_mode(opt_ssl, m);
+        default:
+          break;
         }
+
+        set_ssl_mode(opt_ssl, m);
+      }
 #else
-        throw_error(
-              "Can not create TLS session - this connector is built"
-              " without TLS support."
-              );
+      throw_error(
+            "Can not create TLS session - this connector is built"
+            " without TLS support."
+            );
 #endif
+    }
+
+    /*
+      Go through the list of options and build data sources list.
+    */
+
+    Host_sources source;
+
+    std::string host = "localhost";
+    std::string socket;
+    unsigned port = DEFAULT_MYSQLX_PORT;
+    unsigned priority = 0;
+
+    auto it = settings.begin();
+
+    bool initialized = false;
+    bool add = false;
+
+    //HOST can be skipped only on single host scenarios
+    bool singlehost = false;
+    bool socket_only = true;
+
+    /*
+      Check for PORT and PRIORITY settings and if present,
+      store values in port and priority variables.
+    */
+
+    auto port_prio
+      = [&it, &settings, &port, &priority](bool with_port)
+    {
+      if (with_port &&
+          it != settings.end() &&
+          it->first ==SessionOption::PORT)
+      {
+        port = it->second;
+        if (port > 65535U)
+          throw_error("Port value out of range");
+        ++it;
       }
 
-#ifdef WITH_SSL
-      opt.set_tls(opt_ssl);
-#endif
-
-      /*
-        Setting Authentication method after SSL options
-        to override the defaults if necessary
-      */
-      if (settings.has_option(SessionOption::AUTH))
+      if (it != settings.end() && it->first == SessionOption::PRIORITY)
       {
-        AuthMethod am =
-          AuthMethod(
-            settings.find(SessionOption::AUTH).get<unsigned>());
+        priority = static_cast<unsigned>(it->second);
 
-        switch(am)
-        {
-        case AuthMethod::PLAIN:
-          opt.set_auth_method(cdk::ds::mysqlx::Protocol_options::PLAIN);
-        break;
-        case AuthMethod::MYSQL41:
-          opt.set_auth_method(cdk::ds::mysqlx::Protocol_options::MYSQL41);
-        break;
-        case AuthMethod::EXTERNAL:
-          opt.set_auth_method(cdk::ds::mysqlx::Protocol_options::EXTERNAL);
-        break;
-        }
+        if (priority > max_priority)
+          throw_error("Priority should be a value between 0 and 100");
+
+        ++priority;
+
+        if (priority > 65535U)
+          throw_error("Priority value out of range");
       }
-
-      Host_sources source;
-
-      std::string host = "localhost";
-      unsigned port = DEFAULT_MYSQLX_PORT;
-      unsigned priority = 0;
-
-      auto it = settings.begin();
-
-      bool initialized = false;
-      bool add = false;
-
-      //HOST can be skipped only on single host scenarios
-      bool singlehost = false;
-
-      /*
-        Check for PORT and PRIORITY settings and if present,
-        store values in port and priority variables.
-      */
-
-      auto port_prio = [&it, &settings, &port, &priority]()
+      else
       {
-        if (it != settings.end() && it->first ==SessionOption::PORT)
-        {
-          port = it->second;
-          if (port > 65535U)
-            throw_error("Port value out of range");
-          ++it;
-        }
+        --it;
+      }
+    };
 
-        if (it != settings.end() && it->first == SessionOption::PRIORITY)
-        {
-          priority = static_cast<unsigned>(it->second);
-
-          if (priority > max_priority)
-            throw_error("Priority should be a value between 0 and 100");
-
-          ++priority;
-
-          if (priority > 65535U)
-            throw_error("Priority value out of range");
-        }
-        else
-        {
-          --it;
-        }
-      };
-
-      do
+    do
+    {
+#ifndef _WIN32
+      if (it != settings.end() && it->first ==SessionOption::SOCKET)
       {
+        if (singlehost)
+          throw Error("On multiple hosts, HOST option can't be skipped.");
 
-        if (it != settings.end() && it->first ==SessionOption::HOST)
-        {
-          if (singlehost)
-            throw Error("On multiple hosts, HOST option can't be skipped.");
+        add = true;
+        priority = 0;
 
-          add = true;
-          port = DEFAULT_MYSQLX_PORT;
-          priority = 0;
-
-          host = it->second.get<string>();
-
-          if (host.empty())
-            throw Error("Empty host.");
-
-          ++it;
-
-          port_prio();
-
-        }
-        else if (it->first ==SessionOption::PORT)
-        {
-          if (!initialized)
-          {
-            add = true;
-            singlehost = true;
-            port_prio();
-          }
-          else
-          {
-            throw Error("Incorrect settings order! Passed Port without previously passing HOST");
-          }
-
-        }
-        else if (it->first ==SessionOption::PRIORITY)
-        {
-          throw Error("Incorrect settings order! Passed Priority without previously passing HOST");
-        }
+        socket = it->second.get<string>();
 
         ++it;
 
-        if (add || (it == settings.end() && !initialized))
+        port_prio(false);
+
+      }else
+#endif //_WIN32
+
+      if (it != settings.end() && it->first ==SessionOption::HOST)
+      {
+        if (singlehost)
+          throw Error("On multiple hosts, HOST option can't be skipped.");
+
+        add = true;
+        port = DEFAULT_MYSQLX_PORT;
+        priority = 0;
+
+        host = it->second.get<string>();
+
+        if (host.empty())
+          throw Error("Empty host.");
+
+        ++it;
+
+        port_prio(true);
+
+      }
+      else if (it->first ==SessionOption::PORT)
+      {
+        if (!initialized)
         {
-          source.add(cdk::ds::TCPIP( host, static_cast<unsigned short>(port)),
-                     static_cast<cdk::ds::TCPIP::Options>(opt),
-                     static_cast<unsigned short>(priority));
-
-          initialized = true;
-
-          if (it == settings.end())
-            break;
-
-          add = false;
+          add = true;
+          singlehost = true;
+          port_prio(true);
+        }
+        else
+        {
+          throw Error("Incorrect settings order! Passed Port without previously passing HOST");
         }
 
-      } while (it != settings.end());
+      }
+      else if (it->first ==SessionOption::PRIORITY)
+      {
+        throw Error("Incorrect settings order! Passed Priority without previously passing HOST");
+      }
 
-      m_impl = std::make_shared<Impl>(source);
+      ++it;
 
-    }
+      if (add || (it == settings.end() && !initialized))
+      {
+        if (socket.empty())
+        {
+          socket_only = false;
+
+          cdk::ds::TCPIP::Options opt(user, has_pwd ? &pwd_str : NULL );
+
+          bool is_secure = false;
+#ifdef WITH_SSL
+          opt.set_tls(opt_ssl);
+          is_secure = cdk::ds::TCPIP::Options::TLS_options::SSL_MODE::DISABLED
+                      != opt_ssl.ssl_mode();
+#endif
+
+          set_common_options(opt, is_secure);
+
+          source.add(cdk::ds::TCPIP( host, static_cast<unsigned short>(port)),
+                      opt,
+                      static_cast<unsigned short>(priority));
+        }
+#ifndef _WIN32
+        else
+        {
+          cdk::ds::Unix_socket::Options opt(user, has_pwd ? &pwd_str : NULL );
+
+          set_common_options(opt, true);
+
+          source.add(cdk::ds::Unix_socket(socket),
+                      opt,
+                      static_cast<unsigned short>(priority));
+
+          socket.clear();
+        }
+#endif //_WIN32
+
+        initialized = true;
+
+        if (it == settings.end())
+          break;
+
+        add = false;
+      }
+
+    } while (it != settings.end());
+
+    if (socket_only && has_ssl)
+      throw Error("TLS connections over Unix domain socket are not supported");
+
+    m_impl = std::make_shared<Impl>(source);
+
   }
   CATCH_AND_WRAP
 }

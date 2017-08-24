@@ -47,6 +47,10 @@ public:
   TLS(Socket_base* tcpip,
       const Options& Opts);
 
+  bool is_secure() const
+  {
+    return true;
+  }
 
   class Read_op;
   class Read_some_op;

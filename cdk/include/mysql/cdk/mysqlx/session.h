@@ -445,7 +445,7 @@ protected:
 
 public:
 
-  cdk::api::Connection* get_connection();
+  //cdk::api::Connection* get_connection();
 
   typedef ds::Options<ds::mysqlx::Protocol_options> Options;
 
@@ -466,7 +466,7 @@ public:
     , m_nr_cols(0)
   {
     m_stmt_stats.clear();
-    authenticate(options);
+    authenticate(options, conn.is_secure());
     check_protocol_fields();
   }
 
@@ -606,7 +606,7 @@ private:
   Reply_init &set_command(Proto_op *cmd);
 
   // Authentication (cdk::protocol::mysqlx::Auth_processor)
-  void authenticate(const Options &options);
+  void authenticate(const Options &options, bool secure = false);
   void auth_ok(bytes data);
   void auth_continue(bytes data);
   void auth_fail(bytes data);

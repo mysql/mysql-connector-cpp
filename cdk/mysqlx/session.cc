@@ -308,15 +308,20 @@ public:
 */
 
 
-void Session::authenticate( const Session::Options &options)
+void Session::authenticate(const Session::Options &options,
+                           bool  secure_conn)
 {
 
   delete m_auth_interface;
   m_auth_interface = NULL;
 
   using cdk::ds::mysqlx::Protocol_options;
+  auto am = options.auth_method();
 
-  switch (options.auth_method())
+  if (Protocol_options::DEFAULT == am)
+    am = secure_conn ? Protocol_options::PLAIN : Protocol_options::MYSQL41;
+
+  switch (am)
   {
     case Protocol_options::MYSQL41:
       m_auth_interface = new AuthMysql41(options);
@@ -327,6 +332,8 @@ void Session::authenticate( const Session::Options &options)
     case Protocol_options::EXTERNAL:
       m_auth_interface = new AuthExternal(options);
     break;
+    case Protocol_options::DEFAULT:
+      assert(false);  // should not happen
     default:
       THROW("Unknown authentication method");
   }

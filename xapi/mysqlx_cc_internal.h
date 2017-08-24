@@ -363,6 +363,14 @@ public:
 struct Host_sources : public cdk::ds::Multi_source
 {
 
+  template<typename Data_source>
+  inline void add(Data_source ds,
+                  typename Data_source::Options options,
+                  unsigned short prio)
+  {
+    cdk::ds::Multi_source::add(ds, options, prio);
+  }
+
   inline void add(cdk::ds::TCPIP ds,
                   cdk::ds::TCPIP::Options options,
                   unsigned short prio)
@@ -396,6 +404,8 @@ private:
 
   std::bitset<LAST> m_options_used;
 
+  bool m_has_ssl = false;
+
   /*
     This struct extends cdk::ds::TCPIP to allow setting
     host and port at any time
@@ -404,6 +414,9 @@ private:
   struct TCPIP_t : public cdk::ds::TCPIP
   {
     TCPIP_t() : cdk::ds::TCPIP() {}
+
+    TCPIP_t(const std::string &_host) :
+      cdk::ds::TCPIP(_host) {}
 
     TCPIP_t(const std::string &_host, unsigned short _port) :
       cdk::ds::TCPIP(_host, _port) {}
@@ -442,8 +455,56 @@ private:
 
   };
 
-  typedef std::pair<unsigned short, TCPIP_t> Prio_host_pair;
-  typedef std::vector<Prio_host_pair> Host_list;
+
+  typedef cdk::foundation::variant<
+  TCPIP_t
+#ifndef _WIN32
+  ,cdk::ds::Unix_socket
+#endif
+  >  Ds_variant;
+
+  typedef
+  std::multimap<unsigned short,Ds_variant>
+  Host_list;
+
+  struct Add_list
+  {
+    Host_list &m_list;
+    unsigned short priority = 0;
+    bool socket_only = true;
+    Host_list::const_iterator &m_last_tcpip;
+#ifndef _WIN32
+    Host_list::const_iterator &m_last_socket;
+#endif
+
+    Add_list(Host_list &list
+             , Host_list::const_iterator &last_tcpip
+         #ifndef _WIN32
+             , Host_list::const_iterator &last_socket
+         #endif
+             )
+      : m_list(list)
+      , m_last_tcpip(last_tcpip)
+  #ifndef _WIN32
+      , m_last_socket(last_socket)
+  #endif
+    {}
+
+
+    void operator() (const TCPIP_t &ds_tcp)
+    {
+      m_last_tcpip = m_list.emplace(priority, ds_tcp);
+      socket_only = false;
+    }
+
+#ifndef _WIN32
+    void operator() (const cdk::ds::Unix_socket &ds_socket)
+    {
+      m_last_socket = m_list.emplace(std::make_pair(priority, ds_socket));
+    }
+#endif //_WIN32
+
+  };
 
   enum source_state
   { unknown, priority, non_priority }
@@ -454,6 +515,10 @@ private:
 
   Host_sources m_ms;
   Host_list    m_host_list;
+  Host_list::const_iterator m_last_tcpip;
+#ifndef _WIN32
+  Host_list::const_iterator m_last_socket;
+#endif
 
   bool         m_explicit_mode = false;
 
@@ -463,6 +528,10 @@ public:
 
   mysqlx_session_options_struct(source_state state = source_state::unknown)
       : m_source_state(state)
+      , m_last_tcpip(m_host_list.end())
+    #ifndef _WIN32
+      , m_last_socket(m_host_list.end())
+    #endif
     {
   #ifdef WITH_SSL
       set_ssl_mode(SSL_MODE_REQUIRED);
@@ -506,6 +575,11 @@ public:
   // Implementing URI_Processor interface
   void host(unsigned short priority, const std::string &host_name) override;
 
+#ifndef _WIN32
+  // Implementing URI_Processor interface
+  void socket(unsigned short priority, const std::string &socket_path) override;
+#endif
+
   // Make sure an option is set for a single data source
   void set_multiple_options(va_list args);
 
@@ -518,6 +592,9 @@ public:
   const std::string get_host();
   unsigned int get_port();
   unsigned int get_auth_method();
+#ifndef _WIN32
+  const std::string get_socket();
+#endif //_WIN32
   unsigned int get_priority();
   const std::string get_user();
   const std::string* get_password();

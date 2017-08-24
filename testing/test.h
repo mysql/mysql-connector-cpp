@@ -69,12 +69,14 @@ namespace mysqlx {
       unsigned short m_port;
       const char *m_user;
       const char *m_password;
+      const char *m_socket;
 
       // You can define per-test set-up and tear-down logic as usual.
       virtual void SetUp()
       {
         m_status = NULL;
         m_port = 0;
+        m_socket = NULL;
         m_user = NULL;
         m_password = NULL;
         m_sess = NULL;
@@ -86,6 +88,8 @@ namespace mysqlx {
           return;
         }
         m_port = (short)atoi(xplugin_port);
+
+        m_socket = getenv("MYSQLX_SOCKET");
 
         // By default use "root" user without any password.
         m_user = getenv("XPLUGIN_USER");
@@ -126,6 +130,11 @@ namespace mysqlx {
         if (!m_sess)
          throw m_status;
         return *m_sess;
+      }
+
+      const char* get_socket() const
+      {
+        return m_socket;
       }
 
       unsigned short get_port() const
@@ -192,6 +201,9 @@ namespace mysqlx {
 
 #define SKIP_IF_NO_XPLUGIN  \
   if (!has_xplugin()) { std::cerr <<"SKIPPED: " <<m_status <<std::endl; return; }
+
+#define SKIP_IF_NO_SOCKET  \
+  if (!get_socket()) { std::cerr <<"SKIPPED: No unix socket" <<std::endl; return; }
 
 #define SKIP_IF_SERVER_VERSION_LESS(x,y,z)\
   if (is_server_version_less(x, y, z)) \

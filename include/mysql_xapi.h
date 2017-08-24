@@ -361,12 +361,18 @@ typedef enum mysqlx_opt_type_enum
   MYSQLX_OPT_SSL_CA = 7,
   MYSQLX_OPT_PRIORITY = 8,    /**< Host priority for failover configurations */
   MYSQLX_OPT_AUTH = 9,        /**< Authentication method */
+#ifndef _WIN32
+  MYSQLX_OPT_SOCKET = 10,
+#endif
   LAST
 }
 mysqlx_opt_type_t;
 
 #define OPT_HOST(A)     MYSQLX_OPT_HOST, (A)
 #define OPT_PORT(A)     MYSQLX_OPT_PORT, (unsigned int)(A)
+#ifndef _WIN32
+#define OPT_SOCKET(A)   MYSQLX_OPT_SOCKET, (A)
+#endif //_WIN32
 #define OPT_USER(A)     MYSQLX_OPT_USER, (A)
 #define OPT_PWD(A)      MYSQLX_OPT_PWD, (A)
 #define OPT_DB(A)       MYSQLX_OPT_DB, (A)
@@ -2564,7 +2570,7 @@ mysqlx_column_get_collation(mysqlx_result_t *res, uint32_t pos);
         it could be confusing with the multi-byte charsets.
         For instance with UTF8MB4 the length of VARCHAR(100)
         column is returned as 400 because each character is
-        4 bytes long.       
+        4 bytes long.
 
   @ingroup xapi_md
 */
