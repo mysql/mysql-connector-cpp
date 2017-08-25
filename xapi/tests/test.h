@@ -289,7 +289,7 @@ public:
   {\
     std::cerr <<"SKIPPED: " << \
     "Server version not supported (" \
-    << x << "." << y <<"." << ")" << z <<std::endl; \
+    << x << "." << y <<"." << z << ")" <<std::endl; \
     return; \
   }
 

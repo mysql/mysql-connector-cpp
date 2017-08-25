@@ -528,7 +528,7 @@ Session::Session(SessionSettings settings)
       database = settings.find(SessionOption::DB).get<string>();
     }
 
-    AuthMethod auth_method;
+    AuthMethod auth_method = AuthMethod::MYSQL41;  // avoid compiler warning
     bool       has_auth = settings.has_option(SessionOption::AUTH);
 
     if (has_auth)

@@ -1775,6 +1775,7 @@ TEST_F(xapi, myc_344_sql_error_test)
   printf("\nExpected error: %s\n", err_msg);
 }
 
+
 #ifndef _WIN32
 TEST_F(xapi, unix_socket)
 {

@@ -456,7 +456,7 @@ private:
   };
 
 
-  typedef cdk::foundation::variant<
+  typedef cdk::variant<
   TCPIP_t
 #ifndef _WIN32
   ,cdk::ds::Unix_socket
@@ -467,44 +467,8 @@ private:
   std::multimap<unsigned short,Ds_variant>
   Host_list;
 
-  struct Add_list
-  {
-    Host_list &m_list;
-    unsigned short priority = 0;
-    bool socket_only = true;
-    Host_list::const_iterator &m_last_tcpip;
-#ifndef _WIN32
-    Host_list::const_iterator &m_last_socket;
-#endif
-
-    Add_list(Host_list &list
-             , Host_list::const_iterator &last_tcpip
-         #ifndef _WIN32
-             , Host_list::const_iterator &last_socket
-         #endif
-             )
-      : m_list(list)
-      , m_last_tcpip(last_tcpip)
-  #ifndef _WIN32
-      , m_last_socket(last_socket)
-  #endif
-    {}
-
-
-    void operator() (const TCPIP_t &ds_tcp)
-    {
-      m_last_tcpip = m_list.emplace(priority, ds_tcp);
-      socket_only = false;
-    }
-
-#ifndef _WIN32
-    void operator() (const cdk::ds::Unix_socket &ds_socket)
-    {
-      m_last_socket = m_list.emplace(std::make_pair(priority, ds_socket));
-    }
-#endif //_WIN32
-
-  };
+  struct Add_list;
+  friend Add_list;
 
   enum source_state
   { unknown, priority, non_priority }
@@ -515,9 +479,10 @@ private:
 
   Host_sources m_ms;
   Host_list    m_host_list;
-  Host_list::const_iterator m_last_tcpip;
+  unsigned short m_last_prio = 0;
+  cdk::opt<cdk::ds::TCPIP> m_last_tcpip;
 #ifndef _WIN32
-  Host_list::const_iterator m_last_socket;
+  cdk::opt<cdk::ds::Unix_socket> m_last_socket;
 #endif
 
   bool         m_explicit_mode = false;
@@ -528,10 +493,6 @@ public:
 
   mysqlx_session_options_struct(source_state state = source_state::unknown)
       : m_source_state(state)
-      , m_last_tcpip(m_host_list.end())
-    #ifndef _WIN32
-      , m_last_socket(m_host_list.end())
-    #endif
     {
   #ifdef WITH_SSL
       set_ssl_mode(SSL_MODE_REQUIRED);

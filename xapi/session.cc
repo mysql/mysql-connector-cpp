@@ -33,7 +33,7 @@ const unsigned max_priority = 100;
 mysqlx_session_struct::mysqlx_session_struct(
   const mysqlx_session_options_t &opt
 )
-  : m_session(mysqlx_session_options_t(opt).get_multi_source()),
+  : m_session(opt.get_multi_source()),
     m_stmt(NULL)
 {
   const string *db = opt.get_db();
@@ -511,6 +511,35 @@ cdk::ds::mysqlx::Protocol_options::auth_method_t uint_to_auth_method(unsigned in
   return cdk::ds::mysqlx::Protocol_options::PLAIN;
 }
 
+
+struct mysqlx_session_options_struct::Add_list
+{
+  mysqlx_session_options_struct *opts = NULL;
+  unsigned short priority = 0;
+  bool socket_only = true;
+
+  Add_list(mysqlx_session_options_struct &_opts)
+    : opts(&_opts)
+  {}
+
+  void operator() (const TCPIP_t &ds_tcp)
+  {
+    opts->m_last_tcpip = ds_tcp;
+    opts->m_host_list.emplace(priority, ds_tcp);
+    socket_only = false;
+  }
+
+#ifndef _WIN32
+  void operator() (const cdk::ds::Unix_socket &ds_socket)
+  {
+    opts->m_last_socket = ds_socket;
+    opts->m_host_list.emplace(std::make_pair(priority, ds_socket));
+  }
+#endif //_WIN32
+
+};
+
+
 void mysqlx_session_options_struct::set_multiple_options(va_list args)
 {
   mysqlx_opt_type_t type;
@@ -518,13 +547,7 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
   Ds_variant ds;
   m_options_used.reset();
 
-
-
-#ifndef _WIN32
-  Add_list add_list(m_host_list, m_last_tcpip, m_last_socket);
-#else
-  Add_list add_list(m_host_list, m_last_tcpip);
-#endif
+  Add_list add_list(*this);
 
   // The type is promoted to int when passing into va_list
   while( (type = (mysqlx_opt_type_t)(va_arg(args, int))) > 0 )
@@ -593,7 +616,8 @@ void mysqlx_session_options_struct::set_multiple_options(va_list args)
           if (uint_data > max_priority)
             throw Mysqlx_exception(MYSQLX_ERROR_MAX_PRIORITY);
 
-          add_list.priority = (unsigned short)uint_data + 1;
+          m_last_prio = (unsigned short)uint_data + 1;
+          add_list.priority = m_last_prio;
           m_source_state = source_state::priority;
           break;
         case MYSQLX_OPT_USER:
@@ -745,29 +769,30 @@ mysqlx_session_options_struct::get_multi_source() const
 
 const std::string mysqlx_session_options_struct::get_host()
 {
-  if (m_last_tcpip != m_host_list.end())
-    return m_last_tcpip->second.get<TCPIP_t>().host();
+  static TCPIP_t  defaults;
 
-  return TCPIP_t().host(); // return the default host name
+  if (m_last_tcpip)
+    return m_last_tcpip->host();
+
+  return defaults.host(); // return the default host name
 }
 
 #ifndef _WIN32
 const std::string mysqlx_session_options_struct::get_socket()
 {
-  if (m_last_socket == m_host_list.end())
+  if (!m_last_socket)
     throw Mysqlx_exception("No socket defined");
 
-  return m_last_socket->second.get<cdk::ds::Unix_socket>().path();
+  return m_last_socket->path();
 }
 #endif
 
 unsigned int mysqlx_session_options_struct::get_priority()
 {
-  if (m_source_state != source_state::priority || m_last_tcpip == m_host_list.end())
+  if (m_source_state != source_state::priority || m_last_prio == 0)
     throw Mysqlx_exception("Priority is not available");
 
-  unsigned short prio = m_last_tcpip->first;
-  return prio ? prio - 1 : 0;
+  return m_last_prio - 1;
 }
 
 unsigned int mysqlx_session_options_struct::get_auth_method()
@@ -788,10 +813,10 @@ unsigned int mysqlx_session_options_struct::get_auth_method()
 
 unsigned int mysqlx_session_options_struct::get_port()
 {
-  if (m_last_tcpip == m_host_list.end())
+  if (!m_last_tcpip)
     throw Mysqlx_exception(MYSQLX_ERROR_MISSING_CONN_INFO);
 
-  return m_last_tcpip->second.get<TCPIP_t>().port();
+  return m_last_tcpip->port();
 }
 
 const std::string mysqlx_session_options_struct::get_user()
@@ -827,7 +852,8 @@ void mysqlx_session_options_struct::host(unsigned short priority,
   if (!port)
     throw Mysqlx_exception("Wrong value for port");
 
-  m_last_tcpip = m_host_list.emplace(priority, TCPIP_t(host, port));
+  auto it = m_host_list.emplace(priority, TCPIP_t(host, port));
+  m_last_tcpip = it->second.get<TCPIP_t>();
 }
 
 // Implementing URI_Processor interface
@@ -836,8 +862,8 @@ void mysqlx_session_options_struct::host(unsigned short priority,
 {
   PRIORITY_CHECK;
 
-  m_last_tcpip = m_host_list.emplace(priority, TCPIP_t(host));
-
+  auto it = m_host_list.emplace(priority, TCPIP_t(host));
+  m_last_tcpip = it->second.get<TCPIP_t>();
 }
 
 #ifndef _WIN32
@@ -846,8 +872,8 @@ void mysqlx_session_options_struct::socket(unsigned short priority,
 {
   PRIORITY_CHECK;
 
-  m_last_socket =
-      m_host_list.emplace(priority, cdk::ds::Unix_socket(path));
+  auto it = m_host_list.emplace(priority, cdk::ds::Unix_socket(path));
+  m_last_socket = it->second.get<cdk::ds::Unix_socket>();
 
 }
 #endif
