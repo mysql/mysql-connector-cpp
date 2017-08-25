@@ -46,6 +46,8 @@ namespace cdk {
   using foundation::string;
   using foundation::scoped_ptr;
   using foundation::shared_ptr;
+  using foundation::variant;
+  using foundation::opt;
 
   using foundation::bytes;
   using foundation::buffers;

@@ -103,13 +103,13 @@ protected:
   variant_base(const First &val)
     : m_owns(true)
   {
-    new (&m_storage) First(val);
+    set(val);
   }
 
   variant_base(First &&val)
     : m_owns(true)
   {
-    new (&m_storage) First(std::move(val));
+    set(std::move(val));
   }
 
   template<typename T>
@@ -132,8 +132,7 @@ protected:
   {
     if (!other.m_owns)
       return;
-    *reinterpret_cast<First*>(&m_storage)
-      = *other.get((First*)nullptr);
+    set(*other.get((First*)nullptr));
   }
 
   variant_base(variant_base &&other)
@@ -141,8 +140,16 @@ protected:
   {
     if (!other.m_owns)
       return;
-    *reinterpret_cast<First*>(&m_storage)
-      = std::move(*other.get((First*)nullptr));
+    set(std::move(*other.get((First*)nullptr)));
+  }
+
+  variant_base& operator=(const variant_base &other)
+  {
+    if (other.m_owns)
+      set(*other.get((First*)nullptr));
+    else
+      Base::operator=(static_cast<const Base&>(other));
+    return *this;
   }
 
   void set(const First &val)
@@ -264,6 +271,15 @@ protected:
   {
     assert(false);
   }
+
+  void operator=(const variant_base&)
+  {}
+
+  template<typename T>
+  void operator=(const T&)
+  {
+    assert(false);
+  }
 };
 
 }  // detail
@@ -276,6 +292,14 @@ class variant
   : private detail::variant_base<0,0,Types...>
 {
   typedef detail::variant_base<0,0,Types...> Base;
+
+protected:
+
+  template <typename T>
+  const T* get_ptr() const
+  {
+    return Base::get((const T*)nullptr);
+  }
 
 public:
 
@@ -298,6 +322,12 @@ public:
   variant(T &&val)
     : Base(std::move(val))
   {}
+
+  variant& operator=(const variant &other)
+  {
+    Base::operator=(static_cast<const Base&>(other));
+    return *this;
+  }
 
   template <typename T>
   variant& operator=(T&& val)
@@ -333,6 +363,60 @@ public:
   const T& get() const
   {
     return *Base::get((const T*)nullptr);
+  }
+
+  template <typename T>
+  const T* operator->() const
+  {
+    return get_ptr<T>();
+  }
+};
+
+
+/*
+  Object x of type opt<T> can be either empty or hold value of type T. In
+  the latter case reference to stored object can be obtained with x.get()
+  and stored object's methods can be called via operator->: x->method().
+*/
+
+template < typename Type >
+class opt
+  : private variant<Type>
+{
+  typedef variant<Type> Base;
+
+public:
+
+  opt()
+  {}
+
+  opt(const opt &other)
+    : Base(static_cast<const Base&>(other))
+  {}
+
+  template <typename... T>
+  opt(T... args)
+    : Base(Type(args...))
+  {}
+
+  opt& operator=(const opt &other)
+  {
+    Base::operator=(static_cast<const Base&>(other));
+    return *this;
+  }
+
+  opt& operator=(const Type& val)
+  {
+    Base::operator=(val);
+    return *this;
+  }
+
+  using Base::operator bool;
+  using Base::get;
+
+  const Type* operator->() const
+  {
+    return Base::template get_ptr<Type>();
   }
 };
 
