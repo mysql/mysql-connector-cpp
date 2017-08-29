@@ -2292,6 +2292,12 @@ TEST_F(Crud, single_document)
 {
   SKIP_IF_NO_XPLUGIN;
 
+  /*
+    Note: requires x-protocol support for 'upsert' flag and WL#10682
+    (Mysqlx.CRUD.Update on top level document). The later is not implemented
+    in 5.7 plugin.
+  */
+
   SKIP_IF_SERVER_VERSION_LESS(8, 0, 3);
 
   cout << "Creating session..." << endl;
@@ -2318,22 +2324,26 @@ TEST_F(Crud, single_document)
   EXPECT_TRUE(coll.getOne("id1").isNull());
 
   // Replace existing document
-  EXPECT_TRUE(coll.replaceOne("id3", expr("{\"name\": \"qux\" }")));
+  EXPECT_EQ(1, coll.replaceOne("id3", expr("{\"name\": \"qux\" }"))
+                   .getAffectedItemsCount());
   EXPECT_EQ(string("qux"), coll.getOne("id3")["name"].get<string>());
 
   // Ignore _id field on document and replace existing docment
   // Document passed as string
-  EXPECT_TRUE(coll.replaceOne("id3", "{\"_id\": \"id4\", \"name\": \"baz\" }"));
+  EXPECT_EQ(1, coll.replaceOne("id3", "{\"_id\": \"id4\", \"name\": \"baz\" }")
+                   .getAffectedItemsCount());
   EXPECT_EQ(string("baz"), coll.getOne("id3")["name"].get<string>());
   EXPECT_EQ(string("id3"), coll.getOne("id3")["_id"].get<string>());
 
   // should not affect none
-  EXPECT_FALSE(coll.replaceOne("id4", expr("{\"_id\":\"id4\", \"name\": \"baz\" }")));
+  EXPECT_EQ(0,
+    coll.replaceOne("id4", expr("{\"_id\":\"id4\", \"name\": \"baz\" }"))
+        .getAffectedItemsCount());
 
   // Using DbDoc
   DbDoc doc("{\"_id\":\"id4\", \"name\": \"quux\" }");
 
-  EXPECT_TRUE(coll.replaceOne("id3", doc));
+  EXPECT_EQ(1, coll.replaceOne("id3", doc).getAffectedItemsCount());
   EXPECT_EQ(string("quux"), coll.getOne("id3")["name"].get<string>());
 }
 
@@ -2356,11 +2366,13 @@ TEST_F(Crud, add_or_replace)
     .add("{\"_id\":\"id3\", \"name\":\"baz\" }")
     .execute();
 
-  EXPECT_TRUE(coll.addOrReplace("id4", "{\"name\":\"zaz\"}"));
+  EXPECT_EQ(1, coll.addOrReplaceOne("id4", "{\"name\":\"zaz\"}")
+                   .getAffectedItemsCount());
   // Check that the document was added
   EXPECT_EQ(string("zaz"), coll.getOne("id4")["name"].get<string>());
 
-  EXPECT_FALSE(coll.addOrReplace("id4", "{\"name\":\"zzz\"}"));
+  EXPECT_EQ(0, coll.addOrReplaceOne("id4", "{\"name\":\"zzz\"}")
+                   .getAffectedItemsCount());
   // Check that the document was replaced
   EXPECT_EQ(string("zzz"), coll.getOne("id4")["name"].get<string>());
 

@@ -454,14 +454,14 @@ public:
     because the statement gets executed upon calling of this function.
   */
 
-  bool replaceOne(string id, internal::ExprValue &&document)
+  Result replaceOne(string id, internal::ExprValue &&document)
   {
-      return
-          internal::CollectionReplace(*this, id, std::move(document)).execute().getAffectedItemsCount() == 1;
+    return
+      internal::CollectionReplace(*this, id, std::move(document)).execute();
   }
 
   /**
-    Adds a new document identified by id if it does not exist and 
+    Adds a new document identified by id if it does not exist and
     returns true. Otherwise replaces the existing document
     with that id and returns false.
     Parameter document can be either DbDoc object,
@@ -471,9 +471,11 @@ public:
     because the statement is executed upon calling of this function.
   */
 
-  bool addOrReplace(string id, internal::ExprValue &&document)
+  Result addOrReplaceOne(string id, internal::ExprValue &&document)
   {
-      return internal::CollectionReplace(*this, id, std::move(document), true).execute().getAffectedItemsCount() == 1;
+    return
+      internal::CollectionReplace(*this, id, std::move(document), true)
+      .execute();
   }
 
 };
