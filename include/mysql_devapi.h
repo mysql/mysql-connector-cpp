@@ -120,7 +120,7 @@ namespace mysqlx {
 
   When creating Schema object, by default no checks are made that
   it actually exists in the database. Operation that is executed
-  on the server and involves such non-existent schema will throw
+  on the server and involves such non-existent schema throws
   an error at execution time.
 
   @ingroup devapi
@@ -170,9 +170,9 @@ public:
   /**
     Return `Collection` object representing named collection in
     the schema. If `check_exists` is true and named collection
-    does not exist, an error will be thrown. Otherwise, if named
-    collection does not exist, the returned object will refer
-    to non-existent collection.
+    does not exist, an error is thrown. Otherwise, if named
+    collection does not exist, the returned object refers
+    to a non-existent collection.
 
     @note Checking existence of the collection involves
     communication with the server. If `check_exists` is false,
@@ -184,8 +184,8 @@ public:
 
   /**
     Return `Table` object representing table or view in the schema.
-    If `check_exists` is true and table does not exist, an error will be thrown.
-    Otherwise, if table does not exists, the returned object will refer
+    If `check_exists` is true and table does not exist, an error is thrown.
+    Otherwise, if table does not exists, the returned object refers
     to non-existent table.
 
     @note Checking existence of the table involves
@@ -254,9 +254,9 @@ public:
   /**
     Drop given collection from the schema.
 
-    This method will silently succeed if given collection does not exist.
+    This method silently succeeds if given collection does not exist.
 
-    @note If table name is passed to the method, it will behave like
+    @note If table name is passed to the method, it behaves like
     dropTable().
   */
 
@@ -265,11 +265,11 @@ public:
   /**
     Drop given table from the schema.
 
-    This method will silently succeed if given table does not exist. If given
-    table is a view (isView() returns true) then it will not be dropped (and no
+    This method silently succeeds if given table does not exist. If given
+    table is a view (isView() returns true) then it is not dropped (and no
     error is reported) - use dropView() instead.
 
-    @note If collection name is passed to the method, it will behave like
+    @note If collection name is passed to the method, it behaves like
     dropCollection().
   */
 
@@ -278,7 +278,7 @@ public:
   /**
     Drop given view from the schema.
 
-    This method will silently succeed if given view does not exist. This is
+    This method silently succeeds if given view does not exist. This is
     also the case when a name of non-view object, such as table or collection
     was given (as a view with the given name does not exist).
   */
@@ -660,9 +660,9 @@ DLL_WARNINGS_PUSH
   are thrown from session constructor.
 
   It is possible to specify several hosts when creating a session. In that
-  case failed connection to one of the hosts will trigger fail-over attempt
+  case failed connection to one of the hosts triggers fail-over attempt
   to connect to a different host in the list. Only if none of the hosts could
-  be contacted, session creation will fail. It is also possible to specify
+  be contacted, session creation fails. It is also possible to specify
   priorities for the hosts in the list which determine the order in which
   hosts are tried (see `SessionOption::PRIORITY`).
 
@@ -734,7 +734,7 @@ public:
     Get named schema object in a given session.
 
     The object does not have to exist in the database.
-    Errors will be thrown if one tries to use non-existing
+    Error is thrown if one tries to use a non-existing
     schema.
   */
 
@@ -743,7 +743,7 @@ public:
   /**
     Get named schema object in a given session.
 
-    Errors will be thrown if one tries to use non-existing
+    Error is thrown if one tries to use a non-existing
     schema with check_existence = true.
   */
 
@@ -770,7 +770,7 @@ public:
   /**
     Drop the schema.
 
-    Errors will be thrown if schema doesn't exist,
+    Error is thrown if the schema doesn't exist,
   */
 
   void   dropSchema(const string &name);
@@ -818,7 +818,7 @@ public:
   /**
     Closes current session.
 
-    After a session is closed, any call to other method will throw Error.
+    After a session is closed, any call to other method throws Error.
   */
 
   void close()

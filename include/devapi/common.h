@@ -369,7 +369,7 @@ namespace internal {
   class is_range
   {
     /*
-      Note: This overload will be taken into account only if std::begin(X) and
+      Note: This overload is taken into account only if std::begin(X) and
       std::end(X) expressions are valid.
     */
     template <class X>

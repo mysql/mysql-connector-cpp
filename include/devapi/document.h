@@ -388,8 +388,7 @@ public:
   /**
     @name Conversion to C++ Types
 
-    Attempt to convert value of non-compatible type will
-    throw an error.
+    Attempt to convert value of non-compatible type throws an error.
   */
   //@{
 
@@ -585,16 +584,16 @@ public:
   as expression.
 
   If `s` is a string value, then in contexts where values are
-  expected, `expr(s)` will treat `s` as a DevAPI expression. For
+  expected, `expr(s)` treats `s` as a DevAPI expression. For
   example statement
 
   table.select("foo > 1").execute();
 
-  will return string `"foo > 1"` for each row in the table while
+  returns the string `"foo  1"` for each row in the table while
 
   table.select(expr("foo > 1")).execute();
 
-  will return true/false, depending on the value of the expression.
+  returns true/false, depending on the value of the expression.
 
   @ingroup devapi
 */

@@ -43,7 +43,7 @@
 
      Limit< Offset< Executable<...> > >
 
-  will represent operation for which first .limit() can be called, followed by
+  represents an operation for which first .limit() can be called, followed by
   .offset() and then finally .execute(). See classes like
   Collection_find_base in collection_crud.h for more examples.
 

@@ -158,7 +158,7 @@
   use standard C++ library classes as components. For example, we use
   std::shared_ptr<> a lot. We can not modify standard library headers to export
   these classes. As is the common practice, we ignore this issue assuming that
-  the code that uses our connector will be built with the same C++ runtime
+  the code that uses our connector is built with the same C++ runtime
   implementation as the one used to build the connector. To silence the warnings,
   uses of standard library classes in our public API classes should be surrounded
   with DLL_WARNINGS_PUSH/POP macros.

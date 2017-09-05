@@ -185,7 +185,7 @@ namespace internal {
   Result res = operation.execute();
   ~~~~~~
 
-  Storing another result in `Result` instance will overwrite
+  Storing another result in `Result` instance overwrites
   previous result.
 
   @todo Implement other methods for getting information about
@@ -371,7 +371,7 @@ public:
         it could be confusing with the multi-byte charsets.
         For instance with UTF8MB4 the length of VARCHAR(100)
         column is returned as 400 because each character is
-        4 bytes long.       
+        4 bytes long.
 */
 
   unsigned long getLength() const;
@@ -481,8 +481,8 @@ public:
     Return all remaining rows
 
     %Result of this method can be stored in an STL container such as
-    `std::list<Row>`. Rows that have been fetched using fetchOne() will not
-    be available when calling fetchAll()
+    `std::list<Row>`. Rows that have already been fetched using fetchOne() are
+    not available when calling fetchAll()
    */
 
   RowList fetchAll()
@@ -499,7 +499,7 @@ public:
   /*
    Iterate over rows (range-for support).
 
-   Rows that have been fetched using iterator will not be available when
+   Rows that have been fetched using iterator are not available when
    calling fetchOne() or fetchAll()
   */
 
@@ -663,8 +663,8 @@ public:
     Return all remaining documents.
 
     %Result of this method can be stored in an STL container such as
-    `std::list<DbDoc>`. Documents that have been fetched using fetchOne() will
-    not be available when calling fetchAll()
+    `std::list<DbDoc>`. Documents that have been fetched using fetchOne() are
+    not available when calling fetchAll()
    */
 
   DocList fetchAll()
@@ -684,7 +684,7 @@ public:
   /*
    Iterate over documents (range-for support).
 
-   Documents that have been fetched using iterator will not be available when
+   Documents that have been fetched using iterator are not available when
    calling fetchOne() or fetchAll()
   */
 
