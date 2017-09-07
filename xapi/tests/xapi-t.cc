@@ -1881,6 +1881,13 @@ TEST_F(xapi, unix_socket)
 
   local_sess = mysqlx_get_session_from_options(opt, conn_error, &conn_err_code);
 
+  {
+    // Bug 26742948
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SOCKET, "../../../../../../../tmp/mysqlx_11.sock"));
+
+    mysqlx_session_option_set(opt, MYSQLX_OPT_USER, "mysqld_user", PARAM_END);
+  }
+
   mysqlx_free_options(opt);
 
   if (local_sess)
