@@ -90,7 +90,7 @@ class variant_base<Size, Align, First, Rest...>
     Rest...
   >  Base;
 
-  bool m_owns;
+  bool m_owns = false;
 
 protected:
 
@@ -115,20 +115,18 @@ protected:
   template<typename T>
   variant_base(T &&val)
     : Base(std::move(val))
-    , m_owns(false)
   {}
 
   template<typename T>
   variant_base(const T &val)
     : Base(val)
-    , m_owns(false)
   {}
 
 
   // Copy/move semantics
 
   variant_base(const variant_base &other)
-    : Base(other)
+    : Base(static_cast<const Base&>(other))
   {
     if (!other.m_owns)
       return;
@@ -136,7 +134,7 @@ protected:
   }
 
   variant_base(variant_base &&other)
-    : Base(std::move(other))
+    : Base(std::move(static_cast<const Base&&>(other)))
   {
     if (!other.m_owns)
       return;
