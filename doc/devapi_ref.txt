@@ -91,7 +91,8 @@ a result (ignored here; the results are used later).
 To insert documents use the @link mysqlx::Collection::add
 `Collection::add()`@endlink method. Documents are described by JSON strings
 using the same syntax as MySQL Server. Note that double quotes are required
-around field names and they must be escaped inside C strings:
+around field names and they must be escaped inside C strings, unless the new
+C++11 `R"(...)"` string literal syntax is used as in the example below:
 
 @skipline {
 @until cout

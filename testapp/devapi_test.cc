@@ -61,17 +61,22 @@ try {
   {
     Result add;
 
-    add= coll.add("{ \"name\": \"foo\", \"age\": 1 }").execute();
+    add= coll.add(R"({ "name": "foo", "age": 1 })").execute();
     cout <<"- added doc with id: " <<add.getDocumentId() <<endl;
 
-    add= coll.add("{ \"name\": \"bar\", \"age\": 2,"
-                  "  \"toys\": [ \"car\", \"ball\" ] }").execute();
+    add= coll.add(R"({ "name": "bar", "age": 2, "toys": [ "car", "ball" ] })")
+             .execute();
     cout <<"- added doc with id: " <<add.getDocumentId() <<endl;
 
-    add= coll.add("{ \"name\": \"baz\", \"age\": 3, \"date\": { \"day\": 20, \"month\": \"Apr\" }}").execute();
+    add= coll.add(R"({
+       "name": "baz",
+        "age": 3,
+       "date": { "day": 20, "month": "Apr" }
+    })").execute();
     cout <<"- added doc with id: " <<add.getDocumentId() <<endl;
 
-    add= coll.add("{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }").execute();
+    add= coll.add(R"({ "_id": "myuuid-1", "name": "foo", "age": 7 })")
+             .execute();
     cout <<"- added doc with id: " <<add.getDocumentId() <<endl;
   }
 

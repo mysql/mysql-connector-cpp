@@ -98,7 +98,7 @@ namespace internal {
 
     virtual ~Result_base() {}
 
-    /// Get number of warnings stored in the result.
+    /// Get the number of warnings stored in the result.
 
     unsigned getWarningCount() const
     {
@@ -108,7 +108,7 @@ namespace internal {
       CATCH_AND_WRAP
     }
 
-    /// Get list of warnings stored in the result.
+    /// Get a list of warnings stored in the result.
 
     WarningList getWarnings()
     {
@@ -118,7 +118,7 @@ namespace internal {
       CATCH_AND_WRAP
     }
 
-    /// Get warning at given, 0-based position.
+    /// Get the warning at the given, 0-based position.
 
     Warning getWarning(unsigned pos)
     {
@@ -174,22 +174,19 @@ namespace internal {
 
 
 /**
-  Represents result of an operation that does not return data.
+  Represents a result of an operation that does not return data.
 
-  Generic result which can be returned by operations which only
+  A generic result which can be returned by operations which only
   modify data.
 
-  `Result` instance can store result of executing an operation:
+  A `Result` instance can store the result of executing an operation:
 
   ~~~~~~
   Result res = operation.execute();
   ~~~~~~
 
-  Storing another result in `Result` instance overwrites
-  previous result.
-
-  @todo Implement other methods for getting information about
-  the result specified by DevAPI.
+  Storing another result in a `Result` instance overwrites
+  the previous result.
 
   @ingroup devapi_res
 */
@@ -227,13 +224,13 @@ public:
   uint64_t getAutoIncrementValue() const;
 
   /**
-    Return id of the document added to a collection.
+    Return an identifier of a single document added to a collection.
   */
 
   const GUID& getDocumentId() const;
 
   /**
-    Return list of ids of documents added to a collection on a chain add() call.
+    Return a list of identifiers of multiple documents added to a collection.
   */
 
   DocIdList getDocumentIds() const;
@@ -265,7 +262,7 @@ private:
 
 /**
   List of types for `Type` enumeration. For each type TTT in this list
-  there is corresponding enumeration value `Type::TTT`. For example
+  there is the corresponding enumeration value `Type::TTT`. For example,
   constant `Type::INT` represents the "INT" type.
 
   @note The class name declared for each type is ignored for now
@@ -338,7 +335,7 @@ std::ostream& operator<<(std::ostream &out, Type t)
 
 
 /**
-  Class providing meta-data for a single result column.
+  Provides meta-data for a single result column.
 
   @ingroup devapi_res
 */
@@ -361,18 +358,17 @@ public:
 
   Type getType()   const;  ///< TODO
 
-/**
-  Get column length
+  /**
+    Get column length
 
-  @return the maximum length of data in the column in bytes
-  as reported by server.
+    @return The maximum length of data in the column in bytes, as reported
+    by the server.
 
-  @note because the column length is returned as byte length
-        it could be confusing with the multi-byte charsets.
-        For instance with UTF8MB4 the length of VARCHAR(100)
-        column is returned as 400 because each character is
-        4 bytes long.
-*/
+    @note Because the column length is returned as byte length, it could be
+    confusing with the multi-byte character sets. For instance, with UTF8MB4
+    the length of VARCHAR(100) column is reported as 400 because each character
+    is 4 bytes long.
+  */
 
   unsigned long getLength() const;
   unsigned short getFractionalDigits() const;  ///< TODO
@@ -412,8 +408,10 @@ public:
 /**
   %Result of an operation that returns rows.
 
-  @note It is possible to iterate over rows in the result using
-  range loop: `for (Row r : result) ...`
+  A `RowResult` object gives sequential access to the rows contained in
+  the result. It is possible to get the rows one-by-one, or fetch and store
+  all of them at once. One can iterate over the rows using range loop:
+  `for (Row r : result) ...`.
 
   @ingroup devapi_res
 */
@@ -442,18 +440,19 @@ public:
     return *this;
   }
 
-  /// Return number of fields in each row.
+  /// Return the number of fields in each row.
 
   col_count_t getColumnCount() const;
 
-  /// Return Column instance describing given result column.
+  /// Return `Column` object describing the given column of the result.
 
   Column getColumn(col_count_t pos) const;
 
   /**
-    Return meta-data for all result columns. The returned data
-    can be stored in any STL container which can store Column
-    objects.
+    Return meta-data for all result columns.
+
+    The returned data can be stored in any container which holds `Column`
+    objects, such as `std::vector<Column>`.
   */
 
   Columns getColumns() const
@@ -465,9 +464,9 @@ public:
   }
 
   /**
-    Return current row and move to the next one in the sequence.
+    Return the current row and move to the next one in the sequence.
 
-    If there are no more rows in this result, returns NULL.
+    If there are no more rows in this result, returns a null `Row` instance.
   */
 
   Row fetchOne()
@@ -480,9 +479,9 @@ public:
   /**
     Return all remaining rows
 
-    %Result of this method can be stored in an STL container such as
-    `std::list<Row>`. Rows that have already been fetched using fetchOne() are
-    not available when calling fetchAll()
+    %Result of this method can be stored in a container such as
+    `std::list<Row>`. Rows that have already been fetched using `fetchOne()` are
+    not included in the result of `fetchAll()`.
    */
 
   RowList fetchAll()
@@ -491,7 +490,10 @@ public:
   }
 
   /**
-     Returns number of rows available on RowResult to be fetched
+    Returns the number of rows contained in the result.
+
+    The method counts only the rows that were not yet fetched and are still
+    available in the result.
   */
 
   uint64_t count();
@@ -530,14 +532,14 @@ public:
 
 
 /**
-  %Result of SQL query or command.
+  %Result of an SQL query or command.
 
-  Such result can contain one or more results returned from a
-  single command or query. When created, SqlResult instance gives
-  access to the first result. Method `nextResult()` moves to the next
-  result if there is any.
-
-  @todo implement `nextResult()` and other methods specified by DevAPI.
+  In general, an SQL query or command can return multiple results (for example,
+  a call to a stored procedure). Additionally, each or only some of these
+  results can contain row data. A `SqlResult` object gives a sequential access
+  to all results of a multi-result. Method `nextResult()` moves to the next
+  result in the sequence, if present. Methods of `RowResult` are used to access
+  row data of the current result (if it contains data).
 
   @ingroup devapi_res
 */
@@ -559,7 +561,7 @@ public:
 
 
   /**
-    Tels if current result contains rows.
+    Tell if the current result contains row data.
 
     If this is the case, rows can be accessed using `RowResult` interface.
     Otherwise calling `RowResult` methods throws an error.
@@ -569,24 +571,27 @@ public:
 
 
   /**
-    Move to next result if there is one.
+    Move to the next result, if there is one.
 
-    Returns true if next result is available, false if there are no more
-    results in the reply. Calling `nextResult()` discards the current result
-    and all the data it contains (if any).
+    Returns true if the next result is available, false if there are no more
+    results in the reply. Calling `nextResult()` discards the current result.
+    If it has any rows that has not yet been fetched, these rows are also
+    discarded.
   */
 
   bool nextResult();
 
   /**
-    Get the count of affected items from manipulation statements.
-   */
+    Get the count of affected items from data manipulation statements.
+  */
+
   uint64_t getAffectedRowsCount();
 
   /**
     Get the auto-increment value if one was generated by a table insert
     statement.
-   */
+  */
+
   uint64_t getAutoIncrementValue();
 
 private:
@@ -618,8 +623,10 @@ private:
 /**
   %Result of an operation that returns documents.
 
-  @note It is possible to iterate over documents in the result using
-  range loop: `for (DbDoc d : result) ...`
+  A `DocResult` object gives sequential access to the documents contained in
+  the result. It is possible to get the documents one-by-one, or fetch and store
+  all of them at once. One can iterate over the documents using range loop:
+  `for (DbDoc d : result) ...`.
 
   @ingroup devapi_res
 */
@@ -649,9 +656,9 @@ public:
   }
 
   /**
-    Return current document and move to the next one in the sequence.
+    Return the current document and move to the next one in the sequence.
 
-    If there are no more documents in this result returns null document.
+    If there are no more documents in this result, returns a null document.
   */
 
   DbDoc fetchOne()
@@ -662,9 +669,9 @@ public:
   /**
     Return all remaining documents.
 
-    %Result of this method can be stored in an STL container such as
-    `std::list<DbDoc>`. Documents that have been fetched using fetchOne() are
-    not available when calling fetchAll()
+    %Result of this method can be stored in a container such as
+    `std::list<DbDoc>`. Documents that have already been fetched using
+    `fetchOne()` are not included in the result of `fetchAll()`.
    */
 
   DocList fetchAll()
@@ -673,8 +680,11 @@ public:
   }
 
   /**
-     Returns number of documents available on DocResult to be fetched.
-   */
+    Returns the number of documents contained in the result.
+
+    The method counts only the documents that were not yet fetched and are still
+    available in the result.
+  */
 
   uint64_t count()
   {

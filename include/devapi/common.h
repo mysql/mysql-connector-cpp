@@ -167,7 +167,7 @@ typedef unsigned long row_count_t;
   Method `begin()` returns pointer to the first byte in the
   region, `end()` to one past the last byte in the region.
 
-  @note Instance of `bytes` type does not store the bytes -
+  @note An instance of `bytes` does not store the bytes -
   it merely describes a region of memory and is equivalent
   to a pair of pointers. It is very cheap to copy `bytes` and
   pass them by value.
@@ -175,7 +175,7 @@ typedef unsigned long row_count_t;
   @note This class extends std::pair<byte *, size_t> to make
   it consistent with how memory regions are described by
   std::get_temporary_buffer(). It is also possible to initialize
-  bytes instance by buffer returned from
+  a `bytes` instance by buffer returned from
   std::get_temporary_buffer(), as follows:
 
     bytes buf = std::get_temporary_buffer<byte>(size);

@@ -277,7 +277,7 @@ struct URI_parser::Guard
 
 
 /*
-  Character classess defined by the grammar.
+  Character classes defined by the grammar.
 */
 
 #define LIST(X,Y)  T_##X,

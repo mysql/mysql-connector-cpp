@@ -45,7 +45,7 @@
   characteristics before it gets executed with `execute()` method. The latter
   returns a @link mysqlx::Result `Result`@endlink, @link mysqlx::DocResult
   `DocResult`@endlink or @link mysqlx::RowResult `RowResult`@endlink object,
-  depending on the type of operation.
+  depending on the type of the operation.
 
   @defgroup devapi_res    Classes for result processing
   @ingroup devapi
@@ -115,13 +115,13 @@ namespace mysqlx {
 
   Each `Schema` instance is tied to a particular session and all
   the operations on the schema and its objects are performed using
-  that session. If session is deleted, attempt to use schema of
-  that session would yield an error.
+  that session. If the session is destroyed, an attempt to use a schema of
+  that session yields an error.
 
-  When creating Schema object, by default no checks are made that
-  it actually exists in the database. Operation that is executed
-  on the server and involves such non-existent schema throws
-  an error at execution time.
+  When creating a `Schema` object, by default no checks are made that
+  it actually exists in the database. An operation that is executed
+  on the server and involves such a non-existent schema throws
+  an error.
 
   @ingroup devapi
 */
@@ -136,7 +136,7 @@ class PUBLIC_API Schema
 public:
 
   /**
-     Construct named schema object.
+    Construct an object representing the named schema.
   */
 
   Schema(Session &sess, const string &name)
@@ -144,10 +144,9 @@ public:
   {}
 
   /**
-    Construct schema object representing the default schema
-    of the session.
+    Construct an object representing the default schema of the session.
 
-    @todo Clarify what "default schema" is.
+    The default schema is the one specified by session creation options.
   */
 
   Schema(Session&);
@@ -159,92 +158,144 @@ public:
 
 
   /**
-    Create new collection in the schema. If `reuse` is false
-    and collection already exists, an error is thrown. Otherwise,
-    if collection with given name already exists, it is returned
-    as if `getCollection()` was called.
+    Create a new collection in the schema.
+
+    Returns the created collection. Set `reuse` flag to true to return
+    an already existing collection with the same name. Otherwise, an attempt
+    to create a collection which already exists throws an error.
   */
 
   Collection createCollection(const string&, bool reuse= false);
 
   /**
-    Return `Collection` object representing named collection in
-    the schema. If `check_exists` is true and named collection
-    does not exist, an error is thrown. Otherwise, if named
-    collection does not exist, the returned object refers
-    to a non-existent collection.
+    Return an object representing a collection with the given name.
 
-    @note Checking existence of the collection involves
-    communication with the server. If `check_exists` is false,
-    on the other hand, no I/O is involved when creating a
-    `Collection` instance.
+    To check if the collection actually exists in the database set
+    `check_existence` flag to true. Otherwise the returned object can refer to
+    a non-existing collection. An attempt to use such a non-existing collection
+    in a database operation throws an error.
+
+    @note Checking the existence of a collection involves communication with
+    the server. If `check_exists` is false, on the other hand, no I/O is
+    involved when creating a `Collection` object.
   */
 
   Collection getCollection(const string&, bool check_exists= false);
 
   /**
-    Return `Table` object representing table or view in the schema.
-    If `check_exists` is true and table does not exist, an error is thrown.
-    Otherwise, if table does not exists, the returned object refers
-    to non-existent table.
+    Return an object representing a table or a view with the given name.
 
-    @note Checking existence of the table involves
-    communication with the server. If `check_exists` is false,
-    on the other hand, no I/O is involved when creating a
-    `Table` instance.
+    To check if the table actually exists in the database set
+    `check_existence` flag to true. Otherwise the returned object can refer to
+    a non-existing table. An attempt to use such a non-existing table
+    in a database operation throws an error.
+
+    @note The returned `Table` object can represent a plain table or
+    a view. See `Table` class description.
+
+    @note Checking the existence of a table involves communication with
+    the server. If `check_exists` is false, on the other hand, no I/O is
+    involved when creating a `Table` object.
   */
 
   Table getTable(const string&, bool check_existence = false);
 
   /**
-    Return list of `Collection` object representing collections in
-    the schema.
+    Get a list of all collections in the schema.
+
+    The returned value can be stored in a container that holds `Collection`
+    objects, such as `std::vector<Collection>`.
   */
 
   CollectionList getCollections();
 
   /**
-    Return list of names of collections in the schema.
+    Get a list of names of all collections in the schema.
+
+    The returned value can be stored in a container that holds strings, such as
+    `std::vector<string>`.
   */
 
   StringList getCollectionNames();
 
   /**
-    Return list of `Table` object representing tables and views in
-    the schema.
+    Get a list of all tables and views in the schema.
+
+    The returned value can be stored in a container that holds `Table`
+    objects, such as `std::vector<Table>`.
+
+    @note The list also contains views which are represented by `Table` objects
+    - see `Table` class description.
   */
 
   TableList getTables();
 
   /**
-    Return list of tables and views in the schema.
+    Get a list of names of all tables and views in the schema.
+
+    The returned value can be stored in a container that holds strings, such as
+    `std::vector<string>`.
+
+    @note The list also contains names of views as views are represented
+    by `Table` objects - see `Table` class description.
   */
 
   StringList getTableNames();
 
   /**
-    Return Collection as a Table object.
+    Return a table corresponding to the given collection.
 
-    @note Checking existence of the collection involves
-    communication with the server. If `check_exists` is false,
-    on the other hand, no I/O is involved when creating a
-    `Table` instance.
+    The table has two columns: `_id` and `doc`. For each document in
+    the collection there is one row in the table with `doc` filed holding
+    the document as a JSON value and `_id` field holding document's identifier.
+
+    To check if the collection actually exists in the database set
+    `check_existence` flag to true. Otherwise the returned table can refer to
+    a non-existing collection. An attempt to use such a non-existing collection
+    table throws an error.
+
+    @note Checking the existence of a collection involves communication with
+    the server. If `check_exists` is false, on the other hand, no I/O is
+    involved when creating the `Table` object.
   */
+
   Table getCollectionAsTable(const string&, bool check_exists = true);
 
   /**
-    Create new View in the schema.
+    Return an operation which creates a new view in the schema.
 
-    If replace is true, the view should exist, otherwise Error is thrown.
+    Specify view's query and other properties using methods of `ViewCreate`
+    class chained on the returned operation object. Call `execute()` to create
+    the view.
+
+    If `replace` is false and there is a view with the same name, an error
+    is thrown. Set `replace` to true to replace an existing view with
+    the given name. In this case an error is thrown if the view to be replaced
+    does not exist. These errors are thrown when the operation is executed,
+    not when it is created.
+
+    @see `ViewCreate`.
   */
+
   ViewCreate createView(const mysqlx::string& view_name, bool replace = false)
   {
     return ViewCreate(*this, view_name, replace);
   }
 
   /**
-    Change created View in the schema.
+    Return an operation which alters a view with the given name.
+
+    Specify new view properties using `ViewAlter` methods chained on
+    the returned operation object. Call `execute()` to execute the operation
+    and alter the view as specified. Note that you must specify a new query
+    when altering a view.
+
+    If a view with the given name does not exist, an error is thrown when
+    the operation is executed.
+
+    @see `ViewAlter`
   */
+
   ViewAlter alterView(const mysqlx::string& view_name)
   {
     return ViewAlter(*this, view_name);
@@ -252,35 +303,37 @@ public:
 
 
   /**
-    Drop given collection from the schema.
+    Drop the given collection from the schema.
 
-    This method silently succeeds if given collection does not exist.
+    This method silently succeeds if a collection with the given name does
+    not exist.
 
-    @note If table name is passed to the method, it behaves like
+    @note If a table name is passed to the method, it behaves like
     dropTable().
   */
 
   void dropCollection(const mysqlx::string& name);
 
   /**
-    Drop given table from the schema.
+    Drop the given table from the schema.
 
-    This method silently succeeds if given table does not exist. If given
-    table is a view (isView() returns true) then it is not dropped (and no
-    error is reported) - use dropView() instead.
+    This method silently succeeds if a table with the given name does not exist.
+    If the table is a view (isView() returns true) then it is not dropped (and
+    no error is reported) - use dropView() instead.
 
-    @note If collection name is passed to the method, it behaves like
+    @note If a collection name is passed to the method, it behaves like
     dropCollection().
   */
 
   void dropTable(const mysqlx::string& name);
 
   /**
-    Drop given view from the schema.
+    Drop the given view from the schema.
 
-    This method silently succeeds if given view does not exist. This is
-    also the case when a name of non-view object, such as table or collection
-    was given (as a view with the given name does not exist).
+    This method silently succeeds if a view with the given name does not exist.
+
+    @note If a name of a table or a collection is given, then a view with this
+    name does not exist and hence the method silently succeeds.
   */
 
   void dropView(const mysqlx::string& name);
@@ -291,9 +344,9 @@ public:
 
 
 /**
-  Represents collection of documents in a schema.
+  Represents a collection of documents in a schema.
 
-  Collection object can be obtained from `Schema::getCollection()`
+  A collection object can be obtained from `Schema::getCollection()`
   method:
 
   ~~~~~~
@@ -310,15 +363,12 @@ public:
   Collection myColl(db, "My Collection");
   ~~~~~~
 
-  Documents can be added and removed using @link add `add()`@endlink
-  and `remove()` method, respectively. Method `find()`
-  is used to query documents that satisfy given criteria.
+  When creating a `Collection` object, by default no checks are made that
+  it actually exists in the database. An operation that is executed
+  on the server and involves such a non-existent collection throws
+  an error. Call `existsInDatabase()` to check the existence of the collection.
 
   @ingroup devapi
-
-  @todo `update()` method.
-  @todo Support for parameterized collection operations.
-  @todo Sorting and limiting returned results.
 */
 
 class PUBLIC_API Collection
@@ -335,13 +385,13 @@ public:
 
 
   /**
-    Get schema of the collection.
+    Get the schema of the collection.
   */
 
   const Schema& getSchema() const override { return m_schema; }
 
   /**
-    Check if this collection existis in the database.
+    Check if this collection exists in the database.
 
     @note This check involves communication with the server.
   */
@@ -350,8 +400,9 @@ public:
 
 
   /**
-    Get number of documents in the collection.
+    Get the number of documents in the collection.
   */
+
   uint64_t count();
 
   /*
@@ -360,7 +411,17 @@ public:
   */
 
   /**
-    Return operation which fetches all the documents in the collection.
+    Return an operation which fetches all documents from the collection.
+
+    Call `execute()` on the returned operation object to execute it and get
+    a `DocResult` object that gives access to the documents. Specify additional
+    query parameters, such as ordering of the documents, using chained methods
+    of `CollectionFind` class before making the final call to `execute()`.
+
+    @note Any errors related to the operation are reported when the operation
+    is executed, not when it is created.
+
+    @see `CollectionFind`
   */
 
   CollectionFind find()
@@ -372,7 +433,18 @@ public:
   }
 
   /**
-    Return operation which finds documents that satisfy given expression.
+    Return an operation which finds documents that satisfy given criteria.
+
+    The criteria is specified as a Boolean expression string.
+    Call `execute()` on the returned operation object to execute it and get
+    a `DocResult` object that gives access to the documents. Specify additional
+    query parameters, such as ordering of the documents, using chained methods
+    of `CollectionFind` class before making the final call to `execute()`.
+
+    @note Any errors related to the operation are reported when the operation
+    is executed, not when it is created.
+
+    @see `CollectionFind`
   */
 
   CollectionFind find(const string &cond)
@@ -384,11 +456,17 @@ public:
   }
 
   /**
-    Return operation which adds documents to the collection. Documents can be
-    specified as JSON strings or `DbDoc` instances. One or more documents can
-    be specified in single `add()` call. Further documents  can be
-    added with more `add()` calls. Method `add()` also accepts a container with
-    documents or a range of documents given by two iterators.
+    Return an operation which adds documents to the collection.
+
+    Specify documents to be added in the same way as when calling
+    `CollectionAdd::add()` method. Make additional calls to `add()` method on
+    the returned operation object to add more documents. Call `execute()`
+    to execute the operation and add all specified documents to the collection.
+
+    @note Any errors related to the operation are reported when the operation
+    is executed, not when it is created.
+
+    @see `CollectionAdd`
   */
 
   template <typename... Types>
@@ -403,7 +481,21 @@ public:
   }
 
   /**
-    Return operation which removes documents satisfying given expression.
+    Return an operation which removes documents satisfying the given criteria.
+
+    The criteria is specified as a Boolean expression string.
+    Call `execute()` on the returned operation object to execute it and remove
+    the matching documents. Use chained methods of `CollectionRemove` class
+    before the final call to `execute()` to further limit the set of documents
+    that are removed.
+
+    @note To remove all documents in the collection, pass "true" as
+    the selection criteria.
+
+    @note Any errors related to the operation are reported when the operation
+    is executed, not when it is created.
+
+    @see `CollectionRemove`
   */
 
   CollectionRemove remove(const string &cond)
@@ -415,7 +507,21 @@ public:
   }
 
   /**
-    Return operation which modifies documents that satisfy given expression.
+    Return an operation which modifies documents that satisfy the given criteria.
+
+    The criteria is specified as a Boolean expression string.
+    Specify modifications to be applied to each document using chained methods
+    of `CollectionModify` class on the returned operation object. Call
+    `execute()` to execute the operation and modify matching documents
+    as specified.
+
+    @note To modify all documents in the collection, pass "true" as
+    the selection criteria.
+
+    @note Any errors related to the operation are reported when the operation
+    is executed, not when it is created.
+
+    @see `CollectionModify`
   */
 
   CollectionModify modify(const string &expr)
@@ -427,8 +533,10 @@ public:
   }
 
   /**
-    Returns Document with the giver id.
-    Returns empty document if not found.
+    Return the document with the given id.
+
+    Returns null document if a document with the given id does not exist in
+    the collection.
   */
 
   DbDoc getOne(const string &id)
@@ -437,7 +545,10 @@ public:
   }
 
   /**
-    Removes the document with the given id.
+    Remove the document with the given id.
+
+    Does nothing if a document with the given id does not exist in
+    the collection.
    */
 
   Result removeOne(const string &id)
@@ -446,12 +557,19 @@ public:
   }
 
   /**
-    Replaces the document identified by id if it exists and returns true.
-    Otherwise returns false. Parameter document can be either DbDoc object,
-    or JSON string, or expr(docexpr) where docexpr is like JSON
-    string but field values are expressions.
-    It is not possible to bind values of named parameters with .bind()
-    because the statement gets executed upon calling of this function.
+    Replace the document with the given id by a new one.
+
+    Specify the new document as either a `DbDoc` object, a JSON string or
+    an `expr(docexpr)` argument, where `docexpr` is like a JSON string but
+    field values are given by expressions to be evaluated on the server.
+
+    If a document with the given id does not exist in the collection, nothing
+    is done and the returned `Result` object indicates that no documents were
+    modified.
+
+    @note If expressions are used, they can not use named parameters because
+    it is not possible to bind values prior to execution of `replaceOne()`
+    operation.
   */
 
   Result replaceOne(string id, internal::ExprValue &&document)
@@ -461,14 +579,18 @@ public:
   }
 
   /**
-    Adds a new document identified by id if it does not exist and
-    returns true. Otherwise replaces the existing document
-    with that id and returns false.
-    Parameter document can be either DbDoc object,
-    or JSON string, or expr(docexpr) where docexpr is like JSON
-    string but field values are expressions.
-    It is not possible to bind values of named parameters with .bind()
-    because the statement is executed upon calling of this function.
+    Add a new document or replace an existing document with the given id.
+
+    Specify the new document as either a `DbDoc` object, a JSON string or
+    an `expr(docexpr)` argument, where `docexpr` is like a JSON string but
+    field values are given by expressions to be evaluated on the server.
+
+    If a document with the given id does not exist, the new document is added
+    to the collection.
+
+    @note If expressions are used, they can not use named parameters because
+    it is not possible to bind values prior to execution of `addOrReplaceOne()`
+    operation.
   */
 
   Result addOrReplaceOne(string id, internal::ExprValue &&document)
@@ -489,7 +611,7 @@ public:
 /**
   Represents a table in a schema.
 
-  Collection object can be obtained from `Schema::getTable()`
+  A `Table` object can be obtained from `Schema::getTable()`
   method:
 
   ~~~~~~
@@ -506,11 +628,15 @@ public:
   Table myTable(db, "My Table");
   ~~~~~~
 
-  Rows can be added to a table using `insert()` method followed
-  by `values()` calls, which prepare insert operation.
+  A `Table` object can refer to a plain table or to a view. In the latter case
+  method `isView()` called on the object returns true.
+
+  When creating a `Table` object, by default no checks are made that
+  it actually exists in the database. An operation that is executed
+  on the server and involves such a non-existent table throws
+  an error. Call `existsInDatabase()` to check the existence of the table.
 
   @ingroup devapi
-  @todo Other CRUD operations on a table.
 */
 
 class PUBLIC_API Table
@@ -545,16 +671,32 @@ public:
 
   DIAGNOSTIC_POP
 
+  /**
+    Check if this table object corresponds to a view.
+
+    @note This check invovles communication with the server.
+  */
 
   bool isView();
 
+  /**
+    Get the schema of the collection.
+  */
+
   const Schema& getSchema() const override { return m_schema; }
+
+  /**
+    Check if this collection exists in the database.
+
+    @note This check involves communication with the server.
+  */
 
   bool existsInDatabase() const override;
 
   /**
-    Get number of rows
+    Get the number of rows in the table.
   */
+
   uint64_t count();
 
 
@@ -564,13 +706,21 @@ public:
   */
 
   /**
-    Return operation which inserts rows into the full table without
+    Return an operation which inserts rows into the full table without
     restricting the columns.
 
-    Each row added by the operation must have the same number of values as
-    the number of columns of the table. However, this check is done only
-    after sending the insert command to the server. If value count does not
-    match table column count server reports error.
+    Specify rows to be inserted using methods of `TableInsert` class chained
+    on the returned operation object. Call `execute()` to execute the operation
+    and insert the specified rows.
+
+    Each specified row must have the same number of values as the number
+    of columns of the table. If the value count and the table column count do
+    not match, server reports error when operation is executed.
+
+    @note Any errors related to the operation are reported when the operation
+    is executed, not when it is created.
+
+    @see `TableInsert`
   */
 
   TableInsert insert()
@@ -582,12 +732,24 @@ public:
   }
 
   /**
-    Return operation which inserts row into the table restricting the columns.
+    Return an operation which inserts rows into the table restricting
+    the columns.
 
-    Each row added by the operation must have the same number of values
-    as the columns specified here. However, this check is done only
-    after sending the insert command to the server. If value count does not
-    match table column count server reports error.
+    Specify column names as method arguments. Values are inserted only into
+    the specified columns, other columns are set to null or to column's default
+    value (depending on the definition of the table). Specify rows to
+    be inserted using methods of `TableInsert` class chained on the returned
+    operation object. Call `execute()` to execute the operation and insert
+    the specified values.
+
+    Each specified row must have the same number of values as the number
+    of columns listed here. If the value count and the column count do
+    not match, server reports error when operation is executed.
+
+    @note Any errors related to the operation are reported when the operation
+    is executed, not when it is created.
+
+    @see `TableInsert`
   */
 
   template <class... T>
@@ -600,10 +762,23 @@ public:
   }
 
   /**
-    Select rows from table.
+    Return an operation which selects rows from the table.
 
-    Optional list of expressions defines projection with transforms
-    rows found by this operation.
+    Call `execute()` on the returned operation object to execute it and get
+    a `RowResult` object that gives access to the rows. Specify query
+    parameters, such as selection criteria and ordering of the rows, using
+    chained methods of `TableSelect` class before making the final call to
+    `execute()`. To project selected rows before returning them in the result,
+    specify a list of expressions as arguments of this method. These expressions
+    are evaluated to form a row in the result. An expression can be optionally
+    followed by "AS <name>" suffix to give a name to the corresponding column
+    in the result. If no expressions are given, rows are returned as is, without
+    any projection.
+
+    @note Any errors related to the operation are reported when the operation
+    is executed, not when it is created.
+
+    @see `TableSelect`
   */
 
   template<typename ...PROJ>
@@ -616,7 +791,16 @@ public:
   }
 
   /**
-    Return operation which removes rows from the table.
+    Return an operation which removes rows from the table.
+
+    Use chained methods of `TableRemove` class on the returned operation object
+    to specify the rows to be removed. Call `execute()` to execute the operation
+    and remove the rows.
+
+    @note Any errors related to the operation are reported when the operation
+    is executed, not when it is created.
+
+    @see `TableRemove`
   */
 
   TableRemove remove()
@@ -628,7 +812,17 @@ public:
   }
 
   /**
-    Return operation which updates rows in the table.
+    Return an operation which updates rows in the table.
+
+    Use chained methods of `TableUpdate` class on the returned operation object
+    to specify which rows should be updated and what modifications to apply
+    to each of them. Call `execute()` to execute the operation and remove
+    the rows.
+
+    @note Any errors related to the operation are reported when the operation
+    is executed, not when it is created.
+
+    @see `TableUpdate`
   */
 
   TableUpdate update()
@@ -648,23 +842,30 @@ using SqlStatement = internal::SQL_statement;
 DLL_WARNINGS_PUSH
 
 /**
-  Represents a session which gives access to data stored
-  in the data store.
+  Represents a session which gives access to data stored in a data store.
 
-  Session can be created from connection string, given `SessionSettings` object
-  or a host name, TCP/IP port, user name and password can be specified directly.
-  Once created, session is ready to be used. Session destructor closes session
-  and cleans up after it.
+  A `Session` object can be created from a connection string, from
+  `SessionSettings` or by directly specifying a host name, TCP/IP port and user
+  credentials. Once created, a session is ready to be used. Session destructor
+  closes the session and cleans up after it.
 
   If it is not possible to create a valid session for some reason, errors
   are thrown from session constructor.
 
-  It is possible to specify several hosts when creating a session. In that
-  case failed connection to one of the hosts triggers fail-over attempt
+  Several hosts can be specified by session creation parameters. In that case
+  a failed connection to one of the hosts triggers a fail-over attempt
   to connect to a different host in the list. Only if none of the hosts could
-  be contacted, session creation fails. It is also possible to specify
-  priorities for the hosts in the list which determine the order in which
-  hosts are tried (see `SessionOption::PRIORITY`).
+  be contacted, session creation fails.
+
+  The fail-over logic tries hosts in the order in which they are specified in
+  session settings unless explicit priorities are assigned to the hosts. In that
+  case hosts are tried in the decreasing priority order and for hosts with
+  the same priority the order in which they are tired is random.
+
+  Once a valid session is created using one of the hosts, the session is bound
+  to that host and never re-connected again. If the connection gets broken,
+  the session fails without making any other fail-over attempts. The fail-over
+  logic is executed only when establishing a new session.
 
   @ingroup devapi
 */
@@ -690,14 +891,14 @@ public:
 
 
   /**
-    Create session specified by `SessionSettings` object.
+    Create a session specified by a `SessionSettings` object.
   */
 
   Session(SessionSettings settings);
 
 
   /**
-    Create session using given session settings.
+    Create a session using given session settings.
 
     This constructor forwards arguments to a `SessionSettings` constructor.
     Thus all forms of specifying session options are also directly available
@@ -731,44 +932,53 @@ public:
 
 
   /**
-    Get named schema object in a given session.
+    Create a new schema.
 
-    The object does not have to exist in the database.
-    Error is thrown if one tries to use a non-existing
-    schema.
+    Returns the created schema. Set `reuse` flag to true to return an already
+    existing schema with the same name. Otherwise, an attempt to create
+    a schema which already exists throws an error.
   */
 
   Schema createSchema(const string &name, bool reuse = false);
 
   /**
-    Get named schema object in a given session.
+    Return an object representing a schema with the given name.
 
-    Error is thrown if one tries to use a non-existing
-    schema with check_existence = true.
+    To check if the schema actually exists in the database set `check_existence`
+    flag to true. Otherwise the returned object can refer to a non-existing
+    schema. An attempt to use such a non-existing schema in a database operation
+    throws an error.
+
+    @note Checking the existence of a schema involves communication with
+    the server. If `check_exists` is false, on the other hand, no I/O is
+    involved when creating a `Schema` object.
   */
 
   Schema getSchema(const string&, bool check_existence = false);
 
   /**
-    Get the default schema specified when session was created.
+    Get the default schema specified when the session was created.
   */
 
   Schema getDefaultSchema();
 
   /**
-    Get the name of the default schema specified when session was created.
+    Get the name of the default schema specified when the session was created.
   */
 
   string getDefaultSchemaName();
 
   /**
-    Get list of schema objects in a given session.
+    Get a list of all database schemas.
+
+    The returned value can be stored in a container that holds `Schema` objects,
+    such as `std::vector<Schema>`.
   */
 
   SchemaList getSchemas();
 
   /**
-    Drop the schema.
+    Drop the named schema.
 
     Error is thrown if the schema doesn't exist,
   */
@@ -777,7 +987,15 @@ public:
 
 
   /**
-    Operation that runs arbitrary SQL query.
+    Return an operation which executes an arbitrary SQL statement.
+
+    Call `execute()` on the returned operation object to execute the statement
+    and get an `SqlResult` object representing its results. If the SQL statement
+    contains `?` placeholders, call `bind()` to define their values
+    prior to the execution.
+
+    @note Errors related to SQL execution are reported when the statement
+    is executed, not when it is created.
   */
 
   SqlStatement sql(const string &query)
@@ -816,9 +1034,10 @@ public:
   void rollback();
 
   /**
-    Closes current session.
+    Close this session.
 
-    After a session is closed, any call to other method throws Error.
+    After the session is closed, any call to other session's methods
+    throws an error.
   */
 
   void close()

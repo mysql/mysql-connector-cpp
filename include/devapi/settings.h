@@ -41,23 +41,28 @@ namespace mysqlx {
 */
 
 #ifndef _WIN32
-#define ADD_SOCKET(x) x(SOCKET) /*!< path to unix domain socket*/
+#define ADD_SOCKET(x) x(SOCKET) /*!< path to a Unix domain socket*/ END_LIST
 #else
 #define ADD_SOCKET(x)
 #endif //_WIN32
 
-#define SETTINGS_OPTIONS(x)                                                      \
-  x(URI)          /*!< connection URI or string */                               \
-  /*! DNS name of the host, IPv4 address or IPv6 address */                      \
-  x(HOST)                                                                        \
-  x(PORT)          /*!< X Plugin port to connect to */                           \
-  x(PRIORITY)      /*!< define priority on a multiple host connection */         \
-  x(USER)          /*!< user name */                                             \
-  x(PWD)           /*!< password */                                              \
-  x(DB)            /*!< default database */                                      \
-  x(SSL_MODE)      /*!< define `SSLMode` option to be used */                    \
-  x(SSL_CA)        /*!< path to a PEM file specifying trusted root certificates*/\
-  x(AUTH)          /*!< authentication method, PLAIN, MYSQL41, etc.*/            \
+#define SETTINGS_OPTIONS(x)                                                   \
+  x(URI)          /*!< connection URI or string */                            \
+  /*! DNS name of the host, IPv4 address or IPv6 address */                   \
+  x(HOST)                                                                     \
+  x(PORT)          /*!< X Plugin port to connect to */                        \
+  /*! Assign a priority (a number in range 1 to 100) to the last specified
+      host; these priorities are used to determine the order in which multiple
+      hosts are tried by the connection fail-over logic (see description
+      of `Session` class) */                                                  \
+  x(PRIORITY)                                                                 \
+  x(USER)          /*!< user name */                                          \
+  x(PWD)           /*!< password */                                           \
+  x(DB)            /*!< default database */                                   \
+  x(SSL_MODE)      /*!< define `SSLMode` option to be used */                 \
+  /*! path to a PEM file specifying trusted root certificates*/               \
+  x(SSL_CA)                                                                   \
+  x(AUTH)          /*!< authentication method, PLAIN, MYSQL41, etc.*/         \
   ADD_SOCKET(x) \
   END_LIST
 
@@ -67,7 +72,8 @@ namespace mysqlx {
 /**
   Session creation options
 
-  @note `PRIORITY` should be defined after a HOST (PORT) definition
+  @note `PRIORITY` should be defined after a `HOST` (`PORT`) to which
+  it applies.
 
   @note Specifying `SSL_CA` option requires `SSL_MODE` value of `VERIFY_CA`
   or `VERIFY_IDENTITY`. If `SSL_MODE` is not explicitly given then
@@ -80,6 +86,9 @@ enum_class SessionOption
   LAST
 };
 
+
+/// @cond DISABLED
+// Note: Doxygen gets confused here and renders docs incorrectly.
 
 inline
 std::string SessionOptionName(SessionOption opt)
@@ -98,6 +107,7 @@ std::string SessionOptionName(SessionOption opt)
   };
 }
 
+/// @endcond
 
 
 #define SSL_MODE_TYPES(x)\
@@ -119,7 +129,7 @@ std::string SessionOptionName(SessionOption opt)
 #define SSL_ENUM(x) x,
 
 /**
-  Modes to be used by `SSL_MODE` option
+  Modes to be used with `SSL_MODE` option
 */
 
 enum_class SSLMode
@@ -127,6 +137,8 @@ enum_class SSLMode
   SSL_MODE_TYPES(SSL_ENUM)
 };
 
+
+/// @cond DISABLED
 
 inline
 std::string SSLModeName(SSLMode m)
@@ -145,6 +157,8 @@ std::string SSLModeName(SSLMode m)
   };
 }
 
+/// @endcond
+
 
 #define AUTH_METHODS(x)\
   x(PLAIN)        /*!< Plain text authentication method. The password is
@@ -157,18 +171,21 @@ std::string SSLModeName(SSLMode m)
   x(EXTERNAL)     /*!< External authentication when the server establishes
                        the user authenticity by other means such as SSL/x509
                        certificates. Currently not supported by X Plugin */ \
+  END_LIST
 
 #define AUTH_ENUM(x) x,
 
 /**
-  Modes to be used by @ref AUTH option
+  Authentication methods to be used with `AUTH` option.
 */
 
-enum class AuthMethod
+enum_class AuthMethod
 {
   AUTH_METHODS(AUTH_ENUM)
 };
 
+
+/// @cond DISABLED
 
 inline
 std::string AuthMethodName(AuthMethod m)
@@ -187,6 +204,7 @@ std::string AuthMethodName(AuthMethod m)
   };
 }
 
+/// @endcond
 
 
 namespace internal {
@@ -241,11 +259,11 @@ void Settings_detail<Settings_traits>::do_add(SessionOption, Value&&);
 class Session;
 
 /**
-  Represents session options to be passed at Session object creation.
+  Represents session options to be passed at session creation time.
 
-  SessionSettings can be constructed using URL string, common connect options
-  (host, port, user, password, database) or with a list
-  of `SessionOption` constants followed by option value.
+  SessionSettings can be constructed using a connection string, common
+  connect options (host, port, user, password, database) or with a list
+  of `SessionOption` constants, each followed by the option value.
 
   Examples:
   ~~~~~~
@@ -264,8 +282,13 @@ class Session;
     );
   ~~~~~~
 
-  Some settings, such as `HOST`, can be specified several times to build
-  a list of hosts to be used by connection fail-over logic.
+  The HOST, PORT and SOCKET settings can be repeated to build a list of hosts
+  to be used by the connection fail-over logic when creating a session (see
+  description of `Session` class). In that case each host can be assigned
+  a priority by setting the `PRIORITY` option. If priorities are not explicitly
+  assigned, hosts are tried in the order in which they are specified in session
+  settings. If priorities are used, they must be assigned to all hosts
+  specified in the settings.
 
   @ingroup devapi
 */
@@ -283,12 +306,41 @@ DLL_WARNINGS_POP
 public:
 
   /**
-    Get settings from a connection string or URI.
+    Create session settings from a connection string.
 
-    Connection sting has the form `"user:pass\@host:port/?option&option"`,
-    valid URI is like a connection string with a `mysqlx://` prefix. Host is
-    specified as either DNS name, IPv4 address of the form "nn.nn.nn.nn" or
-    IPv6 address of the form "[nn:nn:nn:...]".
+    Connection sting has the form
+
+          "user:pass@connection-data/db?option&option"
+
+    with optional `mysqlx://` prefix.
+
+    The `connetction-data` part is either a single host address or a coma
+    separated list of hosts in square brackets: `[host1, host2, ..., hostN]`.
+    In the latter case the connection fail-over logic will be used when
+    creating the session.
+
+    A single host address is either a DNS host name, an IPv4 address of
+    the form "nn.nn.nn.nn" or an IPv6 address of the form "[nn:nn:nn:...]".
+    On Unix systems a host can be specified as a path to a Unix domain
+    socket - this path must start with `/` or `.`.
+
+    Characters like `/` in the connection data, which otherwise have a special
+    meaning inside a connection string, must be represented using percent
+    encoding (e.g., `%2F` for `/`). Another option is to enclose a host name or
+    a socket path in round braces. For example, one can write
+
+        "mysqlx://(./path/to/socket)/db"
+
+    instead of
+
+        "mysqlx://.%2Fpath%2Fto%2Fsocket/db"
+
+    To specify priorities for hosts in a multi-host settings, use list of pairs
+    of the form `(address=host,priority=N)`. If priorities are specified, they
+    must be given to all hosts in the list.
+
+    The optional `db` part of the connection string defines the default schema
+    of the session.
 
     Possible connection options are:
 
@@ -417,8 +469,8 @@ public:
   /**
     Specify settings as a list of session options.
 
-    The list of options consist of `SessionOption` constant
-    identifying the option to set, followed by option value.
+    The list of options consist of a `SessionOption` constant,
+    identifying the option to set, followed by the value of the option.
 
     Example:
     ~~~~~~
@@ -447,8 +499,8 @@ public:
     SessionSetting operator and methods
   */
 
-  /**
-    Returns an iterator pointing to the first element of the SessionSettings.
+  /*
+    Return an iterator pointing to the first element of the SessionSettings.
   */
 
   iterator begin()
@@ -459,8 +511,8 @@ public:
     CATCH_AND_WRAP
   }
 
-  /**
-    Returns an iterator pointing to the last element of the SessionSettings.
+  /*
+    Return an iterator pointing to the last element of the SessionSettings.
   */
 
   iterator end()
@@ -473,8 +525,12 @@ public:
 
 
   /**
-    Finds element of specified @p opt and returns its Value.
-    Will throw Error if not found.
+    Find the specified option @p opt and returns its Value.
+
+    Throws an error if the given option was not found in the settings.
+
+    @note For option such as `HOST`, which can repeat several times in
+    the settings, only the last value is reported.
   */
 
   Value& find(SessionOption opt)
@@ -486,10 +542,18 @@ public:
   }
 
   /**
-    Set list of `SessionOption` to given values.
+    Set session options.
 
-    When using `HOST`, `PORT` and `PRIORITY`, all have to be defined
-    in the same set() call.
+    Accepts a list of one or more `SessionOption` constants, each followed by
+    the option value. Options specified here are added to the current settings.
+
+    Repeated `HOST`, `PORT`, `SOCKET` and `PRIORITY` options build a list of
+    hosts to be used by the fail-over logic. For other options, if they are set
+    again, the new value overrides the previous setting.
+
+    @note
+    When using `HOST`, `PORT` and `PRIORITY` options to specify a single
+    host, all have to be specified in the same `set()` call.
    */
 
   template<typename V,typename...R>
@@ -503,7 +567,7 @@ public:
   }
 
   /**
-    Clears all settings specified so far.
+    Clear all settings specified so far.
   */
 
   void clear()
@@ -555,8 +619,6 @@ public:
   }
 
 private:
-
-  //using Base::get_mode_name;
 
   friend Session;
 };

@@ -29,7 +29,7 @@
   @file
   Crud operations on tables.
 
-  Classes declared here represent CRUD operations on a given table. They are
+  Classes declared here represent CRUD operations on a table. They are
   analogous to collection CRUD operation classes defined in collection_crud.h.
 
   The following classes for table CRUD operations are defined:
@@ -45,7 +45,11 @@
   TableSelect  select_op = table.select(...).orderBy(...);
   ~~~~~~
 
-  TODO: Fluent API grammar diagram.
+  CRUD operation objects have methods which can modify the operation
+  before it gets executed. For example `TableInsert::values()`
+  appends a row to the list of rows that should be inserted into a table
+  by the given TableInsert operation. These methods can be chained
+  as allowed by the fluent API grammar.
 */
 
 
@@ -72,15 +76,15 @@ namespace internal {
 }
 
 /**
-  Operation which inserts rows into a table.
+  An operation which inserts rows into a table.
 
-  This class defines the .values() and .rows() clauses which
-  specify rows to be inserted.
+  This class defines methods that specify the rows to be inserted into
+  the table.
 
   @todo Check that every row passed to .values() call has
   the same number of values. The column count should match
   the one in insert(c1,...) call. For insert() without column
-  list, it should be ?
+  list, it should match the number of columns in the table.
 
   @ingroup devapi_op
 */
@@ -116,7 +120,7 @@ public:
   }
 
 
-  /// Add given row to the list of rows to be inserted.
+  /// Add the given row to the list of rows to be inserted.
 
   virtual TableInsert& values(const Row &row)
   {
@@ -128,7 +132,7 @@ public:
   }
 
   /**
-    Add single row consisting of specified values to the list of
+    Add a single row consisting of the specified values to the list of
     rows to be inserted.
   */
 
@@ -171,7 +175,7 @@ public:
   }
 
   /**
-    Add specified rows.
+    Add the given list of rows.
   */
 
   template<typename... Types>
@@ -221,14 +225,14 @@ namespace internal {
 
 
 /**
-  Operation which selects rows from a table.
+  An operation which selects rows from a table.
 
-  Apart from clauses defined by Table_sort, it defines the
-  where() clause which specifies selection criteria.
+  The class defines various methods, such as `where()`, to specify which rows
+  should be returned and in which order.
 
   For each row the operation can return all fields from the
   row or a set of values defined by projection expressions
-  specified when operation was created.
+  specified when the operation was created.
 
   @ingroup devapi_op
 */
@@ -271,7 +275,7 @@ public:
   /**
     Specify row selection criteria.
 
-    The criteria is specified as a string containing Boolean expression.
+    The criteria is specified as a Boolean expression string.
   */
 
   Operation& where(const string& expr)
@@ -317,11 +321,10 @@ namespace internal {
 
 
 /**
-  Operation which updates values stored in rows.
+  An operation which updates rows stored in a table.
 
-  Apart from methods for specifying sorting order and binding paramater values,
-  this class defines .set() method for modifying field values and .where()
-  method for narrowing set of rows to be modified.
+  Methods of this clas specify modifications to be applied to each row as well
+  as the set of rows that should be modified.
 
   @ingroup devapi_op
 */
@@ -349,10 +352,10 @@ public:
 
 
   /**
-    Set given field in a row to the given value.
+    Set the given field in a row to the given value.
 
     The value can be either a direct literal or an expression given
-    by `expr(<string>)`, evaluated in the server.
+    as `expr(<string>)`, to be evaluated in the server.
   */
 
   TableUpdate& set(const string& field, internal::ExprValue val)
@@ -410,10 +413,9 @@ namespace internal {
 
 
 /**
-  Operation which removes rows from a table.
+  An operation which removes rows from a table.
 
-  Apart from methods for specifying sort order and binding parameter values,
-  this class defines .where() method which selects rows to be removed.
+  The class defines methods to specify which rows should be removed.
 
   @ingroup devapi_op
 */

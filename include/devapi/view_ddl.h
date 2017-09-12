@@ -130,12 +130,12 @@ namespace internal {
     }
 
     /**
-       Specify table select operation for which the view is created.
+       Specify a table select operation for which the view is created.
 
        @note In situations where select statement is modified after
-       passing it to definedAs() method, later changes do not affect
+       passing it to `definedAs()` method, later changes do not affect
        view definition which uses the state of the statement at the time
-       of definedAs() call.
+       of `definedAs()` call.
     */
 
     ViewCheckOpt& definedAs(const TableSelect& table)
@@ -170,8 +170,8 @@ namespace internal {
     /**
       Specify definer of a view.
 
-      The definer is used to determine access rights for the view. It is specified
-      as a valid MySQL account name of the form "user@host".
+      The definer is used to determine access rights for the view. It
+      is specified as a valid MySQL account name of the form "user@host".
 
       @see https://dev.mysql.com/doc/refman/en/stored-programs-security.html
     */
@@ -289,7 +289,7 @@ namespace internal {
 
 
 /**
-  Represents an operation which creates a view.
+  An operation which creates a view.
 
   The query for which the view is created must be specified with
   `definedAs()` method. Other methods can specify different view creation
@@ -310,9 +310,9 @@ class PUBLIC_API ViewCreate
 
 
 /**
-  Represents an operation which modifies an existing view.
+  An operation which modifies an existing view.
 
-  ViewAlter operation must specify new query for the view with
+  `ViewAlter` operation must specify a new query for the view with
   `definedAs()` method (it is not possible to change other characteristics
   of a view without changing its query).
 */
@@ -330,7 +330,7 @@ class PUBLIC_API ViewAlter
 
 
 /**
-  Represents an operation which drops a view.
+  An operation which drops a view.
 */
 
 class PUBLIC_API ViewDrop
@@ -343,8 +343,7 @@ class PUBLIC_API ViewDrop
 public:
 
   /**
-    Modify drop view operation so that it checks existence of the view
-    before dropping it.
+    Require checking the existence of the view before dropping it.
   */
 
   Executable& ifExists()
