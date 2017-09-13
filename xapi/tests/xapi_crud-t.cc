@@ -104,6 +104,7 @@ TEST_F(xapi, test_row_locking)
 
 TEST_F(xapi, test_having_group_by)
 {
+  SKIP_TEST("bug#26310713");
   SKIP_IF_NO_XPLUGIN;
 
   mysqlx_result_t *res;

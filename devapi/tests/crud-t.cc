@@ -73,13 +73,9 @@ TEST_F(Crud, basic)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
+  cout << "Creating collection..." << endl;
 
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
-
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Collection coll = sch.createCollection("c1", true);
 
   coll.remove("true").execute();
@@ -350,13 +346,9 @@ TEST_F(Crud, bind)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
+  cout << "Creating collection..." << endl;
 
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
-
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Collection coll = sch.createCollection("c1", true);
 
   add_data(coll);
@@ -509,13 +501,9 @@ TEST_F(Crud, modify)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
+  cout << "Creating collection..." << endl;
 
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
-
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Collection coll = sch.createCollection("c1", true);
 
   add_data(coll);
@@ -654,13 +642,9 @@ TEST_F(Crud, order_limit)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
+  cout << "Creating collection..." << endl;
 
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
-
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Collection coll = sch.createCollection("c1", true);
 
   add_data(coll);
@@ -740,13 +724,9 @@ TEST_F(Crud, projections)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
+  cout << "Creating collection..." << endl;
 
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
-
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Collection coll = sch.createCollection("c1", true);
 
   add_data(coll);
@@ -839,7 +819,7 @@ TEST_F(Crud, existence_checks)
 
   cout << "Creating session..." << endl;
 
-  Session sess(this);
+  mysqlx::Session &sess = get_sess();
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -864,7 +844,7 @@ TEST_F(Crud, table)
 
   cout << "Creating session..." << endl;
 
-  Session sess(this);
+  mysqlx::Session &sess = get_sess();
 
   cout << "Session accepted, creating collection..." << endl;
 
@@ -1062,11 +1042,7 @@ TEST_F(Crud, table_order_limit)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
-
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
+  cout << "Creating table..." << endl;
 
   sql("DROP TABLE IF EXISTS test.crud_table");
   sql(
@@ -1076,7 +1052,7 @@ TEST_F(Crud, table_order_limit)
     "  age INT"
     ")");
 
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Table tbl = sch.getTable("crud_table");
 
 
@@ -1143,11 +1119,7 @@ TEST_F(Crud, table_projections)
 
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
-
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
+  cout << "Creating table..." << endl;
 
   sql("DROP TABLE IF EXISTS test.crud_table");
   sql(
@@ -1157,7 +1129,7 @@ TEST_F(Crud, table_projections)
     "  age INT"
     ")");
 
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Table tbl = sch.getTable("crud_table");
 
 
@@ -1327,11 +1299,9 @@ TEST_F(Crud, doc_path)
 
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
+  cout << "Creating collection..." << endl;
 
-  Session sess(this);
-
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   sch.dropCollection("coll");
   Collection coll = sch.createCollection("coll",false);
 
@@ -1364,11 +1334,7 @@ TEST_F(Crud, row_error)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
-
-  Session sess(this);
-
-  cout << "Session accepted, creating table..." << endl;
+  cout << "Creating table..." << endl;
 
   sql("DROP TABLE IF EXISTS test.row_error");
   sql(
@@ -1377,7 +1343,7 @@ TEST_F(Crud, row_error)
     "  age BIGINT"
     ")");
 
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Table tbl = sch.getTable("row_error");
 
 
@@ -1426,13 +1392,9 @@ TEST_F(Crud, coll_as_table)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
+  cout << "Creating collection..." << endl;
 
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
-
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Collection coll = sch.createCollection("coll", true);
 
   // Clean up
@@ -1498,13 +1460,9 @@ TEST_F(Crud, get_ids)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
+  cout << "Creating collection..." << endl;
 
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
-
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Collection coll = sch.createCollection("coll", true);
 
   // Clean up
@@ -1544,13 +1502,9 @@ TEST_F(Crud, count)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
+  cout << "Creating collection..." << endl;
 
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
-
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Collection coll = sch.createCollection("coll", true);
 
   //Remove all rows
@@ -1585,13 +1539,9 @@ TEST_F(Crud, buffered)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
+  cout << "Creating collection..." << endl;
 
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
-
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Collection coll = sch.createCollection("coll", true);
 
   coll.remove("true").execute();
@@ -1685,13 +1635,9 @@ TEST_F(Crud, iterators)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
+  cout << "Creating collection..." << endl;
 
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
-
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Collection coll = sch.createCollection("coll", true);
 
   coll.remove("true").execute();
@@ -1818,16 +1764,15 @@ TEST_F(Crud, diagnostic)
   }
 }
 
+
 TEST_F(Crud, cached_results)
 {
   SKIP_IF_NO_XPLUGIN;
 
   cout << "Preparing table..." << endl;
 
-  Session sess(this);
-
-  Collection coll = sess.createSchema("test", true)
-                        .createCollection("test", true);
+  Collection coll = get_sess().createSchema("test", true)
+                              .createCollection("test", true);
 
   coll.remove("true").execute();
 
@@ -1856,17 +1801,14 @@ TEST_F(Crud, cached_results)
 
 }
 
+
 TEST_F(Crud, add_empty)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
-
-  Session sess(this);
-
   cout << "Session accepted, creating collection..." << endl;
 
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Collection coll = sch.createCollection("c1", true);
 
   coll.remove("true").execute();
@@ -1884,39 +1826,27 @@ TEST_F(Crud, add_empty)
 
 TEST_F(Crud, doc_id)
 {
-
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
+  cout << "Creating collection..." << endl;
 
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
-
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Collection coll = sch.createCollection("c1", true);
 
   EXPECT_THROW(coll.add("{\"_id\": 127 }").execute(), Error);
   EXPECT_THROW(coll.add("{\"_id\": 12.7 }").execute(), Error);
 }
 
+
 TEST_F(Crud, group_by_having)
 {
-  //TODO: temporary skip goup_by tests
-  return;
-
+  SKIP_TEST("bug#26310713");
   SKIP_IF_NO_XPLUGIN;
-  //TODO: Remove this when  Bug #86754 is fixed
-  SKIP_IF_SERVER_VERSION_LESS(5, 7, 19);
-
-  //TODO: Remove this when  Bug #86754 is fixed
   SKIP_IF_SERVER_VERSION_LESS(5,7,19);
 
   cout << "Preparing table..." << endl;
 
-  Session sess(this);
-
-  Schema test = sess.createSchema("test", true);
+  Schema test = get_sess().createSchema("test", true);
   Collection coll = test.createCollection("coll", true);
   Table tbl = test.getCollectionAsTable("coll", true);
 
@@ -2017,17 +1947,14 @@ TEST_F(Crud, group_by_having)
 
 }
 
+
 TEST_F(Crud, copy_semantics)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
+  cout << "Creating collection..." << endl;
 
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
-
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Collection coll = sch.createCollection("c1", true);
 
   add_data(coll);
@@ -2099,17 +2026,14 @@ TEST_F(Crud, copy_semantics)
   cout << "Done!" << endl;
 }
 
+
 TEST_F(Crud, multi_statment_exec)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating session..." << endl;
+  cout << "Creating collection..." << endl;
 
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
-
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Collection coll = sch.createCollection("c1", true);
 
   add_data(coll);
@@ -2161,19 +2085,16 @@ TEST_F(Crud, multi_statment_exec)
 
 }
 
+
 TEST_F(Crud, expr_in_expr)
 {
   SKIP_IF_NO_XPLUGIN;
 
   SKIP_IF_SERVER_VERSION_LESS(8, 0, 2);
 
-  cout << "Creating session..." << endl;
+  cout << "Creating collection..." << endl;
 
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
-
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Collection coll = sch.createCollection("c1", true);
 
   add_data(coll);
@@ -2214,7 +2135,7 @@ TEST_F(Crud, row_locking)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  Session sess(this);
+  mysqlx::Session &sess = get_sess();
   SKIP_IF_SERVER_VERSION_LESS(8, 0, 3)
 
   string db_name = "row_locking";
@@ -2231,7 +2152,7 @@ TEST_F(Crud, row_locking)
 
   std::stringstream strs;
   strs << "CREATE TABLE " << db_name << "." << tab_name
-       << "(id int primary key)";
+       << "(id int primary key) ENGINE InnoDB";
 
   sql(strs.str());
 
@@ -2288,6 +2209,7 @@ TEST_F(Crud, row_locking)
   sess.dropSchema(db_name);
 }
 
+
 TEST_F(Crud, single_document)
 {
   SKIP_IF_NO_XPLUGIN;
@@ -2300,14 +2222,12 @@ TEST_F(Crud, single_document)
 
   SKIP_IF_SERVER_VERSION_LESS(8, 0, 3);
 
-  cout << "Creating session..." << endl;
+  cout << "Creating collection..." << endl;
 
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
-
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Collection coll = sch.createCollection("c1", true);
+
+  coll.remove("true").execute();
 
   coll.add("{\"_id\":\"id1\", \"name\":\"foo\" }" )
       .add("{\"_id\":\"id2\", \"name\":\"bar\" }" )
@@ -2347,34 +2267,45 @@ TEST_F(Crud, single_document)
   EXPECT_EQ(string("quux"), coll.getOne("id3")["name"].get<string>());
 }
 
+
 TEST_F(Crud, add_or_replace)
 {
   SKIP_IF_NO_XPLUGIN;
   SKIP_IF_SERVER_VERSION_LESS(8, 0, 3)
 
-  cout << "Creating session..." << endl;
+  cout << "Creating collection..." << endl;
 
-  Session sess(this);
-
-  cout << "Session accepted, creating collection..." << endl;
-
-  Schema sch = sess.getSchema("test");
+  Schema sch = getSchema("test");
   Collection coll = sch.createCollection("c1", true);
+
+  coll.remove("true").execute();
 
   coll.add("{\"_id\":\"id1\", \"name\":\"foo\" }")
     .add("{\"_id\":\"id2\", \"name\":\"bar\" }")
     .add("{\"_id\":\"id3\", \"name\":\"baz\" }")
     .execute();
 
+  cout << "Initial documents added to the collection, adding id4..." << endl;
+
   EXPECT_EQ(1, coll.addOrReplaceOne("id4", "{\"name\":\"zaz\"}")
                    .getAffectedItemsCount());
   // Check that the document was added
   EXPECT_EQ(string("zaz"), coll.getOne("id4")["name"].get<string>());
 
-  EXPECT_EQ(0, coll.addOrReplaceOne("id4", "{\"name\":\"zzz\"}")
+  cout << "Replacing id4..." << endl;
+
+  /*
+    Note: Apparently when xplugin replaces one document with another it reports
+    affected tems count as 2 - probably counting the old and the new document
+    as separate.
+  */
+
+  EXPECT_LT(0, coll.addOrReplaceOne("id4", "{\"name\":\"zzz\"}")
                    .getAffectedItemsCount());
   // Check that the document was replaced
   EXPECT_EQ(string("zzz"), coll.getOne("id4")["name"].get<string>());
+
+  cout << "Done!" << endl;
 
 }
 

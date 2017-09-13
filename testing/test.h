@@ -74,6 +74,8 @@ namespace mysqlx {
       // You can define per-test set-up and tear-down logic as usual.
       virtual void SetUp()
       {
+        using namespace mysqlx;
+
         m_status = NULL;
         m_port = 0;
         m_socket = NULL;
@@ -99,7 +101,12 @@ namespace mysqlx {
         m_password = getenv("XPLUGIN_PASSWORD");
 
         try {
-          m_sess = new mysqlx::Session(m_port, m_user, m_password);
+          m_sess = new mysqlx::Session(
+            SessionOption::PORT, m_port,
+            SessionOption::USER, m_user,
+            SessionOption::PWD, m_password,
+            SessionOption::SSL_MODE, SSLMode::DISABLED
+          );
         }
         catch (const Error &e)
         {
@@ -107,6 +114,16 @@ namespace mysqlx {
           m_status = e.what();
           FAIL() << "Could not connect to xplugin at " << m_port << ": " << e;
         }
+
+        // Drop and re-create test schema to clear up after previous tests.
+
+        try {
+          get_sess().dropSchema("test");
+        }
+        catch (const Error&)
+        {}
+
+        get_sess().createSchema("test");
       }
 
       virtual void TearDown()
