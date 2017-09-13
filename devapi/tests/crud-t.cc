@@ -2171,7 +2171,7 @@ TEST_F(Crud, row_locking)
 
   auto lock_check = sess.getSchema("information_schema")
             .getTable("innodb_trx")
-            .select("trx_rows_locked")
+            .select("count(trx_rows_locked)")
             .where("trx_mysql_thread_id=connection_id()");
 
 
@@ -2182,7 +2182,7 @@ TEST_F(Crud, row_locking)
   /* Wait to for the row locking status to populate */
   std::this_thread::sleep_for(std::chrono::milliseconds(5000));
   /* No rows here */
-  EXPECT_TRUE(lock_check.execute().fetchOne().isNull());
+  EXPECT_TRUE((int)lock_check.execute().fetchOne()[0] == 0);
 
   sch.createCollection(coll_name);
   Collection coll = sch.getCollection(coll_name);
@@ -2197,6 +2197,8 @@ TEST_F(Crud, row_locking)
   for (DbDoc d; (d = dres.fetchOne());)
     cout << d["num"] << endl;
 
+  /* Wait to for the row locking status to populate */
+  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
   /* Some number of rows has to be locked */
   EXPECT_TRUE((int)lock_check.execute().fetchOne()[0] > 0);
   sess.commit();
@@ -2204,7 +2206,7 @@ TEST_F(Crud, row_locking)
   /* Wait to for the row locking status to populate */
   std::this_thread::sleep_for(std::chrono::milliseconds(5000));
   /* No rows here */
-  EXPECT_TRUE(lock_check.execute().fetchOne().isNull());
+  EXPECT_TRUE((int)lock_check.execute().fetchOne()[0] == 0);
 
   sess.dropSchema(db_name);
 }
