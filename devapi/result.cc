@@ -186,6 +186,8 @@ Type Column::getType()   const
       case cdk::Format<cdk::TYPE_FLOAT>::DOUBLE:  return Type::DOUBLE;
       case cdk::Format<cdk::TYPE_FLOAT>::FLOAT:   return Type::FLOAT;
       case cdk::Format<cdk::TYPE_FLOAT>::DECIMAL: return Type::DECIMAL;
+      default:
+        THROW("Unrecognized float value encoding format");
       }
     }
 
@@ -200,6 +202,8 @@ Type Column::getType()   const
         return Type::TIMESTAMP;
       case cdk::Format<cdk::TYPE_DATETIME>::DATETIME:
         return fd.m_format.has_time() ? Type::DATETIME : Type::DATE;
+      default:
+        THROW("Unrecognized temporal value encoding format");
       }
     }
 

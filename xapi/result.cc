@@ -170,10 +170,12 @@ const char *mysqlx_result_t::column_get_info_char(uint32_t pos, col_info_type in
   return NULL;
 }
 
+
 /*
   Get metadata information such as column precision, flags, etc that could
   be represented by numbers
 */
+
 uint32_t mysqlx_result_t::column_get_info_int(uint32_t pos, col_info_type info_type)
 {
   if (!m_cursor || !m_cursor->col_count() || pos >= m_cursor->col_count())
@@ -182,90 +184,103 @@ uint32_t mysqlx_result_t::column_get_info_int(uint32_t pos, col_info_type info_t
   //if ((cdk::Format<cdk::TYPE_INTEGER>)m_cursor->format(pos)).is_unsigned()))
   switch (info_type)
   {
-    case COL_INFO_TYPE:
-      switch (m_cursor->type(pos))
+  case COL_INFO_TYPE:
+    switch (m_cursor->type(pos))
+    {
+    case cdk::TYPE_INTEGER:
       {
-        case cdk::TYPE_INTEGER:
-        {
-          cdk::Format<cdk::TYPE_INTEGER> format(m_cursor->format(pos));
-          if (format.length() == 1)
-            return MYSQLX_TYPE_BOOL;
+        cdk::Format<cdk::TYPE_INTEGER> format(m_cursor->format(pos));
+        if (format.length() == 1)
+          return MYSQLX_TYPE_BOOL;
 
-          if (format.is_unsigned())
-            return MYSQLX_TYPE_UINT;
+        if (format.is_unsigned())
+          return MYSQLX_TYPE_UINT;
 
-          return MYSQLX_TYPE_SINT;
-        }
-        case cdk::TYPE_FLOAT:
-        {
-          cdk::Format<cdk::TYPE_FLOAT> format(m_cursor->format(pos));
-
-          if (format.type() == cdk::Format<cdk::TYPE_FLOAT>::FLOAT)
-            return MYSQLX_TYPE_FLOAT;
-          else if (format.type() == cdk::Format<cdk::TYPE_FLOAT>::DOUBLE)
-            return MYSQLX_TYPE_DOUBLE;
-          else
-            return MYSQLX_TYPE_DECIMAL;
-        }
-        case cdk::TYPE_DATETIME:
-        {
-          cdk::Format<cdk::TYPE_DATETIME> format(m_cursor->format(pos));
-          switch(format.type())
-          {
-            case cdk::Format<cdk::TYPE_DATETIME>::TIME:
-              return MYSQLX_TYPE_TIME;
-            case cdk::Format<cdk::TYPE_DATETIME>::TIMESTAMP:
-              return MYSQLX_TYPE_TIMESTAMP;
-            default:
-              return MYSQLX_TYPE_DATETIME;
-          }
-          break;
-        }
-        // TODO: differ the blob types by their length
-        case cdk::TYPE_BYTES:
-        {
-          // TODO: use it when GEOMETRY type is supported by CDK
-          // cdk::Format<cdk::TYPE_BYTES> format(m_cursor->format(pos));
-          return MYSQLX_TYPE_BYTES;
-        }
-        case cdk::TYPE_STRING:
-        {
-          cdk::Format<cdk::TYPE_STRING> format(m_cursor->format(pos));
-          if (format.is_enum())
-            return MYSQLX_TYPE_ENUM;
-          else if (format.is_set())
-            return MYSQLX_TYPE_SET;
-
-          return MYSQLX_TYPE_STRING;
-        }
-        case cdk::TYPE_DOCUMENT:
-          return MYSQLX_TYPE_JSON;
-        case cdk::TYPE_GEOMETRY:
-          return MYSQLX_TYPE_GEOMETRY;
-        default:
-          return m_cursor->type(pos);
+        return MYSQLX_TYPE_SINT;
       }
-
-    case COL_INFO_LENGTH: return m_cursor->col_info(pos).length();
-    case COL_INFO_PRECISION: return m_cursor->col_info(pos).decimals();
-
-    // TODO: collation and flags should be added later
-    case COL_INFO_FLAGS:
-    case COL_INFO_COLLATION: return 0;
-    default: // the rest of info types are processed in column_get_info_char
       break;
+
+    case cdk::TYPE_FLOAT:
+      {
+        cdk::Format<cdk::TYPE_FLOAT> format(m_cursor->format(pos));
+
+        if (format.type() == cdk::Format<cdk::TYPE_FLOAT>::FLOAT)
+          return MYSQLX_TYPE_FLOAT;
+        else if (format.type() == cdk::Format<cdk::TYPE_FLOAT>::DOUBLE)
+          return MYSQLX_TYPE_DOUBLE;
+        else
+          return MYSQLX_TYPE_DECIMAL;
+      }
+      break;
+
+    case cdk::TYPE_DATETIME:
+      {
+        cdk::Format<cdk::TYPE_DATETIME> format(m_cursor->format(pos));
+        switch(format.type())
+        {
+          case cdk::Format<cdk::TYPE_DATETIME>::TIME:
+            return MYSQLX_TYPE_TIME;
+          case cdk::Format<cdk::TYPE_DATETIME>::TIMESTAMP:
+            return MYSQLX_TYPE_TIMESTAMP;
+          default:
+            return MYSQLX_TYPE_DATETIME;
+        }
+      }
+      break;
+
+    // TODO: differ the blob types by their length
+    case cdk::TYPE_BYTES:
+      // TODO: use it when GEOMETRY type is supported by CDK
+      // cdk::Format<cdk::TYPE_BYTES> format(m_cursor->format(pos));
+      return MYSQLX_TYPE_BYTES;
+
+    case cdk::TYPE_STRING:
+      {
+        cdk::Format<cdk::TYPE_STRING> format(m_cursor->format(pos));
+        if (format.is_enum())
+          return MYSQLX_TYPE_ENUM;
+        else if (format.is_set())
+          return MYSQLX_TYPE_SET;
+
+        return MYSQLX_TYPE_STRING;
+      }
+      break;
+
+    case cdk::TYPE_DOCUMENT:
+      return MYSQLX_TYPE_JSON;
+
+    case cdk::TYPE_GEOMETRY:
+      return MYSQLX_TYPE_GEOMETRY;
+
+    default:
+      return m_cursor->type(pos);
+    };
+    break;
+
+  case COL_INFO_LENGTH: return m_cursor->col_info(pos).length();
+  case COL_INFO_PRECISION: return m_cursor->col_info(pos).decimals();
+
+  // TODO: collation and flags should be added later
+  case COL_INFO_FLAGS:
+  case COL_INFO_COLLATION: return 0;
+
+  default: // the rest of info types are processed in column_get_info_char
+    break;
   }
 
   return 0;
 }
 
+
 void mysqlx_result_t::set_table_list_mask(uint32_t mask)
 { m_filter_mask = mask; }
+
 
 /*
   The method which can filter out rows returned by the server on the client side.
   Returns true if the row is allowed to go through or false otherwise.
 */
+
 bool mysqlx_result_t::row_filter(mysqlx_row_t *row)
 {
   if (m_crud.op_type() != OP_ADMIN_LIST || row->row_size() < 2)
@@ -541,7 +556,7 @@ const char * mysqlx_result_t::get_next_doc_id()
 mysqlx_error_t * mysqlx_result_t::get_error()
 {
   mysqlx_error_t *err = Mysqlx_diag::get_error();
-  
+
   if (err)
     return err; // return the error if there is any
 
