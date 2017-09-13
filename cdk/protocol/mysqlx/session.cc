@@ -31,6 +31,9 @@
 #include "protocol.h"
 #include "builders.h"
 
+PUSH_SYS_WARNINGS
+#include <iostream>
+POP_SYS_WARNINGS
 
 PUSH_PB_WARNINGS
 #include "protobuf/mysqlx_session.pb.h"
@@ -251,6 +254,18 @@ void process_notice<notice_type::SessionStateChange>(
   if (!msg.ParseFromString(std::string(notice.begin(), notice.end())))
     THROW("Could not parse notice payload");
 
+#ifdef DEBUG_PROTOBUF
+
+  using std::cerr;
+  using std::endl;
+
+  cerr << endl;
+  cerr << "<--- Notice payload:" << endl;
+  cerr << msg.DebugString();
+  cerr << "<---" << endl << endl;
+
+#endif
+
   switch (msg.param())
   {
   case Mysqlx::Notice::SessionStateChanged::CLIENT_ID_ASSIGNED:
@@ -314,6 +329,18 @@ void process_notice<notice_type::Warning>(
 
   if (!msg.ParseFromString(std::string(notice.begin(), notice.end())))
     THROW("Could not parse notice payload");
+
+#ifdef DEBUG_PROTOBUF
+
+  using std::cerr;
+  using std::endl;
+
+  cerr << endl;
+  cerr << "<--- Notice payload:" << endl;
+  cerr << msg.DebugString();
+  cerr << "<---" << endl << endl;
+
+#endif
 
   short int level;
 

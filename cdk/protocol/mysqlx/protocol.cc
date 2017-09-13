@@ -712,7 +712,7 @@ void Op_rcv::process_payload()
     }
   }
 
-#ifdef DEBUG_PROTOBUF2
+#ifdef DEBUG_PROTOBUF
 
   using std::cerr;
   using std::endl;
