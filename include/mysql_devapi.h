@@ -435,7 +435,7 @@ public:
   /**
     Return an operation which finds documents that satisfy given criteria.
 
-    The criteria is specified as a Boolean expression string.
+    The criteria are specified as a Boolean expression string.
     Call `execute()` on the returned operation object to execute it and get
     a `DocResult` object that gives access to the documents. Specify additional
     query parameters, such as ordering of the documents, using chained methods
@@ -481,16 +481,16 @@ public:
   }
 
   /**
-    Return an operation which removes documents satisfying the given criteria.
+    Return an operation which removes documents satisfying given criteria.
 
-    The criteria is specified as a Boolean expression string.
+    The criteria are specified as a Boolean expression string.
     Call `execute()` on the returned operation object to execute it and remove
     the matching documents. Use chained methods of `CollectionRemove` class
     before the final call to `execute()` to further limit the set of documents
     that are removed.
 
-    @note To remove all documents in the collection, pass "true" as
-    the selection criteria.
+    @note To remove all documents in the collection, pass "true" as selection
+    criteria.
 
     @note Any errors related to the operation are reported when the operation
     is executed, not when it is created.
@@ -507,16 +507,16 @@ public:
   }
 
   /**
-    Return an operation which modifies documents that satisfy the given criteria.
+    Return an operation which modifies documents that satisfy given criteria.
 
-    The criteria is specified as a Boolean expression string.
+    The criteria are specified as a Boolean expression string.
     Specify modifications to be applied to each document using chained methods
     of `CollectionModify` class on the returned operation object. Call
     `execute()` to execute the operation and modify matching documents
     as specified.
 
-    @note To modify all documents in the collection, pass "true" as
-    the selection criteria.
+    @note To modify all documents in the collection, pass "true" as selection
+    criteria.
 
     @note Any errors related to the operation are reported when the operation
     is executed, not when it is created.
