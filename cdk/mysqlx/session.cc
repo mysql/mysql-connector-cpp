@@ -81,11 +81,11 @@ struct Proto_field_checker : public cdk::protocol::mysqlx::api::Expectations
     switch (v)
     {
       case Protocol_fields::ROW_LOCKING:
-        // Find(17) locking(12)
+        // Find=17, locking=12
         m_data = bytes("17.12");
         break;
       case Protocol_fields::UPSERT:
-        // Insert(18) upsert(6)
+        // Insert=18, upsert=6
         m_data = bytes("18.6");
         break;
       default:
