@@ -656,7 +656,7 @@ protected:
 
   void add_param(const mysqlx::string &name, Value &&val)
   {
-    auto el = m_map.emplace(name, std::move(val));
+    auto el = m_map.emplace(name, val);
     //substitute if exists
     if (!el.second)
     {
