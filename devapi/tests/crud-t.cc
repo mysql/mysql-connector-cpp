@@ -2311,3 +2311,50 @@ TEST_F(Crud, add_or_replace)
 
 }
 
+TEST_F(Crud, merge_patch)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating collection..." << endl;
+
+  Schema sch = getSchema("test");
+  Collection coll = sch.createCollection("c1", true);
+
+  coll.remove("true").execute();
+
+  add_data(coll);
+
+  coll.modify("true").patch(R"(
+                        {
+                          "age" : null,
+                          "birth" : { "year": year(CURDATE())-age }
+                        }
+                        )").execute();
+
+  auto res = coll.find().execute();
+  for (auto row : res)
+  {
+    EXPECT_FALSE(row.hasField("age"));
+    std::cout << row["birth"]["year"] << std::endl;
+  }
+
+  coll.modify("true")
+      .patch(R"(
+             {
+             "food":["Falcoaria"],
+             "fullname": concat("Silva", ', ', name)
+             }
+             )")
+      .execute();
+
+  res = coll.find().execute();
+  for (auto doc : res)
+  {
+    EXPECT_EQ(string("Falcoaria"), doc["food"][0].get<string>());
+    EXPECT_THROW(doc["food"][1], std::out_of_range);
+    std::cout << doc["fullname"] << std::endl;
+    string fullname = string("Silva, ") + doc["name"].get<string>();
+    EXPECT_EQ(fullname, doc["fullname"].get<string>());
+  }
+
+}

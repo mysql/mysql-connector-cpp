@@ -65,9 +65,11 @@ namespace internal {
       UNSET,
       ARRAY_INSERT,
       ARRAY_APPEND,
-      ARRAY_DELETE
+      ARRAY_DELETE,
+      MERGE_PATCH
     };
 
+    virtual void add_operation(Operation, ExprValue&&) = 0;
     virtual void add_operation(Operation, const Field&, ExprValue&&) = 0;
     virtual void add_operation(Operation, const Field&) = 0;
   };

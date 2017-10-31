@@ -77,6 +77,9 @@ public:
   Field(const char *s) : m_fld(s)
   {}
 
+  Field()
+  {}
+
   operator const string&() const { return m_fld; }
 
   bool operator <(const Field &other) const

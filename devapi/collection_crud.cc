@@ -528,10 +528,15 @@ class Op_collection_modify
     {}
 
     Field_Op(Operation op, const Field &field, internal::ExprValue &&val)
-      : Field_Op(op, field)
-    {
-      m_val = std::move(val);
-    }
+      : m_op(op)
+      , m_field(field)
+      , m_val(std::move(val))
+    {}
+
+    Field_Op(Operation op, internal::ExprValue &&val)
+      : m_op(op)
+      , m_val(std::move(val))
+    {}
   };
 
   std::list<Field_Op> m_update;
@@ -586,6 +591,12 @@ class Op_collection_modify
                      internal::ExprValue &&val) override
   {
     m_update.emplace_back(op, field, std::move(val));
+  }
+
+  void add_operation(Field_Op::Operation op,
+                     internal::ExprValue &&val) override
+  {
+    m_update.emplace_back(op, std::move(val));
   }
 
   void add_operation(Field_Op::Operation op,
@@ -647,6 +658,11 @@ class Op_collection_modify
       case Impl::ARRAY_DELETE:
         prc.remove(&doc_field);
         break;
+      case Impl::MERGE_PATCH:
+      Value_expr value_prc(m_update_it->m_val,
+                           parser::Parser_mode::DOCUMENT);
+      value_prc.process_if(prc.patch());
+      break;
     }
 
   }
