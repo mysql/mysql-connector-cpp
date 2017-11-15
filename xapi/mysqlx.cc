@@ -573,7 +573,7 @@ int STDCALL mysqlx_set_modify_set(mysqlx_stmt_t *stmt, ...)
   SAFE_EXCEPTION_END(stmt, RESULT_ERROR)
 }
 
-int STDCALL STDCALL mysqlx_set_modify_unset(mysqlx_stmt_t *stmt, ...)
+int STDCALL mysqlx_set_modify_unset(mysqlx_stmt_t *stmt, ...)
 {
   SAFE_EXCEPTION_BEGIN(stmt, RESULT_ERROR)
 
@@ -590,7 +590,7 @@ int STDCALL STDCALL mysqlx_set_modify_unset(mysqlx_stmt_t *stmt, ...)
 }
 
 
-int STDCALL STDCALL mysqlx_set_modify_array_insert(mysqlx_stmt_t *stmt, ...)
+int STDCALL mysqlx_set_modify_array_insert(mysqlx_stmt_t *stmt, ...)
 {
   SAFE_EXCEPTION_BEGIN(stmt, RESULT_ERROR)
 
@@ -607,7 +607,7 @@ int STDCALL STDCALL mysqlx_set_modify_array_insert(mysqlx_stmt_t *stmt, ...)
 }
 
 
-int STDCALL STDCALL mysqlx_set_modify_array_append(mysqlx_stmt_t *stmt, ...)
+int STDCALL mysqlx_set_modify_array_append(mysqlx_stmt_t *stmt, ...)
 {
   SAFE_EXCEPTION_BEGIN(stmt, RESULT_ERROR)
 
@@ -624,7 +624,7 @@ int STDCALL STDCALL mysqlx_set_modify_array_append(mysqlx_stmt_t *stmt, ...)
 }
 
 
-int STDCALL STDCALL mysqlx_set_modify_array_delete(mysqlx_stmt_t *stmt, ...)
+int STDCALL mysqlx_set_modify_array_delete(mysqlx_stmt_t *stmt, ...)
 {
   SAFE_EXCEPTION_BEGIN(stmt, RESULT_ERROR)
 
@@ -638,6 +638,25 @@ int STDCALL STDCALL mysqlx_set_modify_array_delete(mysqlx_stmt_t *stmt, ...)
   return res;
 
   SAFE_EXCEPTION_END(stmt, RESULT_ERROR)
+}
+
+
+int STDCALL
+mysqlx_set_modify_patch(mysqlx_stmt_t *stmt,
+                                   const char *patch_spec)
+{
+  int res = RESULT_OK;
+  va_list args;
+  SAFE_EXCEPTION_BEGIN(stmt, RESULT_ERROR)
+  PARAM_NULL_CHECK(patch_spec, stmt, "Patch scpecification is empty",
+                   RESULT_ERROR)
+
+  va_start(args, stmt);
+  res = stmt->add_coll_modify_values(args, MODIFY_MERGE_PATCH);
+  va_end(args);
+
+  SAFE_EXCEPTION_END(stmt, RESULT_ERROR)
+  return res;
 }
 
 /*
@@ -1492,10 +1511,12 @@ mysqlx_collection_modify_set(mysqlx_collection_t *collection,
 {
   mysqlx_result_t *res;
   va_list args;
+  SAFE_EXCEPTION_BEGIN(collection, NULL)
   va_start(args, criteria);
   res = _mysqlx_collection_modify_exec(collection, criteria, MODIFY_SET, args);
   va_end(args);
   return res;
+  SAFE_EXCEPTION_END(collection, NULL)
 }
 
 mysqlx_result_t * STDCALL
@@ -1504,10 +1525,32 @@ mysqlx_collection_modify_unset(mysqlx_collection_t *collection,
 {
   mysqlx_result_t *res;
   va_list args;
+  SAFE_EXCEPTION_BEGIN(collection, NULL)
+
   va_start(args, criteria);
   res = _mysqlx_collection_modify_exec(collection, criteria, MODIFY_UNSET, args);
   va_end(args);
   return res;
+  SAFE_EXCEPTION_END(collection, NULL)
+}
+
+mysqlx_result_t * STDCALL
+mysqlx_collection_modify_patch(mysqlx_collection_t *collection,
+                               const char *criteria,
+                               const char *patch_spec)
+{
+  mysqlx_result_t *res;
+  va_list args;
+  SAFE_EXCEPTION_BEGIN(collection, NULL)
+  PARAM_NULL_CHECK(patch_spec, collection,
+                   "Patch scpecification is empty", NULL)
+
+  va_start(args, criteria);
+  res = _mysqlx_collection_modify_exec(collection, criteria,
+                                       MODIFY_MERGE_PATCH, args);
+  va_end(args);
+  return res;
+  SAFE_EXCEPTION_END(collection, NULL)
 }
 
 mysqlx_result_t * STDCALL

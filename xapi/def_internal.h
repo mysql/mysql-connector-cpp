@@ -55,5 +55,6 @@ typedef enum mysqlx_modify_op_enum
   MODIFY_UNSET = 2,
   MODIFY_ARRAY_INSERT = 3,
   MODIFY_ARRAY_APPEND = 4,
-  MODIFY_ARRAY_DELETE = 5
+  MODIFY_ARRAY_DELETE = 5,
+  MODIFY_MERGE_PATCH = 6
 } mysqlx_modify_op;

@@ -550,7 +550,7 @@ public:
   {
     if (m_rows.size() == 0)
       return; // nothing to copy
-    
+
     for (Rows::const_iterator it = m_rows.begin();
          it != m_rows.end(); ++it)
     {
@@ -704,7 +704,6 @@ class Modify_item : public Update_item
 
 class Modify_spec : public Update_base<Modify_item>
 {
-
 public:
 
   Modify_spec()

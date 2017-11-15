@@ -430,5 +430,19 @@ void Modify_spec::process(Processor &prc) const
     case MODIFY_UNSET:
       prc.remove(&field);
     break;
+    case MODIFY_MERGE_PATCH:
+    {
+      cdk::Update_processor::Expr_prc *pprc = prc.patch();
+      if (pprc)
+      {
+        if(pprc->doc())
+        {
+          pprc->doc()->doc_begin();
+          it->process(*pprc);
+          pprc->doc()->doc_end();
+        }
+      }
+    }
+    break;
   }
 }

@@ -383,6 +383,12 @@ int mysqlx_stmt_t::add_coll_modify_values(va_list args, mysqlx_modify_op modify_
       m_modify_spec.add_value(modify_type, path);
       continue;
     }
+    else if (modify_type == MODIFY_MERGE_PATCH)
+    {
+      // For merge only one item is expected
+      m_modify_spec.add_value(modify_type, "", true, string(path));
+      return RESULT_OK;
+    }
 
     int64_t val_type = (int64_t)va_arg(args, void*);
 
