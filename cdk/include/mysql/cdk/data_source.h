@@ -54,13 +54,6 @@ public:
   {
   }
 
-  Options(const Options &other)
-    : m_usr(other.m_usr)
-    , m_has_pwd(other.m_has_pwd), m_pwd(other.m_pwd)
-    , m_has_db(other.m_has_db), m_db(other.m_db)
-  {
-  }
-
   Options(const string &usr, const std::string *pwd =NULL)
     : m_usr(usr), m_has_pwd(false), m_has_db(false)
   {

@@ -371,6 +371,7 @@ Session::~Session()
 option_t Session::is_valid()
 {
   wait();
+  // TODO: should errors be thrown here, if any?
   return m_isvalid;
 }
 
@@ -380,6 +381,8 @@ void Session::check_protocol_fields()
   if (m_proto_fields == UINT64_MAX)
   {
     wait();
+    if (0 < entry_count())
+      get_error().rethrow();
     Proto_field_checker field_checker(m_protocol);
     m_proto_fields = 0;
     /* More fields checks will be added here */

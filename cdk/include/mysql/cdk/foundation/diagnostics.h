@@ -286,6 +286,11 @@ public:
     return m_it;
   }
 
+  Entry* get_entry(unsigned int pos)
+  {
+    return m_entries.at(pos);
+  }
+
   const Error& get_error();
 
   friend class Diagnostic_iterator;

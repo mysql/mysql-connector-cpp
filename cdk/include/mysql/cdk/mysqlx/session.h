@@ -326,7 +326,12 @@ class Col_metadata
 
   void get_info(Format<TYPE_BYTES> &fmt) const
   {
-    Format<TYPE_BYTES>::Access::set_width(fmt, m_length);
+    // Note: flag 0x01 means that bytes should be padded with 0x00
+
+    if (m_flags & 0x01)
+    {
+      Format<TYPE_BYTES>::Access::set_width(fmt, m_length);
+    }
   }
 
   /*
@@ -467,6 +472,8 @@ public:
   {
     m_stmt_stats.clear();
     authenticate(options, conn.is_secure());
+    // TODO: make "lazy" checks instead, deferring to the time when given
+    // feature is used.
     check_protocol_fields();
   }
 
