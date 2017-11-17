@@ -2314,6 +2314,7 @@ TEST_F(Crud, add_or_replace)
 TEST_F(Crud, merge_patch)
 {
   SKIP_IF_NO_XPLUGIN;
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 3)
 
   cout << "Creating collection..." << endl;
 
