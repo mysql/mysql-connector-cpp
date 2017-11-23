@@ -276,6 +276,9 @@ namespace ds {
   template <typename DS_t, typename DS_opt>
   struct DS_pair : public std::pair<DS_t, DS_opt>
   {
+    DS_pair(const DS_pair&) = default;
+    DS_pair(DS_pair&&) = default;
+
     DS_pair(DS_t &ds, DS_opt &opt) : std::pair<DS_t, DS_opt>(ds, opt)
     {}
   };

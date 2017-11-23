@@ -96,50 +96,52 @@ protected:
 
   using Base::m_storage;
 
+  /*
+    Default ctor. It constructs an instance which does not hold any value.
+  */
 
-  variant_base() : m_owns(false)
-  {}
-
-  variant_base(const First &val)
-    : m_owns(true)
-  {
-    set(val);
-  }
-
-  variant_base(First &&val)
-    : m_owns(true)
-  {
-    set(std::move(val));
-  }
-
-  template<typename T>
-  variant_base(T &&val)
-    : Base(std::move(val))
-  {}
-
-  template<typename T>
-  variant_base(const T &val)
-    : Base(val)
-  {}
-
+  variant_base() = default;
 
   // Copy/move semantics
 
   variant_base(const variant_base &other)
     : Base(static_cast<const Base&>(other))
   {
-    if (!other.m_owns)
-      return;
-    set(*other.get((First*)nullptr));
+    if (other.m_owns)
+      set(*other.get((First*)nullptr));
   }
 
   variant_base(variant_base &&other)
-    : Base(std::move(static_cast<const Base&&>(other)))
+    : Base(static_cast<Base&&>(other))
   {
-    if (!other.m_owns)
-      return;
-    set(std::move(*other.get((First*)nullptr)));
+    if (other.m_owns)
+    {
+      /*
+        Note: Method other.get() returns const First* pointer. Without
+        casting away constness, method set() would be called with argument
+        of type const First&& and would not correctly assign the value.
+        After casting away the constness, the value passed to set() has
+        the expected type First&&.
+      */
+      set(std::move(*const_cast<First*>(other.get((First*)nullptr))));
+    }
+    other.m_owns = false;
   }
+
+
+  /*
+    Construct variant from a value of one of the compatible types.
+
+    The logic is handled by set() method.
+  */
+
+  template<typename T>
+  variant_base(T &&val)
+  {
+    set(std::forward<T>(val));
+  }
+
+  // Copy assignment.
 
   variant_base& operator=(const variant_base &other)
   {
@@ -150,46 +152,28 @@ protected:
     return *this;
   }
 
+  /*
+    Method set(), depending on the type of the value, either stores it
+    in this instance or in the base class.
+  */
+
   void set(const First &val)
   {
     m_owns = true;
     new (&m_storage) First(val);
   }
 
-  void set(First &&val)
+  void set(First&& val)
   {
     m_owns = true;
     new (&m_storage) First(std::move(val));
   }
 
-  template <
-    typename T,
-    typename std::enable_if<
-      !std::is_same<
-        typename std::remove_reference<T>::type,
-        typename std::remove_reference<First>::type
-      >::value
-    >::type * = nullptr
-  >
-  void set(const T &val)
+  template <typename T>
+  void set(T&& val)
   {
     m_owns = false;
-    Base::set(val);
-  }
-
-  template <
-    typename T,
-    typename std::enable_if<
-      !std::is_same<
-        typename std::remove_reference<T>::type,
-        typename std::remove_reference<First>::type
-      >::value
-    >::type * = nullptr
-  >
-  void set(T &&val)
-  {
-    m_owns = false;
-    Base::set(std::move(val));
+    Base::set(std::forward<T>(val));
   }
 
 
@@ -261,13 +245,19 @@ protected:
   template <class Visitor>
   void visit(Visitor&) const
   {
+    /*
+      Note: This assertion is hit when visit() method is called on
+      a variant object which does not store any data.
+    */
     assert(false);
   }
 
   template<typename T>
   void set(T &&)
   {
-    assert(false);
+    static_assert(false,
+      "Trying to set a variant object to an incompatible type"
+    );
   }
 
   void operator=(const variant_base&)
@@ -276,7 +266,9 @@ protected:
   template<typename T>
   void operator=(const T&)
   {
-    assert(false);
+    static_assert(false,
+      "Trying to set a variant object to an incompatible type"
+    );
   }
 };
 
