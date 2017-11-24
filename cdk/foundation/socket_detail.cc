@@ -28,7 +28,9 @@
 PUSH_SYS_WARNINGS
 #ifdef WITH_SSL_YASSL
 #include "../extra/yassl/include/openssl/ssl.h"
-#endif // WITH_SSL_YASSL
+#else
+#include "openssl/ssl.h"
+#endif
 #include <cstdio>
 #include <limits>
 #ifndef _WIN32
@@ -343,10 +345,14 @@ void initialize_socket_system()
 #endif
 
 #ifdef WITH_SSL_YASSL
-  yaSSL::SSL_library_init();
-  yaSSL::OpenSSL_add_all_algorithms();
-  yaSSL::SSL_load_error_strings();
-#endif // WITH_SSL_YASSL
+  using namespace yaSSL;
+#endif
+
+#ifdef WITH_SSL
+  SSL_library_init();
+  OpenSSL_add_all_algorithms();
+  SSL_load_error_strings();
+#endif
 
 #ifndef WIN32
   //ignore SIGPIPE signal when sending data with connection closed by server

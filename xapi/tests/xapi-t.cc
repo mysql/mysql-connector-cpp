@@ -1883,7 +1883,10 @@ TEST_F(xapi, unix_socket)
 
   {
     // Bug 26742948
-    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SOCKET, "../../../../../../../tmp/mysqlx_11.sock"));
+    EXPECT_EQ(RESULT_OK,
+              mysqlx_session_option_set(opt,
+                                        OPT_SOCKET("../../../../../../../tmp/mysqlx_11.sock"),
+                                        PARAM_END));
 
     mysqlx_session_option_set(opt, MYSQLX_OPT_USER, "mysqld_user", PARAM_END);
   }

@@ -34,11 +34,22 @@ if(NOT PROTOBUF_LITE)
   list(APPEND cdk_libs protobuf)
 endif()
 
-if(WITH_SSL STREQUAL "bundled")
-  list(APPEND cdk_libs yassl taocrypt)
-endif()
+#if(SSL_LIBRARIES AND (WITH_SSL STREQUAL "bundled"))
+#  list(APPEND cdk_libs ${SSL_LIBRARIES})
+#endif()
 
-add_library_ex(cdk STATIC session.cc codec.cc
+SET(cdk_sources
+    session.cc
+    codec.cc
+    )
+
+IF (WIN32 AND OPENSSL_APPLINK_C)
+  LIST(APPEND cdk_sources "${OPENSSL_APPLINK_C}")
+ENDIF()
+
+
+add_library_ex(cdk STATIC
+  ${cdk_sources}
   OBJECTS
     ${target_mysqlx}
     ${target_proto_mysqlx}
@@ -47,6 +58,13 @@ add_library_ex(cdk STATIC session.cc codec.cc
   LIBS
     ${cdk_libs}
 )
+
+#if(SSL_LIBRARIES AND NOT (WITH_SSL STREQUAL "bundled"))
+#list(APPEND cdk_libs ${SSL_LIBRARIES})
+#endif()
+if(SSL_LIBRARIES)
+target_link_libraries(cdk ${SSL_LIBRARIES})
+endif()
 
 add_coverage(cdk)
 

@@ -380,11 +380,14 @@ void Session::check_protocol_fields()
   if (m_proto_fields == UINT64_MAX)
   {
     wait();
-    Proto_field_checker field_checker(m_protocol);
-    m_proto_fields = 0;
-    /* More fields checks will be added here */
-    m_proto_fields |= field_checker.is_supported(Protocol_fields::ROW_LOCKING);
-    m_proto_fields |= field_checker.is_supported(Protocol_fields::UPSERT);
+    if (check_valid())
+    {
+      Proto_field_checker field_checker(m_protocol);
+      m_proto_fields = 0;
+      /* More fields checks will be added here */
+      m_proto_fields |= field_checker.is_supported(Protocol_fields::ROW_LOCKING);
+      m_proto_fields |= field_checker.is_supported(Protocol_fields::UPSERT);
+    }
   }
 }
 

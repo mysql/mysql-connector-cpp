@@ -22,8 +22,8 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-#ifndef CDK_FOUNDATION_CONNECTION_YASSL_H
-#define CDK_FOUNDATION_CONNECTION_YASSL_H
+#ifndef CDK_FOUNDATION_CONNECTION_OPENSSL_H
+#define CDK_FOUNDATION_CONNECTION_OPENSSL_H
 
 #include "connection_tcpip.h"
 #include "stream.h"
@@ -191,4 +191,4 @@ private:
 } // namespace foundation
 } // namespace cdk
 
-#endif // CDK_FOUNDATION_CONNECTION_YASSL_H
+#endif // CDK_FOUNDATION_CONNECTION_OPENSSL_H

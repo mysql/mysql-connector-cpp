@@ -260,22 +260,11 @@ OPTION(WITH_CDK_TESTS "cdk tests" OFF)
 set(WITH_PIC ${CMAKE_POSITION_INDEPENDENT_CODE})
 
 
-if(NOT DEFINED WITH_SSL)
-SET(WITH_SSL "bundled" CACHE STRING "")
-endif()
-
-IF(WITH_SSL)
-  IF(WITH_SSL STREQUAL "bundled")
-    ADD_DEFINITIONS(-DWITH_SSL_YASSL)
-  ENDIF()
-  ADD_DEFINITIONS(-DWITH_SSL)
-ENDIF()
-
-
 
 ADD_SUBDIRECTORY(cdk)
 INCLUDE_DIRECTORIES(${CDK_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(cdk/parser)
+ADD_DEFINITIONS(${SSL_DEFINES})
 
 #
 # Unit tests framework
@@ -351,7 +340,8 @@ ADD_SUBDIRECTORY(devapi)
 add_library_ex(libconcpp ${LIB_TYPE}
     ${WITH_UUID}/src/uuid_gen.cc
     OBJECTS devapi xapi
-    LIBS    cdk
+    LIBS
+    cdk
 )
 
 target_include_directories(libconcpp PRIVATE "${WITH_UUID}/include")

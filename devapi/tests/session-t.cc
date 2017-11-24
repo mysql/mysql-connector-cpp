@@ -600,8 +600,13 @@ TEST_F(Sess, ssl_session)
     catch (Error &e)
     {
       // If server cert CN!=localhost, it will fail with this error
-      EXPECT_EQ(string("CDK Error: yaSSL: SSL certificate validation failure"),
-                string(e.what()));
+#ifdef HAVE_SSL_YASSL
+      const char *err_msg = "CDK Error: yaSSL: SSL certificate validation failure";
+#else
+      const char *err_msg = "CDK Error: OpenSSL: SSL certificate validation failure";
+#endif
+      std::cout << e.what() << std::endl;
+      EXPECT_EQ(string(err_msg), string(e.what()));
     }
 
   }

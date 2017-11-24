@@ -30,7 +30,11 @@
 #pragma warning (push)
 #endif
 
+#if defined(WITH_SSL_YASSL)
 #include <taocrypt/include/sha.hpp>
+#else
+#include "openssl/sha.h"
+#endif
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -38,11 +42,47 @@
 #pragma warning (pop)
 #endif
 
-using TaoCrypt::byte;
+
 
 #define PVERSION41_CHAR '*'
 #define SCRAMBLE_LENGTH 20
 #define SHA1_HASH_SIZE 20
+
+#if defined( WITH_SSL_YASSL)
+using namespace TaoCrypt;
+typedef TaoCrypt::word32  length_t;
+#elif defined (WITH_SSL)
+
+typedef unsigned char byte;
+typedef size_t length_t;
+
+class SHA
+{
+  SHA_CTX m_sha;
+
+  void init()
+  {
+    SHA1_Init(&m_sha);
+  }
+
+  public:
+  SHA()
+  {
+    init();
+  }
+
+  void Update(byte* data, length_t length)
+  {
+    SHA1_Update(&m_sha, data, length);
+  }
+
+  void Final(byte* hash)
+  {
+    SHA1_Final(hash, &m_sha);
+    init();
+  }
+};
+#endif
 
 
 static void my_crypt(uint8_t *to, const uint8_t *s1, const uint8_t *s2, size_t len)
@@ -54,10 +94,10 @@ static void my_crypt(uint8_t *to, const uint8_t *s1, const uint8_t *s2, size_t l
 }
 
 
+
 static std::string scramble(const std::string &scramble_data, const std::string &password)
 {
-  TaoCrypt::SHA   sha1;
-  typedef TaoCrypt::word32  length_t;
+  class SHA sha1;
 
   if (scramble_data.length() != SCRAMBLE_LENGTH)
     throw std::invalid_argument("Password scramble data is invalid");
@@ -87,7 +127,6 @@ static std::string scramble(const std::string &scramble_data, const std::string 
 
   return std::string((char*)result_buf, SCRAMBLE_LENGTH);
 }
-
 
 static char *octet2hex(char *to, const char *str, size_t len)
 {
