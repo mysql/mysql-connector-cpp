@@ -27,7 +27,7 @@
 
 /**
   @file
-  Classes used to access query and command execution results.
+  Details for Row class.
 */
 
 
@@ -38,9 +38,14 @@
 
 
 namespace mysqlx {
+
+class Columns;
+
 namespace internal {
 
-class Row_result_detail;
+template <class COLS> class Row_result_detail;
+struct Table_insert_detail;
+
 
 class PUBLIC_API Row_detail
 {
@@ -56,6 +61,15 @@ protected:
   Row_detail(std::shared_ptr<Impl> &&impl)
   {
     m_impl = std::move(impl);
+  }
+
+  col_count_t col_count() const;
+  bytes       get_bytes(col_count_t) const;
+  Value&      get_val(col_count_t);
+
+  void clear()
+  {
+    m_impl.reset();
   }
 
   Impl& get_impl();
@@ -80,7 +94,7 @@ protected:
 
   static void process_one(std::pair<Impl*,col_count_t>*, const Value &val);
 
-  friend Row_result_detail;
+  friend Row_result_detail<Columns>;
   friend Args_prc;
 };
 

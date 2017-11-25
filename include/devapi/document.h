@@ -46,6 +46,7 @@ class Value;
 class Field;
 class DbDoc;
 class DocResult;
+class SessionSettings;
 
 
 // Field class
@@ -59,11 +60,9 @@ class DocResult;
   @ingroup devapi_res
 */
 
-class PUBLIC_API Field
+class Field
 {
-  DLL_WARNINGS_PUSH
-    string m_fld;
-  DLL_WARNINGS_POP
+  string m_fld;
 
 public:
 
@@ -117,8 +116,10 @@ public:
 */
 
 class PUBLIC_API DbDoc
-  : public internal::Printable
+  : public common::Printable
 {
+  // TODO: move PUBLIC_API stuff to a detail class
+
   class INTERNAL Impl;
 
 DLL_WARNINGS_PUSH
@@ -128,6 +129,8 @@ DLL_WARNINGS_PUSH
 DLL_WARNINGS_POP
 
   INTERNAL DbDoc(const std::shared_ptr<Impl>&);
+
+  const char* get_json() const;
 
 public:
 
@@ -241,13 +244,14 @@ public:
 
   @note Value object copies the values it stores. Thus, after storing value
   in Value object, the original value can be destroyed without invalidating
-  the copy. The only exception is RAW Value, which does not store the
-  bytes it describes - it only stores pointers describing a region of memory.
+  the copy. This includes RAW Values which hold a copy of bytes.
 
   @ingroup devapi_res
 */
 
-class PUBLIC_API Value : public internal::Printable
+class Value
+  : public virtual common::Printable
+  , protected common::Value
 {
 public:
 
@@ -279,10 +283,10 @@ public:
 
   Value();  ///< Constructs Null value.
   Value(std::nullptr_t); ///< Constructs Null value.
-  Value(const string&);
-  Value(string&&);
+  Value(const std::wstring &str);
+  Value(std::wstring &&str);
   Value(const char *str) : Value(string(str)) {}
-  Value(const wchar_t *str) : Value(string(str)) {}
+  Value(const wchar_t *str) : Value(std::wstring(str)) {}
   Value(const bytes&);
   Value(int64_t);
   Value(uint64_t);
@@ -291,28 +295,14 @@ public:
   Value(bool);
   Value(const DbDoc& doc);
 
-  Value(const std::initializer_list<Value> &list)
-    : m_type(ARRAY)
-  {
-    m_arr = std::make_shared<Array>(list);
-  }
-
+  Value(const std::initializer_list<Value> &list);
   template <typename Iterator>
-  Value(Iterator begin_, Iterator end_)
-    : m_type(ARRAY)
-  {
-    try {
-      m_arr = std::make_shared<Array>(begin_, end_);
-    }
-    CATCH_AND_WRAP
-  }
+  Value(Iterator begin_, Iterator end_);
 
   ///@}
 
-  /*
-    Note: These templates are needed to disambiguate constructor resolution
-    for integer types.
-  */
+  Value(common::Value &&other);
+  Value(const common::Value &other);
 
   Value(const Value&) = default;
 
@@ -329,6 +319,11 @@ public:
 
 #endif
 
+  /*
+    Note: These templates are needed to disambiguate constructor resolution
+    for integer types.
+  */
+
   template <
     typename T,
     typename std::enable_if<std::is_signed<T>::value>::type* = nullptr
@@ -344,6 +339,7 @@ public:
   Value(T x)
     : Value(static_cast<uint64_t>(x))
   {}
+
 
   /*
     Assignment operator is implemented using constructors.
@@ -362,10 +358,10 @@ public:
 #endif
 
   template<typename T>
-  Value& operator=(T x)
+  Value& operator=(T&& x)
   {
     try {
-      *this = Value(x);
+      *this = Value(std::forward<T>(x));
       return *this;
     }
     CATCH_AND_WRAP
@@ -400,7 +396,7 @@ public:
   operator double() const;
   operator bool() const;
   operator string() const;
-  operator const bytes&() const;
+  operator bytes() const;
   operator DbDoc() const;
 
   template<typename T>
@@ -409,10 +405,14 @@ public:
   //@}
 
 
-  const bytes& getRawBytes() const
+  bytes getRawBytes() const
   {
-    check_type(RAW);
-    return m_raw;
+    try {
+      size_t len;
+      const byte *ptr = get_bytes(&len);
+      return{ ptr, len };
+    }
+    CATCH_AND_WRAP
   }
 
 
@@ -421,11 +421,14 @@ public:
     value is stored).
   */
 
-  Type  getType() const { return m_type; }
+  Type  getType() const;
 
   /// Convenience method for checking if value is null.
 
-  bool isNull() const { return VNULL == getType(); }
+  bool isNull() const
+  {
+    return VNULL == getType();
+  }
 
   /**
     Check if document value contains given (top-level) field.
@@ -447,9 +450,6 @@ public:
   const Value& operator[](const wchar_t *name) const
   { return (*this)[Field(name)]; }
 
-
-//  typedef std::vector<Value>::iterator iterator;
-//  typedef std::vector<Value>::const_iterator const_iterator;
 
   /**
     Access to elements of an array value.
@@ -476,46 +476,57 @@ public:
 
   /// Print the value to a stream.
 
-  void print(std::ostream&) const;
+  void print(std::ostream &out) const
+  {
+    switch (m_type)
+    {
+    case DOC: out << m_doc; return;
+    case ARR: out << "<array with " << elementCount() << " element(s)>"; return;
+    default:  common::Value::print(out); return;
+    }
+  }
 
 protected:
 
-  Type m_type;
+  enum { VAL, ARR, DOC } m_type = VAL;
 
   void check_type(Type t) const
   {
-    if (m_type != t)
+    if (getType() != t)
       throw Error("Invalid value type");
   }
 
-  union
+  bool is_expr() const
   {
-    uint64_t  _uint64_v;
-    int64_t   _int64_v;
-    float     _float_v;
-    double    _double_v;
-    bool      _bool_v;
-  } m_val;
+    return VAL == m_type && common::Value::EXPR == common::Value::get_type();
+  }
+
+  void set_as_expr()
+  {
+    common::Value::m_type = common::Value::EXPR;
+  }
 
   /*
-    TODO: Above union can not have members of type string or DbDoc.
-    Find another way of sharing memory between representations of
-    different values (try boost::variant?)
+    TODO: Instead extend common::Value with array and document types. Requires
+    moving DbDoc code to the common layer.
   */
 
   typedef std::vector<Value> Array;
 
+  DLL_WARNINGS_PUSH
+
   DbDoc  m_doc;
 
-  DLL_WARNINGS_PUSH
-  bytes  m_raw;
-  string m_str;
+  // Note: shared with other Value instances for the same array.
   std::shared_ptr<Array>  m_arr;
+
   DLL_WARNINGS_POP
 
 public:
 
+  friend SessionSettings;
   friend DbDoc;
+  template <class Base> friend class Bind_parameters;
 
   struct INTERNAL Access;
   friend Access;
@@ -524,7 +535,7 @@ public:
 static const Value nullvalue;
 
 
-#if defined(_MSC_VER) && _MSC_VER < 1900
+#if 0 // defined(_MSC_VER) && _MSC_VER < 1900
 
 inline
 Value& Value::operator=(Value &&other)
@@ -553,29 +564,20 @@ namespace internal {
   Helper class to identify usage of expressions
 */
 
-class ExprValue
-: public Value
+class Expression
+: public mysqlx::Value
 {
- bool m_is_expr = false;
-
-public:
-
- ExprValue()
+ Expression()
  {}
 
  template <typename V>
- ExprValue(V val)
- : Value(val)
- {}
+ Expression(V&& val)
+ : Value(std::forward<V>(val))
+ {
+   set_as_expr();
+ }
 
- ExprValue(Value &&val)
- : Value(std::move(val))
- {}
-
- bool isExpression() const { return m_is_expr; }
-
- template <typename V>
- friend ExprValue expr(V s);
+ friend Expression expr(string&& s);
 };
 
 
@@ -598,18 +600,44 @@ public:
   @ingroup devapi
 */
 
-template <typename V>
 inline
-internal::ExprValue expr(V s)
+mysqlx::internal::Expression expr(string&& e)
 {
-  internal::ExprValue val(s);
-  val.m_is_expr = true;
-  return val;
+  return std::forward<string>(e);
 }
 
 }  // internal
 
+
 using internal::expr;
+
+
+inline
+Value::Type Value::getType() const
+{
+  switch (m_type)
+  {
+  case ARR: return ARRAY;
+  case DOC: return DOCUMENT;
+  case VAL:
+    switch (common::Value::get_type())
+    {
+    case common::Value::VNULL:    return VNULL;
+    case common::Value::UINT64:   return UINT64;
+    case common::Value::INT64:    return INT64;
+    case common::Value::FLOAT:    return FLOAT;
+    case common::Value::DOUBLE:   return DOUBLE;
+    case common::Value::BOOL:     return BOOL;
+    case common::Value::STRING:   return STRING;
+    case common::Value::WSTRING:  return STRING;
+    case common::Value::RAW:      return RAW;
+    case common::Value::EXPR:     return STRING;
+    case common::Value::JSON:     return DOCUMENT;
+    default: break;
+    }
+  default: assert(false); return VNULL; // quiet compiler warning
+  }
+}
 
 
 inline
@@ -631,166 +659,192 @@ const Value& DbDoc::operator[](const wchar_t *name) const
   TODO: more informative errors
 */
 
-inline Value::Value() : m_type(VNULL)
-{}
 
-inline Value::Value(std::nullptr_t) : m_type(VNULL)
-{}
-
-inline Value::Value(int64_t val) : m_type(INT64)
+inline
+Value::Value(const std::initializer_list<Value> &list)
+  : m_type(ARR)
 {
-  m_val._int64_v = val;
+  try {
+    m_arr = std::make_shared<Array>(list);
+  }
+  CATCH_AND_WRAP
 }
 
-inline Value::Value(uint64_t val) : m_type(UINT64)
+template <typename Iterator>
+inline
+Value::Value(Iterator begin_, Iterator end_)
+  : m_type(ARR)
 {
-  m_val._uint64_v = val;
+  try {
+    m_arr = std::make_shared<Array>(begin_, end_);
+  }
+  CATCH_AND_WRAP
 }
+
+
+inline
+Value::Value(common::Value &&other)
+try
+  : common::Value(std::move(other))
+{}
+CATCH_AND_WRAP
+
+inline
+Value::Value(const common::Value &other)
+try
+  : common::Value(other)
+{}
+CATCH_AND_WRAP
+
+
+inline Value::Value()
+{}
+
+inline Value::Value(std::nullptr_t)
+{}
+
+inline Value::Value(int64_t val)
+try
+  : common::Value(val)
+{}
+CATCH_AND_WRAP
+
+inline Value::Value(uint64_t val)
+try
+  : common::Value(val)
+{}
+CATCH_AND_WRAP
 
 inline Value::operator int() const
 {
-  int64_t val = (int64_t)*this;
-  if (val > std::numeric_limits<int>::max())
-    throw Error("Numeric conversion overflow");
-  if (val < std::numeric_limits<int>::min())
-    throw Error("Numeric conversion overflow");
+  try {
+    int64_t val = get_sint();
+    if (val > std::numeric_limits<int>::max())
+      throw Error("Numeric conversion overflow");
+    if (val < std::numeric_limits<int>::min())
+      throw Error("Numeric conversion overflow");
 
-  return (int) val;
+    return (int)val;
+  }
+  CATCH_AND_WRAP
 }
 
 inline Value::operator unsigned() const
 {
-  uint64_t val = static_cast<uint64_t>(*this);
-  if (val > std::numeric_limits<unsigned>::max())
-    throw Error("Numeric conversion overflow");
+  try {
+    uint64_t val = get_uint();
+    if (val > std::numeric_limits<unsigned>::max())
+      throw Error("Numeric conversion overflow");
 
-  return (unsigned) val;
+    return (unsigned)val;
+  }
+  CATCH_AND_WRAP
 }
-
 
 inline Value::operator int64_t() const
 {
-  if (UINT64 != m_type && INT64 != m_type && BOOL != m_type)
-    throw Error("Can not convert to integer value");
-
-  if (BOOL == m_type)
-    return m_val._bool_v ? 1 : 0;
-
-  if (UINT64 == m_type
-      && m_val._uint64_v > (uint64_t)std::numeric_limits<int64_t>::max())
-    throw Error("Numeric conversion overflow");
-
-  int64_t val = (INT64 == m_type ? m_val._int64_v : (int64_t)m_val._uint64_v);
-
-  return val;
+  try {
+    return get_sint();
+  }
+  CATCH_AND_WRAP
 }
 
 inline Value::operator uint64_t() const
 {
-  if (UINT64 != m_type && INT64 != m_type && BOOL != m_type)
-    throw Error("Can not convert to integer value");
-
-  if (BOOL == m_type)
-    return m_val._bool_v ? 1 : 0;
-
-  if (INT64 == m_type
-    && 0 > m_val._int64_v)
-    throw Error("Converting negative integer to unsigned value");
-
-  uint64_t val = (UINT64 == m_type ? m_val._uint64_v : (uint64_t)m_val._int64_v);
-
-  return val;
+  try {
+    return get_uint();
+  }
+  CATCH_AND_WRAP
 }
 
-inline Value::Value(float val) : m_type(FLOAT)
-{
-  m_val._float_v = val;
-}
+
+inline Value::Value(float val)
+try
+  : common::Value(val)
+{}
+CATCH_AND_WRAP
 
 inline
 Value::operator float() const
 {
-  switch (m_type)
-  {
-  case INT64:  return 1.0F*m_val._int64_v;
-  case UINT64: return 1.0F*m_val._uint64_v;
-  case FLOAT:  return m_val._float_v;
-  default:
-    throw Error("Value can not be converted to float");
+  try {
+    return get_float();
   }
+  CATCH_AND_WRAP
 }
 
 
-inline Value::Value(double val) : m_type(DOUBLE)
-{
-  m_val._double_v = val;
-}
+inline Value::Value(double val)
+try
+  : common::Value(val)
+{}
+CATCH_AND_WRAP
 
 inline
 Value::operator double() const
 {
-  switch (m_type)
-  {
-  case INT64:  return 1.0*m_val._int64_v;
-  case UINT64: return 1.0*m_val._uint64_v;
-  case FLOAT:  return m_val._float_v;
-  case DOUBLE: return m_val._double_v;
-  default:
-    throw Error("Value can not be converted to double");
+  try {
+    return get_double();
   }
+  CATCH_AND_WRAP
 }
 
 
-inline Value::Value(bool val) : m_type(BOOL)
-{
-  m_val._bool_v = val;
-}
-
-inline Value::Value(const DbDoc &doc)
-  : m_type(DOCUMENT)
-  , m_doc(doc)
+inline Value::Value(bool val)
+try
+  : common::Value(val)
 {}
+CATCH_AND_WRAP
 
 
 inline
 Value::operator bool() const
 {
-  switch (m_type)
-  {
-  case INT64:  return m_val._int64_v != 0;
-  case UINT64: return m_val._uint64_v != 0;
-  case BOOL: return m_val._bool_v;
-  default:
-    throw Error("Value can not be converted to double");
+  try {
+    return get_bool();
   }
+  CATCH_AND_WRAP
 }
 
 
-inline Value::Value(const string &val) : m_type(STRING)
-{
-  m_str = val;
-}
+inline Value::Value(const DbDoc &doc)
+try
+  : m_type(DOC)
+  , m_doc(doc)
+{}
+CATCH_AND_WRAP
 
-inline Value::Value(string &&val) : m_type(STRING)
-{
-  m_str = std::move(val);
-}
+
+inline Value::Value(const std::wstring &val)
+try
+  : common::Value(val)
+{}
+CATCH_AND_WRAP
+
+inline Value::Value(std::wstring &&val)
+try
+  : common::Value(std::move(val))
+{}
+CATCH_AND_WRAP
 
 inline
 Value::operator string() const
 {
-  check_type(STRING);
-  return m_str;
+  try {
+    return get_wstring();
+  }
+  CATCH_AND_WRAP
 }
 
 
-inline Value::Value(const bytes &data) : m_type(RAW)
-{
-  m_raw = data;
-}
+inline Value::Value(const bytes &data)
+try
+  : common::Value(data.begin(), data.length())
+{}
+CATCH_AND_WRAP
 
 inline
-Value::operator const bytes&() const
+Value::operator bytes() const
 {
   return getRawBytes();
 }
@@ -802,7 +856,6 @@ Value::operator DbDoc() const
   check_type(DOCUMENT);
   return m_doc;
 }
-
 
 inline
 bool Value::hasField(const Field &fld) const
@@ -830,7 +883,7 @@ int DbDoc::fieldType(const Field &fld) const
 inline
 Value::iterator Value::begin()
 {
-  if (ARRAY != m_type)
+  if (ARR != m_type)
     throw Error("Attempt to iterate over non-array value");
   return m_arr->begin();
 }
@@ -838,7 +891,7 @@ Value::iterator Value::begin()
 inline
 Value::const_iterator Value::begin() const
 {
-  if (ARRAY != m_type)
+  if (ARR != m_type)
     throw Error("Attempt to iterate over non-array value");
   return m_arr->begin();
 }
@@ -846,7 +899,7 @@ Value::const_iterator Value::begin() const
 inline
 Value::iterator Value::end()
 {
-  if (ARRAY != m_type)
+  if (ARR != m_type)
     throw Error("Attempt to iterate over non-array value");
   return m_arr->end();
 }
@@ -854,7 +907,7 @@ Value::iterator Value::end()
 inline
 Value::const_iterator Value::end() const
 {
-  if (ARRAY != m_type)
+  if (ARR != m_type)
     throw Error("Attempt to iterate over non-array value");
   return m_arr->end();
 }

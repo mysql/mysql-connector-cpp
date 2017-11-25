@@ -67,20 +67,14 @@
 #include "result.h"
 #include "executable.h"
 #include "crud.h"
-#include "detail/collection_crud.h"
-
-
-namespace cdk {
-
-class Session;
-
-}  // cdk
 
 
 namespace mysqlx {
 
 class Session;
 class Collection;
+class Table;
+
 
 // ----------------------------------------------------------------------
 
@@ -130,22 +124,23 @@ struct Collection_add_base
   the internal implementation object.
 */
 
-DLL_WARNINGS_PUSH
-
-class PUBLIC_API CollectionAdd
+class CollectionAdd
   : public internal::Collection_add_base
   , internal::Collection_add_detail
 {
-
-DLL_WARNINGS_POP
-
 public:
 
   /**
     Create an empty add operation for the given collection.
   */
 
-  CollectionAdd(Collection &coll);
+  CollectionAdd(Collection &coll)
+  {
+    try {
+      reset(internal::Crud_factory::mk_add(coll));
+    }
+    CATCH_AND_WRAP
+  }
 
   CollectionAdd(const internal::Collection_add_base &other)
   {
@@ -207,7 +202,7 @@ public:
 
 protected:
 
-  using Impl = internal::Collection_add_impl;
+  using Impl = common::Collection_add_if;
 
   Impl* get_impl()
   {
@@ -250,17 +245,11 @@ struct Collection_remove_base
   class.
 */
 
-class PUBLIC_API CollectionRemove
+class CollectionRemove
   : public internal::Collection_remove_base
 {
 
 public:
-
-  /**
-    Create an empty remove operation for the given collection.
-  */
-
-  CollectionRemove(Collection &coll);
 
   /**
     Create an operation which removes selected documnets from the given
@@ -269,7 +258,13 @@ public:
     Documents to be removed are specified by the given Boolean expression.
   */
 
-  CollectionRemove(Collection &coll, const string &expr);
+  CollectionRemove(Collection &coll, const string &expr)
+  {
+    try {
+      reset(internal::Crud_factory::mk_remove(coll, expr));
+    }
+    CATCH_AND_WRAP
+  }
 
 
   CollectionRemove(const internal::Collection_remove_cmd &other)
@@ -302,7 +297,7 @@ struct Collection_find_cmd
 
 struct Collection_find_base
  : public Group_by< Having< Sort< Limit< Offset< Bind_parameters<
-            Set_lock< Collection_find_cmd >
+            Set_lock< Collection_find_cmd, common::Collection_find_if >
           > > > > > >
 {};
 
@@ -315,14 +310,10 @@ struct Collection_find_base
   @ingroup devapi_op
 */
 
-DLL_WARNINGS_PUSH
-
-class PUBLIC_API CollectionFind
+class CollectionFind
   : public internal::Collection_find_base
   , internal::Collection_find_detail
 {
-
-DLL_WARNINGS_POP
 
   using Operation = internal::Collection_find_base;
 
@@ -332,7 +323,13 @@ public:
     Create an operation which returns all documents from the given collection.
   */
 
-  CollectionFind(Collection &coll);
+  CollectionFind(Collection &coll)
+  {
+    try {
+      reset(internal::Crud_factory::mk_find(coll));
+    }
+    CATCH_AND_WRAP
+  }
 
   /**
     Create an operation which returns selected documents from the given
@@ -341,7 +338,13 @@ public:
     Documents to be returned are specified by the given Boolean expression.
   */
 
-  CollectionFind(Collection &coll, const string &expr);
+  CollectionFind(Collection &coll, const string &expr)
+  {
+    try {
+      reset(internal::Crud_factory::mk_find(coll, expr));
+    }
+    CATCH_AND_WRAP
+  }
 
 
   CollectionFind(const internal::Collection_find_cmd &other)
@@ -379,7 +382,7 @@ public:
 
  protected:
 
-  using Impl = internal::Proj_impl;
+  using Impl = common::Collection_find_if;
 
   Impl* get_impl()
   {
@@ -398,6 +401,7 @@ public:
 
 class CollectionModify;
 
+
 namespace internal {
 
 class CollectionReplace;
@@ -410,52 +414,6 @@ struct Collection_modify_base
   : public Sort< Limit< Bind_parameters< Collection_modify_cmd > > >
 {};
 
-struct Collection_replace_cmd
-  : public Executable<Result, CollectionReplace>
-{};
-
-struct Collection_replace_base
-    : public Bind_parameters< Collection_replace_cmd >
-{};
-
-/*
-  An operation which replaces a single document with a new one.
-*/
-
-class PUBLIC_API CollectionReplace
-  : public internal::Collection_replace_base
-{
-
-public:
-
-  /*
-    Create operation which replaces document with specified _id in a collection.
-  */
-  CollectionReplace(Collection &base,
-                    const string &id,
-                    internal::ExprValue &&val,
-                    bool upsert = false);
-
-  CollectionReplace(const internal::Collection_replace_cmd &other)
-  {
-    internal::Collection_replace_cmd::operator=(other);
-  }
-
-  CollectionReplace(internal::Collection_replace_cmd &&other)
-  {
-    internal::Collection_replace_cmd::operator=(std::move(other));
-  }
-
-protected:
-
-  using Impl = Collection_modify_impl;
-
-  Impl* get_impl()
-  {
-    return static_cast<Impl*>(internal::Collection_replace_base::get_impl());
-  }
-};
-
 }  // internal namespace
 
 
@@ -465,7 +423,7 @@ protected:
   @ingroup devapi_op
 */
 
-class PUBLIC_API CollectionModify
+class CollectionModify
   : public internal::Collection_modify_base
 {
 
@@ -478,7 +436,13 @@ public:
     Documents to be modified are specified by the given Boolean expression.
   */
 
-  CollectionModify(Collection &base, const string &expr);
+  CollectionModify(Collection &coll, const string &expr)
+  {
+    try {
+      reset(internal::Crud_factory::mk_modify(coll, expr));
+    }
+    CATCH_AND_WRAP
+  }
 
 
   CollectionModify(const internal::Collection_modify_cmd &other)
@@ -500,10 +464,12 @@ public:
     the server.
   */
 
-  CollectionModify& set(const Field &field, internal::ExprValue &&val)
+  CollectionModify& set(const Field &field, const Value &val)
   {
     try {
-      get_impl()->add_operation(Impl::SET, field, std::move(val));
+      get_impl()->add_operation(
+        Impl::SET, std::wstring(field), (const common::Value&)val
+      );
       return *this;
     }
     CATCH_AND_WRAP
@@ -518,7 +484,7 @@ public:
   CollectionModify& unset(const Field &field)
   {
     try {
-      get_impl()->add_operation(Impl::UNSET, field);
+      get_impl()->add_operation(Impl::UNSET, std::wstring(field));
       return *this;
     }
     CATCH_AND_WRAP
@@ -531,10 +497,14 @@ public:
     inside an array field. The given value is inserted at this position.
   */
 
-  CollectionModify& arrayInsert(const Field &field, internal::ExprValue &&val)
+  CollectionModify& arrayInsert(const Field &field, const Value &val)
   {
     try {
-      get_impl()->add_operation(Impl::ARRAY_INSERT, field, std::move(val));
+      get_impl()->add_operation(
+        Impl::ARRAY_INSERT,
+        std::wstring(field),
+        (const common::Value&)val
+      );
       return *this;
     }
     CATCH_AND_WRAP
@@ -548,10 +518,14 @@ public:
     array.
   */
 
-  CollectionModify& arrayAppend(const Field &field, internal::ExprValue &&val)
+  CollectionModify& arrayAppend(const Field &field, const Value &val)
   {
     try {
-      get_impl()->add_operation(Impl::ARRAY_APPEND, field, std::move(val));
+      get_impl()->add_operation(
+        Impl::ARRAY_APPEND,
+        std::wstring(field),
+        (const common::Value&)val
+      );
       return *this;
     }
     CATCH_AND_WRAP
@@ -568,7 +542,7 @@ public:
   CollectionModify& arrayDelete(const Field &field)
   {
     try {
-      get_impl()->add_operation(Impl::ARRAY_DELETE, field);
+      get_impl()->add_operation(Impl::ARRAY_DELETE, std::wstring(field));
       return *this;
     }
     CATCH_AND_WRAP
@@ -576,7 +550,7 @@ public:
 
 protected:
 
-  using Impl = internal::Collection_modify_impl;
+  using Impl = common::Collection_modify_if;
 
   Impl* get_impl()
   {

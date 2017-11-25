@@ -27,6 +27,7 @@
 
 
 #include "../mysql_common.h"
+
 #include <string>
 #include <stdexcept>
 #include <ostream>
@@ -46,42 +47,18 @@ class string;
 
 namespace mysqlx {
 
-typedef unsigned char byte;
+using std::out_of_range;
+
+using common::byte;
+using common::GUID;
 
 
 namespace internal {
 
-/*
-  List_initializer class is used to initialize user std::vector, std::list or
-  own list implementations, as long as initialized by iterators of defined type
-*/
-
-template <typename T>
-struct List_init
-{
-   std::forward_list<T> m_data;
-
-   template <typename L>
-   List_init(L&& list)
-     : m_data(std::move(list.begin()), std::move(list.end()))
-   {}
-
-   //Special case for forward_list using move constructor
-   List_init(std::forward_list<T>&& list)
-     : m_data(std::move(list))
-   {}
-
-   template<typename U>
-   operator U()
-   {
-     return U(m_data.begin(), m_data.end());
-   }
-
-   operator std::forward_list<T>()
-   {
-     return std::move(m_data);
-   }
-};
+  using common::enable_if_t;
+  using common::is_constructible_t;
+  using common::remove_reference_t;
+  using common::is_same;
 
 }  // internal
 
@@ -183,34 +160,34 @@ typedef unsigned long row_count_t;
   @ingroup devapi_aux
 */
 
-class bytes : public std::pair<byte*, size_t>
+class bytes : public std::pair<const byte*, size_t>
 {
 
 public:
 
-  bytes(byte *beg_, byte *end_)
+  bytes(const byte *beg_, const byte *end_)
     : pair(beg_, end_ - beg_)
   {}
 
-  bytes(byte *beg, size_t len) : pair(beg, len)
+  bytes(const byte *beg, size_t len) : pair(beg, len)
   {}
 
-  bytes(const char *str) : pair((byte*)str,0)
+  bytes(const char *str) : pair((const byte*)str, 0)
   {
-    if (NULL != str)
+    if (nullptr != str)
       second = strlen(str);
   }
 
-  bytes(std::pair<byte*, size_t> buf) : pair(buf)
+  bytes(std::pair<const byte*, size_t> buf) : pair(buf)
   {}
 
-  bytes() : pair(NULL, 0)
+  bytes() : pair(nullptr, 0)
   {}
 
   bytes(const bytes &) = default;
 
-  virtual byte* begin() const { return first; }
-  virtual byte* end() const { return first + second; }
+  virtual const byte* begin() const { return first; }
+  virtual const byte* end() const { return first + second; }
 
   size_t length() const { return second; }
   size_t size() const { return length(); }
@@ -219,88 +196,6 @@ public:
   friend Access;
 };
 
-
-namespace internal {
-
-  class PUBLIC_API nocopy
-  {
-  public:
-    nocopy(const nocopy&) = delete;
-    nocopy& operator=(const nocopy&) = delete;
-  protected:
-    nocopy() {}
-  };
-
-
-  class PUBLIC_API Printable
-  {
-    virtual void print(std::ostream&) const = 0;
-    friend std::ostream& operator<<(std::ostream&, const Printable&);
-  };
-
-  inline
-  std::ostream& operator<<(std::ostream &out, const Printable &obj)
-  {
-    obj.print(out);
-    return out;
-  }
-
-
-  /*
-    Defined here because std::enable_if_t is not defined on all platforms on
-    which we build (clang is missing one). Note: it is C++14 feature.
-  */
-
-  template<bool Cond, typename T = void>
-  using enable_if_t = typename std::enable_if<Cond, T>::type;
-
-}  // internal
-
-
-/*
-  Global unique identifiers for documents.
-
-  TODO: Windows GUID type
-*/
-
-class PUBLIC_API GUID : public internal::Printable
-{
-  char m_data[32];
-
-  void set(const char *data)
-  {
-    // Note: Windows gives compile warnings when using strncpy
-    for(unsigned i=0; data[i] && i < sizeof(m_data); ++i)
-      m_data[i]= data[i];
-  }
-
-  INTERNAL void set(const std::string &data) { set(data.c_str()); }
-
-public:
-
-  GUID()
-  {
-    memset(m_data, 0, sizeof(m_data));
-  }
-
-  template <typename T> GUID(T data) { set(data); }
-  template<typename T>  GUID& operator=(T data) { set(data); return *this; }
-
-  operator std::string() const
-  {
-    return std::string(m_data, m_data + sizeof(m_data));
-  }
-
-  void generate();
-
-  void print(std::ostream &out) const
-  {
-    out << std::string(*this);
-  }
-};
-
-
-using std::out_of_range;
 
 /**
   Base class for connector errors.
@@ -313,30 +208,27 @@ using std::out_of_range;
   @ingroup devapi
 */
 
+// TODO: Make it header-only class somehow...
+
 DLL_WARNINGS_PUSH
 
-class PUBLIC_API Error : public std::runtime_error
+class PUBLIC_API Error : public common::Error
 {
 
-DLL_WARNINGS_POP
+  DLL_WARNINGS_POP
 
 public:
 
   Error(const char *msg)
-    : std::runtime_error(msg)
+    : common::Error(msg)
   {}
 };
 
 
-inline
-std::ostream& operator<<(std::ostream &out, const Error &e)
-{
-  out << e.what();
-  return out;
-}
 
 #define CATCH_AND_WRAP \
   catch (const ::mysqlx::Error&) { throw; }       \
+  catch (const std::out_of_range&) { throw; }     \
   catch (const std::exception &e)                 \
   { throw ::mysqlx::Error(e.what()); }            \
   catch (const char *e)                           \
@@ -352,176 +244,521 @@ void throw_error(const char *msg)
 }
 
 
+/*
+  Infrastructure for type-agnostic handling of lists
+  ==================================================
+
+  Template internal::List_initializer<> defined below is used to return lists
+  of values from public API method so that user can store this list in
+  a container of his choice. The only requirement is that the container instance
+  should be constructible from two iterators defining a range of elements
+  (such constructors exists for standard STL containers, for example).
+
+  Thus, given a public API method foo() which returns a List_initializer<> for
+  lists of elements of type X, user can do the following:
+
+     My_container cont = foo();
+
+  The container will be constructed as if this code was executed:
+
+     My_container cont = My_container(begin, end);
+
+  where begin and end are STL iterators defining a range of elements of type X.
+  This is implemented by defining templated conversion operator.
+
+  Apart from initializing containers, values of List_initializer<> type can
+  be iterated using a range loop:
+
+    for(X &el : foo()) { ... }
+
+  Otherwise, user should not be able to use List_initializer<> values directly.
+*/
+
 namespace internal {
 
-  /*
-    Type trait which checks if std::begin()/end() work on objects of given
-    class C, so that it can be used as a range to iterate over.
+/*
+  Iterator template.
 
-    TODO: Make it work also with user-defined begin()/end() functions.
-    TODO: Make it work with plain C arrays. For example:
+  It defines an STL input iterator which is implemented using an
+  implementation object of some type Impl. It is assumed that Impl
+  has the following methods:
 
-       int vals[] = { 1, 2, 3 }
-       process_args(data, vals)
-  */
+   void iterator_start() - puts iterator in "before begin" position;
+   bool iterator_next() - moves iterator to next position, returns
+                          false if it was not possible;
+   Value_type iterator_get() - gets current value.
 
-  template <class C>
-  class is_range
+   An implementation object must be passed to iterator constructor. Iterator
+   stores only a pointer to this implementation (so it must exist as long as
+   iterator is used).
+*/
+
+template<
+  typename Impl,
+  typename T          = typename std::iterator_traits<Impl>::value_type,
+  typename Distance   = typename std::iterator_traits<T*>::difference_type,
+  typename Pointer    = typename std::iterator_traits<T*>::pointer,
+  typename Reference  = typename std::iterator_traits<T*>::reference
+>
+struct iterator
+  : std::iterator < std::input_iterator_tag, T, Distance, Pointer, Reference >
+{
+protected:
+
+  remove_reference_t<Impl> *m_impl = NULL;
+  bool m_at_end = false;
+
+public:
+
+  iterator(Impl& impl)
+    : m_impl(&impl)
+  {
+    m_impl->iterator_start();
+    m_at_end = !m_impl->iterator_next();
+  }
+
+  iterator()
+    : m_at_end(true)
+  {}
+
+  bool operator !=(const iterator &other) const
   {
     /*
-      Note: This overload is taken into account only if std::begin(X) and
-      std::end(X) expressions are valid.
+      Compares only if both iterators are at the end
+      of the sequence.
     */
-    template <class X>
-    static std::true_type test(decltype(std::begin(*((X*)nullptr)))*,
-                               decltype(std::end(*((X*)nullptr)))*);
+    return !(m_at_end && other.m_at_end);
+  }
 
-    template <class X>
+  iterator& operator++()
+  {
+    try {
+      if (m_impl && !m_at_end)
+        m_at_end = !m_impl->iterator_next();
+      return *this;
+    }
+    CATCH_AND_WRAP
+  }
+
+  T operator*() const
+  {
+    if (!m_impl || m_at_end)
+      THROW("Attempt to dereference null iterator");
+
+    try {
+      return m_impl->iterator_get();
+    }
+    CATCH_AND_WRAP
+  }
+
+  friend Impl;
+};
+
+
+/*
+  List_initializer object can be used to initialize a container of
+  arbitrary type U with list of items taken from a source object.
+
+  It is assumed that the source object type Source defines iterator
+  type and that std::begin/end() return iterators to the beginning
+  and end of the sequence. The container type U is assumed to have
+  a constructor from begin/end iterator.
+
+  List_iterator defines begin/end() methods, so it is possible to
+  iterate over the sequence without storing it in any container.
+*/
+
+template <class Source>
+class List_initializer
+{
+protected:
+
+  Source m_src;
+
+  friend Source;
+
+public:
+
+  typedef typename remove_reference_t<Source>::iterator iterator;
+
+  /*
+    Arguments given to the constructor are passed to the internal
+    m_src object.
+  */
+
+  template <typename... Ty>
+  List_initializer(Ty&&... args)
+    : m_src(std::forward<Ty>(args)...)
+  {}
+
+  /*
+    Narrow the set of types for which this template is instantiated
+    to avoid ambiguous conversion errors. It is important to disallow
+    conversion to std::initializer_list<> because this conversion path
+    is considered when assigning to STL containers.
+  */
+
+  template <
+    typename U
+    , typename = is_constructible_t< U, const iterator&, const iterator& >
+    , typename = enable_if_t<
+        ! is_same< U, std::initializer_list<typename U::value_type> >::value
+      >
+  >
+  operator U()
+  {
+    try {
+      return U(std::begin(m_src), std::end(m_src));
+    }
+    CATCH_AND_WRAP
+  }
+
+  iterator begin()
+  {
+    try {
+      return std::begin(m_src);
+    }
+    CATCH_AND_WRAP
+  }
+
+  iterator end() const
+  {
+    try {
+      return std::end(m_src);
+    }
+    CATCH_AND_WRAP
+  }
+
+};
+
+
+template <typename T>
+struct iterator_traits
+{
+  using value_type = remove_reference_t<T>;
+  using difference_type
+    = typename std::iterator_traits<value_type*>::difference_type;
+  using pointer
+    = typename std::iterator_traits<value_type*>::pointer;
+  using reference
+    = typename std::iterator_traits<value_type*>::reference;
+};
+
+
+/*
+  This helper template adapts class Impl to be used as a source for
+  List_initializer<> template.
+
+  Class Impl should be suitable for the Iterator<> template which is used to
+  build iterators required by List_initializer<>. That is, Impl should
+  implement iterator_start(), iteratore_next() etc (see Iterator<>).
+*/
+
+template<
+  typename Impl,
+  typename Value_type = typename Impl::Value,
+  typename Distance   = typename iterator_traits<Value_type>::difference_type,
+  typename Pointer    = typename iterator_traits<Value_type>::pointer,
+  typename Reference  = typename iterator_traits<Value_type>::reference
+>
+class List_source
+{
+  Impl m_impl;
+
+public:
+
+  template <typename... Ty>
+  List_source(Ty&&... args)
+    : m_impl(std::forward<Ty>(args)...)
+  {}
+
+  using iterator = iterator<Impl, Value_type, Distance, Pointer, Reference>;
+
+  iterator begin()
+  {
+    return iterator(m_impl);
+  }
+
+  iterator end() const
+  {
+    return iterator();
+  }
+};
+
+
+/*
+  A template used to adapt an object of class Impl that represents an array of
+  values accessed via operator[] to be used as source for List_initializer<>
+  template. This template uses instance of Impl to implement the iterator
+  methods iterator_start(), so that it can be used with Iterator<> template.
+*/
+
+template <typename Impl, typename Value_type = typename Impl::Value>
+class Array_src_impl
+{
+  Impl m_impl;
+  size_t m_pos = 0;
+  bool   m_at_begin = true;
+
+public:
+
+  template <typename... Ty>
+  Array_src_impl(Ty&&... args)
+    : m_impl(std::forward<Ty>(args)...)
+  {}
+
+  void iterator_start()
+  {
+    m_pos = 0;
+    m_at_begin = true;
+  }
+
+  bool iterator_next()
+  {
+    if (m_at_begin)
+      m_at_begin = false;
+    else
+      m_pos++;
+    return m_pos < size();
+  }
+
+  Value_type iterator_get()
+  {
+    return operator[](m_pos);
+  }
+
+  Value_type operator[](size_t pos)
+  {
+    return m_impl[m_pos];
+  }
+
+  size_t size() const
+  {
+    return m_impl.size();
+  }
+};
+
+
+/*
+  This template adapts an object of type Impl holding an array of values as
+  a source for List_initializer<> template. It combines List_source<> and
+  Array_src_impl<> adapters.
+*/
+
+template<
+  typename Impl,
+  typename Value_type = typename Impl::Value,
+  typename Distance   = typename iterator_traits<Value_type>::difference_type,
+  typename Pointer    = typename iterator_traits<Value_type>::pointer,
+  typename Reference  = typename iterator_traits<Value_type>::reference
+>
+class Array_source
+  : public List_source<
+      Array_src_impl<Impl, Value_type>,
+      Value_type,
+      Distance,
+      Pointer,
+      Reference
+    >
+{
+public:
+
+  using List_source::List_source;
+
+  Value_type operator[](size_t pos)
+  {
+    return m_impl[pos];
+  }
+
+  size_t size() const
+  {
+    return m_impl.size();
+  }
+};
+
+}
+
+
+/*
+  Infrastructure for handling variable argument lists
+  ===================================================
+
+  See documentation of Args_processor<> template.
+*/
+
+namespace internal {
+
+/*
+  Type trait which checks if std::begin()/end() work on objects of given
+  class C, so that it can be used as a range to iterate over.
+
+  TODO: Make it work also with user-defined begin()/end() functions.
+  TODO: Make it work with plain C arrays. For example:
+
+      int vals[] = { 1, 2, 3 }
+      process_args(data, vals)
+*/
+
+template <class C>
+class is_range
+{
+  /*
+    Note: This overload is taken into account only if std::begin(X) and
+    std::end(X) expressions are valid.
+  */
+  template <class X>
+  static std::true_type
+  test(
+    decltype(std::begin(*((X*)nullptr)))*,
+    decltype(std::end(*((X*)nullptr)))*
+  );
+
+  template <class X>
+  static std::false_type test(...);
+
+public:
+
+  static const bool value = is_same<
+    std::true_type,
+    decltype(test<C>(nullptr, nullptr))
+  >::value;
+};
+
+
+/*
+  Class template to be used for uniform processing of variable argument lists
+  in public API methods. This template handles the cases where arguments
+  are specified directly as a list:
+
+    method(arg1, arg2, ..., argN)
+
+  or they are taken from a container such as std::list:
+
+    method(container)
+
+  or they are taken from a range of items described by two iterators:
+
+    method(begin, end)
+
+  A class B that is using this template to define a varargs method 'foo'
+  should define it as follows:
+
+    template <typename... T>
+    X foo(T... args)
+    {
+      Args_processor<B>::process_args(m_impl, args...);
+      return ...;
+    }
+
+  Process_args() is a static method of Args_processor<> and therefore
+  additional context data is passed to it as the first argument. By default
+  this context is a pointer to internal implementation object, as defined
+  by the base class B. The process_args() methods does all the necessary
+  processing of the variable argument list, passing the resulting items
+  one-by-one to B::process_one() method. Base class B must define this
+  static method, which takes the context and one data item as arguments.
+  B::process_one() method can have overloads that handle different types
+  of data items.
+
+  See devapi/detail/crud.h for usage examples.
+*/
+
+template <class Base, class D = typename Base::Impl*>
+class Args_processor
+{
+public:
+
+  /*
+    Check if item of type T can be passed to Base::process_one()
+  */
+
+  template <typename T>
+  class can_process
+  {
+    template <typename X>
+    static std::true_type
+    test(decltype(Base::process_one(*(D*)nullptr,*(X*)nullptr))*);
+
+    template <typename X>
     static std::false_type test(...);
 
   public:
 
     static const bool value
-      = std::is_same<
-          std::true_type, decltype(test<C>(nullptr, nullptr))
-        >::value;
+      = is_same< std::true_type, decltype(test<T>(nullptr)) >::value;
   };
 
+public:
 
   /*
-    Class template to be used for uniform processing of variable argument lists
-    in public API methods. This template handles the cases where arguments
-    are specified directly as a list:
-
-      method(arg1, arg2, ..., argN)
-
-    or they are taken from a container such as std::list:
-
-      method(container)
-
-    or they are taken from a range of items described by two iterators:
-
-      method(begin, end)
-
-    A class B that is using this template to define a varargs method 'foo'
-    should define it as follows:
-
-      template <typename... T>
-      X foo(T... args)
-      {
-        Args_processor<B>::process_args(m_impl, args...);
-        return ...;
-      }
-
-    Process_args() is a static method of Args_processor<> and therefore
-    additional context data is passed to it as the first argument. By default
-    this context is a pointer to internal implementation object, as defined
-    by the base class B. The process_args() methods does all the necessary
-    processing of the variable argument list, passing the resulting items
-    one-by-one to B::process_one() method. Base class B must define this
-    static method, which takes the context and one data item as arguments.
-    B::process_one() method can have overloads that handle different types
-    of data items.
-
-    See devapi/detail/crud.h for usage examples.
+    Process items from a container.
   */
 
-  template <class Base, class D = typename Base::Impl*>
-  class Args_processor
+  template <
+    typename C,
+    enable_if_t<is_range<C>::value>* = nullptr,
+    enable_if_t<!can_process<C>::value>* = nullptr
+  >
+  static void process_args(D data, C container)
   {
-  public:
-
-    /*
-      Check if item of type T can be passed to Base::process_one()
-    */
-
-    template <typename T>
-    class can_process
+    // TODO: use (const) reference to avoid copying instances?
+    for (auto el : container)
     {
-      template <typename X>
-      static std::true_type
-      test(decltype(Base::process_one(*(D*)nullptr,*(X*)nullptr))*);
-
-      template <typename X>
-      static std::false_type test(...);
-
-    public:
-
-      static const bool value
-        = std::is_same<std::true_type, decltype(test<T>(nullptr))>::value;
-    };
-
-  public:
-
-    /*
-      Process items from a container.
-    */
-
-    template <
-      typename C,
-      typename = enable_if_t<is_range<C>::value>,
-      typename = enable_if_t<!can_process<C>::value>
-    >
-      static void process_args(D data, C container)
-    {
-      for (auto el : container)
-      {
-        Base::process_one(data, el);
-      }
+      Base::process_one(data, el);
     }
+  }
 
-    /*
-      If process_args(data, a, b) is called and a,b are of the same type It
-      which can not be passed to Base::process_one() then we assume that a and
-      b are iterators that describe a range of elements to process.
-    */
+  /*
+    If process_args(data, a, b) is called and a,b are of the same type It
+    which can not be passed to Base::process_one() then we assume that a and
+    b are iterators that describe a range of elements to process.
+  */
 
-    template <
-      typename It,
-      typename = enable_if_t<!can_process<It>::value>
-    >
-      static void process_args(D data, const It &begin, const It &end)
+  template <
+    typename It,
+    enable_if_t<!can_process<It>::value>* = nullptr
+  >
+  static void process_args(D data, const It &begin, const It &end)
+  {
+    for (It it = begin; it != end; ++it)
     {
-      for (It it = begin; it != end; ++it)
-      {
-        Base::process_one(data, *it);
-      }
+      Base::process_one(data, *it);
     }
+  }
 
-    /*
-      Process elements given as a varargs list.
-    */
+  /*
+    Process elements given as a varargs list.
+  */
 
-    template <
-      typename T,
-      typename... R,
-      typename = enable_if_t<can_process<T>::value>
-    >
-      static void process_args(D data, T first, R... rest)
-    {
-      process_args1(data, first, rest...);
-    }
+  template <
+    typename T,
+    typename... R,
+    enable_if_t<can_process<T>::value>* = nullptr
+  >
+  static void process_args(D data, T first, R&&... rest)
+  {
+    process_args1(data, first, std::forward<R>(rest)...);
+  }
 
-  private:
+private:
 
-    template <
-      typename T,
-      typename... R,
-      typename = enable_if_t<can_process<T>::value>
-    >
-      static void process_args1(D data, T first, R... rest)
-    {
-      Base::process_one(data, first);
-      process_args1(data, rest...);
-    }
+  template <
+    typename T,
+    typename... R,
+    enable_if_t<can_process<T>::value>* = nullptr
+  >
+  static void process_args1(D data, T first, R&&... rest)
+  {
+    Base::process_one(data, first);
+    process_args1(data, std::forward<R>(rest)...);
+  }
 
-    static void process_args1(D)
-    {}
+  static void process_args1(D)
+  {}
 
-  };
+};
 
 }  // internal namespace
-
 
 
 }  // mysqlx

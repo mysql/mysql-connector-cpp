@@ -22,11 +22,12 @@
 * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#include <test.h>
 #include <iostream>
 #include <array>
 #include <cmath>  // for fabs()
 #include <vector>
+
+#include <test.h>
 
 using std::cout;
 using std::wcout;
@@ -211,7 +212,7 @@ TEST_F(Types, basic)
   sql(
     "CREATE TABLE test.types("
     "  c0 INT,"
-    "  c1 DECIMAL,"
+    "  c1 DECIMAL(4,2),"
     "  c2 FLOAT,"
     "  c3 DOUBLE,"
     "  c4 VARCHAR(32)"
@@ -241,7 +242,7 @@ TEST_F(Types, basic)
   cout << "Query sent, reading rows..." << endl;
   cout << "There are " << res.getColumnCount() << " columns in the result" << endl;
 
-  vector<Column> cc = res.getColumns();
+  const Columns &cc = res.getColumns();
 
   EXPECT_EQ(string("c0"), cc[0].getColumnName());
   EXPECT_EQ(Type::INT, cc[0].getType());
@@ -258,13 +259,13 @@ TEST_F(Types, basic)
   cout << "column " << cc[2] << " precision: "
     << cc[2].getFractionalDigits() << endl;
 
-  Column c3 = res.getColumns()[3];
+  const Column &c3 = res.getColumns()[3];
   EXPECT_EQ(string("c3"), c3.getColumnName());
   EXPECT_EQ(Type::DOUBLE, c3.getType());
   cout << "column " << c3 << " precision: "
     << c3.getFractionalDigits() << endl;
 
-  Column  c4 = res.getColumn(4);
+  const Column &c4 = res.getColumn(4);
   EXPECT_EQ(string("c4"), c4.getColumnName());
   EXPECT_EQ(Type::STRING, c4.getType());
   cout << "column " << res.getColumn(4) << " length: "
@@ -279,14 +280,16 @@ TEST_F(Types, basic)
       cout << "col " << res.getColumn(j) << ": " << row[j] << endl;
     }
 
-    EXPECT_EQ(Value::INT64, row[0].getType());
-    EXPECT_EQ(Value::RAW, row[1].getType());
-    EXPECT_EQ(Value::FLOAT, row[2].getType());
+    // Note: DECIMAL values are converted to double.
+
+    EXPECT_EQ(Value::INT64,  row[0].getType());
+    EXPECT_EQ(Value::DOUBLE, row[1].getType());
+    EXPECT_EQ(Value::FLOAT,  row[2].getType());
     EXPECT_EQ(Value::DOUBLE, row[3].getType());
     EXPECT_EQ(Value::STRING, row[4].getType());
 
     EXPECT_EQ(data_int[i], (int)row[0]);
-    // TODO: chekc decimal value
+    EXPECT_EQ(data_decimal[i], (double)row[1]);
     EXPECT_EQ(data_float[i], (float)row[2]);
     EXPECT_EQ(data_double[i], (double)row[3]);
     EXPECT_EQ(data_string[i], (string)row[4]);
@@ -378,7 +381,7 @@ TEST_F(Types, integer)
   cout << "Query sent, reading rows..." << endl;
   cout << "There are " << res.getColumnCount() << " columns in the result" << endl;
 
-  vector<Column> cc = res.getColumns();
+  const Columns &cc = res.getColumns();
 
   EXPECT_EQ(Type::INT, cc[0].getType());
   EXPECT_TRUE(cc[0].isNumberSigned());
@@ -414,7 +417,7 @@ TEST_F(Types, string)
 
   RowResult res = getSchema("test").getTable("types").select().execute();
 
-  Column c0 = res.getColumn(0);
+  const Column &c0 = res.getColumn(0);
   EXPECT_EQ(Type::STRING, c0.getType());
   cout << "column #0 length: " << c0.getLength() << endl;
   cout << "column #0 charset: " << c0.getCharacterSetName() << endl;
@@ -424,7 +427,7 @@ TEST_F(Types, string)
   EXPECT_EQ(CharacterSet::latin2, c0.getCharacterSet());
   EXPECT_EQ(Collation<CharacterSet::latin2>::general_ci, c0.getCollation());
 
-  Column c1 = res.getColumn(1);
+  const Column &c1 = res.getColumn(1);
   EXPECT_EQ(Type::STRING, c1.getType());
   cout << "column #1 length: " << c1.getLength() << endl;
   cout << "column #1 charset: " << c1.getCharacterSetName() << endl;
@@ -439,7 +442,7 @@ TEST_F(Types, string)
   EXPECT_EQ(CharacterSet::utf8, c1.getCharacterSet());
   EXPECT_EQ(Collation<CharacterSet::utf8>::swedish_ci, c1.getCollation());
 
-  Column c2 = res.getColumn(2);
+  const Column &c2 = res.getColumn(2);
   EXPECT_EQ(Type::STRING, c2.getType());
   cout << "column #2 length: " << c2.getLength() << endl;
   cout << "column #2 charset: " << c2.getCharacterSetName() << endl;
@@ -487,7 +490,7 @@ TEST_F(Types, blob)
 
   RowResult res = types.select().execute();
 
-  Column c0 = res.getColumn(0);
+  const Column &c0 = res.getColumn(0);
   EXPECT_EQ(Type::BYTES, c0.getType());
   cout << "BLOB column length: " << c0.getLength() << endl;
 
@@ -505,7 +508,7 @@ TEST_F(Types, blob)
   cout << "Data length: " << dd.size() << endl;
   EXPECT_EQ(data.size(), dd.size());
 
-  for (byte *ptr = data.begin(); ptr < data.end(); ++ptr)
+  for (const byte *ptr = data.begin(); ptr < data.end(); ++ptr)
     EXPECT_EQ(*ptr, dd.begin()[ptr- data.begin()]);
 
   cout << "Data matches!" << endl;
@@ -544,7 +547,7 @@ TEST_F(Types, json)
 
   cout << "Got results, checking data..." << endl;
 
-  Column c0 = res.getColumn(0);
+  const Column &c0 = res.getColumn(0);
   EXPECT_EQ(Type::JSON, c0.getType());
 
   Row row;
@@ -653,19 +656,19 @@ TEST_F(Types, datetime)
 
   RowResult res = types.select().execute();
 
-  Column c0 = res.getColumn(0);
+  const Column &c0 = res.getColumn(0);
   cout << "column #0 type: " << c0.getType() << endl;
   EXPECT_EQ(Type::DATE, c0.getType());
 
-  Column c1 = res.getColumn(1);
+  const Column &c1 = res.getColumn(1);
   cout << "column #1 type: " << c1.getType() << endl;
   EXPECT_EQ(Type::TIME, c1.getType());
 
-  Column c2 = res.getColumn(2);
+  const Column &c2 = res.getColumn(2);
   cout << "column #2 type: " << c2.getType() << endl;
   EXPECT_EQ(Type::DATETIME, c2.getType());
 
-  Column c3 = res.getColumn(3);
+  const Column &c3 = res.getColumn(3);
   cout << "column #3 type: " << c3.getType() << endl;
   EXPECT_EQ(Type::TIMESTAMP, c3.getType());
 
@@ -719,14 +722,14 @@ TEST_F(Types, set_enum)
 
   cout << "Got result, checking data..." << endl;
 
-  Column c0 = res.getColumn(0);
+  const Column &c0 = res.getColumn(0);
   cout << "column #0 type: " << c0.getType() << endl;
-  //EXPECT_EQ(Type::SET, c0.getType());
+  EXPECT_EQ(Type::SET, c0.getType());
   cout << "- column #0 collation: " << c0.getCollationName() << endl;
 
-  Column c1 = res.getColumn(1);
+  const Column &c1 = res.getColumn(1);
   cout << "column #1 type: " << c1.getType() << endl;
-  //EXPECT_EQ(Type::ENUM, c1.getType());
+  EXPECT_EQ(Type::ENUM, c1.getType());
   cout << "- column #1 collation: " << c1.getCollationName() << endl;
 
   Row row;
@@ -772,11 +775,11 @@ TEST_F(Types, geometry)
   {
     RowResult res = types.select().execute();
 
-    std::vector<Column> cc = res.getColumns();
+    const Columns &cc = res.getColumns();
 
-    for (unsigned c = 0; c < 8; ++c)
+    for (auto &c : cc)
     {
-      EXPECT_EQ(Type::GEOMETRY, cc[c].getType());
+      EXPECT_EQ(Type::GEOMETRY, c.getType());
     }
   }
 

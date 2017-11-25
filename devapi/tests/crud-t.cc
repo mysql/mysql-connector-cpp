@@ -1539,7 +1539,8 @@ TEST_F(Crud, buffered)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating collection..." << endl;
+  cout << "Creating collection";
+  std::flush(cout);
 
   Schema sch = getSchema("test");
   Collection coll = sch.createCollection("coll", true);
@@ -1556,7 +1557,11 @@ TEST_F(Crud, buffered)
       add.add(json.str());
     }
     add.execute();
+    cout << ".";
+    std::flush(cout);
   }
+
+  cout << " done" << endl;
 
   {
     DocResult res = coll.find().sort("age").execute();
@@ -1570,17 +1575,30 @@ TEST_F(Crud, buffered)
     //Get second from cache, after count()
     EXPECT_EQ(1, static_cast<int>(res.fetchOne()["age"]));
 
-    //Get the rest of it
+    cout << "Loading all documents...";
+    std::flush(cout);
+
     std::vector<DbDoc> rows = res.fetchAll();
 
+    cout << " done" << endl;
+
     EXPECT_EQ(9998, rows.size());
+
+    cout << "Examining documents";
+    std::flush(cout);
 
     auto row = rows.begin();
     int i = 2;
     for( ; row != rows.end() ; ++row, ++i)
     {
       EXPECT_EQ(i, static_cast<int>((*row)["age"]));
+      if (0 != i % 1000)
+        continue;
+      cout << ".";
+      std::flush(cout);
     }
+
+    cout << " done" << endl;
 
     EXPECT_EQ(0, res.count());
 
@@ -1607,17 +1625,30 @@ TEST_F(Crud, buffered)
     //Get second from cache, after count()
     EXPECT_EQ(1, static_cast<int>(res.fetchOne()[0]));
 
-    //Get the rest of it
+    cout << "Loading all rows...";
+    std::flush(cout);
+
     std::vector<Row> rows = res.fetchAll();
 
+    cout << " done" << endl;
+
     EXPECT_EQ(9998, rows.size());
+
+    cout << "Examining rows";
+    std::flush(cout);
 
     auto row = rows.begin();
     int i = 2;
     for( ; row != rows.end() ; ++row, ++i)
     {
       EXPECT_EQ(i, static_cast<int>((*row)[0]));
+      if (0 != i % 1000)
+        continue;
+      cout << ".";
+      std::flush(cout);
     }
+
+    cout << " done" << endl;
 
     EXPECT_EQ(0, res.count());
 

@@ -40,35 +40,6 @@ namespace mysqlx {
   TODO: Cross-references to session options inside Doxygen docs do not work.
 */
 
-#ifndef _WIN32
-#define ADD_SOCKET(x) x(SOCKET) /*!< path to a Unix domain socket*/ END_LIST
-#else
-#define ADD_SOCKET(x)
-#endif //_WIN32
-
-#define SETTINGS_OPTIONS(x)                                                   \
-  x(URI)          /*!< connection URI or string */                            \
-  /*! DNS name of the host, IPv4 address or IPv6 address */                   \
-  x(HOST)                                                                     \
-  x(PORT)          /*!< X Plugin port to connect to */                        \
-  /*! Assign a priority (a number in range 1 to 100) to the last specified
-      host; these priorities are used to determine the order in which multiple
-      hosts are tried by the connection fail-over logic (see description
-      of `Session` class) */                                                  \
-  x(PRIORITY)                                                                 \
-  x(USER)          /*!< user name */                                          \
-  x(PWD)           /*!< password */                                           \
-  x(DB)            /*!< default database */                                   \
-  x(SSL_MODE)      /*!< define `SSLMode` option to be used */                 \
-  /*! path to a PEM file specifying trusted root certificates*/               \
-  x(SSL_CA)                                                                   \
-  x(AUTH)          /*!< authentication method, PLAIN, MYSQL41, etc.*/         \
-  ADD_SOCKET(x) \
-  END_LIST
-
-#define OPTIONS_ENUM(x) x,
-
-
 /**
   Session creation options
 
@@ -82,7 +53,11 @@ namespace mysqlx {
 
 enum_class SessionOption
 {
-  SETTINGS_OPTIONS(OPTIONS_ENUM)
+#define SESS_OPT_ENUM_any(X,N) X = N,
+#define SESS_OPT_ENUM_num(X,N) X = N,
+#define SESS_OPT_ENUM_str(X,N) X = N,
+
+  SESSION_OPTION_LIST(SESS_OPT_ENUM)
   LAST
 };
 
@@ -93,11 +68,13 @@ enum_class SessionOption
 inline
 std::string SessionOptionName(SessionOption opt)
 {
-#define OPTIONS_NAME(x) case SessionOption::x: return #x;
+#define SESS_OPT_NAME_any(X,N) case SessionOption::X: return #X;
+#define SESS_OPT_NAME_num(X,N) SESS_OPT_NAME_any(X,N)
+#define SESS_OPT_NAME_str(X,N) SESS_OPT_NAME_any(X,N)
 
   switch(opt)
   {
-    SETTINGS_OPTIONS(OPTIONS_NAME)
+    SESSION_OPTION_LIST(SESS_OPT_NAME)
     default:
     {
       std::ostringstream buf;
@@ -110,31 +87,15 @@ std::string SessionOptionName(SessionOption opt)
 /// @endcond
 
 
-#define SSL_MODE_TYPES(x)\
-  x(DISABLED)        /*!< Establish an unencrypted connection.  */ \
-  x(REQUIRED)        /*!< Establish a secure connection if the server supports
-                          secure connections. The connection attempt fails if a
-                          secure connection cannot be established. This is the
-                          default if `SSL_MODE` is not specified. */ \
-  x(VERIFY_CA)       /*!< Like `REQUIRED`, but additionally verify the server
-                          TLS certificate against the configured Certificate
-                          Authority (CA) certificates (defined by `SSL_CA`
-                          Option). The connection attempt fails if no valid
-                          matching CA certificates are found.*/ \
-  x(VERIFY_IDENTITY) /*!< Like `VERIFY_CA`, but additionally verify that the
-                          server certificate matches the host to which the
-                          connection is attempted.*/\
-  END_LIST
-
-#define SSL_ENUM(x) x,
-
 /**
   Modes to be used with `SSL_MODE` option
 */
 
 enum_class SSLMode
 {
-  SSL_MODE_TYPES(SSL_ENUM)
+#define SSL_ENUM(X,N) X = N,
+
+  SSL_MODE_LIST(SSL_ENUM)
 };
 
 
@@ -143,11 +104,11 @@ enum_class SSLMode
 inline
 std::string SSLModeName(SSLMode m)
 {
-#define MODE_NAME(x) case SSLMode::x: return #x;
+#define MODE_NAME(X,N) case SSLMode::X: return #X;
 
   switch(m)
   {
-    SSL_MODE_TYPES(MODE_NAME)
+    SSL_MODE_LIST(MODE_NAME)
     default:
     {
       std::ostringstream buf;
@@ -160,28 +121,15 @@ std::string SSLModeName(SSLMode m)
 /// @endcond
 
 
-#define AUTH_METHODS(x)\
-  x(PLAIN)        /*!< Plain text authentication method. The password is
-                       sent as a clear text. This method is used by
-                       default in encrypted connections. */ \
-  x(MYSQL41)      /*!< Authentication method supported by MySQL 4.1 and newer.
-                       The password is hashed before being sent to the server.
-                       This method is used by default in unencrypted
-                       connections */ \
-  x(EXTERNAL)     /*!< External authentication when the server establishes
-                       the user authenticity by other means such as SSL/x509
-                       certificates. Currently not supported by X Plugin */ \
-  END_LIST
-
-#define AUTH_ENUM(x) x,
-
 /**
   Authentication methods to be used with `AUTH` option.
 */
 
 enum_class AuthMethod
 {
-  AUTH_METHODS(AUTH_ENUM)
+#define AUTH_ENUM(X,N) X=N,
+
+  AUTH_METHOD_LIST(AUTH_ENUM)
 };
 
 
@@ -190,11 +138,11 @@ enum_class AuthMethod
 inline
 std::string AuthMethodName(AuthMethod m)
 {
-#define AUTH_NAME(x) case AuthMethod::x: return #x;
+#define AUTH_NAME(X,N) case AuthMethod::X: return #X;
 
   switch(m)
   {
-    AUTH_METHODS(AUTH_NAME)
+    AUTH_METHOD_LIST(AUTH_NAME)
     default:
     {
       std::ostringstream buf;
@@ -230,28 +178,18 @@ struct Settings_traits
     return SessionOptionName(opt);
   }
 
-  static std::string get_aouth_name(AuthMethod m)
+  static std::string get_auth_name(AuthMethod m)
   {
     return AuthMethodName(m);
   }
 };
 
 
-/*
-  We need to declare these methods of specialized
-  Settings_deatil<Settings_traits> template as PUBLIC_API because they are used
-  by public API SessionSettings class and they are defined in session.cc.
-  Without these declarations the methods won't be exported by the connector
-  library.
-*/
-
 template<>
 PUBLIC_API
-Value& Settings_detail<Settings_traits>::find(SessionOption opt);
+void
+internal::Settings_detail<internal::Settings_traits>::do_set(opt_list_t &&opts);
 
-template<>
-PUBLIC_API
-void Settings_detail<Settings_traits>::do_add(SessionOption, Value&&);
 
 } // internal namespace
 
@@ -293,15 +231,10 @@ class Session;
   @ingroup devapi
 */
 
-DLL_WARNINGS_PUSH
-
-class PUBLIC_API SessionSettings
-  : internal::Settings_detail<internal::Settings_traits>
+class SessionSettings
+  : private internal::Settings_detail<internal::Settings_traits>
 {
-
-DLL_WARNINGS_POP
-
-  using Base = internal::Settings_detail<internal::Settings_traits>;
+  using Value = mysqlx::Value;
 
 public:
 
@@ -351,7 +284,7 @@ public:
   SessionSettings(const string &uri)
   {
     try {
-      do_set(true, SessionOption::URI, uri);
+      Settings_detail::set_from_uri(uri);
     }
     CATCH_AND_WRAP
   }
@@ -369,17 +302,17 @@ public:
                   const char *pwd = NULL,
                   const string &db = string())
   {
-    try {
+    set(
+      SessionOption::HOST, host,
+      SessionOption::PORT, port,
+      SessionOption::USER, user
+    );
 
-      do_set(true, SessionOption::HOST, host,
-          SessionOption::PORT, port,
-          SessionOption::USER, user,
-          SessionOption::DB, db);
+    if (pwd)
+      set(SessionOption::PWD, std::string(pwd));
 
-      if (pwd)
-        do_set(true, SessionOption::PWD, pwd);
-    }
-    CATCH_AND_WRAP
+    if (!db.empty())
+      set(SessionOption::DB, db);
   }
 
   SessionSettings(const std::string &host, unsigned port,
@@ -485,28 +418,25 @@ public:
     ~~~~~~
   */
 
-  template <typename V,typename...R>
-  SessionSettings(SessionOption opt, V val, R...rest)
+  template <typename... R>
+  SessionSettings(SessionOption opt, R&&...rest)
   {
     try {
-      do_set(true, opt, val, rest...);
+      Settings_detail::set(opt, std::forward<R>(rest)...);
     }
     CATCH_AND_WRAP
   }
-
-
-  /*
-    SessionSetting operator and methods
-  */
 
   /*
     Return an iterator pointing to the first element of the SessionSettings.
   */
 
+  using Settings_detail::iterator;
+
   iterator begin()
   {
     try {
-      return m_options.begin();
+      return Settings_detail::begin();
     }
     CATCH_AND_WRAP
   }
@@ -518,7 +448,7 @@ public:
   iterator end()
   {
     try {
-      return m_options.end();
+      return Settings_detail::end();
     }
     CATCH_AND_WRAP
   }
@@ -533,10 +463,10 @@ public:
     the settings, only the last value is reported.
   */
 
-  Value& find(SessionOption opt)
+  Value find(SessionOption opt)
   {
     try {
-      return Base::find(opt);
+      return Settings_detail::get(opt);
     }
     CATCH_AND_WRAP
   }
@@ -556,12 +486,11 @@ public:
     host, all have to be specified in the same `set()` call.
    */
 
-  template<typename V,typename...R>
-  void set(SessionOption opt, V v, R...rest)
+  template<typename... R>
+  void set(SessionOption opt, R&&... rest)
   {
     try {
-      m_call_used.reset();
-      do_set(false, opt, v,rest...);
+      Settings_detail::set(opt, std::forward<R>(rest)...);
     }
     CATCH_AND_WRAP
   }
@@ -573,8 +502,7 @@ public:
   void clear()
   {
     try {
-      m_options.clear();
-      m_option_used.reset();
+      Settings_detail::clear();
     }
     CATCH_AND_WRAP
   }
@@ -589,21 +517,7 @@ public:
   void erase(SessionOption opt)
   {
     try {
-
-      auto it = m_options.begin();
-
-      while(it != m_options.end())
-      {
-        if(it->first == opt)
-        {
-          it = m_options.erase(it);
-        }
-        else
-        {
-          ++it;
-        }
-      }
-      m_option_used.reset(size_t(opt));
+      Settings_detail::erase(opt);
     }
     CATCH_AND_WRAP
   }
@@ -615,7 +529,10 @@ public:
 
   bool has_option(SessionOption opt)
   {
-    return m_option_used.test(size_t(opt));
+    try {
+      return Settings_detail::has_option(opt);
+    }
+    CATCH_AND_WRAP
   }
 
 private:
