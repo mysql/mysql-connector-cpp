@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2017, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -29,6 +29,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <boost/scoped_array.hpp>
 
+
 #include <cppconn/prepared_statement.h>
 #include <cppconn/parameter_metadata.h>
 
@@ -47,24 +48,24 @@ class NativeStatementWrapper;
 
 class MySQL_ResultBind
 {
-	unsigned int num_fields;
-	boost::scoped_array< char > is_null;
-	boost::scoped_array< char > err;
-	boost::scoped_array< unsigned long > len;
+  unsigned int num_fields;
+  boost::scoped_array< my_bool > is_null;
+  boost::scoped_array< my_bool > err;
+  boost::scoped_array< unsigned long > len;
 
-	boost::shared_ptr< NativeAPI::NativeStatementWrapper > proxy;
+  boost::shared_ptr< NativeAPI::NativeStatementWrapper > proxy;
 
-	boost::shared_ptr< MySQL_DebugLogger > logger;
+  boost::shared_ptr< MySQL_DebugLogger > logger;
 
 public:
-	boost::scoped_array< MYSQL_BIND > rbind;
+  boost::scoped_array< MYSQL_BIND > rbind;
 
 
-	MySQL_ResultBind( boost::shared_ptr< NativeAPI::NativeStatementWrapper > & _capi, boost::shared_ptr< MySQL_DebugLogger > & log);
+  MySQL_ResultBind( boost::shared_ptr< NativeAPI::NativeStatementWrapper > & _capi, boost::shared_ptr< MySQL_DebugLogger > & log);
 
-	~MySQL_ResultBind();
+  ~MySQL_ResultBind();
 
-	void bindResult();
+  void bindResult();
 
 };
 
