@@ -354,3 +354,22 @@ function(merge_static_libraries TARGET)
   endif()
 
 endfunction()
+
+# An IMPORTED library can also be merged.
+MACRO(ADD_IMPORTED_LIBRARY TARGET LOC)
+  ADD_LIBRARY(${TARGET} STATIC IMPORTED)
+  SET_TARGET_PROPERTIES(${TARGET} PROPERTIES IMPORTED_LOCATION ${LOC})
+#  SET(KNOWN_CONVENIENCE_LIBRARIES
+#    ${KNOWN_CONVENIENCE_LIBRARIES} ${TARGET} CACHE INTERNAL "" FORCE)
+#  CONFIGURE_FILE(
+#    ${MYSQL_CMAKE_SCRIPT_DIR}/save_archive_location.cmake.in
+#    ${CMAKE_BINARY_DIR}/archive_output_directory/lib_location_${TARGET}.cmake
+#    @ONLY)
+#  ADD_CUSTOM_TARGET(${TARGET}_location
+#    COMMAND ${CMAKE_COMMAND}
+#    -DTARGET_NAME=${TARGET}
+#    -DTARGET_LOC=$<TARGET_FILE:${TARGET}>
+#    -DCFG_INTDIR=${CMAKE_CFG_INTDIR}
+#    -P ${CMAKE_BINARY_DIR}/archive_output_directory/lib_location_${TARGET}.cmake
+#    )
+ENDMACRO()

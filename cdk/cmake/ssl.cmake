@@ -72,15 +72,6 @@ MACRO (MYSQL_USE_BUNDLED_SSL)
   CHANGE_SSL_SETTINGS("bundled")
 
   ADD_SUBDIRECTORY(extra/yassl)
-  GET_TARGET_PROPERTY(src yassl SOURCES)
-  FOREACH(file ${src})
-    SET(SSL_SOURCES ${SSL_SOURCES} ${CMAKE_SOURCE_DIR}/extra/yassl/${file})
-  ENDFOREACH()
-  GET_TARGET_PROPERTY(src taocrypt SOURCES)
-  FOREACH(file ${src})
-    SET(SSL_SOURCES ${SSL_SOURCES}
-      ${CMAKE_SOURCE_DIR}/extra/yassl/taocrypt/${file})
-  ENDFOREACH()
 ENDMACRO()
 
 MACRO(RESET_SSL_VARIABLES)
@@ -116,32 +107,8 @@ MACRO (MYSQL_CHECK_SSL)
   ENDIF()
 
   IF(WITH_SSL STREQUAL "bundled")
+    RESET_SSL_VARIABLES()
     MYSQL_USE_BUNDLED_SSL()
-    # Reset some variables, in case we switch from /path/to/ssl to "bundled".
-    IF (WITH_SSL_PATH)
-      UNSET(WITH_SSL_PATH)
-      UNSET(WITH_SSL_PATH CACHE)
-    ENDIF()
-    IF (OPENSSL_ROOT_DIR)
-      UNSET(OPENSSL_ROOT_DIR)
-      UNSET(OPENSSL_ROOT_DIR CACHE)
-    ENDIF()
-    IF (OPENSSL_INCLUDE_DIR)
-      UNSET(OPENSSL_INCLUDE_DIR)
-      UNSET(OPENSSL_INCLUDE_DIR CACHE)
-    ENDIF()
-    IF (WIN32 AND OPENSSL_APPLINK_C)
-      UNSET(OPENSSL_APPLINK_C)
-      UNSET(OPENSSL_APPLINK_C CACHE)
-    ENDIF()
-    IF (OPENSSL_LIBRARY)
-      UNSET(OPENSSL_LIBRARY)
-      UNSET(OPENSSL_LIBRARY CACHE)
-    ENDIF()
-    IF (CRYPTO_LIBRARY)
-      UNSET(CRYPTO_LIBRARY)
-      UNSET(CRYPTO_LIBRARY CACHE)
-    ENDIF()
   ELSEIF(WITH_SSL STREQUAL "system" OR
       WITH_SSL STREQUAL "yes" OR
       WITH_SSL_PATH
@@ -152,7 +119,7 @@ MACRO (MYSQL_CHECK_SSL)
       # http://www.slproweb.com/products/Win32OpenSSL.html
       # and will look for "C:/OpenSSL-Win64/" (and others)
       # For APPLE we set the hint /usr/local/opt/openssl
-      IF(LINK_STATIC_RUNTIME_LIBRARIES)
+      IF(STATIC_MSVCRT)
         SET(OPENSSL_MSVC_STATIC_RT ON)
       ENDIF()
       IF(APPLE AND NOT OPENSSL_ROOT_DIR)
@@ -194,13 +161,10 @@ MACRO (MYSQL_CHECK_SSL)
       MESSAGE(STATUS "OPENSSL_APPLINK_C ${OPENSSL_APPLINK_C}")
     ENDIF()
 
-    IF(LINUX AND INSTALL_LAYOUT MATCHES "STANDALONE")
-      SET(LINUX_STANDALONE 1)
-    ENDIF()
 
     # On mac this list is <.dylib;.so;.a>
     # On most platforms we still prefer static libraries, so we revert it here.
-    IF (WITH_SSL_PATH AND NOT APPLE AND NOT LINUX_STANDALONE)
+    IF (WITH_SSL_PATH AND NOT APPLE)
       LIST(REVERSE CMAKE_FIND_LIBRARY_SUFFIXES)
       MESSAGE(STATUS "suffixes <${CMAKE_FIND_LIBRARY_SUFFIXES}>")
     ENDIF()
@@ -232,41 +196,6 @@ MACRO (MYSQL_CHECK_SSL)
        OPENSSL_MAJOR_VERSION STREQUAL "1"
       )
       SET(OPENSSL_FOUND TRUE)
-      FIND_PROGRAM(OPENSSL_EXECUTABLE openssl
-        DOC "path to the openssl executable")
-      IF(OPENSSL_EXECUTABLE)
-        SET(OPENSSL_EXECUTABLE_HAS_ZLIB 0)
-        EXECUTE_PROCESS(
-          COMMAND ${OPENSSL_EXECUTABLE} "list-cipher-commands"
-          OUTPUT_VARIABLE stdout
-          ERROR_VARIABLE  stderr
-          RESULT_VARIABLE result
-          OUTPUT_STRIP_TRAILING_WHITESPACE
-          )
-#       If previous command failed, try alternative command line (debian)
-        IF(NOT result EQUAL 0)
-          EXECUTE_PROCESS(
-            COMMAND ${OPENSSL_EXECUTABLE} "list" "-cipher-commands"
-            OUTPUT_VARIABLE stdout
-            ERROR_VARIABLE  stderr
-            RESULT_VARIABLE result
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            )
-        ENDIF()
-        IF(result EQUAL 0)
-          STRING(REGEX REPLACE "[ \n]+" ";" CIPHER_COMMAND_LIST ${stdout})
-          FOREACH(cipher_command ${CIPHER_COMMAND_LIST})
-            IF(${cipher_command} STREQUAL "zlib")
-              SET(OPENSSL_EXECUTABLE_HAS_ZLIB 1)
-            ENDIF()
-          ENDFOREACH()
-          IF(OPENSSL_EXECUTABLE_HAS_ZLIB)
-            MESSAGE(STATUS "The openssl command does support zlib")
-          ELSE()
-            MESSAGE(STATUS "The openssl command does not support zlib")
-          ENDIF()
-        ENDIF()
-      ENDIF()
     ELSE()
       SET(OPENSSL_FOUND FALSE)
     ENDIF()
@@ -301,7 +230,6 @@ MACRO (MYSQL_CHECK_SSL)
     CHECK_SYMBOL_EXISTS(SHA512_DIGEST_LENGTH "openssl/sha.h"
                         HAVE_SHA512_DIGEST_LENGTH)
     IF(OPENSSL_FOUND AND HAVE_SHA512_DIGEST_LENGTH)
-      SET(SSL_SOURCES "")
       SET_SSL_LIBRARIES("${MY_OPENSSL_LIBRARY};${MY_CRYPTO_LIBRARY}")
       INCLUDE_DIRECTORIES(SYSTEM ${OPENSSL_INCLUDE_DIR})
       SET(SSL_INTERNAL_INCLUDE_DIRS "")
