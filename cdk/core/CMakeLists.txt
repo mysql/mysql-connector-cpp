@@ -44,6 +44,9 @@ SET(cdk_sources
     )
 
 IF (WIN32 AND OPENSSL_APPLINK_C)
+  # Remove warnings from openssl applink.c
+  set_source_files_properties("${OPENSSL_APPLINK_C}"  PROPERTIES
+                              COMPILE_FLAGS "/wd4152 /wd4996")
   LIST(APPEND cdk_sources "${OPENSSL_APPLINK_C}")
 ENDIF()
 

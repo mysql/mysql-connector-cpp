@@ -23,6 +23,9 @@
  */
 
 #include <mysql/cdk/foundation/common.h>
+//include socket_detail.h before ssl.h because it includes winsock2.h
+//which must be included before winsock.h
+#include "socket_detail.h"
 PUSH_SYS_WARNINGS
 #ifdef WITH_SSL_YASSL
 #include "../extra/yassl/include/openssl/ssl.h"
@@ -34,7 +37,6 @@ POP_SYS_WARNINGS
 #include <mysql/cdk/foundation/error.h>
 #include <mysql/cdk/foundation/connection_openssl.h>
 #include <mysql/cdk/foundation/opaque_impl.i>
-#include "socket_detail.h"
 #include "connection_tcpip_base.h"
 
 #ifdef WITH_SSL_YASSL
@@ -235,7 +237,11 @@ void connection_TLS_impl::do_connect()
 
     cdk::foundation::connection::detail::set_nonblocking(fd, false);
 
+#ifdef WITH_SSL_YASSL
     SSL_set_fd(m_tls, fd);
+#else
+    SSL_set_fd(m_tls, static_cast<int>(fd));
+#endif
 
     if(SSL_connect(m_tls) != 1)
       throw_openssl_error();

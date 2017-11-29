@@ -295,6 +295,8 @@ IF(WIN32)
   # 4625 = copy ctor was implicitly deleted (*)
   # 4626 = copy assignment was implicitly deleted (*)
   # 4711 = function 'function' selected for inline expansion
+  # 4520 = The class has multiple default constructors. The first constructor is
+  #        used.
   #
   # Note: 4512 is disabled because according to C++11 standard the situations
   # that triggers this warning should be handled automatically by the compiler
@@ -306,10 +308,12 @@ IF(WIN32)
   # Note (*): We use this a lot when inheriting from foundation::nocopy - this
   # is our C++ way to disable copy semantics.
   #
+  #
+  # Note: 4520 only present on Visual Studio 12
 
   set(CMAKE_${LANG}_FLAGS
     "${CMAKE_${LANG}_FLAGS} /Wall /wd4512 /wd4127 /wd4100
-     /wd4820 /wd4571 /wd4710 /wd4514 /wd4625 /wd4626 /wd4464 /wd4711"
+     /wd4820 /wd4571 /wd4710 /wd4514 /wd4625 /wd4626 /wd4464 /wd4711 /wd4520"
   )
 
   # Note: We disable warnings related to C++11 language because we want this

@@ -1713,7 +1713,7 @@ if (V == NULL) \
         corresponding parameters in the muliple host configurations.
 */
 int STDCALL
-mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type, ...)
+mysqlx_session_option_get(mysqlx_session_options_t *opt, int type, ...)
 {
   SAFE_EXCEPTION_BEGIN(opt, RESULT_ERROR)
   int rc = RESULT_OK;

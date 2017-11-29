@@ -248,5 +248,6 @@ MACRO (MYSQL_CHECK_SSL)
       "Wrong option or path for WITH_SSL. "
       "Valid options are : ${WITH_SSL_DOC}")
   ENDIF()
+
 ENDMACRO()
 
