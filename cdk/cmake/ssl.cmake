@@ -251,3 +251,26 @@ MACRO (MYSQL_CHECK_SSL)
 
 ENDMACRO()
 
+MACRO(MYSQL_OPENSSL_SPACKAGE INSTALL_LIBDIR INSTALL_LIBDIR_DEBUG)
+if(WIN32 OR APPLE)
+
+  if (OPENSSL_LIBRARY OR CRYPTO_LIBRARY)
+    # Install/bundle the OpenSSL libraries including the soft links
+    install(FILES
+      ${OPENSSL_LIBRARY}
+      ${CRYPTO_LIBRARY}
+      CONFIGURATIONS Release RelWithDebInfo
+      DESTINATION ${INSTALL_LIBDIR}
+      COMPONENT main
+      )
+
+    install(FILES
+      ${OPENSSL_LIBRARY}
+      ${CRYPTO_LIBRARY}
+      CONFIGURATIONS Debug
+      DESTINATION ${INSTALL_LIBDIR_DEBUG}
+      COMPONENT main
+      )
+  endif()
+endif()
+ENDMACRO(MYSQL_OPENSSL_SPACKAGE)
