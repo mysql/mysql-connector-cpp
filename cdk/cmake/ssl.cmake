@@ -255,18 +255,34 @@ MACRO(MYSQL_OPENSSL_SPACKAGE INSTALL_LIBDIR INSTALL_LIBDIR_DEBUG)
 if(WIN32 OR APPLE)
 
   if (OPENSSL_LIBRARY OR CRYPTO_LIBRARY)
+    if (WIN32)
+      if (EXISTS "${OPENSSL_ROOT_DIR}/bin/ssleay32.dll")
+        SET(OPENSSL_SSL_SO "${OPENSSL_ROOT_DIR}/bin/ssleay32.dll")
+      endif()
+      if (EXISTS "${OPENSSL_ROOT_DIR}/bin/libeay32.dll")
+        SET(OPENSSL_CRYPTO_SO "${OPENSSL_ROOT_DIR}/bin/libeay32.dll")
+      endif()
+    elseif(APPLE)
+      if (${OPENSSL_LIBRARY} MATCHES "^.*\\.dylib$" )
+        SET(OPENSSL_SSL_SO ${OPENSSL_LIBRARY})
+      endif()
+      if (${CRYPTO_LIBRARY} MATCHES "^.*\\.dylib$" )
+        SET(OPENSSL_CRYPTO_SO ${CRYPTO_LIBRARY})
+      endif()
+    endif()
+    MESSAGE(STATUS "Install/bundle the OpenSSL libraries including the soft links")
     # Install/bundle the OpenSSL libraries including the soft links
     install(FILES
-      ${OPENSSL_LIBRARY}
-      ${CRYPTO_LIBRARY}
+      ${OPENSSL_SSL_SO}
+      ${OPENSSL_CRYPTO_SO}
       CONFIGURATIONS Release RelWithDebInfo
       DESTINATION ${INSTALL_LIBDIR}
       COMPONENT main
       )
 
     install(FILES
-      ${OPENSSL_LIBRARY}
-      ${CRYPTO_LIBRARY}
+      ${OPENSSL_SSL_SO}
+      ${OPENSSL_CRYPTO_SO}
       CONFIGURATIONS Debug
       DESTINATION ${INSTALL_LIBDIR_DEBUG}
       COMPONENT main
