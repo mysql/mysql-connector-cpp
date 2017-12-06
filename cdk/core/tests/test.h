@@ -178,7 +178,7 @@ public:
 class Table_ref
   : public cdk::api::Table_ref
   // to be able to pass schema.name as admin command arguments
-  , public cdk::Any_list
+  , public cdk::Any::Document
 {
   Schema_ref m_schema;
   const cdk::string m_name;
@@ -201,19 +201,19 @@ public:
 private:
 
   /*
-    Any_list: pass schema.name as a list of two strings, starting with
-    schema name (null if not present) followed by table name.
-  */
+    Document: pass the schema name as a key-val pair
+    "schema" = schema_name,
+    followed by table name as
+    "name" = table_name
+    */
 
   void process(Processor &prc) const
   {
-    prc.list_begin();
-    if (m_schema.is_null())
-      prc.list_el()->scalar()->null();
-    else
-      prc.list_el()->scalar()->str(m_schema.name());
-    prc.list_el()->scalar()->str(m_name);
-    prc.list_end();
+    prc.doc_begin();
+    prc.key_val("name")->scalar()->str(m_name);
+    if (!m_schema.is_null())
+      prc.key_val("schema")->scalar()->str(m_schema.name());
+    prc.doc_end();
   }
 
 };

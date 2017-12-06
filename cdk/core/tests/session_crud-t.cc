@@ -701,9 +701,8 @@ void Session_crud::drop_table(cdk::Session &sess, const Table_ref &tbl)
 
 void Session_crud::drop_coll(cdk::Session &sess, const Table_ref &coll)
 {
-  Any_list& args = const_cast<Any_list&>(static_cast<const Any_list&>(coll));
-
-  Reply drop(sess.admin("drop_collection", args));
+  Reply drop(sess.admin("drop_collection",
+                        static_cast<const cdk::Any::Document&>(coll)));
   drop.wait();
 
   if (0 < drop.entry_count()
@@ -717,10 +716,8 @@ void Session_crud::drop_coll(cdk::Session &sess, const Table_ref &coll)
 void Session_crud::create_coll(cdk::Session &sess, const Table_ref &coll)
 {
   drop_coll(sess, coll);
-
-  Any_list& args = const_cast<Any_list&>(static_cast<const Any_list&>(coll));
-
-  Reply create(sess.admin("create_collection", args));
+  Reply create(sess.admin("create_collection",
+                          static_cast<const cdk::Any::Document&>(coll)));
   create.wait();
 
   if (0 < create.entry_count()

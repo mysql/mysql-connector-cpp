@@ -401,6 +401,12 @@ class Session
   friend class Reply;
   friend class Cursor;
 
+  struct Doc_args : public Any_list
+  {
+    const cdk::Any::Document *m_doc;
+    void process(Processor &prc) const;
+  };
+
 protected:
 
   Protocol  m_protocol;
@@ -415,7 +421,7 @@ protected:
   enum { CMD_SQL, CMD_ADMIN, CMD_COLL_ADD } m_cmd_type;
 
   string m_stmt;
-  Any_list *m_cmd_args;
+  Doc_args m_cmd_args;
   const Table_ref *m_table;
 
   unsigned long m_id;
@@ -460,7 +466,6 @@ public:
     , m_isvalid(false)
     , m_current_reply(NULL)
     , m_auth_interface(NULL)
-    , m_cmd_args(NULL)
     , m_table(NULL)
     , m_id(0)
     , m_expired(false)
@@ -521,7 +526,8 @@ public:
   */
 
   Reply_init &sql(const string&, Any_list*);
-  Reply_init &admin(const char*, Any_list&);
+
+  Reply_init &admin(const char*, const cdk::Any::Document&);
 
   /*
     CRUD API

@@ -81,11 +81,11 @@ struct Proto_field_checker : public cdk::protocol::mysqlx::api::Expectations
     switch (v)
     {
       case Protocol_fields::ROW_LOCKING:
-        // Find(17) locking(12)
+        // Find=17, locking=12
         m_data = bytes("17.12");
         break;
       case Protocol_fields::UPSERT:
-        // Insert(18) upsert(6)
+        // Insert=18, upsert=6
         m_data = bytes("18.6");
         break;
       default:
@@ -438,13 +438,26 @@ Reply_init& Session::sql(const string &stmt, Any_list *args)
   return set_command(new SndStmt(m_protocol, "sql", stmt, args));
 }
 
-Reply_init& Session::admin(const char *cmd, Any_list &args)
+void Session::Doc_args::process(Processor &prc) const
 {
+  Safe_prc<Any_list::Processor> sprc(prc);
+  sprc->list_begin();
+  if (m_doc)
+    m_doc->process_if(sprc->list_el()->doc());
+  sprc->list_end();
+}
+
+
+Reply_init& Session::admin(const char *cmd, const cdk::Any::Document &args)
+{
+
   if (!is_valid())
     throw_error("admin: invalid session");
 
+  m_cmd_args.m_doc = &args;
+
   m_stmt.set_utf8(cmd);
-  m_cmd.reset(new SndStmt(m_protocol, "xplugin", m_stmt, &args));
+  m_cmd.reset(new SndStmt(m_protocol, "mysqlx", m_stmt, &m_cmd_args));
   return *this;
 }
 

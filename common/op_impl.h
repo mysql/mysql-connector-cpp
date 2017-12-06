@@ -1010,19 +1010,26 @@ struct Op_sql
 */
 
 struct Op_admin
-  : public Op_sql
+  : public Op_bind< Op_base<common::Bind_if> >
 {
   const char *m_cmd;
 
   Op_admin(Shared_session_impl sess, const char *cmd)
-    : Op_sql(sess, string()), m_cmd(cmd)
+    : Op_bind(sess), m_cmd(cmd)
   {}
 
   cdk::Reply* send_command() override
   {
+    auto *param = get_params();
+    assert(param);
     return new cdk::Reply(
-      get_cdk_session().admin(m_cmd, m_params)
+      get_cdk_session().admin(m_cmd, *param)
     );
+  }
+
+  Executable_if* clone() const override
+  {
+    return new Op_admin(*this);
   }
 };
 
@@ -1125,10 +1132,10 @@ struct Op_create<Object_type::COLLECTION>
     : Op_admin(sess, "create_collection")
   {
     if (coll.schema())
-      add_param(Value(coll.schema()->name()));
+      add_param(L"schema", Value(coll.schema()->name()));
     else
       throw_error("No schema specified for create collection operation");
-    add_param(Value(coll.name()));
+    add_param(L"name", Value(coll.name()));
     // 1050 = table already exists
     if (reuse)
       skip_error(cdk::server_error(1050));
@@ -1169,8 +1176,8 @@ struct Op_drop
   {
     if (!obj.schema())
       throw_error("No schema specified for drop collection/table operation");
-    add_param(Value(obj.schema()->name()));
-    add_param(Value(obj.name()));
+    add_param(L"schema", Value(obj.schema()->name()));
+    add_param(L"name", Value(obj.name()));
     // 1051 = collection doesn't exist
     skip_error(cdk::server_error(1051));
   }
@@ -1287,8 +1294,8 @@ struct Op_list_objects
   )
     : Op_admin(sess, "list_objects")
   {
-    add_param(Value(schema.name()));
-    add_param(Value(pattern));
+    add_param(L"schema", Value(schema.name()));
+    add_param(L"pattern", Value(pattern));
   }
 
   // Static method to filter rows for a given object type.

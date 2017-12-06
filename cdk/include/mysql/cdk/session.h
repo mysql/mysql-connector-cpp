@@ -193,7 +193,7 @@ public:
     TODO: Find documentation for supported admin commands.
   */
 
-  Reply_init admin(const char *cmd, Any_list &args)
+  Reply_init admin(const char *cmd, const cdk::Any::Document &args)
   {
     return m_session->admin(cmd, args);
   }
