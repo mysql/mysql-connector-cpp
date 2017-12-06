@@ -326,7 +326,7 @@ class Row_result_detail
 {
 public:
 
-  using iterator = iterator<Row_result_detail, Row>;
+  using iterator = Iterator<Row_result_detail, Row>;
   using RowList = List_initializer<Row_result_detail&>;
   using Columns = COLS;
 
@@ -410,7 +410,7 @@ class PUBLIC_API Doc_result_detail
 {
 public:
 
-  using iterator = iterator<Doc_result_detail, DbDoc>;
+  using iterator = Iterator<Doc_result_detail, DbDoc>;
   using DocList = List_initializer<Doc_result_detail&>;
 
   iterator begin()

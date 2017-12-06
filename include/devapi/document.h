@@ -306,11 +306,13 @@ public:
 
   Value(const Value&) = default;
 
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
+#ifdef HAVE_MOVE_CTORS
 
   Value(Value&&) = default;
 
 #else
+
+  // Note move ctor implemented using move assignment defined below.
 
   Value(Value &&other)
   {
@@ -341,21 +343,20 @@ public:
   {}
 
 
-  /*
-    Assignment operator is implemented using constructors.
-  */
-
   Value& operator=(const Value&) = default;
 
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-
- Value& operator=(Value&&) = default;
-
-#else
+  /*
+    Note: Move assignment is defined explicitly to avoid problems with
+    virtual Printable base.
+  */
 
   Value& operator=(Value&&);
 
-#endif
+  /*
+    Assignment is implemented in terms of constructors: first an instance
+    is created from the input data and then move assignment is used to place
+    the result into this instance.
+  */
 
   template<typename T>
   Value& operator=(T&& x)
@@ -535,27 +536,25 @@ public:
 static const Value nullvalue;
 
 
-#if 0 // defined(_MSC_VER) && _MSC_VER < 1900
-
 inline
 Value& Value::operator=(Value &&other)
 {
   m_type = other.m_type;
-  m_val =  other.m_val;
 
   switch (m_type)
   {
-  case STRING: m_str = std::move(other.m_str); break;
-  case DOCUMENT: m_doc = std::move(other.m_doc); break;
-  case RAW: m_raw = std::move(other.m_raw); break;
-  case ARRAY: m_arr = std::move(other.m_arr); break;
+  case VAL:
+    common::Value::operator=(std::move(other));
+    break;
+
+  case DOC: m_doc = std::move(other.m_doc); break;
+  case ARR: m_arr = std::move(other.m_arr); break;
+
   default: break;
   }
 
   return *this;
 }
-
-#endif
 
 
 namespace internal {

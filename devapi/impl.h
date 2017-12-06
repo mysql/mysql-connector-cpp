@@ -380,35 +380,6 @@ struct internal::Session_detail::Impl
 };
 
 
-// --------------------------------------------------------------------
-
-/*
-  Implementation of List_init<> source class taking items from
-  query results.
-*/
-
-inline
-bool internal::Query_src::iterator_next()
-{
-  assert(m_res);
-  m_row = m_res->get_row();
-  return nullptr != m_row;
-}
-
-
-inline
-string internal::Query_src::iterator_get()
-{
-  assert(m_row);
-  assert(cdk::TYPE_STRING == m_res->get_column(0).m_type);
-
-  cdk::string name;
-  m_res->get_column(0).get<cdk::TYPE_STRING>()
-    .m_codec.from_bytes(m_row->at(0).data(), name);
-
-  return name;
-}
-
 }
 
 #endif

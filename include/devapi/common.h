@@ -300,7 +300,7 @@ template<
   typename Pointer    = typename std::iterator_traits<T*>::pointer,
   typename Reference  = typename std::iterator_traits<T*>::reference
 >
-struct iterator
+struct Iterator
   : std::iterator < std::input_iterator_tag, T, Distance, Pointer, Reference >
 {
 protected:
@@ -310,18 +310,18 @@ protected:
 
 public:
 
-  iterator(Impl& impl)
+  Iterator(Impl& impl)
     : m_impl(&impl)
   {
     m_impl->iterator_start();
     m_at_end = !m_impl->iterator_next();
   }
 
-  iterator()
+  Iterator()
     : m_at_end(true)
   {}
 
-  bool operator !=(const iterator &other) const
+  bool operator !=(const Iterator &other) const
   {
     /*
       Compares only if both iterators are at the end
@@ -330,7 +330,7 @@ public:
     return !(m_at_end && other.m_at_end);
   }
 
-  iterator& operator++()
+  Iterator& operator++()
   {
     try {
       if (m_impl && !m_at_end)
@@ -463,6 +463,8 @@ template<
 >
 class List_source
 {
+protected:
+
   Impl m_impl;
 
 public:
@@ -472,7 +474,7 @@ public:
     : m_impl(std::forward<Ty>(args)...)
   {}
 
-  using iterator = iterator<Impl, Value_type, Distance, Pointer, Reference>;
+  using iterator = Iterator<Impl, Value_type, Distance, Pointer, Reference>;
 
   iterator begin()
   {
@@ -496,6 +498,8 @@ public:
 template <typename Impl, typename Value_type = typename Impl::Value>
 class Array_src_impl
 {
+protected:
+
   Impl m_impl;
   size_t m_pos = 0;
   bool   m_at_begin = true;
@@ -529,7 +533,7 @@ public:
 
   Value_type operator[](size_t pos)
   {
-    return m_impl[m_pos];
+    return m_impl[pos];
   }
 
   size_t size() const
@@ -561,9 +565,26 @@ class Array_source
       Reference
     >
 {
+  using Base = List_source<
+      Array_src_impl<Impl, Value_type>,
+      Value_type,
+      Distance,
+      Pointer,
+      Reference
+  >;
+
+  using Base::m_impl;
+
 public:
 
-  using List_source::List_source;
+  using
+  List_source<
+      Array_src_impl<Impl, Value_type>,
+      Value_type,
+      Distance,
+      Pointer,
+      Reference
+  >::List_source;
 
   Value_type operator[](size_t pos)
   {

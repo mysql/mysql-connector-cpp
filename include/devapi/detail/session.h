@@ -54,8 +54,8 @@ class PUBLIC_API Db_obj_base
 protected:
 
   DLL_WARNINGS_PUSH
-  string m_name;
   Shared_session_impl m_sess;
+  string m_name;
   DLL_WARNINGS_POP
 
   Db_obj_base(const Shared_session_impl& sess, const string& name)

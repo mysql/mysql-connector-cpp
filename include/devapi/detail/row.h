@@ -94,6 +94,7 @@ protected:
 
   static void process_one(std::pair<Impl*,col_count_t>*, const Value &val);
 
+  friend Table_insert_detail;
   friend Row_result_detail<Columns>;
   friend Args_prc;
 };

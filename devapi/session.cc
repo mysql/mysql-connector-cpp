@@ -213,7 +213,7 @@ internal::Session_detail::Name_src::Name_src(
   : m_sess(sess)
 {
   common::Op_list<Object_type::SCHEMA> list_op{ sess.m_impl, pattern };
-  m_res = std::make_unique<Res_impl>(list_op.execute());
+  m_res.reset(new Res_impl(list_op.execute()));
 }
 
 
@@ -261,14 +261,14 @@ internal::Schema_detail::Name_src::Name_src(
   case COLLECTION:
     {
       common::Op_list<Object_type::COLLECTION> list_op(sess, obj, pattern);
-      m_res = std::make_unique<Res_impl>(list_op.execute());
+      m_res.reset(new Res_impl(list_op.execute()));
     };
     break;
 
   case TABLE:
     {
       common::Op_list<Object_type::TABLE> list_op(sess, obj, pattern);
-      m_res = std::make_unique<Res_impl>(list_op.execute());
+      m_res.reset(new Res_impl(list_op.execute()));
     };
     break;
   }
@@ -294,6 +294,57 @@ internal::Schema_detail::Table_src::iterator_get()
   return Table(m_schema, Name_src::iterator_get(), type == L"VIEW");
 }
 
+
+/*
+  Implementation of List_init<> source class taking items from
+  query results.
+*/
+
+
+bool internal::Query_src::iterator_next()
+{
+  assert(m_res);
+  m_row = m_res->get_row();
+  return nullptr != m_row;
+}
+
+
+string internal::Query_src::iterator_get()
+{
+  assert(m_row);
+
+  const auto &name_col = m_res->get_column(0);
+  const auto &data = m_row->at(0).data();
+  cdk::string name;
+
+  // TDOD: Investigate why we get column type other than STRING.
+  // This is realted to changed default collation in newer servers and logic
+  // we have to interpret BYTES columns as STRING for some collations.
+  // TODO: use Value to do the conversion?
+
+  switch (name_col.m_type)
+  {
+  case cdk::TYPE_STRING:
+    m_res->get_column(0).get<cdk::TYPE_STRING>()
+      .m_codec.from_bytes(data, name);
+    break;
+
+  case cdk::TYPE_BYTES:
+    /*
+      Even if we see name column reported as raw bytes, we assume it is
+      like an utf8 string with null byte appended at the end.
+    */
+    assert(0 < data.size());
+    assert(0 == *data.end());
+    name = std::string(data.begin(), data.end()-1);
+    break;
+
+  default:
+    assert(false);
+  }
+
+  return name;
+}
 
 // ---------------------------------------------------------------------
 

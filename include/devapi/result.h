@@ -440,7 +440,20 @@ public:
 };
 
 
-extern template PUBLIC_API internal::Columns_detail<Column>;
+/*
+  Extern declarations for Columns_detail<Column> template specialization
+  elements that are defined in result.cc.
+
+  Note: "extern template" works with MSVC but not with GCC.
+*/
+
+namespace internal {
+
+template<> PUBLIC_API
+void Columns_detail<Column>::init(const Result_detail::Impl&);
+
+}  // internal
+
 
 extern template PUBLIC_API
 void internal::Columns_detail<Column>::init(
@@ -473,6 +486,37 @@ private:
   friend internal::Row_result_detail<Columns>;
 };
 
+
+/*
+  Extern declarations for Row_result_detail<Columns> template specialization
+  elements that are defined in result.cc.
+*/
+
+namespace internal {
+
+template<> PUBLIC_API
+bool Row_result_detail<Columns>::iterator_next();
+
+template<> PUBLIC_API
+col_count_t Row_result_detail<Columns>::col_count() const;
+
+template<> PUBLIC_API
+Row_result_detail<Columns>::Row_result_detail(
+  common::Result_init &init
+);
+
+template<> PUBLIC_API
+auto Row_result_detail<Columns>::get_column(col_count_t pos) const
+-> const Column&;
+
+template<> PUBLIC_API
+auto internal::Row_result_detail<Columns>::get_columns() const
+-> const Columns&;
+
+template<> PUBLIC_API
+row_count_t internal::Row_result_detail<Columns>::row_count();
+
+} // internal
 
 
 /**
@@ -810,36 +854,6 @@ private:
   template <class Res,class Op>
   friend class Executable;
 };
-
-
-/*
-  Extern declarations for Row_result_detail<Columns> template specialization
-  elements that are defined in result.cc.
-*/
-
-extern template PUBLIC_API internal::Row_result_detail<Columns>;
-
-extern template PUBLIC_API
-bool internal::Row_result_detail<Columns>::iterator_next();
-
-extern template PUBLIC_API
-col_count_t internal::Row_result_detail<Columns>::col_count() const;
-
-extern template PUBLIC_API
-internal::Row_result_detail<Columns>::Row_result_detail(
-  common::Result_init &init
-);
-
-extern template PUBLIC_API
-auto internal::Row_result_detail<Columns>::get_column(col_count_t pos) const
--> const Column&;
-
-extern template PUBLIC_API
-auto internal::Row_result_detail<Columns>::get_columns() const
--> const Columns&;
-
-extern template PUBLIC_API
-row_count_t internal::Row_result_detail<Columns>::row_count();
 
 
 }  // mysqlx

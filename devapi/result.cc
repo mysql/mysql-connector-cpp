@@ -452,22 +452,22 @@ Warning internal::Result_detail::get_warning(size_t pos)
   if (!entry)
     throw std::out_of_range("No diagnostic entry at position ...");
 
-    byte level = Warning::LEVEL_ERROR;
+  byte level = Warning::LEVEL_ERROR;
 
-    switch (entry->severity())
-    {
-    case cdk::api::Severity::ERROR:   level = Warning::LEVEL_ERROR; break;
-    case cdk::api::Severity::WARNING: level = Warning::LEVEL_WARNING; break;
-    case cdk::api::Severity::INFO:    level = Warning::LEVEL_INFO; break;
-    }
+  switch (entry->severity())
+  {
+  case cdk::api::Severity::ERROR:   level = Warning::LEVEL_ERROR; break;
+  case cdk::api::Severity::WARNING: level = Warning::LEVEL_WARNING; break;
+  case cdk::api::Severity::INFO:    level = Warning::LEVEL_INFO; break;
+  }
 
-    // TODO: handle error category
+  // TODO: handle error category
 
-    return Warning_detail(
-      level,
-      (uint16_t)entry->code().value(),
-      std::wstring(entry->description())
-    );
+  return Warning_detail(
+    level,
+    (uint16_t)entry->code().value(),
+    std::wstring(entry->description())
+  );
 }
 
 
