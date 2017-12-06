@@ -1093,6 +1093,59 @@ CRUD_TEST_BEGIN(update)
     // TODO: Add data checks
   }
 
+  cout << endl
+    << "Do a merge and change the document layout" << endl
+    << " - rename name to name2" << endl
+    << " - flatten date {day: 23, month: \"April\"} to" << endl
+    << "   day2: 23, month2: \"April\""
+    << endl << endl;
+
+  {
+    struct Update : public Update_spec
+    {
+      Update() : Update_spec(2)
+      {}
+
+      void process(Update_processor &prc) const
+      {
+          Safe_prc<Expression::Document::Processor> sprc(prc.patch()->doc());
+          Path name_path("name");
+          Path day_path("date", "day");
+          Path mon_path("date", "month");
+
+          sprc->doc_begin();
+          // rename "name" to "name2"
+          sprc->key_val("name2")->scalar()->ref(name_path);
+          sprc->key_val("name")->scalar()->val()->null();
+
+          // Flatten "date: { day : 23, month : apr }" into
+          // "day2 : 23, month2: apr"
+          sprc->key_val("date")->scalar()->val()->null();
+          sprc->key_val("day2")->scalar()->ref(day_path);
+          sprc->key_val("month2")->scalar()->ref(mon_path);
+          sprc->doc_end();
+      }
+    }
+    update_spec;
+
+    static Expr which_update("name = 'baz'");
+
+    Reply update(sess.coll_update(coll, &which_update, update_spec));
+    update.wait();
+
+    // Show data after update.
+    static Expr which_find("name2 = 'baz' AND day2 = 23");
+    Reply find(sess.coll_find(coll, NULL, &which_find));
+    Cursor c(find);
+    set_meta_data(c);
+    c.get_rows(*this);
+    c.wait();
+    EXPECT_EQ(1, rows.size());
+
+    // TODO: Add data checks
+  }
+
+
   // TODO: array update operations
   // TODO: Update rows in a table
 

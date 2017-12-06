@@ -1006,6 +1006,18 @@ public:
     return &m_conv;
   }
 
+  Expr_prc* patch()
+  {
+    Prc_to::Expr_prc *prc
+      = m_proc->update_op(protocol::mysqlx::update_op::MERGE_PATCH);
+
+    if (!prc)
+      return NULL;
+
+    m_conv.reset(*prc);
+    return &m_conv;
+  }
+
   void report_path(const Doc_path *path)
   {
     if (path)
