@@ -1406,7 +1406,7 @@ mysqlx_collection_add(mysqlx_collection_struct *collection, ...)
 mysqlx_result_struct * STDCALL
 _mysqlx_collection_modify_exec(mysqlx_collection_struct *collection,
                                const char *criteria,
-                               mysqlx_modify_op modify_op, va_list args)
+                               mysqlx_modify_op modify_op, va_list &args)
 {
   SAFE_EXCEPTION_BEGIN(collection, NULL)
   mysqlx_stmt_struct *stmt;

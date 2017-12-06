@@ -97,7 +97,7 @@ Value get_value(va_list &args)
         mysqlx_stmt_t::sql_bind()
 */
 
-int mysqlx_stmt_struct::sql_bind(va_list args)
+int mysqlx_stmt_struct::sql_bind(va_list &args)
 {
   auto *impl = get_impl<OP_SQL>(this);
 
@@ -146,7 +146,7 @@ int mysqlx_stmt_struct::sql_bind(cdk::string s)
         mysqlx_stmt_struct::param_bind()
 */
 
-int mysqlx_stmt_struct::param_bind(va_list args)
+int mysqlx_stmt_struct::param_bind(va_list &args)
 {
   using BImpl = common::Bind_if;
 
@@ -165,7 +165,7 @@ int mysqlx_stmt_struct::param_bind(va_list args)
 }
 
 
-int mysqlx_stmt_struct::add_columns(va_list args)
+int mysqlx_stmt_struct::add_columns(va_list &args)
 {
   if (m_op_type != OP_INSERT)
   {
@@ -210,7 +210,7 @@ int mysqlx_stmt_struct::add_columns(va_list args)
   NOTE: Each new call resets the column and row values
 */
 
-int mysqlx_stmt_struct::add_row(bool get_columns, va_list args)
+int mysqlx_stmt_struct::add_row(bool get_columns, va_list &args)
 {
   if (m_op_type != OP_INSERT) // && m_op_type != OP_ADD)
   {
@@ -250,7 +250,7 @@ int mysqlx_stmt_struct::add_row(bool get_columns, va_list args)
 }
 
 
-int mysqlx_stmt_struct::add_projections(va_list args)
+int mysqlx_stmt_struct::add_projections(va_list &args)
 {
   char *item_utf8 = NULL;
   if (m_op_type != OP_SELECT && m_op_type != OP_FIND)
@@ -281,7 +281,7 @@ int mysqlx_stmt_struct::add_projections(va_list args)
 }
 
 
-int mysqlx_stmt_struct::add_coll_modify_values(va_list args, mysqlx_modify_op modify_type)
+int mysqlx_stmt_struct::add_coll_modify_values(va_list &args, mysqlx_modify_op modify_type)
 {
   char *path_utf8 = NULL;
   if (m_op_type != OP_MODIFY)
@@ -328,7 +328,7 @@ int mysqlx_stmt_struct::add_coll_modify_values(va_list args, mysqlx_modify_op mo
 }
 
 
-int mysqlx_stmt_struct::add_table_update_values(va_list args)
+int mysqlx_stmt_struct::add_table_update_values(va_list &args)
 {
   char *column_utf8 = NULL;
 
@@ -430,7 +430,7 @@ void mysqlx_stmt_struct::set_row_locking(mysqlx_row_locking_t row_locking)
 }
 
 
-int mysqlx_stmt_struct::add_group_by(va_list args)
+int mysqlx_stmt_struct::add_group_by(va_list &args)
 {
   const char *group_by_utf8;
 
@@ -542,7 +542,7 @@ int mysqlx_stmt_struct::set_limit(cdk::row_count_t row_count, cdk::row_count_t o
   NOTE: each call to this function adds a new item to ORDER BY list
 */
 
-int mysqlx_stmt_struct::add_order_by(va_list args)
+int mysqlx_stmt_struct::add_order_by(va_list &args)
 {
   switch (m_op_type)
   {
@@ -598,7 +598,7 @@ int mysqlx_stmt_struct::add_document(const char *json_doc)
 }
 
 
-int mysqlx_stmt_struct::add_multiple_documents(va_list args)
+int mysqlx_stmt_struct::add_multiple_documents(va_list &args)
 {
   // Note: we report error if no documents were passed
   int rc = RESULT_ERROR;

@@ -36,6 +36,8 @@
 #include "error_internal.h"
 #include "crud_internal.h"
 
+#include <cstdarg>
+
 
 using common::throw_error;
 using mysqlx::common::Schema_ref;
@@ -116,7 +118,7 @@ public:
   {
     cdk::string obj_name(name);
 
-    map_t::iterator it = m_storage.find(obj_name);
+    typename map_t::iterator it = m_storage.find(obj_name);
     if (it == m_storage.end())
       it = m_storage.emplace(obj_name, handle_t(parent, obj_name)).first;
 

@@ -114,7 +114,7 @@ public:
   mysqlx_op_enum        m_op_type;
 
   mysqlx_stmt_struct(mysqlx_session_struct *session, mysqlx_op_t op, Impl *impl)
-    : m_session(*session), m_op_type(op), m_impl(impl)
+    : m_session(*session), m_impl(impl), m_op_type(op)
   {}
 
   mysqlx_result_struct* new_result(common::Result_init &init)
@@ -150,10 +150,10 @@ public:
     return new_result(m_impl->execute());
   }
 
-  int sql_bind(va_list args);
+  int sql_bind(va_list &args);
   int sql_bind(cdk::string s);
 
-  int param_bind(va_list args);
+  int param_bind(va_list &args);
 
   /*
     Return the operation type OP_SELECT, OP_INSERT, OP_UPDATE, OP_DELETE,
@@ -166,15 +166,15 @@ public:
   int set_limit(cdk::row_count_t row_count, cdk::row_count_t offset);
   int set_having(const char *having_expr);
 
-  int add_order_by(va_list args);
-  int add_row(bool get_columns, va_list args);
-  int add_columns(va_list args);
+  int add_order_by(va_list &args);
+  int add_row(bool get_columns, va_list &args);
+  int add_columns(va_list &args);
   int add_document(const char *json_doc);
-  int add_multiple_documents(va_list args);
-  int add_projections(va_list args);
-  int add_table_update_values(va_list args);
-  int add_coll_modify_values(va_list args, mysqlx_modify_op op);
-  int add_group_by(va_list args);
+  int add_multiple_documents(va_list &args);
+  int add_projections(va_list &args);
+  int add_table_update_values(va_list &args);
+  int add_coll_modify_values(va_list &args, mysqlx_modify_op op);
+  int add_group_by(va_list &args);
 
   // Return the session validity state
   bool session_valid();
