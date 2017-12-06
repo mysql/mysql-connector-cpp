@@ -236,6 +236,7 @@ public:
     default:
       if (m_str.empty())
         throw Error("Value cannot be converted to raw bytes");
+      FALLTHROUGH;
     case RAW:
     case STRING:
       if (size)

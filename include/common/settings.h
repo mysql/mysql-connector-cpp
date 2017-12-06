@@ -286,6 +286,7 @@ void Settings_impl::Data::erase(Option opt)
   {
   case Option::HOST:
     m_host_cnt = 0;
+    FALLTHROUGH;
   case Option::PORT:
     if (0 == m_host_cnt)
       m_tcpip = false;

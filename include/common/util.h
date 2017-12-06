@@ -39,6 +39,23 @@
 
 
 /*
+  Macro to be used to disable "implicit fallthrough" gcc warning
+  <https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html>
+*/
+
+#ifdef __GNUC__
+#define FALLTHROUGH // fallthrough
+/*
+  Note: this should also work, but not sure which gcc version is required
+  for it to work.
+  #define FALLTHROUGH __attribute__((fallthrough))
+*/
+#else
+#define FALLTHROUGH  // fallthrough
+#endif
+
+
+/*
   Note: we add throw statement to the definition of THROW() so that compiler won't
   complain if it is used in contexts where, e.g., a value should be returned from
   a function.

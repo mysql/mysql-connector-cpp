@@ -637,6 +637,7 @@ void Settings_impl::Setter::null()
   case Option::PRIORITY:
   case Option::USER:
     throw_error("Option ... can not be unset");
+    break;
   default:
     m_data.erase(m_cur_opt);
   }
