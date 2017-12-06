@@ -375,6 +375,33 @@ public:
       );
   }
 
+
+  void create_index(const char* name_utf8, const char* idx_json)
+  {
+    mysqlx_result_struct *result =
+      m_sess.new_stmt<OP_IDX_CREATE>(
+        *this,
+        cdk::string(name_utf8),
+        cdk::string(idx_json)
+      )->exec();
+
+    if (!result)
+      throw_error("Failed to execute create index operation.");
+  }
+
+  void drop_index(const char* name_utf8)
+  {
+    mysqlx_result_struct *result =
+      m_sess.new_stmt<OP_IDX_DROP>(
+        *this,
+        cdk::string(name_utf8)
+      )->exec();
+
+    if (!result)
+      throw_error("Failed to execute drop index operation.");
+  }
+
+
   mysqlx_session_t &get_session()
   {
     return m_sess;

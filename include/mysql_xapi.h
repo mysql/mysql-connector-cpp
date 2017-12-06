@@ -2820,6 +2820,14 @@ PUBLIC_API mysqlx_error_t *
 mysqlx_result_next_warning(mysqlx_result_t *res);
 
 
+PUBLIC_API int
+mysqlx_collection_create_index(mysqlx_collection_t *coll, const char *name,
+                               const char *idx_json);
+
+PUBLIC_API int
+mysqlx_collection_drop_index(mysqlx_collection_t *coll, const char *name);
+
+
 #ifdef	__cplusplus
 }
 #endif
