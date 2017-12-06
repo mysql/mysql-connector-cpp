@@ -190,7 +190,39 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
   // if priorities were not set explicitly, assign decreasing starting from 100
   int prio = m_data.m_user_priorities ? -1 : 100;
 
-  auto add_host = [this, &src, &opts](iterator &it, int prio) {
+  /*
+    Look for a priority after host/socket setting. If prio >= 0 then implicit
+    priorities are used and in that case only sanity checks are done.
+    Otherwise we expect that priority is explicitly given in the settings and
+    throw error if this is not the case.
+  */
+
+  auto check_prio = [this](iterator &it, int &prio) {
+
+    if (0 > prio)
+    {
+      if (it == end() || Option::PRIORITY != it->first)
+        throw_error("No priority specified for host ...");
+      // note: value of PRIORITY option is checked for validity
+      prio = (int)it->second.get_uint();
+      ++it;
+    }
+
+    assert(0 <= prio && prio <= 100);
+
+    /*
+      If there are more options, there should be no PRIORITY option
+      at this point.
+    */
+    assert(it == end() || Option::PRIORITY != it->first);
+  };
+
+  /*
+    This lambda is called when current option is HOST or PORT, to add (next)
+    TCPIP host with optional priority to the data source.
+  */
+
+  auto add_host = [this, &src, &opts, check_prio](iterator &it, int prio) {
 
     string host("localhost");
     unsigned short  port = DEFAULT_MYSQLX_PORT;
@@ -214,24 +246,7 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
       ++it;
     }
 
-    // Look for priority
-
-    if (0 > prio)
-    {
-      if (it == end() || Option::PRIORITY != it->first)
-        throw_error("No priority specified for host ...");
-      // note: value of PRIORITY option is checked for validity
-      prio = (int)it->second.get_uint();
-      ++it;
-    }
-
-    assert(0 <= prio && prio <= 100);
-
-    /*
-      If there are more options, there should be no PRIORITY option
-      at this point.
-    */
-    assert(it == end() || Option::PRIORITY != it->first);
+    check_prio(it, prio);
 
 #ifdef WITH_SSL
 
@@ -251,13 +266,35 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
     src.add(cdk::ds::TCPIP(host, port), opts, (unsigned short)prio);
   };
 
+  /*
+    This lambda is called when current option is SOCKET to add Unix socket
+    source to the list.
+  */
 
-
-  auto add_socket = [this, &src, &opts](iterator it, int prio) {
-    // TODO
-    assert(false);
+#ifdef _WIN32
+  auto add_socket = [](iterator, int) {
+    throw_error("Unix socket connections not supported on Windows platform.");
   };
+#else
+  auto add_socket = [this, &src, &opts, check_prio](iterator it, int prio) {
 
+    assert(Option::SOCKET == it->first);
+
+    string socket = it->second.get_string();
+    ++it;
+
+    check_prio(it, prio);
+
+    src.add(cdk::ds::Unix_socket(socket),
+      (cdk::ds::Unix_socket::Options&)opts,
+      (unsigned short)prio);
+
+  };
+#endif
+
+  /*
+    Go through options and look for ones which define connections.
+  */
 
   for (auto it = begin(); it != end();)
   {

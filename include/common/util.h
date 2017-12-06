@@ -35,6 +35,7 @@
 #include <utility>   // std::move etc
 #include <algorithm>
 #include <functional>
+#include <type_traits>
 
 
 /*
@@ -206,12 +207,12 @@ namespace common {
 
 template <
   typename T, typename U,
-  typename UT = std::make_unsigned<T>::type,
   enable_if_t<std::is_unsigned<U>::value>* = nullptr
 >
 inline
 bool check_num_limits(U val)
 {
+  using UT = typename std::make_unsigned<T>::type;
   return !(val > (UT)std::numeric_limits<T>::max());
 }
 

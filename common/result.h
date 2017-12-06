@@ -414,7 +414,7 @@ private:
     const cdk::Format_info &fi
   )
   {
-    m_cols.emplace(pos, Format_descr<T>(fi));
+    m_cols.emplace(pos, Column_info<STR>(Format_descr<T>(fi)));
     m_cols.at(pos).store_info(ci);
   }
 

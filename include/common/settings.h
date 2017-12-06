@@ -102,7 +102,7 @@ protected:
   using opt_val_t = std::pair<Option, Value>;
   // TODO: use multimap instead?
   using option_list_t = std::vector<opt_val_t>;
-  using iterator = typename option_list_t::const_iterator;
+  using iterator = option_list_t::const_iterator;
 
 public:
 
@@ -301,6 +301,8 @@ void Settings_impl::Data::erase(Option opt)
     break;
   case Option::SSL_MODE:
     m_ssl_mode = SSL_mode::LAST;
+    break;
+  default:
     break;
   }
 }

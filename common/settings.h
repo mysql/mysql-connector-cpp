@@ -283,11 +283,35 @@ Settings_impl::Setter::set_option<Settings_impl::Option::HOST>(
 template<>
 inline void
 Settings_impl::Setter::set_option<Settings_impl::Option::SOCKET>(
+#ifdef _WIN32
   const std::string&
+#else
+  const std::string &val
+#endif
 )
 {
+#if _WIN32
+
   throw_error("SOCKET option not supported on Windows");
-  //m_new.m_sock = true;
+
+#else
+
+  /*
+    In the case of explicit priorities, if a previous host was added, check that
+    a priority was specified for the previous host.
+  */
+
+  if (m_data.m_user_priorities && m_host && !m_prio)
+    throw_error("PRIORITY not set for all hosts in a multi-host settings");
+
+  m_host = true;
+  m_socket = true;
+  m_prio = false;
+  m_port = false;
+  ++m_data.m_host_cnt;
+  add_option(Option::SOCKET, val);
+
+#endif
 }
 
 

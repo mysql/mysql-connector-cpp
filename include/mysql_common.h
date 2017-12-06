@@ -32,10 +32,10 @@
   kept in the common/ folder, either as headers or source files.
 */
 
-#include "common\api.h"
-#include "common\error.h"
-#include "common\util.h"
-#include "common\value.h"
+#include "common/api.h"
+#include "common/error.h"
+#include "common/util.h"
+#include "common/value.h"
 
 
 #define DEFAULT_MYSQL_PORT  3306

@@ -102,9 +102,15 @@ public:
     : m_sess(sess)
   {}
 
-  // TODO: reply object is not copied here?
+  /*
+    Note: When objects of classes exteding Op_base are copied, only definiton
+    of the operation to be executed is copied. The execution state such as
+    m_reply, m_inited etc. is not copied from the other instance, but is
+    initialized so that the copied operation is ready to be executed.
+  */
+
   Op_base(const Op_base& other)
-    : m_sess       (other.m_sess      )
+    : m_sess(other.m_sess)
   {}
 
   virtual ~Op_base()
@@ -369,7 +375,7 @@ protected:
 
   // cdk::Param_source
 
-  void process(Processor &prc) const
+  void process(Processor &prc) const override
   {
     prc.doc_begin();
 
@@ -451,8 +457,10 @@ protected:
 
   // cdk::Limit interface
 
-  row_count_t get_row_count() const { return m_has_limit ? m_limit : 0; }
-  const row_count_t* get_offset() const
+  row_count_t get_row_count() const override
+  { return m_has_limit ? m_limit : 0; }
+
+  const row_count_t* get_offset() const override
   {
     return m_has_offset ? &m_offset : NULL;
   }
@@ -531,7 +539,7 @@ private:
 
   // cdk::Order_by interface
 
-  void process(Order_by::Processor& prc) const
+  void process(Order_by::Processor& prc) const override
   {
     prc.list_begin();
 
@@ -585,6 +593,8 @@ class Op_having
 {
 protected:
 
+  using string = std::wstring;
+
   string m_having;
 
 public:
@@ -613,7 +623,7 @@ private:
 
   // cdk::Expression processor
 
-  void process(cdk::Expression::  Processor& prc) const
+  void process(cdk::Expression::Processor& prc) const override
   {
     parser::Expression_parser expr_parser(PM, m_having);
     expr_parser.process(prc);
@@ -666,7 +676,7 @@ private:
 
   // Expr_list
 
-  void process(cdk::Expr_list::Processor& prc) const
+  void process(cdk::Expr_list::Processor& prc) const override
   {
     prc.list_begin();
 
@@ -742,7 +752,7 @@ private:
 
   // cdk::Expression::Document
 
-  void process(cdk::Expression::Document::Processor& prc) const
+  void process(cdk::Expression::Document::Processor& prc) const override
   {
     /*
       Note: If m_doc_proj is not empty then it specifies the whole projection
@@ -806,7 +816,7 @@ private:
 
   // cdk::Projection
 
-  void process(cdk::Projection::Processor& prc) const
+  void process(cdk::Projection::Processor& prc) const override
   {
     prc.list_begin();
 
@@ -844,6 +854,7 @@ class Op_select : public Base
 {
 protected:
 
+  using string = std::wstring;
   using Shared_session_impl = typename Base::Shared_session_impl;
 
   string m_where_expr;
@@ -911,6 +922,8 @@ public:
 struct Op_sql
   : public Op_base<common::Bind_if>
 {
+  using string = std::wstring;
+
   string m_query;
 
   typedef std::list<Value> param_list_t;
@@ -1265,6 +1278,8 @@ const char* obj_name<Object_type::TABLE>() { return "TABLE"; }
 struct Op_list_objects
   : public Op_admin
 {
+  using string = std::wstring;
+
   Op_list_objects(
     Shared_session_impl sess,
     const cdk::api::Schema_ref &schema,
@@ -1292,6 +1307,8 @@ template <Object_type T>
 struct Op_list
   : public Op_list_objects
 {
+  using string = std::wstring;
+
   Op_list(
     Shared_session_impl sess,
     const cdk::api::Schema_ref &schema,
@@ -1311,6 +1328,8 @@ template <>
 struct Op_list<Object_type::TABLE>
   : public Op_list_objects
 {
+  using string = std::wstring;
+
   bool m_include_views;
 
   Op_list(
@@ -1351,6 +1370,8 @@ template <>
 struct Op_list<Object_type::SCHEMA>
   : public Op_sql
 {
+  using string = std::wstring;
+
   Op_list(
     Shared_session_impl sess,
     const string &pattern
@@ -1750,6 +1771,8 @@ class Op_collection_find
                 Op_base<common::Collection_find_if>
               >>>>>>>
 {
+  using string = std::wstring;
+
   Object_ref m_coll;
 
 public:
@@ -1805,6 +1828,8 @@ class Op_collection_remove
               Op_base<common::Collection_remove_if>
             >>>>
 {
+  using string = std::wstring;
+
   Object_ref m_coll;
 
 public:
@@ -1862,6 +1887,7 @@ class Op_collection_modify
         >>>>
     , public cdk::Update_spec
 {
+  using string = std::wstring;
   using Impl = common::Collection_modify_if;
 
   Object_ref m_coll;
@@ -2155,6 +2181,7 @@ class Op_table_insert
     , public cdk::Row_source
     , public cdk::api::Columns
 {
+  using Base = Op_base<common::Table_insert_if<Row_impl<VAL>>>;
   using Value = VAL;
   using string = std::wstring;
   using Row_list = std::list < Row_impl<VAL> >;
@@ -2171,12 +2198,12 @@ class Op_table_insert
 public:
 
   Op_table_insert(Shared_session_impl sess, const Object_ref &tbl)
-    : Op_base(sess)
+    : Base(sess)
     , m_table(tbl)
   {}
 
   Op_table_insert(const Op_table_insert &other)
-    : Op_base(other)
+    : Base(other)
     , m_table(other.m_table)
     , m_rows(other.m_rows)
     , m_cols(other.m_cols)
@@ -2240,12 +2267,19 @@ private:
     // Prepare iterators to make a pass through m_rows list.
     m_started = false;
 
+    /*
+      Note: gcc complained if get_cdk_session() was used without Base:: prefix.
+      I actually do not understand why...
+    */
+
     return new cdk::Reply(
-      get_cdk_session().table_insert(m_table,
-                                     *this,
-                                     m_cols.empty() ? nullptr : this,
-                                     nullptr)
-                         );
+      Base::get_cdk_session().table_insert(
+        m_table,
+        *this,
+        m_cols.empty() ? nullptr : this,
+        nullptr
+      )
+    );
   }
 
 
@@ -2319,6 +2353,12 @@ class Op_table_update
   , public cdk::Update_spec
   , public cdk::api::Column_ref
 {
+  using Base =  Op_select< tbl_mode,
+                Op_sort< tbl_mode,
+                Op_limit<
+                Op_bind<
+                  Op_base<common::Table_update_if>
+                >>>>;
   using string = std::wstring;
   typedef std::map<string, Value> SetValues;
 
@@ -2330,12 +2370,12 @@ class Op_table_update
 public:
 
   Op_table_update(Shared_session_impl sess, const cdk::api::Object_ref &table)
-    : Op_select(sess)
+    : Base(sess)
     , m_table(table)
   {}
 
   Op_table_update(const Op_table_update &other)
-    : Op_select(other)
+    : Base(other)
     , m_table(other.m_table)
     , m_set_values(other.m_set_values)
   {}
@@ -2365,7 +2405,7 @@ protected:
     m_set_it = m_set_values.end();
 
     return
-        new cdk::Reply(get_cdk_session().table_update(
+        new cdk::Reply(Base::get_cdk_session().table_update(
                         m_table,
                         get_where(),
                         *this,
@@ -2441,6 +2481,12 @@ class Op_table_remove
               Op_base<common::Table_remove_if>
             >>>>
 {
+  using Base =  Op_select< tbl_mode,
+                Op_sort< tbl_mode,
+                Op_limit<
+                Op_bind<
+                  Op_base<common::Table_remove_if>
+                >>>>;
   using string = std::wstring;
 
   Object_ref m_table;
@@ -2448,7 +2494,7 @@ class Op_table_remove
 public:
 
   Op_table_remove(Shared_session_impl sess, const cdk::api::Object_ref &table)
-    : Op_select(sess)
+    : Base(sess)
     , m_table(table)
   {}
 
@@ -2462,7 +2508,7 @@ protected:
   cdk::Reply* send_command() override
   {
     return
-        new cdk::Reply(get_cdk_session().table_delete(
+        new cdk::Reply(Base::get_cdk_session().table_delete(
                           m_table,
                           get_where(),
                           get_order_by(),
