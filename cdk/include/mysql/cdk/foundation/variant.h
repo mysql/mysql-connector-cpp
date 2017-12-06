@@ -252,6 +252,21 @@ protected:
     assert(false);
   }
 
+  void operator=(const variant_base&)
+  {}
+
+#if defined _MSC_VER
+
+  /*
+    The static asserts below are handy for debugging compile-time issues
+    with variant<> template usage. But they work only for MSVC which apparently
+    does not look at methods which are not needed in the final code. Gcc works
+    differently and triggers the asserts even though methods are not actually
+    instantiated. So, for GCC we simply do not include these method definitions
+    so that compilation would fail (with a more criptic error message) if wrong
+    variant usage would require them to exist.
+  */
+
   template<typename T>
   void set(T &&)
   {
@@ -260,9 +275,6 @@ protected:
     );
   }
 
-  void operator=(const variant_base&)
-  {}
-
   template<typename T>
   void operator=(const T&)
   {
@@ -270,6 +282,9 @@ protected:
       "Trying to set a variant object to an incompatible type"
     );
   }
+
+#endif
+
 };
 
 }  // detail

@@ -277,8 +277,9 @@ namespace ds {
   struct DS_pair : public std::pair<DS_t, DS_opt>
   {
     DS_pair(const DS_pair&) = default;
+#ifdef HAVE_MOVE_CTORS
     DS_pair(DS_pair&&) = default;
-
+#endif
     DS_pair(DS_t &ds, DS_opt &opt) : std::pair<DS_t, DS_opt>(ds, opt)
     {}
   };
@@ -288,11 +289,14 @@ namespace ds {
 
   private:
 
-    typedef cdk::foundation::variant <DS_pair<cdk::ds::TCPIP, cdk::ds::TCPIP::Options>,
+    typedef cdk::foundation::variant <
+      DS_pair<cdk::ds::TCPIP, cdk::ds::TCPIP::Options>
 #ifndef _WIN32
-                                      DS_pair<cdk::ds::Unix_socket, cdk::ds::Unix_socket::Options>,
+      ,DS_pair<cdk::ds::Unix_socket, cdk::ds::Unix_socket::Options>
 #endif //_WIN32
-                                      DS_pair<cdk::ds::TCPIP_old, cdk::ds::TCPIP_old::Options>> DS_variant;
+      ,DS_pair<cdk::ds::TCPIP_old, cdk::ds::TCPIP_old::Options>
+    >
+    DS_variant;
 
     bool m_is_prioritized;
     unsigned short m_counter;
