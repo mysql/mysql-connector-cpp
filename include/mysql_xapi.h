@@ -65,11 +65,14 @@
 #ifndef MYSQL_XAPI_H
 #define MYSQL_XAPI_H
 
-#include "mysql_common.h"
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
+
+
+#include "mysql_common_constants.h"
+#include "common/api.h"
 
 #include <stdlib.h>
 #include <stdint.h>

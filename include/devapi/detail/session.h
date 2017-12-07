@@ -26,10 +26,18 @@
 #define MYSQLX_DETAIL_SESSION_H
 
 #include "../common.h"
+#include "../crud.h"
+
+#include <set>
+
+namespace cdk {
+  class Session;
+}
 
 
 namespace mysqlx {
 
+class Value;
 class Session;
 class Schema;
 class Table;
@@ -37,6 +45,7 @@ class Collection;
 
 namespace common {
   class Session_impl;
+  class Result_init;
 }
 
 namespace internal {
@@ -96,15 +105,26 @@ protected:
 struct PUBLIC_API Query_src
 {
   using Value = string;
-  using Res_impl = common::Result_impl<string>;
+  struct Res_impl;
 
-  DLL_WARNINGS_PUSH
-  std::unique_ptr<Res_impl> m_res;
-  DLL_WARNINGS_POP
-
-  const common::Row_data *m_row = nullptr;
+  Res_impl *m_res = nullptr;
+  const void *m_row = nullptr;
 
 public:
+
+  Query_src()
+  {}
+
+  Query_src(Query_src &&other)
+    : m_res(other.m_res)
+  {
+    // Note: only one instance of Query_src owns m_res.
+    other.m_res = nullptr;
+  }
+
+  Query_src(const Query_src&) = delete;
+
+  virtual ~Query_src();
 
   virtual void  iterator_start()
   {
