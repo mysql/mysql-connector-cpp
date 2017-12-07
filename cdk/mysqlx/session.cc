@@ -484,9 +484,31 @@ void Session::commit()
     r.get_error().rethrow();
 }
 
-void Session::rollback()
+void Session::rollback(const string &savepoint)
 {
-  Reply r(sql(L"ROLLBACK", NULL));
+  string qry = L"ROLLBACK";
+  if (!savepoint.empty())
+    qry += string(L" TO `") + savepoint + L"`";
+  Reply r(sql(qry, NULL));
+  r.wait();
+  if (r.entry_count() > 0)
+    r.get_error().rethrow();
+}
+
+void Session::savepoint_set(const string &savepoint)
+{
+  // TODO: some chars in savepoint name need to be quotted.
+  string qry = L"SAVEPOINT `"+ savepoint + L"`";
+  Reply r(sql(qry, NULL));
+  r.wait();
+  if (r.entry_count() > 0)
+    r.get_error().rethrow();
+}
+
+void Session::savepoint_remove(const string &savepoint)
+{
+  string qry = L"RELEASE SAVEPOINT `" + savepoint + L"`";
+  Reply r(sql(qry, NULL));
   r.wait();
   if (r.entry_count() > 0)
     r.get_error().rethrow();
