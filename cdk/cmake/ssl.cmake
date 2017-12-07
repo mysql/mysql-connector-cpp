@@ -251,7 +251,7 @@ MACRO (MYSQL_CHECK_SSL)
 
 ENDMACRO()
 
-MACRO(MYSQL_OPENSSL_SPACKAGE INSTALL_LIBDIR INSTALL_LIBDIR_DEBUG)
+MACRO(MYSQL_OPENSSL_SPACKAGE TARGET INSTALL_LIBDIR INSTALL_LIBDIR_DEBUG)
 if(WIN32 OR APPLE)
 
   if (OPENSSL_LIBRARY OR CRYPTO_LIBRARY)
@@ -269,6 +269,29 @@ if(WIN32 OR APPLE)
       if (${CRYPTO_LIBRARY} MATCHES "^.*\\.dylib$" )
         SET(OPENSSL_CRYPTO_SO ${CRYPTO_LIBRARY})
       endif()
+
+      EXECUTE_PROCESS(
+        COMMAND readlink "${OPENSSL_CRYPTO_SO}" OUTPUT_VARIABLE CRYPTO_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+      EXECUTE_PROCESS(
+        COMMAND readlink "${OPENSSL_SSL_SO}" OUTPUT_VARIABLE OPENSSL_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+      MESSAGE(STATUS "INSTALL_NAME_TOOL")
+      MESSAGE(STATUS "TARGET_FILE: $<TARGET_FILE:${TARGET}>")
+      MESSAGE(STATUS "CRYPTO_VERSION: ${CRYPTO_VERSION}")
+      MESSAGE(STATUS "OPENSSL_VERSION: ${OPENSSL_VERSION}")
+
+      # OpenSSL libraries are on same path as TARGET"
+      add_custom_command(TARGET ${TARGET} POST_BUILD
+        COMMAND install_name_tool -change
+        "${OPENSSL_CRYPTO_SO}" "@loader_path/${CRYPTO_VERSION}"
+        "$<TARGET_FILE:${TARGET}>"
+        COMMAND install_name_tool -change
+        "${OPENSSL_VERSION}" "@loader_path/${OPENSSL_VERSION}"
+        "$<TARGET_FILE:${TARGET}>"
+        )
+
     endif()
     MESSAGE(STATUS "Install/bundle the OpenSSL libraries including the soft links")
     # Install/bundle the OpenSSL libraries including the soft links

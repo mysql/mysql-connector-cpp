@@ -467,7 +467,7 @@ install(TARGETS libconcpp
 
 # Pick install location for dependencies
 # --------------------------------------
-MYSQL_OPENSSL_SPACKAGE("${LIB_DIR}" "${LIB_DIR}/debug")
+MYSQL_OPENSSL_SPACKAGE(libconcpp ${LIB_DIR} "${LIB_DIR}/debug")
 
 #
 # Tests
