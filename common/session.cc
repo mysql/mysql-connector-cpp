@@ -276,7 +276,7 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
     throw_error("Unix socket connections not supported on Windows platform.");
   };
 #else
-  auto add_socket = [this, &src, &opts, check_prio](iterator it, int prio) {
+  auto add_socket = [this, &src, &opts, check_prio](iterator &it, int prio) {
 
     assert(Option::SOCKET == it->first);
 
