@@ -43,6 +43,70 @@
   };
 
 
+TEST_F(xapi, test_create_collection_index)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  mysqlx_result_t *res;
+  mysqlx_schema_t *schema;
+  mysqlx_collection_t *collection;
+  mysqlx_stmt_t *stmt;
+  const char *schema_name = "cc_crud_test";
+  const char *coll_name = "index_test";
+  const char *json[] = {
+    "{\"zip\": \"34239\", \"zcount\": \"10\", \"some_text\": \"just some text\"}",
+    "{\"zip\": \"30001\", \"zcount\": \"20\", \"some_text\": \"some more text\"}"
+  };
+
+  const char *geo_json =
+    "{\"zip\": \"34239\", \"type\" : \"Point\", \"coords\" : [12.34, 56.78]}";
+
+  const char *json_idx = "{"\
+             "\"fields\": ["\
+             "{ \"field\": \"$.zip\", \"required\" : true , \"type\" : \"TEXT(10)\" },"\
+             "{ \"field\": \"$.zcount\", \"type\" : \"INT UNSIGNED\" }]}";
+
+  const char *geo_json_idx = "{"\
+             "\"type\" : \"SPATIAL\","\
+             "\"fields\": "\
+             "[ { \"field\": \"$.coords\", \"type\" : \"GEOJSON\", \"required\" : true "\
+             " , \"srid\" : 31233 }]}";
+
+  AUTHENTICATE();
+
+  mysqlx_schema_drop(get_session(), schema_name);
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_create(get_session(), schema_name));
+  schema = mysqlx_get_schema(get_session(), schema_name, 0);
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, coll_name));
+  collection = mysqlx_get_collection(schema, coll_name, 0);
+
+  stmt = mysqlx_collection_add_new(collection);
+  EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, json[0]));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, json[1]));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  EXPECT_EQ(RESULT_OK,
+            mysqlx_collection_create_index(collection, "custom_idx1", json_idx));
+
+  EXPECT_EQ(RESULT_OK,
+            mysqlx_collection_drop_index(collection, "custom_idx1"));
+
+  /* Drop old collection and create a new one with geo data */
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_drop(schema, coll_name));
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, coll_name));
+  collection = mysqlx_get_collection(schema, coll_name, 0);
+
+  CRUD_CHECK(res = mysqlx_collection_add(collection, geo_json, PARAM_END),
+             collection);
+
+  EXPECT_EQ(RESULT_OK,
+            mysqlx_collection_create_index(collection, "geo_idx1", geo_json_idx));
+
+  EXPECT_EQ(RESULT_OK,
+            mysqlx_collection_drop_index(collection, "geo_idx1"));
+}
+
+
 TEST_F(xapi, test_row_locking)
 {
   //TODO: temporary skip goup_by tests

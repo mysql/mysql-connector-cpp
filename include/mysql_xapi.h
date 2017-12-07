@@ -2820,10 +2820,43 @@ PUBLIC_API mysqlx_error_t *
 mysqlx_result_next_warning(mysqlx_result_t *res);
 
 
+/**
+  Create index for a collection.
+
+  This function creates a named index in a collection
+  using a JSON index specification
+
+  @coll collection to create an index
+  @name name for an index to be created
+  @idx_json index specification as JSON string
+
+  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  The error handle can be obtained from the collection
+  using `mysqlx_error()` function.
+
+  @ingroup xapi_ddl
+*/
 PUBLIC_API int
 mysqlx_collection_create_index(mysqlx_collection_t *coll, const char *name,
                                const char *idx_json);
 
+/**
+  Drop index in a collection
+
+  This function drops an index in a collection
+  with a specific name
+
+  @coll collection to drop an index
+  @name name for an index to be dropped
+
+  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  The error handle can be obtained from the collection
+  using `mysqlx_error()` function.
+
+  @note The warning handle returned by a previous call is invalidated.
+
+  @ingroup xapi_ddl
+*/
 PUBLIC_API int
 mysqlx_collection_drop_index(mysqlx_collection_t *coll, const char *name);
 

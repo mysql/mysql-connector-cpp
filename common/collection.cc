@@ -197,6 +197,7 @@ struct Fields_conv
   >
 {
   Field_list_conv  m_arr_conv;
+  JSON_val_conv m_scalar_conv;
 
   List_prc* arr() override
   {
@@ -209,15 +210,12 @@ struct Fields_conv
 
   Scalar_prc* scalar() override
   {
-    /*
-      TODO: Add scalar processing for indexes as this one with
-            scalar value on 1st level
+    auto *prc = m_proc->scalar();
+    if (!prc)
+      return nullptr;
 
-      "type": "SPATIAL",
-      "fields": [ { "field": "$.coords", "type": "GEOJSON", "srid": 31287 } ]
-
-    */
-    return nullptr;
+    m_scalar_conv.reset(*prc);
+    return &m_scalar_conv;
   }
 
   Doc_prc* doc() override

@@ -1269,7 +1269,7 @@ struct Op_idx_admin
   )
     : Op_admin(sess, cmd)
   {
-    assert(!coll.schema());
+    assert(coll.schema());
     add_param(L"schema", coll.schema()->name());
     add_param(L"collection", coll.name());
     add_param(L"name", name);
