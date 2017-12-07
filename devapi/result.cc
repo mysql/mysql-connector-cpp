@@ -152,20 +152,56 @@ Type get_api_type(cdk::Type_info type, const common::Format_info &fmt)
 }
 
 
-bool internal::Column_detail::is_signed() const
+string internal::Column_detail::get_name() const
 {
-
-  try {
-    if (cdk::TYPE_INTEGER != get_impl().m_type)
-      return false;
-
-    const common::Format_descr<cdk::TYPE_INTEGER> &fd
-      = get_impl().get<cdk::TYPE_INTEGER>();
-    return !fd.m_format.is_unsigned();
-  }
-  CATCH_AND_WRAP
+  return get_impl().m_name;
 }
 
+string internal::Column_detail::get_label() const
+{
+  return get_impl().m_label;
+}
+
+string internal::Column_detail::get_schema_name() const
+{
+  return get_impl().m_schema_name;
+}
+
+string internal::Column_detail::get_table_name() const
+{
+  return get_impl().m_table_name;
+}
+
+string internal::Column_detail::get_table_label() const
+{
+  return get_impl().m_table_label;
+}
+
+unsigned long internal::Column_detail::get_length() const
+{
+  return get_impl().m_length;
+}
+
+unsigned short internal::Column_detail::get_decimals() const
+{
+  return get_impl().m_decimals;
+}
+
+
+bool internal::Column_detail::is_signed() const
+{
+  if (cdk::TYPE_INTEGER != get_impl().m_type)
+    return false;
+
+  const common::Format_descr<cdk::TYPE_INTEGER> &fd
+    = get_impl().get<cdk::TYPE_INTEGER>();
+  return !fd.m_format.is_unsigned();
+}
+
+bool internal::Column_detail::is_padded() const
+{
+  return get_impl().m_padded;
+}
 
 
 /*

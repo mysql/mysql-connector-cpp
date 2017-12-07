@@ -746,6 +746,8 @@ TEST_F(xapi, failover_test_url)
 
 TEST_F(xapi, auth_method)
 {
+  SKIP_IF_NO_XPLUGIN
+
   char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
   int conn_err_code = 0;
   mysqlx_session_t *local_sess = NULL;
@@ -862,6 +864,8 @@ TEST_F(xapi, auth_method)
 
 TEST_F(xapi, auth_method_external)
 {
+  SKIP_IF_NO_XPLUGIN
+
   char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
   int conn_err_code = 0;
   mysqlx_session_t *local_sess = NULL;

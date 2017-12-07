@@ -30,14 +30,12 @@
   creation options, check their consistency and present the settings in the
   form expected by CDK.
 
-  Known session options and their values are defined in mysql_common.h header
-  as SESSION_OPTION_LIST() and accompanying macros.
+  Known session options and their values are defined
+  in mysql_common_constants.h header as SESSION_OPTION_LIST() and accompanying
+  macros.
 */
 
-#if !defined(SESSION_OPTION_LIST)
-#error common/settings.h must be included after mysql_common.h
-#endif
-
+#include "../mysql_common_constants.h"
 #include "value.h"
 
 #include <vector>

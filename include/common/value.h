@@ -27,6 +27,7 @@
 
 #include <string>
 
+#include "api.h"
 #include "error.h"
 #include "util.h"
 

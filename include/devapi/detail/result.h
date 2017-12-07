@@ -35,8 +35,9 @@
 #include "../error.h"
 #include "../document.h"
 #include "../row.h"
+#include "../collations.h"
 
-#include "../../common/result.h"
+#include <deque>
 
 
 namespace mysqlx {
@@ -45,6 +46,13 @@ class RowResult;
 class Column;
 class Columns;
 class Session;
+
+namespace common {
+
+class Result_init;
+template <class STR> class Column_info;
+
+}  // common
 
 
 namespace internal {
@@ -172,6 +180,7 @@ class PUBLIC_API Column_detail
 public:
 
   using Impl = common::Column_info<string>;
+
   const Impl *m_impl = nullptr;
 
   Column_detail(const Impl &impl)
@@ -184,55 +193,24 @@ public:
     return *m_impl;
   }
 
-  string get_name() const
-  {
-    return get_impl().m_name;
-  }
-
-  string get_label() const
-  {
-    return get_impl().m_label;
-  }
-
-  string get_schema_name() const
-  {
-    return get_impl().m_schema_name;
-  }
-
-  string get_table_name() const
-  {
-    return get_impl().m_table_name;
-  }
-
-  string get_table_label() const
-  {
-   return get_impl().m_table_label;
-  }
+  string get_name() const;
+  string get_label() const;
+  string get_schema_name() const;
+  string get_table_name() const;
+  string get_table_label() const;
 
   // Note: should return values of mysqlx::Type enum constants
 
   unsigned get_type() const;
 
   CharacterSet get_charset() const;
-
   const CollationInfo& get_collation() const;
 
-  unsigned long get_length() const
-  {
-    return get_impl().m_length;
-  }
-
-  unsigned short get_decimals() const
-  {
-    return get_impl().m_decimals;
-  }
+  unsigned long get_length() const;
+  unsigned short get_decimals() const;
 
   bool is_signed() const;
-
-  bool is_padded() const
-  {
-    return get_impl().m_padded;
-  }
+  bool is_padded() const;
 
   void print(std::ostream&) const override;
 
@@ -265,7 +243,7 @@ template <class COL>
 struct Column_storage
   : public COL
 {
-  Column_storage(const Column_detail::Impl &impl)
+  Column_storage(const typename COL::Impl &impl)
     : COL(impl)
   {}
 

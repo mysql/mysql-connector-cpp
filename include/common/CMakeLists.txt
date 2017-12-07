@@ -20,37 +20,10 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-
-#
-# MySQL Connector/C++ Public Headers
-#
-# see headers.cmake for explanations how project's public
-# headers are declared and processed.
-#
-
-INCLUDE(headers)
-
-#
-# Headers require C++11 compiler. Set appropriate option
-# for gcc/clang compilers.
-#
-
-if(NOT WIN32)
-  set(HEADER_CHECK_OPTIONS "-std=c++11")
-endif()
-
-SETUP_HEADERS(${CMAKE_CURRENT_SOURCE_DIR})
-
-SET(headers mysql_common_constants.h mysql_common.h mysql_xapi.h mysql_devapi.h)
+SET(headers api.h  error.h  op_if.h  settings.h  util.h  value.h)
 
 check_headers(${headers})
 
-ADD_HEADERS_DIR(common)
-ADD_HEADERS_DIR(devapi)
 ADD_HEADERS(${headers})
 ADD_HEADER_CHECKS()
-
-ADD_HEADERS_TARGET()
-
-INSTALL(FILES ${headers} DESTINATION include)
-
+INSTALL(FILES ${headers} DESTINATION include/common)
