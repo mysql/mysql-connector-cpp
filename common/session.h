@@ -106,6 +106,12 @@ public:
 
   void prepare_for_cmd();
 
+  unsigned long m_savepoint = 0;
+
+  unsigned long next_savepoint()
+  {
+    return ++m_savepoint;
+  }
 };
 
 
