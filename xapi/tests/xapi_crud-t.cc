@@ -59,7 +59,7 @@ TEST_F(xapi, test_create_collection_index)
   };
 
   const char *geo_json =
-    "{\"zip\": \"34239\", \"type\" : \"Point\", \"coords\" : [12.34, 56.78]}";
+  "{\"zip\": \"34239\", \"coords\" : { \"type\": \"Point\", \"coordinates\": [102.0, 0.0] }}";
 
   const char *json_idx = "{"\
              "\"fields\": ["\
@@ -70,7 +70,7 @@ TEST_F(xapi, test_create_collection_index)
              "\"type\" : \"SPATIAL\","\
              "\"fields\": "\
              "[ { \"field\": \"$.coords\", \"type\" : \"GEOJSON\", \"required\" : true "\
-             " , \"srid\" : 31233 }]}";
+             "}]}";
 
   AUTHENTICATE();
 
@@ -91,16 +91,23 @@ TEST_F(xapi, test_create_collection_index)
   EXPECT_EQ(RESULT_OK,
             mysqlx_collection_drop_index(collection, "custom_idx1"));
 
-  /* Drop old collection and create a new one with geo data */
+  /* Drop old collection and create a new one */
   EXPECT_EQ(RESULT_OK, mysqlx_collection_drop(schema, coll_name));
   EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, coll_name));
   collection = mysqlx_get_collection(schema, coll_name, 0);
 
-  CRUD_CHECK(res = mysqlx_collection_add(collection, geo_json, PARAM_END),
-             collection);
+  /*
+    First we create index, then we insert the document.
+    Otherwise the server-side reports error:
 
+    "Collection contains document missing required field"
+    Looks like it is an issue in xplugin.
+  */
   EXPECT_EQ(RESULT_OK,
             mysqlx_collection_create_index(collection, "geo_idx1", geo_json_idx));
+
+  CRUD_CHECK(res = mysqlx_collection_add(collection, geo_json, PARAM_END),
+             collection);
 
   EXPECT_EQ(RESULT_OK,
             mysqlx_collection_drop_index(collection, "geo_idx1"));
