@@ -285,6 +285,8 @@ public:
   cdk::collation_id_t m_collation;
   bool           m_padded = false;
 
+  Column_info(const Column_info&) = default;
+
   /*
     Create Column_info instance for a column of type T that uses given
     encoding format. The rest of column meta-data should be filled in using

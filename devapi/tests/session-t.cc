@@ -1014,6 +1014,7 @@ TEST_F(Sess, unix_socket)
 
 TEST_F(Sess, bugs)
 {
+  SKIP_IF_NO_XPLUGIN
 
   {
     SessionSettings sess_settings("localhost_not_found", 13009, "rafal", (char*)NULL);

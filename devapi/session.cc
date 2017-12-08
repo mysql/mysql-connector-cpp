@@ -32,6 +32,7 @@
 
 #include "impl.h"
 #include "../common/settings.h"
+#include "../common/result.h"
 
 
 const unsigned max_priority = 100;
@@ -207,13 +208,29 @@ const std::wstring& internal::Session_detail::get_default_schema_name()
   Schema list source.
 */
 
+struct internal::Query_src::Res_impl
+  : public common::Result_impl<string>
+{
+  template <typename... Ty>
+  Res_impl(Ty&&... args)
+    : common::Result_impl<string>(std::forward<Ty>(args)...)
+  {};
+};
+
+
+internal::Query_src::~Query_src()
+{
+  delete m_res;
+}
+
+
 internal::Session_detail::Name_src::Name_src(
   const Session &sess, const string &pattern
 )
   : m_sess(sess)
 {
   common::Op_list<Object_type::SCHEMA> list_op{ sess.m_impl, pattern };
-  m_res.reset(new Res_impl(list_op.execute()));
+  m_res = new Res_impl(list_op.execute());
 }
 
 
@@ -261,14 +278,14 @@ internal::Schema_detail::Name_src::Name_src(
   case COLLECTION:
     {
       common::Op_list<Object_type::COLLECTION> list_op(sess, obj, pattern);
-      m_res.reset(new Res_impl(list_op.execute()));
+      m_res = new Res_impl(list_op.execute());
     };
     break;
 
   case TABLE:
     {
       common::Op_list<Object_type::TABLE> list_op(sess, obj, pattern);
-      m_res.reset(new Res_impl(list_op.execute()));
+      m_res = new Res_impl(list_op.execute());
     };
     break;
   }
@@ -284,12 +301,13 @@ internal::Schema_detail::Collection_src::iterator_get()
 Table
 internal::Schema_detail::Table_src::iterator_get()
 {
-  assert(1 < m_row->size());
+  auto *row = static_cast<const common::Row_data*>(m_row);
+  assert(1 < row->size());
   assert(cdk::TYPE_STRING == m_res->get_column(1).m_type);
 
   cdk::string type;
   m_res->get_column(1).get<cdk::TYPE_STRING>()
-    .m_codec.from_bytes(m_row->at(1).data(), type);
+    .m_codec.from_bytes(row->at(1).data(), type);
 
   return Table(m_schema, Name_src::iterator_get(), type == L"VIEW");
 }
@@ -312,9 +330,10 @@ bool internal::Query_src::iterator_next()
 string internal::Query_src::iterator_get()
 {
   assert(m_row);
+  auto *row = static_cast<const common::Row_data*>(m_row);
 
   const auto &name_col = m_res->get_column(0);
-  const auto &data = m_row->at(0).data();
+  const auto &data = row->at(0).data();
   cdk::string name;
 
   // TDOD: Investigate why we get column type other than STRING.

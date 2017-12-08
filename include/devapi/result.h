@@ -219,6 +219,7 @@ private:
 
   template <class Res, class Op>
   friend class Executable;
+  friend Collection;
 };
 
 
