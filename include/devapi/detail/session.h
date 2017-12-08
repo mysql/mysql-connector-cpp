@@ -85,6 +85,9 @@ protected:
   virtual Schema_detail& get_schema() = 0;
 
   Result add_or_replace_one(const string &id, Value&&, bool);
+
+  void index_drop(const string &name);
+  void index_create(const string &name, Value &&spec);
 };
 
 

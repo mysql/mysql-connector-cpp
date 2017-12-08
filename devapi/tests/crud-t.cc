@@ -59,15 +59,6 @@ public:
   void add_data(Collection &coll);
 };
 
-void output_id_list(Result& res)
-{
-  std::vector<mysqlx::GUID> ids = res.getDocumentIds();
-  for (auto id : ids)
-  {
-    cout << "- added doc with id: " << id  << endl;
-  }
-
-}
 
 
 TEST_F(Crud, basic)
@@ -430,9 +421,7 @@ TEST_F(Crud, bind)
 
   }
 
-
   {
-
     cout << "Fetching documents... using bind Arrays" << endl;
 
     std::list<string> food_list;
@@ -2342,4 +2331,3 @@ TEST_F(Crud, add_or_replace)
   cout << "Done!" << endl;
 
 }
-

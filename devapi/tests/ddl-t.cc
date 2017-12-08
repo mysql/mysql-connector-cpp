@@ -168,6 +168,78 @@ TEST_F(Ddl, create_drop)
   cout << "Done!" << endl;
 }
 
+
+TEST_F(Ddl, create_index)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating collection..." << endl;
+
+  Schema sch = getSchema("test");
+  Collection coll = sch.createCollection("c1", true);
+  coll.remove("true").execute();
+
+  cout << "Inserting documents..." << endl;
+
+  {
+    Result add;
+
+    add = coll
+      .add(R"({ "zip": "34239", "zcount": "10", "some_text": "just some text" })")
+      .add(R"({ "zip": "30001", "zcount": "20", "some_text": "some more text" })")
+      .execute();
+    output_id_list(add);
+    EXPECT_EQ(2U, add.getAffectedItemsCount());
+
+  }
+
+  /* Create a multi value index */
+
+  coll.createIndex("custom_idx1", R"-({
+    "fields": [
+      { "field": "$.zip", "required" : true , "type" : "TEXT(10)" },
+      { "field": "$.zcount", "type" : "INT UNSIGNED" }
+    ]
+  })-");
+
+  coll.dropIndex("custom_idx1");
+  coll.remove("true").execute();
+
+  /**
+    First we create a spatial index, then we insert the document.
+    Otherwise the server-side reports error:
+
+    "Collection contains document missing required field"
+    Looks like it is an issue in xplugin.
+
+    Also, the server 5.7 doesn't seem to handle spatial indexes
+  */
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 4);
+
+  coll.createIndex("geo_idx1", R"-({
+    "type" : "SPATIAL",
+    "fields": [{ "field": "$.coords", "type" : "GEOJSON", "required" : true }]
+  })-");
+
+  {
+    Result add;
+
+    add = coll.add(R"({
+      "zip": "34239",
+      "coords": { "type": "Point", "coordinates": [102.0, 0.0] }
+    })")
+    .execute();
+
+    output_id_list(add);
+    EXPECT_EQ(1U, add.getAffectedItemsCount());
+
+  }
+  coll.dropIndex("geo_idx1");
+
+  cout << "Done!" << endl;
+}
+
+
 TEST_F(Ddl, bugs)
 {
 

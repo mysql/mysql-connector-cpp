@@ -678,6 +678,30 @@ public:
     CATCH_AND_WRAP
   }
 
+  /**
+    Create a new index on the given collection.
+
+    Specify the new document as either a `DbDoc` object or a JSON string.
+  */
+
+  void createIndex(const string &name, Value &&idx_spec)
+  {
+    try {
+      Collection_detail::index_create(name, std::move(idx_spec));
+    }
+    CATCH_AND_WRAP
+  }
+
+
+  void dropIndex(const string &name)
+  {
+    try {
+      Collection_detail::index_drop(name);
+    }
+    CATCH_AND_WRAP
+  }
+
+
   friend CollectionFind;
   friend CollectionAdd;
   friend CollectionRemove;

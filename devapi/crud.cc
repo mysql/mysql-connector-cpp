@@ -157,6 +157,31 @@ internal::Collection_detail::add_or_replace_one(
 }
 
 
+void internal::Collection_detail::index_drop(const string &name)
+{
+  Object_ref coll(get_schema().m_name, m_name);
+  common::Op_idx_drop cmd(m_sess, coll, name);
+  cmd.execute();
+}
+
+void
+internal::Collection_detail::index_create(const string &name, Value &&spec)
+{
+  switch (spec.getType())
+  {
+  case Value::STRING:
+    break;
+  default:
+    // TODO: support other forms: DbDoc, expr("{...}")?
+    throw_error("Index specification must be a string.");
+  }
+
+  Object_ref coll(get_schema().m_name, m_name);
+  common::Op_idx_create cmd(m_sess, coll, name, spec);
+  cmd.execute();
+
+}
+
 
 // --------------------------------------------------------------------
 

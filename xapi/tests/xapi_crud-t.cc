@@ -97,12 +97,17 @@ TEST_F(xapi, test_create_collection_index)
   collection = mysqlx_get_collection(schema, coll_name, 0);
 
   /*
-    First we create index, then we insert the document.
+    First we create a spatial index, then we insert the document.
     Otherwise the server-side reports error:
 
     "Collection contains document missing required field"
     Looks like it is an issue in xplugin.
+
+    Also, the server 5.7 doesn't seem to handle spatial indexes
   */
+
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 4);
+
   EXPECT_EQ(RESULT_OK,
             mysqlx_collection_create_index(collection, "geo_idx1", geo_json_idx));
 
