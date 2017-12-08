@@ -2535,7 +2535,7 @@ PUBLIC_API uint16_t
 mysqlx_column_get_precision(mysqlx_result_t *res, uint32_t pos);
 
 
-/**
+/*
   Get column flags.
 
   @param res result handle
@@ -2826,12 +2826,15 @@ mysqlx_result_next_warning(mysqlx_result_t *res);
 /**
   Create index for a collection.
 
-  This function creates a named index in a collection
-  using a JSON index specification
+  This function creates a named index in the collection using a JSON index
+  specification.
 
-  @coll collection to create an index
-  @name name for an index to be created
-  @idx_json index specification as JSON string
+  @param coll collection to create the index for
+  @param name name for the index to be created
+  @param idx_spec index specification as a JSON string
+
+  @see @ref indexing for information on how to define document
+  collection indexes.
 
   @return `RESULT_OK` - on success; `RESULT_ERR` - on error
   The error handle can be obtained from the collection
@@ -2839,18 +2842,19 @@ mysqlx_result_next_warning(mysqlx_result_t *res);
 
   @ingroup xapi_ddl
 */
+
 PUBLIC_API int
 mysqlx_collection_create_index(mysqlx_collection_t *coll, const char *name,
-                               const char *idx_json);
+                               const char *idx_spec);
 
 /**
-  Drop index in a collection
+  Drop index on a collection
 
   This function drops an index in a collection
   with a specific name
 
-  @coll collection to drop an index
-  @name name for an index to be dropped
+  @param coll collection whose index should be dropped
+  @param name name of the index to be dropped
 
   @return `RESULT_OK` - on success; `RESULT_ERR` - on error
   The error handle can be obtained from the collection
@@ -2860,6 +2864,7 @@ mysqlx_collection_create_index(mysqlx_collection_t *coll, const char *name,
 
   @ingroup xapi_ddl
 */
+
 PUBLIC_API int
 mysqlx_collection_drop_index(mysqlx_collection_t *coll, const char *name);
 

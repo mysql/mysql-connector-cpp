@@ -679,19 +679,33 @@ public:
   }
 
   /**
-    Create a new index on the given collection.
+    Create index on the collection.
 
-    Specify the new document as either a `DbDoc` object or a JSON string.
+    This function creates a named index in the collection using a JSON index
+    specification.
+
+    @param name name for an index to be created
+    @param idx_spec index specification as a JSON string
+
+    @see @ref indexing for information on how to define document
+    collection indexes.
   */
 
-  void createIndex(const string &name, Value &&idx_spec)
+  void createIndex(const string &name, const string &idx_spec)
   {
     try {
-      Collection_detail::index_create(name, std::move(idx_spec));
+      Collection_detail::index_create(name, idx_spec);
     }
     CATCH_AND_WRAP
   }
 
+  /**
+    Drop index on the collection.
+
+    @param name name for an index to be dropped
+
+    @ingroup devapi_ddl
+  */
 
   void dropIndex(const string &name)
   {
