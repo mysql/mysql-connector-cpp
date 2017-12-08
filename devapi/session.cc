@@ -150,28 +150,35 @@ void internal::Session_detail::close()
 
 void internal::Session_detail::start_transaction()
 {
-  try {
-    get_cdk_session().begin();
-  }
-  CATCH_AND_WRAP
+  common::Op_trx<common::Trx_op::BEGIN> cmd(m_impl);
+  cmd.execute();
 }
 
 
 void internal::Session_detail::commit()
 {
-  try {
-    get_cdk_session().commit();
-  }
-  CATCH_AND_WRAP
+  common::Op_trx<common::Trx_op::COMMIT> cmd(m_impl);
+  cmd.execute();
 }
 
 
-void internal::Session_detail::rollback()
+void internal::Session_detail::rollback(const string &sp)
 {
-  try {
-    get_cdk_session().rollback();
-  }
-  CATCH_AND_WRAP
+  common::Op_trx<common::Trx_op::ROLLBACK> cmd(m_impl, sp);
+  cmd.execute();
+}
+
+string internal::Session_detail::savepoint_set(const string &sp)
+{
+  common::Op_trx<common::Trx_op::SAVEPOINT_SET> cmd(m_impl, sp);
+  cmd.execute();
+  return cmd.get_name();
+}
+
+void internal::Session_detail::savepoint_remove(const string &sp)
+{
+  common::Op_trx<common::Trx_op::SAVEPOINT_REMOVE> cmd(m_impl, sp);
+  cmd.execute();
 }
 
 

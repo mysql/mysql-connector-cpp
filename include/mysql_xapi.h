@@ -731,7 +731,7 @@ mysqlx_transaction_commit(mysqlx_session_t *sess);
 
 
 /**
-  Rollback a transaction for the session.
+  Roll back a transaction for the session.
 
   @param sess session handle
 
@@ -746,6 +746,61 @@ mysqlx_transaction_commit(mysqlx_session_t *sess);
 
 PUBLIC_API int
 mysqlx_transaction_rollback(mysqlx_session_t *sess);
+
+
+/**
+  Create savepoint inside transaction.
+
+  @param sess session handle.
+
+  @param name savepoint name (NULL for automatically generated one)
+
+  @return savepoint name
+
+  @note Savepoints are created inside transaction! Later, you can roll back
+  the transaction to a created savepoint using mysqlx_rollback_to().
+  If the current transaction has a savepoint with the same name, the old
+  savepoint is deleted and a new one is set.
+
+  @ingroup xapi_sess
+*/
+
+PUBLIC_API const char*
+mysqlx_savepoint_set( mysqlx_session_t *sess, const char *name);
+
+
+/**
+  Release savepoint created by mysqlx_savepoint_set().
+
+  @param sess session handle
+
+  @param name savepoint name to be released
+
+  @return `RESULT_OK` - savepoint exists and is released;
+          `RESULT_ERR` - on error
+
+  @ingroup xapi_sess
+*/
+
+PUBLIC_API int
+mysqlx_savepoint_release(mysqlx_session_t *sess, const char *name);
+
+
+/**
+  Roll back to savepoint created by mysqlx_savepoint_set().
+
+  @param sess session handle.
+
+  @param name savepoint name.
+
+  @return `RESULT_OK` - savepoint exists and is released;
+          `RESULT_ERR` - on error.
+
+  @ingroup xapi_sess
+*/
+
+PUBLIC_API int
+mysqlx_rollback_to(  mysqlx_session_t *sess, const char *name);
 
 
 /**

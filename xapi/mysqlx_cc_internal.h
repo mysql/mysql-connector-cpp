@@ -145,6 +145,7 @@ struct mysqlx_session_struct
   : public Mysqlx_diag
 {
   using Stmt_cache = std::forward_list<mysqlx_stmt_struct>;
+  std::string m_savepoint_name;
 
 public:
 
@@ -250,7 +251,9 @@ public:
 
   void transaction_begin();
   void transaction_commit();
-  void transaction_rollback();
+  void transaction_rollback(const char *sp);
+  const char * savepoint_set(const char *);
+  void savepoint_remove(const char *);
 
   mysqlx_error_t *get_last_error();
 

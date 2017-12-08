@@ -262,21 +262,36 @@ TEST_F(Sess, trx)
     EXPECT_FALSE(doc.hasField("bar"));
   }
 
-  /*
-    Check error thrown if starting new transaction while previous
-    one is not closed.
-  */
+  //With Savepoints!
 
   get_sess().startTransaction();
 
-  try {
-    get_sess().startTransaction();
-    FAIL() << "Expected an error";
-  }
-  catch (const Error &e)
-  {
-    cout << "Expected error: " << e << endl;
-  }
+  std::vector<string> savepoints;
+
+  coll.add("{\"bar\": 5}").execute();
+  savepoints.emplace_back(get_sess().setSavepoint()); //savepoints[0]
+  coll.add("{\"bar\": 6}").execute();
+  savepoints.emplace_back(get_sess().setSavepoint()); //savepoints[1]
+  coll.add("{\"bar\": 7}").execute();
+  savepoints.emplace_back(get_sess().setSavepoint()); //savepoints[2]
+  coll.add("{\"bar\": 8}").execute();
+  savepoints.emplace_back(get_sess().setSavepoint("MySave")); //savepoints[3]
+
+  get_sess().releaseSavepoint("MySave");
+  EXPECT_THROW(get_sess().releaseSavepoint(savepoints.back()), Error);
+  savepoints.pop_back();
+  // rollback to bar:6
+  get_sess().rollbackTo(savepoints[1]);
+  //savepoint of bar:7 was removed because of the rollback to bar:6
+  EXPECT_THROW(get_sess().rollbackTo(savepoints[2]), Error);
+  EXPECT_THROW(get_sess().rollbackTo(""), Error);
+  get_sess().rollbackTo(savepoints.front());
+  get_sess().commit();
+
+  cout << "Collection has " << coll.count()
+    << " documents." << endl;
+
+  EXPECT_EQ(3U, coll.count());
 
   cout << "Done!" << endl;
 }
