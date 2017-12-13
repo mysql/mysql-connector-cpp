@@ -63,6 +63,58 @@ IF(WIN32)
                                                     "SET(LICENSE_FILENAME \"${LICENSE_FILENAME}\")\n")
 ENDIF(WIN32)
 
+
+# On Linux el6/el7 the default gcc is too old, see if devtoolset is installed.
+# We need to look for gcc before calling PROJECT below.
+OPTION(FORCE_UNSUPPORTED_COMPILER "Disable compiler version checks" OFF)
+MARK_AS_ADVANCED(FORCE_UNSUPPORTED_COMPILER)
+
+IF(UNIX)
+  FIND_PROGRAM(MY_UNAME uname /bin /usr/bin /usr/local/bin /sbin)
+ENDIF()
+
+IF(CMAKE_HOST_UNIX AND NOT FORCE_UNSUPPORTED_COMPILER
+    AND NOT CMAKE_C_COMPILER AND NOT CMAKE_CXX_COMPILER)
+  # Cannot INCLUDE(CMakeDetermineSystem) prior to PROJECT initialization below.
+  SET (ENV_CC "$ENV{CC}")
+  SET (ENV_CXX "$ENV{CXX}")
+  IF (ENV_CC STREQUAL "" AND ENV_CXX STREQUAL "")
+    IF(MY_UNAME)
+      EXEC_PROGRAM(uname ARGS -r OUTPUT_VARIABLE MY_HOST_SYSTEM_VERSION)
+      IF(MY_HOST_SYSTEM_NAME MATCHES "Linux" AND
+          MY_HOST_SYSTEM_VERSION MATCHES "\\.el[67](uek)?\\.")
+        MESSAGE(STATUS
+          "This is ${MY_HOST_SYSTEM_NAME} version ${MY_HOST_SYSTEM_VERSION}")
+        FIND_PROGRAM(MY_GCC_COMPILER gcc)
+        IF (MY_GCC_COMPILER)
+          MESSAGE(STATUS "gcc is ${MY_GCC_COMPILER}")
+          MESSAGE(STATUS
+            "We probably need /opt/rh/devtoolset-6/root/usr/bin/gcc")
+          EXECUTE_PROCESS(COMMAND ${MY_GCC_COMPILER} -dumpversion
+            OUTPUT_VARIABLE MY_GCC_VERSION)
+          IF(MY_GCC_VERSION VERSION_LESS 5.0)
+            MESSAGE(STATUS "${MY_GCC_COMPILER} is version ${MY_GCC_VERSION}")
+            FIND_PROGRAM(ALTERNATIVE_GCC gcc
+              NO_DEFAULT_PATH
+              PATHS "/opt/rh/devtoolset-6/root/usr/bin")
+            FIND_PROGRAM(ALTERNATIVE_GPP g++
+              NO_DEFAULT_PATH
+              PATHS "/opt/rh/devtoolset-6/root/usr/bin")
+            IF(ALTERNATIVE_GCC AND ALTERNATIVE_GPP)
+              SET(CMAKE_C_COMPILER ${ALTERNATIVE_GCC})
+              SET(CMAKE_CXX_COMPILER ${ALTERNATIVE_GPP})
+              MESSAGE(STATUS "Using ${ALTERNATIVE_GCC}")
+              MESSAGE(STATUS "Using ${ALTERNATIVE_GPP}")
+            ELSE()
+              MESSAGE(WARNING "Could not find devtoolset gcc")
+            ENDIF()
+          ENDIF()
+        ENDIF()
+      ENDIF()
+    ENDIF()
+  ENDIF()
+ENDIF()
+
 #-----------------
 # CPPFLAGS, CXXFLAGS and LDFLAGS from the environment
 
@@ -269,7 +321,7 @@ IF(MYSQLCLIENT_STATIC_BINDING AND EXISTS "${CMAKE_SOURCE_DIR}/cmake/mysql_versio
 ENDIF()
 
 
-OPTION(USE_SERVER_CXXFLAGS "USE MYSQL_CXXFLAGS on connector build" 0)
+OPTION(USE_SERVER_CXXFLAGS "USE MYSQL_CXXFLAGS on connector build" TRUE)
 
 message(STATUS "USE_SERVER_FLAGS : ${USE_SERVER_CXXFLAGS}")
 if (USE_SERVER_CXXFLAGS)
