@@ -123,6 +123,12 @@ set(ENV_OR_OPT_VARS
   MYSQL_LINK_FLAGS
 )
 
+IF(NOT WIN32)
+set(MYSQL_COMPILER_ID
+    MYSQL_COMPILER_VERSION
+)
+ENDIF(NOT WIN32)
+
 # Mark the variable names that have values that are paths
 set(ENV_OR_OPT_PATH_VARS
   MYSQL_DIR
@@ -146,7 +152,7 @@ foreach(_xvar ${ENV_OR_OPT_VARS})
     set(${_xvar} $ENV{${_xvar}})
   endif()
 
-  # Notmalize the path if the variable is set and is a path 
+  # Notmalize the path if the variable is set and is a path
   if(${_xvar})
     list(FIND ENV_OR_OPT_PATH_VARS ${_xvar} _index)
     if (${_index} GREATER -1)
@@ -560,7 +566,7 @@ if(MYSQL_LIB_DIR)
   set(MYSQL_LIBRARIES ${MYSQL_LIB})
 
 elseif(MYSQL_DIR AND
-       (NOT _mysql_config_in_mysql_dir) AND 
+       (NOT _mysql_config_in_mysql_dir) AND
        (NOT _mysql_config_set_by_user))
 
   if(FINDMYSQL_DEBUG)
@@ -808,6 +814,19 @@ ENDIF()
 
 ##########################################################################
 #
+# Get libmysqlclient compiler ID and VERSION
+#
+##########################################################################
+IF(NOT WIN32)
+_mysql_conf(MYSQL_COMPILER_VERSION "")
+STRING(REGEX MATCH "Compiler:[a-zA-Z0-9\\. ]+" MYSQL_COMPILER_VERSION ${MYSQL_COMPILER_VERSION})
+STRING(REGEX REPLACE "Compiler: " "" MYSQL_COMPILER_VERSION ${MYSQL_COMPILER_VERSION})
+STRING(REGEX MATCH "[a-zA-Z0-9]+" MYSQL_COMPILER_ID ${MYSQL_COMPILER_VERSION})
+STRING(REGEX REPLACE "[a-zA-Z0-9]+ " "" MYSQL_COMPILER_VERSION ${MYSQL_COMPILER_VERSION})
+ENDIF(NOT WIN32)
+
+##########################################################################
+#
 # Report
 #
 ##########################################################################
@@ -836,3 +855,8 @@ message(STATUS "  MYSQL_VERSION               : ${MYSQL_VERSION}")
 message(STATUS "  MYSQL_VERSION_ID            : ${MYSQL_VERSION_ID}")
 message(STATUS "  MYSQL_LIB                   : ${MYSQL_LIB}")
 message(STATUS "  MYSQL_LIBRARIES             : ${MYSQL_LIBRARIES}")
+
+IF(NOT WIN32)
+message(STATUS "  MYSQL_COMPILER_ID           : ${MYSQL_COMPILER_ID}")
+message(STATUS "  MYSQL_COMPILER_VERSION      : ${MYSQL_COMPILER_VERSION}")
+ENDIF(NOT WIN32)
