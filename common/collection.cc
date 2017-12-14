@@ -58,8 +58,17 @@ struct JSON_val_conv : public cdk::Converter<JSON_val_conv,
 
   void num(int64_t v)
   {
-    if (m_proc)
+    if (!m_proc)
+      return;
+
+    /*
+      Note: xplugin expects positive values to be reported as unsigned integers.
+    */
+
+    if (v < 0)
       m_proc->num(v);
+    else
+      m_proc->num(uint64_t(v));
   }
 
   void num(float v)
@@ -85,8 +94,8 @@ struct JSON_val_conv : public cdk::Converter<JSON_val_conv,
 
 struct Field_conv
   : public cdk::Converter<Field_conv,
-  cdk::JSON::Processor::Any_prc,
-  cdk::Any::Processor
+    cdk::JSON::Processor::Any_prc,
+    cdk::Any::Processor
   >
 {
   using string = cdk::string;
@@ -114,19 +123,38 @@ struct Field_conv
   {
     using Doc_conv = cdk::Doc_prc_converter<JSON_val_conv>;
     bool m_has_required = false;
+    bool m_has_options = false;
+    bool m_geojson = false;
 
     Any_prc* key_val(const string &key) override
     {
-      string field_name = key;
+      static const std::set<std::string> allowed_keys =
+      { "field", "type", "required", "options", "srid" };
+
+      std::string field_name = to_lower(key);
+
+      if (allowed_keys.find(field_name) == allowed_keys.end())
+        throw_error("Invalid parameter in index field specification");
+
       // Do a key name replacement on 2nd level
-      if (key == string("field"))
+      if (field_name == "field")
       {
         field_name = "member";
       }
-      else if (key == string("required"))
+      else if (field_name == "required")
       {
         m_has_required = true;
       }
+      else if (field_name == "options" || field_name == "srid")
+      {
+        m_has_options = true;
+      }
+
+      // TODO: enable this when m_geojson is correctly set.
+
+      //if (m_has_options && !m_geojson)
+      //  throw_error("Only GEOJSON index component can have \"options\" or \"srid\" parameters");
+
       return Doc_conv::key_val(field_name);
     }
 
@@ -142,7 +170,7 @@ struct Field_conv
         if (!m_has_required)
         {
           // No "required" in "field"
-          m_proc->key_val("required")->scalar()->yesno(false);
+          m_proc->key_val("required")->scalar()->yesno(m_geojson);
         }
         m_proc->doc_end();
       }
@@ -234,9 +262,14 @@ struct Index_def_conv : public cdk::Converter<Index_def_conv,
 
   Prc_from::Any_prc* key_val(const string &key)
   {
-    string field_name = key;
+    static const std::set<std::string> allowed_keys = { "fields", "type" };
+    std::string field_name = to_lower(key);
+
+    if (allowed_keys.find(field_name) == allowed_keys.end())
+      throw_error("Invalid index parameter");
+
     // Do a key name replacement on 1st level
-    if (key == string("fields"))
+    if (field_name == "fields")
     {
       field_name = "constraint";
     }
@@ -248,6 +281,8 @@ struct Index_def_conv : public cdk::Converter<Index_def_conv,
     return &m_fields_conv;
   }
 };
+
+
 
 
 struct Index_def

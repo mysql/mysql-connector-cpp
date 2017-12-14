@@ -101,8 +101,10 @@ protected:
       m_sess = new mysqlx::Session(
         SessionOption::PORT, m_port,
         SessionOption::USER, m_user,
-        SessionOption::PWD, m_password,
-        SessionOption::SSL_MODE, SSLMode::DISABLED
+        SessionOption::PWD, m_password
+#ifndef WITH_SSL
+        , SessionOption::SSL_MODE, SSLMode::DISABLED
+#endif
       );
     }
     catch (const Error &e)
@@ -242,5 +244,14 @@ public:
 // TODO: remove this when prepare is ok again
 #define SKIP_TEST(A) std::cerr << "SKIPPED: " << A << std::endl; return;
 
+
+#define EXPECT_ERR(Code) \
+  do { \
+    try { Code; FAIL() << "Expected an error"; } \
+    catch (const std::exception &e) \
+    { cout << "Expected error: " << e.what() << endl; } \
+    catch (const char *e) { FAIL() << "Bad exception: " << e; } \
+    catch (...) { FAIL() << "Bad exception"; } \
+  } while(false)
 
 #endif

@@ -1287,8 +1287,8 @@ struct Op_idx_drop
   )
     : Op_idx_admin(sess, coll, name, "drop_collection_index")
   {
-    // TODO: correct error number... 1051 = collection doesn't exist
-    // skip_error(cdk::server_error(1051));
+    // 1091 = "Can't drop ...; check that column/key exists"
+    skip_error(cdk::server_error(1091));
   }
 };
 

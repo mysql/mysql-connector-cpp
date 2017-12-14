@@ -66,10 +66,14 @@ TEST_F(xapi, test_create_collection_index)
              "{ \"field\": \"$.zip\", \"required\" : true , \"type\" : \"TEXT(10)\" },"\
              "{ \"field\": \"$.zcount\", \"type\" : \"INT UNSIGNED\" }]}";
 
-  const char *geo_json_idx = "{"\
-             "\"type\" : \"SPATIAL\","\
-             "\"fields\": "\
-             "[ { \"field\": \"$.coords\", \"type\" : \"GEOJSON\", \"required\" : true "\
+  const char *geo_json_idx = "{"
+             "\"type\" : \"SPATIAL\","
+             "\"fields\": [{"
+                "\"field\": \"$.coords\","
+                "\"type\" : \"GEOJSON\","
+                "\"required\" : true,"
+                "\"options\": 2,"
+                "\"srid\": 4326"
              "}]}";
 
   AUTHENTICATE();
@@ -77,6 +81,7 @@ TEST_F(xapi, test_create_collection_index)
   mysqlx_schema_drop(get_session(), schema_name);
   EXPECT_EQ(RESULT_OK, mysqlx_schema_create(get_session(), schema_name));
   schema = mysqlx_get_schema(get_session(), schema_name, 0);
+
   EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, coll_name));
   collection = mysqlx_get_collection(schema, coll_name, 0);
 
