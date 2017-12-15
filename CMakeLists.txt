@@ -94,7 +94,7 @@ include(libutils)
 include(install_layout.cmake)
 
 set(
-  BUNDLE_DEPENDENCIES ON CACHE BOOLEAN
+  BUNDLE_DEPENDENCIES OFF CACHE BOOLEAN
   "If enabled, external libraries used by the connector, such as openSSL,
    will be installed together with the connector library"
 )
