@@ -238,7 +238,7 @@ void connection_TLS_impl::do_connect()
     cdk::foundation::connection::detail::set_nonblocking(fd, false);
 
 #ifdef WITH_SSL_YASSL
-    SSL_set_fd(m_tls, fd);
+    SSL_set_fd(m_tls, static_cast<int>(fd));
 #else
     SSL_set_fd(m_tls, static_cast<int>(fd));
 #endif

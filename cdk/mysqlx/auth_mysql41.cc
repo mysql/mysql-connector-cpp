@@ -31,9 +31,9 @@
 #endif
 
 #if defined(WITH_SSL_YASSL)
-#include <taocrypt/include/sha.hpp>
+#include <sha.hpp>
 #else
-#include "openssl/sha.h"
+#include <openssl/sha.h>
 #endif
 
 #ifdef __GNUC__

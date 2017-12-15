@@ -22,6 +22,8 @@
 
 
 cmake_minimum_required(VERSION 2.8)
+# TODO: Why it is not enough to set it in the top-level CMakeLists.txt?
+cmake_policy(SET CMP0023 OLD)
 
 ADD_SUBDIRECTORY(tests)
 
@@ -34,21 +36,11 @@ if(NOT PROTOBUF_LITE)
   list(APPEND cdk_libs protobuf)
 endif()
 
-#if(SSL_LIBRARIES AND (WITH_SSL STREQUAL "bundled"))
-#  list(APPEND cdk_libs ${SSL_LIBRARIES})
-#endif()
 
 SET(cdk_sources
-    session.cc
-    codec.cc
-    )
-
-IF (WIN32 AND OPENSSL_APPLINK_C)
-  # Remove warnings from openssl applink.c
-  set_source_files_properties("${OPENSSL_APPLINK_C}"  PROPERTIES
-                              COMPILE_FLAGS "/wd4152 /wd4996")
-  LIST(APPEND cdk_sources "${OPENSSL_APPLINK_C}")
-ENDIF()
+  session.cc
+  codec.cc
+)
 
 
 add_library_ex(cdk STATIC
@@ -61,13 +53,6 @@ add_library_ex(cdk STATIC
   LIBS
     ${cdk_libs}
 )
-
-#if(SSL_LIBRARIES AND NOT (WITH_SSL STREQUAL "bundled"))
-#list(APPEND cdk_libs ${SSL_LIBRARIES})
-#endif()
-if(SSL_LIBRARIES)
-target_link_libraries(cdk ${SSL_LIBRARIES})
-endif()
 
 add_coverage(cdk)
 

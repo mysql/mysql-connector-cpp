@@ -82,25 +82,38 @@ if (NOT HAVE_CODECVT_UTF8) #AND NOT CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 
+#
+# -------------------------------------------
+#
+
 ADD_SUBDIRECTORY(tests)
 
 SET(sources error.cc stream.cc connection_tcpip.cc socket.cc diagnostics.cc
             string.cc socket_detail.cc)
 
 IF(WITH_SSL)
-  SET(sources ${sources} connection_openssl.cc)
+
+  list(APPEND sources connection_openssl.cc)
+
+  if(WIN32 AND OPENSSL_APPLINK_C)
+    message("adding source: ${OPENSSL_APPLINK_C}")
+    list(APPEND sources "${OPENSSL_APPLINK_C}")
+    # Remove warnings from openssl applink.c
+    set_source_files_properties("${OPENSSL_APPLINK_C}"  PROPERTIES
+                                COMPILE_FLAGS "/wd4152 /wd4996")
+  endif()
+
 ENDIF()
 
+#message("cdk foundation sources: ${sources}")
 
 SET(target_foundation ${cdk_target_prefix}foundation
     CACHE INTERNAL "CDK foundation target")
 
 ADD_LIBRARY(${target_foundation} OBJECT ${sources})
 ADD_COVERAGE(${target_foundation})
+add_ssl(${target_foundation})
 
-IF(WITH_SSL STREQUAL "bundled")
-  lib_interface_link_libraries(${target_foundation} yassl)
-ENDIF()
 
 IF(WIN32)
   lib_interface_link_libraries(${target_foundation} ws2_32)

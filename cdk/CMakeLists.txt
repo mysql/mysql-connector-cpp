@@ -23,12 +23,13 @@
 
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
+cmake_policy(VERSION 2.8.12)
+cmake_policy(SET CMP0022 NEW)  # consistently use INTERFACE_LINK_LIBRARIES property
+cmake_policy(SET CMP0023 OLD)
 
 
 PROJECT(MySQLCDK)
 
-cmake_policy(VERSION 2.8.12)
-cmake_policy(SET CMP0022 NEW)  # consistently use INTERFACE_LINK_LIBRARIES property
 
 #
 # Detect if we are configured as stand-alone project, or sub-project.
@@ -151,15 +152,9 @@ endif()
 message("WITH_SSL: ${WITH_SSL}")
 
 include(ssl)
-MYSQL_CHECK_SSL()
-if(WITH_SSL STREQUAL "bundled")
-  if(CDK_BIG_ENDIAN)
-    ADD_DEFINITIONS(-DWORDS_BIGENDIAN)
-  endif()
-endif()
-
-ADD_DEFINITIONS(${SSL_DEFINES})
-
+MYSQL_CHECK_SSL(${CDK_BIG_ENDIAN})
+add_config(WITH_SSL)
+add_config(WITH_SSL_YASSL)
 
 #
 # Enable C++11
