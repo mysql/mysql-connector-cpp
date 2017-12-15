@@ -230,11 +230,11 @@ static const String2IntMap booleanOptions[]=
   {
     {"OPT_REPORT_DATA_TRUNCATION",  MYSQL_REPORT_DATA_TRUNCATION, false},
     {"OPT_ENABLE_CLEARTEXT_PLUGIN", MYSQL_ENABLE_CLEARTEXT_PLUGIN, false},
-    {"sslVerify",                   MYSQL_OPT_SSL_VERIFY_SERVER_CERT, false}, // Deprecated
     {"OPT_CAN_HANDLE_EXPIRED_PASSWORDS", MYSQL_OPT_CAN_HANDLE_EXPIRED_PASSWORDS, true},
     {"OPT_CONNECT_ATTR_RESET",      MYSQL_OPT_CONNECT_ATTR_RESET, true},
     {"OPT_RECONNECT",               MYSQL_OPT_RECONNECT, true},
-    {"sslEnforce",                  MYSQL_OPT_SSL_ENFORCE, false} // Deprecated
+    {"OPT_GET_SERVER_PUBLIC_KEY",   MYSQL_OPT_GET_SERVER_PUBLIC_KEY, true},
+    {"OPT_OPTIONAL_RESULTSET_METADATA", MYSQL_OPT_OPTIONAL_RESULTSET_METADATA, true},
 
   };
 /* Array for mapping of integer connection options to mysql_options call */
@@ -247,6 +247,7 @@ static const String2IntMap intOptions[]=
     {"OPT_MAX_ALLOWED_PACKET",  MYSQL_OPT_MAX_ALLOWED_PACKET, false},
     {"OPT_NET_BUFFER_LENGTH",   MYSQL_OPT_NET_BUFFER_LENGTH, false},
     {"OPT_SSL_MODE",            MYSQL_OPT_SSL_MODE    , false},
+    {"OPT_RETRY_COUNT",         MYSQL_OPT_RETRY_COUNT, false},
 
   };
 /* Array for mapping of string connection options to mysql_options call */
@@ -416,7 +417,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   const sql::SQLString * p_s;
   bool opt_reconnect = false;
   int  client_exp_pwd = false;
-  bool secure_auth= true;
 
 
   /* Values set in properties individually should have priority over those
@@ -700,11 +700,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       } catch (sql::InvalidArgumentException& e) {
         throw sql::InvalidArgumentException("Wrong type passed for useLegacyAuth expected sql::SQLString");
       }
-      if (p_b) {
-        secure_auth= !*p_b;
-      } else {
-        throw sql::InvalidArgumentException("No bool value passed for useLegacyAuth");
-      }
     } else if (!it->first.compare("OPT_CONNECT_ATTR_ADD")) {
       const std::map< sql::SQLString, sql::SQLString > *conVal;
       try {
@@ -777,13 +772,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 #endif
 
   proxy->use_protocol(uri.Protocol());
-
-  try {
-    proxy->options(MYSQL_SECURE_AUTH, &secure_auth);
-  } catch (sql::InvalidArgumentException& e) {
-    std::string errorOption("MYSQL_SECURE_AUTH");
-    throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
-  }
 
   try {
     proxy->options(MYSQL_SET_CHARSET_NAME, defaultCharset.c_str());
