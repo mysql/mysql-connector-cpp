@@ -422,16 +422,30 @@ function(bundle_ssl_libs)
 
           message("bundling: ${lib_file}")
           install(FILES "${lib_file}" DESTINATION "${INSTALL_LIB_DIR_STATIC}")
+          get_filename_component(lib_dir "${lib_file}" DIRECTORY)
+          get_filename_component(lib_name "${lib_file}" NAME)
+
+          # Create symlink used at link time
+
+          string(REGEX MATCH "[^.]+" link_name "${lib_name}")
+          set(link_name "${link_name}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+
+          message("bundling link: ${link_name} -> ${lib_name}")
+          install(CODE "execute_process(
+            COMMAND ${CMAKE_COMMAND} -E create_symlink
+                    ${lib_name} ${link_name}
+            WORKING_DIRECTORY \"\${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB_DIR_STATIC}\"
+          )")
+
+          # Create soname link
 
           if(soname)
 
-            get_filename_component(lib_dir "${lib_file}" DIRECTORY)
-            get_filename_component(lib_name "${lib_file}" NAME)
             message("bundling soname link: ${soname} -> ${lib_name}")
             install(CODE "execute_process(
                COMMAND ${CMAKE_COMMAND} -E create_symlink
                        ${lib_name} ${soname}
-               WORKING_DIRECTORY \"${lib_dir}\"
+               WORKING_DIRECTORY \"\${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB_DIR_STATIC}\"
             )")
 
           endif()
