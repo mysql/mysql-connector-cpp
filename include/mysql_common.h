@@ -25,19 +25,9 @@
 #ifndef MYSQL_COMMON_H
 #define MYSQL_COMMON_H
 
+
 #define DEFAULT_MYSQL_PORT  3306
 #define DEFAULT_MYSQLX_PORT 33060
-
-
-/*
-  On Windows, dependency on the sockets library can be handled using
-  #pragma comment directive.
-*/
-
-#ifdef _WIN32
-#pragma comment(lib,"ws2_32")
-#endif
-
 
 /*
   Note: we add throw statement to the definition of THROW() so that compiler won't
