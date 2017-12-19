@@ -89,6 +89,7 @@ int main(int argc, const char **argv)
       sql.str("");
       sql << "INSERT INTO test(id, label) VALUES (";
       sql << test_data[i].id << ", '" << test_data[i].label << "')";
+      std::cout << sql.str() << std::endl;
       stmt->execute(sql.str());
     }
     cout << "#\t Test table populated" << endl;

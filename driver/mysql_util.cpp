@@ -257,6 +257,13 @@ const OUR_CHARSET our_charsets60[] =
   { 245, "utf8mb4", "utf8mb4_croatian_ci", 1, 4, "", cppconn_mbcharlen_utf8mb4, check_mb_utf8mb4_valid},
   { 246, "utf8mb4", "utf8mb4_unicode_520_ci", 1, 4, "", cppconn_mbcharlen_utf8mb4, check_mb_utf8mb4_valid},
   { 247, "utf8mb4", "utf8mb4_vietnamese_ci", 1, 4, "", cppconn_mbcharlen_utf8mb4, check_mb_utf8mb4_valid},
+  { 248, "utf8mb4", "utf8mb4_vietnamese_ci", 1, 4, "", cppconn_mbcharlen_utf8mb4, check_mb_utf8mb4_valid},
+
+  {248, "gb18030", "gb18030_chinese_ci",1, 4, "", NULL, NULL },
+  {249, "gb18030", "gb18030_bin",1, 4, "", NULL, NULL },
+  {250, "gb18030", "gb18030_unicode_520_ci",1, 4, "", NULL, NULL },
+
+  { 255, "utf8mb4", "utf8mb4_0900_ai_ci", 1, 4, "", cppconn_mbcharlen_utf8mb4, check_mb_utf8mb4_valid},
 
   /*Should not really happen, but adding them */
   { 254, "utf8", "utf8_general_cs", 1, 3, "", cppconn_mbcharlen_utf8, check_mb_utf8_valid},

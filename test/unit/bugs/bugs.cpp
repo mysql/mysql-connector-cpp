@@ -532,7 +532,7 @@ void bugs::bug71606()
 void bugs::bug72700()
 {
   logMsg("bugs::bug72700");
-  ASSERT(stmt->execute("select astext(geomfromtext('point(10 10)'))"));
+  ASSERT(stmt->execute("select ST_AsText(ST_GeomFromText('point(10 10)'))"));
 
   try
   {

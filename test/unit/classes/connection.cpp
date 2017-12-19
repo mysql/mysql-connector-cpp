@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2017, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -958,19 +958,6 @@ void connection::connectUsingMapWrongTypes()
       /* expected */
     }
     connection_properties.erase("OPT_REPORT_DATA_TRUNCATION");
-
-    try
-    {
-      connection_properties["sslVerify"]=(strval);
-      created_objects.clear();
-      con.reset(driver->connect(connection_properties));
-      FAIL("No exception XXXI - sslVerify");
-    }
-    catch (sql::InvalidArgumentException)
-    {
-      /* expected */
-    }
-    connection_properties.erase("sslVerify");
 
     try
     {
@@ -2111,26 +2098,26 @@ void connection::setTransactionIsolation()
   {
     con->setTransactionIsolation(sql::TRANSACTION_READ_COMMITTED);
     ASSERT_EQUALS(sql::TRANSACTION_READ_COMMITTED, con->getTransactionIsolation());
-    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'tx_isolation'"));
+    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'transaction_isolation'"));
     checkResultSetScrolling(res);
     res->next();
     ASSERT_EQUALS("READ-COMMITTED", res->getString("Value"));
 
     con->setTransactionIsolation(sql::TRANSACTION_READ_UNCOMMITTED);
     ASSERT_EQUALS(sql::TRANSACTION_READ_UNCOMMITTED, con->getTransactionIsolation());
-    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'tx_isolation'"));
+    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'transaction_isolation'"));
     res->next();
     ASSERT_EQUALS("READ-UNCOMMITTED", res->getString("Value"));
 
     con->setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
     ASSERT_EQUALS(sql::TRANSACTION_REPEATABLE_READ, con->getTransactionIsolation());
-    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'tx_isolation'"));
+    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'transaction_isolation'"));
     res->next();
     ASSERT_EQUALS("REPEATABLE-READ", res->getString("Value"));
 
     con->setTransactionIsolation(sql::TRANSACTION_SERIALIZABLE);
     ASSERT_EQUALS(sql::TRANSACTION_SERIALIZABLE, con->getTransactionIsolation());
-    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'tx_isolation'"));
+    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'transaction_isolation'"));
     res->next();
     ASSERT_EQUALS("SERIALIZABLE", res->getString("Value"));
   }

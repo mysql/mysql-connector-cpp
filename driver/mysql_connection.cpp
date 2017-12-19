@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2017, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -349,8 +349,6 @@ bool get_connection_option(const sql::SQLString optionName,
   - sslCA
   - sslCAPath
   - sslCipher
-  - sslEnforce
-  - sslVerify
   - sslCRL
   - sslCRLPath
   - useLegacyAuth
@@ -379,6 +377,10 @@ bool get_connection_option(const sql::SQLString optionName,
   - OPT_CONNECT_ATTR_ADD
   - OPT_CONNECT_ATTR_DELETE
   - OPT_CONNECT_ATTR_RESET
+  - OPT_RETRY_COUNT,
+  - OPT_GET_SERVER_PUBLIC_KEY,
+  - OPT_OPTIONAL_RESULTSET_METADATA
+  - OPT
   - preInit
   - postInit
   - rsaKey
