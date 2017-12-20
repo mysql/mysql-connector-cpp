@@ -283,10 +283,15 @@ public:
 
   Value();  ///< Constructs Null value.
   Value(std::nullptr_t); ///< Constructs Null value.
+
+  Value(const std::string &str);
+  Value(std::string &&str);
+  Value(const char *str) : Value(std::string(str)) {}
+
   Value(const std::wstring &str);
   Value(std::wstring &&str);
-  Value(const char *str) : Value(string(str)) {}
   Value(const wchar_t *str) : Value(std::wstring(str)) {}
+
   Value(const bytes&);
   Value(int64_t);
   Value(uint64_t);
@@ -810,6 +815,19 @@ inline Value::Value(const DbDoc &doc)
 try
   : m_type(DOC)
   , m_doc(doc)
+{}
+CATCH_AND_WRAP
+
+
+inline Value::Value(const std::string &val)
+try
+  : common::Value(val)
+{}
+CATCH_AND_WRAP
+
+inline Value::Value(std::string &&val)
+try
+  : common::Value(std::move(val))
 {}
 CATCH_AND_WRAP
 

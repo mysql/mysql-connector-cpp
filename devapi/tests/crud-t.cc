@@ -551,7 +551,13 @@ TEST_F(Crud, modify)
     op.set(string("name"), Value("boo"));
     op.set("$.age", expr("age+1"));
     op.arrayAppend("food", "Popcorn");
-    res = op.arrayAppend("food", "Coke")
+
+    // Note: scenario from bug#27270420
+
+    std::string food("food");
+    std::string coke("Coke");
+
+    res = op.arrayAppend(food.c_str(), coke)
       .bind("name", "ba%")
       .bind("age", 3)
       .execute();
