@@ -618,7 +618,8 @@ TEST_F(Crud, modify)
 
     cout << "  age: " << doc["age"] << endl;
 
-    EXPECT_EQ(3, (int)doc["age"]);
+    // Double type because of MySQL 8.0.4 type change
+      EXPECT_EQ(3, (double)doc["age"]);
 
     {
       CollectionModify op(coll, "name like :name");
@@ -701,7 +702,9 @@ TEST_F(Crud, order_limit)
     cout << "doc#" << i << ": " << doc << endl;
 
     // age 1 and 2
-    EXPECT_EQ(i+1, (int)doc["age"]);
+    // Double type because of MySQL 8.0.4 type change
+    EXPECT_EQ(i+1, (double)doc["age"]);
+
     EXPECT_EQ(string("foo"), (string)doc["name"] );
 
   }
@@ -808,7 +811,8 @@ TEST_F(Crud, projections)
         cout << col << endl;
       }
       EXPECT_EQ(4, rows);
-      EXPECT_EQ(2016 - (int)doc["age"], (int)doc["birthYear"]);
+      // Double type because of MySQL 8.0.4 type change
+        EXPECT_EQ(2016 - (double)doc["age"], (double)doc["birthYear"]);
     }
   }
 }
@@ -1430,7 +1434,8 @@ TEST_F(Crud, coll_as_table)
   doc = docres.fetchOne();
 
   EXPECT_EQ(string("bar"), static_cast<string>(doc["name"]));
-  EXPECT_EQ(2, static_cast<int>(doc["age"]));
+  // Double type because of MySQL 8.0.4 type change
+    EXPECT_EQ(2, static_cast<double>(doc["age"]));
 
   sql("DROP TABLE IF EXISTS test.not_collection");
   sql(
