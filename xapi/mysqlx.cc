@@ -951,11 +951,11 @@ const char * STDCALL mysqlx_column_get_schema(
 */
 
 const char * STDCALL mysqlx_column_get_catalog(
-  mysqlx_result_struct *res, uint32_t
+  mysqlx_result_struct *res, uint32_t pos
 )
 {
   SAFE_EXCEPTION_BEGIN(res, NULL)
-  return NULL;
+  return res->get_column(pos).m_catalog.c_str();
   SAFE_EXCEPTION_END(res, NULL)
 }
 

@@ -315,6 +315,8 @@ TEST_F(xapi, basic)
     const char *col_schema = mysqlx_column_get_schema(res, i);
     const char *col_cat = mysqlx_column_get_catalog(res, i);
 
+    EXPECT_NE(nullptr, col_cat);
+
     printf("\n Column # %d", i + 1);
     printf("\n * name: %s, orig name: %s, table: %s, orig table: %s, schema: %s, catalog: %s",
       col_name, col_orig_name, col_table, col_orig_table, col_schema, col_cat);
