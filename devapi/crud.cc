@@ -142,10 +142,31 @@ internal::Collection_detail::add_or_replace_one(
 )
 {
   Object_ref coll(get_schema().m_name, m_name);
+
+  if (doc.getType() == Value::STRING)
+  {
+    doc = DbDoc(doc.get<string>());
+  }
+
   Value_expr expr(doc, parser::Parser_mode::DOCUMENT);
 
   if (replace)
   {
+    string doc_id;
+    bool has_id = true;
+
+    try {
+      doc_id = doc.get<DbDoc>()["_id"];
+    } catch (std::out_of_range)
+    {
+      has_id = false;
+    }
+
+    if (has_id && (doc_id != id))
+    {
+      throw Error(R"(Document "_id" and replace id are different!)");
+    }
+
     Replace_cmd cmd(m_sess, coll, std::string(id), expr);
     return cmd.execute();
   }
