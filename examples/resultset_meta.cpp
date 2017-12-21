@@ -110,12 +110,13 @@ int main(int argc, const char **argv)
       printResultSetMetaData(res, ps_res);
     }
 
+    // Disabled due to a bug on server/libmysqlclient (Bug#89016)
     {
-      boost::scoped_ptr< sql::ResultSet > res(stmt->executeQuery("DESCRIBE test"));
-      boost::scoped_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("DESCRIBE test"));
-      boost::scoped_ptr< sql::ResultSet > ps_res(prep_stmt->executeQuery());
-      cout << "# \tDESCRIBE test" << endl;
-      printResultSetMetaData(res, ps_res);
+//      boost::scoped_ptr< sql::ResultSet > res(stmt->executeQuery("DESCRIBE test"));
+//      boost::scoped_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("DESCRIBE test"));
+//      boost::scoped_ptr< sql::ResultSet > ps_res(prep_stmt->executeQuery());
+//      cout << "# \tDESCRIBE test" << endl;
+//      printResultSetMetaData(res, ps_res);
     }
 
     /* Clean up */
