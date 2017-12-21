@@ -123,8 +123,12 @@ const char * mysqlx_result_struct::read_json(size_t *json_byte_size)
 
   cdk::bytes data = row->get_bytes(0);
 
+  /*
+    Note: we return size in bytes, including the '\0' terminator.
+  */
+
   if (json_byte_size)
-    *json_byte_size = data.size() > 0 ? data.size() - 1 : 0; // data.size();
+    *json_byte_size = data.size();
 
   if (0 == data.size())
   {

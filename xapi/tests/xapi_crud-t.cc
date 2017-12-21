@@ -784,6 +784,8 @@ TEST_F(xapi, json_test)
   EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_crud_test", 1)) != NULL);
   EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, "crud_collection"));
 
+  // Insert first document with known length.
+
   for (i = 0; i < 5; i++)
   {
     sprintf(insert_buf, "INSERT INTO cc_crud_test.crud_collection (doc) VALUES " \
@@ -806,6 +808,13 @@ TEST_F(xapi, json_test)
       printf("\n[json: %s]", json_string);
 
     EXPECT_STREQ(json_row[i], json_string);
+
+    /*
+      Note: json_len contains total number of bytes in the returned string,
+      includeing the '\0' terminator.
+    */
+
+    EXPECT_EQ(strlen(json_string) + 1, json_len);
     ++i;
   }
 }
