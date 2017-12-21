@@ -937,10 +937,14 @@ TEST_F(xapi, conn_options_test)
   mysqlx_session_options_t *opt = mysqlx_session_options_new();
 
 
-  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+  ASSERT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
                       OPT_HOST(m_xplugin_host), OPT_PORT(m_port),
-                      OPT_USER(m_xplugin_usr), OPT_PWD(m_xplugin_pwd),
+                      OPT_USER(m_xplugin_usr), OPT_PWD(""),
                       PARAM_END));
+
+  ASSERT_EQ(RESULT_OK,
+    mysqlx_session_option_set(opt, OPT_PWD(m_xplugin_pwd),PARAM_END)
+  );
 
   EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(opt, (mysqlx_opt_type_t)127, port2, PARAM_END));
   cout << "Expected error: " << mysqlx_error_message(mysqlx_error(opt)) << std::endl;

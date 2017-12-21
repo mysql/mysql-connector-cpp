@@ -1027,6 +1027,12 @@ TEST_F(Sess, bugs)
   }
 
   {
+    // empty string as password
+    SessionSettings sess_settings("localhost_not_found", 13009, "rafal", "");
+  }
+
+
+  {
     // Using same Result on different sessions
 
     SessionSettings settings(SessionOption::PORT, get_port(),

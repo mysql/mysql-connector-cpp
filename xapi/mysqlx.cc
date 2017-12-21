@@ -1647,6 +1647,15 @@ void check_option<MYSQLX_OPT_USER>(const char *val)
 }
 
 
+/*
+  It is OK to give empty string as a password.
+*/
+
+template<>
+void check_option<MYSQLX_OPT_PWD>(const char *val)
+{}
+
+
 int STDCALL
 mysqlx_session_option_set(mysqlx_session_options_struct *opt, ...)
 {
