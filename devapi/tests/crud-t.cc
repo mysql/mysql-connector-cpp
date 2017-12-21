@@ -2293,12 +2293,6 @@ TEST_F(Crud, single_document)
   EXPECT_EQ(0,
     coll.replaceOne("id4", expr("{\"_id\":\"id4\", \"name\": \"baz\" }"))
         .getAffectedItemsCount());
-
-  // Using DbDoc
-  DbDoc doc("{\"_id\":\"id4\", \"name\": \"quux\" }");
-
-  EXPECT_EQ(1, coll.replaceOne("id3", doc).getAffectedItemsCount());
-  EXPECT_EQ(string("quux"), coll.getOne("id3")["name"].get<string>());
 }
 
 
