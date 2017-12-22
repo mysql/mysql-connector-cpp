@@ -1742,7 +1742,7 @@ if (V == NULL) \
 int STDCALL
 mysqlx_session_option_get(
   mysqlx_session_options_struct *opt,
-  mysqlx_opt_type_t type,
+  int type,
   ...
 )
 {
@@ -1750,7 +1750,7 @@ mysqlx_session_option_get(
 
   SAFE_EXCEPTION_BEGIN(opt, RESULT_ERROR)
 
-  if (!opt->has_option(type))
+  if (!opt->has_option(mysqlx_opt_type_enum(type)))
   {
     opt->set_diagnostic("Option ... is not set", 0);
     return RESULT_ERROR;
