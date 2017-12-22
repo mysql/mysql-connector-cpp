@@ -1652,7 +1652,7 @@ void check_option<MYSQLX_OPT_USER>(const char *val)
 */
 
 template<>
-void check_option<MYSQLX_OPT_PWD>(const char *val)
+void check_option<MYSQLX_OPT_PWD>(const char *)
 {}
 
 
