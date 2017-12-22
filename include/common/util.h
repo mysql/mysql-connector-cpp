@@ -44,12 +44,11 @@
 */
 
 #ifdef __GNUC__
-#define FALLTHROUGH // fallthrough
-/*
-  Note: this should also work, but not sure which gcc version is required
-  for it to work.
+# if __GNUC__ < 7
+#   define FALLTHROUGH // fallthrough
+# else
   #define FALLTHROUGH __attribute__((fallthrough))
-*/
+# endif
 #else
 #define FALLTHROUGH  // fallthrough
 #endif
