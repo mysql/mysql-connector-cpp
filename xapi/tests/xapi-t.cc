@@ -1440,7 +1440,7 @@ TEST_F(xapi, unix_socket)
     FAIL() << "ssl-mode used on unix domain socket";
   }
 
-  std::cout << "Expected connection error: " << conn_err_code << std::endl;
+  std::cout << "Expected connection error: " << conn_error << std::endl;
 
   opt = mysqlx_session_options_new();
 
@@ -1458,7 +1458,11 @@ TEST_F(xapi, unix_socket)
 
   {
     // Bug 26742948
-    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt, MYSQLX_OPT_SOCKET, "../../../../../../../tmp/mysqlx_11.sock"));
+    EXPECT_EQ(RESULT_OK,
+      mysqlx_session_option_set(opt,
+        MYSQLX_OPT_SOCKET, "../../../../../../../tmp/mysqlx_11.sock", PARAM_END
+      )
+    );
 
     mysqlx_session_option_set(opt, MYSQLX_OPT_USER, "mysqld_user", PARAM_END);
   }
@@ -1471,7 +1475,7 @@ TEST_F(xapi, unix_socket)
     FAIL() << "ssl-mode used on unix domain socket";
   }
 
-  std::cout << "Expected connection error: " << conn_err_code << std::endl;
+  std::cout << "Expected connection error: " << conn_error << std::endl;
 
 
   std::cout << "Done" << std::endl;

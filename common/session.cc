@@ -95,12 +95,14 @@ TLS_options::SSL_MODE get_ssl_mode(unsigned m)
 
 
 /*
-  Initialize CDK connection options based on session settings. If secure is
-  true then the connection is assumed to be secure (does not require
-  encryption).
+  Initialize CDK connection options based on session settings.
+  If socket is true, we are preparing options for a connection
+  over Unix domain socket (and then encryption is not required by default).
 */
 
-void prepare_options(Settings_impl &settings, bool secure, TCPIP_options &opts)
+void prepare_options(
+  Settings_impl &settings, bool socket, TCPIP_options &opts
+)
 {
   using Option = Settings_impl::Option;
   using SSL_mode = Settings_impl::SSL_mode;
@@ -127,11 +129,23 @@ void prepare_options(Settings_impl &settings, bool secure, TCPIP_options &opts)
   */
 
   unsigned mode = unsigned(SSL_mode::REQUIRED);
+  bool mode_set = false;
 
   if (settings.has_option(Option::SSL_MODE))
+  {
+    mode_set = true;
     mode = (unsigned)settings.get(Option::SSL_MODE).get_uint();
+  }
   else if (settings.has_option(Option::SSL_CA))
+  {
+    mode_set = true;
     mode = unsigned(SSL_mode::VERIFY_CA);
+  }
+
+  if (socket && mode_set && mode >= unsigned(SSL_mode::REQUIRED))
+  {
+    throw_error("SSL connection over Unix domain socket requested.");
+  }
 
   if (unsigned(SSL_mode::DISABLED) == mode)
   {
@@ -142,7 +156,7 @@ void prepare_options(Settings_impl &settings, bool secure, TCPIP_options &opts)
   else
 #ifdef WITH_SSL
   {
-    secure = true;
+    socket = true;  // so that PLAIN auth method is used below
 
     TLS_options tls_opt(get_ssl_mode(mode));
     if (settings.has_option(Option::SSL_CA))
@@ -160,7 +174,7 @@ void prepare_options(Settings_impl &settings, bool secure, TCPIP_options &opts)
   else
   {
     opts.set_auth_method(
-      secure ? TCPIP_options::PLAIN : TCPIP_options::MYSQL41
+      socket ? TCPIP_options::PLAIN : TCPIP_options::MYSQL41
     );
   }
 
@@ -179,9 +193,9 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
     A single-host connection over Unix domain socket is considered secure.
     Otherwise SSL connection will be configured by default.
   */
-  bool secure = m_data.m_sock && (1 == m_data.m_host_cnt);
+  bool socket = m_data.m_sock && (1 == m_data.m_host_cnt);
 
-  prepare_options(*this, secure, opts);
+  prepare_options(*this, socket, opts);
 
   // Build the list of hosts based on current settings.
 

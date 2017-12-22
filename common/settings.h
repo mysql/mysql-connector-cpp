@@ -309,6 +309,7 @@ Settings_impl::Setter::set_option<Settings_impl::Option::SOCKET>(
   m_prio = false;
   m_port = false;
   ++m_data.m_host_cnt;
+  m_data.m_sock = true;
   add_option(Option::SOCKET, val);
 
 #endif
