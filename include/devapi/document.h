@@ -401,7 +401,8 @@ public:
   operator float() const;
   operator double() const;
   operator bool() const;
-  operator string() const;
+  operator std::wstring() const;
+  operator std::string() const;
   operator bytes() const;
   operator DbDoc() const;
 
@@ -530,6 +531,7 @@ protected:
 
 public:
 
+  friend mysqlx::string;
   friend SessionSettings;
   friend DbDoc;
   template <class Base> friend class Bind_parameters;
@@ -845,13 +847,29 @@ try
 CATCH_AND_WRAP
 
 inline
-Value::operator string() const
+Value::operator std::wstring() const
 {
   try {
     return get_wstring();
   }
   CATCH_AND_WRAP
 }
+
+inline
+Value::operator std::string() const
+{
+  try {
+    return get_string();
+  }
+  CATCH_AND_WRAP
+}
+
+// Conversion to mysqlx::string is done via its ctor from common::Value.
+
+inline
+mysqlx::string::string(const Value &val)
+  : string((const common::Value&)val)
+{}
 
 
 inline Value::Value(const bytes &data)

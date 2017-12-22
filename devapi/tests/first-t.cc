@@ -155,6 +155,31 @@ TEST_F(First, sql_multi)
 }
 
 
+TEST_F(First, value)
+{
+  // Value object and conversions.
+
+  {
+    Value val = "foo";
+    EXPECT_EQ(Value::STRING, val.getType());
+    EXPECT_EQ(val.get<std::string>(), "foo");
+    EXPECT_EQ(val.get<std::wstring>(), L"foo");
+    EXPECT_EQ(val.get<mysqlx::string>(), L"foo");
+  }
+
+  {
+    Value val = L"foo";
+    EXPECT_EQ(Value::STRING, val.getType());
+    EXPECT_EQ(val.get<std::string>(), "foo");
+    EXPECT_EQ(val.get<std::wstring>(), L"foo");
+    EXPECT_EQ(val.get<mysqlx::string>(), L"foo");
+  }
+
+  // TODO: test other types
+}
+
+
+
 TEST_F(First, api)
 {
   // Check that assignment works for database objects.
