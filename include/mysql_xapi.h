@@ -832,7 +832,7 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, ...);
 */
 
 PUBLIC_API int
-mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
+mysqlx_session_option_get(mysqlx_session_options_t *opt, int type,
                           ...);
 
 /*

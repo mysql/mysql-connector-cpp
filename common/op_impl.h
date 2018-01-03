@@ -1879,7 +1879,8 @@ public:
                           get_group_by(),
                           get_having(),
                           get_limit(),
-                          get_params()
+                          get_params(),
+                          m_lock_mode
                     ));
   }
 

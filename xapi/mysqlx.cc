@@ -432,7 +432,6 @@ mysqlx_set_limit_and_offset(mysqlx_stmt_struct *stmt, uint64_t row_count,
 int mysqlx_set_row_locking(mysqlx_stmt_t *stmt, int locking)
 {
   SAFE_EXCEPTION_BEGIN(stmt, RESULT_ERROR)
-    THROW("Not implemented");
   stmt->set_row_locking((mysqlx_row_locking_t)locking);
   return RESULT_OK;
   SAFE_EXCEPTION_END(stmt, RESULT_ERROR)
@@ -951,11 +950,11 @@ const char * STDCALL mysqlx_column_get_schema(
 */
 
 const char * STDCALL mysqlx_column_get_catalog(
-  mysqlx_result_struct *res, uint32_t
+  mysqlx_result_struct *res, uint32_t pos
 )
 {
   SAFE_EXCEPTION_BEGIN(res, NULL)
-  return NULL;
+  return res->get_column(pos).m_catalog.c_str();
   SAFE_EXCEPTION_END(res, NULL)
 }
 
@@ -1647,6 +1646,15 @@ void check_option<MYSQLX_OPT_USER>(const char *val)
 }
 
 
+/*
+  It is OK to give empty string as a password.
+*/
+
+template<>
+void check_option<MYSQLX_OPT_PWD>(const char *)
+{}
+
+
 int STDCALL
 mysqlx_session_option_set(mysqlx_session_options_struct *opt, ...)
 {
@@ -1733,7 +1741,7 @@ if (V == NULL) \
 int STDCALL
 mysqlx_session_option_get(
   mysqlx_session_options_struct *opt,
-  mysqlx_opt_type_t type,
+  int type,
   ...
 )
 {
@@ -1741,7 +1749,7 @@ mysqlx_session_option_get(
 
   SAFE_EXCEPTION_BEGIN(opt, RESULT_ERROR)
 
-  if (!opt->has_option(type))
+  if (!opt->has_option(mysqlx_opt_type_enum(type)))
   {
     opt->set_diagnostic("Option ... is not set", 0);
     return RESULT_ERROR;
