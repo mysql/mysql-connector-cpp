@@ -40,9 +40,6 @@
 
 namespace mysqlx {
 
-namespace internal {
-  class Row_result_detail;
-}
 
 /**
   Represents a single row from a result that contains rows.
@@ -63,13 +60,16 @@ namespace internal {
   @ingroup devapi_res
 */
 
-class PUBLIC_API Row
-  : internal::Row_detail
+class Row
+  : private internal::Row_detail
 {
 
   Row(internal::Row_detail &&other)
+  try
     : Row_detail(std::move(other))
   {}
+  CATCH_AND_WRAP
+
 
 public:
 
@@ -79,14 +79,19 @@ public:
   explicit Row(T val, Types... vals)
   {
     try {
-      set_values(0, val, vals...);
+      Row_detail::set_values(0, val, vals...);
     }
     CATCH_AND_WRAP
   }
 
-  virtual ~Row() {}
 
-  col_count_t colCount() const;
+  col_count_t colCount() const
+  {
+    try {
+      return Row_detail::col_count();
+    }
+    CATCH_AND_WRAP
+  }
 
 
   /**
@@ -96,7 +101,13 @@ public:
     @throws out_of_range if given row was not fetched from server.
   */
 
-  bytes getBytes(col_count_t pos) const;
+  bytes getBytes(col_count_t pos) const
+  {
+    try {
+      return Row_detail::get_bytes(pos);
+    }
+    CATCH_AND_WRAP
+  }
 
 
   /**
@@ -105,7 +116,13 @@ public:
     @throws out_of_range if given field does not exist in the row.
   */
 
-  Value& get(col_count_t pos);
+  Value& get(col_count_t pos)
+  {
+    try {
+      return Row_detail::get_val(pos);
+    }
+    CATCH_AND_WRAP
+  }
 
 
   /**
@@ -119,8 +136,8 @@ public:
   Value& set(col_count_t pos, const Value &val)
   {
     try {
-      set_values(pos, val);
-      return get(pos);
+      Row_detail::set_values(pos, val);
+      return Row_detail::get_val(pos);
     }
     CATCH_AND_WRAP
   }
@@ -162,10 +179,21 @@ public:
   bool isNull() const { return NULL == m_impl; }
   operator bool() const { return !isNull(); }
 
-  void clear();
+  void clear()
+  {
+    try {
+      Row_detail::clear();
+    }
+    CATCH_AND_WRAP
+  }
+
+private:
+
+  using internal::Row_detail::m_impl;
 
   /// @cond IGNORED
-  friend internal::Row_result_detail;
+  friend internal::Row_result_detail<Columns>;
+  friend internal::Table_insert_detail;
   /// @endcond
 };
 

@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <set>
 #include <deque>
+#include <map>
 #include <chrono>
 #include <thread>
 
@@ -550,7 +551,13 @@ TEST_F(Crud, modify)
     op.set(string("name"), Value("boo"));
     op.set("$.age", expr("age+1"));
     op.arrayAppend("food", "Popcorn");
-    res = op.arrayAppend("food", "Coke")
+
+    // Note: scenario from bug#27270420
+
+    std::string food("food");
+    std::string coke("Coke");
+
+    res = op.arrayAppend(food.c_str(), coke)
       .bind("name", "ba%")
       .bind("age", 3)
       .execute();
@@ -617,7 +624,8 @@ TEST_F(Crud, modify)
 
     cout << "  age: " << doc["age"] << endl;
 
-    EXPECT_EQ(3, (int)doc["age"]);
+    // Double type because of MySQL 8.0.4 type change
+      EXPECT_EQ(3, (double)doc["age"]);
 
     {
       CollectionModify op(coll, "name like :name");
@@ -700,7 +708,9 @@ TEST_F(Crud, order_limit)
     cout << "doc#" << i << ": " << doc << endl;
 
     // age 1 and 2
-    EXPECT_EQ(i+1, (int)doc["age"]);
+    // Double type because of MySQL 8.0.4 type change
+    EXPECT_EQ(i+1, (double)doc["age"]);
+
     EXPECT_EQ(string("foo"), (string)doc["name"] );
 
   }
@@ -807,7 +817,8 @@ TEST_F(Crud, projections)
         cout << col << endl;
       }
       EXPECT_EQ(4, rows);
-      EXPECT_EQ(2016 - (int)doc["age"], (int)doc["birthYear"]);
+      // Double type because of MySQL 8.0.4 type change
+        EXPECT_EQ(2016 - (double)doc["age"], (double)doc["birthYear"]);
     }
   }
 }
@@ -1429,7 +1440,8 @@ TEST_F(Crud, coll_as_table)
   doc = docres.fetchOne();
 
   EXPECT_EQ(string("bar"), static_cast<string>(doc["name"]));
-  EXPECT_EQ(2, static_cast<int>(doc["age"]));
+  // Double type because of MySQL 8.0.4 type change
+    EXPECT_EQ(2, static_cast<double>(doc["age"]));
 
   sql("DROP TABLE IF EXISTS test.not_collection");
   sql(
@@ -1539,7 +1551,8 @@ TEST_F(Crud, buffered)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  cout << "Creating collection..." << endl;
+  cout << "Creating collection";
+  std::flush(cout);
 
   Schema sch = getSchema("test");
   Collection coll = sch.createCollection("coll", true);
@@ -1556,7 +1569,11 @@ TEST_F(Crud, buffered)
       add.add(json.str());
     }
     add.execute();
+    cout << ".";
+    std::flush(cout);
   }
+
+  cout << " done" << endl;
 
   {
     DocResult res = coll.find().sort("age").execute();
@@ -1570,17 +1587,30 @@ TEST_F(Crud, buffered)
     //Get second from cache, after count()
     EXPECT_EQ(1, static_cast<int>(res.fetchOne()["age"]));
 
-    //Get the rest of it
+    cout << "Loading all documents...";
+    std::flush(cout);
+
     std::vector<DbDoc> rows = res.fetchAll();
 
+    cout << " done" << endl;
+
     EXPECT_EQ(9998, rows.size());
+
+    cout << "Examining documents";
+    std::flush(cout);
 
     auto row = rows.begin();
     int i = 2;
     for( ; row != rows.end() ; ++row, ++i)
     {
       EXPECT_EQ(i, static_cast<int>((*row)["age"]));
+      if (0 != i % 1000)
+        continue;
+      cout << ".";
+      std::flush(cout);
     }
+
+    cout << " done" << endl;
 
     EXPECT_EQ(0, res.count());
 
@@ -1607,17 +1637,30 @@ TEST_F(Crud, buffered)
     //Get second from cache, after count()
     EXPECT_EQ(1, static_cast<int>(res.fetchOne()[0]));
 
-    //Get the rest of it
+    cout << "Loading all rows...";
+    std::flush(cout);
+
     std::vector<Row> rows = res.fetchAll();
 
+    cout << " done" << endl;
+
     EXPECT_EQ(9998, rows.size());
+
+    cout << "Examining rows";
+    std::flush(cout);
 
     auto row = rows.begin();
     int i = 2;
     for( ; row != rows.end() ; ++row, ++i)
     {
       EXPECT_EQ(i, static_cast<int>((*row)[0]));
+      if (0 != i % 1000)
+        continue;
+      cout << ".";
+      std::flush(cout);
     }
+
+    cout << " done" << endl;
 
     EXPECT_EQ(0, res.count());
 

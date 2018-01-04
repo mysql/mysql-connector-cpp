@@ -39,32 +39,7 @@
 #include <memory>
 
 using namespace ::mysqlx;
-
 using std::endl;
-
-
-// Value
-// -----
-
-
-void Value::print(ostream &out) const
-{
-  switch (m_type)
-  {
-  case VNULL: out << "<null>"; return;
-  case UINT64: out << m_val._uint64_v; return;
-  case INT64: out << m_val._int64_v; return;
-  case DOUBLE: out << m_val._double_v; return;
-  case FLOAT: out << m_val._float_v; return;
-  case BOOL: out << (m_val._bool_v ? "true" : "false"); return;
-  case STRING: out << (std::string)m_str; return;
-  case DOCUMENT: out << m_doc; return;
-  case RAW: out << "<" << m_raw.size() << " raw bytes>"; return;
-  // TODO: print array contnets
-  case ARRAY: out << "<array with " << elementCount() << " element(s)>"; return;
-  default:  out << "<unknown value>"; return;
-  }
-}
 
 
 // DbDoc implementation
@@ -85,6 +60,12 @@ DbDoc::DbDoc(const std::shared_ptr<Impl> &impl)
 {}
 
 
+const char* DbDoc::get_json() const
+{
+  return m_impl ? m_impl->get_json() : nullptr;
+}
+
+
 bool DbDoc::hasField(const Field &fld) const
 {
   try {
@@ -93,8 +74,12 @@ bool DbDoc::hasField(const Field &fld) const
   CATCH_AND_WRAP
 }
 
+
 const Value& DbDoc::operator[](const Field &fld) const
 {
+  if (!m_impl)
+    throw std::out_of_range("empty document");
+
   try {
     return m_impl->get(fld);
   }
@@ -109,6 +94,7 @@ const Value& DbDoc::operator[](const Field &fld) const
   }
 }
 
+
 void DbDoc::print(std::ostream &out) const
 {
   try {
@@ -119,6 +105,7 @@ void DbDoc::print(std::ostream &out) const
   }
   CATCH_AND_WRAP
 }
+
 
 // JSON document
 // -------------
@@ -201,7 +188,7 @@ public:
       // Create array value.
 
       Value sub;
-      sub.m_type = Value::ARRAY;
+      sub.m_type = Value::ARR;
       sub.m_arr = std::make_shared<Value::Array>();
 
       // Create builder for the sub-array.
@@ -226,7 +213,7 @@ public:
       // Create document value and append it to the array.
 
       Value sub;
-      sub.m_type = Value::DOCUMENT;
+      sub.m_type = Value::DOC;
       sub.m_doc.m_impl = std::make_shared<DbDoc::Impl>();
       m_arr->emplace_back(sub);
 
@@ -248,7 +235,7 @@ public:
     void null() { m_arr->emplace_back(Value()); }
     void str(const cdk::string &val)
     {
-      m_arr->emplace_back(Value(val));
+      m_arr->emplace_back(mysqlx::string(val));
     }
     void num(uint64_t val) { m_arr->emplace_back(val); }
     void num(int64_t val) { m_arr->emplace_back(val); }
@@ -268,7 +255,7 @@ public:
 
     // Turn the value to one storing an array.
 
-    arr.m_type = Value::ARRAY;
+    arr.m_type = Value::ARR;
     arr.m_arr  = std::make_shared<Value::Array>();
 
     // Set up array builder for the new value.
@@ -288,7 +275,7 @@ public:
 
     // Turn the value to one storing a document.
 
-    sub.m_type = Value::DOCUMENT;
+    sub.m_type = Value::DOC;
     sub.m_doc.m_impl = std::make_shared<DbDoc::Impl>();
 
     // Use another builder to build the sub-document.
@@ -311,7 +298,7 @@ public:
   void null() { m_map.emplace(m_key, Value()); }
   void str(const cdk::string &val)
   {
-    m_map.emplace(m_key, Value(val));
+    m_map.emplace(m_key, mysqlx::string(val));
   }
   void num(uint64_t val)  { m_map.emplace(m_key, val); }
   void num(int64_t val)   { m_map.emplace(m_key, val); }
@@ -370,7 +357,7 @@ Value Value::Access::mk_from_json(const std::string &json)
 
     Doc_prc    *doc()
     {
-      m_val->m_type = DOCUMENT;
+      m_val->m_type = DOC;
       m_doc_builder.reset(new DbDoc::Impl::Builder(*m_val->m_doc.m_impl));
       return m_doc_builder.get();
     }
@@ -379,7 +366,7 @@ Value Value::Access::mk_from_json(const std::string &json)
 
     List_prc   *arr()
     {
-      m_val->m_type = ARRAY;
+      m_val->m_type = ARR;
       m_val->m_arr = std::make_shared<Array>();
       m_arr_builder.m_arr = m_val->m_arr.get();
       return &m_arr_builder;
@@ -429,6 +416,8 @@ Value Value::Access::mk_from_json(const std::string &json)
 
   Note: Iterator takes shared ownership of document implementation
   so it can be used even if original document was destroyed.
+
+  TODO: Use common::Iterator<> template instead?
 */
 
 

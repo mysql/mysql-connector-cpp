@@ -22,8 +22,13 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
+#ifndef XAPI_DEF_INTERNAL_H
+#define XAPI_DEF_INTERNAL_H
+
+#include <mysql/cdk.h>
+
 typedef parser::Expression_parser Expression_parser;
-typedef uint64_t row_count_t;
+using   cdk::row_count_t;
 typedef cdk::api::Sort_direction Sort_direction;
 
 typedef enum mysqlx_op_enum
@@ -46,7 +51,17 @@ typedef enum mysqlx_op_enum
 */
   OP_VIEW_CREATE = 10, OP_VIEW_UPDATE = 11, OP_VIEW_REPLACE = 12,
 
-  OP_ADMIN_LIST = 13
+/*
+  Transactions
+*/
+  OP_TRX_BEGIN, OP_TRX_COMMIT, OP_TRX_ROLLBACK,
+
+  OP_LIST_SCHEMAS,
+  OP_LIST_COLLECTIONS,
+  OP_LIST_TABLES,
+
+  OP_SCHEMA_CREATE, OP_COLLECTION_CREATE,
+  OP_SCHEMA_DROP, OP_COLLECTION_DROP, OP_TABLE_DROP, OP_VIEW_DROP
 } mysqlx_op_t;
 
 typedef enum mysqlx_modify_op_enum
@@ -57,3 +72,5 @@ typedef enum mysqlx_modify_op_enum
   MODIFY_ARRAY_APPEND = 4,
   MODIFY_ARRAY_DELETE = 5
 } mysqlx_modify_op;
+
+#endif

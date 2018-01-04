@@ -39,8 +39,6 @@
 
 namespace mysqlx {
 
-
-
 /**
   An error, warning or other diagnostic information reported by server
   when executing queries or statements. The information can be printed to
@@ -52,8 +50,8 @@ namespace mysqlx {
   @ingroup devapi
 */
 
-class PUBLIC_API Warning
-  : public internal::Printable
+class Warning
+  : public virtual common::Printable
   , internal::Warning_detail
 {
 public:
@@ -77,7 +75,13 @@ private:
     : Warning_detail(std::move(init))
   {}
 
-  void print(std::ostream&) const;
+  void print(std::ostream &out) const
+  {
+    try {
+      Warning_detail::print(out);
+    }
+    CATCH_AND_WRAP
+  }
 
 public:
 
@@ -108,27 +112,30 @@ public:
     return m_msg;
   }
 
+
+  friend internal::Result_detail;
+
   struct Access;
   friend Access;
 };
 
 
 inline
-void Warning::print(std::ostream &out) const
+void internal::Warning_detail::print(std::ostream &out) const
 {
-  switch (getLevel())
+  switch (Warning::Level(m_level))
   {
-  case LEVEL_ERROR: out << "Error"; break;
-  case LEVEL_WARNING: out << "Warning"; break;
-  case LEVEL_INFO: out << "Info"; break;
+  case Warning::LEVEL_ERROR: out << "Error"; break;
+  case Warning::LEVEL_WARNING: out << "Warning"; break;
+  case Warning::LEVEL_INFO: out << "Info"; break;
+  default: out << "<Unknown>"; break;
   }
 
-  if (getCode())
-    out << " " << getCode();
+  if (m_code)
+    out << " " << m_code;
 
-  out << ": " << getMessage();
+  out << ": " << m_msg;
 }
-
 
 
 }  // mysqlx

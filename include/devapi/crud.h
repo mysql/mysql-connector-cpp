@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  *
  * The MySQL Connector/C++ is licensed under the terms of the GPLv2
  * <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -30,6 +30,50 @@
   Common templates used to define CRUD operation classes.
 */
 
+
+#include "common.h"
+#include "detail/crud.h"
+
+
+namespace mysqlx {
+
+class Collection;
+class Table;
+
+namespace internal {
+
+/*
+  Factory for constructing concrete implementations of various CRUD
+  operations. All these implementations implement the base Executable_if
+  interface.
+
+  Note: The caller of mk_xxx() method takes ownership of the returned
+  implementation object.
+*/
+
+struct PUBLIC_API Crud_factory
+{
+  using Impl = common::Executable_if;
+
+  static Impl* mk_add(Collection &coll);
+  static Impl* mk_remove(Collection &coll, const string &expr);
+  static Impl* mk_find(Collection &coll);
+  static Impl* mk_find(Collection &coll, const string &expr);
+  static Impl* mk_modify(Collection &coll, const string &expr);
+
+  static Impl* mk_insert(Table &tbl);
+  static Impl* mk_select(Table &tbl);
+  static Impl* mk_update(Table &tbl);
+  static Impl* mk_remove(Table &tbl);
+
+  static Impl* mk_sql(Session &sess, const string &sql);
+};
+
+
+}  // internal
+}  // mysqlx
+
+
 /*
   Different CRUD operation classes derive from `Executable` which defines
   the `execute()` method that executes given operation. Derived classes
@@ -50,17 +94,10 @@
   Each template assumes that its base class defines method 'get_impl()' which
   returns a pointer to the internal implementation object. It also assumes that
   this implementation is of appropriate type and can be casted to
-  the appropriate implementation type. For example Limit<> template assumes
-  that the implementation type can be casted to Limit_impl type. See
-  detail/crud.h for definition of the hierarchy of implementation classes.
+  the appropriate interface type. For example Limit<> template assumes
+  that the implementation type can be casted to Limit_if type.
 */
 
-
-#include "common.h"
-#include "executable.h"
-#include "detail/crud.h"
-
-#include <map>
 
 namespace mysqlx {
 namespace internal {
@@ -93,7 +130,7 @@ public:
 
 protected:
 
-  using Impl = Limit_impl;
+  using Impl = common::Limit_if;
 
   Impl* get_impl()
   {
@@ -127,7 +164,7 @@ public:
 
 protected:
 
-  using Impl = Limit_impl;
+  using Impl = common::Limit_if;
 
   Impl* get_impl()
   {
@@ -167,7 +204,7 @@ public:
 
 protected:
 
-  using Impl = Sort_impl;
+  using Impl = common::Sort_if;
 
   Impl* get_impl()
   {
@@ -207,7 +244,7 @@ public:
 
 protected:
 
-  using Impl = Sort_impl;
+  using Impl = common::Sort_if;
 
   Impl* get_impl()
   {
@@ -243,7 +280,7 @@ public:
 
 protected:
 
-  using Impl = Having_impl;
+  using Impl = common::Having_if;
 
   Impl* get_impl()
   {
@@ -282,7 +319,7 @@ public:
 
 protected:
 
-  using Impl = Group_by_impl;
+  using Impl = common::Group_by_if;
 
   Impl* get_impl()
   {
@@ -310,10 +347,10 @@ public:
   */
 
   template <typename... Types>
-  BindOperation& bind(Types... vals)
+  BindOperation& bind(Types&&... vals)
   {
     try {
-      add_params(get_impl(), vals...);
+      add_params(get_impl(), std::forward<Types>(vals)...);
       return *this;
     }
     CATCH_AND_WRAP
@@ -321,7 +358,7 @@ public:
 
 protected:
 
-  using Impl = Bind_impl;
+  using Impl = common::Bind_if;
 
   Impl* get_impl()
   {
@@ -348,10 +385,16 @@ public:
     it are bound to values.
   */
 
-  BindOperation& bind(const string &parameter, Value val)
+  BindOperation& bind(const string &parameter, const Value &val)
   {
+    if (Value::DOCUMENT == val.getType())
+      throw_error("Can not bind a parameter to a document");
+
+    if (Value::ARRAY == val.getType())
+      throw_error("Can not bind a parameter to an array");
+
     try {
-      get_impl()->add_param(parameter, std::move(val));
+      get_impl()->add_param(parameter, (const common::Value&)val);
       return *this;
     }
     CATCH_AND_WRAP
@@ -374,7 +417,7 @@ public:
 
 protected:
 
-  using Impl = Bind_impl;
+  using Impl = common::Bind_if;
 
   Impl* get_impl()
   {
@@ -385,7 +428,7 @@ protected:
 
 /// @copydoc Offset
 
-template <class Base>
+template <class Base, class IMPL>
 class Set_lock
   : public Base
 {
@@ -401,7 +444,7 @@ public:
 
   Operation& lockShared()
   {
-    get_impl()->set_locking(internal::Lock_mode::SHARED);
+    get_impl()->set_lock_mode(common::Lock_mode::SHARED);
     return *this;
   }
 
@@ -415,13 +458,13 @@ public:
 
   Operation& lockExclusive()
   {
-    get_impl()->set_locking(internal::Lock_mode::EXCLUSIVE);
+    get_impl()->set_lock_mode(common::Lock_mode::EXCLUSIVE);
     return *this;
   }
 
 protected:
 
-  using Impl = Bind_impl;
+  using Impl = IMPL;
 
   Impl* get_impl()
   {

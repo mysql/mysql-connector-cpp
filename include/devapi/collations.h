@@ -85,7 +85,7 @@ const char* characterSetName(CharacterSet id)
   @ingroup devapi_res
 */
 
-struct PUBLIC_API CollationInfo
+struct CollationInfo
 {
   /// Numeric collation id, as used by MySQL server.
 

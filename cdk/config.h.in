@@ -27,4 +27,9 @@
 
 @GENERATED_CONFIG_DEFS@
 
+#define HAVE_MOVE_CTORS
+#if defined _MSC_VER && _MSC_VER < 1900
+  #undef HAVE_MOVE_CTORS
+#endif
+
 #endif

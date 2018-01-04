@@ -30,8 +30,7 @@ ADD_LIBRARY(devapi OBJECT
   session.cc
   result.cc
   document.cc
-  collection_crud.cc
-  table_crud.cc
+  crud.cc
 )
 
 ADD_COVERAGE(devapi)
