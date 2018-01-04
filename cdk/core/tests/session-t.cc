@@ -816,6 +816,50 @@ TEST_F(Session_core, trx)
       cout << "== end of data ==" << endl;
     }
 
+    //With SavePoints
+
+    s.begin();
+    do_sql(s, L"INSERT INTO t VALUES (3)");
+    s.savepoint_set("P3");
+    do_sql(s, L"INSERT INTO t VALUES (4)");
+    s.savepoint_set("P4");
+    do_sql(s, L"INSERT INTO t VALUES (5)");
+    s.savepoint_set("P5");
+    do_sql(s, L"INSERT INTO t VALUES (5)");
+    s.savepoint_set("P6");
+    s.savepoint_remove("P5");
+
+    //Removing/Setting empty savepoint
+    EXPECT_THROW(s.savepoint_set(""), Error);
+    EXPECT_THROW(s.savepoint_remove(""), Error);
+
+    //removing already removed savepoint
+    EXPECT_THROW(s.savepoint_remove("P5"), Error);
+
+    // Rollback to removed savepoint
+    EXPECT_THROW(s.rollback("P5"), Error);
+
+    s.rollback("P4");
+    s.savepoint_remove("P3");
+
+    //Savepoint should have been removed, since was not used on the rollback!
+    EXPECT_THROW(s.savepoint_remove("P6"), Error);
+
+    s.commit();
+
+    prc.add(3);
+    prc.add(4);
+
+    {
+      r = s.sql(L"SELECT a FROM t");
+      Cursor c(r);
+      prc.reset(c);
+      cout << "== processing rows ==" << endl;
+      c.get_rows(prc);
+      c.wait();
+      cout << "== end of data ==" << endl;
+    }
+
     // Negative tests
 
     s.begin();

@@ -165,6 +165,7 @@ struct Traits
   typedef cdk::row_count_t row_count_t;
   typedef cdk::col_count_t col_count_t;
   typedef void transaction_id_t;
+  typedef const string& savepoint_id_t;
 
   typedef cdk::Type_info   Type_info;
   typedef const cdk::Format_info& Format_info;
