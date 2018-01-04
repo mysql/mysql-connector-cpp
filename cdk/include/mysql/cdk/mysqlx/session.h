@@ -519,7 +519,9 @@ public:
 
   void begin();
   void commit();
-  void rollback();
+  void rollback(const string &savepoint);
+  void savepoint_set(const string &savepoint);
+  void savepoint_remove(const string &savepoint);
 
   /*
      SQL API

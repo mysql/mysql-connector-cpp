@@ -79,6 +79,7 @@ namespace foundation {
   X (in_transaction,     9, "Open transaction") \
   X (no_transaction,    10, "No transaction") \
   X (tls_error,         11, "TLS error") \
+  X (bad_savepoint,     12, "Bad savepoint") \
 
 // Define constants for CDK error conditions in cdkerrc structure
 
