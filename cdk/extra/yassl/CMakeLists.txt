@@ -29,17 +29,6 @@ ADD_DEFINITIONS(-DWIN32_LEAN_AND_MEAN -DNOGDI)
 # We want to use std::min/std::max, not the windows.h macros
 ADD_DEFINITIONS(-DNOMINMAX)
 
-
-#MY_CHECK_CXX_COMPILER_FLAG("-Wno-unused-const-variable" HAVE_NO_UNUSED_CONST_VAR)
-
-IF(CMAKE_GENERATOR MATCHES "Xcode" AND HAVE_NO_UNUSED_CONST_VAR)
-  INCLUDE(${MYSQL_CMAKE_SCRIPT_DIR}/compile_flags.cmake)
-  ADD_COMPILE_FLAGS(
-    src/yassl_int.cpp
-    src/socket_wrapper.cpp
-    COMPILE_FLAGS -Wno-unused-const-variable)
-ENDIF()
-
 INCLUDE (CheckTypeSize)
 
 CHECK_TYPE_SIZE("long"      SIZEOF_LONG)
@@ -60,7 +49,11 @@ TARGET_LINK_LIBRARIES(yassl taocrypt)
 IF(MSVC)
   TARGET_COMPILE_OPTIONS(yassl PRIVATE /wd4267 /wd4334)
 ELSE()
-  TARGET_COMPILE_OPTIONS(yassl PRIVATE -Wno-unused-but-set-variable)
+  IF(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    TARGET_COMPILE_OPTIONS(yassl PRIVATE -Wno-unused-but-set-variable)
+  ELSE()
+   TARGET_COMPILE_OPTIONS(yassl PRIVATE -Wno-unused-const-variable)
+  ENDIF()
 ENDIF()
 
 #if(WIN32)

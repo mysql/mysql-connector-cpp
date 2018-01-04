@@ -117,7 +117,7 @@ class Format<TYPE_BYTES> : public Format_base
 public:
 
   Format(const Format_info &fi)
-    : Format_base(TYPE_STRING, fi)
+    : Format_base(TYPE_BYTES, fi)
     , m_width(0)
   {
     fi.get_info(*this);

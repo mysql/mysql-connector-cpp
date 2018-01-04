@@ -64,7 +64,7 @@ public:
   /*
     Callbacks host(), socket() and pipe() can be called several times to
     report multiple targets listed in a connection string. They report
-    priority 1+x if user specified priority x, or 0 if no priority was pecified.
+    priority 1+x if user specified priority x, or 0 if no priority was specified.
   */
 
   virtual void host(unsigned short /*priority*/,

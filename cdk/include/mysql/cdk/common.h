@@ -165,6 +165,7 @@ struct Traits
   typedef cdk::row_count_t row_count_t;
   typedef cdk::col_count_t col_count_t;
   typedef void transaction_id_t;
+  typedef const string& savepoint_id_t;
 
   typedef cdk::Type_info   Type_info;
   typedef const cdk::Format_info& Format_info;
@@ -606,6 +607,11 @@ public:
 
   virtual Expr_prc* array_append(const Doc_path*) =0;
 
+  /*
+    Perform MERGE_PATCH operation on a document.
+  */
+  virtual Expr_prc* patch() =0;
+
 };
 
 
@@ -657,6 +663,9 @@ struct Safe_prc<Update_processor>
 
   Safe_prc<Expr_prc> array_append(const Doc_path *path)
   { return m_prc ? m_prc->array_append(path) : NULL; }
+
+  Safe_prc<Expr_prc> patch()
+  { return m_prc ? m_prc->patch() : NULL; }
 };
 
 }  // cdk
