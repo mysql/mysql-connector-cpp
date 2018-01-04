@@ -279,6 +279,7 @@ public:
   string m_table_name;
   string m_table_label;
   string m_schema_name;
+  string m_catalog;
 
   unsigned long  m_length;
   unsigned short m_decimals;
@@ -324,7 +325,11 @@ public:
       m_table_label = ci.table()->name();
 
       if (ci.table()->schema())
+      {
         m_schema_name = ci.table()->schema()->name();
+        if (ci.table()->schema()->catalog())
+          m_catalog = ci.table()->schema()->catalog()->name();
+      }
     }
 
     m_collation = ci.collation();

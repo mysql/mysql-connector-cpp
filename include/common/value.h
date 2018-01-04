@@ -105,11 +105,15 @@ public:
 
   // Construct an item from a string
   Value(const std::string& str) : m_type(STRING), m_str(str)
-  {}
+  {
+    m_val.v_bool = false;
+  }
 
   // Construct an item from a string
   Value(const std::wstring& str) : m_type(WSTRING), m_wstr(str)
-  {}
+  {
+    m_val.v_bool = false;
+  }
 
   // Construct an item from a signed 64-bit integer
   Value(int64_t v) : m_type(INT64)
@@ -249,36 +253,8 @@ public:
 
   // Note: these methods perform utf8 conversions as necessary.
 
-  const std::string& get_string() const
-  {
-    switch (m_type)
-    {
-    case RAW:
-    case STRING:
-      return m_str;
-    case WSTRING: // TODO
-    case EXPR:
-    case JSON:
-    default:
-      throw Error("Value cannot be converted to string");
-    }
-  }
-
-  const std::wstring& get_wstring() const
-  {
-    switch (m_type)
-    {
-    case WSTRING:
-    case EXPR:
-    case JSON:
-      return m_wstr;
-
-    case RAW:  // TODO
-    case STRING: // TODO
-    default:
-      throw Error("Value cannot be converted to string");
-    }
-  }
+  const std::string& get_string() const;
+  const std::wstring& get_wstring() const;
 
   Type get_type() const
   {

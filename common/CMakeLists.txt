@@ -21,4 +21,4 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 include_directories(${PROJECT_SOURCE_DIR}/cdk/extra/uuid/include)
-add_library(common OBJECT session.cc result.cc)
+add_library(common OBJECT session.cc result.cc value.cc)

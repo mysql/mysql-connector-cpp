@@ -361,7 +361,7 @@ string internal::Query_src::iterator_get()
       like an utf8 string with null byte appended at the end.
     */
     assert(0 < data.size());
-    assert(0 == *data.end());
+    assert(0 == *(data.end()-1));
     name = std::string(data.begin(), data.end()-1);
     break;
 

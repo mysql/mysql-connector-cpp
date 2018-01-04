@@ -45,8 +45,6 @@
 
 TEST_F(xapi, test_row_locking)
 {
-  //TODO: temporary skip goup_by tests
-  return;
   SKIP_IF_NO_XPLUGIN
 
   mysqlx_result_t *res;
@@ -314,6 +312,8 @@ TEST_F(xapi, basic)
     const char *col_orig_table = mysqlx_column_get_original_table(res, i);
     const char *col_schema = mysqlx_column_get_schema(res, i);
     const char *col_cat = mysqlx_column_get_catalog(res, i);
+
+    EXPECT_NE(nullptr, col_cat);
 
     printf("\n Column # %d", i + 1);
     printf("\n * name: %s, orig name: %s, table: %s, orig table: %s, schema: %s, catalog: %s",
@@ -782,6 +782,8 @@ TEST_F(xapi, json_test)
   EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_crud_test", 1)) != NULL);
   EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, "crud_collection"));
 
+  // Insert first document with known length.
+
   for (i = 0; i < 5; i++)
   {
     sprintf(insert_buf, "INSERT INTO cc_crud_test.crud_collection (doc) VALUES " \
@@ -804,6 +806,13 @@ TEST_F(xapi, json_test)
       printf("\n[json: %s]", json_string);
 
     EXPECT_STREQ(json_row[i], json_string);
+
+    /*
+      Note: json_len contains total number of bytes in the returned string,
+      includeing the '\0' terminator.
+    */
+
+    EXPECT_EQ(strlen(json_string) + 1, json_len);
     ++i;
   }
 }
@@ -2099,6 +2108,7 @@ TEST_F(xapi_bugs, list_functions)
     exec_sql(queries[i]);
   }
 
+  SESS_CHECK( res = mysqlx_get_schemas(get_session(), NULL));
   SESS_CHECK( res = mysqlx_get_schemas(get_session(), "cc_crud_te%"));
   col_num = mysqlx_column_get_count(res);
   EXPECT_EQ(col_num, 1);
@@ -2144,8 +2154,8 @@ TEST_F(xapi_bugs, list_functions)
     printf(" [%s]", buf);
   }
 
-  // Get tables and views
-  SESS_CHECK( res = mysqlx_get_tables(schema, "%", 1));
+  // Get tables and views (NULL pattern is the same as "%")
+  SESS_CHECK( res = mysqlx_get_tables(schema, NULL, 1));
 
   while ((row = mysqlx_row_fetch_one(res)) != NULL)
   {
@@ -2159,6 +2169,7 @@ TEST_F(xapi_bugs, list_functions)
   }
 
   // Get collections
+  SESS_CHECK( res = mysqlx_get_collections(schema, NULL));
   SESS_CHECK( res = mysqlx_get_collections(schema, "col%"));
 
   while ((row = mysqlx_row_fetch_one(res)) != NULL)

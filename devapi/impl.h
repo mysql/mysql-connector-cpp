@@ -138,7 +138,7 @@ void Value::Access::process(
   {
   case Value::DOC:
     {
-      mysqlx::DbDoc doc = static_cast<mysqlx::DbDoc>(val);
+      mysqlx::DbDoc &doc = const_cast<Value&>(val).m_doc;
 
 #if 0
       /*

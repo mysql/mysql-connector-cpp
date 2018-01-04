@@ -283,10 +283,15 @@ public:
 
   Value();  ///< Constructs Null value.
   Value(std::nullptr_t); ///< Constructs Null value.
+
+  Value(const std::string &str);
+  Value(std::string &&str);
+  Value(const char *str) : Value(std::string(str)) {}
+
   Value(const std::wstring &str);
   Value(std::wstring &&str);
-  Value(const char *str) : Value(string(str)) {}
   Value(const wchar_t *str) : Value(std::wstring(str)) {}
+
   Value(const bytes&);
   Value(int64_t);
   Value(uint64_t);
@@ -393,15 +398,21 @@ public:
   operator unsigned() const;
   operator int64_t() const;
   operator uint64_t() const;
+
   operator float() const;
   operator double() const;
+
   operator bool() const;
-  operator string() const;
-  operator bytes() const;
+
+  operator std::wstring() const;
+  operator std::string() const;
+
+  explicit operator bytes() const;
   operator DbDoc() const;
 
+
   template<typename T>
-  T get() const { return static_cast<T>(*this); }
+  T get() const;
 
   //@}
 
@@ -525,6 +536,7 @@ protected:
 
 public:
 
+  friend mysqlx::string;
   friend SessionSettings;
   friend DbDoc;
   template <class Base> friend class Bind_parameters;
@@ -714,7 +726,9 @@ try
 {}
 CATCH_AND_WRAP
 
-inline Value::operator int() const
+template<>
+inline
+int Value::get<int>() const
 {
   try {
     int64_t val = get_sint();
@@ -728,7 +742,15 @@ inline Value::operator int() const
   CATCH_AND_WRAP
 }
 
-inline Value::operator unsigned() const
+inline
+Value::operator int() const
+{
+  return get<int>();
+}
+
+
+template<>
+inline unsigned Value::get<unsigned>() const
 {
   try {
     uint64_t val = get_uint();
@@ -740,7 +762,15 @@ inline Value::operator unsigned() const
   CATCH_AND_WRAP
 }
 
-inline Value::operator int64_t() const
+inline
+Value::operator unsigned() const
+{
+  return get<unsigned>();
+}
+
+
+template<>
+inline int64_t Value::get<int64_t>() const
 {
   try {
     return get_sint();
@@ -748,12 +778,26 @@ inline Value::operator int64_t() const
   CATCH_AND_WRAP
 }
 
-inline Value::operator uint64_t() const
+inline
+Value::operator int64_t() const
+{
+  return get<int64_t>();
+}
+
+
+template<>
+inline uint64_t Value::get<uint64_t>() const
 {
   try {
     return get_uint();
   }
   CATCH_AND_WRAP
+}
+
+inline
+Value::operator uint64_t() const
+{
+  return get<uint64_t>();
 }
 
 
@@ -763,13 +807,20 @@ try
 {}
 CATCH_AND_WRAP
 
+template<>
 inline
-Value::operator float() const
+float Value::get<float>() const
 {
   try {
     return get_float();
   }
   CATCH_AND_WRAP
+}
+
+inline
+Value::operator float() const
+{
+  return get<float>();
 }
 
 
@@ -779,13 +830,20 @@ try
 {}
 CATCH_AND_WRAP
 
+template<>
 inline
-Value::operator double() const
+double Value::get<double>() const
 {
   try {
     return get_double();
   }
   CATCH_AND_WRAP
+}
+
+inline
+Value::operator double() const
+{
+  return get<double>();
 }
 
 
@@ -796,8 +854,9 @@ try
 CATCH_AND_WRAP
 
 
+template<>
 inline
-Value::operator bool() const
+bool Value::get<bool>() const
 {
   try {
     return get_bool();
@@ -805,11 +864,30 @@ Value::operator bool() const
   CATCH_AND_WRAP
 }
 
+inline
+Value::operator bool() const
+{
+  return get<bool>();
+}
+
 
 inline Value::Value(const DbDoc &doc)
 try
   : m_type(DOC)
   , m_doc(doc)
+{}
+CATCH_AND_WRAP
+
+
+inline Value::Value(const std::string &val)
+try
+  : common::Value(val)
+{}
+CATCH_AND_WRAP
+
+inline Value::Value(std::string &&val)
+try
+  : common::Value(std::move(val))
 {}
 CATCH_AND_WRAP
 
@@ -826,14 +904,53 @@ try
 {}
 CATCH_AND_WRAP
 
+template<>
 inline
-Value::operator string() const
+std::wstring Value::get<std::wstring>() const
 {
   try {
     return get_wstring();
   }
   CATCH_AND_WRAP
 }
+
+inline
+Value::operator std::wstring() const
+{
+  return get<std::wstring>();
+}
+
+
+template<>
+inline
+std::string Value::get<std::string>() const
+{
+  try {
+    return get_string();
+  }
+  CATCH_AND_WRAP
+}
+
+inline
+Value::operator std::string() const
+{
+  return get<std::string>();
+}
+
+
+template<>
+inline
+string Value::get<string>() const
+{
+  return get<std::wstring>();
+}
+
+// Conversion to mysqlx::string is done via its ctor from common::Value.
+
+inline
+mysqlx::string::string(const Value &val)
+  : string((const common::Value&)val)
+{}
 
 
 inline Value::Value(const bytes &data)
@@ -842,19 +959,34 @@ try
 {}
 CATCH_AND_WRAP
 
+template<>
 inline
-Value::operator bytes() const
+bytes Value::get<bytes>() const
 {
   return getRawBytes();
 }
 
-
 inline
-Value::operator DbDoc() const
+Value::operator bytes() const
+{
+  return get<bytes>();
+}
+
+
+template<>
+inline
+DbDoc Value::get<DbDoc>() const
 {
   check_type(DOCUMENT);
   return m_doc;
 }
+
+inline
+Value::operator DbDoc() const
+{
+  return get<DbDoc>();
+}
+
 
 inline
 bool Value::hasField(const Field &fld) const

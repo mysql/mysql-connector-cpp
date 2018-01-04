@@ -227,8 +227,8 @@ public:
 
   mysqlx_result_struct* get_schemas(const char *pattern_utf8 = nullptr)
   {
-    cdk::string pattern(pattern_utf8);
-    return new_stmt<OP_LIST_SCHEMAS>(pattern_utf8 ? pattern : L"%")->exec();
+    cdk::string pattern(pattern_utf8 ? pattern_utf8 : "%");
+    return new_stmt<OP_LIST_SCHEMAS>(pattern)->exec();
   }
 
 
@@ -310,23 +310,18 @@ public:
 
   mysqlx_result_struct* get_tables(const char *pattern_utf8, bool include_views)
   {
-    cdk::string pattern(pattern_utf8);
+    cdk::string pattern(pattern_utf8 ? pattern_utf8 : "%");
 
     return m_session.new_stmt<OP_LIST_TABLES>(
-            *this,
-            pattern_utf8 ? pattern : L"%",
-            include_views
-           )->exec();
+      *this, pattern, include_views
+    )->exec();
   }
 
   mysqlx_result_struct* get_collections(const char *pattern_utf8)
   {
-    cdk::string pattern(pattern_utf8);
+    cdk::string pattern(pattern_utf8 ? pattern_utf8 : "%");
 
-    return m_session.new_stmt<OP_LIST_COLLECTIONS>(
-              *this,
-              pattern_utf8 ? pattern : L"%"
-           )->exec();
+    return m_session.new_stmt<OP_LIST_COLLECTIONS>(*this, pattern)->exec();
   }
 
 

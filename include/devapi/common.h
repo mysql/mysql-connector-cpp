@@ -51,6 +51,7 @@ using std::out_of_range;
 
 using common::byte;
 using common::GUID;
+class Value;
 
 
 namespace internal {
@@ -94,12 +95,6 @@ public:
   string(const std::wstring &other) : std::wstring(other) {}
   string(std::wstring &&other) : std::wstring(std::move(other)) {}
 
-  string& operator=(const std::wstring &other)
-  {
-    assign(other);
-    return *this;
-  }
-
   // TODO: make utf8 conversions explicit
 
   string(const char *other)
@@ -115,6 +110,9 @@ public:
     Impl::from_utf8(*this, other);
   }
 
+  string(const common::Value&);
+  string(const Value &val);
+
   // conversion to utf-8
 
   operator std::string() const
@@ -123,6 +121,21 @@ public:
   }
 
 };
+
+
+inline
+string::string(const common::Value &val)
+{
+  switch (val.get_type())
+  {
+  case common::Value::STRING:
+    Impl::from_utf8(*this, val.get_string());
+    return;
+
+  default:
+    assign(val.get_wstring());
+  }
+}
 
 
 inline
