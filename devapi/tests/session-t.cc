@@ -1,4 +1,4 @@
-﻿/*
+/*
 * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 *
 * The MySQL Connector/C++ is licensed under the terms of the GPLv2
@@ -260,22 +260,6 @@ TEST_F(Sess, trx)
   {
     cout << "- doc: " << doc << endl;
     EXPECT_FALSE(doc.hasField("bar"));
-  }
-
-  /*
-    Check error thrown if starting new transaction while previous
-    one is not closed.
-  */
-
-  get_sess().startTransaction();
-
-  try {
-    get_sess().startTransaction();
-    FAIL() << "Expected an error";
-  }
-  catch (const Error &e)
-  {
-    cout << "Expected error: " << e << endl;
   }
 
   cout << "Done!" << endl;
