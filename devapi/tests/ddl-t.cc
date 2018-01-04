@@ -32,8 +32,8 @@ using namespace mysqlx;
 
 
 class Ddl : public mysqlx::test::Xplugin
-{
-};
+{};
+
 
 TEST_F(Ddl, create_drop)
 {
@@ -71,14 +71,10 @@ TEST_F(Ddl, create_drop)
   //Tables Test
 
   {
-    //TODO substitute with createTable when available
-
-    sql(L"CREATE TABLE schema_to_drop_1.tb1 (`name` varchar(20), `age` int)");
-    sql(L"CREATE TABLE schema_to_drop_1.tb2 (`name` varchar(20), `age` int)");
-
-    schema.createView("view1").columns("name","age")
-          .definedAs(schema.getTable("tb1").select()).execute();
-
+    sql(L"USE schema_to_drop_1");
+    sql(L"CREATE TABLE tb1 (`name` varchar(20), `age` int)");
+    sql(L"CREATE TABLE tb2 (`name` varchar(20), `age` int)");
+    sql(L"CREATE VIEW  view1 AS SELECT `name`, `age` FROM tb1");
 
     std::list<Table> tables_list = schema.getTables();
 
@@ -98,34 +94,6 @@ TEST_F(Ddl, create_drop)
 
       }
     }
-
-    //Drop Tables/Views
-
-    /*
-      Note: currently passing view to dropTable() does nothing. Changing this
-      requires changes in xplugin. Similar with passing table to dropView().
-    */
-    //EXPECT_THROW(schema.dropTable("view1"), mysqlx::Error);
-    EXPECT_NO_THROW(schema.dropTable("view1"));
-    EXPECT_NO_THROW(schema.getTable("view1", true));
-
-    EXPECT_NO_THROW(schema.dropView("tb1"));
-    EXPECT_NO_THROW(schema.getTable("tb1", true));
-
-    std::list<Table> table_list = schema.getTables();
-
-    for (auto t : table_list)
-    {
-      //View is not dropped, but still no error thrown
-      if (t.isView())
-        schema.dropView(t.getName());
-      else
-        schema.dropTable(t.getName());
-    }
-
-    EXPECT_THROW(schema.getTable("tb1", true), mysqlx::Error);
-    EXPECT_THROW(schema.getTable("tb2", true), mysqlx::Error);
-    EXPECT_THROW(schema.getTable("view1", true), mysqlx::Error);
   }
 
   //Collection tests
@@ -152,12 +120,6 @@ TEST_F(Ddl, create_drop)
 
     // Drop Collections
 
-    /*
-      Note: currently passing collection to dropView() does nothing. Changing this
-      requires changes in xplugin.
-    */
-
-    EXPECT_NO_THROW(schema.dropView(collection_name_1));
     EXPECT_NO_THROW(schema.getCollection(collection_name_1, true));
 
     std::list<string> list_coll_name = schema.getCollectionNames();
@@ -176,7 +138,6 @@ TEST_F(Ddl, create_drop)
     EXPECT_THROW(schema.getCollection(collection_name_1, true), mysqlx::Error);
     EXPECT_THROW(schema.getCollection(collection_name_2, true), mysqlx::Error);
   }
-
 
 
   // Get Schemas
@@ -215,7 +176,7 @@ TEST_F(Ddl, bugs)
   {
     /*
       Having Result before dropView() triggered error, because cursor was closed
-      without informing Result, so that Result coud cache and then close Cursor
+      without informing Result, so that Result could cache and then close Cursor
       and Reply
     */
 
@@ -230,17 +191,21 @@ TEST_F(Ddl, bugs)
           ")");
 
     Table tbl = schema.getTable("bugs_table");
+    Collection coll = schema.createCollection("coll");
 
-    schema.createView("newView").algorithm(Algorithm::TEMPTABLE)
-        .security(SQLSecurity ::INVOKER).definedAs(tbl.select()).execute();
+    // TODO
 
-    RowResult result = get_sess().sql("show create view bugs.newView").execute();
+    //schema.createView("newView").algorithm(Algorithm::TEMPTABLE)
+    //    .security(SQLSecurity ::INVOKER).definedAs(tbl.select()).execute();
+
+    RowResult result = get_sess().sql("show create table bugs.bugs_table").execute();
     Row r = result.fetchOne();
 
-    schema.dropView("newView");
+    schema.dropCollection("coll");
+    //schema.dropView("newView");
 
-    schema.createView("newView").algorithm(Algorithm::TEMPTABLE)
-        .security(SQLSecurity ::INVOKER).definedAs(tbl.select()).execute();
+    //schema.createView("newView").algorithm(Algorithm::TEMPTABLE)
+    //    .security(SQLSecurity ::INVOKER).definedAs(tbl.select()).execute();
 
     r = result.fetchOne();
   }

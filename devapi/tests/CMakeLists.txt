@@ -28,6 +28,10 @@
 remove_definitions(-DCONCPP_BUILD_STATIC)
 remove_definitions(-DCONCPP_BUILD_SHARED)
 
+if(WIN32)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
+
 #
 # If linking with connector statically, define macro that indicates this
 # to the public headers.

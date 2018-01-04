@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  *
  * The MySQL Connector/C++ is licensed under the terms of the GPLv2
  * <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -33,13 +33,17 @@
 #include <mysql/cdk.h>
 #include <mysql/cdk/converters.h>
 #include <expr_parser.h>
+
 #include <map>
 #include <memory>
 #include <stack>
 #include <list>
 
 #include "../global.h"
-#include "result_impl.h"
+#include "../common/result.h"
+#include "../common/op_impl.h"
+
+//#include "result_impl.h"
 
 
 namespace mysqlx {
@@ -47,12 +51,6 @@ namespace mysqlx {
 
 struct Value::Access
 {
-
-  static cdk::bytes get_bytes(const Value &val)
-  {
-    return cdk::bytes(val.m_raw.begin(), val.m_raw.end());
-  }
-
   /*
     Build document value from a JSON string which is
     assumed to describe a document.
@@ -61,7 +59,7 @@ struct Value::Access
   static Value mk_doc(const string &json)
   {
     Value ret;
-    ret.m_type = Value::DOCUMENT;
+    ret.m_type = Value::DOC;
     ret.m_doc = DbDoc(json);
     return std::move(ret);
   }
@@ -73,257 +71,187 @@ struct Value::Access
   */
 
   static Value mk_from_json(const std::string &json);
-};
 
-
-struct Value_scalar_prc_converter
-    : public cdk::Converter<
-    Value_scalar_prc_converter,
-    cdk::Expr_processor,
-    cdk::Value_processor
-    >
-{
-
-  virtual Value_prc*  val() override
+  template <cdk::Type_info T>
+  static Value mk(cdk::bytes data, common::Format_descr<T> &fmt)
   {
-    return m_proc;
+    return common::Value::Access::mk(data, fmt);
   }
 
-  Args_prc*   op(const char*) override
-  {
-    THROW("Unexpected expression usage operator");
-  }
+  static Value mk(cdk::bytes data, common::Format_descr<cdk::TYPE_DOCUMENT>&);
 
-  Args_prc*   call(const Object_ref&) override
-  {
-    THROW("Unexpected expression usage operator");
-  }
 
-  void ref(const Column_ref&, const Doc_path*) override
-  {
-    THROW("Unexpected expression usage operator");
-  }
-
-  void ref(const Doc_path&) override
-  {
-    THROW("Unexpected expression usage operator");
-  }
-
-  void param(const cdk::string&) override
-  {
-    THROW("Unexpected expression usage operator");
-  }
-
-  void param(uint16_t) override
-  {
-    THROW("Unexpected expression usage operator");
-  }
-
-  void var(const cdk::string&) override
-  {
-    THROW("Unexpected expression usage operator");
-  }
+  static void process(
+    parser::Parser_mode::value, const Value&, cdk::Expression::Processor&
+  );
 
 };
-
-
-typedef
-cdk::Expr_conv_base<cdk::Any_prc_converter<Value_scalar_prc_converter>>
-Value_converter;
 
 
 /*
-  Present Value object as CDK expression.
+  This class presents Value object as cdk::Expression, like common::Value_expr
+  does for common::Value objects. It differs from common::Value_expr in that it
+  supports array and document values.
 */
 
+
 class Value_expr
-    : public cdk::Expression
-    , cdk::Format_info
+  : public cdk::Expression
 {
-  parser::Parser_mode::value m_parser_mode;
-  Value m_value;
-  bool m_is_expr = false;
+  const Value &m_val;
+  parser::Parser_mode::value m_pm;
 
+public:
 
-  //Private constructor to be used only inside Value_expr class
   Value_expr(const Value &val,
-            bool is_expr,
-            parser::Parser_mode::value parser_mode)
-    : m_parser_mode(parser_mode)
-    , m_value(val)
-    , m_is_expr(is_expr)
+             parser::Parser_mode::value parser_mode)
+    : m_val(val), m_pm(parser_mode)
   {}
 
-public:
-
-  Value_expr(const Value &val, parser::Parser_mode::value parser_mode)
-    : m_parser_mode(parser_mode)
-    , m_value(val)
-  {}
-
-  Value_expr(Value &&val, parser::Parser_mode::value parser_mode)
-    : m_parser_mode(parser_mode)
-    , m_value(std::move(val))
-  {}
-
-  Value_expr(const internal::ExprValue &val, parser::Parser_mode::value parser_mode)
-    : m_parser_mode(parser_mode)
-    , m_value(val)
+  void process_if(Processor *prc) const
   {
-    m_is_expr = val.isExpression();
+    if (!prc)
+      return;
+    process(*prc);
   }
 
-  Value_expr(internal::ExprValue &&val, parser::Parser_mode::value parser_mode)
-    : m_parser_mode(parser_mode)
-    , m_value(std::move(val))
+  void process(Processor &prc) const override
   {
-    m_is_expr = val.isExpression();
+    Value::Access::process(m_pm, static_cast<const Value&>(m_val), prc);
   }
-
-  void process (Processor &prc) const override
-  {
-    // Handle expressions
-
-    if (m_is_expr)
-    {
-      assert(Value::STRING == m_value.getType());
-      parser::Expression_parser expr(m_parser_mode,
-        (mysqlx::string)m_value);
-      expr.process(prc);
-      return;
-    }
-
-    // Handle non scalar values
-
-    switch (m_value.getType())
-    {
-    case Value::DOCUMENT:
-      {
-        mysqlx::DbDoc doc = static_cast<mysqlx::DbDoc>(m_value);
-        Processor::Doc_prc *dprc = safe_prc(prc)->doc();
-        if (!dprc)
-          return;
-        dprc->doc_begin();
-        for (Field fld : doc)
-        {
-          Value_expr value(doc[fld], m_is_expr, m_parser_mode);
-          value.process_if(dprc->key_val((string)fld));
-        }
-        dprc->doc_end();
-      }
-      return;
-
-    case Value::ARRAY:
-      {
-        Processor::List_prc *lpr = safe_prc(prc)->arr();
-        if (!lpr)
-          return;
-        lpr->list_begin();
-        for (Value val : m_value)
-        {
-          Value_expr value(val, m_is_expr, m_parser_mode);
-          value.process_if(lpr->list_el());
-        }
-        lpr->list_end();
-      }
-      return;
-
-    default: break; // continue with scalar values
-    }
-
-    // Handle scalar values
-
-    Processor::Scalar_prc::Value_prc *vprc;
-    vprc = safe_prc(prc)->scalar()->val();
-
-    if (!vprc)
-      return;
-
-    switch (m_value.getType())
-    {
-      case Value::VNULL:
-        vprc->null();
-        break;
-      case Value::UINT64:
-        vprc->num(static_cast<uint64_t>(m_value));
-        break;
-      case Value::INT64:
-        vprc->num(static_cast<int64_t>(m_value));
-        break;
-      case Value::FLOAT:
-        vprc->num(static_cast<float>(m_value));
-        break;
-      case Value::DOUBLE:
-        vprc->num(static_cast<double>(m_value));
-        break;
-      case Value::BOOL:
-        vprc->yesno(static_cast<bool>(m_value));
-        break;
-      case Value::STRING:
-        vprc->str(static_cast<mysqlx::string>(m_value));
-        break;
-      case Value::RAW:
-        vprc->value(cdk::TYPE_BYTES,
-                    static_cast<const cdk::Format_info&>(*this),
-                    Value::Access::get_bytes(m_value));
-        break;
-      default:
-        THROW("Unexpected value type");
-    }
-  }
-
-  // Trivial Format_info for raw byte values
-
-  bool for_type(cdk::Type_info) const override { return true; }
-  void get_info(cdk::Format<cdk::TYPE_BYTES>&) const override {}
-  using cdk::Format_info::get_info;
 
 };
+
+
+inline
+void Value::Access::process(
+  parser::Parser_mode::value pm,
+  const Value &val,
+  cdk::Expression::Processor &prc
+)
+{
+  using Processor = cdk::Expression::Processor;
+
+  // Handle non scalar values
+
+  switch (val.m_type)
+  {
+  case Value::DOC:
+    {
+      mysqlx::DbDoc &doc = const_cast<Value&>(val).m_doc;
+
+#if 0
+      /*
+        To avoid costly parsing, if document has internal JSON representation
+        simply report this document as a JSON string.
+
+        TODO:
+        Test Types.joson fails when inserting ARRAY value with JSON based DbDoc
+        element. In that case, what we get in the end in the collection table
+        is an array where the document is treated as a string: we get value
+        like this:
+
+          [ ..., "{...}", ...]
+
+        instead of a value like this:
+
+          [ ..., {...}, ... ]
+
+        Using json_unquote(json) to report the document does not help.
+        Currently only parsing the json string and reporting as protocol OBJECT
+        works as expected.
+      */
+
+      const char *json = doc.get_json();
+      if (json)
+      {
+        common::Object_ref f(L"json_unquote");
+
+        auto argsprc = safe_prc(prc)->scalar()->call(f);
+        if (argsprc)
+        {
+          argsprc->list_begin();
+          argsprc->list_el()->scalar()->val()->str(json);
+          argsprc->list_end();
+        }
+        return;
+      }
+#endif
+
+      Processor::Doc_prc *dprc = safe_prc(prc)->doc();
+      if (!dprc)
+        return;
+      dprc->doc_begin();
+      for (Field fld : doc)
+      {
+        // TODO: do we need to force interpreting field values as expressions?
+        auto fprc = dprc->key_val((string)fld);
+        if (fprc)
+          process(pm, doc[fld], *fprc);
+      }
+      dprc->doc_end();
+    }
+    return;
+
+  case Value::ARR:
+    {
+      Processor::List_prc *lpr = safe_prc(prc)->arr();
+      if (!lpr)
+        return;
+      lpr->list_begin();
+      for (Value el : *val.m_arr)
+      {
+        auto elprc = lpr->list_el();
+        if (elprc)
+          process(pm, el, *elprc);
+      }
+      lpr->list_end();
+    }
+    return;
+
+  default:
+    common::Value::Access::process(pm, val, prc);
+    return;
+  }
+}
 
 
 // --------------------------------------------------------------------
 
+/*
+  These wrappres are just a convenience to be able to construct
+  a Schema_ref/Object_ref instance directly from Schema/Collection/Table one.
+*/
 
-class Schema_ref : public cdk::api::Schema_ref
+struct Schema_ref : public common::Schema_ref
 {
-  const cdk::string m_name;
+  using common::Schema_ref::Schema_ref;
 
-  const cdk::string name() const { return m_name; }
-
-public:
-
-  Schema_ref(const mysqlx::string &name) : m_name(name) {}
-  Schema_ref(const cdk::string &name) : m_name(name) {}
+  Schema_ref(const Schema &sch)
+    : Schema_ref(sch.getName())
+  {}
 };
 
 
-class Table_ref : public cdk::api::Table_ref
+struct Object_ref : public common::Object_ref
 {
-  Schema_ref m_schema;
-  const cdk::string m_name;
+  using common::Object_ref::Object_ref;
 
-public:
+  // TODO: Collection/Table without explicit schema?
 
-  const cdk::string name() const { return m_name; }
-  const cdk::api::Schema_ref* schema() const { return &m_schema; }
-
-  Table_ref(const Collection &coll)
-    : m_schema(coll.getSchema().getName())
-    , m_name(coll.getName())
+  Object_ref(const Collection &coll)
+    : Object_ref(coll.getSchema().getName(), coll.getName())
   {}
 
-  Table_ref(const Table &tbl)
-    : m_schema(tbl.getSchema().getName())
-    , m_name(tbl.getName())
-  {}
-
-  Table_ref(const cdk::string &schema, const cdk::string &name)
-    : m_schema(schema), m_name(name)
+  Object_ref(const Table &tbl)
+    : Object_ref(tbl.getSchema().getName(), tbl.getName())
   {}
 };
+
 
 
 // --------------------------------------------------------------------
+
 
 /*
   DbDoc implementation which stores document data in std::map.
@@ -355,6 +283,11 @@ class DbDoc::Impl
   {
     const_cast<Impl*>(this)->prepare();
     return m_map.at(fld);
+  }
+
+  virtual const char* get_json() const
+  {
+    return nullptr;
   }
 
   // Iterating over fields of the document
@@ -400,800 +333,50 @@ public:
   {
     out << m_json;
   }
+
+  const char* get_json() const
+  {
+    return m_json.c_str();
+  }
 };
 
 
 // --------------------------------------------------------------------
+
+/*
+  Implementation for a single Row instance.
+
+  The common::Row_impl<> template is used with mysqlx::Value class used for
+  internal storage of row field values.
+*/
+
+class internal::Row_detail::Impl
+  : public common::Row_impl<Value>
+{
+public:
+
+  using common::Row_impl<Value>::Row_impl;
+
+  friend Row;
+  friend Row_detail;
+  friend RowResult;
+  friend SqlResult;
+};
+
+
 
 /*
   Internal implementation for Session objects.
+
+  The common::Session_impl class is used.
 */
 
 struct internal::Session_detail::Impl
+  : public common::Session_impl
 {
   using Result_impl = internal::Result_detail::Impl;
 
-  cdk::ds::Multi_source m_ms;
-  cdk::Session          m_sess;
-  cdk::string           m_default_db;
-
-  Result_impl *m_current_result = nullptr;
-
-  Impl(cdk::ds::Multi_source &ms)
-    : m_sess(ms)
-  {
-    if (m_sess.get_default_schema())
-      m_default_db = *m_sess.get_default_schema();
-    if (!m_sess.is_valid())
-      m_sess.get_error().rethrow();
-  }
-
-  virtual ~Impl()
-  {
-    /*
-      Deregister current result. This sends notification to the result
-      and gives it a chance to cache its data before session is gone.
-    */
-    register_result(nullptr);
-  }
-
-  void register_result(Result_impl *result);
-  void deregister_result(Result_impl *result);
-};
-
-
-struct Session::Access
-{
-  static cdk::Session& get_cdk_session(Session &sess)
-  {
-    return sess.get_cdk_session();
-  }
-
-  static void prepare_for_cmd(Session &sess)
-  {
-    sess.prepare_for_cmd();
-  }
-};
-
-
-struct internal::Result_base::Access
-{
-  static Result_base mk_empty() { return Result_base(); }
-
-  template <typename A>
-  static Result_base mk(mysqlx::Session *sess, A a)
-  {
-    return Result_base(sess, a);
-  }
-
-  template <typename A, typename B>
-  static Result_base mk(mysqlx::Session *sess, A a, B b)
-  {
-    return Result_base(sess, a, b);
-  }
-};
-
-
-// --------------------------------------------------------------------
-
-/*
-  CRUD operation implementations
-  ==============================
-
-  Templates and classes defined in public headers crud.h,
-  collection_crud.h and table_crud.h define the public API of classes
-  representing CRUD operations.
-
-  Here we define templates that are used to build a hierarchy of
-  classes that implement these CRUD operations. Each CRUD operation
-  expects that its internal implementation object implements an
-  appropriate interface defined by XXX_impl classes. The interface
-  classes are structured into an inheritance chierarchy with
-  Executable_impl at the bottom. Thus each CRUD implementation object
-  must define the Executable_impl::execute() methods and then any
-  additional methods required by the CRUD operation being implemented.
-*/
-
-
-/*
-  Base for CRUD implementation classes which implements the following
-  implementation aspects:
-
-  - Storing values of named parameters in `m_map` member,
-  - Storing limit/offset information (if any).
-
-  This information is available in forms expected by CDK:
-
-  - get_params() returns pointer to cdk::Param_source (NULL if no
-    parameter values were specified),
-  - get_limit() returns a pointer to cdk::Limit (NULL if no
-    limit/offset was specified).
-
-  This class also handles the final execution of an operation, which
-  is performed as follows (see method `wait`).
-
-  1. First, appropriate CRUD operation is sent to the server using
-     underlying CDK session. This produces a cdk::Reply object which
-     is used for further processing. Sending the CRUD operation is
-     performed by method `send_command` which should be overwriten by
-     derived class. Derived class has access to the underlying CDK session
-     with method `get_cdk_session()`.
-
-  2. After getting cdk::Reply object implementation waits for it to
-     receive server reply and then returns Result_base instance created
-     from the cdk::Reply object.
-
-  The Op_base template is parametrized by the implementation interface
-  `Impl` that derived class wants to implement. The Op_base template
-  implements some of the interface methods, other templates and derived
-  class should implement the rest.
-*/
-
-template<class Impl>
-class Op_base
-  : public Impl
-  , public cdk::Limit
-  , public cdk::Param_source
-{
-protected:
-
-  Session *m_sess;
-
-  /*
-    Note: using cdk::scoped_ptr to be able to trnasfer ownership
-    to a different object.
-  */
-  cdk::scoped_ptr<cdk::Reply> m_reply;
-
-  row_count_t m_limit = 0;
-  bool m_has_limit = false;
-  row_count_t m_offset = 0;
-  bool m_has_offset = false;
-  internal::Lock_mode::value m_locking = internal::Lock_mode::NONE;
-
-  typedef std::map<string, Value> param_map_t;
-  param_map_t m_map;
-
-
-  Op_base(Session &sess)
-    : m_sess(&sess)
-  {}
-  Op_base(Collection &coll)
-    : m_sess(&coll.getSession())
-  {}
-  Op_base(Table &tbl)
-    : m_sess(&tbl.getSession())
-  {}
-  Op_base(const Op_base& other)
-    : m_sess       (other.m_sess      )
-    , m_limit      (other.m_limit     )
-    , m_has_limit  (other.m_has_limit )
-    , m_offset     (other.m_offset    )
-    , m_has_offset (other.m_has_offset)
-    , m_map        (other.m_map       )
-  {}
-
-  virtual ~Op_base()
-  {}
-
-  cdk::Session& get_cdk_session()
-  {
-    assert(m_sess);
-    return Session::Access::get_cdk_session(*m_sess);
-  }
-
-  /*
-    TODO: Currently send_command() allocates new cdk::Reply object on heap
-    and then passes it to result object which takes ownership. Avoid dynamic
-    allocation: return cdk reply initializer instead and use it to initialize
-    an instance of cdk::Reply inside result object (in its implementation
-    actually). This way only result implementation has to be allocated on heap.
-  */
-
-  virtual cdk::Reply* send_command() = 0;
-
-  /*
-    Given cdk reply object for the statement, return Result_base object
-    that handles that reply. The reply pointer can be NULL in case no
-    reply has been generated for the statement (TODO: explain in what
-    scenario reply can be NULL).
-
-    The returned Result_base object should take ownership of the cdk reply
-    object passed here (if any).
-  */
-
-  virtual internal::Result_base mk_result(cdk::Reply *reply)
-  {
-    return reply ? internal::Result_base::Access::mk(m_sess, reply)
-      : internal::Result_base::Access::mk_empty();
-  }
-
-
-  // Limit and offset
-
-  void set_limit(unsigned lm)
-  {
-    m_has_limit = true;
-    m_limit = lm;
-  }
-
-  void set_offset(unsigned offset)
-  {
-    m_has_offset = true;
-    m_offset = offset;
-  }
-
-  cdk::Limit* get_limit()
-  {
-    return m_has_limit || m_has_offset ? this : nullptr;
-  }
-
-  // Locking
-
-  void set_locking(internal::Lock_mode::value locking)
-  {
-    m_locking = locking;
-  }
-
-  cdk::Lock_mode_value get_locking()
-  {
-    switch (m_locking)
-    {
-      case internal::Lock_mode::SHARED:
-        return cdk::Lock_mode_value::SHARED;
-      break;
-      case internal::Lock_mode::EXCLUSIVE:
-        return cdk::Lock_mode_value::EXCLUSIVE;
-      break;
-      case internal::Lock_mode::NONE:
-        return cdk::Lock_mode_value::NONE;
-      break;
-    }
-    return cdk::Lock_mode_value::NONE;
-  }
-
-  // Parameters
-
-  void add_param(const mysqlx::string &name, Value &&val)
-  {
-    auto el = m_map.emplace(name, std::move(val));
-    //substitute if exists
-    if (!el.second)
-    {
-      el.first->second = std::move(val);
-    }
-  }
-
-  /*
-    Note: This is a method to implement positional '?' parmaeters which are not
-    used by CRUD operations (they use named parmaeters insted). The method
-    should not be called in this context and we use assertion to verify this.
-  */
-
-  void add_param(Value)
-  {
-    assert(false);
-  }
-
-  void clear_params()
-  {
-    m_map.clear();
-  }
-
-  cdk::Param_source* get_params()
-  {
-    return m_map.empty() ? nullptr : this;
-  }
-
-
-  // Async execution
-
-  bool m_inited = false;
-  bool m_completed = false;
-
-  /*
-    Initialize statement execution (if not already done) by sending command
-    to the server. This initializes m_reply to point to a cdk::Reply object
-    that waits for the server reply.
-  */
-
-  void init()
-  {
-    if (m_inited)
-      return;
-    m_inited = true;
-
-    assert(m_sess);
-
-    /*
-      Prepare session for sending a new command. This gives session a chance
-      to do necessary cleanups, such as consuming pending reply to a previous
-      command.
-    */
-    Session::Access::prepare_for_cmd(*m_sess);
-    m_reply.reset(send_command());
-  }
-
-  bool is_completed()
-  {
-    if (m_completed)
-      return true;
-
-    init();
-    m_completed = (!m_reply) || m_reply->is_completed();
-    return m_completed;
-  }
-
-  /*
-    Drive statement execution operation. First call init() to initialize it
-    if it was not done before. Then wait for the reply object to become ready.
-  */
-
-  void cont()
-  {
-    if (m_completed)
-      return;
-    init();
-    if (m_reply)
-    {
-      m_reply->cont();
-      if (0 < m_reply->entry_count())
-        m_reply->get_error().rethrow();
-    }
-  }
-
-  /*
-    Drive statement execution unitl server reply is available.
-  */
-
-  internal::Result_base wait()
-  {
-    init();
-    if (m_reply)
-    {
-      m_reply->wait();
-      if (0 < m_reply->entry_count())
-        m_reply->get_error().rethrow();
-    }
-    return get_result();
-  }
-
-  /*
-    Get the result of completed statement execution operation.
-  */
-
-  internal::Result_base get_result()
-  {
-    if (!is_completed())
-      THROW("Attempt to get result of incomplete operation");
-
-    /*
-      Server reply to the command is now passed to the result instance.
-      We reset m_inited and m_completed flag so that upon next execution the
-      command will be sent to the server again and a new reply will be created.
-    */
-
-    m_inited = false;
-    m_completed = false;
-
-    /*
-      Note: result created by mk_result() takes ownership of the cdk::Reply
-      object.
-    */
-
-    return mk_result(m_reply.release());
-  }
-
-
-  // Synchronous execution
-
-  internal::Result_base execute()
-  {
-    // Can not execute operation that is already completed.
-    assert(!m_completed);
-
-    return wait();
-  }
-
-
-  // cdk::Limit interface
-
-  row_count_t get_row_count() const { return m_limit; }
-  const row_count_t* get_offset() const
-  {
-    return m_has_offset ? &m_offset : NULL;
-  }
-
-
-  // cdk::Param_source
-
-  void process(Processor &prc) const
-  {
-    prc.doc_begin();
-
-    Value_converter conv;
-
-    for (auto it : m_map)
-    {
-      Value_expr value(it.second, parser::Parser_mode::DOCUMENT);
-      conv.reset(value);
-      conv.process_if(prc.key_val(it.first));
-    }
-    prc.doc_end();
-  }
-
-};
-
-
-/*
-  This template adds handling of order specifications on top of Op_base.
-
-  It implements the `add_order` method required by implementations of
-  CRUD operations that support ordering. Ordering information is stored
-  internally and transformed to the form expected by CDK: method
-  `get_order_by` returns pointer to cdk::Order_by or NULL if no order
-  specifications were given.
-
-  Template parameters are the implementation interface class being
-  implemented and parser mode for parsing expressions in order
-  specifications.
-*/
-
-template <class Impl, parser::Parser_mode::value PM>
-class Op_sort
-  : public Op_base<Impl>
-  , public cdk::Order_by
-{
-  std::list<cdk::string> m_order;
-
-  void add_sort(const mysqlx::string &sort)
-  {
-    m_order.push_back(sort);
-  }
-
-protected:
-
-  template <class X,
-            typename std::enable_if<
-              std::is_convertible<X*, internal::Db_object*>::value
-              >::type* = nullptr
-            >
-  Op_sort(X &x) : Op_base<Impl>(x)
-  {}
-
-
-public:
-
-  cdk::Order_by* get_order_by()
-  {
-    return m_order.empty() ? nullptr : this;
-  }
-
-private:
-
-  // cdk::Order_by interface
-
-  void process(Order_by::Processor& prc) const
-  {
-    prc.list_begin();
-
-    for (cdk::string el : m_order)
-    {
-
-      parser::Order_parser order_parser(PM, el);
-      order_parser.process_if(prc.list_el());
-
-    }
-
-    prc.list_end();
-  }
-};
-
-
-/*
-  This template adds handling of having specification on top of
-  Op_sort.
-
-  It implements the `set_having` method required by implementations of
-  CRUD operations that support having expression. The Expression is stored
-  internally and transformed to the form expected by CDK:
-  method `get_having` return pointer to cdk::Expression (as expected
-  for table/collection having definition) or NULL if no having specification
-  is given.
-
-  Template parameters are the implementation interface class being
-  implemented and parser mode for parsing expressions in order
-  specifications.
-*/
-
-template <class Impl, parser::Parser_mode::value PM>
-class Op_having
-  : public Op_sort<Impl, PM>
-  , public cdk::Expression
-{
-  cdk::string m_having;
-
-  void set_having(const mysqlx::string &having)
-  {
-    m_having = having;
-  }
-
-protected:
-
-  template <class X,
-            typename std::enable_if<
-              std::is_convertible<X*, internal::Db_object*>::value
-              >::type* = nullptr
-            >
-  Op_having(X &x) : Op_sort<Impl,PM>(x)
-  {}
-
-public:
-
-  cdk::Expression* get_having()
-  {
-    return m_having.empty() ? nullptr : this;
-  }
-
-private:
-
-  // cdk::Expression processor
-
-  void process(cdk::Expression::  Processor& prc) const
-  {
-    parser::Expression_parser expr_parser(PM, m_having);
-    expr_parser.process(prc);
-  }
-};
-
-
-/*
-  This template adds handling of groupBy specification on top of
-  Op_having.
-
-  It implements the `add_group_by` method required by implementations of
-  CRUD operations that support groupBy expressions. The Expressions are stored
-  internally and transformed to the form expected by CDK:
-  method `get_group_by` return pointer to cdk::Expr_list (as expected
-  for table/collection groupBy definition) or NULL if no groupBy specification
-  is given.
-
-  Template parameters are the implementation interface class being
-  implemented and parser mode for parsing expressions in order
-  specifications.
-*/
-
-template <class Impl, parser::Parser_mode::value PM>
-class Op_group_by
-  : public Op_having<Impl, PM>
-  , public cdk::Expr_list
-{
-  std::vector<cdk::string> m_group_by;
-
-  void add_group_by(const mysqlx::string &group_by)
-  {
-    m_group_by.push_back(group_by);
-  }
-
-protected:
-
-  template <class X,
-            typename std::enable_if<
-              std::is_convertible<X*, internal::Db_object*>::value
-              >::type* = nullptr
-            >
-  Op_group_by(X &x) : Op_having<Impl,PM>(x)
-  {}
-
-public:
-
-  cdk::Expr_list* get_group_by()
-  {
-    return m_group_by.empty() ? nullptr : this;
-  }
-
-private:
-
-  void process(cdk::Expr_list::Processor& prc) const
-  {
-    prc.list_begin();
-
-    for (cdk::string el : m_group_by)
-    {
-      parser::Expression_parser expr_parser(PM, el);
-      expr_parser.process_if(prc.list_el());
-    }
-
-    prc.list_end();
-  }
-};
-
-
-/*
-  This template adds handling of projection specifications on top
-  of Op_group_by.
-
-  It implements the `add_proj` method required by implementations of
-  CRUD operations that support projection. Projection specifications
-  are stored internally and transformed to the form expected by CDK:
-  methods `get_xxx_proj` return pointer to cdk::Projection (as expected
-  for table projections) or cdk::Expression::Document (as expected by
-  document projections or NULL if no projection specifications were
-  given.
-
-  Template parameters are the implementation interface class being
-  implemented and parser mode for parsing expressions in projection
-  specifications.
-*/
-
-template <class Impl, parser::Parser_mode::value PM>
-class Op_projection
-    : public Op_group_by<Impl, PM>
-    , public cdk::Projection
-    , public cdk::Expression::Document
-{
-
-  std::vector<cdk::string> m_projections;
-  cdk::string  m_doc_proj;
-
-protected:
-
-
-  template <class X,
-            typename std::enable_if<
-              std::is_convertible<X*, internal::Db_object*>::value
-              >::type* = nullptr
-            >
-  Op_projection(X &init) : Op_group_by<Impl,PM>(init)
-  {}
-
-public:
-
-  void set_proj(const mysqlx::string& doc)
-  {
-    m_doc_proj = doc;
-  }
-
-  void add_proj(const mysqlx::string& field)
-  {
-    m_projections.push_back(field);
-  }
-
-  cdk::Projection* get_tbl_proj()
-  {
-    return m_projections.empty() ? nullptr : this;
-  }
-
-  cdk::Expression::Document* get_doc_proj()
-  {
-    return m_projections.empty() && m_doc_proj.empty() ? nullptr : this;
-  }
-
-private:
-
-  void process(cdk::Expression::Document::Processor& prc) const
-  {
-    if (!m_doc_proj.empty())
-    {
-      struct : public cdk::Expression::Processor
-      {
-        Doc_prc *m_prc;
-
-        Scalar_prc* scalar()
-        {
-          throw_error("Scalar expression can not be used as projection");
-          return NULL;
-        }
-
-        List_prc* arr()
-        {
-          throw_error("Array expression can not be used as projection");
-          return NULL;
-        }
-
-        // Report that any value is a document.
-
-        Doc_prc* doc()
-        {
-          return m_prc;
-        }
-
-      }
-      eprc;
-
-      eprc.m_prc = &prc;
-
-      parser::Expression_parser parser(parser::Parser_mode::DOCUMENT, m_doc_proj);
-
-      parser.process(eprc);
-
-      return;
-    }
-
-    prc.doc_begin();
-
-    for (cdk::string field : m_projections)
-    {
-      parser::Projection_parser expr_parser(PM, field);
-      expr_parser.process(prc);
-    }
-
-    prc.doc_end();
-
-  }
-
-  void process(cdk::Projection::Processor& prc) const
-  {
-    prc.list_begin();
-
-    for (cdk::string el : m_projections)
-    {
-
-      parser::Projection_parser order_parser(PM, el);
-      auto prc_el = prc.list_el();
-      if (prc_el)
-        order_parser.process(*prc_el);
-
-    }
-
-    prc.list_end();
-
-  }
-
-};
-
-
-/*
-  This template adds handling of selection criteria on top
-  of Op_projection.
-
-  It implements the `add_where` method required by implementations of
-  CRUD operations that support document/row selection. The selection
-  criteria is transformed into the form expected by cdk: method
-  `get_where()` returns pointer to cdk::Expression or NULL if no
-  selection criteria was specified.
-
-  Template parameters are the base class which can be one of the other
-  implementation templates and parser mode for parsing selection
-  expression.
-*/
-
-template <class Base, parser::Parser_mode::value PM>
-class Op_select : public Base
-{
-protected:
-
-  mysqlx::string m_where_expr;
-  std::unique_ptr<parser::Expression_parser> m_expr;
-
-  template <class X,
-            typename std::enable_if<
-              std::is_convertible<X*, internal::Db_object*>::value
-              >::type* = nullptr
-            >
-  Op_select(X &init) : Base(init)
-  {}
-
-  Op_select(const Op_select &other)
-    : Base(other)
-    , m_where_expr(other.m_where_expr)
-  {
-    if (!m_where_expr.empty())
-      m_expr.reset(new parser::Expression_parser(PM, m_where_expr));
-  }
-
-public:
-
-  void add_where(const mysqlx::string &expr)
-  {
-    m_where_expr = expr;
-    m_expr.reset(new parser::Expression_parser(PM, m_where_expr));
-  }
-
-  cdk::Expression* get_where() const
-  {
-    return m_expr.get();
-  }
+  using common::Session_impl::Session_impl;
 };
 
 

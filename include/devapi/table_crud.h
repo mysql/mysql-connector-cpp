@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  *
  * The MySQL Connector/C++ is licensed under the terms of the GPLv2
  * <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -57,7 +57,7 @@
 #include "result.h"
 #include "executable.h"
 #include "crud.h"
-#include "detail/table_crud.h"
+
 
 namespace mysqlx {
 
@@ -89,7 +89,7 @@ namespace internal {
   @ingroup devapi_op
 */
 
-class PUBLIC_API TableInsert
+class TableInsert
   : public internal::Table_insert_base
   , internal::Table_insert_detail
 {
@@ -103,11 +103,17 @@ protected:
     add_columns(get_impl(), cols...);
   }
 
+public:
+
   // Create operation which inserts rows into given table.
 
-  TableInsert(Table &table);
-
-public:
+  TableInsert(Table &table)
+  {
+    try {
+      reset(internal::Crud_factory::mk_insert(table));
+    }
+    CATCH_AND_WRAP
+  }
 
   TableInsert(const internal::Table_insert_base &other)
   {
@@ -125,7 +131,7 @@ public:
   virtual TableInsert& values(const Row &row)
   {
     try {
-      get_impl()->add_row(row);
+      add_rows(get_impl(), row);
       return *this;
     }
     CATCH_AND_WRAP
@@ -190,7 +196,7 @@ public:
 
 protected:
 
-  using Impl = internal::Table_insert_impl;
+  using Table_insert_detail::Impl;
 
   Impl* get_impl()
   {
@@ -217,7 +223,7 @@ namespace internal {
 
   struct Table_select_base
     : public Group_by < Having < Order_by < Limit < Offset< Bind_parameters<
-              Set_lock< Table_select_cmd >
+              Set_lock< Table_select_cmd, common::Table_select_if >
              > > > > > >
   {};
 
@@ -237,19 +243,22 @@ namespace internal {
   @ingroup devapi_op
 */
 
-DLL_WARNINGS_PUSH
-
-class PUBLIC_API TableSelect
+class TableSelect
   : public internal::Table_select_base
   , internal::Table_select_detail
 {
-DLL_WARNINGS_POP
 
   using Operation = Table_select_base;
 
 public:
 
-  TableSelect(Table &table);
+  TableSelect(Table &table)
+  {
+    try{
+      reset(internal::Crud_factory::mk_select(table));
+    }
+    CATCH_AND_WRAP
+  }
 
   template <typename...PROJ>
   TableSelect(Table &table, const PROJ&... proj)
@@ -281,7 +290,7 @@ public:
   Operation& where(const string& expr)
   {
     try {
-      get_impl()->add_where(expr);
+      get_impl()->set_where(expr);
       return *this;
     }
     CATCH_AND_WRAP
@@ -289,7 +298,7 @@ public:
 
 protected:
 
-  using Impl = internal::Table_select_impl;
+  using Impl = common::Table_select_if;
 
   Impl* get_impl()
   {
@@ -329,16 +338,26 @@ namespace internal {
   @ingroup devapi_op
 */
 
-class PUBLIC_API TableUpdate
+class TableUpdate
 : public internal::Table_update_base
 {
   using Operation = internal::Table_update_base;
 
-  TableUpdate(Table& table);
+  TableUpdate(Table& table)
+  {
+    try{
+      reset(internal::Crud_factory::mk_update(table));
+    }
+    CATCH_AND_WRAP
+  }
 
 public:
 
-  // TODO: ctor with where condition?
+  TableUpdate(Table &table, const string &expr)
+    : TableUpdate(table)
+  {
+    where(expr);
+  }
 
   TableUpdate(const internal::Table_update_cmd &other)
   {
@@ -358,10 +377,10 @@ public:
     as `expr(<string>)`, to be evaluated in the server.
   */
 
-  TableUpdate& set(const string& field, internal::ExprValue val)
+  TableUpdate& set(const string& field, const Value &val)
   {
     try {
-      get_impl()->add_set(field, std::move(val));
+      get_impl()->add_set(field, (const common::Value&)val);
       return *this;
     }
     CATCH_AND_WRAP
@@ -374,7 +393,7 @@ public:
   Operation& where(const string& expr)
   {
     try {
-      get_impl()->add_where(expr);
+      get_impl()->set_where(expr);
       return *this;
     }
     CATCH_AND_WRAP
@@ -382,7 +401,7 @@ public:
 
 protected:
 
-  using Impl = internal::Table_update_impl;
+  using Impl = common::Table_update_if;
 
   Impl* get_impl()
   {
@@ -420,16 +439,26 @@ namespace internal {
   @ingroup devapi_op
 */
 
-class PUBLIC_API TableRemove
+class TableRemove
   : public internal::Table_remove_base
 {
   using Operation = internal::Table_remove_base;
 
-  TableRemove(Table& table);
+  TableRemove(Table& table)
+  {
+    try {
+      reset(internal::Crud_factory::mk_remove(table));
+    }
+    CATCH_AND_WRAP
+  }
 
 public:
 
-  // TODO: ctor with where condition?
+  TableRemove(Table &table, const string &expr)
+    : TableRemove(table)
+  {
+    where(expr);
+  }
 
   TableRemove(const internal::Table_remove_cmd &other)
   {
@@ -449,7 +478,7 @@ public:
   Operation& where(const string &expr)
   {
     try {
-      get_impl()->add_where(expr);
+      get_impl()->set_where(expr);
       return *this;
     }
     CATCH_AND_WRAP
@@ -457,7 +486,7 @@ public:
 
 protected:
 
-  using Impl = internal::Table_remove_impl;
+  using Impl = common::Table_remove_if;
 
   Impl* get_impl()
   {

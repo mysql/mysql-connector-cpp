@@ -27,7 +27,7 @@
 
 /**
   @file
-  Classes used to access query and command execution results.
+  Details for public API result classes.
 */
 
 
@@ -35,212 +35,58 @@
 #include "../error.h"
 #include "../document.h"
 #include "../row.h"
+#include "../collations.h"
 
-#include <memory>
-
-
-namespace cdk {
-
-  class Reply;
-
-}  // cdk
+#include <deque>
 
 
 namespace mysqlx {
 
 class RowResult;
-
-namespace internal {
-
-  struct Session_detail;
-  class Result_base;
-
-/*
-  List_initializer object can be used to initialize a container of
-  arbitrary type U with list of items taken from source object.
-
-  It is assumed that the source object type Source defines iterator
-  type and that std::begin/end() return iterators to the beginning
-  and end of the sequence. The container type U is assumed to have
-  a constructor from begin/end iterator.
-
-  List_iterator defines begin/end() methods, so it is possible to
-  iterate over the sequence without storing it in any container.
-
-  TODO: common.h contains List_init<> template - check if code can be
-  merged.
-*/
-
-template <class Source>
-class List_initializer
-{
-protected:
-
-  Source &m_src;
-
-  List_initializer(Source &src)
-    : m_src(src)
-  {}
-
-  friend Source;
-
-public:
-
-  typedef typename Source::iterator iterator;
-
-  /*
-    Narrow the set of types for which this template is instantiated
-    to avoid ambiguous conversion errors. It is important to disallow
-    conversion to std::initializer_list<> because this conversion path
-    is considered when assigning to STL containers.
-  */
-
-  template <
-    typename U
-    , typename
-      = typename std::is_constructible<
-          U, const iterator&, const iterator&
-        >::type
-    , typename
-      = typename std::enable_if<
-          !std::is_same<
-            U,
-            std::initializer_list<typename U::value_type>
-          >::value
-        >::type
-  >
-  operator U()
-  {
-    try {
-      return U(std::begin(m_src), std::end(m_src));
-    }
-    CATCH_AND_WRAP
-  }
-
-  iterator begin()
-  {
-    try {
-      return std::begin(m_src);
-    }
-    CATCH_AND_WRAP
-  }
-
-  iterator end() const
-  {
-    try {
-      return std::end(m_src);
-    }
-    CATCH_AND_WRAP
-  }
-
-};
-
-
-/*
-  Iterator template.
-
-  It defines an STL input iterator which is implemented using an
-  implementation object of some type Impl. It is assumed that Impl
-  has the following methods:
-
-   void iterator_start() - puts iterator in "before begin" position;
-   bool iterator_next() - moves iterator to next position, returns
-                          false if it was not possible;
-   Value_type iterator_get() - gets current value.
-*/
-
-template<typename Value_type, typename Impl>
-struct iterator
-  : std::iterator < std::input_iterator_tag, Value_type>
-{
-protected:
-
-  Impl *m_impl = NULL;
-  bool m_at_end = false;
-
-  iterator(Impl& impl)
-    : m_impl(&impl)
-  {
-    m_impl->iterator_start();
-    m_at_end = !m_impl->iterator_next();
-  }
-
-  iterator()
-    : m_at_end(true)
-  {}
-
-public:
-
-  bool operator !=(const iterator &other) const
-  {
-    /*
-      Compares only if both iterators are at the end
-      of the sequence.
-    */
-    return !(m_at_end && other.m_at_end);
-  }
-
-  iterator<Value_type, Impl>& operator++()
-  {
-    try {
-      if (m_impl && !m_at_end)
-        m_at_end = !m_impl->iterator_next();
-      return *this;
-    }
-    CATCH_AND_WRAP
-  }
-
-  Value_type operator*() const
-  {
-    if (!m_impl || m_at_end)
-      THROW("Attempt to dereference null iterator");
-
-    try {
-      return m_impl->iterator_get();
-    }
-    CATCH_AND_WRAP
-  }
-
-  friend Impl;
-};
-
-} // internal
-
-
+class Column;
+class Columns;
 class Session;
 
+namespace common {
+
+class Result_init;
+template <class STR> class Column_info;
+
+}  // common
+
 
 namespace internal {
 
-class Result_base;
-class Row_result_detail;
-class Doc_result_detail;
+
+struct Session_detail;
 
 
-class PUBLIC_API Result_detail : nocopy
+class PUBLIC_API Result_detail
 {
+  // Disable copy semantics for result classes.
+
+  Result_detail(const Result_detail&) = delete;
+  Result_detail& operator=(const Result_detail&) = delete;
+
+protected:
+
+  Result_detail(common::Result_init&);
+
+  // Note: move semantics is implemented by move assignment operator.
+
+  Result_detail(Result_detail &&other)
+  {
+    operator=(std::move(other));
+  }
+
+  Result_detail& operator=(Result_detail&&);
 
 public:
 
   Result_detail() = default;
   virtual ~Result_detail();
 
-protected:
-
   struct INTERNAL Impl;
-  using WarningList = internal::List_initializer<Result_detail>;
-  using iterator = internal::iterator<Warning, Result_detail>;
-
-  Impl  *m_impl = NULL;
-  bool m_owns_impl = false;
-
-
-  Result_detail(Session*, cdk::Reply*);
-
-  Result_detail(Session*, cdk::Reply*, const std::vector<GUID>&);
-
-
-  void init(Result_detail&&);
 
   Impl& get_impl();
 
@@ -251,61 +97,135 @@ protected:
 
   void check_result() const;
 
+  uint64_t get_affected_rows() const;
+  uint64_t get_auto_increment() const;
 
-  // warning iterator implementation
+  using GUID = common::GUID;
+  using DocIdList = internal::List_initializer<const std::vector<GUID>&>;
 
-  unsigned m_wpos;
-  bool   m_at_begin;
+  const GUID& get_document_id() const;
+  DocIdList get_document_ids() const;
 
-  void iterator_start();
-  bool iterator_next();
-  Warning iterator_get();
+  // Handling multi-results
 
-  unsigned    get_warning_count() const;
-  Warning     get_warning(unsigned pos);
-  WarningList get_warnings();
+  bool has_data() const;
+  bool next_result();
+
+private:
+
+  Impl  *m_impl = nullptr;
+  bool m_owns_impl = false;
+
+  /*
+    Source for WarningList initializer.
+  */
+
+  struct Warning_src
+  {
+    using Value = Warning;
+
+    Result_detail &m_res;
+
+    Warning_src(Result_detail &res)
+      : m_res(res)
+    {}
+
+    size_t size() const
+    {
+      return m_res.get_warning_count();
+    }
+
+    Warning operator[](size_t pos)
+    {
+      return m_res.get_warning(pos);
+    }
+  };
 
 public:
 
-  iterator begin()
+  using WarningList = internal::List_initializer<Array_source<Warning_src>>;
+
+  unsigned    get_warning_count() const;
+  Warning     get_warning(size_t pos);
+
+  WarningList get_warnings()
   {
-    return iterator(*this);
+    assert(m_impl);
+    return { *this };
   }
 
-  iterator end()
-  {
-    return iterator();
-  }
+public:
 
-  friend iterator;
-  friend Result_base;
-  friend Row_result_detail;
-  friend Doc_result_detail;
   friend Session_detail;
   friend List_initializer<Result_detail>;
-
-  struct Access;
-  friend Access;
 };
 
 
+/*
+  This class keeps a reference to column information stored in a
+  common::Column_info<> instance. The meta-data is exposed in format expected
+  by X DevAPI meta-data access methods. In particualr the CDK type and encoding
+  format information is translated to X DevAPI type information. For example,
+  a CDK column of type FLOAT can be reported as DevAPI type FLOAT, DOUBLE
+  or DECIMAL, depending on the encoding format that was reported by CDK. This
+  translation happens in Column::getType() method.
+
+  Additional encoding information is exposed via other methods such as
+  is_signed().
+*/
+
 class PUBLIC_API Column_detail
+  : virtual common::Printable
 {
+public:
+
+  using Impl = common::Column_info<string>;
+
+  const Impl *m_impl = nullptr;
+
+  Column_detail(const Impl &impl)
+    : m_impl(&impl)
+  {}
+
+  const Impl& get_impl() const
+  {
+    assert(m_impl);
+    return *m_impl;
+  }
+
+  string get_name() const;
+  string get_label() const;
+  string get_schema_name() const;
+  string get_table_name() const;
+  string get_table_label() const;
+
+  // Note: should return values of mysqlx::Type enum constants
+
+  unsigned get_type() const;
+
+  CharacterSet get_charset() const;
+  const CollationInfo& get_collation() const;
+
+  unsigned long get_length() const;
+  unsigned short get_decimals() const;
+
+  bool is_signed() const;
+  bool is_padded() const;
+
+  void print(std::ostream&) const override;
+
 protected:
 
-  class INTERNAL Impl;
-  DLL_WARNINGS_PUSH
-  std::shared_ptr<Impl> m_impl;
-  DLL_WARNINGS_POP
+  Column_detail() = default;
+  Column_detail(const Column_detail&) = default;
+  Column_detail(Column_detail&&) = default;
 
-  Column_detail(const std::shared_ptr<Impl> &impl)
-    : m_impl(impl)
-  {}
+  Column_detail& operator=(const Column_detail&) = default;
 
 public:
 
   friend Impl;
-  friend Row_result_detail;
+  friend Result_detail;
   friend RowResult;
 
   struct INTERNAL Access;
@@ -313,134 +233,150 @@ public:
 };
 
 
-class PUBLIC_API Row_result_detail
- : virtual Result_detail
+/*
+  A wrapper around column meta-data class COL that adds copy semantics
+  and default ctor. This is required by Columns_detail class which uses
+  an STL container to store data for several columns.
+*/
+
+template <class COL>
+struct Column_storage
+  : public COL
 {
-  using Impl = Result_detail::Impl;
+  Column_storage(const typename COL::Impl &impl)
+    : COL(impl)
+  {}
+
+  // Note: these members are needed to use it with std::deque<>
+
+  Column_storage() = default;
+  Column_storage(const Column_storage&) = default;
+  Column_storage& operator=(const Column_storage&) = default;
+};
+
+
+template <class COLS> class Row_result_detail;
+
+
+/*
+  Class holding meta-data information for all columns in a result.
+
+  Template parameter COL is a class used to store information about a single
+  column. It is made into template parameter because full definition of
+  the actuall mysqlx::Column class is not available in this header.
+
+  Note: Because this class is implemented using std::deque<>, we wrap COL
+  class with the Column_storage<> wrapper to provide copy semantics and default
+  ctor required by this STL container.
+*/
+
+template <class COL>
+class Columns_detail
+  : public std::deque<Column_storage<COL>>
+{
+  Columns_detail(const Columns_detail&) = delete;
 
 protected:
 
-  // Column meta-data access
+  Columns_detail() = default;
+  Columns_detail(Columns_detail&&) = default;
+  Columns_detail& operator=(Columns_detail&&) = default;
 
-  struct PUBLIC_API Columns_src
+  void init(const internal::Result_detail::Impl&);
+
+  friend internal::Row_result_detail<Columns>;
+};
+
+
+/*
+  COLS is a class used to store information about result columns. It is made
+  into template parameter because the actual mysqlx::Columns class, with
+  the public API for accessing column information, is defined in the top-level
+  header devapi/result.h.
+
+  The COLS class should have move semantics to enable move-semantics for result
+  objects.
+*/
+
+template <class COLS>
+class Row_result_detail
+  : public Result_detail
+{
+public:
+
+  using iterator = Iterator<Row_result_detail, Row>;
+  using RowList = List_initializer<Row_result_detail&>;
+  using Columns = COLS;
+
+  iterator begin()
   {
-    const Row_result_detail::Impl &m_res_impl;
+    return iterator(*this);
+  }
 
-    Columns_src(const Row_result_detail::Impl &res)
-      : m_res_impl(res)
-    {}
-
-    struct iterator
-      : public internal::iterator<Column_detail, Columns_src>
-    {
-      // Some valid C++11 constructs do not work in MSVC 2013.
-
-#if defined(_MSC_VER) && _MSC_VER > 1800
-
-      using internal::iterator<Column_detail, Columns_src>::iterator;
-
-#else
-
-      iterator() {}
-      iterator(Columns_src &src)
-        : internal::iterator<Column_detail, Columns_src>::iterator(src)
-      {}
-
-#endif
-
-      // Note: define reference type so that Column instance can be constructe
-      // from it.
-      using reference = Column_detail&&;
-
-      friend Columns_src;
-    };
-
-    iterator begin()
-    {
-      return iterator(*this);
-    }
-
-    iterator end()
-    {
-      return iterator();
-    }
-
-    // iterator implementation
-
-    col_count_t m_pos;
-    bool m_at_begin;
-
-    void iterator_start();
-    bool iterator_next();
-    Column_detail iterator_get();
-  };
-
-  struct PUBLIC_API Columns
-    : public internal::List_initializer<Columns_src>
+  iterator end() const
   {
-    Columns_src m_src;
-
-    Columns(const Row_result_detail &res)
-      : List_initializer(m_src)
-      , m_src(res.get_impl())
-    {}
-
-    /*
-      Note: Without this empty destructor code crashes on
-      Solaris but works fine on all other platforms. The
-      crash is like if the m_src object gets destroyed too
-      early.
-    */
-
-    ~Columns()
-    {}
-
-    Column_detail operator[](col_count_t pos) const;
-  };
-
-  Row get_row();
+    return iterator();
+  }
 
 private:
 
   // Row iterator implementation
 
-  Row m_cur_row;
+  Row   m_row;
+
+  using Value = Row;
 
   void iterator_start() {}
 
-  bool iterator_next()
+  bool iterator_next();
+
+  Value iterator_get()
   {
-    m_cur_row = get_row();
-    return !m_cur_row.isNull();
+    return m_row;
   }
 
-  Row iterator_get()
+
+protected:
+
+  Row_result_detail() = default;
+  Row_result_detail(common::Result_init&);
+
+  Row_result_detail(Row_result_detail&&) = default;
+  Row_result_detail& operator=(Row_result_detail&&) = default;
+
+  RowList get_rows()
   {
-    return m_cur_row;
+    /*
+      Construct RowList instance passing reference to this Row_result_detail
+      object which acts as a source for the list initializer.
+    */
+    return *this;
   }
 
-public:
+  row_count_t row_count();
 
-  using iterator = internal::iterator<Row, Row_result_detail>;
-
-  iterator begin()
+  Row get_row()
   {
-    try {
-      return iterator(*this);
-    }
-    CATCH_AND_WRAP
+    if (!iterator_next())
+      return Row();
+    return iterator_get();
   }
 
-  iterator end() const
-  {
-    try {
-      return iterator();
-    }
-    CATCH_AND_WRAP
-  }
+private:
+
+  // Storage for result column information.
+
+  Columns  m_cols;
+
+protected:
+
+  col_count_t     col_count() const;
+  const Column&   get_column(col_count_t) const;
+  const Columns&  get_columns() const;
 
   friend iterator;
   friend RowResult;
+  friend Columns;
 };
 
 
@@ -448,34 +384,21 @@ public:
 // ----------------------
 
 class PUBLIC_API Doc_result_detail
-  : virtual Result_detail
+  : public Result_detail
 {
-protected:
-
-  void init(Doc_result_detail&&)
-  {}
-
-  DbDoc get_doc();
-  uint64_t count();
-
 public:
 
-  using iterator = internal::iterator<DbDoc, Doc_result_detail>;
+  using iterator = Iterator<Doc_result_detail, DbDoc>;
+  using DocList = List_initializer<Doc_result_detail&>;
 
   iterator begin()
   {
-    try {
-      return iterator(*this);
-    }
-    CATCH_AND_WRAP
+    return iterator(*this);
   }
 
   iterator end() const
   {
-    try {
-      return iterator();
-    }
-    CATCH_AND_WRAP
+    return iterator();
   }
 
 private:
@@ -486,15 +409,33 @@ private:
 
   void iterator_start() {}
 
-  bool iterator_next()
-  {
-    m_cur_doc = get_doc();
-    return !m_cur_doc.isNull();
-  }
+  bool iterator_next();
 
   DbDoc iterator_get()
   {
     return m_cur_doc;
+  }
+
+protected:
+
+  Doc_result_detail() = default;
+
+  Doc_result_detail(common::Result_init &init)
+    : Result_detail(init)
+  {}
+
+  DbDoc get_doc()
+  {
+    if (!iterator_next())
+      return DbDoc();
+    return iterator_get();
+  }
+
+  uint64_t count();
+
+  DocList get_docs()
+  {
+    return *this;
   }
 
   friend Impl;

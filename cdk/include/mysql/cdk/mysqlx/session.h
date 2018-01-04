@@ -326,7 +326,12 @@ class Col_metadata
 
   void get_info(Format<TYPE_BYTES> &fmt) const
   {
-    Format<TYPE_BYTES>::Access::set_width(fmt, m_length);
+    // Note: flag 0x01 means that bytes should be padded with 0x00
+
+    if (m_flags & 0x01)
+    {
+      Format<TYPE_BYTES>::Access::set_width(fmt, m_length);
+    }
   }
 
   /*
@@ -396,6 +401,12 @@ class Session
   friend class Reply;
   friend class Cursor;
 
+  struct Doc_args : public Any_list
+  {
+    const cdk::Any::Document *m_doc;
+    void process(Processor &prc) const;
+  };
+
 protected:
 
   Protocol  m_protocol;
@@ -410,7 +421,7 @@ protected:
   enum { CMD_SQL, CMD_ADMIN, CMD_COLL_ADD } m_cmd_type;
 
   string m_stmt;
-  Any_list *m_cmd_args;
+  Doc_args m_cmd_args;
   const Table_ref *m_table;
 
   unsigned long m_id;
@@ -455,7 +466,6 @@ public:
     , m_isvalid(false)
     , m_current_reply(NULL)
     , m_auth_interface(NULL)
-    , m_cmd_args(NULL)
     , m_table(NULL)
     , m_id(0)
     , m_expired(false)
@@ -467,6 +477,8 @@ public:
   {
     m_stmt_stats.clear();
     authenticate(options, conn.is_secure());
+    // TODO: make "lazy" checks instead, deferring to the time when given
+    // feature is used.
     check_protocol_fields();
   }
 
@@ -507,14 +519,17 @@ public:
 
   void begin();
   void commit();
-  void rollback();
+  void rollback(const string &savepoint);
+  void savepoint_set(const string &savepoint);
+  void savepoint_remove(const string &savepoint);
 
   /*
      SQL API
   */
 
   Reply_init &sql(const string&, Any_list*);
-  Reply_init &admin(const char*, Any_list&);
+
+  Reply_init &admin(const char*, const cdk::Any::Document&);
 
   /*
     CRUD API

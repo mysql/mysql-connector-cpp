@@ -271,7 +271,6 @@ Session_builder::tls_connect(Socket_base &connection, const TLS::Options &option
 Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
   : m_session(NULL)
   , m_connection(NULL)
-  , m_trans(false)
 {
   Session_builder sb(true);  // throw errors if detected
 
@@ -295,7 +294,6 @@ struct ds::Multi_source::Access
 Session::Session(ds::Multi_source &ds)
   : m_session(NULL)
   , m_connection(NULL)
-  , m_trans(false)
 {
   Session_builder sb;
 
@@ -323,7 +321,6 @@ Session::Session(ds::Multi_source &ds)
 Session::Session(ds::Unix_socket &ds, const ds::Unix_socket::Options &options)
   : m_session(NULL)
   , m_connection(NULL)
-  , m_trans(false)
 {
   Session_builder sb(true);  // throw errors if detected
 
@@ -339,8 +336,6 @@ Session::Session(ds::Unix_socket &ds, const ds::Unix_socket::Options &options)
 
 Session::~Session()
 {
-  if (m_trans)
-    rollback();
   delete m_session;
   delete m_connection;
 }

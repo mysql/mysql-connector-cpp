@@ -21,8 +21,7 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 
-SET(headers error.h row.h result.h settings.h session.h
-            crud.h collection_crud.h table_crud.h view.h)
+SET(headers error.h row.h result.h settings.h session.h crud.h)
 
 check_headers(${headers})
 

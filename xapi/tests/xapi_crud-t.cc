@@ -113,8 +113,6 @@ TEST_F(xapi, test_merge_patch)
 
 TEST_F(xapi, test_row_locking)
 {
-  //TODO: temporary skip goup_by tests
-  return;
   SKIP_IF_NO_XPLUGIN
 
   mysqlx_result_t *res;
@@ -382,6 +380,8 @@ TEST_F(xapi, basic)
     const char *col_orig_table = mysqlx_column_get_original_table(res, i);
     const char *col_schema = mysqlx_column_get_schema(res, i);
     const char *col_cat = mysqlx_column_get_catalog(res, i);
+
+    EXPECT_NE(nullptr, col_cat);
 
     printf("\n Column # %d", i + 1);
     printf("\n * name: %s, orig name: %s, table: %s, orig table: %s, schema: %s, catalog: %s",
@@ -781,12 +781,12 @@ TEST_F(xapi, ddl_test)
 
   sess = get_session();
 
-  exec_sql("DROP DATABASE IF EXISTS cc_ddl_test");
-  exec_sql("CREATE DATABASE cc_ddl_test");
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_drop(sess, "cc_ddl_test"));
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_create(sess, "cc_ddl_test"));
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_ddl_test", 1)) != NULL);
+
   exec_sql("CREATE TABLE cc_ddl_test.ddl_table (id int)");
   exec_sql("CREATE VIEW cc_ddl_test.ddl_view AS SELECT * FROM cc_ddl_test.ddl_table");
-
-  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_ddl_test", 1)) != NULL);
   EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, "ddl_collection"));
 
   // Check that the collection is created
@@ -822,26 +822,8 @@ TEST_F(xapi, ddl_test)
   // Check that the view exists
   exec_sql("SELECT * FROM cc_ddl_test.ddl_view");
 
-  // Dropping an existing view, expect OK
-  EXPECT_EQ(RESULT_OK, mysqlx_view_drop(schema, "ddl_view"));
-
-  // Check that the view does not exist
-  exec_sql_error("SELECT * FROM cc_ddl_test.ddl_view");
-
-  // Dropping a non-existing view, expect OK
-  EXPECT_EQ(RESULT_OK, mysqlx_view_drop(schema, "ddl_view"));
-
   // Check that the table exists
   exec_sql("SELECT * FROM cc_ddl_test.ddl_table");
-
-  // Dropping an existing table, expect OK
-  EXPECT_EQ(RESULT_OK, mysqlx_table_drop(schema, "ddl_table"));
-
-  // Check that the table is dropped
-  exec_sql_error("SELECT * FROM cc_ddl_test.ddl_table");
-
-  // Dropping a non-existing table, expect OK
-  EXPECT_EQ(RESULT_OK, mysqlx_table_drop(schema, "ddl_table"));
 
   // Drop the test schema
   EXPECT_EQ(RESULT_OK, mysqlx_schema_drop(get_session(), "cc_ddl_test"));
@@ -868,6 +850,8 @@ TEST_F(xapi, json_test)
   EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_crud_test", 1)) != NULL);
   EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, "crud_collection"));
 
+  // Insert first document with known length.
+
   for (i = 0; i < 5; i++)
   {
     sprintf(insert_buf, "INSERT INTO cc_crud_test.crud_collection (doc) VALUES " \
@@ -890,6 +874,13 @@ TEST_F(xapi, json_test)
       printf("\n[json: %s]", json_string);
 
     EXPECT_STREQ(json_row[i], json_string);
+
+    /*
+      Note: json_len contains total number of bytes in the returned string,
+      includeing the '\0' terminator.
+    */
+
+    EXPECT_EQ(strlen(json_string) + 1, json_len);
     ++i;
   }
 }
@@ -954,7 +945,6 @@ TEST_F(xapi, null_test)
 }
 
 
-
 TEST_F(xapi, param_safety_test)
 {
   SKIP_IF_NO_XPLUGIN
@@ -1006,7 +996,6 @@ TEST_F(xapi, param_safety_test)
   printf("\nExpected error: %s", mysqlx_error_message(get_session()));
   EXPECT_TRUE(mysqlx_get_schema(get_session(), "nonexisting_schema", 1) == NULL);
   printf("\nExpected error: %s", mysqlx_error_message(get_session()));
-
   EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_crud_test", 1)) != NULL);
 
   /* Table getting */
@@ -1017,14 +1006,6 @@ TEST_F(xapi, param_safety_test)
   printf("\nExpected error: %s", mysqlx_error_message(schema));
   EXPECT_TRUE(mysqlx_get_table(schema, "nonexisting_table", 1) == NULL);
   printf("\nExpected error: %s", mysqlx_error_message(schema));
-
-  /* Table dropping */
-  EXPECT_EQ(RESULT_ERROR, mysqlx_table_drop(NULL, "crud_test"));
-  EXPECT_EQ(RESULT_ERROR, mysqlx_table_drop(schema, NULL));
-  printf("\nExpected error: %s", mysqlx_error_message(schema));
-  EXPECT_EQ(RESULT_ERROR, mysqlx_table_drop(schema, ""));
-  printf("\nExpected error: %s", mysqlx_error_message(schema));
-
   EXPECT_TRUE((table = mysqlx_get_table(schema, "crud_test", 1)) != NULL);
 
   /* Collection creating */
@@ -1041,16 +1022,11 @@ TEST_F(xapi, param_safety_test)
   EXPECT_EQ(RESULT_ERROR, mysqlx_collection_drop(schema, ""));
   printf("\nExpected error: %s", mysqlx_error_message(schema));
 
+
   EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, "collection_test"));
 
-  /* View dropping */
-  EXPECT_EQ(RESULT_ERROR, mysqlx_view_drop(NULL, "crud_view"));
-  EXPECT_EQ(RESULT_ERROR, mysqlx_view_drop(schema, NULL));
-  printf("\nExpected error: %s", mysqlx_error_message(schema));
-  EXPECT_EQ(RESULT_ERROR, mysqlx_view_drop(schema, ""));
-  printf("\nExpected error: %s", mysqlx_error_message(schema));
-
   EXPECT_TRUE((collection = mysqlx_get_collection(schema, "collection_test", 1)) != NULL);
+
 
   /* Collection FIND, ADD, MODIFY and REMOVE one-call ops */
   EXPECT_TRUE((res = mysqlx_collection_find(NULL, NULL)) == NULL);
@@ -1135,14 +1111,19 @@ TEST_F(xapi, param_safety_test)
   RESULT_CHECK(res = mysqlx_execute(stmt));
 
   stmt = mysqlx_table_update_new(table);
-  EXPECT_EQ(RESULT_OK, mysqlx_set_update_values(stmt, PARAM_END));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_set_update_values(stmt, PARAM_END));
+  printf("\nExpected error: %s", mysqlx_error_message(stmt));
   EXPECT_TRUE(mysqlx_execute(stmt) == NULL);
   printf("\nExpected error: %s", mysqlx_error_message(stmt));
 
+  buf[0] = 0;
   opt = mysqlx_session_options_new();
+  // option not set yet
+  EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_get(opt, MYSQLX_OPT_HOST, buf));
+  printf("\nExpected error: %s", mysqlx_error_message(opt));
+  mysqlx_session_option_set(opt, MYSQLX_OPT_HOST, "localhost", PARAM_END);
   EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_get(opt, MYSQLX_OPT_HOST, NULL));
   printf("\nExpected error: %s", mysqlx_error_message(opt));
-  buf[0] = 0;
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_HOST, buf));
   EXPECT_STRCASEEQ("localhost", buf);
 
@@ -2195,6 +2176,7 @@ TEST_F(xapi_bugs, list_functions)
     exec_sql(queries[i]);
   }
 
+  SESS_CHECK( res = mysqlx_get_schemas(get_session(), NULL));
   SESS_CHECK( res = mysqlx_get_schemas(get_session(), "cc_crud_te%"));
   col_num = mysqlx_column_get_count(res);
   EXPECT_EQ(col_num, 1);
@@ -2240,8 +2222,8 @@ TEST_F(xapi_bugs, list_functions)
     printf(" [%s]", buf);
   }
 
-  // Get tables and views
-  SESS_CHECK( res = mysqlx_get_tables(schema, "%", 1));
+  // Get tables and views (NULL pattern is the same as "%")
+  SESS_CHECK( res = mysqlx_get_tables(schema, NULL, 1));
 
   while ((row = mysqlx_row_fetch_one(res)) != NULL)
   {
@@ -2255,6 +2237,7 @@ TEST_F(xapi_bugs, list_functions)
   }
 
   // Get collections
+  SESS_CHECK( res = mysqlx_get_collections(schema, NULL));
   SESS_CHECK( res = mysqlx_get_collections(schema, "col%"));
 
   while ((row = mysqlx_row_fetch_one(res)) != NULL)
@@ -2281,7 +2264,6 @@ TEST_F(xapi_bugs, schemas_list_test)
   int col_num = 0;
   int i = 0;
 
-  // Connect as a node session to use SQL
   AUTHENTICATE();
   for (i = 0; i < 2; i++)
   {
@@ -2326,6 +2308,7 @@ TEST_F(xapi_bugs, one_call_collection_test)
 
   AUTHENTICATE();
 
+  mysqlx_schema_drop(get_session(), "cc_crud_test");
   mysqlx_schema_create(get_session(), "cc_crud_test");
 
   EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_crud_test", 1)) != NULL);
@@ -2338,10 +2321,15 @@ TEST_F(xapi_bugs, one_call_collection_test)
 
   EXPECT_TRUE((collection = mysqlx_get_collection(schema, "collection_exec", 1)) != NULL);
 
-  SESS_CHECK(res = mysqlx_collection_add(collection, json_buf[0], json_buf[1],
-                                         PARAM_END));
+  CRUD_CHECK(
+    res = mysqlx_collection_add(collection, json_buf[0], json_buf[1], PARAM_END),
+    collection
+  );
 
-  SESS_CHECK(res = mysqlx_collection_find(collection, "a_key = 327"));
+  CRUD_CHECK(
+    res = mysqlx_collection_find(collection, "a_key = 327"),
+    collection
+  );
 
   i = 0;
   while ((json_string = mysqlx_json_fetch_one(res, &json_len)) != NULL)
@@ -2356,16 +2344,27 @@ TEST_F(xapi_bugs, one_call_collection_test)
 
   EXPECT_EQ(1, i);
 
-  SESS_CHECK(res = mysqlx_collection_modify_set(collection, "a_key = 327",
-                                                "c_key", PARAM_EXPR("a_key + 100"),
-                                                "b_key", PARAM_STRING(new_str_val),
-                                                PARAM_END));
+  CRUD_CHECK(
+    res = mysqlx_collection_modify_set(
+      collection, "a_key = 327",
+      "c_key", PARAM_EXPR("a_key + 100"),
+      "b_key", PARAM_STRING(new_str_val),
+      PARAM_END
+    ),
+    collection
+  );
 
-  SESS_CHECK(res = mysqlx_collection_modify_unset(collection,
-                                                "a_key = 327",
-                                                "a_key", PARAM_END));
+  CRUD_CHECK(
+    res = mysqlx_collection_modify_unset(
+      collection, "a_key = 327", "a_key", PARAM_END
+    ),
+    collection
+  );
 
-  SESS_CHECK(res = mysqlx_collection_find(collection, "c_key = 427"));
+  CRUD_CHECK(
+    res = mysqlx_collection_find(collection, "c_key = 427"),
+    collection
+  );
 
   while ((json_string = mysqlx_json_fetch_one(res, &json_len)) != NULL)
   {
@@ -2380,14 +2379,20 @@ TEST_F(xapi_bugs, one_call_collection_test)
   }
 
   // remove one document
-  SESS_CHECK(res = mysqlx_collection_remove(collection, "a_key = 320"));
+  CRUD_CHECK(
+    res = mysqlx_collection_remove(collection, "a_key = 320"),
+    collection
+  );
 
-  SESS_CHECK(res = mysqlx_collection_find(collection, "a_key = 320"));
+  CRUD_CHECK(
+    res = mysqlx_collection_find(collection, "a_key = 320"),
+    collection
+  );
   EXPECT_EQ(NULL, mysqlx_json_fetch_one(res, &json_len));
 
-  SESS_CHECK(res = mysqlx_collection_remove(collection, ""));
+  CRUD_CHECK(res = mysqlx_collection_remove(collection, "true"), collection);
 
-  SESS_CHECK(res = mysqlx_collection_find(collection, ""));
+  CRUD_CHECK(res = mysqlx_collection_find(collection, ""), collection);
   EXPECT_EQ(NULL, mysqlx_json_fetch_one(res, &json_len));
 
 }
@@ -2465,9 +2470,11 @@ TEST_F(xapi_bugs, collection_id_test)
   // Document with _id specified by user
   EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, "{\"a_key\" : 200, \"_id\" : \"111222333\"}"));
 
-  // Document with invalid _id specified by user, expect error
-  EXPECT_EQ(RESULT_ERROR, mysqlx_set_add_document(stmt, "{\"a_key\" : 300, \"_id\" : \"000000000000000000000000000000000011122223333\"}"));
-  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+  // Document with invalid _id specified by user, expect error when the add
+  // operation is executed, but not when document is appended to the operation
+  EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, "{\"a_key\" : 300, \"_id\" : \"000000000000000000000000000000000011122223333\"}"));
+  EXPECT_EQ(NULL, res = mysqlx_execute(stmt));
+  printf("\nExpected error: %s\n", mysqlx_error_message(stmt));
 
   while ((id = mysqlx_fetch_doc_id(res)) != NULL)
   {

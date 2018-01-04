@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016,2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The MySQL Connector/C is licensed under the terms of the GPLv2
  * <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -65,11 +65,15 @@
 #ifndef MYSQL_XAPI_H
 #define MYSQL_XAPI_H
 
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-#include "mysql_common.h"
+
+#include "mysql_common_constants.h"
+#include "common/api.h"
+
 #include <stdlib.h>
 #include <stdint.h>
 
@@ -78,14 +82,6 @@ extern "C" {
   @{
 */
 
-/*
-  On Windows, dependency on the sockets library can be handled using
-  #pragma comment directive.
-*/
-
-#ifdef _WIN32
- #pragma comment(lib, "ws2_32")
-#endif
 
 // FIXME
 #define STDCALL
@@ -142,7 +138,6 @@ typedef object_id* MYSQLX_GUID;
 
 #define MYSQLX_COLLATION_UNDEFINED 0
 
-#define DEFAULT_MYSQLX_PORT 33060
 
 /*
   Error codes
@@ -162,6 +157,7 @@ typedef object_id* MYSQLX_GUID;
 #define MYSQLX_ERROR_MISSING_VIEW_NAME_MSG "Missing view name"
 #define MYSQLX_ERROR_MISSING_KEY_NAME_MSG "Missing key name"
 #define MYSQLX_ERROR_MISSING_HOST_NAME "Missing host name"
+#define MYSQLX_ERROR_MISSING_SOCKET_NAME "Missing socket name"
 #define MYSQLX_ERROR_MISSING_CONN_INFO "Missing connecting information"
 #define MYSQLX_ERROR_HANDLE_NULL_MSG "Handle cannot be NULL"
 #define MYSQLX_ERROR_VIEW_INVALID_STMT_TYPE "Invalid statement type for View. Only SELECT type is supported"
@@ -178,6 +174,7 @@ typedef object_id* MYSQLX_GUID;
 #define MYSQLX_ERROR_ROW_LOCKING "Row locking is supported only for SELECT and FIND"
 #define MYSQLX_ERROR_WRONG_LOCKING_MODE "Wrong value for the row locking mode"
 #define MYSQLX_ERROR_WRONG_EXPRESSION "Expression could not be parsed"
+#define MYSQLX_ERROR_EMPTY_JSON "Empty JSON document string"
 
 
 /* Opaque structures*/
@@ -351,20 +348,12 @@ typedef enum mysqlx_sort_direction_enum
 
 typedef enum mysqlx_opt_type_enum
 {
-  MYSQLX_OPT_HOST = 1,        /**< host name or IP address, DNS name of the host,
-                                   IPv4 address or IPv6 address */
-  MYSQLX_OPT_PORT = 2,        /**< port */
-  MYSQLX_OPT_USER = 3,        /**< user name */
-  MYSQLX_OPT_PWD = 4,         /**< password */
-  MYSQLX_OPT_DB = 5,          /**< default database */
-  MYSQLX_OPT_SSL_MODE = 6,
-  /** path to a PEM file specifying trusted root certificates */
-  MYSQLX_OPT_SSL_CA = 7,
-  MYSQLX_OPT_PRIORITY = 8,    /**< Host priority for failover configurations */
-  MYSQLX_OPT_AUTH = 9,        /**< Authentication method */
-#ifndef _WIN32
-  MYSQLX_OPT_SOCKET = 10,
-#endif
+
+#define XAPI_OPT_ENUM_str(X,N)  MYSQLX_OPT_##X = N,
+#define XAPI_OPT_ENUM_num(X,N)  MYSQLX_OPT_##X = N,
+#define XAPI_OPT_ENUM_any(X,N)  MYSQLX_OPT_##X = N,
+
+  SESSION_OPTION_LIST(XAPI_OPT_ENUM)
   LAST
 }
 mysqlx_opt_type_t;
@@ -390,20 +379,9 @@ mysqlx_opt_type_t;
 
 typedef enum mysqlx_ssl_mode_enum
 {
-  SSL_MODE_DISABLED = 0,       /**< Establish an unencrypted connection. */
-  SSL_MODE_REQUIRED = 2,       /**< Establish a secure connection if the server
-                                    supports secure connections. The connection
-                                    attempt fails if a secure connection cannot
-                                    be established.  */
-  SSL_MODE_VERIFY_CA = 3,      /**< Like SSL_MODE_REQUIRED, but additionally
-                                    verify the server TLS certificate against
-                                    the configured Certificate Authority (CA)
-                                    certificates. The connection attempt fails
-                                    if no valid matching CA certificates are
-                                    found. */
-  SSL_MODE_VERIFY_IDENTITY = 4 /**< Like VERIFY_CA, but additionally verify
-                                    that the server certificate matches the host
-                                    to which the connection is attempted.*/
+#define XAPI_SSL_MODE_ENUM(X,N)  SSL_MODE_##X = N,
+
+  SSL_MODE_LIST(XAPI_SSL_MODE_ENUM)
 }
 mysqlx_ssl_mode_t;
 
@@ -415,56 +393,11 @@ mysqlx_ssl_mode_t;
 
 typedef enum mysqlx_auth_method_enum
 {
-  MYSQLX_AUTH_PLAIN = 0,       /**< Plain text authentication method.
-                                    By default used in SSL connections. */
-  MYSQLX_AUTH_MYSQL41 = 1,     /**< Authention method where the password is
-                                    stored in MySQL 4.1 style. By default
-                                    used in unencrypted connections. */
-  MYSQLX_AUTH_EXTERNAL = 2     /**< External authentication handled by other
-                                    means than the standard MySQL server auth.
-                                    Currently not supported by X Plugin */
+#define XAPI_AUTH_ENUM(X,N)  MYSQLX_AUTH_##X = N,
+
+  AUTH_METHOD_LIST(XAPI_AUTH_ENUM)
 }
 mysqlx_auth_method_t;
-
-
-/**
-  Constants for defining the View algorithm using
-  mysqlx_set_view_algorithm() function.
-  @see https://dev.mysql.com/doc/refman/en/view-algorithms.html
-*/
-
-typedef enum mysqlx_view_algorithm_enum
-{
-  VIEW_ALGORITHM_UNDEFINED = 0,   /**< Undefined view algorithm */
-  VIEW_ALGORITHM_MERGE = 1,       /**< Merge view algorithm */
-  VIEW_ALGORITHM_TEMPTABLE = 2    /**< Temptable view algorithm */
-} mysqlx_view_algorithm_t;
-
-
-/**
-  Constants for defining the View security using
-  mysqlx_set_view_security() function.
-  @see https://dev.mysql.com/doc/refman/en/stored-programs-security.html
-*/
-
-typedef enum mysqlx_view_security_enum
-{
-  VIEW_SECURITY_DEFINER = 1,  /**< Definer view security context */
-  VIEW_SECURITY_INVOKER = 2   /**< Invoker view security context */
-} mysqlx_view_security_t;
-
-
-/**
-  Constants for defining the View check options
-  mysqlx_set_view_security() function.
-  @see https://dev.mysql.com/doc/refman/en/view-check-option.html
-*/
-
-typedef enum mysqlx_view_check_option_enum
-{
-  VIEW_CHECK_OPTION_CASCADED = 1,   /**< Cascaded view check option */
-  VIEW_CHECK_OPTION_LOCAL = 2       /**< Local view check option */
-} mysqlx_view_check_option_t;
 
 
 /**
@@ -474,10 +407,12 @@ typedef enum mysqlx_view_check_option_enum
 */
 typedef enum mysqlx_row_locking_enum
 {
+#define XAPI_ROW_LOCK_ENUM(X,N)  ROW_LOCK_##X = N,
+
   ROW_LOCK_NONE = 0,       /**< No locking */
-  ROW_LOCK_SHARED = 1,     /**< Locking in Shared mode */
-  ROW_LOCK_EXCLUSIVE = 2   /**< Locking in Exclusive mode */
-} mysqlx_row_locking_t;
+  LOCK_MODE_LIST(XAPI_ROW_LOCK_ENUM)
+}
+mysqlx_row_locking_t;
 
 /*
   ====================================================================
@@ -886,6 +821,10 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, ...);
           is set otherwise (use `mysqlx_error()` to get the error
           information)
 
+  @note When reading string option values to a bufer, user is responsible for
+        providing a large enough buffer. No overrun checks are done when
+        copying data to the buffer.
+
   @note For failover configurations with multiple hosts this function
         will return only the last added host name. Same is true for the port
         or the priority associated with this host name.
@@ -894,7 +833,7 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, ...);
 */
 
 PUBLIC_API int
-mysqlx_session_option_get(mysqlx_session_options_t *opt, mysqlx_opt_type_t type,
+mysqlx_session_option_get(mysqlx_session_options_t *opt, int type,
                           ...);
 
 /*
@@ -1916,6 +1855,8 @@ mysqlx_table_update_new(mysqlx_table_t *table);
 
   @return `RESULT_OK` - on success; `RESULT_ERR` - on error
 
+  @note The `param` list must be not empty, otherwise error is reported.
+
   @note All fields and their corresponding expressions must be set in one call
         otherwise the next call to this function will reset all parameters to
         their new values.
@@ -2646,9 +2587,8 @@ mysqlx_column_get_precision(mysqlx_result_t *res, uint32_t pos);
 
   @ingroup xapi_md
 */
-
-PUBLIC_API uint32_t
-mysqlx_column_get_flags(mysqlx_result_t *res, uint32_t pos);
+//PUBLIC_API uint32_t
+//mysqlx_column_get_flags(mysqlx_result_t *res, uint32_t pos);
 
 
 /**
@@ -2800,40 +2740,6 @@ mysqlx_schema_drop(mysqlx_session_t *sess, const char *schema);
 
 
 /**
-  Drop a table
-
-  @param schema schema handle
-  @param table the name of the table to drop
-
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
-          The error handle can be obtained from the session
-          using `mysqlx_error()` function.
-
-  @ingroup xapi_ddl
-*/
-
-PUBLIC_API int
-mysqlx_table_drop(mysqlx_schema_t *schema, const char *table);
-
-
-/**
-  Drop a view
-
-  @param schema schema handle
-  @param view the name of the view to drop
-
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
-          The error handle can be obtained from the session
-          using `mysqlx_error()` function.
-
-  @ingroup xapi_ddl
-*/
-
-PUBLIC_API int
-mysqlx_view_drop(mysqlx_schema_t *schema, const char *view);
-
-
-/**
   Create a new collection in a specified schema
 
   @param schema schema handle
@@ -2957,430 +2863,6 @@ PUBLIC_API unsigned int mysqlx_result_warning_count(mysqlx_result_t *res);
 PUBLIC_API mysqlx_error_t *
 mysqlx_result_next_warning(mysqlx_result_t *res);
 
-
-#define VIEW_OPTION_ALGORITHM     100
-#define VIEW_OPTION_SECURITY      101
-#define VIEW_OPTION_CHECK_OPTION  102
-#define VIEW_OPTION_DEFINER       103
-#define VIEW_OPTION_COLUMNS       104
-
-/**  @name Macros used to declare view attributes */
-/**@{*/
-
-/**
-  Specify algorithm to be used for view processing.
-  @see `mysqlx_view_algorithm_t`
-*/
-#define VIEW_ALGORITHM(A)    (void*)VIEW_OPTION_ALGORITHM, A
-
-/**
-  Specify view security context.
-  @see `mysqlx_view_security_t`
-*/
-#define VIEW_SECURITY(S)     (void*)VIEW_OPTION_SECURITY, S
-
-/**
-  Specify definer of a view.
-
-  The definer is used to determine access rights for the view. It is specified
-  as a valid MySQL account name of the form "user@host".
-
-  @see https://dev.mysql.com/doc/refman/en/stored-programs-security.html
-*/
-#define VIEW_DEFINER(D)      (void*)VIEW_OPTION_DEFINER, D
-
-/**
-  Specify checks to be performed for an updatable view.
-  @see `mysqlx_view_check_option_t`
-*/
-#define VIEW_CHECK_OPTION(C) (void*)VIEW_OPTION_CHECK_OPTION, C
-
-/**
-  Specify names for view columns.
-
-  The number of column names must match the number of columns of view's
-  query.
-*/
-#define VIEW_COLUMNS(...)    (void*)VIEW_OPTION_COLUMNS, __VA_ARGS__
-
-/**@}*/
-
-
-/**
-  Create a new View
-
-  Creates a new View in a given schema based on a previously
-  defined select statement.
-
-  An attempt to call this function if a view with a specified name
-  already exists will result in an error.
-
-  @param schema schema handle
-
-  @param name   view name
-
-  @param select_stmt statement representing a table select query
-         which will be used for the view (see `mysqlx_table_select_new()`)
-
-  @param ... variable list of view definition options terminated by `PARAM_END`.
-          Each option starts with a `VIEW_OPTION_X` constant followed
-          by option's value(s). See below for more details.
-
-  @return handle containing the result of the view create operation or
-          NULL if an error has happened. This result can be used to examine
-          reported warnings, if any.
-
-  There are convenience macros `VIEW_ALGORITHM()`, `VIEW_SECURITY()`,
-  `VIEW_CHECK_OPTION()`, `VIEW_DEFINER()` and `VIEW_COLUMNS()`which can be used
-  to specify view options. For instance:
-  ~~~~~~
-  mysqlx_view_create(schema, "view_1", select_stmt,
-                      VIEW_DEFINER("root"),
-                      VIEW_ALGORITHM(VIEW_ALGORITHM_TEMPTABLE),
-                      VIEW_COLUMNS("col_1", "col_2"), PARAM_END);
-  ~~~~~~
-  The order of parameters in the list is not fixed, but if
-  `VIEW_COLUMNS()` (`VIEW_OPTION_COLUMNS`) is used it must be the
-  last parameter before terminating the list with `PARAM_END`. See documentation
-  of the convenience macros for more details on possible view definition
-  options
-
-
-  @note In case of error the error details can be obtained from the schema
-        object using `mysqlx_error()` or `mysqlx_error_message()`.
-
-  @ingroup xapi_ddl
-*/
-
-PUBLIC_API mysqlx_result_t *
-mysqlx_view_create(mysqlx_schema_t *schema, const char *name,
-                   mysqlx_stmt_t *select_stmt, ...);
-
-
-/**
-  Return a new statement which creates a view
-
-  Creates a statement which will be used for creating a new view
-  in a given schema based on a previously defined select statement. Before
-  executing this statement with `mysqlx_execute()` additional view options
-  can be specified using `mysqlx_set_view_x()` family of functions.
-
-  An attempt to execute the returned statement if a view with a specified name
-  already exists will result in an error.
-
-  @param schema schema handle
-
-  @param name view name
-
-  @param select_stmt statement representing a table select query
-         which will be used for the view (see `mysqlx_table_select_new()`)
-
-  @return statement handle for view create operation.
-          NULL can be returned only in case when there are problems
-          allocating memory, which normally should not happen.
-          It is very unlikely for this function to end with an error
-          because it does not do any parsing, parameter checking etc.
-
-  @note To actually execute the statement, the returned handle has to be
-        given to `mysqlx_execute()`.
-
-  @note In case of error the error details can be obtained from the schema
-        object using `mysqlx_error()` or `mysqlx_error_message()`.
-
-  @note Changing the select statement after the `mysqlx_view_create_new()`
-        call has no effect on the returned view create statement, which uses
-        the state of the select statement at the time of the
-        `mysqlx_view_create_new()` call.
-
-  @see `mysqlx_set_view_algorithm()`, `mysqlx_set_view_security()`,
-       `mysqlx_set_view_check_option()`, `mysqlx_set_view_definer()`,
-       `mysqlx_set_view_columns()`
-
-  @ingroup xapi_ddl
-*/
-
-PUBLIC_API mysqlx_stmt_t *
-mysqlx_view_create_new(mysqlx_schema_t *schema, const char *name,
-                       mysqlx_stmt_t *select_stmt);
-
-
-/**
-  Modify an existing view
-
-  Modifies a view in a given schema based on a previously defined select
-  statement.
-
-  An attempt to call this function if a view with the specified name
-  does not exist will result in an error.
-
-  @param schema schema handle
-
-  @param name view name
-
-  @param select_stmt statement representing a table select query
-         which will be used for the view (see `mysqlx_table_select_new()`)
-
-  @param ... variable list of view definition options terminated by `PARAM_END`.
-          Each option starts with a `VIEW_OPTION_X` constant followed
-          by option's value(s). See `mysqlx_view_create()` for more details
-          on how view options are specified.
-
-  @return handle containing result of view modify operation or NULL if an error
-          has happened. This result can be used to examine
-          reported warnings, if any.
-
-  @note In case of error the error details can be obtained from the schema
-        object using `mysqlx_error()` or `mysqlx_error_message()`.
-
-  @note A new select statement must be specified when updating a view. It is not
-  possible to change other view options without changing the main query.
-
-  @ingroup xapi_ddl
-*/
-
-PUBLIC_API mysqlx_result_t *
-mysqlx_view_modify(mysqlx_schema_t *schema, const char *name,
-                   mysqlx_stmt_t *select_stmt, ...);
-
-
-/**
-  Return a new statement which modifies an existing view
-
-  Creates a statement which will modify an existing view in a given schema
-  based on a previously defined select statement.  Before
-  executing this statement with `mysqlx_execute()` additional view options
-  can be specified using `mysqlx_set_view_x()` family of functions.
-
-  An attempt to execute the returned statement if a view with a specified name
-  does not exist will result in an error.
-
-  @param schema schema handle
-
-  @param name view name
-
-  @param select_stmt statement representing a table select query
-         which will be used for the view (see `mysqlx_table_select_new()`)
-
-  @return statement handle for view modify operation.
-          NULL can be returned only in case when there are problems
-          allocating memory, which normally should not happen.
-          It is very unlikely for this function to end with an error
-          because it does not do any parsing, parameter checking etc.
-
-  @note To actually execute the statement, the returned handle has to be
-        given to `mysqlx_execute()`.
-
-  @note In case of error the error details can be obtained from the schema
-        object using `mysqlx_error()` or `mysqlx_error_message()`.
-
-  @note Changing the select statement after the `mysqlx_view_modify_new()`
-        call has no effect on the returned view modify statement, which uses
-        the state of the select statement at the time of the
-        `mysqlx_view_modify_new()` call.
-
-  @see `mysqlx_set_view_algorithm()`, `mysqlx_set_view_security()`,
-       `mysqlx_set_view_check_option()`, `mysqlx_set_view_definer()`,
-       `mysqlx_set_view_columns()`
-
-  @ingroup xapi_ddl
-*/
-
-PUBLIC_API mysqlx_stmt_t *
-mysqlx_view_modify_new(mysqlx_schema_t *schema, const char *name,
-                       mysqlx_stmt_t *select_stmt);
-
-
-/**
-  Modify an existing view or create a new one
-
-  Modifies an existing view or creates a new one in a given schema
-  based on a previously defined select statement.
-
-  @param schema schema handle
-
-  @param name view name
-
-  @param select_stmt statement representing a table select query
-         which will be used for the view (see `mysqlx_table_select_new()`)
-
-  @param ... variable list of view definition options terminated by `PARAM_END`.
-          Each option starts with a `VIEW_OPTION_X` constant followed
-          by option's value(s). See `mysqlx_view_create()` for more details
-          on how view options are specified.
-
-  @return handle containing result of view replace operation or
-          NULL if the error has happened. This result can be used to examine
-          reported warnings, if any.
-
-  @note In case of error the error details can be obtained from the schema
-        object using `mysqlx_error()` or `mysqlx_error_message()`.
-
-  @ingroup xapi_ddl
-*/
-
-PUBLIC_API mysqlx_result_t *
-mysqlx_view_replace(mysqlx_schema_t *schema, const char *name,
-                    mysqlx_stmt_t *select_stmt, ...);
-
-
-/**
-  Return a new statement which modifies an existing view or creates a new one
-
-  Creates a statement which will create or modify an existing view in the given
-  schema based on a previously defined select statement. Before
-  executing this statement with `mysqlx_execute()` additional view options
-  can be specified using `mysqlx_set_view_x()` family of functions.
-
-  @param schema schema handle
-
-  @param name view name
-
-  @param select_stmt statement representing a table select query
-         which will be used for the view (see `mysqlx_table_select_new()`)
-
-  @return statement handle for view replace operation.
-          NULL can be returned only in case when there are problems
-          allocating memory, which normally should not happen.
-          It is very unlikely for this function to end with an error
-          because it does not do any parsing, parameter checking etc.
-
-  @note To actually execute the statement, the returned handle has to be
-        given to `mysqlx_execute()`.
-
-  @note In case of error the error details can be obtained from the schema
-        object using `mysqlx_error()` or `mysqlx_error_message()`.
-
-  @note Changing the select statement after the `mysqlx_view_replace_new()`
-        call has no effect on the returned view replace statement, which uses
-        the state of the select statement at the time of the
-        `mysqlx_view_replace_new()` call.
-
-  @see `mysqlx_set_view_algorithm()`, `mysqlx_set_view_security()`,
-       `mysqlx_set_view_check_option()`, `mysqlx_set_view_definer()`,
-       `mysqlx_set_view_columns()`
-
-  @ingroup xapi_ddl
-*/
-
-PUBLIC_API mysqlx_stmt_t *
-mysqlx_view_replace_new(mysqlx_schema_t *schema, const char *name,
-                        mysqlx_stmt_t *select_stmt);
-
-
-/**
-  Set an algorithm for a view
-
-  @param view_stmt view statement handle
-
-  @param algorithm a `mysqlx_view_algorithm_t` constant specifying
-         the algorithm.
-
-  @return RESULT_OK if a call was successful, RESULT_ERROR otherwise
-
-  @note In case of error the error details can be obtained from the
-        view statement object using `mysqlx_error()` or
-        `mysqlx_error_message()`.
-
-  @see `mysqlx_view_algorithm_t`
-
-  @ingroup xapi_ddl
-*/
-
-PUBLIC_API int
-mysqlx_set_view_algorithm(mysqlx_stmt_t *view_stmt, int algorithm);
-
-
-/**
-  Set a security context for a view
-
-  @param view_stmt view statement handle
-
-  @param security a `mysqlx_view_security_t` constant specifying the security
-         context.
-
-  @return RESULT_OK if a call was successful, RESULT_ERROR otherwise
-
-  @note In case of error the error details can be obtained from the
-        view statement object using `mysqlx_error()` or
-        `mysqlx_error_message()`.
-
-  @see `mysqlx_view_security_t`
-
-  @ingroup xapi_ddl
-*/
-
-PUBLIC_API int
-mysqlx_set_view_security(mysqlx_stmt_t *view_stmt, int security);
-
-
-/**
-  Set a definer for a view
-
-  @param view_stmt view statement handle
-
-  @param user a valid MySQL account name of the form "user@host"
-
-  @return RESULT_OK if a call was successful, RESULT_ERROR otherwise
-
-  @note In case of error the error details can be obtained from the
-        view statement object using `mysqlx_error()` or
-        `mysqlx_error_message()`.
-
-  @see https://dev.mysql.com/doc/refman/en/stored-programs-security.html
-
-  @ingroup xapi_ddl
-*/
-
-PUBLIC_API int
-mysqlx_set_view_definer(mysqlx_stmt_t *view_stmt, const char *user);
-
-
-/**
-  Set a check option for a view
-
-  @param view_stmt view statement handle
-
-  @param option a `mysqlx_view_check_option_t` constant specifying the
-         check option
-
-  @return RESULT_OK if a call was successful, RESULT_ERROR otherwise
-
-  @note In case of error the error details can be obtained from the
-        view statement object using `mysqlx_error()` or
-        `mysqlx_error_message()`.
-
-  @see `mysqlx_view_check_option_t`
-
-  @ingroup xapi_ddl
-*/
-
-PUBLIC_API int
-mysqlx_set_view_check_option(mysqlx_stmt_t *view_stmt, int option);
-
-
-/**
-  Set column names for a view
-
-  @param view_stmt view statement handle
-
-  @param ... variable parameters list containing strings that specify
-             the column names for a View. The list has to be terminated
-             by PARAM_END
-
-  @return RESULT_OK if a call was successful, RESULT_ERROR otherwise
-
-  @note In case of error the error details can be obtained from the
-        view statement object using `mysqlx_error()` or
-        `mysqlx_error_message()`.
-
-  @note The number of column names must match the number of columns of
-  view's query.
-
-  @ingroup xapi_ddl
-*/
-
-PUBLIC_API int
-mysqlx_set_view_columns(mysqlx_stmt_t *view_stmt, ...);
 
 #ifdef	__cplusplus
 }

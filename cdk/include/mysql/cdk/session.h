@@ -50,7 +50,6 @@ protected:
   mysqlx::Session      *m_session;
   const mysqlx::string *m_database;
   api::Connection      *m_connection;
-  bool                  m_trans;
 
   typedef Reply::Initializer Reply_init;
 
@@ -78,8 +77,6 @@ public:
   option_t check_valid() { return m_session->check_valid(); }
 
   void close() {
-    if (m_trans)
-      rollback();
     m_session->close();
     m_connection->close();
   }
@@ -97,9 +94,6 @@ public:
   */
 
   void begin() {
-    if (m_trans)
-      throw_error(cdkerrc::in_transaction, "While starting new transaction");
-    m_trans = true;
     m_session->begin();
   }
 
@@ -112,9 +106,7 @@ public:
   */
 
   void commit() {
-    if (m_trans)
       m_session->commit();
-    m_trans = false;
   }
 
   /*
@@ -125,12 +117,31 @@ public:
     open.
   */
 
-  void rollback() {
-    if (m_trans)
-      m_session->rollback();
-    m_trans = false;
+  void rollback(const string &savepoint = string()) {
+      m_session->rollback(savepoint);
   }
 
+  /*
+    SavePoints are created inside transaction! And later, you can rollback the
+    transaction to a specific SavePoint.
+  */
+
+  void savepoint_set(const string &savepoint)
+  {
+    if (savepoint.empty())
+      throw_error(cdkerrc::bad_savepoint, "Invalid (empty) savepoint name");
+    m_session->savepoint_set(savepoint);
+  }
+
+  /*
+     Simply removes previously added SavePoint. No changes to transaction.
+  */
+  void savepoint_remove(const string &savepoint)
+  {
+    if (savepoint.empty())
+      throw_error(cdkerrc::bad_savepoint, "Invalid (empty) savepoint name");
+    m_session->savepoint_remove(savepoint);
+  }
 
   /*
     Diagnostics
@@ -193,7 +204,7 @@ public:
     TODO: Find documentation for supported admin commands.
   */
 
-  Reply_init admin(const char *cmd, Any_list &args)
+  Reply_init admin(const char *cmd, const cdk::Any::Document &args)
   {
     return m_session->admin(cmd, args);
   }

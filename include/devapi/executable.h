@@ -33,6 +33,7 @@
 
 #include "common.h"
 #include "result.h"
+#include "../common/op_if.h"
 
 
 namespace mysqlx {
@@ -40,52 +41,19 @@ namespace mysqlx {
 using std::ostream;
 
 
-namespace internal {
-
-/*
-  Abstract interface to be implemented by internal implementations
-  of an executable object.
-
-  The execute() method returns a Result_base object which can be
-  used to initialize different result types used in DevAPI.
-
-  Implementation of an executable object holds a description of the operation
-  that should be executed. Executable objects can be copied (for example
-  by copy assignment operation) and in this case a new copy of the current
-  description of the operation should be created by clone() method. After
-  cloning, the 2 executable implementations can be modified and executed
-  independently.
-
-  See various Op_xxx classes defined for example in devapi/collection_crud.cc
-  to see examples of executable object implementations. Note that these Op_xxx
-  classes do not directly inherit from Executable_impl, but use a whole
-  hierarchy of implementation classes based on Executable_impl. But in the end
-  they define execute() method that executes given operation using all the
-  information collected using other methods of the implementation class.
-*/
-
-struct Executable_impl
-{
-  virtual Result_base execute() = 0;
-
-  virtual Executable_impl *clone() const = 0;
-
-  virtual ~Executable_impl() {}
-};
-
-}  // internal
-
-
-
 /**
   Represents an operation that can be executed.
 
-  Creating an operation does not involve any communication
-  with the server. Only when `execute()` method is called
-  operation is sent to the server for execution.
+  Creating an operation does not involve any communication with the server.
+  Only when `execute()` method is called operation is sent to the server
+  for execution.
 
   The template parameter `Res` is the type of result that
   is returned by `execute()` method.
+
+  A derived class must create an implementation object for the operation and
+  set it using reset() method. Such implementation object should implement
+  common::Executable_if interface.
 */
 
 template <class Res, class Op>
@@ -93,7 +61,7 @@ class Executable
 {
 protected:
 
-  using Impl = internal::Executable_impl;
+  using Impl = common::Executable_if;
 
   std::shared_ptr<Impl> m_impl;
 
@@ -127,7 +95,7 @@ protected:
       throw Error("Attempt to use invalid operation");
   }
 
-  internal::Executable_impl* get_impl()
+  Impl* get_impl()
   {
     check_if_valid();
     return m_impl.get();
@@ -173,6 +141,12 @@ public:
   {
     try {
       check_if_valid();
+      /*
+        Note: The implementation object's execute() methods returns a reference
+        to a common::Result_init object which provides information about
+        the session and pending server reply. The returned Res instance should
+        be constructible from such Result_init reference.
+      */
       return m_impl->execute();
     }
     CATCH_AND_WRAP

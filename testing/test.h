@@ -25,13 +25,10 @@
 #ifndef MYSQLX_TESTING_TEST_H
 #define MYSQLX_TESTING_TEST_H
 
-#ifndef _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS
-#endif
 
-//#include "cdk_test.h"
-#include <mysql_devapi.h>
 #include <gtest/gtest.h>
+#include <mysql_devapi.h>
+
 
 namespace mysqlx {
   namespace test {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016,2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The MySQL Connector/C is licensed under the terms of the GPLv2
  * <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -21,6 +21,10 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
+
+#ifndef XAPI_INTERNAL_ERROR
+#define XAPI_INTERNAL_ERROR
+
 
 class Mysqlx_exception
 {
@@ -143,7 +147,7 @@ typedef struct mysqlx_error_struct : public Mysqlx_diag_base
 class Mysqlx_diag : public Mysqlx_diag_base
 {
   protected:
-  mysqlx_error_t m_error;
+  mysqlx_error_struct m_error;
 
   public:
   virtual void set_diagnostic(const Mysqlx_exception &ex)
@@ -151,6 +155,11 @@ class Mysqlx_diag : public Mysqlx_diag_base
 
   virtual void set_diagnostic(const char *msg, unsigned int num)
   { m_error.set(msg, num); }
+
+  virtual void set_diagnostic(mysqlx_error_struct &&error)
+  {
+    m_error = std::move(error);
+  }
 
   void clear()
   {
@@ -167,3 +176,4 @@ class Mysqlx_diag : public Mysqlx_diag_base
   virtual ~Mysqlx_diag() {}
 };
 
+#endif
