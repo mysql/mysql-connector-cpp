@@ -3117,6 +3117,64 @@ void connection::tls_version()
 
 }
 
+void connection::cached_sha2_auth()
+{
+
+  logMsg("connection::auth - MYSQL_OPT_GET_SERVER_PUBLIC_KEY");
+
+  stmt.reset(con->createStatement());
+
+  try {
+    stmt->execute("DROP USER 'doomuser'@'localhost';");
+  } catch (...) {}
+
+
+  stmt->execute("CREATE USER 'doomuser'@'localhost' IDENTIFIED WITH caching_sha2_password BY '!sha2user_pass';");
+
+  sql::ConnectOptionsMap opts;
+  opts["hostName"] = url;
+  opts["userName"] = "doomuser";
+  opts["password"] = "!sha2user_pass";
+  opts["OPT_GET_SERVER_PUBLIC_KEY"] = false;
+  opts["OPT_SSL_MODE"] = sql::SSL_MODE_DISABLED;
+
+  try {
+
+    // Should fail using unencrypted connection, since we don't have server
+    // public key
+    created_objects.clear();
+    //need to close connection, otherwise will use fast auth!
+    con->close();
+    con.reset(driver->connect(opts));
+    FAIL("caching_sha2_password can't be used on unexcrypted connection");
+    throw "caching_sha2_password can't be used on unexcrypted connection";
+  }
+  catch(std::exception &e)
+  {
+    std::stringstream err;
+    err << "Expected error: ";
+    err << e.what();
+    logMsg(err.str());
+  }
+
+  opts["OPT_GET_SERVER_PUBLIC_KEY"] = true;
+
+  // Now we can connect using unencrypted connection, since we now can ask for
+  // the server public key
+  con.reset(driver->connect(opts));
+
+  //Now using fast auth!
+  con->close();
+  opts["OPT_GET_SERVER_PUBLIC_KEY"] = false;
+  con.reset(driver->connect(opts));
+
+  // Cleanup
+  con.reset(getConnection());
+  stmt.reset(con->createStatement());
+  stmt->execute("DROP USER 'doomuser'@'localhost';");
+
+}
+
 
 } /* namespace connection */
 } /* namespace testsuite */

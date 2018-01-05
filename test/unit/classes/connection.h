@@ -78,6 +78,7 @@ public:
   TEST_CASE(reconnect);
   TEST_CASE(ssl_mode);
   TEST_CASE(tls_version);
+  TEST_CASE(cached_sha2_auth);
   }
 
   /**
@@ -246,6 +247,12 @@ public:
    *
    */
   void tls_version();
+
+  /*
+   * Test of MySQL_Connection::cached_sha2_auth()
+   *
+   */
+  void cached_sha2_auth();
 
 
 };
