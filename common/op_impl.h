@@ -33,6 +33,7 @@
 #include "db_object.h"
 
 #include <bitset>
+#include <list>
 
 
 /*
@@ -1334,6 +1335,69 @@ void drop_object(
   Result_impl<std::string> res(drop.execute());
   res.next_result();
 }
+
+
+// ----------------------------------------------------------------------------
+
+/*
+  Creating and droping collection indexes.
+*/
+
+struct Op_idx_admin
+  : public Op_admin
+{
+  Op_idx_admin(
+    Shared_session_impl sess,
+    const cdk::api::Object_ref &coll,
+    const string &name,
+    const char *cmd
+  )
+    : Op_admin(sess, cmd)
+  {
+    assert(coll.schema());
+    add_param(L"schema", coll.schema()->name());
+    add_param(L"collection", coll.name());
+    add_param(L"name", name);
+  }
+};
+
+
+struct Op_idx_drop
+  : public Op_idx_admin
+{
+  Op_idx_drop(
+    Shared_session_impl sess,
+    const cdk::api::Object_ref &coll,
+    const string &name
+  )
+    : Op_idx_admin(sess, coll, name, "drop_collection_index")
+  {
+    // 1091 = "Can't drop ...; check that column/key exists"
+    skip_error(cdk::server_error(1091));
+  }
+};
+
+
+struct Op_idx_create
+  : public Op_idx_admin
+{
+  string m_def;
+
+  Op_idx_create(
+    Shared_session_impl sess,
+    const cdk::api::Object_ref &coll,
+    const string &name,
+    const string &idx_def
+  )
+    : Op_idx_admin(sess, coll, name, "create_collection_index")
+    , m_def(idx_def)
+  {
+    // TODO: correct error number... 1051 = collection doesn't exist
+    // skip_error(cdk::server_error(1051));
+  }
+
+  void process(cdk::Any::Document::Processor &prc) const override;
+};
 
 
 // ----------------------------------------------------------------------------

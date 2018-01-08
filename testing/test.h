@@ -28,190 +28,203 @@
 
 #include <gtest/gtest.h>
 #include <mysql_devapi.h>
-
+#include <iostream>
 
 namespace mysqlx {
-  namespace test {
+namespace test {
 
-    /*
-    Fixture for tests that speak to xplugin. The xplugin port should be set
-    with XPLUGIN_PORT env variable.
-    */
+/*
+  Fixture for tests that speak to xplugin. The xplugin port should be set
+  with XPLUGIN_PORT env variable.
+*/
 
-    class Xplugin : public ::testing::Test
-    {
-    public:
+class Xplugin : public ::testing::Test
+{
+public:
 
-      class Session;
+  class Session;
 
-    protected:
-      // Per-test-case set-up.
-      // Called before the first test in this test case.
-      // Can be omitted if not needed.
-      static void SetUpTestCase()
-      {
-
-      }
-
-      // Per-test-case tear-down.
-      // Called after the last test in this test case.
-      // Can be omitted if not needed.
-      static void TearDownTestCase()
-      {
-
-      }
-
-      const char *m_status;
-      mysqlx::Session *m_sess;
-      unsigned short m_port;
-      const char *m_user;
-      const char *m_password;
-      const char *m_socket;
-
-      // You can define per-test set-up and tear-down logic as usual.
-      virtual void SetUp()
-      {
-        using namespace mysqlx;
-
-        m_status = NULL;
-        m_port = 0;
-        m_socket = NULL;
-        m_user = NULL;
-        m_password = NULL;
-        m_sess = NULL;
-
-        const char *xplugin_port = getenv("XPLUGIN_PORT");
-        if (!xplugin_port)
-        {
-          m_status = "XPLUGIN_PORT not set";
-          return;
-        }
-        m_port = (short)atoi(xplugin_port);
-
-        m_socket = getenv("MYSQLX_SOCKET");
-
-        // By default use "root" user without any password.
-        m_user = getenv("XPLUGIN_USER");
-        if(!m_user)
-          m_user = "root";
-
-        m_password = getenv("XPLUGIN_PASSWORD");
-
-        try {
-          m_sess = new mysqlx::Session(
-            SessionOption::PORT, m_port,
-            SessionOption::USER, m_user,
-            SessionOption::PWD, m_password,
-            SessionOption::SSL_MODE, SSLMode::DISABLED
-          );
-        }
-        catch (const Error &e)
-        {
-          m_sess = NULL;
-          m_status = e.what();
-          FAIL() << "Could not connect to xplugin at " << m_port << ": " << e;
-        }
-
-        // Drop and re-create test schema to clear up after previous tests.
-
-        try {
-          get_sess().dropSchema("test");
-        }
-        catch (const Error&)
-        {}
-
-        get_sess().createSchema("test");
-      }
-
-      virtual void TearDown()
-      {
-        delete m_sess;
-      }
-
-      Schema getSchema(const string &name)
-      {
-        return get_sess().getSchema(name);
-      }
-
-      SqlResult sql(const string &query)
-      {
-        return get_sess().sql(query).execute();
-      }
-
-      mysqlx::Session& get_sess() const
-      {
-        // TODO: better error.
-        if (!m_sess)
-         throw m_status;
-        return *m_sess;
-      }
-
-      const char* get_socket() const
-      {
-        return m_socket;
-      }
-
-      unsigned short get_port() const
-      {
-        return m_port;
-      }
-
-      const char* get_user() const
-      {
-        return m_user;
-      }
-
-      const char* get_password() const
-      {
-        return m_password;
-      }
-
-      bool has_xplugin() const
-      {
-        return NULL == m_status;
-      }
-
-      bool is_server_version_less(int test_upper_version,
-                                  int test_lower_version,
-                                  int test_release_version)
-      {
-        SqlResult res_version= sql("SHOW VARIABLES LIKE 'version'");
-
-        std::stringstream version;
-        version << res_version.fetchOne()[1].get<string>();
-
-        int upper_version, minor_version, release_version;
-        char sep;
-        version >> upper_version;
-        version >> sep;
-        version >> minor_version;
-        version >> sep;
-        version >> release_version;
-
-        if ( (upper_version < test_upper_version) ||
-             (upper_version == test_upper_version &&
-              minor_version << test_lower_version) ||
-             (upper_version == test_upper_version &&
-              minor_version == test_lower_version &&
-              release_version < test_release_version))
-        {
-          return true;
-        }
-        return false;
-      }
-    };
-
-    class Xplugin::Session : public mysqlx::Session
-    {
-    public:
-
-      Session(const Xplugin *test)
-      : mysqlx::Session(test->get_port(), test->get_user(), test->get_password())
-      {}
-    };
+protected:
+  // Per-test-case set-up.
+  // Called before the first test in this test case.
+  // Can be omitted if not needed.
+  static void SetUpTestCase()
+  {
 
   }
-} // cdk::test
+
+  // Per-test-case tear-down.
+  // Called after the last test in this test case.
+  // Can be omitted if not needed.
+  static void TearDownTestCase()
+  {
+
+  }
+
+  const char *m_status;
+  mysqlx::Session *m_sess;
+  unsigned short m_port;
+  const char *m_user;
+  const char *m_password;
+  const char *m_socket;
+
+  // You can define per-test set-up and tear-down logic as usual.
+  virtual void SetUp()
+  {
+    using namespace mysqlx;
+
+    m_status = NULL;
+    m_port = 0;
+    m_socket = NULL;
+    m_user = NULL;
+    m_password = NULL;
+    m_sess = NULL;
+
+    const char *xplugin_port = getenv("XPLUGIN_PORT");
+    if (!xplugin_port)
+    {
+      m_status = "XPLUGIN_PORT not set";
+      return;
+    }
+    m_port = (short)atoi(xplugin_port);
+
+    m_socket = getenv("MYSQLX_SOCKET");
+
+    // By default use "root" user without any password.
+    m_user = getenv("XPLUGIN_USER");
+    if (!m_user)
+      m_user = "root";
+
+    m_password = getenv("XPLUGIN_PASSWORD");
+
+    try {
+      m_sess = new mysqlx::Session(
+        SessionOption::PORT, m_port,
+        SessionOption::USER, m_user,
+        SessionOption::PWD, m_password
+#ifndef WITH_SSL
+        , SessionOption::SSL_MODE, SSLMode::DISABLED
+#endif
+      );
+    }
+    catch (const Error &e)
+    {
+      m_sess = NULL;
+      m_status = e.what();
+      FAIL() << "Could not connect to xplugin at " << m_port << ": " << e;
+    }
+
+    // Drop and re-create test schema to clear up after previous tests.
+
+    try {
+      get_sess().dropSchema("test");
+    }
+    catch (const Error&)
+    {}
+
+    get_sess().createSchema("test");
+  }
+
+  virtual void TearDown()
+  {
+    delete m_sess;
+  }
+
+  Schema getSchema(const string &name)
+  {
+    return get_sess().getSchema(name);
+  }
+
+  SqlResult sql(const string &query)
+  {
+    return get_sess().sql(query).execute();
+  }
+
+  mysqlx::Session& get_sess() const
+  {
+    // TODO: better error.
+    if (!m_sess)
+      throw m_status;
+    return *m_sess;
+  }
+
+  const char* get_socket() const
+  {
+    return m_socket;
+  }
+
+  unsigned short get_port() const
+  {
+    return m_port;
+  }
+
+  const char* get_user() const
+  {
+    return m_user;
+  }
+
+  const char* get_password() const
+  {
+    return m_password;
+  }
+
+  bool has_xplugin() const
+  {
+    return NULL == m_status;
+  }
+
+  bool is_server_version_less(int test_upper_version,
+                              int test_lower_version,
+                              int test_release_version)
+  {
+    SqlResult res_version = sql("SHOW VARIABLES LIKE 'version'");
+
+    std::stringstream version;
+    version << res_version.fetchOne()[1].get<string>();
+
+    int upper_version, minor_version, release_version;
+    char sep;
+    version >> upper_version;
+    version >> sep;
+    version >> minor_version;
+    version >> sep;
+    version >> release_version;
+
+    if ((upper_version < test_upper_version) ||
+      (upper_version == test_upper_version &&
+        minor_version << test_lower_version) ||
+        (upper_version == test_upper_version &&
+          minor_version == test_lower_version &&
+          release_version < test_release_version))
+    {
+      return true;
+    }
+    return false;
+  }
+
+  void output_id_list(Result& res)
+  {
+    std::vector<mysqlx::GUID> ids = res.getDocumentIds();
+    for (auto id : ids)
+    {
+      std::cout << "- added doc with id: " << id << std::endl;
+    }
+
+  }
+};
+
+
+class Xplugin::Session : public mysqlx::Session
+{
+public:
+
+  Session(const Xplugin *test)
+    : mysqlx::Session(test->get_port(), test->get_user(), test->get_password())
+  {}
+};
+
+}} // cdk::test
+
 
 #define SKIP_IF_NO_XPLUGIN  \
   if (!has_xplugin()) { std::cerr <<"SKIPPED: " <<m_status <<std::endl; return; }
@@ -230,5 +243,15 @@ namespace mysqlx {
 
 // TODO: remove this when prepare is ok again
 #define SKIP_TEST(A) std::cerr << "SKIPPED: " << A << std::endl; return;
+
+
+#define EXPECT_ERR(Code) \
+  do { \
+    try { Code; FAIL() << "Expected an error"; } \
+    catch (const std::exception &e) \
+    { cout << "Expected error: " << e.what() << endl; } \
+    catch (const char *e) { FAIL() << "Bad exception: " << e; } \
+    catch (...) { FAIL() << "Bad exception"; } \
+  } while(false)
 
 #endif

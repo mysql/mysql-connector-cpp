@@ -168,6 +168,166 @@ TEST_F(Ddl, create_drop)
   cout << "Done!" << endl;
 }
 
+
+TEST_F(Ddl, create_index)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating collection..." << endl;
+
+  Schema sch = getSchema("test");
+  Collection coll = sch.createCollection("c1", true);
+  coll.remove("true").execute();
+
+  cout << "Inserting documents..." << endl;
+
+  {
+    Result add;
+
+    add = coll
+      .add(R"({ "zip": "34239", "zcount": "10", "some_text": "just some text" })")
+      .add(R"({ "zip": "30001", "zcount": "20", "some_text": "some more text" })")
+      .execute();
+    output_id_list(add);
+    EXPECT_EQ(2U, add.getAffectedItemsCount());
+
+  }
+
+  /* Create a multi value index */
+  cout << "Plain index..." << endl;
+
+  coll.createIndex("custom_idx1", R"-({
+    "Fields": [
+      { "field": "$.zip", "required" : true , "TyPe" : "TEXT(10)" },
+      { "FIELD": "$.zcount", "type" : "INT unsigned" }
+    ]
+  })-");
+
+  coll.dropIndex("custom_idx1");
+  coll.remove("true").execute();
+
+  /**
+    First we create a spatial index, then we insert the document.
+    Otherwise the server-side reports error:
+
+    "Collection contains document missing required field"
+    Looks like it is an issue in xplugin.
+
+    Also, the server 5.7 doesn't seem to handle spatial indexes
+  */
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 4);
+
+  cout << "Spatial index..." << endl;
+
+  coll.createIndex("geo_idx1", R"-({
+    "type" : "SPATIAL",
+    "fields": [{
+      "field": "$.coords",
+      "type" : "GEOJSON",
+      "required" : true,
+      "options": 2,
+      "srid": 4326
+    }]
+  })-");
+
+  {
+    Result add;
+
+    add = coll.add(R"({
+      "zip": "34239",
+      "coords": { "type": "Point", "coordinates": [102.0, 0.0] }
+    })")
+    .execute();
+
+    output_id_list(add);
+    EXPECT_EQ(1U, add.getAffectedItemsCount());
+
+  }
+
+#if 0
+
+  // Spatial index with implicit "required" attribute.
+  // TODO: FIXME
+
+  coll.remove("true").execute();
+
+  EXPECT_NO_THROW(coll.createIndex("geo_idx1", R"-({
+    "type" : "SPATIAL",
+    "fields": [{
+      "field": "$.coords",
+      "type" : "GEOJSON",
+    }]
+  })-"));
+
+#endif
+
+  cout << "Drop non exsiting index..." << endl;
+
+  EXPECT_NO_THROW(coll.dropIndex("non exsiting"));
+
+  cout << "Negative tests" << endl;
+
+  cout << "- index already exists" << endl;
+
+  EXPECT_ERR(coll.createIndex("geo_idx1",
+    R"({ "fields": [{ "field": "$.zcount", "type": "int" }] })"));
+
+  coll.dropIndex("geo_idx1");
+
+  cout << "- empty index name" << endl;
+
+  EXPECT_ERR(coll.dropIndex(""));
+  EXPECT_ERR(coll.createIndex("",
+    R"({ "fields": [{ "field": "$.zcount", "type": "int" }] })"));
+
+  cout << "- no index fields" << endl;
+
+  EXPECT_ERR(coll.createIndex("bad_idx", R"({ "type": "INDEX" })"));
+  EXPECT_ERR(coll.createIndex("bad_idx", R"({ })"));
+  EXPECT_ERR(coll.createIndex("bad_idx", R"({ "fields": [] })"));
+
+  cout << "- invalid index definition" << endl;
+
+  EXPECT_ERR(coll.createIndex("bad_idx", "{ this is not valid )"));
+  EXPECT_ERR(coll.createIndex("bad_idx", R"({ "foo": 123 })"));
+  EXPECT_ERR(coll.createIndex("bad_idx",
+    R"({ "fields": [{ "field": "$.zcount", "type": "int" }], "foo": 7 })"));
+  EXPECT_ERR(coll.createIndex("bad_idx",
+    R"({ "fields": [{ "field": "$.zcount", "type": "int", "foo": 7 }] })"));
+  EXPECT_ERR(coll.createIndex("bad_idx",
+    R"({ "fields": { "field": "$.zcount", "type": "int" } })"));
+
+  cout << "- bad index type" << endl;
+
+  EXPECT_ERR(coll.createIndex("bad_idx",
+    R"({ "type": "foo",
+         "fields": [{ "field": "$.zcount", "type": "int" }] })"));
+
+  cout << "- bad index field type" << endl;
+
+  EXPECT_ERR(coll.createIndex("bad_idx",
+    R"({ "fields": [{ "field": "$.zcount", "type": "foo" }] })"));
+
+  cout << "- options for non-spatial index" << endl;
+
+  EXPECT_ERR(coll.createIndex("bad_idx",
+    R"({ "fields": [{ "field": "$.zcount", "type": "int", "options": 123 }] })"));
+
+  cout << "- bad spatial index" << endl;
+
+  EXPECT_ERR(coll.createIndex("geo_idx2", R"({
+    "type" : "SPATIAL",
+    "fields": [{
+      "field": "$.coords",
+      "type" : "GEOJSON",
+      "required" : false
+    }]
+  })"));
+
+  cout << "Done!" << endl;
+}
+
+
 TEST_F(Ddl, bugs)
 {
 

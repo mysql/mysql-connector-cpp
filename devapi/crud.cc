@@ -142,10 +142,31 @@ internal::Collection_detail::add_or_replace_one(
 )
 {
   Object_ref coll(get_schema().m_name, m_name);
+
+  if (doc.getType() == Value::STRING)
+  {
+    doc = DbDoc(doc.get<string>());
+  }
+
   Value_expr expr(doc, parser::Parser_mode::DOCUMENT);
 
   if (replace)
   {
+    string doc_id;
+    bool has_id = true;
+
+    try {
+      doc_id = doc.get<DbDoc>()["_id"];
+    } catch (std::out_of_range)
+    {
+      has_id = false;
+    }
+
+    if (has_id && (doc_id != id))
+    {
+      throw Error(R"(Document "_id" and replace id are different!)");
+    }
+
     Replace_cmd cmd(m_sess, coll, std::string(id), expr);
     return cmd.execute();
   }
@@ -156,6 +177,31 @@ internal::Collection_detail::add_or_replace_one(
   }
 }
 
+
+void internal::Collection_detail::index_drop(const string &name)
+{
+  Object_ref coll(get_schema().m_name, m_name);
+  common::Op_idx_drop cmd(m_sess, coll, name);
+  cmd.execute();
+}
+
+void
+internal::Collection_detail::index_create(const string &name, Value &&spec)
+{
+  switch (spec.getType())
+  {
+  case Value::STRING:
+    break;
+  default:
+    // TODO: support other forms: DbDoc, expr("{...}")?
+    throw_error("Index specification must be a string.");
+  }
+
+  Object_ref coll(get_schema().m_name, m_name);
+  common::Op_idx_create cmd(m_sess, coll, name, spec);
+  cmd.execute();
+
+}
 
 
 // --------------------------------------------------------------------

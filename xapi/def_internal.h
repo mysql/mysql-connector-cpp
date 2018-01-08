@@ -62,8 +62,12 @@ typedef enum mysqlx_op_enum
   OP_LIST_TABLES,
 
   OP_SCHEMA_CREATE, OP_COLLECTION_CREATE,
-  OP_SCHEMA_DROP, OP_COLLECTION_DROP, OP_TABLE_DROP, OP_VIEW_DROP
+  OP_SCHEMA_DROP, OP_COLLECTION_DROP,
+
+  OP_IDX_CREATE, OP_IDX_DROP
+
 } mysqlx_op_t;
+
 
 typedef enum mysqlx_modify_op_enum
 {

@@ -1896,6 +1896,33 @@ unsigned int STDCALL mysqlx_error_num(void *obj)
 }
 
 
+int STDCALL
+mysqlx_collection_create_index(
+  mysqlx_collection_struct *coll, const char *name, const char *idx_json
+)
+{
+  SAFE_EXCEPTION_BEGIN(coll, RESULT_ERROR)
+    PARAM_NULL_EMPTY_CHECK(name, coll, MYSQLX_ERROR_MISSING_COLLECTION_NAME_MSG, RESULT_ERROR)
+
+  coll->create_index(name, idx_json);
+  return RESULT_OK;
+  SAFE_EXCEPTION_END(coll, RESULT_ERROR)
+}
+
+int STDCALL
+mysqlx_collection_drop_index(
+  mysqlx_collection_struct *coll, const char *name
+)
+{
+  SAFE_EXCEPTION_BEGIN(coll, RESULT_ERROR)
+    PARAM_NULL_EMPTY_CHECK(name, coll, MYSQLX_ERROR_MISSING_COLLECTION_NAME_MSG, RESULT_ERROR)
+
+  coll->drop_index(name);
+  return RESULT_OK;
+  SAFE_EXCEPTION_END(coll, RESULT_ERROR)
+}
+
+
 #ifdef _WIN32
 BOOL WINAPI DllMain(
   _In_ HINSTANCE,
