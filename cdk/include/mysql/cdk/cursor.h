@@ -55,7 +55,10 @@ public:
   void get_rows(Row_processor& rp, row_count_t limit)
   { m_impl.get_rows(rp, limit); }
   bool get_row(Row_processor& rp) { return m_impl.get_row(rp); }
-  void close() { m_impl.close(); }
+  void close()
+  {
+    m_impl.close();
+  }
 
   // Meta_data interface
 

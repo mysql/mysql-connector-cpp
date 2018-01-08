@@ -27,8 +27,7 @@
 
 /**
   @file
-  Implementation interface hierarchy and details for templates
-  defining CRUD operations.
+  Details for public API classes representing CRUD operations.
 */
 
 
@@ -39,83 +38,23 @@
 namespace mysqlx {
 namespace internal {
 
-/*
-  The XXX_impl classes defined below form a hierarchy of interfaces, based
-  on Executable_impl, for internal implementations of crud operations.
-  The concrete implementations, like Op_collection_find defined in
-  devapi/collection_crud.cc, implement one of the top interfaces in this
-  hierarchy but the hierarchy allows casting down the implementation to
-  the layer implementing particular aspect of the operation. For example
-  Limit_impl interface allows setting limit and offset for returned/affected
-  rows/documents, which is common for different CRUD operations.
-*/
-
-struct Lock_mode
-{
-  enum value { NONE, SHARED, EXCLUSIVE };
-};
-
-
-struct Bind_impl : public Executable_impl
-{
-  virtual void add_param(const string&, Value&&) = 0;
-  virtual void add_param(Value) = 0;
-  virtual void set_locking(Lock_mode::value) = 0;
-};
-
-
-struct Limit_impl : public Bind_impl
-{
-  virtual void set_offset(unsigned) = 0;
-  virtual void set_limit(unsigned) = 0;
-};
-
-
-struct Sort_impl : public Limit_impl
-{
-  virtual void add_sort(const string&) = 0;
-};
-
-
-struct Having_impl : public Sort_impl
-{
-  virtual void set_having(const string&) = 0;
-};
-
-
-struct Group_by_impl : public Having_impl
-{
-  virtual void add_group_by(const string&) = 0;
-};
-
-struct Proj_impl : public Group_by_impl
-{
-  virtual void add_proj(const string&) = 0;
-  virtual void set_proj(const string&) = 0;
-};
-
-
-/*
-  Classes encapsulating details of various CRUD methods of the CRUD operation
-  APIs defined by templates from "devapi/crud.h".
-*/
 
 struct PUBLIC_API Bind_detail
 {
 protected:
 
-  using Impl = Bind_impl;
+  using Impl = common::Bind_if;
   using Args_prc = Args_processor<Bind_detail, Impl*>;
 
-  static void process_one(Impl *impl, Value val)
+  static void process_one(Impl *impl, const Value &val)
   {
-    impl->add_param(val);
+    impl->add_param((const common::Value&)val);
   }
 
   template <typename... T>
-  static void add_params(Impl *impl, T... vals)
+  static void add_params(Impl *impl, T&&... vals)
   {
-    Args_prc::process_args(impl, vals...);
+    Args_prc::process_args(impl, std::forward<T>(vals)...);
   }
 
   friend Args_prc;
@@ -126,7 +65,7 @@ struct PUBLIC_API Sort_detail
 {
 protected:
 
-  using Impl = Sort_impl;
+  using Impl = common::Sort_if;
   using Args_prc = Args_processor<Sort_detail, Impl*>;
 
   static void process_one(Impl *impl, const string &ord_spec)
@@ -148,7 +87,7 @@ struct PUBLIC_API Group_by_detail
 {
 protected:
 
-  using Impl = Group_by_impl;
+  using Impl = common::Group_by_if;
   using Args_prc = Args_processor<Group_by_detail, Impl*>;
 
   static void process_one(Impl *impl, const string &spec)
@@ -170,7 +109,7 @@ struct PUBLIC_API Proj_detail
 {
 protected:
 
-  using Impl = Proj_impl;
+  using Impl = common::Proj_if;
   using Args_prc = Args_processor<Proj_detail, Impl*>;
 
   static void process_one(Impl *impl, const string &spec)
@@ -187,6 +126,143 @@ protected:
   friend Args_prc;
 };
 
+
+struct PUBLIC_API Collection_add_detail
+{
+protected:
+
+  using Impl = common::Collection_add_if;
+  using Args_prc = Args_processor<Collection_add_detail, Impl*>;
+
+  static void process_one(Impl *impl, const string &json)
+  {
+    impl->add_json(json);
+  }
+
+  static void process_one(Impl *impl, const DbDoc &doc)
+  {
+    // TODO: Do it better when we support sending structured
+    // document descriptions to the server.
+
+    std::ostringstream buf;
+    buf << doc;
+    // Note: utf8 conversion using mysqlx::string.
+    impl->add_json(mysqlx::string(buf.str()));
+  }
+
+  template <typename... T>
+  static void do_add(Impl *impl, T... args)
+  {
+    Args_prc::process_args(impl, args...);
+  }
+
+  friend Args_prc;
+};
+
+
+struct PUBLIC_API Collection_find_detail
+{
+protected:
+
+  using Impl = common::Proj_if;
+  using Args_prc = Args_processor<Collection_find_detail, Impl*>;
+
+  static void process_one(Impl *impl, const string &proj)
+  {
+    impl->add_proj(proj);
+  }
+
+
+  static void do_fields(Impl *impl, const Expression &proj)
+  {
+    impl->set_proj(proj.get<string>());
+  }
+
+  /*
+    Note: If e is an expression (of type Expression) then only
+    .fields(e) is valid - the multi-argument variant .fields(e,...)
+    should be disabled.
+  */
+
+  template <
+    typename T, typename... R,
+    typename = enable_if_t<!is_same<T, Expression>::value>
+  >
+    static void do_fields(Impl *impl, T first, R... rest)
+  {
+    Args_prc::process_args(impl, first, rest...);
+  }
+
+  friend Args_prc;
+};
+
+
+struct PUBLIC_API Table_insert_detail
+{
+protected:
+
+  using Row_impl = internal::Row_detail::Impl;
+  using Impl = common::Table_insert_if<Row_impl>;
+
+  /*
+    Helper methods which pass column/row information to the
+    internal implementation object.
+  */
+
+  struct Add_column
+  {
+    static void process_one(Impl *impl, const string &col)
+    {
+      impl->add_column(col);
+    }
+  };
+
+  struct Add_value
+  {
+    using Impl = std::pair<Row, unsigned>;
+
+    static void process_one(Impl *impl, const mysqlx::Value &val)
+    {
+      impl->first.set((impl->second)++, val);
+    }
+  };
+
+  struct Add_row
+  {
+    static void process_one(Impl *impl, const Row &row)
+    {
+      impl->add_row(*row.m_impl);
+    }
+  };
+
+  template <typename... T>
+  static void add_columns(Impl *impl, T... args)
+  {
+    Args_processor<Add_column,Impl*>::process_args(impl, args...);
+  }
+
+  template <typename... T>
+  static void add_rows(Impl *impl, T... args)
+  {
+    Args_processor<Add_row,Impl*>::process_args(impl, args...);
+  }
+
+  template <typename... T>
+  static void add_values(Impl *impl, T... args)
+  {
+    Add_value::Impl row{ {}, 0 };
+    Args_processor<Add_value>::process_args(&row, args...);
+    Add_row::process_one(impl, row.first);
+  }
+
+  friend Args_processor<Add_column, Impl*>;
+  friend Args_processor<Add_row, Impl*>;
+  friend Args_processor<Add_value, Impl*>;
+
+};
+
+
+using Table_select_detail = Proj_detail;
 
 }}  // mysqlx::internal
 

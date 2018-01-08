@@ -24,70 +24,58 @@
 
 #include <mysql_xapi.h>
 #include "mysqlx_cc_internal.h"
+#include "../common/op_impl.h"
 
-/*
-  Member function to init the data model and parser mode when
-  CRUD is being created, so this could be re-used.
-*/
-void mysqlx_stmt_t::init_data_model()
+using std::string;
+using common::throw_error;
+using common::Value;
+
+
+Value get_value(int64_t type, va_list &args)
 {
-  /*
-    Knowing the operation type is enough to determine the data model and
-    the parser mode.
-  */
-  switch(m_op_type)
+  switch (type)
   {
-    // TABLE Ops
-    case OP_SELECT:
-    case OP_INSERT:
-    case OP_UPDATE:
-    case OP_DELETE:
-    case OP_SQL: // For plain SQL we assume TABLE mode
-      m_data_model = cdk::protocol::mysqlx::TABLE;
-      m_parser_mode = parser::Parser_mode::TABLE;
-      break;
+    case MYSQLX_TYPE_NULL:
+      return {};
+    case MYSQLX_TYPE_SINT:
+      return va_arg(args, int64_t);
+    case MYSQLX_TYPE_UINT:
+      return va_arg(args, uint64_t);
+    case MYSQLX_TYPE_FLOAT:
+    case MYSQLX_TYPE_DOUBLE:
+      // With variable parameters a float value is promoted to a double
+      return va_arg(args, double);
+    case MYSQLX_TYPE_BOOL:
+      // With variable parameters a bool value is promoted to int
+      return (bool)(va_arg(args, int) != 0);
+    case MYSQLX_TYPE_STRING:
+      // TODO: utf8 conversion
+      return std::string(va_arg(args, char*));
+    case MYSQLX_TYPE_BYTES:
+    {
+      cdk::byte *cb = va_arg(args, cdk::byte*);
+      return { cb, va_arg(args, size_t) };
+    }
+    case MYSQLX_TYPE_EXPR:
+      return Value::Access::mk_expr(va_arg(args, char*));
 
-    // DOCUMENT Ops
-    case OP_FIND:
-    case OP_ADD:
-    case OP_MODIFY:
-    case OP_REMOVE:
-      m_data_model = cdk::protocol::mysqlx::DOCUMENT;
-      m_parser_mode = parser::Parser_mode::DOCUMENT;
-      break;
     default:
-      m_data_model = cdk::protocol::mysqlx::DEFAULT;
-      m_parser_mode = parser::Parser_mode::TABLE;
-    break;
+      throw_error("Unknown data type in variable argument list.");
+      return Value(); // quiet compile warnings
   }
-  m_group_by_list.set_parser_mode(m_parser_mode);
 }
 
-void mysqlx_stmt_t::copy_parent_data(mysqlx_stmt_struct *parent)
+
+Value get_value(va_list &args)
 {
-  if (parent->m_where.get())
-    m_where.reset(new Expression_parser(*static_cast<parser::Expression_parser*>(parent->m_where.get())));
+  int64_t type = (int64_t)va_arg(args, void*);
 
-  if (parent->m_having.get())
-    m_having.reset(new Expression_parser(*static_cast<parser::Expression_parser*>(parent->m_having.get())));
+  if (0 == type)
+    throw std::out_of_range("end of variable argument list");
 
-  if (parent->m_limit.get())
-    m_limit.reset(new Limit(*parent->m_limit.get()));
-
-  if (parent->m_order_by.get())
-    m_order_by.reset(new Order_by(*parent->m_order_by.get()));
-
-  if (parent->m_proj_list.get())
-    m_proj_list.reset(new Projection_list(*parent->m_proj_list.get()));
-
-    m_param_source = parent->m_param_source;
-    m_group_by_list = parent->m_group_by_list;
+  return get_value(type, args);
 }
 
-void mysqlx_stmt_t::init_crud()
-{
-  m_session.reset_diagnostic();
-}
 
 /*
   Member function for binding values for parametrized SQL queries.
@@ -108,48 +96,16 @@ void mysqlx_stmt_t::init_crud()
   NOTE: Each new call resets the binds set by the previous call to
         mysqlx_stmt_t::sql_bind()
 */
-int mysqlx_stmt_t::sql_bind(va_list args)
+
+int mysqlx_stmt_struct::sql_bind(va_list &args)
 {
-  m_param_list.clear();
-  // For variadic parameters mysqlx_data_type_t is used as value of void* pointer
+  auto *impl = get_impl<OP_SQL>(this);
+
+  // For variadic parameters mysqlx_data_structype_t is used as value of void* pointer
   int64_t type = (int64_t)va_arg(args, void*);
   do
   {
-    switch (type)
-    {
-      case MYSQLX_TYPE_NULL:
-        m_param_list.add_null_value();
-        break;
-      case MYSQLX_TYPE_SINT:
-        m_param_list.add_param_value(va_arg(args, int64_t));
-        break;
-      case MYSQLX_TYPE_UINT:
-        m_param_list.add_param_value(va_arg(args, uint64_t));
-        break;
-      case MYSQLX_TYPE_FLOAT:
-      case MYSQLX_TYPE_DOUBLE:
-        // With variable parameters a float value is promoted to a double
-        m_param_list.add_param_value(va_arg(args, double));
-        break;
-      case MYSQLX_TYPE_BOOL:
-      {
-        // With variable parameters a bool value is promoted to int
-        m_param_list.add_param_value((bool)(va_arg(args, int) != 0));
-      }
-      break;
-      case MYSQLX_TYPE_STRING:
-        m_param_list.add_param_value(cdk::string(va_arg(args, char*)));
-        break;
-      case MYSQLX_TYPE_BYTES:
-      {
-        cdk::byte *cb = va_arg(args, cdk::byte*);
-        m_param_list.add_param_value(cdk::bytes(cb, va_arg(args, size_t)));
-      }
-      break;
-      default:
-        set_diagnostic("Data type is not supported.", 0);
-        return RESULT_ERROR;
-    }
+    impl->add_param(get_value(type, args));
     type = (int64_t)va_arg(args, void*);
     // Spin in the loop until finding the end of the list or on an error
   } while (0 != (int)type);
@@ -157,14 +113,17 @@ int mysqlx_stmt_t::sql_bind(va_list args)
   return RESULT_OK;
 }
 
-/*
-  This function will not clear the parameter list
-*/
-int mysqlx_stmt_t::sql_bind(cdk::string s)
+
+int mysqlx_stmt_struct::sql_bind(cdk::string s)
 {
-   m_param_list.add_param_value(s);
-   return RESULT_OK;
+  assert(OP_SQL == m_op_type);
+  assert(m_impl);
+
+  get_impl<OP_SQL>(this)->add_param(std::string(s));
+
+  return RESULT_OK;
 }
+
 
 /*
   Member function for binding values for parametrized CRUD queries.
@@ -172,7 +131,7 @@ int mysqlx_stmt_t::sql_bind(cdk::string s)
 
   PARAMETERS:
     args - variable list of parameters.
-           param_name, (mysqlx_data_type_t)type, value, ..., PARAM_END
+           param_name, (mysqlx_data_structype_t)type, value, ..., PARAM_END
 
            The list is closed by PARAM_END value
 
@@ -184,77 +143,53 @@ int mysqlx_stmt_t::sql_bind(cdk::string s)
     RESULT_ERROR - on error
 
   NOTE: Each new call resets the binds set by the previous call to
-        mysqlx_stmt_t::param_bind()
+        mysqlx_stmt_struct::param_bind()
 */
-int mysqlx_stmt_t::param_bind(va_list args)
-{
-  m_param_list.clear();
-  m_param_source.clear();
-  // For variadic parameters mysqlx_data_type_t is used as value of void* pointer
-  char *param_name = 0;
 
-  while((param_name = va_arg(args, char*)) != NULL)
+int mysqlx_stmt_struct::param_bind(va_list &args)
+{
+  using BImpl = common::Bind_if;
+
+  BImpl *impl = get_impl<BImpl>(this);
+
+  // For variadic parameters mysqlx_data_structype_t is used as value of void* pointer
+  char *param_name_utf8 = 0;
+
+  while((param_name_utf8 = va_arg(args, char*)) != NULL)
   {
-    int64_t type = (int64_t)va_arg(args, void*);
-    switch (type)
-    {
-      case MYSQLX_TYPE_NULL:
-          m_param_source.add_null_value(param_name);
-        break;
-      case MYSQLX_TYPE_SINT:
-        m_param_source.add_param_value(param_name, va_arg(args, int64_t));
-        break;
-      case MYSQLX_TYPE_UINT:
-        m_param_source.add_param_value(param_name, va_arg(args, uint64_t));
-        break;
-      case MYSQLX_TYPE_FLOAT:
-      case MYSQLX_TYPE_DOUBLE:
-        // With variable parameters a float value is promoted to a double
-        m_param_source.add_param_value(param_name, va_arg(args, double));
-        break;
-      case MYSQLX_TYPE_BOOL:
-      {
-        // With variable parameters a bool value is promoted to int
-        m_param_source.add_param_value(param_name, (bool)(va_arg(args, int) != 0));
-      }
-      break;
-      case MYSQLX_TYPE_STRING:
-        m_param_source.add_param_value(param_name, cdk::string(va_arg(args, char*)));
-        break;
-      case MYSQLX_TYPE_BYTES:
-      {
-        cdk::byte *cb = va_arg(args, cdk::byte*);
-        size_t sz = va_arg(args, size_t);
-        m_param_source.add_param_value(param_name, cdk::bytes(cb, sz));
-      }
-      break;
-      default:
-        set_diagnostic("Data type is not supported.", 0);
-        return RESULT_ERROR;
-    }
+    cdk::string param_name(param_name_utf8);
+    impl->add_param(param_name, get_value(args));
   }
 
   return RESULT_OK;
 }
 
-int mysqlx_stmt_t::add_columns(va_list args)
+
+int mysqlx_stmt_struct::add_columns(va_list &args)
 {
   if (m_op_type != OP_INSERT)
   {
     m_error.set("Wrong operation type. Only INSERT and ADD are supported.", 0);
     return RESULT_ERROR;
   }
-  m_col_source.clear();
-  const char *col_name = va_arg(args, char*);
-  while (col_name)
+
+  auto *impl = get_impl<OP_INSERT>(this);
+
+  // TODO: Error if no columns given?
+  impl->clear_columns();
+
+  const char *col_name_utf8 = va_arg(args, char*);
+  while (col_name_utf8)
   {
-    m_col_source.add_column(col_name);
-    col_name = va_arg(args, char*);
+    cdk::string col_name(col_name_utf8);
+    impl->add_column(col_name);
+    col_name_utf8 = va_arg(args, char*);
   }
 
   return RESULT_OK;
 
 }
+
 
 /*
   Member function for adding row values CRUD ADD.
@@ -274,374 +209,151 @@ int mysqlx_stmt_t::add_columns(va_list args)
 
   NOTE: Each new call resets the column and row values
 */
-int mysqlx_stmt_t::add_row(bool get_columns, va_list args)
+
+int mysqlx_stmt_struct::add_row(bool get_columns, va_list &args)
 {
-  if (m_op_type != OP_INSERT && m_op_type != OP_ADD)
+  if (m_op_type != OP_INSERT) // && m_op_type != OP_ADD)
   {
     m_error.set("Wrong operation type. Only INSERT and ADD are supported.", 0);
     return RESULT_ERROR;
   }
 
-  m_row_source.add_new_row();
+  auto *impl = get_impl<OP_INSERT>(this);
 
-  // For variadic parameters mysqlx_data_type_t is used as value of void* pointer
+  // For variadic parameters mysqlx_data_structype_t is used as value of void* pointer
   int64_t type;
-  char *col_name = NULL;
+  char *col_name_utf8 = NULL;
 
-  // Clearing columns for each column + row data call
-  if (get_columns)
-    m_col_source.clear();
+  common::Row_impl<> row;
+  cdk::col_count_t col = 0;
 
   /*
     Getting column name only if the flag is set. Otherwise do not attempt it
     to avoid the stack corruption.
   */
-  while((!get_columns || (col_name = va_arg(args, char*)) != NULL)
-         && (type = (int64_t)va_arg(args, void*)) != 0)
-  {
+  // TODO: Error if no values are given?
 
+  while((!get_columns || (col_name_utf8 = va_arg(args, char*)) != NULL)
+        && ((type = (int64_t)va_arg(args, void*)) != 0))
+  {
     if (get_columns)
     {
-      m_col_source.add_column(col_name);
+      cdk::string col_name(col_name_utf8);
+      impl->add_column(col_name);
     }
 
-    switch (type)
-    {
-      case MYSQLX_TYPE_NULL:
-        m_row_source.add_null_value();
-        break;
-      case MYSQLX_TYPE_SINT:
-        m_row_source.add_row_value(va_arg(args, int64_t));
-        break;
-      case MYSQLX_TYPE_UINT:
-        m_row_source.add_row_value(va_arg(args, uint64_t));
-        break;
-      case MYSQLX_TYPE_FLOAT:
-      case MYSQLX_TYPE_DOUBLE:
-        // With variable parameters a float value is promoted to a double
-        m_row_source.add_row_value(va_arg(args, double));
-        break;
-      case MYSQLX_TYPE_BOOL:
-        // With variable parameters a bool value is promoted to int
-        m_row_source.add_row_value((bool)(va_arg(args, int) != 0));
-        break;
-      case MYSQLX_TYPE_STRING:
-        m_row_source.add_row_value(string(va_arg(args, char*)));
-        break;
-      case MYSQLX_TYPE_BYTES:
-      {
-        cdk::byte *cb = va_arg(args, cdk::byte*);
-        m_row_source.add_row_value(cdk::bytes(cb, va_arg(args, size_t)));
-      }
-      break;
-      default:
-        m_error.set("Data type is not supported.", 0);
-        return RESULT_ERROR;
-    }
+    row.set(col++, get_value(type, args));
   }
 
+  impl->add_row(row);
   return RESULT_OK;
 }
 
-int mysqlx_stmt_t::add_projections(va_list args)
+
+int mysqlx_stmt_struct::add_projections(va_list &args)
 {
-  char *item = NULL;
+  char *item_utf8 = NULL;
   if (m_op_type != OP_SELECT && m_op_type != OP_FIND)
   {
     m_error.set("Wrong operation type. Only SELECT and FIND are supported.", 0);
     return RESULT_ERROR;
   }
-  /*
-    Projections are allocated dynamically because they are optional
-    and creating an empty non-working list affects other operations
-  */
-  m_proj_list.reset(new Projection_list(m_op_type));
-  while ((item = (char*)va_arg(args, char*)) != NULL )
-  {
-    m_proj_list->add_value(item);
-  }
 
-  if (!m_proj_list->count())
-    m_proj_list.release();
+  auto *impl = get_impl<common::Proj_if>(this);
+
+  // TODO: Error if no projections passed?
+
+  while ((item_utf8 = (char*)va_arg(args, char*)) != NULL )
+  {
+    cdk::string item(item_utf8);
+
+    if (OP_FIND == m_op_type)
+    {
+      // For find we expect single item with document expression.
+      impl->set_proj(item);
+      return RESULT_OK;
+    }
+
+    impl->add_proj(item);
+  }
 
   return RESULT_OK;
 }
 
-int mysqlx_stmt_t::add_coll_modify_values(va_list args, mysqlx_modify_op modify_type)
+
+int mysqlx_stmt_struct::add_coll_modify_values(va_list &args, mysqlx_modify_op modify_type)
 {
-  char *path = NULL;
+  char *path_utf8 = NULL;
   if (m_op_type != OP_MODIFY)
   {
-    m_error.set("Wrong operation type. Only MODIFY is supported.", 0);
+    set_diagnostic("Wrong operation type. Only MODIFY is supported.", 0);
     return RESULT_ERROR;
   }
 
-  while ((path = (char*)va_arg(args, char*)) != NULL )
+  using MImpl = common::Collection_modify_if;
+
+  MImpl *impl = get_impl<MImpl>(this);
+
+  MImpl::Operation op = MImpl::SET;
+
+  switch (modify_type)
   {
+  case MODIFY_SET: op = MImpl::SET; break;
+  case MODIFY_UNSET: op = MImpl::UNSET; break;
+  case MODIFY_ARRAY_INSERT: op = MImpl::ARRAY_INSERT; break;
+  case MODIFY_ARRAY_APPEND: op = MImpl::ARRAY_APPEND; break;
+  case MODIFY_ARRAY_DELETE: op = MImpl::ARRAY_DELETE; break;
+  }
+
+  int rc = RESULT_ERROR;
+
+  while ((path_utf8 = (char*)va_arg(args, char*)) != NULL )
+  {
+    cdk::string path(path_utf8);
+
+    rc = RESULT_OK;
+
     if (modify_type == MODIFY_UNSET || modify_type == MODIFY_ARRAY_DELETE)
     {
-      m_modify_spec.add_value(modify_type, path);
+      impl->add_operation(op, path);
       continue;
     }
 
-    int64_t val_type = (int64_t)va_arg(args, void*);
-
-    switch (val_type)
-    {
-      case MYSQLX_TYPE_SINT:
-        m_modify_spec.add_value(modify_type, path, false, va_arg(args, int64_t));
-        break;
-      case MYSQLX_TYPE_UINT:
-        m_modify_spec.add_value(modify_type, path, false, va_arg(args, uint64_t));
-        break;
-      case MYSQLX_TYPE_FLOAT:
-      case MYSQLX_TYPE_DOUBLE:
-        // With variable parameters a float value is promoted to a double
-        m_modify_spec.add_value(modify_type, path, false, va_arg(args, double));
-        break;
-      case MYSQLX_TYPE_BOOL:
-        // With variable parameters a float value is promoted to int
-        m_modify_spec.add_value(modify_type, path, false, (bool)(va_arg(args, int) != 0));
-        break;
-      case MYSQLX_TYPE_STRING:
-        m_modify_spec.add_value(modify_type, path, false, string(va_arg(args, char*)));
-        break;
-      case MYSQLX_TYPE_EXPR:
-        m_modify_spec.add_value(modify_type, path, true, string(va_arg(args, char*)));
-        break;
-      case MYSQLX_TYPE_BYTES:
-      {
-        cdk::byte *cb = va_arg(args, cdk::byte*);
-        m_modify_spec.add_value(modify_type, path, false,
-                                cdk::bytes(cb,
-                                va_arg(args, size_t)));
-      }
-      break;
-      case MYSQLX_TYPE_NULL:
-        m_modify_spec.add_null_value(modify_type, path);
-      break;
-      default:
-        m_error.set("Data type is not supported.", 0);
-        return RESULT_ERROR;
-    }
+    impl->add_operation(op, path, get_value(args));
   }
-  return RESULT_OK;
+
+  if (rc == RESULT_ERROR)
+    set_diagnostic("No modifications specified for MODIFY operation.", 0);
+  return rc;
 }
 
-int mysqlx_stmt_t::add_table_update_values(va_list args)
+
+int mysqlx_stmt_struct::add_table_update_values(va_list &args)
 {
-  char *column = NULL;
+  char *column_utf8 = NULL;
 
   if (m_op_type != OP_UPDATE)
   {
     m_error.set("Wrong operation type. Only UPDATE is supported.", 0);
     return RESULT_ERROR;
   }
-  while ((column = (char*)va_arg(args, char*)) != NULL )
+
+  using UImpl = common::Table_update_if;
+
+  UImpl *impl = get_impl<UImpl>(this);
+
+  int rc = RESULT_ERROR;
+
+  while ((column_utf8 = (char*)va_arg(args, char*)) != NULL )
   {
-    int64_t data_type = (int64_t)va_arg(args, void*);
-    switch(data_type)
-    {
-      case MYSQLX_TYPE_NULL:
-        m_update_spec.add_null_value(column);
-      break;
-      case MYSQLX_TYPE_SINT:
-        m_update_spec.add_value(column, va_arg(args, int64_t));
-      break;
-      case MYSQLX_TYPE_UINT:
-        m_update_spec.add_value(column, va_arg(args, uint64_t));
-      break;
-      case MYSQLX_TYPE_FLOAT:
-      case MYSQLX_TYPE_DOUBLE:
-        m_update_spec.add_value(column, va_arg(args, double));
-      break;
-      case MYSQLX_TYPE_BOOL:
-        m_update_spec.add_value(column, va_arg(args, int) != 0);
-      break;
-      case MYSQLX_TYPE_STRING:
-        m_update_spec.add_value(column, string(va_arg(args, char*)));
-      break;
-      case MYSQLX_TYPE_BYTES:
-      {
-        // For bytes the code expects another parameter for length
-        cdk::byte *cb = va_arg(args, cdk::byte*);
-        m_update_spec.add_value(column, cdk::bytes(cb, va_arg(args, size_t)));
-      }
-      break;
-      case MYSQLX_TYPE_EXPR:
-        m_update_spec.add_expr(column, string(va_arg(args, char*)));
-      break;
-      default:
-       m_error.set("Data type is not supported.", 0);
-       return RESULT_ERROR;
-    }
+    cdk::string column(column_utf8);
+    rc = RESULT_OK;
+    impl->add_set(column, get_value(args));
   }
-  return RESULT_OK;
-}
 
-/*
-  Execute a CRUD statement.
-  RETURN: pointer to mysqlx_result_t, which is being allocated each time
-          when this function is called. The old result is freed automatically.
-          On error the function returns NULL
-
-  NOTE: no need to free the result in the end cdk::scoped_ptr will
-        take care of it
-*/
-mysqlx_result_t *mysqlx_stmt_t::exec()
-{
-  cdk::Session &sess = m_session.get_session();
-
-  switch(m_op_type)
-  {
-    case OP_SELECT:
-      m_reply = sess.table_select(m_db_obj_ref,
-                                  NULL,               // view spec
-                                  m_where.get(),
-                                  m_proj_list.get(),
-                                  m_order_by.get(),
-                                  m_group_by_list.get_list(),
-                                  m_having.get(),
-                                  m_limit.get(),
-                                  m_param_source.count() ? &m_param_source : NULL,
-                                  m_row_locking);
-      break;
-    case OP_VIEW_CREATE:
-    case OP_VIEW_UPDATE:
-    case OP_VIEW_REPLACE:
-      m_reply = sess.table_select(m_db_obj_ref,
-                                  &m_view_spec,
-                                  m_where.get(),
-                                  m_proj_list.get(),
-                                  m_order_by.get(),
-                                  m_group_by_list.get_list(),
-                                  m_having.get(),
-                                  m_limit.get(),
-                                  m_param_source.count() ? &m_param_source : NULL);
-      break;
-    case OP_INSERT:
-      {
-        if (!m_row_source.row_count())
-          throw Mysqlx_exception(Mysqlx_exception::MYSQLX_EXCEPTION_INTERNAL,
-                                 0, "Missing row data for INSERT! Use mysqlx_set_insert_row()");
-        Row_source *row_src = &m_row_source;
-        m_reply = sess.table_insert(m_db_obj_ref, *row_src,
-                                    m_col_source.count() ? &m_col_source : NULL,
-                                    m_param_source.count() ? &m_param_source : NULL);
-      }
-      break;
-    case OP_UPDATE:
-        if (!m_update_spec.count())
-          throw Mysqlx_exception(Mysqlx_exception::MYSQLX_EXCEPTION_INTERNAL,
-                                 0, "Missing data for UPDATE! Use mysqlx_set_update_values()");
-
-        m_reply = sess.table_update(m_db_obj_ref,
-                                    m_where.get(),
-                                    m_update_spec,
-                                    m_order_by.get(),
-                                    m_limit.get(),
-                                    m_param_source.count() ? &m_param_source : NULL);
-      break;
-    case OP_DELETE:
-      m_reply = sess.table_delete(m_db_obj_ref,
-                                  m_where.get(),
-                                  m_order_by.get(),
-                                  m_limit.get(),
-                                  m_param_source.count() ? &m_param_source : NULL);
-      break;
-    case OP_FIND:
-      m_reply = sess.coll_find(m_db_obj_ref,
-                               NULL,                // view spec
-                               m_where.get(),
-                               m_proj_list.get(),
-                               m_order_by.get(),
-                               m_group_by_list.get_list(),
-                               m_having.get(),
-                               m_limit.get(),
-                               m_param_source.count() ? &m_param_source : NULL,
-                               m_row_locking);
-      break;
-    case OP_ADD:
-      if (!m_doc_source.count())
-          throw Mysqlx_exception(Mysqlx_exception::MYSQLX_EXCEPTION_INTERNAL,
-                                 0, "Missing JSON data for ADD! Use mysqlx_set_add_document()");
-      m_reply = sess.coll_add(m_db_obj_ref,
-                              m_doc_source,
-                              m_param_source.count() ? &m_param_source : NULL);
-      break;
-    case OP_MODIFY:
-      if (!m_modify_spec.count())
-          throw Mysqlx_exception(Mysqlx_exception::MYSQLX_EXCEPTION_INTERNAL,
-                                 0, "Missing data for MODIFY! Use mysqlx_set_modify_set(), " \
-                                    "mysqlx_set_modify_unset(), mysqlx_set_modify_array_insert(), " \
-                                    "mysqlx_set_modify_array_delete(), mysqlx_set_modify_array_append() " \
-                                    "functions");
-      m_reply = sess.coll_update(m_db_obj_ref,
-                                 m_where.get(),
-                                 m_modify_spec,
-                                 m_order_by.get(),
-                                 m_limit.get(),
-                                 m_param_source.count() ? &m_param_source : NULL);
-      break;
-    case OP_REMOVE:
-      m_reply = sess.coll_remove(m_db_obj_ref,
-                                 m_where.get(),
-                                 m_order_by.get(),
-                                 m_limit.get(),
-                                 m_param_source.count() ? &m_param_source : NULL);
-      break;
-    case OP_SQL:
-      {
-        Param_list *param_list = m_param_list.count() ? &m_param_list : NULL;
-        m_reply = sess.sql(m_query, param_list);
-      }
-      break;
-    case OP_ADMIN_LIST:
-      {
-        m_reply = sess.admin("list_objects", m_db_obj_ref);
-      }
-      break;
-    default: // All other operations are not implemented
-      return NULL;
-  }
-  m_result.reset(new mysqlx_result_t(*this, m_reply));
-
-  m_reply.wait(); // wait for the operation to complete
-
-  if (m_op_type == OP_ADD)
-    m_result->copy_doc_ids(m_doc_source);
-
-  m_col_source.clear();
-  m_doc_source.clear();
-  m_row_source.clear();
-  m_update_spec.clear();
-  m_modify_spec.clear();
-
-  return m_result.get();
-}
-
-/*
-  Set member to a CDK expression which results from parsing given string val
-*/
-int mysqlx_stmt_t::set_expression(cdk::scoped_ptr<cdk::Expression> &member,
-                                  const char *val)
-{
-  if (!val || !val[0])
-    return RESULT_OK;
-
-  int res = RESULT_OK;
-  try
-  {
-    member.reset(new Expression_parser(m_parser_mode, val));
-    if (!member.get())
-      res = RESULT_ERROR;
-  }
-  catch (...)
-  {
-    res = RESULT_ERROR;
-    // TODO: Get exception details
-  }
-  return res;
+  if (rc == RESULT_ERROR)
+    set_diagnostic("No modifications specified for UPDATE operation.", 0);
+  return rc;
 }
 
 
@@ -657,12 +369,93 @@ int mysqlx_stmt_t::set_expression(cdk::scoped_ptr<cdk::Expression> &member,
 
   NOTE: each call to this function replaces previously set WHERE
 */
-int mysqlx_stmt_t::set_where(const char *where_expr)
+
+#define OP_WHERE_LIST(X) \
+  X(SELECT) X(DELETE) X(UPDATE) X(FIND) X(MODIFY) X(REMOVE)
+#define OP_CASE(X) case OP_##X:
+
+int mysqlx_stmt_struct::set_where(const char *where_expr)
 {
-  if (m_op_type == OP_ADD || m_op_type == OP_INSERT)
+  cdk::string expr;
+
+  // passing NULL or empty string means "no restrictions"
+
+  if (!where_expr || !*where_expr)
+    return RESULT_OK;
+
+  expr = where_expr;
+
+#define SET_WHERE(X) \
+  case OP_##X: get_impl<OP_##X>(this)->set_where(expr); break;
+
+  switch (m_op_type)
+  {
+    OP_WHERE_LIST(SET_WHERE)
+
+  default:
     throw Mysqlx_exception(MYSQLX_ERROR_OP_NOT_SUPPORTED);
-  return set_expression(m_where, where_expr);
+  }
+  return RESULT_OK;
 }
+
+
+template <mysqlx_op_t OP>
+void set_row_locking_helper(
+  typename stmt_traits<OP>::Impl *impl,
+  mysqlx_row_locking_enum  row_locking
+)
+{
+  assert(impl);
+
+  if (ROW_LOCK_NONE == row_locking)
+    return impl->clear_lock_mode();
+
+  impl->set_lock_mode(common::Lock_mode(unsigned(row_locking)));
+}
+
+
+void mysqlx_stmt_struct::set_row_locking(mysqlx_row_locking_t row_locking)
+{
+  switch (m_op_type)
+  {
+  case OP_SELECT:
+    set_row_locking_helper<OP_SELECT>(get_impl<OP_SELECT>(this), row_locking);
+    break;
+  case OP_FIND:
+    set_row_locking_helper<OP_FIND>(get_impl<OP_FIND>(this), row_locking);
+    break;
+  default:
+    throw Mysqlx_exception(MYSQLX_ERROR_OP_NOT_SUPPORTED);
+  }
+}
+
+
+int mysqlx_stmt_struct::add_group_by(va_list &args)
+{
+  const char *group_by_utf8;
+
+  while ((group_by_utf8 = va_arg(args, char*)) != NULL)
+  {
+    switch (m_op_type)
+    {
+    case OP_SELECT:
+    case OP_FIND:
+      break;
+
+    default:
+      throw Mysqlx_exception(MYSQLX_ERROR_OP_NOT_SUPPORTED);
+    }
+  }
+
+  using GImpl = common::Group_by_if;
+  GImpl *impl = get_impl<GImpl>(this);
+  cdk::string group_by(group_by_utf8);
+
+  impl->add_group_by(group_by);
+
+  return RESULT_OK;
+}
+
 
 /*
   Set HAVING for statement operation
@@ -676,12 +469,33 @@ int mysqlx_stmt_t::set_where(const char *where_expr)
 
   NOTE: each call to this function replaces previously set HAVING
 */
-int mysqlx_stmt_t::set_having(const char *having_expr)
+
+int mysqlx_stmt_struct::set_having(const char *having_expr_utf8)
 {
-  if (m_op_type != OP_SELECT && m_op_type != OP_FIND)
+  assert(having_expr_utf8);
+
+  switch (m_op_type)
+  {
+  case OP_SELECT:
+  case OP_FIND:
+    break;
+
+  default:
     throw Mysqlx_exception(MYSQLX_ERROR_OP_NOT_SUPPORTED);
-  return set_expression(m_having, having_expr);
+  }
+
+  if (!having_expr_utf8 || !*having_expr_utf8)
+    throw Mysqlx_exception("Empty having expression");
+
+  using HImpl = common::Having_if;
+  HImpl *impl = get_impl<HImpl>(this);
+  cdk::string having_expr(having_expr_utf8);
+
+  impl->set_having(having_expr);
+
+  return RESULT_OK;
 }
+
 
 /*
   Set LIMIT for CRUD operation
@@ -695,25 +509,25 @@ int mysqlx_stmt_t::set_having(const char *having_expr)
 
   NOTE: each call to this function replaces previously set LIMIT
 */
-int mysqlx_stmt_t::set_limit(row_count_t row_count, row_count_t offset)
+int mysqlx_stmt_struct::set_limit(cdk::row_count_t row_count, cdk::row_count_t offset)
 {
-  if (m_op_type == OP_ADD || m_op_type == OP_INSERT)
-    throw Mysqlx_exception(MYSQLX_ERROR_OP_NOT_SUPPORTED);
+  switch (m_op_type)
+  {
+    OP_WHERE_LIST(OP_CASE)  break;
 
-  int res = RESULT_OK;
-  try
-  {
-    m_limit.reset(new Limit(row_count, offset));
-    if (!(m_limit.get()))
-      res = RESULT_ERROR;
+  default:
+    throw Mysqlx_exception(MYSQLX_ERROR_OP_NOT_SUPPORTED);
   }
-  catch(...)
-  {
-    res = RESULT_ERROR;
-    // TODO: Get exception details
-  }
-  return res;
+
+  using LImpl = common::Limit_if;
+  LImpl *impl = get_impl<LImpl>(this);
+
+  impl->set_limit(row_count);
+  impl->set_offset(offset);
+
+  return RESULT_OK;
 }
+
 
 /*
   Set one item in ORDER BY for CRUD operation
@@ -727,186 +541,46 @@ int mysqlx_stmt_t::set_limit(row_count_t row_count, row_count_t offset)
 
   NOTE: each call to this function adds a new item to ORDER BY list
 */
-int mysqlx_stmt_t::add_order_by(va_list args)
-{
-  char *item = NULL;
-  mysqlx_sort_direction_t sort_direction;
-  clear_order_by();
-  do
-  {
-    item = va_arg(args, char*);
-    if (item && *item)
-    {
-      // mysqlx_sort_direction_t is promoted to int
-      sort_direction = (mysqlx_sort_direction_t)va_arg(args, int);
-      // Initial setup is done only once
-      if (!m_order_by.get())
-        m_order_by.reset(new Order_by(m_parser_mode));
 
-      if (m_order_by.get())
-        m_order_by->add_item(item, (Sort_direction::value)sort_direction);
-      else
-      {
-        set_diagnostic("Error creating ORDER BY instance", 0);
-        return RESULT_ERROR;
-      }
-    }
-  }
-  while (item && *item);
-  return RESULT_OK;
-}
-
-// Return the session validity state
-bool mysqlx_stmt_t::session_valid()
-{
-  return m_session.is_valid();
-}
-
-void mysqlx_stmt_t::acquire_diag(cdk::foundation::api::Severity::value val)
-{
-  // Free and reset the previous error
-  m_error.set(NULL);
-
-  if (m_reply.entry_count(val))
-  {
-    // TODO: implement warnings and info using Diagnostic_iterator
-    try
-    {
-      m_error.set(&m_reply.get_error());
-    }
-    catch(...)
-    {
-      // swallow the exception
-    }
-  }
-}
-
-void mysqlx_stmt_t::clear_order_by()
-{
-  if(m_order_by.get()) m_order_by->clear();
-}
-
-bool mysqlx_stmt_t::is_view_op()
-{
-  return (m_op_type == OP_VIEW_CREATE || m_op_type == OP_VIEW_UPDATE ||
-          m_op_type == OP_VIEW_REPLACE);
-}
-
-void mysqlx_stmt_t::set_view_algorithm(int algorithm)
-{
-  if (!is_view_op())
-    throw Mysqlx_exception(MYSQLX_ERROR_VIEW_TYPE_MSG);
-
-  m_view_spec.set_algorithm(algorithm);
-}
-
-void mysqlx_stmt_t::set_view_security(int security)
-{
-  if (!is_view_op())
-    throw Mysqlx_exception(MYSQLX_ERROR_VIEW_TYPE_MSG);
-
-  m_view_spec.set_security(security);
-}
-
-void mysqlx_stmt_t::set_view_check_option(int option)
-{
-  if (!is_view_op())
-    throw Mysqlx_exception(MYSQLX_ERROR_VIEW_TYPE_MSG);
-
-  m_view_spec.set_check(option);
-}
-
-void mysqlx_stmt_t::set_view_definer(const char* user)
-{
-  if (!is_view_op())
-    throw Mysqlx_exception(MYSQLX_ERROR_VIEW_TYPE_MSG);
-
-  m_view_spec.set_definer(user);
-}
-
-void mysqlx_stmt_t::set_view_columns(va_list args)
-{
-  if (!is_view_op())
-    throw Mysqlx_exception(MYSQLX_ERROR_VIEW_TYPE_MSG);
-
-  m_view_spec.set_columns(args);
-}
-
-void mysqlx_stmt_t::set_view_properties(va_list args)
-{
-  int64_t view_option = 0;
-  if (!is_view_op())
-    throw Mysqlx_exception(MYSQLX_ERROR_VIEW_TYPE_MSG);
-
-  /*
-    The list of arguments is ending after the list of columns,
-    so the function must stop getting more arguments
-  */
-  while (view_option != VIEW_OPTION_COLUMNS &&
-         (view_option = (int64_t)va_arg(args, void*)) != 0)
-  {
-    switch (view_option)
-    {
-      case VIEW_OPTION_ALGORITHM:
-        set_view_algorithm(va_arg(args, int));
-      break;
-      case VIEW_OPTION_SECURITY:
-        set_view_security(va_arg(args, int));
-      break;
-      case VIEW_OPTION_CHECK_OPTION:
-        set_view_check_option(va_arg(args, int));
-      break;
-      case VIEW_OPTION_DEFINER:
-        set_view_definer(va_arg(args, const char*));
-      break;
-      case VIEW_OPTION_COLUMNS:
-        set_view_columns(args);
-      break;
-      default:
-        throw Mysqlx_exception("Wrong VIEW property");
-    }
-  }
-}
-
-void mysqlx_stmt_t::set_row_locking(mysqlx_row_locking_t row_locking)
+int mysqlx_stmt_struct::add_order_by(va_list &args)
 {
   switch (m_op_type)
   {
-    case OP_SELECT:
-    case OP_FIND:
-      switch (row_locking)
-      {
-        case ROW_LOCK_NONE:
-          m_row_locking = cdk::Lock_mode_value::NONE;
-          break;
-        case ROW_LOCK_SHARED:
-          m_row_locking = cdk::Lock_mode_value::SHARED;
-          break;
-        case ROW_LOCK_EXCLUSIVE:
-          m_row_locking = cdk::Lock_mode_value::EXCLUSIVE;
-          break;
-        default:
-          throw Mysqlx_exception(MYSQLX_ERROR_WRONG_LOCKING_MODE);
-      }
-      break;
-    default:
-      throw Mysqlx_exception(MYSQLX_ERROR_ROW_LOCKING);
+    OP_WHERE_LIST(OP_CASE)  break;
+
+  default:
+    throw Mysqlx_exception(MYSQLX_ERROR_OP_NOT_SUPPORTED);
   }
-}
 
-mysqlx_stmt_t::~mysqlx_stmt_struct()
-{
-  try
+  using SImpl = common::Sort_if;
+  SImpl *impl = get_impl<SImpl>(this);
+
+  char *item_utf8 = NULL;
+  mysqlx_sort_direction_enum sort_direction;
+
+  do
   {
-    if (m_result.get())
-      m_result->close_cursor();
-  } catch(...) {}
+    item_utf8 = va_arg(args, char*);
+    if (item_utf8 && *item_utf8)
+    {
+      cdk::string item(item_utf8);
+      // mysqlx_sort_direction_t is promoted to int
+      sort_direction = (mysqlx_sort_direction_enum)va_arg(args, int);
+      impl->add_sort(item,
+        SORT_ORDER_ASC == sort_direction ? SImpl::ASC : SImpl::DESC
+      );
+    }
+  }
+  while (item_utf8 && *item_utf8);
 
+  return RESULT_OK;
 }
 
-int mysqlx_stmt_t::add_document(const char *json_doc)
+
+int mysqlx_stmt_struct::add_document(const char *json_doc)
 {
-  int res = RESULT_OK;
+  assert(json_doc && *json_doc);
+
   if (m_op_type != OP_ADD)
   {
     set_diagnostic("Wrong operation type. Only ADD is supported.", 0);
@@ -914,64 +588,28 @@ int mysqlx_stmt_t::add_document(const char *json_doc)
   }
 
   if (!json_doc || !(*json_doc))
-    throw Mysqlx_exception("Missing JSON data");
-  /*
-    This is done as a two-stage process add_new_doc()/add_doc_key_value()
-    because in the future this function can support multiple arguments
-  */
-  m_doc_source.add_new_doc();
-  try
-  {
-    m_doc_source.add_doc_value(json_doc);
-  }
-  catch (...)
-  {
-    // Something went wrong when parsing the JSON, remove the new doc
-    m_doc_source.remove_last_row();
-    throw;
-  }
+    throw Mysqlx_exception("Missing JSON data for ADD operation.");
 
-  return res;
-}
+  auto *impl = get_impl<OP_ADD>(this);
 
-int mysqlx_stmt_t::add_multiple_documents(va_list args)
-{
-  int rc = RESULT_OK;
-  m_doc_source.clear();
-  const char *json_doc;
-  while ((json_doc = va_arg(args, char*)) != NULL && rc == RESULT_OK)
-  {
-    rc = add_document(json_doc);
-  }
-  return rc;
-}
+  impl->add_json(json_doc);
 
-int mysqlx_stmt_t::add_group_by(va_list args)
-{
-  m_group_by_list.clear();
-  if (m_op_type != OP_SELECT && m_op_type != OP_FIND)
-  {
-    set_diagnostic(MYSQLX_ERROR_OP_NOT_SUPPORTED, 0);
-    return RESULT_ERROR;
-  }
-
-  const char *group_by;
-  while ((group_by = va_arg(args, char*)) != NULL)
-  {
-    m_group_by_list.add_group_by(group_by);
-  }
   return RESULT_OK;
 }
 
-void Group_by_list::process(cdk::Expr_list::Processor& prc) const
-{
-  prc.list_begin();
 
-  for (group_by_list_type::const_iterator it = m_group_by_list.begin();
-    it != m_group_by_list.end(); ++it)
+int mysqlx_stmt_struct::add_multiple_documents(va_list &args)
+{
+  // Note: we report error if no documents were passed
+  int rc = RESULT_ERROR;
+  const char *json_doc;
+  while ((json_doc = va_arg(args, char*)) != NULL)
   {
-    parser::Expression_parser expr_parser(m_parser_mode, *it);
-    expr_parser.process_if(prc.list_el());
+    rc = add_document(json_doc);
+    if (rc != RESULT_OK)
+      return RESULT_ERROR;
   }
-  prc.list_end();
+  if (rc == RESULT_ERROR)
+    set_diagnostic("No documents specified for ADD operation.", 0);
+  return rc;
 }

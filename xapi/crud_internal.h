@@ -22,128 +22,118 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
+#ifndef XAPI_INTERNAL_CRUD
+#define XAPI_INTERNAL_CRUD
+
+#include "../common/op_impl.h"
+
 /*
   CRUD implementation
   Copy constructor must be disabled for this class
 */
 
-typedef struct mysqlx_session_struct mysqlx_session_t;
-class Db_obj_ref;
-class Limit;
-class Order_by;
-class Param_list;
-class Row_source;
+using namespace mysqlx;
 
-class Group_by_list : public cdk::Expr_list
+
+uint32_t get_type(const mysqlx::common::Format_info&);
+
+
+struct mysqlx_result_struct
+  : public Mysqlx_diag
+  , common::Result_impl<std::string>
 {
-  typedef std::vector<cdk::string> group_by_list_type;
-  group_by_list_type m_group_by_list;
-  parser::Parser_mode::value m_parser_mode;
+  using Impl = common::Result_impl<std::string>;
+
+  mysqlx_stmt_struct   *m_stmt;
+  cdk::Diagnostic_iterator m_warn_it;
 
 public:
 
-  Group_by_list() {}
+  std::list<mysqlx_row_struct>  m_row_set;
+  cdk::scoped_ptr<mysqlx_error_struct> m_current_warning;
+  std::vector<std::string> m_doc_id_list;
+  size_t m_current_id_index = 0;
 
-  void set_parser_mode(parser::Parser_mode::value mode) { m_parser_mode = mode; }
-  void add_group_by(const char *expr) { m_group_by_list.push_back(cdk::string(expr)); }
-  void clear() { m_group_by_list.clear(); }
-  void process(cdk::Expr_list::Processor& prc) const;
-  cdk::Expr_list *get_list() { return m_group_by_list.size() ? this : NULL; }
+public:
+
+
+  mysqlx_result_struct(mysqlx_stmt_struct *sess, common::Result_init &init)
+    : Impl(init), m_stmt(sess)
+  {
+    next_result();
+    check_errors();
+  }
+
+  void check_errors()
+  {
+    // TODO: this iterator will iterate also over errors - is that ok?
+    m_warn_it = get_entries(cdk::api::Severity::WARNING);
+    if ( 0 < entry_count())
+      set_diagnostic(mysqlx_error_struct(Impl::get_error()));
+  }
+
+
+  mysqlx_error_struct *get_next_warning();
+
+  /*
+    Read the next row from the result set and advance the cursor position
+  */
+  mysqlx_row_struct *read_row()
+  {
+    const common::Row_data *data = get_row();
+    check_errors();
+    if (!data)
+      return nullptr;
+
+    m_row_set.emplace_back(*data, m_mdata);
+    return &m_row_set.back();
+  }
+
+
+  const char * read_json(size_t *json_byte_size);
+
+  const char *get_next_doc_id();
+
 };
 
-typedef struct mysqlx_stmt_struct : public Mysqlx_diag
+
+
+struct mysqlx_stmt_struct : public Mysqlx_diag
 {
 private:
-  mysqlx_session_t &m_session;
-  cdk::scoped_ptr<mysqlx_result_t> m_result;
-  Db_obj_ref m_db_obj_ref;
-  cdk::protocol::mysqlx::Data_model m_data_model;
-  parser::Parser_mode::value m_parser_mode;
-  mysqlx_op_t m_op_type;
-  cdk::Reply m_reply;
-  cdk::scoped_ptr<cdk::Expression> m_where;
-  cdk::scoped_ptr<cdk::Expression> m_having;
-  cdk::scoped_ptr<Limit> m_limit;
-  cdk::scoped_ptr<Order_by> m_order_by;
-  cdk::scoped_ptr<Projection_list> m_proj_list;
-  Param_list m_param_list;
-  Param_source m_param_source;
-  Row_source m_row_source;
-  Column_source m_col_source;
-  Doc_source m_doc_source;
-  Update_spec m_update_spec;
-  Modify_spec m_modify_spec;
-  cdk::string m_query;
-  Group_by_list m_group_by_list;
-  View_spec m_view_spec;
-  cdk::Lock_mode_value m_row_locking = cdk::Lock_mode_value::NONE;
 
-  int set_expression(cdk::scoped_ptr<cdk::Expression> &member, const char *val);
+  using Impl = common::Executable_if;
+  using Result_impl = mysqlx_result_struct::Impl;
+
+  mysqlx_session_struct &m_session;
+  cdk::scoped_ptr<mysqlx_result_struct>   m_result;
 
 public:
-  mysqlx_stmt_struct(mysqlx_session_t *session, const char *query, uint32_t length) :
-                                     m_session(*session),
-                                     m_op_type(OP_SQL),
-                                     m_query(std::string(query,length))
+
+  cdk::scoped_ptr<Impl> m_impl;
+  mysqlx_op_enum        m_op_type;
+
+  mysqlx_stmt_struct(mysqlx_session_struct *session, mysqlx_op_t op, Impl *impl)
+    : m_session(*session), m_impl(impl), m_op_type(op)
+  {}
+
+  mysqlx_result_struct* new_result(common::Result_init &init)
   {
-    init_data_model();
+    m_result.reset(new mysqlx_result_struct(this, init));
+    return m_result.get();
   }
 
-  mysqlx_stmt_struct(mysqlx_session_t *session, const cdk::string &schema, const cdk::string &name,
-                     mysqlx_op_t op_type) : m_session(*session),
-                     m_db_obj_ref(schema, name),
-                     m_op_type(op_type)
+  void rm_result(mysqlx_result_struct *res)
   {
-    init_data_model();
+    if (res != m_result.get())
+      return;
+    // TODO: notify the current result so that it can cache data etc?
+    m_result.reset(NULL);
   }
 
-  mysqlx_stmt_struct(mysqlx_session_t *session, const cdk::string &schema, const cdk::string &name,
-                     mysqlx_op_t op_type, mysqlx_stmt_struct *parent) : m_session(*session),
-                     m_db_obj_ref(parent->get_ref()),
-                     m_op_type(op_type),
-                     m_view_spec(schema, name, op_type)
-  {
-    init_data_model();
-    if (parent)
-      copy_parent_data(parent);
-  }
 
-  /*
-    Un-registering result.
-    The parameter is not used.
-    This method will be extended in the future to handle
-    multiple results.
-  */
-  bool set_result(mysqlx_result_t *res)
-  {
-    m_result.reset(res);
-    return m_result.get() != NULL;
-  }
+  mysqlx_result_struct* get_result() { return m_result.get(); }
 
-  void copy_parent_data(mysqlx_stmt_struct *parent);
-
-  mysqlx_result_t *get_result() { return m_result.get(); }
-
-  /*
-    Get diagnostic info for the previously executed CRUD
-    TODO: implement getting warnings and info using
-          Diagnostic_iterator
-  */
-  void acquire_diag(cdk::foundation::api::Severity::value val =
-                    cdk::foundation::api::Severity::ERROR);
-
-  ~mysqlx_stmt_struct();
-
-  /*
-    Member function to init the data model and parser mode when
-    CRUD is being created, so this could be re-used.
-  */
-  void init_data_model();
-
-  /*
-    Member function to init the internal CRUD state.
-  */
-  void init_crud();
 
   /*
     Execute a CRUD statement.
@@ -154,12 +144,16 @@ public:
     NOTE: no need to free the result in the end cdk::scoped_ptr will
           take care of it
   */
-  mysqlx_result_t *exec();
+  mysqlx_result_struct *exec()
+  {
+    Mysqlx_diag::clear();
+    return new_result(m_impl->execute());
+  }
 
-  int sql_bind(va_list args);
+  int sql_bind(va_list &args);
   int sql_bind(cdk::string s);
 
-  int param_bind(va_list args);
+  int param_bind(va_list &args);
 
   /*
     Return the operation type OP_SELECT, OP_INSERT, OP_UPDATE, OP_DELETE,
@@ -167,36 +161,200 @@ public:
   */
   mysqlx_op_t op_type() { return m_op_type; }
   mysqlx_session_t &get_session() { return m_session; }
-  const Db_obj_ref &get_ref() { return m_db_obj_ref; }
 
   int set_where(const char *where_expr);
-  int set_limit(row_count_t row_count, row_count_t offset);
+  int set_limit(cdk::row_count_t row_count, cdk::row_count_t offset);
   int set_having(const char *having_expr);
 
-  int add_order_by(va_list args);
-  int add_row(bool get_columns, va_list args);
-  int add_columns(va_list args);
+  int add_order_by(va_list &args);
+  int add_row(bool get_columns, va_list &args);
+  int add_columns(va_list &args);
   int add_document(const char *json_doc);
-  int add_multiple_documents(va_list args);
-  int add_projections(va_list args);
-  int add_table_update_values(va_list args);
-  int add_coll_modify_values(va_list args, mysqlx_modify_op op);
-  int add_group_by(va_list args);
-
-  // Clear the list of ORDER BY items
-  void clear_order_by();
+  int add_multiple_documents(va_list &args);
+  int add_projections(va_list &args);
+  int add_table_update_values(va_list &args);
+  int add_coll_modify_values(va_list &args, mysqlx_modify_op op);
+  int add_group_by(va_list &args);
 
   // Return the session validity state
   bool session_valid();
-  bool is_view_op();
 
-  void set_view_algorithm(int algorithm);
-  void set_view_security(int security);
-  void set_view_check_option(int option);
-  void set_view_definer(const char* user);
-  void set_view_columns(va_list args);
-  void set_view_properties(va_list args);
   void set_row_locking(mysqlx_row_locking_t row_locking);
 
   friend class Group_by_list;
-} mysqlx_stmt_t;
+};
+
+
+typedef mysqlx_stmt_struct mysqlx_stmt_t;
+
+
+/*
+  The stmt_traits<> template defines implementation class for different
+  CRUD operations identified by mysqlx_op_enum constants.
+*/
+
+template <mysqlx_op_enum OP>
+struct stmt_traits;
+
+
+template<>
+struct stmt_traits<OP_SQL>
+{
+  using Impl = common::Op_sql;
+};
+
+
+template<>
+struct stmt_traits<OP_TRX_BEGIN>
+{
+  using Impl = common::Op_trx<common::Trx_op::BEGIN>;
+};
+
+template<>
+struct stmt_traits<OP_TRX_COMMIT>
+{
+  using Impl = common::Op_trx<common::Trx_op::COMMIT>;
+};
+
+template<>
+struct stmt_traits<OP_TRX_ROLLBACK>
+{
+  using Impl = common::Op_trx<common::Trx_op::ROLLBACK>;
+};
+
+template<>
+struct stmt_traits<OP_TRX_SAVEPOINT_SET>
+{
+  using Impl = common::Op_trx<common::Trx_op::SAVEPOINT_SET>;
+};
+
+template<>
+struct stmt_traits<OP_TRX_SAVEPOINT_RM>
+{
+  using Impl = common::Op_trx<common::Trx_op::SAVEPOINT_REMOVE>;
+};
+
+
+template<>
+struct stmt_traits<OP_SELECT>
+{
+  using Impl = common::Op_table_select;
+};
+
+template<>
+struct stmt_traits<OP_INSERT>
+{
+  using Impl = common::Op_table_insert<>;
+};
+
+template<>
+struct stmt_traits<OP_UPDATE>
+{
+  using Impl = common::Op_table_update;
+};
+
+template<>
+struct stmt_traits<OP_DELETE>
+{
+  using Impl = common::Op_table_remove;
+};
+
+
+template<>
+struct stmt_traits<OP_ADD>
+{
+  using Impl = common::Op_collection_add;
+};
+
+template<>
+struct stmt_traits<OP_REMOVE>
+{
+  using Impl = common::Op_collection_remove;
+};
+
+template<>
+struct stmt_traits<OP_FIND>
+{
+  using Impl = common::Op_collection_find;
+};
+
+template<>
+struct stmt_traits<OP_MODIFY>
+{
+  using Impl = common::Op_collection_modify;
+};
+
+template<>
+struct stmt_traits<OP_SCHEMA_CREATE>
+{
+  using Impl = common::Op_create<common::Object_type::SCHEMA>;
+};
+
+template<>
+struct stmt_traits<OP_SCHEMA_DROP>
+{
+  using Impl = common::Op_drop<common::Object_type::SCHEMA>;
+};
+
+template<>
+struct stmt_traits<OP_COLLECTION_DROP>
+{
+  using Impl = common::Op_drop<common::Object_type::COLLECTION>;
+};
+
+template<>
+struct stmt_traits<OP_TABLE_DROP>
+{
+  using Impl = common::Op_drop<common::Object_type::TABLE>;
+};
+
+template<>
+struct stmt_traits<OP_LIST_SCHEMAS>
+{
+  using Impl = common::Op_list<common::Object_type::SCHEMA>;
+};
+
+template<>
+struct stmt_traits<OP_LIST_COLLECTIONS>
+{
+  using Impl = common::Op_list<common::Object_type::COLLECTION>;
+};
+
+template<>
+struct stmt_traits<OP_LIST_TABLES>
+{
+  using Impl = common::Op_list<common::Object_type::TABLE>;
+};
+
+
+/*
+  Return pointer to internal statement implementation after casting it to
+  the appropriate implementation class for operation OP (as defined
+  by stmt_traits<> template).
+*/
+
+template <typename Impl>
+inline
+auto get_impl(mysqlx_stmt_struct *stmt)
+  -> Impl*
+{
+  assert(stmt && stmt->m_impl);
+  // TODO: dynamic_cast<> did not work - rtti not enabled?
+  Impl *impl = (Impl*)(stmt->m_impl.get());
+  assert(impl);
+  return impl;
+}
+
+template <mysqlx_op_t OP>
+inline
+auto get_impl(mysqlx_stmt_struct *stmt)
+  -> typename stmt_traits<OP>::Impl*
+{
+  if (OP != stmt->m_op_type)
+    throw Mysqlx_exception("Invalid operation type");
+  return get_impl<typename stmt_traits<OP>::Impl>(stmt);
+}
+
+
+
+#endif

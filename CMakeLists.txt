@@ -164,6 +164,7 @@ endif()
 
 if(WIN32)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+  add_definitions(-DNOMINMAX)
 endif()
 
 
@@ -337,6 +338,7 @@ endif()
 #
 
 ADD_SUBDIRECTORY(doc)
+ADD_SUBDIRECTORY(common)
 ADD_SUBDIRECTORY(xapi)
 ADD_SUBDIRECTORY(devapi)
 
@@ -350,7 +352,7 @@ ADD_SUBDIRECTORY(devapi)
 
 add_library_ex(libconcpp ${LIB_TYPE}
     ${WITH_UUID}/src/uuid_gen.cc
-    OBJECTS devapi xapi
+    OBJECTS xapi devapi common
     LIBS    cdk
 )
 

@@ -81,11 +81,11 @@ struct Proto_field_checker : public cdk::protocol::mysqlx::api::Expectations
     switch (v)
     {
       case Protocol_fields::ROW_LOCKING:
-        // Find(17) locking(12)
+        // Find=17, locking=12
         m_data = bytes("17.12");
         break;
       case Protocol_fields::UPSERT:
-        // Insert(18) upsert(6)
+        // Insert=18, upsert=6
         m_data = bytes("18.6");
         break;
       default:
@@ -371,6 +371,7 @@ Session::~Session()
 option_t Session::is_valid()
 {
   wait();
+  // TODO: should errors be thrown here, if any?
   return m_isvalid;
 }
 
@@ -380,6 +381,8 @@ void Session::check_protocol_fields()
   if (m_proto_fields == UINT64_MAX)
   {
     wait();
+    if (0 < entry_count())
+      get_error().rethrow();
     Proto_field_checker field_checker(m_protocol);
     m_proto_fields = 0;
     /* More fields checks will be added here */
@@ -435,13 +438,26 @@ Reply_init& Session::sql(const string &stmt, Any_list *args)
   return set_command(new SndStmt(m_protocol, "sql", stmt, args));
 }
 
-Reply_init& Session::admin(const char *cmd, Any_list &args)
+void Session::Doc_args::process(Processor &prc) const
 {
+  Safe_prc<Any_list::Processor> sprc(prc);
+  sprc->list_begin();
+  if (m_doc)
+    m_doc->process_if(sprc->list_el()->doc());
+  sprc->list_end();
+}
+
+
+Reply_init& Session::admin(const char *cmd, const cdk::Any::Document &args)
+{
+
   if (!is_valid())
     throw_error("admin: invalid session");
 
+  m_cmd_args.m_doc = &args;
+
   m_stmt.set_utf8(cmd);
-  m_cmd.reset(new SndStmt(m_protocol, "xplugin", m_stmt, &args));
+  m_cmd.reset(new SndStmt(m_protocol, "mysqlx", m_stmt, &m_cmd_args));
   return *this;
 }
 
@@ -468,9 +484,31 @@ void Session::commit()
     r.get_error().rethrow();
 }
 
-void Session::rollback()
+void Session::rollback(const string &savepoint)
 {
-  Reply r(sql(L"ROLLBACK", NULL));
+  string qry = L"ROLLBACK";
+  if (!savepoint.empty())
+    qry += string(L" TO `") + savepoint + L"`";
+  Reply r(sql(qry, NULL));
+  r.wait();
+  if (r.entry_count() > 0)
+    r.get_error().rethrow();
+}
+
+void Session::savepoint_set(const string &savepoint)
+{
+  // TODO: some chars in savepoint name need to be quotted.
+  string qry = L"SAVEPOINT `"+ savepoint + L"`";
+  Reply r(sql(qry, NULL));
+  r.wait();
+  if (r.entry_count() > 0)
+    r.get_error().rethrow();
+}
+
+void Session::savepoint_remove(const string &savepoint)
+{
+  string qry = L"RELEASE SAVEPOINT `" + savepoint + L"`";
+  Reply r(sql(qry, NULL));
   r.wait();
   if (r.entry_count() > 0)
     r.get_error().rethrow();

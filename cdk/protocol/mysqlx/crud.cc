@@ -650,6 +650,7 @@ public:
     case update_op::ITEM_REPLACE:
     case update_op::ARRAY_INSERT:
     case update_op::ARRAY_APPEND:
+    case update_op::MERGE_PATCH:
     default:
       {
         m_expr_builder.reset(new Expr_builder(*m_upd_op.mutable_value(), &m_conv));

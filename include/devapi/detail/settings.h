@@ -1,39 +1,37 @@
 #ifndef MYSQLX_DETAIL_SETTINGS_H
 #define MYSQLX_DETAIL_SETTINGS_H
 
+#include <mysql_common.h>
 #include "../document.h"
 
-#include <vector>
-#include <bitset>
-#include <sstream>
+#include <list>
 
 namespace mysqlx {
 namespace internal {
-
-
 
 /*
   Note: Options and SSLMode enumerations are given by Traits template parameter to allow defining (and documenting) them in the main settings.h header.
 */
 
+
 template <typename Traits>
 class Settings_detail
+  : public common::Settings_impl
 {
-  using Options    = typename Traits::Options;
+  using Value      = common::Value;
+  using SOption    = typename Traits::Options;
   using SSLMode    = typename Traits::SSLMode;
   using AuthMethod = typename Traits::AuthMethod;
 
+public:
+
+  template <typename V, typename... Ty>
+  void set(SOption opt, V&& val, Ty&&... rest)
+  {
+    do_set(get_options(opt, std::forward<V>(val), std::forward<Ty>(rest)...));
+  }
+
 protected:
-
-  using option_list_t = std::vector<std::pair<Options, Value>>;
-  using iterator = typename option_list_t::iterator;
-
-  option_list_t           m_options;
-  std::bitset<size_t(Options::LAST)>  m_option_used;
-  std::bitset<size_t(Options::LAST)>  m_call_used;
-
-  void do_add(Options opt, Value &&v);
-  Value& find(Options opt);
 
   /*
     Declare options that require specific type of value (mostly enumerations).
@@ -47,7 +45,7 @@ protected:
   X(AUTH,AuthMethod)
 
 #define CHECK_OPT(Opt,Type) \
-  if (opt == Options::Opt) \
+  if (opt == Option::Opt) \
     throw Error(#Opt "setting requires value of type " #Type);
 
   /*
@@ -55,7 +53,7 @@ protected:
     TODO: More precise type checking using per-option types.
   */
 
-  static Value opt_val(Options opt, Value &&val)
+  static Value opt_val(Option opt, Value &&val)
   {
     OPT_VAL_TYPE(CHECK_OPT)
     return val;
@@ -71,179 +69,88 @@ protected:
     typename std::enable_if<std::is_convertible<V,string>::value>::type*
     = nullptr
   >
-  static Value opt_val(Options opt, V &&val)
+  static Value opt_val(Option opt, V &&val)
   {
     OPT_VAL_TYPE(CHECK_OPT)
     return string(val);
   }
 
-  static Value opt_val(Options opt, SSLMode m)
+  static Value opt_val(Option opt, SSLMode m)
   {
-    if (opt != Options::SSL_MODE)
-      throw Error("SessionSettings::SSLMode value can only be used on SSL_MODE setting.");
+    if (opt != Option::SSL_MODE)
+      throw Error(
+        "SessionSettings::SSLMode value can only be used on SSL_MODE setting."
+      );
     return unsigned(m);
   }
 
-  static Value opt_val(Options opt, AuthMethod m)
+  static Value opt_val(Option opt, AuthMethod m)
   {
-    if (opt != Options::AUTH)
-      throw Error("SessionSettings::AuthMethod value can only be used on AUTH setting.");
+    if (opt != Option::AUTH)
+      throw Error(
+        "SessionSettings::AuthMethod value can only be used on AUTH setting."
+      );
     return unsigned(m);
   }
 
 
+  using opt_val_t = std::pair<Option, Value>;
+  using opt_list_t = std::list<opt_val_t>;
 
   /*
-    TODO: Document it
+    Set list of options with consistency checks.
+
+    This operation is atomic - settings are changed only if all options could
+    be set without error, otherwise settings remain unchanged.
   */
 
-  void do_set(bool) {}
-
-  template <typename V, typename...R>
-  void do_set(bool host_optional, Options opt, V v, R...rest)
-  {
-    switch (opt)
-    {
-#ifndef WIN32
-    case Options::SOCKET:
-      return do_add_socket(opt_val(Options::SOCKET, v), rest...);
-#endif
-
-    case Options::HOST:
-      return do_add_host(opt_val(Options::HOST, v), rest...);
-
-    case Options::PORT:
-      if (host_optional)
-        return do_add_host("localhost", opt_val(Options::PORT, v), rest...);
-      else
-        throw Error("Defining PORT without first defining HOST.");
-
-    case Options::PRIORITY:
-      if (host_optional)
-      {
-        do_add_host(
-          "localhost",
-          opt_val(Options::PORT, DEFAULT_MYSQLX_PORT),
-          opt_val(Options::PRIORITY, v)
-        );
-        do_set(false, rest...);
-        return;
-      }
-      else
-        throw Error("Defining PRIORITY without first defining HOST.");
-
-    default:
-
-      if (m_call_used.test(size_t(opt)))
-      {
-        std::stringstream error;
-        error << "SessionSettings option "
-              << Traits::get_option_name(opt) << " defined twice";
-
-        throw Error(error.str().c_str());
-      }
-
-      m_call_used.set(size_t(opt));
-
-      do_add(opt, opt_val(opt,v));
-      do_set(host_optional, rest...);
-    }
-  }
-
+  void do_set(opt_list_t&&);
 
   /*
-    Add HOST setting checking valid order of options after it
-    (PORT/PRIORITY).
+    Templates that collect varargs list of options into opt_list_t list
+    that can be passed to do_set().
   */
 
-  void do_add_host(Value &&host)
+  static opt_list_t get_options()
   {
-    do_add(Options::HOST, std::move(host));
+    return {};
   }
-
-  void do_add_host(Value &&host, Value &&port)
-  {
-    do_add(Options::HOST, std::move(host));
-    do_add(Options::PORT, std::move(port));
-  }
-
-  void do_add_host(Value &&host, Value &&port, Value &&priority)
-  {
-    do_add(Options::HOST, std::move(host));
-    do_add(Options::PORT, std::move(port));
-    do_add(Options::PRIORITY, std::move(priority));
-  }
-
-  template <typename V, typename...R>
-  void do_add_host(Value &&host, Options opt, V v, R...rest)
-  {
-    if (opt == Options::PORT)
-    {
-      //we could still have priority
-      do_add_host(std::move(host), opt_val(Options::PORT,v), rest...);
-      return;
-    }
-    else if (opt == Options::PRIORITY)
-    {
-      do_add_host(std::move(host), DEFAULT_MYSQLX_PORT,
-        opt_val(Options::PRIORITY,v));
-      do_set(false, rest...);
-      return;
-    }
-
-    do_add_host(std::move(host));
-    do_set(false, opt, v, rest...);
-  }
-
-  template <typename V, typename...R>
-  void do_add_host(Value &&host, Value &&port, Options opt, V v, R...rest)
-  {
-    if (opt == Options::PRIORITY)
-    {
-      do_add_host(std::move(host), std::move(port),
-        opt_val(Options::PRIORITY, v));
-      do_set(false, rest...);
-      return;
-    }
-    do_add_host(std::move(host), std::move(port));
-    do_set(false, opt, v, rest...);
-  }
-
-#ifndef WIN32
 
   /*
-    Add SOCKET setting checking if PRIORITY is available.
+    Note: if we ever support options without values, another overload is
+    needed: get_options(Option opt, Option opt1, R&... rest).
   */
 
-  void do_add_socket(Value &&socket)
+  template <typename V, typename... Ty>
+  static opt_list_t get_options(SOption opt, V&& val, Ty&&... rest)
   {
-    do_add(Options::SOCKET, std::move(socket));
+    Option oo = (Option)opt;
+    opt_list_t opts = get_options(std::forward<Ty>(rest)...);
+    opts.emplace_front(oo, opt_val(oo, std::forward<V>(val)));
+    return std::move(opts);
   }
 
-  void do_add_socket(Value &&socket, Value &&priority)
+  /*
+    Note: Methods below rely on the fact that DevAPI SessionOption constants
+    have the same numeric values as common::Settings_impl::Option ones.
+  */
+
+  void erase(SOption opt)
   {
-    do_add(Options::SOCKET, std::move(socket));
-    do_add(Options::PRIORITY, std::move(priority));
+    Settings_impl::erase((Option)opt);
   }
 
-  template <typename V, typename...R>
-  void do_add_socket(Value &&socket, Options opt, V v, R...rest)
+  bool has_option(SOption opt)
   {
-    if (opt == Options::PRIORITY)
-    {
-      do_add_socket(std::move(socket), opt_val(opt,v));
-      do_set(false, rest...);
-    }
-    else
-    {
-      do_add_socket(std::move(socket));
-      do_set(false, opt, v, rest...);
-    }
+    return Settings_impl::has_option((Option)opt);
   }
 
-#endif
-
+  Value get(SOption opt)
+  {
+    return Settings_impl::get((Option)opt);
+  }
 };
+
 
 }  // internal namespace
 }  // mysqlx namespace

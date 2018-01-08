@@ -39,10 +39,15 @@ class Transaction
 public:
 
   typedef typename Traits::transaction_id_t transaction_id_t;
-  //typedef typename Traits::savepoint_id_t   savepoint_id_t;
+  typedef typename Traits::savepoint_id_t   savepoint_id_t;
 
   virtual transaction_id_t  commit() = 0;
-  virtual void rollback() = 0;
+
+  /*
+    Rollback transaction to the given savepoint. Default Savepoint id
+    (savepoint_id_t()) means beginning of the transaction.
+  */
+  virtual void rollback(savepoint_id_t id) = 0;
 
   /*
     TODO:
@@ -52,20 +57,17 @@ public:
   //virtual bool has_changes() = 0;
 
   /*
-    TODO:
     Create a savepoint with given id. If a savepoint with the same id was
     created earlier in the same transaction, then it is replaced by the new one.
     It is an error to create savepoint with id 0, which is reserved for
     the beginning of the current transaction.
   */
-  //virtual void Transaction::savepoint(savepoint_id_t id) = 0;
+  virtual void savepoint_set(savepoint_id_t id) = 0;
 
   /*
-    TODO:
-    Rollback transaction to the given savepoint. Savepoint id 0 (the default)
-    means beginning of the transaction.
+    Remove a savepoint with given id.
   */
-  //virtual void Transaction::rollback(savepoint_id_t sp = 0) = 0;
+  virtual void savepoint_remove(savepoint_id_t id) = 0;
 
 };
 

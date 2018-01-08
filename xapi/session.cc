@@ -23,102 +23,61 @@
  */
 
 #include <mysql_xapi.h>
+#include <mysql_common.h>
 #include "mysqlx_cc_internal.h"
 #include <algorithm>
 #include <string>
 
-const unsigned max_priority = 100;
+using std::string;
 
 
 mysqlx_session_struct::mysqlx_session_struct(
-  const mysqlx_session_options_t &opt
+  mysqlx_session_options_struct *opt
 )
-  : m_session(opt.get_multi_source()),
-    m_stmt(NULL)
 {
-  const string *db = opt.get_db();
-  if (db)
-    m_default_db = *db;
+  cdk::ds::Multi_source ds;
+  opt->get_data_source(ds);
+  m_impl = std::make_shared<common::Session_impl>(ds);
 }
+
 
 mysqlx_session_struct::mysqlx_session_struct(
   const std::string &host, unsigned short port,
   const string &usr, const std::string *pwd,
   const std::string *db
 )
-  : mysqlx_session_struct(mysqlx_session_options_t(host, port, usr, pwd, db))
+  : mysqlx_session_struct(mysqlx_session_options_struct(host, port, usr, pwd, db))
 {}
 
 mysqlx_session_struct::mysqlx_session_struct(
   const std::string &conn_str
 )
-  : mysqlx_session_struct(mysqlx_session_options_t(conn_str))
+  : mysqlx_session_struct(mysqlx_session_options_struct(conn_str))
 {}
 
 
-
-mysqlx_stmt_t * mysqlx_session_t::sql_query(const char *query, uint32_t length)
+mysqlx_stmt_struct*
+mysqlx_session_struct::sql_query(const char *query_utf8, uint32_t length)
 {
-  if (!query || !(*query))
+  if (!query_utf8 || !(*query_utf8))
     throw Mysqlx_exception("Query is empty");
 
-  if (m_stmt)
-    delete m_stmt;
-
   if (length == MYSQLX_NULL_TERMINATED)
-    length = (uint32_t)strlen(query);
+    length = (uint32_t)strlen(query_utf8);
 
-  m_stmt = new mysqlx_stmt_t(this, query, length);
-  return m_stmt;
+  std::string query(query_utf8, length);
+  return new_stmt<OP_SQL>(cdk::string(query));  // note: UTF8 conversion
 }
 
-/*
-  This method creates a local statement operation that belongs to the session
-  or an external one, which belongs to the higher level objects such as
-  collection or a table
-*/
-mysqlx_stmt_t * mysqlx_session_t::stmt_op(const cdk::string schema, const cdk::string obj_name,
-                                      mysqlx_op_t op_type, bool session_crud,
-                                      mysqlx_stmt_t *parent)
+
+mysqlx_error_struct * mysqlx_session_struct::get_last_error()
 {
-  mysqlx_stmt_t *stmt;
+  cdk::Session &sess = get_session();
 
-  // This will be removed after adding multiple CRUD's per session
-  if (session_crud && m_stmt)
-    delete m_stmt;
-
-  if (!schema.length() && m_default_db.empty())
-  {
-    if (session_crud)
-      m_stmt = NULL;
-    throw Mysqlx_exception("The default schema is not specified");
-  }
-
-  if (parent)
-    stmt = new mysqlx_stmt_t(this, schema.length() ? schema : m_default_db,
-                             obj_name, op_type, parent);
-  else
-    stmt = new mysqlx_stmt_t(this, schema.length() ? schema : m_default_db,
-                             obj_name, op_type);
-
-  if (session_crud)
-    m_stmt = stmt;
-  return stmt;
-}
-
-void mysqlx_session_t::reset_stmt(mysqlx_stmt_t*)
-{
-  if (m_stmt)
-    delete m_stmt;
-  m_stmt = NULL;
-}
-
-mysqlx_error_t * mysqlx_session_t::get_last_error()
-{
   // Return session errors from CDK first
-  if (m_session.entry_count())
+  if (sess.entry_count())
   {
-      m_error.set(&m_session.get_error());
+      m_error.set(&sess.get_error());
   }
   else if (!m_error.message() && !m_error.error_num())
     return NULL;
@@ -126,142 +85,65 @@ mysqlx_error_t * mysqlx_session_t::get_last_error()
   return &m_error;
 }
 
-const cdk::Error * mysqlx_session_t::get_cdk_error()
+
+const cdk::Error * mysqlx_session_struct::get_cdk_error()
 {
-  if (m_session.entry_count())
-    return &m_session.get_error();
+  if (get_session().entry_count())
+    return &get_session().get_error();
 
   return NULL;
 }
 
-void mysqlx_session_t::reset_diagnostic()
+
+void mysqlx_session_struct::reset_diagnostic()
 {
   m_error.reset();
 }
 
-void mysqlx_session_t::admin_collection(const char *cmd,
-                                     cdk::string schema,
-                                     cdk::string coll_name)
-{
-  if (!schema.length() && m_default_db.empty())
-  {
-    throw Mysqlx_exception("The default schema is not specified");
-  }
 
-  Db_obj_ref tab_ref(schema.length() ? schema : m_default_db, coll_name);
-  cdk::Reply reply;
-  reply = m_session.admin(cmd, tab_ref);
-  reply.wait();
-  if (reply.entry_count())
-  {
-    const cdk::Error &err = reply.get_error();
-    if (err.code() != cdk::server_error(SKIP_ERROR_COLL_EXISTS))
-      throw err;
-  }
+void mysqlx_session_struct::transaction_begin()
+{
+  // Note: the internal implementation object handles registered results etc.
+  stmt_traits<OP_TRX_BEGIN>::Impl stmt(m_impl);
+  stmt.execute();
 }
 
-void mysqlx_session_t::create_schema(const char *schema)
+void mysqlx_session_struct::transaction_commit()
 {
-  if (!schema || !(*schema))
-    throw Mysqlx_exception(MYSQLX_ERROR_MISSING_SCHEMA_NAME_MSG);
-
-  std::stringstream sstr;
-  sstr << "CREATE SCHEMA IF NOT EXISTS `" << schema << "`";
-
-  cdk::Reply reply;
-  reply = m_session.sql(sstr.str());
-  reply.wait();
-  if (reply.entry_count())
-    throw reply.get_error();
+  stmt_traits<OP_TRX_COMMIT>::Impl stmt(m_impl);
+  stmt.execute();
 }
 
-mysqlx_schema_t & mysqlx_session_t::get_schema(const char *name, bool check)
+void mysqlx_session_struct::transaction_rollback(const char *sp)
 {
-  if (!name || !(*name))
-    throw Mysqlx_exception(MYSQLX_ERROR_MISSING_SCHEMA_NAME_MSG);
-  cdk::string schema_name = name;
-  Schema_map::iterator it = m_schema_map.find(schema_name);
-  // Return existing schema if it was requested before
-  if (it != m_schema_map.end())
-    return it->second;
-
-  m_schema_map.insert(std::make_pair(schema_name,
-                      mysqlx_schema_t(*this, schema_name, check)));
-  return m_schema_map.at(schema_name);
+  stmt_traits<OP_TRX_ROLLBACK>::Impl stmt(
+    m_impl,
+    sp ? string(sp) : string()
+  );
+  stmt.execute();
 }
 
-void mysqlx_session_t::drop_object(cdk::string schema, cdk::string name,
-                                 Object_type obj_type)
-
+const char * mysqlx_session_struct::savepoint_set(const char *sp)
 {
-  if (obj_type == COLLECTION)
-  {
-    admin_collection("drop_collection", schema, name);
-    return;
-  }
+  stmt_traits<OP_TRX_SAVEPOINT_SET>::Impl stmt(
+    m_impl,
+    sp ? string(sp) : string()
+  );
 
-  cdk::Reply reply;
-  std::stringstream sstr;
-
-  switch(obj_type)
-  {
-    case SCHEMA:
-      sstr << "DROP SCHEMA "; break;
-    case TABLE:
-      sstr << "DROP TABLE "; break;
-    case VIEW:
-      sstr << "DROP VIEW "; break;
-    break;
-    default:
-      throw Mysqlx_exception(Mysqlx_exception::MYSQLX_EXCEPTION_INTERNAL, 0,
-                             "Attempt to drop an object of unknown type.");
-  }
-
-  sstr << "IF EXISTS ";
-
-  if (schema.length())
-    sstr << " `" << schema << "`";
-
-  if (schema.length() && name.length())
-    sstr << ".";
-
-  if (name.length())
-    sstr << " `" << name << "`";
-
-  reply = m_session.sql(sstr.str());
-  reply.wait();
-
-  if (reply.entry_count())
-    throw reply.get_error();
+  stmt.execute();
+  m_savepoint_name = stmt.get_name();
+  return m_savepoint_name.c_str();
 }
 
-void mysqlx_session_t::transaction_begin()
+void mysqlx_session_struct::savepoint_remove(const char *sp)
 {
-  m_session.begin();
+  if (!sp || !sp[0])
+    throw_error("Invalid empty save point name");
+  stmt_traits<OP_TRX_SAVEPOINT_RM>::Impl stmt(m_impl, string(sp));
+  stmt.execute();
 }
 
-void mysqlx_session_t::transaction_commit()
-{
-  m_session.commit();
-}
 
-void mysqlx_session_t::transaction_rollback()
-{
-  m_session.rollback();
-}
-
-mysqlx_session_t::~mysqlx_session_struct()
-{
-  try
-  {
-    reset_stmt(m_stmt);
-    m_session.close();
-  }
-  catch(...)
-  {
-    // Do not do anything
-  }
-}
 
 using cdk::foundation::connection::TLS;
 
@@ -304,33 +186,21 @@ unsigned int ssl_mode_to_uint(TLS::Options::SSL_MODE mode)
   }
 }
 
+
 const char* opt_name(mysqlx_opt_type_t opt)
 {
-  switch (opt)
-  {
-  case MYSQLX_OPT_HOST: return "host";
-  case MYSQLX_OPT_PORT: return "port";
-  case MYSQLX_OPT_USER: return "user";
-  case MYSQLX_OPT_PWD: return "pwd";
-  case MYSQLX_OPT_DB: return "db";
-  case MYSQLX_OPT_SSL_MODE: return "ssl-mode";
-  case MYSQLX_OPT_SSL_CA: return "ssl-ca";
-  case MYSQLX_OPT_PRIORITY: return "priority";
-  default: return "<unknown>";
-  }
+  using mysqlx::common::Settings_impl;
+  using Option = Settings_impl::Option;
+  return Settings_impl::option_name(Option(opt));
 }
 
 const char* ssl_mode_name(mysqlx_ssl_mode_t m)
 {
-  switch (m)
-  {
-  case SSL_MODE_DISABLED: return "DISABLED";
-  case SSL_MODE_REQUIRED: return "REQUIRED";
-  case SSL_MODE_VERIFY_CA: return "VERIFY_CA";
-  case SSL_MODE_VERIFY_IDENTITY: return "VERIFY_IDENTITY";
-  default: return "<unknown>";
-  }
+  using mysqlx::common::Settings_impl;
+  using SSL_mode = Settings_impl::SSL_mode;
+  return Settings_impl::ssl_mode_name(SSL_mode(m));
 }
+
 
 struct Error_bad_option : public Mysqlx_exception
 {
@@ -385,584 +255,3 @@ struct Error_ca_mode : public Mysqlx_exception
     : Error_ca_mode(mysqlx_ssl_mode_t(ssl_mode_to_uint(m)))
   {}
 };
-
-void  mysqlx_session_options_struct::check_option(mysqlx_opt_type_t opt)
-{
-  switch (opt)
-  {
-  case MYSQLX_OPT_HOST:
-  case MYSQLX_OPT_PORT:
-  case MYSQLX_OPT_PRIORITY:
-    return;
-
-  default:
-    if (!(opt < mysqlx_opt_type_t::LAST))
-      throw Error_bad_option(opt);
-    if (m_options_used.test(opt))
-      throw Error_dup_option(opt);
-    m_options_used.set(opt);
-  }
-};
-
-mysqlx_session_options_struct::mysqlx_session_options_struct(
-                              const std::string host, unsigned short port,
-                              const std::string usr, const std::string *pwd,
-                              const std::string *db,
-                              unsigned int ssl_mode)
-  : mysqlx_session_options_struct(source_state::non_priority)
-{
-  this->host(0, host, (port ? port : DEFAULT_MYSQLX_PORT));
-  this->user(usr);
-
-  if (pwd)
-    this->password(*pwd);
-
-  if (db)
-    set_database(*db);
-
-  set_ssl_mode(mysqlx_ssl_mode_t(ssl_mode));
-
-#ifndef WITH_SSL
-  if (ssl_mode != SSL_MODE_DISABLED)
-    set_diagnostic(MYSQLX_ERROR_NO_TLS_SUPPORT, 0);
-#endif
-
-  m_explicit_mode = false;
-}
-
-
-void mysqlx_session_options_t::set_ssl_ca(const string &ca)
-{
-
-  if (m_explicit_mode)
-  {
-    switch (auto m = m_tls_options.ssl_mode())
-    {
-    case TLS::Options::SSL_MODE::DISABLED:
-    case TLS::Options::SSL_MODE::REQUIRED:
-      throw Error_ca_mode(m);
-
-    case TLS::Options::SSL_MODE::PREFERRED:
-      assert(false);
-
-    case TLS::Options::SSL_MODE::VERIFY_CA:
-    case TLS::Options::SSL_MODE::VERIFY_IDENTITY:
-      break;
-    }
-  }
-  else
-  {
-    // When SSL CA is set the SSL MODE should already be set
-    throw Mysqlx_exception("ssl-mode should be VERIFY_CA or VERIFY_IDENTITY "\
-                           "before setting ssl-ca");
-  }
-
-  m_tls_options.set_ca(ca);
-  m_tcp_opts.set_tls(m_tls_options);
-}
-
-
-void mysqlx_session_options_struct::set_ssl_mode(mysqlx_ssl_mode_t ssl_mode)
-{
-  auto m = uint_to_ssl_mode(ssl_mode);
-
-  if (!m_tls_options.get_ca().empty())
-  {
-    switch (ssl_mode)
-    {
-    case SSL_MODE_DISABLED:
-    case SSL_MODE_REQUIRED:
-      throw Error_ca_mode(ssl_mode);
-
-    case SSL_MODE_VERIFY_CA:
-    case SSL_MODE_VERIFY_IDENTITY:
-      break;
-    }
-  }
-
-  m_tls_options.set_ssl_mode(m);
-  m_tcp_opts.set_tls(m_tls_options);
-  m_explicit_mode = true;
-}
-
-unsigned int mysqlx_session_options_struct::get_ssl_mode()
-{
-  return ssl_mode_to_uint(m_tls_options.ssl_mode());
-}
-
-
-#define PRIO_CHECK if ((add_list.priority > 0 && m_source_state == source_state::non_priority) || \
-(add_list.priority == 0 && ds &&  m_source_state == source_state::priority)) \
-  throw Mysqlx_exception(MYSQLX_ERROR_MIX_PRIORITY)
-
-cdk::ds::mysqlx::Protocol_options::auth_method_t uint_to_auth_method(unsigned int m)
-{
-  switch (m)
-  {
-    case MYSQLX_AUTH_PLAIN:
-      return cdk::ds::mysqlx::Protocol_options::PLAIN;
-    case MYSQLX_AUTH_MYSQL41:
-      return cdk::ds::mysqlx::Protocol_options::MYSQL41;
-    case MYSQLX_AUTH_EXTERNAL:
-      return cdk::ds::mysqlx::Protocol_options::EXTERNAL;
-    default:
-      throw Mysqlx_exception(MYSQLX_ERROR_AUTH_METHOD);
-  }
-  return cdk::ds::mysqlx::Protocol_options::PLAIN;
-}
-
-
-struct mysqlx_session_options_struct::Add_list
-{
-  mysqlx_session_options_struct *opts = NULL;
-  unsigned short priority = 0;
-  bool socket_only = true;
-
-  Add_list(mysqlx_session_options_struct &_opts)
-    : opts(&_opts)
-  {}
-
-  void operator() (const TCPIP_t &ds_tcp)
-  {
-    opts->m_last_tcpip = ds_tcp;
-    opts->m_host_list.emplace(priority, ds_tcp);
-    socket_only = false;
-  }
-
-#ifndef _WIN32
-  void operator() (const cdk::ds::Unix_socket &ds_socket)
-  {
-    opts->m_last_socket = ds_socket;
-    opts->m_host_list.emplace(std::make_pair(priority, ds_socket));
-  }
-#endif //_WIN32
-
-};
-
-
-void mysqlx_session_options_struct::set_multiple_options(va_list args)
-{
-  mysqlx_opt_type_t type;
-  enum {TCPIP_type, UNIX_type} selected_type = TCPIP_type;
-  Ds_variant ds;
-  m_options_used.reset();
-
-  Add_list add_list(*this);
-
-  // The type is promoted to int when passing into va_list
-  while( (type = (mysqlx_opt_type_t)(va_arg(args, int))) > 0 )
-  {
-    {
-      unsigned int uint_data = 0;
-      const char *char_data = NULL;
-
-      check_option(type);
-
-      switch (type)
-      {
-        case MYSQLX_OPT_HOST:
-          if (ds)
-          {
-            PRIO_CHECK;
-
-            ds.visit(add_list);
-
-            add_list.priority = 0;
-          }
-
-          char_data = va_arg(args, char*);
-          if (char_data == NULL)
-            throw Mysqlx_exception(MYSQLX_ERROR_MISSING_HOST_NAME);
-
-          ds = TCPIP_t(char_data);
-          selected_type = TCPIP_type;
-          break;
-        case MYSQLX_OPT_PORT:
-          uint_data = (va_arg(args, unsigned int));
-          if (!ds)
-            throw Mysqlx_exception(MYSQLX_ERROR_MISSING_HOST_NAME);
-
-          if (selected_type != TCPIP_type)
-            throw Mysqlx_exception(MYSQLX_ERROR_MISSING_HOST_NAME);
-
-          const_cast<TCPIP_t&>(ds.get<TCPIP_t>()).set_port(static_cast<unsigned short>(uint_data));
-
-          break;
-#ifndef _WIN32
-        case MYSQLX_OPT_SOCKET:
-        {
-          if (ds)
-          {
-            PRIO_CHECK;
-            ds.visit(add_list);
-
-            add_list.priority = 0;
-          }
-          char_data = va_arg(args, char*);
-
-          ds = cdk::ds::Unix_socket(char_data);
-          selected_type = UNIX_type;
-        }
-          break;
-#endif //_WIN32
-        case MYSQLX_OPT_PRIORITY:
-          if (m_source_state == source_state::non_priority)
-            throw Mysqlx_exception(MYSQLX_ERROR_MIX_PRIORITY);
-
-          if (!ds)
-            throw Mysqlx_exception(MYSQLX_ERROR_MISSING_HOST_NAME);
-
-          uint_data = (va_arg(args, unsigned int));
-          if (uint_data > max_priority)
-            throw Mysqlx_exception(MYSQLX_ERROR_MAX_PRIORITY);
-
-          m_last_prio = (unsigned short)uint_data + 1;
-          add_list.priority = m_last_prio;
-          m_source_state = source_state::priority;
-          break;
-        case MYSQLX_OPT_USER:
-          char_data = va_arg(args, char*);
-          if (char_data == NULL)
-            char_data = "";
-          m_tcp_opts.set_user(char_data);
-          break;
-        case MYSQLX_OPT_PWD:
-          char_data = va_arg(args, char*);
-          m_tcp_opts.set_pwd(char_data);
-          break;
-        case MYSQLX_OPT_DB:
-          char_data = va_arg(args, char*);
-          if (char_data == NULL)
-            char_data = "";
-          m_tcp_opts.set_database(char_data);
-          break;
-        case MYSQLX_OPT_AUTH:
-          uint_data = va_arg(args, unsigned int);
-          m_tcp_opts.set_auth_method(uint_to_auth_method(uint_data));
-          break;
-
-#ifdef WITH_SSL
-        case MYSQLX_OPT_SSL_CA:
-          char_data = va_arg(args, char*);
-          set_ssl_ca(char_data);
-          m_has_ssl = true;
-          break;
-        case MYSQLX_OPT_SSL_MODE:
-          uint_data = va_arg(args, unsigned int);
-          set_ssl_mode(mysqlx_ssl_mode_t(uint_data));
-          m_has_ssl = true;
-          break;
-#else
-        case MYSQLX_OPT_SSL_MODE:
-        case MYSQLX_OPT_SSL_CA:
-          throw Mysqlx_exception(MYSQLX_ERROR_NO_TLS_SUPPORT);
-          break;
-#endif
-        default:
-          throw Mysqlx_exception("Invalid option value");
-      }
-    }
-  }
-
-  PRIO_CHECK;
-
-  if (ds)
-  {
-    m_source_state = (add_list.priority > 0) ? source_state::priority : source_state::non_priority;
-    // Host list is updated only if a new host is specified
-    ds.visit(add_list);
-  }
-}
-
-cdk::ds::Multi_source&
-mysqlx_session_options_struct::get_multi_source() const
-{
-  auto *self = const_cast<mysqlx_session_options_struct*>(this);
-
-  if (mysqlx_error_t *err = self->get_error())
-    throw Mysqlx_exception(
-      Mysqlx_exception::MYSQLX_EXCEPTION_INTERNAL,
-      err->error_num(), err->message());
-
-  if (m_source_state == source_state::unknown)
-    throw Mysqlx_exception(MYSQLX_ERROR_MISSING_CONN_INFO);
-
-  self->m_ms.clear();
-
-
-  struct Sources_add
-  {
-    Host_sources& m_sources;
-    cdk::ds::TCPIP::Options &m_tcp_opt;
-#ifndef _WIN32
-    cdk::ds::Unix_socket::Options &m_unix_opt;
-#endif //_WIN32
-
-    unsigned short m_priority;
-    bool m_socket_only = true;
-
-    Sources_add(Host_sources& sources
-                ,cdk::ds::TCPIP::Options &tcp_opt
-            #ifndef _WIN32
-                ,cdk::ds::Unix_socket::Options &unix_opt
-            #endif //_WIN32
-                )
-      : m_sources(sources)
-      , m_tcp_opt(tcp_opt)
-  #ifndef _WIN32
-      , m_unix_opt(unix_opt)
-  #endif //_WIN32
-    {}
-
-    void operator()(const cdk::ds::mysqlx::TCPIP& to_add)
-    {
-      m_sources.add(to_add, m_tcp_opt, m_priority);
-      m_socket_only = false;
-    }
-
-#ifndef _WIN32
-    void operator()(const cdk::ds::mysqlx::Unix_socket& to_add)
-    {
-      m_sources.add(to_add,
-                    m_unix_opt, m_priority);
-    }
-#endif //_WIN32
-
-    void set_priority(unsigned short priority)
-    {
-      m_priority = priority;
-    }
-
-  };
-
-#ifndef _WIN32
-  cdk::ds::Unix_socket::Options socket_opts( m_tcp_opts.user(),
-                                           m_tcp_opts.password());
-
-  if (m_tcp_opts.database())
-    socket_opts.set_database(*m_tcp_opts.database());
-#endif //_WIN32
-
-  Sources_add sources(self->m_ms
-                      , self->m_tcp_opts
-                    #ifndef _WIN32
-                      , socket_opts
-                    #endif //_WIN32
-                      );
-
-  for (Host_list::iterator it = self->m_host_list.begin();
-        it != self->m_host_list.end(); ++it)
-  {
-
-    sources.set_priority(it->first);
-
-    it->second.visit(sources);
-
-  }
-#ifndef _WIN32
-  if (sources.m_socket_only && m_has_ssl)
-    throw Mysqlx_exception("TLS connections over Unix domain socket are not supported");
-#endif
-  return self->m_ms;
-}
-
-
-const std::string mysqlx_session_options_struct::get_host()
-{
-  static TCPIP_t  defaults;
-
-  if (m_last_tcpip)
-    return m_last_tcpip->host();
-
-  return defaults.host(); // return the default host name
-}
-
-#ifndef _WIN32
-const std::string mysqlx_session_options_struct::get_socket()
-{
-  if (!m_last_socket)
-    throw Mysqlx_exception("No socket defined");
-
-  return m_last_socket->path();
-}
-#endif
-
-unsigned int mysqlx_session_options_struct::get_priority()
-{
-  if (m_source_state != source_state::priority || m_last_prio == 0)
-    throw Mysqlx_exception("Priority is not available");
-
-  return m_last_prio - 1;
-}
-
-unsigned int mysqlx_session_options_struct::get_auth_method()
-{
-  switch (m_tcp_opts.auth_method())
-  {
-  case cdk::ds::mysqlx::Protocol_options::PLAIN:
-    return MYSQLX_AUTH_PLAIN;
-  case cdk::ds::mysqlx::Protocol_options::MYSQL41:
-    return MYSQLX_AUTH_MYSQL41;
-  case cdk::ds::mysqlx::Protocol_options::EXTERNAL:
-    return MYSQLX_AUTH_EXTERNAL;
-  default:
-    throw Mysqlx_exception(MYSQLX_ERROR_AUTH_METHOD);
-  }
-  return MYSQLX_AUTH_PLAIN;
-}
-
-unsigned int mysqlx_session_options_struct::get_port()
-{
-  if (!m_last_tcpip)
-    throw Mysqlx_exception(MYSQLX_ERROR_MISSING_CONN_INFO);
-
-  return m_last_tcpip->port();
-}
-
-const std::string mysqlx_session_options_struct::get_user()
-{
-  return m_tcp_opts.user();
-}
-
-const std::string* mysqlx_session_options_struct::get_password()
-{
-  return m_tcp_opts.password();
-}
-
-const cdk::string* mysqlx_session_options_struct::get_db() const
-{
-  return m_tcp_opts.database();
-}
-
-#define PRIORITY_CHECK if (priority > (max_priority+1)) \
-                         throw Mysqlx_exception(MYSQLX_ERROR_MAX_PRIORITY);\
-                       if ((priority > 0 && m_source_state == source_state::non_priority) || \
-                           (priority == 0 && m_source_state == source_state::priority)) \
- throw Mysqlx_exception(MYSQLX_ERROR_MIX_PRIORITY); \
-else \
- m_source_state = (priority > 0) ? source_state::priority : source_state::non_priority\
-
-
-// Implementing URI_Processor interface
-void mysqlx_session_options_struct::host(unsigned short priority,
-          const std::string &host,
-          unsigned short port)
-{
-  PRIORITY_CHECK;
-  if (!port)
-    throw Mysqlx_exception("Wrong value for port");
-
-  auto it = m_host_list.emplace(priority, TCPIP_t(host, port));
-  m_last_tcpip = it->second.get<TCPIP_t>();
-}
-
-// Implementing URI_Processor interface
-void mysqlx_session_options_struct::host(unsigned short priority,
-          const std::string &host)
-{
-  PRIORITY_CHECK;
-
-  auto it = m_host_list.emplace(priority, TCPIP_t(host));
-  m_last_tcpip = it->second.get<TCPIP_t>();
-}
-
-#ifndef _WIN32
-void mysqlx_session_options_struct::socket(unsigned short priority,
-                                           const std::string &path)
-{
-  PRIORITY_CHECK;
-
-  auto it = m_host_list.emplace(priority, cdk::ds::Unix_socket(path));
-  m_last_socket = it->second.get<cdk::ds::Unix_socket>();
-
-}
-#endif
-
-
-
-
-void mysqlx_session_options_struct::key_val(const std::string &key)
-{
-  // So far there is no supported options as "?key"
-  throw Error_bad_option(key);
-}
-
-void mysqlx_session_options_struct::key_val(const std::string& key, const std::string& val)
-{
-  std::string lc_key=key;
-  lc_key.resize(key.size());
-  std::transform(key.begin(), key.end(), lc_key.begin(), ::tolower);
-
-  if (lc_key.find("ssl-", 0) == 0)
-  {
-    m_has_ssl = true;
-#ifdef WITH_SSL
-    if (lc_key == "ssl-ca")
-    {
-      check_option(MYSQLX_OPT_SSL_CA);
-      set_ssl_ca(val);
-    }
-    else if (lc_key  == "ssl-mode")
-    {
-      check_option(MYSQLX_OPT_SSL_MODE);
-
-      static std::map<std::string, mysqlx_ssl_mode_enum> mode_map =
-      {
-        { "disabled", SSL_MODE_DISABLED },
-        { "required", SSL_MODE_REQUIRED },
-        { "verify_ca", SSL_MODE_VERIFY_CA },
-        { "verify_identity", SSL_MODE_VERIFY_IDENTITY }
-      };
-
-      std::string lc_val;
-      lc_val.resize(val.size());
-      std::transform(val.begin(), val.end(), lc_val.begin(), ::tolower);
-
-      try {
-        set_ssl_mode(mode_map.at(lc_val));
-      }
-      catch (const std::out_of_range&)
-      {
-        throw Error_bad_mode(val);
-      }
-    }
-    else
-    {
-      throw Error_bad_option(key);
-    }
-
-    m_tcp_opts.set_tls(m_tls_options);
-#else
-    set_diagnostic(MYSQLX_ERROR_NO_TLS_SUPPORT, 0);
-#endif
-  }
-  else if (lc_key == "auth")
-  {
-    static std::map<std::string,
-                    cdk::ds::mysqlx::Protocol_options::auth_method_t>
-                    auth_map =
-    {
-      { "plain", cdk::ds::mysqlx::Protocol_options::PLAIN },
-      { "mysql41", cdk::ds::mysqlx::Protocol_options::MYSQL41 },
-      { "external", cdk::ds::mysqlx::Protocol_options::EXTERNAL }
-    };
-
-    std::string lc_val;
-    lc_val.resize(val.size());
-    std::transform(val.begin(), val.end(), lc_val.begin(), ::tolower);
-    try
-    {
-      m_tcp_opts.set_auth_method(auth_map.at(lc_val));
-    }
-    catch (const std::out_of_range&)
-    {
-      throw Mysqlx_exception(
-        std::string(MYSQLX_ERROR_AUTH_METHOD).
-                    append(" ").append(lc_key));
-    }
-  }
-}
-
-
-mysqlx_session_options_struct::~mysqlx_session_options_struct()
-{}

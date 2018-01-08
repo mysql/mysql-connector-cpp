@@ -41,16 +41,14 @@ namespace internal {
 class Result_detail;
 
 
-class PUBLIC_API Warning_detail
+class Warning_detail
+  : public virtual common::Printable
 {
 protected:
 
   byte     m_level;
   uint16_t m_code;
-
-  DLL_WARNINGS_PUSH
   string   m_msg;
-  DLL_WARNINGS_POP
 
 
   // Some valid C++11 constructs do not work in MSVC 2013.
@@ -73,6 +71,8 @@ protected:
   Warning_detail(byte level, uint16_t code, const string &msg)
     : m_level(level), m_code(code), m_msg(msg)
   {}
+
+  void print(std::ostream&) const;
 
   friend Result_detail;
 };

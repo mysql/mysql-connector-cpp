@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  *
  * The MySQL Connector/C++ is licensed under the terms of the GPLv2
  * <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -86,12 +86,20 @@
 #include "devapi/result.h"
 #include "devapi/collection_crud.h"
 #include "devapi/table_crud.h"
-#include "devapi/view_ddl.h"
 #include "devapi/settings.h"
 #include "devapi/detail/session.h"
 
 
 namespace mysqlx {
+
+class Session;
+
+namespace internal {
+
+template <class Base> class Sch_object;
+
+}  // internal
+
 
 /**
   Represents a database schema.
@@ -126,12 +134,10 @@ namespace mysqlx {
   @ingroup devapi
 */
 
-class PUBLIC_API Schema
-  : public internal::Db_object
+class Schema
+  : protected internal::Schema_detail
 {
-  using CollectionList = internal::List_init<Collection>;
-  using TableList      = internal::List_init<Table>;
-  using StringList     = internal::List_init<string>;
+  Session *m_sess;
 
 public:
 
@@ -139,9 +145,7 @@ public:
     Construct an object representing the named schema.
   */
 
-  Schema(Session &sess, const string &name)
-    : internal::Db_object(sess, name)
-  {}
+  Schema(Session &sess, const string &name);
 
   /**
     Construct an object representing the default schema of the session.
@@ -152,9 +156,48 @@ public:
   Schema(Session&);
 
 
-  const Schema& getSchema() const override { return *this; }
+  /**
+     Get schema name
+  */
 
-  bool existsInDatabase() const override;
+  const string& getName() const
+  {
+    return m_name;
+  }
+
+  /**
+    Get Session object
+  */
+
+  Session& getSession()
+  {
+    return *m_sess;
+  }
+
+  const Session& getSession() const
+  {
+    return const_cast<Schema*>(this)->getSession();
+  }
+
+  /**
+    Check if this schema exists in the database.
+
+    @note Involves communication with the server.
+  */
+
+  bool existsInDatabase() const
+  {
+    try {
+      /*
+        Note: We get from server a list of schemata filtered by the name of
+        this schema - if the schema exists the list should not be empty.
+      */
+      internal::Session_detail::Name_src list(*m_sess, m_name);
+      list.iterator_start();
+      return list.iterator_next();
+    }
+    CATCH_AND_WRAP
+  }
 
 
   /**
@@ -165,7 +208,7 @@ public:
     to create a collection which already exists throws an error.
   */
 
-  Collection createCollection(const string&, bool reuse= false);
+  Collection createCollection(const string &name, bool reuse = false);
 
   /**
     Return an object representing a collection with the given name.
@@ -180,7 +223,7 @@ public:
     involved when creating a `Collection` object.
   */
 
-  Collection getCollection(const string&, bool check_exists= false);
+  Collection getCollection(const string &name, bool check_exists = false);
 
   /**
     Return an object representing a table or a view with the given name.
@@ -198,7 +241,7 @@ public:
     involved when creating a `Table` object.
   */
 
-  Table getTable(const string&, bool check_existence = false);
+  Table getTable(const string &name, bool check_exists = false);
 
   /**
     Get a list of all collections in the schema.
@@ -207,7 +250,13 @@ public:
     objects, such as `std::vector<Collection>`.
   */
 
-  CollectionList getCollections();
+  CollectionList getCollections()
+  {
+    try {
+      return Collection_src(*this, L"%");
+    }
+    CATCH_AND_WRAP
+  }
 
   /**
     Get a list of names of all collections in the schema.
@@ -216,7 +265,13 @@ public:
     `std::vector<string>`.
   */
 
-  StringList getCollectionNames();
+  StringList getCollectionNames()
+  {
+    try {
+      return Name_src(*this, COLLECTION, L"%");
+    }
+    CATCH_AND_WRAP
+  }
 
   /**
     Get a list of all tables and views in the schema.
@@ -228,7 +283,13 @@ public:
     - see `Table` class description.
   */
 
-  TableList getTables();
+  TableList getTables()
+  {
+    try {
+      return Table_src(*this, L"%");
+    }
+    CATCH_AND_WRAP
+  }
 
   /**
     Get a list of names of all tables and views in the schema.
@@ -240,7 +301,13 @@ public:
     by `Table` objects - see `Table` class description.
   */
 
-  StringList getTableNames();
+  StringList getTableNames()
+  {
+    try {
+      return Name_src(*this, TABLE, L"%");
+    }
+    CATCH_AND_WRAP
+  }
 
   /**
     Return a table corresponding to the given collection.
@@ -259,47 +326,7 @@ public:
     involved when creating the `Table` object.
   */
 
-  Table getCollectionAsTable(const string&, bool check_exists = true);
-
-  /**
-    Return an operation which creates a new view in the schema.
-
-    Specify view's query and other properties using methods of `ViewCreate`
-    class chained on the returned operation object. Call `execute()` to create
-    the view.
-
-    If `replace` is false and there is a view with the same name, an error
-    is thrown. Set `replace` to true to replace an existing view with
-    the given name. In this case an error is thrown if the view to be replaced
-    does not exist. These errors are thrown when the operation is executed,
-    not when it is created.
-
-    @see `ViewCreate`.
-  */
-
-  ViewCreate createView(const mysqlx::string& view_name, bool replace = false)
-  {
-    return ViewCreate(*this, view_name, replace);
-  }
-
-  /**
-    Return an operation which alters a view with the given name.
-
-    Specify new view properties using `ViewAlter` methods chained on
-    the returned operation object. Call `execute()` to execute the operation
-    and alter the view as specified. Note that you must specify a new query
-    when altering a view.
-
-    If a view with the given name does not exist, an error is thrown when
-    the operation is executed.
-
-    @see `ViewAlter`
-  */
-
-  ViewAlter alterView(const mysqlx::string& view_name)
-  {
-    return ViewAlter(*this, view_name);
-  }
+  Table getCollectionAsTable(const string &name, bool check_exists = true);
 
 
   /**
@@ -312,35 +339,84 @@ public:
     dropTable().
   */
 
-  void dropCollection(const mysqlx::string& name);
-
-  /**
-    Drop the given table from the schema.
-
-    This method silently succeeds if a table with the given name does not exist.
-    If the table is a view (isView() returns true) then it is not dropped (and
-    no error is reported) - use dropView() instead.
-
-    @note If a collection name is passed to the method, it behaves like
-    dropCollection().
-  */
-
-  void dropTable(const mysqlx::string& name);
-
-  /**
-    Drop the given view from the schema.
-
-    This method silently succeeds if a view with the given name does not exist.
-
-    @note If a name of a table or a collection is given, then a view with this
-    name does not exist and hence the method silently succeeds.
-  */
-
-  void dropView(const mysqlx::string& name);
+  void dropCollection(const mysqlx::string& name)
+  {
+    try {
+      Schema_detail::drop_collection(name);
+    }
+    CATCH_AND_WRAP
+  }
 
 
   friend Collection;
+  friend Table;
+  friend internal::Schema_detail::Name_src;
+  template <class Base> friend class internal::Sch_object;
 };
+
+
+/*
+  Database objects that belong to some schema
+  ===========================================
+*/
+
+
+namespace internal {
+
+// Common base for schema objects defining the common API methods.
+
+template <class Base = Db_obj_base>
+class Sch_object
+  : public Base
+{
+protected:
+
+  Schema m_schema;
+
+  Sch_object(const Schema &sch, const string &name);
+
+public:
+
+  using string = mysqlx::string;
+
+  /**
+     Get database object name
+  */
+
+  const string& getName() const
+  {
+    return Base::m_name;
+  }
+
+  /**
+    Get Session object
+  */
+
+  Session& getSession()
+  {
+    return m_schema.getSession();
+  }
+
+  /**
+     Get schema object
+  */
+
+  const Schema& getSchema() const
+  {
+    return m_schema;
+  }
+
+protected:
+
+  std::shared_ptr<common::Session_impl> get_session();
+
+  internal::Schema_detail& get_schema()
+  {
+    return m_schema;
+  }
+};
+
+}  // internal
 
 
 /**
@@ -371,33 +447,30 @@ public:
   @ingroup devapi
 */
 
-class PUBLIC_API Collection
-  : public internal::Db_object
+class Collection
+  : protected internal::Sch_object<internal::Collection_detail>
 {
-  Schema m_schema;
-
 public:
 
   Collection(const Schema &sch, const string &name)
-    : internal::Db_object(*sch.m_sess, name)
-    , m_schema(sch)
+  try
+    : Sch_object(sch, name)
   {}
+  CATCH_AND_WRAP
 
 
-  /**
-    Get the schema of the collection.
-  */
+  using Sch_object::getName;
+  using Sch_object::getSession;
+  using Sch_object::getSchema;
 
-  const Schema& getSchema() const override { return m_schema; }
-
-  /**
-    Check if this collection exists in the database.
-
-    @note This check involves communication with the server.
-  */
-
-  bool existsInDatabase() const override;
-
+  bool existsInDatabase() const
+  {
+    try {
+      Schema::StringList list(m_schema, Schema::COLLECTION, m_name);
+      return list.begin() != list.end();
+    }
+    CATCH_AND_WRAP
+  }
 
   /**
     Get the number of documents in the collection.
@@ -572,10 +645,13 @@ public:
     operation.
   */
 
-  Result replaceOne(string id, internal::ExprValue &&document)
+  Result replaceOne(const string &id, Value &&document)
   {
-    return
-      internal::CollectionReplace(*this, id, std::move(document)).execute();
+    try {
+      return
+        Collection_detail::add_or_replace_one(id, std::move(document), true);
+    }
+    CATCH_AND_WRAP
   }
 
   /**
@@ -593,14 +669,42 @@ public:
     operation.
   */
 
-  Result addOrReplaceOne(string id, internal::ExprValue &&document)
+  Result addOrReplaceOne(const string &id, Value &&document)
   {
-    return
-      internal::CollectionReplace(*this, id, std::move(document), true)
-      .execute();
+    try {
+      return
+        Collection_detail::add_or_replace_one(id, std::move(document), false);
+    }
+    CATCH_AND_WRAP
   }
 
+  friend CollectionFind;
+  friend CollectionAdd;
+  friend CollectionRemove;
+  friend CollectionModify;
+  friend internal::Crud_factory;
 };
+
+
+inline
+Collection Schema::createCollection(const string &name, bool reuse)
+{
+  try {
+    Schema_detail::create_collection(name, reuse);
+    return Collection(*this, name);
+  }
+  CATCH_AND_WRAP
+}
+
+
+inline
+Collection Schema::getCollection(const string &name, bool check_exists)
+{
+  Collection coll(*this, name);
+  if (check_exists && !coll.existsInDatabase())
+    throw_error("Collection does not exist");
+  return coll;
+}
 
 
 /*
@@ -639,65 +743,51 @@ public:
   @ingroup devapi
 */
 
-class PUBLIC_API Table
-    : public internal::Db_object
+class Table
+  : protected internal::Sch_object<>
 {
-  Schema m_schema;
-  enum { YES, NO, UNDEFINED} m_isview = UNDEFINED;
-
 public:
 
-  DIAGNOSTIC_PUSH
-
-  #if _MSC_VER && _MSC_VER < 1900
-    /*
-      MSVC 2013 has problems with delegating constructors for classes which
-      use virtual inheritance.
-      See: https://www.daniweb.com/programming/software-development/threads/494204/visual-c-compiler-warning-initvbases
-    */
-    DISABLE_WARNING(4100)
-  #endif
-
   Table(const Schema &sch, const string &name)
-    : internal::Db_object(*sch.m_sess, name)
-    , m_schema(sch)
+    : Sch_object(sch, name)
   {}
 
-  Table(const Schema &sch, const string &name, bool isView_)
-    : Table(sch, name)
+  Table(const Schema &sch, const string &name, bool is_view)
+    : Sch_object(sch, name)
   {
-    m_isview = isView_ ? YES : NO;
+    m_type = is_view ? VIEW : TABLE;
   }
 
-  DIAGNOSTIC_POP
+
+  using Sch_object::getName;
+  using Sch_object::getSession;
+  using Sch_object::getSchema;
+
+
+  bool existsInDatabase() const;
+
 
   /**
     Check if this table object corresponds to a view.
 
-    @note This check invovles communication with the server.
+    @note This check might involve communication with the server.
   */
 
   bool isView();
 
-  /**
-    Get the schema of the collection.
-  */
-
-  const Schema& getSchema() const override { return m_schema; }
-
-  /**
-    Check if this collection exists in the database.
-
-    @note This check involves communication with the server.
-  */
-
-  bool existsInDatabase() const override;
 
   /**
     Get the number of rows in the table.
   */
 
-  uint64_t count();
+  uint64_t count()
+  {
+    try {
+      RowResult cnt = select(L"count(*)").execute();
+      return cnt.fetchOne()[0].get<uint64_t>();
+    }
+    CATCH_AND_WRAP
+  }
 
 
   /*
@@ -833,13 +923,86 @@ public:
     CATCH_AND_WRAP;
   }
 
+private:
+
+  enum { TABLE, VIEW, UNKNOWN } m_type = UNKNOWN;
+
+  friend TableSelect;
+  friend TableInsert;
+  friend TableRemove;
+  friend TableUpdate;
+  friend internal::Crud_factory;
 };
+
+
+inline
+bool Table::existsInDatabase() const
+{
+  try {
+    /*
+      Note: When checking existence, we also determine if this is a view or
+      a plain table because this information is fetched from the server when
+      querying for a list of tables.
+    */
+    Schema::TableList list(m_schema, m_name);
+    auto it = list.begin();
+
+    if (!(it != list.end()))
+      return false;
+
+    const_cast<Table*>(this)->m_type = (*it).isView() ? VIEW : TABLE;
+    return true;
+  }
+  CATCH_AND_WRAP
+}
+
+
+inline
+bool Table::isView()
+{
+  try {
+    /*
+      If view status was not determined yet, do existence check which
+      determines it as a side effect.
+    */
+    if (UNKNOWN == m_type)
+      if (!existsInDatabase())
+        throw_error("Table does not exist");
+    return VIEW == m_type;
+  }
+  CATCH_AND_WRAP
+}
+
+
+inline
+Table Schema::getTable(const string &name, bool check_exists)
+{
+  Table tbl(*this, name);
+  if (check_exists && !tbl.existsInDatabase())
+    throw_error("Table does not exist");
+  return tbl;
+}
+
+
+inline
+Table Schema::getCollectionAsTable(const string &name, bool check_exists)
+{
+  if (check_exists && !getCollection(name).existsInDatabase())
+    throw_error("Collection does not exist");
+  return { *this, name };
+}
+
+
+inline
+uint64_t Collection::count()
+{
+  return m_schema.getCollectionAsTable(m_name).count();
+}
+
 
 
 using SqlStatement = internal::SQL_statement;
 
-
-DLL_WARNINGS_PUSH
 
 /**
   Represents a session which gives access to data stored in a data store.
@@ -870,23 +1033,9 @@ DLL_WARNINGS_PUSH
   @ingroup devapi
 */
 
-class PUBLIC_API Session
-  : internal::nocopy
-  , internal::Session_detail
+class Session
+  : private internal::Session_detail
 {
-
-  DLL_WARNINGS_POP
-
-  using SchemaList = internal::List_init<Schema>;
-
-protected:
-
-  /*
-    This constructor constructs a child session of a parent session.
-  */
-
-  INTERNAL Session(Session*);
-
 public:
 
 
@@ -894,7 +1043,11 @@ public:
     Create a session specified by a `SessionSettings` object.
   */
 
-  Session(SessionSettings settings);
+  Session(SessionSettings settings)
+  try
+    : Session_detail(settings)
+  {}
+  CATCH_AND_WRAP
 
 
   /**
@@ -939,7 +1092,14 @@ public:
     a schema which already exists throws an error.
   */
 
-  Schema createSchema(const string &name, bool reuse = false);
+  Schema createSchema(const string &name, bool reuse = false)
+  {
+    try {
+      Session_detail::create_schema(name, reuse);
+      return Schema(*this, name);
+    }
+    CATCH_AND_WRAP
+  }
 
   /**
     Return an object representing a schema with the given name.
@@ -954,19 +1114,34 @@ public:
     involved when creating a `Schema` object.
   */
 
-  Schema getSchema(const string&, bool check_existence = false);
+  Schema getSchema(const string &name, bool check_exists = false)
+  {
+    Schema sch(*this, name);
+    if (check_exists && !sch.existsInDatabase())
+      throw_error("Schema does not exist");
+    return sch;
+  }
 
   /**
     Get the default schema specified when the session was created.
   */
 
-  Schema getDefaultSchema();
+  Schema getDefaultSchema()
+  {
+    return Schema(*this, getDefaultSchemaName());
+  }
 
   /**
     Get the name of the default schema specified when the session was created.
   */
 
-  string getDefaultSchemaName();
+  string getDefaultSchemaName()
+  {
+    try {
+      return Session_detail::get_default_schema_name();
+    }
+    CATCH_AND_WRAP
+  }
 
   /**
     Get a list of all database schemas.
@@ -975,7 +1150,15 @@ public:
     such as `std::vector<Schema>`.
   */
 
-  SchemaList getSchemas();
+  SchemaList getSchemas()
+  {
+    try {
+      return Schema_src(*this, L"%");
+    }
+    CATCH_AND_WRAP
+  }
+
+  // TODO: Should we have getSchemaNames() too?
 
   /**
     Drop the named schema.
@@ -983,7 +1166,13 @@ public:
     Error is thrown if the schema doesn't exist,
   */
 
-  void   dropSchema(const string &name);
+  void dropSchema(const string &name)
+  {
+    try {
+      Session_detail::drop_schema(name);
+    }
+    CATCH_AND_WRAP
+  }
 
 
   /**
@@ -1012,7 +1201,13 @@ public:
     Throws error if previously opened transaction is not closed.
   */
 
-  void startTransaction();
+  void startTransaction()
+  {
+    try {
+      Session_detail::start_transaction();
+    }
+    CATCH_AND_WRAP
+  }
 
   /**
     Commit opened transaction, if any.
@@ -1021,17 +1216,112 @@ public:
     transaction is closed.
   */
 
-  void commit();
+  void commit()
+  {
+    try {
+      Session_detail::commit();
+    }
+    CATCH_AND_WRAP
+  }
 
   /**
-    Rollback opened transaction, if any.
+    Roll back opened transaction, if any.
 
     Does nothing if no transaction was opened. Transaction which was
     rolled back is closed. To start a new transaction a call to
     `startTransaction()` is needed.
   */
 
-  void rollback();
+  void rollback()
+  {
+    try {
+      Session_detail::rollback();
+    }
+    CATCH_AND_WRAP
+  }
+
+  /**
+    Roll back opened transaction to specified savepoint.
+
+    It rolls back to savepoint, but transaction remains active.
+    Does nothing if no transaction was opened.
+
+    @throws Error If savepoint doesn't exist or is empty.
+  */
+
+  void rollbackTo(const string &savepoint)
+  {
+    try {
+      if (savepoint.empty())
+        throw_error("Invalid empty save point name");
+      Session_detail::rollback(savepoint);
+    }
+    CATCH_AND_WRAP
+  }
+
+
+  /**
+    Sets a named transaction savepoint with a name as
+    identifier.
+
+    To use savepoints a transaction has to be started using startTransaction().
+
+    @returns string with savepoint name.
+
+    @note If the current transaction has a savepoint with the same name,
+    the old savepoint is deleted and a new one is set.
+  */
+
+  string setSavepoint(const string &savepoint)
+  {
+    try {
+      if (savepoint.empty())
+        throw_error("Invalid empty save point name");
+      return Session_detail::savepoint_set(savepoint);
+    }
+    CATCH_AND_WRAP
+  }
+
+
+  /**
+    Creats a transaction savepoint with a generated name as
+    identifier.
+
+    To use savepoints a transaction has to be started using startTransaction().
+
+    @returns string with generated savepoint name.
+
+    @note If the current transaction has a savepoint with the same name,
+    the old savepoint is deleted and a new one is set.
+  */
+
+  string setSavepoint()
+  {
+    try {
+      return Session_detail::savepoint_set();
+    }
+    CATCH_AND_WRAP
+  }
+
+
+  /**
+    Releases savepoint previously added by setSavepoint().
+
+    @note Releasing savepoint doesn't affect data.
+
+    @throws Error If savepoint doesn't exist.
+  */
+
+  void releaseSavepoint(const string &savepoint)
+  {
+    try {
+      if (savepoint.empty())
+        throw_error("Invalid empty save point name");
+      Session_detail::savepoint_remove(savepoint);
+    }
+    CATCH_AND_WRAP
+  }
+
 
   /**
     Close this session.
@@ -1048,11 +1338,11 @@ public:
     CATCH_AND_WRAP
   }
 
+protected:
+
+  using internal::Session_detail::m_impl;
 
 public:
-
-  struct INTERNAL Access;
-  friend Access;
 
   friend Schema;
   friend Collection;
@@ -1061,10 +1351,37 @@ public:
   friend RowResult;
 
   ///@cond IGNORE
+  friend internal::Session_detail;
+  friend internal::Crud_factory;
   friend internal::Result_detail;
+  template <class Base> friend class internal::Sch_object;
   ///@endcond
 };
 
+
+inline
+Schema::Schema(Session &sess, const string &name)
+  : Schema_detail(sess.m_impl, name)
+  , m_sess(&sess)
+{}
+
+
+template <class Base>
+inline
+internal::Sch_object<Base>::Sch_object(const Schema &sch, const string &name)
+  : Base(sch.getSession().m_impl, name)
+  , m_schema(sch)
+{}
+
+
+template <class Base>
+inline
+std::shared_ptr<common::Session_impl>
+internal::Sch_object<Base>::get_session()
+{
+  assert(m_schema.m_sess);
+  return m_schema.m_sess->m_impl;
+}
 
 }  // mysqlx
 

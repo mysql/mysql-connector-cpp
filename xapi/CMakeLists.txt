@@ -39,13 +39,8 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${warning_options}")
 SET(_libmysqlx_cc_src
          crud.cc
          result.cc
-         row.cc
          mysqlx.cc
          session.cc
-         schema.cc
-         collection.cc
-         table.cc
-         view.cc
 )
 
 ADD_LIBRARY(xapi OBJECT ${_libmysqlx_cc_src})
