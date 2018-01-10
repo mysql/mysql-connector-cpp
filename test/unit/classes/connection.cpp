@@ -32,6 +32,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <cppconn/connection.h>
 #include <driver/mysql_connection.h>
 #include <cppconn/exception.h>
+#include <cppconn/version_info.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <list>
@@ -958,6 +959,21 @@ void connection::connectUsingMapWrongTypes()
       /* expected */
     }
     connection_properties.erase("OPT_REPORT_DATA_TRUNCATION");
+
+#if MYCPPCONN_STATIC_MYSQL_VERSION_ID < 80000
+    try
+    {
+      connection_properties["sslVerify"]=(strval);
+      created_objects.clear();
+      con.reset(driver->connect(connection_properties));
+      FAIL("No exception XXXI - sslVerify");
+    }
+    catch (sql::InvalidArgumentException)
+    {
+      /* expected */
+    }
+    connection_properties.erase("sslVerify");
+#endif
 
     try
     {
@@ -3122,7 +3138,11 @@ void connection::cached_sha2_auth()
 
   logMsg("connection::auth - MYSQL_OPT_GET_SERVER_PUBLIC_KEY");
 
-  stmt.reset(con->createStatement());
+  if (getMySQLVersion(con) < 80000)
+  {
+    SKIP("Server doesn't support caching_sha2_password");
+    return;
+  }
 
   try {
     stmt->execute("DROP USER 'doomuser'@'localhost';");
@@ -3172,7 +3192,6 @@ void connection::cached_sha2_auth()
   con.reset(getConnection());
   stmt.reset(con->createStatement());
   stmt->execute("DROP USER 'doomuser'@'localhost';");
-
 }
 
 
