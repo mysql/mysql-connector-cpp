@@ -43,12 +43,11 @@ namespace classes
 void parametermetadata::getMeta()
 {
   logMsg("parametermetadata::InsertSelectAllTypes() - MySQL_ParameterMetaData::*");
-  ParameterMetaData * parameta;
 
   try
   {
     pstmt.reset(con->prepareStatement("SELECT 1"));
-    parameta = pstmt->getParameterMetaData();
+    pstmt->getParameterMetaData();
     pstmt->close();
   }
   catch (sql::SQLException &e)

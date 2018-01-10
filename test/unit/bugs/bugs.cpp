@@ -569,9 +569,9 @@ void bugs::bug72700()
 
 void bugs::bug66871()
 {
-  sql::Connection *con;
-  sql::Statement *stmt;
-  sql::ResultSet *res;
+  sql::Connection *con = NULL;
+  sql::Statement *stmt = NULL;
+  sql::ResultSet *res = NULL;
 
   logMsg("bugs::bug66871");
   try

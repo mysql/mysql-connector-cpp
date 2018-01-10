@@ -1940,8 +1940,7 @@ void PreparedStatementTest::testSetNull02()
   logMsg(Null_Val_Query);
   rs.reset(stmt->executeQuery(Null_Val_Query));
   rs->next();
-  float f = static_cast<float> (rs->getDouble(1));
-  f = 0.0;
+  rs->getDouble(1);
   NULLFlag=rs->wasNull();
 
   TestsListener::messagesLog()
