@@ -20,10 +20,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-SET(headers api.h  error.h  op_if.h  settings.h  util.h  value.h)
+
+SET(headers error.h row.h result.h settings.h session.h crud.h)
 
 check_headers(${headers})
 
 ADD_HEADERS(${headers})
 ADD_HEADER_CHECKS()
-INSTALL(FILES ${headers} DESTINATION include/common)
+INSTALL(FILES ${headers} DESTINATION include/mysqlx/devapi/detail)

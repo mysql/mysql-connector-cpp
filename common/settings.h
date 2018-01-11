@@ -25,8 +25,7 @@
 #ifndef MYSQLX_COMMON_SETTINGS_INT_H
 #define MYSQLX_COMMON_SETTINGS_INT_H
 
-//#include "../document.h"
-#include <mysql_common.h>
+#include <mysqlx/common.h>
 #include <mysql/cdk.h>
 #include <uri_parser.h>
 #include "value.h"

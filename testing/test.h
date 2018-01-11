@@ -27,7 +27,7 @@
 
 
 #include <gtest/gtest.h>
-#include <mysql_devapi.h>
+#include <mysqlx/xdevapi.h>
 
 
 namespace mysqlx {

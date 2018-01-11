@@ -1,7 +1,7 @@
 #ifndef MYSQLX_DETAIL_SETTINGS_H
 #define MYSQLX_DETAIL_SETTINGS_H
 
-#include <mysql_common.h>
+#include "../common.h"
 #include "../document.h"
 
 #include <list>

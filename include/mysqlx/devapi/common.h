@@ -26,7 +26,7 @@
 #define MYSQLX_COMMON_H
 
 
-#include "../mysql_common.h"
+#include "../common.h"
 
 #include <string>
 #include <stdexcept>

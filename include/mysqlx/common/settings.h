@@ -35,7 +35,7 @@
   macros.
 */
 
-#include "../mysql_common_constants.h"
+#include "../common_constants.h"
 #include "value.h"
 
 #include <vector>

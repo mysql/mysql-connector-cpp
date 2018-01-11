@@ -29,7 +29,7 @@
   Internal implementations for public DevAPI classes.
 */
 
-#include <mysql_devapi.h>
+#include <mysqlx/xdevapi.h>
 #include <mysql/cdk.h>
 #include <mysql/cdk/converters.h>
 #include <expr_parser.h>

@@ -23,7 +23,7 @@
  */
 
 #include <mysql/cdk.h>
-#include <mysql_devapi.h>
+#include <mysqlx/xdevapi.h>
 #include <json_parser.h>
 
 /**

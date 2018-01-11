@@ -22,7 +22,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-#include <mysql_devapi.h>
+#include <mysqlx/xdevapi.h>
 #include <uuid_gen.h>
 
 #include <time.h>

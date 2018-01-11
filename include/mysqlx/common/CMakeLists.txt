@@ -20,33 +20,10 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+SET(headers api.h  error.h  op_if.h  settings.h  util.h  value.h)
 
-#
-# MySQL Connector/C++ Public Headers
-#
-# see headers.cmake for explanations how project's public
-# headers are declared and processed.
-#
+check_headers(${headers})
 
-include(headers)
-
-#
-# Headers require C++11 compiler. Set appropriate option
-# for gcc/clang compilers.
-#
-
-if(NOT WIN32)
-  set(HEADER_CHECK_OPTIONS "-std=c++11")
-endif()
-
-setup_headers(${CMAKE_CURRENT_SOURCE_DIR})
-
-
-add_headers_dir(mysqlx)
-
-#
-# Target to test public headers, if WITH_HEADERS_CHECKS build option is set.
-#
-
-add_headers_target()
-
+ADD_HEADERS(${headers})
+ADD_HEADER_CHECKS()
+INSTALL(FILES ${headers} DESTINATION include/mysqlx/common)

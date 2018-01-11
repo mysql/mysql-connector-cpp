@@ -22,8 +22,8 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-#include <mysql_xapi.h>
-#include <mysql_common.h>
+#include <mysqlx/common.h>
+#include <mysqlx/xapi.h>
 #include "mysqlx_cc_internal.h"
 #include <algorithm>
 #include <string>

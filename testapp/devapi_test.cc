@@ -23,7 +23,7 @@
  */
 
 #include <iostream>
-#include <mysql_devapi.h>
+#include <mysqlx/xdevapi.h>
 
 
 using ::std::cout;

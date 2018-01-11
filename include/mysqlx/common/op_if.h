@@ -35,7 +35,7 @@
   in the connector.
 */
 
-#include "../mysql_common_constants.h"
+#include "../common_constants.h"
 #include <string>
 
 

@@ -37,7 +37,7 @@
   kept in the common/ folder, either as headers or source files.
 */
 
-#include "mysql_common_constants.h"
+#include "common_constants.h"
 #include "common/api.h"
 #include "common/error.h"
 #include "common/util.h"

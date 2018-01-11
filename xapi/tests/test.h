@@ -27,7 +27,7 @@
 
 #include <iostream>
 #include <gtest/gtest.h>
-#include <mysql_xapi.h>
+#include <mysqlx/xapi.h>
 
 using namespace ::std;
 

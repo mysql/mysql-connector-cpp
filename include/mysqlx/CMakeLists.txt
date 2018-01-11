@@ -21,10 +21,14 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 
-SET(headers error.h row.h result.h settings.h session.h crud.h)
+SET(headers common_constants.h common.h xapi.h xdevapi.h)
 
 check_headers(${headers})
 
+ADD_HEADERS_DIR(common)
+ADD_HEADERS_DIR(devapi)
 ADD_HEADERS(${headers})
 ADD_HEADER_CHECKS()
-INSTALL(FILES ${headers} DESTINATION include/devapi/detail)
+
+INSTALL(FILES ${headers} DESTINATION include/mysqlx)
+

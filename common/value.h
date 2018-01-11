@@ -26,7 +26,7 @@
 #define MYSQLX_COMMON_INT_VALUE_H
 
 
-#include <mysql_common.h>
+#include <mysqlx/common.h>
 #include <mysql/cdk.h>
 #include <expr_parser.h>
 

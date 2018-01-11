@@ -71,10 +71,10 @@ endif()
 
 set(CONCPLS_INCLUDES "${WITH_CONCPP}/include")
 
-if(NOT EXISTS "${CONCPLS_INCLUDES}/mysql_devapi.h")
+if(NOT EXISTS "${CONCPLS_INCLUDES}/mysqlx/xdevapi.h")
   message(FATAL_ERROR
     "Could not find MySQL Connector/C++ 8.0 headers at specified"
-    " location: ${WITH_CONCPP}/include"
+    " location: ${CONCPLS_INCLUDES}"
   )
 endif()
 

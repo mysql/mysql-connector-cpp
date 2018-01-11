@@ -71,7 +71,7 @@ extern "C" {
 #endif
 
 
-#include "mysql_common_constants.h"
+#include "common_constants.h"
 #include "common/api.h"
 
 #include <stdlib.h>

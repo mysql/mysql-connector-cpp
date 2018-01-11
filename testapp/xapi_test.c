@@ -23,7 +23,7 @@
  */
 
 #include <stdio.h>
-#include <mysql_xapi.h>
+#include <mysqlx/xapi.h>
 
 /* Error processing macros */
 #define CRUD_CHECK(C, S) if (!C) \

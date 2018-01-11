@@ -26,8 +26,8 @@
 #define MYSQLX_COMMON_OP_IMPL_H
 
 #include <mysql/cdk.h>
-#include <mysql_common.h>
-#include <common/op_if.h>
+#include <mysqlx/common.h>
+#include <mysqlx/common/op_if.h>
 #include "session.h"
 #include "result.h"
 #include "db_object.h"
