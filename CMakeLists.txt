@@ -45,13 +45,27 @@ else()
   message("Using 32bit genereator")
 endif()
 
-include(version.cmake)
+#
+# On Windows, set VS to "vsNN" where NN is the MSVC version.
+#
 
+unset(VS)
+if(WIN32)
+  if(MSVC12)
+    set(VS "vs12")
+  elseif(MSVC14)
+    set(VS "vs14")
+  endif()
+endif()
+
+
+include(version.cmake)
 
 # Base name for the connector libraries.
 
 #set(LIB_NAME_BASE "mysqlcppconn2")
 set(LIB_NAME_BASE "mysqlcppconn${CONCPP_VERSION_MAJOR}")
+set(JDBC_LIB_NAME_BASE "mysqlcppconn")
 
 #
 # Set up cmake module search patch
@@ -67,6 +81,15 @@ LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cdk/cmake)
 
 include(libutils)
+
+
+#
+# Install settings
+# ================
+#
+
+include(install_layout.cmake)
+
 
 #
 # Compiler settings
@@ -241,6 +264,7 @@ if(THROW_AS_ASSERT)
   add_definitions(-DTHROW_AS_ASSERT)
 endif()
 
+
 #
 # We use UUID generator from common sub-module.
 #
@@ -286,7 +310,7 @@ INCLUDE(testing)
 SETUP_TESTING()
 
 ADD_TEST_INCLUDES(${PROJECT_SOURCE_DIR}/testing)
-ADD_TEST_LIBRARIES(libconcpp)
+ADD_TEST_LIBRARIES(connector)
 
 #
 # Project's public headers
@@ -337,6 +361,15 @@ endif()
 # Connector/C++ components
 #
 
+option(WITH_JDBC
+ "Whether to build a variant of connector library which implements legacy JDBC API"
+ OFF
+)
+
+if(WITH_JDBC)
+  include(jdbc.cmake)
+endif()
+
 ADD_SUBDIRECTORY(doc)
 ADD_SUBDIRECTORY(common)
 ADD_SUBDIRECTORY(xapi)
@@ -350,13 +383,13 @@ ADD_SUBDIRECTORY(devapi)
 
 # Generate the main connector library.
 
-add_library_ex(libconcpp ${LIB_TYPE}
+add_library_ex(connector ${LIB_TYPE}
     ${WITH_UUID}/src/uuid_gen.cc
     OBJECTS xapi devapi common
     LIBS    cdk
 )
 
-target_include_directories(libconcpp PRIVATE "${WITH_UUID}/include")
+target_include_directories(connector PRIVATE "${WITH_UUID}/include")
 
 # Disable warnings in code which is not ours.
 
@@ -376,7 +409,9 @@ endif()
 #
 # Static library has -static suffix added to the base name.
 #
-# On Windows we distinguish the MSVC version used to build the library
+# On Windows we add major ABI version to the shared library name, so that
+# different ABI versions of the library can be installed next to each other.
+# Also, on Windows we distinguish the MSVC version used to build the library
 # (as this determines the runtime version). The shared libraries use
 # -vsNN suffix, the import library does not have the suffix but is installed
 # to a vsNN/ subfolder of the library install location (see install layout
@@ -384,14 +419,6 @@ endif()
 # static runtime.
 #
 
-set(VS)
-if(WIN32)
-  if(MSVC12)
-    set(VS "vs12")
-  elseif(MSVC14)
-    set(VS "vs14")
-  endif()
-endif()
 
 if(BUILD_STATIC)
 
@@ -403,6 +430,9 @@ if(BUILD_STATIC)
 else()
 
   set(LIB_NAME "${LIB_NAME_BASE}")
+  if(WIN32)
+    set(LIB_NAME "${LIB_NAME}-${ABI_VERSION_MAJOR}")
+  endif()
   if(VS)
     set(LIB_NAME "${LIB_NAME}-${VS}")
   endif()
@@ -410,71 +440,34 @@ else()
 endif()
 
 
-set_property(TARGET libconcpp PROPERTY OUTPUT_NAME ${LIB_NAME})
+set_property(TARGET connector PROPERTY OUTPUT_NAME ${LIB_NAME})
 message("Connector library name: ${LIB_NAME}")
 
 if(NOT BUILD_STATIC)
-  set_property(TARGET libconcpp PROPERTY ARCHIVE_OUTPUT_NAME ${LIB_NAME_BASE})
+  set_property(TARGET connector PROPERTY ARCHIVE_OUTPUT_NAME ${LIB_NAME_BASE})
 endif()
 
-set_target_properties(libconcpp PROPERTIES
-  VERSION "${API_VERSION}"
-  SOVERSION "${API_VERSION_MAJOR}"
+set_target_properties(connector PROPERTIES
+  VERSION "${ABI_VERSION_MAJOR}.${CONCPP_VERSION}"
+  SOVERSION "${ABI_VERSION_MAJOR}"
 )
 
-#
-# Pick install location for the main library
-# ------------------------------------------
-#
-# On Windows the install layout is as follows, where NN is the MSVC version
-# used to build the connector:
-#
-#  {lib,lib64}/mysqlcppconnX-vsNN.dll              <-- shared library
-#  {lib,lib64}/vsNN/mysqlcppconnX-static.lib       <-- static with /MD
-#  {lib,lib64}/vsNN/mysqlcppconnX-static-mt.lib    <-- static with /MT
-#  {lib,lib64}/vsNN/mysqlcppconnX.lib              <-- import library for DLL
-#
-# On Linux it is as follows, where A.B is the API version number
-#
-#  {lib,lib64}/libmysqlcppconnX.so.A.B             <-- shared library
-#  {lib,lib64}/libmysqlcppconnX.so.A               <-- soname link
-#  {lib,lib64}/libmysqlcppconnX.so                 <-- development link
-#  {lib,lib64}/libmysqlcppconnX-static.a           <-- static library
-#
-# Additionally, if connector is built in debug mode, the libraries are installed
-# in debug/ subfolder of {lib,lib64}/ or {lib,lib64}/vsNN/.
-#
 
-set(LIB_DIR "" CACHE PATH "Library install location (relative to install root)")
-
-if(NOT LIB_DIR)
-  if(IS64BIT)
-    set(LIB_DIR "lib64")
-  else()
-    set(LIB_DIR "lib")
-  endif()
-endif()
-
-message("Connector library will be installed at: ${LIB_DIR}")
-
-set(LIB_DIR_STATIC "${LIB_DIR}")
-if(VS)
-  set(LIB_DIR_STATIC "${LIB_DIR_STATIC}/${VS}")
-endif()
+message("Connector libraries will be installed at: ${INSTALL_LIB_DIR}")
 
 
-install(TARGETS libconcpp
+install(TARGETS connector
   CONFIGURATIONS Release RelWithDebInfo
-  ARCHIVE DESTINATION "${LIB_DIR_STATIC}"
-  RUNTIME DESTINATION "${LIB_DIR}"
-  LIBRARY DESTINATION "${LIB_DIR}"
+  ARCHIVE DESTINATION "${INSTALL_LIB_DIR_STATIC}"
+  RUNTIME DESTINATION "${INSTALL_LIB_DIR}"
+  LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
 )
 
-install(TARGETS libconcpp
+install(TARGETS connector
   CONFIGURATIONS Debug
-  ARCHIVE DESTINATION "${LIB_DIR_STATIC}/debug"
-  RUNTIME DESTINATION "${LIB_DIR}/debug"
-  LIBRARY DESTINATION "${LIB_DIR}/debug"
+  ARCHIVE DESTINATION "${INSTALL_LIB_DIR_STATIC}/debug"
+  RUNTIME DESTINATION "${INSTALL_LIB_DIR}/debug"
+  LIBRARY DESTINATION "${INSTALL_LIB_DIR}/debug"
 )
 
 
@@ -508,9 +501,18 @@ ENDIF (WITH_TESTS)
 #
 
 ADD_EXECUTABLE(try try.cc)
-TARGET_LINK_LIBRARIES(try libconcpp)
+TARGET_LINK_LIBRARIES(try connector)
 SET_INTERFACE_OPTIONS(try devapi)
 #  ADD_GCOV(try)
+
+if(WITH_JDBC)
+
+  add_executable(try_jdbc try_jdbc.cc)
+  target_link_libraries(try_jdbc ${JDBC_LIBS})
+  add_dependencies(try_jdbc build_jdbc)
+  target_include_directories(try_jdbc PRIVATE ${JDBC_INCLUDES})
+
+endif()
 
 #
 # Show dynamic library dependencies for try program.
@@ -530,10 +532,19 @@ if(NOT LDD)
 endif()
 
 if(LDD)
+
   add_custom_command(TARGET try POST_BUILD
     COMMAND ${LDD} ${LDD_OPTS} $<TARGET_FILE:try>
     COMMENT "Checking dynamic library dependencies:"
   )
+
+  if(WITH_JDBC)
+    add_custom_command(TARGET try_jdbc POST_BUILD
+      COMMAND ${LDD} ${LDD_OPTS} $<TARGET_FILE:try_jdbc>
+      COMMENT "Checking dynamic library dependencies:"
+    )
+  endif()
+
 endif()
 
 endif()
@@ -556,6 +567,11 @@ endif()
 file(REMOVE_RECURSE ${PROJECT_BINARY_DIR}/link_test)
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/link_test)
 
+unset(jdbc_options)
+if(WITH_JDBC)
+  list(APPEND jdbc_options -DWITH_JDBC=ON -DWITH_BOOST=${BOOST_ROOT})
+endif()
+
 add_custom_target(link_test
   COMMAND ${CMAKE_COMMAND} -E remove_directory ${PROJECT_BINARY_DIR}/install
   COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/install
@@ -569,15 +585,21 @@ add_custom_target(link_test
     -D WITH_CONCPP=${PROJECT_BINARY_DIR}/install
     -D BUILD_STATIC=${BUILD_STATIC}
     -D STATIC_MSVCRT=${STATIC_MSVCRT}
+    ${jdbc_options}
     ${PROJECT_SOURCE_DIR}/testapp
   COMMAND ${CMAKE_COMMAND} --build . --config $<CONFIGURATION>  --clean-first
-  DEPENDS libconcpp
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/link_test
   VERBATIM
 )
 
+if(WITH_JDBC)
+  add_dependencies(link_test build_jdbc)
+endif()
+
+# TDOD: Use ${CMAKE_COMMAND}, but evaluated at test time, not here.
+
 add_test(NAME Link_test
-  COMMAND ${CMAKE_COMMAND} --build . --target link_test --config $<CONFIGURATION>
+  COMMAND cmake --build . --target link_test --config $<CONFIGURATION>
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
 

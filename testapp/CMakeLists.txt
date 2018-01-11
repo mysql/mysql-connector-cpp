@@ -24,6 +24,20 @@
 cmake_minimum_required(VERSION 2.8)
 PROJECT(MySQL_CONCPP_TEST)
 
+#
+# Settings using by this project:
+#
+# WITH_CONCPP (required)  location of Connector/C++ 8.0 installation
+# BUILD_STATIC            whether to link with connector statically
+#                         or dynamically (the default)
+# WITH_BOOST  (optional)  where to look for Boost (required only when building
+#                         JDBC API application)
+#
+# WITH_JDBC               build JDBC API test application
+#
+
+option(WITH_JDBC "Also build the JDBC API test application" OFF)
+
 set(WITH_CONCPP $ENV{WITH_CONCPP} CACHE PATH "MySQL Connector/C++ 8.0 install location")
 
 if(NOT WITH_CONCPP)
@@ -49,6 +63,7 @@ else()
 endif()
 
 
+#message("sizeof void*: ${CMAKE_SIZEOF_VOID_P}")
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   set(IS64BIT 1)
   message("Generationg 64bit code")
@@ -57,11 +72,7 @@ else()
 endif()
 
 if(WIN32)
-  if(MSVC12)
-   set(VS "vs12")
-  elseif(MSVC14)
-   set(VS "vs14")
-  endif()
+  set(VS "vs14")
 endif()
 
 
@@ -69,22 +80,13 @@ endif()
 # Find MySQL Connector/C++ at specified location.
 #
 
-set(CONCPLS_INCLUDES "${WITH_CONCPP}/include")
+set(CONCPP_INCLUDES "${WITH_CONCPP}/include")
 
-if(NOT EXISTS "${CONCPLS_INCLUDES}/mysqlx/xdevapi.h")
+if(NOT EXISTS "${CONCPP_INCLUDES}/mysqlx/xdevapi.h")
   message(FATAL_ERROR
     "Could not find MySQL Connector/C++ 8.0 headers at specified"
     " location: ${CONCPLS_INCLUDES}"
   )
-endif()
-
-
-set(libconcpp_name mysqlcppconn8)
-if(BUILD_STATIC)
-  set(libconcpp_name "${libconcpp_name}-static")
-  if(WIN32 AND STATIC_MSVCRT)
-    set(libconcpp_name "${libconcpp_name}-mt")
-  endif()
 endif()
 
 
@@ -100,7 +102,24 @@ if(VS)
 endif()
 
 
-message("Looking for the connector library ${libconcpp_name} here: ${LIB_PATH_STATIC}")
+set(libconcpp_name mysqlcppconn8)
+set(libconcpp_jdbc_name mysqlcppconn)
+
+foreach(name libconcpp_name libconcpp_jdbc_name)
+
+if(BUILD_STATIC)
+  set(${name} "${${name}}-static")
+  if(WIN32 AND STATIC_MSVCRT)
+    set(${name} "${${name}}-mt")
+  endif()
+endif()
+
+endforeach()
+
+
+message("Looking for connector libraries here: ${LIB_PATH_STATIC}")
+
+message("Looking for the main library  ${libconcpp_name}")
 
 find_library(CONCPP_LIB NAMES ${libconcpp_name}
   PATHS "${LIB_PATH_STATIC}"
@@ -119,86 +138,85 @@ if(NOT CONCPP_LIB AND NOT CONCPP_LIB_DEBUG)
   )
 endif()
 
+# Set CONCPP_LIBS
 
 if(CONCPP_LIB)
-  message("Using Connector/C++ 8.0 library: ${CONCPP_LIB}")
-  if(CONCPP_LIB_DEBUG)
-    list(APPEND CONCPP_LIBS optimized "${CONCPP_LIB}")
-  else()
+  list(APPEND CONCPP_LIBS optimized "${CONCPP_LIB}")
+  if(NOT CONCPP_LIB_DEBUG AND NOT WIN32)
     message(WARNING "Using generic library also for debug builds")
     list(APPEND CONCPP_LIBS general "${CONCPP_LIB}")
+  else()
+    message(WARNING "Could not find debug libraries, building in debug mode will not work")
   endif()
 endif()
 
 if(CONCPP_LIB_DEBUG)
-  message("Debug library: ${CONCPP_LIB_DEBUG}")
-  if(CONCPP_LIB)
-    list(APPEND CONCPP_LIBS debug "${CONCPP_LIB_DEBUG}")
-  else()
+  list(APPEND CONCPP_LIBS debug "${CONCPP_LIB_DEBUG}")
+  if(NOT CONCPP_LIB AND NOT WIN32)
     message(WARNING "Using debug library also for non-debug builds")
     list(APPEND CONCPP_LIBS general "${CONCPP_LIB_DEBUG}")
+  else()
+    message(WARNING "Only debug libraries found, building in release mode will not work")
   endif()
 endif()
 
+message("Using Connector/C++ 8.0 libraries: ${CONCPP_LIBS}")
 
-#
-# Copy shared library to a pre-defined location where also the executable
-# will be built. This is necessary for Windows to find the DLL when running
-# the executable.
-#
 
-file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/run)
-file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/run/debug)
+message("Looking for the legacy library  ${libconcpp_jdbc_name}")
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY run)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE run)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG run/debug)
+find_library(CONCPP_JDBC NAMES ${libconcpp_jdbc_name}
+  PATHS "${LIB_PATH_STATIC}"
+  NO_DEFAULT_PATH
+)
 
-if(NOT BUILD_STATIC)
+find_library(CONCPP_JDBC_DEBUG NAMES ${libconcpp_jdbc_name}
+  PATHS "${LIB_PATH_STATIC}/debug"
+  NO_DEFAULT_PATH
+)
 
-  set(libconcpp_name_shared mysqlcppconn8)
-  if(VS)
-    set(libconcpp_name_shared "${libconcpp_name_shared}-${VS}")
-  endif()
-
-  set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_SHARED_LIBRARY_SUFFIX})
-
-  find_library(CONCPP_LIB_SHARED NAMES ${libconcpp_name_shared}
-    PATHS "${LIB_PATH}"
-    NO_DEFAULT_PATH
+if(CONCPP_JDBC OR CONCPP_JDBC_DEBUG)
+  set(HAS_JDBC ON)
+elseif(WITH_JDBC)
+  message(FATAL_ERROR
+    "Could not find MySQL Connector/C++ 8.0 legacy library"
+    " ${libconcpp_jdbc_name} at spcified location ${LIB_PATH_STATIC}"
   )
+endif()
 
-  find_library(CONCPP_LIB_SHARED_DEBUG NAMES ${libconcpp_name_shared}
-    PATHS "${LIB_PATH}/debug"
-    NO_DEFAULT_PATH
-  )
 
-  if(NOT CONCPP_LIB_SHARED AND NOT CONCPP_LIB_SHARED_DEBUG)
-    message(FATAL_ERROR
-      "Could not find MySQL Connector/C++ 8.0 shared library ${libconcpp_name_shared} at specified"
-      " location: ${LIB_PATH}"
-    )
+if(CONCPP_JDBC)
+  list(APPEND CONCPP_JDBC_LIBS optimized "${CONCPP_JDBC}")
+  if(NOT CONCPP_JDBC_DEBUG AND NOT WIN32)
+    message(WARNING "Using generic library also for debug builds")
+    list(APPEND CONCPP_JDBC_LIBS general "${CONCPP_JDBC}")
+  else()
+    message(WARNING "Could not find debug libraries, building in debug mode will not work")
   endif()
+endif()
 
-
-  if(CONCPP_LIB_SHARED)
-    message("Copying shared library: ${CONCPP_LIB_SHARED}")
-    file(COPY "${CONCPP_LIB_SHARED}" DESTINATION ${PROJECT_BINARY_DIR}/run)
+if(CONCPP_JDBC_DEBUG)
+  list(APPEND CONCPP_JDBC_LIBS debug "${CONCPP_JDBC_DEBUG}")
+  if(NOT CONCPP_JDBC AND NOT WIN32)
+    message(WARNING "Using debug library also for non-debug builds")
+    list(APPEND CONCPP_JDBC_LIBS general "${CONCPP_JDBC_DEBUG}")
+  else()
+    message(WARNING "Only debug libraries found, building in release mode will not work")
   endif()
+endif()
 
-  if(CONCPP_LIB_SHARED_DEBUG)
-    message("Copying debug shared library: ${CONCPP_LIB_SHARED_DEBUG}")
-    file(COPY "${CONCPP_LIB_SHARED_DEBUG}" DESTINATION ${PROJECT_BINARY_DIR}/run/debug)
-  endif()
-
-endif(NOT BUILD_STATIC)
+message("Using Connector/C++ 8.0 legacy libraries: ${CONCPP_JDBC_LIBS}")
 
 #
-# Connector/C++ requires pthread library on Unix.
+# Connector/C++ requires pthread library on Unix. Legacy connector needs
+# even more.
 #
 
 IF(CMAKE_HOST_UNIX)
   list(APPEND CONCPP_LIBS pthread)
+  if(NOT APPLE)
+    list(APPEND CONCPP_JDBC_LIBS pthread rt dl)
+  endif()
 ENDIF()
 
 #
@@ -207,6 +225,10 @@ ENDIF()
 
 if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
   list(APPEND CONCPP_LIBS socket nsl)
+  # TODO: Could be couple more libs reqired..
+  # MYSQL_LIBRARIES
+  # stdc++;gcc_s;CrunG3;c;..;socket;nsl;m;rt
+  list(APPEND CONCPP_JDBC_LIBS socket nsl rt)
 endif()
 
 #
@@ -244,16 +266,74 @@ IF(WIN32)
 
 ENDIF()
 
+#
+# Look for Boost which is required when building JDBC API application.
+#
+
+if(HAS_JDBC)
+
+  if(DEFINED WITH_BOOST)
+    set(BOOST_ROOT "${WITH_BOOST}")
+    set(Boost_NO_SYSTEM_PATHS ON)
+  endif()
+
+  find_package(Boost)
+
+  if (Boost_FOUND)
+
+    set(BOOST_INCLUDES "${Boost_INCLUDE_DIRS}")
+    set(WITH_JDBC ON)
+
+  else()
+
+    if(DEFINED WITH_BOOST)
+      message("Boost could not be found at specified location: ${WITH_BOOST}")
+    endif()
+
+    if(WITH_JDBC)
+      message(FATAL_ERROR
+        "Can not build JDBC API application because Boost is missing"
+        " (use WITH_BOOST)."
+      )
+    else()
+      message(WARNING
+        "JDBC API application will not be built because required Boost headers"
+        " could not be found (use WITH_BOOST)."
+      )
+    endif()
+
+  endif()
+
+endif()
 
 #
-# Test program that uses MySQL Connector/C++.
+# Arrange for executables to be built in either "run" or "run/debug" location,
+# depending on the build type. This is to simplify dependencies management
+# (see below).
 #
 
-INCLUDE_DIRECTORIES(${CONCPLS_INCLUDES})
+file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/run)
+file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/run/debug)
 
-ADD_EXECUTABLE(devapi_test devapi_test.cc)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY run)
 
-TARGET_LINK_LIBRARIES(devapi_test ${CONCPP_LIBS})
+foreach(config ${CMAKE_CONFIGURATION_TYPES})
+  string(TOUPPER "${config}" CONFIG)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONFIG} run)
+endforeach()
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG run/debug)
+
+
+#
+# Test programs that use MySQL Connector/C++.
+#
+
+
+include_directories(${CONCPP_INCLUDES})
+
+
+add_executable(devapi_test devapi_test.cc)
+target_link_libraries(devapi_test ${CONCPP_LIBS})
 
 # To use DevAPI we must enable C++11
 
@@ -261,8 +341,9 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   target_compile_options(devapi_test PRIVATE "-std=c++11")
 endif()
 
-ADD_EXECUTABLE(xapi_test xapi_test.c)
-TARGET_LINK_LIBRARIES(xapi_test ${CONCPP_LIBS})
+
+add_executable(xapi_test xapi_test.c)
+target_link_libraries(xapi_test ${CONCPP_LIBS})
 
 #
 # Note: Connector/C++ library depends on C++ runtime library.
@@ -274,3 +355,56 @@ TARGET_LINK_LIBRARIES(xapi_test ${CONCPP_LIBS})
 #
 
 set_target_properties(xapi_test PROPERTIES LINKER_LANGUAGE CXX)
+
+
+if(WITH_JDBC)
+
+  if(BUILD_STATIC)
+    add_definitions(-DCPPCONN_PUBLIC_FUNC=)
+  endif()
+
+  include_directories(${BOOST_INCLUDES})
+  add_executable(jdbc_test jdbc_test.cc)
+  target_link_libraries(jdbc_test ${CONCPP_JDBC_LIBS})
+
+endif()
+
+
+#
+# Copy shared libraries to the location where the executable is built.
+# This is necessary for Windows to find the required DLLs when running
+# the executable. (Note: On Unix it can be arranged by correctly setting
+# rpath, but this does not work on Windows)
+#
+
+message("Installing shared library dependencies.")
+
+file(GLOB libs "${LIB_PATH}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+file(INSTALL ${libs} DESTINATION run)
+
+#
+# Note: Using non-debug libraries with code which was build in debug mode
+# (or vice versa) does not work on Windows, but on other platforms we try
+# it.
+#
+
+if (NOT WIN32)
+  file(INSTALL ${libs} DESTINATION run/debug)
+endif()
+
+#
+# Overwrite libs in run/debug with debug versions if present.
+#
+
+file(GLOB debug_libs "${LIB_PATH}/debug/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+file(INSTALL ${debug_libs} DESTINATION run/debug)
+
+#
+# If non-debug libraries were not found and we are not on Windows, try
+# using debug ones, if present.
+#
+
+if (NOT WIN32 AND NOT libs)
+  flie(INSTALL ${debug_libs} DESTINATAION run)
+endif()
+
