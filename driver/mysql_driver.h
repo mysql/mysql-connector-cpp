@@ -27,9 +27,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #ifndef _MYSQL_DRIVER_H_
 #define _MYSQL_DRIVER_H_
 
-#include <boost/scoped_ptr.hpp>
 
 #include "cppconn/driver.h"
+
+#include <boost/scoped_ptr.hpp>
+
 
 extern "C"
 {
