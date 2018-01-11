@@ -50,9 +50,6 @@ namespace NativeAPI
   Function to convert sql::mysql::MySQL_Connection_Options to
   libmysqlclient mysql_option
 */
-#if (__cplusplus >= 201103L)
-constexpr
-#endif
 mysql_option
 get_mysql_option(sql::mysql::MySQL_Connection_Options opt)
 {
