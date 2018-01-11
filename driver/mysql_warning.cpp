@@ -98,7 +98,9 @@ namespace mysql
   }
 
   MySQL_Warning::MySQL_Warning(const MySQL_Warning& w)
-    : sql_state(w.sql_state), errNo(w.errNo), descr(w.descr), next(w.next.get()) {}
+    : SQLWarning(), sql_state(w.sql_state), errNo(w.errNo), descr(w.descr),
+      next(w.next.get())
+  {}
 
   MySQL_Warning::MySQL_Warning(const ::sql::SQLWarning & w)
     :	sql_state	(w.getSQLState()),

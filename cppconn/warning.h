@@ -61,7 +61,7 @@ protected:
 
 	virtual ~SQLWarning(){};
 
-	SQLWarning(const SQLWarning& e){};
+	SQLWarning(const SQLWarning&){};
 
 private:
 	const SQLWarning & operator = (const SQLWarning & rhs);

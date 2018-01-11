@@ -35,6 +35,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 namespace sql
 {
 class ResultSet;
+class Connection;
 
 class DatabaseMetaData
 {

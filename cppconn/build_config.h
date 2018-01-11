@@ -30,6 +30,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #ifndef CPPCONN_PUBLIC_FUNC
 
 #if defined(_WIN32)
+
  // mysqlcppconn_EXPORTS is added by cmake and defined for dynamic lib build only
   #ifdef mysqlcppconn_EXPORTS
     #define CPPCONN_PUBLIC_FUNC __declspec(dllexport)
@@ -42,8 +43,23 @@ with this program; if not, write to the Free Software Foundation, Inc.,
       #define CPPCONN_PUBLIC_FUNC __declspec(dllimport)
     #endif
   #endif
+
+  /*
+    Warning 4251 is about non dll-interface classes being used by ones exported
+    from our DLL (for example std lib classes or Boost ones). Following
+    the crowd, we ignore this issue for now.
+  */
+
+  __pragma(warning (disable:4251))
+
 #else
   #define CPPCONN_PUBLIC_FUNC
+
+  /*
+    These are triggered by, e.g., std::auto_ptr<> which is used by Boost.
+  */
+
+  __Pragma(GCC diagnostic ignored -Wdeprecated-declarations)
 #endif
 
 #endif    //#ifndef CPPCONN_PUBLIC_FUNC
