@@ -1,4 +1,4 @@
 [submodule "jdbc"]
 	path = jdbc
-	url = .
+	url = ../mysql-connector-cpp.git
 	branch = cpp80
