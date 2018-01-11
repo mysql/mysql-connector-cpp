@@ -59,7 +59,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
     These are triggered by, e.g., std::auto_ptr<> which is used by Boost.
   */
 
-  __Pragma(GCC diagnostic ignored -Wdeprecated-declarations)
+  #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
 #endif    //#ifndef CPPCONN_PUBLIC_FUNC
