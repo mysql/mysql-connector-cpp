@@ -363,7 +363,7 @@ endif()
 
 option(WITH_JDBC
  "Whether to build a variant of connector library which implements legacy JDBC API"
- OFF
+ ON
 )
 
 if(WITH_JDBC)
