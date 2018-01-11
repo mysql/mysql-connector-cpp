@@ -29,7 +29,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <boost/scoped_ptr.hpp>
 
-#include <cppconn/driver.h>
+#include "cppconn/driver.h"
 
 extern "C"
 {

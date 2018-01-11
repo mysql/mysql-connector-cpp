@@ -27,7 +27,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #ifndef _SQL_PARAMETER_METADATA_H_
 #define _SQL_PARAMETER_METADATA_H_
 
-#include <cppconn/sqlstring.h>
+#include "sqlstring.h"
 
 
 namespace sql

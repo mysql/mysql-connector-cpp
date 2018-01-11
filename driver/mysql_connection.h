@@ -27,7 +27,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #ifndef _MYSQL_CONNECTION_H_
 #define _MYSQL_CONNECTION_H_
 
-#include <cppconn/connection.h>
+#include "cppconn/connection.h"
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 
