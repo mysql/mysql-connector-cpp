@@ -34,20 +34,12 @@ using namespace ::mysqlx;
 int main(int argc, const char* argv[])
 try {
 
-  unsigned short port = (argc > 1 ? atoi(argv[1]) : 0);
-  const char    *user = (argc > 2 ? argv[2] : "root");
-  const char    *pwd  = (argc > 3 ? argv[3] : NULL);
+  const char   *url = (argc > 1 ? argv[1] : "mysqlx://root@127.0.0.1");
 
-  if (0 == port)
-  {
-    // Default MySQL X port
-    port = 33060;
-  }
-
-  cout << "Creating session on localhost, port " << port
+  cout << "Creating session on " << url
        << " ..." << endl;
 
-  Session sess("localhost", port, user, pwd);
+  Session sess(url);
 
   cout <<"Session accepted, creating collection..." <<endl;
 

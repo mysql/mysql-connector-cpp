@@ -47,7 +47,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <jdbc/cppconn/resultset.h>
 #include <jdbc/cppconn/statement.h>
 
-#define DEFAULT_PORT 3306
+#define DEFAULT_URI "tcp://127.0.0.1"
 #define EXAMPLE_USER "root"
 #define EXAMPLE_PASS ""
 #define EXAMPLE_DB "test"
@@ -60,16 +60,10 @@ using namespace std;
 
 int main(int argc, const char **argv)
 {
-  unsigned short port = (argc > 1 ? atoi(argv[1]) : 0);
+  const char   *url = (argc > 1 ? argv[1] : DEFAULT_URI);
   const string user(argc >= 3 ? argv[2] : EXAMPLE_USER);
   const string pass(argc >= 4 ? argv[3] : EXAMPLE_PASS);
   const string database(argc >= 5 ? argv[4] : EXAMPLE_DB);
-
-  if (0 == port)
-  {
-    port = DEFAULT_PORT;
-  }
-
 
   cout << endl;
   cout << "Connector/C++ standalone program example..." << endl;
@@ -81,14 +75,11 @@ int main(int argc, const char **argv)
 
     /* Using the Driver to create a connection */
 
-    cout << "Creating session on localhost, port " << port << " ..."
+    cout << "Creating session on " << url << " ..."
          << endl << endl;
 
-    stringstream url;
-    url << "localhost:" << port;
-
     boost::scoped_ptr< sql::Connection >
-      con(driver->connect(url.str(), user, pass));
+      con(driver->connect(url, user, pass));
     con->setSchema(database);
 
     boost::scoped_ptr< sql::Statement > stmt(con->createStatement());
