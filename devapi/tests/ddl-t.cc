@@ -300,8 +300,7 @@ TEST_F(Ddl, create_index)
   cout << "- bad index type" << endl;
 
   EXPECT_ERR(coll.createIndex("bad_idx",
-    R"({ "type": "foo",
-         "fields": [{ "field": "$.zcount", "type": "int" }] })"));
+   R"({ "type": "foo", "fields": [{ "field": "$.zcount", "type": "int" }] })"));
 
   cout << "- bad index field type" << endl;
 
@@ -315,14 +314,9 @@ TEST_F(Ddl, create_index)
 
   cout << "- bad spatial index" << endl;
 
-  EXPECT_ERR(coll.createIndex("geo_idx2", R"({
-    "type" : "SPATIAL",
-    "fields": [{
-      "field": "$.coords",
-      "type" : "GEOJSON",
-      "required" : false
-    }]
-  })"));
+  EXPECT_ERR(coll.createIndex("geo_idx2",
+    R"({ "type" : "SPATIAL", "fields": [{ "field": "$.coords", "type" : "GEOJSON", "required" : false }] })")
+             );
 
   cout << "Done!" << endl;
 }
