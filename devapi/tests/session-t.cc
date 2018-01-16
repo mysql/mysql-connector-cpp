@@ -301,6 +301,8 @@ TEST_F(Sess, auth_method)
 
   SKIP_IF_NO_XPLUGIN;
 
+  USE_NATIVE_PWD;
+
   auto check_user = [](mysqlx::Session &sess)
   {
     SqlResult res = sess.sql("SELECT CURRENT_USER()").execute();
@@ -412,6 +414,8 @@ TEST_F(Sess, ssl_session)
 {
 
   SKIP_IF_NO_XPLUGIN;
+
+  USE_NATIVE_PWD;
 
   //Test if ssl is enabled using cipher
   auto check_ssl_impl = [](mysqlx::Session &sess, bool enable, int line)
@@ -697,6 +701,8 @@ TEST_F(Sess, ipv6)
 {
 
   SKIP_IF_NO_XPLUGIN;
+
+  USE_NATIVE_PWD;
 
   {
     mysqlx::Session sess(SessionOption::HOST, "::1",

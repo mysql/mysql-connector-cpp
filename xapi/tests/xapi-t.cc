@@ -321,6 +321,8 @@ TEST_F(xapi, conn_string_test)
 {
   SKIP_IF_NO_XPLUGIN
 
+  USE_NATIVE_PWD;
+
   unsigned short port = 0;
   char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
   std::string  conn_str_basic;
@@ -748,6 +750,8 @@ TEST_F(xapi, auth_method)
 {
   SKIP_IF_NO_XPLUGIN
 
+  USE_NATIVE_PWD;
+
   char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
   int conn_err_code = 0;
   mysqlx_session_t *local_sess = NULL;
@@ -924,6 +928,8 @@ TEST_F(xapi, auth_method_external)
 TEST_F(xapi, conn_options_test)
 {
   SKIP_IF_NO_XPLUGIN
+
+  USE_NATIVE_PWD;
 
   unsigned int port2 = 0;
   unsigned int ssl_enable = 0;
