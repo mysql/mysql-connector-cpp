@@ -23,16 +23,6 @@
 
 SET(target_mysqlx ${cdk_target_prefix}mysqlx CACHE INTERNAL "CDK mysqlx target")
 
-
-#
-# File auth_mysql41.cc uses yassl code and for this to work we need to set up
-# include paths and a couple of defines which are copied from yassl cmake files.
-#
-
-INCLUDE_DIRECTORIES(
-  ${PROJECT_SOURCE_DIR}/extra/yassl
-)
-
 ADD_DEFINITIONS(-DWIN32_LEAN_AND_MEAN -DNOGDI)
 ADD_DEFINITIONS(-DNOMINMAX)
 ADD_DEFINITIONS(-DSIZEOF_LONG=${SIZEOF_LONG} -DSIZEOF_LONG_LONG=${SIZEOF_LONG_LONG})
@@ -48,6 +38,11 @@ endif()
 
 ADD_LIBRARY(${target_mysqlx} OBJECT session.cc result.cc auth_mysql41.cc)
 ADD_COVERAGE(${target_mysqlx})
+
+# Note: File auth_mysql41.cc uses SSL code.
+
+add_ssl(${target_mysqlx})
+
 #TARGET_LINK_LIBRARIES(${target_mysqlx} ${target_proto_mysqlx})
 
 ADD_SUBDIRECTORY(tests)

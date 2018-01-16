@@ -5,17 +5,17 @@ Connector/C++ 8.0 can be used as either a static or a shared library.
 If used as a shared library, the library must be installed on the target
 machine in order for the application to run. The shared library name is:
 
-- `libmysqlcppconn2.so` on Unix platforms (the soname is
-  `libmysqlcppconn2.so.1`)
-- `libmysqlcppconn2.dylib` on the OSX platform (the soname is
-  `libmysqlcppconn2.1.dylib`)
-- `mysqlcppconn2-vsXX.dll` on Windows platforms (see
+- `libmysqlcppconn8.so` on Unix platforms (the soname is
+  `libmysqlcppconn8.so.1`)
+- `libmysqlcppconn8.dylib` on the OSX platform (the soname is
+  `libmysqlcppconn8.1.dylib`)
+- `mysqlcppconn8-vsXX.dll` on Windows platforms (see
    [Windows Notes](@ref usage_win) for explanation of `-vsXX` suffixes)
 
 The static library name is:
 
-- `libmysqlcppconn2-static.a` on OSX and Unix platforms.
-- `mysqlcppconn2-static.lib` on Windows platforms,
+- `libmysqlcppconn8-static.a` on OSX and Unix platforms.
+- `mysqlcppconn8-static.lib` on Windows platforms,
 
 In what follows we assume that Connector/C++ 8.0 is installed to the location
 given by `$MYSQL_CONCPP_DIR`.
@@ -27,7 +27,7 @@ Using the shared library
 When compiling code which uses the connector, add `$MYSQL_CONCPP_DIR/include`
 to project's include path and `$MYSQL_CONCPP_DIR/lib` or
 `$MYSQL_CONCPP_DIR/lib64` to the library path (the latter on a 64-bit platform).
-Then add `-lmysqlcppconn2` to the linker options (on Unix systems also add
+Then add `-lmysqlcppconn8` to the linker options (on Unix systems also add
 `-lpthread` required by Connector/C++ on these platforms).
 
 If code uses X DevAPI, enable C++11 support in the compiler as it is required
@@ -40,7 +40,7 @@ with sources in `app.cc` is shown below:
 ~~~~~~~
 MYSQL_CONCPP_DIR= ...
 CPPFLAGS = -I $(MYSQL_CONCPP_DIR)/include -L $(MYSQL_CONCPP_DIR)/lib64
-LDLIBS = -lmysqlcppconn2 -lpthread
+LDLIBS = -lmysqlcppconn8 -lpthread
 CXXFLAGS = -std=c++11
 
 app : app.cc
@@ -49,7 +49,7 @@ app : app.cc
 It generates the following compiler invocation:
 
 ~~~~~~~~
-g++ -std=c++11 -I .../include -L .../lib64  app.cc  -lmysqlcppconn2 -lpthread -o app
+g++ -std=c++11 -I .../include -L .../lib64  app.cc  -lmysqlcppconn8 -lpthread -o app
 ~~~~~~~~
 
 
@@ -60,7 +60,7 @@ might look like this:
 ~~~~~~~
 MYSQL_CONCPP_DIR= ...
 CPPFLAGS = -I $(MYSQL_CONCPP_DIR)/include -L $(MYSQL_CONCPP_DIR)/lib64
-LDLIBS = -lmysqlcppconn2 -lpthread
+LDLIBS = -lmysqlcppconn8 -lpthread
 
 app : app.c
 ~~~~~~~
@@ -68,7 +68,7 @@ app : app.c
 which generates the following compiler invocation:
 
 ~~~~~~~
-cc  -I .../include -L .../lib64  app.c  -lmysqlcppconn2 -lpthread -o app
+cc  -I .../include -L .../lib64  app.c  -lmysqlcppconn8 -lpthread -o app
 ~~~~~~~
 
 Note that the resulting code, even though it is compiled as plain C, will
@@ -85,6 +85,15 @@ uses it should be built using the same compiler that was used to build the
 connector. If using the binary distribution of the connector, then compile with
 `clang` on OSX and with `gcc` on other Unix systems. See also [Window Notes]
 (@ref usage_win) for details about compiling code on Windows.
+
+@note when Connector/C++ is configured to be built to use OpenSSL it will make
+the connector library dependent on shared OpenSSL libraries. The dynamic linker
+needs to be able to find not only the connector library at the run time,
+but also OpenSSL libraries. One option is to put OpenSSL libraries in the same
+location as the connector libraries, as is the case when installing connector
+from MySQL binary packages. In this case the dynamic linker should correctly
+locate OpenSSL libraries next to the connector library.
+
 
 
 Using the static library
@@ -105,7 +114,7 @@ library statically is shown below:
 ~~~~~~~
 MYSQL_CONCPP_DIR= ...
 CPPFLAGS = -DSTATIC_CONCPP -I $(MYSQL_CONCPP_DIR)/include
-LDLIBS = $(MYSQL_CONCPP_DIR)/lib64/libmysqlcppconn2-static.a -lpthread
+LDLIBS = $(MYSQL_CONCPP_DIR)/lib64/libmysqlcppconn8-static.a -lpthread
 CXXFLAGS = -std=c++11
 
 app : app.cc
@@ -114,7 +123,7 @@ app : app.cc
 It generates the following compiler invocation:
 
 ~~~~~~~
-g++ -std=c++11 -DSTATIC_CONCPP -I .../include  app.cc  .../lib64/libmysqlcppconn2-static.a -lpthread -o app
+g++ -std=c++11 -DSTATIC_CONCPP -I .../include  app.cc  .../lib64/libmysqlcppconn8-static.a -lpthread -o app
 ~~~~~~~
 
 
@@ -125,7 +134,7 @@ to build the final code. This approach is taken in the example `Makefile` below:
 ~~~~~~~
 MYSQL_CONCPP_DIR= ...
 CPPFLAGS = -DSTATIC_CONCPP -I $(MYSQL_CONCPP_DIR)/include
-LDLIBS = $(MYSQL_CONCPP_DIR)/lib64/libmysqlcppconn2-static.a -lpthread
+LDLIBS = $(MYSQL_CONCPP_DIR)/lib64/libmysqlcppconn8-static.a -lpthread
 LINK.o = $(LINK.cc) # use C++ linker
 
 app : app.o
@@ -138,7 +147,7 @@ C++ runtime:
 
 ~~~~~~~
 cc  -DSTATIC_CONCPP -I .../include  -c -o app.o app.c
-g++  -DSTATIC_CONCPP -I .../include  app.o  .../libmysqlcppconn2-static.a -lpthread -o app
+g++  -DSTATIC_CONCPP -I .../include  app.o  .../libmysqlcppconn8-static.a -lpthread -o app
 ~~~~~~~
 
 
@@ -148,7 +157,7 @@ library `libstdc++` as an explicit input to the linker:
 ~~~~~~~
 MYSQL_CONCPP_DIR= ...
 CPPFLAGS = -I $(MYSQL_CONCPP_DIR)/include
-LDLIBS = $(MYSQL_CONCPP_DIR)/lib64/libmysqlcppconn2-static.a -lpthread -lstdc++
+LDLIBS = $(MYSQL_CONCPP_DIR)/lib64/libmysqlcppconn8-static.a -lpthread -lstdc++
 
 app : app.c
 ~~~~~~~
@@ -156,13 +165,36 @@ app : app.c
 With this `Makefile` the compiler is invoked as follows:
 
 ~~~~~~~
-cc  -DSTATIC_CONCPP -I .../include  app.c  .../libmysqlcppconn2-static.a -lpthread -lstdc++ -o app
+cc  -DSTATIC_CONCPP -I .../include  app.c  .../libmysqlcppconn8-static.a -lpthread -lstdc++ -o app
 ~~~~~~~
+
+When linking statically to Connector/C++ that was built with OpenSSL, the
+OpenSSL libraries must be specified to the linker.
+An example `Makefile` C application from sources in `app.c`
+might look like this:
+
+~~~~~~~
+MYSQL_CONCPP_DIR= ...
+CPPFLAGS = -DSTATIC_CONCPP -I $(MYSQL_CONCPP_DIR)/include
+LDLIBS = $(MYSQL_CONCPP_DIR)/lib64/libmysqlcppconn8-static.a -lpthread -lssl -lcrypto
+CXXFLAGS = -std=c++11
+
+app : app.cc
+~~~~~~~
+
+It generates the following compiler invocation:
+~~~~~~~
+g++ -std=c++11 -DSTATIC_CONCPP -I .../include  app.cc  .../lib64/libmysqlcppconn8-static.a -lpthread -lssl -lcrypto -o app
+~~~~~~~
+
+@note In the above case the Connector/C++ static library code is embedded into
+the resulting binary application, but the dynamic linker needs to find OpenSSL
+libraries. It can use OpenSSL that is installed in the system or bundled with
+MySQL packages.
 
 @note Even if the application that uses Connector/C++ is written in plain C, the
 final executable will depend on the C++ runtime which must be installed on the
 target computer on which the application will run.
-
 
 OS X Notes
 ----------
@@ -184,7 +216,7 @@ dependency on `pthread` library on OS X.
 ~~~~~~~
 MYSQL_CONCPP_DIR= ...
 CPPFLAGS = -I $(MYSQL_CONCPP_DIR)/include -L $(MYSQL_CONCPP_DIR)/lib64
-LDLIBS = -lmysqlcppconn2
+LDLIBS = -lmysqlcppconn8
 CXX = clang++ -stdlib=libc++
 CXXFLAGS = -std=c++11
 
@@ -217,18 +249,16 @@ There are separate 32-bit and 64-bit packages, each keeping libraries in
 `lib/` and `lib64/` folder, respectively. The library folder contains two
 versions of the shared library:
 
-- `mysqlcppconn2-vs12.dll` - built with MSVC 2013, compiler version 18.00
-- `mysqlcppconn2-vs14.dll` - built with MSVC 2015, compiler version 19.00
+- `mysqlcppconn8-vs14.dll` - built with MSVC 2015, compiler version 19.00
 
-The corresponding import libraries are in `vs12/` or `vs14/` subfolder
+The corresponding import libraries are in `vs14/` subfolder
 of the library folder:
 
-- `vs12/mysqlcppconn2.lib` - import library for `mysqlcppconn2-vs12.dll`
-- `vs14/mysqlcppconn2.lib` - import library for `mysqlcppconn2-vs14.dll`
+- `vs14/mysqlcppconn8.lib` - import library for `mysqlcppconn8-vs14.dll`
 
 A project which uses the shared connector library must be configured to link
-with the import library `mysqlcppconn2.lib`. The library path should be
-set to `.../vs12` or `.../vs14`, as appropriate for the MSVC version being
+with the import library `mysqlcppconn8.lib`. The library path should be
+set to `.../vs14` or other, as appropriate for the MSVC version being
 used.
 
 @note An application which uses the shared connector library must be able
@@ -238,9 +268,9 @@ the connector DLL in the same location as the executable.
 
 The static library comes in two more flavors, giving the user a choice
 to build his code either with the static (`/MT`) or the dynamic runtime (`/MD`).
-If building code in the `/MT` mode, the `mysqlconcpp2-static-mt.lib` connector
-library should be used. For `/MD` builds the `mysqlconcpp2-static.lib` should
-be used. These libraries are found in either `vs12/` or `vs14/` subfolder, as
+If building code in the `/MT` mode, the `mysqlcppconn8-static-mt.lib` connector
+library should be used. For `/MD` builds the `mysqlcppconn8-static.lib` should
+be used. These libraries are found in `vs14/` ov `vsXX` subfolder, as
 appropriate for the MSVC version being used.
 
 @note The shared library uses dynamic runtime (`/MD`) and the code which uses

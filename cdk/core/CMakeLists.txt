@@ -22,6 +22,8 @@
 
 
 cmake_minimum_required(VERSION 2.8)
+# TODO: Why it is not enough to set it in the top-level CMakeLists.txt?
+cmake_policy(SET CMP0023 OLD)
 
 ADD_SUBDIRECTORY(tests)
 
@@ -34,11 +36,15 @@ if(NOT PROTOBUF_LITE)
   list(APPEND cdk_libs protobuf)
 endif()
 
-if(WITH_SSL STREQUAL "bundled")
-  list(APPEND cdk_libs yassl taocrypt)
-endif()
 
-add_library_ex(cdk STATIC session.cc codec.cc
+SET(cdk_sources
+  session.cc
+  codec.cc
+)
+
+
+add_library_ex(cdk STATIC
+  ${cdk_sources}
   OBJECTS
     ${target_mysqlx}
     ${target_proto_mysqlx}

@@ -24,6 +24,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 CMAKE_POLICY(VERSION 2.8.12)
 cmake_policy(SET CMP0022 NEW)
+cmake_policy(SET CMP0023 OLD)
 
 #
 # Prevent cmake from setting its default value of CMAKE_INSTALL_PREFIX
@@ -38,6 +39,10 @@ PROJECT(MySQL_CONCPP)
 message("Building on system: ${CMAKE_SYSTEM} (${CMAKE_SYSTEM_PROCESSOR})")
 message("Using cmake generator: ${CMAKE_GENERATOR}")
 
+if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
+  set(SUNOS ON CACHE INTERNAL "")
+endif()
+
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   set(IS64BIT 1)
   message("Using 64bit generator")
@@ -45,12 +50,25 @@ else()
   message("Using 32bit genereator")
 endif()
 
+#
+# On Windows, set VS to "vsNN" where NN is the MSVC version.
+#
+
+set(VS)
+if(WIN32)
+  if(MSVC12)
+    set(VS "vs12")
+  elseif(MSVC14)
+    set(VS "vs14")
+  endif()
+endif()
+
+
 include(version.cmake)
 
 
 # Base name for the connector libraries.
 
-#set(LIB_NAME_BASE "mysqlcppconn2")
 set(LIB_NAME_BASE "mysqlcppconn${CONCPP_VERSION_MAJOR}")
 
 #
@@ -67,6 +85,43 @@ LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cdk/cmake)
 
 include(libutils)
+
+#
+# Install settings
+# ================
+#
+
+include(install_layout.cmake)
+
+set(
+  BUNDLE_DEPENDENCIES OFF CACHE BOOLEAN
+  "If enabled, external libraries used by the connector, such as openSSL,
+   will be installed together with the connector library"
+)
+
+#
+#  Default install location
+#
+
+if(NOT CMAKE_INSTALL_PREFIX)
+
+  if(WIN32)
+
+    if(DEFINED ENV{HOMEPATH})
+      string(REPLACE "\\" "/" install_prefix "$ENV{HOMEDRIVE}$ENV{HOMEPATH}")
+    else()
+      set(install_prefix "C:/Program Files (x86)")
+    endif()
+    set(CMAKE_INSTALL_PREFIX "${install_prefix}/MySQL/MySQL Connector C++ ${CONCPP_PACKAGE_BASE_VERSION}")
+
+  else()
+
+    set(CMAKE_INSTALL_PREFIX "/usr/local/mysql/connector-c++-${CONCPP_PACKAGE_BASE_VERSION}")
+
+  endif()
+
+endif()
+
 
 #
 # Compiler settings
@@ -184,6 +239,22 @@ include(gcov)
 
 
 #
+# Linker settings
+# ===============
+#
+
+#
+# Produce rpath dependent libraries on MacOS
+# see: <https://developer.apple.com/library/content/documentation/DeveloperTools/Conceptual/DynamicLibraries/100-Articles/RunpathDependentLibraries.html#//apple_ref/doc/uid/TP40008306-SW1>
+# and: <https://cmake.org/cmake/help/v3.0/prop_tgt/MACOSX_RPATH.html>
+#
+
+if(APPLE)
+  set(CMAKE_MACOSX_RPATH ON)
+endif()
+
+
+#
 # Main project and its dependencies
 # =================================
 #
@@ -260,23 +331,10 @@ SET(WITH_CDK_DOC 0)
 OPTION(WITH_CDK_TESTS "cdk tests" OFF)
 set(WITH_PIC ${CMAKE_POSITION_INDEPENDENT_CODE})
 
-
-if(NOT DEFINED WITH_SSL)
-SET(WITH_SSL "bundled" CACHE STRING "")
-endif()
-
-IF(WITH_SSL)
-  IF(WITH_SSL STREQUAL "bundled")
-    ADD_DEFINITIONS(-DWITH_SSL_YASSL)
-  ENDIF()
-  ADD_DEFINITIONS(-DWITH_SSL)
-ENDIF()
-
-
-
 ADD_SUBDIRECTORY(cdk)
 INCLUDE_DIRECTORIES(${CDK_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(cdk/parser)
+
 
 #
 # Unit tests framework
@@ -353,7 +411,8 @@ ADD_SUBDIRECTORY(devapi)
 add_library_ex(libconcpp ${LIB_TYPE}
     ${WITH_UUID}/src/uuid_gen.cc
     OBJECTS xapi devapi common
-    LIBS    cdk
+    LIBS
+    cdk
 )
 
 target_include_directories(libconcpp PRIVATE "${WITH_UUID}/include")
@@ -364,6 +423,39 @@ if(MSVC)
   set_source_files_properties(${WITH_UUID}/src/uuid_gen.cc
     PROPERTIES COMPILE_FLAGS "/wd4244 /wd4311 /wd4302"
   )
+endif()
+
+#
+# Embed rpath information in the connector library.
+#
+
+set_property(TARGET libconcpp PROPERTY BUILD_WITH_INSTALL_RPATH ON)
+
+# The $ORIGIN/@loader_path entry tells to look for dependent libraries in the
+# location where our connector library is stored.
+
+if(APPLE)
+  set_property(TARGET libconcpp APPEND PROPERTY INSTALL_RPATH "@loader_path")
+elseif(NOT WIN32)
+  set_property(TARGET libconcpp APPEND PROPERTY INSTALL_RPATH "$ORIGIN")
+endif()
+
+
+if(0)
+#
+#  Add command to list rpath information
+#
+
+if(APPLE)
+  set(list_rpath_cmd otool -l $<TARGET_FILE:libconcpp> "|" grep RPATH -A2)
+elseif(NOT WIN32)
+  set(list_rpath_cmd objdump -x $<TARGET_FILE:libconcpp> "|" grep RPATH -A2)
+endif()
+
+add_custom_command(TARGET libconcpp POST_BUILD
+  COMMAND ${list_rpath_cmd}
+  COMMENT "RPATH setting"
+)
 endif()
 
 
@@ -383,15 +475,6 @@ endif()
 # below). For static libraries, we add -mt suffix if it is linked with
 # static runtime.
 #
-
-set(VS)
-if(WIN32)
-  if(MSVC12)
-    set(VS "vs12")
-  elseif(MSVC14)
-    set(VS "vs14")
-  endif()
-endif()
 
 if(BUILD_STATIC)
 
@@ -422,59 +505,19 @@ set_target_properties(libconcpp PROPERTIES
   SOVERSION "${API_VERSION_MAJOR}"
 )
 
-#
-# Pick install location for the main library
-# ------------------------------------------
-#
-# On Windows the install layout is as follows, where NN is the MSVC version
-# used to build the connector:
-#
-#  {lib,lib64}/mysqlcppconnX-vsNN.dll              <-- shared library
-#  {lib,lib64}/vsNN/mysqlcppconnX-static.lib       <-- static with /MD
-#  {lib,lib64}/vsNN/mysqlcppconnX-static-mt.lib    <-- static with /MT
-#  {lib,lib64}/vsNN/mysqlcppconnX.lib              <-- import library for DLL
-#
-# On Linux it is as follows, where A.B is the API version number
-#
-#  {lib,lib64}/libmysqlcppconnX.so.A.B             <-- shared library
-#  {lib,lib64}/libmysqlcppconnX.so.A               <-- soname link
-#  {lib,lib64}/libmysqlcppconnX.so                 <-- development link
-#  {lib,lib64}/libmysqlcppconnX-static.a           <-- static library
-#
-# Additionally, if connector is built in debug mode, the libraries are installed
-# in debug/ subfolder of {lib,lib64}/ or {lib,lib64}/vsNN/.
-#
-
-set(LIB_DIR "" CACHE PATH "Library install location (relative to install root)")
-
-if(NOT LIB_DIR)
-  if(IS64BIT)
-    set(LIB_DIR "lib64")
-  else()
-    set(LIB_DIR "lib")
-  endif()
-endif()
-
-message("Connector library will be installed at: ${LIB_DIR}")
-
-set(LIB_DIR_STATIC "${LIB_DIR}")
-if(VS)
-  set(LIB_DIR_STATIC "${LIB_DIR_STATIC}/${VS}")
-endif()
-
 
 install(TARGETS libconcpp
   CONFIGURATIONS Release RelWithDebInfo
-  ARCHIVE DESTINATION "${LIB_DIR_STATIC}"
-  RUNTIME DESTINATION "${LIB_DIR}"
-  LIBRARY DESTINATION "${LIB_DIR}"
+  ARCHIVE DESTINATION "${INSTALL_LIB_DIR_STATIC}"
+  RUNTIME DESTINATION "${INSTALL_LIB_DIR}"
+  LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
 )
 
 install(TARGETS libconcpp
   CONFIGURATIONS Debug
-  ARCHIVE DESTINATION "${LIB_DIR_STATIC}/debug"
-  RUNTIME DESTINATION "${LIB_DIR}/debug"
-  LIBRARY DESTINATION "${LIB_DIR}/debug"
+  ARCHIVE DESTINATION "${INSTALL_LIB_DIR_STATIC}/debug"
+  RUNTIME DESTINATION "${INSTALL_LIB_DIR}/debug"
+  LIBRARY DESTINATION "${INSTALL_LIB_DIR}/debug"
 )
 
 
@@ -482,7 +525,6 @@ install(TARGETS libconcpp
 # Tests
 # =====
 #
-
 
 remove_definitions(-DCONCPP_BUILD_STATIC)
 remove_definitions(-DCONCPP_BUILD_SHARED)
@@ -540,14 +582,15 @@ endif()
 
 #
 # Linking test
+# ------------
 #
-# This test compiles test application using internall installation of built
+# This test compiles test application using internal installation of built
 # connector. It is important to work with installed files because otherwise
-# cmake does its magic to resolve missing dependencies when buiding test code.
+# cmake does its magic to resolve missing dependencies when building test code.
 # We don't want this to happen to make sure that test code can be built with
 # connector library only, as we distribute it.
 #
-# Note: internall installation into <binary_dir>/install is done by directly
+# Note: internal installation into <binary_dir>/install is done by directly
 # executing cmake_install.cmake script which is generated by cmake.
 #
 # TODO: Also test dynamic linking (requires adopting test app project)
@@ -567,6 +610,7 @@ add_custom_target(link_test
   COMMAND ${CMAKE_COMMAND}
     -G "${CMAKE_GENERATOR}"
     -D WITH_CONCPP=${PROJECT_BINARY_DIR}/install
+    -D WITH_SSL="${WITH_SSL}"
     -D BUILD_STATIC=${BUILD_STATIC}
     -D STATIC_MSVCRT=${STATIC_MSVCRT}
     ${PROJECT_SOURCE_DIR}/testapp
@@ -587,26 +631,8 @@ add_test(NAME Link_test
 # ========================
 #
 
-if(NOT CMAKE_INSTALL_PREFIX)
-
-  if(WIN32)
-
-    if(DEFINED ENV{HOMEPATH})
-      string(REPLACE "\\" "/" install_prefix "$ENV{HOMEDRIVE}$ENV{HOMEPATH}")
-    else()
-      set(install_prefix "C:/Program Files (x86)")
-    endif()
-    set(CMAKE_INSTALL_PREFIX "${install_prefix}/MySQL/MySQL Connector C++ ${CONCPP_PACKAGE_BASE_VERSION}")
-
-  else()
-
-    set(CMAKE_INSTALL_PREFIX "/usr/local/mysql/connector-c++-${CONCPP_PACKAGE_BASE_VERSION}")
-
-  endif()
-
-endif()
-
 message("Install location: ${CMAKE_INSTALL_PREFIX}")
+message("Connector library will be installed at: ${INSTALL_LIB_DIR}")
 
 option(WITH_PACKAGES "Configure for building binary/source packages" OFF)
 if(WITH_PACKAGES)

@@ -20,6 +20,7 @@
 #ifndef _AUTH_MYSQL41_H_
 #define _AUTH_MYSQL41_H_
 
+#include <mysql/cdk/config.h>
 #include <string>
 
 namespace mysqlx

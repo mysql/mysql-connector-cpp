@@ -49,6 +49,17 @@ else()
 endif()
 
 
+set(WITH_SSL $ENV{WITH_SSL} CACHE STRING
+ "\"no\" = connector built without SSL support,"
+ "\"bundled\" = connector with built-in SSL support,"
+ " any other value or not set implies that connector is using shared OpenSSL libraries."
+)
+
+if(NOT DEFINED WITH_SSL)
+ set(WITH_SSL "system")
+endif()
+
+
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   set(IS64BIT 1)
   message("Generationg 64bit code")
@@ -142,9 +153,8 @@ endif()
 
 
 #
-# Copy shared library to a pre-defined location where also the executable
-# will be built. This is necessary for Windows to find the DLL when running
-# the executable.
+# Copy shared libraries to a pre-defined location where also the executable
+# will be built. This is necessary for finding the libraries at run-time.
 #
 
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/run)
@@ -154,44 +164,31 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY run)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE run)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG run/debug)
 
-if(NOT BUILD_STATIC)
 
-  set(libconcpp_name_shared mysqlcppconn8)
-  if(VS)
-    set(libconcpp_name_shared "${libconcpp_name_shared}-${VS}")
-  endif()
+file(
+  GLOB shared_libs "${LIB_PATH}/*${CMAKE_SHARED_LIBRARY_SUFFIX}"
+)
+message("copying libs to run location: ${shared_libs}")
 
-  set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_SHARED_LIBRARY_SUFFIX})
+file(COPY ${shared_libs} DESTINATION "${PROJECT_BINARY_DIR}/run")
+file(COPY ${shared_libs} DESTINATION "${PROJECT_BINARY_DIR}/run/debug")
 
-  find_library(CONCPP_LIB_SHARED NAMES ${libconcpp_name_shared}
-    PATHS "${LIB_PATH}"
-    NO_DEFAULT_PATH
-  )
-
-  find_library(CONCPP_LIB_SHARED_DEBUG NAMES ${libconcpp_name_shared}
-    PATHS "${LIB_PATH}/debug"
-    NO_DEFAULT_PATH
-  )
-
-  if(NOT CONCPP_LIB_SHARED AND NOT CONCPP_LIB_SHARED_DEBUG)
-    message(FATAL_ERROR
-      "Could not find MySQL Connector/C++ 8.0 shared library ${libconcpp_name_shared} at specified"
-      " location: ${LIB_PATH}"
-    )
-  endif()
+file(
+  GLOB shared_libs_debug "${LIB_PATH}/debug/*${CMAKE_SHARED_LIBRARY_SUFFIX}"
+)
+if(shared_libs_debug)
+  message("copying debug libs to run location: ${shared_libs_debug}")
+  file(COPY ${shared_libs_debug} DESTINATION "${PROJECT_BINARY_DIR}/run/debug")
+endif()
 
 
-  if(CONCPP_LIB_SHARED)
-    message("Copying shared library: ${CONCPP_LIB_SHARED}")
-    file(COPY "${CONCPP_LIB_SHARED}" DESTINATION ${PROJECT_BINARY_DIR}/run)
-  endif()
+#
+# Note: Adding this so that bundled libraries such as openSSL can be found
+# at link time in# case they are not installed on the system.
+#
 
-  if(CONCPP_LIB_SHARED_DEBUG)
-    message("Copying debug shared library: ${CONCPP_LIB_SHARED_DEBUG}")
-    file(COPY "${CONCPP_LIB_SHARED_DEBUG}" DESTINATION ${PROJECT_BINARY_DIR}/run/debug)
-  endif()
+link_directories(${LIB_PATH_STATIC})
 
-endif(NOT BUILD_STATIC)
 
 #
 # Connector/C++ requires pthread library on Unix.
@@ -207,6 +204,15 @@ ENDIF()
 
 if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
   list(APPEND CONCPP_LIBS socket nsl)
+endif()
+
+#
+# If building statically and connector uses OpenSSL libraries, we need to
+# link to them too (however, no need to do it on Windows).
+#
+
+if(NOT WIN32 AND BUILD_STATIC AND WITH_SSL AND NOT (WITH_SSL STREQUAL "bundled"))
+  list(APPEND CONCPP_LIBS ssl crypto)
 endif()
 
 #
@@ -252,7 +258,6 @@ ENDIF()
 INCLUDE_DIRECTORIES(${CONCPLS_INCLUDES})
 
 ADD_EXECUTABLE(devapi_test devapi_test.cc)
-
 TARGET_LINK_LIBRARIES(devapi_test ${CONCPP_LIBS})
 
 # To use DevAPI we must enable C++11

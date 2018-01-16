@@ -7,12 +7,15 @@ To build Connector/C++, the following tools and libraries are required:
 
 - A C++ compiler that supports C++11. In case of gcc it must be at least
   version 4.8. These compilers have been tested: gcc 4.8.4, clang 7.3.0,
-  MS Visual Studio 2013, MS Visual Studio 2015.
+  MS Visual Studio 2015.
 
 - CMake 2.8.11 or later.
 
-- Boost library version 1.55 or higher. Tested with Boost 1.56.
-  For MS Visual Studio 2015 Boost version 1.59 or higher is required.
+- OpenSSL version 1.0.x if connector is built with OpenSSL.
+
+@note: On some platforms Boost libraries are needed to build the connector.
+       Boost version 1.55 or higher is required (for MS Visual Studio 
+       version 1.59 or higher).
 
 Build configuration
 -------------------
@@ -23,8 +26,9 @@ Only out-of-source builds are supported. To configure a build, execute
 $ cmake <Connector/C++ source location>
 ~~~~~~~
 
-If `cmake` can not find the required Boost version, or if it is installed
-in a non-standard location, specify the correct location using the option:
+If Boost libraries are used and `cmake` can not find the required Boost
+version, or if it is installed in a non-standard location, specify the
+correct location using the option:
 
 - `-DWITH_BOOST=<Boost location>`
 
@@ -40,6 +44,24 @@ By default a shared library is built. To build a static library, use the option:
 
 - `-DBUILD_STATIC=yes`
 
+Configuring SSL libraries
+-------------------------
+Connector/C++ can be built with different SSL libraries.
+Use `-DWITH_SSL=<Option value>' to specify the desired SSL build type:
+
+- bundled   - build with bundled YaSSL code
+- system    - build with external openSSL library installed on the system, the 
+              library location is detected by cmake.
+- <path>    - build with external openSSL library installed at specified 
+              location.
+
+@note when Connector/C++ is configured to be built to use OpenSSL it will make
+      the connector library dependent on shared OpenSSL libraries.
+      When linking Connector/C++ dynamically, this dependency is relevant
+      only at run time. However, when linking statically to the connector
+      library the OpenSSL libraries should be explicitly linked too. In Linux
+      it means adding -lssl -lcrypto to the compile/link command.
+      In Windows this is handled automatically.
 
 Building and testing
 --------------------
@@ -62,19 +84,19 @@ It is also possible to omit the `--config CCC` option in which case the default
 After a successful build, the build location should contain
 the Connector/C++ shared library:
 
-- `libmysqlcppconn2.so.1.0` on Unix
-- `libmysqlcppconn2.1.0.dylib` on OS X
-- `CCC/mysqlcppconn2-vsXX.dll` on Windows, where `-vs12` or `-vs14` prefix
+- `libmysqlcppconn8.so.1.0` on Unix
+- `libmysqlcppconn8.1.0.dylib` on OS X
+- `CCC/mysqlcppconn8-vsXX.dll` on Windows, where `-vs12` or `-vs14` prefix
   depends on the MSVC version used to build the connector
 
 On Unix and OS X also appropriate symbolic links are created. On Windows the
-import library for the DLL is created at `CCC/mysqlcppconn2.lib` (the `CCC/`
+import library for the DLL is created at `CCC/mysqlcppconn8.lib` (the `CCC/`
 subdirectory is named the same as the build configuration used).
 
 In the case of a static library build, the output library names are:
 
-- `libmysqlcppconn2-static.a` on Unix and OS X
-- `CCC/mysqlcppconn2-static.lib` on Windows
+- `libmysqlcppconn8-static.a` on Unix and OS X
+- `CCC/mysqlcppconn8-static.lib` on Windows
 
 
 ### Testing
@@ -117,8 +139,8 @@ subdirectory of the build location.
   must be added to the build configuration of test programs.
 
 @note
-  The 32/64-bit Windows `cmake` generator (`"Visual Studio 12 2013 Win64"` vs
-  `"Visual Studio 12 2013"`) used to build test applications must match
+  The 32/64-bit Windows `cmake` generator (`"Visual Studio 14 2015 Win64"` vs
+  `"Visual Studio 14 2015"`) used to build test applications must match
   the one used to build the connector.
 
 Before running test programs, ensure that a MySQL Server instance is running
@@ -212,8 +234,8 @@ On Windows one can request that Connector/C++ uses the static runtime library
 This might be necessary if code which uses Connector/C++ also uses the static
 runtime.
 
-Selecting a cmake generator such as `"Visual Studio 12 2013 Win64"` vs
-`"Visual Studio 12 2013"` selects the 64 or 32 bit platform for which
+Selecting a cmake generator such as `"Visual Studio 14 2015 Win64"` vs
+`"Visual Studio 14 2015"` selects the 64 or 32 bit platform for which
 the connector is built. An application which uses Connector/C++ must
 be built for the same platform as the connector.
 
