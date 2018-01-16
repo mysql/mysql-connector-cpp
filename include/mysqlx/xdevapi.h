@@ -1225,7 +1225,7 @@ public:
   }
 
   /**
-    Rollback opened transaction, if any.
+    Roll back opened transaction, if any.
 
     Does nothing if no transaction was opened. Transaction which was
     rolled back is closed. To start a new transaction a call to
@@ -1239,6 +1239,89 @@ public:
     }
     CATCH_AND_WRAP
   }
+
+  /**
+    Roll back opened transaction to specified savepoint.
+
+    It rolls back to savepoint, but transaction remains active.
+    Does nothing if no transaction was opened.
+
+    @throws Error If savepoint doesn't exist or is empty.
+  */
+
+  void rollbackTo(const string &savepoint)
+  {
+    try {
+      if (savepoint.empty())
+        throw_error("Invalid empty save point name");
+      Session_detail::rollback(savepoint);
+    }
+    CATCH_AND_WRAP
+  }
+
+
+  /**
+    Sets a named transaction savepoint with a name as
+    identifier.
+
+    To use savepoints a transaction has to be started using startTransaction().
+
+    @returns string with savepoint name.
+
+    @note If the current transaction has a savepoint with the same name,
+    the old savepoint is deleted and a new one is set.
+  */
+
+  string setSavepoint(const string &savepoint)
+  {
+    try {
+      if (savepoint.empty())
+        throw_error("Invalid empty save point name");
+      return Session_detail::savepoint_set(savepoint);
+    }
+    CATCH_AND_WRAP
+  }
+
+
+  /**
+    Creats a transaction savepoint with a generated name as
+    identifier.
+
+    To use savepoints a transaction has to be started using startTransaction().
+
+    @returns string with generated savepoint name.
+
+    @note If the current transaction has a savepoint with the same name,
+    the old savepoint is deleted and a new one is set.
+  */
+
+  string setSavepoint()
+  {
+    try {
+      return Session_detail::savepoint_set();
+    }
+    CATCH_AND_WRAP
+  }
+
+
+  /**
+    Releases savepoint previously added by setSavepoint().
+
+    @note Releasing savepoint doesn't affect data.
+
+    @throws Error If savepoint doesn't exist.
+  */
+
+  void releaseSavepoint(const string &savepoint)
+  {
+    try {
+      if (savepoint.empty())
+        throw_error("Invalid empty save point name");
+      Session_detail::savepoint_remove(savepoint);
+    }
+    CATCH_AND_WRAP
+  }
+
 
   /**
     Close this session.

@@ -317,7 +317,9 @@ protected:
 
   void start_transaction();
   void commit();
-  void rollback();
+  void rollback(const string &sp = string());
+  string savepoint_set(const string &sp = string());
+  void savepoint_remove(const string&);
 
 
   common::Session_impl& get_impl()

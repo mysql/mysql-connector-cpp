@@ -167,8 +167,12 @@ protected:
     const char *xplugin_pwd = pwd ? pwd : m_xplugin_pwd;
     const char *xplugin_host = m_xplugin_host;
 
-    m_sess = mysqlx_get_session(xplugin_host, m_port, xplugin_usr, xplugin_pwd, db,
-                                conn_error, &conn_err_code);
+    m_sess = mysqlx_get_session(
+      xplugin_host, m_port,
+      xplugin_usr, xplugin_pwd,
+      nullptr,
+      conn_error, &conn_err_code
+    );
 
     if (!m_sess)
     {
@@ -176,6 +180,15 @@ protected:
              " ERROR CODE: " << conn_err_code;
     }
     cout << "Connected to xplugin..." << endl;
+
+    if (db)
+    {
+      // Drop and re-create schema to clean it up.
+      mysqlx_schema_drop(m_sess, db);
+      mysqlx_schema_create(m_sess, db);
+      string use = string("USE `") + db + "`";
+      exec_sql(use.c_str());
+    }
   }
 
 

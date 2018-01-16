@@ -114,11 +114,35 @@ void mysqlx_session_struct::transaction_commit()
   stmt.execute();
 }
 
-void mysqlx_session_struct::transaction_rollback()
+void mysqlx_session_struct::transaction_rollback(const char *sp)
 {
-  stmt_traits<OP_TRX_ROLLBACK>::Impl stmt(m_impl);
+  stmt_traits<OP_TRX_ROLLBACK>::Impl stmt(
+    m_impl,
+    sp ? string(sp) : string()
+  );
   stmt.execute();
 }
+
+const char * mysqlx_session_struct::savepoint_set(const char *sp)
+{
+  stmt_traits<OP_TRX_SAVEPOINT_SET>::Impl stmt(
+    m_impl,
+    sp ? string(sp) : string()
+  );
+
+  stmt.execute();
+  m_savepoint_name = stmt.get_name();
+  return m_savepoint_name.c_str();
+}
+
+void mysqlx_session_struct::savepoint_remove(const char *sp)
+{
+  if (!sp || !sp[0])
+    throw_error("Invalid empty save point name");
+  stmt_traits<OP_TRX_SAVEPOINT_RM>::Impl stmt(m_impl, string(sp));
+  stmt.execute();
+}
+
 
 
 using cdk::foundation::connection::TLS;

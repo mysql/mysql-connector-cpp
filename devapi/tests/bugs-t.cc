@@ -109,3 +109,28 @@ TEST_F(Bugs, bug26130226_crash_update)
     tabNew.update().set((char *)0, expr("")).execute(), // SegFault
     Error);
 }
+
+TEST_F(Bugs, bug_26962725_double_bind)
+{
+  get_sess().dropSchema("bug_26962725_double_bind");
+  Schema db = get_sess().createSchema("bug_26962725_double_bind");
+  /// Collection.find() function with fixed values
+
+  db.dropCollection("my_collection");
+  Collection myColl = db.createCollection("my_collection");
+
+  myColl.add(R"({"name":"mike", "age":39})")
+        .add(R"({"name":"johannes", "age":28})")
+        .execute();
+
+  EXPECT_EQ(2, myColl.find().execute().count());
+
+  // Create Collection.remove() operation, but do not run it yet
+  auto myRemove = myColl.remove("name = :param1 AND age = :param2");
+
+  // Binding parameters to the prepared function and .execute()
+  myRemove.bind("param1", "mike").bind("param2", 39).execute();
+  myRemove.bind("param1", "johannes").bind("param2", 28).execute();
+
+  EXPECT_EQ(0, myColl.find().execute().count());
+}

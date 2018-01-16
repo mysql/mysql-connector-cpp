@@ -1230,6 +1230,51 @@ TEST_F(xapi, transaction_test)
     EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &a));
     EXPECT_EQ(200, a);
   }
+
+  // Savepoints
+
+  std::vector<string> savepoints;
+
+  EXPECT_EQ(RESULT_OK, mysqlx_transaction_begin(get_session()));
+  SESS_CHECK(res = mysqlx_table_insert(table, "a", PARAM_SINT(500), PARAM_END));
+  savepoints.emplace_back(mysqlx_savepoint_set(get_session(), NULL)); //savepoints[0]
+  SESS_CHECK(res = mysqlx_table_insert(table, "a", PARAM_SINT(600), PARAM_END));
+  savepoints.emplace_back(mysqlx_savepoint_set(get_session(), NULL)); //savepoints[1]
+  SESS_CHECK(res = mysqlx_table_insert(table, "a", PARAM_SINT(700), PARAM_END));
+  savepoints.emplace_back(mysqlx_savepoint_set(get_session(), NULL)); //savepoints[2]
+  SESS_CHECK(res = mysqlx_table_insert(table, "a", PARAM_SINT(800), PARAM_END));
+  savepoints.emplace_back(mysqlx_savepoint_set(get_session(), "MySave")); //savepoints[3]
+
+
+  EXPECT_EQ(RESULT_OK, mysqlx_savepoint_release(get_session(), "MySave"));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_savepoint_release(get_session(),
+                                                   savepoints.back().c_str()));
+  savepoints.pop_back();
+  // rollback to a=600
+  EXPECT_EQ(RESULT_OK, mysqlx_rollback_to(get_session(),
+                                          savepoints[1].c_str()));
+  //savepoint of a=700 was removed because of the rollback to a=600
+  EXPECT_EQ(RESULT_ERROR, mysqlx_rollback_to(get_session(),
+                                             savepoints[2].c_str()));
+  EXPECT_EQ(RESULT_ERROR, mysqlx_rollback_to(get_session(),""));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_rollback_to(get_session(),
+                                             savepoints.front().c_str()));
+
+  EXPECT_EQ(RESULT_OK, mysqlx_transaction_commit(get_session()));
+
+  SESS_CHECK(res = mysqlx_table_select(table, "a > 0"));
+
+  int i = 0;
+  for(auto row = mysqlx_row_fetch_one(res);
+      row;
+      row = mysqlx_row_fetch_one(res),++i)
+  {
+    int64_t a = 0;
+    EXPECT_EQ(RESULT_OK, mysqlx_get_sint(row, 0, &a));
+    EXPECT_EQ(i == 0 ? 200 : 500, a);
+  }
+
 }
 
 

@@ -1558,13 +1558,45 @@ int STDCALL mysqlx_transaction_commit(mysqlx_session_struct *sess)
 int STDCALL mysqlx_transaction_rollback(mysqlx_session_struct *sess)
 {
   SAFE_EXCEPTION_BEGIN(sess, RESULT_ERROR)
-  sess->transaction_rollback();
+  sess->transaction_rollback(nullptr);
   return RESULT_OK;
   SAFE_EXCEPTION_END(sess, RESULT_ERROR)
 }
 
 
-const char * STDCALL
+const char* STDCALL
+mysqlx_savepoint_set(mysqlx_session_t *sess, const char *name)
+{
+  SAFE_EXCEPTION_BEGIN(sess, NULL)
+  return sess->savepoint_set(name);
+  SAFE_EXCEPTION_END(sess, NULL)
+}
+
+int STDCALL
+mysqlx_savepoint_release(mysqlx_session_t *sess, const char *name)
+{
+  SAFE_EXCEPTION_BEGIN(sess, RESULT_ERROR)
+  sess->savepoint_remove(name);
+  return RESULT_OK;
+  SAFE_EXCEPTION_END(sess, RESULT_ERROR)
+}
+
+ int STDCALL
+ mysqlx_rollback_to(mysqlx_session_t *sess, const char *name)
+ {
+   SAFE_EXCEPTION_BEGIN(sess, RESULT_ERROR)
+   if (name == NULL || strlen(name) == 0)
+   {
+     sess->set_diagnostic("Invalid save point name", 0);
+     return RESULT_ERROR;
+   }
+   sess->transaction_rollback(name);
+   return RESULT_OK;
+   SAFE_EXCEPTION_END(sess, RESULT_ERROR)
+ }
+
+
+ const char * STDCALL
 mysqlx_fetch_doc_id(mysqlx_result_struct *result)
 {
   SAFE_EXCEPTION_BEGIN(result, NULL)

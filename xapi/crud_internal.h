@@ -222,6 +222,18 @@ struct stmt_traits<OP_TRX_ROLLBACK>
   using Impl = common::Op_trx<common::Trx_op::ROLLBACK>;
 };
 
+template<>
+struct stmt_traits<OP_TRX_SAVEPOINT_SET>
+{
+  using Impl = common::Op_trx<common::Trx_op::SAVEPOINT_SET>;
+};
+
+template<>
+struct stmt_traits<OP_TRX_SAVEPOINT_RM>
+{
+  using Impl = common::Op_trx<common::Trx_op::SAVEPOINT_REMOVE>;
+};
+
 
 template<>
 struct stmt_traits<OP_SELECT>

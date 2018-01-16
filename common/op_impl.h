@@ -1042,7 +1042,9 @@ struct Op_admin
   They are implemented as Op_trx template parametrized by operation type.
 */
 
-enum class Trx_op { BEGIN, COMMIT, ROLLBACK };
+enum class Trx_op {
+  BEGIN, COMMIT, ROLLBACK, SAVEPOINT_SET, SAVEPOINT_REMOVE
+};
 
 
 template <Trx_op>
@@ -1078,13 +1080,96 @@ cdk::Reply* Op_trx<Trx_op::COMMIT>::send_command()
   return nullptr;
 }
 
-template<>
-inline
-cdk::Reply* Op_trx<Trx_op::ROLLBACK>::send_command()
+
+struct Op_trx_savepoint
+  : public Op_base<common::Executable_if>
 {
-  get_cdk_session().rollback();
-  return nullptr;
-}
+  using string = cdk::string;
+
+  string m_name;
+
+  Op_trx_savepoint(Shared_session_impl sess, const string &name = string())
+    : Op_base(sess), m_name(name)
+  {}
+};
+
+
+template<>
+struct Op_trx<Trx_op::ROLLBACK>
+  : public Op_trx_savepoint
+{
+  using Op_trx_savepoint::Op_trx_savepoint;
+
+  cdk::Reply* send_command() override
+  {
+    get_cdk_session().rollback(m_name);
+    return nullptr;
+  }
+
+  Executable_if* clone() const override
+  {
+    return new Op_trx(*this);
+  }
+};
+
+
+template<>
+struct Op_trx<Trx_op::SAVEPOINT_SET>
+  : public Op_trx_savepoint
+{
+  Op_trx(Shared_session_impl sess, const string &name)
+    : Op_trx_savepoint(sess, name)
+  {
+    if (!name.empty())
+      return;
+
+    // Generate savepoint name.
+
+    std::wstringstream savepoint;
+    savepoint << L"SP" << sess->next_savepoint();
+    m_name = savepoint.str();
+  }
+
+  cdk::Reply* send_command() override
+  {
+    get_cdk_session().savepoint_set(m_name);
+    return nullptr;
+  }
+
+  const string& get_name() const
+  {
+    return m_name;
+  }
+
+  Executable_if* clone() const override
+  {
+    return new Op_trx(*this);
+  }
+};
+
+
+template<>
+struct Op_trx<Trx_op::SAVEPOINT_REMOVE>
+  : public Op_trx_savepoint
+{
+  Op_trx(Shared_session_impl sess, const string &name)
+    : Op_trx_savepoint(sess, name)
+  {
+    if (name.empty())
+      throw_error("Invalid empty save point name");
+  }
+
+  cdk::Reply* send_command() override
+  {
+    get_cdk_session().savepoint_remove(m_name);
+    return nullptr;
+  }
+
+  Executable_if* clone() const override
+  {
+    return new Op_trx(*this);
+  }
+};
 
 
 // ----------------------------------------------------------------------
