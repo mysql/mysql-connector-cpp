@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/C++ is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -20,14 +20,14 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-# The files in protobuf-2.6.0/ are unmodified versions of google source files.
+# The files in protobuf-2.6.1/ are unmodified versions of google source files.
 # To save some space and time, we have remove directories which are not
 # needed by MySQL:
-#   protobuf-2.6.0/gtest/
-#   protobuf-2.6.0/java/
-#   protobuf-2.6.0/python/
-#   protobuf-2.6.0/m4/
-#   protobuf-2.6.0/vsprojects/
+#   protobuf-2.6.1/gtest/
+#   protobuf-2.6.1/java/
+#   protobuf-2.6.1/python/
+#   protobuf-2.6.1/m4/
+#   protobuf-2.6.1/vsprojects/
 
 cmake_minimum_required(VERSION 2.8)
 PROJECT(Protobuf)
@@ -37,7 +37,7 @@ PROJECT(Protobuf)
 # TODO: Put some meaningful configuration there.
 #
 
-file(WRITE ${PROJECT_BINARY_DIR}/config.h)
+file(WRITE ${PROJECT_BINARY_DIR}/config.h "\n")
 
 #
 # Do not export any symbols
@@ -48,6 +48,37 @@ file(WRITE ${PROJECT_BINARY_DIR}/config.h)
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-fvisibility=hidden)
 endif()
+
+
+#
+# Solaris compile and link settings
+#
+
+if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
+
+  add_definitions(-DSOLARIS_64BIT_ENABLED)
+
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "sparc")
+    add_definitions(-DGOOGLE_PROTOBUF_ARCH_SPARC)
+  endif()
+
+  add_compile_options(
+    -m64 -std=c++11
+    -xbuiltin=%all
+    -xlibmil
+    -xatomic=studio
+  )
+
+  foreach(type EXE SHARED MODULE)
+
+    set(CMAKE_${type}_LINKER_FLAGS
+      "-m64 -std=c++11 -lstdc++ -xatomic=studio -lCrunG3 -lgcc_s -lc"
+    )
+
+  endforeach()
+
+endif()
+
 
 #
 # Configure static runtime library on Windows if requested
@@ -99,6 +130,7 @@ IF(UNIX)
   list(APPEND warnings_list "-Wno-ignored-qualifiers")
   list(APPEND warnings_list "-Wno-return-type")
   list(APPEND warnings_list "-Wno-unused-function")
+  list(APPEND warnings_list "-Wno-unused-local-typedefs")
 
   if(APPLE)
 
@@ -110,11 +142,23 @@ IF(UNIX)
 
   endif()
 
-  IF(CMAKE_COMPILER_IS_GNUCXX)
+  if(CMAKE_COMPILER_IS_GNUCXX)
+
     list(APPEND warnings_list "-Wno-unused-local-typedefs")
     list(APPEND warnings_list "-Wno-maybe-uninitialized")
     list(APPEND warnings_list "-Wno-unused-but-set-parameter")
-  ENDIF()
+
+  elseif(CMAKE_SYSTEM_NAME MATCHES "SunOS")
+
+    # Option -erroff disables only warnings, actually. This option requires
+    # a warning tag, which is printed if -errtags option is enabled.
+
+    add_compile_options(
+      -errtags=yes
+      -erroff=anonnotype
+    )
+
+  endif()
 
 ELSE(WIN32)
 
@@ -129,8 +173,7 @@ ELSE(WIN32)
 
 ENDIF()
 
-string(REPLACE ";" " " warning_options "${warnings_list}")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${warning_options}")
+add_compile_options(${warnings_list})
 
 
 #
@@ -139,7 +182,7 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${warning_options}")
 
 
 SET(PROTO_SRC_DIR
-  "${PROJECT_SOURCE_DIR}/protobuf-2.6.0/src")
+  "${PROJECT_SOURCE_DIR}/protobuf-2.6.1/src")
 
 set(build_stamp "${PROJECT_BINARY_DIR}/build.stamp")
 
