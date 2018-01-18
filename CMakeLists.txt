@@ -31,7 +31,16 @@ IF(COMMAND cmake_policy AND POLICY CMP0015)
   cmake_policy(SET CMP0015 NEW)
 ENDIF(COMMAND cmake_policy AND POLICY CMP0015)
 
-INCLUDE(VersionInfo.cmake)
+if(NOT EXISTS "${PROJECT_BINARY_DIR}/VersionInfo.cmake")
+  message(FATAL_ERROR
+    "Could not find generated version info file (VersionInfo.cmake in"
+    " the build location). Normally this file is generated when legacy"
+    " connector build is configured during main connector build"
+    " configuration. See file jdbc.cmake in the base directory."
+  )
+endif()
+
+INCLUDE("${PROJECT_BINARY_DIR}/VersionInfo.cmake")
 
 #
 # If either ENABLE_BUILD_DYNAMIC or ENABLE_BUILD_STATIC are defined, they
