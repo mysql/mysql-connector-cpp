@@ -62,8 +62,23 @@ else()
   message("Using dynamic runtime library.")
 endif()
 
+#
+# If connector was built with OpenSSL then WITH_SSL should be set accordingly
+# and we need to take care of the dependency on the OpenSSL libraries
+# (see below).
+#
 
-#message("sizeof void*: ${CMAKE_SIZEOF_VOID_P}")
+set(WITH_SSL $ENV{WITH_SSL} CACHE STRING
+ "\"no\" = connector built without SSL support,"
+ "\"bundled\" = connector with built-in SSL support,"
+ " any other value or not set implies that connector is using shared OpenSSL libraries."
+)
+
+if(NOT DEFINED WITH_SSL)
+ set(WITH_SSL "system")
+endif()
+
+
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   set(IS64BIT 1)
   message("Generationg 64bit code")
@@ -85,7 +100,7 @@ set(CONCPP_INCLUDES "${WITH_CONCPP}/include")
 if(NOT EXISTS "${CONCPP_INCLUDES}/mysqlx/xdevapi.h")
   message(FATAL_ERROR
     "Could not find MySQL Connector/C++ 8.0 headers at specified"
-    " location: ${CONCPLS_INCLUDES}"
+    " location: ${CONCPP_INCLUDES}"
   )
 endif()
 
@@ -101,6 +116,15 @@ if(VS)
    set(LIB_PATH_STATIC "${LIB_PATH_STATIC}/${VS}")
 endif()
 
+#
+#  There are 2 libraries for Connector/C++ 8.0. The new library with base
+#  name mysqlcppconn8 and the legacy library mysqlcppconn which is backward
+#  compatible with Connector/C++ 1.1.
+#
+#  Static versions of connecotr library have -static suffix. Additionally,
+#  on Windows they have -mt suffix if the library was built using static
+#  runtime libs (/MT compiler setting).
+#
 
 set(libconcpp_name mysqlcppconn8)
 set(libconcpp_jdbc_name mysqlcppconn)
@@ -207,6 +231,7 @@ endif()
 
 message("Using Connector/C++ 8.0 legacy libraries: ${CONCPP_JDBC_LIBS}")
 
+
 #
 # Connector/C++ requires pthread library on Unix. Legacy connector needs
 # even more.
@@ -226,9 +251,17 @@ ENDIF()
 if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
   list(APPEND CONCPP_LIBS socket nsl)
   # TODO: Could be couple more libs reqired..
-  # MYSQL_LIBRARIES
-  # stdc++;gcc_s;CrunG3;c;..;socket;nsl;m;rt
+  # MYSQL_LIBRARIES: stdc++;gcc_s;CrunG3;c;..;socket;nsl;m;rt
   list(APPEND CONCPP_JDBC_LIBS socket nsl rt)
+endif()
+
+#
+# If building statically and connector uses OpenSSL libraries, we need to
+# link to them too (however, no need to do it on Windows).
+#
+
+if(NOT WIN32 AND BUILD_STATIC AND WITH_SSL AND NOT (WITH_SSL STREQUAL "bundled"))
+  list(APPEND CONCPP_LIBS ssl crypto)
 endif()
 
 #
@@ -328,18 +361,14 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG run/debug)
 # Test programs that use MySQL Connector/C++.
 #
 
-
 include_directories(${CONCPP_INCLUDES})
 
+#
+# Note: Adding this so that bundled libraries such as openSSL can be found
+# at link time in case they are not installed on the system.
+#
 
-add_executable(devapi_test devapi_test.cc)
-target_link_libraries(devapi_test ${CONCPP_LIBS})
-
-# To use DevAPI we must enable C++11
-
-if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  target_compile_options(devapi_test PRIVATE "-std=c++11")
-endif()
+link_directories(${LIB_PATH_STATIC})
 
 
 add_executable(xapi_test xapi_test.c)
@@ -355,6 +384,17 @@ target_link_libraries(xapi_test ${CONCPP_LIBS})
 #
 
 set_target_properties(xapi_test PROPERTIES LINKER_LANGUAGE CXX)
+
+
+# To use DevAPI or JDBC API we must enable C++11
+
+if(NOT MSVC)
+  add_compile_options("-std=c++11")
+endif()
+
+
+add_executable(devapi_test devapi_test.cc)
+target_link_libraries(devapi_test ${CONCPP_LIBS})
 
 
 if(WITH_JDBC)

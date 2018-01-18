@@ -22,9 +22,14 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-
 #ifndef MYSQLX_GLOBAL_H
 #define MYSQLX_GLOBAL_H
+
+/*
+  This header contains global declarations that are used by both DevAPI
+  and XAPI. This is only implementation-side stuff - No public header
+  should depend on this one.
+*/
 
 #include "cdk/extra/uuid/include/uuid_gen.h"
 

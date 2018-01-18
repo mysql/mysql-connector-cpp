@@ -16,6 +16,7 @@ More information:
 - [Connector/C++ XAPI Reference] (@ref xapi_ref)
 - [How to build code that uses Connector/C++](@ref usage)
 - [Building Connector/C++] (@ref building)
+- [Indexing Document Collections] (@ref indexing)
 
 @note
 Code that uses Connector/C++ 8.0 can communicate only with MySQL Server version

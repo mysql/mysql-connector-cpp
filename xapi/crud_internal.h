@@ -303,12 +303,6 @@ struct stmt_traits<OP_COLLECTION_DROP>
 };
 
 template<>
-struct stmt_traits<OP_TABLE_DROP>
-{
-  using Impl = common::Op_drop<common::Object_type::TABLE>;
-};
-
-template<>
 struct stmt_traits<OP_LIST_SCHEMAS>
 {
   using Impl = common::Op_list<common::Object_type::SCHEMA>;
@@ -324,6 +318,19 @@ template<>
 struct stmt_traits<OP_LIST_TABLES>
 {
   using Impl = common::Op_list<common::Object_type::TABLE>;
+};
+
+template<>
+struct stmt_traits<OP_IDX_CREATE>
+{
+  using Impl = common::Op_idx_create;
+};
+
+
+template<>
+struct stmt_traits<OP_IDX_DROP>
+{
+  using Impl = common::Op_idx_drop;
 };
 
 

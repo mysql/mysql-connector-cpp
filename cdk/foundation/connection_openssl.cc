@@ -23,16 +23,23 @@
  */
 
 #include <mysql/cdk/foundation/common.h>
+//include socket_detail.h before ssl.h because it includes winsock2.h
+//which must be included before winsock.h
+#include "socket_detail.h"
 PUSH_SYS_WARNINGS
+#ifdef WITH_SSL_YASSL
 #include "../extra/yassl/include/openssl/ssl.h"
+#else
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#endif
 POP_SYS_WARNINGS
 #include <mysql/cdk/foundation/error.h>
-#include <mysql/cdk/foundation/connection_yassl.h>
+#include <mysql/cdk/foundation/connection_openssl.h>
 #include <mysql/cdk/foundation/opaque_impl.i>
-#include "socket_detail.h"
 #include "connection_tcpip_base.h"
 
-
+#ifdef WITH_SSL_YASSL
 static const char* tls_ciphers_list="DHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:"
                                     "AES128-RMD:DES-CBC3-RMD:DHE-RSA-AES256-RMD:"
                                     "DHE-RSA-AES128-RMD:DHE-RSA-DES-CBC3-RMD:"
@@ -41,20 +48,68 @@ static const char* tls_ciphers_list="DHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:"
                                     "EDH-RSA-DES-CBC-SHA:AES128-SHA:AES256-RMD:";
 static const char* tls_cipher_blocked= "!aNULL:!eNULL:!EXPORT:!LOW:!MD5:!DES:!RC2:!RC4:!PSK:!SSLv3:";
 
+using namespace yaSSL;
+#else
+static const char tls_ciphers_list[]="ECDHE-ECDSA-AES128-GCM-SHA256:"
+                                     "ECDHE-ECDSA-AES256-GCM-SHA384:"
+                                     "ECDHE-RSA-AES128-GCM-SHA256:"
+                                     "ECDHE-RSA-AES256-GCM-SHA384:"
+                                     "ECDHE-ECDSA-AES128-SHA256:"
+                                     "ECDHE-RSA-AES128-SHA256:"
+                                     "ECDHE-ECDSA-AES256-SHA384:"
+                                     "ECDHE-RSA-AES256-SHA384:"
+                                     "DHE-RSA-AES128-GCM-SHA256:"
+                                     "DHE-DSS-AES128-GCM-SHA256:"
+                                     "DHE-RSA-AES128-SHA256:"
+                                     "DHE-DSS-AES128-SHA256:"
+                                     "DHE-DSS-AES256-GCM-SHA384:"
+                                     "DHE-RSA-AES256-SHA256:"
+                                     "DHE-DSS-AES256-SHA256:"
+                                     "ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:"
+                                     "ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:"
+                                     "DHE-DSS-AES128-SHA:DHE-RSA-AES128-SHA:"
+                                     "TLS_DHE_DSS_WITH_AES_256_CBC_SHA:DHE-RSA-AES256-SHA:"
+                                     "AES128-GCM-SHA256:DH-DSS-AES128-GCM-SHA256:"
+                                     "ECDH-ECDSA-AES128-GCM-SHA256:AES256-GCM-SHA384:"
+                                     "DH-DSS-AES256-GCM-SHA384:ECDH-ECDSA-AES256-GCM-SHA384:"
+                                     "AES128-SHA256:DH-DSS-AES128-SHA256:ECDH-ECDSA-AES128-SHA256:AES256-SHA256:"
+                                     "DH-DSS-AES256-SHA256:ECDH-ECDSA-AES256-SHA384:AES128-SHA:"
+                                     "DH-DSS-AES128-SHA:ECDH-ECDSA-AES128-SHA:AES256-SHA:"
+                                     "DH-DSS-AES256-SHA:ECDH-ECDSA-AES256-SHA:DHE-RSA-AES256-GCM-SHA384:"
+                                     "DH-RSA-AES128-GCM-SHA256:ECDH-RSA-AES128-GCM-SHA256:DH-RSA-AES256-GCM-SHA384:"
+                                     "ECDH-RSA-AES256-GCM-SHA384:DH-RSA-AES128-SHA256:"
+                                     "ECDH-RSA-AES128-SHA256:DH-RSA-AES256-SHA256:"
+                                     "ECDH-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:"
+                                     "ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA:"
+                                     "ECDHE-ECDSA-AES256-SHA:DHE-DSS-AES128-SHA:DHE-RSA-AES128-SHA:"
+                                     "TLS_DHE_DSS_WITH_AES_256_CBC_SHA:DHE-RSA-AES256-SHA:"
+                                     "AES128-SHA:DH-DSS-AES128-SHA:ECDH-ECDSA-AES128-SHA:AES256-SHA:"
+                                     "DH-DSS-AES256-SHA:ECDH-ECDSA-AES256-SHA:DH-RSA-AES128-SHA:"
+                                     "ECDH-RSA-AES128-SHA:DH-RSA-AES256-SHA:ECDH-RSA-AES256-SHA:DES-CBC3-SHA";
+static const char tls_cipher_blocked[]= "!aNULL:!eNULL:!EXPORT:!LOW:!MD5:!DES:!RC2:!RC4:!PSK:"
+                                        "!DHE-DSS-DES-CBC3-SHA:!DHE-RSA-DES-CBC3-SHA:"
+                                        "!ECDH-RSA-DES-CBC3-SHA:!ECDH-ECDSA-DES-CBC3-SHA:"
+                                        "!ECDHE-RSA-DES-CBC3-SHA:!ECDHE-ECDSA-DES-CBC3-SHA:";
+#endif
 
-static void throw_yassl_error_msg(const char* msg)
+static void throw_openssl_error_msg(const char* msg)
 {
   throw cdk::foundation::Error(cdk::foundation::cdkerrc::tls_error,
-                               std::string("yaSSL: ") + msg);
+                             #ifdef WITH_SSL_YASSL
+                               std::string("YaSSL: ")
+                             #else
+                               std::string("OpenSSL: ")
+                             #endif
+                               + msg);
 }
 
-static void throw_yassl_error()
+static void throw_openssl_error()
 {
   char buffer[512];
 
-  yaSSL::ERR_error_string_n(yaSSL::ERR_get_error(), buffer, sizeof(buffer));
+  ERR_error_string_n(ERR_get_error(), buffer, sizeof(buffer));
 
-  throw_yassl_error_msg(buffer);
+  throw_openssl_error_msg(buffer);
 }
 
 
@@ -79,12 +134,12 @@ public:
   {
     if (m_tls)
     {
-      yaSSL::SSL_shutdown(m_tls);
-      yaSSL::SSL_free(m_tls);
+      SSL_shutdown(m_tls);
+      SSL_free(m_tls);
     }
 
     if (m_tls_ctx)
-      yaSSL::SSL_CTX_free(m_tls_ctx);
+      SSL_CTX_free(m_tls_ctx);
 
     delete m_tcpip;
   }
@@ -94,8 +149,8 @@ public:
   void verify_server_cert();
 
   cdk::foundation::connection::Socket_base* m_tcpip;
-  yaSSL::SSL* m_tls;
-  yaSSL::SSL_CTX* m_tls_ctx;
+  SSL* m_tls;
+  SSL_CTX* m_tls_ctx;
   cdk::foundation::connection::TLS::Options m_options;
 };
 
@@ -113,14 +168,18 @@ void connection_TLS_impl::do_connect()
 
   try
   {
-    yaSSL::SSL_METHOD* method = yaSSL::TLSv1_1_client_method();
+#ifdef WITH_SSL_YASSL
+    SSL_METHOD* method = TLSv1_1_client_method();
+#else
+    const SSL_METHOD* method = SSLv23_client_method();
+#endif
 
     if (!method)
-      throw_yassl_error();
+      throw_openssl_error();
 
     m_tls_ctx = SSL_CTX_new(method);
     if (!m_tls_ctx)
-      throw_yassl_error();
+      throw_openssl_error();
 
 
     std::string cipher_list;
@@ -134,8 +193,9 @@ void connection_TLS_impl::do_connect()
         cdk::foundation::connection::TLS::Options::SSL_MODE::VERIFY_CA
         )
     {
-      SSL_CTX_set_verify(m_tls_ctx, yaSSL::SSL_VERIFY_PEER , NULL);
+      SSL_CTX_set_verify(m_tls_ctx, SSL_VERIFY_PEER , NULL);
 
+#ifdef WITH_SSL_YASSL
       int errNr = SSL_CTX_load_verify_locations(
                     m_tls_ctx,
                     m_options.get_ca().c_str(),
@@ -145,33 +205,46 @@ void connection_TLS_impl::do_connect()
       switch(errNr)
       {
         case yaSSL::SSL_BAD_FILE:
-          throw_yassl_error_msg("error opening ca file");
+          throw_openssl_error_msg("error opening ca file");
         case yaSSL::SSL_BAD_PATH:
-          throw_yassl_error_msg("bad ca_path");
+          throw_openssl_error_msg("bad ca_path");
         case yaSSL::SSL_BAD_STAT:
-          throw_yassl_error_msg("bad file permissions inside ca_path");
+          throw_openssl_error_msg("bad file permissions inside ca_path");
         default:
           break;
       }
+#else
+
+      if (SSL_CTX_load_verify_locations(
+            m_tls_ctx,
+            m_options.get_ca().c_str(),
+            m_options.get_ca_path().empty()
+            ? NULL : m_options.get_ca_path().c_str()) == 0)
+        throw_openssl_error();
+#endif
 
     }
     else
     {
-      SSL_CTX_set_verify(m_tls_ctx, yaSSL::SSL_VERIFY_NONE, 0);
+      SSL_CTX_set_verify(m_tls_ctx, SSL_VERIFY_NONE, 0);
     }
 
-    m_tls = yaSSL::SSL_new(m_tls_ctx);
+    m_tls = SSL_new(m_tls_ctx);
     if (!m_tls)
-      throw_yassl_error();
+      throw_openssl_error();
 
     unsigned int fd = m_tcpip->get_fd();
 
     cdk::foundation::connection::detail::set_nonblocking(fd, false);
 
-    yaSSL::SSL_set_fd(m_tls, static_cast<yaSSL::YASSL_SOCKET_T>(fd));
+#ifdef WITH_SSL_YASSL
+    SSL_set_fd(m_tls, static_cast<int>(fd));
+#else
+    SSL_set_fd(m_tls, static_cast<int>(fd));
+#endif
 
-    if(yaSSL::SSL_connect(m_tls) != yaSSL::SSL_SUCCESS)
-      throw_yassl_error();
+    if(SSL_connect(m_tls) != 1)
+      throw_openssl_error();
 
     if (m_options.ssl_mode()
         ==
@@ -184,14 +257,14 @@ void connection_TLS_impl::do_connect()
   {
     if (m_tls)
     {
-      yaSSL::SSL_shutdown(m_tls);
-      yaSSL::SSL_free(m_tls);
+      SSL_shutdown(m_tls);
+      SSL_free(m_tls);
       m_tls = NULL;
     }
 
     if (m_tls_ctx)
     {
-      yaSSL::SSL_CTX_free(m_tls_ctx);
+      SSL_CTX_free(m_tls_ctx);
       m_tls_ctx = NULL;
     }
 
@@ -206,17 +279,17 @@ void connection_TLS_impl::do_connect()
 */
 class safe_cert
 {
-  yaSSL::X509* m_cert;
+  X509* m_cert;
 
 public:
-  safe_cert(yaSSL::X509 *cert = NULL)
+  safe_cert(X509 *cert = NULL)
     : m_cert(cert)
   {}
 
   ~safe_cert()
   {
     if (m_cert)
-      yaSSL::X509_free(m_cert);
+      X509_free(m_cert);
   }
 
   operator bool()
@@ -224,7 +297,7 @@ public:
     return m_cert != NULL;
   }
 
-  safe_cert& operator = (yaSSL::X509 *cert)
+  safe_cert& operator = (X509 *cert)
   {
     m_cert = cert;
     return *this;
@@ -237,7 +310,7 @@ public:
     return *this;
   }
 
-  operator yaSSL::X509 *() const
+  operator X509 *() const
   {
     return m_cert;
   }
@@ -249,21 +322,21 @@ void connection_TLS_impl::verify_server_cert()
   safe_cert server_cert;
   char *cn= NULL;
   int cn_loc= -1;
-  yaSSL::ASN1_STRING *cn_asn1= NULL;
-  yaSSL::X509_NAME_ENTRY *cn_entry= NULL;
-  yaSSL::X509_NAME *subject= NULL;
+  ASN1_STRING *cn_asn1= NULL;
+  X509_NAME_ENTRY *cn_entry= NULL;
+  X509_NAME *subject= NULL;
 
 
   server_cert = SSL_get_peer_certificate(m_tls);
 
   if (!server_cert)
   {
-    throw_yassl_error_msg("Could not get server certificate");
+    throw_openssl_error_msg("Could not get server certificate");
   }
 
-  if (yaSSL::X509_V_OK != SSL_get_verify_result(m_tls))
+  if (X509_V_OK != SSL_get_verify_result(m_tls))
   {
-    throw_yassl_error_msg("Failed to verify the server certificate");
+    throw_openssl_error_msg("Failed to verify the server certificate");
   }
   /*
     We already know that the certificate exchanged was valid; the SSL library
@@ -279,26 +352,26 @@ void connection_TLS_impl::verify_server_cert()
    X509_check_host in the future.
   */
 
-  subject= X509_get_subject_name((yaSSL::X509 *) server_cert);
+  subject= X509_get_subject_name((X509 *) server_cert);
   // Find the CN location in the subject
   cn_loc= X509_NAME_get_index_by_NID(subject, NID_commonName, -1);
   if (cn_loc < 0)
   {
-    throw_yassl_error_msg("Failed to get CN location in the certificate subject");
+    throw_openssl_error_msg("Failed to get CN location in the certificate subject");
   }
 
   // Get the CN entry for given location
   cn_entry= X509_NAME_get_entry(subject, cn_loc);
   if (cn_entry == NULL)
   {
-    throw_yassl_error_msg("Failed to get CN entry using CN location");
+    throw_openssl_error_msg("Failed to get CN entry using CN location");
   }
 
   // Get CN from common name entry
   cn_asn1 = X509_NAME_ENTRY_get_data(cn_entry);
   if (cn_asn1 == NULL)
   {
-    throw_yassl_error_msg("Failed to get CN from CN entry");
+    throw_openssl_error_msg("Failed to get CN from CN entry");
   }
 
   cn= (char *) ASN1_STRING_data(cn_asn1);
@@ -306,13 +379,13 @@ void connection_TLS_impl::verify_server_cert()
   // There should not be any NULL embedded in the CN
   if ((size_t)ASN1_STRING_length(cn_asn1) != strlen(cn))
   {
-    throw_yassl_error_msg("NULL embedded in the certificate CN");
+    throw_openssl_error_msg("NULL embedded in the certificate CN");
   }
 
 
   if (!m_options.verify_cn(cn))
   {
-    throw_yassl_error_msg("SSL certificate validation failure");
+    throw_openssl_error_msg("SSL certificate validation failure");
   }
 
 }
@@ -376,10 +449,10 @@ bool TLS::Read_op::common_read()
   byte* data =buffer.begin() + m_currentBufferOffset;
   int buffer_size = static_cast<int>(buffer.size() - m_currentBufferOffset);
 
-  int result = yaSSL::SSL_read(impl.m_tls, data, buffer_size);
+  int result = SSL_read(impl.m_tls, data, buffer_size);
 
   if (result == -1)
-    throw IO_error(yaSSL::SSL_get_error(impl.m_tls,0));
+    throw IO_error(SSL_get_error(impl.m_tls,0));
 
   if (result > 0)
   {
@@ -434,7 +507,7 @@ bool TLS::Read_some_op::common_read()
 
   const bytes& buffer = m_bufs.get_buffer(0);
 
-  int result = yaSSL::SSL_read(impl.m_tls, buffer.begin(), (int)buffer.size());
+  int result = SSL_read(impl.m_tls, buffer.begin(), (int)buffer.size());
 
   if (result > 0)
   {
@@ -483,7 +556,7 @@ bool TLS::Write_op::common_write()
   byte* data = buffer.begin() + m_currentBufferOffset;
   int buffer_size = static_cast<int>(buffer.size() - m_currentBufferOffset);
 
-  int result = yaSSL::SSL_write(impl.m_tls, data, buffer_size);
+  int result = SSL_write(impl.m_tls, data, buffer_size);
 
   if (result > 0)
   {
@@ -538,7 +611,7 @@ bool TLS::Write_some_op::common_write()
 
   const bytes& buffer = m_bufs.get_buffer(0);
 
-  int result = yaSSL::SSL_write(impl.m_tls, buffer.begin(), (int)buffer.size());
+  int result = SSL_write(impl.m_tls, buffer.begin(), (int)buffer.size());
 
   if (result > 0)
   {

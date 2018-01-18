@@ -32,6 +32,20 @@
 #include "cdk/cursor.h"
 #include "cdk/codec.h"
 
+/*
+  On Windows, external dependencies can be declared using
+  #pragma comment directive.
+*/
+
+#ifdef _WIN32
+#pragma comment(lib,"ws2_32")
+#if defined(WITH_SSL) && !defined(WITH_SSL_YASSL)
+  #pragma comment(lib,"ssleay32")
+  #pragma comment(lib,"libeay32")
+#endif
+#endif
+
+
 namespace cdk {
 
 typedef Cursor::Row_processor Row_processor;

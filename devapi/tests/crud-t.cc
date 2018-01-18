@@ -59,15 +59,6 @@ public:
   void add_data(Collection &coll);
 };
 
-void output_id_list(Result& res)
-{
-  std::vector<mysqlx::GUID> ids = res.getDocumentIds();
-  for (auto id : ids)
-  {
-    cout << "- added doc with id: " << id  << endl;
-  }
-
-}
 
 
 TEST_F(Crud, basic)
@@ -430,9 +421,7 @@ TEST_F(Crud, bind)
 
   }
 
-
   {
-
     cout << "Fetching documents... using bind Arrays" << endl;
 
     std::list<string> food_list;
@@ -2293,23 +2282,28 @@ TEST_F(Crud, single_document)
                    .getAffectedItemsCount());
   EXPECT_EQ(string("qux"), coll.getOne("id3")["name"].get<string>());
 
-  // Ignore _id field on document and replace existing docment
+  // Setting a different _id on document should throw error
   // Document passed as string
-  EXPECT_EQ(1, coll.replaceOne("id3", "{\"_id\": \"id4\", \"name\": \"baz\" }")
-                   .getAffectedItemsCount());
-  EXPECT_EQ(string("baz"), coll.getOne("id3")["name"].get<string>());
+  EXPECT_THROW(coll.replaceOne("id3", "{\"_id\": \"id4\", \"name\": \"baz\" }"),
+               Error);
+  // Document passed as a wstring
+  EXPECT_THROW(coll.replaceOne("id3", L"{\"_id\": \"id4\", \"name\": \"baz\" }"),
+               Error);
+  // Document passed as an expression
+  EXPECT_THROW(coll.replaceOne("id3", expr("{\"_id\": \"id4\", \"name\": \"baz\" }")),
+               Error);
+  EXPECT_THROW(coll.replaceOne("id3", expr("{\"_id\": \"id4\", \"name\": \"baz\" }")),
+               Error);
+  // Document passed as DbDoc
+  EXPECT_THROW(coll.replaceOne("id3", DbDoc("{\"_id\": \"id4\", \"name\": \"baz\" }")),
+               Error);
+  EXPECT_EQ(string("qux"), coll.getOne("id3")["name"].get<string>());
   EXPECT_EQ(string("id3"), coll.getOne("id3")["_id"].get<string>());
 
-  // should not affect none
+  // should affect none
   EXPECT_EQ(0,
     coll.replaceOne("id4", expr("{\"_id\":\"id4\", \"name\": \"baz\" }"))
         .getAffectedItemsCount());
-
-  // Using DbDoc
-  DbDoc doc("{\"_id\":\"id4\", \"name\": \"quux\" }");
-
-  EXPECT_EQ(1, coll.replaceOne("id3", doc).getAffectedItemsCount());
-  EXPECT_EQ(string("quux"), coll.getOne("id3")["name"].get<string>());
 }
 
 
@@ -2353,4 +2347,3 @@ TEST_F(Crud, add_or_replace)
   cout << "Done!" << endl;
 
 }
-

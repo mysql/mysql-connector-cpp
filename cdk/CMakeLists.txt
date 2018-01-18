@@ -23,12 +23,13 @@
 
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
+cmake_policy(VERSION 2.8.12)
+cmake_policy(SET CMP0022 NEW)  # consistently use INTERFACE_LINK_LIBRARIES property
+cmake_policy(SET CMP0023 OLD)
 
 
 PROJECT(MySQLCDK)
 
-cmake_policy(VERSION 2.8.12)
-cmake_policy(SET CMP0022 NEW)  # consistently use INTERFACE_LINK_LIBRARIES property
 
 #
 # Detect if we are configured as stand-alone project, or sub-project.
@@ -148,28 +149,12 @@ endif()
 # Add SSL
 #
 
-if(NOT DEFINED WITH_SSL)
-SET(WITH_SSL "bundled" CACHE STRING "TODO: Document me!")
-endif()
-
 message("WITH_SSL: ${WITH_SSL}")
 
-IF(WITH_SSL)
-  IF(WITH_SSL STREQUAL "bundled")
-    ADD_DEFINITIONS(-DWITH_SSL_YASSL)
-    if(CDK_BIG_ENDIAN)
-      ADD_DEFINITIONS(-DWORDS_BIGENDIAN)
-    endif()
-    ADD_SUBDIRECTORY(extra/yassl)
-  ELSE()
-    MESSAGE(WARNING "WITH_SSL option set to unrecognized value '${WITH_SSL}'"
-                  " - will be ignored. Currently the only value allowed is"
-                  " 'bundled', which uses the bundled YaSSL library to implement"
-                  " TLS connections.")
-  ENDIF()
-  ADD_DEFINITIONS(-DWITH_SSL)
-ENDIF()
-
+include(ssl)
+MYSQL_CHECK_SSL(${CDK_BIG_ENDIAN})
+add_config(WITH_SSL)
+add_config(WITH_SSL_YASSL)
 
 #
 # Enable C++11
@@ -305,6 +290,8 @@ IF(WIN32)
   # 4625 = copy ctor was implicitly deleted (*)
   # 4626 = copy assignment was implicitly deleted (*)
   # 4711 = function 'function' selected for inline expansion
+  # 4520 = The class has multiple default constructors. The first constructor is
+  #        used.
   #
   # Note: 4512 is disabled because according to C++11 standard the situations
   # that triggers this warning should be handled automatically by the compiler
@@ -316,10 +303,12 @@ IF(WIN32)
   # Note (*): We use this a lot when inheriting from foundation::nocopy - this
   # is our C++ way to disable copy semantics.
   #
+  #
+  # Note: 4520 only present on Visual Studio 12
 
   set(CMAKE_${LANG}_FLAGS
     "${CMAKE_${LANG}_FLAGS} /Wall /wd4512 /wd4127 /wd4100
-     /wd4820 /wd4571 /wd4710 /wd4514 /wd4625 /wd4626 /wd4464 /wd4711"
+     /wd4820 /wd4571 /wd4710 /wd4514 /wd4625 /wd4626 /wd4464 /wd4711 /wd4520"
   )
 
   # Note: We disable warnings related to C++11 language because we want this

@@ -298,7 +298,6 @@ TEST_F(Sess, trx)
 
 TEST_F(Sess, auth_method)
 {
-
   SKIP_IF_NO_XPLUGIN;
 
   auto check_user = [](mysqlx::Session &sess)
@@ -615,8 +614,10 @@ TEST_F(Sess, ssl_session)
     catch (Error &e)
     {
       // If server cert CN!=localhost, it will fail with this error
-      EXPECT_EQ(string("CDK Error: yaSSL: SSL certificate validation failure"),
-                string(e.what()));
+      std::cout << e.what() << std::endl;
+      EXPECT_NE(std::string::npos,
+        std::string(e.what()).find("SSL certificate validation failure")
+      );
     }
 
   }

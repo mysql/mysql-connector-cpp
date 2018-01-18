@@ -2590,7 +2590,7 @@ PUBLIC_API uint16_t
 mysqlx_column_get_precision(mysqlx_result_t *res, uint32_t pos);
 
 
-/**
+/*
   Get column flags.
 
   @param res result handle
@@ -2876,6 +2876,52 @@ PUBLIC_API unsigned int mysqlx_result_warning_count(mysqlx_result_t *res);
 
 PUBLIC_API mysqlx_error_t *
 mysqlx_result_next_warning(mysqlx_result_t *res);
+
+
+/**
+  Create index for a collection.
+
+  This function creates a named index in the collection using a JSON index
+  specification.
+
+  @param coll collection to create the index for
+  @param name name for the index to be created
+  @param idx_spec index specification as a JSON string
+
+  @see @ref indexing for information on how to define document
+  collection indexes.
+
+  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  The error handle can be obtained from the collection
+  using `mysqlx_error()` function.
+
+  @ingroup xapi_ddl
+*/
+
+PUBLIC_API int
+mysqlx_collection_create_index(mysqlx_collection_t *coll, const char *name,
+                               const char *idx_spec);
+
+/**
+  Drop index on a collection
+
+  This function drops an index in a collection
+  with a specific name
+
+  @param coll collection whose index should be dropped
+  @param name name of the index to be dropped
+
+  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  The error handle can be obtained from the collection
+  using `mysqlx_error()` function.
+
+  @note The warning handle returned by a previous call is invalidated.
+
+  @ingroup xapi_ddl
+*/
+
+PUBLIC_API int
+mysqlx_collection_drop_index(mysqlx_collection_t *coll, const char *name);
 
 
 #ifdef	__cplusplus

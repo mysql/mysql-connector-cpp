@@ -31,6 +31,28 @@ get_filename_component(LIBUTILS_SCRIPT_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
 set(LIBUTILS_SCRIPT_DIR "${LIBUTILS_SCRIPT_DIR}/libutils")
 
 #
+# On MacOS we need install_name_tool to do rpath mangling (see below)
+#
+
+if(APPLE)
+
+  find_program(INSTALL_NAME_TOOL install_name_tool)
+
+  # If available, otool is used to show runtime dependencies for libraries we
+  # build
+
+  find_program(OTOOL otool)
+
+  if(NOT INSTALL_NAME_TOOL)
+    message(FATAL_ERROR
+      "Could not find install_name_tool required to buld Connector/C++"
+    )
+  endif()
+
+endif()
+
+
+#
 # Add interface link libraries to a target, even if this is object
 # library target.
 #
@@ -48,6 +70,21 @@ function(lib_interface_link_libraries TARGET)
   endif()
 
 endfunction(lib_interface_link_libraries)
+
+
+function(lib_link_libraries TARGET)
+
+  get_target_property(target_type ${TARGET} TYPE)
+
+  if(target_type STREQUAL "OBJECT_LIBRARY")
+    set_property(TARGET ${TARGET}
+      APPEND PROPERTY INTERFACE_LINK_LIBRARIES ${ARGN}
+    )
+  else()
+    target_link_libraries(${TARGET} PRIVATE ${ARGN})
+  endif()
+
+endfunction(lib_link_libraries)
 
 
 #
@@ -148,6 +185,25 @@ function(add_library_ex TARGET)
   endif()
 
   #
+  # Propagate RPATH_MANGLE property from compound libraries to the target.
+  #
+
+  set(mangle_paths)
+
+  foreach(xx ${objs} ${libs})
+    get_target_property(xx_mangle_paths ${xx} RPATH_MANGLE)
+    #message("== checking mangle paths of ${xx}: ${xx_mangle_paths}")
+    if(xx_mangle_paths)
+      list(APPEND mangle_paths ${xx_mangle_paths})
+    endif()
+  endforeach()
+
+  if(mangle_paths)
+    list(REMOVE_DUPLICATES mangle_paths)
+    #message("== collected mangle paths: ${mangle_paths}")
+  endif()
+
+  #
   # We use different technology for building static library
   # from object libraries on Linux and on Windows or OSX.
   #
@@ -184,6 +240,10 @@ function(add_library_ex TARGET)
   add_library(${TARGET} ${type} ${srcs})
   #message("- added ${type} library: ${TARGET}")
 
+  if(mangle_paths)
+    set_property(TARGET ${TARGET} PROPERTY RPATH_MANGLE ${mangle_paths})
+  endif()
+
   foreach(obj ${objs})
 
     # If we are building static library on Linux, then for each object
@@ -199,7 +259,7 @@ function(add_library_ex TARGET)
     endif()
 
     target_link_libraries(${TARGET}
-      INTERFACE $<TARGET_PROPERTY:${obj},INTERFACE_LINK_LIBRARIES>
+      PRIVATE $<TARGET_PROPERTY:${obj},INTERFACE_LINK_LIBRARIES>
     )
 
     target_include_directories(${TARGET}
@@ -219,7 +279,75 @@ function(add_library_ex TARGET)
 
   endif()
 
+  #
+  # Perform rpath mangling on MacOS (see below).
+  #
+
+  if(${type} STREQUAL "SHARED" AND APPLE)
+    mangle_osx_rpaths(${TARGET})
+  endif()
+
 endfunction(add_library_ex)
+
+
+#
+# Perform MacOS rptah mangling.
+#
+# For some libraries we depend on, such as openSSL, we want the link name
+# stored in our library to be of the form @rpath/<library name> instead of
+# being a fixed path to the location where such external dependencies were
+# found at build time.
+#
+# If target we build has MACOSX_RPATH and RPATH_MANGLE properties set, then
+# we perform rpath mangling for that target. The RPATH_MANGLE property is
+# a list of link names that should be mangled, that is, the directory prefix
+# of the link name should be replaced by @rpath.
+#
+# We use install_name_tool to change link names stored in the target. For more
+# information about @rpath see: <https://developer.apple.com/library/content/documentation/DeveloperTools/Conceptual/DynamicLibraries/100-Articles/RunpathDependentLibraries.html#//apple_ref/doc/uid/TP40008306-SW1>
+#
+
+function(mangle_osx_rpaths TARGET)
+
+  if (NOT APPLE)
+    return()
+  endif()
+
+  get_target_property(use_rpaths ${TARGET} MACOSX_RPATH)
+
+  if (NOT use_rpaths)
+    return()
+  endif()
+
+  #message("rpath mangling for target: ${TARGET}")
+
+  get_target_property(paths_to_mangle ${TARGET} RPATH_MANGLE)
+
+  set(mangle_commands)
+
+  foreach(path ${paths_to_mangle})
+    #message("magling path: ${path}")
+    get_filename_component(lib_name "${path}" NAME)
+    list(APPEND mangle_commands
+      COMMAND ${INSTALL_NAME_TOOL} -change "\"${path}\"" "\"@rpath/${lib_name}\"" "\"$<TARGET_FILE:${TARGET}>\""
+    )
+  endforeach()
+
+  # If otool is available, also list final dependencies after the mangling
+  if(OTOOL)
+    list(APPEND mangle_commands COMMAND ${OTOOL} -L "\"$<TARGET_FILE:${TARGET}>\"")
+  endif()
+
+  #message("mangle commands: ${mangle_commands}")
+
+  # Invoke mangling commands as a POST_BUILD step for the target.
+
+  add_custom_command(TARGET ${TARGET} POST_BUILD
+    ${mangle_commands}
+    COMMENT "runtime dependencies of ${TARGET}:"
+  )
+
+endfunction(mangle_osx_rpaths)
 
 
 #
@@ -353,4 +481,10 @@ function(merge_static_libraries TARGET)
 
   endif()
 
+endfunction()
+
+# An IMPORTED library can also be merged.
+function(add_imported_library target location)
+  ADD_LIBRARY(${target} STATIC IMPORTED)
+  SET_TARGET_PROPERTIES(${target} PROPERTIES IMPORTED_LOCATION ${location})
 endfunction()
