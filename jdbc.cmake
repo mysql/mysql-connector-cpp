@@ -51,6 +51,16 @@ endif()
 include(boost)
 list(APPEND jdbc_cmake_opts -DBOOST_ROOT=${BOOST_ROOT})
 
+#
+# Generate version info for legacy connector
+#
+
+configure_file(
+  "${PROJECT_SOURCE_DIR}/jdbc/VersionInfo.cmake.in"
+  "${JDBC_DIR}/VersionInfo.cmake"
+  @ONLY
+)
+
 # Dirty trick to speed up cmake set up time.
 
 file(
