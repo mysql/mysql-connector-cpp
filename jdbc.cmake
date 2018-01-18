@@ -256,15 +256,20 @@ install(
 #  Install external dependencies of MySQL client library, such as OpenSSL,
 #  if bundled with client library installation.
 #
-#  TODO
+#  Note: if main connector uses OpenSSL, then we will use the same libraries
+#  to satisfy client library dependency. But if main connector does not use
+#  OpenSSL, we copy required dependencies from MySQL installation.
 #
 
-message("Installing external dependencies from: ${MYSQL_DIR}")
+if(BUNDLE_DEPENDENCIES AND WITH_SSL STREQUAL "bundled")
 
-install(DIRECTORY "${MYSQL_DIR}/bin/" DESTINATION lib64
-  FILES_MATCHING PATTERN "*${CMAKE_SHARED_LIBRARY_SUFFIX}"
-)
+  message("Bundling OpenSSL libraries from: ${MYSQL_DIR}")
 
+  install(DIRECTORY "${MYSQL_DIR}/bin/" DESTINATION lib64
+    FILES_MATCHING PATTERN "*${CMAKE_SHARED_LIBRARY_SUFFIX}"
+  )
+
+endif()
 
 #############################################################################
 #
