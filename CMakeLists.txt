@@ -573,6 +573,24 @@ if (ENABLE_BUILD_STATIC)
 endif()
 
 
+if(0)
+#
+#  Add command to show rpath information
+#
+
+if(APPLE)
+  set(list_rpath_cmd otool -l $<TARGET_FILE:mysqlcppconn> "|" grep RPATH -A2)
+elseif(NOT WIN32)
+  set(list_rpath_cmd objdump -x $<TARGET_FILE:mysqlcppconn> "|" grep RPATH -A2)
+endif()
+
+add_custom_command(TARGET mysqlcppconn POST_BUILD
+  COMMAND ${list_rpath_cmd}
+  COMMENT "RPATH setting for: $<TARGET_FILE_NAME:mysqlcppconn>"
+)
+endif()
+
+
 if(WITH_EXAMPLES)
 ADD_SUBDIRECTORY(examples)
 endif()

@@ -71,7 +71,16 @@ ENDIF(NOT MYSQLCLIENT_STATIC_BINDING)
 
 #-----------------
 # CPPFLAGS, CXXFLAGS and LDFLAGS from the environment
-SET(MYSQLCPPCONN_DT_RPATH "" CACHE STRING "For dynamic libmysql binding: DT_RPATH to set (default: unset)")
+
+if(NOT DEFINED MYSQLCPPCONN_DT_RPATH)
+  if(APPLE)
+    set(rpath "@loader_path")
+  elseif(NOT WIN32)
+    set(rpath "$ORIGIN")
+  endif()
+endif()
+
+SET(MYSQLCPPCONN_DT_RPATH ${MYSQLCPPCONN_DT_RPATH} CACHE STRING "For dynamic libmysql binding: DT_RPATH to set (default: unset)")
 
 IF(MYSQLCPPCONN_DT_RPATH)
   SET(CMAKE_SKIP_BUILD_RPATH  TRUE)
