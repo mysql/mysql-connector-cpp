@@ -1,26 +1,32 @@
 /*
-Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
-
-The MySQL Connector/C++ is licensed under the terms of the GPLv2
-<http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
-MySQL Connectors. There are special exceptions to the terms and
-conditions of the GPLv2 as it is applied to this software, see the
-FLOSS License Exception
-<http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published
-by the Free Software Foundation; version 2 of the License.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
-*/
+ * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2.0, as
+ * published by the Free Software Foundation.
+ *
+ * This program is also distributed with certain software (including
+ * but not limited to OpenSSL) that is licensed under separate terms,
+ * as designated in a particular file or component or in included license
+ * documentation.  The authors of MySQL hereby grant you an
+ * additional permission to link the program and your derivative works
+ * with the separately licensed software that they have included with
+ * MySQL.
+ *
+ * Without limiting anything contained in the foregoing, this file,
+ * which is part of MySQL Connector/C++, is also subject to the
+ * Universal FOSS Exception, version 1.0, a copy of which can be found at
+ * http://oss.oracle.com/licenses/universal-foss-exception.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License, version 2.0, for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+ */
 
 
 
@@ -174,144 +180,144 @@ typedef void (STDCALL *ptr2mysql_thread_end)();
 class IMySQLCAPI
 {
 public:
-	virtual my_ulonglong affected_rows(MYSQL *) = 0;
+  virtual my_ulonglong affected_rows(MYSQL *) = 0;
 
-	virtual my_bool autocommit(MYSQL *, my_bool) = 0;
+  virtual my_bool autocommit(MYSQL *, my_bool) = 0;
 
-	virtual void close(MYSQL *mysql) = 0;
+  virtual void close(MYSQL *mysql) = 0;
 
-	virtual my_bool commit(MYSQL *mysql) = 0;
+  virtual my_bool commit(MYSQL *mysql) = 0;
 
-	virtual void data_seek(MYSQL_RES *, my_ulonglong) = 0;
+  virtual void data_seek(MYSQL_RES *, my_ulonglong) = 0;
 
-	virtual void debug(const char *) = 0;
+  virtual void debug(const char *) = 0;
 
-	virtual unsigned int mysql_errno(MYSQL *mysql) = 0;
+  virtual unsigned int mysql_errno(MYSQL *mysql) = 0;
 
-	virtual const char * error(MYSQL *mysql) = 0;
+  virtual const char * error(MYSQL *mysql) = 0;
 
-	virtual MYSQL_FIELD * fetch_field(MYSQL_RES *) = 0;
+  virtual MYSQL_FIELD * fetch_field(MYSQL_RES *) = 0;
 
-	virtual MYSQL_FIELD * fetch_field_direct (MYSQL_RES *, unsigned int) = 0;
+  virtual MYSQL_FIELD * fetch_field_direct (MYSQL_RES *, unsigned int) = 0;
 
-	virtual unsigned long * fetch_lengths(MYSQL_RES * ) = 0;
+  virtual unsigned long * fetch_lengths(MYSQL_RES * ) = 0;
 
-	virtual MYSQL_ROW fetch_row(MYSQL_RES * ) = 0;
+  virtual MYSQL_ROW fetch_row(MYSQL_RES * ) = 0;
 
-	virtual unsigned int field_count(MYSQL *) = 0;
+  virtual unsigned int field_count(MYSQL *) = 0;
 
-	virtual void free_result(MYSQL_RES * ) = 0;
+  virtual void free_result(MYSQL_RES * ) = 0;
 
-	virtual unsigned long get_client_version() = 0;
+  virtual unsigned long get_client_version() = 0;
 
-	virtual const char * get_server_info(MYSQL *) = 0;
+  virtual const char * get_server_info(MYSQL *) = 0;
 
-	virtual unsigned long get_server_version(MYSQL *) = 0;
+  virtual unsigned long get_server_version(MYSQL *) = 0;
 
-	virtual void get_character_set_info(MYSQL *, void *) = 0;
+  virtual void get_character_set_info(MYSQL *, void *) = 0;
 
-	virtual const char * info(MYSQL *mysql) = 0;
+  virtual const char * info(MYSQL *mysql) = 0;
 
-	virtual MYSQL * init(MYSQL *mysql) = 0;
+  virtual MYSQL * init(MYSQL *mysql) = 0;
 
-	virtual int library_init(int argc, char **argv, char **groups) = 0;
+  virtual int library_init(int argc, char **argv, char **groups) = 0;
 
-	virtual void library_end() = 0;
+  virtual void library_end() = 0;
 
-	virtual my_bool more_results(MYSQL *) = 0;
+  virtual my_bool more_results(MYSQL *) = 0;
 
-	virtual int next_result(MYSQL *) = 0;
+  virtual int next_result(MYSQL *) = 0;
 
-	virtual unsigned int num_fields(MYSQL_RES * ) = 0;
+  virtual unsigned int num_fields(MYSQL_RES * ) = 0;
 
-	virtual my_ulonglong num_rows(MYSQL_RES * ) = 0;
+  virtual my_ulonglong num_rows(MYSQL_RES * ) = 0;
 
-	virtual int options(MYSQL *, enum mysql_option option , const void *arg) = 0;
+  virtual int options(MYSQL *, enum mysql_option option , const void *arg) = 0;
 
-	virtual int options(MYSQL *, enum mysql_option option , const void *arg1, const void *arg2) = 0;
+  virtual int options(MYSQL *, enum mysql_option option , const void *arg1, const void *arg2) = 0;
 
-	virtual int get_option(MYSQL *, enum mysql_option option , const void *arg) = 0;
+  virtual int get_option(MYSQL *, enum mysql_option option , const void *arg) = 0;
 
-	virtual int ping(MYSQL *) = 0;
+  virtual int ping(MYSQL *) = 0;
 
-	virtual int query(MYSQL *, const char *) = 0;
+  virtual int query(MYSQL *, const char *) = 0;
 
-	virtual MYSQL * real_connect(MYSQL * mysql,
-								const char *  host,
-								const char *  user,
-								const char *  passwd,
-								const char *  db,
-								unsigned int  port,
-								const char *  unix_socket,
-								unsigned long client_flag) = 0;
+  virtual MYSQL * real_connect(MYSQL * mysql,
+                const char *  host,
+                const char *  user,
+                const char *  passwd,
+                const char *  db,
+                unsigned int  port,
+                const char *  unix_socket,
+                unsigned long client_flag) = 0;
 
-	virtual unsigned long real_escape_string(MYSQL * mysql, char * to, const char * from, unsigned long length) = 0;
+  virtual unsigned long real_escape_string(MYSQL * mysql, char * to, const char * from, unsigned long length) = 0;
 
-	virtual int real_query(MYSQL *, const char *, unsigned long) = 0;
+  virtual int real_query(MYSQL *, const char *, unsigned long) = 0;
 
-	virtual my_bool rollback(MYSQL *) = 0;
+  virtual my_bool rollback(MYSQL *) = 0;
 
-	virtual const char * sqlstate(MYSQL *) = 0;
+  virtual const char * sqlstate(MYSQL *) = 0;
 
-	virtual my_bool ssl_set(MYSQL * mysql,
-							const char * key,
-							const char * cert,
-							const char * ca,
-							const char * capath,
-							const char * cipher) = 0;
+  virtual my_bool ssl_set(MYSQL * mysql,
+              const char * key,
+              const char * cert,
+              const char * ca,
+              const char * capath,
+              const char * cipher) = 0;
 
-	virtual MYSQL_RES * store_result(MYSQL *) = 0;
+  virtual MYSQL_RES * store_result(MYSQL *) = 0;
 
-	virtual MYSQL_RES * use_result(MYSQL *) = 0;
+  virtual MYSQL_RES * use_result(MYSQL *) = 0;
 
-	virtual unsigned int warning_count(MYSQL *) = 0;
+  virtual unsigned int warning_count(MYSQL *) = 0;
 
-	/* Methods - wrappers of prepared statement stmt_* functions */
-	virtual my_ulonglong  stmt_affected_rows (MYSQL_STMT *) = 0;
+  /* Methods - wrappers of prepared statement stmt_* functions */
+  virtual my_ulonglong  stmt_affected_rows (MYSQL_STMT *) = 0;
 
-	virtual my_bool stmt_attr_set(MYSQL_STMT *stmt, enum enum_stmt_attr_type option , const void *arg) = 0;
+  virtual my_bool stmt_attr_set(MYSQL_STMT *stmt, enum enum_stmt_attr_type option , const void *arg) = 0;
 
-	virtual my_bool stmt_bind_param(MYSQL_STMT *, MYSQL_BIND *) = 0;
+  virtual my_bool stmt_bind_param(MYSQL_STMT *, MYSQL_BIND *) = 0;
 
-	virtual my_bool stmt_bind_result(MYSQL_STMT *, MYSQL_BIND *) = 0;
+  virtual my_bool stmt_bind_result(MYSQL_STMT *, MYSQL_BIND *) = 0;
 
-	virtual my_bool stmt_close(MYSQL_STMT *) = 0;
+  virtual my_bool stmt_close(MYSQL_STMT *) = 0;
 
-	virtual void stmt_data_seek(MYSQL_STMT *, my_ulonglong) = 0;
+  virtual void stmt_data_seek(MYSQL_STMT *, my_ulonglong) = 0;
 
-	virtual unsigned int stmt_errno(MYSQL_STMT *) = 0;
+  virtual unsigned int stmt_errno(MYSQL_STMT *) = 0;
 
-	virtual const char * stmt_error(MYSQL_STMT *) = 0;
+  virtual const char * stmt_error(MYSQL_STMT *) = 0;
 
-	virtual int stmt_execute(MYSQL_STMT *) = 0;
+  virtual int stmt_execute(MYSQL_STMT *) = 0;
 
-	virtual int stmt_fetch(MYSQL_STMT *) = 0;
+  virtual int stmt_fetch(MYSQL_STMT *) = 0;
 
-	virtual unsigned int stmt_field_count(MYSQL_STMT *) = 0;
+  virtual unsigned int stmt_field_count(MYSQL_STMT *) = 0;
 
-	virtual MYSQL_STMT * stmt_init(MYSQL *) = 0;
+  virtual MYSQL_STMT * stmt_init(MYSQL *) = 0;
 
-	virtual my_ulonglong stmt_num_rows(MYSQL_STMT *) = 0;
+  virtual my_ulonglong stmt_num_rows(MYSQL_STMT *) = 0;
 
-	virtual unsigned long stmt_param_count(MYSQL_STMT *) = 0;
+  virtual unsigned long stmt_param_count(MYSQL_STMT *) = 0;
 
-	virtual int stmt_prepare(MYSQL_STMT *, const char *, unsigned long) = 0;
+  virtual int stmt_prepare(MYSQL_STMT *, const char *, unsigned long) = 0;
 
-	virtual MYSQL_RES * stmt_result_metadata(MYSQL_STMT *) = 0;
+  virtual MYSQL_RES * stmt_result_metadata(MYSQL_STMT *) = 0;
 
-	virtual my_bool stmt_send_long_data(MYSQL_STMT * stmt , unsigned int par_number, const char * data, unsigned long len) = 0;
+  virtual my_bool stmt_send_long_data(MYSQL_STMT * stmt , unsigned int par_number, const char * data, unsigned long len) = 0;
 
-	virtual const char *  stmt_sqlstate(MYSQL_STMT *) = 0;
+  virtual const char *  stmt_sqlstate(MYSQL_STMT *) = 0;
 
-	virtual int stmt_store_result(MYSQL_STMT *) = 0;
+  virtual int stmt_store_result(MYSQL_STMT *) = 0;
 
-	virtual int stmt_next_result(MYSQL_STMT *) = 0;
+  virtual int stmt_next_result(MYSQL_STMT *) = 0;
 
-	virtual bool stmt_free_result(MYSQL_STMT *) = 0;
+  virtual bool stmt_free_result(MYSQL_STMT *) = 0;
 
-	virtual void thread_end() = 0;
+  virtual void thread_end() = 0;
 
-	virtual void thread_init() = 0;
+  virtual void thread_init() = 0;
 };
 
 boost::shared_ptr<IMySQLCAPI> getCApiHandle(const sql::SQLString & name);

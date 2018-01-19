@@ -1,26 +1,32 @@
 /*
-Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
-
-The MySQL Connector/C++ is licensed under the terms of the GPLv2
-<http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
-MySQL Connectors. There are special exceptions to the terms and
-conditions of the GPLv2 as it is applied to this software, see the
-FLOSS License Exception
-<http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published
-by the Free Software Foundation; version 2 of the License.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
-*/
+ * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2.0, as
+ * published by the Free Software Foundation.
+ *
+ * This program is also distributed with certain software (including
+ * but not limited to OpenSSL) that is licensed under separate terms,
+ * as designated in a particular file or component or in included license
+ * documentation.  The authors of MySQL hereby grant you an
+ * additional permission to link the program and your derivative works
+ * with the separately licensed software that they have included with
+ * MySQL.
+ *
+ * Without limiting anything contained in the foregoing, this file,
+ * which is part of MySQL Connector/C++, is also subject to the
+ * Universal FOSS Exception, version 1.0, a copy of which can be found at
+ * http://oss.oracle.com/licenses/universal-foss-exception.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License, version 2.0, for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+ */
 
 
 
@@ -115,7 +121,7 @@ int pthread_create(pthread_t *,pthread_attr_t *,pthread_handler,void *);
 int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr);
 int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
 int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
-			   struct timespec *abstime);
+         struct timespec *abstime);
 int pthread_cond_signal(pthread_cond_t *cond);
 int pthread_cond_broadcast(pthread_cond_t *cond);
 int pthread_cond_destroy(pthread_cond_t *cond);
@@ -326,9 +332,9 @@ struct tm *gmtime_r(const time_t *clock, struct tm *res);
 #if ((defined(HAVE_PTHREAD_ATTR_CREATE) && !defined(HAVE_SIGWAIT)) || defined(HAVE_DEC_3_2_THREADS)) && !defined(HAVE_CTHREADS_WRAPPER)
 /* This is set on AIX_3_2 and Siemens unix (and DEC OSF/1 3.2 too) */
 #define pthread_key_create(A,B) \
-		pthread_keycreate(A,(B) ?\
-				  (pthread_destructor_t) (B) :\
-				  (pthread_destructor_t) pthread_dummy)
+    pthread_keycreate(A,(B) ?\
+          (pthread_destructor_t) (B) :\
+          (pthread_destructor_t) pthread_dummy)
 #define pthread_attr_init(A) pthread_attr_create(A)
 #define pthread_attr_destroy(A) pthread_attr_delete(A)
 #define pthread_attr_setdetachstate(A,B) pthread_dummy(0)
@@ -349,7 +355,7 @@ struct tm *gmtime_r(const time_t *clock, struct tm *res);
 #undef pthread_cond_timedwait
 #define pthread_cond_timedwait(a,b,c) my_pthread_cond_timedwait((a),(b),(c))
 int my_pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
-			      struct timespec *abstime);
+            struct timespec *abstime);
 #endif
 
 #if defined(HPUX10)
@@ -461,14 +467,14 @@ int safe_mutex_lock(safe_mutex_t *mp, myf my_flags, const char *file,
 int safe_mutex_unlock(safe_mutex_t *mp,const char *file, uint line);
 int safe_mutex_destroy(safe_mutex_t *mp,const char *file, uint line);
 int safe_cond_wait(pthread_cond_t *cond, safe_mutex_t *mp,const char *file,
-		   uint line);
+       uint line);
 int safe_cond_timedwait(pthread_cond_t *cond, safe_mutex_t *mp,
-			struct timespec *abstime, const char *file, uint line);
+      struct timespec *abstime, const char *file, uint line);
 void safe_mutex_global_init(void);
 void safe_mutex_end(FILE *file);
 void safe_mutex_free_deadlock_data(safe_mutex_t *mp);
 
-	/* Wrappers if safe mutex is actually used */
+  /* Wrappers if safe mutex is actually used */
 #define MYF_TRY_LOCK              1
 #define MYF_NO_DEADLOCK_DETECTION 2
 

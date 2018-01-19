@@ -1,26 +1,32 @@
 /*
-Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
-
-The MySQL Connector/C++ is licensed under the terms of the GPLv2
-<http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
-MySQL Connectors. There are special exceptions to the terms and
-conditions of the GPLv2 as it is applied to this software, see the
-FLOSS License Exception
-<http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published
-by the Free Software Foundation; version 2 of the License.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
-*/
+ * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2.0, as
+ * published by the Free Software Foundation.
+ *
+ * This program is also distributed with certain software (including
+ * but not limited to OpenSSL) that is licensed under separate terms,
+ * as designated in a particular file or component or in included license
+ * documentation.  The authors of MySQL hereby grant you an
+ * additional permission to link the program and your derivative works
+ * with the separately licensed software that they have included with
+ * MySQL.
+ *
+ * Without limiting anything contained in the foregoing, this file,
+ * which is part of MySQL Connector/C++, is also subject to the
+ * Universal FOSS Exception, version 1.0, a copy of which can be found at
+ * http://oss.oracle.com/licenses/universal-foss-exception.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License, version 2.0, for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+ */
 
 
 
@@ -32,9 +38,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "mysql_debug.h"
 
 #define NON_WANTED_FUNCTIONS 	!strstr(func, "Closed") \
-								&& !strstr(func, "Valid") \
-								&& !strstr(func, "getMySQLHandle") \
-								&& !strstr(func, "isBeforeFirstOrAfterLast")
+                && !strstr(func, "Valid") \
+                && !strstr(func, "getMySQLHandle") \
+                && !strstr(func, "isBeforeFirstOrAfterLast")
 
 
 namespace sql
@@ -45,15 +51,15 @@ namespace mysql
 
 /* {{{ MySQL_DebugEnterEvent::MySQL_DebugEnterEvent() -I- */
 MySQL_DebugEnterEvent::MySQL_DebugEnterEvent(unsigned int l, const char * const f,
-											 const char * const func_name,
-											 const boost::shared_ptr< MySQL_DebugLogger > & logger_object)
+                       const char * const func_name,
+                       const boost::shared_ptr< MySQL_DebugLogger > & logger_object)
   : line(l), file(f), func(func_name), logger(logger_object)
 {
-	if (logger) {
-		if (NON_WANTED_FUNCTIONS) {
-			logger->enter(this);
-		}
-	}
+  if (logger) {
+    if (NON_WANTED_FUNCTIONS) {
+      logger->enter(this);
+    }
+  }
 }
 /* }}} */
 
@@ -61,11 +67,11 @@ MySQL_DebugEnterEvent::MySQL_DebugEnterEvent(unsigned int l, const char * const 
 /* {{{ MySQL_DebugEnterEvent::MySQL_DebugEnterEvent() -I- */
 MySQL_DebugEnterEvent::~MySQL_DebugEnterEvent()
 {
-	if (logger) {
-		if (NON_WANTED_FUNCTIONS) {
-			logger->leave(this);
-		}
-	}
+  if (logger) {
+    if (NON_WANTED_FUNCTIONS) {
+      logger->leave(this);
+    }
+  }
 }
 /* }}} */
 
@@ -74,10 +80,10 @@ MySQL_DebugEnterEvent::~MySQL_DebugEnterEvent()
 MySQL_DebugLogger::MySQL_DebugLogger()
   : tracing(NO_TRACE)
 {
-	// ToDo: On Win getenv() is not thread-safe !
-	if (getenv("MYSQLCPPCONN_TRACE_ENABLED")) {
-		tracing = NORMAL_TRACE;
-	}
+  // ToDo: On Win getenv() is not thread-safe !
+  if (getenv("MYSQLCPPCONN_TRACE_ENABLED")) {
+    tracing = NORMAL_TRACE;
+  }
 }
 /* }}} */
 
@@ -85,7 +91,7 @@ MySQL_DebugLogger::MySQL_DebugLogger()
 /* {{{ MySQL_DebugLogger::~MySQL_DebugLogger() -I- */
 MySQL_DebugLogger::~MySQL_DebugLogger()
 {
-	callStack.empty();
+  callStack.empty();
 }
 /* }}} */
 
@@ -94,7 +100,7 @@ MySQL_DebugLogger::~MySQL_DebugLogger()
 void
 MySQL_DebugLogger::disableTracing()
 {
-	tracing = NO_TRACE;
+  tracing = NO_TRACE;
 }
 /* }}} */
 
@@ -103,7 +109,7 @@ MySQL_DebugLogger::disableTracing()
 void
 MySQL_DebugLogger::enableTracing()
 {
-	tracing = NORMAL_TRACE;
+  tracing = NORMAL_TRACE;
 }
 /* }}} */
 
@@ -112,14 +118,14 @@ MySQL_DebugLogger::enableTracing()
 void
 MySQL_DebugLogger::enter(const MySQL_DebugEnterEvent * event)
 {
-	if (tracing != NO_TRACE) {
-		printf("#\t");
-		for (unsigned int i = 0; i < callStack.size(); ++i) {
-			printf("|  ");
-		}
-		printf(">%s\n", event->func);
-	}
-	callStack.push(event);
+  if (tracing != NO_TRACE) {
+    printf("#\t");
+    for (unsigned int i = 0; i < callStack.size(); ++i) {
+      printf("|  ");
+    }
+    printf(">%s\n", event->func);
+  }
+  callStack.push(event);
 }
 /* }}} */
 
@@ -128,7 +134,7 @@ MySQL_DebugLogger::enter(const MySQL_DebugEnterEvent * event)
 bool
 MySQL_DebugLogger::isTracing()
 {
-	return (tracing != NO_TRACE);
+  return (tracing != NO_TRACE);
 }
 /* }}} */
 
@@ -137,14 +143,14 @@ MySQL_DebugLogger::isTracing()
 void
 MySQL_DebugLogger::leave(const MySQL_DebugEnterEvent * event)
 {
-	callStack.pop();
-	if (tracing != NO_TRACE) {
-		printf("#\t");
-		for (unsigned int i = 0; i < callStack.size(); ++i) {
-			printf("|  ");
-		}
-		printf("<%s\n", event->func);
-	}
+  callStack.pop();
+  if (tracing != NO_TRACE) {
+    printf("#\t");
+    for (unsigned int i = 0; i < callStack.size(); ++i) {
+      printf("|  ");
+    }
+    printf("<%s\n", event->func);
+  }
 }
 /* }}} */
 
@@ -153,15 +159,15 @@ MySQL_DebugLogger::leave(const MySQL_DebugEnterEvent * event)
 void
 MySQL_DebugLogger::log(const char * const type, const char * const message)
 {
-	if (tracing == NO_TRACE) {
-		return;
-	}
-	printf("#\t");
-	for (unsigned int i = 0; i < callStack.size(); ++i) {
-		printf("|  ");
-	}
-	printf("%s: ", type);
-	printf("%s\n", message);
+  if (tracing == NO_TRACE) {
+    return;
+  }
+  printf("#\t");
+  for (unsigned int i = 0; i < callStack.size(); ++i) {
+    printf("|  ");
+  }
+  printf("%s: ", type);
+  printf("%s\n", message);
 }
 /* }}} */
 
@@ -170,19 +176,19 @@ MySQL_DebugLogger::log(const char * const type, const char * const message)
 void
 MySQL_DebugLogger::log_va(const char * const type, const char * const format, ...)
 {
-	if (tracing == NO_TRACE) {
-		return;
-	}
-	va_list args;
-	printf("#\t");
-	for (unsigned int i = 0; i < callStack.size(); ++i) {
-		printf("|  ");
-	}
-	printf("%s: ", type);
-	va_start(args, format);
-	vprintf(format, args);
-	va_end(args);
-	printf("\n");
+  if (tracing == NO_TRACE) {
+    return;
+  }
+  va_list args;
+  printf("#\t");
+  for (unsigned int i = 0; i < callStack.size(); ++i) {
+    printf("|  ");
+  }
+  printf("%s: ", type);
+  va_start(args, format);
+  vprintf(format, args);
+  va_end(args);
+  printf("\n");
 }
 /* }}} */
 

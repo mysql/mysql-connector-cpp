@@ -1,26 +1,32 @@
 /*
-Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
-
-The MySQL Connector/C++ is licensed under the terms of the GPLv2
-<http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
-MySQL Connectors. There are special exceptions to the terms and
-conditions of the GPLv2 as it is applied to this software, see the
-FLOSS License Exception
-<http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published
-by the Free Software Foundation; version 2 of the License.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
-*/
+ * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2.0, as
+ * published by the Free Software Foundation.
+ *
+ * This program is also distributed with certain software (including
+ * but not limited to OpenSSL) that is licensed under separate terms,
+ * as designated in a particular file or component or in included license
+ * documentation.  The authors of MySQL hereby grant you an
+ * additional permission to link the program and your derivative works
+ * with the separately licensed software that they have included with
+ * MySQL.
+ *
+ * Without limiting anything contained in the foregoing, this file,
+ * which is part of MySQL Connector/C++, is also subject to the
+ * Universal FOSS Exception, version 1.0, a copy of which can be found at
+ * http://oss.oracle.com/licenses/universal-foss-exception.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License, version 2.0, for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+ */
 
 
 
@@ -45,38 +51,38 @@ class MySQL_ConnectionMetaData;
 
 struct MySQL_ConnectionData
 {
-	MySQL_ConnectionData(boost::shared_ptr< MySQL_DebugLogger > & l)
-		: closed(false), autocommit(false), txIsolationLevel(TRANSACTION_READ_COMMITTED),
-		  is_valid(false), sql_mode_set(false), cache_sql_mode(false),
-		  metadata_use_info_schema(true), reconnect(false),
-		  defaultStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
-		  defaultPreparedStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
-		  logger(l), meta(NULL) {}
+  MySQL_ConnectionData(boost::shared_ptr< MySQL_DebugLogger > & l)
+    : closed(false), autocommit(false), txIsolationLevel(TRANSACTION_READ_COMMITTED),
+      is_valid(false), sql_mode_set(false), cache_sql_mode(false),
+      metadata_use_info_schema(true), reconnect(false),
+      defaultStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
+      defaultPreparedStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
+      logger(l), meta(NULL) {}
 
-	~MySQL_ConnectionData()
-	{
-	}
+  ~MySQL_ConnectionData()
+  {
+  }
 
-	bool closed;
-	bool autocommit;
-	enum_transaction_isolation txIsolationLevel;
+  bool closed;
+  bool autocommit;
+  enum_transaction_isolation txIsolationLevel;
 
-	boost::scoped_ptr<const MySQL_Warning> warnings;
+  boost::scoped_ptr<const MySQL_Warning> warnings;
 
-	bool is_valid;
+  bool is_valid;
 
-	sql::SQLString sql_mode;
-	bool sql_mode_set;
-	bool cache_sql_mode;
-	bool metadata_use_info_schema;
-	bool reconnect;
+  sql::SQLString sql_mode;
+  bool sql_mode_set;
+  bool cache_sql_mode;
+  bool metadata_use_info_schema;
+  bool reconnect;
 
-	sql::ResultSet::enum_type defaultStatementResultType;
-	sql::ResultSet::enum_type defaultPreparedStatementResultType;
+  sql::ResultSet::enum_type defaultStatementResultType;
+  sql::ResultSet::enum_type defaultPreparedStatementResultType;
 
-	boost::shared_ptr< MySQL_DebugLogger > logger;
+  boost::shared_ptr< MySQL_DebugLogger > logger;
 
-	boost::scoped_ptr< MySQL_ConnectionMetaData > meta;
+  boost::scoped_ptr< MySQL_ConnectionMetaData > meta;
 };
 
 } /* namespace mysql */

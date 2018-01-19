@@ -1,26 +1,32 @@
 /*
-Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
-
-The MySQL Connector/C++ is licensed under the terms of the GPLv2
-<http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
-MySQL Connectors. There are special exceptions to the terms and
-conditions of the GPLv2 as it is applied to this software, see the
-FLOSS License Exception
-<http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published
-by the Free Software Foundation; version 2 of the License.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
-*/
+ * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2.0, as
+ * published by the Free Software Foundation.
+ *
+ * This program is also distributed with certain software (including
+ * but not limited to OpenSSL) that is licensed under separate terms,
+ * as designated in a particular file or component or in included license
+ * documentation.  The authors of MySQL hereby grant you an
+ * additional permission to link the program and your derivative works
+ * with the separately licensed software that they have included with
+ * MySQL.
+ *
+ * Without limiting anything contained in the foregoing, this file,
+ * which is part of MySQL Connector/C++, is also subject to the
+ * Universal FOSS Exception, version 1.0, a copy of which can be found at
+ * http://oss.oracle.com/licenses/universal-foss-exception.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License, version 2.0, for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+ */
 
 
 
@@ -39,14 +45,14 @@ namespace NativeAPI
 /* {{{ LibmysqlStaticProxy::LibmysqlStaticProxy() */
 LibmysqlStaticProxy::LibmysqlStaticProxy()
 {
-	this->library_init(0, NULL, NULL);
+  this->library_init(0, NULL, NULL);
 }
 /* }}} */
 
 /* {{{ LibmysqlStaticProxy::~LibmysqlStaticProxy() */
 LibmysqlStaticProxy::~LibmysqlStaticProxy()
 {
-	this->library_end();
+  this->library_end();
 }
 /* }}} */
 
@@ -56,7 +62,7 @@ LibmysqlStaticProxy::~LibmysqlStaticProxy()
 my_ulonglong
 LibmysqlStaticProxy::affected_rows(MYSQL * mysql)
 {
-	return ::mysql_affected_rows(mysql);
+  return ::mysql_affected_rows(mysql);
 }
 /* }}} */
 
@@ -65,7 +71,7 @@ LibmysqlStaticProxy::affected_rows(MYSQL * mysql)
 my_bool
 LibmysqlStaticProxy::autocommit(MYSQL * mysql, my_bool mode)
 {
-	return ::mysql_autocommit(mysql, mode);
+  return ::mysql_autocommit(mysql, mode);
 }
 /* }}} */
 
@@ -74,7 +80,7 @@ LibmysqlStaticProxy::autocommit(MYSQL * mysql, my_bool mode)
 void
 LibmysqlStaticProxy::close(MYSQL * mysql)
 {
-	return ::mysql_close(mysql);
+  return ::mysql_close(mysql);
 }
 /* }}} */
 
@@ -83,7 +89,7 @@ LibmysqlStaticProxy::close(MYSQL * mysql)
 my_bool
 LibmysqlStaticProxy::commit(MYSQL * mysql)
 {
-	return ::mysql_commit(mysql);
+  return ::mysql_commit(mysql);
 }
 /* }}} */
 
@@ -92,7 +98,7 @@ LibmysqlStaticProxy::commit(MYSQL * mysql)
 void
 LibmysqlStaticProxy::data_seek(MYSQL_RES * result, my_ulonglong offset)
 {
-	return ::mysql_data_seek(result, offset);
+  return ::mysql_data_seek(result, offset);
 }
 /* }}} */
 
@@ -100,7 +106,7 @@ LibmysqlStaticProxy::data_seek(MYSQL_RES * result, my_ulonglong offset)
 void
 LibmysqlStaticProxy::debug(const char * debug)
 {
-	return ::mysql_debug(debug);
+  return ::mysql_debug(debug);
 }
 /* }}} */
 
@@ -109,7 +115,7 @@ LibmysqlStaticProxy::debug(const char * debug)
 unsigned int
 LibmysqlStaticProxy::mysql_errno(MYSQL * mysql)
 {
-	return ::mysql_errno(mysql);
+  return ::mysql_errno(mysql);
 }
 /* }}} */
 
@@ -118,7 +124,7 @@ LibmysqlStaticProxy::mysql_errno(MYSQL * mysql)
 const char *
 LibmysqlStaticProxy::error(MYSQL * mysql)
 {
-	return ::mysql_error(mysql);
+  return ::mysql_error(mysql);
 }
 /* }}} */
 
@@ -127,7 +133,7 @@ LibmysqlStaticProxy::error(MYSQL * mysql)
 MYSQL_FIELD *
 LibmysqlStaticProxy::fetch_field(MYSQL_RES * result)
 {
-	return ::mysql_fetch_field(result);
+  return ::mysql_fetch_field(result);
 }
 /* }}} */
 
@@ -135,7 +141,7 @@ LibmysqlStaticProxy::fetch_field(MYSQL_RES * result)
 MYSQL_FIELD *
 LibmysqlStaticProxy::fetch_field_direct(MYSQL_RES * result, unsigned int fieldnr)
 {
-	return ::mysql_fetch_field_direct(result, fieldnr);
+  return ::mysql_fetch_field_direct(result, fieldnr);
 }
 /* }}} */
 
@@ -144,7 +150,7 @@ LibmysqlStaticProxy::fetch_field_direct(MYSQL_RES * result, unsigned int fieldnr
 unsigned long *
 LibmysqlStaticProxy::fetch_lengths(MYSQL_RES * result)
 {
-	return ::mysql_fetch_lengths(result);
+  return ::mysql_fetch_lengths(result);
 }
 /* }}} */
 
@@ -153,7 +159,7 @@ LibmysqlStaticProxy::fetch_lengths(MYSQL_RES * result)
 MYSQL_ROW
 LibmysqlStaticProxy::fetch_row(MYSQL_RES * result)
 {
-	return ::mysql_fetch_row(result);
+  return ::mysql_fetch_row(result);
 }
 /* }}} */
 
@@ -162,7 +168,7 @@ LibmysqlStaticProxy::fetch_row(MYSQL_RES * result)
 unsigned int
 LibmysqlStaticProxy::field_count(MYSQL * mysql)
 {
-	return ::mysql_field_count(mysql);
+  return ::mysql_field_count(mysql);
 }
 /* }}} */
 
@@ -171,7 +177,7 @@ LibmysqlStaticProxy::field_count(MYSQL * mysql)
 void
 LibmysqlStaticProxy::free_result(MYSQL_RES * result)
 {
-	return ::mysql_free_result(result);
+  return ::mysql_free_result(result);
 }
 /* }}} */
 
@@ -180,7 +186,7 @@ LibmysqlStaticProxy::free_result(MYSQL_RES * result)
 unsigned long
 LibmysqlStaticProxy::get_client_version()
 {
-	return ::mysql_get_client_version();
+  return ::mysql_get_client_version();
 }
 /* }}} */
 
@@ -189,7 +195,7 @@ LibmysqlStaticProxy::get_client_version()
 const char *
 LibmysqlStaticProxy::get_server_info(MYSQL * mysql)
 {
-	return ::mysql_get_server_info(mysql);
+  return ::mysql_get_server_info(mysql);
 }
 /* }}} */
 
@@ -198,7 +204,7 @@ LibmysqlStaticProxy::get_server_info(MYSQL * mysql)
 unsigned long
 LibmysqlStaticProxy::get_server_version(MYSQL * mysql)
 {
-	return ::mysql_get_server_version(mysql);
+  return ::mysql_get_server_version(mysql);
 }
 /* }}} */
 
@@ -207,7 +213,7 @@ LibmysqlStaticProxy::get_server_version(MYSQL * mysql)
 void
 LibmysqlStaticProxy::get_character_set_info(MYSQL * mysql, void *cs)
 {
-	return ::mysql_get_character_set_info(mysql, static_cast<MY_CHARSET_INFO *>(cs));
+  return ::mysql_get_character_set_info(mysql, static_cast<MY_CHARSET_INFO *>(cs));
 }
 /* }}} */
 
@@ -216,7 +222,7 @@ LibmysqlStaticProxy::get_character_set_info(MYSQL * mysql, void *cs)
 const char *
 LibmysqlStaticProxy::info(MYSQL * mysql)
 {
-	return ::mysql_info(mysql);
+  return ::mysql_info(mysql);
 }
 /* }}} */
 
@@ -225,7 +231,7 @@ LibmysqlStaticProxy::info(MYSQL * mysql)
 MYSQL *
 LibmysqlStaticProxy::init(MYSQL * mysql)
 {
-	return ::mysql_init(mysql);
+  return ::mysql_init(mysql);
 }
 /* }}} */
 
@@ -234,7 +240,7 @@ LibmysqlStaticProxy::init(MYSQL * mysql)
 int
 LibmysqlStaticProxy::library_init(int argc,char **argv,char **groups)
 {
-	return ::mysql_library_init(argc, argv, groups);
+  return ::mysql_library_init(argc, argv, groups);
 }
 /* }}} */
 
@@ -243,7 +249,7 @@ LibmysqlStaticProxy::library_init(int argc,char **argv,char **groups)
 void
 LibmysqlStaticProxy::library_end()
 {
-	return ::mysql_library_end();
+  return ::mysql_library_end();
 }
 /* }}} */
 
@@ -252,7 +258,7 @@ LibmysqlStaticProxy::library_end()
 my_bool
 LibmysqlStaticProxy::more_results(MYSQL * mysql)
 {
-	return ::mysql_more_results(mysql);
+  return ::mysql_more_results(mysql);
 }
 /* }}} */
 
@@ -261,7 +267,7 @@ LibmysqlStaticProxy::more_results(MYSQL * mysql)
 int
 LibmysqlStaticProxy::next_result(MYSQL * mysql)
 {
-	return ::mysql_next_result(mysql);
+  return ::mysql_next_result(mysql);
 }
 /* }}} */
 
@@ -270,7 +276,7 @@ LibmysqlStaticProxy::next_result(MYSQL * mysql)
 unsigned int
 LibmysqlStaticProxy::num_fields(MYSQL_RES * result)
 {
-	return ::mysql_num_fields(result);
+  return ::mysql_num_fields(result);
 }
 /* }}} */
 
@@ -279,7 +285,7 @@ LibmysqlStaticProxy::num_fields(MYSQL_RES * result)
 my_ulonglong
 LibmysqlStaticProxy::num_rows(MYSQL_RES * result)
 {
-	return ::mysql_num_rows(result);
+  return ::mysql_num_rows(result);
 }
 /* }}} */
 
@@ -288,12 +294,12 @@ LibmysqlStaticProxy::num_rows(MYSQL_RES * result)
 int
 LibmysqlStaticProxy::options(MYSQL * mysql, enum mysql_option option, const void *arg)
 {
-	// in 5.0 mysql_options's 3rd parameter is "const char *"
-	if ((::mysql_options(mysql, option, static_cast<const char *>(arg)))) {
-		throw sql::InvalidArgumentException("Unsupported option provided to mysql_options()");
-	} else {
-		return 0;
-	}
+  // in 5.0 mysql_options's 3rd parameter is "const char *"
+  if ((::mysql_options(mysql, option, static_cast<const char *>(arg)))) {
+    throw sql::InvalidArgumentException("Unsupported option provided to mysql_options()");
+  } else {
+    return 0;
+  }
 }
 /* }}} */
 
@@ -303,13 +309,13 @@ int
 LibmysqlStaticProxy::options(MYSQL * mysql, enum mysql_option option, const void *arg1, const void *arg2)
 {
 #if MYSQL_VERSION_ID >= 50606
-	if ((::mysql_options4(mysql, option, static_cast<const char *>(arg1), static_cast<const char *>(arg2)))) {
-		throw sql::InvalidArgumentException("Unsupported option provided to mysql_options4()");
-	} else {
-		return 0;
-	}
+  if ((::mysql_options4(mysql, option, static_cast<const char *>(arg1), static_cast<const char *>(arg2)))) {
+    throw sql::InvalidArgumentException("Unsupported option provided to mysql_options4()");
+  } else {
+    return 0;
+  }
 #else
-	throw ::sql::MethodNotImplementedException("::mysql_options4()");
+  throw ::sql::MethodNotImplementedException("::mysql_options4()");
 #endif
 }
 /* }}} */
@@ -320,13 +326,13 @@ int
 LibmysqlStaticProxy::get_option(MYSQL * mysql, enum mysql_option option, const void *arg)
 {
 #if MYSQL_VERSION_ID >= 50703
-	if (::mysql_get_option(mysql, option, arg)) {
-		throw sql::InvalidArgumentException("Unsupported option provided to mysql_get_option()");
-	} else {
-		return 0;
-	}
+  if (::mysql_get_option(mysql, option, arg)) {
+    throw sql::InvalidArgumentException("Unsupported option provided to mysql_get_option()");
+  } else {
+    return 0;
+  }
 #else
-	throw ::sql::MethodNotImplementedException("::mysql_get_option()");
+  throw ::sql::MethodNotImplementedException("::mysql_get_option()");
 #endif
 }
 /* }}} */
@@ -336,7 +342,7 @@ LibmysqlStaticProxy::get_option(MYSQL * mysql, enum mysql_option option, const v
 int
 LibmysqlStaticProxy::query(MYSQL * mysql, const char *stmt_str)
 {
-	return ::mysql_query(mysql, stmt_str);
+  return ::mysql_query(mysql, stmt_str);
 }
 /* }}} */
 
@@ -345,7 +351,7 @@ LibmysqlStaticProxy::query(MYSQL * mysql, const char *stmt_str)
 int
 LibmysqlStaticProxy::ping(MYSQL * mysql)
 {
-	return ::mysql_ping(mysql);
+  return ::mysql_ping(mysql);
 }
 /* }}} */
 
@@ -353,15 +359,15 @@ LibmysqlStaticProxy::ping(MYSQL * mysql)
 /* {{{ LibmysqlStaticProxy::real_connect() */
 MYSQL *
 LibmysqlStaticProxy::real_connect(MYSQL * mysql,
-								const char * host,
-								const char * user,
-								const char * passwd,
-								const char * db,
-								unsigned int port,
-								const char * unix_socket,
-								unsigned long client_flag)
+                const char * host,
+                const char * user,
+                const char * passwd,
+                const char * db,
+                unsigned int port,
+                const char * unix_socket,
+                unsigned long client_flag)
 {
-	return ::mysql_real_connect(mysql, host, user, passwd, db, port, unix_socket, client_flag);
+  return ::mysql_real_connect(mysql, host, user, passwd, db, port, unix_socket, client_flag);
 }
 /* }}} */
 
@@ -370,7 +376,7 @@ LibmysqlStaticProxy::real_connect(MYSQL * mysql,
 unsigned long
 LibmysqlStaticProxy::real_escape_string(MYSQL * mysql, char * to, const char * from, unsigned long length)
 {
-	return ::mysql_real_escape_string(mysql, to, from, length);
+  return ::mysql_real_escape_string(mysql, to, from, length);
 }
 /* }}} */
 
@@ -379,7 +385,7 @@ LibmysqlStaticProxy::real_escape_string(MYSQL * mysql, char * to, const char * f
 int
 LibmysqlStaticProxy::real_query(MYSQL *mysql,const char *stmt_str, unsigned long len)
 {
-	return ::mysql_real_query(mysql, stmt_str, len);
+  return ::mysql_real_query(mysql, stmt_str, len);
 }
 /* }}} */
 
@@ -388,7 +394,7 @@ LibmysqlStaticProxy::real_query(MYSQL *mysql,const char *stmt_str, unsigned long
 my_bool
 LibmysqlStaticProxy::rollback(MYSQL * mysql)
 {
-	return ::mysql_rollback(mysql);
+  return ::mysql_rollback(mysql);
 }
 /* }}} */
 
@@ -397,7 +403,7 @@ LibmysqlStaticProxy::rollback(MYSQL * mysql)
 const char *
 LibmysqlStaticProxy::sqlstate(MYSQL * mysql)
 {
-	return ::mysql_sqlstate(mysql);
+  return ::mysql_sqlstate(mysql);
 }
 /* }}} */
 
@@ -405,13 +411,13 @@ LibmysqlStaticProxy::sqlstate(MYSQL * mysql)
 /* {{{ LibmysqlStaticProxy::ssl_set() */
 my_bool
 LibmysqlStaticProxy::ssl_set(MYSQL* mysql,
-							const char * key,
-							const char * cert,
-							const char * ca,
-							const char * capath,
-							const char * cipher)
+              const char * key,
+              const char * cert,
+              const char * ca,
+              const char * capath,
+              const char * cipher)
 {
-	return ::mysql_ssl_set(mysql, key, cert, ca, capath, cipher);
+  return ::mysql_ssl_set(mysql, key, cert, ca, capath, cipher);
 }
 /* }}} */
 
@@ -420,7 +426,7 @@ LibmysqlStaticProxy::ssl_set(MYSQL* mysql,
 MYSQL_RES *
 LibmysqlStaticProxy::store_result(MYSQL * mysql)
 {
-	return ::mysql_store_result(mysql);
+  return ::mysql_store_result(mysql);
 }
 /* }}} */
 
@@ -429,7 +435,7 @@ LibmysqlStaticProxy::store_result(MYSQL * mysql)
 MYSQL_RES *
 LibmysqlStaticProxy::use_result(MYSQL * mysql)
 {
-	return ::mysql_use_result(mysql);
+  return ::mysql_use_result(mysql);
 }
 /* }}} */
 
@@ -438,7 +444,7 @@ LibmysqlStaticProxy::use_result(MYSQL * mysql)
 unsigned int
 LibmysqlStaticProxy::warning_count(MYSQL * mysql)
 {
-	return ::mysql_warning_count(mysql);
+  return ::mysql_warning_count(mysql);
 }
 /* }}} */
 
@@ -448,7 +454,7 @@ LibmysqlStaticProxy::warning_count(MYSQL * mysql)
 my_ulonglong
 LibmysqlStaticProxy::stmt_affected_rows(MYSQL_STMT *stmt)
 {
-	return ::mysql_stmt_affected_rows(stmt);
+  return ::mysql_stmt_affected_rows(stmt);
 }
 /* }}} */
 
@@ -457,7 +463,7 @@ LibmysqlStaticProxy::stmt_affected_rows(MYSQL_STMT *stmt)
 my_bool
 LibmysqlStaticProxy::stmt_attr_set(MYSQL_STMT * stmt, enum enum_stmt_attr_type option, const void * arg)
 {
-	return ::mysql_stmt_attr_set(stmt, option, arg);
+  return ::mysql_stmt_attr_set(stmt, option, arg);
 }
 /* }}} */
 
@@ -466,7 +472,7 @@ LibmysqlStaticProxy::stmt_attr_set(MYSQL_STMT * stmt, enum enum_stmt_attr_type o
 my_bool
 LibmysqlStaticProxy::stmt_bind_param(MYSQL_STMT * stmt, MYSQL_BIND * bind)
 {
-	return ::mysql_stmt_bind_param(stmt, bind);
+  return ::mysql_stmt_bind_param(stmt, bind);
 }
 /* }}} */
 
@@ -475,7 +481,7 @@ LibmysqlStaticProxy::stmt_bind_param(MYSQL_STMT * stmt, MYSQL_BIND * bind)
 my_bool
 LibmysqlStaticProxy::stmt_bind_result(MYSQL_STMT * stmt, MYSQL_BIND * bind)
 {
-	return ::mysql_stmt_bind_result(stmt, bind);
+  return ::mysql_stmt_bind_result(stmt, bind);
 }
 /* }}} */
 
@@ -484,7 +490,7 @@ LibmysqlStaticProxy::stmt_bind_result(MYSQL_STMT * stmt, MYSQL_BIND * bind)
 my_bool
 LibmysqlStaticProxy::stmt_close(MYSQL_STMT * stmt)
 {
-	return ::mysql_stmt_close(stmt);
+  return ::mysql_stmt_close(stmt);
 }
 /* }}} */
 
@@ -493,7 +499,7 @@ LibmysqlStaticProxy::stmt_close(MYSQL_STMT * stmt)
 void
 LibmysqlStaticProxy::stmt_data_seek(MYSQL_STMT * stmt, my_ulonglong row_nr)
 {
-	return ::mysql_stmt_data_seek(stmt, row_nr);
+  return ::mysql_stmt_data_seek(stmt, row_nr);
 }
 /* }}} */
 
@@ -502,7 +508,7 @@ LibmysqlStaticProxy::stmt_data_seek(MYSQL_STMT * stmt, my_ulonglong row_nr)
 unsigned int
 LibmysqlStaticProxy::stmt_errno(MYSQL_STMT * stmt)
 {
-	return ::mysql_stmt_errno(stmt);
+  return ::mysql_stmt_errno(stmt);
 }
 /* }}} */
 
@@ -511,7 +517,7 @@ LibmysqlStaticProxy::stmt_errno(MYSQL_STMT * stmt)
 const char *
 LibmysqlStaticProxy::stmt_error(MYSQL_STMT * stmt)
 {
-	return ::mysql_stmt_error(stmt);
+  return ::mysql_stmt_error(stmt);
 }
 /* }}} */
 
@@ -520,7 +526,7 @@ LibmysqlStaticProxy::stmt_error(MYSQL_STMT * stmt)
 int
 LibmysqlStaticProxy::stmt_execute(MYSQL_STMT * stmt)
 {
-	return ::mysql_stmt_execute(stmt);
+  return ::mysql_stmt_execute(stmt);
 }
 /* }}} */
 
@@ -529,7 +535,7 @@ LibmysqlStaticProxy::stmt_execute(MYSQL_STMT * stmt)
 int
 LibmysqlStaticProxy::stmt_fetch(MYSQL_STMT * stmt)
 {
-	return ::mysql_stmt_fetch(stmt);
+  return ::mysql_stmt_fetch(stmt);
 }
 /* }}} */
 
@@ -538,7 +544,7 @@ LibmysqlStaticProxy::stmt_fetch(MYSQL_STMT * stmt)
 unsigned int
 LibmysqlStaticProxy::stmt_field_count(MYSQL_STMT * stmt)
 {
-	return ::mysql_stmt_field_count(stmt);
+  return ::mysql_stmt_field_count(stmt);
 }
 /* }}} */
 
@@ -547,7 +553,7 @@ LibmysqlStaticProxy::stmt_field_count(MYSQL_STMT * stmt)
 MYSQL_STMT *
 LibmysqlStaticProxy::stmt_init(MYSQL * mysql)
 {
-	return ::mysql_stmt_init(mysql);
+  return ::mysql_stmt_init(mysql);
 }
 /* }}} */
 
@@ -556,7 +562,7 @@ LibmysqlStaticProxy::stmt_init(MYSQL * mysql)
 my_ulonglong
 LibmysqlStaticProxy::stmt_num_rows(MYSQL_STMT * stmt)
 {
-	return ::mysql_stmt_num_rows(stmt);
+  return ::mysql_stmt_num_rows(stmt);
 }
 /* }}} */
 
@@ -565,7 +571,7 @@ LibmysqlStaticProxy::stmt_num_rows(MYSQL_STMT * stmt)
 unsigned long
 LibmysqlStaticProxy::stmt_param_count(MYSQL_STMT * stmt)
 {
-	return ::mysql_stmt_param_count(stmt);
+  return ::mysql_stmt_param_count(stmt);
 }
 /* }}} */
 
@@ -574,7 +580,7 @@ LibmysqlStaticProxy::stmt_param_count(MYSQL_STMT * stmt)
 int
 LibmysqlStaticProxy::stmt_prepare(MYSQL_STMT * stmt, const char * stmt_str, unsigned long len)
 {
-	return ::mysql_stmt_prepare(stmt, stmt_str, len);
+  return ::mysql_stmt_prepare(stmt, stmt_str, len);
 }
 /* }}} */
 
@@ -583,7 +589,7 @@ LibmysqlStaticProxy::stmt_prepare(MYSQL_STMT * stmt, const char * stmt_str, unsi
 MYSQL_RES *
 LibmysqlStaticProxy::stmt_result_metadata(MYSQL_STMT * stmt)
 {
-	return ::mysql_stmt_result_metadata(stmt);
+  return ::mysql_stmt_result_metadata(stmt);
 }
 /* }}} */
 
@@ -591,11 +597,11 @@ LibmysqlStaticProxy::stmt_result_metadata(MYSQL_STMT * stmt)
 /* {{{ LibmysqlStaticProxy::stmt_send_long_data() */
 my_bool
 LibmysqlStaticProxy::stmt_send_long_data(MYSQL_STMT * stmt,
-										unsigned int  par_number,
-										const char *  data,
-										unsigned long len)
+                    unsigned int  par_number,
+                    const char *  data,
+                    unsigned long len)
 {
-	return ::mysql_stmt_send_long_data(stmt, par_number, data, len);
+  return ::mysql_stmt_send_long_data(stmt, par_number, data, len);
 }
 /* }}} */
 
@@ -604,7 +610,7 @@ LibmysqlStaticProxy::stmt_send_long_data(MYSQL_STMT * stmt,
 const char *
 LibmysqlStaticProxy::stmt_sqlstate(MYSQL_STMT * stmt)
 {
-	return ::mysql_stmt_sqlstate(stmt);
+  return ::mysql_stmt_sqlstate(stmt);
 }
 /* }}} */
 
@@ -613,7 +619,7 @@ LibmysqlStaticProxy::stmt_sqlstate(MYSQL_STMT * stmt)
 int
 LibmysqlStaticProxy::stmt_store_result(MYSQL_STMT * stmt)
 {
-	return ::mysql_stmt_store_result(stmt);
+  return ::mysql_stmt_store_result(stmt);
 }
 /* }}} */
 
@@ -623,9 +629,9 @@ int
 LibmysqlStaticProxy::stmt_next_result(MYSQL_STMT * stmt)
 {
 #if MYSQL_VERSION_ID >= 50503
-	return ::mysql_stmt_next_result(stmt);
+  return ::mysql_stmt_next_result(stmt);
 #else
-	throw ::sql::MethodNotImplementedException("::mysql_stmt_next_result()");
+  throw ::sql::MethodNotImplementedException("::mysql_stmt_next_result()");
 #endif
 }
 /* }}} */
@@ -635,7 +641,7 @@ LibmysqlStaticProxy::stmt_next_result(MYSQL_STMT * stmt)
 bool
 LibmysqlStaticProxy::stmt_free_result(MYSQL_STMT * stmt)
 {
-	return ::mysql_stmt_free_result(stmt);
+  return ::mysql_stmt_free_result(stmt);
 }
 /* }}} */
 
@@ -644,7 +650,7 @@ LibmysqlStaticProxy::stmt_free_result(MYSQL_STMT * stmt)
 void
 LibmysqlStaticProxy::thread_end()
 {
-	::mysql_thread_end();
+  ::mysql_thread_end();
 }
 /* }}} */
 
@@ -653,7 +659,7 @@ LibmysqlStaticProxy::thread_end()
 void
 LibmysqlStaticProxy::thread_init()
 {
-	::mysql_thread_init();
+  ::mysql_thread_init();
 }
 /* }}} */
 

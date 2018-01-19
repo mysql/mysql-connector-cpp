@@ -1,26 +1,32 @@
 /*
-Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
-
-The MySQL Connector/C++ is licensed under the terms of the GPLv2
-<http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
-MySQL Connectors. There are special exceptions to the terms and
-conditions of the GPLv2 as it is applied to this software, see the
-FLOSS License Exception
-<http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published
-by the Free Software Foundation; version 2 of the License.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
-*/
+ * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2.0, as
+ * published by the Free Software Foundation.
+ *
+ * This program is also distributed with certain software (including
+ * but not limited to OpenSSL) that is licensed under separate terms,
+ * as designated in a particular file or component or in included license
+ * documentation.  The authors of MySQL hereby grant you an
+ * additional permission to link the program and your derivative works
+ * with the separately licensed software that they have included with
+ * MySQL.
+ *
+ * Without limiting anything contained in the foregoing, this file,
+ * which is part of MySQL Connector/C++, is also subject to the
+ * Universal FOSS Exception, version 1.0, a copy of which can be found at
+ * http://oss.oracle.com/licenses/universal-foss-exception.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License, version 2.0, for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+ */
 
 
 
@@ -53,12 +59,12 @@ namespace mysql
 
 /* {{{ MySQL_Statement::MySQL_Statement() -I- */
 MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, boost::shared_ptr< NativeAPI::NativeConnectionWrapper > & _proxy,
-									sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & l)
-	: warnings(NULL), connection(conn), proxy(_proxy), isClosed(false), warningsHaveBeenLoaded(true),
+                  sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & l)
+  : warnings(NULL), connection(conn), proxy(_proxy), isClosed(false), warningsHaveBeenLoaded(true),
   last_update_count(UL64(~0)), logger(l), resultset_type(rset_type), warningsCount(0)
 {
-	CPP_ENTER("MySQL_Statement::MySQL_Statement");
-	CPP_INFO_FMT("this=%p", this);
+  CPP_ENTER("MySQL_Statement::MySQL_Statement");
+  CPP_INFO_FMT("this=%p", this);
 }
 /* }}} */
 
@@ -66,10 +72,10 @@ MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, boost::shared_ptr< Nat
 /* {{{ MySQL_Statement::~MySQL_Statement() -I- */
 MySQL_Statement::~MySQL_Statement()
 {
-	CPP_ENTER("MySQL_Statement::~MySQL_Statement");
-	CPP_INFO_FMT("this=%p", this);
+  CPP_ENTER("MySQL_Statement::~MySQL_Statement");
+  CPP_INFO_FMT("this=%p", this);
 
-	warnings.reset();
+  warnings.reset();
 }
 /* }}} */
 
@@ -80,23 +86,23 @@ MySQL_Statement::~MySQL_Statement()
 void
 MySQL_Statement::do_query(const ::sql::SQLString &q)
 {
-	CPP_ENTER("MySQL_Statement::do_query");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
+  CPP_ENTER("MySQL_Statement::do_query");
+  CPP_INFO_FMT("this=%p", this);
+  checkClosed();
 
-	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
-	if (!proxy_p) {
-		throw sql::InvalidInstanceException("Connection has been closed");
-	}
+  boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  if (!proxy_p) {
+    throw sql::InvalidInstanceException("Connection has been closed");
+  }
 
-	if (proxy_p->query(q) && proxy_p->errNo()) {
-		CPP_ERR_FMT("Error during proxy->query : %d:(%s) %s", proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
-		sql::mysql::util::throwSQLException(*proxy_p.get());
-	}
+  if (proxy_p->query(q) && proxy_p->errNo()) {
+    CPP_ERR_FMT("Error during proxy->query : %d:(%s) %s", proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
+    sql::mysql::util::throwSQLException(*proxy_p.get());
+  }
 
-	warningsCount= proxy_p->warning_count();
+  warningsCount= proxy_p->warning_count();
 
-	warningsHaveBeenLoaded= false;
+  warningsHaveBeenLoaded= false;
 }
 /* }}} */
 
@@ -105,32 +111,32 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
 boost::shared_ptr< NativeAPI::NativeResultsetWrapper >
 MySQL_Statement::get_resultset()
 {
-	CPP_ENTER("MySQL_Statement::get_resultset");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
+  CPP_ENTER("MySQL_Statement::get_resultset");
+  CPP_INFO_FMT("this=%p", this);
+  checkClosed();
 
-	NativeAPI::NativeResultsetWrapper * result;
+  NativeAPI::NativeResultsetWrapper * result;
 
-	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
-	if (!proxy_p) {
-		throw sql::InvalidInstanceException("Connection has been closed");
-	}
+  boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  if (!proxy_p) {
+    throw sql::InvalidInstanceException("Connection has been closed");
+  }
 
-	//TODO: again - probably no need to catch-n-throw here. Or maybe no need to throw further
-	try {
-		result= (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY)
-				? proxy_p->use_result()
-				: proxy_p->store_result();
-		if (!result) {
-			sql::mysql::util::throwSQLException(*proxy_p.get());
-		}
-	} catch (::sql::SQLException & e) {
-		CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
-			proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
-		throw e;
-	}
+  //TODO: again - probably no need to catch-n-throw here. Or maybe no need to throw further
+  try {
+    result= (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY)
+        ? proxy_p->use_result()
+        : proxy_p->store_result();
+    if (!result) {
+      sql::mysql::util::throwSQLException(*proxy_p.get());
+    }
+  } catch (::sql::SQLException & e) {
+    CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
+      proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
+    throw e;
+  }
 
-	return boost::shared_ptr< NativeAPI::NativeResultsetWrapper >(result);
+  return boost::shared_ptr< NativeAPI::NativeResultsetWrapper >(result);
 }
 /* }}} */
 
@@ -139,10 +145,10 @@ MySQL_Statement::get_resultset()
 void
 MySQL_Statement::cancel()
 {
-	CPP_ENTER("MySQL_Statement::cancel");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::cancel");
+  CPP_ENTER("MySQL_Statement::cancel");
+  CPP_INFO_FMT("this=%p", this);
+  checkClosed();
+  throw sql::MethodNotImplementedException("MySQL_Statement::cancel");
 }
 /* }}} */
 
@@ -151,18 +157,18 @@ MySQL_Statement::cancel()
 bool
 MySQL_Statement::execute(const sql::SQLString& sql)
 {
-	CPP_ENTER("MySQL_Statement::execute");
-	CPP_INFO_FMT("this=%p", this);
-	CPP_INFO_FMT("query=%s", sql.c_str());
-	checkClosed();
-	do_query(sql);
-	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
-	if (!proxy_p) {
-		throw sql::InvalidInstanceException("Connection has been closed");
-	}
-	bool ret = proxy_p->field_count() > 0;
-	last_update_count = ret? UL64(~0):proxy_p->affected_rows();
-	return ret;
+  CPP_ENTER("MySQL_Statement::execute");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("query=%s", sql.c_str());
+  checkClosed();
+  do_query(sql);
+  boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  if (!proxy_p) {
+    throw sql::InvalidInstanceException("Connection has been closed");
+  }
+  bool ret = proxy_p->field_count() > 0;
+  last_update_count = ret? UL64(~0):proxy_p->affected_rows();
+  return ret;
 }
 /* }}} */
 
@@ -171,22 +177,22 @@ MySQL_Statement::execute(const sql::SQLString& sql)
 sql::ResultSet *
 MySQL_Statement::executeQuery(const sql::SQLString& sql)
 {
-	CPP_ENTER("MySQL_Statement::executeQuery");
-	CPP_INFO_FMT("this=%p", this);
-	CPP_INFO_FMT("query=%s", sql.c_str());
-	checkClosed();
-	last_update_count = UL64(~0);
-	do_query(sql);
-	sql::ResultSet *tmp =
-				new MySQL_ResultSet(
-						get_resultset(),
-						proxy,
-						resultset_type==sql::ResultSet::TYPE_FORWARD_ONLY ? resultset_type : sql::ResultSet::TYPE_SCROLL_INSENSITIVE,
-						this,
-						logger
-				);
-	CPP_INFO_FMT("rset=%p", tmp);
-	return tmp;
+  CPP_ENTER("MySQL_Statement::executeQuery");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("query=%s", sql.c_str());
+  checkClosed();
+  last_update_count = UL64(~0);
+  do_query(sql);
+  sql::ResultSet *tmp =
+        new MySQL_ResultSet(
+            get_resultset(),
+            proxy,
+            resultset_type==sql::ResultSet::TYPE_FORWARD_ONLY ? resultset_type : sql::ResultSet::TYPE_SCROLL_INSENSITIVE,
+            this,
+            logger
+        );
+  CPP_INFO_FMT("rset=%p", tmp);
+  return tmp;
 }
 /* }}} */
 
@@ -195,60 +201,60 @@ MySQL_Statement::executeQuery(const sql::SQLString& sql)
 void
 dirty_drop_rs(boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy)
 {
-	boost::scoped_ptr<NativeAPI::NativeResultsetWrapper> result(proxy->store_result());
-	// Destructor will do the job on result freeing
+  boost::scoped_ptr<NativeAPI::NativeResultsetWrapper> result(proxy->store_result());
+  // Destructor will do the job on result freeing
 }
 
 /* {{{ MySQL_Statement::executeUpdate() -I- */
 int
 MySQL_Statement::executeUpdate(const sql::SQLString& sql)
 {
-	CPP_ENTER("MySQL_Statement::executeUpdate");
-	CPP_INFO_FMT("this=%p", this);
-	CPP_INFO_FMT("query=%s", sql.c_str());
-	checkClosed();
+  CPP_ENTER("MySQL_Statement::executeUpdate");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("query=%s", sql.c_str());
+  checkClosed();
 
-	do_query(sql);
+  do_query(sql);
 
-	bool got_rs= false;
+  bool got_rs= false;
 
-	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
-	if (!proxy_p) {
-		throw sql::InvalidInstanceException("Connection has been closed");
-	}
+  boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  if (!proxy_p) {
+    throw sql::InvalidInstanceException("Connection has been closed");
+  }
 
-	do {
-		if (proxy_p->field_count()) {
-			/* We can't just throw - we need to walk through rest of results */
-			got_rs= true;
-			dirty_drop_rs(proxy_p);
-		} else {
-			/* We return update count for last query */
-			last_update_count= proxy_p->affected_rows();
-		}
+  do {
+    if (proxy_p->field_count()) {
+      /* We can't just throw - we need to walk through rest of results */
+      got_rs= true;
+      dirty_drop_rs(proxy_p);
+    } else {
+      /* We return update count for last query */
+      last_update_count= proxy_p->affected_rows();
+    }
 
-		if (!proxy_p->more_results()) {
-			if (got_rs){
-				throw sql::InvalidArgumentException("Statement returning result set");
-			} else {
-				return static_cast<int>(last_update_count);
-			}
-		}
+    if (!proxy_p->more_results()) {
+      if (got_rs){
+        throw sql::InvalidArgumentException("Statement returning result set");
+      } else {
+        return static_cast<int>(last_update_count);
+      }
+    }
 
-		switch (proxy_p->next_result()) {
-		case 0:
-			// There is next result and we go on next cycle iteration to process it
-			break;
-		case -1:
-			throw sql::SQLException("Impossible! more_results() said true, next_result says no more results");
-		default/* > 0 */:
-			CPP_ERR_FMT("Error during executeUpdate : %d:(%s) %s", proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
-			sql::mysql::util::throwSQLException(*proxy_p.get());
-		}
-	} while (1);
+    switch (proxy_p->next_result()) {
+    case 0:
+      // There is next result and we go on next cycle iteration to process it
+      break;
+    case -1:
+      throw sql::SQLException("Impossible! more_results() said true, next_result says no more results");
+    default/* > 0 */:
+      CPP_ERR_FMT("Error during executeUpdate : %d:(%s) %s", proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
+      sql::mysql::util::throwSQLException(*proxy_p.get());
+    }
+  } while (1);
 
-	/* Should not actually get here*/
-	return 0;
+  /* Should not actually get here*/
+  return 0;
 }
 /* }}} */
 
@@ -257,10 +263,10 @@ MySQL_Statement::executeUpdate(const sql::SQLString& sql)
 sql::Connection *
 MySQL_Statement::getConnection()
 {
-	CPP_ENTER("MySQL_Statement::getConnection");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	return connection;
+  CPP_ENTER("MySQL_Statement::getConnection");
+  CPP_INFO_FMT("this=%p", this);
+  checkClosed();
+  return connection;
 }
 /* }}} */
 
@@ -269,11 +275,11 @@ MySQL_Statement::getConnection()
 size_t
 MySQL_Statement::getFetchSize()
 {
-	CPP_ENTER("MySQL_Statement::getFetchSize");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::getFetchSize");
-	return 0;
+  CPP_ENTER("MySQL_Statement::getFetchSize");
+  CPP_INFO_FMT("this=%p", this);
+  checkClosed();
+  throw sql::MethodNotImplementedException("MySQL_Statement::getFetchSize");
+  return 0;
 }
 /* }}} */
 
@@ -282,61 +288,61 @@ MySQL_Statement::getFetchSize()
 sql::ResultSet *
 MySQL_Statement::getResultSet()
 {
-	CPP_ENTER("MySQL_Statement::getResultSet");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
+  CPP_ENTER("MySQL_Statement::getResultSet");
+  CPP_INFO_FMT("this=%p", this);
+  checkClosed();
 
-	last_update_count = UL64(~0);
+  last_update_count = UL64(~0);
 
-	boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result;
+  boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result;
 
-	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
 
-	if (!proxy_p) {
-		throw sql::InvalidInstanceException("Connection has been closed");
-	}
+  if (!proxy_p) {
+    throw sql::InvalidInstanceException("Connection has been closed");
+  }
 
-	sql::ResultSet::enum_type tmp_type;
+  sql::ResultSet::enum_type tmp_type;
 
-	try {
-		NativeAPI::NativeResultsetWrapper * tmp_ptr;
-		switch (resultset_type) {
-			case sql::ResultSet::TYPE_FORWARD_ONLY:
-				if (!(tmp_ptr = proxy_p->use_result())) {
-					sql::mysql::util::throwSQLException(*proxy_p.get());
-				}
-				result.reset(tmp_ptr);
-				tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
-				break;
-			default:
-				if (!(tmp_ptr = proxy_p->store_result())) {
-					sql::mysql::util::throwSQLException(*proxy_p.get());
-				}
-				result.reset(tmp_ptr);
-				tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
-		}
-	} catch (::sql::SQLException & e ) {
-		if (proxy_p->errNo() != 0)
-		{
-			CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
-				proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
-			throw e;
-		}
-		else
-		{
-			return NULL;
-		}
-	}
+  try {
+    NativeAPI::NativeResultsetWrapper * tmp_ptr;
+    switch (resultset_type) {
+      case sql::ResultSet::TYPE_FORWARD_ONLY:
+        if (!(tmp_ptr = proxy_p->use_result())) {
+          sql::mysql::util::throwSQLException(*proxy_p.get());
+        }
+        result.reset(tmp_ptr);
+        tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
+        break;
+      default:
+        if (!(tmp_ptr = proxy_p->store_result())) {
+          sql::mysql::util::throwSQLException(*proxy_p.get());
+        }
+        result.reset(tmp_ptr);
+        tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
+    }
+  } catch (::sql::SQLException & e ) {
+    if (proxy_p->errNo() != 0)
+    {
+      CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
+        proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
+      throw e;
+    }
+    else
+    {
+      return NULL;
+    }
+  }
 
-	if (!result) {
-		/* if there was an update then this method should return NULL and not throw */
-		return NULL;
-	}
+  if (!result) {
+    /* if there was an update then this method should return NULL and not throw */
+    return NULL;
+  }
 
-	sql::ResultSet * ret = new MySQL_ResultSet(result, proxy, tmp_type, this, logger);
+  sql::ResultSet * ret = new MySQL_ResultSet(result, proxy, tmp_type, this, logger);
 
-	CPP_INFO_FMT("res=%p", ret);
-	return ret;
+  CPP_INFO_FMT("res=%p", ret);
+  return ret;
 }
 /* }}} */
 
@@ -345,10 +351,10 @@ MySQL_Statement::getResultSet()
 void
 MySQL_Statement::setFetchSize(size_t /* fetch */)
 {
-	CPP_ENTER("MySQL_Statement::setFetchSize");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::setFetchSize");
+  CPP_ENTER("MySQL_Statement::setFetchSize");
+  CPP_INFO_FMT("this=%p", this);
+  checkClosed();
+  throw sql::MethodNotImplementedException("MySQL_Statement::setFetchSize");
 }
 /* }}} */
 
@@ -357,10 +363,10 @@ MySQL_Statement::setFetchSize(size_t /* fetch */)
 void
 MySQL_Statement::setQueryTimeout(unsigned int timeout)
 {
-	CPP_ENTER("MySQL_Statement::setQueryTimeout");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	connection->setSessionVariable("max_statement_time", timeout);
+  CPP_ENTER("MySQL_Statement::setQueryTimeout");
+  CPP_INFO_FMT("this=%p", this);
+  checkClosed();
+  connection->setSessionVariable("max_statement_time", timeout);
 }
 /* }}} */
 
@@ -369,10 +375,10 @@ MySQL_Statement::setQueryTimeout(unsigned int timeout)
 void
 MySQL_Statement::clearWarnings()
 {
-	CPP_ENTER("MySQL_Statement::clearWarnings");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	warnings.reset();
+  CPP_ENTER("MySQL_Statement::clearWarnings");
+  CPP_INFO_FMT("this=%p", this);
+  checkClosed();
+  warnings.reset();
 }
 /* }}} */
 
@@ -381,11 +387,11 @@ MySQL_Statement::clearWarnings()
 void
 MySQL_Statement::close()
 {
-	CPP_ENTER("MySQL_Statement::close");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	clearWarnings();
-	isClosed = true;
+  CPP_ENTER("MySQL_Statement::close");
+  CPP_INFO_FMT("this=%p", this);
+  checkClosed();
+  clearWarnings();
+  isClosed = true;
 }
 /* }}} */
 
@@ -394,11 +400,11 @@ MySQL_Statement::close()
 unsigned int
 MySQL_Statement::getMaxFieldSize()
 {
-	CPP_ENTER("MySQL_Statement::getMaxFieldSize");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::getMaxFieldSize");
-	return 0;
+  CPP_ENTER("MySQL_Statement::getMaxFieldSize");
+  CPP_INFO_FMT("this=%p", this);
+  checkClosed();
+  throw sql::MethodNotImplementedException("MySQL_Statement::getMaxFieldSize");
+  return 0;
 }
 /* }}} */
 
@@ -407,11 +413,11 @@ MySQL_Statement::getMaxFieldSize()
 uint64_t
 MySQL_Statement::getMaxRows()
 {
-	CPP_ENTER("MySQL_Statement::getMaxRows");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::getMaxRows");
-	return 0;
+  CPP_ENTER("MySQL_Statement::getMaxRows");
+  CPP_INFO_FMT("this=%p", this);
+  checkClosed();
+  throw sql::MethodNotImplementedException("MySQL_Statement::getMaxRows");
+  return 0;
 }
 /* }}} */
 
@@ -420,30 +426,30 @@ MySQL_Statement::getMaxRows()
 bool
 MySQL_Statement::getMoreResults()
 {
-	CPP_ENTER("MySQL_Statement::getMoreResults");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
-	last_update_count = UL64(~0);
-	boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  CPP_ENTER("MySQL_Statement::getMoreResults");
+  CPP_INFO_FMT("this=%p", this);
+  checkClosed();
+  last_update_count = UL64(~0);
+  boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
 
-	if (!proxy_p) {
-		throw sql::InvalidInstanceException("Connection has been closed");
-	}
+  if (!proxy_p) {
+    throw sql::InvalidInstanceException("Connection has been closed");
+  }
 
-	if (proxy_p->more_results()) {
+  if (proxy_p->more_results()) {
 
-		int next_result = proxy_p->next_result();
+    int next_result = proxy_p->next_result();
 
-		if (next_result > 0) {
-			CPP_ERR_FMT("Error during getMoreResults : %d:(%s) %s", proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
-			sql::mysql::util::throwSQLException(*proxy_p.get());
-		} else if (next_result == 0) {
-			return proxy_p->field_count() != 0;
-		} else if (next_result == -1) {
-			throw sql::SQLException("Impossible! more_results() said true, next_result says no more results");
-		}
-	}
-	return false;
+    if (next_result > 0) {
+      CPP_ERR_FMT("Error during getMoreResults : %d:(%s) %s", proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
+      sql::mysql::util::throwSQLException(*proxy_p.get());
+    } else if (next_result == 0) {
+      return proxy_p->field_count() != 0;
+    } else if (next_result == -1) {
+      throw sql::SQLException("Impossible! more_results() said true, next_result says no more results");
+    }
+  }
+  return false;
 }
 /* }}} */
 
@@ -452,20 +458,20 @@ MySQL_Statement::getMoreResults()
 unsigned int
 MySQL_Statement::getQueryTimeout()
 {
-	checkClosed();
-	sql::SQLString value= connection->getSessionVariable("max_statement_time");
-	if (value.length() > 0) {
-		unsigned int timeout;
-		std::istringstream buffer(value);
-		buffer >> timeout;
-		if (buffer.rdstate() & std::istringstream::failbit) {
-			return 0;
-		} else {
-			return timeout;
-		}
-	} else {
-		return 0;
-	}
+  checkClosed();
+  sql::SQLString value= connection->getSessionVariable("max_statement_time");
+  if (value.length() > 0) {
+    unsigned int timeout;
+    std::istringstream buffer(value);
+    buffer >> timeout;
+    if (buffer.rdstate() & std::istringstream::failbit) {
+      return 0;
+    } else {
+      return timeout;
+    }
+  } else {
+    return 0;
+  }
 }
 /* }}} */
 
@@ -474,9 +480,9 @@ MySQL_Statement::getQueryTimeout()
 sql::ResultSet::enum_type
 MySQL_Statement::getResultSetType()
 {
-	CPP_ENTER("MySQL_Statement::getResultSetType");
-	checkClosed();
-	return resultset_type;
+  CPP_ENTER("MySQL_Statement::getResultSetType");
+  checkClosed();
+  return resultset_type;
 }
 /* }}} */
 
@@ -485,14 +491,14 @@ MySQL_Statement::getResultSetType()
 uint64_t
 MySQL_Statement::getUpdateCount()
 {
-	CPP_ENTER("MySQL_Statement::getUpdateCount");
-	checkClosed();
-	if (last_update_count == UL64(~0)) {
-		return UL64(~0);
-	}
-	uint64_t ret = last_update_count;
-	last_update_count = UL64(~0); /* the value will be returned once per result set */
-	return ret;
+  CPP_ENTER("MySQL_Statement::getUpdateCount");
+  checkClosed();
+  if (last_update_count == UL64(~0)) {
+    return UL64(~0);
+  }
+  uint64_t ret = last_update_count;
+  last_update_count = UL64(~0); /* the value will be returned once per result set */
+  return ret;
 }
 /* }}} */
 
@@ -501,17 +507,17 @@ MySQL_Statement::getUpdateCount()
 const SQLWarning *
 MySQL_Statement::getWarnings()
 {
-	CPP_ENTER("MySQL_Statement::getWarnings");
-	CPP_INFO_FMT("this=%p", this);
-	checkClosed();
+  CPP_ENTER("MySQL_Statement::getWarnings");
+  CPP_INFO_FMT("this=%p", this);
+  checkClosed();
 
-	if (!warningsHaveBeenLoaded)
-	{
-		warnings.reset(loadMysqlWarnings(connection, warningsCount));
-		warningsHaveBeenLoaded= true;
-	}
+  if (!warningsHaveBeenLoaded)
+  {
+    warnings.reset(loadMysqlWarnings(connection, warningsCount));
+    warningsHaveBeenLoaded= true;
+  }
 
-	return warnings.get();
+  return warnings.get();
 }
 /* }}} */
 
@@ -520,8 +526,8 @@ MySQL_Statement::getWarnings()
 void
 MySQL_Statement::setCursorName(const sql::SQLString &)
 {
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::setCursorName");
+  checkClosed();
+  throw sql::MethodNotImplementedException("MySQL_Statement::setCursorName");
 }
 /* }}} */
 
@@ -530,8 +536,8 @@ MySQL_Statement::setCursorName(const sql::SQLString &)
 void
 MySQL_Statement::setEscapeProcessing(bool)
 {
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::setEscapeProcessing");
+  checkClosed();
+  throw sql::MethodNotImplementedException("MySQL_Statement::setEscapeProcessing");
 }
 /* }}} */
 
@@ -540,8 +546,8 @@ MySQL_Statement::setEscapeProcessing(bool)
 void
 MySQL_Statement::setMaxFieldSize(unsigned int)
 {
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::setMaxFieldSize");
+  checkClosed();
+  throw sql::MethodNotImplementedException("MySQL_Statement::setMaxFieldSize");
 }
 /* }}} */
 
@@ -550,8 +556,8 @@ MySQL_Statement::setMaxFieldSize(unsigned int)
 void
 MySQL_Statement::setMaxRows(unsigned int)
 {
-	checkClosed();
-	throw sql::MethodNotImplementedException("MySQL_Statement::setMaxRows");
+  checkClosed();
+  throw sql::MethodNotImplementedException("MySQL_Statement::setMaxRows");
 }
 /* }}} */
 
@@ -560,9 +566,9 @@ MySQL_Statement::setMaxRows(unsigned int)
 sql::Statement *
 MySQL_Statement::setResultSetType(sql::ResultSet::enum_type type)
 {
-	checkClosed();
-	resultset_type = type;
-	return this;
+  checkClosed();
+  resultset_type = type;
+  return this;
 }
 /* }}} */
 
@@ -571,11 +577,11 @@ MySQL_Statement::setResultSetType(sql::ResultSet::enum_type type)
 void
 MySQL_Statement::checkClosed()
 {
-	CPP_ENTER("MySQL_Statement::checkClosed");
-	if (isClosed) {
-		CPP_ERR("Statement has been closed");
-		throw sql::InvalidInstanceException("Statement has been closed");
-	}
+  CPP_ENTER("MySQL_Statement::checkClosed");
+  if (isClosed) {
+    CPP_ERR("Statement has been closed");
+    throw sql::InvalidInstanceException("Statement has been closed");
+  }
 }
 /* }}} */
 
