@@ -1,0 +1,299 @@
+Licensing Information User Manual
+
+MySQL Connector/C++
+     __________________________________________________________________
+
+   This is a license book. It contains Oracle's product license and other
+   licensing information, including licensing information for third-party
+   software which may be included in this commercial release of MySQL
+   Connector/C++.
+
+   Last updated: December 2017.
+
+Introduction
+
+   This Licensing Information document is a part of the product or program
+   documentation under the terms of your Oracle license agreement and is
+   intended to help you understand the program editions, entitlements,
+   restrictions, prerequisites, special license rights, and/or separately
+   licensed third party technology terms associated with the Oracle
+   software program(s) covered by this document (the "Program(s)").
+   Entitled or restricted use products or components identified in this
+   document that are not provided with the particular Program may be
+   obtained from the Oracle Software Delivery Cloud website
+   (https://edelivery.oracle.com/) or from media Oracle may provide. If
+   you have a question about your license rights and obligations, please
+   contact your Oracle sales representative, review the information
+   provided in Oracle's Software Investment Guide
+   (http://www.oracle.com/us/corporate/pricing/software-investment-guide/i
+   ndex.html), and/or contact the applicable Oracle License Management
+   Services representative listed on
+   http://www.oracle.com/us/corporate/license-management-services/index.ht
+   ml.
+
+Licensing Information
+
+Product License - MySQL Connector/C++
+
+   Last updated: December 2017.
+
+   Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights
+   reserved.
+
+   This software and related documentation are provided under a license
+   agreement containing restrictions on use and disclosure and are
+   protected by intellectual property laws. Except as expressly permitted
+   in your license agreement or allowed by law, you may not use, copy,
+   reproduce, translate, broadcast, modify, license, transmit, distribute,
+   exhibit, perform, publish, or display any part, in any form, or by any
+   means. Reverse engineering, disassembly, or decompilation of this
+   software, unless required by law for interoperability, is prohibited.
+
+   If this software or related documentation is delivered to the U.S.
+   Government or anyone licensing it on behalf of the U.S. Government, the
+   following notice is applicable:
+
+   U.S. GOVERNMENT RIGHTS.  Programs, software, databases, and related
+   documentation and technical data delivered to U.S. Government customers
+   are "commercial computer software" or "commercial technical data"
+   pursuant to the applicable Federal Acquisition Regulation and
+   agency-specific supplemental regulations. As such, the use,
+   duplication, disclosure, modification, and adaptation shall be subject
+   to the restrictions and license terms set forth in the applicable
+   Government contract, and, to the extent applicable by the terms of the
+   Government contract, the additional rights set forth in FAR 52.227-19,
+   Commercial Computer Software License (December 2007). Oracle USA, Inc.,
+   500 Oracle Parkway, Redwood City, CA 94065.
+
+   This software is developed for general use in a variety of information
+   management applications. It is not developed or intended for use in any
+   inherently dangerous applications, including applications which may
+   create a risk of personal injury. If you use this software in dangerous
+   applications, then you shall be responsible to take all appropriate
+   fail-safe, backup, redundancy, and other measures to ensure the safe
+   use of this software. Oracle Corporation and its affiliates disclaim
+   any liability for any damages caused by use of this software in
+   dangerous applications.
+
+   Oracle is a registered trademark of Oracle Corporation and/or its
+   affiliates. Other names may be trademarks of their respective owners.
+
+   This software and documentation may provide access to or information on
+   content, products, and services from third parties. Oracle Corporation
+   and its affiliates are not responsible for and expressly disclaim all
+   warranties of any kind with respect to third-party content, products,
+   and services. Oracle Corporation and its affiliates will not be
+   responsible for any loss, costs, or damages incurred due to your access
+   to or use of third-party content, products, or services.
+
+Licenses for Third-Party Components
+
+   The following sections contain licensing information for libraries that
+   we have included with the MySQL Connector/C++ source and components
+   used to test MySQL Connector/C++. We are thankful to all individuals
+   that have created these.
+
+Boost Library License
+
+   The following software may be included in this product:
+
+   Boost C++ Libraries
+
+   Use of any of this software is governed by the terms of the license
+   below:
+Boost Software License - Version 1.0 - August 17th, 2003
+
+Permission is hereby granted, free of charge, to any person or
+organization obtaining a copy of the software and accompanying
+documentation covered by this license (the "Software") to use,
+reproduce, display, distribute, execute, and transmit the Software,
+and to prepare derivative works of the Software, and to permit
+third-parties to whom the Software is furnished to do so, all
+subject to the following:
+
+The copyright notices in the Software and this entire statement,
+including the above license grant, this restriction and the
+following disclaimer, must be included in all copies of the
+Software, in whole or in part, and all derivative works of the
+Software, unless such copies or derivative works are solely in the
+form of machine-executable object code generated by a source
+language processor.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND
+NON-INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR ANYONE
+DISTRIBUTING THE SOFTWARE BE LIABLE FOR ANY DAMAGES OR OTHER
+LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.
+
+Google Protocol Buffers License
+
+The following software may be included in this product:
+
+Protocol Buffers (aka Google protobuf)
+
+Google Protocol Buffers - protobuf
+Copyright 2008, Google Inc.
+All rights reserved.
+
+Redistribution and use in source and binary forms,
+with or without modification, are permitted provided
+that the following conditions are met:
+
+* Redistributions of source code must retain the above
+  copyright notice, this list of conditions and the
+  following disclaimer.
+* Redistributions in binary form must reproduce the
+  above copyright notice, this list of conditions and
+  the following disclaimer in the documentation and/or
+  other materials provided with the distribution.
+* Neither the name of Google Inc. nor the names of its
+  contributors may be used to endorse or promote products
+  derived from this software without specific prior written
+  permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Code generated by the Protocol Buffer compiler is owned by
+the owner of the input file used when generating it. This
+code is not standalone and requires a support library to be
+linked with it. This support library is itself covered by
+the above license.
+
+OpenSSL License
+
+   The following software may be included in this product:
+LICENSE ISSUES
+==============
+
+The OpenSSL toolkit stays under a double license, i.e. both the conditions of
+the OpenSSL License and the original SSLeay license apply to the toolkit. See
+below for the actual license texts. Actually both licenses are BSD-style Open
+Source licenses. In case of any license issues related to OpenSSL please
+contact openssl-core@openssl.org.
+
+OpenSSL License
+---------------
+
+====================================================================
+Copyright (c) 1998-2017 The OpenSSL Project.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in
+   the documentation and/or other materials provided with the
+   distribution.
+
+3. All advertising materials mentioning features or use of this
+   software must display the following acknowledgment:
+   "This product includes software developed by the OpenSSL Project
+   for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+
+4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+   endorse or promote products derived from this software without
+   prior written permission. For written permission, please contact
+   openssl-core@openssl.org.
+
+5. Products derived from this software may not be called "OpenSSL"
+   nor may "OpenSSL" appear in their names without prior written
+   permission of the OpenSSL Project.
+
+6. Redistributions of any form whatsoever must retain the following
+   acknowledgment:
+   "This product includes software developed by the OpenSSL Project
+   for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+
+THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+====================================================================
+
+This product includes cryptographic software written by Eric Young
+(eay@cryptsoft.com). This product includes software written by Tim Hudson
+(tjh@cryptsoft.com).
+
+Original SSLeay License
+-----------------------
+
+Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
+All rights reserved.
+
+This package is an SSL implementation written by Eric Young
+(eay@cryptsoft.com). The implementation was written so as to conform with
+Netscapes SSL.
+
+This library is free for commercial and non-commercial use as long as the
+following conditions are aheared to. The following conditions apply to all
+code found in this distribution, be it the RC4, RSA, lhash, DES, etc., code;
+not just the SSL code. The SSL documentation included with this distribution
+is covered by the same copyright terms except that the holder is Tim Hudson
+(tjh@cryptsoft.com).
+
+Copyright remains Eric Young's, and as such any Copyright notices in the
+code are not to be removed. If this package is used in a product, Eric Young
+should be given attribution as the author of the parts of the library used.
+This can be in the form of a textual message at program startup or in
+documentation (online or textual) provided with the package.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+   "This product includes cryptographic software written by
+   Eric Young (eay@cryptsoft.com)"
+   The word 'cryptographic' can be left out if the rouines from the library
+   being used are not cryptographic related :-).
+4. If you include any Windows specific code (or a derivative thereof) from
+   the apps directory (application code) you must include an acknowledgement:
+   "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
+
+THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The licence and distribution terms for any publically available version or
+derivative of this code cannot be changed. i.e. this code cannot simply be
+copied and put under another distribution licence
+[including the GNU Public Licence.]

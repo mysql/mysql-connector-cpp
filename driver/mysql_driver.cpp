@@ -1,26 +1,32 @@
 /*
-Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
-
-The MySQL Connector/C++ is licensed under the terms of the GPLv2
-<http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
-MySQL Connectors. There are special exceptions to the terms and
-conditions of the GPLv2 as it is applied to this software, see the
-FLOSS License Exception
-<http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published
-by the Free Software Foundation; version 2 of the License.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
-*/
+ * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2.0, as
+ * published by the Free Software Foundation.
+ *
+ * This program is also distributed with certain software (including
+ * but not limited to OpenSSL) that is licensed under separate terms,
+ * as designated in a particular file or component or in included license
+ * documentation.  The authors of MySQL hereby grant you an
+ * additional permission to link the program and your derivative works
+ * with the separately licensed software that they have included with
+ * MySQL.
+ *
+ * Without limiting anything contained in the foregoing, this file,
+ * which is part of MySQL Connector/C++, is also subject to the
+ * Universal FOSS Exception, version 1.0, a copy of which can be found at
+ * http://oss.oracle.com/licenses/universal-foss-exception.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License, version 2.0, for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+ */
 
 
 
@@ -38,21 +44,21 @@ extern "C"
 {
 CPPCONN_PUBLIC_FUNC void * sql_mysql_get_driver_instance()
 {
-	void * ret = sql::mysql::get_driver_instance();
-	return ret;
+  void * ret = sql::mysql::get_driver_instance();
+  return ret;
 }
 
 
 /* these are the functions without namespace - from cppconn/driver.h */
 CPPCONN_PUBLIC_FUNC sql::Driver * get_driver_instance_by_name(const char * const clientlib)
 {
-	return sql::mysql::get_driver_instance_by_name(clientlib);
+  return sql::mysql::get_driver_instance_by_name(clientlib);
 }
 
 
 CPPCONN_PUBLIC_FUNC sql::Driver * get_driver_instance()
 {
-	return sql::mysql::get_driver_instance();
+  return sql::mysql::get_driver_instance();
 }
 
 
@@ -69,46 +75,46 @@ static std::map< sql::SQLString, boost::shared_ptr<MySQL_Driver> > driver;
 
 CPPCONN_PUBLIC_FUNC sql::mysql::MySQL_Driver * get_driver_instance()
 {
-	return get_driver_instance_by_name("");
+  return get_driver_instance_by_name("");
 }
 
 
 CPPCONN_PUBLIC_FUNC sql::mysql::MySQL_Driver * get_driver_instance_by_name(const char * const clientlib)
 {
-	::sql::SQLString dummy(clientlib);
+  ::sql::SQLString dummy(clientlib);
 
-	std::map< sql::SQLString, boost::shared_ptr< MySQL_Driver > >::const_iterator cit;
+  std::map< sql::SQLString, boost::shared_ptr< MySQL_Driver > >::const_iterator cit;
 
-	if ((cit = driver.find(dummy)) != driver.end()) {
-		return cit->second.get();
-	} else {
-		boost::shared_ptr< MySQL_Driver > newDriver;
+  if ((cit = driver.find(dummy)) != driver.end()) {
+    return cit->second.get();
+  } else {
+    boost::shared_ptr< MySQL_Driver > newDriver;
 
-		newDriver.reset(new MySQL_Driver(dummy));
-		driver[dummy] = newDriver;
+    newDriver.reset(new MySQL_Driver(dummy));
+    driver[dummy] = newDriver;
 
-		return newDriver.get();
-	}
+    return newDriver.get();
+  }
 }
 
 
 MySQL_Driver::MySQL_Driver()
 {
-	try {
-		proxy.reset(::sql::mysql::NativeAPI::createNativeDriverWrapper(emptyStr));
-	}	catch(std::runtime_error & e)	{
-		throw sql::InvalidArgumentException(e.what());
-	}
+  try {
+    proxy.reset(::sql::mysql::NativeAPI::createNativeDriverWrapper(emptyStr));
+  }	catch(std::runtime_error & e)	{
+    throw sql::InvalidArgumentException(e.what());
+  }
 }
 
 
 MySQL_Driver::MySQL_Driver(const ::sql::SQLString & clientLib)
 {
-	try {
-		proxy.reset(::sql::mysql::NativeAPI::createNativeDriverWrapper(clientLib));
-	}	catch(std::runtime_error & e)	{
-		throw sql::InvalidArgumentException(e.what());
-	}
+  try {
+    proxy.reset(::sql::mysql::NativeAPI::createNativeDriverWrapper(clientLib));
+  }	catch(std::runtime_error & e)	{
+    throw sql::InvalidArgumentException(e.what());
+  }
 }
 
 
@@ -118,51 +124,51 @@ MySQL_Driver::~MySQL_Driver()
 
 
 sql::Connection * MySQL_Driver::connect(const sql::SQLString& hostName,
-										const sql::SQLString& userName,
-										const sql::SQLString& password)
+                    const sql::SQLString& userName,
+                    const sql::SQLString& password)
 {
-	return new MySQL_Connection(this, proxy->conn_init(),hostName, userName, password);
+  return new MySQL_Connection(this, proxy->conn_init(),hostName, userName, password);
 }
 
 
 sql::Connection * MySQL_Driver::connect(sql::ConnectOptionsMap & properties)
 {
-	return new MySQL_Connection(this, proxy->conn_init(),properties);
+  return new MySQL_Connection(this, proxy->conn_init(),properties);
 }
 
 
 //TODO: That has to be defined in cmake files
 int MySQL_Driver::getMajorVersion()
 {
-	return MYCPPCONN_MAJOR_VERSION;
+  return MYCPPCONN_MAJOR_VERSION;
 }
 
 int MySQL_Driver::getMinorVersion()
 {
-	return MYCPPCONN_MINOR_VERSION;
+  return MYCPPCONN_MINOR_VERSION;
 }
 
 int MySQL_Driver::getPatchVersion()
 {
-	return MYCPPCONN_PATCH_VERSION;
+  return MYCPPCONN_PATCH_VERSION;
 }
 
 const sql::SQLString & MySQL_Driver::getName()
 {
-	static const sql::SQLString name("MySQL Connector C++ (libmysql)");
-	return name;
+  static const sql::SQLString name("MySQL Connector C++ (libmysql)");
+  return name;
 }
 
 
 void MySQL_Driver::threadInit()
 {
-	proxy->thread_init();
+  proxy->thread_init();
 }
 
 
 void MySQL_Driver::threadEnd()
 {
-	proxy->thread_end();
+  proxy->thread_end();
 }
 
 } /* namespace mysql */
