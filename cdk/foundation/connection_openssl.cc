@@ -320,7 +320,7 @@ public:
 void connection_TLS_impl::verify_server_cert()
 {
   safe_cert server_cert;
-  char *cn= NULL;
+  const unsigned char *cn= NULL;
   int cn_loc= -1;
   ASN1_STRING *cn_asn1= NULL;
   X509_NAME_ENTRY *cn_entry= NULL;
@@ -374,16 +374,20 @@ void connection_TLS_impl::verify_server_cert()
     throw_openssl_error_msg("Failed to get CN from CN entry");
   }
 
-  cn= (char *) ASN1_STRING_data(cn_asn1);
+#if OPENSSL_VERSION_NUMBER > 0x10100000L
+  cn= ASN1_STRING_get0_data(cn_asn1);
+#else
+  cn= ASN1_STRING_data(cn_asn1);
+#endif
 
   // There should not be any NULL embedded in the CN
-  if ((size_t)ASN1_STRING_length(cn_asn1) != strlen(cn))
+  if ((size_t)ASN1_STRING_length(cn_asn1) != strlen(reinterpret_cast<const char*>(cn)))
   {
     throw_openssl_error_msg("NULL embedded in the certificate CN");
   }
 
 
-  if (!m_options.verify_cn(cn))
+  if (!m_options.verify_cn(reinterpret_cast<const char*>(cn)))
   {
     throw_openssl_error_msg("SSL certificate validation failure");
   }
