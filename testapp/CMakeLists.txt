@@ -262,6 +262,7 @@ endif()
 
 if(NOT WIN32 AND BUILD_STATIC AND WITH_SSL AND NOT (WITH_SSL STREQUAL "bundled"))
   list(APPEND CONCPP_LIBS ssl crypto)
+  list(APPEND CONCPP_JDBC_LIBS ssl crypto)
 endif()
 
 #
