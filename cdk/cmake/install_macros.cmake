@@ -1,17 +1,30 @@
-# Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; version 2 of the License.
+# it under the terms of the GNU General Public License, version 2.0, as
+# published by the Free Software Foundation.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is also distributed with certain software (including
+# but not limited to OpenSSL) that is licensed under separate terms,
+# as designated in a particular file or component or in included license
+# documentation.  The authors of MySQL hereby grant you an
+# additional permission to link the program and your derivative works
+# with the separately licensed software that they have included with
+# MySQL.
+#
+# Without limiting anything contained in the foregoing, this file,
+# which is part of MySQL Connector/C++, is also subject to the
+# Universal FOSS Exception, version 1.0, a copy of which can be found at
+# http://oss.oracle.com/licenses/universal-foss-exception.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU General Public License, version 2.0, for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+# along with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 # Installs targets, also installs pdbs on Windows.
 #
@@ -45,10 +58,10 @@ MACRO (INSTALL_DEBUG_SYMBOLS targets)
         pdb_location ${pdb_location})
     ENDIF()
     IF(target STREQUAL "mysqld")
-	  SET(comp Server)
+    SET(comp Server)
     ELSE()
       SET(comp Debuginfo)
-    ENDIF()	  
+    ENDIF()
     # No .pdb file for static libraries.
     IF(NOT type MATCHES "STATIC_LIBRARY")
       INSTALL(FILES ${pdb_location}
@@ -59,20 +72,20 @@ MACRO (INSTALL_DEBUG_SYMBOLS targets)
 ENDMACRO()
 
 # Installs manpage for given file (either script or executable)
-# 
+#
 FUNCTION(INSTALL_MANPAGE file)
   IF(NOT UNIX)
     RETURN()
   ENDIF()
   GET_FILENAME_COMPONENT(file_name "${file}" NAME)
-  SET(GLOB_EXPR 
+  SET(GLOB_EXPR
     ${CMAKE_SOURCE_DIR}/man/*${file}man.1*
     ${CMAKE_SOURCE_DIR}/man/*${file}man.8*
     ${CMAKE_BINARY_DIR}/man/*${file}man.1*
     ${CMAKE_BINARY_DIR}/man/*${file}man.8*
    )
   IF(MYSQL_DOC_DIR)
-    SET(GLOB_EXPR 
+    SET(GLOB_EXPR
       ${MYSQL_DOC_DIR}/man/*${file}man.1*
       ${MYSQL_DOC_DIR}/man/*${file}man.8*
       ${MYSQL_DOC_DIR}/man/*${file}.1*
@@ -80,7 +93,7 @@ FUNCTION(INSTALL_MANPAGE file)
       ${GLOB_EXPR}
       )
    ENDIF()
-    
+
   FILE(GLOB_RECURSE MANPAGES ${GLOB_EXPR})
   IF(MANPAGES)
     LIST(GET MANPAGES 0 MANPAGE)
@@ -102,7 +115,7 @@ FUNCTION(INSTALL_SCRIPT)
   ""
   ${ARGN}
   )
-  
+
   SET(script ${ARG_DEFAULT_ARGS})
   IF(NOT ARG_DESTINATION)
     SET(ARG_DESTINATION ${INSTALL_BINDIR})
@@ -113,17 +126,17 @@ FUNCTION(INSTALL_SCRIPT)
     SET(COMP)
   ENDIF()
 
-  INSTALL(FILES 
+  INSTALL(FILES
     ${script}
     DESTINATION ${ARG_DESTINATION}
-    PERMISSIONS OWNER_READ OWNER_WRITE 
+    PERMISSIONS OWNER_READ OWNER_WRITE
     OWNER_EXECUTE GROUP_READ GROUP_EXECUTE
     WORLD_READ WORLD_EXECUTE  ${COMP}
   )
   INSTALL_MANPAGE(${script})
 ENDFUNCTION()
 
-# Install symbolic link to CMake target. 
+# Install symbolic link to CMake target.
 # We do 'cd path; ln -s target_name link_name'
 # We also add an INSTALL target for "${path}/${link_name}"
 MACRO(INSTALL_SYMLINK target target_name link_name destination component)
@@ -135,20 +148,20 @@ IF(UNIX)
   ADD_CUSTOM_COMMAND(
     OUTPUT ${output}
     COMMAND ${CMAKE_COMMAND} ARGS -E remove -f ${output}
-    COMMAND ${CMAKE_COMMAND} ARGS -E create_symlink 
-      ${target_name} 
+    COMMAND ${CMAKE_COMMAND} ARGS -E create_symlink
+      ${target_name}
       ${link_name}
     WORKING_DIRECTORY ${path}
     DEPENDS ${target}
     )
-  
+
   ADD_CUSTOM_TARGET(symlink_${link_name}
     ALL
     DEPENDS ${output})
   SET_TARGET_PROPERTIES(symlink_${link_name} PROPERTIES CLEAN_DIRECT_OUTPUT 1)
   IF(CMAKE_GENERATOR MATCHES "Xcode")
     # For Xcode, replace project config with install config
-    STRING(REPLACE "${CMAKE_CFG_INTDIR}" 
+    STRING(REPLACE "${CMAKE_CFG_INTDIR}"
       "\${CMAKE_INSTALL_CONFIG_NAME}" output ${output})
   ENDIF()
   INSTALL(FILES ${output} DESTINATION ${destination} COMPONENT ${component})
@@ -159,22 +172,22 @@ IF(WIN32)
   OPTION(SIGNCODE "Sign executables and dlls with digital certificate" OFF)
   MARK_AS_ADVANCED(SIGNCODE)
   IF(SIGNCODE)
-   SET(SIGNTOOL_PARAMETERS 
+   SET(SIGNTOOL_PARAMETERS
      /a /t http://timestamp.verisign.com/scripts/timstamp.dll
      CACHE STRING "parameters for signtool (list)")
     FIND_PROGRAM(SIGNTOOL_EXECUTABLE signtool)
     IF(NOT SIGNTOOL_EXECUTABLE)
-      MESSAGE(FATAL_ERROR 
+      MESSAGE(FATAL_ERROR
       "signtool is not found. Signing executables not possible")
     ENDIF()
     IF(NOT DEFINED SIGNCODE_ENABLED)
       FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/testsign.c "int main(){return 0;}")
       MAKE_DIRECTORY(${CMAKE_CURRENT_BINARY_DIR}/testsign)
-     TRY_COMPILE(RESULT ${CMAKE_CURRENT_BINARY_DIR}/testsign ${CMAKE_CURRENT_BINARY_DIR}/testsign.c  
+     TRY_COMPILE(RESULT ${CMAKE_CURRENT_BINARY_DIR}/testsign ${CMAKE_CURRENT_BINARY_DIR}/testsign.c
       COPY_FILE ${CMAKE_CURRENT_BINARY_DIR}/testsign.exe
      )
-      
-     EXECUTE_PROCESS(COMMAND 
+
+     EXECUTE_PROCESS(COMMAND
       ${SIGNTOOL_EXECUTABLE} sign ${SIGNTOOL_PARAMETERS} ${CMAKE_CURRENT_BINARY_DIR}/testsign.exe
       RESULT_VARIABLE ERR ERROR_QUIET OUTPUT_QUIET
       )
@@ -194,11 +207,11 @@ MACRO(SIGN_TARGET target)
  IF(target_type AND NOT target_type MATCHES "STATIC")
    GET_TARGET_PROPERTY(target_location ${target}  LOCATION)
    IF(CMAKE_GENERATOR MATCHES "Visual Studio")
-   STRING(REPLACE "${CMAKE_CFG_INTDIR}" "\${CMAKE_INSTALL_CONFIG_NAME}" 
+   STRING(REPLACE "${CMAKE_CFG_INTDIR}" "\${CMAKE_INSTALL_CONFIG_NAME}"
      target_location ${target_location})
    ENDIF()
    INSTALL(CODE
-   "EXECUTE_PROCESS(COMMAND 
+   "EXECUTE_PROCESS(COMMAND
      ${SIGNTOOL_EXECUTABLE} sign ${SIGNTOOL_PARAMETERS} ${target_location}
      RESULT_VARIABLE ERR)
     IF(NOT \${ERR} EQUAL 0)
