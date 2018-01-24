@@ -3,12 +3,12 @@ Licensing Information User Manual
 MySQL Connector/C++
      __________________________________________________________________
 
-   This is a license book. It contains Oracle's product license and other
-   licensing information, including licensing information for third-party
-   software which may be included in this commercial release of MySQL
-   Connector/C++.
+   This License Information User Manual contains Oracle's product license
+   and other licensing information, including licensing information for
+   third-party software which may be included in this distribution of
+   MySQL Connector/C++.
 
-   Last updated: December 2017.
+   Last updated: January 2018.
 
 Introduction
 
@@ -35,7 +35,7 @@ Licensing Information
 
 Product License - MySQL Connector/C++
 
-   Last updated: December 2017.
+   Last updated: January 2018.
 
    Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights
    reserved.
@@ -93,7 +93,7 @@ Licenses for Third-Party Components
    used to test MySQL Connector/C++. We are thankful to all individuals
    that have created these.
 
-Boost Library License
+Boost Library
 
    The following software may be included in this product:
 
@@ -128,10 +128,9 @@ LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
 OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
 
-Google Protocol Buffers License
+Google Protocol Buffers
 
-The following software may be included in this product:
-
+   The following software may be included in this product:
 Protocol Buffers (aka Google protobuf)
 
 Google Protocol Buffers - protobuf
@@ -173,7 +172,7 @@ code is not standalone and requires a support library to be
 linked with it. This support library is itself covered by
 the above license.
 
-OpenSSL License
+OpenSSL
 
    The following software may be included in this product:
 LICENSE ISSUES
