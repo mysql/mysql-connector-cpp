@@ -216,6 +216,8 @@ protected:
     }
 
   }
+
+  friend class Use_native_pwd;
 };
 
 
@@ -228,7 +230,34 @@ public:
   {}
 };
 
-}} // cdk::test
+
+class Use_native_pwd
+{
+  Xplugin& m_xplugin;
+  const char* m_user;
+  const char* m_password;
+
+public:
+  Use_native_pwd(Xplugin &xplugin)
+    : m_xplugin(xplugin)
+  {
+    m_xplugin.sql("CREATE USER unsecure_root IDENTIFIED WITH 'mysql_native_password';");
+    m_xplugin.sql("grant all on *.* to unsecure_root;");
+    m_user = m_xplugin.m_user;
+    m_password = m_xplugin.m_password;
+    m_xplugin.m_user = "unsecure_root";
+    m_password = NULL;
+  }
+
+  ~Use_native_pwd()
+  {
+    m_xplugin.sql("DROP USER unsecure_root");
+    m_xplugin.m_user = m_user;
+    m_xplugin.m_password = m_password;
+  }
+};
+
+}} // mysql::test
 
 
 #define SKIP_IF_NO_XPLUGIN  \
@@ -260,3 +289,6 @@ public:
   } while(false)
 
 #endif
+
+#define USE_NATIVE_PWD  \
+  mysqlx::test::Use_native_pwd __dummy_user__(*this)

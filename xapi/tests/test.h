@@ -290,6 +290,31 @@ protected:
 public:
   mysqlx_session_t *get_session() { return m_sess; }
 
+  friend class use_native_pwd;
+};
+
+
+class use_native_pwd
+{
+  xapi& m_xapi;
+  const char* m_user;
+
+public:
+  use_native_pwd(xapi &xapi_obj)
+    : m_xapi(xapi_obj)
+  {
+    m_xapi.authenticate();
+    m_xapi.exec_sql("CREATE USER unsecure_root IDENTIFIED WITH 'mysql_native_password';");
+    m_xapi.exec_sql("grant all on *.* to unsecure_root;");
+    m_user = m_xapi.m_xplugin_usr;
+    m_xapi.m_xplugin_usr = "unsecure_root";
+  }
+
+  ~use_native_pwd()
+  {
+    m_xapi.exec_sql("DROP USER unsecure_root");
+    m_xapi.m_xplugin_usr = m_user;
+  }
 };
 
 
@@ -311,6 +336,11 @@ public:
     << x << "." << y <<"." << z << ")" <<std::endl; \
     return; \
   }
+
+#define USE_NATIVE_PWD  \
+  use_native_pwd __dummy_user__(*this)
+
+
 
 class xapi_bugs : public xapi
 {};
