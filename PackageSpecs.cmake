@@ -123,7 +123,7 @@ endif()
 if(EXISTS "${CMAKE_SOURCE_DIR}/COPYING.txt")
   set(LIC_FILE "COPYING")       # Without ".txt" extension
 else()
-  set(LIC_FILE "LICENSE.mysql") # Without ".txt" extension
+  set(LIC_FILE "LICENSE") # Without ".txt" extension
 endif()
 
 if(WIN32)
