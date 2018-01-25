@@ -26,6 +26,24 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+#
+# Connector/C++ version
+#
+
+set(CONCPP_VERSION_MAJOR  8 CACHE INTERNAL "version info")
+set(CONCPP_VERSION_MINOR  0 CACHE INTERNAL "version info")
+set(CONCPP_VERSION_MICRO  7 CACHE INTERNAL "version info")
+# Level is "-alpha", "-beta", empty if GA
+set(CONCPP_VERSION_LEVEL  "-rc" CACHE INTERNAL "version info")
+
+set(CONCPP_VERSION
+  "${CONCPP_VERSION_MAJOR}.${CONCPP_VERSION_MINOR}.${CONCPP_VERSION_MICRO}"
+  CACHE INTERNAL "version info"
+)
+
+#
+#  ABI versions
+#
 
 set(ABI_VERSION_MAJOR 1 CACHE INTERNAL "version info")
 set(ABI_VERSION_MINOR 0 CACHE INTERNAL "version info")
@@ -38,18 +56,6 @@ set(JDBC_ABI_VERSION_MAJOR 7 CACHE INTERNAL "version info")
 set(JDBC_ABI_VERSION_MINOR 0 CACHE INTERNAL "version info")
 set(
   JDBC_ABI_VERSION "${JDBC_ABI_VERSION_MAJOR}.${JDBC_ABI_VERSION_MINOR}"
-  CACHE INTERNAL "version info"
-)
-
-
-set(CONCPP_VERSION_MAJOR  8 CACHE INTERNAL "version info")
-set(CONCPP_VERSION_MINOR  0 CACHE INTERNAL "version info")
-set(CONCPP_VERSION_MICRO  6 CACHE INTERNAL "version info")
-# Level is "-alpha", "-beta", empty if GA
-set(CONCPP_VERSION_LEVEL  "-dmr" CACHE INTERNAL "version info")
-
-set(CONCPP_VERSION
-  "${CONCPP_VERSION_MAJOR}.${CONCPP_VERSION_MINOR}.${CONCPP_VERSION_MICRO}"
   CACHE INTERNAL "version info"
 )
 
