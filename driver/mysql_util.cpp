@@ -2348,7 +2348,9 @@ static int my_uni_utf8(unsigned long wc, unsigned char *r, unsigned char *e)
     case 4: r[3] = (unsigned char) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x10000;
 #endif
     case 3: r[2] = (unsigned char) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x800;
+    FALLTHROUGH
     case 2: r[1] = (unsigned char) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0xc0;
+    FALLTHROUGH
     case 1: r[0] = (unsigned char) wc;
   }
   return count;

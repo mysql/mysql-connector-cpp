@@ -117,6 +117,15 @@
                                     (((uint32_t) (((unsigned char*) (A))[0])) << 24))) <<\
                                     32))
 
+#if (__GNUC__ >= 7) && (__cplusplus == 201103L)
+  #define FALLTHROUGH [[gnu::fallthrough]];
+#elif (__cplusplus > 201103L)
+  #define FALLTHROUGH [[fallthrough]];
+#else
+  #define FALLTHROUGH
+#endif
+
+
 namespace sql
 {
 namespace mysql
