@@ -107,9 +107,7 @@ protected:
           m_sess = new mysqlx::Session(
             SessionOption::PORT, m_port,
             SessionOption::USER, m_user,
-            SessionOption::PWD, m_password,
-            // TODO: Use SSL connection by default?
-            SessionOption::SSL_MODE, SSLMode::DISABLED
+            SessionOption::PWD, m_password
           );
         }
         catch (const Error &e)
