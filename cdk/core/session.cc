@@ -35,6 +35,8 @@
 
 namespace cdk {
 
+using std::unique_ptr;
+
 /*
   A class that creates a session from given data source.
 
@@ -261,14 +263,20 @@ Session_builder::tls_connect(Socket_base &connection, const TLS::Options &option
   if (!prc.m_tls)
     return NULL;
 
-  // Capabilites OK, create TLS connection now.
+  /*
+    Capabilites OK, create TLS connection now.
 
-  TLS *tls_conn = new TLS(&connection, options);
+    Note: The TLS object is protected by unique_ptr<> for the case that
+    connection attempt below throws an error - in that case the newly created
+    object should be deleted.
+  */
+
+  unique_ptr<TLS> tls_conn(new TLS(&connection, options));
 
   // TODO: attempt failover if TLS-layer reports network error?
   tls_conn->connect();
 
-  return tls_conn;
+  return tls_conn.release();
 }
 
 #endif
