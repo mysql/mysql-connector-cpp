@@ -75,36 +75,57 @@ struct Session_builder
     3. If a bail-out error was detected, throws that error.
   */
 
-  template <class Conn>
-  Conn* connect(Conn*);
-
   bool operator() (const ds::TCPIP &ds, const ds::TCPIP::Options &options);
 #ifndef WIN32
   bool operator() (const ds::Unix_socket&ds, const ds::Unix_socket::Options &options);
 #endif
   bool operator() (const ds::TCPIP_old &ds, const ds::TCPIP_old::Options &options);
 
+  /*
+    Make a connection attempt using the given connection object. Returns true if
+    connection was established, otherwise returns false or throws error
+    depending on the value of m_throw_errors;
+  */
+
+  template <class Conn>
+  bool connect(Conn&);
+
 #ifdef WITH_SSL
-  TLS* tls_connect(Socket_base &conn, const TLS::Options &opt);
+
+  /*
+    Given plain connection `conn` (which should be a dynamically allocated
+    object) create a TLS connection over it, if possible.
+
+    If a TLS object is successfully created, it takes the ownership of the
+    plain connection object passed to this call. The caller of this method
+    should take responsibility for the returned TLS object in that case.
+
+    If this method throws error, then it deletes the plain connection object
+    first, so that the caller does not need to bother about it. But if this
+    method returns NULL, then the ownership of the plain connection
+    object stays with the caller who is responsible of deleting it.
+
+    Returns NULL if TLS connections are not supported. Throws errors in case
+    of other problems.
+  */
+
+  TLS* tls_connect(Socket_base *conn, const TLS::Options &opt);
 #endif
 };
 
 
 template <class Conn>
-Conn* Session_builder::connect(Conn* connection)
+bool Session_builder::connect(Conn &connection)
 {
   m_attempts++;
 
-  assert(connection);
-
   try
   {
-    connection->connect();
+    connection.connect();
+    return true;
   }
   catch (...)
   {
-    delete connection;
-
     // Use rethrow_error() to wrap arbitrary exception in cdk::Error.
 
     try {
@@ -123,9 +144,8 @@ Conn* Session_builder::connect(Conn* connection)
       m_error.reset(err.clone());
     }
 
-    return NULL;
+    return false;
   }
-  return connection;
 }
 
 
@@ -138,23 +158,56 @@ Session_builder::operator() (
   using foundation::connection::TCPIP;
   using foundation::connection::Socket_base;
 
-  TCPIP* connection = connect(new TCPIP(ds.host(), ds.port()));
+  unique_ptr<TCPIP> connection(new TCPIP(ds.host(), ds.port()));
 
-  if (!connection)
+  if (!connect(*connection))
     return false;  // continue to next host if available
 
 #ifdef WITH_SSL
-  TLS *tls_conn = tls_connect(*connection, options.get_tls());
+
+  /*
+    Note: We must be careful to release the unique_ptr<> if tls_connect()
+    throws error or returns a TLS object because in that case the plain
+    connection object is either deleted by tls_connect() or its ownership
+    is passed to the returned TLS object. However, if tls_connect() returns
+    NULL, we are still responsible for the plain connection object.
+  */
+
+  TLS * tls_conn = nullptr;
+  try {
+    tls_conn = tls_connect(connection.get(), options.get_tls());
+  }
+  catch (...)
+  {
+    connection.release();
+    throw;
+  }
+
   if (tls_conn)
   {
+    // Now tls_conn owns the plain connection.
+    connection.release();
+
+    /*
+      Note: Order is important! We need to take ownership of tls_conn before
+      calling mysqlx::Session() ctor which might throw errors.
+    */
+
     m_conn = tls_conn;
     m_sess = new mysqlx::Session(*tls_conn, options);
   }
   else
 #endif
   {
-    m_conn = connection;
+    /*
+      Note: Order is important! We must construct mysqlx::Session using
+      connection object of type TCPIP and we must do it before
+      connection.release() is called. If session ctor fails, the unique_ptr<>
+      will still take care of deleting the connection object.
+    */
+
     m_sess = new mysqlx::Session(*connection, options);
+    m_conn = connection.release();
   }
 
   m_database = options.database();
@@ -171,13 +224,13 @@ Session_builder::operator() (
   using foundation::connection::Unix_socket;
   using foundation::connection::Socket_base;
 
-  Unix_socket* connection = connect(new Unix_socket(ds.path()));
+  unique_ptr<Unix_socket> connection(new Unix_socket(ds.path()));
 
-  if (!connection)
+  if (!connect(*connection))
     return false;  // continue to next host if available
 
-  m_conn = connection;
   m_sess = new mysqlx::Session(*connection, options);
+  m_conn = connection.release();
 
   m_database = options.database();
 
@@ -201,8 +254,17 @@ Session_builder::operator() (
 #ifdef WITH_SSL
 
 Session_builder::TLS*
-Session_builder::tls_connect(Socket_base &connection, const TLS::Options &options)
+Session_builder::tls_connect(Socket_base *connection, const TLS::Options &options)
 {
+  /*
+    Note: In case of throwing any errors, the connection object should be
+    deleted - this is taken care of by the unique_ptr<>. However, if returning
+    NULL, the ownership stays with the caller of this method and hence we must
+    release the unique_ptr<>.
+  */
+
+  unique_ptr<Socket_base> conn_ptr(connection);
+
   if (!options.get_ca().empty() &&
       options.ssl_mode() < TLS::Options::SSL_MODE::VERIFY_CA)
     throw Error(cdkerrc::generic_error,
@@ -214,11 +276,16 @@ Session_builder::tls_connect(Socket_base &connection, const TLS::Options &option
                 "Missing ssl-ca option to verify CA");
 
   if (options.ssl_mode() == TLS::Options::SSL_MODE::DISABLED)
+  {
+    conn_ptr.release();
     return NULL;
+  }
+
+  assert(connection);
 
   // Negotiate TLS capabilities.
 
-  cdk::protocol::mysqlx::Protocol proto(connection);
+  cdk::protocol::mysqlx::Protocol proto(*connection);
 
   struct : cdk::protocol::mysqlx::api::Any::Document
   {
@@ -261,20 +328,29 @@ Session_builder::tls_connect(Socket_base &connection, const TLS::Options &option
   proto.rcv_Reply(prc).wait();
 
   if (!prc.m_tls)
+  {
+    conn_ptr.release();
     return NULL;
+  }
 
   /*
     Capabilites OK, create TLS connection now.
 
-    Note: The TLS object is protected by unique_ptr<> for the case that
-    connection attempt below throws an error - in that case the newly created
-    object should be deleted.
+    Note: The TLS object created here takes ownership of the plain connection
+    object passed to this method. The TLS object itself is protected by a
+    unique_ptr<> for the case that connection attempt below throws an error
+    - in that case it will be deleted before leaving this method.
   */
 
-  unique_ptr<TLS> tls_conn(new TLS(&connection, options));
+  unique_ptr<TLS> tls_conn(new TLS(conn_ptr.release(), options));
 
-  // TODO: attempt failover if TLS-layer reports network error?
+  // TODO: attempt fail-over if TLS-layer reports network error?
   tls_conn->connect();
+
+  /*
+    Finally we pass the ownership of the created TLS object to the caller
+    of this method.
+  */
 
   return tls_conn.release();
 }

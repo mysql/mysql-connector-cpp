@@ -128,6 +128,12 @@ class connection_TLS_impl
   : public ::cdk::foundation::connection::Socket_base::Impl
 {
 public:
+
+  /*
+    Note: Once created, the TLS object takes ownership of the plain tcpip
+    connection object (which is assumed to be dynamically allocated).
+  */
+
   connection_TLS_impl(cdk::foundation::connection::Socket_base* tcpip,
                       cdk::foundation::connection::TLS::Options options)
     : m_tcpip(tcpip)
