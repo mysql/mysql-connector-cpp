@@ -679,6 +679,12 @@ add_test(NAME Link_test
 
 
 #
+# Create the BUILDINFO file
+# =========================
+#
+include(buildinfo.cmake)
+
+#
 # Packaging specifications
 # ========================
 #
