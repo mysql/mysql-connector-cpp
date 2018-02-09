@@ -3,17 +3,34 @@ MySQL Connector/C++ Documentation  {#mainpage}
 
 MySQL Connector/C++ is a library for applications written in C or C++ that want
 to communicate with MySQL database servers. Version 8.0 of Connector/C++
-implements new APIs which, on top of traditional SQL, give access
-to MySQL implementing a document store. For code written in C++ this is the new
-[X DevAPI] (@ref devapi), which is the common MySQL API to access
-MySQL Document Store, also implemented by other MySQL connectors. Code written
-in plain C can use the [XAPI] (@ref xapi) -- a new plain C API which offers
-functionality similar to X DevAPI.
+implements three different APIs which can be used by applications...
 
+- The new [X DevAPI] (@ref devapi) for applications written in C++.
+- The new [XAPI] (@ref xapi) for applications written in plain C.
+- The [legacy JDBC based API]
+  (https://dev.mysql.com/doc/connector-cpp/en/connector-cpp-reference.html),
+  also implemented in version 1.1 of the connector.
+
+The new APIs give access to MySQL implementing a [document store]
+(https://dev.mysql.com/doc/refman/8.0/en/document-store.html). Consequently,
+code written against these APIs can work only with a MySQL Server with the
+X Plugin enabled in it. This is supported by MySQL Server version 8 or 5.7.12+.
+Apart from accessing the document store, the new APIs allow executing
+traditional SQL queries as well.
+
+Application written against the JDBC based API of Connector/C++ 1.1 can be also
+compiled with Connector/C++ 8.0 which is backward compatible with the earlier
+version. Such code does not require the X Plugin and can communicate with older
+version of the MySQL Server.
+
+The API to be used is chosen by including appropriate set of headers, as
+explained in @ref usage.
+ 
 More information:
 
 - [Connector/C++ X DevAPI Reference] (@ref devapi_ref)
 - [Connector/C++ XAPI Reference] (@ref xapi_ref)
+- [Connector/C++ legacy C++ API based on JDBC4 Reference] (@ref jdbc_ref)
 - [How to build code that uses Connector/C++](@ref usage)
 - [Building Connector/C++] (@ref building)
 - [Indexing Document Collections] (@ref indexing)

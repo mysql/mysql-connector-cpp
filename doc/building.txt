@@ -6,16 +6,15 @@ Prerequisites
 To build Connector/C++, the following tools and libraries are required:
 
 - A C++ compiler that supports C++11. In case of gcc it must be at least
-  version 4.8. These compilers have been tested: gcc 4.8.4, clang 7.3.0,
-  MS Visual Studio 2015.
+  version 4.8. These compilers have been tested: gcc 4.8.4, 4.8.5, 4.9.2, 5.4.0,
+  6.3.0, 6.3.1, 7.1.1, 7.2.0, 7.2.1, clang 9.0.0, MS Visual Studio 2015.
 
-- CMake 2.8.11 or later.
+- CMake 2.8.12 or later.
 
 - OpenSSL version 1.0.x if connector is built with OpenSSL.
 
 @note: On some platforms Boost libraries are needed to build the connector.
-       Boost version 1.55 or higher is required (for MS Visual Studio 
-       version 1.59 or higher).
+       Boost version 1.59.
 
 Build configuration
 -------------------
@@ -43,6 +42,27 @@ If not specified, the install location defaults to
 By default a shared library is built. To build a static library, use the option:
 
 - `-DBUILD_STATIC=yes`
+
+Building of the legacy C++ JDBC4 library
+----------------------------------------
+Connector/C++ supports the legacy C++ JDBC4 API, which is placed inside a
+separate library `libmysqlcppconn` or `mysqlcppconn` depending on the Operating
+System.
+
+In order to enable building of the legacy C++ JDBC4 library the Connector/C++
+needs to be built with the following options:
+
+- `WITH_JDBC` to enable the legacy C++ JDBC4 API. Usage of this option in cmake
+  command looks like this: `-DWITH_JDBC=yes`. By default this option is not
+  enabled and the legacty C++ JDBC4 functionality is not built.
+
+- `MYSQL_DIR` to allow using server libraries such as libmysqlclient if it is
+  not installed at the default location.
+  The command line should look like: `-DMYSQL_DIR=<path_to_mysql_server_dir>`
+
+- `WITH_BOOST` to point to boost location if it is different from the default.
+  The command line should look like: `-DMYSQL_DIR=<path_to_mysql_server_dir>`
+
 
 Configuring SSL libraries
 -------------------------
@@ -84,9 +104,17 @@ It is also possible to omit the `--config CCC` option in which case the default
 After a successful build, the build location should contain
 the Connector/C++ shared library:
 
-- `libmysqlcppconn8.so.1.0` on Unix
-- `libmysqlcppconn8.1.0.dylib` on OS X
+- `libmysqlcppconn8.so.1` on Unix
+- `libmysqlcppconn8.1.dylib` on OS X
 - `CCC/mysqlcppconn8-vsXX.dll` on Windows, where `-vs12` or `-vs14` prefix
+  depends on the MSVC version used to build the connector
+  
+If Connector/C++ is built to support the legacy C++ JDBC4 API (WITH_JDBC option
+enabled) the build library directory will have another shared library:
+
+- `libmysqlcppconn.so.7` on Unix
+- `libmysqlcppconn.7.dylib` on OS X
+- `CCC/mysqlcppconn-7-vsXX.dll` on Windows, where `-vs12` or `-vs14` prefix
   depends on the MSVC version used to build the connector
 
 On Unix and OS X also appropriate symbolic links are created. On Windows the
@@ -96,8 +124,15 @@ subdirectory is named the same as the build configuration used).
 In the case of a static library build, the output library names are:
 
 - `libmysqlcppconn8-static.a` on Unix and OS X
-- `CCC/mysqlcppconn8-static.lib` on Windows
+- `CCC/mysqlcppconn8-static.lib` and `CCC/mysqlcppconn8-static-mt.lib`
+  on Windows
 
+If Connector/C++ is built to support the legacy C++ JDBC4 API (WITH_JDBC option
+enabled) the build library directory will have another static library:
+
+- `libmysqlcppconn-static.a` on Unix and OS X
+- `CCC/mysqlcppconn-static.lib` and `CCC/mysqlcppconn-static-mt.lib`
+  on Windows
 
 ### Testing
 
@@ -130,8 +165,8 @@ $ cmake -DWITH_CONCPP=<Connector/C++ install location> <source location>/testapp
 $ cmake --build . --config CCC
 ~~~~~~~
 
-This should create the `devapi_test` and `xapi_test` executables in the `run/`
-subdirectory of the build location.
+This should create the `devapi_test`, `xapi_test` and `jdbc_test` executables
+in the `run/` subdirectory of the build location.
 
 @note
   On Windows, if the connector was built with the static runtime by specifying
@@ -142,6 +177,9 @@ subdirectory of the build location.
   The 32/64-bit Windows `cmake` generator (`"Visual Studio 14 2015 Win64"` vs
   `"Visual Studio 14 2015"`) used to build test applications must match
   the one used to build the connector.
+  
+@note in order to build `jdbc_test` the Connector/C++ has to be built
+  with WITH_JDBC, MYSQL_DIR and WITH_BOOST options.
 
 Before running test programs, ensure that a MySQL Server instance is running
 with X Plugin loaded into it. The easiest way of arranging this is to use
@@ -167,23 +205,16 @@ the standard 33060 one.
 Now one can start one of the test programs and see the output similar to the
 one presented below. The `devapi_test` program accepts port number as the first
 argument, with the default value 33060. Thus, if the server was started
-as described above, run the test program as follows:
+as described above, run the test program with the following URL as a parameter:
 
 ~~~~~~~
-$ run/devapi_test 13009
+$ run/devapi_test mysqlx://root@127.0.0.1:13009
 ~~~~~~~
 
 The program uses the `root` user account without any password and assumes
 that there is a `test` schema in the server (these assumptions hold for
 a server started using `mysql-test-run.pl`). Different user credentials can
 be passed as the second and the third argument of `devapi_test` invocation.
-
-For the `xapi_test` program, connection details can be given in form of an URL,
-as shown below:
-
-~~~~~~~
-$ run/xapi_test mysqlx://root@127.0.0.1:13009
-~~~~~~~
 
 If everything goes well, `devapi_test` should produce output similar to this:
 
@@ -222,6 +253,20 @@ doc#1: {"_id": "A0ABC08DAABAD1110C120800273BD115", "age": 2, "name": "bar", "toy
 Done!
 ~~~~~~~
 
+For the `xapi_test` program, connection details can be given in form of an URL,
+as shown below:
+
+~~~~~~~
+$ run/xapi_test mysqlx://root@127.0.0.1:13009
+~~~~~~~
+
+For the `jdbc_test` program the command line would look as this:
+
+~~~~~~~
+$ run/jdbc_test tcp://127.0.0.1:13009 root
+~~~~~~~
+
+
 Windows Notes
 -------------
 Connector/C++ uses C++11 language and for that reason it is not possible
@@ -256,7 +301,7 @@ the compiler and the linker invocations. Another option is to set the required
 deployment target and then the compiler defaults are changed accordingly.
 To define the deployment target, set the environment variable
 `MACOSX_DEPLOYMENT_TARGET` to the requested OS X version. Binary distributions
-of Connector/C++ are built with `MACOSX_DEPLOYMENT_TARGET` set to `10.9`.
+of Connector/C++ are built with `MACOSX_DEPLOYMENT_TARGET` set to `10.12`.
 
 Building Connector/C++ with `gcc` or its `libstdc++` runtime has not been
 tested and there is no support in the build system for using an alternative
