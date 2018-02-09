@@ -47,7 +47,7 @@ See @ref usage for instructions on how to build the sample code.
 Code which uses X DevAPI should include the `mysql_devapi.h` header. The API
 is declared within the `mysqlx` namespace:
 
-@skip #include <mysql_devapi.h>
+@skip #include <mysqlx/xdevapi.h>
 @until using namespace
 
 To create an @link mysqlx::Session `Session` @endlink object, specify DNS name

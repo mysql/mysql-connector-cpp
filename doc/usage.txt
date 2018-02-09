@@ -1,21 +1,31 @@
 Using Connector/C++ 8.0  {#usage}
 =======================
 
+Connector/C++ 8.0 supports X DevAPI, XAPI and legacy C++ JDBC4 API.
+Inside the packages the new APIs (X DevAPI and XAPI) and the legacy 
+C++ JDBC4 are placed into separate library files:
+
+ - `libmysqlcppconn8`.(.so/.dylib/.dll/.a) containing X DevAPI and XAPI
+   functionality
+ - `libmysqlcppconn`.(.so/.dylib/.dll/.a) containig legacy C++ JDBC4
+   functionality
+   
 Connector/C++ 8.0 can be used as either a static or a shared library.
 If used as a shared library, the library must be installed on the target
-machine in order for the application to run. The shared library name is:
+machine in order for the application to run. The shared library names are:
 
-- `libmysqlcppconn8.so` on Unix platforms (the soname is
-  `libmysqlcppconn8.so.1`)
-- `libmysqlcppconn8.dylib` on the OSX platform (the soname is
-  `libmysqlcppconn8.1.dylib`)
-- `mysqlcppconn8-vsXX.dll` on Windows platforms (see
-   [Windows Notes](@ref usage_win) for explanation of `-vsXX` suffixes)
+- `libmysqlcppconn8.so` and `libmysqlcppconn.so` on Unix platforms
+  (the sonames are `libmysqlcppconn8.so.1` and `libmysqlcppconn.so.7`)
+- `libmysqlcppconn8.dylib` and `libmysqlcppconn.dylib` on the OSX platform
+  (the sonames are `libmysqlcppconn8.1.dylib` and `libmysqlcppconn.7.dylib`)
+- `mysqlcppconn8-1-vsXX.dll` and `mysqlcppconn-7-vsXX.dll` on Windows platforms
+  (see [Windows Notes](@ref usage_win) for explanation of `-vsXX` suffixes)
 
-The static library name is:
+The static library names are:
 
-- `libmysqlcppconn8-static.a` on OSX and Unix platforms.
-- `mysqlcppconn8-static.lib` on Windows platforms,
+- `libmysqlcppconn8-static.a` and `libmysqlcppconn-static.a` on OSX and
+  Unix platforms.
+- `mysqlcppconn8-static.lib` and `mysqlcppconn-static.lib` on Windows platforms.
 
 In what follows we assume that Connector/C++ 8.0 is installed to the location
 given by `$MYSQL_CONCPP_DIR`.
@@ -23,16 +33,49 @@ given by `$MYSQL_CONCPP_DIR`.
 
 Using the shared library
 ------------------------
+The choice of the API is done by including the appropriate set of headers.
 
-When compiling code which uses the connector, add `$MYSQL_CONCPP_DIR/include`
-to project's include path and `$MYSQL_CONCPP_DIR/lib` or
-`$MYSQL_CONCPP_DIR/lib64` to the library path (the latter on a 64-bit platform).
-Then add `-lmysqlcppconn8` to the linker options (on Unix systems also add
-`-lpthread` required by Connector/C++ on these platforms).
+When compiling code which uses the connector set the following include paths:
+
+ - `$MYSQL_CONCPP_DIR/include` for X DevAPI/XAPI
+ 
+ - `$MYSQL_CONCPP_DIR/include/jdbc` for legacy C++ JDBC4 API
+   @note The legacy code that uses Connector/C++ 1.1 has includes like
+~~~~
+#include <mysql_driver.h>
+~~~~
+   Therefore, in order to match the file layout of the headers in
+   Connector/C++ 8 such include statements must be changed to
+~~~~
+#include <jdbc/mysql_driver.h>
+~~~~
+   Alternatively, the include path could be set to
+   `$MYSQL_CONCPP_DIR/include/jdbc`
+   
+ 
+The library paths are the same for X DevAPI/XAPI and legacy C++ JDBC4 API:
+`$MYSQL_CONCPP_DIR/lib` or `$MYSQL_CONCPP_DIR/lib64` (the latter on a 64-bit
+platform).
+Then add `-lmysqlcppconn8` for X DevAPI/XAPI or `-lmysqlcppconn` for legacy C++
+JDBC4 API to the linker options.
+
+Different platforms might require additional libraries or compiler/linker
+options:
+
+ - For Linux the following options might be required `-lpthread`
+ 
+ - In Solaris the user might need adding `-lsocket -lnsl -lrt`
+ 
+ - In OSX it can be `-stdlib=libc++`
 
 If code uses X DevAPI, enable C++11 support in the compiler as it is required
 by the X DevAPI headers. For `gcc` and `clang` compilers this can be done
-using `-std=c++11` option. Connector/C++ requires gcc version 4.8 or later.
+using `-std=c++11` option. It is essential to build the aplication with the
+same version of the build toold that was using for building Connector/C++.
+The build tools versions depend on the platform and can be found inside
+BUILDINFO.txt file inside the Connector/C++ package.
+
+@note For the legacty C++ JDBC4 API the support for C++11 is not required.
 
 An example `Makefile` to build an application which uses Connector/C++ X DevAPI,
 with sources in `app.cc` is shown below:
@@ -52,6 +95,9 @@ It generates the following compiler invocation:
 g++ -std=c++11 -I .../include -L .../lib64  app.cc  -lmysqlcppconn8 -lpthread -o app
 ~~~~~~~~
 
+@note For linking against the legacy C++ JDBC4 library the library name would be
+`-lmysqlcppconn`. Also, the option `-std=c++11` could be omitted unless the user
+code utilizes C++11.
 
 The connector can be also used with plain C code written against XAPI.
 An example `Makefile` to build a plain C application from sources in `app.c`
@@ -82,11 +128,13 @@ where connector libraries can be found.
 
 @note Because Connector/C++ exports C++ classes in its X DevAPI, code which
 uses it should be built using the same compiler that was used to build the
-connector. If using the binary distribution of the connector, then compile with
+connector. The Connector/C++ distribution includes the BUILDINFO.txt file
+containing information about the compiler used to build the connector.
+If using the binary distribution of the connector, then compile with
 `clang` on OSX and with `gcc` on other Unix systems. See also [Window Notes]
 (@ref usage_win) for details about compiling code on Windows.
 
-@note when Connector/C++ is configured to be built to use OpenSSL it will make
+When Connector/C++ is configured to be built to use OpenSSL it will make
 the connector library dependent on shared OpenSSL libraries. The dynamic linker
 needs to be able to find not only the connector library at the run time,
 but also OpenSSL libraries. One option is to put OpenSSL libraries in the same
@@ -108,6 +156,12 @@ it is important to define the `STATIC_CONCPP` macro. This macro is used
 to adjust API declarations in connector's public headers for usage with
 the static library.
 
+@note The `STATIC_CONCPP` macro triggers building of the static library only for
+   X DevAPI/XAPI part of the connector. Enabling the static library for the
+   legacy C++ JDBC4 API requires adding a definition for CPPCONN_PUBLIC_FUNC as
+   an empty macro. Check [here] (https://dev.mysql.com/doc/connector-cpp/en/connector-cpp-apps-windows-visual-studio.html)
+   for more information
+
 An example `Makefile` to build a C++ application that links to the connector
 library statically is shown below:
 
@@ -126,6 +180,9 @@ It generates the following compiler invocation:
 g++ -std=c++11 -DSTATIC_CONCPP -I .../include  app.cc  .../lib64/libmysqlcppconn8-static.a -lpthread -o app
 ~~~~~~~
 
+@note For linking against the legacy C++ JDBC4 library the library name would be
+`-lmysqlcppconn`. Also, the option `-std=c++11` could be omitted unless the user
+code utilizes C++11.
 
 When building plain C code it is important to take care of connector's
 dependency on the C++ runtime. Best way is to ensure that a C++ linker is used
@@ -237,9 +294,7 @@ versions of the MSVC compiler also use different versions of the runtime.
 It is important to ensure that the compiler version and the build mode of
 an application matches the same parameters used when building the connector
 library. This is to ensure that the runtime library used by the connector
-and the application is the same. For that reason the binary distribution
-of Connector/C++ for Windows includes several variants of the library built
-with different parameters.
+and the application is the same.
 
 @note Only release mode builds are supported by the current binary
 distribution of Connector/C++ 8.0. Debug variants of the connector
@@ -266,23 +321,16 @@ to locate it at the runtime. The common way of arranging this is to put
 the connector DLL in the same location as the executable.
 
 
-The static library comes in two more flavors, giving the user a choice
-to build his code either with the static (`/MT`) or the dynamic runtime (`/MD`).
-If building code in the `/MT` mode, the `mysqlcppconn8-static-mt.lib` connector
-library should be used. For `/MD` builds the `mysqlcppconn8-static.lib` should
-be used. These libraries are found in `vs14/` ov `vsXX` subfolder, as
+The static library comes with its code generated for the dynamic runtime (`/MD`)
+and has a name `mysqlcppconn8-static.lib` for X DevAPI/XAPI and
+`mysqlcppconn-static.lib` for the legacy C++ JDBC4 API.
+These libraries are found in `vs14/` ov `vsXX` subfolder, as
 appropriate for the MSVC version being used.
 
 @note The shared library uses dynamic runtime (`/MD`) and the code which uses
 the shared library should be built in the same `/MD` mode. There is
 no possibility to use shared connector library from code built in `/MT` mode.
 Attempt to do it can lead to undefined behavior.
-
-
-@todo Building applications in 'Debug' mode using binary distribution
-      of Connector/C++.
-@todo How to build on OSX with XCode.
-@todo Dynamic linking with other connector dependencies.
 
 
 <!--
