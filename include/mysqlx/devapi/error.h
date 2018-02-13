@@ -119,7 +119,9 @@ public:
   }
 
 
+  ///@cond IGNORE
   friend internal::Result_detail;
+  ///@endcond
 
   struct Access;
   friend Access;

@@ -542,10 +542,13 @@ protected:
 
 public:
 
-  friend mysqlx::string;
   friend SessionSettings;
   friend DbDoc;
+
+  ///@cond IGNORE
+  friend mysqlx::string;
   template <class Base> friend class Bind_parameters;
+  ///@endcond IGNORE
 
   struct INTERNAL Access;
   friend Access;

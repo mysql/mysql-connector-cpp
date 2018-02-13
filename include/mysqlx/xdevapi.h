@@ -356,8 +356,11 @@ public:
 
   friend Collection;
   friend Table;
+
+  ///@cond IGNORE
   friend internal::Schema_detail::Name_src;
   template <class Base> friend class internal::Sch_object;
+  ///@endcond
 };
 
 
@@ -726,7 +729,10 @@ public:
   friend CollectionAdd;
   friend CollectionRemove;
   friend CollectionModify;
+
+  ///@cond IGNORE
   friend internal::Crud_factory;
+  ///@endcond
 };
 
 
@@ -975,7 +981,10 @@ private:
   friend TableInsert;
   friend TableRemove;
   friend TableUpdate;
+
+  ///@cond IGNORE
   friend internal::Crud_factory;
+  ///@endcond
 };
 
 
