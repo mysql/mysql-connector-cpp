@@ -315,12 +315,12 @@ if(HAS_JDBC)
   if(DEFINED WITH_BOOST)
     set(BOOST_ROOT "${WITH_BOOST}")
     set(Boost_NO_SYSTEM_PATHS ON)
-    
+
     # Setting this variable to ON disables attempts to use the cmake
     # configuration script provided by Boost and use only the logic
     # implemented in FindBoost. The cmake configuration script from Boost
     # proved to be buggy on some platforms and breaks our builds.
-    
+
     set(Boost_NO_BOOST_CMAKE ON)
   endif()
 

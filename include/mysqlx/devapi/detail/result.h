@@ -290,7 +290,9 @@ protected:
 
   void init(const internal::Result_detail::Impl&);
 
+  ///@cond IGNORE
   friend internal::Row_result_detail<Columns>;
+  ///@endcond
 };
 
 

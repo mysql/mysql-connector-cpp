@@ -490,7 +490,9 @@ private:
   Columns(Columns&&) = default;
   Columns& operator=(Columns&&) = default;
 
+  ///@cond IGNORE
   friend internal::Row_result_detail<Columns>;
+  ///@endcond
 };
 
 
