@@ -22,10 +22,11 @@ And for legacy API include:
   #include <jdbc/mysql_connection.h>
   #include <jdbc/cppconn/*.h>
 ~~~~~~
-Above include directives work under assumption that include path contains
-`$MYSQL_CPPCONN_DIR/include`, where `$MYSQL_CPPCONN_DIR` is the location where
-Connector/C++ was installed. Pass `-I $MYSQL_CPPCONN_DIR/include` option to
-the compiler invocation line to ensure this.
+The preceding include directives work under the assumption that the include path
+contains `$MYSQL_CPPCONN_DIR/include`, where `$MYSQL_CPPCONN_DIR` is
+the location where Connector/C++ was installed. Pass
+the `-I $MYSQL_CPPCONN_DIR/include` option on the compiler invocation line
+to ensure this.
 
 @note The legacy code that uses Connector/C++ 1.1 has includes of the form
 ~~~~
@@ -38,14 +39,15 @@ To build such code with Connector/C++ 8 without modifying it, add
 
 
 The X DevAPI uses C++11 language features. For that reason enable C++11 support
-in the compiler using `-std=c++11` option when building code that uses X DevAPI.
+in the compiler using the `-std=c++11` option when building code that uses X DevAPI.
 This is not needed for XAPI (which is a plain C API) nor for the legacy JDBC API
 which is based on plain C++.
 
 
-@note The legacy API requires Boost headers. The location of Boost headers needs
-to be added to the include path to correctly compile legacy code. Only Boost
-headers are needed - Boost libraries are not used during linking phase.
+@note The legacy API requires Boost headers. The location of these headers needs
+to be added to the include path to correctly compile legacy code. Only
+the headers from Boost are needed -- the Boost libraries are not used during
+linking phase.
 
 
 Using the shared library
@@ -94,7 +96,7 @@ It generates the following compiler invocation:
 g++ -std=c++11 -I .../include -L .../lib64  app.cc  -lmysqlcppconn8 -o app
 ~~~~~~~~
 
-@note For linking against the legacy C++ JDBC4 library the library name would be
+@note For linking against the legacy C++ JDBC4 library the library name is
 `-lmysqlcppconn`. Also, the option `-std=c++11` could be omitted unless the user
 code utilizes C++11.
 
@@ -122,7 +124,7 @@ depend on the C++ runtime (`libstdc++`).
 
 @note
 When running an application which uses the shared Connector/C++ library,
-the library and its run-time dependencies must be found by the dynamic linker.
+the library and its runtime dependencies must be found by the dynamic linker.
 The dynamic linker must be properly configured to find Connector/C++ libraries
 and their dependencies.
 
@@ -132,12 +134,12 @@ must be installed on the system in order to run code that links against
 Connector/C++ libraries. Another option is to put OpenSSL libraries in the same
 location as Connector/C++. In this case the dynamic linker should find them
 next to the connector library. See also [Windows Notes](@ref usage_win) and
-[MacOS Notes](@ref usage_macos).
+[macOS Notes](@ref usage_macos).
 
 @note
 It is possible to build Connector/C++ libraries without OpenSSL, using internal
 implementation of TLS connections. In this case the OpenSSL libraries are not
-required at run-time.
+required at runtime.
 
 
 Using the static library
@@ -148,8 +150,8 @@ way there is no runtime dependency on the connector and the resulting binary
 can run on systems where Connector/C++ is not installed.
 
 @note
-However, even when linking statically, the resulting code will still depend
-on OpenSSL libraries and all other run-time dependencies of the Connector/C++
+However, even when linking statically, the resulting code still depends
+on OpenSSL libraries and all other runtime dependencies of the Connector/C++
 library.
 
 When compiling code which is linked with the connector library statically,
@@ -186,7 +188,7 @@ It generates the following compiler invocation:
 g++ -std=c++11 -DSTATIC_CONCPP -I .../include  app.cc  .../lib64/libmysqlcppconn8-static.a -lssl -lcrypto -lpthread -o app
 ~~~~~~~
 
-@note For linking against the legacy C++ JDBC4 library the library name would be
+@note For linking against the legacy C++ JDBC4 library the library name is
 `-lmysqlcppconn`. Also, the option `-std=c++11` could be omitted unless the user
 code utilizes C++11.
 
@@ -251,10 +253,10 @@ final executable will depend on the C++ runtime which must be installed on the
 target computer on which the application will run.
 
 
-MacOS Notes                                              @anchor usage_macos
+macOS Notes                                              @anchor usage_macos
 -----------
 
-The binary distribution of Connector/C++ for MacOS is compiled using the MacOS
+The binary distribution of Connector/C++ for macOS is compiled using the macOS
 native `clang` compiler. For that reason an application that uses the connector
 should be built with the same `clang` compiler.
 
@@ -265,7 +267,7 @@ as Connector/C++, that is, the native `libc++`. To ensure that, the
 `-stdlib=libc++` option should be passed to the compiler and the linker
 invocations.
 
-An example `Makefile` for OS X build is shown below.
+An example `Makefile` for macOS build is shown below.
 
 ~~~~~~~
 MYSQL_CONCPP_DIR= ...
@@ -277,8 +279,8 @@ CXXFLAGS = -std=c++11
 app : app.cc
 ~~~~~~~
 
-Binary packages for MacOS include OpenSSL libraries which are required by code
-linked with the connector. These libraries are put
+Binary packages for macOS include OpenSSL libraries which are required by code
+linked with the connector. These libraries are installed
 in the same location as the connector libraries and should be found there by
 the dynamic linker.
 
@@ -333,18 +335,18 @@ static version `vs14/mysqlcppconn-static.lib`.
 When building code that uses Connector/C++ libraries add
 `$MYSQL_CPPCONN_DIR/include` as additional include folder and
 `$MYSQL_CPPCONN_DIR/{lib,lib64}/vs14` as additional library folder in
-the project configuration. To use dynamic library add `mysqlcppconn8.lib`
+the project configuration. To use the dynamic library add `mysqlcppconn8.lib`
 to linker inputs (`mysqlcppconn.lib` for legacy code). For static linking add
-`mysqlcppconn8-static.lib` instead(`mysqlcppconn-static.lib` for legacy code).
-If linking statically, linker must find import libraries for the required
+`mysqlcppconn8-static.lib` instead (`mysqlcppconn-static.lib` for legacy code).
+If linking statically, the linker must find the import libraries for the required
 OpenSSL libraries. They are present in the `$MYSQL_CPPCONN_DIR/{lib,lib64}/vs14`
-folder if connector was installed from the binary package provided by MySQL
+folder if the connector was installed from the binary package provided by MySQL
 and the corresponding OpenSSL DLLs are present in the main library folder, next
 to the connector DLLs.
 
 
 @note An application which uses the shared connector library must be able
-to locate it, as well as it dependencies such as OpenSSL, at the runtime.
+to locate it, as well as its dependencies such as OpenSSL, at the runtime.
 The common way of arranging this is to put the required DLLs in the same
 location as the executable.
 

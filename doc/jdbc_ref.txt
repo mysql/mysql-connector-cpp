@@ -1,42 +1,16 @@
-Connector/C++ 8.0 legacy C++ API based on JDBC4 Reference {#jdbc_ref}
+Connector/C++ 8.0 legacy C++ API based on JDBC4 {#jdbc_ref}
 =======================================
 
-Connector/C++ 8.0 supports the legacy C++ API based on JDBC4 specification.
+Connector/C++ 8.0 supports the legacy C++ API based on the JDBC4 specification.
 
 This allows an easy migration to Connector/C++ version 8.0 for applications
-that use Connector/C++ version 1.1. 
+that use Connector/C++ version 1.1.
 
 More detailed information about the legacy C++ API can be found in the
 [X MySQL Connector/C++ Developer Guide]
 (https://dev.mysql.com/doc/connector-cpp/en/)
 of MySQL online manual.
 
-Source distributions of Connector/C++ include an examples directory
-containing usage examples that explain how to use the following classes: 
-
- - `Connection`
-
- - `Driver`
-
- - `PreparedStatement`
-
- - `ResultSet`
-
- - `ResultSetMetaData`
-
- - `Statement`
-
- The examples cover:
-
- - Using the Driver class to connect to MySQL
-
- - Creating tables, inserting rows, fetching rows using (simple) statements
-
- - Creating tables, inserting rows, fetching rows using prepared statements
-
- - Hints for working around prepared statement limitations
-
- - Accessing result set metadata 
 
 ### Sample code which uses Connector/C++ with legacy C++ API ###
 
@@ -46,14 +20,14 @@ legacy C++ API.
 @note
   The connection is established over the legacy protocol and therefore
   X Plugin is not needed and the server does not need to support X Protocol.
-  
+
 After the connection is established the code executes a simple SQL statement
 and reads the result from the server. The source file can be found in
 testapp/jdbc_test.cc in the source distribution of Connector/C++ 8.0.
 See @ref usage for instructions on how to build the sample code.
 
-Each program which is using the legacy C++ API has to do the following
-includes:
+Each program which uses the legacy C++ API has to include the following
+headers:
 
 @dontinclude jdbc_test.cc
 @skip #include <jdbc/mysql_connection.h>
@@ -64,8 +38,8 @@ These headers are needed for using the `ResultSet` and `Statement` classes:
 @skip #include <jdbc/cppconn/resultset.h>
 @until #include <jdbc/cppconn/statement.h>
 
-Define the credentials for connecting, process command line params and
-other housekeeping stuff:
+Define the credentials for connecting, process command line parameters and
+other housekeeping:
 
 @skip #define DEFAULT_URI "tcp://127.0.0.1"
 @until try {
@@ -82,16 +56,16 @@ Make sure that you free con, the `sql::Connection` object, as soon as you do
 not need it any more. But do not explicitly free driver, the connector object.
 Connector/C++ takes care of freeing that.
 
-@note `get_mysql_driver_instance()` calls `get_driver_instance()`, which is 
+@note `get_mysql_driver_instance()` calls `get_driver_instance()`, which is
 not thread-safe. Either avoid invoking these methods from within multiple
 threads at once, or surround the calls with a mutex to prevent simultaneous
-execution in multiple threads. 
+execution in multiple threads.
 
  These methods can be used to check the connection state or reconnect:
 
  - `sql::Connection::isValid()` checks whether the connection is alive
 
- - `sql::Connection::reconnect()` reconnects if the connection has gone down 
+ - `sql::Connection::reconnect()` reconnects if the connection has gone down
 
 The `sql::Connection` is used to set the schema and create a statement:
 
@@ -115,14 +89,14 @@ prepared statements. If your query returns one result set, use
 `sql::Statement::executeQuery()` or `sql::PreparedStatement::executeQuery()`
 to run your query. Both methods return `sql::ResultSet` objects.
 By default, Connector/C++ buffers all result sets on the client to support
-cursors. 
+cursors.
 
 The code below walks through the entire result set row by row using
-`sql::ResultSet::next()` method, which returns `true` if the row was sucessfully
-read. Otherwise it returns `false`, which means we reached the end of the
-result set and there are no more rows to read.
+`sql::ResultSet::next()` method, which returns `true` if the row was
+successfully read. Otherwise it returns `false`, which means we reached the end
+of the result set and there are no more rows to read.
 
-The actual data is obtained trhough the getXxxx() functions such as
+The actual data is obtained through the getXxxx() functions such as
 `getInt(), getString()`, etc. The columns can be indexed by numbers in the
 order they are given inside the result set starting from 1.
 Alternatively the column name can be used as a string index.
